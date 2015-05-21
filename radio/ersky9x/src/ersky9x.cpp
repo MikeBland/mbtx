@@ -113,7 +113,17 @@ OS_TID DebugTask;
 OS_STK debug_stk[DEBUG_STACK_SIZE] ;
 #endif
 
+#ifdef SERIAL_HOST
+void host( void* pdata ) ;
+#define HOST_STACK_SIZE	300
+OS_TID HostTask ;
+OS_STK Host_stk[HOST_STACK_SIZE] ;
+uint8_t Host10ms ;
+
 #endif
+
+#endif
+
 
 const char * const *Language = English ;
 
@@ -356,7 +366,7 @@ const char *Str_ON = PSTR(STR_ON) ;
 
 
 
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 //const char modi12x3[]= "\004RUD ELE THR AIL " ;
 // now use PSTR(STR_STICK_NAMES)
 const char stickScramble[]= {
@@ -373,28 +383,28 @@ const char stickScramble[]= {
 //    4, 3, 2, 1		// mode 4
 //} ;
 
-#else
+//#else
 
-const char modi12x3[]=
-  "RUD ELE THR AIL " ;
-//  "RUD THR ELE AIL "
-//  "AIL ELE THR RUD "
-//  "AIL THR ELE RUD ";
-// Now indexed using modn12x3
+//const char modi12x3[]=
+//  "RUD ELE THR AIL " ;
+////  "RUD THR ELE AIL "
+////  "AIL ELE THR RUD "
+////  "AIL THR ELE RUD ";
+//// Now indexed using modn12x3
 
-const char modn12x3[]= {
-    1, 2, 3, 4,
-    1, 3, 2, 4,
-    4, 2, 3, 1,
-    4, 3, 2, 1 };
-#endif
+//const char modn12x3[]= {
+//    1, 2, 3, 4,
+//    1, 3, 2, 4,
+//    4, 2, 3, 1,
+//    4, 3, 2, 1 };
+//#endif
 
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 uint8_t modeFixValue( uint8_t value )
 {
 	return stickScramble[g_eeGeneral.stickMode*4+value]+1 ;
 }
-#endif
+//#endif
 
 MenuFuncP g_menuStack[5];
 
@@ -403,7 +413,7 @@ uint8_t  EnterMenu = 0 ;
 
 
 // Temporary to allow compile
-uint8_t g_vbat100mV = 98 ;
+uint8_t g_vbat100mV ;//= 98 ;
 //int16_t calibratedStick[7] ;
 //int16_t g_chans512[NUM_SKYCHNOUT] ;
 uint8_t heartbeat ;
@@ -454,7 +464,7 @@ uint32_t ResetReason ;
 
 
 #ifdef PCBX9D
-const char Switches_Str[] = "SA0SA1SA2SB0SB1SB2SC0SC1SC2SD0SD1SD2SE0SE1SE2SF0SF2SG0SG1SG2SH0SH2" ;
+//const char Switches_Str[] = "SA0SA1SA2SB0SB1SB2SC0SC1SC2SD0SD1SD2SE0SE1SE2SF0SF2SG0SG1SG2SH0SH2" ;
 // Needs to be in pulses_driver.h
 extern void init_no_pulses(uint32_t port) ;
 extern void init_pxx(uint32_t port) ;
@@ -1037,6 +1047,10 @@ int main( void )
 
 #ifdef	DEBUG
 	DebugTask = CoCreateTaskEx( handle_serial,NULL,18,&debug_stk[DEBUG_STACK_SIZE-1],DEBUG_STACK_SIZE, 1, FALSE );
+#endif 
+
+#ifdef SERIAL_HOST
+	HostTask = CoCreateTaskEx( host, NULL,19, &Host_stk[HOST_STACK_SIZE-1], HOST_STACK_SIZE, 1, FALSE ) ;
 #endif 
 
 #ifdef REV9E
@@ -1726,7 +1740,7 @@ void main_loop(void* pdata)
   ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
 #ifdef PCBSKY
         ab /= 55296  ;
-        g_vbat100mV = ab + 3 ;// Also add on 0.3V for voltage drop across input diode
+        g_vbat100mV = ab + 3 + 3 ;// Also add on 0.3V for voltage drop across input diode
 #endif
 #ifdef PCBX9D
         ab /= 57165  ;
@@ -1887,7 +1901,11 @@ void main_loop(void* pdata)
 //			break ;		
 //		}
 //#endif
+#ifdef SERIAL_HOST
+		mainSequence( NO_MENU ) ;
+#else
 		mainSequence( MENUS ) ;
+#endif
 #ifndef SIMU
 		CoTickDelay(1) ;					// 2mS for now
 #endif
@@ -2012,6 +2030,25 @@ int8_t getAndSwitch( SKYCSwData &cs )
 #endif
 }
 
+void doVoiceAlarmSource( VoiceAlarmData *pvad )
+{
+	if ( pvad->source )
+	{
+		// SORT OTHER values here
+		if ( pvad->source >= NUM_XCHNRAW )
+		{
+			voice_telem_item( pvad->source - NUM_SKYXCHNRAW - 1 ) ;
+		}
+		else
+		{
+			int16_t value ;
+			value = getValue( pvad->source - 1 ) ;
+			voice_numeric( value, 0, 0 ) ;
+		}
+	}
+}
+
+
 static void processVoiceAlarms()
 {
 	uint32_t i ;
@@ -2021,6 +2058,8 @@ static void processVoiceAlarms()
 	{
 		uint32_t play = 0 ;
 		curent_state = 0 ;
+		int16_t ltimer = Nvs_timer[i] ;
+
 		if ( pvad->func )		// Configured
 		{
   		int16_t x ;
@@ -2072,7 +2111,7 @@ static void processVoiceAlarms()
 			}
 			if ( x == 0 )
 			{
-				Nvs_timer[i] = 0 ;
+				ltimer = 0 ;
 			}
 			else
 			{
@@ -2087,12 +2126,12 @@ static void processVoiceAlarms()
 				if ( curent_state == 0 )
 				{
 //							Nvs_state[i] = 0 ;
-					Nvs_timer[i] = -1 ;
+					ltimer = -1 ;
 				}
 			}
 			else// No switch, no function
 			{ // Check for source with numeric rate
-				if ( pvad->rate >= 3 )	// A time
+				if ( pvad->rate >= 4 )	// A time
 				{
 					if ( pvad->vsource )
 					{
@@ -2105,13 +2144,42 @@ static void processVoiceAlarms()
 
 		if ( ( VoiceCheckFlag & 2 ) == 0 )
 		{
+		 if ( pvad->rate == 3 )	// All
+		 {
+		 		uint32_t pos = switchPosition( pvad->swtch ) ;
+				uint32_t state = Nvs_state[i] ;
+				play = 0 ;
+				if ( state != pos )
+				{
+					if ( state > 0x80 )
+					{
+						if ( --state == 0x80 )
+						{
+							state = pos ;
+							ltimer = 0 ;
+							play = pos + 1 ;
+						}
+					}
+					else
+					{
+						state = 0x83 ;
+					}
+					Nvs_state[i] = state ;
+				}
+//				else
+//				{
+//					play = 0 ;
+//				}
+		 }
+		 else
+		 {
 			if ( play == 1 )
 			{
 				if ( Nvs_state[i] == 0 )
 				{ // just turned ON
 					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
 					{ // ON
-						Nvs_timer[i] = 0 ;
+						ltimer = 0 ;
 					}
 				}
 				Nvs_state[i] = 1 ;
@@ -2126,7 +2194,7 @@ static void processVoiceAlarms()
 				{
 					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
 					{
-						Nvs_timer[i] = 0 ;
+						ltimer = 0 ;
 						play = 1 ;
 						if ( pvad->rate == 2 )
 						{
@@ -2136,12 +2204,18 @@ static void processVoiceAlarms()
 				}
 				Nvs_state[i] = 0 ;
 			}
+			if ( pvad->rate == 33 )
+			{
+				play = 0 ;
+				ltimer = -1 ;
+			}
+		 }
 		}
 		else
 		{
-			Nvs_state[i] = play ;
-			Nvs_timer[i] = -1 ;
-			play = 0 ;
+			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
+			play = ( pvad->rate == 33 ) ? 1 : 0 ;
+			ltimer = -1 ;
 		}
 
 		if ( pvad->mute )
@@ -2157,34 +2231,35 @@ static void processVoiceAlarms()
 
 		if ( play )
 		{
-			if ( Nvs_timer[i] < 0 )
+			if ( ltimer < 0 )
 			{
-				if ( pvad->rate >= 3 )	// A time
+				if ( pvad->rate >= 3 )	// A time or ONCE
 				{
-					Nvs_timer[i] = 0 ;
+					ltimer = 0 ;
 				}
 			}
-			if ( Nvs_timer[i] == 0 )
+			if ( ltimer == 0 )
 			{
 				if ( pvad->vsource == 1 )
 				{
-					if ( pvad->source )
-					{
-						// SORT OTHER values here
-						if ( pvad->source >= NUM_SKYXCHNRAW )
-						{
-							voice_telem_item( pvad->source - NUM_SKYXCHNRAW - 1 ) ;
-						}
-						else
-						{
-							if ( pvad->source )
-							{
-								int16_t value ;
-								value = getValue( pvad->source - 1 ) ;
-								voice_numeric( value, 0, 0 ) ;
-							}
-						}
-					}
+					doVoiceAlarmSource( pvad ) ;
+//					if ( pvad->source )
+//					{
+//						// SORT OTHER values here
+//						if ( pvad->source >= NUM_SKYXCHNRAW )
+//						{
+//							voice_telem_item( pvad->source - NUM_SKYXCHNRAW - 1 ) ;
+//						}
+//						else
+//						{
+//							if ( pvad->source )
+//							{
+//								int16_t value ;
+//								value = getValue( pvad->source - 1 ) ;
+//								voice_numeric( value, 0, 0 ) ;
+//							}
+//						}
+//					}
 				}
 				if ( pvad->fnameType == 0 )	// None
 				{
@@ -2194,10 +2269,10 @@ static void processVoiceAlarms()
 				{
 					char name[10] ;
 					char *p ;
-					p = (char *)cpystr( (uint8_t *)name, pvad->file.name ) ;
-					if ( play == 2 )
+					p = (char *)ncpystr( (uint8_t *)name, pvad->file.name, 8 ) ;
+					if ( play >= 2 )
 					{
-						*(p-1) += 1 ;
+						*(p-1) += ( play - 1 ) ;
 					}
 					putUserVoice( name, 0 ) ;
 				}
@@ -2220,47 +2295,49 @@ static void processVoiceAlarms()
 				}
 				if ( pvad->vsource == 2 )
 				{
-					if ( pvad->source )
-					{
-						// SORT OTHER values here
-						if ( pvad->source >= NUM_SKYXCHNRAW )
-						{
-							voice_telem_item( pvad->source - NUM_SKYXCHNRAW - 1 ) ;
-						}
-						else
-						{
-							if ( pvad->source )
-							{
-								int16_t value ;
-								value = getValue( pvad->source - 1 ) ;
-								voice_numeric( value, 0, 0 ) ;
-							}
-						}
-					}
+					doVoiceAlarmSource( pvad ) ;
+//					if ( pvad->source )
+//					{
+//						// SORT OTHER values here
+//						if ( pvad->source >= NUM_SKYXCHNRAW )
+//						{
+//							voice_telem_item( pvad->source - NUM_SKYXCHNRAW - 1 ) ;
+//						}
+//						else
+//						{
+//							if ( pvad->source )
+//							{
+//								int16_t value ;
+//								value = getValue( pvad->source - 1 ) ;
+//								voice_numeric( value, 0, 0 ) ;
+//							}
+//						}
+//					}
 				}
         if ( pvad->haptic )
 				{
 					audioDefevent( (pvad->haptic > 1) ? ( ( pvad->haptic == 3 ) ? AU_HAPTIC3 : AU_HAPTIC2 ) : AU_HAPTIC1 ) ;
 				}
-				if ( pvad->rate < 3 )	// ON/OFF/BOTH
+				if ( ( pvad->rate < 4 ) || ( pvad->rate > 32 ) )	// Not a time
 				{
-					Nvs_timer[i] = -1 ;
+					ltimer = -1 ;
 				}
 				else
 				{
-					Nvs_timer[i] = 1 ;
+					ltimer = 1 ;
 				}
 			}
-			else if ( Nvs_timer[i] > 0 )
+			else if ( ltimer > 0 )
 			{
-				Nvs_timer[i] += 1 ;
-				if ( Nvs_timer[i] > ( (pvad->rate-2) * 10 ) )
+				ltimer += 1 ;
+				if ( ltimer > ( (pvad->rate-2) * 10 ) )
 				{
-					Nvs_timer[i] = 0 ;
+					ltimer = 0 ;
 				}
 			}
 		}
 		pvad += 1 ;
+		Nvs_timer[i] = ltimer ;
 	}
 }
 
@@ -2322,7 +2399,6 @@ void mainSequence( uint32_t no_menu )
 #endif
 
 	perMain( no_menu ) ;		// Allow menu processing
-
 	if(heartbeat == 0x3)
 	{
     wdt_reset();
@@ -2380,9 +2456,9 @@ void mainSequence( uint32_t no_menu )
 #endif
 
  #ifdef PCBSKY
-		if ( ++coProTimer > 24 )
+		if ( ++coProTimer > 9 )
 		{
-			coProTimer -= 25 ;
+			coProTimer -= 10 ;
 			
 #ifndef REVX
 			if ( CoProcAlerted == 0 )
@@ -2633,7 +2709,24 @@ static uint8_t RssiTestCount ;
 			{
 				if ( g_model.enRssiRed == 0 )
 				{
+#ifdef ASSAN
+					int8_t offset ;
+#ifdef PCBX9D
+					if ( g_model.xprotocol == PROTO_ASSAN )
+#else
+					if ( g_model.protocol == PROTO_ASSAN )
+#endif // PCBX9D
+					{
+						offset = 18 ;
+					}
+					else
+					{
+						offset = 42 ;
+					}
+					if ( rssiValue && rssiValue < g_model.rssiRed + offset )
+#else // ASSAN
 					if ( rssiValue && rssiValue < g_model.rssiRed + 42 )
+#endif // ASSAN
 					{
 						// Alarm
 						redAlert = 1 ;
@@ -2655,7 +2748,24 @@ static uint8_t RssiTestCount ;
 				}
 				if ( ( redAlert == 0 ) && ( g_model.enRssiOrange == 0 ) )
 				{
+#ifdef ASSAN
+					int8_t offset ;
+#ifdef PCBX9D
+					if ( g_model.xprotocol == PROTO_ASSAN )
+#else
+					if ( g_model.protocol == PROTO_ASSAN )
+#endif // PCBX9D
+					{
+						offset = 20 ;
+					}
+					else
+					{
+						offset = 45 ;
+					}
+					if ( rssiValue && rssiValue < g_model.rssiOrange + offset )
+#else // ASSAN
 					if ( rssiValue && rssiValue < g_model.rssiOrange + 45 )
+#endif // ASSAN
 					{
 						// Alarm
 						if ( ++orangeCounter > 3 )
@@ -3506,7 +3616,6 @@ int8_t checkIncDec_hg0( int8_t i_val, int8_t i_max)
 
 
 const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
-
 uint32_t calcStickScroll( uint32_t index )
 {
 	uint32_t direction ;
@@ -3517,12 +3626,12 @@ uint32_t calcStickScroll( uint32_t index )
 		index ^= 3 ;
 	}
 	
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 	value = phyStick[index] ;
 	value /= 8 ;
-#else
-	value = calibratedStick[index] / 128 ;
-#endif
+//#else
+//	value = calibratedStick[index] / 128 ;
+//#endif
 	direction = value > 0 ? 0x80 : 0 ;
 	if ( value < 0 )
 	{
@@ -3570,7 +3679,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
 			}
 			GvAdjLastSw[i][0] = sw0 ;
 		}
-		if ( pgvaradj->function > 3 )
+		if ( ( pgvaradj->function > 3 ) && ( pgvaradj->function < 7 ) )
 		{
 			sw1 = pgvaradj->switch_value ;
 			if ( sw1 )
@@ -3646,6 +3755,29 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
      			value = 0 ;
 				}
 			break ;
+			
+			case 7 :
+				if ( switchedON & 1 )
+				{
+     			value += 1 ;
+					if ( value > pgvaradj->switch_value )
+					{
+						value = pgvaradj->switch_value ;
+					}
+				}
+			break ;
+			
+			case 8 :
+				if ( switchedON & 1 )
+				{
+     			value -= 1 ;
+					if ( value < pgvaradj->switch_value )
+					{
+						value = pgvaradj->switch_value ;
+					}
+				}
+			break ;
+
 		}
   	if(value > 125)
 		{
@@ -3740,17 +3872,20 @@ void processAnaEncoder()
 }
 #endif
 
+uint8_t GvarSource[4] ;
+
 int8_t getGvarSourceValue( uint8_t src )
 {
 	int16_t value ;
 	
 	if ( src <= 4 )
 	{
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 		value = getTrimValue( CurrentPhase, src - 1 ) ;
-#else
-		value = getTrimValue( CurrentPhase, convert_mode_helper(src) - 1 ) ;
-#endif
+//#else
+//		value = getTrimValue( CurrentPhase, convert_mode_helper(src) - 1 ) ;
+//#endif
+		GvarSource[src-1] = 1 ;
 //				g_model.gvars[i].gvar = *TrimPtr[ convert_mode_helper(g_model.gvars[i].gvsource) - 1 ] ;
 	}
 	else if ( src == 5 )	// REN
@@ -3759,11 +3894,11 @@ int8_t getGvarSourceValue( uint8_t src )
 	}
 	else if ( src <= 9 )	// Stick
 	{
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 		value = calibratedStick[ src-5 - 1 ] / 8 ;
-#else
-		value = calibratedStick[ convert_mode_helper( src-5) - 1 ] / 8 ;
-#endif
+//#else
+//		value = calibratedStick[ convert_mode_helper( src-5) - 1 ] / 8 ;
+//#endif
 //				g_model.gvars[i].gvar = limit( -125, calibratedStick[ convert_mode_helper(g_model.gvars[i].gvsource-5) - 1 ] / 8, 125 ) ;
 	}
 #ifdef PCBSKY
@@ -3805,13 +3940,12 @@ int8_t getGvarSourceValue( uint8_t src )
 		value = calc_scaler( src-38, 0, 0 ) ;
 #endif
 	}
-	else
-//#ifdef PCBSKY
-//			else if ( src <= 68 )	// Scalers
-//#endif
-//#ifdef PCBX9D
-//			else if ( src <= 69 )	// Scalers
-//#endif
+#ifdef PCBSKY
+	else if ( src <= 68 )	// Scalers
+#endif
+#ifdef PCBX9D
+	else if ( src <= 69 )	// Scalers
+#endif
 	{ // Outputs
 		int32_t x ;
 #ifdef PCBSKY
@@ -3822,6 +3956,10 @@ int8_t getGvarSourceValue( uint8_t src )
 #endif
 		x *= 100 ;
 		value = x / 1024 ;
+	}
+	else
+	{
+		value = 0 ;
 	}
 	if ( value > 125 )
 	{
@@ -3861,6 +3999,9 @@ void perMain( uint32_t no_menu )
 
 	if(!tick10ms) return ; //make sure the rest happen only every 10ms.
 
+#ifdef SERIAL_HOST
+	Host10ms = 1 ;
+#endif
 	if ( ppmInValid )
 	{
 		ppmInValid -= 1 ;
@@ -4100,6 +4241,10 @@ void perMain( uint32_t no_menu )
 	StickScrollAllowed = 3 ;
 
 #if GVARS
+	GvarSource[0] = 0 ;
+	GvarSource[1] = 0 ;
+	GvarSource[2] = 0 ;
+	GvarSource[3] = 0 ;
 	for( uint8_t i = 0 ; i < MAX_GVARS ; i += 1 )
 	{
 		// ToDo, test for trim inputs here
@@ -4714,9 +4859,9 @@ static uint8_t checkTrim(uint8_t event)
     uint8_t idx = k/2;
 		
 // SORT idx for stickmode if FIX_MODE on
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 				idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
-#endif
+//#endif
 		if ( g_eeGeneral.crosstrim )
 		{
 			idx = 3 - idx ;			
@@ -4724,13 +4869,19 @@ static uint8_t checkTrim(uint8_t event)
 		uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
     int16_t tm = getTrimValue( phaseNo, idx ) ;
     int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
     bool thrChan = (2 == idx) ;
-#else
-		bool thrChan = ((2-(g_eeGeneral.stickMode&1)) == idx);
-#endif
+//#else
+//		bool thrChan = ((2-(g_eeGeneral.stickMode&1)) == idx);
+//#endif
 		bool thro = (thrChan && (g_model.thrTrim));
     if(thro) v = 2; // if throttle trim and trim trottle then step=2
+
+		if ( GvarSource[idx] )
+		{
+			v = 1 ;
+		}
+
     if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
     int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
 
@@ -4790,7 +4941,7 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
   if(idx==0)
 		lcd_putsAtt(x,y,XPSTR("----"),att);
   else if(idx<=4)
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 	{
 		const char *ptr = "" ;
 		if ( g_model.useCustomStickNames )
@@ -4806,9 +4957,9 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
       lcd_putsAttIdx(x,y,PSTR(STR_STICK_NAMES),(idx-1),att) ;
 		}
 	}
-#else
-    lcd_putsnAtt(x,y,&modi12x3[(modn12x3[g_eeGeneral.stickMode*4+(idx-1)]-1)*4],4,att) ;
-#endif
+//#else
+//    lcd_putsnAtt(x,y,&modi12x3[(modn12x3[g_eeGeneral.stickMode*4+(idx-1)]-1)*4],4,att) ;
+//#endif
   else if(idx<=chanLimit)
 #if GVARS
     lcd_putsAttIdx(x,y,PSTR(STR_CHANS_GV),(idx-5),att);
@@ -4889,7 +5040,7 @@ uint8_t Sw3PosCount[8] ;
 void createSwitchMapping()
 {
 	uint8_t *p = switchMapTable ;
-	uint8_t map = g_eeGeneral.switchMapping ;
+	uint16_t map = g_eeGeneral.switchMapping ;
 	*p++ = 0 ;
 	if ( map & USE_THR_3POS )
 	{
@@ -4958,6 +5109,14 @@ void createSwitchMapping()
 		*p++ = HSW_Gear ;
 	}
 	*p++ = HSW_Trainer ;
+	if ( map & USE_PB1 )
+	{
+		*p++ = HSW_Pb1 ;
+	}
+	if ( map & USE_PB2 )
+	{
+		*p++ = HSW_Pb2 ;
+	}
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
 	{
 		*p++ = i ;	// Custom switches
@@ -5323,10 +5482,14 @@ const char *get_switches_string()
 
 int16_t getValue(uint8_t i)
 {
-#ifdef PCBX9D
-  if(i<8) return calibratedStick[i];//-512..512
-#else
   if(i<7) return calibratedStick[i];//-512..512
+#ifdef PCBX9D
+ #if NUM_EXTRA_POTS
+	if ( i >= EXTRA_POTS_START-1 )
+	{
+		return calibratedStick[i-EXTRA_POTS_START+8] ;
+	}
+ #endif
 #endif
   if(i<PPM_BASE) return 0 ;
 	else if(i<CHOUT_BASE)
@@ -5455,7 +5618,7 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
   {
       x = getValue(cs.v1-1);
 #ifdef FRSKY
-      if (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT)
+      if ( (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1 < EXTRA_POTS_START ) )
 			{
         y = convertTelemConstant( cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
 #ifndef TELEMETRY_LOST
@@ -5628,7 +5791,7 @@ int8_t getMovedSwitch()
 
 #ifdef PCBSKY
   uint16_t mask = 0xC000 ;
-	uint8_t map = g_eeGeneral.switchMapping ;
+	uint16_t map = g_eeGeneral.switchMapping ;
 	
 	for ( uint8_t i=8 ; i>0 ; i-- )
 	{
@@ -5754,11 +5917,44 @@ int8_t getMovedSwitch()
 	if ( result == 0 )
 	{
 		mask = getSwitch00( 9 ) ;
-		if ( mask && ( trainer_state  == 0 ) )
+		if ( ( mask ^ trainer_state ) & 1 )
 		{
-			result = 9 ;
+			if ( mask )
+			{
+				result = 9 ;
+			}
+			trainer_state ^= 1 ;
 		}
-		trainer_state = mask ;
+	}
+	if ( map & USE_PB1 )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb1 ) << 1 ;
+			if ( ( mask ^ trainer_state ) & 2 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb1 ;
+				}
+				trainer_state ^= 2 ;
+			}
+		}
+	}
+	if ( map & USE_PB2 )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb2 ) << 2 ;
+			if ( ( mask ^ trainer_state ) & 4 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb2 ;
+				}
+				trainer_state ^= 4 ;
+			}
+		}
 	}
 #endif
 #ifdef PCBX9D
@@ -6192,11 +6388,13 @@ void checkSwitches()
 #endif
 	//loop until all switches are reset
 
+ 	warningStates &= ~g_model.modelswitchWarningDisables ;
 	while (1)
   {
 #ifdef PCBSKY
 		read_9_adc() ; // needed for 3/6 pos ELE switch
     uint16_t i = getCurrentSwitchStates() ;
+		i &= ~g_model.modelswitchWarningDisables ;
 
 		if ( first )
 		{
@@ -6253,7 +6451,10 @@ void checkSwitches()
 // To Do
   		getMovedSwitch() ;	// loads switches_states
 
-			if ( ( switches_states & 0x3FFF ) == warningStates )
+    	uint16_t ss = switches_states ;
+			ss &= ~g_model.modelswitchWarningDisables ;
+
+			if ( ( ss & 0x3FFF ) == warningStates )
 			{
 				return ;
 			}
@@ -6265,16 +6466,19 @@ void checkSwitches()
 			return ;
 		}
 #endif
-  		alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
-  		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
+ 		alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
+ 		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
+		{
+ 		  uint16_t mask = ( 0x03 << (i*2) ) ;
+ 		  uint8_t attr = ((warningStates & mask) == (ss & mask)) ? 0 : INVERS ;
+			if ( ~g_model.modelswitchWarningDisables & mask )
 			{
-  		  uint16_t mask = ( 0x03 << (i*2) ) ;
-  		  uint8_t attr = ((warningStates & mask) == (switches_states & mask)) ? 0 : INVERS ;
   		  lcd_putcAtt( 3*FW+i*(2*FW+2), 2*FH, 'A'+i, attr ) ;
 				lcd_putcAtt( 4*FW+i*(2*FW+2), 2*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}
+		}
 #endif
-        refreshDisplay();
+    refreshDisplay() ;
 
 
     wdt_reset();
@@ -6325,6 +6529,19 @@ void pushMenu(MenuFuncP newMenu)
   g_menuStack[++g_menuStackPtr] = newMenu ;
 }
 
+uint8_t *ncpystr( uint8_t *dest, uint8_t *source, uint8_t count )
+{
+  while ( (*dest++ = *source++) )
+	{
+		if ( --count == 0 )
+		{
+			*dest++ = '\0' ;
+			break ;
+		}
+	}	
+  return dest - 1 ;
+}
+
 uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 {
   while ( (*dest++ = *source++) )
@@ -6363,14 +6580,14 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x )
 
 uint8_t IS_THROTTLE( uint8_t x )
 {
-#ifdef FIX_MODE
+//#ifdef FIX_MODE
 	return x == 2 ;
-#else
-	uint8_t y ;
-	y = g_eeGeneral.stickMode&1 ;
-	y = 2 - y ;
-	return (((y) == x) && (x<4)) ;
-#endif
+//#else
+//	uint8_t y ;
+//	y = g_eeGeneral.stickMode&1 ;
+//	y = 2 - y ;
+//	return (((y) == x) && (x<4)) ;
+//#endif
 }
 
 /*** EOF ***/
