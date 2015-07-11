@@ -1,0 +1,41 @@
+<RCC>
+    <qresource prefix="/">
+        <file>images/copy.png</file>
+        <file>images/cut.png</file>
+        <file>images/new.png</file>
+        <file>images/open.png</file>
+        <file>images/paste.png</file>
+        <file>images/save.png</file>
+        <file>images/read_eeprom.png</file>
+        <file>images/write_eeprom.png</file>
+        <file>images/write_flash.png</file>
+        <file>images/read_flash.png</file>
+        <file>images/simulate.png</file>
+        <file>images/configure.png</file>
+        <file>donators</file>
+        <file>images/print.png</file>
+        <file>images/clear.png</file>
+        <file>images/add.png</file>
+        <file>images/edit.png</file>
+        <file>images/duplicate.png</file>
+        <file>images/fuses.png</file>
+        <file>images/list.png</file>
+        <file>images/read_eeprom_file.png</file>
+        <file>images/write_eeprom_file.png</file>
+        <file>images/moveup.png</file>
+        <file>images/movedown.png</file>
+        <file>images/update.png</file>
+        <file>images/contributors.png</file>
+        <file>images/preferences.png</file>
+        <file>images/switch_dir.png</file>
+        <file>images/exit.png</file>
+        <file>images/er9x_manual.png</file>
+        <file>images/load_model.png</file>
+        <file>images/save_model.png</file>
+        <file>images/c_home.png</file>
+        <file>images/fuses_set.png</file>
+        <file>images/info.png</file>
+        <file>images/eepskye-title.png</file>
+        <file>eepskye.png</file>
+    </qresource>
+</RCC>

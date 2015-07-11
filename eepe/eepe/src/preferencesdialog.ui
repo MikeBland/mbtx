@@ -1,0 +1,1186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>preferencesDialog</class>
+ <widget class="QDialog" name="preferencesDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>669</width>
+    <height>488</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Preferences</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="eepe.qrc">
+    <normaloff>:/images/preferences.png</normaloff>:/images/preferences.png</iconset>
+  </property>
+  <layout class="QGridLayout" name="gridLayout_2">
+   <item row="0" column="0">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Language (requires restart)</string>
+     </property>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QComboBox" name="locale_QB"/>
+   </item>
+   <item row="3" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>Check for updates on startup</string>
+     </property>
+    </widget>
+   </item>
+   <item row="3" column="1">
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="0" column="0">
+      <widget class="QCheckBox" name="startupCheck_er9x">
+       <property name="text">
+        <string>er9x</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QCheckBox" name="startupCheck_eepe">
+       <property name="text">
+        <string>eePe</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="4" column="0">
+    <widget class="QLabel" name="label_4">
+     <property name="text">
+      <string>Show Splash Screen</string>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="1">
+    <widget class="QCheckBox" name="showSplash">
+     <property name="text">
+      <string/>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="13" column="1">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="14" column="1">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_4">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>Default Channel Order</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QComboBox" name="channelorderCB">
+       <property name="whatsThis">
+        <string>Channel order
+
+This is used by the templates to determine which channel goes to what number output.</string>
+       </property>
+       <property name="currentIndex">
+        <number>0</number>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true">R E T A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">R E A T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">R T E A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">R T A E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">R A E T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">R A T E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E R T A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E R A T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E T R A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E T A R</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E A R T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">E A T R</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T R E A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T R A E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T E R A</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T E A R</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T A R E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">T A E R</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A R E T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A R T E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A E R T</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A E T R</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A T R E</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">A T E R</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_14">
+       <property name="text">
+        <string>Default Stick Mode</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QComboBox" name="stickmodeCB">
+       <property name="whatsThis">
+        <string>Mode selection:
+
+Mode 1:
+  Left stick:  Elevator, Rudder
+  Right stick:  Throttle, Aileron
+
+Mode 2:
+  Left stick:  Throttle, Rudder
+  Right stick:  Elevator, Aileron
+
+Mode 3:
+  Left stick:  Elevator, Aileron
+  Right stick:  Throttle, Rudder
+
+Mode 4:
+  Left stick:  Throttle, Aileron
+  Right stick:  Elevator, Rudder
+
+</string>
+       </property>
+       <property name="currentIndex">
+        <number>1</number>
+       </property>
+       <item>
+        <property name="text">
+         <string>Mode 1 (RUD ELE THR AIL)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mode 2 (RUD THR ELE AIL)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mode 3 (AIL ELE THR RUD)</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mode 4 (AIL THR ELE RUD)</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Version to download</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="downloadVerCB">
+       <item>
+        <property name="text">
+         <string>er9x</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - JETI</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - FrSky</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - Ardupilot</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - FrSky NOHT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - NOHT</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - NMEA</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - 128 - FrSky</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - 128 - Standard</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>er9x - Frsky - Serial voice</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_12">
+       <property name="text">
+        <string>Processor</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QComboBox" name="ProcessorCB">
+       <item>
+        <property name="text">
+         <string>M64</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>M128</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>M1281</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>M2561</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_13">
+       <property name="text">
+        <string>Default EEPROM version</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QComboBox" name="DefaultVersionCB">
+       <item>
+        <property name="text">
+         <string>1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>4</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>Current Version - er9x</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <layout class="QGridLayout" name="gridLayout_3" columnstretch="0,10,10" columnminimumwidth="0,0,0">
+       <item row="0" column="2">
+        <widget class="QPushButton" name="er9x_dnld">
+         <property name="text">
+          <string>Download</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0">
+        <widget class="QLabel" name="er9x_ver_label">
+         <property name="text">
+          <string>r111</string>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="1">
+        <widget class="QPushButton" name="er9x_dnld_2">
+         <property name="text">
+          <string>Check</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+   <item row="12" column="0" colspan="2">
+    <layout class="QGridLayout" name="gridLayout_5">
+     <item row="1" column="2">
+      <widget class="QLineEdit" name="avrdude_location">
+       <property name="toolTip">
+        <string>Location of AVRDUDE executable</string>
+       </property>
+       <property name="whatsThis">
+        <string>The location of the AVRDUDE.EXE executable.</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="4" rowspan="2">
+      <widget class="QPushButton" name="pushButton">
+       <property name="whatsThis">
+        <string>Use this button to browse and look for the AVRDUDE.EXE executable file.</string>
+       </property>
+       <property name="text">
+        <string>Browse...</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>Programmer</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QComboBox" name="avrdude_programmer">
+       <property name="whatsThis">
+        <string>Programmer used for communicating with the controller.
+Please consult the programmer's documentation and the AVRDUDE documentation to select the appropriate programmer.</string>
+       </property>
+       <property name="insertPolicy">
+        <enum>QComboBox::InsertAlphabetically</enum>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true">c2n232i</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dasa3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dasa</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">siprog</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">ponyser</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">89isp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">frank-stk200</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">blaster</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">ere-isp-avr</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">atisp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dapa</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">xil</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">futurlec</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">abcmini</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">picoweb</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">sp12</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">alf</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">bascom</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dt006</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">pony-stk200</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk200</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">bsd</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">pavr</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_pdi</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_dw</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_hvsp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_pp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_isp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">dragon_jtag</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2pdi</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2avr32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtagmkII_avr32</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2dw</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2isp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2fast</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag2slow</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtagmkII</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag1slow</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtag1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">jtagmkI</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avr911</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avr109</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">butterfly</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">usbtiny</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">usbasp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avr910</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk600hvsp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk600pp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk600</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk500hvsp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk500pp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk500v2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">mib510</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk500v1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">stk500</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">buspirate</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avrisp2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avrispmkII</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avrispv2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">avrisp</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">arduino</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="4">
+      <widget class="QPushButton" name="pushButton_3">
+       <property name="whatsThis">
+        <string>List all available programmers.</string>
+       </property>
+       <property name="text">
+        <string>List Available</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QLineEdit" name="avrArgs">
+       <property name="toolTip">
+        <string>Extra arguments that will be passed to AVRDUDE on every call</string>
+       </property>
+       <property name="whatsThis">
+        <string>Extra arguments used in AVRDUDE.
+This can be used for providing extra information to AVRDUDE.
+
+Please only use this if you know what you are doing.  There are no error checks and you could cripple your controller.</string>
+       </property>
+       <property name="text">
+        <string notr="true"/>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Extra Arguments</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="4">
+      <widget class="QPushButton" name="pushButton_4">
+       <property name="whatsThis">
+        <string>Show AVRDUDE help</string>
+       </property>
+       <property name="text">
+        <string>Show Help</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="2">
+      <widget class="QComboBox" name="avrdude_port">
+       <property name="whatsThis">
+        <string>Communication port to the programmer.
+</string>
+       </property>
+       <item>
+        <property name="text">
+         <string notr="true"/>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">usb</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">com1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">com2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">com3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">com4</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">lpt1</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">lpt2</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">lpt3</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string notr="true">lpt4</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>avrdoper</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com5</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com6</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com7</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com8</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com9</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com10</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com11</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com12</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com13</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com14</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com15</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com16</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com17</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com18</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com19</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com20</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com21</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com22</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com23</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com24</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com25</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com26</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com27</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com28</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com29</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>com30</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>Port</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_9">
+       <property name="text">
+        <string>AVRDUDE Location</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_10">
+       <property name="text">
+        <string>mcu</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QComboBox" name="avrdude_mcu">
+       <property name="whatsThis">
+        <string>Programmer used for communicating with the controller.
+Please consult the programmer's documentation and the AVRDUDE documentation to select the appropriate programmer.</string>
+       </property>
+       <property name="insertPolicy">
+        <enum>QComboBox::InsertAlphabetically</enum>
+       </property>
+       <item>
+        <property name="text">
+         <string>m64</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m128</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m328p</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>M88</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m1281</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>m2561</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>Burn Configuration</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QLabel" name="label_16">
+     <property name="text">
+      <string>Profile</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="eepe.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>preferencesDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>370</x>
+     <y>49</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>preferencesDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>390</x>
+     <y>55</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

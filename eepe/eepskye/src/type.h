@@ -1,0 +1,1 @@
+#define SKY 1
