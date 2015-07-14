@@ -46,7 +46,7 @@
  #endif
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #include "x9d/stm32f2xx.h"
 #include "x9d/stm32f2xx_gpio.h"
 #include "X9D/i2c_ee.h"
@@ -80,8 +80,8 @@ void p4hex( uint16_t value ) ;
 void p2hex( unsigned char c ) ;
 void hex_digit_send( unsigned char c ) ;
 
-uint8_t Dbg_Spi_tx_buf[32] ;
-uint8_t Dbg_Spi_rx_buf[32] ;
+//uint8_t Dbg_Spi_tx_buf[32] ;
+//uint8_t Dbg_Spi_rx_buf[32] ;
 
 uint8_t I2CwriteValue ;
 uint8_t I2CreadValue ;
@@ -239,7 +239,7 @@ uint32_t Mem_address ;
 uint32_t Next_mem_address ;
 
 uint32_t Memaddmode ;
-uint32_t SoundCheck ;
+//uint32_t SoundCheck ;
 
 #if VOICE_TEST
 uint8_t Sdcard_data[1024] ;
@@ -261,7 +261,7 @@ DIR Dir ;
 extern uint32_t Cap_index ;
 extern uint8_t Activated ;
 
-uint8_t EEdata[256] ;
+//uint8_t EEdata[256] ;
 uint32_t Tcap_index ;
 
 void handle_serial(void* pdata)
@@ -291,17 +291,17 @@ void handle_serial(void* pdata)
 		}
 #endif
 		
-#if PCBSKY		
-#ifndef PCBDUE
-		if ( SoundCheck )
-		{
-			if ( queueTone( 610, 200, 30, 0 ) )
-			{
-				SoundCheck = 0 ;
-			}			
-		}
-#endif
-#endif
+//#if PCBSKY		
+//#ifndef PCBDUE
+//		if ( SoundCheck )
+//		{
+//			if ( queueTone( 610, 200, 30, 0 ) )
+//			{
+//				SoundCheck = 0 ;
+//			}			
+//		}
+//#endif
+//#endif
 
 		while ( ( rxchar = rxuart() ) == 0xFFFF )
 		{
@@ -598,76 +598,76 @@ extern void initWatchdog( void ) ;
 			}
 		}
 
-		static uint32_t bk_address = 0 ;
-		if ( rxchar == 'X' )
-		{
-			txmit( 'X' ) ;
-			bk_address = 0 ;
-			crlf() ;
-			p8hex( bk_address ) ;
-			crlf() ;
-			uint32_t i ;
-			for ( i = 0 ; i < 128 ; i += 1 )
-			{
-				EEdata[i] = 0x55 ;
-			}
-			disp_256( (uint32_t)EEdata, 8 ) ;
-			I2C_EE_BufferRead( EEdata, 0, 128 ) ;
-			txmit( 'y' ) ;
-			disp_256( (uint32_t)EEdata, 8 ) ;
-		}
+//		static uint32_t bk_address = 0 ;
+//		if ( rxchar == 'X' )
+//		{
+//			txmit( 'X' ) ;
+//			bk_address = 0 ;
+//			crlf() ;
+//			p8hex( bk_address ) ;
+//			crlf() ;
+//			uint32_t i ;
+//			for ( i = 0 ; i < 128 ; i += 1 )
+//			{
+//				EEdata[i] = 0x55 ;
+//			}
+//			disp_256( (uint32_t)EEdata, 8 ) ;
+//			I2C_EE_BufferRead( EEdata, 0, 128 ) ;
+//			txmit( 'y' ) ;
+//			disp_256( (uint32_t)EEdata, 8 ) ;
+//		}
 
-		if ( rxchar == 'x' )
-		{
-			txmit( 'x' ) ;
-			crlf() ;
-			p8hex( bk_address ) ;
-			crlf() ;
-			uint32_t i ;
-			for ( i = 0 ; i < 128 ; i += 1 )
-			{
-				EEdata[i] = 0x55 ;
-			}
-			disp_256( (uint32_t)EEdata, 8 ) ;
-			I2C_EE_BufferRead( EEdata, bk_address, 128 ) ;
-			txmit( 'y' ) ;
-			disp_256( (uint32_t)EEdata, 8 ) ;
-			bk_address += 128 ;
-		}
+//		if ( rxchar == 'x' )
+//		{
+//			txmit( 'x' ) ;
+//			crlf() ;
+//			p8hex( bk_address ) ;
+//			crlf() ;
+//			uint32_t i ;
+//			for ( i = 0 ; i < 128 ; i += 1 )
+//			{
+//				EEdata[i] = 0x55 ;
+//			}
+//			disp_256( (uint32_t)EEdata, 8 ) ;
+//			I2C_EE_BufferRead( EEdata, bk_address, 128 ) ;
+//			txmit( 'y' ) ;
+//			disp_256( (uint32_t)EEdata, 8 ) ;
+//			bk_address += 128 ;
+//		}
 
-		if ( rxchar == 'g' )
-		{
-void generalDefault() ;
-			generalDefault() ;			
-		}
+//		if ( rxchar == 'g' )
+//		{
+//void generalDefault() ;
+//			generalDefault() ;			
+//		}
 
-		if ( rxchar == 'W' )
-		{
-			txmit( 'w' ) ;
-			uint32_t i ;
-			for ( i = 0 ; i < 128 ; i += 1 )
-			{
-				EEdata[i] = i ;
-			}
-			disp_256( (uint32_t)EEdata, 128 ) ;
-			WP_L ;
-			I2C_EE_BufferWrite( EEdata, 0, 128 ) ;
-			txmit( 'z' ) ;
-		}	
+//		if ( rxchar == 'W' )
+//		{
+//			txmit( 'w' ) ;
+//			uint32_t i ;
+//			for ( i = 0 ; i < 128 ; i += 1 )
+//			{
+//				EEdata[i] = i ;
+//			}
+//			disp_256( (uint32_t)EEdata, 128 ) ;
+//			WP_L ;
+//			I2C_EE_BufferWrite( EEdata, 0, 128 ) ;
+//			txmit( 'z' ) ;
+//		}	
 		
-		if ( rxchar == 'Q' )
-		{
-			txmit( 'q' ) ;
-			uint32_t i ;
-			for ( i = 0 ; i < 128 ; i += 1 )
-			{
-				EEdata[i] = 0xFF ;
-			}
-			disp_256( (uint32_t)EEdata, 8 ) ;
-			WP_L ;
-			I2C_EE_BufferWrite( EEdata, 0, 128 ) ;
-			txmit( 'z' ) ;
-		}	
+//		if ( rxchar == 'Q' )
+//		{
+//			txmit( 'q' ) ;
+//			uint32_t i ;
+//			for ( i = 0 ; i < 128 ; i += 1 )
+//			{
+//				EEdata[i] = 0xFF ;
+//			}
+//			disp_256( (uint32_t)EEdata, 8 ) ;
+//			WP_L ;
+//			I2C_EE_BufferWrite( EEdata, 0, 128 ) ;
+//			txmit( 'z' ) ;
+//		}	
 
 		if ( rxchar == 'R' )
 		{
@@ -834,7 +834,7 @@ static uint8_t Ht1621Data[16] = {	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0
 //			padc = ADC ;
 //			p8hex( padc->ADC_CDR4 ) ;
 //			crlf() ;
-//			read_9_adc() ;
+//			read_adc() ;
 //			DACC->DACC_CDR = padc->ADC_CDR4 ;		// Battery 
 //		}
 	
@@ -1554,17 +1554,21 @@ extern uint8_t I2Cdebug ;
 //	//		tone_start( 50 ) ;
 //		}
 
-//		if ( rxchar == '!' )
-//		{
+//extern uint8_t PlayingTone ;
+extern uint8_t PlayingFreq ;
+		if ( rxchar == ',' )
+		{
+			PlayingFreq = 60 + g_eeGeneral.speakerPitch + BEEP_OFFSET ;
+//			PlayingTone = 1 ;
 //			playTone( 1000, 20000 ) ;
 //	//		tone_start( 0 ) ;
-//		}
+		}
 
-//		if ( rxchar == '.' )
-//		{
-//			playTone( 0, 0 ) ;
-//	//		tone_stop() ;
-//		}
+		if ( rxchar == '.' )
+		{
+			PlayingFreq = 70 + g_eeGeneral.speakerPitch + BEEP_OFFSET ;
+//			PlayingTone = 1 ;
+		}
 
 #endif
 

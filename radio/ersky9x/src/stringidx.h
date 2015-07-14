@@ -1,3 +1,21 @@
+
+
+#define FWx4		"\030"
+#define FWx5		"\036"
+#define FWx6		"\044"
+#define FWx7		"\052"
+#define FWx8		"\060"
+#define FWx10		"\074"
+#define FWx11		"\102"
+#define FWx12		"\110"
+#define FWx13		"\116"
+#define FWx14		"\124"
+#define FWx15		"\132"
+#define FWx16		"\140"
+#define FWx17		"\146"
+#define FWx18		"\152"
+
+
 #define STR_ON              0
 #define STR_OFF             1
 #define STR_ALTEQ	          2
@@ -315,6 +333,8 @@
 #define STR_EXTRA_SOURCE    312
 
 #define STR_HELI_TEXT			  313
+#define STR_MULTI_TYPE   		314
+#define STR_MULTI_OPTION  	315
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "

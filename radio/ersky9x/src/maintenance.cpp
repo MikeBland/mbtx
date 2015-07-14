@@ -40,13 +40,21 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 #else
 #ifdef PCBSKY
-#include "AT91SAM3S2.h"
+#include "AT91SAM3S4.h"
 #include "core_cm3.h"
 #endif
 #ifdef PCBX9D
 #include "stm32f2xx.h"
 #include "stm32f2xx_flash.h"
+#include "X9D/hal.h"
 #endif
+#ifdef PCBSP
+#include "x9d\stm32f2xx.h"
+#include "x9d\stm32f2xx_flash.h"
+#include "X9D/hal.h"
+#endif
+
+
 #include "ersky9x.h"
 #include "lcd.h"
 #include "menus.h"
@@ -56,7 +64,6 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "CoOS.h"
 #endif
 #include "ff.h"
-#include "X9D/hal.h"
 #include "sound.h"
 #include "frsky.h"
 
@@ -69,7 +76,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define SPORT_INTERNAL	0
 #define SPORT_EXTERNAL	1
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #if !defined(PCBTARANIS)
 #define INTERNAL_RF_ON()      GPIO_SetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
@@ -179,7 +186,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 }
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 //After reset, write is not allowed in the Flash control register (FLASH_CR) to protect the
 //Flash memory against possible unwanted operations due, for example, to electric
 //disturbances. The following sequence is used to unlock this register:
@@ -757,7 +764,7 @@ void menuUp1(uint8_t event)
 			{
 				if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 				{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 					firmwareAddress = 0x08000000 ;
 #endif
 #ifdef PCBSKY
@@ -1517,7 +1524,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
-			x9dSPortInit( 0 ) ;
+			x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;
 #endif
 #endif
 #ifdef PCBSKY

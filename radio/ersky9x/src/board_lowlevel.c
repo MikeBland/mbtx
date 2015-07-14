@@ -41,8 +41,8 @@
 
 #include "board.h"
 
-#define	USE_54_MHZ	1
-//#define	USE_64_MHZ	1
+//#define	USE_54_MHZ	1
+#define	USE_64_MHZ	1
 
 /*----------------------------------------------------------------------------
  *        Local definitions

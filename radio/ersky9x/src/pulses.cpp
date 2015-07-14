@@ -89,15 +89,17 @@ uint8_t Serial_bit_count;
 uint8_t Serial_byte_count ;
 uint8_t Current_protocol ;
 uint8_t pxxFlag = 0 ;
+uint16_t PcmCrc ;
+uint8_t PcmOnesCount ;
 
-volatile uint8_t Dsm_9xr = 0 ;
+volatile uint8_t Dsm_Type = 0 ;
 uint8_t DsmInitCounter = 0 ;
-//uint8_t Dsm_9xr_channels = 12 ;
-//uint8_t Dsm_9xr_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
+//uint8_t Dsm_Type_channels = 12 ;
+//uint8_t Dsm_Type_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
 //uint8_t Dsm_mode_response = 0 ;
 
-uint16_t Pulses[18] = {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
-uint16_t Pulses2[18] = {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
+uint16_t Pulses[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
+uint16_t Pulses2[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 volatile uint32_t Pulses_index = 0 ;		// Modified in interrupt routine
 volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
 
@@ -110,6 +112,9 @@ volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
 
 static uint8_t pass ;		// For PXX and DSM-9XR and ASSAN
 uint8_t DebugDsmPass ;
+
+void crc( uint8_t data ) ;
+
 
 void module_output_low()
 {
@@ -266,13 +271,14 @@ extern "C" void PWM_IRQHandler (void)
 				}
 			break ;
 
+      case PROTO_MULTI:
       case PROTO_DSM2:
       case PROTO_ASSAN:
 				// Alternate periods of 19.5mS/8.5mS and 2.5 mS
 				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
 				if ( period == 5000 )	// 2.5 mS
 				{
-//					if ( Dsm_9xr )
+//					if ( Dsm_Type )
 //					{
 						period = 8500*2 ;		// Total 11 mS
 //					}
@@ -377,7 +383,7 @@ void sendByteDsm2(uint8_t b) //max 10changes 0 10 10 10 10 1
   }
 	
 	put_serial_bit( 1 ) ;		// Stop bit
-	if ( Dsm_9xr == 0 )
+	if ( Dsm_Type == 0 )
 	{
 		put_serial_bit( 1 ) ;		// Stop bit
 	}
@@ -388,7 +394,7 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 {
 	// Process mode here
 	uint8_t dsm_mode_response ;
-//	Dsm_9xr_channels = channels ;
+//	Dsm_Type_channels = channels ;
 #ifdef ASSAN
 	if ( g_model.protocol == PROTO_ASSAN )
 	{
@@ -415,6 +421,13 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 }
 
 
+static void sendByteCrcSerial(uint8_t b)
+{
+	crc(b) ;
+	sendByteDsm2(b) ;
+}
+
+
 // This is the data stream to send, prepare after 19.5 mS
 // Send after 22.5 mS
 
@@ -424,44 +437,47 @@ void setupPulsesDsm2(uint8_t chns)
 {
   static uint8_t dsmDat[2+6*2+4]={0xFF,0x00,  0x00,0xAA,  0x05,0xFF,  0x09,0xFF,  0x0D,0xFF,  0x13,0x54,  0x14,0xAA } ;
   uint16_t required_baudrate ;
+#ifdef PCBSKY
 	uint8_t counter ;
-  //	CSwData &cs = g_model.customSw[NUM_SKYCSW-1];
+#endif // PCBSKY
 
 	required_baudrate = SCC_BAUD_125000 ;
 #ifdef ASSAN
 	if ( g_model.protocol == PROTO_ASSAN )
 	{
 		required_baudrate = SCC_BAUD_115200 ;
-		Dsm_9xr = 2 ;
+		Dsm_Type = 2 ;
 		DsmChecksum = 0 ;
 	}
 	else
 #endif
-	if ( g_model.sub_protocol == DSM_9XR )
+	if( (g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) )
 	{
 		required_baudrate = SCC_BAUD_115200 ;
-		Dsm_9xr = 1 ;
+		Dsm_Type = 1 ;
 		// Consider inverting COM1 here
 	}
 	else
 	{
-		Dsm_9xr = 0 ;
+		Dsm_Type = 0 ;
 	}
 	
+#ifdef PCBSKY
 	if ( required_baudrate != Scc_baudrate )
 	{
 		init_ssc( required_baudrate ) ;
 	}
+#endif // PCBSKY
 
 	Serial_byte = 0 ;
 	Serial_bit_count = 0 ;
 	Serial_byte_count = 0 ;
   Pulses2MHzptr = Bit_pulses ;
     
-	if ( Dsm_9xr )
+	if ( Dsm_Type )
 	{
 #ifdef ASSAN
-		uint8_t channels = (Dsm_9xr == 2) ? 7 : 12 ;
+		uint8_t channels = (Dsm_Type == 2) ? 7 : 12 ;
 #else
 		uint8_t channels = 12 ;
 #endif
@@ -469,7 +485,7 @@ void setupPulsesDsm2(uint8_t chns)
 		if ( flags == 0 )
 		{
 //			flags = ORTX_USE_11mS | ORTX_USE_11bit | ORTX_USE_DSMX | ORTX_USE_TM ;
-			if ( Dsm_9xr == 1 )
+			if ( Dsm_Type == 1 )
 			{
 				flags = ORTX_AUTO_MODE ;
 			}
@@ -477,46 +493,45 @@ void setupPulsesDsm2(uint8_t chns)
 		else
 		{
 #ifdef ASSAN
-			flags &= (Dsm_9xr == 2) ? 0x0F : 0x7F ;
+			flags &= (Dsm_Type == 2) ? 0x0F : 0x7F ;
 #else
 			flags &= 0x7F ;
 #endif
 			channels = g_model.ppmNCH ;
 		}
 			 
+//#ifdef PCBSP
 		if ( (dsmDat[0]&BindBit) && (!keyState(SW_Trainer) ) )
+//#else
+//		if ( (dsmDat[0]&BindBit) && (!keyState(SW_SH2) ) )
+//#endif
 		{
 			dsmDat[0] &= ~BindBit	;
 		}
 
 		uint8_t startChan = g_model.startChannel ;
 #ifdef ASSAN
-		if ( Dsm_9xr == 2 )
+		if ( Dsm_Type == 2 )
 		{
 			if ( (pxxFlag & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
-//				flags |= ORTX_AUTO_MODE | ORTX_BIND_FLAG ;
 				flags = ORTX_BIND_FLAG | ORTX_USE_11mS | ORTX_USE_11bit ;
 				if ( pxxFlag & PXX_DSMX )
 				{
 					flags |= ORTX_USE_DSMX ;
 				}
 				pass = 0 ;
-//				| ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_USE_TM ;
 			}
 			// Need to choose dsmx/dsm2 as well
-//putProtocolDebug( '>' ) ;
 
   		sendByteDsm2( flags ) ;
-//putProtocolDebug( flags ) ;
-//  		sendByteDsm2( 0x80 | ( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ) ;		// 
-//putProtocolDebug( 0x80 | ( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ) ;
   		sendByteDsm2( 0 | ( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ) ;		// 
-//putProtocolDebug( 0 | ( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ) ;
   		sendByteDsm2( 0 ) ;
-//putProtocolDebug( 0 ) ;
-  		sendByteDsm2( 1 ) ;	// Model number
-//putProtocolDebug( 1 ) ;
+#ifdef ENABLE_DSM_MATCH  		
+			sendByteDsm2( g_model.pxxRxNum ) ;	// Model number
+#else
+			sendByteDsm2( 1 ) ;	// Model number
+#endif
 			pass &= 0x80 ;
 			if ( pass )
 			{
@@ -537,10 +552,6 @@ void setupPulsesDsm2(uint8_t chns)
 				startChan += 1 ;
 				if ( startChan <= channels )
 				{
-//if ( i < 3 )
-//{
-//putProtocolDebug( ( pulse >> 8 ) | pass ) ;
-//}
   		  	sendByteDsm2( ( pulse >> 8 ) | pass ) ;
     			sendByteDsm2( pulse & 0xff ) ;
 				}
@@ -566,42 +577,25 @@ void setupPulsesDsm2(uint8_t chns)
 		{
 #endif // ASSAN
 		DebugDsmPass = pass ;
-//#ifdef ASSAN
-//putProtocolDebug( '>' ) ;
-//#endif // ASSAN
 		sendByteDsm2( 0xAA );
-//#ifdef ASSAN
-//putProtocolDebug( 0xAA ) ;
-//#endif // ASSAN
 		if ( pass == 0 )
 		{
   		sendByteDsm2( pass ) ;		// Actually is a 0
-//#ifdef ASSAN
-//putProtocolDebug( pass ) ;
-//#endif // ASSAN
 			// Do init packet
 			if ( (pxxFlag & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				flags |= ORTX_BIND_FLAG ;
 			}
-
 			// Need to choose dsmx/dsm2 as well
   		sendByteDsm2( flags ) ;
-//#ifdef ASSAN
-//putProtocolDebug( flags ) ;
-//#endif // ASSAN
   		sendByteDsm2( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
-//#ifdef ASSAN
-//putProtocolDebug( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ;
-//#endif // ASSAN
   		sendByteDsm2( channels ) ;			// Max channels
 //  		sendByteDsm2( g_model.pxxRxNum ) ;		// Rx Num
+#ifdef ENABLE_DSM_MATCH  		
+			sendByteDsm2( g_model.pxxRxNum ) ;	// Model number
+#else
   		sendByteDsm2( 1 ) ;		// 'Model Match' disabled
-//#ifdef ASSAN
-//putProtocolDebug( 1 ) ;
-//putProtocolDebug( 0 ) ;
-//putProtocolDebug( 0 ) ;
-//#endif // ASSAN
+#endif
 			pass = 1 ;
 		}
 		else
@@ -612,9 +606,6 @@ void setupPulsesDsm2(uint8_t chns)
 				startChan += 7 ;
 			}
   		sendByteDsm2( pass );
-//#ifdef ASSAN
-//putProtocolDebug( pass ) ;
-//#endif // ASSAN
 
 			for(uint8_t i=0 ; i<7 ; i += 1 )
 			{
@@ -632,12 +623,6 @@ void setupPulsesDsm2(uint8_t chns)
 				if ( startChan <= channels )
 				{
   		  	sendByteDsm2( pulse >> 8 ) ;
-//#ifdef ASSAN
-//if ( i < 5 )
-//{
-//	putProtocolDebug( pulse >> 8 ) ;
-//}																				 
-//#endif // ASSAN
     			sendByteDsm2( pulse & 0xff ) ;
 				}
 				else
@@ -672,37 +657,68 @@ void setupPulsesDsm2(uint8_t chns)
 	else
 	{
   	// If more channels needed make sure the pulses union/array is large enough
-  	if (dsmDat[0]&BadData)  //first time through, setup header
-  	{
-  	  switch(g_model.sub_protocol)
-  	  {
-  	    case LPXDSM2:
-  	      dsmDat[0]= 0x80;
-  	    break;
-  	    case DSM2only:
-  	      dsmDat[0]=0x90;
-  	    break;
-  	    default:
-  	      dsmDat[0]=0x98;  //dsmx, bind mode
-  	    break;
-  	  }
-  	}
+		if(g_model.protocol == PROTO_DSM2)
+		{
+  		if (dsmDat[0]&BadData)  //first time through, setup header
+  		{
+  		  switch(g_model.sub_protocol)
+  		  {
+  		    case LPXDSM2:
+  		      dsmDat[0]= 0x80;
+  		    break;
+  		    case DSM2only:
+  		      dsmDat[0]=0x90;
+  		    break;
+  		    default:
+  		      dsmDat[0]=0x98;  //dsmx, bind mode
+  		    break;
+  		  }
+  		}
 
-  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-  	if ((!(dsmDat[0]&BindBit))&& (pxxFlag & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-  	else dsmDat[0]&=~RangeCheckBit;
-  	dsmDat[1]=g_model.pxxRxNum ;  //DSM2 Header second byte for model match
-  	for(uint8_t i=0; i<chns; i++)
-  	{
-			uint16_t pulse = limit(0, ((g_chans512[g_model.startChannel+i]*13)>>5)+512,1023);
- 		  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
-  	 	dsmDat[3+2*i] = pulse & 0xff;
-  	}
+	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+  		if ((!(dsmDat[0]&BindBit))&& (pxxFlag & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  		else dsmDat[0]&=~RangeCheckBit;
+		}
+		else // Multi
+		{
+			dsmDat[0] = g_model.sub_protocol+1;
+			if (pxxFlag & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
+			if (pxxFlag & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
+		}
 
-  	for ( counter = 0 ; counter < 14 ; counter += 1 )
-  	{
-  	  sendByteDsm2(dsmDat[counter]);
-  	}
+		if(g_model.protocol == PROTO_MULTI)
+		{
+			PcmCrc=0;
+			sendByteCrcSerial( dsmDat[0] ) ;
+			sendByteCrcSerial((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
+			sendByteCrcSerial(g_model.option_protocol);
+			uint16_t serialH = 0 ;
+			for(uint8_t i=0; i<8; i++)
+			{
+				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
+				sendByteCrcSerial(pulse & 0xff);
+				serialH<<=2;
+				serialH|=((pulse>>8)&0x03);
+			}
+			sendByteCrcSerial((serialH>>8)&0xff);
+			sendByteCrcSerial(serialH&0xff);
+			sendByteCrcSerial( PcmCrc&0xff);
+		}
+		else
+		{
+  		dsmDat[1]=g_model.pxxRxNum ;  //DSM2 Header second byte for model match
+  		for(uint8_t i=0; i<chns; i++)
+  		{
+				uint16_t pulse = limit(0, ((g_chans512[g_model.startChannel+i]*13)>>5)+512,1023);
+ 			  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
+  		 	dsmDat[3+2*i] = pulse & 0xff;
+  		}
+
+  		for ( counter = 0 ; counter < 14 ; counter += 1 )
+  		{
+  		  sendByteDsm2(dsmDat[counter]);
+  		}
+		}
 	}
  	for ( counter = 0 ; counter < 16 ; counter += 1 )
 	{
@@ -732,6 +748,7 @@ void setupPulses()
 				disable_ssc() ;
       break;
       case PROTO_DSM2:
+	    case PROTO_MULTI:
 				disable_ssc() ;
       break;
 #ifdef ASSAN
@@ -754,12 +771,13 @@ void setupPulses()
 #ifdef ASSAN
       case PROTO_ASSAN :
 #endif
+    	case PROTO_MULTI:
       case PROTO_DSM2:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
 				DsmInitCounter = 0 ;
-//				Dsm_9xr_channels = 12 ;
-//				Dsm_9xr_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
+//				Dsm_Type_channels = 12 ;
+//				Dsm_Type_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
 //				Dsm_mode_response = 0 ;
 				pass = 0 ;
       break;
@@ -777,6 +795,7 @@ void setupPulses()
       setupPulsesPXX();
     break;
 	  case PROTO_DSM2:
+    case PROTO_MULTI:
 //      sei() ;							// Interrupts allowed here
       setupPulsesDsm2( ( g_model.sub_protocol == DSM_9XR ) ? 12 : 6 ) ; 
     break;
@@ -962,9 +981,6 @@ const uint16_t CRCTable[]=
     0x7bc7,0x6a4e,0x58d5,0x495c,0x3de3,0x2c6a,0x1ef1,0x0f78
 };
 
-
-uint16_t PcmCrc ;
-uint8_t PcmOnesCount ;
 
 void crc( uint8_t data )
 {

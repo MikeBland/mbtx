@@ -200,6 +200,36 @@ void evalVario(int16_t altitude_bp, uint16_t altitude_ap)
 
 void dsmTelemetryStartReceive()
 {
+#ifdef PCBSKY
+ #ifndef REVX
+	if ( g_model.frskyComPort == 0 )
+	{
+		if ( CaptureMode == CAP_COM1 )
+		{
+			uint16_t rxchar ;
+			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			{
+				// flush Rx buffer
+			}	
+		}
+	}
+ #endif // nREVX
+#endif // PCBSKY
+	
+#if defined(PCBX9D) || defined(PCBSP)
+	if ( g_model.frskyComPort == 0 )
+	{
+		if ( CaptureMode == CAP_COM1 )
+		{
+			uint16_t rxchar ;
+			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			{
+				// flush Rx buffer
+			}	
+		}
+	}
+#endif // PCBX9D || PCBSP
+	
 	numPktBytes = 0 ;
 }
 
@@ -808,7 +838,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifdef PCBSKY
 		if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 	{
@@ -836,7 +866,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			csum |= *q ;
 			TelemetryDebug4 = csum ;
 		}
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		if ( TelemetryDebug3 != TelemetryDebug4 )
 		{
 			return ;
@@ -934,6 +964,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
    	frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid packets are being detected
   	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid packets are being detected
 
+   	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
+  	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 		
 		// Debug code
 		uint16_t temp = *packet ;
@@ -964,7 +996,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
     	frskyTelemetry[2].set(type, FR_RXRSI_COPY );	// RSSI
 		}
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		if ( ( g_model.xprotocol == PROTO_ASSAN ) && ( RssiTimer ) )
 		{
    		frskyTelemetry[3].set(type, FR_TXRSI_COPY );	// RSSI
@@ -1043,7 +1075,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifdef PCBSKY
 				if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 				if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 #endif
@@ -1128,7 +1160,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifdef PCBSKY
 		if ( g_model.protocol != PROTO_ASSAN )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		if ( g_model.xprotocol != PROTO_ASSAN )
 #endif
 		{
@@ -1440,7 +1472,7 @@ void frsky_receive_byte( uint8_t data )
 #ifdef PCBSKY
 		if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 		{
@@ -1858,17 +1890,8 @@ void telemetry_init( uint8_t telemetryType )
 }
 
 
-uint8_t InitCounter ;
-uint8_t Parameter[4] ;
-
 void FRSKY_Init( uint8_t brate )
 {
-	InitCounter += 1 ;
-	Parameter[0] = Parameter[1] ;
-	Parameter[1] = Parameter[2] ;
-	Parameter[2] = Parameter[3] ;
-	Parameter[3] = brate ;
-
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
 
@@ -1892,20 +1915,24 @@ void FRSKY_Init( uint8_t brate )
 	
 	if ( brate == 0 )
 	{
+		uint32_t baudrate = 9600 ;
+		if ( g_model.protocol == PROTO_MULTI )
+		{
+			baudrate = 125000 ;
+		}
 		if ( g_model.frskyComPort == 0 )
 		{
-			UART2_Configure( 9600, Master_frequency ) ;
+			UART2_Configure( baudrate, Master_frequency ) ;
 			UART2_timeout_disable() ;
-#ifdef REVX
-			g_model.telemetryRxInvert = 0 ;
-			clearMFP() ;
-#endif
+//#ifdef REVX
+//			g_model.telemetryRxInvert = 0 ;
+//			clearMFP() ;
+//#endif
 		}
 		else
 		{
-			UART_Configure( 9600, Master_frequency ) ;
+			UART_Configure( baudrate, Master_frequency ) ;
 		}
-		
 	}
 	else if ( brate == 1 )
 	{
@@ -1913,10 +1940,10 @@ void FRSKY_Init( uint8_t brate )
 		{
 			UART2_Configure( 57600, Master_frequency ) ;
 			UART2_timeout_disable() ;
-#ifdef REVX
-			g_model.telemetryRxInvert = 0 ;
-			clearMFP() ;
-#endif
+//#ifdef REVX
+//			g_model.telemetryRxInvert = 0 ;
+//			clearMFP() ;
+//#endif
 		}
 		else
 		{
@@ -1930,10 +1957,10 @@ void FRSKY_Init( uint8_t brate )
 		UART2_Configure( 115200, Master_frequency ) ;
 //		UART2_Configure( 111111, Master_frequency ) ;
 		UART2_timeout_enable() ;
-#ifdef REVX
-		g_model.telemetryRxInvert = 0 ;
-		setMFP() ;
-#endif
+//#ifdef REVX
+//		g_model.telemetryRxInvert = 0 ;
+//		clearMFP() ;
+//#endif
 	}
 #endif
 #ifdef REVX
@@ -1944,8 +1971,8 @@ void FRSKY_Init( uint8_t brate )
 //		{
 			UART2_Configure( 115200, Master_frequency ) ;
 			UART2_timeout_enable() ;
-			g_model.telemetryRxInvert = 1 ;
-			setMFP() ;
+//			g_model.telemetryRxInvert = 1 ;
+//			setMFP() ;
 //		}
 //		else
 //		{
@@ -1972,18 +1999,24 @@ void FRSKY_Init( uint8_t brate )
 		}
 		else
 		{
-			x9dSPortInit( 1 ) ;
+			x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;	// 9600
 		}
 	}
 #ifdef ASSAN
 	else if ( brate == 3 )
 	{
-		x9dSPortInit( 115200 ) ;		// ASSAN
+		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// ASSAN
 	}
 #endif
-	else
+	else if ( brate == 1 )
 	{
-		x9dSPortInit( 0 ) ;
+		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// 57600
+	}
+	else // 9XR-DSM
+	{
+		FrskyComPort = g_model.frskyComPort = 0 ;
+		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
+//		init_software_com1( 115200, 1 ) ;
 	}
 #endif
 
@@ -2030,8 +2063,8 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 	uint8_t shift = 4 ;
 	if ( FrskyTelemetryType == 1 )	// SPORT
 	{
-		count = 2 ;
-		shift = 1 ;
+		count = 4 ;
+		shift = 2 ;
 	}
 	if ( ++averageCount >= count )
 	{
@@ -2114,8 +2147,21 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		type = TEL_ASSAN ;
 	}
 #endif
-
 #endif
+
+#if defined(PCBX9D) || defined(PCBSP)
+	if ( (g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) )
+	{
+		type = TEL_DSM ;
+	}
+#ifdef ASSAN
+	if ( g_model.xprotocol == PROTO_ASSAN )
+	{
+		type = TEL_ASSAN ;
+	}
+#endif
+#endif
+
 	
 	switch ( telemetryType )
 	{
@@ -2254,8 +2300,18 @@ void check_frsky( uint32_t fivems )
 		uint16_t rxchar ;
 		if ( g_model.frskyComPort == 0 )
 		{
-			while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+			if ( CaptureMode == CAP_COM1 )
 			{
+				uint16_t rxchar ;
+				while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				{
+					frsky_receive_byte( rxchar ) ;
+				}
+			}
+			else
+			{
+				while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+				{
 	//Debug_frsky2 += 1 ;
 //				if ( MaintenanceRunning )
 //				{
@@ -2265,6 +2321,7 @@ void check_frsky( uint32_t fivems )
 //				{
 					frsky_receive_byte( rxchar ) ;
 //				}
+				}
 			}
 		}
 		else

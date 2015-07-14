@@ -41,7 +41,7 @@
 #include "CoOS.h"
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #include "diskio.h"
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
@@ -63,6 +63,8 @@
 // Timer1 used for DAC output timing
 // Timer5 is currently UNUSED
 
+uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
+
 #ifdef PCBSKY
 #ifdef REVX
 volatile uint16_t Analog_values[NUMBER_ANALOG] ;
@@ -72,7 +74,6 @@ volatile uint16_t Analog_values[NUMBER_ANALOG] ;
 #endif
 uint16_t Temperature ;				// Raw temp reading
 uint16_t Max_temperature ;		// Max raw temp reading
-uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 uint16_t DsmRxTimeout ;
 uint16_t WatchdogTimeout ;
 
@@ -97,7 +98,7 @@ struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 struct t_fifo64 Telemetry_fifo ;
 struct t_SportTx
 {
@@ -131,7 +132,7 @@ uint32_t spi_operation( uint8_t *tx, uint8_t *rx, uint32_t count ) ;
 //uint32_t spi_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count ) ;
 uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count ) ;
 
-void read_9_adc(void ) ;
+void read_adc(void ) ;
 void init_adc( void ) ;
 void init_ssc( uint16_t baudrate ) ;
 void disable_ssc( void ) ;
@@ -161,6 +162,14 @@ void putEvent( register uint8_t evt)
   s_evt = evt;
 }
 
+uint8_t menuPressed()
+{
+	if ( keys[KEY_MENU].isKilled() )
+	{
+		return 0 ;
+	}
+	return ( read_keys() & 2 ) == 0 ;
+}
 
 uint8_t getEvent()
 {
@@ -415,7 +424,7 @@ extern uint8_t AnaEncSw ;
 #endif
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 	sdPoll10ms() ;
 #endif
 
@@ -563,6 +572,94 @@ int32_t get_16bit_fifo32( struct t_16bit_fifo32 *pfifo )
 //	return -1 ;
 //}
 
+#ifdef SERIAL_TRAINER
+// 9600 baud, bit time 104.16uS
+#define BIT_TIME_9600		208
+// 100000 baud, bit time 10uS (SBUS)
+#define BIT_TIME_100K		20
+// 115200 baud, bit time 8.68uS
+#define BIT_TIME_115K		17
+
+// States in LineState
+#define LINE_IDLE			0
+#define LINE_ACTIVE		1
+
+// States in BitState
+#define BIT_IDLE			0
+#define BIT_ACTIVE		1
+#define BIT_FRAMING		2
+
+uint8_t LineState ;
+uint8_t CaptureMode ;
+uint16_t BitTime ;
+uint16_t HtoLtime ;
+uint16_t LtoHtime ;
+uint8_t SoftSerInvert = 0 ;
+
+uint8_t BitState ;
+uint8_t BitCount ;
+uint8_t Byte ;
+uint8_t Tc5Count ;
+
+//uint16_t SerTimes[64] ;
+//uint16_t SerValues[64] ;
+//uint16_t SerBitStates[64] ;
+//uint16_t SerBitCounts[64] ;
+//uint16_t SerBitInputs[64] ;
+
+//uint32_t SerIndex ;
+
+// time in units of 0.5uS, value is 1 or 0
+void putCaptureTime( uint16_t time, uint32_t value )
+{
+	time += BitTime/2 ;
+	time /= BitTime ;		// Now number of bits
+
+	if ( value == 3 )
+	{
+		return ;
+	}
+
+	if ( BitState == BIT_IDLE )
+	{ // Starting, value should be 0
+		BitState = BIT_ACTIVE ;
+		BitCount = 0 ;
+		if ( time > 1 )
+		{
+			Byte >>= time-1 ;
+			BitCount = time-1 ;
+		}
+	}
+	else
+	{
+		if ( value )
+		{
+			while ( time )
+			{
+				if ( BitCount >= 8 )
+				{ // Got a byte
+					put_fifo64( &CaptureRx_fifo, Byte ) ;
+					BitState = BIT_IDLE ;
+					break ;
+				}
+				else
+				{
+					Byte >>= 1 ;
+					Byte |= 0x80 ;
+					time -= 1 ;
+					BitCount += 1 ;
+				}
+			}
+		}
+		else
+		{
+			Byte >>= time ;
+			BitCount += time ;
+		}
+	}
+}
+
+#endif
 
 
 #ifdef PCBSKY
@@ -1564,7 +1661,7 @@ int32_t rxBtuart()
 
 // Read 8 (9 for REVB) ADC channels
 // Documented bug, must do them 1 by 1
-void read_9_adc()
+void read_adc()
 {
 	register Adc *padc ;
 	register uint32_t y ;
@@ -1841,117 +1938,6 @@ void start_ppm_capture()
 
 
 #ifdef SERIAL_TRAINER
-// 9600 baud, bit time 104.16uS
-#define BIT_TIME_9600		208
-// 100000 baud, bit time 10uS (SBUS)
-#define BIT_TIME_100K		20
-// 115200 baud, bit time 8.68uS
-#define BIT_TIME_115K		17
-
-// States in LineState
-#define LINE_IDLE			0
-#define LINE_ACTIVE		1
-
-// States in BitState
-#define BIT_IDLE			0
-#define BIT_ACTIVE		1
-#define BIT_FRAMING		2
-
-uint8_t LineState ;
-uint8_t CaptureMode ;
-uint16_t BitTime ;
-uint16_t HtoLtime ;
-uint16_t LtoHtime ;
-uint8_t SoftSerInvert = 0 ;
-
-uint8_t BitState ;
-uint8_t BitCount ;
-uint8_t Byte ;
-uint8_t Tc5Count ;
-
-//uint16_t SerTimes[64] ;
-//uint16_t SerValues[64] ;
-//uint16_t SerBitStates[64] ;
-//uint16_t SerBitCounts[64] ;
-//uint16_t SerBitInputs[64] ;
-
-//uint32_t SerIndex ;
-
-
-
-// time in units of 0.5uS, value is 1 or 0
-void putCaptureTime( uint16_t time, uint32_t value )
-{
-//	if ( BitState == BIT_IDLE )
-//	{
-//		SerTimes[14] = SerTimes[0] ;
-//		SerTimes[15] = SerTimes[1] ;
-//		SerValues[14] = SerValues[0] ;
-//		SerValues[15] = SerValues[1] ;
-//		SerIndex = 0 ;
-//	}
-	
-//	SerTimes[SerIndex] = time ;
-//	SerValues[SerIndex] = value ;
-	
-	time += BitTime/2 ;
-	time /= BitTime ;		// Now number of bits
-
-//	SerBitStates[SerIndex] = BitState ;
-//	SerBitCounts[SerIndex] = BitCount ;
-//	SerBitInputs[SerIndex] = time ;
-	
-//	SerIndex += 1 ;
-//	if ( SerIndex > 63 )
-//	{
-//		SerIndex = 0 ;
-//	}
-	 
-	if ( value == 3 )
-	{
-		return ;
-	}
-
-	if ( BitState == BIT_IDLE )
-	{ // Starting, value should be 0
-		BitState = BIT_ACTIVE ;
-		BitCount = 0 ;
-		if ( time > 1 )
-		{
-			Byte >>= time-1 ;
-			BitCount = time-1 ;
-		}
-	}
-	else
-	{
-		if ( value )
-		{
-			while ( time )
-			{
-				if ( BitCount >= 8 )
-				{ // Got a byte
-					put_fifo64( &CaptureRx_fifo, Byte ) ;
-					BitState = BIT_IDLE ;
-					break ;
-				}
-				else
-				{
-					Byte >>= 1 ;
-					Byte |= 0x80 ;
-					time -= 1 ;
-					BitCount += 1 ;
-				}
-			}
-		}
-		else
-		{
-			Byte >>= time ;
-			BitCount += time ;
-		}
-	}
-}
-
-
 
 
 void setCaptureMode(uint32_t mode)
@@ -2272,7 +2258,7 @@ extern "C" void SSC_IRQHandler()
 
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 
 //  /* Determine the integer part */
 //  if ((USARTx->CR1 & USART_CR1_OVER8) != 0)
@@ -2361,16 +2347,32 @@ void x9dConsoleInit()
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
 
-void x9dSPortInit( uint32_t baudRate )
+void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert )
 {
 	// Serial configure  
+
+	if ( mode == SPORT_MODE_SOFTWARE )
+	{
+	  NVIC_DisableIRQ(USART2_IRQn) ;
+		init_software_com1( baudRate, invert ) ;
+		return ;
+	}
+	disable_software_com1() ;
 
 	RCC->APB1ENR |= RCC_APB1ENR_USART2EN ;		// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+#ifdef PCBSP
+// PB2 as SPort enable
+	configure_pins( 0x00000004, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+	GPIOB->BSRRH = 0x0004 ;		// output disable
+	configure_pins( 0x00000002, PIN_PERIPHERAL | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTA ) ;
+	configure_pins( 0x00000001, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_7 | PIN_PORTA ) ;
+#else
 	configure_pins( 0x00000010, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
 	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
+#endif
 	if ( baudRate > 10 )
 	{
 		USART2->BRR = PeripheralSpeeds.Peri1_frequency / baudRate ;
@@ -2399,7 +2401,11 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count )
 {
 	SportTx.ptr = buffer ;
 	SportTx.count = count ;
+#ifdef PCBSP
+	GPIOB->BSRRL = 0x0004 ;		// output enable
+#else
 	GPIOD->BSRRL = 0x0010 ;		// output enable
+#endif
 	USART2->CR1 &= ~USART_CR1_RE ;
 	USART2->CR1 |= USART_CR1_TXEIE ;
 }
@@ -2440,7 +2446,11 @@ extern "C" void USART2_IRQHandler()
 		USART2->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
 		if ( g_model.xprotocol != PROTO_ASSAN )
 		{
+#ifdef PCBSP
+			GPIOB->BSRRH = 0x0004 ;		// output disable
+#else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+#endif
 			USART2->CR1 |= USART_CR1_RE ;
 		}
 	}
@@ -2529,8 +2539,258 @@ extern "C" void USART3_IRQHandler()
 	}	 
 }
 
+static void start_timer11()
+{
+#ifndef SIMU
 
+	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN ;		// Enable clock
+	TIM11->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
+	TIM1->CCER = 0 ;
+	TIM1->CCMR1 = 0 ;
+	 
+	TIM11->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 ;
 
+	TIM11->CR1 = TIM_CR1_CEN ;
 
+	NVIC_SetPriority( TIM1_TRG_COM_TIM11_IRQn, 14 ) ; // Low priority interrupt
+	NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
 #endif
+}
+
+static void stop_timer11()
+{
+	TIM11->CR1 = 0 ;
+	NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
+}
+
+
+// Handle software serial on COM1 input (for non-inverted input)
+void init_software_com1(uint32_t baudrate, uint32_t invert)
+{
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+	
+	BitTime = 2000000 / baudrate ;
+
+#ifdef PCBSP
+	SoftSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
+#else
+	SoftSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
+#endif
+
+	LineState = LINE_IDLE ;
+	CaptureMode = CAP_COM1 ;
+
+#ifdef PCBSP
+#define EXT_BIT_MASK	0x00000008
+	SYSCFG->EXTICR[0] = 0 ;
+#else
+#define EXT_BIT_MASK	0x00000040
+	SYSCFG->EXTICR[1] = 0x0300 ;
+#endif
+	EXTI->IMR = EXT_BIT_MASK ;
+	EXTI->RTSR = EXT_BIT_MASK ;
+	EXTI->FTSR = EXT_BIT_MASK ;
+
+#ifdef PCBSP
+	configure_pins( GPIO_Pin_3, PIN_INPUT | PIN_PORTA ) ;
+	NVIC_SetPriority( EXTI3_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI3_IRQn) ;
+#else
+	configure_pins( GPIO_Pin_6, PIN_INPUT | PIN_PORTD ) ;
+	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
+#endif
+	start_timer11() ;
+}
+
+void disable_software_com1()
+{
+	stop_timer11() ;
+	EXTI->IMR &= ~EXT_BIT_MASK ;
+#ifdef PCBSP
+	NVIC_DisableIRQ( EXTI3_IRQn ) ;
+#else
+	NVIC_DisableIRQ( EXTI9_5_IRQn ) ;
+#endif
+}
+
+#ifdef PCBSP
+extern "C" void EXTI3_IRQHandler()
+#else
+extern "C" void EXTI9_5_IRQHandler()
+#endif
+{
+  register uint32_t capture ;
+  register uint32_t dummy ;
+
+	capture =  TIM7->CNT ;	// Capture time
+	EXTI->PR = EXT_BIT_MASK ;
+#ifdef PCBSP
+	dummy = GPIOA->IDR ;
+	if ( ( dummy & GPIO_Pin_3 ) == SoftSerInvert )
+#else
+	dummy = GPIOD->IDR ;
+	if ( ( dummy & GPIO_Pin_6 ) == SoftSerInvert )
+#endif
+	{
+		// L to H transisition
+		LtoHtime = capture ;
+		TIM11->CNT = 0 ;
+		TIM11->CCR1 = BitTime * 10 ;
+		uint32_t time ;
+		capture -= HtoLtime ;
+		time = capture ;
+		putCaptureTime( time, 0 ) ;
+		TIM11->EGR = TIM_EGR_CC1G ;
+		TIM11->CCER = TIM_CCER_CC1E ;
+//		(void) TC1->TC_CHANNEL[2].TC_SR ;
+	}
+	else
+	{
+		// H to L transisition
+		HtoLtime = capture ;
+		if ( LineState == LINE_IDLE )
+		{
+			LineState = LINE_ACTIVE ;
+			putCaptureTime( 0, 3 ) ;
+			TIM11->CCR1 = capture + (BitTime * 20) ;
+//			(void) TC1->TC_CHANNEL[2].TC_SR ;
+		}
+		else
+		{
+			uint32_t time ;
+			capture -= LtoHtime ;
+			time = capture ;
+			putCaptureTime( time, 1 ) ;
+		}
+		TIM11->EGR = 0 ;
+	}
+}
+
+extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
+{
+	uint32_t status ;
+
+	status = TIM11->SR ;
+	if ( status & TIM_SR_CC1IF )
+	{		
+		uint32_t time ;
+		time = TIM7->CNT - LtoHtime ;
+		putCaptureTime( time, 2 ) ;
+		LineState = LINE_IDLE ;
+		TIM11->EGR = 0 ;
+		TIM11->SR = 0 ;
+	}
+	
+}
+
+
+
+#endif // X9D || SP
+
+#ifdef PCBSP
+void init_spi()
+{
+//  SPI_InitTypeDef  SPI_InitStructure;
+//  GPIO_InitTypeDef GPIO_InitStructure;
+
+  /* Enable GPIO clock for CS */
+  RCC_AHB1PeriphClockCmd( RCC_AHB1Periph_GPIOA, ENABLE);
+  /* Enable GPIO clock for Signals */
+  RCC_AHB1PeriphClockCmd( RCC_AHB1Periph_GPIOB, ENABLE);
+  /* Enable SPI clock, SPI1: APB2, SPI2: APB1 */
+  RCC->APB2ENR |= RCC_APB2ENR_SPI1EN ;    // Enable clock
+
+	// APB1 clock / 2 = 133nS per clock
+	SPI1->CR1 = 0 ;		// Clear any mode error
+	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA ;
+	SPI1->CR2 = 0 ;
+	SPI1->CR1 |= SPI_CR1_MSTR ;	// Make sure in case SSM/SSI needed to be set first
+	SPI1->CR1 |= SPI_CR1_SPE ;
+
+	configure_pins( GPIO_Pin_SPI_EE_CS, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PERIPHERAL | PIN_PORTA | PIN_PER_5 ) ;
+	configure_pins( GPIO_Pin_SPI_EE_SCK | GPIO_Pin_SPI_EE_MOSI, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PERIPHERAL | PIN_PORTB | PIN_PER_5 ) ;
+	configure_pins( GPIO_Pin_SPI_EE_MISO, PIN_PERIPHERAL | PIN_INPUT | PIN_PORTB | PIN_PULLUP | PIN_PER_5 ) ;
+        
+//#ifdef STM32_SD_USE_DMA
+//  /* enable DMA clock */
+//  RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+//#endif
+	
+}
+
+uint32_t spi_operation( register uint8_t *tx, register uint8_t *rx, register uint32_t count )
+{
+	register SPI_TypeDef *spiptr = SPI1 ;
+	register uint32_t result ;
+	
+	(void) spiptr->DR ;		// Dump any rx data
+	while( count )
+	{
+		result = 0 ;
+		while( ( spiptr->SR & SPI_SR_TXE ) == 0 )
+		{
+			// wait
+			if ( ++result > 10000 )
+			{
+				result = 0xFFFF ;
+				break ;				
+			}
+		}
+		if ( result > 10000 )
+		{
+			break ;
+		}
+//		if ( count == 1 )
+//		{
+//			spiptr->SPI_CR = SPI_CR_LASTXFER ;		// LastXfer bit
+//		}
+		spiptr->DR = *tx++ ;
+		result = 0 ;
+		while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+		{
+			// wait for received
+			if ( ++result > 10000 )
+			{
+				result = 0x2FFFF ;
+				break ;				
+			}
+		}
+		if ( result > 10000 )
+		{
+			break ;
+		}
+		*rx++ = spiptr->DR ;
+		count -= 1 ;
+	}
+	if ( result <= 10000 )
+	{
+		result = 0 ;
+	}
+	result = 0 ; 
+	
+	return result ;
+}
+
+void eeprom_write_enable()
+{
+	eeprom_write_one( 6, 0 ) ;
+}
+
+uint32_t eeprom_read_status()
+{
+	return eeprom_write_one( 5, 1 ) ;
+}
+
+uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
+{
+	return 0 ;
+}
+
+uint32_t spi_PDC_action( register uint8_t *command, register uint8_t *tx, register uint8_t *rx, register uint32_t comlen, register uint32_t count )
+{
+	return 0 ;
+}
+
+#endif // PCBSP
 

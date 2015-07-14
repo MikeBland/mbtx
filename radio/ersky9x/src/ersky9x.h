@@ -39,6 +39,8 @@
 
 #define TELEMETRY_LOST	1
 
+//#define ENABLE_DSM_MATCH	1
+
 #ifdef SIMU
 #include "simpgmspace.h"
 #else
@@ -47,7 +49,7 @@
 #ifdef PCBSKY
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #define wdt_reset()	(IWDG->KR = 0x0000AAAAL)
 #endif
 #endif
@@ -121,7 +123,12 @@ extern const char * const Swedish[] ;
  #define NUMBER_ANALOG		10
  #define CURRENT_ANALOG	8
  #else
- #define NUMBER_ANALOG	8
+  #ifdef PCBSP
+   #define NUMBER_ANALOG	11
+	 #define NUM_REMOTE_ANALOG	3
+  #else
+   #define NUMBER_ANALOG	8
+  #endif
  #endif
 #endif
 #endif
@@ -132,11 +139,14 @@ extern const char * const Swedish[] ;
 #define NUM_EXTRA_ANALOG		0
 #endif	// REV9E
 
+#ifndef NUM_REMOTE_ANALOG
+ #define NUM_REMOTE_ANALOG	0
+#endif
 
 //#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNSW1SW2SW3SW4SW5SW6SW7SW8SW9SWASWBSWCSWDSWESWFSWGSWHSWISWJSWKSWLSWMSWNSWO"
 #define NUM_CSW  12 //number of custom switches
 #define NUM_SKYCSW  24 //number of custom switches
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define CSW_INDEX	9	// Index of first custom switch
 #endif
 #ifdef PCBX9D
@@ -167,7 +177,7 @@ enum EnumKeys {
     TRM_RH_UP   ,
 	  BTN_RE,
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
     //SW_NC     ,
     //SW_ON     ,
     SW_ThrCt  ,
@@ -195,7 +205,7 @@ enum EnumKeys {
 };
 
 // Hardware switch mappings:
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define HSW_ThrCt			1
 #define HSW_RuddDR		2
 #define HSW_ElevDR		3
@@ -281,7 +291,11 @@ int8_t switchMap( int8_t x ) ;
 
 #ifdef PCBX9D
 
+#ifdef REV9E
+#define HSW_SD2				1
+#else
 #define HSW_SF2				1
+#endif
 //#define HSW_SF2				2
 
 #define HSW_SC0				4
@@ -300,9 +314,15 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_SA0				51
 #define HSW_SA1				52
 #define HSW_SA2				53
+#ifdef REV9E
+#define HSW_SF0				54
+#define HSW_SF1				55
+#define HSW_SF2				56
+#else
 #define HSW_SD0				54
 #define HSW_SD1				55
 #define HSW_SD2				56
+#endif
 #define HSW_SG0				57
 #define HSW_SG1				58
 #define HSW_SG2				59
@@ -403,7 +423,7 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 uint8_t CS_STATE( uint8_t x) ;
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)==CS_LATCH) || ((x)==CS_FLIP)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define SW_BASE      SW_ThrCt
 #define SW_BASE_DIAG SW_ThrCt
 #define MAX_PSWITCH   (SW_Trainer-SW_ThrCt+1)  // 9 physical switches
@@ -450,7 +470,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define SWP_IL4 (SWP_ID1B | SWP_ID2B)
 #define SWP_IL5 (SWP_ID0B | SWP_ID1B | SWP_ID2B)
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define THR_WARN_MASK	0x0101
 #define RUD_WARN_MASK	0x0202
 #define ELE_WARN_MASK	0x0C04
@@ -526,7 +546,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MIX_P1    5
 #define MIX_P2    6
 #define MIX_P3    7
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define MIX_MAX   8
 #define MIX_FULL  9
 #define MIX_CYC1  10
@@ -628,17 +648,18 @@ extern uint8_t Ee_lock ;
 #define PROTO_PPM        0
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
-#define PROTO_ASSAN      3
- #ifdef ASSAN
+#define PROTO_MULTI      3
+#define PROTO_ASSAN      4
+#ifdef ASSAN
+#define PROT_MAX         4
+#else
 #define PROT_MAX         3
- #else
-#define PROT_MAX         2
- #endif
+#endif
 #define PROTO_PPM16			 3		// No longer needed
 #define PROTO_OFF		     15		// For X9D
-#define PROT_STR_LEN     6
+#define PROT_STR_LEN      6
 #ifdef ASSAN
-#define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  Assan    "
+#define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
 #else
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
 #endif
@@ -647,6 +668,27 @@ extern uint8_t Ee_lock ;
 #define DSM2only         1
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
+
+#define MULTI_STR "\007Flysky Hubsan Frsky  Hisky  V2x2   DSM2   Devo   KN     YD717  SymaX  SLT"
+//#define MULTI_STR_LEN    7
+#define M_Flysky           0
+#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
+#define M_Hubsan           1
+#define M_Frsky            2
+#define M_Hisky            3
+#define M_V2x2             4
+#define M_DSM2             5
+#define M_DSM2_STR "\004DSM2DSMX"
+#define M_Devo	  	       6
+#define M_KN	  	         7
+#define M_YD717	           8
+#define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
+#define M_SymaX	           9
+#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
+#define M_SLT		  		     10
+#define M_NONE_STR "\004None"
+#define M_NY_STR "\001NY"
+
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01
@@ -662,7 +704,8 @@ extern uint8_t Ee_lock ;
 
 extern uint8_t pxxFlag;
 extern uint8_t pxxFlag_x ;
-extern uint8_t stickMoved;
+extern uint8_t InactivityMonitor ;
+extern uint16_t InacCounter ;
 
 #define FLASH_DURATION 50
 
@@ -753,7 +796,7 @@ extern uint8_t convert_mode_helper(uint8_t x) ;
 #define BACKLIGHT_OFF   (PWM->PWM_CH_NUM[0].PWM_CDTY = 100)
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 extern void backlight_on( void ) ;
 extern void backlight_off( void ) ;
 #ifdef REVPLUS
@@ -800,7 +843,7 @@ struct t_calib
 	uint8_t idxState;
 } ;
 
-#define menuPressed() ( ( read_keys() & 2 ) == 0 )
+uint8_t menuPressed( void ) ;
 
 struct t_alpha
 {
@@ -957,6 +1000,7 @@ void    popMenu(bool uppermost=false);
 #define NO_INPUT   0x02
 #define FADE_FIRST	0x20
 #define FADE_LAST		0x40
+#define NO_DELAY_SLOW	0x80
 
 // Timeout, in seconds, stick scroll remains active
 #define STICK_SCROLL_TIMEOUT		5
@@ -995,6 +1039,7 @@ extern void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
 extern void checkSwitches( void ) ;
 extern void checkTHR( void ) ;
 extern void setLanguage( void ) ;
+extern void checkXyCurve( void ) ;
 
 #define TMR_OFF     0
 #define TMR_RUNNING 1
@@ -1029,6 +1074,7 @@ extern void valueprocessAnalogEncoder( uint32_t x ) ;
 extern uint8_t Tevent ;
 
 #if GVARS
+extern int8_t REG100_100(int8_t x) ;
 extern int8_t REG(int8_t x, int8_t min, int8_t max) ;
 #endif
 
@@ -1054,13 +1100,13 @@ extern struct t_p1 P1values ;
 #ifdef PCBSKY
 extern uint16_t ResetReason ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 extern uint32_t ResetReason ;
 #endif
 extern uint8_t unexpectedShutdown ;
 extern uint8_t SdMounted ;
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #include "X9D/stm32f2xx.h"
 #include "X9D/rtc.h"
 #include "X9D/stm32f2xx_rtc.h"
@@ -1085,7 +1131,7 @@ extern uint8_t HoldVolume ;
 extern const char *AlertMessage ;
 extern uint8_t AlertType ;
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #define INTERNAL_MODULE 0
 #define EXTERNAL_MODULE 1
 #define TRAINER_MODULE  2
@@ -1111,7 +1157,7 @@ uint8_t throttleReversed( void ) ;
 
 
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 struct t_PeripheralSpeeds
 {
 	uint32_t Peri1_frequency ;
@@ -1124,5 +1170,7 @@ extern struct t_PeripheralSpeeds PeripheralSpeeds ;
 
 #endif
 
+#define SCC_BAUD_125000		0
+#define SCC_BAUD_115200		1
 
 #endif

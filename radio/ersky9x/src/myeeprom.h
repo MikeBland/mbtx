@@ -16,12 +16,16 @@
 #ifndef eeprom_h
 #define eeprom_h
 
-#include <inttypes.h>
+#include <stdint.h>
 
 
 //eeprom data
 //#define EE_VERSION 2
+#if defined(PCBSKY) || defined(PCBSP)
+#define MAX_MODELS  60
+#else
 #define MAX_MODELS  32
+#endif
 #define MAX_MIXERS  32
 #define MAX_SKYMIXERS  48
 #define MAX_CURVE5  8
@@ -42,6 +46,7 @@
 
 #define	NUM_VOICE		8
 #define NUM_VOICE_ALARMS	24
+#define NUM_EXTRA_VOICE_ALARMS	12
 
 #define NUM_GVAR_ADJUST	8
 
@@ -532,7 +537,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t 	modelVersion ;
   uint8_t   protocol:4 ;
   uint8_t   country:2 ;
-  uint8_t   sub_protocol:2 ;
+  uint8_t   not_sub_protocol:2 ;
   int8_t    ppmNCH;
   uint8_t   thrTrim:1;            // Enable Throttle Trim
 	uint8_t   xnumBlades:2;					// RPM scaling, now elsewhere as uint8_t
@@ -560,7 +565,7 @@ PACK(typedef struct te_ModelData {
   int8_t    trim[4];
   int8_t    curves5[MAX_CURVE5][5];
   int8_t    curves9[MAX_CURVE9][9];
-  int8_t    curvexy[18];			// Currently unused
+  int8_t    curvexy[18] ;
   SKYCSwData   customSw[NUM_SKYCSW];
 //  uint8_t   rxnum;
   uint8_t   frSkyVoltThreshold ;
@@ -589,7 +594,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t logRate ;
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
-  uint8_t   xsub_protocol:2 ;
+  uint8_t   not_xsub_protocol:2 ;
   int8_t    xppmNCH ;
   int8_t    xppmDelay ;
   uint8_t   xpulsePol ;
@@ -639,6 +644,11 @@ PACK(typedef struct te_ModelData {
 	uint16_t modelswitchWarningDisables ;
 	uint16_t xmodelswitchWarningDisables ;
 	uint8_t ymodelswitchWarningDisables ;
+	char modelImageName[VOICE_NAME_SIZE+2] ;
+	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;
+	uint8_t option_protocol ;
+  uint8_t sub_protocol ;
+  uint8_t xsub_protocol ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

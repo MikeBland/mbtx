@@ -26,7 +26,7 @@
 #define DISPLAY_H  64
 #endif
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define DISPLAY_W 128
 #define DISPLAY_H  64
 #endif

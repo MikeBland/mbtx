@@ -23,7 +23,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #include "x9d\stm32f2xx.h"
 #include "x9d\stm32f2xx_gpio.h"
 #include "x9d\hal.h"
@@ -40,6 +40,11 @@
 
 #ifdef PCBSKY
 #include "lcd.h"
+#endif
+
+#ifdef PCBSP
+#include "analog.h"
+#include "mega64.h"
 #endif
 
 #include "myeeprom.h"
@@ -128,7 +133,7 @@ void configure_pins( uint32_t pins, uint16_t config )
 #endif
 
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 void configure_pins( uint32_t pins, uint16_t config )
 {
 	uint32_t address ;
@@ -341,6 +346,118 @@ void config_free_pins()
 // KEY_LEFT  LCD3  PC5 (PC3)
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
 // LCD pins 5 DOWN, 4 RIGHT, 3 LEFT, 1 UP
+
+#ifdef PCBSP
+void init_trims()
+{
+// Trims 
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	configure_pins( 0x6000, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( 0x2080, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+}
+
+uint32_t read_keys()
+{
+	return Buttons ;
+}
+
+uint32_t hwKeyState( uint8_t key )
+{
+	return 0 ;
+}
+
+uint32_t keyState(EnumKeys enuk)
+{
+	return 0 ;
+}
+
+uint32_t switchPosition( uint32_t swtch )
+{
+	return 0 ;
+}
+
+void init_keys()
+{
+}
+
+void setup_switches()
+{
+}
+
+uint32_t read_trims()
+{
+	uint32_t trims ;
+	uint32_t trima ;
+
+	trims = 0 ;
+
+	trima = GPIOC->IDR ;
+
+// TRIM_LH_DOWN
+	if ( ( trima & 0x00000080 ) == 0 )
+	{
+		trims |= 1 ;
+	}
+
+// TRIM_LH_UP
+	if ( ( trima & 0x00002000 ) == 0 )
+	{
+		trims |= 2 ;
+	}
+  
+	  
+// TRIM_LV_DOWN
+	if ( ( trima & 0x00000040 ) == 0 )
+	{
+		trims |= 4 ;
+	}
+
+	trima = GPIOA->IDR ;
+
+// TRIM_RH_DOWN
+	if ( ( trima & 0x00004000 ) == 0 )
+	{
+		trims |= 0x40 ;
+	}
+
+// TRIM_RH_UP
+	if ( ( trima & 0x00002000 ) == 0 )
+	{
+		trims |= 0x80 ;
+	}
+
+	trima = AnalogSwitches ;
+
+// TRIM_LV_UP
+	if ( trima & AS_LV_TRIM_UP )
+	{
+		trims |= 8 ;
+	}
+
+// TRIM_RV_UP
+	if ( trima & AS_RV_TRIM_UP )
+	{
+		trims |= 0x20 ;
+	}
+
+// TRIM_RV_DOWN
+	if ( trima & AS_RV_TRIM_DN )
+	{
+		trims |= 0x10 ;
+	}
+
+// TRIM_LV_DOWN
+	if ( trima & AS_LV_TRIM_DN )
+	{
+		trims |= 4 ;
+	}
+
+	return trims ;
+}
+
+#endif
+
 #ifdef PCBSKY
 
 uint8_t ExtraInputs ;
@@ -992,28 +1109,26 @@ uint32_t read_trims()
 	trima = GPIOE->IDR ;
 
 // TRIM_LH_DOWN
-	if ( ( trima & 0x00000010 ) == 0 )
+	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
 	{
 		trims |= 1 ;
 	}
     
-#ifndef REV9E
-// TRIM_LV_DOWN
-	if ( ( trima & 0x00000040 ) == 0 )
-	{
-		trims |= 4 ;
-	}
-#endif
-
 // TRIM_LH_UP
-	if ( ( trima & 0x00000008 ) == 0 )
+	if ( ( trima & PIN_TRIMLH_UP ) == 0 )
 	{
 		trims |= 2 ;
 	}
 
 #ifndef REV9E
+// TRIM_LV_DOWN
+	if ( ( trima & PIN_TRIMLV_DN ) == 0 )
+	{
+		trims |= 4 ;
+	}
+
 // TRIM_LV_UP
-	if ( ( trima & 0x00000020 ) == 0 )
+	if ( ( trima & PIN_TRIMLV_UP ) == 0 )
 	{
 		trims |= 8 ;
 	}
@@ -1022,26 +1137,26 @@ uint32_t read_trims()
 	trima = GPIOC->IDR ;
 
 // TRIM_RV_UP
-	if ( ( trima & 0x00000004 ) == 0 )
+	if ( ( trima & PIN_TRIMRV_UP ) == 0 )
 	{
 		trims |= 0x20 ;
 	}
 
 // TRIM_RH_DOWN
-	if ( ( trima & 0x00000002 ) == 0 )
+	if ( ( trima & PIN_TRIMRH_DN ) == 0 )
 	{
 		trims |= 0x40 ;
 	}
 
 
 // TRIM_RV_DOWN
-	if ( ( trima & 0x00000008 ) == 0 )
+	if ( ( trima & PIN_TRIMRV_DN ) == 0 )
 	{
 		trims |= 0x10 ;
 	}
 
 // TRIM_RH_UP
-	if ( ( trima & 0x00002000 ) == 0 )
+	if ( ( trima & PIN_TRIMRH_UP ) == 0 )
 	{
 		trims |= 0x80 ;
 	}
@@ -1049,13 +1164,13 @@ uint32_t read_trims()
 #ifdef REV9E
 	trima = GPIOG->IDR ;
 // TRIM_LV_DOWN
-	if ( ( trima & 0x00000002 ) == 0 )
+	if ( ( trima & PIN_TRIMLV_DN ) == 0 )
 	{
 		trims |= 4 ;
 	}
 
 // TRIM_LV_UP
-	if ( ( trima & 0x00000001 ) == 0 )
+	if ( ( trima & PIN_TRIMLV_UP ) == 0 )
 	{
 		trims |= 8 ;
 	}
@@ -1088,15 +1203,19 @@ void setup_switches()
 	configure_pins( 0xE387, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 #endif
 #ifdef REVPLUS
+#ifdef REV9E
+	configure_pins( PIN_SW_H_L, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+#else	
 	configure_pins( PIN_SW_H, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+#endif
 #endif
 
 #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN ; 		// Enable port F clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ; 		// Enable port Gclock
 	configure_pins( PIN_SW_I_L | PIN_SW_I_H | PIN_SW_J_L | PIN_SW_J_H | PIN_SW_K_L | PIN_SW_K_H 
 									| PIN_SW_L_H | PIN_SW_M_L | PIN_SW_M_H | PIN_SW_N_L | PIN_SW_N_H,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTF ) ;
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ; 		// Enable port Gclock
 	configure_pins( PIN_SW_O_L | PIN_SW_O_H | PIN_SW_P_L | PIN_SW_P_H | PIN_SW_R_L | PIN_SW_R_H,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTG) ;
 #endif	// REV9E
@@ -1130,6 +1249,7 @@ uint32_t hwKeyState( uint8_t key )
 
   switch ( key )
 	{
+#ifndef REV9E
     case HSW_SA0:
       xxx = ~e & PIN_SW_A_L;
       break;
@@ -1220,25 +1340,106 @@ uint32_t hwKeyState( uint8_t key )
 #endif
       break;
 
+#endif // nREV9E
+
 #ifdef REV9E
-    case HSW_SI0:
-      xxx = ~f & PIN_SW_I_L ;
+    
+    case HSW_SA0:
+      xxx = ~e & PIN_SW_A_L;
+      break;
+    case HSW_SA1:
+      xxx = ((e & PIN_SW_A_L) | (e & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
+      break;
+    case HSW_SA2:
+      xxx = ~e & PIN_SW_A_H;
+      break;
+
+    case HSW_SB0:
+      xxx = ~GPIOD->IDR & PIN_SW_B_L ;
+      break;
+    case HSW_SB1:
+      xxx = (GPIOD->IDR & (PIN_SW_B_L | PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
+      break;
+    case HSW_SB2:
+      xxx = ~GPIOD->IDR & PIN_SW_B_H ;
+      break;
+
+    case HSW_SC0:
+      xxx = ~g & PIN_SW_C_L ;
+      break;
+    case HSW_SC1:
+      xxx = ((g & PIN_SW_C_L) | (g & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+      break;
+    case HSW_SC2:
+      xxx = ~g & PIN_SW_C_H ;
+      break;
+
+//    case HSW_SD0:
+//      xxx = ~e & PIN_SW_D_L ;
+//			break;
+//		case HSW_SD1:
+//      xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+//      break;
+    case HSW_SD2:
+      xxx = ~e & PIN_SW_D_L ;
+      break;
+    
+    case HSW_SE0:
+      xxx = ~f & PIN_SW_E_L ;
+      break;
+    case HSW_SE1:
+      xxx = ((f & PIN_SW_E_H) | (f & PIN_SW_E_L)) == (PIN_SW_E_H | PIN_SW_E_L) ;
+      break;
+    case HSW_SE2:
+      xxx = ~f & PIN_SW_E_H ;
+      break;
+
+		case HSW_SF0:
+      xxx = ~e & PIN_SW_F_L ;
+      break;
+    case HSW_SF1:
+      xxx = ((e & PIN_SW_F_H) | (e & PIN_SW_F_L)) == (PIN_SW_F_H | PIN_SW_F_L) ;
+      break;
+//    case HSW_SF2:
+//      xxx = ~e & PIN_SW_F_H ;
+//      break;
+
+    case HSW_SF2:
+      xxx = ~e & PIN_SW_F_H ;
+      break;
+
+    case HSW_SG0:
+      xxx = ~f & PIN_SW_G_L ;
+      break;
+    case HSW_SG1:
+      xxx = (f & (PIN_SW_G_H | PIN_SW_G_L)) == (PIN_SW_G_H | PIN_SW_G_L) ;
+      break;
+    case HSW_SG2:
+      xxx = ~f & PIN_SW_G_H ;
+      break;
+
+    case HSW_SH2:
+      xxx = ~f & PIN_SW_H_L;
+      break;
+
+		case HSW_SI0:
+      xxx = ~e & PIN_SW_I_L ;
       break;
     case HSW_SI1:
-      xxx = (f & (PIN_SW_I_H | PIN_SW_I_L)) == (PIN_SW_I_H | PIN_SW_I_L) ;
+      xxx = ((f & PIN_SW_I_H) | (e & PIN_SW_I_L)) == (PIN_SW_I_H | PIN_SW_I_L) ;
       break;
     case HSW_SI2:
       xxx = ~f & PIN_SW_I_H ;
       break;
 
     case HSW_SJ0:
-      xxx = ~f & PIN_SW_J_L ;
+      xxx = ~g & PIN_SW_J_L ;
       break;
     case HSW_SJ1:
-      xxx = (f & (PIN_SW_J_H | PIN_SW_J_L)) == (PIN_SW_J_H | PIN_SW_J_L) ;
+      xxx = (g & (PIN_SW_J_H | PIN_SW_J_L)) == (PIN_SW_J_H | PIN_SW_J_L) ;
       break;
     case HSW_SJ2:
-      xxx = ~f & PIN_SW_J_H ;
+      xxx = ~g & PIN_SW_J_H ;
       break;
     
 		case HSW_SK0:
@@ -1255,70 +1456,70 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~e & PIN_SW_L_L ;
       break;
     case HSW_SL1:
-      xxx = ( (f & PIN_SW_L_H ) | (e & PIN_SW_L_L) ) == (PIN_SW_L_H | PIN_SW_L_L) ;
+      xxx = ( (e & PIN_SW_L_H ) | (e & PIN_SW_L_L) ) == (PIN_SW_L_H | PIN_SW_L_L) ;
       break;
     case HSW_SL2:
-      xxx = ~f & PIN_SW_L_H ;
+      xxx = ~e & PIN_SW_L_H ;
       break;
 
 		case HSW_SM0:
-      xxx = ~f & PIN_SW_M_L ;
+      xxx = ~a & PIN_SW_M_L ;
       break;
     case HSW_SM1:
-      xxx = (f & (PIN_SW_M_H | PIN_SW_M_L)) == (PIN_SW_M_H | PIN_SW_M_L) ;
+      xxx = ((e & PIN_SW_M_H) | (a & PIN_SW_M_L)) == (PIN_SW_M_H | PIN_SW_M_L) ;
       break;
     case HSW_SM2:
-      xxx = ~f & PIN_SW_M_H ;
+      xxx = ~e & PIN_SW_M_H ;
       break;
 
 		case HSW_SN0:
-      xxx = ~f & PIN_SW_N_L ;
+      xxx = ~b & PIN_SW_N_L ;
       break;
     case HSW_SN1:
-      xxx = (f & (PIN_SW_N_H | PIN_SW_N_L)) == (PIN_SW_N_H | PIN_SW_N_L) ;
+      xxx = (b & (PIN_SW_N_H | PIN_SW_N_L)) == (PIN_SW_N_H | PIN_SW_N_L) ;
       break;
     case HSW_SN2:
-      xxx = ~f & PIN_SW_N_H ;
+      xxx = ~b & PIN_SW_N_H ;
       break;
 
 		case HSW_SO0:
-      xxx = ~g & PIN_SW_O_L ;
+      xxx = ~e & PIN_SW_O_L ;
       break;
     case HSW_SO1:
-      xxx = (g & (PIN_SW_O_H | PIN_SW_O_L)) == (PIN_SW_O_H | PIN_SW_O_L) ;
+      xxx = ((f & PIN_SW_O_H) | (e & PIN_SW_O_L)) == (PIN_SW_O_H | PIN_SW_O_L) ;
       break;
     case HSW_SO2:
-      xxx = ~g & PIN_SW_O_H ;
+      xxx = ~f & PIN_SW_O_H ;
       break;
 
 		case HSW_SP0:
-      xxx = ~g & PIN_SW_P_L ;
+      xxx = ~f & PIN_SW_P_L ;
       break;
     case HSW_SP1:
-      xxx = (g & (PIN_SW_P_H | PIN_SW_P_L)) == (PIN_SW_P_H | PIN_SW_P_L) ;
+      xxx = (f & (PIN_SW_P_H | PIN_SW_P_L)) == (PIN_SW_P_H | PIN_SW_P_L) ;
       break;
     case HSW_SP2:
-      xxx = ~g & PIN_SW_P_H ;
+      xxx = ~f & PIN_SW_P_H ;
       break;
     
 		case HSW_SQ0:
-      xxx = ~e & PIN_SW_Q_L ;
+      xxx = ~f & PIN_SW_Q_L ;
       break;
     case HSW_SQ1:
-      xxx = (e & (PIN_SW_Q_H | PIN_SW_Q_L)) == (PIN_SW_Q_H | PIN_SW_Q_L) ;
+      xxx = (f & (PIN_SW_Q_H | PIN_SW_Q_L)) == (PIN_SW_Q_H | PIN_SW_Q_L) ;
       break;
     case HSW_SQ2:
-      xxx = ~e & PIN_SW_Q_H ;
+      xxx = ~f & PIN_SW_Q_H ;
       break;
 
 		case HSW_SR0:
-      xxx = ~g & PIN_SW_R_L ;
+      xxx = ~e & PIN_SW_R_L ;
       break;
     case HSW_SR1:
-      xxx = (g & (PIN_SW_R_H | PIN_SW_R_L)) == (PIN_SW_R_H | PIN_SW_R_L) ;
+      xxx = ((b & PIN_SW_R_H) | (e & PIN_SW_R_L)) == (PIN_SW_R_H | PIN_SW_R_L) ;
       break;
     case HSW_SR2:
-      xxx = ~g & PIN_SW_R_H ;
+      xxx = ~b & PIN_SW_R_H ;
       break;
 
 #endif	// REV9E
@@ -1433,7 +1634,11 @@ uint32_t keyState(EnumKeys enuk)
 //      xxx = e & PIN_SW_F ;
 //      break;
     case SW_SF2:
+#ifdef REV9E
+      xxx = ~e & PIN_SW_D_L ;
+#else
       xxx = ~e & PIN_SW_F ;
+#endif
       break;
 
 //    case SW_SG0:
@@ -1455,7 +1660,11 @@ uint32_t keyState(EnumKeys enuk)
 //      break;
     case SW_SH2:
 #ifdef REVPLUS
+#ifdef REV9E
+      xxx = ~GPIOF->IDR & PIN_SW_H_L ;
+#else
       xxx = ~GPIOD->IDR & PIN_SW_H;
+#endif
 #else
       xxx = ~e & PIN_SW_H;
 #endif
@@ -1474,7 +1683,7 @@ uint32_t keyState(EnumKeys enuk)
 
 // Returns 0, 1 or 2 for ^ - or v
 #ifdef REV9E
-static const uint8_t SwitchIndices[] = {HSW_SA0,HSW_SB0,HSW_SC0,HSW_SD0,HSW_SE0,HSW_SF2,HSW_SG0,HSW_SH2,HSW_SI0,
+static const uint8_t SwitchIndices[] = {HSW_SA0,HSW_SB0,HSW_SC0,HSW_SD2,HSW_SE0,HSW_SF0,HSW_SG0,HSW_SH2,HSW_SI0,
 																 HSW_SJ0, HSW_SK0, HSW_SL0, HSW_SM0, HSW_SN0, HSW_SO0, HSW_SP0, HSW_SQ0, HSW_SR0 } ;
 #else
 static const uint8_t SwitchIndices[] = {HSW_SA0,HSW_SB0,HSW_SC0,HSW_SD0,HSW_SE0,HSW_SF2,HSW_SG0,HSW_SH2} ;

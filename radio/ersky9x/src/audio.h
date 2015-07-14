@@ -182,6 +182,10 @@ class audioQueue
 
 };
 
+void beginToneFill( void ) ;
+//int32_t xtoneFill( uint16_t *buffer, uint32_t frequency, uint32_t timeMs ) ;
+int32_t toneFill( uint16_t *buffer ) ;
+
 //wrapper function - dirty but results in a space saving!!!
 extern audioQueue audio;
 
@@ -222,13 +226,26 @@ struct t_voice
 	uint8_t NamedVoiceQueue[VOICE_Q_LENGTH][VOICE_NAME_SIZE+1] ;
 } ;
 
+struct toneQentry
+{
+	uint8_t toneFreq ;
+	int8_t toneFreqIncr ;
+	uint8_t toneTimeLeft ;
+	uint8_t tonePause ;
+	uint8_t toneRepeat ;
+} ;						    
+
+
 extern struct t_voice Voice ;
+extern struct toneQentry ToneQueue[] ;
 
 extern void putVoiceQueue( uint16_t value ) ;
 extern void putNamedVoiceQueue( const char *name, uint16_t value ) ;
 extern void putSystemVoice( uint16_t sname, uint16_t value ) ;
 extern void putUserVoice( char *name, uint16_t value ) ;
 extern void voice_task(void* pdata) ;
+extern bool ToneFreeSlots( void ) ;
+extern void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8_t pause, uint8_t repeat ) ;
 
 
 // Defines for voice messages

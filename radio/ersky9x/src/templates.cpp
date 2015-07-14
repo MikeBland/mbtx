@@ -79,6 +79,7 @@ SKYMixData* setDest(uint8_t dch)
     memset( md, 0, sizeof(MixData) ) ;
     md->destCh = dch;
 		md->weight = 100 ;
+		md->lateOffset = 1 ;
     return &g_model.mixData[i];
 }
 
@@ -150,16 +151,15 @@ void applyTemplate(uint8_t idx)
     if(idx==j++) 
     {
         clearMixes();
-        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD); md->lateOffset = 1 ;
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE); md->lateOffset = 1 ;
-        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR); md->lateOffset = 1 ;
-        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL); md->lateOffset = 1 ;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD);
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE);
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR);
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL);
     }
 
     //T-Cut
     if(idx==j++)
     {
-//        md=setDest(ICC(STK_THR));  md->srcRaw=MIX_MAX;  md->weight=-100;  md->swtch=DSW_THR;  md->mltpx=MLTPX_REP;
     	SKYSafetySwData *sd = &g_model.safetySw[ICC(STK_THR)-1] ;
 			sd->opt.ss.mode = 0 ;
 			sd->opt.ss.swtch = DSW_THR ;
@@ -169,13 +169,6 @@ void applyTemplate(uint8_t idx)
     //sticky t-cut
     if(idx==j++)
     {
-//        md=setDest(ICC(STK_THR));  md->srcRaw=MIX_MAX;  md->weight=-100;  md->swtch=DSW_SWC;  md->mltpx=MLTPX_REP;
-//        md=setDest(14);            md->srcRaw=CH(14);
-//        md=setDest(14);            md->srcRaw=MIX_MAX;  md->weight=-100;  md->swtch=DSW_SWB;  md->mltpx=MLTPX_REP;
-//        md=setDest(14);            md->srcRaw=MIX_MAX;  md->swtch=DSW_THR;  md->mltpx=MLTPX_REP;
-
-//        setSwitch(0xB,CS_VNEG, CM(STK_THR), -99);
-//        setSwitch(0xC,CS_VPOS, CH(14), 0);
     	SKYSafetySwData *sd = &g_model.safetySw[ICC(STK_THR)-1] ;
 			sd->opt.ss.mode = 3 ;
 			sd->opt.ss.swtch = DSW_THR ;
@@ -186,20 +179,24 @@ void applyTemplate(uint8_t idx)
     if(idx==j++) 
     {
         clearMixes();
-        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD);
-        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_ELE);  md->weight=-100;
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_RUD);
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE);  md->weight= 100;
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR);
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL);
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD); md->weight= 50 ;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_ELE); md->weight=-50 ;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_RUD); md->weight= 50 ;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE); md->weight= 50 ;
     }
 
     //Elevon\\Delta
     if(idx==j++)
     {
         clearMixes();
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE);
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_AIL);
-        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_ELE);
-        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL);  md->weight=-100;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD);
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR);
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE); md->weight= 50 ;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_AIL); md->weight= 50 ;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_ELE); md->weight= 50 ;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL); md->weight=-50 ;
     }
 
 

@@ -75,7 +75,7 @@ uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
 #define DISPLAY_END (DisplayBuf+sizeof(DisplayBuf))
 
 #ifdef PCBX9D
-#define X9D_OFFSET		42
+#define X9D_OFFSET		11
 #define DISPLAY_START (DisplayBuf + X9D_OFFSET)
 #else
 #define DISPLAY_START (DisplayBuf + 0)
@@ -877,6 +877,12 @@ uint8_t speaker[] = {
 } ;
 #endif
 
+#if PCBX9D
+uint8_t ImageDisplay = 0 ;
+uint8_t ImageX ;
+uint8_t ImageY ;
+#endif
+
 void lcd_clear()
 {
   memset( DisplayBuf, 0, sizeof( DisplayBuf) ) ;
@@ -885,10 +891,22 @@ void lcd_clear()
 	lcd_img( 212-X9D_OFFSET, 0, arrows, 0, 0 ) ;
 	lcd_img( 212-X9D_OFFSET-10, 0, arrows, 1, 0 ) ;
 #endif	// nREV9E
-	putsTime( 140, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
-	lcd_img( 130, 2*FH, speaker, 0, 0 ) ;
+	putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+	lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
 extern uint8_t CurrentVolume ;
-	lcd_hbar( 135, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+	lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+#if PCBX9D
+//#if REVPLUS
+	lcd_hline( 130, 31, 61 ) ;
+	lcd_vline( 129, 0, 64 ) ;
+
+// Debug
+//extern uint8_t s_eeDirtyMsk ;
+//	lcd_outhex4( 132, 0*FH, s_eeDirtyMsk ) ;
+
+//	ImageDisplay = 1 ;
+//#endif
+#endif
 
 
 //#ifdef REV9E
@@ -1268,4 +1286,27 @@ void refreshDisplay()
 #endif // PCBSKY
 #endif // PCBDUE
 
+#ifdef PCBSP
+void refreshDisplay()
+{
+	
+}
 
+void lcdSetRefVolt(uint8_t val)
+{
+	
+}
+
+void lcd_init()
+{
+	
+}
+
+void backlight_on()
+{
+}
+
+void backlight_off()
+{
+}
+#endif // PCBSP

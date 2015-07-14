@@ -51,14 +51,17 @@
 #include "sound.h"
 #include "lcd.h"
 #include "drivers.h"
+
 #ifdef PCBSKY
 #include "file.h"
 #endif
+
 #include "menus.h"
 #include "timers.h"
 #include "logicio.h"
 #include "pulses.h"
 #include "stringidx.h"
+
 #ifdef FRSKY
 #include "frsky.h"
 #endif
@@ -72,6 +75,16 @@
 #include "X9D/stm32f2xx_rcc.h"
 #include "X9D/hal.h"
 #include "X9D/i2c_ee.h"
+#endif
+
+#ifdef PCBSP
+#include "file.h"
+#include "analog.h"
+#include "diskio.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_gpio.h"
+#include "X9D/stm32f2xx_rcc.h"
+#include "X9D/hal.h"
 #endif
 
 #include "sbus.h"
@@ -194,8 +207,8 @@ volatile int32_t Rotary_count ;
 int32_t LastRotaryValue ;
 int32_t Rotary_diff ;
 uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE] ;
-uint8_t Nvs_state[NUM_VOICE_ALARMS] ;
-int16_t Nvs_timer[NUM_VOICE_ALARMS] ;
+uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
 uint8_t HoldVolume ;
 int8_t RotaryControl ;
@@ -239,7 +252,7 @@ void getADC_single( void ) ;
 void getADC_osmp( void ) ;
 void getADC_filt( void ) ;
 #ifdef PCBSKY
-void read_9_adc( void ) ;
+void read_adc( void ) ;
 void init_adc( void ) ;
 #endif
 
@@ -289,7 +302,7 @@ volatile uint32_t Tenms ;						// Modified in interrupt routine
 volatile uint8_t tick10ms = 0 ;
 volatile uint8_t tick5ms = 0 ;
 uint16_t g_LightOffCounter ;
-uint8_t  stickMoved = 0 ;
+uint8_t  InactivityMonitor = 0 ;
 
 uint16_t S_anaFilt[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;				// Analog inputs after filtering
 #ifdef PCBSKY
@@ -319,7 +332,7 @@ uint8_t CoProcAlerted ;
 int main( void ) ;
 
 EEGeneral  g_eeGeneral;
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 ModelData  g_oldmodel;
 #endif
 SKYModelData  g_model;
@@ -422,7 +435,7 @@ uint8_t heartbeat_running ;
 #ifdef PCBSKY
 uint16_t ResetReason ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 uint32_t ResetReason ;
 #endif
 
@@ -439,6 +452,9 @@ uint32_t ResetReason ;
 //  wdt_reset();
 //	g_LightOffCounter = 2000 ;
 //	lcd_clear() ;
+//	lcd_outhex4( 0, 0, x ) ;
+//	lcd_outhex4( 0, FH, ++ProgressCounter ) ;
+//	lcd_outhex4( 0, 2*FH, CurrentVolume ) ;
 //	lcd_outhex4( 212-X9D_OFFSET, 0, x ) ;
 //	lcd_outhex4( 212-X9D_OFFSET, FH, ++ProgressCounter ) ;
 //	lcd_outhex4( 212-X9D_OFFSET, 2*FH, PowerState ) ;
@@ -458,7 +474,13 @@ uint32_t ResetReason ;
 //	lcd_outhex4( 212-X9D_OFFSET, 6*FH, GPIOE->MODER ) ;
 //	lcd_outhex4( 212-X9D_OFFSET, 7*FH, GPIOE->AFR[0]>>16 ) ;
 
-//	refreshDisplay() ;
+//	uint32_t i ;
+//	for ( i = 0 ; i < 200 ; i += 1 )
+//	{
+//	  wdt_reset();
+//		lcd_outhex4( 0, 7*FH, i ) ;
+//		refreshDisplay() ;
+//	}
 //}
 //#endif
 
@@ -622,7 +644,7 @@ void update_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
 #ifdef PCBX9D
-	x9dSPortInit( 0 ) ; // Kick off at 57600 baud
+	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCBSKY
 	UART2_Configure( 57600, Master_frequency ) ;
@@ -679,7 +701,7 @@ void update_mode(void* pdata)
 #ifdef PCBSKY
 		sd_poll_10mS() ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		sdPoll10ms() ;
 #endif
 #endif
@@ -844,6 +866,11 @@ int main( void )
 	init_hw_timer() ;
 	init_adc() ;
 
+#ifdef PCBX9D
+	I2C_EE_Init() ;
+	setVolume( 0 ) ;
+#endif
+
 #ifdef PCBSKY
 	init_pwm() ;
 #ifndef SIMU
@@ -870,16 +897,32 @@ int main( void )
 
 	g_menuStack[0] =  menuProc0 ;
 
+//progress( 9 ) ;
+
+
 #ifdef PCBX9D
-	start_sound() ;
+//	I2C_EE_Init() ;
+//progress( 8 ) ;
+//	setVolume( 12 ) ;
+//progress( 7 ) ;
 	init_trims() ;
-	I2C_EE_Init() ;
 	initHaptic() ;
 	start_2Mhz_timer() ;
+	setVolume( 0 ) ;
+	start_sound() ;
+//progress( 6 ) ;
 #endif
-#ifdef PCBSKY
+
+#ifdef PCBSP
+	init_trims() ;
+	start_2Mhz_timer() ;
+#endif
+
+#if defined(PCBSKY) || defined(PCBSP)
 	init_spi() ;
 	init_eeprom() ;	
+
+//progress( 0 ) ;
 
 //	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
 //	{
@@ -903,7 +946,9 @@ int main( void )
 #endif
 #ifdef PCBX9D
 	lcdSetRefVolt(g_eeGeneral.contrast) ;
+#ifndef REV9E
 	init_adc2() ;
+#endif // nPCBSP
 #endif
 
 	createSwitchMapping() ;
@@ -929,6 +974,8 @@ int main( void )
 		UART_Configure( g_model.com2Baudrate, Master_frequency ) ;
 	}
 #endif	// PCBSKY
+
+//progress( 1 ) ;
 
 	// At this point, check for "maintenance mode"
 	if ( ( read_trims() & 0x81 )== 0x81 )
@@ -1003,6 +1050,7 @@ int main( void )
 	}
 	setVolume( x ) ;
 
+//progress( 2 ) ;
 	// Choose here between PPM and PXX
 
 	g_menuStack[1] = menuProcModelSelect ;	// this is so the first instance of [MENU LONG] doesn't freak out!
@@ -1062,6 +1110,8 @@ void initTopLcd() ;
 
 	 
 	Main_running = 1 ;
+
+//progress( 3 ) ;
 
 	CoStartOS();
 
@@ -1737,6 +1787,10 @@ void main_loop(void* pdata)
 #ifdef PCBX9D
   int32_t ab = anaIn(8);
 #endif
+#ifdef PCBSP
+  int32_t ab = anaIn(4);
+#endif
+
   ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
 #ifdef PCBSKY
         ab /= 55296  ;
@@ -1750,6 +1804,7 @@ void main_loop(void* pdata)
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
 	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
+ 	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
 
 	start_ppm_capture() ;
@@ -1780,7 +1835,7 @@ void main_loop(void* pdata)
   }
 
 #ifdef PCBX9D
- 	perOut(g_chans512, 0);
+ 	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
 #endif
 
@@ -1840,6 +1895,7 @@ void main_loop(void* pdata)
 
   		uint16_t tgtime = get_tmr10ms() ;
 	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) // 50 - Half second
+//	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 200 ) // 50 - Half second
   		{
 				if ( check_soft_power() == POWER_ON )
 				{
@@ -1869,6 +1925,9 @@ void main_loop(void* pdata)
 // 	lcd_outhex4( 50, 7*FH, dbgVal >> 16 ) ;
 // 	lcd_outhex4( 75, 7*FH, dbgVal ) ;
 
+//extern uint8_t s_eeDirtyMsk ;
+//	lcd_outhex4( 132, 1*FH, s_eeDirtyMsk ) ;
+
 				refreshDisplay() ;
   		}
 //			if ( check_soft_power() == 0 )
@@ -1887,10 +1946,24 @@ void main_loop(void* pdata)
 //#endif
 				
 				soft_power_off() ;		// Only turn power off if necessary
+#ifdef PCBX9D
+				for(;;)
+				{
+					wdt_reset() ;
+  				PWR->CR |= PWR_CR_CWUF;
+  				/* Select STANDBY mode */
+  				PWR->CR |= PWR_CR_PDDS;
+  				/* Set SLEEPDEEP bit of Cortex System Control Register */
+  				SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+  				/* Request Wait For Event */
+  				__WFE();
+				}
+#else
 				for(;;)
 				{
 					wdt_reset() ;
 				}
+#endif // PCBX9D
 
 //			}
 		}
@@ -1967,7 +2040,7 @@ uint16_t getTmr2MHz()
 #ifdef PCBSKY
 	return TC1->TC_CHANNEL[0].TC_CV ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 	return TIM7->CNT ;
 #endif
 }
@@ -2001,7 +2074,7 @@ static void almess( const char * s, uint8_t type )
 
 int8_t getAndSwitch( SKYCSwData &cs )
 {
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 	int8_t x = 0 ;
 	if ( cs.andsw )	// Code repeated later, could be a function
 	{
@@ -2054,12 +2127,15 @@ static void processVoiceAlarms()
 	uint32_t i ;
 	uint32_t curent_state ;
 	VoiceAlarmData *pvad = &g_model.vad[0] ;
-	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
+	for ( i = 0 ; i < NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
 	{
 		uint32_t play = 0 ;
 		curent_state = 0 ;
 		int16_t ltimer = Nvs_timer[i] ;
-
+	 	if ( i == NUM_VOICE_ALARMS )
+		{
+			pvad = &g_model.vadx[0] ;
+		}
 		if ( pvad->func )		// Configured
 		{
   		int16_t x ;
@@ -2355,7 +2431,7 @@ void mainSequence( uint32_t no_menu )
 	static uint32_t coProTimer = 0 ;
 #endif
   uint16_t t0 = getTmr2MHz();
-	uint8_t numSafety = NUM_SKYCHNOUT - g_model.numVoice ;
+	CPU_UINT numSafety = NUM_SKYCHNOUT - g_model.numVoice ;
 	
 	if ( g_eeGeneral.filterInput == 1 )
 	{
@@ -2450,7 +2526,7 @@ void mainSequence( uint32_t no_menu )
  #ifdef PCBSKY
 		sd_poll_10mS() ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 		sdPoll10ms() ;
 #endif
 #endif
@@ -2525,7 +2601,7 @@ void mainSequence( uint32_t no_menu )
         }
       }
 			uint16_t total_volts = 0 ;
-			uint8_t audio_sounded = 0 ;
+			CPU_UINT audio_sounded = 0 ;
 			uint8_t low_cell = 220 ;		// 4.4V
 			for (uint8_t k=0; k<FrskyBattCells; k++)
 			{
@@ -2712,9 +2788,9 @@ static uint8_t RssiTestCount ;
 #ifdef ASSAN
 					int8_t offset ;
 #ifdef PCBX9D
-					if ( g_model.xprotocol == PROTO_ASSAN )
+					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
 #else
-					if ( g_model.protocol == PROTO_ASSAN )
+					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
 #endif // PCBX9D
 					{
 						offset = 18 ;
@@ -2751,9 +2827,9 @@ static uint8_t RssiTestCount ;
 #ifdef ASSAN
 					int8_t offset ;
 #ifdef PCBX9D
-					if ( g_model.xprotocol == PROTO_ASSAN )
+					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
 #else
-					if ( g_model.protocol == PROTO_ASSAN )
+					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
 #endif // PCBX9D
 					{
 						offset = 20 ;
@@ -3660,7 +3736,7 @@ bool usbPlugged(void)
 static void	processAdjusters()
 {
 static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
-	for ( uint32_t i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
 		pgvaradj = &g_model.gvarAdjuster[i] ;
@@ -3866,7 +3942,7 @@ void valueprocessAnalogEncoder( uint32_t x )
 #ifdef PCBSKY
 void processAnaEncoder()
 {
-	read_9_adc() ;		// need to just read the 1 channel
+	read_adc() ;		// need to just read the 1 channel
 	uint32_t x = Analog_values[5] >> 1 ;
 	valueprocessAnalogEncoder( x ) ;
 }
@@ -3901,7 +3977,7 @@ int8_t getGvarSourceValue( uint8_t src )
 //#endif
 //				g_model.gvars[i].gvar = limit( -125, calibratedStick[ convert_mode_helper(g_model.gvars[i].gvsource-5) - 1 ] / 8, 125 ) ;
 	}
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 	else if ( src <= 12 )	// Pot
 #endif
 #ifdef PCBX9D
@@ -3911,14 +3987,14 @@ int8_t getGvarSourceValue( uint8_t src )
 		value = calibratedStick[ ( src-6)] / 8 ;
 //				g_model.gvars[i].gvar = limit( -125, calibratedStick[ (g_model.gvars[i].gvsource-6)] / 8, 125 ) ;
 	}
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 	else if ( src <= 36 )	// Chans
 #endif
 #ifdef PCBX9D
 	else if ( src <= 37 )	// Pot
 #endif
 	{
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 		value = ex_chans[src-13] * 100 / 1024 ;
 #endif
 #ifdef PCBX9D
@@ -3926,21 +4002,21 @@ int8_t getGvarSourceValue( uint8_t src )
 #endif
 //				g_model.gvars[i].gvar = limit( -125, ex_chans[g_model.gvars[i].gvsource-13] / 10, 125 ) ;
 	}
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 	else if ( src <= 44 )	// Scalers
 #endif
 #ifdef PCBX9D
 	else if ( src <= 45 )	// Scalers
 #endif
 	{
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 		value = calc_scaler( src-37, 0, 0 ) ;
 #endif
 #ifdef PCBX9D
 		value = calc_scaler( src-38, 0, 0 ) ;
 #endif
 	}
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 	else if ( src <= 68 )	// Scalers
 #endif
 #ifdef PCBX9D
@@ -3948,7 +4024,7 @@ int8_t getGvarSourceValue( uint8_t src )
 #endif
 	{ // Outputs
 		int32_t x ;
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 		x = g_chans512[src-45] ;
 #endif
 #ifdef PCBX9D
@@ -4008,7 +4084,12 @@ void perMain( uint32_t no_menu )
 	}
 
 	heartbeat |= HEART_TIMER10ms;
-  uint8_t evt=getEvent();
+  
+#ifdef PCBSP
+	processAnalogSwitches() ;
+#endif // PCBSP
+	
+	uint8_t evt=getEvent();
   evt = checkTrim(evt);
 
 		if ( ( evt == 0 ) || ( evt == EVT_KEY_REPT(KEY_MENU) ) )
@@ -4076,11 +4157,20 @@ void perMain( uint32_t no_menu )
 	{
 		uint16_t a = 0 ;
 		uint16_t b = 0 ;
-		if(g_LightOffCounter) g_LightOffCounter -= 1 ;
-		if( evt | Rotary_diff ) a = g_eeGeneral.lightAutoOff*500 ; // on keypress turn the light on 5*100
-		if(stickMoved) b = g_eeGeneral.lightOnStickMove*500 ;
-		if(a>g_LightOffCounter) g_LightOffCounter = a ;
-		if(b>g_LightOffCounter) g_LightOffCounter = b ;
+    
+		uint16_t lightoffctr ;
+		lightoffctr = g_LightOffCounter ;
+
+		if(lightoffctr) lightoffctr -= 1 ;
+		if( evt | Rotary_diff )
+		{
+			a = g_eeGeneral.lightAutoOff*500 ; // on keypress turn the light on 5*100
+			InacCounter = 0 ;
+		}
+		if(InactivityMonitor) b = g_eeGeneral.lightOnStickMove*500 ;
+		if(a>lightoffctr) lightoffctr = a ;
+		if(b>lightoffctr) lightoffctr = b ;
+		g_LightOffCounter = lightoffctr ;
 	}
 	check_backlight() ;
 // Handle volume
@@ -4131,7 +4221,7 @@ void perMain( uint32_t no_menu )
 			static uint16_t oldVolValue ;
 			uint16_t x ;
 			uint16_t divisor ;
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 			if ( g_model.anaVolume < 4 )
 #endif
 #ifdef PCBX9D
@@ -4340,6 +4430,9 @@ void perMain( uint32_t no_menu )
 #ifdef PCBX9D
 		if ( ( lastTMR & 3 ) == 0 )
 #endif
+#ifdef PCBSKY
+		if ( ( lastTMR & 3 ) == 0 )
+#endif
 		{
 			uint16_t t1 = getTmr2MHz() ;
   	  refreshDisplay();
@@ -4372,7 +4465,7 @@ void perMain( uint32_t no_menu )
 ////        1417*18/256 = 99 (actually 99.6) to represent 9.9 volts.
 ////        Erring on the side of low is probably best.
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
         int32_t ab = anaIn(7);
 #endif
 #ifdef PCBX9D
@@ -4410,7 +4503,7 @@ void perMain( uint32_t no_menu )
     break ;
 
   }
-  stickMoved = 0; //reset this flag
+  InactivityMonitor = 0; //reset this flag
 		
 	AUDIO_HEARTBEAT();  // the queue processing
 
@@ -4523,17 +4616,17 @@ void interrupt5ms()
 	if ( ++pre_scale >= 2 )
 	{
 		Tenms |= 1 ;			// 10 mS has passed
-#ifdef PCBSKY
- #ifndef REVX
-		if ( Buzzer_count )
-		{
-			if ( --Buzzer_count == 0 )
-			{
-				buzzer_off() ;			
-			}
-		}
- #endif
-#endif
+//#ifdef PCBSKY
+// #ifndef REVX
+//		if ( Buzzer_count )
+//		{
+//			if ( --Buzzer_count == 0 )
+//			{
+//				buzzer_off() ;			
+//			}
+//		}
+// #endif
+//#endif
 //		Timer2_count += 1 ;
 		pre_scale = 0 ;
   	per10ms();
@@ -4593,7 +4686,7 @@ uint16_t LastAnaIn[4] ; //[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
 #ifndef SIMU
 uint16_t anaIn(uint8_t chan)
 {
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 //  static uint8_t crossAna[]={1,5,7,0,4,6,2,3,8};
 //  volatile uint16_t *p = &S_anaFilt[crossAna[chan]] ;
   volatile uint16_t *p = &S_anaFilt[chan] ;
@@ -4637,7 +4730,7 @@ void getADC_single()
 
 #ifdef PCBSKY
   uint16_t t0 = getTmr2MHz();
-	read_9_adc() ;
+	read_adc() ;
 	t0 = getTmr2MHz() - t0;
   if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
 #endif
@@ -4659,7 +4752,7 @@ void getADC_single()
 	}
 }
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define OSMP_SAMPLES	4
 #define OSMP_TOTAL		16384
 #define OSMP_SHIFT		3
@@ -4680,6 +4773,7 @@ void getADC_osmp()
 	register uint32_t x ;
 	register uint32_t y ;
 	uint16_t temp[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
+	static uint16_t next_ana[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
 
 	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
 	{
@@ -4688,7 +4782,7 @@ void getADC_osmp()
 	for( y = 0 ; y < OSMP_SAMPLES ; y += 1 )
 	{
 #ifdef PCBSKY
-		read_9_adc() ;
+		read_adc() ;
 #endif
 #ifdef PCBX9D
 		read_adc() ;
@@ -4708,7 +4802,39 @@ void getADC_osmp()
 #endif
 	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
 	{
-		S_anaFilt[x] = temp[x] >> OSMP_SHIFT ;
+		uint16_t y = temp[x] >> OSMP_SHIFT ;
+		uint16_t z = S_anaFilt[x] ;
+		uint16_t w = next_ana[x] ;
+		
+		int16_t diff = abs( (int16_t) y - z ) ;
+
+		next_ana[x] = y ;
+		if ( diff < 10 )
+		{
+			if ( y > z )
+			{
+				if ( w > z )
+				{
+					y = z + 1 ;
+				}
+				else
+				{
+					y = z ;
+				}
+			}
+			else if ( y < z )
+			{
+				if ( w < z )
+				{
+					y = z - 1 ;
+				}
+				else
+				{
+					y = z ;
+				}
+			}
+		}
+		S_anaFilt[x] = y ;
 //		S_anaFilt[x] = temp[x] >> 2 ;
 	}
 }
@@ -4721,7 +4847,7 @@ void getADC_filt()
 	uint16_t temp ;
 
 #ifdef PCBSKY
-	read_9_adc() ;
+	read_adc() ;
 #endif
 #ifdef PCBX9D
 		read_adc() ;
@@ -5029,7 +5155,7 @@ void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att)
 uint8_t MaxSwitchIndex = MAX_SKYDRSWITCH ;		// For ON and OFF
 #endif
 
-#if PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 
 uint8_t switchMapTable[80] ;
 uint8_t switchUnMapTable[80] ;
@@ -5210,16 +5336,26 @@ void createSwitchMapping()
 	*p++ = HSW_SC1 ;
 	*p++ = HSW_SC2 ;
 	
+#ifdef REV9E
+	*p++ = HSW_SF0 ;
+	*p++ = HSW_SF1 ;
+	*p++ = HSW_SF2 ;
+#else
 	*p++ = HSW_SD0 ;
 	*p++ = HSW_SD1 ;
 	*p++ = HSW_SD2 ;
-	
+#endif
+	 
 	*p++ = HSW_SE0 ;
 	*p++ = HSW_SE1 ;
 	*p++ = HSW_SE2 ;
 
 //	*p++ = HSW_SF0 ;
+#ifdef REV9E
+	*p++ = HSW_SD2 ;
+#else
 	*p++ = HSW_SF2 ;
+#endif
 
 	*p++ = HSW_SG0 ;
 	*p++ = HSW_SG1 ;
@@ -5761,7 +5897,7 @@ void putsDblSizeName( uint8_t y )
 }
 
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 static uint16_t switches_states = 0 ;
 static uint8_t trainer_state = 0 ;
 #endif
@@ -5789,7 +5925,7 @@ int8_t getMovedSwitch()
 	}
   s_last_time = time ;
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
   uint16_t mask = 0xC000 ;
 	uint16_t map = g_eeGeneral.switchMapping ;
 	
@@ -6392,7 +6528,7 @@ void checkSwitches()
 	while (1)
   {
 #ifdef PCBSKY
-		read_9_adc() ; // needed for 3/6 pos ELE switch
+		read_adc() ; // needed for 3/6 pos ELE switch
     uint16_t i = getCurrentSwitchStates() ;
 		i &= ~g_model.modelswitchWarningDisables ;
 
@@ -6550,6 +6686,11 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 }
 
 #if GVARS
+int8_t REG100_100(int8_t x)
+{
+	return REG( x, -100, 100 ) ;
+}
+
 int8_t REG(int8_t x, int8_t min, int8_t max)
 {
   int8_t result = x;
@@ -6588,6 +6729,19 @@ uint8_t IS_THROTTLE( uint8_t x )
 //	y = 2 - y ;
 //	return (((y) == x) && (x<4)) ;
 //#endif
+}
+
+void checkXyCurve()
+{
+	if ( g_model.curvexy[9] == 0 )
+	{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curvexy[i] = j ;
+		}
+	}
 }
 
 /*** EOF ***/

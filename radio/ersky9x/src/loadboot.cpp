@@ -55,20 +55,20 @@
  #include "stm32f2xx.h"
  #include "stm32f2xx_gpio.h"
 #else
- #ifdef PCBX9D
+ #if defined(PCBX9D) || defined(PCBSP)
   #include "x9d\stm32f2xx.h"
   #include "x9d\stm32f2xx_gpio.h"
  #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
 void bwdt_reset()
 {
 	IWDG->KR = 0xAAAA ;		// reload
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
 
 __attribute__ ((section(".bootrodata"), used))
 void _bootStart( void ) ;
@@ -81,7 +81,7 @@ const uint32_t BootVectors[] = {
 } ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
 __attribute__ ((section(".bootrodata.*"), used))
 #endif
 
@@ -97,7 +97,7 @@ const uint8_t BootCode[] = {
    #include "bootloader/bootflashT.lbm"
 	#endif
 #else
- #ifdef PCBX9D
+ #if defined(PCBX9D) || defined(PCBSP)
   #ifdef REVPLUS
    #include "bootloader/bootflashXp.lbm"
   #else
@@ -114,7 +114,7 @@ const uint8_t BootCode[] = {
 } ;
 
 
-#if defined(PCBX9D) || defined(PCBTARANIS)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
 
 __attribute__ ((section(".bootrodata"), used))
 

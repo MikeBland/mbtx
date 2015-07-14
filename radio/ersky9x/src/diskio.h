@@ -45,6 +45,11 @@
 #include "x9d\stm32f2xx.h"
 #endif
 
+#ifdef PCBSP
+#include "x9d\stm32f2xx.h"
+#endif
+
+
 #if !defined(SIMU)
 #include "core_cm3.h"
 #endif
@@ -164,7 +169,7 @@ extern uint32_t sd_acmd6( void ) ;
 extern uint32_t sd_acmd51( uint32_t *presult ) ;
 extern uint32_t sd_cmd13( uint32_t *status) ;
 extern void sd_poll_10mS( void ) ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 extern void sdPoll10ms( void ) ;
 extern void sdInit( void ) ;
 #endif

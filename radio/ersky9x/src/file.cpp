@@ -740,6 +740,24 @@ void ee32LoadModel(uint8_t id)
 			g_model.telemetryProtocol = TELEMETRY_DSM ;
 		}
 	}
+	checkXyCurve() ;
+	// Now check the sub_protocol(s)
+	if ( g_model.sub_protocol == 0 )
+	{
+		if ( g_model.not_sub_protocol != 0 )
+		{
+			g_model.sub_protocol = g_model.not_sub_protocol ;
+			g_model.not_sub_protocol = 0 ;
+		}
+	}
+	if ( g_model.xsub_protocol == 0 )
+	{
+		if ( g_model.not_xsub_protocol != 0 )
+		{
+			g_model.xsub_protocol = g_model.not_xsub_protocol ;
+			g_model.not_xsub_protocol = 0 ;
+		}
+	}
 }
 
 bool eeModelExists(uint8_t id)

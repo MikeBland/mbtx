@@ -52,6 +52,8 @@ extern void end_bt_tx_interrupt() ;
 extern struct t_fifo64 Sbus_fifo ;
 extern struct t_fifo64 CaptureRx_fifo ;
 
+extern uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
+
 #ifdef REVX
 extern int32_t getJetiWord( void ) ;
 extern volatile uint16_t Analog_values[] ;
@@ -61,10 +63,6 @@ extern volatile uint16_t Analog_values[] ;
 extern uint16_t Temperature ;		// Raw temp reading
 extern uint16_t Max_temperature ;
 
-#define SCC_BAUD_125000		0
-#define SCC_BAUD_115200		1
-
-extern uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
 extern volatile uint32_t Spi_complete ;
 
@@ -126,7 +124,9 @@ extern void p8hex( uint32_t value ) ;
 extern void p4hex( uint16_t value ) ;
 extern void p2hex( unsigned char c ) ;
 extern void hex_digit_send( unsigned char c ) ;
-extern void read_9_adc(void ) ;
+#ifdef PCBSKY
+extern void read_adc(void ) ;
+#endif
 extern void xread_9_adc(void ) ;
 extern void init_adc( void ) ;
 void set_stick_gain( uint32_t gains ) ;
@@ -140,8 +140,14 @@ extern void start_2Mhz_timer( void ) ;
 
 extern void disable_ssc( void ) ;
 
-extern void x9dSPortInit( uint32_t baudRate ) ;
+#define SPORT_MODE_HARDWARE		0
+#define SPORT_MODE_SOFTWARE		1
+#define SPORT_POLARITY_NORMAL	0
+#define SPORT_POLARITY_INVERT	1
+
+extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert ) ;
 extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count ) ;
+void disable_software_com1( void ) ;
 
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 
@@ -197,6 +203,7 @@ class Key
 public:
   void input(bool val, EnumKeys enuk);
   bool state()       { return m_vals==FFVAL;                }
+  bool isKilled()    { return m_state == KSTATE_KILLED ;    }
   void pauseEvents() { m_state = KSTATE_PAUSE;  m_cnt   = 0;}
   void killEvents()  { m_state = KSTATE_KILLED; m_dblcnt=0; }
   uint8_t getDbl()   { return m_dblcnt;                     }

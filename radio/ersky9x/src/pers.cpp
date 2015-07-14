@@ -18,7 +18,14 @@
 
 #include <stdint.h>
 #include <string.h>
+#ifdef PCBSKY
 #include "AT91SAM3S4.h"
+#endif
+#ifdef PCBSP
+#include "X9D/stm32f2xx.h"
+#include "X9D/hal.h"
+#endif
+
 #include "ersky9x.h"
 #include "templates.h"
 #include "myeeprom.h"

@@ -353,7 +353,11 @@ const char * const Swedish[] =
 	ISTR_ALERT_ORG		 ,	
 	ISTR_ALERT_RED		 ,	
 	ISTR_LANGUAGE			 ,	
+#ifdef PCBX9D
 	IHW_SWITCHES_STR   ,
+#else
+	0,
+#endif
 	IHW_SWITCHARROW_STR,
 	ISTR_RSSI_WARN		 ,	 
 	ISTR_RSSI_CRITICAL ,	
@@ -364,5 +368,7 @@ const char * const Swedish[] =
 	ISTR_BT_TRAINER		 ,
 	ISTR_T_RANGE_TEST	 ,
 	ISTR_EXTRA_SOURCE  ,
-	ISTR_HELI_TEXT
+	ISTR_HELI_TEXT		 ,
+	ISTR_MULTI_TYPE    ,
+	ISTR_MULTI_OPTION   
 } ;

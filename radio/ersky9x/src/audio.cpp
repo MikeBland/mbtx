@@ -18,7 +18,7 @@
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSP)
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/hal.h"
@@ -53,6 +53,21 @@ extern uint8_t AudioVoiceCountUnderruns ;
 //#define SPEAKER_OFF  PORTE &= ~(1 << OUT_E_BUZZER) // speaker output 'low'
 
 struct t_voice Voice ;
+struct toneQentry ToneQueue[AUDIO_QUEUE_LENGTH] ;
+uint8_t ToneQueueRidx ;
+uint8_t ToneQueueWidx ;
+
+bool ToneFreeSlots()
+{
+	uint8_t temp ;
+	temp = ToneQueueWidx ;
+	temp += AUDIO_QUEUE_LENGTH ;
+	temp -= ToneQueueRidx ;
+	temp %= AUDIO_QUEUE_LENGTH ;
+	temp = AUDIO_QUEUE_LENGTH - temp ;
+	return temp >= AUDIO_QUEUE_FREESLOTS ;
+}
+
 
 audioQueue::audioQueue()
 {
@@ -145,56 +160,56 @@ void audioQueue::heartbeat()
 		}
 	}
  
-  if (toneTimeLeft )
-	{
+//  if (toneTimeLeft )
+//	{
 		
-		if ( queueTone( toneFreq * 61 / 2, toneTimeLeft * 10, toneFreqIncr * 61 / 2, 0 ) )
-		{
-    			toneTimeLeft = 0 ; //time gets counted down
-		}
-
-		//this works - but really needs a delay added in.
-		// reason is because it takes time for the motor to spin up
-		// need to take this into account when the tone sent is really short!
-		// initial thoughts are a seconds queue to process haptic that gets
-		// fired from here.  end result is haptic events run for mix of 2 seconds?
-		
-//		if (toneHaptic)
+//		if ( queueTone( toneFreq * 61 / 2, toneTimeLeft * 10, toneFreqIncr * 61 / 2, 0 ) )
 //		{
-//#ifdef REVPLUS		
-//	    		hapticOn(((g_eeGeneral.hapticStrength+5)) * 10); 
-//#else			
-//	    		hapticOn((g_eeGeneral.hapticStrength *  2 ) * 10); 
-//#endif 
-//	    		hapticMinRun = HAPTIC_SPINUP;
-//		}    
-  }
-  else
-	{
-    if ( tonePause )
-		{
-			if ( queueTone( 0, tonePause * 10, 0, 0 ) )
-			{
-    		tonePause = 0 ; //time gets counted down
-			}
- 		}
-		else
-		{  
-      if (t_queueRidx != t_queueWidx)
-			{
-        toneFreq = queueToneFreq[t_queueRidx];
-        toneTimeLeft = queueToneLength[t_queueRidx];
-        toneFreqIncr = queueToneFreqIncr[t_queueRidx];
-        tonePause = queueTonePause[t_queueRidx];
-//        toneHaptic = queueToneHaptic[t_queueRidx];
-//        hapticTick = 0;
-        if (!queueToneRepeat[t_queueRidx]--)
-				{
-          t_queueRidx = (t_queueRidx + 1) % AUDIO_QUEUE_LENGTH;
-        }
-      }
-    }
-  }
+//    			toneTimeLeft = 0 ; //time gets counted down
+//		}
+
+//		//this works - but really needs a delay added in.
+//		// reason is because it takes time for the motor to spin up
+//		// need to take this into account when the tone sent is really short!
+//		// initial thoughts are a seconds queue to process haptic that gets
+//		// fired from here.  end result is haptic events run for mix of 2 seconds?
+		
+////		if (toneHaptic)
+////		{
+////#ifdef REVPLUS		
+////	    		hapticOn(((g_eeGeneral.hapticStrength+5)) * 10); 
+////#else			
+////	    		hapticOn((g_eeGeneral.hapticStrength *  2 ) * 10); 
+////#endif 
+////	    		hapticMinRun = HAPTIC_SPINUP;
+////		}    
+//  }
+//  else
+//	{
+//    if ( tonePause )
+//		{
+//			if ( queueTone( 0, tonePause * 10, 0, 0 ) )
+//			{
+//    		tonePause = 0 ; //time gets counted down
+//			}
+// 		}
+//		else
+//		{  
+//      if (t_queueRidx != t_queueWidx)
+//			{
+//        toneFreq = queueToneFreq[t_queueRidx];
+//        toneTimeLeft = queueToneLength[t_queueRidx];
+//        toneFreqIncr = queueToneFreqIncr[t_queueRidx];
+//        tonePause = queueTonePause[t_queueRidx];
+////        toneHaptic = queueToneHaptic[t_queueRidx];
+////        hapticTick = 0;
+//        if (!queueToneRepeat[t_queueRidx]--)
+//				{
+//          t_queueRidx = (t_queueRidx + 1) % AUDIO_QUEUE_LENGTH;
+//        }
+//      }
+//    }
+//  }
 }
 
 inline uint8_t audioQueue::getToneLength(uint8_t tLen)
@@ -221,14 +236,18 @@ void audioQueue::playNow(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
     uint8_t tRepeat, uint8_t tHaptic, int8_t tFreqIncr)
 {
 	
-	if(!freeslots()){
-			return;
-	}
+//	if(!freeslots()){
+//			return;
+//	}
 	
-  if (g_eeGeneral.beeperVal) {
-    toneFreq = (tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0); // add pitch compensator
-    toneTimeLeft = getToneLength(tLen);
-    tonePause = tPause;
+  if (g_eeGeneral.beeperVal)
+	{
+		
+		queueTone( 1, tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0, tFreqIncr, tLen, tPause, tRepeat ) ;	// Now
+    
+//		toneFreq = (tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0); // add pitch compensator
+//    toneTimeLeft = getToneLength(tLen);
+//    tonePause = tPause;
 		if ( tHaptic )
 		{
   		buzzTimeLeft = toneTimeLeft ;
@@ -239,14 +258,13 @@ void audioQueue::playNow(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
 			}
 			buzzPause = tPause ;
 		}
-//    toneHaptic = tHaptic;
-//    hapticTick = 0;
-    toneFreqIncr = tFreqIncr;
-    t_queueWidx = t_queueRidx;
+    
+//		toneFreqIncr = tFreqIncr;
+//    t_queueWidx = t_queueRidx;
 
-    if (tRepeat) {
-      playASAP(tFreq, tLen, tPause, tRepeat-1, tHaptic, tFreqIncr);
-    }
+//    if (tRepeat) {
+//      playASAP(tFreq, tLen, tPause, tRepeat-1, tHaptic, tFreqIncr);
+//    }
   }
 }
 
@@ -266,24 +284,26 @@ void audioQueue::playASAP(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
 		}
 	}
 	
-	if(!freeslots()){
-			return;
-	}	
+	queueTone( 0, tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0, tFreqIncr, tLen, tPause, tRepeat ) ;	// Now
 	
-  if (g_eeGeneral.beeperVal)
-	{
-    uint8_t next_queueWidx = (t_queueWidx + 1) % AUDIO_QUEUE_LENGTH;
-    if (next_queueWidx != t_queueRidx)
-		{
-      queueToneFreq[t_queueWidx] = (tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0); // add pitch compensator
-      queueToneLength[t_queueWidx] = getToneLength(tLen);
-      queueTonePause[t_queueWidx] = tPause;
-//      queueToneHaptic[t_queueWidx] = tHaptic;
-      queueToneRepeat[t_queueWidx] = tRepeat;
-      queueToneFreqIncr[t_queueWidx] = tFreqIncr;
-      t_queueWidx = next_queueWidx;
-    }
-  }
+//	if(!freeslots()){
+//			return;
+//	}	
+	
+//  if (g_eeGeneral.beeperVal)
+//	{
+//    uint8_t next_queueWidx = (t_queueWidx + 1) % AUDIO_QUEUE_LENGTH;
+//    if (next_queueWidx != t_queueRidx)
+//		{
+//      queueToneFreq[t_queueWidx] = (tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0); // add pitch compensator
+//      queueToneLength[t_queueWidx] = getToneLength(tLen);
+//      queueTonePause[t_queueWidx] = tPause;
+////      queueToneHaptic[t_queueWidx] = tHaptic;
+//      queueToneRepeat[t_queueWidx] = tRepeat;
+//      queueToneFreqIncr[t_queueWidx] = tFreqIncr;
+//      t_queueWidx = next_queueWidx;
+//    }
+//  }
 }
 
 void audioQueue::event(uint8_t e, uint8_t f, uint8_t hapticOff) {
@@ -654,6 +674,12 @@ FATFS g_FATFS ;
 FIL Vfile ;
 uint32_t SDlastError ;
 
+//uint8_t PlayingTone = 0 ;
+uint8_t PlayingFreq ;
+int32_t ToneTime ;
+
+struct toneQentry ToneEntry ;
+
 void buildFilename( uint32_t v_index, uint8_t *name )
 {
 	uint32_t x ;
@@ -735,13 +761,17 @@ void voice_task(void* pdata)
 
 		if ( fr == FR_OK)
 		{
-			SdMounted = mounted = 1 ;
+		 SdMounted = mounted = 1 ;
 	
-			while ( Voice.VoiceQueueCount == 0 )
-			{
-				CoTickDelay(3) ;					// 6mS for now
-			}
-
+		 while ( ( Voice.VoiceQueueCount == 0 ) && (ToneQueueRidx == ToneQueueWidx) )
+		 {
+		 	CoTickDelay(3) ;					// 6mS for now
+		 }
+		 if ( Voice.VoiceQueueCount )
+		 {
+		 	
+			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
+		 	
 			name = Voice.NamedVoiceQueue[Voice.VoiceQueueOutIndex] ;
 			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex++] ;
 
@@ -812,19 +842,23 @@ void voice_task(void* pdata)
 						}
 						if ( offset <= 300 )
 						{
+							uint32_t y ;
 							size = FileData[offset+1] + ( FileData[offset+2] << 8 ) + ( FileData[offset+3] << 16 ) ;		// data size
 							offset += 5 ;
 						
 							size -= VOICE_BUFFER_SIZE-offset ;
+
 							if ( w8or16 == 8 )
 							{
-								wavU8Convert( &FileData[offset], VoiceBuffer[0].dataw, VOICE_BUFFER_SIZE-offset ) ;
-								VoiceBuffer[0].count = VOICE_BUFFER_SIZE-offset ;
+								wavU8Convert( &FileData[offset], &VoiceBuffer[0].dataw[offset], VOICE_BUFFER_SIZE-offset ) ;
+								y = offset ;
+								VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
 							}
 							else if ( w8or16 == 16 )
 							{
-								wavU16Convert( (uint16_t*)&FileData[offset], VoiceBuffer[0].dataw, VOICE_BUFFER_SIZE-offset/2 ) ;
-								VoiceBuffer[0].count = VOICE_BUFFER_SIZE-offset/2 ;
+								wavU16Convert( (uint16_t*)&FileData[offset], &VoiceBuffer[0].dataw[offset/2], VOICE_BUFFER_SIZE-offset/2 ) ;
+								y = offset/2 ;
+								VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
 								size -= VOICE_BUFFER_SIZE ;
 							}
 							else
@@ -837,7 +871,12 @@ void voice_task(void* pdata)
 								uint32_t amount ;
 								VoiceBuffer[0].frequency = x ;		// sample rate
 								currentFrequency = VoiceBuffer[0].frequency = x ;		// sample rate
-								
+
+								for( x = 0 ; x < y ; x += 1 )
+								{
+									VoiceBuffer[0].dataw[x] = 2048 ;
+								}
+								 
 								if ( w8or16 == 8 )
 								{
 									wavU8Convert( &FileData[VOICE_BUFFER_SIZE], VoiceBuffer[1].dataw, VOICE_BUFFER_SIZE ) ;
@@ -902,12 +941,18 @@ void voice_task(void* pdata)
 										nread /= 2 ;
 										wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[x].dataw, nread ) ;
 									}
+// May no longer need these lines									
 									if ( nread == 1 )
 									{
 										nread = 2 ;
 										VoiceBuffer[x].dataw[1] = VoiceBuffer[x].dataw[0] ;
 									}
-									VoiceBuffer[x].count = nread ;
+// End of possible removal
+									while ( nread < VOICE_BUFFER_SIZE )
+									{
+										VoiceBuffer[x].dataw[nread++] = 2048 ;		// Pad last buffer
+									}
+									VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
 									VoiceBuffer[x].frequency = currentFrequency ;
 									appendVoice( x ) ;		// index of next buffer
 									v_index = x ;		// Last buffer sent
@@ -952,6 +997,65 @@ void voice_task(void* pdata)
 			__disable_irq() ;
 			Voice.VoiceQueueCount -= 1 ;
 			__enable_irq() ;
+		 }
+		 else
+		 {
+		 	// Play a tone
+			if (ToneQueueRidx != ToneQueueWidx)
+//		 	if ( PlayingTone == 1 )
+			{
+				int32_t toneOver ;
+
+//				queueTone( 1, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 2, 10 ) ;	// Now
+//				queueTone( 0, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 10, 1 ) ;  // Asap
+//				queueTone( 0, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 2, 10 ) ;	// Asap
+	        
+				beginToneFill() ;
+				toneFill( VoiceBuffer[0].dataw ) ;
+				currentFrequency = VoiceBuffer[0].frequency = 16000 ;		// sample rate
+				toneFill( VoiceBuffer[1].dataw ) ;
+				VoiceBuffer[1].count = VOICE_BUFFER_SIZE ;
+				VoiceBuffer[1].frequency = currentFrequency ;
+				toneFill( VoiceBuffer[2].dataw ) ;
+				VoiceBuffer[2].count = VOICE_BUFFER_SIZE ;
+				VoiceBuffer[2].frequency = currentFrequency ;
+				startVoice( NUM_VOICE_BUFFERS ) ;
+//				PlayingTone = 2 ;
+				for(x = 0;;)
+				{
+					while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
+					{
+						CoTickDelay(1) ;					// 2mS for now
+					}
+					toneOver = toneFill( VoiceBuffer[x].dataw ) ;
+					VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
+					VoiceBuffer[x].frequency = currentFrequency ;
+					appendVoice( x ) ;		// index of next buffer
+					v_index = x ;		// Last buffer sent
+					x += 1 ;
+					if ( x > NUM_VOICE_BUFFERS - 1 )
+					{
+						x = 0 ;							
+					}
+					if ( toneOver )
+					{
+						// finish
+						x = 100 ;
+ 						while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
+						{
+							CoTickDelay(1) ;					// 2mS for now
+							if ( --x == 0 )
+							{
+								break ;		// Timeout, 200 mS
+							}
+						}
+						endVoice() ;
+//						PlayingTone = 0 ;
+						break ;
+					}
+				}
+			}
+		 }
 		}
 		else
 		{
@@ -960,4 +1064,223 @@ void voice_task(void* pdata)
 		CoTickDelay(1) ;					// 2mS for now
 	} // for(;;)
 }
+
+uint16_t Sine16k[32] =
+{
+//	2048,2268,2471,2605,2648,2605,2471,2268,
+//	2048,1826,1623,1490,1448,1490,1623,1826
+	2048,2165,2278,2381,2472,2547,2602,2636,
+	2648,2636,2602,2547,2472,2381,2278,2165,
+	2048,1931,1818,1715,1624,1549,1494,1460,
+	1448,1460,1494,1549,1624,1715,1818,1931
+} ;
+
+//static uint8_t toneIndex ;
+//static uint16_t toneTime ;
+
+/*static*/ uint16_t toneCount ;
+/*static*/ uint8_t toneTimer ;
+/*static*/ uint8_t toneTimeLeft ;
+/*static*/ int8_t toneFreqIncr ;
+/*static*/ uint8_t frequency ;
+/*static*/ uint8_t tonePause ;
+/*static*/ uint8_t toneRepeat ;
+/*static*/ uint8_t toneOrPause ;
+/*static*/ uint8_t toneActive ;
+
+
+void beginToneFill()
+{
+//	toneTimer = 160 ;
+//	toneCount = 0 ;
+	toneActive = 0 ;
+//	toneTimeLeft = ToneEntry.toneTimeLeft ;
+//	toneFreqIncr = ToneEntry.toneFreqIncr ;
+//	frequency = ToneEntry.toneFreq ;
+//	tonePause = ToneEntry.tonePause ;
+//	toneRepeat = ToneEntry.toneRepeat ;
+}
+
+
+void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8_t pause, uint8_t repeat )
+{
+	struct toneQentry *ptr_queue ;
+  uint8_t nextWidx ;
+
+	if ( place )	// playNow so put at front
+	{
+		ToneQueueWidx = ToneQueueRidx ;		// Discard queue
+	}
+	else
+	{
+		if ( !ToneFreeSlots() )
+		{
+			return ;
+		}
+	}
+  nextWidx = (ToneQueueWidx + 1) % AUDIO_QUEUE_LENGTH;
+  if (nextWidx != ToneQueueRidx)
+	{
+		ptr_queue = &ToneQueue[ToneQueueWidx] ;
+		ptr_queue->toneFreq = freq ;
+		ptr_queue->toneFreqIncr = freqInc ;
+		ptr_queue->toneTimeLeft = time ;
+		ptr_queue->tonePause = pause ;
+		ptr_queue->toneRepeat = repeat ;
+		ToneQueueWidx = nextWidx ;
+	}
+}
+
+
+
+void nextToneData()
+{
+	if ( Voice.VoiceQueueCount )
+	{
+		ToneQueueWidx = ToneQueueRidx ;		// Discard queue
+		return ;
+	}
+
+	if ( toneActive == 0 )
+	{
+		if (ToneQueueRidx != ToneQueueWidx)
+		{
+			ToneEntry = ToneQueue[ToneQueueRidx] ;
+			ToneQueueRidx = (ToneQueueRidx + 1) % AUDIO_QUEUE_LENGTH;
+			toneTimeLeft = ToneEntry.toneTimeLeft ;
+			toneFreqIncr = ToneEntry.toneFreqIncr ;
+			frequency = ToneEntry.toneFreq ;
+			tonePause = ToneEntry.tonePause ;
+			toneRepeat = ToneEntry.toneRepeat ;
+			toneOrPause = 0 ;		// Tone
+			toneTimer = 160 ;
+//			if ( tonePause || toneRepeat)
+//			{
+				toneActive = 1 ;
+//			}
+		}
+		return ;
+	}
+	 
+	if ( toneOrPause == 0 )		// Tone
+	{ // Look at pause
+		if ( tonePause )
+		{
+			toneOrPause = 1 ;		// Pause
+			toneTimer = 160 ;
+			frequency = 0 ;
+			toneTimeLeft = tonePause ;
+			tonePause = 0 ;
+			if ( toneRepeat == 0 )
+			{
+				toneActive = 0 ;
+			}
+		}
+	}
+	else
+	{ // End of pause, check for repeat
+		if ( toneRepeat )
+		{
+			toneRepeat -= 1 ;
+			toneTimer = 160 ;
+			toneCount = 0 ;
+			toneTimeLeft = ToneEntry.toneTimeLeft ;
+			toneFreqIncr = ToneEntry.toneFreqIncr ;
+			frequency = ToneEntry.toneFreq ;
+			tonePause = ToneEntry.tonePause ;
+			toneOrPause = 0 ;		// Tone
+			if ( (tonePause == 0) && (toneRepeat == 0) )
+			{
+				toneActive = 0 ;
+			}
+		}
+	}
+}
+
+// This for 16kHz sample rate
+// Returns +ve or zero, remaining time
+//   -ve offset into buffer of blank time
+int32_t toneFill( uint16_t *buffer )
+{
+	uint32_t i = 0 ;
+	uint32_t y ;
+
+	if ( toneTimeLeft == 0 )
+	{
+		nextToneData() ;
+	}
+
+	while ( toneTimeLeft )
+	{
+		while ( i < 512 )
+		{
+			if ( toneTimer-- )
+			{
+				toneCount += frequency ;
+				y = ( toneCount & 0x01F0) >> 4 ;
+				*buffer++ = frequency ? Sine16k[y] : 2048 ;
+				i += 1 ;
+			}
+			else
+			{
+				if ( --toneTimeLeft == 0 )
+				{
+					break ;
+				}
+				else
+				{
+					if ( frequency )
+					{
+						frequency += toneFreqIncr ;
+					}
+					toneTimer = 160 ;
+				}
+			}
+		}
+		if ( i >= 512 )
+		{
+			break ;
+		}
+		nextToneData() ;
+	}
+	while ( i < 512 )
+	{
+  	*buffer++ = 2048 ;
+		i += 1 ;
+	}
+	return toneTimeLeft == 0 ;
+}
+
+// This for 16kHz sample rate
+// Returns +ve or zero, remaining time
+//   -ve offset into buffer of blank time
+//int32_t xtoneFill( uint16_t *buffer, uint32_t frequency, uint32_t timeMs )
+//{
+//	uint32_t i = 0 ;
+//	uint32_t y ;
+
+//	while ( i < 512 )
+//	{
+//		toneCount += frequency ;
+//		y = ( toneCount & 0x01F0) >> 4 ;
+//		*buffer++ = Sine16k[y] ;
+//		i += 1 ;
+//		if ( --timeMs == 0 )
+//		{
+//			break ;
+//		}
+//	}
+//	y = i ;
+//	if ( i )
+//	{ // sine finished, but not buffer
+//		while ( i < 512 )
+//		{
+//	  	*buffer++ = 2048 ;
+//			i += 1 ;
+//		}
+//	}
+//	return timeMs > 0 ? timeMs : -(int32_t)y ;
+//}
+
+
 

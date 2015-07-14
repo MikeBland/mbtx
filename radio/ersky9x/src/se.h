@@ -109,7 +109,7 @@
 #define ISTR_MSTACK_UFLOW    "mStack uflow"
 #define ISTR_MSTACK_OFLOW    "mStack oflow"
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define ISTR_CHANS_GV        "\004P1  P2  P3  HALVFULLCYK1CYK2CYK3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8KN1 KN2 KN3 KN4 KN5 KN6 KN7 KN8 KN9 KN10KN11KN12KN13KN14KN15KN16KN17KN18KN19KN20KN21KN22KN23KN24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW       "\004P1  P2  P3  HALVFULLCYK1CYK2CYK3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8KN1 KN2 KN3 KN4 KN5 KN6 KN7 KN8 KN9 KN10KN11KN12KN13KN14KN15KN16KN17KN18KN19KN20KN21KN22KN23KN24SWCH"
 #endif
@@ -164,7 +164,7 @@
 #define ISTR_COPY_TRIM       "LAGRA TRIM[MENU]"
 #define ISTR_TELEMETRY       "TELEMETRI"
 #define ISTR_USR_PROTO       "Protokoll"
-#define ISTR_FRHUB_WSHHI    "\005FrHubWSHhiDSMx Jeti MavlkArduP"
+#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti MavlkArduP"
 #define ISTR_MET_IMP         "\003MetImp"
 #define ISTR_A_CHANNEL       "A  kanal"
 #define ISTR_ALRM            "alrm"
@@ -182,7 +182,7 @@
 #define ISTR_2SWITCH         "\001Brytare"
 #define ISTR_2SENSITIVITY    "\001Noggrannhet"
 #define ISTR_GLOBAL_VARS     "GLOBALA VAR"
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define ISTR_GV_SOURCE       "\003---RtmEtmTtmAtmRENRodHjdGasSkeP1 P2 P3 k1 k2 k3 k4 k5 k6 k7 k8 k9 k10k11k12k13k14k15k16k17k18k19k20k21k22k23k24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24"
 #define ISTR_EXTRA_SOURCE   ""
 #endif
@@ -261,7 +261,7 @@
 #define ISTR_PROTO           "Proto"
 // ISTR_21_USEC after \021 max 4 chars
 #define ISTR_21_USEC         "\021uSek"
-#define ISTR_13_RXNUM        "\013RxNum"
+#define ISTR_13_RXNUM        "\014RxNum"
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US           "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
@@ -353,9 +353,9 @@
 #define ISTR_MODE            "Fas"
 
 // SWITCHES_STR 3 chars each
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBSP)
 #define ISWITCHES_STR        "\003GASRODHJDID0ID1ID2SKELANTRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfTH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\2016P06P16P26P36P46P5PB1PB2"
-#define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSH6P"
+//#define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSH6P"
 #define IHW_SWITCHARROW_STR  "\200-\201"
 #endif
 #ifdef PCBX9D
@@ -448,7 +448,7 @@
 #define ISTR_RANGE_RSSI      "R\304CKVIDD RSSI:"
 #define ISTR_FAILSAFE        "FAILSAFE"
 #define ISTR_VOLUME_CTRL     "Volymkontroll"
-#define ISTR_PROT_OPT				"\006PPM   PXX   DSM2  Assan "
+#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
 #define ISTR_TYPE            " Typ"
 #define ISTR_COUNTRY         " Land"
 #define ISTR_SP_FAILSAFE     " Failsafe"
@@ -469,6 +469,8 @@
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Critical"
 #define ISTR_BT_TRAINER		  "BT as Trainer"
+#define ISTR_MULTI_TYPE     "Protocol\037Type\037Autobind\037Bind\037Range"
+#define ISTR_MULTI_OPTION   "\014Option"
 
 //"RSSI Warn"
 //"RSSI Critical"
