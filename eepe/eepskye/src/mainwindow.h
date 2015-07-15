@@ -75,10 +75,8 @@ protected:
 
 private slots:
 
-    void replyGFinished(QNetworkReply * reply);
     void reply1Finished(QNetworkReply * reply);
     void reply2Finished(QNetworkReply * reply);
-    void replyGssl( QNetworkReply * reply, const QList<QSslError> & list) ;
 
     void reply1Accepted();
     void reply2Accepted();

@@ -1,0 +1,15 @@
+#! /bin/bash
+
+C:/Progs/QtSDK/Simulator/Qt/mingw/bin/lupdate eepe.pro
+C:/Progs/QtSDK/Simulator/Qt/mingw/bin/lconvert -i eepe_.ts -o eepe_.po
+C:/Progs/QtSDK/Simulator/Qt/mingw/bin/lconvert -i eepe_he.ts -o eepe_he.po
+C:/Progs/QtSDK/Simulator/Qt/mingw/bin/lconvert -i eepe_fr.ts -o eepe_fr.po
+C:/Progs/QtSDK/Simulator/Qt/mingw/bin/lrelease eepe.pro
+rm eepe_.qm
+
+if [ ! -d "lang" ]; then
+    mkdir lang
+fi
+
+cp *.qm lang
+mv *.qm ../winbuildessentials

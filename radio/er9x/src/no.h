@@ -167,6 +167,7 @@
 #define STR_V_OPT1         "\007 8 Secs12 Secs16 Secs"
 #define STR_VS             "VS"
 #define STR_VOICE_OPT      "\006PÅ    AV    BEGGE 15Secs30Secs60SecsVaribl"
+#define STR_VOICE_V2OPT    "\004  PÅ  AVBEGG ALLONCE"
 #define STR_CUST_SWITCH    "LOGICAL BRYTERE"
 //#define STR_S              "S"
 #define STR_15_ON          "\015På"

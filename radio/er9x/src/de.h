@@ -169,6 +169,7 @@
 #define STR_V_OPT1         "\007 8 Sek 12 Sek 16 Sek "
 #define STR_VS             "VS" // ?
 #define STR_VOICE_OPT      "\006AN    AUS   BEIDE 15Sek 30Sek 60Sek Eigene"
+#define STR_VOICE_V2OPT    "\004  AN AUSBEID ALLONCE"
 #define STR_CUST_SWITCH    "IND. SCHALTER" // Individueller Schalter
 //#define STR_S              "S"
 #define STR_15_ON          "\015An"

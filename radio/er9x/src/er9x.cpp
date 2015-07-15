@@ -63,8 +63,10 @@ void checkTHR( void );
 ///   Pr�ft beim Einschalten ob alle Switches 'off' sind.
 void checkSwitches( void );
 
+#ifdef V2
 #ifdef USE_ADJUSTERS
 static void	processAdjusters( void ) ;
+#endif
 #endif
 int8_t getGvarSourceValue( uint8_t src ) ;
 

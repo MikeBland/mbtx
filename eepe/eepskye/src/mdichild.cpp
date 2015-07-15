@@ -1026,6 +1026,10 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				{
 					result = EEFULLSIZE ;
 				}
+        if (result==EESIZE)
+        {
+          result = EEFULLSIZE ;
+        }
 
 
         if (result!=EEFULLSIZE)
