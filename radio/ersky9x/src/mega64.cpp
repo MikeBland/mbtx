@@ -17,9 +17,10 @@
 // 0x01, 0x11, 16 bit address, 8 bit data, 0x01  - Write EEPROM value
 // 0x01, 0x12, 16 bit address, 0x01  - send 32 bytes EEPROM data @ address
 // 0x01, 0x13, 2 bytes data - contrast and backlight, 0x01
+// 0x01, 0x14, 2 bytes data - haptic on/off(1/0), haptic strength, 0x01
 // 
 // From 9X
-// 0x01, 0x80, switches, buttons, trims, sticks, pots, 0x01
+// 0x01, 0x80, switches, buttons, trims, sticks, pots, enc_switch, enc_position, revision, 0x01
 // 0x01, 0x81, 16 bit address, 32 bytes data, 0x01	- 32 bytes EEPROM data
 // 0x01, 0x82, 16 bytes data, 0x01	- 8 trainer inputs
 
@@ -51,45 +52,68 @@
 #include "lcd.h"
 #include "drivers.h"
 #include "CoOS.h"
+#include "string.h"
+#include "isp.h"
 
-#define PORT9X_ID          ID_UART4
+#define PORT9X_ID          ID_USART1
 #define PORT9X_BAUDRATE    200000
-#define PORT9X_UART       UART4
-#define PORT9X_UART_IRQn  UART4_IRQn
+#define PORT9X_UART       USART1
+#define PORT9X_UART_IRQn  UART1_IRQn
 
 uint8_t TxBuffer[140] ;
 volatile uint8_t TxBusy ;
 uint8_t DisplaySequence ;
+uint8_t SendDisplay ;
+uint8_t ResendDisplay ;
 
-uint8_t TempBuffer[6] ;
+//uint8_t TempBuffer[6] ;
 
-uint8_t Buttons ;
-uint8_t Trims ;
-uint16_t Switches ;
+uint8_t M64Buttons ;
+uint8_t M64Trims ;
+uint8_t M64Contrast ;
+uint8_t M64SetContrast ;
+uint16_t M64Switches ;
+uint8_t M64EncoderPosition ;
+uint8_t M64Revision ;
+uint8_t M64Received ;
 
-uint16_t Analog[8] ;
+uint8_t M64SetHaptic ;
+uint8_t M64HapticOnOff ;
+uint8_t M64HapticStrength ;
+
+uint16_t M64Overruns ;
+uint16_t M64CountErrors ;
+
+uint8_t M64Display[1024] ;
+
+uint16_t M64Analog[8] ;
 
 //uint8_t EepromImage[4096] ;
 //uint16_t EepromAddress ;
 //uint8_t ReadingEeprom ;
 
-struct t_fifo64 Arduino_fifo ;
+struct t_fifo64 mega64_fifo ;
+extern struct t_fifo64 RemoteRx_fifo ;
   
-void USART1_Configure( uint32_t baudrate, uint32_t masterClock)
+static void USART1_Configure( uint32_t baudrate )
 {
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;			// Enable DMA2 clock
 
-	configure_pins( GPIO_Pin_7, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_7 | PIN_PORTB | PIN_NO_PULLUP ) ;
-	configure_pins( GPIO_Pin_6, PIN_PERIPHERAL | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTB ) ;
+	configure_pins( GPIO_Pin_7, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTB | PIN_NO_PULLUP ) ;
+	configure_pins( GPIO_Pin_6, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTB ) ;
+//	GPIOB->MODER = (GPIOB->MODER & 0xFFFF0FFF ) | 0x0000A000 ;	// Alternate func.
+//	GPIOB->AFR[0] = (GPIOB->AFR[0] & 0x00FFFFFF ) | 0x77000000 ;	// Alternate func.
 
-	USART1->BRR = PeripheralSpeeds.Peri2_frequency / 100000 ;
-	USART1->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_M | USART_CR1_PCE ;
+	USART1->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+//	USART1->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_M | USART_CR1_PCE | USART_CR1_TE ;
+	USART1->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE ;
 	USART1->CR2 = 0 ;
 	USART1->CR3 = 0 ;
 	(void) USART1->DR ;
-	NVIC_SetPriority( USART1_IRQn, 4 ) ; // Lower priority interrupt
-//  NVIC_EnableIRQ(USART1_IRQn) ;
+	NVIC_SetPriority( USART1_IRQn, 2 ) ; // Slightly higher priority interrupt
+  NVIC_EnableIRQ(USART1_IRQn) ;
 }
 
 extern "C" void USART1_IRQHandler()
@@ -103,13 +127,19 @@ extern "C" void USART1_IRQHandler()
 	if ( status & USART_SR_RXNE )
 	{
 		data = USART1->DR ; // USART data register
-		struct t_fifo64 *pfifo = &Arduino_fifo ;
+		struct t_fifo64 *pfifo = &mega64_fifo ;
   	uint32_t next = (pfifo->in+1) & 0x3f;
 		if ( next != pfifo->out )
 		{
 			pfifo->fifo[pfifo->in] = data ;
 			pfifo->in = next ;
 		}
+	}
+
+	if ( status & USART_SR_ORE )
+	{
+		M64Overruns += 1 ;
+		data = USART1->DR ; // USART data register
 	}
 
 //  if ( pUsart->US_IMR & US_IMR_ENDTX )
@@ -179,23 +209,38 @@ extern "C" void USART1_IRQHandler()
 //	pUsart->US_IER = US_IER_RXRDY ;
 //}
 
-//uint32_t txPdcUsart( uint8_t *buffer, uint32_t size )
-//{
-//  register Usart *pUsart = PORT9X_USART ;
 
-//	if ( pUsart->US_TNCR == 0 )
-//	{
-//	  pUsart->US_TNPR = (uint32_t)buffer ;
-//		pUsart->US_TNCR = size ;
-//		pUsart->US_PTCR = US_PTCR_TXTEN ;
-//		(void) pUsart->US_CSR ;
-//		pUsart->US_IER = US_IER_ENDTX ;
-//		TxBusy = 1 ;
-//		NVIC_EnableIRQ(PORT9X_USART_IRQn) ;
-//		return 1 ;
-//	}
-//	return 0 ;
-//}
+
+// Using USART1
+// DMA2, channel 4, stream 7
+
+uint32_t txPdcUsart( uint8_t *buffer, uint32_t size )
+{
+	DMA2_Stream7->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+	DMA2_Stream7->CR = DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0
+										 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 ;
+	DMA2_Stream7->PAR = (uint32_t) &USART1->DR ;
+	DMA2_Stream7->M0AR = (uint32_t) buffer ;
+////	DMA2_Stream7->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
+	DMA2_Stream7->NDTR = size ;
+	DMA2->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7 ; // Write ones to clear bits
+	DMA2_Stream7->CR |= DMA_SxCR_EN ;		// Enable DMA
+	USART1->CR3 |= USART_CR3_DMAT ;
+	TxBusy = 1 ;
+	DMA2_Stream7->CR |= DMA_SxCR_TCIE ;
+	NVIC_SetPriority( DMA2_Stream7_IRQn, 5 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ( DMA2_Stream7_IRQn ) ;
+	return 0 ;
+}
+
+extern "C" void DMA2_Stream7_IRQHandler()
+{
+	USART1->CR3 &= ~USART_CR3_DMAT ;
+	DMA2_Stream7->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+	DMA2_Stream7->CR &= ~DMA_SxCR_TCIE ;	// Stop interrupt
+	TxBusy = 0 ;
+}
+
 
 //void USART1_Handler()
 //{
@@ -208,7 +253,7 @@ extern "C" void USART1_IRQHandler()
 //	if ( status & US_CSR_RXRDY )
 //	{
 //		data = pUsart->US_RHR ; // USART data register
-//		struct t_fifo64 *pfifo = &Arduino_fifo ;
+//		struct t_fifo64 *pfifo = &mega64_fifo ;
 //  	uint32_t next = (pfifo->in+1) & 0x3f;
 //		if ( next != pfifo->out )
 //		{
@@ -263,8 +308,10 @@ uint8_t SlaveType ;
 uint8_t *SlavePtr ;
 uint8_t SlaveActionRequired ;
 uint8_t SlaveDisplayRefresh ;
+uint8_t SlaveRxCount ;
 
-uint8_t SlaveTempReceiveBuffer[80] ;
+#define SLAVE_RX_SIZE		80
+uint8_t SlaveTempReceiveBuffer[SLAVE_RX_SIZE] ;
 
 #define SlaveWaitSTX		0
 #define SlaveGotSTX			1
@@ -305,6 +352,7 @@ void processSlaveByte( uint8_t byte )
 		case SlaveData :
 			if ( byte == 1 )
 			{
+				SlaveRxCount = SlavePtr - SlaveTempReceiveBuffer ;
 				SlaveActionRequired = 1 ;
 				SlaveState = SlaveWaitSTX ;
 			}
@@ -321,109 +369,175 @@ void processSlaveByte( uint8_t byte )
 						byte &= 0x7F ;
 						SlaveStuff = 0 ;
 					}
-				  *SlavePtr++ = byte ;
+					if ( SlavePtr < &SlaveTempReceiveBuffer[SLAVE_RX_SIZE] )
+					{
+				  	*SlavePtr++ = byte ;
+					}
 				}
 			}
-			
 		break ;
 	}
-
 }
 
+uint8_t RemData[20] ;
+uint8_t RemIndex ;
+uint8_t RemState ;
+uint8_t RemStuff ;
+uint8_t RemCsum ;
+uint8_t RemValid ;
+uint16_t RemOkCount ;
+uint16_t RemBadCount ;
+
+static void poll_mega64()
+{
+	int16_t byte ;
+	while ( ( byte = get_fifo64( &mega64_fifo ) ) != -1 )
+	{
+		processSlaveByte( byte ) ;
+		if (SlaveActionRequired)
+		{
+			SlaveActionRequired = 0 ;
+			if ( SlaveType == 0x80 )
+			{
+				if ( SlaveRxCount == 22 )	// Check in case of overrun error
+				{
+					uint16_t switches ;
+					byte = SlaveTempReceiveBuffer[0] ;
+					M64Buttons = byte & 0x7E ;
+					M64Trims = SlaveTempReceiveBuffer[1] ;
+					switches = SlaveTempReceiveBuffer[2] | ( ( byte & 1 ) << 8 ) ;
+					if ( SlaveTempReceiveBuffer[19] & 0x20 )
+					{
+						switches |= 0x0200 ;	// Encoder switch
+					}
+					M64Switches = switches ;
+					M64Analog[0] = SlaveTempReceiveBuffer[3] | ( SlaveTempReceiveBuffer[4] << 8 ) ;
+					M64Analog[1] = SlaveTempReceiveBuffer[5] | ( SlaveTempReceiveBuffer[6] << 8 ) ;
+					M64Analog[2] = SlaveTempReceiveBuffer[7] | ( SlaveTempReceiveBuffer[8] << 8 ) ;
+					M64Analog[3] = SlaveTempReceiveBuffer[9] | ( SlaveTempReceiveBuffer[10] << 8 ) ;
+					M64Analog[4] = SlaveTempReceiveBuffer[11] | ( SlaveTempReceiveBuffer[12] << 8 ) ;
+					M64Analog[5] = SlaveTempReceiveBuffer[13] | ( SlaveTempReceiveBuffer[14] << 8 ) ;
+					M64Analog[6] = SlaveTempReceiveBuffer[15] | ( SlaveTempReceiveBuffer[16] << 8 ) ;
+					M64Analog[7] = SlaveTempReceiveBuffer[17] | ( SlaveTempReceiveBuffer[18] << 8 ) ;
+					M64EncoderPosition = SlaveTempReceiveBuffer[20] ;
+					M64Revision = SlaveTempReceiveBuffer[21] ;
+					M64Received = 1 ;
+				}
+				else
+				{
+					M64CountErrors += 1 ;
+					
+				}
+			}
+//			else if ( SlaveType == 0x81 )	// EEPROM data
+//			{
+//				uint16_t address ;
+//				uint32_t i ;
+//				address = SlaveTempReceiveBuffer[0] | ( SlaveTempReceiveBuffer[1] << 8 ) ;
+//				for ( i = 2 ; i < 34 ; i += 1 )
+//				{
+//					EepromImage[address++] = SlaveTempReceiveBuffer[i] ;
+//				}
+//				EepromAddress += 32 ;
+//				ReadingEeprom = 1 ;
+//			}
+		}
+	}
+	while ( ( byte = get_fifo64( &RemoteRx_fifo ) ) != -1 )
+	{
+		if ( RemState == 0 )
+		{
+			if ( byte == 0x55 )
+			{
+				RemState = 1 ;
+				RemIndex = 0 ;
+				RemCsum = 0 ;
+			}
+		}
+		else
+		{
+			if ( RemStuff )
+			{
+				RemStuff = 0 ;
+				byte |= 0x50 ;
+			}
+			else
+			{
+				if ( byte == 0x56 )
+				{
+					RemStuff = 1 ;
+					continue ;
+				}
+			}
+			RemData[RemIndex++] = byte ;
+			if ( RemIndex == 13 )
+			{
+				RemState = 0 ;
+				if ( RemCsum == RemData[12] )
+				{
+					// Accept data
+					RemValid = 1 ;
+					RemOkCount += 1;
+				}
+				else
+				{
+					RemValid = 0 ;
+					RemBadCount += 1 ;
+				}
+			}
+			else
+			{
+				RemCsum += byte ;
+			}
+
+		}
+	}
+}
 
 // the loop function runs over and over again forever
-//void loop()
-//{
-//	uint8_t count ;
+void checkM64()
+{
+	uint8_t count ;
 //	int16_t byte ;
 
-//	if ( Tenms )
-//	{
-//		Tenms = 0 ;
-//		SendProtocol = 1 ;
-//	}
-//	if ( SendProtocol )
-//	{
-//		if ( TxBusy == 0  )
-//		{
-//			uint8_t index = 0 ;
-//			uint8_t buffer[34] ;
-//			buffer[0] = 0 ;		// PPM
-//			buffer[1] = 0 ;		// sub-protocol/ num channels for PPM
-
-//			for ( count = 2 ; count < 34 ; count += 2 )
-//			{
-//				buffer[count] = Channel[index] ;
-//				buffer[count+1] = Channel[index] >> 8 ;
-//				index += 1 ;
-//			}
-//			count = fillTxBuffer( buffer, 0x10, 34 ) ;
-//			txPdcUsart( TxBuffer, count ) ;
-//			SendProtocol = 0 ;
-//		}
-//	}
-//	if ( OnehundredmS )
-//	{
-////		StartDelay = 1 ;
-//		lcd_clear() ;
-//		lcd_puts_Pleft( 0, "Arduino Due" ) ;
-//		lcd_outhex4( 17*FW, 0, HexCounter ) ;
-//		lcd_puts_Pleft( 7*FH, "Bottom Line\020End" ) ;
-
-//		lcd_puts_Pleft( 2*FH, "Buttons" ) ;
-//		lcd_outhex4( 10*FW, 2*FH, Buttons ) ;
-//		lcd_puts_Pleft( 3*FH, "Trims" ) ;
-//		lcd_outhex4( 10*FW, 3*FH, Trims ) ;
-//		lcd_puts_Pleft( 4*FH, "Switches" ) ;
-//		lcd_outhex4( 10*FW, 4*FH, Switches ) ;
-
-//		lcd_outhex4( 16*FW, 2*FH, Analog[0] ) ;
-//		lcd_outhex4( 16*FW, 3*FH, Analog[1] ) ;
-//		lcd_outhex4( 16*FW, 4*FH, Analog[2] ) ;
-//		lcd_outhex4( 0, 5*FH, Analog[3] ) ;
-//		lcd_outhex4( 26, 5*FH, Analog[4] ) ;
-//		lcd_outhex4( 52, 5*FH, Analog[5] ) ;
-//		lcd_outhex4( 78, 5*FH, Analog[6] ) ;
-//		lcd_outhex4( 104, 5*FH, Analog[7] ) ;
-
-//		lcd_outhex4( 0, 6*FH, EepromAddress ) ;
-		
-//		lcd_char_inverse( 0, 7*FH, 127, 1 ) ;
-//		SendDisplay = 1 ;
-//		OnehundredmS = 0 ;
-//	}
+	poll_mega64() ;
 	
-//	if ( SendDisplay )
-//	{
-//		if ( TxBusy == 0 )
-//		{
-//			count = fillTxBuffer( DisplayBuf, 0, 64 ) ;
-//			DisplaySequence = 0x81 ;
-//			txPdcUsart( TxBuffer, count ) ;
-//			SendDisplay = 0 ;
-//		}
-//	}
-
-//	if ( OneSecond )
-//	{
-//		HexCounter += 1 ;
-//		if ( OutputState )
-//		{
-//			OutputState = 0 ;
-////			PIOA->PIO_SODR = 0x0800 ;
-//			PIOB->PIO_SODR = 0x08000000 ;
-
-//		}
-//		else
-//		{
-//			OutputState = 1 ;
-//			PIOB->PIO_CODR = 0x08000000 ;
-////			PIOA->PIO_CODR = 0x0800 ;
-////		  PORT9X_USART->US_THR = 0x2A ;
-//		}
-////		UART->UART_THR = 0x55 + Console_fifo.in ;
-//		OneSecond = 0 ;
-//	}
+	if ( M64SetHaptic )
+	{
+		if ( TxBusy == 0 )
+		{
+			uint8_t buf[2] ;
+			buf[0] = M64HapticOnOff ;
+			buf[1] = M64HapticStrength ;
+			count = fillTxBuffer( buf, 0x14, 2 ) ;
+			txPdcUsart( TxBuffer, count ) ;
+			M64SetHaptic = 0 ;
+		}
+	}
+	
+	if ( M64SetContrast )
+	{
+		if ( TxBusy == 0 )
+		{
+			uint8_t buf[2] ;
+			buf[0] = M64Contrast ;
+			buf[1] = 50 ;	// Brightness - unused
+			count = fillTxBuffer( buf, 0x13, 2 ) ;
+			txPdcUsart( TxBuffer, count ) ;
+			M64SetContrast = 0 ;
+		}
+	}
+	
+	if ( SendDisplay )
+	{
+		if ( TxBusy == 0 )
+		{
+			count = fillTxBuffer( M64Display, 0, 64 ) ;
+			DisplaySequence = 0x81 ;
+			txPdcUsart( TxBuffer, count ) ;
+			SendDisplay = 0 ;
+		}
+	}
 
 //	if ( ReadingEeprom == 1 )
 //	{
@@ -449,21 +563,31 @@ void processSlaveByte( uint8_t byte )
 //		}
 //	}
 	 
-//	if ( DisplaySequence )
-//	{
-//		if ( TxBusy == 0 )
-//		{
-//			count = fillTxBuffer( &DisplayBuf[64*(DisplaySequence & 0x0F)], DisplaySequence & 0x0F, 64 ) ;
-//			txPdcUsart( TxBuffer, count ) ;
-//			DisplaySequence += 1 ;
-//			if ( DisplaySequence > 0x8F)
-//			{
-//				DisplaySequence = 0 ;
-//			}
-//		}
-//	}
-	
-//	while ( ( byte = get_fifo64( &Arduino_fifo ) ) != -1 )
+	if ( DisplaySequence )
+	{
+		
+		if ( TxBusy == 0 )
+		{
+			count = fillTxBuffer( &M64Display[64*(DisplaySequence & 0x0F)], DisplaySequence & 0x0F, 64 ) ;
+			txPdcUsart( TxBuffer, count ) ;
+			DisplaySequence += 1 ;
+			if ( DisplaySequence > 0x8F)
+			{
+				DisplaySequence = 0 ;
+				if ( ResendDisplay )
+				{
+					memcpy( M64Display, DisplayBuf, sizeof(M64Display) ) ;
+					ResendDisplay = 0 ;
+					SendDisplay = 1 ;
+				}
+			}
+		}
+	}
+
+
+
+	 
+//	while ( ( byte = get_fifo64( &mega64_fifo ) ) != -1 )
 //	{
 //		processSlaveByte( byte ) ;
 //		if (SlaveActionRequired)
@@ -499,7 +623,7 @@ void processSlaveByte( uint8_t byte )
 //		}
 //	}
 //  wdt_reset() ;
-//}
+}
 
 //void main_loop(void* pdata)
 //{
@@ -515,5 +639,24 @@ void processSlaveByte( uint8_t byte )
 ////		PIOA->PIO_CODR = 0x0800 ;
 //	}
 //}
+
+void displayToM64()
+{
+	if ( DisplaySequence == 0 )
+	{
+		memcpy( M64Display, DisplayBuf, sizeof(M64Display) ) ;
+		SendDisplay = 1 ;
+	}
+	else
+	{
+		ResendDisplay = 1 ;
+	}
+}
+
+void initM64()
+{
+	ispForceResetOff() ;
+	USART1_Configure( PORT9X_BAUDRATE ) ;
+}
 
 

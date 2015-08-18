@@ -13,7 +13,7 @@
 *
 ****************************************************************************/
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #define PIN_MODE_MASK		0x0003
 #define PIN_INPUT				0x0000
 #define PIN_OUTPUT			0x0001

@@ -521,7 +521,7 @@ const uint8_t SpeedTable[] = { 1, 10, 12, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55
 // This routine is called every 10 mS, and checks for card
 // insertion and removal.
 // When a card is inserted, it initialises it ready for read/write access.
-void sd_poll_10mS()
+void sdPoll10mS()
 {
         uint32_t i ;
 

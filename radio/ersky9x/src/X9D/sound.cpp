@@ -32,7 +32,9 @@
 *
 ****************************************************************************/
 
-
+#ifdef PCB9XT
+#define SOFTWARE_VOLUME	1
+#endif
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -50,6 +52,10 @@
 #include "..\timers.h"
 #include "i2c_ee.h"
 #include "hal.h"
+#ifdef PCB9XT
+#include "mega64.h"
+#endif
+
 
 #define	TONE_MODE_2		1
 
@@ -249,8 +255,8 @@ void init_dac()
 	DAC->DHR12R1 = 2010 ;
 	DAC->SR = DAC_SR_DMAUDR1 ;		// Write 1 to clear flag
 	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 ;			// Enable DAC
-	NVIC_SetPriority( DMA1_Stream5_IRQn, 3 ) ; // Lower priority interrupt
-	NVIC_SetPriority( TIM6_DAC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( DMA1_Stream5_IRQn, 4 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM6_DAC_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(TIM6_DAC_IRQn) ;
 	NVIC_EnableIRQ(DMA1_Stream5_IRQn) ;
 }
@@ -426,20 +432,60 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
+#ifdef SOFTWARE_VOLUME
+static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+{
+//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
+	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+} ;
+
+uint16_t swVolumeLevel()
+{
+	return SwVolume_scale[CurrentVolume] ;
+}
+
+#endif	 
 
 void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
 {
+#ifdef SOFTWARE_VOLUME
+	uint32_t multiplier ;
+	int32_t value ;
+	multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+#endif	 
+	
 	while( count-- )
 	{
+#ifdef SOFTWARE_VOLUME
+		value = (int8_t) (*src++ - 128 ) ;
+		value *= multiplier ;
+		value += 32768 * 256 ;
+		*dest++ = value >> 12 ;
+#else
 		*dest++ = *src++ << 4 ;
+#endif	 
 	}
 }
 
 void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
 {
+#ifdef SOFTWARE_VOLUME
+	uint32_t multiplier ;
+	int32_t value ;
+	multiplier = SwVolume_scale[CurrentVolume] ;
+#endif	 
+	
 	while( count-- )
 	{
+#ifdef SOFTWARE_VOLUME
+		value = (int16_t) *src++ ;
+		value *= multiplier ;
+		value += 32768 * 256 ;
+		*dest++ = value >> 12 ;
+#else
 		*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+#endif	
 	}
 }
 
@@ -579,10 +625,10 @@ void setVolume( register uint8_t volume )
 	}
 	CurrentVolume = volume ;
 	volume = Volume_scale[volume] ;
-#ifdef PCBSP
+#ifdef PCB9XT
 #else
 	I2C_set_volume( volume ) ;
-#endif // PCBSP
+#endif // PCB9XT
 //	TargetVolume = volume ;
 //	if ( TargetVolume != ActualVolume )
 //	{
@@ -607,6 +653,26 @@ void setVolume( register uint8_t volume )
 }
 
 #ifndef REVPLUS
+#ifdef PCB9XT
+void initHaptic()
+{
+}
+
+void hapticOff()
+{
+	M64HapticOnOff = 0 ;
+	M64SetHaptic = 1 ;
+}
+
+// pwmPercent 0-100
+void hapticOn( uint32_t pwmPercent )
+{
+	M64HapticStrength = pwmPercent ;
+	M64HapticOnOff = 1 ;
+	M64SetHaptic = 1 ;
+}
+
+#else
 void initHaptic()
 {
 	configure_pins( GPIO_Pin_HAPTIC, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
@@ -623,6 +689,7 @@ void hapticOn( uint32_t pwmPercent )
 {
 	GPIOHAPTIC->BSRRL = GPIO_Pin_HAPTIC ;
 }
+#endif
 #endif
 
 

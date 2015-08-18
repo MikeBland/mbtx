@@ -142,7 +142,7 @@
 #define ER9X_128_URL   "http://www.er9x.com/er9x-128.hex"
 #define ER9X_128_S_URL   "http://www.er9x.com/er9x-128.hex"
 //#define ER9X_STAMP "http://www.er9x.com/stamp-er9x.h"
-#define EEPE_URL   "http://www.er9x.com/eePeInstall.zip"
+#define EEPE_URL   "http://www.er9x.com/eePeInstall.exe"
 //#define EEPE_STAMP "http://www.er9x.com/stamp-eepe.h"
 #define ER9X_DE_URL   "http://www.er9x.com/er9x-de.hex"
 #define ER9X_FRSKY_DE_URL   "http://www.er9x.com/er9x-frsky-de.hex"
@@ -486,7 +486,8 @@ void MainWindow::downloadLatester9x()
     QSettings settings("er9x-eePe", "eePe");
 
     QString dnldURL, baseFileName;
-    switch (settings.value("download-version", 0).toInt())
+		int index = settings.value("download-version", 0).toInt() ;
+    switch ( index )
     {
     case (DNLD_VER_ER9X_JETI):
         dnldURL = ER9X_JETI_URL;
@@ -525,7 +526,10 @@ void MainWindow::downloadLatester9x()
         dnldURL = ER9X_FRSKY_DE_URL;
         baseFileName = "er9x-frsky-de.hex";
         break;
-    
+    case (DNLD_VER_ER9X_FRSKY_SV):
+        dnldURL = ER9X_FRSKY_SV_URL;
+        baseFileName = "er9x-frsky-sv.hex";
+    break;
 
     case (DNLD_VER_ER9X_2561):
         dnldURL = ER9X_2561_URL;
@@ -1218,7 +1222,7 @@ void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepe-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Erez Raviv &copy;2010<br>");
-    aboutStr.append(QString("<a href='http://code.google.com/p/eepe/'>http://code.google.com/p/eepe/</a><br>Revision: %1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the er9x firmware useful please support by donating<br>"));
 		aboutStr.append(" <a href='" DONATE_MB_STR "'>");
     aboutStr.append(tr("to Mike Blandford (current maintainer)") + "</a><br>");

@@ -44,10 +44,19 @@ F_CPU = 16000000
 FORMAT = ihex
 
 # Target file name (without extension).
+
+ifeq ($(SLAVE), YES)
+ ifeq ($(CPU), 2561)
+ TARGET = slave2561
+ else
+ TARGET = slave
+ endif
+else
 ifeq ($(V2), YES)
 TARGET = mbtx
 else
 TARGET = er9x
+endif
 endif
 
 # Object files directory
@@ -66,7 +75,13 @@ endif
 
 # List C++ source files here. (C dependencies are automatically generated.)
 #CPPSRC = $(TARGET).cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+
+ifeq ($(SLAVE), YES)
+CPPSRC = slave.cpp lcdslave.cpp
+else
 CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+endif
+
 ifeq ($(BOOT),YES)
  CPPSRC += optiboot.cpp
 endif
@@ -89,7 +104,9 @@ ifeq ($(EXT), NMEA)
 endif
 
 ifeq ($(CPU), 2561)
+ifneq ($(SLAVE), YES)
  CPPSRC += arduinoDue.cpp
+endif
 endif
 
 
@@ -774,6 +791,9 @@ extcoff: $(TARGET).elf
 	@echo
 	@echo $(MSG_FLASH) $@
 	$(OBJCOPY) -O $(FORMAT) -R .eeprom $< $@
+
+%bin: %elf
+	$(OBJCOPY) -O binary $< $@
 
 %.eep: %.elf
 	@echo

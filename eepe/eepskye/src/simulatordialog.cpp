@@ -2084,7 +2084,8 @@ void simulatorDialog::timerTick()
 
 // code for cx%
 //		val = throttle_val ;
-    val = calibratedStick[CONVERT_MODE(abs(g_model.timer[0].tmrModeA)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
+//    val = calibratedStick[CONVERT_MODE(abs(g_model.timer[0].tmrModeA)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
+  	val = calibratedStick[3-1];
    	if(tma>=TMR_VAROFS) // Cxx%
 		{
  	    val = chanOut[tma-TMR_VAROFS] ;

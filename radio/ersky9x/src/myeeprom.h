@@ -21,7 +21,7 @@
 
 //eeprom data
 //#define EE_VERSION 2
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define MAX_MODELS  60
 #else
 #define MAX_MODELS  32
@@ -154,7 +154,7 @@ PACK(typedef struct t_EEGeneral {
   char      ownerName[GENERAL_OWNER_NAME_LEN];
   uint8_t   switchWarningStates;
 	uint8_t		volume ;
-	uint8_t 	bright ;			// backlight
+	uint8_t 	bright ;			// backlight (red for 9Xt)
   uint8_t   stickGain;
 	uint8_t		mAh_alarm ;
 	uint16_t	mAh_used ;
@@ -170,7 +170,7 @@ PACK(typedef struct t_EEGeneral {
   int16_t   x9dcalibSpanPos ;	// X9D
 	uint8_t		stickReverse ;
 	uint8_t		language ;
-	uint8_t 	bright_white ;			// backlight(white) for PLUS
+	uint8_t 	bright_white ;			// backlight(white) for PLUS (green for 9Xt)
   int16_t   x9dPcalibMid ;			// X9D for PLUS
   int16_t   x9dPcalibSpanNeg ;	// X9D for PLUS
   int16_t   x9dPcalibSpanPos ;	// X9D for PLUS
@@ -195,6 +195,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		thrsource ;
 	uint8_t		elesource ;
 	uint8_t 	stickDeadband[4] ;
+	uint8_t 	bright_blue ;			// backlight(blue) for 9Xtreme
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 

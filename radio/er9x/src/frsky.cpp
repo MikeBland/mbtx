@@ -525,8 +525,6 @@ static bool checkSportPacket()
     crc += packet[i]; //0-1FF
     crc += crc >> 8; //0-100
     crc &= 0x00ff;
-    crc += crc >> 8; //0-0FF
-    crc &= 0x00ff;
   }
   return (crc == 0x00ff) ;
 }
@@ -1327,26 +1325,23 @@ void FRSKY_Init( uint8_t brate)
 #ifdef MULTI_PROTOCOL
 		if ( g_model.protocol == PROTO_MULTI ) // 125000
 		{
-			UCSR0A &= (1 << U2X0); // enable double speed operation.
-			UBRR0L = 16;			// if double speed is not allowed value is 8
+			UBRR0L = 7;
 			UBRR0H = 0;
 		}
 		else
 #endif // MULTI_PROTOCOL
 		{
-			UCSR0A &= ~(1 << U2X0); // disable double speed operation.
 			UBRR0L = UBRRL_VALUE;
 			UBRR0H = UBRRH_VALUE;
 		}
 	}
 	else // 57600
 	{
-//  	UCSR0A |= (1 << U2X0); // enable double speed operation.
-		UCSR0A &= ~(1 << U2X0); // disable double speed operation.
 		UBRR0L = UBRRL_57600 ;
 		UBRR0H = UBRRH_57600 ;
 	}
 
+	UCSR0A &= ~(1 << U2X0); // disable double speed operation.
   // set 8 N1
   UCSR0B = 0 | (0 << RXCIE0) | (0 << TXCIE0) | (0 << UDRIE0) | (0 << RXEN0) | (0 << TXEN0) | (0 << UCSZ02);
   UCSR0C = 0 | (1 << UCSZ01) | (1 << UCSZ00);

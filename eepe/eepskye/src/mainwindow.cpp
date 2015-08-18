@@ -87,6 +87,7 @@
 #define DNLD_VER_ERSKY9XR	       1
 #define DNLD_VER_ERSKYX9D				 2
 #define DNLD_VER_ERSKYX9DP			 3
+#define DNLD_VER_ERSKYX9XT			 4
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -121,6 +122,7 @@
 #define ERSKY9XR_URL "http://www.er9x.com/ersky9xr_rom.bin"
 #define ERSKYX9D_URL "http://www.er9x.com/x9d_rom.bin"
 #define ERSKYX9DP_URL "http://www.er9x.com/x9dp_rom.bin"
+#define ERSKYX9XT_URL "http://www.er9x.com/ersky9xSp_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -214,6 +216,9 @@ void MainWindow::title()
     break ;
 		case 3 :
 			type = "Taranis Plus" ;
+    break ;
+		case 4 :
+			type = "9Xtreme" ;
     break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
@@ -1256,7 +1261,7 @@ void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepskye-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Michael Blandford &copy;2013<br>");
-    aboutStr.append(QString("<a href='http://code.google.com/p/eepe/'>http://code.google.com/p/eepe/</a><br>Revision: %1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the ersky9x firmware useful please support by"));
     aboutStr.append(" <a href='" DONATE_MB_STR "'>");
 //    aboutStr.append(tr("donating") + "</a></center><br>");

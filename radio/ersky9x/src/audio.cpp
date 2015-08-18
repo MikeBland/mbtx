@@ -18,7 +18,7 @@
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/hal.h"
@@ -38,10 +38,18 @@
 #include "CoOS.h"
 #endif
 
+#ifdef PCB9XT
+#define SOFTWARE_VOLUME	1
+#endif
+
 extern uint8_t CurrentVolume ;
 extern uint8_t Activated ;
 
 extern uint8_t AudioVoiceCountUnderruns ;
+
+//#ifdef PCB9XT
+//void txmit( uint8_t c ) ;
+//#endif
 
 //#ifdef PCBX9D
 //#ifdef REVPLUS
@@ -56,6 +64,7 @@ struct t_voice Voice ;
 struct toneQentry ToneQueue[AUDIO_QUEUE_LENGTH] ;
 uint8_t ToneQueueRidx ;
 uint8_t ToneQueueWidx ;
+uint8_t SdAccessRequest ;
 
 bool ToneFreeSlots()
 {
@@ -444,7 +453,8 @@ void audioQueue::event(uint8_t e, uint8_t f, uint8_t hapticOff) {
 		    case AU_LONG_TONE :
 		      playNow( 40, 200, 0 ) ;
 		    break ;
-					
+
+					 
 		    default:
 		      break;
 	  }
@@ -666,6 +676,24 @@ void putNamedVoiceQueue( const char *name, uint16_t value )
 	}
 }
 
+void voiceSystemNameNumberAudio( uint16_t sname, uint16_t number, uint8_t audio )
+{
+	const char *name ;
+
+#ifdef PCBSKY	
+	if ( !CardIsConnected() )
+#else
+	if ( socket_is_empty() )
+#endif
+	{
+    audioDefevent( audio ) ;
+	}
+	else
+	{
+		name = SysVoiceNames[sname] ;
+		putNamedVoiceQueue( name, 0xE000 + number ) ;
+	}
+}
 
 uint8_t SaveVolume ;
 TCHAR VoiceFilename[48] ;
@@ -719,6 +747,23 @@ void buildFilename( uint32_t v_index, uint8_t *name )
 	cpystr( ( uint8_t*)ptr, ( uint8_t*)".wav" ) ;
 }
 
+uint32_t lockOutVoice()
+{
+	uint8_t lockValue ;
+	CoSchedLock() ;
+	lockValue = Voice.VoiceLock ;
+	if ( lockValue == 0 )
+	{
+		Voice.VoiceLock = 1 ;
+	}
+	CoSchedUnlock() ;
+	return (lockValue == 0) ;
+}
+
+void unlockVoice()
+{
+	Voice.VoiceLock = 0 ;
+}
 
 void voice_task(void* pdata)
 {
@@ -741,12 +786,7 @@ void voice_task(void* pdata)
 			if ( Activated == 0 )
 			{
 #ifndef SIMU
-#ifdef PCBSKY
-				sd_poll_10mS() ;
-#endif
-#ifdef PCBX9D
-				sdPoll10ms() ;
-#endif
+				sdPoll10mS() ;
 #endif
 			}
 		}
@@ -762,6 +802,7 @@ void voice_task(void* pdata)
 		if ( fr == FR_OK)
 		{
 		 SdMounted = mounted = 1 ;
+		 CoTickDelay( SdAccessRequest ? 10 : 1) ;					// 4mS for now
 	
 		 while ( ( Voice.VoiceQueueCount == 0 ) && (ToneQueueRidx == ToneQueueWidx) )
 		 {
@@ -1197,6 +1238,10 @@ void nextToneData()
 	}
 }
 
+#ifdef SOFTWARE_VOLUME
+uint16_t swVolumeLevel( void ) ;
+#endif	 
+
 // This for 16kHz sample rate
 // Returns +ve or zero, remaining time
 //   -ve offset into buffer of blank time
@@ -1204,6 +1249,11 @@ int32_t toneFill( uint16_t *buffer )
 {
 	uint32_t i = 0 ;
 	uint32_t y ;
+#ifdef SOFTWARE_VOLUME
+	uint32_t multiplier ;
+	int32_t value ;
+	multiplier = swVolumeLevel() ;
+#endif	 
 
 	if ( toneTimeLeft == 0 )
 	{
@@ -1218,7 +1268,22 @@ int32_t toneFill( uint16_t *buffer )
 			{
 				toneCount += frequency ;
 				y = ( toneCount & 0x01F0) >> 4 ;
+#ifdef SOFTWARE_VOLUME
+				if ( frequency )
+				{
+					value = (int32_t)Sine16k[y] - 2048 ;
+					value *= multiplier ;
+					value += 2048 * 256 ;
+					value >>= 8 ;
+				}
+				else
+				{
+					value = 2048 ;
+				}
+				*buffer++ = value ;
+#else
 				*buffer++ = frequency ? Sine16k[y] : 2048 ;
+#endif
 				i += 1 ;
 			}
 			else

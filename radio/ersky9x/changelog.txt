@@ -1,0 +1,611 @@
+====================================================================================
+ERSKY9x changelog
+Please insert a short description of a change by inserting it below this header and 
+above the previous change.
+
+Format is as follows:
+******************************************
+CHANGELOG: 25-APR-2011
+description here
+====================================================================================
+
+******************************************
+CHANGELOG: 18-Aug-2015  MPB (r218)
+SWR on early Taranis Plus fixes
+'PRO remove automatic COM1 inversion
+SPort telemetry increase number of samples in RSSI averaging
+Taranis add model image to display
+Bootloader to V1.6, fix problem with large capacity SD cards
+XY curve available
+Extend number of sub-protocol options
+Virtual keyboard editing of text
+Add ALL and ONCE to voice rate options
+Add support for "MULTI" protocol
+Add "model notes" option in main popup
+Add stick deadband option
+Fix problem with swash ring
+On turning extended limits off, reduce limits to +/-100%
+Model specific switch warning enables
+SKY/PRO, increase processor clock from 54MHz to 64MHz
+Add 12 more voice alarms
+Taranis, increase I2C clock speed
+Tarainis (and Plus) - Increase CPU clock to 120MHz. Mainly for the standard to get the image
+Support for 9XR DSM module on SKY and Taranis
+Early Taranis Plus, support for SWR problem
+Beep tone generation method changed
+Elevon template updated
+Additions to support the 9Xtreme board
+
+******************************************
+CHANGELOG: 08-Apr-2015  MPB (r215)
+Start to new DSM Tx module
+Fix reboot problem when WAV file has single sample
+X9D turn soft power on earlier
+Fix minor bugs in restore function
+Make LONG EXIT return to main screen
+Increase debug console baudrate to 115200
+Add GVAR adjusters
+Split GVARs, Scalers and Adjusters to separate menus
+Support for 6-pos switch on X9D
+X9E support
+SKY, PRO increase clock to 54 MHz
+
+
+******************************************
+CHANGELOG: 02-Feb-2015  MPB (r214)
+Complete Model index menu
+Add second custom telemetry screen
+Rename logical switches to Lx (for Logical)
+Add 9XR-PRO DSM bit-bang serial input to SKY
+Fix DSM telemetry bugs
+Allow SBUS trainer input on COM2 and Bluetooth
+Add TmOK value to telemetry items
+FiFos don't disable interrupts, some are larger
+Add Menu Popups on main screen
+Move templates to the end of the mixer menu
+Allow selective disabling of Expo and Dual rates on a mix
+Allow inclusion of safety and limits in a mix where a channel is the source
+Allow Expo on a mix instead of a curve or differential
+Add option for serial to Bluetooth 'pass through'
+Allow MENU HOLD to enable larger changes in edited values
+Use "VERY LONG MENU" to toggle values to/from a GVAR
+I2C code to support Hack addon of MCP23008 and LED drivers
+Taranis - alter internal codes for pots/sliders - UPSETS existing models
+Allow an odd number of channels on PPM
+SKY/PRO - Add FMS serial output on COM2
+9XR-PRO - add LCD delay at power on.
+Taranis - support rotaryencoder on analog input
+Allow model specific throttle reverse
+Support for 6-position switch
+Debug tests for I2C expansion
+
+******************************************
+CHANGELOG: 04-Oct-2014  MPB (r213, source only)
+Change haptic handling
+Improve SPort RXRSSI detection
+bootloader improve trim switch detection
+More on JETI/MAVLINK
+Store BT as trainer status
+Add throttle idle at 0% option
+HC-05 BT baudrate setting improvements
+Add stick names option
+Log more telemetry items
+Allow up to 16 channels on trainer input
+
+******************************************
+CHANGELOG: 25-Sep-2014  MPB (r212, source only)
+Start to extra telemetry protocols
+FrSky telemetry detection on SPort changed
+Add files jeti.h, mavlink.cpp, mavlink.h
+Rename logical switches as Sx not SWx
+Rename ofs to val in custom and voice switches
+Rename TSSI to SWR when SPort in use
+Add more items to model edit index
+Add use of COM2 as SBUS trainer input
+Taranis - add SPort pin use for CPPM or SBUS trainer input
+Add 8 extra trainer inputs for when SBUS is in use
+Fix insta-trim bug in modes 3 and 4
+Rotary encoder enabled in maintenance mode
+
+******************************************
+CHANGELOG: 23-Aug-2014  MPB (r211, source only)
+SPort GPS processing and GPS logging
+Extra 3-POS switches support
+Jump to EXPO/DR editing from mix editor
+DSM telemetry fades/losses/holds monitoring
+Add 57600 baudrate to bluetooth
+Add bluetooth to trainer mapping option
+Sticky throttle switch handles trainer throttle
+Trainer weight resolution improved and more switches allowed
+From R204, DSM Rx number always sent as 1
+X9D PLUS supported
+Add persistant total ON time
+Add model specific backlight switch
+Add Ntimer custom switch
+Add 1-Shot and 1-ShotR to custom switches
+Add v~=ofs to custom switches
+Add named voice files for model name and system messages
+Add voice warning for throttle check and switch check
+Add open drain drive option for PPM output
+
+******************************************
+CHANGELOG: 30-Apr-2014  MPB (r203)
+X9D handle DJT telemetry
+X9D allow SPort port in maintenance mode
+Vario tones frequency changes
+X9D bootloader handle SH for disable SD card
+X9D bootloader MAC support
+Add custom switch LATCH and Flip-Flop
+CUrve editing, PRESET now at bottom
+Scalers as vario source
+X9D switches bug fixes
+Scalers as GVAR source
+X9D external module additions
+X9D extra pot (slider) fixes
+Check for resetting telemetry values in custom display
+Trim centre telltales
+Fix mix delay bug
+Use consumed mAh as fuel value
+9XRPRO - convert temperature to degC
+All add more SPort IDs
+X9D/+ add haptic
+X9D+ support both backlights
+X9D+ support changed LCD control signals
+Fix number of voice switches with 8 additional switches
+PPM open drain driver
+9XRPRO - increase DSMX range check power level
+
+******************************************
+CHANGELOG: 20-Mar-2014  MPB (r202)
+Add oXsensor voltage on telemetry
+DSM telemetry updates
+DSM telemetry auto-configure
+DSM telemetry screen updated
+Add current source option
+Slow voice bug fix
+Add Scalers and A3/A4
+Bootloader fixes for MAC
+Stop logging on model load
+Expo/Dr fix on updating model version
+Backup and restore models to SD card
+Allow 'sticky' throttle with timer THs
+PXX only send 8 channels in D8 mode
+
+******************************************
+CHANGELOG: 12-Feb-2014  MPB (r201)
+Fix COM port bug
+Improve voice file header handling
+Add file system interlocking
+Add THIS mix source
+Fix Instatrim problems
+Fix mix copy/move bugs
+Add Flight Mode control of mixes
+Add Flight Mode fading
+Add Flight Mode names
+Remove MOVE/COPY/DELETE when selecting empty model slot
+Minor logging improvements
+Add more SPort telemetry items (A3/A4/RPM)
+
+******************************************
+CHANGELOG: 25-Jan-2014  MPB (r199)
+Improve bootloader build
+Add "maintenance mode"
+Fix logging bug
+Add Rx voltage to telemetry (SPort only)
+Fix COM2 bug with DJT
+Language specific chars for X9D
+Improve makefile
+
+******************************************
+CHANGELOG: 15-Jan-2014  MPB (r198)
+bootloader for X9D (Taranis)
+Handle DSMX module channel count better
+Hopefully add N/S/E/W to GPS display
+Fix spurious switch warning when button pressed on splash screen
+X9D set VTOR correctly
+
+******************************************
+CHANGELOG: 09-Jan-2014  MPB (r197)
+Remove beeper options - not used
+Code for a DSM module on the 9XR-PRO, with telemetry, including new telemetry screen
+Display USB on 9XR-PRO when flashing
+Support for X9D
+Remove beeper/speaker options
+Sync. volume changes to voice output
+Various minor bug fixes.
+Change to the way curves and expo are drawn
+Change to the way curves are displayed and edited
+Re-arrange RF protocol items in menu
+Allow option to reverse any stick (in case replacement sticks are wrong)
+Add ability to use a switch to set the switch to be used when editing
+LCD plotting options
+Add 'sticky' throttle safety switch
+Add Hdg (heading) to GPS display
+Voice lockup fixes
+Language support
+Addition of "bootloader"
+
+******************************************
+CHANGELOG: 12-Nov-2013  MPB (r188)
+fix menu underflow bug!
+
+******************************************
+CHANGELOG: 12-Nov-2013  MPB (r187)
+Channel order moved to radio setup
+Handle menu switching better
+PXX support 16 channels output
+Fix HELI bug
+
+******************************************
+CHANGELOG: 27-Oct-2013  MPB (r186)
+Add telemetry logging
+Improve model version update
+
+******************************************
+CHANGELOG: 21-Oct-2013  MPB (r185)
+Correctly commit the release!
+
+******************************************
+CHANGELOG: 21-Oct-2013  MPB
+Fix sink tones editing bug
+Add ppm in monitoring in mixers
+Fix vario bug
+Fix volume bug
+
+******************************************
+CHANGELOG: 15-Oct-2013  MPB
+Fix EXPO/DR bug
+Trim improvements 
+
+******************************************
+CHANGELOG: 13-Oct-2013  MPB
+Correct sink tones sense
+Fix HP vario SPort scaling
+Make COM2 work with in SPort mode
+Add code towards model backup to SD card
+Add channel uS display to limits menu
+Fix trainer bug on stick modes
+Fix expo/dr bug due to stick modes change
+Fix throttle trim bug due to stick modes change
+Fix encoder button not changing on/off values
+Fix cyclic pitch bug on different stick modes
+Scale output bars if extended limits enabled
+Increase RPM blade count to 127
+
+******************************************
+CHANGELOG: 30-Sep-2013  MPB
+Pot/GVAR for volume control
+Add mutex support in OS
+Some code saving to match er9x code
+Fix FrSky buffer overflow bug
+Encoder editing of owner name
+Fix mode page editing of modes 6 and 7
+Remove memory check warning option
+Volume control
+PXX support for XJT
+SPort support for XJT
+Improve Stick Mode operation
+Vario Sink Tones option reversed
+Auto update mix sources when loading old eeprom model
+Disable trainer if no trainer ppm input
+
+******************************************
+CHANGELOG: 05-Aug-2013  MPB
+Language variant support
+Vario setup in EEPROM
+Use switch to set switch value
+Default switch states set from switches
+
+******************************************
+CHANGELOG: 17-Jul-2013  MPB
+Display changed limits when AutoLimits is enabled
+Fix flight Mode labels
+Protect PPM sync pulse length
+
+******************************************
+CHANGELOG: 10-Jul-2013  MPB
+Fix FrSky user packet count
+
+******************************************
+CHANGELOG: 08-Jul-2013  MPB
+Vario parameters stored in EEPROM
+Rotary LONG exits popup
+No delete on popup for current model
+Disable stick scroll on mode change
+
+******************************************
+CHANGELOG: 03-Jul-2013  MPB
+Model select popup
+GVARS on voice
+
+******************************************
+CHANGELOG: 23-Jun-2013  MPB
+Fix vario edit display bug
+
+******************************************
+CHANGELOG: 22-Jun-2013  MPB
+Move vario config to TELEMETRY2
+
+******************************************
+CHANGELOG: 21-Jun-2013  MPB
+Add FAS current offset
+Add vario tones
+Add function switch to enable vario
+Flash saving
+Add Auto limits adjust option on sub-trim
+
+******************************************
+CHANGELOG: 07-Jun-2013  MPB
+Change curve editing
+Higher resolution switch timers
+Change expo/dual rate editing
+Fix late offset bug
+
+******************************************
+CHANGELOG: 11-May-2013  MPB
+Fix WSHH bugs
+Add Watts for FAS-40/100
+Insta-trim ignore small stick offsets
+
+******************************************
+CHANGELOG: 28-Apr-2013  MPB
+Add TRN to AND switches
+Fix voice timer minute bug
+Fix Co-processor reboot bug
+Version 06 of TinyApp available
+Alarm if Co-processor out of date
+Stick scrolling times out if not used
+Fix SLOW UP missing bug
+
+******************************************
+CHANGELOG: 21-Apr-2013  MPB
+Timer comparison changes
+Reboot processing fixed.
+
+******************************************
+CHANGELOG: 19-Apr-2013  MPB
+Reboot report improvement
+Stick Scrolling/encoder improvements
+'late' offset option in mix
+Rotary encoder triggers backlight
+
+******************************************
+CHANGELOG: 16-Apr-2013  MPB
+Extra template
+Reboot protection and reporting
+Stick Scrolling
+
+******************************************
+CHANGELOG: 30-Mar-2013  MPB
+Fix v<ofs bug
+Add centre beep filtering
+Add EEPROM read mapping to mass storage disk
+
+******************************************
+CHANGELOG: 21-Mar-2013  MPB
+Add support for FrSky new Vario (not commercially available)
+Fix MINUS for voice numbers
+Add two extra GVARS
+Allow channel outputs as GVAR sources
+Add differential mix option
+Add !curve option in mix
+Replace curve/differential on mixer summary display
+Add display of all 24 channels on main screen
+Extend custom switches display on main screen
+Add Cross Trims option
+
+******************************************
+CHANGELOG: 06-Mar-2013  MPB
+Add vertical speed
+Handle negative voice values
+Remove PPM16 - PPM2 now available
+Allow Gvars as voice sources
+Custom switches, allow ! (not) in and switch
+Ensure good volume for inactivity alarm.
+
+******************************************
+CHANGELOG: 07-Feb-2013  MPB
+r159 - Limit last channel to 24
+Add option for telemetry com port
+Telemetry tweaks on loss of telemetry
+
+******************************************
+CHANGELOG: 07-Feb-2013  MPB
+Allow protocol channel choice
+r158 - start channel on DSM and PXX
+
+******************************************
+CHANGELOG: 06-Feb-2013  MPB
+Add PPM2 output
+Add Flight Phases
+
+******************************************
+CHANGELOG: 30-Jan-2013  MPB
+Fix obscure bug in move model
+
+******************************************
+CHANGELOG: 30-Jan-2013  MPB
+Minor tweaks to model copy/move, enhance 'MEMORY STAT' menu
+
+******************************************
+CHANGELOG: 29-Jan-2013  MPB
+Improve RPM calculation
+Move telemetry procedures to frsky.cpp
+Move display procedures to lcd.cpp
+Add copy and swap models in EEPROM
+Make model copy and move work in modelselect menu
+Add new file pulses.cpp
+
+******************************************
+CHANGELOG: 16-Jan-2013  MPB
+Fix model move in modelselect menu, X9D add PXX
+
+******************************************
+CHANGELOG: 19-Jan-2013  MPB
+Fix voice temps in degFW, X9D voice, X9D lcd speedup
+
+******************************************
+CHANGELOG: 17-Jan-2013  MPB
+X9d volume, add i2c files, changes to X9D/sound.cpp for voice
+
+******************************************
+CHANGELOG: 14-Jan-2013  MPB
+Cosmetic changes to mixer menu, X9D sound
+
+******************************************
+CHANGELOG: 13-Jan-2013  MPB
+Fix Pilot name editing bug, slow and delay 25 secs in steps of 0.1 sec
+
+******************************************
+CHANGELOG: 10-Jan-2013  MPB
+r143 FIx trainer bug, more X9D additions
+
+******************************************
+CHANGELOG: 05-Jan-2013  MPB
+r132 Add X9D.cpp test program
+
+******************************************
+CHANGELOG: 05-Jan-2013  MPB
+r131 RPM blade count now 1 to 50
+Internal file changes to allow X9D testing
+
+******************************************
+CHANGELOG: 02-Dec-2012  MPB
+r130 New mixer menu and popup
+Fix encoder editing problem
+Change modelname editing, allows encoder
+
+******************************************
+CHANGELOG: 02-Dec-2012  MPB
+r129 Fix voice output for low ratio settings
+
+******************************************
+CHANGELOG: 24-Nov-2012  MPB
+r128 Fix an editing bug and remove debug on expo screen
+
+******************************************
+CHANGELOG: 24-Nov-2012  MPB
+r127 Enable GVARS with expo and dual rate
+
+******************************************
+CHANGELOG: 22-Nov-2012  MPB
+r125 Tweaks to improve global variables
+r126 Commit the bin file
+
+******************************************
+CHANGELOG: 21-Nov-2012  MPB
+Rotary encoder now steps through all items
+Current calibration moved to ANA menu
+Co-processor version now on Firmware version menu
+Limited Global variable functionality added
+
+******************************************
+CHANGELOG: 17-Oct-2012  MPB
+MAJOR UPDATE - EEPROM structure changed
+48 mixes
+24 channels
+24 safety/voice switches
+24 custom switches
+20 model memories
+Automatic EEPROM structure update
+Co-processor applet to rev 04, saves time every 2 hours
+
+******************************************
+CHANGELOG: 06-Oct-2012  MPB
+USB Mass Storage !!
+Date/Time minor bug fix
+CO-Proc Temperature
+Watchdog to 1.5 Seconds (from 16)
+
+******************************************
+CHANGELOG: 28-Sep-2012  MPB
+Voice for thousands fixed
+Some types of WAV file headers read properly now
+RPM numeric display improved
+Real Time Clock added to co-processor
+Menu added to allow RTC to be set
+Co-processor applet updated
+
+******************************************
+CHANGELOG: 21-Sep-2012  MPB
+Rotary encoder improvements
+
+******************************************
+CHANGELOG: 18-Sep-2012  MPB
+Add Stick analog gain option
+
+******************************************
+CHANGELOG: 18-Sep-2012  MPB
+Voice file reading improved
+Voice output scheduling changed
+
+******************************************
+CHANGELOG: 15-Sep-2012  MPB
+Add 3POS as mixer input
+Fix altitude voice feet/metres
+Extra AND switches on custom switches changed
+Fix Condensed bug on LCD
+Sync. custom timer to AND switch
+Changed Ymodem for testing
+
+******************************************
+CHANGELOG: 07-Sep-2012  MPB
+Fix voice bug.
+Add version number to model EEPROM
+
+******************************************
+CHANGELOG: 05-Sep-2012  MPB
+Improve cell voltage handling
+Move USB detection code to allow applet initialisation to work
+Fix bug in getValue() re timers and battery
+Correct FAS100 voltage scaling 
+
+******************************************
+CHANGELOG: 31-Aug-2012  MPB
+voice_numeric - add thousands and 2 decimals - needs new/changed voice files
+Correct startup timing for Optrex LCD
+Bluetooth baudrate settings(Linvor)
+WSHH say 'metres' if metric set
+Rotary encoder divide 2 option
+Fix Bluetooth baudrate setting bug
+
+******************************************
+CHANGELOG: 27-Aug-2012  MPB
+Use voice files 400-499
+Fix voice output for timers and other things
+Add voice file 58 - NO TELEMETRY
+Fix Cvlt display
+More rotary encoder functionality
+BT debug display
+
+******************************************
+CHANGELOG: 22-Aug-2012  MPB
+Action USB on boot, disable USB after 10 seconds power on
+
+******************************************
+CHANGELOG: 13-Aug-2012  MPB
+Fix throttle warning when reversed bug
+
+******************************************
+CHANGELOG: 07-08-2012 MPB
+Add retries to reading the SD card SCR register
+
+******************************************
+CHANGELOG: 03-08-2012 MPB
+Add FAS100 Voltage
+Correct FAS100 current and mAh
+Voice uses files 101 to 109 for hundreds
+Add total cell voltage
+Add extra AND to custom switches
+Ensure system sounds work when no SD card present
+
+******************************************
+CHANGELOG: 22-07-2012
+Added changelog file
+MENU used to play model name voice file
+Timers in menu labelled 1 and 2
+Voice Switch bug fixed
+Compiler bug in core_cm3.c fixed
+
+
+

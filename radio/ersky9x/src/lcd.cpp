@@ -33,6 +33,9 @@
 #include "drivers.h"
 #include "logicio.h"
 //#include "language.h"
+#ifdef PCB9XT
+#include "mega64.h"
+#endif
 
 
 #include "font.lbm"
@@ -1286,27 +1289,31 @@ void refreshDisplay()
 #endif // PCBSKY
 #endif // PCBDUE
 
-#ifdef PCBSP
+#ifdef PCB9XT
 void refreshDisplay()
 {
-	
+	displayToM64() ;	
 }
 
 void lcdSetRefVolt(uint8_t val)
 {
-	
+	M64Contrast = val ;
+	M64SetContrast = 1 ;
 }
 
 void lcd_init()
 {
-	
 }
 
 void backlight_on()
 {
+	BlSetColour( 100-g_eeGeneral.bright, 0 ) ;				// Red
+	BlSetColour( 100-g_eeGeneral.bright_white, 1 ) ;	// Green
+	BlSetColour( 100-g_eeGeneral.bright_blue, 2 ) ;		// blue
 }
 
 void backlight_off()
 {
+	BlSetColour( 0, 3 ) ;
 }
-#endif // PCBSP
+#endif // PCB9XT

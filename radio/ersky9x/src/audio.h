@@ -216,6 +216,8 @@ void audioVoiceDefevent( uint8_t e, uint8_t v) ;
 
 #define VOICE_Q_LENGTH		16
 
+extern uint8_t SdAccessRequest ;
+
 struct t_voice
 {
 	uint8_t VoiceQueueCount ;
@@ -246,7 +248,10 @@ extern void putUserVoice( char *name, uint16_t value ) ;
 extern void voice_task(void* pdata) ;
 extern bool ToneFreeSlots( void ) ;
 extern void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8_t pause, uint8_t repeat ) ;
+extern void voiceSystemNameNumberAudio( uint16_t name, uint16_t number, uint8_t audio ) ;
 
+extern uint32_t lockOutVoice( void ) ;
+extern void unlockVoice( void ) ;
 
 // Defines for voice messages
 

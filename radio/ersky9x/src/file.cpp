@@ -36,6 +36,10 @@
 #include "sound.h"
 #endif
 #include "stringidx.h"
+#ifdef PCB9XT
+#include "X9D/stm32f2xx_gpio.h"
+#include "X9D/hal.h"
+#endif
 
 extern PROGMEM s9xsplash[] ;
 
@@ -131,7 +135,7 @@ uint32_t Eeprom32_data_size ;
 //#define E32_READING						10		// Set elsewhere as a lock
 
 
-void handle_serial( void ) ;
+//void handle_serial( void ) ;
 
 bool eeModelExists(uint8_t id) ;
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq ) ;
@@ -336,6 +340,10 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
 // Read eeprom data starting at random address
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
+//	txmit( 'r' ) ;
+//	if ( immediate )
+//		txmit( 'i' ) ;
+
 #ifdef SIMU
   assert(size);
   eeprom_pointer = eeAddress;
@@ -361,7 +369,7 @@ uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint3
 	{
 		return 0 ;		
 	}
-	for ( x = 0 ; x < 100000 ; x += 1  )
+	for ( x = 0 ; x < 1000000 ; x += 1  )
 	{
 		if ( Spi_complete )
 		{
@@ -371,6 +379,27 @@ uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint3
     sleep(5/*ms*/);
 #endif
 	}
+//#ifdef PCB9XT
+//	txmit( (x<1000000) ? 'z' : 'y' ) ;
+//#endif
+
+//	p4hex((uint16_t)DMA2_Stream0->NDTR) ;
+//	txmit('+') ;
+//	p4hex((uint16_t)DMA2_Stream3->NDTR) ;
+//	txmit('~') ;
+//	p8hex( (uint32_t) DMA2_Stream0->M0AR ) ;
+
+//extern void p2hex( unsigned char c ) ;
+//	p2hex( buffer[0] ) ;
+//	p2hex( buffer[1] ) ;
+//	p2hex( buffer[2] ) ;
+//	p2hex( buffer[3] ) ;
+//	p2hex( buffer[4] ) ;
+//	p2hex( buffer[5] ) ;
+//	p2hex( buffer[6] ) ;
+//	p2hex( buffer[7] ) ;
+
+
 	return x ;
 }
 
@@ -1060,7 +1089,7 @@ void ee32_process()
 uint32_t unprotect_eeprom()
 {
  	register uint8_t *p ;
-
+	uint32_t result ;
 	eeprom_write_enable() ;
 		
 	p = Spi_tx_buf ;
@@ -1069,7 +1098,11 @@ uint32_t unprotect_eeprom()
 	*(p+2) = 0 ;
 	*(p+3) = 0 ;		// 3 bytes address
 
-	return spi_operation( p, Spi_rx_buf, 4 ) ;
+	result = spi_operation( p, Spi_rx_buf, 4 ) ;
+#ifdef PCB9XT
+	GPIOA->BSRRL = GPIO_Pin_SPI_EE_CS ;		// output disable
+#endif	 
+	return result ;
 }
 
 void convertSwitch( int8_t *p )

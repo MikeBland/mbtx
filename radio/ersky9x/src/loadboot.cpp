@@ -55,20 +55,20 @@
  #include "stm32f2xx.h"
  #include "stm32f2xx_gpio.h"
 #else
- #if defined(PCBX9D) || defined(PCBSP)
+ #if defined(PCBX9D) || defined(PCB9XT)
   #include "x9d\stm32f2xx.h"
   #include "x9d\stm32f2xx_gpio.h"
  #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
 void bwdt_reset()
 {
 	IWDG->KR = 0xAAAA ;		// reload
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
 
 __attribute__ ((section(".bootrodata"), used))
 void _bootStart( void ) ;
@@ -81,7 +81,7 @@ const uint32_t BootVectors[] = {
 } ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
 __attribute__ ((section(".bootrodata.*"), used))
 #endif
 
@@ -97,39 +97,54 @@ const uint8_t BootCode[] = {
    #include "bootloader/bootflashT.lbm"
 	#endif
 #else
- #if defined(PCBX9D) || defined(PCBSP)
-  #ifdef REVPLUS
-   #include "bootloader/bootflashXp.lbm"
+#ifdef PCB9XT
+ #include "bootloader/bootflash9xt.lbm"
+#else
+  #ifdef PCBX9D
+   #ifdef REVPLUS
+    #include "bootloader/bootflashXp.lbm"
+   #else
+    #include "bootloader/bootflashX.lbm"
+   #endif
   #else
-   #include "bootloader/bootflashX.lbm"
-  #endif
- #else
-  #ifdef REVX
-   #include "bootloader/bootflash8.lbm"
-  #else
-   #include "bootloader/bootflash4.lbm"
+   #ifdef REVX
+    #include "bootloader/bootflash8.lbm"
+   #else
+    #include "bootloader/bootflash4.lbm"
+   #endif
   #endif
  #endif
 #endif
 } ;
 
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
 
 __attribute__ ((section(".bootrodata"), used))
 
 void _bootStart()
 {
 	// turn soft power on now
+#ifdef PCB9XT
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	GPIOC->PUPDR = 0x0020 ;	// PIN_MCU_PWR
+#else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	GPIOD->BSRRL = 1 ;
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC ) | 1 ;
-	
+#endif
+
+#ifdef PCB9XT
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	GPIOA->PUPDR = 0x14000000 ;
+	GPIOC->PUPDR = 0x04004000 ;		// PortC clock enabled above
+#else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	
 	GPIOC->PUPDR = 0x00000004 ;
 	GPIOE->PUPDR = 0x00000040 ;
+#endif
 
 	uint32_t i ;
 	for ( i = 0 ; i < 50000 ; i += 1 )
@@ -137,10 +152,22 @@ void _bootStart()
 		bwdt_reset() ;
 	}
 
+//#ifndef PCB9XT
+#ifdef PCB9XT
+//	if ( 1 )
+//	{
+//		if ( 1 )
+//		{
+	if ( (GPIOA->IDR & 0x00004000 ) == 0 )
+	{
+		if ( (GPIOC->IDR & 0x00002000 ) == 0 )
+		{
+#else
 	if ( (GPIOE->IDR & 0x00000008 ) == 0 )
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{
+#endif
 			// Bootloader needed
 			const uint8_t *src ;
 			uint8_t *dest ;
@@ -165,6 +192,8 @@ void _bootStart()
 	
 		}
 	}
+//#endif
+
 //	run_application() ;	
 	asm(" mov.w	r1, #134217728");	// 0x8000000
   asm(" add.w	r1, #32768");			// 0x8000

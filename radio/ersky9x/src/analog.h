@@ -20,22 +20,22 @@ extern void init_adc2() ;
 extern uint32_t read_adc( void ) ;
 extern void stop_adc( void ) ;
 
-#ifdef PCBSP
+#ifdef PCB9XT
 
 extern uint16_t AnalogSwitches ;
 // Bits in AnalogSwitches ;
-#define AS_LV_TRIM_UP		0x0100
-#define AS_LV_TRIM_DN		0x0080
-#define AS_RV_TRIM_UP		0x0040
+#define AS_LV_TRIM_UP		0x0004
+#define AS_LV_TRIM_DN		0x0002
+#define AS_RV_TRIM_UP		0x0001
 #define AS_AIL_SW				0x0020
 #define AS_THR_SW				0x0010
 #define AS_RV_TRIM_DN		0x0008
-#define AS_IDL2_SW			0x0004
-#define AS_IDL1_SW			0x0002
-#define AS_GEA_SW				0x0001
+#define AS_IDL2_SW			0x0100
+#define AS_IDL1_SW			0x0080
+#define AS_GEA_SW				0x0040
 
 
 void processAnalogSwitches( void ) ;
-#endif // PCBSP
+#endif // PCB9XT
 
 

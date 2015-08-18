@@ -1,0 +1,81 @@
+1. Add the following to at91sam3s4-9x
+
+################################################################################
+## CoProcessor
+################################################################################
+array set at91sam3s4_coprocessor {
+    dftDisplay  1
+    dftDefault  0
+    dftAddress  0x0
+    dftSize     0x80000
+    dftSend     "GENERIC::SendFile"
+    dftReceive  "GENERIC::ReceiveFile"
+    dftScripts  "::at91sam3s4_coprocessor_scripts"
+}
+
+array set at91sam3s4_coprocessor_scripts {
+    "Enable Coprocessor"    "COPROCESSOR::Init 0"
+}
+
+set COPROCESSOR::appletAddr          0x20000800
+set COPROCESSOR::appletMailboxAddr   0x20000840
+set COPROCESSOR::appletFileName      "$libPath(extLib)/$target(board)/applet-coprocessor-atsam3s4.bin"
+
+
+-----------------------------------
+
+2. Add the following to generic.tcl (in tcl.lib\common
+
+################################################################################
+## NAMESPACE COPROCESSOR
+################################################################################
+namespace eval COPROCESSOR {
+    # Following variables are defined in <board>.tcl
+    variable appletAddr
+    variable appletMailboxAddr
+    variable appletFileName
+}
+
+#===============================================================================
+#  proc COPROCESSOR::Init
+#-------------------------------------------------------------------------------
+proc COPROCESSOR::Init {sfId} {
+    global target
+    variable appletAddr
+    variable appletMailboxAddr
+    variable appletFileName
+
+    puts "-I- COPROCESSOR::Init $sfId (trace level : $target(traceLevel))"
+    
+    # Load the applet to the target
+    GENERIC::Init $COPROCESSOR::appletAddr $COPROCESSOR::appletMailboxAddr $COPROCESSOR::appletFileName [list $target(comType) $target(traceLevel) $sfId]
+}
+
+-----------------------------------
+
+3. Copy the file "applet-coprocessor-atsam3s4.bin" into the 
+tcl_lib\at91sam3s2-9x directory
+
+4. Program the hex file tinyboot.hex into the ATtiny167
+
+5. Connect the USB and run SAM-BA. Write the latest Ersky9x revision to Flash.
+
+6. Select the CoProcessor tab, and run the enable script. Set the write
+address to 0x80. Set the send filename to TinyApp.bin, Click on Send File.
+
+7. Disconnect the USB.
+
+8. Turn the system on, and press UP LONG to get to the "BATTERY" screen.
+The coprocessor test should start at 0, change to 0181 indicating bootloader 
+version 01 (the 81 part), and valid (the 01 part).
+When ersky9x sees it is talking to the bootloader, it tells it to execute the 
+application. The 0181 should change to 0101 indicating the application version 
+(second 01) and valid (first 01).
+
+Done!!!
+
+
+
+
+
+

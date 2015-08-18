@@ -40,8 +40,8 @@ else
  ifeq ($(PCB), DUE)
   OBJDIR = skyDobj
  else
-  ifeq ($(PCB), SP)
-    OBJDIR = skySPobj
+  ifeq ($(PCB), 9XT)
+    OBJDIR = sky9XTobj
   else
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
@@ -99,8 +99,8 @@ ifeq ($(PCB), X9D)
   endif
  endif
 else
- ifeq ($(PCB), SP)
-   PROJECT      = ersky9xSp
+ ifeq ($(PCB), 9XT)
+   PROJECT      = ersky9x9XT
  else
   ifeq ($(REVX), 1)
    PROJECT      = ersky9xr
@@ -142,10 +142,11 @@ else
  CPPDEFS += -DPCBSKY 
  LDSCRIPT = sam3s2c_flash.ld
  else
-  ifeq ($(PCB), SP)
+  ifeq ($(PCB), 9XT)
    LDSCRIPT = x9d/stm32_flash.ld
    CPPDEFS += -DHSE_VALUE=12000000
-   CPPDEFS += -DPCBSP 
+   CPPDEFS += -DPCB9XT 
+   CPPDEFS += -DPCBSP
   else
    ifeq ($(PCB), X9D)
 #     ARCH = ARM
@@ -296,7 +297,7 @@ CPPSRC = stamp.cpp \
 
 else
 
-ifeq ($(PCB), SP)
+ifeq ($(PCB), 9XT)
 
 # List C source files here
 SRC  = x9d/system_stm32f2xx.c \
@@ -342,6 +343,7 @@ CPPSRC = ersky9x.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			mega64.cpp \
+			isp.cpp \
 		   lcd.cpp
 
 #         x9d/lcd_driver.cpp \
@@ -507,6 +509,10 @@ ifeq ($(PHASES), 1)
  CPPDEFS += -DPHASES
 endif
 
+ifeq ($(PCB), 9XT)
+  EXT_MOD=9XT
+endif
+
 ifeq ($(PCB), X9D)
 # If Taranis+
  ifeq ($(REVPLUS), 1)
@@ -612,6 +618,7 @@ clean:
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
 	-rm -f skyDobj/*.*
+	-rm -f sky9XTobj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

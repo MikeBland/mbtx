@@ -247,8 +247,11 @@
 #define STR_SEND_RX_NUM    "Bind  Range"
 #define STR_DSM_TYPE       "Type DSM"
 #ifdef MULTI_PROTOCOL
-#define STR_MULTI_TYPE     "Codage\037Type\037Autobind\037Bind\037Range"
-#define STR_MULTI_OPTION       "\014Option"
+#define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
+#define STR_MULTI_OPTION	"\013Option"
+#define M_NONE_STR			"\004None"
+#define M_NY_STR			"\001NY"
+#define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "1ere voie\037Codag"
 #define STR_PPM_1ST_CHAN   "1ere voie"

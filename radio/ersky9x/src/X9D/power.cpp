@@ -57,8 +57,14 @@ void soft_power_off()
 //		wdt_reset() ;
 //	}
 //#endif
-  GPIO_ResetBits(GPIOPWR,PIN_MCU_PWR);
+#ifdef PCB9XT
+	configure_pins( PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
+#endif
+  GPIO_ResetBits(GPIOPWR,PIN_MCU_PWR) ;
 }
+
+uint32_t SoftPowerCalls ;
+uint32_t SoftPowerOff ;
 
 uint32_t check_soft_power()
 {
@@ -109,10 +115,49 @@ uint32_t check_soft_power()
 	}
 
  #else // REV9E
+#ifdef PCB9XT
+	SoftPowerCalls += 1 ;
+	static uint32_t c1 = 0 ;
+//	static uint32_t c2 = 0 ;
+	uint16_t value = GPIOC->IDR ;
+  if ( value & PIN_PWR_STATUS )
+#else
   if (GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET)
-    return POWER_ON;
+#endif
+	{
+#ifdef PCB9XT
+		c1 = 0 ;
+#endif // PCB9XT
+    return POWER_ON ;
+	}
   else
+	{
+#ifdef PCB9XT
+	  if (GPIO_ReadInputDataBit( GPIOPWR, PIN_MCU_PWR) == Bit_SET)
+		{
+			return POWER_TRAINER ;
+		}
+#endif
+#ifdef PCB9XT
+		SoftPowerOff += 1 ;
+		c1 += 1 ;
+//		static uint32_t counter = 0 ;
+//		if ( ++counter > 250 )
+//		{
+//extern void txmit( uint8_t c ) ;
+//			txmit('*') ;
+//extern void p4hex( uint16_t value ) ;
+//			p4hex( GPIOC->IDR ) ;
+//		 	counter = 0 ;
+//		}
+		if ( c1 > 50 )
+		{
+    	return POWER_OFF;
+		}
+    return POWER_ON ;
+#endif
     return POWER_OFF;
+	}
  #endif // REV9E
 #endif
 }
@@ -125,6 +170,9 @@ void init_soft_power()
 #ifdef REVPLUS
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 #endif
+#ifdef PCB9XT
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+#endif
 	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
 	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
 //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOPWR, ENABLE);
@@ -134,7 +182,7 @@ void init_soft_power()
 	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
 	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 #else
-#ifdef PCBSP
+#ifdef PCB9XT
 	configure_pins( PIN_INT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
 	configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 #else
@@ -150,9 +198,17 @@ void init_soft_power()
 //  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP ;
 //  GPIO_Init(GPIOPWR, &GPIO_InitStructure);
 
+#ifdef PCB9XT
+	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTC ) ;
+#else
 	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+#endif
 	
+#ifdef PCB9XT
+	configure_pins( PIN_MCU_PWR, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+#else
 	configure_pins( PIN_TRNDET, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+#endif
   
 //	GPIO_InitStructure.GPIO_Pin = PIN_PWR_STATUS;
 //  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IN;
@@ -173,7 +229,9 @@ void init_soft_power()
   
 	
 // Not yet!!!!*********	
+#ifndef PCB9XT
 	GPIO_SetBits(GPIOPWR,PIN_MCU_PWR);
+#endif
 #ifdef REV9E
 	PowerState = POWER_STATE_START ;
 #endif

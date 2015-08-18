@@ -88,10 +88,15 @@ void preferencesDialog::initSettings()
     	currentER9Xrev = settings.value("currentERSKYX9Drev", 1).toInt();
 			ui->label_CurrentVersion->setText( "Current Version - erskyX9D" ) ;
 		}
-		else
+		else if ( dnloadVersion == 3 )
 		{
     	currentER9Xrev = settings.value("currentERSKYX9DPrev", 1).toInt();
 			ui->label_CurrentVersion->setText( "Current Version - erskyX9DP" ) ;
+		}
+		else
+		{
+    	currentER9Xrev = settings.value("currentERSKY9XTrev", 1).toInt();
+			ui->label_CurrentVersion->setText( "Current Version - ersky9XT" ) ;
 		}
     ui->er9x_ver_label->setText(QString("r%1").arg(currentER9Xrev));
 #ifdef SKY
@@ -151,10 +156,15 @@ void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
     currentER9Xrev = settings.value("currentERSKYX9Drev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - erskyX9D" ) ;
 	}
-	else
+  else if ( index == 3 )
 	{
     currentER9Xrev = settings.value("currentERSKYX9DPrev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - erskyX9DP" ) ;
+	}
+	else
+	{
+    currentER9Xrev = settings.value("currentERSKY9XTrev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - ersky9XT" ) ;
 	}
   ui->er9x_ver_label->setText(QString("r%1").arg(currentER9Xrev));
   settings.setValue("download-version", ui->downloadVerCB->currentIndex());

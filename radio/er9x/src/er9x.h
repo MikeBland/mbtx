@@ -23,7 +23,7 @@
 #define VERSION4	1
 
 // Multi protocol feature
-//#define MULTI_PROTOCOL	1
+#define MULTI_PROTOCOL	1
 
 //#define STACK_TRACE				1
 
@@ -52,6 +52,10 @@
 #endif
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
+
+// Bits in SystemOptions
+#define SYS_OPT_HARDWARE_EDIT	1
+#define SYS_OPT_MUTE					2
 
 
 /* Building an er9x hex for custom transmitter */
@@ -246,6 +250,8 @@ extern const prog_char APM Str_OFF[] ;
 extern const prog_char APM Str_ON[] ;
 extern const prog_char APM Str_Switch_warn[] ;
 extern const prog_char APM modi12x3[] ;
+
+extern uint8_t SystemOptions ;
 
 //extern const prog_uint8_t APM chout_ar[] ;
 extern const prog_uint8_t APM bchout_ar[] ;
@@ -560,8 +566,8 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  KN    YD717 SymaX SLT   "
-//#define MULTI_STR_LEN    7
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
+//#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
@@ -571,14 +577,12 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
 #define M_Devo  	       6
-#define M_KN	           7
-#define M_YD717	           8
+#define M_YD717	           7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
+#define M_KN	           8
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
+#define M_SYMAX_STR "\007SYMAX  SYMAX5CSYMAX4 "
 #define M_SLT		       10
-#define M_NONE_STR "\004None"
-#define M_NY_STR "\001NY"
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -1215,9 +1219,11 @@ struct t_latency
 extern uint16_t A1A2toScaledValue( uint8_t channel, uint8_t *dplaces ) ;
 
 #ifdef CPUM2561
+#ifndef SLAVE
 void arduinoSerialRx( void ) ;
 void arduinoSerialTx( void ) ;
 void arduinoDueSlave( void ) ;
+#endif
 #endif
 
 extern uint8_t TmOK ;

@@ -500,7 +500,7 @@ void setupPulsesDsm2(uint8_t chns)
 			channels = g_model.ppmNCH ;
 		}
 			 
-//#ifdef PCBSP
+//#ifdef PCB9XT
 		if ( (dsmDat[0]&BindBit) && (!keyState(SW_Trainer) ) )
 //#else
 //		if ( (dsmDat[0]&BindBit) && (!keyState(SW_SH2) ) )

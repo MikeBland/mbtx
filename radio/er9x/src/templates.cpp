@@ -136,11 +136,12 @@ const prog_int8_t heli_ar5[] PROGMEM = {-100, -50, 0, 50, 100};
 #endif
 
 
-void setMix( uint8_t dch, uint8_t stick )
+MixData *setMix( uint8_t dch, uint8_t stick )
 {
   MixData *md ;
 	md=setDest( dch ) ;
 	md->srcRaw=CM( stick ) ;
+	return md ;
 }
 
 
@@ -232,22 +233,26 @@ void applyTemplate(uint8_t idx)
     if(idx==j++) 
     {
         clearMixes();
-        setMix(ICC(STK_RUD), STK_RUD ) ;
-        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_ELE);  md->weight=-100;
-        setMix(ICC(STK_ELE), STK_RUD ) ;
-        setMix(ICC(STK_ELE), STK_ELE ) ;
+        setMix(ICC(STK_RUD), STK_RUD )->weight=-50 ;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_ELE);  md->weight=-50 ;
+        setMix(ICC(STK_ELE), STK_RUD )->weight=-50 ;
+        setMix(ICC(STK_ELE), STK_ELE )->weight=-50 ;
+        setMix(ICC(STK_THR), STK_THR ) ;
+        setMix(ICC(STK_AIL), STK_AIL ) ;
+
     }
 
     //Elevon\\Delta
     if(idx==j++)
     {
         clearMixes();
-        setMix(ICC(STK_ELE), STK_ELE ) ;
-        setMix(ICC(STK_ELE), STK_AIL ) ;
-        setMix(ICC(STK_AIL), STK_ELE ) ;
-        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL);  md->weight=-100;
+        setMix(ICC(STK_ELE), STK_ELE )->weight=-50 ;
+        setMix(ICC(STK_ELE), STK_AIL )->weight=-50 ;
+        setMix(ICC(STK_AIL), STK_ELE )->weight=-50 ;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL);  md->weight=-50 ;
+        setMix(ICC(STK_RUD), STK_RUD ) ;
+        setMix(ICC(STK_THR), STK_THR ) ;
     }
-
 
     //Heli Setup
     if(idx==j++)

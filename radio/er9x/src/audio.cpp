@@ -143,6 +143,11 @@ void audioQueue::play(uint8_t tFreq, uint8_t tLen, uint8_t tPause, uint8_t flags
 	if(!freeslots()){
 			return;
 	}
+	if ( SystemOptions & SYS_OPT_MUTE )
+	{
+		return ;
+	}
+
   if (g_eeGeneral.beeperVal)
 	{
 	  int8_t tFreqIncr = (flags >> 6) ;

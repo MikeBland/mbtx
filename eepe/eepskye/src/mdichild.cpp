@@ -202,7 +202,7 @@ void MdiChild::refreshList()
         str.prepend(" - ");
     addItem(tr("General Settings") + str);
 		uint32_t max_models = MAX_MODELS ;
-		if ( radioData.type == 0 )
+		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -349,10 +349,10 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
     //QByteArray gmData = mimeD->data("application/x-eepe");
     char *gData = gmData->data();//new char[gmData.size() + 1];
     int i = 0;
-    int id = index;
+    uint32_t id = index;
     if(!id) id++;
 		uint32_t max_models = MAX_MODELS ;
-		if ( radioData.type == 0 )
+		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -683,9 +683,9 @@ void MdiChild::saveModelToFile()
 
 void MdiChild::duplicate()
 {
-    int i = this->currentRow();
+    uint32_t i = this->currentRow();
 		uint32_t max_models = MAX_MODELS ;
-		if ( radioData.type == 0 )
+		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -696,7 +696,7 @@ void MdiChild::duplicate()
     //XXXXXXXXXXXXX
 //        if(eeFile.getModel(&gmodel,--i))
 //        {
-            int j = i+1;
+            uint32_t j = i+1;
 		//XXXXXXXXXXXXX
             while(j<max_models && radioData.File_system[j+1].size) j++;
 		//XXXXXXXXXXXXX
@@ -781,6 +781,10 @@ void MdiChild::OpenEditWindow()
 				{
     		  type = " (Taranis Plus)" ;
 				}
+				else if ( radioData.type == 3 )
+				{
+    			type = " (9Xtreme)" ;
+				}
         t->setWindowTitle(tr("Editing model %1: ").arg(i) + mname + type ) ;
 
         for(int j=0; j<MAX_SKYMIXERS; j++)
@@ -822,6 +826,10 @@ void MdiChild::newFile()
 		if ( x == 3 )
 		{
     	type = " (Taranis Plus)" ;
+		}
+		else if ( x == 4 )
+		{
+    	type = " (9Xtreme)" ;
 		}
 
     isUntitled = true;
@@ -892,12 +900,12 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 								
           }
 					uint32_t max_models = MAX_MODELS ;
-					if ( radioData.type == 0 )
+					if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
 					{
 						max_models = MAX_IMODELS ;
 					}
 
-          for(int i=0; i<max_models; i++)
+          for(uint32_t i=0; i<max_models; i++)
           {
             SKYModelData tmod;
             memset(&tmod,0,sizeof(tmod));
@@ -1184,12 +1192,12 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
 
         //Save model data one by one
 				uint32_t max_models = MAX_MODELS ;
-				if ( radioData.type == 0 )
+				if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
 				{
 					max_models = MAX_IMODELS ;
 				}
         
-				for(int i=0; i<max_models; i++)
+        for(uint32_t i=0; i<max_models; i++)
         {
             saveModelToXML(&doc, &root, i, MDVERS);
         }
@@ -1237,7 +1245,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-        if ( radioData.type )
+        if ( ( radioData.type ) && ( radioData.type < 3) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1305,6 +1313,10 @@ bool MdiChild::maybeSave()
 void MdiChild::setCurrentFile(const QString &fileName)
 {
     QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
+		if ( radioData.type == 3 )
+		{
+ 			type = " (9Xtreme)" ;
+		}
     
 		curFile = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;
@@ -1434,7 +1446,7 @@ void MdiChild::burnTo()  // write to Tx
 					{
       			qint32 fsize ;
 						fsize = (MAX_IMODELS+1)*8192 ;
-						if ( radioData.type )
+		        if ( ( radioData.type ) && ( radioData.type < 3) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}
@@ -1636,7 +1648,7 @@ void MdiChild::modelDefault(uint8_t id)
 		}
 		radioData.models[id].modelVersion = 3 ;
 	}
-	if ( radioData.type ) // Taranis
+  if ( ( radioData.type ) && ( radioData.type < 3) ) // Taranis
 	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;

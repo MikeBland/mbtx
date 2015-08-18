@@ -48,7 +48,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "stm32f2xx_flash.h"
 #include "X9D/hal.h"
 #endif
-#ifdef PCBSP
+#ifdef PCB9XT
 #include "x9d\stm32f2xx.h"
 #include "x9d\stm32f2xx_flash.h"
 #include "X9D/hal.h"
@@ -76,7 +76,10 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define SPORT_INTERNAL	0
 #define SPORT_EXTERNAL	1
 
-#if defined(PCBX9D) || defined(PCBSP)
+#define	NO_RECEIVE		0
+#define WITH_RECEIVE	1
+
+#if defined(PCBX9D) || defined(PCB9XT)
 #if !defined(PCBTARANIS)
 #define INTERNAL_RF_ON()      GPIO_SetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
@@ -90,6 +93,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define UPDATE_TYPE_COPROCESSOR		1
 #define UPDATE_TYPE_SPORT_INT			2
 #define UPDATE_TYPE_SPORT_EXT			3
+#define UPDATE_TYPE_CHANGE_ID			4
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
@@ -135,6 +139,10 @@ uint8_t SportVerValid ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 
+const uint8_t SportIds[32] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
+				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
+															0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7,
+															0x98, 0x39, 0xBA, 0x1B, 0x7C, 0xDD, 0x5E, 0xFF } ;
 
 uint8_t SportState ;
 #define SPORT_IDLE				0
@@ -186,7 +194,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 //After reset, write is not allowed in the Flash control register (FLASH_CR) to protect the
 //Flash memory against possible unwanted operations due, for example, to electric
 //disturbances. The following sequence is used to unlock this register:
@@ -291,7 +299,7 @@ uint32_t validateFile( uint32_t *block )
 	uint32_t i ;
 	uint8_t *bytes ;
 	
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( block[0] & 0xFFFC0000 ) != 0x20000000 )
 	{
 		return 0 ;
@@ -572,6 +580,175 @@ void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
 #define UPDATE_ACTION			5
 #define UPDATE_COMPLETE		6
 
+#define CHANGE_SCANNING		0
+#define CHANGE_ENTER_ID		1
+#define CHANGE_SET_IDLE		2
+#define CHANGE_SET_VALUE	3
+#define CHANGE_FINISHED		4
+
+static uint8_t TxPacket[8] ;
+static uint8_t TxPhyPacket[16] ;
+static uint8_t SportTimer ;
+
+uint8_t SendCount ;
+uint8_t RxCount ;
+uint8_t RxLastCount ;
+uint8_t IdIndex ;
+uint8_t IdFound ;
+
+uint8_t RxPacket[10] ;
+uint8_t PhyId ;
+uint8_t NewPhyId ;
+uint16_t AppId ;
+
+void menuChangeId(uint8_t event)
+{
+	static uint32_t state ;
+ 	
+	TITLE( "CHANGE SPort Id" ) ;
+
+	lcd_puts_Pleft( 2*FH, "Not Implemented(yet)" ) ;
+
+
+	switch(event)
+	{
+    case EVT_ENTRY:
+			RxCount = 0 ;
+			RxLastCount = 0 ;
+			FrskyTelemetryType = 1 ;
+			IdIndex = 0x1B ;
+			IdFound = 0 ;
+			state = CHANGE_SCANNING ;
+			SendCount = 2 ;
+    break ;
+    
+		case EVT_KEY_FIRST(KEY_EXIT):
+     	chainMenu(menuUpdate) ;
+   		killEvents(event) ;
+    break ;
+		
+		case EVT_KEY_FIRST(KEY_UP):
+			if ( state == CHANGE_ENTER_ID )
+			{
+				if ( ++NewPhyId > 0x1B )
+				{
+					NewPhyId = 0x1B ;
+				}
+			}
+    break ;
+    
+		case EVT_KEY_FIRST(KEY_DOWN):
+			if ( state == CHANGE_ENTER_ID )
+			{
+				if ( NewPhyId  )
+				{
+					NewPhyId -= 1 ;
+				}
+			}
+    break ;
+
+		case EVT_KEY_FIRST(KEY_MENU):
+			if ( state == CHANGE_ENTER_ID )
+			{
+				TxPhyPacket[0] = 0x7E ;
+				TxPhyPacket[1] = PhyId ;
+				TxPhyPacket[2] = 0x21 ;
+				TxPhyPacket[3] = 0xFF ;
+				TxPhyPacket[4] = 0xFF ;
+				TxPhyPacket[5] = 0 ;
+				TxPhyPacket[6] = 0 ;
+				TxPhyPacket[7] = 0 ;
+				TxPhyPacket[8] = 0 ;
+
+  			uint16_t crc = 0 ;
+  			for ( uint8_t i=2; i<9; i++)
+				{
+  			  crc += TxPhyPacket[i]; //0-1FF
+  			  crc += crc >> 8; //0-100
+  			  crc &= 0x00ff;
+  			}
+				TxPhyPacket[9] = ~crc ;
+#ifdef PCBX9D
+				x9dSPortTxStart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+#ifdef PCBSKY
+				txPdcUsart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+				state = CHANGE_SET_IDLE ;
+			}
+    break ;
+	}
+
+	switch ( state )
+	{
+		case CHANGE_SCANNING :
+			lcd_puts_Pleft( 3*FH, "Scanning" ) ;
+			if ( --SendCount == 0 )
+			{
+				SendCount = 2 ;
+				if ( ++IdIndex > 0x1B )
+				{
+					IdIndex = 0 ;
+				}
+				TxPhyPacket[0] = 0x7E ;
+				TxPhyPacket[1] = SportIds[IdIndex] ;
+#ifdef PCBX9D
+				x9dSPortTxStart( TxPhyPacket, 2, WITH_RECEIVE ) ;
+#endif
+#ifdef PCBSKY
+				txPdcUsart( TxPhyPacket, 2, WITH_RECEIVE ) ;
+#endif
+			}
+		break ;
+	
+		case CHANGE_ENTER_ID :
+			lcd_puts_Pleft( 3*FH, "New Id: " ) ;
+	    lcd_outdez( 9*FW, 3*FH, NewPhyId ) ;
+		break ;
+
+		case CHANGE_SET_IDLE :
+			lcd_puts_Pleft( 3*FH, "Set Idle state" ) ;
+		break ;
+
+	}
+
+	lcd_outhex4( 0, 7*FH, RxCount ) ;
+	if ( RxPacket[1] == 0x10 )
+	{
+		IdFound = 1 ;
+		PhyId = RxPacket[0] ;
+		NewPhyId = PhyId & 0x1F ;
+		if ( NewPhyId > 0x1B )
+		{
+			NewPhyId = 0x1B ;
+		}
+		AppId = RxPacket[2] | ( RxPacket[3] << 8 ) ;
+		lcd_outhex4( 0, 4*FH, RxPacket[0] ) ;
+		lcd_outhex4( 25, 4*FH, RxPacket[1] ) ;
+		lcd_outhex4( 50, 4*FH, RxPacket[2] ) ;
+		lcd_outhex4( 75, 4*FH, RxPacket[3] ) ;
+		lcd_outhex4( 100, 4*FH, RxPacket[4] ) ;
+		lcd_outhex4( 0, 5*FH, RxPacket[5] ) ;
+		lcd_outhex4( 25, 5*FH, RxPacket[6] ) ;
+		lcd_outhex4( 50, 5*FH, RxPacket[7] ) ;
+		lcd_outhex4( 75, 5*FH, RxPacket[8] ) ;
+//		lcd_outhex4( 100, 5*FH, RxPacket[9] ) ;
+	}
+	if ( IdFound )
+	{
+		lcd_outhex4( 0, 6*FH, PhyId ) ;
+		lcd_outhex4( 25, 6*FH, AppId ) ;
+	}
+
+//extern uint16_t TelemetryDebug ;
+//extern uint16_t TelemetryDebug1 ;
+//extern uint16_t TelemetryDebug2 ;
+//extern uint16_t TelemetryDebug3 ;
+//	lcd_outhex4( 0, 6*FH, TelemetryDebug ) ;
+//	lcd_outhex4( 25, 6*FH, TelemetryDebug1 ) ;
+//	lcd_outhex4( 50, 6*FH, TelemetryDebug2 ) ;
+//	lcd_outhex4( 75, 6*FH, TelemetryDebug3 ) ;
+}
 
 void menuUp1(uint8_t event)
 {
@@ -629,7 +806,7 @@ void menuUp1(uint8_t event)
 #else				
   			fr = f_mount(0, &g_FATFS) ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 				unlockFlash() ;
 #endif
 			}
@@ -764,7 +941,7 @@ void menuUp1(uint8_t event)
 			{
 				if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 				{
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 					firmwareAddress = 0x08000000 ;
 #endif
 #ifdef PCBSKY
@@ -974,13 +1151,16 @@ void menuUpdate(uint8_t event)
  #ifndef REVX
 	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
 	lcd_puts_Pleft( 4*FH, "  Update SPort" );
+	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
+	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
  #endif
 #endif
 #ifdef PCBX9D
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 #endif
 
   switch(event)
@@ -1007,11 +1187,21 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
+			}
  #else
 			if ( position == 3*FH )
 			{
 				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
+			}
+			if ( position == 4*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
 			}
  #endif
 #endif
@@ -1026,6 +1216,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
+			}
 #endif
     	killEvents(event) ;
 			reboot = 0 ;
@@ -1038,7 +1233,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCBSKY
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 4*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1052,7 +1247,7 @@ void menuUpdate(uint8_t event)
 		break ;
  #else
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 3*FH )
+			if ( position < 4*FH )
 			{
 				position += FH ;				
 			}
@@ -1068,7 +1263,7 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 4*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1358,18 +1553,14 @@ uint32_t check_ready()
 #define PRIM_END_DOWNLOAD   (0x83)
 #define PRIM_DATA_CRC_ERR   (0x84)
 
-static uint8_t TxPacket[8] ;
-static uint8_t TxPhyPacket[16] ;
-static uint8_t SportTimer ;
 
-
-void writePacket( uint8_t *buffer )
+void writePacket( uint8_t *buffer, uint8_t phyId )
 {
 	uint8_t *ptr = TxPhyPacket ;
 	uint32_t i ;
 
 	*ptr++ = 0x7E ;
-	*ptr++ = 0xFF ;
+	*ptr++ = phyId ;
 	buffer[7] = crc16_ccitt( buffer, 7 ) ;
 	for ( i = 0 ; i < 8 ; i += 1 )
 	{
@@ -1385,10 +1576,10 @@ void writePacket( uint8_t *buffer )
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
 #ifdef PCBX9D
-	x9dSPortTxStart( TxPhyPacket, i ) ;
+	x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
 #endif
 #ifdef PCBSKY
-	txPdcUsart( TxPhyPacket, i ) ;
+	txPdcUsart( TxPhyPacket, i, NO_RECEIVE ) ;
 #endif
 }
 
@@ -1403,7 +1594,7 @@ void blankTxPacket()
 
 // This is called from the receive processing.
 // Packet has leading 0x7E stripped
-void maintenance_receive_packet( uint8_t *packet )
+void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 {
 	uint32_t addr ;
 	
@@ -1446,7 +1637,7 @@ void maintenance_receive_packet( uint8_t *packet )
 					TxPacket[0] = 0x50 ;
 					TxPacket[1] = PRIM_DATA_EOF ;
 					SportTimer = 20 ;		// 200 mS
-					writePacket( TxPacket ) ;
+					writePacket( TxPacket, 0xFF ) ;
 					SportState = SPORT_END ;
 				}
 				else
@@ -1466,7 +1657,7 @@ void maintenance_receive_packet( uint8_t *packet )
 						uint32_t *dptr = (uint32_t *)(&TxPacket[2]) ;
         		*dptr = *ptr ;
 						SportTimer = 20 ;		// 200 mS
-						writePacket( TxPacket ) ;
+						writePacket( TxPacket, 0xFF ) ;
 					}
 					if ( BlockInUse )
 					{
@@ -1500,6 +1691,20 @@ void maintenance_receive_packet( uint8_t *packet )
 					SportState = SPORT_FAIL ;
 			break ;
 		}
+	}
+	else
+	{
+		RxCount += 1 ;
+		RxPacket[0] = packet[0] ;
+		RxPacket[1] = packet[1] ;
+		RxPacket[2] = packet[2] ;
+		RxPacket[3] = packet[3] ;
+		RxPacket[4] = packet[4] ;
+		RxPacket[5] = packet[5] ;
+		RxPacket[6] = packet[6] ;
+		RxPacket[7] = packet[7] ;
+		RxPacket[8] = packet[8] ;
+		RxPacket[9] = packet[9] ;
 	}
 }
 
@@ -1555,7 +1760,7 @@ uint32_t sportUpdate( uint32_t external )
 				TxPacket[0] = 0x50 ;
 				TxPacket[1] = PRIM_REQ_POWERUP ;
 				SportTimer = 10 ;		// 100 mS
-				writePacket( TxPacket ) ;
+				writePacket( TxPacket, 0xFF ) ;
 			}
 		break ;
 		
@@ -1567,7 +1772,7 @@ uint32_t sportUpdate( uint32_t external )
 				TxPacket[1] = PRIM_REQ_VERSION ;
 				SportTimer = 20 ;		// 200 mS
 				SportState = SPORT_VERSION ;
-				writePacket( TxPacket ) ;
+				writePacket( TxPacket, 0xFF ) ;
 			}
 		break ;
 
@@ -1578,7 +1783,7 @@ uint32_t sportUpdate( uint32_t external )
 			SportTimer = 20 ;		// 200 mS
 			SportState = SPORT_DATA ;
 // Stop here for testing
-			writePacket( TxPacket ) ;
+			writePacket( TxPacket, 0xFF ) ;
 		break ;
 
 		case SPORT_DATA :

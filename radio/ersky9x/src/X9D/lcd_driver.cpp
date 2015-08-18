@@ -97,7 +97,7 @@ void setupSPIdma()
 	DMA1_Stream7->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
 //	DMA1_Stream7->NDTR = DISPLAY_W*DISPLAY_H/8*4 ;
 
-	NVIC_SetPriority( DMA1_Stream7_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( DMA1_Stream7_IRQn, 3 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(DMA1_Stream7_IRQn) ;
 }
 
@@ -603,6 +603,10 @@ void hapticOn( uint32_t pwmPercent )
 
 #else
 
+#ifdef PCB9XT
+
+#else
+
 void backlight_on()
 {
 	TIM10->CCR1 = 100 - BacklightBrightness ;
@@ -645,6 +649,7 @@ static void LCD_BL_Config()
 	TIM10->EGR = 0 ;
 	TIM10->CR1 = 1 ;
 }
+#endif
 #endif
 
 /** Init the anolog spi gpio
@@ -991,7 +996,7 @@ void initTimerTopLcd()
 	TIM12->CCMR1 = 0 ;
 	TIM12->EGR = 0 ;
 	TIM12->CR1 = 5 ;
-  NVIC_SetPriority(TIM8_BRK_TIM12_IRQn, 2 ) ;
+  NVIC_SetPriority(TIM8_BRK_TIM12_IRQn, 3 ) ;
 	NVIC_EnableIRQ(TIM8_BRK_TIM12_IRQn) ;
 }
 

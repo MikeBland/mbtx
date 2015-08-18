@@ -174,7 +174,7 @@ static void socket_cp_init(void)
 DWORD socket_is_empty(void)
 {
 //        return 0; /* fake inserted */
-	return GPIOD->IDR & GPIO_Pin_9 ;
+	return GPIO_CTL_SD->IDR & GPIO_Pin_CP ;
 }
 
 static void card_power(BYTE on)
@@ -941,7 +941,7 @@ DRESULT disk_ioctl (
 /*-----------------------------------------------------------------------*/
 /* This function must be called in period of 10ms                        */
 
-void sdPoll10ms()
+void sdPoll10mS()
 {
         static DWORD pv;
         DWORD ns;

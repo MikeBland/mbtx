@@ -58,7 +58,7 @@ static uint8_t IlinesCount ;
 
 //extern void putVoiceQueue( uint8_t value ) ;
 extern int16_t AltOffset ;
-extern uint8_t EnableHardwareEdit ;
+extern uint8_t SystemOptions ;
 static uint8_t s_currIdx;
 
 NOINLINE void resetTimer1(void) ;
@@ -3234,7 +3234,7 @@ static void deleteMix(uint8_t idx)
 		memmove( md, md+1,(MAX_MIXERS-(idx+1))*sizeof(MixData));
     memset(&g_model.mixData[MAX_MIXERS-1],0,sizeof(MixData));
     STORE_MODELVARS;
-    eeWaitComplete() ;
+//    eeWaitComplete() ;
 }
 
 static void insertMix(uint8_t idx, uint8_t copy)
@@ -3258,7 +3258,7 @@ static void insertMix(uint8_t idx, uint8_t copy)
 #endif
 		}
 		s_currMixIdx = idx ;
-//    STORE_MODELVARS;
+    STORE_MODELVARS;
 //    eeWaitComplete() ;
 }
 
@@ -7603,7 +7603,19 @@ void perOut(int16_t *chanOut, uint8_t att)
 						{
 							v = calc_scaler( k - (MIX_3POS+MAX_GVARS+1), 0, 0 ) ;
 						}
-            
+
+//            else if (k > MIX_3POS+MAX_GVARS + NUM_SCALERS)
+//						{
+//							// ( k >= EXTRA_POTS_START )
+//							// An extra pot
+//							v = calibratedStick[k-EXTRA_POTS_START+8] ;
+//						}
+//            else
+//						{
+//							v = calc_scaler( k - (MIX_3POS+MAX_GVARS+1), 0, 0 ) ;
+//						}
+
+
 						if(md->mixWarn) mixWarning |= 1<<(md->mixWarn-1); // Mix warning
         }
         Output.swOn[mixIndex] = swon ;
@@ -8285,7 +8297,7 @@ void menuProcIndex(uint8_t event)
 	{
 		case M_INDEX :
   		TITLEP(Str_Radio_Setup);
-			IlinesCount = EnableHardwareEdit ? 11 : 10 ;
+			IlinesCount = ( SystemOptions & SYS_OPT_HARDWARE_EDIT ) ? 11 : 10 ;
 			sub += 1 ;
 
 static const prog_char *const n_Strings[11] PROGMEM = {
@@ -8475,7 +8487,7 @@ Str_Hardware
       	if(sub==subN)
 				{
   				attr = 0 ;
-					if ( EnableHardwareEdit )
+					if ( SystemOptions & SYS_OPT_HARDWARE_EDIT )
 					{
 						CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.stickReverse, 15 ) ;
 						if ( BLINK_ON_PHASE )
@@ -8539,6 +8551,7 @@ Str_Hardware
 #else
 					editName( g_posHorz, y, &g_eeGeneral.customStickNames[i*4], 4, sub==subN ) ;
 #endif
+					subN += 1 ;
 	 				y += FH ;
 				}
 				
@@ -10131,12 +10144,14 @@ Str_Protocol
   		else // if (protocol == PROTO_PXX) || DSM2 || MULTI
   		{
 				cols = 1 ;
+				int8_t value = g_model.ppmNCH ;
 #ifdef MULTI_PROTOCOL
-					if (protocol == PROTO_MULTI)
-						lcd_xlabel_decimal( 21*FW, y, g_model.ppmNCH & 0x0F, (sub==subN && subSub==1 ? blink:0), PSTR(STR_13_RXNUM) ) ;
-					else
+				if (protocol == PROTO_MULTI)
+				{
+					value &= 0x0F ;
+				}
 #endif
-						lcd_xlabel_decimal( 21*FW, y, g_model.ppmNCH, (sub==subN && subSub==1 ? blink:0), PSTR(STR_13_RXNUM) ) ;
+				lcd_xlabel_decimal( 21*FW, y, value, (sub==subN && subSub==1 ? blink:0), PSTR(STR_13_RXNUM) ) ;
 			}
 
 			if(sub==subN )
@@ -10153,48 +10168,50 @@ Str_Protocol
   		  	switch (subSub){
   		  	case 0:
 					{
-#if (PROT_MAX == PROTO_PPMSIM )
-						uint8_t prot_max = PROT_MAX ;
-						if ( g_eeGeneral.enablePpmsim == 0 )
-						{
-							prot_max -= 1 ;
-						}
-  		  	  CHECK_INCDEC_H_MODELVAR_0(protocol, prot_max ) ;
-#else
-						uint8_t oldProtocol = protocol ;
+//#if (PROT_MAX == PROTO_PPMSIM )
+//						uint8_t prot_max = PROT_MAX ;
+//						if ( g_eeGeneral.enablePpmsim == 0 )
+//						{
+//							prot_max -= 1 ;
+//						}
+//  		  	  CHECK_INCDEC_H_MODELVAR_0(protocol, prot_max ) ;
+//#else
+//						uint8_t oldProtocol = protocol ;
   		  	  CHECK_INCDEC_H_MODELVAR_0(protocol, PROT_MAX ) ;
-						if ( g_eeGeneral.enablePpmsim == 0 )
-						{
-							if ( protocol == PROTO_PPMSIM )
-							{
-								if ( oldProtocol > protocol )
-								{
-									protocol -= 1 ;
-								}
-								else
-								{
-									protocol += 1 ;
-								}
-							}
-						}
-#endif
+//						if ( g_eeGeneral.enablePpmsim == 0 )
+//						{
+//							if ( protocol == PROTO_PPMSIM )
+//							{
+//								if ( oldProtocol > protocol )
+//								{
+//									protocol -= 1 ;
+//								}
+//								else
+//								{
+//									protocol += 1 ;
+//								}
+//							}
+//						}
+//#endif
 					}
   		  	break;
   		  	case 1:
   		  	    if( ppmTypeProto ) //if ((protocol == PROTO_PPM) || (protocol == PROTO_PPM16)|| (protocol == PROTO_PPMSIM) )
   		  	        CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH,-2,4);
   		  	    else // if (protocol == PROTO_PXX) || DSM2 || MULTI
+							{
 #ifdef MULTI_PROTOCOL
-					if (protocol == PROTO_MULTI)
-					{
-						attr = g_model.ppmNCH & 0x0F;
-						CHECK_INCDEC_H_MODELVAR(attr, 0, 15);
-						g_model.ppmNCH=(g_model.ppmNCH & 0xF0) + attr;
-					}
-					else
+								if (protocol == PROTO_MULTI)
+								{
+									attr = g_model.ppmNCH & 0x0F;
+									CHECK_INCDEC_H_MODELVAR(attr, 0, 15);
+									g_model.ppmNCH=(g_model.ppmNCH & 0xF0) + attr;
+								}
+								else
 #endif
-						CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH, 0, 124);
-  		  	    break;
+									CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH, 0, 124);
+							}
+  		  	break;
   		  	case 2:
   		  	    if( ppmTypeProto ) //if ((protocol == PROTO_PPM) || (protocol == PROTO_PPM16) || (protocol == PROTO_PPMSIM) )
   		  	        CHECK_INCDEC_H_MODELVAR(g_model.ppmDelay,-4,10);
@@ -10226,39 +10243,47 @@ Str_Protocol
 #ifdef MULTI_PROTOCOL
 			if (protocol == PROTO_MULTI)
 			{
-				uint8_t nchLow = g_model.ppmNCH &0x0F ;
+				// Display on screen static text
 				lcd_puts_Pleft(    y, PSTR(STR_MULTI_TYPE));
+				// Sub-protocol stored in sub_protocol bits0..4
 				attr=g_model.sub_protocol;
+//#ifdef V2
+//				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
+//#else
 				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
-				if(g_model.sub_protocol!=attr) g_model.ppmNCH &= 0x0F;
-				uint8_t nchHi = g_model.ppmNCH >> 4 ;
+//#endif
+				if(g_model.sub_protocol==attr)
+					attr=(g_model.ppmNCH >> 4) &0x07 ;
+				else
+					attr=0;
 				y += FH ;
 				subN++;
+				//Sub-sub-protocol stored in ppmNCH bits4..6
+				const prog_char * s;
 				switch(g_model.sub_protocol&0x1F)
 				{
 					case M_Flysky:
-						nchHi = checkIndexed( y, PSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
+						s=PSTR(FWx10"\003"M_FLYSKY_STR);
 						break;
 					case M_DSM2:
-						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
+						s=PSTR(FWx10"\001"M_DSM2_STR);
 						break;
 					case M_YD717:
-						nchHi = checkIndexed( y, PSTR(FWx10"\004"M_YD717_STR), nchHi, (sub==subN) ) ;
+						s=PSTR(FWx10"\004"M_YD717_STR);
 						break;
 					case M_SymaX:
-						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_SYMAX_STR), nchHi, (sub==subN) ) ;
+						s=PSTR(FWx10"\002"M_SYMAX_STR);
 						break;
 					default:
-						nchHi = 0 ;
-						nchHi = checkIndexed( y, PSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
+						s=PSTR(FWx10"\000"M_NONE_STR);
 						break;
 				}
-				g_model.ppmNCH = (nchHi << 4) + nchLow ;
+				g_model.ppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.ppmNCH & 0x8F);
 				y += FH ;
 				subN++;
-
-				uint8_t value = (g_model.sub_protocol>>6)&0x01 ;
-				lcd_putsAttIdx(  9*FW, y, PSTR(M_NY_STR), value, (sub==subN && subSub==0 ? blink:0) );
+				// Power stored in ppmNCH bit7 & Option stored in option_protocol
+				uint8_t value = (g_model.ppmNCH>>7)&0x01 ;
+				lcd_putsAttIdx(  6*FW, y, PSTR(M_LH_STR), value, (sub==subN && subSub==0 ? blink:0) );
 				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
 				if(sub==subN)
 				{
@@ -10266,13 +10291,33 @@ Str_Protocol
 					if(subSub==0 && s_editing)
 					{
 						CHECK_INCDEC_H_MODELVAR_0(value, 1 );
-						g_model.sub_protocol = (value<<6) + (g_model.sub_protocol&0xBF);
+						g_model.ppmNCH = (value<<7) + (g_model.ppmNCH&0x7F);
 					}
 					if(subSub==1 && s_editing)
 						CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
 				}
 				y += FH ;
 				subN++;
+				// BIND use PXX_BIND flag & Autobind stored in sub_protocol bit6
+				value = (g_model.sub_protocol>>6)&0x01 ;
+				lcd_putsAttIdx(  20*FW, y, PSTR(M_NY_STR), value, (sub==subN && subSub==1 ? blink:0) );
+				if(sub==subN)
+				{
+					Columns = 1;
+					if(subSub==0)
+						rangeBindAction( y, PXX_BIND ) ;
+					if(subSub==1 && s_editing)
+					{
+						CHECK_INCDEC_H_MODELVAR_0(value, 1 );
+						g_model.sub_protocol = (value<< 6) + (g_model.sub_protocol & 0xBF);
+					}
+				}		
+				y += FH ;
+				subN++;
+
+				// Range use PXX_RANGE_CHECK
+				if(sub==subN)
+					rangeBindAction( y, PXX_RANGE_CHECK ) ;
 			}
 #endif // MULTI_PROTOCOL
 			if (protocol == PROTO_DSM2)
@@ -10297,11 +10342,7 @@ Str_Protocol
 				subN++;
 			}
 			
-#ifdef MULTI_PROTOCOL
-			if ( (protocol == PROTO_PXX) || (protocol == PROTO_MULTI) )
-#else
 			if (protocol == PROTO_PXX)
-#endif
 			{
   			if(sub==subN)
 				{

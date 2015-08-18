@@ -32,6 +32,7 @@
 *
 ****************************************************************************/
 
+//#define SOFTWARE_VOLUME	1
 
 
 #include <stdint.h>
@@ -304,7 +305,7 @@ void init_dac()
 	dacptr->DACC_TNCR = 50 ;	// words, 100 16 bit values
 	dacptr->DACC_PTCR = DACC_PTCR_TXTEN ;
 #endif // TONE_MODE_2
-	NVIC_SetPriority( DACC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( DACC_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(DACC_IRQn) ;
 }
 
@@ -554,20 +555,59 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
+#ifdef SOFTWARE_VOLUME
+static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+{
+	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+} ;
+
+uint16_t swVolumeLevel()
+{
+	return SwVolume_scale[CurrentVolume] ;
+}
+
+#endif	 
 
 void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
 {
+#ifdef SOFTWARE_VOLUME
+	uint32_t multiplier ;
+	int32_t value ;
+	multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+#endif	 
+	
 	while( count-- )
 	{
+#ifdef SOFTWARE_VOLUME
+		value = (int8_t) (*src++ - 128 ) ;
+		value *= multiplier ;
+		value += 32768 * 256 ;
+		*dest++ = value >> 12 ;
+#else
 		*dest++ = *src++ << 4 ;
+#endif	 
 	}
 }
 
 void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
 {
+#ifdef SOFTWARE_VOLUME
+	uint32_t multiplier ;
+	int32_t value ;
+	multiplier = SwVolume_scale[CurrentVolume] ;
+#endif	 
+	
 	while( count-- )
 	{
+#ifdef SOFTWARE_VOLUME
+		value = (int16_t) *src++ ;
+		value *= multiplier ;
+		value += 32768 * 256 ;
+		*dest++ = value >> 12 ;
+#else
 		*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+#endif	
 	}
 }
 
@@ -738,7 +778,7 @@ void init_twi()
 	TWI0->TWI_CWGR = 0x00040000 | timing ;			// TWI clock set
 	TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 	TWI0->TWI_MMR = 0x002F0000 ;		// Device 5E (>>1) and master is writing
-  NVIC_SetPriority(TWI0_IRQn, 4 ) ;
+  NVIC_SetPriority(TWI0_IRQn, 5 ) ;
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 }
 
@@ -797,6 +837,7 @@ static uint8_t TwiOperation ;
 #define TWI_READ_BUFFER		15
 #define TWI_WRITE_COMMAND_BUFFER    16
 #define TWI_READ_COMMAND_BUFFER     17
+#define TWI_WAIT_BUFFER		18
 
 
 
@@ -877,7 +918,6 @@ struct t_I2C_request LedI2cRequest ;
 struct t_I2C_request *I2cHeadPointer ;
 struct t_I2C_request *I2cTailPointer ;
 
-uint8_t I2Cdebug ;
 
 void submitI2cRequest( struct t_I2C_request *ptr )
 {
@@ -963,6 +1003,16 @@ void read23008( uint8_t *ptrData )
 	submitI2cRequest( &GeneralI2cRequest ) ;
 }
 
+void readI2cEncoder( uint8_t *ptrData )
+{
+	GeneralI2cRequest.mmr = 0x00041000 ;	// reading, No addr
+//	GeneralI2cRequest.address = 0 ;
+	GeneralI2cRequest.dataSize = 2 ;
+	GeneralI2cRequest.dataBuffer = ptrData ;
+	GeneralI2cRequest.operationType = TWI_READ_BUFFER ;
+	submitI2cRequest( &GeneralI2cRequest ) ;
+}
+
 // This is called from an interrupt routine, or
 // interrupts must be disabled while it is called
 // from elsewhere.
@@ -994,7 +1044,6 @@ void i2c_check_for_request()
 		}
 		else if ( I2cHeadPointer->operationType == TWI_WRITE_BUFFER )
 		{
-			I2Cdebug = 'A' ;
 			TwiOperation = TWI_WRITE_BUFFER ;
 #ifndef SIMU
 			TWI0->TWI_TPR = (uint32_t)I2cHeadPointer->dataBuffer+1 ;
@@ -1003,7 +1052,6 @@ void i2c_check_for_request()
 			TWI0->TWI_THR = *I2cHeadPointer->dataBuffer ;	// First byte
 			TWI0->TWI_PTCR = TWI_PTCR_TXTEN ;	// Start data transfer
 			TWI0->TWI_IER = TWI_IER_TXBUFE | TWI_IER_TXCOMP ;
-			I2Cdebug = 'B' ;
 		}
 		else if ( I2cHeadPointer->operationType == TWI_READ_BUFFER )
 		{
@@ -1011,11 +1059,13 @@ void i2c_check_for_request()
 #ifndef SIMU
 			TWI0->TWI_RPR = (uint32_t)I2cHeadPointer->dataBuffer ;
 #endif
-			TWI0->TWI_RCR = I2cHeadPointer->dataSize-1 ;
 			if ( TWI0->TWI_SR & TWI_SR_RXRDY )
 			{
 				(void) TWI0->TWI_RHR ;
+				(void) TWI0->TWI_RHR ;
 			}
+			TWI0->TWI_RCR = I2cHeadPointer->dataSize-1 ;
+			(void) TWI0->TWI_SR ;		// Read as some bits cleared on read
 			TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start data transfer
 			TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
 			TWI0->TWI_IER = TWI_IER_RXBUFF | TWI_IER_TXCOMP ;
@@ -1172,7 +1222,11 @@ void setVolume( register uint8_t volume )
 	}
 	CurrentVolume = volume ;
 	volume = Volume_scale[volume] ;
+#ifdef SOFTWARE_VOLUME
+	Volume_required = 127 ;
+#else
 	Volume_required = volume ;
+#endif
 	__disable_irq() ;
 	i2c_check_for_request() ;
 	__enable_irq() ;
@@ -1490,7 +1544,6 @@ extern "C" void TWI0_IRQHandler()
 		}
 		else
 		{
-			I2Cdebug = 'F' ;
 			I2cHeadPointer->done = 2 ;
 			I2cHeadPointer = I2cHeadPointer->next ;
 		}
@@ -1498,10 +1551,8 @@ extern "C" void TWI0_IRQHandler()
 
 	if ( TwiOperation == TWI_WRITE_BUFFER )
 	{
- 		I2Cdebug = 'C' ;
 		if ( status & TWI_SR_TXBUFE )
 		{
-			I2Cdebug = 'D' ;
 			TWI0->TWI_IDR = TWI_IDR_TXBUFE ;
 			TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
 			TWI0->TWI_PTCR = TWI_PTCR_TXTDIS ;	// Stop transfers
@@ -1512,7 +1563,6 @@ extern "C" void TWI0_IRQHandler()
 		}
 		else
 		{
-			I2Cdebug = 'E' ;
 			TWI0->TWI_IDR = TWI_IDR_TXBUFE ;
 			TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
 			TWI0->TWI_PTCR = TWI_PTCR_TXTDIS ;	// Stop transfers
@@ -1528,6 +1578,7 @@ extern "C" void TWI0_IRQHandler()
 		if ( status & TWI_SR_RXBUFF )
 		{
 			TWI0->TWI_IDR = TWI_IDR_RXBUFF ;
+			TwiOperation = TWI_WAIT_BUFFER ;
 			TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
 			TWI0->TWI_RCR = 1 ;						// Last byte
 			return ;
@@ -1538,16 +1589,32 @@ extern "C" void TWI0_IRQHandler()
 			if ( TWI0->TWI_RCR > 0 )
 			{
 				TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
-			}
-			else
-			{
-				TwiOperation = TWI_NONE ;
-				I2cHeadPointer->done = 1 ;
-				I2cHeadPointer = (struct t_I2C_request *) NULL ;
-			}
+		  }
 		}
-		
 	}
+	
+	if ( TwiOperation == TWI_WAIT_BUFFER )
+	{
+		TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
+		if ( status & TWI_SR_RXRDY )
+		{
+			(void) TWI0->TWI_RHR ;			// Discard any rubbish data
+		}
+		TwiOperation = TWI_NONE ;
+		I2cHeadPointer->done = 1 ;
+		I2cHeadPointer = (struct t_I2C_request *) NULL ;
+	}		
+//			}
+//			else
+//			{
+//				TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
+//				TwiOperation = TWI_NONE ;
+//				I2cHeadPointer->done = 1 ;
+//				I2cHeadPointer = (struct t_I2C_request *) NULL ;
+//			}
+//		}
+		
+//	}
 	 
 	if ( status & TWI_SR_NACK )
 	{

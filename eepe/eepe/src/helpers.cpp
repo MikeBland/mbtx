@@ -2775,7 +2775,7 @@ QString FindErskyPath( int type )
       if(ret)
 			{
         QString vName=QString::fromUtf16 ( (const ushort *) szVolumeName) ;
-        if (vName.contains("ERSKY_9X"))
+				if ( (vName.contains("ERSKY_9X")) || (vName.contains("9XTREME")) )
 				{
           eepromfile=drive.absolutePath();
 					if ( eepromfile.right(1) == "/" )

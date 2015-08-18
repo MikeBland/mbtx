@@ -2,8 +2,8 @@
 #include "ui_modeledit.h"
 #include "pers.h"
 #include "helpers.h"
-#include "..\..\common\edge.h"
-#include "..\..\common\node.h"
+#include "../../common/edge.h"
+#include "../../common/node.h"
 #include "mixerdialog.h"
 #include "simulatordialog.h"
 #include "VoiceAlarmDialog.h"
@@ -3495,15 +3495,15 @@ void ModelEdit::on_timerDirCB_currentIndexChanged(int index)
 
 void ModelEdit::on_timerResetCB_currentIndexChanged(int index)
 {
-	int limit = MAX_DRSWITCH-1 ;
-#ifndef SKY
-  if ( eeFile->mee_type )
-	{
-   	limit += EXTRA_CSW ;
-	}
-#endif
+//	int limit = MAX_DRSWITCH-1 ;
+//#ifndef SKY
+//  if ( eeFile->mee_type )
+//	{
+//   	limit += EXTRA_CSW ;
+//	}
+//#endif
 	
-  g_model.timer1RstSw = index-limit ;
+  g_model.timer1RstSw = getTimerSwitchCbValue( ui->timerResetCB, eeFile->mee_type ) ;
   updateSettings() ;
 }
 
@@ -3535,15 +3535,15 @@ void ModelEdit::on_timer2DirCB_currentIndexChanged(int index)
 
 void ModelEdit::on_timer2ResetCB_currentIndexChanged(int index)
 {
-	int limit = MAX_DRSWITCH-1 ;
-#ifndef SKY
-  if ( eeFile->mee_type )
-	{
-   	limit += EXTRA_CSW ;
-	}
-#endif
+//	int limit = MAX_DRSWITCH-1 ;
+//#ifndef SKY
+//  if ( eeFile->mee_type )
+//	{
+//   	limit += EXTRA_CSW ;
+//	}
+//#endif
 	
-  g_model.timer2RstSw = index-limit ;
+  g_model.timer2RstSw = getTimerSwitchCbValue( ui->timer2ResetCB, eeFile->mee_type ) ;
   updateSettings() ;
 }
 

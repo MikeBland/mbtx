@@ -260,6 +260,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		thrsource ;
 	uint8_t		elesource ;
 	uint8_t 	stickDeadband[4] ;
+	uint8_t 	bright_blue ;			// backlight(blue) for 9Xtreme
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif

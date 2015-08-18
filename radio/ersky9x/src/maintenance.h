@@ -34,7 +34,7 @@ extern TCHAR Filenames[8][50] ;
 extern FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc ) ;
 extern uint32_t fileList(uint8_t event, struct fileControl *fc ) ;
 extern uint32_t fillNames( uint32_t index, struct fileControl *fc ) ;
-extern void maintenance_receive_packet( uint8_t *packet ) ;
+extern void maintenance_receive_packet( uint8_t *packet, uint32_t check ) ;
 
 #endif
 

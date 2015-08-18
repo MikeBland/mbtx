@@ -138,7 +138,7 @@
 #endif
 
 // ADC
-#ifndef PCBSP
+#ifndef PCB9XT
 #define PIN_STK_J1                      GPIO_Pin_0  //PA.00              
 #define PIN_STK_J2                      GPIO_Pin_1  //PA.01
 #define PIN_STK_J3                      GPIO_Pin_2  //PA.02
@@ -160,7 +160,7 @@
 #define PIN_FLAP5                      GPIO_Pin_10  //PF.10
 #define PIN_FLAP6                      GPIO_Pin_1  //PB.01
 #endif
-#endif // nPCBSP
+#endif // nPCB9XT
 
 
 
@@ -168,7 +168,7 @@
 #define PIN_AUDIO_DAC                   GPIO_Pin_4  //PA.04
 
 // Power_OFF Delay and LED
-#ifndef PCBSP
+#ifndef PCB9XT
 #define PIN_PWR_LED                     GPIO_Pin_6  //PC.06
 #define PIN_PWR_STATUS                  GPIO_Pin_1  //PD.01
 #define PIN_MCU_PWR                     GPIO_Pin_0  //PD.00
@@ -187,7 +187,7 @@
 #define PIN_INT_RF_PWR                  GPIO_Pin_15	// PD15
 #endif
 #define PIN_EXT_RF_PWR                  GPIO_Pin_8
-#endif // nPCBSP
+#endif // nPCB9XT
 
 // Smart-Port
 #define PIN_SPORT_ON                    GPIO_Pin_4  //PD.04
@@ -369,9 +369,13 @@
 #define GPIO_Mode_WP                    GPIO_Mode_OUT//lock?
 #define GPIO_Mode_CP                    GPIO_Mode_IN //
 #define GPIO_Pin_WP                     GPIO_Pin_8  //PD.08
+#ifndef PCB9XT
 #define GPIO_Pin_CP                     GPIO_Pin_9  //PD.09
 #define GPIO_CTL_SD                     GPIOD
-
+#else
+#define GPIO_Pin_CP                     GPIO_Pin_11  //PC.11
+#define GPIO_CTL_SD                     GPIOC
+#endif
 // Audio----I2S3-----SPI3
 #define CODEC_MCLK_DISABLED
 #define CODEC_USE_INT
@@ -438,13 +442,13 @@
 #define DMA_FLAG_SPI_SD_TC_TX           DMA1_FLAG_TC3
 
 
-#ifdef PCBSP
+#ifdef PCB9XT
 #define PIN_STK_J1                      GPIO_Pin_0  //PC.00              
 #define PIN_STK_J2                      GPIO_Pin_1  //PC.01
 #define PIN_STK_J3                      GPIO_Pin_2  //PC.02
 #define PIN_STK_J4                      GPIO_Pin_3  //PC.03
 #define PIN_MVOLT                       GPIO_Pin_0  //PB.00
-#define PIN_SW1		                      GPIO_Pin_8  //PA.08
+#define PIN_SW1		                      GPIO_Pin_6  //PA.06
 #define PIN_SW2		                      GPIO_Pin_1  //PB.01
 #define PIN_SW3		                      GPIO_Pin_4  //PC.04
   
@@ -454,7 +458,7 @@
 
 #define RCC_AHB1Periph_GPIOPWR          RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD
 #define GPIOPWR		                      GPIOC
-#define PIN_PWR_STATUS                  GPIO_Pin_6  //PD.06
+#define PIN_PWR_STATUS                  GPIO_Pin_6  //PC.06
 #define PIN_MCU_PWR                     GPIO_Pin_5  //PC.05
 
 #define GPIOPWRINT                      GPIOC
@@ -467,7 +471,15 @@
 #define GPIO_Pin_SPI_EE_SCK							GPIO_Pin_3	// PB.03
 #define GPIO_Pin_SPI_EE_MOSI						GPIO_Pin_5	// PB.05
 #define GPIO_Pin_SPI_EE_MISO						GPIO_Pin_4	// PB.04
-#endif // PCBSP
+
+// Mega64 programming
+#define GPIO_Pin_M64_RST								GPIO_Pin_10	// PC.10
+#define GPIO_Pin_M64_SCK								GPIO_Pin_8	// PA.08
+#define GPIO_Pin_M64_MOSI								GPIO_Pin_6	// PB.06
+#define GPIO_Pin_M64_MISO								GPIO_Pin_7	// PB.07
+
+
+#endif // PCB9XT
 
 
 #endif

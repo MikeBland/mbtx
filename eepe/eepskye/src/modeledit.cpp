@@ -301,7 +301,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-		if ( rData->type )
+		if ( ( rData->type ) && ( rData->type < 3 ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -503,7 +503,7 @@ uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 
 void ModelEdit::setSwitchDefPos()
 {
-	if ( rData->type == 0 )
+	if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
 	{
 		
     quint16 y = (g_model.modelswitchWarningStates >> 1 ) ;
@@ -5990,6 +5990,7 @@ SKYMixData* ModelEdit::setDest(uint8_t dch)
             (MAX_SKYMIXERS-(i+1))*sizeof(SKYMixData) );
     memset(&g_model.mixData[i],0,sizeof(SKYMixData));
     g_model.mixData[i].destCh = dch;
+		g_model.mixData[i].weight = 100 ;
 		g_model.mixData[i].lateOffset = 1 ;
     return &g_model.mixData[i];
 }
@@ -6031,6 +6032,7 @@ void ModelEdit::setCurve(uint8_t c, int8_t ar[])
 void ModelEdit::setSwitch(uint8_t idx, uint8_t func, int8_t v1, int8_t v2)
 {
     g_model.customSw[idx-1].func = func;
+  	g_model.customSw[idx-1].andsw = 0 ;
     g_model.customSw[idx-1].v1   = v1;
     g_model.customSw[idx-1].v2   = v2;
 }
@@ -6073,7 +6075,10 @@ void ModelEdit::applyTemplate(uint8_t idx)
     //T-Cut
     if(idx==j++)
     {
-        md=setDest(ICC(STK_THR));  md->srcRaw=MIX_MAX;  md->weight=-100;  md->swtch=DSW_THR;  md->mltpx=MLTPX_REP;
+      SKYSafetySwData *sd = &g_model.safetySw[ICC(STK_THR)-1] ;
+			sd->opt.ss.mode = 0 ;
+			sd->opt.ss.swtch = DSW_THR ;
+			sd->opt.ss.val = g_model.throttleIdle ? 0 : -100 ;
     }
 
     //sticky t-cut
@@ -6104,20 +6109,24 @@ void ModelEdit::applyTemplate(uint8_t idx)
     if(idx==j++)
     {
         clearMixes();
-        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-50;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
     }
 
     //Elevon\\Delta
     if(idx==j++)
     {
         clearMixes();
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-100;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 50;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-50;
     }
 
 

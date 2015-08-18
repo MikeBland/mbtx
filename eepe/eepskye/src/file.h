@@ -101,6 +101,7 @@ struct t_radioData
     unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+2] ;		// Allow for general
 		uint32_t valid ;
 		uint32_t type ;
+		uint32_t options ;
 } ;
 
 uint32_t rawloadFile( t_radioData *radioData, uint8_t *eeprom ) ;

@@ -826,7 +826,14 @@ normal:
 // MULTI protocol definition
 /*
   Serial: 125000 Baud 8n1      _ xxxx xxxx - ---
-  Channels: Nbr=8, 10bits=0..1023
+  Channels:
+    Nbr=8
+    10bits=0..1023
+	0		-125%
+    96		-100%
+	512		   0%
+	928		+100%
+	1023	+125%
   Stream[0]   = sub_protocol|BindBit|RangeCheckBit|AutoBindBit;
    sub_protocol=>	Reserved	0
 					Flysky		1
@@ -836,16 +843,16 @@ normal:
 					V2x2		5
 					DSM2		6
 					Devo		7
-					KN			8
-					YD717		9
+					YD717		8
+					KN			9
 					SymaX		10
 					SLT			11
-   BindBit=>		0x80
-   AutoBindBit=>	0x40
-   RangeCheckBit=>  0x20
-  Stream[1]   = RxNum | Type;
-   RxNum value is 0..15
-   Type is 0..15 <<4
+   BindBit=>		0x80	1=Bind/0=No
+   AutoBindBit=>	0x40	1=Yes /0=No
+   RangeCheck=>		0x20	1=Yes /0=No
+  Stream[1]   = RxNum | Power | Type;
+   RxNum value is 0..15 (bits 0..3)
+   Type is 0..7 <<4     (bit 4..6)
 		sub_protocol==Flysky
 			Flysky	0
 			V9x9	1
@@ -863,9 +870,9 @@ normal:
 		sub_protocol==SYMAX
 			SYMAX	0
 			SYMAX5C	1
-			
+			SYMAX4	2
+   Power value => 0x80	0=High/1=Low
   Stream[2]   = option_protocol;
-  
    option_protocol value is -127..127
   Stream[i+3] = lowByte(channel[i])		// with i[0..7]
   Stream[11]  = highByte(channel[0])<<6 | highByte(channel[1])<<4 | highByte(channel[2])<<2 | highByte(channel[3])
@@ -938,14 +945,14 @@ void setupPulsesSerial(void)
     }
     if((serialdat0copy&BindBit)&&(!keyState(SW_Trainer)))  serialdat0copy&=~BindBit;		//clear bind bit if trainer not pulled
     if ((!(serialdat0copy&BindBit))&&getSwitch00(MAX_DRSWITCH-1)) serialdat0copy|=RangeCheckBit;	//range check function
-    else serialdat0copy&=~RangeCheckBit;
+    	else serialdat0copy&=~RangeCheckBit;
 #ifdef MULTI_PROTOCOL
 	}
 	else
 	{
 		serialdat0copy= g_model.sub_protocol+1;
-		if (pxxFlag & PXX_BIND)	serialdat0copy|=BindBit;		//set bind bit if bind menu is pressed
-		if (pxxFlag & PXX_RANGE_CHECK)	serialdat0copy|=RangeCheckBit;		//set bind bit if bind menu is pressed
+		if (pxxFlag & PXX_BIND)			serialdat0copy|=BindBit;		//set bind bit if BIND menu is pressed
+		if (pxxFlag & PXX_RANGE_CHECK)	serialdat0copy|=RangeCheckBit;	//set range bit if RANGE menu is pressed
 	}
 #endif // MULTI_PROTOCOL
 	
@@ -957,22 +964,17 @@ void setupPulsesSerial(void)
 		PcmControl.PcmCrc=0;
 		sendByteCrcSerial(serialdat0copy);
 		sendByteCrcSerial(g_model.ppmNCH);
-//		serialDat[2] = g_model.option_protocol ;  //MULTI Header third byte for protocol option
 		sendByteCrcSerial(g_model.option_protocol);
 		uint16_t serialH = 0;
 		for(uint8_t i=0; i<8; i++)
 		{
 			uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
-//			serialDat[3+i] = pulse & 0xff;
 			sendByteCrcSerial(pulse & 0xff);
 			serialH<<=2;
 			serialH|=((pulse>>8)&0x03);
 		}
-//		serialDat[11]=(serialH>>8)&0xff;
 		sendByteCrcSerial((serialH>>8)&0xff);
-//		serialDat[12]=serialH&0xff;
 		sendByteCrcSerial(serialH&0xff);
-//		serialDat[13]=PcmControl.PcmCrc&0xff;
 		sendByteSerial(PcmControl.PcmCrc&0xff);
 	}
 	else
@@ -983,27 +985,16 @@ void setupPulsesSerial(void)
 		for(uint8_t i=0; i<6; i++)
     {
 			uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
-//        serialDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
-//        serialDat[3+2*i] = pulse & 0xff;
 			sendByteSerial((i<<2) | ((pulse>>8)&0x03));
 			sendByteSerial(pulse & 0xff);
-//        *p++ = (i<<2) | ((pulse>>8)&0x03);
-//        *p++ = pulse & 0xff;
     }
 	}
-//    for ( counter = 0 ; counter < 2*6+2 ; counter += 1 )
-//    {
-//    	sendByteSerial(serialDat[counter]);
-//    }
 		uint8_t *ptr ;
 
 		ptr = pulses2MHzptr ;
 
-//    pulses2MHzptr-=1 ; //remove last stopbits and
-//    _send_1( 255 ) ;	 //prolong them
 		*ptr = 0 ;
 		*(ptr-1) = 255 ;
-//    _send_1(0);        //end of pulse stream
     Serial_pulsePtr = pulses2MHz.pbyte ;
 }
 

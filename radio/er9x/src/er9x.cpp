@@ -120,7 +120,8 @@ const prog_uint8_t APM bchout_ar[] = {
 audioQueue  audio;
 
 uint8_t sysFlags = 0;
-uint8_t EnableHardwareEdit ;
+uint8_t SystemOptions ;
+
 
 struct t_alarmControl AlarmControl = { 100, 0, 10, 2 } ;
 
@@ -577,7 +578,7 @@ uint16_t scale_telem_value( uint8_t val, uint8_t channel, uint8_t *p_att )
 		unit = 'A' ;
     value /= 100 ;
   }
-  else if ( ratio < 100 )
+  else if ( ( ratio < 100 ) && ( fd->opt.alarm.type != 1 ) )	// Not raw
   {
       value *= 2 ;
       value /= 51 ;  // Same as *10 /255 but without overflow
@@ -1929,6 +1930,12 @@ static void checkQuickSelect()
     uint8_t i = keyDown(); //check for keystate
     uint8_t j;
 
+		if ( ( i & 6 ) == 6 )
+		{
+			SystemOptions |= SYS_OPT_MUTE ;
+			return ;
+		}
+
     for(j=0; j<6; j++)
 		{
 			if ( i & 0x02 ) break ;
@@ -2495,6 +2502,10 @@ void t_voice::voice_process(void)
 					}
 					VoiceQueueOutIndex = t ;
 					VoiceQueueCount -= 1 ;
+					if ( SystemOptions & SYS_OPT_MUTE )
+					{
+						return ;
+					}
 					VoiceTimer = 17 ;
 					if ( lvoiceSerial & 0x8000 )	// Looking for Volume setting
 					{
@@ -2599,6 +2610,10 @@ void t_voice::voice_process(void)
 						VoiceQueueOutIndex = 0 ;			
 					}
 					VoiceQueueCount -= 1 ;
+					if ( SystemOptions & SYS_OPT_MUTE )
+					{
+						return ;
+					}
 					VoiceTimer = 17 ;
 					if ( VoiceSerial & 0x8000 )	// Looking for Volume setting
 					{
@@ -2948,6 +2963,7 @@ static void inactivityCheck()
       	if(PtrInactivity->inacCounter>(uint16_t)((timer)*(100*60/16)))
       	  if((PtrInactivity->inacCounter&0x1F)==1)
 					{
+						SystemOptions &= ~SYS_OPT_MUTE ;						
 							setVolume(NUM_VOL_LEVELS-2) ;		// Nearly full volume
       	      audioVoiceDefevent( AU_INACTIVITY, V_INACTIVE ) ;
 //										setVolume(g_eeGeneral.volume+7) ;			// Back to required volume
@@ -3954,7 +3970,7 @@ extern uint8_t serialDat0 ;
   uint8_t in ;
 	while ( (in = ~PIND & 0xC3) == 0x41 )
 	{
-		EnableHardwareEdit = 1 ;		
+		SystemOptions = SYS_OPT_HARDWARE_EDIT ;		
 #if defined(CPUM128) || defined(CPUM2561)
 		lcd_puts_Pleft( FH, PSTR("Hardware Menu Enabled") ) ;
 		refreshDiplay() ;
@@ -4236,14 +4252,16 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 	}
 	play |= curent_state ;
 
+	uint8_t l_nvsState = Nvs_state[i] ;
+
 	if ( ( AlarmControl.VoiceCheckFlag & 2 ) == 0 )
 	{
 	 if ( pvad->rate == 3 )	// All
 	 {
 	 		uint8_t pos = switchPosition( pvad->swtch ) ;
-			if ( Nvs_state[i] != pos )
+			if ( l_nvsState != pos )
 			{
-				Nvs_state[i] = pos ;
+				l_nvsState = pos ;
 				ltimer = 0 ;
 				play = pos + 1 ;
 			}
@@ -4256,14 +4274,14 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 	 {
 		if ( play == 1 )
 		{
-			if ( Nvs_state[i] == 0 )
+			if ( l_nvsState == 0 )
 			{ // just turned ON
 				if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
 				{ // ON
 					ltimer = 0 ;
 				}
 			}
-			Nvs_state[i] = 1 ;
+			l_nvsState = 1 ;
 			if ( ( pvad->rate == 1 ) )
 			{
 				play = 0 ;
@@ -4271,7 +4289,7 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 		}
 		else
 		{
-			if ( Nvs_state[i] == 1 )
+			if ( l_nvsState == 1 )
 			{
 				if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
 				{
@@ -4283,21 +4301,23 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 					}
 				}
 			}
-			Nvs_state[i] = 0 ;
+			l_nvsState = 0 ;
 		}
 		if ( pvad->rate == 33 )
 		{
 			play = 0 ;
 			ltimer = -1 ;
 		}
-		 }
+	 }
 	}
 	else
 	{
-		Nvs_state[i] = play ;
+		l_nvsState = play ;
 		play = ( pvad->rate == 33 ) ? 1 : 0 ;
 		ltimer = -1 ;
 	}
+
+	Nvs_state[i] = l_nvsState ;
 
 	if ( pvad->mute )
 	{

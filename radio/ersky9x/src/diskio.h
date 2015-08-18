@@ -45,7 +45,7 @@
 #include "x9d\stm32f2xx.h"
 #endif
 
-#ifdef PCBSP
+#ifdef PCB9XT
 #include "x9d\stm32f2xx.h"
 #endif
 
@@ -168,9 +168,8 @@ extern uint32_t sd_cmd16( void ) ;
 extern uint32_t sd_acmd6( void ) ;
 extern uint32_t sd_acmd51( uint32_t *presult ) ;
 extern uint32_t sd_cmd13( uint32_t *status) ;
-extern void sd_poll_10mS( void ) ;
-#if defined(PCBX9D) || defined(PCBSP)
-extern void sdPoll10ms( void ) ;
+extern void sdPoll10mS( void ) ;
+#if defined(PCBX9D) || defined(PCB9XT)
 extern void sdInit( void ) ;
 #endif
 extern uint32_t sd_card_ready( void ) ;

@@ -21,7 +21,7 @@
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
-#ifdef PCBSP
+#ifdef PCB9XT
 #include "X9D/stm32f2xx.h"
 #include "X9D/hal.h"
 #endif
@@ -120,7 +120,11 @@ void generalDefault()
   memset(&g_eeGeneral,0,sizeof(g_eeGeneral));
   g_eeGeneral.myVers   =  MDVERS;
 //  g_eeGeneral.currModel=  0;
-  g_eeGeneral.contrast = 18;
+#ifdef PCB9XT
+  g_eeGeneral.contrast = 25 ;
+#else
+  g_eeGeneral.contrast = 18 ;
+#endif
   g_eeGeneral.vBatWarn = 65;
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
@@ -157,6 +161,9 @@ void modelDefault(uint8_t id)
 		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
 		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
 	}
+#ifdef PCB9XT
+	g_model.protocol = PROTO_OFF ;
+#endif
 }
 
 bool eeDuplicateModel(uint8_t id)
@@ -183,18 +190,18 @@ bool eeDuplicateModel(uint8_t id)
 
 void eeReadAll()
 {
-//	txmit('a') ;
   if(!ee32LoadGeneral() )
   {
-//	txmit('b') ;
-		
     alert((char const *)PSTR(STR_BAD_EEPROM), true);
+#ifdef PCB9XT
+    g_eeGeneral.contrast = 25 ;
+#else
     g_eeGeneral.contrast = 18 ;
+#endif
     message(PSTR(STR_EE_FORMAT));
     generalDefault();
 
     modelDefault(0);
-    
 		STORE_GENERALVARS;
     STORE_MODELVARS;        
   }

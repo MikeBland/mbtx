@@ -23,7 +23,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "x9d\stm32f2xx.h"
 #include "x9d\stm32f2xx_gpio.h"
 #include "x9d\stm32f2xx_rcc.h"
@@ -42,7 +42,7 @@
 #include "myeeprom.h"
 
 
-#ifndef PCBSP
+#ifndef PCB9XT
 #define STICK_LV	3
 #define STICK_LH  2
 #define STICK_RV  0
@@ -62,7 +62,7 @@
 #define DIG1			6
 #define DIG2			9
 #define DIG3			14
-#endif // nPCBSP
+#endif // nPCB9XT
 
 #ifdef REV9E
 #define FLAP_3		6
@@ -89,7 +89,7 @@ void init_adc()
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
 
-#ifndef PCBSP
+#ifndef PCB9XT
 	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
 									PIN_FLP_J1 , PIN_ANALOG | PIN_PORTA ) ;
 
@@ -105,17 +105,17 @@ void init_adc()
 	
 	configure_pins( PIN_SLD_J1 | PIN_SLD_J2 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
 #else	 
-	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_SW3, PIN_ANALOG | PIN_PORTC ) ;
+	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 | PIN_SW3, PIN_ANALOG | PIN_PORTC ) ;
 	configure_pins( PIN_MVOLT | PIN_SW2, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( PIN_SW1, PIN_ANALOG | PIN_PORTA ) ;
-#endif // PCBSP
+#endif // PCB9XT
 				
 
 	ADC1->CR1 = ADC_CR1_SCAN ;
 	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
 	
 	
-#ifndef PCBSP
+#ifndef PCB9XT
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 #ifdef REVPLUS
  #ifdef REV9E
@@ -133,21 +133,21 @@ void init_adc()
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
 
 #else	 
-// ADD PCBSP here
+// ADD PCB9XT here
 	ADC1->SQR1 = (NUMBER_ANALOG-1-NUM_REMOTE_ANALOG) << 20 ;		// NUMBER_ANALOG Channels
 	ADC1->SQR2 = DIG2 + (DIG3<<5) ;
 	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (BATTERY<<20) + (DIG1<<25) ;
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
 
-#endif // PCBSP
+#endif // PCB9XT
 	 
 	ADC->CCR = 0 ; //ADC_CCR_ADCPRE_0 ;		// Clock div 2
 	
-	DMA2_Stream0->CR = DMA_SxCR_PL | DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC ;
-	DMA2_Stream0->PAR = (uint32_t) &ADC1->DR ;
-	DMA2_Stream0->M0AR = (uint32_t) Analog_values ;
-	DMA2_Stream0->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
+	DMA2_Stream4->CR = DMA_SxCR_PL | DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC ;	// Channel 0
+	DMA2_Stream4->PAR = (uint32_t) &ADC1->DR ;
+	DMA2_Stream4->M0AR = (uint32_t) Analog_values ;
+	DMA2_Stream4->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
 #ifdef REV9E
 	init_adc3() ;
 #endif	// REV9E
@@ -157,12 +157,12 @@ uint32_t read_adc()
 {
 	uint32_t i ;
 	
-	DMA2_Stream0->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	ADC1->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
-	DMA2->LIFCR = DMA_LIFCR_CTCIF0 | DMA_LIFCR_CHTIF0 |DMA_LIFCR_CTEIF0 | DMA_LIFCR_CDMEIF0 | DMA_LIFCR_CFEIF0 ; // Write ones to clear bits
-	DMA2_Stream0->M0AR = (uint32_t) Analog_values ;
-	DMA2_Stream0->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
-	DMA2_Stream0->CR |= DMA_SxCR_EN ;		// Enable DMA
+	DMA2->HIFCR = DMA_HIFCR_CTCIF4 | DMA_HIFCR_CHTIF4 |DMA_HIFCR_CTEIF4 | DMA_HIFCR_CDMEIF4 | DMA_HIFCR_CFEIF4 ; // Write ones to clear bits
+	DMA2_Stream4->M0AR = (uint32_t) Analog_values ;
+	DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
+	DMA2_Stream4->CR |= DMA_SxCR_EN ;		// Enable DMA
 #ifdef REV9E
 	DMA2_Stream1->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	ADC3->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
@@ -175,17 +175,17 @@ uint32_t read_adc()
 	ADC1->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
 	for ( i = 0 ; i < 20000 ; i += 1 )
 	{
-		if ( DMA2->LISR & DMA_LISR_TCIF0 )
+		if ( DMA2->HISR & DMA_HISR_TCIF4 )
 		{
 			break ;
 		}
 	}
-	DMA2_Stream0->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	return ( i < 20000 ) ? 1 : 0 ;
 }
 
 #ifndef REV9E
-#ifndef PCBSP
+#ifndef PCB9XT
 
 // This to read a single channel for use as a rotary encoder
 // Channel is POT_L (6) or POT_R (8) or POT_3 (9)
@@ -233,10 +233,10 @@ void init_adc2()
 		RCC->APB1ENR &= ~RCC_APB1ENR_TIM5EN ;		// Disable clock
 	}
 }
-#endif // nPCBSP
+#endif // nPCB9XT
 #endif // nREV9E
 
-#ifndef PCBSP
+#ifndef PCB9XT
 #ifdef REV9E
 void init_adc3()
 {
@@ -262,9 +262,9 @@ void init_adc3()
 	DMA2_Stream1->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
 }
 #endif	// REV9E
-#endif // nPCBSP
+#endif // nPCB9XT
 
-#ifndef PCBSP
+#ifndef PCB9XT
 uint16_t RotaryAnalogValue ;
 uint16_t REDebug1 ;
 
@@ -284,14 +284,14 @@ extern "C" void ADC_IRQHandler()
 		valueprocessAnalogEncoder( x >> 1 ) ;
 	}
 }
-#endif // nPCBSP
+#endif // nPCB9XT
 
 // TODO
 void stop_adc()
 {
 }	
 
-#ifdef PCBSP
+#ifdef PCB9XT
 
 uint16_t AnalogSwitches ;
 static uint16_t oldAnalog[3] ;
@@ -312,26 +312,26 @@ void processAnalogSwitches()
 		if ( diff < 20 )
 		{
 			uint32_t y ;
-			if ( x < 0x56F )
+			if ( x < 2734 )
 			{
-				if ( x < 0x465 )
+				if ( x < 2316 )
 				{
-					y = ( x < 0x428 ) ? 4 : 0 ;
+					y = ( x < 2129 ) ? 7 : 6 ;
 				}
 				else
 				{
-					y = ( x < 0x4FB ) ? 6 : 2 ;
+					y = ( x < 2536 ) ? 5 : 4 ;
 				}
 			}
 			else
 			{
-				if ( x < 0x68B )
+				if ( x < 3353  )
 				{
-					y = ( x < 0x5CE ) ? 5 : 1 ;
+					y = ( x < 2975 ) ? 3 : 2 ;
 				}
 				else
 				{
-					y = ( x < 0x780 ) ? 7 : 3 ;
+					y = ( x < 3835 ) ? 1 : 0 ;
 				}
 			}
 			y <<= (i*3) ;
@@ -341,6 +341,6 @@ void processAnalogSwitches()
 	}
 }
 
-#endif // PCBSP
+#endif // PCB9XT
 
 

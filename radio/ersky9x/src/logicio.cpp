@@ -23,7 +23,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "x9d\stm32f2xx.h"
 #include "x9d\stm32f2xx_gpio.h"
 #include "x9d\hal.h"
@@ -42,7 +42,7 @@
 #include "lcd.h"
 #endif
 
-#ifdef PCBSP
+#ifdef PCB9XT
 #include "analog.h"
 #include "mega64.h"
 #endif
@@ -133,7 +133,7 @@ void configure_pins( uint32_t pins, uint16_t config )
 #endif
 
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 void configure_pins( uint32_t pins, uint16_t config )
 {
 	uint32_t address ;
@@ -347,7 +347,13 @@ void config_free_pins()
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
 // LCD pins 5 DOWN, 4 RIGHT, 3 LEFT, 1 UP
 
-#ifdef PCBSP
+#ifdef PCB9XT
+
+// Switches from M64:
+// ELE, RUD, TRAIN
+// M64Switches, bit 8=Train, bit 1=RUD, bit 2=ELE
+
+
 void init_trims()
 {
 // Trims 
@@ -359,30 +365,194 @@ void init_trims()
 
 uint32_t read_keys()
 {
-	return Buttons ;
+	checkM64() ;
+	return ~M64Buttons ;
 }
+
+uint32_t readKeyUpgradeBit( uint8_t index )
+{
+  CPU_UINT xxx = 0 ;
+	uint32_t t = 1 << (index-1) ;
+
+	if ( t > 16 )
+	{
+		t >>= 2 ;
+	}
+
+	xxx = M64Trims & t ;
+	return xxx ;
+}
+
 
 uint32_t hwKeyState( uint8_t key )
 {
-	return 0 ;
+  CPU_UINT xxx = 0 ;
+  if( key > HSW_MAX )  return 0 ;
+
+	if ( ( key >= HSW_ThrCt ) && ( key <= HSW_Trainer ) )
+	{
+		return keyState( (EnumKeys)(key + ( SW_ThrCt - HSW_ThrCt ) ) ) ;
+	}
+	
+	// Add other options here
+
+	xxx = 0 ; 
+	uint32_t as = AnalogSwitches ;
+
+	switch(key)
+	{
+		case HSW_Thr3pos0 :
+    	xxx = as & AS_THR_SW ;	// SW_TCUT     PC20
+    break ;
+		
+		case HSW_Thr3pos1 :
+			xxx = ~as & AS_THR_SW ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+    break ;
+
+		case HSW_Thr3pos2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+    break ;
+			 
+		case HSW_Ele3pos0 :
+			xxx = ~M64Switches & 0x0004 ;	// ELE_DR
+//			xxx = ( g_eeGeneral.elesource == 5 ) ? av9 < 490 : ~c & 0x80000000 ;	// ELE_DR   PC31
+    break ;
+
+		case HSW_Ele3pos1 :
+//			if ( g_eeGeneral.elesource == 5 )
+//			{
+//				xxx = av9 > 1500 ;
+//			}
+//      else
+//			{
+				xxx = M64Switches & 0x0004 ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.elesource ) ;
+//			}
+		break ;
+
+		case HSW_Ele3pos2 :
+//			if ( g_eeGeneral.elesource == 5 )
+//			{
+//				xxx = ( av9 <= 1500 ) && ( av9 >= 490 ) ;
+//			}
+//      else
+//			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.elesource ) ;
+//			}
+    break ;
+
+		case HSW_Rud3pos0 :
+		 xxx = ~M64Switches & 0x0002	;	// RUD_DR   PA15
+    break ;
+
+		case HSW_Rud3pos1 :
+			xxx = M64Switches & 0x0002 ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+//			xxx = (a & 0x00008000) ; if ( xxx ) xxx = (c & 0x80000000) ;
+    break ;
+
+		case HSW_Rud3pos2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+//			xxx = ~c & 0x80000000 ;	// ELE_DR   PC31
+    break ;
+
+		case HSW_Ail3pos0 :
+			xxx = as & AS_AIL_SW ;	// AIL-DR  PA2
+    break ;
+
+		case HSW_Ail3pos1 :
+//			xxx = (a & 0x00000004) ; if ( xxx ) xxx = (PIOB->PIO_PDSR & 0x00004000) ;
+			xxx = ~as & AS_AIL_SW ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+    break ;                               
+
+		case HSW_Ail3pos2 :
+//			xxx = ~PIOB->PIO_PDSR & 0x00004000 ;
+			xxx = readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+    break ;
+
+		case HSW_Gear3pos0 :
+			xxx = as & AS_GEA_SW ;	// SW_GEAR     PC16
+    break ;
+
+		case HSW_Gear3pos1 :
+//			xxx = (c & 0x00010000) ; if ( xxx ) xxx = (PIOB->PIO_PDSR & 0x00004000) ;
+			xxx = ~as & AS_GEA_SW ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+    break ;
+
+		case HSW_Gear3pos2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+//			xxx = ~PIOB->PIO_PDSR & 0x00004000 ;
+    break ;
+
+		case HSW_Pb1 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb1source ) ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
+    break ;
+		 
+	}
+	return xxx ;
 }
 
 uint32_t keyState(EnumKeys enuk)
 {
+	uint32_t as ;
+  CPU_UINT xxx = 0 ;
+  if(enuk < (int)DIM(keys))  return keys[enuk].state() ? 1 : 0 ;
+	
+	as = AnalogSwitches ;
+
+	switch((uint8_t)enuk)
+	{
+    case SW_AileDR : xxx = ~as & AS_AIL_SW ;	// AIL-DR
+    break ;
+    case SW_ID0    : xxx = as & AS_IDL1_SW ;	// SW_IDL1
+    break ;
+    case SW_ID1    : xxx = (~as & AS_IDL1_SW) ; if ( xxx ) xxx = (~as & AS_IDL2_SW) ;
+    break ;
+    case SW_ID2    : xxx = as & AS_IDL2_SW ;	// SW_IDL2
+    break ;
+		case SW_Gear   : xxx = ~as & AS_GEA_SW ;	// SW_GEAR
+    break ;
+    case SW_ThrCt  : xxx = ~as & AS_THR_SW ;	// SW_TCUT
+    break ;
+		case SW_ElevDR : xxx = M64Switches & 0x0004 ;	// ELE_DR
+    break ;
+    case SW_RuddDR : xxx = M64Switches & 0x0002 ;	// RUD_DR
+    break ;
+    case SW_Trainer: xxx = M64Switches & 0x00000100 ;	// SW-TRAIN
+    break ;
+	}
+	
+  if ( xxx )
+  {
+    return 1 ;
+  }
 	return 0 ;
 }
 
 uint32_t switchPosition( uint32_t swtch )
 {
-	return 0 ;
+	if ( hwKeyState( swtch ) )
+	{
+		return 0 ;
+	}
+	swtch += 1 ;
+	if ( hwKeyState( swtch ) )
+	{
+		return 1 ;			
+	}
+	return 2 ;
 }
 
 void init_keys()
 {
+	// Nothing to do
 }
 
 void setup_switches()
 {
+	// Nothing to do
 }
 
 uint32_t read_trims()
@@ -406,13 +576,6 @@ uint32_t read_trims()
 		trims |= 2 ;
 	}
   
-	  
-// TRIM_LV_DOWN
-	if ( ( trima & 0x00000040 ) == 0 )
-	{
-		trims |= 4 ;
-	}
-
 	trima = GPIOA->IDR ;
 
 // TRIM_RH_DOWN

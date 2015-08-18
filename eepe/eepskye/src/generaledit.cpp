@@ -979,10 +979,10 @@ void GeneralEdit::on_soundModeCB_currentIndexChanged(int index)
 
 void GeneralEdit::on_tabWidget_selected(QString )
 {
-    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,0,0));
-    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,0,0));
-    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,0,0));
-    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,0,0));
+    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,2,0));
+    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,2,0));
+    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,2,0));
+    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,2,0));
 }
 
 

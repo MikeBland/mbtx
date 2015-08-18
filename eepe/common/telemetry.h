@@ -43,6 +43,7 @@ private slots:
     void on_exitButton_clicked();
     void on_startButton_clicked();
     void on_startButtonModule_clicked();
+		int on_startButtonUart_clicked() ;
     void on_exitButtonModule_clicked();
     void on_ReadAlarmsButton_clicked();
     void on_SetAlarmsButton_clicked();

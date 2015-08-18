@@ -2,7 +2,7 @@
 #define SIMULATORDIALOG_H
 
 #include <QDialog>
-#include "..\..\common\node.h"
+#include "../../common/node.h"
 #include <stdint.h>
 #include "pers.h"
 #include "qextserialport.h"

@@ -46,7 +46,7 @@
  #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "x9d/stm32f2xx.h"
 #include "x9d/stm32f2xx_gpio.h"
 #include "X9D/i2c_ee.h"
@@ -80,8 +80,8 @@ void p4hex( uint16_t value ) ;
 void p2hex( unsigned char c ) ;
 void hex_digit_send( unsigned char c ) ;
 
-//uint8_t Dbg_Spi_tx_buf[32] ;
-//uint8_t Dbg_Spi_rx_buf[32] ;
+uint8_t Dbg_Spi_tx_buf[32] ;
+uint8_t Dbg_Spi_rx_buf[32] ;
 
 uint8_t I2CwriteValue ;
 uint8_t I2CreadValue ;
@@ -268,10 +268,18 @@ void handle_serial(void* pdata)
 {
 	uint16_t rxchar ;
 
+//#ifdef PCB9XT
+//	txmit('Z') ;
+//#endif
+
 	while ( Activated == 0 )
 	{
+#ifdef PCB9XT
+		break ;
+#endif
 		CoTickDelay(10) ;					// 20mS
 	}
+//	txmit(';') ;
 
 #if VOICE_TEST
 	static uint32_t SdAddress = 0 ;
@@ -284,11 +292,13 @@ void handle_serial(void* pdata)
 		CoTickDelay(50) ;					// 100mS for now
 	}
 #endif
+#ifndef PCB9XT
 #ifndef PCBDUE
-		while ( g_model.frskyComPort )		// Leave the port alone!
+		while ( g_model.frskyComPort || ( g_model.com2Baudrate == 0 ) )		// Leave the port alone!
 		{
 			CoTickDelay(50) ;					// 100mS for now
 		}
+#endif
 #endif
 		
 //#if PCBSKY		
@@ -393,6 +403,125 @@ void handle_serial(void* pdata)
 //			Voice.VoiceLock = 0 ;
 //			crlf() ;
 //		}
+
+#ifdef PCB9XT
+		if ( rxchar == 'w' )
+		{
+			register uint32_t x ;
+			register uint8_t *p ;
+
+			txmit( 'w' ) ;
+			p = Dbg_Spi_tx_buf ;
+			*(p) = 0x55 ;
+			*(p+1) = 0xAA ;
+			*(p+2) = 0x55 ;
+			*(p+3) = 0xAA ;
+			*(p+4) = 0xFF ;
+			*(p+5) = 0xFF ;
+			*(p+6) = 0xFF ;
+			*(p+7) = 0xFF ;
+
+uint32_t write32_eeprom_block( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
+			 
+			x = write32_eeprom_block( 0, p, 8, 0 ) ;
+			p4hex( x ) ;
+		}
+
+		if ( rxchar == 'o' )
+		{
+			register uint8_t *p ;
+			txmit( 'o' ) ;
+			eeprom_write_enable() ;
+			p = Dbg_Spi_tx_buf ;
+			*p = 0x20 ;		// Block Erase command
+			*(p+1) = 0 ;
+			*(p+2) = 0 ;
+			*(p+3) = 0 ;		// 3 bytes address
+			spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		}
+
+		if ( rxchar == 'p' )
+		{
+			uint8_t *p ;
+			uint32_t x ;
+			uint32_t y ;
+			
+			txmit( 'p' ) ;
+			crlf() ;
+			for ( y = 0 ; y < 65536 ; y += 4096 )
+			{
+				
+				p = Dbg_Spi_tx_buf ;
+				*(p) = 3 ;
+				*(p+1) = y >> 16 ;
+				*(p+2) = y >> 8 ;
+				*(p+3) = y ;		// 3 bytes address
+
+				spi_PDC_action( p, 0, Dbg_Spi_rx_buf, 4, 32 ) ;
+				for ( x = 0 ; x < 1000000 ; x += 1  )
+				{
+					if ( Spi_complete )
+					{
+						break ;				
+					}
+				}
+
+				p = Dbg_Spi_rx_buf ;
+				for ( x = 0 ; x < 32 ; x += 1 )
+				{
+					p2hex( p[x] ) ;
+				}
+				crlf() ;
+			}
+		}
+
+
+		if ( rxchar == 'm' )
+		{
+			register uint8_t *p ;
+			register uint32_t x ;
+			
+			txmit( 'm' ) ;
+			p = Dbg_Spi_tx_buf ;
+			*(p) = 3 ;
+			*(p+1) = 0 ;
+			*(p+2) = 0 ;
+			*(p+3) = 0 ;
+
+			spi_PDC_action( p, 0, Dbg_Spi_rx_buf, 4, 8 ) ;
+
+			for ( x = 0 ; x < 100000 ; x += 1  )
+			{
+				if ( Spi_complete )
+				{
+					break ;				
+				}
+			}
+		}
+
+		if ( rxchar == 'n' )
+		{
+			register uint8_t *p ;
+//			register uint32_t x ;
+			
+			txmit( 'n' ) ;
+			txmit( Spi_complete ? '1' : '0' ) ;
+
+			crlf() ;
+
+			p = Dbg_Spi_rx_buf ;
+			p2hex( *p ) ;
+			p2hex( *(p+1) ) ;
+			p2hex( *(p+2) ) ;
+			p2hex( *(p+3) ) ;
+			p2hex( *(p+4) ) ;
+			p2hex( *(p+5) ) ;
+			p2hex( *(p+6) ) ;
+			p2hex( *(p+7) ) ;
+			crlf() ;
+		}
+#endif
+
 
 #if VOICE_TEST
 		if ( ( rxchar == 'M' ) || ( rxchar == 'N' ) )
@@ -553,6 +682,30 @@ void handle_serial(void* pdata)
 			crlf() ;
 		}
 #endif
+
+#ifdef PCB9XT
+extern void backlightSet( uint32_t value ) ;
+extern void backlightSend() ;
+
+		if ( rxchar == 't' )
+		{
+			txmit( 't' ) ;
+			backlightSet( 0x00000080 ) ;
+			backlightSend() ;
+			txmit( 'x' ) ;
+			txmit( 'x' ) ;
+			txmit( 'x' ) ;
+			p4hex(TIM4->CCR4) ;
+			txmit( '-' ) ;
+			p4hex(TIM4->CCR1) ;
+			txmit( '-' ) ;
+			p4hex(DMA1_Stream0->NDTR) ;
+			txmit( '-' ) ;
+			p4hex(TIM4->CCMR2) ;
+			crlf() ;
+		}
+#endif // PCB9XT
+
 	 
 #ifdef PCBX9D
 
@@ -767,7 +920,11 @@ static uint8_t Ht1621Data[16] = {	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0
 
 		if ( rxchar == 'V' )
 		{
+#ifdef PCB9XT
+			uputs( (char *)VERSION9XT ) ;
+#else
 			uputs( (char *)VERSION ) ;
+#endif
 			crlf() ;
 		}
 		
@@ -1226,12 +1383,12 @@ int32_t Ymodem_Receive( uint8_t *buf ) ;
 			crlf() ;
 		}
 		
-extern uint8_t I2Cdebug ;
+//extern uint8_t I2Cdebug ;
 		if ( rxchar == 'l' )
 		{
 			txmit( 'l' ) ;
 			p2hex( I2CreadValue & 3 ) ;
-			txmit( I2Cdebug ) ;
+//			txmit( I2Cdebug ) ;
 			crlf() ;
 		}
 
@@ -1239,7 +1396,7 @@ extern uint8_t I2Cdebug ;
 		{
 			txmit( 'p' ) ;
 			initLed() ;
-			txmit( I2Cdebug ) ;
+//			txmit( I2Cdebug ) ;
 			crlf() ;
 		}
 
@@ -1248,7 +1405,7 @@ extern uint8_t I2Cdebug ;
 			txmit( 'q' ) ;
 			LedWriteValue += 4 ;
 			writeLed( LedWriteValue ) ;
-			txmit( I2Cdebug ) ;
+//			txmit( I2Cdebug ) ;
 			crlf() ;
 		}
 
@@ -1257,7 +1414,7 @@ extern uint8_t I2Cdebug ;
 			txmit( 'r' ) ;
 			readLed( &I2CreadValue ) ;
 			p2hex( I2CreadValue ) ;
-			txmit( I2Cdebug ) ;
+//			txmit( I2Cdebug ) ;
 			crlf() ;
 		}
 #endif
@@ -1296,6 +1453,51 @@ extern uint8_t I2Cdebug ;
 //			}
 //		}
 
+
+		if ( rxchar == 'm' )
+		{
+			register uint8_t *p ;
+			register uint32_t x ;
+			
+			txmit( 'm' ) ;
+			p = Dbg_Spi_tx_buf ;
+			*(p) = 3 ;
+			*(p+1) = 0 ;
+			*(p+2) = 0 ;
+			*(p+3) = 0 ;
+
+			spi_PDC_action( p, 0, Dbg_Spi_rx_buf, 4, 8 ) ;
+
+			for ( x = 0 ; x < 100000 ; x += 1  )
+			{
+				if ( Spi_complete )
+				{
+					break ;				
+				}
+			}
+		}
+
+		if ( rxchar == 'n' )
+		{
+			register uint8_t *p ;
+//			register uint32_t x ;
+			
+			txmit( 'n' ) ;
+			txmit( Spi_complete ? '1' : '0' ) ;
+
+			crlf() ;
+
+			p = Dbg_Spi_rx_buf ;
+			p2hex( *p ) ;
+			p2hex( *(p+1) ) ;
+			p2hex( *(p+2) ) ;
+			p2hex( *(p+3) ) ;
+			p2hex( *(p+4) ) ;
+			p2hex( *(p+5) ) ;
+			p2hex( *(p+6) ) ;
+			p2hex( *(p+7) ) ;
+			crlf() ;
+		}
 //		if ( rxchar == 'm' )
 //		{
 //			register uint8_t *p ;

@@ -59,8 +59,6 @@
 
 uint8_t s_current_protocol[NUM_MODULES] = { 255, 255 } ;
 
-
-
 extern void setupPulses(unsigned int port);
 void setupPulsesPPM(unsigned int port);
 //void setupPulsesPXX(unsigned int port);
@@ -80,6 +78,10 @@ static void init_pa7_dsm2( void ) ;
 static void disable_pa7_dsm2( void ) ;
 static void init_pa7_ppm( void ) ;
 static void disable_pa7_ppm( void ) ;
+#ifdef PCB9XT
+static void init_pa10_dsm2( void ) ;
+static void disable_pa10_dsm2( void ) ;
+#endif
 #ifdef ASSAN
 static void init_pa7_assan( void ) ;
 static void disable_pa7_assan( void ) ;
@@ -111,6 +113,12 @@ void init_dsm2(uint32_t port)
 	{
     init_pa7_dsm2() ;
   }
+#ifdef PCB9XT
+	else
+	{
+    init_pa10_dsm2() ;
+	}
+#endif
 }
 
 void disable_dsm2(uint32_t port)
@@ -119,6 +127,12 @@ void disable_dsm2(uint32_t port)
 	{
     disable_pa7_dsm2();
   }
+#ifdef PCB9XT
+	else
+	{
+    disable_pa10_dsm2();
+	}
+#endif
 }
 
 #ifdef ASSAN
@@ -198,7 +212,7 @@ static void init_pa10_none()
   TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM1->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM1_CC_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM1_CC_IRQn) ;
 }
 
@@ -235,7 +249,7 @@ static void init_pa7_none()
   TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
 }
 
@@ -297,7 +311,7 @@ static void init_pa10_pxx()
   TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM1->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM1_CC_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM1_CC_IRQn) ;
 }
 
@@ -345,8 +359,8 @@ static void init_pa10_ppm()
   TIM1->DIER |= TIM_DIER_UIE ;
 
   TIM1->CR1 = TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM1_CC_IRQn, 2 ) ; // Lower priority interrupt
-	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM1_CC_IRQn) ;
   NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn) ;
 }
@@ -360,6 +374,18 @@ static void disable_pa10_ppm()
 
   INTERNAL_RF_OFF();
 }
+
+#ifdef PCB9XT
+static void init_pa10_dsm2()
+{
+	
+}
+
+static void disable_pa10_dsm2()
+{
+	
+}
+#endif
 
 extern uint16_t g_timePXX;
 extern "C" void TIM1_CC_IRQHandler()
@@ -398,14 +424,27 @@ extern "C" void TIM1_CC_IRQHandler()
 
 extern "C" void TIM1_UP_TIM10_IRQHandler()
 {
-  TIM1->SR &= ~TIM_SR_UIF ;                               // Clear flag
+#ifdef PCB9XT
+  if ( ( TIM1->DIER & TIM_DIER_UIE ) && ( TIM1->SR & TIM_SR_UIF ) )
+	{
+#endif
+ 		TIM1->SR &= ~TIM_SR_UIF ;                               // Clear flag
 
-  TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
-  if ( *ppmStreamPtr[INTERNAL_MODULE] == 0 )
-  {
-    TIM1->SR &= ~TIM_SR_CC2IF ;                     // Clear this flag
-    TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
-  }
+ 		TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
+ 		if ( *ppmStreamPtr[INTERNAL_MODULE] == 0 )
+ 		{
+ 		  TIM1->SR &= ~TIM_SR_CC2IF ;                     // Clear this flag
+ 		  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+ 		}
+#ifdef PCB9XT
+	}
+	else
+	{
+		// must be timer 10
+extern void timer10_interrupt() ;
+		timer10_interrupt() ;
+	}
+#endif
 }
 
 
@@ -432,7 +471,11 @@ static void init_pa7_pxx()
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
 #else
+#ifdef PCB9XT
+  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+#else
   TIM8->CCER = TIM_CCER_CC1NE ;
+#endif
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
@@ -461,7 +504,7 @@ static void init_pa7_pxx()
   TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
 }
 
@@ -504,8 +547,8 @@ static void init_pa7_assan()
   TIM8->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
   TIM8->DIER |= TIM_DIER_UIE ;
   TIM8->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 2 ) ; // Lower priority interrupt
-	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn) ;
 }
@@ -544,7 +587,11 @@ static void init_pa7_dsm2()
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
 #else
+#ifdef PCB9XT
+  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+#else
   TIM8->CCER = TIM_CCER_CC1NE ;
+#endif
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
@@ -573,7 +620,7 @@ static void init_pa7_dsm2()
   TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
 }
 
@@ -611,9 +658,17 @@ static void init_pa7_ppm()
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E ;
 #else
-  TIM8->CCER = TIM_CCER_CC1NE;
+#ifdef PCB9XT
+  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+#else
+  TIM8->CCER = TIM_CCER_CC1NE ;
+#endif
   if(!g_model.xpulsePol)
+#ifdef PCB9XT
+	  TIM8->CCER &= ~TIM_CCER_CC1NP ;
+#else
     TIM8->CCER |= TIM_CCER_CC1NP;
+#endif
 #endif
   TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC2PE ;                   // PWM mode 1
   TIM8->CCR1 = (g_model.xppmDelay*50+300)*2 ;
@@ -627,8 +682,8 @@ static void init_pa7_ppm()
   TIM8->DIER |= TIM_DIER_UIE ;
 
   TIM8->CR1 = TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 2 ) ; // Lower priority interrupt
-	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 2 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn) ;
 }
@@ -652,7 +707,11 @@ extern "C" void TIM8_CC_IRQHandler()
 			// must be ASSAN disable Tx output
   		uint32_t status;
 		  TIM8->SR &= ~TIM_SR_CC3IF ;    // Clear flag
+#ifdef PCB9XT
+			GPIOB->BSRRH = 0x0004 ;		// output disable
+#else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+#endif
 			USART2->CR1 |= USART_CR1_RE ;
   		status = USART2->SR ;
   		while (status & (USART_FLAG_RXNE))
@@ -672,7 +731,11 @@ extern "C" void TIM8_CC_IRQHandler()
 			// must be ASSAN re-enable Tx output
 		  TIM8->SR &= ~TIM_SR_CC1IF ;    // Clear flag
 			USART2->CR1 &= ~USART_CR1_RE ; // Stop receive
+#ifdef PCB9XT
+			GPIOB->BSRRL = 0x0004 ;		// output disable
+#else
 			GPIOD->BSRRL = PIN_SPORT_ON ;				 // output enable
+#endif
 			return ;
 		}
 	}
@@ -718,7 +781,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 #ifdef ASSAN
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_ASSAN)
 	{
-		x9dSPortTxStart( (uint8_t *)dsm2Stream, 20 ) ;
+		x9dSPortTxStart( (uint8_t *)dsm2Stream, 20, 0 ) ;
 	}
 	else
 #endif

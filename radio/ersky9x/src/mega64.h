@@ -13,5 +13,26 @@
 *
 ****************************************************************************/
 
-extern uint8_t Buttons ;
+extern uint8_t M64Buttons ;
+extern uint8_t M64Trims ;
+extern uint16_t M64Switches ;
+extern uint16_t M64Analog[] ;
+
+extern uint8_t M64Contrast ;
+extern uint8_t M64SetContrast ;
+
+extern uint16_t M64Overruns ;
+extern uint16_t M64CountErrors ;
+extern uint8_t M64Received ;
+extern uint8_t M64Revision ;
+
+extern uint8_t M64SetHaptic ;
+extern uint8_t M64HapticOnOff ;
+extern uint8_t M64HapticStrength ;
+
+//void poll_mega64( void ) ;
+void checkM64( void ) ;
+void displayToM64( void ) ;
+void initM64( void ) ;
+
 

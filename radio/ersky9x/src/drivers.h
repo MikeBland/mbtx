@@ -66,6 +66,11 @@ extern uint16_t Max_temperature ;
 
 extern volatile uint32_t Spi_complete ;
 
+#ifdef PCB9XT
+extern uint16_t rxTelemetry( void ) ;
+extern void init_software_remote( void ) ;
+#endif
+
 #ifdef PCBX9D
 extern void x9dConsoleInit( void ) ;
 extern uint16_t rxTelemetry( void ) ;
@@ -103,7 +108,7 @@ extern void poll2ndUsart10mS( void ) ;
 extern void startPdcUsartReceive( void ) ;
 //extern void endPdcUsartReceive( void ) ;
 extern void rxPdcUsart( void (*pChProcess)(uint8_t x) ) ;
-extern uint32_t txPdcUsart( uint8_t *buffer, uint32_t size ) ;
+extern uint32_t txPdcUsart( uint8_t *buffer, uint32_t size, uint32_t receive ) ;
 extern uint32_t txPdcPending( void ) ;
 extern uint32_t txCom2Uart( uint8_t *buffer, uint32_t size ) ;
 
@@ -138,6 +143,13 @@ void start_ppm_capture( void ) ;
 void end_ppm_capture( void ) ;
 extern void start_2Mhz_timer( void ) ;
 
+#ifdef PCB9XT
+extern uint8_t BlChanged ;
+extern void BlSetColour( uint32_t level, uint32_t colour ) ;
+extern void backlightSend() ;
+extern void console9xtInit( void ) ;
+#endif
+
 extern void disable_ssc( void ) ;
 
 #define SPORT_MODE_HARDWARE		0
@@ -146,7 +158,7 @@ extern void disable_ssc( void ) ;
 #define SPORT_POLARITY_INVERT	1
 
 extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert ) ;
-extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count ) ;
+extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive ) ;
 void disable_software_com1( void ) ;
 
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
@@ -182,7 +194,7 @@ extern uint32_t sd_cmd9( void ) ;
 extern uint32_t sd_cmd17( uint32_t address, uint32_t *presult ) ;
 extern uint32_t sd_acmd6( void ) ;
 extern uint32_t sd_acmd51( uint32_t *presult ) ;
-extern void sd_poll_10mS( void ) ;
+extern void sdPoll10mS( void ) ;
 extern uint32_t sd_card_ready( void ) ;
 extern uint32_t sd_read_block( uint32_t block_no, uint32_t *data ) ;
 

@@ -299,7 +299,7 @@ bool ModelSelectionPage::validatePage()
   QString newName(nameLineEdit->text());
   newName = (newName.normalized(QString::NormalizationForm_D));
   newName = newName.replace(QRegExp("[^ A-Za-z0-9_.-,\\s]"), "");
-  strncpy( wizDlg->mix.name, newName.toAscii(), WIZ_MODEL_NAME_LENGTH);
+  strncpy( wizDlg->mix.name, newName.toLatin1(), WIZ_MODEL_NAME_LENGTH);
   wizDlg->mix.name[WIZ_MODEL_NAME_LENGTH]=0;
 
   if (multirotorRB->isChecked())

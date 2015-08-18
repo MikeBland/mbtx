@@ -37,6 +37,9 @@
 #include "sound.h"
 #include "mavlink.h"
 
+
+void txmit( uint8_t c ) ;
+
 // Enumerate FrSky packet codes
 #define LINKPKT         0xfe
 #define USRPKT          0xfd
@@ -216,7 +219,7 @@ void dsmTelemetryStartReceive()
  #endif // nREVX
 #endif // PCBSKY
 	
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 	if ( g_model.frskyComPort == 0 )
 	{
 		if ( CaptureMode == CAP_COM1 )
@@ -228,7 +231,7 @@ void dsmTelemetryStartReceive()
 			}	
 		}
 	}
-#endif // PCBX9D || PCBSP
+#endif // PCBX9D || PCB9XT
 	
 	numPktBytes = 0 ;
 }
@@ -836,10 +839,10 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 #ifdef ASSAN
 #ifdef PCBSKY
-		if ( g_model.protocol == PROTO_ASSAN )
+	if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
-		if ( g_model.xprotocol == PROTO_ASSAN )
+#if defined(PCBX9D) || defined(PCB9XT)
+	if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 	{
 		uint8_t *p = packet ;
@@ -866,7 +869,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			csum |= *q ;
 			TelemetryDebug4 = csum ;
 		}
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 		if ( TelemetryDebug3 != TelemetryDebug4 )
 		{
 			return ;
@@ -996,7 +999,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
     	frskyTelemetry[2].set(type, FR_RXRSI_COPY );	// RSSI
 		}
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 		if ( ( g_model.xprotocol == PROTO_ASSAN ) && ( RssiTimer ) )
 		{
    		frskyTelemetry[3].set(type, FR_TXRSI_COPY );	// RSSI
@@ -1075,7 +1078,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifdef PCBSKY
 				if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 				if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 #endif
@@ -1160,7 +1163,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifdef PCBSKY
 		if ( g_model.protocol != PROTO_ASSAN )
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 		if ( g_model.xprotocol != PROTO_ASSAN )
 #endif
 		{
@@ -1192,8 +1195,6 @@ static bool checkSportPacket()
     crc += packet[i]; //0-1FF
     crc += crc >> 8; //0-100
     crc &= 0x00ff;
-    crc += crc >> 8; //0-0FF
-    crc &= 0x00ff;
   }
   return (crc == 0x00ff) ;
 }
@@ -1203,12 +1204,14 @@ void processSportPacket()
 	uint8_t *packet = frskyRxBuffer ;
   uint8_t  prim   = packet[1];
 //  uint16_t appId  = *((uint16_t *)(packet+2)) ;
+	TelemetryDebug1 += 1 ;
 
 	if ( MaintenanceRunning )
 	{
-		maintenance_receive_packet( packet ) ;	// Uses different chksum
+		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
 		return ;
 	}
+	TelemetryDebug2 += 1 ;
 	 
   if ( !checkSportPacket() )
 	{
@@ -1472,7 +1475,7 @@ void frsky_receive_byte( uint8_t data )
 #ifdef PCBSKY
 		if ( g_model.protocol == PROTO_ASSAN )
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 		if ( g_model.xprotocol == PROTO_ASSAN )
 #endif
 		{
@@ -1646,7 +1649,7 @@ void frskyTransmitBuffer( uint32_t size )
 {
 	if ( g_model.frskyComPort == 0 )
 	{	
-		txPdcUsart( frskyTxBuffer, size ) ;
+		txPdcUsart( frskyTxBuffer, size, 0 ) ;
 	}
 	else
 	{
@@ -1845,7 +1848,7 @@ void telemetry_init( uint8_t telemetryType )
 			g_model.telemetryRxInvert = 1 ;
 			setMFP() ;
 			USART0->US_IER = US_IER_RXRDY ;
-			NVIC_SetPriority( USART0_IRQn, 4 ) ; // Lower priority interrupt
+			NVIC_SetPriority( USART0_IRQn, 5 ) ; // Lower priority interrupt
 			NVIC_EnableIRQ(USART0_IRQn) ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
 		  resetTelemetry();
@@ -1938,6 +1941,8 @@ void FRSKY_Init( uint8_t brate )
 	{
 		if ( g_model.frskyComPort == 0 )
 		{
+			numPktBytes = 0 ;
+			dataState = frskyDataIdle ;
 			UART2_Configure( 57600, Master_frequency ) ;
 			UART2_timeout_disable() ;
 //#ifdef REVX
@@ -1988,6 +1993,28 @@ void FRSKY_Init( uint8_t brate )
 #endif
   // clear frsky variables
 #endif // PCBSKY
+
+#ifdef PCB9XT
+	if ( brate == 0 )
+	{
+		x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;	// 9600
+	}
+#ifdef ASSAN
+	else if ( brate == 3 )
+	{
+		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// ASSAN
+	}
+#endif
+	else if ( brate == 1 )
+	{
+		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// 57600
+	}
+	else // 9XR-DSM
+	{
+		FrskyComPort = g_model.frskyComPort = 0 ;
+		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
+	}
+#endif // PCB9XT
 
 #ifdef PCBX9D
 	if ( brate == 0 )
@@ -2122,18 +2149,33 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
+#ifdef PCB9XT
+	type = g_model.protocol == PROTO_PXX ;
+	if ( g_model.protocol == PROTO_OFF )
+	{
+		type = g_model.xprotocol == PROTO_PXX ;
+	}
+#endif
+
 #ifdef PCBX9D
 	type = g_model.protocol == PROTO_PXX ;
 	if ( g_model.protocol == PROTO_OFF )
 	{
 		type = g_model.xprotocol == PROTO_PXX ;
 	}
-#ifdef ASSAN
-	if ( g_model.xprotocol == PROTO_ASSAN )
+	else
 	{
-		type = TEL_ASSAN ;
+		if ( g_model.xprotocol == PROTO_PPM )
+		{
+			if ( g_model.frskyComPort )
+			{
+				if ( type ) // Internal is PXX
+				{
+					type = TEL_FRSKY_HUB ;
+				}
+			}
+		}
 	}
-#endif
 #endif
 
 #ifdef PCBSKY
@@ -2149,7 +2191,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 	if ( (g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) )
 	{
 		type = TEL_DSM ;
@@ -2196,7 +2238,7 @@ void check_frsky( uint32_t fivems )
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	if ( type != TelemetryType )
 //	if ( telemetryType != FrskyTelemetryType )
 #endif
@@ -2295,7 +2337,7 @@ void check_frsky( uint32_t fivems )
 //	}
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	{
 		uint16_t rxchar ;
 		if ( g_model.frskyComPort == 0 )

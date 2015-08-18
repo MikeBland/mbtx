@@ -49,7 +49,7 @@
 #ifdef PCBSKY
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #define wdt_reset()	(IWDG->KR = 0x0000AAAAL)
 #endif
 #endif
@@ -57,7 +57,8 @@
 #ifdef PCBDUE
 #define VERSION	"DUE-V1.00"
 #else
-#define VERSION	"V0.26"
+#define VERSION	"V1.00"
+#define VERSION9XT	"9xt-0.30"
 #endif
 
 #define GVARS		1
@@ -123,7 +124,7 @@ extern const char * const Swedish[] ;
  #define NUMBER_ANALOG		10
  #define CURRENT_ANALOG	8
  #else
-  #ifdef PCBSP
+  #ifdef PCB9XT
    #define NUMBER_ANALOG	11
 	 #define NUM_REMOTE_ANALOG	3
   #else
@@ -146,7 +147,7 @@ extern const char * const Swedish[] ;
 //#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNSW1SW2SW3SW4SW5SW6SW7SW8SW9SWASWBSWCSWDSWESWFSWGSWHSWISWJSWKSWLSWMSWNSWO"
 #define NUM_CSW  12 //number of custom switches
 #define NUM_SKYCSW  24 //number of custom switches
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define CSW_INDEX	9	// Index of first custom switch
 #endif
 #ifdef PCBX9D
@@ -177,7 +178,7 @@ enum EnumKeys {
     TRM_RH_UP   ,
 	  BTN_RE,
 
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
     //SW_NC     ,
     //SW_ON     ,
     SW_ThrCt  ,
@@ -205,7 +206,7 @@ enum EnumKeys {
 };
 
 // Hardware switch mappings:
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define HSW_ThrCt			1
 #define HSW_RuddDR		2
 #define HSW_ElevDR		3
@@ -423,7 +424,7 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 uint8_t CS_STATE( uint8_t x) ;
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)==CS_LATCH) || ((x)==CS_FLIP)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
 
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define SW_BASE      SW_ThrCt
 #define SW_BASE_DIAG SW_ThrCt
 #define MAX_PSWITCH   (SW_Trainer-SW_ThrCt+1)  // 9 physical switches
@@ -470,7 +471,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define SWP_IL4 (SWP_ID1B | SWP_ID2B)
 #define SWP_IL5 (SWP_ID0B | SWP_ID1B | SWP_ID2B)
 
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define THR_WARN_MASK	0x0101
 #define RUD_WARN_MASK	0x0202
 #define ELE_WARN_MASK	0x0C04
@@ -546,7 +547,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MIX_P1    5
 #define MIX_P2    6
 #define MIX_P3    7
-#if defined(PCBSKY) || defined(PCBSP)
+#if defined(PCBSKY) || defined(PCB9XT)
 #define MIX_MAX   8
 #define MIX_FULL  9
 #define MIX_CYC1  10
@@ -796,7 +797,7 @@ extern uint8_t convert_mode_helper(uint8_t x) ;
 #define BACKLIGHT_OFF   (PWM->PWM_CH_NUM[0].PWM_CDTY = 100)
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 extern void backlight_on( void ) ;
 extern void backlight_off( void ) ;
 #ifdef REVPLUS
@@ -1100,13 +1101,13 @@ extern struct t_p1 P1values ;
 #ifdef PCBSKY
 extern uint16_t ResetReason ;
 #endif
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 extern uint32_t ResetReason ;
 #endif
 extern uint8_t unexpectedShutdown ;
 extern uint8_t SdMounted ;
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "X9D/stm32f2xx.h"
 #include "X9D/rtc.h"
 #include "X9D/stm32f2xx_rtc.h"
@@ -1131,7 +1132,7 @@ extern uint8_t HoldVolume ;
 extern const char *AlertMessage ;
 extern uint8_t AlertType ;
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #define INTERNAL_MODULE 0
 #define EXTERNAL_MODULE 1
 #define TRAINER_MODULE  2
@@ -1157,7 +1158,7 @@ uint8_t throttleReversed( void ) ;
 
 
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 struct t_PeripheralSpeeds
 {
 	uint32_t Peri1_frequency ;

@@ -23,7 +23,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "x9d\stm32f2xx.h"
 #include "x9d\hal.h"
 #endif
@@ -57,7 +57,7 @@ extern void disable_pxx(uint32_t port) ;
 // TC4 - input capture clock
 // TC5 - Spare
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 uint8_t DebugDsmPass ;
 
 // DSM2 control bits
@@ -109,7 +109,7 @@ void init5msTimer()
 																						// MCK/128, set @ RA, Clear @ RC waveform
 	ptc->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
 	
-  NVIC_SetPriority(TC2_IRQn, 3) ;
+  NVIC_SetPriority(TC2_IRQn, 4) ;
 	NVIC_EnableIRQ(TC2_IRQn) ;
 	TC0->TC_CHANNEL[2].TC_IER = TC_IER0_CPCS ;
 }
@@ -258,7 +258,7 @@ void init_pwm()
 #endif
 
 // Starts TIMER at 200Hz, 5mS period
-#if defined(PCBX9D) || defined(PCBSP)
+#if defined(PCBX9D) || defined(PCB9XT)
 
 uint8_t Dsm_mode_response = 0 ;
 
@@ -273,7 +273,7 @@ void init5msTimer()
 	TIM14->EGR = 0 ;
 	TIM14->CR1 = 5 ;
 	TIM14->DIER |= 1 ;
-  NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 3 ) ;
+  NVIC_SetPriority(TIM8_TRG_COM_TIM14_IRQn, 4 ) ;
 	NVIC_EnableIRQ(TIM8_TRG_COM_TIM14_IRQn) ;
 }
 
@@ -1126,6 +1126,17 @@ void hw_delay( uint16_t time )
 	}
 }
 
+void hwTimerStart()
+{
+	TIM13->CNT = 0 ;
+	TIM13->EGR = 1 ;		// Re-start counter
+}
+
+uint16_t hwTimerValue()
+{
+	return TIM13->CNT ;
+}
+
 void setupTrainerPulses()
 {
   uint32_t i ;
@@ -1202,7 +1213,7 @@ void stop_trainer_ppm()
 void init_trainer_capture()
 {
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-	configure_pins( PIN_TR_PPM_IN, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 ) ;
+	configure_pins( PIN_TR_PPM_IN, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 | PIN_PULLUP ) ;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN ;		// Enable clock
 	
 	TIM3->ARR = 0xFFFF ;
@@ -1570,7 +1581,7 @@ void setupPulsesDsm2(uint8_t channels)
 			channels = g_model.xppmNCH ;
 		}
 
-#ifdef PCBSP
+#ifdef PCB9XT
 		if ( (dsmDat[0]&BindBit) && (!keyState(SW_Trainer) ) )
 #else
 		if ( (dsmDat[0]&BindBit) && (!keyState(SW_SH2) ) )
@@ -1756,7 +1767,7 @@ void setupPulsesDsm2(uint8_t channels)
   				break;
   			}
     	}
-	#ifdef PCBSP
+	#ifdef PCB9XT
   		if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
 	#else
   		if((dsmDat[0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled

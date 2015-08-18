@@ -42,6 +42,9 @@
 #include "string.h"
 #include <stdlib.h>
 #include "menus.h"
+#ifndef SIMU
+#include "CoOS.h"
+#endif
 
 #define NULL 0
 
@@ -72,7 +75,7 @@ const char *openLogs()
 #ifdef PCBSKY
   if ( SdMounted == 0 )
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 extern uint32_t sdMounted( void ) ;
   if ( sdMounted() == 0 )
 #endif
@@ -153,7 +156,9 @@ extern uint32_t sdMounted( void ) ;
 
   strcpy_P(&filename[len+11], ".csv" ) ;
 
-  result = f_open(&g_oLogFile, filename, FA_OPEN_ALWAYS | FA_WRITE);
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_oLogFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+	CoTickDelay(1) ;					// 2mS
   if (result != FR_OK)
 	{
     return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;

@@ -1,6 +1,6 @@
 #include "simulatordialog.h"
 #include "ui_simulatordialog.h"
-#include "..\..\common\node.h"
+#include "../../common\node.h"
 #include <QtGui>
 #include <stdint.h>
 #include "pers.h"
@@ -1661,21 +1661,30 @@ int16_t simulatorDialog::intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 
     return erg / 25; // 100*D5/RESX;
 }
 
+static uint8_t lastSwPos[2] ;
 void simulatorDialog::timerTick()
 {
-    int16_t val = 0;
-    if((abs(g_model.tmrMode)>1) && (abs(g_model.tmrMode)<TMR_VAROFS)) {
-        val = calibratedStick[CONVERT_MODE(abs(g_model.tmrMode)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
-        val = (g_model.tmrMode<0 ? RESX-val : val+RESX ) / (RESX/16);  // only used for %
-    }
+  int16_t val = 0;
+  int16_t v ;
+	uint8_t tma ;
+//    if((abs(g_model.tmrMode)>1) && (abs(g_model.tmrMode)<TMR_VAROFS)) {
+//        val = calibratedStick[CONVERT_MODE(abs(g_model.tmrMode)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
+//        val = (g_model.tmrMode<0 ? RESX-val : val+RESX ) / (RESX/16);  // only used for %
+//    }
 
     int8_t tm = g_model.tmrMode;
+//    val = calibratedStick[3-1];
+//    if(tm>=TMR_VAROFS) // Cxx%
+//    {
+//      val = chanOut[tm-TMR_VAROFS] ;
+//    }
   	int8_t tmb ;
 		uint8_t switch_b ;
 		uint8_t max_drswitch ;
 		max_drswitch = ( ee_type ) ? MAX_DRSWITCH+EXTRA_CSW : MAX_DRSWITCH ;
-    
-  for( int itimer = 0 ; itimer < 2 ; itimer += 1 )
+
+  int itimer ;
+  for( itimer = 0 ; itimer < 2 ; itimer += 1 )
 	{
 		uint8_t resetting = 0 ;
     if ( itimer == 0 )
@@ -1688,9 +1697,9 @@ void simulatorDialog::timerTick()
 		}
 		if ( tmb )
 		{
-    	if(tmb>(TOGGLE_INDEX))	 // toggeled switch
+    	if(tmb>=(HSW_MAX))	 // toggeled switch
 			{
-        uint8_t swPos = getSwitch( tmb-(TOGGLE_INDEX), 0 ) ;
+        uint8_t swPos = getSwitch( tmb-(HSW_MAX), 0 ) ;
         if ( swPos != lastResetSwPos[itimer] )
 				{
           lastResetSwPos[itimer] = swPos ;
@@ -1732,15 +1741,31 @@ void simulatorDialog::timerTick()
 		}
 	}
 		
+		tma = g_model.tmrMode ;
 		tmb = g_model.tmrModeB ;
+
+
+    v = 0 ;
+    if(( tma > 1 ) && ( tma < TMR_VAROFS ) )
+		{
+ 			v = calibratedStick[3-1] ;
+    }
+//		if ( ThrottleStickyOn )
+//		{
+//			v = -RESX ;
+//		}
+   	if(tma>=TMR_VAROFS) // Cxx%
+		{
+			v = chanOut[tma-TMR_VAROFS] ;
+		}		
+		val = ( v + RESX ) / (RESX/16) ;
 
     if(tmb > HSW_MAX)
 		{ //toggeled switch//abs(g_model.tmrMode)<(10+MAX_DRSWITCH-1)
-      static uint8_t lastSwPos;
-      if(!(sw_toggled[0] | s_sum | s_cnt | s_time[0] | lastSwPos)) lastSwPos = 0 ;  // if initializing then init the lastSwPos
+      if(!(sw_toggled[0] | s_sum | s_cnt | s_time[0] | lastSwPos[itimer])) lastSwPos[itimer] = 0 ;  // if initializing then init the lastSwPos
       uint8_t swPos = getSwitch( tmb - HSW_MAX, 0 ) ;
-      if(swPos && !lastSwPos)  sw_toggled[0] = !sw_toggled[0];  //if switcdh is flipped first time -> change counter state
-      lastSwPos = swPos;
+      if(swPos && !lastSwPos[itimer])  sw_toggled[0] = !sw_toggled[0];  //if switcdh is flipped first time -> change counter state
+      lastSwPos[itimer] = swPos;
     }
 		else
 		{
@@ -1775,14 +1800,18 @@ void simulatorDialog::timerTick()
 
     	s_timerVal[0] = g_model.tmrVal;
     	uint8_t tmrM = abs(g_model.tmrMode);
-    	if(tmrM==TMRMODE_NONE) s_timerState[0] = TMR_OFF;
-    	else if(tmrM==TMRMODE_ABS)
+      uint16_t subtrahend ;
+      if(tma==TMRMODE_NONE)// s_timerState[0] = TMR_OFF;
 			{
-				if ( tmb == 0 ) s_timerVal[0] -= s_timeCumAbs ;
-    		else s_timerVal[0] -= s_timeCumSw[0] ; //switch
+			}	
+    	else if(tma==TMRMODE_ABS)
+			{
+				if ( tmb == 0 ) subtrahend = s_timeCumAbs ;
+    		else subtrahend = s_timeCumSw[0] ; //switch
     	}
-			else if(tmrM<TMR_VAROFS) s_timerVal[0] -= (tmrM&1) ? s_timeCum16ThrP[0]/16 : s_timeCumThr[0];// stick% : stick
-    	else s_timerVal[0] -= s_timeCumSw[0]; //switch
+			else if(tma<TMR_VAROFS-1) subtrahend = s_timeCumThr[0];// stick% : stick
+    	else subtrahend = s_timeCum16ThrP[0]/16 ; //switch
+			s_timerVal[0] -= subtrahend ;
 
     	switch(s_timerState[0])
     	{
@@ -1840,7 +1869,7 @@ void simulatorDialog::timerTick()
 	{ //toggeled switch//abs(g_model.tmrMode)<(10+MAX_DRSWITCH-1)
       static uint8_t lastSwPos2;
       if(!(sw_toggled[1] | s_sum | s_cnt | s_time[1] | lastSwPos2)) lastSwPos2 = 0 ;  // if initializing then init the lastSwPos
-      uint8_t swPos = getSwitch( tmb-(TOGGLE_INDEX), 0 ) ;
+      uint8_t swPos = getSwitch( tmb-(HSW_MAX), 0 ) ;
       if(swPos && !lastSwPos2)  sw_toggled[1] = !sw_toggled[1];  //if switcdh is flipped first time -> change counter state
       lastSwPos2 = swPos;
   }

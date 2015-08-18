@@ -242,6 +242,48 @@ void telemetryDialog::on_startButtonModule_clicked()
 	}
 }
 
+
+int telemetryDialog::on_startButtonUart_clicked()
+{
+	return 0 ;
+	QString portname ;
+	if ( telemetry )
+	{
+		clearCurrentConnection() ;
+	}
+	if ( sending )
+	{
+		clearCurrentConnection() ;
+	}
+
+  portname = ui->TelPortCB->currentText() ;
+	port = new QextSerialPort(portname, QextSerialPort::EventDriven) ;
+  port->setBaudRate(BAUD57600) ;
+  port->setFlowControl(FLOW_OFF) ;
+	port->setParity(PAR_NONE) ;
+  port->setDataBits(DATA_8) ;
+	port->setStopBits(STOP_1) ;
+  port->setTimeout(50) ;  //set timeouts to 50 ms
+
+
+ 	if (!port->open(QIODevice::ReadWrite | QIODevice::Unbuffered) )
+ 	{
+ 		QMessageBox::critical(this, "Sport Config", tr("Com Port Unavailable"));
+		if (port->isOpen())
+		{
+ 	  	port->close();
+		}
+ 	  delete port ;
+		port = NULL ;
+		return 0 ;	// Failed
+	}
+  connect(port,SIGNAL(readyRead()),this,SLOT(receive()));
+	ui->startButtonUart->setText("Stop") ;
+	return 1 ;
+	
+}
+
+
 void telemetryDialog::on_startButton_clicked()
 {
 	QString portname ;
