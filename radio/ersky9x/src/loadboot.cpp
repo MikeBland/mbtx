@@ -120,30 +120,47 @@ const uint8_t BootCode[] = {
 
 #if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
 
+#define WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() (RCC->CSR & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_SFTRSTF))
+
 __attribute__ ((section(".bootrodata"), used))
 
 void _bootStart()
 {
 	// turn soft power on now
 #ifdef PCB9XT
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN ; 		// Enable portC and A clock
+	__ASM volatile ("nop") ;	// Needed for the STM32F4
+	__ASM volatile ("nop") ;
 	GPIOC->PUPDR = 0x0020 ;	// PIN_MCU_PWR
 #else
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
-	GPIOD->BSRRL = 1 ;
-	GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC ) | 1 ;
+ #ifdef REV9E
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOGEN ; // Enable portD clock
+ #else
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
+ #endif
+	__ASM volatile ("nop") ;	// Needed for the STM32F4
+	__ASM volatile ("nop") ;
+	
+ #ifdef REV9E
+	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+ #endif
+	{
+		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
+		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
+	}
 #endif
 
 #ifdef PCB9XT
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	GPIOA->PUPDR = 0x14000000 ;
 	GPIOC->PUPDR = 0x04004000 ;		// PortC clock enabled above
 #else
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	
 	GPIOC->PUPDR = 0x00000004 ;
+ #ifdef REV9E
+	GPIOG->PUPDR = 0x00000001 ;
+ #else
 	GPIOE->PUPDR = 0x00000040 ;
+ #endif
 #endif
 
 	uint32_t i ;
@@ -151,6 +168,21 @@ void _bootStart()
 	{
 		bwdt_reset() ;
 	}
+ // now the second part of power on sequence
+// If we got here and the radio was not started by the watchdog/software reset,
+// then we must have a power button pressed. If not then we are in power on/off loop
+// and to terminate it, just wait here without turning on PWR pin. The power supply will
+// eventually exhaust and the radio will turn off.
+ #ifdef REV9E
+	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+	{
+		// wait here until the power key is pressed
+		while (GPIOD->IDR & PWR_GPIO_PIN_SWITCH)
+		{
+			bwdt_reset();
+		}
+	}
+#endif
 
 //#ifndef PCB9XT
 #ifdef PCB9XT
@@ -163,7 +195,11 @@ void _bootStart()
 		if ( (GPIOC->IDR & 0x00002000 ) == 0 )
 		{
 #else
+ #ifdef REV9E
+	if ( (GPIOG->IDR & 0x00000001 ) == 0 )
+ #else
 	if ( (GPIOE->IDR & 0x00000008 ) == 0 )
+ #endif
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{

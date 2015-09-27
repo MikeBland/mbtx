@@ -33,6 +33,14 @@ struct t_fifo64
 	uint32_t out ;
 } ;
 
+struct t_fifo128
+{
+	uint8_t fifo[128] ;
+	uint32_t in ;
+	uint32_t out ;
+} ;
+
+
 // Options in CaptureMode
 #define CAP_PPM				0
 #define CAP_SERIAL		1
@@ -44,6 +52,8 @@ extern uint8_t CaptureMode ;
 //extern int32_t get_fifo32( struct t_fifo32 *pfifo ) ;
 extern void put_fifo64( struct t_fifo64 *pfifo, uint8_t byte ) ;
 extern int32_t get_fifo64( struct t_fifo64 *pfifo ) ;
+extern void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte ) ;
+extern int32_t get_fifo128( struct t_fifo128 *pfifo ) ;
 extern struct t_serial_tx Bt_tx ;
 extern uint32_t txPdcBt( struct t_serial_tx *data ) ;
 extern uint32_t txPdcCom2( struct t_serial_tx *data ) ;
@@ -144,11 +154,16 @@ void end_ppm_capture( void ) ;
 extern void start_2Mhz_timer( void ) ;
 
 #ifdef PCB9XT
+#define BL_RED		0
+#define BL_GREEN	1
+#define BL_BLUE		2
+#define BL_ALL		3
 extern uint8_t BlChanged ;
 extern void BlSetColour( uint32_t level, uint32_t colour ) ;
+extern void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel ) ;
 extern void backlightSend() ;
 extern void console9xtInit( void ) ;
-#endif
+#endif	// PCB9XT
 
 extern void disable_ssc( void ) ;
 
@@ -222,5 +237,6 @@ public:
 };
 
 extern Key keys[NUM_KEYS] ;
+
 
 #endif

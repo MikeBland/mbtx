@@ -106,6 +106,10 @@ PACK(typedef struct t_exTrainerMix {
   int8_t  studWeight ;
 }) exTrainerMix; //
 
+PACK(typedef struct t_btDevice {
+  uint8_t  address[6] ;
+  uint8_t  name[8] ;
+}) btDeviceData ;
 
 PACK(typedef struct t_EEGeneral {
   uint8_t   myVers;
@@ -146,7 +150,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   hideNameOnSplash:1;
   uint8_t   optrexDisplay:1;
   uint8_t   unexpectedShutdown:1;
-  uint8_t   spare:1;
+  uint8_t   softwareVolume:1;
   uint8_t   speakerPitch;
   uint8_t	hapticStrength;
   uint8_t	speakerMode;
@@ -195,7 +199,14 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		thrsource ;
 	uint8_t		elesource ;
 	uint8_t 	stickDeadband[4] ;
-	uint8_t 	bright_blue ;			// backlight(blue) for 9Xtreme
+	uint8_t 	bright_blue ;				// backlight(blue) for 9Xtreme
+	uint8_t		btName[15] ;				// For the HC06 module
+	uint8_t		ar9xBoard:1 ;
+	uint8_t		externalRtcType:2 ;
+	uint8_t		spare:5 ;
+	uint8_t fixedDateTime[6] ;
+	btDeviceData btDevice[4] ;
+
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -523,6 +534,13 @@ typedef struct t_gvarAdjust
 	int8_t switch_value ;
 } GvarAdjust ;
 
+PACK(typedef struct t_customCheck
+{
+  uint8_t source ;
+	int8_t  min ;
+	int8_t  max ;
+}) CustomCheckData ;
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -593,6 +611,7 @@ PACK(typedef struct te_ModelData {
 	int8_t pxxFailsafe[16] ;
 	int8_t logSwitch ;
 	uint8_t logRate ;
+  // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
   uint8_t   not_xsub_protocol:2 ;
@@ -639,7 +658,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E
-  uint8_t ymodelswitchWarningStates ;	// Enough bits for Taranis X9E
+  uint8_t ymodelswitchWarningStates ;		// Enough bits for Taranis X9E
 	uint8_t customDisplay2Index[6] ;
 	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
 	uint16_t modelswitchWarningDisables ;
@@ -650,6 +669,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t option_protocol ;
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
+	CustomCheckData customCheck ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

@@ -90,7 +90,7 @@ uint8_t JetiTxBuffer[16] ;
 struct t_rxUartBuffer TelemetryInBuffer ;
 
 struct t_fifo64 Console_fifo ;
-struct t_fifo64 BtRx_fifo ;
+struct t_fifo128 BtRx_fifo ;
 
 struct t_fifo64 CaptureRx_fifo ;
 struct t_fifo64 RemoteRx_fifo ;
@@ -504,6 +504,27 @@ int32_t get_fifo64( struct t_fifo64 *pfifo )
 	return -1 ;
 }
 
+void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte )
+{
+  uint32_t next = (pfifo->in + 1) & 0x7f;
+	if ( next != pfifo->out )
+	{
+		pfifo->fifo[pfifo->in] = byte ;
+		pfifo->in = next ;
+	}
+}
+
+int32_t get_fifo128( struct t_fifo128 *pfifo )
+{
+	int32_t rxbyte ;
+	if ( pfifo->in != pfifo->out )				// Look for char available
+	{
+		rxbyte = pfifo->fifo[pfifo->out] ;
+		pfifo->out = ( pfifo->out + 1 ) & 0x7F ;
+		return rxbyte ;
+	}
+	return -1 ;
+}
 
 //void put_fifo64( struct t_fifo64 *pfifo, uint8_t byte )
 //{
@@ -1519,7 +1540,7 @@ extern "C" void UART1_IRQHandler()
 	}
 	if ( pUart->UART_SR & UART_SR_RXRDY )
 	{
-		put_fifo64( &BtRx_fifo, pUart->UART_RHR ) ;	
+		put_fifo128( &BtRx_fifo, pUart->UART_RHR ) ;	
 	}
 }
 
@@ -1598,7 +1619,7 @@ void txmitBt( uint8_t c )
 
 int32_t rxBtuart()
 {
-	return get_fifo64( &BtRx_fifo ) ;
+	return get_fifo128( &BtRx_fifo ) ;
 }
 
 //void xread_9_adc()
@@ -1747,9 +1768,21 @@ void read_adc()
 	Analog_values[1] = ADC->ADC_CDR9 ;
 	Analog_values[2] = ADC->ADC_CDR14 ;
 	Analog_values[3] = ADC->ADC_CDR1 ;
-	Analog_values[4] = ADC->ADC_CDR5 ;
+#ifndef REVX
+	if ( g_eeGeneral.ar9xBoard == 0 )
+	{
+#endif
+		Analog_values[4] = ADC->ADC_CDR5 ;
+		Analog_values[6] = ADC->ADC_CDR3 ;
+#ifndef REVX
+	}
+	else
+	{
+		Analog_values[6] = ADC->ADC_CDR5 ;
+		Analog_values[4] = ADC->ADC_CDR3 ;
+	}
+#endif
 	Analog_values[5] = ADC->ADC_CDR13 ;
-	Analog_values[6] = ADC->ADC_CDR3 ;
 	Analog_values[7] = ADC->ADC_CDR4 ;
 //#endif
 #ifdef REVB
@@ -2086,6 +2119,7 @@ extern "C" void TC5_IRQHandler()
 // (The timer is free-running and is thus not reset to zero at each capture interval.)
 // Timer 4 generates the 2MHz clock to clock Timer 3
 
+extern uint16_t SbusTimer ;
 
 extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 {
@@ -2172,11 +2206,18 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 			{
   	  	if(val>800 && val<2200)
 				{
-					ppmInValid = 100 ;
-  		    g_ppmIns[ppmInState++ - 1] =
-  	  	    (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
-
-		    }else{
+					if ( g_eeGeneral.trainerSource == 0 )
+					{
+						ppmInValid = 100 ;
+						if ( SbusTimer == 0 )
+						{ // Not receiving trainer data over SBUS
+	  		  	  g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10 ;
+							//+-500 != 512, but close enough.
+						}
+					}
+		    }
+				else
+				{
   		    ppmInState=0; // not triggered
   	  	}
   	  }
@@ -3196,6 +3237,7 @@ uint16_t BlData[27] ;
 uint8_t BlColours[3] ;
 uint8_t BlChanged ;
 uint8_t BlCount ;
+uint8_t BlSending ;
 
 
 // The value is 24 bits, 8 red, 8 green, 8 blue right justified
@@ -3214,8 +3256,27 @@ void backlightSet( uint32_t value )
 	*blptr = 40 ;
 }
 
+void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
+{
+	rlevel *= 255 ;
+	rlevel /= 100 ;
+	if ( rlevel > 255 )
+	{
+		rlevel = 255 ;
+	}
+	BlColours[BL_RED] = rlevel ;
+	glevel *= 255 ;
+	glevel /= 100 ;
+	if ( glevel > 255 )
+	{
+		glevel = 255 ;
+	}
+	BlColours[BL_GREEN] = glevel ;
+	BlSetColour( blevel, BL_BLUE ) ;
+}
+
 // Level is 0 to 100%
-// colour is 0 red, 1 green, 2 blue
+// colour is 0 red, 1 green, 2 blue, 3 all
 void BlSetColour( uint32_t level, uint32_t colour )
 {
 	if ( colour > 3 )
@@ -3243,17 +3304,24 @@ void BlSetColour( uint32_t level, uint32_t colour )
 	if ( level != BlLastLevel )
 	{
 		BlLastLevel = level ;
-		backlightSet( level ) ;
-		BlCount = 2 ;
 		BlChanged = 1 ;
-		backlightSend() ;
+		if ( BlSending == 0 )
+		{
+			backlightSend() ;
+		}		 
 	}
 }
 
 void backlightSend()
 {
-	BlChanged = 0 ;
-	
+	BlSending = 1 ;
+	if ( BlChanged )
+	{
+		backlightSet( BlLastLevel ) ;
+		BlChanged = 0 ;
+		BlCount = 2 ;
+	}
+
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;           // Enable portB clock
   configure_pins( GPIO_Pin_9, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_2 | PIN_OS25 | PIN_PUSHPULL ) ;
 	
@@ -3297,6 +3365,12 @@ extern "C" void DMA1_Stream0_IRQHandler()
 	DMA1_Stream0->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	DMA1_Stream0->CR &= ~DMA_SxCR_TCIE ;		// Stop interrupt
   TIM4->CR1 &= ~TIM_CR1_CEN ;
+
+	BlSending = 0 ;
+	if ( BlChanged )
+	{
+		backlightSend() ;
+	}
 }
 
 

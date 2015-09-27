@@ -1277,6 +1277,11 @@ extern "C" void TIM2_IRQHandler()
 		doCapture = 1 ;
 	}
 
+	if ( g_eeGeneral.trainerSource != 0 )
+	{
+		doCapture = 0 ;
+	}
+
 	if ( doCapture )
 	{
   	val = (uint16_t)(capture - lastCapt) / 2 ;

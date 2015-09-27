@@ -34,5 +34,6 @@ extern uint8_t M64HapticStrength ;
 void checkM64( void ) ;
 void displayToM64( void ) ;
 void initM64( void ) ;
-
+void m64_10mS( void ) ;
+uint32_t m64ReceiveStatus( void ) ;
 

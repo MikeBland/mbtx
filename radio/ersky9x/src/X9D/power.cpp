@@ -150,7 +150,7 @@ uint32_t check_soft_power()
 //			p4hex( GPIOC->IDR ) ;
 //		 	counter = 0 ;
 //		}
-		if ( c1 > 50 )
+		if ( c1 > 5 )
 		{
     	return POWER_OFF;
 		}

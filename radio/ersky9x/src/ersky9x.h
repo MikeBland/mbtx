@@ -31,12 +31,6 @@
 //#define	SERIAL_HOST		1
 #endif
 
-//#ifdef PCBSKY
-// #ifdef REVX
-//  #define DISABLE_PXX_SPORT	1
-// #endif
-//#endif
-
 #define TELEMETRY_LOST	1
 
 //#define ENABLE_DSM_MATCH	1
@@ -143,6 +137,8 @@ extern const char * const Swedish[] ;
 #ifndef NUM_REMOTE_ANALOG
  #define NUM_REMOTE_ANALOG	0
 #endif
+
+extern uint8_t SystemOptions ;
 
 //#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNSW1SW2SW3SW4SW5SW6SW7SW8SW9SWASWBSWCSWDSWESWFSWGSWHSWISWJSWKSWLSWMSWNSWO"
 #define NUM_CSW  12 //number of custom switches
@@ -637,6 +633,9 @@ extern uint8_t Ee_lock ;
 #define EE_TRIM    4           // Store model because of trim
 #define INCDEC_SWITCH   0x08
 
+// Bits in SystemOptions
+#define SYS_OPT_HARDWARE_EDIT	1
+#define SYS_OPT_MUTE					2
 
 #define TMR_VAROFS  4
 
@@ -1039,6 +1038,7 @@ extern void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
 
 extern void checkSwitches( void ) ;
 extern void checkTHR( void ) ;
+extern void checkCustom( void ) ;
 extern void setLanguage( void ) ;
 extern void checkXyCurve( void ) ;
 
@@ -1059,6 +1059,7 @@ struct t_timer
 	uint16_t s_timeCum16ThrP ; //gewichtete laufzeit in 1/16 sec
 	int16_t  s_timerVal ;
 	int16_t last_tmr ;
+	uint16_t s_timeCumAbs;  //laufzeit in 1/16 sec
 } ;
 
 extern struct t_timer s_timer[] ;
@@ -1152,10 +1153,24 @@ extern uint8_t AlertType ;
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
 
+void com2Configure( void ) ;
+
 extern uint8_t TmOK ;
 
 uint8_t throttleReversed( void ) ;
 
+
+struct btRemote_t
+{
+	uint8_t address[16] ;
+	uint8_t name[16] ;
+} ;
+extern uint8_t BtCurrentBaudrate ;
+
+#ifdef PCBSKY
+extern struct btRemote_t BtRemote[] ;
+extern uint8_t NumberBtremotes ;
+#endif
 
 
 #if defined(PCBX9D) || defined(PCB9XT)

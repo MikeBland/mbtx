@@ -32,10 +32,6 @@
 *
 ****************************************************************************/
 
-#ifdef PCB9XT
-#define SOFTWARE_VOLUME	1
-#endif
-
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -153,7 +149,6 @@ void start_sound()
 {
 	start_dactimer() ;
 	init_dac() ;
-
 	// TODO - for volume, shared with EEPROM?
 	//init_twi() ;
 }
@@ -234,6 +229,7 @@ void start_dactimer()
 // DMA1, Stream 5, channel 7
 void init_dac()
 {
+	
 	DacIdle = 1 ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	configure_pins( 0x0010, PIN_ANALOG | PIN_PORTA ) ;
@@ -332,6 +328,7 @@ void end_sound()
 }
 
 // Called every 5mS from interrupt routine
+
 void sound_5ms()
 {
 #ifndef TONE_MODE_2
@@ -352,6 +349,7 @@ void sound_5ms()
 #endif // TONE_MODE_2
 		if ( Sound_g.VoiceRequest )
 		{
+			
 			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
 			
 			if ( DacIdle )	// All sent
@@ -370,7 +368,6 @@ void sound_5ms()
 				DMA1_Stream5->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ;		// Enable DMA channel and interrupt
 				DAC->SR = DAC_SR_DMAUDR1 ;			// Write 1 to clear flag
 				DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 ;			// Enable DAC
-				
 #endif
 			}
 			return ;
@@ -432,7 +429,6 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
-#ifdef SOFTWARE_VOLUME
 static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
 {
 //	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
@@ -445,48 +441,61 @@ uint16_t swVolumeLevel()
 	return SwVolume_scale[CurrentVolume] ;
 }
 
-#endif	 
 
 void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
 {
-#ifdef SOFTWARE_VOLUME
-	uint32_t multiplier ;
-	int32_t value ;
-	multiplier = SwVolume_scale[CurrentVolume] * 256 ;
-#endif	 
-	
-	while( count-- )
+#ifndef PCB9XT
+	if ( g_eeGeneral.softwareVolume )
 	{
-#ifdef SOFTWARE_VOLUME
-		value = (int8_t) (*src++ - 128 ) ;
-		value *= multiplier ;
-		value += 32768 * 256 ;
-		*dest++ = value >> 12 ;
-#else
-		*dest++ = *src++ << 4 ;
-#endif	 
+#endif
+		uint32_t multiplier ;
+		int32_t value ;
+		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+		while( count-- )
+		{
+			value = (int8_t) (*src++ - 128 ) ;
+			value *= multiplier ;
+			value += 32768 * 256 ;
+			*dest++ = value >> 12 ;
+		}
+#ifndef PCB9XT
 	}
+	else
+	{
+		while( count-- )
+		{
+			*dest++ = *src++ << 4 ;
+		}
+	}
+#endif
 }
 
 void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
 {
-#ifdef SOFTWARE_VOLUME
-	uint32_t multiplier ;
-	int32_t value ;
-	multiplier = SwVolume_scale[CurrentVolume] ;
-#endif	 
-	
-	while( count-- )
+#ifndef PCB9XT
+	if ( g_eeGeneral.softwareVolume )
 	{
-#ifdef SOFTWARE_VOLUME
-		value = (int16_t) *src++ ;
-		value *= multiplier ;
-		value += 32768 * 256 ;
-		*dest++ = value >> 12 ;
-#else
-		*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
-#endif	
+#endif
+		uint32_t multiplier ;
+		int32_t value ;
+		multiplier = SwVolume_scale[CurrentVolume] ;
+		while( count-- )
+		{
+			value = (int16_t) *src++ ;
+			value *= multiplier ;
+			value += 32768 * 256 ;
+			*dest++ = value >> 12 ;
+		}
+#ifndef PCB9XT
 	}
+	else
+	{
+		while( count-- )
+		{
+			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+		}
+	}
+#endif
 }
 
 
@@ -625,8 +634,11 @@ void setVolume( register uint8_t volume )
 	}
 	CurrentVolume = volume ;
 	volume = Volume_scale[volume] ;
-#ifdef PCB9XT
-#else
+#ifndef PCB9XT
+	if ( g_eeGeneral.softwareVolume )
+	{
+		volume = 127 ;
+	}
 	I2C_set_volume( volume ) ;
 #endif // PCB9XT
 //	TargetVolume = volume ;

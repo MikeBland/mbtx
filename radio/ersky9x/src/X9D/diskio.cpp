@@ -978,6 +978,10 @@ FATFS g_FATFS_Obj;
 void sdInit()
 {
 	FRESULT fr ;
+	if ( socket_is_empty() )
+	{
+		return ;
+	}
   if (( fr = f_mount(0, &g_FATFS_Obj)) == FR_OK)
 	{
 		
@@ -989,6 +993,10 @@ void sdInit()
 uint32_t sdMounted()
 {
 	// Should check for card present as well
+	if ( socket_is_empty() )
+	{
+		return 0 ;
+	}
   return Card_state == 100 ;
 }
 

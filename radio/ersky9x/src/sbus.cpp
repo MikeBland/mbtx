@@ -39,8 +39,8 @@
 #include "sbus.h"
 
 uint8_t SbusFrame[28] ;
-uint16_t SbusTimer ;
 uint8_t SbusIndex = 0 ;
+extern uint16_t SbusTimer ;
 
 void processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 {
@@ -67,6 +67,7 @@ void processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 		inputbits >>= 11 ;
 	}
 	ppmInValid = 100 ;
+	SbusTimer = 1000 ;
 	return ;
 }
 

@@ -66,6 +66,8 @@ uint8_t ToneQueueRidx ;
 uint8_t ToneQueueWidx ;
 uint8_t SdAccessRequest ;
 
+void nextToneData( void ) ;
+
 bool ToneFreeSlots()
 {
 	uint8_t temp ;
@@ -765,6 +767,67 @@ void unlockVoice()
 	Voice.VoiceLock = 0 ;
 }
 
+static uint32_t currentFrequency ;
+
+void doTone()
+{
+	int32_t toneOver ;
+	uint32_t v_index ;
+	uint32_t x ;
+					
+	if ( SystemOptions & SYS_OPT_MUTE )
+	{
+		nextToneData() ;	// Discard item
+		return ;
+	}
+
+	beginToneFill() ;
+	toneFill( VoiceBuffer[0].dataw ) ;
+	VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
+	currentFrequency = VoiceBuffer[0].frequency = 16000 ;		// sample rate
+	toneFill( VoiceBuffer[1].dataw ) ;
+	VoiceBuffer[1].count = VOICE_BUFFER_SIZE ;
+	VoiceBuffer[1].frequency = currentFrequency ;
+	toneFill( VoiceBuffer[2].dataw ) ;
+	VoiceBuffer[2].count = VOICE_BUFFER_SIZE ;
+	VoiceBuffer[2].frequency = currentFrequency ;
+	startVoice( NUM_VOICE_BUFFERS ) ;
+	
+	for(x = 0;;)
+	{
+		while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
+		{
+			CoTickDelay(1) ;					// 2mS for now
+		}
+		toneOver = toneFill( VoiceBuffer[x].dataw ) ;
+		VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
+		VoiceBuffer[x].frequency = currentFrequency ;
+		appendVoice( x ) ;		// index of next buffer
+		v_index = x ;		// Last buffer sent
+		x += 1 ;
+		if ( x > NUM_VOICE_BUFFERS - 1 )
+		{
+			x = 0 ;							
+		}
+		if ( toneOver )
+		{
+			// finish
+			x = 100 ;
+ 			while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
+			{
+				CoTickDelay(1) ;					// 2mS for now
+				if ( --x == 0 )
+				{
+					break ;		// Timeout, 200 mS
+				}
+			}
+			endVoice() ;
+			break ;
+		}
+	}
+}
+
+
 void voice_task(void* pdata)
 {
 	uint32_t v_index ;
@@ -776,8 +839,6 @@ void voice_task(void* pdata)
 	uint32_t size ;
 	uint8_t *name ;
 
-	static uint32_t currentFrequency ;
-
 	for(;;)
 	{
 		while ( !sd_card_ready() )
@@ -788,6 +849,15 @@ void voice_task(void* pdata)
 #ifndef SIMU
 				sdPoll10mS() ;
 #endif
+				ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
+			}
+		 	// Play a tone
+			else
+			{
+				if (ToneQueueRidx != ToneQueueWidx)
+				{
+					doTone() ;
+				}
 			}
 		}
 		if ( mounted == 0 )
@@ -810,11 +880,21 @@ void voice_task(void* pdata)
 		 }
 		 if ( Voice.VoiceQueueCount )
 		 {
+		 	uint32_t processed = 0 ;
 		 	
 			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
 		 	
 			name = Voice.NamedVoiceQueue[Voice.VoiceQueueOutIndex] ;
-			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex++] ;
+			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex] ;
+			if ( SystemOptions & SYS_OPT_MUTE )
+			{
+				Voice.VoiceQueueOutIndex += 1 ;
+				Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
+				__disable_irq() ;
+				Voice.VoiceQueueCount -= 1 ;
+				__enable_irq() ;
+				continue ;
+			}
 
 			if ( (v_index & 0xFF00) == 0xFF00 )
 			{
@@ -830,6 +910,7 @@ void voice_task(void* pdata)
 					SaveVolume = CurrentVolume ;
 					setVolume( v_index ) ;
 				}
+				processed = 1 ;
 			}
 			else
 			{
@@ -839,6 +920,7 @@ void voice_task(void* pdata)
 					Voice.VoiceLock = 1 ;
   				CoSchedUnlock() ;
 
+					processed = 1 ;
 					buildFilename( v_index, name ) ;
 					fr = f_open( &Vfile, VoiceFilename, FA_READ ) ;
 					if ( fr != FR_OK )
@@ -1034,73 +1116,37 @@ void voice_task(void* pdata)
   				CoSchedUnlock() ;
 				}
 			}
-			Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
-			__disable_irq() ;
-			Voice.VoiceQueueCount -= 1 ;
-			__enable_irq() ;
+			if ( processed )
+			{
+				Voice.VoiceQueueOutIndex += 1 ;
+				Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
+				__disable_irq() ;
+				Voice.VoiceQueueCount -= 1 ;
+				__enable_irq() ;
+			}
 		 }
 		 else
 		 {
 		 	// Play a tone
 			if (ToneQueueRidx != ToneQueueWidx)
-//		 	if ( PlayingTone == 1 )
 			{
-				int32_t toneOver ;
-
-//				queueTone( 1, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 2, 10 ) ;	// Now
-//				queueTone( 0, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 10, 1 ) ;  // Asap
-//				queueTone( 0, BEEP_DEFAULT_FREQ + 25 + g_eeGeneral.speakerPitch + BEEP_OFFSET, 0, 5, 2, 10 ) ;	// Asap
-	        
-				beginToneFill() ;
-				toneFill( VoiceBuffer[0].dataw ) ;
-				currentFrequency = VoiceBuffer[0].frequency = 16000 ;		// sample rate
-				toneFill( VoiceBuffer[1].dataw ) ;
-				VoiceBuffer[1].count = VOICE_BUFFER_SIZE ;
-				VoiceBuffer[1].frequency = currentFrequency ;
-				toneFill( VoiceBuffer[2].dataw ) ;
-				VoiceBuffer[2].count = VOICE_BUFFER_SIZE ;
-				VoiceBuffer[2].frequency = currentFrequency ;
-				startVoice( NUM_VOICE_BUFFERS ) ;
-//				PlayingTone = 2 ;
-				for(x = 0;;)
-				{
-					while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
-					{
-						CoTickDelay(1) ;					// 2mS for now
-					}
-					toneOver = toneFill( VoiceBuffer[x].dataw ) ;
-					VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
-					VoiceBuffer[x].frequency = currentFrequency ;
-					appendVoice( x ) ;		// index of next buffer
-					v_index = x ;		// Last buffer sent
-					x += 1 ;
-					if ( x > NUM_VOICE_BUFFERS - 1 )
-					{
-						x = 0 ;							
-					}
-					if ( toneOver )
-					{
-						// finish
-						x = 100 ;
- 						while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
-						{
-							CoTickDelay(1) ;					// 2mS for now
-							if ( --x == 0 )
-							{
-								break ;		// Timeout, 200 mS
-							}
-						}
-						endVoice() ;
-//						PlayingTone = 0 ;
-						break ;
-					}
-				}
+				doTone() ;
+			}
+			else
+			{
+		 		CoTickDelay(3) ;					// 6mS for now
 			}
 		 }
 		}
 		else
 		{
 			SDlastError = fr ;
+		 	// Play a tone
+			if (ToneQueueRidx != ToneQueueWidx)
+			{
+				doTone() ;
+			}
+
 		}
 		CoTickDelay(1) ;					// 2mS for now
 	} // for(;;)
@@ -1176,7 +1222,7 @@ void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8
 
 void nextToneData()
 {
-	if ( Voice.VoiceQueueCount )
+	if ( SdMounted && Voice.VoiceQueueCount )
 	{
 		ToneQueueWidx = ToneQueueRidx ;		// Discard queue
 		return ;
@@ -1238,9 +1284,7 @@ void nextToneData()
 	}
 }
 
-#ifdef SOFTWARE_VOLUME
 uint16_t swVolumeLevel( void ) ;
-#endif	 
 
 // This for 16kHz sample rate
 // Returns +ve or zero, remaining time
@@ -1249,11 +1293,9 @@ int32_t toneFill( uint16_t *buffer )
 {
 	uint32_t i = 0 ;
 	uint32_t y ;
-#ifdef SOFTWARE_VOLUME
 	uint32_t multiplier ;
 	int32_t value ;
 	multiplier = swVolumeLevel() ;
-#endif	 
 
 	if ( toneTimeLeft == 0 )
 	{
@@ -1268,21 +1310,28 @@ int32_t toneFill( uint16_t *buffer )
 			{
 				toneCount += frequency ;
 				y = ( toneCount & 0x01F0) >> 4 ;
-#ifdef SOFTWARE_VOLUME
-				if ( frequency )
+#ifndef PCB9XT
+				if ( g_eeGeneral.softwareVolume )
 				{
-					value = (int32_t)Sine16k[y] - 2048 ;
-					value *= multiplier ;
-					value += 2048 * 256 ;
-					value >>= 8 ;
+#endif
+					if ( frequency )
+					{
+						value = (int32_t)Sine16k[y] - 2048 ;
+						value *= multiplier ;
+						value += 2048 * 256 ;
+						value >>= 8 ;
+					}
+					else
+					{
+						value = 2048 ;
+					}
+					*buffer++ = value ;
+#ifndef PCB9XT
 				}
 				else
 				{
-					value = 2048 ;
+					*buffer++ = frequency ? Sine16k[y] : 2048 ;
 				}
-				*buffer++ = value ;
-#else
-				*buffer++ = frequency ? Sine16k[y] : 2048 ;
 #endif
 				i += 1 ;
 			}

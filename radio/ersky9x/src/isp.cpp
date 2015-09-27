@@ -296,7 +296,7 @@ void ispChipErase()
   ispTransmit(0x80) ;
   ispTransmit(0) ;
   ispTransmit(0) ;
-  clockWait(30) ;
+  clockWait(50) ;
 }
 
 //uchar ispWriteEEPROM(unsigned int address, uchar data)
@@ -352,26 +352,26 @@ void clockWait(uint16_t time)
 
 uint8_t IspStatus ;
 uint8_t Signature[3] ;
-uint8_t M64Program[256] ;
+uint8_t M64Program[64] ;
 
-void checkIspAccess()
-{
-	uint32_t i ;
-	ispConnect() ;
-	clockWait( 64 ) ;	// 20mS
-	if ( ( IspStatus = ispEnterProgrammingMode() ) == 0 )
-	{
-		Signature[0] = ispReadSignature(0) ;
-		Signature[1] = ispReadSignature(1) ;
-		Signature[2] = ispReadSignature(2) ;
-		for ( i = 0 ; i < 256 ; i += 1 )
-		{
-			M64Program[i] = ispReadFlash( i ) ;
-		}
-	}
-	ispDisconnect() ;
-	clockWait(64) ;
-}
+//void checkIspAccess()
+//{
+//	uint32_t i ;
+//	ispConnect() ;
+//	clockWait( 64 ) ;	// 20mS
+//	if ( ( IspStatus = ispEnterProgrammingMode() ) == 0 )
+//	{
+//		Signature[0] = ispReadSignature(0) ;
+//		Signature[1] = ispReadSignature(1) ;
+//		Signature[2] = ispReadSignature(2) ;
+//		for ( i = 0 ; i < 64 ; i += 1 )
+//		{
+//			M64Program[i] = ispReadFlash( i ) ;
+//		}
+//	}
+//	ispDisconnect() ;
+//	clockWait(64) ;
+//}
 
 void flashPage( uint8_t *data, uint16_t address, uint16_t size )
 {
@@ -393,12 +393,13 @@ void flashPage( uint8_t *data, uint16_t address, uint16_t size )
 
 
 
-void flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t size2561 )
+uint32_t flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t size2561 )
 {
 	uint32_t i ;
 	uint8_t *data ;
 	uint16_t address ;
 	uint16_t size ;
+	uint8_t *verifyData ;
 
 	ispConnect() ;
 	clockWait( 64 ) ;	// 20mS
@@ -416,8 +417,17 @@ void flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t siz
 		data = data2561 ;
 		size = size2561 ;
 	}
+	verifyData = data ;
 
 	ispChipErase() ;
+
+	if ( Signature[1] == 0x98 )
+	{
+	  ispTransmit(0x4D) ;
+  	ispTransmit(0) ;
+	  ispTransmit(0) ;
+  	ispTransmit(0) ;
+	}
 
 	for ( address = 0 ; address < size ; address += 256 )
 	{
@@ -429,13 +439,26 @@ void flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t siz
 		flashPage( data, address, i ) ;
 		data += 256 ;
 	}
+	for ( i = 0 ; i < 64 ; i += 1 )
+	{
+		M64Program[i] = ispReadFlash( i ) ;
+	}
 	ispDisconnect() ;
 	clockWait(64) ;
+
+	for ( i = 0 ; i < 64 ; i += 1 )
+	{
+		if ( *verifyData++ != M64Program[i] )
+		{
+			return 1 ;
+		}
+	}
+	return 0 ;
 }
 
-void updateSlave()
+uint32_t updateSlave()
 {
-	flashAvr( (uint8_t * )SlaveData64, (uint8_t * )SlaveData2561, sizeof(SlaveData64), sizeof(SlaveData2561) ) ;
+	return flashAvr( (uint8_t * )SlaveData64, (uint8_t * )SlaveData2561, sizeof(SlaveData64), sizeof(SlaveData2561) ) ;
 }
 
 

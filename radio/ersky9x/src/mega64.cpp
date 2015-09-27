@@ -26,6 +26,9 @@
 
 // Also do byte stuffing, 0x01 sent as 0x1B, 0x81 and 0x1B sent as 0x1B, 0x9B.
 
+// RemData: 12 bytes - buttons, trims, switches, Pot1, Pot2, Pot3, enc_switch, enc_pos, Revision
+
+
 // Allocation of serial ports:
 // UART is connected to 16U2 device - debug only
 // UART - PA8(A) - RX Due0, PA9(A) - TX Due1, both to 16U2
@@ -83,6 +86,9 @@ uint8_t M64HapticStrength ;
 
 uint16_t M64Overruns ;
 uint16_t M64CountErrors ;
+
+uint8_t M64MainTimer ;
+uint8_t M64BackupTimer ;
 
 uint8_t M64Display[1024] ;
 
@@ -388,6 +394,8 @@ uint8_t RemValid ;
 uint16_t RemOkCount ;
 uint16_t RemBadCount ;
 
+
+
 static void poll_mega64()
 {
 	int16_t byte ;
@@ -402,6 +410,7 @@ static void poll_mega64()
 				if ( SlaveRxCount == 22 )	// Check in case of overrun error
 				{
 					uint16_t switches ;
+					M64MainTimer = 150 ;
 					byte = SlaveTempReceiveBuffer[0] ;
 					M64Buttons = byte & 0x7E ;
 					M64Trims = SlaveTempReceiveBuffer[1] ;
@@ -476,8 +485,30 @@ static void poll_mega64()
 				if ( RemCsum == RemData[12] )
 				{
 					// Accept data
+					M64BackupTimer = 150 ;
 					RemValid = 1 ;
-					RemOkCount += 1;
+					RemOkCount += 1 ;
+					if ( M64MainTimer == 0 )
+					{
+						// Nothing received over the main connection
+						int16_t byte ;
+						uint16_t switches ;
+						
+						byte = RemData[1] ;
+						M64Buttons = byte & 0x7E ;
+						M64Trims = RemData[2] ;
+						switches = RemData[0] | ( ( byte & 1 ) << 8 ) ;
+						if ( RemData[9] & 0x20 )
+						{
+							switches |= 0x0200 ;	// Encoder switch
+						}
+						M64Switches = switches ;
+						M64Analog[4] = RemData[3] | ( RemData[4] << 8 ) ;
+						M64Analog[5] = RemData[5] | ( RemData[6] << 8 ) ;
+						M64Analog[6] = RemData[7] | ( RemData[8] << 8 ) ;
+						M64EncoderPosition = RemData[10] ;
+						M64Revision = RemData[11] ;
+					}
 				}
 				else
 				{
@@ -657,6 +688,32 @@ void initM64()
 {
 	ispForceResetOff() ;
 	USART1_Configure( PORT9X_BAUDRATE ) ;
+}
+
+void m64_10mS()
+{
+	if ( M64MainTimer )
+	{
+		M64MainTimer -= 1 ;
+	}
+	if ( M64BackupTimer )
+	{
+		M64BackupTimer -= 1 ;
+	}
+}
+
+uint32_t m64ReceiveStatus()
+{
+	uint32_t result = 0 ;
+	if ( M64MainTimer )
+	{
+		result |= 1 ;
+	}
+	if ( M64BackupTimer )
+	{
+		result |= 2 ;
+	}
+	return result ;
 }
 
 

@@ -802,6 +802,10 @@ void RlcFile::writeRlc(uint8_t i_fileId, uint8_t typ, uint8_t *buf, uint16_t i_l
 
   do {
     nextRlcWriteStep();
+		if ( sync_write )
+		{
+			wdt_reset() ;
+		}
   } while (IS_SYNC_WRITE_ENABLE() && m_write_step && !s_write_err);
 }
 
@@ -918,10 +922,16 @@ void RlcFile::flush()
   ENABLE_SYNC_WRITE(true);
 
   while (m_write_len && !s_write_err)
+	{
     nextWriteStep();
+		wdt_reset() ;
+	}
 
   while (isWriting() && !s_write_err)
+	{
     nextRlcWriteStep();
+		wdt_reset() ;
+	}
 
   ENABLE_SYNC_WRITE(false);
 }

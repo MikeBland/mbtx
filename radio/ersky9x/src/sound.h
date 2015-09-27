@@ -50,6 +50,7 @@ extern void clearMFP( void ) ;
 extern void setRtcCAL( uint8_t value ) ;
 #endif
 
+extern void writeExtRtc( uint8_t *ptr ) ;
 
 /* make sure the defines below always go in numeric order */
 //#define AUDIO_TADA (0)

@@ -79,11 +79,11 @@ void ispSetSCKOption(uchar sckoption);
 /* wait time * 320 us */
 void clockWait(uint16_t time) ;
 
-void checkIspAccess( void ) ;
+// void checkIspAccess( void ) ;
 
 void ispForceResetOff( void ) ;
 
-void updateSlave( void ) ;
+uint32_t updateSlave( void ) ;
 int32_t newSlaveRevision( void ) ;
 
 #endif /* __isp_h_included__ */
