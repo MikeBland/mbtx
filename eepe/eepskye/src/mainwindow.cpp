@@ -122,7 +122,7 @@
 #define ERSKY9XR_URL "http://www.er9x.com/ersky9xr_rom.bin"
 #define ERSKYX9D_URL "http://www.er9x.com/x9d_rom.bin"
 #define ERSKYX9DP_URL "http://www.er9x.com/x9dp_rom.bin"
-#define ERSKYX9XT_URL "http://www.er9x.com/ersky9xSp_rom.bin"
+#define ERSKYX9XT_URL "http://www.er9x.com/ersky9x9XT_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -347,6 +347,9 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 					case 3 :
 						currentRev = currentERSKYX9DPrev ;
 					break ;
+          case 4 :
+						currentRev = currentERSKY9XTrev ;
+					break ;
 				}
 
         if(rev>currentRev)
@@ -368,6 +371,11 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
             case (DNLD_VER_ERSKYX9DP):
                 dnldURL = ERSKYX9DP_URL;
                 baseFileName = "x9dp_rom.bin";
+                break;
+
+            case (DNLD_VER_ERSKYX9XT):
+                dnldURL = ERSKYX9XT_URL;
+                baseFileName = "ersky9x9XT_rom.bin";
                 break;
 
             default:
@@ -417,6 +425,10 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 											case 3 :
                     		settings.setValue("currentERSKYX9DPrev", rev);
 											break ;
+											
+											case 4 :
+                    		settings.setValue("currentERSKY9XTrev", rev);
+											break ;
 										}
                 }
             }
@@ -451,49 +463,21 @@ void MainWindow::downloadLatester9x()
           dnldURL = ERSKY9XR_URL;
           baseFileName = "ersky9xr_rom.bin";
       break;
-//    case (DNLD_VER_ER9X_JETI):
-//        dnldURL = ER9X_JETI_URL;
-//        baseFileName = "er9x-jeti.hex";
-//        break;
-//    case (DNLD_VER_ER9X_FRSKY):
-//        dnldURL = ER9X_FRSKY_URL;
-//        baseFileName = "er9x-frsky.hex";
-//        break;
-//    case (DNLD_VER_ER9X_ARDUPILOT):
-//        dnldURL = ER9X_ARDUPILOT_URL;
-//        baseFileName = "er9x-ardupilot.hex";
-//        break;
-//    case (DNLD_VER_ER9X_NMEA):
-//        dnldURL = ER9X_NMEA_URL;
-//        baseFileName = "er9x-nmea.hex";
-//        break;
-//    case (DNLD_VER_ER9X_FRSKY_NOHT):
-//        dnldURL = ER9X_FRSKY_NOHT_URL;
-//        baseFileName = "er9x-frsky-noht.hex";
-//        break;
-//    case (DNLD_VER_ER9X_NOHT):
-//        dnldURL = ER9X_NOHT_URL;
-//        baseFileName = "er9x-noht.hex";
-//        break;
 
- /*
-    case (DNLD_VER_ER9X_SPKR):
-        dnldURL = ER9X_SPKR_URL;
-        baseFileName = "er9x-spkr.hex";
-        break;
-    case (DNLD_VER_ER9X_NOHT_SPKR):
-        dnldURL = ER9X_NOHT_SPKR_URL;
-        baseFileName = "er9x-noht-spkr.hex";
-        break;
-    case (DNLD_VER_ER9X_FRSKY_SPKR):
-        dnldURL = ER9X_FRSKY_SPKR_URL;
-        baseFileName = "er9x-frsky-spkr.hex";
-        break;
-    case (DNLD_VER_ER9X_FRSKY_NOHT_SPKR):
-        dnldURL = ER9X_FRSKY_NOHT_SPKR_URL;
-        baseFileName = "er9x-frsky-noht-spkr.hex";
-        break;
- */
+      case (DNLD_VER_ERSKYX9D):
+          dnldURL = ERSKYX9D_URL;
+          baseFileName = "x9d_rom.bin";
+      break;
+
+      case (DNLD_VER_ERSKYX9DP):
+          dnldURL = ERSKYX9DP_URL;
+          baseFileName = "x9dp_rom.bin";
+      break;
+
+      case (DNLD_VER_ERSKYX9XT):
+          dnldURL = ERSKYX9XT_URL;
+          baseFileName = "ersky9x9XT_rom.bin";
+      break;
     }
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),settings.value("lastDir").toString() + "/" + baseFileName,tr(HEX_FILES_FILTER));
@@ -514,6 +498,9 @@ void MainWindow::downloadLatester9x()
 			break ;
       case 3 :
     		currentERSKY9Xrev_temp = currentERSKYX9DPrev ;
+			break ;
+			case 4 :
+        currentERSKY9Xrev_temp = currentERSKY9XTrev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -602,6 +589,10 @@ void MainWindow::reply1Accepted()
 		
 			case 3 :
     		settings.setValue("currentERSKYX9DPrev", currentERSKY9Xrev);
+			break ;
+											
+			case 4 :
+        settings.setValue("currentERSKY9XTrev", currentERSKY9XTrev);
 			break ;
 		}	
 }
@@ -1658,6 +1649,7 @@ void MainWindow::readSettings()
     currentERSKY9XRrev = settings.value("currentERSKY9XRrev", 1).toInt();
     currentERSKYX9Drev = settings.value("currentERSKYX9Drev", 1).toInt();
     currentERSKYX9DPrev = settings.value("currentERSKYX9DPrev", 1).toInt();
+    currentERSKY9XTrev = settings.value("currentERSKY9XTrev", 1).toInt();
 		currentEEPSKYErelease = settings.value("currentEEPSKYErelease", 1).toInt();
     currentEEPSKYErev = SVN_VER_NUM;
 

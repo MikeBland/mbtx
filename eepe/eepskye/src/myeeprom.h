@@ -594,6 +594,14 @@ typedef struct t_gvarAdjust
 	int8_t switch_value ;
 } GvarAdjust ;
 
+PACK(typedef struct t_customCheck
+{
+  uint8_t source ;
+	int8_t  min ;
+	int8_t  max ;
+}) CustomCheckData ;
+
+
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
   uint8_t   modelVoice ;		// Index to model name voice (261+value)
@@ -608,7 +616,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t		modelVersion ;
   uint8_t   protocol:4 ;
   uint8_t   country:2 ;
-  uint8_t   sub_protocol:2 ;
+  uint8_t   not_sub_protocol:2 ;
   int8_t    ppmNCH;
   uint8_t   thrTrim:1;            // Enable Throttle Trim
 	uint8_t   xnumBlades:2;					// RPM scaling, now elsewhere as uint8_t
@@ -665,7 +673,7 @@ PACK(typedef struct te_ModelData {
   // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
-  uint8_t   xsub_protocol:2 ;
+  uint8_t   not_xsub_protocol:2 ;
   int8_t    xppmNCH ;
   int8_t    xppmDelay ;
   uint8_t   xpulsePol ;
@@ -716,6 +724,10 @@ PACK(typedef struct te_ModelData {
 	uint8_t ymodelswitchWarningDisables ;
 	char modelImageName[VOICE_NAME_SIZE+2] ;
 	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;
+	uint8_t option_protocol ;
+  uint8_t sub_protocol ;
+  uint8_t xsub_protocol ;
+	CustomCheckData customCheck ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

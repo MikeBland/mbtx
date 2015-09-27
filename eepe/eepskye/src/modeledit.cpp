@@ -242,6 +242,13 @@ void ModelEdit::tabModelEditSetup()
     ui->timer1MinuteBeepCB->setChecked(g_model.timer1Mbeep);
     ui->timer2MinuteBeepCB->setChecked(g_model.timer2Mbeep);
 
+		customAlarmLock = true ;
+		populateCustomAlarmCB( ui->CustomAlarmSourceCB, rData->type ) ;
+    ui->CustomAlarmSourceCB->setCurrentIndex(g_model.customCheck.source );
+		ui->CustomAlarmMinSB->setValue(g_model.customCheck.min ) ;
+    ui->CustomAlarmMaxSB->setValue(g_model.customCheck.max ) ;
+		customAlarmLock = false ;
+
     //trim inc, thro trim, thro expo, instatrim
     ui->trimIncCB->setCurrentIndex(g_model.trimInc);
     populateSwitchCB(ui->trimSWCB,g_model.trimSw, rData->type);
@@ -6456,6 +6463,35 @@ void ModelEdit::ControlCurveSignal(bool flag)
   ui->curvePt9_16->blockSignals(flag);
 }
 
+void ModelEdit::on_CustomAlarmSourceCB_currentIndexChanged(int index)
+{
+	if ( customAlarmLock )
+	{
+		return ;
+	}
+	g_model.customCheck.source = index ;
+  updateSettings();
+}
+
+void ModelEdit::on_CustomAlarmMinSB_editingFinished()
+{
+	if ( customAlarmLock )
+	{
+		return ;
+	}
+	g_model.customCheck.min	= ui->CustomAlarmMinSB->value() ;
+  updateSettings();
+}
+	
+void ModelEdit::on_CustomAlarmMaxSB_editingFinished()
+{
+	if ( customAlarmLock )
+	{
+		return ;
+	}
+	g_model.customCheck.max = ui->CustomAlarmMaxSB->value() ;
+  updateSettings();
+}
 
 
 

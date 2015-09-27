@@ -4386,7 +4386,7 @@ static void editTimer( uint8_t sub )
 {
 	uint8_t subN ;
 	uint8_t timer ;
-#ifndef GLOBAL_COUNTDOWN
+#ifdef GLOBAL_COUNTDOWN
 	if ( sub < 5 )
 #else
 	if ( sub < 7 )
@@ -4398,7 +4398,7 @@ static void editTimer( uint8_t sub )
 	}
 	else
 	{
-#ifndef GLOBAL_COUNTDOWN
+#ifdef GLOBAL_COUNTDOWN
 		subN = 5 ;
 #else
 		subN = 7 ;
@@ -8285,7 +8285,7 @@ void menuProcIndex(uint8_t event)
 
 //	uint8_t saveEvent = event ;
 
-	event = indexProcess( event, &mstate, 4 ) ;
+	event = indexProcess( event, &mstate, ( SystemOptions & SYS_OPT_HARDWARE_EDIT ) ? 4 : 3 ) ;
 	mstate.check_columns(event, IlinesCount-1 ) ;
 //	Tevent = event = saveEvent ;
 	
@@ -9968,8 +9968,12 @@ Str_Protocol
 		case M_TIMERS :
 		{
 			TITLEP(Str_Timer) ;
+#ifdef GLOBAL_COUNTDOWN
 			IlinesCount = 10 ;
-			
+#else
+			IlinesCount = 14 ;
+#endif
+			 
 			editTimer( sub ) ;
 #ifndef V2
 			TimerMode *ptConfig = &TimerConfig[0] ;

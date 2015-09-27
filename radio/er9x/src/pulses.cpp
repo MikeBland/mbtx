@@ -835,7 +835,8 @@ normal:
 	928		+100%
 	1023	+125%
   Stream[0]   = sub_protocol|BindBit|RangeCheckBit|AutoBindBit;
-   sub_protocol=>	Reserved	0
+   sub_protocol is 0..31 (bits 0..4)
+				=>	Reserved	0
 					Flysky		1
 					Hubsan		2
 					Frsky		3
@@ -847,6 +848,8 @@ normal:
 					KN			9
 					SymaX		10
 					SLT			11
+					CX10		12
+					CG023		13
    BindBit=>		0x80	1=Bind/0=No
    AutoBindBit=>	0x40	1=Yes /0=No
    RangeCheck=>		0x20	1=Yes /0=No
@@ -871,6 +874,10 @@ normal:
 			SYMAX	0
 			SYMAX5C	1
 			SYMAX4	2
+		sub_protocol==CX10
+			CX10_GREEN	0
+			CX10_BLUE	1	// also compatible with CX10-A, CX12
+			DM007		2
    Power value => 0x80	0=High/1=Low
   Stream[2]   = option_protocol;
    option_protocol value is -127..127

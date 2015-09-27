@@ -59,6 +59,7 @@ private:
     bool protocolEditLock;
     bool plot_curve[16];
     bool switchesTabDone ;
+    bool customAlarmLock ;
     
 		int oldAdjFunction[NUM_GVAR_ADJUST] ;
     QSpinBox  * cswitchOffset[NUM_SKYCSW];
@@ -343,6 +344,10 @@ private slots:
 		void on_EnIdx_stateChanged(int ) ;
 		void on_EnAil_stateChanged(int ) ;
 		void on_EnGea_stateChanged(int ) ;
+
+    void on_CustomAlarmSourceCB_currentIndexChanged(int index) ;
+		void on_CustomAlarmMinSB_editingFinished() ;
+		void on_CustomAlarmMaxSB_editingFinished() ;
 
 };
 

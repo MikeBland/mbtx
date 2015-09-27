@@ -1230,8 +1230,9 @@ uint16_t stickMoveValue()
 #define INAC_DEVISOR 256   // Issue 206 - bypass splash screen with stick movement
     uint16_t sum = 0;
     for(uint8_t i=0; i<4; i++)
-        sum += anaIn(i)/INAC_DEVISOR;
-    return sum ;
+        sum += anaIn(i) ;
+	sum += 128 ;
+	return sum / INAC_DEVISOR ;
 }
 
 

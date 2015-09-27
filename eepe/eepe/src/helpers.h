@@ -22,6 +22,7 @@
 
 #ifdef SKY
 void populateAnaVolumeCB( QComboBox *b, int value, int type ) ;
+void populateCustomAlarmCB( QComboBox *b, int type ) ;
 #else
 void populateAnaVolumeCB( QComboBox *b, int value ) ;
 #endif

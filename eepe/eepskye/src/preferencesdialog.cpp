@@ -93,6 +93,11 @@ void preferencesDialog::initSettings()
     	currentER9Xrev = settings.value("currentERSKYX9DPrev", 1).toInt();
 			ui->label_CurrentVersion->setText( "Current Version - erskyX9DP" ) ;
 		}
+		else if ( dnloadVersion == 4 )
+		{
+    	currentER9Xrev = settings.value("currentERSKY9XTrev", 1).toInt();
+			ui->label_CurrentVersion->setText( "Current Version - ersky9XT" ) ;
+		}
 		else
 		{
     	currentER9Xrev = settings.value("currentERSKY9XTrev", 1).toInt();

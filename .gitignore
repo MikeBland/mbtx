@@ -142,3 +142,6 @@ sky9XTobj
 9XtremeTest1.dfu
 /radio/ersky9x/src/*.BIN
 *.BIN
+9XtremeTest2.dfu
+obj
+*.dfu
