@@ -18,17 +18,25 @@
 
 static void HAPTIC_ON()
 {
+#ifdef XSW_MOD
+	if ( g_eeGeneral.hapticStrength > 0)
+#else
 	if ( g_eeGeneral.pg2Input == 0)
+#endif
 	{
-		PORTG |= (1<<2) ;
+		PORTG |= (1<<2) ;   // PG2->HI
 	}
 }
 
 static void HAPTIC_OFF()
 {
+#ifdef XSW_MOD
+	if ( g_eeGeneral.hapticStrength > 0)
+#else
 	if ( g_eeGeneral.pg2Input == 0)
+#endif
 	{
-		PORTG &= ~(1<<2) ;
+		PORTG &= ~(1<<2) ;  // PG2->LO
 	}
 }
 

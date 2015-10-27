@@ -315,13 +315,21 @@ uint8_t lcd_putsAtt(uint8_t x,uint8_t y,const prog_char * s,uint8_t mode)
 	{
     char c = (source) ? *s++ : pgm_read_byte(s++);
     if(!c) break;
+#ifdef XSW_MOD
+    if ( c == '\037' || c == '\035' )   // '\037' for (CR+LF), '\035' for CR+LF+indentation
+#else
 		if ( c == 31 )
+#endif
 		{
 			if ( (y += FH) >= DISPLAY_H )	// Screen height
 			{
 				break ;
 			}	
 			x = 0 ;
+#ifdef XSW_MOD
+      if (c == '\035')
+        x = FW ;
+#endif
 		}
 		else
 		{
@@ -820,7 +828,7 @@ static void lcdSendByte(uint8_t val)
 static void lcdSendCtlByte(uint8_t val)
 {
   PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_CS1);  // enable chip select
-  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // enable write 
+  //PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // enable write 
   PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_A0);   // set to control mode
   lcdSendByte(val);
   PORTC_LCD_CTRL |= (1<<OUT_C_LCD_CS1);   // disable chip select
@@ -829,7 +837,7 @@ static void lcdSendCtlByte(uint8_t val)
 static void lcdSendDataBytes(uint8_t *p, uint8_t COLUMN_START_LO)
 {
   PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_CS1);  // enable chip select
-  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // enable write 
+  //PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // enable write 
   for(uint8_t y=0xB0; y < 0xB8; y++) {
     PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_A0); // switch to ctl send mode
 
@@ -912,6 +920,7 @@ void lcd_init()
   delay_2us();
   PORTC_LCD_CTRL |= (1<<OUT_C_LCD_RES);
   delay_1_5us(1500);
+  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // permanently enable LCD_WR 
   for (uint8_t i = 0; i < sizeof(Lcdinit); i++) {
     lcdSendCtl(pgm_read_byte(&Lcdinit[i]));
   }
@@ -996,6 +1005,7 @@ void lcd_init()
   delay_2us();
   PORTC_LCD_CTRL |= (1<<OUT_C_LCD_RES);
   delay_1_5us(1500);
+  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // permanently enable LCD_WR 
   if (g_eeGeneral.SSD1306) {
     for (uint8_t i = 0; i < sizeof(SSD1306init); i++) {
       lcdSendCtl(SSD1306init[i]);
@@ -1110,7 +1120,7 @@ void lcd_init()
   delay_2us();
   PORTC_LCD_CTRL |= (1<<OUT_C_LCD_RES); //  f524  sbi 0x15, 2 IOADR-PORTC_LCD_CTRL; 21           1
   delay_1_5us(1500);
-  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);
+  PORTC_LCD_CTRL &= ~(1<<OUT_C_LCD_RnW);  // permanently enable LCD_WR 
 
 	for ( i = 0 ; i < sizeof(Lcdinit) ; i += 1 )
 	{
@@ -1157,11 +1167,15 @@ void refreshDiplay()
 	}
 
 //extern uint8_t SaveBusy ;
+//lcd_outhex4( 0, 0, DDRD ) ;
 //lcd_outhex4( 0, 0, Voice.VoiceSerialRxState ) ;
 //lcd_outhex4( 25, 0, Voice.VoiceSerialValue ) ;
+//lcd_outhex4( 25, 0, PIND ) ;
+//lcd_outhex4( 50, 0, PORTD ) ;
 //lcd_outhex4( 50, 0, SaveBusy ) ;
 //lcd_outhex4( 75, 0, Voice.VoiceState ) ;
 //lcd_outhex4( 100, 0, Voice.VoiceDebug ) ;
+//lcd_outhex4( 75, 0, (UCSR1B<<8) ) ;
 //lcd_outhex4( 50, 0, (UCSR1B<<8) | ( SerialVoiceDebug & 0x00FF ) ) ;
 
 #ifdef SIMU

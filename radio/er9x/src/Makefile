@@ -103,11 +103,11 @@ ifeq ($(EXT), NMEA)
  CPPSRC += nmea.cpp
 endif
 
-ifeq ($(CPU), 2561)
-ifneq ($(SLAVE), YES)
- CPPSRC += arduinoDue.cpp
-endif
-endif
+#ifeq ($(CPU), 2561)
+#ifneq ($(SLAVE), YES)
+# CPPSRC += arduinoDue.cpp
+#endif
+#endif
 
 
 HELI = YES

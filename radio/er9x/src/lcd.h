@@ -99,6 +99,7 @@ extern void lcd_img(uint8_t i_x,uint8_t i_y,const prog_uchar * imgdat,uint8_t id
 extern void lcd_init();
 extern void lcd_clear();
 extern void refreshDiplay();
+extern void lcdSetOrientation( void ) ;   // XSW_MOD
 extern void lcdSetContrast( void ) ;
 extern void lcdSetRefVolt(unsigned char val);
 #define BLINK_ON_PHASE (g_blinkTmr10ms & (1<<6))
