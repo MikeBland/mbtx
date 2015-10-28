@@ -1800,7 +1800,7 @@ void simulatorDialog::timerTick()
 
     	s_timerVal[0] = g_model.tmrVal;
     	uint8_t tmrM = abs(g_model.tmrMode);
-      uint16_t subtrahend ;
+      uint16_t subtrahend = 0 ;
       if(tma==TMRMODE_NONE)// s_timerState[0] = TMR_OFF;
 			{
 			}	

@@ -102,6 +102,8 @@ struct t_radioData
 		uint32_t valid ;
 		uint32_t type ;
 		uint32_t options ;
+		uint32_t T9xr_pro ;
+
 } ;
 
 uint32_t rawloadFile( t_radioData *radioData, uint8_t *eeprom ) ;

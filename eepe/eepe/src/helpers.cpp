@@ -1697,8 +1697,8 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 	}
 #endif
 #ifdef SKY
-  b->addItem("!TRN");
-  for(int i=-(MaxSwitchIndex[0]-2-NUM_SKYCSW) ; i<=(MaxSwitchIndex[0]-2-NUM_SKYCSW); i += 1)
+//  b->addItem("!TRN");
+  for(int i=-(MaxSwitchIndex[0]-2-NUM_SKYCSW+1) ; i<=(MaxSwitchIndex[0]-2-NUM_SKYCSW+1); i += 1)
 #else 	
 	for(int i=0 ; i<=8; i += 1)
 #endif
@@ -1711,6 +1711,10 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 #else
     b->addItem(getSWName(i,0));
 #endif
+  
+//#ifdef SKY
+//	b->addItem("TRN");
+//#endif
 
 	name[0] = 'L' ;
 //	name[1] = 'W' ;
@@ -1726,7 +1730,6 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 		name[1] = i ;
     b->addItem(name);
 	}
-  b->addItem("TRN");
 #endif
 #ifdef SKY
 	int x = value ;
@@ -2780,6 +2783,8 @@ uint8_t throttleReversed( EEGeneral *g_eeGeneral, ModelData *g_model )
 #include "mountlist.h"
 #endif
 
+int Found9Xtreme ;
+
 QString FindErskyPath( int type )
 {
     int pathcount=0;
@@ -2795,12 +2800,19 @@ QString FindErskyPath( int type )
       DWORD dwSerialNumber = 0;
       DWORD dwMaxFileNameLength=256;
       DWORD dwFileSystemFlags=0;
+
+
       bool ret = GetVolumeInformationW( (WCHAR *) drive.absolutePath().utf16(),szVolumeName,256,&dwSerialNumber,&dwMaxFileNameLength,&dwFileSystemFlags,szFileSystemName,256);
       if(ret)
 			{
+				Found9Xtreme = 0 ;
         QString vName=QString::fromUtf16 ( (const ushort *) szVolumeName) ;
 				if ( (vName.contains("ERSKY_9X")) || (vName.contains("9XTREME")) )
 				{
+					if ( vName.contains("9XTREME") )
+					{
+						Found9Xtreme = 1 ;
+					}
           eepromfile=drive.absolutePath();
 					if ( eepromfile.right(1) == "/" )
 					{

@@ -172,6 +172,28 @@ PACK(typedef struct t_OldEEGeneral {
 
 
 #ifdef SKY
+
+PACK(typedef struct t_TrainerChannel
+{
+  int16_t calib ;
+  uint8_t srcChn:3 ; //0-7 = ch1-8
+	uint8_t spare:3 ;
+  uint8_t mode:2;   //off,add-mode,subst-mode
+  int8_t  swtch ;
+  int8_t  studWeight ;
+}) TrainerChannel ; //
+
+PACK(typedef struct t_TrainerProfile
+{
+	TrainerChannel channel[4] ;
+}) TrainerProfile ; //
+
+
+PACK(typedef struct t_btDevice {
+  uint8_t  address[6] ;
+  uint8_t  name[8] ;
+}) btDeviceData ;
+
 PACK(typedef struct t_EEGeneral {
     uint8_t   myVers;
     int16_t   calibMid[7];
@@ -211,7 +233,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   hideNameOnSplash:1;
   	uint8_t   optrexDisplay:1;
 	  uint8_t   unexpectedShutdown:1;
-    uint8_t   spare:1;
+  uint8_t   softwareVolume:1;
     uint8_t   speakerPitch;
     uint8_t   hapticStrength;
     uint8_t   speakerMode;
@@ -219,7 +241,7 @@ PACK(typedef struct t_EEGeneral {
     char      ownerName[GENERAL_OWNER_NAME_LEN];
     uint8_t   switchWarningStates;
 		int8_t		volume ;
-	uint8_t 	bright ;			// backlight
+	uint8_t 	bright ;			// backlight (red for 9Xt)
   uint8_t   stickGain;
 	uint8_t		mAh_alarm ;
 	uint16_t	mAh_used ;
@@ -228,14 +250,14 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		bt_baudrate ;
 	uint8_t		rotaryDivisor ;
 	uint8_t   crosstrim:1;
-	uint8_t   spare9:7;
+	uint8_t   hapticMinRun:7;
 	int8_t   rtcCal ;
   int16_t   x9dcalibMid ;			// X9D
   int16_t   x9dcalibSpanNeg ;	// X9D
   int16_t   x9dcalibSpanPos ;	// X9D
 	uint8_t		stickReverse ;
 	uint8_t		language ;
-	uint8_t 	bright_white ;			// backlight(white) for PLUS
+	uint8_t 	bright_white ;			// backlight(white) for PLUS (green for 9Xt)
   int16_t   x9dPcalibMid ;			// X9D for PLUS
   int16_t   x9dPcalibSpanNeg ;	// X9D for PLUS
   int16_t   x9dPcalibSpanPos ;	// X9D for PLUS
@@ -261,6 +283,18 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		elesource ;
 	uint8_t 	stickDeadband[4] ;
 	uint8_t 	bright_blue ;			// backlight(blue) for 9Xtreme
+	uint8_t		btName[15] ;				// For the HC06 module
+	uint8_t		ar9xBoard:1 ;
+	uint8_t		externalRtcType:2 ;
+	uint8_t		spare:3 ;
+	uint8_t		is9Xtreme:1 ;
+	uint8_t		forceMenuEdit:1 ;
+	uint8_t fixedDateTime[6] ;
+	btDeviceData btDevice[4] ;
+	TrainerProfile trainerProfile[3] ;
+	uint8_t CurrentTrainerProfile ;
+	uint16_t SixPositionCalibration[6] ;
+
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -301,14 +335,18 @@ PACK(typedef struct t_MixData {
   uint8_t speedDown:4;       // 0 nichts
   uint8_t carryTrim:1;
   uint8_t mltpx:2;           // multiplex method 0=+ 1=* 2=replace
-  uint8_t lateOffset:1;      // 
+//#ifdef V2
+//    uint8_t hiResSlow:1 ;
+//#else
+    uint8_t lateOffset:1 ;
+//#endif
   uint8_t mixWarn:2;         // mixer warning
   uint8_t disableExpoDr:1;
-  uint8_t mixres:1;
+  uint8_t differential:1;
   int8_t  sOffset;
-  int8_t  res;
+	uint8_t modeControl:5 ;
+  uint8_t sw23pos:3 ;
 }) MixData;
-
 
 PACK(typedef struct t_CSwData { // Custom Switches data
   int8_t  v1; //input
@@ -604,11 +642,11 @@ PACK(typedef struct t_customCheck
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
-  uint8_t   modelVoice ;		// Index to model name voice (261+value)
+  uint8_t   modelVoice ;		// Index to model name voice (260+value)
   uint8_t   RxNum ;						// was timer trigger source, now RxNum for model match
   uint8_t   telemetryRxInvert:1 ;	// was tmrDir, now use tmrVal>0 => count down
   uint8_t   traineron:1;  		// 0 disable trainer, 1 allow trainer
-  uint8_t   spare22:1 ;  			// Start timer2 using throttle
+  uint8_t   autoBtConnect:1 ;
   uint8_t   FrSkyUsrProto:1 ; // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
   uint8_t   FrSkyGpsAlt:1 ;		// Use Gps Altitude as main altitude reading
   uint8_t   FrSkyImperial:1 ; // Convert FrSky values to imperial units
@@ -623,7 +661,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t   extendedTrims:1;			// Only applies to phases
   uint8_t   thrExpo:1;            // Enable Throttle Expo
 	uint8_t   frskyComPort:1;
-	uint8_t   spare11:2;
+	uint8_t		DsmTelemetry:1 ;
+	uint8_t   useCustomStickNames:1 ;
   int8_t    trimInc;          // Trim Increments
   int8_t    ppmDelay;
   int8_t    trimSw;
@@ -708,7 +747,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t telemetryProtocol ;
 	uint8_t com2Function:4 ;
 	uint8_t com3Function:4 ;	// Bluetooth or telemetry
-	uint8_t telemetryBaudrate ;	// May be useful
+	uint8_t telemetryBaudrate:4 ;	// May be useful
+	uint8_t com2Baudrate:4 ;
 	uint8_t throttleSource:3 ;
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
@@ -728,6 +768,7 @@ PACK(typedef struct te_ModelData {
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
+	uint8_t btDefaultAddress ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

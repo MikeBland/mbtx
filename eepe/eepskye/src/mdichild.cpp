@@ -822,6 +822,11 @@ void MdiChild::newFile()
 		{
 			radioData.type = x-1 ;
 		}
+		radioData.T9xr_pro = 0 ;
+		if ( x == 1 )
+		{
+			radioData.T9xr_pro = 1 ;
+		}
     QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
 		if ( x == 3 )
 		{
@@ -1013,7 +1018,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
         if( (file.size()!=EESIZE) && (file.size()!=EE20MSIZE) && (file.size()!=EEFULLSIZE) )
         {
             QMessageBox::critical(this, tr("Error"),tr("Error reading file:\n"
-                                                       "File wrong size - %1").arg(fileName));
+                                                       "File wrong size - %1 %2").arg(fileName).arg(file.size()));
             return false;
         }
 
@@ -1061,6 +1066,14 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
         }
 				defaultModelType = DefaultModelType ;
 				radioData.type = 0 ;
+				int x ;
+		    QSettings settings("er9x-eePskye", "eePskye");
+				x = settings.value("download-version", 0).toInt() ;
+				if ( ( x == 4 ) || ( radioData.generalSettings.is9Xtreme ) )
+				{
+					radioData.type = 3 ;	// 9Xtreme
+					radioData.T9xr_pro = 1 ;
+				}
         refreshList();
         if(resetCurrentFile) setCurrentFile(fileName);
 
@@ -1445,7 +1458,8 @@ void MdiChild::burnTo()  // write to Tx
 					else
 					{
       			qint32 fsize ;
-						fsize = (MAX_IMODELS+1)*8192 ;
+//						fsize = (MAX_IMODELS+1)*8192 ;
+						fsize = 64*8192 ;
 		        if ( ( radioData.type ) && ( radioData.type < 3) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
@@ -1596,6 +1610,18 @@ void MdiChild::generalDefault()
   int16_t sum=0;
   for(int i=0; i<12;i++) sum+=radioData.generalSettings.calibMid[i];
   radioData.generalSettings.chkSum = sum;
+	
+	// Now update the trainer values if necessary.
+  uint32_t i ;
+	for ( i = 0 ; i < 4 ; i += 1 )
+	{
+		if ( radioData.generalSettings.trainer.mix[i].swtch != -16 )
+		{
+			radioData.generalSettings.exTrainer[i].swtch = radioData.generalSettings.trainer.mix[i].swtch ;
+			radioData.generalSettings.exTrainer[i].studWeight = radioData.generalSettings.trainer.mix[i].studWeight * 13 / 4 ;
+			radioData.generalSettings.trainer.mix[i].swtch = -16 ;
+		}
+	}
 
   QSettings settings("er9x-eePskye", "eePskye");
   radioData.generalSettings.templateSetup = settings.value("default_channel_order", 0).toInt();
@@ -1648,7 +1674,7 @@ void MdiChild::modelDefault(uint8_t id)
 		}
 		radioData.models[id].modelVersion = 3 ;
 	}
-  if ( ( radioData.type ) && ( radioData.type < 3) ) // Taranis
+  if ( ( radioData.type ) && ( radioData.type < 4) ) // Taranis/9Xtreme
 	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;
@@ -1740,6 +1766,9 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 		dst->mixWarn = er9x::srcMix->mixWarn ;
     dst->disableExpoDr = er9x::srcMix->disableExpoDr ;
 		dst->sOffset = er9x::srcMix->sOffset ;
+  	dst->lateOffset = er9x::srcMix->lateOffset ;
+  	dst->modeControl = er9x::srcMix->modeControl ;
+		dst->switchSource = er9x::srcMix->sw23pos ;
 	}
 	for ( i = 0 ; i < NUM_CHNOUT ; i += 1 )
 	{

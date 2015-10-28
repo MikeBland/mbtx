@@ -39,6 +39,7 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
     offset = arg.at(3).toInt() ;
 		numBlocks = size / 4096 ;
 
+		ui->progressBar->show() ;
     ui->progressBar->setMaximum(numBlocks) ;
     ui->progressBar->setValue(0) ;
 //		thread()->wait( 400 ) ;
@@ -59,6 +60,8 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 	}
 	else
 	{
+		ui->progressBar->hide() ;
+		
 		if(wTitle.isEmpty())
         setWindowTitle(tr("SAM-BA result"));
     else

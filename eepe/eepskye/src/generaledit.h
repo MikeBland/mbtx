@@ -1,6 +1,7 @@
 #ifndef GENERALEDIT_H
 #define GENERALEDIT_H
 
+#include <QtGui>
 #include <QDialog>
 #include "pers.h"
 
@@ -24,11 +25,14 @@ private:
 
     EEGeneral g_eeGeneral;
     int StudWeight1,StudWeight2, StudWeight3, StudWeight4;
+		int CurrentTrainerProfile ;
+		int trainerTabLock ;
 
 //    bool switchDefPosEditLock;
 //    void getGeneralSwitchDefPos(int i, bool val);
 //    void setSwitchDefPos();
 		void setHwSwitchActive( void ) ;
+		void setHardwareSwitchCB( QComboBox *b, int switchlist, int type ) ;
 
 signals:
     void modelValuesChanged();
@@ -36,9 +40,23 @@ signals:
 private slots:
     void updateTrainerTab();
     void trainerTabValueChanged();
+		void saveTrainerToProfile() ;
+		void loadTrainerFromProfile() ;
     void validateWeightSB();
+    void on_TrainerProfileSB_valueChanged( int ) ;
 
     void on_ownerNameLE_editingFinished();
+		void on_BtNameText_editingFinished() ;
+		void on_BtDev1Name_editingFinished() ;
+		void on_BtDev2Name_editingFinished() ;
+		void on_BtDev3Name_editingFinished() ;
+		void on_BtDev4Name_editingFinished() ;
+		void btDevEdited( int dev, QLineEdit *uiDev ) ;
+
+		uint8_t b2hex( uint8_t c ) ;
+		uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source ) ;
+		uint32_t btAddressValid( uint8_t *address ) ;
+
     void on_splashScreenChkB_stateChanged(int );
     void on_beepCountDownChkB_stateChanged(int );
     void on_beepMinuteChkB_stateChanged(int );
@@ -73,6 +91,7 @@ private slots:
     void on_ana7Pos_editingFinished();
     void on_ana8Pos_editingFinished();
 
+    void on_ExtRtcCB_currentIndexChanged(int index);
 
     void on_stickmodeCB_currentIndexChanged(int index);
     void on_channelorderCB_currentIndexChanged(int index);
@@ -98,7 +117,11 @@ private slots:
     void on_tabWidget_selected(QString );
     void on_PotScrollEnableChkB_stateChanged(int );
 		void on_StickScrollEnableChkB_stateChanged(int ) ;
+		void on_SoftwareVolumeChkB_stateChanged(int ) ;
+		void on_Ar9xChkB_stateChanged(int ) ;
+		void on_MenuEditChkB_stateChanged(int ) ;
 		void on_CrossTrimChkB_stateChanged(int ) ;
+		void on_hapticMinRunSB_editingFinished() ;
 //    void on_BandGapEnableChkB_stateChanged(int );
     void on_splashScreenNameChkB_stateChanged(int );
     void on_backlightStickMove_editingFinished();
@@ -111,6 +134,8 @@ private slots:
 		void on_CurrentCalibSB_editingFinished() ;
 		void on_MaHalarmSB_editingFinished() ;
 		void on_brightSB_editingFinished() ;
+		void on_brightGreenSB_editingFinished() ;
+		void on_brightBlueSB_editingFinished() ;
 		void do_stick_gain() ;
 		void on_stickgainLVCB_currentIndexChanged(int ) ;
 		void on_stickgainLHCB_currentIndexChanged(int ) ;

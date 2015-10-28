@@ -313,6 +313,7 @@ private slots:
 		void on_xtypeCB_currentIndexChanged(int index) ;
 		void updateToMV2( void ) ;
 		void updateToMV3( void ) ;
+		void on_Com2BaudrateCB_currentIndexChanged(int index) ;
 
 		void on_switchwarnChkB_stateChanged(int ) ;
 		void getModelSwitchDefPos(int i, bool val) ;
@@ -345,9 +346,14 @@ private slots:
 		void on_EnAil_stateChanged(int ) ;
 		void on_EnGea_stateChanged(int ) ;
 
+		void on_AutoBtConnectChkB_stateChanged(int ) ;
+		void on_UseStickNamesChkB_stateChanged(int ) ;
+
     void on_CustomAlarmSourceCB_currentIndexChanged(int index) ;
 		void on_CustomAlarmMinSB_editingFinished() ;
 		void on_CustomAlarmMaxSB_editingFinished() ;
+
+		void on_BtDefaultAddrSB_editingFinished() ;
 
 };
 

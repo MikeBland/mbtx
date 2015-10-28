@@ -830,10 +830,10 @@ void ee32LoadModel(struct t_radioData *radioData, uint8_t id)
 			{
 				radioData->models[id].numBlades = radioData->models[id].xnumBlades + 2 ;				
 			}
-			if ( radioData->models[id].protocol == PROTO_PPM16 )			// PPM16 ?
-			{
-				radioData->models[id].protocol = PROTO_PPM ;
-			}
+//			if ( radioData->models[id].protocol == PROTO_PPM16 )			// PPM16 ?
+//			{
+//				radioData->models[id].protocol = PROTO_PPM ;
+//			}
     }
 }
 
@@ -863,7 +863,7 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 	uint32_t i ;
 
 	memset( eeprom, 0xFF, EEFULLSIZE ) ;
-	if ( radioData->type )
+	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) )
 	{
 		// Taranis type
 		EeFsFormat( eeprom ) ;

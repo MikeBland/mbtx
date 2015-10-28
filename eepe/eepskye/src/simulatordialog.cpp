@@ -324,7 +324,7 @@ void simulatorDialog::timerEvent()
 						y -= 1 ;
 					}
 					int8_t x ;
-					if ( txType == 0 )
+					if ( ( txType == 0 ) || ( txType == 3 ) )
 					{
 						x = getAndSwitch( cs ) ;
 					}
@@ -406,7 +406,7 @@ void simulatorDialog::timerEvent()
 						int8_t andSwOn = 1 ;
 						if ( ( cs.func == CS_RMONO ) )
 						{
-							andSwOn = txType ? cs.andsw : getAndSwitch( cs ) ;
+							andSwOn = ((txType==1) || (txType == 2)) ? cs.andsw : getAndSwitch( cs ) ;
 							if ( andSwOn )
 							{
 								andSwOn = getSwitch( andSwOn, 0, 0) ;
@@ -568,7 +568,7 @@ void simulatorDialog::centerSticks()
 
 void simulatorDialog::configSwitches()
 {
-		if ( txType )
+		if ((txType==1) || (txType == 2))
 		{
 			ui->SAslider->setMaximum( 2 ) ;
 			ui->SAwidget->show() ;
@@ -1057,7 +1057,7 @@ int8_t simulatorDialog::getGvarSourceValue( uint8_t src )
 	{
     value = calibratedStick[CONVERT_MODE(src-5,g_model.modelVersion,g_eeGeneral.stickMode)-1] / 8 ;
 	}
-	else if ( src <= ( txType ? 13 : 12 ) )	// Pot
+	else if ( src <= ( ((txType==1) || (txType == 2)) ? 13 : 12 ) )	// Pot
 	{
 		uint32_t y ;
     y = src - 6 ;
@@ -1066,18 +1066,18 @@ int8_t simulatorDialog::getGvarSourceValue( uint8_t src )
 				
 		value = calibratedStick[ y ] / 8 ;
 	}
-	else if ( src <= ( txType ? 37 : 36 ) )	// Chans
+	else if ( src <= ( ((txType==1) || (txType == 2)) ? 37 : 36 ) )	// Chans
 	{
-    value = ex_chans[src-( txType ? 14 : 13)] / 10 ;
+    value = ex_chans[src-( ((txType==1) || (txType == 2)) ? 14 : 13)] / 10 ;
 	}
-  else if ( src <= ( txType ? 45 : 44 ) )	// Scalers
+  else if ( src <= ( ((txType==1) || (txType == 2)) ? 45 : 44 ) )	// Scalers
 	{
-    value = calc_scaler( src - ( txType ? 38 : 37 ) ) ;
+    value = calc_scaler( src - ( ((txType==1) || (txType == 2)) ? 38 : 37 ) ) ;
 	}
-  else// if ( src <= ( txType ? 45+24 : 44+24 ) )	// Scalers
+  else// if ( src <= ( ((txType==1) || (txType == 2)) ? 45+24 : 44+24 ) )	// Scalers
 	{ // Outputs
 		int32_t x ;
-    x = chanOut[src-( txType ? 46 : 45 )] ;
+    x = chanOut[src-( ((txType==1) || (txType == 2)) ? 46 : 45 )] ;
 		x *= 100 ;
 		value = x / 1024 ;
 	}
@@ -1147,7 +1147,7 @@ void simulatorDialog::getValues()
     
     calibratedStick[4] = ui->dialP_1->value();
     calibratedStick[5] = ui->dialP_2->value();
-		if ( txType )
+		if ( ((txType==1) || (txType == 2)) )
 		{
 	    calibratedStick[6] = ui->SliderL->value();
     	calibratedStick[7] = ui->SliderR->value(); // For X9D
@@ -1313,7 +1313,7 @@ void simulatorDialog::setValues()
 #define CSWITCH_OFF "QLabel { }"
 
 		int i = 0 ;
-		if ( txType )
+		if ( ((txType==1) || (txType == 2)) )
 		{
 			i = MAX_XDRSWITCH - MAX_DRSWITCH ;
 		}
@@ -1500,7 +1500,7 @@ inline qint16 calc1000toRESX(qint16 x)
 
 bool simulatorDialog::hwKeyState(int key)
 {
-  if ( txType == 0 )
+  if ( ( txType == 0 ) || ( txType == 3 ) )
 	{
     switch (key)
     {
@@ -1578,7 +1578,7 @@ bool simulatorDialog::hwKeyState(int key)
 
 bool simulatorDialog::keyState(EnumKeys key)
 {
-  if ( txType == 0 )
+  if ( ( txType == 0 ) || ( txType == 3 ) )
 	{
     switch (key)
     {
@@ -1631,7 +1631,7 @@ bool simulatorDialog::keyState(EnumKeys key)
 
 qint16 simulatorDialog::getValue(qint8 i)
 {
-	uint8_t offset = txType ? 1 : 0 ;
+	uint8_t offset = ((txType==1) || (txType == 2)) ? 1 : 0 ;
 
     if(i<(PPM_BASE)) return calibratedStick[i];//-512..512
 		else if(i >= EXTRA_POTS_START-1) return calibratedStick[i-EXTRA_POTS_START+8] ;
@@ -1665,7 +1665,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 	aswitch = abs(swtch) ;
  	SwitchStack[level] = aswitch ;
 
-	int limit = txType ? MAX_XDRSWITCH : MAX_DRSWITCH ;
+	int limit = ((txType==1) || (txType == 2)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
    cs_index = abs(swtch)-(limit-NUM_SKYCSW);
 
 	{
@@ -1700,7 +1700,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 		}
 
 
-	  if ( txType == 0 )
+		if ( ( txType == 0 ) || ( txType == 3 ) )
 		{
 			if ( abs(swtch) > MAX_DRSWITCH )
 			{
@@ -1838,7 +1838,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 		{	
   	  ret_value = CsTimer[cs_index] >= 0 ;
 			int8_t x ;
-			if ( txType == 0 )
+			if ( ( txType == 0 ) || ( txType == 3 ) )
 			{
 				x = getAndSwitch( cs ) ;
 			}
@@ -1872,21 +1872,21 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 			{
 				int8_t x ;
 				x = cs.andsw ;
-				if ( txType == 0 )
+				if ( ( txType == 0 ) || ( txType == 3 ) )
 				{
-					if ( x > 8 )
+					if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
 					{
 						x += 1 ;
 					}
-					if ( x < -8 )
+					if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
 					{
 						x -= 1 ;
 					}
-					if ( x > 9+NUM_SKYCSW )
+					if ( x == 9+NUM_SKYCSW+1 )
 					{
 						x = 9 ;			// Tag TRN on the end, keep EEPROM values
 					}
-					if ( x < -(9+NUM_SKYCSW) )
+					if ( x == -(9+NUM_SKYCSW+1) )
 					{
 						x = -9 ;			// Tag TRN on the end, keep EEPROM values
 					}
@@ -2023,7 +2023,7 @@ void simulatorDialog::timerTick()
 
   s_cnt++;			// Number of times val added in
 
-	int hsw_max = txType ? HSW_MAX_X9D : HSW_MAX ;
+	int hsw_max = ((txType==1) || (txType == 2)) ? HSW_MAX_X9D : HSW_MAX ;
 	for( timer = 0 ; timer < 2 ; timer += 1 )
 	{
 		struct t_timer *ptimer = &s_timer[timer] ;
@@ -2421,7 +2421,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 
 		uint8_t num_analog = 7 ;
-		if ( txType )
+		if ( ((txType==1) || (txType == 2)) )
 		{
 			num_analog = 8 ;
 			if ( txType == 2 )
@@ -2558,7 +2558,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
   uint8_t Mix_max ;
   uint8_t Mix_full ;
   uint8_t Chout_base ;
-//  if ( txType )
+//  if ( ((txType==1) || (txType == 2)) )
 //  {
 //    Mix_3pos = MIX_3POS+1 ;
 //    Mix_max = MIX_MAX + 1 ;
@@ -2584,7 +2584,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 //    calibratedStick[Mix_max-1]=calibratedStick[Mix_full-1]=1024;
     anas[Mix_max-1]  = RESX;     // MAX
     anas[Mix_full-1] = RESX;     // FULL
-	  if ( txType )
+	  if ( ((txType==1) || (txType == 2)) )
 		{
 			anas[Mix_3pos-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
 		}
@@ -2625,7 +2625,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         int16_t vc = 0;
         if(g_model.swashCollectiveSource)
 				{
-					if ( txType )
+					if ( ((txType==1) || (txType == 2)) )
 					{
 						if ( g_model.swashCollectiveSource >= EXTRA_POTS_START )
 						{
@@ -2808,7 +2808,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							}
 						}
 
-				  	if ( txType )
+				  	if ( ((txType==1) || (txType == 2)) )
 						{
 							if ( k == MIX_3POS-1 )
 							{

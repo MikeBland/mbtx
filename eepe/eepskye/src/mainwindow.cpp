@@ -775,7 +775,7 @@ void MainWindow::burnFrom()
     QString tempFile = tempDir + "/temp.bin";
 //    QString str = "eeprom:r:" + tempFile + ":i"; // writing eeprom -> MEM:OPR:FILE:FTYPE"
 
-	QString size = QString("0x%1").arg( (MAX_IMODELS+1)*8192,5,16,QChar('0')) ;
+	QString size = QString("0x%1").arg( 64*8192,5,16,QChar('0')) ;
 //    QStringList arguments = GetSambaArguments(QString("SERIALFLASH::Init 0\n") + "receive_file {SerialFlash AT25} \"\" 0x0 0x1000 0\n" + "receive_file {SerialFlash AT25} \"" + tempFile + "\" 0x0 0x22000 0\n");
 	
 	QStringList arguments = GetSambaArguments(QString("SERIALFLASH::Init 0\n") + "receive_file {SerialFlash AT25} \"" + tempFile + "\" 0x0 " + size + " 0\n");
@@ -822,6 +822,7 @@ void MainWindow::burnFrom()
 		{
       QMessageBox::critical(this, "eePskye", tr("SAM-BA did not finish correctly" ) ) ;
 		}
+		Found9Xtreme = 0 ;
 	}
 
   if(QFileInfo(tempFile).exists() && res)
@@ -874,7 +875,8 @@ void MainWindow::burnExtenalToEEPROM()
 					{
 						avrdudeLoc = "" ;
 			      qint32 fsize ;
-						fsize = (MAX_IMODELS+1)*8192 ;
+//						fsize = (MAX_IMODELS+1)*8192 ;
+						fsize = 64*8192 ;
 						if ( QFileInfo(path).size() == 32768 )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
@@ -1014,7 +1016,7 @@ void MainWindow::burnExtenalFromEEPROM()
 //        else if(QFileInfo(fileName).suffix().toUpper()=="BIN") str += ":r";
 //        else str += ":a";
 
-		    QStringList arguments = GetSambaArguments(QString("SERIALFLASH::Init 0\n") + "receive_file {SerialFlash AT25} \"" + fileName + "\" 0x0 0x2A000 0\n");
+		    QStringList arguments = GetSambaArguments(QString("SERIALFLASH::Init 0\n") + "receive_file {SerialFlash AT25} \"" + fileName + "\" 0x0 0x80000 0\n");
 //        arguments << "-c" << programmer << "-p" << mcu << args << "-U" << str;
 				int res ;
 				if ( arguments.isEmpty() )
@@ -1030,7 +1032,8 @@ void MainWindow::burnExtenalFromEEPROM()
 					else
 					{
       			qint32 fsize ;
-						fsize = (MAX_IMODELS+1)*8192 ;
+//						fsize = (MAX_IMODELS+1)*8192 ;
+						fsize = 64*8192 ;
 						if ( QFileInfo(path).size() == 32768 )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
@@ -1064,7 +1067,7 @@ void MainWindow::burnExtenalFromEEPROM()
 	      	  if ( (file.size()!=EEFULLSIZE) && (file.size()!=32768) )
 						{
     	  	  	QMessageBox::critical(this, tr("Error"),tr("Error reading file:\n"
-        		                                             "File wrong size - %1").arg(fileName));
+        		                                             "File wrong size(2) - %1").arg(fileName));
       		  	return ;
 						}
 					}

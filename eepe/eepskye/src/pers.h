@@ -369,8 +369,9 @@ enum EnumKeys {
 #define PROTO_PPM        0
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
-#define PROTO_PPM16			 3		// No longer needed
-#define PROTO_OFF		     15		// For X9D
+#define PROTO_MULTI			 3
+#define PROTO_ASSAN			 4
+#define PROTO_OFF		     15		// For X9D/9Xtreme
 #define PROT_MAX         2
 #define PROT_STR "PPM   PXX   DSM2  "
 #define PROT_STR_LEN     6

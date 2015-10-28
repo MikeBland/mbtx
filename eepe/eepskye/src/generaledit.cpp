@@ -40,7 +40,38 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
     populateSwitchCB(ui->backlightswCB,g_eeGeneral.lightSw, rData->type );
 
-    ui->ownerNameLE->setText(g_eeGeneral.ownerName);
+    ui->ownerNameLE->setText(g_eeGeneral.ownerName) ;
+    ui->BtNameText->setText( (char *)g_eeGeneral.btName) ;
+
+    ui->BtDev1Name->setText( (char *)g_eeGeneral.btDevice[0].name) ;
+    ui->BtDev2Name->setText( (char *)g_eeGeneral.btDevice[1].name) ;
+    ui->BtDev3Name->setText( (char *)g_eeGeneral.btDevice[2].name) ;
+    ui->BtDev4Name->setText( (char *)g_eeGeneral.btDevice[3].name) ;
+
+		if ( btAddressValid( g_eeGeneral.btDevice[0].address ) )
+		{
+      uint8_t text[16] ;
+			btAddrBin2Hex( text, g_eeGeneral.btDevice[0].address ) ;
+      ui->BtDev1Address->setText((char *)text) ;
+		}
+		if ( btAddressValid( g_eeGeneral.btDevice[1].address ) )
+		{
+      uint8_t text[16] ;
+			btAddrBin2Hex( text, g_eeGeneral.btDevice[1].address ) ;
+      ui->BtDev2Address->setText((char *)text) ;
+		}
+		if ( btAddressValid( g_eeGeneral.btDevice[2].address ) )
+		{
+      uint8_t text[16] ;
+			btAddrBin2Hex( text, g_eeGeneral.btDevice[2].address ) ;
+      ui->BtDev3Address->setText((char *)text) ;
+		}
+		if ( btAddressValid( g_eeGeneral.btDevice[3].address ) )
+		{
+      uint8_t text[16] ;
+			btAddrBin2Hex( text, g_eeGeneral.btDevice[3].address ) ;
+      ui->BtDev4Address->setText((char *)text) ;
+		}
 
     ui->contrastSB->setValue(g_eeGeneral.contrast);
     ui->battwarningDSB->setValue((double)g_eeGeneral.vBatWarn/10);
@@ -69,6 +100,11 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
+    ui->SoftwareVolumeChkB->setChecked(g_eeGeneral.softwareVolume ) ;
+    ui->Ar9xChkB->setChecked(g_eeGeneral.ar9xBoard ) ;
+    ui->MenuEditChkB->setChecked(g_eeGeneral.forceMenuEdit ) ;
+
+		ui->ExtRtcCB->setCurrentIndex(g_eeGeneral.externalRtcType ) ;
     
 		ui->volumeSB->setValue(g_eeGeneral.volume);
 //    ui->enablePpmsimChkB->setChecked(g_eeGeneral.enablePpmsim);
@@ -81,12 +117,23 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->splashScreenChkB->setChecked(!g_eeGeneral.disableSplashScreen);
     ui->splashScreenNameChkB->setChecked(!g_eeGeneral.hideNameOnSplash);
     ui->brightSB->setValue(100-g_eeGeneral.bright ) ;
+    ui->brightGreenSB->setValue(100-g_eeGeneral.bright_white ) ;
+    ui->brightBlueSB->setValue(100-g_eeGeneral.bright_blue ) ;
 		ui->BtBaudrateCB->setCurrentIndex(g_eeGeneral.bt_baudrate) ;
 		ui->RotaryDivisorCB->setCurrentIndex(g_eeGeneral.rotaryDivisor) ;
 		ui->CurrentCalibSB->setValue(g_eeGeneral.current_calib ) ;
 		ui->MaHalarmSB->setValue(g_eeGeneral.mAh_alarm*50 ) ;
     ui->BluetoothTypeCB->setCurrentIndex(g_eeGeneral.BtType);
-    
+		
+		ui->hapticMinRunSB->setValue( g_eeGeneral.hapticMinRun + 20 ) ;
+
+		ui->SixCal0_SB->setValue( g_eeGeneral.SixPositionCalibration[0] ) ;
+		ui->SixCal1_SB->setValue( g_eeGeneral.SixPositionCalibration[1] ) ;
+		ui->SixCal2_SB->setValue( g_eeGeneral.SixPositionCalibration[2] ) ;
+		ui->SixCal3_SB->setValue( g_eeGeneral.SixPositionCalibration[3] ) ;
+		ui->SixCal4_SB->setValue( g_eeGeneral.SixPositionCalibration[4] ) ;
+		ui->SixCal5_SB->setValue( g_eeGeneral.SixPositionCalibration[5] ) ;
+
     ui->ana1Neg->setValue(g_eeGeneral.calibSpanNeg[0]);
     ui->ana2Neg->setValue(g_eeGeneral.calibSpanNeg[1]);
     ui->ana3Neg->setValue(g_eeGeneral.calibSpanNeg[2]);
@@ -139,13 +186,36 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		updateTrainerTab();
 
 
-		if ( rData->type < 1 )
+		if ( ( rData->type < 1 ) || ( rData->type == 3 ) )
 		{
 			ui->label_AilSw->show() ;
 			ui->label_EleSw->show() ;
 			ui->label_ThrSw->show() ;
 			ui->label_GeaSw->show() ;
 			ui->label_RudSw->show() ;
+			ui->label_PB1Sw->show() ;
+			ui->label_PB2Sw->show() ;
+
+      int xtype = 0 ;
+			if ( rData->type == 3 )
+			{
+				xtype = 2 ;
+			}
+			else
+			{
+				if ( rData->T9xr_pro )
+				{
+					xtype = 1 ;
+				}
+			}
+			setHardwareSwitchCB( ui->AilCB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->EleCB, 0, xtype ) ;
+			setHardwareSwitchCB( ui->GeaCB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->RudCB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->ThrCB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->PB1CB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->PB2CB, 1, xtype ) ;
+
       ui->AilCB->show() ;
       ui->EleCB->show() ;
       ui->GeaCB->show() ;
@@ -154,9 +224,9 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->PB1CB->show() ;
 			ui->PB2CB->show() ;
 			ui->label_Encoder->hide() ;
-			ui->label_6Pos->hide() ;
+//			ui->label_6Pos->hide() ;
 			ui->EncoderCB->hide() ;
-			ui->SixPosCB->hide() ;
+//			ui->SixPosCB->hide() ;
 			ui->AilCB->setCurrentIndex( g_eeGeneral.ailsource ) ;
 			uint8_t value = g_eeGeneral.elesource ;
 			if ( value > 5 )
@@ -181,6 +251,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->label_ThrSw->hide() ;
 			ui->label_GeaSw->hide() ;
 			ui->label_RudSw->hide() ;
+			ui->label_PB1Sw->hide() ;
+			ui->label_PB2Sw->hide() ;
       ui->AilCB->hide() ;
       ui->EleCB->hide() ;
       ui->GeaCB->hide() ;
@@ -189,13 +261,13 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->PB1CB->hide() ;
 			ui->PB2CB->hide() ;
 			ui->label_Encoder->show() ;
-			ui->label_6Pos->show() ;
+//			ui->label_6Pos->show() ;
 			ui->EncoderCB->show() ;
-			ui->SixPosCB->show() ;
+//			ui->SixPosCB->show() ;
 			ui->EncoderCB->setCurrentIndex(g_eeGeneral.analogMapping & 3) ;
-			ui->SixPosCB->setCurrentIndex((g_eeGeneral.analogMapping >> 2) & 3) ;
 			//g_eeGeneral.analogMapping
 		}
+		ui->SixPosCB->setCurrentIndex((g_eeGeneral.analogMapping >> 2) & 7) ;
 		
 		setHwSwitchActive();
 
@@ -258,6 +330,108 @@ GeneralEdit::~GeneralEdit()
 //    switchDefPosEditLock = false;
 //}
 
+
+// switchList = 0 for ELE, 1 for others
+// type = 0 for SKY, 1 for PRO, 2 for 9Xtreme
+void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
+{
+  b->clear() ;
+	if ( switchList )
+	{
+		switch ( type )
+		{
+			case 0 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "LCD2" ) ;
+				b->addItem( "LCD3" ) ;
+				b->addItem( "LCD4" ) ;
+				b->addItem( "ELE " ) ;
+				b->addItem( "EXT4" ) ;
+				b->addItem( "EXT5" ) ;
+				b->addItem( "EXT6" ) ;
+			break ;
+			case 1 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "LCD2" ) ;
+				b->addItem( "LCD3" ) ;
+				b->addItem( "LCD4" ) ;
+				b->addItem( "ELE " ) ;
+			break ;
+			case 2 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "EXT1" ) ;
+				b->addItem( "EXT2" ) ;
+				b->addItem( "EXT3" ) ;
+				b->addItem( "EXT4" ) ;
+				b->addItem( "ELE " ) ;
+				b->addItem( "EXT5" ) ;
+				b->addItem( "EXT6" ) ;
+				b->addItem( "EXT7" ) ;
+				b->addItem( "EXT8" ) ;
+			break ;
+		}
+	}
+	else
+	{
+		switch ( type )
+		{
+			case 0 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "LCD2" ) ;
+				b->addItem( "LCD3" ) ;
+				b->addItem( "LCD4" ) ;
+				b->addItem( "ANA " ) ;
+				b->addItem( "6PSA" ) ;
+				b->addItem( "6PSB" ) ;
+				b->addItem( "EXT4" ) ;
+				b->addItem( "EXT5" ) ;
+				b->addItem( "EXT6" ) ;
+			break ;
+			case 1 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "LCD2" ) ;
+				b->addItem( "LCD3" ) ;
+				b->addItem( "LCD4" ) ;
+				b->addItem( "ANA " ) ;
+				b->addItem( "6PSA" ) ;
+				b->addItem( "6PSB" ) ;
+			break ;
+			case 2 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "EXT1" ) ;
+				b->addItem( "EXT2" ) ;
+				b->addItem( "EXT3" ) ;
+				b->addItem( "EXT4" ) ;
+				b->addItem( "EXT5" ) ;
+				b->addItem( "6PSA" ) ;
+				b->addItem( "6PSB" ) ;
+				b->addItem( "EXT6" ) ;
+				b->addItem( "EXT7" ) ;
+				b->addItem( "EXT8" ) ;
+			break ;
+		}
+	}
+
+
+//	value = checkIndexed( y, XPSTR(FWx17"\005\004NONELCD2LCD6LCD7DAC1ELE "), value, condition ) ;
+//#else
+//#ifdef PCB9XT
+//	value = checkIndexed( y, XPSTR(FWx17"\011\004NONEEXT1EXT2EXT3EXT4ELE EXT5EXT6EXT7EXT8"), value, condition ) ;
+//#else
+//	value = checkIndexed( y, XPSTR(FWx17"\010\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6"), value, condition ) ;
+
+//#ifdef REVX
+//				value = checkIndexed( y, XPSTR(FWx17"\007\004NONELCD2LCD6LCD7DAC1ANA 6PSA6PSB"), value, (sub==subN) ) ;
+//#else
+//#ifdef PCB9XT
+//				value = checkIndexed( y, XPSTR(FWx17"\012\004NONEEXT1EXT2EXT3EXT4EXT56PSA6PSBEXT6EXT7EXT8"), value, (sub==subN) ) ;
+//#else
+//				value = checkIndexed( y, XPSTR(FWx17"\012\004NONELCD2LCD6LCD7DAC1ANA 6PSA6PSBEXT4EXT5EXT6"), value, (sub==subN) ) ;
+}			
+			
+
+
+
 void GeneralEdit::updateSettings()
 {
     int16_t sum=0;
@@ -275,11 +449,109 @@ void GeneralEdit::updateSettings()
 		GlobalModified = 1 ;
 }
 
+uint32_t GeneralEdit::btAddressValid( uint8_t *address )
+{
+	uint8_t x ;
+	x = *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address ;
+	return x ;
+}
+
+uint8_t GeneralEdit::b2hex( uint8_t c )
+{
+	c &= 0x0F ;
+	if ( c > 9 )
+	{
+		c += 7 ;
+	}
+	c += '0' ;
+	return c ;
+}
+
+uint8_t *GeneralEdit::btAddrBin2Hex( uint8_t *dest, uint8_t *source )
+{
+	uint8_t c ;
+	
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	*dest++ = ',' ;
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	*dest++ = ',' ;
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	c = *source++ ;
+	*dest++ = b2hex( c >> 4 ) ;
+	*dest++ = b2hex( c ) ;
+	*dest = '\0' ;
+	return dest ;
+}
+
+void GeneralEdit::saveTrainerToProfile()
+{
+	uint32_t i ;
+	for ( i = 0 ; i < 4 ; i += 1 )
+	{
+		TrainerMix *td = &g_eeGeneral.trainer.mix[i];
+		exTrainerMix *xtd = &g_eeGeneral.exTrainer[i] ;
+		TrainerChannel *tc = &g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[i] ;
+		tc->calib = g_eeGeneral.trainer.calib[i] ;
+		tc->srcChn = td->srcChn ;
+		tc->mode = td->mode ;
+		tc->swtch = xtd->swtch ;
+		tc->studWeight = xtd->studWeight ;
+	}
+}
+
+void GeneralEdit::loadTrainerFromProfile()
+{
+	uint32_t i ;
+	for ( i = 0 ; i < 4 ; i += 1 )
+	{
+		TrainerMix *td = &g_eeGeneral.trainer.mix[i];
+		exTrainerMix *xtd = &g_eeGeneral.exTrainer[i] ;
+		TrainerChannel *tc = &g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[i] ;
+		g_eeGeneral.trainer.calib[i] = tc->calib ;
+		td->srcChn = tc->srcChn ;
+		td->mode = tc->mode ;
+		xtd->swtch = tc->swtch ;
+		xtd->studWeight = tc->studWeight ;
+	}
+}
+
+void GeneralEdit::on_TrainerProfileSB_valueChanged( int x )
+{
+	trainerTabLock = 1 ;
+	
+	saveTrainerToProfile() ;
+	g_eeGeneral.CurrentTrainerProfile = ui->TrainerProfileSB->value() ;
+	CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
+	loadTrainerFromProfile() ;
+	trainerTabLock = 0 ;
+  updateTrainerTab() ;
+  updateSettings() ;
+}
 
 void GeneralEdit::updateTrainerTab()
 {
+	trainerTabLock = 1 ;
     on_tabWidget_selected(""); // updates channel name labels
 
+		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
+		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
     ui->modeCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
     ui->sourceCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].srcChn);
     if ( g_eeGeneral.trainer.mix[0].swtch == -16)
@@ -302,7 +574,7 @@ void GeneralEdit::updateTrainerTab()
     ui->sourceCB_2->setCurrentIndex(g_eeGeneral.trainer.mix[1].srcChn);
     if ( g_eeGeneral.trainer.mix[1].swtch == -16)
 		{
-			populateSwitchCB(ui->swtchCB_2,g_eeGeneral.exTrainer[0].swtch, rData->type ) ;
+			populateSwitchCB(ui->swtchCB_2,g_eeGeneral.exTrainer[1].swtch, rData->type ) ;
 			ui->weightSB_2->setMaximum(100) ;
 			ui->weightSB_2->setMinimum(-100) ;
 			ui->weightSB_2->setSingleStep(1) ;
@@ -334,7 +606,7 @@ void GeneralEdit::updateTrainerTab()
     	StudWeight3=g_eeGeneral.trainer.mix[2].studWeight*13/4;
 		}
 
-    ui->modeCB_4->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
+    ui->modeCB_4->setCurrentIndex(g_eeGeneral.trainer.mix[3].mode);
     ui->sourceCB_4->setCurrentIndex(g_eeGeneral.trainer.mix[3].srcChn);
     if ( g_eeGeneral.trainer.mix[3].swtch == -16)
 		{
@@ -358,10 +630,15 @@ void GeneralEdit::updateTrainerTab()
     ui->trainerCalib_4->setValue(g_eeGeneral.trainer.calib[3]);
 
     ui->PPM_MultiplierDSB->setValue(double(g_eeGeneral.PPM_Multiplier+10)/10);
+	trainerTabLock = 0 ;
 }
 
 void GeneralEdit::trainerTabValueChanged()
 {
+	if ( trainerTabLock )
+	{
+		return ;
+	}
     g_eeGeneral.trainer.mix[0].mode       = ui->modeCB_1->currentIndex();
 //    g_eeGeneral.trainer.mix[0].studWeight = ui->weightSB_1->value()*4/13;
     g_eeGeneral.trainer.mix[0].srcChn     = ui->sourceCB_1->currentIndex();
@@ -422,6 +699,10 @@ void GeneralEdit::trainerTabValueChanged()
 
 void GeneralEdit::validateWeightSB()
 {
+	if ( trainerTabLock )
+	{
+		return ;
+	}
     ui->weightSB_1->blockSignals(true);
     ui->weightSB_2->blockSignals(true);
     ui->weightSB_3->blockSignals(true);
@@ -532,6 +813,18 @@ void GeneralEdit::on_MaHalarmSB_editingFinished()
 void GeneralEdit::on_brightSB_editingFinished()
 {
     g_eeGeneral.bright = 100-ui->brightSB->value() ;
+    updateSettings();
+}
+
+void GeneralEdit::on_brightGreenSB_editingFinished()
+{
+    g_eeGeneral.bright_white = 100-ui->brightGreenSB->value() ;
+    updateSettings();
+}
+
+void GeneralEdit::on_brightBlueSB_editingFinished()
+{
+    g_eeGeneral.bright_blue = 100-ui->brightBlueSB->value() ;
     updateSettings();
 }
 
@@ -712,6 +1005,24 @@ void GeneralEdit::on_StickScrollEnableChkB_stateChanged(int )
     updateSettings();
 }
 
+void GeneralEdit::on_SoftwareVolumeChkB_stateChanged(int )
+{
+    g_eeGeneral.softwareVolume = ui->SoftwareVolumeChkB->isChecked() ? 1 : 0 ;
+    updateSettings();
+}
+
+void GeneralEdit::on_Ar9xChkB_stateChanged(int )
+{
+    g_eeGeneral.ar9xBoard = ui->Ar9xChkB->isChecked() ? 1 : 0 ;
+    updateSettings();
+}
+
+void GeneralEdit::on_MenuEditChkB_stateChanged(int )
+{
+    g_eeGeneral.forceMenuEdit = ui->MenuEditChkB->isChecked() ? 1 : 0 ;
+    updateSettings();
+}
+
 void GeneralEdit::on_CrossTrimChkB_stateChanged(int )
 {
     g_eeGeneral.crosstrim = ui->CrossTrimChkB->isChecked() ? 1 : 0 ;
@@ -729,6 +1040,13 @@ void GeneralEdit::on_beeperCB_currentIndexChanged(int index)
     g_eeGeneral.beeperVal = index;
     updateSettings();
 }
+
+void GeneralEdit::on_hapticMinRunSB_editingFinished()
+{
+	g_eeGeneral.hapticMinRun = ui->hapticMinRunSB->value() - 20 ;
+  updateSettings() ;
+}
+
 
 void GeneralEdit::on_channelorderCB_currentIndexChanged(int index)
 {
@@ -959,6 +1277,70 @@ void GeneralEdit::on_ownerNameLE_editingFinished()
     updateSettings();
 }
 
+void GeneralEdit::on_BtNameText_editingFinished()
+{
+	quint8 i ;
+//    memset(&g_eeGeneral.btName,' ',sizeof(g_eeGeneral.ownerName));
+    for( i=0; i<(sizeof(g_eeGeneral.btName)); i++)
+    {
+			quint8 c ;
+      if(i>=sizeof(g_eeGeneral.btName)-1) break;
+      c = ui->BtNameText->text().toStdString()[i];
+			g_eeGeneral.btName[i] = c ;
+			if ( c == 0 )
+			{
+				break ;
+			}
+    }
+    while ( i<(sizeof(g_eeGeneral.btName)) )
+		{
+			g_eeGeneral.btName[i++] = '\0' ;
+		}
+    updateSettings();
+}
+
+void GeneralEdit::btDevEdited( int dev, QLineEdit *uiDev )
+{
+	quint8 i ;
+//    memset(&g_eeGeneral.btName,' ',sizeof(g_eeGeneral.ownerName));
+    for( i=0; i<7 ; i++ )
+    {
+			quint8 c ;
+      if(i>=6) break;
+      c = uiDev->text().toStdString()[i];
+			g_eeGeneral.btDevice[dev].name[i] = c ;
+			if ( c == 0 )
+			{
+				break ;
+			}
+    }
+    while ( i<7 )
+		{
+			g_eeGeneral.btDevice[dev].name[i++] = '\0' ;
+		}
+    updateSettings();
+}
+
+void GeneralEdit::on_BtDev1Name_editingFinished()
+{
+	btDevEdited( 0, ui->BtDev1Name ) ;
+}
+
+void GeneralEdit::on_BtDev2Name_editingFinished()
+{
+	btDevEdited( 1, ui->BtDev2Name ) ;
+}
+
+void GeneralEdit::on_BtDev3Name_editingFinished()
+{
+	btDevEdited( 2, ui->BtDev3Name ) ;
+}
+
+void GeneralEdit::on_BtDev4Name_editingFinished()
+{
+	btDevEdited( 3, ui->BtDev4Name ) ;
+}
+
 void GeneralEdit::on_speakerPitchSB_editingFinished()
 {
     g_eeGeneral.speakerPitch = ui->speakerPitchSB->value();
@@ -1160,8 +1542,8 @@ void GeneralEdit::on_EncoderCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_SixPosCB_currentIndexChanged(int x )
 {
-	g_eeGeneral.analogMapping &= ~0x0C ;
-	g_eeGeneral.analogMapping |= (x & 3 ) << 2 ;
+	g_eeGeneral.analogMapping &= ~0x1C ;
+	g_eeGeneral.analogMapping |= (x & 7 ) << 2 ;
   updateSettings();
 }
 
@@ -1278,6 +1660,12 @@ void GeneralEdit::on_PB2CB_currentIndexChanged(int x )
 	g_eeGeneral.pb2source = x ;
 	setHwSwitchActive() ;
   updateSettings();
+}
+
+void GeneralEdit::on_ExtRtcCB_currentIndexChanged(int index)
+{
+	g_eeGeneral.externalRtcType = index ;
+  updateSettings() ;
 }
 
 void GeneralEdit::setHwSwitchActive()

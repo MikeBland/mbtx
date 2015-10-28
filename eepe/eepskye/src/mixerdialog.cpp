@@ -30,6 +30,9 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->sourceCB->addItem("SC6 ");
     ui->sourceCB->addItem("SC7 ");
     ui->sourceCB->addItem("SC8 ");
+
+    ui->sourceCB->setCurrentIndex(md->srcRaw) ;
+
 //		uint32_t value ;
 //		value = md->srcRaw ;
 //		if ( eeType )
@@ -64,7 +67,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 		ui->sourceSwitchCB->clear();
 
-		if ( eeType )
+ 		if ( ( (eeType == 1 ) || ( eeType == 2 ) ) )	// Taranis
 		{
     	ui->sourceSwitchCB->addItem("SA");
     	ui->sourceSwitchCB->addItem("SB");
@@ -74,7 +77,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     	ui->sourceSwitchCB->addItem("SF");
     	ui->sourceSwitchCB->addItem("SG");
     	ui->sourceSwitchCB->addItem("SH");
-      if ( g_eeGeneral->analogMapping & 0x0C /*MASK_6POS*/ )
+      if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
 			{
     		ui->sourceSwitchCB->addItem("6P");
 			}
@@ -88,6 +91,10 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     	ui->sourceSwitchCB->addItem("AIL");
     	ui->sourceSwitchCB->addItem("GEA");
     	ui->sourceSwitchCB->addItem("TRN");
+      if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
+			{
+    		ui->sourceSwitchCB->addItem("6P");
+			}
 		}
     ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		
@@ -208,6 +215,10 @@ void MixerDialog::updateChannels()
 	if ( leeType == 2 )
 	{
 		lowBound = 23 ;
+	}
+	if ( leeType == 3 )
+	{
+		lowBound = 21 ;
 	}
   if ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 )
 	{

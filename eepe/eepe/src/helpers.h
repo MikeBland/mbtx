@@ -158,6 +158,7 @@ uint8_t CONVERT_MODE( uint8_t x, int modelVersion, int stickMode ) ;
 //#endif
 
 #ifdef SKY
+extern int Found9Xtreme ;
 QString FindErskyPath( int type ) ;
 void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model ) ;
 #endif

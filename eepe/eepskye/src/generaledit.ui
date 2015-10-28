@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -175,20 +175,6 @@ p, li { white-space: pre-wrap; }
          </property>
          <property name="value">
           <number>1</number>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label_36">
-         <property name="text">
-          <string>Haptic Strength (spkr only)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="1">
-        <widget class="QSpinBox" name="hapticStengthSB">
-         <property name="maximum">
-          <number>5</number>
          </property>
         </widget>
        </item>
@@ -585,6 +571,35 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="5" column="0">
+          <widget class="QCheckBox" name="SoftwareVolumeChkB">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;Warnings&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;These will define startup warnings.&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Throttle warning - will alert if the throttle is not at idle during startup&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Switch warning - will alert if switches are not in their defaul position&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Memory warning - will alert if there's not a lot of memory left&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;Silent mode warning - will alert you if the beeper is set to quiet (0)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Software Volume</string>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item row="6" column="0" colspan="2">
@@ -742,7 +757,7 @@ p, li { white-space: pre-wrap; }
             <string extracomment="Screen Contrast [20-45]"/>
            </property>
            <property name="text">
-            <string>Brightness</string>
+            <string>Brightness (Red/colour)</string>
            </property>
           </widget>
          </item>
@@ -752,7 +767,7 @@ p, li { white-space: pre-wrap; }
             <string extracomment="Screen Contrast [20-45]"/>
            </property>
            <property name="text">
-            <string>Green</string>
+            <string>Green (white)</string>
            </property>
           </widget>
          </item>
@@ -805,7 +820,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item row="2" column="5">
-          <widget class="QSpinBox" name="brightBLueSB">
+          <widget class="QSpinBox" name="brightBlueSB">
            <property name="toolTip">
             <string/>
            </property>
@@ -1733,6 +1748,44 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </widget>
        </item>
+       <item row="4" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
+         <item>
+          <widget class="QSpinBox" name="hapticStengthSB">
+           <property name="maximum">
+            <number>5</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_51">
+           <property name="text">
+            <string>Haptic Min. Run</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="hapticMinRunSB">
+           <property name="minimum">
+            <number>20</number>
+           </property>
+           <property name="maximum">
+            <number>40</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_36">
+         <property name="text">
+          <string>Haptic Strength (spkr only)</string>
+         </property>
+        </widget>
+       </item>
       </layout>
      </widget>
      <widget class="QWidget" name="tab">
@@ -1740,7 +1793,7 @@ This is used by the templated to determine which channel goes to what number out
        <string>Trainer</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
-       <item row="1" column="0" colspan="2">
+       <item row="2" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_4">
          <item row="2" column="0">
           <widget class="QLabel" name="chnLabel_1">
@@ -2011,14 +2064,14 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_33">
          <property name="text">
           <string>PPM Multiplier</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <widget class="QDoubleSpinBox" name="PPM_MultiplierDSB">
          <property name="decimals">
           <number>1</number>
@@ -2031,14 +2084,14 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="label_34">
          <property name="text">
           <string>Calibration</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="0" column="0">
           <widget class="QSpinBox" name="trainerCalib_1">
@@ -2082,7 +2135,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="5" column="0">
+       <item row="6" column="0">
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -2124,6 +2177,23 @@ This is used by the templated to determine which channel goes to what number out
            <string>Slave</string>
           </property>
          </item>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_55">
+         <property name="text">
+          <string>Profile</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="TrainerProfileSB">
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>2</number>
+         </property>
         </widget>
        </item>
       </layout>
@@ -2580,7 +2650,7 @@ This is used by the templated to determine which channel goes to what number out
        <string>Hardware</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_10">
-       <item row="0" column="0">
+       <item row="2" column="0">
         <layout class="QGridLayout" name="gridLayout_7">
          <item row="2" column="0">
           <widget class="QLabel" name="label_GeaSw">
@@ -2624,7 +2694,7 @@ This is used by the templated to determine which channel goes to what number out
           </widget>
          </item>
          <item row="6" column="0">
-          <widget class="QLabel" name="label_ThrSw_2">
+          <widget class="QLabel" name="label_PB1Sw">
            <property name="text">
             <string>PB1 switch</string>
            </property>
@@ -2729,7 +2799,7 @@ This is used by the templated to determine which channel goes to what number out
           </widget>
          </item>
          <item row="7" column="0">
-          <widget class="QLabel" name="label_ThrSw_3">
+          <widget class="QLabel" name="label_PB2Sw">
            <property name="text">
             <string>PB2 switch</string>
            </property>
@@ -2992,7 +3062,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="0" column="2">
+       <item row="2" column="3">
         <spacer name="horizontalSpacer">
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
@@ -3005,7 +3075,7 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </spacer>
        </item>
-       <item row="2" column="0">
+       <item row="8" column="0">
         <spacer name="verticalSpacer_4">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -3018,7 +3088,7 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </spacer>
        </item>
-       <item row="0" column="1">
+       <item row="2" column="1">
         <layout class="QGridLayout" name="gridLayout_12">
          <item row="0" column="0">
           <widget class="QLabel" name="label_Encoder">
@@ -3092,11 +3162,118 @@ This is used by the templated to determine which channel goes to what number out
              <string>P3</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>AUX</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_6Pos_2">
+           <property name="text">
+            <string>6-POS-Cal1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_6Pos_3">
+           <property name="text">
+            <string>6-POS-Cal2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_6Pos_4">
+           <property name="text">
+            <string>6-POS-Cal3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_6Pos_5">
+           <property name="text">
+            <string>6-POS-Cal4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_6Pos_6">
+           <property name="text">
+            <string>6-POS-Cal5</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_6Pos_7">
+           <property name="text">
+            <string>6-POS-Cal6</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="SixCal0_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QSpinBox" name="SixCal1_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QSpinBox" name="SixCal2_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <widget class="QSpinBox" name="SixCal3_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="1">
+          <widget class="QSpinBox" name="SixCal4_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QSpinBox" name="SixCal5_SB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <property name="maximum">
+            <number>4097</number>
+           </property>
           </widget>
          </item>
         </layout>
        </item>
-       <item row="1" column="0">
+       <item row="3" column="0">
         <layout class="QGridLayout" name="gridLayout_15">
          <item row="0" column="0">
           <widget class="QLabel" name="label_StickLHdb">
@@ -3151,6 +3328,183 @@ This is used by the templated to determine which channel goes to what number out
           <widget class="QSpinBox" name="StickRHdeadbandSB">
            <property name="maximum">
             <number>15</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="Ar9xChkB">
+         <property name="text">
+          <string>AR9X Board</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <layout class="QGridLayout" name="gridLayout_16">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_EleSw_2">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Ext. RTC</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="ExtRtcCB">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DS3231</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="0">
+        <widget class="QCheckBox" name="MenuEditChkB">
+         <property name="text">
+          <string>Force Menu Edit</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <layout class="QGridLayout" name="gridLayout_20">
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="BtDev1Address">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="BtDev3Address">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="BtDev4Address">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="BtDev2Address">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLineEdit" name="BtDev1Name">
+           <property name="maxLength">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QLineEdit" name="BtDev2Name">
+           <property name="maxLength">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="2">
+          <widget class="QLineEdit" name="BtDev3Name">
+           <property name="maxLength">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="2">
+          <widget class="QLineEdit" name="BtDev4Name">
+           <property name="maxLength">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_Encoder_3">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Bt Address 1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_Encoder_2">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Bluetooth Name</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLineEdit" name="BtNameText">
+           <property name="maxLength">
+            <number>14</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_Encoder_4">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Bt Address 2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_Encoder_5">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Bt Address 3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_Encoder_6">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Bt Address 4</string>
            </property>
           </widget>
          </item>
