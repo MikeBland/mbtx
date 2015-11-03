@@ -43,11 +43,15 @@ const prog_uchar APM font[] = {
 
 #define font_5x8_x20_x7f (font)
 
+#ifdef SMALL_DBL
+#include "font12x8test.lbm"
+#define font_10x16_x20_x7f (font_12x8)
+#else
 const prog_uchar APM font_dblsize[] = {
 #include "font_dblsize.lbm"
 };
-
 #define font_10x16_x20_x7f (font_dblsize)
+#endif // SMALL_DBL
 
 
 void lcd_clear()
@@ -59,7 +63,39 @@ void lcd_clear()
 void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 {
 	div_t qr ;
+#ifdef SMALL_DBL
+	uint8_t z = FWNUM*6-2 ;
+	if ( att&DBLSIZE )
+	{
+		x += 3 ;
+		z = FWNUM*5-2 ;
+	}
 
+	if ( tme<0 )
+	{
+		lcd_putcAtt( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
+		tme = -tme;
+	}
+	
+	lcd_putcAtt( x, y, ':',att&att2);
+	qr = div( tme, 60 ) ;
+	
+	if ( att&DBLSIZE )
+	{
+		x += 2 ;
+	}
+	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
+	
+	if ( att&DBLSIZE )
+	{
+		x += FWNUM*5-4 ;
+	}
+	else
+	{
+		x += FW*3-3 ;
+	}
+	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
+#else	
 	if ( tme<0 )
 	{
 		lcd_putcAtt( x - ((att&DBLSIZE) ? FWNUM*6-2 : FWNUM*3),    y, '-',att);
@@ -71,6 +107,7 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
 	x += (att&DBLSIZE) ? FWNUM*6-4 : FW*3-3;
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
+#endif
 }
 
 void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att)
@@ -151,7 +188,11 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char d,uint8_t mode)
     bool         inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
 	if(mode&DBLSIZE)
   {
+#ifdef SMALL_DBL
+		if ( (c!=0x2E)) x+=2; //check for decimal point
+#else
 		if ( (c!=0x2E)) x+=FW; //check for decimal point
+#endif
 	/* each letter consists of ten top bytes followed by
 	 * five bottom by ten bottom bytes (20 bytes per 
 	 * char) */
@@ -181,8 +222,32 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char d,uint8_t mode)
 #else
 			c_mapped = c - 0x20 ;
 #endif
+#ifdef SMALL_DBL
+        q = &font_10x16_x20_x7f[(c_mapped)*14] ;// + ((c-0x20)/16)*160];
+#ifdef DBL_FONT_SMALL
+#if defined(CPUM128) || defined(CPUM2561)
+				if ( ( c_mapped == ('i'-'a'+0x2B) ) || ( c_mapped == ('l'-'a'+0x2B) ) )
+				{
+					p -= 1 ;
+					x -= 2 ;
+				}
+#endif
+#endif
+        for(char i=7; i>=0; i--)
+				{
+					uint8_t b1 ;
+					uint8_t b3 ;
+   		  	b1 = pgm_read_byte(q) ;
+   		  	b3 = pgm_read_byte(q+7) ;
+					if ( i == 0 )
+					{
+						b1 = 0 ;
+						b3 = 0 ;
+					}
+#else
         q = &font_10x16_x20_x7f[(c_mapped)*20] ;// + ((c-0x20)/16)*160];
-        for(char i=11; i>=0; i--){
+        for(char i=11; i>=0; i--)
+				{
 	    /*top byte*/
             uint8_t b1 = i>1 ? pgm_read_byte(q) : 0;
 	    /*bottom byte*/
@@ -191,6 +256,7 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char d,uint8_t mode)
 //            uint8_t b2 = i>0 ? pgm_read_byte(++q) : 0;
 	    /*bottom byte*/
 //            uint8_t b4 = i>0 ? pgm_read_byte(10+q) : 0;
+#endif // SMALL_DBL
             q++;
             if(inv) {
                 b1=~b1;
@@ -422,9 +488,15 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 
   if (mode & DBLSIZE)
   {
+#ifdef SMALL_DBL
+   	fw = 8 ;
+   	xinc = 8 ;
+   	Lcd_lastPos = 8 ;
+#else
     fw += FWNUM ;
     xinc = 2*FWNUM;
     Lcd_lastPos = 2*FW;
+#endif
   }
   else
   {
@@ -530,9 +602,15 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
     }
     x-=fw;
   }
-  if (xn) {
+  if (xn)
+	{
+#ifdef SMALL_DBL
+    lcd_hline(xn-1, y+2*FH-4, ln);
+    lcd_hline(xn-1, y+2*FH-3, ln);
+#else
     lcd_hline(xn, y+2*FH-4, ln);
     lcd_hline(xn, y+2*FH-3, ln);
+#endif // SMALL_DBL
   }
   if(negative) lcd_putcAtt(x-fw,y,'-',mode);
 	asm("") ;
@@ -995,6 +1073,25 @@ static void lcdSendCtl2(uint8_t c1, uint8_t c2)
   lcdSendCtl(c2);
 }
 
+void lcdSetOrientation()
+{
+  lcdSendCtl(0xAE);             // turn-off
+  if (g_eeGeneral.SSD1306) {
+    if (g_eeGeneral.rotateScreen) {
+      lcdSendCtl2(0xA1, 0xC8);  // ADC = 1: reverse direction(SEG128->SEG1)
+    } else {                    // SHL = 1: reverse direction(COM64->COM1)
+      lcdSendCtl2(0xA0, 0xC0);  // ADC = 0: normal direction(SEG1->SEG128)
+    }
+  } else {
+    if (g_eeGeneral.rotateScreen) {
+      lcdSendCtl2(0xA0, 0xC8);  // ADC = 0: norm direction(SEG1->SEG132/SEG128)
+    } else {                    // SHL = 1: rev direction(COM64->COM1)
+      lcdSendCtl2(0xA1, 0xC0);  // ADC = 1: rev direction(SEG132/SEG128->SEG1)
+    }                           // SHL = 0: norm direction(COM1->COM64)
+  }
+  lcdSendCtl(0xAF);             // turn-on
+}
+
 void lcd_init()
 {
   LcdLock = 1 ;                 // Lock LCD data lines
@@ -1108,6 +1205,20 @@ const static prog_uchar APM Lcdinit[] =
 #endif
 } ;	
 
+#if defined(CPUM128) || defined(CPUM2561)
+void lcdSetOrientation()
+{
+  lcdSendCtl(0xAE);       // turn-off display
+  if (g_eeGeneral.rotateScreen) {
+    lcdSendCtl(0xA0);     // ADC = 0: norm direction(SEG1->SEG132/SEG128)
+    lcdSendCtl(0xC8);     // SHL = 1: rev direction(COM64->COM1)
+  } else {
+    lcdSendCtl(0xA1);     // ADC = 1: rev direction(SEG132/SEG128->SEG1)
+    lcdSendCtl(0xC0);     // SHL = 0: norm direction(COM1->COM64)
+  }
+  lcdSendCtl(0xAF);       // turn-on display
+}
+#endif
 
 void lcd_init()
 {
@@ -1127,14 +1238,7 @@ void lcd_init()
 	  lcdSendCtl(pgm_read_byte(&Lcdinit[i]) ) ;
 	}
 #if defined(CPUM128) || defined(CPUM2561)
-  if (g_eeGeneral.rotateScreen) {
-    lcdSendCtl(0xA0);     // ADC = 0: norm direction(SEG1->SEG132/SEG128)
-    lcdSendCtl(0xC8);     // SHL = 1: rev direction(COM64->COM1)
-  } else {
-    lcdSendCtl(0xA1);     // ADC = 1: rev direction(SEG132/SEG128->SEG1)
-    lcdSendCtl(0xC0);     // SHL = 0: norm direction(COM1->COM64)
-  }
-  lcdSendCtl(0xAF);       // turn-on display
+  lcdSetOrientation();
 #endif
 	lcdSetContrast() ;
 //	LcdLock = 0 ;						// Free LCD data lines

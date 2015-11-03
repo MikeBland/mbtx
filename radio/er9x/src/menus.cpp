@@ -661,12 +661,22 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 			{
 				x -= 4 ;
 			}
+#ifdef SMALL_DBL
+			else
+			{
+				x += 2 ;
+			}
+#endif // SMALL_DBL
 			if ( style & TELEM_LABEL )
 			{
 				x += FW+4 ;
 			}
 			att &= DBLSIZE | INVERS | BLINK ;
+#ifdef SMALL_DBL
+      putsTime(x-FW-2+5, y, val, att, att) ;
+#else
       putsTime(x-FW, y, val, att, att) ;
+#endif // SMALL_DBL
 			displayed = 1 ;
     	unit = channel + 2 + '1';
 			xbase -= FW ;
@@ -2205,7 +2215,7 @@ void menuScaleOne(uint8_t event)
 }
 
 #ifdef V2
-#ifdef USE_ADJUSTERS
+#if defined(CPUM128) || defined(CPUM2561)
 void menuProcAdjust(uint8_t event)
 {
 	TITLE("GVAR Adjust");
@@ -6521,7 +6531,11 @@ void menuProc0(uint8_t event)
         putsVBat( 6*FW+1, 2*FH, att|NO_UNIT);
         lcd_putc( 6*FW+2, 3*FH, 'V');
 
+#ifdef SMALL_DBL
+					displayTimer( x+14*FW-3+2, FH*2, 0, DBLSIZE ) ;
+#else
 					displayTimer( x+14*FW-3, FH*2, 0, DBLSIZE ) ;
+#endif // SMALL_DBL
           putsTmrMode(x+7*FW-FW/2,FH*3,0,0);
 
 				i = getFlightPhase() ;
@@ -6920,7 +6934,11 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
     }
     else  // New Timer2 display
     {
+#ifdef SMALL_DBL
+			displayTimer( 27+5*FW, FH*5, 1, DBLSIZE ) ;
+#else
 			displayTimer( 30+5*FW, FH*5, 1, DBLSIZE ) ;
+#endif // SMALL_DBL
       putsTmrMode( 30-2*FW-FW/2,FH*6, 0, 0x80 ) ;
     }
 //extern uint16_t Tval ;
@@ -9923,8 +9941,19 @@ void menuProcModelIndex(uint8_t event)
 	static MState2 mstate;
 	EditType = EE_MODEL ;
 
-	event = indexProcess( event, &mstate, MODEL_EXTRA ) ;
-	mstate.check_columns(event, IlinesCount-1 ) ;
+#ifdef V2
+#if defined(CPUM128) || defined(CPUM2561)
+	if ( PopupData.PopupActive == 0 )
+	{
+#endif // 128/2561
+#endif // V2
+		event = indexProcess( event, &mstate, MODEL_EXTRA ) ;
+		mstate.check_columns(event, IlinesCount-1 ) ;
+#ifdef V2
+#if defined(CPUM128) || defined(CPUM2561)
+	}
+#endif // 128/2561
+#endif // V2
 	
 	switch ( MenuControl.SubmenuIndex )
 	{
@@ -9949,7 +9978,7 @@ void menuProcModelIndex(uint8_t event)
 #endif
 		case M_GLOBALS :
 #ifdef V2
-#if defined(CPUM128) || defined(CPUM2561)
+#ifdef USE_ADJUSTERS
 			if ( PopupData.PopupActive == 0 )
 			{
 				PopupData.PopupIdx = 0 ;
@@ -10012,14 +10041,13 @@ Str_Protocol
 #endif // V2
 			 
 			displayIndex( n_Strings, MODEL_EXTRA, 7, sub ) ;
-		break ;
 
 #ifdef V2
 #ifdef USE_ADJUSTERS
 			if ( PopupData.PopupActive )
 			{
 //				uint8_t popaction = doPopup( PSTR("GVARS\0GVadjusters\0Scalers"), 7, 13 ) ;
-				uint8_t popaction = doPopup( PSTR("GVARS\0GVadjusters"), 7, 13 ) ;
+				uint8_t popaction = doPopup( PSTR("GVARS\0GVadjusters"), 3, 13 ) ;
   			if ( popaction == POPUP_SELECT )
 				{
 					uint8_t popidx = PopupData.PopupSel ;
@@ -10045,6 +10073,7 @@ Str_Protocol
 			}
 #endif // 128/2561
 #endif // V2
+		break ;
 		 
 		case M_MGENERAL :
 		{	
@@ -10632,6 +10661,9 @@ Str_Protocol
 						break;
 					case M_SymaX:
 						s=PSTR(FWx10"\002"M_SYMAX_STR);
+						break;
+					case M_CX10:
+						s=PSTR(FWx10"\002"M_CX10_STR);
 						break;
 					default:
 						s=PSTR(FWx10"\000"M_NONE_STR);

@@ -1636,8 +1636,12 @@ void putWarnSwitch( uint8_t x, uint8_t idx )
 
 void putsDblSizeName( uint8_t y )
 {
+#ifdef SMALL_DBL
+	lcd_putsnAtt( 24, y, g_model.name, 10, DBLSIZE | BSS ) ;
+#else	
 	for(uint8_t i=0;i<sizeof(g_model.name);i++)
 		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
+#endif
 }
 
 #ifdef XSW_MOD

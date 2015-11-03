@@ -54,7 +54,7 @@
 #undef	SWITCH_MAPPING
 #endif
 
-#define USE_ADJUSTERS			1
+//#define USE_ADJUSTERS			1
 
 #if defined(CPUM128) || defined(CPUM2561)
 #define USE_ADJUSTERS			1
@@ -1377,6 +1377,8 @@ int16_t getSvFifo( void ) ;
 void serialVoiceTx( uint8_t byte ) ;
 uint8_t throttleReversed( void ) ;
 void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index ) ;
+
+#define SMALL_DBL
 
 #endif // er9x_h
 /*eof*/
