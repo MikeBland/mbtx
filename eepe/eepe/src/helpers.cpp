@@ -2785,6 +2785,8 @@ uint8_t throttleReversed( EEGeneral *g_eeGeneral, ModelData *g_model )
 
 int Found9Xtreme ;
 
+QString VolNames[8] ;
+
 QString FindErskyPath( int type )
 {
     int pathcount=0;
@@ -2792,6 +2794,17 @@ QString FindErskyPath( int type )
     QStringList drives;
     QString eepromfile;
     QString fsname;
+		int x = 0 ;
+
+		VolNames[0] = "" ;
+		VolNames[1] = "" ;
+		VolNames[2] = "" ;
+		VolNames[3] = "" ;
+		VolNames[4] = "" ;
+		VolNames[5] = "" ;
+		VolNames[6] = "" ;
+		VolNames[7] = "" ;
+
 #if defined WIN32 || !defined __GNUC__
     foreach( QFileInfo drive, QDir::drives() )
 		{
@@ -2801,12 +2814,12 @@ QString FindErskyPath( int type )
       DWORD dwMaxFileNameLength=256;
       DWORD dwFileSystemFlags=0;
 
-
       bool ret = GetVolumeInformationW( (WCHAR *) drive.absolutePath().utf16(),szVolumeName,256,&dwSerialNumber,&dwMaxFileNameLength,&dwFileSystemFlags,szFileSystemName,256);
       if(ret)
 			{
 				Found9Xtreme = 0 ;
         QString vName=QString::fromUtf16 ( (const ushort *) szVolumeName) ;
+				VolNames[x++] = vName ;
 				if ( (vName.contains("ERSKY_9X")) || (vName.contains("9XTREME")) )
 				{
 					if ( vName.contains("9XTREME") )
@@ -2818,7 +2831,7 @@ QString FindErskyPath( int type )
 					{
 						eepromfile = eepromfile.left( eepromfile.size() - 1 ) ;
 					}
-          eepromfile.append( ( type == 1 ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
+          eepromfile.append( ( type == 1 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
           if (QFile::exists(eepromfile))
 					{
             pathcount++;

@@ -223,7 +223,7 @@ void printDialog::printMixes()
 
         //QString srcStr = SRC_STR;
         //str += " " + srcStr.mid(CONVERT_MODE(md->srcRaw+1)*4,4);
-        str += getSourceStr(g_eeGeneral->stickMode,md->srcRaw);
+        str += getSourceStr(g_eeGeneral->stickMode,md->srcRaw, g_model->modelVersion);
 
         if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,0) + ")";
         if(md->carryTrim) str += tr(" noTrim");

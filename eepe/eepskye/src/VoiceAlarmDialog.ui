@@ -48,6 +48,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can select from all the sources: Sticks, Potentiometers, Channels, PPM inputs (Trainer Port), Scalers, Telemetry, GVARs, etc. These, combined with a function, can be used to generate alarms, or just let the nice lady that lives inside your radio tell you the source values. If a source is selected, its current value will be displayed to the right of the word “Source”.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Source</string>
    </property>
@@ -106,6 +109,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here we set a logical condition that compares the source value with another value in order to verify if the condition is true or not. It is, in effect, a logical switch. For example:&lt;/p&gt;&lt;p&gt;Imagine we have analog Port 1 (A1=) as source, and we want to play an alarm if the voltage drops below a certain level. We select the function “v&amp;lt;val”. This means that IF the voltage on A1 (v) is smaller than (&amp;lt;) the value we set (val), then the condition will be met (TRUE). The “function switch” will turn on, triggering the playing of a voice or audio file and/or vibration.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Function</string>
    </property>
@@ -135,6 +141,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the set value to which the source value is compared by the logical function. If the logical condition is verified, the “function switch” will turn on, triggering voice, audio and/or vibration events.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Value</string>
    </property>
@@ -157,6 +166,9 @@
      <width>52</width>
      <height>21</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A physical or logical switch can be used to play a source value, like telemetry, GVAR, or stick position, or to play voice files when turning switches ON or OFF.&lt;/p&gt;&lt;p&gt;This field is normally left at “---” for alarms.&lt;/p&gt;&lt;p&gt;You can select any of the physical switches and the logical switches as well as their inverse.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Switch</string>
@@ -351,6 +363,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This field allows us to set how the Voice/Audio/Haptic alarm will be played.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;On – &lt;/span&gt;The event/file will be played&lt;span style=&quot; color:#000000;&quot;&gt; once&lt;/span&gt; when either the physical/logical switch is ON, or the “function switch” is ON (logical condition is TRUE), depending on what is being used.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Off – &lt;/span&gt;The source, file, or alarm will be played once when either the physical/logical switch is OFF or the “function switch” is OFF (logical condition is FALSE), depending on what is being used.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Both – &lt;/span&gt;This plays one file once when the switch is turned ON, and the consecutive file once when the switch is turned OFF. &lt;/p&gt;&lt;p&gt;For example, suppose you have two files. Flaps1 and Flaps2. You select Flaps 1. &lt;/p&gt;&lt;p&gt;When you turn the switch ON, Flaps 1 will be played. The second file (Flaps 2), which must be the consecutive file &amp;quot;number/Name&amp;quot; on the SD Card, will be played when you turn the switch OFF.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;1,2 ,3 ,4... – &lt;/span&gt;This repeats a file or event every “n” seconds, from 1 to 30 seconds.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Once -&lt;/span&gt; This will play a file or source once at startup, or when the model is selected from the &amp;quot;Model Select&amp;quot; menu.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;All-&lt;/span&gt; To be used with a 3 position or 6 position switch. Just select the first file. This file corresponds to the first position of the switch, and all the consecutive files will be matched with the other switch positions&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Rate</string>
    </property>
@@ -363,6 +378,9 @@
      <width>52</width>
      <height>21</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option causes the Tx to vibrate when voice or audio alarms or events are sounded. Select one of the three preset vibration patterns: Haptic1, Haptic2, Haptic3.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Haptic</string>
@@ -437,6 +455,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you select the type of alarm. The options are “Number or Name” to play a voice file, “Audio” for a warning sound file, or “------” &lt;span style=&quot; background-color:transparent;&quot;&gt;for no &lt;/span&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt;audio or voice.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>File Type</string>
    </property>
@@ -465,6 +486,9 @@
      <width>52</width>
      <height>21</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the File Type is set for example to Name, you will be able to select the voice file name in this field. by pressing [MENU LONG], a list of all user voice files on the SD Card will be displayed. Pressing [MENU ] when a file is highlighted will cause the radio to play it (so you can check that you've got the right one). [MENU LONG] will select the file When Number is selected you can select a numbered voice file file, or just type the number. If you scroll to the end of the numbered files you can also select GVARs and Scalers&lt;/p&gt;&lt;p&gt;If the File Type is set to audio you can select some pre-programmed sounds. These are generated internally by the ErSky9x firmware.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>File</string>
@@ -535,6 +559,9 @@
      <height>21</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;As the name says, this option will play the source value either&lt;span style=&quot; text-decoration: underline;&quot;&gt; before&lt;/span&gt; or&lt;span style=&quot; text-decoration: underline;&quot;&gt; after&lt;/span&gt; the selected voice file/audio.&lt;/p&gt;&lt;p&gt;Before we had the Voice Alarms menu, two voice switches were required to say, for example:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;“Flight pack voltage” and then the telemetry value “Seven point three”.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Now with the Play Source option, we can do the whole announcement in one menu. The options for Play Source are:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Before –&lt;/span&gt; the source value will be played before the file.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;After –&lt;/span&gt; the source value will be played after the selected voice file.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;No –&lt;/span&gt; The source won't be played. Only a voice file, audio or haptic will be played.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Play Source</string>
    </property>
@@ -572,6 +599,9 @@
      <width>81</width>
      <height>21</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this option is set to PLAY, the radio will announce “No Telemetry” if a telemetry event (source) is triggered but the Tx is not receiving a valid telemetry signal. Some people find this annoying so you have the alternative of MUTE. You decide.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>On No Telemetry</string>

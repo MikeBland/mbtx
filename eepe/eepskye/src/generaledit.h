@@ -63,7 +63,7 @@ private slots:
     void on_alarmwarnChkB_stateChanged(int );
     void on_tabWidget_currentChanged(int index);
 
-    void on_battCalib_editingFinished();
+//    void on_battCalib_editingFinished();
     void on_ana1Neg_editingFinished();
     void on_ana2Neg_editingFinished();
     void on_ana3Neg_editingFinished();
@@ -106,14 +106,14 @@ private slots:
 		void on_inactVolumeSB_editingFinished() ;
     void on_backlightautoSB_editingFinished();
     void on_backlightswCB_currentIndexChanged(int index);
-    void on_battcalibDSB_editingFinished();
+//    void on_battcalibDSB_editingFinished();
     void on_battwarningDSB_editingFinished();
     void on_contrastSB_editingFinished();
 		void on_volumeSB_editingFinished();
     void on_beepFlashChkB_stateChanged(int );
     void on_speakerPitchSB_editingFinished();
     void on_hapticStengthSB_editingFinished();
-    void on_soundModeCB_currentIndexChanged(int index);
+//    void on_soundModeCB_currentIndexChanged(int index);
     void on_tabWidget_selected(QString );
     void on_PotScrollEnableChkB_stateChanged(int );
 		void on_StickScrollEnableChkB_stateChanged(int ) ;

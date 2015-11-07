@@ -75,14 +75,14 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
     ui->contrastSB->setValue(g_eeGeneral.contrast);
     ui->battwarningDSB->setValue((double)g_eeGeneral.vBatWarn/10);
-    ui->battcalibDSB->setValue((double)g_eeGeneral.vBatCalib/10);
+//    ui->battcalibDSB->setValue((double)g_eeGeneral.vBatCalib/10);
     ui->battCalib->setValue((double)g_eeGeneral.vBatCalib/10);
     ui->backlightautoSB->setValue(g_eeGeneral.lightAutoOff*5);
     ui->backlightStickMove->setValue(g_eeGeneral.lightOnStickMove*5);
     ui->inactimerSB->setValue(g_eeGeneral.inactivityTimer+10);
     ui->inactVolumeSB->setValue(g_eeGeneral.inactivityVolume+21) ;
 
-    ui->soundModeCB->setCurrentIndex(g_eeGeneral.speakerMode);
+//    ui->soundModeCB->setCurrentIndex(g_eeGeneral.speakerMode);
     ui->speakerPitchSB->setValue(g_eeGeneral.speakerPitch);
     ui->hapticStengthSB->setValue(g_eeGeneral.hapticStrength);
 
@@ -119,6 +119,38 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->brightSB->setValue(100-g_eeGeneral.bright ) ;
     ui->brightGreenSB->setValue(100-g_eeGeneral.bright_white ) ;
     ui->brightBlueSB->setValue(100-g_eeGeneral.bright_blue ) ;
+
+		switch ( rData->type )
+		{
+			case 0 :
+			case 1 :
+				ui->brightGreenSB->hide() ;
+				ui->brightBlueSB->hide() ;
+				ui->label_BrightGreen->hide() ;
+				ui->label_BrightBlue->hide() ;
+				ui->label_Bright->setText("Brightness") ;
+			break ;
+				
+			case 2 :
+				ui->label_Bright->setText("Brightness (Colour)") ;
+				ui->label_BrightGreen->setText("Brightness (White)") ;
+				ui->label_BrightGreen->show() ;
+				ui->label_BrightBlue->hide() ;
+				ui->brightGreenSB->show() ;
+				ui->brightBlueSB->hide() ;
+			break ;
+
+			case 3 :
+				ui->brightGreenSB->show() ;
+				ui->brightBlueSB->show() ;
+				ui->label_BrightGreen->show() ;
+				ui->label_BrightBlue->show() ;
+				ui->label_Bright->setText("Brightness (Red)") ;
+				ui->label_BrightGreen->setText("Brightness (Green)") ;
+				ui->label_BrightBlue->setText("Brightness (Blue)") ;
+			break ;
+		}
+
 		ui->BtBaudrateCB->setCurrentIndex(g_eeGeneral.bt_baudrate) ;
 		ui->RotaryDivisorCB->setCurrentIndex(g_eeGeneral.rotaryDivisor) ;
 		ui->CurrentCalibSB->setValue(g_eeGeneral.current_calib ) ;
@@ -880,12 +912,12 @@ void GeneralEdit::on_battwarningDSB_editingFinished()
     updateSettings();
 }
 
-void GeneralEdit::on_battcalibDSB_editingFinished()
-{
-    g_eeGeneral.vBatCalib = ui->battcalibDSB->value()*10;
-    ui->battCalib->setValue(ui->battcalibDSB->value());
-    updateSettings();
-}
+//void GeneralEdit::on_battcalibDSB_editingFinished()
+//{
+//    g_eeGeneral.vBatCalib = ui->battcalibDSB->value()*10;
+//    ui->battCalib->setValue(ui->battcalibDSB->value());
+//    updateSettings();
+//}
 
 void GeneralEdit::on_backlightswCB_currentIndexChanged(int index)
 {
@@ -1226,12 +1258,12 @@ void GeneralEdit::on_ana8Pos_editingFinished()
     updateSettings();
 }
 
-void GeneralEdit::on_battCalib_editingFinished()
-{
-    g_eeGeneral.vBatCalib = ui->battCalib->value()*10;
-    ui->battcalibDSB->setValue(ui->battCalib->value());
-    updateSettings();
-}
+//void GeneralEdit::on_battCalib_editingFinished()
+//{
+//    g_eeGeneral.vBatCalib = ui->battCalib->value()*10;
+//    ui->battcalibDSB->setValue(ui->battCalib->value());
+//    updateSettings();
+//}
 
 
 void GeneralEdit::on_tabWidget_currentChanged(int index)
@@ -1353,11 +1385,11 @@ void GeneralEdit::on_hapticStengthSB_editingFinished()
     updateSettings();
 }
 
-void GeneralEdit::on_soundModeCB_currentIndexChanged(int index)
-{
-    g_eeGeneral.speakerMode = index;
-    updateSettings();
-}
+//void GeneralEdit::on_soundModeCB_currentIndexChanged(int index)
+//{
+//    g_eeGeneral.speakerMode = index;
+//    updateSettings();
+//}
 
 void GeneralEdit::on_tabWidget_selected(QString )
 {

@@ -1721,6 +1721,10 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 		dest->modelVersion = 3 ;
 	}
 	dest->protocol = er9x::EmodelData.protocol ;
+	if ( dest->protocol > 2 )
+	{
+		dest->protocol -= 2 ;
+	}
 	dest->ppmNCH = er9x::EmodelData.ppmNCH ;
 	dest->thrTrim = er9x::EmodelData.thrTrim ;
 	dest->xnumBlades = er9x::EmodelData.numBlades ;

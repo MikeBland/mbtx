@@ -304,6 +304,9 @@ private slots:
     void on_xppmFrameLengthDSB_editingFinished();
     void ControlCurveSignal(bool flag);
     void on_DSM_Type_currentIndexChanged(int index);
+    void on_xDSM_Type_currentIndexChanged(int index);
+    void on_SubProtocolCB_currentIndexChanged(int index);
+    void on_xSubProtocolCB_currentIndexChanged(int index);
     void on_pxxRxNum_editingFinished();
 		void on_VoiceNumberSB_editingFinished() ;
 		void on_autoLimitsSB_editingFinished() ;

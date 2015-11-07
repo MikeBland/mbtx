@@ -800,6 +800,7 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->show() ;
+        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
         ui->pxxRxNum->setEnabled(false);
         ui->typeCB->setEnabled(false);
         ui->countryCB->setEnabled(false);
@@ -900,6 +901,7 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(false);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->show() ;
+        ui->xSubProtocolCB->setCurrentIndex(g_model.xsub_protocol )	;
         ui->xPxxRxNum->setEnabled(false);
         ui->xtypeCB->setEnabled(false);
         ui->xcountryCB->setEnabled(false);
@@ -4474,7 +4476,31 @@ void ModelEdit::on_DSM_Type_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.ppmNCH = index;
+    g_model.sub_protocol = index;
+    updateSettings();
+}
+
+void ModelEdit::on_xDSM_Type_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.xsub_protocol = index;
+    updateSettings();
+}
+
+void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.sub_protocol = index;
+    updateSettings();
+}
+
+void ModelEdit::on_xSubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.xsub_protocol = index;
     updateSettings();
 }
 

@@ -63,7 +63,16 @@
       <number>2</number>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <property name="margin">
+      <property name="leftMargin">
+       <number>2</number>
+      </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>2</number>
+      </property>
+      <property name="bottomMargin">
        <number>2</number>
       </property>
       <item>
@@ -963,6 +972,9 @@ QPushButton:pressed {
                 <height>21</height>
                </size>
               </property>
+              <property name="toolTip">
+               <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This allows communication between eepskye and a transmitter over Bluetooth in a trainer setup, or an arduino board via serial. The arduino can then output pulses for 16 servos.&lt;/p&gt;&lt;p&gt;This is very used when learning to work with ErSky9x, and also when programming a new model in eepskye, as you can see exactly what is happening on the model while you program it. If you use this feature, please REMOVE PROPELLERS AND ROTORS from your models. Also program a throttle-Cut switch. Play safe. The project page is:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;http://openrcforums.com/forum/viewtopic.php?f=91&amp;amp;t=5476&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Serial in eepskye&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              </property>
               <property name="text">
                <string>Send (SBUS)</string>
               </property>
@@ -1754,7 +1766,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1797,7 +1818,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1840,7 +1870,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1883,7 +1922,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1926,7 +1974,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1969,7 +2026,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_8">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2025,7 +2091,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_10">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2081,7 +2156,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_13">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2124,7 +2208,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_14">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2167,7 +2260,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_15">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2210,7 +2312,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_17">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2253,7 +2364,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_19">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2296,7 +2416,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_20">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2343,7 +2472,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_11">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2386,7 +2524,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_12">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2429,7 +2576,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_16">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2472,7 +2628,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_18">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2515,7 +2680,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_21">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2558,7 +2732,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_22">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2685,7 +2868,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_24">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2728,7 +2920,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_25">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2771,7 +2972,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_26">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2808,7 +3018,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_27">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2857,7 +3076,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_28">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2900,7 +3128,16 @@ QPushButton:pressed {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_29">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>

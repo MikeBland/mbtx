@@ -13,6 +13,9 @@
 #endif
 //#endif
 
+#include <QMessageBox>
+#include <QScrollBar>
+
 extern QString AvrdudeOutput ;
 
 avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg, QString wTitle, int closeBehaviour) :

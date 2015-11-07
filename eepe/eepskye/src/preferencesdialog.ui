@@ -137,6 +137,9 @@
    </item>
    <item row="1" column="0">
     <widget class="QLabel" name="label_13">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This setting determines the sequence of the first four channels when setting up a new model or applying a template. It is the order in which the outputs will be available from the receiver. The default channel order in ErSky9x is RETA.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
       <string>Default Channel Order</string>
      </property>
@@ -276,6 +279,9 @@ This is used by the templated to determine which channel goes to what number out
    </item>
    <item row="2" column="0">
     <widget class="QLabel" name="label_14">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stick Mode determines how the four physical stick axes are assigned to the four primary control inputs (rudder, elevator, throttle, aileron). Mode 1 uses the left stick for rudder and elevator and the right for throttle and aileron, while Mode 2 has rudder and throttle on the left stick and aileron and elevator on the right (they are sometimes called “throttle right” and “throttle left” modes respectively). Modes 3 and 4 are similar except that rudder is on the right and aileron on the left.&lt;/p&gt;&lt;p&gt;ErSky9x can be set to any of the four stick modes, but the chosen mode must be compatible with the physical setup of the transmitter. If Mode 1 or 3 is selected, the “vertical” axis on the right stick controls throttle and normally has a friction or ratchet mechanism, while the left stick must be spring-centred. If Mode 2 or 4 is selected, the throttle friction mechanism must be on the left stick. Transmitters can usually be purchased as Mode 1 or Mode 2. The 9x is relatively easy to convert between right and left throttle configurations by interchanging the spring and friction mechanisms. For the 9XR-PRO, replacement stick assemblies are available in the two physical configurations. Note that Stick Mode is quite distinct from Channel Order; the two must not be confused. Use Stick Mode to determine how the sticks are configured to control the model: for example, whether you want to use the left or the right stick to control elevator. Use Channel Order to determine which channel will be used to control each servo or other control mechanism in the model: for example, to match the fixed channel order of a BNF Ultramicro model (TAER).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
       <string>Default Stick Mode</string>
      </property>
