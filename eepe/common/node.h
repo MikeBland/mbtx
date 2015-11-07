@@ -43,6 +43,9 @@
 #define NODE_H
 
 #include <QtGui>
+#include <QGraphicsItem>
+#include <QSpinBox>
+
 
 #define DEFAULT_BALL_SIZE 14
 #define BALL_HEIGHT 2

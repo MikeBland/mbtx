@@ -4,6 +4,11 @@
 #include <QtGui>
 #include <QtXml>
 #include "pers.h"
+#include <QComboBox>
+#include <QSpinBox>
+#include <QCheckBox>
+
+//#include "../eepskye/src/myeeprom.h"
 
 #ifdef SKY
 #define TMR_NUM_OPTION  (TMR_VAROFS+24)

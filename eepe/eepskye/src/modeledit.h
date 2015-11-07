@@ -7,6 +7,12 @@
 #include "pers.h"
 #include "mixerslist.h"
 
+#include <QSpinBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QTextBrowser>
+#include <QCheckBox>
+
 namespace Ui {
     class ModelEdit;
 }

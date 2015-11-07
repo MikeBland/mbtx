@@ -5,6 +5,8 @@
 #include "pers.h"
 #include "myeeprom.h"
 #include "helpers.h"
+#include <QFileDialog>
+#include <QMessageBox>
 
 
 

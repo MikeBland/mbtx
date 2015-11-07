@@ -10,6 +10,8 @@
 #include "TemplateDialog.h"
 
 #include <QtGui>
+#include <QMessageBox>
+#include <QMenu>
 
 #define BC_BIT_RUD (0x01)
 #define BC_BIT_ELE (0x02)

@@ -1,6 +1,8 @@
 #include "donatorsdialog.h"
 #include "ui_donatorsdialog.h"
 #include <QtGui>
+#include <QScrollBar>
+
 
 donatorsDialog::donatorsDialog(QWidget *parent) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),

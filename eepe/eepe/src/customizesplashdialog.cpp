@@ -3,7 +3,8 @@
 
 #include <QtGui>
 #include "helpers.h"
-
+#include <QFileDialog>
+#include <QMessageBox>
 
 
 customizeSplashDialog::customizeSplashDialog(QWidget *parent) :

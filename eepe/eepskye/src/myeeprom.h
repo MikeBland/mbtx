@@ -17,6 +17,7 @@
 #define eeprom_h
 
 #include <stdint.h>
+//#include "pers.h"
 
 #ifndef PACK
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))

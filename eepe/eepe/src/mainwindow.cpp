@@ -45,6 +45,16 @@
 #include <QNetworkReply>
 #include <QNetworkProxy>
 #include <QNetworkProxyFactory>
+#include <QMdiArea>
+#include <QApplication>
+#include <QStatusBar>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QAction>
+#include <QMenu>
+#include <QMdiSubWindow>
+#include <QMenuBar>
+#include <QToolBar>
 
 #include "mainwindow.h"
 #include "mdichild.h"
@@ -56,8 +66,8 @@
 #include "customizesplashdialog.h"
 #include "stamp-eepe.h"
 #include "serialdialog.h"
-#include "..\..\common\telemetry.h"
-#include "..\..\common\reviewOutput.h"
+#include "../common/telemetry.h"
+#include "../common/reviewOutput.h"
 #include "simulatordialog.h"
 
 #define DONATE_ER_STR "https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=B9RNATGH7DTQ6"

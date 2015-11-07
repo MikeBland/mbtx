@@ -47,6 +47,16 @@
 #include <QNetworkProxyFactory>
 #include <QFileInfo>
 #include <QSslConfiguration>
+#include <QStatusBar>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QAction>
+#include <QMenu>
+#include <QMdiSubWindow>
+#include <QMenuBar>
+#include <QToolBar>
+#include <QApplication>
+#include <QMdiArea>
 
 #include "mainwindow.h"
 #include "pers.h"
@@ -64,6 +74,7 @@
 #include "helpers.h"
 #include "../../common/telemetry.h"
 #include "simulatordialog.h"
+//#include "qmdiarea.h"
 
 #if defined WIN32 || !defined __GNUC__
 #include <windows.h>
@@ -133,7 +144,7 @@ int ReleaseChecked ;
 
 MainWindow::MainWindow()
 {
-    mdiArea = new QMdiArea;
+    mdiArea = new QMdiArea();
     mdiArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     mdiArea->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
     setCentralWidget(mdiArea);

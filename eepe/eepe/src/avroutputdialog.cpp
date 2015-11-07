@@ -1,6 +1,8 @@
 #include "avroutputdialog.h"
 #include "ui_avroutputdialog.h"
 #include <QtGui>
+#include <QScrollBar>
+#include <QMessageBox>
 
 extern QString AvrdudeOutput ;
 

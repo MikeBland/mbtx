@@ -2,6 +2,7 @@
 #include "ui_burnconfigdialog.h"
 #include "avroutputdialog.h"
 #include <QtGui>
+#include <QFileDialog>
 
 burnConfigDialog::burnConfigDialog(QWidget *parent) :
     QDialog(parent),

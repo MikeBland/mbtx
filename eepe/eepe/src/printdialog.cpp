@@ -4,6 +4,11 @@
 #include "helpers.h"
 #include <QtGui>
 
+#include <QPrinter>
+
+#include <QPrintDialog>
+
+
 printDialog::printDialog(QWidget *parent, EEGeneral *gg, ModelData *gm) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
     ui(new Ui::printDialog)

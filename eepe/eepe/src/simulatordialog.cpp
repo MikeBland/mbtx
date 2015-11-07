@@ -1,12 +1,13 @@
 #include "simulatordialog.h"
 #include "ui_simulatordialog.h"
-#include "../../common\node.h"
+#include "../common/node.h"
 #include <QtGui>
 #include <stdint.h>
 #include "pers.h"
 #include "helpers.h"
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
+#include <QMessageBox>
 
 #define GBALL_SIZE  20
 #define GVARS	1
