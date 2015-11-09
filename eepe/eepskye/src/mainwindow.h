@@ -42,13 +42,14 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
-#include <QNetworkAccessManager>
-#include <QDateTime>
 #include "downloaddialog.h"
 
+#include <QMainWindow>
 
+class QNetworkAccessManager;
+class QDateTime;
 class MdiChild;
+
 QT_BEGIN_NAMESPACE
 class QAction;
 class QMenu;

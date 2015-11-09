@@ -3,13 +3,14 @@
 
 #include <QDialog>
 #include <QtGui>
-#include <QPen>
-#include <QSpinBox>
-#include <QComboBox>
-#include <QLabel>
-#include <QTextBrowser>
-#include <QSpinBox>
-#include <QCheckBox>
+
+class QPen;
+class QSpinBox;
+class QComboBox;
+class QLabel;
+class QTextBrowser;
+class QSpinBox;
+class QCheckBox;
 
 #include "pers.h"
 #include "mixerslist.h"

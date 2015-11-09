@@ -3,15 +3,15 @@
 
 #include <QDialog>
 #include <QtGui>
-#include <QPen>
 #include "pers.h"
 #include "mixerslist.h"
 
-#include <QSpinBox>
-#include <QComboBox>
-#include <QLabel>
-#include <QTextBrowser>
-#include <QCheckBox>
+class QPen;
+class QSpinBox;
+class QComboBox;
+class QLabel;
+class QTextBrowser;
+class QCheckBox;
 
 namespace Ui {
     class ModelEdit;

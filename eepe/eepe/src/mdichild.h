@@ -49,12 +49,12 @@
 #define FILE_TYPE_EEPG 5
 
 #include <QtGui>
-#include <QtXml>
 #include "pers.h"
 #include "myeeprom.h"
 #include "helpers.h"
 #include "modeledit.h"
 
+class QtXml;
 
 
 #define ER9X_EEPROM_FILE_TYPE        "ER9X_EEPROM_FILE"

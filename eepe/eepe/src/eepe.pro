@@ -19,7 +19,6 @@ HEADERS += mainwindow.h \
     preferencesdialog.h \
     mixerslist.h \
     downloaddialog.h \
-    stamp-eepe.h \
     customizesplashdialog.h \
     serialdialog.h \
     VoiceAlarmDialog.h \

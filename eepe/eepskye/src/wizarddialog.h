@@ -14,8 +14,8 @@
 
 #ifndef WIZARDDIALOG_H
 #define WIZARDDIALOG_H
-#include <QWizard>
 #include "wizarddata.h" 
+#include <QWizard>
 
 QT_BEGIN_NAMESPACE
 class QCheckBox;

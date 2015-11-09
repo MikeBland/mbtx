@@ -12,6 +12,8 @@
 #include <QtGui>
 #include <QMessageBox>
 #include <QMenu>
+#include <QTextBrowser>
+
 
 #define BC_BIT_RUD (0x01)
 #define BC_BIT_ELE (0x02)

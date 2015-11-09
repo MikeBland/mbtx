@@ -4,8 +4,9 @@
 #include <QtGui>
 #include <QDialog>
 #include "pers.h"
-#include <QComboBox>
-#include <QLineEdit>
+
+class QComboBox;
+class QLineEdit;
 
 
 namespace Ui {

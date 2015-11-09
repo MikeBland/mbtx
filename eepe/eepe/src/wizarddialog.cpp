@@ -22,6 +22,8 @@
 #include <QLineEdit>
 #include <QRadioButton>
 #include <QString>
+#include <QComboBox>
+#include <QCheckBox>
 
 WizardDialog::WizardDialog(const EEGeneral & settings, unsigned int modelId, QWidget *parent):
   QWizard(parent),

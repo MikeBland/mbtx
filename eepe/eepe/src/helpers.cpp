@@ -4,6 +4,9 @@
 #include "pers.h"
 
 #include "helpers.h"
+#include <QComboBox>
+#include <QCheckBox>
+#include <QSpinBox>
 
 QString AudioAlarms[] = {
   "Warn1",

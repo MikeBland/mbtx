@@ -20,7 +20,6 @@ HEADERS += mainwindow.h \
     preferencesdialog.h \
     mixerslist.h \
     downloaddialog.h \
-    stamp-eepskye.h \
     customizesplashdialog.h \
     eeprom_rlc.h \
     VoiceAlarmDialog.h \

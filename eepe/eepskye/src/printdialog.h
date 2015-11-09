@@ -4,7 +4,8 @@
 #include <QDialog>
 #include <QtGui>
 #include "pers.h"
-#include <QTextEdit>
+
+class QTextEdit;
 
 namespace Ui {
     class printDialog;

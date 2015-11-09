@@ -3,9 +3,10 @@
 
 #include <QDialog>
 #include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QFile>
+
+class QNetworkReply;
+class QNetworkRequest;
+class QFile;
 
 
 namespace Ui {

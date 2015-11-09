@@ -1,8 +1,10 @@
 #include "downloaddialog.h"
 #include "ui_downloaddialog.h"
+
 #include <QMessageBox>
-#include <QNetworkAccessManager>
-#include <QNetworkProxy>
+#include <QNetworkReply>
+#include <QFile>
+
 
 downloadDialog::downloadDialog(QWidget *parent, QString src, QString tgt) :
     QDialog(parent),

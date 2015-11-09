@@ -55,6 +55,14 @@
 #include <QMdiSubWindow>
 #include <QMenuBar>
 #include <QToolBar>
+#include <QPen>
+#include <QSpinBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QTextBrowser>
+#include <QSpinBox>
+#include <QCheckBox>
+
 
 #include "mainwindow.h"
 #include "mdichild.h"
@@ -169,7 +177,7 @@ int ReleaseChecked ;
 
 void populateDownloads( QComboBox *b )
 {
-	b->clear() ;
+  b->clear() ;
   b->addItem( "er9x" ) ;
   b->addItem( "er9x - JETI" ) ;
   b->addItem( "er9x - FrSky" ) ;

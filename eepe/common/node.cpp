@@ -43,6 +43,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QPainter>
 #include <QStyleOption>
+#include <QSpinBox>
 
 #include "edge.h"
 #include "node.h"
