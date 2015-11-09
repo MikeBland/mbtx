@@ -58,6 +58,9 @@
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can write a description of what your mix does. Nice feature that helps you to keep track of your programming.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Comment</string>
    </property>
@@ -74,6 +77,9 @@
    <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0">
     <item row="0" column="1">
      <widget class="QLabel" name="label_13">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;Use this option to delay application of the mix, usually to delay the action of a switch. When the switch is turned on or off the mixer will wait the specified number of seconds before changing the value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Delay</string>
       </property>
@@ -81,6 +87,9 @@
     </item>
     <item row="0" column="2">
      <widget class="QLabel" name="label_14">
+      <property name="toolTip">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Use this option to slow the rate of change in the channel. When not zero these values will determine the maximum speed with which the value can change. The specified value is the number of seconds to go between -100% and 100%. When you select Slow it only applies to that mix, NOT to any others on the same channel.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
       <property name="text">
        <string>Slow</string>
       </property>
@@ -320,6 +329,9 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Fix Offset corrects an issue with previous versions of the firmware, which added offset values early in the mixing process and consequently had outcomes that were hard to calculate. Fix Offset instead adds offset values at the end of the mixing process, where their impact is clear and predictable. Fix Offset should only be turned OFF when using a model definition created under an earlier version of the firmware.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Fix Offset</string>
    </property>
@@ -344,6 +356,9 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
      <width>47</width>
      <height>0</height>
     </size>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;GVARs can also be used as Offset.When this box is checked, a GVAR (GV1-5) can be selected as Offset instead of a percentage value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Gvar</string>
@@ -416,6 +431,9 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
      <height>0</height>
     </size>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;GVARs can also be used as Weight.When this box is checked, a GVAR (GV1-5) can be selected as Weight instead of a percentage value.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Gvar</string>
    </property>
@@ -428,6 +446,9 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
      <width>81</width>
      <height>16</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Here you select the switch to control the mix. If a switch is not selected then the mix is ON by default. Options are the physical switches, the logical switches and the inverse of all of them.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Switch</string>
@@ -476,6 +497,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This value defines how the mix affects the channel. The three options are: Add, Multiply and Replace.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Multiplex</string>
    </property>
@@ -505,6 +529,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600; color:#000000;&quot;&gt;EnableExpoDR - &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This option is only visible when a stick is selected as source for the mix, and it is ON by d&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;efault. When OFF, any Expo and Rates applied previously to the input will be ignored and the raw value of the input will be used instead. When a channel is selected as Source for the mix the option will change to:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#000000;&quot;&gt;Use Output - &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000; background-color:transparent;&quot;&gt;When this option is ON, the R&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; text-decoration: underline; color:#000000; background-color:transparent;&quot;&gt;eal Output&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000; background-color:transparent;&quot;&gt; of the source channel, including the results of any safety switch and of the various settings in the Limits menu (which are applied after the mixer), is available to be used as input for the mix. The input appears as “OPx”, where “x” is the source channel number.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Disable Expo/Dr</string>
    </property>
@@ -517,6 +544,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <width>71</width>
      <height>16</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;When this is ON, any trim value for the channel will be carried through the mix. When OFF, any trim value is ignored. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Include Trim</string>
@@ -531,6 +561,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This value is &lt;/span&gt;&lt;span style=&quot; text-decoration: underline; color:#000000;&quot;&gt;added&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; to the value from the input. It can range from -125% to 125%. Default is 0%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Offset</string>
    </property>
@@ -544,6 +577,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This value &lt;/span&gt;&lt;span style=&quot; text-decoration: underline; color:#000000;&quot;&gt;multiplies&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; the value from the input. It can range from -125% to +125%. Default is 100%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Weight</string>
    </property>
@@ -556,6 +592,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <width>51</width>
      <height>16</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the input for the mix. It can be a Stick or Potentiometer, HALF, FULL, Switches, CYC1/2/3 (Heli), Trainer Inputs (PPM1-8), Mixer Channel Outputs (CH1-16), Real Channel Outputs (OP1-16), GVARs (GV1-5), THIS, and Scalers (SC1-8).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Source</string>
@@ -583,6 +622,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium;&quot;&gt;Here you can select an audible signal that will sound whenever a mix is turned on (only works when a switch is defined). You have an option of three different warning sounds. The sound clusters will play repeatedly.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Warning</string>
    </property>
@@ -596,6 +638,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <height>16</height>
     </rect>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Here you may select a Curve or apply Diff (Differential) or Expo (Exponential) to the mix.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Curve</string>
    </property>
@@ -608,6 +653,9 @@ Setting this value will cause a beep to be emmitted when this value is active.</
      <width>77</width>
      <height>20</height>
     </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;Add &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;–&lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;/&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This is the default – the mix is added to the previous values in the same channel. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;Multiply &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;–&lt;/span&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;/&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Use this to multiply the previous values in the same channel.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;Replace – &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This option is used in conjunction with a switch. When the switch is ON, a replace mix overrides all the previous mixes on the same channel.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="whatsThis">
     <string>Multiplexer
@@ -654,6 +702,9 @@ This determines how mixer values are added.
      <width>47</width>
      <height>0</height>
     </size>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;GVARs (GV1-5) can also be used when Differential (Diff) is selected.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="text">
     <string>Gvar</string>
@@ -795,6 +846,9 @@ This determines how mixer values are added.
      <pointsize>8</pointsize>
     </font>
    </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This option allows you to select in which Flight Mode(s) this particular mix is active; by default a mix is active in all Flight Modes. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
    <property name="text">
     <string>Flight Modes</string>
    </property>
@@ -922,6 +976,22 @@ This determines how mixer values are added.
    </property>
    <property name="whatsThis">
     <string>The source for the mixer</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_expo_comment">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>140</y>
+     <width>141</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600; color:#000000;&quot;&gt;EnableExpoDR - &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This option is only visible when a stick is selected as source for the mix, and it is ON by d&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;efault. When OFF, any Expo and Rates applied previously to the input will be ignored and the raw value of the input will be used instead. When a channel is selected as Source for the mix the option will change to:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600; color:#000000;&quot;&gt;Use Output - &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000; background-color:transparent;&quot;&gt;When this option is ON, the R&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; text-decoration: underline; color:#000000; background-color:transparent;&quot;&gt;eal Output&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000; background-color:transparent;&quot;&gt; of the source channel, including the results of any safety switch and of the various settings in the Limits menu (which are applied after the mixer), is available to be used as input for the mix. The input appears as “OPx”, where “x” is the source channel number.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Disable Expo/Dr</string>
    </property>
   </widget>
  </widget>

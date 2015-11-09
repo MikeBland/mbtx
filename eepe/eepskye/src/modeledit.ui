@@ -29,6 +29,9 @@
   <layout class="QGridLayout" name="gridLayout">
    <item row="13" column="0">
     <widget class="QPushButton" name="pushButton">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the eepskye Simulator and simulate the model being edited..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
      <property name="text">
       <string>Simulate</string>
      </property>
@@ -40,8 +43,11 @@
    </item>
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidget">
+     <property name="toolTip">
+      <string/>
+     </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>4</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -115,6 +121,9 @@
           <layout class="QGridLayout" name="gridLayout_26">
            <item row="1" column="0">
             <widget class="QLabel" name="label_2">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;OFF – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is OFF. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;ON – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is on, always counting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;THs, TH% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Select one of these to activate the timer based on the throttle stick position. When &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;THs&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; is selected, the timer starts whenever the stick is not at -100. The &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;TH%&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; option is the same except the timer speed is determined by stick position. When the stick is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the stick position.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;c1% to c16% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;These provide the proportional output of any channel from 1 to 16. When the channel is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the channel position.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>TriggerA</string>
              </property>
@@ -125,6 +134,9 @@
            </item>
            <item row="2" column="0">
             <widget class="QLabel" name="label_118">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;Trigger &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;B acts as an &amp;quot;AND&amp;quot; switch to “Trigger A”. That means you need two conditions for the Timer to start counting. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;If a &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;Trigger B s&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;witch is defined, then it needs to be ON for Trigger A to work. Options for Trigger B are any physical switch, any logical switch, any momentary switch and the inverse of any of them.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600;&quot;&gt;Switches – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;You can specify any physical switch or logical switch&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; so w&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;henever that switch is activated the timer counts. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;For example, if you want the timer to count when the ELE switch is on, set Trigger A to ON and Trigger B to ELE.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; background-color:transparent;&quot;&gt;Momentary switches -&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; A switch plus “m” (like TRNm) means “momentary”. Moving the switch onc&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;e to the ON position and back turns the timer ON. Moving it ON and OFF again turns the timer OFF. Try it with the TRNm switch. Flick the switch to toggle the timer ON and OFF.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>TriggerB</string>
              </property>
@@ -135,6 +147,9 @@
            </item>
            <item row="4" column="0">
             <widget class="QLabel" name="label_3">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;Here you can choose whether the timer counts up or down.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer Direction</string>
              </property>
@@ -162,6 +177,9 @@
                <height>16777215</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Tip to Set the timer on the TX.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;To set the time in steps of one minute highlight the field and press and hold the [MENU] key while setting the time. Press [MENU]/[EXIT] when done.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer Value</string>
              </property>
@@ -182,6 +200,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QLabel" name="label_95">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ErSky9x provides two fully programmable timers that can count either up or down. By default, the timers are set to OFF and are not operational.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer 1</string>
              </property>
@@ -192,6 +213,9 @@
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="label_228">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This resets the timer to its set value. Options are any physical switch, any logical switch, any momentary switch and the inverse of any of them. For example, imagine you set the TRN switch as the timer reset switch, and the timer is set to count down from 10:00 (ten minutes) with the throttle stick as trigger (THs). At any point if you hit the TRN switch, the timer will be reset to 10:00. If it is counting when you reset it, it will resume counting from the beginning.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Reset Switch</string>
              </property>
@@ -199,6 +223,9 @@
            </item>
            <item row="1" column="2">
             <widget class="QCheckBox" name="timer1BeepCdownCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time at 30, 20, 10, 5, 4, 3, 2, 1, 0 seconds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
@@ -209,6 +236,9 @@
            </item>
            <item row="2" column="2">
             <widget class="QCheckBox" name="timer1MinuteBeepCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time every full minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
@@ -223,6 +253,9 @@
           <layout class="QGridLayout" name="gridLayout_27">
            <item row="1" column="0">
             <widget class="QLabel" name="label_92">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;OFF – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is OFF. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;ON – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is on, always counting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;THs, TH% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Select one of these to activate the timer based on the throttle stick position. When &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;THs&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; is selected, the timer starts whenever the stick is not at -100. The &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;TH%&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; option is the same except the timer speed is determined by stick position. When the stick is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the stick position.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;c1% to c16% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;These provide the proportional output of any channel from 1 to 16. When the channel is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the channel position.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>TriggerA</string>
              </property>
@@ -233,6 +266,9 @@
            </item>
            <item row="2" column="0">
             <widget class="QLabel" name="label_119">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;Trigger &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;B acts as an &amp;quot;AND&amp;quot; switch to “Trigger A”. That means you need two conditions for the Timer to start counting. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;If a &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;Trigger B s&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;witch is defined, then it needs to be ON for Trigger A to work. Options for Trigger B are any physical switch, any logical switch, any momentary switch and the inverse of any of them.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600;&quot;&gt;Switches – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;You can specify any physical switch or logical switch&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; so w&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;henever that switch is activated the timer counts. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;For example, if you want the timer to count when the ELE switch is on, set Trigger A to ON and Trigger B to ELE.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; background-color:transparent;&quot;&gt;Momentary switches -&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; A switch plus “m” (like TRNm) means “momentary”. Moving the switch onc&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;e to the ON position and back turns the timer ON. Moving it ON and OFF again turns the timer OFF. Try it with the TRNm switch. Flick the switch to toggle the timer ON and OFF.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>TriggerB</string>
              </property>
@@ -243,6 +279,9 @@
            </item>
            <item row="4" column="0">
             <widget class="QLabel" name="label_93">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;Here you can choose whether the timer counts up or down.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer Direction</string>
              </property>
@@ -270,6 +309,9 @@
                <height>16777215</height>
               </size>
              </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Tip to Set the timer on the TX.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;To set the time in steps of one minute highlight the field and press and hold the [MENU] key while setting the time. Press [MENU]/[EXIT] when done.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer Value</string>
              </property>
@@ -290,6 +332,9 @@
            </item>
            <item row="0" column="1">
             <widget class="QLabel" name="label_96">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ErSky9x provides two fully programmable timers that can count either up or down. By default, the timers are set to OFF and are not operational.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Timer 2</string>
              </property>
@@ -300,6 +345,9 @@
            </item>
            <item row="3" column="0">
             <widget class="QLabel" name="label_229">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;This resets the timer to its set value. Options are any physical switch, any logical switch, any momentary switch and the inverse of any of them. For exam&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;ple, imagine you set the TRN switch as the timer reset switch, and the timer is set to count down from 10:00 (ten minutes) with the throttle stick as trigger (THs). At any point if you hit the TRN switch, the timer will be reset to 10:00. If it is counting when you reset it, it will resume counting from the beginning.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="text">
               <string>Reset Switch</string>
              </property>
@@ -307,6 +355,9 @@
            </item>
            <item row="1" column="2">
             <widget class="QCheckBox" name="timer2BeepCdownCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time at 30, 20, 10, 5, 4, 3, 2, 1, 0 seconds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
@@ -317,6 +368,9 @@
            </item>
            <item row="2" column="2">
             <widget class="QCheckBox" name="timer2MinuteBeepCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time every full minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
              <property name="layoutDirection">
               <enum>Qt::RightToLeft</enum>
              </property>
@@ -331,6 +385,9 @@
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="label_10">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting determines how the active trims behave.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Exp –&lt;/span&gt; Exponential – trims are fine near the centre and get progressively coarser further out.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ExFine –&lt;/span&gt; Extra fine – 1 step per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Fine –&lt;/span&gt; 2 steps per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Medium –&lt;/span&gt; 4 steps per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse –&lt;/span&gt; 8 steps per click.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Trim Increment</string>
          </property>
@@ -369,6 +426,9 @@
          </item>
          <item>
           <widget class="QLabel" name="label_7">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is a useful feature for fuel-powered models. When turned ON, (1) the centre detent for the throttle trim is removed, and (2) throttle trim affects only the “low” side of the throttle range. That means you can use the trim for setting idle while full throttle remains unchanged. When OFF, throttle trim behaves like trim on other primary controls.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Throttle Trim</string>
            </property>
@@ -386,6 +446,9 @@
          </item>
          <item>
           <widget class="QLabel" name="label_8">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When ON, this option causes throttle stick expo to apply from zero to full throttle, instead of having a centre point like the expo setting on the other stick axes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Throttle Expo</string>
            </property>
@@ -403,6 +466,9 @@
          </item>
          <item>
           <widget class="QLabel" name="label_55">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;E. Limits (Extended Limits) &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Allows control limits to go to plus or minus 125% instead of the normal 100% maximum. Note that 100% on the Er9x firmware already corresponds to approximately 125% on most other transmitters, so extended limits should not normally be required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Extended Limits</string>
            </property>
@@ -420,6 +486,9 @@
          </item>
          <item>
           <widget class="QLabel" name="label_114">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When ON this enables a model to receive trainer inputs from a connected Slave (student) transmitter, providing that all the configurations were correctly made in the Trainer Setup menu. The option is for use when the transmitter is serving as Master in a buddy box arrangement.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Unless specifically required for training purposes, this option should be left turned OFF.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Trainer</string>
            </property>
@@ -439,6 +508,9 @@
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_12">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Beep Cnt&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(Beep Centre)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Causes inputs to beep when centred. This is useful for locating the centre of the pots without looking (e.g., while flying!).&lt;/p&gt;&lt;p&gt;On the radio, Press &lt;span style=&quot; font-weight:600;&quot;&gt;[MENU&lt;/span&gt;] to turn ON centre beeping for an input. It will then become highlighted.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Center beep</string>
          </property>
@@ -497,8 +569,11 @@
          </item>
          <item row="0" column="7">
           <widget class="QLabel" name="label_258">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option checks that the selected input (Stick or Potentiometer) is within a certain range (defined by the Min and Max values) at startup, or when the model is loaded by selecting it in the &amp;quot;Model Select menu&amp;quot;. If the input value (position) is outside the range, a warning will be displayed indicating both Min and Max limits, as well as the current Input value (position). The warning will be cleared as soon as the input value falls within the programmed range, or a key is pressed, and the tx will resume normal operation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
-            <string>Custom Alarm</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Custom Check&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
           </widget>
          </item>
@@ -555,6 +630,9 @@
        </item>
        <item row="4" column="0">
         <widget class="QLabel" name="label_177">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies to the Limits menu by allowing Subtrim to override the Limits setting so that servo throw remains the same on both sides of centre. The value here determines the maximum amount the limits can be exceeded (e.g., a setting of 10.0 allows a limit set at 100% to go as high as plus/minus 110%).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;Be careful when using this feature as the control limit values are no longer absolute and could allow a servo to exceed a mechanical limit.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Auto Limits</string>
          </property>
@@ -577,6 +655,9 @@
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="label_190">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets a specific control to adjust the audio volume, typically one of the three pots or a Global Variable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Volume Control</string>
            </property>
@@ -590,6 +671,9 @@
          </item>
          <item row="0" column="3">
           <widget class="QLabel" name="label_11">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; background-color:transparent;&quot;&gt;When this switch is activated, the current position of the sticks is copied to the Subtrim settings (Limits menu); hence the sticks must &lt;/span&gt;&lt;span style=&quot; text-decoration: underline;&quot;&gt;immediately&lt;/span&gt; be neutralized. Choose a switch that is easily reached while holding the sticks but unlikely to be flipped accidenta&lt;span style=&quot; color:#000000;&quot;&gt;lly.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; background-color:transparent;&quot;&gt;This function is very useful for first flights, as it avoids the need to take your hands off the stick to press the trim buttons. Simply hold the plane level with the sticks and flick the selected Trim Switch. Immediately centre the sticks and the plane should be roughly trimmed. Fine trimming can still be done with the regular trim buttons, if necessary. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; background-color:transparent;&quot;&gt;The function is triggered by moving the switch from its default position. If a regular switch is used, the switch must first be moved back to its default position before InstaTrim can again be triggered. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; background-color:transparent;&quot;&gt;NOTE: It is advisable to disable this function once initial trimming is completed as it can have seriously negative results if triggered accidentally!&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>InstaTrim Switch</string>
            </property>
@@ -602,6 +686,9 @@
        </item>
        <item row="6" column="0">
         <widget class="QLabel" name="label_191">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model Version&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Version</string>
          </property>
@@ -659,6 +746,9 @@
        </item>
        <item row="7" column="0">
         <widget class="QLabel" name="label_192">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selects which switches will be checked at startup and when selecting a new model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Switch Warning</string>
          </property>
@@ -1356,6 +1446,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="5" column="0">
         <widget class="QLabel" name="label_263">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When a bluetooth Module is installed and this option is ON, the radio will try to connect automatically to a second transmitter also equiped with a Bluetooth module, as long as its BT address was previously stored.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>AutoBT Connect</string>
          </property>
@@ -1378,6 +1471,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QCheckBox" name="UseStickNamesChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This enables the use on this model of the custom stick names you have defined in the Radio Setup, Controls menu&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="layoutDirection">
             <enum>Qt::RightToLeft</enum>
            </property>
@@ -1455,6 +1551,9 @@ p, li { white-space: pre-wrap; }
        </property>
        <item row="4" column="0">
         <widget class="QLabel" name="label_262">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can select the protocols from all supported RF systems. The contents of the sub menus vary according to the selected protocol. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Protocol</string>
          </property>
@@ -1493,6 +1592,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="label_153">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Frsky Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects the type of receiver. Choose D16 for the X series, D8 for the D series, and LRP for the long range receivers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Type</string>
            </property>
@@ -1522,6 +1624,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="4">
           <widget class="QLabel" name="label_154">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the RF module power to match legal requirements in some countries.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Country</string>
            </property>
@@ -1551,8 +1656,14 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="6">
           <widget class="QLabel" name="label_117">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Frsky Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Receiver match. This gives the receiver a number (0...124) to prevent you from flying with the wrong model selected in the radio.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>PXX RxNum</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -1577,6 +1688,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="8">
           <widget class="QLabel" name="label_13">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PPM Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects POSitive or NEGative PPM pulses. Some modules and simulators adjust automatically (e.g., Frsky DJT/DHT and OrangeRX DSM2/DSMX), while others have specific requirements (Spektrum DM9 module requires NEG).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Pulse Shift (polarity)</string>
            </property>
@@ -1607,6 +1721,9 @@ p, li { white-space: pre-wrap; }
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the first channel in the signal sequence. It is usually left at 1, but other start numbers may be needed for a flight controller which accepts raw PPM. Note that this setting has no effect when used with the DSM2 protocol.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Start Channel</string>
@@ -1643,6 +1760,9 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Can be set from 4 to 16 in increments of 2. This is important when using the TX with some flight simulator dongles that can't accept more than 4 or 6 channels. Also, with receivers having 6 or fewer channels, such as the FrSky D4R-II, setting the PPM number of channels to match the receiver allows for a faster PPM signal with less latency.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channels</string>
            </property>
@@ -1674,6 +1794,9 @@ p, li { white-space: pre-wrap; }
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The length of each frame within the PPM train, in milliseconds. &lt;span style=&quot; background-color:transparent;&quot;&gt;For a setup with 8 or fewer channels it it can normally be left at the default 22.5 ms.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>PPM Frame Length</string>
@@ -1710,6 +1833,9 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The default spacing of 300uSec is suitable for most modules, but may be adjusted to eliminate jitter.(The Spektrum DM9 requires 400uSec for accurate centring.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>ppm Delay</string>
            </property>
@@ -1738,6 +1864,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="6" column="0">
         <widget class="QLabel" name="label_208">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Sub-Protocol</string>
          </property>
@@ -1745,6 +1874,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="8" column="0">
         <widget class="QLabel" name="labelProtoExt">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can select the protocols from all supported RF systems. The contents of the sub menus vary according to the selected protocol. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Protocol (External)</string>
          </property>
@@ -1783,6 +1915,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="2">
           <widget class="QLabel" name="labelxp1">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Frsky Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects the type of receiver. Choose D16 for the X series, D8 for the D series, and LRP for the long range receivers.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Type</string>
            </property>
@@ -1841,8 +1976,14 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="6">
           <widget class="QLabel" name="labelxp3">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Frsky Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Receiver match. This gives the receiver a number (0...124) to prevent you from flying with the wrong model selected in the radio.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>PXX RxNum</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -1867,6 +2008,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="0" column="8">
           <widget class="QLabel" name="labelxp8">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PPM Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects POSitive or NEGative PPM pulses. Some modules and simulators adjust automatically (e.g., Frsky DJT/DHT and OrangeRX DSM2/DSMX), while others have specific requirements (Spektrum DM9 module requires NEG).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Pulse Shift (polarity)</string>
            </property>
@@ -1897,6 +2041,9 @@ p, li { white-space: pre-wrap; }
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the first channel in the signal sequence. It is usually left at 1, but other start numbers may be needed for a flight controller which accepts raw PPM. Note that this setting has no effect when used with the DSM2 protocol.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Start Channel</string>
@@ -1933,8 +2080,14 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Can be set from 4 to 16 in increments of 2. This is important when using the TX with some flight simulator dongles that can't accept more than 4 or 6 channels. Also, with receivers having 6 or fewer channels, such as the FrSky D4R-II, setting the PPM number of channels to match the receiver allows for a faster PPM signal with less latency.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channels</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -1965,8 +2118,14 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The length of each frame within the PPM train, in milliseconds. &lt;span style=&quot; background-color:transparent;&quot;&gt;For a setup with 8 or fewer channels it it can normally be left at the default 22.5 ms.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>PPM Frame Length</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -2000,8 +2159,14 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The default spacing of 300uSec is suitable for most modules, but may be adjusted to eliminate jitter.(The Spektrum DM9 requires 400uSec for accurate centring.)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>ppm Delay</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -2028,6 +2193,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="10" column="0">
         <widget class="QLabel" name="label_257">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Sub-Protocol</string>
          </property>
@@ -2035,6 +2203,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="12" column="0">
         <widget class="QLabel" name="label_PPM2">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It can be used to connect a second RF Module&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>PPM2</string>
          </property>
@@ -2049,6 +2220,9 @@ p, li { white-space: pre-wrap; }
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Where two receivers are used for extra channels, PPM 1 is set to match the capability of the first receiver, while PPM 2 is set for the second receiver. If first receiver is an 8-channel unit, then the second receiver will normally start at channel 9. The options are: ‘Follow’ or a specific channel from 1 through 17.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Start Channel</string>
@@ -2085,8 +2259,14 @@ p, li { white-space: pre-wrap; }
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The options are 4 through to 16 channels in 2-channel increments. This depends on the numberof channels your second receiver or flight controller can handle and how many channels youneed to send.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channels</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
            </property>
           </widget>
          </item>
@@ -2185,6 +2365,9 @@ p, li { white-space: pre-wrap; }
       <layout class="QFormLayout" name="formLayout_2">
        <item row="0" column="0">
         <widget class="QLabel" name="label_103">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This defines the type of swash plate used by the heli:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;120&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;: “Standard” 120 degree swash plate. The “pitch” servo is towards the front/back.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;120X&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;: Same 120 degree swash plate but turned 90° so the pitch servo is on one side.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;140&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;: Less common 140 degree swash plate – the “pitch” servo is towards the front/back.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; color:#000000;&quot;&gt;90&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;: Basically a simple 90 degree setup where a single servo operates the collective pitch directly and discrete aileron and elevator servos tilt the swash. May be used for fixed pitch helicopters.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Swash Type</string>
          </property>
@@ -2221,6 +2404,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label_106">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This defines the source of the collective input. The idea is that you can create a mix in a virtual channel (above those sent to the receiver) incorporating all the required curves and switches, then simply use it as the input here to mix with the other inputs.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Collective</string>
          </property>
@@ -2231,6 +2417,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="2" column="0">
         <widget class="QLabel" name="label_107">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;As the name implies, this feature limits stick outputs, just as a physical swash ring limits stick movements. Notice that this feature only works o&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;n Ail and Ele, re&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;gardless of stick mode selected.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Swash Ring</string>
          </property>
@@ -2257,6 +2446,9 @@ p, li { white-space: pre-wrap; }
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_108">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;These allow the direction of the cyclical and collective input functions to be inverted. Use them to make the controls move the correct way when setting up your heli. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Invert</string>
          </property>
@@ -2318,6 +2510,9 @@ p, li { white-space: pre-wrap; }
        <layout class="QGridLayout" name="gridLayout_30">
         <item row="1" column="0">
          <widget class="QLabel" name="label_147">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM0</string>
           </property>
@@ -2325,6 +2520,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="2" column="0">
          <widget class="QLabel" name="label_146">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Five flight modes (FM) are available: the default mode FM0, plus FM1 to FM04. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM1</string>
           </property>
@@ -2332,6 +2530,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="4" column="0">
          <widget class="QLabel" name="label_148">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM2</string>
           </property>
@@ -2339,6 +2540,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="6" column="0">
          <widget class="QLabel" name="label_149">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM3</string>
           </property>
@@ -2346,6 +2550,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="8" column="0">
          <widget class="QLabel" name="label_150">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM4</string>
           </property>
@@ -2353,6 +2560,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="10" column="0">
          <widget class="QLabel" name="label_151">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM5</string>
           </property>
@@ -2360,6 +2570,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="12" column="0">
          <widget class="QLabel" name="label_152">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>FM6</string>
           </property>
@@ -2425,6 +2638,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="1" column="4">
          <widget class="QLabel" name="label_157">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Own Trim</string>
           </property>
@@ -2432,6 +2648,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="1" column="5">
          <widget class="QLabel" name="label_158">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Own Trim</string>
           </property>
@@ -2439,6 +2658,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="1" column="6">
          <widget class="QLabel" name="label_159">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Own Trim</string>
           </property>
@@ -2446,6 +2668,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="1" column="7">
          <widget class="QLabel" name="label_160">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Own Trim</string>
           </property>
@@ -2909,6 +3134,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="0" column="2">
          <widget class="QLabel" name="label_Switch">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode, except FM0, has a selectable activation switch (physical or logical). &lt;span style=&quot; color:#000000;&quot;&gt;FM0 is active if no other flight mode is active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Switch</string>
           </property>
@@ -2945,6 +3173,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="0" column="8">
          <widget class="QLabel" name="label_Switch_2">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode has Fade-in/Fade-out parameters for smooth transitions between modes. The duration of the fade in/out transitions can be set in &amp;quot;Seconds&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Fade In</string>
           </property>
@@ -2955,6 +3186,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="0" column="9">
          <widget class="QLabel" name="label_Switch_3">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode has Fade-in/Fade-out parameters for smooth transitions between modes. The duration of the fade in/out transitions can be set in &amp;quot;Seconds&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Fade Out</string>
           </property>
@@ -3209,6 +3443,9 @@ p, li { white-space: pre-wrap; }
         </item>
         <item row="0" column="1">
          <widget class="QLabel" name="label_Switch_4">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You can insert a name for evey flight mode. It will be displayed on a main screen when the corresponding flight mode is active&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Name</string>
           </property>
@@ -3411,6 +3648,9 @@ Right</string>
               <pointsize>14</pointsize>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This screen allows you to enter and edit Expo and D/R (Dual Rate) values for the three main controls (Rud/Ele/Ail), as well as Throttle, though the latter is less common. As we will see below, “dual rate” doesn't tell the full story, as THREE different rates may be set.&lt;/p&gt;&lt;p&gt;When adjusting Expo and Weight values, the numbers for the two control directions will normally move together, provided the stick is centred. To adjust them separately, hold the stick in the desired control direction. &lt;/p&gt;&lt;p&gt;The usual fixed values for Expo and/or Weight can be replaced by Global Variables (GVARs). To do this, highlight the field and press [MENU] for around 3 seconds. Choose from GV1 to GV5 by using [UP]/[DOWN], [RIGHT]/[LEFT]. Both values will change at the same time providing the stick is in the middle during the process. If the stick is not centered, only one value will be changed.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Triple Rates&lt;/span&gt;&lt;/p&gt;&lt;p&gt;As noted above, you are not limited to two expo/rate combinations. For each control you can set two switches, allowing you to select from three combinations. The main switch (DrSw1) changes between Hi and Mid values, with OFF (up) giving Hi rate. If DrSw1 is ON (down), the second switch (DrSw2) can select either between Mid or Low values. In other words:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hi&lt;/span&gt; is DrSw1 OFF (DrSw2 doesn't matter)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Mid&lt;/span&gt; is DrSw1 ON, DrSw2 OF&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Lo&lt;/span&gt; is DrSw1 ON, DrSw2 ON&lt;/p&gt;&lt;p&gt;Note that “Hi”, “Mid” and “Low” are only names, you can set any rate or expo you like for each of them. In this case, the three position switch is used instead of two separate two position switches. The positions are labelled ID0, ID1 and ID2. For DrSw1 enter “!ID2” (remember, exclamation mark means “not”) and for the DrSw2 enter “!ID1”. The logic is that since DrSw1 is not ID2 it must be either ID0 or ID1. Likewise since DrSw2 is not ID1 it must be ID2 or ID0. Confused? Don't worry, it works. :-)&lt;/p&gt;&lt;p&gt;For a simple DR/Expo setup use &amp;quot;DrSw1&amp;quot; only.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Rudder</string>
             </property>
@@ -3611,6 +3851,9 @@ Right</string>
               <pointsize>14</pointsize>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This screen allows you to enter and edit Expo and D/R (Dual Rate) values for the three main controls (Rud/Ele/Ail), as well as Throttle, though the latter is less common. As we will see below, “dual rate” doesn't tell the full story, as THREE different rates may be set.&lt;/p&gt;&lt;p&gt;When adjusting Expo and Weight values, the numbers for the two control directions will normally move together, provided the stick is centred. To adjust them separately, hold the stick in the desired control direction. &lt;/p&gt;&lt;p&gt;The usual fixed values for Expo and/or Weight can be replaced by Global Variables (GVARs). To do this, highlight the field and press [MENU] for around 3 seconds. Choose from GV1 to GV5 by using [UP]/[DOWN], [RIGHT]/[LEFT]. Both values will change at the same time providing the stick is in the middle during the process. If the stick is not centered, only one value will be changed.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Triple Rates&lt;/span&gt;&lt;/p&gt;&lt;p&gt;As noted above, you are not limited to two expo/rate combinations. For each control you can set two switches, allowing you to select from three combinations. The main switch (DrSw1) changes between Hi and Mid values, with OFF (up) giving Hi rate. If DrSw1 is ON (down), the second switch (DrSw2) can select either between Mid or Low values. In other words:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hi&lt;/span&gt; is DrSw1 OFF (DrSw2 doesn't matter)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Mid&lt;/span&gt; is DrSw1 ON, DrSw2 OF&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Lo&lt;/span&gt; is DrSw1 ON, DrSw2 ON&lt;/p&gt;&lt;p&gt;Note that “Hi”, “Mid” and “Low” are only names, you can set any rate or expo you like for each of them. In this case, the three position switch is used instead of two separate two position switches. The positions are labelled ID0, ID1 and ID2. For DrSw1 enter “!ID2” (remember, exclamation mark means “not”) and for the DrSw2 enter “!ID1”. The logic is that since DrSw1 is not ID2 it must be either ID0 or ID1. Likewise since DrSw2 is not ID1 it must be ID2 or ID0. Confused? Don't worry, it works. :-)&lt;/p&gt;&lt;p&gt;For a simple DR/Expo setup use &amp;quot;DrSw1&amp;quot; only.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Aileron</string>
             </property>
@@ -3805,6 +4048,9 @@ Left</string>
               <pointsize>14</pointsize>
              </font>
             </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This screen allows you to enter and edit Expo and D/R (Dual Rate) values for the three main controls (Rud/Ele/Ail), as well as Throttle, though the latter is less common. As we will see below, “dual rate” doesn't tell the full story, as THREE different rates may be set.&lt;/p&gt;&lt;p&gt;When adjusting Expo and Weight values, the numbers for the two control directions will normally move together, provided the stick is centred. To adjust them separately, hold the stick in the desired control direction. &lt;/p&gt;&lt;p&gt;The usual fixed values for Expo and/or Weight can be replaced by Global Variables (GVARs). To do this, highlight the field and press [MENU] for around 3 seconds. Choose from GV1 to GV5 by using [UP]/[DOWN], [RIGHT]/[LEFT]. Both values will change at the same time providing the stick is in the middle during the process. If the stick is not centered, only one value will be changed.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Triple Rates&lt;/span&gt;&lt;/p&gt;&lt;p&gt;As noted above, you are not limited to two expo/rate combinations. For each control you can set two switches, allowing you to select from three combinations. The main switch (DrSw1) changes between Hi and Mid values, with OFF (up) giving Hi rate. If DrSw1 is ON (down), the second switch (DrSw2) can select either between Mid or Low values. In other words:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hi&lt;/span&gt; is DrSw1 OFF (DrSw2 doesn't matter)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Mid&lt;/span&gt; is DrSw1 ON, DrSw2 OF&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Lo&lt;/span&gt; is DrSw1 ON, DrSw2 ON&lt;/p&gt;&lt;p&gt;Note that “Hi”, “Mid” and “Low” are only names, you can set any rate or expo you like for each of them. In this case, the three position switch is used instead of two separate two position switches. The positions are labelled ID0, ID1 and ID2. For DrSw1 enter “!ID2” (remember, exclamation mark means “not”) and for the DrSw2 enter “!ID1”. The logic is that since DrSw1 is not ID2 it must be either ID0 or ID1. Likewise since DrSw2 is not ID1 it must be ID2 or ID0. Confused? Don't worry, it works. :-)&lt;/p&gt;&lt;p&gt;For a simple DR/Expo setup use &amp;quot;DrSw1&amp;quot; only.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
             <property name="text">
              <string>Throttle</string>
             </property>
@@ -3998,6 +4244,9 @@ Right</string>
              <font>
               <pointsize>14</pointsize>
              </font>
+            </property>
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This screen allows you to enter and edit Expo and D/R (Dual Rate) values for the three main controls (Rud/Ele/Ail), as well as Throttle, though the latter is less common. As we will see below, “dual rate” doesn't tell the full story, as THREE different rates may be set.&lt;/p&gt;&lt;p&gt;When adjusting Expo and Weight values, the numbers for the two control directions will normally move together, provided the stick is centred. To adjust them separately, hold the stick in the desired control direction. &lt;/p&gt;&lt;p&gt;The usual fixed values for Expo and/or Weight can be replaced by Global Variables (GVARs). To do this, highlight the field and press [MENU] for around 3 seconds. Choose from GV1 to GV5 by using [UP]/[DOWN], [RIGHT]/[LEFT]. Both values will change at the same time providing the stick is in the middle during the process. If the stick is not centered, only one value will be changed.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Triple Rates&lt;/span&gt;&lt;/p&gt;&lt;p&gt;As noted above, you are not limited to two expo/rate combinations. For each control you can set two switches, allowing you to select from three combinations. The main switch (DrSw1) changes between Hi and Mid values, with OFF (up) giving Hi rate. If DrSw1 is ON (down), the second switch (DrSw2) can select either between Mid or Low values. In other words:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hi&lt;/span&gt; is DrSw1 OFF (DrSw2 doesn't matter)&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Mid&lt;/span&gt; is DrSw1 ON, DrSw2 OF&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Lo&lt;/span&gt; is DrSw1 ON, DrSw2 ON&lt;/p&gt;&lt;p&gt;Note that “Hi”, “Mid” and “Low” are only names, you can set any rate or expo you like for each of them. In this case, the three position switch is used instead of two separate two position switches. The positions are labelled ID0, ID1 and ID2. For DrSw1 enter “!ID2” (remember, exclamation mark means “not”) and for the DrSw2 enter “!ID1”. The logic is that since DrSw1 is not ID2 it must be either ID0 or ID1. Likewise since DrSw2 is not ID1 it must be ID2 or ID0. Confused? Don't worry, it works. :-)&lt;/p&gt;&lt;p&gt;For a simple DR/Expo setup use &amp;quot;DrSw1&amp;quot; only.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
             </property>
             <property name="text">
              <string>Elevator</string>
@@ -4838,6 +5087,9 @@ Right</string>
        </item>
        <item row="0" column="1">
         <widget class="QLabel" name="label_46">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The values of SubTrim set the centre point of the channel and can range from -100 to 100. Increments are 0.1, giving fine resolution.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -4848,7 +5100,7 @@ Right</string>
           <number>0</number>
          </property>
          <property name="text">
-          <string>Offset</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SubTrim&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -4860,6 +5112,9 @@ Right</string>
        </item>
        <item row="0" column="2">
         <widget class="QLabel" name="label_49">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -4882,6 +5137,9 @@ Right</string>
        </item>
        <item row="0" column="4">
         <widget class="QLabel" name="label_50">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -4904,6 +5162,9 @@ Right</string>
        </item>
        <item row="0" column="6">
         <widget class="QLabel" name="label_54">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This reverses the output of the channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -5189,6 +5450,9 @@ Right</string>
        </item>
        <item row="0" column="8">
         <widget class="QLabel" name="label_197">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The values of SubTrim set the centre point of the channel and can range from -100 to 100. Increments are 0.1, giving fine resolution.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -5199,7 +5463,7 @@ Right</string>
           <number>0</number>
          </property>
          <property name="text">
-          <string>Offset</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;SubTrim&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignCenter</set>
@@ -5211,6 +5475,9 @@ Right</string>
        </item>
        <item row="0" column="9">
         <widget class="QLabel" name="label_198">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -5267,6 +5534,9 @@ Right</string>
        </item>
        <item row="0" column="11">
         <widget class="QLabel" name="label_200">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -5323,6 +5593,9 @@ Right</string>
        </item>
        <item row="0" column="13">
         <widget class="QLabel" name="label_202">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This reverses the output of the channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11113,7 +11386,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch1</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11136,7 +11409,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch2</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11152,7 +11425,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch3</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11168,7 +11441,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch4</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11184,7 +11457,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch5</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11208,6 +11481,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Logical Switches, previously called Custom Switches, produce an ON or OFF output based on a logical operation to compare values and/or assess logical conditions (e.g., which switches are ON). As virtual switches, they can be used in programming anywhere a switch can be selected. They will turn on when the logical condition being tested is verified (true).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;This column shows the operation or condition to be applied by the switch. Once the defined condition(s) is/are met, the logical switch will turn ON.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11216,6 +11492,9 @@ Right</string>
          </property>
          <property name="text">
           <string>Function</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11233,6 +11512,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11241,6 +11523,9 @@ Right</string>
          </property>
          <property name="text">
           <string>V1</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11258,6 +11543,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11266,6 +11554,9 @@ Right</string>
          </property>
          <property name="text">
           <string>V2</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11278,7 +11569,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch6</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 6&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11291,7 +11582,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch7</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 7&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11304,7 +11595,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch8</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11317,7 +11608,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitch9</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11330,7 +11621,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchA</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch A&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11343,7 +11634,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchB</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch B&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11356,7 +11647,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchC</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11392,6 +11683,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If a switch is identified in this column, it acts as a further condition that must be met for the logical switch to turn ON. In other words, this switch functions as an “AND” condition in addition to the main condition of the logical switch. So, the Logical Switch will only turn ON when its main condition is true, and the &amp;quot;AND&amp;quot; switch is ON. If any of these conditions is false, the Logical Switch is OFF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11400,6 +11694,9 @@ Right</string>
          </property>
          <property name="text">
           <string>AND Switch</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11426,6 +11723,9 @@ Right</string>
          <property name="text">
           <string>Telemetry Value</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
        <item row="25" column="1">
@@ -11450,7 +11750,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchO</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch O&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11471,6 +11771,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Logical Switches, previously called Custom Switches, produce an ON or OFF output based on a logical operation to compare values and/or assess logical conditions (e.g., which switches are ON). As virtual switches, they can be used in programming anywhere a switch can be selected. They will turn on when the logical condition being tested is verified (true).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;This column shows the operation or condition to be applied by the switch. Once the defined condition(s) is/are met, the logical switch will turn ON.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11479,6 +11782,9 @@ Right</string>
          </property>
          <property name="text">
           <string>Function</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11496,6 +11802,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11504,6 +11813,9 @@ Right</string>
          </property>
          <property name="text">
           <string>V1</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11521,6 +11833,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11529,6 +11844,9 @@ Right</string>
          </property>
          <property name="text">
           <string>V2</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11555,6 +11873,9 @@ Right</string>
          <property name="text">
           <string>Telemetry Value</string>
          </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
         </widget>
        </item>
        <item row="0" column="11">
@@ -11571,6 +11892,9 @@ Right</string>
            <height>16777215</height>
           </size>
          </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If a switch is identified in this column, it acts as a further condition that must be met for the logical switch to turn ON. In other words, this switch functions as an “AND” condition in addition to the main condition of the logical switch. So, the Logical Switch will only turn ON when its main condition is true, and the &amp;quot;AND&amp;quot; switch is ON. If any of these conditions is false, the Logical Switch is OFF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11579,6 +11903,9 @@ Right</string>
          </property>
          <property name="text">
           <string>AND Switch</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
          </property>
         </widget>
        </item>
@@ -11604,7 +11931,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchN</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11620,7 +11947,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchM</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch M&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11636,7 +11963,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchL</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch L&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11649,7 +11976,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchK</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch K&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11668,7 +11995,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchJ</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch J&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11684,7 +12011,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchI</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch I&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11700,7 +12027,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchH</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch H&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11716,7 +12043,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchG</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch G&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11732,7 +12059,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchF</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch F&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11748,7 +12075,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchE</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch E&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11764,7 +12091,7 @@ Right</string>
           <enum>QFrame::Raised</enum>
          </property>
          <property name="text">
-          <string>CSwitchD</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch D&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
         </widget>
        </item>
@@ -11811,6 +12138,9 @@ Right</string>
        </item>
        <item row="1" column="2">
         <widget class="QLabel" name="label_66">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;All physical switches, Logical switches and the inverse of all of them.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11833,6 +12163,9 @@ Right</string>
        </item>
        <item row="1" column="3">
         <widget class="QLabel" name="label_80">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The value depends on which type of safety switch is selected.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;S -&lt;/span&gt; A range from -125% to 125% &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;X -&lt;/span&gt; A range from -125% to 125% &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A -&lt;/span&gt; Pre-programmed audio sounds and Haptic (vibration). Options are:&lt;span style=&quot; font-style:italic;&quot;&gt;Warn1, Warn2, Cheep, Ring, SciFi, Robot, Chirp, Tada, Siren, AlmClk, Ratata, Tick, Haptc1, Haptc2, Haptc3.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;V -&lt;/span&gt; A voice number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -11939,6 +12272,9 @@ Right</string>
        </item>
        <item row="1" column="1">
         <widget class="QLabel" name="label_84">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There are four types of Safety Switch. When are activated by a physical switch such as THR they have the following results:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;S ‒&lt;/span&gt; (Simple Safety): Replaces the existing value for a channel with a fixed “safe” value. Frequently used as a “throttle cut” switch, generally with a value of -100 on the throttle channel. Useful also when setting failsafe on certain receivers. For each affected channel, just program a safety switch to set your desired servo position. Use the same physical switch to control all these safety switches. When you turn the switch ON, all the channels will move to the correct position and you can press the button or do whatever else is needed to have the receiver record the failsafe settings. Examples of receivers for which this is useful include “D” series FrSky and Spektrum receivers that provide “Preset Failsafe.” &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;X ‒&lt;/span&gt; (Sticky Safety): Replaces the existing value for a channel with a fixed “safe” value and requires that the input (usually throttle stick) be in the “safe” position to resume control.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A ‒&lt;/span&gt; (Audio): Plays a sound or haptic vibration chosen from a list.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;V ‒&lt;/span&gt; (Voice): Plays a voice file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -12002,6 +12338,9 @@ Right</string>
        </item>
        <item row="1" column="7">
         <widget class="QLabel" name="label_205">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;There are four types of Safety Switch. When are activated by a physical switch such as THR they have the following results:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;S ‒&lt;/span&gt; (Simple Safety): Replaces the existing value for a channel with a fixed “safe” value. Frequently used as a “throttle cut” switch, generally with a value of -100 on the throttle channel. Useful also when setting failsafe on certain receivers. For each affected channel, just program a safety switch to set your desired servo position. Use the same physical switch to control all these safety switches. When you turn the switch ON, all the channels will move to the correct position and you can press the button or do whatever else is needed to have the receiver record the failsafe settings. Examples of receivers for which this is useful include “D” series FrSky and Spektrum receivers that provide “Preset Failsafe.” &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;X ‒&lt;/span&gt; (Sticky Safety): Replaces the existing value for a channel with a fixed “safe” value and requires that the input (usually throttle stick) be in the “safe” position to resume control.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A ‒&lt;/span&gt; (Audio): Plays a sound or haptic vibration chosen from a list.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;V ‒&lt;/span&gt; (Voice): Plays a voice file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -12018,6 +12357,9 @@ Right</string>
        </item>
        <item row="1" column="8">
         <widget class="QLabel" name="label_206">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;All physical switches, Logical switches and the inverse of all of them.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -12040,6 +12382,9 @@ Right</string>
        </item>
        <item row="1" column="9">
         <widget class="QLabel" name="label_207">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The value depends on which type of safety switch is selected.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;S -&lt;/span&gt; A range from -125% to 125% &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;X -&lt;/span&gt; A range from -125% to 125% &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;A -&lt;/span&gt; Pre-programmed audio sounds and Haptic (vibration). Options are:&lt;span style=&quot; font-style:italic;&quot;&gt;Warn1, Warn2, Cheep, Ring, SciFi, Robot, Chirp, Tada, Siren, AlmClk, Ratata, Tick, Haptc1, Haptc2, Haptc3.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;V -&lt;/span&gt; A voice number.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
          </property>
@@ -12248,6 +12593,9 @@ Right</string>
           <font>
            <pointsize>10</pointsize>
           </font>
+         </property>
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Following the 24 Safety Switches (CH1 to 24) are, by default, eight Voice Switches (VS25 to VS32) that trigger the playing of a particular voice file and determine the conditions and manner in which it is played. If more than eight Voice Switches are required, Safety Switches can be converted into Voice Switches, up to a maximum of all 32 switches.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;The first column identifies the Voice Switch number.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;The second column may contain ON, OFF, BOTH, 15 sec, 30 sec, 60 sec, and Varibl.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;ON: &lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;When the switch is activated, the item in the fourth column will be announced &lt;/span&gt;&lt;span style=&quot; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;ONCE&lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;OFF: &lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;W&lt;/span&gt;&lt;span style=&quot; font-size:11pt; color:#000000;&quot;&gt;hen the switch is deactivated, the item in the fourth column will be announced &lt;/span&gt;&lt;span style=&quot; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;ONCE&lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;BOTH: &lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;Both ON and OFF voice switches can be activated from one command line, provided the two voice files are consecutively numbered and are consecutively ON and OFF files.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;The Third column may contain any physical or virtual switch such as RUD, ELE, ID0, ID1, ID2, L1, L2, L3,...etc.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;The fourth column shows values depending on which setting is selected in the second column. If &amp;quot;&lt;/span&gt;&lt;span style=&quot; font-size:medium; font-weight:600; color:#000000;&quot;&gt;Varibl&lt;/span&gt;&lt;span style=&quot; font-size:medium; color:#000000;&quot;&gt;&amp;quot; is selected, Telemetry values and Scalers are available as options in this column.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Number of Voice Switches</string>
@@ -12704,6 +13052,9 @@ Right</string>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_104">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;“A1” and “A2” on this screen refer to the two analog inputs available on FrSky D-series receivers. These inputs can accept a maximum of 3.3v. To measure higher voltages, therefore, a voltage divider consisting of a pair of resistors must be used. For example, a divider with 4:1 ratio will measure voltages up to 13.2v (4 x 3.3v). &lt;/p&gt;&lt;p&gt;The numbers immediately to the right of “A1 channel” and “A2 channel” represent the measurement Range, which depends on the divider ratio of the voltage sensor. For the 4:1 ratio used to measure receiver voltage, this value should be set to 13.2 (3.3 x 4). For a 6:1 ratio sensor, the range would be set to 19.8 (3.3 x 6). The range is the maximum allowed voltage for that particular voltage divider. Higher than 19.8V and the voltage at the analog port will be over the maximum 3.3V, possibly destroying the receiver.&lt;/p&gt;&lt;p&gt;Further to the right, the lower-case ‘v’ following the Range value represents one of four scaling factors used in converting the telemetry number (0-255) into a suitable read-out value. The ‘v’ setting corresponds to a read-out range of 0 to 25.5 volts, while a capital ‘V’ setting gives 0 to 51 volts (at reduced resolution). Set to ‘A’ for current measurement, the telemetry number is converted to a range of 0 to 65 Amps. Finally, the ‘-‘ setting displays the unconverted telemetry number (0-255), which can be used for parameters other than voltage or current, such as temperature or RPM, depending on the sensor.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: Do not connect a battery (or other power source) that supplies more than 3.3v directly to the analog ports A1 and A2 or they may be destroyed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channel 1</string>
            </property>
@@ -12766,6 +13117,9 @@ Right</string>
          </property>
          <item row="0" column="0">
           <widget class="QLabel" name="label_110">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;“A1” and “A2” on this screen refer to the two analog inputs available on FrSky D-series receivers. These inputs can accept a maximum of 3.3v. To measure higher voltages, therefore, a voltage divider consisting of a pair of resistors must be used. For example, a divider with 4:1 ratio will measure voltages up to 13.2v (4 x 3.3v). &lt;/p&gt;&lt;p&gt;The numbers immediately to the right of “A1 channel” and “A2 channel” represent the measurement Range, which depends on the divider ratio of the voltage sensor. For the 4:1 ratio used to measure receiver voltage, this value should be set to 13.2 (3.3 x 4). For a 6:1 ratio sensor, the range would be set to 19.8 (3.3 x 6). The range is the maximum allowed voltage for that particular voltage divider. Higher than 19.8V and the voltage at the analog port will be over the maximum 3.3V, possibly destroying the receiver.&lt;/p&gt;&lt;p&gt;Further to the right, the lower-case ‘v’ following the Range value represents one of four scaling factors used in converting the telemetry number (0-255) into a suitable read-out value. The ‘v’ setting corresponds to a read-out range of 0 to 25.5 volts, while a capital ‘V’ setting gives 0 to 51 volts (at reduced resolution). Set to ‘A’ for current measurement, the telemetry number is converted to a range of 0 to 65 Amps. Finally, the ‘-‘ setting displays the unconverted telemetry number (0-255), which can be used for parameters other than voltage or current, such as temperature or RPM, depending on the sensor.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: Do not connect a battery (or other power source) that supplies more than 3.3v directly to the analog ports A1 and A2 or they may be destroyed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channel 2</string>
            </property>
@@ -12942,6 +13296,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can toggle between “FrHub” (FrSky Telemetry Hub) and “WSHhi” (Winged Shadow How Hi) telemetry protocols. The Winged Shadow unit has apparently been discontinued but many are still in use.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Protocol</string>
            </property>
@@ -12998,6 +13355,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you can select either Metric or Imperial units.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Units</string>
            </property>
@@ -13034,6 +13394,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Setting for the RPM sensor. Number of blades, 1 to 127.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Num Blades</string>
            </property>
@@ -13069,6 +13432,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This displays the Global Positioning System (GPS) determination of altitude and may be turned ON or OFF. &lt;span style=&quot; color:#000000;&quot;&gt;If ON, the barometric altitude reading is replaced by GPS altitude (this feature may be removed in a future release of the firmware).&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>GpsAltMain</string>
            </property>
@@ -13098,6 +13464,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Turn this option ON to send Telemetry data over Bluetooth.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>BT telemetry</string>
            </property>
@@ -13126,6 +13495,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Indicate the COM port your Telemetry RF module is connected to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Telemetry COM port</string>
@@ -13163,6 +13535,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is an harcoded RSSI alarm. It will warn you if the value falls under the programmed value. Normally the default value can be used if you are using a frsky RF module.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>RSSI warning</string>
            </property>
@@ -13175,6 +13550,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is an harcoded TSSI alarm. It will warn you if the value falls under the programmed value. Normally the default value can be used if you are using a frsky RF module.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>RSSI Critical</string>
@@ -13537,6 +13915,9 @@ Right</string>
          </item>
          <item row="0" column="6">
           <widget class="QLabel" name="label_242">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Two custom Telemetry screens are available. Up to six telemetry sources, GVARs or Scalers can be displayed on a single screen in the order you select.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Screen 2</string>
            </property>
@@ -13547,6 +13928,9 @@ Right</string>
          </item>
          <item row="0" column="1">
           <widget class="QLabel" name="label_241">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Two custom Telemetry screens are available. Up to six telemetry sources, GVARs or Scalers can be displayed on a single screen in the order you select.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Screen 1</string>
            </property>
@@ -13569,6 +13953,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FAS stands for FrSky Ampere Sensor. These units come in several sizes. Some FAS show a small reading when no current is really flowing; the FAS Offset field may be used to 'zero-out' this error.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>FAS current offset</string>
@@ -13617,6 +14004,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Possible Current Sources are &lt;span style=&quot; color:#000000;&quot;&gt;A1/A2, FasV, and Scalers 1 to 8. &lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Current Source</string>
@@ -13736,6 +14126,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Source may be either “vspd”, the value passed directly over telemetry, the “A2” port if using the analog value, or a Scaler. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Vario Source</string>
            </property>
@@ -13811,6 +14204,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Vario tones may be enabled by means of a switch, the specific switch is selected by the Switch entry. The value includes “ON” to allow the vario tones to be permanently enabled. The vario tones are short bleeps that sound more frequently the higher the climb or sink rate.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Switch</string>
            </property>
@@ -13829,6 +14225,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The sensitivity for sounding the tones may also be set. The higher the value, the less the sensitivity. Typical values are 2 for “vspd” and 40 for “A2”.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Sensitivity</string>
@@ -13869,6 +14268,9 @@ Right</string>
              <height>16777215</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Option to turn OFF the Vario sink tones. Some might find the sink tones annoying.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Sink Tones Off</string>
            </property>
@@ -13884,6 +14286,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a switch to enable Logging to the SD Card.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Logging Switch</string>
@@ -13903,6 +14308,9 @@ Right</string>
              <width>100</width>
              <height>16777215</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select how frequently the radio will update the log file.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Logging Rate</string>
@@ -13966,6 +14374,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This field can assume the same value as a source, or its own fixed value.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -13994,6 +14405,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Global variables (GVARs) can replace the usual numbers for any Weight, Offset, Differential or Expo setting. They can also be used as source for a mix, Scaler, Logical Switch, etc, and  can be selected from the usual list of sources. Their main use is to allow the group adjustment of several parameters that should have the same value. In other words, a single global variable (such as GV1) can be inserted in several fields, allowing all of them to be adjusted simultaneously by changing the one GVAR value. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14021,6 +14435,9 @@ Right</string>
          <width>121</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select an input. Sticks, Pots, Mixer Channel Outputs, Real Channel Outputs and Scalers are available from the list.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -14508,6 +14925,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A scaler is a function that takes an input value and applies an offset and/or scaling factors (multiplication/division by fixed ratios). The result may be used for display on the custom telemetry screen, for voice output, as the source for a mix, or as a comparison value for a logical switch. For telemetry display purposes each scaler may be given a four character name. For both telemetry display and voice usage, the units may be selected, together with the number of implicit decimal places. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14535,6 +14955,9 @@ Right</string>
          <width>121</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Stick/pot value, trainer input, channel output or telemetry value.</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -14564,6 +14987,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif';&quot;&gt;-32,000 to +32,000.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14591,6 +15017,9 @@ Right</string>
          <width>61</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif';&quot;&gt;1 to 256.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -14620,6 +15049,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif';&quot;&gt;1 to 256.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14647,6 +15079,9 @@ Right</string>
          <width>61</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>Select from Feet, Volts, Deg_C, Deg_F, mAh, Amps, Metre, Watts.</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -14676,6 +15111,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the sign of the result. “+” or “-”&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14704,6 +15142,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Number of decimal places 0, 1 or 2.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -14731,6 +15172,9 @@ Right</string>
          <width>61</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Define whether the offset is applied First, or after the multiplier and divisor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -14950,6 +15394,9 @@ Right</string>
          <width>61</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four-character, user-edited name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -16595,6 +17042,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you select a switch. When it is ON, the GVAR will assume the value from the Input. If no switch is selected, the GVAR assume the same value as the input. If no switch or input are defined, you can give the GVAR a fixed value..&lt;/p&gt;&lt;p&gt;All physical switches, logical switches and the inverse of all of them may be selected..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -16693,6 +17143,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;GVAR Adjusters. They can increase/Decrease a GVAR value, set a GVAR value, Add to the GVAR value,etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -16720,6 +17173,9 @@ Right</string>
          <width>61</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select a GVAR to be adjusted. GVAR1 to 7 may be selected.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
@@ -16749,6 +17205,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The following functions are available:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Add:&lt;/span&gt; When Switch turns ON, Value is added to GVAR.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set C:&lt;/span&gt; When Switch turns ON, GVAR is set to Value.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Set V: &lt;/span&gt;When Switch turns ON, GVAR is set to Item's value.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;IncDec:&lt;/span&gt; When Switch(Inc) turns ON, GVAR is incremented by 1, When Switch(Dec) turns ON, GVAR is decremented by 1.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inc/Zero:&lt;/span&gt; When Switch(Inc) turns ON, GVAR is incremented by 1, When Switch(Zero) turns ON, GVAR is set to zero.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Dec/Zero:&lt;/span&gt; When Switch(Dec) turns ON, GVAR is decremented by 1, When Switch(Zero) turns ON, GVAR is set to zero.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inc/Lim:&lt;/span&gt; Increase the GVAR to a Limit.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Dec/Lim:&lt;/span&gt; Decrease the GVAR to a Limit&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -16777,6 +17236,9 @@ Right</string>
          <height>21</height>
         </rect>
        </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Any physical or logical switch (or its inverse) can be selected&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>
        </property>
@@ -16804,6 +17266,9 @@ Right</string>
          <width>71</width>
          <height>21</height>
         </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It can be a value, a switch, or an input depending on which function is selected..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
        </property>
        <property name="frameShape">
         <enum>QFrame::Panel</enum>

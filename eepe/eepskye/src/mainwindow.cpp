@@ -769,6 +769,8 @@ QStringList MainWindow::GetSambaArguments(const QString &tcl)
 
 }
 
+extern QString AvrdudeOutput ;
+extern QString VolNames[] ;
 
 // Read the EEPROM from the Radio
 void MainWindow::burnFrom()
@@ -799,6 +801,7 @@ void MainWindow::burnFrom()
 	  if ( path.isEmpty() )
 		{
       QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
+			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
       return;
 		}
 		else

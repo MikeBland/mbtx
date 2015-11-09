@@ -808,7 +808,7 @@ void MainWindow::burnFrom()
     if(!QFileInfo(avrdudeLoc).exists())
 		{
       QMessageBox::critical(this, tr("Error"),
-                   tr("Adrdude not found at %1.")
+                   tr("Avrdude not found at %1.")
                    .arg(avrdudeLoc));
 			return ;
 		}
@@ -862,7 +862,7 @@ int MainWindow::backupEeprom()
     if(!QFileInfo(avrdudeLoc).exists())
 		{
       QMessageBox::critical(this, tr("Error"),
-                   tr("Adrdude not found at %1.")
+                   tr("Avrdude not found at %1.")
                    .arg(avrdudeLoc));
 			return 1 ;
 		}
@@ -907,7 +907,7 @@ void MainWindow::burnExtenalToEEPROM()
     		if(!QFileInfo(avrdudeLoc).exists())
 				{
     		  QMessageBox::critical(this, tr("Error"),
-    		               tr("Adrdude not found at %1.")
+    		               tr("Avrdude not found at %1.")
     		               .arg(avrdudeLoc));
 					return ;
 				}
@@ -951,7 +951,7 @@ void MainWindow::burnToFlash(QString fileToFlash)
     		if(!QFileInfo(avrdudeLoc).exists())
 				{
     		  QMessageBox::critical(this, tr("Error"),
-    		               tr("Adrdude not found at %1.")
+    		               tr("Avrdude not found at %1.")
     		               .arg(avrdudeLoc));
 					return ;
 				}
@@ -1049,7 +1049,7 @@ void MainWindow::burnExtenalFromEEPROM()
     		if(!QFileInfo(avrdudeLoc).exists())
 				{
     		  QMessageBox::critical(this, tr("Error"),
-    		               tr("Adrdude not found at %1.")
+    		               tr("Avrdude not found at %1.")
     		               .arg(avrdudeLoc));
 					return ;
 				}
@@ -1090,7 +1090,7 @@ void MainWindow::burnFromFlash()
     		if(!QFileInfo(avrdudeLoc).exists())
 				{
     		  QMessageBox::critical(this, tr("Error"),
-    		               tr("Adrdude not found at %1.")
+    		               tr("Avrdude not found at %1.")
     		               .arg(avrdudeLoc));
 					return ;
 				}

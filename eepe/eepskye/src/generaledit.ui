@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>705</width>
-    <height>720</height>
+    <height>659</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -38,7 +38,7 @@ These will be relevant for all models in the same EEPROM.</string>
        <item row="0" column="0">
         <widget class="QLabel" name="label_31">
          <property name="toolTip">
-          <string extracomment="Screen Contrast [20-45]"/>
+          <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The radio owner's name. You... Unless... (hmmm...) This may be displayed on the splash screen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Owner Name</string>
@@ -54,6 +54,9 @@ These will be relevant for all models in the same EEPROM.</string>
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label_12">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:medium; font-style:italic;&quot;&gt;Sets beeping levels.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;i. Quiet:&lt;/span&gt; No beeping at all. No warning – nada. The Tx will not even warn you when the battery is low. If you're using a LiPo&lt;span style=&quot; color:#000000;&quot;&gt; battery to power the TX, w&lt;/span&gt;atch out! &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;ii. No keys:&lt;/span&gt; The beeps are normal but edit keys are silent.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;iii. Normal:&lt;/span&gt; Normal beeping.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;iv. Long beeps:&lt;/span&gt; For those who want to annoy other people.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;v. Extra long beeps.... &lt;/span&gt;You gotta be joking, right?? &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Beeper Mode</string>
          </property>
@@ -114,44 +117,16 @@ These will be relevant for all models in the same EEPROM.</string>
         </widget>
        </item>
        <item row="2" column="0">
-        <widget class="QLabel" name="label_23">
+        <widget class="QLabel" name="label_32">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Values from 1 to 100 may be set. The pitch varies one tone up for every five value increments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
-          <string>Sound Mode</string>
+          <string>Beeper Pitch</string>
          </property>
         </widget>
        </item>
        <item row="2" column="1">
-        <widget class="QComboBox" name="soundModeCB">
-         <item>
-          <property name="text">
-           <string>Beeper</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>PiSpkr</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>BeeperVoice</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>PiSpkrVoice</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="3" column="0">
-        <widget class="QLabel" name="label_32">
-         <property name="text">
-          <string>Speaker Pitch (spkr only)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
         <widget class="QSpinBox" name="speakerPitchSB">
          <property name="toolTip">
           <string/>
@@ -178,28 +153,34 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="label_37">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option sets the general Audio volume (0 to 23).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Volume</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="4" column="1">
         <widget class="QSpinBox" name="volumeSB">
          <property name="maximum">
           <number>23</number>
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="label_8">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Filter ADC:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SING:&lt;/span&gt; Single conversion. This is the fastest conversion but base resolution is&lt;/p&gt;&lt;p&gt;1024.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;OSMP:&lt;/span&gt; Oversampling. This uses extra samples to increase resolution to&lt;/p&gt;&lt;p&gt;2048. Just slightly slower than SING&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FILT:&lt;/span&gt; Filtered. This is in case you have excessive noise from the conversion&lt;/p&gt;&lt;p&gt;(servo jitters). This will filter the input and prevent that noise. It will, however,&lt;/p&gt;&lt;p&gt;increase latency by about 30 msec.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Input Filter</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="6" column="1">
         <widget class="QComboBox" name="inputfilterCB">
          <item>
           <property name="text">
@@ -218,17 +199,17 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="8" column="0">
+       <item row="7" column="0">
         <widget class="QLabel" name="label_2">
          <property name="toolTip">
-          <string extracomment="Low Battery Voltage warning [5v-10v]"/>
+          <string extracomment="Low Battery Voltage warning [5v-10v]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When the voltage of the transmitter battery drops below this l&lt;span style=&quot; color:#000000;&quot;&gt;evel&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; the transmitter will warn you to land soon.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Battery Warning</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="1">
+       <item row="7" column="1">
         <widget class="QDoubleSpinBox" name="battwarningDSB">
          <property name="toolTip">
           <string/>
@@ -265,46 +246,7 @@ Acceptable values are 5v..10v</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="0">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Battery Calibration</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="1">
-        <widget class="QDoubleSpinBox" name="battcalibDSB">
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="statusTip">
-          <string/>
-         </property>
-         <property name="whatsThis">
-          <string>Battery calibration:
-This value will be added to the measured battery voltage.  Use this value to calibrate the meter with an external meter.</string>
-         </property>
-         <property name="prefix">
-          <string notr="true"/>
-         </property>
-         <property name="suffix">
-          <string notr="true">v</string>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-9.900000000000000</double>
-         </property>
-         <property name="maximum">
-          <double>9.900000000000000</double>
-         </property>
-         <property name="singleStep">
-          <double>0.100000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="14" column="0">
+       <item row="12" column="0">
         <widget class="QLabel" name="label_28">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -317,13 +259,16 @@ This value will be added to the measured battery voltage.  Use this value to cal
          </property>
         </widget>
        </item>
-       <item row="14" column="1">
+       <item row="12" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <property name="spacing">
           <number>6</number>
          </property>
          <item>
           <widget class="QCheckBox" name="beepMinuteChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time every full minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -338,6 +283,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QCheckBox" name="beepCountDownChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timers will report the time at 30, 20, 10, 5, 4, 3, 2, 1, 0 seconds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>Beeps at 30, 15, 10, and down from5 seconds</string>
            </property>
@@ -348,6 +296,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <widget class="QCheckBox" name="beepFlashChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Flashes the backlight when some hard coded alarms and warnings sound. For example the timers minute warning, or the radio battery is low.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -362,13 +313,16 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="15" column="0" colspan="2">
+       <item row="13" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_3">
          <property name="sizeConstraint">
           <enum>QLayout::SetNoConstraint</enum>
          </property>
          <item row="0" column="0">
           <widget class="QCheckBox" name="thrrevChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif';&quot;&gt;The Throttle Reverse option inverts the operation of the throttle stick. When Throttle Reverse is turned ON, closed throttle is UP (away from the operator) and full throttle is DOWN (towards the operator). Throttle Reverse also inverts the throttle warning on start-up (requiring the throttle stick to be in the UP position) and some other throttle-related functions.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>Reverse throttle operation.
 If this is checked the throttle will be reversed.  Idle will be forward, trim will also be reversed and the throttle warning will be reversed as well.
@@ -383,7 +337,7 @@ If this is checked the throttle will be reversed.  Idle will be forward, trim wi
          <item row="0" column="1">
           <widget class="QCheckBox" name="splashScreenChkB">
            <property name="toolTip">
-            <string>Show splash screen on startup</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;When this option is ON, the splash screen is shown when the radio is turned ON. The screen can be skipped by pressing any key or moving a stick.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="whatsThis">
             <string>Show splash screen on startup</string>
@@ -395,6 +349,9 @@ If this is checked the throttle will be reversed.  Idle will be forward, trim wi
          </item>
          <item row="1" column="0">
           <widget class="QCheckBox" name="PotScrollEnableChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;If this is ON, pots P1, &lt;/span&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt;P2 and P3 &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;can be used to move between, and edit, menu items.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -419,7 +376,7 @@ p, li { white-space: pre-wrap; }
          <item row="1" column="1">
           <widget class="QCheckBox" name="splashScreenNameChkB">
            <property name="toolTip">
-            <string>Show splash screen on startup</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'ArialMT, serif';&quot;&gt;If this is ON, the name set in &lt;/span&gt;&lt;span style=&quot; font-family:'Arial-ItalicMT, serif'; font-style:italic;&quot;&gt;Owner Name &lt;/span&gt;&lt;span style=&quot; font-family:'ArialMT, serif';&quot;&gt; will be shown on the &lt;/span&gt;&lt;span style=&quot; font-family:'ArialMT, serif'; font-size:medium;&quot;&gt;splash screen.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="whatsThis">
             <string>Show splash screen on startup</string>
@@ -431,6 +388,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="2" column="0">
           <widget class="QCheckBox" name="thrwarnChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;If this is ON and the throttle is not at idle, the Tx will show a warning when it is turned on or the active model is changed. To clear the alert, either press a key or bring the throttle stick to idle. The Tx will not output a signal until the alert is cleared.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -463,6 +423,9 @@ p, li { white-space: pre-wrap; }
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This will give you a “heads up” if your &lt;/span&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt;beeper i&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;s silent. If it is ON and the &lt;/span&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt;beeper&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; option in the “AudioHaptic” menu is set to “Quiet”, you will receive an “Alarms Disabled” warning on startup. &lt;/span&gt;This will not affect voice alarms, only the &lt;span style=&quot; background-color:transparent;&quot;&gt;beeper &lt;/span&gt;signal. For example, the sound you hear when operating the trims.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -491,6 +454,9 @@ p, li { white-space: pre-wrap; }
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;FrSky telemetry modules, when used with D-series receivers, produce their own Received Signal Strength Indication (RSSI) alarm sounds (see module instructions for details). Where RSSI alarms (either voice or beeper) are set in the transmitter itself, the module alarms are normally turned OFF. Generally you don’t want to have the module beeping as well as the transmitter!&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -521,6 +487,9 @@ p, li { white-space: pre-wrap; }
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt;If this is ON, one of the sticks can be used to move between, and edit, menu items. Which stick is used depends on the selected mode (see below) &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:11pt; color:#000000; background-color:transparent;&quot;&gt;–&lt;/span&gt;&lt;span style=&quot; color:#000000; background-color:transparent;&quot;&gt; for Mode 1 it's the left stick and for Mode 2 the right. Vertical stick movement normally moves between items and sideways movement edits them.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -549,6 +518,9 @@ p, li { white-space: pre-wrap; }
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Cross Trim swaps the trims so the switches on the left apply to the stick on the right, and those on the right apply to the stick on the left. This can make trim adjustment in flight easier, particularly for &lt;span style=&quot; background-color:transparent;&quot;&gt;Mode 2&lt;/span&gt; fliers, as it allows them to adjust aileron and elevator trim with the left hand while flying with the right.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -579,6 +551,9 @@ p, li { white-space: pre-wrap; }
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Volume is controlled by software instead of hardware. Normally the volume is controlled over an I2C volume potentiometer. Some boards don't have this hardware.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -602,7 +577,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="6" column="0" colspan="2">
+       <item row="5" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_9" rowstretch="0,0,0" columnstretch="0,0,0,0,0,0">
          <property name="verticalSpacing">
           <number>0</number>
@@ -637,7 +612,7 @@ p, li { white-space: pre-wrap; }
          <item row="0" column="0">
           <widget class="QLabel" name="label">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The contrast of the LCD display screen. The values can be 20..45. The higher the value, the darker the screen.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Contrast</string>
@@ -646,6 +621,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_4">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:large; font-weight:600;&quot;&gt;Light Switch - &lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt;The display backlight can be set to turn ON via any of the transmitter physical switches (RUD, ID0, ELE, etc.) or any of the Logical Switches (L1, L2,...LA, LB, etc.). It can also be set to full-time ON or OFF by this menu.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Backlight Switch</string>
            </property>
@@ -671,6 +649,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_5">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this is not set to OFF, any key-press will turn on the backlight, which will turn off again after the specified number of seconds. The possible duration ranges from 5 to 600 seconds.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Backlight Auto On/OFF after</string>
            </property>
@@ -700,6 +681,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="1" column="2">
           <widget class="QLabel" name="label_38">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this is not set to OFF, movement of the sticks will turn ON the backlight; it will turn OFF after the specified number of seconds. The possible duration ranges from 5 to 600 seconds.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Backlight On Stick Move</string>
            </property>
@@ -729,6 +713,9 @@ p, li { white-space: pre-wrap; }
          </item>
          <item row="2" column="2">
           <widget class="QCheckBox" name="OptrexDisplayChkB">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Supported only by the &amp;quot;Skyboard&amp;quot;. It is an alternative to the stock LCD display&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="whatsThis">
             <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
@@ -845,12 +832,12 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="18" column="0" colspan="2">
+       <item row="16" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_11">
          <item row="1" column="0">
           <widget class="QLabel" name="label_9">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some transmitters using Ersky9x can measure their own current. This sets a capacity alarm for the transmitter battery&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>MaH Alarm</string>
@@ -860,7 +847,7 @@ p, li { white-space: pre-wrap; }
          <item row="2" column="0">
           <widget class="QLabel" name="label_11">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the baudrate for the Bluettooth module when available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Bluetooth Baudrate</string>
@@ -900,7 +887,7 @@ p, li { white-space: pre-wrap; }
          <item row="1" column="2">
           <widget class="QLabel" name="label_10">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Calibration of the transmitter internal current sensor&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Current Calib</string>
@@ -991,7 +978,7 @@ Mode 4:
          <item row="2" column="2">
           <widget class="QLabel" name="label_29">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some Encoders might need their output divided, otherwise the cursor might jump 2 or more lines/settings per click, instead of only one. The range of values is 1,2, and 4.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Rotary Divisor</string>
@@ -1049,6 +1036,9 @@ Mode 4:
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_14">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stick Mode determines how the four physical stick axes are assigned to the four primary control inputs (Rudder, Elevator, Throttle, Aileron). Mode 1 uses the left stick for Rudder and Elevator and the right for Throttle and Aileron, while Mode 2 has Rudder and Throttle on the left stick and Aileron and Elevator on the right (they are sometimes called “Throttle right” and “Throttle left” modes respectively). Modes 3 and 4 are similar except that Rudder is on the right and Aileron on the left. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Stick Mode</string>
            </property>
@@ -1111,7 +1101,7 @@ Mode 4:
          <item row="3" column="2">
           <widget class="QLabel" name="label_53">
            <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]"/>
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ersky9x at the moment supports 2 types of Bluetooth modules. The &amp;quot;HC-05&amp;quot; that can be programmed by the radio to work as Master or Slave, and the &amp;quot;HC-06&amp;quot; that is configured (normally as Slave) before it leaves the factory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Bluetooth Type</string>
@@ -1164,7 +1154,7 @@ Mode 4:
          </item>
         </layout>
        </item>
-       <item row="23" column="0" colspan="2">
+       <item row="21" column="0" colspan="2">
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1177,7 +1167,7 @@ Mode 4:
          </property>
         </spacer>
        </item>
-       <item row="20" column="0" colspan="2">
+       <item row="18" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_13">
          <item row="0" column="0">
           <widget class="QLabel" name="label_27">
@@ -1186,6 +1176,9 @@ Mode 4:
              <width>70</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is only needed if another type of stick gimbal, such as Aurora 9, is fitted to the transmitter. ‘LV’ means Left Vertical, etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Stick Gain</string>
@@ -1410,7 +1403,7 @@ Mode 4:
          </item>
         </layout>
        </item>
-       <item row="22" column="0" colspan="2">
+       <item row="20" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_14">
          <item row="0" column="0">
           <widget class="QLabel" name="label_42">
@@ -1419,6 +1412,9 @@ Mode 4:
              <width>70</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Stick Reverse</string>
@@ -1495,10 +1491,13 @@ Mode 4:
          </item>
         </layout>
        </item>
-       <item row="16" column="0" colspan="2">
+       <item row="14" column="0" colspan="2">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QLabel" name="label_13">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This setting determines the sequence of the first four channels when setting up a new model or applying a template. It is the order in which the outputs will be available from the receiver. The default channel order in Ersky9x is RETA&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Channel Order (For Templates)</string>
            </property>
@@ -1689,7 +1688,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="10" column="1">
+       <item row="8" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QSpinBox" name="inactimerSB">
@@ -1712,6 +1711,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item>
           <widget class="QLabel" name="label_48">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the Inactivity Alarm Volume.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Inactivity Alarm Volume</string>
            </property>
@@ -1741,14 +1743,17 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="10" column="0">
+       <item row="8" column="0">
         <widget class="QLabel" name="label_6">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This will set up a warning that will play an audio &lt;span style=&quot; color:#000000;&quot;&gt;alarm if&lt;/span&gt; the Tx is left unattended for the specified amount of time. The default value is 10 minutes. To turn OFF the Inactivity Alarm, set the value to zero. Values can be from 1 to 250 minutes. To reset the timer (and stop the alarm) simply move one of the sticks. When the Tx is running on USB power, the alarm is inactive. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Inactivity Timer</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="3" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QSpinBox" name="hapticStengthSB">
@@ -1759,6 +1764,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item>
           <widget class="QLabel" name="label_51">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Haptic min run is the startup time for the haptic motor, the minimum time power is applied to the motor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Haptic Min. Run</string>
            </property>
@@ -1779,8 +1787,11 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="4" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_36">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:mediuml;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:mediuml; font-style:italic;&quot;&gt;Haptic modification needed)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Values from 0 to 5 may be set. This parameter determines the strength of the vibration. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Haptic Strength (spkr only)</string>
          </property>
@@ -2062,10 +2073,98 @@ This is used by the templated to determine which channel goes to what number out
          <item row="5" column="4">
           <widget class="QComboBox" name="swtchCB_4"/>
          </item>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_56">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The Trainer menu matches the four PPM channels (PPM1 to PPM4) received from the Slave transmitter to the sticks of the Master transmitter. That means they will REPLACE or ADD TO the Master TX sticks when Trainer is enabled, normally by a switch. The channel order of the Slave does not need to be the same as that of the Master, provided the PPMin channels and Master transmitter sticks are correctly matched using this screen. Nor do the stick modes of the two transmitters need to be the same.&lt;/p&gt;&lt;p&gt;The student's transmitter (Slave) does not need to have the same model programming as the instructor's, since only the stick values are used. It just needs a model memory to be set up with a basic four channel model programmed in it. No special settings or mixes are needed for such a basic setup. The Master and Slave transmitters do not have to be of the same type. Normally, almost any transmitter that sends a valid PPM signal on its trainer port can be made to work, but some may require different settings, special cables or additional circuitry. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Inputs&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_57">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The &lt;span style=&quot; font-weight:600;&quot;&gt;‘mode’ &lt;/span&gt;column selects how PPMin is used when the Trainer Switch is activated:&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;[off]&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Channel unused&lt;/span&gt;. No input from student stick&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;[+=] &lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Add &lt;/span&gt;student stick value to instructor stick value (sometimes used for training when the student can already fly and only small and quick corrections are needed. When landing for example).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:11pt; font-weight:600;&quot;&gt;[:=] &lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;Replace &lt;/span&gt;instructor stick value with student stick value (normal training setup)&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Mode&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_58">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The ‘&lt;span style=&quot; font-weight:600;&quot;&gt;Weight&lt;/span&gt;’ entry applies a weighting to the PPMin value from -100 to +100. Use negative values to reverse the input if necessary. Values closer to 0 reduce the student's control sensitivity.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Weight&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="label_59">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The &lt;span style=&quot; font-weight:600;&quot;&gt;‘Source&lt;/span&gt;’ entry assigns a PPMin channel to each stick shown on the left column.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Source&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QLabel" name="label_60">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The ‘&lt;span style=&quot; font-weight:600;&quot;&gt;Switch&lt;/span&gt;’ entry selects the switch used to activate trainer operation; normally TRN is used for all channels, but it is possible to select any physical switch, Logical switch, or the inverse of all of them.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Switch&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item row="3" column="0">
         <widget class="QLabel" name="label_33">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Multiplier&lt;/span&gt; adjusts all PPMin values by a factor from 0.0 to 5.0. It is normally left at 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>PPM Multiplier</string>
          </property>
@@ -2086,6 +2185,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="4" column="0">
         <widget class="QLabel" name="label_34">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting calibrates the Master radio to use the Trainer signals coming from the Slave Tx.&lt;/p&gt;&lt;p&gt;To calibrate the Master radio to use the PPMin signals coming from the Slave Tx, first turn on its power switch and select the memory for the trainer model. Then go to Model Setup, General and set Trainer to ON. Now plug the trainer cable into the student transmitter with the power switch in the OFF position. This activates the student transmitter in slave mode. With the Master transmitter still turned ON, plug the trainer cable into its trainer port. The Trainer menu should now show the PPM input values changing when you move the sticks on the Slave transmitter. Centre the sticks and trims on the Slave transmitter,&lt;span style=&quot; font-weight:600;&quot;&gt; including the throttle.&lt;/span&gt; Now highlight &lt;span style=&quot; font-weight:600;&quot;&gt;'Cal'&lt;/span&gt; in the Trainer setup menu on the Master transmitter and press the [MENU] button. All of the values to the right of 'Cal' should change to zero. In order to check that calibration has been successful, you should move the sticks on the Slave (student) transmitter to their fullest extents and make sure that each stick axis has a range of about -100 to 100. This completes calibration of the trainer setup. If necessary, the Multiplier can be used to adjust the input values, but is normally not required.&lt;/p&gt;&lt;p&gt;Test the trainer setup to ensure that control of the primary flight functions transfers correctly to the student when the trainer switch is ON. Check in particular that controls work in the proper directions on both transmitters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Calibration</string>
          </property>
@@ -2150,6 +2252,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="0" column="0">
         <widget class="QLabel" name="label_54">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Here you select the type of input for the Trainer.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Jack: &lt;/span&gt;The Jack plug on the back of the radio.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;BT:&lt;/span&gt; The trainer signal will be received from a Bluetooth module, if installed.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;None&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Slave&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Trainer Source</string>
          </property>
@@ -2181,6 +2286,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="1" column="0">
         <widget class="QLabel" name="label_55">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Trainer profiles are available. You can configure and calibrate 4 different radios, without having to configure the Trainer menu every time you use a different Slave transmitter . A very nice feature if you teach other people to fly and they use their own radio..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Profile</string>
          </property>
@@ -2554,6 +2662,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="9" column="0">
         <widget class="QLabel" name="label_22">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This value needs to be calibrated to ensure accuracy of the display and of the low battery warning. This calibration is done on the radio. Go to &amp;quot;Radio Setup/DiagAna&amp;quot; Screen. Press [DOWN] to go to the calibration setting. Press [MENU] to enable calibration of the TX voltage. Measure the voltage of the battery with a meter while the transmitter is turned on and adjust the value to match by pressing [LEFT]/[RIGHT]. Press [MENU] or [EXIT] to complete the process. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Battery Calibration</string>
          </property>
@@ -2654,6 +2765,9 @@ This is used by the templated to determine which channel goes to what number out
         <layout class="QGridLayout" name="gridLayout_7">
          <item row="2" column="0">
           <widget class="QLabel" name="label_GeaSw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the Digital or Analog pin used to upgrade this switch from a 2 position switch to a 3 position switch .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>GEA switch</string>
            </property>
@@ -2661,6 +2775,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_RudSw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the Digital or Analog pin used to upgrade this switch from a 2 position switch to a 3 position switch .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>RUD switch</string>
            </property>
@@ -2668,6 +2785,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_AilSw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the Digital or Analog pin used to upgrade this switch from a 2 position switch to a 3 position switch .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>AIL switch</string>
            </property>
@@ -2675,6 +2795,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="4" column="0">
           <widget class="QLabel" name="label_ThrSw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the Digital or Analog pin used to upgrade this switch from a 2 position switch to a 3 position switch .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>THR switch</string>
            </property>
@@ -2688,6 +2811,9 @@ This is used by the templated to determine which channel goes to what number out
              <height>0</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the Digital or Analog pin used to upgrade this switch from a 2 position switch to a 3 position switch .&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>ELE switch</string>
            </property>
@@ -2695,6 +2821,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="6" column="0">
           <widget class="QLabel" name="label_PB1Sw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>PB1 switch</string>
            </property>
@@ -2800,6 +2929,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="7" column="0">
           <widget class="QLabel" name="label_PB2Sw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>PB2 switch</string>
            </property>
@@ -3105,6 +3237,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_6Pos">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select from the list which input you've connected the 6 position switch to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>6-POS</string>
            </property>
@@ -3277,6 +3412,9 @@ This is used by the templated to determine which channel goes to what number out
         <layout class="QGridLayout" name="gridLayout_15">
          <item row="0" column="0">
           <widget class="QLabel" name="label_StickLHdb">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Insert some deadband at the center of the stick travel. This is useful if the sticks do not center well. Values range form 0 to 15..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Stick LH deadband</string>
            </property>
@@ -3291,6 +3429,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="label_StickLVdb">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Insert some deadband at the center of the stick travel. This is useful if the sticks do not center well. Values range form 0 to 15..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Stick LV deadband</string>
            </property>
@@ -3298,6 +3439,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="2" column="0">
           <widget class="QLabel" name="label_StickRVdb">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Insert some deadband at the center of the stick travel. This is useful if the sticks do not center well. Values range form 0 to 15..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Stick RV deadband</string>
            </property>
@@ -3305,6 +3449,9 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item row="3" column="0">
           <widget class="QLabel" name="label_StickRHdb">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Insert some deadband at the center of the stick travel. This is useful if the sticks do not center well. Values range form 0 to 15..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Stick RH deadband</string>
            </property>
@@ -3335,6 +3482,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="4" column="0">
         <widget class="QCheckBox" name="Ar9xChkB">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>AR9X Board</string>
          </property>
@@ -3349,6 +3499,9 @@ This is used by the templated to determine which channel goes to what number out
              <width>70</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you added an I2C RTC (Real Time Clock) module to your Ar9x board, select it from the list.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Ext. RTC</string>
@@ -3373,6 +3526,9 @@ This is used by the templated to determine which channel goes to what number out
        </item>
        <item row="7" column="0">
         <widget class="QCheckBox" name="MenuEditChkB">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this option is ON we always have to press the MENU button (or encoder center button) to be able to edit a setting. Press the MENU button, the field will blink, edit it, and press MENU again to leave editing. Then you can proceed to the next field. That means editing using the LEFT and RIGHT keys without pressing MENU is not allowed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
          <property name="text">
           <string>Force Menu Edit</string>
          </property>
@@ -3444,6 +3600,9 @@ This is used by the templated to determine which channel goes to what number out
              <height>0</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Bluetooth addresses can be stored on the TX. This makes connecting two radios over bluetooth faster and easier..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Bt Address 1</string>
            </property>
@@ -3456,6 +3615,9 @@ This is used by the templated to determine which channel goes to what number out
              <width>70</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bluetooth Module's Name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Bluetooth Name</string>
@@ -3477,6 +3639,9 @@ This is used by the templated to determine which channel goes to what number out
              <height>0</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Bluetooth addresses can be stored on the TX. This makes connecting two radios over bluetooth faster and easier..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Bt Address 2</string>
            </property>
@@ -3490,6 +3655,9 @@ This is used by the templated to determine which channel goes to what number out
              <height>0</height>
             </size>
            </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Bluetooth addresses can be stored on the TX. This makes connecting two radios over bluetooth faster and easier..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
            <property name="text">
             <string>Bt Address 3</string>
            </property>
@@ -3502,6 +3670,9 @@ This is used by the templated to determine which channel goes to what number out
              <width>70</width>
              <height>0</height>
             </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Bluetooth addresses can be stored on the TX. This makes connecting two radios over bluetooth faster and easier..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
             <string>Bt Address 4</string>

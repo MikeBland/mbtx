@@ -13,8 +13,47 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
     populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, eeType);
-    ui->sourceCB->addItem("SWCH");
-    ui->sourceCB->addItem("GV1 ");
+    
+		ui->sourceCB->addItem("SWCH");
+		
+//		ui->sourceCB->addItem("sIDx");
+//    ui->sourceCB->addItem("sTHR");
+//    ui->sourceCB->addItem("sRUD");
+//    ui->sourceCB->addItem("sELE");
+//    ui->sourceCB->addItem("sAIL");
+//    ui->sourceCB->addItem("sGEA");
+//    ui->sourceCB->addItem("sTRN");
+//    ui->sourceCB->addItem("L1  ");
+//    ui->sourceCB->addItem("L2  ");
+//    ui->sourceCB->addItem("L3  ");
+//    ui->sourceCB->addItem("L4  ");
+//    ui->sourceCB->addItem("L5  ");
+//    ui->sourceCB->addItem("L6  ");
+//    ui->sourceCB->addItem("L7  ");
+//    ui->sourceCB->addItem("L8  ");
+//    ui->sourceCB->addItem("L9  ");
+//		ui->sourceCB->addItem("LA  ");
+//    ui->sourceCB->addItem("LB  ");
+//    ui->sourceCB->addItem("LC  ");
+//    ui->sourceCB->addItem("LD  ");
+//    ui->sourceCB->addItem("LE  ");
+//    ui->sourceCB->addItem("LF  ");
+//    ui->sourceCB->addItem("LG  ");
+//    ui->sourceCB->addItem("LH  ");
+//    ui->sourceCB->addItem("LI  ");
+//    ui->sourceCB->addItem("LJ  ");
+//    ui->sourceCB->addItem("LK  ");
+//    ui->sourceCB->addItem("LL  ");
+//    ui->sourceCB->addItem("LM  ");
+//    ui->sourceCB->addItem("LN  ");
+//    ui->sourceCB->addItem("LO  ");
+
+//		if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
+//		{
+//	    ui->sourceCB->addItem("6POS");
+//    }
+
+		ui->sourceCB->addItem("GV1 ");
     ui->sourceCB->addItem("GV2 ");
     ui->sourceCB->addItem("GV3 ");
     ui->sourceCB->addItem("GV4 ");
@@ -31,6 +70,29 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->sourceCB->addItem("SC7 ");
     ui->sourceCB->addItem("SC8 ");
 
+//		int x = md->srcRaw ;
+//		if ( x >= MIX_3POS )
+//		{
+//			if ( x == MIX_3POS )
+//			{
+//				x += md->switchSource ;
+//			}
+//			else
+//			{
+//				x += 6 + 24 ;
+//		 		if ( ( (eeType == 1 ) || ( eeType == 2 ) ) )	// Taranis
+//				{
+//					x += 1 ;
+//				}
+//	      if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
+//				{
+//					x += 1 ;
+//				}
+//			}
+//		}
+
+
+//		ui->sourceCB->setCurrentIndex(x);
     ui->sourceCB->setCurrentIndex(md->srcRaw) ;
 
 //		uint32_t value ;
@@ -77,10 +139,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     	ui->sourceSwitchCB->addItem("SF");
     	ui->sourceSwitchCB->addItem("SG");
     	ui->sourceSwitchCB->addItem("SH");
-      if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
-			{
-    		ui->sourceSwitchCB->addItem("6P");
-			}
+
 		}
 		else
 		{
@@ -91,12 +150,39 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     	ui->sourceSwitchCB->addItem("AIL");
     	ui->sourceSwitchCB->addItem("GEA");
     	ui->sourceSwitchCB->addItem("TRN");
-      if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
-			{
-    		ui->sourceSwitchCB->addItem("6P");
-			}
 		}
-    ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
+    
+    ui->sourceSwitchCB->addItem("L1  ");
+    ui->sourceSwitchCB->addItem("L2  ");
+    ui->sourceSwitchCB->addItem("L3  ");
+    ui->sourceSwitchCB->addItem("L4  ");
+    ui->sourceSwitchCB->addItem("L5  ");
+    ui->sourceSwitchCB->addItem("L6  ");
+    ui->sourceSwitchCB->addItem("L7  ");
+    ui->sourceSwitchCB->addItem("L8  ");
+    ui->sourceSwitchCB->addItem("L9  ");
+		ui->sourceSwitchCB->addItem("LA  ");
+    ui->sourceSwitchCB->addItem("LB  ");
+    ui->sourceSwitchCB->addItem("LC  ");
+    ui->sourceSwitchCB->addItem("LD  ");
+    ui->sourceSwitchCB->addItem("LE  ");
+    ui->sourceSwitchCB->addItem("LF  ");
+    ui->sourceSwitchCB->addItem("LG  ");
+    ui->sourceSwitchCB->addItem("LH  ");
+    ui->sourceSwitchCB->addItem("LI  ");
+    ui->sourceSwitchCB->addItem("LJ  ");
+    ui->sourceSwitchCB->addItem("LK  ");
+    ui->sourceSwitchCB->addItem("LL  ");
+    ui->sourceSwitchCB->addItem("LM  ");
+    ui->sourceSwitchCB->addItem("LN  ");
+    ui->sourceSwitchCB->addItem("LO  ");
+		if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
+		{
+    	ui->sourceSwitchCB->addItem("6POS");
+		}
+    
+		
+		ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		
 		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -125, 125 ) ;
     populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -125, 125 ) ;
@@ -223,6 +309,7 @@ void MixerDialog::updateChannels()
   if ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 )
 	{
 		ui->label_expo_output->setText( "Use Output" ) ;
+		ui->label_expo_comment->setText( "(or Expo/Dr enable)" ) ;
 	  ui->FMtrimChkB->setChecked(md->disableExpoDr) ;
 		if ( md->disableExpoDr )
 		{
@@ -244,6 +331,7 @@ void MixerDialog::updateChannels()
 	else
 	{
 		ui->label_expo_output->setText( "Enable Expo/Dr" ) ;
+		ui->label_expo_comment->setText( "(or Select output)" ) ;
 	  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
 	}
 //  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
@@ -263,7 +351,24 @@ void MixerDialog::valuesChanged()
 		oldSrcRaw = md->srcRaw ;
     uint32_t value ;
 		value = ui->sourceCB->currentIndex()+1 ;
-  	value = decodePots( value, leeType ) ;
+  	
+//		int x = ui->sourceCB->currentIndex()+1 ;
+//		if ( x >= MIX_3POS )
+//		{
+//			if ( x >= MIX_3POS+7 )
+//			{
+//				x -= 6 ;
+//			}
+//			else
+//			{
+//		    md->sw23pos = x - (MIX_3POS) ;
+//				x = MIX_3POS ;
+//			}
+//		}
+//    md->srcRaw       = x ;
+		
+		
+		value = decodePots( value, leeType ) ;
 		md->srcRaw       = value ;
 		
 		md->switchSource = ui->sourceSwitchCB->currentIndex() ;
