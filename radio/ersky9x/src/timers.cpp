@@ -1150,6 +1150,15 @@ void setupTrainerPulses()
 	}
 	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
+  if(g_model.trainPulsePol)
+	{
+		TIM3->CCER = TIM_CCER_CC4E | TIM_CCER_CC4P ;
+	}
+	else
+	{
+		TIM3->CCER = TIM_CCER_CC4E ;
+	}
+
   ptr = TrainerPpmStream ;
 
 	total = 22500u*2; //Minimum Framelen=22.5 ms
@@ -1166,8 +1175,8 @@ void setupTrainerPulses()
 	*ptr = 0 ;
 	TIM3->CCR1 = total - 1000 ;		// Update time
 	TIM3->CCR4 = (g_model.ppmDelay*50+300)*2 ;
+  
 }
-
 
 
 // Trainer PPM oputput PC9, Timer 3 channel 4, (Alternate Function 2)
@@ -1182,7 +1191,15 @@ void init_trainer_ppm()
 	
   TIM3->ARR = *TrainerPulsePtr++ ;
   TIM3->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;               // 0.5uS
-  TIM3->CCER = TIM_CCER_CC4E ;
+  
+  if(g_model.trainPulsePol)
+	{
+		TIM3->CCER = TIM_CCER_CC4E | TIM_CCER_CC4P ;
+	}
+	else
+	{
+		TIM3->CCER = TIM_CCER_CC4E ;
+	}
 	
   TIM3->CCMR2 = TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2 | TIM_CCMR2_OC4PE ;                   // PWM mode 1
 	TIM3->CCR4 = 600 ;		// 300 uS pulse
@@ -1452,10 +1469,12 @@ uint16_t dsm2Value ;
 uint8_t dsm2Index = 0;
 void _send_1(uint8_t v)
 {
+#ifndef PCB9XT
   if (dsm2Index == 0)
     v -= 2;
   else
     v += 2;
+#endif
 
   dsm2Value += v;
   *dsm2StreamPtr++ = dsm2Value;
@@ -1755,7 +1774,7 @@ void setupPulsesDsm2(uint8_t channels)
  		dsm2StreamPtr = dsm2Stream ;
   	dsm2Value = 100;
   	*dsm2StreamPtr++ = dsm2Value;
-		if(g_model.protocol == PROTO_DSM2)
+		if(g_model.xprotocol == PROTO_DSM2)
 		{
  			if (dsmDat[0]&BadData)  //first time through, setup header
 			{
@@ -1787,7 +1806,7 @@ void setupPulsesDsm2(uint8_t channels)
 			if (pxxFlag_x & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
 		}
  		
-		if(g_model.protocol == PROTO_MULTI)
+		if ( g_model.xprotocol == PROTO_MULTI )
 		{
 			PcmCrc=0;
 			sendByteCrcSerial( dsmDat[0] ) ;

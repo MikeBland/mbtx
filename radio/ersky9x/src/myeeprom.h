@@ -106,6 +106,24 @@ PACK(typedef struct t_exTrainerMix {
   int8_t  studWeight ;
 }) exTrainerMix; //
 
+
+PACK(typedef struct t_TrainerChannel
+{
+  int16_t calib ;
+  uint8_t srcChn:3 ; //0-7 = ch1-8
+	uint8_t spare:3 ;
+  uint8_t mode:2;   //off,add-mode,subst-mode
+  int8_t  swtch ;
+  int8_t  studWeight ;
+}) TrainerChannel ; //
+
+PACK(typedef struct t_TrainerProfile
+{
+	TrainerChannel channel[4] ;
+	uint8_t profileName[6] ;
+}) TrainerProfile ; //
+
+
 PACK(typedef struct t_btDevice {
   uint8_t  address[6] ;
   uint8_t  name[8] ;
@@ -165,6 +183,8 @@ PACK(typedef struct t_EEGeneral {
 	uint16_t	run_time ;
 	int8_t		current_calib ;
 	uint8_t		bt_baudrate ;
+//	uint8_t		bt_baudrate:4 ;
+//	uint8_t		bt_correction:4 ;
 	uint8_t		rotaryDivisor ;
 	uint8_t   crosstrim:1;
 	uint8_t   hapticMinRun:7;
@@ -203,9 +223,14 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		btName[15] ;				// For the HC06 module
 	uint8_t		ar9xBoard:1 ;
 	uint8_t		externalRtcType:2 ;
-	uint8_t		spare:5 ;
+	uint8_t		spare:3 ;
+	uint8_t		is9Xtreme:1 ;
+	uint8_t		forceMenuEdit:1 ;
 	uint8_t fixedDateTime[6] ;
 	btDeviceData btDevice[4] ;
+	TrainerProfile trainerProfile[4] ;
+	uint8_t CurrentTrainerProfile ;
+	uint16_t SixPositionCalibration[6] ;
 
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
@@ -548,7 +573,7 @@ PACK(typedef struct te_ModelData {
   uint8_t   RxNum ;						// was timer trigger source, now RxNum for model match
   uint8_t   telemetryRxInvert:1 ;	// was tmrDir, now use tmrVal>0 => count down
   uint8_t   traineron:1;  		// 0 disable trainer, 1 allow trainer
-  uint8_t   spare15:1 ;
+  uint8_t   autoBtConnect:1 ;
   uint8_t   FrSkyUsrProto:1 ; // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
   uint8_t   FrSkyGpsAlt:1 ;		// Use Gps Altitude as main altitude reading
   uint8_t   FrSkyImperial:1 ; // Convert FrSky values to imperial units
@@ -617,7 +642,9 @@ PACK(typedef struct te_ModelData {
   uint8_t   not_xsub_protocol:2 ;
   int8_t    xppmNCH ;
   int8_t    xppmDelay ;
-  uint8_t   xpulsePol ;
+  uint8_t   xpulsePol:1 ;
+  uint8_t   trainPulsePol:1 ;
+  uint8_t   polSpare:6 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;
@@ -670,6 +697,7 @@ PACK(typedef struct te_ModelData {
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
+	uint8_t btDefaultAddress ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 
