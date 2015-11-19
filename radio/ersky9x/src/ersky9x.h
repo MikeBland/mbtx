@@ -89,6 +89,7 @@ extern const char * const French[] ;
 extern const char * const German[] ;
 extern const char * const Norwegian[] ;
 extern const char * const Swedish[] ;
+extern const char * const Italian[] ;
 
 #define PSTR(a) Language[a]
 #define XPSTR(a)  (char *)a
@@ -259,7 +260,9 @@ enum EnumKeys {
 #define HSW_Ele6pos5	65
 #define HSW_Pb1				66
 #define HSW_Pb2				67
-#define HSW_MAX				67
+#define HSW_Pb3				68
+#define HSW_Pb4				69
+#define HSW_MAX				69
 
 #define HSW_OFFSET ( HSW_Thr3pos0 - ( HSW_Trainer + NUM_SKYCSW + 1 ) )
 
@@ -274,12 +277,18 @@ enum EnumKeys {
 #define	USE_ELE_6PSB	0x40
 #define	USE_PB1				0x80
 #define	USE_PB2				0x100
+#define	USE_PB3				0x200
+#define	USE_PB4				0x400
 
 //extern uint8_t switchMap[] ;
 //extern uint8_t switchUnMap[] ;
 uint16_t oneSwitchText( uint8_t swtch, uint16_t state ) ;
 extern uint8_t Sw3PosList[] ;
 extern uint8_t Sw3PosCount[] ;
+
+void create6posTable( void ) ;
+extern uint16_t SixPositionTable[5] ;
+
 #endif // PCBSKY
 
 void createSwitchMapping( void ) ;
@@ -370,15 +379,17 @@ int8_t switchMap( int8_t x ) ;
 #define	USE_P2_ENC	0x02
 #define	USE_P3_ENC	0x03
 #define ENC_MASK		0x03
-#define	USE_P1_6POS	0x04
-#define	USE_P2_6POS	0x08
-#define	USE_P3_6POS	0x0C
-#define MASK_6POS		0x0C
 
 
 #define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
 
 #endif // PCBX9D
+
+#define	USE_P1_6POS		0x04
+#define	USE_P2_6POS		0x08
+#define	USE_P3_6POS		0x0C
+#define	USE_AUX_6POS	0x10
+#define MASK_6POS			0x1C
 
 extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 
@@ -669,7 +680,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\007Flysky Hubsan Frsky  Hisky  V2x2   DSM2   Devo   KN     YD717  SymaX  SLT"
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 "
 //#define MULTI_STR_LEN    7
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -680,14 +691,18 @@ extern uint8_t Ee_lock ;
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
 #define M_Devo	  	       6
-#define M_KN	  	         7
-#define M_YD717	           8
+#define M_YD717	           7
+#define M_KN	  	         8
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
+#define M_SYMAX_STR "\007SYMAX  SYMAX5CSYMAX4 "
 #define M_SLT		  		     10
+#define M_CX10		       11
+#define M_CX10_STR "\005GREENBLUE DM007"
+#define M_CG023		       12
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
+#define M_LH_STR "\004HighLow "
 
 
 // PXX_SEND_RXNUM == BIND
@@ -722,6 +737,7 @@ template<class t> inline t limit(t mi, t x, t ma){ return min(max(mi,x),ma); }
 #define sysFLAG_OLD_EEPROM (0x01)
 extern uint8_t sysFlags;
 extern uint8_t StickScrollAllowed ;
+extern uint8_t StepSize ;
 
 const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 #define NUMCHARS (sizeof(s_charTab)-1)
@@ -1022,7 +1038,7 @@ uint8_t telemItemValid( uint8_t index ) ;
 extern int16_t get_telemetry_value( int8_t channel ) ;
 
 extern void putVoiceQueue( uint16_t value ) ;
-void voice_numeric( int16_t value, uint8_t num_decimals, uint8_t units_index ) ;
+void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index ) ;
 extern void voice_telem_item( int8_t index ) ;
 extern uint8_t *cpystr( uint8_t *dest, uint8_t *source ) ;
 extern uint8_t *ncpystr( uint8_t *dest, uint8_t *source, uint8_t count ) ;
@@ -1166,11 +1182,14 @@ struct btRemote_t
 	uint8_t name[16] ;
 } ;
 extern uint8_t BtCurrentBaudrate ;
+extern uint8_t BtLinkRequest ;
 
 #ifdef PCBSKY
 extern struct btRemote_t BtRemote[] ;
 extern uint8_t NumberBtremotes ;
 #endif
+
+extern uint8_t HardwareMenuEnabled ;
 
 
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -1188,5 +1207,9 @@ extern struct t_PeripheralSpeeds PeripheralSpeeds ;
 
 #define SCC_BAUD_125000		0
 #define SCC_BAUD_115200		1
+
+uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source ) ;
+uint32_t btAddressValid( uint8_t *address ) ;
+uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 ) ;
 
 #endif

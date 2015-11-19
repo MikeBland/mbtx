@@ -44,6 +44,9 @@
 #include "font_dblsize.lbm"
 #define font_10x16_x20_x7f (font_dblsize)
 
+#include "fontnum12x8.lbm"
+#define font_num12x8 (font_num_12x8)
+
 const uint8_t font_se_extra[] = {
 #include "font_se_05x07.lbm"
 } ;
@@ -52,6 +55,9 @@ const uint8_t font_fr_extra[] = {
 } ;
 const uint8_t font_de_extra[] = {
 #include "font_de_05x07.lbm"
+} ;
+const uint8_t font_it_extra[] = {
+#include "font_it_05x07.lbm"
 } ;
 
 const uint8_t font_se_big_extra[] = {
@@ -116,16 +122,46 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 {
 	div_t qr ;
 
+	uint8_t z = FWNUM*6-2 ;
+	if ( att&DBLSIZE )
+	{
+		if ( att&CONDENSED )
+		{
+			x += 3 ;
+			z = FWNUM*5-2 ;
+		}
+	}
 	if ( tme<0 )
 	{
-		lcd_putcAtt( x - ((att&DBLSIZE) ? FWNUM*6-2 : FWNUM*3),    y, '-',att);
+		lcd_putcAtt( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
 		tme = -tme;
 	}
 
-	lcd_putcAtt(x, y, ':',att&att2);
+	lcd_putcAtt( x, y, ':',att&att2);
 	qr = div( tme, 60 ) ;
+	if ( att&DBLSIZE )
+	{
+		if ( att&CONDENSED )
+		{
+			x += 2 ;
+		}
+	}
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
-	x += (att&DBLSIZE) ? FWNUM*6-4 : FW*3-4 ;
+	if ( att&DBLSIZE )
+	{
+		if ( att&CONDENSED )
+		{
+			x += FWNUM*5-4 ;
+		}
+		else
+		{
+			x += FWNUM*6-4 ;
+		}
+	}
+	else
+	{
+		x += FW*3-4 ;
+	}
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
 }
 
@@ -229,75 +265,147 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
   
 	if(mode&DBLSIZE)
   {
-		if ( (c!=0x2E)) x+=FW; //check for decimal point
-	/* each letter consists of ten top bytes followed by
-	 * five bottom by ten bottom bytes (20 bytes per 
-	 * char) */
-	  unsigned char c_mapped ;
-		if( c < 0xC0 )
-		{
-			c_mapped = c - 0x20 ;
-			q = (uint8_t *) &font_10x16_x20_x7f[(c_mapped)*20] ;
-//  	  q = (uint8_t *) &font_10x16_x20_x7f[(c-0x20)*10 + ((c-0x20)/16)*160];
-		}
-		else
-		{
-			if ( ExtraBigFont )
-			{
-				q = (uint8_t *) &ExtraBigFont[(c-0xC0)*10] ;
-			}
-			else
-			{
-				q = (uint8_t *) &font_10x16_x20_x7f[0] ;
-			}
-		}
-    for( i=5 ; i>=0 ; i-- )
-		{
-			uint8_t b1 ;
-			uint8_t b3 ;
-			uint8_t b2 ;
-			uint8_t b4 ;
+		uint32_t doNormal = 1 ;
+	  unsigned char c_mapped = c ;
 
+		if ( (mode & CONDENSED) )
+		{
+			if ( c == '-' )
+			{
+				doNormal = 0 ;
+				c_mapped = 10 ;
+			}
+			if ( c == ':' )
+			{
+				doNormal = 0 ;
+				c_mapped = 11 ;
+			}
+			if ( ( c >= '0' ) && ( c <= '9' ) )
+			{
+				doNormal = 0 ;
+				c_mapped -= '0' ;
+			}
+			
+			if ( doNormal == 0 )
+			{
+				if ( (c!=0x2E)) x+=FW; //check for decimal point
+			/* each letter consists of 8 top bytes followed by
+	 		* five bottom by 8 bottom bytes (16 bytes per 
+	 		* char) */
+				q = (uint8_t *) &font_num12x8[c_mapped*14] ;
+    		
+				for( i=7 ; i>=0 ; i-- )
+				{
+					uint8_t b1 ;
+					uint8_t b3 ;
+//					uint8_t b2 ;
+//					uint8_t b4 ;
+
+  		  	/*top byte*/
+   		  	b1 = *q ;
+  		  	/*bottom byte*/
+   		  	b3 = *(q+7) ;
+  		  	/*top byte*/
+//   		  	b2 = *(++q) ;
+  		  	/*bottom byte*/
+//   		  	b4 = *(q+8) ;
+   		  	q++;
+					if ( i == 0 )
+					{
+						b1 = 0 ;
+						b3 = 0 ;
+					}
+    		  if(inv)
+					{
+				    b1=~b1;
+	//			    b2=~b2;
+				    b3=~b3;
+//				    b4=~b4;
+    		  }
+
+    		  if(&p[DISPLAY_W+1] < DISPLAY_END)
+					{
+    		    p[0]=b1;
+//    		    p[1]=b2;
+    		    p[DISPLAY_W] = b3;
+//    		    p[DISPLAY_W+1] = b4;
+    		    p+=1;
+    		  }
+    		}
+			}
+		}
+		if ( doNormal )
+		{
+			if ( (c!=0x2E)) x+=FW; //check for decimal point
+		/* each letter consists of ten top bytes followed by
+	 	* five bottom by ten bottom bytes (20 bytes per 
+	 	* char) */
+	  	unsigned char c_mapped ;
 			if( c < 0xC0 )
 			{
-	    	/*top byte*/
-      	b1 = i>0 ? *q : 0;
-	    	/*bottom byte*/
-      	b3 = i>0 ? *(q+10) : 0;
-	    	/*top byte*/
-      	b2 = i>0 ? *(++q) : 0;
-	    	/*bottom byte*/
-      	b4 = i>0 ? *(q+10) : 0;
-      	q++;
+				c_mapped = c - 0x20 ;
+				q = (uint8_t *) &font_10x16_x20_x7f[(c_mapped)*20] ;
+	//  	  q = (uint8_t *) &font_10x16_x20_x7f[(c-0x20)*10 + ((c-0x20)/16)*160];
 			}
 			else
 			{
-	    	/*top byte*/
-      	b1 = i>0 ? *q++ : 0 ;
-	    	/*bottom byte*/
-      	b3 = i>0 ? *q++ : 0 ;
-	    	/*top byte*/
-      	b2 = i>0 ? *q++ : 0 ;
-	    	/*bottom byte*/
-      	b4 = i>0 ? *q++ : 0 ;
+				if ( ExtraBigFont )
+				{
+					q = (uint8_t *) &ExtraBigFont[(c-0xC0)*10] ;
+				}
+				else
+				{
+					q = (uint8_t *) &font_10x16_x20_x7f[0] ;
+				}
 			}
-      if(inv)
+    	for( i=5 ; i>=0 ; i-- )
 			{
-		    b1=~b1;
-		    b2=~b2;
-		    b3=~b3;
-		    b4=~b4;
-      }
+				uint8_t b1 ;
+				uint8_t b3 ;
+				uint8_t b2 ;
+				uint8_t b4 ;
 
-      if(&p[DISPLAY_W+1] < DISPLAY_END)
-			{
-        p[0]=b1;
-        p[1]=b2;
-        p[DISPLAY_W] = b3;
-        p[DISPLAY_W+1] = b4;
-        p+=2;
-      }
-    }
+				if( c < 0xC0 )
+				{
+	  	  	/*top byte*/
+    	  	b1 = i>0 ? *q : 0;
+	  	  	/*bottom byte*/
+    	  	b3 = i>0 ? *(q+10) : 0;
+	  	  	/*top byte*/
+    	  	b2 = i>0 ? *(++q) : 0;
+	  	  	/*bottom byte*/
+    	  	b4 = i>0 ? *(q+10) : 0;
+    	  	q++;
+				}
+				else
+				{
+	  	  	/*top byte*/
+    	  	b1 = i>0 ? *q++ : 0 ;
+	  	  	/*bottom byte*/
+    	  	b3 = i>0 ? *q++ : 0 ;
+	  	  	/*top byte*/
+    	  	b2 = i>0 ? *q++ : 0 ;
+	  	  	/*bottom byte*/
+    	  	b4 = i>0 ? *q++ : 0 ;
+				}
+    	  if(inv)
+				{
+			    b1=~b1;
+			    b2=~b2;
+			    b3=~b3;
+			    b4=~b4;
+    	  }
+
+    	  if(&p[DISPLAY_W+1] < DISPLAY_END)
+				{
+    	    p[0]=b1;
+    	    p[1]=b2;
+    	    p[DISPLAY_W] = b3;
+    	    p[DISPLAY_W+1] = b4;
+    	    p+=2;
+    	  }
+    	}
+		}
 //        q = &dbl_font[(c-0x20)*20];
 //        for(char i=0; i<10; i++){
 //            uint8_t b = pgm_read_byte(q++);
@@ -511,9 +619,18 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 
   if (mode & DBLSIZE)
   {
-    fw += FWNUM ;
-    xinc = 2*FWNUM;
-    Lcd_lastPos = 2*FW;
+		if ( (mode & CONDENSED) )
+		{
+    	fw = 8 ;
+    	xinc = 8 ;
+    	Lcd_lastPos = 8 ;
+		}
+		else
+		{
+    	fw += FWNUM ;
+    	xinc = 2*FWNUM;
+    	Lcd_lastPos = 2*FW;
+		}
   }
   else
   {
@@ -566,19 +683,32 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 	{
     c = (tmp % 10) + '0';
     lcd_putcAtt(x, y, c, mode);
-    if (prec==i) {
-      if (mode & DBLSIZE) {
-        xn = x;
-        if(c=='2' || c=='3' || c=='1') ln++;
-        uint8_t tn = (tmp/10) % 10;
-        if(tn==2 || tn==4) {
-          if (c=='4') {
-            xn++;
-          }
-          else {
-            xn--; ln++;
-          }
-        }
+    if (prec==i)
+		{
+      if (mode & DBLSIZE)
+			{
+        xn = x ;
+				if ( (mode & CONDENSED) )
+				{
+					x -= 1 ;
+        	xn = x-1 ;
+				}
+				else
+				{
+	        if(c=='2' || c=='3' || c=='1') ln++;
+	        uint8_t tn = (tmp/10) % 10;
+	        if(tn==2 || tn==4)
+					{
+	          if (c=='4')
+						{
+	            xn++;
+	          }
+	          else
+						{
+	            xn--; ln++;
+	          }
+	        }
+				}
       }
       else
 			{
@@ -1307,9 +1437,10 @@ void lcd_init()
 
 void backlight_on()
 {
-	BlSetColour( 100-g_eeGeneral.bright, 0 ) ;				// Red
-	BlSetColour( 100-g_eeGeneral.bright_white, 1 ) ;	// Green
-	BlSetColour( 100-g_eeGeneral.bright_blue, 2 ) ;		// blue
+	BlSetAllColours( 100-g_eeGeneral.bright, 100-g_eeGeneral.bright_white, 100-g_eeGeneral.bright_blue ) ;
+//	BlSetColour( 100-g_eeGeneral.bright, 0 ) ;				// Red
+//	BlSetColour( 100-g_eeGeneral.bright_white, 1 ) ;	// Green
+//	BlSetColour( 100-g_eeGeneral.bright_blue, 2 ) ;		// blue
 }
 
 void backlight_off()

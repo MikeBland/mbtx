@@ -336,6 +336,37 @@
 #define STR_MULTI_TYPE   		314
 #define STR_MULTI_OPTION  	315
 
+#define STR_Display		    	316
+#define STR_AudioHaptic			317
+#define STR_Alarms			  	318
+#define STR_General		    	319
+#define STR_Controls				320
+#define STR_Hardware				321
+#define STR_Calibration			322
+
+//#define STR_Trainer		    	323
+#define STR_Version		    	324
+#define STR_ModuleRssi			325
+#define STR_DateTime				326
+#define STR_DiagSwtch		  	327
+#define STR_DiagAna		    	328
+
+#define STR_Mixer		      	329
+#define STR_Cswitches		  	330
+#define STR_Telemetry		  	331
+#define STR_limits			  	332
+#define STR_Bluetooth		  	333
+#define STR_heli_setup			334
+#define STR_Curves			  	335
+#define STR_Expo				  	336
+#define STR_Globals		    	337
+#define STR_Timer		      	338
+#define STR_Modes			 			339
+#define STR_Voice		      	340
+#define STR_Protocol				341
+#define STR_Safety					342
+
+
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 //"SC  ="

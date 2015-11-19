@@ -472,6 +472,11 @@ void power_off (void)
         Stat |= STA_NOINIT;             /* Set STA_NOINIT */
 }
 
+void sdIfSetup()
+{
+	power_on() ;
+}
+
 
 /*-----------------------------------------------------------------------*/
 /* Receive a data packet from MMC                                        */

@@ -21,5 +21,7 @@ extern void utxmit( uint8_t c ) ;
 extern void up8hex( uint32_t value ) ;
 #endif
 
+//#define SPLASH_DEBUG	1
+//#define MULTI_DEBUG		1
 
 

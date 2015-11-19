@@ -228,6 +228,14 @@
 #define PIN_FS_ID                       GPIO_Pin_10 //PA.10
 #define PIN_FS_DM                       GPIO_Pin_11 //PA.11
 #define PIN_FS_DP                       GPIO_Pin_12 //PA.12
+#define USB_RCC_AHB1Periph_GPIO         RCC_AHB1Periph_GPIOA
+#define USB_GPIO_PIN_DM                 GPIO_Pin_11 //PA.11
+#define USB_GPIO_PIN_DP                 GPIO_Pin_12 //PA.12
+#define USB_GPIO_PinSource_DM           GPIO_PinSource11
+#define USB_GPIO_PinSource_DP           GPIO_PinSource12
+#define USB_GPIO_AF                     GPIO_AF_OTG1_FS
+#define USB_GPIO                        GPIOA
+#define USB_GPIO_PIN_VBUS               GPIO_Pin_9  // PA.09
 
 #ifdef REVPLUS
 // Haptic PB8
@@ -342,12 +350,19 @@
 //#define CODEC_I2S_MODE                 GPIO_Pin_  //Connect to GND=I2S_STANDARD
 
 // Eeprom 5137
+#ifdef PCB9XT
+#define I2C_EE_GPIO                     GPIOB
+#define I2C_EE_GPIO_CLK                 RCC_AHB1Periph_GPIOB
+#define I2C_EE_SCL                      GPIO_Pin_10  //PB10
+#define I2C_EE_SDA                      GPIO_Pin_11  //PB11
+#else
 #define I2C_EE_GPIO                     GPIOB
 #define I2C_EE_WP_GPIO                  GPIOB
 #define I2C_EE_GPIO_CLK                 RCC_AHB1Periph_GPIOB
 #define I2C_EE_SCL                      GPIO_Pin_6  //PB6
 #define I2C_EE_SDA                      GPIO_Pin_7  //PB7
 #define I2C_EE_WP                       GPIO_Pin_9  //PB9
+#endif
 
 // SD---spi2
 #define SPI_SD                          SPI2
@@ -383,6 +398,8 @@
 #define AudioFreq                       I2S_AudioFreq_44k 
 
 
+#ifdef PCB9XT
+#else
 // EEPROM and CAT5137
 //#define EE_M24C08                       /* Support the device: M24C08. */
 //#define EE_M24C64_32                  /* Support the devices: M24C32 and M24C64 */
@@ -390,6 +407,7 @@
 #define I2C_FLASH_PAGESIZE              64
 #define I2C_EEPROM_ADDRESS              0xA2
 #define I2C_CAT5137_ADDRESS             0x5C //0101110
+#endif
 
 //#if defined (EE_M24C08)
 // #define I2C_FLASH_PAGESIZE             (16)

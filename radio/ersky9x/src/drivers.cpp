@@ -104,7 +104,8 @@ struct t_fifo64 Telemetry_fifo ;
 struct t_SportTx
 {
 	uint8_t *ptr ;
-	uint32_t count ;
+	uint16_t count ;
+	uint8_t busy ;
 } SportTx ;
 #endif
 
@@ -412,7 +413,12 @@ extern uint8_t AnaEncSw ;
 
 #ifdef PCB9XT
 extern uint16_t M64Switches ;
+extern uint8_t EncoderI2cData[] ;
 	uint8_t value = (M64Switches & 0x0200) ? 1 : 0 ;
+	if ( value == 0 )
+	{
+		value = EncoderI2cData[1] ? 1 : 0 ;
+	}
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	if ( value )
 	{
@@ -1541,6 +1547,8 @@ extern "C" void UART1_IRQHandler()
 	if ( pUart->UART_SR & UART_SR_RXRDY )
 	{
 		put_fifo128( &BtRx_fifo, pUart->UART_RHR ) ;	
+extern uint16_t BtCounters[4] ;
+ 		BtCounters[3] += 1 ;
 	}
 }
 
@@ -2463,6 +2471,19 @@ void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert )
 }
 
 
+void x9dHubTxStart( uint8_t *buffer, uint32_t count )
+{
+	SportTx.ptr = buffer ;
+	SportTx.count = count ;
+	SportTx.busy = 1 ;
+	USART2->CR1 |= USART_CR1_TXEIE ;
+}
+
+uint32_t hubTxPending()
+{
+	return SportTx.busy ;
+}
+
 void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 {
 	SportTx.ptr = buffer ;
@@ -2517,6 +2538,8 @@ extern "C" void USART2_IRQHandler()
 		{
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable
+			SportTx.busy = 0 ;
+
 #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
 #endif
@@ -3248,7 +3271,8 @@ void backlightSet( uint32_t value )
 	value <<= 8 ;
 	for ( i = 0 ; i < 24 ; i += 1 )
 	{
-		*blptr++ = ( value & 0x80000000 ) ? 12 : 5 ;
+//		*blptr++ = ( value & 0x80000000 ) ? 12 : 5 ;
+		*blptr++ = ( value & 0x80000000 ) ? 6 : 3 ;
 		value <<= 1 ;
 	}
 	*blptr++ = 40 ;
@@ -3330,8 +3354,10 @@ void backlightSend()
 
   TIM4->CR1 &= ~TIM_CR1_CEN ;
 	TIM4->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000000 - 1 ;		// 0.1uS
-  TIM4->ARR = 24 ;             // 2.5uS
-  TIM4->CCR1 = 19 ;            // Update time
+//  TIM4->ARR = 24 ;             // 2.5uS
+//  TIM4->CCR1 = 19 ;            // Update time
+  TIM4->ARR = 12 ;             // 1.3uS
+  TIM4->CCR1 = 9 ;            // Update time
 	TIM4->CCER = TIM_CCER_CC4E ;
 	TIM4->CNT = 65536-710 ;
   TIM4->CCR4 = BlData[0] ;		// Past end
@@ -3354,6 +3380,18 @@ void backlightSend()
 	NVIC_SetPriority( DMA1_Stream0_IRQn, 5 ) ; // Lower priority interrupt
   NVIC_EnableIRQ( DMA1_Stream0_IRQn ) ;
 }
+
+//void backlightReset()
+//{
+//  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;           // Enable portB clock
+//  configure_pins( GPIO_Pin_9, PIN_OUTPUT | PIN_PORTB | PIN_OS25 | PIN_PUSHPULL ) ;
+//	GPIOB->BSRRL = GPIO_Pin_9 ;		// output high
+//	hw_delay( 500 ) ; // 50uS
+//	GPIOB->BSRRH = GPIO_Pin_9 ;		// output low
+//	hw_delay( 500 ) ; // 50uS
+//	GPIOB->BSRRL = GPIO_Pin_9 ;		// output high
+//	hw_delay( 500 ) ; // 50uS
+//}
 
 extern "C" void DMA1_Stream0_IRQHandler()
 {

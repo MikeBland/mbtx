@@ -73,6 +73,10 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #endif
 #include "maintenance.h"
 
+//#if defined(PCB9XT)
+//uint16_t lastPacketType ;
+//#endif
+
 #define SPORT_INTERNAL	0
 #define SPORT_EXTERNAL	1
 
@@ -94,6 +98,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define UPDATE_TYPE_SPORT_INT			2
 #define UPDATE_TYPE_SPORT_EXT			3
 #define UPDATE_TYPE_CHANGE_ID			4
+#define UPDATE_TYPE_AVR						5
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
@@ -668,7 +673,7 @@ void menuChangeId(uint8_t event)
   			  crc &= 0x00ff;
   			}
 				TxPhyPacket[9] = ~crc ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 				x9dSPortTxStart( TxPhyPacket, 10, NO_RECEIVE ) ;
 #endif
 #ifdef PCBSKY
@@ -692,7 +697,7 @@ void menuChangeId(uint8_t event)
 				}
 				TxPhyPacket[0] = 0x7E ;
 				TxPhyPacket[1] = SportIds[IdIndex] ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 				x9dSPortTxStart( TxPhyPacket, 2, WITH_RECEIVE ) ;
 #endif
 #ifdef PCBSKY
@@ -766,6 +771,17 @@ void menuUp1(uint8_t event)
 	}
 	else
 	{
+#ifdef PCB9XT
+ 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+		{
+  		TITLE( "UPDATE Ext. SPort" ) ;
+		}
+		else
+		{
+  		TITLE( "UPDATE AVR" ) ;
+		}
+#endif
+		
 #ifdef PCBX9D
 		if (UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
@@ -794,6 +810,9 @@ void menuUp1(uint8_t event)
 		}
  #endif
 #endif
+
+
+
 	}
 	switch(event)
 	{
@@ -828,7 +847,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem > 1 ) )
+ 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -905,6 +924,18 @@ void menuUp1(uint8_t event)
 				lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
  #endif
 #endif
+#ifdef PCB9XT
+		 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					SportVerValid = 0 ;
+				}
+				else
+				{
+					// AVR
+					lcd_puts_Pleft( 2*FH, "Flash AVR from" ) ;
+				}
+#endif
 			}
 			else
 			{
@@ -959,6 +990,13 @@ void menuUp1(uint8_t event)
 					}
 				}
  #endif
+#endif
+#ifdef PCB9XT
+				else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
+				{
+					width = 50 ;	// Not used
+					
+				}
 #endif
 				else
 				{
@@ -1056,6 +1094,14 @@ void menuUp1(uint8_t event)
 			}
  #endif
 #endif
+			
+#ifdef PCB9XT
+			else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
+			{
+				// No more display, never return, check for power off when finished
+				
+			}
+#endif
 			else		// Internal/External Sport
 			{
 #ifdef PCBX9D
@@ -1075,6 +1121,11 @@ void menuUp1(uint8_t event)
 					lcd_outhex4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
 					lcd_outhex4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
 				}
+//#if defined(PCB9XT)
+//				lcd_outhex4( 60, 7*FH, lastPacketType ) ;
+//				lcd_outhex4( 85, 7*FH, SportState ) ;
+//#endif
+
 				if ( SportState == SPORT_POWER_ON )
 				{
 					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
@@ -1100,7 +1151,7 @@ void menuUp1(uint8_t event)
 			lcd_puts_Pleft( 3*FH, "Flashing Complete" ) ;
  			if ( (UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
  			{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
  				if ( SportVerValid & 1 )
  				{
  					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
@@ -1130,7 +1181,7 @@ void menuUp1(uint8_t event)
 
 			if ( event == EVT_KEY_FIRST(KEY_EXIT) )
 			{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
 #endif
@@ -1161,6 +1212,10 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+#endif
+#ifdef PCB9XT
+	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 4*FH, "  Update Avr CPU" );
 #endif
 
   switch(event)
@@ -1222,6 +1277,18 @@ void menuUpdate(uint8_t event)
 	      chainMenu(menuChangeId) ;
 			}
 #endif
+#ifdef PCB9XT
+			if ( position == 3*FH )
+			{
+				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 4*FH )
+			{
+				UpdateItem = UPDATE_TYPE_AVR ;
+	      chainMenu(menuChangeId) ;
+			}
+#endif
     	killEvents(event) ;
 			reboot = 0 ;
     break ;
@@ -1264,6 +1331,22 @@ void menuUpdate(uint8_t event)
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
 			if ( position < 5*FH )
+			{
+				position += FH ;				
+			}
+		break ;
+    
+		case EVT_KEY_FIRST(KEY_UP):
+			if ( position > 2*FH )
+			{
+				position -= FH ;				
+			}
+		break ;
+#endif
+#ifdef PCB9XT
+    case EVT_KEY_FIRST(KEY_DOWN):
+//			if ( position < 4*FH )
+			if ( position < 3*FH )
 			{
 				position += FH ;				
 			}
@@ -1575,7 +1658,7 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
     }
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
 #endif
 #ifdef PCBSKY
@@ -1601,7 +1684,9 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 	if( ( packet[0] == 0x5E) && ( packet[1]==0x50))
 	{
 		SportTimer = 0 ;		// stop timer
-
+//#if defined(PCB9XT)
+//		lastPacketType = packet[2] ;
+//#endif
 		switch( packet[2] )
 		{
 			case PRIM_ACK_POWERUP :
@@ -1656,7 +1741,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 						ptr += addr ;
 						uint32_t *dptr = (uint32_t *)(&TxPacket[2]) ;
         		*dptr = *ptr ;
-						SportTimer = 20 ;		// 200 mS
+						SportTimer = 5 ;		// 50 mS
 						writePacket( TxPacket, 0xFF ) ;
 					}
 					if ( BlockInUse )
@@ -1725,7 +1810,7 @@ uint32_t sportUpdate( uint32_t external )
 #if !defined(PCBTARANIS)
 			FrskyTelemetryType = 1 ;
 #endif
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
@@ -1749,6 +1834,9 @@ uint32_t sportUpdate( uint32_t external )
 			{
   			INTERNAL_RF_ON();
 			}
+#endif
+#ifdef PCB9XT
+ 			EXTERNAL_RF_ON() ;
 #endif
 			SportState = SPORT_POWER_ON ;
 		break ;
@@ -1787,6 +1875,13 @@ uint32_t sportUpdate( uint32_t external )
 		break ;
 
 		case SPORT_DATA :
+#if defined(PCB9XT)
+			if ( SportTimer == 0 )
+			{
+				SportTimer = 5 ;		// 50 mS
+				writePacket( TxPacket, 0xFF ) ;
+			}
+#endif
 		break ;
 		
 		case SPORT_DATA_READ :
@@ -1820,7 +1915,7 @@ void maintenanceBackground()
 {
 #if !defined(PCBTARANIS)
 	// First, deal with any received bytes
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	uint16_t rxchar ;
 	while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
 	{

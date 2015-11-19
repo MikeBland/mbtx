@@ -59,6 +59,7 @@
 #include "logicio.h"
 #include "drivers.h"
 #include "pulses.h"
+#include "debug.h"
 
 //#ifdef ASSAN
 //uint8_t ProtocolDebug[16384] ;
@@ -420,11 +421,21 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 	}
 }
 
+#ifdef MULTI_DEBUG
+uint32_t DebugMultiIndex ;
+uint8_t DebugMultiData[32] ;
+#endif
 
 static void sendByteCrcSerial(uint8_t b)
 {
 	crc(b) ;
 	sendByteDsm2(b) ;
+#ifdef MULTI_DEBUG
+	if ( DebugMultiIndex < 32 )
+	{
+		DebugMultiData[DebugMultiIndex++] = b ;
+	}
+#endif
 }
 
 
@@ -689,6 +700,9 @@ void setupPulsesDsm2(uint8_t chns)
 		if(g_model.protocol == PROTO_MULTI)
 		{
 			PcmCrc=0;
+#ifdef MULTI_DEBUG
+			DebugMultiIndex = 0 ;
+#endif			
 			sendByteCrcSerial( dsmDat[0] ) ;
 			sendByteCrcSerial((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
 			sendByteCrcSerial(g_model.option_protocol);
@@ -704,6 +718,43 @@ void setupPulsesDsm2(uint8_t chns)
 			sendByteCrcSerial(serialH&0xff);
 			sendByteCrcSerial( PcmCrc&0xff);
 		}
+//		else if ( g_model.protocol == PROTO_SBUS )
+//		{
+//			*p++ = 0x0F ;
+//			for ( i = 0 ; i < 16 ; i += 1 )
+//			{
+//				int16_t x = g_chans512[i] ;
+//				x *= 4 ;
+//				x += x > 0 ? 4 : -4 ;
+//				x /= 5 ;
+//				x += 0x3E0 ;
+//				if ( x < 0 )
+//				{
+//					x = 0 ;
+//				}
+//				if ( x > 2047 )
+//				{
+//					x = 2047 ;
+//				}
+//				outputbits |= x << outputbitsavailable ;
+//				outputbitsavailable += 11 ;
+//				while ( outputbitsavailable >= 8 )
+//				{
+//					uint8_t j = outputbits ;
+//					checksum += j ;
+//					if ( ( j == 2 ) || ( j == 3 ) )
+//					{
+//						j ^= 0x80 ;
+//						*p++ = 3 ;		// "stuff"
+//					}
+//          *p++ = j ;
+//					outputbits >>= 8 ;
+//					outputbitsavailable -= 8 ;
+//				}
+//			}
+//			*p++ = 0 ;
+//			*p++ = 0 ;
+//		}
 		else
 		{
   		dsmDat[1]=g_model.pxxRxNum ;  //DSM2 Header second byte for model match
@@ -767,6 +818,7 @@ void setupPulses()
       case PROTO_PXX:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
+				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
       break;
 #ifdef ASSAN
       case PROTO_ASSAN :
@@ -775,6 +827,7 @@ void setupPulses()
       case PROTO_DSM2:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
+				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
 				DsmInitCounter = 0 ;
 //				Dsm_Type_channels = 12 ;
 //				Dsm_Type_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit

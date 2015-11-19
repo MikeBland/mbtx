@@ -26,6 +26,7 @@
 #if defined(PCBX9D) || defined(PCB9XT)
 #include "x9d\stm32f2xx.h"
 #include "x9d\hal.h"
+#include "debug.h"
 #endif
 
 
@@ -1525,10 +1526,21 @@ void putDsm2Flush()
   *dsm2StreamPtr++ = 44010; // Past the 44000 of the ARR
 }
 
+#ifdef MULTI_DEBUG
+uint32_t DebugMultiIndex ;
+uint8_t DebugMultiData[32] ;
+#endif
+
 static void sendByteCrcSerial(uint8_t b)
 {
 	crc(b) ;
 	sendByteDsm2(b) ;
+#ifdef MULTI_DEBUG
+	if ( DebugMultiIndex < 32 )
+	{
+		DebugMultiData[DebugMultiIndex++] = b ;
+	}
+#endif
 }
 
 
@@ -1781,13 +1793,13 @@ void setupPulsesDsm2(uint8_t channels)
   			switch(g_model.xsub_protocol)
   			{
   				case LPXDSM2:
-  				  dsmDat[0]= 0x00;
+  				  dsmDat[0]= 0x80;
   				break;
   				case DSM2only:
-  				  dsmDat[0]=0x10;
+  				  dsmDat[0]=0x90;
   				break;
   				default:
-  				  dsmDat[0]=0x18;  //dsmx, bind mode
+  				  dsmDat[0]=0x98;  //dsmx, bind mode
   				break;
   			}
     	}
@@ -1808,6 +1820,9 @@ void setupPulsesDsm2(uint8_t channels)
  		
 		if ( g_model.xprotocol == PROTO_MULTI )
 		{
+#ifdef MULTI_DEBUG
+			DebugMultiIndex = 0 ;
+#endif
 			PcmCrc=0;
 			sendByteCrcSerial( dsmDat[0] ) ;
 			sendByteCrcSerial((g_model.xppmNCH & 0xF0) | ( g_model.xPxxRxNum & 0x0F ) );

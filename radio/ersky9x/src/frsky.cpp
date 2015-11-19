@@ -37,6 +37,8 @@
 #include "sound.h"
 #include "mavlink.h"
 
+// DEBUG *********
+//uint32_t CellsDebug[3] ;
 
 void txmit( uint8_t c ) ;
 
@@ -104,6 +106,8 @@ const uint8_t Fr_indices[] =
 uint8_t TmOK ;
 
 uint8_t AltitudeDecimals ;
+uint8_t AltitudeZeroed = 0 ;
+extern int16_t AltOffset ;
 int16_t WholeAltitude ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
@@ -147,7 +151,7 @@ uint16_t XjtVersion ;
 struct t_hub_max_min FrskyHubMaxMin ;
 
 uint8_t FrskyVolts[12];
-uint8_t FrskyBattCells=0;
+uint8_t FrskyBattCells[2] = {0,0} ;
 uint16_t Frsky_Amp_hour_prescale ;
 
 uint8_t TelemetryType ;
@@ -275,6 +279,16 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 	FrskyVolts[battnumber] = ( cell & 0x0FFF ) / 10 ;
 }
 
+void storeAltitude( int16_t value )
+{
+	FrskyHubData[FR_ALT_BARO] = value ;
+	if ( !AltitudeZeroed )
+	{
+     AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+		AltitudeZeroed = 1 ;
+	}
+}
+
 void store_hub_data( uint8_t index, uint16_t value )
 {
 	if ( index == FR_ALT_BARO )
@@ -297,13 +311,13 @@ void store_hub_data( uint8_t index, uint16_t value )
 		{
 			value /= 10 ;			
 		}
-		FrskyHubData[FR_ALT_BARO] = WholeAltitude + ( (WholeAltitude > 0) ? value : -value ) ;
+		storeAltitude( WholeAltitude + ( (WholeAltitude > 0) ? value : -value ) ) ;
 	}
 	
 	if ( index == FR_SPORT_ALT )
 	{
 		index = FR_ALT_BARO ;         // For max and min
-		FrskyHubData[FR_ALT_BARO] = value ;
+		storeAltitude(  value ) ;
 	}
 	
 	if ( index == FR_SPORT_GALT )
@@ -326,7 +340,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 			}
       if ( index == FR_GPS_ALT )
       {
-         FrskyHubData[FR_ALT_BARO] = FrskyHubData[FR_GPS_ALT] * 10 ;      // Copy Gps Alt instead
+         storeAltitude( FrskyHubData[FR_GPS_ALT] * 10 ) ;      // Copy Gps Alt instead
          index = FR_ALT_BARO ;         // For max and min
       }
 		}
@@ -370,17 +384,21 @@ void store_hub_data( uint8_t index, uint16_t value )
 			// It appears the cell voltage bytes are in the wrong order
 //  							uint8_t battnumber = ( FrskyHubData[6] >> 12 ) & 0x000F ;
   		uint8_t battnumber = ((uint8_t)value >> 4 ) & 0x000F ;
-  		if (FrskyBattCells < battnumber+1)
+  		if (FrskyBattCells[0] < battnumber+1)
 			{
  				if (battnumber+1>=6)
 				{
-  				FrskyBattCells=6;
+  				FrskyBattCells[0]=6;
   			}
 				else
 				{
-  				FrskyBattCells=battnumber+1;
+  				FrskyBattCells[0]=battnumber+1;
   			}
   		}
+//			if ( battnumber < 3 )
+//			{
+//				CellsDebug[battnumber] = value ;
+//			}
 			store_cell_data( battnumber, ( ( value & 0x0F ) << 8 ) + (value >> 8) ) ;
 		}
 		if ( index == FR_RPM )			// RPM
@@ -1018,7 +1036,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	//2[02] Altitude MSB (Hex)
 	//3[03] Altitude LSB (Hex) 16bit signed integer, in 0.1m
 				DsmDbgCounters[0] += 1 ;
-				FrskyHubData[FR_ALT_BARO] = ivalue ;
+				storeAltitude( ivalue ) ;
 			break ;
 		
 			case DSM_AMPS :
@@ -1327,13 +1345,32 @@ void processSportPacket()
 				case CELLS_ID_8 :
 				{
   	      uint8_t battnumber = value ;
-					if ( prim != DATA_ID_FLVSS )
+					if ( prim == DATA_ID_FLVSS )
 					{
-						battnumber += 6 ;
+	  				FrskyBattCells[0] = battnumber >> 4 ;
+					}
+					else
+					{
+	  				FrskyBattCells[1] = battnumber >> 4 ;
+						battnumber += FrskyBattCells[0] ;
 					}
 					uint16_t cell ;
-  				FrskyBattCells = battnumber >> 4 ;
 					battnumber &= 0x0F ;
+
+// DEBUG ************ 
+//					if ( battnumber == 0 )
+//					{
+//						CellsDebug[0] = value ;
+//					}
+//					else if ( battnumber == 2 )
+//					{
+//						CellsDebug[1] = value ;
+//					}
+//					else if ( battnumber == 4 )
+//					{
+//						CellsDebug[2] = value ;
+//					}
+
 					value >>= 8 ;
 					cell = value ;
 					store_cell_data( battnumber, cell ) ;
@@ -1657,6 +1694,12 @@ void frskyTransmitBuffer( uint32_t size )
 	}
 }
 #endif
+#ifdef PCB9XT
+void frskyTransmitBuffer( uint32_t size )
+{
+	x9dHubTxStart( frskyTxBuffer, size ) ;
+}
+#endif
 
 uint8_t FrskyAlarmSendState = 0 ;
 uint8_t FrskyDelay = 0 ;
@@ -1675,8 +1718,16 @@ void FRSKY10mspoll(void)
   {
     return; // we only have one buffer. If it's in use, then we can't send yet.
   }
+#endif
+#ifdef PCB9XT
+	if ( hubTxPending() )
+  {
+    return  ;; // we only have one buffer. If it's in use, then we can't send yet.
+  }
+#endif
 
   // Now send a packet
+#ifdef PCBSKY
 #ifdef REVX
 	if ( TelemetryType == TEL_JETI )
 	{
@@ -1685,6 +1736,8 @@ void FRSKY10mspoll(void)
 	}
 	else
 #endif
+#endif
+#if defined(PCBSKY) || defined(PCB9XT)
   {
 		uint8_t i ;
 		uint8_t j = 1 ;
@@ -2525,7 +2578,8 @@ void check_frsky( uint32_t fivems )
 // New model loaded
 void FRSKY_setModelAlarms(void)
 {
-	FrskyBattCells = 0 ;
+	FrskyBattCells[0] = 0 ;
+	FrskyBattCells[1] = 0 ;
   FrskyAlarmSendState |= 0x0F ;
 //#ifndef SIMU
 //  Frsky_current[0].Amp_hour_boundary = 360000L/ g_model.frsky.channels[0].ratio ; // <= (!) division per 0!

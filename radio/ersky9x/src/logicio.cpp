@@ -374,20 +374,32 @@ uint32_t readKeyUpgradeBit( uint8_t index )
   CPU_UINT xxx = 0 ;
 	uint32_t t = 1 << (index-1) ;
 
-	if ( t > 16 )
-	{
-		t >>= 2 ;
-	}
+//	if ( t > 16 )
+//	{
+//		t >>= 2 ;
+//	}
 
 	xxx = M64Trims & t ;
 	return xxx ;
 }
 
-
 uint32_t hwKeyState( uint8_t key )
 {
   CPU_UINT xxx = 0 ;
-  if( key > HSW_MAX )  return 0 ;
+	register uint32_t a ;
+	uint32_t avpot = 0xFFFF ;
+  
+	a = g_eeGeneral.analogMapping & MASK_6POS ;
+	if ( a )
+	{
+		avpot = M64Analog[ (a >> 2) + 3] ;
+		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
+		{
+			avpot = 2047 - avpot ;
+		}
+	}
+	
+	if( key > HSW_MAX )  return 0 ;
 
 	if ( ( key >= HSW_ThrCt ) && ( key <= HSW_Trainer ) )
 	{
@@ -489,6 +501,57 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Pb2 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
     break ;
+
+		case HSW_Pb3 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb3source ) ;
+    break ;
+			 
+		case HSW_Pb4 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb4source ) ;
+    break ;
+
+		case HSW_Ele6pos0 :
+			
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot > SixPositionTable[0] ;
+			}
+    break ;
+
+		case HSW_Ele6pos1 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[0] ) && ( avpot >= SixPositionTable[1] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos2 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[1] ) && ( avpot >= SixPositionTable[2] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos3 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[2] ) && ( avpot >= SixPositionTable[3] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos4 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[3] ) && ( avpot >= SixPositionTable[4] ) ;
+			}
+    break ;
+
+		case HSW_Ele6pos5 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot < SixPositionTable[4] ;
+			}
+    break ;
 		 
 	}
 	return xxx ;
@@ -541,6 +604,21 @@ uint32_t switchPosition( uint32_t swtch )
 	if ( hwKeyState( swtch ) )
 	{
 		return 1 ;			
+	}
+	if ( swtch == HSW_Ele6pos1 )
+	{
+		if ( hwKeyState( HSW_Ele6pos3 ) )
+		{
+			return 3 ;
+		}
+		if ( hwKeyState( HSW_Ele6pos4 ) )
+		{
+			return 4 ;
+		}
+		if ( hwKeyState( HSW_Ele6pos5 ) )
+		{
+			return 5 ;
+		}
 	}
 	return 2 ;
 }
@@ -848,6 +926,24 @@ uint32_t hwKeyState( uint8_t key )
 	register uint32_t a ;
 	register uint32_t c ;
 	uint32_t av9 = Analog_values[9] ;
+	uint32_t avpot = 0xFFFF ;
+
+	a = g_eeGeneral.analogMapping & MASK_6POS ;
+	if ( a )
+	{
+		if ( a == USE_AUX_6POS )
+		{
+			avpot = av9 ;
+		}
+		else
+		{
+			avpot = Analog_values[ (a >> 2) + 3] ;
+		}
+		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
+		{
+			avpot = 4095 - avpot ;
+		}
+	}
 
   CPU_UINT xxx = 0 ;
   if( key > HSW_MAX )  return 0 ;
@@ -979,7 +1075,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 
 		case HSW_Ele6pos0 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot > SixPositionTable[0] ;
+			}
+			else if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = av9 > 3438 ;
 			}
@@ -990,7 +1090,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 			
 		case HSW_Ele6pos1 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[0] ) && ( avpot >= SixPositionTable[1] ) ;
+			}
+			else if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = ( av9 <= 3438 ) && ( av9 >= 2525 ) ;
 			}
@@ -1001,7 +1105,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 			
 		case HSW_Ele6pos2 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[1] ) && ( avpot >= SixPositionTable[2] ) ;
+			}
+			else 			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = ( av9 <= 2525 ) && ( av9 >= 2159 ) ;
 			}
@@ -1012,7 +1120,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 			
 		case HSW_Ele6pos3 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[2] ) && ( avpot >= SixPositionTable[3] ) ;
+			}
+			else 			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = ( av9 <= 2159 ) && ( av9 >= 1974 ) ;
 			}
@@ -1023,7 +1135,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 			
 		case HSW_Ele6pos4 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[3] ) && ( avpot >= SixPositionTable[4] ) ;
+			}
+			else 			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = ( av9 <= 1974 ) && ( av9 >= 950 ) ;
 			}
@@ -1034,7 +1150,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 			
 		case HSW_Ele6pos5 :
-			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot < SixPositionTable[4] ;
+			}
+			else 			if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
 				xxx = av9 < 950 ;
 			}
@@ -1050,6 +1170,14 @@ uint32_t hwKeyState( uint8_t key )
 			 
 		case HSW_Pb2 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
+    break ;
+
+		case HSW_Pb3 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb3source ) ;
+    break ;
+			 
+		case HSW_Pb4 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb4source ) ;
     break ;
 
     default:
@@ -1079,18 +1207,15 @@ uint32_t switchPosition( uint32_t swtch )
 	}
 	if ( swtch == HSW_Ele6pos1 )
 	{
-		swtch += 2 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos3 ) )
 		{
 			return 3 ;
 		}
-		swtch += 1 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos4 ) )
 		{
 			return 4 ;
 		}
-		swtch += 1 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos5 ) )
 		{
 			return 5 ;
 		}
@@ -1885,18 +2010,15 @@ uint32_t switchPosition( uint32_t swtch )
 	}
 	if ( swtch == HSW_Ele6pos1 )
 	{
-		swtch += 2 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos3 ) )
 		{
 			return 3 ;
 		}
-		swtch += 1 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos4 ) )
 		{
 			return 4 ;
 		}
-		swtch += 1 ;
-		if ( hwKeyState( swtch ) )
+		if ( hwKeyState( HSW_Ele6pos5 ) )
 		{
 			return 5 ;
 		}

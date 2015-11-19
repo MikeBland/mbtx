@@ -19,8 +19,13 @@
 #define HAPTIC_ON   PORTG |=  (1<<2)
 */
 
-
-
+#define VOLUME_MASK		0xFF00
+#define VLOC_MASK			0xF000
+#define VLOC_SYSTEM		0xE000
+#define VLOC_USER			0xD000
+#define VLOC_MNAMES		0xC000
+#define VLOC_NUMSYS		0x1000
+#define VLOC_NUMUSER	0x2000
 
 //audio
 #define AUDIO_QUEUE_LENGTH (20)  //20 seems to suit most alerts
@@ -190,7 +195,8 @@ int32_t toneFill( uint16_t *buffer ) ;
 extern audioQueue audio;
 
 void audioDefevent(uint8_t e);
-void audioVoiceDefevent( uint8_t e, uint8_t v) ;
+void audioVoiceDefevent( uint8_t e, uint16_t v) ;
+void audioNamedVoiceDefevent( uint8_t e, uint16_t v ) ;
 
 #define AUDIO_KEYPAD_UP()   audioDefevent(AU_KEYPAD_UP)
 #define AUDIO_KEYPAD_DOWN() audioDefevent(AU_KEYPAD_DOWN)
@@ -255,58 +261,59 @@ extern void unlockVoice( void ) ;
 
 // Defines for voice messages
 
-#define	V_ZERO					0
-#define	V_ONE						1
-#define	V_TWO						2
-#define	V_THREE					3
+//#define	V_ZERO					0
+//#define	V_ONE						1
+//#define	V_TWO						2
+//#define	V_THREE					3
 
-#define V_WARNING				21
+//#define V_WARNING				21
 #define V_ERROR					22
-#define V_ALERT					23
-#define V_FEET					24
-#define V_FOOT					25
-#define V_MINUS					26
+//#define V_ALERT					23
+//#define V_FEET					(24 | 0x1000)
+//#define V_FOOT					(25 | 0x1000)
+//#define V_MINUS					26
 
 #define	V_HELLO					28
-#define V_LIMIT					29
-#define V_RPM						30
-#define V_FBATTLOW			31
-#define V_POINT					35
-#define V_VOLTS					36
-#define V_VOLT					37
-#define	V_MINUTES				38
-#define	V_MINUTE				39
-#define	V_FORTY					40
+//#define V_LIMIT					29
+//#define V_RPM						30
+//#define V_FBATTLOW			31
+//#define V_POINT					35
+//#define V_VOLTS					36
+//#define V_VOLT					37
+//#define	V_MINUTES				38
+//#define	V_MINUTE				39
+//#define	V_FORTY					40
 
-#define	V_30SECS				41
-#define	V_20SECS				42
-#define	V_10SECS				43
+//#define	V_30SECS				41
+//#define	V_20SECS				42
+//#define	V_10SECS				43
 
 
-#define V_PERCENT				44
+//#define V_PERCENT				44
 #define	V_INACTIVE			45
 #define	V_BATTERY_LOW		46
-#define	V_DEGREES				47
-#define	V_DEGREE				48
+//#define	V_DEGREES				47
+//#define	V_DEGREE				48
 #define	V_CAPACITY			49
 
-#define V_AMPS					51
-#define V_AMP						52
-#define	V_SECONDS				53
-#define	V_SECOND				54
-#define	V_DB						55
-#define	V_METRES				56
-#define	V_METRE					57
+//#define V_AMPS					51
+//#define V_AMP						52
+//#define	V_SECONDS				53
+//#define	V_SECOND				54
+//#define	V_DB						55
+//#define	V_METRES				56
+//#define	V_METRE					57
 #define	V_NOTELEM				58
-#define	V_WATTS					59
+//#define	V_WATTS					59
 
 #define V_RSSI_CRITICAL	71
 #define V_RSSI_WARN			70
 
 #define V_THR_WARN			74
 #define V_SW_WARN				75
+//#define V_BT_LOST				76
 
-#define V_HUNDRED			 100
+//#define V_HUNDRED			 100
 #define V_THOUSAND		 110
 
 #if defined NMEA
@@ -352,7 +359,7 @@ extern void unlockVoice( void ) ;
 #define	SV_SECONDS    33
 #define	SV_SECOND     34
 #define	SV_DB         35
-#define	SV_METERS     36
+#define	SV_METRES     36
 #define	SV_METER      37
 #define	SV_NO_TELEM   38
 #define	SV_RX_V_LOW   39
@@ -370,6 +377,9 @@ extern void unlockVoice( void ) ;
 #define	SV_RSSICRIT   51
 #define	SV_RX_LOST    52
 #define	SV_CAP_WARN   53
+#define	SV_BT_LOST		54
+#define	SV_HUNDRED		55
+#define	SV_THOUSAND		56
 
 
 #endif // audio_h     

@@ -68,6 +68,10 @@
 #define USE_EXT_RTC		1
 #endif
 
+#ifdef SPLASH_DEBUG
+extern uint16_t SplashDebug[] ;
+#endif
+
 union t_xmem Xmem ;
 
 extern int32_t Rotary_diff ;
@@ -994,6 +998,9 @@ void menuProcStatistic2(uint8_t event) ;
 void menuProcDsmDdiag(uint8_t event) ;
 void menuProcAlpha(uint8_t event) ;
 void menuProcTrainDdiag(uint8_t event) ;
+#ifdef PCB9XT
+void menuDebug(uint8_t event) ;
+#endif
 
 void menuProcVoiceAlarm(uint8_t event) ;
 
@@ -1038,6 +1045,9 @@ enum EnumTabStat
 	e_stat2,
 	e_dsm,
 	e_traindiag,
+#ifdef PCB9XT
+	e_debug,
+#endif
   e_Setup2,
   e_Setup3,
 #ifdef PCBX9D
@@ -1061,6 +1071,9 @@ MenuFuncP menuTabStat[] =
 	menuProcStatistic2,
 	menuProcDsmDdiag,
 	menuProcTrainDdiag,
+#ifdef PCB9XT
+	menuDebug,
+#endif
   menuProcSetup2,
 	menuProcSDstat,
 #ifdef PCBX9D
@@ -6273,7 +6286,7 @@ uint8_t blink = InverseBlink ;
 			uint8_t attr = g_model.sub_protocol ;
 			g_model.sub_protocol = checkIndexed( y, FWx10"\014"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 			if(g_model.sub_protocol!=attr) g_model.ppmNCH &= 0x0F;
-			uint8_t nchHi = g_model.ppmNCH >> 4 ;
+			uint8_t nchHi = ( g_model.ppmNCH >> 4) & 0x07 ;
 			y += FH ;
 			subN++;
 			switch(g_model.sub_protocol&0x1F)
@@ -6298,7 +6311,8 @@ uint8_t blink = InverseBlink ;
 					nchHi = checkIndexed( y, XPSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
 					break;
 			}
-			g_model.ppmNCH = (nchHi << 4) ;
+			g_model.ppmNCH = (nchHi << 4) | (g_model.ppmNCH & 0x8F) ;
+			g_model.ppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.ppmNCH & 0x8F);
 			y += FH ;
 			subN++;
 
@@ -7731,7 +7745,12 @@ void menuProcDiagKeys(uint8_t event)
 					displayType = 1 ;
 				}
 			break ;
+			case 3 :	// IDx
+				t = switchPosition( HSW_ID0 ) ;
+				displayType = 1 ;
+			break ;
 			case 6 :	// AIL
+				y -= FH ;
 				if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
 				{
 					t = switchPosition( HSW_Ail3pos0 ) ;
@@ -7739,21 +7758,28 @@ void menuProcDiagKeys(uint8_t event)
 				}
 			break ;
 			case 7 :	// GEA
+				y -= FH ;
 				if ( g_eeGeneral.switchMapping & USE_GEA_3POS )
 				{
 					t = switchPosition( HSW_Gear3pos0 ) ;
 					displayType = 1 ;
 				}
 			break ;
+			case 8 :	// TRN
+				y -= FH ;
+			break ;
 		}
-    putsDrSwitches(x,y,i+1,0); //ohne off,on
-		if ( displayType == 0 )
+		if ( ( i < 4 ) || ( i > 5 ) )
 		{
-    	lcd_putcAtt(x+FW*4+2,  y,t+'0',t ? INVERS : 0);
-		}
-		else
-		{
-			lcd_putc(x+FW*4+2, y, PSTR(HW_SWITCHARROW_STR)[t] ) ;
+    	putsDrSwitches(x,y,i+1,0); //ohne off,on
+			if ( displayType == 0 )
+			{
+    		lcd_putcAtt(x+FW*4+2,  y,t+'0',t ? INVERS : 0);
+			}
+			else
+			{
+				lcd_putc(x+FW*4+2, y, PSTR(HW_SWITCHARROW_STR)[t] ) ;
+			}
 		}
   }
 #endif
@@ -7791,13 +7817,28 @@ void menuProcDiagKeys(uint8_t event)
 #if defined(PCBSKY) || defined(PCB9XT)
 	if ( g_eeGeneral.switchMapping & USE_PB1 )
 	{
-	  lcd_puts_Pleft(1*FH,XPSTR("\017PB1") ) ;
-		putc_0_1( FW*20, 1*FH, getSwitch00(HSW_Pb1) ) ;
+	  lcd_puts_Pleft(7*FH,XPSTR("\010PB1") ) ;
+		putc_0_1( FW*11+2, 7*FH, getSwitch00(HSW_Pb1) ) ;
+	}
+	
+	if ( g_eeGeneral.switchMapping & ( USE_PB2 | USE_PB3 | USE_PB4 ) )
+	{
+	  lcd_puts_Pleft(1*FH,XPSTR("\017PB") ) ;
 	}
 	if ( g_eeGeneral.switchMapping & USE_PB2 )
 	{
-	  lcd_puts_Pleft(2*FH,XPSTR("\017PB2") ) ;
-		putc_0_1( FW*20, 2*FH, getSwitch00(HSW_Pb2) ) ;
+	  lcd_puts_Pleft(1*FH,XPSTR("\0212") ) ;
+		putc_0_1( FW*17, 2*FH, getSwitch00(HSW_Pb2) ) ;
+	}
+	if ( g_eeGeneral.switchMapping & USE_PB3 )
+	{
+	  lcd_puts_Pleft(1*FH,XPSTR("\0223") ) ;
+		putc_0_1( FW*18, 2*FH, getSwitch00(HSW_Pb3) ) ;
+	}
+	if ( g_eeGeneral.switchMapping & USE_PB4 )
+	{
+	  lcd_puts_Pleft(1*FH,XPSTR("\0234") ) ;
+		putc_0_1( FW*19, 2*FH, getSwitch00(HSW_Pb4) ) ;
 	}
 #endif
 
@@ -8591,6 +8632,95 @@ extern uint32_t Bt_ok ;
 //	lcd_outhex4( 0, 4*FH, (frskyStreaming<< 8) | frskyUsrStreaming ) ;
 }
 
+
+#ifdef PCB9XT
+#include "x9d/hal.h"
+uint8_t AudioTest ;
+uint8_t AudioCount ;
+extern void sdIfSetup( void ) ;
+
+void menuAudioDebug(uint8_t event)
+{
+	TITLE(XPSTR("Audio Debug")) ;
+
+	if ( event == EVT_KEY_FIRST(KEY_EXIT) )
+	{
+    killEvents(event) ;
+		popMenu(false) ;
+	}
+
+	AudioCount += 1 ;
+	if ( AudioCount == 2 )
+	{
+		AudioCount = 0 ;
+	}
+	switch ( AudioTest )
+	{
+		case 0 :
+			if ( AudioCount )
+			{
+				GPIOB->BSRRL = GPIO_Pin_SPI_SD_SCK ;			// A0 high
+			}
+			else
+			{
+				GPIOB->BSRRH = GPIO_Pin_SPI_SD_SCK ;			// A0 high
+			}
+		break ;
+		case 1 :
+			if ( AudioCount )
+			{
+				GPIOB->BSRRL = GPIO_Pin_SPI_SD_MOSI ;			// A0 high
+			}
+			else
+			{
+				GPIOB->BSRRH = GPIO_Pin_SPI_SD_MOSI ;			// A0 high
+			}
+		break ;
+		case 2 :
+			if ( AudioCount )
+			{
+				GPIOB->BSRRL = GPIO_Pin_SPI_SD_CS ;			// A0 high
+			}
+			else
+			{
+				GPIOB->BSRRH = GPIO_Pin_SPI_SD_CS ;			// A0 high
+			}
+		break ;
+	}
+}
+
+void menuDebug(uint8_t event)
+{
+	MENU(XPSTR("DEBUG"), menuTabStat, e_debug, 2, {0} ) ;
+
+  switch(event)
+	{
+		case EVT_ENTRY :
+			AudioTest = 0 ;
+		break ;
+		case EVT_ENTRY_UP :
+			sdIfSetup() ;
+		break ;
+    case EVT_KEY_FIRST(KEY_MENU):
+			configure_pins( GPIO_Pin_SPI_SD_SCK | GPIO_Pin_SPI_SD_MOSI|GPIO_Pin_SPI_SD_CS, PIN_OUTPUT | PIN_PORTB | PIN_PUSHPULL | PIN_OS25 | PIN_NO_PULLUP ) ;
+			AudioCount = 0 ;
+			pushMenu(menuAudioDebug) ;
+		break ;
+	}
+
+  lcd_puts_Pleft( 2*FH, XPSTR("Test Audio") ) ;
+	int8_t sub = mstate2.m_posVert ;
+
+  lcd_outdezAtt( PARAM_OFS+2*FW, 2*FH, AudioTest, (sub==1) ? INVERS : 0) ;
+	if(sub==1)
+	{
+		AudioTest = checkIncDec16( AudioTest, 0, 2, 0 ) ;
+	}
+	 
+}
+#endif
+
+
 uint8_t TrainerMode ;
 uint8_t TrainerPos ;
 uint8_t TrainerDebugData[16] ;
@@ -8654,35 +8784,52 @@ void menuProcTrainDdiag(uint8_t event)
 		}
 	}
 
-//extern uint8_t DebugMultiData[] ;
+#ifdef MULTI_DEBUG
+extern uint8_t DebugMultiData[] ;
 
-//  lcd_outhex4( 0, 4*FH, (DebugMultiData[0] << 8) | DebugMultiData[1] ) ;
-//  lcd_outhex4( 30, 4*FH, (DebugMultiData[2] << 8) | DebugMultiData[3] ) ;
-//  lcd_outhex4( 60, 4*FH, (DebugMultiData[4] << 8) | DebugMultiData[5] ) ;
-//  lcd_outhex4( 90, 4*FH, (DebugMultiData[6] << 8) | DebugMultiData[7] ) ;
+  lcd_outhex4( 0, 4*FH, (DebugMultiData[0] << 8) | DebugMultiData[1] ) ;
+  lcd_outhex4( 30, 4*FH, (DebugMultiData[2] << 8) | DebugMultiData[3] ) ;
+  lcd_outhex4( 60, 4*FH, (DebugMultiData[4] << 8) | DebugMultiData[5] ) ;
+  lcd_outhex4( 90, 4*FH, (DebugMultiData[6] << 8) | DebugMultiData[7] ) ;
   
-//	lcd_outhex4( 0, 5*FH, (DebugMultiData[8] << 8) | DebugMultiData[9] ) ;
-//  lcd_outhex4( 30, 5*FH, (DebugMultiData[10] << 8) | DebugMultiData[11] ) ;
-//  lcd_outhex4( 60, 5*FH, (DebugMultiData[12] << 8) | DebugMultiData[13] ) ;
-//  lcd_outhex4( 90, 5*FH, (DebugMultiData[14] << 8) | DebugMultiData[15] ) ;
+	lcd_outhex4( 0, 5*FH, (DebugMultiData[8] << 8) | DebugMultiData[9] ) ;
+  lcd_outhex4( 30, 5*FH, (DebugMultiData[10] << 8) | DebugMultiData[11] ) ;
+  lcd_outhex4( 60, 5*FH, (DebugMultiData[12] << 8) | DebugMultiData[13] ) ;
+  lcd_outhex4( 90, 5*FH, (DebugMultiData[14] << 8) | DebugMultiData[15] ) ;
+#endif
 
-extern uint32_t I2C_debug[] ;
-  lcd_outhex4( 0, 4*FH, I2C_debug[0] >> 16 ) ;
-  lcd_outhex4( 25, 4*FH, I2C_debug[0] ) ;
-  lcd_outhex4( 60, 4*FH, I2C_debug[1] >> 16 ) ;
-  lcd_outhex4( 85, 4*FH, I2C_debug[1] ) ;
+//#ifdef PCB9XT
+//extern uint32_t I2C_debug[] ;
+//  lcd_outhex4( 0, 4*FH, I2C_debug[0] >> 16 ) ;
+//  lcd_outhex4( 25, 4*FH, I2C_debug[0] ) ;
+//  lcd_outhex4( 60, 4*FH, I2C_debug[1] >> 16 ) ;
+//  lcd_outhex4( 85, 4*FH, I2C_debug[1] ) ;
 
-  lcd_outhex4( 0, 5*FH, I2C_debug[2] >> 16 ) ;
-  lcd_outhex4( 25, 5*FH, I2C_debug[2] ) ;
-  lcd_outhex4( 60, 5*FH, I2C_debug[3] >> 16 ) ;
-  lcd_outhex4( 85, 5*FH, I2C_debug[3] ) ;
+//  lcd_outhex4( 0, 5*FH, I2C_debug[2] >> 16 ) ;
+//  lcd_outhex4( 25, 5*FH, I2C_debug[2] ) ;
+//  lcd_outhex4( 60, 5*FH, I2C_debug[3] >> 16 ) ;
+//  lcd_outhex4( 85, 5*FH, I2C_debug[3] ) ;
 
-  lcd_outhex4( 0, 6*FH, I2C_debug[4] ) ;
+//  lcd_outhex4( 0, 6*FH, I2C_debug[4] ) ;
 
-  lcd_outhex4( 0, 7*FH, I2C_debug[6] >> 16 ) ;
-  lcd_outhex4( 25, 7*FH, I2C_debug[6] ) ;
-  lcd_outhex4( 60, 7*FH, I2C_debug[7] >> 16 ) ;
-  lcd_outhex4( 85, 7*FH, I2C_debug[7] ) ;
+//  lcd_outhex4( 0, 7*FH, I2C_debug[6] >> 16 ) ;
+//  lcd_outhex4( 25, 7*FH, I2C_debug[6] ) ;
+//  lcd_outhex4( 60, 7*FH, I2C_debug[7] >> 16 ) ;
+//  lcd_outhex4( 85, 7*FH, I2C_debug[7] ) ;
+//#endif
+//#ifdef SPLASH_DEBUG
+//  lcd_outhex4( 0, 4*FH, SplashDebug[0] ) ;
+//  lcd_outhex4( 25, 4*FH, SplashDebug[1]) ;
+//  lcd_outhex4( 60, 4*FH, SplashDebug[2] ) ;
+//  lcd_outhex4( 85, 4*FH, SplashDebug[3] ) ;
+
+//  lcd_outhex4( 0, 5*FH,  SplashDebug[4] ) ;
+//  lcd_outhex4( 25, 5*FH, SplashDebug[5] ) ;
+//  lcd_outhex4( 60, 5*FH, SplashDebug[6] ) ;
+//  lcd_outhex4( 85, 5*FH, SplashDebug[7] ) ;
+
+//  lcd_outhex4( 0, 6*FH, SplashDebug[8] ) ;
+//#endif
 
 }
 
@@ -12697,7 +12844,14 @@ uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t c
 #ifdef PCB9XT
 	value = checkIndexed( y, XPSTR(FWx17"\010\004NONEEXT1EXT2EXT3EXT4EXT5EXT6EXT7EXT8"), value, condition ) ;
 #else
-	value = checkIndexed( y, XPSTR(FWx17"\010\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6"), value, condition ) ;
+	if ( g_eeGeneral.ar9xBoard == 0 )
+	{
+		value = checkIndexed( y, XPSTR(FWx17"\010\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6"), value, condition ) ;
+	}
+	else
+	{
+		value = checkIndexed( y, XPSTR(FWx17"\005\004NONEEXT1EXT2EXT3PB14ELE "), value, condition ) ;
+	}
 #endif
 #endif
 	g_eeGeneral.switchMapping = sm & ~(mask) ;
@@ -13380,14 +13534,14 @@ STR_DiagAna
 		{
 			uint8_t subN = 0 ;
 #ifdef PCBSKY
-			uint8_t num = 9 + 2 + 2 + 4 + 1 + 1 + 1 ;
+			uint8_t num = 9 + 2 + 2 + 4 + 1 + 1 + 3 ;
 #ifndef REVX
 			num += 1 ;
 #endif
 			IlinesCount = num ;
 #else
 #ifdef PCB9XT
-			IlinesCount = 2 + 4 + 1 + 7 + 1 ;
+			IlinesCount = 3 + 4 + 1 + 7 + 3 ;
 #else
 			IlinesCount = 4 + 4 + 1 + 1 ;
 #endif
@@ -13405,8 +13559,7 @@ STR_DiagAna
 				IlinesCount += 6 ;
 				page3 += 6 ;
 			}
-
-#endif
+#endif // PCBSKY
 
 #ifdef PCBSKY
 			if ( g_eeGeneral.ar9xBoard )
@@ -13419,8 +13572,8 @@ STR_DiagAna
 #endif
 
 #ifdef PCB9XT
-			uint32_t page2 = 6 ;
-			uint32_t page3 = 7 ;
+			uint32_t page2 = 7 ;
+			uint32_t page3 = 8 ;
 			if ( g_eeGeneral.analogMapping & MASK_6POS )
 			{
 				IlinesCount += 6 ;
@@ -13443,7 +13596,7 @@ STR_DiagAna
 			if ( sub < 4 )
 #endif
 #ifdef PCB9XT
-			if ( sub < 2 )
+			if ( sub < 3 )
 // testing for speaker hiss only
 //			if ( sub < 3 )
 #endif
@@ -13463,6 +13616,12 @@ STR_DiagAna
 				}
  				y += FH ;
 				subN += 1 ;
+
+#ifdef PCB9XT
+				g_eeGeneral.enableI2C = onoffMenuItem( g_eeGeneral.enableI2C, y, XPSTR("I2C Enable"), (sub==subN ? blink:0) ) ;
+ 				y += FH ;
+				subN += 1 ;
+#endif
 
 // testing for speaker hiss only
 //#ifdef PCB9XT
@@ -13598,10 +13757,10 @@ STR_DiagAna
 #endif // PCBSKY
 
 #ifdef PCB9XT
-			else if ( sub < 6 )
+			else if ( sub < page2 )
 			{
 				displayNext() ;
-				subN = 2 ;
+				subN = 3 ;
 #endif // PCB9XT
 
 #ifdef PCBX9D
@@ -13677,7 +13836,7 @@ STR_DiagAna
 #define NUM_ANA_INPUTS	4
 #endif
 #ifdef PCB9XT
-	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002---P1 P2 P3 "), value, (sub==subN ? INVERS:0));
+	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\003---P1 P2 P3 "), value, (sub==subN ? INVERS:0));
 #define NUM_ANA_INPUTS	3
 #endif
 				oldValue = value ;
@@ -13772,7 +13931,14 @@ STR_DiagAna
 #ifdef PCB9XT
 				value = checkIndexed( y, XPSTR(FWx17"\010\004NONEEXT1EXT2EXT3EXT4EXT5EXT6EXT7EXT8"), value, (sub==subN) ) ;
 #else
-				value = checkIndexed( y, XPSTR(FWx17"\012\004NONELCD2LCD6LCD7DAC1ANA 6PSA6PSBEXT4EXT5EXT6"), value, (sub==subN) ) ;
+				if ( g_eeGeneral.ar9xBoard == 0 )
+				{
+					value = checkIndexed( y, XPSTR(FWx17"\012\004NONELCD2LCD6LCD7DAC1ANA 6PSA6PSBEXT4EXT5EXT6"), value, (sub==subN) ) ;
+				}
+				else
+				{
+					value = checkIndexed( y, XPSTR(FWx17"\007\004NONEEXT1EXT2EXT3PB14ANA 6PSA6PSB"), value, (sub==subN) ) ;
+				}
 #endif	// PCB9XT
 #endif
 
@@ -13854,7 +14020,15 @@ STR_DiagAna
 #else
 				subN = 9 ;
 #endif
-        lcd_puts_Pleft( y,XPSTR("Stick Reverse:"));
+  			lcd_puts_Pleft( y, XPSTR("PB3 switch\037PB4 switch"));
+				g_eeGeneral.pb3source = edit3posSwitchSource( y, g_eeGeneral.pb3source, USE_PB3, (sub==subN) ) ;
+				y += FH ;
+				subN += 1 ;
+				g_eeGeneral.pb4source = edit3posSwitchSource( y, g_eeGeneral.pb4source, USE_PB4, (sub==subN) ) ;
+				y += FH ;
+				subN += 1 ;
+        
+				lcd_puts_Pleft( y,XPSTR("Stick Reverse:"));
  				y += FH ;
 				for ( uint8_t i = 0 ; i < 4 ; i += 1 )
 				{
@@ -15256,8 +15430,6 @@ void menuProcSlave(uint8_t event)
 	
 }
 #endif // PCB9XT
-
-//extern uint16_t SplashDebug[9] ;
 
 extern uint32_t ChipId ;
 void menuProcBoot(uint8_t event)

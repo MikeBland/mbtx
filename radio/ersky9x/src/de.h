@@ -126,6 +126,9 @@ v.xx.01-german
 #define ISTR_CHANS_GV	     "\004P1  P2  P3  HALBVOLLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW	   "\004P1  P2  P3  HALBVOLLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
 #endif
+#ifdef PCB9XT
+#define ISTR_CHANS_EXTRA   "\004P4  P5  P6  P7  "
+#endif
 #ifdef PCBX9D
 #define ISTR_CHANS_GV	     "\004P1  P2  SL  HALBVOLLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW	   "\004P1  P2  SL  HALBVOLLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
@@ -366,7 +369,7 @@ v.xx.01-german
 
 // SWITCHES_STR 3 chars each
 #if defined(PCBSKY) || defined(PCB9XT)
-#define ISWITCHES_STR       "\003GASSEIH\302HID0ID1ID2QUEFWKTRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfTH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\2016P06P16P26P36P46P5PB1PB2"
+#define ISWITCHES_STR       "\003GASSEIH\302HID0ID1ID2QUEFWKTRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfTH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\2016P06P16P26P36P46P5PB1PB2PB3PB4"
 //#define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSH6P"
 #define IHW_SWITCHARROW_STR  "\200-\201"
 #endif
@@ -481,8 +484,38 @@ v.xx.01-german
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Critical"
 #define ISTR_BT_TRAINER		  "BT as Trainer"
-#define ISTR_MULTI_TYPE     "Protocol\037Type\037Autobind\037Bind\037Range"
+#define ISTR_MULTI_TYPE     "Protocol\037Type\037Autobind\037Power"
 #define ISTR_MULTI_OPTION   "\014Option"
+
+#define ISTR_Display		     "Display" 
+#define ISTR_AudioHaptic		 "AudioHaptic" 
+#define ISTR_Alarms			     "Alarms" 
+#define ISTR_General		     "General" 
+#define ISTR_Controls			   "Controls"
+#define ISTR_Hardware			   "Hardware"
+#define ISTR_Calibration		 "Calibration" 
+//#define ISTR_Trainer		     "Trainer" 
+#define ISTR_Version		     "Version" 
+#define ISTR_ModuleRssi			 "FrSky xSSI"
+#define ISTR_DateTime			   "Date-Time" 
+#define ISTR_DiagSwtch		   "DiagSwtch"  
+#define ISTR_DiagAna		     "DiagAna" 
+
+#define ISTR_Mixer		      "Mixer" 
+#define ISTR_Cswitches		  "L.Switches" 
+#define ISTR_Telemetry		  "Telemetry" 
+#define ISTR_limits			    "Limits" 
+#define ISTR_Bluetooth		  "BlueTooth" 
+#define ISTR_heli_setup			"Heli" 
+#define ISTR_Curves			    "Curves" 
+#define ISTR_Expo				    "Expo/Dr" 
+#define ISTR_Globals		    "Globals" 
+#define ISTR_Timer		      "Timers" 
+#define ISTR_Modes			 		"Modes" 
+#define ISTR_Voice		      "Voice" 
+#define ISTR_Protocol			  "Protocol" 
+#define ISTR_Safety					"Safety Sws"
+
 
 //"RSSI Warn"
 //"RSSI Critical"

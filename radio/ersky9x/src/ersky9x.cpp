@@ -76,6 +76,15 @@
 #include "X9D/stm32f2xx_rcc.h"
 #include "X9D/hal.h"
 #include "X9D/i2c_ee.h"
+
+#include "X9D/usb_dcd_int.h"
+#include "X9D/usb_bsp.h"
+#include "X9D/usbd_conf.h"
+
+extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev, 
+                                 uint8_t *report,
+                                 uint16_t len) ;
+
 #endif
 
 #ifdef PCB9XT
@@ -86,7 +95,17 @@
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
+#include "X9D/i2c_9xt.h"
 #include "X9D/hal.h"
+
+#include "X9D/usb_dcd_int.h"
+#include "X9D/usb_bsp.h"
+#include "X9D/usbd_conf.h"
+
+extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev, 
+                                 uint8_t *report,
+                                 uint16_t len) ;
+
 #endif
 
 #include "sbus.h"
@@ -161,6 +180,7 @@ t_time Time ;
 uint8_t unexpectedShutdown = 0;
 uint8_t SdMounted = 0;
 uint8_t CurrentTrainerSource ;
+uint8_t HardwareMenuEnabled = 0 ;
 
 #define SW_STACK_SIZE	6
 uint8_t Last_switch[NUM_SKYCSW] ;
@@ -259,6 +279,10 @@ void handle_serial( void* pdata ) ;
 #endif
 #endif
 
+
+#if defined(PCBSKY) || defined(PCB9XT)
+uint16_t SixPositionTable[5] ;
+#endif
 
 #ifdef PCBSKY
 uint16_t anaIn( uint8_t chan ) ;
@@ -454,6 +478,7 @@ uint32_t ChipId ;
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 uint32_t ResetReason ;
+uint32_t ChipId ;
 #endif
 
 //uint8_t Timer2_running = 0 ;
@@ -501,6 +526,61 @@ uint32_t ResetReason ;
 //}
 //#endif
 
+void usbJoystickUpdate(void) ;
+
+#if defined(PCB9XT) || defined(PCBX9D)
+bool usbPlugged(void)
+{
+  return GPIO_ReadInputDataBit(GPIOA, PIN_FS_VBUS);
+}
+#endif
+
+
+void handleUsbConnection()
+{
+#if (defined(PCBX9D) || defined(PCB9XT)) && !defined(SIMU)
+  static bool usbStarted = false;
+
+  if (!usbStarted && usbPlugged())
+	{
+    usbStarted = true;
+
+    /*
+      We used to initialize USB peripheral and driver here.
+      According to my tests this is way too late. The USB peripheral
+      therefore does not have enough information to start responding to 
+      USB host request, which causes very slow USB device recognition, 
+      multiple USB device resets, etc...
+
+      If we want to change the USB profile, the procedure is simple:
+        * USB cable must be disconnected
+        * call usbDeInit();
+        * call usbUnit(); which initializes USB with the new profile. 
+          Obviously the usbInit() should be modified to have a runtime
+          selection of the USB profile.
+    */
+
+//#if defined(USB_MASS_STORAGE)
+//    opentxClose();
+//    usbPluggedIn();
+//#endif
+  }
+  if (usbStarted && !usbPlugged())
+	{
+    usbStarted = false;
+  }
+  
+//#if defined(USB_JOYSTICK)
+  if (usbStarted )
+	{
+    usbJoystickUpdate();
+  }
+//#endif
+  
+#endif //#if defined(PCB9XT) && !defined(SIMU)
+}
+
+
 
 #ifdef PCBX9D
 //const char Switches_Str[] = "SA0SA1SA2SB0SB1SB2SC0SC1SC2SD0SD1SD2SE0SE1SE2SF0SF2SG0SG1SG2SH0SH2" ;
@@ -544,8 +624,14 @@ void setLanguage()
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
 		break ;
+		case 5 :
+			Language = Italian ;
+			ExtraFont = font_it_extra ;
+			ExtraBigFont = NULL ;
+		break ;
 		default :
 			Language = English ;
+			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
 		break ;
 	}
@@ -658,6 +744,16 @@ void setBtBaudrate( uint32_t index )
 		brate = 115200 ;
 	}
 
+//	if ( g_eeGeneral.bt_correction )
+//	{
+//		uint32_t value = g_eeGeneral.bt_correction ;
+//		value += 100 ;
+//		if ( value > 107 )
+//		{
+//			value -= 16 ;
+//		}
+//		brate = brate * value / 100 ;
+//	}
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
 }
 #endif
@@ -670,7 +766,7 @@ void update_mode(void* pdata)
 	g_menuStack[0] = menuUpdate ;
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCBSKY
@@ -829,6 +925,25 @@ void com2Configure()
 	}	 
 }
 
+#ifdef PCBSKY
+ #ifndef REVX
+static void checkAr9x()
+{
+	uint32_t x = ChipId & 0x00000F00 ;
+	if ( x <= 0x00000900 )
+	{
+		return ;
+	}
+	g_eeGeneral.ar9xBoard = 1 ;
+	g_eeGeneral.softwareVolume = 1 ;
+}
+ #endif
+#endif
+
+
+#if defined(PCB9XT) || defined(PCBX9D)
+extern "C" void usbInit(void) ;
+#endif
 
 int main( void )
 {
@@ -841,6 +956,7 @@ int main( void )
 	ChipId = CHIPID->CHIPID_CIDR ;
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
+	ChipId = *((uint16_t *)0x1FFF7A22) ;
 	ResetReason = RCC->CSR ;
   RCC->CSR |= RCC_CSR_RMVF ;
 #endif
@@ -1034,7 +1150,7 @@ uint32_t updateSlave() ;
 			initM64() ;
 		}
 		GPIOA->BSRRL = 0x0004 ;			// Pin High
-		BlSetColour( 0, BL_ALL ) ;	
+		BlSetAllColours( 0, 0, 0 ) ;
 	}
 	lcd_clear() ;
 	refreshDisplay() ;
@@ -1139,6 +1255,8 @@ uint32_t updateSlave() ;
 	init_trims() ;
 	start_2Mhz_timer() ;
 	start_sound() ;
+//	I2C_Init() ;
+	init_I2C2() ;
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -1175,6 +1293,12 @@ uint32_t updateSlave() ;
 #endif
 	
 	eeReadAll() ;
+#ifdef PCBSKY
+ #ifndef REVX
+	checkAr9x() ;
+ #endif
+#endif
+
 	SportStreamingStarted = 0 ;
 	setLanguage() ;
 #ifdef PCBSKY
@@ -1189,7 +1313,12 @@ uint32_t updateSlave() ;
 
 	createSwitchMapping() ;
 #ifdef PCBSKY
+	create6posTable() ;
 	init_rotary_encoder() ;
+#endif 
+
+#ifdef PCB9XT
+	create6posTable() ;
 #endif 
 
 #ifdef REV9E
@@ -1212,6 +1341,11 @@ uint32_t updateSlave() ;
 		while(1) ;
 #endif
 	
+	}
+
+	if ( ( read_trims() & 0x01 )== 0x01 )
+	{
+		HardwareMenuEnabled = 1 ;
 	}
 
   resetTimer();
@@ -1251,9 +1385,14 @@ uint32_t updateSlave() ;
 #else
 	backlight_set( g_eeGeneral.bright ) ;
 #endif
+	usbInit() ;
 #endif
 #ifdef PCB9XT
+  usbInit() ;
+//	backlightReset() ;
 	backlight_on() ;
+//	hw_delay( 2000 ) ; // 200uS
+//	backlight_on() ;
 #endif
 
 //  lcdSetRefVolt(g_eeGeneral.contrast) ;
@@ -1364,7 +1503,7 @@ void initTopLcd() ;
 
 #ifdef PCBSKY
 OS_FlagID Bt_flag ;
-struct t_fifo64 Bt_fifo ;
+struct t_fifo128 Bt_fifo ;
 struct t_serial_tx Bt_tx ;
 struct t_serial_tx Com2_tx ;
 uint8_t BtTxBuffer[32] ;
@@ -1393,11 +1532,36 @@ uint8_t BtName[16] ;
 uint8_t BtRole[4] ;
 uint8_t BtIac[10] ;
 
-uint8_t BtCounters[4] ;
-uint8_t BtTotals[4] ;
+uint16_t BtCounters[4] ;
+uint16_t BtTotals[4] ;
 
 uint8_t BtMasterSlave = 0 ;
 uint16_t BtLastSbusSendTime ;
+
+uint32_t btAddressValid( uint8_t *address )
+{
+	uint8_t x ;
+	x = *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address++ ;
+	x |= *address ;
+	return x ;
+}
+
+uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 )
+{
+	uint32_t x ;
+	for ( x = 0 ; x < 6 ; x += 1 )
+	{
+		if ( *address1++ != *address2++ )
+		{
+			return 0 ;
+		}
+	}
+	return 1 ;
+}
 
 void bt_send_buffer()
 {
@@ -1409,22 +1573,21 @@ void bt_send_buffer()
 		CoTickDelay(1) ;					// 2mS for now
 	}
 	Bt_tx.size = 0 ;
- 	BtCounters[3] += 1 ;
 }
 
-#define BT_POLL_TIMEOUT		600
+#define BT_POLL_TIMEOUT		800
 
 void flushBtFifo()
 {
 	uint16_t rxchar ;
 
-//	txmit( '[' ) ;
+	txmit( '[' ) ;
 	while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 	{
-//		txmit( rxchar ) ;
+txmit( rxchar ) ;
 		// null body, flush fifo
 	}
-//	txmit( ']' ) ;
+	txmit( ']' ) ;
 }
 
 uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
@@ -1432,20 +1595,19 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	uint16_t x ;
 	uint32_t y ;
 	uint16_t rxchar ;
+	uint16_t a = 0 ;
+	uint16_t b = 0 ;
 
 	x = 'O' ;
 	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
-		if ( errorAllowed )
-		{
-			x = 13 ;	// <CR>
-		}
+		x = 13 ;	// <CR>
 	}
 	for( y = 0 ; y < timeout ;  y += 1 )
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-//			txmit( rxchar ) ;
+txmit( rxchar ) ;
 //			btStartLog( rxchar ) ;
 
 			if ( rxchar == x )
@@ -1455,16 +1617,18 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 					x = 'K' ;
 					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 					{
-						if ( errorAllowed )
-						{
-							x = 10 ;	// <LF>
-						}
+						x = 10 ;	// <LF>
 					}
 				}
 				else
 				{
 					break ;			// Found "OK"
 				}
+			}
+			if ( rxchar != 13 )
+			{
+				a = b ;
+				b = rxchar ;
 			}
 		}
 		else
@@ -1474,17 +1638,28 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	}
 	if ( y < timeout )
 	{
+		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		{
+			if ( errorAllowed == 0 )
+			{
+				if ( ( a != 'O') || ( b != 'K' ) )
+				{
+					return 0 ;
+				}
+			}
+		}
 		return 1 ;
 	}
 	else
 	{
 		return 0 ;
 	}
-	 
 }
 
 uint32_t poll_bt_device()
 {
+txmit('P') ;
+	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
 	Bt_tx.size = 2 ;
@@ -1500,9 +1675,15 @@ uint32_t poll_bt_device()
 	return getBtOK(1, BT_POLL_TIMEOUT ) ;
 }
 
+uint8_t BtBaudChangeCount = 0 ;
+uint8_t BtBaudChangeIndex = 9 ;
+
 uint32_t changeBtBaudrate( uint32_t baudIndex )
 {
 	uint16_t x ;
+
+	BtBaudChangeCount += 1 ;
+	BtBaudChangeIndex = baudIndex ;
 
 	x = 4 ;		// 9600
 	if ( baudIndex == 0 )
@@ -1568,7 +1749,7 @@ uint32_t changeBtBaudrate( uint32_t baudIndex )
 // AT+RMAAD - clears paired list
 // AT+ROLE=1
 // AT+RESET - may be needed
-// AT+CMODE=1 - search for any
+// AT+CMODE=0 - search specific
 // AT+INQM=0,5,4 - 5 devices, 4*1.28 seconds search time
 // (AT+PSWD=1234) - default value
 // AT+INIT - may be needed (Error:(17) allowed
@@ -1590,12 +1771,15 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 	uint16_t rxchar ;
 	uint8_t *end ;
 
+	CoTickDelay(5) ;	// 10mS
 	flushBtFifo() ;
 
 	if ( command )
 	{
 		end = cpystr( &BtTxBuffer[0], command ) ;
 		Bt_tx.size = end - BtTxBuffer ;
+
+uputs( (char *)command ) ;
 
 //		uint32_t i ;
 //		txmit('{') ;
@@ -1616,7 +1800,7 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-//			txmit( rxchar ) ;
+			txmit( rxchar ) ;
 			if ( length )
 			{
 //				if ( ( rxchar >= ' ' ) && ( rxchar < 0x80 ) )
@@ -1640,8 +1824,32 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 			CoTickDelay(1) ;					// 2mS
 		}				 
 	}
+
 	if ( y < BT_POLL_TIMEOUT )
 	{
+		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		{
+			// flush the CR-LF
+			while ( y < BT_POLL_TIMEOUT )
+			{
+				if ( ( rxchar = rxBtuart() ) != 0xFFFF )
+				{
+txmit( rxchar ) ;
+					if ( rxchar == 10 )
+					{
+						if ( x == 13 )
+						{
+							break ;			// Found CRLF
+						}
+					}
+					x = rxchar ;
+				}
+				else
+				{
+					CoTickDelay(1) ;					// 2mS
+				}				 
+			}
+		}
 		return 1 ;
 	}
 	if ( length )
@@ -1766,10 +1974,12 @@ void getBtValues()
 uint8_t BtFirstByte ; 
 uint8_t BtChannelNumber ;
 uint8_t BtRxState ;
+uint8_t BtRxChecksum ;
 
 uint8_t BtSbusFrame[28] ;
 uint8_t BtSbusIndex = 0 ;
 uint16_t BtSbusTimer ;
+uint8_t BtRxOccured ;
 
 #ifdef PCBSKY
 void processBtRx( int32_t x, uint32_t rxTimeout )
@@ -1778,13 +1988,11 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 
 	if ( g_model.BTfunction == 2 )
 	{
-		if ( BtRxState == BT_RX_IDLE )
+		if ( x == 2 )
 		{
-			if ( x == 2 )
-			{
-				BtRxState = BT_RX_RECEIVE ;
-				BtSbusIndex = 0 ;
-			}
+			BtRxState = BT_RX_RECEIVE ;
+			BtSbusIndex = 0 ;
+			BtRxChecksum = 0 ;
 		}
 		else
 		{
@@ -1803,10 +2011,15 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 			if ( BtRxState == BT_RX_RECEIVE )
 			{
 				BtSbusFrame[BtSbusIndex++] = x ;
-				if ( BtSbusIndex > 24 )
+				BtRxChecksum += x ;
+				if ( BtSbusIndex > 25 )
 				{
 					BtCounters[1] += 1 ;
-					processSBUSframe( BtSbusFrame, g_ppmIns, BtSbusIndex ) ;
+					BtRxOccured = 1 ;
+					if ( BtRxChecksum == 0 )
+					{
+						processSBUSframe( BtSbusFrame, g_ppmIns, BtSbusIndex ) ;
+					}
 					BtRxState = BT_RX_IDLE ;
 				}
 			}
@@ -1941,6 +2154,9 @@ uint8_t BtRname[32] ;
 uint8_t BtCurrentBaudrate ;
 uint16_t BtRxTimer ;
 uint8_t BtBinAddr[6] ;
+uint8_t BtLinkRequest ;
+uint8_t BtCurrentLinkIndex ;
+uint8_t BtPreviousLinkIndex = 0xFF ;
 
 void btCountersToTotals()
 {
@@ -2001,6 +2217,27 @@ void btAddrHex2Bin()
 			value = 0 ;
 		}
 	}
+	for ( y = 0 ; y < 4 ; y += 1 )
+	{
+		if ( btAddressValid( g_eeGeneral.btDevice[y].address ) )
+		{
+			if ( btAddressMatch( g_eeGeneral.btDevice[y].address, BtBinAddr ) )
+			{
+				break ;
+			}
+		}
+		else
+		{
+			g_eeGeneral.btDevice[y].address[0] = BtBinAddr[0] ;
+			g_eeGeneral.btDevice[y].address[1] = BtBinAddr[1] ;
+			g_eeGeneral.btDevice[y].address[2] = BtBinAddr[2] ;
+			g_eeGeneral.btDevice[y].address[3] = BtBinAddr[3] ;
+			g_eeGeneral.btDevice[y].address[4] = BtBinAddr[4] ;
+			g_eeGeneral.btDevice[y].address[5] = BtBinAddr[5] ;
+			STORE_GENERALVARS ;
+			break ;
+		}
+	}
 }
 
 uint8_t b2hex( uint8_t c )
@@ -2017,7 +2254,7 @@ uint8_t b2hex( uint8_t c )
 uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
 {
 	uint8_t c ;
-
+	
 	c = *source++ ;
 	*dest++ = b2hex( c >> 4 ) ;
 	*dest++ = b2hex( c ) ;
@@ -2040,6 +2277,137 @@ uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
 	*dest++ = b2hex( c ) ;
 	*dest = '\0' ;
 	return dest ;
+	
+//	uint8_t d ;
+//	uint8_t zeroSupress = 1 ;
+
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	d = b2hex( c ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	*dest++ = b2hex( c ) ;
+//	*dest++ = ',' ;
+	
+//	zeroSupress = 1 ;
+	
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	*dest++ = b2hex( c ) ;
+//	*dest++ = ',' ;
+	
+//	zeroSupress = 1 ;
+	
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	d = b2hex( c ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	d = b2hex( c ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	c = *source++ ;
+//	d = b2hex( c >> 4 ) ;
+//	if ( zeroSupress )
+//	{
+//		if ( d != '0' )
+//		{
+//			zeroSupress = 0 ;
+//		}
+//	}
+//	if ( zeroSupress == 0 )
+//	{
+//		*dest++ = d ;
+//	}
+//	*dest++ = b2hex( c ) ;
+//	*dest = '\0' ;
+//	return dest ;
 }
 
 uint8_t *copyBtAddress( uint8_t *end, uint32_t index )
@@ -2076,15 +2444,49 @@ uint32_t btLink( uint32_t index )
 	uint32_t x ;
 	uint32_t i ;
 	uint8_t *end ;
+
+	btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
+	CoTickDelay(10) ;					// 20mS
+	getBtOK(0, BT_POLL_TIMEOUT ) ;
+	CoTickDelay(10) ;					// 20mS
 	
+//	btTransaction( (uint8_t *)"AT+ADCN\r\n", 0, 0 ) ;
+//	CoTickDelay(10) ;					// 40mS
+//	i = getBtOK(0, 2000 ) ;
+//	CoTickDelay(10) ;					// 20mS
+//txmit('|') ;
+	
+//	btTransaction( (uint8_t *)"AT+MRAD?\r\n", 0, 0 ) ;
+//	CoTickDelay(10) ;					// 40mS
+//	i = getBtOK(0, 2000 ) ;
+//	CoTickDelay(10) ;					// 20mS
+//txmit('|') ;
+	
+//	end = cpystr( BtRname, (uint8_t *)"AT+FSAD=" ) ;
+//	end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
+//	*end++ = '\r' ;
+//	*end++ = '\n' ;
+//	*end = '\0' ;
+//	btTransaction( BtRname, 0, 0 ) ;
+//	CoTickDelay(10) ;					// 40mS
+//	i = getBtOK(0, 2000 ) ;
+//txmit('|') ;
+	
+	if ( BtPreviousLinkIndex != index )
+	{
+		end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
+		end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
+		*end++ = '\r' ;
+		*end++ = '\n' ;
+		*end = '\0' ;
+		btTransaction( BtRname, 0, 0 ) ;
+		CoTickDelay(10) ;					// 40mS
+		i = getBtOK(0, 2000 ) ;
+	}
+	 
 	x = 0 ;
 	end = cpystr( BtRname, (uint8_t *)"AT+LINK=" ) ;
-	end = btAddrBin2Hex( end, BtBinAddr ) ;
-
-
-//	end = copyBtAddress( end, 0 ) ;
-
-	 
+	end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
 	*end++ = '\r' ;
 	*end++ = '\n' ;
 	*end = '\0' ;
@@ -2092,20 +2494,20 @@ uint32_t btLink( uint32_t index )
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
 
-//						txmit(i+'=') ;
+txmit(i+'=') ;
 	if ( i == 0 )
 	{
-		for ( x = 0 ; x < 5 ; x += 1 )
+		for ( x = 0 ; x < 10 ; x += 1 )
 		{
 			CoTickDelay(10) ;					// 40mS
 			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-//								txmit(i+'=') ;
+txmit(i+'=') ;
 			if ( i )
 			{
-//									txmit('V') ;
+txmit('V') ;
 				break ;
 			}
-//								txmit('U') ;
+txmit('U') ;
 		}
 	}
 	return i ;
@@ -2116,26 +2518,74 @@ void btConfigure()
 {
 	uint32_t i ;
 	uint32_t j ;
+	
+	PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+	CoTickDelay(10) ;					// 20mS
 	BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-//	txmit(i+'=') ;
+txmit(i+'=') ;
 	BtConfigure = 0x41 ;
-	btTransaction( (uint8_t *)"AT+CMODE=1\r\n", 0, 0 ) ;
+	btTransaction( (uint8_t *)"AT+CMODE=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-//	txmit(i+'=') ;
+txmit(i+'=') ;
 	BtConfigure = 0x42 ;
+//	btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
+//	CoTickDelay(10) ;					// 20mS
+//	i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+//	BtConfigure = 0x43 ;
+	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
+	CoTickDelay(10) ;					// 40mS
+	i = getBtOK(0, 2000 ) ;
+	BtConfigure = 0x44 ;
+txmit('R') ;
+txmit(i+'=') ;
+// AT+PAIR=address,timeout
+//	uint8_t *end ;
+//	for ( j = 0 ; j < 4 ; j += 1 )
+//	{
+//		if ( btAddressValid( g_eeGeneral.btDevice[j].address ) )
+//		{
+//			end = cpystr( BtRname, (uint8_t *)"AT+PAIR=" ) ;
+//			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[j].address ) ;
+//			end = cpystr( end, (uint8_t *)",5\r\n" ) ;
+//			btTransaction( BtRname, 0, 0 ) ;
+//			CoTickDelay(10) ;					// 40mS
+//			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+//txmit('A') ;
+//txmit(i+'=') ;
+//			if ( i == 0 )
+//			{
+//				uint32_t k ;
+//				for ( k = 0 ; k < 12 ; k += 1 )
+//				{
+//					i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+//txmit('B') ;
+//txmit(i+'=') ;
+//				}
+//			}
+//			BtConfigure = 0x45 + j ;
+//		}
+//		else
+//		{
+//			break ;
+//		}
+//	}
 	btTransaction( (uint8_t *)"AT+INQM=0,5,4\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
-	for ( j = 0 ; j < 10 ; j += 1 )
+	for ( j = 0 ; j < 12 ; j += 1 )
 	{
 		i = getBtOK(0, 225 ) ;
-//		txmit(i+'=') ;
-		BtConfigure = 0x43 + j ;
+txmit(i+'=') ;
+		BtConfigure = 0x49 + j ;
 	}
 	BtConfigure = 0 ;
+	CoTickDelay(10) ;					// 20mS
+	PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+	CoTickDelay(10) ;					// 20mS
+
 }
 
 
@@ -2144,7 +2594,6 @@ void btConfigure()
 #define BT_SLAVE_SEND_SBUS	2
 #define BT_IS_SLAVE					4
 #define BT_RX_DATA					8
-
 
 void bt_task(void* pdata)
 {
@@ -2203,9 +2652,9 @@ void bt_task(void* pdata)
 		if ( Bt_ok )
 		{
 			Bt_ok = x + 1 ;		
+			BtCurrentBaudrate = x ;
 			if ( x != g_eeGeneral.bt_baudrate )
 			{
-				BtCurrentBaudrate = x ;
 				x = g_eeGeneral.bt_baudrate ;
 				// Need to change Bt Baudrate
 				Bt_ok = changeBtBaudrate( x ) ;
@@ -2234,9 +2683,19 @@ void bt_task(void* pdata)
 		CoTickDelay(1) ;					// 2mS
 		getBtValues() ;
 		CoTickDelay(1) ;					// 2mS
+		btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
+		CoTickDelay(10) ;					// 20mS
+		getBtOK(1, BT_POLL_TIMEOUT ) ;
+		CoTickDelay(10) ;					// 20mS
+		btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
+		CoTickDelay(10) ;					// 20mS
+		getBtOK(0, BT_POLL_TIMEOUT ) ;
+		CoTickDelay(10) ;					// 20mS
 		PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
 	}
 
+	BtCurrentLinkIndex = g_model.btDefaultAddress ;
+	
 	while(1)
 	{
 		BtCounters[2] += 1 ;
@@ -2261,7 +2720,7 @@ void bt_task(void* pdata)
 			if ( Bt_tx.ready == 0 )	// Buffer available
 			{
 				Bt_tx.size = 0 ;
-				while ( ( y = get_fifo64( &Bt_fifo ) ) != -1 )
+				while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
 				{
 					BtTxBuffer[Bt_tx.size++] = y ;
 					if ( Bt_tx.size > 31 )
@@ -2310,7 +2769,7 @@ void bt_task(void* pdata)
 			if ( x == E_OK )
 			{
 				// We have some data in the Fifo
-				while ( ( y = get_fifo64( &Bt_fifo ) ) != -1 )
+				while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
 				{
 					BtTxBuffer[Bt_tx.size++] = y ;
 					if ( Bt_tx.size > 31 )
@@ -2414,7 +2873,7 @@ void bt_task(void* pdata)
 					{
 						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 						{
-//							txmit( rxchar ) ;
+							txmit( rxchar ) ;
 							if ( rxchar == '+' )
 							{
 								x = 1 ;
@@ -2564,22 +3023,50 @@ void bt_task(void* pdata)
 //						}
 
 
-						i = btLink(0) ;
-						if ( i )
-						{
-							BtLinked = 1 ;
-							BtRxTimer = 1000 ;
-						}
-						btTransaction( (uint8_t *)"AT+STATE?\r\n", 0, 0 ) ;
+//						i = btLink(0) ;
+//						if ( i )
+//						{
+//							BtLinked = 1 ;
+//							BtRxTimer = 1000 ;
+//							BtRxOccured = 0 ;
+//						}
+//						btTransaction( (uint8_t *)"AT+STATE?\r\n", 0, 0 ) ;
 						CoTickDelay(10) ;					// 40mS
-						i = getBtOK(0, BT_POLL_TIMEOUT * 2 ) ;
-						txmit(i+'=') ;
+//						i = getBtOK(0, BT_POLL_TIMEOUT * 2 ) ;
+//						txmit(i+'=') ;
 					}
 					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
 				}
 			}
+			else if ( BtLinkRequest )
+			{
+				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+				{
+//					uint32_t i ;
+					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					CoTickDelay(10) ;					// 40mS
+//					i = btLink( BtLinkRequest & 3 ) ;
+					btLink( BtLinkRequest & 3 ) ;
+					BtCurrentLinkIndex = BtLinkRequest & 3 ;
+//					if ( i )
+//					{
+						BtLinked = 1 ;
+						BtRxTimer = 1000 ;
+						BtRxOccured = 0 ;
+//					}
+					CoTickDelay(10) ;					// 40mS
+					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+					BtLinkRequest = 0 ;
+				}
+			}
+
 //		txmitBt( 'X' ) ;		// Send an X to Bluetooth every second for testing
 #ifdef PCBSKY
+			if ( ( BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
+					btAddressValid( g_eeGeneral.btDevice[BtCurrentLinkIndex].address ) )
+			{
+				BtLinked = 1 ;
+			}
 
 			if ( ( ( BtMasterSlave == 2 ) && ( g_model.BTfunction == 2 ) && BtLinked )
 					 || ( btBits & BT_SLAVE_SEND_SBUS ) )
@@ -2598,11 +3085,14 @@ void bt_task(void* pdata)
 						x = getTmr2MHz() - BtLastSbusSendTime ;
 					} while ( x < 28000 ) ;
 					BtLastSbusSendTime += 28000 ;
+//					} while ( x < 40000 ) ;
+//					BtLastSbusSendTime += 40000 ;
 				}
 				// Send Sbus Frame
   			uint8_t *p = BtTxBuffer ;
 				uint32_t outputbitsavailable = 0 ;
 				uint32_t outputbits = 0 ;
+				uint8_t checksum = 0x0F ;
 
 				*p++ = 2 ;		// Marker 
 				*p++ = 0x0F ;
@@ -2610,6 +3100,7 @@ void bt_task(void* pdata)
 			 	{
 					int16_t x = g_chans512[i] ;
 					x *= 4 ;
+					x += x > 0 ? 4 : -4 ;
 					x /= 5 ;
 					x += 0x3E0 ;
 					if ( x < 0 )
@@ -2625,6 +3116,7 @@ void bt_task(void* pdata)
 					while ( outputbitsavailable >= 8 )
 					{
 						uint8_t j = outputbits ;
+						checksum += j ;
 						if ( ( j == 2 ) || ( j == 3 ) )
 						{
 							j ^= 0x80 ;
@@ -2637,6 +3129,12 @@ void bt_task(void* pdata)
 				}
 				*p++ = 0 ;
 				*p++ = 0 ;
+				if ( ( checksum == 2 ) || ( checksum == 3 ) )
+				{
+					*p++ = 3 ;		// "stuff"
+					checksum ^= 0x80 ;
+				}
+				*p++ = -checksum ;
 				Bt_tx.size = p - BtTxBuffer ;
 				bt_send_buffer() ;
 				BtCounters[0] += 1 ;
@@ -2693,12 +3191,33 @@ void bt_task(void* pdata)
 		{
 			if ( BtLinked )
 			{
-				uint32_t i ;
-				i = btLink(0) ;
+//				uint32_t i ;
+				if ( BtRxOccured )
+				{
+					putSystemVoice( SV_BT_LOST, 0 ) ;
+				}
+				if ( g_model.autoBtConnect )
+				{
+					BtCurrentLinkIndex =  g_model.btDefaultAddress ;
+				}
+
+				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+				{
+					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					CoTickDelay(10) ;					// 40mS
+				}
+//				i = btLink(BtCurrentLinkIndex) ;
+				btLink(BtCurrentLinkIndex) ;
 //				if ( i )
 //				{
 					BtRxTimer = 1000 ;
+					BtRxOccured = 0 ;
 //				}
+				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+				{
+					CoTickDelay(10) ;					// 40mS
+					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+				}
 			}
 		}
 
@@ -2730,9 +3249,9 @@ void log_task(void* pdata)
 		do
 		{
 			CoTickDelay(5) ;					// 10mS
-		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 100 ) ;
+		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) ;
 //		LogTimer = 0 ;
-  	tgtime += 100 ;
+  	tgtime += 50 ;
 		LogTimer += 1 ;
 
 		if ( g_model.logSwitch )
@@ -2783,15 +3302,17 @@ void log_task(void* pdata)
 			if ( LogsRunning & 1 )
 			{
 				// log Data (depending on Rate)
-				if ( g_model.logRate )
+				LogsRunning += 0x40 ;
+				uint8_t mask = 0x40 ;
+				if ( g_model.logRate == 2 )		// 0.5 secs
 				{
-					LogsRunning ^= 0x80 ;
-					if ( LogsRunning & 0x80 )
-					{
-						writeLogs() ;
-					}
+					mask = 0 ;
 				}
-				else
+				else if ( g_model.logRate )		// 2.0 secs
+				{
+					mask = 0xC0 ;
+				}
+				if ( ( LogsRunning & mask ) == 0 )
 				{
 					writeLogs() ;
 				}
@@ -2807,7 +3328,7 @@ void log_task(void* pdata)
 void telem_byte_to_bt( uint8_t data )
 {
 #ifndef SIMU
-        put_fifo64( &Bt_fifo, data ) ;
+        put_fifo128( &Bt_fifo, data ) ;
         CoSetFlag( Bt_flag ) ;                  // Tell the Bt task something to do
 #endif
 }
@@ -2873,6 +3394,9 @@ void test_loop( void* pdata )
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
+#ifdef PCB9XT
+	backlight_on() ;
+#endif
 
 #ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
@@ -2892,11 +3416,11 @@ void main_loop(void* pdata)
 
 		if ( g_model.modelVoice == -1 )
 		{
-			putNamedVoiceQueue( g_model.modelVname, 0xC000 ) ;
+			putNamedVoiceQueue( g_model.modelVname, VLOC_MNAMES ) ;
 		}
 		else
 		{
-			putVoiceQueue( g_model.modelVoice + 260 ) ;
+			putVoiceQueue( ( g_model.modelVoice + 260 ) | VLOC_NUMUSER ) ;
 		}
 	}
 	VoiceCheckFlag |= 2 ;// Set switch current states
@@ -3043,21 +3567,24 @@ extern uint8_t PowerState ;
       STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
 
   		uint16_t tgtime = get_tmr10ms() ;
-	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) // 50 - Half second
+	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 70 ) // 50 - Half second
 //	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 200 ) // 50 - Half second
   		{
-#ifndef REV9E				
-				if ( check_soft_power() == POWER_ON )
+				if ( (uint16_t)(get_tmr10ms() - tgtime ) > 60 )
 				{
+#ifndef REV9E				
+					if ( check_soft_power() == POWER_ON )
+					{
 #ifdef PCBSKY
-					if ( MaintenanceRunning == 0)
-					{					
-						module_output_active() ;
-					}
+						if ( MaintenanceRunning == 0)
+						{					
+							module_output_active() ;
+						}
 #endif
-					break ;		// Power back on
-				}
+						break ;		// Power back on
+					}
 #endif // nREV9E
+				}
 				wdt_reset() ;
 
 				if ( ee32_check_finished() == 0 )
@@ -3528,7 +4055,7 @@ static void processVoiceAlarms()
 					{
 						value = g_model.gvars[value-501].gvar ;
 					}
-					putVoiceQueue( value + ( play - 1 ) ) ;
+					putVoiceQueue( ( value + ( play - 1 ) ) | VLOC_NUMUSER ) ;
 				}
 				else
 				{ // Audio
@@ -3596,6 +4123,9 @@ void mainSequence( uint32_t no_menu )
 
 #ifdef PCBSKY
 	static uint32_t coProTimer = 0 ;
+#endif
+#ifdef PCB9XT
+	static uint32_t EncoderTimer = 0 ;
 #endif
   uint16_t t0 = getTmr2MHz();
 	CPU_UINT numSafety = NUM_SKYCHNOUT - g_model.numVoice ;
@@ -3691,6 +4221,9 @@ void mainSequence( uint32_t no_menu )
 #ifdef PCB9XT
 		m64_10mS() ;
 #endif
+#if defined(PCB9XT) || defined(PCBX9D)
+		handleUsbConnection() ;
+#endif
 
 		if ( ++OneSecTimer >= 100 )
 		{
@@ -3751,6 +4284,7 @@ extern void readExtRtc() ;
 #endif
 			}
 		}
+
 	 	if ( g_eeGeneral.ar9xBoard )
 		{
 extern void pollForRtcComplete() ;
@@ -3758,6 +4292,55 @@ extern void pollForRtcComplete() ;
 		}
 
 #endif
+
+#ifdef PCB9XT
+		if ( g_eeGeneral.enableI2C )
+		{
+			if ( ++EncoderTimer > 4 )
+			{
+				EncoderTimer -= 5 ;
+	//			if ( readI2cEncoder( EncoderI2cData ) )
+				hwreadI2cEncoder( EncoderI2cData ) ;
+			}
+extern uint32_t i2c2_result() ;
+
+			if ( EncoderTimer == 1 )
+			{
+				if ( i2c2_result() == 1 )
+				{
+					static uint8_t lastPosition = 0 ;
+					if ( lastPosition != EncoderI2cData[0] )
+					{
+						int8_t diff = EncoderI2cData[0] - lastPosition ;
+	//					{
+						
+	//						int32_t x = diff ;
+	//						if ( g_eeGeneral.rotaryDivisor == 1)
+	//						{
+	//							x = diff >> 2 ;
+	//						}
+	//						else if ( g_eeGeneral.rotaryDivisor == 2)
+	//						{
+	//							x = diff >> 1 ;
+	//						}
+	//						else
+	//						{
+	//							x = diff ;
+	//						}
+	//						diff = x ;
+	//					}
+						if ( diff < 9 && diff > -9 )
+						{
+							Rotary_count += diff ;
+						}
+						lastPosition = EncoderI2cData[0] ;
+					}
+				
+				}
+			}
+		}
+#endif
+
 #if defined(PCBX9D) || defined(PCB9XT)
 	rtc_gettime( &Time ) ;
 #endif
@@ -3804,7 +4387,8 @@ extern void pollForRtcComplete() ;
 			uint16_t total_volts = 0 ;
 			CPU_UINT audio_sounded = 0 ;
 			uint8_t low_cell = 220 ;		// 4.4V
-			for (uint8_t k=0; k<FrskyBattCells; k++)
+			uint8_t totalCells = FrskyBattCells[0] + FrskyBattCells[1] ;
+		  for (uint8_t k=0 ; k<totalCells ; k++)
 			{
 				total_volts += FrskyVolts[k] ;
 				if ( FrskyVolts[k] < low_cell )
@@ -3930,7 +4514,7 @@ extern void pollForRtcComplete() ;
 					{
 						if(getSwitch00( sd->opt.ss.swtch))
 						{
-							putVoiceQueue( sd->opt.ss.val + 128 ) ;
+							putVoiceQueue( ( sd->opt.ss.val + 128 ) | VLOC_NUMUSER ) ;
 						}
 					}
 				}
@@ -4077,7 +4661,7 @@ static uint8_t RssiTestCount ;
 						{
 							if(getSwitch00( sd->opt.ss.swtch))
 							{
-								putVoiceQueue( sd->opt.ss.val + 128 ) ;
+								putVoiceQueue( ( sd->opt.ss.val + 128 ) | VLOC_NUMUSER ) ;
 								AlarmTimers[i] = 40 ;		// 4 seconds
 							}
 						}
@@ -4116,7 +4700,7 @@ static uint8_t RssiTestCount ;
 					{ // ON
 						if ( ( Vs_state[i] == 0 ) && curent_state )
 						{
-							putVoiceQueue( sd->opt.vs.vval ) ;
+							putVoiceQueue( ( sd->opt.vs.vval ) | VLOC_NUMUSER  ) ;
 						}
 					}
 					if ( ( mode == 1 ) || ( mode == 2 ) )
@@ -4129,7 +4713,7 @@ static uint8_t RssiTestCount ;
 							{
 								x += 1 ;							
 							}
-							putVoiceQueue( x ) ;
+							putVoiceQueue( x | VLOC_NUMUSER  ) ;
 						}
 					}
 					if ( mode > 5 )
@@ -4149,7 +4733,7 @@ static uint8_t RssiTestCount ;
 							if ( mode == 5 ) mask = 600 ;
 							if ( timer % mask == 0 )
 							{
-								putVoiceQueue( sd->opt.vs.vval ) ;
+								putVoiceQueue( sd->opt.vs.vval | VLOC_NUMUSER  ) ;
 							}
 						}
 					}
@@ -4604,29 +5188,35 @@ void check_backlight()
 //#endif
 }
 
-//uint16_t SplashDebug[9] ;
+#ifdef SPLASH_DEBUG
+uint16_t SplashDebug[9] ;
+#endif
 
 uint16_t stickMoveValue()
 {
 #define INAC_DEVISOR 256   // Issue 206 - bypass splash screen with stick movement
-    uint16_t sum = 0;
+    uint16_t sum = 0 ;
     for(uint8_t i=0; i<4; i++)
 		{
-//			SplashDebug[i] = anaIn(i) ;
-        sum += anaIn(i)/INAC_DEVISOR;
+#ifdef SPLASH_DEBUG
+			SplashDebug[i] = anaIn(i) ;
+#endif
+      sum += anaIn(i) ;
 		}
-    return sum ;
+	sum += 128 ;
+	return sum / INAC_DEVISOR ;
 }
-
 
 void doSplash()
 {
 	uint32_t i ;
 	uint32_t j ;
 
-//	SplashDebug[8] = 0 ;
+#ifdef SPLASH_DEBUG
+	SplashDebug[8] = 0 ;
+#endif
 
-	if(!g_eeGeneral.disableSplashScreen)
+	if( (!g_eeGeneral.disableSplashScreen) || ( HardwareMenuEnabled ) )
   {
    	check_backlight() ;
     lcd_clear();
@@ -4641,8 +5231,10 @@ void doSplash()
 
   	uint16_t inacSum = stickMoveValue();
 
-//  	for( i=0; i<4 ; i++)
-//			SplashDebug[i+4] = SplashDebug[i] ;
+#ifdef SPLASH_DEBUG
+  	for( i=0; i<4 ; i++)
+			SplashDebug[i+4] = SplashDebug[i] ;
+#endif
 
   	uint16_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;  
   	uint16_t scrtime = get_tmr10ms() ;
@@ -4696,19 +5288,28 @@ void doSplash()
 			uint8_t xxx ;
 			if ( ( xxx = keyDown() ) )
 			{
-//				SplashDebug[8] = xxx ;
+#ifdef SPLASH_DEBUG
+				SplashDebug[8] = xxx ;
+#endif
 				return ;  //wait for key release
 			}
 				  
 			if (tsum!=inacSum)
 			{
-//				SplashDebug[8] = 0xF000 ;
+#ifdef SPLASH_DEBUG
+				SplashDebug[8] = 0xF000 ;
+#endif
 		   return ;  //wait for key release
 			}
 //			if(keyDown() || (tsum!=inacSum))   return;  //wait for key release
 
-			if ( check_power_or_usb() ) return ;		// Usb on or power off
-
+			if ( check_power_or_usb() )
+			{
+#ifdef SPLASH_DEBUG
+				SplashDebug[8] = 0xC000 ;
+#endif
+				return ;		// Usb on or power off
+			}
 			check_backlight() ;
   	  wdt_reset();
   	}
@@ -4720,7 +5321,7 @@ void doSplash()
 bool    checkIncDec_Ret;
 struct t_p1 P1values ;
 static uint8_t LongMenuTimer ;
-uint8_t StepSize ;
+uint8_t StepSize = 20 ;
 
 //int16_t checkIncDec16(uint8_t event, int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flags)
 int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flags)
@@ -4728,6 +5329,12 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   int16_t newval = val;
   uint8_t kpl=KEY_RIGHT, kmi=KEY_LEFT, kother = -1;
 //	uint8_t skipPause = 0 ;
+	uint8_t editAllowed = 1 ;
+	
+	if ( g_eeGeneral.forceMenuEdit and s_editMode == 0 )
+	{
+		editAllowed = 0 ;
+	}
 
 		uint8_t event = Tevent ;
 //  if(event & _MSK_KEY_DBL){
@@ -4738,30 +5345,36 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 //  }
   if(event==EVT_KEY_FIRST(kpl) || event== EVT_KEY_REPT(kpl) || (s_editMode && (event==EVT_KEY_FIRST(KEY_UP) || event== EVT_KEY_REPT(KEY_UP))) )
 	{
-		if ( menuPressed() )
+		if ( editAllowed )
 		{
-    	newval += 100 ;
-		}		 
-		else
-		{
-    	newval += 1 ;
+			if ( menuPressed() )
+			{
+    		newval += StepSize ;
+			}		 
+			else
+			{
+    		newval += 1 ;
+			}
+			audioDefevent(AU_KEYPAD_UP);
+    	kother=kmi;
 		}
-		audioDefevent(AU_KEYPAD_UP);
 
-    kother=kmi;
   }else if(event==EVT_KEY_FIRST(kmi) || event== EVT_KEY_REPT(kmi) || (s_editMode && (event==EVT_KEY_FIRST(KEY_DOWN) || event== EVT_KEY_REPT(KEY_DOWN))) )
 	{
-		if ( menuPressed() )
+		if ( editAllowed )
 		{
-    	newval -= 100 ;
-		}		 
-		else
-		{
-    	newval -= 1 ;
+			if ( menuPressed() )
+			{
+    		newval -= StepSize ;
+			}		 
+			else
+			{
+    		newval -= 1 ;
+			}
+			audioDefevent(AU_KEYPAD_DOWN);
+    	kother=kpl;
 		}
-		audioDefevent(AU_KEYPAD_DOWN);
 
-    kother=kpl;
   }
   if((kother != (uint8_t)-1) && keyState((EnumKeys)kother)){
     newval=-val;
@@ -4790,14 +5403,17 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 //  if (s_editMode>0 && (i_flags & INCDEC_SWITCH))
   if ( i_flags & INCDEC_SWITCH )
 	{
-    int8_t swtch = getMovedSwitch();
-    if (swtch)
+		if ( s_editMode )
 		{
-#if defined(PCBSKY) || defined(PCB9XT)
-			swtch = switchUnMap( swtch ) ;
-#endif
-      newval = swtch ;
-    }
+    	int8_t swtch = getMovedSwitch();
+    	if (swtch)
+			{
+	#if defined(PCBSKY) || defined(PCB9XT)
+				swtch = switchUnMap( swtch ) ;
+	#endif
+    	  newval = swtch ;
+    	}
+		}
   }
 
   //change values based on P1
@@ -4845,6 +5461,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   else {
     checkIncDec_Ret = false;
   }
+	StepSize = 20 ;
   return newval;
 }
 
@@ -4896,6 +5513,41 @@ int8_t checkIncDec_hg0( int8_t i_val, int8_t i_max)
 //  &g_model.trim[3]
 //} ;
 
+#if defined(USB_JOYSTICK) && !defined(SIMU)
+extern USB_OTG_CORE_HANDLE USB_OTG_dev;
+
+/*
+  Prepare and send new USB data packet
+
+  The format of HID_Buffer is defined by
+  USB endpoint description can be found in 
+  file usb_hid_joystick.c, variable HID_JOYSTICK_ReportDesc
+*/
+void usbJoystickUpdate(void)
+{
+  static uint8_t HID_Buffer[HID_IN_PACKET];
+  
+  //buttons
+  HID_Buffer[0] = 0; //buttons
+  for (int i = 0; i < 8; ++i) {
+    if ( g_chans512[i+8] > 0 ) {
+      HID_Buffer[0] |= (1 << i);
+    } 
+  }
+
+  //analog values
+  //uint8_t * p = HID_Buffer + 1;
+  for (int i = 0; i < 8; ++i) {
+    int16_t value = g_chans512[i] / 8;
+    if ( value > 127 ) value = 127;
+    else if ( value < -127 ) value = -127;
+    HID_Buffer[i+1] = static_cast<int8_t>(value);  
+  }
+
+  USBD_HID_SendReport (&USB_OTG_dev, HID_Buffer, HID_IN_PACKET );
+}
+#endif
+
 
 const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
 uint32_t calcStickScroll( uint32_t index )
@@ -4930,14 +5582,6 @@ uint32_t calcStickScroll( uint32_t index )
 	}
 	return value | direction ;
 }
-
-#ifdef PCBX9D
-bool usbPlugged(void)
-{
-  return GPIO_ReadInputDataBit(GPIOA, PIN_FS_VBUS);
-}
-#endif
-
 
 static void	processAdjusters()
 {
@@ -5739,13 +6383,15 @@ void perMain( uint32_t no_menu )
 				{
 					if( (g_vbat100mV<g_eeGeneral.vBatWarn) && (g_vbat100mV>49) )
 					{
-            audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW);
+						voiceSystemNameNumberAudio( SV_TXBATLOW, V_BATTERY_LOW, AU_TX_BATTERY_LOW ) ;
+//            audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW | 0x1000 ) ;
             if (g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
 					}
 #ifdef PCBSKY
 					else if ( ( g_eeGeneral.mAh_alarm ) && ( ( MAh_used + Current_used/3600 ) / 500 >= g_eeGeneral.mAh_alarm ) )
 					{
-            audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW);
+						voiceSystemNameNumberAudio( SV_TXBATLOW, V_BATTERY_LOW, AU_TX_BATTERY_LOW ) ;
+//            audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW | 0x1000 ) ;
 					}
 #endif
         }
@@ -5953,6 +6599,10 @@ uint16_t anaIn(uint8_t chan)
 	if ( chan == 7 )
 	{
 		p = &S_anaFilt[4] ;
+	}
+	if ( chan > 7 )
+	{
+		p = &M64Analog[chan-8] ;
 	}
 #endif
 #ifdef PCBSKY
@@ -6478,6 +7128,17 @@ void createSwitchMapping()
 	{
 		*p++ = HSW_ElevDR ;
 	}
+
+	if ( g_eeGeneral.analogMapping & MASK_6POS )
+	{
+		*p++ = HSW_Ele6pos0 ;
+		*p++ = HSW_Ele6pos1 ;
+		*p++ = HSW_Ele6pos2 ;
+		*p++ = HSW_Ele6pos3 ;
+		*p++ = HSW_Ele6pos4 ;
+		*p++ = HSW_Ele6pos5 ;
+	}
+
 	*p++ = HSW_ID0 ;
 	*p++ = HSW_ID1 ;
 	*p++ = HSW_ID2 ;
@@ -6511,6 +7172,14 @@ void createSwitchMapping()
 	if ( map & USE_PB2 )
 	{
 		*p++ = HSW_Pb2 ;
+	}
+	if ( map & USE_PB3 )
+	{
+		*p++ = HSW_Pb3 ;
+	}
+	if ( map & USE_PB4 )
+	{
+		*p++ = HSW_Pb4 ;
 	}
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
 	{
@@ -6574,6 +7243,23 @@ void createSwitchMapping()
 	}
 	Sw3PosCount[++index] = 2 ;
 	Sw3PosList[index] = HSW_Trainer ;
+}
+
+void create6posTable()
+{
+	uint32_t i ;
+
+
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		uint32_t j = i ;
+		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
+		{
+			j = 4 - i ;
+		}
+		SixPositionTable[j] = 
+		(g_eeGeneral.SixPositionCalibration[i+1] + g_eeGeneral.SixPositionCalibration[i]) / 2 ;
+	}
 }
 
 #endif
@@ -7361,6 +8047,36 @@ int8_t getMovedSwitch()
 			}
 		}
 	}
+	if ( map & USE_PB3 )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb3 ) << 1 ;
+			if ( ( mask ^ trainer_state ) & 8 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb3 ;
+				}
+				trainer_state ^= 8 ;
+			}
+		}
+	}
+	if ( map & USE_PB4 )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb4 ) << 1 ;
+			if ( ( mask ^ trainer_state ) & 16 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb4 ;
+				}
+				trainer_state ^= 16 ;
+			}
+		}
+	}
 #endif
 #ifdef PCBX9D
 #ifdef REV9E
@@ -7508,7 +8224,8 @@ void alert(const char * s, bool defaults)
 
 	lcdSetRefVolt(defaults ? 0x22 : g_eeGeneral.contrast);
 
-  audioVoiceDefevent(AU_ERROR, V_ERROR);
+	voiceSystemNameNumberAudio( SV_ERROR, V_ERROR, AU_WARNING2 ) ;
+//  audioVoiceDefevent(AU_ERROR, V_ERROR | 0x1000);
   clearKeyEvents();
   while(1)
   {
@@ -7868,6 +8585,7 @@ void checkSwitches()
 #ifdef PCB9XT
 		read_adc() ; // needed for 3/6 pos ELE switch
 		processAnalogSwitches() ;
+		processAnalogSwitches() ;		// Make sure the values are processed at startup.
 #endif // PCB9XT
 	 
 	warningStates = g_model.modelswitchWarningStates ;

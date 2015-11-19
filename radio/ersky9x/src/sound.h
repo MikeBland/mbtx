@@ -114,7 +114,8 @@ void read23008( uint8_t *ptrData ) ;
 void initLed( void ) ;
 void writeLed( uint8_t value ) ;
 void readLed( uint8_t *ptrData ) ;
-void readI2cEncoder( uint8_t *ptrData ) ;
+uint32_t readI2cEncoder( uint8_t *ptrData ) ;
+uint32_t hwreadI2cEncoder( uint8_t *ptrData ) ;
 
 #ifdef PCBX9D
 void initHaptic() ;

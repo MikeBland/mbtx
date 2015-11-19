@@ -561,6 +561,12 @@ bool ee32LoadGeneral()
 
   g_eeGeneral.myVers   =  MDVERS; // update myvers
 
+#ifdef PCB9XT
+	g_eeGeneral.is9Xtreme = 1 ;
+#else
+	g_eeGeneral.is9Xtreme = 0 ;
+#endif
+
   uint16_t sum=0;
   if(size>(43)) for(uint8_t i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
 	else return false ;
@@ -787,6 +793,21 @@ void ee32LoadModel(uint8_t id)
 			g_model.not_xsub_protocol = 0 ;
 		}
 	}
+	if ( g_model.protocol > PROT_MAX )
+	{
+		if ( g_model.protocol != PROTO_OFF )
+		{
+			g_model.protocol = 0 ;
+		}
+	}
+	if ( g_model.xprotocol > PROT_MAX )
+	{
+		if ( g_model.xprotocol != PROTO_OFF )
+		{
+			g_model.xprotocol = 0 ;
+		}
+	}
+	AltitudeZeroed = 0 ;
 }
 
 bool eeModelExists(uint8_t id)
@@ -1633,5 +1654,79 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
   return "MODEL RESTORED" ;
 }
 #endif
+
+
+//#define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
+
+// uint16_t AmountEeBackedUp ;
+//FIL g_eebackupFile = {0};
+
+//const char *backupEeprom()
+//{
+//  FRESULT result;
+//  DIR folder;
+//  char filename[34]; // /EEPROM/eeprom-2013-01-01.bin
+
+//	AmountEeBackedUp = 0 ;
+
+//#ifdef PCBSKY
+//  if ( SdMounted == 0 )
+//#endif
+//#if defined(PCBX9D) || defined(PCB9XT)
+//extern uint32_t sdMounted( void ) ;
+//  if ( sdMounted() == 0 )
+//#endif
+//    return "NO SD CARD" ;
+
+//  strcpy( filename, EEPROM_PATH ) ;
+
+//  result = f_opendir( &folder, filename) ;
+//  if (result != FR_OK)
+//	{
+//    if (result == FR_NO_PATH)
+//      result = f_mkdir(filename) ;
+//    if (result != FR_OK)
+//      return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+//  }
+
+//  strcpy( &filename[7], "/eeprom" ) ;
+//  uint32_t len = 14 ;
+
+//  filename[len] = '-';
+//	div_t qr = div( Time.year, 10);
+//  filename[len+4] = '0' + qr.rem;
+//  qr = div(qr.quot, 10);
+//  filename[len+3] = '0' + qr.rem;
+//  qr = div(qr.quot, 10);
+//  filename[len+2] = '0' + qr.rem;
+//  filename[len+1] = '0' + qr.quot;
+//  filename[len+5] = '-';
+//  qr = div( Time.month, 10);
+//  filename[len+7] = '0' + qr.rem;
+//  filename[len+6] = '0' + qr.quot;
+//  filename[len+8] = '-';
+//  qr = div( Time.date, 10);
+//  filename[len+10] = '0' + qr.rem;
+//  filename[len+9] = '0' + qr.quot;
+	
+//  strcpy_P(&filename[len+11], ".bin" ) ;
+//	CoTickDelay(1) ;					// 2mS
+//  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+//	CoTickDelay(1) ;					// 2mS
+//  if (result != FR_OK)
+//	{
+//    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+//  }
+
+
+//  UINT written ;
+//	ee32_read_512( uint32_t sector, uint8_t *buffer )
+//  result = f_write(&g_eebackupFile, buf, 512, &written);
+	 
+
+//  return NULL ;
+//}
+
+
 
 

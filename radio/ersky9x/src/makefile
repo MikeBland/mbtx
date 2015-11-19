@@ -147,6 +147,7 @@ else
    CPPDEFS += -DHSE_VALUE=12000000
    CPPDEFS += -DPCB9XT 
    CPPDEFS += -DPCBSP
+   CPPDEFS += -DUSB_JOYSTICK
   else
    ifeq ($(PCB), X9D)
 #     ARCH = ARM
@@ -155,6 +156,7 @@ else
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
+     CPPDEFS += -DUSB_JOYSTICK
    else
     CPPDEFS += -DPCBSKY 
     ifeq ($(PCB), DUE)
@@ -208,6 +210,16 @@ SRC  = x9d/system_stm32f2xx.c \
        x9d/stm32f2xx_pwr.c \
        x9d/stm32f2xx_rcc.c \
        x9d/misc.c \
+       x9d/usbd_desc.c   \
+       x9d/usb_core.c    \
+       x9d/usb_dcd.c     \
+       x9d/usb_bsp.c     \
+       x9d/usb_dcd_int.c \
+       x9d/usbd_core.c   \
+       x9d/usbd_ioreq.c  \
+       x9d/usbd_req.c    \
+       x9d/usbd_hid_joystick.c \
+       x9d/usb_driver.c    \
        port.c \
        coos.c
 
@@ -254,10 +266,12 @@ CPPSRC = ersky9x.cpp \
 			no.cpp \
 			fr.cpp \
 			se.cpp \
+			it.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
+         x9d/usbd_usr.cpp \
 		   lcd.cpp
 
 #         gtime.cpp \
@@ -288,6 +302,7 @@ CPPSRC = stamp.cpp \
 			no.cpp \
 			fr.cpp \
 			se.cpp \
+			it.cpp \
          debug.cpp \
          file.cpp \
          pers.cpp \
@@ -307,6 +322,16 @@ SRC  = x9d/system_stm32f2xx.c \
        x9d/stm32f2xx_pwr.c \
        x9d/stm32f2xx_rcc.c \
        x9d/misc.c \
+       x9d/usbd_desc.c   \
+       x9d/usb_core.c    \
+       x9d/usb_dcd.c     \
+       x9d/usb_bsp.c     \
+       x9d/usb_dcd_int.c \
+       x9d/usbd_core.c   \
+       x9d/usbd_ioreq.c  \
+       x9d/usbd_req.c    \
+       x9d/usbd_hid_joystick.c \
+       x9d/usb_driver.c    \
        port.c \
        coos.c
 
@@ -319,6 +344,7 @@ CPPSRC = ersky9x.cpp \
          x9d/pulses_driver.cpp \
          x9d/watchdog.cpp \
          x9d/rtc_driver.cpp \
+         x9d/i2c_9xt.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
@@ -338,12 +364,14 @@ CPPSRC = ersky9x.cpp \
 			no.cpp \
 			fr.cpp \
 			se.cpp \
+			it.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			mega64.cpp \
 			isp.cpp \
+         x9d/usbd_usr.cpp \
 		   lcd.cpp
 
 #         x9d/lcd_driver.cpp \
@@ -400,6 +428,7 @@ CPPSRC = stamp.cpp \
 			no.cpp \
 			fr.cpp \
 			se.cpp \
+			it.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -408,6 +437,11 @@ CPPSRC = stamp.cpp \
 
 #         gtime.cpp \
 #         massstorage.cpp \
+
+
+#ifeq ($(REVX), 1)
+# CPPSRC += pl.cpp
+#endif
 
 # List ASM source files here
 ASRC =

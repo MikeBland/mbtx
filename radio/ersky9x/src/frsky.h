@@ -314,6 +314,7 @@ extern void process_frsky_q( void ) ;
 //extern Frsky_current_info Frsky_current[2] ;
 
 extern uint8_t AltitudeDecimals ;
+extern uint8_t AltitudeZeroed ;
 
 // Global Fr-Sky telemetry data variables
 extern uint8_t frskyStreaming; // >0 (true) == data is streaming in. 0 = nodata detected for some time
@@ -325,7 +326,7 @@ extern int16_t FrskyHubData[] ;
 //extern int16_t FrskyHubMin[] ;
 //extern int16_t FrskyHubMax[] ;
 extern uint8_t FrskyVolts[];
-extern uint8_t FrskyBattCells;
+extern uint8_t FrskyBattCells[] ;
 extern uint8_t FrskyAlarmCheckFlag ;
 //extern uint8_t MaxGpsSpeed ;
 //extern uint16_t MaxGpsAlt ;

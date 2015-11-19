@@ -248,7 +248,7 @@ void init_dac()
 	DMA1_Stream5->NDTR = 100 ;
 #endif // TONE_MODE_2
 
-	DAC->DHR12R1 = 2010 ;
+	DAC->DHR12R1 = 2048 ;
 	DAC->SR = DAC_SR_DMAUDR1 ;		// Write 1 to clear flag
 	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 ;			// Enable DAC
 	NVIC_SetPriority( DMA1_Stream5_IRQn, 4 ) ; // Lower priority interrupt
@@ -448,7 +448,7 @@ void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
 	if ( g_eeGeneral.softwareVolume )
 	{
 #endif
-		uint32_t multiplier ;
+		int32_t multiplier ;
 		int32_t value ;
 		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
 		while( count-- )
@@ -476,7 +476,7 @@ void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
 	if ( g_eeGeneral.softwareVolume )
 	{
 #endif
-		uint32_t multiplier ;
+		int32_t multiplier ;
 		int32_t value ;
 		multiplier = SwVolume_scale[CurrentVolume] ;
 		while( count-- )

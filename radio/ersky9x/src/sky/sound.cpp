@@ -1032,7 +1032,7 @@ void read23008( uint8_t *ptrData )
 	submitI2cRequest( &GeneralI2cRequest ) ;
 }
 
-void readI2cEncoder( uint8_t *ptrData )
+uint32_t readI2cEncoder( uint8_t *ptrData )
 {
 	GeneralI2cRequest.mmr = 0x00041000 ;	// reading, No addr
 //	GeneralI2cRequest.address = 0 ;
@@ -1041,6 +1041,7 @@ void readI2cEncoder( uint8_t *ptrData )
 	GeneralI2cRequest.operationType = TWI_READ_BUFFER ;
 	GeneralI2cRequest.speed = TWI_HIGH_SPEED ;
 	submitI2cRequest( &GeneralI2cRequest ) ;
+	return 1 ;
 }
 
 void readExtRtc()

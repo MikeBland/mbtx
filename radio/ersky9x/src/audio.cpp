@@ -477,7 +477,20 @@ void audioDefevent(uint8_t e)
 //	}
 }
 
-void audioVoiceDefevent( uint8_t e, uint8_t v)
+void audioNamedVoiceDefevent( uint8_t e, uint16_t v)
+{
+	if ( /*( g_eeGeneral.speakerMode & 2 ) && */Voice.VoiceLock == 0 )
+	{
+		putSystemVoice( v, 0 ) ;
+	}
+	else
+	{
+    audioDefevent( e ) ;
+	}
+}
+
+
+void audioVoiceDefevent( uint8_t e, uint16_t v)
 {
 	if ( /*( g_eeGeneral.speakerMode & 2 ) && */Voice.VoiceLock == 0 )
 	{
@@ -489,29 +502,88 @@ void audioVoiceDefevent( uint8_t e, uint8_t v)
 	}
 }
 
+void putSysNumVoiceQueue( uint16_t value )
+{
+	putVoiceQueue( value | VLOC_NUMSYS ) ;
+}
 
+void voicePointName( uint8_t index )
+{
+	char name[10] ;
+	char *p ;
+	p = (char *)cpystr( (uint8_t *)name, (uint8_t *)"POINT_0" ) ;
+	*(p-1) += index ;
+	putNamedVoiceQueue( name, VLOC_SYSTEM + index + 6 ) ;
+}
+
+// index is 0 to 99
+void voice0to99Name( uint16_t index )
+{
+	char name[10] ;
+	div_t qr ;
+	char *p = name ;
+
+	*p++ = 'N' ;
+	if ( index < 100 )
+	{
+		qr = div( index, 10 ) ;
+		*p++ = qr.quot + '0' ;
+		*p++ = qr.rem + '0' ;
+		*p = '\0' ;
+		putNamedVoiceQueue( name, VLOC_SYSTEM + index + 400 ) ;
+	}
+	else
+	{
+		if ( index < 1000 )
+		{
+			index /= 100 ;	// Gives 0 to 9 hundreds
+			*p++ = index + '0' ;
+			*p++ = '0' ;
+			*p++ = '0' ;
+			*p = '\0' ;
+			putNamedVoiceQueue( name, VLOC_SYSTEM + index + 100 ) ;
+		}
+		else
+		{
+			index /= 1000 ;	// Gives 0 to 20 thousands
+			qr = div( index, 10 ) ;
+			if ( qr.quot )
+			{
+				*p++ = qr.quot + '0' ;
+			}
+			*p++ = qr.rem + '0' ;
+			*p++ = '0' ;
+			*p++ = '0' ;
+			*p++ = '0' ;
+			*p = '\0' ;
+			putNamedVoiceQueue( name, VLOC_SYSTEM + index + 110 ) ;
+		}
+	}
+}
 
 // Announce a value using voice
-void voice_numeric( int16_t value, uint8_t num_decimals, uint8_t units_index )
+void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index )
 {
 	uint8_t decimals = 0 ;
+	uint8_t actualDecimals = 0 ;
 	div_t qr ;
 	uint32_t flag = 0 ;
 
-	if ( units_index > 127 )
-	{
-		putVoiceQueue( units_index ) ;
-	}
+//	if ( units_index > 127 )
+//	{
+//		void putSystemVoice( uint16_t sname, uint16_t value )
+////		putSysNumVoiceQueue( units_index ) ;
+//	}
 	if ( value < 0 )
 	{
 		value = - value ;
-		putVoiceQueue( V_MINUS ) ;
+		putSystemVoice( SV_MINUS, 0 ) ;
 	}
 
 	if ( num_decimals )
 	{
 		qr = div( value, num_decimals == 2 ? 100 : 10 ) ;
-		decimals = qr.rem ;
+		actualDecimals = qr.rem ;
 		value = qr.quot ;
 	}
 
@@ -521,57 +593,81 @@ void voice_numeric( int16_t value, uint8_t num_decimals, uint8_t units_index )
 		decimals = qr.rem ;		// save in case no hundreds
 		if ( qr.quot > 9 )		// Thousands
 		{
+			num_decimals = 0 ;
 			flag = 1 ;
 			qr = div( qr.quot, 10 ) ;
 			if ( qr.quot < 21 )
 			{
-				putVoiceQueue( qr.quot + 110 ) ;
+//				putVoiceQueue( qr.quot + 110 ) ;
+//				putSysNumVoiceQueue( qr.quot + 110 ) ;
+				voice0to99Name( qr.quot * 1000 ) ;
 			}
 			else
 			{
-				putVoiceQueue( qr.quot + 400 ) ;
-				putVoiceQueue( V_THOUSAND ) ;
+//				putVoiceQueue( qr.quot + 400 ) ;
+//				putSysNumVoiceQueue( qr.quot + 400 ) ;
+				voice0to99Name( qr.quot ) ;
+				putSystemVoice( SV_THOUSAND, V_THOUSAND ) ;
+//				putVoiceQueue( V_THOUSAND | VLOC_NUMSYS ) ;
 			}
 			qr.quot = qr.rem ;			
 		}
 		if ( qr.quot )		// There are hundreds
 		{
-			putVoiceQueue( qr.quot + 100 ) ;
-			putVoiceQueue( decimals + 400 ) ;
+//			putVoiceQueue( qr.quot + 100 ) ;
+//			putSysNumVoiceQueue( qr.quot + 100 ) ;
+			voice0to99Name( qr.quot * 100 ) ;
+//			putVoiceQueue( decimals + 400 ) ;
+			if ( decimals )
+			{
+//				putSysNumVoiceQueue( decimals + 400 ) ;
+				voice0to99Name( decimals ) ;
+			}
 			flag = 1 ;
 		}
 		else
 		{
-			putVoiceQueue( decimals + 400 ) ;
+//			putVoiceQueue( decimals + 400 ) ;
+//			putSysNumVoiceQueue( decimals + 400 ) ;
+			voice0to99Name( decimals ) ;
 			flag = 1 ;
 		}
 		if ( ( flag == 0 ) && (qr.rem) )
 		{
-			putVoiceQueue( qr.rem + 400 ) ;
+//			putVoiceQueue( qr.rem + 400 ) ;
+//			putSysNumVoiceQueue( qr.rem + 400 ) ;
+			voice0to99Name( qr.rem ) ;
 		}
 	}
 	else
 	{
-		putVoiceQueue( qr.rem + 400 ) ;
+//		putVoiceQueue( qr.rem + 400 ) ;
+//		putSysNumVoiceQueue( qr.rem + 400 ) ;
+		voice0to99Name( qr.rem ) ;
 	}
 
 	if ( num_decimals )
 	{
 		if ( num_decimals == 2 )
 		{
-			qr = div( decimals, 10 ) ;
-			putVoiceQueue( qr.quot + 6 ) ;		// Point x
-			putVoiceQueue( qr.rem + 400 ) ;
+			qr = div( actualDecimals, 10 ) ;
+			voicePointName( qr.quot ) ;
+//			putVoiceQueue( qr.quot + 6 ) ;		// Point x
+//			putVoiceQueue( qr.rem + 400 ) ;
+//			putSysNumVoiceQueue( qr.rem + 400 ) ;
+			voice0to99Name( qr.rem ) ;
 		}
 		else
 		{
-			putVoiceQueue( decimals + 6 ) ;		// Point x
+			voicePointName( actualDecimals ) ;
+//			putVoiceQueue( decimals + 6 ) ;		// Point x
 		}
 	}
 		 
-	if ( units_index && ( units_index < 128 ) )
+	if ( units_index )
 	{
-		putVoiceQueue( units_index ) ;
+		putSystemVoice( units_index, 0 ) ;
+//		putSysNumVoiceQueue( units_index ) ;
 	}
 }
 
@@ -645,7 +741,10 @@ const char SysVoiceNames[][VOICE_NAME_SIZE+1] =
 	"RSSI_LOW",
 	"RSSICRIT",
 	"RX_LOST",
-	"CAP_WARN"
+	"CAP_WARN",
+	"BT_LOST",
+	"HUNDRED",
+	"THOUSAND"
 } ;
 
 void putSystemVoice( uint16_t sname, uint16_t value )
@@ -653,12 +752,12 @@ void putSystemVoice( uint16_t sname, uint16_t value )
 	const char *name ;
 
 	name = SysVoiceNames[sname] ;
-	putNamedVoiceQueue( name, 0xE000 + value ) ;
+	putNamedVoiceQueue( name, VLOC_SYSTEM | value ) ;
 }
 
 void putUserVoice( char *name, uint16_t value )
 {
-	putNamedVoiceQueue( name, 0xD000 + value ) ;
+	putNamedVoiceQueue( name, VLOC_USER + value ) ;
 }
 
 void putNamedVoiceQueue( const char *name, uint16_t value )
@@ -693,7 +792,7 @@ void voiceSystemNameNumberAudio( uint16_t sname, uint16_t number, uint8_t audio 
 	else
 	{
 		name = SysVoiceNames[sname] ;
-		putNamedVoiceQueue( name, 0xE000 + number ) ;
+		putNamedVoiceQueue( name, VLOC_SYSTEM + number ) ;
 	}
 }
 
@@ -710,30 +809,44 @@ int32_t ToneTime ;
 
 struct toneQentry ToneEntry ;
 
+//uint8_t DebugFilename[40] ;
+//uint16_t DebugNumber ;
+
+// v_index Exxx - \\system\name
+// v_index Dxxx - \\user\name
+// v_index Cxxx - \\modelnames\name
+// v_index 1xxx - \\system\(v_index & 0xFFF)
+
 void buildFilename( uint32_t v_index, uint8_t *name )
 {
 	uint32_t x ;
 	TCHAR *ptr ;
 	uint8_t *dirName ;
-	
+
+	x = 0 ;
 	ptr = (TCHAR *)cpystr( ( uint8_t*)VoiceFilename, ( uint8_t*)"\\voice\\" ) ;
-	if (v_index & 0xF000)
+	if (v_index & VLOC_MASK)
 	{
-		v_index &= 0xF000 ;
+		uint32_t index = v_index & VLOC_MASK ;
 		dirName = ( uint8_t*)"system\\" ;	// 0xE000
-		if ( v_index == 0xC000 )
+		if ( index == VLOC_MNAMES )
 		{
 			dirName = ( uint8_t*)"modelNames\\" ;
 		}
-		else if ( v_index == 0xD000 )
+		else if ( ( index == VLOC_USER ) || ( index == VLOC_NUMUSER ) )
 		{
 			dirName = ( uint8_t*)"user\\" ;
 		}
 		ptr = (TCHAR *)cpystr( (uint8_t *)ptr, dirName ) ;
-		ptr = (TCHAR *)cpystr( (uint8_t *)ptr, name ) ;
+		if ( ( index != VLOC_NUMSYS ) && ( index != VLOC_NUMUSER ) )
+		{
+			ptr = (TCHAR *)cpystr( (uint8_t *)ptr, name ) ;
+			x = 1 ;
+		}
 	}
-	else
+	if ( x == 0 )
 	{
+		v_index &= ~VLOC_MASK ;
 		*ptr++ = '0' ;
 		*(ptr + 2) = '0' + v_index % 10 ;
 		x = v_index / 10 ;
@@ -838,7 +951,10 @@ void voice_task(void* pdata)
 	uint32_t mounted = 0 ;
 	uint32_t size ;
 	uint8_t *name ;
-
+//#ifdef PCB9XT
+//	uint32_t muted ;
+//	muted = 0 ;
+//#endif
 	for(;;)
 	{
 		while ( !sd_card_ready() )
@@ -876,8 +992,35 @@ void voice_task(void* pdata)
 	
 		 while ( ( Voice.VoiceQueueCount == 0 ) && (ToneQueueRidx == ToneQueueWidx) )
 		 {
+//#ifdef PCB9XT
+//		 	if ( muted == 0 )
+//			{
+//				uint32_t value = 1900 ;
+//				do
+//				{
+//					DAC->DHR12R1 = value ;
+//					value -= 100 ;
+//		 			CoTickDelay(1) ;					// 2mS
+//				} while ( value ) ;
+//				muted = 1 ;
+//			}
+//#endif
 		 	CoTickDelay(3) ;					// 6mS for now
 		 }
+//#ifdef PCB9XT
+//		 if ( muted )
+//		 {
+//				uint32_t value = 10 ;
+//				do
+//				{
+//					DAC->DHR12R1 = value ;
+//					value += 100 ;
+//		 			CoTickDelay(1) ;					// 2mS
+//				} while ( value < 2010 ) ;
+//			DAC->DHR12R1 = 2010 ;
+//		 	muted = 0 ;
+//		 }
+//#endif
 		 if ( Voice.VoiceQueueCount )
 		 {
 		 	uint32_t processed = 0 ;
@@ -896,10 +1039,10 @@ void voice_task(void* pdata)
 				continue ;
 			}
 
-			if ( (v_index & 0xFF00) == 0xFF00 )
+			if ( (v_index & VOLUME_MASK) == VOLUME_MASK )
 			{
-				v_index &= 0x00FF ;
-				if ( v_index == 0x00FF )
+				v_index &= ~VOLUME_MASK ;
+				if ( v_index == (uint16_t)~VOLUME_MASK )
 				{
 					HoldVolume = 0 ;
 					setVolume( SaveVolume ) ;
@@ -925,9 +1068,19 @@ void voice_task(void* pdata)
 					fr = f_open( &Vfile, VoiceFilename, FA_READ ) ;
 					if ( fr != FR_OK )
 					{
-						if ( (v_index & 0xF000) == 0xE000 )
+						if ( (v_index & VLOC_MASK) == VLOC_SYSTEM )
 						{
-							v_index &= 0x0FFF ;
+							v_index &= ~VLOC_MASK ;
+							if ( v_index )
+							{
+								buildFilename( v_index | VLOC_NUMSYS , name ) ;
+								fr = f_open( &Vfile, VoiceFilename, FA_READ ) ;
+							}
+						}
+						else
+						{
+							if ( ( (v_index & VLOC_MASK) == VLOC_NUMSYS ) || ( (v_index & 0xF000) == 0x2000 ) )
+							v_index &= ~VLOC_MASK ;
 							if ( v_index )
 							{
 								buildFilename( v_index, name ) ;

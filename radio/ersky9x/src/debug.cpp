@@ -46,10 +46,17 @@
  #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#ifdef PCBX9D
 #include "x9d/stm32f2xx.h"
 #include "x9d/stm32f2xx_gpio.h"
 #include "X9D/i2c_ee.h"
+#include "X9D/hal.h"
+#endif
+
+#ifdef PCB9XT
+#include "x9d/stm32f2xx.h"
+#include "x9d/stm32f2xx_gpio.h"
+#include "X9D/i2c_9xt.h"
 #include "X9D/hal.h"
 #endif
 
@@ -84,8 +91,10 @@ uint8_t Dbg_Spi_tx_buf[32] ;
 uint8_t Dbg_Spi_rx_buf[32] ;
 
 uint8_t I2CwriteValue ;
+#ifdef PCBSKY
 uint8_t I2CreadValue ;
 uint8_t LedWriteValue ;
+#endif
 
 void uputs( register char *string )
 {
@@ -1130,6 +1139,41 @@ int32_t Ymodem_Receive( uint8_t *buf ) ;
 			crlf() ;
 		}
 #endif
+
+//#ifdef PCB9XT
+//		if ( rxchar == 'i' )
+//		{
+//			txmit( 'i' ) ;
+//			init23008() ;
+//			crlf() ;
+//		}
+
+//		if ( rxchar == 'j' )
+//		{
+//			txmit( 'j' ) ;
+//			I2CwriteValue += 4 ;
+//			I2CwriteValue &= 0xFC ;
+//			write23008( I2CwriteValue ) ;
+//			crlf() ;
+//		}
+
+//		if ( rxchar == 'k' )
+//		{
+//			txmit( 'k' ) ;
+//			read23008() ;
+//			crlf() ;
+//		}
+		
+////extern uint8_t I2Cdebug ;
+//		if ( rxchar == 'l' )
+//		{
+//			txmit( 'l' ) ;
+//			p2hex( McpReadData ) ;
+////			txmit( I2Cdebug ) ;
+//			crlf() ;
+//		}
+//#endif
+
 
 #if PCBSKY
 //		if ( rxchar == 'f' )
