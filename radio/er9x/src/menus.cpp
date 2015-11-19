@@ -10636,9 +10636,9 @@ Str_Protocol
 				// Sub-protocol stored in sub_protocol bits0..4
 				attr=g_model.sub_protocol;
 //#ifdef V2
-//				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
+//				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 //#endif
 				if(g_model.sub_protocol==attr)
 					attr=(g_model.ppmNCH >> 4) &0x07 ;
@@ -10648,34 +10648,69 @@ Str_Protocol
 				subN++;
 				//Sub-sub-protocol stored in ppmNCH bits4..6
 				const prog_char * s;
-				switch(g_model.sub_protocol&0x1F)
+				uint8_t x = g_model.sub_protocol&0x1F ;
+				if ( x == M_Flysky)
 				{
-					case M_Flysky:
-						s=PSTR(FWx10"\003"M_FLYSKY_STR);
-						break;
-					case M_DSM2:
-						s=PSTR(FWx10"\001"M_DSM2_STR);
-						break;
-					case M_YD717:
-						s=PSTR(FWx10"\004"M_YD717_STR);
-						break;
-					case M_SymaX:
-						s=PSTR(FWx10"\002"M_SYMAX_STR);
-						break;
-					case M_CX10:
-						s=PSTR(FWx10"\002"M_CX10_STR);
-						break;
-					default:
-						s=PSTR(FWx10"\000"M_NONE_STR);
-						break;
+					s=PSTR(FWx10"\003"M_FLYSKY_STR);
 				}
+				else if ( x == M_Hisky )
+				{
+					s=PSTR(FWx10"\001"M_HISKY_STR);
+				}
+				else if ( x == M_DSM2 )
+				{
+					s=PSTR(FWx10"\001"M_DSM2_STR);
+				}
+				else if ( x == M_YD717 )
+				{
+					s=PSTR(FWx10"\004"M_YD717_STR);
+				}
+				else if ( x == M_SymaX )
+				{
+					s=PSTR(FWx10"\002"M_SYMAX_STR);
+				}
+				else if ( x == M_CX10 )
+				{
+					s=PSTR(FWx10"\002"M_CX10_STR);
+				}
+				else if ( x == M_CG023 )
+				{
+					s=PSTR(FWx10"\001"M_CG023_STR);
+				}
+				else
+				{
+					s=PSTR(FWx10"\000"M_NONE_STR);
+				}
+//				switch(g_model.sub_protocol&0x1F)
+//				{
+//					case M_Flysky:
+//						s=PSTR(FWx10"\003"M_FLYSKY_STR);
+//						break;
+//					case M_DSM2:
+//						s=PSTR(FWx10"\001"M_DSM2_STR);
+//						break;
+//					case M_YD717:
+//						s=PSTR(FWx10"\004"M_YD717_STR);
+//						break;
+//					case M_SymaX:
+//						s=PSTR(FWx10"\002"M_SYMAX_STR);
+//						break;
+//					case M_CX10:
+//						s=PSTR(FWx10"\002"M_CX10_STR);
+//						break;
+//					default:
+//						s=PSTR(FWx10"\000"M_NONE_STR);
+//						break;
+//				}
 				g_model.ppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.ppmNCH & 0x8F);
 				y += FH ;
 				subN++;
 				// Power stored in ppmNCH bit7 & Option stored in option_protocol
 				uint8_t value = (g_model.ppmNCH>>7)&0x01 ;
 				lcd_putsAttIdx(  6*FW, y, PSTR(M_LH_STR), value, (sub==subN && subSub==0 ? blink:0) );
-				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+//				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+				lcd_outdezAtt( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0) ) ;
+				lcd_puts_Pleft( y, PSTR(STR_MULTI_OPTION) ) ;
 				if(sub==subN)
 				{
 					Columns = 1;

@@ -62,6 +62,15 @@
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
 
+#ifdef CPUM2561
+#define SBUS_PROTOCOL	1
+#endif
+
+#ifndef FRSKY
+#define SBUS_PROTOCOL	1
+#endif
+
+
 // Bits in SystemOptions
 #define SYS_OPT_HARDWARE_EDIT	1
 #define SYS_OPT_MUTE					2
@@ -647,19 +656,41 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
 #define PROTO_PPM16	     3
+
 #ifdef MULTI_PROTOCOL
 #define PROTO_PPMSIM     4
 #define PROTO_MULTI      5
+ #ifdef SBUS_PROTOCOL	
+#define PROTO_SBUS       6
+#define PROT_MAX         6
+ #else
 #define PROT_MAX         5
+ #endif // SBUS_PROTOCOL
 #else
 #define PROTO_PPMSIM     4
+ #ifdef SBUS_PROTOCOL	
+#define PROTO_SBUS       5
+#define PROT_MAX         5
+ #else
 #define PROT_MAX         4
+ #endif // SBUS_PROTOCOL
 #endif // MULTI_PROTOCOL
+
 #ifdef MULTI_PROTOCOL
+ #ifdef SBUS_PROTOCOL	
+#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI SBUS  "
+ #else
 #define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI "
+ #endif // SBUS_PROTOCOL
 #else
+ #ifdef SBUS_PROTOCOL	
+#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMSBUS  "
+ #else
 #define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIM"
+ #endif // SBUS_PROTOCOL
 #endif // MULTI_PROTOCOL
+
+
 //#define PROT_STR_LEN     6
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX"
 //#define DSM2_STR_LEN     9
@@ -668,7 +699,8 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 Bayang"
+//#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
 //#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
@@ -676,6 +708,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_Hubsan           1
 #define M_Frsky            2
 #define M_Hisky            3
+#define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2             4
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
@@ -684,11 +717,13 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
 #define M_KN	           8
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5CSYMAX4 "
+#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		       10
 #define M_CX10		       11
 #define M_CX10_STR "\005GREENBLUE DM007"
 #define M_CG023		       12
+#define M_CG023_STR "\005CG023YD829"
+#define M_BAYANG	       13
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
