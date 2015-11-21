@@ -62,14 +62,15 @@
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
 
-#ifdef CPUM2561
-#define SBUS_PROTOCOL	1
-#endif
+//#ifdef CPUM2561
+//#define SBUS_PROTOCOL	1
+//#endif
 
-#ifndef FRSKY
-#define SBUS_PROTOCOL	1
-#endif
+//#ifndef FRSKY
+//#define SBUS_PROTOCOL	1
+//#endif
 
+#define SBUS_PROTOCOL	1
 
 // Bits in SystemOptions
 #define SYS_OPT_HARDWARE_EDIT	1

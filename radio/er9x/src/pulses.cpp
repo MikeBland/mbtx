@@ -4,13 +4,16 @@
 
 extern struct t_latency g_latency ;
 
-#ifdef SBUS_PROTOCOL	
-#define PULSES_WORD_SIZE	115		// 72=((2+2*6)*10)/2+2
-#define PULSES_BYTE_SIZE	(PULSES_WORD_SIZE * 2)
-#else
+//#ifdef SBUS_PROTOCOL	
+//#define PULSES_WORD_SIZE	115		// 72=((2+2*6)*10)/2+2
+//#define PULSES_BYTE_SIZE	(PULSES_WORD_SIZE * 2)
+//#else
 #define PULSES_WORD_SIZE	72		// 72=((2+2*6)*10)/2+2
 #define PULSES_BYTE_SIZE	(PULSES_WORD_SIZE * 2)
-#endif
+//#endif
+
+#define BITLEN_SERIAL (8*2) //125000 Baud
+#define BITLEN_SBUS (10*2) //100000 Baud
 
 union p2mhz_t 
 {
@@ -18,11 +21,31 @@ union p2mhz_t
     uint8_t pbyte[PULSES_BYTE_SIZE] ;   // 144
 } pulses2MHz ;
 
+struct t_pcm_control
+{
+	uint8_t PcmByte ;
+	uint8_t PcmBitCount ;
+	uint8_t *PcmPtr ;
+	uint16_t PcmCrc ;
+	uint8_t PcmOnesCount ;
+	uint8_t Shift ;
+	uint8_t Limit ;
+} PcmControl ;
+
 uint8_t *pulses2MHzptr = pulses2MHz.pbyte ;
 uint8_t heartbeat;
 uint8_t Current_protocol;
 uint8_t pxxFlag = 0;					// also used for MULTI_PROTOCOL for bind flag
 uint8_t PausePulses = 0 ;
+static uint8_t *Serial_pulsePtr = pulses2MHz.pbyte ;
+
+static uint8_t pass_bitlen ;
+
+static uint8_t PulsePol ;
+static uint8_t PulsePol16 ;
+
+uint8_t serialDat0 ;	// Set to 0xFF in main()
+
 
 #define CTRL_END 0
 #define CTRL_CNT 1
@@ -44,9 +67,6 @@ static void setupPulsesPXX( void ) ;
 static void sendByteSerial(uint8_t b) ;
 
 //uint16_t PulseTotal ;
-
-static uint8_t PulsePol ;
-static uint8_t PulsePol16 ;
 
 //ISR(TIMER1_OVF_vect)
 ISR(TIMER1_COMPA_vect) //2MHz pulse generation
@@ -366,18 +386,44 @@ void setupPulsesPPM( uint8_t proto )
 }
 
 
-static uint8_t *Serial_pulsePtr = pulses2MHz.pbyte ;
 ISR(TIMER1_CAPT_vect) //2MHz pulse generation
 {
     //      static uint8_t  pulsePol;
     uint8_t x ;
+    uint8_t y ;
     PORTB ^=  (1<<OUT_B_PPM);
     x = *Serial_pulsePtr;      // Byte size
-    Serial_pulsePtr += 1 ;
-    ICR1 = x ;
-    if ( x > 200 )
+		y = x & 0x0F ;
+		if ( y == 15 )
+		{
+			y = 255 ;
+		}
+		else
+		{
+			y *= pass_bitlen ;
+			y -= 1 ;
+		}
+    ICR1 = y ;
+    x >>= 4 ;
+		if ( x == 0 )
+		{
+    	Serial_pulsePtr += 1 ;
+		}
+		else
+		{
+			*Serial_pulsePtr = x ;
+		}
+		
+		if ( y > 200 )
     {
+			if ( g_model.protocol == PROTO_SBUS )
+			{
+        PORTB &= ~(1<<OUT_B_PPM) ;
+			}
+			else
+			{
         PORTB |=  (1<<OUT_B_PPM);      // Make sure pulses are the correct way up      
+			}
     }
     heartbeat |= HEART_TIMER2Mhz;
 }
@@ -593,16 +639,6 @@ const prog_uint16_t APM CRCTable[]=
 
 
 
-struct t_pcm_control
-{
-	uint8_t PcmByte ;
-	uint8_t PcmBitCount ;
-	uint8_t *PcmPtr ;
-	uint16_t PcmCrc ;
-	uint8_t PcmOnesCount ;
-} PcmControl ;
-
-
 static void crc( uint8_t data )
 {
     //	uint8_t i ;
@@ -614,13 +650,20 @@ static void crc( uint8_t data )
 void putPcmPart( uint8_t value )
 {
 		struct t_pcm_control *ptrControl ;
+		uint8_t x ;
 
 		ptrControl = &PcmControl ;
 		FORCE_INDIRECT(ptrControl) ;
     
-		ptrControl->PcmByte >>= 2 ;
-    ptrControl->PcmByte |= value ;
-    if ( ++ptrControl->PcmBitCount >= 4 )
+		x = ptrControl->PcmByte ;
+		x /= 4 ;	// Better code than a shift !!!!
+		if ( ptrControl->Shift )
+		{
+			x >>= 2 ;
+		}
+    x |= value ;
+		ptrControl->PcmByte = x ;
+    if ( ++ptrControl->PcmBitCount >= ptrControl->Limit )
     {
         *ptrControl->PcmPtr++ = ptrControl->PcmByte ;
         ptrControl->PcmBitCount = ptrControl->PcmByte = 0 ;
@@ -679,11 +722,6 @@ void putPcmHead()
 		{
     	putPcmPart( 0x80 ) ;
 		}
-//    putPcmPart( 0x80 ) ;
-//    putPcmPart( 0x80 ) ;
-//    putPcmPart( 0x80 ) ;
-//    putPcmPart( 0x80 ) ;
-//    putPcmPart( 0x80 ) ;
     putPcmPart( 0xC0 ) ;
 }
 
@@ -695,17 +733,13 @@ uint16_t scaleForPXX( uint8_t i )
 	return limit( 1, value, 2046 ) ;
 }
 
-//uint16_t PxxStart ;
-//uint16_t PxxTime ;
 
-static uint8_t pass ;
-//void setUpPulsesPCM()
 static void setupPulsesPXX()
 {
     uint8_t i ;
     uint16_t chan ;
     uint16_t chan_1 ;
-		uint8_t lpass = pass ;
+		uint8_t lpass = pass_bitlen ;
 
 #ifdef CPUM2561
     TIMSK1 &= ~( (1<<OCIE1B) | (1<<OCIE1C) ) ;	// COMPC & B interrupts off
@@ -714,7 +748,6 @@ static void setupPulsesPXX()
     ETIMSK &= ~(1<<OCIE1C) ;	// COMPC interrupt off
 #endif
 
-//		PxxStart = TCNT1 ;
 		{
 			struct t_pcm_control *ptrControl ;
 
@@ -726,13 +759,11 @@ static void setupPulsesPXX()
     	ptrControl->PcmCrc = 0 ;
     	ptrControl->PcmBitCount = ptrControl->PcmByte = 0 ;
     	ptrControl->PcmOnesCount = 0 ;
+			ptrControl->Shift = 0 ;
+			ptrControl->Limit = 4 ;
 		}
 
 			pulses2MHz.pbyte[0] = 0xFF ;		// Preamble
-//    putPcmPart( 0xC0 ) ;
-//    putPcmPart( 0xC0 ) ;
-//    putPcmPart( 0xC0 ) ;
-//    putPcmPart( 0xC0 ) ;
     putPcmHead(  ) ;  // sync byte
     putPcmByte( g_model.ppmNCH ) ;     // putPcmByte( g_model.rxnum ) ;  //
 
@@ -806,7 +837,7 @@ static void setupPulsesPXX()
 		{
 			lpass += 1 ;
 		}
-		pass = lpass ;
+		pass_bitlen = lpass ;
 //		PxxTime = TCNT1 - PxxStart ;
 	asm("") ;
 }
@@ -919,12 +950,27 @@ normal:
   Stream[12]  = highByte(channel[4])<<6 | highByte(channel[5])<<4 | highByte(channel[6])<<2 | highByte(channel[7])
   Stream[13]  = lowByte(CRC16(Stream[0..12])
 */
-#define BITLEN_SERIAL (8*2) //125000 Baud
-#define BITLEN_SBUS (10*2) //100000 Baud
+
+//static void putSerialPart( uint8_t value )
+//{
+//	struct t_pcm_control *ptrControl ;
+
+//	ptrControl = &PcmControl ;
+//	FORCE_INDIRECT(ptrControl) ;
+
+//	ptrControl->PcmByte >>= 4 ;
+//  ptrControl->PcmByte |= value ;
+//  if ( ++ptrControl->PcmBitCount >= 2 )
+//  {
+//    *ptrControl->PcmPtr++ = ptrControl->PcmByte ;
+//    ptrControl->PcmBitCount = ptrControl->PcmByte = 0 ;
+//  }
+//}
+
 static void sendByteSerial(uint8_t b) //max 10changes 0 10 10 10 10 1
 {
     bool    lev = 0;
-		uint8_t bitLen = BITLEN_SERIAL ;
+		uint8_t bitLen ;
 		uint8_t parity = 0x80 ;
 		uint8_t count = 8 ;
 #ifdef SBUS_PROTOCOL
@@ -938,29 +984,28 @@ static void sendByteSerial(uint8_t b) //max 10changes 0 10 10 10 10 1
 				bitLen <<= 1 ;
 			}
 			parity &= 0x80 ;
-			bitLen = BITLEN_SBUS ;
 			count = 9 ;
 		}
 #endif // SBUS_PROTOCOL
-    uint8_t len = bitLen; //max val: 9*16 < 256
-		uint8_t *ptr ;
+    uint8_t len = 0x10 ; // 1 << 4
 
-		ptr = pulses2MHzptr ;
     for( uint8_t i=0; i<=count; i++)
 		{ //8Bits + Stop=1
         bool nlev = b & 1; //lsb first
-        if(lev == nlev){
-            len += bitLen;
-        }else{
-						*ptr++ = len -1 ;
-            len  = bitLen;
-            lev  = nlev;
+        if(lev == nlev)
+				{
+          len += 0x10 ;
+        }
+				else
+				{
+					putPcmPart( len ) ;
+          len = 0x10 ;
+          lev = nlev ;
         }
         b = (b>>1) | parity ; //shift in parity or stop bit
 				parity = 0x80 ;				// Now a stop bit
     }
-    *ptr++ = len+bitLen-1 ; // 2 stop bits
-	  pulses2MHzptr = ptr ;
+		putPcmPart( len + 0x10 ) ; // 2 stop bits
 }
 
 #ifdef MULTI_PROTOCOL
@@ -971,22 +1016,38 @@ static void sendByteCrcSerial(uint8_t b)
 }
 #endif
 
-//static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
-uint8_t serialDat0 ;	// Set to 0xFF in main()
+uint16_t dsmPulseCalc( uint8_t channel )
+{
+	return limit(0, ((g_chans512[channel]*13)>>5)+512,1023) ;
+}
+
 
 void setupPulsesSerial(void)
 {
+	struct t_pcm_control *ptrControl ;
+	uint8_t protocol ;
+
+	ptrControl = &PcmControl ;
+	FORCE_INDIRECT(ptrControl) ;
+    
+	ptrControl->PcmPtr = pulses2MHz.pbyte ;
+ 	ptrControl->PcmBitCount = ptrControl->PcmByte = 0 ;
+	ptrControl->PcmCrc = 0 ;
+	ptrControl->Shift = 1 ;
+	ptrControl->Limit = 2 ;
+
 //    uint8_t counter ;
     uint8_t serialdat0copy;
 	//	CSwData &cs = g_model.customSw[NUM_CSW-1];
 
-    pulses2MHzptr = pulses2MHz.pbyte ;
+//    pulses2MHzptr = pulses2MHz.pbyte ;
     
     // If more channels needed make sure the pulses union/array is large enough
 
 	serialdat0copy = serialDat0 ;		// Fetch byte once, saves flash
+	protocol = g_model.protocol ;
 #ifdef MULTI_PROTOCOL
-	if(g_model.protocol == PROTO_DSM2)
+	if( protocol == PROTO_DSM2)
 	{
 #endif // MULTI_PROTOCOL
     if (serialdat0copy&BadData)  //first time through, setup header
@@ -1019,17 +1080,18 @@ void setupPulsesSerial(void)
 	
 	serialDat0 = serialdat0copy ;		// Put byte back
 	
+	pass_bitlen = BITLEN_SERIAL ;
+
 #ifdef MULTI_PROTOCOL
-	if(g_model.protocol == PROTO_MULTI)
+	if( protocol == PROTO_MULTI)
 	{
-		PcmControl.PcmCrc=0;
 		sendByteCrcSerial(serialdat0copy);
 		sendByteCrcSerial(g_model.ppmNCH);
 		sendByteCrcSerial(g_model.option_protocol);
 		uint16_t serialH = 0;
 		for(uint8_t i=0; i<8; i++)
 		{
-			uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
+			uint16_t pulse = dsmPulseCalc( i ) ;
 			sendByteCrcSerial(pulse & 0xff);
 			serialH<<=2;
 			serialH|=((pulse>>8)&0x03);
@@ -1041,16 +1103,13 @@ void setupPulsesSerial(void)
 	else
 #endif // MULTI_PROTOCOL
 #ifdef SBUS_PROTOCOL	
-	if ( g_model.protocol == PROTO_SBUS )
+	if ( protocol == PROTO_SBUS )
 	{
+		pass_bitlen = BITLEN_SBUS ;
 		uint8_t outputbitsavailable = 0 ;
 		uint32_t outputbits = 0 ;
 		uint8_t i ;
 		sendByteSerial(0x0F) ;
-		
-//		sendByteSerial(1) ;
-//		sendByteSerial(2) ;
-//		sendByteSerial(3) ;
 		
 		for ( i = 0 ; i < 16 ; i += 1 )
 		{
@@ -1087,18 +1146,21 @@ void setupPulsesSerial(void)
 		sendByteSerial(g_model.ppmNCH);
 		for(uint8_t i=0; i<6; i++)
     {
-			uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
+			uint16_t pulse = dsmPulseCalc( i ) ;
 			sendByteSerial((i<<2) | ((pulse>>8)&0x03));
 			sendByteSerial(pulse & 0xff);
     }
 	}
-		uint8_t *ptr ;
-
-		ptr = pulses2MHzptr ;
-
-		*ptr = 0 ;
-		*(ptr-1) = 255 ;
-    Serial_pulsePtr = pulses2MHz.pbyte ;
+		
+  if ( ptrControl->PcmBitCount )
+	{
+		*ptrControl->PcmPtr = 0x0F ;
+	}
+	else
+	{
+		*(ptrControl->PcmPtr - 1) |= 0xF0 ;
+	}
+  Serial_pulsePtr = pulses2MHz.pbyte ;
 }
 
 
