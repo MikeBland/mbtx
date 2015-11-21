@@ -27,7 +27,9 @@
 #endif
 
 // Multi protocol feature
+#ifndef NMEA
 #define MULTI_PROTOCOL	1
+#endif
 
 //#define STACK_TRACE				1
 
@@ -70,7 +72,9 @@
 //#define SBUS_PROTOCOL	1
 //#endif
 
+#ifndef NMEA
 #define SBUS_PROTOCOL	1
+#endif
 
 // Bits in SystemOptions
 #define SYS_OPT_HARDWARE_EDIT	1

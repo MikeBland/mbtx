@@ -416,11 +416,13 @@ ISR(TIMER1_CAPT_vect) //2MHz pulse generation
 		
 		if ( y > 200 )
     {
+#ifdef SBUS_PROTOCOL	
 			if ( g_model.protocol == PROTO_SBUS )
 			{
         PORTB &= ~(1<<OUT_B_PPM) ;
 			}
 			else
+#endif
 			{
         PORTB |=  (1<<OUT_B_PPM);      // Make sure pulses are the correct way up      
 			}
@@ -970,7 +972,9 @@ normal:
 static void sendByteSerial(uint8_t b) //max 10changes 0 10 10 10 10 1
 {
     bool    lev = 0;
+#ifdef SBUS_PROTOCOL	
 		uint8_t bitLen ;
+#endif // SBUS_PROTOCOL
 		uint8_t parity = 0x80 ;
 		uint8_t count = 8 ;
 #ifdef SBUS_PROTOCOL
@@ -1025,7 +1029,9 @@ uint16_t dsmPulseCalc( uint8_t channel )
 void setupPulsesSerial(void)
 {
 	struct t_pcm_control *ptrControl ;
+#if defined(SBUS_PROTOCOL) || defined(MULTI_PROTOCOL)
 	uint8_t protocol ;
+#endif
 
 	ptrControl = &PcmControl ;
 	FORCE_INDIRECT(ptrControl) ;
@@ -1045,7 +1051,9 @@ void setupPulsesSerial(void)
     // If more channels needed make sure the pulses union/array is large enough
 
 	serialdat0copy = serialDat0 ;		// Fetch byte once, saves flash
+#if defined(SBUS_PROTOCOL) || defined(MULTI_PROTOCOL)
 	protocol = g_model.protocol ;
+#endif
 #ifdef MULTI_PROTOCOL
 	if( protocol == PROTO_DSM2)
 	{
