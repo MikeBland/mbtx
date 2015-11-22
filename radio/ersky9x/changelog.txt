@@ -11,6 +11,7 @@ description here
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)
+Taranis & 9Xtreme add trainer polarity
 SWR on early Taranis Plus fixes
 'PRO remove automatic COM1 inversion
 SPort telemetry increase number of samples in RSSI averaging
@@ -35,6 +36,12 @@ Early Taranis Plus, support for SWR problem
 Beep tone generation method changed
 Elevon template updated
 Additions to support the 9Xtreme board
+Bluetooth as trainer started
+Allow Logical switches as mix sources
+Allow replacement of P1/P2/P3/AUX with 6-pos switch
+Allow forced use of MENU while editing
+Better use of named voice files
+Add "Auto Zero" of altitude
 
 ******************************************
 CHANGELOG: 08-Apr-2015  MPB (r215)

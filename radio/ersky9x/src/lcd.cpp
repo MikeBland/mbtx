@@ -59,6 +59,9 @@ const uint8_t font_de_extra[] = {
 const uint8_t font_it_extra[] = {
 #include "font_it_05x07.lbm"
 } ;
+const uint8_t font_pl_extra[] = {
+#include "font_pl_05x07.lbm"
+} ;
 
 const uint8_t font_se_big_extra[] = {
 #include "font_se_10x14.lbm"

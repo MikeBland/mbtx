@@ -4,6 +4,13 @@
 #include <QDialog>
 #include <QtGui>
 #include <QPen>
+#include <QSpinBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QTextBrowser>
+#include <QSpinBox>
+#include <QCheckBox>
+
 #include "pers.h"
 #include "mixerslist.h"
 

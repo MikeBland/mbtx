@@ -87,9 +87,16 @@
 #define MAX_PHASES		4
 #else
 #define MAX_PHASES		4
+#define MAX_MODES		4
 #endif
 
+#ifdef V2
+#define NUM_VOICE_ALARMS	10
+#define NUM_SAFETY				16
+#define NUM_GVAR_ADJUST		4
+#else
 #define NUM_VOICE_ALARMS	8
+#endif
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
@@ -102,6 +109,20 @@ PACK(typedef struct t_TrainerData {
   int16_t        calib[4];
   TrainerMix     mix[4];
 }) TrainerData;
+
+#ifdef V2
+PACK(typedef struct t_V2TrainerMix {
+    uint8_t srcChn:4 ; //0-7 = ch1-8
+    uint8_t mode:2 ;   //off,add-mode,subst-mode
+    int8_t  swtch ;
+    int8_t  studWeight ;
+})  V2TrainerMix ;
+
+PACK(typedef struct t_V2TrainerData {
+    int16_t        calib[4];
+    V2TrainerMix     mix[4];
+}) V2TrainerData ;
+#endif
 
 #ifdef SKY
 PACK(typedef struct t_OldEEGeneral {
@@ -146,7 +167,13 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   FRSkyRed:4;
 #else
 		uint8_t   unused1;
+#ifdef XSW_MOD
+    uint8_t   unused2:2;
+   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+#else
     uint8_t   unused2:4;
+#endif
 #endif
     uint8_t   hideNameOnSplash:1;
 #ifdef SKY
@@ -163,7 +190,11 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   speakerMode;
     uint8_t   lightOnStickMove;
     char      ownerName[GENERAL_OWNER_NAME_LEN];
+#ifdef XSW_MOD
+    uint16_t  switchWarningStates;
+#else
     uint8_t   switchWarningStates;
+#endif
 		int8_t		volume ;
 #ifdef SKY
 	uint8_t 	bright ;			// backlight
@@ -189,6 +220,9 @@ PACK(typedef struct t_EEGeneral {
 		uint8_t		stickReverse ;
 #endif
 		uint8_t		customStickNames[16] ;
+#ifdef XSW_MOD
+    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
+#else                                           // wasted 4b if MAX_XSWITCH is an odd number
     uint8_t   switchMapping ;
 		uint8_t	ele2source:4 ;
 		uint8_t	ail2source:4 ;
@@ -201,11 +235,92 @@ PACK(typedef struct t_EEGeneral {
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
     uint8_t  exSwitchWarningStates ;
+#endif
 }) EEGeneral;
 
 
+#ifdef V2
+PACK(typedef struct t_V2EEGeneral {
+    uint8_t   myVers;
+    int16_t   calibMid[7];
+    int16_t   calibSpanNeg[7];
+    int16_t   calibSpanPos[7];
+    uint16_t  chkSum;
+    uint8_t   currModel; //0..15
+    uint8_t   contrast;
+    uint8_t   vBatWarn;
+    int8_t    vBatCalib;
+    int8_t    lightSw;
+    V2TrainerData trainer;
+    uint8_t   view;
+    uint8_t   disableThrottleWarning:1;
+    uint8_t   disableSwitchWarning:1;
+    uint8_t   disableMemoryWarning:1;
+    uint8_t   beeperVal:3;
+    uint8_t   unused_reserveWarning:1;
+    uint8_t   disableAlarmWarning:1;
+    uint8_t   stickMode;
+    int8_t    inactivityTimer;
+    uint8_t   throttleReversed:1;
+    uint8_t   unused_minuteBeep:1;
+    uint8_t   unused_preBeep:1;
+    uint8_t   flashBeep:1;
+    uint8_t   disableSplashScreen:1;
+    uint8_t   disablePotScroll:1;
+    uint8_t   disableBG:1;
+    uint8_t   unused_frskyinternalalarm:1;		// Not used if no FRSKY_ALARMS
+    uint8_t   unused_spare_filter ;		// No longer needed, left for eepe compatibility for now
+    uint8_t   lightAutoOff;
+    uint8_t   templateSetup;  //RETA order according to chout_ar array
+    int8_t    PPM_Multiplier;
+//    uint8_t   unused1;
+#ifdef XSW_MOD
+    uint8_t   unused2:2;
+   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+#else
+    uint8_t   unused2:4;
+#endif
+    uint8_t   hideNameOnSplash:1;
+    uint8_t   enablePpmsim:1;
+    uint8_t   blightinv:1;
+    uint8_t   stickScroll:1;
+    uint8_t   speakerPitch;
+    uint8_t   hapticStrength;
+    uint8_t   speakerMode;
+    uint8_t   lightOnStickMove;
+    char      ownerName[GENERAL_OWNER_NAME_LEN];
+//    uint8_t   switchWarningStates;
+		int8_t		volume ;
+//    uint8_t   res[3];
+    uint8_t   crosstrim:1 ;
+    uint8_t   FrskyPins:1 ;
+    uint8_t   rotateScreen:1 ;
+    uint8_t   serialLCD:1 ;
+    uint8_t   SSD1306:1 ;
+    uint8_t   TEZr90:1 ;
+    uint8_t   MegasoundSerial:1 ;
+    uint8_t   spare1:1 ;
+		uint8_t		stickReverse ;
+		uint8_t		customStickNames[16] ;
+#ifdef XSW_MOD
+    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
+#else                                           // wasted 4b if MAX_XSWITCH is an odd number
+    uint8_t   switchMapping ;
+		uint8_t	ele2source:4 ;
+		uint8_t	ail2source:4 ;
+		uint8_t	rud2source:4 ;
+		uint8_t	gea2source:4 ;
+		uint8_t pb1source:4 ;
+		uint8_t pb2source:4 ;
+    uint8_t pg2Input:1 ;
+    uint8_t pb7Input:1 ;
+    uint8_t lcd_wrInput:1 ;
+    uint8_t  spare5:5 ;
+#endif
+}) V2EEGeneral;
 
-
+#endif
 
 //eeprom modelspec
 //expo[3][2][2] //[Norm/Dr][expo/weight][R/L]
@@ -240,7 +355,12 @@ PACK(typedef struct t_MixData {
   uint8_t speedDown:4;       // 0 nichts
   uint8_t carryTrim:1;
   uint8_t mltpx:2;           // multiplex method 0=+ 1=* 2=replace
-  uint8_t lateOffset:1;      // 
+#ifdef V2
+//  uint8_t hiResSlow:1 ;
+  uint8_t lateOffset:1 ;
+#else
+  uint8_t lateOffset:1 ;
+#endif
   uint8_t mixWarn:2;         // mixer warning
   uint8_t disableExpoDr:1;
   uint8_t differential:1;
@@ -282,6 +402,21 @@ PACK(typedef struct t_SafetySwData { // Custom Switches data
 	} opt ;
 }) SafetySwData;
 
+PACK(typedef struct t_VoiceSwData
+{
+  uint8_t swtch ;
+	uint8_t mode ; // ON, OFF, BOTH, ALL, ONCE
+  uint8_t val ;
+}) VoiceSwData ;
+
+
+PACK(typedef struct t_V2SafetySwData
+{ // Safety Switches data
+	int8_t  swtch:7 ;
+	uint8_t mode:1 ;	// 'S', 'X'
+ 	int8_t  val ;
+}) V2SafetySwData ;
+
 PACK(typedef struct t_FrSkyChannelData {
   uint8_t   ratio;                // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
   uint8_t   alarms_value[2];      // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
@@ -293,6 +428,12 @@ PACK(typedef struct t_FrSkyChannelData {
 //PACK(typedef struct t_FrSkyData {
 //    FrSkyChannelData channels[2];
 //}) FrSkyData;
+
+PACK(typedef struct t_V2FrSkyChannelData
+{
+ 	uint16_t   ratio ;                // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+	uint8_t unit ;
+}) V2FrSkyChannelData;
 
 PACK(typedef struct t_FrSkyalarms
 {
@@ -311,11 +452,27 @@ PACK(typedef struct t_FrSkyData {
 //		FrSkyAlarmData alarmData[4] ;
 }) FrSkyData;
 
+PACK(typedef struct t_V2FrSkyData {
+    V2FrSkyChannelData channels[2];
+		uint8_t FASoffset ;			// 0.0 to 1.5
+		int8_t rxRssiLow ;
+		int8_t rxRssiCritical ;
+//		uint8_t frskyAlarmLimit ;		// For mAh
+//		uint8_t frskyAlarmSound ;		// For mAh
+//		FrSkyAlarmData alarmData[4] ;
+}) V2FrSkyData;
+
 PACK(typedef struct t_gvar {
 	int8_t gvar ;
 	uint8_t gvsource ;
 //	int8_t gvswitch ;
 }) GvarData ;
+
+PACK(typedef struct t_V2gvar {
+	int8_t gvar ;
+	uint8_t gvsource ;
+	int8_t gvswitch ;
+}) V2GvarData ;
 
 PACK(typedef struct t_PhaseData {
 	// Trim store as -1001 to -1, trim value-501, 0-5 use trim of phase 0-5
@@ -323,7 +480,23 @@ PACK(typedef struct t_PhaseData {
   int8_t swtch;        // Try 0-5 use trim of phase 0-5, 1000-2000, trim + 1500 ???
   uint8_t fadeIn:4;
   uint8_t fadeOut:4;
+//	uint8_t name[6] ;
 }) PhaseData;
+
+PACK(typedef struct t_V2PhaseData {
+	// Trim store as -1001 to -1, trim value-501, 0-5 use trim of phase 0-5
+  int16_t trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of modes 1|2|3|4 instead
+  int8_t swtch;        // Try 0-5 use trim of phase 0-5, 1000-2000, trim + 1500 ???
+  uint8_t fadeIn:4;
+  uint8_t fadeOut:4;
+	uint8_t name[6] ;
+}) V2PhaseData;
+	 
+PACK(typedef struct t_FunctionData { // Function data
+  int8_t  swtch ; //input
+  uint8_t func ;
+  uint8_t param ;
+}) FunctionData ;
 
 PACK(typedef struct t_Vario
 {
@@ -367,6 +540,80 @@ PACK(typedef struct t_voiceAlarm
 //		uint8_t name[8] ;
 //	} file ;
 }) VoiceAlarmData ;
+
+typedef struct t_gvarAdjust
+{
+	uint8_t function:4 ;
+	uint8_t gvarIndex:4 ;
+	int8_t swtch ;
+	int8_t switch_value ;
+} GvarAdjust ;
+
+typedef struct t_TimerMode
+{
+  uint16_t  tmrVal ;
+	uint8_t   tmrModeA ;          // timer trigger source -> off, abs, stk, stk%, cx%
+  int8_t    tmrModeB ;           // timer trigger source -> !sw, none, sw, m_sw
+//	int8_t		tmrRstSw ;
+  uint8_t   tmrDir ;					// Timer direction
+//  uint8_t   tmrDir:1 ;					// Timer direction
+//	uint8_t 	tmrCdown:1 ;
+//	uint8_t 	tmrMbeep:1 ;
+} __attribute__((packed)) TimerMode ;
+
+typedef struct t_V2TimerMode
+{
+  uint16_t  tmrVal ;
+	uint8_t   tmrModeA ;          // timer trigger source -> off, abs, stk, stk%, cx%
+  int8_t    tmrModeB ;           // timer trigger source -> !sw, none, sw, m_sw
+	int8_t		tmrRstSw ;
+  uint8_t   tmrDir ;					// Timer direction
+	uint8_t 	tmrCdown:1 ;
+	uint8_t 	tmrMbeep:1 ;
+} __attribute__((packed)) V2TimerMode ;
+
+
+typedef struct t_V2Ppm
+{
+  int8_t    ppmNCH;						// Also RxNum
+  int8_t    ppmDelay;
+  int8_t    ppmFrameLength;    //0=22.5  (10msec-30msec) 0.5msec increments
+} __attribute__((packed)) V2Ppm ;
+
+typedef struct t_V2Pxx
+{
+  uint8_t RxNum ;
+  uint8_t sub_protocol ;		// sub_protocol
+  uint8_t country ;
+} __attribute__((packed)) V2Pxx ;
+
+typedef struct t_V2Dsm
+{
+  uint8_t RxNum ;
+  uint8_t sub_protocol ;		// sub_protocol
+} __attribute__((packed)) V2Dsm ;
+
+typedef struct t_V2Multi
+{
+  uint8_t RxNum:4 ;
+  uint8_t sub_sub_protpcol:4 ;
+  uint8_t sub_protocol ;		// sub_protocol
+	uint8_t option_protocol;		// Option byte for MULTI protocol
+} __attribute__((packed)) V2Multi ;
+
+
+typedef struct t_V2Protocol
+{
+	uint8_t protocol:4 ;
+	uint8_t ppmStart:4 ;					// Start channel for PPM
+	union
+	{
+		V2Ppm ppm ;
+		V2Pxx pxx ;
+		V2Dsm dsm ;
+		V2Multi multi ;
+	} ;
+} __attribute__((packed)) V2Protocol ;
 
 
 typedef struct t_ModelData {
@@ -426,7 +673,11 @@ typedef struct t_ModelData {
   uint16_t  tmr2Val;
   int8_t    tmr2Mode;              // timer2 trigger source -> off, abs, stk, stk%, sw/!sw, !m_sw/!m_sw
   int8_t		tmr2ModeB;
+#ifdef XSW_MOD
+		uint16_t switchWarningStates ;
+#else
 	uint8_t switchWarningStates ;
+#endif
 	uint8_t sub_trim_limit ;
 	uint8_t CustomDisplayIndex[6] ;
 	GvarData gvars[MAX_GVARS] ;
@@ -458,7 +709,86 @@ typedef struct t_ModelData {
   uint8_t tmr2Dir:1;    //0=>Count Down, 1=>Count Up
 	int8_t gvswitch[MAX_GVARS] ;
   VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
+#ifndef XSW_MOD
+  uint8_t  exSwitchWarningStates ;
+#endif
 } __attribute__((packed)) ModelData;
+
+#ifdef V2
+PACK(typedef struct t_V2ModelData
+{
+  char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
+  uint8_t   modelVoice ;		// Index to model name voice (260+value)
+	V2TimerMode	timer[2] ;
+  uint8_t   unused_tmrDir:1;    //0=>Count Down, 1=>Count Up
+  uint8_t   traineron:1;  // 0 disable trainer, 1 allow trainer
+  uint8_t   unused_xt2throttle:1 ;  // Start timer2 using throttle
+  uint8_t   FrSkyUsrProto:1 ;  // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
+  uint8_t   FrSkyGpsAlt:1 ;  	// Use Gps Altitude as main altitude reading
+  uint8_t   FrSkyImperial:1 ;  // Convert FrSky values to imperial units
+  uint8_t   unused_FrSkyAltAlarm:2;
+  uint8_t   protocol:4 ;
+  uint8_t   country:2 ;
+  uint8_t   unused_xsub_protocol:2 ;	// sub_protocol is the extended version
+  uint8_t   sub_protocol ;						// sub_protocol
+	int8_t		option_protocol;		// Option byte for MULTI protocol
+  int8_t    ppmNCH;						// Also RxNum
+  int8_t    ppmFrameLength;    //0=22.5  (10msec-30msec) 0.5msec increments
+  int8_t    ppmDelay;
+  
+	uint8_t   thrTrim:1;            // Enable Throttle Trim
+	uint8_t   unused_xnumBlades:2;					// RPM scaling
+	uint8_t   unused_mixTime:1 ;		// Scaling for slow/delay
+  uint8_t   thrExpo:1;            // Enable Throttle Expo
+	uint8_t   ppmStart:3 ;					// Start channel for PPM
+  uint8_t   pulsePol:1;
+  uint8_t   extendedLimits:1;
+  uint8_t   swashInvertELE:1;
+  uint8_t   swashInvertAIL:1;
+  uint8_t   swashInvertCOL:1;
+  uint8_t   swashType:3;
+  uint8_t   swashCollectiveSource;
+  uint8_t   swashRingValue;
+  MixData   mixData[MAX_MIXERS];
+  LimitData limitData[NUM_CHNOUT];
+  ExpoData  expoData[4];
+  int8_t    trim[4];
+  int8_t    curves5[MAX_CURVE5][5];
+  int8_t    curves9[MAX_CURVE9][9];
+  CxSwData	customSw[NUM_CSW+EXTRA_CSW];
+	VarioData varioData ;
+  int8_t  trimInc;              // Trim Increments (0-4)
+  int8_t  trimSw;
+	uint8_t beepANACenter;        // 1<<0->A1.. 1<<6->A7
+	uint8_t numBlades ;
+	V2GvarData gvars[MAX_GVARS] ;
+	V2SafetySwData safetySw[NUM_SAFETY];
+	uint8_t CustomDisplayIndex[2][6] ;
+
+	uint8_t modelVersion ;		// Keep at offset 0x2F0 from start of structure!
+  
+  V2FrSkyData frsky;
+#ifdef XSW_MOD
+	uint16_t switchWarningStates ;
+#else
+	uint8_t switchWarningStates ;
+  uint8_t exSwitchWarningStates ;	// MAy combine as 16 bit value
+#endif
+	uint8_t sub_trim_limit ;
+	uint8_t	customStickNames[16] ;
+	V2PhaseData phaseData[MAX_MODES] ;
+	VoiceSwData voiceSw[EXTRA_VOICE_SW] ;
+	ScaleData Scalers[NUM_SCALERS] ;
+	uint8_t	anaVolume ;	// analog volume control
+	uint8_t  currentSource ;
+	uint8_t useCustomStickNames:2 ;
+	uint8_t throttleIdle:1 ;
+  uint8_t throttleReversed:1;
+	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
+	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
+//	int8_t unused_pxxFailsafe[16] ;	// Currently unused
+}) V2ModelData ;
+#endif
 
 
 

@@ -1,4 +1,6 @@
 #include <QtGui>
+#include <QMessageBox>
+
 #include "pers.h"
 #include "helpers.h"
 

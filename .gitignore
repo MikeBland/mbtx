@@ -145,3 +145,5 @@ sky9XTobj
 9XtremeTest2.dfu
 obj
 *.dfu
+/radio/ersky9x9XT_rom.bin
+*.deb

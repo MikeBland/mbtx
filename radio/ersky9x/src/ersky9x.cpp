@@ -106,7 +106,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
                                  uint8_t *report,
                                  uint16_t len) ;
 
-#endif
+#endif // PCB9XT
 
 #include "sbus.h"
 
@@ -122,7 +122,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 
 #ifndef SIMU
 #define MAIN_STACK_SIZE		500
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 #define BT_STACK_SIZE			100
 #endif
 #define LOG_STACK_SIZE		350
@@ -132,7 +132,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 OS_TID MainTask;
 OS_STK main_stk[MAIN_STACK_SIZE] ;
 
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 #define BT_TYPE_HC06		0
 #define BT_TYPE_HC05		1
 uint8_t BtType ;
@@ -241,7 +241,7 @@ uint8_t Activated = 0 ;
 uint8_t Tevent ;
 uint16_t SbusTimer = 0 ;
 
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 void tmrBt_Handle( void ) ;
 void bt_task(void* pdata) ;
 #endif
@@ -629,6 +629,11 @@ void setLanguage()
 			ExtraFont = font_it_extra ;
 			ExtraBigFont = NULL ;
 		break ;
+		case 6 :
+			Language = Polish ;
+			ExtraFont = font_pl_extra ;
+			ExtraBigFont = NULL ;
+		break ;
 		default :
 			Language = English ;
 			ExtraFont = NULL ;
@@ -708,7 +713,7 @@ int32_t isAgvar(uint8_t value)
 	return 0 ;
 }
 
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 #define BT_115200		0
 #define BT_9600			1
 #define BT_19200		2
@@ -994,6 +999,12 @@ int main( void )
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 	init_soft_power() ;
+#endif
+
+#ifdef PCB9XT
+// Configure pin PA5 as an output, low for Bluetooth use
+	configure_pins( GPIO_Pin_5, PIN_PORTA | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+	GPIOA->BSRRH = GPIO_Pin_5 ;		// Set low
 #endif
 
 #ifdef PCBSKY
@@ -1445,7 +1456,7 @@ uint32_t updateSlave() ;
 
 	CoInitOS();
 
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 	BtTask = CoCreateTask(bt_task,NULL,19,&Bt_stk[BT_STACK_SIZE-1],BT_STACK_SIZE);
 #endif
 
@@ -1501,7 +1512,19 @@ void initTopLcd() ;
 //	CoSetFlag(Bt1SFlag);		// 1 second return,set flag
 //}
 
+
 #ifdef PCBSKY
+#define HC05_ENABLE_HIGH		(PIOB->PIO_SODR = PIO_PB12)			// Set bit B12 HIGH
+#define HC05_ENABLE_LOW			(PIOB->PIO_CODR = PIO_PB12)			// Set bit B12 LOW
+#endif // PCBSKY
+
+#ifdef PCB9XT
+#define HC05_ENABLE_HIGH		(GPIOA->BSRRL = GPIO_Pin_5)			// Set bit PA5 HIGH
+#define HC05_ENABLE_LOW			(GPIOA->BSRRH = GPIO_Pin_5)			// Set bit PA5 LOW
+#endif // PCB9XT
+
+
+#ifdef BLUETOOTH
 OS_FlagID Bt_flag ;
 struct t_fifo128 Bt_fifo ;
 struct t_serial_tx Bt_tx ;
@@ -2519,7 +2542,7 @@ void btConfigure()
 	uint32_t i ;
 	uint32_t j ;
 	
-	PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 	BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
@@ -2583,7 +2606,7 @@ txmit(i+'=') ;
 	}
 	BtConfigure = 0 ;
 	CoTickDelay(10) ;					// 20mS
-	PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 
 }
@@ -2625,7 +2648,7 @@ void bt_task(void* pdata)
 
 	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
-		PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+		HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 		CoTickDelay(5) ;					// 10mS
 	}
 
@@ -2691,7 +2714,7 @@ void bt_task(void* pdata)
 		CoTickDelay(10) ;					// 20mS
 		getBtOK(0, BT_POLL_TIMEOUT ) ;
 		CoTickDelay(10) ;					// 20mS
-		PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+		HC05_ENABLE_LOW ;							// Set bit B12 LOW
 	}
 
 	BtCurrentLinkIndex = g_model.btDefaultAddress ;
@@ -2708,13 +2731,14 @@ void bt_task(void* pdata)
 		{
 			btBits &= ~BT_IS_SLAVE ;
 		}
-		
+
+#ifndef PCB9XT 
 		if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
 		{
 			static uint32_t pqrs = 0 ;
 			if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 			{
-				PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 			}
 			// Send data to COM2
 			if ( Bt_tx.ready == 0 )	// Buffer available
@@ -2763,6 +2787,7 @@ void bt_task(void* pdata)
 			CoTickDelay(1) ;					// 2mS for now
 		}
 		else
+#endif	// nPCB9XT
 		{
 		
 			x = CoWaitForSingleFlag( Bt_flag, 1 ) ;		// Wait for data in Fifo
@@ -2786,7 +2811,7 @@ void bt_task(void* pdata)
 			{
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
-					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 				}
 				CoTickDelay(10) ;					// 20mS for now
 				changeBtBaudrate( g_eeGeneral.bt_baudrate ) ;
@@ -2794,13 +2819,13 @@ void bt_task(void* pdata)
 //				setBtBaudrate( g_eeGeneral.bt_baudrate ) ;
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
-					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 				}
 				BtBaudrateChanged = 0 ;
 			}
 			else if ( BtRoleChange & 0x80 )
 			{
-				PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 				uint8_t newRole = BtRoleChange & 0x01 ;
 				BtRoleChange = 0x40 ;
 				if ( newRole+1 != BtMasterSlave )
@@ -2809,20 +2834,20 @@ void bt_task(void* pdata)
 					getBtRole() ;
 				}
 				BtRoleChange = 0 ;
-				PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+				HC05_ENABLE_LOW ;							// Set bit B12 LOW
 			}
 			else if ( BtNameChange & 0x80 )
 			{
 				uint8_t *pname = g_eeGeneral.btName ;
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
-					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					pname = BtName ;
 				}
 				BtNameChange = 0x40 ;
 				setBtName( pname ) ;
 				BtNameChange = 0 ;
-				PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+				HC05_ENABLE_LOW ;							// Set bit B12 LOW
 			}
 			else if ( BtConfigure & 0x80 )
 			{
@@ -2837,7 +2862,7 @@ void bt_task(void* pdata)
 					uint32_t j ;
 					uint16_t rxchar ;
 
-					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					CoTickDelay(1) ;					// 2mS
 					flushBtFifo() ;
 					if ( BtScanInit == 0)
@@ -3035,7 +3060,7 @@ void bt_task(void* pdata)
 //						i = getBtOK(0, BT_POLL_TIMEOUT * 2 ) ;
 //						txmit(i+'=') ;
 					}
-					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 				}
 			}
 			else if ( BtLinkRequest )
@@ -3043,7 +3068,7 @@ void bt_task(void* pdata)
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
 //					uint32_t i ;
-					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					CoTickDelay(10) ;					// 40mS
 //					i = btLink( BtLinkRequest & 3 ) ;
 					btLink( BtLinkRequest & 3 ) ;
@@ -3055,7 +3080,7 @@ void bt_task(void* pdata)
 						BtRxOccured = 0 ;
 //					}
 					CoTickDelay(10) ;					// 40mS
-					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 					BtLinkRequest = 0 ;
 				}
 			}
@@ -3203,7 +3228,7 @@ void bt_task(void* pdata)
 
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
-					PIOB->PIO_SODR = PIO_PB12 ;		// Set bit B12 HIGH
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					CoTickDelay(10) ;					// 40mS
 				}
 //				i = btLink(BtCurrentLinkIndex) ;
@@ -3216,7 +3241,7 @@ void bt_task(void* pdata)
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
 					CoTickDelay(10) ;					// 40mS
-					PIOB->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 				}
 			}
 		}
@@ -3224,7 +3249,7 @@ void bt_task(void* pdata)
 #endif
 	}
 }
-#endif	// PCBSKY
+#endif	// BLUETOOTH
 
 extern const char *openLogs( void ) ;
 extern void writeLogs( void ) ;

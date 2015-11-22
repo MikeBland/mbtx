@@ -72,11 +72,11 @@ DLIBS =
 
 EXT = STD
 
-ifeq ($(STAMP), 1)
+#ifeq ($(STAMP), 1)
 AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
 #REV = $(shell echo $$(( $(AREV) )))
-endif
+#endif
 
 #
 # End of default section
@@ -429,6 +429,7 @@ CPPSRC = stamp.cpp \
 			fr.cpp \
 			se.cpp \
 			it.cpp \
+			pl.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \

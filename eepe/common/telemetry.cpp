@@ -15,6 +15,7 @@
 #include "qextserialenumerator.h"
 #include <QtCore/QList>
 #include <QString>
+#include <QMessageBox>
 
 // Receive buffer state machine state defs
 #define frskyDataIdle    0

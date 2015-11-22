@@ -49,6 +49,10 @@
 #include "simulatordialog.h"
 #include "printdialog.h"
 #include "wizarddialog.h"
+#include <QApplication>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QMenu>
 
 extern class simulatorDialog *SimPointer ;
 

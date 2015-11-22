@@ -16,6 +16,12 @@
 #include "wizarddialog.h"
 #include "wizarddata.h"
 #include "helpers.h"
+#include <QMessageBox>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QString>
 
 WizardDialog::WizardDialog(const EEGeneral & settings, unsigned int modelId, QWidget *parent):
   QWizard(parent),
@@ -293,7 +299,7 @@ bool ModelSelectionPage::validatePage()
   QString newName(nameLineEdit->text());
   newName = (newName.normalized(QString::NormalizationForm_D));
   newName = newName.replace(QRegExp("[^ A-Za-z0-9_.-,\\s]"), "");
-  strncpy( wizDlg->mix.name, newName.toAscii(), WIZ_MODEL_NAME_LENGTH);
+	strncpy( wizDlg->mix.name, newName.toLatin1(), WIZ_MODEL_NAME_LENGTH);
   wizDlg->mix.name[WIZ_MODEL_NAME_LENGTH]=0;
 
   if (multirotorRB->isChecked())

@@ -35,6 +35,11 @@
 
 //#define ENABLE_DSM_MATCH	1
 
+//#if defined(PCBSKY) || defined(PCB9XT)
+#ifdef PCBSKY
+#define BLUETOOTH	1
+#endif
+
 #ifdef SIMU
 #include "simpgmspace.h"
 #else
@@ -90,6 +95,7 @@ extern const char * const German[] ;
 extern const char * const Norwegian[] ;
 extern const char * const Swedish[] ;
 extern const char * const Italian[] ;
+extern const char * const Polish[] ;
 
 #define PSTR(a) Language[a]
 #define XPSTR(a)  (char *)a
@@ -680,30 +686,32 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 "
-//#define MULTI_STR_LEN    7
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 Bayang"
+//#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
 #define M_Frsky            2
 #define M_Hisky            3
+#define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2             4
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
 #define M_Devo	  	       6
 #define M_YD717	           7
-#define M_KN	  	         8
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
+#define M_KN	  	         8
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5CSYMAX4 "
+#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		  		     10
 #define M_CX10		       11
 #define M_CX10_STR "\005GREENBLUE DM007"
 #define M_CG023		       12
+#define M_CG023_STR "\005CG023YD829"
+#define M_BAYANG	       13
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "
-
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01

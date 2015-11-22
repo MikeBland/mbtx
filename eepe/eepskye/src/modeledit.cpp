@@ -223,6 +223,15 @@ void ModelEdit::tabModelEditSetup()
 		}
     ui->modelImageLE->setText( n ) ;
 
+		if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
+		{
+			ui->modelImageLE->hide() ;
+		}
+		else
+		{
+			ui->modelImageLE->show() ;
+		}
+
 		ui->VoiceNumberSB->setValue(g_model.modelVoice+260) ;
     //timer mode direction value
     populateTimerSwitchCB(ui->timerModeCB,g_model.timer[0].tmrModeA);

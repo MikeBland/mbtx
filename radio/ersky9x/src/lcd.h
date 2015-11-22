@@ -65,6 +65,7 @@ extern const uint8_t font_se_extra[] ;
 extern const uint8_t font_fr_extra[] ;
 extern const uint8_t font_de_extra[] ;
 extern const uint8_t font_it_extra[] ;
+extern const uint8_t font_pl_extra[] ;
 
 extern const uint8_t font_se_big_extra[] ;
 extern const uint8_t font_fr_big_extra[] ;

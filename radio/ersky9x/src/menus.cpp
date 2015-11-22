@@ -1055,7 +1055,7 @@ enum EnumTabStat
 	e_Image,
 #endif
 #endif
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 	e_bluetooth,
 #endif
 #ifdef PCB9XT
@@ -6273,45 +6273,52 @@ uint8_t blink = InverseBlink ;
 		}
 //#endif
 		
-//#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
-//#define M_DSM2_STR "\004DSM2DSMX"
-//#define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
-//#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
-//#define M_NONE_STR "\004None"
-//#define M_NY_STR "\001NY"
-		
 		if (protocol == PROTO_MULTI)
 		{
 			lcd_puts_Pleft( y, PSTR(STR_MULTI_TYPE));
 			uint8_t attr = g_model.sub_protocol ;
 			g_model.sub_protocol = checkIndexed( y, FWx10"\014"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
-			if(g_model.sub_protocol!=attr) g_model.ppmNCH &= 0x0F;
-			uint8_t nchHi = ( g_model.ppmNCH >> 4) & 0x07 ;
+			if(g_model.sub_protocol==attr)
+				attr=(g_model.ppmNCH >> 4) &0x07 ;
+			else
+				attr=0;
+			
 			y += FH ;
 			subN++;
-			switch(g_model.sub_protocol&0x1F)
+			char *s ;
+			uint8_t x = g_model.sub_protocol&0x1F ;
+			if ( x == M_Flysky)
 			{
-				case M_Flysky:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
-					break;
-				case M_DSM2:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
-					break;
-				case M_YD717:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\004"M_YD717_STR), nchHi, (sub==subN) ) ;
-					break;
-				case M_SymaX:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\001"M_SYMAX_STR), nchHi, (sub==subN) ) ;
-					break;
-					case M_CX10:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\002"M_CX10_STR), nchHi, (sub==subN) ) ;
-					break;
-				default:
-					nchHi = 0 ;
-					nchHi = checkIndexed( y, XPSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
-					break;
+				s=XPSTR(FWx10"\003"M_FLYSKY_STR);
 			}
-			g_model.ppmNCH = (nchHi << 4) | (g_model.ppmNCH & 0x8F) ;
+			else if ( x == M_Hisky )
+			{
+				s=XPSTR(FWx10"\001"M_HISKY_STR);
+			}
+			else if ( x == M_DSM2 )
+			{
+				s=XPSTR(FWx10"\001"M_DSM2_STR);
+			}
+			else if ( x == M_YD717 )
+			{
+				s=XPSTR(FWx10"\004"M_YD717_STR);
+			}
+			else if ( x == M_SymaX )
+			{
+				s=XPSTR(FWx10"\002"M_SYMAX_STR);
+			}
+			else if ( x == M_CX10 )
+			{
+				s=XPSTR(FWx10"\002"M_CX10_STR);
+			}
+			else if ( x == M_CG023 )
+			{
+				s=XPSTR(FWx10"\001"M_CG023_STR);
+			}
+			else
+			{
+				s=XPSTR(FWx10"\000"M_NONE_STR);
+			}
 			g_model.ppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.ppmNCH & 0x8F);
 			y += FH ;
 			subN++;
@@ -13358,8 +13365,8 @@ STR_DiagAna
 			subN += 1 ;
 
 	    lcd_puts_Pleft( y,PSTR(STR_LANGUAGE));
-	    lcd_putsAttIdx( 10*FW, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN"),g_eeGeneral.language,(sub==subN ? blink:0));
-	    if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 5 ) ;
+	    lcd_putsAttIdx( 10*FW, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN   POLISH    "),g_eeGeneral.language,(sub==subN ? blink:0));
+	    if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 6 ) ;
 			setLanguage() ;
  			y += FH ;
 			subN += 1 ;
@@ -14928,7 +14935,7 @@ extern uint16_t switches_states ;
 			uint8_t subN = 0 ;
 			
       TITLE( XPSTR("BlueTooth") ) ;
-#if defined(PCBSKY) || defined(PCB9XT)
+#ifdef BLUETOOTH
  #ifdef BT_COMMAND_DEBUG
 			IlinesCount = 3 ;
  #else
@@ -14947,7 +14954,7 @@ extern uint16_t switches_states ;
 			y += FH ;
 			subN += 1 ;
 
-#if defined(PCBSKY)
+#ifdef BLUETOOTH
 			lcd_puts_Pleft( y, XPSTR("BT as Trainer") );
 			g_model.BTfunction = checkIndexed( y, XPSTR(FWx16"\002""\004 OFF  RxTxRx"), g_model.BTfunction, (sub==subN) ) ;
 //			if ( (sub == subN) )
@@ -15104,7 +15111,7 @@ extern uint8_t BtPswd[] ;
 	}	
 }
 
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 extern uint8_t Bt_ok ;
 extern uint16_t Bt_debug ;
 extern uint8_t Bt_baudrate ;
@@ -15171,7 +15178,7 @@ void menuProcBt(uint8_t event)
 		lcd_outhex4( i*25, 7*FH, x ) ;
 	}
 	
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 	lcd_outdez( 75, 7*FH, BtRxTimer ) ;
 extern uint8_t BtCurrentLinkIndex ;
 extern uint8_t BtBaudChangeIndex ;
@@ -15408,7 +15415,7 @@ void menuProcBtScan(uint8_t event)
 
 
 
-#endif
+#endif // BLUETOOTH
 
 #ifdef PCB9XT
 void menuProcSlave(uint8_t event)
