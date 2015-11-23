@@ -10,6 +10,18 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 23-Nov-2015  MPB (r819)
+V-tail and Elevon templates
+RAM and flash savings
+Changes towards V2
+Splash timeout fix
+Smaller double size font
+Add SBUS protocol
+Buttons restart inactivity timer
+Mute option at power on
+Hardware Menu protected
+
+******************************************
 CHANGELOG: 06-May-2015  MPB (r818)
 Save some flash and RAM
 Commit missing source files
