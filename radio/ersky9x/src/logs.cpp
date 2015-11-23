@@ -65,6 +65,33 @@ uint8_t logDelay;
 
 #define LOGS_PATH           "/LOGS"   // no trailing slash = important
 
+void setFilenameDateTime( char *filename )
+{
+//#if defined(RTCLOCK)
+  filename[0] = '-';
+//  struct gtm utm;
+//  gettime(&utm);
+  
+	div_t qr = div( Time.year, 10);
+  filename[4] = '0' + qr.rem;
+  qr = div(qr.quot, 10);
+  filename[3] = '0' + qr.rem;
+  qr = div(qr.quot, 10);
+  filename[2] = '0' + qr.rem;
+  filename[1] = '0' + qr.quot;
+  filename[5] = '-';
+  qr = div( Time.month, 10);
+  filename[7] = '0' + qr.rem;
+  filename[6] = '0' + qr.quot;
+  filename[8] = '-';
+  qr = div( Time.date, 10);
+  filename[10] = '0' + qr.rem;
+  filename[9] = '0' + qr.quot;
+//#endif
+	
+}
+
+
 const char *openLogs()
 {
   // Determine and set log file filename
@@ -132,27 +159,8 @@ extern uint32_t sdMounted( void ) ;
     len = sizeof(LOGS_PATH) + 5 + 2;
   }
 
-//#if defined(RTCLOCK)
-  filename[len] = '-';
-//  struct gtm utm;
-//  gettime(&utm);
-  
-	div_t qr = div( Time.year, 10);
-  filename[len+4] = '0' + qr.rem;
-  qr = div(qr.quot, 10);
-  filename[len+3] = '0' + qr.rem;
-  qr = div(qr.quot, 10);
-  filename[len+2] = '0' + qr.rem;
-  filename[len+1] = '0' + qr.quot;
-  filename[len+5] = '-';
-  qr = div( Time.month, 10);
-  filename[len+7] = '0' + qr.rem;
-  filename[len+6] = '0' + qr.quot;
-  filename[len+8] = '-';
-  qr = div( Time.date, 10);
-  filename[len+10] = '0' + qr.rem;
-  filename[len+9] = '0' + qr.quot;
-//#endif
+
+	setFilenameDateTime( &filename[len] ) ;
 
   strcpy_P(&filename[len+11], ".csv" ) ;
 
@@ -207,7 +215,7 @@ extern uint32_t sdMounted( void ) ;
 	{
 		f_puts(",Fades,Holds", &g_oLogFile) ;
 	}
-#ifdef PCBSKY
+#ifdef BLUETOOTH
   f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8,BtRx\n", &g_oLogFile);
 #else
   f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8\n", &g_oLogFile);
@@ -327,13 +335,13 @@ void writeLogs()
 					num_decimals = 100 ;
 				}
 				qr = div( value, num_decimals ) ;
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 				f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 #else
 				f_printf(&g_oLogFile, "%d.%d\n", qr.quot, qr.rem ) ;
 #endif
 			}
-#ifdef PCBSKY
+#ifdef BLUETOOTH
 extern uint8_t BtTotals[4] ;
 			f_printf(&g_oLogFile, "%d\n", BtTotals[1] ) ;
 #endif

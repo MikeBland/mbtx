@@ -365,6 +365,7 @@
 #define STR_Voice		      	340
 #define STR_Protocol				341
 #define STR_Safety					342
+#define STR_Eeprom		    	343
 
 
 //"Current Source"

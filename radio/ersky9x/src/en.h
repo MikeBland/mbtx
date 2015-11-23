@@ -485,6 +485,7 @@
 #define ISTR_DateTime			   "Date-Time" 
 #define ISTR_DiagSwtch		   "DiagSwtch"  
 #define ISTR_DiagAna		     "DiagAna" 
+#define ISTR_Eeprom			     "EEPROM" 
 
 #define ISTR_Mixer		      "Mixer" 
 #define ISTR_Cswitches		  "L.Switches" 

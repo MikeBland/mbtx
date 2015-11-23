@@ -399,5 +399,6 @@ const char * const Swedish[] =
 	ISTR_Modes			   ,
 	ISTR_Voice		     ,
 	ISTR_Protocol		   ,
-	ISTR_Safety			   
+	ISTR_Safety			   ,
+	ISTR_Eeprom
 } ;

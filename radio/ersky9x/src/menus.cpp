@@ -12668,6 +12668,86 @@ uint8_t evalOffset(int8_t sub)
 		return (s_pgOfs = t_pgOfs) ;
 }
 
+#define EBACK_START		0
+#define EBACK_OPEN		1
+#define EBACK_WRITE		2
+
+#define EBACK_DONE		10
+
+extern uint16_t General_timer ;
+extern uint16_t Model_timer ;
+
+void menuBackupEeprom( uint8_t event )
+{
+	static uint8_t state ;
+	static uint8_t count ;
+	TITLE(XPSTR("Backup EEPROM"));
+	
+	switch ( event )
+	{
+		case EVT_ENTRY :
+			state = EBACK_START ;
+			if ( General_timer )
+			{
+				General_timer = 1 ;		// Make these happen soon
+			}
+			if ( Model_timer )
+			{
+				Model_timer = 1 ;
+			}
+		break ;
+
+    case EVT_KEY_BREAK(KEY_EXIT):
+			if ( state == EBACK_DONE )
+			{
+				popMenu( false ) ;
+				// need a reboot!!
+			}
+		break ;
+	}
+
+	switch ( state )
+	{
+		case EBACK_START :
+			lcd_puts_Pleft( 4*FH, XPSTR("\006Preparing") ) ;
+			if ( ee32_check_finished() )
+			{
+				state = EBACK_OPEN ;
+			}
+		break ;
+
+		case EBACK_OPEN :
+			count = 0 ;
+			state = EBACK_WRITE ;
+		break ;
+		
+		case EBACK_WRITE :
+			if ( count < 128 )
+			{
+				uint32_t i ;
+				uint32_t width = count / 2 ;
+				lcd_hline( 0, 5*FH-1, 65 ) ;
+				lcd_hline( 0, 6*FH, 65 ) ;
+				lcd_vline( 64, 5*FH, 8 ) ;
+				for ( i = 0 ; i <= width ; i += 1 )
+				{
+					lcd_vline( i, 5*FH, 8 ) ;
+				}
+				count += 1 ;
+			}
+			else
+			{
+				state = EBACK_DONE ;
+			}
+		break ;
+		
+		case EBACK_DONE :
+			lcd_puts_Pleft( 4*FH, XPSTR("\004EEPROM Saved") ) ;
+		break ;
+	}
+}
+
+
 //const char Str_Display[] =     "Display" ;
 //const char Str_AudioHaptic[] = "AudioHaptic" ;
 //const char Str_Alarms[] =      "Alarms" ;
@@ -12693,9 +12773,10 @@ const char Str_General[] =     "General" ;
 #define M_TRAINER		8
 #define M_VERSION		9
 #define M_MODULE		10
-#define M_DATE			11
-#define M_DIAGKEYS	12
-#define M_DIAGANA		13
+#define M_EEPROM		11
+#define M_DATE			12
+#define M_DIAGKEYS	13
+#define M_DIAGANA		14
 
 //static void displayIndex( const char *const strings[], uint8_t extra, uint8_t lines, uint8_t highlight )
 static void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight )
@@ -12926,7 +13007,7 @@ void menuProcIndex(uint8_t event)
 	{
 		case 0 :
   		TITLE(XPSTR("Radio Setup"));
-			IlinesCount = 13 ;
+			IlinesCount = 14 ;
 			sub += 1 ;
 			
 			
@@ -12957,6 +13038,7 @@ STR_Calibration,
 STR_Trainer,
 STR_Version,
 STR_ModuleRssi,
+STR_Eeprom,
 STR_DateTime,
 STR_DiagSwtch,
 STR_DiagAna
@@ -12964,7 +13046,7 @@ STR_DiagAna
 	
 			 
 //			displayIndex( n_Strings, 6, 7, sub ) ;
-			displayIndex( in_Strings, 6, 7, sub ) ;
+			displayIndex( in_Strings, 7, 7, sub ) ;
 		
 		break ;
 		
@@ -14051,6 +14133,36 @@ STR_DiagAna
 				}
  				y += FH ;
 				subN += 1 ;
+			}
+		}			 
+		break ;
+
+		case M_EEPROM :
+		{
+			uint8_t subN = 0 ;
+			
+			IlinesCount = 2 ;
+
+			TITLE( XPSTR("EEPROM") ) ;
+			if ( HardwareMenuEnabled == 0 )
+			{
+				IlinesCount = 0 ;
+        lcd_puts_Pleft( 3*FH,XPSTR("\006Disabled"));
+				break ;
+			}
+      lcd_putsAtt( 0, y, XPSTR("Backup EEPROM"), (sub==subN) ? INVERS : 0 ) ;
+			y += FH ;
+			subN += 1 ;
+      lcd_putsAtt( 0, y,XPSTR("Restore EEPROM"), (sub==subN) ? INVERS : 0 ) ;
+
+  		lcd_puts_Pleft( 4*FH, XPSTR("\003IN DEVELOPMENT"));
+
+			if ( Tevent==EVT_KEY_BREAK(KEY_MENU) ) // || Tevent == EVT_KEY_BREAK(BTN_RE)  )
+			{
+				if ( sub == 0 )
+				{
+					pushMenu(menuBackupEeprom) ;
+				}
 			}
 		}			 
 		break ;

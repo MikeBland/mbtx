@@ -1385,6 +1385,17 @@ uint32_t updateSlave() ;
 #if defined(PCBSKY) || defined(PCB9XT)
   checkQuickSelect();
 #endif
+
+#ifdef PCBX9D
+	{
+  	uint8_t i = keyDown(); //check for keystate
+		if ( ( i & 6 ) == 6 )
+		{
+			SystemOptions |= SYS_OPT_MUTE ;
+		}
+	}
+#endif
+
 #ifdef PCBSKY
 	PWM->PWM_CH_NUM[0].PWM_CDTYUPD = g_eeGeneral.bright ;
 	MAh_used = g_eeGeneral.mAh_used ;
