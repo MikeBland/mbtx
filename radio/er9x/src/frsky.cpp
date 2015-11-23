@@ -641,7 +641,6 @@ void processSportPacket()
 					store_hub_data( FR_A4, value ) ;
 				break ;
 
-#if defined(CPUM128) || defined(CPUM2561)
 				case T1_ID_8 :
 					store_hub_data( FR_TEMP1, value ) ;
 				break ;
@@ -654,6 +653,7 @@ void processSportPacket()
 					store_hub_data( FR_RPM, value ) ;
 				break ;
 				
+#if defined(CPUM128) || defined(CPUM2561)
 				case ACCX_ID_8 :
 					store_hub_data( FR_ACCX, value ) ;
 				break ;
@@ -764,9 +764,9 @@ uint8_t Private_position ;
 //uint8_t TezDebug0 ;
 //uint8_t TezDebug1 ;
 
-#ifdef CPUM2561
-extern uint8_t Arduino ;
-#endif
+//#ifdef CPUM2561
+//extern uint8_t Arduino ;
+//#endif
 
 #ifndef SIMU
 ISR(USART0_RX_vect)
@@ -779,13 +779,13 @@ ISR(USART0_RX_vect)
   
 	UCSR0B &= ~(1 << RXCIE0); // disable Interrupt
 	sei() ;
-#ifdef CPUM2561
-	if ( Arduino )
-	{
-		arduinoSerialRx() ;
-		return ;
-	}
-#endif
+//#ifdef CPUM2561
+//	if ( Arduino )
+//	{
+//		arduinoSerialRx() ;
+//		return ;
+//	}
+//#endif
   stat = UCSR0A; // USART control and Status Register 0 A
 
     /*
@@ -1026,13 +1026,13 @@ ISR(USART0_UDRE_vect)
 {
 	struct t_frskyTx *pftx = &FrskyTx ;	
 	FORCE_INDIRECT(pftx) ;
-#ifdef CPUM2561
-	if ( Arduino )
-	{
-		arduinoSerialTx() ;
-		return ;
-	}
-#endif
+//#ifdef CPUM2561
+//	if ( Arduino )
+//	{
+//		arduinoSerialTx() ;
+//		return ;
+//	}
+//#endif
   
 	if ( pftx->frskyTxBufferCount > 0) 
   {

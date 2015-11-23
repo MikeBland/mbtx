@@ -136,7 +136,13 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   templateSetup;  //RETA order according to chout_ar array
     int8_t    PPM_Multiplier;
     uint8_t   unused1;
+#ifdef XSW_MOD
+    uint8_t   unused2:2;
+   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+#else
     uint8_t   unused2:4;
+#endif
     uint8_t   hideNameOnSplash:1;
     uint8_t   enablePpmsim:1;
     uint8_t   blightinv:1;
@@ -146,7 +152,11 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   speakerMode;
     uint8_t   lightOnStickMove;
     char      ownerName[GENERAL_OWNER_NAME_LEN];
+#ifdef XSW_MOD
+    uint16_t  switchWarningStates;
+#else
     uint8_t   switchWarningStates;
+#endif
 		int8_t		volume ;
     uint8_t   res[3];
     uint8_t   crosstrim:1 ;
@@ -159,6 +169,9 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   spare1:1 ;
 		uint8_t		stickReverse ;
 		uint8_t		customStickNames[16] ;
+#ifdef XSW_MOD
+    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
+#else                                           // wasted 4b if MAX_XSWITCH is an odd number
     uint8_t   switchMapping ;
 		uint8_t	ele2source:4 ;
 		uint8_t	ail2source:4 ;
@@ -170,6 +183,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t pb7Input:1 ;
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
+#endif
 }) EEGeneral;
 
 
@@ -208,7 +222,13 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   templateSetup;  //RETA order according to chout_ar array
     int8_t    PPM_Multiplier;
 //    uint8_t   unused1;
+#ifdef XSW_MOD
+    uint8_t   unused2:2;
+   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+#else
     uint8_t   unused2:4;
+#endif
     uint8_t   hideNameOnSplash:1;
     uint8_t   enablePpmsim:1;
     uint8_t   blightinv:1;
@@ -231,6 +251,9 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   spare1:1 ;
 		uint8_t		stickReverse ;
 		uint8_t		customStickNames[16] ;
+#ifdef XSW_MOD
+    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
+#else                                           // wasted 4b if MAX_XSWITCH is an odd number
     uint8_t   switchMapping ;
 		uint8_t	ele2source:4 ;
 		uint8_t	ail2source:4 ;
@@ -242,6 +265,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t pb7Input:1 ;
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
+#endif
 }) V2EEGeneral;
 
 #endif
@@ -619,7 +643,11 @@ PACK(typedef struct t_ModelData {
     uint8_t   tmr2Mode;              // timer2 trigger source -> off, abs, stk, stk%, sw/!sw, !m_sw/!m_sw
     int8_t		tmr2ModeB;
 //    uint8_t   tmr2dir:1;    //0=>Count Down, 1=>Count Up
+#ifdef XSW_MOD
+		uint16_t switchWarningStates ;
+#else
 		uint8_t switchWarningStates ;
+#endif
 		uint8_t sub_trim_limit ;
 		uint8_t CustomDisplayIndex[6] ;
 		GvarData gvars[MAX_GVARS] ;
@@ -652,7 +680,9 @@ PACK(typedef struct t_ModelData {
 //	uint8_t tspare:1 ;
 	int8_t gvswitch[MAX_GVARS] ;
 	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
+#ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
+#endif
 
 }) ModelData;
 
@@ -711,8 +741,12 @@ PACK(typedef struct t_V2ModelData
 	uint8_t modelVersion ;		// Keep at offset 0x2F0 from start of structure!
   
   V2FrSkyData frsky;
+#ifdef XSW_MOD
+	uint16_t switchWarningStates ;
+#else
 	uint8_t switchWarningStates ;
   uint8_t exSwitchWarningStates ;	// MAy combine as 16 bit value
+#endif
 	uint8_t sub_trim_limit ;
 	uint8_t	customStickNames[16] ;
 	V2PhaseData phaseData[MAX_MODES] ;

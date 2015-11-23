@@ -137,7 +137,7 @@
 #define STR_USR_PROTO			 "UsrProto"
 #define STR_FRHUB_WSHHI    "\005FrHubWSHhi"
 #define STR_MET_IMP        "\003MetImp"
-#define STR_A_CHANNEL      "A  channel"
+#define STR_A_CHANNEL      "A  chan."
 #define STR_ALRM           "alrm"
 #define STR_TELEMETRY2     "TELEMETRY2"
 #define STR_TX_RSSIALRM    "TxRSSIalrm"
@@ -218,7 +218,8 @@
 #define STR_SETUP          "SETUP"
 #define STR_NAME           "Name"
 #define STR_VOICE_INDEX    "Voice Index\021MENU"
-#define STR_TIMER_TEXT		 "Timer\037TriggerA\037TriggerB\037Timer\037Reset Switch"
+#define STR_TIMER_TEXT		 "Timer\037TriggerA\037TriggerB\037Timer\037\037\037Reset Switch"
+#define STR_TIMER_TEXT_X	 "Timer\037TriggerA\037TriggerB\037Timer\037Reset Switch"
 #define STR_TRIGGER        "TriggerA"
 #define STR_TRIGGERB       "TriggerB"
 //STR_COUNT_DOWN_UP indexed, 10 chars each
@@ -324,12 +325,17 @@
 #define STR_FLASH_ON_BEEP  "Flash on beep"
 #define STR_LIGHT_SWITCH   "Light switch"
 #define STR_LIGHT_INVERT   "Backlight invert"
-#define STR_LIGHT_AFTER    "Light off after\023s"
-#define STR_LIGHT_STICK    "Light on Stk Mv\023s"
+#define STR_LIGHT_AFTER    "Light off after"
+#define STR_LIGHT_STICK    "Light on Stk Mv"
 #define STR_SPLASH_SCREEN  "Splash screen"
 #define STR_SPLASH_NAME    "Splash Name"
 #define STR_THR_WARNING    "Throttle Warning"
+#ifdef XSW_MOD
+#define STR_ROTATE         "Rotate"
+#define STR_DEAFULT_SW_PAGE "Deflt Sw\037CustomStkNames\037Auto Limits\037Volume Control"
+#else // !XSW_MOD
 #define STR_DEAFULT_SW_PAGE "Default Sw\037CustomStkNames\037Auto Limits\037Volume Control"
+#endif  // XSW_MOD
 #define STR_DEAFULT_SW     "Default Sw"
 #define STR_MEM_WARN       "Memory Warning"
 #define STR_ALARM_WARN     "Alarm Warning"
@@ -342,11 +348,22 @@
 #define STR_MODE           "Mode"
 
 // SWITCHES_STR 3 chars each
+#ifdef XSW_MOD
+// Must be V2 as well
+//#if defined(CPUM128) || defined(CPUM2561)
+#define SWITCHES_STR       "\003IDLTHRRUDELEAILGEAPB1PB2TRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI ID0ID1ID2TH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\201"
+//#else
+//#define SWITCHES_STR       "\003IDLTHRRUDELEAILGEAPB1PB2TRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC ID0ID1ID2TH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\201"
+//#endif
+#else	// !XSW_MOD
 #if defined(CPUM128) || defined(CPUM2561)
 #define SWITCHES_STR       "\003THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI EL\200EL-EL\201RU\200RU-RU\201AI\200AI-AI\201GE\200GE-GE\201PB1PB2"
+#elif defined(SWITCH_MAPPING)
+#define SWITCHES_STR       "\003THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC EL\200EL-EL\201RU\200RU-RU\201AI\200AI-AI\201GE\200GE-GE\201PB1PB2"
 #else
 #define SWITCHES_STR       "\003THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC "
 #endif
+#endif  // XSW_MOD
 #define SWITCH_WARN_STR	   "Switch Warning"
 // CURV_STR indexed 3 chars each
 #define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16"

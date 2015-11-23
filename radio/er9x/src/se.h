@@ -217,7 +217,8 @@
 #define STR_SETUP           "SETUP"
 #define STR_NAME            "Namn"
 #define STR_VOICE_INDEX     "Rost-Index\021MENU"
-#define STR_TIMER_TEXT		 "TriggerA\037TriggerB\037Timer\037Reset Switch"
+#define STR_TIMER_TEXT		 "Timer\037TriggerA\037TriggerB\037Timer\037\037\037Reset Switch"
+#define STR_TIMER_TEXT_X	 "Timer\037TriggerA\037TriggerB\037Timer\037Reset Switch"
 #define STR_TRIGGER	        "TriggerA"
 #define STR_TRIGGERB        "TriggerB"
 //STR_COUNT_DOWN_UP indexed, 10 chars each
@@ -342,11 +343,16 @@
 #define STR_MODE            "Fas"
 
 // SWITCHES_STR 3 chars each
+#ifdef XSW_MOD
+#define SWITCHES_STR        "\003IDLGASRODHJDSKELANPB1PB2TRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI ID0ID1ID2TH\200TH-TH\201RU\200RU-RU\201EL\200EL-EL\201AI\200AI-AI\201GE\200GE-GE\201"
+#else
 #if defined(CPUM128) || defined(CPUM2561)
 #define SWITCHES_STR        "\003GASRODHJDID0ID1ID2SKELANTRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI EL\200EL-EL\201RU\200RU-RU\201AI\200AI-AI\201GE\200GE-GE\201PB1PB2"
 #else
 #define SWITCHES_STR        "\003GASRODHJDID0ID1ID2SKELANTRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC "
 #endif
+#endif  // XSW_MOD
+
 #define SWITCH_WARN_STR     "Brytarvarning"
 // CURV_STR indexed 3 chars each
 #define CURV_STR            "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16"

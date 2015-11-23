@@ -233,6 +233,9 @@ struct t_voice
 	uint8_t VoiceQueueInIndex ;
 	uint8_t VoiceQueueOutIndex ;
 	uint8_t VoiceSerialData[5] ;
+#if defined(COP328)
+	uint8_t VoiceSerialCommand ;
+#endif
 	uint8_t VoiceSerialCount ;
 	uint8_t VoiceSerialIndex ;
 	uint8_t VoiceSerialRxState ;

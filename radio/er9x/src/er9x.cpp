@@ -20,6 +20,7 @@
 #include "pulses.h"
 #include "lcd.h"
 #include "menus.h"
+#include "voice.h"
 
 // Next two lines swapped as new complier/linker reverses them in memory!
 const
@@ -462,22 +463,29 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
     case  MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_ON,att);return;
     case -MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_OFF,att);return;
     }
-		if ( idx1 < 0 )
-		{
-  		lcd_putcAtt(x,y, '!',att);
-		}
+//		if ( idx1 < 0 )
+//		{
+//		}
 		int8_t z ;
 		z = idx1 ;
 		if ( z < 0 )
 		{
+  		lcd_putcAtt(x,y, '!',att);
 			z = -idx1 ;			
 		}
 		z -= 1 ;
+#ifdef XSW_MOD
+  if (z >= (SW_3POS_BASE-1)) {
+    // to get 3pos switch names from Str_Switches
+    z -= (SW_3POS_BASE-1-(MAX_PSWITCH+MAX_CSWITCH));
+  }
+#else
 //		z *= 3 ;
 	if ( z > MAX_DRSWITCH )
 	{
 		z -= HSW_OFFSET ;
 	}
+#endif
   lcd_putsAttIdx(x+FW,y,Str_Switches,z,att) ;
 }
 
@@ -634,6 +642,19 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, uint8_t val, uint8_t channel, uint8
 
 #endif
 
+#ifdef XSW_MOD
+inline uint8_t switchPosition(uint8_t swtch)
+{
+		uint8_t pi = (swtch - 1) ;
+    if (swtch >= SW_3POS_BASE) {
+			//assert(swtch <= SW_3POS_END);
+			swtch -= SW_3POS_BASE;
+      pi = swtch / 3;
+	  }
+    return switchState(PSW_BASE + pi);
+}
+#endif
+
 int16_t getValue(uint8_t i)
 {
     if(i<7) return calibratedStick[i];//-512..512
@@ -671,6 +692,36 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
     case  MAX_DRSWITCH: return  true;
     case -MAX_DRSWITCH: return  false;
     }
+
+#ifdef XSW_MOD
+    bool dir = (swtch > 0);
+    uint8_t aswtch = swtch ;
+    if ( swtch < 0 )
+      aswtch = -swtch ;
+
+    if (aswtch <= MAX_PSWITCH) {
+      aswtch = switchState(PSW_BASE + aswtch - 1) ;
+      return (dir ? (aswtch != ST_UP) : (aswtch == ST_UP)) ;
+    }
+
+    if (aswtch >= SW_3POS_BASE) {
+      if (aswtch > SW_3POS_END)
+        return false;
+      aswtch -= SW_3POS_BASE;
+      uint8_t pi = aswtch / 3;
+      aswtch -= pi * 3;
+      ret_value = (switchState(PSW_BASE + pi) == aswtch);
+      return (dir ? ret_value : !ret_value);
+    }
+
+    //custom switch, Issue 78
+    //use putsChnRaw
+    //input -> 1..4 -> sticks,  5..8 pots
+    //MAX,FULL - disregard
+    //ppm
+    cs_index = aswtch - MAX_PSWITCH - 1;
+
+#else // !XSW_MOD
 
 #ifndef SWITCH_MAPPING
 		if ( swtch > MAX_DRSWITCH )
@@ -721,9 +772,12 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
     //MAX,FULL - disregard
     //ppm
 
-#ifdef V2
-    cs_index = aswtch-(MAX_DRSWITCH-NUM_CSW-EXTRA_CSW) ;
+#endif  // XSW_MOD
 
+#ifdef V2
+#ifndef XSW_MOD
+    cs_index = aswtch-(MAX_DRSWITCH-NUM_CSW-EXTRA_CSW) ;
+#endif
 		CxSwData *cs = &g_model.customSw[cs_index];
     
 		if(!cs->func) return false;
@@ -731,7 +785,7 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
     if ( level>4 )
     {
     		ret_value = Last_switch[cs_index] & 1 ;
-        return swtch>0 ? ret_value : !ret_value ;
+        return dir ? ret_value : !ret_value ;
     }
 
     int8_t a = cs->v1;
@@ -864,18 +918,25 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 #ifdef VERSION3
 		}
 #endif
+//#ifdef XSW_MOD
+//    return dir ? ret_value : !ret_value ;
+//#else
     return swtch>0 ? ret_value : !ret_value ;
+//#endif
 
 
 
 
-#else
+#else // !V2
+
+#ifndef XSW_MOD
  #if defined(CPUM128) || defined(CPUM2561)
     cs_index = aswtch-(MAX_DRSWITCH-NUM_CSW-EXTRA_CSW);
  #else
     cs_index = aswtch-(MAX_DRSWITCH-NUM_CSW);
  #endif
-		
+#endif
+
 #if defined(CPUM128) || defined(CPUM2561)
 		if ( cs_index >= NUM_CSW )
 		{
@@ -885,7 +946,11 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
     	if ( level>4 )
     	{
 			    ret_value = Last_switch[cs_index] & 1 ;
-    	    return swtch>0 ? ret_value : !ret_value ;
+//#ifdef XSW_MOD
+//			    return dir ? ret_value : !ret_value ;
+//#else
+			    return swtch>0 ? ret_value : !ret_value ;
+//#endif
     	}
 
     	int8_t a = cs->v1;
@@ -1011,6 +1076,24 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 				x = cs->andsw ;
 				if ( x )
 				{
+#ifdef XSW_MOD
+					if ( ( x >= DSW_TRN ) && ( x <= DSW_TRN+NUM_CSW+EXTRA_CSW ) )
+					{
+						x += 1 ;
+					}
+					if ( ( x <= -DSW_TRN ) && ( x >= -(DSW_TRN+NUM_CSW+EXTRA_CSW) ) )
+					{
+						x -= 1 ;
+					}
+					if ( x == DSW_TRN+NUM_CSW+EXTRA_CSW+1 )
+					{
+						x = DSW_TRN ;			// Tag TRN on the end, keep EEPROM values
+					}
+					if ( x == -(DSW_TRN+NUM_CSW+EXTRA_CSW+1) )
+					{
+						x = -DSW_TRN ;			// Tag TRN on the end, keep EEPROM values
+					}
+#else // !XSW_MOD
 					if ( ( x > 8 ) && ( x <= 9+NUM_CSW+EXTRA_CSW ) )
 					{
 						x += 1 ;
@@ -1027,6 +1110,7 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 					{
 						x = -9 ;			// Tag TRN on the end, keep EEPROM values
 					}
+#endif  // XSW_MOD
     	  	ret_value = getSwitch( x, 0, level+1) ;
 				}
 			}
@@ -1038,7 +1122,11 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 #ifdef VERSION3
 			}
 #endif
-    	return swtch>0 ? ret_value : !ret_value ;
+//#ifdef XSW_MOD
+//	    return dir ? ret_value : !ret_value ;
+//#else
+	    return swtch>0 ? ret_value : !ret_value ;
+//#endif
 		}
 #endif
 		CSwData *cs = &g_model.customSw[cs_index];
@@ -1048,7 +1136,11 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
     if ( level>4 )
     {
     		ret_value = Last_switch[cs_index] & 1 ;
-        return swtch>0 ? ret_value : !ret_value ;
+//#ifdef XSW_MOD
+//		    return dir ? ret_value : !ret_value ;
+//#else
+    		return swtch>0 ? ret_value : !ret_value ;
+//#endif
     }
 
     int8_t a = cs->v1;
@@ -1162,7 +1254,11 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 			x = cs->andsw ;
 			if ( x )
 			{
+#ifdef XSW_MOD
+				if ( x >= DSW_TRN )
+#else
 				if ( x > 8 )
+#endif
 				{
 					x += 1 ;
 				}
@@ -1177,7 +1273,11 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 #ifdef VERSION3
 		}
 #endif
+//#ifdef XSW_MOD
+//    return dir ? ret_value : !ret_value ;
+//#else
     return swtch>0 ? ret_value : !ret_value ;
+//#endif
 #endif // V2
 
 }
@@ -1230,8 +1330,9 @@ uint16_t stickMoveValue()
 #define INAC_DEVISOR 256   // Issue 206 - bypass splash screen with stick movement
     uint16_t sum = 0;
     for(uint8_t i=0; i<4; i++)
-        sum += anaIn(i)/INAC_DEVISOR;
-    return sum ;
+        sum += anaIn(i) ;
+	sum += 128 ;
+	return sum / INAC_DEVISOR ;
 }
 
 
@@ -1533,6 +1634,149 @@ void putWarnSwitch( uint8_t x, uint8_t idx )
 
 }
 
+void putsDblSizeName( uint8_t y )
+{
+#ifdef SMALL_DBL
+	lcd_putsnAtt( 24, y, g_model.name, 10, DBLSIZE | BSS ) ;
+#else	
+	for(uint8_t i=0;i<sizeof(g_model.name);i++)
+		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
+#endif
+}
+
+#ifdef XSW_MOD
+uint16_t getCurrentSwitchStates()
+{
+  uint16_t i = 0, j = PSW_END;
+  while (j > PSW_3POS_END) {
+    i <<= 1;
+    if (switchState( j-- ) == ST_DN)   // ST_UP or ST_DN or ST_NC for PB1/PB2
+      i |= 1;
+  }
+  while (j >= PSW_BASE) {
+    uint8_t t = switchState( j-- ) ;
+    i <<= 2 ;
+    i |= t ;
+  }
+  return i;   // (MSB=0,Trainer:1,PB2:1,PB1:1,Gear:2,AileDR:2,ElevDR:2,RuddDR:2,ThrCt:2,IDL:2)
+}
+
+void checkSwitches()
+{
+  if(g_eeGeneral.disableSwitchWarning)
+    return; // if warning is off
+
+  uint16_t warningStates = g_model.switchWarningStates ;
+
+  uint8_t first = 1 ;
+  uint8_t voice = 0 ;
+
+  //loop until all switches are reset
+  while (true) {
+    uint16_t i = getCurrentSwitchStates() ;
+    //show the difference between i and switch?
+    //show just the offending switches.
+    //first row - IDL, THR, RUD, ELE, AIL, GEA, PB1, PB2, TRN
+    uint16_t x = i ^ warningStates ;
+
+    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+    voice = 0 ;
+
+    uint16_t m = 3;
+    uint8_t k = 0, w = 2, dw = 3*FW + FW/2;
+    uint8_t j = PSW_BASE;
+    while (j++ <= PSW_3POS_END) {
+      if (x & m) {
+        putWarnSwitch(w, k);
+      }
+      m <<= 2;
+      w += dw;
+      k++;
+    }
+    m = 1 << (k << 1);
+    while (j++ <= PSW_END) {
+      if (x & m) {
+        putWarnSwitch(w, k);
+      }
+      m <<= 1;
+      w += dw;
+      k++;
+    }
+
+    refreshDiplay();
+
+    if ( first )
+    {
+      voice = ALERT_VOICE ;
+      clearKeyEvents();
+      first = 0 ;
+    }
+
+    if( (i==warningStates) || (keyDown())) // check state against settings
+    {
+      return;  //wait for key release
+    }
+
+    check_backlight_voice() ;
+    wdt_reset() ;
+
+  }
+}
+
+//uint16_t CurrentSwitches ;
+#if defined(CPUM128) || defined(CPUM2561)
+static uint16_t switches_state = 0;
+
+int8_t getMovedSwitch()
+{
+  static uint16_t s_last_time = 0 ;
+
+  uint16_t xstate = switches_state;
+  switches_state = getCurrentSwitchStates();
+//	CurrentSwitches = switches_state ;
+
+  uint16_t time = get_tmr10ms() ;
+  bool skipping = ( (uint16_t)(time - s_last_time) > 10) ;
+  s_last_time = time ;
+  if (skipping)
+    return 0;
+
+  //         DSW_TRN,  DSW_PB2, _PB1, _GEA, _AIL,  DSW_ELE, DSW_RUD, DSW_THR,DSW_IDL
+  // sw_index   (x,9,        8,    7,    6,     5,       4,       3,       2,      1    )
+  // sw_state = (0,Trainer:1,PB2:1,PB1:1,Gear:2,AileDR:2,ElevDR:2,RuddDR:2,ThrCt:2,IDL:2)
+  int8_t swi = 0, swi3 = SW_3POS_BASE, result = 0 ;
+  uint16_t cstate = switches_state;
+  xstate ^= cstate;
+  while (swi++ < MAX_PSW3POS) {
+    if (xstate & 3) {           // 3pos switch moved
+      if (is3PosSwitch(swi)) {  // 3pos pin connected/mapped?
+        uint8_t s3 = (cstate & 3);
+        result = swi3 + s3;
+      } else {
+        result = (cstate & 2) ? swi : (-swi);
+      }
+      break;
+    }
+    xstate >>= 2;
+    cstate >>= 2;
+    swi3 += 3;
+  }
+  if (result == 0) {
+    while (swi++ < MAX_PSWITCH) {
+      if (xstate & 1) {       // 2pos switch moved
+        result = ((cstate & 1) ? swi : (-swi));
+        break;
+      }
+      xstate >>= 1;
+      cstate >>= 1;
+    }
+  }
+  return result;
+}
+#endif
+
+#else	// !XSW_MOD
+
 uint8_t getCurrentSwitchStates()
 {
   uint8_t i = 0 ;
@@ -1745,14 +1989,6 @@ void checkSwitches()
 
 }
 
-void putsDblSizeName( uint8_t y )
-{
-	for(uint8_t i=0;i<sizeof(g_model.name);i++)
-		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
-}
-
-
-
 #if defined(CPUM128) || defined(CPUM2561)
 
 #ifdef SWITCH_MAPPING
@@ -1922,6 +2158,7 @@ int8_t getMovedSwitch()
 	return result;
 }
 #endif
+#endif  // XSW_MOD
 
 #ifdef QUICK_SELECT
 #ifndef SIMU
@@ -2175,6 +2412,8 @@ static uint8_t checkTrim(uint8_t event)
     return event;
 }
 
+//int8_t MovedSwitch ;
+
 //global helper vars
 //bool    checkIncDec_Ret;
 #ifndef NOPOTSCROLL
@@ -2256,7 +2495,8 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
     int8_t swtch = getMovedSwitch();
     if (swtch)
 		{
-#ifdef SWITCH_MAPPING
+//			MovedSwitch = swtch ;
+#if defined(SWITCH_MAPPING) || defined(XSW_MOD)
 			swtch = switchUnMap( swtch ) ;
 #endif      
 			newval = swtch ;
@@ -2327,10 +2567,10 @@ int16_t checkIncDec_u0( int16_t i_val, uint8_t i_max)
   return checkIncDec16( i_val,0,i_max,EditType) ;
 }
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_flags)
 {
-#ifdef SWITCH_MAPPING
+#if defined(SWITCH_MAPPING) || defined(XSW_MOD)
 	i_val = switchUnMap( i_val ) ;
   return switchMap( checkIncDec16(i_val,i_min,i_max,i_flags) ) ;
 #else
@@ -2395,6 +2635,23 @@ inline bool checkSlaveMode()
 #endif
 }
 
+#if defined(COP328)
+uint8_t CfgVc;  // received voice card feature
+uint8_t Cfg9x;  // sent 9x config bits
+
+static uint8_t getCfg9x()
+{
+  uint8_t cfg = 0;
+  if ((g_eeGeneral.speakerMode & 4) && g_eeGeneral.MegasoundSerial)
+    cfg |= VB_MEGASOUND;
+	if ( !g_eeGeneral.pb7backlight )
+    cfg |= VB_BACKLIGHT;
+	if ( !g_eeGeneral.LVTrimMod )
+    cfg |= VB_TRIM_LV;
+  return cfg;
+}
+#endif
+
 void backlightKey()
 {
   uint8_t a = g_eeGeneral.lightAutoOff ;
@@ -2438,6 +2695,7 @@ void setVolume( uint8_t value )
 {
 	CurrentVolume = value ;
 	putVoiceQueueLong( value + 0xFFF0 ) ;
+//	putVoiceQueueLong( value | VQ_VOLUME ) ;
 }
 
 void putVoiceQueueLong( uint16_t value )
@@ -2457,6 +2715,14 @@ void putVoiceQueueLong( uint16_t value )
 	}
 }
 
+#if defined(COP328)
+// send 9x config info
+void sendCfg9x( uint8_t cfg )
+{
+  Cfg9x = cfg;
+	putVoiceQueueLong( cfg | VQ_CONFIG ) ;
+}
+#endif
 
 void t_voice::voice_process(void)
 {
@@ -2473,7 +2739,13 @@ void t_voice::voice_process(void)
 				uint8_t x = rx ;
 				if ( VoiceSerialRxState == V_WAIT_RX )
 				{
+#if defined(COP328)
+          VoiceSerialCommand = x;
+					if ( x == XCMD_STATUS || x == XCMD_FEATURE )
+#else
+//					if ( x == XCMD_STATUS )
 					if ( x == 0x1F )
+#endif
 					{
 						VoiceSerialRxState = V_RECEIVING_COUNT ;
 					}
@@ -2485,7 +2757,12 @@ void t_voice::voice_process(void)
 				}
 				else if ( VoiceSerialRxState == V_RECEIVING_VALUE )
 				{
-					VoiceSerialValue = x ;
+#if defined(COP328)
+          if (VoiceSerialCommand == XCMD_FEATURE)
+            CfgVc = x | VC_RECEIVED;    // Voice module's alive!
+          else
+#endif
+					  VoiceSerialValue = x ;
 					VoiceSerialRxState = V_WAIT_RX ;
 				}
 			}
@@ -2507,11 +2784,12 @@ void t_voice::voice_process(void)
 						return ;
 					}
 					VoiceTimer = 17 ;
+//					if ( (lvoiceSerial & VQ_CMDMASK) == VQ_VOLUME )	// Looking for Volume setting
 					if ( lvoiceSerial & 0x8000 )	// Looking for Volume setting
 					{
 						VoiceTimer = 40 ;
 					}
-					VoiceSerialData[0] = 0x1F ;
+					VoiceSerialData[0] = VCMD_PLAY ;
 					VoiceSerialData[1] = 2 ;
 					VoiceSerialData[2] = lvoiceSerial ;
 					VoiceSerialData[3] = lvoiceSerial >> 8 ;
@@ -2570,13 +2848,17 @@ void t_voice::voice_process(void)
 					}
 				}
 			}
-			
+
+#ifdef XSW_MOD
+      if ( g_eeGeneral.pb7backlight )
+        goto pb7_backlight;
+#endif
 			if ( VoiceState != V_CLOCKING )
 	  	{ // Send backlight, 0x1D, 0x01, backlight
 				if ( ++VoiceBacklightCount > 9 )
 				{
 					VoiceBacklightCount = 0 ;
-					VoiceSerialData[0] = 0x1D ;
+					VoiceSerialData[0] = VCMD_BACKLIGHT ;
 					VoiceSerialData[1] = 1 ;
 					VoiceSerialData[2] = Backlight ? 1 : 0 ;
 					VoiceSerialIndex = 0 ;
@@ -2705,8 +2987,15 @@ void t_voice::voice_process(void)
 	}
 	else// no voice, put backlight control out
 	{
+#ifdef XSW_MOD
+		if ( g_eeGeneral.pb7backlight )
+#else
 		if ( g_eeGeneral.pb7Input == 0)
+#endif
 		{
+#if defined(SERIAL_VOICE) && defined(XSW_MOD)
+  pb7_backlight:
+#endif
 			if ( Backlight ^ g_eeGeneral.blightinv )
 			{
 				PORTB |= (1<<OUT_B_LIGHT) ;				// Drive high,pullup enabled
@@ -2803,7 +3092,7 @@ uint8_t calcStickScroll( uint8_t index )
 #ifdef USE_ADJUSTERS
 static void	processAdjusters()
 {
-static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
+  static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
 	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
@@ -3205,6 +3494,14 @@ static void perMain()
 				setVolume( requiredVolume ) ;
 			}
 		
+#if defined(COP328)
+  #if defined(CPUM128) || defined(CPUM2561)
+      uint8_t cfg = getCfg9x();
+      if (cfg != Cfg9x) {
+        sendCfg9x(cfg);
+      }
+  #endif
+#endif
 			if ( g_eeGeneral.stickScroll && StickScrollAllowed )
 			{
 			 	if ( StickScrollTimer )
@@ -3820,7 +4117,7 @@ int main(void)
 {
 
     DDRA = 0xff;  PORTA = 0x00;
-    DDRB = 0x81;  PORTB = 0x7e; //pullups keys+nc
+    DDRB = 0x81;  PORTB = 0x7e; //pullups keys+nc - PB7 backlight output off (0)
     DDRC = 0x3e;  PORTC = 0xc1; //pullups nc
     DDRD = 0x00;  PORTD = 0xff; //all D inputs pullups keys
     DDRE = 0x08;  PORTE = 0xff-(1<<OUT_E_BUZZER); //pullups + buzzer 0
@@ -4040,17 +4337,34 @@ extern uint8_t serialDat0 ;
 		serialVoiceInit() ;
 	}
 #endif
-    //we assume that startup is like pressing a switch and moving sticks.  Hence the lightcounter is set
-    //if we have a switch on backlight it will be able to turn on the backlight.
 
-		{
-			stickMoved = 1 ;
-			doBackLightVoice(1) ;
-			stickMoved = 0 ;
-		}
-    // moved here and logic added to only play statup tone if splash screen enabled.
-    // that way we save a bit, but keep the option for end users!
+#ifdef XSW_MOD
+#if defined(CPUM128) || defined(CPUM2561)
+  initLVTrimPin();
+  initBacklightPin();
+#endif
+  initHapticPin();
+  for (uint8_t j = 0; j < MAX_XSWITCH; j++) {
+    uint8_t src = getSwitchSource(j);
+    initSwitchSrcPin(src);
+  }
+  initSwitchMapping(); // initialize necessary things for switch map/unmap
+#endif // XSW_MOD
+
+  //we assume that startup is like pressing a switch and moving sticks.  Hence the lightcounter is set
+  //if we have a switch on backlight it will be able to turn on the backlight.
+	{
+		stickMoved = 1 ;
+		doBackLightVoice(1) ;
+		stickMoved = 0 ;
+	}
+ // moved here and logic added to only play statup tone if splash screen enabled.
+ // that way we save a bit, but keep the option for end users!
 	setVolume(g_eeGeneral.volume+7) ;
+#if defined(COP328)
+  CfgVc = 0;
+  sendCfg9x(getCfg9x());
+#endif
     
   if ( ( mcusr & (1<<WDRF) ) == 0 )
 	{
@@ -4478,6 +4792,7 @@ void mainSequence()
 			delayTimer -= 1 ;
 		}
 
+#ifdef FRSKY    // htc
 		uint8_t redAlert = 0 ;
 		static uint8_t redCounter ;
 		static uint8_t orangeCounter ;
@@ -4528,6 +4843,7 @@ void mainSequence()
 				}
 			}
 		}
+#endif // FRSKY
 #endif // V2
 
 #ifdef V2

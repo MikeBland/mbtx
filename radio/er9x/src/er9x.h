@@ -18,40 +18,63 @@
 
 //#define VARIO	1
 
-#define VERS 1
-#define VERSION3	1
-#define VERSION4	1
+#define VERS      1
+#define VERSION3  1
+#define VERSION4  1
+
+#ifdef V2
+#define XSW_MOD		1
+#endif
 
 // Multi protocol feature
+#ifndef NMEA
 #define MULTI_PROTOCOL	1
+#endif
 
 //#define STACK_TRACE				1
 
 // Remove features from M64-FrSky version
 #if ( defined(CPUM64) && defined(FRSKY) )
-#define NOPOTSCROLL					1
-#define NOSAFETY_A_OR_V			1
-#define MINIMISE_CODE				1
-#define	SWITCH_MAPPING			1
-#ifdef SERVOICEONLY
-#define	SERIAL_VOICE_ONLY		1
-#define	SERIAL_VOICE				1
-#endif
-#define	REMOVE_FROM_64FRSKY	1
+ #define NOPOTSCROLL          1
+ #define NOSAFETY_A_OR_V      1
+ #define MINIMISE_CODE        1
+ #define SWITCH_MAPPING       1
+ #ifdef SERVOICEONLY
+  #define SERIAL_VOICE_ONLY   1
+  #define SERIAL_VOICE        1
+ #endif
+ #define REMOVE_FROM_64FRSKY  1
 #else
-#define QUICK_SELECT		1
-#define	SERIAL_VOICE		1
-#define	SWITCH_MAPPING		1
+ #define QUICK_SELECT         1
+ #define SERIAL_VOICE         1
+ #define CHECK_MOVED_SWITCH   1
+ #define SWITCH_MAPPING       1
 #endif
 //#define NOGPSALT	1
 
-#define USE_ADJUSTERS			1
+#ifdef XSW_MOD
+#undef	SWITCH_MAPPING
+#endif
+
+//#define USE_ADJUSTERS			1
 
 #if defined(CPUM128) || defined(CPUM2561)
 #define USE_ADJUSTERS			1
 #endif
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
+
+//#ifdef CPUM2561
+//#define SBUS_PROTOCOL	1
+//#endif
+
+//#ifndef FRSKY
+//#define SBUS_PROTOCOL	1
+//#endif
+
+#ifndef NMEA
+#define SBUS_PROTOCOL	1
+#endif
 
 // Bits in SystemOptions
 #define SYS_OPT_HARDWARE_EDIT	1
@@ -286,6 +309,17 @@ enum EnumKeys {
 	  BTN_RE,
     //SW_NC     ,
     //SW_ON     ,
+#ifdef XSW_MOD
+    SW_IDL ,            // ID0/ID1/ID2
+    SW_ThrCt  ,         // TH^/TH-/THv
+    SW_RuddDR ,         // RU^/RU-/RUv
+    SW_ElevDR ,         // EL^/EL-/ELv
+    SW_AileDR ,         // AI^/AI-/AIv
+    SW_Gear   ,         // GE^/GE-/GEv
+    SW_PB1,             // push button 1
+    SW_PB2,             // push button 2
+    SW_Trainer
+#else
     SW_ThrCt  ,
     SW_RuddDR ,
     SW_ElevDR ,
@@ -295,7 +329,70 @@ enum EnumKeys {
     SW_AileDR ,
     SW_Gear   ,
     SW_Trainer
+#endif
 }; 
+
+// custom switch counts
+#define NUM_CSW         12  //number of custom switches
+#define EXTRA_CSW       6
+#define EXTRA_VOICE_SW  8
+
+#ifdef XSW_MOD
+extern int8_t  MaxSwitchIndex;    // max list index of switch selection menu
+extern uint8_t MappedSwitchState; // mapped switch state bit flag
+                                  // (MSB:PB2,PB1,GEA,AIL,ELE,RUD,THR,IDL)
+// 2b switch states/positions
+#define ST_UP      0        // up position (tied to GND)
+#define ST_MID     1        // middle position of 3-pos switch
+#define ST_DN      2        // down position of both 2-pos and 3-pos switches
+#define ST_NC      3        // not connected
+
+// physical switch base indices
+#define PSW_BASE      SW_IDL        // the first physical/3-pos switch
+#define PSW_3POS_END  SW_Gear       // the last 3-pos switch
+#define PSW_END       SW_Trainer    // the last physical switch
+#define XSW_BASE      SW_ThrCt      // the first extra switch
+#define XSW_3POS_END  SW_Gear       // the last extra 3-pos switch
+#define XSW_END       SW_PB2        // the last extra switch
+
+// max values
+#define MAX_PSW3POS     (PSW_3POS_END-PSW_BASE+1) // 6 physical 3-pos switches
+#define MAX_PSW2POS     (PSW_END-PSW_3POS_END)    // 3 physical 2-pos switches
+#define MAX_PSWITCH     (MAX_PSW3POS+MAX_PSW2POS) // 9 physical switches
+#define MAX_XSWITCH     (XSW_END-XSW_BASE+1)      // 7 extra switches
+//#define MAX_CSWITCH     (NUM_CSW+EXTRA_CSW)       // max 18 custom switches (L1..L9,LA..LI)
+//#if defined(CPUM128) || defined(CPUM2561)
+#define MAX_CSWITCH     (NUM_CSW+EXTRA_CSW)       // max 18 custom switches (L1..L9,LA..LI)
+//#else
+//#define MAX_CSWITCH     NUM_CSW                   // max 12 custom switches (L1..L9,LA..LC)
+//#endif
+#define MAX_DRSWITCH    (1+MAX_PSWITCH+MAX_CSWITCH)
+#define SW_3POS_BASE    (MAX_DRSWITCH+1)          // ID0,1,2,TH^,-,v,RU^,-,v,EL^,-,v,AI^,-,v,GE^,-,v
+#define SW_3POS_END     (SW_3POS_BASE+3*MAX_PSW3POS-1)
+//#define MaxSwitchIndex  (SW_3POS_END)
+#define TOGGLE_INDEX    (SW_3POS_END)
+
+// extra switch sources: 4bits [0..15]
+#define SSW_NONE        0       // No source
+#define SSW_PB7         1       // Backlight, parallel Voice card strobe
+#define SSW_PC0         2       // NC - other LCD CS, rerouted LV trim UP
+#define SSW_PC4         3       // LCD_WR - serial LCD SCL, rerouted LV trim DWN
+#define SSW_PC6         4       // FrSky - rerouted ThrCt
+#define SSW_PC7         5       // FrSky - rerouted AileDR
+#define SSW_PG2         6       // Haptic
+#define SSW_PG5         7       // M2561 only
+#define SSW_XPB0        8       // voice module PB0 - D3 (EXT1)
+#define SSW_XPB1        9       // voice module PB1 - BL
+#define SSW_XPC0        10      // voice module PC0 - BUSY
+#define SSW_XPD2        11      // voice module PD2 - CLK
+#define SSW_XPD3        12      // voice module PD3 - D0 (TRIM_LV_DWN)
+#define SSW_XPD4        13      // voice module PD4 - D1 (TRIM_LV_UP)
+#define SSW_XPD7        14      // voice module PD7 - D2 (EXT2)
+
+// the first external switch source
+#define SSW_XBASE       SSW_XPB0
+
+#else	// !XSW_MOD
 
 // Hardware switch mappings:
 #define HSW_ThrCt			1
@@ -360,9 +457,7 @@ int8_t switchUnMap( int8_t x ) ;
 int8_t switchMap( int8_t x ) ;
 #endif
 
-#define NUM_CSW  12 //number of custom switches
-#define EXTRA_CSW	6
-#define EXTRA_VOICE_SW	8
+#endif  // XSW_MOD
 
 extern const prog_char APM Str_Switches[] ;
 
@@ -408,6 +503,7 @@ uint8_t CS_STATE( uint8_t x) ;
 const prog_char APM s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 #define NUMCHARS (sizeof(s_charTab)-1)
 
+#ifndef XSW_MOD
 
 //#define SW_BASE      SW_NC
 #define SW_BASE      SW_ThrCt
@@ -450,6 +546,8 @@ const prog_char APM s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 #define SWP_LEG2	(SWP_ID1B)
 #define SWP_LEG3	(SWP_ID2B)
 
+#endif  // !XSW_MOD
+
 #define NUM_STICKS	4
 
 
@@ -479,6 +577,17 @@ const prog_char APM s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 #define DR_DRSW1  99
 #define DR_DRSW2  98
 
+#ifdef XSW_MOD
+#define DSW____  0    // "---"
+#define DSW_IDL  1
+#define DSW_THR  2
+#define DSW_RUD  3
+#define DSW_ELE  4
+#define DSW_AIL  5
+#define DSW_GEA  6
+#define DSW_PB1  7
+#define DSW_PB2  8
+#else // !XSW_MOD
 #define DSW_THR  1
 #define DSW_RUD  2
 #define DSW_ELE  3
@@ -487,19 +596,26 @@ const prog_char APM s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrst
 #define DSW_ID2  6
 #define DSW_AIL  7
 #define DSW_GEA  8
+#endif  // XSW_MOD
 #define DSW_TRN  9
-#define DSW_SW1  10
+#define DSW_SW1  10   // custom switches (NUM_CSW)
 #define DSW_SW2  11
 #define DSW_SW3  12
 #define DSW_SW4  13
 #define DSW_SW5  14
 #define DSW_SW6  15
-#define DSW_SW7   16
-#define DSW_SW8   17
-#define DSW_SW9   18
-#define DSW_SWA   19
-#define DSW_SWB   20
-#define DSW_SWC   21
+#define DSW_SW7  16
+#define DSW_SW8  17
+#define DSW_SW9  18
+#define DSW_SWA  19
+#define DSW_SWB  20
+#define DSW_SWC  21
+
+#ifdef XSW_MOD
+#define DSW_ID0  SW_3POS_BASE
+#define DSW_ID1  (DSW_ID0+1)
+#define DSW_ID2  (DSW_ID0+2)
+#endif
 
 #define SCROLL_TH 64
 #define INACTIVITY_THRESHOLD 256
@@ -545,19 +661,41 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
 #define PROTO_PPM16	     3
+
 #ifdef MULTI_PROTOCOL
 #define PROTO_PPMSIM     4
 #define PROTO_MULTI      5
+ #ifdef SBUS_PROTOCOL	
+#define PROTO_SBUS       6
+#define PROT_MAX         6
+ #else
 #define PROT_MAX         5
+ #endif // SBUS_PROTOCOL
 #else
 #define PROTO_PPMSIM     4
+ #ifdef SBUS_PROTOCOL	
+#define PROTO_SBUS       5
+#define PROT_MAX         5
+ #else
 #define PROT_MAX         4
+ #endif // SBUS_PROTOCOL
 #endif // MULTI_PROTOCOL
+
 #ifdef MULTI_PROTOCOL
+ #ifdef SBUS_PROTOCOL	
+#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI SBUS  "
+ #else
 #define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI "
+ #endif // SBUS_PROTOCOL
 #else
+ #ifdef SBUS_PROTOCOL	
+#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMSBUS  "
+ #else
 #define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIM"
+ #endif // SBUS_PROTOCOL
 #endif // MULTI_PROTOCOL
+
+
 //#define PROT_STR_LEN     6
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX"
 //#define DSM2_STR_LEN     9
@@ -566,13 +704,16 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 Bayang"
+//#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
+//#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
 #define M_Frsky            2
 #define M_Hisky            3
+#define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2             4
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
@@ -581,8 +722,13 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
 #define M_KN	           8
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5CSYMAX4 "
+#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		       10
+#define M_CX10		       11
+#define M_CX10_STR "\005GREENBLUE DM007"
+#define M_CG023		       12
+#define M_CG023_STR "\005CG023YD829"
+#define M_BAYANG	       13
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -616,11 +762,39 @@ void pauseEvents(uint8_t enuk);
 uint8_t getEventDbl(uint8_t event);
 /// stoppt alle events von dieser taste bis diese wieder losgelassen wird
 void    killEvents(uint8_t enuk);
+
+#ifdef XSW_MOD
+bool parVoiceInstalled();
+void initLVTrimPin();
+void initBacklightPin();
+void initHapticPin();
+void initSwitchSrcPin(uint8_t swsrc);
+void initSwitchMapping();
+
+void setSwitchSource(uint8_t xswitch, uint8_t swsrc);
+void unsetSwitchSource(uint8_t swsrc);
+uint16_t getSwitchSourceMask();
+uint8_t getSwitchSource(uint8_t xswitch);
+uint8_t switchState(uint8_t pswitch);
+uint8_t keyState(EnumKeys enuk);
+
+int8_t switchUnMap( int8_t x ) ;
+int8_t switchMap( int8_t x ) ;
+
+inline bool qSwitchMapped(uint8_t swidx0) {
+  return (MappedSwitchState & (1 << swidx0));
+}
+inline bool is3PosSwitch( uint8_t dswitch ) {
+  return (dswitch <= DSW_GEA && qSwitchMapped(dswitch - DSW_IDL));
+}
+#else
 /// liefert den Wert einer beliebigen Taste KEY_MENU..SW_Trainer
 bool    keyState(EnumKeys enuk);
 #ifdef SWITCH_MAPPING
 uint8_t hwKeyState( uint8_t key ) ;
 #endif
+#endif  // XSW_MOD
+
 /// Liefert das naechste Tasten-Event, auch trim-Tasten.
 /// Das Ergebnis hat die Form:
 /// EVT_KEY_BREAK(key), EVT_KEY_FIRST(key), EVT_KEY_REPT(key) oder EVT_KEY_LONG(key)
@@ -764,7 +938,7 @@ int8_t checkIncDec_i8( int8_t i_val, int8_t i_min, int8_t i_max);
 //int8_t checkIncDec_hg0( int8_t i_val, int8_t i_max) ;
 int8_t checkIncDec_0(int8_t i_val, int8_t i_max) ;
 int16_t checkIncDec_u0(int16_t i_val, uint8_t i_max) ;
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_flags) ;
 #endif
 
@@ -780,7 +954,7 @@ int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_fl
 #define CHECK_INCDEC_H_MODELVAR_0( var, max)     \
     var = checkIncDec_0(var,max)
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 #define CHECK_INCDEC_MODELSWITCH( var, min, max) \
   var = checkIncDecSwitch(var,min,max,EE_MODEL|INCDEC_SWITCH)
 
@@ -1109,7 +1283,11 @@ extern uint8_t Main_running ;
 extern const prog_char *AlertMessage ;
 extern int16_t m_to_ft( int16_t metres ) ;
 
+#ifdef XSW_MOD
+uint16_t getCurrentSwitchStates( void ) ;
+#else
 uint8_t getCurrentSwitchStates( void ) ;
+#endif
 
 // Rotary encoder movement states
 //#define	ROTARY_MENU_LR		0
@@ -1239,6 +1417,8 @@ int16_t getSvFifo( void ) ;
 void serialVoiceTx( uint8_t byte ) ;
 uint8_t throttleReversed( void ) ;
 void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index ) ;
+
+#define SMALL_DBL
 
 #endif // er9x_h
 /*eof*/
