@@ -10481,6 +10481,551 @@ Str_Protocol
 
 		case M_PROTOCOL :
 		{
+			
+/*			
+#ifdef V2
+			
+#define P_CHANNELS		0x0001			
+#define P_RXNUM				0x0002
+#define P_PPMDELAY		0x0004
+#define P_SUBPROTO		0x0008
+#define P_SUBSUBPROTO	0x0010
+#define P_FRAMELEN		0x0020
+#define P_COUNTRY			0x0040
+#define P_AUTOBIND		0x0080
+#define P_POLARITY		0x0100
+#define P_OPTION			0x0200
+#define P_BIND				0X0400
+#define P_RANGE				0x0800
+
+#define SHIFT_PROTOCOL	1
+
+#ifdef SHIFT_PROTOCOL
+		{
+			uint8_t dataItems = 6 ;
+			uint8_t protocol = g_model.protocol ;
+			uint16_t needed = P_CHANNELS | P_PPMDELAY | P_FRAMELEN | P_POLARITY ;
+			if (protocol == PROTO_PXX)
+			{
+				dataItems = 7 ;
+				needed = P_RXNUM	| P_SUBPROTO | P_COUNTRY | P_BIND | P_RANGE ;
+			}
+			if ( protocol == PROTO_DSM2 )
+			{
+				dataItems = 4 ;
+				needed = P_RXNUM	| P_SUBPROTO ;
+			}
+#ifdef MULTI_PROTOCOL
+			if (protocol == PROTO_MULTI)
+			{
+				dataItems = 9 ;
+				needed = P_RXNUM	| P_SUBPROTO | P_SUBSUBPROTO | P_AUTOBIND | P_OPTION | P_BIND | P_RANGE ;
+			}
+#endif
+			TITLEP(Str_Protocol) ;
+			IlinesCount = dataItems ;
+			
+			uint8_t blink = InverseBlink ;
+  		uint8_t attr = 0 ;
+			uint8_t subN = 0 ;
+  		
+			lcd_puts_Pleft( y, PSTR(STR_1ST_CHAN_PROTO));
+  		if(sub==subN) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0(g_model.ppmStart,7) ; }
+  		lcd_putcAtt( 19*FW, y, '1'+g_model.ppmStart, attr);
+			y += FH ;
+			subN++;
+
+			lcd_putsAttIdx(  6*FW, y, PSTR(PROT_STR), protocol, (sub==subN ? blink:0) );
+			if(sub==subN )
+			{
+#if (PROT_MAX == PROTO_PPMSIM )
+				uint8_t prot_max = PROT_MAX ;
+				if ( g_eeGeneral.enablePpmsim == 0 )
+				{
+					prot_max -= 1 ;
+				}
+ 		  	CHECK_INCDEC_H_MODELVAR_0(protocol, prot_max ) ;
+#else
+				uint8_t oldProtocol = protocol ;
+ 		  	CHECK_INCDEC_H_MODELVAR_0(protocol, PROT_MAX ) ;
+				if ( g_eeGeneral.enablePpmsim == 0 )
+				{
+					if ( protocol == PROTO_PPMSIM )
+					{
+						if ( oldProtocol > protocol )
+						{
+							protocol -= 1 ;
+						}
+						else
+						{
+							protocol += 1 ;
+						}
+					}
+				}
+#endif
+				g_model.protocol = protocol ;
+			}
+			y += FH ;
+			subN++;
+			if ( needed & P_CHANNELS )
+			{
+		 		attr = 0 ;
+	  		lcd_puts_Pleft( y, PSTR("Channels"));
+				if(sub==subN )
+				{
+					attr = blink ;
+	        CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH,-2,4);
+				}
+ 			  lcd_putsAttIdx(  17*FW, y, PSTR(STR_PPMCHANNELS),(g_model.ppmNCH+2), attr ) ;
+				y += FH ;
+				subN++;
+			}
+		
+			if ( needed & P_RXNUM )
+		  {
+				uint8_t max ;
+				uint8_t value ;
+				y -= FH ;
+#ifdef MULTI_PROTOCOL
+				if (protocol == PROTO_MULTI)
+				{
+					value = g_model.ppmNCH & 0x0F;
+					max = 15 ;
+				}
+				else
+				{
+					value = g_model.ppmNCH ;
+					max = 124 ;
+				}	
+#else
+				value = g_model.ppmNCH ;
+				max = 124 ;
+#endif
+				attr = 0 ;
+				if(sub==subN )
+				{
+					attr = blink ;
+					CHECK_INCDEC_H_MODELVAR(value, 0, max);
+				}
+#ifdef MULTI_PROTOCOL
+				if (protocol == PROTO_MULTI)
+				{
+					g_model.ppmNCH=(g_model.ppmNCH & 0xF0) + value ;
+				}
+				else
+				{
+					g_model.ppmNCH = value ;
+				}
+#else
+				g_model.ppmNCH = value ;
+#endif
+				lcd_xlabel_decimal( 21*FW, y, value, attr, PSTR("\014RxNum") ) ;
+				y += FH ;
+				subN++;
+		  }
+			
+			if ( needed & P_PPMDELAY )
+			{
+		 		attr = 0 ;
+				if(sub==subN )
+				{
+					attr = blink ;
+	        CHECK_INCDEC_H_MODELVAR( g_model.ppmDelay, -4, 10) ;
+				}
+				lcd_xlabel_decimal( 20*FW, y, (g_model.ppmDelay*50)+300, attr, PSTR("Delay") ) ;
+				y += FH ;
+				subN++;
+			}
+			if ( needed & P_SUBPROTO )
+			{
+		 		attr = 0 ;
+				if ( protocol == PROTO_DSM2 )
+				{
+					
+  			  lcd_puts_Pleft( y, PSTR(STR_DSM_TYPE));
+					g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\002"DSM2_STR), g_model.sub_protocol, (sub==subN) ) ;
+				}
+				else if ( protocol == PROTO_PXX )
+				{
+					lcd_puts_Pleft( y, PSTR("Type") ) ;
+					g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\002\003D16D8 LRP"), g_model.sub_protocol, (sub==subN) ) ;
+				}
+#ifdef MULTI_PROTOCOL
+				else
+				{
+					lcd_puts_Pleft( y, PSTR("Protocol"));
+					attr = g_model.sub_protocol ;
+					g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+					if(g_model.sub_protocol!=attr) g_model.ppmNCH &= 0x0F;
+				}
+#endif
+				y += FH ;
+				subN++;
+			}
+		
+#ifdef MULTI_PROTOCOL
+			if ( needed & P_SUBSUBPROTO )
+			{
+				lcd_puts_Pleft( y, PSTR("Type"));
+				uint8_t nchLow = g_model.ppmNCH &0x0F ;
+				uint8_t nchHi = g_model.ppmNCH >> 4 ;
+				switch(g_model.sub_protocol&0x1F)
+				{
+					case M_Flysky:
+						nchHi = checkIndexed( y, PSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
+						break;
+					case M_DSM2:
+						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
+						break;
+					case M_YD717:
+						nchHi = checkIndexed( y, PSTR(FWx10"\004"M_YD717_STR), nchHi, (sub==subN) ) ;
+						break;
+					case M_SymaX:
+						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_SYMAX_STR), nchHi, (sub==subN) ) ;
+						break;
+					default:
+						nchHi = 0 ;
+						nchHi = checkIndexed( y, PSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
+						break;
+				}
+				g_model.ppmNCH = (nchHi << 4) + nchLow ;
+				y += FH ;
+				subN++;
+				
+			}
+#endif
+			 
+			if ( needed & P_FRAMELEN )
+			{
+				attr = PREC1 ;
+  			if(sub==subN)
+				{
+					attr = INVERS | PREC1 ;
+					CHECK_INCDEC_H_MODELVAR(g_model.ppmFrameLength,-20,20) ;
+				}
+				lcd_xlabel_decimal( 13*FW-2, y, (int16_t)g_model.ppmFrameLength*5 + 225, attr, PSTR(STR_PPMFRAME_MSEC) ) ;
+				y += FH ;
+				subN++;
+			}
+
+			if ( needed & P_COUNTRY )
+			{
+				lcd_puts_Pleft( y, PSTR("Country") ) ;
+				g_model.country = checkIndexed( y, PSTR(FWx10"\002\003AmeJapEur"), g_model.country, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			}
+
+#ifdef MULTI_PROTOCOL
+			if ( needed & P_AUTOBIND )
+			{
+				attr = 0 ;
+				lcd_puts_Pleft( y, PSTR("Autobind"));
+				uint8_t value = (g_model.sub_protocol>>6)&0x01 ;
+				if(sub==subN)
+				{
+					attr = blink ;
+					CHECK_INCDEC_H_MODELVAR_0(value, 1 );
+					g_model.sub_protocol = (value<<6) + (g_model.sub_protocol&0xBF);
+				}
+				lcd_putsAttIdx(  9*FW, y, PSTR(M_NY_STR), value, attr );
+				y += FH ;
+				subN++;
+			}
+#endif
+
+			if ( needed & P_POLARITY )
+			{
+  		 	lcd_puts_Pleft(    y, PSTR(STR_SHIFT_SEL));
+				g_model.pulsePol = checkIndexed( y, PSTR(FWx17"\001"STR_POS_NEG), g_model.pulsePol, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			}
+
+#ifdef MULTI_PROTOCOL
+			if ( needed & P_OPTION )
+			{
+				attr = 0 ;
+				y -= FH ;
+				if(sub==subN)
+				{
+					attr = blink ;
+					CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
+				}
+				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, attr, PSTR("\014Option") ) ;
+				y += FH ;
+				subN++;
+			}
+#endif
+			
+			if ( needed & P_BIND )
+			{
+				lcd_puts_Pleft( y, PSTR("Bind") ) ;
+  			if(sub==subN)
+				{
+					rangeBindAction( y, PXX_BIND ) ;
+  			}	
+				y += FH ;
+				subN++;
+
+			}
+  			
+			if ( needed & P_RANGE )
+			{
+				lcd_puts_Pleft( y, PSTR("Range") ) ;
+				if(sub==subN)
+				{
+					rangeBindAction( y, PXX_RANGE_CHECK ) ;
+  			}		
+			}
+		}	
+
+#else // SHIFT_PROTOCOL
+		{
+			uint8_t dataItems = 4 ;
+			uint8_t protocol = g_model.protocol ;
+			if (protocol == PROTO_PXX)
+			{
+				dataItems = 6 ;
+			}
+			if ( protocol == PROTO_DSM2 )
+			{
+				dataItems = 3 ;
+			}
+#ifdef MULTI_PROTOCOL
+			if (protocol == PROTO_MULTI)
+			{
+				dataItems = 7 ;
+			}
+#endif
+
+			TITLEP(Str_Protocol) ;
+			IlinesCount = dataItems ;
+			
+			uint8_t blink = InverseBlink ;
+			uint8_t subSub = g_posHorz ;
+			uint8_t subN = 0 ;
+
+  		uint8_t attr = 0 ;
+  		lcd_puts_Pleft(    y, PSTR(STR_1ST_CHAN_PROTO));
+  		if(sub==subN) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0(g_model.ppmStart,7) ; }
+  		lcd_putcAtt( 19*FW, y, '1'+g_model.ppmStart, attr);
+			y += FH ;
+			subN++;
+
+			uint8_t ppmTypeProto = 0 ;
+  		if( ( protocol == PROTO_PPM ) || (protocol == PROTO_PPM16) || (protocol == PROTO_PPMSIM) )
+			{
+				ppmTypeProto = 1 ;
+			}
+
+			uint8_t cols = 0 ;
+			lcd_putsAttIdx(  6*FW, y, PSTR(PROT_STR), protocol, (sub==subN && subSub==0 ? blink:0) );
+  		if( ppmTypeProto )// ( protocol == PROTO_PPM ) || (protocol == PROTO_PPM16) || (protocol == PROTO_PPMSIM) )
+			{
+				uint8_t x ;
+				cols = 2 ;
+			  lcd_puts_Pleft( y, PSTR(STR_23_US) );
+				x = 12*FW ;
+ 			  lcd_putsAttIdx(  x, y, PSTR(STR_PPMCHANNELS),(g_model.ppmNCH+2),(sub==subN && subSub==1  ? blink:0));
+ 			  lcd_outdezAtt(  x+7*FW-2, y,  (g_model.ppmDelay*50)+300, (sub==subN && subSub==2 ? blink:0));
+  		}
+  		else // if (protocol == PROTO_PXX) || DSM2 || MULTI
+  		{
+				cols = 1 ;
+#ifdef MULTI_PROTOCOL
+					if (protocol == PROTO_MULTI)
+						lcd_xlabel_decimal( 21*FW, y, g_model.ppmNCH & 0x0F, (sub==subN && subSub==1 ? blink:0), PSTR(STR_13_RXNUM) ) ;
+					else
+#endif
+						lcd_xlabel_decimal( 21*FW, y, g_model.ppmNCH, (sub==subN && subSub==1 ? blink:0), PSTR(STR_13_RXNUM) ) ;
+			}
+
+			if(sub==subN )
+			{
+				Columns = cols ;
+			 	if (s_editing )
+				{
+//					uint8_t prot_max = PROT_MAX ;
+
+//					if ( g_eeGeneral.enablePpmsim == 0 )
+//					{
+//						prot_max -= 1 ;
+//					}
+  		  	switch (subSub){
+  		  	case 0:
+					{
+#if (PROT_MAX == PROTO_PPMSIM )
+						uint8_t prot_max = PROT_MAX ;
+						if ( g_eeGeneral.enablePpmsim == 0 )
+						{
+							prot_max -= 1 ;
+						}
+  		  	  CHECK_INCDEC_H_MODELVAR_0(protocol, prot_max ) ;
+#else
+						uint8_t oldProtocol = protocol ;
+  		  	  CHECK_INCDEC_H_MODELVAR_0(protocol, PROT_MAX ) ;
+						if ( g_eeGeneral.enablePpmsim == 0 )
+						{
+							if ( protocol == PROTO_PPMSIM )
+							{
+								if ( oldProtocol > protocol )
+								{
+									protocol -= 1 ;
+								}
+								else
+								{
+									protocol += 1 ;
+								}
+							}
+						}
+#endif
+					}
+  		  	break;
+  		  	case 1:
+  		  	    if( ppmTypeProto ) //if ((protocol == PROTO_PPM) || (protocol == PROTO_PPM16)|| (protocol == PROTO_PPMSIM) )
+  		  	        CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH,-2,4);
+  		  	    else // if (protocol == PROTO_PXX) || DSM2 || MULTI
+#ifdef MULTI_PROTOCOL
+					if (protocol == PROTO_MULTI)
+					{
+						attr = g_model.ppmNCH & 0x0F;
+						CHECK_INCDEC_H_MODELVAR(attr, 0, 15);
+						g_model.ppmNCH=(g_model.ppmNCH & 0xF0) + attr;
+					}
+					else
+#endif
+						CHECK_INCDEC_H_MODELVAR(g_model.ppmNCH, 0, 124);
+  		  	    break;
+  		  	case 2:
+  		  	    if( ppmTypeProto ) //if ((protocol == PROTO_PPM) || (protocol == PROTO_PPM16) || (protocol == PROTO_PPMSIM) )
+  		  	        CHECK_INCDEC_H_MODELVAR(g_model.ppmDelay,-4,10);
+  		  	    break;
+  		  	}
+					uint8_t oldProtocol = g_model.protocol ;
+					g_model.protocol = protocol ;
+  		  	if(oldProtocol != protocol) // if change - reset ppmNCH
+  		  	    g_model.ppmNCH = 0;
+				}
+			}
+			y += FH ;
+			subN++;
+
+  		if( ppmTypeProto ) //if( (protocol == PROTO_PPM) || (protocol == PROTO_PPM16) || (protocol == PROTO_PPMSIM) )
+			{
+				uint8_t attr = PREC1 ;
+  		  if(sub==subN) { attr = INVERS | PREC1 ; CHECK_INCDEC_H_MODELVAR(g_model.ppmFrameLength,-20,20) ; }
+				lcd_xlabel_decimal( 13*FW-2, y, (int16_t)g_model.ppmFrameLength*5 + 225, attr, PSTR(STR_PPMFRAME_MSEC) ) ;
+				y += FH ;
+				subN++;
+			
+  		 	lcd_puts_Pleft(    y, PSTR(STR_SHIFT_SEL));
+				
+				g_model.pulsePol = checkIndexed( y, PSTR(FWx17"\001"STR_POS_NEG), g_model.pulsePol, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			}
+#ifdef MULTI_PROTOCOL
+			if (protocol == PROTO_MULTI)
+			{
+				uint8_t nchLow = g_model.ppmNCH &0x0F ;
+				lcd_puts_Pleft(    y, PSTR(STR_MULTI_TYPE));
+				attr=g_model.sub_protocol;
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\012"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				if(g_model.sub_protocol!=attr) g_model.ppmNCH &= 0x0F;
+				uint8_t nchHi = g_model.ppmNCH >> 4 ;
+				y += FH ;
+				subN++;
+				switch(g_model.sub_protocol&0x1F)
+				{
+					case M_Flysky:
+						nchHi = checkIndexed( y, PSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
+						break;
+					case M_DSM2:
+						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
+						break;
+					case M_YD717:
+						nchHi = checkIndexed( y, PSTR(FWx10"\004"M_YD717_STR), nchHi, (sub==subN) ) ;
+						break;
+					case M_SymaX:
+						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_SYMAX_STR), nchHi, (sub==subN) ) ;
+						break;
+					default:
+						nchHi = 0 ;
+						nchHi = checkIndexed( y, PSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
+						break;
+				}
+				g_model.ppmNCH = (nchHi << 4) + nchLow ;
+				y += FH ;
+				subN++;
+
+				uint8_t value = (g_model.sub_protocol>>6)&0x01 ;
+				lcd_putsAttIdx(  9*FW, y, PSTR(M_NY_STR), value, (sub==subN && subSub==0 ? blink:0) );
+				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+				if(sub==subN)
+				{
+					Columns = 1;
+					if(subSub==0 && s_editing)
+					{
+						CHECK_INCDEC_H_MODELVAR_0(value, 1 );
+						g_model.sub_protocol = (value<<6) + (g_model.sub_protocol&0xBF);
+					}
+					if(subSub==1 && s_editing)
+						CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
+				}
+				y += FH ;
+				subN++;
+			}
+#endif // MULTI_PROTOCOL
+			if (protocol == PROTO_DSM2)
+			{
+  		  lcd_puts_Pleft(    y, PSTR(STR_DSM_TYPE));
+				
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\002"DSM2_STR), g_model.sub_protocol, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			}
+
+			if (protocol == PROTO_PXX)
+			{
+				lcd_puts_Pleft( y, PSTR(" Type\037 Country\037Bind\037Range") ) ;
+	  
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\002\003D16D8 LRP"), g_model.sub_protocol, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			
+				g_model.country = checkIndexed( y, PSTR(FWx10"\002\003AmeJapEur"), g_model.country, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+			}
+			
+#ifdef MULTI_PROTOCOL
+			if ( (protocol == PROTO_PXX) || (protocol == PROTO_MULTI) )
+#else
+			if (protocol == PROTO_PXX)
+#endif
+			{
+  			if(sub==subN)
+				{
+					rangeBindAction( y, PXX_BIND ) ;
+  			}	
+				y += FH ;
+				subN++;
+
+  			if(sub==subN)
+				{
+					rangeBindAction( y, PXX_RANGE_CHECK ) ;
+  			}		
+			}
+	  }
+#endif // SHIFT_PROTOCOL
+
+#else // V2			 
+			
+			
+			
+*/		
+			
 			uint8_t dataItems = 4 ;
 			uint8_t protocol = g_model.protocol ;
 			if (protocol == PROTO_PXX)
@@ -10783,6 +11328,9 @@ Str_Protocol
   			}		
 			}
 	  }
+/*
+ #endif // V2
+*/
 		break ;
 
 		case M_SWITCHES :
