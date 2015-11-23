@@ -87,11 +87,15 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
     
 		ui->volumeSB->setValue(g_eeGeneral.volume+7);
     ui->enablePpmsimChkB->setChecked(g_eeGeneral.enablePpmsim);
+#ifndef V2
     ui->internalFrskyAlarmChkB->setChecked(g_eeGeneral.frskyinternalalarm);
+#endif
     ui->backlightinvertChkB->setChecked(g_eeGeneral.blightinv);
 
+#ifndef V2
     ui->beepMinuteChkB->setChecked(g_eeGeneral.minuteBeep);
     ui->beepCountDownChkB->setChecked(g_eeGeneral.preBeep);
+#endif
     ui->beepFlashChkB->setChecked(g_eeGeneral.flashBeep);
     ui->splashScreenChkB->setChecked(!g_eeGeneral.disableSplashScreen);
     ui->splashScreenNameChkB->setChecked(!g_eeGeneral.hideNameOnSplash);
@@ -182,7 +186,8 @@ GeneralEdit::~GeneralEdit()
 
 void GeneralEdit::setSwitchDefPos()
 {
-    quint8 x = g_eeGeneral.switchWarningStates & SWP_IL5;
+#ifndef V2
+  quint8 x = g_eeGeneral.switchWarningStates & SWP_IL5;
     if(x==SWP_IL1 || x==SWP_IL2 || x==SWP_IL3 || x==SWP_IL4 || x==SWP_IL5) //illegal states for ID0/1/2
     {
         g_eeGeneral.switchWarningStates &= ~SWP_IL5; // turn all off, make sure only one is on
@@ -199,6 +204,7 @@ void GeneralEdit::setSwitchDefPos()
     ui->switchDefPos_7->setChecked(g_eeGeneral.switchWarningStates & 0x40);
     ui->switchDefPos_8->setChecked(g_eeGeneral.switchWarningStates & 0x80);
     switchDefPosEditLock = false;
+#endif
 }
 
 void GeneralEdit::updateSettings()
@@ -421,8 +427,10 @@ void GeneralEdit::on_enablePpmsimChkB_stateChanged(int )
 
 void GeneralEdit::on_internalFrskyAlarmChkB_stateChanged(int )
 {
-    g_eeGeneral.frskyinternalalarm = ui->internalFrskyAlarmChkB->isChecked() ? 1 : 0;
+#ifndef V2
+  g_eeGeneral.frskyinternalalarm = ui->internalFrskyAlarmChkB->isChecked() ? 1 : 0;
     updateSettings();
+#endif
 }
 		
 void GeneralEdit::on_backlightinvertChkB_stateChanged(int )
@@ -687,14 +695,18 @@ void GeneralEdit::on_tabWidget_currentChanged(int index)
 
 void GeneralEdit::on_beepMinuteChkB_stateChanged(int )
 {
+#ifndef V2
     g_eeGeneral.minuteBeep = ui->beepMinuteChkB->isChecked() ? 1 : 0;
     updateSettings();
+#endif
 }
 
 void GeneralEdit::on_beepCountDownChkB_stateChanged(int )
 {
+#ifndef V2
     g_eeGeneral.preBeep = ui->beepCountDownChkB->isChecked() ? 1 : 0;
     updateSettings();
+#endif
 }
 
 void GeneralEdit::on_beepFlashChkB_stateChanged(int )
@@ -822,10 +834,12 @@ void GeneralEdit::on_splashScreenNameChkB_stateChanged(int )
 
 void GeneralEdit::getGeneralSwitchDefPos(int i, bool val)
 {
+#ifndef V2
     if(val)
         g_eeGeneral.switchWarningStates |= (1<<(i-1));
     else
         g_eeGeneral.switchWarningStates &= ~(1<<(i-1));
+#endif
 }
 
 void GeneralEdit::on_switchDefPos_1_stateChanged(int )
@@ -859,8 +873,10 @@ void GeneralEdit::on_switchDefPos_4_stateChanged(int )
     else
         return;
 
+#ifndef V2
     g_eeGeneral.switchWarningStates &= ~0x30; //turn off ID1/2
     getGeneralSwitchDefPos(4,ui->switchDefPos_4->isChecked());
+#endif
     updateSettings();
 }
 void GeneralEdit::on_switchDefPos_5_stateChanged(int )
@@ -877,14 +893,17 @@ void GeneralEdit::on_switchDefPos_5_stateChanged(int )
     else
         return;
 
+#ifndef V2
     g_eeGeneral.switchWarningStates &= ~0x28; //turn off ID0/2
     getGeneralSwitchDefPos(5,ui->switchDefPos_5->isChecked());
+#endif
     updateSettings();
 }
 void GeneralEdit::on_switchDefPos_6_stateChanged(int )
 {
     if(switchDefPosEditLock) return;
 
+#ifndef V2
     if(ui->switchDefPos_6->isChecked())
     {
         switchDefPosEditLock = true;
@@ -898,6 +917,7 @@ void GeneralEdit::on_switchDefPos_6_stateChanged(int )
     g_eeGeneral.switchWarningStates &= ~0x18; //turn off ID1/2
     getGeneralSwitchDefPos(6,ui->switchDefPos_6->isChecked());
     updateSettings();
+#endif
 }
 void GeneralEdit::on_switchDefPos_7_stateChanged(int )
 {

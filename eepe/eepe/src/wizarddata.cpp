@@ -165,11 +165,18 @@ WizMix::operator ModelData()
   // Add the Throttle Cut option
   if( options[THROTTLE_CUT_OPTION] && throttleChannel >=0 )
 	{
+#ifndef V2
     SafetySwData *sd = &model.safetySw[throttleChannel] ;
-		sd->opt.ss.mode = 3 ;
+#else
+    V2SafetySwData *sd = &model.safetySw[throttleChannel] ;
+#endif
+
+#ifndef V2
+    sd->opt.ss.mode = 3 ;
 		sd->opt.ss.swtch = DSW_THR ;
     sd->opt.ss.val = model.throttleIdle ? 0 : -100 ;
-//    model.funcSw[switchIndex].swtch.type = SWITCH_TYPE_SWITCH;
+#endif
+    //    model.funcSw[switchIndex].swtch.type = SWITCH_TYPE_SWITCH;
 //    model.funcSw[switchIndex].swtch.index = isTaranis ? SWITCH_SF0 : SWITCH_THR;
 //    model.funcSw[switchIndex].enabled = 1;
 //    model.funcSw[switchIndex].func = (AssignFunc)throttleChannel;

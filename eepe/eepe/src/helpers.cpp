@@ -973,12 +973,17 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 #ifdef SKY
         SKYFrSkyChannelData *fd ;
 #else
-			  FrSkyChannelData *fd ;
+#ifndef V2
+        FrSkyChannelData *fd ;
+#else
+        V2FrSkyChannelData *fd ;
+#endif
 #endif
 
   			fd = &model->frsky.channels[index] ;
     	  value = val ;
-    		if (fd->type == 2/*V*/)
+#ifndef V2
+        if (fd->type == 2/*V*/)
     		{
     		    times2 = 1 ;
     		}
@@ -986,7 +991,8 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
     		{
     		    times2 = 0 ;
     		}
-				uint16_t ratio ;
+#endif
+        uint16_t ratio ;
 	
   			ratio = fd->ratio ;
   			if ( times2 )
@@ -994,7 +1000,8 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   			    ratio <<= 1 ;
   			}
   			value *= ratio ;
-				if ( fd->type == 3/*A*/)
+#ifndef V2
+        if ( fd->type == 3/*A*/)
   			{
   			    value /= 100 ;
   			    att = PREC1 ;
@@ -1009,8 +1016,10 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   			{
   			    value /= 255 ;
   			}
+#endif
 
-    	  if ( (fd->type == 0/*v*/) || (fd->type == 2/*v*/) )
+#ifndef V2
+        if ( (fd->type == 0/*v*/) || (fd->type == 2/*v*/) )
     	  {
  			    att = PREC1 ;
 					unit = 'v' ;
@@ -1022,7 +1031,8 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 						unit = 'A' ;
 					}
     	  }
-				val = value ;
+#endif
+        val = value ;
     	}
     break ;
 

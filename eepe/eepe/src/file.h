@@ -75,7 +75,11 @@ struct t_file_entry
 struct t_radioData
 {
 		struct t_file_entry File_system[MAX_MODELS+1] ;
+#ifdef V2
+    V2EEGeneral generalSettings ;
+#else
     EEGeneral generalSettings ;
+#endif
     ModelData models[MAX_MODELS];
     unsigned char ModelNames[MAX_MODELS+1][MODEL_NAME_LEN+2] ;		// Allow for general
 		uint8_t valid ;

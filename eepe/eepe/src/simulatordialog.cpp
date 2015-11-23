@@ -230,11 +230,13 @@ void simulatorDialog::timerEvent()
 
     timerTick();
     //    if(s_timerState != TMR_OFF)
+#ifndef V2
     setWindowTitle(modelName + QString(" - Timer: (%3, %4) %1:%2")
                    .arg(abs(-s_timerVal[0])/60, 2, 10, QChar('0'))
                    .arg(abs(-s_timerVal[0])%60, 2, 10, QChar('0'))
                    .arg(getTimerMode(g_model.tmrMode, g_model.modelVersion))
                    .arg(g_model.tmrDir ? "Count Up" : "Count Down"));
+#endif
 
 		ui->Timer1->setText(QString("%1:%2").arg(abs(-s_timerVal[0])/60, 2, 10, QChar('0'))
                    .arg(abs(-s_timerVal[0])%60, 2, 10, QChar('0'))) ;
@@ -260,7 +262,11 @@ void simulatorDialog::timerEvent()
 			// 0.1 second has elapsed			
 			for ( i = 0 ; i < NUM_CSW ; i += 1 )
 			{
-    		CSwData *cs = &g_model.customSw[i];
+#ifndef V2
+        CSwData *cs = &g_model.customSw[i];
+#else
+        CxSwData *cs = &g_model.customSw[i];
+#endif
         uint8_t cstate = CS_STATE(cs->func, g_model.modelVersion);
 
     		if(cstate == CS_TIMER)
@@ -363,7 +369,8 @@ void simulatorDialog::timerEvent()
 			if ( ee_type )
 			{
 			
-				for ( i = NUM_CSW ; i < NUM_CSW+EXTRA_CSW ; i += 1 )
+#ifndef V2
+        for ( i = NUM_CSW ; i < NUM_CSW+EXTRA_CSW ; i += 1 )
 				{
     			CxSwData *cs = &g_model.xcustomSw[i-NUM_CSW];
     	
@@ -476,6 +483,7 @@ void simulatorDialog::timerEvent()
 						}
 			  	}
 				}
+#endif
 			} 
 		}
 
@@ -670,7 +678,11 @@ uint32_t simulatorDialog::getFlightPhase()
 	uint32_t i ;
   for ( i = 0 ; i < MAX_PHASES ; i += 1 )
 	{
+#ifndef V2
     PhaseData *phase = &g_model.phaseData[i];
+#else
+    V2PhaseData *phase = &g_model.phaseData[i];
+#endif
     if ( phase->swtch && getSwitch( phase->swtch, 0 ) )
 		{
       return i + 1 ;
@@ -1323,7 +1335,8 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
     //ppm
     cs_index = abs(swtch)-(PHY_SWITCH);
 
-		if ( ee_type )
+#ifndef V2
+    if ( ee_type )
 		{
 			if ( cs_index >= NUM_CSW )
 			{
@@ -1466,8 +1479,13 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 				return swtch>0 ? ret_value : !ret_value ;
 			}
 		}
+#endif
 
-		CSwData &cs = g_model.customSw[cs_index];
+#ifndef V2
+    CSwData &cs = g_model.customSw[cs_index];
+#else
+    CxSwData &cs = g_model.customSw[cs_index];
+#endif
     if(!cs.func) return false;
 		
     if ( level>4 )
@@ -1672,8 +1690,10 @@ void simulatorDialog::timerTick()
 //        val = (g_model.tmrMode<0 ? RESX-val : val+RESX ) / (RESX/16);  // only used for %
 //    }
 
+#ifndef V2
     int8_t tm = g_model.tmrMode;
-//    val = calibratedStick[3-1];
+#endif
+    //    val = calibratedStick[3-1];
 //    if(tm>=TMR_VAROFS) // Cxx%
 //    {
 //      val = chanOut[tm-TMR_VAROFS] ;
@@ -1687,6 +1707,7 @@ void simulatorDialog::timerTick()
   for( itimer = 0 ; itimer < 2 ; itimer += 1 )
 	{
 		uint8_t resetting = 0 ;
+#ifndef V2
     if ( itimer == 0 )
 		{
 			tmb = g_model.timer1RstSw ;
@@ -1739,9 +1760,11 @@ void simulatorDialog::timerTick()
 //				resetTimer2() ;
 			}
 		}
-	}
+#endif
+  }
 		
-		tma = g_model.tmrMode ;
+#ifndef V2
+    tma = g_model.tmrMode ;
 		tmb = g_model.tmrModeB ;
 
 
@@ -1783,6 +1806,7 @@ void simulatorDialog::timerTick()
 		{
 			val = 0 ;		// Stop TH%
 		}
+#endif
 
     if((uint16_t)( g_tmr10ms-s_time[0])>99)
 		{
@@ -1798,7 +1822,8 @@ void simulatorDialog::timerTick()
 			if(sw_toggled[0] ) s_timeCumSw[0] += 1;
     	s_timeCum16ThrP[0]            += val/2;
 
-    	s_timerVal[0] = g_model.tmrVal;
+#ifndef V2
+      s_timerVal[0] = g_model.tmrVal;
     	uint8_t tmrM = abs(g_model.tmrMode);
       uint16_t subtrahend = 0 ;
       if(tma==TMRMODE_NONE)// s_timerState[0] = TMR_OFF;
@@ -1828,6 +1853,7 @@ void simulatorDialog::timerTick()
     	case TMR_STOPPED:
     	    break;
     	}
+#endif
 
     	static int16_t last_tmr;
 
@@ -1835,7 +1861,8 @@ void simulatorDialog::timerTick()
     	{
     	    if(s_timerState[0]==TMR_RUNNING)
     	    {
-    	        if(g_eeGeneral.preBeep && g_model.tmrVal) // beep when 30, 15, 10, 5,4,3,2,1 seconds remaining
+#ifndef V2
+              if(g_eeGeneral.preBeep && g_model.tmrVal) // beep when 30, 15, 10, 5,4,3,2,1 seconds remaining
     	        {
     	            if(s_timerVal[0]==30) {beepAgain=2; beepWarn2();} //beep three times
     	            if(s_timerVal[0]==20) {beepAgain=1; beepWarn2();} //beep two times
@@ -1851,7 +1878,8 @@ void simulatorDialog::timerTick()
     	            beepWarn2();
     	            if(g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
     	        }
-    	    }
+#endif
+          }
     	    else if(s_timerState[0]==TMR_BEEPING)
     	    {
     	        beepWarn();
@@ -1859,9 +1887,12 @@ void simulatorDialog::timerTick()
     	    }
     	}
     	last_tmr = s_timerVal[0];
-    	if(g_model.tmrDir) s_timerVal[0] = g_model.tmrVal-s_timerVal[0]; //if counting backwards - display backwards
-		}
+#ifndef V2
+      if(g_model.tmrDir) s_timerVal[0] = g_model.tmrVal-s_timerVal[0]; //if counting backwards - display backwards
+#endif
+    }
 
+#ifndef V2
   tm = g_model.tmr2Mode;
 	tmb = g_model.tmr2ModeB ;
 
@@ -1904,7 +1935,9 @@ void simulatorDialog::timerTick()
     
 	if(sw_toggled[1]) s_timeCumSw[1] += 1;
   s_timeCum16ThrP[1]            += val/2;
+#endif
 
+#ifndef V2
   s_timerVal[1] = g_model.tmr2Val;
   uint8_t tmrM = abs(g_model.tmr2Mode);
   if(tmrM==TMRMODE_NONE) s_timerState[1] = TMR_OFF;
@@ -1916,6 +1949,7 @@ void simulatorDialog::timerTick()
 	else if(tmrM<TMR_VAROFS) s_timerVal[1] -= (tmrM&1) ? s_timeCum16ThrP[1]/16 : s_timeCumThr[1];// stick% : stick
   else s_timerVal[1] -= s_timeCumSw[1]; //switch
   if(g_model.tmr2Dir) s_timerVal[1] = g_model.tmr2Val-s_timerVal[1]; //if counting backwards - display backwards
+#endif
 
 }
 
@@ -2540,8 +2574,12 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         //========== DELAY and PAUSE ===============
         if (md->speedUp || md->speedDown || md->delayUp || md->delayDown)  // there are delay values
         {
-					uint8_t timing = g_model.mixTime ? 20 : 100 ;
-            if(init)
+#ifndef V2
+          uint8_t timing = g_model.mixTime ? 20 : 100 ;
+#else
+          uint8_t timing = 20 ;
+#endif
+          if(init)
             {
                 act[mixIndex]=(int32_t)v*DEL_MULT;
                 swTog = false;
@@ -2799,7 +2837,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if(g_model.limitData[chanIndex].revert) result = -result ;// finally do the reverse.
 
 				{
-					uint8_t numSafety = 16 - g_model.numVoice ;
+#ifndef V2
+          uint8_t numSafety = 16 - g_model.numVoice ;
           if ( chanIndex < numSafety )
 					{
         		if(g_model.safetySw[chanIndex].opt.ss.swtch)  //if safety sw available for channel check and replace val if needed
@@ -2844,7 +2883,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							}
 						}
 					}
-				}
+#endif
+        }
         //cli();
         chanOut[chanIndex] = result ; //copy consistent word to int-level
         //sei();

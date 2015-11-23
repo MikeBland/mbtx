@@ -61,8 +61,12 @@ QString printDialog::fv(const QString name, const QString value)
 
 QString printDialog::getTimer()
 {
+#ifndef V2
     QString str = ", " + g_model->tmrDir==0 ? ", Count Down" : " Count Up";
     return tr("%1:%2, ").arg(g_model->tmrVal/60, 2, 10, QChar('0')).arg(g_model->tmrVal%60, 2, 10, QChar('0')) + getTimerMode(g_model->tmrMode,g_model->modelVersion) + str;
+#else
+  return "00:00" ;
+#endif
 }
 
 QString printDialog::getProtocol()
@@ -450,8 +454,10 @@ void printDialog::printSafetySwitches()
     {
         str.append("<tr>");
         str.append(doTC(tr("CH%1").arg(i+1),"",true));
+#ifndef V2
         str.append(doTC(getSWName(g_model->safetySw[i].opt.ss.swtch,0),"green"));
         str.append(doTC(QString::number(g_model->safetySw[i].opt.ss.val),"green"));
+#endif
         str.append("</tr>");
     }
     str.append("</table>");
