@@ -701,7 +701,7 @@ uint32_t read_trims()
 
 #ifdef PCBSKY
 
-uint8_t ExtraInputs ;
+uint16_t ExtraInputs ;
 
 uint32_t read_keys()
 {
@@ -746,6 +746,24 @@ extern uint8_t Co_proc_status[] ;
 		x |= 0x08 ;
 	}
 #endif
+
+	uint32_t av9 = Analog_values[9] ;
+	if ( av9 < 490 )
+	{
+		x |= 0x40 ;
+	}
+	else
+	{
+		if ( av9 > 1500 )
+		{
+			x |= 0x80 ;
+		}
+		else
+		{
+			x |= 0x0100 ;
+		}
+	}
+
 	ExtraInputs = x ;
 #else	
 	y = x & 0x00000060 ;
@@ -927,6 +945,7 @@ uint32_t hwKeyState( uint8_t key )
 	register uint32_t c ;
 	uint32_t av9 = Analog_values[9] ;
 	uint32_t avpot = 0xFFFF ;
+	uint32_t anaIndex = g_eeGeneral.ar9xBoard ? 6 : 9 ;
 
 	a = g_eeGeneral.analogMapping & MASK_6POS ;
 	if ( a )
@@ -995,25 +1014,46 @@ uint32_t hwKeyState( uint8_t key )
 //    break ;
 		
 		case HSW_Thr3pos0 :
-    	xxx = ~c & 0x00100000 ;	// SW_TCUT     PC20
+			if ( g_eeGeneral.thrsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x40 ;
+			}
+      else
+			{
+	    	xxx = ~c & 0x00100000 ;	// SW_TCUT     PC20
+			}
     break ;
 		
 		case HSW_Thr3pos1 :
-			xxx = (c & 0x00100000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+			if ( g_eeGeneral.thrsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x80 ;
+			}
+      else
+			{
+				xxx = (c & 0x00100000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+			}
     break ;
 
 		case HSW_Thr3pos2 :
-			xxx = readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+			if ( g_eeGeneral.thrsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x100 ;
+			}
+      else
+			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
+			}
     break ;
 			 
 		case HSW_Ele3pos0 :
-			xxx = ( g_eeGeneral.elesource == 5 ) ? av9 < 490 : ~c & 0x80000000 ;	// ELE_DR   PC31
+			xxx = ( g_eeGeneral.elesource == 5 ) ? ExtraInputs & 0x40 : ~c & 0x80000000 ;	// ELE_DR   PC31
     break ;
 
 		case HSW_Ele3pos1 :
 			if ( g_eeGeneral.elesource == 5 )
 			{
-				xxx = av9 > 1500 ;
+				xxx = ExtraInputs & 0x80 ;
 			}
       else
 			{
@@ -1024,7 +1064,7 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Ele3pos2 :
 			if ( g_eeGeneral.elesource == 5 )
 			{
-				xxx = ( av9 <= 1500 ) && ( av9 >= 490 ) ;
+				xxx = ExtraInputs & 0x100 ;
 			}
       else
 			{
@@ -1033,44 +1073,107 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 
 		case HSW_Rud3pos0 :
-			xxx = ~a & 0x00008000 ;	// RUD_DR   PA15
+			if ( g_eeGeneral.rudsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x40 ;
+			}
+      else
+			{
+				xxx = ~a & 0x00008000 ;	// RUD_DR   PA15
+			}
     break ;
 
 		case HSW_Rud3pos1 :
-			xxx = (a & 0x00008000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+			if ( g_eeGeneral.rudsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x80 ;
+			}
+      else
+			{
+				xxx = (a & 0x00008000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+			}
 //			xxx = (a & 0x00008000) ; if ( xxx ) xxx = (c & 0x80000000) ;
     break ;
 
 		case HSW_Rud3pos2 :
-			xxx = readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+			if ( g_eeGeneral.rudsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x100 ;
+			}
+      else
+			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.rudsource ) ;
+			}
 //			xxx = ~c & 0x80000000 ;	// ELE_DR   PC31
     break ;
 
 		case HSW_Ail3pos0 :
-			xxx = ~a & 0x00000004 ;	// AIL-DR  PA2
+			if ( g_eeGeneral.ailsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x40 ;
+			}
+      else
+			{
+				xxx = ~a & 0x00000004 ;	// AIL-DR  PA2
+			}
     break ;
 
 		case HSW_Ail3pos1 :
 //			xxx = (a & 0x00000004) ; if ( xxx ) xxx = (PIOB->PIO_PDSR & 0x00004000) ;
-			xxx = (a & 0x00000004) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+			if ( g_eeGeneral.ailsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x80 ;
+			}
+      else
+			{
+				xxx = (a & 0x00000004) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+			}
     break ;                               
 
 		case HSW_Ail3pos2 :
 //			xxx = ~PIOB->PIO_PDSR & 0x00004000 ;
-			xxx = readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+			if ( g_eeGeneral.ailsource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x100 ;
+			}
+      else
+			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.ailsource ) ;
+			}
     break ;
 
 		case HSW_Gear3pos0 :
-			xxx = ~c & 0x00010000 ;	// SW_GEAR     PC16
+			if ( g_eeGeneral.geasource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x40 ;
+			}
+      else
+			{
+				xxx = ~c & 0x00010000 ;	// SW_GEAR     PC16
+			}
     break ;
 
 		case HSW_Gear3pos1 :
 //			xxx = (c & 0x00010000) ; if ( xxx ) xxx = (PIOB->PIO_PDSR & 0x00004000) ;
-			xxx = (c & 0x00010000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+			if ( g_eeGeneral.geasource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x80 ;
+			}
+      else
+			{
+				xxx = (c & 0x00010000) ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+			}
     break ;
 
 		case HSW_Gear3pos2 :
-			xxx = readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+			if ( g_eeGeneral.geasource == anaIndex )
+			{
+				xxx = ExtraInputs & 0x100 ;
+			}
+      else
+			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.geasource ) ;
+			}
 //			xxx = ~PIOB->PIO_PDSR & 0x00004000 ;
     break ;
 

@@ -46,8 +46,8 @@ int16_t *const CalibMid[] =
 	&g_eeGeneral.calibMid[4],
 	&g_eeGeneral.calibMid[5],
 	&g_eeGeneral.calibMid[6],
-#ifdef PCBX9D
 	&g_eeGeneral.x9dcalibMid,
+#ifdef PCBX9D
 #if REVPLUS
 #ifdef REV9E
 	&g_eeGeneral.xcalibMid[0],
@@ -56,6 +56,11 @@ int16_t *const CalibMid[] =
 #endif
 	&g_eeGeneral.x9dPcalibMid
 #endif
+#endif
+#if defined(PCBSKY) || defined(PCB9XT)
+	&g_eeGeneral.xcalibMid[0],
+	&g_eeGeneral.xcalibMid[1],
+	&g_eeGeneral.xcalibMid[2],
 #endif
 } ;
 
@@ -68,8 +73,8 @@ int16_t *const CalibSpanPos[] =
 	&g_eeGeneral.calibSpanPos[4],
 	&g_eeGeneral.calibSpanPos[5],
 	&g_eeGeneral.calibSpanPos[6],
-#ifdef PCBX9D
 	&g_eeGeneral.x9dcalibSpanPos,
+#ifdef PCBX9D
 #if REVPLUS
 #ifdef REV9E
 	&g_eeGeneral.xcalibSpanPos[0],
@@ -78,6 +83,11 @@ int16_t *const CalibSpanPos[] =
 #endif
 	&g_eeGeneral.x9dPcalibSpanPos
 #endif
+#endif
+#if defined(PCBSKY) || defined(PCB9XT)
+	&g_eeGeneral.xcalibSpanPos[0],
+	&g_eeGeneral.xcalibSpanPos[1],
+	&g_eeGeneral.xcalibSpanPos[2],
 #endif
 } ;
 
@@ -90,8 +100,8 @@ int16_t *const CalibSpanNeg[] =
 	&g_eeGeneral.calibSpanNeg[4],
 	&g_eeGeneral.calibSpanNeg[5],
 	&g_eeGeneral.calibSpanNeg[6],
-#ifdef PCBX9D
 	&g_eeGeneral.x9dcalibSpanNeg,
+#ifdef PCBX9D
 #if REVPLUS
 #ifdef REV9E
 	&g_eeGeneral.xcalibSpanNeg[0],
@@ -100,6 +110,11 @@ int16_t *const CalibSpanNeg[] =
 #endif
 	&g_eeGeneral.x9dPcalibSpanNeg
 #endif
+#endif
+#if defined(PCBSKY) || defined(PCB9XT)
+	&g_eeGeneral.xcalibSpanNeg[0],
+	&g_eeGeneral.xcalibSpanNeg[1],
+	&g_eeGeneral.xcalibSpanNeg[2],
 #endif
 } ;
 

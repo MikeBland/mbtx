@@ -30,6 +30,9 @@
 #include "x9d\hal.h"
 #endif
 
+#ifdef PCB9XT
+#include "mega64.h"
+#endif
 
 #ifndef SIMU
 #include "core_cm3.h"
@@ -81,7 +84,7 @@ void init_adc3( void ) ;
 //#define SAMPTIME	3		// sample time = 56 cycles
 //#define SAMPTIME	6		// sample time = 144 cycles
 
-volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
+volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
 
 void init_adc()
 {
@@ -181,6 +184,50 @@ uint32_t read_adc()
 		}
 	}
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+
+	AnalogData[0] = Analog_values[0] ;
+#ifdef PCBX9D
+	AnalogData[1] = 4096 - Analog_values[1] ;
+#else
+	AnalogData[1] = Analog_values[1] ;
+#endif
+	AnalogData[2] = Analog_values[2] ;
+#ifdef PCBX9D
+	AnalogData[3] = 4096 - Analog_values[3] ;
+#else
+	AnalogData[3] = Analog_values[3] ;
+#endif
+#ifndef PCB9XT	
+	AnalogData[4] = Analog_values[4] ;
+	AnalogData[5] = Analog_values[5] ;
+	AnalogData[6] = Analog_values[6] ;
+	AnalogData[7] = Analog_values[7] ;
+#endif
+#ifdef PCB9XT
+	AnalogData[4] = M64Analog[4] * 2 ;
+	AnalogData[5] = M64Analog[5] * 2 ;
+	AnalogData[6] = M64Analog[6] * 2 ;
+	AnalogData[7] = M64Analog[0] * 2 ;
+	AnalogData[8] = M64Analog[1] * 2 ;
+	AnalogData[9] = M64Analog[2] * 2 ;
+	AnalogData[10] = M64Analog[3] * 2 ;
+
+	AnalogData[12] = Analog_values[4] ;
+#else
+	AnalogData[12] = Analog_values[8] ;
+#endif
+#ifdef REVPLUS
+	AnalogData[8] = Analog_values[9] ;
+#ifdef REV9E
+	AnalogData[9] = Analog_values[10] ;
+	AnalogData[10] = Analog_values[11] ;
+	AnalogData[11] = Analog_values[12] ;
+#endif	// REV9E
+#endif
+
+
+
+
 	return ( i < 20000 ) ? 1 : 0 ;
 }
 

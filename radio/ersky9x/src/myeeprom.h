@@ -234,6 +234,7 @@ PACK(typedef struct t_EEGeneral {
 	uint16_t SixPositionCalibration[6] ;
 	uint8_t		pb3source ;
 	uint8_t		pb4source ;
+	uint8_t	extraPotsSource[4] ;
 
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;

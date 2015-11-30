@@ -1799,13 +1799,21 @@ void read_adc()
 	x = ADC->ADC_CDR10 ;
 	y = Analog_values[9] ;
 	int32_t diff = x - y ;
-	if ( diff < 0 )
+	if ( ( g_eeGeneral.extraPotsSource[0] != 1 ) && ( g_eeGeneral.extraPotsSource[1] != 1 ) )
 	{
-		diff = -diff ;
-	}
-	if ( diff > 10 )
-	{
-		if ( ( ( g_tmr10ms - timer ) & 0x0000FFFF ) > 10 )
+		if ( diff < 0 )
+		{
+			diff = -diff ;
+		}
+		if ( diff > 10 )
+		{
+			if ( ( ( g_tmr10ms - timer ) & 0x0000FFFF ) > 10 )
+			{
+				timer = g_tmr10ms ;
+				Analog_values[9] = x ;
+			}
+		}
+		else
 		{
 			timer = g_tmr10ms ;
 			Analog_values[9] = x ;
@@ -1813,7 +1821,6 @@ void read_adc()
 	}
 	else
 	{
-		timer = g_tmr10ms ;
 		Analog_values[9] = x ;
 	}
 //#endif
@@ -1822,6 +1829,26 @@ void read_adc()
 	if ( Temperature > Max_temperature )
 	{
 		Max_temperature = Temperature ;		
+	}
+
+
+	AnalogData[0] = Analog_values[0] ;
+	AnalogData[1] = Analog_values[1] ;
+	AnalogData[2] = Analog_values[2] ;
+	AnalogData[3] = Analog_values[3] ;
+	AnalogData[4] = Analog_values[4] ;
+	AnalogData[5] = Analog_values[5] ;
+	AnalogData[6] = Analog_values[6] ;
+	AnalogData[12] = Analog_values[7] ;
+	if ( g_eeGeneral.ar9xBoard == 0 )
+	{
+		AnalogData[13] = Analog_values[8] ;
+		AnalogData[7] = Analog_values[9] ;
+	}
+	else
+	{
+		AnalogData[7] = Analog_values[8] ;
+		AnalogData[8] = Analog_values[9] ;
 	}
 
 // Power save
@@ -1899,6 +1926,10 @@ void set_stick_gain( uint32_t gains )
 	uint32_t offset ;
 
 	gain = GAIN_CURRENT ;
+	if ( g_eeGeneral.ar9xBoard )
+	{
+		gain = 0 ;
+	}	
 	offset = 0 ;
 	padc = ADC ;
 

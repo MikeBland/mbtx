@@ -186,6 +186,11 @@ uint8_t HardwareMenuEnabled = 0 ;
 uint8_t Last_switch[NUM_SKYCSW] ;
 int8_t SwitchStack[SW_STACK_SIZE] ;
 
+uint8_t NumExtraPots ;
+
+uint16_t AnalogData[ANALOG_DATA_SIZE] ;
+
+
 //#define TRUE	1
 //#define FALSE	0
 
@@ -343,7 +348,7 @@ volatile uint8_t tick5ms = 0 ;
 uint16_t g_LightOffCounter ;
 uint8_t  InactivityMonitor = 0 ;
 
-uint16_t S_anaFilt[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;				// Analog inputs after filtering
+uint16_t S_anaFilt[ANALOG_DATA_SIZE] ;				// Analog inputs after filtering
 #ifdef PCBSKY
 uint16_t Current_analogue ;
 uint16_t Current_current ;
@@ -3427,9 +3432,39 @@ void test_loop( void* pdata )
 #endif
 
 
+#ifndef PCBX9D
+uint32_t countExtraPots()
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[2] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[3] )
+	{
+		count += 1 ;
+	}
+	return count ;
+}
+#endif
+
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
+#ifdef PCBX9D
+	NumExtraPots = NUM_EXTRA_POTS ;
+#else
+	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+#endif
+
 #ifdef PCB9XT
 	backlight_on() ;
 #endif
@@ -3464,13 +3499,13 @@ void main_loop(void* pdata)
 
 // Preload battery voltage
 #ifdef PCBSKY
-  int32_t ab = anaIn(7);
+  int32_t ab = anaIn(12);
 #endif
 #ifdef PCBX9D
-  int32_t ab = anaIn(8);
+  int32_t ab = anaIn(12);
 #endif
 #ifdef PCB9XT
-  int32_t ab = anaIn(7);
+  int32_t ab = anaIn(12);
 #endif
 
   ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
@@ -4183,7 +4218,7 @@ void mainSequence( uint32_t no_menu )
 	{
 
 		uint16_t temp ;
-		temp = Analog_values[8] ;
+		temp = AnalogData[13] ;
 		temp = temp - Current_adjust / temp ;
 		{
 			uint16_t min_current ;
@@ -6391,10 +6426,10 @@ void perMain( uint32_t no_menu )
 ////        Erring on the side of low is probably best.
 
 #if defined(PCBSKY) || defined(PCB9XT)
-        int32_t ab = anaIn(7);
+        int32_t ab = anaIn(12);
 #endif
 #ifdef PCBX9D
-        int32_t ab = anaIn(8);
+        int32_t ab = anaIn(12);
 #endif
 
         ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
@@ -6628,23 +6663,37 @@ uint16_t anaIn(uint8_t chan)
 	
 #ifdef PCB9XT
   volatile uint16_t *p = &S_anaFilt[chan] ;
-	if ( ( chan >= 4 ) && ( chan <= 6 ) )
+//	if ( ( chan >= 4 ) && ( chan <= 6 ) )
+//	{
+//		p = &M64Analog[chan] ;
+//	}
+//	if ( chan == 7 )
+//	{
+//		p = &S_anaFilt[4] ;
+//	}
+	if ( ( chan >= 7 ) && ( chan <= 10 ) )
 	{
-		p = &M64Analog[chan] ;
-	}
-	if ( chan == 7 )
-	{
-		p = &S_anaFilt[4] ;
-	}
-	if ( chan > 7 )
-	{
-		p = &M64Analog[chan-8] ;
+		uint32_t x = 7 ;
+		if ( g_eeGeneral.extraPotsSource[chan-7] )
+		{
+			x += g_eeGeneral.extraPotsSource[chan-7] - 1 ;
+		}
+		p = &S_anaFilt[x] ;
 	}
 #endif
 #ifdef PCBSKY
 //  static uint8_t crossAna[]={1,5,7,0,4,6,2,3,8};
 //  volatile uint16_t *p = &S_anaFilt[crossAna[chan]] ;
   volatile uint16_t *p = &S_anaFilt[chan] ;
+	if ( ( chan >= 7 ) && ( chan <= 8 ) )
+	{
+		uint32_t x = 7 ;
+		if ( g_eeGeneral.extraPotsSource[chan-7] )
+		{
+			x += g_eeGeneral.extraPotsSource[chan-7] - 1 ;
+		}
+		p = &S_anaFilt[x] ;
+	}
 #endif
 #ifdef PCBX9D
   volatile uint16_t *p = &S_anaFilt[chan] ;
@@ -6677,33 +6726,91 @@ uint16_t anaIn(uint8_t chan)
 }
 #endif
 
+uint32_t getAnalogIndex( uint32_t index )
+{
+	uint32_t z = index ;
+	if ( index == 8 )
+	{
+		if ( g_eeGeneral.ar9xBoard == 1 )
+		{
+			if ( g_eeGeneral.extraPotsSource[0] == 1 )
+			{
+				z = 9 ;
+			}
+		}
+		else
+		{
+			z = 9 ;
+		}
+	}
+	return z ;
+}
+
+
 uint16_t g_timeAdc ;
+//void ogetADC_single()
+//{
+//	register uint32_t x ;
+//	uint16_t temp ;
+//	uint32_t numAnalog = NUMBER_ANALOG+NUM_EXTRA_ANALOG ;
+
+//#if defined(PCBSKY) || defined(PCB9XT)
+//	if ( g_eeGeneral.extraPotsSource[0] )
+//	{
+//		numAnalog += 1 ;
+//	}
+//#endif
+
+//#ifdef PCBSKY
+//  uint16_t t0 = getTmr2MHz();
+//	read_adc() ;
+//	t0 = getTmr2MHz() - t0;
+//  if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
+//#endif
+//#if defined(PCBX9D) || defined(PCB9XT)
+//		read_adc() ;
+//#endif
+
+//	for( x = 0 ; x < numAnalog ; x += 1 )
+//	{
+//		uint32_t z = x ;
+//		if ( x > 7 )
+//		{
+//			z = getAnalogIndex(x) ;
+//		}
+//		temp = Analog_values[z] ;
+//#ifdef PCBX9D
+//		if ( (x==1) || (x==3) )
+//		{
+//			temp = 4096 - temp ;
+//		}
+//#endif
+//		S_anaFilt[x] = temp >> 1 ;
+////		S_anaFilt[x] = temp ;
+//	}
+//}
+
 void getADC_single()
 {
 	register uint32_t x ;
 	uint16_t temp ;
+	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
 #ifdef PCBSKY
   uint16_t t0 = getTmr2MHz();
+#endif
+	
 	read_adc() ;
+
+#ifdef PCBSKY
 	t0 = getTmr2MHz() - t0;
   if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT)
-		read_adc() ;
-#endif
 
-	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
-		temp = Analog_values[x] ;
-#ifdef PCBX9D
-		if ( (x==1) || (x==3) )
-		{
-			temp = 4096 - temp ;
-		}
-#endif
+		temp = AnalogData[x] ;
 		S_anaFilt[x] = temp >> 1 ;
-//		S_anaFilt[x] = temp ;
 	}
 }
 
@@ -6723,39 +6830,113 @@ void getADC_single()
 
 //uint16_t AdcDebug[OSMP_SAMPLES] ;
 
+//void ogetADC_osmp()
+//{
+//	register uint32_t x ;
+//	register uint32_t y ;
+//	uint32_t numAnalog = NUMBER_ANALOG+NUM_EXTRA_ANALOG ;
+
+//#if defined(PCBSKY) || defined(PCB9XT)
+//	if ( g_eeGeneral.extraPotsSource[0] )
+//	{
+//		numAnalog += 1 ;
+//	}
+//#endif
+//	uint16_t temp[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
+//	static uint16_t next_ana[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
+
+//	for( x = 0 ; x < numAnalog ; x += 1 )
+//	{
+//		temp[x] = 0 ;
+//	}
+//	for( y = 0 ; y < OSMP_SAMPLES ; y += 1 )
+//	{
+//#ifdef PCBSKY
+//		read_adc() ;
+//#endif
+//#if defined(PCBX9D) || defined(PCB9XT)
+//		read_adc() ;
+//#endif
+//		for( x = 0 ; x < numAnalog ; x += 1 )
+//		{
+//			uint32_t z = x ;
+//			if ( x > 7 )
+//			{
+//				z = getAnalogIndex(x) ;
+//			}
+//			temp[x] += Analog_values[z] ;
+////			if ( x == 3 )
+////			{
+////				AdcDebug[y] = Analog_values[x] ;
+////			}
+//		}
+//	}
+//#ifdef PCBX9D
+//	temp[1] = OSMP_TOTAL - temp[1] ;
+//	temp[3] = OSMP_TOTAL - temp[3] ;
+//#endif
+//	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+//	{
+//		uint16_t y = temp[x] >> OSMP_SHIFT ;
+//		uint16_t z = S_anaFilt[x] ;
+//		uint16_t w = next_ana[x] ;
+		
+//		int16_t diff = abs( (int16_t) y - z ) ;
+
+//		next_ana[x] = y ;
+//		if ( diff < 10 )
+//		{
+//			if ( y > z )
+//			{
+//				if ( w > z )
+//				{
+//					y = z + 1 ;
+//				}
+//				else
+//				{
+//					y = z ;
+//				}
+//			}
+//			else if ( y < z )
+//			{
+//				if ( w < z )
+//				{
+//					y = z - 1 ;
+//				}
+//				else
+//				{
+//					y = z ;
+//				}
+//			}
+//		}
+//		S_anaFilt[x] = y ;
+////		S_anaFilt[x] = temp[x] >> 2 ;
+//	}
+//}
+
 void getADC_osmp()
 {
 	register uint32_t x ;
 	register uint32_t y ;
-	uint16_t temp[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
-	static uint16_t next_ana[NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
+	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
-	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+	uint16_t temp[ANALOG_DATA_SIZE] ;
+	static uint16_t next_ana[ANALOG_DATA_SIZE] ;
+
+	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
 		temp[x] = 0 ;
 	}
 	for( y = 0 ; y < OSMP_SAMPLES ; y += 1 )
 	{
-#ifdef PCBSKY
 		read_adc() ;
-#endif
-#if defined(PCBX9D) || defined(PCB9XT)
-		read_adc() ;
-#endif
-		for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+		
+		for( x = 0 ; x < numAnalog ; x += 1 )
 		{
-			temp[x] += Analog_values[x] ;
-//			if ( x == 3 )
-//			{
-//				AdcDebug[y] = Analog_values[x] ;
-//			}
+			temp[x] += AnalogData[x] ;
 		}
 	}
-#ifdef PCBX9D
-	temp[1] = OSMP_TOTAL - temp[1] ;
-	temp[3] = OSMP_TOTAL - temp[3] ;
-#endif
-	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+	for( x = 0 ; x < ANALOG_DATA_SIZE ; x += 1 )
 	{
 		uint16_t y = temp[x] >> OSMP_SHIFT ;
 		uint16_t z = S_anaFilt[x] ;
@@ -6790,48 +6971,78 @@ void getADC_osmp()
 			}
 		}
 		S_anaFilt[x] = y ;
-//		S_anaFilt[x] = temp[x] >> 2 ;
 	}
 }
 
 
+//void ogetADC_filt()
+//{
+//	register uint32_t x ;
+//	static uint16_t t_ana[2][NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
+//	uint16_t temp ;
+//	uint32_t numAnalog = NUMBER_ANALOG+NUM_EXTRA_ANALOG ;
+
+//#if defined(PCBSKY) || defined(PCB9XT)
+//	if ( g_eeGeneral.extraPotsSource[0] )
+//	{
+//		numAnalog += 1 ;
+//	}
+//#endif
+
+//#ifdef PCBSKY
+//	read_adc() ;
+//#endif
+//#if defined(PCBX9D) || defined(PCB9XT)
+//		read_adc() ;
+//#endif
+//	for( x = 0 ; x < numAnalog ; x += 1 )
+//	{
+//		temp = S_anaFilt[x] ;
+//#ifdef PCBX9D
+//		if ( (x==1) || (x==3) )
+//		{
+//			temp = 2048 - temp ;
+////			temp = 4096 - temp ;
+//		}
+//#endif
+//		temp = temp/2 + (t_ana[1][x] >> 2 ) ;
+////		temp = temp/2 + (t_ana[1][x] >> 1 ) ;
+//#ifdef PCBX9D
+//		if ( (x==1) || (x==3) )
+//		{
+//			temp = 2048 - temp ;
+////			temp = 4096 - temp ;
+//		}
+//#endif
+//		S_anaFilt[x] = temp ;
+//		t_ana[1][x] = ( t_ana[1][x] + t_ana[0][x] ) >> 1 ;
+//		uint32_t z = x ;
+//		if ( x > 7 )
+//		{
+//			z = getAnalogIndex(x) ;
+//		}
+//		t_ana[0][x] = ( t_ana[0][x] + Analog_values[z] ) >> 1 ;
+//	}	 
+//}
+
 void getADC_filt()
 {
 	register uint32_t x ;
-	static uint16_t t_ana[2][NUMBER_ANALOG+NUM_EXTRA_ANALOG] ;
+	static uint16_t t_ana[2][ANALOG_DATA_SIZE] ;
 	uint16_t temp ;
+	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
-#ifdef PCBSKY
+
 	read_adc() ;
-#endif
-#if defined(PCBX9D) || defined(PCB9XT)
-		read_adc() ;
-#endif
-	for( x = 0 ; x < NUMBER_ANALOG+NUM_EXTRA_ANALOG ; x += 1 )
+	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
 		temp = S_anaFilt[x] ;
-#ifdef PCBX9D
-		if ( (x==1) || (x==3) )
-		{
-			temp = 2048 - temp ;
-//			temp = 4096 - temp ;
-		}
-#endif
 		temp = temp/2 + (t_ana[1][x] >> 2 ) ;
-//		temp = temp/2 + (t_ana[1][x] >> 1 ) ;
-#ifdef PCBX9D
-		if ( (x==1) || (x==3) )
-		{
-			temp = 2048 - temp ;
-//			temp = 4096 - temp ;
-		}
-#endif
 		S_anaFilt[x] = temp ;
 		t_ana[1][x] = ( t_ana[1][x] + t_ana[0][x] ) >> 1 ;
-		t_ana[0][x] = ( t_ana[0][x] + Analog_values[x] ) >> 1 ;
+		t_ana[0][x] = ( t_ana[0][x] + AnalogData[x] ) >> 1 ;
 	}	 
 }
-
 
 uint32_t getFlightPhase()
 {
@@ -7048,11 +7259,11 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
     lcd_putsAttIdx(x,y,PSTR(STR_CHANS_RAW),(idx-5),att);
 #endif
   
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 	else if(idx < EXTRA_POTS_START)
-#else
-	else
-#endif	// NUM_EXTRA_POTS
+//#else
+//	else
+//#endif	// NUM_EXTRA_POTS
 	{
 		if ( mix )
 		{
@@ -7074,12 +7285,12 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 		}
   	lcd_putsAttIdx(x,y,PSTR(STR_TELEM_ITEMS),(idx-NUM_SKYXCHNRAW),att);
 	}
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 	else
 	{
-  	lcd_putsAttIdx(x,y,PSTR(STR_EXTRA_SOURCE),(idx-EXTRA_POTS_START),att);
+  	lcd_putsAttIdx(x,y,PSTR(STR_CHANS_EXTRA),(idx-EXTRA_POTS_START),att);
 	}
-#endif	// NUM_EXTRA_POTS
+//#endif	// NUM_EXTRA_POTS
 }
 
 void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att)
@@ -7610,14 +7821,14 @@ const char *get_switches_string()
 int16_t getValue(uint8_t i)
 {
   if(i<7) return calibratedStick[i];//-512..512
-#ifdef PCBX9D
- #if NUM_EXTRA_POTS
+//#ifdef PCBX9D
+// #if NUM_EXTRA_POTS
 	if ( i >= EXTRA_POTS_START-1 )
 	{
 		return calibratedStick[i-EXTRA_POTS_START+8] ;
 	}
- #endif
-#endif
+// #endif
+//#endif
   if(i<PPM_BASE) return 0 ;
 	else if(i<CHOUT_BASE)
 	{

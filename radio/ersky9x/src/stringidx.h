@@ -330,7 +330,7 @@
 #define STR_BT_TRAINER			310
 
 #define STR_T_RANGE_TEST    311
-#define STR_EXTRA_SOURCE    312
+#define STR_CHANS_EXTRA	    312
 
 #define STR_HELI_TEXT			  313
 #define STR_MULTI_TYPE   		314

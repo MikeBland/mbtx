@@ -884,7 +884,7 @@ uint8_t get_dr_state(uint8_t x)
     !getSwitch00( ped->drSw2) ? DR_MID : DR_LOW) ;
 }
 
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 static uint8_t mapPots( uint8_t value )
 {
 	if ( value >= EXTRA_POTS_POSITION )
@@ -895,7 +895,7 @@ static uint8_t mapPots( uint8_t value )
 		}
 		else
 		{
-			value += NUM_EXTRA_POTS ;
+			value += NumExtraPots ;
 		}
 	}
 	return value ;
@@ -905,19 +905,19 @@ static uint8_t unmapPots( uint8_t value )
 {
 	if ( value >= EXTRA_POTS_POSITION )
 	{
-		if ( value < EXTRA_POTS_POSITION + NUM_EXTRA_POTS )
+		if ( value < EXTRA_POTS_POSITION + NumExtraPots )
 		{
 			value += EXTRA_POTS_START - EXTRA_POTS_POSITION ;
 		}
 		else
 		{
-			value -= NUM_EXTRA_POTS ;
+			value -= NumExtraPots ;
 		}
 	}
 	return value ;
 }
 
-#endif
+//#endif
 
 #define DO_SQUARE(xx,yy,ww)         \
 {uint8_t x,y,w ; x = xx; y = yy; w = ww ; \
@@ -1020,7 +1020,7 @@ enum MainViews
   MAX_VIEWS
 };
 
-int16_t calibratedStick[NUMBER_ANALOG+NUM_EXTRA_POTS];
+int16_t calibratedStick[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS];
 
 int16_t ex_chans[NUM_SKYCHNOUT];          // Outputs + intermidiates
 uint8_t s_pgOfs;
@@ -1658,8 +1658,8 @@ uint8_t MState2::check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t 
 #define SCREEN_WIDTH  128
 #define SCREEN_HEIGHT 64
 #define BOX_LIMIT     (BOX_WIDTH-MARKER_WIDTH)
-#define LBOX_CENTERX  (  SCREEN_WIDTH/4 + 10)
-#define BOX_CENTERY  (SCREEN_HEIGHT-9-BOX_WIDTH/2)
+#define LBOX_CENTERX  (  SCREEN_WIDTH/4 + 10-1)
+#define BOX_CENTERY  (SCREEN_HEIGHT-9-BOX_WIDTH/2-1)
 #define RBOX_CENTERX  (3*SCREEN_WIDTH/4 - 10)
 //#define RBOX_CENTERY  (SCREEN_HEIGHT-9-BOX_WIDTH/2)
 
@@ -1683,7 +1683,16 @@ void doMainScreenGrphics()
     {
         uint8_t x, y, len ;			// declare temporary variables
 #if defined(PCBSKY) || defined(PCB9XT)
-        for( x = -5, y = 4 ; y < 7 ; x += 5, y += 1 )
+				uint32_t maxy ;
+				maxy = 7 ;
+				x = -5 ;
+				if ( g_eeGeneral.extraPotsSource[0] )
+				{
+					x = - 8 ;
+					maxy = 8 ;
+				}
+
+        for( y = 4 ; y < maxy ; x += 5, y += 1 )
         {
             len = ((calibratedStick[y]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
             V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len )
@@ -3014,16 +3023,16 @@ void menuScaleOne(uint8_t event)
       case 0 :	// Source
 				lcd_puts_Pleft( y, XPSTR("Source") ) ;
 				putsChnRaw( 11*FW, y, pscaler->source, attr ) ;
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 				if( attr )
 				{
 					uint8_t x = mapPots( pscaler->source ) ;
-					CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NUM_EXTRA_POTS ) ;
+					CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
 					pscaler->source = unmapPots( x ) ;
 				}
-#else
-				if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->source, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS ) ;
-#endif
+//#else
+//				if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->source, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS ) ;
+//#endif
 			break ;
 			case 1 :	// name
 				alphaEditName( 11*FW-2, y, (uint8_t *)pscaler->name, sizeof(pscaler->name), attr, (uint8_t *)XPSTR( "Scaler Name") ) ;
@@ -3729,15 +3738,15 @@ uint8_t subSub = g_posHorz;
             case (CS_VCOMP):
             case (CS_VOFS):
 #ifdef FRSKY
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 							{
 								uint8_t x = mapPots( cs.v1 ) ;
-								CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NUM_EXTRA_POTS ) ;
+								CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
 								cs.v1 = unmapPots( x ) ;
 							}
-#else
-                CHECK_INCDEC_H_MODELVAR_0( cs.v1, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS);
-#endif
+//#else
+//                CHECK_INCDEC_H_MODELVAR_0( cs.v1, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS);
+//#endif
 #else
                 CHECK_INCDEC_H_MODELVAR_0( cs.v1, NUM_SKYXCHNRAW);
 #endif
@@ -3771,15 +3780,15 @@ uint8_t subSub = g_posHorz;
                 CHECK_INCDEC_MODELSWITCH( cs.v2, -MaxSwitchIndex,MaxSwitchIndex);
                 break;
             case (CS_VCOMP):
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 							{
 								uint8_t x = mapPots( cs.v2 ) ;
-								CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NUM_EXTRA_POTS ) ;
+								CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
 								cs.v2 = unmapPots( x ) ;
 							}
-#else
-                CHECK_INCDEC_H_MODELVAR_0( cs.v2, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS);
-#endif
+//#else
+//                CHECK_INCDEC_H_MODELVAR_0( cs.v2, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS);
+//#endif
                 break;
             case (CS_TIMER):
                 CHECK_INCDEC_H_MODELVAR( cs.v2, -50,99);
@@ -3980,13 +3989,13 @@ void menuProcVoiceOne(uint8_t event)
 					if ( attr )
 					{
 	      		
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 						uint8_t x = mapPots( pvad->source ) ;
-						CHECK_INCDEC_H_MODELVAR( x, 0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NUM_EXTRA_POTS ) ;
+						CHECK_INCDEC_H_MODELVAR( x, 0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
 						pvad->source = unmapPots( x ) ;
-#else
-						pvad->source = checkIncDec16( pvad->source, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS, EE_MODEL);
-#endif
+//#else
+//						pvad->source = checkIncDec16( pvad->source, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS, EE_MODEL);
+//#endif
 					}
 					if ( pvad->source )
 					{
@@ -4402,37 +4411,37 @@ void menuProcMixOne(uint8_t event)
 					{
 						if ( value > MIX_3POS )
 						{
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 							if ( value < EXTRA_POTS_START )
 							{
-#endif	// NUM_EXTRA_POTS
+//#endif	// NUM_EXTRA_POTS
 								value += num_mix_switches-1 ;
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 							}
-#endif	// NUM_EXTRA_POTS
+//#endif	// NUM_EXTRA_POTS
 						}
 					}
 					if ( attr )
 					{
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 						uint8_t x = mapPots( value ) ;
-						CHECK_INCDEC_H_MODELVAR( x, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NUM_EXTRA_POTS + (num_mix_switches-1) );
+						CHECK_INCDEC_H_MODELVAR( x, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) );
 						value = unmapPots( x ) ;
-#else
-						CHECK_INCDEC_H_MODELVAR( value, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8 + (num_mix_switches-1) );
-#endif	// NUM_EXTRA_POTS
+//#else
+//						CHECK_INCDEC_H_MODELVAR( value, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8 + (num_mix_switches-1) );
+//#endif	// NUM_EXTRA_POTS
 						if ( value >= MIX_3POS )
 						{
 							if ( value > (uint32_t)MIX_3POS + (num_mix_switches-1) )
 							{
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 								if ( value < EXTRA_POTS_START )
 								{
-#endif	// NUM_EXTRA_POTS
+//#endif	// NUM_EXTRA_POTS
 									value -= (num_mix_switches-1) ;
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 								}
-#endif	// NUM_EXTRA_POTS
+//#endif	// NUM_EXTRA_POTS
 							}
 							else
 							{
@@ -7418,14 +7427,21 @@ void menuProcDiagCalib(uint8_t event)
   //    int8_t  sub    = mstate2.m_posVert ;
   mstate2.m_posVert = 0 ; // make sure we don't scroll or move cursor here
 
-  for(uint8_t i=0; i<NUM_ANALOG_CALS; i++)
+#if defined(PCBSKY) || defined(PCB9XT)
+	uint32_t numAnalogCals = NUM_ANALOG_CALS + countExtraPots() ;
+#else
+	uint32_t numAnalogCals = NUM_ANALOG_CALS ;
+#endif
+
+  for(uint32_t i=0; i < numAnalogCals ; i++)
 	{ //get low and high vals for sticks and trims
 		
-#ifdef REVPLUS
-		int16_t vt = anaIn( (i<8) ? i : i+1 ) ;
-#else
+//#ifdef REVPLUS
 		int16_t vt = anaIn( i ) ;
-#endif
+//#else
+//		int16_t vt = anaIn( i ) ;
+//		int16_t vt = anaIn( i ) ;
+//#endif
     Xmem.Cal_data.loVals[i] = min(vt,Xmem.Cal_data.loVals[i]);
     Xmem.Cal_data.hiVals[i] = max(vt,Xmem.Cal_data.hiVals[i]);
     if(i>=4)
@@ -7472,15 +7488,16 @@ void menuProcDiagCalib(uint8_t event)
       //SET MIDPOINT
       //[MENU]
       
-  		for(uint8_t i=0; i<NUM_ANALOG_CALS; i++)
+  		for(uint8_t i=0; i<numAnalogCals; i++)
       {
           Xmem.Cal_data.loVals[i] =  15000;
           Xmem.Cal_data.hiVals[i] = -15000;
-#ifdef REVPLUS
-          Xmem.Cal_data.midVals[i] = anaIn( (i<8) ? i : i+1 );
-#else
-          Xmem.Cal_data.midVals[i] = anaIn(i);
-#endif
+//#ifdef REVPLUS
+//          Xmem.Cal_data.midVals[i] = anaIn( i );
+//#else
+          Xmem.Cal_data.midVals[i] = anaIn( i );
+//          Xmem.Cal_data.midVals[i] = anaIn(i);
+//#endif
       }
       lcd_puts_Pleft( 2*FH, PSTR(STR_SET_MIDPOINT) ) ;//, 12, sub>0 ? INVERS : 0);
       lcd_puts_P(3*FW, 3*FH, PSTR(STR_MENU_DONE) ) ;//, 16, sub>0 ? BLINK : 0);
@@ -7491,7 +7508,7 @@ void menuProcDiagCalib(uint8_t event)
       //[MENU]
 			StickScrollAllowed = 0 ;
 
-      for(uint8_t i=0; i<NUM_ANALOG_CALS; i++)
+      for(uint8_t i=0; i<numAnalogCals; i++)
 			{
 	      if(abs(Xmem.Cal_data.loVals[i]-Xmem.Cal_data.hiVals[i])>50)
 				{
@@ -7517,7 +7534,15 @@ void menuProcDiagCalib(uint8_t event)
     break;
   }
 
-  doMainScreenGrphics();
+  doMainScreenGrphics() ;
+#if defined(PCBSKY) || defined(PCB9XT)
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		uint8_t len ;
+    len = ((calibratedStick[8]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+    V_BAR( 101, SCREEN_HEIGHT-8, len ) ;
+	}
+#endif
 }
 
 uint16_t Current ;
@@ -7571,16 +7596,26 @@ void menuProcDiagAna(uint8_t event)
     if(i<7)  lcd_outdezAtt(15*FW, y, (int32_t)calibratedStick[index]*1000/1024, PREC1);
     if(i==7)
 		{
-			 putsVBat(14*FW,y,(sub==1 ? InverseBlink : 0)|PREC1);
-#ifdef PCBX9D
-    	lcd_outhex4( 6*FW, y,anaIn(8));
-#endif
-#ifdef PCB9XT
-    	lcd_outhex4( 6*FW, y,anaIn(4));
-//    	lcd_outhex4( 16*FW, y, g_eeGeneral.vBatCalib ) ;
-#endif
+			putsVBat(14*FW,y,(sub==1 ? InverseBlink : 0)|PREC1);
+    	lcd_outhex4( 6*FW, y,anaIn(12));
+//#ifdef PCBX9D
+//    	lcd_outhex4( 6*FW, y,anaIn(8));
+//#endif
+//#ifdef PCB9XT
+//    	lcd_outhex4( 6*FW, y,anaIn(4));
+////    	lcd_outhex4( 16*FW, y, g_eeGeneral.vBatCalib ) ;
+//#endif
 		}
   }
+
+#ifdef PCBSKY
+	if ( g_eeGeneral.ar9xBoard )
+	{
+	  lcd_putc( 18*FW, 4*FH, 'A' ) ;
+  	lcd_putc( 19*FW, 4*FH, '8' ) ;
+  	lcd_outhex4( 17*FW, 5*FH,Analog_values[8]);
+	}
+#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifdef REVB    
@@ -9680,8 +9715,8 @@ void menuProcBattery(uint8_t event)
 	  lcd_outdezAtt( 20*FW-2, 6*FH, (((((int32_t)Max_temperature - 838 ) * 621 ) >> 11 ) - 20) ,0 ) ;
 
 #ifdef PCBSKY
-static uint8_t count = 0 ;
-static uint32_t sum ;
+//static uint8_t count = 0 ;
+//static uint32_t sum ;
 #ifdef USE_EXT_RTC
 extern uint8_t ExternalRtc[7] ;
 	lcd_outhex4( 0, 7*FH, (ExternalRtc[0] << 8 ) | ExternalRtc[1] ) ;
@@ -9689,18 +9724,18 @@ extern uint8_t ExternalRtc[7] ;
 	lcd_outhex4( 50, 7*FH, (ExternalRtc[4] << 8 ) | ExternalRtc[5] ) ;
 	lcd_outhex4( 75, 7*FH, (ExternalRtc[6] << 8 ) ) ;
 #endif
-	if ( count == 0 )
-	{
-		sum = Analog_values[8] ;
-	}
-	else
-	{
-		sum += Analog_values[8] ;
-	}
-	count += 1 ;
-	if ( count > 1 )
-	{
-		count = 0 ;
+//	if ( count == 0 )
+//	{
+//		sum = Analog_values[8] ;
+//	}
+//	else
+//	{
+//		sum += Analog_values[8] ;
+//	}
+//	count += 1 ;
+//	if ( count > 1 )
+//	{
+//		count = 0 ;
 //#ifdef USE_EXT_RTC
 //extern uint8_t ExternalRtc[7] ;
 //extern void readExtRtc() ;
@@ -9724,7 +9759,7 @@ extern uint8_t ExternalRtc[7] ;
 //		}
 //#endif
 
-	}
+//	}
 #endif
 
 #endif
@@ -9879,15 +9914,15 @@ void menuProcStatistic(uint8_t event)
 {
 	MENU(PSTR(STR_STAT), menuTabStat, e_stat1, 1, {0} ) ;
 
-  lcd_puts_Pleft( FH*0, XPSTR("\017TOT\037\001TME\017TSW\037\001STK\017ST%"));
+  lcd_puts_Pleft( FH*0, XPSTR("\016TOT\037\001TME\016TSW\037\001STK\016ST%"));
 
   putsTime(    6*FW, FH*1, s_timer[0].s_timeCumAbs, 0, 0);
-  putsTime(   12*FW, FH*1, s_timer[0].s_timeCumSw,      0, 0);
+  putsTime(   11*FW, FH*1, s_timer[0].s_timeCumSw,      0, 0);
 
   putsTime(    6*FW, FH*2, s_timer[0].s_timeCumThr, 0, 0);
-  putsTime(   12*FW, FH*2, s_timer[0].s_timeCum16ThrP/16, 0, 0);
+  putsTime(   11*FW, FH*2, s_timer[0].s_timeCum16ThrP/16, 0, 0);
 
-  putsTime(   12*FW, FH*0, s_timeCumTot, 0, 0);
+  putsTime(   11*FW, FH*0, s_timeCumTot, 0, 0);
 
   uint16_t traceRd = s_traceCnt>MAXTRACE ? s_traceWr : 0;
   uint8_t x=5;
@@ -11173,6 +11208,7 @@ extern uint8_t ImageY ;
   {
 		displayTimer( 30+5*FW, FH*5, 1, DBLSIZE ) ;
     putsTmrMode( 30-2*FW-FW/2,FH*6, 0, 1, 0 ) ;
+    putsTime( FW*17+3, 5*FH, Time.hour * 60 + Time.minute, 0, 0 ) ;
   }
 
 	if ( PopupData.PopupActive )
@@ -11661,18 +11697,20 @@ void perOut(int16_t *chanOut, uint8_t att )
 //#ifdef FIX_MODE
 				uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
 //#endif        
-        for( uint8_t i = 0 ; i < 7+NUM_EXTRA_POTS ; i += 1 ) // calc Sticks
+        for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
 				{
             //Normalization  [0..2048] ->   [-1024..1024]
-#ifdef PCB9XT
-					int16_t v = anaIn( (i<7) ? i : i+1 ) ;
-#else
-#ifdef REVPLUS
-					int16_t v = anaIn( (i<8) ? i : i+1 ) ;
-#else
 					int16_t v = anaIn( i ) ;
-#endif
-#endif
+//#ifdef PCB9XT
+//					int16_t v = anaIn( (i<7) ? i : i+1 ) ;
+//#else
+//#ifdef REVPLUS
+//					int16_t v = anaIn( (i<8) ? i : i+1 ) ;
+//#else
+//					int16_t v = anaIn( (i<7) ? i : i+1 ) ;
+////					int16_t v = anaIn( i ) ;
+//#endif
+//#endif
 					v = scaleAnalog( v, i ) ;
 
 //#ifdef FIX_MODE
@@ -11873,7 +11911,7 @@ void perOut(int16_t *chanOut, uint8_t att )
             int16_t vc = 0;
             if(g_model.swashCollectiveSource)
 						{
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 							if ( g_model.swashCollectiveSource >= EXTRA_POTS_START )
 							{
 								vc = calibratedStick[g_model.swashCollectiveSource-EXTRA_POTS_START+7] ;
@@ -11882,9 +11920,9 @@ void perOut(int16_t *chanOut, uint8_t att )
 							{
               	vc = anas[g_model.swashCollectiveSource-1];
 							}
-#else							
-              vc = anas[g_model.swashCollectiveSource-1];
-#endif
+//#else							
+//              vc = anas[g_model.swashCollectiveSource-1];
+//#endif
 						}
 
             if(g_model.swashInvertELE) vp = -vp;
@@ -12674,8 +12712,10 @@ uint8_t evalOffset(int8_t sub)
 
 #define EBACK_DONE		10
 
+#if defined(PCBSKY) || defined(PCB9XT)
 extern uint16_t General_timer ;
 extern uint16_t Model_timer ;
+#endif
 
 void menuBackupEeprom( uint8_t event )
 {
@@ -12687,6 +12727,7 @@ void menuBackupEeprom( uint8_t event )
 	{
 		case EVT_ENTRY :
 			state = EBACK_START ;
+#if defined(PCBSKY) || defined(PCB9XT)
 			if ( General_timer )
 			{
 				General_timer = 1 ;		// Make these happen soon
@@ -12695,6 +12736,10 @@ void menuBackupEeprom( uint8_t event )
 			{
 				Model_timer = 1 ;
 			}
+//#else
+//			ee32_check_finished() ;
+#endif
+
 		break ;
 
     case EVT_KEY_BREAK(KEY_EXIT):
@@ -12923,7 +12968,7 @@ static uint8_t indexProcess( uint8_t event, MState2 *pmstate, uint8_t extra )
 	return event ;
 }
 
-uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t condition )
+uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t condition, uint8_t allowAna )
 {
 	uint16_t sm = g_eeGeneral.switchMapping ;
 #ifdef REVX
@@ -12934,11 +12979,25 @@ uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t c
 #else
 	if ( g_eeGeneral.ar9xBoard == 0 )
 	{
-		value = checkIndexed( y, XPSTR(FWx17"\010\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6"), value, condition ) ;
+		if ( allowAna )
+		{
+			value = checkIndexed( y, XPSTR(FWx17"\011\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6ANA "), value, condition ) ;
+		}
+		else
+		{
+			value = checkIndexed( y, XPSTR(FWx17"\010\004NONELCD2LCD6LCD7DAC1ELE EXT4EXT5EXT6"), value, condition ) ;
+		}
 	}
 	else
 	{
-		value = checkIndexed( y, XPSTR(FWx17"\005\004NONEEXT1EXT2EXT3PB14ELE "), value, condition ) ;
+		if ( allowAna )
+		{
+			value = checkIndexed( y, XPSTR(FWx17"\006\004NONEEXT1EXT2EXT3PB14ELE ANA "), value, condition ) ;
+		}
+		else
+		{
+			value = checkIndexed( y, XPSTR(FWx17"\005\004NONEEXT1EXT2EXT3PB14ELE "), value, condition ) ;
+		}
 	}
 #endif
 #endif
@@ -12959,7 +13018,7 @@ void menuProcIndex(uint8_t event)
 	static MState2 mstate;
 	EditType = EE_GENERAL ;
 
-	event = indexProcess( event, &mstate, 6 ) ;
+	event = indexProcess( event, &mstate, 7 ) ;
 	event = mstate.check_columns( event, IlinesCount-1 ) ;
 //	event = mstate.check( event, 0, NULL, 0, &Columns, 0, IlinesCount-1 ) ;
 
@@ -13054,7 +13113,7 @@ STR_DiagAna
 		{	
 			uint8_t subN = 0 ;
 			
-      TITLE( XPSTR("DISPLAY") ) ;
+      TITLE( PSTR(STR_Display) ) ;
 #ifdef PCBX9D
  #ifdef REVPLUS
 			IlinesCount = 7 ;
@@ -13240,7 +13299,7 @@ STR_DiagAna
 			uint8_t subN = 0 ;
 			IlinesCount = 7 ;
       
-			TITLE( XPSTR("AUDIO/HAPTIC") ) ;
+			TITLE( PSTR(STR_AudioHaptic) ) ;
   		lcd_puts_Pleft( y, PSTR(STR_VOLUME));
 			current_volume = g_eeGeneral.volume ;
 			lcd_outdezAtt( PARAM_OFS+2*FW, y, current_volume, (sub==subN) ? blink : 0 ) ;
@@ -13528,7 +13587,7 @@ STR_DiagAna
 //			uint8_t y = 1*FH;
 			uint8_t subN = 0 ;
 			IlinesCount = 8 ;
-			TITLE( XPSTR("CONTROLS") ) ;
+			TITLE( PSTR(STR_Controls) ) ;
 
 			if ( sub < 4 )
 			{
@@ -13623,14 +13682,14 @@ STR_DiagAna
 		{
 			uint8_t subN = 0 ;
 #ifdef PCBSKY
-			uint8_t num = 9 + 2 + 2 + 4 + 1 + 1 + 3 ;
+			uint8_t num = 9 + 2 + 2 + 4 + 1 + 1 + 4 ;
 #ifndef REVX
 			num += 1 ;
 #endif
 			IlinesCount = num ;
 #else
 #ifdef PCB9XT
-			IlinesCount = 3 + 4 + 1 + 7 + 3 ;
+			IlinesCount = 3 + 4 + 1 + 7 + 5 ;
 #else
 			IlinesCount = 4 + 4 + 1 + 1 ;
 #endif
@@ -13656,7 +13715,7 @@ STR_DiagAna
 				num += 1 ;
 				page2 += 1 ;
 				page3 += 1 ;
-				IlinesCount += 1 ;
+				IlinesCount += 2 ;
 			}
 #endif
 
@@ -13670,7 +13729,7 @@ STR_DiagAna
 			}
 #endif
 
-			TITLE( XPSTR("HARDWARE") ) ;
+			TITLE( PSTR(STR_Hardware) ) ;
 			if ( HardwareMenuEnabled == 0 )
 			{
 				IlinesCount = 0 ;
@@ -14067,7 +14126,7 @@ STR_DiagAna
 
 				{
 				  lcd_puts_Pleft( y, XPSTR("THR switch"));
-					g_eeGeneral.thrsource = edit3posSwitchSource( y, g_eeGeneral.thrsource, USE_THR_3POS, (sub==subN) ) ;
+					g_eeGeneral.thrsource = edit3posSwitchSource( y, g_eeGeneral.thrsource, USE_THR_3POS, (sub==subN), 1 ) ;
 				}	
  				y += FH ;
 				subN++;
@@ -14075,31 +14134,31 @@ STR_DiagAna
 					
 				{
 				  lcd_puts_Pleft( y, XPSTR("RUD switch"));
-					g_eeGeneral.rudsource = edit3posSwitchSource( y, g_eeGeneral.rudsource, USE_RUD_3POS, (sub==subN) ) ;
+					g_eeGeneral.rudsource = edit3posSwitchSource( y, g_eeGeneral.rudsource, USE_RUD_3POS, (sub==subN), 1 ) ;
 				}	
  				y += FH ;
 				subN++;
 					
 				{
 				  lcd_puts_Pleft( y, XPSTR("AIL switch"));
-					g_eeGeneral.ailsource = edit3posSwitchSource( y, g_eeGeneral.ailsource, USE_AIL_3POS, (sub==subN) ) ;
+					g_eeGeneral.ailsource = edit3posSwitchSource( y, g_eeGeneral.ailsource, USE_AIL_3POS, (sub==subN), 1 ) ;
 				}	
  				y += FH ;
 				subN++;
 					
 				{
 				  lcd_puts_Pleft( y, XPSTR("GEA switch"));
-					g_eeGeneral.geasource = edit3posSwitchSource( y, g_eeGeneral.geasource, USE_GEA_3POS, (sub==subN) ) ;
+					g_eeGeneral.geasource = edit3posSwitchSource( y, g_eeGeneral.geasource, USE_GEA_3POS, (sub==subN), 1 ) ;
 				}	
 					
 	 				y += FH ;
 					subN++;
 				
   			lcd_puts_Pleft( y, XPSTR("PB1 switch\037PB2 switch"));
-				g_eeGeneral.pb1source = edit3posSwitchSource( y, g_eeGeneral.pb1source, USE_PB1, (sub==subN) ) ;
+				g_eeGeneral.pb1source = edit3posSwitchSource( y, g_eeGeneral.pb1source, USE_PB1, (sub==subN), 0 ) ;
 				y += FH ;
 				subN += 1 ;
-				g_eeGeneral.pb2source = edit3posSwitchSource( y, g_eeGeneral.pb2source, USE_PB2, (sub==subN) ) ;
+				g_eeGeneral.pb2source = edit3posSwitchSource( y, g_eeGeneral.pb2source, USE_PB2, (sub==subN), 0 ) ;
 			}
 #endif // PCBSKY
 			else
@@ -14109,13 +14168,59 @@ STR_DiagAna
 #else
 				subN = 9 ;
 #endif
+
+#if defined(PCBSKY) || defined(PCB9XT)
   			lcd_puts_Pleft( y, XPSTR("PB3 switch\037PB4 switch"));
-				g_eeGeneral.pb3source = edit3posSwitchSource( y, g_eeGeneral.pb3source, USE_PB3, (sub==subN) ) ;
+				g_eeGeneral.pb3source = edit3posSwitchSource( y, g_eeGeneral.pb3source, USE_PB3, (sub==subN), 0 ) ;
 				y += FH ;
 				subN += 1 ;
-				g_eeGeneral.pb4source = edit3posSwitchSource( y, g_eeGeneral.pb4source, USE_PB4, (sub==subN) ) ;
+				g_eeGeneral.pb4source = edit3posSwitchSource( y, g_eeGeneral.pb4source, USE_PB4, (sub==subN), 0 ) ;
 				y += FH ;
 				subN += 1 ;
+#endif
+
+#if defined(PCBSKY) || defined(PCB9XT)
+  			lcd_puts_Pleft( y, XPSTR("POT4"));
+				uint8_t value = g_eeGeneral.extraPotsSource[0] ;
+#ifdef PCB9XT
+				value = checkIndexed( y, XPSTR(FWx17"\004\004NONEEXT1EXT2EXT3EXT4"), value, (sub==subN) ) ;
+#else
+				if ( g_eeGeneral.ar9xBoard == 0 )
+				{
+					value = checkIndexed( y, XPSTR(FWx17"\001\004NONEAD10"), value, (sub==subN) ) ;
+				}
+				else
+				{
+					value = checkIndexed( y, XPSTR(FWx17"\002\004NONEAD10AD8 "), value, (sub==subN) ) ;
+				}
+#endif	// PCB9XT
+				g_eeGeneral.extraPotsSource[0] = value ;
+				NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+ 				y += FH ;
+				subN++;
+
+#ifdef PCB9XT
+  			lcd_puts_Pleft( y, XPSTR("POT5"));
+				value = g_eeGeneral.extraPotsSource[1] ;
+				value = checkIndexed( y, XPSTR(FWx17"\004\004NONEEXT1EXT2EXT3EXT4"), value, (sub==subN) ) ;
+				g_eeGeneral.extraPotsSource[1] = value ;
+				NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+ 				y += FH ;
+				subN++;
+#else
+				if ( g_eeGeneral.ar9xBoard )
+				{
+	  			lcd_puts_Pleft( y, XPSTR("POT5"));
+					value = g_eeGeneral.extraPotsSource[1] ;
+					value = checkIndexed( y, XPSTR(FWx17"\002\004NONEAD10AD8 "), value, (sub==subN) ) ;
+					g_eeGeneral.extraPotsSource[1] = value ;
+					NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+ 					y += FH ;
+					subN++;
+				}
+#endif	// PCB9XT
+
+#endif // PCBSKY !! PCB9XT
         
 				lcd_puts_Pleft( y,XPSTR("Stick Reverse:"));
  				y += FH ;
@@ -14407,17 +14512,17 @@ STR_Protocol
 			subN += 1 ;
 		
 			attr = 0 ;
-#if NUM_EXTRA_POTS
+//#if NUM_EXTRA_POTS
 			if(sub==subN)
 			{
 				attr = blink ;
 				uint8_t x = mapPots( g_model.swashCollectiveSource ) ;
-				CHECK_INCDEC_H_MODELVAR_0( x, NUM_SKYXCHNRAW+NUM_EXTRA_POTS ) ;
+				CHECK_INCDEC_H_MODELVAR_0( x, NUM_SKYXCHNRAW+NumExtraPots ) ;
 				g_model.swashCollectiveSource = unmapPots( x ) ;
 			}
-#else
-    	if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_model.swashCollectiveSource, NUM_SKYXCHNRAW) ; }
-#endif
+//#else
+//    	if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_model.swashCollectiveSource, NUM_SKYXCHNRAW) ; }
+//#endif
     	putsChnRaw(17*FW, y, g_model.swashCollectiveSource, attr ) ;
 			y += FH ;
 			subN += 1 ;

@@ -573,6 +573,10 @@ uint8_t CS_STATE( uint8_t x) ;
 
 #define EXTRA_POTS_POSITION	8
 
+#ifndef PCBX9D
+extern uint32_t countExtraPots( void ) ;
+#endif
+
 #ifdef PCBX9D
 #define MIX_MAX   8 
 #define MIX_FULL  9 
@@ -596,7 +600,11 @@ uint8_t CS_STATE( uint8_t x) ;
 #endif	// REV9E
 #endif	// PCBX9D
 
+#define	NUM_POSSIBLE_EXTRA_POTS 5
+
+
 #define EXTRA_POTS_START	120
+extern uint8_t NumExtraPots ;
 
 #define DR_HIGH   0
 #define DR_MID    1
@@ -856,14 +864,20 @@ extern int16_t *const CalibSpanNeg[] ;
  #define NUM_ANALOG_CALS	7
 #endif
 
+ #define MAX_ANALOG_CALS	12
+
+#define ANALOG_DATA_SIZE		14
+
+extern uint16_t AnalogData[ANALOG_DATA_SIZE] ;
+
 
 extern uint16_t evalChkSum( void ) ;
 
 struct t_calib
 {
-	int16_t midVals[NUM_ANALOG_CALS];
-	int16_t loVals[NUM_ANALOG_CALS];
-	int16_t hiVals[NUM_ANALOG_CALS];
+	int16_t midVals[MAX_ANALOG_CALS];
+	int16_t loVals[MAX_ANALOG_CALS];
+	int16_t hiVals[MAX_ANALOG_CALS];
 	uint8_t idxState;
 } ;
 
