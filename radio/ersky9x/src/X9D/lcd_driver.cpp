@@ -11,11 +11,11 @@
 
 #include "../ersky9x.h"
 
-#include "x9d\stm32f2xx.h"
-#include "x9d\stm32f2xx_gpio.h"
-#include "x9d\stm32f2xx_rcc.h"
-#include "x9d\hal.h"
-#include "x9d\aspi.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_gpio.h"
+#include "X9D/stm32f2xx_rcc.h"
+#include "X9D/hal.h"
+#include "X9D/aspi.h"
 
 #include "timers.h"
 #include "lcd.h"

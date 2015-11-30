@@ -11,8 +11,8 @@
 */
 
 #include <stdint.h>
-#include "x9d\stm32f2xx.h"
-#include "x9d\stm32f2xx_gpio.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_gpio.h"
 #include "X9D/hal.h"
 #include "ersky9x.h"
 #include "logicio.h"
@@ -40,11 +40,11 @@
 //}
 
 const uint8_t SlaveData64[] = {
-#include "..\..\er9x\src\slave64.lbm"
+#include "../../er9x/src/slave64.lbm"
 } ;
 
 const uint8_t SlaveData2561[] = {
-#include "..\..\er9x\src\slave2561.lbm"
+#include "../../er9x/src/slave2561.lbm"
 } ;
 
 int32_t newSlaveRevision()

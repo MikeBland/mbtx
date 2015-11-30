@@ -8641,7 +8641,7 @@ extern uint32_t Bt_ok ;
 
 
 #ifdef PCB9XT
-#include "x9d/hal.h"
+#include "X9D/hal.h"
 uint8_t AudioTest ;
 uint8_t AudioCount ;
 extern void sdIfSetup( void ) ;

@@ -11,14 +11,14 @@
 */
 
 
-#include "..\ersky9x.h"
+#include "../ersky9x.h"
 #include "stm32f2xx.h"
 //#include "stm32f2xx_gpio.h"
-#include "..\logicio.h"
+#include "../logicio.h"
 #include "stm32f2xx_rcc.h"
 #include "hal.h"
 #include "i2c_ee.h"
-#include "..\timers.h"
+#include "../timers.h"
 
 
 #define	I2C_delay()   hw_delay( 25 )
