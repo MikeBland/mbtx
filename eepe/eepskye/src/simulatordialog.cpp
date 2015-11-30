@@ -718,11 +718,13 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int 
     {
         nodeLeft->setCenteringY(false);   //mode 1,3 -> THR on left
         ui->holdLeftY->setChecked(true);
+ 		  nodeLeft->stepToBottom();   //mode 1,3 -> THR on left
     }
     else
     {
         nodeRight->setCenteringY(false);   //mode 1,3 -> THR on right
         ui->holdRightY->setChecked(true);
+		  nodeRight->stepToBottom();   //mode 1,3 -> THR on right
     }
 
 		CurrentPhase = getFlightPhase() ;

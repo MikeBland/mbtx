@@ -35,9 +35,9 @@
  */
 
 #include "ersky9x.h"
-#include "x9d\stm32f2xx_rtc.h"
-#include "x9d/stm32f2xx_rcc.h"
-#include "x9d/stm32f2xx_pwr.h"
+#include "X9D/stm32f2xx_rtc.h"
+#include "X9D/stm32f2xx_rcc.h"
+#include "X9D/stm32f2xx_pwr.h"
 
 void rtcSetTime( t_time *t )
 {

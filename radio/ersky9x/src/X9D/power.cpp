@@ -33,9 +33,9 @@
  */
 
 #include <stdint.h>
-#include "..\ersky9x.h"
+#include "../ersky9x.h"
 #include "hal.h"
-#include "..\logicio.h"
+#include "../logicio.h"
 #include "stm32f2xx_gpio.h"
 #include "stm32f2xx_rcc.h"
 

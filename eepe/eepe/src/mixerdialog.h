@@ -22,6 +22,7 @@ protected:
 
 private slots:
     void valuesChanged();
+		void setSpeeds() ;
 
 
 private:

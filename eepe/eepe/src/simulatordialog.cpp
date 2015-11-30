@@ -106,6 +106,16 @@ simulatorDialog::simulatorDialog( QWidget *parent) :
 			}
 		}
 //    setupTimer();
+   	if(g_eeGeneral.stickMode & 1)
+   	{
+//   		  nodeLeft->setCenteringY(false);   //mode 1,3 -> THR on left
+//   		  ui->holdLeftY->setChecked(true);
+   	}
+   	else
+   	{
+//   		  nodeRight->setCenteringY(false);   //mode 1,3 -> THR on right
+//   		  ui->holdRightY->setChecked(true);
+   	}
 }
 
 simulatorDialog::~simulatorDialog()
@@ -2561,7 +2571,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         }
         //========== INPUT OFFSET ===============
 //        if ( ( md->enableFmTrim == 0 ) && ( md->lateOffset == 0 ) )
-        if ( md->lateOffset == 0 )
+#ifndef V2
+				if ( md->lateOffset == 0 )
         {
 #if GVARS
             if(md->sOffset) v += calc100toRESX( REG( md->sOffset, -125, 125 )	) ;
@@ -2569,7 +2580,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             if(md->sOffset) v += calc100toRESX(md->sOffset);
 #endif
         }
-
+#endif
 
         //========== DELAY and PAUSE ===============
         if (md->speedUp || md->speedDown || md->delayUp || md->delayDown)  // there are delay values
@@ -2740,7 +2751,9 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         
         //========== lateOffset ===============
 //        if ( ( md->enableFmTrim == 0 ) && ( md->lateOffset ) )
+#ifndef V2
         if ( md->lateOffset )
+#endif
         {
 #if GVARS
             if(md->sOffset) dv += calc100toRESX( REG( md->sOffset, -125, 125 )	) * 100  ;

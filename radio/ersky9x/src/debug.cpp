@@ -47,15 +47,15 @@
 #endif
 
 #ifdef PCBX9D
-#include "x9d/stm32f2xx.h"
-#include "x9d/stm32f2xx_gpio.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_gpio.h"
 #include "X9D/i2c_ee.h"
 #include "X9D/hal.h"
 #endif
 
 #ifdef PCB9XT
-#include "x9d/stm32f2xx.h"
-#include "x9d/stm32f2xx_gpio.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_gpio.h"
 #include "X9D/i2c_9xt.h"
 #include "X9D/hal.h"
 #endif

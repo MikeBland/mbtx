@@ -60,7 +60,7 @@ namespace er9x
 #define EXTRA_CSW	6
 #define EXTRA_VOICE_SW	8
   #include "../../eepe/src/myeeprom.h"
-	ModelData EmodelData ;
+  V1ModelData EmodelData ;
 	MixData *srcMix ;
 }	
 
@@ -1703,7 +1703,7 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 {
 	uint32_t i ;
 	
-  er9x::ModelData *source ;
+  er9x::V1ModelData *source ;
 	source = &er9x::EmodelData ;
 
 	memset( dest, 0, sizeof(*dest) ) ;

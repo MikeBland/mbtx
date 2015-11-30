@@ -39,13 +39,13 @@
 #ifndef SIMU
  	#include "core_cm3.h"
 #endif
-#include "..\sound.h"
-#include "..\ersky9x.h"
-#include "..\myeeprom.h"
-#include "..\drivers.h"
-#include "..\audio.h"
-#include "..\logicio.h"
-#include "..\timers.h"
+#include "../sound.h"
+#include "../ersky9x.h"
+#include "../myeeprom.h"
+#include "../drivers.h"
+#include "../audio.h"
+#include "../logicio.h"
+#include "../timers.h"
 #include "i2c_ee.h"
 #include "hal.h"
 #ifdef PCB9XT

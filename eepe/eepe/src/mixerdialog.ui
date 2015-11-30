@@ -491,7 +491,7 @@ This determines how mixer values are added.
     <string>Source</string>
    </property>
   </widget>
-  <widget class="QLabel" name="offset_label_2">
+  <widget class="QLabel" name="FixHiResLabel">
    <property name="geometry">
     <rect>
      <x>10</x>

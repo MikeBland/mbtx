@@ -49,8 +49,8 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "X9D/hal.h"
 #endif
 #ifdef PCB9XT
-#include "x9d\stm32f2xx.h"
-#include "x9d\stm32f2xx_flash.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_flash.h"
 #include "X9D/hal.h"
 #endif
 

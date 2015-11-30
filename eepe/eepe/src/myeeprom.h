@@ -236,7 +236,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t  spare5:5 ;
     uint8_t  exSwitchWarningStates ;
 #endif
-}) EEGeneral;
+}) V1EEGeneral;
 
 
 #ifdef V2
@@ -356,8 +356,8 @@ PACK(typedef struct t_MixData {
   uint8_t carryTrim:1;
   uint8_t mltpx:2;           // multiplex method 0=+ 1=* 2=replace
 #ifdef V2
-//  uint8_t hiResSlow:1 ;
-  uint8_t lateOffset:1 ;
+  uint8_t hiResSlow:1 ;
+//  uint8_t lateOffset:1 ;
 #else
   uint8_t lateOffset:1 ;
 #endif
@@ -712,7 +712,7 @@ typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
-} __attribute__((packed)) ModelData;
+} __attribute__((packed)) V1ModelData;
 
 #ifdef V2
 PACK(typedef struct t_V2ModelData

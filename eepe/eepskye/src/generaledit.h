@@ -27,6 +27,7 @@ private:
     int StudWeight1,StudWeight2, StudWeight3, StudWeight4;
 		int CurrentTrainerProfile ;
 		int trainerTabLock ;
+		int hardwareTabLock ;
 
 //    bool switchDefPosEditLock;
 //    void getGeneralSwitchDefPos(int i, bool val);

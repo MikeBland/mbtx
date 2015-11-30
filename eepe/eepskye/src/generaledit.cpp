@@ -32,6 +32,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->tabWidget->setCurrentIndex(settings.value("generalEditTab", 0).toInt());
 
 		memcpy(  &g_eeGeneral, &radioData->generalSettings, sizeof( g_eeGeneral) ) ;
+		hardwareTabLock = 1 ;
 //    eeFile->getGeneralSettings(&g_eeGeneral);
     createSwitchMapping( &g_eeGeneral, MAX_DRSWITCH, rData->type ) ;
 
@@ -334,6 +335,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     connect(ui->weightSB_2, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_3, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_4, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
+
+		hardwareTabLock = 0 ;
 }
 
 GeneralEdit::~GeneralEdit()
@@ -1581,6 +1584,10 @@ void GeneralEdit::on_SixPosCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_AilCB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_AIL_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_AIL_3POS ;
 	g_eeGeneral.switchMapping |= value ;
@@ -1595,6 +1602,10 @@ void GeneralEdit::on_AilCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_EleCB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
   g_eeGeneral.switchMapping &= ~(USE_ELE_3POS | USE_ELE_6POS | USE_ELE_6PSB ) ;
 	uint16_t value = x ;
 	if ( value > 5 )
@@ -1631,6 +1642,10 @@ void GeneralEdit::on_EleCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_GeaCB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_GEA_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_GEA_3POS ;
 	g_eeGeneral.switchMapping |= value ;
@@ -1646,6 +1661,10 @@ void GeneralEdit::on_GeaCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_RudCB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_RUD_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_RUD_3POS ;
 	g_eeGeneral.switchMapping |= value ;
@@ -1661,6 +1680,10 @@ void GeneralEdit::on_RudCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_ThrCB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_THR_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_THR_3POS ;
 	g_eeGeneral.switchMapping |= value ;
@@ -1676,6 +1699,10 @@ void GeneralEdit::on_ThrCB_currentIndexChanged(int x )
 
 void GeneralEdit::on_PB1CB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_PB1 : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_PB1 ;
 	g_eeGeneral.switchMapping |= value ;
@@ -1686,6 +1713,10 @@ void GeneralEdit::on_PB1CB_currentIndexChanged(int x )
 
 void GeneralEdit::on_PB2CB_currentIndexChanged(int x )
 {
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
 	uint16_t value = x ? USE_PB2 : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_PB2 ;
 	g_eeGeneral.switchMapping |= value ;

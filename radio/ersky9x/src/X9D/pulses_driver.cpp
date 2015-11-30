@@ -38,7 +38,7 @@
 #include "ersky9x.h"
 #include "stm32f2xx.h"
 #include "logicio.h"
-#include "x9d\hal.h"
+#include "X9D/hal.h"
 #include "X9D/stm32f2xx_usart.h"
 #include "stm32f2xx_rcc.h"
 #include "stm32f2xx_gpio.h"

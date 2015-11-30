@@ -26,7 +26,7 @@
 #endif
 
 #ifdef PCBX9D
-#include "x9d\stm32f2xx.h"
+#include "X9D/stm32f2xx.h"
 #endif
 
 

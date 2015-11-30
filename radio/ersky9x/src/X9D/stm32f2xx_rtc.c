@@ -261,7 +261,7 @@
   */ 
 
 /* Includes ------------------------------------------------------------------*/
-#include "x9d/stm32f2xx.h"
+#include "X9D/stm32f2xx.h"
 #include "stm32f2xx_rtc.h"
 #include "stm32f2xx_rcc.h"
 

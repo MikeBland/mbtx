@@ -307,6 +307,7 @@ uint8_t MaxSwitchIndex ;		// For ON and OFF
 void createSwitchMapping()
 {
 	uint8_t *p = switchMapTable ;
+	FORCE_INDIRECT(p) ;
 	uint8_t map = g_eeGeneral.switchMapping ;
 	*p++ = 0 ;
 	*p++ = HSW_ThrCt ;
@@ -1613,11 +1614,13 @@ void checkTHR()
     }
 }
 
+#ifndef MINIMISE_CODE
 static void checkAlarm() // added by Gohst
 {
     if(g_eeGeneral.disableAlarmWarning) return;
     if(!g_eeGeneral.beeperVal) alert(PSTR(STR_ALARMS_DISABLE));
 }
+#endif
 
 static void checkWarnings()
 {
@@ -3683,7 +3686,8 @@ static void perMain()
         if((s_batCheck==0) && (g_vbat100mV<g_eeGeneral.vBatWarn) && (g_vbat100mV>49)){
 
             audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW);
-            if (g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
+//            if (g_eeGeneral.flashBeep)
+						 g_LightOffCounter = FLASH_DURATION;
         }
     }
     break;
@@ -4381,7 +4385,9 @@ extern uint8_t serialDat0 ;
     g_vbat100mV = anaIn(7) / 14 ;
     checkTHR();
     checkSwitches();
+#ifndef MINIMISE_CODE
     checkAlarm();
+#endif
     checkWarnings();
     clearKeyEvents(); //make sure no keys are down before proceeding
 		putVoiceQueueUpper( g_model.modelVoice ) ;
@@ -4432,7 +4438,7 @@ NOINLINE int16_t getTelemetryValue( uint8_t index )
 	int16_t value ;
 	int16_t *p ;
 	p = &FrskyHubData[index] ;
-	FORCE_INDIRECT(p) ;
+	FORCE_INDIRECT(p) ;	// Minimises time interrupts are disabled
 	cli() ;
 	value = *p ;
 	sei() ;
@@ -4445,7 +4451,7 @@ int16_t getAltbaroWithOffset()
 }
 #endif
 
-int8_t isAgvar(uint8_t value)
+uint8_t isAgvar(uint8_t value)
 {
 	if ( value >= 62 )
 	{

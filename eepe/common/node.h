@@ -79,6 +79,7 @@ public:
     void setCenteringY(bool val) {centerY = val;}
     void setFixedX(bool val) {fixedX = val;}
     void setFixedY(bool val) {fixedY = val;}
+		void stepToBottom() ;
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
@@ -93,6 +94,7 @@ private:
     bool centerY;
     bool fixedX;
     bool fixedY;
+    bool moveToBottom;
     int  ballSize;
     QSpinBox *qsb;
     QList<Edge *> edgeList;

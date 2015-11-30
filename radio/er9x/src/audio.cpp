@@ -156,7 +156,7 @@ void audioQueue::play(uint8_t tFreq, uint8_t tLen, uint8_t tPause, uint8_t flags
 		return ;
 	}
 
-  if (g_eeGeneral.beeperVal)
+//  if (g_eeGeneral.beeperVal)
 	{
 	  int8_t tFreqIncr = (flags >> 6) ;
 		uint8_t tRepeat = flags & 0x0F ;

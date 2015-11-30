@@ -65,6 +65,7 @@ Node::Node(QSpinBox *sb)
     centerY   = true;
     fixedX    = false;
     fixedY    = false;
+    moveToBottom = false;
     ballSize = DEFAULT_BALL_SIZE;
 }
 
@@ -100,9 +101,24 @@ void Node::stepToCenter(qreal step)
             else
                 p.ry() = y;
         }
+				else
+				{
+					if ( moveToBottom )
+					{
+    				moveToBottom = false;
+    				QRectF qr = scene()->sceneRect();
+    				qreal y = qr.bottom() ;
+    				p.ry() = y;
+					}
+				}
         setPos(p);
     }
 
+}
+
+void Node::stepToBottom()
+{
+	moveToBottom = true ;
 }
 
 void Node::setBallSize(int size)

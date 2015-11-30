@@ -5390,8 +5390,12 @@ static void timerBeeps()
         if(tval==10) {audioVoiceDefevent(AU_TIMER_10, V_10SECS);flasht = 1;}	
         if(tval<= 5) { flasht = 1;	if(tval >= 0) {audioVoiceDefevent(AU_TIMER_LT3, tval) ;} /*else audioDefevent(AU_TIMER_LT3);*/}
 
+#ifndef MINIMISE_CODE    
         if(g_eeGeneral.flashBeep && flasht )
-            g_LightOffCounter = FLASH_DURATION;
+#else
+        if( flasht )
+#endif
+					g_LightOffCounter = FLASH_DURATION;
       }
 
 			if ( tval < 0 )
@@ -5420,13 +5424,19 @@ static void timerBeeps()
 				{
           audioDefevent(AU_WARNING1);
 				}
-        if(g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
+#ifndef MINIMISE_CODE    
+        if(g_eeGeneral.flashBeep)
+#endif
+				 g_LightOffCounter = FLASH_DURATION;
       }
         
 			if ( ( tptr->s_timerVal < 0 ) && ( tptr->s_timerVal >= -MAX_ALERT_TIME) )
 	    {
   	    audioDefevent(AU_TIMER_LT3);
-    	  if(g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
+#ifndef MINIMISE_CODE    
+    	  if(g_eeGeneral.flashBeep)
+#endif
+					g_LightOffCounter = FLASH_DURATION;
 	    }
 		}
   }
@@ -5737,6 +5747,11 @@ void menuProcJeti(uint8_t event)
 }
 #endif
 
+void putsTimeNoAtt( uint8_t x,uint8_t y,int16_t tme )
+{
+	putsTime( x, y, tme, 0, 0 ) ;
+}
+
 void menuProcStatistic(uint8_t event)
 {
 	static uint8_t statMenuIndex ;
@@ -5796,13 +5811,13 @@ extern uint8_t SaveMcusr ;
 
     lcd_puts_Pleft( FH*0, PSTR("\021TOT\037\001TME\021TSW\037\001STK\021ST%"));
 
-    putsTime(    7*FW, FH*1, TimeGlobals.s_timeCumAbs, 0, 0);
-    putsTime(   13*FW, FH*1, tptr->s_timeCumSw,      0, 0);
+    putsTimeNoAtt(    7*FW, FH*1, TimeGlobals.s_timeCumAbs );
+    putsTimeNoAtt(   13*FW, FH*1, tptr->s_timeCumSw );
 
-    putsTime(    7*FW, FH*2, tptr->s_timeCumThr, 0, 0);
-    putsTime(   13*FW, FH*2, tptr->s_timeCum16ThrP/16, 0, 0);
+    putsTimeNoAtt(    7*FW, FH*2, tptr->s_timeCumThr );
+    putsTimeNoAtt(   13*FW, FH*2, tptr->s_timeCum16ThrP/16 );
 
-    putsTime(   13*FW, FH*0, TimeGlobals.s_timeCumTot, 0, 0);
+    putsTimeNoAtt(   13*FW, FH*0, TimeGlobals.s_timeCumTot );
 
 // Temp stack trace display
 
@@ -8546,10 +8561,14 @@ Str_Hardware
 				subN += 1 ;
 			}
       
+#ifndef MINIMISE_CODE    
 			g_eeGeneral.flashBeep = onoffItem( g_eeGeneral.flashBeep, y, sub==subN ) ;
+#endif
 #if ROTATE_SCREEN
+#ifndef MINIMISE_CODE    
 			y += FH ;
 			subN += 1 ;
+#endif
 
       uint8_t b = g_eeGeneral.rotateScreen;
       uint8_t c = onoffItem( b, y, sub==subN ) ;
@@ -8752,11 +8771,20 @@ Str_Hardware
 		case M_ALARMS :
 		{	
 			TITLEP( Str_Alarms ) ;
+#ifndef MINIMISE_CODE    
 #ifdef FRSKY
 			IlinesCount = 6 ;
 #else
 			IlinesCount = 6 ;
 #endif
+#else
+#ifdef FRSKY
+			IlinesCount = 5 ;
+#else
+			IlinesCount = 5 ;
+#endif
+#endif
+
   		uint8_t attr = LEFT ;
       lcd_puts_Pleft( y,PSTR(STR_BATT_WARN"\037"STR_INACT_ALARM));
       if(sub==subN) { attr = blink | LEFT ; CHECK_INCDEC_H_GENVAR( g_eeGeneral.vBatWarn, 40, 120); } //5-10V
@@ -8785,10 +8813,12 @@ Str_Hardware
   		y += FH ;
 			subN += 1 ;
 
+#ifndef MINIMISE_CODE
       b = g_eeGeneral.disableAlarmWarning;
       g_eeGeneral.disableAlarmWarning = offonMenuItem( b, y, PSTR(STR_ALARM_WARN), sub==subN ) ;
   		y += FH ;
 			subN += 1 ;
+#endif
 					    
 		} 
 		break ;
@@ -9935,6 +9965,10 @@ void displayLetterArrow( uint8_t x, uint8_t y, uint8_t letter, uint8_t value )
 	lcd_putc( x+FW, y, value  ) ;
 }
 #endif
+
+
+const prog_char APM StrNZ_country[] = { FW*10, 2, 3, 'A','m','e','J','a','p','E','u','r'};
+const prog_char APM StrNZ_xjtType[] = { FW*10, 2, 3, 'D','1','6','D','8',' ','L','R','P' };
 
 void menuProcModelIndex(uint8_t event)
 {
@@ -11304,11 +11338,11 @@ Str_Protocol
 			{
 				lcd_puts_Pleft( y, PSTR(" Type\037 Country\037Bind\037Range") ) ;
 	  
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\002\003D16D8 LRP"), g_model.sub_protocol, (sub==subN) ) ;
+				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) ) ;
 				y += FH ;
 				subN++;
 			
-				g_model.country = checkIndexed( y, PSTR(FWx10"\002\003AmeJapEur"), g_model.country, (sub==subN) ) ;
+				g_model.country = checkIndexed( y, StrNZ_country, g_model.country, (sub==subN) ) ;
 				y += FH ;
 				subN++;
 			}

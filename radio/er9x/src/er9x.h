@@ -1303,7 +1303,7 @@ extern int8_t REG(int8_t x, int8_t min, int8_t max) ;
 extern int8_t REG100_100(int8_t x) ;
 
 extern uint16_t evalChkSum( void ) ;
-extern int8_t isAgvar(uint8_t value) ;
+extern uint8_t isAgvar(uint8_t value) ;
 struct t_calib
 {
 	int16_t midVals[7];

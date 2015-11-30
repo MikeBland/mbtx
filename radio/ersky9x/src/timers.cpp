@@ -24,8 +24,8 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
-#include "x9d\stm32f2xx.h"
-#include "x9d\hal.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/hal.h"
 #include "debug.h"
 #endif
 

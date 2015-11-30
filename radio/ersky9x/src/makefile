@@ -125,7 +125,7 @@ ifeq ($(RUN_FROM_FLASH), 0)
  else
    ifeq ($(PCB), X9D)
 #     ARCH = ARM
-     LDSCRIPT = x9d/stm32_flash.ld
+     LDSCRIPT = X9D/stm32_flash.ld
 #     TRGT = arm-none-eabi-
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
@@ -143,7 +143,7 @@ else
  LDSCRIPT = sam3s2c_flash.ld
  else
   ifeq ($(PCB), 9XT)
-   LDSCRIPT = x9d/stm32_flash.ld
+   LDSCRIPT = X9D/stm32_flash.ld
    CPPDEFS += -DHSE_VALUE=12000000
    CPPDEFS += -DPCB9XT 
    CPPDEFS += -DPCBSP
@@ -151,7 +151,7 @@ else
   else
    ifeq ($(PCB), X9D)
 #     ARCH = ARM
-     LDSCRIPT = x9d/stm32_flash.ld
+     LDSCRIPT = X9D/stm32_flash.ld
 #     TRGT = arm-none-eabi-
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
@@ -203,52 +203,52 @@ UADEFS =
 ifeq ($(PCB), X9D)
 
 # List C source files here
-SRC  = x9d/system_stm32f2xx.c \
-       x9d/stm32f2xx_gpio.c \
-       x9d/stm32f2xx_spi.c \
-       x9d/stm32f2xx_rtc.c \
-       x9d/stm32f2xx_pwr.c \
-       x9d/stm32f2xx_rcc.c \
-       x9d/misc.c \
-       x9d/usbd_desc.c   \
-       x9d/usb_core.c    \
-       x9d/usb_dcd.c     \
-       x9d/usb_bsp.c     \
-       x9d/usb_dcd_int.c \
-       x9d/usbd_core.c   \
-       x9d/usbd_ioreq.c  \
-       x9d/usbd_req.c    \
-       x9d/usbd_hid_joystick.c \
-       x9d/usb_driver.c    \
+SRC  = X9D/system_stm32f2xx.c \
+       X9D/stm32f2xx_gpio.c \
+       X9D/stm32f2xx_spi.c \
+       X9D/stm32f2xx_rtc.c \
+       X9D/stm32f2xx_pwr.c \
+       X9D/stm32f2xx_rcc.c \
+       X9D/misc.c \
+       X9D/usbd_desc.c   \
+       X9D/usb_core.c    \
+       X9D/usb_dcd.c     \
+       X9D/usb_bsp.c     \
+       X9D/usb_dcd_int.c \
+       X9D/usbd_core.c   \
+       X9D/usbd_ioreq.c  \
+       X9D/usbd_req.c    \
+       X9D/usbd_hid_joystick.c \
+       X9D/usb_driver.c    \
        port.c \
        coos.c
 
-#       x9d/usb_bsp.c \
-#       x9d/usbd_desc.c \
-#       x9d/usb/src/usb_core.c \
-#       x9d/usb/src/usb_dcd.c \
-#       x9d/usb/src/usb_dcd_int.c \
-#       x9d/usb/src/usbd_core.c \
-#       x9d/usb/src/usbd_ioreq.c \
-#       x9d/usb/src/usbd_req.c \
-#       x9d/usb/src/usbd_msc_data.c \
-#       x9d/usb/src/usbd_msc_scsi.c \
-#       x9d/usb/src/usbd_msc_bot.c \
-#       x9d/usb/src/usbd_msc_core.c \
+#       X9D/usb_bsp.c \
+#       X9D/usbd_desc.c \
+#       X9D/usb/src/usb_core.c \
+#       X9D/usb/src/usb_dcd.c \
+#       X9D/usb/src/usb_dcd_int.c \
+#       X9D/usb/src/usbd_core.c \
+#       X9D/usb/src/usbd_ioreq.c \
+#       X9D/usb/src/usbd_req.c \
+#       X9D/usb/src/usbd_msc_data.c \
+#       X9D/usb/src/usbd_msc_scsi.c \
+#       X9D/usb/src/usbd_msc_bot.c \
+#       X9D/usb/src/usbd_msc_core.c \
 
 
 
 CPPSRC = ersky9x.cpp \
-         x9d/lcd_driver.cpp \
-         x9d/aspi.cpp \
-         x9d/sound.cpp \
-         x9d/diskio.cpp \
-         x9d/power.cpp \
-         x9d/pulses_driver.cpp \
-         x9d/watchdog.cpp \
-       	x9d/i2c_ee.cpp \
-         x9d/rtc_driver.cpp \
-         x9d/eeprom_rlc.cpp \
+         X9D/lcd_driver.cpp \
+         X9D/aspi.cpp \
+         X9D/sound.cpp \
+         X9D/diskio.cpp \
+         X9D/power.cpp \
+         X9D/pulses_driver.cpp \
+         X9D/watchdog.cpp \
+       	X9D/i2c_ee.cpp \
+         X9D/rtc_driver.cpp \
+         X9D/eeprom_rlc.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
@@ -272,16 +272,16 @@ CPPSRC = ersky9x.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
-         x9d/usbd_usr.cpp \
+         X9D/usbd_usr.cpp \
 		   lcd.cpp
 
 #         gtime.cpp \
 #         massstorage.cpp \
-#         x9d/usbd_usr.cpp \
-#         x9d/usbd_storage_msd.cpp \
+#         X9D/usbd_usr.cpp \
+#         X9D/usbd_storage_msd.cpp \
 
 # List ASM source files here
-ASRC = x9d/startup_stm32f2xx.s
+ASRC = X9D/startup_stm32f2xx.s
 
 else
 
@@ -317,36 +317,36 @@ else
 ifeq ($(PCB), 9XT)
 
 # List C source files here
-SRC  = x9d/system_stm32f2xx.c \
-       x9d/stm32f2xx_gpio.c \
-       x9d/stm32f2xx_spi.c \
-       x9d/stm32f2xx_rtc.c \
-       x9d/stm32f2xx_pwr.c \
-       x9d/stm32f2xx_rcc.c \
-       x9d/misc.c \
-       x9d/usbd_desc.c   \
-       x9d/usb_core.c    \
-       x9d/usb_dcd.c     \
-       x9d/usb_bsp.c     \
-       x9d/usb_dcd_int.c \
-       x9d/usbd_core.c   \
-       x9d/usbd_ioreq.c  \
-       x9d/usbd_req.c    \
-       x9d/usbd_hid_joystick.c \
-       x9d/usb_driver.c    \
+SRC  = X9D/system_stm32f2xx.c \
+       X9D/stm32f2xx_gpio.c \
+       X9D/stm32f2xx_spi.c \
+       X9D/stm32f2xx_rtc.c \
+       X9D/stm32f2xx_pwr.c \
+       X9D/stm32f2xx_rcc.c \
+       X9D/misc.c \
+       X9D/usbd_desc.c   \
+       X9D/usb_core.c    \
+       X9D/usb_dcd.c     \
+       X9D/usb_bsp.c     \
+       X9D/usb_dcd_int.c \
+       X9D/usbd_core.c   \
+       X9D/usbd_ioreq.c  \
+       X9D/usbd_req.c    \
+       X9D/usbd_hid_joystick.c \
+       X9D/usb_driver.c    \
        port.c \
        coos.c
 
 
 CPPSRC = ersky9x.cpp \
-         x9d/aspi.cpp \
-         x9d/sound.cpp \
-         x9d/diskio.cpp \
-         x9d/power.cpp \
-         x9d/pulses_driver.cpp \
-         x9d/watchdog.cpp \
-         x9d/rtc_driver.cpp \
-         x9d/i2c_9xt.cpp \
+         X9D/aspi.cpp \
+         X9D/sound.cpp \
+         X9D/diskio.cpp \
+         X9D/power.cpp \
+         X9D/pulses_driver.cpp \
+         X9D/watchdog.cpp \
+         X9D/rtc_driver.cpp \
+         X9D/i2c_9xt.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
@@ -374,15 +374,15 @@ CPPSRC = ersky9x.cpp \
 			sbus.cpp \
 			mega64.cpp \
 			isp.cpp \
-         x9d/usbd_usr.cpp \
+         X9D/usbd_usr.cpp \
 		   lcd.cpp
 
-#         x9d/lcd_driver.cpp \
-#       	x9d/i2c_ee.cpp \
-#         x9d/eeprom_rlc.cpp \
+#         X9D/lcd_driver.cpp \
+#       	X9D/i2c_ee.cpp \
+#         X9D/eeprom_rlc.cpp \
 
 # List ASM source files here
-ASRC = x9d/startup_stm32f2xx.s
+ASRC = X9D/startup_stm32f2xx.s
 
 else
 
@@ -521,7 +521,7 @@ CPFLAGS += $(CPPDEFS)
 
 ifeq ($(PCB), X9D)
 CPFLAGS += -Ix9d
-CPPFLAGS += -Ix9d/usb/src -Ix9d
+CPPFLAGS += -IX9D/usb/src -Ix9d
 endif
 
 #   ifeq ($(STAMP), 1)
@@ -622,17 +622,17 @@ $(OBJDIR):
 #$(OBJDIR)/%.o : %.cpp
 #	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 $(CPPOBJS) : $(OBJDIR)/%.o : %.cpp
-	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
+	@mkdir -p $(@D); $(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.c
 #	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 $(COBJS) : $(OBJDIR)/%.o : %.c
-	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
+	@mkdir -p $(@D); $(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.s
 #	$(AS) -c $(ASFLAGS) $< -o $@
 $(AOBJS) : $(OBJDIR)/%.o : %.s
-	$(AS) -c $(ASFLAGS) $< -o $@
+	@mkdir -p $(@D); $(AS) -c $(ASFLAGS) $< -o $@
 
 #%elf: $(OBJS)
 #	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@

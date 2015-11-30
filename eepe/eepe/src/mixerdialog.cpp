@@ -10,7 +10,12 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
     ui->setupUi(this);
     md = mixdata;
 		mType = eepromType ;
+#ifndef V2
 		delaySlowSpeed = delaySpeed ;
+#else
+		delaySpeed = delaySlowSpeed = md->hiResSlow ;
+		ui->FixHiResLabel->setText("HiResDelay") ;
+#endif
 		ValuesEditLock = false ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
@@ -81,7 +86,11 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
     populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -125, 125 ) ;
 
     ui->trimChkB->setChecked(md->carryTrim==0);
+#ifndef V2
     ui->lateOffsetChkB->setChecked(md->lateOffset);
+#else
+    ui->lateOffsetChkB->setChecked(md->hiResSlow);
+#endif
     populateSwitchCB(ui->switchesCB,md->swtch, eepromType ) ;
     ui->warningCB->setCurrentIndex(md->mixWarn);
     ui->mltpxCB->setCurrentIndex(md->mltpx);
@@ -119,43 +128,7 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
 			}
 		}
 
-
-		if ( delaySpeed )
-		{
-			ui->delayDownSB->setDecimals( 1 ) ;
-			ui->delayDownSB->setSingleStep( 0.2 ) ;
-			ui->delayDownSB->setMaximum ( 3.0 ) ;
-			ui->delayDownSB->setValue(md->delayDown/5.0) ;
-			
-			ui->delayUpSB->setDecimals( 1 ) ;
-			ui->delayUpSB->setSingleStep( 0.2 ) ;
-			ui->delayUpSB->setMaximum ( 3.0 ) ;
-    	ui->delayUpSB->setValue(md->delayUp/5.0) ;
-			
-			ui->slowDownSB->setDecimals( 1 ) ;
-			ui->slowDownSB->setSingleStep( 0.2 ) ;
-			ui->slowDownSB->setMaximum ( 3.0 ) ;
-    	ui->slowDownSB->setValue(md->speedDown/5.0) ;
-			
-			ui->slowUpSB->setDecimals( 1 ) ;
-			ui->slowUpSB->setSingleStep( 0.2 ) ;
-			ui->slowUpSB->setMaximum ( 3.0 ) ;
-    	ui->slowUpSB->setValue(md->speedUp/5.0) ;
-		}
-		else
-		{
-			ui->delayDownSB->setDecimals( 0 ) ;
-			ui->delayDownSB->setSingleStep( 1 ) ;
-			ui->delayDownSB->setMaximum ( 15 ) ;
-			ui->delayUpSB->setDecimals( 0 ) ;
-			ui->slowDownSB->setDecimals( 0 ) ;
-			ui->slowUpSB->setDecimals( 0 ) ;
-	    ui->delayDownSB->setValue(md->delayDown) ;
-    	ui->delayUpSB->setValue(md->delayUp) ;
-    	ui->slowDownSB->setValue(md->speedDown) ;
-    	ui->slowUpSB->setValue(md->speedUp) ;
-		}
-
+		setSpeeds() ;
 
     mixCommennt = comment;
     ui->mixerComment->setPlainText(mixCommennt->trimmed());
@@ -201,6 +174,45 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
 MixerDialog::~MixerDialog()
 {
     delete ui;
+}
+
+void MixerDialog::setSpeeds()
+{
+  if ( delaySlowSpeed )
+	{
+		ui->delayDownSB->setDecimals( 1 ) ;
+		ui->delayDownSB->setSingleStep( 0.2 ) ;
+		ui->delayDownSB->setMaximum ( 3.0 ) ;
+		ui->delayDownSB->setValue(md->delayDown/5.0) ;
+			
+		ui->delayUpSB->setDecimals( 1 ) ;
+		ui->delayUpSB->setSingleStep( 0.2 ) ;
+		ui->delayUpSB->setMaximum ( 3.0 ) ;
+    ui->delayUpSB->setValue(md->delayUp/5.0) ;
+			
+		ui->slowDownSB->setDecimals( 1 ) ;
+		ui->slowDownSB->setSingleStep( 0.2 ) ;
+		ui->slowDownSB->setMaximum ( 3.0 ) ;
+    ui->slowDownSB->setValue(md->speedDown/5.0) ;
+			
+		ui->slowUpSB->setDecimals( 1 ) ;
+		ui->slowUpSB->setSingleStep( 0.2 ) ;
+		ui->slowUpSB->setMaximum ( 3.0 ) ;
+    ui->slowUpSB->setValue(md->speedUp/5.0) ;
+	}
+	else
+	{
+		ui->delayDownSB->setDecimals( 0 ) ;
+		ui->delayDownSB->setSingleStep( 1 ) ;
+		ui->delayDownSB->setMaximum ( 15 ) ;
+		ui->delayUpSB->setDecimals( 0 ) ;
+		ui->slowDownSB->setDecimals( 0 ) ;
+		ui->slowUpSB->setDecimals( 0 ) ;
+	  ui->delayDownSB->setValue(md->delayDown) ;
+    ui->delayUpSB->setValue(md->delayUp) ;
+    ui->slowDownSB->setValue(md->speedDown) ;
+    ui->slowUpSB->setValue(md->speedUp) ;
+	}
 }
 
 void MixerDialog::changeEvent(QEvent *e)
@@ -290,6 +302,15 @@ void MixerDialog::valuesChanged()
     md->swtch        = getSwitchCbValue( ui->switchesCB, mType ) ;
     md->mixWarn      = ui->warningCB->currentIndex();
     md->mltpx        = ui->mltpxCB->currentIndex();
+
+#ifndef V2
+		md->lateOffset   = ui->lateOffsetChkB->checkState() ? 1 : 0 ;
+#else
+		md->hiResSlow   = ui->lateOffsetChkB->checkState() ? 1 : 0 ;
+    delaySlowSpeed = md->hiResSlow ;
+		setSpeeds() ;
+#endif
+		 
 		if ( delaySlowSpeed )
 		{
     	md->delayDown    = (ui->delayDownSB->value()+0.1 ) * 5 ;
@@ -330,8 +351,6 @@ void MixerDialog::valuesChanged()
 				updateChannels() ;
 			}
 		}
-		
-		md->lateOffset   = ui->lateOffsetChkB->checkState() ? 1 : 0 ;
 		
 		oldcurvemode = md->differential ;
 		if ( oldcurvemode == 0 )
