@@ -126,7 +126,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   throttleReversed:1;
     uint8_t   minuteBeep:1;
     uint8_t   preBeep:1;
-    uint8_t   unused_flashBeep:1;
+    uint8_t   flashBeep:1;
     uint8_t   disableSplashScreen:1;
     uint8_t   disablePotScroll:1;
     uint8_t   disableBG:1;

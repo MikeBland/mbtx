@@ -155,7 +155,6 @@ const prog_uint8_t APM TelemValid[] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } ;
 #define EDIT_DR_SWITCH_MOMENT	0x02
 int8_t edit_dr_switch( uint8_t x, uint8_t y, int8_t drswitch, uint8_t attr, uint8_t edit ) ;
 
-
 extern MenuFuncP g_menuStack[] ;
 extern uint8_t g_menuStackPtr ;
 static MenuFuncP lastPopMenu()
@@ -6150,6 +6149,20 @@ int8_t unit ;
 #endif
 #endif
 
+#ifndef QUICK_SELECT
+static
+#endif
+void putsDblSizeName( uint8_t y )
+{
+#ifdef SMALL_DBL
+	lcd_putsnAtt( 24, y, g_model.name, 10, DBLSIZE | BSS ) ;
+#else	
+	for(uint8_t i=0;i<sizeof(g_model.name);i++)
+		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
+#endif
+}
+
+
 void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index )
 {
 #ifdef XSW_MOD
@@ -11219,8 +11232,9 @@ Str_Protocol
 //#else
 				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 //#endif
+				uint8_t ppmNch = g_model.ppmNCH ;
 				if(g_model.sub_protocol==attr)
-					attr=(g_model.ppmNCH >> 4) &0x07 ;
+					attr=(ppmNch >> 4) &0x07 ;
 				else
 					attr=0;
 				y += FH ;
@@ -11281,11 +11295,12 @@ Str_Protocol
 //						s=PSTR(FWx10"\000"M_NONE_STR);
 //						break;
 //				}
-				g_model.ppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.ppmNCH & 0x8F);
+				ppmNch = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (ppmNch & 0x8F);
+				g_model.ppmNCH = ppmNch ;
 				y += FH ;
 				subN++;
 				// Power stored in ppmNCH bit7 & Option stored in option_protocol
-				uint8_t value = (g_model.ppmNCH>>7)&0x01 ;
+				uint8_t value = (ppmNch>>7)&0x01 ;
 				lcd_putsAttIdx(  6*FW, y, PSTR(M_LH_STR), value, (sub==subN && subSub==0 ? blink:0) );
 //				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
 				lcd_outdezAtt( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0) ) ;
@@ -11296,7 +11311,12 @@ Str_Protocol
 					if(subSub==0 && s_editing)
 					{
 						CHECK_INCDEC_H_MODELVAR_0(value, 1 );
-						g_model.ppmNCH = (value<<7) + (g_model.ppmNCH&0x7F);
+						ppmNch &= 0x7F ;
+						if ( value )
+						{
+							ppmNch |= 0x80 ;
+						}
+						g_model.ppmNCH = ppmNch ;
 					}
 					if(subSub==1 && s_editing)
 						CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
@@ -11304,7 +11324,8 @@ Str_Protocol
 				y += FH ;
 				subN++;
 				// BIND use PXX_BIND flag & Autobind stored in sub_protocol bit6
-				value = (g_model.sub_protocol>>6)&0x01 ;
+				uint8_t subProto = g_model.sub_protocol ;
+				value = (subProto>>6)&0x01 ;
 				lcd_putsAttIdx(  20*FW, y, PSTR(M_NY_STR), value, (sub==subN && subSub==1 ? blink:0) );
 				if(sub==subN)
 				{
@@ -11314,7 +11335,12 @@ Str_Protocol
 					if(subSub==1 && s_editing)
 					{
 						CHECK_INCDEC_H_MODELVAR_0(value, 1 );
-						g_model.sub_protocol = (value<< 6) + (g_model.sub_protocol & 0xBF);
+						subProto &= 0xBF ;
+						if ( value )
+						{
+							subProto |= 0x40 ;
+						}
+						g_model.sub_protocol = subProto ;
 					}
 				}		
 				y += FH ;
@@ -11336,7 +11362,7 @@ Str_Protocol
 
 			if (protocol == PROTO_PXX)
 			{
-				lcd_puts_Pleft( y, PSTR(" Type\037 Country\037Bind\037Range") ) ;
+				lcd_puts_Pleft( y, PSTR(STR_PXX_TYPE) ) ;
 	  
 				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) ) ;
 				y += FH ;
@@ -11345,10 +11371,10 @@ Str_Protocol
 				g_model.country = checkIndexed( y, StrNZ_country, g_model.country, (sub==subN) ) ;
 				y += FH ;
 				subN++;
-			}
+//			}
 			
-			if (protocol == PROTO_PXX)
-			{
+//			if (protocol == PROTO_PXX)
+//			{
   			if(sub==subN)
 				{
 					rangeBindAction( y, PXX_BIND ) ;

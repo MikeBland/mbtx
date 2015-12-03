@@ -106,10 +106,10 @@
 #define STR_T_S_4CHAN      "4 voies simple"
 #define STR_T_TCUT         "Coupure Gaz"
 #define STR_T_STICK_TCUT   "Coup. Gaz Manche"
-#define STR_T_V_TAIL       "Empennage en V"
+#define STR_T_V_TAIL       "Empennage V"
 #define STR_T_ELEVON       "Elevon/Delta"
-#define STR_T_HELI_SETUP   "Setup Heli"
-#define STR_T_GYRO         "Setup Gyro"
+#define STR_T_HELI_SETUP   "Config Heli"
+#define STR_T_GYRO         "Config Gyro"
 #define STR_T_SERVO_TEST16 "Test Servos(16)"
 #define STR_T_SERVO_TEST8  "Test Servos(8)"
 
@@ -123,9 +123,9 @@
 #define STR_VERSION        "Version"
 #define STR_TRAINER        "Ecolage"
 #define STR_SLAVE          "\007Slave" 
-#define STR_MENU_DONE      "[MENU] WHEN DONE"
+#define STR_MENU_DONE      "[MENU] si OK"
 #define STR_CURVES         "Courbes"
-#define STR_CURVE          "CURVE"
+#define STR_CURVE          "COURB"
 #define STR_GLOBAL_VAR     "GLOBAL VAR"
 #define STR_VALUE          "Valeur"
 #define STR_PRESET         "PRESET"
@@ -141,14 +141,14 @@
 #define STR_ALRM           "alrm"
 #define STR_TELEMETRY2     "TELEMETRIE2"
 #define STR_TX_RSSIALRM    "TxRSSIalrm"
-#define STR_NUM_BLADES     "Nb de pales"
+#define STR_NUM_BLADES     "Nb. pales"
 //#if ALT_ALARM
 //#define STR_ALT_ALARM      "AltAlarm"
 //#define STR_OFF122400      "\003OFF122400"
 //#endif
-#define STR_VOLT_THRES     "Volt Thres="
+#define STR_VOLT_THRES     "Seuil Volt="
 #define STR_GPS_ALTMAIN    "GpsAltMain"
-#define STR_CUSTOM_DISP    "Affichage Perso"
+#define STR_CUSTOM_DISP    "Affich. Perso"
 #define STR_FAS_OFFSET     "FAS Offset"
 //#define STR_VARIO_SRC_IDX  "Vario: Source\000\132\002\004----vspdA2  "
 #define STR_VARIO_SRC      "Vario: Source"
@@ -181,7 +181,7 @@
 #define STR_2TRIM          "\001Trim"
 #define STR_15DIFF         "\010Diff"
 #define STR_Curve          "Courbe"
-#define STR_2WARNING       "\001Warning"
+#define STR_2WARNING       "\001Alerte"
 #define STR_2MULTIPLEX     "\001Multpx"
 // STR_ADD_MULT_REP indexed 8 chars each
 #define STR_ADD_MULT_REP   "\010Ajoute  Multipl.Remplace"
@@ -245,12 +245,13 @@
 #define STR_23_US          "\023uS"
 // STR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
 #define STR_PPMFRAME_MSEC  "Trame PPM\015mSec"
-#define STR_SEND_RX_NUM    "Bind  Range"
+#define STR_SEND_RX_NUM    "Bind  Portee"
 #define STR_DSM_TYPE       "Type DSM"
+#define STR_PXX_TYPE       " Type\037 Region \037Bind\037Portee"
 #ifdef MULTI_PROTOCOL
-#define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
+#define STR_MULTI_TYPE		"Codage\037Type\037Power\037Bind     Autobind\037Portee"
 #define STR_MULTI_OPTION	"\013Option"
-#define M_NONE_STR			"\004None"
+#define M_NONE_STR			"\004N/A"
 #define M_NY_STR			"\001NY"
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
@@ -259,11 +260,11 @@
 #define STR_SHIFT_SEL      "Polarite"
 // STR_POS_NEG indexed 3 chars each
 #define STR_POS_NEG        "\003POSNEG"
-#define STR_VOL_PAGE				STR_E_LIMITS"\037""Zero des gaz\037"STR_THR_REVERSE"\037""Pleins gaz""\037"STR_T_TRIM"\037"STR_T_EXPO
+#define STR_VOL_PAGE				STR_E_LIMITS"\037""Zero gaz\037"STR_THR_REVERSE"\037""Pleins gaz""\037"STR_T_TRIM"\037"STR_T_EXPO
 #define STR_E_LIMITS       "Limites etendues"
 #define STR_Trainer        "Ecolage"
 #define STR_T2THTRIG       "T2ThTrig"
-#define STR_AUTO_LIMITS    "Auto Limits"
+#define STR_AUTO_LIMITS    "Limites auto"
 // STR_1_RETA indexed 1 char each
 #define STR_1_RETA         "\001RETA"
 #define STR_FL_MODE        "FL MODE"
@@ -273,7 +274,7 @@
 #define STR_MODES          "Modes"
 #define STR_SP_FM0         " FM0"
 #define STR_SP_FM          " FM"
-#define STR_HELI_SETUP     "Setup Heli"
+#define STR_HELI_SETUP     "Conf. Heli"
 #define STR_HELI_TEXT			 "Type Plateau\037Collectif\037Swash Ring\037Direction ELE\037Direction AIL\037Direction COL"
 #define STR_SWASH_TYPE     "Type Plateau"
 #define STR_COLLECTIVE     "Collectif"
@@ -285,14 +286,14 @@
 #define STR_MODEL_POPUP    "EDITER\0SELECT.\0SEL/EDIT\0COPIER\0DEPLACER\0SUPPRIM.\0SAUVEGA.\0RESTAUR."
 #define STR_MODELSEL       "MODELSEL"
 // STR_11_FREE after \011 max 4 chars
-#define STR_11_FREE        "\011free"
+#define STR_11_FREE        "\011disp"
 #define STR_CALIBRATION    "Etalonnage"
 // STR_MENU_TO_START after \003 max 15 chars
-#define STR_MENU_TO_START  "\003[MENU] TO START"
+#define STR_MENU_TO_START  "\003[MENU] PR DEBUT"
 // STR_SET_MIDPOINT after \005 max 11 chars
-#define STR_SET_MIDPOINT   "\005SET MIDPOINT"
+#define STR_SET_MIDPOINT   "\005REG NEUTRES"
 // STR_MOVE_STICKS after \003 max 15 chars
-#define STR_MOVE_STICKS    "\003MOVE STICKS/POTS"
+#define STR_MOVE_STICKS    "\003BUTEES MAN/POTS"
 #define STR_ANA            "ANA"
 #define STR_DIAG           "DIAG"
 #define STR_KEYNAMES       " Left\037Right\037\003Up\037 Down\037 Exit\037 Menu"
@@ -320,17 +321,17 @@
 // STR_INACT_ALARM m for minutes after \023 - single char
 #define STR_INACT_ALARM    "Alarme inactivite\023m"
 #define STR_THR_REVERSE    "Inverser gaz"
-#define STR_MINUTE_BEEP    "Bips minute"
-#define STR_BEEP_COUNTDOWN "Bips de decompte"
-#define STR_FLASH_ON_BEEP  "Flash + bips"
+#define STR_MINUTE_BEEP    "Bip/minute"
+#define STR_BEEP_COUNTDOWN "Bip/decompte"
+#define STR_FLASH_ON_BEEP  "Flash av bip"
 #define STR_LIGHT_SWITCH   "Inter eclairage"
 #define STR_LIGHT_INVERT   "Inv. retroecl."
 #define STR_LIGHT_AFTER    "Coupure apres :\023s"
 #define STR_LIGHT_STICK    "Rallumer si mvmt\023s"
-#define STR_SPLASH_SCREEN  "Affiche Accueil"
+#define STR_SPLASH_SCREEN  "Logo Accueil"
 #define STR_SPLASH_NAME    "Affiche Nom"
 #define STR_THR_WARNING    "Alerte gaz"
-#define STR_DEAFULT_SW_PAGE "Int/defaut\037Renom. manches\037Auto Limits\037Controle volume"
+#define STR_DEAFULT_SW_PAGE "Int/defaut\037Renom. manches\037Limites Auto\037Controle volume"
 #define STR_DEAFULT_SW     "Int/defaut"
 #define STR_MEM_WARN       "Alerte memoire"
 #define STR_ALARM_WARN     "Alerte alarmes"
@@ -388,7 +389,7 @@
 #define STR_SPD_KTS_MAX    "Vit=\011kts Max="
 #define STR_11_MPH         "\011mph"
 
-#define STR_SINK_TONES	   "Bips/descente"
+#define STR_SINK_TONES	   "Bip/descente"
 #define STR_FRSKY_MOD      "Mod Frsky faite"
 #define STR_TEZ_R90				 "TelemetrEZ>=r90"
 
@@ -418,8 +419,8 @@
 #define STR_CPU_TEMP_MAX   "temp. CPU\014C Max\024C"
 #define STR_MEMORY_STAT    "MEMORY STAT"
 #define STR_GENERAL        "General"
-#define STR_Model          "Modèle"
-#define STR_RADIO_SETUP2   "RADIO SETUP2"
+#define STR_Model          "Modele"
+#define STR_RADIO_SETUP2   "CONF. RADIO2"
 #define STR_BRIGHTNESS     "Luminosite"
 #define STR_CAPACITY_ALARM "Capacity Alarm"
 #define STR_BT_BAUDRATE    "Bt baudrate"
@@ -429,7 +430,7 @@
 #define STR_STICK_RV_GAIN  "Stick RV Gain"
 #define STR_STICK_RH_GAIN  "Stick RH Gain"
 
-#define STR_DISPLAY		   "Affichage"
+#define STR_DISPLAY	   "Affichage"
 #define STR_PROTOCOL	   "Codage"
 #define STR_HARDWARE	   "Hardware"
 #define STR_ALARMS  	   "Alarmes"
@@ -443,7 +444,7 @@
 #define STR_VOICEALA   	   "Alarmes Vocales"
 #define STR_CLEAR_ALL_MIXES "Suppr. TOUS les mix?"
 
-#define STR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics"
+#define STR_MAIN_POPUP		"Sel. Modele \0Conf.Modele\0Menu prec\0Conf. Radio\0Stats"
 #define MODEL_SETUP_OFFSET	13
 #define RADIO_SETUP_OFFSET	35
 

@@ -1052,7 +1052,6 @@ void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att);
 void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att);
 void putsVBat(uint8_t x,uint8_t y,uint8_t att);
 void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2);
-void putsDblSizeName( uint8_t y ) ;
 
 #ifdef FRSKY
 void putsTelemetry(uint8_t x, uint8_t y, uint8_t val, uint8_t unit, uint8_t att);
@@ -1419,6 +1418,10 @@ uint8_t throttleReversed( void ) ;
 void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index ) ;
 
 #define SMALL_DBL
+
+#ifdef QUICK_SELECT
+void putsDblSizeName( uint8_t y ) ;
+#endif
 
 #endif // er9x_h
 /*eof*/

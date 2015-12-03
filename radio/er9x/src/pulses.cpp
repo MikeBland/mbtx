@@ -1115,7 +1115,7 @@ void setupPulsesSerial(void)
 	{
 		pass_bitlen = BITLEN_SBUS ;
 		uint8_t outputbitsavailable = 0 ;
-		uint32_t outputbits = 0 ;
+		__uint24 outputbits = 0 ;
 		uint8_t i ;
 		sendByteSerial(0x0F) ;
 		
@@ -1134,7 +1134,7 @@ void setupPulsesSerial(void)
 			{
 				x = 2047 ;
 			}
-			outputbits |= (uint32_t)x << outputbitsavailable ;
+			outputbits |= (__uint24)x << outputbitsavailable ;
 			outputbitsavailable += 11 ;
 			while ( outputbitsavailable >= 8 )
 			{

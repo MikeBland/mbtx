@@ -1637,16 +1637,6 @@ void putWarnSwitch( uint8_t x, uint8_t idx )
 
 }
 
-void putsDblSizeName( uint8_t y )
-{
-#ifdef SMALL_DBL
-	lcd_putsnAtt( 24, y, g_model.name, 10, DBLSIZE | BSS ) ;
-#else	
-	for(uint8_t i=0;i<sizeof(g_model.name);i++)
-		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
-#endif
-}
-
 #ifdef XSW_MOD
 uint16_t getCurrentSwitchStates()
 {
@@ -2365,15 +2355,30 @@ static uint8_t checkTrim(uint8_t event)
     		int16_t tm = getTrimValue( phaseNo, idx ) ;
         int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
         bool thrChan = (2 == idx) ;
-        bool thro = (thrChan && (g_model.thrTrim));
-        if(thro) v = 2 ; // if throttle trim and trim trottle then step=2
+        
+				bool thro = false ;
+				if ( thrChan )
+				{
+					if ( g_model.thrTrim )
+					{
+						thro = true ;
+						v = 2 ; // if throttle trim and trim trottle then step=2
+					}
+        	if(throttleReversed())
+					{
+						v = -v;  // throttle reversed = trim reversed
+					}
+				}
+				
+//				bool thro = (thrChan && (g_model.thrTrim));
+//        if(thro) v = 2 ; // if throttle trim and trim trottle then step=2
 
 //				if ( GvarSource[idx] )
 //				{
 //					v = 1 ;
 //				}
 
-        if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
+//        if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
         int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
 
         if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0)){
@@ -2588,9 +2593,10 @@ void popMenu(bool uppermost)
 		{
         g_menuStackPtr = uppermost ? 0 : g_menuStackPtr-1;
 				EnterMenu = EVT_ENTRY_UP ;
-    }else{
-        alert(PSTR(STR_MSTACK_UFLOW));
     }
+//		else{
+//        alert(PSTR(STR_MSTACK_UFLOW));
+//    }
 }
 
 void chainMenu(MenuFuncP newMenu)
@@ -3331,7 +3337,7 @@ static void perMain()
 {
     static uint8_t lastTMR;
 		uint8_t t10ms ;
-		t10ms = g_tmr10ms ;
+		t10ms = *( (uint8_t *) &g_tmr10ms) ;
     tick10ms = t10ms - lastTMR ;
     lastTMR = t10ms ;
 
@@ -3686,8 +3692,10 @@ static void perMain()
         if((s_batCheck==0) && (g_vbat100mV<g_eeGeneral.vBatWarn) && (g_vbat100mV>49)){
 
             audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW);
-//            if (g_eeGeneral.flashBeep)
-						 g_LightOffCounter = FLASH_DURATION;
+#ifndef MINIMISE_CODE
+            if (g_eeGeneral.flashBeep)
+#endif
+							g_LightOffCounter = FLASH_DURATION;
         }
     }
     break;
@@ -3876,7 +3884,7 @@ static void getADC_bandgap()
     // Wait for the AD conversion to complete
     while (ADCSRA & 0x40) ;
 //    ADCSRA|=0x10;
-    BandGap = (BandGap * 7 + ADC + 4 ) >> 3 ;
+    BandGap = ADC ; //(BandGap * 7 + ADC + 4 ) >> 3 ;
     //  if(BandGap<256)
     //      BandGap = 256;
 }
@@ -4064,26 +4072,27 @@ ISR(TIMER3_CAPT_vect, ISR_NOBLOCK) //capture ppm in 16MHz / 8 = 2MHz
     static uint16_t lastCapt;
     uint16_t val = (capture - lastCapt) / 2;
     lastCapt = capture;
-
+		uint8_t lppmInState = ppmInState ;
     // We prcoess g_ppmInsright here to make servo movement as smooth as possible
     //    while under trainee control
   	if (val>4000 && val < 16000) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
-  	  ppmInState = 1; // triggered
+  	  lppmInState = 1; // triggered
   	else
   	{
-  		if(ppmInState && ppmInState<=8)
+  		if(lppmInState && lppmInState<=8)
 			{
   	  	if(val>800 && val<2200)
 				{
 					ppmInAvailable = 100 ;
-  		    g_ppmIns[ppmInState++ - 1] =
+  		    g_ppmIns[lppmInState++ - 1] =
   	  	    (int16_t)(val - 1500)* (uint8_t)(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
 
 		    }else{
-  		    ppmInState=0; // not triggered
+  		    lppmInState=0; // not triggered
   	  	}
   	  }
   	}
+		ppmInState = lppmInState ;
 
     cli();
 #ifdef CPUM2561
@@ -4748,9 +4757,6 @@ void mainSequence()
 	CalcScaleNest = 0 ;
   
 	uint16_t t0 = getTmr16KHz();
-#ifndef V2
-	uint8_t numSafety = 16 - g_model.numVoice ;
-#endif // nV2
   //      getADC[g_eeGeneral.filterInput]();
 //    if ( g_eeGeneral.filterInput == 1)
 //    {
@@ -4919,6 +4925,9 @@ void mainSequence()
 #else
 //#if defined(CPUM128) || defined(CPUM2561)
 		uint16_t ltimer = timer ;
+#ifndef V2
+		uint8_t numSafety = 16 - g_model.numVoice ;
+#endif // nV2
 		for ( i = numSafety ; i < NUM_CHNOUT+EXTRA_VOICE_SW ; i += 1 )
 //#else
 //		for ( i = numSafety ; i < NUM_CHNOUT ; i += 1 )
@@ -5528,6 +5537,7 @@ void mainSequence()
 					pCounter &= 0xF0 ;
 				}
 				periodCounter = pCounter ;
+				uint8_t numSafety = 16 - g_model.numVoice ;
 				for ( i = 0 ; i < numSafety ; i += 1 )
 				{
     			SafetySwData *sd = &g_model.safetySw[i] ;
