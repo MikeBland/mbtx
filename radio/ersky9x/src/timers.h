@@ -58,6 +58,7 @@ extern void setupPulsesPpmx( void ) ;
 extern void init_no_pulses(uint32_t port) ;
 extern void disable_no_pulses(uint32_t port) ;
 extern void init_dsm2(uint32_t port) ;
+extern void init_multi(uint32_t port) ;
 extern void disable_dsm2(uint32_t port) ;
 extern void init_assan(uint32_t port) ;
 extern void disable_assan(uint32_t port) ;

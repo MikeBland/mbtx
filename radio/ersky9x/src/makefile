@@ -622,17 +622,20 @@ $(OBJDIR):
 #$(OBJDIR)/%.o : %.cpp
 #	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 $(CPPOBJS) : $(OBJDIR)/%.o : %.cpp
-	@mkdir -p $(@D); $(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
+	@mkdir -p $(@D)
+	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.c
 #	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 $(COBJS) : $(OBJDIR)/%.o : %.c
-	@mkdir -p $(@D); $(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
+	@mkdir -p $(@D)
+	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.s
 #	$(AS) -c $(ASFLAGS) $< -o $@
 $(AOBJS) : $(OBJDIR)/%.o : %.s
-	@mkdir -p $(@D); $(AS) -c $(ASFLAGS) $< -o $@
+	@mkdir -p $(@D)
+	$(AS) -c $(ASFLAGS) $< -o $@
 
 #%elf: $(OBJS)
 #	$(CC) $(OBJS) $(LDFLAGS) $(LIBS) -o $@

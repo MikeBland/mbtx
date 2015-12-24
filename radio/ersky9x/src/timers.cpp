@@ -438,6 +438,10 @@ void setupPulses(unsigned int port)
 					init_no_pulses( EXTERNAL_MODULE ) ;
   	  	break;
 	    	case PROTO_MULTI:
+					init_multi(EXTERNAL_MODULE) ;
+					DsmInitCounter = 0 ;
+					pass_x = 0 ;
+  	  	break;
 	      case PROTO_DSM2:
 					init_dsm2(EXTERNAL_MODULE) ;
 					DsmInitCounter = 0 ;
@@ -1464,28 +1468,28 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 }
 
 extern uint16_t dsm2Stream[] ;
-uint16_t *dsm2StreamPtr ;
-uint16_t dsm2Value ;
+uint16_t *dsm2StreamPtr[2] ;
+uint16_t dsm2Value[2] ;
+uint8_t dsm2Index[2] = {0,0} ;
 
-uint8_t dsm2Index = 0;
 void _send_1(uint8_t v)
 {
 #ifndef PCB9XT
-  if (dsm2Index == 0)
+  if (dsm2Index[0] == 0)
     v -= 2;
   else
     v += 2;
 #endif
 
-  dsm2Value += v;
-  *dsm2StreamPtr++ = dsm2Value;
+  dsm2Value[0] += v;
+  *dsm2StreamPtr[0]++ = dsm2Value[0];
 
-  dsm2Index = (dsm2Index+1) % 2;
+  dsm2Index[0] = (dsm2Index[0]+1) % 2;
 }
 
 //#define BITLEN_DSM2	(8*2)
 
-uint8_t BITLEN_DSM2 = (8*2) ;
+uint8_t BITLEN_Serial = (8*2) ;
 
 uint32_t DsmPassIndex ;
 #ifdef ASSAN
@@ -1504,26 +1508,48 @@ void sendByteDsm2(uint8_t b) //max 10 changes 0 10 10 10 10 1
 	}
 #endif
 
+
+	uint8_t parity = 0x80 ;
+	uint8_t count = 8 ;
+//#if defined(SBUS_PROTOCOL) || defined(MULTI_PROTOCOL)
+	uint8_t bitLen ;
+	if ( g_model.xprotocol != PROTO_DSM2 )
+	{ // SBUS & MULTI
+		parity = 0 ;
+		bitLen = b ;
+		for( uint8_t i=0; i<8; i++)
+		{
+			parity += bitLen & 0x80 ;
+			bitLen <<= 1 ;
+		}
+		parity &= 0x80 ;
+		count = 9 ;
+	}
+//#endif // SBUS_PROTOCOL & MULTI_PROTOCOL
     bool lev = 0;
-    uint8_t len = BITLEN_DSM2; //max val: 9*16 < 256
-    for (uint8_t i=0; i<=8; i++) { //8Bits + Stop=1
+    uint8_t len = BITLEN_Serial; //max val: 9*16 < 256
+    for (uint8_t i=0; i<=count; i++)
+		{ //8Bits + Stop=1
         bool nlev = b & 1; //lsb first
-        if (lev == nlev) {
-          len += BITLEN_DSM2;
+        if (lev == nlev)
+				{
+          len += BITLEN_Serial;
         }
-        else {
+        else
+				{
           _send_1(len); // _send_1(nlev ? len-5 : len+3);
-          len = BITLEN_DSM2;
+          len = BITLEN_Serial;
           lev = nlev;
         }
-        b = (b>>1) | 0x80; //shift in stop bit
+				b = (b>>1) | parity ; //shift in parity or stop bit
+				parity = 0x80 ;				// Now a stop bit
     }
-    _send_1(len+BITLEN_DSM2); // _send_1(len+BITLEN_DSM2+3); // 2 stop bits
+    _send_1(len+BITLEN_Serial); // _send_1(len+BITLEN_DSM2+3); // 2 stop bits
 }
 void putDsm2Flush()
 {
-  dsm2StreamPtr--; //remove last stopbits and
-  *dsm2StreamPtr++ = 44010; // Past the 44000 of the ARR
+  dsm2StreamPtr[0]--; //remove last stopbits and
+  *dsm2StreamPtr[0]++ = 44010; // Past the 44000 of the ARR
 }
 
 #ifdef MULTI_DEBUG
@@ -1531,17 +1557,17 @@ uint32_t DebugMultiIndex ;
 uint8_t DebugMultiData[32] ;
 #endif
 
-static void sendByteCrcSerial(uint8_t b)
-{
-	crc(b) ;
-	sendByteDsm2(b) ;
-#ifdef MULTI_DEBUG
-	if ( DebugMultiIndex < 32 )
-	{
-		DebugMultiData[DebugMultiIndex++] = b ;
-	}
-#endif
-}
+//static void sendByteCrcSerial(uint8_t b)
+//{
+//	crc(b) ;
+//	sendByteDsm2(b) ;
+//#ifdef MULTI_DEBUG
+//	if ( DebugMultiIndex < 32 )
+//	{
+//		DebugMultiData[DebugMultiIndex++] = b ;
+//	}
+//#endif
+//}
 
 
 void setupPulsesDsm2(uint8_t channels)
@@ -1568,6 +1594,11 @@ void setupPulsesDsm2(uint8_t channels)
 		Dsm_Type = 1 ;
 		// Consider inverting COM1 here
 	}
+	else if(g_model.xprotocol == PROTO_MULTI)
+	{
+		required_baudrate = SCC_BAUD_100000 ;
+		Dsm_Type = 0 ;
+	}
 	else
 	{
 		Dsm_Type = 0 ;
@@ -1580,11 +1611,15 @@ void setupPulsesDsm2(uint8_t channels)
 #else
 		if ( required_baudrate == SCC_BAUD_125000 )
 		{
-			BITLEN_DSM2 = (8*2) ;
+			BITLEN_Serial = (8*2) ;
+		}
+		else if ( required_baudrate == SCC_BAUD_100000 )
+		{
+			BITLEN_Serial = (10*2) ;
 		}
 		else
 		{
-			BITLEN_DSM2 = 17 ;
+			BITLEN_Serial = 17 ;
 		}
 		Scc_baudrate = required_baudrate ;
 #endif // PCBSKY
@@ -1695,10 +1730,10 @@ void setupPulsesDsm2(uint8_t channels)
 		else
 		{
 #endif // ASSAN
- 		dsm2StreamPtr = dsm2Stream ;
-  	dsm2Index = 0 ;
-  	dsm2Value = 100 ;
-  	*dsm2StreamPtr++ = dsm2Value ;
+ 		dsm2StreamPtr[0] = dsm2Stream ;
+  	dsm2Index[0] = 0 ;
+  	dsm2Value[0] = 100 ;
+  	*dsm2StreamPtr[0]++ = dsm2Value[0] ;
 		DebugDsmPass = pass_x ;
 		sendByteDsm2( 0xAA );
 		if ( pass_x == 0 )
@@ -1781,11 +1816,11 @@ void setupPulsesDsm2(uint8_t channels)
 	}
 	else
 	{
-//		dsm2Value = 0;
-  	dsm2Index = 0 ;
- 		dsm2StreamPtr = dsm2Stream ;
-  	dsm2Value = 100;
-  	*dsm2StreamPtr++ = dsm2Value;
+//		dsm2Value[0] = 0;
+  	dsm2Index[0] = 0 ;
+ 		dsm2StreamPtr[0] = dsm2Stream ;
+  	dsm2Value[0] = 100;
+  	*dsm2StreamPtr[0]++ = dsm2Value[0];
 		if(g_model.xprotocol == PROTO_DSM2)
 		{
  			if (dsmDat[0]&BadData)  //first time through, setup header
@@ -1811,7 +1846,7 @@ void setupPulsesDsm2(uint8_t channels)
  			if ((!(dsmDat[0]&BindBit))&& (pxxFlag_x & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
  			else dsmDat[0]&=~RangeCheckBit;
 		}
-		else
+		else // Multi
 		{
 			dsmDat[0] = g_model.xsub_protocol+1;
 			if (pxxFlag_x & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
@@ -1823,21 +1858,52 @@ void setupPulsesDsm2(uint8_t channels)
 #ifdef MULTI_DEBUG
 			DebugMultiIndex = 0 ;
 #endif
-			PcmCrc=0;
-			sendByteCrcSerial( dsmDat[0] ) ;
-			sendByteCrcSerial((g_model.xppmNCH & 0xF0) | ( g_model.xPxxRxNum & 0x0F ) );
-			sendByteCrcSerial(g_model.option_protocol);
-			uint16_t serialH = 0 ;
-			for(uint8_t i=0; i<8; i++)
+			uint32_t outputbitsavailable = 0 ;
+			uint32_t outputbits = 0 ;
+			uint32_t i ;
+			sendByteDsm2(0x55) ;
+			sendByteDsm2( dsmDat[0] ) ;
+			sendByteDsm2((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
+			sendByteDsm2(g_model.option_protocol);
+			
+			for ( i = 0 ; i < 16 ; i += 1 )
 			{
-				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
-				sendByteCrcSerial(pulse & 0xff);
-				serialH<<=2;
-				serialH|=((pulse>>8)&0x03);
+				int16_t x = g_chans512[i] ;
+				x *= 4 ;
+				x += x > 0 ? 4 : -4 ;
+				x /= 5 ;
+//#ifdef MULTI_PROTOCOL
+				if ( g_model.xprotocol == PROTO_MULTI )
+					x += 0x400 ;
+				else
+//#endif // MULTI_PROTOCOL
+					x += 0x3E0 ;
+				if ( x < 0 )
+				{
+					x = 0 ;
+				}
+				if ( x > 2047 )
+				{
+					x = 2047 ;
+				}
+				outputbits |= (uint32_t)x << outputbitsavailable ;
+				outputbitsavailable += 11 ;
+				while ( outputbitsavailable >= 8 )
+				{
+					uint32_t j = outputbits ;
+					sendByteDsm2(j) ;
+					outputbits >>= 8 ;
+					outputbitsavailable -= 8 ;
+				}
 			}
-			sendByteCrcSerial((serialH>>8)&0xff);
-			sendByteCrcSerial(serialH&0xff);
-			sendByteCrcSerial( PcmCrc&0xff);
+
+//#ifdef MULTI_PROTOCOL
+//			if ( g_model.xprotocol == PROTO_SBUS )
+//#endif // MULTI_PROTOCOL
+//			{
+//				sendByteDsm2(0);
+//				sendByteDsm2(0);
+//			}
 	  	putDsm2Flush();
 		}
 		else

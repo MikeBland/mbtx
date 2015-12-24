@@ -112,6 +112,7 @@ volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
 #define BadData 0x47
 
 static uint8_t pass ;		// For PXX and DSM-9XR and ASSAN
+static uint8_t bitlen ;
 uint8_t DebugDsmPass ;
 
 void crc( uint8_t data ) ;
@@ -365,9 +366,12 @@ uint32_t DsmPassIndex ;
 uint16_t DsmChecksum ;
 #endif
 
-#define BITLEN_DSM2 (8*2) //125000 Baud => 8uS per bit
+#define BITLEN_SERIAL (8*2) //125000 Baud
+#define BITLEN_SBUS (10*2) //100000 Baud
+
 void sendByteDsm2(uint8_t b) //max 10changes 0 10 10 10 10 1
 {
+	uint32_t parity = 0 ;
 #ifdef ASSAN
 	DsmChecksum += b ;
 #endif
@@ -380,8 +384,13 @@ void sendByteDsm2(uint8_t b) //max 10changes 0 10 10 10 10 1
   for( uint8_t i=0; i<8; i++)	 // 8 data Bits
 	{
 		put_serial_bit( b & 1 ) ;
+		parity ^= b ;
 		b >>= 1 ;
   }
+	if ( g_model.protocol != PROTO_DSM2 )
+	{
+		put_serial_bit( parity & 1 ) ;
+	}
 	
 	put_serial_bit( 1 ) ;		// Stop bit
 	if ( Dsm_Type == 0 )
@@ -426,17 +435,17 @@ uint32_t DebugMultiIndex ;
 uint8_t DebugMultiData[32] ;
 #endif
 
-static void sendByteCrcSerial(uint8_t b)
-{
-	crc(b) ;
-	sendByteDsm2(b) ;
-#ifdef MULTI_DEBUG
-	if ( DebugMultiIndex < 32 )
-	{
-		DebugMultiData[DebugMultiIndex++] = b ;
-	}
-#endif
-}
+//static void sendByteCrcSerial(uint8_t b)
+//{
+//	crc(b) ;
+//	sendByteDsm2(b) ;
+//#ifdef MULTI_DEBUG
+//	if ( DebugMultiIndex < 32 )
+//	{
+//		DebugMultiData[DebugMultiIndex++] = b ;
+//	}
+//#endif
+//}
 
 
 // This is the data stream to send, prepare after 19.5 mS
@@ -468,6 +477,10 @@ void setupPulsesDsm2(uint8_t chns)
 		Dsm_Type = 1 ;
 		// Consider inverting COM1 here
 	}
+	else if(g_model.protocol == PROTO_MULTI)
+	{
+		required_baudrate = SCC_BAUD_100000 ;
+	}
 	else
 	{
 		Dsm_Type = 0 ;
@@ -484,6 +497,7 @@ void setupPulsesDsm2(uint8_t chns)
 	Serial_bit_count = 0 ;
 	Serial_byte_count = 0 ;
   Pulses2MHzptr = Bit_pulses ;
+	bitlen = BITLEN_SERIAL ;
     
 	if ( Dsm_Type )
 	{
@@ -699,63 +713,108 @@ void setupPulsesDsm2(uint8_t chns)
 
 		if(g_model.protocol == PROTO_MULTI)
 		{
-			PcmCrc=0;
+			uint32_t outputbitsavailable = 0 ;
+			uint32_t outputbits = 0 ;
+			uint32_t i ;
+			bitlen = BITLEN_SBUS ;
 #ifdef MULTI_DEBUG
 			DebugMultiIndex = 0 ;
 #endif			
-			sendByteCrcSerial( dsmDat[0] ) ;
-			sendByteCrcSerial((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
-			sendByteCrcSerial(g_model.option_protocol);
-			uint16_t serialH = 0 ;
-			for(uint8_t i=0; i<8; i++)
+			sendByteDsm2(0x55) ;
+			sendByteDsm2( dsmDat[0] ) ;
+			sendByteDsm2((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
+			sendByteDsm2(g_model.option_protocol);
+			
+			for ( i = 0 ; i < 16 ; i += 1 )
 			{
-				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
-				sendByteCrcSerial(pulse & 0xff);
-				serialH<<=2;
-				serialH|=((pulse>>8)&0x03);
+				int16_t x = g_chans512[i] ;
+				x *= 4 ;
+				x += x > 0 ? 4 : -4 ;
+				x /= 5 ;
+//#ifdef MULTI_PROTOCOL
+				if ( g_model.protocol == PROTO_MULTI )
+					x += 0x400 ;
+				else
+//#endif // MULTI_PROTOCOL
+					x += 0x3E0 ;
+				if ( x < 0 )
+				{
+					x = 0 ;
+				}
+				if ( x > 2047 )
+				{
+					x = 2047 ;
+				}
+				outputbits |= (uint32_t)x << outputbitsavailable ;
+				outputbitsavailable += 11 ;
+				while ( outputbitsavailable >= 8 )
+				{
+					uint32_t j = outputbits ;
+					sendByteDsm2(j) ;
+					outputbits >>= 8 ;
+					outputbitsavailable -= 8 ;
+				}
 			}
-			sendByteCrcSerial((serialH>>8)&0xff);
-			sendByteCrcSerial(serialH&0xff);
-			sendByteCrcSerial( PcmCrc&0xff);
-		}
-//		else if ( g_model.protocol == PROTO_SBUS )
-//		{
-//			*p++ = 0x0F ;
-//			for ( i = 0 ; i < 16 ; i += 1 )
+			
+//#ifdef MULTI_PROTOCOL
+			if ( g_model.protocol == PROTO_SBUS )
+//#endif // MULTI_PROTOCOL
+			{
+				sendByteDsm2(0);
+				sendByteDsm2(0);
+			}
+			
+//			uint16_t serialH = 0 ;
+//			for(uint8_t i=0; i<8; i++)
 //			{
-//				int16_t x = g_chans512[i] ;
-//				x *= 4 ;
-//				x += x > 0 ? 4 : -4 ;
-//				x /= 5 ;
-//				x += 0x3E0 ;
-//				if ( x < 0 )
-//				{
-//					x = 0 ;
-//				}
-//				if ( x > 2047 )
-//				{
-//					x = 2047 ;
-//				}
-//				outputbits |= x << outputbitsavailable ;
-//				outputbitsavailable += 11 ;
-//				while ( outputbitsavailable >= 8 )
-//				{
-//					uint8_t j = outputbits ;
-//					checksum += j ;
-//					if ( ( j == 2 ) || ( j == 3 ) )
-//					{
-//						j ^= 0x80 ;
-//						*p++ = 3 ;		// "stuff"
-//					}
-//          *p++ = j ;
-//					outputbits >>= 8 ;
-//					outputbitsavailable -= 8 ;
-//				}
+//				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
+//				sendByteCrcSerial(pulse & 0xff);
+//				serialH<<=2;
+//				serialH|=((pulse>>8)&0x03);
 //			}
-//			*p++ = 0 ;
-//			*p++ = 0 ;
+//			sendByteCrcSerial((serialH>>8)&0xff);
+//			sendByteCrcSerial(serialH&0xff);
+//			sendByteCrcSerial( PcmCrc&0xff);
 //		}
-		else
+////		else if ( g_model.protocol == PROTO_SBUS )
+////		{
+////			*p++ = 0x0F ;
+////			for ( i = 0 ; i < 16 ; i += 1 )
+////			{
+////				int16_t x = g_chans512[i] ;
+////				x *= 4 ;
+////				x += x > 0 ? 4 : -4 ;
+////				x /= 5 ;
+////				x += 0x3E0 ;
+////				if ( x < 0 )
+////				{
+////					x = 0 ;
+////				}
+////				if ( x > 2047 )
+////				{
+////					x = 2047 ;
+////				}
+////				outputbits |= x << outputbitsavailable ;
+////				outputbitsavailable += 11 ;
+////				while ( outputbitsavailable >= 8 )
+////				{
+////					uint8_t j = outputbits ;
+////					checksum += j ;
+////					if ( ( j == 2 ) || ( j == 3 ) )
+////					{
+////						j ^= 0x80 ;
+////						*p++ = 3 ;		// "stuff"
+////					}
+////          *p++ = j ;
+////					outputbits >>= 8 ;
+////					outputbitsavailable -= 8 ;
+////				}
+////			}
+////			*p++ = 0 ;
+////			*p++ = 0 ;
+////		}
+		}
+		else// not MULTI
 		{
   		dsmDat[1]=g_model.pxxRxNum ;  //DSM2 Header second byte for model match
   		for(uint8_t i=0; i<chns; i++)

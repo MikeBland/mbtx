@@ -89,7 +89,8 @@ uint8_t JetiTxBuffer[16] ;
 
 struct t_rxUartBuffer TelemetryInBuffer ;
 
-struct t_fifo64 Console_fifo ;
+struct t_fifo128 Console_fifo ;
+struct t_fifo128 Com3_fifo ;
 struct t_fifo128 BtRx_fifo ;
 
 struct t_fifo64 CaptureRx_fifo ;
@@ -107,6 +108,11 @@ struct t_SportTx
 	uint16_t count ;
 	uint8_t busy ;
 } SportTx ;
+#endif
+
+struct t_serial_tx *Current_Com2 ;
+#ifdef PCB9XT
+struct t_serial_tx *Current_Com3 ;
 #endif
 
 volatile uint32_t Spi_complete ;
@@ -310,6 +316,10 @@ void per10ms()
   g_tmr10ms++;
   if (WatchdogTimeout)
 	{
+  	if (WatchdogTimeout>200)
+		{
+  		WatchdogTimeout = 200 ;			
+		}
     WatchdogTimeout -= 1;
     wdt_reset();  // Retrigger hardware watchdog
   }
@@ -1015,6 +1025,35 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
+void com1Parity( uint32_t even )
+{
+  register Usart *pUsart = SECOND_USART;
+	if ( even )
+	{
+  	pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
+	}
+	else
+	{
+	  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
+	}
+}
+
+
+void com2Parity( uint32_t even )
+{
+  register Uart *pUart = CONSOLE_USART ;
+	if ( even )
+	{
+  	pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
+	}
+	else
+	{
+		pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
+	}
+}
+
+
+
 // Set up COM2 for SBUS (8E2), can't set 2 stop bits!
 void UART_Sbus_configure( uint32_t masterClock )
 {
@@ -1042,7 +1081,6 @@ void UART_9dataOdd1stop()
 //	NVIC_DisableIRQ(UART0_IRQn) ;
 //}
 
-struct t_serial_tx *Current_Com2 ;
 
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
@@ -1087,7 +1125,7 @@ extern "C" void UART0_IRQHandler()
 		}
 		else
 		{
-			put_fifo64( &Console_fifo, CONSOLE_USART->UART_RHR ) ;	
+			put_fifo128( &Console_fifo, CONSOLE_USART->UART_RHR ) ;	
 		}	 
 	}
 }
@@ -1221,8 +1259,6 @@ void UART2_timeout_disable()
 //uint16_t Sstat2 ;
 //uint16_t Sstat3 ;
 
-extern uint16_t Debug_frsky3 ;
-
 extern "C" void USART0_IRQHandler()
 {
   register Usart *pUsart = SECOND_USART;
@@ -1272,7 +1308,6 @@ extern "C" void USART0_IRQHandler()
 		{
 			uint16_t x ;
 			x = pUsart->US_RHR ;
-			Debug_frsky3 = x ;
 			put_16bit_fifo32( &Jeti_fifo, x ) ; // pUsart->US_RHR ) ;	
 		}
 		return ;
@@ -1574,7 +1609,7 @@ void txmit( uint8_t c )
 
 uint16_t rxuart()
 {
-	return get_fifo64( &Console_fifo ) ;
+	return get_fifo128( &Console_fifo ) ;
   
 //	Uart *pUart=CONSOLE_USART ;
 
@@ -1797,10 +1832,10 @@ void read_adc()
 	Analog_values[8] = ADC->ADC_CDR8 ;
 //#ifdef REVX
 	x = ADC->ADC_CDR10 ;
-	y = Analog_values[9] ;
-	int32_t diff = x - y ;
 	if ( ( g_eeGeneral.extraPotsSource[0] != 1 ) && ( g_eeGeneral.extraPotsSource[1] != 1 ) )
 	{
+		y = Analog_values[9] ;
+		int32_t diff = x - y ;
 		if ( diff < 0 )
 		{
 			diff = -diff ;
@@ -1847,8 +1882,8 @@ void read_adc()
 	}
 	else
 	{
-		AnalogData[7] = Analog_values[8] ;
-		AnalogData[8] = Analog_values[9] ;
+		AnalogData[7] = Analog_values[9] ;
+		AnalogData[8] = Analog_values[8] ;
 	}
 
 // Power save
@@ -2298,7 +2333,12 @@ void init_ssc( uint16_t baudrate )
 	sscptr->SSC_THR = 0xFF ;		// Make the output high.
 	sscptr->SSC_TFMR = 0x00000027 ; 	//  0000 0000 0000 0000 0000 0000 1010 0111 (8 bit data, lsb)
 #endif
-	sscptr->SSC_CMR = Master_frequency / ( baudrate ? (115200*2) : (125000*2) ) ;		// 8uS per bit
+	uint32_t divisor = 125000*2 ;
+	if ( baudrate )
+	{
+		divisor = (baudrate == 1) ? 115200*2 : 100000*2 ;
+	}
+	sscptr->SSC_CMR = Master_frequency / divisor ;		// 8uS per bit
 	sscptr->SSC_TCMR = 0 ;  	//  0000 0000 0000 0000 0000 0000 0000 0000
 	sscptr->SSC_CR = SSC_CR_TXEN ;
 
@@ -2536,11 +2576,11 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 //#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_NE | USART_FLAG_FE | USART_FLAG_PE)
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
-uint32_t USART_ERRORS ;
-uint32_t USART_ORE ;
-uint32_t USART_NE ;
-uint32_t USART_FE ;
-uint32_t USART_PE ;
+uint16_t USART_ERRORS ;
+uint16_t USART_ORE ;
+uint16_t USART_NE ;
+uint16_t USART_FE ;
+uint16_t USART_PE ;
 
 extern "C" void USART2_IRQHandler()
 {
@@ -2648,7 +2688,7 @@ uint16_t rxuart()
 //		return USART3->DR ;
 //	}
 //	return 0xFFFF ;
-	return get_fifo64( &Console_fifo ) ;
+	return get_fifo128( &Console_fifo ) ;
 }
 
 extern "C" void USART3_IRQHandler()
@@ -2659,7 +2699,11 @@ extern "C" void USART3_IRQHandler()
 	}
 	else
 	{
-		put_fifo64( &Console_fifo, USART3->DR ) ;	
+		put_fifo128( &Console_fifo, USART3->DR ) ;	
+#ifdef BLUETOOTH
+extern uint16_t BtCounters[4] ;
+ 		BtCounters[3] += 1 ;
+#endif
 	}	 
 }
 #endif
@@ -2758,16 +2802,232 @@ void console9xtInit()
   NVIC_EnableIRQ(UART4_IRQn) ;
 }
 
-extern "C" void UART4_IRQHandler()
+void com3Init( uint32_t baudrate )
 {
-	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+	USART_TypeDef *puart = USART3 ;
+	// Serial configure  
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+	puart->CR2 = 0 ;
+	puart->CR3 = 0 ;
+	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(USART3_IRQn) ;
+}
+
+void com3Stop()
+{
+	USART3->CR1 = 0 ;
+	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
+  NVIC_DisableIRQ(USART3_IRQn) ;
+}
+
+void Com3SetBaudrate ( uint32_t baudrate )
+{
+	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+}
+
+void com1Parity( uint32_t even )
+{
+	if ( even )
 	{
-		put_fifo64( &Sbus_fifo, UART4->DR ) ;	
+		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
 	}
 	else
 	{
-		put_fifo64( &Console_fifo, UART4->DR ) ;	
-	}	 
+		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+
+
+void com2Parity( uint32_t even )
+{
+	if ( even )
+	{
+		UART4->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+	}
+	else
+	{
+		UART4->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+
+void com3Parity( uint32_t even )
+{
+	if ( even )
+	{
+		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+	}
+	else
+	{
+		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+
+void UART4SetBaudrate ( uint32_t baudrate )
+{
+	UART4->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+}
+
+extern "C" void USART3_IRQHandler()
+{
+  uint32_t status;
+  uint8_t data;
+	USART_TypeDef *puart = USART3 ;
+
+  status = puart->SR ;
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( Current_Com3 )
+		{
+			if ( Current_Com3->size )
+			{
+				puart->DR = *Current_Com3->buffer++ ;
+				if ( --Current_Com3->size == 0 )
+				{
+					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+				}
+			}
+			else
+			{
+				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+			}
+		}
+	}
+	
+	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+	{
+		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+		Current_Com3->ready = 0 ;
+	}
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR ;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+			if ( g_eeGeneral.btComPort == 2 )
+			{
+				put_fifo128( &BtRx_fifo, data ) ;	
+#ifdef BLUETOOTH
+extern uint16_t BtCounters[4] ;
+		 		BtCounters[3] += 1 ;
+#endif
+			}
+			else
+			{
+				put_fifo128( &Com3_fifo, data ) ;	
+			}
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+				USART_ORE += 1 ;
+			}
+		}
+    status = puart->SR ;
+	}
+}
+
+
+int32_t rxBtuart()
+{
+	return get_fifo128( &BtRx_fifo ) ;
+}
+
+uint32_t txPdcBt( struct t_serial_tx *data )
+{
+	data->ready = 1 ;
+	if ( g_eeGeneral.btComPort == 1 )
+	{
+		Current_Com2 = data ;
+		UART4->CR1 |= USART_CR1_TXEIE ;
+	}
+	else if ( g_eeGeneral.btComPort == 2 )
+	{
+		Current_Com3 = data ;
+		USART3->CR1 |= USART_CR1_TXEIE ;
+	}
+	return 1 ;			// Sent OK
+}
+
+uint16_t Uart4Errors ;
+
+extern "C" void UART4_IRQHandler()
+{
+  uint32_t status;
+  uint8_t data;
+	USART_TypeDef *puart = UART4 ;
+
+  status = puart->SR ;
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( Current_Com2 )
+		{
+			if ( Current_Com2->size )
+			{
+				puart->DR = *Current_Com2->buffer++ ;
+				if ( --Current_Com2->size == 0 )
+				{
+					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+				}
+			}
+			else
+			{
+				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+			}
+		}
+	}
+	
+	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+	{
+		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+		Current_Com2->ready = 0 ;
+	}
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+			{
+				put_fifo64( &Sbus_fifo, data ) ;
+			}
+			else
+			{
+				if ( g_eeGeneral.btComPort == 1 )
+				{
+					put_fifo128( &BtRx_fifo, data ) ;
+#ifdef BLUETOOTH
+extern uint16_t BtCounters[4] ;
+			 		BtCounters[3] += 1 ;
+#endif
+				}
+				else
+				{
+					put_fifo128( &Console_fifo, data ) ;
+				}
+			}
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+				USART_ORE += 1 ;
+			}
+			Uart4Errors += 1 ;
+		}
+    status = puart->SR ;
+	}
 }
 
 void txmit( uint8_t c )
@@ -2781,7 +3041,7 @@ void txmit( uint8_t c )
 
 uint16_t rxuart()
 {
-	return get_fifo64( &Console_fifo ) ;
+	return get_fifo128( &Console_fifo ) ;
 }
 
 void UART_Sbus_configure( uint32_t masterClock )

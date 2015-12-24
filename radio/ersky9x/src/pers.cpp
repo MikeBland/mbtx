@@ -184,7 +184,7 @@ void modelDefault(uint8_t id)
 bool eeDuplicateModel(uint8_t id)
 {
   uint32_t i;
-  for( i=id+1; i<MAX_MODELS; i++)
+  for( i=id ; i<MAX_MODELS; i++)
   {
     if(! eeModelExists(i) ) break;
   }
@@ -198,6 +198,7 @@ bool eeDuplicateModel(uint8_t id)
 	}
 
 	ee32CopyModel( i+1, id ) ;
+//	ee32CopyModel( i, id ) ;
 
 	return true ;
 }

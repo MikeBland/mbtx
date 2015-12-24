@@ -313,7 +313,7 @@ void writeLogs()
 			qr = div( value, 10);
 			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 			f_printf(&g_oLogFile, "%d.%04d%c,%d.%04d%c,", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S],FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
-			f_printf(&g_oLogFile, "%d,%d,", FrskyHubData[FR_FUEL],FrskyHubData[FR_GPS_SPEED] ) ;
+			f_printf(&g_oLogFile, "%d,%d", FrskyHubData[FR_FUEL],FrskyHubData[FR_GPS_SPEED] ) ;
 
 			//SC1-8
 			uint32_t i ;
@@ -335,15 +335,13 @@ void writeLogs()
 					num_decimals = 100 ;
 				}
 				qr = div( value, num_decimals ) ;
-#ifdef BLUETOOTH
-				f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
-#else
-				f_printf(&g_oLogFile, "%d.%d\n", qr.quot, qr.rem ) ;
-#endif
+				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
 #ifdef BLUETOOTH
 extern uint8_t BtTotals[4] ;
-			f_printf(&g_oLogFile, "%d\n", BtTotals[1] ) ;
+			f_printf(&g_oLogFile, ",%d\n", BtTotals[1] ) ;
+#else
+			f_printf(&g_oLogFile, "\n" ) ;
 #endif
 
 //FR_GPS_SPEED,

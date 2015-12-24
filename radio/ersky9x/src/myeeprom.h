@@ -146,7 +146,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   disableSwitchWarning:1;
   uint8_t   disableMemoryWarning:1;
   uint8_t   beeperVal:3;
-  uint8_t   reserveWarning:1;
+  uint8_t   reserveWarning:1; // could be: uint8_t calibrateWarning:1;
   uint8_t   disableAlarmWarning:1;
   uint8_t   stickMode;
   int8_t    inactivityTimer;
@@ -223,8 +223,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		btName[15] ;				// For the HC06 module
 	uint8_t		ar9xBoard:1 ;
 	uint8_t		externalRtcType:2 ;
-	uint8_t		enableI2C:1 ;
-	uint8_t		spare:2 ;
+	uint8_t		enableI2C:2 ;
+	uint8_t		rotateScreen:1 ;
 	uint8_t		is9Xtreme:1 ;
 	uint8_t		forceMenuEdit:1 ;
 	uint8_t fixedDateTime[6] ;
@@ -235,7 +235,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		pb3source ;
 	uint8_t		pb4source ;
 	uint8_t	extraPotsSource[4] ;
-
+	uint8_t btComPort ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 

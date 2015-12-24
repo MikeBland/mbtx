@@ -35,7 +35,7 @@
 #ifndef sbus_h
 #define sbus_h
 
-extern void processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size ) ;
+extern uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size ) ;
 extern void processSbusInput( void ) ;
 
 #endif

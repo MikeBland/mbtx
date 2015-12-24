@@ -37,7 +37,6 @@
 #include "mega64.h"
 #endif
 
-
 #include "font.lbm"
 #define font_5x8_x20_x7f (font)
 
@@ -170,8 +169,10 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 
 void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att)
 {
+	uint8_t option = att & NO_UNIT ;
+	att &= ~NO_UNIT ;
 	lcd_outdezAtt(x, y, volts, att|PREC1);
-	if(!(att&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, 'v', att);
+	if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, 'v', att);
 }
 
 
@@ -449,6 +450,7 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 		}
 		else
 		{
+			uint8_t oldb = 0 ;
     	for( i=5 ; i!=0 ; i-- )
 			{
     	  uint8_t b = *q++ ;
@@ -457,9 +459,13 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
     	    /*condense the letter by skipping column 4 */
     	    continue;
     	  }
-    	  if(p<DISPLAY_END) *p++ = inv ? ~b : b;
+    	  if(p<DISPLAY_END) *p++ = inv ? ~(b|oldb) : (b|oldb) ;
+				if (mode & BOLD)
+				{
+					oldb = b ;
+				}
     	}
-    	if(p<DISPLAY_END) *p++ = inv ? ~0 : 0;
+    	if(p<DISPLAY_END) *p++ = inv ? ~oldb : oldb ;
 		}
   }
 	return x ;
@@ -618,6 +624,10 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 	{
 		fullwidth = 1 ;
 		len = -len ;		
+	}
+	if (mode & BOLD)
+	{
+		fw = FW ;
 	}
 
   if (mode & DBLSIZE)
@@ -1230,10 +1240,10 @@ void lcd_stop()
 	
 }
 
-void lcdSetContrast()
-{
-	lcdSetRefVolt(g_eeGeneral.contrast);
-}
+//void lcdSetContrast()
+//{
+//	lcdSetRefVolt(g_eeGeneral.contrast);
+//}
 
 void lcdSetRefVolt(uint8_t val)
 {
@@ -1267,6 +1277,38 @@ void lcdSetRefVolt(uint8_t val)
 	LcdLock = 0 ;
 }
 
+void lcdSetOrientation()
+{
+	Pio *pioptr ;
+	pioptr = PIOC ;
+// read the inputs, and lock the LCD lines
+	LcdInputs = PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
+	LcdLock = 1 ;
+
+	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
+
+	uint8_t c1 = 0xA1 ;
+	uint8_t c2 = 0xC0 ;
+//  lcdSendCtl(0xAE);             // turn-off
+  if (g_eeGeneral.rotateScreen)
+	{
+		c1 = 0xA0 ;
+		c2 = 0xC8 ;
+  }
+  lcdSendCtl(c1);
+  lcdSendCtl(c2);
+//  lcdSendCtl(0xAF);             // turn-on
+#ifdef REVB
+	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input
+	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 1, 3, 4, 5 with pullups
+	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
+#else
+	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
+	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 2, 3, 4, 5 with pullups
+	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
+#endif // REVB
+	LcdLock = 0 ;
+}
 
 
 void lcdSendCtl(uint8_t val)
@@ -1353,8 +1395,19 @@ void refreshDisplay()
 #else
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
 #endif // REVB
-  for( y=0; y < 8; y++) {
-    lcdSendCtl( g_eeGeneral.optrexDisplay ? 0 : 0x04 ) ;
+	
+  for( y=0; y < 8; y++)
+	{
+  	uint8_t column_start_lo = 0x04; // skip first 4 columns for normal ST7565
+  	if (g_eeGeneral.rotateScreen)
+		{
+    	column_start_lo ^= 0x04 ;
+		}
+  	if (g_eeGeneral.optrexDisplay)
+		{
+    	column_start_lo ^= 0x04 ;
+		}
+    lcdSendCtl( column_start_lo ) ;
     lcdSendCtl(0x10); //column addr 0
     lcdSendCtl( y | 0xB0); //page addr y
     

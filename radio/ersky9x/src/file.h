@@ -40,6 +40,13 @@ extern const char *ee32BackupModel( uint8_t modelIndex ) ;
 extern const char *ee32RestoreModel( uint8_t modelIndex, char *filename ) ;
 extern void eeModelChanged( void ) ;
 extern void setModelFilename( uint8_t *filename, uint8_t modelIndex, uint32_t type ) ;
+extern uint8_t *eepromBufferAddress( void ) ;
+extern const char *openBackupEeprom( void ) ;
+extern const char *processBackupEeprom( uint16_t blockNo ) ;
+extern void closeBackupEeprom( void ) ;
+
+extern void setFilenameDateTime( char *filename ) ;
+
 
 struct t_file_entry
 {

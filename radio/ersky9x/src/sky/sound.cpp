@@ -1318,7 +1318,7 @@ void setVolume( register uint8_t volume )
 	{
 		Volume_required = volume ;
 	}
-	NVIC_EnableIRQ(TWI0_IRQn) ;
+	NVIC_DisableIRQ(TWI0_IRQn) ;
 	i2c_check_for_request() ;
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 #endif

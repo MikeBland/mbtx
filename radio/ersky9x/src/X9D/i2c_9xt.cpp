@@ -304,6 +304,7 @@ static void I2C2_GPIO_Configuration(void)
 	
   /* Configure I2C_EE pins: SCL and SDA */
 	configure_pins( I2C_EE_SCL | I2C_EE_SDA, PIN_OS50 | PIN_PORTB | PIN_ODRAIN | PIN_PULLUP | PIN_PERIPHERAL | PIN_PER_4 ) ;
+	// If serial, SCL is TX and SDA is Rx, AltFunction = PER_7
 }
 
 void init_I2C2()
@@ -324,6 +325,12 @@ void init_I2C2()
 	pi2c->CR2 |= I2C_CR2_ITERREN | I2C_CR2_ITEVTEN | I2C_CR2_ITBUFEN ;
 	NVIC_SetPriority( I2C2_EV_IRQn, 6 ) ; // Lower priority interrupt
 	NVIC_SetPriority( I2C2_ER_IRQn, 6 ) ; // Lower priority interrupt
+}
+
+void stop_I2C2()
+{
+	I2C2->CR1 = 0 ;
+	RCC->APB1ENR &= ~RCC_APB1ENR_I2C2EN ; // Disable I2C2 clock
 }
 
 uint32_t I2C_debug[8] ;

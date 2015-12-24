@@ -62,7 +62,8 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
-void bwdt_reset()
+__attribute__ ((section(".bootrodata"), used))
+static void bwdt_reset()
 {
 	IWDG->KR = 0xAAAA ;		// reload
 }
@@ -174,6 +175,7 @@ void _bootStart()
 // and to terminate it, just wait here without turning on PWR pin. The power supply will
 // eventually exhaust and the radio will turn off.
  #ifdef REV9E
+#define PWR_GPIO_PIN_SWITCH	0x0001
 	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
 		// wait here until the power key is pressed

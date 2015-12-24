@@ -164,6 +164,7 @@ extern void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
 extern void backlightSend() ;
 //extern void backlightReset( void ) ;
 extern void console9xtInit( void ) ;
+extern void UART4SetBaudrate ( uint32_t baudrate ) ;
 #endif	// PCB9XT
 
 extern void disable_ssc( void ) ;
@@ -179,7 +180,19 @@ void disable_software_com1( void ) ;
 #ifdef PCB9XT
 void x9dHubTxStart( uint8_t *buffer, uint32_t count ) ;
 uint32_t hubTxPending( void ) ;
+void com3Init( uint32_t baudrate ) ;
+void com1Parity( uint32_t even ) ;
+void com2Parity( uint32_t even ) ;
+void com3Parity( uint32_t even ) ;
+void com3Stop( void ) ;
+void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
+
+#ifdef PCBSKY
+void com1Parity( uint32_t even ) ;
+void com2Parity( uint32_t even ) ;
+#endif
+
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 
 extern void init_SDcard( void ) ;

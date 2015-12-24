@@ -284,8 +284,11 @@ void storeAltitude( int16_t value )
 	FrskyHubData[FR_ALT_BARO] = value ;
 	if ( !AltitudeZeroed )
 	{
-     AltOffset = -FrskyHubData[FR_ALT_BARO] ;
-		AltitudeZeroed = 1 ;
+		AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+		if ( AltOffset )
+		{
+			AltitudeZeroed = 1 ;
+		}
 	}
 }
 
@@ -1222,14 +1225,14 @@ void processSportPacket()
 	uint8_t *packet = frskyRxBuffer ;
   uint8_t  prim   = packet[1];
 //  uint16_t appId  = *((uint16_t *)(packet+2)) ;
-	TelemetryDebug1 += 1 ;
+//	TelemetryDebug1 += 1 ;
 
 	if ( MaintenanceRunning )
 	{
 		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
 		return ;
 	}
-	TelemetryDebug2 += 1 ;
+//	TelemetryDebug2 += 1 ;
 	 
   if ( !checkSportPacket() )
 	{
@@ -1488,8 +1491,8 @@ void processSportPacket()
 
 void frsky_receive_byte( uint8_t data )
 {
-	TelemetryDebug += 1 ;
-#ifdef PCBSKY
+//	TelemetryDebug += 1 ;
+#if defined(PCBSKY) || defined(PCB9XT)
 	if ( g_model.bt_telemetry )
 	{
 		telem_byte_to_bt( data ) ;
@@ -1886,6 +1889,7 @@ void telemetry_init( uint8_t telemetryType )
 	switch ( telemetryType )
 	{
 		case TEL_FRSKY_HUB :
+		case TEL_MULTI :
 			FRSKY_Init( 0 ) ;
 		break ;
 		
@@ -1945,11 +1949,13 @@ void telemetry_init( uint8_t telemetryType )
 	}
 }
 
+//uint16_t TelDebug ;
 
 void FRSKY_Init( uint8_t brate )
 {
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
+//	TelDebug = brate ;
 
 	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
 	{
@@ -1974,20 +1980,24 @@ void FRSKY_Init( uint8_t brate )
 		uint32_t baudrate = 9600 ;
 		if ( g_model.protocol == PROTO_MULTI )
 		{
-			baudrate = 125000 ;
+			baudrate = 100000 ;
 		}
 		if ( g_model.frskyComPort == 0 )
 		{
 			UART2_Configure( baudrate, Master_frequency ) ;
 			UART2_timeout_disable() ;
-//#ifdef REVX
-//			g_model.telemetryRxInvert = 0 ;
-//			clearMFP() ;
-//#endif
+			if ( g_model.protocol == PROTO_MULTI )
+			{
+				com1Parity( 1 ) ;
+			}
 		}
 		else
 		{
 			UART_Configure( baudrate, Master_frequency ) ;
+			if ( g_model.protocol == PROTO_MULTI )
+			{
+				com2Parity( 1 ) ;
+			}
 		}
 	}
 	else if ( brate == 1 )
@@ -2050,7 +2060,28 @@ void FRSKY_Init( uint8_t brate )
 #ifdef PCB9XT
 	if ( brate == 0 )
 	{
-		x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;	// 9600
+		uint32_t baudrate = 9600 ;
+		if ( g_model.frskyComPort == 1 )
+		{
+			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+			{
+				baudrate = 100000 ;
+			}
+			console9xtInit() ;
+			UART4SetBaudrate( baudrate ) ;
+			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+			{
+				com2Parity( 1 ) ;
+			}	
+		}
+		else
+		{
+			x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;
+			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+			{
+				com1Parity( 1 ) ;
+			}	
+		}
 	}
 #ifdef ASSAN
 	else if ( brate == 3 )
@@ -2064,7 +2095,7 @@ void FRSKY_Init( uint8_t brate )
 	}
 	else // 9XR-DSM
 	{
-		FrskyComPort = g_model.frskyComPort = 0 ;
+//		FrskyComPort = g_model.frskyComPort = 0 ;
 		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
 	}
 #endif // PCB9XT
@@ -2094,7 +2125,7 @@ void FRSKY_Init( uint8_t brate )
 	}
 	else // 9XR-DSM
 	{
-		FrskyComPort = g_model.frskyComPort = 0 ;
+//		FrskyComPort = g_model.frskyComPort = 0 ;
 		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
 //		init_software_com1( 115200, 1 ) ;
 	}
@@ -2185,9 +2216,9 @@ void resetTelemetry()
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
 }
 
-uint16_t Debug_frsky1 ;
-uint16_t Debug_frsky2 ;
-uint16_t Debug_frsky3 ;
+//uint16_t Debug_frsky1 ;
+//uint16_t Debug_frsky2 ;
+//uint16_t Debug_frsky3 ;
 
 void (*TelemetryReceiver)(uint8_t x) = frsky_receive_byte ;
 
@@ -2242,6 +2273,10 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		type = TEL_ASSAN ;
 	}
 #endif
+	if ( g_model.protocol == PROTO_MULTI )
+	{
+		type = TEL_MULTI ;
+	}
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -2255,6 +2290,10 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		type = TEL_ASSAN ;
 	}
 #endif
+	if ( g_model.xprotocol == PROTO_MULTI )
+	{
+		type = TEL_MULTI ;
+	}
 #endif
 
 	
@@ -2266,13 +2305,19 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		case TELEMETRY_DSM :
 			type = TEL_DSM ;
 		break ;
+		case TELEMETRY_FRHUB :
+			if ( type != TEL_MULTI )
+			{
+				type = TEL_FRSKY_HUB ;
+			}
+		break ;
 	}
-	Debug_frsky1 = type ;
+//	Debug_frsky1 = type ;
 	return type ;
 }
 
-uint8_t TelDebug1 ;
-uint8_t TelDebug2 ;
+//uint8_t TelDebug1 ;
+//uint8_t TelDebug2 ;
 
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
@@ -2284,15 +2329,16 @@ void check_frsky( uint32_t fivems )
 	uint8_t type ;
 
 	type = decodeTelemetryType( telemetryType ) ;
-	TelDebug1 = type ;
-	TelDebug2 = telemetryType ;
+//	TelDebug1 = type ;
+//	TelDebug2 = telemetryType ;
 
 #ifdef PCBSKY
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
-	if ( type != TelemetryType )
+	if ( ( type != TelemetryType )
+			 || ( FrskyComPort != g_model.frskyComPort ) )
 //	if ( telemetryType != FrskyTelemetryType )
 #endif
 	{
@@ -2318,7 +2364,7 @@ void check_frsky( uint32_t fivems )
 		int32_t value ;
 		while ( (value = getJetiWord()) != -1 )
 		{
-			Debug_frsky2 += 1 ;
+//			Debug_frsky2 += 1 ;
 			// send byte to JETI code
 			if ( ( value & 0x0100 ) == 0 )
 			{
@@ -2747,7 +2793,8 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
     uint8_t dplaces ;
 //    uint8_t times2 ;
     uint8_t unit = ' ' ;
-    
+    uint8_t option = att & NO_UNIT ;
+		att &= ~NO_UNIT ;
 //		uint8_t ltype = g_model.frsky.channels[channel].type ;
 
 //    if ( scale )
@@ -2790,7 +2837,7 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
     {
       lcd_outdezNAtt(x, y, value, att, 5) ;
 //			unit = 'v' ;
-      if(!(att&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
+      if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
     }
     else
     {

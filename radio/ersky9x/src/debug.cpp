@@ -231,7 +231,7 @@ extern uint8_t tab_1024[1024];
 * Return         : 0: Byte received
 *                  -1: Timeout
 *******************************************************************************/
-extern struct t_fifo32 Console_fifo ;
+extern struct t_fifo128 Console_fifo ;
 
 //struct t_fifo64 HexStreamFifo ;
 
@@ -283,9 +283,9 @@ void handle_serial(void* pdata)
 
 	while ( Activated == 0 )
 	{
-#ifdef PCB9XT
-		break ;
-#endif
+//#ifdef PCB9XT
+//		break ;
+//#endif
 		CoTickDelay(10) ;					// 20mS
 	}
 //	txmit(';') ;
@@ -308,6 +308,13 @@ void handle_serial(void* pdata)
 			CoTickDelay(50) ;					// 100mS for now
 		}
 #endif
+#endif
+#ifdef PCB9XT
+//		while ( g_eeGeneral.btComPort == 1 )
+		while ( g_eeGeneral.btComPort )
+		{
+			CoTickDelay(50) ;					// 100mS for now
+		}
 #endif
 		
 //#if PCBSKY		

@@ -40,6 +40,7 @@
 #define BLINK         0x02
 #define DBLSIZE       0x04
 #define CONDENSED     0x08
+#define BOLD          0x80
 
 // putsChnRaw flags
 #define MIX_SOURCE    0x10
@@ -109,6 +110,7 @@ extern void lcdSetRefVolt(uint8_t val) ;
 extern void lcdSendCtl(uint8_t val) ;
 extern void refreshDisplay( void ) ;
 extern void lcdSetContrast( void ) ;
+extern void lcdSetOrientation( void ) ;
 
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;

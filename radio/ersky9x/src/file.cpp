@@ -18,6 +18,11 @@
 
 
 #include <stdint.h>
+#ifdef PCBSKY
+  #include "AT91SAM3S4.h"
+#endif
+#ifdef PCB9XT
+#endif
 #include "ersky9x.h"
 #include "stdio.h"
 #include "inttypes.h"
@@ -194,9 +199,14 @@ struct t_eeprom_buffer
 		ModelData model_data ;
 		SKYModelData sky_model_data ;
 		uint32_t words[ EEPROM_BUFFER_SIZE ] ;
+		uint8_t buffer2K[2048] ;
 	} data ;	
 } Eeprom_buffer ;
 
+uint8_t *eepromBufferAddress()
+{
+	return Eeprom_buffer.data.buffer2K ;
+}
 
 static void ee32WaitFinished()
 {
@@ -1656,77 +1666,75 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 #endif
 
 
-//#define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
+#define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
 
-// uint16_t AmountEeBackedUp ;
-//FIL g_eebackupFile = {0};
+uint16_t AmountEeBackedUp ;
+FIL g_eebackupFile = {0};
 
-//const char *backupEeprom()
-//{
-//  FRESULT result;
-//  DIR folder;
-//  char filename[34]; // /EEPROM/eeprom-2013-01-01.bin
+const char *openBackupEeprom()
+{
+  FRESULT result;
+  DIR folder;
+  char filename[34]; // /EEPROM/eeprom-2013-01-01.bin
 
-//	AmountEeBackedUp = 0 ;
+	AmountEeBackedUp = 0 ;
 
-//#ifdef PCBSKY
-//  if ( SdMounted == 0 )
-//#endif
-//#if defined(PCBX9D) || defined(PCB9XT)
-//extern uint32_t sdMounted( void ) ;
-//  if ( sdMounted() == 0 )
-//#endif
-//    return "NO SD CARD" ;
+#ifdef PCBSKY
+  if ( SdMounted == 0 )
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+extern uint32_t sdMounted( void ) ;
+  if ( sdMounted() == 0 )
+#endif
+    return "NO SD CARD" ;
 
-//  strcpy( filename, EEPROM_PATH ) ;
+  strcpy( filename, EEPROM_PATH ) ;
 
-//  result = f_opendir( &folder, filename) ;
-//  if (result != FR_OK)
-//	{
-//    if (result == FR_NO_PATH)
-//      result = f_mkdir(filename) ;
-//    if (result != FR_OK)
-//      return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
-//  }
+  result = f_opendir( &folder, filename) ;
+  if (result != FR_OK)
+	{
+    if (result == FR_NO_PATH)
+      result = f_mkdir(filename) ;
+    if (result != FR_OK)
+      return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
 
-//  strcpy( &filename[7], "/eeprom" ) ;
-//  uint32_t len = 14 ;
+  strcpy( &filename[7], "/eeprom" ) ;
+	setFilenameDateTime( &filename[14] ) ;
+  strcpy_P(&filename[14+11], ".bin" ) ;
 
-//  filename[len] = '-';
-//	div_t qr = div( Time.year, 10);
-//  filename[len+4] = '0' + qr.rem;
-//  qr = div(qr.quot, 10);
-//  filename[len+3] = '0' + qr.rem;
-//  qr = div(qr.quot, 10);
-//  filename[len+2] = '0' + qr.rem;
-//  filename[len+1] = '0' + qr.quot;
-//  filename[len+5] = '-';
-//  qr = div( Time.month, 10);
-//  filename[len+7] = '0' + qr.rem;
-//  filename[len+6] = '0' + qr.quot;
-//  filename[len+8] = '-';
-//  qr = div( Time.date, 10);
-//  filename[len+10] = '0' + qr.rem;
-//  filename[len+9] = '0' + qr.quot;
-	
-//  strcpy_P(&filename[len+11], ".bin" ) ;
-//	CoTickDelay(1) ;					// 2mS
-//  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
-//	CoTickDelay(1) ;					// 2mS
-//  if (result != FR_OK)
-//	{
-//    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
-//  }
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+	CoTickDelay(1) ;					// 2mS
+  if (result != FR_OK)
+	{
+    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+  return NULL ;
+}
 
+const char *processBackupEeprom( uint16_t blockNo )
+{
+  FRESULT result ;
+	UINT written ;
 
-//  UINT written ;
-//	ee32_read_512( uint32_t sector, uint8_t *buffer )
-//  result = f_write(&g_eebackupFile, buf, 512, &written);
-	 
+	if ( blockNo != AmountEeBackedUp )
+	{
+		return "Sync Error" ;
+	}
+  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
+	result = f_write( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &written ) ;
+	wdt_reset() ;
+	if ( result != FR_OK )
+	{
+		return "Write Error" ;
+	}
+	AmountEeBackedUp += 1 ;
+	return NULL ;
+}
 
-//  return NULL ;
-//}
-
-
-
+void closeBackupEeprom()
+{
+	f_close( &g_eebackupFile ) ;
+}
 

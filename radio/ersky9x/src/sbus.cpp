@@ -42,18 +42,18 @@ uint8_t SbusFrame[28] ;
 uint8_t SbusIndex = 0 ;
 extern uint16_t SbusTimer ;
 
-void processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
+uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 {
 	uint32_t inputbitsavailable = 0 ;
 	uint32_t i ;
 	uint32_t inputbits = 0 ;
 	if ( *sbus++ != 0x0F )
 	{
-		return ;		// Not a valid SBUS frame
+		return 0 ;		// Not a valid SBUS frame
 	}
 	if ( size < 23 )
 	{
-		return ;
+		return 0 ;
 	}
 	for ( i = 0 ; i < 16 ; i += 1 )
 	{
@@ -62,13 +62,19 @@ void processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 			inputbits |= *sbus++ << inputbitsavailable ;
 			inputbitsavailable += 8 ;
 		}
-		*pulses++ = ( (int32_t)( inputbits & 0x7FF ) - 0x3E0 ) * 5 / 8 ;
+		if ( pulses )
+		{
+			*pulses++ = ( (int32_t)( inputbits & 0x7FF ) - 0x3E0 ) * 5 / 8 ;
+		}
 		inputbitsavailable -= 11 ;
 		inputbits >>= 11 ;
 	}
-	ppmInValid = 100 ;
+	if ( pulses )
+	{
+		ppmInValid = 100 ;
+	}
 	SbusTimer = 1000 ;
-	return ;
+	return 1 ;
 }
 
 void processSbusInput()

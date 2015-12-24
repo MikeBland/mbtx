@@ -347,6 +347,7 @@ volatile uint8_t tick10ms = 0 ;
 volatile uint8_t tick5ms = 0 ;
 uint16_t g_LightOffCounter ;
 uint8_t  InactivityMonitor = 0 ;
+volatile uint32_t PowerOnTime ;						// Modified in interrupt routine
 
 uint16_t S_anaFilt[ANALOG_DATA_SIZE] ;				// Analog inputs after filtering
 #ifdef PCBSKY
@@ -664,6 +665,12 @@ static void checkAlarm() // added by Gohst
     if(!g_eeGeneral.beeperVal) alert(PSTR(STR_ALRMS_OFF));
 }
 
+//static void checkCalibrate()
+//{
+//  if(g_eeGeneral.calibrateWarning) return ;
+//  alert(XPSTR("Not Calibrated"));
+//}
+
 static void checkWarnings()
 {
     if(sysFlags & sysFLAG_OLD_EEPROM)
@@ -764,7 +771,18 @@ void setBtBaudrate( uint32_t index )
 //		}
 //		brate = brate * value / 100 ;
 //	}
+#ifdef PCB9XT	
+	if ( g_eeGeneral.btComPort == 1 )
+	{
+		UART4SetBaudrate ( brate ) ;
+	}
+	else if ( g_eeGeneral.btComPort == 2 )
+	{
+		Com3SetBaudrate ( brate ) ;
+	}
+#else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
+#endif
 }
 #endif
 
@@ -784,7 +802,7 @@ void update_mode(void* pdata)
 	startPdcUsartReceive() ;
 #endif
 #ifdef PCB9XT
-	BlSetColour( 50, 2 ) ;	
+	BlSetAllColours( 0, 30, 60 ) ;
 #endif
 
   while (1)
@@ -955,6 +973,35 @@ static void checkAr9x()
 extern "C" void usbInit(void) ;
 #endif
 
+#ifdef PCB9XT
+#define SETBL_DELAY		2
+static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
+{
+	return  ;
+	uint16_t timer = 0 ;
+	for ( timer = 0 ; timer < SETBL_DELAY ;  )
+	{
+		if ( Tenms )
+		{
+			Tenms = 0 ;
+			timer += 1 ;
+			wdt_reset() ;
+		}
+	}
+	BlSetAllColours( r, g, b ) ;
+	for ( timer = 0 ; timer < SETBL_DELAY ;  )
+	{
+		if ( Tenms )
+		{
+			Tenms = 0 ;
+			timer += 1 ;
+			wdt_reset() ;
+		}
+	}
+}
+#endif
+
+
 int main( void )
 {
 #ifdef PCBSKY
@@ -971,14 +1018,7 @@ int main( void )
   RCC->CSR |= RCC_CSR_RMVF ;
 #endif
 
-#ifdef PCBX9D
-	x9dConsoleInit() ;
-#endif
-#ifdef PCB9XT
-	console9xtInit() ;
-
-//	uputs( (char *)"Hello\r\n" ) ;
-#endif
+//#endif
 
 #ifdef PCBSKY
   PMC->PMC_PCER0 = (1<<ID_PIOC)|(1<<ID_PIOB)|(1<<ID_PIOA)|(1<<ID_UART0) ;				// Enable clocks to PIOB and PIOA and PIOC and UART0
@@ -1006,10 +1046,15 @@ int main( void )
 	init_soft_power() ;
 #endif
 
+
 #ifdef PCB9XT
 // Configure pin PA5 as an output, low for Bluetooth use
 	configure_pins( GPIO_Pin_5, PIN_PORTA | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
 	GPIOA->BSRRH = GPIO_Pin_5 ;		// Set low
+#endif
+
+#if defined(PCBX9D) || defined(PCB9XT)
+	initWatchdog() ;
 #endif
 
 #ifdef PCBSKY
@@ -1054,6 +1099,14 @@ int main( void )
 	UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 
+#ifdef PCBX9D
+	x9dConsoleInit() ;
+#endif
+#ifdef PCB9XT
+	console9xtInit() ;
+//	uputs( (char *)"Hello\r\n" ) ;
+#endif
+
 	init5msTimer() ;
 	
 	init_hw_timer() ;
@@ -1087,9 +1140,18 @@ int main( void )
 	sdInit() ;
 #endif
 
+
 	__enable_irq() ;
 
+#ifdef PCB9XT
+	delay_setbl( 100, 0, 0 ) ;
+#endif
+
 	lcd_init() ;
+#ifdef PCBSKY
+	lcdSetOrientation() ;
+#endif
+
 #ifdef PCBX9D
   lcd_clear() ;
 	refreshDisplay() ;
@@ -1102,7 +1164,7 @@ int main( void )
 #ifdef PCB9XT
 	initM64() ;
 	init_software_remote() ;
-	if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) != RCC_CSR_WDGRSTF ) && !unexpectedShutdown )	// Not watchdog
+	if ( ( ResetReason & RCC_CSR_WDGRSTF ) != RCC_CSR_WDGRSTF ) // && !unexpectedShutdown )	// Not watchdog
 	{
 		uint16_t timer = 0 ;
 		configure_pins( 0x0004, PIN_PORTA | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25  ) ;
@@ -1117,6 +1179,7 @@ int main( void )
 				m64_10mS() ;				
 				Tenms = 0 ;
 				timer += 1 ;
+				wdt_reset() ;
 			}
 			if ( m64ReceiveStatus() & 1 )
 			{
@@ -1160,6 +1223,7 @@ uint32_t updateSlave() ;
 				{
 					Tenms = 0 ;
 					delay -= 1 ;
+					wdt_reset() ;
 				}
 			}
 #endif			
@@ -1168,6 +1232,11 @@ uint32_t updateSlave() ;
 		GPIOA->BSRRL = 0x0004 ;			// Pin High
 		BlSetAllColours( 0, 0, 0 ) ;
 	}
+	else
+	{
+		delay_setbl( 0, 0, 100 ) ;
+	}
+	
 	lcd_clear() ;
 	refreshDisplay() ;
 #endif
@@ -1271,9 +1340,8 @@ uint32_t updateSlave() ;
 	init_trims() ;
 	start_2Mhz_timer() ;
 	start_sound() ;
-//	I2C_Init() ;
-	init_I2C2() ;
 #endif
+
 
 #if defined(PCBSKY) || defined(PCB9XT)
 	init_spi() ;
@@ -1317,11 +1385,14 @@ uint32_t updateSlave() ;
 
 	SportStreamingStarted = 0 ;
 	setLanguage() ;
-#ifdef PCBSKY
-	lcdSetContrast() ;
-#endif
-#ifdef PCBX9D
 	lcdSetRefVolt(g_eeGeneral.contrast) ;
+
+
+#ifdef PCB9XT
+	delay_setbl( 0, 100, 0 ) ;
+#endif
+
+#ifdef PCBX9D
 #ifndef REV9E
 	init_adc2() ;
 #endif // nREV9E
@@ -1334,14 +1405,27 @@ uint32_t updateSlave() ;
 #endif 
 
 #ifdef PCB9XT
+//	BlSetAllColours( 0, 100, 0 ) ;
 	create6posTable() ;
+	if ( g_eeGeneral.enableI2C == 1 )
+	{
+		init_I2C2() ;
+	}
 #endif 
+
 
 #ifdef REV9E
 	init_rotary_encoder() ;
 #endif // REV9E
 
+#ifdef PCB9XT
+	delay_setbl( 100, 0, 100 ) ;
+#endif
 	com2Configure() ;
+#ifdef PCB9XT
+	delay_setbl( 100, 100, 0 ) ;
+#endif
+
 
 //progress( 1 ) ;
 
@@ -1387,6 +1471,7 @@ uint32_t updateSlave() ;
 #endif
 #endif
 
+
 #if defined(PCBSKY) || defined(PCB9XT)
   checkQuickSelect();
 #endif
@@ -1414,6 +1499,7 @@ uint32_t updateSlave() ;
 #endif
 	usbInit() ;
 #endif
+
 #ifdef PCB9XT
   usbInit() ;
 //	backlightReset() ;
@@ -1620,13 +1706,19 @@ void flushBtFifo()
 {
 	uint16_t rxchar ;
 
+#ifdef PCBSKY
 	txmit( '[' ) ;
+#endif
 	while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 	{
+#ifdef PCBSKY
 txmit( rxchar ) ;
+#endif
 		// null body, flush fifo
 	}
+#ifdef PCBSKY
 	txmit( ']' ) ;
+#endif
 }
 
 uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
@@ -1646,7 +1738,9 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
+#ifdef PCBSKY
 txmit( rxchar ) ;
+#endif
 //			btStartLog( rxchar ) ;
 
 			if ( rxchar == x )
@@ -1697,7 +1791,9 @@ txmit( rxchar ) ;
 
 uint32_t poll_bt_device()
 {
+#ifdef PCBSKY
 txmit('P') ;
+#endif
 	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
@@ -1839,7 +1935,9 @@ uputs( (char *)command ) ;
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
+#ifdef PCBSKY
 			txmit( rxchar ) ;
+#endif
 			if ( length )
 			{
 //				if ( ( rxchar >= ' ' ) && ( rxchar < 0x80 ) )
@@ -1873,7 +1971,9 @@ uputs( (char *)command ) ;
 			{
 				if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 				{
+#ifdef PCBSKY
 txmit( rxchar ) ;
+#endif
 					if ( rxchar == 10 )
 					{
 						if ( x == 13 )
@@ -2014,13 +2114,14 @@ uint8_t BtFirstByte ;
 uint8_t BtChannelNumber ;
 uint8_t BtRxState ;
 uint8_t BtRxChecksum ;
+uint8_t BtBadChecksum ;
 
 uint8_t BtSbusFrame[28] ;
 uint8_t BtSbusIndex = 0 ;
-uint16_t BtSbusTimer ;
+uint8_t BtSbusReceived ;
 uint8_t BtRxOccured ;
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 void processBtRx( int32_t x, uint32_t rxTimeout )
 {
 	uint16_t rxchar ;
@@ -2057,7 +2158,14 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 					BtRxOccured = 1 ;
 					if ( BtRxChecksum == 0 )
 					{
-						processSBUSframe( BtSbusFrame, g_ppmIns, BtSbusIndex ) ;
+						if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
+						{
+							BtSbusReceived = 1 ;
+						}
+					}
+					else
+					{
+						BtBadChecksum = BtRxChecksum ;
 					}
 					BtRxState = BT_RX_IDLE ;
 				}
@@ -2069,11 +2177,14 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 	if ( rxTimeout )
 	{
 		BtCounters[1] += 1 ;
-		if ( ppmInValid == 100 )
+//		if ( ppmInValid == 100 )
+//		{
+//			ppmInValid = 99 ;
+//		}
+		if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
 		{
-			ppmInValid = 99 ;
+			BtSbusReceived = 1 ;
 		}
-		processSBUSframe( BtSbusFrame, g_ppmIns, BtSbusIndex ) ;
 		if ( ppmInValid == 100 )
 		{
 			BtCounters[2] += 1 ;
@@ -2533,20 +2644,28 @@ uint32_t btLink( uint32_t index )
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
 
+#ifdef PCBSKY
 txmit(i+'=') ;
+#endif
 	if ( i == 0 )
 	{
 		for ( x = 0 ; x < 10 ; x += 1 )
 		{
 			CoTickDelay(10) ;					// 40mS
 			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+#ifdef PCBSKY
 txmit(i+'=') ;
+#endif
 			if ( i )
 			{
+#ifdef PCBSKY
 txmit('V') ;
+#endif
 				break ;
 			}
+#ifdef PCBSKY
 txmit('U') ;
+#endif
 		}
 	}
 	return i ;
@@ -2564,12 +2683,16 @@ void btConfigure()
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+#ifdef PCBSKY
 txmit(i+'=') ;
+#endif
 	BtConfigure = 0x41 ;
 	btTransaction( (uint8_t *)"AT+CMODE=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+#ifdef PCBSKY
 txmit(i+'=') ;
+#endif
 	BtConfigure = 0x42 ;
 //	btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
 //	CoTickDelay(10) ;					// 20mS
@@ -2579,8 +2702,10 @@ txmit(i+'=') ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, 2000 ) ;
 	BtConfigure = 0x44 ;
+#ifdef PCBSKY
 txmit('R') ;
 txmit(i+'=') ;
+#endif
 // AT+PAIR=address,timeout
 //	uint8_t *end ;
 //	for ( j = 0 ; j < 4 ; j += 1 )
@@ -2617,7 +2742,9 @@ txmit(i+'=') ;
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
 		i = getBtOK(0, 225 ) ;
+#ifdef PCBSKY
 txmit(i+'=') ;
+#endif
 		BtConfigure = 0x49 + j ;
 	}
 	BtConfigure = 0 ;
@@ -2625,6 +2752,9 @@ txmit(i+'=') ;
 	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 
+#ifndef PCBSKY
+	(void ) i ;
+#endif
 }
 
 
@@ -2651,6 +2781,17 @@ void bt_task(void* pdata)
 	{
 		CoTickDelay(10) ;					// 20mS
 	}
+
+#ifdef PCB9XT
+	if ( g_eeGeneral.enableI2C == 2 )
+	{
+		if ( g_eeGeneral.btComPort == 2 )
+		{
+			stop_I2C2() ;
+			com3Init( 115200 ) ;
+		}
+	}
+#endif
 
 //	static uint32_t count ;
 	Bt_flag = CoCreateFlag(TRUE,0) ;
@@ -2914,7 +3055,9 @@ void bt_task(void* pdata)
 					{
 						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 						{
+#ifdef PCBSKY
 							txmit( rxchar ) ;
+#endif
 							if ( rxchar == '+' )
 							{
 								x = 1 ;
@@ -3102,7 +3245,7 @@ void bt_task(void* pdata)
 			}
 
 //		txmitBt( 'X' ) ;		// Send an X to Bluetooth every second for testing
-#ifdef PCBSKY
+//#ifdef PCBSKY
 			if ( ( BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
 					btAddressValid( g_eeGeneral.btDevice[BtCurrentLinkIndex].address ) )
 			{
@@ -3170,12 +3313,13 @@ void bt_task(void* pdata)
 				}
 				*p++ = 0 ;
 				*p++ = 0 ;
+				checksum = -checksum ;
 				if ( ( checksum == 2 ) || ( checksum == 3 ) )
 				{
 					*p++ = 3 ;		// "stuff"
 					checksum ^= 0x80 ;
 				}
-				*p++ = -checksum ;
+				*p++ = checksum ;
 				Bt_tx.size = p - BtTxBuffer ;
 				bt_send_buffer() ;
 				BtCounters[0] += 1 ;
@@ -3189,13 +3333,10 @@ void bt_task(void* pdata)
 					{
 						BtRxTimer = 100 ;
 					}
-					if ( ppmInValid == 100 )
-					{
-						ppmInValid = 99 ;
-					}
 					processBtRx( x, 0 ) ;
-					if ( ppmInValid == 100 )
+					if ( BtSbusReceived )
 					{
+						BtSbusReceived = 0 ;
 						if ( btBits & BT_IS_SLAVE )
 						{
 							btBits |= BT_SLAVE_SEND_SBUS ;						
@@ -3262,7 +3403,7 @@ void bt_task(void* pdata)
 			}
 		}
 
-#endif
+//#endif
 	}
 }
 #endif	// BLUETOOTH
@@ -3365,7 +3506,7 @@ void log_task(void* pdata)
 
 #endif	// SIMU
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 void telem_byte_to_bt( uint8_t data )
 {
 #ifndef SIMU
@@ -3482,6 +3623,7 @@ void main_loop(void* pdata)
 		checkCustom() ;
   	checkSwitches();
 		checkAlarm();
+//		checkCalibrate() ;
 		checkWarnings();
 		clearKeyEvents(); //make sure no keys are down before proceeding
 
@@ -3567,13 +3709,9 @@ void main_loop(void* pdata)
     STORE_GENERALVARS ;
   }
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
-#endif
-
-#if defined(PCBX9D) || defined(PCB9XT)
-	initWatchdog() ;
 #endif
 
 	Activated = 1 ;
@@ -3679,6 +3817,19 @@ extern uint8_t PowerState ;
 
 				refreshDisplay() ;
   		}
+
+#ifndef REV9E				 
+#ifdef PCBSKY
+			if ( check_soft_power() == POWER_ON )
+			{
+				module_output_active() ;
+				startPulses() ;		// using the required protocol
+				wdt_reset() ;
+				break ;	// Power back on
+			}
+#endif
+#endif
+
 //			if ( check_soft_power() == 0 )
 //			{
 				lcd_clear() ;
@@ -3725,6 +3876,16 @@ extern uint8_t PowerState ;
 				for(;;)
 				{
 					wdt_reset() ;
+#ifndef REV9E				 
+					if ( check_soft_power() == POWER_ON )
+					{
+						init_soft_power() ;
+						module_output_active() ;
+						startPulses() ;		// using the required protocol
+						wdt_reset() ;
+						break ;	// Power back on
+					}
+#endif
 				}
 #endif // PCBX9D
 
@@ -4247,7 +4408,6 @@ void mainSequence( uint32_t no_menu )
 #endif
 
 #ifdef PCB9XT
-//	poll_mega64() ;
 	checkM64() ;
 #endif
 	perMain( no_menu ) ;		// Allow menu processing
@@ -4256,9 +4416,9 @@ void mainSequence( uint32_t no_menu )
     wdt_reset();
     heartbeat = 0;
   }
-#ifdef REV9E
-  wdt_reset() ;
-#endif
+//#ifdef REV9E
+//  wdt_reset() ;
+//#endif
 
 #ifdef PCBX9D
 	checkTrainerSource() ;
@@ -4305,10 +4465,13 @@ void mainSequence( uint32_t no_menu )
 				Current_used += Current_accumulator / 100 ;			// milliAmpSeconds (but scaled)
 				Current_accumulator = 0 ;
 			}
+#endif
+
+#if defined(PCBSKY) || defined(PCB9XT)
 extern void btCountersToTotals() ;
 			btCountersToTotals() ;
-
 #endif
+
 			if ( StickScrollTimer )
 			{
 				StickScrollTimer -= 1 ;				
@@ -4365,7 +4528,7 @@ extern void pollForRtcComplete() ;
 #endif
 
 #ifdef PCB9XT
-		if ( g_eeGeneral.enableI2C )
+		if ( g_eeGeneral.enableI2C == 1 )
 		{
 			if ( ++EncoderTimer > 4 )
 			{
@@ -5265,18 +5428,25 @@ uint16_t SplashDebug[9] ;
 
 uint16_t stickMoveValue()
 {
-#define INAC_DEVISOR 256   // Issue 206 - bypass splash screen with stick movement
     uint16_t sum = 0 ;
-    for(uint8_t i=0; i<4; i++)
+		uint8_t i ;
+    for( i=0; i<4; i++)
 		{
 #ifdef SPLASH_DEBUG
 			SplashDebug[i] = anaIn(i) ;
 #endif
       sum += anaIn(i) ;
 		}
-	sum += 128 ;
-	return sum / INAC_DEVISOR ;
+	return sum ;
 }
+
+static uint32_t hasStickMoved( uint16_t value )
+{
+  if(abs(int16_t( value-stickMoveValue()))>160)
+		return 1 ;
+	return 0 ;
+}
+
 
 void doSplash()
 {
@@ -5300,7 +5470,7 @@ void doSplash()
     	getADC_filt(); // init ADC array
 #endif
 
-  	uint16_t inacSum = stickMoveValue();
+  	uint16_t inacSum = stickMoveValue() ;
 
 #ifdef SPLASH_DEBUG
   	for( i=0; i<4 ; i++)
@@ -5355,7 +5525,6 @@ void doSplash()
         getADC_filt();
 #endif
 
-    	uint16_t tsum = stickMoveValue();
 			uint8_t xxx ;
 			if ( ( xxx = keyDown() ) )
 			{
@@ -5365,7 +5534,7 @@ void doSplash()
 				return ;  //wait for key release
 			}
 				  
-			if (tsum!=inacSum)
+			if ( hasStickMoved( inacSum ) )
 			{
 #ifdef SPLASH_DEBUG
 				SplashDebug[8] = 0xF000 ;
@@ -6004,7 +6173,7 @@ void perMain( uint32_t no_menu )
 		ppmInValid -= 1 ;
 	}
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 	if ( BtRxTimer )
 	{
 		BtRxTimer -= 1 ;
@@ -6588,6 +6757,7 @@ void interrupt5ms()
 {
 	static uint32_t pre_scale ;		// Used to get 10 Hz counter
 
+
 	sound_5ms() ;
 
 #ifdef REV9E
@@ -6602,6 +6772,7 @@ void interrupt5ms()
 	
 	if ( ++pre_scale >= 2 )
 	{
+		PowerOnTime += 1 ;
 		Tenms |= 1 ;			// 10 mS has passed
 		pre_scale = 0 ;
   	per10ms();
@@ -6663,14 +6834,6 @@ uint16_t anaIn(uint8_t chan)
 	
 #ifdef PCB9XT
   volatile uint16_t *p = &S_anaFilt[chan] ;
-//	if ( ( chan >= 4 ) && ( chan <= 6 ) )
-//	{
-//		p = &M64Analog[chan] ;
-//	}
-//	if ( chan == 7 )
-//	{
-//		p = &S_anaFilt[4] ;
-//	}
 	if ( ( chan >= 7 ) && ( chan <= 10 ) )
 	{
 		uint32_t x = 7 ;

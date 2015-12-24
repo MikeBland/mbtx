@@ -403,6 +403,7 @@ uint32_t flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t
 
 	ispConnect() ;
 	clockWait( 64 ) ;	// 20mS
+	wdt_reset() ;
 	if ( ( IspStatus = ispEnterProgrammingMode() ) == 0 )
 	{
 		Signature[0] = ispReadSignature(0) ;
@@ -438,6 +439,7 @@ uint32_t flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t
 		}
 		flashPage( data, address, i ) ;
 		data += 256 ;
+		wdt_reset() ;
 	}
 	for ( i = 0 ; i < 64 ; i += 1 )
 	{
@@ -445,6 +447,7 @@ uint32_t flashAvr( uint8_t *data64, uint8_t *data2561, uint16_t size64, uint16_t
 	}
 	ispDisconnect() ;
 	clockWait(64) ;
+	wdt_reset() ;
 
 	for ( i = 0 ; i < 64 ; i += 1 )
 	{

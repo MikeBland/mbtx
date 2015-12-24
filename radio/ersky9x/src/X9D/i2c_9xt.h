@@ -39,6 +39,7 @@ extern uint8_t McpReadData ;
 
 /* Exported functions ------------------------------------------------------- */
 void I2C_Init( void );
+void stop_I2C2( void ) ;
 void init23008( void ) ;
 void write23008( uint8_t outputs ) ;
 void read23008( void ) ;

@@ -68,7 +68,6 @@ SKYModelData TempModelStore ;
 extern void generalDefault() ;
 extern void modelDefault(uint8_t id)  ;
 
-
 // EEPROM driver
 #if !defined(SIMU)
 #define eepromInit()          I2C_EE_Init()
@@ -1229,7 +1228,7 @@ void eeCheck(bool immediately)
 bool eeDuplicateModel(uint8_t id)
 {
   uint32_t i;
-  for( i=id+1; i<MAX_MODELS; i++)
+  for( i=id ; i<MAX_MODELS; i++)
   {
     if(! eeModelExists(i) ) break;
   }
@@ -1242,7 +1241,7 @@ bool eeDuplicateModel(uint8_t id)
   	if(i>=id) return false; //no free space in directory left
 	}
 
-	eeCopyModel( i+1, id ) ;
+	eeCopyModel( i, id-1 ) ;
 
 	return true ;
 }
@@ -1250,8 +1249,8 @@ bool eeDuplicateModel(uint8_t id)
 bool eeCopyModel(uint8_t dst, uint8_t src)
 {
   if (theFile.copy(FILE_MODEL(dst), FILE_MODEL(src))) {
-    memcpy(ModelNames[dst], ModelNames[src], sizeof(g_model.name));
-    return true;
+    memcpy(ModelNames[dst+1], ModelNames[src+1], sizeof(g_model.name));
+		return true;
   }
   else {
     return false;

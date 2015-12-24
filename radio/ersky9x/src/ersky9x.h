@@ -35,8 +35,8 @@
 
 //#define ENABLE_DSM_MATCH	1
 
-//#if defined(PCBSKY) || defined(PCB9XT)
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
+//#ifdef PCBSKY
 #define BLUETOOTH	1
 #endif
 
@@ -49,7 +49,8 @@
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
-#define wdt_reset()	(IWDG->KR = 0x0000AAAAL)
+//#define wdt_reset()	(IWDG->KR = 0x0000AAAAL)
+extern void wdt_reset() ;
 #endif
 #endif
 
@@ -675,6 +676,9 @@ extern uint8_t Ee_lock ;
 #define PROTO_DSM2       2
 #define PROTO_MULTI      3
 #define PROTO_ASSAN      4
+
+#define PROTO_SBUS	     5
+
 #ifdef ASSAN
 #define PROT_MAX         4
 #else
@@ -683,6 +687,9 @@ extern uint8_t Ee_lock ;
 #define PROTO_PPM16			 3		// No longer needed
 #define PROTO_OFF		     15		// For X9D
 #define PROT_STR_LEN      6
+
+
+
 #ifdef ASSAN
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
 #else
@@ -778,7 +785,7 @@ extern int16_t getValue(uint8_t i) ;
 
 inline int32_t calc100toRESX(register int8_t x)
 {
-  return ((int32_t)x*655)>>6 ;
+  return ((int32_t)x*1311)>>7 ;
 }
 
 inline int16_t calc1000toRESX( register int32_t x)  // improve calc time by Pat MacKenzie
@@ -1206,7 +1213,7 @@ struct btRemote_t
 extern uint8_t BtCurrentBaudrate ;
 extern uint8_t BtLinkRequest ;
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 extern struct btRemote_t BtRemote[] ;
 extern uint8_t NumberBtremotes ;
 #endif
@@ -1229,6 +1236,7 @@ extern struct t_PeripheralSpeeds PeripheralSpeeds ;
 
 #define SCC_BAUD_125000		0
 #define SCC_BAUD_115200		1
+#define SCC_BAUD_100000		2
 
 uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source ) ;
 uint32_t btAddressValid( uint8_t *address ) ;
