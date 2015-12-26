@@ -100,7 +100,7 @@ extern void UART2_timeout_disable( void ) ;
 extern void UART_Sbus_configure( uint32_t masterClock ) ;
 extern void UART_Sbus57600_configure( uint32_t masterClock ) ;
 extern void jetiSendWord( uint16_t word ) ;
-extern void init_software_com1(uint32_t baudrate, uint32_t invert) ;
+extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 //extern void UART_Stop( void ) ;
 //extern void Bt_UART_Stop( void ) ;
 extern void txmit( uint8_t c ) ;
@@ -174,7 +174,7 @@ extern void disable_ssc( void ) ;
 #define SPORT_POLARITY_NORMAL	0
 #define SPORT_POLARITY_INVERT	1
 
-extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert ) ;
+extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity ) ;
 extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive ) ;
 void disable_software_com1( void ) ;
 #ifdef PCB9XT

@@ -268,6 +268,7 @@ CPPSRC = ersky9x.cpp \
 			se.cpp \
 			it.cpp \
 			pl.cpp \
+			vi.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -305,6 +306,7 @@ CPPSRC = stamp.cpp \
 			se.cpp \
 			it.cpp \
 			pl.cpp \
+			vi.cpp \
          debug.cpp \
          file.cpp \
          pers.cpp \
@@ -368,6 +370,7 @@ CPPSRC = ersky9x.cpp \
 			se.cpp \
 			it.cpp \
 			pl.cpp \
+			vi.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -433,6 +436,7 @@ CPPSRC = stamp.cpp \
 			se.cpp \
 			it.cpp \
 			pl.cpp \
+			vi.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \

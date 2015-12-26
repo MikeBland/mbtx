@@ -97,6 +97,7 @@ extern const char * const Norwegian[] ;
 extern const char * const Swedish[] ;
 extern const char * const Italian[] ;
 extern const char * const Polish[] ;
+extern const char * const Vietnamese[] ;
 
 #define PSTR(a) Language[a]
 #define XPSTR(a)  (char *)a

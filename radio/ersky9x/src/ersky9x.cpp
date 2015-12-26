@@ -640,6 +640,11 @@ void setLanguage()
 			ExtraFont = font_pl_extra ;
 			ExtraBigFont = NULL ;
 		break ;
+		case 7 :
+			Language = Vietnamese ;
+			ExtraFont = NULL ;
+			ExtraBigFont = NULL ;
+		break ;
 		default :
 			Language = English ;
 			ExtraFont = NULL ;
@@ -795,7 +800,7 @@ void update_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
 #if defined(PCBX9D) || defined(PCB9XT)
-	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ; // Kick off at 57600 baud
+	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCBSKY
 	UART2_Configure( 57600, Master_frequency ) ;

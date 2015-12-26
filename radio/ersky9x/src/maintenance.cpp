@@ -1814,7 +1814,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
-			x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;
+			x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;
 #endif
 #endif
 #ifdef PCBSKY

@@ -643,12 +643,12 @@ uint8_t CaptureMode ;
 uint16_t BitTime ;
 uint16_t HtoLtime ;
 uint16_t LtoHtime ;
+uint16_t Byte ;
 uint8_t SoftSerInvert = 0 ;
-
 uint8_t BitState ;
 uint8_t BitCount ;
-uint8_t Byte ;
 uint8_t Tc5Count ;
+uint8_t SoftSerialEvenParity ;
 
 //uint16_t SerTimes[64] ;
 //uint16_t SerValues[64] ;
@@ -683,18 +683,35 @@ void putCaptureTime( uint16_t time, uint32_t value )
 	{
 		if ( value )
 		{
+			uint32_t len = SoftSerialEvenParity ? 9 : 8 ;
 			while ( time )
 			{
-				if ( BitCount >= 8 )
+				if ( BitCount >= 9 )
 				{ // Got a byte
-					put_fifo64( &CaptureRx_fifo, Byte ) ;
+					if ( len == 9 )
+					{
+						// check parity (even)
+						uint32_t parity = Byte ;
+						parity ^= parity >> 4 ;
+						parity ^= parity >> 2 ;
+						parity ^= parity >> 1 ;
+						parity ^= Byte >> 8 ;
+						if ( ( parity & 1 ) == 0 )
+						{
+							put_fifo64( &CaptureRx_fifo, Byte ) ;
+						}
+					}
+					else
+					{
+						put_fifo64( &CaptureRx_fifo, Byte ) ;
+					}
 					BitState = BIT_IDLE ;
 					break ;
 				}
 				else
 				{
 					Byte >>= 1 ;
-					Byte |= 0x80 ;
+					Byte |= ( len == 9 ) ? 0x100 : 0x80 ;
 					time -= 1 ;
 					BitCount += 1 ;
 				}
@@ -2106,11 +2123,12 @@ void start_timer5()
 
 
 // Handle software serial on COM1 input (for non-inverted input)
-void init_software_com1(uint32_t baudrate, uint32_t invert)
+void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
 {
 	BitTime = 2000000 / baudrate ;
 
 	SoftSerInvert = invert ? 0 : PIO_PA5 ;
+	SoftSerialEvenParity = parity ? 1 : 0 ;
 
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
@@ -2484,13 +2502,13 @@ void x9dConsoleInit()
 }
 #endif
 
-void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert )
+void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity )
 {
 	// Serial configure  
 	if ( mode == SPORT_MODE_SOFTWARE )
 	{
 	  NVIC_DisableIRQ(USART2_IRQn) ;
-		init_software_com1( baudRate, invert ) ;
+		init_software_com1( baudRate, invert, parity ) ;
 		return ;
 	}
 	disable_software_com1() ;
@@ -2734,11 +2752,12 @@ static void stop_timer11()
 
 
 // Handle software serial on COM1 input (for non-inverted input)
-void init_software_com1(uint32_t baudrate, uint32_t invert)
+void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	
 	BitTime = 2000000 / baudrate ;
+	SoftSerialEvenParity = parity ? 1 : 0 ;
 
 #ifdef PCB9XT
 	SoftSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
@@ -2957,7 +2976,10 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 	return 1 ;			// Sent OK
 }
 
-uint16_t Uart4Errors ;
+//uint16_t Uart4Errors ;
+//uint16_t Uart4Bad ;
+//uint16_t Uart4Data ;
+//uint16_t Uart4RxCount ;
 
 extern "C" void UART4_IRQHandler()
 {
@@ -3014,6 +3036,7 @@ extern uint16_t BtCounters[4] ;
 				}
 				else
 				{
+//					Uart4RxCount +=1 ;
 					put_fifo128( &Console_fifo, data ) ;
 				}
 			}
@@ -3024,7 +3047,21 @@ extern uint16_t BtCounters[4] ;
 			{
 				USART_ORE += 1 ;
 			}
-			Uart4Errors += 1 ;
+			if ( status & USART_FLAG_NE )
+			{
+				USART_NE += 1 ;
+			}
+			if ( status & USART_FLAG_FE )
+			{
+				USART_FE += 1 ;
+			}
+			if ( status & USART_FLAG_PE )
+			{
+				USART_PE += 1 ;
+			}
+//			Uart4Bad = status ;
+//			Uart4Errors += 1 ;
+//			Uart4Data = data ;
 		}
     status = puart->SR ;
 	}

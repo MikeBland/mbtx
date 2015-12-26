@@ -301,13 +301,11 @@ void handle_serial(void* pdata)
 		CoTickDelay(50) ;					// 100mS for now
 	}
 #endif
-#ifndef PCB9XT
 #ifndef PCBDUE
 		while ( g_model.frskyComPort || ( g_model.com2Baudrate == 0 ) )		// Leave the port alone!
 		{
 			CoTickDelay(50) ;					// 100mS for now
 		}
-#endif
 #endif
 #ifdef PCB9XT
 //		while ( g_eeGeneral.btComPort == 1 )
@@ -317,18 +315,6 @@ void handle_serial(void* pdata)
 		}
 #endif
 		
-//#if PCBSKY		
-//#ifndef PCBDUE
-//		if ( SoundCheck )
-//		{
-//			if ( queueTone( 610, 200, 30, 0 ) )
-//			{
-//				SoundCheck = 0 ;
-//			}			
-//		}
-//#endif
-//#endif
-
 		while ( ( rxchar = rxuart() ) == 0xFFFF )
 		{
 			CoTickDelay(5) ;					// 10mS for now

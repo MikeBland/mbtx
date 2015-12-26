@@ -542,7 +542,7 @@ static void disable_pa7_pxx()
 #ifdef ASSAN
 static void init_pa7_assan()
 {
-	x9dSPortInit( 115200, SPORT_MODE_HARDWARE, 0 ) ;
+	x9dSPortInit( 115200, SPORT_MODE_HARDWARE, 0, 0 ) ;
   EXTERNAL_RF_ON();
 	setupPulsesDsm2(6) ;
   

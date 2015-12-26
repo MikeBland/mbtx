@@ -518,6 +518,11 @@ uint8_t LinkAveCount ;
 
 void processFrskyPacket(uint8_t *packet)
 {
+	if ( numPktBytes != 9 )
+	{
+		return ;
+	}
+	
   // What type of packet?
   switch (packet[0])
   {
@@ -540,6 +545,7 @@ void processFrskyPacket(uint8_t *packet)
       frskyTelemetry[1].set(packet[2], FR_A2_COPY ); //FrskyHubData[] =  frskyTelemetry[1].value ;
       frskyTelemetry[2].set(packet[3], FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
       frskyTelemetry[3].set(packet[4] / 2, FR_TXRSI_COPY ); //FrskyHubData[] =  frskyTelemetry[3].value ;
+
 //			if ( LinkAveCount > 15 )
 //			{
 //				LinkAveCount = 0 ;
@@ -2051,7 +2057,7 @@ void FRSKY_Init( uint8_t brate )
 	else
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
-		init_software_com1( 115200, 1 ) ;
+		init_software_com1( 115200, 1, 0 ) ;
 	}
 #endif
   // clear frsky variables
@@ -2061,12 +2067,12 @@ void FRSKY_Init( uint8_t brate )
 	if ( brate == 0 )
 	{
 		uint32_t baudrate = 9600 ;
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+		{
+			baudrate = 100000 ;
+		}
 		if ( g_model.frskyComPort == 1 )
 		{
-			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-			{
-				baudrate = 100000 ;
-			}
 			console9xtInit() ;
 			UART4SetBaudrate( baudrate ) ;
 			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
@@ -2076,27 +2082,34 @@ void FRSKY_Init( uint8_t brate )
 		}
 		else
 		{
-			x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;
-			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+			if ( baudrate == 100000 )
 			{
-				com1Parity( 1 ) ;
-			}	
+				x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 1 ) ;	// Invert/even parity
+			}
+			else
+			{
+				x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;
+				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+				{
+					com1Parity( 1 ) ;
+				}	
+			}
 		}
 	}
 #ifdef ASSAN
 	else if ( brate == 3 )
 	{
-		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// ASSAN
+		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// ASSAN
 	}
 #endif
 	else if ( brate == 1 )
 	{
-		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// 57600
+		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// 57600
 	}
 	else // 9XR-DSM
 	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
+		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
 	}
 #endif // PCB9XT
 
@@ -2110,23 +2123,23 @@ void FRSKY_Init( uint8_t brate )
 		}
 		else
 		{
-			x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;	// 9600
+			x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;	// 9600
 		}
 	}
 #ifdef ASSAN
 	else if ( brate == 3 )
 	{
-		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// ASSAN
+		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// ASSAN
 	}
 #endif
 	else if ( brate == 1 )
 	{
-		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL ) ;		// 57600
+		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// 57600
 	}
 	else // 9XR-DSM
 	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT ) ;	// Invert
+		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
 //		init_software_com1( 115200, 1 ) ;
 	}
 #endif
@@ -2319,6 +2332,8 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 //uint8_t TelDebug1 ;
 //uint8_t TelDebug2 ;
 
+//uint16_t Frsky4RxCount ;
+
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
 {
@@ -2469,6 +2484,7 @@ void check_frsky( uint32_t fivems )
 		{
 			while ( ( rxchar = rxuart() ) != 0xFFFF )
 			{
+//				Frsky4RxCount += 1 ;
 				frsky_receive_byte( rxchar ) ;
 			}
 		}

@@ -8840,8 +8840,35 @@ void menuDebug(uint8_t event)
 //  lcd_outhex4( 90, 2*FH, UART4->CR2 ) ;
 //  lcd_outhex4( 0, 3*FH, g_model.com2Function ) ;
 //  lcd_outhex4( 30, 3*FH, g_eeGeneral.btComPort ) ;
+//extern uint16_t USART_ORE ;
+//extern uint16_t USART_FE ;
+//extern uint16_t USART_PE ;
 //extern uint16_t Uart4Errors ;
-//  lcd_outhex4( 60, 3*FH, Uart4Errors ) ;
+//extern uint16_t Uart4Bad ;
+//extern uint16_t Uart4Data ;
+
+//  lcd_outhex4( 0, 3*FH, USART_ORE ) ;
+//  lcd_outhex4( 30, 3*FH, Uart4Errors ) ;
+//  lcd_outhex4( 60, 3*FH, USART_FE ) ;
+//  lcd_outhex4( 90, 3*FH, USART_PE ) ;
+//  lcd_outhex4( 30, 4*FH, Uart4Bad ) ;
+//  lcd_outhex4( 60, 4*FH, Uart4Data ) ;
+
+//extern uint8_t CopyPacket[] ;
+//extern uint16_t PacketErrors ;
+
+//  lcd_outhex4( 0, 5*FH, (CopyPacket[0] << 8 ) | CopyPacket[1] ) ;
+//  lcd_outhex4( 30, 5*FH, (CopyPacket[2] << 8 ) | CopyPacket[3] ) ;
+//  lcd_outhex4( 60, 5*FH, (CopyPacket[4] << 8 ) | CopyPacket[5] ) ;
+//  lcd_outhex4( 90, 5*FH, (CopyPacket[6] << 8 ) | CopyPacket[7] ) ;
+//  lcd_outhex4( 0, 6*FH, (CopyPacket[8] << 8 ) | CopyPacket[9] ) ;
+//  lcd_outhex4( 60, 6*FH, PacketErrors ) ;
+
+//extern uint16_t Uart4RxCount ;
+//extern uint16_t Frsky4RxCount ;
+//  lcd_outhex4( 0, 7*FH, Uart4RxCount ) ;
+//  lcd_outhex4( 30, 7*FH, Frsky4RxCount ) ;
+
 //extern struct t_fifo128 Console_fifo ;
 //	uint16_t *p = (uint16_t *)&Console_fifo ;
 //	uint32_t i ;
@@ -8930,7 +8957,7 @@ void menuProcTrainDdiag(uint8_t event)
 			if ( TrainerMode == 2 )
 			{
 				setCaptureMode( 0 ) ;			
-				init_software_com1( 9600, 0 ) ;
+				init_software_com1( 9600, 0, 0 ) ;
 			}
 			else
 			{
@@ -13714,8 +13741,8 @@ STR_DiagAna
 			subN += 1 ;
 
 	    lcd_puts_Pleft( y,PSTR(STR_LANGUAGE));
-	    lcd_putsAttIdx( 10*FW, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN   POLISH    "),g_eeGeneral.language,(sub==subN ? blink:0));
-	    if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 6 ) ;
+	    lcd_putsAttIdx( 10*FW, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN   POLISH    VIETNAMESE"),g_eeGeneral.language,(sub==subN ? blink:0));
+	    if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 7 ) ;
 			setLanguage() ;
  			y += FH ;
 			subN += 1 ;
