@@ -1001,7 +1001,7 @@ void setupPulsesPPM2()
 		if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
 		{
 			g_model.ppmNCH = 0 ;		// Correct if wrong from DSM
-/		}
+		}
 		p = (g_model.ppmNCH + 4) * 2 ;
 		if ( p > 16 )
 		{
