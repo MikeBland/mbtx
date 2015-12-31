@@ -268,7 +268,7 @@ uint8_t telemItemValid( uint8_t index )
 		}
 		else
 		{
-			i -= CHOUT_BASE-NUM_CHNOUT ;
+			i -= CHOUT_BASE+NUM_CHNOUT ;
 			x = pgm_read_byte( &TelemValid[i] ) ;
 			if ( x == 3 )
 			{
@@ -1030,7 +1030,7 @@ void putsTxStr( uint8_t x, uint8_t y )
 void putsOffDecimal( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
 {
   if(value)
-      lcd_outdezAtt( x+3*FW,y,value,attr) ;
+      lcd_outdezAtt( x+3*FW-2,y,value,attr) ;
   else
       lcd_putsAtt(  x,y,Str_OFF,attr) ;
 }
@@ -3398,10 +3398,17 @@ void menuProcMixOne(uint8_t event)
     uint8_t  sub    = mstate2.m_posVert;
 
     uint8_t t_pgOfs = evalOffset(sub);
+#ifdef V2
+		lcd_puts_Pskip( FH, PSTR(STR_2SOURCE"\037"STR_2WEIGHT"\037""\001"STR_OFFSET"\037"STR_ENABLEEXPO
+			"\037"STR_2TRIM"\037\037\037"STR_2SWITCH"\037""\001MODES""\037"STR_2WARNING"\037"STR_2MULTIPLEX
+			"\037""HiResSlowDelay""\037"STR_2DELAY_DOWN"\037"STR_2DELAY_UP"\037"STR_2SLOW_DOWN"\037"
+			STR_2SLOW_UP), s_pgOfs ) ;
+#else
 		lcd_puts_Pskip( FH, PSTR(STR_2SOURCE"\037"STR_2WEIGHT"\037""\001"STR_OFFSET"\037"STR_2FIX_OFFSET
 			"\037"STR_ENABLEEXPO"\037"STR_2TRIM"\037\037\037"STR_2SWITCH"\037""\001MODES""\037"STR_2WARNING
 			"\037"STR_2MULTIPLEX"\037"STR_2DELAY_DOWN"\037"STR_2DELAY_UP"\037"STR_2SLOW_DOWN"\037"
 			STR_2SLOW_UP), s_pgOfs ) ;
+#endif
 
     for(uint8_t k=0; k<7; k++)
     {
@@ -3451,14 +3458,16 @@ void menuProcMixOne(uint8_t event)
         case 2:
 						md2->sOffset = gvarMenuItem125( FW*16, y, md2->sOffset, attr ) ;
             break;
+#ifndef V2
         case 3:
-#ifdef V2
-						md2->hiResSlow = onoffItem( md2->hiResSlow, y, attr ) ;
-#else
 						md2->lateOffset = onoffItem( md2->lateOffset, y, attr ) ;
 #endif
             break;
+#ifndef V2
         case 4:
+#else
+        case 3:
+#endif
 						if ( ( md2->srcRaw <=4 ) )
 						{
 							md2->disableExpoDr = offonItem( md2->disableExpoDr, y, attr ) ;
@@ -3468,10 +3477,18 @@ void menuProcMixOne(uint8_t event)
 							md2->disableExpoDr = onoffMenuItem( md2->disableExpoDr, y, PSTR("\001Use Output   "), attr ) ;
 						}
 						break;
+#ifndef V2
         case 5:
+#else
+        case 4:
+#endif
 						md2->carryTrim = offonItem( md2->carryTrim, y, attr ) ;
 						break;
+#ifndef V2
         case 6 :
+#else
+        case 5:
+#endif
 					{	
 					 	uint8_t value = md2->differential ;
 						if ( value == 0 )
@@ -3498,7 +3515,11 @@ void menuProcMixOne(uint8_t event)
 						}
 					}
         break;
+#ifndef V2
         case 7 :
+#else
+        case 6:
+#endif
 						if ( md2->differential )		// Non zero for curve
 						{
 		          md2->curve = gvarMenuItem( 12*FW, y, md2->curve, -100, 100, attr ) ;
@@ -3535,10 +3556,18 @@ void menuProcMixOne(uint8_t event)
 							}
 						}
         break;
+#ifndef V2
         case 8:
+#else
+        case 7:
+#endif
 						md2->swtch = edit_dr_switch( 13*FW, y, md2->swtch, attr, attr ? EDIT_DR_SWITCH_EDIT : 0 ) ;
             break;
+#ifndef V2
         case 9:
+#else
+        case 8:
+#endif
 					{
 						uint8_t b = 1 ;
 
@@ -3565,14 +3594,27 @@ void menuProcMixOne(uint8_t event)
 						}
 					}
         break ;
+#ifndef V2
         case 10:
+#else
+        case 9:
+#endif
 						b = md2->mixWarn ;
 						putsOffDecimal( FW*13, y, b, attr ) ;
             if(attr) { CHECK_INCDEC_H_MODELVAR_0( b, 3); md2->mixWarn = b ; }
             break;
+#ifndef V2
         case 11:
+#else
+        case 10:
+#endif
 						md2->mltpx = checkIndexed( y, PSTR(FWx13"\002"STR_ADD_MULT_REP), md2->mltpx, (sub==i) ) ;
             break;
+#ifdef V2
+        case 11:
+						md2->hiResSlow = onoffItem( md2->hiResSlow, y, attr ) ;
+            break;
+#endif
         case 12:
 						md2->delayDown = editSlowDelay( y, attr, md2->delayDown ) ;
             break;
@@ -6575,10 +6617,10 @@ void menuProc0(uint8_t event)
 				else
 				{
         	lcd_putsAttIdx( 6*FW+2,     2*FH,PSTR(STR_TRIM_OPTS),g_model.trimInc, 0);
-					if ( g_model.thrTrim )
-					{
-						lcd_puts_P(x+8*FW-FW/2-1,2*FH,PSTR(STR_TTM));
-					}
+//					if ( g_model.thrTrim )
+//					{
+//						lcd_puts_P(x+8*FW-FW/2-1,2*FH,PSTR(STR_TTM));
+//					}
 				}
         //trim sliders
         for(uint8_t i=0; i<4; i++)
@@ -8462,8 +8504,8 @@ static uint8_t checkIndexQualified( uint8_t y, const prog_char * s, uint8_t valu
 static void selectSwitchSource(uint8_t xsw, uint8_t y, uint8_t edit, uint16_t qmask)
 {
   uint8_t prev = getSwitchSource(xsw);
-  uint8_t curr = checkIndexQualified( y, PSTR(FWx17"\016\004NONEPB7 PC0 PC4 PC6 PC7 PG2 PG5 XPB0XPB1XPC0XPD2XPD3XPD4XPD7"), prev, edit, qmask ) ; // max 7 ext switch sources
-  if (curr != prev) {
+	uint8_t curr = checkIndexQualified( y, PSTR(FWx17"\016\004NONEPB7 PC0 PC4 PC6 PC7 PG2 PG5 EXT1XPD2XPD3XPD4XPB1XPC0EXT2"), prev, edit, qmask ) ; // max 7 ext switch sources
+	if (curr != prev) {
     setSwitchSource(xsw, curr);
     initSwitchSrcPin(curr);
   }
@@ -8526,7 +8568,7 @@ Str_Hardware
   		uint8_t attr ;
 //			y = FH ;
 			attr = (sub==subN) ? blink : 0 ;
-			lcd_xlabel_decimal( PARAM_OFS, y, g_eeGeneral.contrast, attr, PSTR(STR_CONTRAST) ) ;
+			lcd_xlabel_decimal( PARAM_OFS+3*FW-2, y, g_eeGeneral.contrast, attr, PSTR(STR_CONTRAST) ) ;
       if ( attr )
 			{
 				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, LCD_MINCONTRAST, LCD_MAXCONTRAST) ;

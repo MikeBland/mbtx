@@ -1497,7 +1497,7 @@ void processSportPacket()
 
 void frsky_receive_byte( uint8_t data )
 {
-//	TelemetryDebug += 1 ;
+	TelemetryDebug += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT)
 	if ( g_model.bt_telemetry )
 	{

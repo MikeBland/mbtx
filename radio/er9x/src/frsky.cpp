@@ -1323,9 +1323,9 @@ void FRSKY_Init( uint8_t brate)
   	if ( brate == 0 ) // 9600
 	{
 #ifdef MULTI_PROTOCOL
-		if ( g_model.protocol == PROTO_MULTI ) // 125000
+		if ( g_model.protocol == PROTO_MULTI ) // 100000bps
 		{
-			UBRR0L = 7;
+			UBRR0L = 9;
 			UBRR0H = 0;
 		}
 		else
@@ -1344,7 +1344,12 @@ void FRSKY_Init( uint8_t brate)
 	UCSR0A &= ~(1 << U2X0); // disable double speed operation.
   // set 8 N1
   UCSR0B = 0 | (0 << RXCIE0) | (0 << TXCIE0) | (0 << UDRIE0) | (0 << RXEN0) | (0 << TXEN0) | (0 << UCSZ02);
-  UCSR0C = 0 | (1 << UCSZ01) | (1 << UCSZ00);
+#ifdef MULTI_PROTOCOL
+	if ( g_model.protocol == PROTO_MULTI ) // set 8e2
+		UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+	else
+#endif // MULTI_PROTOCOL
+		UCSR0C = 0 | (1 << UCSZ01) | (1 << UCSZ00);
 
   
   while (UCSR0A & (1 << RXC0)) UDR0; // flush receive buffer

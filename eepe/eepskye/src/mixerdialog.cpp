@@ -93,7 +93,25 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 
 //		ui->sourceCB->setCurrentIndex(x);
-    ui->sourceCB->setCurrentIndex(md->srcRaw) ;
+#ifdef SKY    
+		int value ;
+		value = md->srcRaw ;
+		if ( ( eeType == 1 ) || ( eeType == 2 ) )
+		{
+			if ( value >= EXTRA_POTS_POSITION )
+			{
+				if ( value >= EXTRA_POTS_START )
+				{
+					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+				}
+				else
+				{
+					value += eeType == 2 ? 2 : NUM_EXTRA_POTS ;
+				}
+			}
+		}
+#endif
+    ui->sourceCB->setCurrentIndex(value) ;
 
 //		uint32_t value ;
 //		value = md->srcRaw ;

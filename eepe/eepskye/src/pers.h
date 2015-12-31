@@ -173,7 +173,9 @@ enum EnumKeys {
 #define HSW_Ele6pos5	65
 #define HSW_Pb1				66
 #define HSW_Pb2				67
-#define HSW_MAX				67
+#define HSW_Pb3				68
+#define HSW_Pb4				69
+#define HSW_MAX				69
 #define HSW_MAX_X9D		65
 
 #define HSW_SF2				1
@@ -212,8 +214,14 @@ enum EnumKeys {
 #define	USE_ELE_6PSB	0x40
 #define	USE_PB1				0x80
 #define	USE_PB2				0x100
+#define	USE_PB3				0x200
+#define	USE_PB4				0x400
 
-
+#define	USE_P1_6POS		0x04
+#define	USE_P2_6POS		0x08
+#define	USE_P3_6POS		0x0C
+#define	USE_AUX_6POS	0x10
+#define MASK_6POS			0x1C
 
 #define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfTH^TH-THvRU^RU-RUvEL^EL-ELvAI^AI-AIvGE^GE-GEv6P06P16P26P36P46P5PB1PB2"
 #define XSWITCHES_STR "SF       SC^SC-SCv      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB^SB-SBvSE^SE-SEvSA^SA-SAvSD^SD-SDvSG^SG-SGv6P06P16P26P36P46P5PB1PB2"

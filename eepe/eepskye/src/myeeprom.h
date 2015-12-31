@@ -186,6 +186,7 @@ PACK(typedef struct t_TrainerChannel
 PACK(typedef struct t_TrainerProfile
 {
 	TrainerChannel channel[4] ;
+	uint8_t profileName[6] ;
 }) TrainerProfile ; //
 
 
@@ -286,15 +287,19 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		btName[15] ;				// For the HC06 module
 	uint8_t		ar9xBoard:1 ;
 	uint8_t		externalRtcType:2 ;
-	uint8_t		spare:3 ;
+	uint8_t		enableI2C:2 ;
+	uint8_t		rotateScreen:1 ;
 	uint8_t		is9Xtreme:1 ;
 	uint8_t		forceMenuEdit:1 ;
 	uint8_t fixedDateTime[6] ;
 	btDeviceData btDevice[4] ;
-	TrainerProfile trainerProfile[3] ;
+	TrainerProfile trainerProfile[4] ;
 	uint8_t CurrentTrainerProfile ;
 	uint16_t SixPositionCalibration[6] ;
-
+	uint8_t		pb3source ;
+	uint8_t		pb4source ;
+	uint8_t	extraPotsSource[4] ;
+	uint8_t btComPort ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -715,7 +720,9 @@ PACK(typedef struct te_ModelData {
   uint8_t   not_xsub_protocol:2 ;
   int8_t    xppmNCH ;
   int8_t    xppmDelay ;
-  uint8_t   xpulsePol ;
+  uint8_t   xpulsePol:1 ;
+  uint8_t   trainPulsePol:1 ;
+  uint8_t   polSpare:6 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;

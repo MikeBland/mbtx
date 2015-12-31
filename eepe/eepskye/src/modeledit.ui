@@ -47,7 +47,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>4</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -459,6 +459,26 @@
          </item>
          <item>
           <widget class="QCheckBox" name="thrExpoChkB">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_98">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When ON, this option causes throttle stick expo to apply from zero to full throttle, instead of having a centre point like the expo setting on the other stick axes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Throttle Idle Centre</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="thrIdleChkB">
            <property name="text">
             <string/>
            </property>
@@ -1694,6 +1714,9 @@ p, li { white-space: pre-wrap; }
            <property name="text">
             <string>Pulse Shift (polarity)</string>
            </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
           </widget>
          </item>
          <item row="0" column="9">
@@ -1708,6 +1731,36 @@ p, li { white-space: pre-wrap; }
              <string>Negative</string>
             </property>
            </item>
+          </widget>
+         </item>
+         <item row="0" column="11">
+          <widget class="QComboBox" name="OpenDrainCB">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
+           <item>
+            <property name="text">
+             <string>OpenDrain</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>PushPull</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="10">
+          <widget class="QLabel" name="label_115">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;PPM Protocol:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Selects POSitive or NEGative PPM pulses. Some modules and simulators adjust automatically (e.g., Frsky DJT/DHT and OrangeRX DSM2/DSMX), while others have specific requirements (Spektrum DM9 module requires NEG).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>OpenDrain</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
           </widget>
          </item>
         </layout>
@@ -2321,7 +2374,78 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="SubProtocolCB"/>
+          <widget class="QComboBox" name="SubProtocolCB">
+           <item>
+            <property name="text">
+             <string>Flysky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hubsan</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Frsky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hisky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>V2x2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Devo</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>YD717</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>KN</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SymaX</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CX10</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CG023</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bayang</string>
+            </property>
+           </item>
+          </widget>
          </item>
         </layout>
        </item>
@@ -2352,7 +2476,78 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="xSubProtocolCB"/>
+          <widget class="QComboBox" name="xSubProtocolCB">
+           <item>
+            <property name="text">
+             <string>Flysky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hubsan</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Frsky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hisky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>V2x2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Devo</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>YD717</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>KN</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SymaX</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CX10</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CG023</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bayang</string>
+            </property>
+           </item>
+          </widget>
          </item>
         </layout>
        </item>

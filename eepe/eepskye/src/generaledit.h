@@ -34,6 +34,7 @@ private:
 //    void setSwitchDefPos();
 		void setHwSwitchActive( void ) ;
 		void setHardwareSwitchCB( QComboBox *b, int switchlist, int type ) ;
+		void setHardwarePotCB( QComboBox *b, int type ) ;
 
 signals:
     void modelValuesChanged();
@@ -170,6 +171,10 @@ private slots:
 		void on_ThrCB_currentIndexChanged(int ) ;
 		void on_PB1CB_currentIndexChanged(int ) ;
 		void on_PB2CB_currentIndexChanged(int ) ;
+		void on_PB3CB_currentIndexChanged(int ) ;
+		void on_PB4CB_currentIndexChanged(int ) ;
+		void on_Pot4CB_currentIndexChanged(int ) ;
+		void on_Pot5CB_currentIndexChanged(int ) ;
 		void on_EncoderCB_currentIndexChanged(int ) ;
 		void on_SixPosCB_currentIndexChanged(int ) ;
 

@@ -1230,9 +1230,9 @@ void MainWindow::showEr9xManual()
 //    ER9x Users Guide.pdf
     QString cdir = QApplication::applicationDirPath();
 #ifdef Q_WS_WIN
-    QDesktopServices::openUrl(QUrl::fromLocalFile(cdir + "/ER9x Users Guide.pdf")); // WIN
+    QDesktopServices::openUrl(QUrl::fromLocalFile(cdir + "/ER9x_Manual_2015-v01.pdf")); // WIN
 #else
-    QDesktopServices::openUrl(QUrl("file:///" + cdir + "/ER9x Users Guide.pdf"));   // MAC & Linux (X11)
+    QDesktopServices::openUrl(QUrl("file:///" + cdir + "/ER9x_Manual_2015-v01.pdf"));   // MAC & Linux (X11)
 #endif
 }
 

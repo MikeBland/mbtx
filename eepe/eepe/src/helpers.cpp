@@ -328,6 +328,17 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 		{
 			*p++ = HSW_ElevDR ;
 		}
+	
+    if ( pgeneral->analogMapping & MASK_6POS )
+		{
+			*p++ = HSW_Ele6pos0 ;
+			*p++ = HSW_Ele6pos1 ;
+			*p++ = HSW_Ele6pos2 ;
+			*p++ = HSW_Ele6pos3 ;
+			*p++ = HSW_Ele6pos4 ;
+			*p++ = HSW_Ele6pos5 ;
+		}
+
 		*p++ = HSW_ID0 ;
 		*p++ = HSW_ID1 ;
 		*p++ = HSW_ID2 ;
@@ -361,6 +372,14 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 		if ( map & USE_PB2 )
 		{
 			*p++ = HSW_Pb2 ;
+		}
+		if ( map & USE_PB3 )
+		{
+			*p++ = HSW_Pb3 ;
+		}
+		if ( map & USE_PB4 )
+		{
+			*p++ = HSW_Pb4 ;
 		}
 	}
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
@@ -468,6 +487,14 @@ uint8_t getSw3PosList( int index )
 
 uint8_t getSw3PosCount( int index )
 {
+	if ( index == 31 )
+	{
+		return 6 ;
+	}
+	if ( index > 6 )
+	{
+		return 2 ;
+	}
 	return Sw3PosCount[index] ;
 }
 

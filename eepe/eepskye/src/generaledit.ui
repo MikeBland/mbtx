@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -3192,6 +3192,124 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="label_PB3Sw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>PB3 switch</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_PB4Sw">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>PB4 switch</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="2">
+          <widget class="QComboBox" name="PB3CB">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DAC1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ELE</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT6</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="9" column="2">
+          <widget class="QComboBox" name="PB4CB">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DAC1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ELE</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT6</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
        </item>
        <item row="2" column="3">
@@ -3404,6 +3522,124 @@ p, li { white-space: pre-wrap; }
            <property name="maximum">
             <number>4097</number>
            </property>
+          </widget>
+         </item>
+         <item row="8" column="0">
+          <widget class="QLabel" name="label_Pot4">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Pot 4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="9" column="0">
+          <widget class="QLabel" name="label_Pot5">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Pot 5</string>
+           </property>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QComboBox" name="Pot4CB">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DAC1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ELE</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT6</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="9" column="1">
+          <widget class="QComboBox" name="Pot5CB">
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT3</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DAC1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>ELE</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>EXT6</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>

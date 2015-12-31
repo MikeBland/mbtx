@@ -272,8 +272,9 @@ void ModelEdit::tabModelEditSetup()
     ui->timer2DirCB->setCurrentIndex(g_model.timer[1].tmrDir);
     ui->TrainerChkB->setChecked(g_model.traineron);
 //    ui->T2ThrTrgChkB->setChecked(g_model.t2throttle);
-
-    //center beep
+    ui->thrIdleChkB->setChecked(g_model.throttleIdle) ;
+    
+		//center beep
     ui->bcRUDChkB->setChecked(g_model.beepANACenter & BC_BIT_RUD);
     ui->bcELEChkB->setChecked(g_model.beepANACenter & BC_BIT_ELE);
     ui->bcTHRChkB->setChecked(g_model.beepANACenter & BC_BIT_THR);
@@ -305,6 +306,7 @@ void ModelEdit::tabModelEditSetup()
       ui->protocolCB->addItem("OFF");
       ui->xprotocolCB->addItem("OFF");
 		}
+		ui->OpenDrainCB->setCurrentIndex(g_model.ppmOpenDrain);
     //protocol channels ppm delay (disable if needed)
     protocolEditLock = false ;
     setProtocolBoxes();
@@ -852,6 +854,11 @@ void ModelEdit::setProtocolBoxes()
         ui->pxxRxNum->setEnabled(false);
 
         ui->ppmDelaySB->setValue(300+50*g_model.ppmDelay);
+
+				if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
+				{
+					g_model.ppmNCH = 0 ;		// Correct if wrong from DSM/MULTI
+				}
         ui->numChannelsSB->setValue(8+2*g_model.ppmNCH);
         ui->ppmFrameLengthDSB->setValue(22.5+((double)g_model.ppmFrameLength)*0.5);
 
@@ -1480,11 +1487,12 @@ void ModelEdit::tabMixes()
 				{
 					if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
 					{
-						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SH_6P" ;
+						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO_6P" ;
 					}
 					else
 					{
-						srcstr = "IdxThrRudEleAilGeaTrn" ;
+						
+						srcstr = "IdxThrRudEleAilGeaTrnL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO_6P" ;
 					}
 					str += srcstr.mid( md->switchSource * 3, 3 ) ;
 				}
@@ -4548,6 +4556,12 @@ void ModelEdit::on_autoLimitsSB_editingFinished()
 void ModelEdit::on_thrTrimChkB_toggled(bool checked)
 {
     g_model.thrTrim = checked;
+    updateSettings();
+}
+
+void ModelEdit::on_thrIdleChkB_toggled(bool checked)
+{
+    g_model.throttleIdle = checked;
     updateSettings();
 }
 

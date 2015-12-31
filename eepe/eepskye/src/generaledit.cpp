@@ -228,14 +228,22 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->label_RudSw->show() ;
 			ui->label_PB1Sw->show() ;
 			ui->label_PB2Sw->show() ;
+			ui->label_PB3Sw->show() ;
+			ui->label_PB4Sw->show() ;
+			ui->label_Pot4->show() ;
+			ui->Pot4CB->show() ;
 
       int xtype = 0 ;
 			if ( rData->type == 3 )
 			{
 				xtype = 2 ;
+				ui->label_Pot5->show() ;
+				ui->Pot5CB->show() ;
 			}
 			else
 			{
+				ui->label_Pot5->hide() ;
+				ui->Pot5CB->hide() ;
 				if ( rData->T9xr_pro )
 				{
 					xtype = 1 ;
@@ -248,6 +256,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			setHardwareSwitchCB( ui->ThrCB, 1, xtype ) ;
 			setHardwareSwitchCB( ui->PB1CB, 1, xtype ) ;
 			setHardwareSwitchCB( ui->PB2CB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->PB3CB, 1, xtype ) ;
+			setHardwareSwitchCB( ui->PB4CB, 1, xtype ) ;
+			setHardwarePotCB( ui->Pot4CB, xtype ) ;
+			setHardwarePotCB( ui->Pot5CB, xtype ) ;
 
       ui->AilCB->show() ;
       ui->EleCB->show() ;
@@ -256,19 +268,24 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->ThrCB->show() ;
 			ui->PB1CB->show() ;
 			ui->PB2CB->show() ;
+			ui->PB3CB->show() ;
+			ui->PB4CB->show() ;
 			ui->label_Encoder->hide() ;
 //			ui->label_6Pos->hide() ;
 			ui->EncoderCB->hide() ;
 //			ui->SixPosCB->hide() ;
 			ui->AilCB->setCurrentIndex( g_eeGeneral.ailsource ) ;
 			uint8_t value = g_eeGeneral.elesource ;
-			if ( value > 5 )
+			if ( rData->type != 3 )
 			{
-				value += 2 ;
-			}
-			if ( value >101 )
-			{
-				value -= 102-6 ;
+				if ( value > 5 )
+				{
+					value += 2 ;
+				}
+				if ( value >101 )
+				{
+					value -= 102-6 ;
+				}
 			}
     	ui->EleCB->setCurrentIndex( value ) ;
 			ui->GeaCB->setCurrentIndex( g_eeGeneral.geasource ) ;
@@ -276,6 +293,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->ThrCB->setCurrentIndex( g_eeGeneral.thrsource ) ;
 			ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
 			ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
+			ui->PB3CB->setCurrentIndex( g_eeGeneral.pb3source ) ;
+			ui->PB4CB->setCurrentIndex( g_eeGeneral.pb4source ) ;
+			ui->Pot4CB->setCurrentIndex( g_eeGeneral.extraPotsSource[0] ) ;
+			ui->Pot5CB->setCurrentIndex( g_eeGeneral.extraPotsSource[1] ) ;
 		}
 		else
 		{
@@ -286,6 +307,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->label_RudSw->hide() ;
 			ui->label_PB1Sw->hide() ;
 			ui->label_PB2Sw->hide() ;
+			ui->label_PB3Sw->hide() ;
+			ui->label_PB4Sw->hide() ;
+			ui->label_Pot4->hide() ;
+			ui->label_Pot5->hide() ;
       ui->AilCB->hide() ;
       ui->EleCB->hide() ;
       ui->GeaCB->hide() ;
@@ -293,6 +318,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->ThrCB->hide() ;
 			ui->PB1CB->hide() ;
 			ui->PB2CB->hide() ;
+			ui->PB3CB->hide() ;
+			ui->PB4CB->hide() ;
+			ui->Pot4CB->hide() ;
+			ui->Pot5CB->hide() ;
 			ui->label_Encoder->show() ;
 //			ui->label_6Pos->show() ;
 			ui->EncoderCB->show() ;
@@ -366,6 +395,31 @@ GeneralEdit::~GeneralEdit()
 //}
 
 
+// type = 0 for SKY, 1 for PRO, 2 for 9Xtreme
+void GeneralEdit::setHardwarePotCB( QComboBox *b, int type )
+{
+  b->clear() ;
+	switch ( type )
+	{
+		case 0 :
+		case 1 :
+			b->addItem( "NONE" ) ;
+			b->addItem( "AD10" ) ;
+			if ( g_eeGeneral.ar9xBoard )
+			{
+				b->addItem( "AD8" ) ;
+			}
+		break ;
+		case 2 :
+			b->addItem( "NONE" ) ;
+			b->addItem( "EXT1" ) ;
+			b->addItem( "EXT2" ) ;
+			b->addItem( "EXT3" ) ;
+			b->addItem( "EXT4" ) ;
+		break ;
+	}
+}
+
 // switchList = 0 for ELE, 1 for others
 // type = 0 for SKY, 1 for PRO, 2 for 9Xtreme
 void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
@@ -378,7 +432,9 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 			case 0 :
 				b->addItem( "NONE" ) ;
 				b->addItem( "LCD2" ) ;
-				b->addItem( "LCD3" ) ;
+				b->addItem( "LCD6" ) ;
+				b->addItem( "LCD7" ) ;
+				b->addItem( "DAC1" ) ;
 				b->addItem( "LCD4" ) ;
 				b->addItem( "ELE " ) ;
 				b->addItem( "EXT4" ) ;
@@ -388,8 +444,9 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 			case 1 :
 				b->addItem( "NONE" ) ;
 				b->addItem( "LCD2" ) ;
-				b->addItem( "LCD3" ) ;
-				b->addItem( "LCD4" ) ;
+				b->addItem( "LCD6" ) ;
+				b->addItem( "LCD7" ) ;
+				b->addItem( "DAC1" ) ;
 				b->addItem( "ELE " ) ;
 			break ;
 			case 2 :
@@ -398,7 +455,6 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 				b->addItem( "EXT2" ) ;
 				b->addItem( "EXT3" ) ;
 				b->addItem( "EXT4" ) ;
-				b->addItem( "ELE " ) ;
 				b->addItem( "EXT5" ) ;
 				b->addItem( "EXT6" ) ;
 				b->addItem( "EXT7" ) ;
@@ -413,8 +469,9 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 			case 0 :
 				b->addItem( "NONE" ) ;
 				b->addItem( "LCD2" ) ;
-				b->addItem( "LCD3" ) ;
-				b->addItem( "LCD4" ) ;
+				b->addItem( "LCD6" ) ;
+				b->addItem( "LCD7" ) ;
+				b->addItem( "DAC1" ) ;
 				b->addItem( "ANA " ) ;
 				b->addItem( "6PSA" ) ;
 				b->addItem( "6PSB" ) ;
@@ -425,8 +482,9 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 			case 1 :
 				b->addItem( "NONE" ) ;
 				b->addItem( "LCD2" ) ;
-				b->addItem( "LCD3" ) ;
-				b->addItem( "LCD4" ) ;
+				b->addItem( "LCD6" ) ;
+				b->addItem( "LCD7" ) ;
+				b->addItem( "DAC1" ) ;
 				b->addItem( "ANA " ) ;
 				b->addItem( "6PSA" ) ;
 				b->addItem( "6PSB" ) ;
@@ -438,8 +496,6 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 				b->addItem( "EXT3" ) ;
 				b->addItem( "EXT4" ) ;
 				b->addItem( "EXT5" ) ;
-				b->addItem( "6PSA" ) ;
-				b->addItem( "6PSB" ) ;
 				b->addItem( "EXT6" ) ;
 				b->addItem( "EXT7" ) ;
 				b->addItem( "EXT8" ) ;
@@ -1608,12 +1664,15 @@ void GeneralEdit::on_EleCB_currentIndexChanged(int x )
 	}
   g_eeGeneral.switchMapping &= ~(USE_ELE_3POS | USE_ELE_6POS | USE_ELE_6PSB ) ;
 	uint16_t value = x ;
-	if ( value > 5 )
+	if ( rData->type != 3 )
 	{
-		value -= 2 ;
-		if ( value < 6 )
+		if ( value > 5 )
 		{
-			value += 102-6 ;
+			value -= 2 ;
+			if ( value < 6 )
+			{
+				value += 102-6 ;
+			}
 		}
 	}
 	if ( value )
@@ -1725,6 +1784,52 @@ void GeneralEdit::on_PB2CB_currentIndexChanged(int x )
   updateSettings();
 }
 
+void GeneralEdit::on_PB3CB_currentIndexChanged(int x )
+{
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
+	uint16_t value = x ? USE_PB3 : 0 ;
+	g_eeGeneral.switchMapping &= ~USE_PB3 ;
+	g_eeGeneral.switchMapping |= value ;
+	g_eeGeneral.pb3source = x ;
+	setHwSwitchActive() ;
+  updateSettings();
+}
+
+void GeneralEdit::on_PB4CB_currentIndexChanged(int x )
+{
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
+	uint16_t value = x ? USE_PB4 : 0 ;
+	g_eeGeneral.switchMapping &= ~USE_PB3 ;
+	g_eeGeneral.switchMapping |= value ;
+	g_eeGeneral.pb4source = x ;
+	setHwSwitchActive() ;
+  updateSettings();
+}
+
+void GeneralEdit::on_Pot4CB_currentIndexChanged(int x )
+{
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
+	g_eeGeneral.extraPotsSource[0] = x ;
+  updateSettings();
+}
+void GeneralEdit::on_Pot5CB_currentIndexChanged(int x )
+{
+	if ( hardwareTabLock )
+	{
+		return ;
+	}
+	g_eeGeneral.extraPotsSource[1] = x ;
+  updateSettings();
+}
 void GeneralEdit::on_ExtRtcCB_currentIndexChanged(int index)
 {
 	g_eeGeneral.externalRtcType = index ;

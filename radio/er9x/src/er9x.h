@@ -382,11 +382,11 @@ extern uint8_t MappedSwitchState; // mapped switch state bit flag
 #define SSW_PG2         6       // Haptic
 #define SSW_PG5         7       // M2561 only
 #define SSW_XPB0        8       // voice module PB0 - D3 (EXT1)
-#define SSW_XPB1        9       // voice module PB1 - BL
-#define SSW_XPC0        10      // voice module PC0 - BUSY
-#define SSW_XPD2        11      // voice module PD2 - CLK
-#define SSW_XPD3        12      // voice module PD3 - D0 (TRIM_LV_DWN)
-#define SSW_XPD4        13      // voice module PD4 - D1 (TRIM_LV_UP)
+#define SSW_XPD2        9       // voice module PD2 - CLK
+#define SSW_XPD3        10      // voice module PD3 - D0 (TRIM_LV_DWN)
+#define SSW_XPD4        11      // voice module PD4 - D1 (TRIM_LV_UP)
+#define SSW_XPB1        12      // voice module PB1 - BL
+#define SSW_XPC0        13      // voice module PC0 - BUSY
 #define SSW_XPD7        14      // voice module PD7 - D2 (EXT2)
 
 // the first external switch source

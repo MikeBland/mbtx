@@ -141,6 +141,10 @@ void modelDefaultWrite(uint8_t id)
 #else
   applyTemplate(0); //default 4 channel template
 #endif
+#ifndef NOPOTSCROLL
+	g_eeGeneral.disablePotScroll = 1 ;
+#endif
+
 	modelSave( id ) ;
 //  theFile.writeRlc(FILE_MODEL(id),FILE_TYP_MODEL,(uint8_t*)&g_model,sizeof(g_model),200);
 }

@@ -34,3 +34,6 @@ win32:LIBS             += -lsetupapi -ladvapi32 -luser32
 
 # moc doesn't detect Q_OS_LINUX correctly, so add this to make it work
 linux*:DEFINES += __linux__
+
+FORMS += \
+    ../../common/protocol.ui

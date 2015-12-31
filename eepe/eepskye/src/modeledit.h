@@ -269,6 +269,7 @@ private slots:
 
     void on_thrExpoChkB_toggled(bool checked);
     void on_thrTrimChkB_toggled(bool checked);
+    void on_thrIdleChkB_toggled(bool checked) ;
     void on_TrainerChkB_toggled(bool checked);
 //    void on_T2ThrTrgChkB_toggled(bool checked);
 		

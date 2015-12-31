@@ -650,19 +650,45 @@ uint8_t BitCount ;
 uint8_t Tc5Count ;
 uint8_t SoftSerialEvenParity ;
 
+uint16_t USART_ERRORS ;
+uint16_t USART_ORE ;
+uint16_t USART_NE ;
+uint16_t USART_FE ;
+uint16_t USART_PE ;
+
 //uint16_t SerTimes[64] ;
 //uint16_t SerValues[64] ;
 //uint16_t SerBitStates[64] ;
 //uint16_t SerBitCounts[64] ;
 //uint16_t SerBitInputs[64] ;
+//uint16_t SaveSerTimes[64] ;
 
 //uint32_t SerIndex ;
+
+//uint16_t SoftCounter ;
+//uint16_t ParityByte ;
+//uint16_t SaveTime ;
+//uint16_t ParityTime ;
+//uint16_t SaveHtoL ;
+//uint16_t SaveLtoH ;
+//uint16_t SaveTIM11 ;
+//uint16_t SaveTIM7 ;
+//uint16_t SaveValue ;
+//uint16_t SaveCCR1 ;
+//uint16_t TIM11Count ;
+//uint16_t LastHtoL ;
+//uint16_t LastLtoH ;
+//uint16_t SaveLastHtoL ;
+//uint16_t SaveLastLtoH ;
+
+//uint16_t SaveSerIndex ;
 
 // time in units of 0.5uS, value is 1 or 0
 void putCaptureTime( uint16_t time, uint32_t value )
 {
 	time += BitTime/2 ;
 	time /= BitTime ;		// Now number of bits
+//	SaveTime = time ;
 
 	if ( value == 3 )
 	{
@@ -686,7 +712,7 @@ void putCaptureTime( uint16_t time, uint32_t value )
 			uint32_t len = SoftSerialEvenParity ? 9 : 8 ;
 			while ( time )
 			{
-				if ( BitCount >= 9 )
+				if ( BitCount >= len )
 				{ // Got a byte
 					if ( len == 9 )
 					{
@@ -698,7 +724,33 @@ void putCaptureTime( uint16_t time, uint32_t value )
 						parity ^= Byte >> 8 ;
 						if ( ( parity & 1 ) == 0 )
 						{
+//							SoftCounter += 1 ;
 							put_fifo64( &CaptureRx_fifo, Byte ) ;
+						}
+						else
+						{
+//							ParityTime = SaveTime ;
+//							ParityByte = Byte ;
+							USART_PE += 1 ;
+//							SaveHtoL = HtoLtime ;
+//							SaveLtoH = LtoHtime ;
+//							SaveTIM11 = TIM11->CNT ;
+//							SaveTIM7 = TIM7->CNT ;
+//							SaveValue = value ;
+//							SaveCCR1 = TIM11->CCR1 ;
+//							SaveLastHtoL = LastHtoL ;
+//							SaveLastLtoH = LastLtoH ;
+//							SaveSerTimes[0] = SerTimes[0] ;
+//							SaveSerTimes[1] = SerTimes[1] ;
+//							SaveSerTimes[2] = SerTimes[2] ;
+//							SaveSerTimes[3] = SerTimes[3] ;
+//							SaveSerTimes[4] = SerTimes[4] ;
+//							SaveSerTimes[5] = SerTimes[5] ;
+//							SaveSerTimes[6] = SerTimes[6] ;
+//							SaveSerTimes[7] = SerTimes[7] ;
+//							SaveSerTimes[8] = SerTimes[8] ;
+//							SaveSerTimes[9] = SerTimes[9] ;
+//							SaveSerIndex = SerIndex ;
 						}
 					}
 					else
@@ -1251,6 +1303,7 @@ void UART2_timeout_enable()
   pUsart->US_RTOR = 115 ;		// Bits @ 115200 ~= 1mS
   pUsart->US_IER = US_IER_TIMEOUT ;
 	DsmRxTimeout = 0 ;
+	NVIC_SetPriority( USART0_IRQn, 5 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(USART0_IRQn) ;
 	
 }
@@ -2120,7 +2173,11 @@ void start_timer5()
 #endif
 }
 
-
+void stop_timer5()
+{
+	TC1->TC_CHANNEL[2].TC_CCR = 0 ;		// Disable clock
+	NVIC_DisableIRQ(TC5_IRQn) ;
+}
 
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
@@ -2140,6 +2197,14 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
 	NVIC_SetPriority( PIOA_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ(PIOA_IRQn) ;
 	start_timer5() ;
+}
+
+void disable_software_com1()
+{
+	stop_timer5() ;
+	CaptureMode = CAP_PPM ;
+	PIOA->PIO_IDR = PIO_PA5 ;
+	NVIC_DisableIRQ(PIOA_IRQn) ;
 }
 
 extern "C" void PIOA_IRQHandler()
@@ -2594,12 +2659,6 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 //#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_NE | USART_FLAG_FE | USART_FLAG_PE)
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
-uint16_t USART_ERRORS ;
-uint16_t USART_ORE ;
-uint16_t USART_NE ;
-uint16_t USART_FE ;
-uint16_t USART_PE ;
-
 extern "C" void USART2_IRQHandler()
 {
   uint32_t status;
@@ -2732,8 +2791,9 @@ static void start_timer11()
 
 	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN ;		// Enable clock
 	TIM11->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
-	TIM1->CCER = 0 ;
-	TIM1->CCMR1 = 0 ;
+	TIM11->CCER = 0 ;
+	TIM11->DIER = 0 ;
+	TIM11->CCMR1 = 0 ;
 	 
 	TIM11->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 ;
 
@@ -2751,6 +2811,27 @@ static void stop_timer11()
 }
 
 
+//#ifdef PCB9XT
+//// Soft Serial capture, PA3, Timer 9 channel 2
+//void init_softSerial_capture()
+//{
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+//	configure_pins( GPIO_Pin_3, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_3 | PIN_PULLUP) ;
+//	RCC->APB2ENR |= RCC_APB2ENR_TIM9EN ;		// Enable clock
+	
+//	TIM9->ARR = 0xFFFF ;
+//	TIM9->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+//	TIM9->CR2 = 0 ;
+//	TIM9->CCMR1 = TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 | TIM_CCMR1_CC2S_0 | TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 | TIM_CCMR1_CC1S_1 ;
+//	TIM9->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC2P ;
+//	TIM9->SR &= ~(TIM_SR_CC2IF | TIM_SR_CC1IF) ;				// Clear flags
+//	TIM9->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE ;
+//	TIM9->CR1 = TIM_CR1_CEN ;
+//  NVIC_SetPriority(TIM1_BRK_TIM9_IRQn, 0);
+//	NVIC_EnableIRQ(TIM1_BRK_TIM9_IRQn) ;
+//}
+//#endif
+
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
@@ -2758,6 +2839,15 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 	
 	BitTime = 2000000 / baudrate ;
 	SoftSerialEvenParity = parity ? 1 : 0 ;
+
+//#ifdef PCB9XT
+//	SoftSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
+//	LineState = LINE_IDLE ;
+//	CaptureMode = CAP_COM1 ;
+//	init_softSerial_capture() ;
+//	start_timer11() ;
+//	return ;
+//#endif
 
 #ifdef PCB9XT
 	SoftSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
@@ -2788,11 +2878,13 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
 #endif
+	
 	start_timer11() ;
 }
 
 void disable_software_com1()
 {
+	CaptureMode = CAP_PPM ;
 	stop_timer11() ;
 	EXTI->IMR &= ~EXT_BIT_MASK ;
 #ifdef PCB9XT
@@ -3215,7 +3307,27 @@ extern "C" void timer10_interrupt()
 
 #endif
 
+//uint16_t LastTransition ;
+//uint16_t Missing1 ;
+//uint16_t Missing2 ;
+//uint16_t LastSr ;
+//uint32_t DumpStack[32] ;
+
+
+
+//uint32_t __get_PSP(void)
+//{
+//  uint32_t result=0;
+
+//  __ASM volatile ("MRS %0, psp\n\t"
+//                  "MOV r0, %0 \n\t"
+//                  "BX  lr     \n\t"  : "=r" (result) );
+//  return(result);
+//}
+
+
 #ifdef PCB9XT
+//extern "C" void TIM1_BRK_TIM9_IRQHandler()
 extern "C" void EXTI3_IRQHandler()
 #else
 extern "C" void EXTI9_5_IRQHandler()
@@ -3224,8 +3336,101 @@ extern "C" void EXTI9_5_IRQHandler()
   register uint32_t capture ;
   register uint32_t dummy ;
 
+//#ifdef PCB9XT
+//	dummy = TIM9->SR & (TIM_SR_CC2IF | TIM_SR_CC1IF) ;
+
+//	if ( ( LastSr & 0x400 ) == 0 )
+//	{
+//		if ( TIM9->SR & 0x400 )
+//		{
+//			uint32_t i ;
+//			i = __get_PSP() ;
+//			DumpStack[0] = i ;
+//			uint32_t *ptr = (uint32_t *) i ;
+
+//			for ( i = 2 ; i < 14 ; i += 1 )
+//			{
+//				DumpStack[i] = *ptr++ ;
+//			}
+//		}
+//		else
+//		{
+//			uint32_t i ;
+//			i = __get_PSP() ;
+//			DumpStack[1] = i ;
+//			uint32_t *ptr = (uint32_t *) i ;
+//			for ( i = 14 ; i < 26 ; i += 1 )
+//			{
+//				DumpStack[i] = *ptr++ ;
+//			}
+//		}
+//	}
+//	LastSr = TIM9->SR ;
+
+//	// CC1 physical rising, CC2 falling edge
+//	// So for inverted serial CC1 is HtoL, CC2 is LtoH
+	
+//	if ( LineState == LINE_IDLE )
+//	{
+//		SerIndex = 0 ;
+//	}
+	
+//	if ( LastTransition == 0 )	// LtoH
+//	{
+//		capture = TIM9->CCR1 ;
+//		LastTransition = 1 ;
+//	}
+//	else
+//	{
+//		capture = TIM9->CCR2 ;
+//		LastTransition = 0 ;
+//	}
+//	SerTimes[SerIndex] = capture ;
+//	if ( SerIndex < 63 )
+//	{
+//		SerIndex += 1 ;
+//	}
+
+//	if ( LastTransition == 0 )	// LtoH
+//	{
+//		// L to H transition
+//		LtoHtime = capture ;
+//		TIM11->CNT = 0 ;
+//		TIM11->CCR1 = BitTime * 12 ;
+//		uint32_t time ;
+//		capture -= HtoLtime ;
+//		time = capture ;
+//		putCaptureTime( time, 0 ) ;
+//		TIM11->DIER = TIM_DIER_CC1IE ;
+//	}
+//	else
+//	{
+//		// H to L transition
+//		LastHtoL = HtoLtime ;
+//		HtoLtime = capture ;
+//		if ( LineState == LINE_IDLE )
+//		{
+//			LineState = LINE_ACTIVE ;
+//			putCaptureTime( 0, 3 ) ;
+//		}
+//		else
+//		{
+//			uint32_t time ;
+//			capture -= LtoHtime ;
+//			time = capture ;
+//			putCaptureTime( time, 1 ) ;
+//		}
+//		TIM11->DIER = 0 ;
+//		TIM11->CCR1 = BitTime * 20 ;
+//		TIM11->CNT = 0 ;
+//		TIM11->SR = 0 ;
+//	}
+//	return ;
+//#endif
+
 	capture =  TIM7->CNT ;	// Capture time
 	EXTI->PR = EXT_BIT_MASK ;
+	
 #ifdef PCB9XT
 	dummy = GPIOA->IDR ;
 	if ( ( dummy & GPIO_Pin_3 ) == SoftSerInvert )
@@ -3234,27 +3439,40 @@ extern "C" void EXTI9_5_IRQHandler()
 	if ( ( dummy & GPIO_Pin_6 ) == SoftSerInvert )
 #endif
 	{
-		// L to H transisition
+		// L to H transition
+//		if ( LastTransition == 0 )
+//		{
+//			Missing1 += 1 ;
+//		}
+//		LastTransition = 0 ;
+			 
+//		LastLtoH = LtoHtime ;
+		
 		LtoHtime = capture ;
 		TIM11->CNT = 0 ;
-		TIM11->CCR1 = BitTime * 10 ;
+		TIM11->CCR1 = BitTime * 12 ;
 		uint32_t time ;
 		capture -= HtoLtime ;
 		time = capture ;
 		putCaptureTime( time, 0 ) ;
-		TIM11->EGR = TIM_EGR_CC1G ;
-		TIM11->CCER = TIM_CCER_CC1E ;
+		TIM11->DIER = TIM_DIER_CC1IE ;
 //		(void) TC1->TC_CHANNEL[2].TC_SR ;
 	}
 	else
 	{
-		// H to L transisition
+		// H to L transition
+//		LastHtoL = HtoLtime ;
+//		if ( LastTransition == 1 )
+//		{
+//			Missing2 += 1 ;
+//		}
+//		LastTransition = 1 ;
+		
 		HtoLtime = capture ;
 		if ( LineState == LINE_IDLE )
 		{
 			LineState = LINE_ACTIVE ;
 			putCaptureTime( 0, 3 ) ;
-			TIM11->CCR1 = capture + (BitTime * 20) ;
 //			(void) TC1->TC_CHANNEL[2].TC_SR ;
 		}
 		else
@@ -3263,8 +3481,13 @@ extern "C" void EXTI9_5_IRQHandler()
 			capture -= LtoHtime ;
 			time = capture ;
 			putCaptureTime( time, 1 ) ;
+//			TIM11->CCER = 0 ;
 		}
-		TIM11->EGR = 0 ;
+		TIM11->DIER = 0 ;
+		TIM11->CCR1 = BitTime * 20 ;
+		TIM11->CNT = 0 ;
+		TIM11->SR = 0 ;
+//		TIM11->EGR = 0 ;
 	}
 }
 
@@ -3275,11 +3498,13 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 	status = TIM11->SR ;
 	if ( status & TIM_SR_CC1IF )
 	{		
+//		TIM11Count += 1 ;
 		uint32_t time ;
 		time = TIM7->CNT - LtoHtime ;
 		putCaptureTime( time, 2 ) ;
 		LineState = LINE_IDLE ;
-		TIM11->EGR = 0 ;
+		TIM11->DIER = 0 ;
+//		TIM11->EGR = 0 ;
 		TIM11->SR = 0 ;
 	}
 	

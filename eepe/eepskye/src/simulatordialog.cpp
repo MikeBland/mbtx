@@ -600,6 +600,8 @@ void simulatorDialog::configSwitches()
 			ui->switchID2->setVisible( false ) ;
 			ui->switchPB1->hide() ;
 			ui->switchPB2->hide() ;
+			ui->switchPB3->hide() ;
+			ui->switchPB4->hide() ;
 		}
 		else
 		{
@@ -611,8 +613,22 @@ void simulatorDialog::configSwitches()
 			ui->SDwidget->hide() ;
 			ui->SGwidget->hide() ;
 			ui->SHwidget->hide() ;
-			ui->SliderL->hide() ;
-			ui->SliderR->hide() ;
+      if ( g_eeGeneral.extraPotsSource[0] )
+			{
+				ui->SliderL->show() ;
+			}
+			else
+			{
+				ui->SliderL->hide() ;
+			}
+      if ( g_eeGeneral.extraPotsSource[1] )
+			{
+				ui->SliderR->show() ;
+			}
+			else
+			{
+				ui->SliderR->hide() ;
+			}
 			ui->dialP_3->show() ;
 			if ( g_eeGeneral.switchMapping & USE_THR_3POS )
 			{
@@ -652,6 +668,14 @@ void simulatorDialog::configSwitches()
 			{
 				ui->switchELE->show() ;
 			}
+			
+      if ( g_eeGeneral.analogMapping & MASK_6POS )
+			{
+				ui->SAslider->setMaximum( 5 ) ;
+				ui->SAwidget->show() ;
+				ui->labelSA->setText("6P") ;
+			}
+			
 			if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
 			{
 				ui->SBwidget->show() ;
@@ -687,6 +711,22 @@ void simulatorDialog::configSwitches()
 			else
 			{
 				ui->switchPB2->hide() ;
+			}
+			if ( g_eeGeneral.switchMapping & USE_PB3 )
+			{
+				ui->switchPB3->show() ;
+			}
+			else
+			{
+				ui->switchPB3->hide() ;
+			}
+			if ( g_eeGeneral.switchMapping & USE_PB4 )
+			{
+				ui->switchPB4->show() ;
+			}
+			else
+			{
+				ui->switchPB4->hide() ;
 			}
 			ui->switchTRN->setVisible( true ) ;
 			ui->switchID0->setVisible( true ) ;
@@ -2858,7 +2898,14 @@ void simulatorDialog::perOut(bool init, uint8_t att)
                 uint32_t sw = getSw3PosList( md.switchSource) ;
                 if ( getSw3PosCount(md.switchSource) == 2 )
 								{
-        					v = hwKeyState(sw) ? 1024 : -1024 ;
+									if ( md.switchSource > 6 )	// Logical switch
+									{
+										v = getSwitch( md.switchSource+3, 0, 0) ? 1024 : -1024 ;
+									}
+									else
+									{
+        						v = hwKeyState(sw) ? 1024 : -1024 ;
+									}
 								}
 								else if ( getSw3PosCount(md.switchSource) == 6 )
 								{
@@ -3238,7 +3285,22 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 									{
 						  			if ( g_model.modelVersion >= 2 )
 										{
-											if ( calibratedStick[2] < -1010 )
+											uint32_t throttleOK = 0 ;
+											if ( g_model.throttleIdle )
+											{
+												if ( abs( calibratedStick[2] ) < 20 )
+												{
+													throttleOK = 1 ;
+												}
+											}
+											else
+											{
+  											if(calibratedStick[2] < -1004)
+  											{
+													throttleOK = 1 ;
+  											}
+											}
+											if ( throttleOK )
 											{
 												sticky = 1 ;
 											}

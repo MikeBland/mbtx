@@ -203,7 +203,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   view;
     uint8_t   disableThrottleWarning:1;
     uint8_t   disableSwitchWarning:1;
-    uint8_t   unused_disableMemoryWarning:1;
+    uint8_t   disableMemoryWarning:1;
     uint8_t   beeperVal:3;
     uint8_t   unused_reserveWarning:1;
     uint8_t   disableAlarmWarning:1;
@@ -212,7 +212,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   throttleReversed:1;
     uint8_t   unused_minuteBeep:1;
     uint8_t   unused_preBeep:1;
-    uint8_t   unused_flashBeep:1;
+    uint8_t   flashBeep:1;
     uint8_t   disableSplashScreen:1;
     uint8_t   disablePotScroll:1;
     uint8_t   disableBG:1;

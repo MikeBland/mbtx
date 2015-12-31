@@ -706,7 +706,7 @@ void setupPulsesDsm2(uint8_t chns)
 		}
 		else // Multi
 		{
-			dsmDat[0] = g_model.sub_protocol+1;
+			dsmDat[0] = (g_model.sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
 			if (pxxFlag & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
 			if (pxxFlag & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
 		}
@@ -998,6 +998,10 @@ void setupPulsesPPM2()
 	if ( p == 0 )
 	{
 //  	p = 8+g_model.ppmNCH*2 + g_model.startChannel ; //Channels *2
+		if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
+		{
+			g_model.ppmNCH = 0 ;		// Correct if wrong from DSM
+/		}
 		p = (g_model.ppmNCH + 4) * 2 ;
 		if ( p > 16 )
 		{

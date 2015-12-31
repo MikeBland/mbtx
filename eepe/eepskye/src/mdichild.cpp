@@ -60,7 +60,7 @@ namespace er9x
 #define EXTRA_CSW	6
 #define EXTRA_VOICE_SW	8
   #include "../../eepe/src/myeeprom.h"
-  V1ModelData EmodelData ;
+  ModelData EmodelData ;
 	MixData *srcMix ;
 }	
 
@@ -1440,7 +1440,7 @@ void MdiChild::burnTo()  // write to Tx
             QMessageBox::critical(this,tr("Error"), tr("Cannot write temporary file!"));
             return;
         }
-        QString str = "eeprom:w:" + tempFile + ":i"; // writing eeprom -> MEM:OPR:FILE:FTYPE"
+//        QString str = "eeprom:w:" + tempFile + ":i"; // writing eeprom -> MEM:OPR:FILE:FTYPE"
 
         QStringList arguments = GetSambaArguments(QString("SERIALFLASH::Init 0\n") + "send_file {SerialFlash AT25} \"" + tempFile + "\" 0x0 0\n");
 //        arguments << "-c" << programmer << "-p" << "m64" << args << "-U" << str;
@@ -1703,7 +1703,7 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 {
 	uint32_t i ;
 	
-  er9x::V1ModelData *source ;
+  er9x::ModelData *source ;
 	source = &er9x::EmodelData ;
 
 	memset( dest, 0, sizeof(*dest) ) ;

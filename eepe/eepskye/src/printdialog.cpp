@@ -135,7 +135,7 @@ void printDialog::printExpo()
 
     for(int i=0; i<4; i++)
     {
-        str.append("<h3>" + getSourceStr(1, i+1, 0, 0 ) + "</h3>");
+        str.append("<h3>" + getSourceStr(1, i+1, g_model->modelVersion, 0 ) + "</h3>");
         str.append(fv(tr("Switch 1:"), getSWName(g_model->expoData[i].drSw1,0)));
         str.append(fv(tr("Switch 2:"), getSWName(g_model->expoData[i].drSw2,0)));
         str.append("<table border=1 cellspacing=0 cellpadding=3>");

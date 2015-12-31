@@ -3342,7 +3342,14 @@ void menuProcGlobals(uint8_t event)
 //				if ( pgvar->gvsource < 70 )
 //#endif
 //				{				
+				if ( pgvar->gvsource >= EXTRA_POTS_START )
+				{
+					lcd_putsAttIdx( 12*FW, y, PSTR(STR_CHANS_EXTRA), pgvar->gvsource - EXTRA_POTS_START, attr ) ;
+				}
+				else
+				{
 					lcd_putsAttIdx( 12*FW, y, PSTR(STR_GV_SOURCE), pgvar->gvsource, attr ) ;
+				}
 //				}
 //				else
 //				{
@@ -3356,7 +3363,11 @@ void menuProcGlobals(uint8_t event)
 					// STR_GV_SOURCE
 #if defined(PCBSKY) || defined(PCB9XT)
 //  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 68+12 ) ;
-  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 72 ) ;
+  			if(active)
+				{
+					// map pots etc.
+					CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 72 ) ;
+				}
 #endif
 #ifdef PCBX9D
 //  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 69+12 ) ;
@@ -6176,7 +6187,7 @@ uint8_t blink = InverseBlink ;
 				uint8_t x ;
 			  lcd_puts_Pleft( y, PSTR(STR_21_USEC) );
 				x = 10*FW ;
-				if ( g_model.ppmNCH > 12 )
+				if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
 				{
 					g_model.ppmNCH = 0 ;		// Correct if wrong from DSM
 				}
@@ -6238,6 +6249,10 @@ uint8_t blink = InverseBlink ;
 				{
   	     	case 0:
   	        CHECK_INCDEC_H_MODELVAR_0( g_model.protocol, prot_max ) ;
+						if ( protocol != g_model.protocol )
+						{
+							g_model.ppmNCH = 0 ;
+						}
   	      break;
   	      case 1:
   	        if (protocol == PROTO_PPM)
@@ -8832,28 +8847,6 @@ void menuDebug(uint8_t event)
 //		break ;
 //	}
 
-//#ifdef PCB9XT
-//extern uint16_t TelDebug ;
-//  lcd_outhex4( 0, 2*FH, TelDebug ) ;
-//  lcd_outhex4( 30, 2*FH, UART4->BRR ) ;
-//  lcd_outhex4( 60, 2*FH, UART4->CR1 ) ;
-//  lcd_outhex4( 90, 2*FH, UART4->CR2 ) ;
-//  lcd_outhex4( 0, 3*FH, g_model.com2Function ) ;
-//  lcd_outhex4( 30, 3*FH, g_eeGeneral.btComPort ) ;
-//extern uint16_t USART_ORE ;
-//extern uint16_t USART_FE ;
-//extern uint16_t USART_PE ;
-//extern uint16_t Uart4Errors ;
-//extern uint16_t Uart4Bad ;
-//extern uint16_t Uart4Data ;
-
-//  lcd_outhex4( 0, 3*FH, USART_ORE ) ;
-//  lcd_outhex4( 30, 3*FH, Uart4Errors ) ;
-//  lcd_outhex4( 60, 3*FH, USART_FE ) ;
-//  lcd_outhex4( 90, 3*FH, USART_PE ) ;
-//  lcd_outhex4( 30, 4*FH, Uart4Bad ) ;
-//  lcd_outhex4( 60, 4*FH, Uart4Data ) ;
-
 //extern uint8_t CopyPacket[] ;
 //extern uint16_t PacketErrors ;
 
@@ -8866,8 +8859,8 @@ void menuDebug(uint8_t event)
 
 //extern uint16_t Uart4RxCount ;
 //extern uint16_t Frsky4RxCount ;
-//  lcd_outhex4( 0, 7*FH, Uart4RxCount ) ;
-//  lcd_outhex4( 30, 7*FH, Frsky4RxCount ) ;
+//  lcd_outhex4( 0, 7*FH, SoftCounter ) ;
+//  lcd_outhex4( 30, 7*FH, TelemetryDebug ) ;
 
 //extern struct t_fifo128 Console_fifo ;
 //	uint16_t *p = (uint16_t *)&Console_fifo ;
@@ -8897,33 +8890,33 @@ void menuDebug(uint8_t event)
 
 
 
-#ifdef SPLASH_DEBUG
-	static uint16_t value = 0 ;
-extern uint16_t stickMoveValue() ;
-extern uint32_t hasStickMoved( uint16_t value ) ;
+//#ifdef SPLASH_DEBUG
+//	static uint16_t value = 0 ;
+//extern uint16_t stickMoveValue() ;
+//extern uint32_t hasStickMoved( uint16_t value ) ;
 
-  switch(event)
-	{
-		case EVT_ENTRY :
-			value = stickMoveValue() ;
-		break ;
-	}
+//  switch(event)
+//	{
+//		case EVT_ENTRY :
+//			value = stickMoveValue() ;
+//		break ;
+//	}
 
-  lcd_outhex4( 0, 2*FH, stickMoveValue() ) ;
-  lcd_outhex4( 25, 2*FH, hasStickMoved( value ) ) ;
+//  lcd_outhex4( 0, 2*FH, stickMoveValue() ) ;
+//  lcd_outhex4( 25, 2*FH, hasStickMoved( value ) ) ;
 
-  lcd_outhex4( 0, 4*FH, SplashDebug[0] ) ;
-  lcd_outhex4( 25, 4*FH, SplashDebug[1]) ;
-  lcd_outhex4( 60, 4*FH, SplashDebug[2] ) ;
-  lcd_outhex4( 85, 4*FH, SplashDebug[3] ) ;
+//  lcd_outhex4( 0, 4*FH, SplashDebug[0] ) ;
+//  lcd_outhex4( 25, 4*FH, SplashDebug[1]) ;
+//  lcd_outhex4( 60, 4*FH, SplashDebug[2] ) ;
+//  lcd_outhex4( 85, 4*FH, SplashDebug[3] ) ;
 
-  lcd_outhex4( 0, 5*FH,  SplashDebug[4] ) ;
-  lcd_outhex4( 25, 5*FH, SplashDebug[5] ) ;
-  lcd_outhex4( 60, 5*FH, SplashDebug[6] ) ;
-  lcd_outhex4( 85, 5*FH, SplashDebug[7] ) ;
+//  lcd_outhex4( 0, 5*FH,  SplashDebug[4] ) ;
+//  lcd_outhex4( 25, 5*FH, SplashDebug[5] ) ;
+//  lcd_outhex4( 60, 5*FH, SplashDebug[6] ) ;
+//  lcd_outhex4( 85, 5*FH, SplashDebug[7] ) ;
 
-  lcd_outhex4( 0, 6*FH, SplashDebug[8] ) ;
-#endif
+//  lcd_outhex4( 0, 6*FH, SplashDebug[8] ) ;
+//#endif
 
 }
 //#endif
@@ -11615,7 +11608,8 @@ static void inactivityCheck()
 			{
 				SystemOptions &= ~SYS_OPT_MUTE ;						
 				putVoiceQueue( VOLUME_MASK + g_eeGeneral.inactivityVolume + ( NUM_VOL_LEVELS-3 ) ) ;
-        audioVoiceDefevent( AU_INACTIVITY, V_INACTIVE | VLOC_NUMSYS ) ;
+				voiceSystemNameNumberAudio( SV_INACTV, V_INACTIVE, AU_INACTIVITY ) ;
+//				audioVoiceDefevent( AU_INACTIVITY, V_INACTIVE | VLOC_NUMSYS ) ;
 				putVoiceQueue( 0xFFFF ) ;
 
       }

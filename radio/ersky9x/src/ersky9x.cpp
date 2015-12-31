@@ -1009,6 +1009,17 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 
 int main( void )
 {
+	
+#ifdef PCB9XT
+ 	{
+		uint32_t i ;
+		for ( i = 0 ; i < 81 ; i += 1 )
+		{
+			NVIC->IP[i] = 0x80 ;
+		}
+	}
+#endif
+	
 #ifdef PCBSKY
 	register Pio *pioptr ;
 #endif
@@ -6048,8 +6059,12 @@ uint8_t GvarSource[4] ;
 int8_t getGvarSourceValue( uint8_t src )
 {
 	int16_t value ;
-	
-	if ( src <= 4 )
+
+	if ( src >= EXTRA_POTS_START )
+	{
+		value = calibratedStick[src-EXTRA_POTS_START+8] / 8 ;
+	}
+	else if ( src <= 4 )
 	{
 //#ifdef FIX_MODE
 		value = getTrimValue( CurrentPhase, src - 1 ) ;

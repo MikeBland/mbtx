@@ -2500,15 +2500,17 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 #if defined(CPUM128) || defined(CPUM2561)
   if ( i_flags & INCDEC_SWITCH )
 	{
-    int8_t swtch = getMovedSwitch();
-    if (swtch)
+		if ( s_editMode )
 		{
-//			MovedSwitch = swtch ;
+	    int8_t swtch = getMovedSwitch();
+  	  if (swtch)
+			{
 #if defined(SWITCH_MAPPING) || defined(XSW_MOD)
-			swtch = switchUnMap( swtch ) ;
+				swtch = switchUnMap( swtch ) ;
 #endif      
-			newval = swtch ;
-    }
+				newval = swtch ;
+    	}
+		}
   }
 #endif
     //change values based on P1
@@ -4278,7 +4280,7 @@ extern uint8_t serialDat0 ;
 //#endif
 
   uint8_t in ;
-	while ( (in = ~PIND & 0xC3) == 0x41 )
+	while ( (in = ~PIND & 0xC3) == 0x40 )
 	{
 		SystemOptions = SYS_OPT_HARDWARE_EDIT ;		
 #if defined(CPUM128) || defined(CPUM2561)

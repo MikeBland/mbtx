@@ -236,7 +236,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t  spare5:5 ;
     uint8_t  exSwitchWarningStates ;
 #endif
-}) V1EEGeneral;
+}) EEGeneral;
 
 
 #ifdef V2
@@ -712,7 +712,7 @@ typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
-} __attribute__((packed)) V1ModelData;
+} __attribute__((packed)) ModelData;
 
 #ifdef V2
 PACK(typedef struct t_V2ModelData

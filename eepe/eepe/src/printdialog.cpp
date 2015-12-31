@@ -133,17 +133,27 @@ void printDialog::printSetup()
 
 }
 
+extern uint8_t stickScramble[] ;
+
 void printDialog::printExpo()
 {
     QString str = tr("<h2>Expo/Dr Settings</h2>");
 
     for(int i=0; i<4; i++)
     {
-        str.append("<h3>" + getSourceStr(g_eeGeneral->stickMode, i+1) + "</h3>");
+			uint8_t index = i ;
+
+//      if ( g_model->modelVersion >= 2 )
+//			{
+//        uint8_t stickIndex = g_eeGeneral->stickMode*4 ;
+//				index = stickScramble[stickIndex+i] ;
+//			}
+			
+        str.append("<h3>" + getSourceStr(0, i+1, g_model->modelVersion) + "</h3>");
         //high, mid, low
         //left right / expo, dr
-        str.append(fv(tr("Switch 1:"), getSWName(g_model->expoData[i].drSw1,0)));
-        str.append(fv(tr("Switch 2:"), getSWName(g_model->expoData[i].drSw2,0)));
+        str.append(fv(tr("Switch 1:"), getSWName(g_model->expoData[index].drSw1,0)));
+        str.append(fv(tr("Switch 2:"), getSWName(g_model->expoData[index].drSw2,0)));
         str.append("<table border=1 cellspacing=0 cellpadding=3>");
 
         str.append("<tr>");
@@ -157,26 +167,26 @@ void printDialog::printExpo()
 
         str.append("<tr>");
         str.append(doTC(tr("High"), "", true));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_HIGH][DR_EXPO][DR_LEFT]),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_HIGH][DR_WEIGHT][DR_LEFT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_HIGH][DR_WEIGHT][DR_RIGHT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_HIGH][DR_EXPO][DR_RIGHT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_HIGH][DR_EXPO][DR_LEFT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_HIGH][DR_WEIGHT][DR_LEFT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_HIGH][DR_WEIGHT][DR_RIGHT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_HIGH][DR_EXPO][DR_RIGHT]),"green"));
         str.append("</tr>");
 
         str.append("<tr>");
         str.append(doTC(tr("Mid"), "", true));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_MID][DR_EXPO][DR_LEFT]),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_MID][DR_WEIGHT][DR_LEFT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_MID][DR_WEIGHT][DR_RIGHT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_MID][DR_EXPO][DR_RIGHT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_MID][DR_EXPO][DR_LEFT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_MID][DR_WEIGHT][DR_LEFT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_MID][DR_WEIGHT][DR_RIGHT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_MID][DR_EXPO][DR_RIGHT]),"green"));
         str.append("</tr>");
 
         str.append("<tr>");
         str.append(doTC(tr("Low"), "", true));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_LOW][DR_EXPO][DR_LEFT]),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_LOW][DR_WEIGHT][DR_LEFT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_LOW][DR_WEIGHT][DR_RIGHT]+100),"green"));
-        str.append(doTC(QString::number(g_model->expoData[i].expo[DR_LOW][DR_EXPO][DR_RIGHT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_LOW][DR_EXPO][DR_LEFT]),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_LOW][DR_WEIGHT][DR_LEFT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_LOW][DR_WEIGHT][DR_RIGHT]+100),"green"));
+        str.append(doTC(QString::number(g_model->expoData[index].expo[DR_LOW][DR_EXPO][DR_RIGHT]),"green"));
         str.append("</tr>");
 
         str.append("</table>");

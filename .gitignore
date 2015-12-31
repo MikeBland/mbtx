@@ -147,3 +147,8 @@ obj
 *.dfu
 /radio/ersky9x9XT_rom.bin
 *.deb
+R418
+/radio/er9x/makev2.log
+/radio/er9x/doV2make
+/radio/er9x/buildV2release
+temp
