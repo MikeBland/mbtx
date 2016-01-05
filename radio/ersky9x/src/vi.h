@@ -242,7 +242,7 @@
 #define ISTR_TRIGGERB       "TriggerB"
 //ISTR_COUNT_DOWN_UP indexed, 10 chars each
 #define ISTR_COUNT_DOWN_UP  "\012Dem Xuong Dem Len   "
-#define ISTR_T_TRIM         "T-Trim"
+#define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 #define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each

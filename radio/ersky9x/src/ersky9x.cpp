@@ -3642,6 +3642,8 @@ void main_loop(void* pdata)
 //		checkCalibrate() ;
 		checkWarnings();
 		clearKeyEvents(); //make sure no keys are down before proceeding
+		wdt_reset() ;
+  	WatchdogTimeout = 100 ;
 
 		if ( g_model.modelVoice == -1 )
 		{

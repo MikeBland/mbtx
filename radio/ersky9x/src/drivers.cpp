@@ -1258,6 +1258,7 @@ void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 //	register Pio *pioptr ;
 
   /* Configure PIO */
+	disable_software_com1() ;
 	configure_pins( (PIO_PA5 | PIO_PA6), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
 	
 #ifdef REVX

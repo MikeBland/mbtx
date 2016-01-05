@@ -998,16 +998,20 @@ void setupPulsesPPM2()
 	if ( p == 0 )
 	{
 //  	p = 8+g_model.ppmNCH*2 + g_model.startChannel ; //Channels *2
+		p = (g_model.ppmNCH + 4) * 2 ;
 		if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
 		{
-			g_model.ppmNCH = 0 ;		// Correct if wrong from DSM
+			p = 8 ;		// Use a default if wrong from DSM
 		}
-		p = (g_model.ppmNCH + 4) * 2 ;
 		if ( p > 16 )
 		{
 			p -= 13 ;
 		}
   	p += g_model.startChannel ; //Channels *2
+		if ( p > 16 )
+		{
+			p = 16 ;
+		}
 	}
 	else
 	{

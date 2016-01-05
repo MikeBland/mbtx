@@ -168,7 +168,7 @@
 #define STR_VS             "VS"
 #define STR_VOICE_OPT      "\006ON    OFF   BOTH  15Secs30Secs60SecsVaribl"
 #define STR_VOICE_V2OPT    "\004ON  OFF BOTH  ALL ONCE"
-#define STR_CUST_SWITCH    "INTERS LOGIQUES"
+#define STR_CUST_SWITCH    "Inters Logiques"
 //#define STR_S              "S"
 #define STR_15_ON          "\015On"
 #define STR_EDIT_MIX       "EDIT. MIX"
@@ -196,7 +196,7 @@
 #define STR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define STR_DELETE_MIX     "Suppr. mix?"
 #define STR_MIX_POPUP      "EDITER\0INSERER\0COPIER\0DEPLACER\0SUPPRIMER\0SUPP.TOUT"
-#define STR_MIXER          "MIXAGES"
+#define STR_MIXER          "Mixages"
 // CHR_S S for Slow
 #define CHR_S              'S'
 // CHR_D D for Delay
@@ -252,7 +252,7 @@
 #define STR_MULTI_TYPE		"Codage\037Type\037Power\037Bind     Autobind\037Portee"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004N/A"
-#define M_NY_STR			"\001NY"
+#define M_NY_STR			"\001NO"
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "1ere voie\037Codag"
@@ -267,13 +267,13 @@
 #define STR_AUTO_LIMITS    "Limites auto"
 // STR_1_RETA indexed 1 char each
 #define STR_1_RETA         "\001RETA"
-#define STR_FL_MODE        "FL MODE"
+#define STR_FL_MODE        "PHASE"
 #define STR_SWITCH_TRIMS   "Inter\037Trims"
 #define STR_SWITCH         "Inter"
 #define STR_TRIMS          "Trims"
-#define STR_MODES          "Modes"
-#define STR_SP_FM0         " FM0"
-#define STR_SP_FM          " FM"
+#define STR_MODES          "Phases"
+#define STR_SP_FM0         " PV0"
+#define STR_SP_FM          " PV"
 #define STR_HELI_SETUP     "Conf. Heli"
 #define STR_HELI_TEXT			 "Type Plateau\037Collectif\037Swash Ring\037Direction ELE\037Direction AIL\037Direction COL"
 #define STR_SWASH_TYPE     "Type Plateau"
@@ -291,7 +291,7 @@
 // STR_MENU_TO_START after \003 max 15 chars
 #define STR_MENU_TO_START  "\003[MENU] PR DEBUT"
 // STR_SET_MIDPOINT after \005 max 11 chars
-#define STR_SET_MIDPOINT   "\005REG NEUTRES"
+#define STR_SET_MIDPOINT   "\003REGLER NEUTRES"
 // STR_MOVE_STICKS after \003 max 15 chars
 #define STR_MOVE_STICKS    "\003BUTEES MAN/POTS"
 #define STR_ANA            "ANA"
@@ -329,7 +329,7 @@
 #define STR_LIGHT_AFTER    "Coupure apres :\023s"
 #define STR_LIGHT_STICK    "Rallumer si mvmt\023s"
 #define STR_SPLASH_SCREEN  "Logo Accueil"
-#define STR_SPLASH_NAME    "Affiche Nom"
+#define STR_SPLASH_NAME    "Nom Logo"
 #define STR_THR_WARNING    "Alerte gaz"
 #define STR_DEAFULT_SW_PAGE "Int/defaut\037Renom. manches\037Limites Auto\037Controle volume"
 #define STR_DEAFULT_SW     "Int/defaut"

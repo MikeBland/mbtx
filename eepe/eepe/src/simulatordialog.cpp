@@ -1239,8 +1239,8 @@ bool simulatorDialog::hwKeyState(int key)
 //		case HSW_Ele6pos5 :	return ui->SAslider->value() == 5 ; break ;
     case HSW_Pb1	:	return ui->switchPB1->isDown() ; break ;
     case HSW_Pb2	:	return ui->switchPB2->isDown() ; break ;
-    case HSW_Pb3	:	return ui->switchPB3->isDown() ; break ;
-    case HSW_Pb4	:	return ui->switchPB4->isDown() ; break ;
+//    case HSW_Pb3	:	return ui->switchPB3->isDown() ; break ;
+//    case HSW_Pb4	:	return ui->switchPB4->isDown() ; break ;
     default:
       return keyState( (EnumKeys) key ) ;
     break;

@@ -256,7 +256,7 @@
 #define ISTR_TRIM_INC        "GasOkning""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS    FWx14"\004""\006Exp   xFin  Fin   MediumGrov  "
-#define ISTR_TRIM_SWITCH     "TrimBr."
+#define ISTR_TRIM_SWITCH     "Insta-TrimBr."
 #define ISTR_BEEP_CENTRE     "Centerpip"
 #define ISTR_RETA123         "RHGS1234"
 #define ISTR_PROTO           "Proto"

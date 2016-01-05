@@ -72,9 +72,7 @@ static void	processAdjusters( void ) ;
 int8_t getGvarSourceValue( uint8_t src ) ;
 
 #ifndef SIMU
-#ifdef QUICK_SELECT
 static void checkQuickSelect( void ); // Quick model select on startup
-#endif
 void getADC_osmp( void ) ;
 #endif
 
@@ -2153,18 +2151,21 @@ int8_t getMovedSwitch()
 #endif
 #endif  // XSW_MOD
 
-#ifdef QUICK_SELECT
 #ifndef SIMU
 static void checkQuickSelect()
 {
     uint8_t i = keyDown(); //check for keystate
+#ifdef QUICK_SELECT
     uint8_t j;
+#endif
 
 		if ( ( i & 6 ) == 6 )
 		{
 			SystemOptions |= SYS_OPT_MUTE ;
 			return ;
 		}
+
+#ifdef QUICK_SELECT
 
     for(j=0; j<6; j++)
 		{
@@ -2188,9 +2189,9 @@ static void checkQuickSelect()
         refreshDiplay();
         clearKeyEvents(); // wait for user to release key
     }
+#endif // QUICK_SELECT
 }
 #endif
-#endif // QUICK_SELECT
 
 uint8_t StickScrollAllowed ;
 uint8_t StickScrollTimer ;
@@ -4336,9 +4337,7 @@ extern uint8_t serialDat0 ;
 		FRSKY_Init( 0 ) ;	
 #endif
 		
-#ifdef QUICK_SELECT
 		checkQuickSelect();
-#endif // QUICK_SELECT
 
 #ifdef SWITCH_MAPPING
 	createSwitchMapping() ;

@@ -263,12 +263,12 @@ v.xx.01-german
 #define ISTR_TRIGGERB       "TriggerB"
 //ISTR_COUNT_DOWN_UP indexed, 10 chars each
 #define ISTR_COUNT_DOWN_UP  "\012Z\301hl runteZ\301hl hoch"
-#define ISTR_T_TRIM         "T-Trim"
+#define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 #define ISTR_TRIM_INC       "Trim Ink""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Expon ExFeinFein  MittelGrob  "
-#define ISTR_TRIM_SWITCH    "Trim Sch"
+#define ISTR_TRIM_SWITCH    "Insta-Trim Sch"
 #define ISTR_BEEP_CENTRE    "Piep Frq" //TonhÃ¶he Frequenz
 #define ISTR_RETA123        "SHGQ1234"
 #define ISTR_PROTO          "Proto" // Protokoll

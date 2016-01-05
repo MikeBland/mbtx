@@ -1497,7 +1497,7 @@ void processSportPacket()
 
 void frsky_receive_byte( uint8_t data )
 {
-	TelemetryDebug += 1 ;
+//	TelemetryDebug += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT)
 	if ( g_model.bt_telemetry )
 	{
@@ -1990,12 +1990,24 @@ void FRSKY_Init( uint8_t brate )
 		}
 		if ( g_model.frskyComPort == 0 )
 		{
+#ifdef REVX
 			UART2_Configure( baudrate, Master_frequency ) ;
 			UART2_timeout_disable() ;
 			if ( g_model.protocol == PROTO_MULTI )
 			{
 				com1Parity( 1 ) ;
 			}
+#else
+			if ( g_model.protocol == PROTO_MULTI )
+			{
+				init_software_com1( baudrate, 1, 1 ) ;
+			}
+			else
+			{
+				UART2_Configure( baudrate, Master_frequency ) ;
+				UART2_timeout_disable() ;
+			}
+#endif
 		}
 		else
 		{

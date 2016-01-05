@@ -691,6 +691,7 @@ void MdiChild::duplicate()
 		}
     if(i && i<max_models)
     {
+			i -= 1 ;
 //      ModelData gmodel;
 //      SKYModelData gmodel1;
     //XXXXXXXXXXXXX

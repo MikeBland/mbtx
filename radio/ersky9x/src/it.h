@@ -246,12 +246,12 @@
 #define ISTR_TRIGGERB       "TriggerB"
 //ISTR_COUNT_DOWN_UP indexed, 10 chars each
 #define ISTR_COUNT_DOWN_UP  "\012Count DownCount Up  "
-#define ISTR_T_TRIM         "T-Trim"
+#define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 #define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Exp   ExFineFine  MediumCoarse"
-#define ISTR_TRIM_SWITCH    "Trim Sw"
+#define ISTR_TRIM_SWITCH    "Insta-Trim Sw"
 #define ISTR_BEEP_CENTRE    "Beep Cnt"
 #define ISTR_RETA123        "RETA1234"
 #define ISTR_PROTO          "Proto"
