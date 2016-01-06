@@ -5,6 +5,8 @@
 #include <QtGui>
 #include "pers.h"
 
+class QTextEdit;
+
 namespace Ui {
     class printDialog;
 }

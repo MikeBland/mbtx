@@ -43,8 +43,12 @@
 #define NODE_H
 
 #include <QtGui>
+
+class QGraphicsItem;
+class QSpinBox;
 #include <QGraphicsItem>
 #include <QSpinBox>
+
 
 #define DEFAULT_BALL_SIZE 14
 #define BALL_HEIGHT 2
@@ -53,6 +57,8 @@ class Edge;
 QT_BEGIN_NAMESPACE
 class QGraphicsSceneMouseEvent;
 QT_END_NAMESPACE
+
+#include <QGraphicsItem>
 
 class Node : public QGraphicsItem
 {

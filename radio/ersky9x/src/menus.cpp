@@ -64,9 +64,9 @@
 #endif
 
 
-#ifdef REVX
-#define USE_EXT_RTC		1
-#endif
+//#ifdef REVX
+//#define USE_EXT_RTC		1
+//#endif
 
 #ifdef SPLASH_DEBUG
 extern uint16_t SplashDebug[] ;
@@ -9876,13 +9876,13 @@ void menuProcBattery(uint8_t event)
 #ifdef PCBSKY
 //static uint8_t count = 0 ;
 //static uint32_t sum ;
-#ifdef USE_EXT_RTC
-extern uint8_t ExternalRtc[7] ;
-	lcd_outhex4( 0, 7*FH, (ExternalRtc[0] << 8 ) | ExternalRtc[1] ) ;
-	lcd_outhex4( 25, 7*FH, (ExternalRtc[2] << 8 ) | ExternalRtc[3] ) ;
-	lcd_outhex4( 50, 7*FH, (ExternalRtc[4] << 8 ) | ExternalRtc[5] ) ;
-	lcd_outhex4( 75, 7*FH, (ExternalRtc[6] << 8 ) ) ;
-#endif
+//#ifdef USE_EXT_RTC
+//extern uint8_t ExternalRtc[7] ;
+//	lcd_outhex4( 0, 7*FH, (ExternalRtc[0] << 8 ) | ExternalRtc[1] ) ;
+//	lcd_outhex4( 25, 7*FH, (ExternalRtc[2] << 8 ) | ExternalRtc[3] ) ;
+//	lcd_outhex4( 50, 7*FH, (ExternalRtc[4] << 8 ) | ExternalRtc[5] ) ;
+//	lcd_outhex4( 75, 7*FH, (ExternalRtc[6] << 8 ) ) ;
+//#endif
 //	if ( count == 0 )
 //	{
 //		sum = Analog_values[8] ;

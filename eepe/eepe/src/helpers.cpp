@@ -2,7 +2,11 @@
 #include <QMessageBox>
 
 #include "pers.h"
+
 #include "helpers.h"
+#include <QComboBox>
+#include <QCheckBox>
+#include <QSpinBox>
 
 QString AudioAlarms[] = {
   "Warn1",
@@ -1867,6 +1871,12 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
 #else
         b->addItem(getSWName(i,extra));
 #endif
+		if (type == 2 )
+		{
+      	b->addItem(" 8 seconds");
+      	b->addItem("12 seconds");
+      	b->addItem("16 seconds");
+		}
 #ifdef SKY
 		int j ;
 		j = switchUnMap(value, eepromType) ;
@@ -1875,12 +1885,6 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
     b->setCurrentIndex(value+ offset ) ;
 #endif
     b->setMaxVisibleItems(10);
-		if (type == 2 )
-		{
-      	b->addItem(" 8 seconds");
-      	b->addItem("12 seconds");
-      	b->addItem("16 seconds");
-		}
 }
 
 

@@ -3,6 +3,8 @@
 #include "pers.h"
 #include "helpers.h"
 #include <QtGui>
+#include <QPrinter>
+#include <QPrintDialog>
 
 printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
@@ -433,6 +435,17 @@ void printDialog::printSwitches()
     te->append(str);
 }
 
+
+QString ssTypes[4] = {
+	"S", "A", "V", "X"
+} ;
+
+QString ssAnames[3] = {
+" 8 secs",
+"12 secs",
+"16 secs"
+} ;
+
 void printDialog::printSafetySwitches()
 {
     QString str = tr("<h2>Safety Switches</h2>");
@@ -441,6 +454,7 @@ void printDialog::printSafetySwitches()
     str.append("<table border=1 cellspacing=0 cellpadding=3>");
     str.append("<tr>");
     str.append(doTC("&nbsp;"));
+    str.append(doTC(tr("Type"), "", true));
     str.append(doTC(tr("Switch"), "", true));
     str.append(doTC(tr("Value"), "", true));
     str.append("</tr>");
@@ -448,8 +462,33 @@ void printDialog::printSafetySwitches()
     {
         str.append("<tr>");
         str.append(doTC(tr("CH%1").arg(i+1),"",true));
-        str.append(doTC(getSWName(g_model->safetySw[i].opt.ss.swtch,0),"green"));
-        str.append(doTC(QString::number(g_model->safetySw[i].opt.ss.val,0),"green"));
+				int x = g_model->safetySw[i].opt.ss.mode ;
+        str.append(doTC(ssTypes[x],"green"));
+        if ( ( x ==0 ) || ( x == 3 ) ) // 'S' or 'X'
+				{
+					str.append(doTC(getSWName(g_model->safetySw[i].opt.ss.swtch,0),"green"));
+        	str.append(doTC(QString::number(g_model->safetySw[i].opt.ss.val),"green"));
+				}
+				else if ( x == 1 )	// 'A'
+				{
+					str.append(doTC(getSWName(g_model->safetySw[i].opt.ss.swtch,0),"green"));
+          str.append(doTC(getAudioAlarmName(g_model->safetySw[i].opt.ss.val),"green"));
+				}
+				else // 'V'
+				{
+					x = g_model->safetySw[i].opt.ss.swtch ;
+					if ( ( x >= 35 ) && ( x <= 37 ) )
+					{
+						// 35-37 8, 12, 16 secs
+						str.append(doTC(ssAnames[x-35],"green"));
+	          str.append(doTC(getTelemString( g_model->safetySw[i].opt.ss.val+1),"green"));
+					}
+					else
+					{
+						str.append(doTC(getSWName(x,0),"green"));
+	        	str.append(doTC(QString::number(g_model->safetySw[i].opt.ss.val+128),"green"));
+					}
+				}
         str.append("</tr>");
     }
     str.append("</table>");

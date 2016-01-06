@@ -42,10 +42,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "downloaddialog.h"
+
 #include <QMainWindow>
 #include <QNetworkAccessManager>
-#include <QDateTime>
-#include "downloaddialog.h"
+
+class QDateTime;
 
 
 class MdiChild;

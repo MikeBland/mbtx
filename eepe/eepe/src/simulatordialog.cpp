@@ -7,6 +7,7 @@
 #include "helpers.h"
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
+#include <QMessageBox>
 
 #define GBALL_SIZE  20
 #define GVARS	1

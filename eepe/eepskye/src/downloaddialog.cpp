@@ -3,6 +3,9 @@
 #include <QMessageBox>
 #include <QNetworkAccessManager>
 #include <QNetworkProxy>
+#include <QNetworkRequest>
+#include <QNetworkReply>
+#include <QFile>
 
 downloadDialog::downloadDialog(QWidget *parent, QString src, QString tgt) :
     QDialog(parent),

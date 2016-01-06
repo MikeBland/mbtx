@@ -1,6 +1,9 @@
 #include "avroutputdialog.h"
 #include "ui_avroutputdialog.h"
 #include <QtGui>
+#include <QScrollBar>
+#include <QMessageBox>
+#include <QScrollBar>
 
 //#if !__GNUC__
 #if defined WIN32 || !defined __GNUC__
@@ -13,8 +16,6 @@
 #endif
 //#endif
 
-#include <QMessageBox>
-#include <QScrollBar>
 
 extern QString AvrdudeOutput ;
 

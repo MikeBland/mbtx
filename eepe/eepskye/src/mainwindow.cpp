@@ -47,6 +47,16 @@
 #include <QNetworkProxyFactory>
 #include <QFileInfo>
 #include <QSslConfiguration>
+#include <QStatusBar>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QAction>
+#include <QMenu>
+#include <QMdiSubWindow>
+#include <QMenuBar>
+#include <QToolBar>
+#include <QApplication>
+#include <QMdiArea>
 
 #include "mainwindow.h"
 #include "pers.h"

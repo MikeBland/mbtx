@@ -52,6 +52,10 @@
 #include "printdialog.h"
 #include "eeprom_rlc.h"
 #include "wizarddialog.h"
+#include <QApplication>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QMenu>
 
 namespace er9x
 {

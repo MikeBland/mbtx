@@ -16,6 +16,15 @@
 #include "wizarddialog.h"
 #include "wizarddata.h"
 #include "helpers.h"
+#include <QMessageBox>
+#include <QLabel>
+#include <QVBoxLayout>
+#include <QLineEdit>
+#include <QRadioButton>
+#include <QMessageBox>
+#include <QComboBox>
+#include <QCheckBox>
+
 
 WizardDialog::WizardDialog(const EEGeneral & settings, unsigned int modelId, QWidget *parent):
   QWizard(parent),

@@ -55,6 +55,13 @@
 #include <QMdiSubWindow>
 #include <QMenuBar>
 #include <QToolBar>
+#include <QPen>
+#include <QSpinBox>
+#include <QComboBox>
+#include <QLabel>
+#include <QTextBrowser>
+#include <QSpinBox>
+#include <QCheckBox>
 
 #include "mainwindow.h"
 #include "mdichild.h"

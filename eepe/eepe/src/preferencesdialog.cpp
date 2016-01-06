@@ -4,6 +4,7 @@
 #include "stamp-eepe.h"
 #include "mainwindow.h"
 #include <QtGui>
+#include <QFileDialog>
 
 #ifndef SKY
 extern void populateDownloads( QComboBox *b ) ;

@@ -2,6 +2,7 @@
 #define MIXERSLIST_H
 
 #include <QtGui>
+
 #include <QListWidget>
 
 class MixersList : public QListWidget

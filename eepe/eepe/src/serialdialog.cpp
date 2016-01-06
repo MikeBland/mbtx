@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <QFileDialog>
 #include <QSettings>
+#include <QMessageBox>
 
 extern int DebugMode ;
 
