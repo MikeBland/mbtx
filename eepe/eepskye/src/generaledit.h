@@ -3,6 +3,7 @@
 
 #include <QtGui>
 #include <QDialog>
+#include <QComboBox>
 #include "pers.h"
 
 namespace Ui {

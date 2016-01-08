@@ -122,9 +122,9 @@
 //#define ER9X_ARDUPILOT_URL   "http://er9x.googlecode.com/svn/trunk/er9x-ardupilot.hex"
 //#define ER9X_NMEA_URL   "http://er9x.googlecode.com/svn/trunk/er9x-nmea.hex"
 //#define ER9X_STAMP "http://er9x.googlecode.com/svn/trunk/src/stamp-er9x.h"
-#define EEPE_URL   "http://eepe.googlecode.com/svn/trunk/eePeInstall.exe"
+#define EEPE_URL   "http://www.er9x.com/eePeInstall.exe"
 //#define EEPE_STAMP "http://eepe.googlecode.com/svn/trunk/src/stamp-eepe.h"
-#define EEPSKYE_URL   "http://eepe.googlecode.com/svn/trunk/eePeInstall.exe"
+#define EEPSKYE_URL   "http://www.er9x.com/eePeInstall.exe"
 #define EEPSKYE_STAMP "http://eepe.googlecode.com/svn/trunk/src/eepskye/src/stamp-eepskye.h"
 
 #define ERSKY9X_STAMP "http://ersky9x.googlecode.com/svn/trunk/src/stamp-ersky9x.h"
@@ -544,7 +544,7 @@ void MainWindow::reply2Finished(QNetworkReply * reply)
             showcheckForUpdatesResult = false; // update is available - do not show dialog
 
 #ifdef Q_OS_WIN32
-            int ret = QMessageBox::question(this, "eePskye", tr("A new version of eePe is available (r%1)<br>"
+            int ret = QMessageBox::question(this, "eePskye", tr("A new version of eePskye is available (r%1)<br>"
                                                                 "Would you like to download it?").arg(rev) ,
                                             QMessageBox::Yes | QMessageBox::No);
 
@@ -555,15 +555,15 @@ void MainWindow::reply2Finished(QNetworkReply * reply)
                 QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),settings.value("lastDir").toString() + "/eePeInstall.zip",tr("Zip File (*.zip)"));
                 if (fileName.isEmpty()) return;
 
-                downloadDialog * dd = new downloadDialog(this,EEPE_URL,fileName);
+                downloadDialog * dd = new downloadDialog(this,EEPSKYE_URL,fileName);
                 installer_fileName = fileName;
                 connect(dd,SIGNAL(accepted()),this,SLOT(reply2Accepted()));
                 dd->show();
             }           
 #else
             QMessageBox::information(this, "eePe", tr("A new version of eePskye is available (r%1)\n"
-                                                      "To update please visit the eepe code page\n"
-                                                      "http://code.google.com/p/eepe/").arg(rev) );
+                                                      "To update please visit the eepe download page\n"
+                                                      "http://www.er9x.com").arg(rev) );
 #endif
         }
         else

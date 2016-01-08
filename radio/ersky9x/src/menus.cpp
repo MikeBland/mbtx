@@ -7916,6 +7916,9 @@ void menuProcDiagKeys(uint8_t event)
    	lcd_putsAttIdx(  x, y, PSTR(STR_KEYNAMES),i,0);
     lcd_putcAtt(x+FW*5+2,  y,t+'0',t);
   }
+  lcd_puts_Pleft(1*FH,XPSTR("  Enc") ) ;
+  bool t=keyState((EnumKeys)(BTN_RE));
+  lcd_putcAtt(x+FW*5+2, 1*FH,t+'0',t);
 
   x=14*FW;
   lcd_putsn_P(x, 3*FH,PSTR(STR_TRIM_M_P),7);
@@ -12788,7 +12791,18 @@ extern void sdInit( void ) ;
 
 //	evalOffset(sub);
 
-	lcd_puts_Pleft( 1*FH, PSTR(STR_4_READY));
+	uint32_t present ;
+	lcd_puts_Pleft( 1*FH, XPSTR("Present"));
+
+#ifdef PCBSKY
+	present = CardIsPresent() ;
+#else
+extern DWORD socket_is_empty( void ) ;
+	present = !socket_is_empty() ;
+#endif
+	lcd_putsAttIdx( 9*FW, 1*FH, XPSTR("\003No Yes"), present, 0 ) ;
+	
+	lcd_puts_Pleft( 2*FH, PSTR(STR_4_READY));
 
 #ifndef SIMU
 
@@ -12800,20 +12814,20 @@ extern void sdInit( void ) ;
 #ifdef PCBX9D
 extern uint8_t CardType ;
 extern uint32_t sdMounted( void ) ;
-	lcd_outhex4( 10*FW, 1*FH, CardType ) ;
-	lcd_outhex4( 16*FW, 1*FH, sdMounted() ) ;
-	lcd_outhex4( 10*FW, 2*FH, Card_state ) ;
+	lcd_outhex4( 10*FW, 2*FH, CardType ) ;
+	lcd_outhex4( 16*FW, 2*FH, sdMounted() ) ;
+	lcd_outhex4( 10*FW, 3*FH, Card_state ) ;
 #endif
 
 #ifdef PCBSKY
-	lcd_outhex4( 10*FW, 1*FH, Card_state ) ;
+	lcd_outhex4( 10*FW, 2*FH, Card_state ) ;
 	 
 extern uint32_t SDlastError ;
-	lcd_outhex4( 16*FW, 1*FH, SDlastError ) ;
+	lcd_outhex4( 16*FW, 2*FH, SDlastError ) ;
 	 
 //	if (sd_card_ready() )		// Moved for debugging
 //	{
-		y = 2*FH ;
+		y = 3*FH ;
 		x = 4*FW ;
 		lcd_puts_Pleft( y, XPSTR("CID"));
 		for ( i = 0 ; i < 4 ; i += 1 )
@@ -12827,7 +12841,7 @@ extern uint32_t SDlastError ;
 				x = 4*FW ;				
 			}			 
 		}
-		y = 4*FH ;
+		y = 5*FH ;
 		x = 4*FW ;
 		lcd_puts_Pleft( y, XPSTR("CSD"));
 		for ( i = 0 ; i < 4 ; i += 1 )
@@ -12841,7 +12855,7 @@ extern uint32_t SDlastError ;
 				x = 4*FW ;				
 			}			 
 		}
-		y = 6*FH ;
+		y = 7*FH ;
 		x = 4*FW ;
 		lcd_puts_Pleft( y, XPSTR("SCR"));
 		for ( i = 0 ; i < 2 ; i += 1 )
@@ -12856,7 +12870,7 @@ extern uint32_t SDlastError ;
 	}
 	else
 	{
-		lcd_puts_Pleft( 1*FH, PSTR(STR_NOT));
+		lcd_puts_Pleft( 2*FH, PSTR(STR_NOT));
 	}
 #endif
 }

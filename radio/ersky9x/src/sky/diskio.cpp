@@ -267,7 +267,7 @@ uint32_t sdCommand(uint32_t cmd, uint32_t arg)
   uint32_t i;
   Hsmci *phsmci = HSMCI;
 
-  if (CardIsConnected())
+  if (CardIsPresent())
 	{
     phsmci->HSMCI_ARGR = arg;
     phsmci->HSMCI_CMDR = cmd;
@@ -338,7 +338,7 @@ uint32_t sd_acmd41()
   uint32_t i;
   Hsmci *phsmci = HSMCI;
 
-  if (CardIsConnected()) {
+  if (CardIsPresent()) {
     sd_cmd55();
     phsmci->HSMCI_ARGR = 0x403F8000;
     phsmci->HSMCI_CMDR = 0x00001069;
@@ -438,7 +438,7 @@ uint32_t sd_acmd51( uint32_t *presult )
         uint32_t j = 0 ;
         Hsmci *phsmci = HSMCI ;
 
-        if ( CardIsConnected() )
+        if ( CardIsPresent() )
         {
                 sd_cmd55() ;
                 // Block size = 64/ 8, nblocks = 1
@@ -480,7 +480,7 @@ uint32_t sd_acmd6()
         uint32_t i ;
         Hsmci *phsmci = HSMCI ;
 
-        if ( CardIsConnected() )
+        if ( CardIsPresent() )
         {
                 sd_cmd55() ;
                 phsmci->HSMCI_ARGR = 2 ;                // Bus width 4 bits
@@ -525,7 +525,7 @@ void sdPoll10mS()
 {
         uint32_t i ;
 
-        if ( !CardIsConnected() )
+        if ( !CardIsPresent() )
         {
                 Card_state = SD_ST_EMPTY ;
                 Sd_rca = 0 ;
@@ -535,7 +535,7 @@ void sdPoll10mS()
         switch ( Card_state )
         {
                 case SD_ST_EMPTY :
-                  if ( CardIsConnected() ) {
+                  if ( CardIsPresent() ) {
                     Card_state = SD_ST_INIT1 ;
                   }
                   break ;
@@ -630,7 +630,7 @@ void sdPoll10mS()
 // returns 1 for YES, 0 for NO
 uint32_t sd_card_ready( void )
 {
-  if ( CardIsConnected() )
+  if ( CardIsPresent() )
   {
     if ( Card_state == SD_ST_DATA )
     {
@@ -646,7 +646,7 @@ uint32_t sd_cmd16()
 //#if 0
   Hsmci *phsmci = HSMCI;
 
-  if (CardIsConnected())
+  if (CardIsPresent())
 	{
     phsmci->HSMCI_BLKR = ( ( 512 ) << 16 ) | 1 ;
     phsmci->HSMCI_ARGR = 512;

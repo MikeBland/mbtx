@@ -1,6 +1,6 @@
 #include "simulatordialog.h"
 #include "ui_simulatordialog.h"
-#include "../../common\node.h"
+#include "../../common/node.h"
 #include <QtGui>
 #include <stdint.h>
 #include "pers.h"

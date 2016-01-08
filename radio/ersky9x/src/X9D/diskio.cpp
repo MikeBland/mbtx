@@ -1022,7 +1022,7 @@ void sdMountPoll()
 // returns 1 for YES, 0 for NO
 uint32_t sd_card_ready( void )
 {
-//  if ( CardIsConnected() )
+//  if ( CardIsPresent() )
 //  {
     if ( Card_state == 100 )
     {

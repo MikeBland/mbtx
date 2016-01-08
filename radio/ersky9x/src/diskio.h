@@ -145,7 +145,7 @@ volatile extern BYTE Timer1, Timer2;	/* 100Hz decrement timer */
 //------------------------------------------------------------------------------
 /// Detect if SD card is connected
 //------------------------------------------------------------------------------
-#define CardIsConnected() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
+#define CardIsPresent() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
 
 extern uint32_t Card_ID[4] ;
 extern uint32_t Card_SCR[2] ;

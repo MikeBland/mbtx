@@ -959,9 +959,9 @@ void com2Configure()
 }
 
 #ifdef PCBSKY
- #ifndef REVX
 static void checkAr9x()
 {
+ #ifndef REVX
 	uint32_t x = ChipId & 0x00000F00 ;
 	if ( x <= 0x00000900 )
 	{
@@ -969,8 +969,10 @@ static void checkAr9x()
 	}
 	g_eeGeneral.ar9xBoard = 1 ;
 	g_eeGeneral.softwareVolume = 1 ;
-}
+ #else
+ 	g_eeGeneral.ar9xBoard = 0 ;
  #endif
+}
 #endif
 
 
@@ -1124,6 +1126,7 @@ int main( void )
 #endif
 
 	init5msTimer() ;
+  WatchdogTimeout = 100 ;
 	
 	init_hw_timer() ;
 	init_adc() ;
@@ -1394,9 +1397,7 @@ uint32_t updateSlave() ;
 	
 	eeReadAll() ;
 #ifdef PCBSKY
- #ifndef REVX
 	checkAr9x() ;
- #endif
 #endif
 
 	SportStreamingStarted = 0 ;
@@ -3658,15 +3659,7 @@ void main_loop(void* pdata)
 
 
 // Preload battery voltage
-#ifdef PCBSKY
   int32_t ab = anaIn(12);
-#endif
-#ifdef PCBX9D
-  int32_t ab = anaIn(12);
-#endif
-#ifdef PCB9XT
-  int32_t ab = anaIn(12);
-#endif
 
   ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
 #ifdef PCBSKY
@@ -6616,12 +6609,7 @@ void perMain( uint32_t no_menu )
 ////        1417*18/256 = 99 (actually 99.6) to represent 9.9 volts.
 ////        Erring on the side of low is probably best.
 
-#if defined(PCBSKY) || defined(PCB9XT)
         int32_t ab = anaIn(12);
-#endif
-#ifdef PCBX9D
-        int32_t ab = anaIn(12);
-#endif
 
         ab = ( ab + ab*(g_eeGeneral.vBatCalib)/128 ) * 4191 ;
 //        ab = (uint16_t) ab / (g_eeGeneral.disableBG ? 240 : BandGap ) ;  // ab might be more than 32767

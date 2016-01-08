@@ -201,7 +201,7 @@ extern void init_SDcard( void ) ;
 /// Detect if SD card is connected
 //------------------------------------------------------------------------------
 #ifdef PCBSKY
-#define CardIsConnected() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
+#define CardIsPresent() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
 #endif
 
 extern uint32_t Card_ID[4] ;

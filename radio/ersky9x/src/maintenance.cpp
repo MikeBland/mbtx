@@ -764,6 +764,8 @@ void menuUp1(uint8_t event)
 	static uint32_t firmwareAddress ;
 	uint32_t i ;
 	uint32_t width ;
+   
+	wdt_reset() ;
 	 
 	if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{

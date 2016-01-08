@@ -147,6 +147,7 @@ void generalDefault()
 	g_eeGeneral.volume = 2 ;
 	g_eeGeneral.lightSw = MAX_SKYDRSWITCH ;	// ON
 	g_eeGeneral.filterInput = 1 ;
+	g_eeGeneral.beeperVal = 3 ;
 
   for (int i = 0; i < NUM_ANALOG_CALS ; ++i )
 	{

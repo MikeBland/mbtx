@@ -782,7 +782,7 @@ void voiceSystemNameNumberAudio( uint16_t sname, uint16_t number, uint8_t audio 
 	const char *name ;
 
 #ifdef PCBSKY	
-	if ( !CardIsConnected() )
+	if ( !CardIsPresent() )
 #else
 	if ( socket_is_empty() )
 #endif
