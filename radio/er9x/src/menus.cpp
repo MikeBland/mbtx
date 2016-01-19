@@ -11272,7 +11272,7 @@ Str_Protocol
 //#ifdef V2
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\017"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 //#endif
 				uint8_t ppmNch = g_model.ppmNCH ;
 				if(g_model.sub_protocol==attr)
@@ -11300,43 +11300,26 @@ Str_Protocol
 				{
 					s=PSTR(FWx10"\004"M_YD717_STR);
 				}
+				else if ( x == M_KN )
+				{
+					s=PSTR(FWx10"\001"M_KN_STR);
+				}
 				else if ( x == M_SymaX )
 				{
-					s=PSTR(FWx10"\002"M_SYMAX_STR);
+					s=PSTR(FWx10"\001"M_SYMAX_STR);
 				}
 				else if ( x == M_CX10 )
 				{
-					s=PSTR(FWx10"\002"M_CX10_STR);
+					s=PSTR(FWx10"\006"M_CX10_STR);
 				}
 				else if ( x == M_CG023 )
 				{
-					s=PSTR(FWx10"\001"M_CG023_STR);
+					s=PSTR(FWx10"\002"M_CG023_STR);
 				}
 				else
 				{
 					s=PSTR(FWx10"\000"M_NONE_STR);
 				}
-//				switch(g_model.sub_protocol&0x1F)
-//				{
-//					case M_Flysky:
-//						s=PSTR(FWx10"\003"M_FLYSKY_STR);
-//						break;
-//					case M_DSM2:
-//						s=PSTR(FWx10"\001"M_DSM2_STR);
-//						break;
-//					case M_YD717:
-//						s=PSTR(FWx10"\004"M_YD717_STR);
-//						break;
-//					case M_SymaX:
-//						s=PSTR(FWx10"\002"M_SYMAX_STR);
-//						break;
-//					case M_CX10:
-//						s=PSTR(FWx10"\002"M_CX10_STR);
-//						break;
-//					default:
-//						s=PSTR(FWx10"\000"M_NONE_STR);
-//						break;
-//				}
 				ppmNch = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (ppmNch & 0x8F);
 				g_model.ppmNCH = ppmNch ;
 				y += FH ;
