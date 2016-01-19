@@ -6363,7 +6363,7 @@ uint8_t blink = InverseBlink ;
 		{
 			lcd_puts_Pleft( y, PSTR(STR_MULTI_TYPE));
 			uint8_t attr = g_model.sub_protocol ;
-			g_model.sub_protocol = checkIndexed( y, FWx10"\016"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+			g_model.sub_protocol = checkIndexed( y, FWx10"\017"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 			if(g_model.sub_protocol==attr)
 				attr=(g_model.ppmNCH >> 4) &0x07 ;
 			else
