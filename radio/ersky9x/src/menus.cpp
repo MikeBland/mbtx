@@ -6363,7 +6363,7 @@ uint8_t blink = InverseBlink ;
 		{
 			lcd_puts_Pleft( y, PSTR(STR_MULTI_TYPE));
 			uint8_t attr = g_model.sub_protocol ;
-			g_model.sub_protocol = checkIndexed( y, FWx10"\014"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+			g_model.sub_protocol = checkIndexed( y, FWx10"\016"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 			if(g_model.sub_protocol==attr)
 				attr=(g_model.ppmNCH >> 4) &0x07 ;
 			else
@@ -6389,17 +6389,21 @@ uint8_t blink = InverseBlink ;
 			{
 				s=XPSTR(FWx10"\004"M_YD717_STR);
 			}
+			else if ( x == M_KN )
+			{
+				s=XPSTR(FWx10"\001"M_KN_STR);
+			}
 			else if ( x == M_SymaX )
 			{
-				s=XPSTR(FWx10"\002"M_SYMAX_STR);
+				s=XPSTR(FWx10"\001"M_SYMAX_STR);
 			}
 			else if ( x == M_CX10 )
 			{
-				s=XPSTR(FWx10"\002"M_CX10_STR);
+				s=XPSTR(FWx10"\006"M_CX10_STR);
 			}
 			else if ( x == M_CG023 )
 			{
-				s=XPSTR(FWx10"\001"M_CG023_STR);
+				s=XPSTR(FWx10"\002"M_CG023_STR);
 			}
 			else
 			{
