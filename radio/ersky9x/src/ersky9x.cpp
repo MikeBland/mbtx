@@ -1723,19 +1723,19 @@ void flushBtFifo()
 {
 	uint16_t rxchar ;
 
-#ifdef PCBSKY
-	txmit( '[' ) ;
-#endif
+//#ifdef PCBSKY
+//	txmit( '[' ) ;
+//#endif
 	while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 	{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 		// null body, flush fifo
 	}
-#ifdef PCBSKY
-	txmit( ']' ) ;
-#endif
+//#ifdef PCBSKY
+//	txmit( ']' ) ;
+//#endif
 }
 
 uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
@@ -1755,9 +1755,9 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 //			btStartLog( rxchar ) ;
 
 			if ( rxchar == x )
@@ -1808,9 +1808,9 @@ txmit( rxchar ) ;
 
 uint32_t poll_bt_device()
 {
-#ifdef PCBSKY
-txmit('P') ;
-#endif
+//#ifdef PCBSKY
+//txmit('P') ;
+//#endif
 	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
@@ -1952,9 +1952,9 @@ uputs( (char *)command ) ;
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-#ifdef PCBSKY
-			txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//			txmit( rxchar ) ;
+//#endif
 			if ( length )
 			{
 //				if ( ( rxchar >= ' ' ) && ( rxchar < 0x80 ) )
@@ -1988,9 +1988,9 @@ uputs( (char *)command ) ;
 			{
 				if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 				{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 					if ( rxchar == 10 )
 					{
 						if ( x == 13 )
@@ -2661,28 +2661,28 @@ uint32_t btLink( uint32_t index )
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
 
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	if ( i == 0 )
 	{
 		for ( x = 0 ; x < 10 ; x += 1 )
 		{
 			CoTickDelay(10) ;					// 40mS
 			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 			if ( i )
 			{
-#ifdef PCBSKY
-txmit('V') ;
-#endif
+//#ifdef PCBSKY
+//txmit('V') ;
+//#endif
 				break ;
 			}
-#ifdef PCBSKY
-txmit('U') ;
-#endif
+//#ifdef PCBSKY
+//txmit('U') ;
+//#endif
 		}
 	}
 	return i ;
@@ -2700,16 +2700,16 @@ void btConfigure()
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	BtConfigure = 0x41 ;
 	btTransaction( (uint8_t *)"AT+CMODE=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	BtConfigure = 0x42 ;
 //	btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
 //	CoTickDelay(10) ;					// 20mS
@@ -2719,10 +2719,10 @@ txmit(i+'=') ;
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, 2000 ) ;
 	BtConfigure = 0x44 ;
-#ifdef PCBSKY
-txmit('R') ;
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit('R') ;
+//txmit(i+'=') ;
+//#endif
 // AT+PAIR=address,timeout
 //	uint8_t *end ;
 //	for ( j = 0 ; j < 4 ; j += 1 )
@@ -2759,9 +2759,9 @@ txmit(i+'=') ;
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
 		i = getBtOK(0, 225 ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 		BtConfigure = 0x49 + j ;
 	}
 	BtConfigure = 0 ;
@@ -3072,9 +3072,9 @@ void bt_task(void* pdata)
 					{
 						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 						{
-#ifdef PCBSKY
-							txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//							txmit( rxchar ) ;
+//#endif
 							if ( rxchar == '+' )
 							{
 								x = 1 ;

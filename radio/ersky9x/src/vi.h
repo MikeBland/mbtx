@@ -156,7 +156,7 @@
 #define ISTR_COPY_TRIM      "SAO CHEP TRIM [MENU]"
 #define ISTR_TELEMETRY      "DO TU XA "
 #define ISTR_USR_PROTO      "UsrProto"
-#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti MavlkArduP"
+#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHubFrMav"
 #define ISTR_MET_IMP        "\003MetImp"
 #define ISTR_A_CHANNEL      "A  Kenh"
 #define ISTR_ALRM           "c.bao"

@@ -440,9 +440,25 @@ void store_hub_data( uint8_t index, uint16_t value )
 	}	
 }
 
+//#define DEBUG_MAVLINK	1
+#ifdef DEBUG_MAVLINK
+uint16_t Mcounter ;
+#endif
 
 void frsky_proc_user_byte( uint8_t byte )
 {
+#ifdef DEBUG_MAVLINK
+	if ( byte == 0x5E )
+	{
+		if ( ++Mcounter >= 6 )
+		{
+			crlf() ;
+			Mcounter = 0 ;
+		}
+	}
+	p2hex( byte ) ;
+#endif
+
 	if (g_model.FrSkyUsrProto == 0)  // FrSky Hub
 	{
 	
@@ -2348,6 +2364,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 			type = TEL_DSM ;
 		break ;
 		case TELEMETRY_FRHUB :
+		case TELEMETRY_ARDUPILOT :
 			if ( type != TEL_MULTI )
 			{
 				type = TEL_FRSKY_HUB ;

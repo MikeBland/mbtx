@@ -2314,6 +2314,7 @@ void menuCustomTelemetry(uint8_t event)
 	}
 }
 
+// FrSky WSHhi DSMx  Jeti  Mavlk ArduP FrHub"
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifdef REVX
@@ -10554,8 +10555,13 @@ void menuProc0(uint8_t event)
 				}	
         if(view == e_telemetry)
 				{
+					uint32_t t_limit = 0x40 ;
 					tview += 0x10 ;
-					if ( tview > ( ( FrskyTelemetryType != 2 ) ? 0x40 : 0x50 ) )
+					if ( ( FrskyTelemetryType == 2 ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT ) )
+					{
+						t_limit = 0x50 ;
+					}
+					if ( tview > t_limit )
 					{
 						tview = 0 ;
 					}
@@ -10580,9 +10586,14 @@ void menuProc0(uint8_t event)
         else if(view == e_telemetry)
 				{
 					tview -= 0x10 ;
+					uint32_t t_limit = 0x40 ;
+					if ( ( FrskyTelemetryType == 2 ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT ) )
+					{
+						t_limit = 0x50 ;
+					}
 					if ( tview > 0x60 )
 					{
-						tview = ( FrskyTelemetryType != 2 ) ? 0x40 : 0x50 ;
+						tview = t_limit ;
 					}
 					
           g_model.mview = e_telemetry | tview ;
@@ -11402,6 +11413,55 @@ extern uint8_t ImageY ;
             }
             else// if ( tview == 0x50 )
 						{
+						 if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
+						 {
+								// Mavlink over FrSky
+								uint8_t attr = 0 ;
+								lcd_putsAtt(  0 * FW, 0 * FH, XPSTR("          "), 0 ); // clear inversed model name from screen
+								// line 0, left - Battary remaining
+								uint8_t batt =  FrskyHubData[FR_FUEL] ;
+								if ( batt < 20 ) { attr = BLINK ; } else {attr = 0 ;}
+								lcd_hbar( 01, 1, 10, 5, batt ) ;
+								lcd_rect( 11, 2, 2, 3 ) ;
+								if (batt > 99) batt = 99 ;
+								lcd_outdezAtt ( 4*FW,   0*FH, batt, attr ) ;
+								lcd_putcAtt	  ( 4*FW+1, 0*FH, '%',  attr ) ;
+								// line 0, V, volt bat
+ 				        attr = PREC1 ;
+ 				        lcd_outdezAtt( 8 * FW+2, 0, FrskyHubData[FR_VOLTS], attr ) ;
+								// line 0, V, volt cpu
+ 				        lcd_outdezAtt( 11 * FW-2, 0, FrskyHubData[FR_VCC], PREC1 ) ;
+		    				    //lcd_putc     ( 11 * FW+1, 0, 'v');
+								// line 1 - Flight mode
+ 				        uint8_t blink = BLINK;
+ 				        if (frskyUsrStreaming) blink = 0 ;
+								lcd_putsAtt( 15*FW-1, 1*FH, XPSTR("T1="), 0 ) ;
+ 				        lcd_outdezAtt( 20 * FW, 1*FH, FrskyHubData[FR_TEMP1], blink ) ;
+								
+#define STR_MAV_ARMED  		 "ARMED"
+#define STR_MAV_DISARMED  	 "DISARM"
+#define STR_MAV_NODATA 		 "NODATA"
+								if (frskyUsrStreaming)
+								{
+									if ( FrskyHubData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED )
+									{
+										lcd_putsAtt(  1 * FW, 1 * FH, XPSTR(STR_MAV_ARMED), blink) ;
+									}
+									else
+									{
+										lcd_putsAtt(  0 * FW, 1 * FH, XPSTR(STR_MAV_DISARMED), blink) ;
+									}
+								}
+								else
+								{
+									lcd_putsAtt(  0 * FW, 1 * FH, XPSTR(STR_MAV_NODATA), BLINK) ; // NO DRV
+								}
+
+ 				        lcd_outdezAtt( 5*FW , 7*FH, FrskyHubData[FR_COURSE], blink ) ;
+						 	
+						 }
+						 else
+						 {
 							// Spektrum format screen
 							lcd_puts_Pleft( 0*FH, XPSTR("\013rssi")) ;
 							lcd_puts_Pleft( 2*FH, XPSTR("Vbat")) ;
@@ -11423,6 +11483,7 @@ extern uint8_t ImageY ;
 								lcd_putc( 20*FW, 6*FH, 'X' ) ;
 							}
 							dsmDisplayABLRFH() ;
+						 }
 						}
 //            else	// ( tview == 0x50 )
 //						{
