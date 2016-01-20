@@ -776,6 +776,7 @@ PACK(typedef struct te_ModelData {
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
+	uint8_t xoption_protocol ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

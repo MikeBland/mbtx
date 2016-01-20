@@ -581,6 +581,7 @@ WINSHELL = cmd
 XBM2LBM = ruby ../util/xbm2lbm.rb
 AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
+PROV=$(shell sh -c "cat prov.txt")
 
 
 # Define Messages
@@ -656,9 +657,9 @@ stamp:
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-er9x.h
 	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-er9x.h
 ifeq ($(V2), YES)
-	@echo "#define SVN_VERS \"er9xV2-r$(REV)\"" >> stamp-er9x.h
+	@echo "#define SVN_VERS \"er9xV2-$(PROV)r$(REV)\"" >> stamp-er9x.h
 else
-	@echo "#define SVN_VERS \"er9x-r$(REV)\"" >> stamp-er9x.h
+	@echo "#define SVN_VERS \"er9x-$(PROV)r$(REV)\"" >> stamp-er9x.h
 endif
 	@echo "#define MOD_VERS \"$(EXT_MOD) $(HT_MOD) $(BEEPER_MOD) $(CPU_MOD) $(SC_MOD) \"" >> stamp-er9x.h
 #	@cat stamp-er9x.h

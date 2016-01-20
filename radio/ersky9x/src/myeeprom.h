@@ -670,7 +670,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t timer2Cdown:1 ;
 	uint8_t timer1Mbeep:1 ;
 	uint8_t timer2Mbeep:1 ;
-	uint8_t tspare:4 ;
+	uint8_t timer1Haptic:2 ;
+	uint8_t timer2Haptic:2 ;
   int8_t mlightSw ;
 	uint8_t ppmOpenDrain ;
 	char modelVname[VOICE_NAME_SIZE] ;
@@ -702,6 +703,7 @@ PACK(typedef struct te_ModelData {
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
+	uint8_t xoption_protocol ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

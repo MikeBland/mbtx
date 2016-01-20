@@ -390,6 +390,22 @@ enum EnumKeys {
 #define DSM2_DSMX        2
 
 
+// MULTI options
+#define M_Flysky          0
+#define M_Hubsan          1
+#define M_Frsky           2
+#define M_Hisky           3
+#define M_V2x2            4
+#define M_DSM2            5
+#define M_Devo	  	      6
+#define M_YD717	          7
+#define M_KN	  	        8
+#define M_SymaX	          9
+#define M_SLT		  		   10
+#define M_CX10		       11
+#define M_CG023		       12
+#define M_BAYANG	       13
+
 
 #define GETADC_SING = 0
 #define GETADC_OSMP = 1

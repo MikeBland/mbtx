@@ -337,7 +337,7 @@ void voice_telem_item( int8_t index )
 		{	
 			div_t qr ;
 			qr = div( value, 60 ) ;
-			voice_numeric( qr.quot, 0, SV_MINUTES ) ;
+			voice_numeric( qr.quot, 0, (qr.quot == 1) ? SV_MINUTE : SV_MINUTES ) ;
 			value = qr.rem ;
 			unit = SV_SECONDS ;			
 		}
@@ -3365,8 +3365,18 @@ void menuProcGlobals(uint8_t event)
 //  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 68+12 ) ;
   			if(active)
 				{
+					uint32_t value = pgvar->gvsource ;
 					// map pots etc.
-					CHECK_INCDEC_H_MODELVAR_0( pgvar->gvsource, 72 ) ;
+					if ( value >= EXTRA_POTS_START )
+					{
+						value += 73 - EXTRA_POTS_START ;
+					}
+					CHECK_INCDEC_H_MODELVAR_0( value, 72 + NumExtraPots ) ;
+					if ( value > 72 )
+					{
+						value += EXTRA_POTS_START - 73 ;
+					}
+					pgvar->gvsource = value ;
 				}
 #endif
 #ifdef PCBX9D
@@ -4119,7 +4129,7 @@ void menuProcVoiceOne(uint8_t event)
 				break ;
 
 				case 4 :	 // rate ;
-  	  		lcd_puts_Pleft( y, XPSTR("Rate") ) ;
+  	  		lcd_puts_Pleft( y, XPSTR("Trigger") ) ;
 					displayVoiceRate( 16*FW, y, pvad->rate, attr ) ;
 
 //					if ( pvad->rate < 3 )
@@ -4698,11 +4708,11 @@ void menuProcMixOne(uint8_t event)
             break;
         case 12:
             lcd_puts_P(  2*FW,y,PSTR(STR_2DELAY_DOWN));
-						md2->delayDown = editSlowDelay( y, attr, md2->delayDown ) ;
+						md2->delayUp = editSlowDelay( y, attr, md2->delayUp ) ;	// Sense was wrong
             break;
         case 13:
             lcd_puts_P(  2*FW,y,PSTR(STR_2DELAY_UP));
-						md2->delayUp = editSlowDelay( y, attr, md2->delayUp ) ;
+						md2->delayDown = editSlowDelay( y, attr, md2->delayDown ) ;	// Sense was wrong
             break;
         case 14:
             lcd_puts_P(  2*FW,y,PSTR(STR_2SLOW_DOWN));
@@ -5855,26 +5865,26 @@ static void editTimer( uint8_t sub, uint8_t event )
 {
 	uint8_t subN ;
 	uint8_t timer ;
-	if ( sub < 7 )
+	if ( sub < 8 )
 	{
 		subN = 0 ;
 		timer = 0 ;
 	}
 	else
 	{
-		subN = 7 ;
+		subN = 8 ;
 		timer = 1 ;
 	}
 	t_TimerMode *ptm ;
 	
 	ptm = &g_model.timer[timer] ;
 
-	uint8_t y = FH ;
+	uint8_t y = 0 ;
 	uint8_t blink = InverseBlink ;
 
-  lcd_puts_Pleft( y, PSTR(STR_TIMER) ) ;
-  lcd_putc( 5*FW, y, '1'+ timer ) ;
- 	putsTime(12*FW-1, y, ptm->tmrVal,(sub==subN ? blink:0),(sub==subN ? blink:0) ) ;
+//  lcd_puts_Pleft( y, PSTR(STR_TIMER) ) ;
+//  lcd_putc( 5*FW, y, '1'+ timer ) ;
+ 	putsTime(14*FW-1, y, ptm->tmrVal,(sub==subN ? blink:0),(sub==subN ? blink:0) ) ;
 
 #ifndef NOPOTSCROLL
 //	    if(sub==subN && (s_editing	) )	// Use s_editing???
@@ -5901,7 +5911,7 @@ static void editTimer( uint8_t sub, uint8_t event )
    			attr = blink ;
 				CHECK_INCDEC_H_MODELVAR_0( ptm->tmrModeA, 1+2+24 ) ;
 			}
-    	putsTmrMode(10*FW,y,attr, timer, 1 ) ;
+    	putsTmrMode(16*FW,y,attr, timer, 1 ) ;
 			y += FH ;
 		subN++ ;
   	
@@ -5912,7 +5922,7 @@ static void editTimer( uint8_t sub, uint8_t event )
 	   		attr = blink ;
 			}
 			uint8_t doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-			ptm->tmrModeB = edit_dr_switch( 15*FW, y, ptm->tmrModeB, attr, doedit, event ) ;
+			ptm->tmrModeB = edit_dr_switch( 16*FW, y, ptm->tmrModeB, attr, doedit, event ) ;
 			y += FH ;
 		subN++ ;
 	 
@@ -5934,7 +5944,7 @@ static void editTimer( uint8_t sub, uint8_t event )
 			b = timer ? g_model.timer2Cdown : g_model.timer1Cdown ;
   	  (timer ? g_model.timer2Cdown : g_model.timer1Cdown) = onoffMenuItem( b, y, PSTR(STR_BEEP_COUNTDOWN), sub==subN  ) ;
 			y += FH ;
-		subN++;
+			subN++;
 
   	  lcd_puts_Pleft( y, XPSTR("Reset Switch"));
   	  attr = 0 ;
@@ -5945,7 +5955,7 @@ static void editTimer( uint8_t sub, uint8_t event )
 
 			int16_t sw = (timer==0) ? g_model.timer1RstSw : g_model.timer2RstSw ;
 			doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-			sw = edit_dr_switch( 15*FW, y, sw, attr, doedit, event ) ;
+			sw = edit_dr_switch( 16*FW, y, sw, attr, doedit, event ) ;
 			if ( timer == 0 )
 			{
 				g_model.timer1RstSw = sw ;
@@ -5953,6 +5963,25 @@ static void editTimer( uint8_t sub, uint8_t event )
 			else
 			{
 				g_model.timer2RstSw = sw ;
+			}
+			y += FH ;
+			subN++;
+  	  
+			lcd_puts_Pleft( y, XPSTR("Haptic"));
+  	  attr = 0 ;
+			if(sub==subN)
+			{
+				attr = blink ;
+			}
+			sw = (timer==0) ? g_model.timer1Haptic : g_model.timer2Haptic ;
+			sw = checkIndexed( y, XPSTR(FWx12"\003""\006  NoneMinute Cdown  Both"), sw, (sub==subN) ) ;
+			if ( timer == 0 )
+			{
+				g_model.timer1Haptic = sw ;
+			}
+			else
+			{
+				g_model.timer2Haptic = sw ;
 			}
 			y += FH ;
 
@@ -6363,7 +6392,7 @@ uint8_t blink = InverseBlink ;
 		{
 			lcd_puts_Pleft( y, PSTR(STR_MULTI_TYPE));
 			uint8_t attr = g_model.sub_protocol ;
-			g_model.sub_protocol = checkIndexed( y, FWx10"\014"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+			g_model.sub_protocol = checkIndexed( y, FWx10"\016"MULTI_STR, g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 			if(g_model.sub_protocol==attr)
 				attr=(g_model.ppmNCH >> 4) &0x07 ;
 			else
@@ -6399,7 +6428,7 @@ uint8_t blink = InverseBlink ;
 			}
 			else if ( x == M_CG023 )
 			{
-				s=XPSTR(FWx10"\001"M_CG023_STR);
+				s=XPSTR(FWx10"\002"M_CG023_STR);
 			}
 			else
 			{
@@ -6411,7 +6440,9 @@ uint8_t blink = InverseBlink ;
 
 			uint8_t value = (g_model.sub_protocol>>6)&0x01 ;
 			lcd_putsAttIdx(  9*FW, y, XPSTR(M_NY_STR), value, (sub==subN && subSub==0 ? blink:0) );
-			lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+  		lcd_outdezAtt( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0) ) ;
+			lcd_puts_Pleft( y, PSTR(STR_MULTI_OPTION) ) ;
+//			lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
 			if(sub==subN)
 			{
 				Columns = 1;
@@ -8501,29 +8532,44 @@ void timer(int16_t throttle_val)
         if(ptimer->s_timerState==TMR_RUNNING)
         {
 					uint8_t audioControl ;
+					uint8_t hapticControl = 0 ;
 					if ( timer == 0 )
 					{
 						audioControl = g_eeGeneral.preBeep | g_model.timer1Cdown ;
+						if ( audioControl )
+						{
+							if ( g_model.timer1Haptic & 2 )
+							{
+								hapticControl = 1 ;
+							}
+						}
 					}
 					else
 					{
 						audioControl = g_model.timer2Cdown ;
+						if ( audioControl )
+						{
+							if ( g_model.timer2Haptic & 2 )
+							{
+								hapticControl = 1 ;
+							}
+						}
 					}
-					
             if(audioControl && g_model.timer[timer].tmrVal) // beep when 30, 15, 10, 5,4,3,2,1 seconds remaining
             {
-              	if(ptimer->s_timerVal==30) {audioNamedVoiceDefevent( AU_TIMER_30, SV_30SECOND );}
-              	if(ptimer->s_timerVal==20) {audioNamedVoiceDefevent( AU_TIMER_20, SV_20SECOND );}
-                if(ptimer->s_timerVal==10) {audioNamedVoiceDefevent( AU_TIMER_10, SV_10SECOND );}
+              	if(ptimer->s_timerVal==30) {audioNamedVoiceDefevent( AU_TIMER_30, SV_30SECOND );if ( hapticControl ){audioDefevent(AU_HAPTIC1);}}
+              	if(ptimer->s_timerVal==20) {audioNamedVoiceDefevent( AU_TIMER_20, SV_20SECOND );if ( hapticControl ){audioDefevent(AU_HAPTIC1);}}
+                if(ptimer->s_timerVal==10) {audioNamedVoiceDefevent( AU_TIMER_10, SV_10SECOND );if ( hapticControl ){audioDefevent(AU_HAPTIC1);}}
                 if(ptimer->s_timerVal<= 5)
 								{
 									if(ptimer->s_timerVal>= 0)
 									{
 										audioVoiceDefevent(AU_TIMER_LT3, ptimer->s_timerVal | VLOC_NUMSYS ) ;
+										if ( hapticControl ){audioDefevent(AU_HAPTIC1);}
 									}
 									else
 									{
-										if ( ( timer == 0 ) && g_eeGeneral.preBeep )
+										if ( ( timer == 0 ) && ( g_eeGeneral.preBeep || g_model.timer1Mbeep ) )
 										{
 											audioDefevent(AU_TIMER_LT3);
 										}
@@ -8534,25 +8580,40 @@ void timer(int16_t throttle_val)
             }
 						div_t mins ;
 						mins = div( g_model.timer[timer].tmrDir ? g_model.timer[timer].tmrVal- ptimer->s_timerVal : ptimer->s_timerVal, 60 ) ;
+					hapticControl = 0 ;
 					if ( timer == 0 )
 					{
 						audioControl = g_eeGeneral.minuteBeep | g_model.timer1Mbeep ;
+						if ( audioControl )
+						{
+							if ( g_model.timer1Haptic & 1 )
+							{
+								hapticControl = 1 ;
+							}
+						}
 					}
 					else
 					{
 						audioControl = g_model.timer2Mbeep ;
+						if ( audioControl )
+						{
+							if ( g_model.timer1Haptic & 1 )
+							{
+								hapticControl = 1 ;
+							}
+						}
 					}
             if( audioControl && ((mins.rem)==0)) //short beep every minute
             {
-//								if ( g_eeGeneral.speakerMode & 2 )
-//								{
-									if ( mins.quot ) {voice_numeric( mins.quot, 0, SV_MINUTES ) ;}
-//								}
-//								else
-//								{
-//                	audioDefevent(AU_WARNING1);
-//								}
-                if(g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
+							if ( mins.quot )
+							{
+								voice_numeric( mins.quot, 0, (mins.quot == 1) ? SV_MINUTE : SV_MINUTES ) ;
+								if ( hapticControl )
+								{
+									audioDefevent(AU_HAPTIC1);
+								}
+							}
+              if(g_eeGeneral.flashBeep) g_LightOffCounter = FLASH_DURATION;
             }
         }
         else if(ptimer->s_timerState==TMR_BEEPING)
@@ -8849,6 +8910,40 @@ void menuDebug(uint8_t event)
 //			pushMenu(menuAudioDebug) ;
 //		break ;
 //	}
+
+//#ifdef PCB9XT
+//  lcd_outhex4( 100, 0*FH, Analog_values[5] ) ;
+//  lcd_outhex4( 100, 1*FH, Analog_values[6] ) ;
+//  lcd_outhex4( 100, 2*FH, Analog_values[7] ) ;
+//#endif	// PCB9XT
+
+#ifdef PCBSKY
+  lcd_outhex4( 0, 1*FH, FrskyHubData[FR_VCC] ) ;
+  lcd_outhex4( 30, 1*FH, FrskyHubData[FR_V_AMP] ) ;
+  lcd_outhex4( 60, 1*FH, FrskyHubData[FR_ALT_BARO] ) ;
+  lcd_outhex4( 90, 1*FH, FrskyHubData[FR_BASEMODE] ) ;
+#endif	// PCBSKY
+
+
+#ifdef PCBSKY
+extern uint8_t ExternalRtc[] ;
+  lcd_outhex4( 0, 5*FH, (ExternalRtc[0] << 8 ) | ExternalRtc[1] ) ;
+  lcd_outhex4( 30, 5*FH, (ExternalRtc[2] << 8 ) | ExternalRtc[3] ) ;
+  lcd_outhex4( 60, 5*FH, (ExternalRtc[4] << 8 ) | ExternalRtc[5] ) ;
+  lcd_outhex4( 90, 5*FH, (ExternalRtc[6] << 8 ) | ExternalRtc[7] ) ;
+
+  lcd_outhex4( 0, 6*FH, TWI0->TWI_MMR >> 16 ) ;
+  lcd_outhex4( 30, 6*FH, TWI0->TWI_MMR ) ;
+  lcd_outhex4( 60, 6*FH, TWI0->TWI_CWGR ) ;
+  lcd_outhex4( 90, 6*FH, TWI0->TWI_SR ) ;
+
+  lcd_outhex4( 0, 7*FH, PIOA->PIO_ABCDSR[0] ) ;
+  lcd_outhex4( 30, 7*FH, PIOA->PIO_ABCDSR[1] ) ;
+  lcd_outhex4( 60, 7*FH, PIOA->PIO_PSR ) ;
+extern uint32_t ErtcDebug ;
+  lcd_outhex4( 90, 7*FH, ErtcDebug ) ;
+
+#endif	// PCBSKY
 
 //extern uint8_t CopyPacket[] ;
 //extern uint16_t PacketErrors ;
@@ -9429,7 +9524,11 @@ t_time EntryTime ;
 #ifdef REVX
 #define DATE_COUNT_ITEMS	8
 #else
+#if defined(PCBX9D) || defined(PCB9XT)
+#define DATE_COUNT_ITEMS	8
+#else
 #define DATE_COUNT_ITEMS	7
+#endif
 #endif
 
 void menuProcDate(uint8_t event)
@@ -9591,6 +9690,25 @@ extern uint8_t Co_proc_status[] ;
 							previous = -g_eeGeneral.rtcCal | 0x80 ;
 						}
 						setRtcCAL( previous ) ;						
+					}
+				break ;
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+				case 7 :
+					int8_t previous = g_eeGeneral.rtcCal ;
+			  	lcd_puts_P( 12*FW, 5*FH, PSTR(STR_CAL) );
+					lcd_outdezAtt( 20*FW, 5*FH, g_eeGeneral.rtcCal, attr ) ;
+			  	if(sub==subN) CHECK_INCDEC_H_GENVAR( g_eeGeneral.rtcCal, -31, 31 ) ;
+					if ( g_eeGeneral.rtcCal != previous )
+					{
+						previous = g_eeGeneral.rtcCal ;
+						uint32_t sign = 0 ;
+						if ( g_eeGeneral.rtcCal < 0 )
+						{
+							sign = 0x80 ;
+							previous = -g_eeGeneral.rtcCal ;
+						}
+						rtcSetCal( sign, previous ) ;						
 					}
 				break ;
 #endif
@@ -14754,9 +14872,9 @@ STR_Protocol
 			uint32_t t ;
 			div_t qr ;
       TITLE( XPSTR("Timer") ) ;
-			IlinesCount = 15 ;
+			IlinesCount = 17 ;
 			
-			if ( sub < 14 )
+			if ( sub < 16 )
 			{
 				lcd_puts_P( 20*FW-4, 7*FH, XPSTR("->") ) ;
 				lcd_putcAtt( 6*FW, 0, ( sub < 7 ) ? '1' : '2', BLINK ) ;
@@ -14764,7 +14882,7 @@ STR_Protocol
 			}
 			else
 			{
-				subN = 14 ;
+				subN = 16 ;
 //				y = FH ;
 //				uint8_t attr = sub==subN ? blink : 0 ;
 				lcd_puts_Pleft( y,XPSTR("Total Time"));
@@ -14976,6 +15094,12 @@ STR_Protocol
   			attr = 0 ;
   			if(sub==subN) { attr = InverseBlink ; }
 				g_model.mlightSw = edit_dr_switch( 17*FW, y, g_model.mlightSw, attr, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+				if ( g_model.mlightSw == 0 )
+				{
+					putsMomentDrSwitches( 14*FW, y, g_eeGeneral.lightSw, 0 ) ;
+    			lcd_putcAtt( 12*FW, y, '(', 0 ) ;
+    			lcd_putcAtt( 17*FW, y, ')', 0 ) ;
+				}
 				y += FH ;
 				subN += 1 ;
 

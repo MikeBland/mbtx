@@ -1303,6 +1303,14 @@ uint32_t switchPosition( uint32_t swtch )
 	{
 		return 0 ;
 	}
+	if ( ( swtch >= HSW_ThrCt ) && ( swtch <= HSW_ElevDR ) )
+	{
+		return 1 ;	// 2-pos switch
+	}
+	if ( ( swtch >= HSW_AileDR ) && ( swtch <= HSW_Trainer ) )
+	{
+		return 1 ;	// 2-pos switch
+	}
 	swtch += 1 ;
 	if ( hwKeyState( swtch ) )
 	{

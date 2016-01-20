@@ -679,6 +679,51 @@ void ModelEdit::updateToMV4()
   updateSettings() ;
 }
 	 
+void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
+{
+	b->clear() ;
+	switch ( type )
+	{
+		case M_Flysky :
+			b->addItem("Flysky");
+			b->addItem("V9x9");
+			b->addItem("V6x6");
+			b->addItem("V912");
+		break ;
+		case M_Hisky :
+			b->addItem("Hisky");
+			b->addItem("HK310");
+		break ;
+		case M_DSM2 :
+			b->addItem("DSM2");
+			b->addItem("DSMX");
+		break ;
+		case M_YD717 :
+			b->addItem("YD717");
+			b->addItem("SKYWLKR");
+			b->addItem("SYMAX2");
+      b->addItem("NIHUI");
+			b->addItem("NIHUI");
+		break ;
+		case M_SymaX :
+			b->addItem("SYMAX");
+			b->addItem("SYMAX5C");
+		break ;
+		case M_CX10 :
+			b->addItem("GREEN");
+			b->addItem("BLUE");
+			b->addItem("DM007");
+		break ;
+		case M_CG023 :
+			b->addItem("CG023");
+			b->addItem("YD829");
+		break ;
+		default :
+			b->addItem("NONE");
+		break ;
+	}
+}
+
 void ModelEdit::setProtocolBoxes()
 {
     protocolEditLock = true;
@@ -691,7 +736,9 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
-        ui->DSM_Type->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(true);
         ui->countryCB->setEnabled(true);
         ui->typeCB->setEnabled(true);
@@ -707,7 +754,9 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
-        ui->DSM_Type->setEnabled(true);
+        ui->DSM_Type->show() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(false);
 
         ui->DSM_Type->setCurrentIndex(g_model.sub_protocol);
@@ -719,11 +768,34 @@ void ModelEdit::setProtocolBoxes()
         ui->countryCB->setEnabled(false);
         ui->typeCB->setEnabled(false);
         break;
+			
+			case (PROTO_MULTI):
+        ui->ppmDelaySB->setEnabled(false);
+        ui->numChannelsSB->setEnabled(true);
+        ui->ppmFrameLengthDSB->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->show() ;
+        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
+        ui->SubSubProtocolCB->show() ;
+        {
+          int x = g_model.sub_protocol&0x1F ;
+          setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
+          ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
+        }
+        ui->pxxRxNum->setEnabled(false);
+        ui->typeCB->setEnabled(false);
+        ui->countryCB->setEnabled(false);
+//				ui->startChannelsSB->setEnabled(true);
+				ui->pulsePolCB->setEnabled(false);
+      break ;
+
     default:
         ui->ppmDelaySB->setEnabled(true);
         ui->numChannelsSB->setEnabled(true);
         ui->ppmFrameLengthDSB->setEnabled(true);
-        ui->DSM_Type->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(false);
 
         ui->ppmDelaySB->setValue(300+50*g_model.ppmDelay);
@@ -1232,12 +1304,12 @@ void ModelEdit::tabMixes()
 #endif
 				
 				{
-        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayUp/5).arg((double)md->delayDown/5) ;
+        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayDown/5).arg((double)md->delayUp/5) ;
 	        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg((double)md->speedUp/5).arg((double)md->speedDown/5) ;
 				}
 				else
         {
-        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayUp).arg(md->delayDown) ;
+        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayDown).arg(md->delayUp) ;
 	        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg(md->speedUp).arg(md->speedDown) ;
 				}
 
@@ -3875,6 +3947,16 @@ void ModelEdit::on_DSM_Type_currentIndexChanged(int index)
     g_model.sub_protocol = index;
     updateSettings();
 }
+
+void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.sub_protocol = index;
+    setProtocolBoxes();
+    updateSettings();
+}
+
 
 void ModelEdit::on_VoiceNumberSB_editingFinished()
 {

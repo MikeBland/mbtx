@@ -22,6 +22,8 @@
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #endif
 
+#define MULTI_PROTOCOL	1
+
 //eeprom data
 //#define EE_VERSION 2
 #ifdef SKY

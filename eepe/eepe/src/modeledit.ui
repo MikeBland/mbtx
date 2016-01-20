@@ -47,7 +47,7 @@
       <bool>true</bool>
      </property>
      <property name="currentIndex">
-      <number>5</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -649,6 +649,11 @@
              <string>PPMSIM</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>MULTI</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="0" column="2">
@@ -834,30 +839,111 @@
         </layout>
        </item>
        <item row="13" column="0">
-        <widget class="QLabel" name="label_116">
+        <widget class="QLabel" name="subProtoLabel">
          <property name="text">
-          <string>DSM Type</string>
+          <string>Sub Protocol</string>
          </property>
         </widget>
        </item>
        <item row="13" column="1">
-        <widget class="QComboBox" name="DSM_Type">
+        <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
-          <property name="text">
-           <string>LP4/LP5</string>
-          </property>
+          <widget class="QComboBox" name="DSM_Type">
+           <item>
+            <property name="text">
+             <string>LP4/LP5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2/DSMX</string>
+            </property>
+           </item>
+          </widget>
          </item>
          <item>
-          <property name="text">
-           <string>DSM2only</string>
-          </property>
+          <widget class="QComboBox" name="SubProtocolCB">
+           <item>
+            <property name="text">
+             <string>Flysky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hubsan</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Frsky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hisky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>V2x2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Devo</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>YD717</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>KN</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SymaX</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CX10</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CG023</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bayang</string>
+            </property>
+           </item>
+          </widget>
          </item>
          <item>
-          <property name="text">
-           <string>DSM2/DSMX</string>
-          </property>
+          <widget class="QComboBox" name="SubSubProtocolCB"/>
          </item>
-        </widget>
+        </layout>
        </item>
        <item row="14" column="0">
         <widget class="QLabel" name="label_117">
@@ -866,8 +952,24 @@
          </property>
         </widget>
        </item>
-       <item row="15" column="1">
-        <layout class="QHBoxLayout" name="horizontalLayout_5"/>
+       <item row="14" column="1">
+        <widget class="QSpinBox" name="pxxRxNum">
+         <property name="suffix">
+          <string/>
+         </property>
+         <property name="minimum">
+          <number>0</number>
+         </property>
+         <property name="maximum">
+          <number>124</number>
+         </property>
+         <property name="singleStep">
+          <number>1</number>
+         </property>
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
        </item>
        <item row="16" column="0">
         <widget class="QLabel" name="label_151">
@@ -1576,25 +1678,6 @@ p, li { white-space: pre-wrap; }
           </size>
          </property>
         </spacer>
-       </item>
-       <item row="14" column="1">
-        <widget class="QSpinBox" name="pxxRxNum">
-         <property name="suffix">
-          <string/>
-         </property>
-         <property name="minimum">
-          <number>0</number>
-         </property>
-         <property name="maximum">
-          <number>124</number>
-         </property>
-         <property name="singleStep">
-          <number>1</number>
-         </property>
-         <property name="value">
-          <number>1</number>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>

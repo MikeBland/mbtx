@@ -1358,16 +1358,19 @@ void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8
 			return ;
 		}
 	}
-  nextWidx = (ToneQueueWidx + 1) % AUDIO_QUEUE_LENGTH;
-  if (nextWidx != ToneQueueRidx)
+	if ( freq )
 	{
-		ptr_queue = &ToneQueue[ToneQueueWidx] ;
-		ptr_queue->toneFreq = freq ;
-		ptr_queue->toneFreqIncr = freqInc ;
-		ptr_queue->toneTimeLeft = time ;
-		ptr_queue->tonePause = pause ;
-		ptr_queue->toneRepeat = repeat ;
-		ToneQueueWidx = nextWidx ;
+  	nextWidx = (ToneQueueWidx + 1) % AUDIO_QUEUE_LENGTH;
+  	if (nextWidx != ToneQueueRidx)
+		{
+			ptr_queue = &ToneQueue[ToneQueueWidx] ;
+			ptr_queue->toneFreq = freq ;
+			ptr_queue->toneFreqIncr = freqInc ;
+			ptr_queue->toneTimeLeft = time ;
+			ptr_queue->tonePause = pause ;
+			ptr_queue->toneRepeat = repeat ;
+			ToneQueueWidx = nextWidx ;
+		}
 	}
 }
 

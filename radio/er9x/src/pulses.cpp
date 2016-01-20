@@ -911,6 +911,7 @@ normal:
 					CX10		12
 					CG023		13
 					Bayang		14
+					FrskyX		15
    BindBit=>		0x80	1=Bind/0=No
    AutoBindBit=>	0x40	1=Yes /0=No
    RangeCheck=>		0x20	1=Yes /0=No
@@ -944,6 +945,7 @@ normal:
 		sub_protocol==CG023
 			CG023		0
 			YD829		1
+			H8_3D		2
    Power value => 0x80	0=High/1=Low
   Stream[3]   = option_protocol;
    option_protocol value is -127..127

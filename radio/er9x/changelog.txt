@@ -10,6 +10,11 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 11-Jan-2016  MPB (r820)
+H8_3D MULTI supported
+
+
+******************************************
 CHANGELOG: 23-Nov-2015  MPB (r819)
 V-tail and Elevon templates
 RAM and flash savings

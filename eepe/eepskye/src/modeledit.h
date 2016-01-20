@@ -135,6 +135,7 @@ private:
     void resizeEvent(QResizeEvent *event  = 0);
 
     void setProtocolBoxes();
+		void setSubSubProtocol( QComboBox *b, int type ) ;
 
     void drawCurve();
     int currentCurve;
@@ -313,7 +314,9 @@ private slots:
     void on_DSM_Type_currentIndexChanged(int index);
     void on_xDSM_Type_currentIndexChanged(int index);
     void on_SubProtocolCB_currentIndexChanged(int index);
+		void on_SubSubProtocolCB_currentIndexChanged(int index) ;
     void on_xSubProtocolCB_currentIndexChanged(int index);
+		void on_xsubSubProtocolCB_currentIndexChanged(int index) ;
     void on_pxxRxNum_editingFinished();
 		void on_VoiceNumberSB_editingFinished() ;
 		void on_autoLimitsSB_editingFinished() ;
@@ -321,6 +324,12 @@ private slots:
 		void on_xcountryCB_currentIndexChanged(int index) ;
 		void on_typeCB_currentIndexChanged(int index) ;
 		void on_xtypeCB_currentIndexChanged(int index) ;
+		void on_multiOption_editingFinished() ;
+		void on_autobindCB_currentIndexChanged(int index) ;
+		void on_powerCB_currentIndexChanged(int index) ;
+		void on_xmultiOption_editingFinished() ;
+		void on_xautobindCB_currentIndexChanged(int index) ;
+		void on_xpowerCB_currentIndexChanged(int index) ;
 		void updateToMV2( void ) ;
 		void updateToMV3( void ) ;
 		void on_Com2BaudrateCB_currentIndexChanged(int index) ;

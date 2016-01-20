@@ -71,10 +71,20 @@ const uint8_t Fr_indices[] =
 	FR_FUEL,
 	FR_TEMP2,
 	FR_CELL_V,
-	HUBDATALENGTH-1,HUBDATALENGTH-1,
+	FR_VCC,           // 0x07  Extra data for Mavlink via FrSky
+	HUBDATALENGTH-1,
+//	HUBDATALENGTH-1,HUBDATALENGTH-1,
 	FR_GPS_ALTd,	// 9
-	HUBDATALENGTH-1,HUBDATALENGTH-1,
-	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+/* Extra data 1 for Mavlink via FrSky */
+	FR_HOME_DIR,      // 0x0A
+	FR_HOME_DIST,     // 0x0B
+	FR_CPU_LOAD,      // 0x0C
+	FR_GPS_HDOP,      // 0x0D
+	FR_WP_NUM,        // 0x0E
+	FR_WP_BEARING,    // 0x0F
+/* Extra data 1 for Mavlink via FrSky */
+//	HUBDATALENGTH-1,HUBDATALENGTH-1,
+//	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
 	FR_ALT_BARO | 0x80,
 	FR_GPS_SPEED | 0x80,
 	FR_GPS_LONG | 0x80,
@@ -88,7 +98,13 @@ const uint8_t Fr_indices[] =
 	FR_GPS_LONGd,
 	FR_GPS_LATd,
 	FR_COURSEd,		// 28
-	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+/* Extra data 2 for Mavlink via FrSky */
+	FR_BASEMODE,
+	FR_WP_DIST,
+	FR_HEALTH,
+	FR_MSG,
+/* Extra data 2 for Mavlink via FrSky */
+//	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
 	FR_ALT_BAROd,
 	FR_LONG_E_W,
 	FR_LAT_N_S,
@@ -415,6 +431,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 				g_model.numBlades = 1 ;
 			}
 			FrskyHubData[FR_RPM] = x / g_model.numBlades ;
+//			FrskyHubData[FR_RPM] = x / ( g_model.Mavlink == 0 ? g_model.numBladesb : g_model.numBlades * 30) ;
 		}
 		if ( index == FR_V_AMPd )
 		{

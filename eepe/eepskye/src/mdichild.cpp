@@ -1701,6 +1701,8 @@ void MdiChild::setModelFile(uint8_t id)
 
 void convertEr9xSwitch( int8_t *p )
 {
+	int x = *p ;
+	*p = x ;
 }
 
 
@@ -1778,6 +1780,7 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
   	dst->lateOffset = er9x::srcMix->lateOffset ;
   	dst->modeControl = er9x::srcMix->modeControl ;
 		dst->switchSource = er9x::srcMix->sw23pos ;
+		dst->differential = er9x::srcMix->differential ;
 	}
 	for ( i = 0 ; i < NUM_CHNOUT ; i += 1 )
 	{
@@ -1880,17 +1883,74 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 
 	for ( i = 0 ; i < 2 ; i += 1 )
 	{
-//		dest->timer[i] = er9x::EmodelData.timer[i] ;
+		int x ;
+		if ( i == 0 )
+		{
+			dest->timer[i].tmrModeA = er9x::EmodelData.tmrMode ;
+			dest->timer[i].tmrDir = er9x::EmodelData.tmrDir ;
+			x = er9x::EmodelData.tmrModeB ;
+			if ( x > 21 )
+			{
+				x += 13 ;
+			}
+			dest->timer[i].tmrModeB = x ;
+			dest->timer[i].tmrVal = er9x::EmodelData.tmrVal ;
+			dest->timer1RstSw  = er9x::EmodelData.timer1RstSw ;
+			convertEr9xSwitch( (int8_t *)&dest->timer1RstSw ) ;
+			dest->timer1Cdown  = er9x::EmodelData.timer1Cdown ;
+			dest->timer1Mbeep  = er9x::EmodelData.timer1Mbeep ;
+		}
+		else
+		{
+			dest->timer[i].tmrModeA = er9x::EmodelData.tmr2Mode ;
+			dest->timer[i].tmrDir = er9x::EmodelData.tmr2Dir ;
+			x = er9x::EmodelData.tmr2ModeB ;
+			if ( x > 21 )
+			{
+				x += 13 ;
+			}
+			dest->timer[i].tmrModeB = x ;
+			dest->timer[i].tmrVal = er9x::EmodelData.tmr2Val ;
+			dest->timer2RstSw  = er9x::EmodelData.timer2RstSw ;
+			convertEr9xSwitch( (int8_t *)&dest->timer2RstSw ) ;
+			dest->timer2Cdown  = er9x::EmodelData.timer2Cdown ;
+			dest->timer2Mbeep  = er9x::EmodelData.timer2Mbeep ;
+		}
+		
+		
   	if( dest->timer[i].tmrModeB>=(MAX_DRSWITCH))	 //momentary on-off
 		{
 			dest->timer[i].tmrModeB += (NUM_SKYCSW - NUM_CSW) ;
-		}
+    }
 	}
 
 	for ( i = 0 ; i < MAX_GVARS ; i += 1 )
 	{
 		dest->gvars[i] = (GvarData&)er9x::EmodelData.gvars[i] ;
 	}
+
+	// Voice alarms
+	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
+	{
+		int x ;
+		x = er9x::EmodelData.vad[i].source ;
+		if ( x > 35 )
+		{
+			x += 8 ; //extra channels 
+		}
+		dest->vad[i].source = x ;
+		dest->vad[i].func = er9x::EmodelData.vad[i].func ;
+		dest->vad[i].swtch = er9x::EmodelData.vad[i].swtch ;
+		convertEr9xSwitch( (int8_t *)&dest->vad[i].swtch ) ;
+		dest->vad[i].rate = er9x::EmodelData.vad[i].rate ;
+		dest->vad[i].fnameType = er9x::EmodelData.vad[i].fnameType ;
+		dest->vad[i].haptic = er9x::EmodelData.vad[i].haptic ;
+		dest->vad[i].vsource = er9x::EmodelData.vad[i].vsource ;
+		dest->vad[i].mute = er9x::EmodelData.vad[i].mute ;
+		dest->vad[i].offset = er9x::EmodelData.vad[i].offset ;
+		dest->vad[i].file.vfile = er9x::EmodelData.vad[i].vfile ;
+	}
+
 
 //	dest->frskyAlarms = er9x::EmodelData.frskyAlarms ;
 

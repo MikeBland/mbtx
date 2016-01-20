@@ -702,7 +702,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 Bayang"
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyX"
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -723,8 +723,9 @@ extern uint8_t Ee_lock ;
 #define M_CX10		       11
 #define M_CX10_STR "\005GREENBLUE DM007"
 #define M_CG023		       12
-#define M_CG023_STR "\005CG023YD829"
+#define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
+#define M_FRSKYX	       14
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "
@@ -1168,6 +1169,7 @@ extern uint8_t SdMounted ;
 void rtcSetTime( t_time *t ) ;
 void rtc_gettime( t_time *t ) ;
 void rtcInit( void ) ;
+void rtcSetCal( uint32_t RTC_CalibSign, uint32_t Value ) ;
 #endif
 
 extern void setVolume( uint8_t value ) ;

@@ -4244,7 +4244,7 @@ static void processVoiceAlarms()
 		{
 			if ( ltimer < 0 )
 			{
-				if ( pvad->rate >= 3 )	// A time or ONCE
+				if ( pvad->rate >= 4 )	// A time or ONCE
 				{
 					ltimer = 0 ;
 				}
@@ -5422,7 +5422,12 @@ void check_backlight()
 //#ifdef REV9E
 //		BACKLIGHT_ON ;
 //#else
-  if(getSwitch00(g_eeGeneral.lightSw) || getSwitch00(g_model.mlightSw ) || g_LightOffCounter)
+	int8_t sw = g_model.mlightSw ;
+	if ( !sw )
+	{
+		sw = g_eeGeneral.lightSw ;
+	}
+  if(getSwitch00(sw) || g_LightOffCounter)
 	{
 		BACKLIGHT_ON ;
 	}
@@ -6057,7 +6062,7 @@ int8_t getGvarSourceValue( uint8_t src )
 
 	if ( src >= EXTRA_POTS_START )
 	{
-		value = calibratedStick[src-EXTRA_POTS_START+8] / 8 ;
+		value = calibratedStick[src-EXTRA_POTS_START+7] / 8 ;
 	}
 	else if ( src <= 4 )
 	{
@@ -6889,12 +6894,12 @@ uint16_t anaIn(uint8_t chan)
 			LastAnaIn[chan] = temp ;
 		}
 	}
-#ifdef PCBX9D
-		if ( chan == 5 )
-		{
-			temp = 2048 - temp ;
-		}
-#endif
+//#ifdef PCBX9D
+//		if ( chan == 5 )
+//		{
+//			temp = 2048 - temp ;
+//		}
+//#endif
   return temp ;
 }
 #endif

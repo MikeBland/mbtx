@@ -3616,10 +3616,10 @@ void menuProcMixOne(uint8_t event)
             break;
 #endif
         case 12:
-						md2->delayDown = editSlowDelay( y, attr, md2->delayDown ) ;
+						md2->delayUp = editSlowDelay( y, attr, md2->delayUp ) ;	// Sense was wrong
             break;
         case 13:
-						md2->delayUp = editSlowDelay( y, attr, md2->delayUp ) ;
+						md2->delayDown = editSlowDelay( y, attr, md2->delayDown ) ;	// Sense was wrong
             break;
         case 14:
 						md2->speedDown = editSlowDelay( y, attr, md2->speedDown ) ;
@@ -9905,10 +9905,10 @@ void menuProcVoiceAlarm(uint8_t event)
 		else
 		{
 			VoiceSwData *pvd ;
-			pvd = &g_model.voiceSw[k-1-NUM_VOICE_ALARMS];
-			Columns = 1 ;
+			pvd = &g_model.voiceSw[k-NUM_VOICE_ALARMS] ;
+			Columns = 2 ;
 			uint8_t subSub = g_posHorz ;
- 	 		for(uint8_t j=0; j<2;j++)
+ 	 		for(uint8_t j=0; j<3;j++)
 			{
 	    	uint8_t attr = ((sub==k && subSub==j) ? InverseBlink : 0);
 				uint8_t active = attr ? 1 : 0 ;	// (attr && s_editing) ;
@@ -9924,9 +9924,17 @@ void menuProcVoiceAlarm(uint8_t event)
     			}
   			  putsDrSwitches(5*FW, y, pvd->swtch, attr);
 				}
-				else
+				else if (j == 1)
     		{
 					pvd->mode = checkIndexed( y, PSTR(FWx10"\004"STR_VOICE_V2OPT), pvd->mode, active ) ;
+				}
+				else
+				{
+    			if(active)
+					{
+						pvd->val = checkIncDec16(pvd->val, 0, 249, EE_MODEL);
+	        }
+					lcd_outdezAtt(  20*FW, y, pvd->val, attr) ;
 				}
 			}
 		}
@@ -11272,7 +11280,7 @@ Str_Protocol
 //#ifdef V2
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\016"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 //#endif
 				uint8_t ppmNch = g_model.ppmNCH ;
 				if(g_model.sub_protocol==attr)
@@ -11310,7 +11318,7 @@ Str_Protocol
 				}
 				else if ( x == M_CG023 )
 				{
-					s=PSTR(FWx10"\001"M_CG023_STR);
+					s=PSTR(FWx10"\002"M_CG023_STR);
 				}
 				else
 				{

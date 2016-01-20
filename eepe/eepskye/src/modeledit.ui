@@ -1693,7 +1693,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="minimum">
-            <number>1</number>
+            <number>0</number>
            </property>
            <property name="maximum">
             <number>125</number>
@@ -1916,7 +1916,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item row="6" column="0">
-        <widget class="QLabel" name="label_208">
+        <widget class="QLabel" name="labelSubProto">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -1924,6 +1924,111 @@ p, li { white-space: pre-wrap; }
           <string>Sub-Protocol</string>
          </property>
         </widget>
+       </item>
+       <item row="6" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QComboBox" name="DSM_Type">
+           <item>
+            <property name="text">
+             <string>LP4/LP5</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2only</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2/DSMX</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Dsm-9XR</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="SubProtocolCB">
+           <item>
+            <property name="text">
+             <string>Flysky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hubsan</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Frsky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Hisky</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>V2x2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>DSM2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Devo</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>YD717</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>KN</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SymaX</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>SLT</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CX10</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>CG023</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Bayang</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="SubSubProtocolCB"/>
+         </item>
+        </layout>
        </item>
        <item row="8" column="0">
         <widget class="QLabel" name="labelProtoExt">
@@ -2046,7 +2151,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="minimum">
-            <number>1</number>
+            <number>0</number>
            </property>
            <property name="maximum">
             <number>125</number>
@@ -2245,7 +2350,7 @@ p, li { white-space: pre-wrap; }
         </layout>
        </item>
        <item row="10" column="0">
-        <widget class="QLabel" name="label_257">
+        <widget class="QLabel" name="labelSubProtox">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
@@ -2253,201 +2358,6 @@ p, li { white-space: pre-wrap; }
           <string>Sub-Protocol</string>
          </property>
         </widget>
-       </item>
-       <item row="12" column="0">
-        <widget class="QLabel" name="label_PPM2">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It can be used to connect a second RF Module&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>PPM2</string>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="1">
-        <layout class="QGridLayout" name="gridLayout_29">
-         <item row="1" column="0">
-          <widget class="QLabel" name="label_PPM2Start">
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Where two receivers are used for extra channels, PPM 1 is set to match the capability of the first receiver, while PPM 2 is set for the second receiver. If first receiver is an 8-channel unit, then the second receiver will normally start at channel 9. The options are: ‘Follow’ or a specific channel from 1 through 17.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Start Channel</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="1">
-          <widget class="QSpinBox" name="startChannels2SB">
-           <property name="suffix">
-            <string/>
-           </property>
-           <property name="prefix">
-            <string>ch</string>
-           </property>
-           <property name="minimum">
-            <number>0</number>
-           </property>
-           <property name="maximum">
-            <number>17</number>
-           </property>
-           <property name="singleStep">
-            <number>1</number>
-           </property>
-           <property name="value">
-            <number>0</number>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="2">
-          <widget class="QLabel" name="label_PPM2Channels">
-           <property name="maximumSize">
-            <size>
-             <width>100</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The options are 4 through to 16 channels in 2-channel increments. This depends on the numberof channels your second receiver or flight controller can handle and how many channels youneed to send.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Channels</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="3">
-          <widget class="QSpinBox" name="numChannels2SB">
-           <property name="suffix">
-            <string>ch</string>
-           </property>
-           <property name="prefix">
-            <string/>
-           </property>
-           <property name="minimum">
-            <number>4</number>
-           </property>
-           <property name="maximum">
-            <number>16</number>
-           </property>
-           <property name="singleStep">
-            <number>2</number>
-           </property>
-           <property name="value">
-            <number>8</number>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="6" column="1">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
-         <item>
-          <widget class="QComboBox" name="DSM_Type">
-           <item>
-            <property name="text">
-             <string>LP4/LP5</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>DSM2only</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>DSM2/DSMX</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Dsm-9XR</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="SubProtocolCB">
-           <item>
-            <property name="text">
-             <string>Flysky</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Hubsan</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Frsky</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Hisky</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>V2x2</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>DSM2</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Devo</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>YD717</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>KN</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>SymaX</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>SLT</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>CX10</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>CG023</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Bayang</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-        </layout>
        </item>
        <item row="10" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_7">
@@ -2549,7 +2459,349 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
+         <item>
+          <widget class="QComboBox" name="xsubSubProtocolCB"/>
+         </item>
         </layout>
+       </item>
+       <item row="12" column="0">
+        <widget class="QLabel" name="label_PPM2">
+         <property name="toolTip">
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;It can be used to connect a second RF Module&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="text">
+          <string>PPM2</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="1">
+        <layout class="QGridLayout" name="gridLayout_29">
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_PPM2Start">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Where two receivers are used for extra channels, PPM 1 is set to match the capability of the first receiver, while PPM 2 is set for the second receiver. If first receiver is an 8-channel unit, then the second receiver will normally start at channel 9. The options are: ‘Follow’ or a specific channel from 1 through 17.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Start Channel</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="startChannels2SB">
+           <property name="suffix">
+            <string/>
+           </property>
+           <property name="prefix">
+            <string>ch</string>
+           </property>
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>17</number>
+           </property>
+           <property name="singleStep">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <number>0</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_PPM2Channels">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The options are 4 through to 16 channels in 2-channel increments. This depends on the numberof channels your second receiver or flight controller can handle and how many channels youneed to send.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Channels</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QSpinBox" name="numChannels2SB">
+           <property name="suffix">
+            <string>ch</string>
+           </property>
+           <property name="prefix">
+            <string/>
+           </property>
+           <property name="minimum">
+            <number>4</number>
+           </property>
+           <property name="maximum">
+            <number>16</number>
+           </property>
+           <property name="singleStep">
+            <number>2</number>
+           </property>
+           <property name="value">
+            <number>8</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="7" column="1">
+        <widget class="QWidget" name="multiWidget" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+         <widget class="QLabel" name="label_265">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Option</string>
+          </property>
+         </widget>
+         <widget class="QSpinBox" name="multiOption">
+          <property name="geometry">
+           <rect>
+            <x>80</x>
+            <y>0</y>
+            <width>66</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="suffix">
+           <string/>
+          </property>
+          <property name="minimum">
+           <number>-127</number>
+          </property>
+          <property name="maximum">
+           <number>127</number>
+          </property>
+          <property name="singleStep">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_266">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Power</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_267">
+          <property name="geometry">
+           <rect>
+            <x>570</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Autobind</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="powerCB">
+          <property name="geometry">
+           <rect>
+            <x>330</x>
+            <y>0</y>
+            <width>87</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>High</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Low</string>
+           </property>
+          </item>
+         </widget>
+         <widget class="QComboBox" name="autobindCB">
+          <property name="geometry">
+           <rect>
+            <x>650</x>
+            <y>0</y>
+            <width>87</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>No</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Yes</string>
+           </property>
+          </item>
+         </widget>
+        </widget>
+       </item>
+       <item row="13" column="1">
+        <widget class="QWidget" name="xmultiWidget" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+         <widget class="QLabel" name="label_268">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Option</string>
+          </property>
+         </widget>
+         <widget class="QSpinBox" name="xmultiOption">
+          <property name="geometry">
+           <rect>
+            <x>80</x>
+            <y>0</y>
+            <width>66</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <property name="suffix">
+           <string/>
+          </property>
+          <property name="minimum">
+           <number>-127</number>
+          </property>
+          <property name="maximum">
+           <number>127</number>
+          </property>
+          <property name="singleStep">
+           <number>1</number>
+          </property>
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_269">
+          <property name="geometry">
+           <rect>
+            <x>280</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Power</string>
+          </property>
+         </widget>
+         <widget class="QLabel" name="label_270">
+          <property name="geometry">
+           <rect>
+            <x>570</x>
+            <y>0</y>
+            <width>61</width>
+            <height>22</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some protocols have sub-Protocols. For example, the &amp;quot;DSM&amp;quot; Protocol has a few, depending on the type of RF module used. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;LP4/LP5&lt;/span&gt; short range module from an RTF ultra micro model or helicopter; &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2only &lt;/span&gt;for a DSM2 module from a DSM2 transmitter such as the HP6DSM or early DX5e or DX6i;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; font-style:italic;&quot;&gt;DSM2/DSMX&lt;/span&gt; for a DSMX module from a DX4e, DX5e or DX6i.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Autobind</string>
+          </property>
+         </widget>
+         <widget class="QComboBox" name="xpowerCB">
+          <property name="geometry">
+           <rect>
+            <x>330</x>
+            <y>0</y>
+            <width>87</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>High</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Low</string>
+           </property>
+          </item>
+         </widget>
+         <widget class="QComboBox" name="xautobindCB">
+          <property name="geometry">
+           <rect>
+            <x>650</x>
+            <y>0</y>
+            <width>87</width>
+            <height>20</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>No</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Yes</string>
+           </property>
+          </item>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>

@@ -4571,7 +4571,7 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 		}
 		else// No switch, no function
 		{ // Check for source with numeric rate
-			if ( pvad->rate >= 3 )	// A time
+			if ( pvad->rate >= 4 )	// A time
 			{
 				if ( pvad->vsource )
 				{
@@ -4752,7 +4752,6 @@ NOINLINE void processVoiceAlarms()
 	}
 }
 
-
 void mainSequence()
 {
 	CalcScaleNest = 0 ;
@@ -4866,16 +4865,16 @@ void mainSequence()
 			uint8_t mode ;
 			uint8_t value ;
     	VoiceSwData *pvd = &g_model.voiceSw[i];
-			
+
 			mode = pvd->mode ;
 			value = pvd->val ;
-			if ( mode <= 5 )
-			{
-				if ( value > 250 )
-				{
-					value = g_model.gvars[value-248].gvar ; //Gvars 3-7
-				}
-			}
+//			if ( mode <= 5 )
+//			{
+//				if ( value > 250 )
+//				{
+//					value = g_model.gvars[value-248].gvar ; //Gvars 3-7
+//				}
+//			}
 
 			if ( pvd->swtch )		// Configured
 			{
@@ -4907,9 +4906,9 @@ void mainSequence()
 			 			uint8_t pos = switchPosition( pvd->swtch ) ;
 						if ( Vs_state[i] != pos )
 						{
-							curent_state = pos ;
 							putVoiceQueue( value + pos ) ;
 						}
+						curent_state = pos ;
 					}
 				}
 				else

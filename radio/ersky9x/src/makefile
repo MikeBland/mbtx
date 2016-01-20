@@ -26,6 +26,9 @@ BIN  = $(CP) -O ihex
 BINX = $(CP) -O binary 
 
 # Object files directory
+ifeq ($(PCB), X12D)
+  OBJDIR = x12dpobj
+else
 ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   OBJDIR = x9dpobj
@@ -51,6 +54,7 @@ else
   endif
  endif
 endif
+endif
 
 MCU  = cortex-m3
 
@@ -75,6 +79,7 @@ EXT = STD
 #ifeq ($(STAMP), 1)
 AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
+PROV=$(shell sh -c "cat prov.txt")
 #REV = $(shell echo $$(( $(AREV) )))
 #endif
 
@@ -88,6 +93,9 @@ REV = $(shell echo $$(( $(AREV) + 1 )))
 
 # 
 # Define project name and Ram/Flash mode here
+ifeq ($(PCB), X12D)
+  PROJECT        = x12d
+else
 ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   PROJECT        = x9dp
@@ -113,6 +121,7 @@ else
   endif
  endif
 endif
+endif
 
 RUN_FROM_FLASH = 1
 
@@ -131,9 +140,16 @@ ifeq ($(RUN_FROM_FLASH), 0)
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
    else
+    ifeq ($(PCB), X12D)
+     LDSCRIPT = X12D/stm32f4_flash.ld
+     CPPDEFS += -DHSE_VALUE=12000000
+	  CPPDEFS += -DPCBX12D 
+     UDEFS = -DSTM32F429_439xx
+	 else
      LDSCRIPT = sam3s4c_ram.ld
 	  CPPDEFS += -DPCBSKY 
      UDEFS = -Dat91sam3s4
+	 endif
 	endif
  endif
  FULL_PRJ = $(PROJECT)_ram
@@ -158,6 +174,12 @@ else
 	  CPPDEFS += -DPCBX9D 
      CPPDEFS += -DUSB_JOYSTICK
    else
+    ifeq ($(PCB), X12D)
+     LDSCRIPT = X12D/stm32f4_flash.ld
+     CPPDEFS += -DHSE_VALUE=12000000
+	  CPPDEFS += -DPCBX12D 
+     UDEFS = -DSTM32F429_439xx
+	 else
     CPPDEFS += -DPCBSKY 
     ifeq ($(PCB), DUE)
       LDSCRIPT = due/sam3x8_flash.ld
@@ -172,6 +194,7 @@ else
       LDSCRIPT = sam3s4c_flash.ld
       UDEFS = -Dat91sam3s4
      endif
+    endif
     endif
 	endif
   endif
@@ -200,6 +223,27 @@ endif
 # Define ASM defines here
 UADEFS = 
 
+
+ifeq ($(PCB), X12D)
+# List C source files here
+SRC  = X12D/system_stm32f4xx.c \
+		 X12D/sdram_driver.c \
+		 X12D/pwr_driver.c \
+		 X12D/stm32f4xx_fmc.c \
+       X12D/stm32f4xx_rcc.c \
+		 X12D/stm32f4xx_dma2d.c \
+		 X12D/stm32f4xx_ltdc.c \
+		 X12D/stm32f4xx_tim.c \
+       X12D/stm32f4xx_gpio.c
+
+CPPSRC = X12D/e.cpp \
+         X12D/lcd_driver.cpp \
+         X12D/led_driver.cpp
+
+# List ASM source files here
+ASRC = X12D/startup_stm32f40_41xxx.s
+
+else
 ifeq ($(PCB), X9D)
 
 # List C source files here
@@ -460,6 +504,7 @@ endif
 
 endif
 
+endif
 
 # List all user directories here
 UINCDIR = ./inc
@@ -611,10 +656,10 @@ stamp:
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
 	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
  ifeq ($(PCB), X9D)
-	@echo "#define SVN_VERS \"erx9d-r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
  else	
-	@echo "#define SVN_VERS \"ersky9x-r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
  endif
 #	@cat stamp-ersky9x.h
@@ -660,6 +705,7 @@ clean:
 	-rm -f x9dobj/*.*
 	-rm -f x9eobj/*.*
 	-rm -f x9dpobj/*.*
+	-rm -f x12dobj/*.*
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
 	-rm -f skyDobj/*.*

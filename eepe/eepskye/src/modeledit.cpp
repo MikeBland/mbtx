@@ -699,6 +699,51 @@ void ModelEdit::updateToMV3()
 	ui->updateButton3->setVisible( false ) ;
 }
 
+void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
+{
+	b->clear() ;
+	switch ( type )
+	{
+		case M_Flysky :
+			b->addItem("Flysky");
+			b->addItem("V9x9");
+			b->addItem("V6x6");
+			b->addItem("V912");
+		break ;
+		case M_Hisky :
+			b->addItem("Hisky");
+			b->addItem("HK310");
+		break ;
+		case M_DSM2 :
+			b->addItem("DSM2");
+			b->addItem("DSMX");
+		break ;
+		case M_YD717 :
+			b->addItem("YD717");
+			b->addItem("SKYWLKR");
+			b->addItem("SYMAX2");
+      b->addItem("NIHUI");
+		break ;
+		case M_SymaX :
+			b->addItem("SYMAX");
+			b->addItem("SYMAX5C");
+		break ;
+		case M_CX10 :
+			b->addItem("GREEN");
+			b->addItem("BLUE");
+			b->addItem("DM007");
+		break ;
+		case M_CG023 :
+			b->addItem("CG023");
+			b->addItem("YD829");
+		break ;
+		default :
+			b->addItem("NONE");
+		break ;
+	}
+}
+
+
 void ModelEdit::setProtocolBoxes()
 {
     protocolEditLock = true;
@@ -774,7 +819,10 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
+        ui->labelSubProto->hide() ;
         ui->pxxRxNum->setEnabled(true);
+        ui->pxxRxNum->setMaximum(125);
         ui->countryCB->setEnabled(true);
         ui->typeCB->setEnabled(true);
 				ui->startChannelsSB->setEnabled(true);
@@ -786,6 +834,8 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmDelaySB->setValue(300);
         ui->numChannelsSB->setValue(8);
         ui->ppmFrameLengthDSB->setValue(22.5);
+        ui->multiWidget->hide() ;
+
         break;
     case (PROTO_DSM2):
         ui->ppmDelaySB->setEnabled(false);
@@ -794,6 +844,8 @@ void ModelEdit::setProtocolBoxes()
         ui->DSM_Type->setEnabled(true);
         ui->DSM_Type->show() ;
         ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
+        ui->labelSubProto->show() ;
         ui->pxxRxNum->setEnabled(true);
 				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
@@ -806,6 +858,7 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setValue(22.5);
         ui->countryCB->setEnabled(false);
         ui->typeCB->setEnabled(false);
+        ui->multiWidget->hide() ;
         break;
 	    
 			case (PROTO_MULTI):
@@ -815,11 +868,23 @@ void ModelEdit::setProtocolBoxes()
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->show() ;
         ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
-        ui->pxxRxNum->setEnabled(false);
+        ui->SubSubProtocolCB->show() ;
+        ui->labelSubProto->show() ;
+        {
+          int x = g_model.sub_protocol&0x1F ;
+          setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
+          ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
+        }
+        ui->pxxRxNum->setEnabled(true);
+        ui->pxxRxNum->setMaximum(15);
         ui->typeCB->setEnabled(false);
         ui->countryCB->setEnabled(false);
 				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
+        ui->multiWidget->show() ;
+        ui->multiOption->setValue(g_model.option_protocol) ;
+				ui->autobindCB->setCurrentIndex( (g_model.sub_protocol>>6)&0x01 ) ;
+				ui->powerCB->setCurrentIndex( (g_model.ppmNCH>>7)&0x01 ) ;
       break ;
 
 	    case (PROTO_ASSAN):
@@ -828,11 +893,14 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
+        ui->labelSubProto->hide() ;
         ui->pxxRxNum->setEnabled(false);
         ui->typeCB->setEnabled(false);
         ui->countryCB->setEnabled(true);
 				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
+        ui->multiWidget->hide() ;
       break;
 	    
 	    case (PROTO_OFF):
@@ -841,12 +909,15 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->hide() ;
-        ui->SubProtocolCB->setEnabled(false);
+        ui->SubSubProtocolCB->hide() ;
+        ui->labelSubProto->hide() ;
+//        ui->SubProtocolCB->setEnabled(false);
         ui->pxxRxNum->setEnabled(false);
         ui->typeCB->setEnabled(false);
         ui->countryCB->setEnabled(false);
 				ui->startChannelsSB->setEnabled(false);
 				ui->pulsePolCB->setEnabled(false);
+        ui->multiWidget->hide() ;
       break;
     default:	// PPM
         ui->ppmDelaySB->setEnabled(true);
@@ -854,6 +925,8 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(true);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
+        ui->labelSubProto->hide() ;
         ui->pxxRxNum->setEnabled(false);
 
         ui->ppmDelaySB->setValue(300+50*g_model.ppmDelay);
@@ -870,6 +943,7 @@ void ModelEdit::setProtocolBoxes()
         ui->typeCB->setEnabled(false);
 				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(true);
+        ui->multiWidget->hide() ;
         break;
     }
 
@@ -881,7 +955,10 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(false);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->hide() ;
+        ui->xsubSubProtocolCB->hide() ;
+        ui->labelSubProtox->hide() ;
         ui->xPxxRxNum->setEnabled(true);
+        ui->xPxxRxNum->setMaximum(125);
         ui->xcountryCB->setEnabled(true);
         ui->xtypeCB->setEnabled(true);
 				ui->xstartChannelsSB->setEnabled(true);
@@ -893,6 +970,7 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmDelaySB->setValue(300);
         ui->xnumChannelsSB->setValue(8);
         ui->xppmFrameLengthDSB->setValue(22.5);
+        ui->xmultiWidget->hide() ;
         break;
 	    case (PROTO_DSM2):
         ui->xppmDelaySB->setEnabled(false);
@@ -901,6 +979,8 @@ void ModelEdit::setProtocolBoxes()
         ui->xDSM_Type->setEnabled(true);
         ui->xDSM_Type->show() ;
         ui->xSubProtocolCB->hide() ;
+        ui->xsubSubProtocolCB->hide() ;
+        ui->labelSubProtox->show() ;
         ui->xPxxRxNum->setEnabled(true);
 				ui->xstartChannelsSB->setEnabled(true);
 				ui->xpulsePolCB->setEnabled(false);
@@ -913,6 +993,7 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setValue(22.5);
         ui->xcountryCB->setEnabled(false);
         ui->xtypeCB->setEnabled(false);
+        ui->xmultiWidget->hide() ;
         break;
 	    case (PROTO_MULTI):
         ui->xppmDelaySB->setEnabled(false);
@@ -920,12 +1001,24 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(false);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->show() ;
+        ui->labelSubProtox->show() ;
         ui->xSubProtocolCB->setCurrentIndex(g_model.xsub_protocol )	;
-        ui->xPxxRxNum->setEnabled(false);
+        ui->xsubSubProtocolCB->show() ;
+        {
+          int x = g_model.xsub_protocol&0x1F ;
+          setSubSubProtocol( ui->xsubSubProtocolCB, x ) ;
+          ui->xsubSubProtocolCB->setCurrentIndex((g_model.xppmNCH & 0x70)>>4)	;
+        }
+				ui->xPxxRxNum->setEnabled(true);
+        ui->xPxxRxNum->setMaximum(15);
         ui->xtypeCB->setEnabled(false);
         ui->xcountryCB->setEnabled(false);
 				ui->xstartChannelsSB->setEnabled(true);
 				ui->xpulsePolCB->setEnabled(false);
+        ui->xmultiWidget->show() ;
+        ui->xmultiOption->setValue(g_model.xoption_protocol) ;
+				ui->xautobindCB->setCurrentIndex( (g_model.xsub_protocol>>6)&0x01 ) ;
+				ui->xpowerCB->setCurrentIndex( (g_model.xppmNCH>>7)&0x01 ) ;
       break ;
 
 	    case (PROTO_ASSAN):
@@ -934,11 +1027,14 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(false);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->hide() ;
+        ui->xsubSubProtocolCB->hide() ;
+        ui->labelSubProtox->hide() ;
         ui->xPxxRxNum->setEnabled(false);
         ui->xtypeCB->setEnabled(false);
         ui->xcountryCB->setEnabled(true);
 				ui->xstartChannelsSB->setEnabled(true);
 				ui->xpulsePolCB->setEnabled(false);
+        ui->xmultiWidget->hide() ;
       break;
 	    
 			case (PROTO_OFF):
@@ -947,11 +1043,14 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(false);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->hide() ;
+        ui->xsubSubProtocolCB->hide() ;
+        ui->labelSubProtox->hide() ;
         ui->xPxxRxNum->setEnabled(false);
         ui->xtypeCB->setEnabled(false);
         ui->xcountryCB->setEnabled(false);
 				ui->xstartChannelsSB->setEnabled(false);
 				ui->xpulsePolCB->setEnabled(false);
+        ui->xmultiWidget->hide() ;
       break;
 
     default:
@@ -960,6 +1059,8 @@ void ModelEdit::setProtocolBoxes()
         ui->xppmFrameLengthDSB->setEnabled(true);
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->hide() ;
+        ui->xsubSubProtocolCB->hide() ;
+        ui->labelSubProtox->hide() ;
         ui->xPxxRxNum->setEnabled(false);
 
         ui->xppmDelaySB->setValue(300+50*g_model.xppmDelay);
@@ -971,6 +1072,7 @@ void ModelEdit::setProtocolBoxes()
         ui->xtypeCB->setEnabled(false);
 				ui->xstartChannelsSB->setEnabled(true);
 				ui->xpulsePolCB->setEnabled(true);
+        ui->xmultiWidget->hide() ;
         break;
     }
 		
@@ -1561,7 +1663,7 @@ void ModelEdit::tabMixes()
 					}
         }
 
-        if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayUp/10).arg((double)md->delayDown/10) ;
+        if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayDown/10).arg((double)md->delayUp/10) ;
         if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg((double)md->speedUp/10).arg((double)md->speedDown/10) ;
 
         if(md->mixWarn)  str += tr(" Warn(%1)").arg(md->mixWarn);
@@ -4513,6 +4615,16 @@ void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
     if(protocolEditLock) return;
 
     g_model.sub_protocol = index;
+    setProtocolBoxes();
+    updateSettings();
+}
+
+void ModelEdit::on_SubSubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.ppmNCH = ( (index << 4) & 0x70) + (g_model.ppmNCH & 0x8F);
+    setProtocolBoxes();
     updateSettings();
 }
 
@@ -4521,6 +4633,16 @@ void ModelEdit::on_xSubProtocolCB_currentIndexChanged(int index)
     if(protocolEditLock) return;
 
     g_model.xsub_protocol = index;
+    setProtocolBoxes();
+    updateSettings();
+}
+
+void ModelEdit::on_xsubSubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.xppmNCH = ( (index << 4) & 0x70) + (g_model.xppmNCH & 0x8F);
+    setProtocolBoxes();
     updateSettings();
 }
 
@@ -6662,4 +6784,39 @@ void ModelEdit::on_BtDefaultAddrSB_editingFinished()
   updateSettings();
 }
 
+void ModelEdit::on_multiOption_editingFinished()
+{
+	g_model.option_protocol = ui->multiOption->value() ;
+  updateSettings();
+}
+
+void ModelEdit::on_autobindCB_currentIndexChanged(int index)
+{
+	g_model.sub_protocol = (index<<6) + (g_model.sub_protocol&0xBF);
+  updateSettings();
+}
+
+void ModelEdit::on_powerCB_currentIndexChanged(int index)
+{
+	g_model.ppmNCH = (index<<7) + (g_model.ppmNCH&0x7F);
+  updateSettings();
+}
+
+void ModelEdit::on_xmultiOption_editingFinished()
+{
+	g_model.xoption_protocol = ui->xmultiOption->value() ;
+  updateSettings();
+}
+
+void ModelEdit::on_xautobindCB_currentIndexChanged(int index)
+{
+	g_model.xsub_protocol = (index<<6) + (g_model.xsub_protocol&0xBF);
+  updateSettings();
+}
+
+void ModelEdit::on_xpowerCB_currentIndexChanged(int index)
+{
+	g_model.xppmNCH = (index<<7) + (g_model.xppmNCH&0x7F);
+  updateSettings();
+}
 
