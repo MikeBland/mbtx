@@ -912,6 +912,7 @@ normal:
 					CG023		13
 					Bayang		14
 					FrskyX		15
+					ESky		16
    BindBit=>		0x80	1=Bind/0=No
    AutoBindBit=>	0x40	1=Yes /0=No
    RangeCheck=>		0x20	1=Yes /0=No
@@ -932,9 +933,12 @@ normal:
 		sub_protocol==YD717
 			YD717	0
 			SKYWLKR	1
-			SYMAX2	2
+			SYMAX4	2
 			XINXUN	3
 			NIHUI	4
+		sub_protocol==KN
+			WLTOYS	0
+			FEILUN	1
 		sub_protocol==SYMAX
 			SYMAX	0
 			SYMAX5C	1
@@ -942,6 +946,10 @@ normal:
 			CX10_GREEN	0
 			CX10_BLUE	1	// also compatible with CX10-A, CX12
 			DM007		2
+			Q282		3
+			JC3015_1	4
+			JC3015_2	5
+			MK33041		6
 		sub_protocol==CG023
 			CG023		0
 			YD829		1
