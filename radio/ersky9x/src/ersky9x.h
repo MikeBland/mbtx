@@ -702,7 +702,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 Bayang"
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -713,18 +713,21 @@ extern uint8_t Ee_lock ;
 #define M_V2x2             4
 #define M_DSM2             5
 #define M_DSM2_STR "\004DSM2DSMX"
-#define M_Devo	  	       6
+#define M_Devo  	       6
 #define M_YD717	           7
-#define M_YD717_STR "\007YD717  SKYWLKRSYMAX2 XINXUN NIHUI  "
-#define M_KN	  	         8
+#define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
+#define M_KN	           8
+#define M_KN_STR "\006WLTOYSFEILUN"
 #define M_SymaX	           9
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
-#define M_SLT		  		     10
+#define M_SLT		       10
 #define M_CX10		       11
-#define M_CX10_STR "\005GREENBLUE DM007"
+#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041"
 #define M_CG023		       12
-#define M_CG023_STR "\005CG023YD829"
+#define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
+#define M_FRSKYX	       14
+#define M_ESKY		       15
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "
