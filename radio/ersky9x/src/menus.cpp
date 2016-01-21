@@ -6863,34 +6863,51 @@ uint8_t blink = InverseBlink ;
 		{
 			lcd_puts_Pleft( y, PSTR(STR_MULTI_TYPE));
 			uint8_t attr = g_model.xsub_protocol ;
-			g_model.xsub_protocol = checkIndexed( y, FWx10"\014"MULTI_STR, g_model.xsub_protocol&0x1F, (sub==subN) ) + (g_model.xsub_protocol&0xE0);
-			if(g_model.xsub_protocol!=attr) g_model.xppmNCH &= 0x0F;
-			uint8_t nchHi = g_model.xppmNCH >> 4 ;
-			y += FH ;
-			subN++;
-			switch(g_model.xsub_protocol&0x1F)
+			g_model.xsub_protocol = checkIndexed( y, FWx10"\017"MULTI_STR, g_model.xsub_protocol&0x1F, (sub==subN) ) + (g_model.xsub_protocol&0xE0);
+			if(g_model.xsub_protocol==attr)
+				attr=(g_model.xppmNCH >> 4) &0x07 ;
+			else
+				attr=0;
+
+			char *s ;
+			uint8_t x = g_model.xsub_protocol&0x1F ;
+			if ( x == M_Flysky)
 			{
-				case M_Flysky:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
-					break;
-				case M_DSM2:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
-					break;
-				case M_YD717:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\004"M_YD717_STR), nchHi, (sub==subN) ) ;
-					break;
-				case M_SymaX:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\001"M_SYMAX_STR), nchHi, (sub==subN) ) ;
-					break;
-					case M_CX10:
-					nchHi = checkIndexed( y, XPSTR(FWx10"\002"M_CX10_STR), nchHi, (sub==subN) ) ;
-					break;
-				default:
-					nchHi = 0 ;
-					nchHi = checkIndexed( y, XPSTR(FWx10"\000"M_NONE_STR),  nchHi, (sub==subN) );
-					break;
+				s=XPSTR(FWx10"\003"M_FLYSKY_STR);
 			}
-			g_model.xppmNCH = (nchHi << 4) ;
+			else if ( x == M_Hisky )
+			{
+				s=XPSTR(FWx10"\001"M_HISKY_STR);
+			}
+			else if ( x == M_DSM2 )
+			{
+				s=XPSTR(FWx10"\001"M_DSM2_STR);
+			}
+			else if ( x == M_YD717 )
+			{
+				s=XPSTR(FWx10"\004"M_YD717_STR);
+			}
+			else if ( x == M_KN )
+			{
+				s=XPSTR(FWx10"\001"M_KN_STR);
+			}
+			else if ( x == M_SymaX )
+			{
+				s=XPSTR(FWx10"\001"M_SYMAX_STR);
+			}
+			else if ( x == M_CX10 )
+			{
+				s=XPSTR(FWx10"\006"M_CX10_STR);
+			}
+			else if ( x == M_CG023 )
+			{
+				s=XPSTR(FWx10"\002"M_CG023_STR);
+			}
+			else
+			{
+				s=XPSTR(FWx10"\000"M_NONE_STR);
+			}
+			g_model.xppmNCH = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (g_model.xppmNCH & 0x8F);
 			y += FH ;
 			subN++;
 
