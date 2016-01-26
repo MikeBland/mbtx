@@ -1493,7 +1493,26 @@ void lcd_init()
 
 void backlight_on()
 {
-	BlSetAllColours( 100-g_eeGeneral.bright, 100-g_eeGeneral.bright_white, 100-g_eeGeneral.bright_blue ) ;
+	uint32_t r ;
+	uint32_t g ;
+	uint32_t b ;
+	
+	r = g_eeGeneral.bright ;
+	if ( r < 101 )
+	{
+		r = 100 - r ;
+	}
+	g = g_eeGeneral.bright_white ;
+	if ( g < 101 )
+	{
+		g = 100 - g ;
+	}
+	b = g_eeGeneral.bright_blue ;
+	if ( b < 101 )
+	{
+		b = 100 - b ;
+	}
+	BlSetAllColours( r, g, b ) ;
 //	BlSetColour( 100-g_eeGeneral.bright, 0 ) ;				// Red
 //	BlSetColour( 100-g_eeGeneral.bright_white, 1 ) ;	// Green
 //	BlSetColour( 100-g_eeGeneral.bright_blue, 2 ) ;		// blue

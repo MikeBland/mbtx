@@ -830,7 +830,30 @@ void dispGvar( uint8_t x, uint8_t y, uint8_t gvar, uint8_t attr )
 int8_t gvarMenuItem(uint8_t x, uint8_t y, int8_t value, int8_t min, int8_t max, uint8_t attr, uint8_t event )
 {
   bool invers = attr&(INVERS|BLINK);
-  
+
+  if ( attr & GVAR_100 )
+	{
+		attr &= ~GVAR_100 ;
+		if (value >= 101)
+		{
+			dispGvar( x-3*FW, y, (uint8_t)value - 100, attr ) ;
+	    if (invers) value = checkIncDec16( (uint8_t)value, 101, 107, EE_MODEL);
+		}
+		else
+		{
+  	  lcd_outdezAtt(x, y, value, attr ) ;
+    	if (invers) CHECK_INCDEC_H_MODELVAR( value, min, max);
+		}
+		if (invers)
+		{
+			if ( Tevent == EVT_TOGGLE_GVAR )
+			{
+  	  	value = ((value >= 101) ? g_model.gvars[(uint8_t)value-101].gvar : 101);
+		    eeDirty(EE_MODEL) ;
+			}
+		}
+		return value ;
+	}
 	if (value >= 126 || value <= -126)
 	{
 		dispGvar( x-3*FW, y, (uint8_t)value - 125, attr ) ;
@@ -6056,16 +6079,12 @@ void menuProcProtocol(uint8_t event)
 	}
 	if (g_model.xprotocol == PROTO_DSM2)
 	{
-		if (g_model.xsub_protocol == 3)
-		{
 #ifdef ENABLE_DSM_MATCH  		
-			dataItems += 2 ;
-#else
+		if (g_model.xsub_protocol >= 3)
+		{
 			dataItems += 1 ;
-#endif
-			need_bind_range |= 2 ;
 		}
-		else
+#endif
 		{
 			need_bind_range |= 8 ;
 		}
@@ -6429,7 +6448,7 @@ uint8_t blink = InverseBlink ;
 			}
 			else if ( x == M_CX10 )
 			{
-				s=XPSTR(FWx10"\006"M_CX10_STR);
+				s=XPSTR(FWx10"\007"M_CX10_STR);
 			}
 			else if ( x == M_CG023 )
 			{
@@ -6752,12 +6771,12 @@ uint8_t blink = InverseBlink ;
   			lcd_putsAtt( Lcd_lastPos, y, PSTR( STR_PPMCHANNELS ), attr ) ;
 				lcd_outdezAtt(  x+7*FW-1, y,  (g_model.xppmDelay*50)+300, (sub==subN && subSub==2 ? blink:0));
   	  }
-  	  else if ( ( protocol == PROTO_PXX) || ( protocol == PROTO_DSM2) || (protocol == PROTO_MULTI) )
+  	  else if ( ( protocol == PROTO_PXX) || ( ( protocol == PROTO_DSM2) && (g_model.xsub_protocol != DSM_9XR) ) || (protocol == PROTO_MULTI) )
   	  {
 			    lcd_puts_Pleft( y, PSTR(STR_13_RXNUM) );
   	      lcd_outdezAtt(  21*FW, y,  g_model.xPxxRxNum, (sub==subN && subSub==1 ? blink:0));
   	  }
-  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (protocol == PROTO_ASSAN) )
+  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (protocol == PROTO_ASSAN) )
   	  {
 		    lcd_puts_Pleft( y, XPSTR("\013Chans") );
  	      lcd_outdezAtt(  21*FW, y,  g_model.xppmNCH, (sub==subN && subSub==1 ? blink:0));
@@ -6869,6 +6888,8 @@ uint8_t blink = InverseBlink ;
 			else
 				attr=0;
 
+			y += FH ;
+			subN++;
 			char *s ;
 			uint8_t x = g_model.xsub_protocol&0x1F ;
 			if ( x == M_Flysky)
@@ -6913,7 +6934,9 @@ uint8_t blink = InverseBlink ;
 
 			uint8_t value = (g_model.xsub_protocol>>6)&0x01 ;
 			lcd_putsAttIdx(  9*FW, y, XPSTR(M_NY_STR), value, (sub==subN && subSub==0 ? blink:0) );
-			lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+  		lcd_outdezAtt( 21*FW, y, g_model.xoption_protocol, (sub==subN && subSub==1 ? blink:0) ) ;
+			lcd_puts_Pleft( y, PSTR(STR_MULTI_OPTION) ) ;
+//			lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
 			if(sub==subN)
 			{
 				Columns = 1;
@@ -6923,7 +6946,7 @@ uint8_t blink = InverseBlink ;
 					g_model.xsub_protocol = (value<<6) + (g_model.xsub_protocol&0xBF);
 				}
 				if(subSub==1 && s_editing)
-					CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
+					CHECK_INCDEC_H_MODELVAR(g_model.xoption_protocol, -127, 127);
 			}
 			y += FH ;
 			subN++;
@@ -13598,7 +13621,26 @@ STR_DiagAna
 #ifdef PCB9XT
 		  lcd_puts_P(11*FW, y, XPSTR( "RED"));
 			uint8_t oldBrightness = g_eeGeneral.bright ;
-#endif
+			int8_t b ;
+			b = g_eeGeneral.bright ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			attr = 0 ;
+      if(sub==subN)
+			{
+				attr = INVERS ;
+			}
+			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			g_eeGeneral.bright = b ;
+
+#else
+			 
 			lcd_outdezAtt( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright, (sub==subN) ? blink : 0 ) ;
       if(sub==subN)
 			{
@@ -13606,6 +13648,7 @@ STR_DiagAna
 				b = 100 - g_eeGeneral.bright ;
 				CHECK_INCDEC_H_GENVAR_0( b, 100 ) ;
 				g_eeGeneral.bright = 100 - b ;
+#endif
 #ifdef PCBSKY
 				PWM->PWM_CH_NUM[0].PWM_CDTYUPD = g_eeGeneral.bright ;
 #endif
@@ -13619,10 +13662,17 @@ STR_DiagAna
 #ifdef PCB9XT
 				if ( oldBrightness != g_eeGeneral.bright )
 				{
-					BlSetColour( 100-g_eeGeneral.bright, 0 ) ;
+					uint8_t b ;
+					b = g_eeGeneral.bright ;
+					if ( b < 101 )
+					{
+						b = 100 - b ;
+					}
+					BlSetColour( b, 0 ) ;
 				}
-#endif
+#else
 			}
+#endif
 			y += FH ;
 			subN += 1 ;
 
@@ -13633,46 +13683,83 @@ STR_DiagAna
 #ifdef PCB9XT
    		lcd_puts_P(11*FW, y, XPSTR( "GREEN"));
 			oldBrightness = g_eeGeneral.bright_white ;
+//			int8_t b ;
+			b = g_eeGeneral.bright_white ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			attr = 0 ;
+      if(sub==subN)
+			{
+				attr = INVERS ;
+			}
+			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			g_eeGeneral.bright_white = b ;
 #else
    		lcd_puts_P(11*FW, y, XPSTR( "WHITE"));
-#endif
-#ifdef PCB9XT
+//#endif
+//#ifdef PCB9XT
+//			lcd_outdezAtt( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
+//#else
 			lcd_outdezAtt( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
-#else
-			lcd_outdezAtt( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
-#endif
       if(sub==subN)
 			{
 				uint8_t b ;
 				b = 100 - g_eeGeneral.bright_white ;
 				CHECK_INCDEC_H_GENVAR_0( b, 100 ) ;
 				g_eeGeneral.bright_white = 100 - b ;
+#endif
 #ifdef PCB9XT
 				if ( oldBrightness != g_eeGeneral.bright_white )
 				{
-					BlSetColour( 100-g_eeGeneral.bright_white, 1 ) ;
+					uint8_t b ;
+					b = g_eeGeneral.bright_white ;
+					if ( b < 101 )
+					{
+						b = 100 - b ;
+					}
+					BlSetColour( b, 1 ) ;
 				}
 #else
 				backlight_set( g_eeGeneral.bright_white, 1 ) ;
-#endif
 			}
+#endif
 			y += FH ;
 			subN++;
 #endif
 #ifdef PCB9XT
    		lcd_puts_P( 11*FW, y, XPSTR( "BLUE"));
 			oldBrightness = g_eeGeneral.bright_blue ;
-			lcd_outdezAtt( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_blue, (sub==subN) ? blink : 0 ) ;
+			b = g_eeGeneral.bright_blue ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			attr = 0 ;
       if(sub==subN)
 			{
+				attr = INVERS ;
+			}
+			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			if ( b < 101 )
+			{
+				b = 100 - b ;
+			}
+			g_eeGeneral.bright_blue = b ;
+			if ( oldBrightness != g_eeGeneral.bright_blue )
+			{
 				uint8_t b ;
-				b = 100 - g_eeGeneral.bright_blue ;
-				CHECK_INCDEC_H_GENVAR_0( b, 100 ) ;
-				g_eeGeneral.bright_blue = 100 - b ;
-				if ( oldBrightness != g_eeGeneral.bright_blue )
+				b = g_eeGeneral.bright_blue ;
+				if ( b < 101 )
 				{
-					BlSetColour( 100-g_eeGeneral.bright_blue, 2 ) ;
+					b = 100 - b ;
 				}
+				BlSetColour( b, 2 ) ;
 			}
 			y += FH ;
 			subN++;
@@ -14959,7 +15046,7 @@ STR_Protocol
 			if ( sub < 16 )
 			{
 				lcd_puts_P( 20*FW-4, 7*FH, XPSTR("->") ) ;
-				lcd_putcAtt( 6*FW, 0, ( sub < 7 ) ? '1' : '2', BLINK ) ;
+				lcd_putcAtt( 6*FW, 0, ( sub < 8 ) ? '1' : '2', BLINK ) ;
 				editTimer( sub, event ) ;
 			}
 			else

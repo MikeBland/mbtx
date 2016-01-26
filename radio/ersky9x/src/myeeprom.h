@@ -570,6 +570,21 @@ PACK(typedef struct t_customCheck
 	int8_t  max ;
 }) CustomCheckData ;
 
+PACK(typedef struct t_protocol
+{
+  uint8_t   protocol:4 ;
+  uint8_t   country:2 ;
+  uint8_t   not_sub_protocol:1 ;
+  uint8_t   pulsePol:1 ;
+  int8_t    ppmNCH ;
+  int8_t    ppmDelay ;
+  int8_t    ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
+	uint8_t		startChannel ;			// for main output 0 = ch1
+	uint8_t		pxxRxNum ;
+	int8_t		option_protocol ;
+  uint8_t		sub_protocol ;
+}) ProtocolData ;
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -698,12 +713,12 @@ PACK(typedef struct te_ModelData {
 	uint8_t ymodelswitchWarningDisables ;
 	char modelImageName[VOICE_NAME_SIZE+2] ;
 	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;
-	uint8_t option_protocol ;
+	int8_t option_protocol ;
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
-	uint8_t xoption_protocol ;
+	int8_t xoption_protocol ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

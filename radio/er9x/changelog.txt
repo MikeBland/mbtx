@@ -10,9 +10,16 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 22-Jan-2016  MPB (r821)
+Further MULTI changes
+Re-label Delay up and down
+Add Q242 sub-protocol on MULTI
+V2 Voice alarm update
+
+
+******************************************
 CHANGELOG: 11-Jan-2016  MPB (r820)
 H8_3D MULTI supported
-
 
 ******************************************
 CHANGELOG: 23-Nov-2015  MPB (r819)

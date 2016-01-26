@@ -54,6 +54,8 @@
 /* time & telemetry flags */
 #define NO_UNIT       0x80
 
+// GVAR flags
+#define GVAR_100			0x80
 
 
 extern uint8_t LcdLock ;

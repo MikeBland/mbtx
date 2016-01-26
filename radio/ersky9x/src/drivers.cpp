@@ -3836,6 +3836,20 @@ void backlightSet( uint32_t value )
 
 void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
 {
+	if ( rlevel > 100 )
+	{ // A GVAR
+		int32_t x ;
+		x = g_model.gvars[(uint8_t)rlevel-101].gvar ;
+		if ( x < 0 )
+		{
+			x = 0 ;
+		}
+		if ( x > 100 )
+		{
+			x = 100 ;
+		}
+		rlevel = x ;		
+	}
 	rlevel *= 255 ;
 	rlevel /= 100 ;
 	if ( rlevel > 255 )
@@ -3843,6 +3857,21 @@ void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
 		rlevel = 255 ;
 	}
 	BlColours[BL_RED] = rlevel ;
+
+	if ( glevel > 100 )
+	{ // A GVAR
+		int32_t x ;
+		x = g_model.gvars[(uint8_t)glevel-101].gvar ;
+		if ( x < 0 )
+		{
+			x = 0 ;
+		}
+		if ( x > 100 )
+		{
+			x = 100 ;
+		}
+		glevel = x ;		
+	}
 	glevel *= 255 ;
 	glevel /= 100 ;
 	if ( glevel > 255 )
@@ -3860,6 +3889,20 @@ void BlSetColour( uint32_t level, uint32_t colour )
 	if ( colour > 3 )
 	{
 		return ;
+	}
+	if ( level > 100 )
+	{ // A GVAR
+		int32_t x ;
+		x = g_model.gvars[(uint8_t)level-101].gvar ;
+		if ( x < 0 )
+		{
+			x = 0 ;
+		}
+		if ( x > 100 )
+		{
+			x = 100 ;
+		}
+		level = x ;		
 	}
 	level *= 255 ;
 	level /= 100 ;

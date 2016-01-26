@@ -123,7 +123,10 @@ Section "eePe" SecDummy
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\eePskye.lnk" "$INSTDIR\eePskye.exe"
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\er9x Users Manual.lnk" "$INSTDIR\ER9x_Manual_2015-v01.pdf"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
-  
+
+	CreateShortCut "$DESKTOP\eePe.lnk" "$INSTDIR\eePe.exe" ""  
+	CreateShortCut "$DESKTOP\eePskye.lnk" "$INSTDIR\eePskye.exe" ""  
+
   !insertmacro MUI_STARTMENU_WRITE_END
 
 SectionEnd

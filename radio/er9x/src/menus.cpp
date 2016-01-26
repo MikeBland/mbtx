@@ -11318,7 +11318,7 @@ Str_Protocol
 				}
 				else if ( x == M_CX10 )
 				{
-					s=PSTR(FWx10"\006"M_CX10_STR);
+					s=PSTR(FWx10"\007"M_CX10_STR);
 				}
 				else if ( x == M_CG023 )
 				{

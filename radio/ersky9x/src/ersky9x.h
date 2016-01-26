@@ -722,7 +722,7 @@ extern uint8_t Ee_lock ;
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		  		     10
 #define M_CX10		       11
-#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041"
+#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
 #define M_CG023		       12
 #define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13

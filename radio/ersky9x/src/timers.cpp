@@ -1457,9 +1457,15 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
 //	channels -= 8 ;
 //	channels /= 2 ;
+#if defined(PCBX9D) || defined(PCB9XT)
+		if ( ( g_model.xppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+		{
+			g_model.xppmNCH = channels ;
+#else
 		if ( ( g_model.ppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
 		{
 			g_model.ppmNCH = channels ;
+#endif
 			g_model.dsmMode = dsm_mode_response | 0x80 ;
 
 	  	STORE_MODELVARS ;

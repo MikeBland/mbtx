@@ -10,6 +10,25 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 22-Jan-2016  MPB (r219)
+H8_3D MULTI supported
+Correct direction of P2 on Taranis
+Add P4 and P4 as sources for GVARS
+Add Encoder switch to DIAG_SWITCH display
+Re-label delay up/down to match slow up/down directions
+Fix missing haptic output when using model specific countdown beeps
+Add SD Card present data on SD STAT display
+Force Ar9x option off on 'PRO
+Add one second watchdog disable at start up
+Improve SD card disable in bootloader
+Further MULTI improvements
+Fix bugs in DSM-9XR support for 9Xtreme
+GVARs for RGB backlight on 9Xtreme
+Start to MAVLINK support
+Add Q242 sub-protocol on MULTI
+Attempt RTC calibration on Taranis
+
+******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)
 Taranis & 9Xtreme add trainer polarity
 SWR on early Taranis Plus fixes
