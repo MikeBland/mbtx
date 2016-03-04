@@ -890,13 +890,13 @@ normal:
 
 // MULTI protocol definition
 /*
-  Serial: 100000 Baud 8e2      _ xxxx xxxx p --
+Serial: 100000 Baud 8e2      _ xxxx xxxx p --
   Total of 26 bytes
   Stream[0]   = 0x55
    header
   Stream[1]   = sub_protocol|BindBit|RangeCheckBit|AutoBindBit;
    sub_protocol is 0..31 (bits 0..4)
-				=>	Reserved	0
+   =>	Reserved	0
 					Flysky		1
 					Hubsan		2
 					Frsky		3
@@ -913,6 +913,8 @@ normal:
 					Bayang		14
 					FrskyX		15
 					ESky		16
+					MT99XX		17
+					MJXQ		18
    BindBit=>		0x80	1=Bind/0=No
    AutoBindBit=>	0x40	1=Yes /0=No
    RangeCheck=>		0x20	1=Yes /0=No
@@ -950,10 +952,20 @@ normal:
 			JC3015_1	4
 			JC3015_2	5
 			MK33041		6
+			Q242		7
 		sub_protocol==CG023
 			CG023		0
 			YD829		1
 			H8_3D		2
+		sub_protocol==MT99XX
+			MT99		0
+			H7			1
+			YZ			2
+		sub_protocol==MJXQ
+			WLH08		0
+			X600		1
+			X800		2
+			H26D		3
    Power value => 0x80	0=High/1=Low
   Stream[3]   = option_protocol;
    option_protocol value is -127..127

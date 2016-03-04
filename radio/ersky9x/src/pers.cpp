@@ -178,9 +178,10 @@ void modelDefault(uint8_t id)
 		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
 		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
 	}
-#ifdef PCB9XT
+//#ifdef PCB9XT
 	g_model.protocol = PROTO_OFF ;
-#endif
+	g_model.xprotocol = PROTO_OFF ;
+//#endif
 }
 
 bool eeDuplicateModel(uint8_t id)

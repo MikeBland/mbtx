@@ -179,7 +179,9 @@ t_time Time ;
 
 uint8_t unexpectedShutdown = 0;
 uint8_t SdMounted = 0;
+#ifdef PCBX9D
 uint8_t CurrentTrainerSource ;
+#endif
 uint8_t HardwareMenuEnabled = 0 ;
 
 #define SW_STACK_SIZE	6
@@ -620,6 +622,7 @@ void setLanguage()
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
 		break ;
+#ifndef SMALL
 		case 3 :
 			Language = Norwegian ;
 			ExtraFont = font_se_extra ;
@@ -645,6 +648,12 @@ void setLanguage()
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
 		break ;
+		case 8 :
+			Language = Spanish ;
+			ExtraFont = NULL ;
+			ExtraBigFont = NULL ;
+		break ;
+#endif		
 		default :
 			Language = English ;
 			ExtraFont = NULL ;
@@ -827,10 +836,45 @@ void update_mode(void* pdata)
 	  lastTMR = t10ms ;
 
 		maintenanceBackground() ;
-
+#ifdef REV9E
+extern void checkRotaryEncoder() ;
+		checkRotaryEncoder() ;
+#endif
 		if(!tick10ms) continue ; //make sure the rest happen only every 10ms.
 
 	  uint8_t evt=getEvent();
+#ifdef REV9E
+		{
+			int32_t x ;
+			if ( g_eeGeneral.rotaryDivisor == 1)
+			{
+				x = Rotary_count >> 2 ;
+			}
+			else if ( g_eeGeneral.rotaryDivisor == 2)
+			{
+				x = Rotary_count >> 1 ;
+			}
+			else
+			{
+				x = Rotary_count ;
+			}
+			Rotary_diff = x - LastRotaryValue ;
+			LastRotaryValue = x ;
+		}
+		if ( evt == 0 )
+		{
+	extern int32_t Rotary_diff ;
+			if ( Rotary_diff > 0 )
+			{
+				evt = EVT_KEY_FIRST(KEY_DOWN) ;
+			}
+			else if ( Rotary_diff < 0 )
+			{
+				evt = EVT_KEY_FIRST(KEY_UP) ;
+			}
+			Rotary_diff = 0 ;
+		}
+#endif
 
 //	check_backlight() ;
 
@@ -914,7 +958,6 @@ void checkTrainerSource()
 	}
 }
 #endif
-
 
 void com2Configure()
 {
@@ -1024,6 +1067,7 @@ int main( void )
 	
 #ifdef PCBSKY
 	register Pio *pioptr ;
+	module_output_low() ;
 #endif
 
 #ifdef PCBSKY
@@ -1167,6 +1211,39 @@ int main( void )
 #endif
 
 	lcd_init() ;
+
+#ifdef REV9E
+// Check for real power on
+	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
+	{
+		lcd_clear() ;
+		lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+		refreshDisplay() ;
+		while ( get_tmr10ms() < 150 )
+		{
+			uint32_t switchValue ;
+			switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+			wdt_reset() ;
+			if ( !switchValue )
+			{
+				// Don't power on
+				soft_power_off() ;		// Only turn power off if necessary
+				for(;;)
+				{
+					wdt_reset() ;
+ 					PWR->CR |= PWR_CR_CWUF;
+ 					/* Select STANDBY mode */
+ 					PWR->CR |= PWR_CR_PDDS;
+ 					/* Set SLEEPDEEP bit of Cortex System Control Register */
+ 					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+ 					/* Request Wait For Event */
+ 					__WFE();
+				}
+			}
+		}
+	}
+#endif
+
 #ifdef PCBSKY
 	lcdSetOrientation() ;
 #endif
@@ -3618,7 +3695,11 @@ uint32_t countExtraPots()
 void main_loop(void* pdata)
 {
 #ifdef PCBX9D
+ #ifdef REV9E
+	NumExtraPots = NUM_EXTRA_POTS - 2 ;
+ #else
 	NumExtraPots = NUM_EXTRA_POTS ;
+ #endif
 #else
 	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
 #endif
@@ -3678,6 +3759,7 @@ void main_loop(void* pdata)
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
 	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
+	init_ppm2( 3000, 0 ) ;
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
 
@@ -3726,6 +3808,10 @@ void main_loop(void* pdata)
 #endif
 
 	Activated = 1 ;
+
+#ifdef REV9E
+	static uint8_t powerIsOn = 1 ;
+#endif
   
 	while (1)
 	{
@@ -3733,15 +3819,66 @@ void main_loop(void* pdata)
 #if defined(REVB) || defined(PCBX9D) || defined(PCB9XT)
 		
 #ifdef REV9E
-		uint32_t powerState = check_soft_power() ;
-		if ( ( powerState == POWER_X9E_STOP ) || ( powerState == POWER_OFF ) )		// power now off
+		uint8_t stopMenus = MENUS ;
+ 		static uint16_t tgtime = 0 ;
+		if ( GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET )
+		{
+			if ( powerIsOn == 1 )
+			{
+				powerIsOn = 2 ;
+	  		tgtime = get_tmr10ms() ;
+			}
+			else
+			{
+				if ( powerIsOn == 2 )
+				{
+					stopMenus = NO_MENU ;
+					if ( ( get_tmr10ms() & 3 ) == 0 )
+					{
+						lcd_clear() ;
+						lcd_putsAtt( 3*FW, 3*FH, "STOPPING", DBLSIZE ) ;
+						refreshDisplay() ;
+					}
+					if ( (uint16_t)(get_tmr10ms() - tgtime ) > 150 )
+					{
+						powerIsOn = 3 ;
+					}
+				}
+			}
+		}	
+		else
+		{
+			powerIsOn = 1 ;
+		}
+		if ( powerIsOn == 3 )
 #else
 // #ifdef PCB9XT
 //		PowerStatus = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) ;
 //		PowerStatus = check_soft_power() ;
 //    if ( 0 )
 // #else
+#ifdef REVX
+ 		static uint16_t tgtime = 0 ;
+		uint32_t powerState ;
+		powerState = check_soft_power() ;
+		if ( ( powerState == POWER_ON ) || ( powerState == POWER_TRAINER ) )
+		{
+	  	tgtime = get_tmr10ms() ;	// Re-trigger timer
+		}
+		else
+		{
+			if ( powerState == POWER_OFF )
+			{
+				if ( (uint16_t)(get_tmr10ms() - tgtime ) < 40 )
+				{ // Allow time for trainer power to establish if necessary
+					powerState = POWER_ON ;
+				}
+			}
+		}
+		if ( powerState == POWER_OFF )
+#else
 		if ( ( check_soft_power() == POWER_OFF ) )		// power now off
+#endif
 // #endif
 #endif
 		{
@@ -3749,10 +3886,10 @@ void main_loop(void* pdata)
 			lcd_clear() ;
 			lcd_putsn_P( 4*FW, 3*FH, "SHUTTING DOWN", 13 ) ;
 
-#ifdef REV9E
-extern uint8_t PowerState ;
-	lcd_outhex4( 20, 0, PowerState ) ;
-#endif
+//#ifdef REV9E
+//extern uint8_t PowerState ;
+//	lcd_outhex4( 20, 0, PowerState ) ;
+//#endif
 
 #ifdef PCBSKY
 			// Stop pulses out at this point, hold pin low
@@ -3811,6 +3948,26 @@ extern uint8_t PowerState ;
 				{
 					lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
 					tgtime = get_tmr10ms() ;
+
+#ifdef PCB9XT
+extern uint16_t General_timer ;
+extern uint16_t Model_timer ;
+extern uint8_t	Eeprom32_process_state ;
+extern uint8_t Ee32_general_write_pending ;
+extern uint8_t Ee32_model_write_pending ;
+extern uint8_t Ee32_model_delete_pending ;
+
+	lcd_outdez( 3*FW, 7*FH, General_timer ) ;
+	lcd_outdez( 7*FW, 7*FH, Model_timer ) ;
+	lcd_outdez( 10*FW, 7*FH, Eeprom32_process_state ) ;
+	lcd_outdez( 13*FW, 7*FH, Ee32_general_write_pending ) ;
+	lcd_outdez( 16*FW, 7*FH, Ee32_model_write_pending ) ;
+	lcd_outdez( 19*FW, 7*FH, Ee32_model_delete_pending ) ;
+
+
+#endif
+
+
 				}
 				else
 				{
@@ -3831,7 +3988,12 @@ extern uint8_t PowerState ;
 
 #ifndef REV9E				 
 #ifdef PCBSKY
+#ifdef REVX
+			powerState = check_soft_power() ;
+			if ( ( powerState == POWER_ON ) || ( powerState == POWER_TRAINER ) )
+#else
 			if ( check_soft_power() == POWER_ON )
+#endif
 			{
 				module_output_active() ;
 				startPulses() ;		// using the required protocol
@@ -3912,7 +4074,11 @@ extern uint8_t PowerState ;
 #ifdef SERIAL_HOST
 		mainSequence( NO_MENU ) ;
 #else
+ #ifdef REV9E
+		mainSequence( stopMenus ) ;
+ #else
 		mainSequence( MENUS ) ;
+ #endif
 #endif
 #ifndef SIMU
 		CoTickDelay(1) ;					// 2mS for now
@@ -4443,7 +4609,6 @@ void mainSequence( uint32_t no_menu )
 	}
 
 
-
 	if ( Tenms )
 	{
 		
@@ -4489,6 +4654,33 @@ extern void btCountersToTotals() ;
 			}
 			MixerRate = MixerCount ;
 			MixerCount = 0 ;
+#ifdef REV9E
+void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
+void setTopRssi( uint32_t rssi ) ;
+void setTopVoltage( uint32_t volts ) ;
+void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
+
+static uint8_t RssiTestCount ;
+			setTopRssi( FrskyHubData[FR_RXRSI_COPY] ) ;
+			setTopVoltage( g_vbat100mV ) ;
+			setTopOpTime( Time.hour, Time.minute, Time.second ) ;
+			if ( ++RssiTestCount > 149 )
+			{
+				RssiTestCount = 0 ;
+			}
+			uint32_t bstate = g_vbat100mV ;
+			if ( bstate < 92 )
+			{
+				bstate = 0 ;
+			}
+			else
+			{
+				bstate -= 92 ;
+				bstate /= 2 ;
+			}
+			updateTopLCD( s_timer[0].s_timerVal, bstate ) ;
+#endif
+		
 		}
 #ifndef SIMU
 		sdPoll10mS() ;
@@ -4529,6 +4721,7 @@ extern void readExtRtc() ;
 #endif
 			}
 		}
+
 
 	 	if ( g_eeGeneral.ar9xBoard )
 		{
@@ -4590,6 +4783,7 @@ extern uint32_t i2c2_result() ;
 	rtc_gettime( &Time ) ;
 #endif
 	}
+	
 	processAdjusters() ;
 
 	t0 = getTmr2MHz() - t0;
@@ -4765,23 +4959,9 @@ extern uint32_t i2c2_result() ;
 				}
 			}
 		}
-#ifdef REV9E
-void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
-void setTopRssi( uint32_t rssi ) ;
-void setTopVoltage( uint32_t volts ) ;
-void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
-
-static uint8_t RssiTestCount ;
-		setTopRssi( RssiTestCount ) ;
-		setTopVoltage( RssiTestCount ) ;
-		setTopOpTime( RssiTestCount%100, RssiTestCount%100, RssiTestCount%100 ) ;
-		if ( ++RssiTestCount > 149 )
-		{
-			RssiTestCount = 0 ;
-		}
-		updateTopLCD( Time.hour*60+Time.minute, RssiTestCount%6 ) ;
-#endif
   }
+	
+	
 	// New switch voices
 	// New entries, Switch, (on/off/both), voice file index
 
@@ -6570,14 +6750,15 @@ void perMain( uint32_t no_menu )
 	}
 
 #ifdef PCBSKY
-	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
-	{
-		PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
-	}
-	else
-	{
-		PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
-	}
+	checkTrainerSource() ;
+//	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+//	{
+//		PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
+//	}
+//	else
+//	{
+//		PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
+//	}
 #endif
 
 #ifdef PCB9XT
@@ -7674,16 +7855,19 @@ void create6posTable()
 {
 	uint32_t i ;
 
-
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
-		uint32_t j = i ;
+		uint32_t j ;
+		j = (g_eeGeneral.SixPositionCalibration[i+1] + g_eeGeneral.SixPositionCalibration[i]) / 2 ;
 		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
 		{
-			j = 4 - i ;
+#ifdef PCBSKY
+			j = 4095 - j ;
+#else
+			j = 2047 - j ;		// 9XT is 11 bit
+#endif
 		}
-		SixPositionTable[j] = 
-		(g_eeGeneral.SixPositionCalibration[i+1] + g_eeGeneral.SixPositionCalibration[i]) / 2 ;
+		SixPositionTable[i] = j ;
 	}
 }
 
@@ -7717,9 +7901,9 @@ void createSwitchMapping()
 	*p++ = HSW_SC2 ;
 	
 #ifdef REV9E
-	*p++ = HSW_SF0 ;
-	*p++ = HSW_SF1 ;
-	*p++ = HSW_SF2 ;
+	*p++ = HSW_SD0 ;
+	*p++ = HSW_SD1 ;
+	*p++ = HSW_SD2 ;
 #else
 	*p++ = HSW_SD0 ;
 	*p++ = HSW_SD1 ;
@@ -7732,7 +7916,7 @@ void createSwitchMapping()
 
 //	*p++ = HSW_SF0 ;
 #ifdef REV9E
-	*p++ = HSW_SD2 ;
+	*p++ = HSW_SF2 ;
 #else
 	*p++ = HSW_SF2 ;
 #endif
@@ -7744,38 +7928,38 @@ void createSwitchMapping()
 //	*p++ = HSW_SH0 ;
 	*p++ = HSW_SH2 ;
 
-#ifdef REV9E
-	*p++ = HSW_SI0 ;
-	*p++ = HSW_SI1 ;
-	*p++ = HSW_SI2 ;
-	*p++ = HSW_SJ0 ;
-	*p++ = HSW_SJ1 ;
-	*p++ = HSW_SJ2 ;
-	*p++ = HSW_SK0 ;
-	*p++ = HSW_SK1 ;
-	*p++ = HSW_SK2 ;
-	*p++ = HSW_SL0 ;
-	*p++ = HSW_SL1 ;
-	*p++ = HSW_SL2 ;
-	*p++ = HSW_SM0 ;
-	*p++ = HSW_SM1 ;
-	*p++ = HSW_SM2 ;
-	*p++ = HSW_SN0 ;
-	*p++ = HSW_SN1 ;
-	*p++ = HSW_SN2 ;
-	*p++ = HSW_SO0 ;
-	*p++ = HSW_SO1 ;
-	*p++ = HSW_SO2 ;
-	*p++ = HSW_SP0 ;
-	*p++ = HSW_SP1 ;
-	*p++ = HSW_SP2 ;
-	*p++ = HSW_SQ0 ;
-	*p++ = HSW_SQ1 ;
-	*p++ = HSW_SQ2 ;
-	*p++ = HSW_SR0 ;
-	*p++ = HSW_SR1 ;
-	*p++ = HSW_SR2 ;
-#endif	// REV9E
+//#ifdef REV9E
+//	*p++ = HSW_SI0 ;
+//	*p++ = HSW_SI1 ;
+//	*p++ = HSW_SI2 ;
+//	*p++ = HSW_SJ0 ;
+//	*p++ = HSW_SJ1 ;
+//	*p++ = HSW_SJ2 ;
+//	*p++ = HSW_SK0 ;
+//	*p++ = HSW_SK1 ;
+//	*p++ = HSW_SK2 ;
+//	*p++ = HSW_SL0 ;
+//	*p++ = HSW_SL1 ;
+//	*p++ = HSW_SL2 ;
+//	*p++ = HSW_SM0 ;
+//	*p++ = HSW_SM1 ;
+//	*p++ = HSW_SM2 ;
+//	*p++ = HSW_SN0 ;
+//	*p++ = HSW_SN1 ;
+//	*p++ = HSW_SN2 ;
+//	*p++ = HSW_SO0 ;
+//	*p++ = HSW_SO1 ;
+//	*p++ = HSW_SO2 ;
+//	*p++ = HSW_SP0 ;
+//	*p++ = HSW_SP1 ;
+//	*p++ = HSW_SP2 ;
+//	*p++ = HSW_SQ0 ;
+//	*p++ = HSW_SQ1 ;
+//	*p++ = HSW_SQ2 ;
+//	*p++ = HSW_SR0 ;
+//	*p++ = HSW_SR1 ;
+//	*p++ = HSW_SR2 ;
+//#endif	// REV9E
 
 	if ( g_eeGeneral.analogMapping & MASK_6POS )
 	{

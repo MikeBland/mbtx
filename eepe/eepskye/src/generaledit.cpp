@@ -1647,6 +1647,7 @@ void GeneralEdit::on_AilCB_currentIndexChanged(int x )
 	uint16_t value = x ? USE_AIL_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_AIL_3POS ;
 	g_eeGeneral.switchMapping |= value ;
+	g_eeGeneral.ailsource = x ;
 	if ( x )
 	{
 //		g_eeGeneral.switchMapping &= ~USE_GEA_3POS  ;

@@ -181,6 +181,9 @@ else
      UDEFS = -DSTM32F429_439xx
 	 else
     CPPDEFS += -DPCBSKY 
+	 ifeq ($(SMALL), YES)
+    	CPPDEFS += -DSMALL 
+	 endif
     ifeq ($(PCB), DUE)
       LDSCRIPT = due/sam3x8_flash.ld
       UDEFS = -Dat91sam3x8
@@ -313,6 +316,7 @@ CPPSRC = ersky9x.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -351,6 +355,7 @@ CPPSRC = stamp.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
          debug.cpp \
          file.cpp \
          pers.cpp \
@@ -415,6 +420,7 @@ CPPSRC = ersky9x.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -475,17 +481,17 @@ CPPSRC = stamp.cpp \
          pulses.cpp \
 			en.cpp \
 			de.cpp \
-			no.cpp \
 			fr.cpp \
-			se.cpp \
-			it.cpp \
-			pl.cpp \
-			vi.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			logs.cpp
+
+	 ifeq ($(SMALL), YES)
+	 else
+CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
+	 endif
 
 #         gtime.cpp \
 #         massstorage.cpp \
@@ -592,9 +598,9 @@ ifeq ($(REVX), 1)
 endif
 
 # If Flight Phases
-ifeq ($(PHASES), 1)
- CPPDEFS += -DPHASES
-endif
+#ifeq ($(PHASES), 1)
+# CPPDEFS += -DPHASES
+#endif
 
 ifeq ($(PCB), 9XT)
   EXT_MOD=9XT

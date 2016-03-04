@@ -111,7 +111,8 @@ PACK(typedef struct t_TrainerChannel
 {
   int16_t calib ;
   uint8_t srcChn:3 ; //0-7 = ch1-8
-	uint8_t spare:3 ;
+  uint8_t source:2 ;	// Only used on index 0
+	uint8_t spare:1 ;
   uint8_t mode:2;   //off,add-mode,subst-mode
   int8_t  swtch ;
   int8_t  studWeight ;
@@ -236,6 +237,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		pb4source ;
 	uint8_t	extraPotsSource[4] ;
 	uint8_t btComPort ;
+	uint8_t gpsFormat:1 ;
+	uint8_t spare:7 ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 

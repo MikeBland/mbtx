@@ -89,9 +89,11 @@ uint8_t Serial_byte ;
 uint8_t Serial_bit_count;
 uint8_t Serial_byte_count ;
 uint8_t Current_protocol ;
+uint8_t Current_xprotocol ;
 uint8_t pxxFlag = 0 ;
 uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
+uint8_t CurrentTrainerSource ;
 
 volatile uint8_t Dsm_Type = 0 ;
 uint8_t DsmInitCounter = 0 ;
@@ -114,13 +116,36 @@ volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
 static uint8_t pass ;		// For PXX and DSM-9XR and ASSAN
 static uint8_t bitlen ;
 uint8_t DebugDsmPass ;
+uint8_t PulsesPaused ;
 
 void crc( uint8_t data ) ;
 
 
+void pausePulses()
+{
+	PulsesPaused = 1 ;
+	module_output_low() ;
+	PPM2OutputLow() ;
+}
+
+void resumePulses()
+{
+	PulsesPaused = 0 ;
+	if ( g_model.protocol != PROTO_OFF )
+	{
+		module_output_active() ;
+	}
+	if ( g_model.xprotocol != PROTO_OFF )
+	{
+		PPM2OutputActive() ;
+	}
+}
+
 void module_output_low()
 {
-	configure_pins( PIO_PA17, PIN_OUTPUT | PIN_PORTA | PIN_PULLUP | PIN_ODRAIN | PIN_LOW ) ;
+	configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_ODRAIN | PIN_LOW ) ;
+//	PIOA->PIO_CODR = PIO_PA17 ;		
+
 }
 
 void module_output_active()
@@ -128,8 +153,8 @@ void module_output_active()
 	register Pio *pioptr ;
 	
 	pioptr = PIOA ;
-	pioptr->PIO_ABCDSR[0] &= ~PIO_PA17 ;		// Peripheral C
- 	pioptr->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
+//	pioptr->PIO_ABCDSR[0] &= ~PIO_PA17 ;		// Peripheral C
+// 	pioptr->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
 	pioptr->PIO_PDR = PIO_PA17 ;						// Disable bit A17 Assign to peripheral
 #ifdef REVX
 	if ( g_model.ppmOpenDrain )
@@ -147,6 +172,98 @@ void module_output_active()
 }
 
 
+void PPM2OutputLow()
+{
+	configure_pins( PIO_PC15, PIN_ENABLE | PIN_OUTPUT | PIN_PORTC | PIN_ODRAIN | PIN_LOW ) ;
+}
+
+void PPM2OutputActive()
+{
+	configure_pins( PIO_PC15, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
+}
+
+#ifdef PCBSKY
+void checkTrainerSource()
+{
+	uint32_t trainerOutput = 0 ;
+	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+	{
+		trainerOutput = 1 ;
+	}
+	if ( g_eeGeneral.trainerSource == 3 )	// Slave
+	{
+		trainerOutput = 1 ;
+	}
+	if ( CurrentTrainerSource != trainerOutput )
+	{
+		CurrentTrainerSource = trainerOutput ;
+		if ( trainerOutput )		// On trainer power
+		{
+			PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
+			module_output_low() ;
+			PPM2OutputLow() ;
+		}
+		else
+		{
+			PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
+			if ( g_model.protocol != PROTO_OFF )
+			{
+				if ( PulsesPaused == 0 )
+				{
+					module_output_active() ;
+				}
+			}
+			if ( g_model.xprotocol != PROTO_OFF )
+			{
+				if ( PulsesPaused == 0 )
+				{
+					PPM2OutputActive() ;				
+				}
+			}
+		}
+	}
+}
+#endif
+
+
+void init_ppm2( uint32_t period, uint32_t out_enable )
+{
+	register Pwm *pwmptr ;
+	
+// This is the PPM2 output
+#ifdef REVB
+	if ( g_model.xprotocol != PROTO_OFF )
+	{
+		PPM2OutputActive() ;				
+	}
+	else
+	{
+		PPM2OutputLow() ;
+	}
+#endif
+
+#ifdef REVB
+	// PWM1 for PPM2
+	pwmptr = PWM ;
+	pwmptr->PWM_CH_NUM[1].PWM_CMR = 0x0000000B ;	// CLKB
+	if (g_model.pulsePol == 0)
+	{
+		pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
+	}
+	pwmptr->PWM_CH_NUM[1].PWM_CPDR = period ;			// Period
+	pwmptr->PWM_CH_NUM[1].PWM_CPDRUPD = period ;		// Period
+	pwmptr->PWM_CH_NUM[1].PWM_CDTY = g_model.ppmDelay*100+600 ;				// Duty
+	pwmptr->PWM_CH_NUM[1].PWM_CDTYUPD = g_model.ppmDelay*100+600 ;		// Duty
+	pwmptr->PWM_ENA = PWM_ENA_CHID1 ;						// Enable channel 1
+#endif
+
+	pwmptr->PWM_IER1 = PWM_IER1_CHID1 ;
+  NVIC_SetPriority(PWM_IRQn, 3 ) ;
+	NVIC_EnableIRQ(PWM_IRQn) ;
+	
+}
+
+
 void init_main_ppm( uint32_t period, uint32_t out_enable )
 {
 	register Pwm *pwmptr ;
@@ -156,8 +273,13 @@ void init_main_ppm( uint32_t period, uint32_t out_enable )
 
 	if ( out_enable )
 	{
-		module_output_active() ;
+		if ( PulsesPaused == 0 )
+		{
+			module_output_active() ;
+		}
 	}
+	PIOA->PIO_ABCDSR[0] &= ~PIO_PA17 ;		// Peripheral C
+ 	PIOA->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
 
 	pwmptr = PWM ;
 	// PWM3 for PPM output	 
@@ -174,28 +296,6 @@ void init_main_ppm( uint32_t period, uint32_t out_enable )
 
 	pwmptr->PWM_IER1 = PWM_IER1_CHID3 ;
 
-
-#ifdef REVB
-	configure_pins( PIO_PC15, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
-#endif
-
-#ifdef REVB
-	// PWM1 for PPM2
-	pwmptr->PWM_CH_NUM[1].PWM_CMR = 0x0000000B ;	// CLKB
-	if (g_model.pulsePol == 0)
-	{
-		pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
-	}
-	pwmptr->PWM_CH_NUM[1].PWM_CPDR = period ;			// Period
-	pwmptr->PWM_CH_NUM[1].PWM_CPDRUPD = period ;		// Period
-	pwmptr->PWM_CH_NUM[1].PWM_CDTY = g_model.ppmDelay*100+600 ;				// Duty
-	pwmptr->PWM_CH_NUM[1].PWM_CDTYUPD = g_model.ppmDelay*100+600 ;		// Duty
-	pwmptr->PWM_ENA = PWM_ENA_CHID1 ;						// Enable channel 1
-#endif
-
-	pwmptr->PWM_IER1 = PWM_IER1_CHID1 ;
-  NVIC_SetPriority(PWM_IRQn, 3 ) ;
-	NVIC_EnableIRQ(PWM_IRQn) ;
 
 }
 
@@ -237,6 +337,7 @@ extern "C" void PWM_IRQHandler (void)
 	{
 		switch ( Current_protocol )		// Use the current, don't switch until set_up_pulses
 		{
+      case PROTO_OFF:
       case PROTO_PPM:
 				pwmptr->PWM_CH_NUM[3].PWM_CPDRUPD = Pulses[Pulses_index++] ;	// Period in half uS
 				if ( Pulses[Pulses_index] == 0 )
@@ -304,7 +405,10 @@ extern "C" void PWM_IRQHandler (void)
 					if ( Current_protocol == PROTO_ASSAN )
 					{
 						// Enable SSC, output
-						PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
+						if ( PulsesPaused == 0 )
+						{
+							PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
+						}
 						USART0->US_CR = US_CR_RXDIS ;
 //						PIOA->PIO_PER = PIO_PA5 ;		// Assign A5 to PIO
 					}
@@ -328,6 +432,22 @@ extern "C" void PWM_IRQHandler (void)
 		{
 			Pulses2_index = 0 ;
 			setupPulsesPPM2() ;
+		  if ( Current_xprotocol != g_model.xprotocol )
+			{
+				if ( g_model.xprotocol == PROTO_OFF )
+				{
+					PPM2OutputLow() ;
+					PIOC->PIO_CODR = PIO_PC15 ;
+				}
+				else
+				{
+					if ( PulsesPaused == 0 )
+					{
+						PPM2OutputActive() ;
+					}
+				}
+		  	Current_xprotocol = g_model.xprotocol ;
+			}
 		}
 	}
 }
@@ -845,12 +965,24 @@ void startPulses()
 
 void setupPulses()
 {
+	uint32_t requiredProtocol = g_model.protocol ;
+	if ( CurrentTrainerSource )
+	{
+		requiredProtocol = PROTO_PPM ;
+	}
   heartbeat |= HEART_TIMER_PULSES ;
 	
-  if ( Current_protocol != g_model.protocol )
+  if ( Current_protocol != requiredProtocol )
   {
     switch( Current_protocol )
     {	// stop existing protocol hardware
+  	  case PROTO_OFF:
+				disable_main_ppm() ;
+				if ( PulsesPaused == 0 )
+				{
+					module_output_active() ;
+				}
+			break ;
       case PROTO_PPM:
 				disable_main_ppm() ;
       break;
@@ -868,16 +1000,20 @@ void setupPulses()
 #endif
     }
 		
-    Current_protocol = g_model.protocol ;
+    Current_protocol = requiredProtocol ;
     switch(Current_protocol)
     { // Start new protocol hardware here
       case PROTO_PPM:
-				init_main_ppm( 3000, 1 ) ;		// Initial period 1.5 mS, output on
+				init_main_ppm( 3000, CurrentTrainerSource ? 0 : 1 ) ;		// Initial period 1.5 mS, output on
       break;
       case PROTO_PXX:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
 				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+      break;
+  	  case PROTO_OFF:
+				init_main_ppm( 3000, 0 ) ;		// Initial period 1.5 mS, output on
+				module_output_low() ;
       break;
 #ifdef ASSAN
       case PROTO_ASSAN :
@@ -899,6 +1035,9 @@ void setupPulses()
 // Set up output data here
 	switch(Current_protocol)
   {
+  	case PROTO_OFF:
+      setupPulsesPPM();		// Don't enable interrupts through here
+    break;
 	  case PROTO_PPM:
       setupPulsesPPM();		// Don't enable interrupts through here
     break;

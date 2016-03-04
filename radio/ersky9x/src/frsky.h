@@ -415,14 +415,15 @@ struct t_hub_max_min
 extern uint8_t TelemetryType ;
 
 // Values in EEPROM
-#define TELEMETRY_UNDEFINED	0		// To detect not yet configured
-#define TELEMETRY_FRSKY			1
-#define TELEMETRY_WSHHI			2
-#define TELEMETRY_DSM				3
-#define TELEMETRY_JETI			4
-#define TELEMETRY_MAVLINK		5
-#define TELEMETRY_ARDUPILOT	6
-#define TELEMETRY_FRHUB			7
+#define TELEMETRY_UNDEFINED		0		// To detect not yet configured
+#define TELEMETRY_FRSKY				1
+#define TELEMETRY_WSHHI				2
+#define TELEMETRY_DSM					3
+#define TELEMETRY_JETI				4
+#define TELEMETRY_ARDUPLANE		5
+#define TELEMETRY_ARDUCOPTER	6
+#define TELEMETRY_FRHUB				7
+#define TELEMETRY_MAVLINK			8
 
 
 extern uint16_t DsmABLRFH[] ;

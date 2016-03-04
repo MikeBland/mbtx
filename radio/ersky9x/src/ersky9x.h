@@ -98,6 +98,7 @@ extern const char * const Swedish[] ;
 extern const char * const Italian[] ;
 extern const char * const Polish[] ;
 extern const char * const Vietnamese[] ;
+extern const char * const Spanish[] ;
 
 #define PSTR(a) Language[a]
 #define XPSTR(a)  (char *)a
@@ -306,7 +307,8 @@ int8_t switchMap( int8_t x ) ;
 #ifdef PCBX9D
 
 #ifdef REV9E
-#define HSW_SD2				1
+#define HSW_SF2				1
+//#define HSW_SD2				1
 #else
 #define HSW_SF2				1
 #endif
@@ -329,9 +331,9 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_SA1				52
 #define HSW_SA2				53
 #ifdef REV9E
-#define HSW_SF0				54
-#define HSW_SF1				55
-#define HSW_SF2				56
+#define HSW_SD0				54
+#define HSW_SD1				55
+#define HSW_SD2				56
 #else
 #define HSW_SD0				54
 #define HSW_SD1				55
@@ -702,7 +704,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  "
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  Shenqi"
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -728,6 +730,11 @@ extern uint8_t Ee_lock ;
 #define M_BAYANG	       13
 #define M_FRSKYX	       14
 #define M_ESKY		       15
+#define M_MT99XX	       16
+#define M_MT99XX_STR "\002MTH7YZ"
+#define M_MJXQ		       17
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D "
+#define M_SHENQI				 18
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "

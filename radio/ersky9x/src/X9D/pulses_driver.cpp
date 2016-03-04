@@ -416,9 +416,9 @@ extern "C" void TIM1_CC_IRQHandler()
   TIM1->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
 
-#ifdef REV9E
-	s_current_protocol[INTERNAL_MODULE] = PROTO_OFF ;
-#endif
+//#ifdef REV9E
+//	s_current_protocol[INTERNAL_MODULE] = PROTO_OFF ;
+//#endif
   DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
 	setupPulses(0) ;
 

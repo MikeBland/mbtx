@@ -322,7 +322,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 	if ( index == FR_ALT_BAROd )
 	{
 		AltitudeDecimals |= 1 ;
-		if ( value > 9 )
+		if ( ( value > 9 ) || ( value < -9 ) )
 		{
 			AltitudeDecimals |= 2 ;
 		}
@@ -330,7 +330,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 		{
 			value /= 10 ;			
 		}
-		storeAltitude( WholeAltitude + ( (WholeAltitude > 0) ? value : -value ) ) ;
+		storeAltitude( WholeAltitude + value ) ;
 	}
 	
 	if ( index == FR_SPORT_ALT )
@@ -1259,6 +1259,8 @@ static bool checkSportPacket()
   return (crc == 0x00ff) ;
 }
 
+uint16_t FsDebug ;
+
 void processSportPacket()
 {
 	uint8_t *packet = frskyRxBuffer ;
@@ -1284,18 +1286,23 @@ void processSportPacket()
 		if ( packet[3] == 0xF1 )
 		{ // Receiver specific
 			uint8_t value = packet[4] ;
-			if ( packet[2] != 5 )	// Anything except SWR
+			if ( packet[2] == 1 )		// just RSSI
 			{
 				if ( SportStreamingStarted )
 				{
-					frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
+					if ( value )
+					{
+						frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
+					}
+					FsDebug = packet[2] | 0x8000 ;
 				}
 				else
 				{
-					if ( !( ( packet[2] == 1 ) && ( value == 0 ) ) )
+					if ( !( value == 0 ) )
 					{
 						SportStreamingStarted = 1 ;
 						frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
+						FsDebug = packet[2] | 0x4000 ;
 					}
 				}
 			}
@@ -1351,6 +1358,7 @@ void processSportPacket()
 		{ // old sensors
   	  frskyUsrStreaming = 255 ; //FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
 			frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
+			FsDebug = packet[2] | 0x2000 ;
 			uint16_t value = (*((uint16_t *)(packet+4))) ;
 			store_indexed_hub_data( packet[2], value ) ;
 		}
@@ -1358,10 +1366,12 @@ void processSportPacket()
 		{ // new sensors
 			frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
   	  frskyUsrStreaming = 255 ; //FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+			FsDebug = packet[2] | 0x1000 ;
 			uint8_t id = (packet[3] << 4) | ( packet[2] >> 4 ) ;
 			uint32_t value = (*((uint32_t *)(packet+4))) ;
 //			SportId = id ;
 //			SportValue = value ;
+
 			switch ( id )
 			{
 				case ALT_ID_8 :
@@ -1432,7 +1442,7 @@ void processSportPacket()
 				break ;
 				
 				case RPM_ID_8 :
-					store_hub_data( FR_RPM, value ) ;
+					store_hub_data( FR_RPM, value / 60 ) ;
 				break ;
 
 				case A3_ID_8 :
@@ -1444,11 +1454,25 @@ void processSportPacket()
 				break ;
 
 				case T1_ID_8 :
-					store_hub_data( FR_TEMP1, value ) ;
+					if ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) )
+					{
+						store_hub_data( FR_TEMP2, value ) ;
+					}
+					else
+					{
+						store_hub_data( FR_TEMP1, value ) ;
+					}
 				break ;
 				
 				case T2_ID_8 :
-					store_hub_data( FR_TEMP2, value ) ;
+					if ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) )
+					{
+						store_hub_data( FR_BASEMODE, value ) ;
+					}
+					else
+					{
+						store_hub_data( FR_TEMP2, value ) ;
+					}
 				break ;
 
 				case ACCX_ID_8 :
@@ -1464,7 +1488,14 @@ void processSportPacket()
 				break ;
 
 				case FUEL_ID_8 :
-					store_hub_data( FR_FUEL, value ) ;
+					if ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) )
+					{
+						store_hub_data( FR_TEMP1, value ) ;
+					}
+					else
+					{
+						store_hub_data( FR_FUEL, value ) ;
+					}
 				break ;
 
 				case GPS_ALT_ID_8 :
@@ -2020,6 +2051,10 @@ void FRSKY_Init( uint8_t brate )
 		if ( g_model.protocol == PROTO_MULTI )
 		{
 			baudrate = 100000 ;
+			if ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX )
+			{
+				FrskyTelemetryType = 1 ;
+			}
 		}
 		if ( g_model.frskyComPort == 0 )
 		{
@@ -2115,6 +2150,10 @@ void FRSKY_Init( uint8_t brate )
 		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
 		{
 			baudrate = 100000 ;
+			if ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX )
+			{
+				FrskyTelemetryType = 1 ;
+			}
 		}
 		if ( g_model.frskyComPort == 1 )
 		{
@@ -2364,8 +2403,9 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 			type = TEL_DSM ;
 		break ;
 		case TELEMETRY_FRHUB :
-		case TELEMETRY_ARDUPILOT :
-			if ( type != TEL_MULTI )
+		case TELEMETRY_ARDUCOPTER :
+		case TELEMETRY_ARDUPLANE :
+			if ( ( type != TEL_MULTI ) && ( type != TEL_FRSKY_SPORT ) )
 			{
 				type = TEL_FRSKY_HUB ;
 			}

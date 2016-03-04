@@ -126,11 +126,20 @@
         </item>
         <item row="1" column="0" rowspan="2">
          <layout class="QVBoxLayout" name="verticalLayout">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
           <property name="bottomMargin">
            <number>0</number>
           </property>
           <item>
            <widget class="QPushButton" name="switchTHR">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="autoFillBackground">
              <bool>false</bool>
             </property>
@@ -159,6 +168,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SFwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -231,6 +246,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SEwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -301,7 +322,44 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="switchRUD">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton {
+     background-color: #EEEEEE;
+     border-style: outset;
+     border-width: 1px;
+     border-radius: 4px;
+     border-color: black;
+     padding: 2px;
+ } 
+
+QPushButton:checked {
+     background-color: #4CC417;
+     border-style: inset;
+ }</string>
+            </property>
+            <property name="text">
+             <string>RUD</string>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QWidget" name="SAwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -378,7 +436,13 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchRUD">
+           <widget class="QPushButton" name="switchELE">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -395,7 +459,7 @@ QPushButton:checked {
  }</string>
             </property>
             <property name="text">
-             <string>RUD</string>
+             <string>ELE</string>
             </property>
             <property name="checkable">
              <bool>true</bool>
@@ -404,6 +468,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SBwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -480,32 +550,13 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchELE">
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>ELE</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="switchAIL">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -533,7 +584,7 @@ QPushButton:checked {
            <widget class="QPushButton" name="switchPB1">
             <property name="minimumSize">
              <size>
-              <width>27</width>
+              <width>28</width>
               <height>0</height>
              </size>
             </property>
@@ -561,7 +612,7 @@ QPushButton:pressed {
            <widget class="QPushButton" name="switchPB3">
             <property name="minimumSize">
              <size>
-              <width>27</width>
+              <width>28</width>
               <height>0</height>
              </size>
             </property>
@@ -1051,6 +1102,12 @@ QPushButton:checked {
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
            <widget class="QWidget" name="SHwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -1122,6 +1179,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SGwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -1193,6 +1256,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SDwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -1272,7 +1341,7 @@ QPushButton:checked {
            <widget class="QPushButton" name="switchTRN">
             <property name="minimumSize">
              <size>
-              <width>27</width>
+              <width>28</width>
               <height>0</height>
              </size>
             </property>
@@ -1298,6 +1367,12 @@ QPushButton:pressed {
           </item>
           <item>
            <widget class="QPushButton" name="switchGEA">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -1329,6 +1404,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QWidget" name="SCwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -1406,6 +1487,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QPushButton" name="switchID0">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -1437,6 +1524,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QPushButton" name="switchID1">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -1465,6 +1558,12 @@ QPushButton:checked {
           </item>
           <item>
            <widget class="QPushButton" name="switchID2">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
             <property name="styleSheet">
              <string notr="true">QPushButton {
      background-color: #EEEEEE;
@@ -1495,7 +1594,7 @@ QPushButton:checked {
            <widget class="QPushButton" name="switchPB2">
             <property name="minimumSize">
              <size>
-              <width>27</width>
+              <width>28</width>
               <height>0</height>
              </size>
             </property>
@@ -1523,7 +1622,7 @@ QPushButton:pressed {
            <widget class="QPushButton" name="switchPB4">
             <property name="minimumSize">
              <size>
-              <width>27</width>
+              <width>28</width>
               <height>0</height>
              </size>
             </property>

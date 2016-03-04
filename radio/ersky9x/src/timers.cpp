@@ -60,6 +60,7 @@ extern void disable_pxx(uint32_t port) ;
 
 #if defined(PCBX9D) || defined(PCB9XT)
 uint8_t DebugDsmPass ;
+uint8_t PulsesPaused ;
 
 // DSM2 control bits
 #define BindBit 0x80
@@ -67,6 +68,16 @@ uint8_t DebugDsmPass ;
 #define FranceBit 0x10
 #define DsmxBit  0x08
 #define BadData 0x47
+
+void pausePulses()
+{
+	PulsesPaused = 1 ;
+}
+
+void resumePulses()
+{
+	PulsesPaused = 0 ;
+}
 
 //#ifdef ASSAN
 //uint8_t ProtocolDebug[16384] ;
@@ -330,6 +341,7 @@ uint16_t SuCount ;
 
 void setupPulses(unsigned int port)
 {
+	uint32_t requiredprotocol ;
   heartbeat |= HEART_TIMER_PULSES ;
 #ifdef REV9E
 	SuCount += 1 ;
@@ -337,9 +349,15 @@ void setupPulses(unsigned int port)
 //	return ;
 #endif
 	
+
 	if ( port == 0 )
 	{
-  	if ( s_current_protocol[0] != g_model.protocol )
+		requiredprotocol = g_model.protocol ;
+		if ( PulsesPaused )
+		{
+			requiredprotocol = PROTO_OFF ;
+		}
+  	if ( s_current_protocol[0] != requiredprotocol )
   	{
   	  switch( s_current_protocol[0] )
   	  {	// stop existing protocol hardware
@@ -357,7 +375,7 @@ void setupPulses(unsigned int port)
 	//      break ;
   	  }
 		
-  	  s_current_protocol[0] = g_model.protocol ;
+  	  s_current_protocol[0] = requiredprotocol ;
   	  switch(s_current_protocol[0])
   	  { // Start new protocol hardware here
   	    case PROTO_PPM:
@@ -380,7 +398,7 @@ void setupPulses(unsigned int port)
   	}
 
 	// Set up output data here
-		switch(s_current_protocol[0])
+		switch(requiredprotocol)
   	{
 		  case PROTO_PPM:
   	    setupPulsesPpm();		// Don't enable interrupts through here
@@ -400,7 +418,12 @@ void setupPulses(unsigned int port)
 	}
 	else
 	{
-  	if ( s_current_protocol[1] != g_model.xprotocol )
+		requiredprotocol = g_model.xprotocol ;
+		if ( PulsesPaused )
+		{
+			requiredprotocol = PROTO_OFF ;
+		}
+  	if ( s_current_protocol[1] != requiredprotocol )
   	{
   	  switch( s_current_protocol[1] )
   	  {	// stop existing protocol hardware
@@ -424,7 +447,7 @@ void setupPulses(unsigned int port)
 	//      break ;
   	  }
 		
-  	  s_current_protocol[1] = g_model.xprotocol ;
+  	  s_current_protocol[1] = requiredprotocol ;
   	  switch(s_current_protocol[1])
   	  { // Start new protocol hardware here
   	    case PROTO_PPM:
@@ -459,7 +482,7 @@ void setupPulses(unsigned int port)
   	}
 
 	// Set up output data here
-		switch(s_current_protocol[1])
+		switch(requiredprotocol)
   	{
 		  case PROTO_PPM:
   	    setupPulsesPpmx();		// Don't enable interrupts through here

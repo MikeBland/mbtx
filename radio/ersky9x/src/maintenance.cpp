@@ -307,7 +307,14 @@ uint32_t validateFile( uint32_t *block )
 #if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( block[0] & 0xFFFC0000 ) != 0x20000000 )
 	{
+#ifdef REV9E
+		if ( ( block[0] & 0xFFFC0000 ) != 0x10000000 )	// Cover silly openTx stack
+		{
+			return 0 ;
+		}
+#else
 		return 0 ;
+#endif
 	}
 	if ( ( block[1] & 0xFFF00000 ) != 0x08000000 )
 	{
@@ -410,12 +417,15 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	FRESULT fr ;
 	Finfo.lfname = Filenames[0] ;
 	Finfo.lfsize = 48 ;
+  WatchdogTimeout = 200 ;
+
 	fr = f_readdir ( &Dj, 0 ) ;					// rewind
 	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip .
 	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip ..
 	i = 0 ;
 	while ( i <= index )
 	{
+  	WatchdogTimeout = 200 ;
 		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
 		FileSize[0] = Finfo.fsize ;
 		i += 1 ;
@@ -426,6 +436,7 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	}
 	for ( i = 1 ; i < 7 ; i += 1 )
 	{
+ 		WatchdogTimeout = 200 ;
 		Finfo.lfname = Filenames[i] ;
 		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
 		FileSize[i] = Finfo.fsize ;
@@ -480,7 +491,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		lcd_putsn_P( 0, 16+FH*i, &Filenames[i][x], len ) ;
 	}
 
-#if !defined(PCBTARANIS)
+#if !defined(PCBTARANIS) || defined(REV9E)
 	if ( event == 0 )
 	{
 extern int32_t Rotary_diff ;
@@ -766,6 +777,10 @@ void menuUp1(uint8_t event)
 	uint32_t width ;
    
 	wdt_reset() ;
+	if ( WatchdogTimeout < 50 )
+	{
+ 		WatchdogTimeout = 50 ;
+	}
 	 
 	if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{
@@ -819,6 +834,7 @@ void menuUp1(uint8_t event)
 	switch(event)
 	{
     case EVT_ENTRY:
+  		WatchdogTimeout = 200 ;
 			state = UPDATE_NO_FILES ;
 			if ( mounted == 0 )
 			{

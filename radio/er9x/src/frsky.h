@@ -64,14 +64,39 @@
 #define FR_RXV				40
 #define FR_A3					41
 #define FR_A4					42
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data for Mavlink via FrSky */
+#define FR_BASEMODE             43
+#define FR_WP_DIST              44
+#define FR_HEALTH               45
+#define FR_MSG                  46
+#define FR_HOME_DIR             47
+#define FR_HOME_DIST            48
+#define FR_CPU_LOAD             49
+#define FR_GPS_HDOP             50
+#define FR_WP_NUM               51
+#define FR_WP_BEARING           52
+#define FR_VCC                  53
+/* Extra data for Mavlink via FrSky */
+#define FR_TRASH			54  // Used for invalid id
+#else
 #define FR_TRASH			43	// Used for invalid id
+#endif
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data for Mavlink via FrSky */
+#define HUBDATALENGTH  55
+#define HUBMINMAXLEN    7			// Items with a min and max field
+#else
 #define HUBDATALENGTH 44
 #define HUBMINMAXLEN	7			// Items with a min and max field
+#endif
 //#define HUBOFFSETLEN	7			// Items with an offset field
+
+#define MAV_MODE_FLAG_SAFETY_ARMED			128	// 0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly.
 
 #if defined(VARIO)
 #define VARIO_QUEUE_LENGTH          5
@@ -113,6 +138,12 @@ DataID Meaning       Unit   Range   Note
 0x1A   Longitude     dddmm.mmmm     After “.”
 0x1B   Latitude      ddmm.mmmm      After “.”
 0x1C   Course        degree 0-360   After “.”
+//Extra data for Mavlink via FrSky
+0x1D BASEMODE   getBaseMode   apmBaseMode
+0x1E WP_DIST    getWP_dist    wp_dist
+0x1F HEALTH     getHealth     sensors_health
+0x20 STATUS_MSG getStatus_msg status_msg
+//Extra data for Mavlink via FrSky
 0x21   Altitude      m              After "."
 0x22   Long - E/W
 0x23   Lat. N/S
@@ -121,6 +152,12 @@ DataID Meaning       Unit   Range   Note
 0x26   Acc-z         1/256g -8g ~ +8g
 0x28   Current       1A   0-100A
 0x29   VerticalSpeed
+//Extra data for Mavlink via FrSky 
+0x30 HOME_DIR   getHome_dir   home_direction
+0x31 HOME_DIST  getHome_dist  home_distance
+0x32 CPU_LOAD   getCpu_load   cpu_load
+0x33 GPS_HDOP   getGpsHdop    gpsHdop
+//Extra data for Mavlink via FrSky 
 0x3A   Voltage(amp sensor) 0.5v 0-48V Before “.”
 0x3B   Voltage(amp sensor)            After “.”
 
@@ -288,6 +325,27 @@ DataID Meaning       Unit   Range   Note
 
 
 
+//Extra data for Mavlink via FrSky
+#define MAV_SYS_STATUS_SENSOR_3D_GYRO			 1  /* 0x01 3D gyro | */
+#define MAV_SYS_STATUS_SENSOR_3D_ACCEL			 2  /* 0x02 3D accelerometer | */
+#define MAV_SYS_STATUS_SENSOR_3D_MAG			 4  /* 0x04 3D magnetometer | */
+#define MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE		 8  /* 0x08 absolute pressure | */
+#define MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE     16  /* 0x10 differential pressure | */
+#define MAV_SYS_STATUS_SENSOR_GPS			32  /* 0x20 GPS | */
+#define MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW              64  /* 0x40 optical flow | */
+#define MAV_SYS_STATUS_GEOFENCE                    1048576  /* 0x100000 geofence | */
+#define MAV_SYS_STATUS_AHRS                        2097152  /* 0x200000 AHRS subsystem health | */
+#define MAV_SYS_ERR          "Err"
+#define MAV_SYS_ERR_GYRO     "GYRO "
+#define MAV_SYS_ERR_ACCEL    "ACCEL"
+#define MAV_SYS_ERR_MAG      " MAG "
+#define MAV_SYS_ERR_PRESSURE "PRESS"
+#define MAV_SYS_ERR_AIRSPEED "AIRSP"
+#define MAV_SYS_ERR_GPS      " GPS "
+#define MAV_SYS_ERR_OPTICAL  "OPTIC"
+#define MAV_SYS_ERR_GEOFENCE "FENCE"
+#define MAV_SYS_ERR_AHRS     "AHRS "
+//Extra data for Mavlink via FrSky
 #ifdef N2F
 #define FRSKY_TIMEOUT10ms 			200
 #define FRSKY_USR_TIMEOUT10ms 	250
@@ -369,6 +427,7 @@ void FRSKY_setModelAlarms(void) ;
 //enum AlarmLevel FRSKY_alarmRaised(uint8_t idx) ;
 //void FRSKY_alarmPlay(uint8_t idx, uint8_t alarm) ;
 void resetTelemetry();
+//void resetTelemetry( uint8_t first );// Extra data for Mavlink via FrSky 
 
 #if defined(CPUM128) || defined(CPUM2561)
 void FRSKY_disable( void ) ;

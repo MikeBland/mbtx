@@ -45,35 +45,10 @@
 *
 ****************************************************************************/
 
-// For use with Orange DSM module - 9XR PRO
-#define ORTX_USE_DSMX			0x01 //- dsmX flag, else dsm2 use
-#define ORTX_USE_11mS			0x02 //- 11 mSec flag, else 22 mSec
-#define ORTX_USE_11bit		0x04 //- 11 bit (2048) flag, else 10 bit (1024) resolution
-#define ORTX_USE_TM				0x08 //- have a telemetry answer
-#define ORTX_USE_FUTABA		0x10 //- futaba channel "AETR"
-#define ORTX_USE_DEVO			0x20 //- walkera DEVO
-#define ORTX_AUTO_MODE		0x40 //- auto DSM2/DSMX
-#define ORTX_BIND_FLAG		0x80
+#include "sp.h"
 
-extern void module_output_low( void ) ;
-extern void module_output_active( void ) ;
-extern void PPM2OutputLow( void ) ;
-extern void PPM2OutputActive( void ) ;
+extern const char * const Spanish[] ;
 
-
-extern void init_main_ppm( uint32_t period, uint32_t out_enable ) ;
-extern void init_ppm2( uint32_t period, uint32_t out_enable ) ;
-extern void disable_main_ppm( void ) ;
-//extern void disable_ppm2( void ) ;
-extern void perOut( int16_t *chanOut, uint8_t att ) ;
-extern void startPulses( void ) ;
-extern void setupPulses( void ) ;
-extern void setupPulsesPPM( void ) ;
-extern void setupPulsesPPM2( void ) ;
-extern void setupPulsesDsm2(uint8_t chns) ;
-extern void setupPulsesPXX( void ) ;
-extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
-extern void checkTrainerSource( void ) ;
-extern void pausePulses( void ) ;
-extern void resumePulses( void ) ;
+const char * const Spanish[] =
+#include "str_indices.h"
 

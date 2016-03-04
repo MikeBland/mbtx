@@ -64,10 +64,26 @@ const prog_uint8_t APM Fr_indices[] =
 	FR_FUEL,
 	FR_TEMP2,
 	FR_CELL_V,
+#if defined(CPUM128) || defined(CPUM2561)
+	FR_VCC,           // 0x07  Extra data for Mavlink via FrSky
+	HUBDATALENGTH-1,
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_GPS_ALTd,
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data 1 for Mavlink via FrSky */
+	FR_HOME_DIR,      // 0x0A
+	FR_HOME_DIST,     // 0x0B
+	FR_CPU_LOAD,      // 0x0C
+	FR_GPS_HDOP,      // 0x0D
+	FR_WP_NUM,        // 0x0E
+	FR_WP_BEARING,    // 0x0F
+/* Extra data 1 for Mavlink via FrSky */
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,		// 10,11
 	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_ALT_BARO | FR_INDEX_FLAG,
 	FR_GPS_SPEED | FR_INDEX_FLAG,
 	FR_GPS_LONG | FR_INDEX_FLAG,
@@ -81,7 +97,16 @@ const prog_uint8_t APM Fr_indices[] =
 	FR_GPS_LONGd,
 	FR_GPS_LATd,
 	FR_COURSEd,			// 28
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data 2 for Mavlink via FrSky */
+	FR_BASEMODE,
+	FR_WP_DIST,
+	FR_HEALTH,
+	FR_MSG,
+/* Extra data 2 for Mavlink via FrSky */
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_ALT_BAROd,		// 33
 	FR_LONG_E_W,
 	FR_LAT_N_S,
@@ -221,7 +246,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 	if ( index == FR_ALT_BAROd )
 	{
 		AltitudeDecimals |= 1 ;
-		if ( value > 9 )
+		if ( ( value > 9 ) || ( value < -9 ) )
 		{
 			AltitudeDecimals |= 2 ;
 		}
@@ -229,7 +254,7 @@ void store_hub_data( uint8_t index, uint16_t value )
 		{
 			value /= 10 ;			
 		}
-		FrskyHubData[FR_ALT_BARO] = WholeAltitude + ( (WholeAltitude > 0) ? value : -value ) ;
+		FrskyHubData[FR_ALT_BARO] = WholeAltitude + value ) ;
 	}
 
 	if ( index == FR_SPORT_ALT )
@@ -1320,20 +1345,10 @@ void FRSKY_Init( uint8_t brate)
 		brate = 1 ;
 	}
 
-  	if ( brate == 0 ) // 9600
+  if ( brate == 0 ) // 9600
 	{
-#ifdef MULTI_PROTOCOL
-		if ( g_model.protocol == PROTO_MULTI ) // 100000bps
-		{
-			UBRR0L = 9;
-			UBRR0H = 0;
-		}
-		else
-#endif // MULTI_PROTOCOL
-		{
-			UBRR0L = UBRRL_VALUE;
-			UBRR0H = UBRRH_VALUE;
-		}
+		UBRR0L = UBRRL_VALUE;
+		UBRR0H = UBRRH_VALUE;
 	}
 	else // 57600
 	{
@@ -1345,8 +1360,12 @@ void FRSKY_Init( uint8_t brate)
   // set 8 N1
   UCSR0B = 0 | (0 << RXCIE0) | (0 << TXCIE0) | (0 << UDRIE0) | (0 << RXEN0) | (0 << TXEN0) | (0 << UCSZ02);
 #ifdef MULTI_PROTOCOL
-	if ( g_model.protocol == PROTO_MULTI ) // set 8e2
+	if ( g_model.protocol == PROTO_MULTI ) // set 100000bps 8e2
+	{
+		UBRR0L = 9;
+		UBRR0H = 0;
 		UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+	}
 	else
 #endif // MULTI_PROTOCOL
 		UCSR0C = 0 | (1 << UCSZ01) | (1 << UCSZ00);
@@ -1465,6 +1484,7 @@ void resetTelemetry()
 	FrskyHubData[FR_CELL_MIN] = 0 ;			// 0 volts
 	Frsky_Amp_hour_prescale = 0 ;
 	FrskyHubData[FR_AMP_MAH] = 0 ;
+	FrskyBattCells = 0 ;
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
 }
 
@@ -1506,7 +1526,7 @@ void check_frsky()
 		return ;
 #endif
 
-	uint8_t telemetryType = g_model.protocol == PROTO_PXX ;
+	uint8_t telemetryType = (g_model.protocol == PROTO_PXX )||((g_model.protocol == PROTO_MULTI) && ((g_model.sub_protocol&0x1F)==M_FRSKYX));
 	if ( telemetryType != FrskyTelemetryType )
 	{
 		FRSKY_Init( telemetryType ) ;	

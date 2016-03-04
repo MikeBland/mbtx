@@ -22,10 +22,17 @@
 #include "voice.h"
 #ifdef FRSKY
 #include "frsky.h"
+// Extra data for Mavlink via FrSky
+#if defined(CPUM128) || defined(CPUM2561)
+//#include <math.h>
+//#define PI 3.14159265
+#endif
+// Extra data for Mavlink via FrSky
 #endif
 
 #include "language.h"
 
+#define TELEMETRY_ARDUPILOT	5
 
 #ifndef V2
 #define GLOBAL_COUNTDOWN	1
@@ -120,6 +127,10 @@ const prog_char APM Curve_Str[] = CURV_STR ;
 
 static uint8_t Columns ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+static int16_t hdg_home ;// Extra data for Mavlink via FrSky
+#endif
+
 int8_t phyStick[4] ;
 
 const prog_uint8_t APM UnitsVoice[] = {V_FEET,V_VOLTS,V_DEGREES,V_DEGREES,0,V_AMPS,V_METRES,V_WATTS } ;
@@ -127,7 +138,6 @@ const prog_char APM UnitsText[] = { 'F','V','C','F','m','A','m','W' } ;
 const prog_char APM UnitsString[] = "\005Feet VoltsDeg_CDeg_FmAh  Amps MetreWatts" ;
 
 #ifdef FRSKY
-
 
 // TSSI set to zero on no telemetry data
 const prog_char APM Str_telemItems[] = STR_TELEM_ITEMS ; 
@@ -378,6 +388,12 @@ void voice_telem_item( uint8_t indexIn )
 		}
 		break ;
 
+    case FR_RXV :
+			value = convertRxv( value ) ;			
+			unit = SV_VOLTS ;			
+			num_decimals = 1 ;
+		break ;
+
 		case FR_ALT_BARO:
       unit = V_METRES ;
 			if (g_model.FrSkyUsrProto == 1)  // WS How High
@@ -404,6 +420,16 @@ void voice_telem_item( uint8_t indexIn )
 			}
 		break ;
 		 
+#if defined(CPUM128) || defined(CPUM2561)
+// Extra data for Mavlink via FrSky		 
+		case FR_WP_DIST:
+  		if ( g_model.FrSkyImperial )
+  		{
+				value = m_to_ft(value) ;
+			}
+		break ;
+// Extra data for Mavlink via FrSky
+#endif
 		case FR_CURRENT :
 			num_decimals = 1 ;
       unit = V_AMPS ;
@@ -1022,6 +1048,9 @@ uint8_t hyphinvMenuItem( uint8_t value, uint8_t y, uint8_t condition )
 	return checkIndexed( y, PSTR(FWx18"\001"STR_HYPH_INV), value, condition ) ;
 }
 
+
+
+
 void putsTxStr( uint8_t x, uint8_t y )
 {
 	lcd_putsAttIdx( x, y, Str_TXeq, ( g_model.protocol == PROTO_PXX ), 0 ) ;
@@ -1035,6 +1064,31 @@ void putsOffDecimal( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
       lcd_putsAtt(  x,y,Str_OFF,attr) ;
 }
 
+// Extra data for Mavlink via FrSky
+#if defined(CPUM128) || defined(CPUM2561)
+//const int8_t COS[] = { 100,97,87,71,50,26,0,-26,-50,-71,-87,-97,-100,-97,-87,-71,-50,-26,0,26,50,71,87,97,100 };// Extra data for Mavlink via FrSky
+const prog_int8_t APM SIN[] = { 0,26,50,71,87,97,100,97,87,71,50,26,0,-26,-50,-71,-87,-97,-100,-97,-87,-71,-50,-26,0,26,50,71,87,97,100    };// Extra data for Mavlink via FrSky
+
+uint16_t normalize( int16_t alpha )
+{
+   if ( alpha > 360 ) alpha -= 360;
+   if ( alpha <   0 ) alpha = 360 + alpha;
+   alpha /= 15;
+   return alpha ;
+}
+int8_t rcos100( int16_t alpha )
+{
+   alpha = normalize( alpha );
+//   return COS[alpha];
+   return pgm_read_byte( &SIN[alpha+6]) ;
+}
+int8_t rsin100( int16_t alpha )
+{
+   alpha = normalize( alpha );
+   return pgm_read_byte( &SIN[alpha]) ;
+}
+#endif
+// Extra data for Mavlink via FrSky
 //static void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr)
 //{
 //		uint8_t x ;
@@ -1809,6 +1863,27 @@ extern uint8_t frskyRSSIlevel[2] ;
 extern uint8_t frskyRSSItype[2] ;
 #endif
 
+// FrSky WSHhi DSMx  Jeti  Mavlk ArduP FrHub"
+
+#if defined(CPUM128) || defined(CPUM2561)
+
+#define MAX_TEL_OPTIONS		3
+const prog_uint8_t APM TelOptions[] = {0,1,5} ;
+
+//#if defined(PCBSKY) || defined(PCB9XT)
+// #ifdef REVX
+//  #define MAX_TEL_OPTIONS		6
+//  const uint8_t TelOptions[] = {1,2,3,4,5,6} ;
+// #else
+//  #define MAX_TEL_OPTIONS			5
+//  const uint8_t TelOptions[] = {1,2,3,6,7} ;
+// #endif
+//#endif
+
+
+#endif
+
+
 void menuProcTelemetry(uint8_t event)
 {
 	TITLEP(Str_Telemetry);
@@ -1819,6 +1894,7 @@ void menuProcTelemetry(uint8_t event)
 #ifdef MAH_LIMIT			 
 	mstate2.check_columns(event, 22-1-1) ;
 #else
+//	mstate2.check_columns(event, 23-1-1-1) ;// Extra data for Mavlink via FrSky
 	mstate2.check_columns(event, 22-1-1-1) ;
 #endif
 #endif
@@ -1864,7 +1940,44 @@ void menuProcTelemetry(uint8_t event)
 	if ( sub < 4 )
 	{
 		lcd_puts_Pleft( y, PSTR(STR_USR_PROTO"\037""Units"));
+#if defined(CPUM128) || defined(CPUM2561)
+		uint8_t b ;
+		uint8_t attr = 0 ;
+
+		b = g_model.telemetryProtocol ;
+		if ( g_model.FrSkyUsrProto )
+		{
+			b = 1 ;		// WSHHI
+		}
+
+		for ( uint8_t c = 0 ; c < MAX_TEL_OPTIONS ; c += 1 )
+		{
+			if ( pgm_read_byte(&TelOptions[c]) == b )
+			{
+				b = c ;
+				attr = 1 ;
+				break ;
+			}
+		}
+		if ( !attr )
+		{
+			b = 0 ;
+		}
+		attr = 0 ;
+		if(sub==subN)
+		{
+			attr = blink ;
+			CHECK_INCDEC_H_MODELVAR( b,0,MAX_TEL_OPTIONS-1) ;
+		}
+		b = pgm_read_byte(&TelOptions[b]) ;
+		g_model.telemetryProtocol = b ;
+		g_model.FrSkyUsrProto = (b == 1) ? 1 : 0 ;
+
+		lcd_putsAttIdx( 10*FW, FH, PSTR("\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHubFrMav"), b, attr ) ;
+//		g_model.FrSkyUsrProto = checkIndexed( y, PSTR(FWx12"\001"STR_FRHUB_WSHHI), g_model.FrSkyUsrProto, (sub==subN) ) ;
+#else
 		g_model.FrSkyUsrProto = checkIndexed( y, PSTR(FWx12"\001"STR_FRHUB_WSHHI), g_model.FrSkyUsrProto, (sub==subN) ) ;
+#endif
 		y += FH ;
 		subN += 1 ;
 
@@ -1918,7 +2031,7 @@ void menuProcTelemetry(uint8_t event)
   	  subN++; y+=FH;
 		}
 	}
-	else if ( sub < 9 )
+	else if ( sub < 8 )
 	{
 		uint8_t subN = 4 ;
 #ifndef V2
@@ -2035,7 +2148,7 @@ void menuProcTelemetry(uint8_t event)
 		}
 #else
 			pindex = g_model.CustomDisplayIndex ;
-			subN = 9 ;
+			subN = 8 ;
 #endif
   	lcd_puts_Pleft( FH, PSTR(STR_CUSTOM_DISP) );
 		for (uint8_t j=0; j<6; j++)
@@ -6446,7 +6559,22 @@ void menuProc0(uint8_t event)
 					}
           g_eeGeneral.view = e_telemetry | tview ;
 #else
-            g_eeGeneral.view = e_telemetry | ( ( tview + 0x10) & 0x30 ) ;
+
+#if defined(CPUM128) || defined(CPUM2561)
+					uint8_t t_limit = 0x30 ;
+					tview += 0x10 ;
+					if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
+					{
+						t_limit = 0x40 ;
+					}
+					if ( tview > t_limit )
+					{
+						tview = 0 ;
+					}
+          g_eeGeneral.view = e_telemetry | tview ;
+#else
+          g_eeGeneral.view = e_telemetry | ( ( tview + 0x10) & 0x30 ) ;
+#endif
 #endif
           //            STORE_GENERALVARS;     //eeWriteGeneral();
           //            eeDirty(EE_GENERAL);
@@ -6481,7 +6609,21 @@ void menuProc0(uint8_t event)
 					}
           g_eeGeneral.view = e_telemetry | tview ;
 #else
-            g_eeGeneral.view = e_telemetry | ( ( tview - 0x10) & 0x30 );
+#if defined(CPUM128) || defined(CPUM2561)
+					tview -= 0x10 ;
+					uint8_t t_limit = 0x30 ;
+					if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
+					{
+						t_limit = 0x40 ;
+					}
+					if ( tview > 0x60 )
+					{
+						tview = t_limit ;
+					}
+          g_eeGeneral.view = e_telemetry | tview ;
+#else
+          g_eeGeneral.view = e_telemetry | ( ( tview - 0x10) & 0x30 );
+#endif
 #endif
           //            STORE_GENERALVARS;     //eeWriteGeneral();
           //            eeDirty(EE_GENERAL);
@@ -6924,6 +7066,208 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 								//              lcd_putsAtt(6, 2*FH, PSTR("To Be Done"), DBLSIZE);
 							}
             }
+#if defined(CPUM128) || defined(CPUM2561)
+            else if ( tview == 0x40 )
+						{
+						 if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
+						 {
+								// Mavlink over FrSky
+								uint8_t attr = 0 ;
+								lcd_putsAtt(  0 * FW, 0 * FH, PSTR("          "), 0 ); // clear inversed model name from screen
+								// line 0, left - Battary remaining
+								uint8_t batt =  FrskyHubData[FR_FUEL] ;
+								if ( batt < 20 ) { attr = BLINK ; } else {attr = 0 ;}
+								lcd_hbar( 01, 1, 10, 5, batt ) ;
+								lcd_rect( 11, 2, 2, 3 ) ;
+								if (batt > 99) batt = 99 ;
+								lcd_outdezAtt ( 4*FW,   0*FH, batt, attr ) ;
+								lcd_putcAtt	  ( 4*FW+1, 0*FH, '%',  attr ) ;
+								// line 0, V, volt bat
+ 				        attr = PREC1 ;
+ 				        lcd_outdezAtt( 9 * FW+2, 0, FrskyHubData[FR_VOLTS], attr ) ;
+								lcd_putc   ( 9 * FW+3, 0, 'v'); //"v"
+								// line 0, V, volt cpu
+// 				        lcd_outdezAtt( 13 * FW-2, 0, FrskyHubData[FR_VCC], PREC1 ) ;
+//		    				lcd_putc     ( 13 * FW+1, 0, 'v');
+								// line 1 - Flight mode
+ 				        uint8_t blink = BLINK;
+ 				        if (frskyUsrStreaming) blink = 0 ;
+//								lcd_putsAtt( 15*FW-1, 1*FH, XPSTR("T1="), 0 ) ;
+// 				        lcd_outdezAtt( 20 * FW, 1*FH, FrskyHubData[FR_TEMP1], blink ) ;
+							
+								if (frskyUsrStreaming)
+								{
+									if ( FrskyHubData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED )
+									{
+										lcd_putsAtt(  1 * FW, 1 * FH, PSTR(STR_MAV_ARMED), blink) ;
+									}
+									else
+									{
+										lcd_putsAtt(  0 * FW, 1 * FH, PSTR(STR_MAV_DISARMED), blink) ;
+									}
+								}
+								else
+								{
+									lcd_putsAtt(  0 * FW, 1 * FH, PSTR(STR_MAV_NODATA), BLINK) ; // NO DRV
+								}
+
+//							  lcd_outdez( 15 * FW, 3 * FH, FrskyHubData[FR_BASEMODE] ) ;
+
+								const char *s ;
+								uint8_t i = FrskyHubData[FR_TEMP1] ;
+								if ( i == 1 )
+								{
+									s = PSTR(STR_MAV_FM_1) ;
+								}
+								else if ( i == 2 )
+								{
+									s = PSTR(STR_MAV_FM_2) ;
+								}
+								else if ( i == 3 )
+								{
+									s = PSTR(STR_MAV_FM_3) ;
+								}
+								else if ( i == 4 )
+								{
+									s = PSTR(STR_MAV_FM_4) ;
+								}
+								else if ( i == 5 )
+								{
+									s = PSTR(STR_MAV_FM_5) ;
+								}
+								else if ( i == 6 )
+								{
+									s = PSTR(STR_MAV_FM_6) ;
+								}
+								else if ( i == 7 )
+								{
+									s = PSTR(STR_MAV_FM_7) ;
+								}
+								else if ( i == 8 )
+								{
+									s = PSTR(STR_MAV_FM_8) ;
+								}
+								else if ( i == 9 )
+								{
+									s = PSTR(STR_MAV_FM_9) ;
+								}
+								else
+								{
+									s = PSTR(STR_MAV_FM_0) ;
+								}
+								lcd_putsAtt( 15*FW-1, 1*FH, s, blink ) ;
+
+//		 line 2 - "GPS fix" converted from TEMP2
+								uint8_t gps_fix ;
+								uint8_t gps_sat ;
+								gps_fix = FrskyHubData[FR_TEMP2] / 10 ;
+ 				        gps_sat = FrskyHubData[FR_TEMP2] - gps_fix * 10 ;
+								switch ( gps_fix )
+								{
+									case 1: 	lcd_putsAtt( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_NO_FIX), BLINK); break;
+									case 2: 	lcd_puts_P ( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_2DFIX )); break;
+									case 3:
+									case 4: 	lcd_puts_P ( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_3DFIX )); break;
+									default : lcd_putsAtt( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_NO_GPS), INVERS); break;
+								}
+//		line 3 left "SAT"
+								lcd_puts_P( 0 * FW,   3*FH, PSTR(STR_MAV_GPS_SAT_COUNT) ); // sat
+								lcd_outdez( 7 * FW-2, 3*FH, gps_sat ) ;
+
+//		 line 4 left "HDOP"
+                int16_t val;
+								val = FrskyHubData[FR_GPS_HDOP];
+								if (val <= 200)
+								{
+                	attr  = PREC1;
+				   				blink = 0;
+				 				}
+								else
+								{
+                  attr = PREC1 | BLINK;
+				   				blink = BLINK;
+								}
+								lcd_putsAtt( 0 * FW,   4*FH, PSTR(STR_MAV_GPS_HDOP), blink ) ; 
+                lcd_outdezAtt( 7 * FW-2, 4*FH, val, attr ) ; // hdop
+
+//		 line 5 left  "heartbeat"
+								lcd_hbar( 0, 5*FH+1, 40, 4, frskyUsrStreaming ) ; // heartbeat
+//		 line 2 right "Baro Alt"
+								lcd_puts_P( 15 * FW-1, 2*FH, PSTR(STR_MAV_ALT) ) ; // Alt
+								val = get_telemetry_value(TEL_ITEM_BALT) ;
+								attr = 0 ;
+                if ( val < 1000 )
+								{
+                  attr |= PREC1 ;
+                }
+								else
+								{
+                  val /= 10 ;
+                }
+                lcd_outdezAtt( 21 * FW+1, 2*FH, val, attr ) ;
+
+//		 line 3 right "GPS Alt"
+								lcd_puts_P( 15 * FW-1, 3*FH, PSTR(STR_MAV_GALT) ); // GAlt
+								lcd_outdez( 21 * FW+1, 3*FH, get_telemetry_value(TEL_ITEM_GALT) ) ;
+//		 line 4 right "Home Distance"
+								lcd_puts_P( 15 * FW-1, 4*FH, PSTR(STR_MAV_HOME) ); // home
+								lcd_outdez( 21 * FW+1, 4*FH, FrskyHubData[FR_HOME_DIST] ) ;
+//		 line 5 right "Current, Milliampers"
+                lcd_outdezAtt( 20 * FW+1, 5*FH, FrskyHubData[FR_CURRENT], PREC1 ) ;
+								lcd_puts_P( 15 * FW-1, 5*FH, PSTR(STR_MAV_CURRENT) ); // "Cur"
+//								lcd_outdez ( 20 * FW+1, 5*FH,  FrskyHubData[FR_CURRENT])/10;
+		        		lcd_putc   ( 20 * FW+2, 5*FH, 'A');
+//		 line 6 left "Rssi"
+								lcd_puts_P( 0 * FW, 6*FH, PSTR("Rssi") ); // "Rssi"
+								uint8_t rx = FrskyHubData[FR_RXRSI_COPY];
+								if (rx > 100) rx = 100;
+                lcd_outdezAtt( 7 * FW-3, 6*FH, rx, blink);
+//         line 6 right  "Rcq"
+                lcd_puts_P( 15*FW-1, 6*FH, PSTR("Rcq") ); // "Rcq"
+								uint8_t tx = FrskyHubData[FR_TXRSI_COPY];
+								if (tx > 100) tx = 100;
+                lcd_outdezAtt( 21*FW+1, 6*FH, tx, blink);
+
+//		 line 7 
+                lcd_puts_P( 0 * FW, 7*FH, PSTR("Rx") );
+								lcd_hbar( 14, 57, 49, 6, FrskyHubData[FR_RXRSI_COPY] ) ;
+                lcd_puts_P( 19 * FW+1, 7*FH, PSTR("Tx") );
+								lcd_hbar( 65, 57, 49, 6, FrskyHubData[FR_TXRSI_COPY] ) ;
+
+//				 THROTTLE bar, %
+//								lcd_vbar( 0, 1 * FH, 4, 6 * FH - 1, FrskyHubData[FR_RPM] ) ;
+
+								uint8_t x0 = 64 ;
+								uint8_t y0 = 31 ;
+								uint8_t r  = 23 ;
+								uint8_t x ;
+								uint8_t y ;
+								DO_SQUARE( x0, y0, r * 2 + 1 ) ;
+								int16_t hdg = FrskyHubData[FR_COURSE] ;
+								if  ( FrskyHubData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED ) // armed
+								{   // we save head position before arming
+									if ( hdg_home == 0 ) hdg_home = hdg;
+								} else {
+									hdg_home = 0 ;
+								}
+								hdg = hdg - hdg_home + 270 ; // use SIMPLE mode 
+//								lcd_outdez( 12 * FW, 3 * FH, hdg ) ;
+								for (int8_t i = -3 ; i < r ; i += 1 )
+								{
+//#if defined(CPUM128) || defined(CPUM2561)
+//						x = x0 + i * cos ( hdg * PI / 180.0 );
+//						y = y0 + i * sin ( hdg * PI / 180.0 );
+//#else
+									x = x0 + ( i * rcos100 ( hdg ) ) / 100; 
+									y = y0 + ( i * rsin100 ( hdg ) ) / 100;
+//#endif
+									lcd_plot(x, y);
+								}
+
+
+						 }
+						} 	 
+#endif
             else		// Custom screen
             {
 							lcd_vline( 63, 8, 48 ) ;
@@ -11277,10 +11621,21 @@ Str_Protocol
 				lcd_puts_Pleft(    y, PSTR(STR_MULTI_TYPE));
 				// Sub-protocol stored in sub_protocol bits0..4
 				attr=g_model.sub_protocol;
+
+
 //#ifdef V2
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\017"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\021"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+
+//				attr = 0 ;
+//				uint8_t svalue = g_model.sub_protocol & 0x1F ;
+//  		  if(sub==subN) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0( svalue, 31 ) ; }
+//				g_model.sub_protocol = svalue + ( g_model.sub_protocol & 0xE0 ) ;
+//			  lcd_outdezAtt( 20*FW, y, svalue, attr ) ;
+
+
 //#endif
 				uint8_t ppmNch = g_model.ppmNCH ;
 				if(g_model.sub_protocol==attr)
@@ -11323,6 +11678,14 @@ Str_Protocol
 				else if ( x == M_CG023 )
 				{
 					s=PSTR(FWx10"\002"M_CG023_STR);
+				}
+				else if ( x == M_MT99XX )
+				{
+					s=PSTR(FWx10"\002"M_MT99XX_STR);
+				}
+				else if ( x == M_MJXQ )
+				{
+					s=PSTR(FWx10"\003"M_MJXQ_STR);
 				}
 				else
 				{

@@ -55,7 +55,7 @@
 #define NO_UNIT       0x80
 
 // GVAR flags
-#define GVAR_100			0x80
+#define GVAR_100			0x100
 
 
 extern uint8_t LcdLock ;

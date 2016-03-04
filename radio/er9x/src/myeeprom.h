@@ -657,14 +657,17 @@ PACK(typedef struct t_ModelData {
 #ifdef MULTI_PROTOCOL
 		int8_t sub_protocol;		// Extending sub_protocol values for MULTI protocol
 		int8_t option_protocol;		// Option byte for MULTI protocol
-		int8_t pxxFailsafe[14];		// Currently unused
+		uint8_t telemetryProtocol ;
+		int8_t pxxFailsafe[13];		// Currently unused
 #else
-		int8_t pxxFailsafe[16] ;	// Currently unused
+		int8_t sparepxxFailsafe[2];		// Currently unused
+		uint8_t telemetryProtocol ;
+		int8_t pxxFailsafe[13];		// Currently unused
 #endif // MULTI_PROTOCOL
 		SafetySwData xvoiceSw[EXTRA_VOICE_SW] ;
     CxSwData xcustomSw[EXTRA_CSW];
 	uint8_t   currentSource ;
-	uint8_t   altSource ;		// Currently unused
+	uint8_t Mavlink; //Extra data for Mavlink via FrSky 
 	uint8_t unused_phaseNames[MAX_MODES][6] ;
 	ScaleData Scalers[NUM_SCALERS] ;
 	int8_t timer1RstSw ;
@@ -683,6 +686,7 @@ PACK(typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
+//	uint8_t   altSource ;		// Currently unused
 
 }) ModelData;
 

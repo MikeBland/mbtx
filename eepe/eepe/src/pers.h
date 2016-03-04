@@ -297,6 +297,10 @@ enum EnumKeys {
 #define M_CX10		       11
 #define M_CG023		       12
 #define M_BAYANG	       13
+#define M_FRSKYX	       14
+#define M_ESKY		       15
+#define M_MT99XX	       16
+#define M_MJXQ		       17
 
 
 #define GETADC_SING = 0

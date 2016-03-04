@@ -704,7 +704,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  "
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  "
 //#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   "
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -730,6 +730,11 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_BAYANG	       13
 #define M_FRSKYX	       14
 #define M_ESKY		       15
+#define M_MT99XX	       16
+#define M_MT99XX_STR "\002MTH7YZ"
+#define M_MJXQ		       17
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D "
+	
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -1423,6 +1428,25 @@ void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index ) ;
 #ifdef QUICK_SELECT
 void putsDblSizeName( uint8_t y ) ;
 #endif
+
+//
+// Auto Pilot modes from ArduCopter
+//
+#define STABILIZE 0                     // hold level position
+#define ACRO 1                          // rate control
+#define ALT_HOLD 2                      // AUTO control
+#define AUTO 3                          // AUTO control
+#define GUIDED 4                        // AUTO control
+#define LOITER 5                        // Hold a single location
+#define RTL 6                           // AUTO control
+#define CIRCLE 7                        // AUTO control
+#define LAND 9                          // AUTO control
+#define OF_LOITER 10                    // Hold a single location using optical flow sensor
+#define DRIFT 11                        // DRIFT mode (Note: 12 is no longer used)
+#define SPORT 13                        // earth frame rate control
+#define FLIP        14                  // flip the vehicle on the roll axis
+#define AUTOTUNE    15                  // autotune the vehicle's roll and pitch gains
+#define POSHOLD     16                  // position hold with manual override
 
 #endif // er9x_h
 /*eof*/

@@ -27,6 +27,17 @@ GVARs for RGB backlight on 9Xtreme
 Start to MAVLINK support
 Add Q242 sub-protocol on MULTI
 Attempt RTC calibration on Taranis
+Add Spanish language
+Allow choice of GPS Lat/Long units
+GVARs for RGB backlight on 9Xtreme
+MAVLINK over FrSky support
+X9E supported
+Add OFF options for module/PPM2 outputs (SKY/PRO)
+Add Spanish language
+Fix bugs in 6-pos calibration/operation
+Add extra mode names to MavLink (ArduP/ArduC)
+FIx watchdog timeouts on Taranis in maintenance mode
+Fix Trainer startup bug
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)

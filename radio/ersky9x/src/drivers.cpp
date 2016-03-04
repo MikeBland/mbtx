@@ -34,6 +34,7 @@
 #include "myeeprom.h"
 #include "drivers.h"
 #include "logicio.h"
+#include "pulses.h"
 #include "lcd.h"
 #include "debug.h"
 #include "frsky.h"
@@ -76,6 +77,7 @@ uint16_t Temperature ;				// Raw temp reading
 uint16_t Max_temperature ;		// Max raw temp reading
 uint16_t DsmRxTimeout ;
 uint16_t WatchdogTimeout ;
+extern uint8_t PulsesPaused ;
 
 #define RX_UART_BUFFER_SIZE	128
 
@@ -2121,6 +2123,10 @@ void start_ppm_capture()
 {
 	start_timer4() ;
 	start_timer3() ;
+	if ( g_eeGeneral.trainerSource == 0 )
+	{
+		PIOC->PIO_PER = PIO_PC22 ;		// Enable bit C22 as input
+	}
 }
 
 //void end_ppm_capture()
@@ -2139,7 +2145,7 @@ void setCaptureMode(uint32_t mode)
 
 	NVIC_DisableIRQ(PIOA_IRQn) ;
 	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
-		if ( mode == CAP_SERIAL )
+	if ( mode == CAP_SERIAL )
 	{
 		LineState = LINE_IDLE ;
 		BitTime = BIT_TIME_115K ;
@@ -2426,7 +2432,7 @@ void init_ssc( uint16_t baudrate )
 	sscptr->SSC_TCMR = 0 ;  	//  0000 0000 0000 0000 0000 0000 0000 0000
 	sscptr->SSC_CR = SSC_CR_TXEN ;
 
-	configure_pins( PIO_PA17, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA ) ;
+	configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PER_A | PIN_PORTA | PIN_LOW ) ;
 #ifdef REVX
 	if ( baudrate )
 	{
@@ -2437,7 +2443,10 @@ void init_ssc( uint16_t baudrate )
 		PIOA->PIO_MDER = PIO_PA17 ;						// Open Drain O/p in A17
 	}
 #else
-	PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+	if ( PulsesPaused == 0 )
+	{
+		module_output_active() ;
+	}
 #endif
 }
 
@@ -2655,6 +2664,13 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 	USART2->CR1 |= USART_CR1_TXEIE ;
 }
 
+uint8_t LastReceivedSportByte ;
+struct t_pendingSport
+{
+	uint8_t *buffer ;
+	uint32_t count ;
+} PendingSportPacket ;
+
 #if !defined(SIMU)
 
 //#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_NE | USART_FLAG_FE | USART_FLAG_PE)
@@ -2704,6 +2720,18 @@ extern "C" void USART2_IRQHandler()
     if (!(status & USART_FLAG_ERRORS))
 		{
 			put_fifo64( &Telemetry_fifo, data ) ;
+//			if ( LastReceivedSportByte == 0x7E )
+//			{
+//				if ( data == 0x39 )		// Physical Id
+//				{
+//					if ( PendingSportPacket.count )
+//					{
+//						x9dSPortTxStart( PendingSportPacket.buffer, PendingSportPacket.count, 0 ) ;
+//						PendingSportPacket.count = 0 ;
+//					}
+//				}
+//				LastReceivedSportByte = data ;
+//			}
 		}
 		else
 		{

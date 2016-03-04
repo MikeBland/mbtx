@@ -577,6 +577,7 @@ void simulatorDialog::configSwitches()
 			ui->SBwidget->show() ;
 			ui->SEwidget->show() ;
 			ui->SFwidget->show() ;
+			ui->SFslider->setMaximum(1) ;
 			ui->SCwidget->show() ;
 			ui->SDwidget->show() ;
 			ui->SGwidget->show() ;
@@ -634,9 +635,10 @@ void simulatorDialog::configSwitches()
 			ui->dialP_3->show() ;
 			if ( g_eeGeneral.switchMapping & USE_THR_3POS )
 			{
-				ui->SEwidget->show() ;
+				ui->SFwidget->show() ;
+				ui->SFslider->setMaximum(2) ;
 				ui->switchTHR->hide() ;
-				ui->labelSE->setText("THR") ;
+				ui->labelSF->setText("THR") ;
 			}
 			else
 			{
@@ -1558,9 +1560,9 @@ bool simulatorDialog::hwKeyState(int key)
     	case (HSW_Gear):    return ui->switchGEA->isChecked(); break;
     	case (HSW_Trainer): return ui->switchTRN->isDown(); break;
 			
-			case HSW_Thr3pos0	:	return ui->SEslider->value() == 0 ; break ;
-			case HSW_Thr3pos1	:	return ui->SEslider->value() == 1 ; break ;
-			case HSW_Thr3pos2	:	return ui->SEslider->value() == 2 ; break ;
+			case HSW_Thr3pos0	:	return ui->SFslider->value() == 0 ; break ;
+			case HSW_Thr3pos1	:	return ui->SFslider->value() == 1 ; break ;
+			case HSW_Thr3pos2	:	return ui->SFslider->value() == 2 ; break ;
 			case HSW_Rud3pos0	:	return ui->SEslider->value() == 0 ; break ;
 			case HSW_Rud3pos1	:	return ui->SEslider->value() == 1 ; break ;
 			case HSW_Rud3pos2	:	return ui->SEslider->value() == 2 ; break ;

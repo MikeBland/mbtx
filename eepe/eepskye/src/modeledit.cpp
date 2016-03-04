@@ -701,7 +701,20 @@ void ModelEdit::updateToMV3()
 
 void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 {
+	int x = 8 ;
 	b->clear() ;
+  if ( type > 17 )
+	{
+		b->addItem("0");
+		b->addItem("1");
+		b->addItem("2");
+		b->addItem("3");
+		b->addItem("4");
+		b->addItem("5");
+		b->addItem("6");
+		b->addItem("7");
+		return ;
+	}
 	switch ( type )
 	{
 		case M_Flysky :
@@ -709,36 +722,84 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("V9x9");
 			b->addItem("V6x6");
 			b->addItem("V912");
+			x = 4 ;
 		break ;
 		case M_Hisky :
 			b->addItem("Hisky");
 			b->addItem("HK310");
+			x = 2 ;
 		break ;
 		case M_DSM2 :
 			b->addItem("DSM2");
 			b->addItem("DSMX");
+			x = 2 ;
 		break ;
 		case M_YD717 :
 			b->addItem("YD717");
 			b->addItem("SKYWLKR");
-			b->addItem("SYMAX2");
+			b->addItem("SYMAX4");
+      b->addItem("XINXUN");
       b->addItem("NIHUI");
+			x = 5 ;
 		break ;
-		case M_SymaX :
-			b->addItem("SYMAX");
-			b->addItem("SYMAX5C");
+		case M_KN :
+			b->addItem("WLTOYS");
+			b->addItem("FEILUN");
+			x = 2 ;
 		break ;
 		case M_CX10 :
 			b->addItem("GREEN");
 			b->addItem("BLUE");
 			b->addItem("DM007");
+			b->addItem("Q282");
+			b->addItem("J3015_1");
+			b->addItem("J3015_2");
+			b->addItem("MK33041");
+			b->addItem("Q242");
+			x = 8 ;
 		break ;
 		case M_CG023 :
 			b->addItem("CG023");
 			b->addItem("YD829");
+			b->addItem("H8_3D");
+			x = 3 ;
+		break ;
+		case M_MT99XX :
+			b->addItem("MT");
+			b->addItem("H7");
+			b->addItem("YZ");
+			x = 3 ;
+		break ;
+		case M_MJXQ :
+			b->addItem("WLH08");
+			b->addItem("X600");
+			b->addItem("X800");
+			b->addItem("H26D");
+			x = 4 ;
 		break ;
 		default :
 			b->addItem("NONE");
+			x = 1 ;
+		break ;
+	}
+	switch ( x )
+	{
+		case 0 :
+			b->addItem("0");
+		case 1 :
+			b->addItem("1");
+		case 2 :
+			b->addItem("2");
+		case 3 :
+			b->addItem("3");
+		case 4 :
+			b->addItem("4");
+		case 5 :
+			b->addItem("5");
+		case 6 :
+			b->addItem("6");
+		case 7 :
+			b->addItem("7");
 		break ;
 	}
 }
@@ -2350,6 +2411,41 @@ void ModelEdit::updateCurvesTab()
    ControlCurveSignal(false);
 }
 
+const QColor colors[16] =
+{
+  QColor(0,0,127),
+  QColor(0,127,0),
+  QColor(127,0,0),
+  QColor(0,127,127),
+  QColor(127,0,127),
+  QColor(127,127,0),
+  QColor(127,127,127),
+  QColor(0,0,255),
+  QColor(0,127,255),
+  QColor(127,0,255),
+  QColor(0,255,0),
+  QColor(0,255,127),
+  QColor(127,255,0),
+  QColor(255,0,0),
+  QColor(255,0,127),
+  QColor(255,127,0),
+//  QColor(0,0,127),
+//  QColor(0,127,0),
+//  QColor(127,0,0),
+//  QColor(0,127,127),
+//  QColor(127,0,127),
+//  QColor(127,127,0),
+//  QColor(127,127,127),
+//  QColor(0,0,255),
+//  QColor(0,127,255),
+//  QColor(127,0,255),
+//  QColor(0,255,0),
+//  QColor(0,255,127),
+//  QColor(127,255,0),
+//  QColor(255,0,0),
+//  QColor(255,0,127),
+//  QColor(255,127,0),
+};
 
 void ModelEdit::tabCurves()
 {
@@ -2366,6 +2462,77 @@ void ModelEdit::tabCurves()
    currentCurve = 0;
 
    connect(ui->clearMixesPB,SIGNAL(pressed()),this,SLOT(clearCurves()));
+
+	int i ;
+	for ( i = 0 ; i < 16 ; i += 1 )
+	{
+		QPalette palette ;
+		QPushButton *p ;
+		switch ( i )
+		{
+			default:
+			case 0 :
+				p = ui->curveEdit_1 ;
+			break ;
+			case 1 :
+				p = ui->curveEdit_2 ;
+			break ;
+			case 2 :
+				p = ui->curveEdit_3 ;
+			break ;
+			case 3 :
+				p = ui->curveEdit_4 ;
+			break ;
+			case 4 :
+				p = ui->curveEdit_5 ;
+			break ;
+			case 5 :
+				p = ui->curveEdit_6 ;
+			break ;
+			case 6 :
+				p = ui->curveEdit_7 ;
+			break ;
+			case 7 :
+				p = ui->curveEdit_8 ;
+			break ;
+			case 8 :
+				p = ui->curveEdit_9 ;
+			break ;
+			case 9 :
+				p = ui->curveEdit_10 ;
+			break ;
+			case 10 :
+				p = ui->curveEdit_11 ;
+			break ;
+			case 11 :
+				p = ui->curveEdit_12 ;
+			break ;
+			case 12 :
+				p = ui->curveEdit_13 ;
+			break ;
+			case 13 :
+				p = ui->curveEdit_14 ;
+			break ;
+			case 14 :
+				p = ui->curveEdit_15 ;
+			break ;
+			case 15 :
+				p = ui->curveEdit_16 ;
+			break ;
+		}
+
+		palette.setBrush(QPalette::Active, QPalette::Button, QBrush(colors[i]));
+		palette.setBrush(QPalette::Active, QPalette::ButtonText, QBrush(Qt::white));
+
+#ifdef __APPLE__
+		p->setStyleSheet(QString("color: %1;").arg(colors[i].name()));
+#else
+		p->setStyleSheet(QString("background-color: %1; color: white;").arg(colors[i].name()));
+#endif
+		p->setPalette(palette);
+		p->setText(tr("Curve %1").arg(i+1));
+	}
+
 
    connect(ui->curvePt1_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
    connect(ui->curvePt2_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
