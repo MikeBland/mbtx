@@ -245,16 +245,17 @@ void store_hub_data( uint8_t index, uint16_t value )
 	}
 	if ( index == FR_ALT_BAROd )
 	{
+		int16_t val = (int16_t)value ;
 		AltitudeDecimals |= 1 ;
-		if ( ( value > 9 ) || ( value < -9 ) )
+		if ( ( val > 9 ) || ( val < -9 ) )
 		{
 			AltitudeDecimals |= 2 ;
 		}
 		if ( AltitudeDecimals & 2 )
 		{
-			value /= 10 ;			
+			val /= 10 ;			
 		}
-		FrskyHubData[FR_ALT_BARO] = WholeAltitude + value ) ;
+		FrskyHubData[FR_ALT_BARO] = WholeAltitude + val ;
 	}
 
 	if ( index == FR_SPORT_ALT )

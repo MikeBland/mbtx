@@ -388,11 +388,11 @@ void voice_telem_item( uint8_t indexIn )
 		}
 		break ;
 
-    case FR_RXV :
-			value = convertRxv( value ) ;			
-			unit = SV_VOLTS ;			
-			num_decimals = 1 ;
-		break ;
+//    case FR_RXV :
+//			value = convertRxv( value ) ;
+//			unit = V_VOLTS ;			
+//			num_decimals = 1 ;
+//		break ;
 
 		case FR_ALT_BARO:
       unit = V_METRES ;
@@ -714,6 +714,12 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 			unit = putsTelemValue( (style & TELEM_VALUE_RIGHT) ? xbase+61 : x-fieldW, y, val, channel, att|NO_UNIT/*|blink*/ ) ;
 			displayed = 1 ;
     break ;
+
+//		case FR_RXV:
+//  		unit = 'v' ;
+//			att |= PREC1 ;
+//			val = convertRxv( val ) ;
+//    break ;
 
     case FR_TEMP1:
     case FR_TEMP2:
@@ -11627,7 +11633,7 @@ Str_Protocol
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
 				
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\021"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\022"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 
 //				attr = 0 ;
 //				uint8_t svalue = g_model.sub_protocol & 0x1F ;
