@@ -359,6 +359,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     connect(ui->trainerCalib_4, SIGNAL(editingFinished()), this, SLOT(trainerTabValueChanged()));
 
     connect(ui->PPM_MultiplierDSB, SIGNAL(editingFinished()), this, SLOT(trainerTabValueChanged()));
+    connect(ui->TrainerSourceCB, SIGNAL(currentIndexChanged(int)), this, SLOT(trainerTabValueChanged()));
 
     connect(ui->weightSB_1, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_2, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
@@ -604,6 +605,10 @@ void GeneralEdit::saveTrainerToProfile()
 		tc->mode = td->mode ;
 		tc->swtch = xtd->swtch ;
 		tc->studWeight = xtd->studWeight ;
+		if ( i == 0 )
+		{
+			tc->source = g_eeGeneral.trainerSource ;
+		}
 	}
 }
 
@@ -620,6 +625,10 @@ void GeneralEdit::loadTrainerFromProfile()
 		td->mode = tc->mode ;
 		xtd->swtch = tc->swtch ;
 		xtd->studWeight = tc->studWeight ;
+		if ( i == 0 )
+		{
+			g_eeGeneral.trainerSource = tc->source ;
+		}
 	}
 }
 
@@ -642,6 +651,7 @@ void GeneralEdit::updateTrainerTab()
     on_tabWidget_selected(""); // updates channel name labels
 
 		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
+		ui->TrainerSourceCB->setCurrentIndex( g_eeGeneral.trainerSource ) ;
 		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
     ui->modeCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
     ui->sourceCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].srcChn);

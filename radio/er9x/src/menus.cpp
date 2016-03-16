@@ -11633,7 +11633,7 @@ Str_Protocol
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
 				
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\022"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\023"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 
 //				attr = 0 ;
 //				uint8_t svalue = g_model.sub_protocol & 0x1F ;

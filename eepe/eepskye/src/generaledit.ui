@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -1804,7 +1804,7 @@ This is used by the templated to determine which channel goes to what number out
        <string>Trainer</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_6">
-       <item row="2" column="0" colspan="2">
+       <item row="4" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_4">
          <item row="2" column="0">
           <widget class="QLabel" name="chnLabel_1">
@@ -2160,7 +2160,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="label_33">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Multiplier&lt;/span&gt; adjusts all PPMin values by a factor from 0.0 to 5.0. It is normally left at 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2170,7 +2170,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="5" column="1">
         <widget class="QDoubleSpinBox" name="PPM_MultiplierDSB">
          <property name="decimals">
           <number>1</number>
@@ -2183,7 +2183,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="label_34">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting calibrates the Master radio to use the Trainer signals coming from the Slave Tx.&lt;/p&gt;&lt;p&gt;To calibrate the Master radio to use the PPMin signals coming from the Slave Tx, first turn on its power switch and select the memory for the trainer model. Then go to Model Setup, General and set Trainer to ON. Now plug the trainer cable into the student transmitter with the power switch in the OFF position. This activates the student transmitter in slave mode. With the Master transmitter still turned ON, plug the trainer cable into its trainer port. The Trainer menu should now show the PPM input values changing when you move the sticks on the Slave transmitter. Centre the sticks and trims on the Slave transmitter,&lt;span style=&quot; font-weight:600;&quot;&gt; including the throttle.&lt;/span&gt; Now highlight &lt;span style=&quot; font-weight:600;&quot;&gt;'Cal'&lt;/span&gt; in the Trainer setup menu on the Master transmitter and press the [MENU] button. All of the values to the right of 'Cal' should change to zero. In order to check that calibration has been successful, you should move the sticks on the Slave (student) transmitter to their fullest extents and make sure that each stick axis has a range of about -100 to 100. This completes calibration of the trainer setup. If necessary, the Multiplier can be used to adjust the input values, but is normally not required.&lt;/p&gt;&lt;p&gt;Test the trainer setup to ensure that control of the primary flight functions transfers correctly to the student when the trainer switch is ON. Check in particular that controls work in the proper directions on both transmitters.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -2193,7 +2193,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="5" column="0" colspan="2">
+       <item row="7" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_5">
          <item row="0" column="0">
           <widget class="QSpinBox" name="trainerCalib_1">
@@ -2237,7 +2237,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="6" column="0">
+       <item row="8" column="0">
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -2269,12 +2269,12 @@ p, li { white-space: pre-wrap; }
          </item>
          <item>
           <property name="text">
-           <string>Sbus</string>
+           <string>Sbus/BT</string>
           </property>
          </item>
          <item>
           <property name="text">
-           <string>Cppm</string>
+           <string>Cppm/COM2</string>
           </property>
          </item>
          <item>
@@ -2284,23 +2284,34 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item row="3" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <item>
+          <widget class="QSpinBox" name="TrainerProfileSB">
+           <property name="minimum">
+            <number>0</number>
+           </property>
+           <property name="maximum">
+            <number>3</number>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit">
+           <property name="maxLength">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="0">
         <widget class="QLabel" name="label_55">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Four Trainer profiles are available. You can configure and calibrate 4 different radios, without having to configure the Trainer menu every time you use a different Slave transmitter . A very nice feature if you teach other people to fly and they use their own radio..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="text">
           <string>Profile</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="1">
-        <widget class="QSpinBox" name="TrainerProfileSB">
-         <property name="minimum">
-          <number>0</number>
-         </property>
-         <property name="maximum">
-          <number>2</number>
          </property>
         </widget>
        </item>

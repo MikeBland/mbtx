@@ -116,7 +116,8 @@ const uint8_t Fr_indices[] =
 	FR_V_AMP | 0x80,
 	FR_V_AMPd,
 	FR_VOLTS,
-	HUBDATALENGTH-1		// 44
+	FR_AIRSPEED,
+	HUBDATALENGTH-1		// 45
 } ;
 
 uint8_t TmOK ;
@@ -281,6 +282,10 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 	if ( index == 57 )
 	{
 		index = 43 ;	//FR_VOLTS ;		// Move Oxsensor voltage
+	}
+	if ( index == 56 )
+	{
+		index = 44 ;	//FR_AIRSPEED
 	}
 	if ( index > sizeof(Fr_indices) )
 	{
@@ -1538,6 +1543,10 @@ void processSportPacket()
 
 				case GPS_SPEED_ID_8 :
 					store_hub_data( FR_GPS_SPEED, value/1000 ) ;
+				break ;
+
+				case AIRSPEED_ID_8 :
+					store_hub_data( FR_AIRSPEED, value/100 ) ;
 				break ;
 
 			}

@@ -704,7 +704,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  Shenqi"
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -735,6 +735,7 @@ extern uint8_t Ee_lock ;
 #define M_MJXQ		       17
 #define M_MJXQ_STR "\005WLH08X600 X800 H26D "
 #define M_SHENQI				 18
+#define M_FY326					 19
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "
@@ -751,8 +752,11 @@ extern uint8_t Ee_lock ;
 #define POWER_X9E_STOP	3
 
 
-extern uint8_t pxxFlag;
-extern uint8_t pxxFlag_x ;
+#if defined(PCBX9D) || defined(PCB9XT)
+extern uint8_t PxxFlag[2] ;
+#else
+extern uint8_t pxxFlag ;
+#endif
 extern uint8_t InactivityMonitor ;
 extern uint16_t InacCounter ;
 
@@ -784,7 +788,7 @@ const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 extern const int8_t TelemIndex[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 47
+#define NUM_TELEM_ITEMS 48
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
 #define NUM_SKYXCHNRAW (CHOUT_BASE+NUM_SKYCHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -919,7 +923,9 @@ union t_xmem
 #endif
 	struct t_alpha Alpha ;
 //#if defined(CPUM128) || defined(CPUM2561)
-//  uint8_t file_buffer[256];
+#ifdef PCBX9D  
+	uint8_t file_buffer[512];
+#endif
 //#else
 //  uint8_t file_buffer[128];
 //#endif
@@ -1010,6 +1016,7 @@ extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8
 extern const char *get_switches_string( void ) ;
 void putsDblSizeName( uint8_t y ) ;
 void clearKeyEvents( void ) ;
+void speakModelVoice( void ) ;
 
 extern void interrupt5ms() ;
 extern uint16_t getTmr2MHz( void ) ;
@@ -1209,6 +1216,17 @@ extern uint8_t AlertType ;
 #endif
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
+
+// Trainer sources
+#define TRAINER_JACK		0
+#ifdef PCBX9D
+#define TRAINER_SBUS		1
+#define TRAINER_CPPM		2
+#else
+#define TRAINER_BT			1
+#define TRAINER_COM2		2
+#endif
+#define TRAINER_SLAVE		3
 
 void com2Configure( void ) ;
 

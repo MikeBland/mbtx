@@ -44,6 +44,8 @@ extern uint8_t *eepromBufferAddress( void ) ;
 extern const char *openBackupEeprom( void ) ;
 extern const char *processBackupEeprom( uint16_t blockNo ) ;
 extern void closeBackupEeprom( void ) ;
+extern const char *openRestoreEeprom( char *filename ) ;
+extern const char *processRestoreEeprom( uint16_t blockNo ) ;
 
 extern void setFilenameDateTime( char *filename ) ;
 

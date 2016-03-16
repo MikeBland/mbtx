@@ -1095,7 +1095,34 @@ extern uint8_t CurrentVolume ;
 uint8_t LcdLock ;
 uint16_t LcdInputs ;
 
-
+#ifdef PCBSKY
+void lock_lcd()
+{
+	uint32_t x ;
+	uint32_t y ;
+	y = PIOC->PIO_PDSR ;
+	x = y << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP
+	x &= 0x00FF ;
+#ifdef REVB
+	if ( y & 0x01000000 )
+#else 
+	if ( PIOA->PIO_PDSR & 0x80000000 )
+#endif
+	{
+		x |= 0x0400 ;		// EXIT
+	}
+#ifdef REVB
+	if ( PIOB->PIO_PDSR & 0x000000020 )
+#else 
+	if ( PIOB->PIO_PDSR & 0x000000040 )
+#endif
+	{
+		x |= 0x0200 ;		// MENU
+	}
+	LcdInputs = x ;
+	LcdLock = 1 ;
+}
+#endif
 
 #ifndef PCBDUE
 #ifdef PCBSKY
@@ -1130,8 +1157,7 @@ void lcd_init()
 	configure_pins( LCD_A0, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
 
 // read the inputs, and lock the LCD lines
-	LcdInputs = PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
-	LcdLock = 1 ;
+	lock_lcd() ;
 //	pioptr = PIOA ;
 //	pioptr->PIO_PER = LCD_A0 ;		// Enable bit 7 (LCD-A0)
 //	pioptr->PIO_CODR = LCD_A0 ;
@@ -1252,8 +1278,7 @@ void lcdSetRefVolt(uint8_t val)
 	pioptr = PIOC ;
 
 // read the inputs, and lock the LCD lines
-	LcdInputs = PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
-	LcdLock = 1 ;
+	lock_lcd() ;
 
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
 
@@ -1282,8 +1307,7 @@ void lcdSetOrientation()
 	Pio *pioptr ;
 	pioptr = PIOC ;
 // read the inputs, and lock the LCD lines
-	LcdInputs = PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
-	LcdLock = 1 ;
+	lock_lcd() ;
 
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
 
@@ -1386,8 +1410,7 @@ void refreshDisplay()
 #endif // REVB
 
 // read the inputs, and lock the LCD lines
-	LcdInputs = PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
-	LcdLock = 1 ;
+	lock_lcd() ;
 
 	pioptr = PIOC ;
 #ifdef REVB

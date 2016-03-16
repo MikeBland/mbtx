@@ -8,6 +8,7 @@
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
 #include <QMessageBox>
+#include <QSound>
 
 
 #define GBALL_SIZE  20
@@ -23,6 +24,8 @@
 //#define IS_THROTTLE(x)  (((2-(g_eeGeneral.stickMode&1)) == x) && (x<4))
 
 const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2 } ;
+
+int32_t WelcomePlayed = 0 ;
 
 uint8_t simulatorDialog::IS_THROTTLE( uint8_t x)
 {
@@ -274,7 +277,13 @@ void simulatorDialog::timerEvent()
 #define CBEEP_OFF "QLabel { }"
 
     ui->label_beep->setStyleSheet(beepShow ? CBEEP_ON : CBEEP_OFF);
-    if(beepShow) beepShow--;
+    if(beepShow)
+		{
+			if ( --beepShow == 0 )
+			{
+			  ui->label_beep->setText( "BEEP" ) ;
+			}
+		}
 
 
 		if ( ++one_sec_precount >= 10 )
@@ -475,7 +484,9 @@ void simulatorDialog::timerEvent()
 				}
 			}
 		}
-
+			
+    processVoiceAlarms() ;
+		
 		// Now send serial data
 		if ( serialSending )
 		{
@@ -821,6 +832,12 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int 
 
 		configSwitches() ;
     setupTimer();
+		if ( WelcomePlayed == 0 )
+		{
+			voiceDisplay( "WELCOME" ) ;
+//			QSound::play( "C:/Progs/eepe/voice/WELCOME.wav" ) ;
+			WelcomePlayed = 1 ;
+		}
 }
 
 
@@ -1454,6 +1471,13 @@ void simulatorDialog::setValues()
 	ui->Gvar6->setText( tr("%1").arg(g_model.gvars[5].gvar) ) ;
 	ui->Gvar7->setText( tr("%1").arg(g_model.gvars[6].gvar) ) ;
 }
+
+void simulatorDialog::voiceDisplay( QString name )
+{
+  ui->label_beep->setText( name ) ;
+	beepShow = 150 ;
+}
+
 
 void simulatorDialog::beepWarn1()
 {
@@ -3468,4 +3492,262 @@ void simulatorDialog::on_SendDataButton_clicked()
 
 	}
 }
+
+void simulatorDialog::processVoiceAlarms()
+{
+//	uint32_t i ;
+//	uint32_t curent_state ;
+//	VoiceAlarmData *pvad = &g_model.vad[0] ;
+//  for ( i = 0 ; i < NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
+//	{
+//		uint32_t play = 0 ;
+//		curent_state = 0 ;
+//		int16_t ltimer = Nvs_timer[i] ;
+//	 	if ( i == NUM_VOICE_ALARMS )
+//		{
+//			pvad = &g_model.vadx[0] ;
+//		}
+//		if ( pvad->func )		// Configured
+//		{
+//  		int16_t x ;
+//			int16_t y = pvad->offset ;
+//			x = getValue( pvad->source - 1 ) ;
+//  		switch (pvad->func)
+//			{
+//				case 1 :
+//					x = x > y ;
+//				break ;
+//				case 2 :
+//					x = x < y ;
+//				break ;
+//				case 3 :
+//					x = abs(x) > y ;
+//				break ;
+//				case 4 :
+//					x = abs(x) < y ;
+//				break ;
+//				case 5 :
+//				{
+//					if ( isAgvar( pvad->source ) )
+//					{
+//						x *= 10 ;
+//						y *= 10 ;
+//					}
+//    			x = abs(x-y) < 32 ;
+//				}
+//				break ;
+//				case 6 :
+//					x = x == y ;
+//				break ;
+//			}
+//// Start of invalid telemetry detection
+////					if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+////					{ // Telemetry item
+////						if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
+////						{
+////							x = 0 ;	// Treat as OFF
+////						}
+////					}
+//// End of invalid telemetry detection
+//			if ( pvad->swtch )
+//			{
+//				if ( getSwitch( pvad->swtch,0,0 ) == 0 )
+//				{
+//					x = 0 ;
+//				}
+//			}
+//			if ( x == 0 )
+//			{
+//				ltimer = 0 ;
+//			}
+//			else
+//			{
+//				play = 1 ;
+//			}
+//		}
+//		else // No function
+//		{
+//			if ( pvad->swtch )
+//			{
+//				curent_state = getSwitch( pvad->swtch,0,0 ) ;
+//				if ( curent_state == 0 )
+//				{
+////							Nvs_state[i] = 0 ;
+//					ltimer = -1 ;
+//				}
+//			}
+//			else// No switch, no function
+//			{ // Check for source with numeric rate
+//				if ( pvad->rate >= 4 )	// A time
+//				{
+//					if ( pvad->vsource )
+//					{
+//						play = 1 ;
+//					}
+//				}
+//			}
+//		}
+//		play |= curent_state ;
+
+//		if ( ( VoiceCheckFlag & 2 ) == 0 )
+//		{
+//		 if ( pvad->rate == 3 )	// All
+//		 {
+//		 		uint32_t pos = switchPosition( pvad->swtch ) ;
+//				uint32_t state = Nvs_state[i] ;
+//				play = 0 ;
+//				if ( state != pos )
+//				{
+//					if ( state > 0x80 )
+//					{
+//						if ( --state == 0x80 )
+//						{
+//							state = pos ;
+//							ltimer = 0 ;
+//							play = pos + 1 ;
+//						}
+//					}
+//					else
+//					{
+//						state = 0x83 ;
+//					}
+//					Nvs_state[i] = state ;
+//				}
+//		 }
+//		 else
+//		 {
+//			if ( play == 1 )
+//			{
+//				if ( Nvs_state[i] == 0 )
+//				{ // just turned ON
+//					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
+//					{ // ON
+//						ltimer = 0 ;
+//					}
+//				}
+//				Nvs_state[i] = 1 ;
+//				if ( ( pvad->rate == 1 ) )
+//				{
+//					play = 0 ;
+//				}
+//			}
+//			else
+//			{
+//				if ( Nvs_state[i] == 1 )
+//				{
+//					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
+//					{
+//						ltimer = 0 ;
+//						play = 1 ;
+//						if ( pvad->rate == 2 )
+//						{
+//							play = 2 ;
+//						}
+//					}
+//				}
+//				Nvs_state[i] = 0 ;
+//			}
+//			if ( pvad->rate == 33 )
+//			{
+//				play = 0 ;
+//				ltimer = -1 ;
+//			}
+//		 }
+//		}
+//		else
+//		{
+//			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
+//			play = ( pvad->rate == 33 ) ? 1 : 0 ;
+//			ltimer = -1 ;
+//		}
+
+//		if ( pvad->mute )
+//		{
+//			if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+//			{ // Telemetry item
+//				if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
+//				{
+//					play = 0 ;	// Mute it
+//				}
+//			}
+//		}
+
+//		if ( play )
+//		{
+//			if ( ltimer < 0 )
+//			{
+//				if ( pvad->rate >= 4 )	// A time or ONCE
+//				{
+//					ltimer = 0 ;
+//				}
+//			}
+//			if ( ltimer == 0 )
+//			{
+//				if ( pvad->vsource == 1 )
+//				{
+//					doVoiceAlarmSource( pvad ) ;
+//				}
+//				if ( pvad->fnameType == 0 )	// None
+//				{
+//					// Nothing!
+//				}
+//				else if ( pvad->fnameType == 1 )	// Name
+//				{
+//					char name[10] ;
+//					char *p ;
+//					p = (char *)ncpystr( (uint8_t *)name, pvad->file.name, 8 ) ;
+//					if ( play >= 2 )
+//					{
+//						*(p-1) += ( play - 1 ) ;
+//					}
+//					putUserVoice( name, 0 ) ;
+//				}
+//				else if ( pvad->fnameType == 2 )	// Number
+//				{
+//					uint16_t value = pvad->file.vfile ;
+//					if ( value > 507 )
+//					{
+//						value = calc_scaler( value-508, 0, 0 ) ;
+//					}
+//					else if ( value > 500 )
+//					{
+//						value = g_model.gvars[value-501].gvar ;
+//					}
+//					putVoiceQueue( ( value + ( play - 1 ) ) | VLOC_NUMUSER ) ;
+//				}
+//				else
+//				{ // Audio
+//					audio.event( pvad->file.vfile, 0, 1 ) ;
+//				}
+//				if ( pvad->vsource == 2 )
+//				{
+//					doVoiceAlarmSource( pvad ) ;
+//				}
+////        if ( pvad->haptic )
+////				{
+////					audioDefevent( (pvad->haptic > 1) ? ( ( pvad->haptic == 3 ) ? AU_HAPTIC3 : AU_HAPTIC2 ) : AU_HAPTIC1 ) ;
+////				}
+//				if ( ( pvad->rate < 4 ) || ( pvad->rate > 32 ) )	// Not a time
+//				{
+//					ltimer = -1 ;
+//				}
+//				else
+//				{
+//					ltimer = 1 ;
+//				}
+//			}
+//			else if ( ltimer > 0 )
+//			{
+//				ltimer += 1 ;
+//				if ( ltimer > ( (pvad->rate-2) * 10 ) )
+//				{
+//					ltimer = 0 ;
+//				}
+//			}
+//		}
+//		pvad += 1 ;
+//		Nvs_timer[i] = ltimer ;
+//	}
+}
+
 

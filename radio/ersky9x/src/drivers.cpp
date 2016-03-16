@@ -2123,17 +2123,18 @@ void start_ppm_capture()
 {
 	start_timer4() ;
 	start_timer3() ;
-	if ( g_eeGeneral.trainerSource == 0 )
+	TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+	if ( tProf->channel[0].source == TRAINER_JACK )
 	{
 		PIOC->PIO_PER = PIO_PC22 ;		// Enable bit C22 as input
 	}
 }
 
-//void end_ppm_capture()
-//{
-//	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;
-//	NVIC_DisableIRQ(TC3_IRQn) ;
-//}
+void end_ppm_capture()
+{
+	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;
+	NVIC_DisableIRQ(TC3_IRQn) ;
+}
 
 
 #ifdef SERIAL_TRAINER
@@ -2182,7 +2183,7 @@ void start_timer5()
 
 void stop_timer5()
 {
-	TC1->TC_CHANNEL[2].TC_CCR = 0 ;		// Disable clock
+	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
 	NVIC_DisableIRQ(TC5_IRQn) ;
 }
 
@@ -2292,9 +2293,10 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
   uint16_t val ;
 
 	uint32_t status ;
+	status = TC1->TC_CHANNEL[0].TC_SR ;
 	if ( CaptureMode == CAP_SERIAL )
 	{
-		if ( ( status = TC1->TC_CHANNEL[0].TC_SR ) & TC_SR0_LDRBS )
+		if ( status & TC_SR0_LDRBS )
 		{	// H->L edge
 			capture = TC1->TC_CHANNEL[0].TC_RB ;
 			HtoLtime = capture ;
@@ -2339,7 +2341,7 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 		return ;
 	}
 
-	status = TC1->TC_CHANNEL[0].TC_SR ;
+//	status = TC1->TC_CHANNEL[0].TC_SR ;
 	if ( CaptureMode == CAP_COM1 )
 	{
 		if ( status & TC_SR0_CPCS )
@@ -2370,14 +2372,13 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 			{
   	  	if(val>800 && val<2200)
 				{
-					if ( g_eeGeneral.trainerSource == 0 )
+					TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+					if ( tProf->channel[0].source == TRAINER_JACK )
 					{
 						ppmInValid = 100 ;
-						if ( SbusTimer == 0 )
-						{ // Not receiving trainer data over SBUS
-	  		  	  g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10 ;
-							//+-500 != 512, but close enough.
-						}
+//  		  	  g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10 ;
+  		  	  g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ;
+						//+-500 != 512, but close enough.
 					}
 		    }
 				else

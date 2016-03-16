@@ -47,7 +47,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -518,10 +518,32 @@
           </widget>
          </item>
          <item>
-          <widget class="QCheckBox" name="TrainerChkB">
-           <property name="text">
-            <string/>
-           </property>
+          <widget class="QComboBox" name="trainerCB">
+           <item>
+            <property name="text">
+             <string>OFF</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Profile 0</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Profile 1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Profile 2</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Profile 3</string>
+            </property>
+           </item>
           </widget>
          </item>
         </layout>

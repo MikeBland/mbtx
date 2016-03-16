@@ -347,6 +347,61 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
   ee32WaitFinished();
 }
 
+uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
+{
+	uint32_t i ;
+	uint8_t *p ;
+
+	if ( ( eeAddress & 0x00000FFF ) == 0 )
+	{
+		// Erase block
+		eeprom_write_enable() ;
+		p = Spi_tx_buf ;
+		*p = 0x20 ;		// Block Erase command
+		*(p+1) = eeAddress >> 16 ;
+		*(p+2) = eeAddress >> 8 ;
+		*(p+3) = eeAddress ;		// 3 bytes address
+		spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		wdt_reset() ;
+		// Wait for erase to complete
+		while ( Spi_complete == 0 )
+		{
+			CoTickDelay(1) ;					// 2mS
+			wdt_reset() ;
+		}
+		while ( eeprom_read_status() & 1 )
+		{
+			CoTickDelay(1) ;					// 2mS
+			wdt_reset() ;
+		}
+	}
+	for ( i = 0 ; i < 8 ; i += 1 )
+	{
+		// Write 256 byte page
+		uint32_t j ;
+		for ( j = 0 ; j < 256 ; j += 1 )
+		{
+			if ( buffer[j] != 0xFF )
+			{
+				break ;
+			}
+		}
+		if ( j < 256 )
+		{
+			write32_eeprom_block( eeAddress, buffer, 256, 0 ) ;
+			while ( eeprom_read_status() & 1 )
+			{
+				CoTickDelay(1) ;					// 2mS
+				wdt_reset() ;
+			}
+		}
+		buffer += 256 ;
+		eeAddress += 256 ;
+		wdt_reset() ;
+	}
+	return 0 ;
+}
+
 // Read eeprom data starting at random address
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
@@ -1671,6 +1726,32 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 uint16_t AmountEeBackedUp ;
 FIL g_eebackupFile = {0};
 
+const char *openRestoreEeprom( char *filename )
+{
+  FRESULT result;
+
+	AmountEeBackedUp = 0 ;
+
+#ifdef PCBSKY
+  if ( SdMounted == 0 )
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+extern uint32_t sdMounted( void ) ;
+  if ( sdMounted() == 0 )
+#endif
+    return "NO SD CARD" ;
+
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
+	CoTickDelay(1) ;					// 2mS
+  if (result != FR_OK)
+	{
+    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+  return NULL ;
+}
+
+
 const char *openBackupEeprom()
 {
   FRESULT result;
@@ -1724,6 +1805,30 @@ const char *processBackupEeprom( uint16_t blockNo )
 	}
   read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
 	result = f_write( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &written ) ;
+	wdt_reset() ;
+	if ( result != FR_OK )
+	{
+		return "Write Error" ;
+	}
+	AmountEeBackedUp += 1 ;
+	return NULL ;
+}
+
+const char *processRestoreEeprom( uint16_t blockNo )
+{
+  FRESULT result ;
+	UINT nread ;
+
+	if ( blockNo != AmountEeBackedUp )
+	{
+		return "Sync Error" ;
+	}
+	result = f_read( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &nread ) ;
+	CoTickDelay(1) ;					// 2mS
+// Write eeprom here
+	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
+	
+//  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{

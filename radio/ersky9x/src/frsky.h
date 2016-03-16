@@ -78,13 +78,14 @@
 #define FR_WP_BEARING           52
 #define FR_VCC                  53
 /* Extra data for Mavlink via FrSky */
-#define FR_TRASH			54  // Used for invalid id
+#define FR_AIRSPEED             54
+#define FR_TRASH			55  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH 55
+#define HUBDATALENGTH  56
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -251,6 +252,9 @@ DataID Meaning       Unit   Range   Note
 #define A4_FIRST_ID      0x0910
 #define A4_LAST_ID       0x091f
 #define A4_ID_8						0x91
+#define AIRSPEED_FIRST_ID 0x0A00
+#define AIRSPEED_LAST_ID  0x0A0f
+#define AIRSPEED_ID_8			0xA0
 
 
 

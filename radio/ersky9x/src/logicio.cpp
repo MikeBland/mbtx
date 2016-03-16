@@ -708,7 +708,7 @@ uint32_t read_keys()
 	register uint32_t x ;
 	register uint32_t y ;
 
-	x = LcdLock ? LcdInputs : PIOC->PIO_PDSR << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
+	x = LcdLock ? LcdInputs : (PIOC->PIO_PDSR << 1) ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
 #ifdef REVB
 	y = x & 0x00000020 ;		// RIGHT
 	if ( x & 0x00000004 )
@@ -724,6 +724,7 @@ uint32_t read_keys()
 		y |= 0x00000008 ;			// DOWN
 	}
 	x = ~x ;
+	x &= ~0x40 ;
 	if ( x & 8 )
 	{
 		x |= 0x40 ;
@@ -798,21 +799,29 @@ extern uint8_t Co_proc_status[] ;
 	}
 	ExtraInputs = x ;
 #endif
-#ifdef REVB
-	if ( PIOC->PIO_PDSR & 0x01000000 )
-#else 
-	if ( PIOA->PIO_PDSR & 0x80000000 )
-#endif
+
+	if (LcdLock)
 	{
-		y |= 4 ;		// EXIT
+		y |= ( LcdInputs >> 8 ) & 0x06 ;
 	}
-#ifdef REVB
-	if ( PIOB->PIO_PDSR & 0x000000020 )
-#else 
-	if ( PIOB->PIO_PDSR & 0x000000040 )
-#endif
+	else
 	{
-		y |= 2 ;		// MENU
+#ifdef REVB
+		if ( PIOC->PIO_PDSR & 0x01000000 )
+#else 
+		if ( PIOA->PIO_PDSR & 0x80000000 )
+#endif
+		{
+			y |= 4 ;		// EXIT
+		}
+#ifdef REVB
+		if ( PIOB->PIO_PDSR & 0x000000020 )
+#else 
+		if ( PIOB->PIO_PDSR & 0x000000040 )
+#endif
+		{
+			y |= 2 ;		// MENU
+		}
 	}
 	return y ;
 }

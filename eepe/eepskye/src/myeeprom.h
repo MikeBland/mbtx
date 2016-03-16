@@ -177,7 +177,8 @@ PACK(typedef struct t_TrainerChannel
 {
   int16_t calib ;
   uint8_t srcChn:3 ; //0-7 = ch1-8
-	uint8_t spare:3 ;
+  uint8_t source:2 ;	// Only used on index 0
+	uint8_t spare:1 ;
   uint8_t mode:2;   //off,add-mode,subst-mode
   int8_t  swtch ;
   int8_t  studWeight ;
@@ -777,6 +778,8 @@ PACK(typedef struct te_ModelData {
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
 	uint8_t xoption_protocol ;
+	uint8_t trainerProfile ;
+  //SKYMixData exmixData[EXTRA_SKYMIXERS];
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

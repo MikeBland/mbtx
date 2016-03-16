@@ -916,7 +916,8 @@ extern void checkRotaryEncoder() ;
 
 void checkTrainerSource()
 {
-	if ( CurrentTrainerSource	!= g_eeGeneral.trainerSource )
+	uint32_t tSource = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0].source ;
+	if ( CurrentTrainerSource	!= tSource )
 	{
 		switch ( CurrentTrainerSource )
 		{
@@ -935,7 +936,7 @@ void checkTrainerSource()
 				stop_trainer_ppm() ;
 			break ;
 		}
-		CurrentTrainerSource = g_eeGeneral.trainerSource ;
+		CurrentTrainerSource = tSource ;
 		switch ( CurrentTrainerSource )
 		{
 			case 0 :
@@ -2252,7 +2253,8 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 					BtRxOccured = 1 ;
 					if ( BtRxChecksum == 0 )
 					{
-						if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
+						TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+						if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
 						{
 							BtSbusReceived = 1 ;
 						}
@@ -2275,7 +2277,8 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 //		{
 //			ppmInValid = 99 ;
 //		}
-		if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
 		{
 			BtSbusReceived = 1 ;
 		}
@@ -3691,6 +3694,18 @@ uint32_t countExtraPots()
 }
 #endif
 
+void speakModelVoice()
+{
+	if ( g_model.modelVoice == -1 )
+	{
+		putNamedVoiceQueue( g_model.modelVname, VLOC_MNAMES ) ;
+	}
+	else
+	{
+		putVoiceQueue( ( g_model.modelVoice + 260 ) | VLOC_NUMUSER  ) ;
+	}
+}
+
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
@@ -3727,14 +3742,7 @@ void main_loop(void* pdata)
 		wdt_reset() ;
   	WatchdogTimeout = 100 ;
 
-		if ( g_model.modelVoice == -1 )
-		{
-			putNamedVoiceQueue( g_model.modelVname, VLOC_MNAMES ) ;
-		}
-		else
-		{
-			putVoiceQueue( ( g_model.modelVoice + 260 ) | VLOC_NUMUSER ) ;
-		}
+		speakModelVoice() ;
 	}
 	VoiceCheckFlag |= 2 ;// Set switch current states
 
@@ -3758,6 +3766,7 @@ void main_loop(void* pdata)
 
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
+	checkTrainerSource() ;
 	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
 	init_ppm2( 3000, 0 ) ;
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
@@ -4599,13 +4608,17 @@ void mainSequence( uint32_t no_menu )
 
 #ifdef PCBX9D
 	checkTrainerSource() ;
-	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) || ( CurrentTrainerSource == 1 ) )
+	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) || ( CurrentTrainerSource == TRAINER_SBUS ) )
 #endif
 #ifdef PCBSKY
 	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
 #endif
 	{
-		processSbusInput() ;
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( tProf->channel[0].source != TRAINER_JACK )
+		{
+			processSbusInput() ;
+		}
 	}
 
 
@@ -8198,7 +8211,7 @@ int16_t getValue(uint8_t i)
 		x = g_ppmIns[i-PPM_BASE] ;
 		if(i<PPM_BASE+4)
 		{
-			x -= g_eeGeneral.trainer.calib[i-PPM_BASE] ;
+			x -= g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i-PPM_BASE].calib ;
 		}
 		return x*2;
 	}

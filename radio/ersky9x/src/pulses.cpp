@@ -124,8 +124,8 @@ void crc( uint8_t data ) ;
 void pausePulses()
 {
 	PulsesPaused = 1 ;
-	module_output_low() ;
-	PPM2OutputLow() ;
+//	module_output_low() ;
+//	PPM2OutputLow() ;
 }
 
 void resumePulses()
@@ -152,23 +152,26 @@ void module_output_active()
 {
 	register Pio *pioptr ;
 	
-	pioptr = PIOA ;
-//	pioptr->PIO_ABCDSR[0] &= ~PIO_PA17 ;		// Peripheral C
-// 	pioptr->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
-	pioptr->PIO_PDR = PIO_PA17 ;						// Disable bit A17 Assign to peripheral
+	if ( CurrentTrainerSource != TRAINER_SLAVE )
+	{
+		pioptr = PIOA ;
+//		pioptr->PIO_ABCDSR[0] &= ~PIO_PA17 ;		// Peripheral C
+//	 	pioptr->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
+		pioptr->PIO_PDR = PIO_PA17 ;						// Disable bit A17 Assign to peripheral
 #ifdef REVX
-	if ( g_model.ppmOpenDrain )
-	{
-		pioptr->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
-	}
-	else
-	{
-		pioptr->PIO_MDER = PIO_PA17 ;						// Open Drain O/p in A17
-	}
+		if ( g_model.ppmOpenDrain )
+		{
+			pioptr->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+		}
+		else
+		{
+			pioptr->PIO_MDER = PIO_PA17 ;						// Open Drain O/p in A17
+		}
 #else
-	pioptr->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+		pioptr->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
 #endif
-	pioptr->PIO_PUER = PIO_PA17 ;						// With pull up
+		pioptr->PIO_PUER = PIO_PA17 ;						// With pull up
+	}
 }
 
 
@@ -179,31 +182,57 @@ void PPM2OutputLow()
 
 void PPM2OutputActive()
 {
-	configure_pins( PIO_PC15, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
+	if ( CurrentTrainerSource != TRAINER_SLAVE )
+	{
+		configure_pins( PIO_PC15, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
+	}
 }
 
 #ifdef PCBSKY
 void checkTrainerSource()
 {
-	uint32_t trainerOutput = 0 ;
+//Jack BT   COM2 Slave
+	uint32_t tSource = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0].source ;
 	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
 	{
-		trainerOutput = 1 ;
+		tSource = TRAINER_SLAVE ;
 	}
-	if ( g_eeGeneral.trainerSource == 3 )	// Slave
+	if ( g_model.traineron == 0 )
 	{
-		trainerOutput = 1 ;
+		tSource = TRAINER_JACK ;
 	}
-	if ( CurrentTrainerSource != trainerOutput )
+
+	if ( CurrentTrainerSource != tSource )
 	{
-		CurrentTrainerSource = trainerOutput ;
-		if ( trainerOutput )		// On trainer power
+		switch ( CurrentTrainerSource )
 		{
-			PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
-			module_output_low() ;
-			PPM2OutputLow() ;
+			case 0 :
+				end_ppm_capture() ;
+			break ;
+			case 1 :
+			break ;
+			case 2 :
+			break ;
+			case 3 :
+			break ;
 		}
-		else
+		CurrentTrainerSource = tSource ;
+		switch ( tSource )
+		{
+			case 0 :
+				start_ppm_capture() ;
+			break ;
+			case 1 :
+			break ;
+			case 2 :
+			break ;
+			case 3 :	// Slave so output
+				PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
+				module_output_low() ;
+				PPM2OutputLow() ;
+			break ;
+		}
+		if ( tSource != TRAINER_SLAVE )
 		{
 			PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
 			if ( g_model.protocol != PROTO_OFF )
@@ -367,6 +396,10 @@ extern "C" void PWM_IRQHandler (void)
 				else
 				{
 					// Kick off serial output here
+					if ( PulsesPaused == 0 )
+					{
+						PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
+					}
 					sscptr = SSC ;
 					sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
 					sscptr->SSC_TCR = Serial_byte_count ;
@@ -405,12 +438,12 @@ extern "C" void PWM_IRQHandler (void)
 					if ( Current_protocol == PROTO_ASSAN )
 					{
 						// Enable SSC, output
-						if ( PulsesPaused == 0 )
-						{
-							PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
-						}
 						USART0->US_CR = US_CR_RXDIS ;
 //						PIOA->PIO_PER = PIO_PA5 ;		// Assign A5 to PIO
+					}
+					if ( PulsesPaused == 0 )
+					{
+						PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
 					}
 					sscptr = SSC ;
 					sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
@@ -550,21 +583,10 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 	}
 }
 
-#ifdef MULTI_DEBUG
-uint32_t DebugMultiIndex ;
-uint8_t DebugMultiData[32] ;
-#endif
-
 //static void sendByteCrcSerial(uint8_t b)
 //{
 //	crc(b) ;
 //	sendByteDsm2(b) ;
-//#ifdef MULTI_DEBUG
-//	if ( DebugMultiIndex < 32 )
-//	{
-//		DebugMultiData[DebugMultiIndex++] = b ;
-//	}
-//#endif
 //}
 
 
@@ -837,9 +859,6 @@ void setupPulsesDsm2(uint8_t chns)
 			uint32_t outputbits = 0 ;
 			uint32_t i ;
 			bitlen = BITLEN_SBUS ;
-#ifdef MULTI_DEBUG
-			DebugMultiIndex = 0 ;
-#endif			
 			sendByteDsm2(0x55) ;
 			sendByteDsm2( dsmDat[0] ) ;
 			sendByteDsm2((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
@@ -966,7 +985,7 @@ void startPulses()
 void setupPulses()
 {
 	uint32_t requiredProtocol = g_model.protocol ;
-	if ( CurrentTrainerSource )
+	if ( CurrentTrainerSource == TRAINER_SLAVE )
 	{
 		requiredProtocol = PROTO_PPM ;
 	}
@@ -1004,7 +1023,7 @@ void setupPulses()
     switch(Current_protocol)
     { // Start new protocol hardware here
       case PROTO_PPM:
-				init_main_ppm( 3000, CurrentTrainerSource ? 0 : 1 ) ;		// Initial period 1.5 mS, output on
+				init_main_ppm( 3000, (CurrentTrainerSource == TRAINER_SLAVE) ? 0 : 1 ) ;		// Initial period 1.5 mS, output on
       break;
       case PROTO_PXX:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off

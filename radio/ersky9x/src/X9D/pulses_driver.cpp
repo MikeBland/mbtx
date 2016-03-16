@@ -66,7 +66,7 @@ void setupPulsesPPM(unsigned int port);
 uint16_t *ppmStreamPtr[NUM_MODULES];
 uint16_t ppmStream[NUM_MODULES+1][20];
 uint16_t pxxStream[NUM_MODULES][400];
-uint16_t dsm2Stream[400];
+uint16_t dsm2Stream[2][400];
 
 static void init_pa10_pxx( void ) ;
 static void disable_pa10_pxx( void ) ;
@@ -276,51 +276,87 @@ static void disable_pa7_none()
   TIM8->CR1 &= ~TIM_CR1_CEN ;
 }
 
-static void init_pa10_pxx()
+#define PA10_TYPE_PXX		0
+#define PA10_TYPE_DSM		1
+#define PA10_TYPE_MULTI	2
+
+void init_pa10_serial( uint32_t type )
 {
   INTERNAL_RF_ON();
-
-  // Timer1, channel 3
-  setupPulsesPXX(0) ; // TODO not here!
-
+	if ( type == PA10_TYPE_PXX )
+	{
+  	setupPulsesPXX(INTERNAL_MODULE);
+	}
+	else
+	{
+  	setupPulsesDsm2(6, INTERNAL_MODULE) ;
+	}
+  
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIO_INTPPM, ENABLE);
-  
+	
 	configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
-  
+
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;            // Enable DMA2 clock
 
   TIM1->CR1 &= ~TIM_CR1_CEN ;
-  TIM1->ARR = 18000 ;                     // 9mS
-  TIM1->CCR2 = 15000 ;            // Update time
+  
+	if ( type == PA10_TYPE_PXX )
+	{
+		TIM1->ARR = 18000 ;                     // 9mS
+  	TIM1->CCR2 = 15000 ;            // Update time
+	}
+	else if ( type == PA10_TYPE_DSM )
+	{
+		TIM1->ARR = 44000 ;                     // 22mS
+  	TIM1->CCR2 = 40000 ;            // Update time
+	}
+	else // type == PA10_TYPE_MULTI
+	{
+  	TIM1->ARR = 22000 ;             // 11mS
+  	TIM1->CCR2 = 18000 ;            // Update time
+	}
   TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
-  
+
+#ifdef PCB9XT
+  TIM1->CCER = TIM_CCER_CC3E | TIM_CCER_CC3P ;
+#else
   TIM1->CCER = TIM_CCER_CC3E ;
-  
+#endif
+
   TIM1->CR2 = TIM_CR2_OIS3 ;              // O/P idle high
   TIM1->BDTR = TIM_BDTR_MOE ;             // Enable outputs
-  TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
-  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;                     // Force O/P high
+	if ( type == PA10_TYPE_PXX )
+	{
+	  TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
+	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;                     // Force O/P high
+	}
+	else
+	{
+	  TIM1->CCR3 = dsm2Stream[INTERNAL_MODULE][0] ;
+	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
+	}
   TIM1->EGR = 1 ;                                                         // Restart
 
-//      TIM1->SR &= ~TIM_SR_UIF ;             // Clear flag
-//      TIM1->SR &= ~TIM_SR_CC2IF ;           // Clear flag
-  
   DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
 	
 	TIM1->DIER |= TIM_DIER_CC3DE ;          		// Enable DMA on CC3 match
   TIM1->DCR = 15 ;                            // DMA to CC1
 
-//      TIM1->CR1 = TIM_CR1_OPM ;                               // Just run once
   // Enable the DMA channel here, DMA2 stream 6, channel 6
   DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
   DMA2_Stream6->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
   DMA2_Stream6->PAR = CONVERT_PTR(&TIM1->DMAR);
-  DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
-//      DMA2_Stream2->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
-//      DMA2_Stream2->NDTR = 100 ;
+	if ( type == PA10_TYPE_PXX )
+	{
+  	DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
+	}
+	else
+	{
+  	DMA2_Stream6->M0AR = CONVERT_PTR(&dsm2Stream[0][1]);
+	}
   DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
 
   TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
@@ -329,6 +365,63 @@ static void init_pa10_pxx()
   TIM1->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM1_CC_IRQn) ;
+}
+
+
+static void init_pa10_pxx()
+{
+	init_pa10_serial( PA10_TYPE_PXX ) ;
+//  INTERNAL_RF_ON();
+
+//  // Timer1, channel 3
+//  setupPulsesPXX(0) ; // TODO not here!
+
+//  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+//  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIO_INTPPM, ENABLE);
+  
+//	configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
+  
+//  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
+//  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;            // Enable DMA2 clock
+
+//  TIM1->CR1 &= ~TIM_CR1_CEN ;
+//  TIM1->ARR = 18000 ;                     // 9mS
+//  TIM1->CCR2 = 15000 ;            // Update time
+//  TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
+  
+//  TIM1->CCER = TIM_CCER_CC3E ;
+  
+//  TIM1->CR2 = TIM_CR2_OIS3 ;              // O/P idle high
+//  TIM1->BDTR = TIM_BDTR_MOE ;             // Enable outputs
+//  TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
+//  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;                     // Force O/P high
+//  TIM1->EGR = 1 ;                                                         // Restart
+
+////      TIM1->SR &= ~TIM_SR_UIF ;             // Clear flag
+////      TIM1->SR &= ~TIM_SR_CC2IF ;           // Clear flag
+  
+//  DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
+	
+//	TIM1->DIER |= TIM_DIER_CC3DE ;          		// Enable DMA on CC3 match
+//  TIM1->DCR = 15 ;                            // DMA to CC1
+
+////      TIM1->CR1 = TIM_CR1_OPM ;                               // Just run once
+//  // Enable the DMA channel here, DMA2 stream 6, channel 6
+//  DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
+//  DMA2_Stream6->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
+//                                                         | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
+//  DMA2_Stream6->PAR = CONVERT_PTR(&TIM1->DMAR);
+//  DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
+////      DMA2_Stream2->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
+////      DMA2_Stream2->NDTR = 100 ;
+//  DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
+
+//  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
+//  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+//  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+//  TIM1->CR1 |= TIM_CR1_CEN ;
+//	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
+//  NVIC_EnableIRQ(TIM1_CC_IRQn) ;
 }
 
 static void disable_pa10_pxx()
@@ -360,7 +453,17 @@ static void init_pa10_ppm()
   TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
   TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
   
+#ifdef PCB9XT
+  TIM1->CCER = TIM_CCER_CC3E | TIM_CCER_CC3P ;
+#else
   TIM1->CCER = TIM_CCER_CC3E ;
+#endif
+  if(!g_model.pulsePol)
+#ifdef PCB9XT
+	  TIM1->CCER &= ~TIM_CCER_CC3P ;
+#else
+    TIM1->CCER |= TIM_CCER_CC3P;
+#endif
   
   TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 ;     // PWM mode 1
   TIM1->CCMR1 = TIM_CCMR1_OC2PE ;                   			// PWM mode 1
@@ -394,17 +497,20 @@ static void disable_pa10_ppm()
 #ifdef PCB9XT
 static void init_pa10_dsm2()
 {
-  INTERNAL_RF_ON() ;
+	init_pa10_serial( PA10_TYPE_DSM ) ;
 }
 
 static void init_pa10_multi()
 {
-	init_pa10_dsm2() ;	
+	init_pa10_serial( PA10_TYPE_MULTI ) ;
 }
 
 static void disable_pa10_dsm2()
 {
-	
+  DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
+  NVIC_DisableIRQ(TIM1_CC_IRQn) ;
+  TIM1->DIER &= ~TIM_DIER_CC2IE ;
+  TIM1->CR1 &= ~TIM_CR1_CEN ;
   INTERNAL_RF_OFF() ;
 }
 #endif
@@ -419,18 +525,31 @@ extern "C" void TIM1_CC_IRQHandler()
 //#ifdef REV9E
 //	s_current_protocol[INTERNAL_MODULE] = PROTO_OFF ;
 //#endif
-  DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
+//  DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
 	setupPulses(0) ;
 
-  if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX) {
-//    DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
+  if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX)
+	{
+    DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
     DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
     DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
     TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
     TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
-  else if (s_current_protocol[INTERNAL_MODULE] == PROTO_PPM) {
+  else if ( (s_current_protocol[INTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI ) )
+	{
+    DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
+    DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
+    DMA2_Stream6->M0AR = CONVERT_PTR(&dsm2Stream[0][1]);
+  	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
+	  TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
+    DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
+    TIM1->CCR3 = dsm2Stream[0][0];
+    TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+  }
+  else if (s_current_protocol[INTERNAL_MODULE] == PROTO_PPM)
+	{
     ppmStreamPtr[INTERNAL_MODULE] = ppmStream[INTERNAL_MODULE];
     TIM1->DIER |= TIM_DIER_UDE ;
     TIM1->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
@@ -469,15 +588,23 @@ extern void timer10_interrupt() ;
 #endif
 }
 
+#define PA7_TYPE_PXX		0
+#define PA7_TYPE_DSM		1
+#define PA7_TYPE_MULTI	2
 
-static void init_pa7_pxx()
+void init_pa7_serial( uint32_t type )
 {
-  EXTERNAL_RF_ON();
-
-  // Timer8
-  setupPulsesPXX(EXTERNAL_MODULE);
-
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+  EXTERNAL_RF_ON() ;
+	if ( type == PA7_TYPE_PXX )
+	{
+  	setupPulsesPXX(EXTERNAL_MODULE);
+	}
+	else
+	{
+  	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
+	}
+  
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
 #if defined(REV3)
   configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
 #else
@@ -485,10 +612,24 @@ static void init_pa7_pxx()
 #endif
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;            // Enable DMA2 clock
+  
+	TIM8->CR1 &= ~TIM_CR1_CEN ;
 
-  TIM8->CR1 &= ~TIM_CR1_CEN ;
-  TIM8->ARR = 18000 ;                     // 9mS
-  TIM8->CCR2 = 15000 ;            // Update time
+	if ( type == PA7_TYPE_PXX )
+	{
+		TIM8->ARR = 18000 ;                     // 9mS
+  	TIM8->CCR2 = 15000 ;            // Update time
+	}
+	else if ( type == PA7_TYPE_DSM )
+	{
+		TIM8->ARR = 44000 ;                     // 22mS
+  	TIM8->CCR2 = 40000 ;            // Update time
+	}
+	else // type == PA7_TYPE_MULTI
+	{
+  	TIM8->ARR = 22000 ;             // 11mS
+  	TIM8->CCR2 = 18000 ;            // Update time
+	}
   TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
@@ -501,26 +642,40 @@ static void init_pa7_pxx()
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
-  TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0] ;
-  TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0 ;                     // Force O/P high
+	if ( type == PA7_TYPE_PXX )
+	{
+	  TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0] ;
+  	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0 ;                     // Force O/P high
+	}
+	else
+	{
+	  TIM8->CCR1 = dsm2Stream[EXTERNAL_MODULE][0] ;
+	  TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
+	}
   TIM8->EGR = 1 ;                                                         // Restart
-
-//      TIM8->SR &= ~TIM_SR_UIF ;                               // Clear flag
-//      TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
-  TIM8->DIER |= TIM_DIER_CC1DE ;          // Enable DMA on CC1 match
+  
+	TIM8->DIER |= TIM_DIER_CC1DE ;          // Enable DMA on CC1 match
   TIM8->DCR = 13 ;                                                                // DMA to CC1
 
-//      TIM8->CR1 = TIM_CR1_OPM ;                               // Just run once
+
   // Enable the DMA channel here, DMA2 stream 2, channel 7
   DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
   DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
   DMA2_Stream2->CR = DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
-                                                         | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
-  DMA2_Stream2->PAR = CONVERT_PTR(&TIM8->DMAR);
-  DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
-//      DMA2_Stream2->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
-//      DMA2_Stream2->NDTR = 100 ;
-  DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
+																												 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
+  
+	DMA2_Stream2->PAR = CONVERT_PTR(&TIM8->DMAR);
+  
+	if ( type == PA7_TYPE_PXX )
+	{
+		DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
+  }
+	else
+	{
+  	DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
+	}
+  
+	DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
 
   TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
   TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
@@ -528,6 +683,11 @@ static void init_pa7_pxx()
   TIM8->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(TIM8_CC_IRQn) ;
+}
+
+static void init_pa7_pxx()
+{
+	init_pa7_serial( PA7_TYPE_PXX ) ;
 }
 
 static void disable_pa7_pxx()
@@ -544,7 +704,7 @@ static void init_pa7_assan()
 {
 	x9dSPortInit( 115200, SPORT_MODE_HARDWARE, 0, 0 ) ;
   EXTERNAL_RF_ON();
-	setupPulsesDsm2(6) ;
+ 	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
   
 	configure_pins( PIN_EXTPPM_OUT, PIN_INPUT | PIN_PORTA ) ;
 		
@@ -587,71 +747,12 @@ static void disable_pa7_assan()
 
 static void init_pa7_dsm2()
 {
-  EXTERNAL_RF_ON();
-
-//  configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_3 | PIN_OS25 | PIN_PUSHPULL ) ;
-  // Timer8
-  setupPulsesDsm2(6) ;
-
-  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
-#if defined(REV3)
-  configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
-#else
-  configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_3 | PIN_OS25 | PIN_PUSHPULL ) ;
-#endif
-  RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
-  RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;            // Enable DMA2 clock
-
-  TIM8->CR1 &= ~TIM_CR1_CEN ;
-  TIM8->ARR = 44000 ;                     // 22mS
-  TIM8->CCR2 = 40000 ;            // Update time
-  TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
-#if defined(REV3)
-  TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
-#else
-#ifdef PCB9XT
-  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
-#else
-  TIM8->CCER = TIM_CCER_CC1NE ;
-#endif
-#endif
-  TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
-  TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
-  TIM8->CCR1 = dsm2Stream[0] ;
-  TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
-  TIM8->EGR = 1 ;                                                         // Restart
-
-//      TIM8->SR &= ~TIM_SR_UIF ;                               // Clear flag
-//      TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
-  TIM8->DIER |= TIM_DIER_CC1DE ;          // Enable DMA on CC1 match
-  TIM8->DCR = 13 ;                                                                // DMA to CC1
-
-//      TIM8->CR1 = TIM_CR1_OPM ;                               // Just run once
-  // Enable the DMA channel here, DMA2 stream 2, channel 7
-  DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
-  DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-  DMA2_Stream2->CR = DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
-                                                         | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
-  DMA2_Stream2->PAR = CONVERT_PTR(&TIM8->DMAR);
-  DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1]);
-//      DMA2_Stream2->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
-//      DMA2_Stream2->NDTR = 100 ;
-  DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
-
-  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
-  TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
-  TIM8->CR1 |= TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
-  NVIC_EnableIRQ(TIM8_CC_IRQn) ;
+	init_pa7_serial( PA7_TYPE_DSM ) ;
 }
 
 static void init_pa7_multi()
 {
-	init_pa7_dsm2() ;
-  TIM8->ARR = 22000 ;             // 11mS
-  TIM8->CCR2 = 18000 ;            // Update time
-	
+	init_pa7_serial( PA7_TYPE_MULTI ) ;
 }
 
 static void disable_pa7_dsm2()
@@ -669,7 +770,7 @@ static void disable_pa7_dsm2()
 static void init_pa7_ppm()
 {
   EXTERNAL_RF_ON();
-  // Timer1
+  // Timer8
 //  setupPulsesPpmx() ;
   ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
 
@@ -788,11 +889,11 @@ extern "C" void TIM8_CC_IRQHandler()
 	{
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-    DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1]);
+    DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
   	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
-    TIM8->CCR1 = dsm2Stream[0];
+    TIM8->CCR1 = dsm2Stream[1][0];
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM) {

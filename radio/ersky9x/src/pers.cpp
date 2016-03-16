@@ -233,11 +233,11 @@ void eeReadAll()
   uint32_t i ;
 	for ( i = 0 ; i < 4 ; i += 1 )
 	{
-		if ( g_eeGeneral.trainer.mix[i].swtch != -16 )
+		if ( g_eeGeneral.Xtrainer.mix[i].swtch != -16 )
 		{
-			g_eeGeneral.exTrainer[i].swtch = g_eeGeneral.trainer.mix[i].swtch ;
-			g_eeGeneral.exTrainer[i].studWeight = g_eeGeneral.trainer.mix[i].studWeight * 13 / 4 ;
-			g_eeGeneral.trainer.mix[i].swtch = -16 ;
+			g_eeGeneral.XexTrainer[i].swtch = g_eeGeneral.Xtrainer.mix[i].swtch ;
+			g_eeGeneral.XexTrainer[i].studWeight = g_eeGeneral.Xtrainer.mix[i].studWeight * 13 / 4 ;
+			g_eeGeneral.Xtrainer.mix[i].swtch = -16 ;
 			STORE_GENERALVARS ;
 		}
 	}

@@ -210,6 +210,7 @@ void ModelEdit::on_tabWidget_currentChanged(int index)
 void ModelEdit::tabModelEditSetup()
 {
     //name
+		int x ;
 		QString n = g_model.name ;
 
 		while ( n.endsWith(" ") )
@@ -273,7 +274,13 @@ void ModelEdit::tabModelEditSetup()
     ui->thrTrimChkB->setChecked(g_model.thrTrim);
     ui->timerDirCB->setCurrentIndex(g_model.timer[0].tmrDir);
     ui->timer2DirCB->setCurrentIndex(g_model.timer[1].tmrDir);
-    ui->TrainerChkB->setChecked(g_model.traineron);
+
+		x = 0 ;
+		if ( g_model.traineron )
+		{
+			x = g_model.trainerProfile + 1 ;
+		}
+    ui->trainerCB->setCurrentIndex(x) ;
 //    ui->T2ThrTrgChkB->setChecked(g_model.t2throttle);
     ui->thrIdleChkB->setChecked(g_model.throttleIdle) ;
     
@@ -4857,10 +4864,19 @@ void ModelEdit::on_thrIdleChkB_toggled(bool checked)
     updateSettings();
 }
 
-void ModelEdit::on_TrainerChkB_toggled(bool checked)
+void ModelEdit::on_trainerCB_currentIndexChanged(int index)
 {
-    g_model.traineron = checked;
-    updateSettings();
+	if ( index == 0 )
+	{
+    g_model.traineron = 0 ;
+		g_model.trainerProfile = 0 ;
+	}
+	else
+	{
+    g_model.traineron = 1 ;
+		g_model.trainerProfile = index - 1 ;
+	}
+  updateSettings();
 }
 
 void ModelEdit::on_thrExpoChkB_toggled(bool checked)

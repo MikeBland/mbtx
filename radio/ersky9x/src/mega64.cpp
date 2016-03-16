@@ -91,6 +91,7 @@ uint8_t M64MainTimer ;
 uint8_t M64BackupTimer ;
 
 uint8_t M64Display[1024] ;
+uint8_t M64ReDisplay[1024] ;
 
 uint16_t M64Analog[8] ;
 
@@ -607,7 +608,7 @@ void checkM64()
 				DisplaySequence = 0 ;
 				if ( ResendDisplay )
 				{
-					memcpy( M64Display, DisplayBuf, sizeof(M64Display) ) ;
+					memcpy( M64Display, M64ReDisplay, sizeof(M64Display) ) ;
 					ResendDisplay = 0 ;
 					SendDisplay = 1 ;
 				}
@@ -680,6 +681,7 @@ void displayToM64()
 	}
 	else
 	{
+		memcpy( M64ReDisplay, DisplayBuf, sizeof(M64ReDisplay) ) ;
 		ResendDisplay = 1 ;
 	}
 }

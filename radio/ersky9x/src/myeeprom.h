@@ -28,6 +28,7 @@
 #endif
 #define MAX_MIXERS  32
 #define MAX_SKYMIXERS  48
+#define EXTRA_SKYMIXERS	2
 #define MAX_CURVE5  8
 #define MAX_CURVE9  8
 #define MDVERS_r9   1
@@ -141,7 +142,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   vBatWarn;
   int8_t    vBatCalib;
   int8_t    lightSw;
-  TrainerData trainer;
+  TrainerData Xtrainer;
   uint8_t   view;
   uint8_t   disableThrottleWarning:1;
   uint8_t   disableSwitchWarning:1;
@@ -162,7 +163,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   filterInput;
   uint8_t   lightAutoOff;
   uint8_t   templateSetup;  //RETA order according to chout_ar array 
-  int8_t    PPM_Multiplier;
+  int8_t    unused_PPM_Multiplier;
   uint8_t	FRSkyYellow:4;
   uint8_t	FRSkyOrange:4;
   uint8_t	FRSkyRed:4;  //mike please check these are correct
@@ -201,7 +202,7 @@ PACK(typedef struct t_EEGeneral {
   int16_t   x9dPcalibSpanPos ;	// X9D for PLUS
 	uint16_t		switchMapping ;			// 'PRO / SKY
 // used for switch mapping	int8_t		spare10 ;						// was switchTest
-	exTrainerMix exTrainer[4] ;
+	exTrainerMix XexTrainer[4] ;
 	uint16_t totalElapsedTime ;
 	uint16_t sparetotalElapsedTime ;	// In case we need 32 bits
 	uint8_t		BtType ;
@@ -722,6 +723,8 @@ PACK(typedef struct te_ModelData {
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
 	int8_t xoption_protocol ;
+	uint8_t trainerProfile ;
+  //SKYMixData exmixData[EXTRA_SKYMIXERS];
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

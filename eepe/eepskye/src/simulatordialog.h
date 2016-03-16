@@ -149,6 +149,8 @@ private:
 		void resetTimer1() ;
 		void resetTimer2() ;
 		void resetTimer() ;
+		uint8_t Nvs_state[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+		int16_t Nvs_timer[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 
 protected:
 		void closeEvent(QCloseEvent *event) ;
@@ -164,6 +166,8 @@ private slots:
     void on_holdLeftX_clicked(bool checked);
 		void on_SendDataButton_clicked() ;
     void timerEvent();
+		void voiceDisplay( QString name ) ;
+		void processVoiceAlarms( void ) ;
 
 
 };

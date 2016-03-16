@@ -241,6 +241,7 @@ extern uint8_t CalcScaleNest ;
 #define TEL_ITEM_SC7		43
 #define TEL_ITEM_SC8		44
 #define TEL_ITEM_RTC		45
+#define TEL_ITEM_ASPD		46
 
 
 // units

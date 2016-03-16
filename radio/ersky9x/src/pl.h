@@ -162,7 +162,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOK"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspd"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"
