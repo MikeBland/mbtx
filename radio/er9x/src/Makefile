@@ -77,7 +77,7 @@ endif
 #CPPSRC = $(TARGET).cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
 
 ifeq ($(SLAVE), YES)
-CPPSRC = slave.cpp lcdslave.cpp
+CPPSRC = slave.cpp lcdSlave.cpp
 else
 CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
 endif
