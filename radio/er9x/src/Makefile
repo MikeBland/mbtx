@@ -77,31 +77,31 @@ endif
 #CPPSRC = $(TARGET).cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
 
 ifeq ($(SLAVE), YES)
-CPPSRC = slave.cpp lcdSlave.cpp
+    CPPSRC = slave.cpp lcdSlave.cpp
 else
-CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+    CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+    
+    ifeq ($(EXT), JETI)
+     CPPSRC += jeti.cpp
+    endif
+
+    ifeq ($(EXT), FRSKY)
+     CPPSRC += frsky.cpp
+    endif
+
+    ifeq ($(EXT), ARDUPILOT)
+     CPPSRC += ardupilot.cpp
+    endif
+
+    ifeq ($(EXT), NMEA)
+     CPPSRC += nmea.cpp
+    endif
 endif
 
 ifeq ($(BOOT),YES)
  CPPSRC += optiboot.cpp
 endif
 
-
-ifeq ($(EXT), JETI)
- CPPSRC += jeti.cpp
-endif
-
-ifeq ($(EXT), FRSKY)
- CPPSRC += frsky.cpp
-endif
-
-ifeq ($(EXT), ARDUPILOT)
- CPPSRC += ardupilot.cpp
-endif
-
-ifeq ($(EXT), NMEA)
- CPPSRC += nmea.cpp
-endif
 
 #ifeq ($(CPU), 2561)
 #ifneq ($(SLAVE), YES)
