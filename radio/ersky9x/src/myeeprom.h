@@ -239,7 +239,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t	extraPotsSource[4] ;
 	uint8_t btComPort ;
 	uint8_t gpsFormat:1 ;
-	uint8_t spare:7 ;
+	uint8_t reverseScreen:1 ;
+	uint8_t spare:6 ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -455,7 +456,8 @@ PACK(typedef struct te_SafetySwData { // Safety Switches data
 		struct ss
 		{	
 	    int8_t  swtch ;
-			uint8_t mode ;
+			uint8_t mode:2 ;
+			int8_t source:6 ;
     	int8_t  val ;
 			uint8_t res ;
 		} ss ;

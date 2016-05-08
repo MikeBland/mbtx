@@ -181,7 +181,7 @@
 #define ISTR_COPY_TRIM      "Kopi\311j TRYM [MENU]"
 #define ISTR_TELEMETRY      "TELEMETRIA"
 #define ISTR_USR_PROTO      "ProtUrzyt"
-#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti ArduPArduCFrHubFrMavMavlk"
+#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk "
 #define ISTR_MET_IMP        "\003MetAng"
 #define ISTR_A_CHANNEL      "A  kana\305"
 #define ISTR_ALRM           "alrm"
@@ -200,11 +200,11 @@
 #define ISTR_2SENSITIVITY   "\001Czu\305o\312\302  "
 #define ISTR_GLOBAL_VARS    "ODCHYLENIE"
 #if defined(PCBSKY) || defined(PCB9XT)
-#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 P3 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24RtsEtsTtsAts"
+#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 P3 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24"
 #define ISTR_EXTRA_SOURCE   ""
 #endif
 #ifdef PCBX9D
-#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 SL SR c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24RtsEtsTtsAts"
+#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 SL SR c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24"
 #define ISTR_EXTRA_SOURCE   "\003WejP3 P4 P5 P6 "
 #endif
 #define ISTR_TEMPLATES      "SZABLONY"
@@ -362,8 +362,8 @@
 #define ISTR_DEAFULT_SW     "Domy\312lne Prze\305"
 #define ISTR_MEM_WARN       "Pami\304\303 Uwaga"
 #define ISTR_ALARM_WARN     "Alarm Ostrze\314enie"
-#define ISTR_POTSCROLL      "Przes\311wanie Potencj."
-#define ISTR_STICKSCROLL    "Przes\311wanie Dr. Gazu"
+#define ISTR_POTSCROLL      "Przesuwanie Potencj."
+#define ISTR_STICKSCROLL    "Przesuwanie Dr. Gazu"
 #define ISTR_BANDGAP        "Zakres Przerwy"
 #define ISTR_ENABLE_PPMSIM  "Wy\305\300cz PPMSIM"
 #define ISTR_CROSSTRIM      "CrossTrim"
@@ -492,7 +492,11 @@
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Krytyczne"
 #define ISTR_BT_TRAINER		  "BT jako trener"
-#define ISTR_MULTI_TYPE     "Protok\311\305\037Typ \037Autobind\037Zasilanie"
+#define ISTR_MULTI_TEXT     "Protok\311\305\037Typ \037Autobind\037Zasilanie"
+#define ISTR_MULTI_PROTO    "Protok\311\305"
+#define ISTR_MULTI_TYPE	    "Typ"
+#define ISTR_MULTI_AUTO	    "Autobind"
+#define ISTR_MULTI_POWER    "Zasilanie"
 #define ISTR_MULTI_OPTION   "\014Opcje "
 
 #define ISTR_Display		     "Ekran" 

@@ -1052,6 +1052,18 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 }
 #endif
 
+//#ifdef PCB9XT
+//uint16_t PpmTestH ;
+//uint16_t PpmTestL ;
+
+//void CheckPpm()
+//{
+//	if ( ( PpmTestH != 0x0080 ) || ( PpmTestL != 0 ) )
+//	{
+//		alert(XPSTR("PPM Output\037Self Test Failure"));
+//	}
+//}
+//#endif
 
 int main( void )
 {
@@ -1174,6 +1186,19 @@ int main( void )
   WatchdogTimeout = 100 ;
 	
 	init_hw_timer() ;
+	
+//#ifdef PCB9XT
+//	// Test PPM output signal
+//	// On port A pin 7
+//	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+//	GPIOA->BSRRL = PIN_EXTPPM_OUT ;		// High
+//	hw_delay( 40 ) ; // units of 0.1uS
+//	PpmTestH = GPIOA->IDR & 0x0080 ;
+//	GPIOA->BSRRH = PIN_EXTPPM_OUT ;		// Low
+//	hw_delay( 40 ) ; // units of 0.1uS
+//	PpmTestL = GPIOA->IDR & 0x0080 ;
+//#endif
+
 	init_adc() ;
 
 #ifdef PCBX9D
@@ -1243,10 +1268,6 @@ int main( void )
 			}
 		}
 	}
-#endif
-
-#ifdef PCBSKY
-	lcdSetOrientation() ;
 #endif
 
 #ifdef PCBX9D
@@ -3724,6 +3745,10 @@ void main_loop(void* pdata)
 #endif
 
 #ifdef PCBSKY
+	lcdSetOrientation() ;
+#endif
+
+#ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -3738,6 +3763,9 @@ void main_loop(void* pdata)
 		checkAlarm();
 //		checkCalibrate() ;
 		checkWarnings();
+//#ifdef PCB9XT
+//		CheckPpm() ;
+//#endif
 		clearKeyEvents(); //make sure no keys are down before proceeding
 		wdt_reset() ;
   	WatchdogTimeout = 100 ;
@@ -4406,7 +4434,7 @@ static void processVoiceAlarms()
 
 		if ( pvad->mute )
 		{
-			if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+			if ( pvad->source > ( CHOUT_BASE + NUM_SKYCHNOUT ) )
 			{ // Telemetry item
 				if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
 				{
@@ -5011,9 +5039,9 @@ extern uint32_t i2c2_result() ;
 #ifdef ASSAN
 					int8_t offset ;
 #ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
+					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
+					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #endif // PCBX9D
 					{
 						offset = 18 ;
@@ -5050,9 +5078,9 @@ extern uint32_t i2c2_result() ;
 #ifdef ASSAN
 					int8_t offset ;
 #ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
+					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
+					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #endif // PCBX9D
 					{
 						offset = 20 ;
@@ -8888,7 +8916,8 @@ uint8_t checkThrottlePosition()
 {
   uint8_t thrchn=(2-(g_eeGeneral.stickMode&1));//stickMode=0123 -> thr=2121
 	int16_t v = scaleAnalog( anaIn(thrchn), thrchn ) ;
-	
+//	lcd_outhex4( 90, 2*FH, v ) ;
+//  refreshDisplay();
 //	if ( g_model.throttleIdle == 2 )
 //	{
 //  	if(v >= RESX - THRCHK_DEADBAND  )

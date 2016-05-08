@@ -1321,6 +1321,12 @@ void lcdSetOrientation()
   }
   lcdSendCtl(c1);
   lcdSendCtl(c2);
+	c1 = 0xA6 ;		// Display normal (not inverse)
+	if (g_eeGeneral.reverseScreen)
+	{
+		c1 = 0xA7 ;		// Display inverse
+	}	
+  lcdSendCtl(c1);
 //  lcdSendCtl(0xAF);             // turn-on
 #ifdef REVB
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input

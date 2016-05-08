@@ -396,5 +396,11 @@
 	ISTR_Voice		     ,
 	ISTR_Protocol		   ,
 	ISTR_Safety			   ,
-	ISTR_Eeprom
+	ISTR_Eeprom			   ,
+
+	ISTR_MULTI_PROTO   ,
+	ISTR_MULTI_TYPE	   ,
+	ISTR_MULTI_AUTO	   ,
+	ISTR_MULTI_POWER
+
 } ;

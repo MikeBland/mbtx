@@ -416,6 +416,7 @@ struct t_hub_max_min
 #define TEL_DSM					5
 #define TEL_ASSAN	      6
 #define TEL_MULTI	      7
+#define TEL_HUB_RAW			8
 extern uint8_t TelemetryType ;
 
 // Values in EEPROM
@@ -427,7 +428,8 @@ extern uint8_t TelemetryType ;
 #define TELEMETRY_ARDUPLANE		5
 #define TELEMETRY_ARDUCOPTER	6
 #define TELEMETRY_FRHUB				7
-#define TELEMETRY_MAVLINK			8
+#define TELEMETRY_HUBRAW			8
+#define TELEMETRY_MAVLINK			9
 
 
 extern uint16_t DsmABLRFH[] ;

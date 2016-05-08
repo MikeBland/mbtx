@@ -23,6 +23,7 @@
 
 #include <stdint.h>
 
+#define prog_char char
 //#define FIX_MODE		1
 
 #define ASSAN		1
@@ -645,7 +646,7 @@ extern uint8_t NumExtraPots ;
 
 #define SCROLL_TH 64
 #define INACTIVITY_THRESHOLD 256
-#define THRCHK_DEADBAND 16
+#define THRCHK_DEADBAND 31
 #define SPLASH_TIMEOUT  (4*100)  //400 msec - 4 seconds
 
 uint8_t IS_THROTTLE( uint8_t x ) ;
@@ -729,6 +730,7 @@ extern uint8_t Ee_lock ;
 #define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
 #define M_FRSKYX	       14
+#define M_FRSKY_STR "\005CH_16CH_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
 #define M_MT99XX_STR "\002MTH7YZ"

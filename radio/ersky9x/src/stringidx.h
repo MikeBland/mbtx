@@ -333,7 +333,7 @@
 #define STR_CHANS_EXTRA	    312
 
 #define STR_HELI_TEXT			  313
-#define STR_MULTI_TYPE   		314
+#define STR_MULTI_TEXT   		314
 #define STR_MULTI_OPTION  	315
 
 #define STR_Display		    	316
@@ -367,6 +367,10 @@
 #define STR_Safety					342
 #define STR_Eeprom		    	343
 
+#define STR_MULTI_PROTO  		344
+#define STR_MULTI_TYPE  		345
+#define STR_MULTI_AUTO  		346
+#define STR_MULTI_POWER  		347
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "

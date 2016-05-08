@@ -542,8 +542,8 @@ extern "C" void TIM1_CC_IRQHandler()
     DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
     DMA2_Stream6->M0AR = CONVERT_PTR(&dsm2Stream[0][1]);
-  	TIM1->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
-	  TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
+	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
+	  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
     TIM1->CCR3 = dsm2Stream[0][0];
     TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt

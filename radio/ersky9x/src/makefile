@@ -434,6 +434,8 @@ CPPSRC = ersky9x.cpp \
 #       	X9D/i2c_ee.cpp \
 #         X9D/eeprom_rlc.cpp \
 
+CPPSRC += pdi.cpp
+
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
 
@@ -498,7 +500,7 @@ CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 
 
 #ifeq ($(REVX), 1)
-# CPPSRC += pl.cpp
+ CPPSRC += pdi.cpp
 #endif
 
 # List ASM source files here

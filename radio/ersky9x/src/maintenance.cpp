@@ -42,6 +42,9 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #include "core_cm3.h"
+// #ifdef REVX
+  #include "pdi.h"
+// #endif
 #endif
 #ifdef PCBX9D
 #include "stm32f2xx.h"
@@ -52,6 +55,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_flash.h"
 #include "X9D/hal.h"
+#include "pdi.h"
 #endif
 
 
@@ -73,6 +77,17 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #endif
 #include "maintenance.h"
 
+#ifdef PCB9XT
+extern uchar PdiErrors0 ;
+extern uchar PdiErrors1 ;
+extern uchar PdiErrors2 ;
+extern uchar PdiErrors3 ;
+extern uchar PdiErrors4 ;
+extern uchar PdiErrors5 ;
+extern uchar PdiErrors6 ;
+extern uchar PdiErrors7 ;
+extern uchar PdiErrors8 ;
+#endif
 //#if defined(PCB9XT)
 //uint16_t lastPacketType ;
 //#endif
@@ -99,6 +114,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define UPDATE_TYPE_SPORT_EXT			3
 #define UPDATE_TYPE_CHANGE_ID			4
 #define UPDATE_TYPE_AVR						5
+#define UPDATE_TYPE_XMEGA					6
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
@@ -117,6 +133,7 @@ uint8_t CoProresult ;
 #endif
 
 uint32_t sportUpdate( uint32_t external ) ;
+uint32_t xmegaUpdate() ;
 
 TCHAR Filenames[8][50] ;
 extern FATFS g_FATFS ;
@@ -160,6 +177,19 @@ uint8_t SportState ;
 #define SPORT_END					7
 #define SPORT_FAIL				8
 #define SPORT_COMPLETE		9
+
+uint8_t XmegaState ;
+#define XMEGA_IDLE				0
+#define XMEGA_START				1
+#define XMEGA_POWER				2
+#define XMEGA_BEGIN				3
+#define XMEGA_FLASHING		4
+#define XMEGA_DONE				5
+
+uint8_t XmegaSubState ;
+uint8_t XmegaSignature[4] ;
+uint8_t Fuses[8] ;
+
 
 #ifdef PCBSKY
 uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
@@ -827,8 +857,20 @@ void menuUp1(uint8_t event)
 		}
  #endif
 #endif
-
-
+#ifdef PCBSKY
+// #ifdef REVX
+ 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
+		}
+// #endif
+#endif
+#ifdef PCB9XT
+ 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
+		}
+#endif
 
 	}
 	switch(event)
@@ -865,7 +907,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) )
+ 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) && (UpdateItem != 6 ) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -933,13 +975,24 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
 				}
+ 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
 				}
 				CoProcReady = 0 ;
  #else
-				lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+ 				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
+				else
+				{
+					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+				}
  #endif
 #endif
 #ifdef PCB9XT
@@ -947,6 +1000,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
 					SportVerValid = 0 ;
+				}
+				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
 				else
 				{
@@ -1008,12 +1065,37 @@ void menuUp1(uint8_t event)
 					}
 				}
  #endif
+ // REVX
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					XmegaState = XMEGA_START ;
+#ifdef PCB9XT
+					PdiErrors0 = 0 ;
+					PdiErrors1 = 0 ;
+					PdiErrors2 = 0 ;
+					PdiErrors3 = 0 ;
+					PdiErrors4 = 0 ;
+					PdiErrors5 = 0 ;
+					PdiErrors6 = 0 ;
+					PdiErrors7 = 0 ;
+					PdiErrors8 = 0 ;
+#endif
+				}
+
 #endif
 #ifdef PCB9XT
 				else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
 				{
 					width = 50 ;	// Not used
-					
+				}
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					EXTERNAL_RF_ON() ;
+					XmegaState = XMEGA_START ;
 				}
 #endif
 				else
@@ -1111,13 +1193,50 @@ void menuUp1(uint8_t event)
 				}
 			}
  #endif
+ // REVX
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				lcd_outhex4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
+				lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
+				lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
+			}
 #endif
 			
 #ifdef PCB9XT
-			else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
+			else if (UpdateItem == UPDATE_TYPE_AVR )
 			{
 				// No more display, never return, check for power off when finished
 				
+			}
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+#ifdef PCB9XT
+				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+#endif
 			}
 #endif
 			else		// Internal/External Sport
@@ -1196,6 +1315,15 @@ void menuUp1(uint8_t event)
   #endif 			
  #endif 			
 			}
+#ifdef PCB9XT
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+#endif
 
 			if ( event == EVT_KEY_FIRST(KEY_EXIT) )
 			{
@@ -1221,9 +1349,11 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
 	lcd_puts_Pleft( 4*FH, "  Update SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
  #endif
 #endif
 #ifdef PCBX9D
@@ -1234,6 +1364,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Update Avr CPU" );
+	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
 #endif
 
   switch(event)
@@ -1265,6 +1396,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
  #else
 			if ( position == 3*FH )
 			{
@@ -1275,6 +1411,11 @@ void menuUpdate(uint8_t event)
 			{
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
 			}
  #endif
 #endif
@@ -1294,6 +1435,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
+//			if ( position == 5*FH )
+//			{
+//				UpdateItem = UPDATE_TYPE_XMEGA ;
+//	      chainMenu(menuUp1) ;
+//			}
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )
@@ -1305,6 +1451,11 @@ void menuUpdate(uint8_t event)
 			{
 				UpdateItem = UPDATE_TYPE_AVR ;
 	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
 			}
 #endif
     	killEvents(event) ;
@@ -1318,7 +1469,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCBSKY
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -1332,7 +1483,7 @@ void menuUpdate(uint8_t event)
 		break ;
  #else
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 4*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1364,7 +1515,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCB9XT
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
-			if ( position < 3*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1810,6 +1961,98 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 		RxPacket[9] = packet[9] ;
 	}
 }
+
+
+#if defined(PCBSKY) || defined(PCB9XT)
+// This is called repeatedly every 10mS while update is in progress
+uint32_t xmegaUpdate()
+{
+	
+	switch ( XmegaState )
+	{
+		case XMEGA_IDLE :
+		break ;
+
+		case XMEGA_START :
+			BytesFlashed = 0 ;
+		  XmegaSubState = 0 ;
+			XmegaState = XMEGA_POWER ;
+		break ;
+		
+		case XMEGA_POWER :
+			BytesFlashed = 0 ;
+			if ( ++XmegaSubState > 5 )
+			{
+		  	XmegaSubState = 0 ;
+				XmegaState = XMEGA_BEGIN ;
+			}
+		break ;
+		
+		case XMEGA_BEGIN :
+			__disable_irq() ;
+			pdiInit() ;
+			pdiReadBlock(XNVM_DATA_BASE+ 0x90, XmegaSignature, 4 ) ;
+			pdiReadBlock(0x08F0020, Fuses, 8 ) ;
+			if ( ( XmegaSignature[0] == 0x1E ) && (Fuses[7] != 0xFF ) )
+			{
+				pdiChipErase() ;
+				if ( ( Fuses[2] & 0x40 ) == 0 )
+				{ // Boot reset
+ 					wdt_reset() ;
+					pdiWriteFuse( 2, Fuses[2] | 0x40 ) ;
+				}
+			}
+ 			wdt_reset() ;
+			pdiWritePageMemory( 0, FileData, 256 ) ;
+		 	wdt_reset() ;
+			__enable_irq() ;
+			BytesFlashed = 256 ;
+			BlockOffset = 256 ;
+			ByteEnd = 1024 ;
+			XmegaState = XMEGA_FLASHING ;
+
+		  XmegaSubState = 0 ;
+		break ;
+		
+		case XMEGA_FLASHING :
+		  XmegaSubState += 1 ;
+			
+			if ( ( XmegaSubState & 3 ) == 0 )
+			{
+				__disable_irq() ;
+				pdiInit() ;
+				pdiWritePageMemory( BytesFlashed, &FileData[BlockOffset], 256 ) ;
+		 		wdt_reset() ;
+				__enable_irq() ;
+				BytesFlashed += 256 ;
+				BlockOffset += 256 ;
+				if ( BytesFlashed >= ByteEnd )
+				{
+					f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+					BlockOffset = 0 ;
+					ByteEnd += BlockCount ;
+		 			wdt_reset() ;
+				}
+				if ( BytesFlashed >= FirmwareSize )
+				{
+					XmegaState = XMEGA_DONE ;
+					BytesFlashed = FirmwareSize ;
+				}
+			}
+		break ;
+		
+		case XMEGA_DONE :
+			pdiCleanup() ;
+			XmegaState = XMEGA_IDLE ;
+#ifdef PCB9XT
+			EXTERNAL_RF_OFF() ;
+#endif
+			BytesFlashed = FirmwareSize + 1 ;
+		break ;
+	}
+	return BytesFlashed ;
+}	
+#endif
 
 // This is called repeatedly every 10mS while update is in progress
 uint32_t sportUpdate( uint32_t external )

@@ -2623,6 +2623,11 @@ void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t p
 	USART2->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
 	USART2->CR2 = 0 ;
 	USART2->CR3 = 0 ;
+	if ( parity )
+	{
+		USART2->CR1 |= USART_CR1_PCE ;
+		USART2->CR2 |= 0x2000 ;	// 2 stop bits
+	}
 	if ( baudRate == 115200 )		// ASSAN DSM
 	{
 #ifdef PCB9XT
@@ -2648,6 +2653,33 @@ uint32_t hubTxPending()
 {
 	return SportTx.busy ;
 }
+
+#ifndef PCB9XT
+void com1Parity( uint32_t even )
+{
+	if ( even )
+	{
+		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+	}
+	else
+	{
+		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+
+
+void com2Parity( uint32_t even )
+{
+	if ( even )
+	{
+		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+	}
+	else
+	{
+		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+#endif
 
 void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 {
@@ -2676,6 +2708,8 @@ struct t_pendingSport
 
 //#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_NE | USART_FLAG_FE | USART_FLAG_PE)
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
+
+uint16_t RxIntCount ;
 
 extern "C" void USART2_IRQHandler()
 {
@@ -2715,11 +2749,13 @@ extern "C" void USART2_IRQHandler()
 
   while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
 	{
+		
     data = USART2->DR;
 
 //			put_fifo64( &Telemetry_fifo, data ) ;
     if (!(status & USART_FLAG_ERRORS))
 		{
+			RxIntCount += 1 ;
 			put_fifo64( &Telemetry_fifo, data ) ;
 //			if ( LastReceivedSportByte == 0x7E )
 //			{
@@ -2736,6 +2772,7 @@ extern "C" void USART2_IRQHandler()
 		}
 		else
 		{
+			put_fifo64( &Telemetry_fifo, data ) ;
 			USART_ERRORS += 1 ;
 			if ( status & USART_FLAG_ORE )
 			{

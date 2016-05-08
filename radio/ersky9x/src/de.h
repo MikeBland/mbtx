@@ -183,7 +183,7 @@ v.xx.01-german
 #define ISTR_COPY_TRIM      "KOPIE TRIM [MENU]"
 #define ISTR_TELEMETRY      "TELEMETRIE"
 #define ISTR_USR_PROTO      "BenProto"
-#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti ArduPArduCFrHubFrMavMavlk"
+#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk "
 #define ISTR_MET_IMP        "\003MetImp" // Metrisches System / Imperiales System
 #define ISTR_A_CHANNEL      "A  Kanal"
 #define ISTR_ALRM           "alrm"
@@ -488,7 +488,11 @@ v.xx.01-german
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Critical"
 #define ISTR_BT_TRAINER		  "BT as Trainer"
-#define ISTR_MULTI_TYPE     "Protocol\037Type\037Autobind\037Power"
+#define ISTR_MULTI_TEXT     "Protocol\037Type\037Autobind\037Power"
+#define ISTR_MULTI_PROTO    "Protocol"
+#define ISTR_MULTI_TYPE	    "Type"
+#define ISTR_MULTI_AUTO	    "Autobind"
+#define ISTR_MULTI_POWER    "Power"
 #define ISTR_MULTI_OPTION   "\014Option"
 
 #define ISTR_Display		     "Display" 

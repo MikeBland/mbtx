@@ -183,7 +183,7 @@ extern uint8_t JetiIndex ;
 
 uint8_t FrskyTelemetryType ;
 uint8_t FrskyComPort ;
-static uint8_t numPktBytes = 0;
+uint8_t numPktBytes = 0;
 // Receive buffer state machine state defs
 #define frskyDataIdle    0
 #define frskyDataStart   1
@@ -1024,7 +1024,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		type = *packet++ ;
 	}
 
-	TelemetryDebug = (type << 8 ) | *packet ;
+//	TelemetryDebug = (type << 8 ) | *packet ;
 
 	if ( type && (type < 0x20) )
 	{
@@ -1047,7 +1047,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			{
 				DsmDebug[i] = *p++ ;
 			}
-			TelemetryDebug2 += 1 ;
+//			TelemetryDebug2 += 1 ;
 		}
 		// End debug code
 		 
@@ -1546,7 +1546,7 @@ void processSportPacket()
 				break ;
 
 				case AIRSPEED_ID_8 :
-					store_hub_data( FR_AIRSPEED, value/100 ) ;
+					store_hub_data( FR_AIRSPEED, value ) ;
 				break ;
 
 			}
@@ -1570,7 +1570,7 @@ void processSportPacket()
 
 void frsky_receive_byte( uint8_t data )
 {
-//	TelemetryDebug += 1 ;
+	TelemetryDebug += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT)
 	if ( g_model.bt_telemetry )
 	{
@@ -1648,6 +1648,12 @@ void frsky_receive_byte( uint8_t data )
 #ifdef ASSAN
 		}
 #endif
+	}
+	else if ( g_model.telemetryProtocol == TELEMETRY_HUBRAW )
+	{
+  	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
+    frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+		frsky_proc_user_byte( data ) ;		
 	}
 	else // Not DSM
 	{
@@ -1981,8 +1987,8 @@ void telemetry_init( uint8_t telemetryType )
 			UART2_Configure( 9600, Master_frequency ) ;
   		USART0->US_MR =  0x000202C0 ;  // NORMAL, Odd Parity, 9 bit
 			UART2_timeout_disable() ;
-			g_model.telemetryRxInvert = 1 ;
-			setMFP() ;
+//			g_model.telemetryRxInvert = 1 ;
+//			setMFP() ;
 			USART0->US_IER = US_IER_RXRDY ;
 			NVIC_SetPriority( USART0_IRQn, 5 ) ; // Lower priority interrupt
 			NVIC_EnableIRQ(USART0_IRQn) ;
@@ -1996,8 +2002,8 @@ void telemetry_init( uint8_t telemetryType )
 		case TEL_MAVLINK :
 			UART2_Configure( MAVLINK_BAUDRATE, Master_frequency ) ;
 			UART2_timeout_disable() ;
-			g_model.telemetryRxInvert = 1 ;
-			setMFP() ;
+//			g_model.telemetryRxInvert = 1 ;
+//			setMFP() ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
 		  resetTelemetry();
 			startPdcUsartReceive() ;
@@ -2008,8 +2014,8 @@ void telemetry_init( uint8_t telemetryType )
 		case TEL_ARDUPILOT :
 			UART2_Configure( 38400, Master_frequency ) ;
 			UART2_timeout_disable() ;
-			g_model.telemetryRxInvert = 1 ;
-			setMFP() ;
+//			g_model.telemetryRxInvert = 1 ;
+//			setMFP() ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
 		  resetTelemetry();
 			startPdcUsartReceive() ;
@@ -2127,13 +2133,26 @@ void FRSKY_Init( uint8_t brate )
 	}
 #endif
 #ifdef REVX
-	else
+	else	// brate == 2, DSM telemetry
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
+		if ( g_model.protocol == PROTO_MULTI )
+		{
+			if ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 )
+			{
+				FrskyTelemetryType = 2 ;	// DSM
+			}
+			UART2_Configure( 100000, Master_frequency ) ;
+			UART2_timeout_disable() ;
+			com1Parity( 1 ) ;
 //		if ( g_model.frskyComPort == 0 )
 //		{
+		}
+		else
+		{
 			UART2_Configure( 115200, Master_frequency ) ;
 			UART2_timeout_enable() ;
+		}
 //			g_model.telemetryRxInvert = 1 ;
 //			setMFP() ;
 //		}
@@ -2143,10 +2162,21 @@ void FRSKY_Init( uint8_t brate )
 //		}
 	}
 #else
-	else
+	else	// brate == 2, DSM telemetry
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
-		init_software_com1( 115200, 1, 0 ) ;
+		if ( g_model.protocol == PROTO_MULTI )
+		{
+			if ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 )
+			{
+				FrskyTelemetryType = 2 ;	// DSM
+			}
+			init_software_com1( 100000, 1, 1 ) ;
+		}
+		else
+		{
+			init_software_com1( 115200, 1, 0 ) ;
+		}
 	}
 #endif
   // clear frsky variables
@@ -2202,21 +2232,56 @@ void FRSKY_Init( uint8_t brate )
 	else // 9XR-DSM
 	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+		{
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM2 ) )
+			{
+				FrskyTelemetryType = 2 ;	// DSM
+			}
+			x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 1 ) ;	// Invert
+		}
+		else
+		{
+			x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
+		}
 	}
 #endif // PCB9XT
 
 #ifdef PCBX9D
 	if ( brate == 0 )
 	{
+		uint32_t baudrate = 9600 ;
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+		{
+			baudrate = 100000 ;
+			if ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX )
+			{
+				FrskyTelemetryType = 1 ;
+			}
+		}
 		if ( g_model.frskyComPort == 1 )
 		{
 			x9dConsoleInit() ;
-			USART3->BRR = PeripheralSpeeds.Peri1_frequency / 9600 ;
+			USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+			{
+				com2Parity( 1 ) ;
+			}	
 		}
 		else
 		{
-			x9dSPortInit( 9600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;	// 9600
+			if ( baudrate == 100000 )
+			{
+				x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 1 ) ;	// Invert/even parity
+			}
+			else
+			{
+				x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;	// 9600
+				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+				{
+					com1Parity( 1 ) ;
+				}	
+			}
 		}
 	}
 #ifdef ASSAN
@@ -2232,10 +2297,20 @@ void FRSKY_Init( uint8_t brate )
 	else // 9XR-DSM
 	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
-//		init_software_com1( 115200, 1 ) ;
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+		{
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM2 ) )
+			{
+				FrskyTelemetryType = 2 ;	// DSM
+			}
+			x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 1 ) ;	// Invert
+		}
+		else
+		{
+			x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 0 ) ;	// Invert
+		}
 	}
-#endif
+#endif // PCBX9D
 
   memset(frskyAlarms, 0, sizeof(frskyAlarms));
   resetTelemetry();
@@ -2414,6 +2489,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		case TELEMETRY_FRHUB :
 		case TELEMETRY_ARDUCOPTER :
 		case TELEMETRY_ARDUPLANE :
+		case TELEMETRY_HUBRAW :
 			if ( ( type != TEL_MULTI ) && ( type != TEL_FRSKY_SPORT ) )
 			{
 				type = TEL_FRSKY_HUB ;

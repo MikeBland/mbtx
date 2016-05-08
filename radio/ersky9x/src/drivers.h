@@ -86,6 +86,8 @@ extern void x9dConsoleInit( void ) ;
 extern uint16_t rxTelemetry( void ) ;
 extern void USART6_Sbus_configure( void ) ;
 extern void stop_USART6_Sbus( void ) ;
+extern void com1Parity( uint32_t even ) ;
+extern void com2Parity( uint32_t even ) ;
 #endif
 
 extern uint16_t DsmRxTimeout ;
