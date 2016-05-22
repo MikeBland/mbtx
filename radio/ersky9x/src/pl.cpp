@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "pl.h"
 
 extern const char * const Polish[] ;

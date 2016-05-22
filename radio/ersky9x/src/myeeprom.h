@@ -28,7 +28,7 @@
 #endif
 #define MAX_MIXERS  32
 #define MAX_SKYMIXERS  48
-#define EXTRA_SKYMIXERS	2
+#define EXTRA_SKYMIXERS	0
 #define MAX_CURVE5  8
 #define MAX_CURVE9  8
 #define MDVERS_r9   1
@@ -595,7 +595,7 @@ PACK(typedef struct t_protocol
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
   int8_t  	modelVoice ;			// Index to model name voice (260+value)
-  uint8_t   RxNum ;						// was timer trigger source, now RxNum for model match
+  uint8_t   RxNum_unused ;						// was timer trigger source, now RxNum for model match UNUSED
   uint8_t   telemetryRxInvert:1 ;	// was tmrDir, now use tmrVal>0 => count down
   uint8_t   traineron:1;  		// 0 disable trainer, 1 allow trainer
   uint8_t   autoBtConnect:1 ;
@@ -639,7 +639,7 @@ PACK(typedef struct te_ModelData {
 //  uint8_t   rxnum;
   uint8_t   frSkyVoltThreshold ;
   uint8_t   bt_telemetry;
-  uint8_t   numVoice;		// 0-16, rest are Safety switches
+  int8_t   numVoice ;		// -8-16, rest are Safety switches
   SKYSafetySwData  safetySw[NUM_SKYCHNOUT];
 	voiceSwData	voiceSwitches[NUM_VOICE] ;
   SKYFrSkyData frsky;
@@ -669,7 +669,8 @@ PACK(typedef struct te_ModelData {
   int8_t    xppmDelay ;
   uint8_t   xpulsePol:1 ;
   uint8_t   trainPulsePol:1 ;
-  uint8_t   polSpare:6 ;
+	uint8_t		dsmAasRssi:1 ;
+  uint8_t   polSpare:5 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;
@@ -726,7 +727,17 @@ PACK(typedef struct te_ModelData {
 	uint8_t btDefaultAddress ;
 	int8_t xoption_protocol ;
 	uint8_t trainerProfile ;
-  //SKYMixData exmixData[EXTRA_SKYMIXERS];
+  int8_t  curve2xy[18] ;
+  int8_t	curve6[6] ;
+	uint8_t customDisplay1Extra[7] ;
+	uint8_t customDisplay2Extra[7] ;
+#if EXTRA_SKYMIXERS
+  SKYMixData exmixData[EXTRA_SKYMIXERS] ;
+#endif
+#if EXTRA_SKYCHANNELS
+  LimitData elimitData[EXTRA_SKYCHANNELS];
+#endif
+
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

@@ -515,6 +515,10 @@ static void disable_pa10_dsm2()
 }
 #endif
 
+#ifdef PCBX9D
+uint16_t XjtHbeatOffset ;
+#endif
+
 extern uint16_t g_timePXX;
 extern "C" void TIM1_CC_IRQHandler()
 {
@@ -530,6 +534,20 @@ extern "C" void TIM1_CC_IRQHandler()
 
   if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX)
 	{
+#ifdef PCBX9D
+		XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
+		if ( XjtHeartbeatCapture.valid )
+		{
+			if ( XjtHbeatOffset > 0x2200 )
+			{
+				TIM1->ARR = 17980 ;                     // 9mS
+			}
+			else
+			{
+				TIM1->ARR = 18020 ;                     // 9mS
+			}
+		}
+#endif
     DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
     DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);

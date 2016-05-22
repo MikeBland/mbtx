@@ -1017,10 +1017,6 @@ const uint8_t arrows[] = {
 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
 
 } ;
-uint8_t speaker[] = {
-4,8,0,
-0x38,0x38,0x7C,0xFE
-} ;
 #endif
 
 #if PCBX9D
@@ -1037,14 +1033,8 @@ void lcd_clear()
 	lcd_img( 212-X9D_OFFSET, 0, arrows, 0, 0 ) ;
 	lcd_img( 212-X9D_OFFSET-10, 0, arrows, 1, 0 ) ;
 #endif	// nREV9E
-	putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
-	lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
-extern uint8_t CurrentVolume ;
-	lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
 #if PCBX9D
 //#if REVPLUS
-	lcd_hline( 130, 31, 61 ) ;
-	lcd_vline( 129, 0, 64 ) ;
 
 // Debug
 //extern uint8_t s_eeDirtyMsk ;
@@ -1127,6 +1117,10 @@ void lock_lcd()
 #ifndef PCBDUE
 #ifdef PCBSKY
 
+#ifdef REVB
+uint8_t ErcLcd = 0 ;
+#endif // REVB
+
 const static uint8_t Lcdinit[] =
 {
 	0xe2,		// Reset
@@ -1144,6 +1138,23 @@ const static uint8_t Lcdinit[] =
 #endif
 } ;	
 
+const static uint8_t Lcd_ERC12864_2[] =
+{
+   0xe2, //Initialize the internal functions
+   0xae, //DON = 0: display OFF
+   0xa1, //ADC = 1: reverse direction(SEG132->SEG1)
+   0xA6, //REV = 0: non-reverse display
+   0xA4, //EON = 0: normal display. non-entire
+   0xA3, // Select LCD bias=0
+   0xC0, //SHL = 0: normal direction (COM1->COM64)
+   0x2F, //Control power circuit operation VC=VR=VF=1
+   0x27, //Select int resistance ratio R2 R1 R0 =5
+   0x81, //Set reference voltage Mode
+   0x2D, // 24 SV5 SV4 SV3 SV2 SV1 SV0 = 0x18
+   0xAF  //DON = 1: display ON
+} ;
+
+
 
 void lcd_init()
 {
@@ -1154,7 +1165,6 @@ void lcd_init()
 
 
 #ifdef REVB
-	configure_pins( LCD_A0, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
 
 // read the inputs, and lock the LCD lines
 	lock_lcd() ;
@@ -1199,10 +1209,20 @@ void lcd_init()
 	
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	pioptr->PIO_CODR = LCD_RES ;		// Reset LCD
+#ifdef REVB
+	configure_pins( LCD_A0, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+#endif // REVB
 	while ( TC0->TC_CHANNEL[0].TC_CV < 500 )		// >10 uS, Value depends on MCK/2 (used 18MHz)
 	{
 		// Wait
 	}
+#ifdef REVB
+  if ( ( PIOA->PIO_PDSR & LCD_A0 ) == 0 )
+	{
+		ErcLcd = 1 ;
+	}	 
+	configure_pins( LCD_A0, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
+#endif // REVB
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	pioptr->PIO_SODR = LCD_RES ;		// Remove LCD reset
 	while ( TC0->TC_CHANNEL[0].TC_CV < 27000 )	// 1500 uS, Value depends on MCK/2 (used 18MHz)
@@ -1211,7 +1231,11 @@ void lcd_init()
 	}
 	for ( i = 0 ; i < sizeof(Lcdinit) ; i += 1 )
 	{
+#ifdef REVB
+	  lcdSendCtl( ErcLcd ? Lcd_ERC12864_2[i] : Lcdinit[i] ) ;
+#else
 	  lcdSendCtl( Lcdinit[i] ) ;
+#endif
 	}
 //  lcdSendCtl(0xe2); //Initialize the internal functions
 //  lcdSendCtl(0xae); //DON = 0: display OFF

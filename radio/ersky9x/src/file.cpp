@@ -1210,7 +1210,7 @@ void convertModel( SKYModelData *dest, ModelData *source )
 	memset( dest, 0, sizeof(*dest) ) ;
   memcpy( dest->name, source->name, MODEL_NAME_LEN) ;
 	dest->modelVoice = source->modelVoice ;
-	dest->RxNum = source->RxNum ;
+	dest->RxNum_unused = source->RxNum ;
 	dest->traineron = source->traineron ;
 	dest->FrSkyUsrProto = source->FrSkyUsrProto ;
 	dest->FrSkyGpsAlt = source->FrSkyGpsAlt ;

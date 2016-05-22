@@ -237,7 +237,7 @@ volatile int32_t Rotary_position ;
 volatile int32_t Rotary_count ;
 int32_t LastRotaryValue ;
 int32_t Rotary_diff ;
-uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE] ;
+uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE+EXTRA_SKYCHANNELS] ;
 uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
@@ -476,7 +476,7 @@ uint8_t  EnterMenu = 0 ;
 // Temporary to allow compile
 uint8_t g_vbat100mV ;//= 98 ;
 //int16_t calibratedStick[7] ;
-//int16_t g_chans512[NUM_SKYCHNOUT] ;
+//int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 uint8_t heartbeat ;
 uint8_t heartbeat_running ;
 
@@ -3817,6 +3817,8 @@ void main_loop(void* pdata)
 	init_trainer_capture() ;
 
 	rtcInit() ;
+
+	init_xjt_heartbeat() ;
 #endif
 
 #ifdef PCB9XT
@@ -4259,6 +4261,40 @@ void doVoiceAlarmSource( VoiceAlarmData *pvad )
 	}
 }
 
+uint32_t rssiOffsetValue( uint32_t type )
+{
+	uint32_t offset = 45 ;
+
+#ifdef ASSAN
+#if defined(PCBX9D) || defined(PCB9XT)
+	if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#else
+	if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#endif // PCBX9D
+#else // ASSAN
+#if defined(PCBX9D) || defined(PCB9XT)
+	if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#else
+	if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#endif // PCBX9D
+#endif // ASSAN
+	{
+		if ( !g_model.dsmAasRssi )
+		{
+			offset = 20 ;
+		}
+	}
+	if ( type )
+	{
+		offset -= 3 ;
+		if ( offset == 17 )
+		{
+			offset = 18 ;
+		}
+	}				 
+	return offset ;
+}
+
 
 static void processVoiceAlarms()
 {
@@ -4559,7 +4595,7 @@ static void processVoiceAlarms()
 uint32_t MixerRate ;
 uint32_t MixerCount ;
 
-uint8_t AlarmTimers[NUM_SKYCHNOUT] ;
+uint8_t AlarmTimers[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 
 uint8_t EncoderI2cData[2] ;
 
@@ -4866,7 +4902,7 @@ extern uint32_t i2c2_result() ;
       }
 			uint16_t total_volts = 0 ;
 			CPU_UINT audio_sounded = 0 ;
-			uint8_t low_cell = 220 ;		// 4.4V
+			uint16_t low_cell = 440 ;		// 4.4V
 			uint8_t totalCells = FrskyBattCells[0] + FrskyBattCells[1] ;
 		  for (uint8_t k=0 ; k<totalCells ; k++)
 			{
@@ -4878,7 +4914,7 @@ extern uint32_t i2c2_result() ;
 
 				if ( audio_sounded == 0 )
 				{
-		      if ( FrskyVolts[k] < g_model.frSkyVoltThreshold )
+		      if ( FrskyVolts[k] < g_model.frSkyVoltThreshold * 2 )
 					{
 		        audioDefevent(AU_WARNING3);
 						audio_sounded = 1 ;
@@ -4886,8 +4922,8 @@ extern uint32_t i2c2_result() ;
 			  }
 	  	}
 			// Now we have total volts available
-			FrskyHubData[FR_CELLS_TOT] = total_volts / 5 ;
-			if ( low_cell < 220 )
+			FrskyHubData[FR_CELLS_TOT] = total_volts / 10 ;
+			if ( low_cell < 440 )
 			{
 				FrskyHubData[FR_CELL_MIN] = low_cell ;
 			}
@@ -5034,26 +5070,12 @@ extern uint32_t i2c2_result() ;
 
 			if ( frskyStreaming )
 			{
+				int8_t offset ;
 				if ( g_model.enRssiRed == 0 )
 				{
-#ifdef ASSAN
-					int8_t offset ;
-#ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-#else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-#endif // PCBX9D
-					{
-						offset = 18 ;
-					}
-					else
-					{
-						offset = 42 ;
-					}
+					offset = rssiOffsetValue( 1 ) ;
+
 					if ( rssiValue && rssiValue < g_model.rssiRed + offset )
-#else // ASSAN
-					if ( rssiValue && rssiValue < g_model.rssiRed + 42 )
-#endif // ASSAN
 					{
 						// Alarm
 						redAlert = 1 ;
@@ -5075,24 +5097,8 @@ extern uint32_t i2c2_result() ;
 				}
 				if ( ( redAlert == 0 ) && ( g_model.enRssiOrange == 0 ) )
 				{
-#ifdef ASSAN
-					int8_t offset ;
-#ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-#else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-#endif // PCBX9D
-					{
-						offset = 20 ;
-					}
-					else
-					{
-						offset = 45 ;
-					}
+					offset = rssiOffsetValue( 0 ) ;
 					if ( rssiValue && rssiValue < g_model.rssiOrange + offset )
-#else // ASSAN
-					if ( rssiValue && rssiValue < g_model.rssiOrange + 45 )
-#endif // ASSAN
 					{
 						// Alarm
 						if ( ++orangeCounter > 3 )
@@ -6766,7 +6772,19 @@ void perMain( uint32_t no_menu )
 			}
 	 		StepSize = 20 ;
 	 		Tevent = evt ;
-			
+
+#ifdef PCBX9D
+//#ifdef REVPLUS
+//  if (view != e_telemetry)
+	{
+extern uint8_t ImageDisplay ;
+extern uint8_t ImageX ;
+extern uint8_t ImageY ;
+		ImageX = 130 ;
+		ImageY = 32 ;
+		ImageDisplay = 1 ;
+	} 
+#endif
 			g_menuStack[g_menuStackPtr](evt);
 		}
 #ifdef PCBX9D
@@ -9049,6 +9067,9 @@ void checkCustom()
   clearKeyEvents();
 
   timer = 0 ;
+	
+	putSystemVoice( SV_CUSTOM_WARN, V_CUSTOM_WARN ) ;
+
   while (1)
   {
 //		static uint32_t counter = 0 ;
@@ -9482,6 +9503,15 @@ void checkXyCurve()
 		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
 		{
 			g_model.curvexy[i] = j ;
+		}
+	}
+	if ( g_model.curve2xy[9] == 0 )
+	{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curve2xy[i] = j ;
 		}
 	}
 }

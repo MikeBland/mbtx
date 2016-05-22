@@ -13,7 +13,7 @@ description here
 CHANGELOG: 22-Jan-2016  MPB (r219)
 H8_3D MULTI supported
 Correct direction of P2 on Taranis
-Add P4 and P4 as sources for GVARS
+Add P3 and P4 as sources for GVARS
 Add Encoder switch to DIAG_SWITCH display
 Re-label delay up/down to match slow up/down directions
 Fix missing haptic output when using model specific countdown beeps
@@ -38,6 +38,24 @@ Fix bugs in 6-pos calibration/operation
 Add extra mode names to MavLink (ArduP/ArduC)
 FIx watchdog timeouts on Taranis in maintenance mode
 Fix Trainer startup bug
+MavLink Teensy support
+Add extended MULTI protocol settings
+EEPROM BACKUP and RESTORE
+Trainer profiles from model menu
+9Xtreme supports MULTI on internal module
+Display MavLink flight mode when TEMP1 is selected if in ArduX mode
+Include XMEGA flashing option (not Taranis)
+Taranis supports MULTI DSM telemetry
+Add second XY-curve and a 6-point curve
+Add individual cells to telemetry items
+SKY/AR9X support ERC lcd
+Taranis sync PXX with XJT to reduce latency
+Taranis allow 9 custom telemetry values
+Add PXX option for only 8 channels
+DSM telemetry, add "Use 'A' as RSSI value"
+Remove ASSAN protocol
+Improve custom telemetry editing menu
+Language updates
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)

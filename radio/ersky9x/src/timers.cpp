@@ -42,8 +42,8 @@
 
 extern int16_t g_chans512[] ;
 
-uint16_t AssanDebug1 ;
-uint16_t AssanDebug2 ;
+//uint16_t AssanDebug1 ;
+//uint16_t AssanDebug2 ;
 
 extern void init_pxx(uint32_t port) ;
 extern void disable_pxx(uint32_t port) ;
@@ -577,9 +577,9 @@ void setupPulsesPpm()
 		p -= 13 ;
 	}
   p += g_model.startChannel ; //Channels *2
-	if ( p > NUM_SKYCHNOUT )
+	if ( p > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
 	{
-		p = NUM_SKYCHNOUT ;	// Don't run off the end		
+		p = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
 	}
 	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
@@ -630,9 +630,9 @@ void setupPulsesPpmx()
 		p -= 13 ;
 	}
   p += g_model.xstartChannel ; //Channels *2
-	if ( p > NUM_SKYCHNOUT )
+	if ( p > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
 	{
-		p = NUM_SKYCHNOUT ;	// Don't run off the end		
+		p = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
 	}
 	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
@@ -935,6 +935,9 @@ void putPcmHead_x()
     putPcmPart_x( 0 ) ;
 }
 
+uint32_t PxxTestCounter ;
+
+
 uint16_t scaleForPXX( uint8_t i )
 {
 	int16_t value ;
@@ -991,14 +994,36 @@ void setupPulsesPXX(uint8_t module)
 		}
   	for ( i = 0 ; i < 4 ; i += 1 )		// First 8 channels only
   	{																	// Next 8 channels would have 2048 added
-  	  chan = scaleForPXX( startChan ) ;
-			if ( lpass & 1 )
+			chan = scaleForPXX( startChan ) ;
+ 			if ( lpass & 1 )
 			{
 				chan += 2048 ;
 			}
   	  putPcmByte( chan ) ; // Low byte of channel
 			startChan += 1 ;
   	  chan_1 = scaleForPXX( startChan ) ;
+			
+//			if ( ( lpass & 1 ) == 0 )
+//			{
+//				if ( startChan == 1 )
+//				{
+//					chan_1 = 1024 ;
+//					if ( ++PxxTestCounter > 10 )
+//					{
+//						chan_1 = 1024 * 3 / 4 + 1024 ;
+//  					GPIO_ResetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
+//					}
+//					else
+//					{
+//  					GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
+//					}
+//					if ( PxxTestCounter > 21 )
+//					{
+//						PxxTestCounter = 0 ;
+//					}
+//				}
+//			}
+			
 			if ( lpass & 1 )
 			{
 				chan_1 += 2048 ;
@@ -1020,6 +1045,10 @@ void setupPulsesPXX(uint8_t module)
 		else
 		{
 			lpass += 1 ;
+			if ( g_model.ppmNCH == 1 )
+			{
+				lpass = 0 ;
+			}
 		}
 		Pass[module] = lpass ;
 	}  
@@ -1084,6 +1113,10 @@ void setupPulsesPXX(uint8_t module)
 		else
 		{
 			lpass += 1 ;
+			if ( g_model.xppmNCH == 1 )
+			{
+				lpass = 0 ;
+			}
 		}
 		Pass[module] = lpass ;
 		
@@ -1409,6 +1442,9 @@ extern "C" void TIM2_IRQHandler()
 
 void init_cppm_on_heartbeat_capture()
 {
+#ifdef PCBX9D
+	stop_xjt_heartbeat() ;
+#endif
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 ) ;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN ;		// Enable clock
@@ -1430,6 +1466,9 @@ void stop_cppm_on_heartbeat_capture()
 	TIM3->DIER = 0 ;
 	TIM3->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
 	NVIC_DisableIRQ(TIM3_IRQn) ;				// Stop Interrupt
+#ifdef PCBX9D
+	init_xjt_heartbeat() ;
+#endif
 }
 
 

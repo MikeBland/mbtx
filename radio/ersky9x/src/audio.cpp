@@ -744,7 +744,8 @@ const char SysVoiceNames[][VOICE_NAME_SIZE+1] =
 	"CAP_WARN",
 	"BT_LOST",
 	"HUNDRED",
-	"THOUSAND"
+	"THOUSAND",
+	"CST_WARN",
 } ;
 
 void putSystemVoice( uint16_t sname, uint16_t value )

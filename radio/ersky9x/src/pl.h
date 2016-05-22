@@ -162,7 +162,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspd"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"
@@ -263,8 +263,8 @@
 #define ISTR_SETUP          "Ustawienia modelu"
 #define ISTR_NAME           "Nazwa"
 #define ISTR_VOICE_INDEX    "G\305os \021MENU"
-#define ISTR_TRIGGERA       "Spust  "
-#define ISTR_TRIGGERB       "Spust B"
+#define ISTR_TRIGGERA       "Stan   "
+#define ISTR_TRIGGERB       "Spust  "
 //ISTR_COUNT_DOWN_UP indexed, 10 chars each
 #define ISTR_COUNT_DOWN_UP  "\012Licz w d\311\305Licz w g\311r"
 #define ISTR_T_TRIM         "Trymer Gazu"
@@ -362,8 +362,8 @@
 #define ISTR_DEAFULT_SW     "Domy\312lne Prze\305"
 #define ISTR_MEM_WARN       "Pami\304\303 Uwaga"
 #define ISTR_ALARM_WARN     "Alarm Ostrze\314enie"
-#define ISTR_POTSCROLL      "Przesuwanie Potencj."
-#define ISTR_STICKSCROLL    "Przesuwanie Dr. Gazu"
+#define ISTR_POTSCROLL      "Przes\311wanie Potencj."
+#define ISTR_STICKSCROLL    "Przes\311wanie Dr. Gazu"
 #define ISTR_BANDGAP        "Zakres Przerwy"
 #define ISTR_ENABLE_PPMSIM  "Wy\305\300cz PPMSIM"
 #define ISTR_CROSSTRIM      "CrossTrim"
@@ -422,11 +422,11 @@
 #define ISTR_ST_CARD_STAT   "STATYST. KARTY PAM."
 #define ISTR_4_READY        "\004Gotowy"
 #define ISTR_NOT            "NIE"
-#define ISTR_BOOT_REASON    "Spos\311 Uruchomienia"
+#define ISTR_BOOT_REASON    "Spos\311b Uruchom.  "
 #define ISTR_6_WATCHDOG     "\006PRZYCZYNA"
 #define ISTR_5_UNEXPECTED   "\002NIEWYJA\31NIONY"
 #define ISTR_6_SHUTDOWN     "\006ZAMYKANIE"
-#define ISTR_6_POWER_ON     "\004ZA\306\301CZENIE"
+#define ISTR_6_POWER_ON     "\004 ZA\306\301CZENIE"
 // ISTR_MONTHS indexed 3 chars each
 #define ISTR_MONTHS         "\003XxxStyLutMarKwiMajCzeLipSieWrzPa\316LisGru"
 #define ISTR_MENU_REFRESH   "[MENU] od\312wie\314"
@@ -471,7 +471,11 @@
 #define ISTR_RANGE_RSSI			"Sprawd\316 zakres RSSI:"
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"G\305o\312no\312\302"
+#ifdef ASSAN
 #define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#else
+#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 Multi"
+#endif
 #define ISTR_TYPE						" Typ"
 #define ISTR_COUNTRY				" Kraj"
 #define ISTR_SP_FAILSAFE		" Failsafe"
@@ -479,7 +483,7 @@
 #define ISTR_FOLLOW					"\313LED\316"
 #define ISTR_PPM2_CHANNELS	"PPM2 Kana\305y"
 #define ISTR_FILTER_ADC			"Filtr ADC"
-#define ISTR_SCROLLING			"Przes\311wanie"
+#define ISTR_SCROLLING			"Przesuwanie"
 #define ISTR_ALERT_YEL			"Alert [\315\311\305]"
 #define ISTR_ALERT_ORG			"Alert [Pom]"
 #define ISTR_ALERT_RED			"Alert [Cze]"
@@ -512,7 +516,6 @@
 #define ISTR_DateTime			   "Data-Czas" 
 #define ISTR_DiagSwtch		   "DiagPrze\305"  
 #define ISTR_DiagAna		     "DiagDr\300\314k" 
-#define ISTR_Eeprom			     "EEPROM" 
 
 #define ISTR_Mixer		      "Mixer" 
 #define ISTR_Cswitches		  "Prze\305 Log." 
@@ -525,9 +528,25 @@
 #define ISTR_Globals		    "Globalne" 
 #define ISTR_Timer		      "Stoper" 
 #define ISTR_Modes			 		"Tryby Lotu" 
-#define ISTR_Voice		      "Dzwi\304k" 
+#define ISTR_Voice		      "D\316wi\304k" 
 #define ISTR_Protocol			  "Protok\311\305" 
 #define ISTR_Safety					"Wy\305 Bezp."
+#define ISTR_Eeprom			     "EEPROM" 
+
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help"
+#define ISTR_ROTATE_SCREEN			"Rotate Screen"
+#define ISTR_REVERSE_SCREEN			"Reverse Screen"
+#define ISTR_MENU_ONLY_EDIT			"MENU only Edit"
+#define ISTR_Voice_Alarm				"Voice Alarm"
+#define ISTR_Voice_Alarms				"Voice Alarms"
+#define ISTR_CUSTOM_CHECK				"Custom Check"
+#define ISTR_CUSTOM_STK_NAMES		"CustomStkNames"
+#define ISTR_HAPTIC							"Haptic"
+#define ISTR_RESET_SWITCH				"Reset Switch"
+#define ISTR_THROTTLE_OPEN			"Throttle Open"
+#define ISTR_THR_DEFAULT				"Thr. Default"
+#define ISTR_TOTAL_TIME					"Total Time"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom"
 
 
 //"Aktualne \317r\311d\305o"

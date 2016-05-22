@@ -26,7 +26,7 @@
 #define prog_char char
 //#define FIX_MODE		1
 
-#define ASSAN		1
+//#define ASSAN		1
 
 #ifdef PCBX9D
 //#define	SERIAL_HOST		1
@@ -543,6 +543,7 @@ uint8_t CS_STATE( uint8_t x) ;
 //number of real outputchannels CH1-CH16
 #define NUM_CHNOUT  16
 #define NUM_SKYCHNOUT  24
+#define EXTRA_SKYCHANNELS	0
 ///number of real input channels (1-9) plus virtual input channels X1-X4
 #define PPM_BASE    MIX_CYC3
 #define CHOUT_BASE  (PPM_BASE+NUM_PPM)
@@ -790,7 +791,7 @@ const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 extern const int8_t TelemIndex[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 48
+#define NUM_TELEM_ITEMS 54
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
 #define NUM_SKYXCHNRAW (CHOUT_BASE+NUM_SKYCHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -982,7 +983,7 @@ int8_t checkIncDec_hm0( int8_t i_val, int8_t i_max);
 
 
 extern uint8_t heartbeat ;
-extern int16_t g_chans512[NUM_SKYCHNOUT];
+extern int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 //extern uint8_t eeprom[4096] ;
 extern uint8_t BtAsPpm ;
 extern uint8_t BtBaudrateChanged ;
@@ -1028,7 +1029,7 @@ extern int16_t intpol(int16_t x, uint8_t idx);
 extern uint16_t anaIn(uint8_t chan) ;
 
 extern int8_t phyStick[4] ;
-extern int16_t ex_chans[NUM_SKYCHNOUT];
+extern int16_t ex_chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 
 extern void modelDefault( uint8_t id ) ;
 extern uint8_t VoiceCheckFlag ;
@@ -1273,5 +1274,7 @@ extern struct t_PeripheralSpeeds PeripheralSpeeds ;
 uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source ) ;
 uint32_t btAddressValid( uint8_t *address ) ;
 uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 ) ;
+
+uint32_t rssiOffsetValue( uint32_t type ) ;
 
 #endif

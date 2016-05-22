@@ -317,6 +317,7 @@ uint32_t sd_cmd0()
                                           | HSMCI_CMDR_RSPTYP_48_BIT \
                                           | HSMCI_CMDR_MAXLAT )
 
+
 // returns 0 = OK, non-zero = fail
 uint32_t sd_cmd13(uint32_t *status)
 {
@@ -518,6 +519,8 @@ uint32_t sd_acmd6()
 
 const uint8_t SpeedTable[] = { 1, 10, 12, 13, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 70, 80 } ;
 
+extern void init_SDcard() ;
+
 // This routine is called every 10 mS, and checks for card
 // insertion and removal.
 // When a card is inserted, it initialises it ready for read/write access.
@@ -535,7 +538,9 @@ void sdPoll10mS()
         switch ( Card_state )
         {
                 case SD_ST_EMPTY :
-                  if ( CardIsPresent() ) {
+                  if ( CardIsPresent() )
+									{
+										init_SDcard() ;
                     Card_state = SD_ST_INIT1 ;
                   }
                   break ;

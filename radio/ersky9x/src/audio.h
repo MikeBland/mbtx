@@ -312,6 +312,7 @@ extern void unlockVoice( void ) ;
 #define V_THR_WARN			74
 #define V_SW_WARN				75
 //#define V_BT_LOST				76
+#define V_CUSTOM_WARN		77
 
 //#define V_HUNDRED			 100
 #define V_THOUSAND		 110
@@ -380,6 +381,7 @@ extern void unlockVoice( void ) ;
 #define	SV_BT_LOST		54
 #define	SV_HUNDRED		55
 #define	SV_THOUSAND		56
+#define	SV_CUSTOM_WARN	57
 
 
 #endif // audio_h     

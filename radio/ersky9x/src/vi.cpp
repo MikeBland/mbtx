@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "vi.h"
 
 extern const char * const Vietnamese[] ;

@@ -93,6 +93,15 @@ extern void com2Parity( uint32_t even ) ;
 extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
+#ifdef PCBX9D
+struct t_XjtHeartbeatCapture
+{
+	uint16_t value ;
+	uint16_t valid ;
+} ;
+extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+#endif                              
+
 extern void putEvent( register uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
@@ -102,6 +111,10 @@ extern void UART2_timeout_disable( void ) ;
 extern void UART_Sbus_configure( uint32_t masterClock ) ;
 extern void UART_Sbus57600_configure( uint32_t masterClock ) ;
 extern void jetiSendWord( uint16_t word ) ;
+#ifdef PCBX9D
+void init_xjt_heartbeat( void ) ;
+void stop_xjt_heartbeat( void ) ;
+#endif
 extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 //extern void UART_Stop( void ) ;
 //extern void Bt_UART_Stop( void ) ;
@@ -256,6 +269,13 @@ public:
 };
 
 extern Key keys[NUM_KEYS] ;
+
+// Soft Serial options
+#define SERIAL_NORM		0
+#define SERIAL_INVERT	1
+
+#define SERIAL_NO_PARITY		0
+#define SERIAL_EVEN_PARITY	1
 
 
 #endif

@@ -372,6 +372,21 @@
 #define STR_MULTI_AUTO  		346
 #define STR_MULTI_POWER  		347
 
+#define STR_MAIN_POPUP  		348
+#define STR_ROTATE_SCREEN   349
+#define STR_REVERSE_SCREEN	350
+#define STR_MENU_ONLY_EDIT	351
+#define STR_Voice_Alarm			352
+#define STR_Voice_Alarms		353
+#define STR_CUSTOM_CHECK		354
+#define STR_CUSTOM_STK_NAMES 355
+#define STR_HAPTIC					356
+#define STR_RESET_SWITCH		357
+#define STR_THROTTLE_OPEN		358
+#define STR_THR_DEFAULT			359
+#define STR_TOTAL_TIME			360
+#define STR_POPUP_GLOBALS		361
+
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 //"SC  ="

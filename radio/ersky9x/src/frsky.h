@@ -374,7 +374,7 @@ extern FrskyData frskyTelemetry[4];
 extern int16_t FrskyHubData[] ;
 //extern int16_t FrskyHubMin[] ;
 //extern int16_t FrskyHubMax[] ;
-extern uint8_t FrskyVolts[];
+extern uint16_t FrskyVolts[];
 extern uint8_t FrskyBattCells[] ;
 extern uint8_t FrskyAlarmCheckFlag ;
 //extern uint8_t MaxGpsSpeed ;

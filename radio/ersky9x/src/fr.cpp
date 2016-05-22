@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "fr.h"
 
 extern const char * const French[] ;

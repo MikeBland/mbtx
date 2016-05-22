@@ -46,6 +46,7 @@
 ****************************************************************************/
 
 
+#include "ersky9x.h"
 #include "de.h"
 
 extern const char * const German[] ;

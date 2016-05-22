@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "no.h"
 
 extern const char * const Norwegian[] ;

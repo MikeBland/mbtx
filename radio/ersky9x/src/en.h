@@ -143,7 +143,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspd"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "GV"
 #define ISTR_OFF_ON         "OFF ON"
@@ -452,7 +452,11 @@
 #define ISTR_RANGE_RSSI			"RANGE CHECK RSSI:"
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"Volume Control"
+#ifdef ASSAN
 #define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#else
+#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 Multi"
+#endif
 #define ISTR_TYPE						" Type"
 #define ISTR_COUNTRY				" Country"
 #define ISTR_SP_FAILSAFE		" Failsafe"
@@ -493,7 +497,6 @@
 #define ISTR_DateTime			   "Date-Time" 
 #define ISTR_DiagSwtch		   "DiagSwtch"  
 #define ISTR_DiagAna		     "DiagAna" 
-#define ISTR_Eeprom			     "EEPROM" 
 
 #define ISTR_Mixer		      "Mixer" 
 #define ISTR_Cswitches		  "L.Switches" 
@@ -509,13 +512,27 @@
 #define ISTR_Voice		      "Voice" 
 #define ISTR_Protocol			  "Protocol" 
 #define ISTR_Safety					"Safety Sws"
+#define ISTR_Eeprom			     "EEPROM" 
 
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help"
+#define ISTR_ROTATE_SCREEN			"Rotate Screen"
+#define ISTR_REVERSE_SCREEN			"Reverse Screen"
+#define ISTR_MENU_ONLY_EDIT			"MENU only Edit"
+#define ISTR_Voice_Alarm				"Voice Alarm"
+#define ISTR_Voice_Alarms				"Voice Alarms"
+#define ISTR_CUSTOM_CHECK				"Custom Check"
+#define ISTR_CUSTOM_STK_NAMES		"CustomStkNames"
+#define ISTR_HAPTIC							"Haptic"
+#define ISTR_RESET_SWITCH				"Reset Switch"
+#define ISTR_THROTTLE_OPEN			"Throttle Open"
+#define ISTR_THR_DEFAULT				"Thr. Default"
+#define ISTR_TOTAL_TIME					"Total Time"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom"
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 //"SC  ="
 //"Source"
-//"Multiplier"
 //"Divisor"
 //"Unit"
 //"Sign"
@@ -538,7 +555,6 @@
 //"\002MODES"
 // SKY "\004sIDxsTHRsRUDsELEsAILsGEAsTRN"
 // X9D "\002SASBSCSDSESFSGSH"
-//"Reset Switch"
 // SKY "\003---P1 P2 P3 GV4GV5GV6GV7"
 // X9D "\003---P1 P2 SL SR GV5GV6GV7"
 //"Internal"
@@ -563,7 +579,6 @@
 //"Controls"
 //"Hardware"
 //"Calibration"
-//"Trainer"
 //"Version"
 //"Date-Time"
 //"DiagSwtch"
@@ -589,12 +604,10 @@
 //"MODEL SETTINGS"
 //"Mixer"
 //"C.Switches"
-//"Telemetry"
 //"Limits"
 //"Display"
 //"MDISPLAY"
 //"\001Haptic Min Run"
-
 
 
 

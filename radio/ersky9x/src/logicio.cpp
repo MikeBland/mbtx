@@ -948,10 +948,10 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 	return xxx ;
 }
 
-uint16_t AVdebug1 ;
-uint16_t AVdebug2 ;
-uint16_t AVdebug3 ;
-uint16_t AVdebug4 ;
+//uint16_t AVdebug1 ;
+//uint16_t AVdebug2 ;
+//uint16_t AVdebug3 ;
+//uint16_t AVdebug4 ;
 
 
 
@@ -966,7 +966,7 @@ uint32_t hwKeyState( uint8_t key )
 	a = g_eeGeneral.analogMapping & MASK_6POS ;
 	if ( a )
 	{
-		AVdebug1 = a ;
+//		AVdebug1 = a ;
 		if ( a == USE_AUX_6POS )
 		{
 			avpot = av9 ;
@@ -979,7 +979,7 @@ uint32_t hwKeyState( uint8_t key )
 		{
 			avpot = 4095 - avpot ;
 		}
-		AVdebug2 = avpot ;
+//		AVdebug2 = avpot ;
 	}
 
   CPU_UINT xxx = 0 ;
@@ -1198,17 +1198,17 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Ele6pos0 :
 			if ( avpot != 0xFFFF )
 			{
-				AVdebug3 = 1 ;
+//				AVdebug3 = 1 ;
 				xxx = avpot > SixPositionTable[0] ;
 			}
 			else if ( g_eeGeneral.switchMapping & USE_ELE_6PSB )
 			{
-				AVdebug3 = 2 ;
+//				AVdebug3 = 2 ;
 				xxx = av9 > 3438 ;
 			}
 			else
 			{
-				AVdebug3 = 3 ;
+//				AVdebug3 = 3 ;
 				xxx = av9 > 0x7E0 ;
 			}
     break ;

@@ -77,7 +77,7 @@ extern uint8_t CurrentVolume ;
 //volatile uint8_t Buzzer_count ;
 
 uint32_t CoProcTimer ;
-uint32_t Debug_I2C_event ;
+//uint32_t Debug_I2C_event ;
 //uint32_t Debug_I2C_restart ;
 //uint32_t Debug_I2C_index ;
 //uint32_t Debug_I2C_value[8] ;
@@ -1044,7 +1044,7 @@ uint32_t readI2cEncoder( uint8_t *ptrData )
 	return 1 ;
 }
 
-uint32_t ErtcDebug ;
+//uint32_t ErtcDebug ;
 void readExtRtc()
 {
 	ExtRtcI2cRequest.mmr = 0x00681100 ;	// reading, 1 byte addr
@@ -1053,7 +1053,7 @@ void readExtRtc()
 	ExtRtcI2cRequest.dataBuffer = ExternalRtc ;
 	ExtRtcI2cRequest.operationType = TWI_READ_BUFFER ;
 	ExtRtcI2cRequest.speed = TWI_LOW_SPEED ;
-	ErtcDebug += 256 ;
+//	ErtcDebug += 256 ;
 	submitI2cRequest( &ExtRtcI2cRequest ) ;
 }
 
@@ -1061,7 +1061,7 @@ void pollForRtcComplete()
 {
 	if ( ExtRtcI2cRequest.done )
 	{
-		ErtcDebug |= 0x80 ;
+//		ErtcDebug |= 0x80 ;
 		ExtRtcI2cRequest.done = 0 ;
 		Rtc_valid = 1 ;
 		// Set the date and time
@@ -1104,7 +1104,7 @@ void i2c_check_for_request()
 {
 	if ( TWI0->TWI_IMR & TWI_IMR_TXCOMP )
 	{
-		ErtcDebug |= 0x40 ;
+//		ErtcDebug |= 0x40 ;
 		
 		return ;		// Busy
 	}
@@ -1113,7 +1113,7 @@ void i2c_check_for_request()
 
 	if ( I2cHeadPointer )
 	{
-		ErtcDebug |= 1 ;
+//		ErtcDebug |= 1 ;
 		I2cCurrentPointer = I2cHeadPointer ;
 		I2cHeadPointer = I2cHeadPointer->next ;
 		
@@ -1148,7 +1148,7 @@ void i2c_check_for_request()
 		}
 		else if ( I2cCurrentPointer->operationType == TWI_READ_BUFFER )
 		{
-			ErtcDebug |= 2 ;
+//			ErtcDebug |= 2 ;
 			TwiOperation = TWI_READ_BUFFER ;
 #ifndef SIMU
 			TWI0->TWI_RPR = (uint32_t)I2cCurrentPointer->dataBuffer ;
@@ -1193,10 +1193,10 @@ void i2c_check_for_request()
 			(void) TWI0->TWI_RHR ;
 		}
 
-		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-		{
-			Debug_I2C_event += 1 ;
-		}
+//		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
+//		{
+//			Debug_I2C_event += 1 ;
+//		}
 
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
@@ -1253,10 +1253,10 @@ void i2c_check_for_request()
 			(void) TWI0->TWI_RHR ;
 		}
 
-		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-		{
-			Debug_I2C_event += 1 ;
-		}
+//		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
+//		{
+//			Debug_I2C_event += 1 ;
+//		}
 
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
@@ -1495,7 +1495,7 @@ extern "C" void TWI0_IRQHandler()
 {
 	uint32_t status ;
 	status = TWI0->TWI_SR ;		// Read only once, some bits cleared on read
-	ErtcDebug |= 4 ;
+//	ErtcDebug |= 4 ;
 	if ( TwiOperation == TWI_READ_VOL )
 	{
 		if ( status & TWI_SR_RXRDY )
@@ -1673,7 +1673,7 @@ extern "C" void TWI0_IRQHandler()
 	{
 		if ( status & TWI_SR_RXBUFF )
 		{
-			ErtcDebug |= 8 ;
+//			ErtcDebug |= 8 ;
 			TWI0->TWI_IDR = TWI_IDR_RXBUFF ;
 			TwiOperation = TWI_WAIT_BUFFER ;
 			TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
@@ -1685,12 +1685,12 @@ extern "C" void TWI0_IRQHandler()
 			// must be TXCOMP, prob. NAK in data
 			if ( TWI0->TWI_RCR > 0 )
 			{
-				ErtcDebug |= 0x10 ;
+//				ErtcDebug |= 0x10 ;
 				TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
 		  }
 			else
 			{
-				ErtcDebug |= 0x20 ;
+//				ErtcDebug |= 0x20 ;
 				TwiOperation = TWI_NONE ;
 				I2cCurrentPointer->done = 1 ;
 				I2cCurrentPointer = (struct t_I2C_request *) NULL ;
@@ -1723,7 +1723,7 @@ extern "C" void TWI0_IRQHandler()
 	 
 	if ( status & TWI_SR_NACK )
 	{
-		Debug_I2C_event += 0x100 ;
+//		Debug_I2C_event += 0x100 ;
 		(void) TWI0->TWI_RHR ;
 		uint32_t save = TWI0->TWI_CWGR ;
 		TWI0->TWI_CR = TWI_CR_SWRST ;				// Reset in case we are restarting
@@ -1731,13 +1731,13 @@ extern "C" void TWI0_IRQHandler()
 		TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 	}
 
-	if ( status & TWI_SR_RXBUFF )
-	{
-		if ( TWI0->TWI_IMR & TWI_IMR_RXBUFF )
-		{
-			Debug_I2C_event += 0x1000000 ;
-		}
-	}
+//	if ( status & TWI_SR_RXBUFF )
+//	{
+//		if ( TWI0->TWI_IMR & TWI_IMR_RXBUFF )
+//		{
+//			Debug_I2C_event += 0x1000000 ;
+//		}
+//	}
 
 	TWI0->TWI_IDR = TWI_IDR_TXCOMP | TWI_IDR_TXBUFE | TWI_IDR_RXBUFF ;
 	TWI0->TWI_PTCR = TWI_PTCR_TXTDIS | TWI_PTCR_RXTDIS ;	// Stop transfers

@@ -2523,6 +2523,9 @@ extern "C" void SSC_IRQHandler()
 
 void USART6_Sbus_configure()
 {
+#ifdef PCBX9D
+	stop_xjt_heartbeat() ;
+#endif
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 //	GPIOC->MODER = (GPIOC->MODER & 0xFFFFBFFF ) | 0x00008000 ;	// Alternate func.
@@ -2541,6 +2544,9 @@ void stop_USART6_Sbus()
 {
 	configure_pins( 0x0080, PIN_INPUT | PIN_PORTC ) ;
   NVIC_DisableIRQ(USART6_IRQn) ;
+#ifdef PCBX9D
+	init_xjt_heartbeat() ;
+#endif
 }
 
 extern "C" void USART6_IRQHandler()
@@ -2899,6 +2905,31 @@ static void stop_timer11()
 //}
 //#endif
 
+#ifdef PCBX9D
+#define XJT_HEARTBEAT_BIT	0x0080		// PC7
+
+
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_xjt_heartbeat()
+{
+	SYSCFG->EXTICR[1] |= 0x2000 ;		// PC7
+	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
+	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
+	configure_pins( GPIO_Pin_7, PIN_INPUT | PIN_PORTC ) ;
+	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
+	XjtHeartbeatCapture.valid = 1 ;
+}
+
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
+
+#endif
+
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
@@ -2930,11 +2961,11 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 	SYSCFG->EXTICR[0] = 0 ;
 #else
 #define EXT_BIT_MASK	0x00000040
-	SYSCFG->EXTICR[1] = 0x0300 ;
+	SYSCFG->EXTICR[1] |= 0x0300 ;
 #endif
-	EXTI->IMR = EXT_BIT_MASK ;
-	EXTI->RTSR = EXT_BIT_MASK ;
-	EXTI->FTSR = EXT_BIT_MASK ;
+	EXTI->IMR |= EXT_BIT_MASK ;
+	EXTI->RTSR |= EXT_BIT_MASK ;
+	EXTI->FTSR |= EXT_BIT_MASK ;
 
 #ifdef PCB9XT
 	configure_pins( GPIO_Pin_3, PIN_INPUT | PIN_PORTA ) ;
@@ -2956,8 +2987,8 @@ void disable_software_com1()
 	EXTI->IMR &= ~EXT_BIT_MASK ;
 #ifdef PCB9XT
 	NVIC_DisableIRQ( EXTI3_IRQn ) ;
-#else
-	NVIC_DisableIRQ( EXTI9_5_IRQn ) ;
+//#else
+//	NVIC_DisableIRQ( EXTI9_5_IRQn ) ;
 #endif
 }
 
@@ -3496,6 +3527,18 @@ extern "C" void EXTI9_5_IRQHandler()
 //#endif
 
 	capture =  TIM7->CNT ;	// Capture time
+	
+#ifdef PCBX9D
+	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+	{
+		XjtHeartbeatCapture.value = capture ;
+		EXTI->PR = XJT_HEARTBEAT_BIT ;
+	}
+	if ( ( EXTI->PR & EXT_BIT_MASK ) == 0 )
+	{
+		return ;
+	}
+#endif	
 	EXTI->PR = EXT_BIT_MASK ;
 	
 #ifdef PCB9XT
