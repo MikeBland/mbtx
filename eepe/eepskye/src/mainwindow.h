@@ -43,8 +43,8 @@
 #define MAINWINDOW_H
 
 #include "downloaddialog.h"
-
 #include <QMainWindow>
+#include <QDropEvent>
 
 class QNetworkAccessManager;
 class QDateTime;
@@ -69,9 +69,10 @@ public:
 public slots:
     void checkForUpdates(bool ignoreSettings=true);
 
-
 protected:
     void closeEvent(QCloseEvent *event);
+		void dropEvent(QDropEvent *event) ;
+		void dragEnterEvent(QDragEnterEvent *ev) ;
 
 private slots:
 

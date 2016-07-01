@@ -57,8 +57,8 @@
 #include "file.h"
 
 
-//#define ER9X_EEPROM_FILE_TYPE        "ER9X_EEPROM_FILE"
-//#define ER9X_MODEL_FILE_TYPE         "ER9X_MODEL_FILE"
+#define ER9X_EEPROM_FILE_TYPE        "ER9X_EEPROM_FILE"
+#define ER9X_MODEL_FILE_TYPE         "ER9X_MODEL_FILE"
 //#define ER9X_GENERAL_FILE_TYPE       "ER9X_GENERAL_FILE"
 
 #define ERSKY9X_EEPROM_FILE_TYPE        "ERSKY9X_EEPROM_FILE"
@@ -137,6 +137,7 @@ public:
     bool hasPasteData();
     static int getFileType(const QString &fullFileName);
     bool saveToFileEnabled();
+    uint32_t countExtraPots(EEGeneral *g_eeGeneral) ;
 
 //    int modelSize(int id) {return eeFile.size(id);}
     int eepromVersion();
@@ -185,6 +186,7 @@ public slots:
     void setModified(ModelEdit * me = 0);
     void viableModelSelected(int idx);
 		void wizardEdit() ;
+		void setActive() ;
 
 
 

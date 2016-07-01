@@ -349,6 +349,8 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_Ele6pos3	63
 #define HSW_Ele6pos4	64
 #define HSW_Ele6pos5	65
+#define HSW_Pb1				66
+#define HSW_Pb2				67
 #ifdef REV9E
 #define HSW_SI0				66
 #define HSW_SI1				67
@@ -382,7 +384,7 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_SR2				95
 #define HSW_MAX				95
 #else
-#define HSW_MAX				65
+#define HSW_MAX				67
 #endif	// REV9E
 
 //Bitfield for hardware analog mapping
@@ -391,6 +393,8 @@ int8_t switchMap( int8_t x ) ;
 #define	USE_P3_ENC	0x03
 #define ENC_MASK		0x03
 
+#define	USE_PB1				0x80
+#define	USE_PB2				0x100
 
 #define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
 
@@ -674,7 +678,7 @@ extern uint8_t Ee_lock ;
 #define TMRMODE_ABS      1
 #define TMRMODE_THR      2
 #define TMRMODE_THR_REL  3
-#define MAX_ALERT_TIME   20
+#define MAX_ALERT_TIME   5
 
 #define PROTO_PPM        0
 #define PROTO_PXX        1
@@ -1032,7 +1036,7 @@ extern int8_t phyStick[4] ;
 extern int16_t ex_chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 
 extern void modelDefault( uint8_t id ) ;
-extern uint8_t VoiceCheckFlag ;
+extern uint8_t VoiceCheckFlag100mS ;
 
 //void eeWaitComplete( void ) ;
 void eeDirty(uint8_t msk);
@@ -1276,5 +1280,8 @@ uint32_t btAddressValid( uint8_t *address ) ;
 uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 ) ;
 
 uint32_t rssiOffsetValue( uint32_t type ) ;
+
+extern uint8_t LastMusicStartSwitchState ;
+extern uint8_t LastMusicPauseSwitchState ;
 
 #endif

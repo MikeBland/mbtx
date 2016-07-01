@@ -1,18 +1,20 @@
 #include "mixerdialog.h"
 #include "ui_mixerdialog.h"
 #include "pers.h"
+#include "file.h"
 #include "helpers.h"
 
-MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, int eeType) :
+MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData ) :
     QDialog(parent),
     ui(new Ui::MixerDialog)
 {
     ui->setupUi(this);
     md = mixdata;
-		leeType = eeType ;
+		leeType = rData->type ;
+		lextraPots = rData->extraPots ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
-    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, eeType);
+    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, leeType, lextraPots ) ;
     
 		ui->sourceCB->addItem("SWCH");
 		
@@ -96,7 +98,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 #ifdef SKY    
 		int value ;
 		value = md->srcRaw ;
-		if ( ( eeType == 1 ) || ( eeType == 2 ) )
+		if ( ( leeType == 1 ) || ( leeType == 2 ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -106,7 +108,21 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				}
 				else
 				{
-					value += eeType == 2 ? 2 : NUM_EXTRA_POTS ;
+					value += leeType == 2 ? 2 : NUM_EXTRA_POTS ;
+				}
+			}
+		}
+		if ( leeType == RADIO_TYPE_SKY )
+		{
+			if ( value >= EXTRA_POTS_POSITION )
+			{
+				if ( value >= EXTRA_POTS_START )
+				{
+					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+				}
+				else
+				{
+					value += lextraPots ;
 				}
 			}
 		}
@@ -147,7 +163,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 		ui->sourceSwitchCB->clear();
 
- 		if ( ( (eeType == 1 ) || ( eeType == 2 ) ) )	// Taranis
+ 		if ( ( (leeType == 1 ) || ( leeType == 2 ) ) )	// Taranis
 		{
     	ui->sourceSwitchCB->addItem("SA");
     	ui->sourceSwitchCB->addItem("SB");
@@ -208,7 +224,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		ui->trimChkB->setChecked(md->carryTrim==0);
 //    ui->FMtrimChkB->setChecked(!md->disableExpoDr);
     ui->lateOffsetChkB->setChecked(md->lateOffset);
-    populateSwitchCB(ui->switchesCB,md->swtch, eeType );
+    populateSwitchCB(ui->switchesCB,md->swtch, leeType );
     ui->warningCB->setCurrentIndex(md->mixWarn);
     ui->mltpxCB->setCurrentIndex(md->mltpx);
 
@@ -386,7 +402,7 @@ void MixerDialog::valuesChanged()
 //    md->srcRaw       = x ;
 		
 		
-		value = decodePots( value, leeType ) ;
+		value = decodePots( value, leeType, lextraPots ) ;
 		md->srcRaw       = value ;
 		
 		md->switchSource = ui->sourceSwitchCB->currentIndex() ;
@@ -496,7 +512,11 @@ void MixerDialog::valuesChanged()
 				}
 				else
 				{
+#ifdef SKY    
+	    		md->curve = ui->curvesCB->currentIndex()-19;
+#else
 	    		md->curve = ui->curvesCB->currentIndex()-16;
+#endif
 				}	 
 			}
 		}

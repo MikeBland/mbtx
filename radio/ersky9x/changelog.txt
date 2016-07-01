@@ -56,6 +56,9 @@ DSM telemetry, add "Use 'A' as RSSI value"
 Remove ASSAN protocol
 Improve custom telemetry editing menu
 Language updates
+Add background music, merge beeps into voice
+Add RAW telemetry logging
+Initialise telemetry on model load
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)

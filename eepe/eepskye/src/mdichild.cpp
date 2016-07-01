@@ -101,8 +101,7 @@ MdiChild::MdiChild()
     radioData.ModelNames[i][0] = '\0' ;
 	}
 	radioData.type = 0 ;
-
-
+	radioData.extraPots = 0 ;
 
 	generalDefault() ;
 
@@ -120,8 +119,33 @@ MdiChild::MdiChild()
     setDragEnabled(true);
     setAcceptDrops(true);
     setDropIndicatorShown(true);
+	radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
 
 }
+
+
+uint32_t MdiChild::countExtraPots(EEGeneral *g_eeGeneral)
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral->extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[2] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[3] )
+	{
+		count += 1 ;
+	}
+	return count ;
+}
+
 
 void MdiChild::mousePressEvent(QMouseEvent *event)
 {
@@ -165,6 +189,10 @@ void MdiChild::dragEnterEvent(QDragEnterEvent *event)
          clearSelection();
          itemAt(event->pos())->setSelected(true);
     }
+		else if (event->mimeData()->hasFormat("text/uri-list"))
+		{
+	    event->acceptProposedAction();
+		}
 }
 
 void MdiChild::dragMoveEvent(QDragMoveEvent *event)
@@ -186,6 +214,17 @@ void MdiChild::dropEvent(QDropEvent *event)
         QByteArray gmData = event->mimeData()->data("application/x-eepe");
         doPaste(&gmData,i);
     }
+		else
+		{
+		  QList<QUrl> urls = event->mimeData()->urls();
+  		if (urls.isEmpty())
+    		return ;
+			QString fileName = urls.first().toLocalFile();
+  		if (fileName.isEmpty())
+  		  return ;
+			setCurrentRow( i ) ;
+      loadModelFromFile( fileName ) ;
+		}
     event->acceptProposedAction();
 }
 
@@ -234,6 +273,12 @@ void MdiChild::refreshList()
 	    	buf[4] = '\0';
 			}
       addItem(QString(buf));
+    }
+    if (radioData.generalSettings.currModel < 60 )
+		{
+			QFont f = QFont("Courier New", 12) ;
+			f.setBold(true) ;
+      this->item(radioData.generalSettings.currModel+1)->setFont(f) ;
     }
 }
 
@@ -403,7 +448,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
           gData += sizeof(er9x::EmodelData);
           i     += sizeof(er9x::EmodelData);
           id++;
-          QMessageBox::critical(this, tr("Error"),
+          QMessageBox::critical(this, tr("Warning"),
                         tr("Only part pasted from er9x file\nPlease check model settings"));
 				}
 
@@ -519,7 +564,7 @@ bool MdiChild::loadModelFromFile(QString fn)
             xmlOK = doc.setContent(&file);
             if(xmlOK)
             {
-                xmlOK = loadGeneralDataXML(&doc, &tgen);
+              xmlOK = loadGeneralDataXML(&doc, &tgen);
             }
             file.close();
         }
@@ -556,8 +601,23 @@ bool MdiChild::loadModelFromFile(QString fn)
             xmlOK = doc.setContent(&file);
             if(xmlOK)
             {
-                xmlOK = loadModelDataXML(&doc, &tmod);
-                getNotesFromXML(&doc, cmod);
+							QDomDocumentType type = doc.doctype() ;
+							if ( ( type.name() == ERSKY9X_MODEL_FILE_TYPE ) || ( type.name() == ERSKY9X_EEPROM_FILE_TYPE ) )
+							{
+              	xmlOK = loadModelDataXML(&doc, &tmod);
+              	getNotesFromXML(&doc, cmod);
+							}
+							else if ( ( type.name() == ER9X_MODEL_FILE_TYPE ) || ( type.name() == ER9X_EEPROM_FILE_TYPE ) )
+							{
+        				SKYModelData emod;
+								
+              	xmlOK = loadModelDataXML( &doc, &emod ) ;
+              	memcpy( &er9x::EmodelData, &emod, sizeof(er9x::EmodelData) ) ;
+								convertFromEr9x( &tmod, 0 ) ;
+              	getNotesFromXML(&doc, cmod);
+			          QMessageBox::critical(this, tr("Warning"),
+                        tr("Only part pasted from er9x file\nPlease check model settings"));
+							}
             }
             file.close();
         }
@@ -777,11 +837,12 @@ void MdiChild::OpenEditWindow()
             setModified();
         }
 
+				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
     		QString mname = modelName(i-1) ;
         ModelEdit *t = new ModelEdit( &radioData,(i-1),this);
         
 				if(isNew) t->applyBaseTemplate();
-    		QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
+				QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
 				if ( radioData.type == 2 )
 				{
     		  type = " (Taranis Plus)" ;
@@ -812,6 +873,7 @@ void MdiChild::OpenEditWindow()
         GeneralEdit *t = new GeneralEdit(&radioData, this);
         connect(t,SIGNAL(modelValuesChanged()),this,SLOT(setModified()));
         t->show();
+				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
     }
 
 }
@@ -991,7 +1053,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
           /*long result = */ file.read((char*)&temp,32768);
   	      file.close();
 
-					radioData.type = 1 ;
+					radioData.type = RADIO_TYPE_TARANIS ;
 					int x ;
 			    QSettings settings("er9x-eePskye", "eePskye");
 					x = settings.value("download-version", 0).toInt() ;
@@ -1521,6 +1583,8 @@ void MdiChild::ShowContextMenu(const QPoint& pos)
     contextMenu.addAction(QIcon(":/images/simulate.png"), tr("Simulate"),this,SLOT(simulate()),tr("Alt+S"));
     contextMenu.addSeparator();
     contextMenu.addAction(QIcon(":/images/write_eeprom.png"), tr("&Write To Tx"),this,SLOT(burnTo()),tr("Ctrl+Alt+W"));
+    contextMenu.addSeparator();
+    contextMenu.addAction(QIcon(":/images/edit.png"), tr("Set &Active Model"),this,SLOT(setActive()));
 
     contextMenu.exec(globalPos);
 }
@@ -1537,6 +1601,17 @@ void MdiChild::setModified(ModelEdit * me)
         for(int j=0; j<MAX_SKYMIXERS; j++)
             modelNotes[id][j] = me->getNote(j);
     }
+}
+
+void MdiChild::setActive()
+{
+  int i = this->currentRow() ;
+  
+	if ( i )
+	{
+		radioData.generalSettings.currModel = i - 1 ;
+		refreshList();
+	}
 }
 
 void MdiChild::simulate()

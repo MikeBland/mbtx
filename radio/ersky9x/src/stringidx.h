@@ -66,8 +66,8 @@
 #define STR_GV              47
 #define STR_OFF_ON          48
 #define STR_HYPH_INV        49
-#define STR_VERSION         50
-#define STR_TRAINER         51
+#define STR_SHUT_DOWN       50
+#define STR_Music		        51
 #define STR_SLAVE           52
 #define STR_MENU_DONE       53
 #define STR_CURVES          54
@@ -158,7 +158,7 @@
 #define STR_T_EXPO          139
 #define STR_TRIM_INC        140
 #define STR_TRIM_OPTIONS    141
-#define STR_TRIM_SWITCH     142
+#define X_STR_TRIM_SWITCH     142
 #define STR_BEEP_CENTRE     143
 #define STR_RETA123         144
 #define STR_PROTO           145
@@ -184,15 +184,15 @@
 #define STR_SP_FM           165
 #define STR_HELI_SETUP      166
 #define STR_X_OFF_ON      	167
-#define STR_ZCOLLECTIVE      168
-#define STR_ZSWASH_RING      169
-#define STR_ZELE_DIRECTION   170
-#define STR_ZAIL_DIRECTION   171
-#define STR_ZCOL_DIRECTION   172
+#define X_STR_ZCOLLECTIVE      168
+#define X_STR_ZSWASH_RING      169
+#define X_STR_ZELE_DIRECTION   170
+#define X_STR_ZAIL_DIRECTION   171
+#define X_STR_ZCOL_DIRECTION   172
 #define STR_MODEL_POPUP     173
 #define STR_MODELSEL        174
 #define STR_11_FREE         175
-#define STR_CALIBRATION     176
+#define X_STR_CALIBRATION     176
 #define STR_MENU_TO_START   177
 #define STR_SET_MIDPOINT    178
 #define STR_MOVE_STICKS     179
@@ -251,9 +251,9 @@
 #define STR_FUEL            232
 #define STR_12_RPM          233
 #define STR_LAT_EQ          234
-#define STR_LON_EQ          235
-#define STR_ALT_MAX         236
-#define STR_SPD_KTS_MAX     237
+#define X_STR_LON_EQ          235
+#define X_STR_ALT_MAX         236
+#define X_STR_SPD_KTS_MAX     237
 #define STR_11_MPH          238
 #define STR_SINK_TONES		  239
 #define STR_ST_CARD_STAT    240
@@ -266,7 +266,7 @@
 #define STR_6_POWER_ON      247
 #define STR_MONTHS          248
 #define STR_MENU_REFRESH    249
-#define STR_DATE_TIME       250
+#define X_STR_DATE_TIME       250
 #define STR_SEC             251
 #define STR_MIN_SET         252
 #define STR_HOUR_MENU_LONG  253
@@ -318,9 +318,12 @@
 #define STR_ALERT_ORG			  299
 #define STR_ALERT_RED			  300
 #define STR_LANGUAGE				301
-#define HW_SWITCHES_STR			302
-#define HW_SWITCHARROW_STR  303
 
+#define HW_SWITCHES_STR			302
+
+
+
+#define HW_SWITCHARROW_STR  303
 #define STR_RSSI_WARN				304
 #define STR_RSSI_CRITICAL		305
 #define STR_RX_VOLTAGE			306
@@ -328,14 +331,11 @@
 #define STR_FADESLOSSHOLDS	308
 #define STR_DSM_CRITICAL		309
 #define STR_BT_TRAINER			310
-
 #define STR_T_RANGE_TEST    311
 #define STR_CHANS_EXTRA	    312
-
 #define STR_HELI_TEXT			  313
 #define STR_MULTI_TEXT   		314
 #define STR_MULTI_OPTION  	315
-
 #define STR_Display		    	316
 #define STR_AudioHaptic			317
 #define STR_Alarms			  	318
@@ -343,14 +343,12 @@
 #define STR_Controls				320
 #define STR_Hardware				321
 #define STR_Calibration			322
-
-//#define STR_Trainer		    	323
+#define X_STR_Trainer		    	323
 #define STR_Version		    	324
 #define STR_ModuleRssi			325
 #define STR_DateTime				326
 #define STR_DiagSwtch		  	327
 #define STR_DiagAna		    	328
-
 #define STR_Mixer		      	329
 #define STR_Cswitches		  	330
 #define STR_Telemetry		  	331
@@ -366,12 +364,10 @@
 #define STR_Protocol				341
 #define STR_Safety					342
 #define STR_Eeprom		    	343
-
 #define STR_MULTI_PROTO  		344
 #define STR_MULTI_TYPE  		345
 #define STR_MULTI_AUTO  		346
 #define STR_MULTI_POWER  		347
-
 #define STR_MAIN_POPUP  		348
 #define STR_ROTATE_SCREEN   349
 #define STR_REVERSE_SCREEN	350

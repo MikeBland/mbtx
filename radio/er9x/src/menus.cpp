@@ -114,6 +114,7 @@ const prog_char APM Str_heli_setup[] = STR_HELI_SETUP ;
 const prog_char APM Str_Expo[] = STR_EXPO_DR ;
 const prog_char APM Str_Modes[] = STR_MODES ;
 const prog_char APM Str_Curves[] = STR_CURVES ;
+const prog_char APM Str_Curve[] = STR_CURVE ;
 const prog_char APM Str_Safety[] = STR_SAFETY_SW2 ;
 const prog_char APM Str_Globals[] = STR_GLOBAL_VARS ;
 const prog_char APM Str_Protocol[] = STR_PROTOCOL ;
@@ -122,6 +123,8 @@ const prog_char APM Str_1_RETA[] = STR_1_RETA ;
 #ifndef NO_TEMPLATES
 const prog_char APM Str_Templates[] = STR_TEMPLATES ;
 #endif
+
+const prog_char APM Str_Mixer[] = STR_MIXER2 ;
 
 const prog_char APM Curve_Str[] = CURV_STR ;
 
@@ -1451,6 +1454,44 @@ NOINLINE static int8_t *curveAddress( uint8_t idx )
 
 void drawCurve( uint8_t offset )
 {
+#if defined(CPUM128) || defined(CPUM2561)
+  uint8_t cv9 = s_curveChan >= MAX_CURVE5 ;
+	int8_t *crv = curveAddress( s_curveChan ) ;
+	uint8_t points = cv9 ? 9 : 5 ;
+
+	if ( s_curveChan >= MAX_CURVE5 + MAX_CURVE9 )
+	{
+		cv9 = 2 ;
+		crv = g_model.curvexy ;		
+	}
+	lcd_vline(XD, Y0 - WCHART, WCHART * 2);
+  
+//	plotType = PLOT_BLACK ;
+	for(uint8_t i=0; i < points ; i++)
+  {
+    uint8_t xx ;
+		if ( cv9 == 2 )
+		{
+    	xx = XD-1+crv[i+9]*WCHART/100 ;
+		}
+		else
+		{
+			xx = XD-1-WCHART+i*WCHART/(cv9 ? 4 : 2);
+		}
+    uint8_t yy = Y0-crv[i]*WCHART/100;
+
+    if(offset==i)
+    {
+			lcd_rect( xx-1, yy-2, 5, 5 ) ;
+    }
+    else
+    {
+			lcd_rect( xx, yy-1, 3, 3 ) ;
+    }
+  }
+
+	drawFunction( XD, GRAPH_FUNCTION_CURVE ) ;
+#else
   uint8_t cv9 = s_curveChan >= MAX_CURVE5 ;
 	int8_t *crv = curveAddress( s_curveChan ) ;
 
@@ -1473,7 +1514,7 @@ void drawCurve( uint8_t offset )
   }
 
 	drawFunction( XD, GRAPH_FUNCTION_CURVE ) ;
-	
+#endif	
 //	plotType = PLOT_XOR ;
 }
 
@@ -1481,12 +1522,22 @@ void drawCurve( uint8_t offset )
 
 void menuProcCurveOne(uint8_t event)
 {
-  bool    cv9 = s_curveChan >= MAX_CURVE5;
+  uint8_t cv9 = s_curveChan >= MAX_CURVE5;
 	static int8_t dfltCrv;
-
-	TITLE(STR_CURVE) ;
+#if defined(CPUM128) || defined(CPUM2561)
+	uint8_t points = cv9 ? 9 : 5 ;
+	if ( s_curveChan == MAX_CURVE5 + MAX_CURVE9 )
+	{
+		cv9 = 2 ;
+	}
+#endif
+	TITLEP(Str_Curve) ;
 	static MState2 mstate2 ;
+#if defined(CPUM128) || defined(CPUM2561)
+	mstate2.check_columns(event, (cv9 == 2) ? 17 : points ) ;
+#else
 	mstate2.check_columns(event, (cv9 ? 9 : 5) ) ;
+#endif
     
 	if ( event == EVT_ENTRY )
 	{
@@ -1496,6 +1547,116 @@ void menuProcCurveOne(uint8_t event)
 
 	int8_t *crv = curveAddress( s_curveChan ) ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+	uint8_t  preset = points ;
+	uint8_t  sub    = mstate2.m_posVert ;
+	uint8_t blink = InverseBlink ;
+	if ( s_curveChan == MAX_CURVE5 + MAX_CURVE9 )
+	{
+		crv = g_model.curvexy ;
+		uint8_t i ;
+		uint8_t j ;
+		uint8_t k ;
+		j = sub > 8 ? 2 : 0 ;
+		k = sub & 1 ;
+		sub >>= 1 ;
+		if ( k == 0 )
+		{
+			sub += 9 ;
+		}
+		for ( i = 0; i < 7; i++)
+		{
+  	  uint8_t y = i * FH + 8 ;
+  	  uint8_t attr = (k==0) && (sub == j+i+9) ? blink : 0 ;
+			lcd_outdezAtt(4 * FW, y, crv[j+i+9], attr);
+  	  attr = (k==1) && (sub == j+i) ? blink : 0 ;
+    	lcd_outdezAtt(8 * FW, y, crv[j+i], attr);
+		}
+		int8_t min = -100 ;
+		int8_t max = 100 ;
+		if ( k == 0) // x value
+		{
+			if ( sub > 9 )
+			{
+				min = crv[sub-1] ;
+			}
+			if ( sub < 17 )
+			{
+				max = crv[sub+1] ;
+			}
+		}
+		CHECK_INCDEC_H_MODELVAR( crv[sub], min, max ) ;
+		if ( sub > 8 )
+		{
+			sub -= 9 ;
+		}
+// Draw the curve
+		drawCurve( sub ) ;
+	}	
+	else
+	{
+		for (uint8_t i = 0; i < 5; i++)
+		{
+  	  uint8_t y = i * FH + 16;
+  	  uint8_t attr = sub == i ? blink : 0;
+  	  lcd_outdezAtt(4 * FW, y, crv[i], attr);
+			if( cv9 )
+			{
+				if ( points == 6 )
+				{
+					if ( i == 0 )
+					{
+			    	attr = sub == i + 5 ? blink : 0;
+	  	  		lcd_outdezAtt(8 * FW, y, crv[i + 5], attr);
+					}
+				}
+				else if ( i < 4 )
+				{
+			    attr = sub == i + 5 ? blink : 0;
+  	  		lcd_outdezAtt(8 * FW, y, crv[i + 5], attr);
+				}
+			}
+		}
+		lcd_putsAtt( 2*FW, 7*FH,PSTR(STR_PRESET), (sub == preset) ? blink : 0);
+
+
+		if( sub==preset) 
+		{
+			if ( s_editMode )
+			{
+				int8_t t ;
+				Tevent = event ;
+				t = dfltCrv ;
+	  	  dfltCrv = checkIncDec( dfltCrv, -4, 4, 0);
+	  	  if (dfltCrv != t)
+				{
+					uint8_t offset = cv9 ? 4 : 2 ;
+					if ( points == 6 )
+					{
+						for (int8_t i = -5 ; i <= 5 ; i += 2 )
+						{
+						 	crv[(i+5)/2] = i*dfltCrv* 25 / 5 ;
+						}
+				  }
+					else
+					{
+						for (int8_t i = -offset; i <= offset; i++) crv[i+offset] = i*dfltCrv* 25 / offset ;
+					}
+	  	    STORE_MODELVARS;        
+	  	  }
+			}
+		} 
+		else  /*if(sub>0)*/
+		{
+		 CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+		}
+
+// Draw the curve
+		drawCurve( sub ) ;
+		
+	}
+
+#else
 	uint8_t  sub    = mstate2.m_posVert ;
 	uint8_t blink = InverseBlink ;
 	uint8_t  preset = cv9 ? 9 : 5 ;
@@ -1541,6 +1702,7 @@ else  /*if(sub>0)*/
 
 // Draw the curve
 	drawCurve( sub ) ;
+#endif
 }
 
 
@@ -1549,7 +1711,7 @@ void menuProcCurve(uint8_t event)
 {
 	TITLEP(Str_Curves) ;
 	static MState2 mstate2 ;
-		mstate2.check_columns(event,1+MAX_CURVE5+MAX_CURVE9-1-1) ;
+		mstate2.check_columns(event,1+MAX_CURVE5+MAX_CURVE9-1-1+1) ;
 
     int8_t  sub    = mstate2.m_posVert ;
 
@@ -1784,7 +1946,8 @@ t_pgOfs = evalOffset(sub);
             }
 				}
         break;
-        case 3:
+				case 3:
+        default:
 					ld->reverse = hyphinvMenuItem( ld->reverse, y, attr ) ;
 //						menu_lcd_HYPHINV( 18*FW, y, ld->reverse, attr ) ;
 //            if(active) {
@@ -2223,7 +2386,7 @@ void menuProcTelemetry(uint8_t event)
 #if (NUM_SCALERS != 4)
 	ERROR - need to correct max on line below
 #endif
-				g_model.currentSource = checkIndexed( y, PSTR(FWx15"\007\004----A1  A2  Fas SC1 SC2 SC3 SC4"), g_model.currentSource, (sub==subN) ) ;
+				g_model.currentSource = checkIndexed( y, PSTR(FWx16"\007\003---A1 A2 FasSC1SC2SC3SC4"), g_model.currentSource, (sub==subN) ) ;
 			}
 			subN += 1 ;
 		}
@@ -3618,7 +3781,7 @@ void menuProcMixOne(uint8_t event)
 							}
 						}
 					 	uint8_t value2 = value ;
-	          lcd_putsAtt(  1*FW, y, value ? ( value == 2 ) ? PSTR("\021Expo") : PSTR(STR_15DIFF) : PSTR(STR_Curve), attr ) ;
+	          lcd_putsAtt(  1*FW, y, value ? ( value == 2 ) ? PSTR("\021Expo") : PSTR(STR_15DIFF) : Str_Curve, attr ) ;
     		    if(attr) CHECK_INCDEC_H_MODELVAR_0( value2, 2 ) ;
 					 	if ( value != value2 )
 						{
@@ -3657,7 +3820,7 @@ void menuProcMixOne(uint8_t event)
 								put_curve( 2*FW, y, md2->curve, attr ) ;
           	  	if(attr)
 								{
-									CHECK_INCDEC_H_MODELVAR( md2->curve, -MAX_CURVE5-MAX_CURVE9 , MAX_CURVE5+MAX_CURVE9+7-1);
+									CHECK_INCDEC_H_MODELVAR( md2->curve, -MAX_CURVE5-MAX_CURVE9-1 , MAX_CURVE5+MAX_CURVE9+7-1+1);
 									if ( event==EVT_KEY_FIRST(KEY_MENU) )
 									{
 										if ( md2->curve>=CURVE_BASE )
@@ -4037,7 +4200,7 @@ static uint8_t popTranslate( uint8_t popidx, uint8_t mask )
 
 uint8_t doPopup( const prog_char *list, uint8_t mask, uint8_t width )
 {
-	uint8_t count = popupDisplay( list, mask, width ) ;
+	CPU_UINT count = popupDisplay( list, mask, width ) ;
 	uint8_t popaction = popupProcess( count - 1 ) ;
 	uint8_t popidx = PopupData.PopupIdx ;
 	PopupData.PopupSel = popTranslate( popidx, mask ) ;
@@ -4097,7 +4260,7 @@ static void mixpopup()
 
 void menuProcMix(uint8_t event)
 {
-	TITLE(STR_MIXER);
+	TITLEP(Str_Mixer);
 	static MState2 mstate2;
 
 	if ( s_moveMode )
@@ -4783,6 +4946,7 @@ void menuPhaseOne(uint8_t event)
 			break ;
       
 			case 3 : // fadeOut
+      default:
   			if( attr ) CHECK_INCDEC_H_MODELVAR_0( phase->fadeOut, 15 ) ;
 			  lcd_outdezAtt( 17*FW, y, phase->fadeOut * 5, attr | PREC1 ) ;
 			break ;
@@ -7473,27 +7637,106 @@ int16_t intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 0 ,25 ,50, 75, 10
 {
 #define D9 (RESX * 2 / 8)
 #define D5 (RESX * 2 / 4)
-    bool    cv9 = idx >= MAX_CURVE5;
-		int8_t *crv = curveAddress( idx ) ;
-    int16_t erg;
+  uint8_t cv9 = idx >= MAX_CURVE5;
+  int16_t erg;
+	int8_t *crv = curveAddress( idx ) ;
+	
+#if defined(CPUM128) || defined(CPUM2561)
+	if ( idx == MAX_CURVE5 + MAX_CURVE9 )
+	{ // The xy curve
+		crv = g_model.curvexy ;
+		cv9 = 2 ;
+	}
 
-    x+=RESXu;
-    if(x < 0) {
-        erg = (int16_t)crv[0] * (RESX/4);
-    } else if(x >= (RESX*2)) {
-        erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
-    } else {
-        int16_t a,dx;
-        if(cv9){
-            a   = (uint16_t)x / D9;
-            dx  =((uint16_t)x % D9) * 2;
-        } else {
-            a   = (uint16_t)x / D5;
-            dx  = (uint16_t)x % D5;
-        }
-        erg  = (int16_t)crv[a]*((D5-dx)/2) + (int16_t)crv[a+1]*(dx/2);
+  x+=RESXu;
+  if(x < 0)
+	{
+    erg = (int16_t)crv[0] * (RESX/4);
+  }
+	else if(x >= (RESX*2))
+	{
+    erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
+  }
+	else
+	{
+		int16_t deltax ;
+		div_t qr ;
+    
+		if ( cv9 == 2 ) // xy curve
+		{
+		  int16_t a = 0 ;
+			int16_t b ;
+			int16_t c ;
+			uint8_t i ;
+
+			// handle end points
+  	  c = RESX + calc100toRESX(crv[17]) ;
+			if (x>c)
+			{
+				return calc100toRESX(crv[8]) ;
+			}
+  	  b = RESX + calc100toRESX(crv[9]) ;
+			if (x<b)
+			{
+				return calc100toRESX(crv[0]) ;
+			}
+
+			for ( i = 0 ; i < 8 ; i += 1 )
+			{
+	      a = b ;
+  	    b = (i==7 ? c : RESX + calc100toRESX(crv[i+10]));
+    	  if (x<=b) break;
+			}
+			x -= a ;
+			deltax = b - a ;
+			int32_t y1 = (int16_t)crv[i] * (RESX/4) ;
+			int32_t deltay = (int16_t)crv[i+1] * (RESX/4) - y1 ;
+			erg = y1 + ( x ) * deltay / deltax ;
+		}
+		else
+		{
+			if(cv9)
+			{
+				qr = div( x, D9 ) ;
+				deltax = qr.rem * 2 ;
+    	}
+			else
+			{
+				qr = div( x, D5 ) ;
+				deltax = qr.rem ;
+    	}
+	    erg  = (int16_t)crv[qr.quot]*((D5-deltax)/2) + (int16_t)crv[qr.quot+1]*(deltax/2);
+		}
+  }
+	
+#else	
+
+  x+=RESXu;
+  if(x < 0)
+	{
+    erg = (int16_t)crv[0] * (RESX/4);
+  }
+	else if(x >= (RESX*2))
+	{
+    erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
+  }
+	else
+	{
+    int16_t a,dx;
+    if(cv9)
+		{
+      a   = (uint16_t)x / D9;
+      dx  =((uint16_t)x % D9) * 2;
     }
-    return erg / 25; // 100*D5/RESX;
+		else
+		{
+      a   = (uint16_t)x / D5;
+      dx  = (uint16_t)x % D5;
+    }
+    erg  = (int16_t)crv[a]*((D5-dx)/2) + (int16_t)crv[a+1]*(dx/2);
+  }
+#endif
+  return erg / 25; // 100*D5/RESX;
 }
 
 int16_t calcExpo( uint8_t channel, int16_t value )
@@ -10143,7 +10386,7 @@ void menuProcVoiceOne(uint8_t event)
 					attr = blink ;
 					uint8_t b ;
 					b = pvad->vfile ;
-					CHECK_INCDEC_H_MODELVAR( b, 0, 15 ) ;
+					CHECK_INCDEC_H_MODELVAR_0( b, 15 ) ;
 					pvad->vfile = b ;
 				}
 				lcd_putsAttIdx(15*FW, y, Str_Sounds, pvad->vfile, attr ) ;
@@ -10338,7 +10581,6 @@ enum ModelIndices
  #endif
 #endif
 
-const prog_char APM Str_Mixer[] = STR_MIXER2 ;
 const prog_char APM Str_Cswitches[] = STR_CSWITCHES ;
 // STR_EXPO_DR
 const prog_char APM Str_Voice[] = STR_VOICE ;
@@ -11584,7 +11826,7 @@ Str_Protocol
 								if (protocol == PROTO_MULTI)
 								{
 									attr = g_model.ppmNCH & 0x0F;
-									CHECK_INCDEC_H_MODELVAR(attr, 0, 15);
+									CHECK_INCDEC_H_MODELVAR_0(attr, 15);
 									g_model.ppmNCH=(g_model.ppmNCH & 0xF0) + attr;
 								}
 								else
@@ -11633,7 +11875,7 @@ Str_Protocol
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
 				
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\023"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\024"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 
 //				attr = 0 ;
 //				uint8_t svalue = g_model.sub_protocol & 0x1F ;
@@ -11656,6 +11898,10 @@ Str_Protocol
 				if ( x == M_Flysky)
 				{
 					s=PSTR(FWx10"\003"M_FLYSKY_STR);
+				}
+				else if ( x == M_FRSKYX )
+				{
+					s=PSTR(FWx10"\001"M_FRSKY_STR);
 				}
 				else if ( x == M_Hisky )
 				{

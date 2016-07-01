@@ -2091,7 +2091,8 @@ void start_timer3()
 //	pioptr->PIO_PDR = 0x00800000L ;		// Disable bit C23 (TIOA3) Assign to peripheral
 	NVIC_SetPriority( TC3_IRQn, 14 ) ; // Low priority interrupt
 	NVIC_EnableIRQ(TC3_IRQn) ;
-	ptc->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS ;
+//	ptc->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS ;
+	ptc->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS | TC_IER0_LDRBS ;
 #endif
 }
 
@@ -2132,7 +2133,7 @@ void start_ppm_capture()
 
 void end_ppm_capture()
 {
-	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;
+	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS | TC_IER0_LDRBS ;
 	NVIC_DisableIRQ(TC3_IRQn) ;
 }
 
@@ -2354,9 +2355,30 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 		}
 	}
 
-	if ( status & TC_SR0_LDRAS )
+extern uint8_t TrainerPolarity ;
+
+	uint32_t edge = 0 ;
+
+	if ( TrainerPolarity )
 	{
-		capture = TC1->TC_CHANNEL[0].TC_RA ;
+		if ( status & TC_SR0_LDRBS )
+		{
+			capture = TC1->TC_CHANNEL[0].TC_RB ;
+			edge = 1 ;
+		}	
+	}
+	else
+	{
+		if ( status & TC_SR0_LDRAS )
+		{
+			capture = TC1->TC_CHANNEL[0].TC_RA ;
+			edge = 1 ;
+		}	
+	}
+
+	if ( edge )
+	{
+//		capture = TC1->TC_CHANNEL[0].TC_RA ;
 //		(void) TC1->TC_CHANNEL[0].TC_SR ;		// Acknowledgethe interrupt
 
   	val = (uint16_t)(capture - lastCapt) / 2 ;
@@ -2744,11 +2766,11 @@ extern "C" void USART2_IRQHandler()
 		{
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable
-			SportTx.busy = 0 ;
 
 #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
 #endif
+			SportTx.busy = 0 ;
 			USART2->CR1 |= USART_CR1_RE ;
 		}
 	}
@@ -2758,19 +2780,21 @@ extern "C" void USART2_IRQHandler()
 		
     data = USART2->DR;
 
-//			put_fifo64( &Telemetry_fifo, data ) ;
     if (!(status & USART_FLAG_ERRORS))
 		{
 			RxIntCount += 1 ;
 			put_fifo64( &Telemetry_fifo, data ) ;
-//			if ( LastReceivedSportByte == 0x7E )
+//			if ( FrskyTelemetryType == 1 )		// SPORT
 //			{
-//				if ( data == 0x39 )		// Physical Id
+//				if ( LastReceivedSportByte == 0x7E )
 //				{
-//					if ( PendingSportPacket.count )
+//					if ( data == 0x39 )		// Physical Id
 //					{
-//						x9dSPortTxStart( PendingSportPacket.buffer, PendingSportPacket.count, 0 ) ;
-//						PendingSportPacket.count = 0 ;
+//						if ( PendingSportPacket.count )
+//						{
+//							x9dSPortTxStart( PendingSportPacket.buffer, PendingSportPacket.count, 0 ) ;
+//							PendingSportPacket.count = 0 ;
+//						}
 //					}
 //				}
 //				LastReceivedSportByte = data ;

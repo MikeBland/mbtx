@@ -329,6 +329,8 @@ CPPSRC = ersky9x.cpp \
 #         X9D/usbd_usr.cpp \
 #         X9D/usbd_storage_msd.cpp \
 
+CPPSRC += pdi.cpp
+
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
 

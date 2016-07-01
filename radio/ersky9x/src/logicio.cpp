@@ -1431,6 +1431,8 @@ void init_keys()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x1C00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+// Extra inputs
+	configure_pins( 0x6000, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 #endif // REV9E
 }
 
@@ -1685,6 +1687,14 @@ void setup_switches()
 	configure_pins( PIN_SW_C_L | PIN_SW_C_H | PIN_SW_J_L | PIN_SW_J_H,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTG) ;
 #endif	// REV9E
+}
+
+uint32_t readKeyUpgradeBit( uint8_t index )
+{
+  CPU_UINT xxx = 0 ;
+	uint32_t t = 1 << (index+12) ;
+	xxx = ~GPIOA->IDR & t ;
+	return xxx ;
 }
 
 uint32_t hwKeyState( uint8_t key )
@@ -2014,6 +2024,16 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Ele6pos5 :
 				xxx = analog > 3050 ;
     break ;
+
+#ifndef REV9E
+		case HSW_Pb1 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb1source ) ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
+    break ;
+#endif
 
     default:
       break;

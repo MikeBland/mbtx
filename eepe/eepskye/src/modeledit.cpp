@@ -6,6 +6,7 @@
 #include "../../common/edge.h"
 #include "../../common/node.h"
 #include "mixerdialog.h"
+#include "GvarAdjustDialog.h"
 #include "simulatordialog.h"
 #include "VoiceAlarmDialog.h"
 #include "TemplateDialog.h"
@@ -54,6 +55,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
     heliEditLock = false;
     protocolEditLock = false;
     switchDefPosEditLock = false;
+		curveEditLock = false ;
 
 //    if(!eeFile->eeLoadGeneral())  eeFile->generalDefault();
     
@@ -110,6 +112,28 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 
     resizeEvent();  // draws the curves and Expo
 
+}
+
+uint32_t ModelEdit::countExtraPots()
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[2] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[3] )
+	{
+		count += 1 ;
+	}
+	return count ;
 }
 
 void ModelEdit::textUpdate( QLineEdit *source, char *dest, int length )
@@ -230,13 +254,30 @@ void ModelEdit::tabModelEditSetup()
 		if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
 		{
 			ui->modelImageLE->hide() ;
+			ui->label_ModelImage->hide() ;
 		}
 		else
 		{
 			ui->modelImageLE->show() ;
+			ui->label_ModelImage->show() ;
 		}
 
 		ui->VoiceNumberSB->setValue(g_model.modelVoice+260) ;
+		if ( g_model.modelVoice < 0 )
+		{
+			ui->voiceNameLE->setEnabled(true) ;
+		}
+		else
+		{
+			ui->voiceNameLE->setEnabled(false) ;
+		}
+		n = g_model.modelVname ;
+		while ( n.endsWith(" ") )
+		{
+			n = n.left(n.size()-1) ;			
+		}
+    ui->voiceNameLE->setText( n ) ;
+
     //timer mode direction value
     populateTimerSwitchCB(ui->timerModeCB,g_model.timer[0].tmrModeA);
     populateTmrBSwitchCB(ui->timerModeBCB,g_model.timer[0].tmrModeB, rData->type);
@@ -311,11 +352,11 @@ void ModelEdit::tabModelEditSetup()
     ui->xprotocolCB->addItem("Multi");
     ui->protocolCB->addItem("Assan");
     ui->xprotocolCB->addItem("Assan");
-		if ( rData->type )
-		{
+//		if ( rData->type )
+//		{
       ui->protocolCB->addItem("OFF");
       ui->xprotocolCB->addItem("OFF");
-		}
+//		}
 		ui->OpenDrainCB->setCurrentIndex(g_model.ppmOpenDrain);
     //protocol channels ppm delay (disable if needed)
     protocolEditLock = false ;
@@ -1443,13 +1484,15 @@ void ModelEdit::expoEdited()
     updateSettings();
 }
 
-void ModelEdit::tabVoiceAlarms()
+void ModelEdit::voiceAlarmsList()
 {
 	QByteArray qba ;
   uint32_t i ;
 
-	ui->VoiceAlarmList->setFont(QFont("Courier New",12)) ;
-	ui->VoiceAlarmList->clear() ;
+  VoiceListWidget->clear() ;
+
+//	ui->VoiceAlarmList->setFont(QFont("Courier New",12)) ;
+//	ui->VoiceAlarmList->clear() ;
 	for(i=0 ; i<NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ; i += 1)
 	{
 		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
@@ -1490,7 +1533,7 @@ void ModelEdit::tabVoiceAlarms()
 		}
 		if ( value < limit )
 		{
-			str += tr("(%1) ").arg(getSourceStr(g_eeGeneral.stickMode,value,g_model.modelVersion, rData->type )) ;
+			str += tr("(%1) ").arg(getSourceStr(g_eeGeneral.stickMode,value,g_model.modelVersion, rData->type, rData->extraPots )) ;
 		}
 		else
 		{
@@ -1508,7 +1551,17 @@ void ModelEdit::tabVoiceAlarms()
 		{
 			str += tr("(%1) ").arg(vad->offset) ;
 		}
-		str += tr("Switch(%1) ").arg(getSWName(vad->swtch, rData->type)) ;
+
+//    int x = ( (rData->type == 1 ) || ( rData->type == 2 ) ) ? 1 : 0 ;
+//    int lim = MaxSwitchIndex[x] ;
+//    if ( vad->swtch == lim + 1 )
+//		{
+//			str += tr("Switch(Fmd) ") ;
+//		}
+//		else
+//		{
+			str += tr("Switch(%1) ").arg(getSWName(vad->swtch, rData->type)) ;
+//		}
 		if ( vad->rate < 4 )
 		{
 			srcstr = (vad->rate > 1 ) ? (vad->rate == 2 ? "BOTH " : "ALL ") : (vad->rate == 0 ? "ON " : "OFF" ) ;
@@ -1551,8 +1604,210 @@ void ModelEdit::tabVoiceAlarms()
 				str += tr("Alarm(%1)").arg(getAudioAlarmName(vad->file.vfile) ) ;
 			break ;
 		}
-    ui->VoiceAlarmList->addItem(str) ;
+//    ui->VoiceAlarmList->addItem(str) ;
+    VoiceListWidget->addItem(str) ;
 	}
+}
+
+void ModelEdit::tabVoiceAlarms()
+{
+	VoiceListWidget = new VoiceList(this) ;
+  ui->voiceLayout->addWidget(VoiceListWidget,1,1,1,1);
+
+	voiceAlarmsList() ;
+  VoiceListWidget->setCurrentRow(0) ;
+//	VoiceListWidget->item(0)->setSelected(true) ;
+
+//	connect( ui->VoiceAlarmList, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showVoiceContextMenu(const QPoint&)));
+  connect( VoiceListWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showVoiceContextMenu(const QPoint&)));
+  connect( VoiceListWidget,SIGNAL(doubleClicked(QModelIndex)),this,SLOT( voiceAlarmList_doubleClicked(QModelIndex)));
+  connect( VoiceListWidget, SIGNAL(keyWasPressed(QKeyEvent*)), this, SLOT(voice_KeyPress(QKeyEvent*)));
+}
+
+
+void ModelEdit::voiceAlarmsBlank( int i )
+{
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+		vad->source = 0 ;
+		vad->func = 0 ;
+		vad->swtch = 0  ;
+		vad->rate = 0  ;
+		vad->fnameType = 0 ;
+		vad->haptic = 0 ;
+		vad->vsource = 0 ;
+		vad->mute = 0 ;
+		vad->res1 = 0 ;
+		vad->offset = 0 ;
+		vad->file.vfile = 0 ;
+		vad->file.name[0] = 0 ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceBlank()
+{
+  int index = VoiceListWidget->currentRow() ;
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+}
+
+void ModelEdit::voiceAdd()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+	for( i=NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ; i > index ; i -= 1)
+	{
+		int j ;
+		j = i - 1 ;
+		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+		VoiceAlarmData *xvad = ( j >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[j-NUM_SKY_VOICE_ALARMS] : &g_model.vad[j] ;
+		*vad = *xvad ;
+	}
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+	VoiceAlarmData *vad = ( index >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[index-NUM_SKY_VOICE_ALARMS] : &g_model.vad[index] ;
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  dlg->setWindowTitle(tr("Voice Alarm %1").arg(index+1)) ;
+  if(dlg->exec())
+  {
+    updateSettings() ;
+		voiceAlarmsList() ;
+  }
+}
+
+void ModelEdit::voiceRemove()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+  if ( ( index >= 0 ) && ( index < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	{
+		for( i= index ; i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ; i += 1)
+		{
+			int j ;
+			j = i + 1 ;
+			VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+			VoiceAlarmData *xvad = ( j >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[j-NUM_SKY_VOICE_ALARMS] : &g_model.vad[j] ;
+			*vad = *xvad ;
+		}
+		voiceAlarmsBlank( NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ) ;
+		voiceAlarmsList() ;
+	}
+}
+
+void ModelEdit::voiceMoveUp()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i > 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+		VoiceAlarmData *xvad = ( i-1 >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-1-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i-1] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+		voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i-1) ;
+//  	VoiceListWidget->setCurrentRow(i-1)->setSelected(true);
+	  updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceMoveDown()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ) )
+	{
+		int j = i + 1 ;
+		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+		VoiceAlarmData *xvad = ( j >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[j-NUM_SKY_VOICE_ALARMS] : &g_model.vad[j] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+    voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i+1) ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceCopy()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	{
+		QByteArray vData ;
+		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+		vData.append((char*)vad,sizeof(*vad));
+    QMimeData *mimeData = new QMimeData;
+    mimeData->setData("application/x-eepskye-voice", vData);
+    QApplication::clipboard()->setMimeData(mimeData,QClipboard::Clipboard);
+	}
+}
+
+void ModelEdit::voicePaste()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	{
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+		
+    if(mimeData->hasFormat("application/x-eepskye-voice"))
+		{
+			VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+      QByteArray vData = mimeData->data("application/x-eepskye-voice");
+      memcpy( vad,vData,sizeof(*vad));
+			voiceAlarmsList() ;
+		  updateSettings() ;
+		}
+	}
+}
+
+void ModelEdit::showVoiceContextMenu(QPoint pos)
+{
+	QPoint globalPos = VoiceListWidget->mapToGlobal(pos) ;
+	
+	QMenu contextMenu;
+	
+	contextMenu.addAction(QIcon(":/images/add.png"), tr("&Insert"),this, SLOT(voiceAdd()),tr("Ctrl+A"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("C&lear"),this,SLOT(voiceBlank()),tr("Delete"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("&Remove"),this,SLOT(voiceRemove()),tr("Ctrl+R"));
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/copy.png"), tr("&Copy"),this,SLOT(voiceCopy()),tr("Ctrl+C"));
+	contextMenu.addAction(QIcon(":/images/paste.png"), tr("&Paste"),this,SLOT(voicePaste()),tr("Ctrl+V")) ;
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/moveup.png"), tr("Move Up"),this,SLOT(voiceMoveUp()),tr("Ctrl+Up"));
+	contextMenu.addAction(QIcon(":/images/movedown.png"), tr("Move Down"),this,SLOT(voiceMoveDown()),tr("Ctrl+Down"));
+  contextMenu.exec(globalPos);
+}
+
+void ModelEdit::voice_KeyPress(QKeyEvent *event)
+{
+  if(event->matches(QKeySequence::SelectAll)) voiceAdd();  //Ctrl A
+  if(event->matches(QKeySequence::Delete))    voiceBlank();
+  if(event->matches(QKeySequence::Copy))      voiceCopy();
+  if(event->matches(QKeySequence::Paste))     voicePaste();
+	if(event->modifiers().testFlag(Qt::ControlModifier))
+  {
+		if(event->key() == Qt::Key_R)
+    {
+			voiceRemove() ;
+    }
+		if(event->key() == Qt::Key_Down)
+    {
+			voiceMoveDown() ;
+    }
+    if(event->key() == Qt::Key_Up)
+    {
+			voiceMoveUp() ;
+    }
+  }
 }
 
 void ModelEdit::tabMixes()
@@ -1652,7 +1907,21 @@ void ModelEdit::tabMixes()
 							}
 						}
 					}
-          srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, rData->type );
+					if ( rData->type == RADIO_TYPE_SKY )
+					{
+						if ( value >= EXTRA_POTS_START )
+						{
+              value = 7 + rData->extraPots ;
+						}
+						else
+						{
+							if ( value >= EXTRA_POTS_POSITION )
+							{
+                value += rData->extraPots ;
+							}
+						}
+					}
+          srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, rData->type, rData->extraPots );
 				}
 
         str += srcstr ;
@@ -1861,6 +2130,7 @@ void ModelEdit::tabPhase()
   connect(ui->FP3ailTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP4rudTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP4eleTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
+
   connect(ui->FP4thrTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP4ailTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP5rudTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
@@ -2138,7 +2408,7 @@ void ModelEdit::updateHeliTab()
     heliEditLock = true;
 
     ui->swashTypeCB->setCurrentIndex(g_model.swashType);
-    populateSourceCB(ui->swashCollectiveCB,g_eeGeneral.stickMode,0,g_model.swashCollectiveSource,g_model.modelVersion, rData->type);
+    populateSourceCB(ui->swashCollectiveCB,g_eeGeneral.stickMode,0,g_model.swashCollectiveSource,g_model.modelVersion, rData->type, rData->extraPots ) ;
     ui->swashRingValSB->setValue(g_model.swashRingValue);
     ui->swashInvertELE->setChecked(g_model.swashInvertELE);
     ui->swashInvertAIL->setChecked(g_model.swashInvertAIL);
@@ -2152,7 +2422,7 @@ void ModelEdit::heliEdited()
     if(heliEditLock) return;
     g_model.swashType  = ui->swashTypeCB->currentIndex();
     uint32_t value ;
-  	value = decodePots( ui->swashCollectiveCB->currentIndex(), rData->type ) ;
+    value = decodePots( ui->swashCollectiveCB->currentIndex(), rData->type, rData->extraPots ) ;
 		g_model.swashCollectiveSource = value ;
 		g_model.swashRingValue = ui->swashRingValSB->value();
     g_model.swashInvertELE = ui->swashInvertELE->isChecked();
@@ -2270,6 +2540,10 @@ void ModelEdit::tabLimits()
 
 void ModelEdit::updateCurvesTab()
 {
+	int points ;
+	int xNeeded ;
+	int8_t *pcurve ;
+
    ControlCurveSignal(true);
    ui->plotCB_1->setChecked(plot_curve[0]);
    ui->plotCB_2->setChecked(plot_curve[1]);
@@ -2287,138 +2561,218 @@ void ModelEdit::updateCurvesTab()
    ui->plotCB_14->setChecked(plot_curve[13]);
    ui->plotCB_15->setChecked(plot_curve[14]);
    ui->plotCB_16->setChecked(plot_curve[15]);
+   ui->plotCB_17->setChecked(plot_curve[16]);
+   ui->plotCB_18->setChecked(plot_curve[17]);
+   ui->plotCB_19->setChecked(plot_curve[18]);
    
-	 ui->curvePt1_1->setValue(g_model.curves5[0][0]);
-   ui->curvePt2_1->setValue(g_model.curves5[0][1]);
-   ui->curvePt3_1->setValue(g_model.curves5[0][2]);
-   ui->curvePt4_1->setValue(g_model.curves5[0][3]);
-   ui->curvePt5_1->setValue(g_model.curves5[0][4]);
+	points = 5 ;
+	xNeeded = 0 ;
+  pcurve = g_model.curves5[currentCurve] ;
+  if ( currentCurve > 7 )
+	{
+		points = 9 ;
+    pcurve = g_model.curves9[currentCurve-8] ;
+	}
+  if ( ( currentCurve == 16 ) || ( currentCurve == 17 ) )
+	{
+		xNeeded = 1 ;
+    if ( currentCurve == 16 )
+		{
+			pcurve = g_model.curvexy ;
+		}
+		else
+		{
+			pcurve = g_model.curve2xy ;
+		}
+	}
+  if ( currentCurve == 18 )
+	{
+		pcurve = g_model.curve6 ;
+		points = 6 ;
+	}
 
-   ui->curvePt1_2->setValue(g_model.curves5[1][0]);
-   ui->curvePt2_2->setValue(g_model.curves5[1][1]);
-   ui->curvePt3_2->setValue(g_model.curves5[1][2]);
-   ui->curvePt4_2->setValue(g_model.curves5[1][3]);
-   ui->curvePt5_2->setValue(g_model.curves5[1][4]);
+//	 ui->curvePt1_1->setValue(g_model.curves5[0][0]);
+//   ui->curvePt2_1->setValue(g_model.curves5[0][1]);
+//   ui->curvePt3_1->setValue(g_model.curves5[0][2]);
+//   ui->curvePt4_1->setValue(g_model.curves5[0][3]);
+//   ui->curvePt5_1->setValue(g_model.curves5[0][4]);
 
-   ui->curvePt1_3->setValue(g_model.curves5[2][0]);
-   ui->curvePt2_3->setValue(g_model.curves5[2][1]);
-   ui->curvePt3_3->setValue(g_model.curves5[2][2]);
-   ui->curvePt4_3->setValue(g_model.curves5[2][3]);
-   ui->curvePt5_3->setValue(g_model.curves5[2][4]);
+//   ui->curvePt1_2->setValue(g_model.curves5[1][0]);
+//   ui->curvePt2_2->setValue(g_model.curves5[1][1]);
+//   ui->curvePt3_2->setValue(g_model.curves5[1][2]);
+//   ui->curvePt4_2->setValue(g_model.curves5[1][3]);
+//   ui->curvePt5_2->setValue(g_model.curves5[1][4]);
 
-   ui->curvePt1_4->setValue(g_model.curves5[3][0]);
-   ui->curvePt2_4->setValue(g_model.curves5[3][1]);
-   ui->curvePt3_4->setValue(g_model.curves5[3][2]);
-   ui->curvePt4_4->setValue(g_model.curves5[3][3]);
-   ui->curvePt5_4->setValue(g_model.curves5[3][4]);
+//   ui->curvePt1_3->setValue(g_model.curves5[2][0]);
+//   ui->curvePt2_3->setValue(g_model.curves5[2][1]);
+//   ui->curvePt3_3->setValue(g_model.curves5[2][2]);
+//   ui->curvePt4_3->setValue(g_model.curves5[2][3]);
+//   ui->curvePt5_3->setValue(g_model.curves5[2][4]);
 
-   ui->curvePt1_5->setValue(g_model.curves5[4][0]);
-   ui->curvePt2_5->setValue(g_model.curves5[4][1]);
-   ui->curvePt3_5->setValue(g_model.curves5[4][2]);
-   ui->curvePt4_5->setValue(g_model.curves5[4][3]);
-   ui->curvePt5_5->setValue(g_model.curves5[4][4]);
+//   ui->curvePt1_4->setValue(g_model.curves5[3][0]);
+//   ui->curvePt2_4->setValue(g_model.curves5[3][1]);
+//   ui->curvePt3_4->setValue(g_model.curves5[3][2]);
+//   ui->curvePt4_4->setValue(g_model.curves5[3][3]);
+//   ui->curvePt5_4->setValue(g_model.curves5[3][4]);
 
-   ui->curvePt1_6->setValue(g_model.curves5[5][0]);
-   ui->curvePt2_6->setValue(g_model.curves5[5][1]);
-   ui->curvePt3_6->setValue(g_model.curves5[5][2]);
-   ui->curvePt4_6->setValue(g_model.curves5[5][3]);
-   ui->curvePt5_6->setValue(g_model.curves5[5][4]);
+//   ui->curvePt1_5->setValue(g_model.curves5[4][0]);
+//   ui->curvePt2_5->setValue(g_model.curves5[4][1]);
+//   ui->curvePt3_5->setValue(g_model.curves5[4][2]);
+//   ui->curvePt4_5->setValue(g_model.curves5[4][3]);
+//   ui->curvePt5_5->setValue(g_model.curves5[4][4]);
 
-   ui->curvePt1_7->setValue(g_model.curves5[6][0]);
-   ui->curvePt2_7->setValue(g_model.curves5[6][1]);
-   ui->curvePt3_7->setValue(g_model.curves5[6][2]);
-   ui->curvePt4_7->setValue(g_model.curves5[6][3]);
-   ui->curvePt5_7->setValue(g_model.curves5[6][4]);
+//   ui->curvePt1_6->setValue(g_model.curves5[5][0]);
+//   ui->curvePt2_6->setValue(g_model.curves5[5][1]);
+//   ui->curvePt3_6->setValue(g_model.curves5[5][2]);
+//   ui->curvePt4_6->setValue(g_model.curves5[5][3]);
+//   ui->curvePt5_6->setValue(g_model.curves5[5][4]);
 
-   ui->curvePt1_8->setValue(g_model.curves5[7][0]);
-   ui->curvePt2_8->setValue(g_model.curves5[7][1]);
-   ui->curvePt3_8->setValue(g_model.curves5[7][2]);
-   ui->curvePt4_8->setValue(g_model.curves5[7][3]);
-   ui->curvePt5_8->setValue(g_model.curves5[7][4]);
+//   ui->curvePt1_7->setValue(g_model.curves5[6][0]);
+//   ui->curvePt2_7->setValue(g_model.curves5[6][1]);
+//   ui->curvePt3_7->setValue(g_model.curves5[6][2]);
+//   ui->curvePt4_7->setValue(g_model.curves5[6][3]);
+//   ui->curvePt5_7->setValue(g_model.curves5[6][4]);
 
-   ui->curvePt1_9->setValue(g_model.curves9[0][0]);
-   ui->curvePt2_9->setValue(g_model.curves9[0][1]);
-   ui->curvePt3_9->setValue(g_model.curves9[0][2]);
-   ui->curvePt4_9->setValue(g_model.curves9[0][3]);
-   ui->curvePt5_9->setValue(g_model.curves9[0][4]);
-   ui->curvePt6_9->setValue(g_model.curves9[0][5]);
-   ui->curvePt7_9->setValue(g_model.curves9[0][6]);
-   ui->curvePt8_9->setValue(g_model.curves9[0][7]);
-   ui->curvePt9_9->setValue(g_model.curves9[0][8]);
+//   ui->curvePt1_8->setValue(g_model.curves5[7][0]);
+//   ui->curvePt2_8->setValue(g_model.curves5[7][1]);
+//   ui->curvePt3_8->setValue(g_model.curves5[7][2]);
+//   ui->curvePt4_8->setValue(g_model.curves5[7][3]);
+//   ui->curvePt5_8->setValue(g_model.curves5[7][4]);
 
-   ui->curvePt1_10->setValue(g_model.curves9[1][0]);
-   ui->curvePt2_10->setValue(g_model.curves9[1][1]);
-   ui->curvePt3_10->setValue(g_model.curves9[1][2]);
-   ui->curvePt4_10->setValue(g_model.curves9[1][3]);
-   ui->curvePt5_10->setValue(g_model.curves9[1][4]);
-   ui->curvePt6_10->setValue(g_model.curves9[1][5]);
-   ui->curvePt7_10->setValue(g_model.curves9[1][6]);
-   ui->curvePt8_10->setValue(g_model.curves9[1][7]);
-   ui->curvePt9_10->setValue(g_model.curves9[1][8]);
+   ui->curvePt1_9->setValue(pcurve[0]);
+   ui->curvePt2_9->setValue(pcurve[1]);
+   ui->curvePt3_9->setValue(pcurve[2]);
+   ui->curvePt4_9->setValue(pcurve[3]);
+   ui->curvePt5_9->setValue(pcurve[4]);
+   if ( points > 5 )
+	 {
+		 ui->curvePt6_9->setValue(pcurve[5]);
+		 ui->curvePt6_9->show() ;
+	 }
+	 else
+	 {
+		 ui->curvePt6_9->hide() ;
+	 }
+   if ( points > 6 )
+	 {
+		ui->curvePt7_9->setValue(pcurve[6]);
+   	ui->curvePt8_9->setValue(pcurve[7]);
+   	ui->curvePt9_9->setValue(pcurve[8]);
+		ui->curvePt7_9->show() ;
+		ui->curvePt8_9->show() ;
+		ui->curvePt9_9->show() ;
+	 }
+	 else
+	 {
+		 ui->curvePt7_9->hide() ;
+		 ui->curvePt8_9->hide() ;
+		 ui->curvePt9_9->hide() ;
+	 }
 
-   ui->curvePt1_11->setValue(g_model.curves9[2][0]);
-   ui->curvePt2_11->setValue(g_model.curves9[2][1]);
-   ui->curvePt3_11->setValue(g_model.curves9[2][2]);
-   ui->curvePt4_11->setValue(g_model.curves9[2][3]);
-   ui->curvePt5_11->setValue(g_model.curves9[2][4]);
-   ui->curvePt6_11->setValue(g_model.curves9[2][5]);
-   ui->curvePt7_11->setValue(g_model.curves9[2][6]);
-   ui->curvePt8_11->setValue(g_model.curves9[2][7]);
-   ui->curvePt9_11->setValue(g_model.curves9[2][8]);
+	 if ( xNeeded )
+	 {
+   	ui->curvePt1_10->setValue(pcurve[9]);
+   	ui->curvePt2_10->setValue(pcurve[10]);
+   	ui->curvePt3_10->setValue(pcurve[11]);
+   	ui->curvePt4_10->setValue(pcurve[12]);
+   	ui->curvePt5_10->setValue(pcurve[13]);
+   	ui->curvePt6_10->setValue(pcurve[14]);
+   	ui->curvePt7_10->setValue(pcurve[15]);
+   	ui->curvePt8_10->setValue(pcurve[16]);
+   	ui->curvePt9_10->setValue(pcurve[17]);
+		ui->curvePt1_10->show() ;
+		ui->curvePt2_10->show() ;
+		ui->curvePt3_10->show() ;
+		ui->curvePt4_10->show() ;
+		ui->curvePt5_10->show() ;
+		ui->curvePt6_10->show() ;
+		ui->curvePt7_10->show() ;
+		ui->curvePt8_10->show() ;
+		ui->curvePt9_10->show() ;
+	 }
+	 else
+	 {
+	 	ui->curvePt1_10->hide() ;
+	 	ui->curvePt2_10->hide() ;
+	 	ui->curvePt3_10->hide() ;
+	 	ui->curvePt4_10->hide() ;
+	 	ui->curvePt5_10->hide() ;
+	 	ui->curvePt6_10->hide() ;
+	 	ui->curvePt7_10->hide() ;
+	 	ui->curvePt8_10->hide() ;
+	 	ui->curvePt9_10->hide() ;
+	 }
+//   ui->curvePt1_11->setValue(g_model.curves9[2][0]);
+//   ui->curvePt2_11->setValue(g_model.curves9[2][1]);
+//   ui->curvePt3_11->setValue(g_model.curves9[2][2]);
+//   ui->curvePt4_11->setValue(g_model.curves9[2][3]);
+//   ui->curvePt5_11->setValue(g_model.curves9[2][4]);
+//   ui->curvePt6_11->setValue(g_model.curves9[2][5]);
+//   ui->curvePt7_11->setValue(g_model.curves9[2][6]);
+//   ui->curvePt8_11->setValue(g_model.curves9[2][7]);
+//   ui->curvePt9_11->setValue(g_model.curves9[2][8]);
 
-   ui->curvePt1_12->setValue(g_model.curves9[3][0]);
-   ui->curvePt2_12->setValue(g_model.curves9[3][1]);
-   ui->curvePt3_12->setValue(g_model.curves9[3][2]);
-   ui->curvePt4_12->setValue(g_model.curves9[3][3]);
-   ui->curvePt5_12->setValue(g_model.curves9[3][4]);
-   ui->curvePt6_12->setValue(g_model.curves9[3][5]);
-   ui->curvePt7_12->setValue(g_model.curves9[3][6]);
-   ui->curvePt8_12->setValue(g_model.curves9[3][7]);
-   ui->curvePt9_12->setValue(g_model.curves9[3][8]);
+//   ui->curvePt1_12->setValue(g_model.curves9[3][0]);
+//   ui->curvePt2_12->setValue(g_model.curves9[3][1]);
+//   ui->curvePt3_12->setValue(g_model.curves9[3][2]);
+//   ui->curvePt4_12->setValue(g_model.curves9[3][3]);
+//   ui->curvePt5_12->setValue(g_model.curves9[3][4]);
+//   ui->curvePt6_12->setValue(g_model.curves9[3][5]);
+//   ui->curvePt7_12->setValue(g_model.curves9[3][6]);
+//   ui->curvePt8_12->setValue(g_model.curves9[3][7]);
+//   ui->curvePt9_12->setValue(g_model.curves9[3][8]);
 
-   ui->curvePt1_13->setValue(g_model.curves9[4][0]);
-   ui->curvePt2_13->setValue(g_model.curves9[4][1]);
-   ui->curvePt3_13->setValue(g_model.curves9[4][2]);
-   ui->curvePt4_13->setValue(g_model.curves9[4][3]);
-   ui->curvePt5_13->setValue(g_model.curves9[4][4]);
-   ui->curvePt6_13->setValue(g_model.curves9[4][5]);
-   ui->curvePt7_13->setValue(g_model.curves9[4][6]);
-   ui->curvePt8_13->setValue(g_model.curves9[4][7]);
-   ui->curvePt9_13->setValue(g_model.curves9[4][8]);
+//   ui->curvePt1_13->setValue(g_model.curves9[4][0]);
+//   ui->curvePt2_13->setValue(g_model.curves9[4][1]);
+//   ui->curvePt3_13->setValue(g_model.curves9[4][2]);
+//   ui->curvePt4_13->setValue(g_model.curves9[4][3]);
+//   ui->curvePt5_13->setValue(g_model.curves9[4][4]);
+//   ui->curvePt6_13->setValue(g_model.curves9[4][5]);
+//   ui->curvePt7_13->setValue(g_model.curves9[4][6]);
+//   ui->curvePt8_13->setValue(g_model.curves9[4][7]);
+//   ui->curvePt9_13->setValue(g_model.curves9[4][8]);
 
-   ui->curvePt1_14->setValue(g_model.curves9[5][0]);
-   ui->curvePt2_14->setValue(g_model.curves9[5][1]);
-   ui->curvePt3_14->setValue(g_model.curves9[5][2]);
-   ui->curvePt4_14->setValue(g_model.curves9[5][3]);
-   ui->curvePt5_14->setValue(g_model.curves9[5][4]);
-   ui->curvePt6_14->setValue(g_model.curves9[5][5]);
-   ui->curvePt7_14->setValue(g_model.curves9[5][6]);
-   ui->curvePt8_14->setValue(g_model.curves9[5][7]);
-   ui->curvePt9_14->setValue(g_model.curves9[5][8]);
+//   ui->curvePt1_14->setValue(g_model.curves9[5][0]);
+//   ui->curvePt2_14->setValue(g_model.curves9[5][1]);
+//   ui->curvePt3_14->setValue(g_model.curves9[5][2]);
+//   ui->curvePt4_14->setValue(g_model.curves9[5][3]);
+//   ui->curvePt5_14->setValue(g_model.curves9[5][4]);
+//   ui->curvePt6_14->setValue(g_model.curves9[5][5]);
+//   ui->curvePt7_14->setValue(g_model.curves9[5][6]);
+//   ui->curvePt8_14->setValue(g_model.curves9[5][7]);
+//   ui->curvePt9_14->setValue(g_model.curves9[5][8]);
 
-   ui->curvePt1_15->setValue(g_model.curves9[6][0]);
-   ui->curvePt2_15->setValue(g_model.curves9[6][1]);
-   ui->curvePt3_15->setValue(g_model.curves9[6][2]);
-   ui->curvePt4_15->setValue(g_model.curves9[6][3]);
-   ui->curvePt5_15->setValue(g_model.curves9[6][4]);
-   ui->curvePt6_15->setValue(g_model.curves9[6][5]);
-   ui->curvePt7_15->setValue(g_model.curves9[6][6]);
-   ui->curvePt8_15->setValue(g_model.curves9[6][7]);
-   ui->curvePt9_15->setValue(g_model.curves9[6][8]);
+//   ui->curvePt1_15->setValue(g_model.curves9[6][0]);
+//   ui->curvePt2_15->setValue(g_model.curves9[6][1]);
+//   ui->curvePt3_15->setValue(g_model.curves9[6][2]);
+//   ui->curvePt4_15->setValue(g_model.curves9[6][3]);
+//   ui->curvePt5_15->setValue(g_model.curves9[6][4]);
+//   ui->curvePt6_15->setValue(g_model.curves9[6][5]);
+//   ui->curvePt7_15->setValue(g_model.curves9[6][6]);
+//   ui->curvePt8_15->setValue(g_model.curves9[6][7]);
+//   ui->curvePt9_15->setValue(g_model.curves9[6][8]);
 
-   ui->curvePt1_16->setValue(g_model.curves9[7][0]);
-   ui->curvePt2_16->setValue(g_model.curves9[7][1]);
-   ui->curvePt3_16->setValue(g_model.curves9[7][2]);
-   ui->curvePt4_16->setValue(g_model.curves9[7][3]);
-   ui->curvePt5_16->setValue(g_model.curves9[7][4]);
-   ui->curvePt6_16->setValue(g_model.curves9[7][5]);
-   ui->curvePt7_16->setValue(g_model.curves9[7][6]);
-   ui->curvePt8_16->setValue(g_model.curves9[7][7]);
-   ui->curvePt9_16->setValue(g_model.curves9[7][8]);
-   ControlCurveSignal(false);
+//   ui->curvePt1_16->setValue(g_model.curves9[7][0]);
+//   ui->curvePt2_16->setValue(g_model.curves9[7][1]);
+//   ui->curvePt3_16->setValue(g_model.curves9[7][2]);
+//   ui->curvePt4_16->setValue(g_model.curves9[7][3]);
+//   ui->curvePt5_16->setValue(g_model.curves9[7][4]);
+//   ui->curvePt6_16->setValue(g_model.curves9[7][5]);
+//   ui->curvePt7_16->setValue(g_model.curves9[7][6]);
+//   ui->curvePt8_16->setValue(g_model.curves9[7][7]);
+//   ui->curvePt9_16->setValue(g_model.curves9[7][8]);
+   
+//   ui->curvePt1_19->setValue(g_model.curve6[0]);
+//   ui->curvePt2_19->setValue(g_model.curve6[1]);
+//   ui->curvePt3_19->setValue(g_model.curve6[2]);
+//   ui->curvePt4_19->setValue(g_model.curve6[3]);
+//   ui->curvePt5_19->setValue(g_model.curve6[4]);
+//   ui->curvePt6_19->setValue(g_model.curve6[5]);
+	 
+	 ControlCurveSignal(false);
 }
 
-const QColor colors[16] =
+QColor colors[19] =
 {
   QColor(0,0,127),
   QColor(0,127,0),
@@ -2436,8 +2790,9 @@ const QColor colors[16] =
   QColor(255,0,0),
   QColor(255,0,127),
   QColor(255,127,0),
-//  QColor(0,0,127),
-//  QColor(0,127,0),
+  QColor(255,170,255),
+  QColor(0,0,127),
+  QColor(0,127,0),
 //  QColor(127,0,0),
 //  QColor(0,127,127),
 //  QColor(127,0,127),
@@ -2456,22 +2811,41 @@ const QColor colors[16] =
 
 void ModelEdit::tabCurves()
 {
-   for (int i=0; i<16;i++)
+   for (int i=0; i<19;i++)
 	 {
      plot_curve[i]=false;
    }
+   currentCurve = 0;
    redrawCurve=true;
    updateCurvesTab();
+
+	if ( g_model.curvexy[9] == 0 )
+	{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curvexy[i] = j ;
+		}
+	}
+	if ( g_model.curve2xy[9] == 0 )
+	{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curve2xy[i] = j ;
+		}
+	}
 
    QGraphicsScene *scene = new QGraphicsScene(ui->curvePreview);
    scene->setItemIndexMethod(QGraphicsScene::NoIndex);
    ui->curvePreview->setScene(scene);
-   currentCurve = 0;
 
    connect(ui->clearMixesPB,SIGNAL(pressed()),this,SLOT(clearCurves()));
 
 	int i ;
-	for ( i = 0 ; i < 16 ; i += 1 )
+	for ( i = 0 ; i < 19 ; i += 1 )
 	{
 		QPalette palette ;
 		QPushButton *p ;
@@ -2526,6 +2900,15 @@ void ModelEdit::tabCurves()
 			case 15 :
 				p = ui->curveEdit_16 ;
 			break ;
+			case 16 :
+				p = ui->curveEdit_17 ;
+			break ;
+			case 17 :
+				p = ui->curveEdit_18 ;
+			break ;
+			case 18 :
+				p = ui->curveEdit_19 ;
+			break ;
 		}
 
 		palette.setBrush(QPalette::Active, QPalette::Button, QBrush(colors[i]));
@@ -2541,53 +2924,53 @@ void ModelEdit::tabCurves()
 	}
 
 
-   connect(ui->curvePt1_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_2,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_3,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_4,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_5,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_6,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_7,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_8,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
    connect(ui->curvePt1_9,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
    connect(ui->curvePt2_9,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
@@ -2599,75 +2982,82 @@ void ModelEdit::tabCurves()
    connect(ui->curvePt8_9,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
    connect(ui->curvePt9_9,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_10,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+   connect(ui->curvePt1_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt2_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt3_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt4_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt5_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt6_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt7_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt8_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
+   connect(ui->curvePt9_10,SIGNAL(valueChanged(int)),this,SLOT(curveXPointEdited()));
 
-   connect(ui->curvePt1_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_11,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_12,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_13,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_14,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_15,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 
-   connect(ui->curvePt1_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt2_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt3_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt4_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt5_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt6_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt7_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt8_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
-   connect(ui->curvePt9_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt1_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt7_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt8_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt9_16,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+
+//   connect(ui->curvePt1_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt2_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt3_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt4_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt5_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
+//   connect(ui->curvePt6_19,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
 }
 
 void ModelEdit::limitAuto()
@@ -2870,46 +3260,205 @@ void ModelEdit::limitEdited()
 void ModelEdit::setCurrentCurve(int curveId)
 {
     currentCurve = curveId;
-    QString ss = "QSpinBox { background-color:rgb(255, 255, 127);}";
+//    QString ss = "QSpinBox { background-color:rgb(255, 255, 127);}";
 
-    QSpinBox* spn[][16] = {
-          { ui->curvePt1_1, ui->curvePt2_1, ui->curvePt3_1, ui->curvePt4_1, ui->curvePt5_1 }
-        , { ui->curvePt1_2, ui->curvePt2_2, ui->curvePt3_2, ui->curvePt4_2, ui->curvePt5_2 }
-        , { ui->curvePt1_3, ui->curvePt2_3, ui->curvePt3_3, ui->curvePt4_3, ui->curvePt5_3 }
-        , { ui->curvePt1_4, ui->curvePt2_4, ui->curvePt3_4, ui->curvePt4_4, ui->curvePt5_4 }
-        , { ui->curvePt1_5, ui->curvePt2_5, ui->curvePt3_5, ui->curvePt4_5, ui->curvePt5_5 }
-        , { ui->curvePt1_6, ui->curvePt2_6, ui->curvePt3_6, ui->curvePt4_6, ui->curvePt5_6 }
-        , { ui->curvePt1_7, ui->curvePt2_7, ui->curvePt3_7, ui->curvePt4_7, ui->curvePt5_7 }
-        , { ui->curvePt1_8, ui->curvePt2_8, ui->curvePt3_8, ui->curvePt4_8, ui->curvePt5_8 }
-        , { ui->curvePt1_9, ui->curvePt2_9, ui->curvePt3_9, ui->curvePt4_9, ui->curvePt5_9, ui->curvePt6_9, ui->curvePt7_9, ui->curvePt8_9, ui->curvePt9_9 }
-        , { ui->curvePt1_10, ui->curvePt2_10, ui->curvePt3_10, ui->curvePt4_10, ui->curvePt5_10, ui->curvePt6_10, ui->curvePt7_10, ui->curvePt8_10, ui->curvePt9_10 }
-        , { ui->curvePt1_11, ui->curvePt2_11, ui->curvePt3_11, ui->curvePt4_11, ui->curvePt5_11, ui->curvePt6_11, ui->curvePt7_11, ui->curvePt8_11, ui->curvePt9_11 }
-        , { ui->curvePt1_12, ui->curvePt2_12, ui->curvePt3_12, ui->curvePt4_12, ui->curvePt5_12, ui->curvePt6_12, ui->curvePt7_12, ui->curvePt8_12, ui->curvePt9_12 }
-        , { ui->curvePt1_13, ui->curvePt2_13, ui->curvePt3_13, ui->curvePt4_13, ui->curvePt5_13, ui->curvePt6_13, ui->curvePt7_13, ui->curvePt8_13, ui->curvePt9_13 }
-        , { ui->curvePt1_14, ui->curvePt2_14, ui->curvePt3_14, ui->curvePt4_14, ui->curvePt5_14, ui->curvePt6_14, ui->curvePt7_14, ui->curvePt8_14, ui->curvePt9_14 }
-        , { ui->curvePt1_15, ui->curvePt2_15, ui->curvePt3_15, ui->curvePt4_15, ui->curvePt5_15, ui->curvePt6_15, ui->curvePt7_15, ui->curvePt8_15, ui->curvePt9_15 }
-        , { ui->curvePt1_16, ui->curvePt2_16, ui->curvePt3_16, ui->curvePt4_16, ui->curvePt5_16, ui->curvePt6_16, ui->curvePt7_16, ui->curvePt8_16, ui->curvePt9_16 }
-    };
-    for (int i = 0; i < 16; i++)
-    {
-        int jMax = 5;
-        if (i > 7) { jMax = 9; }
-        for (int j = 0; j < jMax; j++)
-        {
-            if (curveId == i)
-            {
-                spn[i][j]->setStyleSheet(ss);
-            }
-            else
-            {
-                spn[i][j]->setStyleSheet("");
-            }
-        }
-   }
+//    QSpinBox* spn[][18] = {
+//          { ui->curvePt1_1, ui->curvePt2_1, ui->curvePt3_1, ui->curvePt4_1, ui->curvePt5_1 }
+//        , { ui->curvePt1_2, ui->curvePt2_2, ui->curvePt3_2, ui->curvePt4_2, ui->curvePt5_2 }
+//        , { ui->curvePt1_3, ui->curvePt2_3, ui->curvePt3_3, ui->curvePt4_3, ui->curvePt5_3 }
+//        , { ui->curvePt1_4, ui->curvePt2_4, ui->curvePt3_4, ui->curvePt4_4, ui->curvePt5_4 }
+//        , { ui->curvePt1_5, ui->curvePt2_5, ui->curvePt3_5, ui->curvePt4_5, ui->curvePt5_5 }
+//        , { ui->curvePt1_6, ui->curvePt2_6, ui->curvePt3_6, ui->curvePt4_6, ui->curvePt5_6 }
+//        , { ui->curvePt1_7, ui->curvePt2_7, ui->curvePt3_7, ui->curvePt4_7, ui->curvePt5_7 }
+//        , { ui->curvePt1_8, ui->curvePt2_8, ui->curvePt3_8, ui->curvePt4_8, ui->curvePt5_8 }
+//        , { ui->curvePt1_9, ui->curvePt2_9, ui->curvePt3_9, ui->curvePt4_9, ui->curvePt5_9, ui->curvePt6_9, ui->curvePt7_9, ui->curvePt8_9, ui->curvePt9_9 }
+//        , { ui->curvePt1_10, ui->curvePt2_10, ui->curvePt3_10, ui->curvePt4_10, ui->curvePt5_10, ui->curvePt6_10, ui->curvePt7_10, ui->curvePt8_10, ui->curvePt9_10 }
+//        , { ui->curvePt1_11, ui->curvePt2_11, ui->curvePt3_11, ui->curvePt4_11, ui->curvePt5_11, ui->curvePt6_11, ui->curvePt7_11, ui->curvePt8_11, ui->curvePt9_11 }
+//        , { ui->curvePt1_12, ui->curvePt2_12, ui->curvePt3_12, ui->curvePt4_12, ui->curvePt5_12, ui->curvePt6_12, ui->curvePt7_12, ui->curvePt8_12, ui->curvePt9_12 }
+//        , { ui->curvePt1_13, ui->curvePt2_13, ui->curvePt3_13, ui->curvePt4_13, ui->curvePt5_13, ui->curvePt6_13, ui->curvePt7_13, ui->curvePt8_13, ui->curvePt9_13 }
+//        , { ui->curvePt1_14, ui->curvePt2_14, ui->curvePt3_14, ui->curvePt4_14, ui->curvePt5_14, ui->curvePt6_14, ui->curvePt7_14, ui->curvePt8_14, ui->curvePt9_14 }
+//        , { ui->curvePt1_15, ui->curvePt2_15, ui->curvePt3_15, ui->curvePt4_15, ui->curvePt5_15, ui->curvePt6_15, ui->curvePt7_15, ui->curvePt8_15, ui->curvePt9_15 }
+//        , { ui->curvePt1_16, ui->curvePt2_16, ui->curvePt3_16, ui->curvePt4_16, ui->curvePt5_16, ui->curvePt6_16, ui->curvePt7_16, ui->curvePt8_16, ui->curvePt9_16 }
+//        , { ui->curvePt1_9, ui->curvePt2_9, ui->curvePt3_9, ui->curvePt4_9, ui->curvePt5_9, ui->curvePt6_9, ui->curvePt7_9, ui->curvePt8_9, ui->curvePt9_9 }
+//        , { ui->curvePt1_9, ui->curvePt2_9, ui->curvePt3_9, ui->curvePt4_9, ui->curvePt5_9, ui->curvePt6_9, ui->curvePt7_9, ui->curvePt8_9, ui->curvePt9_9 }
+//        , { ui->curvePt1_19, ui->curvePt2_19, ui->curvePt3_19, ui->curvePt4_19, ui->curvePt5_19, ui->curvePt6_19 }
+//    };
+//    for (int i = 0; i < 19; i++)
+//    {
+//        int jMax = 5;
+//        if (i > 7) { jMax = 9; }
+//        if (i == 18) { jMax = 6; }
+//        for (int j = 0; j < jMax; j++)
+//        {
+//            if (curveId == i)
+//            {
+//                spn[i][j]->setStyleSheet(ss);
+//            }
+//            else
+//            {
+//                spn[i][j]->setStyleSheet("");
+//            }
+//        }
+//		}
+		updateCurvesTab() ;
+}
+
+int ModelEdit::getNodeMin( QSpinBox *sb )
+{
+	int8_t *pcurve ;
+	if ( currentCurve == 16 )
+	{
+		pcurve = g_model.curvexy ;
+	}
+	else
+	{
+		pcurve = g_model.curve2xy ;
+	}
+	
+	if ( sb == ui->curvePt1_10 )
+	{
+		return -100 ;
+	}
+	else if ( sb == ui->curvePt2_10 )
+	{
+		return pcurve[9] ;
+	}
+	else if ( sb == ui->curvePt3_10 )
+	{
+		return pcurve[10] ;
+	}
+	else if ( sb == ui->curvePt4_10 )
+	{
+		return pcurve[11] ;
+	}
+	else if ( sb == ui->curvePt5_10 )
+	{
+		return pcurve[12] ;
+	}
+	else if ( sb == ui->curvePt6_10 )
+	{
+		return pcurve[13] ;
+	}
+	else if ( sb == ui->curvePt7_10 )
+	{
+		return pcurve[14] ;
+	}
+	else if ( sb == ui->curvePt8_10 )
+	{
+		return pcurve[15] ;
+	}
+	return pcurve[16] ;
+}
+
+int ModelEdit::getNodeMax( QSpinBox *sb )
+{
+	int8_t *pcurve ;
+	if ( currentCurve == 16 )
+	{
+		pcurve = g_model.curvexy ;
+	}
+	else
+	{
+		pcurve = g_model.curve2xy ;
+	}
+	
+	if ( sb == ui->curvePt1_10 )
+	{
+		return pcurve[10] ;
+	}
+	else if ( sb == ui->curvePt2_10 )
+	{
+		return pcurve[11] ;
+	}
+	else if ( sb == ui->curvePt3_10 )
+	{
+		return pcurve[12] ;
+	}
+	else if ( sb == ui->curvePt4_10 )
+	{
+		return pcurve[13] ;
+	}
+	else if ( sb == ui->curvePt5_10 )
+	{
+		return pcurve[14] ;
+	}
+	else if ( sb == ui->curvePt6_10 )
+	{
+		return pcurve[15] ;
+	}
+	else if ( sb == ui->curvePt7_10 )
+	{
+		return pcurve[16] ;
+	}
+	else if ( sb == ui->curvePt8_10 )
+	{
+		return pcurve[17] ;
+	}
+	return 100 ;
+}
+
+int ModelEdit::curveXcheck( QSpinBox *sb )
+{
+	int value = sb->value() ;
+	int limit ;
+	limit = getNodeMin( sb ) ;
+	if ( value < limit )
+	{
+		value = limit ;
+		sb->setValue(value) ;
+	}
+	limit = getNodeMax( sb ) ;
+	if ( value > limit )
+	{
+		value = limit ;
+		sb->setValue(value) ;
+	}
+	return value ;
+}
+
+
+void ModelEdit::curveXPointEdited()
+{
+	int8_t *pcurve ;
+
+	if ( curveEditLock )
+	{
+		return ;
+	}
+	curveEditLock = true ;
+    
+	if ( currentCurve == 16 )
+	{
+		pcurve = g_model.curvexy ;
+	}
+	else
+	{
+		pcurve = g_model.curve2xy ;
+	}
+
+	pcurve[9] = curveXcheck(ui->curvePt1_10);
+	pcurve[10] = curveXcheck(ui->curvePt2_10);
+	pcurve[11] = curveXcheck(ui->curvePt3_10);
+	pcurve[12] = curveXcheck(ui->curvePt4_10);
+	pcurve[13] = curveXcheck(ui->curvePt5_10);
+	pcurve[14] = curveXcheck(ui->curvePt6_10);
+	pcurve[15] = curveXcheck(ui->curvePt7_10);
+	pcurve[16] = curveXcheck(ui->curvePt8_10);
+	pcurve[17] = curveXcheck(ui->curvePt9_10);
+    
+	if (redrawCurve)
+  {
+    drawCurve();
+  }
+  updateSettings();
+	 
+	curveEditLock = false ;
 }
 
 void ModelEdit::curvePointEdited()
 {
+	int points ;
+	int8_t *pcurve ;
     
     QSpinBox *spinBox = qobject_cast<QSpinBox*>(sender());
 
@@ -2918,137 +3467,192 @@ void ModelEdit::curvePointEdited()
     {
         curveId += 10;
     }
+//		if ( curveId == 18 )
+//		{
+//			curveId = 16 ;
+//		}
 
-    setCurrentCurve(curveId);
+//    setCurrentCurve(curveId);
 
-    g_model.curves5[0][0] = ui->curvePt1_1->value();
-    g_model.curves5[0][1] = ui->curvePt2_1->value();
-    g_model.curves5[0][2] = ui->curvePt3_1->value();
-    g_model.curves5[0][3] = ui->curvePt4_1->value();
-    g_model.curves5[0][4] = ui->curvePt5_1->value();
-
-    g_model.curves5[1][0] = ui->curvePt1_2->value();
-    g_model.curves5[1][1] = ui->curvePt2_2->value();
-    g_model.curves5[1][2] = ui->curvePt3_2->value();
-    g_model.curves5[1][3] = ui->curvePt4_2->value();
-    g_model.curves5[1][4] = ui->curvePt5_2->value();
-
-    g_model.curves5[2][0] = ui->curvePt1_3->value();
-    g_model.curves5[2][1] = ui->curvePt2_3->value();
-    g_model.curves5[2][2] = ui->curvePt3_3->value();
-    g_model.curves5[2][3] = ui->curvePt4_3->value();
-    g_model.curves5[2][4] = ui->curvePt5_3->value();
-
-    g_model.curves5[3][0] = ui->curvePt1_4->value();
-    g_model.curves5[3][1] = ui->curvePt2_4->value();
-    g_model.curves5[3][2] = ui->curvePt3_4->value();
-    g_model.curves5[3][3] = ui->curvePt4_4->value();
-    g_model.curves5[3][4] = ui->curvePt5_4->value();
-
-    g_model.curves5[4][0] = ui->curvePt1_5->value();
-    g_model.curves5[4][1] = ui->curvePt2_5->value();
-    g_model.curves5[4][2] = ui->curvePt3_5->value();
-    g_model.curves5[4][3] = ui->curvePt4_5->value();
-    g_model.curves5[4][4] = ui->curvePt5_5->value();
-
-    g_model.curves5[5][0] = ui->curvePt1_6->value();
-    g_model.curves5[5][1] = ui->curvePt2_6->value();
-    g_model.curves5[5][2] = ui->curvePt3_6->value();
-    g_model.curves5[5][3] = ui->curvePt4_6->value();
-    g_model.curves5[5][4] = ui->curvePt5_6->value();
-
-    g_model.curves5[6][0] = ui->curvePt1_7->value();
-    g_model.curves5[6][1] = ui->curvePt2_7->value();
-    g_model.curves5[6][2] = ui->curvePt3_7->value();
-    g_model.curves5[6][3] = ui->curvePt4_7->value();
-    g_model.curves5[6][4] = ui->curvePt5_7->value();
-
-    g_model.curves5[7][0] = ui->curvePt1_8->value();
-    g_model.curves5[7][1] = ui->curvePt2_8->value();
-    g_model.curves5[7][2] = ui->curvePt3_8->value();
-    g_model.curves5[7][3] = ui->curvePt4_8->value();
-    g_model.curves5[7][4] = ui->curvePt5_8->value();
+	points = 5 ;
+  pcurve = g_model.curves5[currentCurve] ;
+  if ( currentCurve > 7 )
+	{
+		points = 9 ;
+    pcurve = g_model.curves9[currentCurve-8] ;
+	}
+  if ( ( currentCurve == 16 ) || ( currentCurve == 17 ) )
+	{
+    if ( currentCurve == 16 )
+		{
+			pcurve = g_model.curvexy ;
+		}
+		else
+		{
+			pcurve = g_model.curve2xy ;
+		}
+	}
+  if ( currentCurve == 18 )
+	{
+		pcurve = g_model.curve6 ;
+		points = 6 ;
+	}
 
 
-    g_model.curves9[0][0] = ui->curvePt1_9->value();
-    g_model.curves9[0][1] = ui->curvePt2_9->value();
-    g_model.curves9[0][2] = ui->curvePt3_9->value();
-    g_model.curves9[0][3] = ui->curvePt4_9->value();
-    g_model.curves9[0][4] = ui->curvePt5_9->value();
-    g_model.curves9[0][5] = ui->curvePt6_9->value();
-    g_model.curves9[0][6] = ui->curvePt7_9->value();
-    g_model.curves9[0][7] = ui->curvePt8_9->value();
-    g_model.curves9[0][8] = ui->curvePt9_9->value();
+   pcurve[0] = ui->curvePt1_9->value();
+   pcurve[1] = ui->curvePt2_9->value();
+   pcurve[2] = ui->curvePt3_9->value();
+   pcurve[3] = ui->curvePt4_9->value();
+   pcurve[4] = ui->curvePt5_9->value();
+   if ( points > 5 )
+	 {
+		pcurve[5] = ui->curvePt6_9->value();
+	 	
+	 }
+   if ( points > 6 )
+	 {
+    pcurve[6] = ui->curvePt7_9->value();
+    pcurve[7] = ui->curvePt8_9->value();
+    pcurve[8] = ui->curvePt9_9->value();
+	 }
 
-    g_model.curves9[1][0] = ui->curvePt1_10->value();
-    g_model.curves9[1][1] = ui->curvePt2_10->value();
-    g_model.curves9[1][2] = ui->curvePt3_10->value();
-    g_model.curves9[1][3] = ui->curvePt4_10->value();
-    g_model.curves9[1][4] = ui->curvePt5_10->value();
-    g_model.curves9[1][5] = ui->curvePt6_10->value();
-    g_model.curves9[1][6] = ui->curvePt7_10->value();
-    g_model.curves9[1][7] = ui->curvePt8_10->value();
-    g_model.curves9[1][8] = ui->curvePt9_10->value();
+		
+		
+		
+		
+		
+		
+		
 
-    g_model.curves9[2][0] = ui->curvePt1_11->value();
-    g_model.curves9[2][1] = ui->curvePt2_11->value();
-    g_model.curves9[2][2] = ui->curvePt3_11->value();
-    g_model.curves9[2][3] = ui->curvePt4_11->value();
-    g_model.curves9[2][4] = ui->curvePt5_11->value();
-    g_model.curves9[2][5] = ui->curvePt6_11->value();
-    g_model.curves9[2][6] = ui->curvePt7_11->value();
-    g_model.curves9[2][7] = ui->curvePt8_11->value();
-    g_model.curves9[2][8] = ui->curvePt9_11->value();
+//    g_model.curves5[1][0] = ui->curvePt1_2->value();
+//    g_model.curves5[1][1] = ui->curvePt2_2->value();
+//    g_model.curves5[1][2] = ui->curvePt3_2->value();
+//    g_model.curves5[1][3] = ui->curvePt4_2->value();
+//    g_model.curves5[1][4] = ui->curvePt5_2->value();
 
-    g_model.curves9[3][0] = ui->curvePt1_12->value();
-    g_model.curves9[3][1] = ui->curvePt2_12->value();
-    g_model.curves9[3][2] = ui->curvePt3_12->value();
-    g_model.curves9[3][3] = ui->curvePt4_12->value();
-    g_model.curves9[3][4] = ui->curvePt5_12->value();
-    g_model.curves9[3][5] = ui->curvePt6_12->value();
-    g_model.curves9[3][6] = ui->curvePt7_12->value();
-    g_model.curves9[3][7] = ui->curvePt8_12->value();
-    g_model.curves9[3][8] = ui->curvePt9_12->value();
+//    g_model.curves5[2][0] = ui->curvePt1_3->value();
+//    g_model.curves5[2][1] = ui->curvePt2_3->value();
+//    g_model.curves5[2][2] = ui->curvePt3_3->value();
+//    g_model.curves5[2][3] = ui->curvePt4_3->value();
+//    g_model.curves5[2][4] = ui->curvePt5_3->value();
 
-    g_model.curves9[4][0] = ui->curvePt1_13->value();
-    g_model.curves9[4][1] = ui->curvePt2_13->value();
-    g_model.curves9[4][2] = ui->curvePt3_13->value();
-    g_model.curves9[4][3] = ui->curvePt4_13->value();
-    g_model.curves9[4][4] = ui->curvePt5_13->value();
-    g_model.curves9[4][5] = ui->curvePt6_13->value();
-    g_model.curves9[4][6] = ui->curvePt7_13->value();
-    g_model.curves9[4][7] = ui->curvePt8_13->value();
-    g_model.curves9[4][8] = ui->curvePt9_13->value();
+//    g_model.curves5[3][0] = ui->curvePt1_4->value();
+//    g_model.curves5[3][1] = ui->curvePt2_4->value();
+//    g_model.curves5[3][2] = ui->curvePt3_4->value();
+//    g_model.curves5[3][3] = ui->curvePt4_4->value();
+//    g_model.curves5[3][4] = ui->curvePt5_4->value();
 
-    g_model.curves9[5][0] = ui->curvePt1_14->value();
-    g_model.curves9[5][1] = ui->curvePt2_14->value();
-    g_model.curves9[5][2] = ui->curvePt3_14->value();
-    g_model.curves9[5][3] = ui->curvePt4_14->value();
-    g_model.curves9[5][4] = ui->curvePt5_14->value();
-    g_model.curves9[5][5] = ui->curvePt6_14->value();
-    g_model.curves9[5][6] = ui->curvePt7_14->value();
-    g_model.curves9[5][7] = ui->curvePt8_14->value();
-    g_model.curves9[5][8] = ui->curvePt9_14->value();
+//    g_model.curves5[4][0] = ui->curvePt1_5->value();
+//    g_model.curves5[4][1] = ui->curvePt2_5->value();
+//    g_model.curves5[4][2] = ui->curvePt3_5->value();
+//    g_model.curves5[4][3] = ui->curvePt4_5->value();
+//    g_model.curves5[4][4] = ui->curvePt5_5->value();
 
-    g_model.curves9[6][0] = ui->curvePt1_15->value();
-    g_model.curves9[6][1] = ui->curvePt2_15->value();
-    g_model.curves9[6][2] = ui->curvePt3_15->value();
-    g_model.curves9[6][3] = ui->curvePt4_15->value();
-    g_model.curves9[6][4] = ui->curvePt5_15->value();
-    g_model.curves9[6][5] = ui->curvePt6_15->value();
-    g_model.curves9[6][6] = ui->curvePt7_15->value();
-    g_model.curves9[6][7] = ui->curvePt8_15->value();
-    g_model.curves9[6][8] = ui->curvePt9_15->value();
+//    g_model.curves5[5][0] = ui->curvePt1_6->value();
+//    g_model.curves5[5][1] = ui->curvePt2_6->value();
+//    g_model.curves5[5][2] = ui->curvePt3_6->value();
+//    g_model.curves5[5][3] = ui->curvePt4_6->value();
+//    g_model.curves5[5][4] = ui->curvePt5_6->value();
 
-    g_model.curves9[7][0] = ui->curvePt1_16->value();
-    g_model.curves9[7][1] = ui->curvePt2_16->value();
-    g_model.curves9[7][2] = ui->curvePt3_16->value();
-    g_model.curves9[7][3] = ui->curvePt4_16->value();
-    g_model.curves9[7][4] = ui->curvePt5_16->value();
-    g_model.curves9[7][5] = ui->curvePt6_16->value();
-    g_model.curves9[7][6] = ui->curvePt7_16->value();
-    g_model.curves9[7][7] = ui->curvePt8_16->value();
-    g_model.curves9[7][8] = ui->curvePt9_16->value();
+//    g_model.curves5[6][0] = ui->curvePt1_7->value();
+//    g_model.curves5[6][1] = ui->curvePt2_7->value();
+//    g_model.curves5[6][2] = ui->curvePt3_7->value();
+//    g_model.curves5[6][3] = ui->curvePt4_7->value();
+//    g_model.curves5[6][4] = ui->curvePt5_7->value();
+
+//    g_model.curves5[7][0] = ui->curvePt1_8->value();
+//    g_model.curves5[7][1] = ui->curvePt2_8->value();
+//    g_model.curves5[7][2] = ui->curvePt3_8->value();
+//    g_model.curves5[7][3] = ui->curvePt4_8->value();
+//    g_model.curves5[7][4] = ui->curvePt5_8->value();
+
+
+//    g_model.curves9[0][0] = ui->curvePt1_9->value();
+//    g_model.curves9[0][1] = ui->curvePt2_9->value();
+//    g_model.curves9[0][2] = ui->curvePt3_9->value();
+//    g_model.curves9[0][3] = ui->curvePt4_9->value();
+//    g_model.curves9[0][4] = ui->curvePt5_9->value();
+//    g_model.curves9[0][5] = ui->curvePt6_9->value();
+//    g_model.curves9[0][6] = ui->curvePt7_9->value();
+//    g_model.curves9[0][7] = ui->curvePt8_9->value();
+//    g_model.curves9[0][8] = ui->curvePt9_9->value();
+
+//    g_model.curves9[1][0] = ui->curvePt1_10->value();
+//    g_model.curves9[1][1] = ui->curvePt2_10->value();
+//    g_model.curves9[1][2] = ui->curvePt3_10->value();
+//    g_model.curves9[1][3] = ui->curvePt4_10->value();
+//    g_model.curves9[1][4] = ui->curvePt5_10->value();
+//    g_model.curves9[1][5] = ui->curvePt6_10->value();
+//    g_model.curves9[1][6] = ui->curvePt7_10->value();
+//    g_model.curves9[1][7] = ui->curvePt8_10->value();
+//    g_model.curves9[1][8] = ui->curvePt9_10->value();
+
+//    g_model.curves9[2][0] = ui->curvePt1_11->value();
+//    g_model.curves9[2][1] = ui->curvePt2_11->value();
+//    g_model.curves9[2][2] = ui->curvePt3_11->value();
+//    g_model.curves9[2][3] = ui->curvePt4_11->value();
+//    g_model.curves9[2][4] = ui->curvePt5_11->value();
+//    g_model.curves9[2][5] = ui->curvePt6_11->value();
+//    g_model.curves9[2][6] = ui->curvePt7_11->value();
+//    g_model.curves9[2][7] = ui->curvePt8_11->value();
+//    g_model.curves9[2][8] = ui->curvePt9_11->value();
+
+//    g_model.curves9[3][0] = ui->curvePt1_12->value();
+//    g_model.curves9[3][1] = ui->curvePt2_12->value();
+//    g_model.curves9[3][2] = ui->curvePt3_12->value();
+//    g_model.curves9[3][3] = ui->curvePt4_12->value();
+//    g_model.curves9[3][4] = ui->curvePt5_12->value();
+//    g_model.curves9[3][5] = ui->curvePt6_12->value();
+//    g_model.curves9[3][6] = ui->curvePt7_12->value();
+//    g_model.curves9[3][7] = ui->curvePt8_12->value();
+//    g_model.curves9[3][8] = ui->curvePt9_12->value();
+
+//    g_model.curves9[4][0] = ui->curvePt1_13->value();
+//    g_model.curves9[4][1] = ui->curvePt2_13->value();
+//    g_model.curves9[4][2] = ui->curvePt3_13->value();
+//    g_model.curves9[4][3] = ui->curvePt4_13->value();
+//    g_model.curves9[4][4] = ui->curvePt5_13->value();
+//    g_model.curves9[4][5] = ui->curvePt6_13->value();
+//    g_model.curves9[4][6] = ui->curvePt7_13->value();
+//    g_model.curves9[4][7] = ui->curvePt8_13->value();
+//    g_model.curves9[4][8] = ui->curvePt9_13->value();
+
+//    g_model.curves9[5][0] = ui->curvePt1_14->value();
+//    g_model.curves9[5][1] = ui->curvePt2_14->value();
+//    g_model.curves9[5][2] = ui->curvePt3_14->value();
+//    g_model.curves9[5][3] = ui->curvePt4_14->value();
+//    g_model.curves9[5][4] = ui->curvePt5_14->value();
+//    g_model.curves9[5][5] = ui->curvePt6_14->value();
+//    g_model.curves9[5][6] = ui->curvePt7_14->value();
+//    g_model.curves9[5][7] = ui->curvePt8_14->value();
+//    g_model.curves9[5][8] = ui->curvePt9_14->value();
+
+//    g_model.curves9[6][0] = ui->curvePt1_15->value();
+//    g_model.curves9[6][1] = ui->curvePt2_15->value();
+//    g_model.curves9[6][2] = ui->curvePt3_15->value();
+//    g_model.curves9[6][3] = ui->curvePt4_15->value();
+//    g_model.curves9[6][4] = ui->curvePt5_15->value();
+//    g_model.curves9[6][5] = ui->curvePt6_15->value();
+//    g_model.curves9[6][6] = ui->curvePt7_15->value();
+//    g_model.curves9[6][7] = ui->curvePt8_15->value();
+//    g_model.curves9[6][8] = ui->curvePt9_15->value();
+
+//    g_model.curves9[7][0] = ui->curvePt1_16->value();
+//    g_model.curves9[7][1] = ui->curvePt2_16->value();
+//    g_model.curves9[7][2] = ui->curvePt3_16->value();
+//    g_model.curves9[7][3] = ui->curvePt4_16->value();
+//    g_model.curves9[7][4] = ui->curvePt5_16->value();
+//    g_model.curves9[7][5] = ui->curvePt6_16->value();
+//    g_model.curves9[7][6] = ui->curvePt7_16->value();
+//    g_model.curves9[7][7] = ui->curvePt8_16->value();
+//    g_model.curves9[7][8] = ui->curvePt9_16->value();
+
+//    g_model.curve6[0] = ui->curvePt1_19->value();
+//    g_model.curve6[1] = ui->curvePt2_19->value();
+//    g_model.curve6[2] = ui->curvePt3_19->value();
+//    g_model.curve6[3] = ui->curvePt4_19->value();
+//    g_model.curve6[4] = ui->curvePt5_19->value();
+//    g_model.curve6[5] = ui->curvePt6_19->value();
 
     if (redrawCurve)
     {
@@ -3076,7 +3680,7 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 				}
         cswitchOffset[i]->setAccelerated(true);
         cswitchOffset0[i]->setVisible(false);
-        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1,g_model.modelVersion, rData->type);
+        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1,g_model.modelVersion, rData->type, rData->extraPots ) ;
         cswitchOffset[i]->setValue(g_model.customSw[i].v2);
 				if ( cswitchSource1[i]->currentIndex() > 36 )
 				{
@@ -3108,8 +3712,8 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
         cswitchSource2[i]->setVisible(true);
         cswitchOffset[i]->setVisible(false);
         cswitchOffset0[i]->setVisible(false);
-        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1,g_model.modelVersion, rData->type);
-        populateSourceCB(cswitchSource2[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v2,g_model.modelVersion, rData->type);
+        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1,g_model.modelVersion, rData->type, rData->extraPots);
+        populateSourceCB(cswitchSource2[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v2,g_model.modelVersion, rData->type, rData->extraPots);
 				cswitchText1[i]->setVisible(false) ;
 				cswitchText2[i]->setVisible(false) ;
         break;
@@ -3136,6 +3740,8 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 				}
 				else
 				{
+
+
 					cswitchText2[i]->setVisible(false) ;
 				}
 				value = g_model.customSw[i].v1+1 ;
@@ -3199,6 +3805,7 @@ void ModelEdit::updateSwitchesTab()
     populateCSWCB(ui->cswitchFunc_8, g_model.customSw[7].func, g_model.modelVersion);
     populateCSWCB(ui->cswitchFunc_9, g_model.customSw[8].func, g_model.modelVersion);
     populateCSWCB(ui->cswitchFunc_10,g_model.customSw[9].func, g_model.modelVersion);
+
     populateCSWCB(ui->cswitchFunc_11,g_model.customSw[10].func, g_model.modelVersion);
     populateCSWCB(ui->cswitchFunc_12,g_model.customSw[11].func, g_model.modelVersion);
     populateCSWCB(ui->cswitchFunc_13,g_model.customSw[12].func, g_model.modelVersion);
@@ -3340,6 +3947,12 @@ void ModelEdit::tabSwitches()
 	}
 
 		switchesTabDone = true ;
+
+    populateTmrBSwitchCB(ui->MusicStartCB,g_model.musicData.musicStartSwitch, rData->type);
+    populateTmrBSwitchCB(ui->MusicPauseCB,g_model.musicData.musicPauseSwitch, rData->type);
+    populateTmrBSwitchCB(ui->MusicPrevCB,g_model.musicData.musicPrevSwitch, rData->type);
+    populateTmrBSwitchCB(ui->MusicNextCB,g_model.musicData.musicNextSwitch, rData->type);
+
     switchEditLock = false;
 }
 
@@ -3782,7 +4395,7 @@ void ModelEdit::switchesEdited()
         switch(CS_STATE(g_model.customSw[i].func, g_model.modelVersion))
         {
         case (CS_VOFS):
-            g_model.customSw[i].v1 = decodePots( cswitchSource1[i]->currentIndex(), rData->type ) ;
+            g_model.customSw[i].v1 = decodePots( cswitchSource1[i]->currentIndex(), rData->type, rData->extraPots ) ;
             g_model.customSw[i].v2 = cswitchOffset[i]->value();
 						if ( g_model.customSw[i].v1 > 36 )
 						{
@@ -3797,8 +4410,8 @@ void ModelEdit::switchesEdited()
             g_model.customSw[i].v2 =  getSwitchCbValue( cswitchSource2[i] , rData->type ) ;
             break;
         case (CS_VCOMP):
-            g_model.customSw[i].v1 = decodePots( cswitchSource1[i]->currentIndex(), rData->type ) ;
-            g_model.customSw[i].v2 = decodePots( cswitchSource2[i]->currentIndex(), rData->type ) ;
+            g_model.customSw[i].v1 = decodePots( cswitchSource1[i]->currentIndex(), rData->type, rData->extraPots ) ;
+            g_model.customSw[i].v2 = decodePots( cswitchSource2[i]->currentIndex(), rData->type, rData->extraPots ) ;
             break;
         case (CS_TIMER):
             g_model.customSw[i].v2 = cswitchOffset[i]->value()-1;
@@ -3873,61 +4486,61 @@ void ModelEdit::tabTrims()
 }
 
 
-void ModelEdit::oneGvarVisibility(int index, QComboBox *b, QSpinBox *sb )
-{
-	int function = g_model.gvarAdjuster[index].function ;
-	int value = g_model.gvarAdjuster[index].switch_value ;
-	int oldFunction = oldAdjFunction[index] ;
+//void ModelEdit::oneGvarVisibility(int index, QComboBox *b, QSpinBox *sb )
+//{
+//	int function = g_model.gvarAdjuster[index].function ;
+//	int value = g_model.gvarAdjuster[index].switch_value ;
+//	int oldFunction = oldAdjFunction[index] ;
 
-	if ( function == 3 )
-	{
-		if ( oldFunction != 3 )
-		{
-			value = 0 ;
-		}
-	}
-	if ( function > 3 )
-	{
-		if ( oldFunction <= 3 )
-		{
-			value = 0 ;
-		}
-	}
-	g_model.gvarAdjuster[index].switch_value = value ;
+//	if ( function == 3 )
+//	{
+//		if ( oldFunction != 3 )
+//		{
+//			value = 0 ;
+//		}
+//	}
+//	if ( function > 3 )
+//	{
+//		if ( oldFunction <= 3 )
+//		{
+//			value = 0 ;
+//		}
+//	}
+//	g_model.gvarAdjuster[index].switch_value = value ;
 
-	if ( ( function < 3 ) || ( function > 6 ) )
-	{
-		sb->show() ;
-		b->hide() ;
-	}
-	else
-	{
-		if ( function == 3 )	// Set V
-		{
-			populateGvarCB( b, value, rData->type  ) ;
-		}
-		else
-		{
-			populateSwitchCB( b, value, rData->type);
-		}
-		sb->hide() ;
-		b->show() ;
-	}
+//	if ( ( function < 3 ) || ( function > 6 ) )
+//	{
+//		sb->show() ;
+//		b->hide() ;
+//	}
+//	else
+//	{
+//		if ( function == 3 )	// Set V
+//		{
+//			populateGvarCB( b, value, rData->type, rData->extraPots ) ;
+//		}
+//		else
+//		{
+//			populateSwitchCB( b, value, rData->type);
+//		}
+//		sb->hide() ;
+//		b->show() ;
+//	}
 	
-}
+//}
 
 
-void ModelEdit::gvarVisibility()
-{
-	oneGvarVisibility( 0, ui->Adj1Sw2CB, ui->Adj1ValueSB ) ;
-	oneGvarVisibility( 1, ui->Adj2Sw2CB, ui->Adj2ValueSB ) ;
-	oneGvarVisibility( 2, ui->Adj3Sw2CB, ui->Adj3ValueSB ) ;
-	oneGvarVisibility( 3, ui->Adj4Sw2CB, ui->Adj4ValueSB ) ;
-	oneGvarVisibility( 4, ui->Adj5Sw2CB, ui->Adj5ValueSB ) ;
-	oneGvarVisibility( 5, ui->Adj6Sw2CB, ui->Adj6ValueSB ) ;
-	oneGvarVisibility( 6, ui->Adj7Sw2CB, ui->Adj7ValueSB ) ;
-	oneGvarVisibility( 7, ui->Adj8Sw2CB, ui->Adj8ValueSB ) ;
-}
+//void ModelEdit::gvarVisibility()
+//{
+//	oneGvarVisibility( 0, ui->Adj1Sw2CB, ui->Adj1ValueSB ) ;
+//	oneGvarVisibility( 1, ui->Adj2Sw2CB, ui->Adj2ValueSB ) ;
+//	oneGvarVisibility( 2, ui->Adj3Sw2CB, ui->Adj3ValueSB ) ;
+//	oneGvarVisibility( 3, ui->Adj4Sw2CB, ui->Adj4ValueSB ) ;
+//	oneGvarVisibility( 4, ui->Adj5Sw2CB, ui->Adj5ValueSB ) ;
+//	oneGvarVisibility( 5, ui->Adj6Sw2CB, ui->Adj6ValueSB ) ;
+//	oneGvarVisibility( 6, ui->Adj7Sw2CB, ui->Adj7ValueSB ) ;
+//	oneGvarVisibility( 7, ui->Adj8Sw2CB, ui->Adj8ValueSB ) ;
+//}
 
 
 void ModelEdit::tabGvar()
@@ -4023,7 +4636,7 @@ void ModelEdit::tabGvar()
       pucb[i]->setCurrentIndex(g_model.Scalers[i].unit ) ;
       psgncb[i]->setCurrentIndex(g_model.Scalers[i].neg ) ;
 			poffcb[i]->setCurrentIndex(g_model.Scalers[i].offsetLast ) ;
-      populateSourceCB(psrccb[i],g_eeGeneral.stickMode,1,g_model.Scalers[i].source,g_model.modelVersion, rData->type ) ;
+      populateSourceCB(psrccb[i],g_eeGeneral.stickMode,1,g_model.Scalers[i].source,g_model.modelVersion, rData->type, rData->extraPots ) ;
       QString n = (char *)g_model.Scalers[i].name ;
 			while ( n.endsWith(" ") )
 			{
@@ -4042,13 +4655,13 @@ void ModelEdit::tabGvar()
 			connect(psname[i], SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
 		}
 		 
-    populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar2CB, g_model.gvars[1].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar3CB, g_model.gvars[2].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar4CB, g_model.gvars[3].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar5CB, g_model.gvars[4].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar6CB, g_model.gvars[5].gvsource, rData->type  ) ;
-    populateGvarCB( ui->Gvar7CB, g_model.gvars[6].gvsource, rData->type  ) ;
+    populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar2CB, g_model.gvars[1].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar3CB, g_model.gvars[2].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar4CB, g_model.gvars[3].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar5CB, g_model.gvars[4].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar6CB, g_model.gvars[5].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar7CB, g_model.gvars[6].gvsource, rData->type, rData->extraPots ) ;
     ui->Gv1SB->setValue(g_model.gvars[0].gvar);
     ui->Gv2SB->setValue(g_model.gvars[1].gvar);
     ui->Gv3SB->setValue(g_model.gvars[2].gvar);
@@ -4090,125 +4703,161 @@ void ModelEdit::tabGvar()
     connect(ui->GvSw7CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 
 		// Adjusters
-    populateSwitchCB( ui->Adj1Sw1CB, g_model.gvarAdjuster[0].swtch, rData->type);
-    populateSwitchCB( ui->Adj2Sw1CB, g_model.gvarAdjuster[1].swtch, rData->type);
-    populateSwitchCB( ui->Adj3Sw1CB, g_model.gvarAdjuster[2].swtch, rData->type);
-    populateSwitchCB( ui->Adj4Sw1CB, g_model.gvarAdjuster[3].swtch, rData->type);
-    populateSwitchCB( ui->Adj5Sw1CB, g_model.gvarAdjuster[4].swtch, rData->type);
-    populateSwitchCB( ui->Adj6Sw1CB, g_model.gvarAdjuster[5].swtch, rData->type);
-    populateSwitchCB( ui->Adj7Sw1CB, g_model.gvarAdjuster[6].swtch, rData->type);
-    populateSwitchCB( ui->Adj8Sw1CB, g_model.gvarAdjuster[7].swtch, rData->type);
+//    populateSwitchCB( ui->Adj1Sw1CB, g_model.gvarAdjuster[0].swtch, rData->type);
+//    populateSwitchCB( ui->Adj2Sw1CB, g_model.gvarAdjuster[1].swtch, rData->type);
+//    populateSwitchCB( ui->Adj3Sw1CB, g_model.gvarAdjuster[2].swtch, rData->type);
+//    populateSwitchCB( ui->Adj4Sw1CB, g_model.gvarAdjuster[3].swtch, rData->type);
+//    populateSwitchCB( ui->Adj5Sw1CB, g_model.gvarAdjuster[4].swtch, rData->type);
+//    populateSwitchCB( ui->Adj6Sw1CB, g_model.gvarAdjuster[5].swtch, rData->type);
+//    populateSwitchCB( ui->Adj7Sw1CB, g_model.gvarAdjuster[6].swtch, rData->type);
+//    populateSwitchCB( ui->Adj8Sw1CB, g_model.gvarAdjuster[7].swtch, rData->type);
 
-    connect(ui->Adj1Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj2Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj3Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj4Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj5Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj6Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj7Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj8Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj1Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj2Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj3Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj4Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj5Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj6Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj7Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj8Sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 
-		populateSwitchCB( ui->Adj1Sw2CB, g_model.gvarAdjuster[0].switch_value, rData->type);
-    populateSwitchCB( ui->Adj2Sw2CB, g_model.gvarAdjuster[1].switch_value, rData->type);
-    populateSwitchCB( ui->Adj3Sw2CB, g_model.gvarAdjuster[2].switch_value, rData->type);
-    populateSwitchCB( ui->Adj4Sw2CB, g_model.gvarAdjuster[3].switch_value, rData->type);
-    populateSwitchCB( ui->Adj5Sw2CB, g_model.gvarAdjuster[4].switch_value, rData->type);
-    populateSwitchCB( ui->Adj6Sw2CB, g_model.gvarAdjuster[5].switch_value, rData->type);
-    populateSwitchCB( ui->Adj7Sw2CB, g_model.gvarAdjuster[6].switch_value, rData->type);
-    populateSwitchCB( ui->Adj8Sw2CB, g_model.gvarAdjuster[7].switch_value, rData->type);
+//		populateSwitchCB( ui->Adj1Sw2CB, g_model.gvarAdjuster[0].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj2Sw2CB, g_model.gvarAdjuster[1].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj3Sw2CB, g_model.gvarAdjuster[2].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj4Sw2CB, g_model.gvarAdjuster[3].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj5Sw2CB, g_model.gvarAdjuster[4].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj6Sw2CB, g_model.gvarAdjuster[5].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj7Sw2CB, g_model.gvarAdjuster[6].switch_value, rData->type);
+//    populateSwitchCB( ui->Adj8Sw2CB, g_model.gvarAdjuster[7].switch_value, rData->type);
 
-    connect(ui->Adj1Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj2Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj3Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj4Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj5Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj6Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj7Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj8Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj1Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj2Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj3Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj4Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj5Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj6Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj7Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj8Sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 
-    ui->Adj1ValueSB->setValue(g_model.gvarAdjuster[0].switch_value);
-    ui->Adj2ValueSB->setValue(g_model.gvarAdjuster[1].switch_value);
-    ui->Adj3ValueSB->setValue(g_model.gvarAdjuster[2].switch_value);
-    ui->Adj4ValueSB->setValue(g_model.gvarAdjuster[3].switch_value);
-    ui->Adj5ValueSB->setValue(g_model.gvarAdjuster[4].switch_value);
-    ui->Adj6ValueSB->setValue(g_model.gvarAdjuster[5].switch_value);
-    ui->Adj7ValueSB->setValue(g_model.gvarAdjuster[6].switch_value);
-    ui->Adj8ValueSB->setValue(g_model.gvarAdjuster[7].switch_value);
+//    ui->Adj1ValueSB->setValue(g_model.gvarAdjuster[0].switch_value);
+//    ui->Adj2ValueSB->setValue(g_model.gvarAdjuster[1].switch_value);
+//    ui->Adj3ValueSB->setValue(g_model.gvarAdjuster[2].switch_value);
+//    ui->Adj4ValueSB->setValue(g_model.gvarAdjuster[3].switch_value);
+//    ui->Adj5ValueSB->setValue(g_model.gvarAdjuster[4].switch_value);
+//    ui->Adj6ValueSB->setValue(g_model.gvarAdjuster[5].switch_value);
+//    ui->Adj7ValueSB->setValue(g_model.gvarAdjuster[6].switch_value);
+//    ui->Adj8ValueSB->setValue(g_model.gvarAdjuster[7].switch_value);
 
-    connect(ui->Adj1ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj2ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj3ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj4ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj5ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj6ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj7ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Adj8ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj1ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj2ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj3ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj4ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj5ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj6ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj7ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Adj8ValueSB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
 
-    ui->Adj1FunctionCB->setCurrentIndex(g_model.gvarAdjuster[0].function ) ;
-    ui->Adj2FunctionCB->setCurrentIndex(g_model.gvarAdjuster[1].function ) ;
-    ui->Adj3FunctionCB->setCurrentIndex(g_model.gvarAdjuster[2].function ) ;
-    ui->Adj4FunctionCB->setCurrentIndex(g_model.gvarAdjuster[3].function ) ;
-    ui->Adj5FunctionCB->setCurrentIndex(g_model.gvarAdjuster[4].function ) ;
-    ui->Adj6FunctionCB->setCurrentIndex(g_model.gvarAdjuster[5].function ) ;
-    ui->Adj7FunctionCB->setCurrentIndex(g_model.gvarAdjuster[6].function ) ;
-    ui->Adj8FunctionCB->setCurrentIndex(g_model.gvarAdjuster[7].function ) ;
+//    ui->Adj1FunctionCB->setCurrentIndex(g_model.gvarAdjuster[0].function ) ;
+//    ui->Adj2FunctionCB->setCurrentIndex(g_model.gvarAdjuster[1].function ) ;
+//    ui->Adj3FunctionCB->setCurrentIndex(g_model.gvarAdjuster[2].function ) ;
+//    ui->Adj4FunctionCB->setCurrentIndex(g_model.gvarAdjuster[3].function ) ;
+//    ui->Adj5FunctionCB->setCurrentIndex(g_model.gvarAdjuster[4].function ) ;
+//    ui->Adj6FunctionCB->setCurrentIndex(g_model.gvarAdjuster[5].function ) ;
+//    ui->Adj7FunctionCB->setCurrentIndex(g_model.gvarAdjuster[6].function ) ;
+//    ui->Adj8FunctionCB->setCurrentIndex(g_model.gvarAdjuster[7].function ) ;
 		
-    connect(ui->Adj1FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj2FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj3FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj4FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj5FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj6FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj7FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj8FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj1FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj2FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj3FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj4FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj5FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj6FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj7FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj8FunctionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 
-    ui->Adj1GvarCB->setCurrentIndex(g_model.gvarAdjuster[0].gvarIndex ) ;
-    ui->Adj2GvarCB->setCurrentIndex(g_model.gvarAdjuster[1].gvarIndex ) ;
-    ui->Adj3GvarCB->setCurrentIndex(g_model.gvarAdjuster[2].gvarIndex ) ;
-    ui->Adj4GvarCB->setCurrentIndex(g_model.gvarAdjuster[3].gvarIndex ) ;
-    ui->Adj5GvarCB->setCurrentIndex(g_model.gvarAdjuster[4].gvarIndex ) ;
-    ui->Adj6GvarCB->setCurrentIndex(g_model.gvarAdjuster[5].gvarIndex ) ;
-    ui->Adj7GvarCB->setCurrentIndex(g_model.gvarAdjuster[6].gvarIndex ) ;
-    ui->Adj8GvarCB->setCurrentIndex(g_model.gvarAdjuster[7].gvarIndex ) ;
+//    ui->Adj1GvarCB->setCurrentIndex(g_model.gvarAdjuster[0].gvarIndex ) ;
+//    ui->Adj2GvarCB->setCurrentIndex(g_model.gvarAdjuster[1].gvarIndex ) ;
+//    ui->Adj3GvarCB->setCurrentIndex(g_model.gvarAdjuster[2].gvarIndex ) ;
+//    ui->Adj4GvarCB->setCurrentIndex(g_model.gvarAdjuster[3].gvarIndex ) ;
+//    ui->Adj5GvarCB->setCurrentIndex(g_model.gvarAdjuster[4].gvarIndex ) ;
+//    ui->Adj6GvarCB->setCurrentIndex(g_model.gvarAdjuster[5].gvarIndex ) ;
+//    ui->Adj7GvarCB->setCurrentIndex(g_model.gvarAdjuster[6].gvarIndex ) ;
+//    ui->Adj8GvarCB->setCurrentIndex(g_model.gvarAdjuster[7].gvarIndex ) ;
 
-    connect(ui->Adj1GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj2GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj3GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj4GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj5GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj6GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj7GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
-    connect(ui->Adj8GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj1GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj2GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj3GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj4GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj5GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj6GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj7GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+//    connect(ui->Adj8GvarCB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 		
-		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
-		{
-			oldAdjFunction[i] = g_model.gvarAdjuster[0].function ;
-		}
-    switchEditLock = true;
-		gvarVisibility() ;
-    switchEditLock = false;
+//		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+//		{
+//			oldAdjFunction[i] = g_model.gvarAdjuster[i].function ;
+//		}
+//    switchEditLock = true;
+//		gvarVisibility() ;
+//    switchEditLock = false;
 
-}
+	ui->AdjusterList->setFont(QFont("Courier New",12)) ;
+	ui->AdjusterList->clear() ;
+	
+//	QByteArray qba ;
+//  uint32_t i ;
 
-void ModelEdit::oneGvarGetValue(int index, QComboBox *b, QSpinBox *sb )
-{
-	int func = g_model.gvarAdjuster[index].function ;
-	if ( ( func < 3 ) || ( func > 6 ) )
+	for ( i = 0 ; i < NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST ; i += 1 )
 	{
-	  g_model.gvarAdjuster[index].switch_value = sb->value() ;
-	}
-	else
-	{
-		if ( func == 3 )	// Set V
+		GvarAdjust *pgvaradj ;
+		pgvaradj = ( i >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
+		
+		QString srcstr ;
+		QString str = "";
+		uint32_t function = pgvaradj->function ;
+		str = tr("Adj%1%2  ").arg((i+1)/10).arg((i+1)%10) ;
+    str += tr("GVAR%1 ").arg( pgvaradj->gvarIndex+1) ;
+    srcstr = "--------Add     Set C   Set V   Inc/Dec Inc/ZeroDec/ZeroInc/Lim Dec/Lim " ;
+		str += tr("%1 ").arg(srcstr.mid( function * 8, 8 )) ;
+    str += tr("Switch(%1) ").arg(getSWName(pgvaradj->swtch, rData->type)) ;
+		if ( ( function < 3 ) || ( function > 6 ) )
 		{
-      g_model.gvarAdjuster[index].switch_value = b->currentIndex() ;
+			str += tr("%1 ").arg(pgvaradj->switch_value) ;
+    }
+		else if ( function == 3 )
+		{
+			str += gvarSourceString( pgvaradj->switch_value, rData->type, rData->extraPots ) ;
 		}
 		else
 		{
-	    g_model.gvarAdjuster[index].switch_value = getSwitchCbValue( b, rData->type ) ;
+    	str += tr("Switch2(%1) ").arg(getSWName(pgvaradj->switch_value, rData->type)) ;
 		}
+		
+		ui->AdjusterList->addItem(str) ;
 	}
 }
+
+//void ModelEdit::oneGvarGetValue(int index, QComboBox *b, QSpinBox *sb )
+//{
+//	GvarAdjust *pgvaradj ;
+//	pgvaradj = ( index >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[index - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[index] ;
+//	int func = g_model.gvarAdjuster[index].function ;
+//	if ( ( func < 3 ) || ( func > 6 ) )
+//	{
+//	  g_model.gvarAdjuster[index].switch_value = sb->value() ;
+//	}
+//	else
+//	{
+//		if ( func == 3 )	// Set V
+//		{
+//      g_model.gvarAdjuster[index].switch_value = b->currentIndex() ;
+//		}
+//		else
+//		{
+//	    g_model.gvarAdjuster[index].switch_value = getSwitchCbValue( b, rData->type ) ;
+//		}
+//	}
+//}
 
 void ModelEdit::GvarEdited()
 {
@@ -4249,51 +4898,51 @@ void ModelEdit::GvarEdited()
       g_model.Scalers[i].unit = pucb[i]->currentIndex() ;
 			g_model.Scalers[i].neg = psgncb[i]->currentIndex() ;
 			g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
-			g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type ) ;
+      g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
       textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
 		}
 
-		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
-		{
-			oldAdjFunction[i] = g_model.gvarAdjuster[0].function ;
-		}
-		g_model.gvarAdjuster[0].function = ui->Adj1FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[1].function = ui->Adj2FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[2].function = ui->Adj3FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[3].function = ui->Adj4FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[4].function = ui->Adj5FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[5].function = ui->Adj6FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[6].function = ui->Adj7FunctionCB->currentIndex() ;
-		g_model.gvarAdjuster[7].function = ui->Adj8FunctionCB->currentIndex() ;
+//		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+//		{
+//			oldAdjFunction[i] = g_model.gvarAdjuster[i].function ;
+//		}
+//		g_model.gvarAdjuster[0].function = ui->Adj1FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[1].function = ui->Adj2FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[2].function = ui->Adj3FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[3].function = ui->Adj4FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[4].function = ui->Adj5FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[5].function = ui->Adj6FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[6].function = ui->Adj7FunctionCB->currentIndex() ;
+//		g_model.gvarAdjuster[7].function = ui->Adj8FunctionCB->currentIndex() ;
     
-		g_model.gvarAdjuster[0].gvarIndex = ui->Adj1GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[1].gvarIndex = ui->Adj2GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[2].gvarIndex = ui->Adj3GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[3].gvarIndex = ui->Adj4GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[4].gvarIndex = ui->Adj5GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[5].gvarIndex = ui->Adj6GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[6].gvarIndex = ui->Adj7GvarCB->currentIndex() ;
-    g_model.gvarAdjuster[7].gvarIndex = ui->Adj8GvarCB->currentIndex() ;
+//		g_model.gvarAdjuster[0].gvarIndex = ui->Adj1GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[1].gvarIndex = ui->Adj2GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[2].gvarIndex = ui->Adj3GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[3].gvarIndex = ui->Adj4GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[4].gvarIndex = ui->Adj5GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[5].gvarIndex = ui->Adj6GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[6].gvarIndex = ui->Adj7GvarCB->currentIndex() ;
+//    g_model.gvarAdjuster[7].gvarIndex = ui->Adj8GvarCB->currentIndex() ;
 
-		g_model.gvarAdjuster[0].swtch = getSwitchCbValue( ui->Adj1Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[1].swtch = getSwitchCbValue( ui->Adj2Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[2].swtch = getSwitchCbValue( ui->Adj3Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[3].swtch = getSwitchCbValue( ui->Adj4Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[4].swtch = getSwitchCbValue( ui->Adj5Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[5].swtch = getSwitchCbValue( ui->Adj6Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[6].swtch = getSwitchCbValue( ui->Adj7Sw1CB, rData->type ) ;
-		g_model.gvarAdjuster[7].swtch = getSwitchCbValue( ui->Adj8Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[0].swtch = getSwitchCbValue( ui->Adj1Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[1].swtch = getSwitchCbValue( ui->Adj2Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[2].swtch = getSwitchCbValue( ui->Adj3Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[3].swtch = getSwitchCbValue( ui->Adj4Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[4].swtch = getSwitchCbValue( ui->Adj5Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[5].swtch = getSwitchCbValue( ui->Adj6Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[6].swtch = getSwitchCbValue( ui->Adj7Sw1CB, rData->type ) ;
+//		g_model.gvarAdjuster[7].swtch = getSwitchCbValue( ui->Adj8Sw1CB, rData->type ) ;
 
-		oneGvarGetValue( 0, ui->Adj1Sw2CB, ui->Adj1ValueSB ) ;
-		oneGvarGetValue( 1, ui->Adj2Sw2CB, ui->Adj2ValueSB ) ;
-		oneGvarGetValue( 2, ui->Adj3Sw2CB, ui->Adj3ValueSB ) ;
-		oneGvarGetValue( 3, ui->Adj4Sw2CB, ui->Adj4ValueSB ) ;
-		oneGvarGetValue( 4, ui->Adj5Sw2CB, ui->Adj5ValueSB ) ;
-		oneGvarGetValue( 5, ui->Adj6Sw2CB, ui->Adj6ValueSB ) ;
-		oneGvarGetValue( 6, ui->Adj7Sw2CB, ui->Adj7ValueSB ) ;
-		oneGvarGetValue( 7, ui->Adj8Sw2CB, ui->Adj8ValueSB ) ;
+//		oneGvarGetValue( 0, ui->Adj1Sw2CB, ui->Adj1ValueSB ) ;
+//		oneGvarGetValue( 1, ui->Adj2Sw2CB, ui->Adj2ValueSB ) ;
+//		oneGvarGetValue( 2, ui->Adj3Sw2CB, ui->Adj3ValueSB ) ;
+//		oneGvarGetValue( 3, ui->Adj4Sw2CB, ui->Adj4ValueSB ) ;
+//		oneGvarGetValue( 4, ui->Adj5Sw2CB, ui->Adj5ValueSB ) ;
+//		oneGvarGetValue( 5, ui->Adj6Sw2CB, ui->Adj6ValueSB ) ;
+//		oneGvarGetValue( 6, ui->Adj7Sw2CB, ui->Adj7ValueSB ) ;
+//		oneGvarGetValue( 7, ui->Adj8Sw2CB, ui->Adj8ValueSB ) ;
 
-		gvarVisibility() ;
+//		gvarVisibility() ;
 
 		updateSettings();
     
@@ -4302,19 +4951,45 @@ void ModelEdit::GvarEdited()
 
 void ModelEdit::tabFrsky()
 {
-    populateTelItemsCB( ui->Ct1, 0, g_model.customDisplayIndex[0] ) ;
+	
+		if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
+		{
+			ui->Ct7->hide() ;
+			ui->Ct8->hide() ;
+			ui->Ct9->hide() ;
+			ui->Ct7_2->hide() ;
+			ui->Ct8_2->hide() ;
+			ui->Ct9_2->hide() ;
+	  }
+		else
+		{
+			ui->Ct7->show() ;
+			ui->Ct8->show() ;
+			ui->Ct9->show() ;
+			ui->Ct7_2->show() ;
+			ui->Ct8_2->show() ;
+			ui->Ct9_2->show() ;
+		}
+    
+		populateTelItemsCB( ui->Ct1, 0, g_model.customDisplayIndex[0] ) ;
     populateTelItemsCB( ui->Ct2, 0, g_model.customDisplayIndex[1] ) ;
     populateTelItemsCB( ui->Ct3, 0, g_model.customDisplayIndex[2] ) ;
     populateTelItemsCB( ui->Ct4, 0, g_model.customDisplayIndex[3] ) ;
     populateTelItemsCB( ui->Ct5, 0, g_model.customDisplayIndex[4] ) ;
     populateTelItemsCB( ui->Ct6, 0, g_model.customDisplayIndex[5] ) ;
-		
-    populateTelItemsCB( ui->Ct1_2, 0, g_model.customDisplay2Index[0] ) ;
+    populateTelItemsCB( ui->Ct7, 0, g_model.customDisplay1Extra[0] ) ;
+    populateTelItemsCB( ui->Ct8, 0, g_model.customDisplay1Extra[1] ) ;
+    populateTelItemsCB( ui->Ct9, 0, g_model.customDisplay1Extra[2] ) ;
+    
+		populateTelItemsCB( ui->Ct1_2, 0, g_model.customDisplay2Index[0] ) ;
     populateTelItemsCB( ui->Ct2_2, 0, g_model.customDisplay2Index[1] ) ;
     populateTelItemsCB( ui->Ct3_2, 0, g_model.customDisplay2Index[2] ) ;
     populateTelItemsCB( ui->Ct4_2, 0, g_model.customDisplay2Index[3] ) ;
     populateTelItemsCB( ui->Ct5_2, 0, g_model.customDisplay2Index[4] ) ;
     populateTelItemsCB( ui->Ct6_2, 0, g_model.customDisplay2Index[5] ) ;
+    populateTelItemsCB( ui->Ct7_2, 0, g_model.customDisplay2Extra[0] ) ;
+    populateTelItemsCB( ui->Ct8_2, 0, g_model.customDisplay2Extra[1] ) ;
+    populateTelItemsCB( ui->Ct9_2, 0, g_model.customDisplay2Extra[2] ) ;
 
     ui->frsky_ratio_0->setValue(g_model.frsky.channels[0].ratio);
     ui->frsky_type_0->setCurrentIndex(g_model.frsky.channels[0].type);
@@ -4398,12 +5073,18 @@ void ModelEdit::tabFrsky()
 		connect( ui->Ct4,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct5,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct6,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct7,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct8,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct9,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct1_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct2_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct3_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct4_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct5_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct6_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct7_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct8_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->Ct9_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 
 		connect( ui->FASoffsetSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
 		connect( ui->currentSource,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
@@ -4484,6 +5165,9 @@ void ModelEdit::FrSkyEdited()
     g_model.customDisplayIndex[3] = ui->Ct4->currentIndex() ;
     g_model.customDisplayIndex[4] = ui->Ct5->currentIndex() ;
     g_model.customDisplayIndex[5] = ui->Ct6->currentIndex() ;
+    g_model.customDisplay1Extra[0] = ui->Ct7->currentIndex() ;
+    g_model.customDisplay1Extra[1] = ui->Ct8->currentIndex() ;
+    g_model.customDisplay1Extra[2] = ui->Ct9->currentIndex() ;
 
     g_model.customDisplay2Index[0] = ui->Ct1_2->currentIndex() ;
     g_model.customDisplay2Index[1] = ui->Ct2_2->currentIndex() ;
@@ -4491,6 +5175,9 @@ void ModelEdit::FrSkyEdited()
     g_model.customDisplay2Index[3] = ui->Ct4_2->currentIndex() ;
     g_model.customDisplay2Index[4] = ui->Ct5_2->currentIndex() ;
     g_model.customDisplay2Index[5] = ui->Ct6_2->currentIndex() ;
+    g_model.customDisplay2Extra[0] = ui->Ct7_2->currentIndex() ;
+    g_model.customDisplay2Extra[1] = ui->Ct8_2->currentIndex() ;
+    g_model.customDisplay2Extra[2] = ui->Ct9_2->currentIndex() ;
 
 		g_model.FASoffset = ui->FASoffsetSB->value() * 10 + 0.49 ;
 		g_model.currentSource = ui->currentSource->currentIndex() ;
@@ -4564,6 +5251,20 @@ void ModelEdit::on_modelImageLE_editingFinished()
     updateSettings();
 
 }
+
+void ModelEdit::on_voiceNameLE_editingFinished()
+{
+    memset(&g_model.modelVname,' ',sizeof(g_model.modelVname)) ;
+    QString str = ui->voiceNameLE->text().left(10).toLatin1() ;
+
+    for(quint8 i=0; i<(str.length()); i++)
+    {
+      if(i>=sizeof(g_model.modelVname)) break ;
+      g_model.modelVname[i] = (char)str.data()[i].toLatin1() ;
+    }
+    updateSettings();
+}
+
 
 void ModelEdit::on_timerModeCB_currentIndexChanged(int index)
 {
@@ -4823,7 +5524,24 @@ void ModelEdit::on_xsubSubProtocolCB_currentIndexChanged(int index)
 void ModelEdit::on_VoiceNumberSB_editingFinished()
 {
     g_model.modelVoice = ui->VoiceNumberSB->value()-260;
+		if ( g_model.modelVoice < 0 )
+		{
+			ui->voiceNameLE->setEnabled(true) ;
+		}
+		else
+		{
+			ui->voiceNameLE->setEnabled(false) ;
+		}
     updateSettings();
+}
+
+void ModelEdit::on_VoiceNumberSB_valueChanged( int x )
+{
+	x -= 260 ;
+	if ( x < 0 )
+	{
+		ui->voiceNameLE->setEnabled(true) ;
+	}
 }
 
 void ModelEdit::on_pxxRxNum_editingFinished()
@@ -5437,134 +6155,162 @@ void ModelEdit::on_spinBox_S4_valueChanged(int value)
 
 QSpinBox *ModelEdit::getNodeSB(int i)   // get the SpinBox that corresponds to the selected node
 {
-    if(currentCurve==0 && i==0) return ui->curvePt1_1;
-    if(currentCurve==0 && i==1) return ui->curvePt2_1;
-    if(currentCurve==0 && i==2) return ui->curvePt3_1;
-    if(currentCurve==0 && i==3) return ui->curvePt4_1;
-    if(currentCurve==0 && i==4) return ui->curvePt5_1;
+    if(i==0) return ui->curvePt1_9;
+    if(i==1) return ui->curvePt2_9;
+    if(i==2) return ui->curvePt3_9;
+    if(i==3) return ui->curvePt4_9;
+    if(i==4) return ui->curvePt5_9;
+    if(i==5) return ui->curvePt6_9;
+    if(i==6) return ui->curvePt7_9;
+    if(i==7) return ui->curvePt8_9;
+    if(i==8) return ui->curvePt9_9;
 
-    if(currentCurve==1 && i==0) return ui->curvePt1_2;
-    if(currentCurve==1 && i==1) return ui->curvePt2_2;
-    if(currentCurve==1 && i==2) return ui->curvePt3_2;
-    if(currentCurve==1 && i==3) return ui->curvePt4_2;
-    if(currentCurve==1 && i==4) return ui->curvePt5_2;
+    if(i==9) return ui->curvePt1_10;
+    if(i==10) return ui->curvePt2_10;
+    if(i==11) return ui->curvePt3_10;
+    if(i==12) return ui->curvePt4_10;
+    if(i==13) return ui->curvePt5_10;
+    if(i==14) return ui->curvePt6_10;
+    if(i==15) return ui->curvePt7_10;
+    if(i==16) return ui->curvePt8_10;
+    if(i==17) return ui->curvePt9_10;
+	 
+	
+//    if(currentCurve==0 && i==0) return ui->curvePt1_1;
+//    if(currentCurve==0 && i==1) return ui->curvePt2_1;
+//    if(currentCurve==0 && i==2) return ui->curvePt3_1;
+//    if(currentCurve==0 && i==3) return ui->curvePt4_1;
+//    if(currentCurve==0 && i==4) return ui->curvePt5_1;
 
-    if(currentCurve==2 && i==0) return ui->curvePt1_3;
-    if(currentCurve==2 && i==1) return ui->curvePt2_3;
-    if(currentCurve==2 && i==2) return ui->curvePt3_3;
-    if(currentCurve==2 && i==3) return ui->curvePt4_3;
-    if(currentCurve==2 && i==4) return ui->curvePt5_3;
+//    if(currentCurve==1 && i==0) return ui->curvePt1_2;
+//    if(currentCurve==1 && i==1) return ui->curvePt2_2;
+//    if(currentCurve==1 && i==2) return ui->curvePt3_2;
+//    if(currentCurve==1 && i==3) return ui->curvePt4_2;
+//    if(currentCurve==1 && i==4) return ui->curvePt5_2;
 
-    if(currentCurve==3 && i==0) return ui->curvePt1_4;
-    if(currentCurve==3 && i==1) return ui->curvePt2_4;
-    if(currentCurve==3 && i==2) return ui->curvePt3_4;
-    if(currentCurve==3 && i==3) return ui->curvePt4_4;
-    if(currentCurve==3 && i==4) return ui->curvePt5_4;
+//    if(currentCurve==2 && i==0) return ui->curvePt1_3;
+//    if(currentCurve==2 && i==1) return ui->curvePt2_3;
+//    if(currentCurve==2 && i==2) return ui->curvePt3_3;
+//    if(currentCurve==2 && i==3) return ui->curvePt4_3;
+//    if(currentCurve==2 && i==4) return ui->curvePt5_3;
 
-    if(currentCurve==4 && i==0) return ui->curvePt1_5;
-    if(currentCurve==4 && i==1) return ui->curvePt2_5;
-    if(currentCurve==4 && i==2) return ui->curvePt3_5;
-    if(currentCurve==4 && i==3) return ui->curvePt4_5;
-    if(currentCurve==4 && i==4) return ui->curvePt5_5;
+//    if(currentCurve==3 && i==0) return ui->curvePt1_4;
+//    if(currentCurve==3 && i==1) return ui->curvePt2_4;
+//    if(currentCurve==3 && i==2) return ui->curvePt3_4;
+//    if(currentCurve==3 && i==3) return ui->curvePt4_4;
+//    if(currentCurve==3 && i==4) return ui->curvePt5_4;
 
-    if(currentCurve==5 && i==0) return ui->curvePt1_6;
-    if(currentCurve==5 && i==1) return ui->curvePt2_6;
-    if(currentCurve==5 && i==2) return ui->curvePt3_6;
-    if(currentCurve==5 && i==3) return ui->curvePt4_6;
-    if(currentCurve==5 && i==4) return ui->curvePt5_6;
+//    if(currentCurve==4 && i==0) return ui->curvePt1_5;
+//    if(currentCurve==4 && i==1) return ui->curvePt2_5;
+//    if(currentCurve==4 && i==2) return ui->curvePt3_5;
+//    if(currentCurve==4 && i==3) return ui->curvePt4_5;
+//    if(currentCurve==4 && i==4) return ui->curvePt5_5;
 
-    if(currentCurve==6 && i==0) return ui->curvePt1_7;
-    if(currentCurve==6 && i==1) return ui->curvePt2_7;
-    if(currentCurve==6 && i==2) return ui->curvePt3_7;
-    if(currentCurve==6 && i==3) return ui->curvePt4_7;
-    if(currentCurve==6 && i==4) return ui->curvePt5_7;
+//    if(currentCurve==5 && i==0) return ui->curvePt1_6;
+//    if(currentCurve==5 && i==1) return ui->curvePt2_6;
+//    if(currentCurve==5 && i==2) return ui->curvePt3_6;
+//    if(currentCurve==5 && i==3) return ui->curvePt4_6;
+//    if(currentCurve==5 && i==4) return ui->curvePt5_6;
 
-    if(currentCurve==7 && i==0) return ui->curvePt1_8;
-    if(currentCurve==7 && i==1) return ui->curvePt2_8;
-    if(currentCurve==7 && i==2) return ui->curvePt3_8;
-    if(currentCurve==7 && i==3) return ui->curvePt4_8;
-    if(currentCurve==7 && i==4) return ui->curvePt5_8;
+//    if(currentCurve==6 && i==0) return ui->curvePt1_7;
+//    if(currentCurve==6 && i==1) return ui->curvePt2_7;
+//    if(currentCurve==6 && i==2) return ui->curvePt3_7;
+//    if(currentCurve==6 && i==3) return ui->curvePt4_7;
+//    if(currentCurve==6 && i==4) return ui->curvePt5_7;
+
+//    if(currentCurve==7 && i==0) return ui->curvePt1_8;
+//    if(currentCurve==7 && i==1) return ui->curvePt2_8;
+//    if(currentCurve==7 && i==2) return ui->curvePt3_8;
+//    if(currentCurve==7 && i==3) return ui->curvePt4_8;
+//    if(currentCurve==7 && i==4) return ui->curvePt5_8;
 
 
-    if(currentCurve==8 && i==0) return ui->curvePt1_9;
-    if(currentCurve==8 && i==1) return ui->curvePt2_9;
-    if(currentCurve==8 && i==2) return ui->curvePt3_9;
-    if(currentCurve==8 && i==3) return ui->curvePt4_9;
-    if(currentCurve==8 && i==4) return ui->curvePt5_9;
-    if(currentCurve==8 && i==5) return ui->curvePt6_9;
-    if(currentCurve==8 && i==6) return ui->curvePt7_9;
-    if(currentCurve==8 && i==7) return ui->curvePt8_9;
-    if(currentCurve==8 && i==8) return ui->curvePt9_9;
+//    if(currentCurve==8 && i==0) return ui->curvePt1_9;
+//    if(currentCurve==8 && i==1) return ui->curvePt2_9;
+//    if(currentCurve==8 && i==2) return ui->curvePt3_9;
+//    if(currentCurve==8 && i==3) return ui->curvePt4_9;
+//    if(currentCurve==8 && i==4) return ui->curvePt5_9;
+//    if(currentCurve==8 && i==5) return ui->curvePt6_9;
+//    if(currentCurve==8 && i==6) return ui->curvePt7_9;
+//    if(currentCurve==8 && i==7) return ui->curvePt8_9;
+//    if(currentCurve==8 && i==8) return ui->curvePt9_9;
 
-    if(currentCurve==9 && i==0) return ui->curvePt1_10;
-    if(currentCurve==9 && i==1) return ui->curvePt2_10;
-    if(currentCurve==9 && i==2) return ui->curvePt3_10;
-    if(currentCurve==9 && i==3) return ui->curvePt4_10;
-    if(currentCurve==9 && i==4) return ui->curvePt5_10;
-    if(currentCurve==9 && i==5) return ui->curvePt6_10;
-    if(currentCurve==9 && i==6) return ui->curvePt7_10;
-    if(currentCurve==9 && i==7) return ui->curvePt8_10;
-    if(currentCurve==9 && i==8) return ui->curvePt9_10;
+//    if(currentCurve==9 && i==0) return ui->curvePt1_10;
+//    if(currentCurve==9 && i==1) return ui->curvePt2_10;
+//    if(currentCurve==9 && i==2) return ui->curvePt3_10;
+//    if(currentCurve==9 && i==3) return ui->curvePt4_10;
+//    if(currentCurve==9 && i==4) return ui->curvePt5_10;
+//    if(currentCurve==9 && i==5) return ui->curvePt6_10;
+//    if(currentCurve==9 && i==6) return ui->curvePt7_10;
+//    if(currentCurve==9 && i==7) return ui->curvePt8_10;
+//    if(currentCurve==9 && i==8) return ui->curvePt9_10;
 
-    if(currentCurve==10 && i==0) return ui->curvePt1_11;
-    if(currentCurve==10 && i==1) return ui->curvePt2_11;
-    if(currentCurve==10 && i==2) return ui->curvePt3_11;
-    if(currentCurve==10 && i==3) return ui->curvePt4_11;
-    if(currentCurve==10 && i==4) return ui->curvePt5_11;
-    if(currentCurve==10 && i==5) return ui->curvePt6_11;
-    if(currentCurve==10 && i==6) return ui->curvePt7_11;
-    if(currentCurve==10 && i==7) return ui->curvePt8_11;
-    if(currentCurve==10 && i==8) return ui->curvePt9_11;
+//    if(currentCurve==10 && i==0) return ui->curvePt1_11;
+//    if(currentCurve==10 && i==1) return ui->curvePt2_11;
+//    if(currentCurve==10 && i==2) return ui->curvePt3_11;
+//    if(currentCurve==10 && i==3) return ui->curvePt4_11;
+//    if(currentCurve==10 && i==4) return ui->curvePt5_11;
+//    if(currentCurve==10 && i==5) return ui->curvePt6_11;
+//    if(currentCurve==10 && i==6) return ui->curvePt7_11;
+//    if(currentCurve==10 && i==7) return ui->curvePt8_11;
+//    if(currentCurve==10 && i==8) return ui->curvePt9_11;
 
-    if(currentCurve==11 && i==0) return ui->curvePt1_12;
-    if(currentCurve==11 && i==1) return ui->curvePt2_12;
-    if(currentCurve==11 && i==2) return ui->curvePt3_12;
-    if(currentCurve==11 && i==3) return ui->curvePt4_12;
-    if(currentCurve==11 && i==4) return ui->curvePt5_12;
-    if(currentCurve==11 && i==5) return ui->curvePt6_12;
-    if(currentCurve==11 && i==6) return ui->curvePt7_12;
-    if(currentCurve==11 && i==7) return ui->curvePt8_12;
-    if(currentCurve==11 && i==8) return ui->curvePt9_12;
+//    if(currentCurve==11 && i==0) return ui->curvePt1_12;
+//    if(currentCurve==11 && i==1) return ui->curvePt2_12;
+//    if(currentCurve==11 && i==2) return ui->curvePt3_12;
+//    if(currentCurve==11 && i==3) return ui->curvePt4_12;
+//    if(currentCurve==11 && i==4) return ui->curvePt5_12;
+//    if(currentCurve==11 && i==5) return ui->curvePt6_12;
+//    if(currentCurve==11 && i==6) return ui->curvePt7_12;
+//    if(currentCurve==11 && i==7) return ui->curvePt8_12;
+//    if(currentCurve==11 && i==8) return ui->curvePt9_12;
 
-    if(currentCurve==12 && i==0) return ui->curvePt1_13;
-    if(currentCurve==12 && i==1) return ui->curvePt2_13;
-    if(currentCurve==12 && i==2) return ui->curvePt3_13;
-    if(currentCurve==12 && i==3) return ui->curvePt4_13;
-    if(currentCurve==12 && i==4) return ui->curvePt5_13;
-    if(currentCurve==12 && i==5) return ui->curvePt6_13;
-    if(currentCurve==12 && i==6) return ui->curvePt7_13;
-    if(currentCurve==12 && i==7) return ui->curvePt8_13;
-    if(currentCurve==12 && i==8) return ui->curvePt9_13;
+//    if(currentCurve==12 && i==0) return ui->curvePt1_13;
+//    if(currentCurve==12 && i==1) return ui->curvePt2_13;
+//    if(currentCurve==12 && i==2) return ui->curvePt3_13;
+//    if(currentCurve==12 && i==3) return ui->curvePt4_13;
+//    if(currentCurve==12 && i==4) return ui->curvePt5_13;
+//    if(currentCurve==12 && i==5) return ui->curvePt6_13;
+//    if(currentCurve==12 && i==6) return ui->curvePt7_13;
+//    if(currentCurve==12 && i==7) return ui->curvePt8_13;
+//    if(currentCurve==12 && i==8) return ui->curvePt9_13;
 
-    if(currentCurve==13 && i==0) return ui->curvePt1_14;
-    if(currentCurve==13 && i==1) return ui->curvePt2_14;
-    if(currentCurve==13 && i==2) return ui->curvePt3_14;
-    if(currentCurve==13 && i==3) return ui->curvePt4_14;
-    if(currentCurve==13 && i==4) return ui->curvePt5_14;
-    if(currentCurve==13 && i==5) return ui->curvePt6_14;
-    if(currentCurve==13 && i==6) return ui->curvePt7_14;
-    if(currentCurve==13 && i==7) return ui->curvePt8_14;
-    if(currentCurve==13 && i==8) return ui->curvePt9_14;
+//    if(currentCurve==13 && i==0) return ui->curvePt1_14;
+//    if(currentCurve==13 && i==1) return ui->curvePt2_14;
+//    if(currentCurve==13 && i==2) return ui->curvePt3_14;
+//    if(currentCurve==13 && i==3) return ui->curvePt4_14;
+//    if(currentCurve==13 && i==4) return ui->curvePt5_14;
+//    if(currentCurve==13 && i==5) return ui->curvePt6_14;
+//    if(currentCurve==13 && i==6) return ui->curvePt7_14;
+//    if(currentCurve==13 && i==7) return ui->curvePt8_14;
+//    if(currentCurve==13 && i==8) return ui->curvePt9_14;
 
-    if(currentCurve==14 && i==0) return ui->curvePt1_15;
-    if(currentCurve==14 && i==1) return ui->curvePt2_15;
-    if(currentCurve==14 && i==2) return ui->curvePt3_15;
-    if(currentCurve==14 && i==3) return ui->curvePt4_15;
-    if(currentCurve==14 && i==4) return ui->curvePt5_15;
-    if(currentCurve==14 && i==5) return ui->curvePt6_15;
-    if(currentCurve==14 && i==6) return ui->curvePt7_15;
-    if(currentCurve==14 && i==7) return ui->curvePt8_15;
-    if(currentCurve==14 && i==8) return ui->curvePt9_15;
+//    if(currentCurve==14 && i==0) return ui->curvePt1_15;
+//    if(currentCurve==14 && i==1) return ui->curvePt2_15;
+//    if(currentCurve==14 && i==2) return ui->curvePt3_15;
+//    if(currentCurve==14 && i==3) return ui->curvePt4_15;
+//    if(currentCurve==14 && i==4) return ui->curvePt5_15;
+//    if(currentCurve==14 && i==5) return ui->curvePt6_15;
+//    if(currentCurve==14 && i==6) return ui->curvePt7_15;
+//    if(currentCurve==14 && i==7) return ui->curvePt8_15;
+//    if(currentCurve==14 && i==8) return ui->curvePt9_15;
 
-    if(currentCurve==15 && i==0) return ui->curvePt1_16;
-    if(currentCurve==15 && i==1) return ui->curvePt2_16;
-    if(currentCurve==15 && i==2) return ui->curvePt3_16;
-    if(currentCurve==15 && i==3) return ui->curvePt4_16;
-    if(currentCurve==15 && i==4) return ui->curvePt5_16;
-    if(currentCurve==15 && i==5) return ui->curvePt6_16;
-    if(currentCurve==15 && i==6) return ui->curvePt7_16;
-    if(currentCurve==15 && i==7) return ui->curvePt8_16;
-    if(currentCurve==15 && i==8) return ui->curvePt9_16;
+//    if(currentCurve==15 && i==0) return ui->curvePt1_16;
+//    if(currentCurve==15 && i==1) return ui->curvePt2_16;
+//    if(currentCurve==15 && i==2) return ui->curvePt3_16;
+//    if(currentCurve==15 && i==3) return ui->curvePt4_16;
+//    if(currentCurve==15 && i==4) return ui->curvePt5_16;
+//    if(currentCurve==15 && i==5) return ui->curvePt6_16;
+//    if(currentCurve==15 && i==6) return ui->curvePt7_16;
+//    if(currentCurve==15 && i==7) return ui->curvePt8_16;
+//    if(currentCurve==15 && i==8) return ui->curvePt9_16;
+
+//    if(currentCurve==16 && i==0) return ui->curvePt1_19;
+//    if(currentCurve==16 && i==1) return ui->curvePt2_19;
+//    if(currentCurve==16 && i==2) return ui->curvePt3_19;
+//    if(currentCurve==16 && i==3) return ui->curvePt4_19;
+//    if(currentCurve==16 && i==4) return ui->curvePt5_19;
+//    if(currentCurve==16 && i==5) return ui->curvePt6_19;
 
     return 0;
 }
@@ -5572,25 +6318,28 @@ QSpinBox *ModelEdit::getNodeSB(int i)   // get the SpinBox that corresponds to t
 void ModelEdit::drawCurve()
 {
     int k,i;
-    QColor * plot_color[16];
-    plot_color[0]=new QColor(0,0,127);
-    plot_color[1]=new QColor(0,127,0);
-    plot_color[2]=new QColor(127,0,0);
-    plot_color[3]=new QColor(0,127,127);
-    plot_color[4]=new QColor(127,0,127);
-    plot_color[5]=new QColor(127,127,0);
-    plot_color[6]=new QColor(127,127,127);
-    plot_color[7]=new QColor(0,0,255);
-    plot_color[8]=new QColor(0,127,255);
-    plot_color[9]=new QColor(127,0,255);
-    plot_color[10]=new QColor(0,255,0);
-    plot_color[11]=new QColor(0,255,127);
-    plot_color[12]=new QColor(127,255,0);
-    plot_color[13]=new QColor(255,0,0);
-    plot_color[14]=new QColor(255,0,127);
-    plot_color[15]=new QColor(255,127,0);
+    QColor * plot_color[19];
+    plot_color[0]= &colors[0] ;
+    plot_color[1]= &colors[1] ;
+    plot_color[2]= &colors[2] ;
+    plot_color[3]= &colors[3] ;
+    plot_color[4]= &colors[4] ;
+    plot_color[5]= &colors[5] ;
+    plot_color[6]= &colors[6] ;
+    plot_color[7]= &colors[7] ;
+    plot_color[8]= &colors[8] ;
+    plot_color[9]= &colors[9] ;
+    plot_color[10]= &colors[10] ;
+    plot_color[11]= &colors[11] ;
+    plot_color[12]= &colors[12] ;
+    plot_color[13]= &colors[13] ;
+    plot_color[14]= &colors[14] ;
+    plot_color[15]= &colors[15] ;
+    plot_color[16]= &colors[16] ;
+    plot_color[17]= &colors[17] ;
+    plot_color[18]= &colors[18] ;
     
-		if(currentCurve<0 || currentCurve>15) return;
+		if(currentCurve<0 || currentCurve>18) return;
 
     Node *nodel = 0;
     Node *nodex = 0;
@@ -5632,6 +6381,28 @@ void ModelEdit::drawCurve()
         }
     }
 
+    for(k=0; k<2; k++)
+		{
+			int8_t *pcurve ;
+			pcurve = (k == 0) ? g_model.curvexy : g_model.curve2xy ;
+        pen.setColor(*plot_color[k+16]);
+        if ((currentCurve!=(k+16)) && (plot_curve[k+16]))
+				{
+           for(i=0; i<8; i++)
+					 {
+                scene->addLine(centerX + (qreal)pcurve[i+9]*width/200,centerY - (qreal)pcurve[i]*height/200, centerX + (qreal)pcurve[i+10]*width/200,centerY - (qreal)pcurve[i+1]*height/200,pen);
+           }
+        }
+    }
+    pen.setColor(*plot_color[18]);
+    if ((currentCurve!=(18)) && (plot_curve[18]))
+		{
+      for(i=0; i<5; i++)
+			{
+        scene->addLine(GFX_MARGIN + i*width/(6-1),centerY - (qreal)g_model.curve6[i]*height/200,GFX_MARGIN + (i+1)*width/(6-1),centerY - (qreal)g_model.curve6[i+1]*height/200,pen);    
+      }
+		}
+
     if(currentCurve<8)
         for(i=0; i<5; i++)
         {
@@ -5643,7 +6414,7 @@ void ModelEdit::drawCurve()
             scene->addItem(nodex);
             if(i>0) scene->addItem(new Edge(nodel, nodex));
         }
-    else
+    else if(currentCurve<16)
         for(i=0; i<9; i++)
         {
             nodel = nodex;
@@ -5651,6 +6422,57 @@ void ModelEdit::drawCurve()
             nodex->setFixedX(true);
 
             nodex->setPos(GFX_MARGIN + i*width/(9-1),centerY - (qreal)g_model.curves9[currentCurve-8][i]*height/200);
+            scene->addItem(nodex);
+            if(i>0) scene->addItem(new Edge(nodel, nodex));
+        }
+    else if(currentCurve<18)
+		{
+			int8_t *pcurve ;
+			pcurve = (currentCurve == 16) ? g_model.curvexy : g_model.curve2xy ;
+      for(i=0; i<9; i++)
+      {
+        nodel = nodex;
+        nodex = new Node(getNodeSB(i), getNodeSB(i+9));
+        nodex->setFixedX(false);
+	      if (i>0 && i<9-1)
+				{
+  	      nodex->setMinX(pcurve[i-1+9]);
+    	    nodex->setMaxX(pcurve[i+1+9]);
+      	}
+      	else
+				{
+					if ( i == 0 )
+					{
+  		      nodex->setMinX(-100);
+    		    nodex->setMaxX(pcurve[i+1+9]);
+					}
+					else
+					{
+	  	      nodex->setMinX(pcurve[i-1+9]);
+  	  	    nodex->setMaxX(100);
+					}
+	      }
+        nodex->setPos(centerX + (qreal)pcurve[i+9]*width/200,centerY - (qreal)pcurve[i]*height/200);
+        scene->addItem(nodex);
+        if(i>0) scene->addItem(new Edge(nodel, nodex));
+//				if ( i == 0 )
+//				{
+//					if ( pcurve[9] != -100 )
+//					{
+//            scene->addLine(GFX_MARGIN,centerY - (qreal)pcurve[i]*height/200,
+//                           centerX + (qreal)pcurve[9]*width/200,centerY - (qreal)pcurve[i]*height/200) ;
+//					}
+//				}
+      }
+		}
+		 else
+        for(i=0; i<6; i++)
+        {
+            nodel = nodex;
+            nodex = new Node(getNodeSB(i));
+            nodex->setFixedX(true);
+
+            nodex->setPos(GFX_MARGIN + i*width/(6-1),centerY - (qreal)g_model.curve6[i]*height/200);
             scene->addItem(nodex);
             if(i>0) scene->addItem(new Edge(nodel, nodex));
         }
@@ -5754,6 +6576,25 @@ void ModelEdit::on_curveEdit_16_clicked()
     drawCurve();
 }
 
+void ModelEdit::on_curveEdit_17_clicked()
+{
+    setCurrentCurve(16);
+    drawCurve();
+}
+
+void ModelEdit::on_curveEdit_18_clicked()
+{
+    setCurrentCurve(17);
+    drawCurve();
+}
+
+void ModelEdit::on_curveEdit_19_clicked()
+{
+    setCurrentCurve(18);
+    drawCurve();
+}
+
+
 
 bool ModelEdit::gm_insertMix(int idx)
 {
@@ -5804,7 +6645,7 @@ void ModelEdit::gm_openMix(int index)
 
     QString comment = mixNotes[index];
 
-    MixerDialog *g = new MixerDialog(this,&mixd, &g_eeGeneral, &comment, g_model.modelVersion, rData->type );
+    MixerDialog *g = new MixerDialog(this,&mixd, &g_eeGeneral, &comment, g_model.modelVersion, rData );
     if(g->exec())
     {
         memcpy(&g_model.mixData[index],&mixd,sizeof(SKYMixData));
@@ -5824,7 +6665,7 @@ int ModelEdit::getMixerIndex(int dch)
     return i;
 }
 
-void ModelEdit::on_VoiceAlarmList_doubleClicked( QModelIndex index )
+void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
 	int i = index.row() ;
 	VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
@@ -5833,7 +6674,31 @@ void ModelEdit::on_VoiceAlarmList_doubleClicked( QModelIndex index )
   if(dlg->exec())
   {
     updateSettings() ;
-		tabVoiceAlarms() ;
+		voiceAlarmsList() ;
+  }
+}
+
+void ModelEdit::on_AdjusterList_doubleClicked( QModelIndex index )
+{
+	int i = index.row() ;
+	GvarAdjust gvad ;
+	GvarAdjust *gad = ( i >= NUM_GVAR_ADJUST) ? &g_model.egvarAdjuster[i-NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
+  gvad.function = gad->function ;
+  gvad.gvarIndex = gad->gvarIndex ;
+  gvad.swtch = gad->swtch ;
+  gvad.switch_value = gad->switch_value ;
+	GvarAdjustDialog *dlg = new GvarAdjustDialog( this, &gvad, rData ) ;
+  dlg->setWindowTitle(tr("Gvar Adjuster %1").arg(index.row()+1)) ;
+  if(dlg->exec())
+  {
+	  gad->function = gvad.function ;
+  	gad->gvarIndex = gvad.gvarIndex ;
+	  gad->swtch = gvad.swtch ;
+  	gad->switch_value = gvad.switch_value ;
+    updateSettings() ;
+    switchEditLock = true ;
+		tabGvar();
+    switchEditLock = false ;
   }
 }
 
@@ -6314,6 +7179,40 @@ void ModelEdit::on_resetCurve_16_clicked()
     drawCurve();
 }
 
+void ModelEdit::on_resetCurve_17_clicked()
+{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curvexy[i] = j ;
+		}
+    memset(&g_model.curvexy,0,9);
+    updateCurvesTab();
+    updateSettings();
+    drawCurve();
+}
+void ModelEdit::on_resetCurve_18_clicked()
+{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curve2xy[i] = j ;
+		}
+    memset(&g_model.curve2xy,0,9);
+    updateCurvesTab();
+    updateSettings();
+    drawCurve();
+}
+void ModelEdit::on_resetCurve_19_clicked()
+{
+    memset(&g_model.curve6,0,sizeof(g_model.curve6));
+    updateCurvesTab();
+    updateSettings();
+    drawCurve();
+}
+
 void ModelEdit::on_extendedLimitsChkB_toggled(bool checked)
 {
     g_model.extendedLimits = checked;
@@ -6466,6 +7365,8 @@ void ModelEdit::clearMixes(bool ask)
 
 void ModelEdit::clearCurves(bool ask)
 {
+		uint32_t i ;
+		int8_t j = -100 ;
     if(ask)
     {
         int res = QMessageBox::question(this,tr("Clear Curves?"),tr("Really clear all the curves?"),QMessageBox::Yes | QMessageBox::No);
@@ -6473,7 +7374,17 @@ void ModelEdit::clearCurves(bool ask)
     }
     memset(g_model.curves5,0,sizeof(g_model.curves5)); //clear all curves
     memset(g_model.curves9,0,sizeof(g_model.curves9)); //clear all curves
-    updateSettings();
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curvexy[i] = j ;
+			g_model.curve2xy[i] = j ;
+		}
+    memset(&g_model.curve2xy,0,9);
+    memset(&g_model.curve6,0,sizeof(g_model.curve6));
+		
+		
+		
+		updateSettings();
     updateCurvesTab();
     resizeEvent();
 }
@@ -6797,48 +7708,26 @@ void ModelEdit::on_plotCB_16_toggled(bool checked)
     drawCurve();
 }
 
+void ModelEdit::on_plotCB_17_toggled(bool checked)
+{
+    plot_curve[16] = checked;
+    drawCurve();
+}
+
+void ModelEdit::on_plotCB_18_toggled(bool checked)
+{
+    plot_curve[17] = checked;
+    drawCurve();
+}
+
+void ModelEdit::on_plotCB_19_toggled(bool checked)
+{
+    plot_curve[18] = checked;
+    drawCurve();
+}
+
 void ModelEdit::ControlCurveSignal(bool flag)
 {
-  ui->curvePt1_1->blockSignals(flag);
-  ui->curvePt2_1->blockSignals(flag);
-  ui->curvePt3_1->blockSignals(flag);
-  ui->curvePt4_1->blockSignals(flag);
-  ui->curvePt5_1->blockSignals(flag);
-  ui->curvePt1_2->blockSignals(flag);
-  ui->curvePt2_2->blockSignals(flag);
-  ui->curvePt3_2->blockSignals(flag);
-  ui->curvePt4_2->blockSignals(flag);
-  ui->curvePt5_2->blockSignals(flag);
-  ui->curvePt1_3->blockSignals(flag);
-  ui->curvePt2_3->blockSignals(flag);
-  ui->curvePt3_3->blockSignals(flag);
-  ui->curvePt4_3->blockSignals(flag);
-  ui->curvePt5_3->blockSignals(flag);
-  ui->curvePt1_4->blockSignals(flag);
-  ui->curvePt2_4->blockSignals(flag);
-  ui->curvePt3_4->blockSignals(flag);
-  ui->curvePt4_4->blockSignals(flag);
-  ui->curvePt5_4->blockSignals(flag);
-  ui->curvePt1_5->blockSignals(flag);
-  ui->curvePt2_5->blockSignals(flag);
-  ui->curvePt3_5->blockSignals(flag);
-  ui->curvePt4_5->blockSignals(flag);
-  ui->curvePt5_5->blockSignals(flag);
-  ui->curvePt1_6->blockSignals(flag);
-  ui->curvePt2_6->blockSignals(flag);
-  ui->curvePt3_6->blockSignals(flag);
-  ui->curvePt4_6->blockSignals(flag);
-  ui->curvePt5_6->blockSignals(flag);
-  ui->curvePt1_7->blockSignals(flag);
-  ui->curvePt2_7->blockSignals(flag);
-  ui->curvePt3_7->blockSignals(flag);
-  ui->curvePt4_7->blockSignals(flag);
-  ui->curvePt5_7->blockSignals(flag);
-  ui->curvePt1_8->blockSignals(flag);
-  ui->curvePt2_8->blockSignals(flag);
-  ui->curvePt3_8->blockSignals(flag);
-  ui->curvePt4_8->blockSignals(flag);
-  ui->curvePt5_8->blockSignals(flag);
   ui->curvePt1_9->blockSignals(flag);
   ui->curvePt2_9->blockSignals(flag);
   ui->curvePt3_9->blockSignals(flag);
@@ -6857,60 +7746,6 @@ void ModelEdit::ControlCurveSignal(bool flag)
   ui->curvePt7_10->blockSignals(flag);
   ui->curvePt8_10->blockSignals(flag);
   ui->curvePt9_10->blockSignals(flag);
-  ui->curvePt1_11->blockSignals(flag);
-  ui->curvePt2_11->blockSignals(flag);
-  ui->curvePt3_11->blockSignals(flag);
-  ui->curvePt4_11->blockSignals(flag);
-  ui->curvePt5_11->blockSignals(flag);
-  ui->curvePt6_11->blockSignals(flag);
-  ui->curvePt7_11->blockSignals(flag);
-  ui->curvePt8_11->blockSignals(flag);
-  ui->curvePt9_11->blockSignals(flag);
-  ui->curvePt1_12->blockSignals(flag);
-  ui->curvePt2_12->blockSignals(flag);
-  ui->curvePt3_12->blockSignals(flag);
-  ui->curvePt4_12->blockSignals(flag);
-  ui->curvePt5_12->blockSignals(flag);
-  ui->curvePt6_12->blockSignals(flag);
-  ui->curvePt7_12->blockSignals(flag);
-  ui->curvePt8_12->blockSignals(flag);
-  ui->curvePt9_12->blockSignals(flag);
-  ui->curvePt1_13->blockSignals(flag);
-  ui->curvePt2_13->blockSignals(flag);
-  ui->curvePt3_13->blockSignals(flag);
-  ui->curvePt4_13->blockSignals(flag);
-  ui->curvePt5_13->blockSignals(flag);
-  ui->curvePt6_13->blockSignals(flag);
-  ui->curvePt7_13->blockSignals(flag);
-  ui->curvePt8_13->blockSignals(flag);
-  ui->curvePt9_13->blockSignals(flag);
-  ui->curvePt1_14->blockSignals(flag);
-  ui->curvePt2_14->blockSignals(flag);
-  ui->curvePt3_14->blockSignals(flag);
-  ui->curvePt4_14->blockSignals(flag);
-  ui->curvePt5_14->blockSignals(flag);
-  ui->curvePt6_14->blockSignals(flag);
-  ui->curvePt7_14->blockSignals(flag);
-  ui->curvePt8_14->blockSignals(flag);
-  ui->curvePt9_14->blockSignals(flag);
-  ui->curvePt1_15->blockSignals(flag);
-  ui->curvePt2_15->blockSignals(flag);
-  ui->curvePt3_15->blockSignals(flag);
-  ui->curvePt4_15->blockSignals(flag);
-  ui->curvePt5_15->blockSignals(flag);
-  ui->curvePt6_15->blockSignals(flag);
-  ui->curvePt7_15->blockSignals(flag);
-  ui->curvePt8_15->blockSignals(flag);
-  ui->curvePt9_15->blockSignals(flag);
-  ui->curvePt1_16->blockSignals(flag);
-  ui->curvePt2_16->blockSignals(flag);
-  ui->curvePt3_16->blockSignals(flag);
-  ui->curvePt4_16->blockSignals(flag);
-  ui->curvePt5_16->blockSignals(flag);
-  ui->curvePt6_16->blockSignals(flag);
-  ui->curvePt7_16->blockSignals(flag);
-  ui->curvePt8_16->blockSignals(flag);
-  ui->curvePt9_16->blockSignals(flag);
 }
 
 void ModelEdit::on_CustomAlarmSourceCB_currentIndexChanged(int index)
@@ -7002,4 +7837,48 @@ void ModelEdit::on_xpowerCB_currentIndexChanged(int index)
 	g_model.xppmNCH = (index<<7) + (g_model.xppmNCH&0x7F);
   updateSettings();
 }
+
+void ModelEdit::on_MusicStartCB_currentIndexChanged(int index)
+{
+	(void) index ;
+  g_model.musicData.musicStartSwitch = getTimerSwitchCbValue( ui->MusicStartCB, rData->type ) ;
+  updateSettings() ;
+}
+
+void ModelEdit::on_MusicPauseCB_currentIndexChanged(int index)
+{
+	(void) index ;
+  g_model.musicData.musicPauseSwitch = getTimerSwitchCbValue( ui->MusicPauseCB, rData->type ) ;
+  updateSettings() ;
+}
+
+void ModelEdit::on_MusicPrevCB_currentIndexChanged(int index)
+{
+	(void) index ;
+  g_model.musicData.musicPrevSwitch = getTimerSwitchCbValue( ui->MusicPrevCB, rData->type ) ;
+  updateSettings() ;
+}
+
+void ModelEdit::on_MusicNextCB_currentIndexChanged(int index)
+{
+	(void) index ;
+  g_model.musicData.musicNextSwitch = getTimerSwitchCbValue( ui->MusicNextCB, rData->type ) ;
+  updateSettings() ;
+}
+
+
+VoiceList::VoiceList(QWidget *parent) :
+    QListWidget(parent)
+{
+    setFont(QFont("Courier New",12));
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+}
+
+void VoiceList::keyPressEvent(QKeyEvent *event)
+{
+  emit keyWasPressed(event);
+}
+
+
 

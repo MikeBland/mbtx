@@ -72,6 +72,16 @@
 //#define USE_EXT_RTC		1
 //#endif
 
+
+extern uint16_t DebugAudio2 ;
+
+
+
+extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
+void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext ) ;
+static struct fileControl FileControl = {	0,0,0,0, {0,0,0,0} } ;
+struct fileControl PlayFileControl = {	0,0,0,0, {0,0,0,0} } ;
+
 #ifdef SPLASH_DEBUG
 extern uint16_t SplashDebug[] ;
 #endif
@@ -115,9 +125,11 @@ static uint8_t UseLastSubmenuIndex = 0 ;
 
 #define VOICE_FILE_TYPE_NAME	0
 #define VOICE_FILE_TYPE_USER	1
+#define VOICE_FILE_TYPE_MUSIC	2
 uint8_t VoiceFileType ;
 uint8_t FileSelectResult ;
 char SelectedVoiceFileName[16] ;
+
 void menuProcSelectVoiceFile(uint8_t event) ;
 #ifdef PCBX9D
 void menuProcSelectImageFile(uint8_t event) ;
@@ -379,13 +391,17 @@ void voice_telem_item( int8_t index )
 			num_decimals = 1 ;
 		break ;
 
+		case FR_CELL_MIN:
+			if ( value > 445 )
+			{
+				value = 0 ;
+			}
 		case CELL_1:
 		case CELL_2:
 		case CELL_3:
 		case CELL_4:
 		case CELL_5:
 		case CELL_6:
-		case FR_CELL_MIN:
 			unit = SV_VOLTS ;			
 			num_decimals = 2 ;
 		break ;
@@ -868,7 +884,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 					x += 2 ;
 				}
 			}		
-      putsTime(x-FW-2+5, y, val, att, att) ;
+      putsTime(x-FW-3+5, y, val, att, att) ;
 			displayed = 1 ;
 			if ( !(style & TELEM_NOTIME_UNIT) )
 			{
@@ -949,13 +965,17 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
       unit = 'A' ;
 		break ;
 
+		case FR_CELL_MIN:
+			if ( val > 445 )
+			{
+				val = 0 ;
+			}
 		case CELL_1:
 		case CELL_2:
 		case CELL_3:
 		case CELL_4:
 		case CELL_5:
 		case CELL_6:
-		case FR_CELL_MIN:
 			att |= PREC2 ;
       unit = 'v' ;
 		break ;
@@ -1230,6 +1250,8 @@ void menuProcBtAddressList(uint8_t event) ;
 
 void menuProcBattery(uint8_t event) ;
 void menuProcStatistic(uint8_t event) ;
+void menuProcMusic(uint8_t event) ;
+void menuProcMusicList(uint8_t event) ;
 //#ifdef PCBX9D
 //#ifdef REVPLUS
 //void menuProcImage(uint8_t event) ;
@@ -1284,6 +1306,8 @@ enum EnumTabStat
 	e_battery,
 	e_stat1,
 	e_stat2,
+	e_music,
+	e_music1,
 	e_dsm,
 	e_traindiag,
 //#ifdef PCB9XT
@@ -1310,6 +1334,8 @@ MenuFuncP menuTabStat[] =
 	menuProcBattery,
 	menuProcStatistic,
 	menuProcStatistic2,
+	menuProcMusic,
+	menuProcMusicList,
 	menuProcDsmDdiag,
 	menuProcTrainDdiag,
 //#ifdef PCB9XT
@@ -2761,8 +2787,8 @@ void menuCustomTelemetry(uint8_t event)
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifdef REVX
-  #define MAX_TEL_OPTIONS		7
-  const uint8_t TelOptions[] = {1,2,3,4,5,6,8} ;
+  #define MAX_TEL_OPTIONS		8
+  const uint8_t TelOptions[] = {1,2,3,4,5,6,7,8} ;
  #else
   #define MAX_TEL_OPTIONS			7
   const uint8_t TelOptions[] = {1,2,3,5,6,7,8} ;
@@ -2770,8 +2796,8 @@ void menuCustomTelemetry(uint8_t event)
 #endif
 
 #ifdef PCBX9D
- #define MAX_TEL_OPTIONS		5
- const uint8_t TelOptions[] = {1,2,3,5,6} ;
+ #define MAX_TEL_OPTIONS		6
+ const uint8_t TelOptions[] = {1,2,3,5,6,7} ;
 #endif
 
 
@@ -3578,19 +3604,19 @@ void menuScaleOne(uint8_t event)
 
 }
 
-
 void menuProcAdjust(uint8_t event)
 {
 	TITLE(XPSTR("GVAR Adjust"));
 	EditType = EE_MODEL ;
 	static MState2 mstate2;
- 	event = mstate2.check_columns(event, NUM_GVAR_ADJUST-1 ) ;
+ 	event = mstate2.check_columns(event, NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST - 1 ) ;
 	
 	uint8_t sub = mstate2.m_posVert ;
 	uint8_t subSub = g_posHorz;
 	uint8_t y = FH ;
 	
-  uint8_t t_pgOfs = (sub == 7 ) ? 1 : 0 ;
+  uint8_t t_pgOfs ;
+	t_pgOfs = evalOffset(sub);
   uint8_t k ;
 	Columns = 3 ;
 	
@@ -3599,9 +3625,18 @@ void menuProcAdjust(uint8_t event)
 		GvarAdjust *pgvaradj ;
     y=(i+1)*FH;
     k=i+t_pgOfs;
-		pgvaradj = &g_model.gvarAdjuster[k] ;
-  	lcd_puts_Pleft( y, XPSTR("A  GV") ) ;
-  	lcd_putc( 1*FW, y, k+'1' ) ;
+		pgvaradj = ( k >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[k - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[k] ;
+  	lcd_putc( 0, y, 'A' ) ;
+  	lcd_puts_P( 3*FW+2, y, XPSTR("GV") ) ;
+		if ( k < 9 )
+		{
+  		lcd_putc( 1*FW, y, k+'1' ) ;
+		}
+		else
+		{
+  		lcd_putc( 1*FW, y, k > 18 ? '2' : '1' ) ;
+  		lcd_putc( 2*FW, y, ( (k+1) % 10) +'0' ) ;
+		}
 
 		if ( sub==k )
 		{
@@ -3615,7 +3650,7 @@ void menuProcAdjust(uint8_t event)
 			uint8_t active = (attr && (s_editMode) ) ;
 			if ( j == 0 )
 			{
-				lcd_putcAtt( 5*FW, y, pgvaradj->gvarIndex+'1', attr ) ;
+				lcd_putcAtt( 5*FW+2, y, pgvaradj->gvarIndex+'1', attr ) ;
 				if ( active )
 				{
  	        CHECK_INCDEC_H_MODELVAR_0( pgvaradj->gvarIndex, 6 ) ;
@@ -4632,7 +4667,7 @@ void menuProcVoiceOne(uint8_t event)
    	  		putsDrSwitches(16*FW, y, pvad->swtch, attr);
 	    		if(attr)
 					{
-      	    CHECK_INCDEC_MODELSWITCH( pvad->swtch, -MaxSwitchIndex, MaxSwitchIndex ) ;
+      	    CHECK_INCDEC_MODELSWITCH( pvad->swtch, -MaxSwitchIndex, MaxSwitchIndex+1 ) ;
     			}
 				break ;
 
@@ -5626,7 +5661,7 @@ uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event 
 
 void mixpopup( uint8_t event )
 {
-	uint8_t popaction = doPopup( PSTR(STR_MIX_POPUP), 0x3F, 11, event ) ;
+	uint8_t popaction = doPopup( PSTR(STR_MIX_POPUP), 0x7F, 11, event ) ;
 //	popupDisplay( PSTR(STR_MIX_POPUP), 0x1F, 8 ) ;
 	
 //	uint8_t popaction = popupProcess( event, 4 ) ;
@@ -5662,6 +5697,10 @@ void mixpopup( uint8_t event )
 			killEvents(event);
 			Tevent = 0 ;
 			pushMenu(menuDeleteMix);
+		}
+		else if ( popidx == 6 )		// Templates
+		{
+			pushMenu( menuProcTemplates ) ;
 		}
 		else
 		{
@@ -6243,7 +6282,7 @@ void dsmDisplayABLRFH()
 			{
 				value = 1000 ;
 			}
-		  lcd_outdezAtt( (i+1)*3*(FW+1)-2, 7*FH, value - 1, 0 ) ;
+		  lcd_outdezAtt( (i+1)*3*(FW+1)-1, 7*FH, value - 1, 0 ) ;
 		}
 	}
 }
@@ -8075,7 +8114,8 @@ void menuProcModelSelect(uint8_t event)
 				SportStreamingStarted = 0 ;
 				speakModelVoice() ;
         resetTimer();
-				VoiceCheckFlag |= 2 ;// Set switch current states
+				VoiceCheckFlag100mS |= 2 ;// Set switch current states
+				telemetry_init( decodeTelemetryType( g_model.telemetryProtocol ) ) ;
 				resumePulses() ;
         STORE_GENERALVARS;
 				if ( ( PopupData.PopupActive == 2 ) || ( popidx == 2 ) )
@@ -8267,7 +8307,7 @@ void menuProcDiagCalib(uint8_t event)
 {
   //    scroll_disabled = 1; // make sure we don't flick out of the screen
 //  SIMPLE_MENU(PSTR(STR_CALIBRATION), menuTabDiag, e_Calib, 2);
-	TITLE(PSTR(STR_CALIBRATION));
+	TITLE(PSTR(STR_Calibration));
 	static MState2 mstate2 ;
 	mstate2.check_columns( event, 2-1 ) ;
 
@@ -8756,6 +8796,23 @@ void menuProcDiagKeys(uint8_t event)
 	}
 #endif
 
+#ifdef PCBX9D
+	
+	configure_pins( 0x6000, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+	
+	if ( g_eeGeneral.switchMapping & USE_PB1 )
+	{
+	  lcd_puts_Pleft(1*FH,XPSTR("\017PB1") ) ;
+		putc_0_1( FW*19+2, 1*FH, getSwitch00(HSW_Pb1) ) ;
+	}
+	
+	if ( g_eeGeneral.switchMapping & USE_PB2 )
+	{
+	  lcd_puts_Pleft(2*FH,XPSTR("\017PB2") ) ;
+		putc_0_1( FW*19+2, 2*FH, getSwitch00(HSW_Pb2) ) ;
+	}
+#endif
+
 //extern uint8_t EncoderI2cData[2] ;
 //lcd_outhex4( 100, 0, (EncoderI2cData[0] << 8 ) | EncoderI2cData[1] ) ;
 
@@ -8775,7 +8832,7 @@ void menuProcDiagKeys(uint8_t event)
 
 void menuProcDiagVers(uint8_t event)
 {
-	TITLE(PSTR(STR_VERSION));
+	TITLE(PSTR(STR_Version));
 	static MState2 mstate2;
 //	if (SubMenuFromIndex)
 //	{
@@ -8999,7 +9056,7 @@ void menuProcTrainer(uint8_t event)
 		lines -= 1 ;
 	}
 	
-	TITLE(PSTR(STR_TRAINER));
+	TITLE(PSTR(STR_Trainer));
 	static MState2 mstate2;
 	static const uint8_t mstate_tab[] = {1, 1, 3, 3, 3, 3, 0/*, 0*/} ;
 
@@ -9204,7 +9261,7 @@ void timer(int16_t throttle_val)
 				tmb += 256 ;
 			}
 
-    	if(tmb>=(HSW_MAX))	 // toggeled switch
+    	if(tmb>(HSW_MAX))	 // toggeled switch
 			{
     	  uint8_t swPos = getSwitch00( tmb-(HSW_MAX) ) ;
 				if ( swPos != ptimer->lastResetSwPos )
@@ -9254,7 +9311,7 @@ void timer(int16_t throttle_val)
 
 		if ( tma != TMRMODE_NONE )		// Timer is not off
 		{ // We have a triggerA so timer is running 
-    	if(tmb>=(HSW_MAX))	 // toggeled switch
+    	if(tmb>(HSW_MAX))	 // toggeled switch
 			{
     	  if(!(ptimer->sw_toggled | ptimer->s_sum | s_cnt | s_time | ptimer->lastSwPos)) ptimer->lastSwPos = 0 ;  // if initializing then init the lastSwPos
     	  uint8_t swPos = getSwitch00( tmb-(HSW_MAX) ) ;
@@ -9513,10 +9570,253 @@ void trace()   // called in perOut - once every 0.01sec
   if(s_traceWr>=MAXTRACE) s_traceWr=0;
 }
 
+TCHAR PlaylistDirectory[30] ;
+char PlayListNames[PLAYLIST_COUNT][MUSIC_NAME_LENGTH+2] ;
+uint16_t PlayListCount ;
+extern uint16_t PlaylistIndex ;
+extern char CurrentPlayName[] ;
+
+void menuProcMusic(uint8_t event)
+{
+	uint32_t rows = 2 ;
+	if ( MusicPlaying == MUSIC_STOPPED )
+	{
+		rows = 5 ;
+	}
+	if ( ( MusicPlaying == MUSIC_PLAYING ) || ( MusicPlaying == MUSIC_PAUSED ) )
+	{
+		rows = 6 ;
+	}
+	MENU( PSTR(STR_Music), menuTabStat, e_music, rows, {0} ) ;
+
+	if ( event == EVT_ENTRY_UP )
+	{ // From menuProcSelectUvoiceFile
+		if ( FileSelectResult == 1 )
+		{
+			copyFileName( (char *)g_eeGeneral.musicVoiceFileName, SelectedVoiceFileName, MUSIC_NAME_LENGTH ) ;
+			g_eeGeneral.musicVoiceFileName[MUSIC_NAME_LENGTH] = '\0' ;
+
+			if ( g_eeGeneral.musicType )
+			{
+				// load playlist
+				cpystr( cpystr( (uint8_t *)PlaylistDirectory, (uint8_t *)"\\music\\" ), g_eeGeneral.musicVoiceFileName ) ;
+				fillPlaylist( PlaylistDirectory, &PlayFileControl, (char *)"WAV" ) ;
+				g_eeGeneral.playListIndex = PlaylistIndex = 0 ;
+			}
+			STORE_GENERALVARS ;
+		}
+	}
+
+  if ( ( event == EVT_KEY_FIRST(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
+	{
+		if ( mstate2.m_posVert != 1 )
+		{
+			killEvents(event) ;
+			s_editMode = 0 ;
+			event = 0 ;
+		}
+		switch ( mstate2.m_posVert )
+		{
+			case 2 :
+				VoiceFileType = VOICE_FILE_TYPE_MUSIC ;
+      	pushMenu( menuProcSelectVoiceFile ) ;
+			break ;
+			case 4 :
+				if ( MusicPlaying == MUSIC_STOPPED )
+				{
+					MusicPlaying = MUSIC_STARTING ;
+				DebugAudio2 = 3 ;
+				}
+				else
+				{
+					MusicPlaying = MUSIC_STOPPING ;
+				}
+			break ;
+
+			case 5 :
+				if ( MusicPlaying == MUSIC_PAUSED )
+				{
+					MusicPlaying = MUSIC_RESUMING ;
+				}
+				else
+				{
+					MusicPlaying = MUSIC_PAUSING ;
+				}
+			break ;
+		}
+	}
+	if ( g_eeGeneral.musicType )
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			if ( mstate2.m_posVert == 5 )
+			{
+			  if ( event == EVT_KEY_FIRST(KEY_LEFT) )
+				{
+					killEvents(event) ;
+					MusicPrevNext = MUSIC_NP_PREV ;
+//					if ( PlaylistIndex == 0 )
+//					{
+//						PlaylistIndex = PlayListCount - 1 ;
+//					}
+//					else
+//					{
+//						PlaylistIndex -= 1 ;
+//					}
+//					MusicPlaying = MUSIC_STARTING ;
+//				DebugAudio2 = 4 ;
+				}
+			  if ( event == EVT_KEY_FIRST(KEY_RIGHT) )
+				{
+					killEvents(event) ;
+					MusicPrevNext = MUSIC_NP_NEXT ;
+//					PlaylistIndex += 1 ;
+//					if ( PlaylistIndex >= PlayListCount )
+//					{
+//						PlaylistIndex = 0 ;
+//					}
+//					MusicPlaying = MUSIC_STARTING ;
+//				DebugAudio2 = 5 ;
+				}
+			}
+		}
+	}
+
+  lcd_puts_Pleft( 1*FH, XPSTR("Type")) ;
+	
+	uint32_t b = g_eeGeneral.musicType ;
+	g_eeGeneral.musicType = checkIndexed( 1*FH, XPSTR(FWx15"\001""\004NameList"), b, (mstate2.m_posVert == 1) ) ;
+	if ( g_eeGeneral.musicType != b )
+	{
+		g_eeGeneral.musicVoiceFileName[0] = '\0' ;
+	}
+
+  lcd_puts_Pleft( 2*FH, XPSTR("File")) ;
+	lcd_putsAtt( 6*FW, 2*FH, (char *)g_eeGeneral.musicVoiceFileName, 0 ) ;
+  
+	g_eeGeneral.musicLoop = onoffMenuItem( g_eeGeneral.musicLoop, 3*FH, XPSTR("Loop"), mstate2.m_posVert == 3 ) ;
+	
+	if ( rows == 5 )
+	{
+  	lcd_puts_Pleft( 4*FH, XPSTR("Start")) ;
+		if ( mstate2.m_posVert == 5 )
+		{
+			mstate2.m_posVert = 4 ;
+		}
+	}
+	else
+	{
+		lcd_puts_Pleft( 4*FH, XPSTR("Stop")) ;
+		lcd_puts_Pleft( 5*FH, MusicPlaying == MUSIC_PAUSED ? XPSTR("\007Resume") : XPSTR("\007Pause")) ;
+		if ( g_eeGeneral.musicType )
+		{
+			if ( MusicPlaying == MUSIC_PLAYING )
+			{
+				lcd_puts_Pleft( 5*FH, XPSTR("Prev<\017>Next")) ;
+			}
+		}
+		lcd_puts_Pleft( 6*FH, CurrentPlayName ) ;
+	}
+
+	if ( mstate2.m_posVert == 2 )
+	{
+		lcd_rect( 6*FW-1, 2*FH-1, MUSIC_NAME_LENGTH*FW+2, 9 ) ;
+	}
+
+	if ( mstate2.m_posVert == 4 )
+	{
+		lcd_char_inverse( 0, 4*FH, 30, 0 ) ;
+	}
+	else if ( mstate2.m_posVert == 5 )
+	{
+		lcd_char_inverse( 7*FW, 5*FH, 36, 0 ) ;
+	}
+
+
+//extern TCHAR VoiceFilename[] ;
+
+//	lcd_puts_Pleft( 5*FH, (char *) VoiceFilename ) ;
+
+
+//extern uint16_t DebugMusic1 ;
+//extern uint16_t DebugMusic2 ;
+//extern uint16_t DebugMusic3 ;
+//extern uint16_t DebugMusic4 ;
+//extern uint16_t DebugMusic5 ;
+//extern uint16_t DebugMusic6 ;
+extern uint32_t BgSizePlayed ;
+extern uint32_t BgTotalSize ;
+
+		lcd_hbar( 10, 57, 101, 6, (BgTotalSize - BgSizePlayed) * 100 / BgTotalSize ) ;
+	
+//	lcd_putsAtt( 7*FW, 4*FH, PlaylistDirectory, 0 ) ;
+
+//	lcd_outhex4( 60, 4*FH, BgSizeLeft >> 16 ) ;
+//	lcd_outhex4( 90, 4*FH, BgSizeLeft ) ;
+
+
+//	lcd_outhex4( 0, 6*FH, DebugMusic1 ) ;
+//	lcd_outhex4( 30, 6*FH, DebugMusic2 ) ;
+//	lcd_outhex4( 60, 6*FH, DebugMusic3 ) ;
+//	lcd_outhex4( 90, 6*FH, DebugMusic4 ) ;
+
+// Debug
+	
+//	lcd_outhex4( 0, 6*FH, MusicPlaying ) ;
+//	lcd_outhex4( 30, 6*FH, MusicInterrupted ) ;
+
+
+//extern uint16_t DebugAudio1 ;
+//	lcd_outhex4( 60, 7*FH, DebugAudio1 ) ;
+//	lcd_outhex4( 90, 7*FH, DebugAudio2 ) ;
+
+//  lcd_outdezAtt(20*FW , 6*FH, rows, 0 ) ;
+
+//extern uint16_t g_timeAppendVoice ;
+//extern uint16_t g_timeAppendMaxVoice ;
+//	lcd_outhex4( 90, 5*FH, g_timeAppendVoice ) ;
+//	lcd_outhex4( 90, 4*FH, g_timeAppendMaxVoice ) ;
+}
+
+void menuProcMusicList(uint8_t event)
+{
+	uint32_t i ;
+	uint32_t j ;
+	if ( PlayListCount < 7 )
+	{
+		i = 1 ;
+		j = PlayListCount ;
+	}
+	else
+	{
+		i = PlayListCount - 6 ;
+		j = 7 ;
+	}
+	MENU( XPSTR("Music List"), menuTabStat, e_music1, i, {0} ) ;
+	int8_t  sub    = mstate2.m_posVert;
+	
+	for ( i = 0 ; i < j ; i += 1 )
+	{
+		lcd_puts_P( 0, (i+1)*FH, PlayListNames[i+sub] ) ;
+	}
+
+//extern TCHAR VoiceFilename[] ;
+//	lcd_puts_P( 0, 6*FH, VoiceFilename ) ;
+//extern uint16_t PlaylistIndex ;
+//	lcd_outhex4( 90, 4*FH, sub ) ;
+////	lcd_outhex4( 90, 5*FH, k ) ;
+//	lcd_outhex4( 90, 6*FH, PlayListCount ) ;
+//	lcd_outhex4( 90, 7*FH, PlaylistIndex ) ;
+
+}
+
+
+
 uint16_t g_timeMain;
 uint16_t g_timeRfsh ;
 uint16_t g_timeMixer ;
 uint16_t g_timePXX;
+uint16_t g_timeBgRead ;
 
 void menuProcStatistic2(uint8_t event)
 {
@@ -9580,6 +9880,10 @@ extern uint32_t MixerRate ;
   lcd_outdezAtt(14*FW , 1*FH, (g_timePXX)/2 ,0);
 #endif
 
+#if defined(PCBSKY) || defined(PCB9XT)
+  lcd_puts_Pleft( 3*FH, XPSTR("tBgRead        ms"));
+  lcd_outdezAtt(14*FW , 3*FH, (g_timeBgRead)/20 ,PREC2);
+#endif
   
 extern uint8_t AudioVoiceCountUnderruns ;
 	lcd_puts_Pleft( 5*FH, XPSTR("Voice underruns"));
@@ -9702,6 +10006,8 @@ extern uint32_t Bt_ok ;
 
 //uint16_t PXX_sync ;
 
+extern uint8_t RawLogging ;
+
 void menuDebug(uint8_t event)
 {
 	MENU(XPSTR("DEBUG"), menuTabStat, e_debug, 1, {0} ) ;
@@ -9717,7 +10023,12 @@ void menuDebug(uint8_t event)
 //		PXX_sync = x << 8 ;
 //  }
 
-//  switch(event)
+  switch(event)
+	{
+		case EVT_KEY_LONG(KEY_MENU):
+			RawLogging = RawLogging ? 0 : 1 ;
+		break ;
+	}
 //	{
 //		case EVT_ENTRY :
 //#ifdef PCBX9D
@@ -9787,10 +10098,21 @@ extern uint16_t XjtHbeatOffset ;
   lcd_outhex4( 25,  6*FH, XjtHeartbeatCapture.valid ) ;
 #endif
 
+extern uint16_t RawIndex ;
+extern uint8_t RawActiveBuffer ;
+extern uint8_t RawWriteBuffer ;
+  lcd_outhex4( 30, 5*FH, RawIndex ) ;
+  lcd_outhex4( 60, 5*FH, RawActiveBuffer ) ;
+  lcd_outhex4( 90, 5*FH, RawWriteBuffer ) ;
+
+
+	lcd_puts_Pleft( 6*FH, XPSTR("Raw Logging") ) ;
+	menu_lcd_onoff( PARAM_OFS, 6*FH, RawLogging, 0 ) ;
+
 extern uint16_t TelRxCount ;
 	lcd_puts_Pleft( 7*FH, XPSTR("TelRxCount") ) ;
   lcd_outhex4( 12*FW,  7*FH, TelRxCount ) ;
-
+  lcd_outhex4( 17*FW,  7*FH, FrskyTelemetryType ) ;
 
 //#ifdef PCB9XT
 //extern uint16_t PpmTestH ;
@@ -9929,18 +10251,21 @@ uint8_t TrainerMode ;
 uint8_t TrainerPos ;
 uint8_t TrainerDebugData[16] ;
 uint16_t TdebugCounter ;
+uint8_t TrainerPolarity ;
 
 void setCaptureMode(uint32_t mode) ;
 extern struct t_fifo64 CaptureRx_fifo ;
 
 void menuProcTrainDdiag(uint8_t event)
 {
-	MENU(XPSTR("Train diag"), menuTabStat, e_traindiag, 2, {0} ) ;
+	MENU(XPSTR("Train diag"), menuTabStat, e_traindiag, 3, {0} ) ;
 	
 	int8_t sub = mstate2.m_posVert ;
 
   lcd_puts_Pleft( 1*FH, XPSTR("Trainer Mode") ) ;
+  lcd_puts_Pleft( 2*FH, XPSTR("Trainer In Pol") ) ;
 	lcd_putsAttIdx(16*FW, FH, XPSTR("\004NormSer Com1"), TrainerMode, (sub == 1) ? INVERS : 0 ) ;
+	lcd_putsAttIdx(16*FW, 2*FH, XPSTR("\003NegPos"), TrainerPolarity, (sub == 2) ? INVERS : 0 ) ;
 	if(sub==1)
   {
 #ifdef PCBSKY
@@ -9967,17 +10292,21 @@ void menuProcTrainDdiag(uint8_t event)
 		}
 #endif	// PCBSKY
   }
+	else if(sub==2)
+  {
+		TrainerPolarity = checkIncDec16( TrainerPolarity, 0, 1, 0 ) ;
+	}	
 	
 	uint32_t i ;
 	for ( i = 0 ; i < 16 ; i += 1 )
 	{
 		if ( TrainerDebugData[i] )
 		{
-			lcd_putc( i*FW, 3*FH, TrainerDebugData[i] ) ;
+			lcd_putc( i*FW, 4*FH, TrainerDebugData[i] ) ;
 		}
 		else
 		{
-			lcd_putc( i*FW, 3*FH, ' ' ) ;
+			lcd_putc( i*FW, 4*FH, ' ' ) ;
 		}
 	}
 
@@ -10464,7 +10793,7 @@ t_time EntryTime ;
 
 void menuProcDate(uint8_t event)
 {
-	TITLE(PSTR(STR_DATE_TIME));
+	TITLE(PSTR(STR_DateTime));
 	static MState2 mstate2;
 	static const uint8_t mstate_tab[] = {0} ;
 	
@@ -10648,8 +10977,8 @@ extern uint8_t Co_proc_status[] ;
 #endif
 }
 
-static struct fileControl FileControl = {	0,0,0,0, {0,0,0,0} } ;
 extern DIR Dj ;
+extern DIR Djp ;
 
 void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext )
 {
@@ -10658,7 +10987,7 @@ void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext )
 	if ( fr == FR_OK )
 	{
 		fc->index = 0 ;
-		fr = f_opendir( &Dj, (TCHAR *) "." ) ;
+		fr = f_opendir( ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )? &Djp : &Dj, (TCHAR *) "." ) ;
 		if ( fr == FR_OK )
 		{
 			fc->ext[0] = *ext++ ;
@@ -10738,12 +11067,29 @@ void menuProcSelectVoiceFile(uint8_t event)
 	struct fileControl *fc = &FileControl ;
 	uint32_t i ;
 
-  TITLE( "SELECT FILE" ) ;
-
+  TITLE( "Select File" ) ;
+		
   switch(event)
 	{
     case EVT_ENTRY:
-			setupFileNames( (VoiceFileType == VOICE_FILE_TYPE_NAME) ? (TCHAR *)"\\voice\\modelNames" : (TCHAR *)"\\voice\\user" , fc, (char *)"WAV" ) ;
+		{
+			TCHAR * directory ;
+			i = 0 ;
+			directory = (TCHAR *)"\\voice\\user" ;
+			if ( VoiceFileType == VOICE_FILE_TYPE_NAME )
+			{
+				directory = (TCHAR *)"\\voice\\modelNames" ;
+			}
+			else if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
+			{
+				directory = (TCHAR *)"\\music" ;
+				if ( g_eeGeneral.musicType )
+				{
+					i = 1 ;
+				}
+			}
+				 
+			setupFileNames( directory, fc, i ? (char *)"\0" : (char *)"WAV" ) ;
 //			fr = f_chdir( (VoiceFileType == VOICE_FILE_TYPE_NAME) ? (TCHAR *)"\\voice\\modelNames" : (TCHAR *)"\\voice\\user" ) ;
 //			if ( fr == FR_OK )
 //			{
@@ -10761,6 +11107,7 @@ void menuProcSelectVoiceFile(uint8_t event)
 //					fc->vpos = 0 ;
 //				}
 //			}
+		}
     break ;
 	}
 	
@@ -10778,10 +11125,20 @@ void menuProcSelectVoiceFile(uint8_t event)
 	}
 	else if ( i == 3 )	// Tag
 	{
-		char name[12] ;
-    killEvents(event) ;
-		copyFileName( name, Filenames[fc->vpos], 8 ) ;
-		putNamedVoiceQueue( name, (VoiceFileType == VOICE_FILE_TYPE_NAME) ? VLOC_MNAMES : VLOC_USER ) ;
+		if ( VoiceFileType != VOICE_FILE_TYPE_MUSIC )
+		{		
+			char name[12] ;
+  	  killEvents(event) ;
+			copyFileName( name, Filenames[fc->vpos], 8 ) ;
+			putNamedVoiceQueue( name, (VoiceFileType == VOICE_FILE_TYPE_NAME) ? VLOC_MNAMES : VLOC_USER ) ;
+		}
+		else
+		{
+			cpystr( (uint8_t *)SelectedVoiceFileName, (uint8_t *)Filenames[fc->vpos] ) ;
+			killEvents(event) ;
+    	popMenu() ;
+			i = 1 ;
+		}
 	}
 	FileSelectResult = i ;
 }
@@ -12035,7 +12392,7 @@ void menuProc0(uint8_t event)
 
 //    if(g_model.timer[0].tmrModeA != TMRMODE_NONE)
 //		{
-			displayTimer( x+14*FW-3, FH*2, 0, DBLSIZE ) ;
+			displayTimer( x+14*FW-1, FH*2, 0, DBLSIZE|CONDENSED ) ;
       putsTmrMode(x+7*FW-FW/2,FH*3,0, 0, 0 ) ;
 //  	}
 
@@ -12149,11 +12506,12 @@ void menuProc0(uint8_t event)
       switch(view)
       {
         case e_outputValues:
-          x0 = (i%4*9+3)*FW/2;
+          x0 = i%4 ;
+          x0 *= 28 ;
           y0 = i/4*FH+40;
               // *1000/1024 = x - x/8 + x/32
 #define GPERC(x)  (x - x/32 + x/128)
-          lcd_outdezAtt( x0+4*FW , y0, GPERC(val),PREC1 ) ;
+          lcd_outdezAtt( x0+6*FW , y0, GPERC(val),PREC1 ) ;
         break;
             
 				case e_outputBars:
@@ -14449,6 +14807,8 @@ extern DWORD socket_is_empty( void ) ;
 	
 	lcd_puts_Pleft( 2*FH, PSTR(STR_4_READY));
 
+extern uint8_t SectorsPerCluster ;
+  lcd_outdezAtt( 127, 1*FH, SectorsPerCluster/2, 0 ) ;
 #ifndef SIMU
 
 #ifdef PCBSKY
@@ -15021,6 +15381,9 @@ uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t c
 #ifdef PCB9XT
 	value = checkIndexed( y, XPSTR(FWx17"\010\004NONEEXT1EXT2EXT3EXT4EXT5EXT6EXT7EXT8"), value, condition ) ;
 #else
+#ifdef PCBX9D
+	value = checkIndexed( y, XPSTR(FWx17"\002\004NONEJTMSJTCK"), value, condition ) ;
+#else
 	if ( g_eeGeneral.ar9xBoard == 0 )
 	{
 		if ( allowAna )
@@ -15050,6 +15413,7 @@ uint8_t edit3posSwitchSource( uint8_t y, uint8_t value, uint16_t mask, uint8_t c
 			value = checkIndexed( y, XPSTR(FWx17"\005\004NONEEXT1EXT2EXT3PB14ELE "), value, condition ) ;
 		}
 	}
+#endif
 #endif
 #endif
 	g_eeGeneral.switchMapping = sm & ~(mask) ;
@@ -15200,7 +15564,12 @@ STR_DiagAna
 #endif            
 #ifdef PCB9XT
  			y = 0 ;
-			IlinesCount = 8 ;
+			IlinesCount = 9 ;
+		 
+		 if ( sub < 7 )
+		 {
+			displayNext() ;
+		 	
 #endif            
   		uint8_t attr ;
 //			y = FH ;
@@ -15424,9 +15793,11 @@ STR_DiagAna
 #endif
 #endif
 
+#ifndef PCB9XT
 			g_eeGeneral.flashBeep = onoffMenuItem( g_eeGeneral.flashBeep, y, PSTR(STR_FLASH_ON_BEEP), sub==subN ) ;
   		y += FH ;
 			subN += 1 ;
+#endif
 #ifdef PCBSKY
 			{
 				uint8_t b = g_eeGeneral.rotateScreen ;
@@ -15446,6 +15817,24 @@ STR_DiagAna
 				}
 #endif
 			}
+#endif
+#ifdef PCB9XT
+		 }
+		 else
+		 {
+				int8_t b ;
+			 	subN = 7 ;
+				y = FH ;
+				g_eeGeneral.flashBeep = onoffMenuItem( g_eeGeneral.flashBeep, y, PSTR(STR_FLASH_ON_BEEP), sub==subN ) ;
+  			y += FH ;
+				subN += 1 ;
+				b = g_eeGeneral.reverseScreen ;
+	  		g_eeGeneral.reverseScreen = onoffMenuItem( b, y, PSTR(STR_REVERSE_SCREEN), sub==subN ) ;
+				if ( g_eeGeneral.reverseScreen != b )
+				{
+					lcdSetOrientation() ;
+				}
+		 }
 #endif
 			 
 		}
@@ -15874,7 +16263,7 @@ STR_DiagAna
 #ifdef PCB9XT
 			IlinesCount = 4 + 4 + 1 + 7 + 5 ;
 #else
-			IlinesCount = 4 + 4 + 1 + 1 ;
+			IlinesCount = 6 + 4 + 1 + 1 ;
 #endif
 #endif
 #ifdef PCBSKY
@@ -15929,7 +16318,7 @@ STR_DiagAna
 			if ( sub < 6 )
 #endif
 #ifdef PCBX9D
-			if ( sub < 4 )
+			if ( sub < 6 )
 #endif
 #ifdef PCB9XT
 			if ( sub < 4 )
@@ -16040,6 +16429,16 @@ STR_DiagAna
 				}
 				y += FH ;
 				subN += 1 ;
+
+  			lcd_puts_Pleft( y, XPSTR("PB1 switch\037PB2 switch"));
+				g_eeGeneral.pb1source = edit3posSwitchSource( y, g_eeGeneral.pb1source, USE_PB1, (sub==subN), 0 ) ;
+				y += FH ;
+				subN += 1 ;
+				g_eeGeneral.pb2source = edit3posSwitchSource( y, g_eeGeneral.pb2source, USE_PB2, (sub==subN), 0 ) ;
+				y += FH ;
+				subN += 1 ;
+
+
 #endif	// PCBX9D
 
 #ifdef PCBSKY
@@ -16110,9 +16509,9 @@ STR_DiagAna
 #endif // PCB9XT
 
 #ifdef PCBX9D
-			else if ( sub < 9 )
+			else if ( sub < 11 )
 			{
-				subN = 4 ;
+				subN = 6 ;
 #endif // PCBX9D
 				uint8_t attr = 0 ;
 	  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_eeGeneral.stickDeadband[0], 15 ) ; }
@@ -16365,7 +16764,7 @@ STR_DiagAna
 #if defined(PCBSKY) || defined(PCB9XT)
 				subN = page3+7 ;
 #else
-				subN = 9 ;
+				subN = 11 ;
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -16687,13 +17086,14 @@ extern uint8_t BtPswd[] ;
 #define M_MODES				5
 #define M_CURVE				6
 #define M_SWITCHES		7
-#define M_SAFETY			8
-#define M_GLOBALS			9
-#define M_TELEMETRY		10
-#define M_VOICE				11
-#define M_TIMERS			12
-#define M_MGENERAL		13
-#define M_PROTOCOL		14
+#define M_MUSIC				8
+#define M_SAFETY			9
+#define M_GLOBALS			10
+#define M_TELEMETRY		11
+#define M_VOICE				12
+#define M_TIMERS			13
+#define M_MGENERAL		14
+#define M_PROTOCOL		15
 
 void menuProcModelIndex(uint8_t event)
 {
@@ -16701,7 +17101,7 @@ void menuProcModelIndex(uint8_t event)
 	EditType = EE_MODEL ;
 	if ( PopupData.PopupActive == 0 )
 	{
-		event = indexProcess( event, &mstate, 7 ) ;
+		event = indexProcess( event, &mstate, 8 ) ;
 		event = mstate.check_columns( event, IlinesCount-1 ) ;
 	}
 					
@@ -16709,7 +17109,13 @@ void menuProcModelIndex(uint8_t event)
 	switch ( SubmenuIndex )
 	{
 		case M_MIXER :
-      pushMenu(menuProcMix) ;
+			if ( PopupData.PopupActive == 0 )
+			{
+				PopupData.PopupIdx = 0 ;
+				PopupData.PopupActive = 3 ;
+				SubmenuIndex = 0 ;
+			}
+//      pushMenu(menuProcMix) ;
 		break ;
 		case M_SWITCHES :
       pushMenu(menuProcSwitches) ;
@@ -16777,7 +17183,7 @@ void menuProcModelIndex(uint8_t event)
 	{
 		case M_MINDEX :
   		TITLE(XPSTR("MODEL SETUP")) ;
-			IlinesCount = 14 ;
+			IlinesCount = 15 ;
 			sub += 1 ;
 
 //static const char *const n_Strings[] = {
@@ -16806,6 +17212,7 @@ STR_Expo,
 STR_Modes,
 STR_Curves,
 STR_Cswitches,
+STR_Music,
 STR_Safety,
 STR_Globals,
 STR_Telemetry,
@@ -16823,14 +17230,18 @@ STR_Protocol
 				{
 					sub = M_GLOBALS ;
 				}
-				else
+				else if ( PopupData.PopupActive == 2 )
 				{
 					sub = M_TELEMETRY ;
+				}
+				else
+				{
+					sub = M_MIXER ;
 				}
 			}
 			
 //			displayIndex( n_Strings, 8, 7, sub ) ;
-			displayIndex( in_Strings, 7, 7, sub ) ;
+			displayIndex( in_Strings, 8, 7, sub ) ;
 			
 			if ( PopupData.PopupActive )
 			{
@@ -16839,9 +17250,13 @@ STR_Protocol
 				{
 					mask = 7 ; ;
 				}
-				else
+				else if ( PopupData.PopupActive == 2 )
 				{
 					mask = 0x18 ;
+				}
+				else
+				{
+					mask = 0x0060 ;
 				}
 				uint8_t popaction = doPopup( PSTR( STR_POPUP_GLOBALS ), mask, 13, event ) ;
   			if ( popaction == POPUP_SELECT )
@@ -16851,21 +17266,29 @@ STR_Protocol
 					{
     	  		pushMenu(menuProcGlobals) ;
 					}
-					if ( popidx == 1 )	// adjusters
+					else if ( popidx == 1 )	// adjusters
 					{
     	  		pushMenu(menuProcAdjust) ;
 					}
-					if ( popidx == 2 )	// scalers
+					else if ( popidx == 2 )	// scalers
 					{
     	  		pushMenu(menuProcScalers) ;
 					}
-					if ( popidx == 3 )	// Telemetry
+					else if ( popidx == 3 )	// Telemetry
 					{
     	  		pushMenu(menuProcTelemetry) ;
 					}
-					if ( popidx == 4 )	// Custom
+					else if ( popidx == 4 )	// Custom
 					{
     	  		pushMenu(menuCustomTelemetry) ;
+					}
+					else if ( popidx == 5 )	// Mixer
+					{
+			      pushMenu(menuProcMix) ;
+					}
+					else if ( popidx == 6 )	// Templates
+					{
+    	  		pushMenu(menuProcTemplates) ;
 					}
 					SubmenuIndex = sub ;
 				}
@@ -16877,6 +17300,53 @@ STR_Protocol
 			}
 		break ;
 
+		case M_MUSIC :
+		{	
+			uint8_t subN = 0 ;
+      TITLE( PSTR( STR_Music ) ) ;
+			IlinesCount = 4 ;
+			uint8_t attr = 0 ;
+			
+  	  if(sub==subN)
+			{
+	   		attr = InverseBlink ;
+			}
+			lcd_puts_Pleft( y, XPSTR("Start Switch"));
+			uint8_t doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
+			g_model.musicData.musicStartSwitch = edit_dr_switch( 16*FW, y, g_model.musicData.musicStartSwitch, attr, doedit, event ) ;
+			y += FH ;
+			subN++ ;
+			attr = 0 ;
+  	  if(sub==subN)
+			{
+	   		attr = InverseBlink ;
+			}
+			lcd_puts_Pleft( y, XPSTR("Pause Switch"));
+			doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
+			g_model.musicData.musicPauseSwitch = edit_dr_switch( 16*FW, y, g_model.musicData.musicPauseSwitch, attr, doedit, event ) ;
+			y += FH ;
+			subN++ ;
+			attr = 0 ;
+  	  if(sub==subN)
+			{
+	   		attr = InverseBlink ;
+			}
+			lcd_puts_Pleft( y, XPSTR("Previous Switch"));
+			doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
+			g_model.musicData.musicPrevSwitch = edit_dr_switch( 16*FW, y, g_model.musicData.musicPrevSwitch, attr, doedit, event ) ;
+			y += FH ;
+			subN++ ;
+			attr = 0 ;
+  	  if(sub==subN)
+			{
+	   		attr = InverseBlink ;
+			}
+			lcd_puts_Pleft( y, XPSTR("Next Switch"));
+			doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
+			g_model.musicData.musicNextSwitch = edit_dr_switch( 16*FW, y, g_model.musicData.musicNextSwitch, attr, doedit, event ) ;
+		}
+		break ;
+		
 		case M_TIMERS :
 		{	
 			uint8_t subN = 0 ;
@@ -16968,6 +17438,11 @@ STR_Protocol
 			uint8_t attr = 0 ;
 			static uint8_t voiceCall = 0 ;			
       TITLE( XPSTR(Str_General) ) ;
+
+    	lcd_putc( 18*FW, 0, '(' ) ;
+    	lcd_putc( 20*FW, 0, ')' ) ;
+    	lcd_putc( 19*FW, 0, g_model.modelVersion + '0' ) ;
+
 #ifdef PCBX9D
 			IlinesCount = 19 ;
 #else

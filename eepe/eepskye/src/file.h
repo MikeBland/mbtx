@@ -103,6 +103,7 @@ struct t_radioData
 		uint32_t type ;
 		uint32_t options ;
 		uint32_t T9xr_pro ;
+		uint32_t extraPots ;
 
 } ;
 

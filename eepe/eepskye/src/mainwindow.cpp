@@ -161,6 +161,8 @@ MainWindow::MainWindow()
 
     readSettings();
 		title() ;
+    
+		setAcceptDrops(true);
 		
 		setUnifiedTitleAndToolBarOnMac(true);
     this->setWindowIcon(QIcon(":/icon.png"));
@@ -206,6 +208,39 @@ MainWindow::MainWindow()
 			}
 		}
 
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+  QList<QUrl> urls = event->mimeData()->urls();
+  if (urls.isEmpty())
+    return;
+    
+	QString fileName = urls.first().toLocalFile();
+  if (fileName.isEmpty())
+    return;
+//  g.eepromDir(QFileInfo(fileName).dir().absolutePath());
+
+  QMdiSubWindow *existing = findMdiChild(fileName);
+  if (existing) {
+    mdiArea->setActiveSubWindow(existing);
+    return;
+  }
+
+  MdiChild *child = createMdiChild();
+  if (child->loadFile(fileName)) {
+    statusBar()->showMessage(tr("File loaded"), 2000);
+    child->show();
+  }
+	
+}
+
+ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+  if (event->mimeData()->hasFormat("text/uri-list"))
+	{
+    event->acceptProposedAction();
+	}
 }
 
 void MainWindow::title()

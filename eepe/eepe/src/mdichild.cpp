@@ -131,6 +131,10 @@ void MdiChild::dragEnterEvent(QDragEnterEvent *event)
          clearSelection();
          itemAt(event->pos())->setSelected(true);
     }
+		else if (event->mimeData()->hasFormat("text/uri-list"))
+		{
+	    event->acceptProposedAction();
+		}
 }
 
 void MdiChild::dragMoveEvent(QDragMoveEvent *event)
@@ -152,6 +156,17 @@ void MdiChild::dropEvent(QDropEvent *event)
         QByteArray gmData = event->mimeData()->data("application/x-eepe");
         doPaste(&gmData,i);
     }
+		else
+		{
+		  QList<QUrl> urls = event->mimeData()->urls();
+  		if (urls.isEmpty())
+    		return ;
+			QString fileName = urls.first().toLocalFile();
+  		if (fileName.isEmpty())
+  		  return ;
+			setCurrentRow( i ) ;
+      loadModelFromFile( fileName ) ;
+		}
     event->acceptProposedAction();
 }
 
@@ -173,6 +188,12 @@ void MdiChild::refreshList()
     {
             eeFile.eeLoadModelName(i,buf,sizeof(buf));
             addItem(QString(buf));
+    }
+    if (radioData.generalSettings.currModel < 60 )
+		{
+			QFont f = QFont("Courier New", 12) ;
+			f.setBold(true) ;
+      this->item(radioData.generalSettings.currModel+1)->setFont(f) ;
     }
 }
 
@@ -807,6 +828,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
                     {
               				radioData.File_system[i+1].size = sizeof(tmod) ;
               				memcpy( &radioData.models[i], &tmod, sizeof( tmod ) ) ;
+											v1ModelTov2( i ) ;
               				memcpy( &radioData.ModelNames[i+1], &radioData.models[i].name, sizeof( radioData.models[0].name) ) ;
               				radioData.ModelNames[i+1][sizeof( radioData.models[0].name)+1] = '\0' ;
                         eeFile.putModel(&tmod,i);
@@ -913,6 +935,129 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
     }
 
     return false;
+}
+
+void MdiChild::v1ModelTov2( int i )
+{
+  struct t_ModelData *v1m = &radioData.models[i] ;
+  struct t_V2ModelData *v2m = &radioData.v2models[i] ;
+	uint32_t i ;
+
+	v2m->traineron = v1m->traineron ;
+	v2m->FrSkyUsrProto = v1m->FrSkyUsrProto ;
+	v2m->FrSkyGpsAlt = v1m->FrSkyGpsAlt ;
+	v2m->FrSkyImperial          = v1m->FrSkyImperial ;
+	v2m->protocol               = v1m->protocol      ;
+	v2m->country                = v1m->country       ;
+	v2m->ppmNCH                 = v1m->ppmNCH        ;
+	v2m->thrTrim                = v1m->thrTrim       ;
+	v2m->thrExpo                = v1m->thrExpo       ;
+	v2m->ppmStart               = v1m->ppmStart      ;
+	v2m->trimInc                = v1m->trimInc       ;
+	v2m->ppmDelay               = v1m->ppmDelay      ;
+	v2m->trimSw                 = v1m->trimSw        ;
+	v2m->beepANACenter          = v1m->beepANACenter ;
+	v2m->pulsePol               = v1m->pulsePol      ;
+	v2m->extendedLimits         = v1m->extendedLimits ;
+	v2m->swashInvertELE         = v1m->swashInvertELE ;
+	v2m->swashInvertAIL         = v1m->swashInvertAIL ;
+	v2m->swashInvertCOL         = v1m->swashInvertCOL ;
+	v2m->swashType              = v1m->swashType     ;
+	v2m->swashCollectiveSource  = v1m->swashCollectiveSource ;
+	v2m->swashRingValue         = v1m->swashRingValue ;
+	v2m->ppmFrameLength         = v1m->ppmFrameLength ;
+	v2m->trim[0]         = v1m->trim[0] ;
+	v2m->trim[1]         = v1m->trim[1] ;
+	v2m->trim[2]         = v1m->trim[2] ;
+	v2m->trim[3]         = v1m->trim[3] ;
+	v2m->anaVolume        = v1m->anaVolume        ;
+	v2m->numBlades        = v1m->numBlades        ;
+	v2m->sub_trim_limit   = v1m->sub_trim_limit        ;
+	v2m->CustomDisplayIndex[0][0] = v1m->CustomDisplayIndex[0] ;
+	v2m->CustomDisplayIndex[0][1] = v1m->CustomDisplayIndex[1] ;
+	v2m->CustomDisplayIndex[0][2] = v1m->CustomDisplayIndex[2] ;
+	v2m->CustomDisplayIndex[0][3] = v1m->CustomDisplayIndex[3] ;
+	v2m->CustomDisplayIndex[0][4] = v1m->CustomDisplayIndex[4] ;
+	v2m->CustomDisplayIndex[0][5] = v1m->CustomDisplayIndex[5] ;
+	v2m->varioData        = v1m->varioData        ;
+	v2m->modelVersion     = v1m->modelVersion        ;
+	v2m->sub_protocol     = v1m->sub_protocol        ;
+	v2m->option_protocol  = v1m->option_protocol        ;
+	v2m->telemetryProtocol = v1m->telemetryProtocol        ;
+	v2m->currentSource = v1m->currentSource        ;
+	v2m->throttleIdle = v1m->throttleIdle        ;
+	v2m->throttleReversed = v1m->throttleReversed        ;
+	for ( i = 0 ; i < MAX_MIXERS ; i += 1 )
+	{
+		v2m->mixData[i] = v1m->mixData[i] ;
+	}
+	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
+	{
+		v2m->vad[i] = v1m->vad[i] ;
+	}
+
+
+}
+
+void MdiChild::v2ModelTov1( int i )
+{
+  struct t_ModelData *v1m = &radioData.models[i] ;
+  struct t_V2ModelData *v2m = &radioData.v2models[i] ;
+
+	v1m->traineron = v2m->traineron ;
+	v1m->FrSkyUsrProto = v2m->FrSkyUsrProto ;
+	v1m->FrSkyGpsAlt = v2m->FrSkyGpsAlt ;
+	v1m->FrSkyImperial         = v2m->FrSkyImperial         ;
+	v1m->protocol              = v2m->protocol              ;
+	v1m->country               = v2m->country               ;
+	v1m->ppmNCH                = v2m->ppmNCH                ;
+	v1m->thrTrim               = v2m->thrTrim               ;
+	v1m->thrExpo               = v2m->thrExpo               ;
+	v1m->ppmStart              = v2m->ppmStart              ;
+	v1m->trimInc               = v2m->trimInc               ;
+	v1m->ppmDelay              = v2m->ppmDelay              ;
+	v1m->trimSw                = v2m->trimSw                ;
+	v1m->beepANACenter         = v2m->beepANACenter         ;
+	v1m->pulsePol              = v2m->pulsePol              ;
+	v1m->extendedLimits        = v2m->extendedLimits        ;
+	v1m->swashInvertELE        = v2m->swashInvertELE        ;
+	v1m->swashInvertAIL        = v2m->swashInvertAIL        ;
+	v1m->swashInvertCOL        = v2m->swashInvertCOL        ;
+	v1m->swashType             = v2m->swashType             ;
+	v1m->swashCollectiveSource = v2m->swashCollectiveSource ;
+	v1m->swashRingValue        = v2m->swashRingValue        ;
+	v1m->ppmFrameLength        = v2m->ppmFrameLength        ;
+	v1m->trim[0]         = v2m->trim[0] ;
+	v1m->trim[1]         = v2m->trim[1] ;
+	v1m->trim[2]         = v2m->trim[2] ;
+	v1m->trim[3]         = v2m->trim[3] ;
+	v1m->anaVolume        = v2m->anaVolume ; // May truncate
+	v1m->numBlades        = v2m->numBlades        ;
+	v1m->sub_trim_limit   = v2m->sub_trim_limit        ;
+	v1m->CustomDisplayIndex[0] = v2m->CustomDisplayIndex[0][0] ;
+	v1m->CustomDisplayIndex[1] = v2m->CustomDisplayIndex[0][1] ;
+	v1m->CustomDisplayIndex[2] = v2m->CustomDisplayIndex[0][2] ;
+	v1m->CustomDisplayIndex[3] = v2m->CustomDisplayIndex[0][3] ;
+	v1m->CustomDisplayIndex[4] = v2m->CustomDisplayIndex[0][4] ;
+	v1m->CustomDisplayIndex[5] = v2m->CustomDisplayIndex[0][5] ;
+	v1m->varioData        = v2m->varioData        ;
+	v1m->modelVersion     = v2m->modelVersion        ;
+	v1m->sub_protocol     = v2m->sub_protocol        ;
+	v1m->option_protocol  = v2m->option_protocol        ;
+	v1m->telemetryProtocol = v2m->telemetryProtocol        ;
+	v1m->currentSource = v2m->currentSource        ;
+	v1m->throttleIdle = v2m->throttleIdle        ;
+	v1m->throttleReversed = v2m->throttleReversed        ;
+	for ( i = 0 ; i < MAX_MIXERS ; i += 1 )
+	{
+		v1m->mixData[i] = v2m->mixData[i] ;
+	}
+	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
+	{
+		v1m->vad[i] = v2m->vad[i] ;
+	}
+
+
 }
 
 bool MdiChild::save()
@@ -1217,9 +1362,16 @@ void MdiChild::burnTo()  // write to Tx
     		QString mcu        = bcd.getMCU();
         QStringList args   = bcd.getAVRArgs();
         
-				
-				
-				
+				if ( args.contains("-F") )
+				{
+    			QMessageBox::StandardButton ret = QMessageBox::question(this, tr("eePe"),
+                 tr("Only use -F if ABSOLUTELY sure. Continue?"),
+                 QMessageBox::Yes | QMessageBox::No);
+    			if (ret != QMessageBox::Yes)
+					{
+						return ;
+					}
+				}
 				
 				if(!bcd.getPort().isEmpty()) args << "-P" << bcd.getPort();
 
@@ -1275,6 +1427,8 @@ void MdiChild::ShowContextMenu(const QPoint& pos)
     contextMenu.addAction(QIcon(":/images/simulate.png"), tr("Simulate"),this,SLOT(simulate()),tr("Alt+S"));
     contextMenu.addSeparator();
     contextMenu.addAction(QIcon(":/images/write_eeprom.png"), tr("&Write To Tx"),this,SLOT(burnTo()),tr("Ctrl+Alt+W"));
+    contextMenu.addSeparator();
+    contextMenu.addAction(QIcon(":/images/edit.png"), tr("Set &Active Model"),this,SLOT(setActive()));
 
     contextMenu.exec(globalPos);
 }
@@ -1293,6 +1447,16 @@ void MdiChild::setModified(ModelEdit * me)
     }
 }
 
+void MdiChild::setActive()
+{
+  int i = this->currentRow() ;
+  
+	if ( i )
+	{
+		radioData.generalSettings.currModel = i - 1 ;
+		refreshList();
+	}
+}
 
 void MdiChild::simulate()
 {

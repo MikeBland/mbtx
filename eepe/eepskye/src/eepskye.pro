@@ -30,7 +30,8 @@ HEADERS += mainwindow.h \
     ../../common/telemetry.h \
     ../../common/reviewOutput.h \
     ../../common/node.h \
-    ../../common/edge.h
+    ../../common/edge.h \
+    GvarAdjustDialog.h
 SOURCES += main.cpp \
     mainwindow.cpp \
     file.cpp \
@@ -57,7 +58,8 @@ SOURCES += main.cpp \
     ../../common/telemetry.cpp \
     ../../common/reviewOutput.cpp \
     ../../common/node.cpp \
-    ../../common/edge.cpp
+    ../../common/edge.cpp \
+    GvarAdjustDialog.cpp
 unix {
 SOURCES += mountlist.cpp
 }
@@ -76,7 +78,8 @@ FORMS += modeledit.ui \
     VoiceAlarmDialog.ui \
     TemplateDialog.ui \
     ../../common/telemetryDialog.ui \
-    ../../common/reviewOutput.ui
+    ../../common/reviewOutput.ui \
+    GvarAdjustDialog.ui
 TRANSLATIONS = eepe_.ts    \
                eepe_he.ts  \
                eepe_pt.ts  \

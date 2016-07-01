@@ -807,6 +807,7 @@ void ee32LoadModel(uint8_t id)
 				}
 			}
 			g_model.modelVersion = 3 ;
+	 		STORE_MODELVARS ;
 		}
 
 

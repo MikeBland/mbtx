@@ -126,7 +126,7 @@
 #define STR_SLAVE          "\007Slave" 
 #define STR_MENU_DONE      "[MENU] WHEN DONE"
 #define STR_CURVES         "Curves"
-#define STR_CURVE          "CURVE"
+#define STR_CURVE          "Curve"
 #define STR_GLOBAL_VAR     "GLOBAL VAR"
 #define STR_VALUE          "Value"
 #define STR_PRESET         "PRESET"
@@ -199,7 +199,7 @@
 #define STR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define STR_DELETE_MIX     "DELETE MIX?"
 #define STR_MIX_POPUP      "EDIT\0INSERT\0COPY\0MOVE\0DELETE\0CLEAR ALL"
-#define STR_MIXER          "MIXER"
+//#define STR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define CHR_S              'S'
 // CHR_D D for Delay
@@ -370,7 +370,7 @@
 #endif  // XSW_MOD
 #define SWITCH_WARN_STR	   "Switch Warning"
 // CURV_STR indexed 3 chars each
-#define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16"
+#define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17"
 // CSWITCH_STR indexed 7 chars each
 #ifdef VERSION3
 #if defined(CPUM128) || defined(CPUM2561)

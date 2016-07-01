@@ -215,7 +215,10 @@ MainWindow::MainWindow()
     readSettings();
 
     setWindowTitle(tr("eePe - EEPROM Editor"));
-    setUnifiedTitleAndToolBarOnMac(true);
+    
+		setAcceptDrops(true);
+		
+		setUnifiedTitleAndToolBarOnMac(true);
     this->setWindowIcon(QIcon(":/icon.png"));
 
     checkForUpdates(false);
@@ -259,6 +262,39 @@ MainWindow::MainWindow()
 		    settings.setValue("currentEEPErelease", currentEEPErelease ) ;
 			}
 		}
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+  QList<QUrl> urls = event->mimeData()->urls();
+  if (urls.isEmpty())
+    return;
+    
+	QString fileName = urls.first().toLocalFile();
+  if (fileName.isEmpty())
+    return;
+//  g.eepromDir(QFileInfo(fileName).dir().absolutePath());
+
+  QMdiSubWindow *existing = findMdiChild(fileName);
+  if (existing) {
+    mdiArea->setActiveSubWindow(existing);
+    return;
+  }
+
+  MdiChild *child = createMdiChild();
+  if (child->loadFile(fileName)) {
+    statusBar()->showMessage(tr("File loaded"), 2000);
+    child->show();
+  }
+	
+}
+
+ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+  if (event->mimeData()->hasFormat("text/uri-list"))
+	{
+    event->acceptProposedAction();
+	}
 }
 
 void MainWindow::releaseNotes()
@@ -901,6 +937,18 @@ void MainWindow::burnExtenalToEEPROM()
         QString programmer = bcd.getProgrammer();
         QString mcu        = bcd.getMCU();
         QStringList args   = bcd.getAVRArgs();
+				
+				if ( args.contains("-F") )
+				{
+    			QMessageBox::StandardButton ret = QMessageBox::question(this, tr("eePe"),
+                 tr("Only use -F if ABSOLUTELY sure. Continue?"),
+                 QMessageBox::Yes | QMessageBox::No);
+    			if (ret != QMessageBox::Yes)
+					{
+						return ;
+					}
+				}
+				
         if(!bcd.getPort().isEmpty()) args << "-P" << bcd.getPort();
 
     		if(!QFileInfo(avrdudeLoc).exists())
@@ -946,6 +994,19 @@ void MainWindow::burnToFlash(QString fileToFlash)
         QString programmer = bcd.getProgrammer();
         QString mcu        = bcd.getMCU();
         QStringList args   = bcd.getAVRArgs();
+				
+				if ( args.contains("-F") )
+				{
+    			QMessageBox::StandardButton ret = QMessageBox::question(this, tr("eePe"),
+                 tr("Only use -F if ABSOLUTELY sure. Continue?"),
+                 QMessageBox::Yes | QMessageBox::No);
+    			if (ret != QMessageBox::Yes)
+					{
+						return ;
+					}
+				}
+				
+				bool disablePreRead = bcd.getPreRead() ;
 
     		if(!QFileInfo(avrdudeLoc).exists())
 				{
@@ -955,24 +1016,26 @@ void MainWindow::burnToFlash(QString fileToFlash)
 					return ;
 				}
 
-				if ( mcu != "m328p" )
+				if ( !disablePreRead )
 				{
-					ret = backupEeprom() ;
-
-					if ( ret )
+					if ( mcu != "m328p" )
 					{
-        	  QMessageBox::warning(this, "eePe", tr("Backup failed, abandoning flash operation") ) ;
-						return ;
-					}
+						ret = backupEeprom() ;
 
-					// delay a bit to allow hardware to settle
-		    	QTime dieTime= QTime::currentTime().addSecs(1);
-		    	while( QTime::currentTime() < dieTime )
-					{
-			  	  QCoreApplication::processEvents(QEventLoop::AllEvents, 100);    
+						if ( ret )
+						{
+        		  QMessageBox::warning(this, "eePe", tr("Backup failed, abandoning flash operation") ) ;
+							return ;
+						}
+
+						// delay a bit to allow hardware to settle
+		    		QTime dieTime= QTime::currentTime().addSecs(1);
+		    		while( QTime::currentTime() < dieTime )
+						{
+			  		  QCoreApplication::processEvents(QEventLoop::AllEvents, 100);    
+						}
 					}
 				}
-
 
 
 //        ret = QMessageBox::question(this, "eePe", tr("Preserve installed spash screen"), QMessageBox::Yes | QMessageBox::No);

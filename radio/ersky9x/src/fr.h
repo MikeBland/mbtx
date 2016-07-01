@@ -157,7 +157,7 @@
 #define ISTR_OFF_ON         "OFFON "
 #define ISTR_HYPH_INV       FWx18"\001""\003---INV"
 #define ISTR_VERSION        "VERSION"
-#define ISTR_TRAINER        "ECOLAGE"
+#define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Esclav." 
 #define ISTR_MENU_DONE      "[MENU] QUAND PRET"
 #define ISTR_CURVES         "COURBES"
@@ -231,7 +231,7 @@
 #define ISTR_YES_NO         "\003OUI\013NON"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "EFFACER MIX?"
-#define ISTR_MIX_POPUP      "EDITER\0AJOUTER\0COPIER\0DEPLACER\0EFFACER\0EFF.TOUT"
+#define ISTR_MIX_POPUP      "EDITER\0AJOUTER\0COPIER\0DEPLACER\0EFFACER\0EFF.TOUT\0TEMPLATES"
 #define ISTR_MIXER          "MIXAGE"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -271,7 +271,7 @@
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US          "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC  " Trame PPM\015mSec"
+#define ISTR_PPMFRAME_MSEC  " Trame PPM\016mSec"
 #define ISTR_SEND_RX_NUM    " Envoyer Nb Rx [MENU]"
 #define ISTR_DSM_TYPE       " Type DSM"
 #define ISTR_PPM_1ST_CHAN   " 1er Canal"
@@ -365,8 +365,13 @@
 #define IHW_SWITCHARROW_STR  		"\200-\201"
 #endif
 #ifdef PCBX9D
+#ifdef REV9E
 #define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"\
 														 "SI\200SI-SI\201SJ\200SJ-SJ\201SK\200SK-SK\201SL\200SL-SL\201SM\200SM-SM\201SN\200SN-SN\201SO\200SO-SO\201SP\200SP-SP\201SQ\200SQ-SQ\201SR\200SR-SR\201"
+#else
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
+#endif	// REV9E
+
 #ifdef REV9E
 #define IHW_SWITCHES_STR     		"\002SASBSCSDSESFSGSHSISJSKSLSMSNSOSPSQSR6P"
 #else
@@ -530,8 +535,9 @@
 #define ISTR_THROTTLE_OPEN		"Gaz Ouvert"
 #define ISTR_THR_DEFAULT		"D/300faut Gaz"
 #define ISTR_TOTAL_TIME			"Temps Total"
-#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso."
+#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates"
 
+#define ISTR_SHUT_DOWN					"Shutting Down"
 
 //"Alerte RSSI"
 //"RSSI Critique"

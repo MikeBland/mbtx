@@ -28,7 +28,7 @@
 
 extern unsigned char DisplayBuf[] ;
 
-#define Revision	3
+#define Revision	6
 
 const static prog_char APM RevisionString[] = { 'r', Revision/100+'0', (Revision%100)/10+'0', '.', Revision%10+'0', 0,  'R', 'e', 'v', Revision }   ;
 
@@ -40,6 +40,7 @@ uint8_t TxBusy ;
 uint8_t SaveMcusr ;
 
 uint8_t Contrast ;
+uint8_t Orientation ;
 uint8_t HapticStrength ;
 
 struct t_rotary Rotary ;
@@ -594,6 +595,11 @@ static void slave()
 							Contrast = SlaveTempReceiveBuffer[0] ;
 //							lcdSetRefVolt( 27 ) ;
 							lcdSetRefVolt( Contrast ) ;
+							if ( Orientation != SlaveTempReceiveBuffer[1] )
+							{
+								Orientation = SlaveTempReceiveBuffer[1] ;
+								lcdSetOrientation() ;
+							}
 						break ;
 
 						case 0x14 :	 
@@ -682,9 +688,12 @@ int main(void)
   uint8_t mcusr = MCUSR; // save the WDT (etc) flags
 	SaveMcusr = mcusr ;
   MCUSR = 0; // must be zeroed before disabling the WDT
+	MCUCR = 0x80 ;
+	MCUCR = 0x80 ;	// Must be done twice
 #else
 //  uint8_t mcusr = MCUCSR;
-  MCUCSR = 0;
+  MCUCSR = 0x80;
+  MCUCSR = 0x80;	// Must be done twice
 #endif
 //RebootReason = mcusr ;
 #ifdef CPUM2561
@@ -729,6 +738,7 @@ int main(void)
 
 	lcd_init() ;
 
+  wdt_enable(WDTO_500MS);
 	slave() ;
 }
 

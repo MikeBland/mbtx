@@ -49,7 +49,12 @@
 #define NUM_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
 
-#define NUM_GVAR_ADJUST	8
+#define NUM_GVAR_ADJUST		8
+#define EXTRA_GVAR_ADJUST	12
+
+#define MUSIC_NAME_LENGTH		14
+#define MUSIC_DIR_LENGTH		8
+#define PLAYLIST_COUNT			16
 
 //OBSOLETE - USE ONLY MDVERS NOW
 //#define GENERAL_MYVER_r261 3
@@ -96,7 +101,7 @@ PACK(typedef struct t_TrainerMix {
   int8_t  studWeight:6; // Now moved to exTrainerMix
   uint8_t mode:2;   //off,add-mode,subst-mode
 }) TrainerMix; //
- 
+
 PACK(typedef struct t_TrainerData {
   int16_t        calib[4];
   TrainerMix     mix[4];
@@ -240,7 +245,11 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t btComPort ;
 	uint8_t gpsFormat:1 ;
 	uint8_t reverseScreen:1 ;
-	uint8_t spare:6 ;
+	uint8_t musicLoop:1 ;
+	uint8_t musicType:1 ;
+	uint8_t spare:4 ;
+	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
+	uint8_t playListIndex ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -438,8 +447,8 @@ PACK(typedef struct te_MixData {
   uint8_t differential:1 ;
   int8_t  sOffset;
 	uint8_t modeControl ;
-  uint8_t switchSource ;
-  uint8_t res[2] ;
+	uint8_t	switchSource ;
+	uint8_t	res[2] ;
 }) SKYMixData;
 
 PACK(typedef struct te_CSwData { // Custom Switches data
@@ -591,6 +600,15 @@ PACK(typedef struct t_protocol
   uint8_t		sub_protocol ;
 }) ProtocolData ;
 
+PACK(typedef struct t_music
+{
+	int8_t musicStartSwitch ;
+	int8_t musicPauseSwitch ;
+	int8_t musicPrevSwitch ;
+	int8_t musicNextSwitch ;
+}) MusicData ;
+
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -731,6 +749,8 @@ PACK(typedef struct te_ModelData {
   int8_t	curve6[6] ;
 	uint8_t customDisplay1Extra[7] ;
 	uint8_t customDisplay2Extra[7] ;
+	MusicData musicData ;
+	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;
 #if EXTRA_SKYMIXERS
   SKYMixData exmixData[EXTRA_SKYMIXERS] ;
 #endif

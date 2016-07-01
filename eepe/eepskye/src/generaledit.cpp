@@ -216,6 +216,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->StickRVdeadbandSB->setValue( g_eeGeneral.stickDeadband[2] ) ;
     ui->StickRHdeadbandSB->setValue( g_eeGeneral.stickDeadband[3] ) ;
 
+		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
+		loadTrainerFromProfile() ;
 		updateTrainerTab();
 
 
@@ -605,10 +607,10 @@ void GeneralEdit::saveTrainerToProfile()
 		tc->mode = td->mode ;
 		tc->swtch = xtd->swtch ;
 		tc->studWeight = xtd->studWeight ;
-		if ( i == 0 )
-		{
-			tc->source = g_eeGeneral.trainerSource ;
-		}
+//		if ( i == 0 )
+//		{
+//			tc->source = g_eeGeneral.trainerSource ;
+//		}
 	}
 }
 
@@ -625,10 +627,10 @@ void GeneralEdit::loadTrainerFromProfile()
 		td->mode = tc->mode ;
 		xtd->swtch = tc->swtch ;
 		xtd->studWeight = tc->studWeight ;
-		if ( i == 0 )
-		{
-			g_eeGeneral.trainerSource = tc->source ;
-		}
+//		if ( i == 0 )
+//		{
+//			g_eeGeneral.trainerSource = tc->source ;
+//		}
 	}
 }
 
@@ -650,9 +652,9 @@ void GeneralEdit::updateTrainerTab()
 	trainerTabLock = 1 ;
     on_tabWidget_selected(""); // updates channel name labels
 
-		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
-		ui->TrainerSourceCB->setCurrentIndex( g_eeGeneral.trainerSource ) ;
 		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
+		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
+		ui->TrainerSourceCB->setCurrentIndex( g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source ) ;
     ui->modeCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
     ui->sourceCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].srcChn);
     if ( g_eeGeneral.trainer.mix[0].swtch == -16)
@@ -794,6 +796,9 @@ void GeneralEdit::trainerTabValueChanged()
     g_eeGeneral.trainer.calib[3] = ui->trainerCalib_4->value();
 
     g_eeGeneral.PPM_Multiplier = ((quint16)(ui->PPM_MultiplierDSB->value()*10))-10;
+		
+		g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source = ui->TrainerSourceCB->currentIndex() ;
+		saveTrainerToProfile() ;
 
     updateSettings();
 }
@@ -999,7 +1004,6 @@ void GeneralEdit::on_BluetoothTypeCB_currentIndexChanged(int index)
     g_eeGeneral.BtType = index ;
     updateSettings();
 }
-
 
 void GeneralEdit::on_backlightautoSB_editingFinished()
 {
@@ -1462,10 +1466,10 @@ void GeneralEdit::on_hapticStengthSB_editingFinished()
 
 void GeneralEdit::on_tabWidget_selected(QString )
 {
-    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,2,0));
-    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,2,0));
-    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,2,0));
-    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,2,0));
+    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,2,0,0));
+    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,2,0,0));
+    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,2,0,0));
+    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,2,0,0));
 }
 
 

@@ -1531,12 +1531,21 @@ void refreshDisplay()
 #ifdef PCB9XT
 void refreshDisplay()
 {
+	if ( ( m64ReceiveStatus() & 1 ) == 0 )
+	{
+		lcd_char_inverse( 0, 0, 6, 1 ) ;
+	}
 	displayToM64() ;	
 }
 
 void lcdSetRefVolt(uint8_t val)
 {
 	M64Contrast = val ;
+	M64SetContrast = 1 ;
+}
+
+void lcdSetOrientation()
+{
 	M64SetContrast = 1 ;
 }
 

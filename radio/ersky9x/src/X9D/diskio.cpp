@@ -247,7 +247,7 @@ BYTE wait_ready (void)
         while ((res != 0xFF) && Timer2);
 
         return res;
-}
+ }
 
 
 

@@ -108,6 +108,9 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 
 #endif // PCB9XT
 
+
+extern uint16_t DebugAudio2 ;
+
 #include "sbus.h"
 
 #include "ff.h"
@@ -179,6 +182,7 @@ t_time Time ;
 
 uint8_t unexpectedShutdown = 0;
 uint8_t SdMounted = 0;
+uint8_t SectorsPerCluster ;
 #ifdef PCBX9D
 uint8_t CurrentTrainerSource ;
 #endif
@@ -247,6 +251,11 @@ uint8_t ppmInValid = 0 ;
 uint8_t Activated = 0 ;
 uint8_t Tevent ;
 uint16_t SbusTimer = 0 ;
+
+uint8_t LastMusicStartSwitchState ;
+uint8_t LastMusicPauseSwitchState ;
+uint8_t LastMusicPrevSwitchState ;
+uint8_t LastMusicNextSwitchState ;
 
 #ifdef BLUETOOTH
 void tmrBt_Handle( void ) ;
@@ -410,7 +419,7 @@ uint8_t AlarmTimer = 100 ;		// Units of 10 mS
 uint8_t AlarmCheckFlag = 0 ;
 //uint8_t CsCheckFlag = 0 ;
 uint8_t VoiceTimer = 10 ;		// Units of 10 mS
-uint8_t VoiceCheckFlag = 0 ;
+uint8_t VoiceCheckFlag100mS = 0 ;
 //#ifdef TELEMETRY_LOST
 //uint8_t TelemetryStatus ;
 //#endif
@@ -3532,6 +3541,8 @@ extern void closeLogs( void ) ;
 
 uint8_t LogsRunning = 0 ;
 uint16_t LogTimer = 0 ;
+extern uint8_t RawLogging ;
+extern void rawStartLogging() ;
 
 void log_task(void* pdata)
 {
@@ -3549,6 +3560,10 @@ void log_task(void* pdata)
 		do
 		{
 			CoTickDelay(5) ;					// 10mS
+			if ( ( RawLogging ) && ( LogsRunning & 1 ) )
+			{
+				writeLogs() ;
+			}
 		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) ;
 //		LogTimer = 0 ;
   	tgtime += 50 ;
@@ -3586,6 +3601,7 @@ void log_task(void* pdata)
 					SdAccessRequest = 0 ;
 					result = openLogs() ;
 					unlockVoice() ;
+					rawStartLogging() ;
 					if ( result != NULL )
 					{
     				audioDefevent( AU_SIREN ) ;
@@ -3602,17 +3618,16 @@ void log_task(void* pdata)
 			if ( LogsRunning & 1 )
 			{
 				// log Data (depending on Rate)
-				LogsRunning += 0x40 ;
-				uint8_t mask = 0x40 ;
+				uint8_t mask = 0x0001 ;
 				if ( g_model.logRate == 2 )		// 0.5 secs
 				{
 					mask = 0 ;
 				}
 				else if ( g_model.logRate )		// 2.0 secs
 				{
-					mask = 0xC0 ;
+					mask = 0x0003 ;
 				}
-				if ( ( LogsRunning & mask ) == 0 )
+				if ( ( LogTimer & mask ) == 0 )
 				{
 					writeLogs() ;
 				}
@@ -3772,7 +3787,7 @@ void main_loop(void* pdata)
 
 		speakModelVoice() ;
 	}
-	VoiceCheckFlag |= 2 ;// Set switch current states
+	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 
 
 // Preload battery voltage
@@ -3923,7 +3938,7 @@ void main_loop(void* pdata)
 		{
 			// Time to switch off
 			lcd_clear() ;
-			lcd_putsn_P( 4*FW, 3*FH, "SHUTTING DOWN", 13 ) ;
+			lcd_puts_P( 4*FW, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 
 //#ifdef REV9E
 //extern uint8_t PowerState ;
@@ -4354,7 +4369,14 @@ static void processVoiceAlarms()
 // End of invalid telemetry detection
 			if ( pvad->swtch )
 			{
-				if ( getSwitch00( pvad->swtch ) == 0 )
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					if ( getFlightPhase() == 0 )
+					{
+						x = 0 ;
+					}
+				}
+				else if ( getSwitch00( pvad->swtch ) == 0 )
 				{
 					x = 0 ;
 				}
@@ -4372,7 +4394,14 @@ static void processVoiceAlarms()
 		{
 			if ( pvad->swtch )
 			{
-				curent_state = getSwitch00( pvad->swtch ) ;
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					curent_state = getFlightPhase() ? 1 : 0 ;
+				}
+				else
+				{
+					curent_state = getSwitch00( pvad->swtch ) ;
+				}
 				if ( curent_state == 0 )
 				{
 //							Nvs_state[i] = 0 ;
@@ -4392,11 +4421,19 @@ static void processVoiceAlarms()
 		}
 		play |= curent_state ;
 
-		if ( ( VoiceCheckFlag & 2 ) == 0 )
+		if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
 		{
 		 if ( pvad->rate == 3 )	// All
 		 {
-		 		uint32_t pos = switchPosition( pvad->swtch ) ;
+		 		uint32_t pos ;
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					pos = getFlightPhase() ;
+				}
+				else
+				{
+					pos = switchPosition( pvad->swtch ) ;
+				}
 				uint32_t state = Nvs_state[i] ;
 				play = 0 ;
 				if ( state != pos )
@@ -4463,7 +4500,23 @@ static void processVoiceAlarms()
 		}
 		else
 		{
-			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
+		 	uint32_t pos ;
+			if ( pvad->rate == 3 )
+			{
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					pos = getFlightPhase() ;
+				}
+				else
+				{
+					pos = switchPosition( pvad->swtch ) ;
+				}
+			}
+			else
+			{
+				pos = play ;
+			}
+			Nvs_state[i] = pos ;
 			play = ( pvad->rate == 33 ) ? 1 : 0 ;
 			ltimer = -1 ;
 		}
@@ -4588,6 +4641,160 @@ static void processVoiceAlarms()
 		}
 		pvad += 1 ;
 		Nvs_timer[i] = ltimer ;
+	}
+}
+
+#define MUSIC_SWITCH_SAME 0
+#define MUSIC_SWITCH_ON		1
+#define MUSIC_SWITCH_OFF	2
+
+extern uint16_t PlayListCount ;
+extern uint16_t PlaylistIndex ;
+
+uint32_t musicSwitch( int16_t mSwitch, uint8_t *state )
+{
+  if(mSwitch)
+	{
+		if ( mSwitch < -HSW_MAX )
+		{
+			mSwitch += 256 ;
+		}
+		if ( VoiceCheckFlag100mS & 2 )
+		{
+  	  *state = getSwitch00( mSwitch-(HSW_MAX) ) ;
+			return MUSIC_SWITCH_SAME ;
+		}
+		
+  	if(mSwitch>(HSW_MAX))	 // toggeled switch
+		{
+  	  uint8_t swPos = getSwitch00( mSwitch-(HSW_MAX) ) ;
+			if ( swPos != *state )
+			{
+				*state = swPos ;
+				if ( swPos )	// Now on
+				{
+					return MUSIC_SWITCH_ON ;
+				}
+			}
+		}
+		else
+		{
+			// normal switch
+  	  uint8_t swPos = getSwitch00( mSwitch ) ;
+			if ( swPos != *state )
+			{
+				*state = swPos ;
+				if ( swPos )	// Now on
+				{
+					return MUSIC_SWITCH_ON ;
+				}
+				else
+				{ // now off
+					return MUSIC_SWITCH_OFF ;
+				}
+			}
+		}
+	}
+	return MUSIC_SWITCH_SAME ;
+}
+
+void processMusicSwitches()
+{
+  int16_t mSwitch ;
+	uint32_t state ;
+	mSwitch = g_model.musicData.musicStartSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicStartSwitchState ) ;
+
+	if ( state == MUSIC_SWITCH_ON )	// Now on
+	{
+		if ( ( MusicPlaying == MUSIC_PLAYING ) || ( MusicPlaying == MUSIC_PAUSED ) )
+		{
+			MusicPlaying = MUSIC_STOPPING ;
+		}
+		else if ( MusicPlaying == MUSIC_STOPPED )
+		{
+			MusicPlaying = MUSIC_STARTING ;
+				DebugAudio2 = 7 ;
+		}
+	}
+	else if ( state == MUSIC_SWITCH_OFF )
+	{
+		if ( ( MusicPlaying == MUSIC_PLAYING ) || ( MusicPlaying == MUSIC_PAUSED ) )
+		{
+			MusicPlaying = MUSIC_STOPPING ;
+		}
+	}
+
+	mSwitch = g_model.musicData.musicPauseSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicPauseSwitchState ) ;
+	if ( state == MUSIC_SWITCH_ON )	// Now on
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			MusicPlaying = MUSIC_PAUSING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSED )
+		{
+			MusicPlaying = MUSIC_RESUMING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSING )
+		{
+			MusicPlaying = MUSIC_PLAYING ;
+		}
+	}
+	else if ( state == MUSIC_SWITCH_OFF )
+	{
+		if ( MusicPlaying == MUSIC_PAUSED )
+		{
+			MusicPlaying = MUSIC_RESUMING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSING )
+		{
+			MusicPlaying = MUSIC_PLAYING ;
+		}
+	}
+	
+	mSwitch = g_model.musicData.musicPrevSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicPrevSwitchState ) ;
+	if ( g_eeGeneral.musicType )
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			if ( state == MUSIC_SWITCH_ON )	// Now on
+			{
+				MusicPrevNext = MUSIC_NP_PREV ;
+//				if ( PlaylistIndex == 0 )
+//				{
+//					PlaylistIndex = PlayListCount - 1 ;
+//				}
+//				else
+//				{
+//					PlaylistIndex -= 1 ;
+//				}
+//				MusicPlaying = MUSIC_STARTING ;
+//				DebugAudio2 = 8 ;
+			}
+		}
+	}
+
+	mSwitch = g_model.musicData.musicNextSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicNextSwitchState ) ;
+	if ( g_eeGeneral.musicType )
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			if ( state == MUSIC_SWITCH_ON )	// Now on
+			{
+				MusicPrevNext = MUSIC_NP_NEXT ;
+//		 		PlaylistIndex += 1 ;
+//		 		if ( PlaylistIndex >= PlayListCount )
+//		 		{
+//		 			PlaylistIndex = 0 ;
+//		 		}
+//		 		MusicPlaying = MUSIC_STARTING ;
+//				DebugAudio2 = 9 ;
+			}
+		}
 	}
 }
 
@@ -5042,13 +5249,13 @@ extern uint32_t i2c2_result() ;
 	// New switch voices
 	// New entries, Switch, (on/off/both), voice file index
 
-	if ( VoiceCheckFlag )	// Every 100mS
+	if ( VoiceCheckFlag100mS )	// Every 100mS
   {
 		uint32_t i ;
 		static uint32_t timer ;
 		static uint32_t delayTimer = 0 ;
     
-		if ( VoiceCheckFlag & 1 )
+		if ( VoiceCheckFlag100mS & 1 )
 		{
 //#ifdef TELEMETRY_LOST
 //			if ( TelemetryStatus && ( frskyStreaming == 0 ) )
@@ -5166,7 +5373,7 @@ extern uint32_t i2c2_result() ;
 			if ( sd->opt.vs.vswtch )		// Configured
 			{
 				curent_state = getSwitch00( sd->opt.vs.vswtch ) ;
-				if ( ( VoiceCheckFlag & 2 ) == 0 )
+				if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
 				{
 					if ( ( mode == 0 ) || ( mode == 2 ) )
 					{ // ON
@@ -5332,7 +5539,7 @@ extern uint32_t i2c2_result() ;
 				}
 				if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
 				{
-					if ( VoiceCheckFlag & 2 )
+					if ( VoiceCheckFlag100mS & 2 )
 					{
 						// Resetting, retrigger any monostables
 						Last_switch[i] &= ~2 ;
@@ -5428,8 +5635,9 @@ extern uint32_t i2c2_result() ;
 //extern VoiceAlarmData vad[NUM_VOICE_ALARMS] ;	// Temporary for RAM based testing
 		// Now test for the new voice alarms
 		processVoiceAlarms() ;
+		processMusicSwitches() ;
 
-		VoiceCheckFlag = 0 ;
+		VoiceCheckFlag100mS = 0 ;
 
 		// Vario
 		{
@@ -6068,11 +6276,11 @@ uint32_t calcStickScroll( uint32_t index )
 
 static void	processAdjusters()
 {
-static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
-	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
+	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
-		pgvaradj = &g_model.gvarAdjuster[i] ;
+		pgvaradj = ( i >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
 		uint32_t idx = pgvaradj->gvarIndex ;
 	
 		int8_t sw0 = pgvaradj->swtch ;
@@ -7040,7 +7248,7 @@ void interrupt5ms()
 		{
 			VoiceTimer = 10 ;		// Restart timer
 			__disable_irq() ;
-			VoiceCheckFlag |= 1 ;	// Flag time to check alarms
+			VoiceCheckFlag100mS |= 1 ;	// Flag time to check alarms
 			__enable_irq() ;
 		}
 		
@@ -8020,6 +8228,15 @@ void createSwitchMapping()
 //	*p++ = HSW_SR2 ;
 //#endif	// REV9E
 
+	if ( g_eeGeneral.switchMapping & USE_PB1 )
+	{
+		*p++ = HSW_Pb1 ;
+	}
+	if ( g_eeGeneral.switchMapping & USE_PB2 )
+	{
+		*p++ = HSW_Pb2 ;
+	}
+
 	if ( g_eeGeneral.analogMapping & MASK_6POS )
 	{
 		*p++ = HSW_Ele6pos0 ;
@@ -8087,7 +8304,7 @@ int8_t switchMap( int8_t x )
 void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)
 {
   int16_t tm = idx1 ;
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 	if ( tm < -HSW_MAX )
 	{
 		tm += 256 ;
@@ -8129,6 +8346,11 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 	else if ( idx1 == -MAX_SKYDRSWITCH )
 	{
     lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att);return;
+	}
+	else if ( idx1 == MAX_SKYDRSWITCH + 1 )
+	{
+    lcd_putsAtt(x+FW,y,XPSTR("Fmd"),att) ;
+		return  ;;
 	}
 
 	if ( idx1 < 0 )

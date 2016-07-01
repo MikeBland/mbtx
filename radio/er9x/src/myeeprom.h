@@ -686,6 +686,7 @@ PACK(typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
+  int8_t    curvexy[18] ;
 //	uint8_t   altSource ;		// Currently unused
 
 }) ModelData;
@@ -764,6 +765,8 @@ PACK(typedef struct t_V2ModelData
 	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
 	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
+	uint8_t telemetryProtocol ;
+  int8_t    curvexy[18] ;
 }) V2ModelData ;
 #endif
 

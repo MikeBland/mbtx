@@ -54,6 +54,33 @@ extern uint16_t LogTimer ;
 FIL g_oLogFile = {0};
 const char *g_logError = NULL ;
 uint8_t logDelay;
+uint8_t RawLogging ;
+
+uint8_t RawBuffer0[256] ;
+uint8_t RawBuffer1[256] ;
+uint16_t RawIndex ;
+uint8_t RawActiveBuffer ;
+uint8_t RawWriteBuffer ;
+
+void rawLogByte( uint8_t byte )
+{
+	uint8_t *p ;
+	p = RawActiveBuffer ? RawBuffer1 : RawBuffer0 ;
+	p[RawIndex++] = byte ;
+	if ( RawIndex >= 256 )
+	{
+		RawIndex = 0 ;
+		RawWriteBuffer = 0x80 | RawActiveBuffer ;
+		RawActiveBuffer = RawActiveBuffer ? 0 : 1 ;
+	}
+}
+
+void rawStartLogging()
+{
+	RawIndex = 0 ;
+	RawActiveBuffer = 0 ;
+	RawWriteBuffer = 0 ;
+}
 
 //#if defined(PCBTARANIS)
 //  #define get2PosState(sw) (switchState(SW_ ## sw ## 0) ? -1 : 1)
@@ -203,12 +230,14 @@ extern uint32_t sdMounted( void ) ;
 //  }
 //  else
 //	{
+		CoTickDelay(1) ;					// 2mS
     result = f_lseek(&g_oLogFile, f_size(&g_oLogFile)); // append
     if (result != FR_OK)
 		{
       return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
     }
   }
+	CoTickDelay(1) ;					// 2mS
   f_puts("Time,Elapsed,Valid,RxRSSI,", &g_oLogFile) ;
   f_puts( FrskyTelemetryType == 1 ? "Swr" : "TxRSSI", &g_oLogFile ) ;
   if ( g_model.DsmTelemetry )
@@ -216,9 +245,9 @@ extern uint32_t sdMounted( void ) ;
 		f_puts(",Fades,Holds", &g_oLogFile) ;
 	}
 #ifdef BLUETOOTH
-  f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8,BtRx\n", &g_oLogFile);
+  f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,Cvlt,Ctot,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8,BtRx\n", &g_oLogFile);
 #else
-  f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8\n", &g_oLogFile);
+  f_puts(",A1,A2,AltB,AltG,Temp1,Temp2,RPM,Amps,Volts,mAH,TxBat,Vspd,RxV,Lat,Long,Fuel,Gspd,Cvlt,Ctot,SC1,SC2,SC3,SC4,SC5,SC6,SC7,SC8\n", &g_oLogFile);
 #endif
 
   return NULL ;
@@ -237,6 +266,7 @@ void writeLogs()
 {
   static const char * error_displayed = NULL ;
 	div_t qr ;
+  UINT written ;
 
 //  if (isFunctionActive(FUNC_LOGS) && logDelay > 0) {
 //    tmr10ms_t tmr10ms = get_tmr10ms();
@@ -253,9 +283,21 @@ void writeLogs()
             error_displayed = result ;
 //            s_global_warning = result ;
           }
-          return  ;;
+          return ;
         }
       }
+
+	if ( RawLogging )
+	{
+		if ( RawWriteBuffer & 0x80 )
+		{
+			uint8_t *p ;
+			RawWriteBuffer &= 1 ;
+			p = RawWriteBuffer ? RawBuffer1 : RawBuffer0 ;
+  		f_write( &g_oLogFile, (BYTE *)p, 256, &written ) ;
+		}
+		return ;
+	}
 
 //#if defined(RTCLOCK)
 //      struct gtm utm;
@@ -265,11 +307,11 @@ void writeLogs()
 //#else
 //      f_printf(&g_oLogFile, "%d,", tmr10ms);
 //#endif
-			qr = div( LogTimer, 60 ) ;
-			uint16_t secs = qr.rem ;
+			qr = div( LogTimer, 120 ) ;
+			uint16_t secs = qr.rem/2 ;
 			qr = div( qr.quot, 60 ) ;
-      f_printf(&g_oLogFile, "%d:%02d:%02d,", qr.quot, qr.rem, secs ) ;	// Elapsed log time
-
+      f_printf(&g_oLogFile, "%d:%02d:%02d", qr.quot, qr.rem, secs ) ;	// Elapsed log time
+      f_printf(&g_oLogFile, LogTimer & 1 ? ".5," : "," ) ;	// Elapsed log time
 //#if defined(FRSKY_SPORT)
 //      f_printf(&g_oLogFile, "%d,%d,", frskyData.rssi[1].value, frskyData.rssi[0].value);
 //#elif defined(FRSKY)
@@ -314,6 +356,12 @@ void writeLogs()
 			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 			f_printf(&g_oLogFile, "%d.%04d%c,%d.%04d%c,", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S],FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
 			f_printf(&g_oLogFile, "%d,%d", FrskyHubData[FR_FUEL],FrskyHubData[FR_GPS_SPEED] ) ;
+
+			qr = div( FrskyHubData[FR_CELL_MIN], 50 ) ;
+			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
+
+			qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
+			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 
 			//SC1-8
 			uint32_t i ;

@@ -429,74 +429,74 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
-static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
-{
-//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
-	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
-	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
-} ;
+//const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+//{
+////	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+//	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
+//	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+//} ;
 
-uint16_t swVolumeLevel()
-{
-	return SwVolume_scale[CurrentVolume] ;
-}
+//uint16_t swVolumeLevel()
+//{
+//	return SwVolume_scale[CurrentVolume] ;
+//}
 
 
-void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
-{
-#ifndef PCB9XT
-	if ( g_eeGeneral.softwareVolume )
-	{
-#endif
-		int32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
-		while( count-- )
-		{
-			value = (int8_t) (*src++ - 128 ) ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-#ifndef PCB9XT
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = *src++ << 4 ;
-		}
-	}
-#endif
-}
+//void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
+//{
+//#ifndef PCB9XT
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//#endif
+//		int32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+//		while( count-- )
+//		{
+//			value = (int8_t) (*src++ - 128 ) ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//#ifndef PCB9XT
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = *src++ << 4 ;
+//		}
+//	}
+//#endif
+//}
 
-void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
-{
-#ifndef PCB9XT
-	if ( g_eeGeneral.softwareVolume )
-	{
-#endif
-		int32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] ;
-		while( count-- )
-		{
-			value = (int16_t) *src++ ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-#ifndef PCB9XT
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
-		}
-	}
-#endif
-}
+//void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
+//{
+//#ifndef PCB9XT
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//#endif
+//		int32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] ;
+//		while( count-- )
+//		{
+//			value = (int16_t) *src++ ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//#ifndef PCB9XT
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+//		}
+//	}
+//#endif
+//}
 
 
 #ifndef TONE_MODE_2
@@ -533,6 +533,10 @@ void tone_stop()
 #endif // TONE_MODE_2
 
 
+uint16_t g_timeAppendVoice ;
+uint16_t g_timeAppendMaxVoice ;
+uint16_t g_timeAppendtime ;
+
 void startVoice( uint32_t count )		// count of filled in buffers
 {
 	AudioVoiceUnderrun = 0 ;
@@ -550,6 +554,11 @@ void startVoice( uint32_t count )		// count of filled in buffers
 	}
 	VoiceCount = count ;
 	Sound_g.VoiceRequest = 1 ;
+
+	g_timeAppendVoice = 0 ;
+	g_timeAppendMaxVoice = 0 ;
+	g_timeAppendtime = get_tmr10ms() ;
+
 }
 
 
@@ -581,6 +590,16 @@ void appendVoice( uint32_t index )		// index of next buffer
 		DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 ;			// Enable DAC
 #endif
 	}
+	uint16_t t10ms ;
+	uint16_t now ;
+	now = get_tmr10ms() ;
+	t10ms = now - g_timeAppendtime ;
+	g_timeAppendtime = now ;
+	if ( t10ms > g_timeAppendMaxVoice )
+	{
+		g_timeAppendMaxVoice = t10ms ;
+	}
+	g_timeAppendVoice = t10ms ;
 }
 
 //#ifdef REV9E

@@ -25,6 +25,7 @@ public:
     QString getProgrammer() {return avrProgrammer;}
     QString getMCU() {return avrMCU;}
     QString getPort() {return avrPort;}
+    bool getPreRead() {return disablePreRead ;}
 
     void listProgrammers();
     void restFuses(bool eeProtect);
@@ -40,6 +41,7 @@ private:
     QString avrProgrammer;
     QString avrMCU;
     QString avrPort;
+		bool disablePreRead ;
 
 private slots:
     void on_avrArgs_editingFinished();

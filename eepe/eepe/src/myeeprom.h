@@ -92,13 +92,10 @@
 #define MAX_MODES		4
 #endif
 
-#ifdef V2
-#define NUM_VOICE_ALARMS	10
+#define V2_NUM_VOICE_ALARMS	10
+#define NUM_VOICE_ALARMS	8
 #define NUM_SAFETY				16
 #define NUM_GVAR_ADJUST		4
-#else
-#define NUM_VOICE_ALARMS	8
-#endif
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
@@ -112,7 +109,6 @@ PACK(typedef struct t_TrainerData {
   TrainerMix     mix[4];
 }) TrainerData;
 
-#ifdef V2
 PACK(typedef struct t_V2TrainerMix {
     uint8_t srcChn:4 ; //0-7 = ch1-8
     uint8_t mode:2 ;   //off,add-mode,subst-mode
@@ -124,7 +120,6 @@ PACK(typedef struct t_V2TrainerData {
     int16_t        calib[4];
     V2TrainerMix     mix[4];
 }) V2TrainerData ;
-#endif
 
 #ifdef SKY
 PACK(typedef struct t_OldEEGeneral {
@@ -241,7 +236,6 @@ PACK(typedef struct t_EEGeneral {
 }) EEGeneral;
 
 
-#ifdef V2
 PACK(typedef struct t_V2EEGeneral {
     uint8_t   myVers;
     int16_t   calibMid[7];
@@ -322,7 +316,6 @@ PACK(typedef struct t_V2EEGeneral {
 #endif
 }) V2EEGeneral;
 
-#endif
 
 //eeprom modelspec
 //expo[3][2][2] //[Norm/Dr][expo/weight][R/L]
@@ -714,9 +707,9 @@ typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
+  int8_t    curvexy[18] ;
 } __attribute__((packed)) ModelData;
 
-#ifdef V2
 PACK(typedef struct t_V2ModelData
 {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -787,10 +780,9 @@ PACK(typedef struct t_V2ModelData
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
-	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
+	VoiceAlarmData vad[V2_NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
 }) V2ModelData ;
-#endif
 
 
 

@@ -74,6 +74,8 @@ public slots:
 
 protected:
     void closeEvent(QCloseEvent *event);
+		void dropEvent(QDropEvent *event) ;
+		void dragEnterEvent(QDragEnterEvent *ev) ;
 
 private slots:
 

@@ -17,9 +17,19 @@ void MixersList::keyPressEvent(QKeyEvent *event)
     emit keyWasPressed(event);
 }
 
+/**
+    @brief Override to give us different mime type for mixers and inputs
+*/
+QStringList MixersList::mimeTypes () const
+{
+    QStringList types;
+    types << "application/x-eepe-mix"; 
+    return types;
+}
+
 bool MixersList::dropMimeData( int index, const QMimeData * data, Qt::DropAction action )
 {    
-    QByteArray dropData = data->data("application/x-qabstractitemmodeldatalist");
+    QByteArray dropData = data->data("application/x-eepe-mix");
     QDataStream stream(&dropData, QIODevice::ReadOnly);
     QByteArray qba;
 

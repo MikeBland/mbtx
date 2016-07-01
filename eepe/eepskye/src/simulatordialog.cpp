@@ -863,7 +863,8 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 	}	
 	else
 	{
-		return *trimptr[idx] ;
+//		return *trimptr[idx] ;
+		return g_model.trim[idx] ;
 	}
 }
 
@@ -910,7 +911,8 @@ void simulatorDialog::setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 		{
 			trim = ( trim > 0 ) ? 125 : -125 ;
 		}	
-   	*trimptr[idx] = trim ;
+//   	*trimptr[idx] = trim ;
+		g_model.trim[idx] = trim ;
 	}
 }
 
@@ -1839,7 +1841,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
     else if(s == CS_VCOMP)
     {
         x = getValue(a-1);
-        y = getValue(a-1);
+        y = getValue(b-1);
     }
 
     switch (cs.func) {
@@ -2025,25 +2027,100 @@ int16_t simulatorDialog::intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 
 {
 #define D9 (RESX * 2 / 8)
 #define D5 (RESX * 2 / 4)
-    bool    cv9 = idx >= MAX_CURVE5;
-    int8_t *crv = cv9 ? g_model.curves9[idx-MAX_CURVE5] : g_model.curves5[idx];
+#define D6 (RESX * 2 / 5)
+    uint32_t    cv9 = idx >= MAX_CURVE5;
+		int8_t *crv ;
+		if ( idx == MAX_CURVE5 + MAX_CURVE9 )
+		{ // The xy curve
+			crv = g_model.curvexy ;
+			cv9 = 2 ;
+		}
+		else if ( idx == MAX_CURVE5 + MAX_CURVE9 + 1)
+		{ // The xy curve
+			crv = g_model.curve2xy ;
+			cv9 = 2 ;
+		}
+		else if ( idx == MAX_CURVE5 + MAX_CURVE9 + 2 )
+		{
+			crv = g_model.curve6 ;
+			cv9 = 3 ;
+		}
+		else
+		{
+    	crv = cv9 ? g_model.curves9[idx-MAX_CURVE5] : g_model.curves5[idx];
+		}
     int16_t erg;
 
     x+=RESXu;
-    if(x < 0) {
+    if(x < 0)
+		{
         erg = (int16_t)crv[0] * (RESX/4);
-    } else if(x >= (RESX*2)) {
+    }
+		else if(x >= (RESX*2))
+		{
+			if ( cv9 == 3 )
+			{
+      	erg = (int16_t)crv[5] * (RESX/4);
+			}
+			else
+			{
         erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
-    } else {
-        int16_t a,dx;
-        if(cv9){
-            a   = (uint16_t)x / D9;
-            dx  =((uint16_t)x % D9) * 2;
-        } else {
-            a   = (uint16_t)x / D5;
-            dx  = (uint16_t)x % D5;
+			}
+    }
+		else
+		{
+			int16_t deltax ;
+			div_t qr ;
+			if ( cv9 == 2 ) // xy curve
+			{
+		    int16_t a = 0 ;
+				int16_t b ;
+				int16_t c ;
+				uint32_t i ;
+
+				// handle end points
+  	    c = RESX + calc100toRESX(crv[17]) ;
+				if ((uint16_t)x>c)
+				{
+					return calc100toRESX(crv[8]) ;
+				}
+  	    b = RESX + calc100toRESX(crv[9]) ;
+				if ((uint16_t)x<b)
+				{
+					return calc100toRESX(crv[0]) ;
+				}
+
+				for ( i = 0 ; i < 8 ; i += 1 )
+				{
+	        a = b ;
+  	      b = (i==7 ? c : RESX + calc100toRESX(crv[i+10]));
+    	    if ((uint16_t)x<=b) break;
+				}
+				qr.quot = i ;
+				qr.rem = x - a ;
+				deltax = b - a ;
+			}
+			else
+			{
+        if(cv9 == 3)
+				{
+					qr = div( x, D6 ) ;
+					deltax = D6 ;
+				}
+				else if ( cv9 )
+				{
+					qr = div( x, D9 ) ;
+					deltax = D9 ;
         }
-        erg  = (int16_t)crv[a]*((D5-dx)/2) + (int16_t)crv[a+1]*(dx/2);
+				else
+				{
+					qr = div( x, D5 ) ;
+					deltax = D5 ;
+        }
+			}
+			int32_t y1 = (int16_t)crv[qr.quot] * (RESX/4) ;
+			int32_t deltay = (int16_t)crv[qr.quot+1] * (RESX/4) - y1 ;
+			erg = y1 + ( qr.rem ) * deltay / deltax ;
     }
     return erg / 25; // 100*D5/RESX;
 }

@@ -1134,13 +1134,12 @@ void ModelEdit::expoEdited()
     updateSettings();
 }
 
-void ModelEdit::tabVoiceAlarms()
+void ModelEdit::voiceAlarmsList()
 {
 	QByteArray qba ;
   uint32_t i ;
 
-	ui->VoiceAlarmList->setFont(QFont("Courier New",12)) ;
-	ui->VoiceAlarmList->clear() ;
+  VoiceListWidget->clear() ;
 	for(i=0 ; i<NUM_VOICE_ALARMS ; i += 1)
 	{
 		VoiceAlarmData *vad = &g_model.vad[i] ;
@@ -1213,9 +1212,206 @@ void ModelEdit::tabVoiceAlarms()
 //				str += tr("Alarm(%1)").arg(getAudioAlarmName(vad->file.vfile) ) ;
 //			break ;
     }
-    ui->VoiceAlarmList->addItem(str) ;
+    VoiceListWidget->addItem(str) ;
 	}
 }
+
+void ModelEdit::tabVoiceAlarms()
+{
+	VoiceListWidget = new VoiceList(this) ;
+  ui->voiceLayout->addWidget(VoiceListWidget,1,1,1,1);
+
+	voiceAlarmsList() ;
+  VoiceListWidget->setCurrentRow(0) ;
+
+  connect( VoiceListWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showVoiceContextMenu(const QPoint&)));
+  connect( VoiceListWidget,SIGNAL(doubleClicked(QModelIndex)),this,SLOT( voiceAlarmList_doubleClicked(QModelIndex)));
+  connect( VoiceListWidget, SIGNAL(keyWasPressed(QKeyEvent*)), this, SLOT(voice_KeyPress(QKeyEvent*)));
+	
+}
+
+void ModelEdit::voiceAlarmsBlank( int i )
+{
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		vad->source = 0 ;
+		vad->func = 0 ;
+		vad->swtch = 0  ;
+		vad->rate = 0  ;
+		vad->fnameType = 0 ;
+		vad->haptic = 0 ;
+		vad->vsource = 0 ;
+		vad->mute = 0 ;
+		vad->offset = 0 ;
+		vad->vfile = 0 ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceBlank()
+{
+  int index = VoiceListWidget->currentRow() ;
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+}
+
+void ModelEdit::voiceAdd()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+	for( i=NUM_VOICE_ALARMS-1 ; i > index ; i -= 1)
+	{
+		int j ;
+		j = i - 1 ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[j] ;
+		*vad = *xvad ;
+	}
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+	VoiceAlarmData *vad = &g_model.vad[index] ;
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  dlg->setWindowTitle(tr("Voice Alarm %1").arg(index+1)) ;
+  if(dlg->exec())
+  {
+    updateSettings() ;
+		voiceAlarmsList() ;
+  }
+}
+
+void ModelEdit::voiceRemove()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+  if ( ( index >= 0 ) && ( index < NUM_VOICE_ALARMS ) )
+	{
+		for( i= index ; i < NUM_VOICE_ALARMS-1 ; i += 1)
+		{
+			int j ;
+			j = i + 1 ;
+			VoiceAlarmData *vad = &g_model.vad[i] ;
+			VoiceAlarmData *xvad = &g_model.vad[j] ;
+			*vad = *xvad ;
+		}
+		voiceAlarmsBlank( NUM_VOICE_ALARMS-1 ) ;
+		voiceAlarmsList() ;
+	}
+}
+
+void ModelEdit::voiceMoveUp()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[i-1] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+		voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i-1) ;
+	  updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceMoveDown()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS-1 ) )
+	{
+		int j = i + 1 ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[j] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+    voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i+1) ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceCopy()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		QByteArray vData ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		vData.append((char*)vad,sizeof(*vad));
+    QMimeData *mimeData = new QMimeData;
+    mimeData->setData("application/x-eepe-voice", vData);
+    QApplication::clipboard()->setMimeData(mimeData,QClipboard::Clipboard);
+	}
+}
+
+void ModelEdit::voicePaste()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+		
+    if(mimeData->hasFormat("application/x-eepe-voice"))
+		{
+			VoiceAlarmData *vad = &g_model.vad[i] ;
+      QByteArray vData = mimeData->data("application/x-eepe-voice");
+      memcpy( vad,vData,sizeof(*vad));
+			voiceAlarmsList() ;
+		  updateSettings() ;
+		}
+	}
+}
+
+void ModelEdit::showVoiceContextMenu(QPoint pos)
+{
+	QPoint globalPos = VoiceListWidget->mapToGlobal(pos) ;
+	
+	QMenu contextMenu;
+	
+	contextMenu.addAction(QIcon(":/images/add.png"), tr("&Insert"),this, SLOT(voiceAdd()),tr("Ctrl+A"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("C&lear"),this,SLOT(voiceBlank()),tr("Delete"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("&Remove"),this,SLOT(voiceRemove()),tr("Ctrl+R"));
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/copy.png"), tr("&Copy"),this,SLOT(voiceCopy()),tr("Ctrl+C"));
+	contextMenu.addAction(QIcon(":/images/paste.png"), tr("&Paste"),this,SLOT(voicePaste()),tr("Ctrl+V")) ;
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/moveup.png"), tr("Move Up"),this,SLOT(voiceMoveUp()),tr("Ctrl+Up"));
+	contextMenu.addAction(QIcon(":/images/movedown.png"), tr("Move Down"),this,SLOT(voiceMoveDown()),tr("Ctrl+Down"));
+  contextMenu.exec(globalPos);
+}
+
+void ModelEdit::voice_KeyPress(QKeyEvent *event)
+{
+  if(event->matches(QKeySequence::SelectAll)) voiceAdd();  //Ctrl A
+  if(event->matches(QKeySequence::Delete))    voiceBlank();
+  if(event->matches(QKeySequence::Copy))      voiceCopy();
+  if(event->matches(QKeySequence::Paste))     voicePaste();
+	if(event->modifiers().testFlag(Qt::ControlModifier))
+  {
+		if(event->key() == Qt::Key_R)
+    {
+			voiceRemove() ;
+    }
+		if(event->key() == Qt::Key_Down)
+    {
+			voiceMoveDown() ;
+    }
+    if(event->key() == Qt::Key_Up)
+    {
+			voiceMoveUp() ;
+    }
+  }
+}
+
 
 void ModelEdit::tabMixes()
 {
@@ -4783,7 +4979,7 @@ int ModelEdit::getMixerIndex(int dch)
     return i;
 }
 
-void ModelEdit::on_VoiceAlarmList_doubleClicked( QModelIndex index )
+void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
   VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &g_model.vad[index.row()], eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
   dlg->setWindowTitle(tr("Voice Alarm %1").arg(index.row()+1)) ;
@@ -5152,6 +5348,7 @@ void ModelEdit::on_resetCurve_1_clicked()
 
 void ModelEdit::on_resetCurve_2_clicked()
 {
+
     memset(&g_model.curves5[1],0,sizeof(g_model.curves5[0]));
     updateCurvesTab();
     updateSettings();
@@ -5867,6 +6064,19 @@ void ModelEdit::ControlCurveSignal(bool flag)
   ui->curvePt7_16->blockSignals(flag);
   ui->curvePt8_16->blockSignals(flag);
   ui->curvePt9_16->blockSignals(flag);
+}
+
+VoiceList::VoiceList(QWidget *parent) :
+    QListWidget(parent)
+{
+    setFont(QFont("Courier New",12));
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+}
+
+void VoiceList::keyPressEvent(QKeyEvent *event)
+{
+  emit keyWasPressed(event);
 }
 
 

@@ -158,7 +158,7 @@
 #define ISTR_OFF_ON          "AV P\304 "
 #define ISTR_HYPH_INV        FWx18"\001""\003---INV"
 #define ISTR_VERSION         "VERSION"
-#define ISTR_TRAINER         "TRAINER"
+#define ISTR_Music	        "Music"
 #define ISTR_SLAVE           "\007Slav" 
 #define ISTR_MENU_DONE       "[MENU] FORTS\304TTER"
 #define ISTR_CURVES          "KURVOR"
@@ -232,7 +232,7 @@
 #define ISTR_YES_NO          "\003JA \013NEJ"
 #define ISTR_MENU_EXIT       "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX      "RADERA MIX?"
-#define ISTR_MIX_POPUP       "EDIT\0ADDERA\0KOPIA\0FLYTTA\0RADERA\0CLEAR ALL"
+#define ISTR_MIX_POPUP       "EDIT\0ADDERA\0KOPIA\0FLYTTA\0RADERA\0CLEAR ALL\0TEMPLATES"
 #define ISTR_MIXER           "MIXER"
 // CHR_S S for Slow
 #define ICHR_S               "S"
@@ -272,7 +272,7 @@
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US           "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC   " PPM-ram  \015mSec"
+#define ISTR_PPMFRAME_MSEC   " PPM-ram  \016mSec"
 #define ISTR_SEND_RX_NUM     " S\301nd Rx-nummer [MENU]"
 #define ISTR_DSM_TYPE        " DSM-typ"
 #define ISTR_PPM_1ST_CHAN    " Kanal 1"
@@ -366,8 +366,13 @@
 #define IHW_SWITCHARROW_STR  "\200-\201"
 #endif
 #ifdef PCBX9D
+#ifdef REV9E
 #define ISWITCHES_STR        "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"\
 														 "SI\200SI-SI\201SJ\200SJ-SJ\201SK\200SK-SK\201SL\200SL-SL\201SM\200SM-SM\201SN\200SN-SN\201SO\200SO-SO\201SP\200SP-SP\201SQ\200SQ-SQ\201SR\200SR-SR\201"
+#else
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
+#endif	// REV9E
+
 #ifdef REV9E
 #define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSHSISJSKSLSMSNSOSPSQSR6P"
 #else
@@ -530,8 +535,9 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates"
 
+#define ISTR_SHUT_DOWN					"Shutting Down"
 
 //"RSSI Warn"
 //"RSSI Critical"

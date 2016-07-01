@@ -684,6 +684,13 @@ Please consult the programmer's documentation and the AVRDUDE documentation to s
        </item>
       </widget>
      </item>
+     <item row="6" column="2">
+      <widget class="QCheckBox" name="disablePreReadCB">
+       <property name="text">
+        <string>Disable Pre-Read</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="2" column="0">

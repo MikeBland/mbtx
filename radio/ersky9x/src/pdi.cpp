@@ -6,7 +6,8 @@
 #include "myeeprom.h"
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
-#ifdef PCB9XT
+
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "X9D/stm32f2xx.h"
 #include "core_cm3.h"
 extern void wdt_reset() ;
@@ -16,6 +17,14 @@ extern void wdt_reset() ;
 // PPM on PA7
 // SPort enable on PB2
 // SPort data on PA2
+
+//Taranis JTMS/JTCK usage
+//Pads:
+//1. Vcc
+//2. JTMS - PA13 - use for PDI DATA
+//3. JTCK - PA14 - use for PDI CLK
+//4. Ground
+
 
 #include <string.h>
 
@@ -49,7 +58,7 @@ void hw_delay( uint16_t time )
 }
 #endif
 
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 extern void hw_delay( uint16_t time ) ;
 #endif
 
@@ -58,14 +67,14 @@ static void pdiWaitBit()
 #ifdef PCBSKY
 	hw_delay(96) ;	// 3 uS
 #endif
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(35) ;	// 3.5 uS
 #endif
 }
 
 uchar pdiInit()
 {
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 	uint32_t temp ;
 #endif
 //12MHz/256 -> 46k
@@ -116,13 +125,27 @@ uchar pdiInit()
 	GPIOB->OTYPER &= 0x0000FFFB ;
 	GPIOB->BSRRL = 0x0004 ;	// Set bit PB2 ON, enable SPort output
 #endif
+
+#ifdef PCBX9D
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	temp = GPIOA->MODER ;
+	temp &= 0xC3FFFFFF ;
+	temp |= 0x14000000 ;
+	GPIOA->MODER = temp ;
+	temp = GPIOA->OSPEEDR ;
+	temp &= 0xC3FFFFFF ;
+	temp |= 0x28000000 ;
+	GPIOA->OSPEEDR = temp ;
+	GPIOA->PUPDR &= 0xC3FFFFFF ;
+	GPIOA->OTYPER &= 0x00009FFF ;
+#endif
 	 
 	pdiSetClk1();
 	pdiSetData0();
 #ifdef PCBSKY
 	hw_delay(3520) ;	// 110 uS
 #endif
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(2200) ;	// 220 uS
 #endif
 
@@ -131,7 +154,7 @@ uchar pdiInit()
 #ifdef PCBSKY
 	hw_delay(320) ;	// 10uS
 #endif
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(250) ;	// 25uS
 #endif
 	pdiSendIdle();
@@ -246,6 +269,9 @@ void pdiSetClk1()
 	GPIOA->BSRRL = 0x0004 ;
 #endif
 //	PORTB|=(1<<3);
+#ifdef PCBX9D
+	GPIOA->BSRRH = 0x2000 ;
+#endif
 }
 
 void pdiSetClk0()
@@ -269,6 +295,9 @@ void pdiSetClk0()
 	GPIOA->BSRRH = 0x0004 ;
 #endif
 //	PORTB&=~(1<<3);
+#ifdef PCBX9D
+	GPIOA->BSRRL = 0x2000 ;
+#endif
 }
 
 void pdiSetData1()
@@ -281,6 +310,10 @@ void pdiSetData1()
 #ifdef PCB9XT
 	GPIOA->BSRRL = 0x0080 ;
 	GPIOA->MODER |= 0x00004000 ;
+#endif
+#ifdef PCBX9D
+	GPIOA->BSRRL = 0x4000 ;
+	GPIOA->MODER |= 0x10000000 ;
 #endif
 
 
@@ -300,6 +333,10 @@ void pdiSetData0()
 	GPIOA->BSRRH = 0x0080 ;
 	GPIOA->MODER |= 0x00004000 ;
 #endif
+#ifdef PCBX9D
+	GPIOA->BSRRH = 0x4000 ;
+	GPIOA->MODER |= 0x10000000 ;
+#endif
 	
 //	PORTB&=~((1<<5)|(1<<2));
 //	DDRB|=(1<<5)|(1<<2);
@@ -313,6 +350,9 @@ void pdiSetDataIn()
 #endif
 #ifdef PCB9XT
 	GPIOA->MODER &= 0xFFFF3FFF ;
+#endif
+#ifdef PCBX9D
+	GPIOA->MODER &= 0xCFFFFFFF ;
 #endif
 	
 //	PORTB&=~(1<<2);
@@ -328,6 +368,9 @@ uchar pdiGetData()
 #endif
 #ifdef PCB9XT
 	return (GPIOA->IDR & 0x0080) ? 1 : 0 ;
+#endif
+#ifdef PCBX9D
+	return (GPIOA->IDR & 0x4000) ? 1 : 0 ;
 #endif
 //	return (PINB&(1<<4))?1:0;
 }

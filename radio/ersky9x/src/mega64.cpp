@@ -553,7 +553,11 @@ void checkM64()
 		{
 			uint8_t buf[2] ;
 			buf[0] = M64Contrast ;
-			buf[1] = 50 ;	// Brightness - unused
+			buf[1] = g_eeGeneral.rotateScreen ? 1 : 0 ;
+			if (g_eeGeneral.reverseScreen)
+			{
+				buf[1] |= 2 ;
+			}
 			count = fillTxBuffer( buf, 0x13, 2 ) ;
 			txPdcUsart( TxBuffer, count ) ;
 			M64SetContrast = 0 ;

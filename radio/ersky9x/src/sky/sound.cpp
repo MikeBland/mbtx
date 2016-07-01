@@ -559,66 +559,69 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
-static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
-{
-//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
-	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
-	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
-} ;
+//const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+//{
+////	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+//	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
+//	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+//} ;
 
-uint16_t swVolumeLevel()
-{
-	return SwVolume_scale[CurrentVolume] ;
-}
+//uint16_t swVolumeLevel()
+//{
+//	return SwVolume_scale[CurrentVolume] ;
+//}
 
-void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
-{
-	if ( g_eeGeneral.softwareVolume )
-	{
-		uint32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
-		while( count-- )
-		{
-			value = (int8_t) (*src++ - 128 ) ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = *src++ << 4 ;
-		}
-	}
-}
+//void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
+//{
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//		uint32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+//		while( count-- )
+//		{
+//			value = (int8_t) (*src++ - 128 ) ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = *src++ << 4 ;
+//		}
+//	}
+//}
 
-void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
-{
-	if ( g_eeGeneral.softwareVolume )
-	{
-		uint32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] ;
-		while( count-- )
-		{
-			value = (int16_t) *src++ ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
-		}
-	}
-}
+//void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
+//{
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//		uint32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] ;
+//		while( count-- )
+//		{
+//			value = (int16_t) *src++ ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+//		}
+//	}
+//}
 
+uint16_t g_timeAppendVoice ;
+uint16_t g_timeAppendMaxVoice ;
+uint16_t g_timeAppendtime ;
 
 void startVoice( uint32_t count )		// count of filled in buffers
 {
@@ -645,6 +648,11 @@ void startVoice( uint32_t count )		// count of filled in buffers
 //	}
 	VoiceCount = count ;
 	Sound_g.VoiceRequest = 1 ;
+
+	g_timeAppendVoice = 0 ;
+	g_timeAppendMaxVoice = 0 ;
+	g_timeAppendtime = get_tmr10ms() ;
+
 }
 
 void endVoice()
@@ -708,6 +716,17 @@ void appendVoice( uint32_t index )		// index of next buffer
 		}
 	}
 	__enable_irq() ;
+	
+	uint16_t t10ms ;
+	uint16_t now ;
+	now = get_tmr10ms() ;
+	t10ms = now - g_timeAppendtime ;
+	g_timeAppendtime = now ;
+	if ( t10ms > g_timeAppendMaxVoice )
+	{
+		g_timeAppendMaxVoice = t10ms ;
+	}
+	g_timeAppendVoice = t10ms ;
 }
 
 // frequency in Hz, time in mS

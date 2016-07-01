@@ -13477,15 +13477,16 @@ Right</string>
         <string>Alarm Source Function Value</string>
        </property>
       </widget>
-      <widget class="QListWidget" name="VoiceAlarmList">
+      <widget class="QWidget" name="gridLayoutWidget_2">
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>20</y>
+         <y>30</y>
          <width>891</width>
-         <height>551</height>
+         <height>601</height>
         </rect>
        </property>
+       <layout class="QGridLayout" name="voiceLayout"/>
       </widget>
      </widget>
     </widget>

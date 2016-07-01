@@ -137,7 +137,7 @@ void printDialog::printExpo()
 
     for(int i=0; i<4; i++)
     {
-        str.append("<h3>" + getSourceStr(1, i+1, g_model->modelVersion, 0 ) + "</h3>");
+        str.append("<h3>" + getSourceStr(1, i+1, g_model->modelVersion, 0, 0 ) + "</h3>");
         str.append(fv(tr("Switch 1:"), getSWName(g_model->expoData[i].drSw1,0)));
         str.append(fv(tr("Switch 2:"), getSWName(g_model->expoData[i].drSw2,0)));
         str.append("<table border=1 cellspacing=0 cellpadding=3>");
@@ -227,7 +227,7 @@ void printDialog::printMixes()
 
         //QString srcStr = SRC_STR;
         //str += " " + srcStr.mid(CONVERT_MODE(md->srcRaw+1)*4,4);
-        str += getSourceStr(g_eeGeneral->stickMode,md->srcRaw, g_model->modelVersion, 0);
+        str += getSourceStr(g_eeGeneral->stickMode,md->srcRaw, g_model->modelVersion, 0, 0);
 
         if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,0) + ")";
         if(md->carryTrim) str += tr(" noTrim");
@@ -350,7 +350,7 @@ void printDialog::printSwitches()
             {
             case CS_VOFS:
                 tstr = g_model->customSw[i].v1 ?
-                       getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v1, 0, 0) :
+                       getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v1, 0, 0, 0) :
                        "0";
                 tstr.remove(" ");
                 if(g_model->customSw[i].func==CS_APOS || g_model->customSw[i].func==CS_ANEG)
@@ -389,7 +389,7 @@ void printDialog::printSwitches()
 
             case CS_VCOMP:
                 tstr = g_model->customSw[i].v1 ?
-                       getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v1, 0, 0) :
+                       getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v1, 0, 0, 0) :
                        "0";
 
                 switch (g_model->customSw[i].func)
@@ -417,7 +417,7 @@ void printDialog::printSwitches()
                 }
 
                 tstr += g_model->customSw[i].v2 ?
-                        getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v2, 0, 0) :
+                        getSourceStr(g_eeGeneral->stickMode,g_model->customSw[i].v2, 0, 0, 0) :
                         "0";
                 break;
             default:

@@ -54,7 +54,7 @@
 #include "modeledit.h"
 #endif
 
-Node::Node(QSpinBox *sb)
+Node::Node(QSpinBox *sb, QSpinBox *xsb)
 {
     setFlag(ItemIsMovable);
     setFlag(ItemSendsGeometryChanges);
@@ -62,6 +62,7 @@ Node::Node(QSpinBox *sb)
     setZValue(-1);
 
     qsb = sb;
+    qxsb = xsb;
     bPressed  = false;
     centerX   = true;
     centerY   = true;
@@ -69,6 +70,8 @@ Node::Node(QSpinBox *sb)
     fixedY    = false;
     moveToBottom = false;
     ballSize = DEFAULT_BALL_SIZE;
+		minX = -100 ;
+		maxX = 100 ;
 }
 
 void Node::addEdge(Edge *edge)
@@ -195,6 +198,7 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
     case ItemPositionChange:
         if (scene())
         {
+					
              // value is the new position.
              QPointF newPos = value.toPointF();
              QRectF rect = scene()->sceneRect();
@@ -203,17 +207,49 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
              newPos.setX(qMin(rect.right(), qMax(newPos.x(), rect.left())));// bound X
              newPos.setY(qMin(rect.bottom(), qMax(newPos.y(), rect.top())));// bound Y
              
+             int newX = -100 + ( (newPos.x()-rect.left()) * 200) / rect.width();
+#ifdef SKY
+             if(qxsb)
+						 {
+	             QObject* tabcurve = qxsb->parent();
+  	           QObject* stackedwidget = tabcurve->parent();
+    	         QObject* tabwidget = stackedwidget->parent();
+							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+                minX = modeledit->getNodeMin( qxsb ) ;
+                maxX = modeledit->getNodeMax( qxsb ) ;
+						 }	 
+#endif
+
+             if (newX < minX) newX = minX;
+             if (newX > maxX) newX = maxX;
+             
+             if(qxsb)
+						 {
+             	newPos.setX(((newX+100)*rect.width()/200+rect.left()));
+						 }
+
              if(qsb)
              {
-                 QObject* tabcurve = qsb->parent();
-                 QObject* stackedwidget = tabcurve->parent();
-                 QObject* tabwidget = stackedwidget->parent();
-                 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent());
+	             QObject* tabcurve = qsb->parent();
+  	           QObject* stackedwidget = tabcurve->parent();
+    	         QObject* tabwidget = stackedwidget->parent();
+							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
                  modeledit->redrawCurve = false;
                  qsb->setValue(100+(rect.top()-y())*200/rect.height());
                  modeledit->redrawCurve = true;
              }
-             
+             if(qxsb)
+             {
+						 	int value1 ;
+	             QObject* tabcurve = qxsb->parent();
+  	           QObject* stackedwidget = tabcurve->parent();
+    	         QObject* tabwidget = stackedwidget->parent();
+							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+                 modeledit->redrawCurve = false;
+								 value1 = -(100+(rect.left()-x())*200/rect.width()) ;
+                 qxsb->setValue( value1);
+								 modeledit->redrawCurve = true;
+             }
 						 return newPos;
          }
         break;

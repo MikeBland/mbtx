@@ -50,6 +50,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "stm32f2xx.h"
 #include "stm32f2xx_flash.h"
 #include "X9D/hal.h"
+#include "pdi.h"
 #endif
 #ifdef PCB9XT
 #include "X9D/stm32f2xx.h"
@@ -76,8 +77,9 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 #endif
 #include "maintenance.h"
+#include "myeeprom.h"
 
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 extern uchar PdiErrors0 ;
 extern uchar PdiErrors1 ;
 extern uchar PdiErrors2 ;
@@ -119,6 +121,7 @@ extern uchar PdiErrors8 ;
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
 
+extern void copyFileName( char *dest, char *source, uint32_t size ) ;
 #ifdef PCBSKY
  #ifndef REVX
 void init_mtwi( void ) ;
@@ -392,6 +395,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 {
 	FRESULT fr ;
 	uint32_t loop ;
+
 	do
 	{
 		loop = 0 ;
@@ -405,41 +409,55 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 		{
 			cpystr( (uint8_t *)fno->lfname, (uint8_t *)fno->fname ) ;		// Copy 8.3 name
 		}
-		int32_t len = strlen(fno->lfname) - 4 ;
-		if ( fc->ext[3] )
+		if ( fc->ext[0] )
 		{
-			len -= 1 ;			
-		}
-		if ( len < 0 )
-		{
-			loop = 1 ;
-		}
-		if ( fno->lfname[len] != '.' )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+1] & ~0x20 ) != fc->ext[0] )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+2] & ~0x20 ) != fc->ext[1] )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+3] & ~0x20 ) != fc->ext[2] )
-		{
-			loop = 1 ;
-		}
-		if ( fc->ext[3] )
-		{
-			if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
+			int32_t len = strlen(fno->lfname) - 4 ;
+			if ( fc->ext[3] )
+			{
+				len -= 1 ;			
+			}
+			if ( len < 0 )
 			{
 				loop = 1 ;
 			}
+			if ( fno->lfname[len] != '.' )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+1] & ~0x20 ) != fc->ext[0] )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+2] & ~0x20 ) != fc->ext[1] )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+3] & ~0x20 ) != fc->ext[2] )
+			{
+				loop = 1 ;
+			}
+			if ( fc->ext[3] )
+			{
+				if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
+				{
+					loop = 1 ;
+				}
+			}
 		}
+		else // looking for a Directory
+		{
+			if ( ( fno->fattrib & AM_DIR ) == 0 )
+			{
+				loop = 1 ;
+			}
+		}	
 	} while ( loop ) ;
 	return fr ;
 }
+
+DIR Djp ;
+extern uint8_t VoiceFileType ;
+#define VOICE_FILE_TYPE_MUSIC	2
 
 uint32_t fillNames( uint32_t index, struct fileControl *fc )
 {
@@ -448,15 +466,19 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	Finfo.lfname = Filenames[0] ;
 	Finfo.lfsize = 48 ;
   WatchdogTimeout = 200 ;
-
-	fr = f_readdir ( &Dj, 0 ) ;					// rewind
-	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip .
-	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip ..
+	DIR *pDj = &Dj ;	
+	if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
+	{
+		pDj = &Djp ;
+	}
+	fr = f_readdir ( pDj, 0 ) ;					// rewind
+	fr = f_readdir ( pDj, &Finfo ) ;		// Skip .
+	fr = f_readdir ( pDj, &Finfo ) ;		// Skip ..
 	i = 0 ;
 	while ( i <= index )
 	{
   	WatchdogTimeout = 200 ;
-		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
+		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
 		FileSize[0] = Finfo.fsize ;
 		i += 1 ;
 		if ( fr != FR_OK || Finfo.fname[0] == 0 )
@@ -468,7 +490,7 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	{
  		WatchdogTimeout = 200 ;
 		Finfo.lfname = Filenames[i] ;
-		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
+		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
 		FileSize[i] = Finfo.fsize ;
 		if ( fr != FR_OK || Finfo.fname[0] == 0 )
 		{
@@ -476,6 +498,52 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 		}
 	}
 	return i ;
+}
+
+extern char PlayListNames[][MUSIC_NAME_LENGTH+2] ;
+extern uint16_t PlayListCount ;
+
+uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
+{
+	uint32_t i ;
+	FRESULT fr ;
+	Finfo.lfsize = 19 ;
+	char filename[20] ;
+  WatchdogTimeout = 200 ;
+
+	fr = f_chdir( dir ) ;
+	if ( fr == FR_OK )
+	{
+		fc->index = 0 ;
+		fr = f_opendir( &Djp, (TCHAR *) "." ) ;
+		if ( fr == FR_OK )
+		{
+			fc->ext[0] = *ext++ ;
+			fc->ext[1] = *ext++ ;
+			fc->ext[2] = *ext++ ;
+			fc->ext[3] = *ext ;
+			fc->index = 0 ;
+
+			fr = f_readdir ( &Djp, 0 ) ;					// rewind
+			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip .
+			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip ..
+			for ( i = 0 ; i < PLAYLIST_COUNT ; i += 1 )
+			{
+ 				WatchdogTimeout = 200 ;
+				Finfo.lfname = filename ;
+				fr = readBinDir( &Djp, &Finfo, fc ) ;		// First entry
+				if ( fr != FR_OK || Finfo.fname[0] == 0 )
+				{
+					break ;
+				}
+				copyFileName( PlayListNames[i], filename, MUSIC_NAME_LENGTH ) ;
+
+			}
+			PlayListCount = i ;
+			return i ;
+		}
+	}
+	return 0 ;
 }
 
 #define DISPLAY_CHAR_WIDTH	21
@@ -834,6 +902,10 @@ void menuUp1(uint8_t event)
 		{
   		TITLE( "UPDATE Int. XJT" ) ;
 		}
+ 		else if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
+		}
 		else
 		{
   		TITLE( "UPDATE Ext. SPort" ) ;
@@ -964,6 +1036,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
 				}
+ 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -1071,7 +1147,7 @@ void menuUp1(uint8_t event)
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					XmegaState = XMEGA_START ;
-#ifdef PCB9XT
+#if defined(PCBX9D) || defined(PCB9XT)
 					PdiErrors0 = 0 ;
 					PdiErrors1 = 0 ;
 					PdiErrors2 = 0 ;
@@ -1095,6 +1171,14 @@ void menuUp1(uint8_t event)
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					EXTERNAL_RF_ON() ;
+					XmegaState = XMEGA_START ;
+				}
+#endif
+#ifdef PCBX9D
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
 					XmegaState = XMEGA_START ;
 				}
 #endif
@@ -1230,13 +1314,26 @@ void menuUp1(uint8_t event)
 				width /= FirmwareSize ;
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
-#ifdef PCB9XT
 				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
 				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
 				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
 				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
 				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+			}
 #endif
+#ifdef PCBX9D
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 			}
 #endif
 			else		// Internal/External Sport
@@ -1360,6 +1457,7 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
@@ -1435,11 +1533,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
-//			if ( position == 5*FH )
-//			{
-//				UpdateItem = UPDATE_TYPE_XMEGA ;
-//	      chainMenu(menuUp1) ;
-//			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )
@@ -1499,7 +1597,7 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -1963,7 +2061,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 }
 
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 // This is called repeatedly every 10mS while update is in progress
 uint32_t xmegaUpdate()
 {

@@ -160,6 +160,7 @@ const prog_uint8_t APM stickScramble[]= {
 uint8_t Arduino = 0 ;
 #endif
 
+const prog_char APM Str_Hyphens[] = "----" ;
 
 uint8_t modeFixValue( uint8_t value )
 {
@@ -229,7 +230,7 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 		att &= ~MIX_SOURCE ;		
 	}
     if(idx==0)
-        lcd_putsnAtt(x,y,PSTR("----"),4,att);
+        lcd_putsnAtt(x,y,Str_Hyphens,4,att);
     else if(idx<=4)
 		{
 			if ( g_model.useCustomStickNames )
@@ -458,7 +459,7 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 {
     
 		switch(idx1){
-    case  0:            lcd_putsAtt(x+FW,y,PSTR("---"),att);return;
+    case  0:            lcd_putsAtt(x+FW,y,&Str_Hyphens[1],att);return;
     case  MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_ON,att);return;
     case -MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_OFF,att);return;
     }
@@ -2232,6 +2233,13 @@ uint8_t getFlightPhase()
   return 0 ;
 }
 
+// Using this will save 14 bytes flash
+//NOINLINE int16_t *phaseTrimAddress( uint8_t phase, uint8_t index )
+//{
+//	return &g_model.phaseData[phase-1].trim[index] ;
+//}
+
+
 int16_t getRawTrimValue( uint8_t phase, uint8_t idx )
 {
 	if ( phase )
@@ -3495,7 +3503,7 @@ static void perMain()
 					}
 					else
 					{
-						v = g_model.gvars[g_model.anaVolume-4].gvar + 125 ;
+						v = g_model.gvars[g_model.anaVolume-4+3].gvar + 125 ;	// +3 to get to GV4-GV7
 						divisor = 250 ;
 					}
 					requiredVolume = v * (NUM_VOL_LEVELS-1) / divisor ;
@@ -4148,9 +4156,12 @@ extern uint8_t serialDat0 ;
   uint8_t mcusr = MCUSR; // save the WDT (etc) flags
 	SaveMcusr = mcusr ;
   MCUSR = 0; // must be zeroed before disabling the WDT
+	MCUCR = 0x80 ;
+	MCUCR = 0x80 ;	// Must be done twice
 #else
   uint8_t mcusr = MCUCSR;
-  MCUCSR = 0;
+  MCUCSR = 0x80 ;
+  MCUCSR = 0x80;	// Must be done twice
 #endif
 //RebootReason = mcusr ;
 #ifdef CPUM2561
@@ -4651,7 +4662,7 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 
 	if ( pvad->mute )
 	{
-		if ( pvad->source > ( CHOUT_BASE - NUM_CHNOUT ) )
+		if ( pvad->source > ( CHOUT_BASE + NUM_CHNOUT ) )
 		{ // Telemetry item
 			if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_CHNOUT ) )
 			{

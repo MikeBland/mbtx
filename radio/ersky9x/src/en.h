@@ -149,7 +149,7 @@
 #define ISTR_OFF_ON         "OFF ON"
 #define ISTR_HYPH_INV       FWx18"\001""\003---INV"
 #define ISTR_VERSION        "VERSION"
-#define ISTR_TRAINER        "TRAINER"
+#define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Slave" 
 #define ISTR_MENU_DONE      "[MENU] WHEN DONE"
 #define ISTR_CURVES         "CURVES"
@@ -223,7 +223,7 @@
 #define ISTR_YES_NO         "\003YES\013NO"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "DELETE MIX?"
-#define ISTR_MIX_POPUP      "EDIT\0INSERT\0COPY\0MOVE\0DELETE\0CLEAR ALL"
+#define ISTR_MIX_POPUP      "EDIT\0INSERT\0COPY\0MOVE\0DELETE\0CLEAR ALL\0TEMPLATES"
 #define ISTR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -263,7 +263,7 @@
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US          "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC  " PPM FrLen\015mSec"
+#define ISTR_PPMFRAME_MSEC  " PPM FrLen\016mSec"
 #define ISTR_SEND_RX_NUM    " Send Rx Number [MENU]"
 #define ISTR_DSM_TYPE       " DSM Type"
 #define ISTR_PPM_1ST_CHAN   " 1st Chan"
@@ -362,7 +362,7 @@
 #define ISWITCHES_STR				 "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"\
 														 "SI\200SI-SI\201SJ\200SJ-SJ\201SK\200SK-SK\201SL\200SL-SL\201SM\200SM-SM\201SN\200SN-SN\201SO\200SO-SO\201SP\200SP-SP\201SQ\200SQ-SQ\201SR\200SR-SR\201"
 #else
-#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
 #endif	// REV9E
 
 #ifdef REV9E
@@ -491,7 +491,6 @@
 #define ISTR_Controls			   "Controls"
 #define ISTR_Hardware			   "Hardware"
 #define ISTR_Calibration		 "Calibration" 
-//#define ISTR_Trainer		     "Trainer" 
 #define ISTR_Version		     "Version" 
 #define ISTR_ModuleRssi			 "FrSky xSSI"
 #define ISTR_DateTime			   "Date-Time" 
@@ -527,7 +526,9 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates"
+
+#define ISTR_SHUT_DOWN					"Shutting Down"
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
@@ -609,5 +610,5 @@
 //"MDISPLAY"
 //"\001Haptic Min Run"
 
-
+// MODEL SETUP / Radio setup / Haptic Min Run / Alarm Warning / BT as Trainer / Haptic / Shutting down 
 

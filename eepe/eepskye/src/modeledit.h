@@ -6,6 +6,31 @@
 #include "pers.h"
 #include "mixerslist.h"
 
+#include <QListWidget>
+class VoiceList : public QListWidget
+{
+    Q_OBJECT
+public:
+    explicit VoiceList(QWidget *parent = 0);
+//    QMimeData * mimeData ( const QList<QListWidgetItem *> items );
+
+    void keyPressEvent(QKeyEvent *event);
+
+signals:
+//    void mimeDropped(int index, const QMimeData *data, Qt::DropAction action);
+    void keyWasPressed(QKeyEvent *event);
+
+protected:
+
+public slots:
+//    bool dropMimeData(int index, const QMimeData *data, Qt::DropAction action);
+
+private:
+//    QPoint dragStartPosition;
+
+};
+
+
 class QPen;
 class QSpinBox;
 class QComboBox;
@@ -43,7 +68,8 @@ public:
     void setNote(int i, QString s);
     int getModelID() { return id_model; }
     void refreshMixerList() { tabMixes(); }
-
+		int getNodeMin( QSpinBox *sb ) ;
+		int getNodeMax( QSpinBox *sb ) ;
 
 private:
     struct t_radioData *rData ;
@@ -53,6 +79,7 @@ private:
     bool switchDefPosEditLock;
 
     MixersList *MixerlistWidget;
+		VoiceList *VoiceListWidget ;
 
     QString mixNotes[MAX_SKYMIXERS];
 
@@ -63,9 +90,10 @@ private:
     bool switchEditLock;
     bool heliEditLock;
     bool protocolEditLock;
-    bool plot_curve[16];
+    bool plot_curve[19];
     bool switchesTabDone ;
     bool customAlarmLock ;
+    bool curveEditLock ;
     
 		int oldAdjFunction[NUM_GVAR_ADJUST] ;
     QSpinBox  * cswitchOffset[NUM_SKYCSW];
@@ -114,12 +142,13 @@ private:
 		void tabPhase();
 		void tabGvar();
 		void tabVoiceAlarms() ;
+		void voiceAlarmsList() ;
     void updateCurvesTab();
     void setSwitchWidgetVisibility(int i);
 		void setSafetyWidgetVisibility(int i);
-		void oneGvarVisibility(int index, QComboBox *b, QSpinBox *sb ) ;
-		void gvarVisibility() ;
-		void oneGvarGetValue(int index, QComboBox *b, QSpinBox *sb ) ;
+//		void oneGvarVisibility(int index, QComboBox *b, QSpinBox *sb ) ;
+//		void gvarVisibility() ;
+//		void oneGvarGetValue(int index, QComboBox *b, QSpinBox *sb ) ;
     void setLimitMinMax();
     void updateSwitchesTab();
     void updateHeliTab();
@@ -130,6 +159,8 @@ private:
 		uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx ) ;
 		int16_t getTrimValue( uint8_t phase, uint8_t idx ) ;
 		void phaseSet(int phase, int trim, QComboBox *cb, QSpinBox *sb );
+    uint32_t countExtraPots() ;
+		int curveXcheck( QSpinBox *sb ) ;
 
     void launchSimulation();
     void resizeEvent(QResizeEvent *event  = 0);
@@ -158,6 +189,7 @@ private:
     void setSwitch(uint8_t idx, uint8_t func, int8_t v1, int8_t v2);
 
 		struct t_templateValues templateValues ;
+	void voiceAlarmsBlank( int i ) ;
 
 
 
@@ -185,6 +217,9 @@ private slots:
     void on_resetCurve_14_clicked();
     void on_resetCurve_15_clicked();
     void on_resetCurve_16_clicked();
+    void on_resetCurve_17_clicked();
+    void on_resetCurve_18_clicked();
+    void on_resetCurve_19_clicked();
 
     void mimeDropped(int index, const QMimeData *data, Qt::DropAction action);
     void pasteMIMEData(const QMimeData * mimeData, int destIdx=1000);
@@ -205,7 +240,8 @@ private slots:
     void mixerlistWidget_doubleClicked(QModelIndex index);
     void mixerlistWidget_KeyPress(QKeyEvent *event);
 
-    void on_VoiceAlarmList_doubleClicked(QModelIndex index) ;
+    void voiceAlarmList_doubleClicked(QModelIndex index) ;
+		void on_AdjusterList_doubleClicked( QModelIndex index ) ;
 
     void on_curveEdit_1_clicked();
     void on_curveEdit_2_clicked();
@@ -223,6 +259,9 @@ private slots:
     void on_curveEdit_14_clicked();
     void on_curveEdit_15_clicked();
     void on_curveEdit_16_clicked();
+    void on_curveEdit_17_clicked();
+    void on_curveEdit_18_clicked();
+		void on_curveEdit_19_clicked();
 
     void on_plotCB_1_toggled(bool checked);
     void on_plotCB_2_toggled(bool checked);
@@ -240,8 +279,12 @@ private slots:
     void on_plotCB_14_toggled(bool checked);
     void on_plotCB_15_toggled(bool checked);
     void on_plotCB_16_toggled(bool checked);
+    void on_plotCB_17_toggled(bool checked);
+    void on_plotCB_18_toggled(bool checked);
+		void on_plotCB_19_toggled(bool checked);
 
     void curvePointEdited();
+    void curveXPointEdited();
     void limitEdited();
     void limitAuto();
     void switchesEdited();
@@ -306,6 +349,7 @@ private slots:
 		void on_timer2ResetCB_currentIndexChanged(int index);
     void on_modelNameLE_editingFinished();
 		void on_modelImageLE_editingFinished() ;
+    void on_voiceNameLE_editingFinished() ;
     void on_tabWidget_currentChanged(int index);
     void on_templateList_doubleClicked(QModelIndex index);
     void on_ppmFrameLengthDSB_editingFinished();
@@ -319,6 +363,7 @@ private slots:
 		void on_xsubSubProtocolCB_currentIndexChanged(int index) ;
     void on_pxxRxNum_editingFinished();
 		void on_VoiceNumberSB_editingFinished() ;
+		void on_VoiceNumberSB_valueChanged( int x ) ;
 		void on_autoLimitsSB_editingFinished() ;
 		void on_countryCB_currentIndexChanged(int index) ;
 		void on_xcountryCB_currentIndexChanged(int index) ;
@@ -373,6 +418,22 @@ private slots:
 		void on_CustomAlarmMaxSB_editingFinished() ;
 
 		void on_BtDefaultAddrSB_editingFinished() ;
+
+		void on_MusicStartCB_currentIndexChanged(int) ;
+		void on_MusicPauseCB_currentIndexChanged(int) ;
+		void on_MusicPrevCB_currentIndexChanged(int) ;
+		void on_MusicNextCB_currentIndexChanged(int) ;
+
+		void voiceAdd() ;
+		void voiceRemove() ;
+	void voiceBlank() ;
+	void voiceMoveUp() ;
+	void voiceMoveDown() ;
+    void showVoiceContextMenu(QPoint pos);
+	void voiceCopy() ;
+	void voicePaste() ;
+	void voice_KeyPress(QKeyEvent *event) ;
+
 
 };
 
