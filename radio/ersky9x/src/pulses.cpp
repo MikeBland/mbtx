@@ -90,7 +90,7 @@ uint8_t Serial_bit_count;
 uint8_t Serial_byte_count ;
 uint8_t Current_protocol ;
 uint8_t Current_xprotocol ;
-uint8_t pxxFlag = 0 ;
+uint8_t pxxFlag[2] = { 0, 0 } ;
 uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 uint8_t CurrentTrainerSource ;
@@ -102,9 +102,11 @@ uint8_t DsmInitCounter = 0 ;
 //uint8_t Dsm_mode_response = 0 ;
 
 uint16_t Pulses[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
-uint16_t Pulses2[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
+uint16_t Pulses2[180] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 volatile uint32_t Pulses_index = 0 ;		// Modified in interrupt routine
 volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
+
+uint8_t Multi2Data[28] ;
 
 // DSM2 control bits
 #define BindBit 0x80
@@ -159,7 +161,7 @@ void module_output_active()
 //	 	pioptr->PIO_ABCDSR[1] |= PIO_PA17 ;			// Peripheral C
 		pioptr->PIO_PDR = PIO_PA17 ;						// Disable bit A17 Assign to peripheral
 #ifdef REVX
-		if ( g_model.ppmOpenDrain )
+		if ( ( g_model.ppmOpenDrain ) || ( g_model.protocol != PROTO_PPM ) )
 		{
 			pioptr->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
 		}
@@ -287,7 +289,9 @@ void init_ppm2( uint32_t period, uint32_t out_enable )
 #endif
 
 	pwmptr->PWM_IER1 = PWM_IER1_CHID1 ;
-  NVIC_SetPriority(PWM_IRQn, 3 ) ;
+  NVIC_SetPriority(SW7_IRQn, 4 ) ;
+	NVIC_EnableIRQ(SW7_IRQn) ;
+  NVIC_SetPriority(PWM_IRQn, 2 ) ;
 	NVIC_EnableIRQ(PWM_IRQn) ;
 	
 }
@@ -351,6 +355,10 @@ void disable_main_ppm()
 //	NVIC_DisableIRQ(PWM_IRQn) ;
 //}
 
+extern "C" void SW7_IRQHandler( void )
+{
+	setupPulses() ;
+}
 
 #ifndef SIMU
 extern "C" void PWM_IRQHandler (void)
@@ -362,6 +370,60 @@ extern "C" void PWM_IRQHandler (void)
 
 	pwmptr = PWM ;
 	reason = pwmptr->PWM_ISR1 ;
+	if ( reason & PWM_ISR1_CHID1 )	// PPM2
+	{
+		if ( g_model.xprotocol == 0 )
+		{
+			pwmptr->PWM_CH_NUM[1].PWM_CPDRUPD = Pulses2[Pulses2_index++] ;	// Period in half uS
+			if ( Pulses2[Pulses2_index] == 0 )
+			{
+				Pulses2_index = 0 ;
+				setupPulsesPPM2() ;
+			  if ( Current_xprotocol != g_model.xprotocol )
+				{
+					if ( g_model.xprotocol == PROTO_OFF )
+					{
+						PPM2OutputLow() ;
+						PIOC->PIO_CODR = PIO_PC15 ;
+					}
+					else
+					{
+						if ( PulsesPaused == 0 )
+						{
+							PPM2OutputActive() ;
+						}
+					}
+			  	Current_xprotocol = g_model.xprotocol ;
+				}
+			}
+		}
+		else // g_model.xprotocol = 1
+		{
+			pwmptr->PWM_CH_NUM[1].PWM_CPDRUPD = Pulses2[Pulses2_index++] ;	// Period in half uS
+			pwmptr->PWM_CH_NUM[1].PWM_CDTYUPD = Pulses2[Pulses2_index++] ;
+			if ( Pulses2[Pulses2_index] == 0 )
+			{
+				Pulses2_index = 0 ;
+				setupPulsesPPM2() ;
+			  if ( Current_xprotocol != g_model.xprotocol )
+				{
+					if ( g_model.xprotocol == PROTO_OFF )
+					{
+						PPM2OutputLow() ;
+						PIOC->PIO_CODR = PIO_PC15 ;
+					}
+					else
+					{
+						if ( PulsesPaused == 0 )
+						{
+							PPM2OutputActive() ;
+						}
+					}
+			  	Current_xprotocol = g_model.xprotocol ;
+				}
+			}
+		}
+	}
 	if ( reason & PWM_ISR1_CHID3 )
 	{
 		switch ( Current_protocol )		// Use the current, don't switch until set_up_pulses
@@ -373,7 +435,8 @@ extern "C" void PWM_IRQHandler (void)
 				{
 					Pulses_index = 0 ;
 
-					setupPulses() ;
+					NVIC->STIR = SW7_IRQn ;
+//					setupPulses() ;
 				}
 			break ;
 
@@ -391,7 +454,8 @@ extern "C" void PWM_IRQHandler (void)
 				pwmptr->PWM_CH_NUM[3].PWM_CPDRUPD = period ;	// Period in half uS
 				if ( period != 5000 )	// 2.5 mS
 				{
-					setupPulses() ;
+					NVIC->STIR = SW7_IRQn ;
+//					setupPulses() ;
 				}
 				else
 				{
@@ -430,7 +494,8 @@ extern "C" void PWM_IRQHandler (void)
 				pwmptr->PWM_CH_NUM[3].PWM_CPDRUPD = period ;	// Period in half uS
 				if ( period != 5000 )	// 2.5 mS
 				{
-					setupPulses() ;
+					NVIC->STIR = SW7_IRQn ;
+//					setupPulses() ;
 				}
 				else
 				{
@@ -456,31 +521,6 @@ extern "C" void PWM_IRQHandler (void)
 					}
 				}
 			break ;
-		}
-	}
-	if ( reason & PWM_ISR1_CHID1 )
-	{
-		pwmptr->PWM_CH_NUM[1].PWM_CPDRUPD = Pulses2[Pulses2_index++] ;	// Period in half uS
-		if ( Pulses2[Pulses2_index] == 0 )
-		{
-			Pulses2_index = 0 ;
-			setupPulsesPPM2() ;
-		  if ( Current_xprotocol != g_model.xprotocol )
-			{
-				if ( g_model.xprotocol == PROTO_OFF )
-				{
-					PPM2OutputLow() ;
-					PIOC->PIO_CODR = PIO_PC15 ;
-				}
-				else
-				{
-					if ( PulsesPaused == 0 )
-					{
-						PPM2OutputActive() ;
-					}
-				}
-		  	Current_xprotocol = g_model.xprotocol ;
-			}
 		}
 	}
 }
@@ -565,7 +605,7 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 //		g_model.ppmNCH = channels ;
 		g_model.dsmMode = dsm_mode_response ;
   	STORE_MODELVARS ;
-		pxxFlag &= ~PXX_BIND ;
+		pxxFlag[0] &= ~PXX_BIND ;
 	}
 	else
 #endif
@@ -680,10 +720,10 @@ void setupPulsesDsm2(uint8_t chns)
 #ifdef ASSAN
 		if ( Dsm_Type == 2 )
 		{
-			if ( (pxxFlag & PXX_BIND) || (dsmDat[0]&BindBit) )
+			if ( (pxxFlag[0] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				flags = ORTX_BIND_FLAG | ORTX_USE_11mS | ORTX_USE_11bit ;
-				if ( pxxFlag & PXX_DSMX )
+				if ( pxxFlag[0] & PXX_DSMX )
 				{
 					flags |= ORTX_USE_DSMX ;
 				}
@@ -692,7 +732,7 @@ void setupPulsesDsm2(uint8_t chns)
 			// Need to choose dsmx/dsm2 as well
 
   		sendByteDsm2( flags ) ;
-  		sendByteDsm2( 0 | ( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ) ;		// 
+  		sendByteDsm2( 0 | ( (pxxFlag[0] & PXX_RANGE_CHECK) ? 4: 7 ) ) ;		// 
   		sendByteDsm2( 0 ) ;
 #ifdef ENABLE_DSM_MATCH  		
 			sendByteDsm2( g_model.pxxRxNum ) ;	// Model number
@@ -749,13 +789,13 @@ void setupPulsesDsm2(uint8_t chns)
 		{
   		sendByteDsm2( pass ) ;		// Actually is a 0
 			// Do init packet
-			if ( (pxxFlag & PXX_BIND) || (dsmDat[0]&BindBit) )
+			if ( (pxxFlag[0] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				flags |= ORTX_BIND_FLAG ;
 			}
 			// Need to choose dsmx/dsm2 as well
   		sendByteDsm2( flags ) ;
-  		sendByteDsm2( (pxxFlag & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
+  		sendByteDsm2( (pxxFlag[0] & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
   		sendByteDsm2( channels ) ;			// Max channels
 //  		sendByteDsm2( g_model.pxxRxNum ) ;		// Rx Num
 #ifdef ENABLE_DSM_MATCH  		
@@ -843,14 +883,14 @@ void setupPulsesDsm2(uint8_t chns)
   		}
 
 	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-  		if ((!(dsmDat[0]&BindBit))&& (pxxFlag & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  		if ((!(dsmDat[0]&BindBit))&& (pxxFlag[0] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
   		else dsmDat[0]&=~RangeCheckBit;
 		}
 		else // Multi
 		{
 			dsmDat[0] = (g_model.sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
-			if (pxxFlag & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
-			if (pxxFlag & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
+			if (pxxFlag[0] & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
+			if (pxxFlag[0] & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
 		}
 
 		if(g_model.protocol == PROTO_MULTI)
@@ -1139,8 +1179,13 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 
 void setupPulsesPPM2()
 {
+  static uint8_t dsmDat[2+6*2+4]={0xFF,0x00,  0x00,0xAA,  0x05,0xFF,  0x09,0xFF,  0x0D,0xFF,  0x13,0x54,  0x14,0xAA } ;
 	register Pwm *pwmptr ;
-	
+	uint8_t *dataPtr ;
+	uint32_t byteCount ;
+	uint32_t bitTime ;
+	uint16_t rest ;
+
 	pwmptr = PWM ;
 	// Now set up pulses
 	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
@@ -1148,77 +1193,265 @@ void setupPulsesPPM2()
   //Total frame length = 22.5msec
   //each pulse is 0.7..1.7ms long with a 0.3ms stop tail
   //The pulse ISR is 2mhz that's why everything is multiplied by 2
-  uint16_t *ptr ;
-  ptr = Pulses2 ;
-  
-	uint32_t p = g_model.startPPM2channel ;
+	if ( g_model.xprotocol == 0 )
+	{
+  	uint16_t *ptr ;
+  	ptr = Pulses2 ;
+ 
+		uint32_t p = g_model.startPPM2channel ;
 
-	if ( p == 0 )
-	{
-//  	p = 8+g_model.ppmNCH*2 + g_model.startChannel ; //Channels *2
-		p = (g_model.ppmNCH + 4) * 2 ;
-		if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
+		if ( p == 0 )
 		{
-			p = 8 ;		// Use a default if wrong from DSM
+	//  	p = 8+g_model.ppmNCH*2 + g_model.startChannel ; //Channels *2
+			p = (g_model.ppmNCH + 4) * 2 ;
+			if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
+			{
+				p = 8 ;		// Use a default if wrong from DSM
+			}
+			if ( p > 16 )
+			{
+				p -= 13 ;
+			}
+  		p += g_model.startChannel ; //Channels *2
+			if ( p > 16 )
+			{
+				p = 16 ;
+			}
 		}
-		if ( p > 16 )
+		else
 		{
-			p -= 13 ;
+			p -= 1 ;
 		}
-  	p += g_model.startChannel ; //Channels *2
-		if ( p > 16 )
+		uint32_t q = (g_model.ppm2NCH + 4) * 2 ;
+		if ( q > 16 )
 		{
-			p = 16 ;
+			q -= 13 ;
 		}
-	}
-	else
-	{
-		p -= 1 ;
-	}
-	uint32_t q = (g_model.ppm2NCH + 4) * 2 ;
-	if ( q > 16 )
-	{
-		q -= 13 ;
-	}
-	q += p ;
-	if ( q > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
-	{
-		q = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
-	}
+		q += p ;
+		if ( q > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
+		{
+			q = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
+		}
 
-	pwmptr->PWM_CH_NUM[1].PWM_CDTYUPD = (g_model.ppmDelay*50+300)*2; //Stoplen *2
+		pwmptr->PWM_CH_NUM[1].PWM_CDTYUPD = (g_model.xppmDelay*50+300)*2; //Stoplen *2
 	
-	if (g_model.pulsePol == 0)
-	{
-		pwmptr->PWM_CH_NUM[1].PWM_CMR &= ~0x00000200 ;	// CPOL
-	}
-	else
-	{
-		pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
-	}
+		if (g_model.xpulsePol == 0)
+		{
+			pwmptr->PWM_CH_NUM[1].PWM_CMR &= ~0x00000200 ;	// CPOL
+		}
+		else
+		{
+			pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
+		}
     
-	uint16_t rest=22500u*2; //Minimum Framelen=22.5 ms
-  rest += (int16_t(g_model.ppmFrameLength))*1000;
-  //    if(p>9) rest=p*(1720u*2 + q) + 4000u*2; //for more than 9 channels, frame must be longer
-  for( uint32_t i = p ; i < q ; i += 1 )
-	{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
-  	int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
-   	rest-=(v);
-	//        *ptr++ = q;      //moved down two lines
-    	    //        pulses2MHz[j++] = q;
-    *ptr++ = v ; /* as Pat MacKenzie suggests */
-    	    //        pulses2MHz[j++] = v - q + 600; /* as Pat MacKenzie suggests */
-	//        *ptr++ = q;      //to here
- 	}
-	//    *ptr=q;       //reverse these two assignments
-	//    *(ptr+1)=rest;
-	if ( rest<9000 )
-	{
-		rest = 9000 ;
+		uint16_t rest=22500u*2; //Minimum Framelen=22.5 ms
+  	rest += (int16_t(g_model.xppmFrameLength))*1000;
+  	//    if(p>9) rest=p*(1720u*2 + q) + 4000u*2; //for more than 9 channels, frame must be longer
+  	for( uint32_t i = p ; i < q ; i += 1 )
+		{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
+  		int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
+  	 	rest-=(v);
+		//        *ptr++ = q;      //moved down two lines
+  	  	    //        pulses2MHz[j++] = q;
+  	  *ptr++ = v ; /* as Pat MacKenzie suggests */
+  	  	    //        pulses2MHz[j++] = v - q + 600; /* as Pat MacKenzie suggests */
+		//        *ptr++ = q;      //to here
+ 		}
+		//    *ptr=q;       //reverse these two assignments
+		//    *(ptr+1)=rest;
+		if ( rest<9000 )
+		{
+			rest = 9000 ;
+		}
+ 		*ptr = rest;
+ 		*(ptr+1) = 0;
 	}
- 	*ptr = rest;
- 	*(ptr+1) = 0;
-	
+	else	// if ( g_model.xprotocol == PROTO_DSM2 )
+	{
+  	uint16_t *ptr ;
+  	ptr = Pulses2 ;
+ 
+		uint32_t p = g_model.startPPM2channel ;
+
+		if ( p == 0 )
+		{
+	//  	p = 8+g_model.ppmNCH*2 + g_model.startChannel ; //Channels *2
+			p = (g_model.ppmNCH + 4) * 2 ;
+			if ( ( g_model.ppmNCH > 12 ) || (g_model.ppmNCH < -2) )
+			{
+				p = 8 ;		// Use a default if wrong from DSM
+			}
+			if ( p > 16 )
+			{
+				p -= 13 ;
+			}
+  		p += g_model.startChannel ; //Channels *2
+			if ( p > 16 )
+			{
+				p = 16 ;
+			}
+		}
+		else
+		{
+			p -= 1 ;
+		}
+		uint32_t q = (g_model.ppm2NCH + 4) * 2 ;
+		if ( q > 16 )
+		{
+			q -= 13 ;
+		}
+		q += p ;
+		if ( q > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
+		{
+			q = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
+		}
+
+//		if (g_model.pulsePol == 0)
+//		{
+//			pwmptr->PWM_CH_NUM[1].PWM_CMR &= ~0x00000200 ;	// CPOL
+//		}
+//		else
+//		{
+		pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
+//		}
+
+		if(g_model.xprotocol == PROTO_DSM2 )
+    {
+  		if (dsmDat[0]&BadData)  //first time through, setup header
+  		{
+  		  switch(g_model.xsub_protocol)
+  		  {
+  		    case LPXDSM2:
+  		      dsmDat[0]= 0x80;
+  		    break;
+  		    case DSM2only:
+  		      dsmDat[0]=0x90;
+  		    break;
+  		    default:
+  		      dsmDat[0]=0x98;  //dsmx, bind mode
+  		    break;
+  		  }
+  		}
+
+	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+  		if ((!(dsmDat[0]&BindBit))&& (pxxFlag[1] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  		else dsmDat[0]&=~RangeCheckBit;
+
+  		dsmDat[1]=g_model.xPxxRxNum ;  //DSM2 Header second byte for model match
+			if ( q > p + 6 )
+			{
+				q = p + 6 ;
+			}
+  		for(uint8_t i=p; i < q ; i++)
+  		{
+//				uint16_t pulse = limit(0, ((g_chans512[/*q+*/i]*13)>>5)+512,1023);
+				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
+ 			  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
+  		 	dsmDat[3+2*i] = pulse & 0xff;
+  		}
+
+			dataPtr = dsmDat ;
+			rest = 22000u*2 ;
+			byteCount = 14 ;
+			bitTime = 8 * 2 ;
+
+		}
+		else
+		{
+			uint32_t outputbitsavailable = 0 ;
+			uint32_t outputbits = 0 ;
+			uint32_t i ;
+			
+			Multi2Data[0] = 0x55 ;
+			Multi2Data[1] = (g_model.xsub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
+			if (pxxFlag[1] & PXX_BIND)	Multi2Data[1] |=BindBit;		//set bind bit if bind menu is pressed
+			if (pxxFlag[1] & PXX_RANGE_CHECK)	Multi2Data[1] |=RangeCheckBit;		//set bind bit if bind menu is pressed
+			Multi2Data[2] = (g_model.xppmNCH & 0xF0) | ( g_model.xPxxRxNum & 0x0F ) ;
+			Multi2Data[3] = g_model.xoption_protocol ;
+
+			dataPtr = &Multi2Data[4] ;
+
+			for ( i = 0 ; i < 16 ; i += 1 )
+			{
+				int16_t x ;
+				uint32_t y = p+i ;
+				x = y >= q ? 0 : g_chans512[y] ;
+				x *= 4 ;
+				x += x > 0 ? 4 : -4 ;
+				x /= 5 ;
+//#ifdef MULTI_PROTOCOL
+				x += 0x400 ;
+				if ( x < 0 )
+				{
+					x = 0 ;
+				}
+				if ( x > 2047 )
+				{
+					x = 2047 ;
+				}
+				outputbits |= (uint32_t)x << outputbitsavailable ;
+				outputbitsavailable += 11 ;
+				while ( outputbitsavailable >= 8 )
+				{
+					uint32_t j = outputbits ;
+					*dataPtr++ = j ;
+					outputbits >>= 8 ;
+					outputbitsavailable -= 8 ;
+				}
+			}
+			
+			dataPtr = Multi2Data ;
+			rest = 11000u*2 ;
+			byteCount = 26 ;
+			bitTime = 10 * 2 ;
+		}
+		
+		uint32_t counter ;
+  	for ( counter = 0 ; counter < byteCount ; counter += 1 )
+  	{
+			uint32_t byte = dataPtr[counter] | 0x0600 ;	// Stop bits
+			uint32_t index ;
+			uint32_t countLow = 1 ;
+			uint32_t countHigh = 0 ;
+			uint32_t parity = 0 ;
+			for ( index = 0 ; index < 12 ; index += 1 )
+			{
+				if ( index == 8 )
+				{
+					byte |= parity & 1 ;
+				}
+				else
+				{
+					parity ^= byte ;
+				}
+					
+				if ( byte & 1 )
+				{
+					countHigh += 1 ;
+				}
+				else
+				{
+					if ( countHigh )
+					{
+						uint32_t t = (countLow+countHigh) * bitTime ;
+						rest -= t ;
+				  	*ptr++ = t ;
+				  	*ptr++ = countLow * bitTime ;
+						countLow = 0 ;
+						countHigh = 0 ;
+					}
+					countLow += 1 ;
+				}
+				byte >>= 1 ;
+			}
+  	}
+		*ptr++ = rest-3000 ;
+  	*ptr++ = 0 ;
+  	*ptr++ = 3000 ;
+  	*ptr++ = 0 ;
+  	*ptr = 0 ;
+
+	}
 }
 
 
@@ -1298,48 +1531,64 @@ void setupPulsesPPM2()
 
 
 
-const uint16_t CRCTable[]=
+//const uint16_t CRCTable[]=
+//{
+//    0x0000,0x1189,0x2312,0x329b,0x4624,0x57ad,0x6536,0x74bf,
+//    0x8c48,0x9dc1,0xaf5a,0xbed3,0xca6c,0xdbe5,0xe97e,0xf8f7,
+//    0x1081,0x0108,0x3393,0x221a,0x56a5,0x472c,0x75b7,0x643e,
+//    0x9cc9,0x8d40,0xbfdb,0xae52,0xdaed,0xcb64,0xf9ff,0xe876,
+//    0x2102,0x308b,0x0210,0x1399,0x6726,0x76af,0x4434,0x55bd,
+//    0xad4a,0xbcc3,0x8e58,0x9fd1,0xeb6e,0xfae7,0xc87c,0xd9f5,
+//    0x3183,0x200a,0x1291,0x0318,0x77a7,0x662e,0x54b5,0x453c,
+//    0xbdcb,0xac42,0x9ed9,0x8f50,0xfbef,0xea66,0xd8fd,0xc974,
+//    0x4204,0x538d,0x6116,0x709f,0x0420,0x15a9,0x2732,0x36bb,
+//    0xce4c,0xdfc5,0xed5e,0xfcd7,0x8868,0x99e1,0xab7a,0xbaf3,
+//    0x5285,0x430c,0x7197,0x601e,0x14a1,0x0528,0x37b3,0x263a,
+//    0xdecd,0xcf44,0xfddf,0xec56,0x98e9,0x8960,0xbbfb,0xaa72,
+//    0x6306,0x728f,0x4014,0x519d,0x2522,0x34ab,0x0630,0x17b9,
+//    0xef4e,0xfec7,0xcc5c,0xddd5,0xa96a,0xb8e3,0x8a78,0x9bf1,
+//    0x7387,0x620e,0x5095,0x411c,0x35a3,0x242a,0x16b1,0x0738,
+//    0xffcf,0xee46,0xdcdd,0xcd54,0xb9eb,0xa862,0x9af9,0x8b70,
+//    0x8408,0x9581,0xa71a,0xb693,0xc22c,0xd3a5,0xe13e,0xf0b7,
+//    0x0840,0x19c9,0x2b52,0x3adb,0x4e64,0x5fed,0x6d76,0x7cff,
+//    0x9489,0x8500,0xb79b,0xa612,0xd2ad,0xc324,0xf1bf,0xe036,
+//    0x18c1,0x0948,0x3bd3,0x2a5a,0x5ee5,0x4f6c,0x7df7,0x6c7e,
+//    0xa50a,0xb483,0x8618,0x9791,0xe32e,0xf2a7,0xc03c,0xd1b5,
+//    0x2942,0x38cb,0x0a50,0x1bd9,0x6f66,0x7eef,0x4c74,0x5dfd,
+//    0xb58b,0xa402,0x9699,0x8710,0xf3af,0xe226,0xd0bd,0xc134,
+//    0x39c3,0x284a,0x1ad1,0x0b58,0x7fe7,0x6e6e,0x5cf5,0x4d7c,
+//    0xc60c,0xd785,0xe51e,0xf497,0x8028,0x91a1,0xa33a,0xb2b3,
+//    0x4a44,0x5bcd,0x6956,0x78df,0x0c60,0x1de9,0x2f72,0x3efb,
+//    0xd68d,0xc704,0xf59f,0xe416,0x90a9,0x8120,0xb3bb,0xa232,
+//    0x5ac5,0x4b4c,0x79d7,0x685e,0x1ce1,0x0d68,0x3ff3,0x2e7a,
+//    0xe70e,0xf687,0xc41c,0xd595,0xa12a,0xb0a3,0x8238,0x93b1,
+//    0x6b46,0x7acf,0x4854,0x59dd,0x2d62,0x3ceb,0x0e70,0x1ff9,
+//    0xf78f,0xe606,0xd49d,0xc514,0xb1ab,0xa022,0x92b9,0x8330,
+//    0x7bc7,0x6a4e,0x58d5,0x495c,0x3de3,0x2c6a,0x1ef1,0x0f78
+//};
+
+
+//void crc( uint8_t data )
+//{
+//    //	uint8_t i ;
+
+//  PcmCrc =(PcmCrc<<8) ^(CRCTable[((PcmCrc>>8)^data)&0xFF]);
+//}
+
+const uint16_t CRC_Short[]=
 {
-    0x0000,0x1189,0x2312,0x329b,0x4624,0x57ad,0x6536,0x74bf,
-    0x8c48,0x9dc1,0xaf5a,0xbed3,0xca6c,0xdbe5,0xe97e,0xf8f7,
-    0x1081,0x0108,0x3393,0x221a,0x56a5,0x472c,0x75b7,0x643e,
-    0x9cc9,0x8d40,0xbfdb,0xae52,0xdaed,0xcb64,0xf9ff,0xe876,
-    0x2102,0x308b,0x0210,0x1399,0x6726,0x76af,0x4434,0x55bd,
-    0xad4a,0xbcc3,0x8e58,0x9fd1,0xeb6e,0xfae7,0xc87c,0xd9f5,
-    0x3183,0x200a,0x1291,0x0318,0x77a7,0x662e,0x54b5,0x453c,
-    0xbdcb,0xac42,0x9ed9,0x8f50,0xfbef,0xea66,0xd8fd,0xc974,
-    0x4204,0x538d,0x6116,0x709f,0x0420,0x15a9,0x2732,0x36bb,
-    0xce4c,0xdfc5,0xed5e,0xfcd7,0x8868,0x99e1,0xab7a,0xbaf3,
-    0x5285,0x430c,0x7197,0x601e,0x14a1,0x0528,0x37b3,0x263a,
-    0xdecd,0xcf44,0xfddf,0xec56,0x98e9,0x8960,0xbbfb,0xaa72,
-    0x6306,0x728f,0x4014,0x519d,0x2522,0x34ab,0x0630,0x17b9,
-    0xef4e,0xfec7,0xcc5c,0xddd5,0xa96a,0xb8e3,0x8a78,0x9bf1,
-    0x7387,0x620e,0x5095,0x411c,0x35a3,0x242a,0x16b1,0x0738,
-    0xffcf,0xee46,0xdcdd,0xcd54,0xb9eb,0xa862,0x9af9,0x8b70,
-    0x8408,0x9581,0xa71a,0xb693,0xc22c,0xd3a5,0xe13e,0xf0b7,
-    0x0840,0x19c9,0x2b52,0x3adb,0x4e64,0x5fed,0x6d76,0x7cff,
-    0x9489,0x8500,0xb79b,0xa612,0xd2ad,0xc324,0xf1bf,0xe036,
-    0x18c1,0x0948,0x3bd3,0x2a5a,0x5ee5,0x4f6c,0x7df7,0x6c7e,
-    0xa50a,0xb483,0x8618,0x9791,0xe32e,0xf2a7,0xc03c,0xd1b5,
-    0x2942,0x38cb,0x0a50,0x1bd9,0x6f66,0x7eef,0x4c74,0x5dfd,
-    0xb58b,0xa402,0x9699,0x8710,0xf3af,0xe226,0xd0bd,0xc134,
-    0x39c3,0x284a,0x1ad1,0x0b58,0x7fe7,0x6e6e,0x5cf5,0x4d7c,
-    0xc60c,0xd785,0xe51e,0xf497,0x8028,0x91a1,0xa33a,0xb2b3,
-    0x4a44,0x5bcd,0x6956,0x78df,0x0c60,0x1de9,0x2f72,0x3efb,
-    0xd68d,0xc704,0xf59f,0xe416,0x90a9,0x8120,0xb3bb,0xa232,
-    0x5ac5,0x4b4c,0x79d7,0x685e,0x1ce1,0x0d68,0x3ff3,0x2e7a,
-    0xe70e,0xf687,0xc41c,0xd595,0xa12a,0xb0a3,0x8238,0x93b1,
-    0x6b46,0x7acf,0x4854,0x59dd,0x2d62,0x3ceb,0x0e70,0x1ff9,
-    0xf78f,0xe606,0xd49d,0xc514,0xb1ab,0xa022,0x92b9,0x8330,
-    0x7bc7,0x6a4e,0x58d5,0x495c,0x3de3,0x2c6a,0x1ef1,0x0f78
-};
+   0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
+   0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7 };
+
+uint16_t CRCTable(uint8_t val)
+{
+	return CRC_Short[val&0x0F] ^ (0x1081 * (val>>4));
+}
 
 
 void crc( uint8_t data )
 {
-    //	uint8_t i ;
-
-  PcmCrc =(PcmCrc<<8) ^(CRCTable[((PcmCrc>>8)^data)&0xFF]);
+  PcmCrc=(PcmCrc<<8) ^ CRCTable((PcmCrc>>8)^data) ;
 }
 
 
@@ -1446,23 +1695,23 @@ void setupPulsesPXX()
     
 //#ifdef DISABLE_PXX_SPORT
 //#ifdef REVX
-//		putPcmByte( pxxFlag ) ;     // First byte of flags
+//		putPcmByte( pxxFlag[0] ) ;     // First byte of flags
 //#else
   	uint8_t flag1;
-  	if (pxxFlag & PXX_BIND)
+  	if (pxxFlag[0] & PXX_BIND)
 		{
-  	  flag1 = (g_model.sub_protocol<< 6) | (g_model.country << 1) | pxxFlag ;
+  	  flag1 = (g_model.sub_protocol<< 6) | (g_model.country << 1) | pxxFlag[0] ;
   	}
   	else
 		{
-  	  flag1 = (g_model.sub_protocol << 6) | pxxFlag ;
+  	  flag1 = (g_model.sub_protocol << 6) | pxxFlag[0] ;
 		}	
 		 putPcmByte( flag1 ) ;     // First byte of flags
 //#endif
     putPcmByte( 0 ) ;     // Second byte of flags
 //#ifdef DISABLE_PXX_SPORT
 //#ifdef REVX
-//    pxxFlag = 0;          // reset flag after send
+//    pxxFlag[0] = 0;          // reset flag after send
 //#endif
 		uint8_t startChan = g_model.startChannel ;
 		if ( lpass & 1 )

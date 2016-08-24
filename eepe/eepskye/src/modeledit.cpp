@@ -23,6 +23,7 @@
 #define BC_BIT_P1  (0x10)
 #define BC_BIT_P2  (0x20)
 #define BC_BIT_P3  (0x40)
+#define BC_BIT_P4  (0x80)
 
 #define RUD  (1)
 #define ELE  (2)
@@ -303,7 +304,11 @@ void ModelEdit::tabModelEditSetup()
 
 		customAlarmLock = true ;
 		populateCustomAlarmCB( ui->CustomAlarmSourceCB, rData->type ) ;
-    ui->CustomAlarmSourceCB->setCurrentIndex(g_model.customCheck.source );
+  	if ( g_eeGeneral.extraPotsSource[0] )
+		{
+			ui->CustomAlarmSourceCB->addItem("P4") ;
+		}
+		ui->CustomAlarmSourceCB->setCurrentIndex(g_model.customCheck.source );
 		ui->CustomAlarmMinSB->setValue(g_model.customCheck.min ) ;
     ui->CustomAlarmMaxSB->setValue(g_model.customCheck.max ) ;
 		customAlarmLock = false ;
@@ -324,6 +329,7 @@ void ModelEdit::tabModelEditSetup()
     ui->trainerCB->setCurrentIndex(x) ;
 //    ui->T2ThrTrgChkB->setChecked(g_model.t2throttle);
     ui->thrIdleChkB->setChecked(g_model.throttleIdle) ;
+    ui->thrRevChkB->setChecked(g_model.throttleReversed) ;
     
 		//center beep
     ui->bcRUDChkB->setChecked(g_model.beepANACenter & BC_BIT_RUD);
@@ -333,6 +339,16 @@ void ModelEdit::tabModelEditSetup()
     ui->bcP1ChkB->setChecked(g_model.beepANACenter & BC_BIT_P1);
     ui->bcP2ChkB->setChecked(g_model.beepANACenter & BC_BIT_P2);
     ui->bcP3ChkB->setChecked(g_model.beepANACenter & BC_BIT_P3);
+    
+    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) )
+		{
+	    ui->bcP4ChkB->show() ;
+			ui->bcP4ChkB->setChecked(g_model.beepANACenter & BC_BIT_P4);
+		}	
+		else
+		{
+	    ui->bcP4ChkB->hide() ;
+		}
 
     ui->extendedLimitsChkB->setChecked(g_model.extendedLimits);
 
@@ -2091,6 +2107,13 @@ void ModelEdit::tabPhase()
 	connect(ui->FP5_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP6_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 
+	connect(ui->FP1_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP2_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP3_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP4_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP5_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP6_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+
 	connect(ui->FP1_RudCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP1_EleCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP1_ThrCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
@@ -2201,6 +2224,13 @@ void ModelEdit::updatePhaseTab()
 	populateSwitchShortCB( ui->FP4_sw, g_model.phaseData[3].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP5_sw, g_model.phaseData[4].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP6_sw, g_model.phaseData[5].swtch, rData->type ) ;
+
+	populateSwitchShortCB( ui->FP1_sw_2, g_model.phaseData[0].swtch2, rData->type ) ;
+	populateSwitchShortCB( ui->FP2_sw_2, g_model.phaseData[1].swtch2, rData->type ) ;
+	populateSwitchShortCB( ui->FP3_sw_2, g_model.phaseData[2].swtch2, rData->type ) ;
+	populateSwitchShortCB( ui->FP4_sw_2, g_model.phaseData[3].swtch2, rData->type ) ;
+	populateSwitchShortCB( ui->FP5_sw_2, g_model.phaseData[4].swtch2, rData->type ) ;
+	populateSwitchShortCB( ui->FP6_sw_2, g_model.phaseData[5].swtch2, rData->type ) ;
 
 	
 	ui->FP1rudTrimSB->setDisabled( populatePhasetrim( ui->FP1_RudCB, 1, g_model.phaseData[0].trim[0] ) ) ;
@@ -2342,6 +2372,13 @@ void ModelEdit::phaseEdited()
   g_model.phaseData[3].swtch = getSwitchCbValueShort( ui->FP4_sw, rData->type ) ;
   g_model.phaseData[4].swtch = getSwitchCbValueShort( ui->FP5_sw, rData->type ) ;
   g_model.phaseData[5].swtch = getSwitchCbValueShort( ui->FP6_sw, rData->type ) ;
+
+  g_model.phaseData[0].swtch2 = getSwitchCbValueShort( ui->FP1_sw_2, rData->type ) ;
+  g_model.phaseData[1].swtch2 = getSwitchCbValueShort( ui->FP2_sw_2, rData->type ) ;
+  g_model.phaseData[2].swtch2 = getSwitchCbValueShort( ui->FP3_sw_2, rData->type ) ;
+  g_model.phaseData[3].swtch2 = getSwitchCbValueShort( ui->FP4_sw_2, rData->type ) ;
+  g_model.phaseData[4].swtch2 = getSwitchCbValueShort( ui->FP5_sw_2, rData->type ) ;
+  g_model.phaseData[5].swtch2 = getSwitchCbValueShort( ui->FP6_sw_2, rData->type ) ;
 
   textUpdate( ui->FM1Name, g_model.phaseData[0].name, 6 ) ;
   textUpdate( ui->FM2Name, g_model.phaseData[1].name, 6 ) ;
@@ -3998,9 +4035,17 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
 		safetySwitchGindex[i]->setVisible(false) ;
   	switch (g_model.safetySw[i].opt.ss.mode)
 		{
+			case 3 :		// 'X'
 			case 0 :		// 'S'
-			case 3 :		// 'S'
-  	    safetySwitchValue[i]->setVisible(true);
+				if ( g_model.safetySw[i].opt.ss.mode == 3 )
+				{
+					safetySwitchSource[i]->show() ;
+				}
+				else
+				{
+					safetySwitchSource[i]->hide() ;
+				}
+				safetySwitchValue[i]->setVisible(true);
   	    safetySwitchAlarm[i]->setVisible(false);
 				safetySwitchValue[i]->setMaximum(125);
   	    safetySwitchValue[i]->setMinimum(-125);
@@ -4026,6 +4071,7 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
 	}
 	else
 	{
+		safetySwitchSource[i]->hide() ;
 		safetySwitchValue[i]->setMaximum(250);
     safetySwitchValue[i]->setMinimum(0);
 		SKYSafetySwData *sd = &g_model.safetySw[i];
@@ -4082,7 +4128,24 @@ void ModelEdit::tabSafetySwitches()
         safetySwitchValue[i] = new QSpinBox(this);
 				safetySwitchGvar[i] = new QCheckBox(this) ;
 				safetySwitchGindex[i] = new QComboBox(this) ;
-				
+				safetySwitchSource[i] = new QComboBox(this) ;
+
+  			if ( g_eeGeneral.extraPotsSource[0] )
+				{
+					safetySwitchSource[i]->addItem("!P4") ;
+				}
+				safetySwitchSource[i]->addItem("!P3") ;
+				safetySwitchSource[i]->addItem("!P2") ;
+				safetySwitchSource[i]->addItem("!P1") ;
+				safetySwitchSource[i]->addItem("THR") ;
+				safetySwitchSource[i]->addItem("P1") ;
+				safetySwitchSource[i]->addItem("P2") ;
+				safetySwitchSource[i]->addItem("P3") ;
+  			if ( g_eeGeneral.extraPotsSource[0] )
+				{	
+					safetySwitchSource[i]->addItem("P4") ;
+				}
+								 
   			safetySwitchGindex[i]->clear() ;
   			for (int j=3; j<=7; j++)
 				{
@@ -4100,7 +4163,9 @@ void ModelEdit::tabSafetySwitches()
         	populateSafetyVoiceTypeCB(safetySwitchType[i], 0, sd->opt.ss.mode);
         	populateSafetySwitchCB(safetySwitchSwtch[i],sd->opt.ss.mode,sd->opt.ss.swtch, rData->type);
 					populateAlarmCB(safetySwitchAlarm[i],sd->opt.ss.val);
-					if ( sd->opt.ss.mode == 2 )		// 'V'
+
+          safetySwitchSource[i]->setCurrentIndex( sd->opt.ss.source + ( ( g_eeGeneral.extraPotsSource[0] ) ? 4 : 3 ) ) ;
+          if ( sd->opt.ss.mode == 2 )		// 'V'
 					{
 						int limit = MAX_DRSWITCH ;
 						if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
@@ -4152,7 +4217,8 @@ void ModelEdit::tabSafetySwitches()
         ui->grid_tabSafetySwitches->addWidget(safetySwitchValue[i],j+2,k+2);
         ui->grid_tabSafetySwitches->addWidget(safetySwitchGindex[i],j+2,k+2);
         ui->grid_tabSafetySwitches->addWidget(safetySwitchGvar[i],j+2,k+3);
-        
+        ui->grid_tabSafetySwitches->addWidget(safetySwitchSource[i],j+2,k+3);
+
 				setSafetyWidgetVisibility(i);
         connect(safetySwitchType[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
         connect(safetySwitchSwtch[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
@@ -4160,6 +4226,7 @@ void ModelEdit::tabSafetySwitches()
         connect(safetySwitchValue[i],SIGNAL(editingFinished()),this,SLOT(safetySwitchesEdited()));
         connect(safetySwitchGindex[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
 			  connect( safetySwitchGvar[i],SIGNAL(stateChanged(int)),this,SLOT(safetySwitchesEdited()));
+			  connect( safetySwitchSource[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
     }
     connect(ui->NumVoiceSwSB,SIGNAL(valueChanged(int)),this,SLOT(safetySwitchesEdited()));
 }
@@ -4210,6 +4277,11 @@ void ModelEdit::safetySwitchesEdited()
 				{
 					val = safetySwitchAlarm[i]->currentIndex() ;
 				}
+				if ( sd->opt.ss.mode == 3)	// Sticky
+				{
+          sd->opt.ss.source = safetySwitchSource[i]->currentIndex() - (( g_eeGeneral.extraPotsSource[0] ) ? 4 : 3 ) ;
+				}
+
         sd->opt.ss.val = val ;
 
         sd->opt.ss.mode  = safetySwitchType[i]->currentIndex() ;
@@ -5582,6 +5654,12 @@ void ModelEdit::on_thrIdleChkB_toggled(bool checked)
     updateSettings();
 }
 
+void ModelEdit::on_thrRevChkB_toggled(bool checked)
+{
+    g_model.throttleReversed = checked;
+    updateSettings();
+}
+
 void ModelEdit::on_trainerCB_currentIndexChanged(int index)
 {
 	if ( index == 0 )
@@ -5678,6 +5756,15 @@ void ModelEdit::on_bcP3ChkB_toggled(bool checked)
         g_model.beepANACenter |= BC_BIT_P3;
     else
         g_model.beepANACenter &= ~BC_BIT_P3;
+    updateSettings();
+}
+
+void ModelEdit::on_bcP4ChkB_toggled(bool checked)
+{
+    if(checked)
+        g_model.beepANACenter |= BC_BIT_P4;
+    else
+        g_model.beepANACenter &= ~BC_BIT_P4;
     updateSettings();
 }
 

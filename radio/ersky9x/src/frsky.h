@@ -429,7 +429,8 @@ extern uint8_t TelemetryType ;
 #define TELEMETRY_ARDUCOPTER	6
 #define TELEMETRY_FRHUB				7
 #define TELEMETRY_HUBRAW			8
-#define TELEMETRY_MAVLINK			9
+#define TELEMETRY_FRMAV				9
+#define TELEMETRY_MAVLINK			10
 
 
 extern uint16_t DsmABLRFH[] ;

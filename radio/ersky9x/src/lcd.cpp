@@ -43,8 +43,11 @@
 #include "font_dblsize.lbm"
 #define font_10x16_x20_x7f (font_dblsize)
 
-#include "fontnum12x8.lbm"
-#define font_num12x8 (font_num_12x8)
+//#include "fontnum12x8.lbm"
+//#define font_num12x8 (font_num_12x8)
+
+#include "font12x8test.lbm"
+//#define font_12x8test (font_12x8)
 
 const uint8_t font_se_extra[] = {
 #include "font_se_05x07.lbm"
@@ -244,7 +247,14 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 		x = c*FW ;
   	if(mode&DBLSIZE)
 		{
-			x += x ;
+			if ( (mode & CONDENSED) )
+			{
+				x = c*8 ;
+			}
+		 	else
+			{
+				x += x ;
+			}	 
 		}
 		return x ;
 	}
@@ -274,29 +284,40 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 
 		if ( (mode & CONDENSED) )
 		{
-			if ( c == '-' )
-			{
-				doNormal = 0 ;
-				c_mapped = 10 ;
-			}
-			if ( c == ':' )
-			{
-				doNormal = 0 ;
-				c_mapped = 11 ;
-			}
-			if ( ( c >= '0' ) && ( c <= '9' ) )
-			{
-				doNormal = 0 ;
-				c_mapped -= '0' ;
-			}
+//			if ( c == '-' )
+//			{
+//				doNormal = 0 ;
+//				c_mapped = 10 ;
+//			}
+//			if ( c == ':' )
+//			{
+//				doNormal = 0 ;
+//				c_mapped = 11 ;
+//			}
+//			if ( ( c >= '0' ) && ( c <= '9' ) )
+//			{
+//				doNormal = 0 ;
+//				c_mapped -= '0' ;
+//			}
+			doNormal = 0 ;
 			
 			if ( doNormal == 0 )
 			{
-				if ( (c!=0x2E)) x+=FW; //check for decimal point
+				if ( (c!=0x2E)) x+=8-FW; //check for decimal point
 			/* each letter consists of 8 top bytes followed by
 	 		* five bottom by 8 bottom bytes (16 bytes per 
 	 		* char) */
-				q = (uint8_t *) &font_num12x8[c_mapped*14] ;
+//				q = (uint8_t *) &font_num12x8[c_mapped*14] ;
+				if( c < 0xC0 )
+				{
+					c_mapped = c - 0x20 ;
+					q = (uint8_t *) &font_12x8[c_mapped*14] ;
+		//  	  q = (uint8_t *) &font_10x16_x20_x7f[(c-0x20)*10 + ((c-0x20)/16)*160];
+				}
+				else
+				{
+					q = (uint8_t *) &font_12x8[0] ;
+				}
     		
 				for( i=7 ; i>=0 ; i-- )
 				{

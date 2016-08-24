@@ -847,10 +847,30 @@ uint32_t simulatorDialog::getFlightPhase()
   for ( i = 0 ; i < MAX_PHASES ; i += 1 )
 	{
     PhaseData *phase = &g_model.phaseData[i];
-    if ( phase->swtch && getSwitch( phase->swtch, 0 ) )
+    if ( phase->swtch )
 		{
-      return i + 1 ;
-    }
+    	if ( getSwitch( phase->swtch, 0, 0 ) )
+			{
+    		if ( phase->swtch2 )
+				{
+					if ( getSwitch( phase->swtch2, 0, 0 ) )
+					{
+						return i + 1 ;
+					}
+				}
+				else
+				{
+					return i + 1 ;
+				}
+    	}
+		}
+		else
+		{
+    	if ( phase->swtch2 && getSwitch( phase->swtch2, 0, 0 ) )
+			{
+    	  return i + 1 ;
+    	}
+		}
   }
   return 0 ;
 }
@@ -1224,6 +1244,12 @@ void simulatorDialog::getValues()
 		else
 		{
     	calibratedStick[6] = ui->dialP_3->value();
+		}
+
+// May be for none X9D??
+		if ( g_eeGeneral.extraPotsSource[0] )
+		{
+    	calibratedStick[7] = ui->SliderL->value(); // For X9D
 		}
 
 		if ( throttleReversed( &g_eeGeneral, &g_model ) )
@@ -3381,33 +3407,73 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 								if ( g_model.safetySw[i].opt.ss.mode == 3 )
 								{
+									int8_t thr = g_model.safetySw[i].opt.ss.source ;
+									uint32_t rev_thr = 0 ;
+									if ( thr == 0 )
+									{
+										thr = 2 ;
+									}
+									else
+									{
+										if ( thr > 0 )
+										{
+											thr += 3 ;
+										}
+										else
+										{
+											rev_thr = 1 ;
+											thr = -thr + 3 ;
+										}
+									}	
 									// Special case, sticky throttle
 									if( applySafety )
 									{
-										sticky = 0 ;
+										sticky &= ~(1<<i) ;
 									}
 									else
 									{
 						  			if ( g_model.modelVersion >= 2 )
 										{
 											uint32_t throttleOK = 0 ;
+//											if ( g_model.throttleIdle )
+//											{
+//												if ( abs( calibratedStick[2] ) < 20 )
+//												{
+//													throttleOK = 1 ;
+//												}
+//											}
+//											else
 											if ( g_model.throttleIdle )
 											{
-												if ( abs( calibratedStick[2] ) < 20 )
+												if ( abs( calibratedStick[thr] ) < 20 )
 												{
 													throttleOK = 1 ;
 												}
 											}
 											else
 											{
-  											if(calibratedStick[2] < -1004)
-  											{
-													throttleOK = 1 ;
-  											}
+												if ( rev_thr )
+												{
+  												if(calibratedStick[thr] > 1004)
+  												{
+														throttleOK = 1 ;
+  												}
+												}
+												else
+												{
+  												if(calibratedStick[thr] < -1004)
+	  											{
+														throttleOK = 1 ;
+  												}
+												}
 											}
 											if ( throttleOK )
 											{
-												sticky = 1 ;
+												sticky |= (1<<i) ;
+											}
+											if ( ( sticky & (1<<i) ) == 0 )
+											{
+												applySafety = 1 ;
 											}
 										}
 										else
@@ -3416,11 +3482,11 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 											{
 												sticky = 1 ;
 											}
+											if ( sticky == 0 )
+											{
+												applySafety = 1 ;
+											}
 										}
-									}
-									if ( sticky == 0 )
-									{
-										applySafety = 1 ;
 									}
 								}
 								if ( applySafety ) result = calc100toRESX(g_model.safetySw[i].opt.ss.val) ;

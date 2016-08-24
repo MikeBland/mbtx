@@ -31,10 +31,14 @@ const uint8_t modn12x3[4][4]= {
   {4, 3, 2, 1} };
 
 // Radio Types
-#define RADIO_TYPE_SKY			0    		
-#define RADIO_TYPE_TARANIS	1    		
-#define RADIO_TYPE_TPLUS		2    		
-#define RADIO_TYPE_9XTREME	3    		
+#define RADIO_TYPE_SKY			0
+#define RADIO_TYPE_TARANIS	1
+#define RADIO_TYPE_TPLUS		2
+#define RADIO_TYPE_9XTREME	3
+#define RADIO_TYPE_ER9XM64V1	4
+#define RADIO_TYPE_ER9XM64V2	5
+#define RADIO_TYPE_ER9XM128V1	6
+#define RADIO_TYPE_ER9XM128V2	7
 
 //convert from mode 1 to mode g_eeGeneral.stickMode
 //NOTICE!  =>  1..4 -> 1..4

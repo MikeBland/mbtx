@@ -1038,6 +1038,33 @@ uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edi
 {
 	uint8_t x ;
 	uint8_t max ;
+
+//#if defined(CPUM128) || defined(CPUM2561)
+#if 1
+	if ( s )
+	{
+		x = pgm_read_byte(s++) ;
+		max = pgm_read_byte(s++) ;
+		lcd_putsAttIdx( x, y, s, value, edit ? InverseBlink: 0 ) ;
+	}
+	else
+	{
+		x = PARAM_OFS ;
+		max = 1 ;
+  	if (value)
+		{
+    	lcd_putc(x+1, y, '\202');
+		}
+		lcd_hbar( x, y, 7, 7, edit ? 100 : 0 ) ;
+	}
+	if(edit)
+	{
+		if ( ( EditColumns == 0 ) || ( s_editMode ) )
+		{
+			value = checkIncDec( value, 0, max, EditType ) ;
+		}
+	}
+#else
 	x = pgm_read_byte(s++) ;
 	max = pgm_read_byte(s++) ;
 	
@@ -1049,6 +1076,7 @@ uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edi
 		}
 	}
 	lcd_putsAttIdx( x, y, s, value, edit ? InverseBlink: 0 ) ;
+#endif
 	return value ;
 }
 
@@ -1269,7 +1297,8 @@ void MState2::check_columns( uint8_t event, uint8_t maxrow)
 		switch(event)
     {
     case EVT_ENTRY:
-        init();
+				m_posVert = 0 ;
+//        init();
         l_posHorz = 0 ;
         s_editMode = false;
         break;
@@ -2001,7 +2030,12 @@ t_pgOfs = evalOffset(sub);
 
 static uint8_t onoffItem( uint8_t value, uint8_t y, uint8_t condition )
 {
+//#if defined(CPUM128) || defined(CPUM2561)
+#if 1
+	return checkIndexed( y, 0, value, condition ) ;
+#else	
 	return checkIndexed( y, PSTR(FWx17"\001""\003"STR_OFF STR_ON), value, condition ) ;
+#endif
 }
 
 static uint8_t offonItem( uint8_t value, uint8_t y, uint8_t condition )
@@ -5396,7 +5430,7 @@ static void qloadModel( uint8_t event, uint8_t index )
 	
 	killEvents(event);
   eeWaitComplete();    // Wait to load model if writing something
-  eeLoadModel(g_eeGeneral.currModel = index);
+  eeLoadModel( index ) ;
 	AlarmControl.VoiceCheckFlag |= 2 ;// Set switch current states
   STORE_GENERALVARS;
   eeWaitComplete();
@@ -11719,7 +11753,11 @@ Str_Protocol
 			uint8_t protocol = g_model.protocol ;
 			if (protocol == PROTO_PXX)
 			{
-				dataItems = 6 ;
+//#if defined(CPUM128) || defined(CPUM2561)
+				dataItems = 7 ;
+//#else
+//				dataItems = 6 ;
+//#endif
 			}
 			if ( protocol == PROTO_DSM2 )
 			{
@@ -11843,6 +11881,9 @@ Str_Protocol
 					g_model.protocol = protocol ;
   		  	if(oldProtocol != protocol) // if change - reset ppmNCH
   		  	    g_model.ppmNCH = 0;
+//#if defined(CPUM128) || defined(CPUM2561)
+							g_model.pxxChans = 0 ;
+//#endif
 				}
 			}
 			y += FH ;
@@ -11875,7 +11916,7 @@ Str_Protocol
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
 				
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\024"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\027"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
 
 //				attr = 0 ;
 //				uint8_t svalue = g_model.sub_protocol & 0x1F ;
@@ -11933,7 +11974,7 @@ Str_Protocol
 				}
 				else if ( x == M_MT99XX )
 				{
-					s=PSTR(FWx10"\002"M_MT99XX_STR);
+					s=PSTR(FWx10"\003"M_MT99XX_STR);
 				}
 				else if ( x == M_MJXQ )
 				{
@@ -12015,7 +12056,13 @@ Str_Protocol
 				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) ) ;
 				y += FH ;
 				subN++;
-			
+
+//#if defined(CPUM128) || defined(CPUM2561)
+				g_model.pxxChans = checkIndexed( y, PSTR(FWx10"\001""\00216 8"), g_model.pxxChans, (sub==subN) ) ;
+				y += FH ;
+				subN++;
+//#endif
+			 
 				g_model.country = checkIndexed( y, StrNZ_country, g_model.country, (sub==subN) ) ;
 				y += FH ;
 				subN++;

@@ -464,5 +464,30 @@ uint32_t updateSlave()
 	return flashAvr( (uint8_t * )SlaveData64, (uint8_t * )SlaveData2561, sizeof(SlaveData64), sizeof(SlaveData2561) ) ;
 }
 
+void resetM64()
+{
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+//	configure_pins( GPIO_Pin_M64_RST, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
+//	RST_LOW() ;   /* RST active */
+//	hw_delay( 20000 ) ;	// 2000 uS
+//	RST_HIGH() ;   /* RST high */
+
+//	init_hw_timer() ;
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+//	configure_pins( GPIO_Pin_M64_RST, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
+
+	ispConnect() ;
+	ispEnterProgrammingMode() ;
+//	if ( ( IspStatus = ispEnterProgrammingMode() ) == 0 )
+//	{
+	ispReadSignature(1) ;
+//	}
+	ispDisconnect() ;
+	clockWait(64) ;
+	wdt_reset() ;
+void initM64( void ) ;
+	initM64() ;
+}
+
 
 

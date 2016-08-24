@@ -941,7 +941,6 @@ void MdiChild::v1ModelTov2( int i )
 {
   struct t_ModelData *v1m = &radioData.models[i] ;
   struct t_V2ModelData *v2m = &radioData.v2models[i] ;
-	uint32_t i ;
 
 	v2m->traineron = v1m->traineron ;
 	v2m->FrSkyUsrProto = v1m->FrSkyUsrProto ;
@@ -983,7 +982,7 @@ void MdiChild::v1ModelTov2( int i )
 	v2m->modelVersion     = v1m->modelVersion        ;
 	v2m->sub_protocol     = v1m->sub_protocol        ;
 	v2m->option_protocol  = v1m->option_protocol        ;
-	v2m->telemetryProtocol = v1m->telemetryProtocol        ;
+//	v2m->telemetryProtocol = v1m->telemetryProtocol        ;
 	v2m->currentSource = v1m->currentSource        ;
 	v2m->throttleIdle = v1m->throttleIdle        ;
 	v2m->throttleReversed = v1m->throttleReversed        ;
@@ -1044,7 +1043,7 @@ void MdiChild::v2ModelTov1( int i )
 	v1m->modelVersion     = v2m->modelVersion        ;
 	v1m->sub_protocol     = v2m->sub_protocol        ;
 	v1m->option_protocol  = v2m->option_protocol        ;
-	v1m->telemetryProtocol = v2m->telemetryProtocol        ;
+//	v1m->telemetryProtocol = v2m->telemetryProtocol        ;
 	v1m->currentSource = v2m->currentSource        ;
 	v1m->throttleIdle = v2m->throttleIdle        ;
 	v1m->throttleReversed = v2m->throttleReversed        ;

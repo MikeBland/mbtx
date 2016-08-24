@@ -31,6 +31,11 @@ const
 #include "splashmarker.h"
 #endif
 
+#if defined(CPUM128) || defined(CPUM2561)
+const uint8_t 
+#include "..\..\common\hand.lbm"
+#endif
+
 /*
 mode1 rud ele thr ail
 mode2 rud thr ele ail
@@ -1584,7 +1589,18 @@ void checkTHR()
 		}
 
     // first - display warning
+
+#if defined(CPUM128) || defined(CPUM2561)
+	lcd_clear();
+  lcd_img( 1, 0, HandImage,0 ) ;
+  lcd_putsAtt(32,0*FH,PSTR("THROTTLE"),DBLSIZE);
+  lcd_putsAtt(32,2*FH,PSTR("WARNING"),DBLSIZE);
+	lcd_puts_P(0,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
+	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
+	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+#else
 		almess( PSTR(STR_THR_NOT_IDLE"\037"STR_RST_THROTTLE), ALERT_SKIP | ALERT_VOICE ) ;
+#endif
     refreshDiplay() ;
     clearKeyEvents();
 
@@ -1632,8 +1648,11 @@ static void checkWarnings()
 
 void putWarnSwitch( uint8_t x, uint8_t idx )
 {
+#if defined(CPUM128) || defined(CPUM2561)
+  lcd_putsAttIdx( x, 5*FH, Str_Switches, idx, 0) ;
+#else
   lcd_putsAttIdx( x, 2*FH, Str_Switches, idx, 0) ;
-
+#endif
 }
 
 #ifdef XSW_MOD
@@ -1845,7 +1864,15 @@ void checkSwitches()
         uint8_t y = j ^ exWarningStates ;
 #endif
 
-				almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#if defined(CPUM128) || defined(CPUM2561)
+				lcd_clear();
+    		lcd_img( 1, 0, HandImage,0 ) ;
+	  		lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
+	  		lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
+				lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+#else
+		    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#endif
 				voice = 0 ;
 
         if(x & SWP_THRB)

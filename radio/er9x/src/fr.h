@@ -247,7 +247,11 @@
 #define STR_PPMFRAME_MSEC  "Trame PPM\015mSec"
 #define STR_SEND_RX_NUM    "Bind  Portee"
 #define STR_DSM_TYPE       "Type DSM"
-#define STR_PXX_TYPE       " Type\037 Region \037Bind\037Portee"
+//#if defined(CPUM128) || defined(CPUM2561)
+#define STR_PXX_TYPE       " Type\037 Chans\037 Region \037Bind\037Portee"
+//#else
+//#define STR_PXX_TYPE       " Type\037 Region \037Bind\037Portee"
+//#endif
 #ifdef MULTI_PROTOCOL
 #define STR_MULTI_TYPE		"Codage\037Type\037Power\037Bind     Autobind\037Portee"
 #define STR_MULTI_OPTION	"\013Option"

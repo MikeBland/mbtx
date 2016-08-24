@@ -83,6 +83,8 @@
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
 #define ISTR_SWITCH_WARN	   "Bryter Advarsel"
+//#define ISTR_SWITCH				   "Bryter"
+#define ISTR_WARNING 				 "Advarsel"
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          "Timer"
 
@@ -331,8 +333,8 @@
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Beeper    ""PiSpkr    ""BeeprVoice""PiSpkVoice""MegaSound "
 #define ISTR_VOLUME         " Volum"
-#define ISTR_SPEAKER_PITCH  " Speaker Pitch"
-#define ISTR_HAPTICSTRENGTH " Viberator styrke"
+#define ISTR_SPEAKER_PITCH  "Speaker Pitch"
+#define ISTR_HAPTICSTRENGTH "Viberator styrke"
 #define ISTR_CONTRAST       "Kontrast"
 #define ISTR_BATT_WARN      "Batteri alarm" 
 // ISTR_INACT_ALARM m for minutes after \023 - single char

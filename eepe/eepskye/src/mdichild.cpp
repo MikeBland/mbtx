@@ -605,7 +605,7 @@ bool MdiChild::loadModelFromFile(QString fn)
 							if ( ( type.name() == ERSKY9X_MODEL_FILE_TYPE ) || ( type.name() == ERSKY9X_EEPROM_FILE_TYPE ) )
 							{
               	xmlOK = loadModelDataXML(&doc, &tmod);
-              	getNotesFromXML(&doc, cmod);
+              	getNotesFromXML(&doc, -cmod ) ;
 							}
 							else if ( ( type.name() == ER9X_MODEL_FILE_TYPE ) || ( type.name() == ER9X_EEPROM_FILE_TYPE ) )
 							{
@@ -614,7 +614,7 @@ bool MdiChild::loadModelFromFile(QString fn)
               	xmlOK = loadModelDataXML( &doc, &emod ) ;
               	memcpy( &er9x::EmodelData, &emod, sizeof(er9x::EmodelData) ) ;
 								convertFromEr9x( &tmod, 0 ) ;
-              	getNotesFromXML(&doc, cmod);
+              	getNotesFromXML(&doc, -cmod ) ;
 			          QMessageBox::critical(this, tr("Warning"),
                         tr("Only part pasted from er9x file\nPlease check model settings"));
 							}
@@ -1174,6 +1174,13 @@ bool MdiChild::saveAs()
 
 void MdiChild::getNotesFromXML(QDomDocument * qdoc, int model_id)
 {
+	int whichModel = model_id ;
+
+	if ( model_id < 0 )
+	{
+		whichModel = -model_id ;
+		model_id = 0 ;
+	}
     //look for MODEL_DATA with modelNum attribute.
     //if modelNum = -1 then just pick the first one
     QDomNodeList ndl = qdoc->elementsByTagName("MODEL_DATA");
@@ -1201,7 +1208,7 @@ void MdiChild::getNotesFromXML(QDomDocument * qdoc, int model_id)
         {
             QDomElement e = n.toElement();
             int mixNum = QString(e.attribute("mix")).toInt();
-            modelNotes[model_id][mixNum] = e.firstChild().toText().data();
+            modelNotes[whichModel][mixNum] = e.firstChild().toText().data();
         }
         n = n.nextSibling();
     }

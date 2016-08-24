@@ -382,6 +382,7 @@
 #define STR_THR_DEFAULT			359
 #define STR_TOTAL_TIME			360
 #define STR_POPUP_GLOBALS		361
+#define STR_WARNING					362
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "

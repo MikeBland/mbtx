@@ -592,7 +592,7 @@ PACK(typedef struct t_ModelData {
     uint8_t   tmrMode;              // timer trigger source -> off, abs, stk, stk%, sw/!sw, !m_sw/!m_sw
     uint8_t   tmrDir:1;    //0=>Count Down, 1=>Count Up
     uint8_t   traineron:1;  // 0 disable trainer, 1 allow trainer
-    uint8_t   unused_xt2throttle:1 ;  // Start timer2 using throttle
+    uint8_t   pxxChans:1 ;  // 
     uint8_t   FrSkyUsrProto:1 ;  // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
     uint8_t   FrSkyGpsAlt:1 ;  	// Use Gps Altitude as main altitude reading
     uint8_t   FrSkyImperial:1 ;  // Convert FrSky values to imperial units
@@ -700,7 +700,7 @@ PACK(typedef struct t_V2ModelData
 	V2TimerMode	timer[2] ;
   uint8_t   unused_tmrDir:1;    //0=>Count Down, 1=>Count Up
   uint8_t   traineron:1;  // 0 disable trainer, 1 allow trainer
-  uint8_t   unused_xt2throttle:1 ;  // Start timer2 using throttle
+  uint8_t   pxxChans:1 ;  // 
   uint8_t   FrSkyUsrProto:1 ;  // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
   uint8_t   FrSkyGpsAlt:1 ;  	// Use Gps Altitude as main altitude reading
   uint8_t   FrSkyImperial:1 ;  // Convert FrSky values to imperial units

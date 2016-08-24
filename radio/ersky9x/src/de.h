@@ -96,6 +96,8 @@ v.xx.01-german
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
 #define ISTR_SWITCH_WARN	   "Schalter Warnung" 
+//#define ISTR_SWITCH				   "Schalter" 
+#define ISTR_WARNING			   "Warnung" 
 // ISTR_TIMER genau 5 Zeichen lang 
 #define ISTR_TIMER          "Timer"			
 
@@ -343,8 +345,8 @@ v.xx.01-german
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Pieper    ""PiLautspre""PieprTon  ""PieLautTon""MegaSound "
 #define ISTR_VOLUME         "Lautst"
-#define ISTR_SPEAKER_PITCH  " Tonh\303he"
-#define ISTR_HAPTICSTRENGTH " Haptische St\301rke"
+#define ISTR_SPEAKER_PITCH  "Tonh\303he"
+#define ISTR_HAPTICSTRENGTH "Haptische St\301rke"
 #define ISTR_CONTRAST       "Kontrast"
 #define ISTR_BATT_WARN      "Batterie Warnung" 
 // ISTR_INACT_ALARM m for minutes after \023 - single char

@@ -111,6 +111,7 @@ private:
     QComboBox * safetySwitchAlarm[NUM_SKYCHNOUT+NUM_VOICE];
 		QCheckBox *safetySwitchGvar[NUM_SKYCHNOUT+NUM_VOICE] ;
 		QComboBox *safetySwitchGindex[NUM_SKYCHNOUT+NUM_VOICE] ;
+		QComboBox *safetySwitchSource[NUM_SKYCHNOUT+NUM_VOICE] ;
 
     QSpinBox *expoDrSpin[4][3][2][2] ;
     QComboBox *expoDrVal[4][3][2][2] ;
@@ -312,6 +313,7 @@ private slots:
     void on_bcP1ChkB_toggled(bool checked);
     void on_bcP2ChkB_toggled(bool checked);
     void on_bcP3ChkB_toggled(bool checked);
+		void on_bcP4ChkB_toggled(bool checked) ;
     void on_timer1BeepCdownCB_toggled(bool checked);
     void on_timer2BeepCdownCB_toggled(bool checked);
     void on_timer1MinuteBeepCB_toggled(bool checked);
@@ -320,6 +322,7 @@ private slots:
     void on_thrExpoChkB_toggled(bool checked);
     void on_thrTrimChkB_toggled(bool checked);
     void on_thrIdleChkB_toggled(bool checked) ;
+		void on_thrRevChkB_toggled(bool checked) ;
 		void on_trainerCB_currentIndexChanged(int index) ;
 //    void on_T2ThrTrgChkB_toggled(bool checked);
 		

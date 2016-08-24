@@ -501,7 +501,8 @@ PACK(typedef struct t_PhaseData {
   char name[6];
   uint8_t fadeIn:4;
   uint8_t fadeOut:4;
-	uint16_t spare ;		// Future expansion
+  int8_t swtch2;       // swtch of phase[0] is not used
+	uint8_t spare ;		// Future expansion
 }) PhaseData;
 
 PACK(typedef struct te_MixData {

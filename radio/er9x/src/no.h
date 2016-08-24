@@ -247,7 +247,11 @@
 #define STR_PPMFRAME_MSEC  "PPM FrLen\015mSec"
 #define STR_SEND_RX_NUM    "Bind  Range"
 #define STR_DSM_TYPE       "DSM Type"
-#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#if defined(CPUM128) || defined(CPUM2561)
+#define STR_PXX_TYPE       " Type\037 Chans\037 Country\037Bind\037Range"
+//#else
+//#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#endif
 #ifdef MULTI_PROTOCOL
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"

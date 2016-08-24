@@ -1810,7 +1810,10 @@ void frskyTransmitBuffer( uint32_t size )
 	}
 	else
 	{
-		txCom2Uart( frskyTxBuffer, size ) ;
+		if ( g_model.bt_telemetry < 2 )
+		{
+			txCom2Uart( frskyTxBuffer, size ) ;
+		}
 	}
 }
 #endif
@@ -2032,13 +2035,27 @@ void telemetry_init( uint8_t telemetryType )
 
 #ifdef REVX
 		case TEL_MAVLINK :
-			UART2_Configure( MAVLINK_BAUDRATE, Master_frequency ) ;
-			UART2_timeout_disable() ;
-//			g_model.telemetryRxInvert = 1 ;
-//			setMFP() ;
-		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
-		  resetTelemetry();
-			startPdcUsartReceive() ;
+	  	memset(frskyAlarms, 0, sizeof(frskyAlarms));
+	  	resetTelemetry();
+			FrskyComPort = g_model.frskyComPort ;
+			if ( g_model.frskyComPort == 1 )
+			{
+				UART_Configure( g_model.com2Baudrate-1, Master_frequency ) ;
+			}
+			else
+			{
+				UART2_Configure( g_model.telemetryBaudrate-1, Master_frequency ) ;
+				UART2_timeout_disable() ;
+				if ( g_model.telemetryRxInvert )
+				{
+					setMFP() ;
+				}
+				else
+				{
+					clearMFP() ;
+				}
+				startPdcUsartReceive() ;
+			}
 		break ;
 #endif
 		
@@ -2070,6 +2087,7 @@ void telemetry_init( uint8_t telemetryType )
 
 void FRSKY_Init( uint8_t brate )
 {
+	
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
 //	TelDebug = brate ;
@@ -2512,6 +2530,9 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	
 	switch ( telemetryType )
 	{
+		case TELEMETRY_MAVLINK :
+			type = TEL_MAVLINK ;
+		break ;
 		case TELEMETRY_JETI :
 			type = TEL_JETI ;
 		break ;
@@ -2845,7 +2866,10 @@ void FRSKY_setModelAlarms(void)
 {
 	FrskyBattCells[0] = 0 ;
 	FrskyBattCells[1] = 0 ;
-  FrskyAlarmSendState |= 0x0F ;
+	if ( g_model.bt_telemetry < 2 )
+	{
+  	FrskyAlarmSendState |= 0x0F ;
+	}
 //#ifndef SIMU
 //  Frsky_current[0].Amp_hour_boundary = 360000L/ g_model.frsky.channels[0].ratio ; // <= (!) division per 0!
 //	Frsky_current[1].Amp_hour_boundary = 360000L/ g_model.frsky.channels[1].ratio ; // <= (!) division per 0!

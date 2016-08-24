@@ -704,7 +704,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS "
+#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN "
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
@@ -731,12 +731,17 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_FRSKY_STR "\005CH_16CH_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
-#define M_MT99XX_STR "\002MTH7YZ"
+#define M_MT99XX_STR "\002MTH7YZLS"
 #define M_MJXQ		       17
 #define M_MJXQ_STR "\005WLH08X600 X800 H26D "
 #define M_SHENQI				 18
 #define M_FY326					 19
-	
+#define M_SFHSS					 20
+#define M_J6PRO					 21
+#define M_FQ777					 22
+#define M_ASSAN					 23
+
+#define M_LAST_MULTI
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

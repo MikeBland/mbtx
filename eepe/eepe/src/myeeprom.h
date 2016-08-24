@@ -95,7 +95,7 @@
 #define V2_NUM_VOICE_ALARMS	10
 #define NUM_VOICE_ALARMS	8
 #define NUM_SAFETY				16
-#define NUM_GVAR_ADJUST		4
+#define V2_NUM_GVAR_ADJUST		4
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
@@ -771,7 +771,7 @@ PACK(typedef struct t_V2ModelData
 #endif
 	uint8_t sub_trim_limit ;
 	uint8_t	customStickNames[16] ;
-	V2PhaseData phaseData[MAX_MODES] ;
+  V2PhaseData phaseData[MAX_PHASES] ;
 	VoiceSwData voiceSw[EXTRA_VOICE_SW] ;
 	ScaleData Scalers[NUM_SCALERS] ;
 	uint8_t	anaVolume ;	// analog volume control
@@ -779,7 +779,7 @@ PACK(typedef struct t_V2ModelData
 	uint8_t useCustomStickNames:2 ;
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
-	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
+  GvarAdjust gvarAdjuster[V2_NUM_GVAR_ADJUST] ;
 	VoiceAlarmData vad[V2_NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
 }) V2ModelData ;

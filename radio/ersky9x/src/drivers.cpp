@@ -92,11 +92,14 @@ uint8_t JetiTxBuffer[16] ;
 struct t_rxUartBuffer TelemetryInBuffer ;
 
 struct t_fifo128 Console_fifo ;
-struct t_fifo128 Com3_fifo ;
 struct t_fifo128 BtRx_fifo ;
 
 struct t_fifo64 CaptureRx_fifo ;
+
+#ifdef PCB9XT
 struct t_fifo64 RemoteRx_fifo ;
+struct t_fifo128 Com3_fifo ;
+#endif
 
 struct t_16bit_fifo32 Jeti_fifo ;
 
@@ -112,6 +115,7 @@ struct t_SportTx
 } SportTx ;
 #endif
 
+struct t_serial_tx *Current_Com1 ;
 struct t_serial_tx *Current_Com2 ;
 #ifdef PCB9XT
 struct t_serial_tx *Current_Com3 ;
@@ -124,6 +128,8 @@ void per10ms( void ) ;
 uint8_t getEvent( void ) ;
 void pauseEvents(uint8_t event) ;
 void killEvents(uint8_t event) ;
+
+
 
 void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 void txmit( uint8_t c ) ;
@@ -626,6 +632,12 @@ int32_t get_16bit_fifo32( struct t_16bit_fifo32 *pfifo )
 #ifdef SERIAL_TRAINER
 // 9600 baud, bit time 104.16uS
 #define BIT_TIME_9600		208
+// 19200 baud, bit time 52.08
+#define BIT_TIME_19200	104
+// 38400 baud, bit time 26.04
+#define BIT_TIME_38400	52
+// 57600 baud, bit time 17.36uS
+#define BIT_TIME_57600	35
 // 100000 baud, bit time 10uS (SBUS)
 #define BIT_TIME_100K		20
 // 115200 baud, bit time 8.68uS
@@ -1096,6 +1108,11 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
+void com2_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert )
+{
+	UART_Configure( baudrate, masterClock) ;
+}
+
 void com1Parity( uint32_t even )
 {
   register Usart *pUsart = SECOND_USART;
@@ -1122,7 +1139,6 @@ void com2Parity( uint32_t even )
 		pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
 	}
 }
-
 
 
 // Set up COM2 for SBUS (8E2), can't set 2 stop bits!
@@ -1157,7 +1173,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	Uart *pUart=CONSOLE_USART ;
 		
-	if ( pUart->UART_TNCR == 0 )
+	if ( pUart->UART_TCR == 0 )
 	{
 		Current_Com2 = data ;
 		data->ready = 1 ;
@@ -1165,7 +1181,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	  pUart->UART_TPR = (uint32_t)data->buffer ;
 #endif
 		pUart->UART_TCR = data->size ;
-		pUart->UART_PTCR = US_PTCR_TXTEN ;
+		pUart->UART_PTCR = UART_PTCR_TXTEN ;
 		pUart->UART_IER = UART_IER_TXBUFE ;
 		NVIC_SetPriority( UART0_IRQn, 5 ) ; // Lower priority interrupt
 		NVIC_EnableIRQ(UART0_IRQn) ;
@@ -1175,14 +1191,42 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	
 }
 
+//extern uint16_t MavDebug1 ;
+
+uint32_t txPdcCom1( struct t_serial_tx *data )
+{
+  register Usart *pUsart = SECOND_USART;
+
+//	MavDebug1 += 1 ;
+	if ( pUsart->US_TCR == 0 )
+	{
+//		MavDebug1 += 0x0100 ;
+		Current_Com1 = data ;
+		data->ready = 1 ;
+#ifndef SIMU
+	  pUsart->US_TPR = (uint32_t)data->buffer ;
+#endif
+		pUsart->US_TCR = data->size ;
+		pUsart->US_PTCR = US_PTCR_TXTEN ;
+		pUsart->US_IER = US_IER_TXBUFE ;
+		NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
+		NVIC_EnableIRQ(USART0_IRQn) ;
+		return 1 ;
+	}
+	return 0 ;
+}
+
 extern "C" void UART0_IRQHandler()
 {
 	Uart *pUart=CONSOLE_USART ;
-	if ( pUart->UART_SR & UART_SR_TXBUFE )
+	if ( pUart->UART_IMR & UART_IMR_TXBUFE )
 	{
-		pUart->UART_IDR = UART_IDR_TXBUFE ;
-		pUart->UART_PTCR = US_PTCR_TXTDIS ;
-		Current_Com2->ready = 0 ;	
+		if ( pUart->UART_SR & UART_SR_TXBUFE )
+		{
+			pUart->UART_IDR = UART_IDR_TXBUFE ;
+			pUart->UART_PTCR = UART_PTCR_TXTDIS ;
+			Current_Com2->ready = 0 ;	
+		}
 	}
 	if ( pUart->UART_SR & UART_SR_RXRDY )
 	{
@@ -1272,6 +1316,29 @@ void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 //  pioptr->PIO_ABCDSR[1] &= ~(PIO_PA5 | PIO_PA6) ;	// Peripheral A
 //  pioptr->PIO_PDR = (PIO_PA5 | PIO_PA6) ;					// Assign to peripheral
 
+	if ( baudrate < 10 )
+	{
+		switch ( baudrate )
+		{
+			case 0 :
+			default :
+				baudrate = 9600 ;
+			break ;
+			case 1 :
+				baudrate = 19200 ;
+			break ;
+			case 2 :
+				baudrate = 38400 ;
+			break ;
+			case 3 :
+				baudrate = 57600 ;
+			break ;
+			case 4 :
+				baudrate = 115200 ;
+			break ;
+		}
+	}
+
 //  /* Configure PMC */
   PMC->PMC_PCER0 = 1 << SECOND_ID;
 
@@ -1294,6 +1361,11 @@ void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
+void com1_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert )
+{
+	UART2_Configure( baudrate, masterClock) ;	
+}
+
 void UART2_9dataOdd1stop()
 {
 	
@@ -1308,7 +1380,11 @@ void UART2_timeout_enable()
 	DsmRxTimeout = 0 ;
 	NVIC_SetPriority( USART0_IRQn, 5 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(USART0_IRQn) ;
-	
+}
+
+void com2_timeout_enable()
+{
+	UART2_timeout_enable() ;	
 }
 
 void UART2_timeout_disable()
@@ -1319,6 +1395,11 @@ void UART2_timeout_disable()
   pUsart->US_IDR = US_IDR_TIMEOUT ;
 	NVIC_DisableIRQ(USART0_IRQn) ;
 	
+}
+
+void com2_timeout_disable()
+{
+	UART2_timeout_disable() ;
 }
 
 //static uint8_t SPI2ndByte ;
@@ -1337,6 +1418,19 @@ extern "C" void USART0_IRQHandler()
   register Usart *pUsart = SECOND_USART;
 
 #ifdef REVX
+	if ( g_model.bt_telemetry > 1 )
+	{
+		if ( pUsart->US_IMR & US_IMR_TXBUFE )
+		{
+			if ( pUsart->US_CSR & US_CSR_TXBUFE )
+			{
+				pUsart->US_IDR = US_IDR_TXBUFE ;
+				pUsart->US_PTCR = US_PTCR_TXTDIS ;
+				Current_Com1->ready = 0 ;	
+			}
+		}
+	}
+
 	if ( (pUsart->US_MR & 0x0000000F) == 0x0000000E )
 	{
 //		if ( pUsart->US_IMR & US_IMR_TXRDY )
@@ -3317,6 +3411,7 @@ uint8_t RemBitCount ;
 uint8_t RemByte ;
 uint32_t RemIntCount ;
 uint16_t RemLatency ;
+uint16_t RemBitMeasure ;
 
 // Handle software serial from M64
 void init_software_remote()
@@ -3364,6 +3459,10 @@ extern "C" void timer10_interrupt()
 			RemLtoHtime = capture ;
 			uint32_t time ;
 			capture -= RemHtoLtime ;
+			if ( capture < 250 )
+			{
+				RemBitMeasure = capture ;
+			}
 			time = capture ;
 			time += RemBitTime/2 ;
 			time /= RemBitTime ;		// Now number of bits
@@ -3401,6 +3500,11 @@ extern "C" void timer10_interrupt()
 			{
 				uint32_t time ;
 				capture -= RemLtoHtime ;
+				if ( capture < 250 )
+				{
+					RemBitMeasure = capture ;
+				}
+
 				time = capture ;
 				time += RemBitTime/2 ;
 				time /= RemBitTime ;		// Now number of bits

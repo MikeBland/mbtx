@@ -812,8 +812,11 @@ void ee32LoadModel(uint8_t id)
 
 
 #ifdef FRSKY
-  FrskyAlarmSendState |= 0x40 ;		// Get RSSI Alarms
-        FRSKY_setModelAlarms();
+		if ( g_model.bt_telemetry < 2 )
+		{
+  		FrskyAlarmSendState |= 0x40 ;		// Get RSSI Alarms
+		}
+  	FRSKY_setModelAlarms();
 #endif
   }
 

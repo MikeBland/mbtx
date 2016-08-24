@@ -75,6 +75,8 @@
 #define ISTR_A_EQ           "A="
 #define ISTR_SOUNDS         "\006Warn1 ""Warn2 ""Cheap ""Ring ""SciFi ""Robot ""Chirp ""Tada ""Crickt ""Sirena ""AlmClk ""Ratata ""Tick ""Haptc1 ""Haptc2 ""Haptc3 "
 #define ISTR_SWITCH_WARN	   "Aviso Switch"
+//#define ISTR_SWITCH				   "SWITCH" 
+#define ISTR_WARNING			   "AVISO" 
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER           "Timer"
 
@@ -325,8 +327,8 @@
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Beeper    ""PiSpkr    ""BeeprVoice""PiSpkVoice""MegaSound "
 #define ISTR_VOLUME         "Volumen"
-#define ISTR_SPEAKER_PITCH  " Tono Altavoz"
-#define ISTR_HAPTICSTRENGTH " Fuerza hactic"
+#define ISTR_SPEAKER_PITCH  "Tono Altavoz"
+#define ISTR_HAPTICSTRENGTH "Fuerza hactic"
 #define ISTR_CONTRAST       "Contraste"
 #define ISTR_BATT_WARN      "Aviso bateria" 
 // ISTR_INACT_ALARM m for minutes after \023 - single char

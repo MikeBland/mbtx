@@ -14,7 +14,7 @@
    <string>SAM-BA Configuration</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="eepe.qrc">
+   <iconset resource="eepskye.qrc">
     <normaloff>:/images/configure.png</normaloff>:/images/configure.png</iconset>
   </property>
   <layout class="QGridLayout" name="gridLayout_2">
@@ -97,6 +97,11 @@ Please consult the programmer's documentation and the AVRDUDE documentation to s
          <string>at91sam3s8-9xr</string>
         </property>
        </item>
+       <item>
+        <property name="text">
+         <string>at91sam3sd8-ek</string>
+        </property>
+       </item>
       </widget>
      </item>
      <item row="4" column="2">
@@ -173,7 +178,7 @@ Please only use this if you know what you are doing.  There are no error checks 
   </layout>
  </widget>
  <resources>
-  <include location="eepe.qrc"/>
+  <include location="eepskye.qrc"/>
  </resources>
  <connections>
   <connection>

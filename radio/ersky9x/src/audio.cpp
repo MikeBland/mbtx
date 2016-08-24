@@ -85,10 +85,6 @@ uint8_t SdAccessRequest ;
 /*static*/ uint8_t toneActive ;
 
 
-uint16_t DebugAudio1 ;
-uint16_t DebugAudio2 ;
-
-
 //uint16_t Sine16k[32] =
 //{
 ////	2048,2268,2471,2605,2648,2605,2471,2268,
@@ -672,7 +668,10 @@ void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index )
 		{
 //			putVoiceQueue( decimals + 400 ) ;
 //			putSysNumVoiceQueue( decimals + 400 ) ;
-			voice0to99Name( decimals ) ;
+			if ( decimals )
+			{
+				voice0to99Name( decimals ) ;
+			}
 			flag = 1 ;
 		}
 		if ( ( flag == 0 ) && (qr.rem) )
@@ -1191,9 +1190,7 @@ void doTone()
 		if ( toneOver )
 		{
 			// finish
-			DebugAudio1 = 1 ;
 			waitVoiceAllSent( v_index ) ;
-			DebugAudio1 |= 0x80 ;
 			break ;
 		}
 	}
@@ -1231,9 +1228,7 @@ void waitAudioAllSentWithTone( uint32_t x, uint32_t v_index)
 			break ;
 		}
 	}
-	DebugAudio1 = 2 ;
 	waitVoiceAllSent( v_index ) ;
-	DebugAudio1 |= 0x80 ;
 }
 
 
@@ -1244,13 +1239,14 @@ void beginMusic( uint32_t offset, uint32_t size, uint32_t frequency )
 {
 	uint32_t x ;
 	UINT nread ;
-	FRESULT fr ;
+//	FRESULT fr ;
 	uint16_t numBuffers = 0 ;
 
 	nread = BgNread ;
 	if ( nread == 0 )
 	{
-		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
 		size -= nread ;
 	}
 	if ( nread == 0 )
@@ -1276,7 +1272,8 @@ void beginMusic( uint32_t offset, uint32_t size, uint32_t frequency )
 	// Buffer 1 is now set, now fill the rest
 	for ( x = 1 ; x < NUM_VOICE_BUFFERS ; x += 1 )
 	{
-		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
 		if ( nread == 0 )
 		{
 			break ;
@@ -1289,12 +1286,14 @@ void beginMusic( uint32_t offset, uint32_t size, uint32_t frequency )
 	}
 	if ( nread )
 	{
-		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
 		size -= nread ;
 	}
 	BgNread = nread ;
 
 	startVoice( numBuffers ) ;
+	BgLastBuffer = numBuffers - 1 ;
 	MusicPlaying = MUSIC_PLAYING ;
 	BgSizeLeft = size ;
 }
@@ -1381,7 +1380,7 @@ void BgPlaying()
 	uint32_t size ;
 	uint32_t v_index ;
 	UINT nread ;
-	FRESULT fr ;
+//	FRESULT fr ;
 	uint32_t toneMerging = 0 ;
 
 	size = BgSizeLeft ;
@@ -1400,7 +1399,8 @@ void BgPlaying()
 		if ( nread == 0 )
 		{
 			uint16_t t1 = getTmr2MHz() ;
-			fr = f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
+			f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
+//			fr = f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
 			t1 = getTmr2MHz() - t1 ;
 			g_timeBgRead = t1 ;
 			size -= nread ;
@@ -1410,15 +1410,11 @@ void BgPlaying()
 		{
 			if ( toneMerging )
 			{
-				DebugAudio1 = 3 ;
 				waitAudioAllSentWithTone( x, v_index ) ;
-				DebugAudio1 |= 0x80 ;
 			}
 			else
 			{
-				DebugAudio1 = 4 ;
 				waitVoiceAllSent( v_index ) ;
-				DebugAudio1 |= 0x80 ;
 			}
 			f_close( &BgFile ) ;
 			MusicPlaying = MUSIC_STOPPED ;
@@ -1459,16 +1455,11 @@ void BgPlaying()
 				// wait for all buffers sent
 				if ( toneMerging )
 				{
-					DebugAudio1 = 5 ;
 					waitAudioAllSentWithTone( x, v_index ) ;
-					DebugAudio1 |= 0x80 ;
 				}
 				else
 				{
-					DebugAudio1 = 6 ;
-//					DebugAudio2 = v_index ;
 					waitVoiceAllSent( v_index ) ;
-					DebugAudio1 |= 0x80 ;
 				}
 //				timer = 100 ;
 // 				while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
@@ -1531,8 +1522,9 @@ void BgPlaying()
 		if ( AudioVoiceUnderrun )
 		{
 			// We weren't quick enough
-			AudioVoiceCountUnderruns += 1 ;
+			AudioVoiceCountUnderruns += 100 ;
 			AudioVoiceUnderrun = 0 ;
+			endVoice() ;
 		}
 		{
 			if ( nread < VOICE_BUFFER_SIZE * 2 )
@@ -1548,13 +1540,11 @@ void BgPlaying()
 			{
 				if (ToneQueueRidx != ToneQueueWidx)
 				{
-//					DebugAudio1 = 1 ;
 					toneMerging = 1 ;
 					beginToneFill() ;
 				}											
 			}
 			toneMerging = !wavU16Convert( (uint16_t*)&BgFileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE, toneMerging ) ;
-//			DebugAudio2 == toneMerging ;
 		}
 // May no longer need these lines									
 //		if ( nread == 1 )
@@ -1580,15 +1570,11 @@ void BgPlaying()
 		{
 			if ( toneMerging )
 			{
-				DebugAudio1 = 7 ;
 				waitAudioAllSentWithTone( x, v_index ) ;
-				DebugAudio1 |= 0x80 ;
 			}
 			else
 			{
-				DebugAudio1 = 8 ;
 				waitVoiceAllSent( v_index ) ;
-				DebugAudio1 |= 0x80 ;
 			}
 			f_close( &BgFile ) ;
 			MusicPlaying = MUSIC_STOPPED ;
@@ -1602,13 +1588,11 @@ void BgPlaying()
 				else
 				{
 					MusicPlaying = MUSIC_STARTING ;
-					DebugAudio2 = 1 ;
 				}
 			}
 			if ( g_eeGeneral.musicLoop )
 			{
 				MusicPlaying = MUSIC_STARTING ;
-				DebugAudio2 = 2 ;
 			}
 			break ;								
 		}
@@ -1717,9 +1701,7 @@ void voice_task(void* pdata)
 			}
 			else if ( MusicPlaying == MUSIC_STOPPING )
 			{
-				DebugAudio1 = 9 ;
 				waitVoiceAllSent( Bgindex ) ;
-				DebugAudio1 |= 0x80 ;
 				f_close( &BgFile ) ;
 				MusicPlaying = MUSIC_STOPPED ;
 			}
@@ -1953,6 +1935,7 @@ void voice_task(void* pdata)
 										// We weren't quick enough
 										AudioVoiceCountUnderruns += 1 ;
 										AudioVoiceUnderrun = 0 ;
+										endVoice() ;
 									}
 //									if ( w8or16 == 8 )
 //									{
@@ -1965,13 +1948,11 @@ void voice_task(void* pdata)
 										{
 											if (ToneQueueRidx != ToneQueueWidx)
 											{
-//												DebugAudio1 = 1 ;
 												toneMerging = 1 ;
 												beginToneFill() ;
 											}											
 										}
 										toneMerging = !wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE, toneMerging ) ;
-//										DebugAudio2 = toneMerging ;
 									}
 //// May no longer need these lines									
 //									if ( nread == 1 )
@@ -2005,15 +1986,11 @@ void voice_task(void* pdata)
 
 							if ( toneMerging )
 							{
-								DebugAudio1 = 10 ;
 								waitAudioAllSentWithTone( x, v_index ) ;
-								DebugAudio1 |= 0x80 ;
 							}
 							else
 							{
-								DebugAudio1 = 11 ;
 								waitVoiceAllSent( v_index ) ;
-								DebugAudio1 |= 0x80 ;
 							}
 //						x = 100 ;
 // 						while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )

@@ -710,7 +710,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 "
+//#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -738,7 +738,7 @@ extern uint8_t Ee_lock ;
 #define M_FRSKY_STR "\005CH_16CH_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
-#define M_MT99XX_STR "\002MTH7YZ"
+#define M_MT99XX_STR "\002MTH7YZLS"
 #define M_MJXQ		       17
 #define M_MJXQ_STR "\005WLH08X600 X800 H26D "
 #define M_SHENQI				 18
@@ -746,6 +746,12 @@ extern uint8_t Ee_lock ;
 #define M_NONE_STR "\004None"
 #define M_NY_STR "\001NY"
 #define M_LH_STR "\004HighLow "
+#define M_SFHSS					 20
+#define M_J6PRO					 21
+#define M_FQ777					 22
+#define M_ASSAN					 23
+
+#define M_LAST_MULTI		 23
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01
@@ -762,7 +768,7 @@ extern uint8_t Ee_lock ;
 #if defined(PCBX9D) || defined(PCB9XT)
 extern uint8_t PxxFlag[2] ;
 #else
-extern uint8_t pxxFlag ;
+extern uint8_t pxxFlag[2] ;
 #endif
 extern uint8_t InactivityMonitor ;
 extern uint16_t InacCounter ;

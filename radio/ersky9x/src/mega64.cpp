@@ -23,6 +23,7 @@
 // 0x01, 0x80, switches, buttons, trims, sticks, pots, enc_switch, enc_position, revision, 0x01
 // 0x01, 0x81, 16 bit address, 32 bytes data, 0x01	- 32 bytes EEPROM data
 // 0x01, 0x82, 16 bytes data, 0x01	- 8 trainer inputs
+// 0x01, 0x83, 1 bytes data, 0x01	- RestartCount
 
 // Also do byte stuffing, 0x01 sent as 0x1B, 0x81 and 0x1B sent as 0x1B, 0x9B.
 
@@ -63,6 +64,9 @@
 #define PORT9X_UART       USART1
 #define PORT9X_UART_IRQn  UART1_IRQn
 
+#define MAIN_TIMEOUT		30
+#define BACKUP_TIMEOUT	30
+
 uint8_t TxBuffer[140] ;
 volatile uint8_t TxBusy ;
 uint8_t DisplaySequence ;
@@ -89,6 +93,12 @@ uint16_t M64CountErrors ;
 
 uint8_t M64MainTimer ;
 uint8_t M64BackupTimer ;
+uint16_t M64ResetTimer ;
+uint8_t M64ResetStatus ;
+uint8_t M64ResetCount ;
+uint8_t M64RestartCount ;
+uint16_t M64RxCount ;
+uint8_t M64DebugData[20] ;
 
 uint8_t M64Display[1024] ;
 uint8_t M64ReDisplay[1024] ;
@@ -134,6 +144,7 @@ extern "C" void USART1_IRQHandler()
 	if ( status & USART_SR_RXNE )
 	{
 		data = USART1->DR ; // USART data register
+		M64RxCount += 1 ;
 		struct t_fifo64 *pfifo = &mega64_fifo ;
   	uint32_t next = (pfifo->in+1) & 0x3f;
 		if ( next != pfifo->out )
@@ -411,7 +422,7 @@ static void poll_mega64()
 				if ( SlaveRxCount == 22 )	// Check in case of overrun error
 				{
 					uint16_t switches ;
-					M64MainTimer = 150 ;
+					M64MainTimer = MAIN_TIMEOUT ;
 					byte = SlaveTempReceiveBuffer[0] ;
 					M64Buttons = byte & 0x7E ;
 					M64Trims = SlaveTempReceiveBuffer[1] ;
@@ -437,6 +448,15 @@ static void poll_mega64()
 				{
 					M64CountErrors += 1 ;
 					
+				}
+			}
+			else if ( SlaveType == 0x83 )	// RestartCount
+			{
+				M64RestartCount = SlaveTempReceiveBuffer[0] ;
+				uint32_t i ;
+				for ( i = 0 ; i < 12 ; i += 1 )
+				{
+					M64DebugData[i] = SlaveTempReceiveBuffer[i] ;
 				}
 			}
 //			else if ( SlaveType == 0x81 )	// EEPROM data
@@ -486,7 +506,7 @@ static void poll_mega64()
 				if ( RemCsum == RemData[12] )
 				{
 					// Accept data
-					M64BackupTimer = 150 ;
+					M64BackupTimer = BACKUP_TIMEOUT ;
 					RemValid = 1 ;
 					RemOkCount += 1 ;
 					if ( M64MainTimer == 0 )
@@ -495,10 +515,10 @@ static void poll_mega64()
 						int16_t byte ;
 						uint16_t switches ;
 						
-						byte = RemData[1] ;
+						byte = RemData[0] ;
 						M64Buttons = byte & 0x7E ;
-						M64Trims = RemData[2] ;
-						switches = RemData[0] | ( ( byte & 1 ) << 8 ) ;
+						M64Trims = RemData[1] ;
+						switches = RemData[2] | ( ( byte & 1 ) << 8 ) ;
 						if ( RemData[9] & 0x20 )
 						{
 							switches |= 0x0200 ;	// Encoder switch
@@ -701,10 +721,30 @@ void m64_10mS()
 	if ( M64MainTimer )
 	{
 		M64MainTimer -= 1 ;
+		M64ResetStatus = 1 ;
 	}
 	if ( M64BackupTimer )
 	{
 		M64BackupTimer -= 1 ;
+		M64ResetStatus = 1 ;
+	}
+	if ( M64ResetTimer )
+	{
+		M64ResetTimer -= 1 ;
+	}
+	if ( M64ResetStatus )
+	{
+		if ( M64ResetTimer == 0 )
+		{
+			if ( ( M64MainTimer == 0 ) && ( M64BackupTimer == 0 ) )
+			{
+				// lost M64
+				M64ResetStatus = 0 ;
+				M64ResetCount += 1 ;
+				resetM64() ;
+				M64ResetTimer = 250 ;
+			}
+		}
 	}
 }
 

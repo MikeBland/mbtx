@@ -57,6 +57,7 @@ extern int32_t get_fifo128( struct t_fifo128 *pfifo ) ;
 extern struct t_serial_tx Bt_tx ;
 extern uint32_t txPdcBt( struct t_serial_tx *data ) ;
 extern uint32_t txPdcCom2( struct t_serial_tx *data ) ;
+extern uint32_t txPdcCom1( struct t_serial_tx *data ) ;
 extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
@@ -73,6 +74,8 @@ extern volatile uint16_t Analog_values[] ;
 extern uint16_t Temperature ;		// Raw temp reading
 extern uint16_t Max_temperature ;
 
+void com1_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert ) ;
+void com2_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert ) ;
 
 extern volatile uint32_t Spi_complete ;
 

@@ -93,6 +93,8 @@
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Uwaga1""Uwaga2""Cheap ""Dzwon ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Syrena""AlmClk""Ratata""Tick  ""Wibr 1""Wibr 2""Wibr 3"
 #define ISTR_SWITCH_WARN	   "SPRAWD\317 PRZE\306\301CZNIKI"
+//#define ISTR_SWITCH				   "PRZELACZNIKI"
+#define ISTR_WARNING			    "SPRAWDZ"
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          "Stoper"
 

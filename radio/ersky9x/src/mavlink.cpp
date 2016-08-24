@@ -15,11 +15,14 @@
 
 #include "ersky9x.h"
 #include "mavlink.h"
+#include "frsky.h"
+#include "string.h"
 
+#include "mavlink\mavlink.cpp"
 
-void mavlinkReceive( uint8_t data )
-{
+//void mavlinkReceive( uint8_t data )
+//{
 	
-}
+//}
 
 

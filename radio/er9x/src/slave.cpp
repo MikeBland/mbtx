@@ -28,20 +28,24 @@
 
 extern unsigned char DisplayBuf[] ;
 
-#define Revision	6
+#define Revision	7
 
 const static prog_char APM RevisionString[] = { 'r', Revision/100+'0', (Revision%100)/10+'0', '.', Revision%10+'0', 0,  'R', 'e', 'v', Revision }   ;
 
+//uint16_t xt = 0 ;		
 
 //uint16_t EepromAddress ;
 //uint8_t EepromRequested ;
 uint8_t ControlsRequested ;
 uint8_t TxBusy ;
 uint8_t SaveMcusr ;
+uint8_t SaveEEARH ;
 
 uint8_t Contrast ;
 uint8_t Orientation ;
 uint8_t HapticStrength ;
+
+uint8_t RestartCount ;
 
 struct t_rotary Rotary ;
 
@@ -51,6 +55,11 @@ struct t_rotary Rotary ;
 
 volatile uint8_t sg_tmr10ms ;
 volatile uint8_t tick10ms = 0 ;
+
+volatile uint8_t OneSecondCounter ;
+volatile uint8_t DoOneSecond ;
+
+uint8_t mcusr ; // save the WDT (etc) flags
 
 void sendBackupData( void ) ;
 
@@ -119,8 +128,10 @@ uint8_t SlaveType ;
 uint8_t *SlavePtr ;
 uint8_t SlaveActionRequired ;
 uint8_t SlaveDisplayRefresh ;
+uint8_t *SlaveBufferEnd ;
 
-uint8_t SlaveTempReceiveBuffer[80] ;
+#define SLAVE_RX_SIZE	80
+uint8_t SlaveTempReceiveBuffer[SLAVE_RX_SIZE] ;
 
 #define SlaveWaitSTX		0
 #define SlaveGotSTX			1
@@ -152,13 +163,15 @@ static void processSlaveByte( uint8_t byte )
 						SlaveStuff = 0 ;
 					}
 					SlaveType = byte ;
-					if ( byte < 16 )
+					if ( (uint16_t)byte < 16 )
 					{
 						SlavePtr = &DisplayBuf[(uint16_t)byte<<6] ;
+						SlaveBufferEnd = SlavePtr + 64 ;
 					}
 					else
 					{
 						SlavePtr = SlaveTempReceiveBuffer ;
+						SlaveBufferEnd = SlavePtr + SLAVE_RX_SIZE ;
 					}
 					SlaveState = SlaveData ;
 				}
@@ -185,7 +198,10 @@ static void processSlaveByte( uint8_t byte )
 						byte &= 0x7F ;
 						SlaveStuff = 0 ;
 					}
-				  *SlavePtr++ = byte ;
+					if ( SlavePtr < SlaveBufferEnd )
+					{
+				  	*SlavePtr++ = byte ;
+					}
 				}
 			}
 		break ;
@@ -194,7 +210,7 @@ static void processSlaveByte( uint8_t byte )
 
 
 // 0x01, 0x80, switches, buttons, trims, sticks, pots, 0x01
-static uint8_t fillTxBuffer( uint8_t *source, uint8_t type, uint8_t count )
+uint8_t fillTxBuffer( uint8_t *source, uint8_t type, uint8_t count )
 {
 	uint8_t *pdest = TxBuffer ;
 	*pdest++ = 1 ;
@@ -278,7 +294,7 @@ void getADC_osmp()
     }
 }
 
-static void sendControls()
+void sendControls()
 {
 	uint8_t count ;
 	uint16_t analog ;
@@ -331,6 +347,27 @@ static void sendControls()
 	startTx( count ) ;
 }
 
+void sendRestarts()
+{
+	uint8_t count ;
+	uint8_t data[20] ;
+	
+	data[0] = RestartCount ;
+	data[1] = PINA ;
+	data[2] = PINB ;
+	data[3] = PINC ;
+	data[4] = PIND ;
+	data[5] = PINE ;
+	data[6] = PING ;
+	data[7] = PORTB ;
+	data[8] = DDRB ;
+	data[9] = SaveEEARH ;
+	data[10] = mcusr ;
+	data[11] = Contrast ;
+	count = fillTxBuffer( data, 0x83, 12 ) ;
+	startTx( count ) ;
+}
+
 //void sendEeprom( uint16_t address )
 //{
 //	uint8_t data[34] ;
@@ -377,7 +414,11 @@ ISR(TIMER0_COMP_vect, ISR_NOBLOCK) //10ms timer
 //  g_blinkTmr10ms++;
   tmr = sg_tmr10ms + 1 ;
 	sg_tmr10ms = tmr ;
-		 
+	if ( ++OneSecondCounter	> 99 )
+	{
+		OneSecondCounter = 0 ;
+		DoOneSecond = 1 ;
+	}
 //	per10ms() ;
 	
 // end 10ms event
@@ -415,11 +456,11 @@ ISR(USART0_RX_vect)
 
 static uint8_t readAilIp()
 {
- #if (!(defined(JETI) || defined(FRSKY) || defined(ARDUPILOT) || defined(NMEA)))
- 	return PINE & (1<<INP_E_AileDR);
- #else
+// #if (!(defined(JETI) || defined(FRSKY) || defined(ARDUPILOT) || defined(NMEA)))
+// 	return PINE & (1<<INP_E_AileDR);
+// #else
  	return PINC & (1<<INP_C_AileDR);
- #endif
+// #endif
 }
 
 
@@ -454,11 +495,11 @@ bool keyState(EnumKeys enuk)
     break ;
     //case SW_ThrCt  : return PINE & (1<<INP_E_ThrCt);
 
- #if (!(defined(JETI) || defined(FRSKY) || defined(ARDUPILOT) || defined(NMEA)))
-     case SW_ThrCt  : xxx = pine & (1<<INP_E_ThrCt);
- #else
+// #if (!(defined(JETI) || defined(FRSKY) || defined(ARDUPILOT) || defined(NMEA)))
+//     case SW_ThrCt  : xxx = pine & (1<<INP_E_ThrCt);
+// #else
     case SW_ThrCt  : xxx = PINC & (1<<INP_C_ThrCt); //shad974: rerouted inputs to free up UART0
- #endif
+// #endif
 		break ;
 
     case SW_Trainer: xxx = pine & (1<<INP_E_Trainer);
@@ -528,14 +569,67 @@ static void pollRotary()
 //	}
 }
 
-static uint8_t Debug1 ;
+//static uint8_t Debug1 ;
 
-static void slave()
+static void ioinit0()
 {
-	int16_t byte ;
-	uint8_t backupTimer = 0 ;
-//	uint16_t address ;
-	// Initialise serial at 200K baud
+	DDRA = 0xff;  PORTA = 0x00;
+	DDRB = 0x81;  PORTB = 0x7E ; //pullups keys+nc, drive Haptic low to disable TEZ
+	DDRC = 0x3e;  PORTC = 0xc1; //pullups nc
+	DDRD = 0x00;  PORTD = 0xff; //all D inputs pullups keys
+	DDRE = 0x08;  PORTE = 0xff-(1<<OUT_E_BUZZER); //pullups + buzzer 0
+	DDRF = 0x00;  PORTF = 0x00; //all F inputs anain - pullups are off
+	//DDRG = 0x10;  PORTG = 0xff; //pullups + SIM_CTL=1 = phonejack = ppm_in
+	DDRG = 0x14; PORTG = 0xfB; //pullups + SIM_CTL=1 = phonejack = ppm_in, Haptic output and off (0)
+	
+	PORTG |=  (1<<OUT_G_SIM_CTL); // 1=ppm-in as out
+  DDRE |= 0x80 ;					// Bit 7 output
+	PORTE |= 0x80 ;
+
+#ifdef CPUM2561
+  mcusr = MCUSR; // save the WDT (etc) flags
+	SaveMcusr = mcusr ;
+  MCUSR = 0; // must be zeroed before disabling the WDT
+	MCUCR = 0x80 ;
+	MCUCR = 0x80 ;	// Must be done twice
+#else
+  mcusr = MCUCSR;
+  MCUCSR = 0x80;
+  MCUCSR = 0x80;	// Must be done twice
+#endif
+//RebootReason = mcusr ;
+#ifdef CPUM2561
+	if ( mcusr == 0 )
+	{
+    wdt_enable(WDTO_60MS) ;
+	}
+#endif
+
+	ADMUX=ADC_VREF_TYPE;
+	ADCSRA=0x85 ;
+
+#ifdef CPUM2561
+	TCCR0B  = (5 << CS00);//  Norm mode, clk/1024
+	OCR0A   = 156;
+	TIMSK0 |= (1<<OCIE0A) ;
+#else
+	TCCR0  = (7 << CS00);//  Norm mode, clk/1024
+	OCR0   = 156;
+	TIMSK	 = (1<<OCIE0) ;
+#endif
+	// TCNT1 2MHz Pulse generator
+	TCCR1A = (0<<WGM10);
+//#ifdef CPUM2561
+////	TIMSK3 |= (1<<ICIE3);
+//#else
+//	// ETIMSK =0 at power on, just set the bits
+////	ETIMSK = (1<<TICIE3);
+//#endif
+	
+}
+
+static void ioinit1()
+{
   DDRE &= ~(1 << DDE0) ;    // set RXD0 pin as input
   PORTE &= ~(1 << PORTE0) ; // disable pullup on RXD0 pin
 
@@ -551,12 +645,50 @@ static void slave()
   UCSR0B |= (1 << RXEN0);  // enable RX
   UCSR0B |= (1 << RXCIE0); // enable Interrupt
   UCSR0B |= (1 << TXEN0) ; // enable TX, but not interrupt yet
+}
+
+static uint8_t iocheck()
+{
+	uint8_t result = 0 ;
+	if ( UBRR0L != 4 )
+	{
+		result = 1 ;
+	}
+	if ( UBRR0H != 0 )
+	{
+		result = 1 ;
+	}
+#ifdef CPUM2561
+	if ( TCCR0B != (5 << CS00) )
+#else
+	if ( TCCR0 != (7 << CS00) )
+#endif
+	{
+		result = 1 ;
+	}
+	return result ;
+}
+
+
+static void slave()
+{
+	int16_t byte ;
+	uint8_t backupTimer = 0 ;
+//	uint16_t address ;
+	// Initialise serial at 200K baud
+	ioinit1() ;
 	sei() ;
 	 
   lcd_clear() ;
   lcd_puts_Pleft( 24, PSTR("\0079Xtreme") ) ;
   lcd_puts_Pleft( 7*FH, RevisionString ) ;
 	refreshDiplay();
+
+//	for ( byte = 0 ; byte < 12500 ; byte += 1 )
+//	{
+//		_delay_us(16) ;
+//    wdt_reset() ;
+//	}
 
 	for(;;)
 	{
@@ -629,7 +761,8 @@ static void slave()
 		t10ms = sg_tmr10ms ;
     tick10ms = t10ms - lastTMR ;
     lastTMR = t10ms ;
-    if(tick10ms) //make sure the rest happen only every 10ms.
+		
+		if(tick10ms) //make sure the rest happen only every 10ms.
 		{
 			ControlsRequested = 1 ;
 			
@@ -638,9 +771,22 @@ static void slave()
 				SlaveDisplayRefresh = 0 ;
 				refreshDiplay() ;
 			}
+			if ( iocheck() )
+			{
+				ioinit0() ;
+				ioinit1() ;
+				RestartCount += 1 ;
+			}
 		}
 		if ( TxBusy == 0 )
 		{
+			if ( DoOneSecond )
+			{
+				DoOneSecond = 0 ;
+				sendRestarts() ;
+			}
+			else
+
 //			if ( EepromRequested )
 //			{
 //				sendEeprom( EepromAddress ) ;
@@ -658,83 +804,22 @@ static void slave()
 				}
 			}
 
-			if ( ++Debug1 > 19 )
-			{
-				Debug1 = 0 ;
-//				lcd_outhex4( 100, 0, ( SlaveType << 8 ) | Contrast ) ; 
-				refreshDiplay() ;
-			}
+//			if ( ++Debug1 > 19 )
+//			{
+//				Debug1 = 0 ;
+////				lcd_outhex4( 100, 0, ( SlaveType << 8 ) | Contrast ) ; 
+//				refreshDiplay() ;
+//			}
 		}
 	}
 }
 
 int main(void)
 {
+	EEARH = 0xFF ;
+	SaveEEARH = EEARH ;
 
-	DDRA = 0xff;  PORTA = 0x00;
-	DDRB = 0x81;  PORTB = 0x7E ; //pullups keys+nc, drive Haptic low to disable TEZ
-	DDRC = 0x3e;  PORTC = 0xc1; //pullups nc
-	DDRD = 0x00;  PORTD = 0xff; //all D inputs pullups keys
-	DDRE = 0x08;  PORTE = 0xff-(1<<OUT_E_BUZZER); //pullups + buzzer 0
-	DDRF = 0x00;  PORTF = 0x00; //all F inputs anain - pullups are off
-	//DDRG = 0x10;  PORTG = 0xff; //pullups + SIM_CTL=1 = phonejack = ppm_in
-	DDRG = 0x14; PORTG = 0xfB; //pullups + SIM_CTL=1 = phonejack = ppm_in, Haptic output and off (0)
-	
-	PORTG |=  (1<<OUT_G_SIM_CTL); // 1=ppm-in as out
-  DDRE |= 0x80 ;					// Bit 7 output
-	PORTE |= 0x80 ;
-
-#ifdef CPUM2561
-  uint8_t mcusr = MCUSR; // save the WDT (etc) flags
-	SaveMcusr = mcusr ;
-  MCUSR = 0; // must be zeroed before disabling the WDT
-	MCUCR = 0x80 ;
-	MCUCR = 0x80 ;	// Must be done twice
-#else
-//  uint8_t mcusr = MCUCSR;
-  MCUCSR = 0x80;
-  MCUCSR = 0x80;	// Must be done twice
-#endif
-//RebootReason = mcusr ;
-#ifdef CPUM2561
-	if ( mcusr == 0 )
-	{
-    wdt_enable(WDTO_60MS) ;
-	}
-#endif
-
-	ADMUX=ADC_VREF_TYPE;
-	ADCSRA=0x85 ;
-
-#ifdef CPUM2561
-	TCCR0B  = (5 << CS00);//  Norm mode, clk/1024
-	OCR0A   = 156;
-	TIMSK0 |= (1<<OCIE0A) ;
-//	TIMSK0 |= (1<<OCIE0A) | (1<<TOIE0) ;
-    
-//	TCCR2B  = (2 << CS00);//  Norm mode, clk/8
-//	TIMSK2 |= (1<<TOIE2) ;
-#else
-	TCCR0  = (7 << CS00);//  Norm mode, clk/1024
-	OCR0   = 156;
-//	TCCR2  = (2 << CS00);//  Norm mode, clk/8
-	// TIMSK =0 at power on, just set the bits
-//	TIMSK	 = (1<<OCIE0) | (1<<TOIE0) | (1<<TOIE2) ;
-	TIMSK	 = (1<<OCIE0) ;
-#endif
-	// TCNT1 2MHz Pulse generator
-	TCCR1A = (0<<WGM10);
-//	TCCR1B = (1 << WGM12) | (2<<CS10); // CTC OCR1A, 16MHz / 8
-	//TIMSK |= (1<<OCIE1A); enable immediately before mainloop
-
-//	TCCR3A  = 0;
-//	TCCR3B  = (1<<ICNC3) | (2<<CS30);      //ICNC3 16MHz / 8
-#ifdef CPUM2561
-//	TIMSK3 |= (1<<ICIE3);
-#else
-	// ETIMSK =0 at power on, just set the bits
-//	ETIMSK = (1<<TICIE3);
-#endif
+	ioinit0() ;
 
 	lcd_init() ;
 

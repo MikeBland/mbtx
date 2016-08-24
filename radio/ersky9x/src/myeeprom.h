@@ -426,7 +426,8 @@ PACK(typedef struct t_PhaseData {
   char name[6];
   uint8_t fadeIn:4;
   uint8_t fadeOut:4;
-	uint16_t spare ;		// Future expansion
+  int8_t swtch2 ;       // swtch of phase[0] is not used
+	uint8_t spare ;		// Future expansion
 }) PhaseData;
 
 PACK(typedef struct te_MixData {
@@ -561,7 +562,7 @@ typedef struct t_voiceAlarm
 	uint8_t haptic:2 ;
 	uint8_t vsource:2 ;
 	uint8_t mute:1 ;
-	uint8_t res1 ;			// Spare for expansion
+	uint8_t delay ;
   int16_t  offset ;		//offset
 	union
 	{
@@ -726,7 +727,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleSource:3 ;
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
-	uint8_t thrSpare:3 ;
+	uint8_t disableThrottleCheck:1 ;
+	uint8_t thrSpare:2 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E

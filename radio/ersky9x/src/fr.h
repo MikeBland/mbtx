@@ -82,6 +82,8 @@
 #define ISTR_A_EQ		"A ="
 #define ISTR_SOUNDS	       	"\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
 #define ISTR_SWITCH_WARN	"Alerte Inter"
+//#define ISTR_SWITCH				"Inter"
+#define ISTR_WARNING			"Alerte"
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          	"Chrono"
 

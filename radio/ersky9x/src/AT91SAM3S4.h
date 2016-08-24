@@ -98,6 +98,7 @@ typedef enum IRQn
   WDT_IRQn             =  4, /**<  4 AT91SAM3S Watchdog Timer (WDT) */
   PMC_IRQn             =  5, /**<  5 AT91SAM3S Power Management Controller (PMC) */
   EFC_IRQn             =  6, /**<  6 AT91SAM3S Enhanced Flash Controller (EFC) */
+  SW7_IRQn	           =  7, /**<  7 AT91SAM3S Software Interrupt 7 */
   UART0_IRQn           =  8, /**<  8 AT91SAM3S UART 0 (UART0) */
   UART1_IRQn           =  9, /**<  9 AT91SAM3S UART 1 (UART1) */
   SMC_IRQn             = 10, /**< 10 AT91SAM3S Static Memory Controller (SMC) */

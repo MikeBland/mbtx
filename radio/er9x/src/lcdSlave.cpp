@@ -237,6 +237,7 @@ void refreshDiplay()
   lcd_refresh = true;
 #else
 	LcdLock = 1 ;						// Lock LCD data lines
+
   uint8_t column_start_lo = 0x04; // skip first 4 columns for normal ST7565
   uint8_t *p=DisplayBuf;
   for(uint8_t y=0xB0; y < 0xB8; y++) {

@@ -74,6 +74,8 @@
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
 #define ISTR_SWITCH_WARN	   "Co cong tac dang mo!"
+//#define ISTR_SWITCH				   "CO CONG" 
+#define ISTR_WARNING			   "TAC DANG MO" 
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          "Timer"
 
@@ -323,8 +325,8 @@
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Beeper    ""PiSpkr    ""BeeprVoice""PiSpkVoice""MegaSound "
 #define ISTR_VOLUME         "Am Luong"
-#define ISTR_SPEAKER_PITCH  " Loa Pitch"
-#define ISTR_HAPTICSTRENGTH " Cuong Do Haptic"
+#define ISTR_SPEAKER_PITCH  "Loa Pitch"
+#define ISTR_HAPTICSTRENGTH "Cuong Do Haptic"
 #define ISTR_CONTRAST       "Tuong Phan"
 #define ISTR_BATT_WARN      "Bao PIN Yeu" 
 // ISTR_INACT_ALARM m for minutes after \023 - single char

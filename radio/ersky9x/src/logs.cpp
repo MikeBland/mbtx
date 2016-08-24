@@ -48,6 +48,8 @@
 
 #define NULL 0
 
+//#define DEBUG_9XT	1
+
 extern int16_t AltOffset ;
 extern uint16_t LogTimer ;
 
@@ -310,7 +312,7 @@ void writeLogs()
 			qr = div( LogTimer, 120 ) ;
 			uint16_t secs = qr.rem/2 ;
 			qr = div( qr.quot, 60 ) ;
-      f_printf(&g_oLogFile, "%d:%02d:%02d", qr.quot, qr.rem, secs ) ;	// Elapsed log time
+      f_printf(&g_oLogFile, "'%d:%02d:%02d", qr.quot, qr.rem, secs ) ;	// Elapsed log time
       f_printf(&g_oLogFile, LogTimer & 1 ? ".5," : "," ) ;	// Elapsed log time
 //#if defined(FRSKY_SPORT)
 //      f_printf(&g_oLogFile, "%d,%d,", frskyData.rssi[1].value, frskyData.rssi[0].value);
@@ -344,6 +346,10 @@ void writeLogs()
       f_printf(&g_oLogFile, "%d,%d,%d,", FrskyHubData[FR_TEMP1], FrskyHubData[FR_TEMP2], FrskyHubData[FR_RPM] ) ;
 
 			qr = div( FrskyHubData[FR_CURRENT], 10);
+			if ( qr.rem < 0 )
+			{
+				qr.rem = - qr.rem ;
+			}
 			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 			
 			qr = div( FrskyHubData[FR_VOLTS], 10);
@@ -355,14 +361,15 @@ void writeLogs()
 			qr = div( value, 10);
 			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 			f_printf(&g_oLogFile, "%d.%04d%c,%d.%04d%c,", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S],FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
-			f_printf(&g_oLogFile, "%d,%d", FrskyHubData[FR_FUEL],FrskyHubData[FR_GPS_SPEED] ) ;
+			f_printf(&g_oLogFile, "%d,%d,", FrskyHubData[FR_FUEL],FrskyHubData[FR_GPS_SPEED] ) ;
 
-			qr = div( FrskyHubData[FR_CELL_MIN], 50 ) ;
+			qr = div( FrskyHubData[FR_CELL_MIN], 100 ) ;
 			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
 
 			qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
-			f_printf(&g_oLogFile, "%d.%d,", qr.quot, qr.rem ) ;
+			f_printf(&g_oLogFile, "%d.%d", qr.quot, qr.rem ) ;
 
+#ifndef DEBUG_9XT
 			//SC1-8
 			uint32_t i ;
 			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
@@ -383,14 +390,49 @@ void writeLogs()
 					num_decimals = 100 ;
 				}
 				qr = div( value, num_decimals ) ;
+				if ( qr.rem < 0 )
+				{
+					qr.rem = - qr.rem ;
+				}
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
+#endif
+
+#ifdef DEBUG_9XT
+extern uint8_t M64MainTimer ;
+extern uint8_t M64BackupTimer ;
+extern uint8_t M64ResetCount ;
+extern uint16_t M64RxCount ;
+extern uint16_t RemBitMeasure ;
+				f_printf(&g_oLogFile, ",%d,%d,%d", M64MainTimer, M64BackupTimer, M64ResetCount ) ;
+extern uint8_t M64Buttons ;
+extern uint16_t M64Switches ;
+				f_printf(&g_oLogFile, ",%d,%d", RemBitMeasure, M64RxCount ) ;
+				M64RxCount = 0 ;				
+				f_printf(&g_oLogFile, ",%d,%d,", M64Buttons, M64Switches ) ;
+extern uint8_t M64DebugData[] ;
+extern uint8_t SlaveTempReceiveBuffer[] ;
+				uint32_t i ;
+				for ( i = 0 ; i < 22 ; i += 1 )
+				{
+					f_printf(&g_oLogFile, "%02X", SlaveTempReceiveBuffer[i] ) ;
+				}
+				f_printf(&g_oLogFile, "," ) ;
+				for ( i = 0 ; i < 12 ; i += 1 )
+				{
+					f_printf(&g_oLogFile, "%02X", M64DebugData[i] ) ;
+				}
+#endif
+
 #ifdef BLUETOOTH
 extern uint8_t BtTotals[4] ;
 			f_printf(&g_oLogFile, ",%d\n", BtTotals[1] ) ;
 #else
 			f_printf(&g_oLogFile, "\n" ) ;
 #endif
+
+
+
 
 //FR_GPS_SPEED,
 //FR_FUEL, FR_A1_MAH, FR_A2_MAH, FR_CELL_MIN,

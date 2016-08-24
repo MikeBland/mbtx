@@ -164,6 +164,8 @@ extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
 
 const char *get_curve_string() ;
 
+extern uint8_t unmapPots( uint8_t value ) ;
+
 extern int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals) ;
 
 extern uint8_t CalcScaleNest ;

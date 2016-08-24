@@ -479,6 +479,7 @@ void sound_5ms()
 		if ( Sound_g.VoiceRequest )
 		{
 			// audioOn() ;
+			
 			dacptr->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
 			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
 			if ( dacptr->DACC_ISR & DACC_ISR_TXBUFE )	// All sent
@@ -661,6 +662,7 @@ void endVoice()
 	{
 		Sound_g.VoiceActive = 0 ;
 	}
+
 //	else
 //	{
 //		DebugVoice += 1 ;

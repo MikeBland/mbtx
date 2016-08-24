@@ -37,7 +37,7 @@
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
-       <string>Setup</string>
+       <string>Setup/Timers</string>
       </attribute>
       <layout class="QFormLayout" name="formLayout">
        <property name="fieldGrowthPolicy">
@@ -117,6 +117,138 @@
        </item>
        <item row="1" column="1">
         <layout class="QGridLayout" name="gridLayout_14">
+         <item row="0" column="2">
+          <layout class="QGridLayout" name="gridLayout_27">
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_92">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;OFF – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is OFF. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;ON – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is on, always counting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;THs, TH% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Select one of these to activate the timer based on the throttle stick position. When &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;THs&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; is selected, the timer starts whenever the stick is not at -100. The &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;TH%&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; option is the same except the timer speed is determined by stick position. When the stick is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the stick position.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;c1% to c16% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;These provide the proportional output of any channel from 1 to 16. When the channel is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the channel position.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>TriggerA</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="timer2ModeCB"/>
+           </item>
+           <item row="2" column="0">
+            <widget class="QLabel" name="label_119">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;Trigger &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;B acts as an &amp;quot;AND&amp;quot; switch to “Trigger A”. That means you need two conditions for the Timer to start counting. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;If a &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;Trigger B s&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;witch is defined, then it needs to be ON for Trigger A to work. Options for Trigger B are any physical switch, any logical switch, any momentary switch and the inverse of any of them.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600;&quot;&gt;Switches – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;You can specify any physical switch or logical switch&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; so w&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;henever that switch is activated the timer counts. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;For example, if you want the timer to count when the ELE switch is on, set Trigger A to ON and Trigger B to ELE.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; background-color:transparent;&quot;&gt;Momentary switches -&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; A switch plus “m” (like TRNm) means “momentary”. Moving the switch onc&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;e to the ON position and back turns the timer ON. Moving it ON and OFF again turns the timer OFF. Try it with the TRNm switch. Flick the switch to toggle the timer ON and OFF.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>TriggerB</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QComboBox" name="timer2ModeBCB"/>
+           </item>
+           <item row="4" column="0">
+            <widget class="QLabel" name="label_93">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;Here you can choose whether the timer counts up or down.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Timer Direction</string>
+             </property>
+            </widget>
+           </item>
+           <item row="4" column="1">
+            <widget class="QComboBox" name="timer2DirCB">
+             <item>
+              <property name="text">
+               <string>Count Down</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Count Up</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="5" column="0">
+            <widget class="QLabel" name="label_94">
+             <property name="maximumSize">
+              <size>
+               <width>100</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Tip to Set the timer on the TX.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;To set the time in steps of one minute highlight the field and press and hold the [MENU] key while setting the time. Press [MENU]/[EXIT] when done.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Timer Value</string>
+             </property>
+            </widget>
+           </item>
+           <item row="5" column="1">
+            <widget class="QTimeEdit" name="timer2ValTE">
+             <property name="accelerated">
+              <bool>true</bool>
+             </property>
+             <property name="currentSection">
+              <enum>QDateTimeEdit::MinuteSection</enum>
+             </property>
+             <property name="displayFormat">
+              <string>mm:ss</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_96">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ErSky9x provides two fully programmable timers that can count either up or down. By default, the timers are set to OFF and are not operational.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Timer 2</string>
+             </property>
+            </widget>
+           </item>
+           <item row="3" column="1">
+            <widget class="QComboBox" name="timer2ResetCB"/>
+           </item>
+           <item row="3" column="0">
+            <widget class="QLabel" name="label_229">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;This resets the timer to its set value. Options are any physical switch, any logical switch, any momentary switch and the inverse of any of them. For exam&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;ple, imagine you set the TRN switch as the timer reset switch, and the timer is set to count down from 10:00 (ten minutes) with the throttle stick as trigger (THs). At any point if you hit the TRN switch, the timer will be reset to 10:00. If it is counting when you reset it, it will resume counting from the beginning.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Reset Switch</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QCheckBox" name="timer2BeepCdownCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time at 30, 20, 10, 5, 4, 3, 2, 1, 0 seconds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Beep Countdown</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="2">
+            <widget class="QCheckBox" name="timer2MinuteBeepCB">
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time every full minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Minute Beep</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
          <item row="0" column="0">
           <layout class="QGridLayout" name="gridLayout_26">
            <item row="1" column="0">
@@ -250,140 +382,15 @@
           </layout>
          </item>
          <item row="0" column="1">
-          <layout class="QGridLayout" name="gridLayout_27">
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_92">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;OFF – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is OFF. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;ON – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Timer is on, always counting.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;THs, TH% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;Select one of these to activate the timer based on the throttle stick position. When &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;THs&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; is selected, the timer starts whenever the stick is not at -100. The &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-weight:600; color:#000000;&quot;&gt;TH%&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt; option is the same except the timer speed is determined by stick position. When the stick is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the stick position.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;c1% to c16% – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;These provide the proportional output of any channel from 1 to 16. When the channel is at -100, the timer is stopped. When at +100 the timer runs at normal speed. When midway the timer's speed reflects the channel position.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>TriggerA</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="timer2ModeCB"/>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_119">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; color:#000000;&quot;&gt;Trigger &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;B acts as an &amp;quot;AND&amp;quot; switch to “Trigger A”. That means you need two conditions for the Timer to start counting. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; color:#000000;&quot;&gt;If a &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;Trigger B s&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;witch is defined, then it needs to be ON for Trigger A to work. Options for Trigger B are any physical switch, any logical switch, any momentary switch and the inverse of any of them.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600;&quot;&gt;Switches – &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;You can specify any physical switch or logical switch&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; so w&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;henever that switch is activated the timer counts. &lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000; background-color:transparent;&quot;&gt;For example, if you want the timer to count when the ELE switch is on, set Trigger A to ON and Trigger B to ELE.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; background-color:transparent;&quot;&gt;Momentary switches -&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; background-color:transparent;&quot;&gt; A switch plus “m” (like TRNm) means “momentary”. Moving the switch onc&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;e to the ON position and back turns the timer ON. Moving it ON and OFF again turns the timer OFF. Try it with the TRNm switch. Flick the switch to toggle the timer ON and OFF.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>TriggerB</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="timer2ModeBCB"/>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_93">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;Here you can choose whether the timer counts up or down.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Timer Direction</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QComboBox" name="timer2DirCB">
-             <item>
-              <property name="text">
-               <string>Count Down</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Count Up</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_94">
-             <property name="maximumSize">
-              <size>
-               <width>100</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Tip to Set the timer on the TX.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;To set the time in steps of one minute highlight the field and press and hold the [MENU] key while setting the time. Press [MENU]/[EXIT] when done.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Timer Value</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QTimeEdit" name="timer2ValTE">
-             <property name="accelerated">
-              <bool>true</bool>
-             </property>
-             <property name="currentSection">
-              <enum>QDateTimeEdit::MinuteSection</enum>
-             </property>
-             <property name="displayFormat">
-              <string>mm:ss</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QLabel" name="label_96">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;ErSky9x provides two fully programmable timers that can count either up or down. By default, the timers are set to OFF and are not operational.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Timer 2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QComboBox" name="timer2ResetCB"/>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_229">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; color:#000000;&quot;&gt;This resets the timer to its set value. Options are any physical switch, any logical switch, any momentary switch and the inverse of any of them. For exam&lt;/span&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium;&quot;&gt;ple, imagine you set the TRN switch as the timer reset switch, and the timer is set to count down from 10:00 (ten minutes) with the throttle stick as trigger (THs). At any point if you hit the TRN switch, the timer will be reset to 10:00. If it is counting when you reset it, it will resume counting from the beginning.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="text">
-              <string>Reset Switch</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QCheckBox" name="timer2BeepCdownCB">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time at 30, 20, 10, 5, 4, 3, 2, 1, 0 seconds&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>Beep Countdown</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="2">
-            <widget class="QCheckBox" name="timer2MinuteBeepCB">
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Timer will report the time every full minute.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="layoutDirection">
-              <enum>Qt::RightToLeft</enum>
-             </property>
-             <property name="text">
-              <string>Minute Beep</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <widget class="Line" name="line_4">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+          </widget>
          </item>
         </layout>
        </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_10">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting determines how the active trims behave.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Exp –&lt;/span&gt; Exponential – trims are fine near the centre and get progressively coarser further out.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;ExFine –&lt;/span&gt; Extra fine – 1 step per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Fine –&lt;/span&gt; 2 steps per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Medium –&lt;/span&gt; 4 steps per click.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Coarse –&lt;/span&gt; 8 steps per click.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -393,7 +400,7 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
+       <item row="3" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QComboBox" name="trimIncCB">
@@ -485,6 +492,26 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_120">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When ON, this option causes throttle stick expo to apply from zero to full throttle, instead of having a centre point like the expo setting on the other stick axes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Throttle Reverse</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="thrRevChkB">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QLabel" name="label_55">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;E. Limits (Extended Limits) &lt;/span&gt;&lt;/p&gt;&lt;p&gt;Allows control limits to go to plus or minus 125% instead of the normal 100% maximum. Note that 100% on the Er9x firmware already corresponds to approximately 125% on most other transmitters, so extended limits should not normally be required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -548,7 +575,7 @@
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="label_12">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Beep Cnt&lt;/span&gt;&lt;span style=&quot; font-style:italic;&quot;&gt;(Beep Centre)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Causes inputs to beep when centred. This is useful for locating the centre of the pots without looking (e.g., while flying!).&lt;/p&gt;&lt;p&gt;On the radio, Press &lt;span style=&quot; font-weight:600;&quot;&gt;[MENU&lt;/span&gt;] to turn ON centre beeping for an input. It will then become highlighted.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -558,7 +585,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="1">
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="0">
           <widget class="QCheckBox" name="bcRUDChkB">
@@ -610,67 +637,108 @@
           </widget>
          </item>
          <item row="0" column="7">
-          <widget class="QLabel" name="label_258">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option checks that the selected input (Stick or Potentiometer) is within a certain range (defined by the Min and Max values) at startup, or when the model is loaded by selecting it in the &amp;quot;Model Select menu&amp;quot;. If the input value (position) is outside the range, a warning will be displayed indicating both Min and Max limits, as well as the current Input value (position). The warning will be cleared as soon as the input value falls within the programmed range, or a key is pressed, and the tx will resume normal operation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
+          <widget class="QCheckBox" name="bcP4ChkB">
            <property name="text">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Custom Check&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>P4</string>
            </property>
           </widget>
-         </item>
-         <item row="0" column="8">
-          <widget class="QComboBox" name="CustomAlarmSourceCB"/>
          </item>
          <item row="0" column="9">
-          <widget class="QLabel" name="label_259">
-           <property name="maximumSize">
+          <widget class="QFrame" name="frame">
+           <property name="minimumSize">
             <size>
-             <width>30</width>
-             <height>16777215</height>
+             <width>320</width>
+             <height>30</height>
             </size>
            </property>
-           <property name="text">
-            <string>Min</string>
+           <property name="frameShape">
+            <enum>QFrame::StyledPanel</enum>
            </property>
-          </widget>
-         </item>
-         <item row="0" column="10">
-          <widget class="QSpinBox" name="CustomAlarmMinSB">
-           <property name="minimum">
-            <number>-125</number>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
            </property>
-           <property name="maximum">
-            <number>125</number>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="11">
-          <widget class="QLabel" name="label_260">
-           <property name="maximumSize">
-            <size>
-             <width>30</width>
-             <height>16777215</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Max</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="12">
-          <widget class="QSpinBox" name="CustomAlarmMaxSB">
-           <property name="minimum">
-            <number>-125</number>
-           </property>
-           <property name="maximum">
-            <number>125</number>
-           </property>
+           <widget class="QWidget" name="horizontalLayoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>311</width>
+              <height>25</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_10">
+             <property name="leftMargin">
+              <number>5</number>
+             </property>
+             <property name="topMargin">
+              <number>4</number>
+             </property>
+             <item>
+              <widget class="QLabel" name="label_258">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option checks that the selected input (Stick or Potentiometer) is within a certain range (defined by the Min and Max values) at startup, or when the model is loaded by selecting it in the &amp;quot;Model Select menu&amp;quot;. If the input value (position) is outside the range, a warning will be displayed indicating both Min and Max limits, as well as the current Input value (position). The warning will be cleared as soon as the input value falls within the programmed range, or a key is pressed, and the tx will resume normal operation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Custom Check&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="CustomAlarmSourceCB"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_259">
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Min</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="CustomAlarmMinSB">
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>125</number>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_260">
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Max</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QSpinBox" name="CustomAlarmMaxSB">
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>125</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </item>
         </layout>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="label_177">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This setting applies to the Limits menu by allowing Subtrim to override the Limits setting so that servo throw remains the same on both sides of centre. The value here determines the maximum amount the limits can be exceeded (e.g., a setting of 10.0 allows a limit set at 100% to go as high as plus/minus 110%).&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Arial, sans-serif'; font-size:medium; font-weight:600; font-style:italic; color:#000000;&quot;&gt;Be careful when using this feature as the control limit values are no longer absolute and could allow a servo to exceed a mechanical limit.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -680,7 +748,7 @@
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <layout class="QGridLayout" name="gridLayout_36">
          <item row="0" column="0">
           <widget class="QDoubleSpinBox" name="autoLimitsSB">
@@ -726,7 +794,7 @@
          </item>
         </layout>
        </item>
-       <item row="6" column="0">
+       <item row="7" column="0">
         <widget class="QLabel" name="label_191">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Model Version&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -736,7 +804,7 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
+       <item row="7" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <item>
           <widget class="QLabel" name="label_version">
@@ -786,7 +854,7 @@
          </item>
         </layout>
        </item>
-       <item row="7" column="0">
+       <item row="8" column="0">
         <widget class="QLabel" name="label_192">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Selects which switches will be checked at startup and when selecting a new model&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -796,7 +864,7 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="8" column="1">
         <layout class="QGridLayout" name="gridLayout_Swarn" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
          <item row="0" column="0">
           <widget class="QCheckBox" name="switchwarnChkB">
@@ -1473,7 +1541,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="8" column="1">
+       <item row="9" column="1">
         <spacer name="verticalSpacer_3">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -1486,7 +1554,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </spacer>
        </item>
-       <item row="5" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="label_263">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When a bluetooth Module is installed and this option is ON, the radio will try to connect automatically to a second transmitter also equiped with a Bluetooth module, as long as its BT address was previously stored.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1496,7 +1564,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="5" column="1">
+       <item row="6" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QCheckBox" name="AutoBtConnectChkB">
@@ -1580,6 +1648,13 @@ p, li { white-space: pre-wrap; }
           </spacer>
          </item>
         </layout>
+       </item>
+       <item row="2" column="1">
+        <widget class="Line" name="line_5">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
        </item>
       </layout>
      </widget>
@@ -4102,6 +4177,37 @@ p, li { white-space: pre-wrap; }
            <set>Qt::AlignCenter</set>
           </property>
          </widget>
+        </item>
+        <item row="2" column="3">
+         <widget class="QComboBox" name="FP1_sw_2"/>
+        </item>
+        <item row="0" column="3">
+         <widget class="QLabel" name="label_Switch_5">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode, except FM0, has a selectable activation switch (physical or logical). &lt;span style=&quot; color:#000000;&quot;&gt;FM0 is active if no other flight mode is active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+          <property name="text">
+           <string>Switch 2</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="3">
+         <widget class="QComboBox" name="FP2_sw_2"/>
+        </item>
+        <item row="6" column="3">
+         <widget class="QComboBox" name="FP3_sw_2"/>
+        </item>
+        <item row="8" column="3">
+         <widget class="QComboBox" name="FP4_sw_2"/>
+        </item>
+        <item row="10" column="3">
+         <widget class="QComboBox" name="FP5_sw_2"/>
+        </item>
+        <item row="12" column="3">
+         <widget class="QComboBox" name="FP6_sw_2"/>
         </item>
        </layout>
       </widget>
