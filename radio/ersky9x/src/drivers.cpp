@@ -148,6 +148,11 @@ uint32_t spi_operation( uint8_t *tx, uint8_t *rx, uint32_t count ) ;
 //uint32_t spi_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count ) ;
 uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count ) ;
 
+#ifdef PCBSKY
+static void com1_timeout_disable( void ) ;
+#endif
+static void disable_software_com1( void ) ;
+
 void read_adc(void ) ;
 void init_adc( void ) ;
 void init_ssc( uint16_t baudrate ) ;
@@ -1108,29 +1113,11 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
-void com2_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert )
+void com2_Configure( uint32_t baudrate, uint32_t parity )
 {
-	UART_Configure( baudrate, masterClock) ;
-}
-
-void com1Parity( uint32_t even )
-{
-  register Usart *pUsart = SECOND_USART;
-	if ( even )
-	{
-  	pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
-	}
-	else
-	{
-	  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
-	}
-}
-
-
-void com2Parity( uint32_t even )
-{
+	UART_Configure( baudrate, Master_frequency) ;
   register Uart *pUart = CONSOLE_USART ;
-	if ( even )
+	if ( parity )
 	{
   	pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
 	}
@@ -1138,7 +1125,23 @@ void com2Parity( uint32_t even )
 	{
 		pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
 	}
+//	com2Parity( parity ) ;
 }
+
+
+
+//void com2Parity( uint32_t even )
+//{
+//  register Uart *pUart = CONSOLE_USART ;
+//	if ( even )
+//	{
+//  	pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
+//	}
+//	else
+//	{
+//		pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
+//	}
+//}
 
 
 // Set up COM2 for SBUS (8E2), can't set 2 stop bits!
@@ -1361,9 +1364,27 @@ void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
-void com1_Configure( uint32_t baudrate, uint32_t masterClock, uint32_t invert )
+void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
-	UART2_Configure( baudrate, masterClock) ;	
+	if ( invert )
+	{
+		init_software_com1( baudrate, SERIAL_INVERT, parity ) ;
+	}
+	else
+	{
+		UART2_Configure( baudrate, Master_frequency ) ;	
+  	register Usart *pUsart = SECOND_USART;
+		if ( parity )
+		{
+  		pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
+		}
+		else
+		{
+		  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
+		}
+//		com1Parity( parity ) ;
+		com1_timeout_disable() ;
+	}
 }
 
 void UART2_9dataOdd1stop()
@@ -1382,7 +1403,7 @@ void UART2_timeout_enable()
 	NVIC_EnableIRQ(USART0_IRQn) ;
 }
 
-void com2_timeout_enable()
+void com1_timeout_enable()
 {
 	UART2_timeout_enable() ;	
 }
@@ -1397,7 +1418,7 @@ void UART2_timeout_disable()
 	
 }
 
-void com2_timeout_disable()
+static void com1_timeout_disable()
 {
 	UART2_timeout_disable() ;
 }
@@ -2302,7 +2323,7 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
 	start_timer5() ;
 }
 
-void disable_software_com1()
+static void disable_software_com1()
 {
 	stop_timer5() ;
 	CaptureMode = CAP_PPM ;
@@ -2698,12 +2719,23 @@ void x9dConsoleInit()
 	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
+
+void com2_Configure( uint32_t baudrate, uint32_t parity )
+{
+	x9dConsoleInit() ;
+	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//	UART4SetBaudrate( baudrate ) ;
+	com2Parity( parity ) ;
+}
+
+
+
 #endif
 
-void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity )
+void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 {
 	// Serial configure  
-	if ( mode == SPORT_MODE_SOFTWARE )
+	if ( invert )
 	{
 	  NVIC_DisableIRQ(USART2_IRQn) ;
 		init_software_com1( baudRate, invert, parity ) ;
@@ -2747,7 +2779,7 @@ void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t p
 	USART2->CR3 = 0 ;
 	if ( parity )
 	{
-		USART2->CR1 |= USART_CR1_PCE ;
+		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;	// Need 9th bit for parity
 		USART2->CR2 |= 0x2000 ;	// 2 stop bits
 	}
 	if ( baudRate == 115200 )		// ASSAN DSM
@@ -2758,7 +2790,7 @@ void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t p
 		GPIOD->BSRRL = 0x0010 ;		// output enable
 #endif
 	}
-	NVIC_SetPriority( USART2_IRQn, 5 ) ; // Lower priority interrupt
+	NVIC_SetPriority( USART2_IRQn, 2 ) ; // Quite high priority interrupt
   NVIC_EnableIRQ(USART2_IRQn);
 }
 
@@ -3127,6 +3159,13 @@ void console9xtInit()
 	UART4->CR3 = 0 ;
 	NVIC_SetPriority( UART4_IRQn, 5 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(UART4_IRQn) ;
+}
+
+void com2_Configure( uint32_t baudrate, uint32_t parity )
+{
+	console9xtInit() ;
+	UART4SetBaudrate( baudrate ) ;
+	com2Parity( parity ) ;
 }
 
 void com3Init( uint32_t baudrate )

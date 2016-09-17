@@ -11909,14 +11909,31 @@ Str_Protocol
 				// Display on screen static text
 				lcd_puts_Pleft(    y, PSTR(STR_MULTI_TYPE));
 				// Sub-protocol stored in sub_protocol bits0..4
-				attr=g_model.sub_protocol;
+				uint8_t oldValue = g_model.sub_protocol ;
+				uint8_t svalue = oldValue & 0x3F ;
+				if ( sub == subN )
+				{
+					attr = blink ;
+ 			  	CHECK_INCDEC_H_MODELVAR_0( svalue, 62 ) ;
+				}
+				
+//				attr=g_model.sub_protocol;
 
 
 //#ifdef V2
 //				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\015"MULTI_STR), g_model.sub_protocol, (sub==subN) ) ;
 //#else
 				
-				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\027"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+//				g_model.sub_protocol = checkIndexed( y, PSTR(FWx10"\027"MULTI_STR), g_model.sub_protocol&0x1F, (sub==subN) ) + (g_model.sub_protocol&0xE0);
+				if ( svalue <= M_LAST_MULTI )
+				{
+					lcd_putsAttIdx( FW*10, y, PSTR(MULTI_STR), svalue, attr ) ;
+				}
+				else
+				{
+	  			lcd_outdezAtt( 21*FW, y, svalue+1, attr ) ;
+				}
+				g_model.sub_protocol = svalue + (g_model.sub_protocol & 0xC0) ;
 
 //				attr = 0 ;
 //				uint8_t svalue = g_model.sub_protocol & 0x1F ;
@@ -11935,7 +11952,7 @@ Str_Protocol
 				subN++;
 				//Sub-sub-protocol stored in ppmNCH bits4..6
 				const prog_char * s;
-				uint8_t x = g_model.sub_protocol&0x1F ;
+				uint8_t x = g_model.sub_protocol&0x3F ;
 				if ( x == M_Flysky)
 				{
 					s=PSTR(FWx10"\003"M_FLYSKY_STR);
@@ -11978,7 +11995,11 @@ Str_Protocol
 				}
 				else if ( x == M_MJXQ )
 				{
-					s=PSTR(FWx10"\003"M_MJXQ_STR);
+					s=PSTR(FWx10"\004"M_MJXQ_STR);
+				}
+				else if ( x == M_HONTAI )
+				{
+					s = PSTR(FWx10"\002"M_HONTAI_STR);
 				}
 				else
 				{

@@ -502,7 +502,7 @@
 #define ISTR_MULTI_PROTO    "Protok\311\305"
 #define ISTR_MULTI_TYPE	    "Typ"
 #define ISTR_MULTI_AUTO	    "Autobind"
-#define ISTR_MULTI_POWER    "Zasilanie"
+#define ISTR_MULTI_POWER    "Zasilanie\014Rate\023mS"
 #define ISTR_MULTI_OPTION   "\014Opcje "
 
 #define ISTR_Display		     "Ekran" 

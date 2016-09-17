@@ -417,6 +417,7 @@ struct t_hub_max_min
 #define TEL_ASSAN	      6
 #define TEL_MULTI	      7
 #define TEL_HUB_RAW			8
+#define TEL_UNKNOWN			255
 extern uint8_t TelemetryType ;
 
 // Values in EEPROM

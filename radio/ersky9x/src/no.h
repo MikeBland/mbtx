@@ -491,7 +491,7 @@
 #define ISTR_MULTI_PROTO    "Protocol"
 #define ISTR_MULTI_TYPE	    "Type"
 #define ISTR_MULTI_AUTO	    "Autobind"
-#define ISTR_MULTI_POWER    "Power"
+#define ISTR_MULTI_POWER    "Power\014Rate\023mS"
 #define ISTR_MULTI_OPTION   "\014Option"
 
 #define ISTR_Display		     "Display" 

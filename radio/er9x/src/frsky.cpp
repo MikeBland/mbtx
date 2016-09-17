@@ -1363,9 +1363,12 @@ void FRSKY_Init( uint8_t brate)
 #ifdef MULTI_PROTOCOL
 	if ( g_model.protocol == PROTO_MULTI ) // set 100000bps 8e2
 	{
-		UBRR0L = 9;
-		UBRR0H = 0;
-		UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+		if ( !g_eeGeneral.TEZr90 )
+		{
+			UBRR0L = 9;
+			UBRR0H = 0;
+			UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+		}
 	}
 	else
 #endif // MULTI_PROTOCOL

@@ -417,6 +417,12 @@ enum EnumKeys {
 #define M_ESKY		       15
 #define M_MT99XX	       16
 #define M_MJXQ		       17
+#define M_SHENQI				 18
+#define M_FY326					 19
+#define M_SFHSS					 20
+#define M_J6PRO					 21
+#define M_FQ777					 22
+#define M_ASSAN					 23
 
 
 #define GETADC_SING = 0

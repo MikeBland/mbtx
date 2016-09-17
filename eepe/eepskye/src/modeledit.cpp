@@ -361,13 +361,16 @@ void ModelEdit::tabModelEditSetup()
     ui->protocolCB->addItem("PPM");
     ui->xprotocolCB->addItem("PPM");
     ui->protocolCB->addItem("PXX");
-    ui->xprotocolCB->addItem("PXX");
+		if ( rData->type )
+		{
+    	ui->xprotocolCB->addItem("PXX");
+		}
     ui->protocolCB->addItem("DSM");
     ui->xprotocolCB->addItem("DSM");
     ui->protocolCB->addItem("Multi");
     ui->xprotocolCB->addItem("Multi");
-    ui->protocolCB->addItem("Assan");
-    ui->xprotocolCB->addItem("Assan");
+//    ui->protocolCB->addItem("Assan");
+//    ui->xprotocolCB->addItem("Assan");
 //		if ( rData->type )
 //		{
       ui->protocolCB->addItem("OFF");
@@ -875,21 +878,25 @@ void ModelEdit::setProtocolBoxes()
 		int i = g_model.protocol ;
 		if ( i == PROTO_OFF )
 		{
-			i = 5 ;
+			i = 4 ;
 		}
     ui->protocolCB->setCurrentIndex(i);
 		i = g_model.xprotocol ;
 		if ( i == PROTO_OFF )
 		{
-			i = 5 ;
+			i = 4 ;
+		}
+		if ( rData->type == 0 )
+		{
+			if ( i )
+			{
+				i -= 1 ;
+			}
 		}
     ui->xprotocolCB->setCurrentIndex(i);
 
 		if ( rData->type )
 		{
-      ui->xppmDelaySB->show() ;
-      ui->xnumChannelsSB->show() ;
-      ui->xppmFrameLengthDSB->show() ;
       ui->xDSM_Type->show() ;
       ui->xPxxRxNum->show() ;
       ui->xppmDelaySB->show() ;
@@ -901,6 +908,7 @@ void ModelEdit::setProtocolBoxes()
 			ui->xprotocolCB->show() ;
 			ui->xpulsePolCB->show() ;
 			ui->labelProtoExt->show() ;
+			ui->labelProtoExt->setText("Protocol(External)");
 			ui->labelxp1->show() ;
 			ui->labelxp2->show() ;
 			ui->labelxp3->show() ;
@@ -912,28 +920,26 @@ void ModelEdit::setProtocolBoxes()
 		}
 		else
 		{
-      ui->xppmDelaySB->hide() ;
+      ui->xDSM_Type->show() ;
+      ui->xPxxRxNum->show() ;
+      ui->xppmDelaySB->show() ;
       ui->xnumChannelsSB->hide() ;
-      ui->xppmFrameLengthDSB->hide() ;
-      ui->xDSM_Type->hide() ;
-      ui->xPxxRxNum->hide() ;
-      ui->xppmDelaySB->hide() ;
-      ui->xnumChannelsSB->hide() ;
-      ui->xppmFrameLengthDSB->hide() ;
+      ui->xppmFrameLengthDSB->show() ;
 			ui->xtypeCB->hide() ;
 			ui->xstartChannelsSB->hide() ;
       ui->xcountryCB->hide() ;
-			ui->xprotocolCB->hide() ;
-			ui->xpulsePolCB->hide() ;
-			ui->labelProtoExt->hide() ;
+			ui->xprotocolCB->show() ;
+			ui->xpulsePolCB->show() ;
+			ui->labelProtoExt->show() ;
+			ui->labelProtoExt->setText("PPM2");
 			ui->labelxp1->hide() ;
 			ui->labelxp2->hide() ;
-			ui->labelxp3->hide() ;
+			ui->labelxp3->show() ;
 			ui->labelxp4->hide() ;
 			ui->labelxp5->hide() ;
-			ui->labelxp6->hide() ;
-			ui->labelxp7->hide() ;
-			ui->labelxp8->hide() ;
+			ui->labelxp6->show() ;
+			ui->labelxp7->show() ;
+			ui->labelxp8->show() ;
 		}
 
     switch (g_model.protocol)
@@ -1060,7 +1066,14 @@ void ModelEdit::setProtocolBoxes()
 				{
 					g_model.ppmNCH = 0 ;		// Correct if wrong from DSM/MULTI
 				}
-        ui->numChannelsSB->setValue(8+2*g_model.ppmNCH);
+				{
+					uint8_t channels = (g_model.ppmNCH + 4) * 2 ;
+					if ( channels > 16 )
+					{
+						channels -= 13 ;
+					}
+        	ui->numChannelsSB->setValue(channels) ;
+				}
         ui->ppmFrameLengthDSB->setValue(22.5+((double)g_model.ppmFrameLength)*0.5);
 
         ui->DSM_Type->setCurrentIndex(0);
@@ -1189,7 +1202,18 @@ void ModelEdit::setProtocolBoxes()
         ui->xPxxRxNum->setEnabled(false);
 
         ui->xppmDelaySB->setValue(300+50*g_model.xppmDelay);
-        ui->xnumChannelsSB->setValue(8+2*g_model.xppmNCH);
+				if ( ( g_model.xppmNCH > 12 ) || (g_model.xppmNCH < -2) )
+				{
+					g_model.xppmNCH = 0 ;		// Correct if wrong from DSM
+				}
+				{
+					uint8_t channels = (g_model.xppmNCH + 4) * 2 ;
+					if ( channels > 16 )
+					{
+						channels -= 13 ;
+					}
+        	ui->xnumChannelsSB->setValue(channels) ;
+				}
         ui->xppmFrameLengthDSB->setValue(22.5+((double)g_model.xppmFrameLength)*0.5);
 
         ui->xDSM_Type->setCurrentIndex(0);
@@ -1214,7 +1238,6 @@ void ModelEdit::setProtocolBoxes()
 			ui->startChannels2SB->hide() ;
 			ui->label_PPM2Channels->hide() ;
 			ui->label_PPM2Start->hide() ;
-			ui->label_PPM2->hide() ;
 		}
 		else
 		{
@@ -1222,7 +1245,6 @@ void ModelEdit::setProtocolBoxes()
 			ui->startChannels2SB->show() ;
 			ui->label_PPM2Channels->show() ;
 			ui->label_PPM2Start->show() ;
-			ui->label_PPM2->show() ;
 		}
 
     protocolEditLock = false;
@@ -5449,7 +5471,7 @@ void ModelEdit::on_xpulsePolCB_currentIndexChanged(int index)
 void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
-		if ( index == 5 )
+		if ( index == 4 )
 		{
 			index = PROTO_OFF ;
 		}
@@ -5464,11 +5486,19 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
-		if ( index == 5 )
+		if ( rData->type == 0 )
+		{
+			if ( index )
+			{
+				index += 1 ;
+			}
+		}
+
+		if ( index == 4 )
 		{
 			index = PROTO_OFF ;
 		}
-    g_model.xprotocol = index;
+	  g_model.xprotocol = index;
     g_model.xppmNCH = 0;
 
     setProtocolBoxes();
@@ -5491,27 +5521,51 @@ void ModelEdit::on_timer2ValTE_editingFinished()
 void ModelEdit::on_numChannelsSB_editingFinished()
 {
     if(protocolEditLock) return;
-    int i = (ui->numChannelsSB->value()-8)/2;
-    if((i*2+8)!=ui->numChannelsSB->value()) ui->numChannelsSB->setValue(i*2+8);
-    g_model.ppmNCH = i;
+    int i = ui->numChannelsSB->value() ;
+		if ( i & 1 )	// odd
+		{
+			i /= 2 ;
+			i += 7 ;
+		}
+		else
+		{
+			i /= 2 ;
+		}
+    g_model.ppmNCH = i - 4 ;
     updateSettings();
 }
 
 void ModelEdit::on_xnumChannelsSB_editingFinished()
 {
     if(protocolEditLock) return;
-    int i = (ui->numChannels2SB->value()-8)/2;
-    if((i*2+8)!=ui->numChannels2SB->value()) ui->numChannels2SB->setValue(i*2+8);
-    g_model.ppm2NCH = i ;
+    int i = ui->xnumChannelsSB->value() ;
+		if ( i & 1 )	// odd
+		{
+			i /= 2 ;
+			i += 7 ;
+		}
+		else
+		{
+			i /= 2 ;
+		}
+		g_model.xppmNCH = i - 4 ;
     updateSettings();
 }
 
 void ModelEdit::on_numChannels2SB_editingFinished()
 {
     if(protocolEditLock) return;
-    int i = (ui->xnumChannelsSB->value()-8)/2;
-    if((i*2+8)!=ui->xnumChannelsSB->value()) ui->xnumChannelsSB->setValue(i*2+8);
-    g_model.xppmNCH = i;
+    int i = ui->numChannels2SB->value() ;
+		if ( i & 1 )	// odd
+		{
+			i /= 2 ;
+			i += 7 ;
+		}
+		else
+		{
+			i /= 2 ;
+		}
+		g_model.ppm2NCH = i - 4 ;
     updateSettings();
 }
 
@@ -5531,7 +5585,7 @@ void ModelEdit::on_xstartChannelsSB_editingFinished()
     updateSettings();
 }
 
-void ModelEdit::on_startChannels2SB_editingFinished()
+void ModelEdit::on_startChannels2SB_valueChanged( int x )
 {
     if(protocolEditLock) return;
 

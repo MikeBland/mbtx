@@ -332,7 +332,7 @@ private slots:
 		void on_numChannels2SB_editingFinished() ;
 		void on_startChannelsSB_editingFinished() ;
 		void on_xstartChannelsSB_editingFinished() ;
-		void on_startChannels2SB_editingFinished() ;
+		void on_startChannels2SB_valueChanged( int x ) ;
     void on_timerValTE_editingFinished();
     void on_timer2ValTE_editingFinished();
     void on_protocolCB_currentIndexChanged(int index);

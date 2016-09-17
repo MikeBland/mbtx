@@ -314,8 +314,18 @@ void init_pa10_serial( uint32_t type )
 	}
 	else // type == PA10_TYPE_MULTI
 	{
-  	TIM1->ARR = 22000 ;             // 11mS
-  	TIM1->CCR2 = 18000 ;            // Update time
+//  	TIM1->ARR = 14000 ;             // 7mS
+//  	TIM1->CCR2 = 10000 ;            // Update time
+		uint32_t x ;
+		x = g_model.ppmFrameLength ;
+		if ( x > 4 )
+		{
+			x = 0 ;
+		}
+		x *= 2000 ;
+		x += 7000 * 2 ;
+  	TIM8->ARR = x ;             // 11mS
+  	TIM8->CCR2 = x-4000 ;       // Update time
 	}
   TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
 
@@ -645,8 +655,18 @@ void init_pa7_serial( uint32_t type )
 	}
 	else // type == PA7_TYPE_MULTI
 	{
-  	TIM8->ARR = 22000 ;             // 11mS
-  	TIM8->CCR2 = 18000 ;            // Update time
+//  	TIM8->ARR = 14000 ;             // 7mS
+//  	TIM8->CCR2 = 10000 ;            // Update time
+		uint32_t x ;
+		x = g_model.xppmFrameLength ;
+		if ( x > 4 )
+		{
+			x = 0 ;
+		}
+		x *= 2000 ;
+		x += 7000 * 2 ;
+  	TIM8->ARR = x ;             // 11mS
+  	TIM8->CCR2 = x-4000 ;       // Update time
 	}
   TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
 #if defined(REV3)
@@ -720,7 +740,7 @@ static void disable_pa7_pxx()
 #ifdef ASSAN
 static void init_pa7_assan()
 {
-	x9dSPortInit( 115200, SPORT_MODE_HARDWARE, 0, 0 ) ;
+	com1_Configure( 115200, 0, 0 ) ;
   EXTERNAL_RF_ON();
  	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
   

@@ -715,12 +715,13 @@ extern uint8_t Ee_lock ;
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
-#define M_Frsky            2
+#define M_FrskyD           2
 #define M_Hisky            3
 #define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2             4
-#define M_DSM2             5
-#define M_DSM2_STR "\004DSM2DSMX"
+#define M_DSM	             5
+#define M_DSM_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
+//#define M_DSM_STR "\004DSM2DSMXAUTO"
 #define M_Devo	  	       6
 #define M_YD717	           7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
@@ -740,7 +741,7 @@ extern uint8_t Ee_lock ;
 #define M_MT99XX	       16
 #define M_MT99XX_STR "\002MTH7YZLS"
 #define M_MJXQ		       17
-#define M_MJXQ_STR "\005WLH08X600 X800 H26D "
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
 #define M_SHENQI				 18
 #define M_FY326					 19
 #define M_NONE_STR "\004None"
@@ -750,8 +751,12 @@ extern uint8_t Ee_lock ;
 #define M_J6PRO					 21
 #define M_FQ777					 22
 #define M_ASSAN					 23
+#define M_FRSKYV				 24
+#define M_HONTAI				 25
+#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
+#define M_OPENLRS				 26
 
-#define M_LAST_MULTI		 23
+#define M_LAST_MULTI		 26
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01

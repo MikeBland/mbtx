@@ -483,7 +483,7 @@
 #define ISTR_MULTI_PROTO    "Protocol"
 #define ISTR_MULTI_TYPE	    "Loai"
 #define ISTR_MULTI_AUTO	    "T.D Ghep"
-#define ISTR_MULTI_POWER    "P.Vi"
+#define ISTR_MULTI_POWER    "P.Vi\014Rate\023mS"
 #define ISTR_MULTI_OPTION   "\014T.Chon"
 
 #define ISTR_Display		     "Display" 

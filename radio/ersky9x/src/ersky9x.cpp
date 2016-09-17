@@ -890,10 +890,11 @@ void update_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
 #if defined(PCBX9D) || defined(PCB9XT)
-	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ; // Kick off at 57600 baud
+	com1_Configure( 57600, SERIAL_NORM, 0 ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCBSKY
-	UART2_Configure( 57600, Master_frequency ) ;
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//	UART2_Configure( 57600, Master_frequency ) ;
 	startPdcUsartReceive() ;
 #endif
 #ifdef PCB9XT
@@ -1071,7 +1072,8 @@ void com2Configure()
 	else
 	{
 #ifdef PCBSKY
-		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
+		com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+//		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 #ifdef PCBX9D
 		x9dConsoleInit() ;
@@ -1293,7 +1295,8 @@ int main( void )
 	PMC->PMC_SCER |= 0x0400 ;								// PCK2 enabled
 	PMC->PMC_PCK[2] = 2 ;										// PCK2 is PLLA
 
-	UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
+	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+//	UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 
 #ifdef PCBX9D

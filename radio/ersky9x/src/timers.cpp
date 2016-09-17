@@ -311,6 +311,8 @@ extern void disable_ppm(uint32_t port) ;
 
 //uint16_t *PulsePtr ;
 uint16_t *TrainerPulsePtr ;
+uint16_t PcmCrc ;
+uint8_t PcmOnesCount ;
 //uint8_t Current_protocol ;
 uint8_t PxxFlag[2] = { 0, 0 } ;
 
@@ -581,24 +583,47 @@ void setupPulsesPpm()
 	{
 		p = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
 	}
+
+	// Now set up pulses
 	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
+  //Total frame length = 22.5msec
+  //each pulse is 0.7..1.7ms long with a 0.3ms stop tail
+  //The pulse ISR is 2mhz that's why everything is multiplied by 2
   ptr = ppmStream[0] ;
 
+#ifdef PCBSKY
+	register Pwm *pwmptr ;
+	
+	pwmptr = PWM ;
+	pwmptr->PWM_CH_NUM[3].PWM_CDTYUPD = (g_model.ppmDelay*50+300)*2; //Stoplen *2
+	
+	if (g_model.pulsePol == 0)
+	{
+		pwmptr->PWM_CH_NUM[3].PWM_CMR |= 0x00000200 ;	// CPOL
+	}
+	else
+	{
+		pwmptr->PWM_CH_NUM[3].PWM_CMR &= ~0x00000200 ;	// CPOL
+	}
+#endif
+	
 	total = 22500u*2; //Minimum Framelen=22.5 ms
   total += (int16_t(g_model.ppmFrameLength))*1000;
 
 	for ( i = g_model.startChannel ; i < p ; i += 1 )
-	{
-//  	pulse = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
-		
+	{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
   	int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
-		
 		total -= v ;
 		*ptr++ = v ;
 	}
+	if ( total<9000 )
+	{
+		total = 9000 ;
+	}
 	*ptr++ = total ;
 	*ptr = 0 ;
+#if defined(PCBX9D) || defined(PCB9XT)
 	TIM1->CCR2 = total - 1000 ;		// Update time
 	TIM1->CCR3 = (g_model.ppmDelay*50+300)*2 ;
   if(!g_model.pulsePol)
@@ -615,6 +640,7 @@ void setupPulsesPpm()
 	  TIM1->CCER &= ~TIM_CCER_CC3P ;
 #endif
 	}
+#endif
 }
 
 void setupPulsesPpmx()
@@ -782,9 +808,6 @@ uint16_t PxxValue_x ;
 //  PcmCrc =(PcmCrc<<8) ^(CRCTable[((PcmCrc>>8)^data)&0xFF]);
 //}
 
-uint16_t PcmCrc ;
-uint8_t PcmOnesCount ;
-
 const uint16_t CRC_Short[]=
 {
    0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
@@ -839,8 +862,6 @@ void putPcmBit( uint8_t bit )
         putPcmBit( 0 ) ;				// Stuff a 0 bit in
     }
 }
-
-
 
 void putPcmByte( uint8_t byte )
 {
@@ -972,10 +993,6 @@ void setupPulsesPXX(uint8_t module)
   uint16_t chan ;
   uint16_t chan_1 ;
 	uint8_t lpass ;
-
-//		Serial_byte = 0 ;
-//		Serial_bit_count = 0 ;
-//		Serial_byte_count = 0 ;
 
 	if ( module == 0 )
 	{
@@ -1571,12 +1588,10 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 {
 	// Process mode here
 	uint8_t dsm_mode_response ;
-//	Dsm_Type_channels = channels ;
 #ifdef ASSAN
 	if ( g_model.xprotocol == PROTO_ASSAN )
 	{
 		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_USE_TM ) ;
-//		g_model.ppmNCH = channels ;
 		g_model.dsmMode = dsm_mode_response ;
   	STORE_MODELVARS ;
 		PxxFlag[0] &= ~PXX_BIND ;
@@ -1586,20 +1601,36 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 #endif
 	{
 		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
-//	channels -= 8 ;
-//	channels /= 2 ;
+		if ( g_model.xprotocol != PROTO_MULTI )
+		{
 #if defined(PCBX9D) || defined(PCB9XT)
-		if ( ( g_model.xppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-		{
-			g_model.xppmNCH = channels ;
+			if ( ( g_model.xppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+			{
+				g_model.xppmNCH = channels ;
 #else
-		if ( ( g_model.ppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-		{
-			g_model.ppmNCH = channels ;
+			if ( ( g_model.ppmNCH != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+			{
+				g_model.ppmNCH = channels ;
 #endif
-			g_model.dsmMode = dsm_mode_response | 0x80 ;
-
-	  	STORE_MODELVARS ;
+				g_model.dsmMode = dsm_mode_response | 0x80 ;
+		  	STORE_MODELVARS ;
+			}
+		}
+		else
+		{
+extern uint8_t MultiResponseData ;
+		dsm_mode_response = channels ;
+		if ( mode & 0x80 )
+		{
+			dsm_mode_response |= 0x80 ;
+		}
+		if ( mode & 0x10 )
+		{
+			dsm_mode_response |= 0x40 ;
+		}
+		MultiResponseData = dsm_mode_response ;
+extern uint8_t MultiResponseFlag ;
+			MultiResponseFlag = 1 ;
 		}
 	}
 }
@@ -1705,6 +1736,8 @@ void putDsm2Flush(uint32_t module)
 
 static uint8_t dsmDat[2][2+6*2]={{0xFF,0x00, 0x00,0xAA, 0x05,0xFF, 0x09,0xFF, 0x0D,0xFF, 0x13,0x54, 0x14,0xAA},
 																 {0xFF,0x00, 0x00,0xAA, 0x05,0xFF, 0x09,0xFF, 0x0D,0xFF, 0x13,0x54, 0x14,0xAA}};
+
+uint16_t DebugDsmX ;
 
 void setupPulsesDsm2(uint8_t channels, uint32_t module )
 {
@@ -2001,17 +2034,92 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 			uint32_t outputbitsavailable = 0 ;
 			uint32_t outputbits = 0 ;
 			uint32_t i ;
-			sendByteDsm2(0x55, module) ;
-			sendByteDsm2( dsmDat[module][0], module ) ;
 			if ( module == 0 )
 			{
-				sendByteDsm2((g_model.ppmNCH & 0xF0) | ( g_model.pxxRxNum & 0x0F ), module );
-				sendByteDsm2(g_model.option_protocol, module);
+				sendByteDsm2( ( g_model.sub_protocol+1 > 31 ) ? 0x54 : 0x55, module ) ;
 			}
 			else
 			{
-				sendByteDsm2((g_model.xppmNCH & 0xF0) | ( g_model.xPxxRxNum & 0x0F ), module );
-				sendByteDsm2(g_model.xoption_protocol, module);
+				sendByteDsm2( ( g_model.xsub_protocol+1 > 31 ) ? 0x54 : 0x55, module ) ;
+			}
+			sendByteDsm2( dsmDat[module][0], module ) ;
+			
+			uint8_t x ;
+			if ( module == 0 )
+			{
+	// temp
+				uint8_t y ;
+				x = g_model.ppmNCH ;
+				if ( (g_model.sub_protocol & 0x3F) == M_DSM )
+				{
+					y = x ;
+					x &= 0x8F ;
+					y &= 0x70 ;
+					if ( y >= 0x20 )
+					{
+						x |= 0x10 ;
+					}
+					sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F ), module  );
+					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F)) << 8 ;
+					x = y ;
+					if ( x == 0x40 )
+					{
+						x = 0x30 ;
+					}
+					y = g_model.option_protocol ;
+					if ( (x & 0x10) == 0 )
+					{
+						y -= 4 ;
+						y &= 3 ;
+					}
+					sendByteDsm2(y, module );
+					DebugDsmX |= y ;
+				}
+	// end of temp
+
+				else
+				{
+					sendByteDsm2(( x & 0xF0) | ( g_model.pxxRxNum & 0x0F ), module );
+					sendByteDsm2(g_model.option_protocol, module);
+				}
+			}
+			else
+			{
+	// temp
+				uint8_t y ;
+				x = g_model.xppmNCH ;
+				if ( (g_model.xsub_protocol & 0x3F) == M_DSM )
+				{
+					y = x ;
+					x &= 0x8F ;
+					y &= 0x70 ;
+					if ( y >= 0x20 )
+					{
+						x |= 0x10 ;
+					}
+					sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.xPxxRxNum & 0x0F ), module );
+					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.xPxxRxNum & 0x0F)) << 8 ;
+					x = y ;
+					if ( x == 0x40 )
+					{
+						x = 0x30 ;
+					}
+					y = g_model.xoption_protocol ;
+					if ( (x & 0x10) == 0 )
+					{
+						y -= 4 ;
+						y &= 3 ;
+					}
+					sendByteDsm2(y, module );
+					DebugDsmX |= y ;
+				}
+	// end of temp
+
+				else
+				{
+					sendByteDsm2(( x & 0xF0) | ( g_model.xPxxRxNum & 0x0F ), module );
+					sendByteDsm2(g_model.xoption_protocol, module);
+			  }
 			}
 			
 			for ( i = 0 ; i < 16 ; i += 1 )
@@ -2021,11 +2129,11 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 				x += x > 0 ? 4 : -4 ;
 				x /= 5 ;
 //#ifdef MULTI_PROTOCOL
-				if ( protocol == PROTO_MULTI )
+//				if ( protocol == PROTO_MULTI )
 					x += 0x400 ;
-				else
+//				else
 //#endif // MULTI_PROTOCOL
-					x += 0x3E0 ;
+//					x += 0x3E0 ;
 				if ( x < 0 )
 				{
 					x = 0 ;

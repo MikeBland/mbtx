@@ -704,24 +704,24 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN "
-#define M_Flysky           0
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrs"
+#define M_Flysky          0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
-#define M_Hubsan           1
-#define M_Frsky            2
-#define M_Hisky            3
+#define M_Hubsan          1
+#define M_Frsky           2
+#define M_Hisky           3
 #define M_HISKY_STR "\005HiskyHK310"
-#define M_V2x2             4
-#define M_DSM2             5
+#define M_V2x2            4
+#define M_DSM2            5
 #define M_DSM2_STR "\004DSM2DSMX"
-#define M_Devo  	       6
-#define M_YD717	           7
+#define M_Devo  	      	6
+#define M_YD717	          7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
-#define M_KN	           8
+#define M_KN	          	8
 #define M_KN_STR "\006WLTOYSFEILUN"
-#define M_SymaX	           9
+#define M_SymaX	          9
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
-#define M_SLT		       10
+#define M_SLT		       	 10
 #define M_CX10		       11
 #define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
 #define M_CG023		       12
@@ -733,15 +733,19 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_MT99XX	       16
 #define M_MT99XX_STR "\002MTH7YZLS"
 #define M_MJXQ		       17
-#define M_MJXQ_STR "\005WLH08X600 X800 H26D "
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
 #define M_SHENQI				 18
 #define M_FY326					 19
 #define M_SFHSS					 20
 #define M_J6PRO					 21
 #define M_FQ777					 22
 #define M_ASSAN					 23
+#define M_FrskyV				 24
+#define M_HONTAI				 25
+#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
+#define M_OPENLRS				 26
 
-#define M_LAST_MULTI
+#define M_LAST_MULTI		 26
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

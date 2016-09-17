@@ -1449,19 +1449,39 @@ void simulatorDialog::setValues()
 
 	if ( j == 0)
 	{
-		j = g_model.startChannel + g_model.ppmNCH*2+8 ;
+		uint8_t chans = g_model.ppmNCH + 4 ;
+		chans *= 2 ;
+		if ( chans > 16 )
+		{
+			chans -= 13 ;
+		}
+		j = g_model.startChannel + chans ;
 	}
 	else
 	{
 		j -= 1 ;
 	}
-	k = j + g_model.ppm2NCH*2+8 ;
+	{
+		uint8_t chans = g_model.ppm2NCH + 4 ;
+		chans *= 2 ;
+		if ( chans > 16 )
+		{
+			chans -= 13 ;
+		}
+		k = j + chans ;
+	}
 	for ( i = 0 ; i < 16 ; i += 1 )
 	{
 		onoff[i] = 0 ;
 		if ( i >= g_model.startChannel )
 		{
-			if ( i < g_model.startChannel + g_model.ppmNCH*2+8 )
+			uint8_t chans = g_model.ppmNCH + 4 ;
+			chans *= 2 ;
+			if ( chans > 16 )
+			{
+				chans -= 13 ;
+			}
+			if ( i < g_model.startChannel + chans )
 			{
 				onoff[i] |= 1 ;
 			}

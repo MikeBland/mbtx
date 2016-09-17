@@ -42,6 +42,13 @@
 
 void txmit( uint8_t c ) ;
 
+#define TEL_TYPE_FRSKY_HUB		0
+#define TEL_TYPE_FRSKY_SPORT	1
+#define TEL_TYPE_DSM					2
+#define TEL_TYPE_ASSAN				3
+
+
+
 // Enumerate FrSky packet codes
 #define LINKPKT         0xfe
 #define USRPKT          0xfd
@@ -311,6 +318,11 @@ void storeAltitude( int16_t value )
 			AltitudeZeroed = 1 ;
 		}
 	}
+}
+
+void storeRSSI( uint8_t value )
+{
+	frskyTelemetry[2].set( value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
 }
 
 void store_hub_data( uint8_t index, uint16_t value )
@@ -1212,7 +1224,18 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 	else if ( type == 0x80 )
 	{
-		dsmBindResponse( *packet, *(packet+2) ) ;
+#ifdef PCBX9D
+		if ( g_model.xprotocol == PROTO_MULTI )
+#else
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+#endif
+		{
+			dsmBindResponse( *(packet+6), *(packet+5) ) ;
+		}
+		else
+		{
+			dsmBindResponse( *packet, *(packet+2) ) ;
+		}
 		// Debug code
 		uint8_t i ;
 		DsmControlDebug[0] = byteCount ;
@@ -2010,18 +2033,20 @@ void telemetry_init( uint8_t telemetryType )
 	{
 		case TEL_FRSKY_HUB :
 		case TEL_MULTI :
-			FRSKY_Init( 0 ) ;
+			FRSKY_Init( TEL_TYPE_FRSKY_HUB ) ;
 		break ;
 		
 		case TEL_FRSKY_SPORT :
-			FRSKY_Init( 1 ) ;
+			FRSKY_Init( TEL_TYPE_FRSKY_SPORT ) ;
 		break ;
 
 #ifdef REVX
 		case TEL_JETI :
-			UART2_Configure( 9600, Master_frequency ) ;
+			com1_Configure( 9600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 9600, Master_frequency ) ;
   		USART0->US_MR =  0x000202C0 ;  // NORMAL, Odd Parity, 9 bit
-			UART2_timeout_disable() ;
+//			com1_timeout_disable() ;
+//			UART2_timeout_disable() ;
 //			g_model.telemetryRxInvert = 1 ;
 //			setMFP() ;
 			USART0->US_IER = US_IER_RXRDY ;
@@ -2044,8 +2069,10 @@ void telemetry_init( uint8_t telemetryType )
 			}
 			else
 			{
-				UART2_Configure( g_model.telemetryBaudrate-1, Master_frequency ) ;
-				UART2_timeout_disable() ;
+				com1_Configure( g_model.telemetryBaudrate-1, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//				UART2_Configure( g_model.telemetryBaudrate-1, Master_frequency ) ;
+//				com1_timeout_disable() ;
+//				UART2_timeout_disable() ;
 				if ( g_model.telemetryRxInvert )
 				{
 					setMFP() ;
@@ -2061,8 +2088,10 @@ void telemetry_init( uint8_t telemetryType )
 		
 #ifdef REVX
 		case TEL_ARDUPILOT :
-			UART2_Configure( 38400, Master_frequency ) ;
-			UART2_timeout_disable() ;
+			com1_Configure( 38400, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 38400, Master_frequency ) ;
+//				com1_timeout_disable() ;
+//			UART2_timeout_disable() ;
 //			g_model.telemetryRxInvert = 1 ;
 //			setMFP() ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
@@ -2072,12 +2101,12 @@ void telemetry_init( uint8_t telemetryType )
 #endif
 
 		case TEL_DSM :
-			FRSKY_Init( 2 ) ;
+			FRSKY_Init( TEL_TYPE_DSM ) ;
 		break ;
 		
 #ifdef ASSAN
 		case TEL_ASSAN :
-			FRSKY_Init( 3 ) ;
+			FRSKY_Init( TEL_TYPE_ASSAN ) ;
 		break ;
 #endif	
 	}
@@ -2085,12 +2114,18 @@ void telemetry_init( uint8_t telemetryType )
 
 //uint16_t TelDebug ;
 
+
+// brate values
+// 0 FrSky hub / Multi
+// 1 FrSky SPort
+// 2 DSM
+// 3 ASSAN (no longer used)
+
 void FRSKY_Init( uint8_t brate )
 {
 	
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
-//	TelDebug = brate ;
 
 	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
 	{
@@ -2103,105 +2138,119 @@ void FRSKY_Init( uint8_t brate )
 #ifdef PCBSKY
 	if ( g_model.com2Function == COM2_FUNC_FMS )
 	{
-		UART_Configure( 19200, Master_frequency ) ;
+		com1_Configure( 19200, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 		return ;
 	}
 #endif
 
-#ifdef PCBSKY
-	
-	if ( brate == 0 )
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
+	if ( brate == TEL_TYPE_FRSKY_HUB )
 	{
 		uint32_t baudrate = 9600 ;
-		if ( g_model.protocol == PROTO_MULTI )
+		uint32_t parity = SERIAL_NO_PARITY ;
+#ifdef PCBX9D
+		if ( g_model.xprotocol == PROTO_MULTI )
+#else
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+#endif
 		{
 			baudrate = 100000 ;
-			if ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX )
+			parity = SERIAL_EVEN_PARITY ;
+#ifdef PCBX9D
+			if ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX )
+#else
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX ) )
+#endif
 			{
 				FrskyTelemetryType = 1 ;
+			}
+#ifdef PCBX9D
+			if ( ( g_model.xsub_protocol & 0x1F ) == M_FrskyD )
+#else
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FrskyD ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FrskyD ) )
+#endif
+			{
+				FrskyTelemetryType = 0 ;
 			}
 		}
 		if ( g_model.frskyComPort == 0 )
 		{
 #ifdef REVX
-			UART2_Configure( baudrate, Master_frequency ) ;
-			UART2_timeout_disable() ;
-			if ( g_model.protocol == PROTO_MULTI )
-			{
-				com1Parity( SERIAL_EVEN_PARITY ) ;
-			}
+			com1_Configure( baudrate, SERIAL_NORM, parity ) ;
 #else
-			if ( g_model.protocol == PROTO_MULTI )
-			{
-				init_software_com1( baudrate, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;
-			}
-			else
-			{
-				UART2_Configure( baudrate, Master_frequency ) ;
-				UART2_timeout_disable() ;
-			}
+			com1_Configure( baudrate, g_model.telemetryRxInvert, parity ) ;
+//			com1_timeout_disable() ;
+
+//			if ( g_model.telemetryRxInvert )
+////			if ( g_model.protocol == PROTO_MULTI )
+//			{
+//				init_software_com1( baudrate, SERIAL_INVERT, parity ) ;
+//			}
+//			else
+//			{
+//				UART2_Configure( baudrate, Master_frequency ) ;
+//				com1Parity( parity ) ;
+//				UART2_timeout_disable() ;
+//			}
 #endif
 		}
 		else
 		{
-			UART_Configure( baudrate, Master_frequency ) ;
-			if ( g_model.protocol == PROTO_MULTI )
-			{
-				com2Parity( SERIAL_EVEN_PARITY ) ;
-			}
+			com2_Configure( baudrate, parity ) ;
+//			UART_Configure( baudrate, Master_frequency ) ;
+//			com2Parity( parity ) ;
 		}
 	}
-	else if ( brate == 1 )
+	else if ( brate == TEL_TYPE_FRSKY_SPORT )
 	{
+		numPktBytes = 0 ;
+		dataState = frskyDataIdle ;
 		if ( g_model.frskyComPort == 0 )
 		{
-			numPktBytes = 0 ;
-			dataState = frskyDataIdle ;
-			UART2_Configure( 57600, Master_frequency ) ;
-			UART2_timeout_disable() ;
-//#ifdef REVX
-//			g_model.telemetryRxInvert = 0 ;
-//			clearMFP() ;
-//#endif
+			com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 57600, Master_frequency ) ;
+//			com1_timeout_disable() ;
+//			UART2_timeout_disable() ;
 		}
 		else
 		{
-			UART_Configure( 57600, Master_frequency ) ;
+			com2_Configure( 57600, SERIAL_NO_PARITY ) ;
+//			UART_Configure( 57600, Master_frequency ) ;
 		}
 	}
 #ifdef ASSAN
-	else if ( brate == 3 )
+	else if ( brate == TEL_TYPE_ASSAN )
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
 		UART2_Configure( 115200, Master_frequency ) ;
 //		UART2_Configure( 111111, Master_frequency ) ;
 		UART2_timeout_enable() ;
-//#ifdef REVX
-//		g_model.telemetryRxInvert = 0 ;
-//		clearMFP() ;
-//#endif
 	}
 #endif
 #ifdef REVX
-	else	// brate == 2, DSM telemetry
+	else	// brate == TEL_TYPE_DSM, DSM telemetry
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
-		if ( g_model.protocol == PROTO_MULTI )
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
 		{
-			if ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 )
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM ) )
 			{
 				FrskyTelemetryType = 2 ;	// DSM
 			}
-			UART2_Configure( 100000, Master_frequency ) ;
-			UART2_timeout_disable() ;
-			com1Parity( SERIAL_EVEN_PARITY ) ;
+			com1_Configure( 100000, SERIAL_NORM, SERIAL_EVEN_PARITY ) ;
+//			UART2_Configure( 100000, Master_frequency ) ;
+//			com1_timeout_disable() ;
+//			UART2_timeout_disable() ;
+//			com1Parity( SERIAL_EVEN_PARITY ) ;
 //		if ( g_model.frskyComPort == 0 )
 //		{
 		}
 		else
 		{
-			UART2_Configure( 115200, Master_frequency ) ;
-			UART2_timeout_enable() ;
+			com1_Configure( 115200, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 115200, Master_frequency ) ;
+			com1_timeout_enable() ;
+//			UART2_timeout_enable() ;
 		}
 //			g_model.telemetryRxInvert = 1 ;
 //			setMFP() ;
@@ -2215,152 +2264,194 @@ void FRSKY_Init( uint8_t brate )
 	else	// brate == 2, DSM telemetry
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
-		if ( g_model.protocol == PROTO_MULTI )
+#ifdef PCBX9D
+		if ( g_model.xprotocol == PROTO_MULTI )
+#else
+		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+#endif
 		{
-			if ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 )
+#ifdef PCBX9D
+			if ( ( g_model.xsub_protocol & 0x1F ) == M_DSM )
+#else
+			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM ) )
+#endif
 			{
 				FrskyTelemetryType = 2 ;	// DSM
 			}
-			init_software_com1( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;
+			com1_Configure( 100000, g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
+//			if ( g_model.telemetryRxInvert )
+//			{
+//				init_software_com1( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;
+//			}
+//			else
+//			{
+//				UART2_Configure( 100000, Master_frequency ) ;
+//				com1Parity( SERIAL_EVEN_PARITY ) ;
+//			}
 		}
 		else
 		{
-			init_software_com1( 115200, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
+			com1_Configure( 115200, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
 		}
 	}
 #endif
   // clear frsky variables
 #endif // PCBSKY
 
-#ifdef PCB9XT
-	if ( brate == 0 )
-	{
-		uint32_t baudrate = 9600 ;
-		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-		{
-			baudrate = 100000 ;
-			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX ) )
-			{
-				FrskyTelemetryType = 1 ;
-			}
-		}
-		if ( g_model.frskyComPort == 1 )
-		{
-			console9xtInit() ;
-			UART4SetBaudrate( baudrate ) ;
-			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-			{
-				com2Parity( SERIAL_EVEN_PARITY ) ;
-			}	
-		}
-		else
-		{
-			if ( baudrate == 100000 )
-			{
-				x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert/even parity
-			}
-			else
-			{
-				x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;
-				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-				{
-					com1Parity( SERIAL_EVEN_PARITY ) ;
-				}	
-			}
-		}
-	}
-#ifdef ASSAN
-	else if ( brate == 3 )
-	{
-		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, SERIAL_NO_PARITY ) ;		// ASSAN
-	}
-#endif
-	else if ( brate == 1 )
-	{
-		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, SERIAL_NO_PARITY ) ;		// 57600
-	}
-	else // 9XR-DSM
-	{
+//#ifdef PCB9XT
+//	if ( brate == TEL_TYPE_FRSKY_HUB )
+//	{
+//		uint32_t baudrate = 9600 ;
+//		uint32_t parity = SERIAL_NO_PARITY ;
+//		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+//		{
+//			baudrate = 100000 ;
+//			parity = SERIAL_EVEN_PARITY ;
+//			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX ) )
+//			{
+//				FrskyTelemetryType = 1 ;
+//			}
+//			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FrskyD ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FrskyD ) )
+//			{
+//				FrskyTelemetryType = 0 ;
+//			}
+//		}
+//		if ( g_model.frskyComPort == 0 )
+//		{
+//			com1_Configure( baudrate, g_model.telemetryRxInvert, parity ) ;
+////			if ( baudrate == 100000 )
+////			{
+////				com1_Configure( 100000, SPORT_POLARITY_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert/even parity
+////			}
+////			else
+////			{
+////				uint32_t parity = SERIAL_NO_PARITY ;
+////				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+////				{
+////					parity = SERIAL_EVEN_PARITY ;
+////				}	
+////				com1_Configure( baudrate, SPORT_POLARITY_NORMAL, parity ) ;
+////			}
+//		}
+//		else
+//		{
+//			com2_Configure( baudrate, parity ) ;
+			
+////			console9xtInit() ;
+////			UART4SetBaudrate( baudrate ) ;
+//////			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+//////			{
+////			com2Parity( parity ) ;
+//////			}	
+//		}
+//	}
+//	else if ( brate == TEL_TYPE_FRSKY_SPORT )
+//	{
+//		numPktBytes = 0 ;
+//		dataState = frskyDataIdle ;
+//		com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;		// 57600
+//	}
+//#ifdef ASSAN
+//	else if ( brate == TEL_TYPE_ASSAN )
+//	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-		{
-			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM2 ) )
-			{
-				FrskyTelemetryType = 2 ;	// DSM
-			}
-			x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert
-		}
-		else
-		{
-			x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, SERIAL_NO_PARITY ) ;	// Invert
-		}
-	}
-#endif // PCB9XT
+//		com1_Configure( 115200, SERIAL_NORM, SERIAL_NO_PARITY ) ;		// ASSAN
+//	}
+//#endif
+//	else // TEL_TYPE_DSM
+//	{
+//		FrskyComPort = g_model.frskyComPort = 0 ;
+//		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+//		{
+//			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM ) )
+//			{
+//				FrskyTelemetryType = 2 ;	// DSM
+//			}
+//			com1_Configure( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert
+//		}
+//		else
+//		{
+//			com1_Configure( 115200, SERIAL_INVERT, SERIAL_NO_PARITY ) ;	// Invert
+//		}
+//	}
+//#endif // PCB9XT
 
-#ifdef PCBX9D
-	if ( brate == 0 )
-	{
-		uint32_t baudrate = 9600 ;
-		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-		{
-			baudrate = 100000 ;
-			if ( ( ( g_model.sub_protocol & 0x1F ) == M_FRSKYX ) || ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX ) )
-			{
-				FrskyTelemetryType = 1 ;
-			}
-		}
-		if ( g_model.frskyComPort == 1 )
-		{
-			x9dConsoleInit() ;
-			USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-			{
-				com2Parity( SERIAL_EVEN_PARITY ) ;
-			}	
-		}
-		else
-		{
-			if ( baudrate == 100000 )
-			{
-				x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, 1 ) ;	// Invert/even parity
-			}
-			else
-			{
-				x9dSPortInit( baudrate, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;	// 9600
-				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-				{
-					com1Parity( SERIAL_EVEN_PARITY ) ;
-				}	
-			}
-		}
-	}
-#ifdef ASSAN
-	else if ( brate == 3 )
-	{
-		x9dSPortInit( 115200, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// ASSAN
-	}
-#endif
-	else if ( brate == 1 )
-	{
-		x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;		// 57600
-	}
-	else // 9XR-DSM
-	{
+//#ifdef PCBX9D
+//	if ( brate == TEL_TYPE_FRSKY_HUB )
+//	{
+//		uint32_t baudrate = 9600 ;
+//		uint32_t parity = SERIAL_NO_PARITY ;
+//		if ( g_model.xprotocol == PROTO_MULTI )
+//		{
+//			baudrate = 100000 ;
+//			parity = SERIAL_EVEN_PARITY ;
+//			if ( ( g_model.xsub_protocol & 0x1F ) == M_FRSKYX )
+//			{
+//				FrskyTelemetryType = 1 ;
+//			}
+//			if ( ( g_model.xsub_protocol & 0x1F ) == M_FrskyD )
+//			{
+//				FrskyTelemetryType = 0 ;
+//			}
+//		}
+//		if ( g_model.frskyComPort == 0 )
+//		{
+//			com1_Configure( baudrate, g_model.telemetryRxInvert, parity ) ;
+////			if ( baudrate == 100000 )
+////			{
+////				com1_Configure( 100000, SERIAL_INVERT, 1 ) ;	// Invert/even parity
+////			}
+////			else
+////			{
+////				uint32_t parity = SERIAL_NO_PARITY ;
+////				if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+////				{
+////					parity = SERIAL_EVEN_PARITY ;
+////				}	
+////				com1_Configure( baudrate, SERIAL_NORM, parity ) ;
+////			}
+//		}
+//		else
+//		{
+//			com2_Configure( baudrate, parity ) ;
+////			x9dConsoleInit() ;
+////			USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+////			if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+////			{
+////				com2Parity( SERIAL_EVEN_PARITY ) ;
+////			}	
+//		}
+//	}
+//	else if ( brate == TEL_TYPE_FRSKY_SPORT )
+//	{
+//		numPktBytes = 0 ;
+//		dataState = frskyDataIdle ;
+//		com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;		// 57600
+//	}
+//#ifdef ASSAN
+//	else if ( brate == TEL_TYPE_ASSAN )
+//	{
 //		FrskyComPort = g_model.frskyComPort = 0 ;
-		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
-		{
-			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM2 ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM2 ) )
-			{
-				FrskyTelemetryType = 2 ;	// DSM
-			}
-			x9dSPortInit( 100000, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert
-		}
-		else
-		{
-			x9dSPortInit( 115200, SPORT_MODE_SOFTWARE, SPORT_POLARITY_INVERT, SERIAL_NO_PARITY ) ;	// Invert
-		}
-	}
-#endif // PCBX9D
+//		com1_Configure( 115200, SERIAL_NORM, SERIAL_NO_PARITY ) ;		// ASSAN
+//	}
+//#endif
+//	else // TEL_TYPE_DSM
+//	{
+//		FrskyComPort = g_model.frskyComPort = 0 ;
+//		if ( ( g_model.protocol == PROTO_MULTI ) || ( g_model.xprotocol == PROTO_MULTI ) )
+//		{
+//			if ( ( ( g_model.sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.xsub_protocol & 0x1F ) == M_DSM ) )
+//			{
+//				FrskyTelemetryType = 2 ;	// DSM
+//			}
+//			com1_Configure( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;	// Invert
+//		}
+//		else
+//		{
+//			com1_Configure( 115200, SERIAL_INVERT, SERIAL_NO_PARITY ) ;	// Invert
+//		}
+//	}
+//#endif // PCBX9D
 
   memset(frskyAlarms, 0, sizeof(frskyAlarms));
   resetTelemetry();
