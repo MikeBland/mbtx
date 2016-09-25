@@ -1126,7 +1126,7 @@ void setupPulsesSerial(void)
 #ifdef MULTI_PROTOCOL
 		else
 		{
-			sendByteSerial( ( g_model.sub_protocol+1 > 31 ) ? 0x54 : 0x55 ) ;
+			sendByteSerial( ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ) ;
 			serialdat0copy= (g_model.sub_protocol+1) & 0x5F;
 			if (pxxFlag & PXX_BIND)			serialdat0copy|=BindBit;		//set bind bit if BIND menu is pressed
 			if (pxxFlag & PXX_RANGE_CHECK)	serialdat0copy|=RangeCheckBit;	//set range bit if RANGE menu is pressed
@@ -1139,7 +1139,7 @@ void setupPulsesSerial(void)
 		
 		for ( i = 0 ; i < 16 ; i += 1 )
 		{
-			int16_t x = g_chans512[i] ;
+			int16_t x = g_chans512[g_model.ppmStart+i] ;
 			x *= 4 ;
 			x += x > 0 ? 4 : -4 ;
 			x /= 5 ;

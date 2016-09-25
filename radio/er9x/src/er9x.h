@@ -712,8 +712,12 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_Hisky           3
 #define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2            4
-#define M_DSM2            5
-#define M_DSM2_STR "\004DSM2DSMX"
+#define M_DSM	            5
+#if defined(CPUM128) || defined(CPUM2561)
+#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
+#else
+#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11"
+#endif
 #define M_Devo  	      	6
 #define M_YD717	          7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "

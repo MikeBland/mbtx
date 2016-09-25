@@ -2036,11 +2036,11 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 			uint32_t i ;
 			if ( module == 0 )
 			{
-				sendByteDsm2( ( g_model.sub_protocol+1 > 31 ) ? 0x54 : 0x55, module ) ;
+				sendByteDsm2( ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
 			}
 			else
 			{
-				sendByteDsm2( ( g_model.xsub_protocol+1 > 31 ) ? 0x54 : 0x55, module ) ;
+				sendByteDsm2( ( ( (g_model.xsub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
 			}
 			sendByteDsm2( dsmDat[module][0], module ) ;
 			
@@ -2124,7 +2124,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 			
 			for ( i = 0 ; i < 16 ; i += 1 )
 			{
-				int16_t x = g_chans512[i] ;
+				int16_t x = g_chans512[g_model.startChannel+i] ;
 				x *= 4 ;
 				x += x > 0 ? 4 : -4 ;
 				x /= 5 ;

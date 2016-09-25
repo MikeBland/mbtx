@@ -710,6 +710,8 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
+#define NUM_MULTI_PROTOCOLS 40
+
 //#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN "
 //#define MULTI_STR_LEN    6
 #define M_Flysky           0

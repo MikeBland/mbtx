@@ -1599,6 +1599,16 @@ void processSportPacket()
 					store_hub_data( FR_AIRSPEED, value ) ;
 				break ;
 
+				case CandF_ID_8 :
+					if ( (packet[2] & 0x0F ) == CandF_AP_STAT_ID )
+					{
+						// bits 0-4 Control mode
+						// bit 8 Armed
+						store_hub_data( FR_BASEMODE, value & 0x0100 ? 0x80 : 0 ) ;
+						store_hub_data( FR_TEMP1, value & 0x1F ) ;
+					}
+				break ;
+
 			}
 		}
 	}

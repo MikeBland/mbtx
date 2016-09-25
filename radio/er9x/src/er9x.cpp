@@ -1598,6 +1598,7 @@ void checkTHR()
 	lcd_puts_P(0,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
 	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
 	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+	audioVoiceDefevent(AU_ERROR, V_ALERT);
 #else
 		almess( PSTR(STR_THR_NOT_IDLE"\037"STR_RST_THROTTLE), ALERT_SKIP | ALERT_VOICE ) ;
 #endif
@@ -1870,6 +1871,10 @@ void checkSwitches()
 	  		lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
 	  		lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
 				lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+				if ( voice )
+				{
+					audioVoiceDefevent(AU_ERROR, V_ALERT);
+				}
 #else
 		    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
 #endif

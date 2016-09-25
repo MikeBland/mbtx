@@ -484,6 +484,8 @@ LDFLAGS += -Wl,--section-start=.boottext=0x1Fd00 -Wl,--section-start=.bootjump=0
 else
  ifneq ($(CPU), 2561)
 LDFLAGS += -Wl,--section-start=.boottext=0xFe00 -Wl,--section-start=.bootjump=0xFFFC
+ else
+LDFLAGS += -Wl,--section-start=.boottext=0x3Fd00 -Wl,--section-start=.bootjump=0x3FFFC
  endif
 endif
 

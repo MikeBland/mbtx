@@ -2070,8 +2070,8 @@ extern uint8_t frskyRSSItype[2] ;
 
 #if defined(CPUM128) || defined(CPUM2561)
 
-#define MAX_TEL_OPTIONS		3
-const prog_uint8_t APM TelOptions[] = {0,1,5} ;
+#define MAX_TEL_OPTIONS		4
+const prog_uint8_t APM TelOptions[] = {0,1,2,5} ;
 
 //#if defined(PCBSKY) || defined(PCB9XT)
 // #ifdef REVX
@@ -2170,7 +2170,7 @@ void menuProcTelemetry(uint8_t event)
 		if(sub==subN)
 		{
 			attr = blink ;
-			CHECK_INCDEC_H_MODELVAR( b,0,MAX_TEL_OPTIONS-1) ;
+			CHECK_INCDEC_H_MODELVAR_0( b, MAX_TEL_OPTIONS-1 ) ;
 		}
 		b = pgm_read_byte(&TelOptions[b]) ;
 		g_model.telemetryProtocol = b ;
@@ -2188,7 +2188,10 @@ void menuProcTelemetry(uint8_t event)
 		y += FH ;
 		subN += 1 ;
 
-		Columns = 1 ;
+		if(sub==subN)
+		{
+			Columns = 1 ;
+		}
 		for (int i=0; i<2; i++)
 		{
 #ifdef V2
@@ -4695,19 +4698,79 @@ void menuDeleteDupModel(uint8_t event)
   }
 }
 
+uint8_t MultiResponseFlag ;
+// Bit 7 = DSMX, Bit 6 = 11mS, bits 3-0 channels
+uint8_t MultiResponseData ;
 
 void menuRangeBind(uint8_t event)
 {
 	static uint8_t timer ;
-	uint8_t flag = pxxFlag & PXX_BIND ;
-	lcd_puts_Pleft( 3*FH, (flag) ? PSTR("\006BINDING") : PSTR("RANGE CHECK RSSI:") ) ;
+#if defined(CPUM128) || defined(CPUM2561)
+	static uint8_t binding = 0 ;
+#else
+	uint8_t binding = pxxFlag & PXX_BIND ;
+#endif
+	lcd_puts_Pleft( 3*FH, (binding) ? PSTR("\006BINDING") : PSTR("RANGE CHECK RSSI:") ) ;
   if ( event == EVT_KEY_FIRST(KEY_EXIT) )
 	{
+    killEvents(event);
 		pxxFlag = 0 ;
 		popMenu(false) ;
 	}
+
+#if defined(CPUM128) || defined(CPUM2561)
+  if ( event == EVT_ENTRY )
+	{
+		binding = pxxFlag & PXX_BIND ? 1 : 0 ;
+		
+		if ( g_model.protocol == PROTO_MULTI )
+		{
+			if ( (g_model.sub_protocol & 0x3F) == M_DSM )
+			{
+				MultiResponseFlag = 0 ;
+			}
+		}
+	}
+
+	if ( g_model.protocol == PROTO_MULTI )
+	{
+		if ( (g_model.sub_protocol & 0x3F) == M_DSM )
+		{
+			if ( MultiResponseFlag )
+			{
+			
+				lcd_puts_Pleft( 7*FH, PSTR("DSM2 22mS\015ch") ) ;
+				if ( MultiResponseData & 0x80 )
+				{
+					lcd_putc( 3*FW, 7*FH, 'X' ) ;
+				}
+				if ( MultiResponseData & 0x40 )
+				{
+					lcd_puts_Pleft( 7*FH, PSTR("\00511") ) ;
+				}
+  			lcd_outdez( 13*FW-2, 7*FH, MultiResponseData & 0x0F ) ;
+
+				int8_t x ;
+				uint8_t y ;
+
+				if ( pxxFlag )
+				{
+					pxxFlag = 0 ;
+					x = MultiResponseData & 0x0F ;	// # channels
+					y = (MultiResponseData & 0xC0 ) >> 2 ;	// DSMX, 11mS
+					g_model.option_protocol = g_model.option_protocol < 0 ? -x : x ;
+					y |= g_model.ppmNCH & 0x8F ;
+					g_model.ppmNCH = y ;	// Set DSM2/DSMX
+					STORE_MODELVARS ;
+				}
+			}
+		}
+	}
+#endif
+
+
 #ifdef FRSKY
-	if ( flag == 0 )
+	if ( binding == 0 )
 	{
 		lcd_outdezAtt( 12 * FW, 6*FH, FrskyHubData[FR_RXRSI_COPY], DBLSIZE);
 	}
@@ -6767,7 +6830,7 @@ void menuProc0(uint8_t event)
 #if defined(CPUM128) || defined(CPUM2561)
 					uint8_t t_limit = 0x30 ;
 					tview += 0x10 ;
-					if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
+					if ( ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT ) || ( g_model.telemetryProtocol == 2 ) )
 					{
 						t_limit = 0x40 ;
 					}
@@ -7469,6 +7532,53 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 								}
 
 
+						 }
+						 else
+						 {
+							// Spektrum format screen
+							lcd_puts_Pleft( 0*FH, PSTR("\013tssi")) ;
+							lcd_puts_Pleft( 2*FH, PSTR("Vbat")) ;
+							lcd_puts_Pleft( 2*FH, PSTR("\013RxV")) ;
+							lcd_puts_Pleft( 4*FH, PSTR("AMP\013Temp")) ;
+							lcd_puts_Pleft( 6*FH, PSTR("RPM\021DSM2")) ;
+							
+							lcd_vline( 63, 8, 32 ) ;
+
+              lcd_outdezAtt( 17*FW-2, 0*FH, FrskyHubData[FR_RXRSI_COPY], 0 ) ;
+              lcd_outdezAtt( 61, 1*FH, FrskyHubData[FR_VOLTS], PREC1|DBLSIZE ) ;
+							lcd_outdezAtt( 125, 1*FH, FrskyHubData[FR_RXV], PREC1|DBLSIZE ) ;
+							lcd_outdezAtt( 61, 3*FH, FrskyHubData[FR_CURRENT], PREC1|DBLSIZE ) ;
+              lcd_outdezAtt( 125, 3*FH, FrskyHubData[FR_TEMP1], DBLSIZE ) ;
+              lcd_outdezAtt( 14*FW, 5*FH, FrskyHubData[FR_RPM], DBLSIZE ) ;
+
+							if ( g_model.protocol == PROTO_MULTI )
+							{
+								if ( ( g_model.sub_protocol & 0x3F ) == M_DSM )
+								{
+									if ( (g_model.ppmNCH & 0x60 )== 0x20)
+									{
+										lcd_putc( 20*FW, 6*FH, 'X' ) ;
+									}
+								}
+							}
+//							dsmDisplayABLRFH() ;
+							for ( uint8_t i = 0 ; i < 6 ; i += 1 )
+							{
+								uint16_t value = DsmABLRFH[i] ;
+								lcd_putc( i*3*(FW+1), 7*FH, pgm_read_byte( PSTR("ABLRFH") + i ) ) ;
+								if ( value == 0 )		// 0xFFFF + 1
+								{
+								  lcd_puts_P( (i+1)*3*(FW+1)-2-(2*FW), 7*FH, PSTR("--") ) ;
+								}
+								else
+								{
+									if ( value > 1000 )
+									{
+										value = 1000 ;
+									}
+								  lcd_outdezAtt( (i+1)*3*(FW+1)-1, 7*FH, value - 1, 0 ) ;
+								}
+							}
 						 }
 						} 	 
 #endif
@@ -11397,7 +11507,7 @@ Str_Protocol
 					case M_Flysky:
 						nchHi = checkIndexed( y, PSTR(FWx10"\003"M_FLYSKY_STR),nchHi, (sub==subN) ) ;
 						break;
-					case M_DSM2:
+					case M_DSM:
 						nchHi = checkIndexed( y, PSTR(FWx10"\001"M_DSM2_STR),  nchHi, (sub==subN) ) ;
 						break;
 					case M_YD717:
@@ -11906,6 +12016,7 @@ Str_Protocol
 #ifdef MULTI_PROTOCOL
 			if (protocol == PROTO_MULTI)
 			{
+				uint8_t attr = 0 ;
 				// Display on screen static text
 				lcd_puts_Pleft(    y, PSTR(STR_MULTI_TYPE));
 				// Sub-protocol stored in sub_protocol bits0..4
@@ -11944,7 +12055,7 @@ Str_Protocol
 
 //#endif
 				uint8_t ppmNch = g_model.ppmNCH ;
-				if(g_model.sub_protocol==attr)
+				if(g_model.sub_protocol==oldValue)
 					attr=(ppmNch >> 4) &0x07 ;
 				else
 					attr=0;
@@ -11953,60 +12064,101 @@ Str_Protocol
 				//Sub-sub-protocol stored in ppmNCH bits4..6
 				const prog_char * s;
 				uint8_t x = g_model.sub_protocol&0x3F ;
-				if ( x == M_Flysky)
+#if defined(CPUM128) || defined(CPUM2561)
+				if ( x <= M_LAST_MULTI )
 				{
-					s=PSTR(FWx10"\003"M_FLYSKY_STR);
-				}
-				else if ( x == M_FRSKYX )
-				{
-					s=PSTR(FWx10"\001"M_FRSKY_STR);
-				}
-				else if ( x == M_Hisky )
-				{
-					s=PSTR(FWx10"\001"M_HISKY_STR);
-				}
-				else if ( x == M_DSM2 )
-				{
-					s=PSTR(FWx10"\001"M_DSM2_STR);
-				}
-				else if ( x == M_YD717 )
-				{
-					s=PSTR(FWx10"\004"M_YD717_STR);
-				}
-				else if ( x == M_KN )
-				{
-					s=PSTR(FWx10"\001"M_KN_STR);
-				}
-				else if ( x == M_SymaX )
-				{
-					s=PSTR(FWx10"\001"M_SYMAX_STR);
-				}
-				else if ( x == M_CX10 )
-				{
-					s=PSTR(FWx10"\007"M_CX10_STR);
-				}
-				else if ( x == M_CG023 )
-				{
-					s=PSTR(FWx10"\002"M_CG023_STR);
-				}
-				else if ( x == M_MT99XX )
-				{
-					s=PSTR(FWx10"\003"M_MT99XX_STR);
-				}
-				else if ( x == M_MJXQ )
-				{
-					s=PSTR(FWx10"\004"M_MJXQ_STR);
-				}
-				else if ( x == M_HONTAI )
-				{
-					s = PSTR(FWx10"\002"M_HONTAI_STR);
+#endif
+					if ( x == M_Flysky)
+					{
+						s=PSTR(FWx10"\003"M_FLYSKY_STR);
+					}
+					else if ( x == M_FRSKYX )
+					{
+						s=PSTR(FWx10"\001"M_FRSKY_STR);
+					}
+					else if ( x == M_Hisky )
+					{
+						s=PSTR(FWx10"\001"M_HISKY_STR);
+					}
+					else if ( x == M_DSM )
+					{
+#if defined(CPUM128) || defined(CPUM2561)
+						s=PSTR(FWx10"\004"M_DSM2_STR);
+#else
+						s=PSTR(FWx10"\003"M_DSM2_STR);
+#endif
+					}
+					else if ( x == M_YD717 )
+					{
+						s=PSTR(FWx10"\004"M_YD717_STR);
+					}
+					else if ( x == M_KN )
+					{
+						s=PSTR(FWx10"\001"M_KN_STR);
+					}
+					else if ( x == M_SymaX )
+					{
+						s=PSTR(FWx10"\001"M_SYMAX_STR);
+					}
+					else if ( x == M_CX10 )
+					{
+						s=PSTR(FWx10"\007"M_CX10_STR);
+					}
+					else if ( x == M_CG023 )
+					{
+						s=PSTR(FWx10"\002"M_CG023_STR);
+					}
+					else if ( x == M_MT99XX )
+					{
+						s=PSTR(FWx10"\003"M_MT99XX_STR);
+					}
+					else if ( x == M_MJXQ )
+					{
+						s=PSTR(FWx10"\004"M_MJXQ_STR);
+					}
+					else if ( x == M_HONTAI )
+					{
+						s = PSTR(FWx10"\002"M_HONTAI_STR);
+					}
+					else
+					{
+						s=PSTR(FWx10"\000"M_NONE_STR);
+					}
+//#if defined(CPUM128) || defined(CPUM2561)
+//					uint8_t old = attr ;
+//#endif
+					attr = checkIndexed( y, s, attr, (sub==subN) ) ;
+					g_model.ppmNCH = (attr << 4) + (ppmNch & 0x8F);
+//#if defined(CPUM128) || defined(CPUM2561)
+//					if ( x == M_DSM )
+//					{
+//						if ( attr == 4 )
+//						{
+//							if ( old != 4 )
+//							{
+//								// Go to bind mode
+// 					    	pxxFlag = PXX_BIND ;		    	//send bind code or range check code
+//								pushMenu(menuRangeBind) ;
+//							}
+//						}
+//					}
+//#endif
+#if defined(CPUM128) || defined(CPUM2561)
 				}
 				else
 				{
-					s=PSTR(FWx10"\000"M_NONE_STR);
+					x = attr ;
+					attr = 0 ;
+					if ( sub == subN )
+					{
+						attr = blink ;
+ 		  			CHECK_INCDEC_H_MODELVAR_0( x, 7 ) ;
+						g_model.ppmNCH = (x << 4) + (g_model.ppmNCH & 0x8F) ;
+					}
+	  			lcd_outdezAtt( 21*FW, y, x, attr ) ;
+					
 				}
-				ppmNch = (checkIndexed( y, s,  attr, (sub==subN) ) << 4) + (ppmNch & 0x8F);
-				g_model.ppmNCH = ppmNch ;
+#endif
 				y += FH ;
 				subN++;
 				// Power stored in ppmNCH bit7 & Option stored in option_protocol

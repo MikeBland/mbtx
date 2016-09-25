@@ -256,6 +256,9 @@ DataID Meaning       Unit   Range   Note
 #define AIRSPEED_LAST_ID  0x0A0f
 #define AIRSPEED_ID_8			0xA0
 
+// Craft and Theory
+#define	CandF_ID_8				0x00
+#define	CandF_AP_STAT_ID	0x01
 
 
 #define BETA_VARIO_ID      0x8030

@@ -58,10 +58,20 @@
 
 #define MAVLINK_MSG_ID_HEARTBEAT 0
 #define MAVLINK_MSG_ID_SYS_STATUS 1
+#define MAVLINK_MSG_ID_RC_CHANNELS_RAW 35
 #define MAVLINK_MSG_ID_GPS_RAW_INT 24
 #define MAVLINK_MSG_ID_VFR_HUD 74
 #define MAVLINK_MSG_ID_HWSTATUS 165
 #define MAVLINK_MSG_ID_RADIO 166
+
+
+// Debug info
+uint16_t Msg35count ;
+uint16_t Msg165count ;
+uint16_t Msg166count ;
+uint16_t Msg35crc ;
+uint16_t Msg165crc ;
+uint16_t Msg166crc ;
 
 
 #if 0
@@ -688,6 +698,22 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 
 		case MAVLINK_PARSE_STATE_GOT_COMPID:
 			rxmsg->msgid = c;
+			
+// Debug			
+			if ( c == 35 )
+			{
+				Msg35count += 1 ;
+			}
+			else if ( c == 165 )
+			{
+				Msg165count += 1 ;
+			}
+			else if ( c == 166 )
+			{
+				Msg166count += 1 ;
+			}
+// End debug
+
 			mavlink_update_checksum(rxmsg, c);
 			if (rxmsg->len == 0)
 			{
@@ -725,6 +751,21 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 //		crlf() ;
 //	}
 
+// Debug			
+				if ( rxmsg->compid == 35 )
+				{
+					Msg35crc += 1 ;
+				}
+				else if ( rxmsg->compid == 165 )
+				{
+					Msg165crc += 1 ;
+				}
+				else if ( rxmsg->compid == 166 )
+				{
+					Msg166crc += 1 ;
+				}
+// End debug
+				
 				status->parse_error++;
 				status->msg_received = 0;
 				status->parse_state = MAVLINK_PARSE_STATE_IDLE;
@@ -754,6 +795,22 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 //		twoHex( rxmsg->checksum >> 8 ) ;
 //		crlf() ;
 //	}
+				
+// Debug			
+				if ( rxmsg->compid == 35 )
+				{
+					Msg35crc += 1 ;
+				}
+				else if ( rxmsg->compid == 165 )
+				{
+					Msg165crc += 1 ;
+				}
+				else if ( rxmsg->compid == 166 )
+				{
+					Msg166crc += 1 ;
+				}
+// End debug
+				
 				status->parse_error++;
 				status->msg_received = 0;
 				status->parse_state = MAVLINK_PARSE_STATE_IDLE;
@@ -902,6 +959,11 @@ static inline uint8_t mavlink_msg_gps_raw_int_get_fix_type(const mavlink_message
 static inline uint8_t mavlink_msg_radio_get_rssi(const mavlink_message_t* msg)
 {
 	return _MAV_RETURN_uint8_t(msg,  4);
+}
+
+static inline uint8_t mavlink_msg_rc_channels_raw_get_rssi(const mavlink_message_t* msg)
+{
+	return _MAV_RETURN_uint8_t(msg,  21);
 }
 
 
@@ -1215,6 +1277,16 @@ void mavlinkReceive( uint8_t data )
 			}
       break ;
 
+			case MAVLINK_MSG_ID_RC_CHANNELS_RAW :
+			{
+				uint8_t value ;
+				value = mavlink_msg_rc_channels_raw_get_rssi(&Msg) ;
+				if ( value )
+				{
+					storeRSSI( value ) ;
+				}
+			}
+      break ;
       case MAVLINK_MSG_ID_HWSTATUS:  
       {
 //MavDebug1 += 0x0100 ;

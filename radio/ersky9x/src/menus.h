@@ -162,6 +162,8 @@ extern void menuUpdate(uint8_t event) ;
 //extern void inactivityCheck( void ) ;
 extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
 
+extern void parseMultiData( void ) ;
+
 const char *get_curve_string() ;
 
 extern uint8_t unmapPots( uint8_t value ) ;

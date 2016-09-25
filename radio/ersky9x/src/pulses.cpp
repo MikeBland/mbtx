@@ -658,8 +658,6 @@ extern uint8_t MultiResponseFlag ;
 // Send after 22.5 mS
 
 
-uint16_t DebugDsmX ;
-
 //static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
 void setupPulsesDsm2(uint8_t chns)
 {
@@ -925,7 +923,7 @@ void setupPulsesDsm2(uint8_t chns)
 			uint32_t outputbits = 0 ;
 			uint32_t i ;
 			bitlen = BITLEN_SBUS ;
-			sendByteDsm2( ( g_model.sub_protocol+1 > 31 ) ? 0x54 : 0x55 ) ;
+			sendByteDsm2( ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ) ;
 			sendByteDsm2( dsmDat[0] ) ;
 			
 			uint8_t x ;
@@ -964,12 +962,11 @@ void setupPulsesDsm2(uint8_t chns)
 			{
 				sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
 				sendByteDsm2(g_model.option_protocol);
-				DebugDsmX = (((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F)) << 8 ) | g_model.option_protocol ;
 			}
 			
 			for ( i = 0 ; i < 16 ; i += 1 )
 			{
-				int16_t x = g_chans512[i] ;
+				int16_t x = g_chans512[g_model.startChannel+i] ;
 				x *= 4 ;
 				x += x > 0 ? 4 : -4 ;
 				x /= 5 ;
@@ -1442,7 +1439,7 @@ void setupPulsesPPM2()
 			uint32_t outputbits = 0 ;
 			uint32_t i ;
 			
-			Multi2Data[0] = ( g_model.xsub_protocol+1 > 31 ) ? 0x54 : 0x55 ;
+			Multi2Data[0] = ( ( (g_model.xsub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
 			Multi2Data[1] = (g_model.xsub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
 			if (pxxFlag[1] & PXX_BIND)	Multi2Data[1] |=BindBit;		//set bind bit if bind menu is pressed
 			if (pxxFlag[1] & PXX_RANGE_CHECK)	Multi2Data[1] |=RangeCheckBit;		//set bind bit if bind menu is pressed

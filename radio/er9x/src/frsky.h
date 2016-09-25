@@ -439,6 +439,10 @@ struct t_hub_max_min
 	int16_t hubMax[HUBMINMAXLEN] ;
 } ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+extern uint16_t DsmABLRFH[] ;
+#endif
+
 extern struct t_hub_max_min FrskyHubMaxMin ;
 
 #endif
