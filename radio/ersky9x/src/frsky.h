@@ -257,8 +257,14 @@ DataID Meaning       Unit   Range   Note
 #define AIRSPEED_ID_8			0xA0
 
 // Craft and Theory
-#define	CandF_ID_8				0x00
-#define	CandF_AP_STAT_ID	0x01
+#define	ARDUP_ID_8				0x00
+#define	ARDUP_AP_STAT_ID	0x01
+#define	ARDUP_GPS_STAT_ID	0x02
+#define	ARDUP_BATT_ID			0x03
+#define	ARDUP_HOME_ID			0x04
+#define	ARDUP_VandYAW_ID	0x05
+#define	ARDUP_ATTandRNGID	0x06
+#define	ARDUP_PARAM_ID		0x07
 
 
 #define BETA_VARIO_ID      0x8030

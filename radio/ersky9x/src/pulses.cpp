@@ -117,7 +117,7 @@ uint8_t Multi2Data[28] ;
 
 static uint8_t pass ;		// For PXX and DSM-9XR and ASSAN
 static uint8_t bitlen ;
-uint8_t DebugDsmPass ;
+//uint8_t DebugDsmPass ;
 uint8_t PulsesPaused ;
 
 void crc( uint8_t data ) ;
@@ -807,7 +807,7 @@ void setupPulsesDsm2(uint8_t chns)
 		else
 		{
 #endif // ASSAN
-		DebugDsmPass = pass ;
+//		DebugDsmPass = pass ;
 		sendByteDsm2( 0xAA );
 		if ( pass == 0 )
 		{
@@ -941,7 +941,6 @@ void setupPulsesDsm2(uint8_t chns)
 //					x |= 0x10 ;
 //				}
 //				sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F ) );
-//				DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F)) << 8 ;
 //				x = y ;
 //				if ( x == 0x40 )
 //				{
@@ -954,7 +953,6 @@ void setupPulsesDsm2(uint8_t chns)
 //					y &= 3 ;
 //				}
 //				sendByteDsm2(y);
-//				DebugDsmX |= y ;
 //			}
 //			else
 // end of temp

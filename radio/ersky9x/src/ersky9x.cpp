@@ -124,7 +124,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 //#define PCB_TEST_9XT	1
 
 #ifndef SIMU
-#define MAIN_STACK_SIZE		350
+#define MAIN_STACK_SIZE		500
 #ifdef BLUETOOTH
 #define BT_STACK_SIZE			100
 #endif
@@ -351,11 +351,6 @@ void test_loop( void* pdata ) ;
 
 #ifdef PCBSKY
 extern "C" void TC2_IRQHandler( void ) ;
-//#ifdef SIMU
-//#define sam_boot()
-//#else
-//extern "C" void sam_boot( void ) ;
-//#endif
 #ifdef	DEBUG
 void handle_serial( void* pdata ) ;
 #endif
@@ -1021,7 +1016,7 @@ void checkTrainerSource()
 		switch ( CurrentTrainerSource )
 		{
 			case 0 :
-				init_trainer_capture() ;
+				init_trainer_capture(0) ;
 				EXTERNAL_RF_OFF() ;
 			break ;
 			case 1 :
@@ -1196,6 +1191,15 @@ int main( void )
  	{
 		uint32_t i ;
 		for ( i = 0 ; i < 81 ; i += 1 )
+		{
+			NVIC->IP[i] = 0x80 ;
+		}
+	}
+#endif
+#ifdef PCBSKY
+ 	{
+		uint32_t i ;
+		for ( i = 0 ; i < 35 ; i += 1 )
 		{
 			NVIC->IP[i] = 0x80 ;
 		}
@@ -1882,21 +1886,10 @@ uint8_t Com2TxBuffer[32] ;
 uint8_t Com1TxBuffer[32] ;
 uint8_t BtLinked ;
 
-//uint8_t BtStartDebug[128] ;
-//uint8_t BtStartIndex ;
-
-//void btStartLog( uint8_t c )
-//{
-//	if ( BtStartIndex < 128 )
-//	{
-//		BtStartDebug[BtStartIndex++] = c ;
-//	}
-//}
-
 struct btRemote_t BtRemote[3] ;
 uint8_t NumberBtremotes ;
 
-uint16_t Bt_debug ;
+//uint16_t Bt_debug ;
 
 uint8_t BtMode[4] ;
 uint8_t BtPswd[6] ;
@@ -3600,12 +3593,9 @@ void bt_task(void* pdata)
 			}
 			else
 			{
-//extern uint16_t MavDebug2 ;
-//extern uint16_t MavDebug3 ;
 #ifdef REVX
 				if ( g_model.bt_telemetry > 1 )
 				{
-//					MavDebug2 += 1 ;
 					if ( g_model.frskyComPort )				
 					{
 						if ( Com2_tx.ready == 0 )	// Buffer available
@@ -3630,11 +3620,9 @@ void bt_task(void* pdata)
 					{
 						if ( Com1_tx.ready == 0 )	// Buffer available
 						{
-//					MavDebug2 += 0x0100 ;
 							Com1_tx.size = 0 ;
 							while( ( x = rxBtuart() ) != (uint32_t)-1 )
 							{
-//					MavDebug3 += 1 ;
 								Com1TxBuffer[Com1_tx.size++] = x ;
 								if ( Com1_tx.size > 31 )
 								{
@@ -4010,7 +3998,7 @@ void main_loop(void* pdata)
 
 //	init_trainer_ppm() ;
 
-	init_trainer_capture() ;
+	init_trainer_capture(0) ;
 
 	rtcInit() ;
 
@@ -4023,7 +4011,7 @@ void main_loop(void* pdata)
 
 //	init_trainer_ppm() ;
 
-	init_trainer_capture() ;
+	init_trainer_capture(0) ;
 
 	rtcInit() ;
 
@@ -4392,7 +4380,6 @@ uint8_t StickScrollTimer ;
 extern int16_t AltOffset ;
 #endif
 
-//uint16_t Debug_analog[8] ;
 static void almess( const char * s, uint8_t type )
 {
 	const char *h ;
@@ -5103,6 +5090,15 @@ void mainSequence( uint32_t no_menu )
 		}
 	}
 
+extern uint8_t TrainerMode ;
+	if ( TrainerMode == 1 )
+	{
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( tProf->channel[0].source == TRAINER_JACK )
+		{
+			processSbusInput() ;
+		}
+	}
 
 	if ( Tenms )
 	{
@@ -6115,9 +6111,9 @@ void check_backlight()
 //#endif
 }
 
-#ifdef SPLASH_DEBUG
-uint16_t SplashDebug[9] ;
-#endif
+//#ifdef SPLASH_DEBUG
+//uint16_t SplashDebug[9] ;
+//#endif
 
 uint16_t stickMoveValue()
 {
@@ -6125,9 +6121,9 @@ uint16_t stickMoveValue()
 		uint8_t i ;
     for( i=0; i<4; i++)
 		{
-#ifdef SPLASH_DEBUG
-			SplashDebug[i] = anaIn(i) ;
-#endif
+//#ifdef SPLASH_DEBUG
+//			SplashDebug[i] = anaIn(i) ;
+//#endif
       sum += anaIn(i) ;
 		}
 	return sum ;
@@ -6146,9 +6142,9 @@ void doSplash()
 	uint32_t i ;
 	uint32_t j ;
 
-#ifdef SPLASH_DEBUG
-	SplashDebug[8] = 0 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//	SplashDebug[8] = 0 ;
+//#endif
 
 	if( (!g_eeGeneral.disableSplashScreen) || ( HardwareMenuEnabled ) )
   {
@@ -6165,10 +6161,10 @@ void doSplash()
 
   	uint16_t inacSum = stickMoveValue() ;
 
-#ifdef SPLASH_DEBUG
-  	for( i=0; i<4 ; i++)
-			SplashDebug[i+4] = SplashDebug[i] ;
-#endif
+//#ifdef SPLASH_DEBUG
+//  	for( i=0; i<4 ; i++)
+//			SplashDebug[i+4] = SplashDebug[i] ;
+//#endif
 
   	uint16_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;  
   	uint16_t scrtime = get_tmr10ms() ;
@@ -6221,26 +6217,26 @@ void doSplash()
 			uint8_t xxx ;
 			if ( ( xxx = keyDown() ) )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = xxx ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = xxx ;
+//#endif
 				return ;  //wait for key release
 			}
 				  
 			if ( hasStickMoved( inacSum ) )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = 0xF000 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = 0xF000 ;
+//#endif
 		   return ;  //wait for key release
 			}
 //			if(keyDown() || (tsum!=inacSum))   return;  //wait for key release
 
 			if ( check_power_or_usb() )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = 0xC000 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = 0xC000 ;
+//#endif
 				return ;		// Usb on or power off
 			}
 			check_backlight() ;
@@ -7287,7 +7283,7 @@ extern uint8_t ImageY ;
 		{
 			stop_trainer_ppm() ;
 			trainerActive = 0 ;
-			init_trainer_capture() ;
+			init_trainer_capture(0) ;
 		}
 	}
 #endif
@@ -7698,8 +7694,6 @@ void getADC_single()
 //#define OSMP_TOTAL		32768
 //#define OSMP_SHIFT		4
 #endif
-
-//uint16_t AdcDebug[OSMP_SAMPLES] ;
 
 //void ogetADC_osmp()
 //{

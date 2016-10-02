@@ -48,8 +48,6 @@
 
 #define NULL 0
 
-//#define DEBUG_9XT	1
-
 extern int16_t AltOffset ;
 extern uint16_t LogTimer ;
 

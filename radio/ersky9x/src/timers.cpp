@@ -42,8 +42,6 @@
 
 extern int16_t g_chans512[] ;
 
-//uint16_t AssanDebug1 ;
-//uint16_t AssanDebug2 ;
 
 extern void init_pxx(uint32_t port) ;
 extern void disable_pxx(uint32_t port) ;
@@ -69,6 +67,25 @@ uint8_t PulsesPaused ;
 #define DsmxBit  0x08
 #define BadData 0x47
 
+
+// States in LineState
+#define LINE_IDLE			0
+#define LINE_ACTIVE		1
+
+#define BIT_TIME_100K		20
+
+uint16_t LastTransition ;
+extern uint16_t BitTime ;
+extern uint16_t HtoLtime ;
+extern uint16_t LtoHtime ;
+extern uint8_t LineState ;
+extern void putCaptureTime( uint16_t time, uint32_t value ) ;
+extern uint8_t SoftSerInvert ;
+extern uint8_t SoftSerialEvenParity ;
+extern void start_timer11(void) ;
+extern uint8_t TrainerPolarity ;
+
+
 void pausePulses()
 {
 	PulsesPaused = 1 ;
@@ -79,26 +96,6 @@ void resumePulses()
 	PulsesPaused = 0 ;
 }
 
-//#ifdef ASSAN
-//uint8_t ProtocolDebug[16384] ;
-//uint32_t ProtocolCount ;
-//uint32_t ProtocolIn ;
-
-//void putProtocolDebug( uint8_t byte )
-//{
-//	if ( ProtocolCount == 0xFFFFFFFF )
-//	{
-//		return ;
-//	}
-//	if ( ProtocolCount < 16384 )
-//	{
-//		ProtocolCount += 1 ;
-//	}
-//	ProtocolDebug[ProtocolIn] = byte ;
-//	ProtocolIn += 1 ;
-//	ProtocolIn &= 16383 ;
-//}
-//#endif
 #endif
 // Starts TIMER at 200Hz, 5mS period
 #ifdef PCBSKY
@@ -1370,8 +1367,12 @@ void stop_trainer_ppm()
 }
 
 // Trainer capture, PC8, Timer 3 channel 3
-void init_trainer_capture()
+// Soft Serial capture, PC8, Timer 3 channel 3
+void init_trainer_capture(uint32_t mode)
 {
+	CaptureMode = mode ;
+	
+	stop_trainer_ppm() ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( PIN_TR_PPM_IN, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 | PIN_PULLUP ) ;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN ;		// Enable clock
@@ -1379,12 +1380,29 @@ void init_trainer_capture()
 	TIM3->ARR = 0xFFFF ;
 	TIM3->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
 	TIM3->CR2 = 0 ;
-	TIM3->CCMR2 = TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
-	TIM3->CCER = TIM_CCER_CC3E ;	 
-	TIM3->SR &= ~TIM_SR_CC3IF ;				// Clear flag
-	TIM3->DIER |= TIM_DIER_CC3IE ;
+	if ( mode == CAP_SERIAL )
+	{
+		LineState = LINE_IDLE ;
+		BitTime = BIT_TIME_100K ;
+		SoftSerialEvenParity = 1 ;
+		SoftSerInvert = TrainerPolarity ;
+		TIM3->CCMR2 = TIM_CCMR2_IC4F_0 | TIM_CCMR2_IC4F_1 | TIM_CCMR2_CC4S_1 | TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
+		TIM3->CCER = TIM_CCER_CC3E | TIM_CCER_CC4E | TIM_CCER_CC4P ;
+		TIM3->SR &= ~(TIM_SR_CC4IF | TIM_SR_CC3IF) ;				// Clear flags
+		TIM3->DIER |= TIM_DIER_CC4IE | TIM_DIER_CC3IE ;
+  	NVIC_SetPriority(TIM3_IRQn, 0 ) ;
+		start_timer11() ;
+	}
+	else
+	{
+		TIM3->CCMR2 = TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
+		TIM3->CCER = TIM_CCER_CC3E ;	 
+		TIM3->SR &= ~TIM_SR_CC3IF ;				// Clear flag
+		TIM3->DIER |= TIM_DIER_CC3IE ;
+  	NVIC_SetPriority(TIM3_IRQn, 7);
+	}
+	
 	TIM3->CR1 = TIM_CR1_CEN ;
-  NVIC_SetPriority(TIM3_IRQn, 7);
 	NVIC_EnableIRQ(TIM3_IRQn) ;
 }
 
@@ -1503,6 +1521,22 @@ void stop_cppm_on_heartbeat_capture()
 #endif
 }
 
+//uint16_t CapTimes[12] ;
+//uint16_t CapLevels[12] ;
+//uint16_t CapIndex ;
+//uint16_t CapCount ;
+
+//void putCapValues( uint16_t time, uint16_t level )
+//{
+//	if ( CapIndex < 12 )
+//	{
+//		CapTimes[CapIndex] = time ;
+//		CapLevels[CapIndex] = level ;
+//		CapIndex += 1 ;
+//	}
+//}
+
+//uint16_t TIM3Captures ;
 
 // Capture interrupt for trainer input
 extern "C" void TIM3_IRQHandler()
@@ -1512,76 +1546,143 @@ extern "C" void TIM3_IRQHandler()
   static uint16_t lastCapt ;
   uint16_t val ;
 	uint32_t doCapture = 0 ;
-	
-  // What mode? in or out?
-  if ( (TIM3->DIER & TIM_DIER_CC3IE ) && ( TIM3->SR & TIM_SR_CC3IF ) )
-    // capture mode
-	{	
-		capture = TIM3->CCR3 ;
-		doCapture = 1 ;
-	}
-
-  if ( (TIM3->DIER & TIM_DIER_CC2IE ) && ( TIM3->SR & TIM_SR_CC2IF ) )
-    // capture mode
-	{	
-		capture = TIM3->CCR2 ;
-		doCapture = 1 ;
-	}
-
-	if ( doCapture )
+	if ( CaptureMode == CAP_SERIAL )
 	{
-  	val = (uint16_t)(capture - lastCapt) / 2 ;
-  	lastCapt = capture;
-
-  	// We prcoess g_ppmInsright here to make servo movement as smooth as possible
-  	//    while under trainee control
-  	if ((val>4000) && (val < 19000)) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
+//		TIM3Captures += 1 ;
+		// CC3 physical rising, CC4 falling edge
+		// So for inverted serial CC3 is HtoL, CC4 is LtoH
+		if ( LastTransition == 0 )	// LtoH
 		{
-  	  ppmInState = 1; // triggered
+			capture = TIM3->CCR4 ;
+			LastTransition = 1 ;
 		}
-  	else
-  	{
-  		if(ppmInState && (ppmInState<=16))
-			{
-  	  	if((val>800) && (val<2200))
-				{
-					ppmInValid = 100 ;
-//  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
-  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ; //+-500 != 512, but close enough.
+		else
+		{
+			capture = TIM3->CCR3 ;
+			LastTransition = 0 ;
+		}
 
-		    }else{
-  		    ppmInState=0; // not triggered
-  	  	}
+  	val = LastTransition ;
+		if ( SoftSerInvert )
+		{
+			val = !val ;
+		}
+		
+		if ( val == 0 )	// LtoH
+		{
+			// L to H transition
+			LtoHtime = capture ;
+			TIM11->CNT = 0 ;
+			TIM11->CCR1 = BitTime * 12 ;
+			uint32_t time ;
+			capture -= HtoLtime ;
+			time = capture ;
+//			putCapValues( time, 0 ) ;
+			putCaptureTime( time, 0 ) ;
+			TIM11->DIER = TIM_DIER_CC1IE ;
+		}
+		else
+		{
+			// H to L transition
+			HtoLtime = capture ;
+			if ( LineState == LINE_IDLE )
+			{
+				LineState = LINE_ACTIVE ;
+//				if ( ++CapCount > 200 )
+//				{
+//					CapIndex = 0 ;
+//					CapCount = 0 ;
+//				}
+//				putCapValues( 0, 3 ) ;
+				putCaptureTime( 0, 3 ) ;
+			}
+			else
+			{
+				uint32_t time ;
+				capture -= LtoHtime ;
+				time = capture ;
+//				putCapValues( time, 1 ) ;
+				putCaptureTime( time, 1 ) ;
+			}
+			TIM11->DIER = 0 ;
+			TIM11->CCR1 = BitTime * 20 ;
+			TIM11->CNT = 0 ;
+			TIM11->SR = 0 ;
+		}
+		return ;
+	}
+	else
+	{
+  	// What mode? in or out?
+  	if ( (TIM3->DIER & TIM_DIER_CC3IE ) && ( TIM3->SR & TIM_SR_CC3IF ) )
+  	  // capture mode
+		{	
+			capture = TIM3->CCR3 ;
+			doCapture = 1 ;
+		}
+
+  	if ( (TIM3->DIER & TIM_DIER_CC2IE ) && ( TIM3->SR & TIM_SR_CC2IF ) )
+  	  // capture mode
+		{	
+			capture = TIM3->CCR2 ;
+			doCapture = 1 ;
+		}
+
+		if ( doCapture )
+		{
+  		val = (uint16_t)(capture - lastCapt) / 2 ;
+  		lastCapt = capture;
+
+  		// We prcoess g_ppmInsright here to make servo movement as smooth as possible
+  		//    while under trainee control
+  		if ((val>4000) && (val < 19000)) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
+			{
+  		  ppmInState = 1; // triggered
+			}
+  		else
+  		{
+  			if(ppmInState && (ppmInState<=16))
+				{
+  		  	if((val>800) && (val<2200))
+					{
+						ppmInValid = 100 ;
+	//  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
+  			    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ; //+-500 != 512, but close enough.
+
+			    }else{
+  			    ppmInState=0; // not triggered
+  		  	}
+  		  }
+  		}
+		}
+
+  	// PPM out compare interrupt
+  	if ( ( TIM3->DIER & TIM_DIER_CC1IE ) && ( TIM3->SR & TIM_SR_CC1IF ) )
+		{
+  	  // compare interrupt
+  	  TIM3->DIER &= ~TIM_DIER_CC1IE ;         // stop this interrupt
+  	  TIM3->SR &= ~TIM_SR_CC1IF ;                             // Clear flag
+
+  	  setupTrainerPulses() ;
+
+			TrainerPulsePtr = TrainerPpmStream ;
+  	  TIM3->DIER |= TIM_DIER_UDE ;
+  	  TIM3->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
+  	  TIM3->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
+  	}
+
+  	// PPM out update interrupt
+  	if ( (TIM3->DIER & TIM_DIER_UIE) && ( TIM3->SR & TIM_SR_UIF ) )
+		{
+  	  TIM3->SR &= ~TIM_SR_UIF ;                               // Clear flag
+  	  TIM3->ARR = *TrainerPulsePtr++ ;
+  	  if ( *TrainerPulsePtr == 0 )
+			{
+  	    TIM3->SR &= ~TIM_SR_CC1IF ;                     // Clear this flag
+  	    TIM3->DIER |= TIM_DIER_CC1IE ;  // Enable this interrupt
   	  }
   	}
 	}
-
-  // PPM out compare interrupt
-  if ( ( TIM3->DIER & TIM_DIER_CC1IE ) && ( TIM3->SR & TIM_SR_CC1IF ) )
-	{
-    // compare interrupt
-    TIM3->DIER &= ~TIM_DIER_CC1IE ;         // stop this interrupt
-    TIM3->SR &= ~TIM_SR_CC1IF ;                             // Clear flag
-
-    setupTrainerPulses() ;
-
-		TrainerPulsePtr = TrainerPpmStream ;
-    TIM3->DIER |= TIM_DIER_UDE ;
-    TIM3->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
-    TIM3->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
-  }
-
-  // PPM out update interrupt
-  if ( (TIM3->DIER & TIM_DIER_UIE) && ( TIM3->SR & TIM_SR_UIF ) )
-	{
-    TIM3->SR &= ~TIM_SR_UIF ;                               // Clear flag
-    TIM3->ARR = *TrainerPulsePtr++ ;
-    if ( *TrainerPulsePtr == 0 )
-		{
-      TIM3->SR &= ~TIM_SR_CC1IF ;                     // Clear this flag
-      TIM3->DIER |= TIM_DIER_CC1IE ;  // Enable this interrupt
-    }
-  }
 }
 
 void dsmBindResponse( uint8_t mode, int8_t channels )
@@ -1737,7 +1838,7 @@ void putDsm2Flush(uint32_t module)
 static uint8_t dsmDat[2][2+6*2]={{0xFF,0x00, 0x00,0xAA, 0x05,0xFF, 0x09,0xFF, 0x0D,0xFF, 0x13,0x54, 0x14,0xAA},
 																 {0xFF,0x00, 0x00,0xAA, 0x05,0xFF, 0x09,0xFF, 0x0D,0xFF, 0x13,0x54, 0x14,0xAA}};
 
-uint16_t DebugDsmX ;
+//uint16_t DebugDsmX ;
 
 void setupPulsesDsm2(uint8_t channels, uint32_t module )
 {
@@ -1910,7 +2011,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
   	dsm2Index[module] = 0 ;
   	dsm2Value[module] = 100 ;
   	*dsm2StreamPtr[module]++ = dsm2Value[module] ;
-		DebugDsmPass = Pass[module] ;
+//		DebugDsmPass = Pass[module] ;
 		sendByteDsm2( 0xAA, module );
 		if ( Pass[module] == 0 )
 		{
@@ -2060,7 +2161,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 						x |= 0x10 ;
 					}
 					sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F ), module  );
-					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F)) << 8 ;
+//					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.pxxRxNum & 0x0F)) << 8 ;
 					x = y ;
 					if ( x == 0x40 )
 					{
@@ -2073,7 +2174,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 						y &= 3 ;
 					}
 					sendByteDsm2(y, module );
-					DebugDsmX |= y ;
+//					DebugDsmX |= y ;
 				}
 	// end of temp
 
@@ -2098,7 +2199,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 						x |= 0x10 ;
 					}
 					sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.xPxxRxNum & 0x0F ), module );
-					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.xPxxRxNum & 0x0F)) << 8 ;
+//					DebugDsmX = ((x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.xPxxRxNum & 0x0F)) << 8 ;
 					x = y ;
 					if ( x == 0x40 )
 					{
@@ -2111,7 +2212,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 						y &= 3 ;
 					}
 					sendByteDsm2(y, module );
-					DebugDsmX |= y ;
+//					DebugDsmX |= y ;
 				}
 	// end of temp
 

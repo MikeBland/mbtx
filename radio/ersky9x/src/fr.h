@@ -300,7 +300,7 @@
 #define ISTR_ELE_DIRECTION  "Direction PRF"
 #define ISTR_AIL_DIRECTION  "Direction AIL"
 #define ISTR_COL_DIRECTION  "Direction COL"
-#define ISTR_MODEL_POPUP    "EDITER\0SELECT.\0SEL/EDIT\0COPIER\0DEPLAC.\0SUPP.\0SAUV.\0REST."
+#define ISTR_MODEL_POPUP    "EDITER\0SELECT.\0SEL/EDIT\0COPIER\0DEPLAC.\0SUPP.\0SAUV.\0REST.\0REPLACE"
 #define ISTR_MODELSEL       "CHOIX MODELE"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE        "\011disp"
@@ -463,9 +463,9 @@
 #define ISTR_FAILSAFE			"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"Ctrl Volume"
 #ifdef ASSAN
-#define ISTR_PROT_OPT			"\005PPM  PXX  DSM2 MultiAssan"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
 #else
-#define ISTR_PROT_OPT			"\005PPM  PXX  DSM2 Multi"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 Multi"
 #endif
 #define ISTR_TYPE			"Type"
 #define ISTR_COUNTRY			"Pays"

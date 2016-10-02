@@ -1054,25 +1054,8 @@ void lcd_clear()
 	lcd_img( 212-X9D_OFFSET, 0, arrows, 0, 0 ) ;
 	lcd_img( 212-X9D_OFFSET-10, 0, arrows, 1, 0 ) ;
 #endif	// nREV9E
-#if PCBX9D
-//#if REVPLUS
-
-// Debug
-//extern uint8_t s_eeDirtyMsk ;
-//	lcd_outhex4( 132, 0*FH, s_eeDirtyMsk ) ;
-
-//	ImageDisplay = 1 ;
-//#endif
-#endif
 
 
-//#ifdef REV9E
-//// Debug
-//	lcd_outhex4( 212-X9D_OFFSET, 0, Analog_values[NUMBER_ANALOG] ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 8, Analog_values[NUMBER_ANALOG+1] ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 16, Analog_values[NUMBER_ANALOG+2] ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 24, Analog_values[NUMBER_ANALOG-2] ) ;
-//#endif	// REV9E
 #endif // PCBX9D
 }
 

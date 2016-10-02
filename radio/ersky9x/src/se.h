@@ -301,7 +301,7 @@
 #define ISTR_ELE_DIRECTION   "HJD-riktning"
 #define ISTR_AIL_DIRECTION   "SKEV-riktning"
 #define ISTR_COL_DIRECTION   "COL-riktning"
-#define ISTR_MODEL_POPUP     "EDIT\0VALJ\0SEL/EDIT\0KOPIA\0FLYTTA\0RADERA\0BACKUP\0RESTORE"
+#define ISTR_MODEL_POPUP     "EDIT\0VALJ\0SEL/EDIT\0KOPIA\0FLYTTA\0RADERA\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL        "MODELLVAL"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE         "\011kvar"
@@ -463,9 +463,9 @@
 #define ISTR_FAILSAFE        "FAILSAFE"
 #define ISTR_VOLUME_CTRL     "Volymkontroll"
 #ifdef ASSAN
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
 #else
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 Multi"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 Multi"
 #endif
 #define ISTR_TYPE            " Typ"
 #define ISTR_COUNTRY         " Land"

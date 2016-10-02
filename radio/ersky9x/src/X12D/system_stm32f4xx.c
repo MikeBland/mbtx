@@ -31,6 +31,7 @@
   */
 
 #include "stm32f4xx.h"
+void SDRAM_Init(void) ;
 
 /**
   * @}
@@ -146,7 +147,7 @@ void SystemInit(void)
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
 
-  void SDRAM_Init();
+  SDRAM_Init();
   void FMC_SDRAMWriteProtectionConfig(uint32_t SDRAM_Bank, FunctionalState NewState);
 
   SDRAM_Init(); // calls SDRAM_GPIOConfig()

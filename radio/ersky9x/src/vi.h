@@ -293,7 +293,7 @@
 #define ISTR_AIL_DIRECTION  "AIL Direction"
 #define ISTR_COL_DIRECTION  "COL Direction"
 //#define ISTR_MODEL_POPUP    "SELECT\0COPY\0MOVE\0DELETE"
-#define ISTR_MODEL_POPUP    "CHINH SUA\0CHON\0SAO CHEP\0DI CHUYEN\0XOA\0SAO LUU\0KHOI PHUC"
+#define ISTR_MODEL_POPUP    "CHINH SUA\0CHON\0SAO CHEP\0DI CHUYEN\0XOA\0SAO LUU\0KHOI PHUC\0REPLACE"
 #define ISTR_MODELSEL       "MODELSEL"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE        "\011free"
@@ -455,9 +455,9 @@
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"D.Chinh Am Luong"
 #ifdef ASSAN
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
 #else
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 Multi"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 Multi"
 #endif
 #define ISTR_TYPE						" Loai"
 #define ISTR_COUNTRY				" Quoc Gia"

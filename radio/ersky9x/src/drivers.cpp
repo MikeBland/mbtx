@@ -682,6 +682,15 @@ uint16_t USART_PE ;
 //uint16_t SerBitInputs[64] ;
 //uint16_t SaveSerTimes[64] ;
 
+struct saveSerialTime
+{
+	uint16_t time ;
+	uint8_t value ;
+} ;
+
+struct saveSerialTime SaveStime[256] ;
+uint8_t SaveSerialIndex ;
+
 //uint32_t SerIndex ;
 
 //uint16_t SoftCounter ;
@@ -705,9 +714,13 @@ uint16_t USART_PE ;
 // time in units of 0.5uS, value is 1 or 0
 void putCaptureTime( uint16_t time, uint32_t value )
 {
+//	SaveTime = time ;
+	SaveStime[SaveSerialIndex].time = time ;
+	SaveStime[SaveSerialIndex].value = value ;
+	SaveSerialIndex += 1 ;
+
 	time += BitTime/2 ;
 	time /= BitTime ;		// Now number of bits
-//	SaveTime = time ;
 
 	if ( value == 3 )
 	{
@@ -744,10 +757,21 @@ void putCaptureTime( uint16_t time, uint32_t value )
 						if ( ( parity & 1 ) == 0 )
 						{
 //							SoftCounter += 1 ;
-							put_fifo64( &CaptureRx_fifo, Byte ) ;
+							if ( CaptureMode == CAP_SERIAL )
+							{
+								put_fifo64( &Sbus_fifo, Byte ) ;
+//								put_fifo64( &CaptureRx_fifo, Byte ) ;
+							}
+							else
+							{
+								put_fifo64( &CaptureRx_fifo, Byte ) ;
+							}
 						}
 						else
 						{
+	SaveStime[SaveSerialIndex].time = 0xFFFF ;
+	SaveStime[SaveSerialIndex].value = 'P' ;
+	SaveSerialIndex += 1 ;
 //							ParityTime = SaveTime ;
 //							ParityByte = Byte ;
 							USART_PE += 1 ;
@@ -777,6 +801,7 @@ void putCaptureTime( uint16_t time, uint32_t value )
 						put_fifo64( &CaptureRx_fifo, Byte ) ;
 					}
 					BitState = BIT_IDLE ;
+					time = 0 ;
 					break ;
 				}
 				else
@@ -1194,16 +1219,12 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	
 }
 
-//extern uint16_t MavDebug1 ;
-
 uint32_t txPdcCom1( struct t_serial_tx *data )
 {
   register Usart *pUsart = SECOND_USART;
 
-//	MavDebug1 += 1 ;
 	if ( pUsart->US_TCR == 0 )
 	{
-//		MavDebug1 += 0x0100 ;
 		Current_Com1 = data ;
 		data->ready = 1 ;
 #ifndef SIMU
@@ -2255,6 +2276,7 @@ void end_ppm_capture()
 
 #ifdef SERIAL_TRAINER
 
+extern uint8_t TrainerPolarity ;
 
 void setCaptureMode(uint32_t mode)
 {
@@ -2265,14 +2287,24 @@ void setCaptureMode(uint32_t mode)
 	if ( mode == CAP_SERIAL )
 	{
 		LineState = LINE_IDLE ;
-		BitTime = BIT_TIME_115K ;
-		TC1->TC_CHANNEL[0].TC_CMR = 0x00090005 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC0, A rise, B fall
+//		BitTime = BIT_TIME_115K ;
+		BitTime = BIT_TIME_100K ;
+		NVIC_SetPriority( TC3_IRQn, 1 ) ; // High to handle 100K
+		if ( TrainerPolarity )
+		{
 		// Or for inverted operation:
-//		TC1->TC_CHANNEL[0].TC_CMR = 0x00060005 ;	// 0000 0000 0000 0110 0000 0000 0000 0101, XC0, A fall, B rise
+			TC1->TC_CHANNEL[0].TC_CMR = 0x00060005 ;	// 0000 0000 0000 0110 0000 0000 0000 0101, XC0, A fall, B rise
+		}
+		else
+		{
+			TC1->TC_CHANNEL[0].TC_CMR = 0x00090005 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC0, A rise, B fall
+		}
 		TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
+		SoftSerialEvenParity = 1 ;
 	}
 	else
 	{
+		NVIC_SetPriority( TC3_IRQn, 14 ) ; // Low priority interrupt
 		TC1->TC_CHANNEL[0].TC_CMR = 0x00090005 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC0, A rise, B fall
 	}
 }
@@ -2410,39 +2442,51 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 
 	uint32_t status ;
 	status = TC1->TC_CHANNEL[0].TC_SR ;
+	SaveStime[SaveSerialIndex].time = status ;
+	SaveStime[SaveSerialIndex].value = 's' ;
+	SaveSerialIndex += 1 ;
+
 	if ( CaptureMode == CAP_SERIAL )
 	{
-		if ( status & TC_SR0_LDRBS )
-		{	// H->L edge
-			capture = TC1->TC_CHANNEL[0].TC_RB ;
-			HtoLtime = capture ;
-			if ( LineState == LINE_IDLE )
+		if ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
+		{
+			while ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
 			{
-				LineState = LINE_ACTIVE ;
-		  }
-			else
-			{
-				uint32_t time ;
-				capture -= LtoHtime ;
-				time = capture ;
-				putCaptureTime( time, 1 ) ;
+				if ( TC1->TC_CHANNEL[0].TC_IMR & TC_IMR0_LDRAS )
+				{	// L->H edge
+					capture = TC1->TC_CHANNEL[0].TC_RA ;
+					LtoHtime = capture ;
+					TC1->TC_CHANNEL[0].TC_RC = capture + (BitTime * 13) ;
+					uint32_t time ;
+					capture -= HtoLtime ;
+					time = capture ;
+					putCaptureTime( time, 0 ) ;
+					TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
+					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
+					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
+					status &= ~TC_SR0_LDRAS ;
+				}
+				else
+				{	// H->L edge
+					capture = TC1->TC_CHANNEL[0].TC_RB ;
+					HtoLtime = capture ;
+					if ( LineState == LINE_IDLE )
+					{
+						LineState = LINE_ACTIVE ;
+				  }
+					else
+					{
+						uint32_t time ;
+						capture -= LtoHtime ;
+						time = capture ;
+						putCaptureTime( time, 1 ) ;
+					}
+					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS ;		// Int on rising edge
+					TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
+					TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
+					status &= ~TC_SR0_LDRBS ;
+				}
 			}
-			TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS ;		// Int on rising edge
-			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
-			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
-		}
-		else if ( status & TC_SR0_LDRAS )
-		{	// L->H edge
-			capture = TC1->TC_CHANNEL[0].TC_RA ;
-			LtoHtime = capture ;
-			TC1->TC_CHANNEL[0].TC_RC = capture + (BitTime * 10) ;
-			uint32_t time ;
-			capture -= HtoLtime ;
-			time = capture ;
-			putCaptureTime( time, 0 ) ;
-			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
-			TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
-			TC1->TC_CHANNEL[0].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
 		}
 		else
 		{ // Compare interrupt
@@ -2601,11 +2645,8 @@ void disable_ssc()
 	sscptr->SSC_CR = SSC_CR_TXDIS ;
 }
 
-//uint16_t SSCdebug ;
-
 extern "C" void SSC_IRQHandler()
 {
-//	SSCdebug += 1 ;
 	if ( SSC->SSC_IMR & SSC_IMR_TXBUFE )
 	{
 		SSC->SSC_IDR = SSC_IDR_TXBUFE ;	// Stop interrupt
@@ -3008,7 +3049,7 @@ extern uint16_t BtCounters[4] ;
 }
 #endif
 
-static void start_timer11()
+void start_timer11()
 {
 #ifndef SIMU
 

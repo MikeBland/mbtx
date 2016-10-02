@@ -65,15 +65,6 @@
 #define MAVLINK_MSG_ID_RADIO 166
 
 
-// Debug info
-uint16_t Msg35count ;
-uint16_t Msg165count ;
-uint16_t Msg166count ;
-uint16_t Msg35crc ;
-uint16_t Msg165crc ;
-uint16_t Msg166crc ;
-
-
 #if 0
 
 MAVLINK_HELPER uint16_t mavlink_finalize_message_chan(mavlink_message_t* msg, uint8_t system_id, uint8_t component_id, 
@@ -592,31 +583,27 @@ float gpsDdToDmsFormat(float ddm)
    return (float)deg * 100.0f + (int)min_dec + sec / 100.0f;
 }
 
-void makeRateRequest()
-{
-  const int  maxStreams = 7;
-  const unsigned short MAVStreams[maxStreams] =
-	{
-      MAV_DATA_STREAM_RAW_SENSORS,
-      MAV_DATA_STREAM_EXTENDED_STATUS,
-      MAV_DATA_STREAM_RC_CHANNELS,
-      MAV_DATA_STREAM_POSITION,
-      MAV_DATA_STREAM_EXTRA1, 
-      MAV_DATA_STREAM_EXTRA2,
-      MAV_DATA_STREAM_EXTRA3
-  };
+//void makeRateRequest()
+//{
+//  const int  maxStreams = 7;
+//  const unsigned short MAVStreams[maxStreams] =
+//	{
+//      MAV_DATA_STREAM_RAW_SENSORS,
+//      MAV_DATA_STREAM_EXTENDED_STATUS,
+//      MAV_DATA_STREAM_RC_CHANNELS,
+//      MAV_DATA_STREAM_POSITION,
+//      MAV_DATA_STREAM_EXTRA1, 
+//      MAV_DATA_STREAM_EXTRA2,
+//      MAV_DATA_STREAM_EXTRA3
+//  };
     
-	const unsigned int MAVRates[maxStreams] = {0x02, 0x02, 0x02, 0x02, 0x05, 0x05, 0x02};
+//	const unsigned int MAVRates[maxStreams] = {0x02, 0x02, 0x02, 0x02, 0x05, 0x05, 0x02};
 //  for (int i=0; i < maxStreams; i++)
 //	{
 //    mavlink_msg_request_data_stream_send(MAVLINK_COMM_0,
 //      apm_mav_system, apm_mav_component, MAVStreams[i], MAVRates[i], 1);
 //  }
-}
-
-//uint16_t MavDebug1 ;
-//uint16_t MavDebug2 ;
-//uint16_t MavDebug3 ;
+//}
 
 uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_status_t* r_mavlink_status)
 {
@@ -635,11 +622,6 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 	int bufferIndex = 0;
 
 	status->msg_received = 0;
-
-//	if ( DebugOutputOn )
-//	{
-//		twoHex( c ) ;
-//	}
 
 	switch (status->parse_state)
 	{
@@ -700,18 +682,18 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 			rxmsg->msgid = c;
 			
 // Debug			
-			if ( c == 35 )
-			{
-				Msg35count += 1 ;
-			}
-			else if ( c == 165 )
-			{
-				Msg165count += 1 ;
-			}
-			else if ( c == 166 )
-			{
-				Msg166count += 1 ;
-			}
+//			if ( c == 35 )
+//			{
+//				Msg35count += 1 ;
+//			}
+//			else if ( c == 165 )
+//			{
+//				Msg165count += 1 ;
+//			}
+//			else if ( c == 166 )
+//			{
+//				Msg166count += 1 ;
+//			}
 // End debug
 
 			mavlink_update_checksum(rxmsg, c);
@@ -752,18 +734,18 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 //	}
 
 // Debug			
-				if ( rxmsg->compid == 35 )
-				{
-					Msg35crc += 1 ;
-				}
-				else if ( rxmsg->compid == 165 )
-				{
-					Msg165crc += 1 ;
-				}
-				else if ( rxmsg->compid == 166 )
-				{
-					Msg166crc += 1 ;
-				}
+//				if ( rxmsg->compid == 35 )
+//				{
+//					Msg35crc += 1 ;
+//				}
+//				else if ( rxmsg->compid == 165 )
+//				{
+//					Msg165crc += 1 ;
+//				}
+//				else if ( rxmsg->compid == 166 )
+//				{
+//					Msg166crc += 1 ;
+//				}
 // End debug
 				
 				status->parse_error++;
@@ -797,18 +779,18 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 //	}
 				
 // Debug			
-				if ( rxmsg->compid == 35 )
-				{
-					Msg35crc += 1 ;
-				}
-				else if ( rxmsg->compid == 165 )
-				{
-					Msg165crc += 1 ;
-				}
-				else if ( rxmsg->compid == 166 )
-				{
-					Msg166crc += 1 ;
-				}
+//				if ( rxmsg->compid == 35 )
+//				{
+//					Msg35crc += 1 ;
+//				}
+//				else if ( rxmsg->compid == 165 )
+//				{
+//					Msg165crc += 1 ;
+//				}
+//				else if ( rxmsg->compid == 166 )
+//				{
+//					Msg166crc += 1 ;
+//				}
 // End debug
 				
 				status->parse_error++;

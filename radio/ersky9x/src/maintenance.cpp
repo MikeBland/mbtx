@@ -854,14 +854,6 @@ void menuChangeId(uint8_t event)
 		lcd_outhex4( 25, 6*FH, AppId ) ;
 	}
 
-//extern uint16_t TelemetryDebug ;
-//extern uint16_t TelemetryDebug1 ;
-//extern uint16_t TelemetryDebug2 ;
-//extern uint16_t TelemetryDebug3 ;
-//	lcd_outhex4( 0, 6*FH, TelemetryDebug ) ;
-//	lcd_outhex4( 25, 6*FH, TelemetryDebug1 ) ;
-//	lcd_outhex4( 50, 6*FH, TelemetryDebug2 ) ;
-//	lcd_outhex4( 75, 6*FH, TelemetryDebug3 ) ;
 }
 
 void menuUp1(uint8_t event)

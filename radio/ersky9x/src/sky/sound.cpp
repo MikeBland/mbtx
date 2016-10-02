@@ -77,10 +77,6 @@ extern uint8_t CurrentVolume ;
 //volatile uint8_t Buzzer_count ;
 
 uint32_t CoProcTimer ;
-//uint32_t Debug_I2C_event ;
-//uint32_t Debug_I2C_restart ;
-//uint32_t Debug_I2C_index ;
-//uint32_t Debug_I2C_value[8] ;
 
 
 struct t_sound_globals Sound_g ;
@@ -460,7 +456,6 @@ void sound_5ms()
 	{
 		if ( --CoProcTimer == 0 )
 		{
-//			Debug_I2C_restart += 1 ;
 			init_twi() ;
 		}
 	}
@@ -663,10 +658,6 @@ void endVoice()
 		Sound_g.VoiceActive = 0 ;
 	}
 
-//	else
-//	{
-//		DebugVoice += 1 ;
-//	}
 }
 
 void appendVoice( uint32_t index )		// index of next buffer
@@ -1065,7 +1056,6 @@ uint32_t readI2cEncoder( uint8_t *ptrData )
 	return 1 ;
 }
 
-//uint32_t ErtcDebug ;
 void readExtRtc()
 {
 	ExtRtcI2cRequest.mmr = 0x00681100 ;	// reading, 1 byte addr
@@ -1074,7 +1064,6 @@ void readExtRtc()
 	ExtRtcI2cRequest.dataBuffer = ExternalRtc ;
 	ExtRtcI2cRequest.operationType = TWI_READ_BUFFER ;
 	ExtRtcI2cRequest.speed = TWI_LOW_SPEED ;
-//	ErtcDebug += 256 ;
 	submitI2cRequest( &ExtRtcI2cRequest ) ;
 }
 
@@ -1082,7 +1071,6 @@ void pollForRtcComplete()
 {
 	if ( ExtRtcI2cRequest.done )
 	{
-//		ErtcDebug |= 0x80 ;
 		ExtRtcI2cRequest.done = 0 ;
 		Rtc_valid = 1 ;
 		// Set the date and time
@@ -1125,8 +1113,6 @@ void i2c_check_for_request()
 {
 	if ( TWI0->TWI_IMR & TWI_IMR_TXCOMP )
 	{
-//		ErtcDebug |= 0x40 ;
-		
 		return ;		// Busy
 	}
 //#if 0
@@ -1134,7 +1120,6 @@ void i2c_check_for_request()
 
 	if ( I2cHeadPointer )
 	{
-//		ErtcDebug |= 1 ;
 		I2cCurrentPointer = I2cHeadPointer ;
 		I2cHeadPointer = I2cHeadPointer->next ;
 		
@@ -1169,7 +1154,6 @@ void i2c_check_for_request()
 		}
 		else if ( I2cCurrentPointer->operationType == TWI_READ_BUFFER )
 		{
-//			ErtcDebug |= 2 ;
 			TwiOperation = TWI_READ_BUFFER ;
 #ifndef SIMU
 			TWI0->TWI_RPR = (uint32_t)I2cCurrentPointer->dataBuffer ;
@@ -1213,11 +1197,6 @@ void i2c_check_for_request()
 		{
 			(void) TWI0->TWI_RHR ;
 		}
-
-//		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-//		{
-//			Debug_I2C_event += 1 ;
-//		}
 
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx

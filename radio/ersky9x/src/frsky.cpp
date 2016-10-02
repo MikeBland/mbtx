@@ -37,9 +37,6 @@
 #include "sound.h"
 #include "mavlink.h"
 
-// DEBUG *********
-//uint32_t CellsDebug[3] ;
-
 void txmit( uint8_t c ) ;
 
 #define TEL_TYPE_FRSKY_HUB		0
@@ -431,10 +428,6 @@ void store_hub_data( uint8_t index, uint16_t value )
   				FrskyBattCells[0]=battnumber+1;
   			}
   		}
-//			if ( battnumber < 3 )
-//			{
-//				CellsDebug[battnumber] = value ;
-//			}
 			store_cell_data( battnumber, ( ( value & 0x0F ) << 8 ) + (value >> 8) ) ;
 		}
 		if ( index == FR_RPM )			// RPM
@@ -457,7 +450,6 @@ void store_hub_data( uint8_t index, uint16_t value )
 	}	
 }
 
-//#define DEBUG_MAVLINK	1
 #ifdef DEBUG_MAVLINK
 uint16_t Mcounter ;
 #endif
@@ -886,15 +878,7 @@ uint16_t DsmControlCounter ;
 uint16_t DsmDbgCounters[20] ;
 extern uint16_t DsmFrameRequired ;
 uint16_t TelRxCount ;
-//uint16_t TelemetryDebug ;
-//uint16_t TelemetryDebug1 ;
-//uint16_t TelemetryDebug2 ;
-//uint16_t TelemetryDebug3 ;
-//uint16_t TelemetryDebug4 ;
 
-//#ifdef ASSAN
-//extern void putProtocolDebug( uint8_t byte ) ;
-//#endif
 
 void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 {
@@ -904,10 +888,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	static uint8_t newMode ;
 	static uint8_t newCount ;
 #endif
-
-//extern uint16_t AssanDebug1 ;
-
-//		AssanDebug1 += 1 ;
 
 	DsmDbgCounters[10] = packet[0] ;
 	DsmDbgCounters[11] = packet[1] ;
@@ -928,13 +908,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		uint16_t csum2 ;
 #endif
 
-//extern struct t_fifo64 HexStreamFifo ;
-//	for ( type = 0 ; type < byteCount ; type += 1 )
-//	{
-//		put_fifo64( &HexStreamFifo, p[type] ) ;
-//	}
-
-//		TelemetryDebug2 = byteCount ;
 		if ( byteCount >= 20 )
 		{
 			uint16_t csum = 0 ;
@@ -961,17 +934,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #endif
 		}
 		
-//putProtocolDebug( '<' ) ;
-//putProtocolDebug( p[0] ) ;
-//putProtocolDebug( p[1] ) ;
-//putProtocolDebug( p[2] ) ;
-//putProtocolDebug( p[3] ) ;
-//putProtocolDebug( p[4] ) ;
-//putProtocolDebug( p[5] ) ;
-//putProtocolDebug( p[6] ) ;
-		
-//		DsmDebug[0] = *packet++ ;	// Work mode
-
 		if (p[0] & ORTX_BIND_FLAG )
 		{
 			if ( p[2] == 3 )
@@ -1005,16 +967,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				DsmControlDebug[ivalue] = *packet++ ;
 			}
 		}
-//		else
-//		{
-//			for ( ivalue = 2 ; ivalue < 18 ; ivalue += 1 )
-//			{
-//				DsmDebug[ivalue] = *packet++ ;
-//			}
-////			TelemetryDebug = *packet++ ;
-////			TelemetryDebug1 = *packet++ ;
-//		}
-//		return ;
 		packet = p + 1 ;
 		type = *packet++ & 0x1F ;
 		if ( type == 0 )
@@ -1029,22 +981,9 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #endif
 	{
 		
-//#ifdef ASSAN
-//uint8_t *p = packet ;
-//putProtocolDebug( '<' ) ;
-//putProtocolDebug( p[0] ) ;
-//putProtocolDebug( p[1] ) ;
-//putProtocolDebug( p[2] ) ;
-//putProtocolDebug( p[3] ) ;
-//putProtocolDebug( p[4] ) ;
-//putProtocolDebug( p[5] ) ;
-//putProtocolDebug( p[6] ) ;
-//#endif //ASSAN		
 		packet += 1 ;			// Skip the 0xAA
 		type = *packet++ ;
 	}
-
-//	TelemetryDebug = (type << 8 ) | *packet ;
 
 	if ( type && (type < 0x20) )
 	{
@@ -1067,7 +1006,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			{
 				DsmDebug[i] = *p++ ;
 			}
-//			TelemetryDebug2 += 1 ;
 		}
 		// End debug code
 		 
@@ -1314,21 +1252,20 @@ static bool checkSportPacket()
   return (crc == 0x00ff) ;
 }
 
-//uint16_t FsDebug ;
+
+uint8_t ARDUPtype ;
 
 void processSportPacket()
 {
 	uint8_t *packet = frskyRxBuffer ;
   uint8_t  prim   = packet[1];
 //  uint16_t appId  = *((uint16_t *)(packet+2)) ;
-//	TelemetryDebug1 += 1 ;
 
 	if ( MaintenanceRunning )
 	{
 		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
 		return ;
 	}
-//	TelemetryDebug2 += 1 ;
 	 
   if ( !checkSportPacket() )
 	{
@@ -1349,7 +1286,6 @@ void processSportPacket()
 					{
 						frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
 					}
-//					FsDebug = packet[2] | 0x8000 ;
 				}
 				else
 				{
@@ -1357,7 +1293,6 @@ void processSportPacket()
 					{
 						SportStreamingStarted = 1 ;
 						frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
-//						FsDebug = packet[2] | 0x4000 ;
 					}
 				}
 			}
@@ -1413,7 +1348,6 @@ void processSportPacket()
 		{ // old sensors
   	  frskyUsrStreaming = 255 ; //FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
 			frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
-//			FsDebug = packet[2] | 0x2000 ;
 			uint16_t value = (*((uint16_t *)(packet+4))) ;
 			store_indexed_hub_data( packet[2], value ) ;
 		}
@@ -1421,11 +1355,8 @@ void processSportPacket()
 		{ // new sensors
 			frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
   	  frskyUsrStreaming = 255 ; //FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
-//			FsDebug = packet[2] | 0x1000 ;
 			uint8_t id = (packet[3] << 4) | ( packet[2] >> 4 ) ;
 			uint32_t value = (*((uint32_t *)(packet+4))) ;
-//			SportId = id ;
-//			SportValue = value ;
 
 			switch ( id )
 			{
@@ -1463,20 +1394,6 @@ void processSportPacket()
 					}
 					uint16_t cell ;
 					battnumber &= 0x0F ;
-
-// DEBUG ************ 
-//					if ( battnumber == 0 )
-//					{
-//						CellsDebug[0] = value ;
-//					}
-//					else if ( battnumber == 2 )
-//					{
-//						CellsDebug[1] = value ;
-//					}
-//					else if ( battnumber == 4 )
-//					{
-//						CellsDebug[2] = value ;
-//					}
 
 					value >>= 8 ;
 					cell = value ;
@@ -1599,13 +1516,94 @@ void processSportPacket()
 					store_hub_data( FR_AIRSPEED, value ) ;
 				break ;
 
-				case CandF_ID_8 :
-					if ( (packet[2] & 0x0F ) == CandF_AP_STAT_ID )
+				case ARDUP_ID_8 :
+					if ( ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
 					{
-						// bits 0-4 Control mode
-						// bit 8 Armed
-						store_hub_data( FR_BASEMODE, value & 0x0100 ? 0x80 : 0 ) ;
-						store_hub_data( FR_TEMP1, value & 0x1F ) ;
+						uint32_t t ;
+						t = packet[2] & 0x0F ;
+						if ( t == ARDUP_AP_STAT_ID )
+						{
+							// bits 0-4 Control mode
+							// bit 8 Armed
+							store_hub_data( FR_BASEMODE, value & 0x0100 ? 0x80 : 0 ) ;
+							store_hub_data( FR_TEMP1, (value & 0x1F) | ( ARDUPtype << 8 ) ) ;
+						}
+						else if ( t == ARDUP_GPS_STAT_ID )
+						{
+							uint16_t xvalue ;
+							// Bits 0-3 #Sats
+							// Bits 4-5 GPs Fix NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D
+							// Bits 6-13 HDOP  7 bits for value, 8th bit is 10^x
+							// Bits 14-21 VDOP
+							// Bits 22-30 GPS Alt? 7 bits for data, 8 and 9th bits 10^x
+							xvalue = value & 0x000F ;	// #sats
+							xvalue *= 10 ;
+							xvalue += (value >>4) & 0x0003 ;	// GPS Fix mode
+							FrskyHubData[FR_TEMP2] = xvalue ;
+							xvalue = (value >> 7) & 0x7F ;
+							if ( value & 0x0000040 )
+							{
+								xvalue *= 10 ;
+							}
+							FrskyHubData[FR_GPS_HDOP] = xvalue * 10 ;
+							xvalue = (value >> 24) & 0x7F ;
+							value >>= 22 ;
+							value &= 0x03 ;
+							while ( value )
+							{
+								xvalue *= 10 ;
+								value -= 1 ;
+							}
+							store_hub_data( FR_GPS_ALT, xvalue ) ;
+						}
+						else if ( t == ARDUP_BATT_ID )
+						{
+							uint16_t xvalue ;
+	//						xvalue = value & 0x01FF ;	// #battery in 0.1V
+							xvalue = (value >> 10) & 0x7F ;
+							if ( value & 0x0000200 )
+							{
+								xvalue *= 10 ;
+							}
+							store_hub_data( FR_CURRENT, xvalue ) ;
+							xvalue = (value >> 17) ;
+							store_hub_data( FR_AMP_MAH, xvalue ) ;
+						}
+						else if ( t == ARDUP_PARAM_ID )
+						{
+							uint32_t id ;
+							id = value >> 24 ;
+							value &= 0x00FFFFFF ;
+
+							if ( id == 1 )
+							{
+								ARDUPtype = value ;
+							}
+	//						else if ( id == 2 )
+	//						{
+//2: FailSafe batt voltage in centivolts
+	//						}
+	//						else if ( id == 3 )
+	//						{
+//3: Failsafe Batt capacity in mAh
+	//						}
+							else if ( id == 4 )
+							{
+								uint32_t xvalue ;
+								xvalue = FrskyHubData[FR_AMP_MAH] * 100 ;
+								if ( value )
+								{
+									store_hub_data( FR_FUEL, 100 - (xvalue / value) ) ;
+								}
+							}
+						}
+						else if ( t == ARDUP_HOME_ID )
+						{
+							uint16_t xvalue ;
+							xvalue = value >> 25 ;
+							xvalue *= 3 ;
+							store_hub_data( FR_HOME_DIR, xvalue ) ;
+						}
 					}
 				break ;
 
@@ -2122,9 +2120,6 @@ void telemetry_init( uint8_t telemetryType )
 	}
 }
 
-//uint16_t TelDebug ;
-
-
 // brate values
 // 0 FrSky hub / Multi
 // 1 FrSky SPort
@@ -2548,10 +2543,6 @@ void resetTelemetry()
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
 }
 
-//uint16_t Debug_frsky1 ;
-//uint16_t Debug_frsky2 ;
-//uint16_t Debug_frsky3 ;
-
 void (*TelemetryReceiver)(uint8_t x) = frsky_receive_byte ;
 
 uint8_t decodeTelemetryType( uint8_t telemetryType )
@@ -2650,27 +2641,18 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 			}
 		break ;
 	}
-//	Debug_frsky1 = type ;
 	return type ;
 }
-
-//uint8_t TelDebug1 ;
-//uint8_t TelDebug2 ;
-
-//uint16_t Frsky4RxCount ;
 
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
 {
   // Used to detect presence of valid FrSky telemetry packets inside the
   // last FRSKY_TIMEOUT10ms 10ms intervals
-//Debug_frsky1 += 1 ;
 	uint8_t telemetryType = g_model.telemetryProtocol ;
 	uint8_t type ;
 
 	type = decodeTelemetryType( telemetryType ) ;
-//	TelDebug1 = type ;
-//	TelDebug2 = telemetryType ;
 
 #ifdef PCBSKY
 	if ( ( type != TelemetryType )
@@ -2679,22 +2661,9 @@ void check_frsky( uint32_t fivems )
 #if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
-//	if ( telemetryType != FrskyTelemetryType )
 #endif
 	{
-#ifdef ASSAN
-//		if ( g_model.xprotocol == PROTO_ASSAN )
-//		{
-//			if ( type != TelemetryType )
-//			{
-//				telemetry_init( type ) ;
-//			}
-//		}
-//		else
-#endif
-		{
-			telemetry_init( type ) ;
-		}
+		telemetry_init( type ) ;
 	}
 
 #ifdef PCBSKY
@@ -2704,7 +2673,6 @@ void check_frsky( uint32_t fivems )
 		int32_t value ;
 		while ( (value = getJetiWord()) != -1 )
 		{
-//			Debug_frsky2 += 1 ;
 			// send byte to JETI code
 			if ( ( value & 0x0100 ) == 0 )
 			{
@@ -2793,15 +2761,7 @@ void check_frsky( uint32_t fivems )
 			{
 				while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
 				{
-	//Debug_frsky2 += 1 ;
-//				if ( MaintenanceRunning )
-//				{
-//					maintenance_receive_byte( rxchar ) ;
-//				}
-//				else
-//				{
 					frsky_receive_byte( rxchar ) ;
-//				}
 				}
 			}
 		}
@@ -2809,7 +2769,6 @@ void check_frsky( uint32_t fivems )
 		{
 			while ( ( rxchar = rxuart() ) != 0xFFFF )
 			{
-//				Frsky4RxCount += 1 ;
 				frsky_receive_byte( rxchar ) ;
 			}
 		}

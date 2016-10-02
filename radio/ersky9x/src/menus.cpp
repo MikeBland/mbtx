@@ -81,9 +81,9 @@ void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 static struct fileControl FileControl = {	0,0,0,0, {0,0,0,0} } ;
 struct fileControl PlayFileControl = {	0,0,0,0, {0,0,0,0} } ;
 
-#ifdef SPLASH_DEBUG
-extern uint16_t SplashDebug[] ;
-#endif
+//#ifdef SPLASH_DEBUG
+//extern uint16_t SplashDebug[] ;
+//#endif
 
 #ifdef PCBX9D
 extern uint8_t ImageDisplay ;
@@ -6697,9 +6697,7 @@ void menuRangeBind(uint8_t event)
 	lcd_puts_Pleft( 2*FH, (binding) ? PSTR(STR_6_BINDING) : PSTR(STR_RANGE_RSSI) ) ;
 //#ifdef PCBX9D
 //	lcd_outhex4( 0, 7*FH, pxxFlag ) ;
-//extern uint8_t DebugDsmPass ;
 //extern uint8_t DebugDsmFlag ;
-//	lcd_outhex4( 25, 7*FH, DebugDsmPass ) ;
 //	lcd_outhex4( 50, 7*FH, DebugDsmFlag ) ;
 //#endif
 
@@ -8403,7 +8401,7 @@ uint8_t blink = InverseBlink ;
 			if ( sub == subN )
 			{
 				attr = blink ;
-  		  CHECK_INCDEC_H_MODELVAR_0( svalue, 62 ) ;
+//  		  CHECK_INCDEC_H_MODELVAR_0( svalue, 62 ) ;
 			}
 			displayMultiProtocol( svalue, y, attr ) ;
 //			if ( svalue <= M_LAST_MULTI )
@@ -8885,14 +8883,14 @@ void menuProcModelSelect(uint8_t event)
 
 	if ( PopupData.PopupActive )
 	{
-		uint8_t mask ;
+		uint16_t mask ;
 		if ( g_eeGeneral.currModel == mstate2.m_posVert )
 		{
 			mask = 0x59 ;
 		}
 		else
 		{
-			mask = ( eeModelExists( mstate2.m_posVert ) == 0 ) ?  0x86 :  0x7E ;
+			mask = ( eeModelExists( mstate2.m_posVert ) == 0 ) ?  0x86 :  0x017E ;
 		}
 
 		uint8_t popaction = doPopup( PSTR(STR_MODEL_POPUP), mask, 10, event ) ;
@@ -8973,6 +8971,15 @@ void menuProcModelSelect(uint8_t event)
 			}
 			else if( popidx == 7 )	// restore
 			{
+				RestoreIndex = mstate2.m_posVert+1 ;
+       	pushMenu( menuProcRestore ) ;				
+			}
+			else if( popidx == 8 )	// replace
+			{
+				WatchdogTimeout = 200 ;		// 2 seconds
+				BackResult = ee32BackupModel( mstate2.m_posVert+1 ) ;
+				AlertType = MESS_TYPE ;
+				AlertMessage = BackResult ;
 				RestoreIndex = mstate2.m_posVert+1 ;
        	pushMenu( menuProcRestore ) ;				
 			}
@@ -9272,8 +9279,6 @@ uint8_t Current_count ;
 #ifdef PCBX9D
 #define NUM_ANA_ITEMS		2
 #endif
-
-//extern uint16_t AdcDebug[8] ;
 
 void menuProcDiagAna(uint8_t event)
 {
@@ -10546,45 +10551,11 @@ void menuProcMusic(uint8_t event)
 		lcd_char_inverse( 7*FW, 5*FH, 36, 0 ) ;
 	}
 
-
-//extern TCHAR VoiceFilename[] ;
-
-//	lcd_puts_Pleft( 5*FH, (char *) VoiceFilename ) ;
-
-
-//extern uint16_t DebugMusic1 ;
-//extern uint16_t DebugMusic2 ;
-//extern uint16_t DebugMusic3 ;
-//extern uint16_t DebugMusic4 ;
-//extern uint16_t DebugMusic5 ;
-//extern uint16_t DebugMusic6 ;
 extern uint32_t BgSizePlayed ;
 extern uint32_t BgTotalSize ;
 
 		lcd_hbar( 10, 57, 101, 6, (BgTotalSize - BgSizePlayed) * 100 / BgTotalSize ) ;
 	
-//	lcd_putsAtt( 7*FW, 4*FH, PlaylistDirectory, 0 ) ;
-
-//	lcd_outhex4( 60, 4*FH, BgSizeLeft >> 16 ) ;
-//	lcd_outhex4( 90, 4*FH, BgSizeLeft ) ;
-
-
-//	lcd_outhex4( 0, 6*FH, DebugMusic1 ) ;
-//	lcd_outhex4( 30, 6*FH, DebugMusic2 ) ;
-//	lcd_outhex4( 60, 6*FH, DebugMusic3 ) ;
-//	lcd_outhex4( 90, 6*FH, DebugMusic4 ) ;
-
-// Debug
-	
-//	lcd_outhex4( 0, 6*FH, MusicPlaying ) ;
-//	lcd_outhex4( 30, 6*FH, MusicInterrupted ) ;
-
-//  lcd_outdezAtt(20*FW , 6*FH, rows, 0 ) ;
-
-//extern uint16_t g_timeAppendVoice ;
-//extern uint16_t g_timeAppendMaxVoice ;
-//	lcd_outhex4( 90, 5*FH, g_timeAppendVoice ) ;
-//	lcd_outhex4( 90, 4*FH, g_timeAppendMaxVoice ) ;
 }
 
 void menuProcMusicList(uint8_t event)
@@ -11068,9 +11039,9 @@ extern uint16_t TelRxCount ;
 
 
 uint8_t TrainerMode ;
-uint8_t TrainerPos ;
-uint8_t TrainerDebugData[16] ;
-uint16_t TdebugCounter ;
+//uint8_t TrainerPos ;
+//uint8_t TrainerDebugData[16] ;
+//uint16_t TdebugCounter ;
 uint8_t TrainerPolarity ;
 
 void setCaptureMode(uint32_t mode) ;
@@ -11088,74 +11059,116 @@ void menuProcTrainDdiag(uint8_t event)
 	lcd_putsAttIdx(16*FW, 2*FH, XPSTR("\003NegPos"), TrainerPolarity, (sub == 2) ? INVERS : 0 ) ;
 	if(sub==1)
   {
-#ifdef PCBSKY
 		uint8_t b = TrainerMode ;
-#endif	// PCBSKY
 		TrainerMode = checkIncDec16( TrainerMode, 0, 2, 0 ) ;
-#ifdef PCBSKY
-		if ( g_model.protocol == PROTO_MULTI )
+#ifndef REVX
+		if ( g_model.telemetryRxInvert )
 		{
 			TrainerMode = 0 ;	// software serial in use
 		}
+#endif	// nREVX
 		if ( TrainerMode != b )
 		{
 			if ( TrainerMode == 2 )
 			{
+#ifdef PCBSKY
 				setCaptureMode( 0 ) ;			
+#else
+				init_trainer_capture( 0 ) ;
+#endif
 				init_software_com1( 9600, 0, 0 ) ;
 			}
 			else
 			{
+#ifdef PCBSKY
 				configure_pins( (PIO_PA5 | PIO_PA6), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
 				setCaptureMode( TrainerMode ) ;			
+#else
+				init_trainer_capture( TrainerMode ) ;
+#endif
 			}
 		}
-#endif	// PCBSKY
   }
 	else if(sub==2)
   {
+		uint8_t b = TrainerPolarity ;
 		TrainerPolarity = checkIncDec16( TrainerPolarity, 0, 1, 0 ) ;
+		if ( TrainerPolarity != b )
+		{
+			if ( TrainerMode == 1 )
+			{
+#ifdef PCBSKY
+				setCaptureMode( TrainerMode ) ;			
+#else
+				init_trainer_capture( TrainerMode ) ;
+#endif
+			}
+		}
 	}	
+
 	
-	uint32_t i ;
-	for ( i = 0 ; i < 16 ; i += 1 )
-	{
-		if ( TrainerDebugData[i] )
-		{
-			lcd_putc( i*FW, 4*FH, TrainerDebugData[i] ) ;
-		}
-		else
-		{
-			lcd_putc( i*FW, 4*FH, ' ' ) ;
-		}
-	}
+//#if defined(PCBX9D) || defined(PCB9XT)
+//extern uint16_t TIM3Captures ;
+//extern uint16_t SbusCounter ;
+//extern uint16_t SbusCounter1 ;
+//extern uint16_t SoftCounter ;
+//	lcd_outhex4( 60, 3*FH, TIM3Captures ) ;
+//	lcd_outhex4( 90, 3*FH, SbusCounter ) ;
+//	lcd_outhex4( 60, 4*FH, SbusCounter1 ) ;
+//	lcd_outhex4( 90, 4*FH, SoftCounter ) ;
 
-	uint16_t rxchar ;
-	while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
-	{
-		TdebugCounter += 1 ;
-		TrainerDebugData[TrainerPos++] = rxchar ;
-		if ( TrainerPos > 15 )
-		{
-			TrainerPos = 0 ;
-		}
-	}
+//extern uint16_t USART_PE ;
+//  lcd_outdezAtt( 20*FW , 7*FH, USART_PE, 0 ) ;
+//#endif
 
-// Mavlink debug
-extern uint16_t Msg35count ;
-extern uint16_t Msg165count ;
-extern uint16_t Msg166count ;
-extern uint16_t Msg35crc ;
-extern uint16_t Msg165crc ;
-extern uint16_t Msg166crc ;
+//extern uint16_t CapTimes[12] ;
+//extern uint16_t CapLevels[12] ;
 
-  lcd_puts_Pleft( 5*FH, XPSTR("35\037165\037166") ) ;
-	lcd_outdez( 10*FW, 5*FH, Msg35count ) ;
-	lcd_outdez( 10*FW, 6*FH, Msg165count ) ;
-	lcd_outdez( 10*FW, 7*FH, Msg166count ) ;
-	lcd_outdez( 17*FW, 5*FH, Msg35crc ) ;
-	lcd_outdez( 17*FW, 6*FH, Msg165crc ) ;
-	lcd_outdez( 17*FW, 7*FH, Msg166crc ) ;
+//	lcd_outhex4( 0, 3*FH, CapTimes[0] ) ;
+//	lcd_outhex4( 0, 4*FH, CapTimes[1] ) ;
+//	lcd_outhex4( 0, 5*FH, CapTimes[2] ) ;
+//	lcd_outhex4( 0, 6*FH, CapTimes[3] ) ;
+//	lcd_outhex4( 0, 7*FH, CapTimes[4] ) ;
+//	lcd_outhex4( 60, 5*FH, CapTimes[5] ) ;
+//	lcd_outhex4( 60, 6*FH, CapTimes[6] ) ;
+	
+//	lcd_outhex4( 30, 3*FH, CapLevels[0] ) ;
+//	lcd_outhex4( 30, 4*FH, CapLevels[1] ) ;
+//	lcd_outhex4( 30, 5*FH, CapLevels[2] ) ;
+//	lcd_outhex4( 30, 6*FH, CapLevels[3] ) ;
+//	lcd_outhex4( 30, 7*FH, CapLevels[4] ) ;
+//	lcd_outhex4( 90, 5*FH, CapLevels[5] ) ;
+//	lcd_outhex4( 90, 6*FH, CapLevels[6] ) ;
+
+//	uint32_t i ;
+//	for ( i = 0 ; i < 16 ; i += 1 )
+//	{
+//		if ( TrainerDebugData[i] )
+//		{
+//			lcd_putc( i*FW, 4*FH, TrainerDebugData[i] ) ;
+//		}
+//		else
+//		{
+//			lcd_putc( i*FW, 4*FH, ' ' ) ;
+//		}
+//	}
+
+//	uint16_t rxchar ;
+//	while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+//	{
+//		TdebugCounter += 1 ;
+//		TrainerDebugData[TrainerPos++] = rxchar ;
+//		if ( TrainerPos > 15 )
+//		{
+//			TrainerPos = 0 ;
+//		}
+//	}
+
+
+//#ifdef PCBSKY
+//extern uint16_t USART_PE ;
+//  lcd_outdezAtt( 20*FW , 6*FH, USART_PE, 0 ) ;
+//#endif
 
 //#ifdef PCB9XT
 //extern uint32_t I2C_debug[] ;
@@ -11175,19 +11188,6 @@ extern uint16_t Msg166crc ;
 //  lcd_outhex4( 25, 7*FH, I2C_debug[6] ) ;
 //  lcd_outhex4( 60, 7*FH, I2C_debug[7] >> 16 ) ;
 //  lcd_outhex4( 85, 7*FH, I2C_debug[7] ) ;
-//#endif
-//#ifdef SPLASH_DEBUG
-//  lcd_outhex4( 0, 4*FH, SplashDebug[0] ) ;
-//  lcd_outhex4( 25, 4*FH, SplashDebug[1]) ;
-//  lcd_outhex4( 60, 4*FH, SplashDebug[2] ) ;
-//  lcd_outhex4( 85, 4*FH, SplashDebug[3] ) ;
-
-//  lcd_outhex4( 0, 5*FH,  SplashDebug[4] ) ;
-//  lcd_outhex4( 25, 5*FH, SplashDebug[5] ) ;
-//  lcd_outhex4( 60, 5*FH, SplashDebug[6] ) ;
-//  lcd_outhex4( 85, 5*FH, SplashDebug[7] ) ;
-
-//  lcd_outhex4( 0, 6*FH, SplashDebug[8] ) ;
 //#endif
 
 }
@@ -11430,14 +11430,8 @@ void menuProcDsmDdiag(uint8_t event)
 
   lcd_outhex4( 0, 1*FH, FrskyTelemetryType ) ;
   lcd_outhex4( 24, 1*FH, g_model.dsmMode ) ;
-//extern uint16_t TelemetryDebug2 ;
-//	lcd_outhex4( 48, FH, TelemetryDebug2 ) ;
 
 #ifdef PCB9XT
-//extern uint16_t TelemetryDebug ;
-//extern uint16_t TelemetryDebug1 ;
-//	lcd_outhex4( 72, FH, TelemetryDebug1 ) ;
-//	lcd_outhex4( 96, FH, TelemetryDebug ) ;
 
 extern uint8_t numPktBytes ;
 extern uint8_t frskyRxBuffer[];
@@ -11488,47 +11482,6 @@ extern uint16_t USART_ERRORS ;
 extern uint16_t USART_FE ;
   lcd_outhex4( 72, 1*FH, USART_ERRORS ) ;
   lcd_outhex4( 96, 1*FH, USART_FE ) ;
-
-//extern uint8_t TelDebug2 ;
-//extern uint8_t FrskyTelemetryType ;
-//extern uint8_t Debug_frsky1 ;
-
-//  lcd_outhex4( 0, 3*FH,  FrskyTelemetryType ) ;
-//  lcd_outhex4( 30, 3*FH,  Debug_frsky1 ) ;
-//  lcd_outhex4( 60, 3*FH,  TelDebug2 ) ;
-
-//extern uint8_t ProtocolDebug[16384] ;
-
-//	lcd_outhex4( 0 , 2*FH, (ProtocolDebug[0]<< 8) | ProtocolDebug[1] ) ;
-//	lcd_outhex4( 24, 2*FH, (ProtocolDebug[2]<< 8) | ProtocolDebug[3] ) ;
-//	lcd_outhex4( 48, 2*FH, (ProtocolDebug[4]<< 8) | ProtocolDebug[5] ) ;
-//	lcd_outhex4( 72, 2*FH, (ProtocolDebug[6]<< 8) | ProtocolDebug[7] ) ;
-
-//	lcd_outhex4( 0 , 3*FH, (ProtocolDebug[ 8]<< 8) | ProtocolDebug[ 9] ) ;
-//	lcd_outhex4( 24, 3*FH, (ProtocolDebug[10]<< 8) | ProtocolDebug[11] ) ;
-//	lcd_outhex4( 48, 3*FH, (ProtocolDebug[12]<< 8) | ProtocolDebug[13] ) ;
-//	lcd_outhex4( 72, 3*FH, (ProtocolDebug[14]<< 8) | ProtocolDebug[15] ) ;
-
-//	lcd_outhex4( 0 , 4*FH, (ProtocolDebug[16]<< 8) | ProtocolDebug[17] ) ;
-//	lcd_outhex4( 24, 4*FH, (ProtocolDebug[18]<< 8) | ProtocolDebug[19] ) ;
-//	lcd_outhex4( 48, 4*FH, (ProtocolDebug[20]<< 8) | ProtocolDebug[21] ) ;
-//	lcd_outhex4( 72, 4*FH, (ProtocolDebug[22]<< 8) | ProtocolDebug[23] ) ;
-
-//	lcd_outhex4( 0 , 5*FH, (ProtocolDebug[24]<< 8) | ProtocolDebug[25] ) ;
-//	lcd_outhex4( 24, 5*FH, (ProtocolDebug[26]<< 8) | ProtocolDebug[27] ) ;
-//	lcd_outhex4( 48, 5*FH, (ProtocolDebug[28]<< 8) | ProtocolDebug[29] ) ;
-//	lcd_outhex4( 72, 5*FH, (ProtocolDebug[30]<< 8) | ProtocolDebug[31] ) ;
-
-//	lcd_outhex4( 0 , 6*FH, (ProtocolDebug[32]<< 8) | ProtocolDebug[33] ) ;
-//	lcd_outhex4( 24, 6*FH, (ProtocolDebug[34]<< 8) | ProtocolDebug[35] ) ;
-//	lcd_outhex4( 48, 6*FH, (ProtocolDebug[36]<< 8) | ProtocolDebug[37] ) ;
-//	lcd_outhex4( 72, 6*FH, (ProtocolDebug[38]<< 8) | ProtocolDebug[39] ) ;
-
-//	lcd_outhex4( 0 , 7*FH, (ProtocolDebug[40]<< 8) | ProtocolDebug[41] ) ;
-//	lcd_outhex4( 24, 7*FH, (ProtocolDebug[42]<< 8) | ProtocolDebug[43] ) ;
-//	lcd_outhex4( 48, 7*FH, (ProtocolDebug[44]<< 8) | ProtocolDebug[45] ) ;
-//	lcd_outhex4( 72, 7*FH, (ProtocolDebug[46]<< 8) | ProtocolDebug[47] ) ;
-
 #endif
 #endif
 
@@ -11579,9 +11532,6 @@ extern uint16_t DsmControlCounter ;
 //	{
 //		lcd_putc( 90, 2*FH, '-' ) ;
 //	}
-
-extern uint8_t DebugDsmPass ;
-	lcd_outhex4( 96, 2*FH, DebugDsmPass ) ;
 
 extern uint16_t DsmDbgCounters[20] ;
 	lcd_outhex4( 24, 2*FH, DsmDbgCounters[6] ) ;
@@ -12250,12 +12200,8 @@ void menuProcJeti(uint8_t event)
     }
 
 extern struct t_16bit_fifo32 Jeti_fifo ;
-//extern uint16_t Debug_frsky2 ;
-//extern uint16_t Debug_frsky3 ;
 
 	lcd_outhex4( 50,  0*FH, JetiIndex ) ;
-//	lcd_outhex4( 75,  0*FH, Debug_frsky2 ) ;
-//	lcd_outhex4( 100,  0*FH, Debug_frsky3 ) ;
 
 	lcd_outhex4( 0,  3*FH, Jeti_fifo.fifo[0] ) ;
 	lcd_outhex4( 25, 3*FH, Jeti_fifo.fifo[1] ) ;
@@ -13184,12 +13130,6 @@ void menuProc0(uint8_t event)
 //		lcd_outhex4( 20, 0, XxxCount ) ;
 //		lcd_outhex4( 60, 0, YyyCount ) ;
 
-//extern uint32_t CellsDebug[3] ;
-//		lcd_outhex4( 20, 0, CellsDebug[0] >> 16 ) ;
-//		lcd_outhex4( 44, 0, CellsDebug[0] ) ;
-//		lcd_outhex4( 20, FH, CellsDebug[1] >> 16 ) ;
-//		lcd_outhex4( 44, FH, CellsDebug[1] ) ;
-
 //#endif
 //extern uint16_t SSCdebug ;
 //lcd_outhex4( 50, 0, SSCdebug ) ;
@@ -13555,7 +13495,13 @@ extern uint8_t LogsRunning ;
 								lcd_putcAtt( 14*FW, 2*FH, FrskyHubData[FR_LAT_N_S], blink ) ;
 								lcd_putcAtt( 14*FW, 3*FH, FrskyHubData[FR_LONG_E_W], blink ) ;
 //                lcd_puts_Pleft( 4*FH, PSTR(STR_ALT_MAX)) ;
-                lcd_outdezAtt(20*FW, 4*FH, FrskyHubMaxMin.hubMax[FR_GPS_ALT], 0);
+								uint16_t alt ;
+								alt = FrskyHubMaxMin.hubMax[FR_GPS_ALT] ;
+                if ( g_model.FrSkyImperial )
+								{
+									alt = m_to_ft( alt ) ;
+								}
+                lcd_outdezAtt(20*FW, 4*FH, alt, 0);
                 lcd_outdez(20*FW, 3*FH, FrskyHubData[FR_COURSE] );
                 
 //								lcd_puts_Pleft( 5*FH, PSTR(STR_SPD_KTS_MAX)) ;
@@ -13571,12 +13517,16 @@ extern uint8_t LogsRunning ;
 								lcd_puts_Pleft( 6*FH, XPSTR("V1=\007V2=\016V3=""\037""V4=\007V5=\016V6=")) ;
               if (frskyUsrStreaming)
 							{
+								uint16_t alt ;
+								alt = FrskyHubData[FR_GPS_ALT] ;
 								mspeed = FrskyHubData[FR_GPS_SPEED] ;
                 if ( g_model.FrSkyImperial )
 								{
 									mspeed = ( mspeed * 589 ) >> 9 ;
+									alt = m_to_ft( alt ) ;
+									lcd_putc( 9*FW, 4*FH, 'f' ) ;
 								}
-								lcd_outdezAtt(8 * FW, 4*FH, FrskyHubData[FR_GPS_ALT], 0 ) ;
+								lcd_outdezAtt(8 * FW, 4*FH, alt, PREC1 ) ;
                 lcd_outdezAtt(8*FW, 5*FH, mspeed, 0);		// Speed
                 
 //								lcd_puts_Pleft( 7*FH, XPSTR("V4=\007V5=\016V6=")) ;
@@ -13807,7 +13757,12 @@ extern uint8_t LogsRunning ;
 //		 line 3 right "GPS Alt"
 #define STR_MAV_GALT         "gAl"
 								lcd_puts_P( 15 * FW-2, 3*FH, XPSTR(STR_MAV_GALT) ); // GAlt
-								lcd_outdez( 21 * FW+1, 3*FH, get_telemetry_value(TEL_ITEM_GALT) ) ;
+								val = get_telemetry_value(TEL_ITEM_GALT) ;
+								if ( g_model.FrSkyImperial )
+								{
+      					 	val = m_to_ft( val ) ;
+								}
+								lcd_outdezAtt( 21 * FW+1, 3*FH, val, PREC1 ) ;
 //		 line 4 right "Home Distance"
 #define STR_MAV_HOME         "dth"
 								lcd_puts_P( 15 * FW-2, 4*FH, XPSTR(STR_MAV_HOME) ); // home

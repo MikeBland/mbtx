@@ -313,7 +313,7 @@ v.xx.01-german
 #define ISTR_ELE_DIRECTION  "H\302H Richtung"
 #define ISTR_AIL_DIRECTION  "QUE Richtung"
 #define ISTR_COL_DIRECTION  "KOL Richtung" //Kollektive
-#define ISTR_MODEL_POPUP    "EDIT\0BEARBEI\0SEL/EDIT\0KOPIER\0BEWEGE\0L\302SCHE\0BACKUP\0RESTORE"
+#define ISTR_MODEL_POPUP    "EDIT\0BEARBEI\0SEL/EDIT\0KOPIER\0BEWEGE\0L\302SCHE\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL       "MODELWAHL"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE        "\011frei"
@@ -475,9 +475,9 @@ v.xx.01-german
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"Volume Control"
 #ifdef ASSAN
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
 #else
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 Multi"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 Multi"
 #endif
 #define ISTR_TYPE						"  Typ"
 #define ISTR_COUNTRY				"    Land"

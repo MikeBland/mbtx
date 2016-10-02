@@ -77,12 +77,18 @@ uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 	return 1 ;
 }
 
+//uint16_t SbusCounter ;
+//uint16_t SbusCounter1 ;
+
 void processSbusInput()
 {
+//	SbusCounter += 1 ;
 	uint16_t rxchar ;
 	uint32_t active = 0 ;
 	while ( ( rxchar = get_fifo64( &Sbus_fifo ) ) != 0xFFFF )
 	{
+//		SbusCounter1 += 1 ;
+		
 		active = 1 ;
 		SbusFrame[SbusIndex++] = rxchar ;
 		if ( SbusIndex > 27 )

@@ -604,7 +604,7 @@ void bootmain(void) {
       // If we are in RWW section, immediately start page erase
 	    if ( eeprom == 0 )
 			{
-#ifdef (__AVR_ATmega2561__)
+#ifdef __AVR_ATmega2561__
       	__boot_page_erase_extended((uint32_t)(uint16_t)(void*)address|(uint32_t)RAMPZ<<16);
 #else
 #if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
