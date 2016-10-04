@@ -33,7 +33,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>14</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -117,7 +117,7 @@
        </item>
        <item row="1" column="1">
         <layout class="QGridLayout" name="gridLayout_14">
-         <item row="0" column="2">
+         <item row="0" column="3">
           <layout class="QGridLayout" name="gridLayout_27">
            <item row="1" column="0">
             <widget class="QLabel" name="label_92">
@@ -383,6 +383,9 @@
          </item>
          <item row="0" column="1">
           <widget class="Line" name="line_4">
+           <property name="lineWidth">
+            <number>2</number>
+           </property>
            <property name="orientation">
             <enum>Qt::Vertical</enum>
            </property>
@@ -1649,8 +1652,11 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="2" column="1">
+       <item row="2" column="0" colspan="2">
         <widget class="Line" name="line_5">
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
          <property name="orientation">
           <enum>Qt::Horizontal</enum>
          </property>
@@ -1692,7 +1698,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>DSM2</string>
+             <string>DSM</string>
             </property>
            </item>
            <item>
@@ -2066,7 +2072,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>Frsky</string>
+             <string>FrskyD</string>
             </property>
            </item>
            <item>
@@ -2081,7 +2087,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>DSM2</string>
+             <string>DSM</string>
             </property>
            </item>
            <item>
@@ -2176,17 +2182,17 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>24</string>
+             <string>FrskyV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>25</string>
+             <string>Hontai</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>26</string>
+             <string>OpenLRS</string>
             </property>
            </item>
            <item>
@@ -2212,6 +2218,161 @@ p, li { white-space: pre-wrap; }
            <item>
             <property name="text">
              <string>31</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>32</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>33</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>34</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>35</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>37</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>38</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>39</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>40</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>41</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>42</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>43</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>44</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>45</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>46</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>47</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>48</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>49</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>50</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>51</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>52</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>53</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>54</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>55</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>56</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>57</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>58</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>59</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>60</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>61</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>62</string>
             </property>
            </item>
           </widget>
@@ -2711,7 +2872,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>Frsky</string>
+             <string>FrskyD</string>
             </property>
            </item>
            <item>
@@ -2726,7 +2887,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>DSM2</string>
+             <string>DSM</string>
             </property>
            </item>
            <item>
@@ -2821,17 +2982,17 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>24</string>
+             <string>FrskyV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>25</string>
+             <string>Hontai</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>26</string>
+             <string>OpenLRS</string>
             </property>
            </item>
            <item>
@@ -2857,6 +3018,161 @@ p, li { white-space: pre-wrap; }
            <item>
             <property name="text">
              <string>31</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>32</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>33</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>34</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>35</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>37</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>38</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>39</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>40</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>41</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>42</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>43</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>44</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>45</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>46</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>47</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>48</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>49</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>50</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>51</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>52</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>53</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>54</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>55</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>56</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>57</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>58</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>59</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>60</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>61</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>62</string>
             </property>
            </item>
           </widget>
@@ -4217,6 +4533,9 @@ p, li { white-space: pre-wrap; }
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
          </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
          <layout class="QGridLayout" name="gridLayout_10">
           <item row="2" column="0" colspan="2">
            <widget class="QComboBox" name="RUD_edrSw1"/>
@@ -4413,6 +4732,9 @@ Right</string>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
          </property>
          <layout class="QGridLayout" name="gridLayout_11">
           <item row="2" column="0" colspan="2">
@@ -4617,6 +4939,9 @@ Right</string>
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
          </property>
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
          <layout class="QGridLayout" name="gridLayout_13">
           <item row="3" column="0" colspan="2">
            <widget class="QComboBox" name="THR_edrSw1"/>
@@ -4813,6 +5138,9 @@ Left</string>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
+         </property>
+         <property name="lineWidth">
+          <number>2</number>
          </property>
          <layout class="QGridLayout" name="gridLayout_15">
           <item row="2" column="0" colspan="2">
@@ -5032,7 +5360,7 @@ Right</string>
       <attribute name="title">
        <string>Limits</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
        <item row="1" column="0">
         <widget class="QLabel" name="label_14">
          <property name="text">
@@ -6173,7 +6501,7 @@ Right</string>
          </property>
         </spacer>
        </item>
-       <item row="0" column="7">
+       <item row="0" column="8">
         <widget class="QLabel" name="label_196">
          <property name="frameShape">
           <enum>QFrame::Panel</enum>
@@ -6195,7 +6523,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="8">
+       <item row="0" column="9">
         <widget class="QLabel" name="label_197">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The values of SubTrim set the centre point of the channel and can range from -100 to 100. Increments are 0.1, giving fine resolution.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -6220,7 +6548,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="9">
+       <item row="0" column="10">
         <widget class="QLabel" name="label_198">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -6245,7 +6573,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="10">
+       <item row="0" column="11">
         <widget class="QLabel" name="label_199">
          <property name="minimumSize">
           <size>
@@ -6279,7 +6607,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="11">
+       <item row="0" column="12">
         <widget class="QLabel" name="label_200">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Limits values set the endpoints of the channel. Each limit can range between -100% and +100%, or -125% and +125% if the extended limits (E-Limits) option is ON in the Model Setup/General menu. &lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: When adjusting limits, please test to ensure that you don't cause unwanted mixing between channels or exceed servo mechanical limits.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;The limits act both as gains and as absolute limits. They reduce output proportionally to ensure that servos do not move beyond the limits you set here. &lt;/p&gt;&lt;p&gt;Turning the AUTO LIMITS option ON in the Model Setup/ General menu will allow Subtrim to override the Limits setting by a maximum amount of 10, in order to ensure that servo throw remains the same on both sides of centre.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -6304,7 +6632,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="12">
+       <item row="0" column="13">
         <widget class="QLabel" name="label_201">
          <property name="minimumSize">
           <size>
@@ -6338,7 +6666,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="0" column="13">
+       <item row="0" column="14">
         <widget class="QLabel" name="label_202">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This reverses the output of the channel.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -6370,14 +6698,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="7">
+       <item row="12" column="8">
         <widget class="QLabel" name="label_189">
          <property name="text">
           <string notr="true">CH24</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="8">
+       <item row="12" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_24">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6393,7 +6721,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="9">
+       <item row="12" column="10">
         <widget class="QSpinBox" name="minSB_24">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6409,14 +6737,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="10">
+       <item row="12" column="11">
         <widget class="QLabel" name="CH24Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="12" column="11">
+       <item row="12" column="12">
         <widget class="QSpinBox" name="maxSB_24">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6432,14 +6760,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="12">
+       <item row="12" column="13">
         <widget class="QLabel" name="CH24Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="12" column="13">
+       <item row="12" column="14">
         <widget class="QComboBox" name="chInvCB_24">
          <item>
           <property name="text">
@@ -6529,7 +6857,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="1" column="8">
+       <item row="1" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_13">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6545,14 +6873,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="7">
+       <item row="1" column="8">
         <widget class="QLabel" name="label_26">
          <property name="text">
           <string notr="true">CH13</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="9">
+       <item row="1" column="10">
         <widget class="QSpinBox" name="minSB_13">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6568,14 +6896,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="10">
+       <item row="1" column="11">
         <widget class="QLabel" name="CH13Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="1" column="11">
+       <item row="1" column="12">
         <widget class="QSpinBox" name="maxSB_13">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6591,14 +6919,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="12">
+       <item row="1" column="13">
         <widget class="QLabel" name="CH13Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="1" column="13">
+       <item row="1" column="14">
         <widget class="QComboBox" name="chInvCB_13">
          <item>
           <property name="text">
@@ -6612,14 +6940,14 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="11" column="7">
+       <item row="11" column="8">
         <widget class="QLabel" name="label_188">
          <property name="text">
           <string notr="true">CH23</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="8">
+       <item row="11" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_23">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6635,7 +6963,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="9">
+       <item row="11" column="10">
         <widget class="QSpinBox" name="minSB_23">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6651,14 +6979,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="10">
+       <item row="11" column="11">
         <widget class="QLabel" name="CH23Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="11" column="11">
+       <item row="11" column="12">
         <widget class="QSpinBox" name="maxSB_23">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6674,14 +7002,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="11" column="12">
+       <item row="11" column="13">
         <widget class="QLabel" name="CH23Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="11" column="13">
+       <item row="11" column="14">
         <widget class="QComboBox" name="chInvCB_23">
          <item>
           <property name="text">
@@ -6695,14 +7023,14 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="10" column="7">
+       <item row="10" column="8">
         <widget class="QLabel" name="label_187">
          <property name="text">
           <string notr="true">CH22</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="8">
+       <item row="10" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_22">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6718,7 +7046,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="9">
+       <item row="10" column="10">
         <widget class="QSpinBox" name="minSB_22">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6734,14 +7062,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="10">
+       <item row="10" column="11">
         <widget class="QLabel" name="CH22Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="10" column="11">
+       <item row="10" column="12">
         <widget class="QSpinBox" name="maxSB_22">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6757,14 +7085,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="10" column="12">
+       <item row="10" column="13">
         <widget class="QLabel" name="CH22Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="10" column="13">
+       <item row="10" column="14">
         <widget class="QComboBox" name="chInvCB_22">
          <item>
           <property name="text">
@@ -6778,35 +7106,35 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="9" column="7">
+       <item row="9" column="8">
         <widget class="QLabel" name="label_186">
          <property name="text">
           <string notr="true">CH21</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="7">
+       <item row="8" column="8">
         <widget class="QLabel" name="label_185">
          <property name="text">
           <string notr="true">CH20</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="7">
+       <item row="7" column="8">
         <widget class="QLabel" name="label_184">
          <property name="text">
           <string notr="true">CH19</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="7">
+       <item row="6" column="8">
         <widget class="QLabel" name="label_183">
          <property name="text">
           <string notr="true">CH18</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="8">
+       <item row="9" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_21">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6822,7 +7150,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="8">
+       <item row="8" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_20">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6838,7 +7166,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="8">
+       <item row="7" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_19">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6854,7 +7182,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="8">
+       <item row="6" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_18">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6870,7 +7198,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="9">
+       <item row="9" column="10">
         <widget class="QSpinBox" name="minSB_21">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6886,7 +7214,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="9">
+       <item row="8" column="10">
         <widget class="QSpinBox" name="minSB_20">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6902,7 +7230,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="9">
+       <item row="7" column="10">
         <widget class="QSpinBox" name="minSB_19">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6918,7 +7246,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="9">
+       <item row="6" column="10">
         <widget class="QSpinBox" name="minSB_18">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6934,21 +7262,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="10">
+       <item row="9" column="11">
         <widget class="QLabel" name="CH21Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="8" column="10">
+       <item row="8" column="11">
         <widget class="QLabel" name="CH20Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="9" column="11">
+       <item row="9" column="12">
         <widget class="QSpinBox" name="maxSB_21">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6964,7 +7292,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="8" column="11">
+       <item row="8" column="12">
         <widget class="QSpinBox" name="maxSB_20">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -6980,21 +7308,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="10">
+       <item row="7" column="11">
         <widget class="QLabel" name="CH19Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="6" column="10">
+       <item row="6" column="11">
         <widget class="QLabel" name="CH18Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="7" column="11">
+       <item row="7" column="12">
         <widget class="QSpinBox" name="maxSB_19">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7010,7 +7338,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="6" column="11">
+       <item row="6" column="12">
         <widget class="QSpinBox" name="maxSB_18">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7026,35 +7354,35 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="9" column="12">
+       <item row="9" column="13">
         <widget class="QLabel" name="CH21Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="8" column="12">
+       <item row="8" column="13">
         <widget class="QLabel" name="CH20Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="7" column="12">
+       <item row="7" column="13">
         <widget class="QLabel" name="CH19Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="6" column="12">
+       <item row="6" column="13">
         <widget class="QLabel" name="CH18Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="9" column="13">
+       <item row="9" column="14">
         <widget class="QComboBox" name="chInvCB_21">
          <item>
           <property name="text">
@@ -7068,7 +7396,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="8" column="13">
+       <item row="8" column="14">
         <widget class="QComboBox" name="chInvCB_20">
          <item>
           <property name="text">
@@ -7082,7 +7410,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="7" column="13">
+       <item row="7" column="14">
         <widget class="QComboBox" name="chInvCB_19">
          <item>
           <property name="text">
@@ -7096,7 +7424,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="6" column="13">
+       <item row="6" column="14">
         <widget class="QComboBox" name="chInvCB_18">
          <item>
           <property name="text">
@@ -7110,14 +7438,14 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="5" column="7">
+       <item row="5" column="8">
         <widget class="QLabel" name="label_182">
          <property name="text">
           <string notr="true">CH17</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="8">
+       <item row="5" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_17">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7133,21 +7461,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="10">
+       <item row="5" column="11">
         <widget class="QLabel" name="CH17Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="5" column="12">
+       <item row="5" column="13">
         <widget class="QLabel" name="CH17Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="5" column="9">
+       <item row="5" column="10">
         <widget class="QSpinBox" name="minSB_17">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7163,7 +7491,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="11">
+       <item row="5" column="12">
         <widget class="QSpinBox" name="maxSB_17">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7179,7 +7507,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="13">
+       <item row="5" column="14">
         <widget class="QComboBox" name="chInvCB_17">
          <item>
           <property name="text">
@@ -7193,21 +7521,21 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="4" column="7">
+       <item row="4" column="8">
         <widget class="QLabel" name="label_29">
          <property name="text">
           <string notr="true">CH16</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="10">
+       <item row="4" column="11">
         <widget class="QLabel" name="CH16Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="4" column="11">
+       <item row="4" column="12">
         <widget class="QSpinBox" name="maxSB_16">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7223,14 +7551,14 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="12">
+       <item row="4" column="13">
         <widget class="QLabel" name="CH16Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="4" column="13">
+       <item row="4" column="14">
         <widget class="QComboBox" name="chInvCB_16">
          <item>
           <property name="text">
@@ -7244,7 +7572,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="4" column="9">
+       <item row="4" column="10">
         <widget class="QSpinBox" name="minSB_16">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7260,7 +7588,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="8">
+       <item row="4" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_16">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7276,21 +7604,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="7">
+       <item row="3" column="8">
         <widget class="QLabel" name="label_28">
          <property name="text">
           <string notr="true">CH15</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="7">
+       <item row="2" column="8">
         <widget class="QLabel" name="label_27">
          <property name="text">
           <string notr="true">CH14</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="8">
+       <item row="3" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_15">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7306,7 +7634,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="8">
+       <item row="2" column="9">
         <widget class="QDoubleSpinBox" name="offsetDSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7322,7 +7650,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="9">
+       <item row="3" column="10">
         <widget class="QSpinBox" name="minSB_15">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7338,7 +7666,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="9">
+       <item row="2" column="10">
         <widget class="QSpinBox" name="minSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7354,21 +7682,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="10">
+       <item row="3" column="11">
         <widget class="QLabel" name="CH15Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="2" column="10">
+       <item row="2" column="11">
         <widget class="QLabel" name="CH14Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="3" column="11">
+       <item row="3" column="12">
         <widget class="QSpinBox" name="maxSB_15">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7384,7 +7712,7 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="11">
+       <item row="2" column="12">
         <widget class="QSpinBox" name="maxSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7400,21 +7728,21 @@ Right</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="12">
+       <item row="3" column="13">
         <widget class="QLabel" name="CH15Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="2" column="12">
+       <item row="2" column="13">
         <widget class="QLabel" name="CH14Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="3" column="13">
+       <item row="3" column="14">
         <widget class="QComboBox" name="chInvCB_15">
          <item>
           <property name="text">
@@ -7428,7 +7756,7 @@ Right</string>
          </item>
         </widget>
        </item>
-       <item row="2" column="13">
+       <item row="2" column="14">
         <widget class="QComboBox" name="chInvCB_14">
          <item>
           <property name="text">
@@ -7440,6 +7768,16 @@ Right</string>
            <string>INV</string>
           </property>
          </item>
+        </widget>
+       </item>
+       <item row="0" column="7" rowspan="16">
+        <widget class="Line" name="line_6">
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
         </widget>
        </item>
       </layout>
@@ -14548,6 +14886,9 @@ Right</string>
        </item>
        <item row="1" column="5" rowspan="17">
         <widget class="Line" name="line">
+         <property name="lineWidth">
+          <number>2</number>
+         </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>
@@ -17239,9 +17580,12 @@ Right</string>
         <rect>
          <x>10</x>
          <y>270</y>
-         <width>891</width>
+         <width>981</width>
          <height>20</height>
         </rect>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
        </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -19212,6 +19556,9 @@ Right</string>
          <width>20</width>
          <height>271</height>
         </rect>
+       </property>
+       <property name="lineWidth">
+        <number>2</number>
        </property>
        <property name="orientation">
         <enum>Qt::Vertical</enum>

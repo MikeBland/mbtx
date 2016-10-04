@@ -79,13 +79,21 @@
 #define FR_VCC                  53
 /* Extra data for Mavlink via FrSky */
 #define FR_AIRSPEED             54
-#define FR_TRASH			55  // Used for invalid id
+
+#define FR_RBOX_B1_V						55
+#define FR_RBOX_B1_A						56
+#define FR_RBOX_B2_V            57
+#define FR_RBOX_B2_A            58
+#define FR_RBOX_B1_CAP          59
+#define FR_RBOX_B2_CAP          60
+
+#define FR_TRASH			61  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  56
+#define HUBDATALENGTH  62
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -255,6 +263,28 @@ DataID Meaning       Unit   Range   Note
 #define AIRSPEED_FIRST_ID 0x0A00
 #define AIRSPEED_LAST_ID  0x0A0f
 #define AIRSPEED_ID_8			0xA0
+
+#define FUEL_QTY_FIRST_ID  0x0A10
+#define FUEL_QTY_LAST_ID   0x0A1F
+#define FUEL_QTY_ID_8      0xA1
+
+#define RBOX_BATT1_FIRST_ID    0x0b00
+#define RBOX_BATT1_LAST_ID     0x0b0f
+#define RBOX_BATT1_ID_8        0xb0
+
+#define RBOX_BATT2_FIRST_ID    0x0b10
+#define RBOX_BATT2_LAST_ID     0x0b1f
+#define RBOX_BATT2_ID_8        0xb1
+#define RBOX_STATE_FIRST_ID    0x0b20
+#define RBOX_STATE_LAST_ID     0x0b2f
+#define RBOX_STATE_ID_8        0xb2
+#define RBOX_CNSP_FIRST_ID     0x0b30
+#define RBOX_CNSP_LAST_ID      0x0b3f
+#define RBOX_CNSP_ID_8         0xb3
+
+#define DIY_FIRST_ID           0x5000
+#define DIY_LAST_ID            0x50ff
+#define DIY_ID_8	             0x00
 
 // Craft and Theory
 #define	ARDUP_ID_8				0x00

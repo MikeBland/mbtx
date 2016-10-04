@@ -473,7 +473,9 @@ extern "C" void PWM_IRQHandler (void)
 
       case PROTO_MULTI:
       case PROTO_DSM2:
+#ifdef ASSAN
       case PROTO_ASSAN:
+#endif
 				// Alternate periods of 19.5mS/8.5mS and 2.5 mS
 				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
 				if ( period == 5000 )	// 2.5 mS
@@ -489,6 +491,10 @@ extern "C" void PWM_IRQHandler (void)
 						x *= 2000 ;
 						x += 4500 * 2 ;
 						period = x ;
+					}
+					else if ( ( Current_protocol == PROTO_DSM2 ) && ( g_model.sub_protocol != DSM_9XR  ) )
+					{
+						period = 19500*2 ;		// Total 22 mS
 					}
 					else
 					{
@@ -508,12 +514,14 @@ extern "C" void PWM_IRQHandler (void)
 				else
 				{
 					// Kick off serial output here
+#ifdef ASSAN
 					if ( Current_protocol == PROTO_ASSAN )
 					{
 						// Enable SSC, output
 						USART0->US_CR = US_CR_RXDIS ;
 //						PIOA->PIO_PER = PIO_PA5 ;		// Assign A5 to PIO
 					}
+#endif
 					if ( PulsesPaused == 0 )
 					{
 						PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
@@ -522,11 +530,13 @@ extern "C" void PWM_IRQHandler (void)
 					sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
 					sscptr->SSC_TCR = Serial_byte_count ;
 					sscptr->SSC_PTCR = SSC_PTCR_TXTEN ;	// Start transfers
+#ifdef ASSAN
 					if ( Current_protocol == PROTO_ASSAN )
 					{
 						// Enable termination interrupt
 						sscptr->SSC_IER = SSC_IER_TXBUFE ;
 					}
+#endif
 				}
 			break ;
 		}
@@ -561,8 +571,8 @@ void put_serial_bit( uint8_t bit )
 	}
 }
 
-uint8_t DsmPass1[10] ;
-uint32_t DsmPassIndex ;
+//uint8_t DsmPass1[10] ;
+//uint32_t DsmPassIndex ;
 #ifdef ASSAN
 uint16_t DsmChecksum ;
 #endif
@@ -577,10 +587,10 @@ void sendByteDsm2(uint8_t b) //max 10changes 0 10 10 10 10 1
 	DsmChecksum += b ;
 #endif
 	
-	if ( DsmPassIndex < 10 )
-	{
-		DsmPass1[DsmPassIndex++] = b ;
-	}
+//	if ( DsmPassIndex < 10 )
+//	{
+//		DsmPass1[DsmPassIndex++] = b ;
+//	}
 	put_serial_bit( 0 ) ;		// Start bit
   for( uint8_t i=0; i<8; i++)	 // 8 data Bits
 	{
@@ -657,6 +667,8 @@ extern uint8_t MultiResponseFlag ;
 // This is the data stream to send, prepare after 19.5 mS
 // Send after 22.5 mS
 
+//uint8_t *DsmDatPointer ;
+//uint16_t DebugDsmChan0 ;
 
 //static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
 void setupPulsesDsm2(uint8_t chns)
@@ -666,6 +678,8 @@ void setupPulsesDsm2(uint8_t chns)
 #ifdef PCBSKY
 	uint8_t counter ;
 #endif // PCBSKY
+
+//	DsmDatPointer = &dsmDat[0] ;
 
 	required_baudrate = SCC_BAUD_125000 ;
 #ifdef ASSAN
@@ -686,6 +700,7 @@ void setupPulsesDsm2(uint8_t chns)
 	else if(g_model.protocol == PROTO_MULTI)
 	{
 		required_baudrate = SCC_BAUD_100000 ;
+		Dsm_Type = 0 ;
 	}
 	else
 	{
@@ -831,7 +846,7 @@ void setupPulsesDsm2(uint8_t chns)
 		}
 		else
 		{
-			DsmPassIndex = 0 ;
+//			DsmPassIndex = 0 ;
 			if ( pass == 2 )
 			{
 				startChan += 7 ;
@@ -1059,6 +1074,10 @@ void setupPulsesDsm2(uint8_t chns)
 				uint16_t pulse = limit(0, ((g_chans512[g_model.startChannel+i]*13)>>5)+512,1023);
  			  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
   		 	dsmDat[3+2*i] = pulse & 0xff;
+//				if ( i == 0 )
+//				{
+//					DebugDsmChan0 = pulse ;
+//				}
   		}
 
   		for ( counter = 0 ; counter < 14 ; counter += 1 )

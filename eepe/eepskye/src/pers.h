@@ -423,6 +423,9 @@ enum EnumKeys {
 #define M_J6PRO					 21
 #define M_FQ777					 22
 #define M_ASSAN					 23
+#define M_FRSKYV	       24
+#define M_HONTAI	       25
+#define M_OPENLRS	       26
 
 
 #define GETADC_SING = 0

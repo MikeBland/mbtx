@@ -1516,6 +1516,28 @@ void processSportPacket()
 					store_hub_data( FR_AIRSPEED, value ) ;
 				break ;
 
+				// Rbox Battx
+				// 0xCCCCVVVV, C has 2dp, V has 3dp
+				case RBOX_BATT1_ID_8 :
+					store_hub_data( FR_RBOX_B1_V, (value & 0x0000FFFF)/10 ) ;	// To 2 dp
+					store_hub_data( FR_RBOX_B1_A, value >> 16 ) ;
+				break ;
+				
+				case RBOX_BATT2_ID_8 :
+					store_hub_data( FR_RBOX_B2_V, (value & 0x0000FFFF)/10 ) ;	// To 2 dp
+					store_hub_data( FR_RBOX_B2_A, value >> 16 ) ;
+				break ;
+
+				// Rbox CNSP
+				// 0xBBBBAAAA, AAAA batt 1 mAh, BBBB batt 2 mAh
+				case RBOX_CNSP_ID_8 :
+					store_hub_data( FR_RBOX_B1_CAP, value & 0x0000FFFF ) ;
+					store_hub_data( FR_RBOX_B2_CAP, value >> 16 ) ;
+				break ;
+
+				// Rbox state
+				// TBA
+
 				case ARDUP_ID_8 :
 					if ( ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
 					{

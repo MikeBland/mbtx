@@ -770,7 +770,7 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 {
 	int x = 8 ;
 	b->clear() ;
-  if ( type > 17 )
+  if ( type > 26 )
 	{
 		b->addItem("0");
 		b->addItem("1");
@@ -844,6 +844,13 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("H26D");
 			x = 4 ;
 		break ;
+		case M_HONTAI :
+			b->addItem("HONTAI");
+			b->addItem("JJRCX1");
+			b->addItem("X5C1");
+			x = 3 ;
+		break ;
+
 		default :
 			b->addItem("NONE");
 			x = 1 ;

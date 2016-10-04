@@ -143,7 +143,7 @@ static uint8_t Columns ;
 
 int8_t phyStick[4] ;
 
-const uint16_t UnitsVoice[] = {SV_FEET,SV_VOLTS,SV_DEGREES,SV_DEGREES,0,SV_AMPS,SV_METRES,SV_WATTS,SV_PERCENT } ;
+const uint16_t UnitsVoice[] = {SV_FEET,SV_VOLTS,SV_DEGREES,SV_DEGREES,SV_MILAMP_H,SV_AMPS,SV_METRES,SV_WATTS,SV_PERCENT } ;
 const uint8_t UnitsText[] = { 'F','V','C','F','m','A','m','W','%' } ;
 const uint8_t UnitsString[] = "\005Feet VoltsDeg_CDeg_FmAh  Amps MetreWattsPcent" ;
 
@@ -207,7 +207,8 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,
 															FR_ACCX, FR_ACCY,	FR_ACCZ, FR_VSPD, V_GVAR1, V_GVAR2,
 															V_GVAR3, V_GVAR4, V_GVAR5, V_GVAR6, V_GVAR7, FR_WATT, FR_RXV, FR_COURSE,
 															FR_A3, FR_A4, V_SC1, V_SC2, V_SC3, V_SC4, V_SC5, V_SC6, V_SC7, V_SC8, V_RTC, TMOK, FR_AIRSPEED,
-															CELL_1,CELL_2,CELL_3,CELL_4,CELL_5,CELL_6  } ;
+															CELL_1,CELL_2,CELL_3,CELL_4,CELL_5,CELL_6,
+															FR_RBOX_B1_V,FR_RBOX_B1_A,FR_RBOX_B2_V,FR_RBOX_B2_A, FR_RBOX_B1_CAP, FR_RBOX_B2_CAP } ;
 
 // TXRSSI is always considered valid as it is forced to zero on loss of telemetry
 // Values are 0 - always valid, 1 - need telemetry, 2 - need hub
@@ -215,7 +216,7 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,
 //const uint8_t TelemValid[] = { 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0  } ;
 
 // Make scalers always OK! Removed again
-const uint8_t TelemValid[] = { 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2  } ;
+const uint8_t TelemValid[] = { 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2  } ;
 
 int8_t edit_dr_switch( uint8_t x, uint8_t y, int8_t drswitch, uint8_t attr, uint8_t flags, uint8_t event ) ;
 
@@ -684,6 +685,8 @@ void voice_telem_item( int8_t index )
 		case CELL_4:
 		case CELL_5:
 		case CELL_6:
+		case FR_RBOX_B1_V :
+		case FR_RBOX_B2_V :
 			unit = SV_VOLTS ;			
 			num_decimals = 2 ;
 		break ;
@@ -779,6 +782,17 @@ void voice_telem_item( int8_t index )
 // Extra data for Mavlink via FrSky
 #endif
 
+		case FR_RBOX_B1_A :
+		case FR_RBOX_B2_A :
+			num_decimals = 2 ;
+      unit = SV_AMPS ;
+		break ;
+		
+		case FR_RBOX_B1_CAP :
+		case FR_RBOX_B2_CAP :
+      unit = SV_MILAMP_H ;
+		break ;
+		
 		case FR_CURRENT :
 			num_decimals = 1 ;
       unit = SV_AMPS ;
@@ -883,6 +897,8 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
     case FR_A1_MAH:
     case FR_A2_MAH:
 		case FR_AMP_MAH :
+		case FR_RBOX_B1_CAP :
+		case FR_RBOX_B2_CAP :
       result *= 50;
     break;
 
@@ -898,6 +914,14 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
 		case FR_CELLS_TOT :
 		case FR_VOLTS :
       result *= 2;
+		break ;
+		case FR_RBOX_B1_V :
+		case FR_RBOX_B2_V :
+      result *= 4 ;
+		break ;
+		case FR_RBOX_B1_A :
+		case FR_RBOX_B2_A :
+      result *= 20;
 		break ;
     case FR_WATT:
       result *= 8 ;
@@ -1268,8 +1292,19 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		case CELL_4:
 		case CELL_5:
 		case CELL_6:
+		case FR_RBOX_B1_V :
+		case FR_RBOX_B2_V :
 			att |= PREC2 ;
       unit = 'v' ;
+		break ;
+		case FR_RBOX_B1_A :
+		case FR_RBOX_B2_A :
+			att |= PREC2 ;
+      unit = 'A' ;
+		break ;
+		case FR_RBOX_B1_CAP :
+		case FR_RBOX_B2_CAP :
+      unit = 'm' ;
 		break ;
 		case FR_CELLS_TOT :
 		case FR_VOLTS :
@@ -11106,7 +11141,23 @@ void menuProcTrainDdiag(uint8_t event)
 		}
 	}	
 
-	
+
+//extern uint8_t Bit_pulses[] ;
+//extern uint8_t *DsmDatPointer ;
+//extern uint16_t DebugDsmChan0 ;
+
+//	lcd_outhex4( 0, 3*FH, Bit_pulses[0] ) ;
+//	lcd_outhex4( 30, 3*FH, Bit_pulses[1] ) ;
+//	lcd_outhex4( 60, 3*FH, Bit_pulses[2] ) ;
+//	lcd_outhex4( 90, 3*FH, Bit_pulses[3] ) ;
+
+//	lcd_outhex4( 0, 4*FH,  DsmDatPointer[0] ) ;
+//	lcd_outhex4( 30, 4*FH, DsmDatPointer[1] ) ;
+//	lcd_outhex4( 60, 4*FH, DsmDatPointer[2] ) ;
+//	lcd_outhex4( 90, 4*FH, DsmDatPointer[3] ) ;
+
+//	lcd_outhex4( 0, 5*FH,  DebugDsmChan0 ) ;
+	 
 //#if defined(PCBX9D) || defined(PCB9XT)
 //extern uint16_t TIM3Captures ;
 //extern uint16_t SbusCounter ;
