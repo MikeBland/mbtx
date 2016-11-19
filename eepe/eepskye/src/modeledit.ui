@@ -33,7 +33,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>14</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -1693,7 +1693,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>PXX</string>
+             <string>XJT</string>
             </property>
            </item>
            <item>
@@ -2197,7 +2197,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>27</string>
+             <string>AFHD2SA</string>
             </property>
            </item>
            <item>
@@ -2526,7 +2526,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>PXX</string>
+             <string>XJT</string>
             </property>
            </item>
            <item>
@@ -2997,7 +2997,7 @@ p, li { white-space: pre-wrap; }
            </item>
            <item>
             <property name="text">
-             <string>27</string>
+             <string>AFHD2SA</string>
             </property>
            </item>
            <item>

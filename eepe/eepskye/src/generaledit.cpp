@@ -123,8 +123,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		switch ( rData->type )
 		{
-			case 0 :
-			case 1 :
+			case RADIO_TYPE_SKY :
+			case RADIO_TYPE_TARANIS :
 				ui->brightGreenSB->hide() ;
 				ui->brightBlueSB->hide() ;
 				ui->label_BrightGreen->hide() ;
@@ -132,7 +132,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->label_Bright->setText("Brightness") ;
 			break ;
 				
-			case 2 :
+			case RADIO_TYPE_TPLUS :
+			case RADIO_TYPE_X9E :
 				ui->label_Bright->setText("Brightness (Colour)") ;
 				ui->label_BrightGreen->setText("Brightness (White)") ;
 				ui->label_BrightGreen->show() ;
@@ -141,7 +142,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->brightBlueSB->hide() ;
 			break ;
 
-			case 3 :
+			case RADIO_TYPE_9XTREME :
 				ui->brightGreenSB->show() ;
 				ui->brightBlueSB->show() ;
 				ui->label_BrightGreen->show() ;
@@ -221,7 +222,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		updateTrainerTab();
 
 
-		if ( ( rData->type < 1 ) || ( rData->type == 3 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 		{
 			ui->label_AilSw->show() ;
 			ui->label_EleSw->show() ;
@@ -236,7 +237,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->Pot4CB->show() ;
 
       int xtype = 0 ;
-			if ( rData->type == 3 )
+			if ( rData->type == RADIO_TYPE_9XTREME )
 			{
 				xtype = 2 ;
 				ui->label_Pot5->show() ;
@@ -278,7 +279,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 //			ui->SixPosCB->hide() ;
 			ui->AilCB->setCurrentIndex( g_eeGeneral.ailsource ) ;
 			uint8_t value = g_eeGeneral.elesource ;
-			if ( rData->type != 3 )
+			if ( rData->type != RADIO_TYPE_9XTREME )
 			{
 				if ( value > 5 )
 				{
@@ -1679,7 +1680,7 @@ void GeneralEdit::on_EleCB_currentIndexChanged(int x )
 	}
   g_eeGeneral.switchMapping &= ~(USE_ELE_3POS | USE_ELE_6POS | USE_ELE_6PSB ) ;
 	uint16_t value = x ;
-	if ( rData->type != 3 )
+	if ( rData->type != RADIO_TYPE_9XTREME )
 	{
 		if ( value > 5 )
 		{

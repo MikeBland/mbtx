@@ -39,6 +39,20 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_ER9XM64V2	5
 #define RADIO_TYPE_ER9XM128V1	6
 #define RADIO_TYPE_ER9XM128V2	7
+#define RADIO_TYPE_X9E				8
+
+#define RADIO_BITTYPE_SKY					1
+#define RADIO_BITTYPE_9XRPRO			2
+#define RADIO_BITTYPE_TARANIS			4
+#define RADIO_BITTYPE_TPLUS				8
+#define RADIO_BITTYPE_9XTREME			16
+#define RADIO_BITTYPE_X9E					32
+#define RADIO_BITTYPE_AR9X				64
+
+#define RADIO_BITTYPE_ER9XM64V1		128
+#define RADIO_BITTYPE_ER9XM64V2		256
+#define RADIO_BITTYPE_ER9XM128V1	512
+#define RADIO_BITTYPE_ER9XM128V2	1024
 
 //convert from mode 1 to mode g_eeGeneral.stickMode
 //NOTICE!  =>  1..4 -> 1..4
@@ -389,7 +403,7 @@ enum EnumKeys {
 #define PROTO_ASSAN			 4
 #define PROTO_OFF		     15		// For X9D/9Xtreme
 #define PROT_MAX         2
-#define PROT_STR "PPM   PXX   DSM2  "
+#define PROT_STR "PPM   XJT   DSM2  "
 #define PROT_STR_LEN     6
 #define DSM2_STR "LP4/LP5  DSM2only DSM2/DSMX"
 #define DSM2_STR_LEN   9
@@ -426,6 +440,7 @@ enum EnumKeys {
 #define M_FRSKYV	       24
 #define M_HONTAI	       25
 #define M_OPENLRS	       26
+#define M_AFHDS2A	       27
 
 
 #define GETADC_SING = 0

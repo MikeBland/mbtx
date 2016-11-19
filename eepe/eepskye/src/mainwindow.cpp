@@ -98,6 +98,8 @@
 #define DNLD_VER_ERSKYX9D				 2
 #define DNLD_VER_ERSKYX9DP			 3
 #define DNLD_VER_ERSKYX9XT			 4
+#define DNLD_VER_ERSKYX9E				 5
+#define DNLD_VER_ERSKYX9A				 6
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -133,6 +135,8 @@
 #define ERSKYX9D_URL "http://www.er9x.com/x9d_rom.bin"
 #define ERSKYX9DP_URL "http://www.er9x.com/x9dp_rom.bin"
 #define ERSKYX9XT_URL "http://www.er9x.com/ersky9x9XT_rom.bin"
+#define ERSKYX9E_URL "http://www.er9x.com/x9e_rom.bin"
+#define ERSKY9XRA_URL "http://www.er9x.com/ersky9x_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -421,6 +425,16 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
             case (DNLD_VER_ERSKYX9XT):
                 dnldURL = ERSKYX9XT_URL;
                 baseFileName = "ersky9x9XT_rom.bin";
+                break;
+            
+            case (DNLD_VER_ERSKYX9E):
+                dnldURL = ERSKYX9E_URL;
+                baseFileName = "x9e_rom.bin";
+                break;
+
+						case (DNLD_VER_ERSKYX9A):
+                dnldURL = ERSKYX9XT_URL;
+                baseFileName = "ersky9x_rom.bin";
                 break;
 
             default:

@@ -2277,7 +2277,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
     {
         QString str = SRCP_STR;
 #ifdef SKY
-        if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) )	// Taranis
+        if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 				{
 					if ( idx == 7 )
 					{
@@ -2288,7 +2288,22 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						return "SR  " ;
 					}
 //					int offset = 1 ;
-					if ( type == RADIO_TYPE_TPLUS )	// Plus
+					if ( type == RADIO_TYPE_X9E )
+					{
+						if ( idx == 9 )
+						{
+							return "S1  " ;
+						}
+						if ( idx == 10 )
+						{
+							return "S2  " ;
+						}
+						if ( idx > 10 )
+						{
+              idx -= 3 ;
+						}
+					}
+					else if ( type == RADIO_TYPE_TPLUS )	// Plus
 					{
 						if ( idx == 9 )
 						{
@@ -2371,12 +2386,16 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 
 #ifdef SKY    
 		int limit = 45 ;
-		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) )
+    if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 		{
 			limit = 46 ;
-			if ( type == 2 )
+			if ( type == RADIO_TYPE_TPLUS )
 			{
 				limit = 47 ;
+			}
+			if ( type == RADIO_TYPE_X9E )
+			{
+				limit = 48 ;
 			}
 		}
 		if ( type == RADIO_TYPE_SKY )
@@ -3191,6 +3210,7 @@ void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model )
 				for ( k = 0 ; k < 2 ; k += 1 )
 				{ // 0=Right, 1=Left
     			dest = CONVERT_MODE(1, 2, g_eeGeneral->stickMode)-1 ;
+
     			src = CONVERT_MODE(1, 1, g_eeGeneral->stickMode)-1 ;
 					lexpoData[dest].expo[i][j][k] = g_model->expoData[src].expo[i][j][k] ;
     			dest = CONVERT_MODE(2, 2, g_eeGeneral->stickMode)-1 ;

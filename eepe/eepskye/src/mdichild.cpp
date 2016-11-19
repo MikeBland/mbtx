@@ -245,7 +245,7 @@ void MdiChild::refreshList()
         str.prepend(" - ");
     addItem(tr("General Settings") + str);
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -401,7 +401,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
     uint32_t id = index;
     if(!id) id++;
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -749,7 +749,7 @@ void MdiChild::duplicate()
 {
     uint32_t i = this->currentRow();
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -883,8 +883,11 @@ void MdiChild::newFile()
     static int sequenceNumber = 1 ;
     QSettings settings("er9x-eePskye", "eePskye");
 		radioData.type = 0 ;
+		radioData.bitType = 0 ;
+		radioData.sub_type = 0 ;
 		int x ;
 		x = settings.value("download-version", 0).toInt() ;
+		radioData.bitType = 1 << x ;
 		if ( x >= 2 )
 		{
 			radioData.type = x-1 ;
@@ -902,6 +905,17 @@ void MdiChild::newFile()
 		else if ( x == 4 )
 		{
     	type = " (9Xtreme)" ;
+		}
+		if ( x == 5 )
+		{
+			radioData.type = 2 ;
+    	type = " (Taranis X9E)" ;
+			radioData.sub_type = 1 ;
+		}
+		if ( x == 6 )
+		{
+			radioData.type = 0 ;
+    	type = " (Sky AR9X)" ;
 		}
 
     isUntitled = true;
@@ -972,7 +986,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 								
           }
 					uint32_t max_models = MAX_MODELS ;
-					if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+          if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 					{
 						max_models = MAX_IMODELS ;
 					}
@@ -1054,13 +1068,16 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
   	      file.close();
 
 					radioData.type = RADIO_TYPE_TARANIS ;
+					radioData.bitType = RADIO_BITTYPE_TARANIS ;
 					int x ;
 			    QSettings settings("er9x-eePskye", "eePskye");
 					x = settings.value("download-version", 0).toInt() ;
 					if ( x >= 2 )
 					{
 						radioData.type = x-1 ;
+						radioData.bitType = x == 3 ? RADIO_BITTYPE_TPLUS : RADIO_BITTYPE_X9E ;
 					}
+
 	        if(!rawloadFileRlc( &radioData, temp) )
   	      {
             QMessageBox::critical(this, tr("Error"),
@@ -1133,6 +1150,8 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
         }
 				defaultModelType = DefaultModelType ;
 				radioData.type = 0 ;
+				radioData.bitType = RADIO_BITTYPE_SKY ;
+
 				int x ;
 		    QSettings settings("er9x-eePskye", "eePskye");
 				x = settings.value("download-version", 0).toInt() ;
@@ -1140,6 +1159,11 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				{
 					radioData.type = 3 ;	// 9Xtreme
 					radioData.T9xr_pro = 1 ;
+					radioData.bitType = RADIO_BITTYPE_9XTREME ;
+				}
+				if ( x == 6 )
+				{
+					radioData.bitType = RADIO_BITTYPE_AR9X ;
 				}
         refreshList();
         if(resetCurrentFile) setCurrentFile(fileName);
@@ -1279,7 +1303,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
 
         //Save model data one by one
 				uint32_t max_models = MAX_MODELS ;
-				if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+        if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 				{
 					max_models = MAX_IMODELS ;
 				}
@@ -1332,7 +1356,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-        if ( ( radioData.type ) && ( radioData.type < 3) )
+				if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1534,7 +1558,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-		        if ( ( radioData.type ) && ( radioData.type < 3) )
+						if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}
@@ -1761,7 +1785,7 @@ void MdiChild::modelDefault(uint8_t id)
 		}
 		radioData.models[id].modelVersion = 3 ;
 	}
-  if ( ( radioData.type ) && ( radioData.type < 4) ) // Taranis/9Xtreme
+	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME ) )
 	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;

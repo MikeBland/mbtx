@@ -14,7 +14,16 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		lextraPots = rData->extraPots ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
-    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, leeType, lextraPots ) ;
+		int type = leeType ;
+		if ( type == RADIO_TYPE_TPLUS )
+		{
+			if ( rData->sub_type == 1 )
+			{
+				type = RADIO_TYPE_X9E ;
+			}
+		}
+
+    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, type, lextraPots ) ;
     
 		ui->sourceCB->addItem("SWCH");
 		

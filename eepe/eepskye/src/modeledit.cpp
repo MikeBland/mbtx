@@ -79,7 +79,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 //		}
     id_model = id;
 
-		createSwitchMapping( &g_eeGeneral, ( ( rData->type == 1 ) || ( rData->type == 2 ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
+		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
     setupMixerListWidget();
 
     QSettings settings("er9x-eePskye", "eePskye");
@@ -252,7 +252,7 @@ void ModelEdit::tabModelEditSetup()
 		}
     ui->modelImageLE->setText( n ) ;
 
-		if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 		{
 			ui->modelImageLE->hide() ;
 			ui->label_ModelImage->hide() ;
@@ -340,8 +340,8 @@ void ModelEdit::tabModelEditSetup()
     ui->bcP2ChkB->setChecked(g_model.beepANACenter & BC_BIT_P2);
     ui->bcP3ChkB->setChecked(g_model.beepANACenter & BC_BIT_P3);
     
-    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) )
-		{
+    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) ) )
+    {
 	    ui->bcP4ChkB->show() ;
 			ui->bcP4ChkB->setChecked(g_model.beepANACenter & BC_BIT_P4);
 		}	
@@ -360,10 +360,10 @@ void ModelEdit::tabModelEditSetup()
 		ui->xprotocolCB->clear() ;
     ui->protocolCB->addItem("PPM");
     ui->xprotocolCB->addItem("PPM");
-    ui->protocolCB->addItem("PXX");
+    ui->protocolCB->addItem("XJT");
 		if ( rData->type )
 		{
-    	ui->xprotocolCB->addItem("PXX");
+    	ui->xprotocolCB->addItem("XJT");
 		}
     ui->protocolCB->addItem("DSM");
     ui->xprotocolCB->addItem("DSM");
@@ -373,6 +373,11 @@ void ModelEdit::tabModelEditSetup()
 //    ui->xprotocolCB->addItem("Assan");
 //		if ( rData->type )
 //		{
+    if ( rData->bitType & RADIO_BITTYPE_9XRPRO )
+		{
+      ui->protocolCB->addItem("Xfire");
+		}
+
       ui->protocolCB->addItem("OFF");
       ui->xprotocolCB->addItem("OFF");
 //		}
@@ -384,10 +389,12 @@ void ModelEdit::tabModelEditSetup()
 		populateAnaVolumeCB( ui->volumeControlCB, g_model.anaVolume, rData->type ) ;
 	  
     //pulse polarity
+		protocolEditLock = true ;
     ui->pulsePolCB->setCurrentIndex(g_model.pulsePol);
     ui->xpulsePolCB->setCurrentIndex(g_model.xpulsePol);
 		ui->countryCB->setCurrentIndex(g_model.country) ;
-	  ui->typeCB->setCurrentIndex(g_model.sub_protocol) ;
+	  ui->typeCB->setCurrentIndex(g_model.sub_protocol&0x3F) ;
+    protocolEditLock = false ;
 		
 		
 		ui->label_version->setText( tr("%1").arg( g_model.modelVersion ) ) ;
@@ -398,7 +405,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-		if ( ( rData->type ) && ( rData->type < 3 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -600,7 +607,7 @@ uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 
 void ModelEdit::setSwitchDefPos()
 {
-	if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
+	if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 	{
 		
     quint16 y = (g_model.modelswitchWarningStates >> 1 ) ;
@@ -797,9 +804,12 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			x = 2 ;
 		break ;
 		case M_DSM2 :
-			b->addItem("DSM2");
-			b->addItem("DSMX");
-			x = 2 ;
+			b->addItem("DSM2-22");
+			b->addItem("DSM2-11");
+			b->addItem("DSMX-22");
+			b->addItem("DSMX-11");
+			b->addItem("AUTO");
+			x = 5 ;
 		break ;
 		case M_YD717 :
 			b->addItem("YD717");
@@ -814,6 +824,11 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("FEILUN");
 			x = 2 ;
 		break ;
+		case M_SymaX :
+			b->addItem("SYMAX");
+			b->addItem("SYMAX5C");
+			x = 2 ;
+		break ;
 		case M_CX10 :
 			b->addItem("GREEN");
 			b->addItem("BLUE");
@@ -825,6 +840,11 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("Q242");
 			x = 8 ;
 		break ;
+		case M_FRSKYX :
+			b->addItem("CH-16");
+			b->addItem("CH-8");
+			x = 2 ;
+		break ;
 		case M_CG023 :
 			b->addItem("CG023");
 			b->addItem("YD829");
@@ -835,7 +855,8 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("MT");
 			b->addItem("H7");
 			b->addItem("YZ");
-			x = 3 ;
+			b->addItem("LS");
+			x = 4 ;
 		break ;
 		case M_MJXQ :
 			b->addItem("WLH08");
@@ -849,6 +870,13 @@ void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 			b->addItem("JJRCX1");
 			b->addItem("X5C1");
 			x = 3 ;
+		break ;
+		case M_AFHDS2A :
+			b->addItem("PWM_IBUS");
+			b->addItem("PPM_IBUS");
+			b->addItem("PWM_SBUS");
+			b->addItem("PPM_SBUS");
+			x = 4 ;
 		break ;
 
 		default :
@@ -893,7 +921,7 @@ void ModelEdit::setProtocolBoxes()
 		{
 			i = 4 ;
 		}
-		if ( rData->type == 0 )
+		if ( rData->type == RADIO_TYPE_SKY )
 		{
 			if ( i )
 			{
@@ -968,7 +996,7 @@ void ModelEdit::setProtocolBoxes()
 
         ui->pxxRxNum->setValue(g_model.pxxRxNum);
 
-        ui->typeCB->setCurrentIndex(g_model.sub_protocol) ;
+        ui->typeCB->setCurrentIndex(g_model.sub_protocol&0x3F) ;
         ui->ppmDelaySB->setValue(300);
         ui->numChannelsSB->setValue(8);
         ui->ppmFrameLengthDSB->setValue(22.5);
@@ -988,7 +1016,7 @@ void ModelEdit::setProtocolBoxes()
 				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
 
-        ui->DSM_Type->setCurrentIndex(g_model.sub_protocol )	;
+        ui->DSM_Type->setCurrentIndex(g_model.sub_protocol&0x3F )	;
 
         ui->pxxRxNum->setValue(g_model.pxxRxNum);
         ui->ppmDelaySB->setValue(300);
@@ -1005,11 +1033,11 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->show() ;
-        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
+        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol&0x3F )	;
         ui->SubSubProtocolCB->show() ;
         ui->labelSubProto->show() ;
         {
-          int x = g_model.sub_protocol&0x1F ;
+          int x = g_model.sub_protocol&0x3F ;
           setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
           ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
         }
@@ -1111,7 +1139,7 @@ void ModelEdit::setProtocolBoxes()
 
         ui->xPxxRxNum->setValue(g_model.xPxxRxNum);
 
-        ui->xtypeCB->setCurrentIndex(g_model.xsub_protocol) ;
+        ui->xtypeCB->setCurrentIndex(g_model.xsub_protocol& 0x3F) ;
         ui->xppmDelaySB->setValue(300);
         ui->xnumChannelsSB->setValue(8);
         ui->xppmFrameLengthDSB->setValue(22.5);
@@ -1130,7 +1158,7 @@ void ModelEdit::setProtocolBoxes()
 				ui->xstartChannelsSB->setEnabled(true);
 				ui->xpulsePolCB->setEnabled(false);
 
-        ui->xDSM_Type->setCurrentIndex(g_model.xsub_protocol )	;
+        ui->xDSM_Type->setCurrentIndex(g_model.xsub_protocol& 0x3F )	;
 
         ui->xPxxRxNum->setValue(g_model.xPxxRxNum);
         ui->xppmDelaySB->setValue(300);
@@ -1147,10 +1175,10 @@ void ModelEdit::setProtocolBoxes()
         ui->xDSM_Type->hide() ;
         ui->xSubProtocolCB->show() ;
         ui->labelSubProtox->show() ;
-        ui->xSubProtocolCB->setCurrentIndex(g_model.xsub_protocol )	;
+        ui->xSubProtocolCB->setCurrentIndex(g_model.xsub_protocol& 0x3F )	;
         ui->xsubSubProtocolCB->show() ;
         {
-          int x = g_model.xsub_protocol&0x1F ;
+          int x = g_model.xsub_protocol&0x3F ;
           setSubSubProtocol( ui->xsubSubProtocolCB, x ) ;
           ui->xsubSubProtocolCB->setCurrentIndex((g_model.xppmNCH & 0x70)>>4)	;
         }
@@ -1239,7 +1267,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-		if ( ( rData->type == 2 ) || ( rData->type == 3 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -1546,10 +1574,10 @@ void ModelEdit::voiceAlarmsList()
 		QString srcstr ;
     uint32_t limit = 45 ;
 		uint32_t value = vad->source ;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 			limit = 46 ;
-			if ( rData->type == 2 )
+    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 			{
 				limit = 47 ;
 			}
@@ -1559,7 +1587,7 @@ void ModelEdit::voiceAlarmsList()
 			}
 			else
 			{
-				if ( rData->type == 2 )
+    		if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 				{
 					if ( value == EXTRA_POTS_START + 1 )
 					{
@@ -1578,7 +1606,15 @@ void ModelEdit::voiceAlarmsList()
 		}
 		if ( value < limit )
 		{
-			str += tr("(%1) ").arg(getSourceStr(g_eeGeneral.stickMode,value,g_model.modelVersion, rData->type, rData->extraPots )) ;
+			int type = rData->type ;
+			if ( type == RADIO_TYPE_TPLUS )
+			{
+				if ( rData->sub_type == 1 )
+				{
+					type = RADIO_TYPE_X9E ;
+				}
+			}
+			str += tr("(%1) ").arg(getSourceStr(g_eeGeneral.stickMode,value,g_model.modelVersion, type, rData->extraPots )) ;
 		}
 		else
 		{
@@ -1927,7 +1963,7 @@ void ModelEdit::tabMixes()
 				{
 					uint32_t value ;
 					value = md->srcRaw ;
-					if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 					{
 						if ( value == EXTRA_POTS_START )
 						{
@@ -1935,7 +1971,7 @@ void ModelEdit::tabMixes()
 						}
 						else
 						{
-							if ( rData->type == 2 )
+    					if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 							{
 								if ( value == EXTRA_POTS_START + 1 )
 								{
@@ -1966,13 +2002,21 @@ void ModelEdit::tabMixes()
 							}
 						}
 					}
+					int type = rData->type ;
+					if ( type == RADIO_TYPE_TPLUS )
+					{
+						if ( rData->sub_type == 1 )
+						{
+							type = RADIO_TYPE_X9E ;
+						}
+					}
           srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, rData->type, rData->extraPots );
 				}
 
         str += srcstr ;
 				if ( srcstr == "s" )
 				{
-					if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 					{
 						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO_6P" ;
 					}
@@ -3926,7 +3970,7 @@ void ModelEdit::tabSwitches()
         ui->gridLayout_8->addWidget(cswitchAndSwitch[i],j+1,k+3);
         cswitchAndSwitch[i]->setVisible(true);
 			}
-      if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 			{
         x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 			}
@@ -4054,7 +4098,7 @@ void ModelEdit::setSafetyLabels()
 void ModelEdit::setSafetyWidgetVisibility(int i)
 {
 	int limit = MAX_DRSWITCH ;
-	if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+  if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 	{
 		limit = MAX_XDRSWITCH ;
 	}
@@ -4197,7 +4241,7 @@ void ModelEdit::tabSafetySwitches()
           if ( sd->opt.ss.mode == 2 )		// 'V'
 					{
 						int limit = MAX_DRSWITCH ;
-						if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    				if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 						{
 							limit = MAX_XDRSWITCH ;
 						}
@@ -4279,7 +4323,7 @@ void ModelEdit::safetySwitchesEdited()
     g_model.numVoice = ui->NumVoiceSwSB->value()-8 ;
 
 		int limit = MAX_DRSWITCH ;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 			limit = MAX_XDRSWITCH ;
 		}
@@ -4476,7 +4520,7 @@ void ModelEdit::switchesEdited()
     
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
-      if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -5053,7 +5097,7 @@ void ModelEdit::GvarEdited()
 void ModelEdit::tabFrsky()
 {
 	
-		if ( ( rData->type == 0 ) || ( rData->type == 3 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 		{
 			ui->Ct7->hide() ;
 			ui->Ct8->hide() ;
@@ -5440,36 +5484,48 @@ void ModelEdit::on_trimSWCB_currentIndexChanged(int index)
 
 void ModelEdit::on_countryCB_currentIndexChanged(int index)
 {
-  g_model.country = index ;
+  if(protocolEditLock) return;
+  
+	g_model.country = index ;
   updateSettings();
 }
 	
 void ModelEdit::on_typeCB_currentIndexChanged(int index)
 {
-  g_model.sub_protocol = index ;
+  if(protocolEditLock) return;
+
+	g_model.sub_protocol = (g_model.sub_protocol&0x40) + index ;
   updateSettings();
 }
 
 void ModelEdit::on_pulsePolCB_currentIndexChanged(int index)
 {
+  if(protocolEditLock) return;
+  
     g_model.pulsePol = index;
     updateSettings();
 }
 
 void ModelEdit::on_xcountryCB_currentIndexChanged(int index)
 {
+  if(protocolEditLock) return;
+  
   g_model.xcountry = index ;
   updateSettings();
 }
 	
 void ModelEdit::on_xtypeCB_currentIndexChanged(int index)
 {
-  g_model.xsub_protocol = index ;
+  if(protocolEditLock) return;
+  
+	g_model.xsub_protocol = (g_model.xsub_protocol&0x40) + index ;
   updateSettings();
 }
 
 void ModelEdit::on_xpulsePolCB_currentIndexChanged(int index)
 {
+  if(protocolEditLock) return;
+  
     g_model.xpulsePol = index;
     updateSettings();
 }
@@ -5478,9 +5534,19 @@ void ModelEdit::on_xpulsePolCB_currentIndexChanged(int index)
 void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
-		if ( index == 4 )
+		if ( index >= 4 )
 		{
-			index = PROTO_OFF ;
+    	if ( rData->bitType & RADIO_BITTYPE_9XRPRO )
+			{
+				if ( index == 5 )
+				{
+					index = PROTO_OFF ;
+				}
+			}
+			else
+			{
+				index = PROTO_OFF ;
+			}
 		}
     g_model.protocol = index;
     g_model.ppmNCH = 0;
@@ -5493,7 +5559,7 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
-		if ( rData->type == 0 )
+		if ( rData->type == RADIO_TYPE_SKY )
 		{
 			if ( index )
 			{
@@ -5606,7 +5672,7 @@ void ModelEdit::on_DSM_Type_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.sub_protocol = index;
+		g_model.sub_protocol = (g_model.sub_protocol&0x40) + index ;
     updateSettings();
 }
 
@@ -5614,7 +5680,7 @@ void ModelEdit::on_xDSM_Type_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.xsub_protocol = index;
+		g_model.xsub_protocol = (g_model.xsub_protocol&0x40) + index ;
     updateSettings();
 }
 
@@ -5622,7 +5688,7 @@ void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.sub_protocol = index;
+		g_model.sub_protocol = (g_model.sub_protocol&0x40) + index ;
     setProtocolBoxes();
     updateSettings();
 }
@@ -5640,7 +5706,7 @@ void ModelEdit::on_xSubProtocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.xsub_protocol = index;
+		g_model.xsub_protocol = (g_model.xsub_protocol&0x40) + index ;
     setProtocolBoxes();
     updateSettings();
 }
@@ -6124,7 +6190,7 @@ void ModelEdit::on_switchDefPos_8_stateChanged(int )
 void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 	    x <<= 1 ;
 	    g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0006 ) | x ;
@@ -6152,7 +6218,7 @@ void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 	    x <<= 3 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0018 ) | x ;
@@ -6180,7 +6246,7 @@ void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 	    x <<= 5 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0060 ) | x ;
@@ -6207,7 +6273,7 @@ void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 	    x <<= 7 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0180 ) | x ;
@@ -6234,7 +6300,7 @@ void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 void ModelEdit::on_SwitchDefSE_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-		if ( ( rData->type == 1 ) || ( rData->type == 2 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 		{
 	    x <<= 9 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0600 ) | x ;
@@ -7143,6 +7209,7 @@ void ModelEdit::moveMixUp()
 
     setSelectedByList(highlightList);
 }
+
 
 void ModelEdit::moveMixDown()
 {

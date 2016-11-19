@@ -1518,6 +1518,29 @@ void simulatorDialog::setValues()
 	ui->Gvar5->setText( tr("%1").arg(g_model.gvars[4].gvar) ) ;
 	ui->Gvar6->setText( tr("%1").arg(g_model.gvars[5].gvar) ) ;
 	ui->Gvar7->setText( tr("%1").arg(g_model.gvars[6].gvar) ) ;
+
+	i = getFlightPhase() ;
+	if ( i && g_model.phaseData[i-1].name[0] )
+	{
+		QString n = g_model.phaseData[i-1].name ;
+		while ( n.endsWith(" ") )
+		{
+			n = n.left(n.size()-1) ;			
+		}
+		if ( n.length() )
+		{
+			ui->FlightMode->setText( n ) ;
+			i = -1 ;
+		}
+	}
+	if ( i >= 0 )
+	{
+		ui->FlightMode->setText( tr("FM%1").arg(i) ) ;
+	}
+
+
+
+
 }
 
 void simulatorDialog::voiceDisplay( QString name )
