@@ -87,8 +87,10 @@ void p4hex( uint16_t value ) ;
 void p2hex( unsigned char c ) ;
 void hex_digit_send( unsigned char c ) ;
 
+#ifdef PCB9XT
 uint8_t Dbg_Spi_tx_buf[32] ;
 uint8_t Dbg_Spi_rx_buf[32] ;
+#endif
 
 uint8_t I2CwriteValue ;
 #ifdef PCBSKY
@@ -231,7 +233,7 @@ extern uint8_t tab_1024[1024];
 * Return         : 0: Byte received
 *                  -1: Timeout
 *******************************************************************************/
-extern struct t_fifo128 Console_fifo ;
+extern struct t_fifo128 Com2_fifo ;
 
 //struct t_fifo64 HexStreamFifo ;
 
@@ -315,7 +317,7 @@ void handle_serial(void* pdata)
 		}
 #endif
 		
-		while ( ( rxchar = rxuart() ) == 0xFFFF )
+		while ( ( rxchar = rxCom2() ) == 0xFFFF )
 		{
 			CoTickDelay(5) ;					// 10mS for now
 #ifndef PCBDUE
@@ -400,7 +402,7 @@ void handle_serial(void* pdata)
 //			{
 //      	usbMassStorage();
 //      	CoTickDelay(1);  // 5*2ms for now
-//				rxchar = rxuart() ;
+//				rxchar = rxCom2() ;
 //			}
 //			Voice.VoiceLock = 0 ;
 //			crlf() ;
@@ -621,7 +623,7 @@ uint32_t write32_eeprom_block( uint32_t eeAddress, register uint8_t *buffer, uin
 	  				while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
 						{
 							CoTickDelay(1) ;					// 2mS for now
-//								if ( ( rxchar = rxuart() ) != 0xFFFF )
+//								if ( ( rxchar = rxCom2() ) != 0xFFFF )
 //								{
 //									break ;
 //								}
@@ -975,7 +977,7 @@ static uint8_t Ht1621Data[16] = {	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0
 //				}
 //				CoTickDelay(1) ;					// 2mS
 
-//				if ( ( rxchar = rxuart() ) != 0xFFFF )
+//				if ( ( rxchar = rxCom2() ) != 0xFFFF )
 //				{
 //					if ( rxchar == 'X' )
 //					{
@@ -1491,50 +1493,50 @@ int32_t Ymodem_Receive( uint8_t *buf ) ;
 //		}
 
 
-		if ( rxchar == 'm' )
-		{
-			register uint8_t *p ;
-			register uint32_t x ;
-			
-			txmit( 'm' ) ;
-			p = Dbg_Spi_tx_buf ;
-			*(p) = 3 ;
-			*(p+1) = 0 ;
-			*(p+2) = 0 ;
-			*(p+3) = 0 ;
-
-			spi_PDC_action( p, 0, Dbg_Spi_rx_buf, 4, 8 ) ;
-
-			for ( x = 0 ; x < 100000 ; x += 1  )
-			{
-				if ( Spi_complete )
-				{
-					break ;				
-				}
-			}
-		}
-
-		if ( rxchar == 'n' )
-		{
-			register uint8_t *p ;
+//		if ( rxchar == 'm' )
+//		{
+//			register uint8_t *p ;
 //			register uint32_t x ;
 			
-			txmit( 'n' ) ;
-			txmit( Spi_complete ? '1' : '0' ) ;
+//			txmit( 'm' ) ;
+//			p = Dbg_Spi_tx_buf ;
+//			*(p) = 3 ;
+//			*(p+1) = 0 ;
+//			*(p+2) = 0 ;
+//			*(p+3) = 0 ;
 
-			crlf() ;
+//			spi_PDC_action( p, 0, Dbg_Spi_rx_buf, 4, 8 ) ;
 
-			p = Dbg_Spi_rx_buf ;
-			p2hex( *p ) ;
-			p2hex( *(p+1) ) ;
-			p2hex( *(p+2) ) ;
-			p2hex( *(p+3) ) ;
-			p2hex( *(p+4) ) ;
-			p2hex( *(p+5) ) ;
-			p2hex( *(p+6) ) ;
-			p2hex( *(p+7) ) ;
-			crlf() ;
-		}
+//			for ( x = 0 ; x < 100000 ; x += 1  )
+//			{
+//				if ( Spi_complete )
+//				{
+//					break ;				
+//				}
+//			}
+//		}
+
+//		if ( rxchar == 'n' )
+//		{
+//			register uint8_t *p ;
+////			register uint32_t x ;
+			
+//			txmit( 'n' ) ;
+//			txmit( Spi_complete ? '1' : '0' ) ;
+
+//			crlf() ;
+
+//			p = Dbg_Spi_rx_buf ;
+//			p2hex( *p ) ;
+//			p2hex( *(p+1) ) ;
+//			p2hex( *(p+2) ) ;
+//			p2hex( *(p+3) ) ;
+//			p2hex( *(p+4) ) ;
+//			p2hex( *(p+5) ) ;
+//			p2hex( *(p+6) ) ;
+//			p2hex( *(p+7) ) ;
+//			crlf() ;
+//		}
 //		if ( rxchar == 'm' )
 //		{
 //			register uint8_t *p ;
@@ -1624,7 +1626,7 @@ int32_t Ymodem_Receive( uint8_t *buf ) ;
 //			for(;;)
 //			{
 //				xfer = 0 ;
-//				if ( ( rxchar = rxuart() ) != 0xFFFF )
+//				if ( ( rxchar = rxCom2() ) != 0xFFFF )
 //				{
 //					if ( rxchar == 27 )		// ESCAPE
 //					{
@@ -1835,21 +1837,21 @@ extern uint8_t PlayingFreq ;
 //	crlf() ;
 //}
 
-void disp_256( register uint32_t address, register uint32_t lines )
-{
-	register uint32_t i ;
-	register uint32_t j ;
-	for ( i = 0 ; i < lines ; i += 1 )
-	{
-		p8hex( address ) ;
-		for ( j = 0 ; j < 16 ; j += 1 )
-		{
-			txmit(' ') ;
-			p2hex( *( (uint8_t *)address++ ) ) ;
-		}
-		crlf() ;
-	}
-}
+//void disp_256( register uint32_t address, register uint32_t lines )
+//{
+//	register uint32_t i ;
+//	register uint32_t j ;
+//	for ( i = 0 ; i < lines ; i += 1 )
+//	{
+//		p8hex( address ) ;
+//		for ( j = 0 ; j < 16 ; j += 1 )
+//		{
+//			txmit(' ') ;
+//			p2hex( *( (uint8_t *)address++ ) ) ;
+//		}
+//		crlf() ;
+//	}
+//}
 
 
 void dispw_256( register uint32_t address, register uint32_t lines )
@@ -1878,7 +1880,7 @@ static int32_t Receive_Byte (uint8_t *c, uint32_t timeout)
 {
 	uint16_t rxchar ;
 
-	while ( ( rxchar = rxuart() ) == 0xFFFF )
+	while ( ( rxchar = rxCom2() ) == 0xFFFF )
 	{
 		CoTickDelay(1) ;					// 2mS
 		timeout -= 1 ;

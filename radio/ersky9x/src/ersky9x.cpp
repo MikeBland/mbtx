@@ -119,7 +119,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 #include "CoOS.h"
 #endif
 
-#include "..\..\common\hand.lbm"
+#include "../../common/hand.lbm"
 
 //#define PCB_TEST_9XT	1
 
@@ -162,6 +162,16 @@ uint8_t Host10ms ;
 #endif
 
 #endif
+
+
+//uint16_t DebugSport0 ;
+//uint16_t DebugSport1 ;
+//uint16_t DebugSport2 ;
+//uint16_t DebugSport3 ;
+
+
+//uint32_t IdleCount ;
+//uint32_t IdlePercent ;
 
 //#define SLAVE_RESET	1
 
@@ -322,7 +332,7 @@ int8_t RotaryControl ;
 uint8_t ppmInValid = 0 ;
 uint8_t Activated = 0 ;
 uint8_t Tevent ;
-uint16_t SbusTimer = 0 ;
+extern uint16_t SbusTimer ;
 
 uint8_t LastMusicStartSwitchState ;
 uint8_t LastMusicPauseSwitchState ;
@@ -343,7 +353,7 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 #endif
 void txmit( uint8_t c ) ;
 void uputs( char *string ) ;
-uint16_t rxuart( void ) ;
+uint16_t rxCom2( void ) ;
 
 #ifdef PCB_TEST_9XT
 void test_loop( void* pdata ) ;
@@ -456,10 +466,8 @@ uint8_t CoProcAlerted ;
 int main( void ) ;
 
 EEGeneral  g_eeGeneral;
-#if defined(PCBSKY) || defined(PCB9XT)
-ModelData  g_oldmodel;
-#endif
 SKYModelData  g_model;
+ProtocolData Protocols[2] ;
 
 //const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 //                                1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
@@ -487,6 +495,8 @@ uint8_t AlarmCheckFlag = 0 ;
 //uint8_t CsCheckFlag = 0 ;
 uint8_t VoiceTimer = 10 ;		// Units of 10 mS
 uint8_t VoiceCheckFlag100mS = 0 ;
+uint8_t CheckFlag20mS = 0 ;
+uint8_t CheckTimer = 2 ;
 //#ifdef TELEMETRY_LOST
 //uint8_t TelemetryStatus ;
 //#endif
@@ -740,7 +750,7 @@ void setLanguage()
 
 const uint8_t csTypeTable[] =
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16
 } ;
 
 uint8_t CS_STATE( uint8_t x)
@@ -890,7 +900,7 @@ void update_mode(void* pdata)
 #ifdef PCBSKY
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 //	UART2_Configure( 57600, Master_frequency ) ;
-	startPdcUsartReceive() ;
+//	startPdcUsartReceive() ;
 #endif
 #ifdef PCB9XT
 	BlSetAllColours( 0, 30, 60 ) ;
@@ -1182,30 +1192,26 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 //}	
 //#endif
 
+//#ifdef WATCHDOG_DEGUG		
 
+//#endif
 
 int main( void )
 {
 	
-#ifdef PCB9XT
  	{
 		uint32_t i ;
+#if defined(PCBX9D) || defined(PCB9XT)
 		for ( i = 0 ; i < 81 ; i += 1 )
-		{
-			NVIC->IP[i] = 0x80 ;
-		}
-	}
 #endif
 #ifdef PCBSKY
- 	{
-		uint32_t i ;
 		for ( i = 0 ; i < 35 ; i += 1 )
+#endif
 		{
 			NVIC->IP[i] = 0x80 ;
 		}
 	}
-#endif
-	
+
 #ifdef PCBSKY
 	register Pio *pioptr ;
 	module_output_low() ;
@@ -1267,7 +1273,13 @@ int main( void )
 	if ( ( pioptr->PIO_PDSR & 0x02000000 ) == 0 )
 	{
 		// USB not the power source
+//#ifdef WATCHDOG_DEGUG		
+//		NVIC_SetPriority( WDT_IRQn, 0 ) ; // Highest priority
+//		NVIC_EnableIRQ(WDT_IRQn) ;
+//		WDT->WDT_MR = 0x3FFF107F ;				// Enable watchdog 0.5 Secs interrupt
+//#else	
 		WDT->WDT_MR = 0x3FFF207F ;				// Enable watchdog 0.5 Secs
+//#endif
 	}
 
 #ifdef REVB	
@@ -3896,6 +3908,22 @@ uint32_t countExtraPots()
 }
 #endif
 
+#ifdef REV9E
+uint32_t countExtraPots()
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	return count ;
+}
+#endif
+
 void speakModelVoice()
 {
 	if ( g_model.modelVoice == -1 )
@@ -3978,13 +4006,12 @@ void main_loop(void* pdata)
 
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
-	checkTrainerSource() ;
 	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
 	init_ppm2( 3000, 0 ) ;
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
-
 	start_ppm_capture() ;
+	checkTrainerSource() ;
 
 //  FrskyAlarmSendState |= 0x40 ;
 #endif
@@ -4080,7 +4107,7 @@ void main_loop(void* pdata)
 //		PowerStatus = check_soft_power() ;
 //    if ( 0 )
 // #else
-#ifdef REVX
+#ifdef PCBSKY
  		static uint16_t tgtime = 0 ;
 		uint32_t powerState ;
 		powerState = check_soft_power() ;
@@ -4106,6 +4133,7 @@ void main_loop(void* pdata)
 #endif
 		{
 			// Time to switch off
+			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 			lcd_clear() ;
 			lcd_puts_P( 4*FW, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 
@@ -4150,6 +4178,7 @@ void main_loop(void* pdata)
       STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
 
   		uint16_t tgtime = get_tmr10ms() ;
+  		uint16_t long_tgtime = tgtime ;
 	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 70 ) // 50 - Half second
 //	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 200 ) // 50 - Half second
   		{
@@ -4169,6 +4198,14 @@ void main_loop(void* pdata)
 #endif // nREV9E
 				}
 				wdt_reset() ;
+
+				if ( AudioActive )
+				{
+					if ( (uint16_t)(get_tmr10ms() - long_tgtime ) < 600 )		// 6 seconds
+					{
+						tgtime = get_tmr10ms() ;
+					}
+				}
 
 				if ( ee32_check_finished() == 0 )
 				{
@@ -4528,6 +4565,9 @@ static void processVoiceAlarms()
 				break ;
 				case 6 :
 					x = x == y ;
+				break ;
+				case 7 :
+					x = (x & y) != 0 ;
 				break ;
 			}
 			functionTrue = x ;
@@ -5202,7 +5242,12 @@ static uint8_t RssiTestCount ;
 			}
 			updateTopLCD( s_timer[0].s_timerVal, bstate ) ;
 #endif
-		
+//			uint32_t x ;
+//			x = IdleCount * 10000 ;
+//			x /= 2000000 ;
+//			IdleCount = 0 ;
+//			IdlePercent = x ;
+
 		}
 #ifndef SIMU
 		sdPoll10mS() ;
@@ -5487,6 +5532,53 @@ extern uint32_t i2c2_result() ;
 	// New switch voices
 	// New entries, Switch, (on/off/both), voice file index
 
+	if ( CheckFlag20mS )
+	{
+		uint32_t i ;
+		
+		CheckFlag20mS = 0 ;
+		for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
+		{
+ 	  	SKYCSwData &cs = g_model.customSw[i];
+			if ( cs.func == CS_LATCH )
+			{
+		    if (getSwitch00( cs.v1) )
+				{
+					Last_switch[i] = 1 ;
+				}
+				else
+				{
+			    if (getSwitch00( cs.v2) )
+					{
+						Last_switch[i] = 0 ;
+					}
+				}
+			}
+			if ( cs.func == CS_FLIP )
+			{
+		    if (getSwitch00( cs.v1) )
+				{
+					if ( ( Last_switch[i] & 2 ) == 0 )
+					{
+						// Clock it!
+			      if (getSwitch00( cs.v2) )
+						{
+							Last_switch[i] = 3 ;
+						}
+						else
+						{
+							Last_switch[i] = 2 ;
+						}
+					}
+				}
+				else
+				{
+					Last_switch[i] &= ~2 ;
+				}
+			}
+		}
+	}
+
 	if ( VoiceCheckFlag100mS )	// Every 100mS
   {
 		uint32_t i ;
@@ -5495,6 +5587,10 @@ extern uint32_t i2c2_result() ;
     
 		if ( VoiceCheckFlag100mS & 1 )
 		{
+			TrimInUse[0] <<= 1 ;
+			TrimInUse[1] <<= 1 ;
+			TrimInUse[2] <<= 1 ;
+			TrimInUse[3] <<= 1 ;
 //#ifdef TELEMETRY_LOST
 //			if ( TelemetryStatus && ( frskyStreaming == 0 ) )
 //			{ // We have lost telemetry
@@ -5583,6 +5679,13 @@ extern uint32_t i2c2_result() ;
 							}
 						}
 			    }
+				}
+			}
+			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+			{
+				if ( g_model.eScalers[i].dest )
+				{
+					calc_scaler( i, 0, 0 ) ;					
 				}
 			}
 		}
@@ -5738,42 +5841,6 @@ extern uint32_t i2c2_result() ;
 						}
 					}
 					CsTimer[i] = y ;
-				}
-				if ( cs.func == CS_LATCH )
-				{
-		      if (getSwitch00( cs.v1) )
-					{
-						Last_switch[i] = 1 ;
-					}
-					else
-					{
-			      if (getSwitch00( cs.v2) )
-						{
-							Last_switch[i] = 0 ;
-						}
-					}
-				}
-				if ( cs.func == CS_FLIP )
-				{
-		      if (getSwitch00( cs.v1) )
-					{
-						if ( ( Last_switch[i] & 2 ) == 0 )
-						{
-							// Clock it!
-			      	if (getSwitch00( cs.v2) )
-							{
-								Last_switch[i] = 3 ;
-							}
-							else
-							{
-								Last_switch[i] = 2 ;
-							}
-						}
-					}
-					else
-					{
-						Last_switch[i] &= ~2 ;
-					}
 				}
 				if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
 				{
@@ -6648,6 +6715,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 
 uint8_t AnaEncSw = 0 ;
 
+#ifdef PCBX9D
 void valueprocessAnalogEncoder( uint32_t x )
 {
 	uint32_t y ;
@@ -6717,15 +6785,15 @@ void valueprocessAnalogEncoder( uint32_t x )
 		Rotary_position = ( Rotary_position & ~0x45 ) | dummy ;
 	}
 }
-
-#ifdef PCBSKY
-void processAnaEncoder()
-{
-	read_adc() ;		// need to just read the 1 channel
-	uint32_t x = Analog_values[5] >> 1 ;
-	valueprocessAnalogEncoder( x ) ;
-}
 #endif
+//#ifdef PCBSKY
+//void processAnaEncoder()
+//{
+//	read_adc() ;		// need to just read the 1 channel
+//	uint32_t x = Analog_values[5] >> 1 ;
+//	valueprocessAnalogEncoder( x ) ;
+//}
+//#endif
 
 uint8_t GvarSource[4] ;
 
@@ -6741,6 +6809,7 @@ int8_t getGvarSourceValue( uint8_t src )
 	{
 //#ifdef FIX_MODE
 		value = getTrimValue( CurrentPhase, src - 1 ) ;
+		TrimInUse[src-1] |= 1 ;
 //#else
 //		value = getTrimValue( CurrentPhase, convert_mode_helper(src) - 1 ) ;
 //#endif
@@ -6863,7 +6932,11 @@ void perMain( uint32_t no_menu )
 #endif
 	if ( ppmInValid )
 	{
-		ppmInValid -= 1 ;
+		if ( --ppmInValid == 0 )
+		{
+			// Announce trainer lost
+			putSystemVoice( SV_TRN_LOST, 0 ) ;
+		}
 	}
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -7485,6 +7558,14 @@ void interrupt5ms()
 			AlarmTimer = 100 ;		// Restart timer
 			AlarmCheckFlag += 1 ;	// Flag time to check alarms
 		}
+		if ( --CheckTimer == 0 )
+		{
+			CheckTimer = 2 ;
+			__disable_irq() ;
+			CheckFlag20mS = 1 ;
+			__enable_irq() ;
+		}
+
 		if (--VoiceTimer == 0 )
 		{
 			VoiceTimer = 10 ;		// Restart timer
@@ -7614,7 +7695,8 @@ uint32_t getAnalogIndex( uint32_t index )
 }
 
 
-uint16_t g_timeAdc ;
+//uint16_t g_timeAdc ;
+
 //void ogetADC_single()
 //{
 //	register uint32_t x ;
@@ -7663,16 +7745,16 @@ void getADC_single()
 	uint16_t temp ;
 	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
-#ifdef PCBSKY
-  uint16_t t0 = getTmr2MHz();
-#endif
+//#ifdef PCBSKY
+//  uint16_t t0 = getTmr2MHz();
+//#endif
 	
 	read_adc() ;
 
-#ifdef PCBSKY
-	t0 = getTmr2MHz() - t0;
-  if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
-#endif
+//#ifdef PCBSKY
+//	t0 = getTmr2MHz() - t0;
+//  if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
+//#endif
 
 	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
@@ -7982,7 +8064,6 @@ int16_t getTrimValue( uint8_t phase, uint8_t idx )
   return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
 }
 
-
 void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 {
 	if ( phase )
@@ -8011,6 +8092,7 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
   STORE_MODELVARS_TRIM ;
 }
 
+uint8_t TrimBits ;
 
 static uint8_t checkTrim(uint8_t event)
 {
@@ -8030,74 +8112,68 @@ static uint8_t checkTrim(uint8_t event)
 			}
 		}
 
-  if( (k>=0) && (k<8) && !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
-  {
-    //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
-    uint8_t idx = k/2;
+  if( (k>=0) && (k<8) )
+	{
+		if ( !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
+  	{
+			TrimBits |= (1 << k ) ;
+			
+  	  //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
+  	  uint8_t idx = k/2;
 		
-// SORT idx for stickmode if FIX_MODE on
-//#ifdef FIX_MODE
-				idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
-//#endif
-		if ( g_eeGeneral.crosstrim )
-		{
-			idx = 3 - idx ;			
-		}
-		uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
-    int16_t tm = getTrimValue( phaseNo, idx ) ;
-    int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
-//#ifdef FIX_MODE
-    bool thrChan = (2 == idx) ;
-//#else
-//		bool thrChan = ((2-(g_eeGeneral.stickMode&1)) == idx);
-//#endif
-		bool thro = (thrChan && (g_model.thrTrim));
-    if(thro) v = 2; // if throttle trim and trim trottle then step=2
-
-		if ( GvarSource[idx] )
-		{
-			v = 1 ;
-		}
-
-    if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
-    int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
-
-    if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0))
-		{
-			setTrimValue( phaseNo, idx, 0 ) ;
-      killEvents(event);
-      audioDefevent(AU_TRIM_MIDDLE);
-    }
-		else if(x>-125 && x<125)
-		{
-			setTrimValue( phaseNo, idx, x ) ;
-//      STORE_MODELVARS_TRIM;
-      //if(event & _MSK_KEY_REPT) warble = true;
-			if(x <= 125 && x >= -125)
+	// SORT idx for stickmode if FIX_MODE on
+			idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
+			if ( g_eeGeneral.crosstrim )
 			{
-//				if(g_eeGeneral.speakerMode == 0){
-//					audioDefevent(AU_TRIM_MOVE);
-//				}
-//				else
-//				{
-					audio.event(AU_TRIM_MOVE,(abs(x)/4)+60);
-//				}
-			}	
-    }
-    else
-    {
-			setTrimValue( phaseNo, idx, (x>0) ? 125 : -125 ) ;
-//      STORE_MODELVARS_TRIM;
-			if(x <= 125 && x >= -125){
-//				if(g_eeGeneral.speakerMode == 0){
-//					audioDefevent(AU_TRIM_MOVE);
-//				} else {
-					audio.event(AU_TRIM_MOVE,(-abs(x)/4)+60);
-//				}
-			}	
-    }
-    return 0;
-  }
+				idx = 3 - idx ;			
+			}
+			if ( TrimInUse[idx] )
+			{
+				uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
+  	  	int16_t tm = getTrimValue( phaseNo, idx ) ;
+  	  	int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
+  	  	bool thrChan = (2 == idx) ;
+				bool thro = (thrChan && (g_model.thrTrim));
+  	  	if(thro) v = 2; // if throttle trim and trim trottle then step=2
+
+				if ( GvarSource[idx] )
+				{
+					v = 1 ;
+				}
+
+  	  	if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
+  	  	int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
+
+  	  	if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0))
+				{
+					setTrimValue( phaseNo, idx, 0 ) ;
+  	  	  killEvents(event);
+  	  	  audioDefevent(AU_TRIM_MIDDLE);
+  	  	}
+				else if(x>-125 && x<125)
+				{
+					setTrimValue( phaseNo, idx, x ) ;
+					if(x <= 125 && x >= -125)
+					{
+						audio.event(AU_TRIM_MOVE,(abs(x)/4)+60);
+					}	
+  	  	}
+  	  	else
+  	  	{
+					setTrimValue( phaseNo, idx, (x>0) ? 125 : -125 ) ;
+					if(x <= 125 && x >= -125)
+					{
+						audio.event(AU_TRIM_MOVE,(-abs(x)/4)+60);
+					}	
+  	  	}
+			}
+  	  return 0;
+  	}
+		else
+		{
+			TrimBits &= ~(1 << k ) ;
+		}
+	}
   return event;
 }
 
@@ -8208,8 +8284,8 @@ uint8_t MaxSwitchIndex = MAX_SKYDRSWITCH ;		// For ON and OFF
 
 #if defined(PCBSKY) || defined(PCB9XT)
 
-uint8_t switchMapTable[80] ;
-uint8_t switchUnMapTable[80] ;
+uint8_t switchMapTable[100] ;
+uint8_t switchUnMapTable[100] ;
 uint8_t MaxSwitchIndex ;		// For ON and OFF
 uint8_t Sw3PosList[8] ;
 uint8_t Sw3PosCount[8] ;
@@ -8313,6 +8389,14 @@ void createSwitchMapping()
 	{
 		*p++ = HSW_Pb4 ;
 	}
+	*p++ = HSW_Ttrmup ;
+	*p++ = HSW_Ttrmdn ;
+	*p++ = HSW_Rtrmup ;
+	*p++ = HSW_Rtrmdn ;
+	*p++ = HSW_Atrmup ;
+	*p++ = HSW_Atrmdn ;
+	*p++ = HSW_Etrmup ;
+	*p++ = HSW_Etrmdn ;
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
 	{
 		*p++ = i ;	// Custom switches
@@ -8321,11 +8405,11 @@ void createSwitchMapping()
 	MaxSwitchIndex = p - switchMapTable ;
 	*++p = MAX_SKYDRSWITCH+1 ;
 	*++p = MAX_SKYDRSWITCH+2 ;
-	*++p = MAX_SKYDRSWITCH+3 ;
-	*++p = MAX_SKYDRSWITCH+4 ;
-	*++p = MAX_SKYDRSWITCH+5 ;
+//	*++p = MAX_SKYDRSWITCH+3 ;
+//	*++p = MAX_SKYDRSWITCH+4 ;
+//	*++p = MAX_SKYDRSWITCH+5 ;
 
-	for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex+5 ; i += 1  )
+	for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex+2 ; i += 1  )
 	{
 		switchUnMapTable[switchMapTable[i]] = i ;
 	}
@@ -8454,16 +8538,25 @@ void createSwitchMapping()
 //	*p++ = HSW_SH0 ;
 	*p++ = HSW_SH2 ;
 
-//#ifdef REV9E
-//	*p++ = HSW_SI0 ;
-//	*p++ = HSW_SI1 ;
-//	*p++ = HSW_SI2 ;
-//	*p++ = HSW_SJ0 ;
-//	*p++ = HSW_SJ1 ;
-//	*p++ = HSW_SJ2 ;
-//	*p++ = HSW_SK0 ;
-//	*p++ = HSW_SK1 ;
-//	*p++ = HSW_SK2 ;
+#ifdef REV9E
+	if ( g_eeGeneral.ailsource & 1 )
+	{
+		*p++ = HSW_SI0 ;
+		*p++ = HSW_SI1 ;
+		*p++ = HSW_SI2 ;
+	}
+	if ( g_eeGeneral.ailsource & 2 )
+	{
+		*p++ = HSW_SJ0 ;
+		*p++ = HSW_SJ1 ;
+		*p++ = HSW_SJ2 ;
+	}
+	if ( g_eeGeneral.ailsource & 4 )
+	{
+		*p++ = HSW_SK0 ;
+		*p++ = HSW_SK1 ;
+		*p++ = HSW_SK2 ;
+	}
 //	*p++ = HSW_SL0 ;
 //	*p++ = HSW_SL1 ;
 //	*p++ = HSW_SL2 ;
@@ -8485,7 +8578,8 @@ void createSwitchMapping()
 //	*p++ = HSW_SR0 ;
 //	*p++ = HSW_SR1 ;
 //	*p++ = HSW_SR2 ;
-//#endif	// REV9E
+#endif	// REV9E
+
 
 	if ( g_eeGeneral.switchMapping & USE_PB1 )
 	{
@@ -8616,14 +8710,20 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 	{
   	lcd_putcAtt(x,y, '!',att);
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
 	int8_t z ;
 	z = idx1 ;
 	if ( z < 0 )
 	{
 		z = -idx1 ;			
 	}
+	if ( ( z <= HSW_Ttrmup ) && ( z >= HSW_Etrmdn ) )
+	{
+		z -= HSW_Etrmdn ;
+	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtdEtuAtdAtuRtdRtuTtdTtu"),z,att) ;
+		return ;
+	}
 	z -= 1 ;
+#if defined(PCBSKY) || defined(PCB9XT)
 //		z *= 3 ;
 	if ( z > MAX_SKYDRSWITCH )
 	{
@@ -8633,13 +8733,6 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 #endif
 
 #ifdef PCBX9D
-	int8_t z ;
-	z = idx1 ;
-	if ( z < 0 )
-	{
-		z = -idx1 ;			
-	}
-	z -= 1 ;
 //		z *= 3 ;
 	if ( z > MAX_SKYDRSWITCH )
 	{
@@ -8967,6 +9060,14 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 	case (CS_LATCH) :
   case (CS_FLIP) :
     ret_value = Last_switch[cs_index] & 1 ;
+  break ;
+  case (CS_BIT_AND) :
+	{	
+    x = getValue(cs.v1-1);
+		y = (uint8_t) cs.v2 ;
+		y |= cs.res << 8 ;
+    ret_value = ( x & y ) != 0 ;
+	}
   break ;
   default:
       ret_value = false;
@@ -9992,18 +10093,6 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x )
 		return IS_THROTTLE( x ) ;
 	}
 	return 0 ;
-}
-
-uint8_t IS_THROTTLE( uint8_t x )
-{
-//#ifdef FIX_MODE
-	return x == 2 ;
-//#else
-//	uint8_t y ;
-//	y = g_eeGeneral.stickMode&1 ;
-//	y = 2 - y ;
-//	return (((y) == x) && (x<4)) ;
-//#endif
 }
 
 void checkXyCurve()

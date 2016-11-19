@@ -226,6 +226,31 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 	store_hub_data( index, value ) ;
 }
 
+#if defined(CPUM128) || defined(CPUM2561)
+void store_telemetry_scaler( uint8_t index, uint16_t value )
+{
+	switch ( index )
+	{
+		case 1 :
+			store_hub_data( FR_BASEMODE, value ) ;
+		break ;
+		case 2 :
+			store_hub_data( FR_CURRENT, value ) ;
+		break ;
+		case 3 :
+			store_hub_data( FR_AMP_MAH, value ) ;
+		break ;
+		case 4 :
+			store_hub_data( FR_VOLTS, value ) ;
+		break ;
+		case 5 :
+			store_hub_data( FR_FUEL, value ) ;
+		break ;
+	}
+}
+#endif
+
+
 NOINLINE void store_cell_data( uint8_t battnumber, uint16_t cell )
 {
 	if ( battnumber < FRSKY_VOLTS_SIZE )
@@ -1174,6 +1199,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 uint8_t Private_count ;
 uint8_t Private_position ;
+uint8_t Private_enable ;
 //extern uint8_t TrotCount ;
 //extern uint8_t TezRotary ;
 
@@ -1292,6 +1318,12 @@ ISR(USART0_RX_vect)
     	  break ;
 			}
 	 	
+	 }
+	 else if ( g_model.telemetryProtocol == 7 )
+	 {
+  		frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
+	    frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+			frsky_proc_user_byte( data ) ;		
 	 }
 	 else
 	 {
@@ -1431,30 +1463,50 @@ ISR(USART0_RX_vect)
 					dataState = PRIVATE_VALUE ;
           Private_count = data ;		// Count of bytes to receive
 					Private_position = 0 ;
+					if ( data > 3 )
+					{
+         		dataState = frskyDataIdle ;
+					}
         break;
         case PRIVATE_VALUE :
-					if ( Private_position == 0 )
+				{
+					uint8_t lEnable ;
+					uint8_t lPosition ;
+					lPosition = Private_position ;
+					lEnable = Private_enable ;
+					if ( lEnable < 50 )
 					{
-						// Process first private data byte
-						// PC6, PC7
-						if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+						lEnable += 12 ;
+					}
+					else
+					{
+						lEnable = 100 ;
+						if ( lPosition == 0 )
 						{
-							DDRC |= 0xC0 ;		// Set as outputs
-							PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+							// Process first private data byte
+							// PC6, PC7
+							if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+							{
+								DDRC |= 0xC0 ;		// Set as outputs
+								PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+							}
+						}
+						else if( lPosition==1) {
+							Rotary.TrotCount = data;
+						}
+						else if(lPosition==2) { // rotary encoder switch
+							Rotary.TezRotary = data;
 						}
 					}
-					else if(Private_position==1) {
-						Rotary.TrotCount = data;
-					}
-					else if(Private_position==2) { // rotary encoder switch
-						Rotary.TezRotary = data;
-					}
-					Private_position++;
-					if ( Private_position == Private_count )
+					Private_enable = lEnable ;
+					lPosition += 1 ;
+					Private_position = lPosition ;
+					if ( lPosition == Private_count )
 					{
           	dataState = frskyDataIdle;
     				FrskyAlarmSendState |= 0x80 ;		// Send ACK
 					}
+				}
         break;
 //---------------------------------------------------------------------------------
 #endif
@@ -1971,6 +2023,11 @@ void check_frsky()
 	if ( g_eeGeneral.FrskyPins == 0 )
 		return ;
 #endif
+
+	if ( Private_enable )
+	{
+		Private_enable -= 1 ;
+	}
 
 	uint8_t telemetryType = (g_model.protocol == PROTO_PXX )||((g_model.protocol == PROTO_MULTI) && ((g_model.sub_protocol&0x1F)==M_FRSKYX));
 	if ( telemetryType != FrskyTelemetryType )

@@ -76,7 +76,11 @@ extern uint8_t CurrentVolume ;
 
 //volatile uint8_t Buzzer_count ;
 
-uint32_t CoProcTimer ;
+uint8_t CoProcTimer ;
+uint8_t AudioVoiceUnderrun ;
+uint8_t AudioVoiceCountUnderruns ;
+uint8_t VoiceCount ;
+
 
 
 struct t_sound_globals Sound_g ;
@@ -89,7 +93,6 @@ struct t_VoiceBuffer VoiceBuffer[NUM_VOICE_BUFFERS] ;
 //#define SOUND_STOP	3
 
 struct t_VoiceBuffer *PtrVoiceBuffer[NUM_VOICE_BUFFERS] ;
-uint8_t VoiceCount ;
 //uint8_t SoundType ;
 
 	 
@@ -360,9 +363,6 @@ void init_dac()
 //	}
 //}
 //#endif
-
-uint8_t AudioVoiceUnderrun ;
-uint8_t AudioVoiceCountUnderruns ;
 
 #ifndef SIMU
 extern "C" void DAC_IRQHandler()
@@ -833,9 +833,9 @@ uint8_t Coproc_read ;
 int8_t Coproc_valid ;
 int8_t Rtc_valid ;
 //static uint8_t Twi_mode ;
+uint8_t TwiOperation ;
 static uint8_t *Twi_read_address ;
 //static uint8_t TwiDevice ;
-uint8_t TwiOperation ;
 //const uint8_t *CoProgBufPtr ;
 //uint8_t Program_coprocessor ;
 //uint8_t Program_blocks_written ;

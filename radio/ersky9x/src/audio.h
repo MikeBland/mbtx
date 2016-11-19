@@ -226,6 +226,7 @@ void audioNamedVoiceDefevent( uint8_t e, uint16_t v ) ;
 #define VOICE_Q_LENGTH		16
 
 extern uint8_t SdAccessRequest ;
+extern uint8_t AudioActive ;
 
 struct t_voice
 {
@@ -327,6 +328,18 @@ extern void unlockVoice( void ) ;
 
 
 // Defines for system voice names
+
+//Are these needed?
+//TX_VOLT
+//ALTITUDE
+//CURRENT
+//PACKVOLT
+//RX_VOLT
+//TEMPERAT
+//DB
+//RX_V_LOW
+//TEMPWARN
+
 #define	SV_ALERT			 0
 #define	SV_SW_WARN		 1
 #define	SV_TH_WARN		 2
@@ -385,6 +398,8 @@ extern void unlockVoice( void ) ;
 #define	SV_HUNDRED		55
 #define	SV_THOUSAND		56
 #define	SV_CUSTOM_WARN	57
+#define	SV_SHUTDOWN		58
+#define	SV_TRN_LOST		59
 
 
 #define MUSIC_STOPPED			0

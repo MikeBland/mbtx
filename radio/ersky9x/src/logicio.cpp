@@ -49,6 +49,7 @@
 
 #include "myeeprom.h"
 
+extern uint8_t TrimBits ;
 
 #ifndef SIMU
 #ifdef PCBSKY
@@ -413,6 +414,80 @@ uint32_t hwKeyState( uint8_t key )
 
 	switch(key)
 	{
+		case HSW_Ttrmup :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 1 ;
+    break ;
+		
+		case HSW_Ttrmdn :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 2 ;
+    break ;
+		case HSW_Rtrmup :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 4 ;
+    break ;
+		case HSW_Rtrmdn :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 8 ;
+    break ;
+		case HSW_Atrmup :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x10 ;
+    break ;
+		case HSW_Atrmdn :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x20 ;
+    break ;
+		case HSW_Etrmup :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x40 ;
+    break ;
+		case HSW_Etrmdn :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x80 ;
+    break ;
+		
 		case HSW_Thr3pos0 :
     	xxx = as & AS_THR_SW ;	// SW_TCUT     PC20
     break ;
@@ -985,6 +1060,80 @@ uint32_t hwKeyState( uint8_t key )
 	c = PIOC->PIO_PDSR ;
 	switch(key)
 	{
+		case HSW_Ttrmup :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 1 ;
+    break ;
+		
+		case HSW_Ttrmdn :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 2 ;
+    break ;
+		case HSW_Rtrmup :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 4 ;
+    break ;
+		case HSW_Rtrmdn :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 8 ;
+    break ;
+		case HSW_Atrmup :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x10 ;
+    break ;
+		case HSW_Atrmdn :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x20 ;
+    break ;
+		case HSW_Etrmup :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x40 ;
+    break ;
+		case HSW_Etrmdn :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x80 ;
+    break ;
+		
 //#ifdef REVB
 //    case HSW_ElevDR : xxx = c & 0x80000000 ;	// ELE_DR   PC31
 //#else 
@@ -1685,6 +1834,7 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 	return xxx ;
 }
 
+
 uint32_t hwKeyState( uint8_t key )
 {
   register uint32_t a = GPIOA->IDR;
@@ -1714,6 +1864,80 @@ uint32_t hwKeyState( uint8_t key )
 
   switch ( key )
 	{
+		case HSW_Ttrmup :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 1 ;
+    break ;
+		
+		case HSW_Ttrmdn :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 2 ;
+    break ;
+		case HSW_Rtrmup :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 4 ;
+    break ;
+		case HSW_Rtrmdn :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 8 ;
+    break ;
+		case HSW_Atrmup :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x10 ;
+    break ;
+		case HSW_Atrmdn :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x20 ;
+    break ;
+		case HSW_Etrmup :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+//			xxx = TrimBits & 0x40 ;
+    break ;
+		case HSW_Etrmdn :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//			xxx = TrimBits & 0x80 ;
+    break ;
+		
 #ifndef REV9E
     case HSW_SA0:
       xxx = ~e & PIN_SW_A_L;

@@ -5,6 +5,7 @@
 #define FWx6		"\044"
 #define FWx7		"\052"
 #define FWx8		"\060"
+#define FWx9		"\066"
 #define FWx10		"\074"
 #define FWx11		"\102"
 #define FWx12		"\110"

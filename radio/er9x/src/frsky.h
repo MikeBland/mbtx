@@ -445,6 +445,10 @@ extern uint16_t DsmABLRFH[] ;
 
 extern struct t_hub_max_min FrskyHubMaxMin ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
+#endif
+
 #endif
 
 

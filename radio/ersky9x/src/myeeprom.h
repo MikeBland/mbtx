@@ -531,9 +531,9 @@ PACK(typedef struct t_scale
 {
   uint8_t source ;
 	int16_t offset ;
-	uint8_t spare1 ;
+	uint8_t multx ;	// An addition using a spare byte
 	uint8_t mult ;
-	uint8_t spare2 ;
+	uint8_t divx ;	// An addition using a spare byte
 	uint8_t div ;
 	uint8_t unit ;
 	uint8_t neg:1 ;
@@ -542,6 +542,13 @@ PACK(typedef struct t_scale
 	uint8_t spare:4 ;
 	uint8_t name[4] ;
 }) ScaleData ;
+
+PACK(typedef struct t_extScale
+{
+	uint8_t mod ;
+	uint8_t dest ;
+	uint8_t spare[4] ;
+} ) ExtScaleData ;
 
 // DSM link monitoring
 PACK(typedef struct t_dsmLink
@@ -753,6 +760,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t customDisplay2Extra[7] ;
 	MusicData musicData ;
 	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
+	uint32_t LogDisable[4] ;	// Up to 128 sensors etc.
+	uint8_t failsafeMode[2] ;
 #if EXTRA_SKYMIXERS
   SKYMixData exmixData[EXTRA_SKYMIXERS] ;
 #endif
@@ -766,8 +776,7 @@ PACK(typedef struct te_ModelData {
 
 extern SKYModelData g_model;
 
-
-
+extern ProtocolData Protocols[2] ;
 
 #endif
 /*eof*/

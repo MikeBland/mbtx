@@ -198,15 +198,17 @@ struct t_eeprom_buffer
 		EEGeneral general_data ;
 		ModelData model_data ;
 		SKYModelData sky_model_data ;
+#if defined(PCBSKY) || defined(PCB9XT)
+		ModelData  oldmodel ;
+#endif
 		uint32_t words[ EEPROM_BUFFER_SIZE ] ;
 		uint8_t buffer2K[2048] ;
 	} data ;	
 } Eeprom_buffer ;
-
-uint8_t *eepromBufferAddress()
-{
-	return Eeprom_buffer.data.buffer2K ;
-}
+//uint8_t *eepromBufferAddress()
+//{
+//	return Eeprom_buffer.data.buffer2K ;
+//}
 
 static void ee32WaitFinished()
 {
@@ -681,10 +683,10 @@ void ee32LoadModel(uint8_t id)
 
 			if ( size < 720 )
 			{
-				memset(&g_oldmodel, 0, sizeof(g_oldmodel));
-				if ( size > sizeof(g_oldmodel) )
+				memset(&Eeprom_buffer.data.oldmodel, 0, sizeof(Eeprom_buffer.data.oldmodel));
+				if ( size > sizeof(Eeprom_buffer.data.oldmodel) )
 				{
-					size = sizeof(g_oldmodel) ;
+					size = sizeof(Eeprom_buffer.data.oldmodel) ;
 				}
 			}
        
@@ -701,8 +703,8 @@ void ee32LoadModel(uint8_t id)
 			{
 				if ( size < 720 )
 				{
-					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_oldmodel, size, 0 ) ;
-					convertModel( &g_model, &g_oldmodel ) ;
+					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.oldmodel, size, 0 ) ;
+					convertModel( &g_model, &Eeprom_buffer.data.oldmodel ) ;
 				}
 				else
 				{
@@ -862,7 +864,15 @@ void ee32LoadModel(uint8_t id)
 			g_model.not_xsub_protocol = 0 ;
 		}
 	}
+#ifdef XFIRE
+ #ifdef REVX
+	if ( g_model.protocol > PROT_MAX + 1 )
+ #else
 	if ( g_model.protocol > PROT_MAX )
+ #endif
+#else
+	if ( g_model.protocol > PROT_MAX )
+#endif
 	{
 		if ( g_model.protocol != PROTO_OFF )
 		{

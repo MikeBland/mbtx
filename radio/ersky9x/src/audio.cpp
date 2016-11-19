@@ -47,6 +47,7 @@
 uint8_t MusicPlaying ;
 uint8_t MusicInterrupted ;
 uint8_t MusicPrevNext ;
+uint8_t AudioActive ;
 
 extern uint8_t CurrentVolume ;
 extern uint8_t Activated ;
@@ -788,6 +789,8 @@ const char SysVoiceNames[][VOICE_NAME_SIZE+1] =
 	"HUNDRED",
 	"THOUSAND",
 	"CST_WARN",
+	"SHUTDOWN",
+	"TRN_LOST",
 } ;
 
 void putSystemVoice( uint16_t sname, uint16_t value )
@@ -1668,6 +1671,7 @@ void voice_task(void* pdata)
 	 
 		 while ( ( Voice.VoiceQueueCount == 0 ) && (ToneQueueRidx == ToneQueueWidx) )
 		 {
+				AudioActive = 0 ;
 //#ifdef PCB9XT
 //		 	if ( muted == 0 )
 //			{
@@ -1740,6 +1744,7 @@ void voice_task(void* pdata)
 		 if ( Voice.VoiceQueueCount )
 		 {
 		 	uint32_t processed = 0 ;
+			AudioActive = 1 ;
 		 	
 //			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
 		 	
@@ -2044,6 +2049,7 @@ void voice_task(void* pdata)
 		 	// Play a tone
 			if (ToneQueueRidx != ToneQueueWidx)
 			{
+				AudioActive = 1 ;
 				doTone() ;
 			}
 

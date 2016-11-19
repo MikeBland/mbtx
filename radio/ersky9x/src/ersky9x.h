@@ -212,6 +212,15 @@ enum EnumKeys {
 #endif
 };
 
+#define HSW_Ttrmup			44
+#define HSW_Ttrmdn			43
+#define HSW_Rtrmup			42
+#define HSW_Rtrmdn			41
+#define HSW_Atrmup			40
+#define HSW_Atrmdn			39
+#define HSW_Etrmup			38
+#define HSW_Etrmdn			37
+
 // Hardware switch mappings:
 #if defined(PCBSKY) || defined(PCB9XT)
 #define HSW_ThrCt			1
@@ -435,13 +444,15 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_MONO		   16	// Monostable
 #define CS_RMONO	   17	// Monostable with reset
 #define CS_EXEQUAL   18	// V~=offset
-#define CS_MAXF      18  //max function
+#define CS_BIT_AND   19
+#define CS_MAXF      19  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
 #define CS_VCOMP      2
 #define CS_TIMER			3
 #define CS_TMONO      4
+#define CS_U16	      5
 
 uint8_t CS_STATE( uint8_t x) ;
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)==CS_LATCH) || ((x)==CS_FLIP)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
@@ -586,6 +597,9 @@ uint8_t CS_STATE( uint8_t x) ;
 #ifndef PCBX9D
 extern uint32_t countExtraPots( void ) ;
 #endif
+#ifdef REV9E
+extern uint32_t countExtraPots( void ) ;
+#endif
 
 #ifdef PCBX9D
 #define MIX_MAX   8 
@@ -654,7 +668,8 @@ extern uint8_t NumExtraPots ;
 #define THRCHK_DEADBAND 31
 #define SPLASH_TIMEOUT  (4*100)  //400 msec - 4 seconds
 
-uint8_t IS_THROTTLE( uint8_t x ) ;
+//uint8_t IS_THROTTLE( uint8_t x ) ;
+#define IS_THROTTLE( x ) ( x== 2 )
 uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
 extern uint8_t Ee_lock ;
@@ -685,6 +700,7 @@ extern uint8_t Ee_lock ;
 #define PROTO_DSM2       2
 #define PROTO_MULTI      3
 #define PROTO_ASSAN      4
+#define PROTO_XFIRE	     4
 
 #define PROTO_SBUS	     5
 
@@ -757,8 +773,9 @@ extern uint8_t Ee_lock ;
 #define M_HONTAI				 25
 #define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
 #define M_OPENLRS				 26
+#define M_AFHD2SA				 27
 
-#define M_LAST_MULTI		 26
+#define M_LAST_MULTI		 27
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01
@@ -808,7 +825,7 @@ const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 extern const int8_t TelemIndex[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 60
+#define NUM_TELEM_ITEMS 62
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
 #define NUM_SKYXCHNRAW (CHOUT_BASE+NUM_SKYCHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1119,6 +1136,8 @@ extern int16_t getRawTrimValue( uint8_t phase, uint8_t idx ) ;
 extern int16_t getTrimValue( uint8_t phase, uint8_t idx ) ;
 extern void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
 
+extern uint8_t TrimInUse[4] ;
+
 extern void checkSwitches( void ) ;
 extern void checkTHR( void ) ;
 extern void checkCustom( void ) ;
@@ -1296,5 +1315,14 @@ uint32_t rssiOffsetValue( uint32_t type ) ;
 
 extern uint8_t LastMusicStartSwitchState ;
 extern uint8_t LastMusicPauseSwitchState ;
+
+// Failsafe values
+#define FAILSAFE_NOT_SET		0
+#define FAILSAFE_RX					1
+#define FAILSAFE_CUSTOM			2
+#define FAILSAFE_HOLD				3
+#define FAILSAFE_NO_PULSES	4
+
+extern uint16_t FailsafeCounter[2] ;
 
 #endif

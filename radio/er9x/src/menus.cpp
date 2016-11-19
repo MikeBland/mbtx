@@ -215,7 +215,10 @@ int16_t calc_scaler( uint8_t index, uint8_t *unit, uint8_t *num_decimals)
 	int32_t value ;
 	uint8_t lnest ;
 	ScaleData *pscaler ;
-	
+#if defined(CPUM128) || defined(CPUM2561)
+	ExtScaleData *epscaler ;
+#endif
+	 
 	lnest = CalcScaleNest ;
 	if ( lnest > 5 )
 	{
@@ -224,6 +227,9 @@ int16_t calc_scaler( uint8_t index, uint8_t *unit, uint8_t *num_decimals)
 	CalcScaleNest = lnest + 1 ;
 	// process
 	pscaler = &g_model.Scalers[index] ;
+#if defined(CPUM128) || defined(CPUM2561)
+	epscaler = &g_model.eScalers[index] ;
+#endif
 	if ( pscaler->source )
 	{
 		value = getValue( pscaler->source - 1 ) ;
@@ -245,6 +251,12 @@ int16_t calc_scaler( uint8_t index, uint8_t *unit, uint8_t *num_decimals)
 	}
 	value *= pscaler->mult+1 ;
 	value /= pscaler->div+1 ;
+#if defined(CPUM128) || defined(CPUM2561)
+	if ( epscaler->mod )
+	{
+		value %= epscaler->mod ;
+	}
+#endif
 	if ( pscaler->offsetLast )
 	{
 		value += pscaler->offset ;
@@ -261,6 +273,12 @@ int16_t calc_scaler( uint8_t index, uint8_t *unit, uint8_t *num_decimals)
 	{
 		*num_decimals = pscaler->precision ;
 	}
+#if defined(CPUM128) || defined(CPUM2561)
+	if ( epscaler->dest )
+	{
+		store_telemetry_scaler( epscaler->dest, value ) ;
+	}
+#endif
 
 	return value ;
 }
@@ -2070,8 +2088,8 @@ extern uint8_t frskyRSSItype[2] ;
 
 #if defined(CPUM128) || defined(CPUM2561)
 
-#define MAX_TEL_OPTIONS		4
-const prog_uint8_t APM TelOptions[] = {0,1,2,5} ;
+#define MAX_TEL_OPTIONS		5
+const prog_uint8_t APM TelOptions[] = {0,1,2,5,7} ;
 
 //#if defined(PCBSKY) || defined(PCB9XT)
 // #ifdef REVX
@@ -2176,7 +2194,7 @@ void menuProcTelemetry(uint8_t event)
 		g_model.telemetryProtocol = b ;
 		g_model.FrSkyUsrProto = (b == 1) ? 1 : 0 ;
 
-		lcd_putsAttIdx( 10*FW, FH, PSTR("\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHubFrMav"), b, attr ) ;
+		lcd_putsAttIdx( 10*FW, FH, PSTR("\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHubHbRawFrMav"), b, attr ) ;
 //		g_model.FrSkyUsrProto = checkIndexed( y, PSTR(FWx12"\001"STR_FRHUB_WSHHI), g_model.FrSkyUsrProto, (sub==subN) ) ;
 #else
 		g_model.FrSkyUsrProto = checkIndexed( y, PSTR(FWx12"\001"STR_FRHUB_WSHHI), g_model.FrSkyUsrProto, (sub==subN) ) ;
@@ -2459,7 +2477,11 @@ void menuScaleOne(uint8_t event)
 {
 	
 	static MState2 mstate2 ;
+#if defined(CPUM128) || defined(CPUM2561)
+	mstate2.check_columns(event, 10 ) ;
+#else
 	mstate2.check_columns(event, 8 ) ;
+#endif
 	lcd_puts_Pleft( 0, Str_SC ) ;
 	uint8_t index = s_currIdx ;
   lcd_putc( 2*FW, 0, index+'1' ) ;
@@ -2478,6 +2500,10 @@ void menuScaleOne(uint8_t event)
 		uint8_t attr = (sub==i ? InverseBlink : 0);
 		ScaleData *pscaler ;
 		pscaler = &g_model.Scalers[index] ;
+#if defined(CPUM128) || defined(CPUM2561)
+		ExtScaleData *epscaler ;
+		epscaler = &g_model.eScalers[index] ;
+#endif
 
 		switch(i)
 		{
@@ -2527,6 +2553,21 @@ void menuScaleOne(uint8_t event)
 				pscaler->offsetLast = checkIndexed( y, PSTR(FWx12"\001\005FirstLast "), pscaler->offsetLast, (sub==i) ) ;
 			}
 			break ;
+#if defined(CPUM128) || defined(CPUM2561)
+      case 9 :	// mod
+				lcd_puts_Pleft( y, PSTR("Mod Value") ) ;
+				epscaler->mod = scalerDecimal( y, epscaler->mod, attr ) ;
+			break ;
+      case 10 :	// Dest
+				lcd_puts_Pleft( y, PSTR("Dest") ) ;
+#define NUM_SCALE_DESTS		5
+				if( attr )
+				{
+					CHECK_INCDEC_H_MODELVAR( epscaler->dest, 0, NUM_SCALE_DESTS ) ;
+				}
+				lcd_putsAttIdx( 11*FW, y, PSTR("\005-----BaseMAmps mAh  VoltsFuel "), epscaler->dest, attr ) ;
+			break ;
+#endif
 		}
 	}
 
@@ -8369,7 +8410,7 @@ void perOut(int16_t *chanOut, uint8_t att)
         uint8_t swon = Output.swOn[mixIndex] ;
 
 				bool t_switch = getSwitch(md->swtch,1) ;
-        if (md->swtch && (md->srcRaw >= PPM_BASE) && (md->srcRaw < PPM_BASE+NUM_PPM)	&& (ppmInAvailable == 0) )
+        if (md->swtch && (md->srcRaw > PPM_BASE) && (md->srcRaw <= PPM_BASE+NUM_PPM)	&& (ppmInAvailable == 0) )
 				{
 					// then treat switch as false ???				
 					t_switch = 0 ;
@@ -12119,6 +12160,10 @@ Str_Protocol
 					else if ( x == M_HONTAI )
 					{
 						s = PSTR(FWx10"\002"M_HONTAI_STR);
+					}
+					else if ( x == M_AFHD2SA )
+					{
+						s = PSTR(FWx10"\004"M_AFHD2SA_STR);
 					}
 					else
 					{

@@ -164,7 +164,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBST"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"
@@ -398,7 +398,7 @@
 // c17-c24 added for timer mode A display
 #define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
 // CSWITCH_STR indexed 7 chars each
-#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val"
+#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  "
 
 #define ISWASH_TYPE_STR     FWx17"\004""\004----""120 ""120X""140 ""90  "
 
@@ -476,7 +476,7 @@
 #ifdef ASSAN
 #define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
 #else
-#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 Multi"
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiXfire"
 #endif
 #define ISTR_TYPE						" Typ"
 #define ISTR_COUNTRY				" Kraj"

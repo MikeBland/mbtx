@@ -272,6 +272,8 @@ extern uint8_t CalcScaleNest ;
 #define TEL_ITEM_RBA2		57
 #define TEL_ITEM_RBM1		58
 #define TEL_ITEM_RBM2		59
+#define TEL_ITEM_RBSERVO	60
+#define TEL_ITEM_RBSTATE	61
 
 
 // units

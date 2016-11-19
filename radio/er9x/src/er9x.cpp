@@ -4964,6 +4964,13 @@ void mainSequence()
 				}
 				Vs_state[i] = curent_state ;
 			}
+			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+			{
+				if ( g_model.eScalers[i].dest )
+				{
+					calc_scaler( i, 0, 0 ) ;					
+				}
+			}
 		}
 #else
 //#if defined(CPUM128) || defined(CPUM2561)

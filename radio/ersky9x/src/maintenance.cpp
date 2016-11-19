@@ -164,10 +164,10 @@ uint8_t SportVerValid ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 
-const uint8_t SportIds[32] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
+const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
 															0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7,
-															0x98, 0x39, 0xBA, 0x1B, 0x7C, 0xDD, 0x5E, 0xFF } ;
+															0x98, 0x39, 0xBA, 0x1B/*, 0x7C, 0xDD, 0x5E, 0xFF*/ } ;
 
 uint8_t SportState ;
 #define SPORT_IDLE				0
@@ -800,7 +800,7 @@ void menuChangeId(uint8_t event)
 			if ( --SendCount == 0 )
 			{
 				SendCount = 2 ;
-				if ( ++IdIndex > 0x1B )
+				if ( ++IdIndex > 27 )
 				{
 					IdIndex = 0 ;
 				}
@@ -2091,17 +2091,24 @@ uint32_t xmegaUpdate()
  					wdt_reset() ;
 					pdiWriteFuse( 2, Fuses[2] | 0x40 ) ;
 				}
-			}
- 			wdt_reset() ;
-			pdiWritePageMemory( 0, FileData, 256 ) ;
-		 	wdt_reset() ;
-			__enable_irq() ;
-			BytesFlashed = 256 ;
-			BlockOffset = 256 ;
-			ByteEnd = 1024 ;
-			XmegaState = XMEGA_FLASHING ;
+ 				wdt_reset() ;
+				pdiWritePageMemory( 0, FileData, 256 ) ;
+		 		wdt_reset() ;
+				__enable_irq() ;
+				BytesFlashed = 256 ;
+				BlockOffset = 256 ;
+				ByteEnd = 1024 ;
+				XmegaState = XMEGA_FLASHING ;
 
-		  XmegaSubState = 0 ;
+		  	XmegaSubState = 0 ;
+			}
+			else
+			{
+ 				wdt_reset() ;
+				__enable_irq() ;
+				SportVerValid = 0x00FF ; // Abort with failed
+				XmegaState = XMEGA_DONE ;
+			}
 		break ;
 		
 		case XMEGA_FLASHING :
@@ -2172,8 +2179,9 @@ uint32_t sportUpdate( uint32_t external )
  #ifdef REVX
 		clearMfp() ;
  #endif
-			UART2_Configure( 57600, Master_frequency ) ;
-			startPdcUsartReceive() ;
+			com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 57600, Master_frequency ) ;
+//			startPdcUsartReceive() ;
 #endif
 			SportTimer = 5 ;		// 50 mS
 #ifdef PCBX9D
@@ -2275,7 +2283,12 @@ void maintenanceBackground()
 #endif
 		
 #ifdef PCBSKY
-	rxPdcUsart( frsky_receive_byte ) ;		// Send serial data here
+	uint16_t rxchar ;
+	while ( ( rxchar = get_fifo64( &Com1_fifo ) ) != 0xFFFF )
+	{
+		frsky_receive_byte( rxchar ) ;
+	}
+//	rxPdcUsart( frsky_receive_byte ) ;		// Send serial data here
 #endif
 
 #else

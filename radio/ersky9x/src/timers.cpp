@@ -57,7 +57,7 @@ extern void disable_pxx(uint32_t port) ;
 // TC5 - Software COM1
 
 #if defined(PCBX9D) || defined(PCB9XT)
-uint8_t DebugDsmPass ;
+//uint8_t DebugDsmPass ;
 uint8_t PulsesPaused ;
 
 // DSM2 control bits
@@ -83,8 +83,10 @@ extern void putCaptureTime( uint16_t time, uint32_t value ) ;
 extern uint8_t SoftSerInvert ;
 extern uint8_t SoftSerialEvenParity ;
 extern void start_timer11(void) ;
+extern void stop_timer11(void) ;
 extern uint8_t TrainerPolarity ;
 
+uint16_t FailsafeCounter[2] ;
 
 void pausePulses()
 {
@@ -975,13 +977,13 @@ uint16_t scaleForPXX( uint8_t i )
 {
 	int16_t value ;
 
-#ifdef REVX
-  value = g_chans512[i] *3 / 4 + 2250 ;
-	return value ;
-#else 
+//#ifdef REVX
+//  value = g_chans512[i] *3 / 4 + 2250 ;
+//	return value ;
+//#else 
 	value = ( i < 24 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
 	return limit( (int16_t)1, value, (int16_t)2046 ) ;
-#endif
+//#endif
 }
 
 void setupPulsesPXX(uint8_t module)
@@ -1014,23 +1016,63 @@ void setupPulsesPXX(uint8_t module)
 		{
  		  flag1 = (g_model.sub_protocol << 6) | PxxFlag[module] ;
 		}	
+		
+		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
+		{
+  		if (g_model.failsafeMode[0] != FAILSAFE_NOT_SET && g_model.failsafeMode[0] != FAILSAFE_RX )
+			{
+    		if ( FailsafeCounter[0]-- == 0 )
+				{
+      		FailsafeCounter[0] = 1000 ;
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+    		if ( ( FailsafeCounter[0] == 0 ) && (g_model.sub_protocol == 0 ) )
+				{
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+			}
+		}
+		
 		putPcmByte( flag1 ) ;     // First byte of flags
   	putPcmByte( 0 ) ;     // Second byte of flags
+		
 		uint8_t startChan = g_model.startChannel ;
 		if ( lpass & 1 )
 		{
 			startChan += 8 ;			
 		}
-  	for ( i = 0 ; i < 4 ; i += 1 )		// First 8 channels only
+		chan = 0 ;
+  	for ( i = 0 ; i < 8 ; i += 1 )		// First 8 channels only
   	{																	// Next 8 channels would have 2048 added
-			chan = scaleForPXX( startChan ) ;
+    	if (flag1 & PXX_SEND_FAILSAFE)
+			{
+				if ( g_model.failsafeMode[0] == FAILSAFE_HOLD )
+				{
+					chan_1 = 2047 ;
+				}
+				else if ( g_model.failsafeMode[0] == FAILSAFE_NO_PULSES )
+				{
+					chan_1 = 0 ;
+				}
+				else
+				{
+					// Send failsafe value
+					int32_t value ;
+					value = ( startChan < 16 ) ? g_model.pxxFailsafe[startChan] : 0 ;
+					value = ( value *3933 ) >> 9 ;
+					value += 1024 ;					
+					chan_1 = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
+				}
+			}
+			else
+			{
+				chan_1 = scaleForPXX( startChan ) ;
+			}
  			if ( lpass & 1 )
 			{
-				chan += 2048 ;
+				chan_1 += 2048 ;
 			}
-  	  putPcmByte( chan ) ; // Low byte of channel
 			startChan += 1 ;
-  	  chan_1 = scaleForPXX( startChan ) ;
 			
 //			if ( ( lpass & 1 ) == 0 )
 //			{
@@ -1053,13 +1095,16 @@ void setupPulsesPXX(uint8_t module)
 //				}
 //			}
 			
-			if ( lpass & 1 )
+			if ( i & 1 )
 			{
-				chan_1 += 2048 ;
+	  	  putPcmByte( chan ) ; // Low byte of channel
+				putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
+  		  putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
 			}
-			startChan += 1 ;
-			putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
-  	  putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
+			else
+			{
+				chan = chan_1 ;
+			}
   	}
 		putPcmByte( 0 ) ;
   	chan = PcmCrc ;		        // get the crc
@@ -1104,6 +1149,23 @@ void setupPulsesPXX(uint8_t module)
 		{
  		  flag1 = (g_model.xsub_protocol << 6) | PxxFlag[module] ;
 		}	
+
+		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
+		{
+  		if (g_model.failsafeMode[0] != FAILSAFE_NOT_SET && g_model.failsafeMode[0] != FAILSAFE_RX )
+			{
+    		if ( FailsafeCounter[0]-- == 0 )
+				{
+      		FailsafeCounter[0] = 1000 ;
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+    		if ( ( FailsafeCounter[0] == 0 ) && (g_model.sub_protocol == 0 ) )
+				{
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+			}
+		}
+		
 		putPcmByte_x( flag1 ) ;     // First byte of flags
   	putPcmByte_x( 0 ) ;     // Second byte of flags
 		uint8_t startChan = g_model.xstartChannel ;
@@ -1111,23 +1173,49 @@ void setupPulsesPXX(uint8_t module)
 		{
 			startChan += 8 ;			
 		}
-  	for ( i = 0 ; i < 4 ; i += 1 )		// First 8 channels only
+		chan = 0 ;
+  	for ( i = 0 ; i < 8 ; i += 1 )		// First 8 channels only
   	{																	// Next 8 channels would have 2048 added
-  	  chan = scaleForPXX( startChan ) ;
+    	if (flag1 & PXX_SEND_FAILSAFE)
+			{
+				if ( g_model.failsafeMode[0] == FAILSAFE_HOLD )
+				{
+					chan_1 = 2047 ;
+				}
+				else if ( g_model.failsafeMode[0] == FAILSAFE_NO_PULSES )
+				{
+					chan_1 = 0 ;
+				}
+				else
+				{
+					// Send failsafe value
+					int32_t value ;
+					value = ( startChan < 16 ) ? g_model.pxxFailsafe[startChan] : 0 ;
+					value = ( value *3933 ) >> 9 ;
+					value += 1024 ;					
+					chan_1 = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
+				}
+			}
+			else
+			{
+				chan_1 = scaleForPXX( startChan ) ;
+			}
 			if ( lpass & 1 )
 			{
 				chan += 2048 ;
 			}
-  	  putPcmByte_x( chan ) ; // Low byte of channel
 			startChan += 1 ;
-  	  chan_1 = scaleForPXX( startChan ) ;
-			if ( lpass & 1 )
+  	  
+			if ( i & 1 )
 			{
-				chan_1 += 2048 ;
+				putPcmByte_x( chan ) ; // Low byte of channel
+				putPcmByte_x( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
+  		  putPcmByte_x( chan_1 >> 4 ) ;  // High byte of channel
 			}
-			startChan += 1 ;
-			putPcmByte_x( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
-  	  putPcmByte_x( chan_1 >> 4 ) ;  // High byte of channel
+			else
+			{
+				chan = chan_1 ;
+			}
   	}
 		putPcmByte_x( 0 ) ;
   	chan = PcmCrc_x ;		        // get the crc
@@ -1411,6 +1499,11 @@ void stop_trainer_capture()
 	TIM3->DIER = 0 ;
 	TIM3->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
 	NVIC_DisableIRQ(TIM3_IRQn) ;				// Stop Interrupt
+	if ( CaptureMode == CAP_SERIAL )
+	{
+		stop_timer11() ;
+		CaptureMode = 0 ;
+	}
 }
 
 void init_serial_trainer_capture()

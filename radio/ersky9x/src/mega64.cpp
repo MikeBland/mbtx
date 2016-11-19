@@ -183,7 +183,7 @@ extern "C" void USART1_IRQHandler()
 ////	}
 ////	else
 ////	{
-//		put_fifo64( &Console_fifo, CONSOLE_USART->UART_RHR ) ;	
+//		put_fifo64( &Com2_fifo, CONSOLE_USART->UART_RHR ) ;	
 ////	}	 
 //}
 
@@ -198,9 +198,9 @@ extern "C" void USART1_IRQHandler()
 //  pUart->UART_THR=c ;
 //}
 
-//uint16_t rxuart()
+//uint16_t rxCom2()
 //{
-//	return get_fifo64( &Console_fifo ) ;
+//	return get_fifo64( &Com2_fifo ) ;
   
 ////	Uart *pUart=CONSOLE_USART ;
 

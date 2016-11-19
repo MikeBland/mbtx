@@ -489,6 +489,12 @@ PACK(typedef struct t_scale
 	uint8_t name[4] ;
 }) ScaleData ;
 
+PACK(typedef struct t_extScale
+{
+	uint8_t mod ;
+	uint8_t dest ;
+} ) ExtScaleData ;
+
 PACK(typedef struct t_voiceAlarm
 {
   uint8_t source ;
@@ -687,6 +693,7 @@ PACK(typedef struct t_ModelData {
   uint8_t  exSwitchWarningStates ;
 #endif
   int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
 //	uint8_t   altSource ;		// Currently unused
 
 }) ModelData;
@@ -767,6 +774,7 @@ PACK(typedef struct t_V2ModelData
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
 	uint8_t telemetryProtocol ;
   int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
 }) V2ModelData ;
 #endif
 

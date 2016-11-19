@@ -333,7 +333,7 @@ void stop_I2C2()
 	RCC->APB1ENR &= ~RCC_APB1ENR_I2C2EN ; // Disable I2C2 clock
 }
 
-uint32_t I2C_debug[8] ;
+//uint32_t I2C_debug[8] ;
 uint32_t I2Clast ;
 
 
@@ -446,7 +446,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
   uint32_t flag1 = 0, flag2 = 0 ;
 	uint32_t processed = 0 ;
 
-	I2C_debug[4] += 1 ;
+//	I2C_debug[4] += 1 ;
 
   /* Read the I2Cx status register */
   flag1 = I2C2->SR1 ;
@@ -491,7 +491,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
 	if ( ( lastevent & I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED ) ==
 					I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED )
 	{
-		I2C_debug[1] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//		I2C_debug[1] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
 		
   	if ( I2cCurrentPointer->dataSize > 1)
 		{
@@ -510,11 +510,11 @@ extern "C" void I2C2_EV_IRQHandler( void )
     if ( I2cCurrentPointer->dataSize == 2)
 		{
     	I2C2->CR1 &= (uint16_t)~((uint16_t)I2C_CR1_ACK) ;
-			I2C_debug[2] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//			I2C_debug[2] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
     }
 		else
 		{
-			I2C_debug[3] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//			I2C_debug[3] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
 		}
     *I2cCurrentPointer->dataBuffer++ = I2C2->DR ;
 
@@ -527,10 +527,10 @@ extern "C" void I2C2_EV_IRQHandler( void )
 		}
 		processed = 1 ;
 	}
-	if ( processed == 0 )
-	{
-		I2C_debug[0] = lastevent | 0xF0000000 | (I2cCurrentPointer->dataSize << 24) | ((I2C_debug[4] << 20) & 0x00F00000 ) ;
-	}
+//	if ( processed == 0 )
+//	{
+//		I2C_debug[0] = lastevent | 0xF0000000 | (I2cCurrentPointer->dataSize << 24) | ((I2C_debug[4] << 20) & 0x00F00000 ) ;
+//	}
 }
 
 extern "C" void I2C2_ER_IRQHandler( void )
@@ -548,7 +548,7 @@ extern "C" void I2C2_ER_IRQHandler( void )
 
 	if ( ( lastevent & 0x00030400 ) == 0x00030400 )
 	{
-		I2C_debug[6] = lastevent ;
+//		I2C_debug[6] = lastevent ;
 		I2C2->SR1 = 0 ;		// Clear errors
 		I2cCurrentPointer->done = 2 ;
 		NVIC_DisableIRQ(I2C2_EV_IRQn) ;
@@ -557,7 +557,7 @@ extern "C" void I2C2_ER_IRQHandler( void )
 	}
 	else
 	{
-		I2C_debug[7] = lastevent ;
+//		I2C_debug[7] = lastevent ;
 		I2C2->SR1 = 0 ;		// Clear errors
 		I2cCurrentPointer->done = 2 ;
 		NVIC_DisableIRQ(I2C2_EV_IRQn) ;
@@ -579,13 +579,13 @@ static uint32_t read_I2C2( uint8_t *pBuffer, uint8_t devAddress, uint16_t numByt
 //  (void) I2C2->SR1 ;
 //  (void) I2C2->SR2 ;	// Clear status bits
 
-	I2C_debug[4] = 0 ;
+//	I2C_debug[4] = 0 ;
 
 	// Generate start
 	I2C2->CR1 |= I2C_CR1_START ;
   if (!I2C2_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT))
     return 0 ;
-	I2C_debug[0] = I2Clast ;
+//	I2C_debug[0] = I2Clast ;
 
   I2C2->DR = (devAddress << 1) | 1 ;
 
@@ -647,13 +647,13 @@ uint32_t write_I2C2( uint8_t *pBuffer, uint8_t devAddress, uint16_t numByteToWri
 //  (void) I2C2->SR1 ;
 //  (void) I2C2->SR2 ;	// Clear status bits
 
-	I2C_debug[4] = 0 ;
+//	I2C_debug[4] = 0 ;
 
 	// Generate start
 	I2C2->CR1 |= I2C_CR1_START ;
   if (!I2C2_WaitEvent(I2C_EVENT_MASTER_MODE_SELECT))
     return 0 ;
-	I2C_debug[0] = I2Clast ;
+//	I2C_debug[0] = I2Clast ;
 
   I2C2->DR = (devAddress << 1) ;	// Write
 
@@ -716,7 +716,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
   uint32_t flag1 = 0, flag2 = 0 ;
 	uint32_t processed = 0 ;
 
-	I2C_debug[4] += 1 ;
+//	I2C_debug[4] += 1 ;
 
   /* Read the I2Cx status register */
   flag1 = I2C2->SR1 ;
@@ -868,7 +868,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
 	if ( ( lastevent & I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED ) ==
 					I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED )
 	{
-		I2C_debug[1] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//		I2C_debug[1] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
 		
   	if ( I2cCurrentPointer->dataSize > 1)
 		{
@@ -887,12 +887,12 @@ extern "C" void I2C2_EV_IRQHandler( void )
     if ( I2cCurrentPointer->dataSize == 2)
 		{
     	I2C2->CR1 &= (uint16_t)~((uint16_t)I2C_CR1_ACK) ;
-			I2C_debug[2] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//			I2C_debug[2] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
     }
-		else
-		{
-			I2C_debug[3] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
-		}
+//		else
+//		{
+//			I2C_debug[3] = lastevent | (I2cCurrentPointer->dataSize << 28) ;
+//		}
     *I2cCurrentPointer->dataBuffer++ = I2C2->DR ;
 
     if ( --I2cCurrentPointer->dataSize == 0 )
@@ -904,10 +904,10 @@ extern "C" void I2C2_EV_IRQHandler( void )
 		}
 		processed = 1 ;
 	}
-	if ( processed == 0 )
-	{
-		I2C_debug[0] = lastevent | 0xF0000000 | (I2cCurrentPointer->dataSize << 24) | ((I2C_debug[4] << 20) & 0x00F00000 ) ;
-	}
+//	if ( processed == 0 )
+//	{
+//		I2C_debug[0] = lastevent | 0xF0000000 | (I2cCurrentPointer->dataSize << 24) | ((I2C_debug[4] << 20) & 0x00F00000 ) ;
+//	}
 }
 
 // This is called from an interrupt routine, or

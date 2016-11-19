@@ -680,22 +680,6 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 
 		case MAVLINK_PARSE_STATE_GOT_COMPID:
 			rxmsg->msgid = c;
-			
-// Debug			
-//			if ( c == 35 )
-//			{
-//				Msg35count += 1 ;
-//			}
-//			else if ( c == 165 )
-//			{
-//				Msg165count += 1 ;
-//			}
-//			else if ( c == 166 )
-//			{
-//				Msg166count += 1 ;
-//			}
-// End debug
-
 			mavlink_update_checksum(rxmsg, c);
 			if (rxmsg->len == 0)
 			{
@@ -718,36 +702,9 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 		break;
 
 		case MAVLINK_PARSE_STATE_GOT_PAYLOAD:
-//#if MAVLINK_CRC_EXTRA
 			mavlink_update_checksum(rxmsg, MAVLINK_MESSAGE_CRC(rxmsg->msgid));
-//#endif
 			if (c != (rxmsg->checksum & 0xFF))
 			{
-			// Check first checksum byte
-//			ErrorCounter += 1 ;
-//			ErrorId = rxmsg->msgid ;
-//	if ( DebugOutputOn )
-//	{
-//		putmc( '-' ) ;
-//		twoHex( rxmsg->checksum ) ;
-//		crlf() ;
-//	}
-
-// Debug			
-//				if ( rxmsg->compid == 35 )
-//				{
-//					Msg35crc += 1 ;
-//				}
-//				else if ( rxmsg->compid == 165 )
-//				{
-//					Msg165crc += 1 ;
-//				}
-//				else if ( rxmsg->compid == 166 )
-//				{
-//					Msg166crc += 1 ;
-//				}
-// End debug
-				
 				status->parse_error++;
 				status->msg_received = 0;
 				status->parse_state = MAVLINK_PARSE_STATE_IDLE;
@@ -768,31 +725,6 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 		case MAVLINK_PARSE_STATE_GOT_CRC1:
 			if (c != (rxmsg->checksum >> 8))
 			{
-			// Check second checksum byte
-//			ErrorCounter += 1 ;
-//			ErrorId = rxmsg->msgid ;
-//	if ( DebugOutputOn )
-//	{
-//		putmc( '-' ) ;
-//		twoHex( rxmsg->checksum >> 8 ) ;
-//		crlf() ;
-//	}
-				
-// Debug			
-//				if ( rxmsg->compid == 35 )
-//				{
-//					Msg35crc += 1 ;
-//				}
-//				else if ( rxmsg->compid == 165 )
-//				{
-//					Msg165crc += 1 ;
-//				}
-//				else if ( rxmsg->compid == 166 )
-//				{
-//					Msg166crc += 1 ;
-//				}
-// End debug
-				
 				status->parse_error++;
 				status->msg_received = 0;
 				status->parse_state = MAVLINK_PARSE_STATE_IDLE;
@@ -805,14 +737,6 @@ uint8_t mavlink_parse_char( uint8_t c, mavlink_message_t* r_message, mavlink_sta
 			}
 			else
 			{
-			// Successfully got message
-//	if ( DebugOutputOn )
-//	{
-//		twoHex( rxmsg->seq ) ;
-//		twoHex( rxmsg->msgid ) ;
-//		crlf() ;
-//	}
-//	MavDebug3 += 1 ;
 				status->msg_received = 1;
 				status->parse_state = MAVLINK_PARSE_STATE_IDLE;
 				_MAV_PAYLOAD_NON_CONST(rxmsg)[status->packet_idx+1] = (char)c;
@@ -1271,9 +1195,7 @@ void mavlinkReceive( uint8_t data )
       break ;
       case MAVLINK_MSG_ID_HWSTATUS:  
       {
-//MavDebug1 += 0x0100 ;
 				store_hub_data( FR_VCC, mavlink_msg_hwstatus_get_Vcc(&Msg) / 100 ) ;
-//	MavDebug2 = mavlink_msg_hwstatus_get_Vcc(&Msg) ;
 
 ////				return MAVLINK_MSG_ID_HWSTATUS;
       }

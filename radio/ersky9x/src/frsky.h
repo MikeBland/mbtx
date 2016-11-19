@@ -86,14 +86,16 @@
 #define FR_RBOX_B2_A            58
 #define FR_RBOX_B1_CAP          59
 #define FR_RBOX_B2_CAP          60
+#define FR_RBOX_SERVO	          61
+#define FR_RBOX_STATE	          62
 
-#define FR_TRASH			61  // Used for invalid id
+#define FR_TRASH			63  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  62
+#define HUBDATALENGTH  64
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -282,6 +284,10 @@ DataID Meaning       Unit   Range   Note
 #define RBOX_CNSP_LAST_ID      0x0b3f
 #define RBOX_CNSP_ID_8         0xb3
 
+#define S6R_FIRST_ID			     0x0c30
+#define S6R_LAST_ID						 0x0c3f
+#define S6R_ID_8			         0xc3
+
 #define DIY_FIRST_ID           0x5000
 #define DIY_LAST_ID            0x50ff
 #define DIY_ID_8	             0x00
@@ -376,6 +382,15 @@ struct FrskyData {
 	void setoffset();
 };
 
+struct t_s6r
+{
+	uint8_t fieldIndex ;
+	uint8_t valid ;
+	int16_t value ;
+} ;
+
+extern struct t_s6r S6Rdata ;
+
 //struct Frsky_current_info
 //{
 //uint16_t Amp_hour_boundary ;
@@ -397,7 +412,7 @@ struct FrSky_Q_t
 } ;
 
 extern void put_frsky_q( uint8_t index, uint16_t value ) ;
-extern void process_frsky_q( void ) ;
+//extern void process_frsky_q( void ) ;
 
 //extern Frsky_current_info Frsky_current[2] ;
 
@@ -456,6 +471,7 @@ struct t_hub_max_min
 #define TEL_ASSAN	      6
 #define TEL_MULTI	      7
 #define TEL_HUB_RAW			8
+#define TEL_XFIRE				9
 #define TEL_UNKNOWN			255
 extern uint8_t TelemetryType ;
 
@@ -481,6 +497,92 @@ extern struct t_hub_max_min FrskyHubMaxMin ;
 
 extern uint16_t A1A2toScaledValue( uint8_t channel, uint8_t *dplaces ) ;
 extern uint16_t logAxScale( uint8_t channel, uint8_t *dps ) ;
+extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
+
+// Crossfire telemetry
+// Frame id
+#define CRSF_GPS_ID                         0x02
+#define CRSF_BATTERY_ID                     0x08
+#define CRSF_LINK_ID                        0x14
+#define CRSF_CHANNELS_ID                    0x16
+#define CRSF_ATTITUDE_ID                    0x1E
+#define CRSF_FLIGHT_MODE_ID                 0x21
+#define CRSF_PING_DEVICES_ID                0x28
+#define CRSF_DEVICE_INFO_ID                 0x29
+#define CRSF_REQUEST_SETTINGS_ID            0x2A
+
+
+// LogEnable index
+#define LOG_A1		0
+#define LOG_A2		1
+#define LOG_RSSI	2
+#define LOG_TSSI	3
+#define LOG_ALT		6
+#define LOG_GALT	7
+#define LOG_GSPD	8
+#define LOG_TEMP1	9
+#define LOG_TEMP2	10
+#define LOG_RPM		11
+#define LOG_FUEL	12
+#define LOG_MAH1	13//
+#define LOG_MAH2	14//
+#define LOG_CVLT	15
+#define LOG_BATT	16
+#define LOG_AMPS	17
+#define LOG_MAH		18
+#define LOG_CTOT	19
+#define LOG_FASV	20
+#define LOG_ACCX	21//
+#define LOG_ACCY	22//
+#define LOG_ACCZ	23//
+#define LOG_VSPD	24
+#define LOG_GVAR1	25
+#define LOG_GVAR2	26
+#define LOG_GVAR3	27
+#define LOG_GVAR4	28
+#define LOG_GVAR5	29
+#define LOG_GVAR6	30
+#define LOG_GVAR7	31
+#define LOG_FWAT	32//
+#define LOG_RXV   33
+#define LOG_HDG   34//
+#define LOG_A3    35//
+#define LOG_A4    36//
+#define LOG_SC1		37
+#define LOG_SC2		38
+#define LOG_SC3		39
+#define LOG_SC4		40
+#define LOG_SC5		41
+#define LOG_SC6		42
+#define LOG_SC7		43
+#define LOG_SC8		44
+
+#define LOG_RTC		45//
+#define LOG_TMOK	46//
+#define LOG_ASPD	47
+
+#define LOG_CEL1	48
+#define LOG_CEL2	49
+#define LOG_CEL3	50
+#define LOG_CEL4	51
+#define LOG_CEL5	52
+#define LOG_CEL6	53
+
+#define LOG_RBV1	54
+#define LOG_RBA1  55
+#define LOG_RBV2  56
+#define LOG_RBA2  57
+#define LOG_RBM1  58
+#define LOG_RBM2  59
+#define LOG_RBSV  60
+#define LOG_RBST  61
+
+#define LOG_BTRX  125
+#define LOG_LAT	  126
+#define LOG_LONG  127
+
+
+
 
 #endif
 

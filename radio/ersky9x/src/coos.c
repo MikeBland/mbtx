@@ -1402,14 +1402,27 @@ void RemoveLinkNode(P_FLAG_NODE pnode)
  * @details    This function is system IDLE task code.	 
  *******************************************************************************
  */
+//extern uint32_t IdleCount ;
+
 void CoIdleTask(void* pdata)
 {
-	uint32_t i ;
+	uint16_t i ;
+//	static uint16_t last ;
   /* Add your codes here */
-	i = 0 ;
   for(; ;) 
   {
-      /* Add your codes here */
+//#ifdef PCBSKY
+//		i = TC1->TC_CHANNEL[0].TC_CV ;
+//#endif
+//#if defined(PCBX9D) || defined(PCB9XT)
+//		i = TIM7->CNT ;
+//#endif
+//      /* Add your codes here */
+//		if ( i != last )
+//		{
+//			last = i ;
+//			IdleCount += 1 ;
+//		}
 	// Toggle bits BACKLIGHT and EXT1, Backlight now on PWM
 //#ifdef PCBSKY
 //#define wdt_reset()	(WDT->WDT_CR = 0xA5000001)

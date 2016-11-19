@@ -62,8 +62,9 @@ extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
 extern struct t_fifo64 CaptureRx_fifo ;
+extern struct t_fifo64 Com1_fifo ;
 
-extern uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
+extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
 #ifdef REVX
 extern int32_t getJetiWord( void ) ;
@@ -77,7 +78,7 @@ extern uint16_t Max_temperature ;
 void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 void com2_Configure( uint32_t baudrate, uint32_t parity ) ;
 
-extern volatile uint32_t Spi_complete ;
+extern volatile uint8_t Spi_complete ;
 
 #ifdef PCB9XT
 extern uint16_t rxTelemetry( void ) ;
@@ -93,7 +94,7 @@ extern void com1Parity( uint32_t even ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
 
-extern uint16_t DsmRxTimeout ;
+//extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
 #ifdef PCBX9D
@@ -107,7 +108,7 @@ extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
 extern void putEvent( register uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
-extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
+//extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void UART2_9dataOdd1stop( void ) ;
 extern void com1_timeout_enable( void ) ;
 //extern void com1_timeout_disable( void ) ;
@@ -123,12 +124,13 @@ extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t pari
 //extern void Bt_UART_Stop( void ) ;
 extern void txmit( uint8_t c ) ;
 extern void uputs( register char *string ) ;
-extern uint16_t rxuart( void ) ;
+extern uint16_t rxCom2( void ) ;
 extern void txmit2nd( uint8_t c ) ;
 extern uint16_t rx2nduart( void ) ;
 extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
+extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 
 extern void poll2ndUsart10mS( void ) ;
 //extern void charProcess( uint8_t byte ) ;

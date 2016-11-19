@@ -49,7 +49,11 @@ else
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
    else
-    OBJDIR = skyobj
+    ifeq ($(SMALL), 1)
+     OBJDIR = skySobj
+    else
+     OBJDIR = skyobj
+    endif
    endif
   endif
  endif
@@ -116,7 +120,11 @@ else
    ifeq ($(PCB), DUE)
     PROJECT      = ersky9xd
    else
-    PROJECT      = ersky9x
+    ifeq ($(SMALL), 1)
+     PROJECT      = ersky9xs
+    else
+     PROJECT      = ersky9x
+    endif
    endif
   endif
  endif
@@ -181,7 +189,7 @@ else
      UDEFS = -DSTM32F429_439xx
 	 else
     CPPDEFS += -DPCBSKY 
-	 ifeq ($(SMALL), YES)
+	 ifeq ($(SMALL), 1)
     	CPPDEFS += -DSMALL 
 	 endif
     ifeq ($(PCB), DUE)
@@ -194,8 +202,15 @@ else
       LDSCRIPT = sam3s8c_flash.ld
       UDEFS = -Dat91sam3s8
      else
-      LDSCRIPT = sam3s4c_flash.ld
-      UDEFS = -Dat91sam3s4
+      ifeq ($(SMALL), 1)
+       LDSCRIPT = sam3s4c_flash.ld
+       UDEFS = -Dat91sam3s4
+      else
+       LDSCRIPT = sam3s4c_flash.ld
+#       LDSCRIPT = sam3s8c_flash.ld
+       UDEFS = -Dat91sam3s4
+#       UDEFS = -Dat91sam3s8
+      endif
      endif
     endif
     endif
@@ -451,11 +466,17 @@ SRC  = core_cm3.c \
        port.c \
        coos.c
 
-#       usb/hid_device_descriptor.c \
-#       usb/hidJoystick.c \
-#       usb/HIDDMouseDriver.c \
-#       usb/USBDDriver.c \
 
+#       sky/usb/udi_hid.c \
+
+#       sky/usb/USBEndpointDescriptor.c sky/usb/USBGenericRequest.c \
+#       sky/usb/USBD_UDP.c sky/usb/USBDDriver.c sky/usb/USBDCallbacks.c \
+#       sky/usb/USBFeatureRequest.c sky/usb/USBInterfaceRequest.c sky/usb/USBGetDescriptorRequest.c \
+#       sky/usb/USBSetAddressRequest.c sky/usb/USBSetConfigurationRequest.c \
+#       sky/usb/USBConfigurationDescriptor.c sky/usb/USBGenericDescriptor.c \
+#       sky/usb/hidJoystick.c \
+#       sky/usb/HIDDMouseDriver.c \
+#       sky/usb/hid_device_descriptor.c \
 
 #       usb/device/core/USBD_UDP.c usb/device/core/USBDDriver.c usb/device/core/USBDCallbacks.c \
 #       usb/device/massstorage/MSDDriver.c usb/device/massstorage/MSDDStateMachine.c usb/device/massstorage/MSDLun.c usb/device/massstorage/MSDDriverDescriptors.c usb/device/massstorage/SBCMethods.c \
@@ -492,7 +513,7 @@ CPPSRC = stamp.cpp \
 			sbus.cpp \
 			logs.cpp
 
-	 ifeq ($(SMALL), YES)
+	 ifeq ($(SMALL), 1)
 	 else
 CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 	 endif
@@ -598,6 +619,7 @@ endif
 # If REVX board
 ifeq ($(REVX), 1)
  CPPDEFS += -DREVX
+ CPPDEFS += -DXFIRE
  EXT_MOD=REVB-X
 endif
 
@@ -718,6 +740,7 @@ clean:
 	-rm -f x12dobj/*.*
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
+	-rm -f skySobj/*.*
 	-rm -f skyDobj/*.*
 	-rm -f sky9XTobj/*.*
 	-rm -f $(FULL_PRJ).elf

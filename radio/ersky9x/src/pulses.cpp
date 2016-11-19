@@ -95,6 +95,8 @@ uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 uint8_t CurrentTrainerSource ;
 
+uint16_t FailsafeCounter[2] ;
+
 volatile uint8_t Dsm_Type = 0 ;
 uint8_t DsmInitCounter = 0 ;
 //uint8_t Dsm_Type_channels = 12 ;
@@ -121,6 +123,7 @@ static uint8_t bitlen ;
 uint8_t PulsesPaused ;
 
 void crc( uint8_t data ) ;
+uint8_t setupPulsesXfire() ;
 
 
 void pausePulses()
@@ -195,13 +198,13 @@ void checkTrainerSource()
 {
 //Jack BT   COM2 Slave
 	uint32_t tSource = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0].source ;
-	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
-	{
-		tSource = TRAINER_SLAVE ;
-	}
 	if ( g_model.traineron == 0 )
 	{
 		tSource = TRAINER_JACK ;
+	}
+	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+	{
+		tSource = TRAINER_SLAVE ;
 	}
 
 	if ( CurrentTrainerSource != tSource )
@@ -215,7 +218,7 @@ void checkTrainerSource()
 			break ;
 			case 2 :
 			break ;
-			case 3 :
+			case TRAINER_SLAVE :
 			break ;
 		}
 		CurrentTrainerSource = tSource ;
@@ -228,7 +231,7 @@ void checkTrainerSource()
 			break ;
 			case 2 :
 			break ;
-			case 3 :	// Slave so output
+			case TRAINER_SLAVE :	// Slave so output
 				PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
 				module_output_low() ;
 				PPM2OutputLow() ;
@@ -476,6 +479,9 @@ extern "C" void PWM_IRQHandler (void)
 #ifdef ASSAN
       case PROTO_ASSAN:
 #endif
+#ifdef XFIRE
+      case PROTO_XFIRE:
+#endif
 				// Alternate periods of 19.5mS/8.5mS and 2.5 mS
 				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
 				if ( period == 5000 )	// 2.5 mS
@@ -495,6 +501,10 @@ extern "C" void PWM_IRQHandler (void)
 					else if ( ( Current_protocol == PROTO_DSM2 ) && ( g_model.sub_protocol != DSM_9XR  ) )
 					{
 						period = 19500*2 ;		// Total 22 mS
+					}
+					else if ( Current_protocol == PROTO_XFIRE )
+					{
+						period = 1500*2 ;		// Total 4 mS
 					}
 					else
 					{
@@ -522,19 +532,30 @@ extern "C" void PWM_IRQHandler (void)
 //						PIOA->PIO_PER = PIO_PA5 ;		// Assign A5 to PIO
 					}
 #endif
-					if ( PulsesPaused == 0 )
+ #ifdef XFIRE
+					if ( Current_protocol == PROTO_XFIRE )
 					{
-						PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
+						txPdcUsart( Bit_pulses, 26, 0 ) ;
 					}
-					sscptr = SSC ;
-					sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
-					sscptr->SSC_TCR = Serial_byte_count ;
-					sscptr->SSC_PTCR = SSC_PTCR_TXTEN ;	// Start transfers
-#ifdef ASSAN
-					if ( Current_protocol == PROTO_ASSAN )
+					else
 					{
-						// Enable termination interrupt
-						sscptr->SSC_IER = SSC_IER_TXBUFE ;
+#endif
+						if ( PulsesPaused == 0 )
+						{
+							PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
+						}
+						sscptr = SSC ;
+						sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
+						sscptr->SSC_TCR = Serial_byte_count ;
+						sscptr->SSC_PTCR = SSC_PTCR_TXTEN ;	// Start transfers
+#ifdef ASSAN
+						if ( Current_protocol == PROTO_ASSAN )
+						{
+							// Enable termination interrupt
+							sscptr->SSC_IER = SSC_IER_TXBUFE ;
+						}
+#endif
+ #ifdef XFIRE
 					}
 #endif
 				}
@@ -1134,6 +1155,10 @@ void setupPulses()
 				disable_ssc() ;
       break;
 #endif
+#ifdef XFIRE
+      case PROTO_XFIRE :
+      break;
+#endif
     }
 		
     Current_protocol = requiredProtocol ;
@@ -1165,6 +1190,11 @@ void setupPulses()
 //				Dsm_mode_response = 0 ;
 				pass = 0 ;
       break;
+#ifdef XFIRE
+      case PROTO_XFIRE :
+				module_output_low() ;
+      break;
+#endif
     }
   }
 
@@ -1190,6 +1220,11 @@ void setupPulses()
     case PROTO_ASSAN :
       setupPulsesDsm2( 12 ) ;
     break;
+#endif
+#ifdef XFIRE
+		case PROTO_XFIRE :
+			setupPulsesXfire() ;
+		break ;
 #endif
   }
 }
@@ -1225,8 +1260,10 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 	
 	pwmptr = PWM ;
 	pwmptr->PWM_CH_NUM[3].PWM_CDTYUPD = (g_model.ppmDelay*50+300)*2; //Stoplen *2
-	
-	if (g_model.pulsePol == 0)
+
+	uint32_t pol = ( CurrentTrainerSource == TRAINER_SLAVE ) ? g_model.trainPulsePol : g_model.pulsePol ;
+	 
+	if (pol == 0)
 	{
 		pwmptr->PWM_CH_NUM[3].PWM_CMR |= 0x00000200 ;	// CPOL
 	}
@@ -1789,10 +1826,6 @@ void setupPulsesPXX()
     putPcmHead(  ) ;  // sync byte
     putPcmByte( g_model.pxxRxNum ) ;
     
-//#ifdef DISABLE_PXX_SPORT
-//#ifdef REVX
-//		putPcmByte( pxxFlag[0] ) ;     // First byte of flags
-//#else
   	uint8_t flag1;
   	if (pxxFlag[0] & PXX_BIND)
 		{
@@ -1802,40 +1835,82 @@ void setupPulsesPXX()
 		{
   	  flag1 = (g_model.sub_protocol << 6) | pxxFlag[0] ;
 		}	
-		 putPcmByte( flag1 ) ;     // First byte of flags
-//#endif
+
+		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
+		{
+  		if (g_model.failsafeMode[0] != FAILSAFE_NOT_SET && g_model.failsafeMode[0] != FAILSAFE_RX )
+			{
+    		if ( FailsafeCounter[0]-- == 0 )
+				{
+      		FailsafeCounter[0] = 1000 ;
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+    		if ( ( FailsafeCounter[0] == 0 ) && (g_model.sub_protocol == 0 ) )
+				{
+      		flag1 |= PXX_SEND_FAILSAFE ;
+				}
+			}
+		}
+
+		putPcmByte( flag1 ) ;     // First byte of flags
     putPcmByte( 0 ) ;     // Second byte of flags
-//#ifdef DISABLE_PXX_SPORT
-//#ifdef REVX
-//    pxxFlag[0] = 0;          // reset flag after send
-//#endif
+		
 		uint8_t startChan = g_model.startChannel ;
 		if ( lpass & 1 )
 		{
 			startChan += 8 ;			
 		}
-    for ( i = 0 ; i < 4 ; i += 1 )		// First 8 channels only
+		chan = 0 ;
+    for ( i = 0 ; i < 8 ; i += 1 )		// First 8 channels only
     {																	// Next 8 channels would have 2048 added
-      chan = scaleForPXX( startChan ) ;
-			if ( lpass & 1 )
+    	if (flag1 & PXX_SEND_FAILSAFE)
 			{
-				chan += 2048 ;
+				if ( g_model.failsafeMode[0] == FAILSAFE_HOLD )
+				{
+					chan_1 = 2047 ;
+				}
+				else if ( g_model.failsafeMode[0] == FAILSAFE_NO_PULSES )
+				{
+					chan_1 = 0 ;
+				}
+				else
+				{
+					// Send failsafe value
+					int32_t value ;
+					value = ( startChan < 16 ) ? g_model.pxxFailsafe[startChan] : 0 ;
+					value = ( value *3933 ) >> 9 ;
+					value += 1024 ;					
+					chan_1 = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
+				}
 			}
-      putPcmByte( chan ) ; // Low byte of channel
-			startChan += 1 ;
-      chan_1 = scaleForPXX( startChan ) ;
+			else
+			{
+      	chan_1 = scaleForPXX( startChan ) ;
+			}
 			if ( lpass & 1 )
 			{
 				chan_1 += 2048 ;
 			}
 			startChan += 1 ;
-			putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
-      putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
+//      chan_1 = scaleForPXX( startChan ) ;
+//			if ( lpass & 1 )
+//			{
+//				chan_1 += 2048 ;
+//			}
+//			startChan += 1 ;
+      
+			if ( i & 1 )
+			{
+				putPcmByte( chan ) ; // Low byte of channel
+				putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
+      	putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
+			}
+			else
+			{
+				chan = chan_1 ;
+			}
     }
-//#ifndef DISABLE_PXX_SPORT
-//#ifndef REVX
 		putPcmByte( 0 ) ;
-//#endif
     chan = PcmCrc ;		        // get the crc
     putPcmByte( chan >> 8 ) ; // Checksum hi
     putPcmByte( chan ) ; 			// Checksum lo
@@ -1855,4 +1930,90 @@ void setupPulsesPXX()
 		}
 		pass = lpass ;
 }
+
+#ifdef XFIRE
+
+// CRC8 implementation with polynom = x^8+x^7+x^6+x^4+x^2+1 (0xD5)
+unsigned char crc8tab[256] = {
+  0x00, 0xD5, 0x7F, 0xAA, 0xFE, 0x2B, 0x81, 0x54,
+  0x29, 0xFC, 0x56, 0x83, 0xD7, 0x02, 0xA8, 0x7D,
+  0x52, 0x87, 0x2D, 0xF8, 0xAC, 0x79, 0xD3, 0x06,
+  0x7B, 0xAE, 0x04, 0xD1, 0x85, 0x50, 0xFA, 0x2F,
+  0xA4, 0x71, 0xDB, 0x0E, 0x5A, 0x8F, 0x25, 0xF0,
+  0x8D, 0x58, 0xF2, 0x27, 0x73, 0xA6, 0x0C, 0xD9,
+  0xF6, 0x23, 0x89, 0x5C, 0x08, 0xDD, 0x77, 0xA2,
+  0xDF, 0x0A, 0xA0, 0x75, 0x21, 0xF4, 0x5E, 0x8B,
+  0x9D, 0x48, 0xE2, 0x37, 0x63, 0xB6, 0x1C, 0xC9,
+  0xB4, 0x61, 0xCB, 0x1E, 0x4A, 0x9F, 0x35, 0xE0,
+  0xCF, 0x1A, 0xB0, 0x65, 0x31, 0xE4, 0x4E, 0x9B,
+  0xE6, 0x33, 0x99, 0x4C, 0x18, 0xCD, 0x67, 0xB2,
+  0x39, 0xEC, 0x46, 0x93, 0xC7, 0x12, 0xB8, 0x6D,
+  0x10, 0xC5, 0x6F, 0xBA, 0xEE, 0x3B, 0x91, 0x44,
+  0x6B, 0xBE, 0x14, 0xC1, 0x95, 0x40, 0xEA, 0x3F,
+  0x42, 0x97, 0x3D, 0xE8, 0xBC, 0x69, 0xC3, 0x16,
+  0xEF, 0x3A, 0x90, 0x45, 0x11, 0xC4, 0x6E, 0xBB,
+  0xC6, 0x13, 0xB9, 0x6C, 0x38, 0xED, 0x47, 0x92,
+  0xBD, 0x68, 0xC2, 0x17, 0x43, 0x96, 0x3C, 0xE9,
+  0x94, 0x41, 0xEB, 0x3E, 0x6A, 0xBF, 0x15, 0xC0,
+  0x4B, 0x9E, 0x34, 0xE1, 0xB5, 0x60, 0xCA, 0x1F,
+  0x62, 0xB7, 0x1D, 0xC8, 0x9C, 0x49, 0xE3, 0x36,
+  0x19, 0xCC, 0x66, 0xB3, 0xE7, 0x32, 0x98, 0x4D,
+  0x30, 0xE5, 0x4F, 0x9A, 0xCE, 0x1B, 0xB1, 0x64,
+  0x72, 0xA7, 0x0D, 0xD8, 0x8C, 0x59, 0xF3, 0x26,
+  0x5B, 0x8E, 0x24, 0xF1, 0xA5, 0x70, 0xDA, 0x0F,
+  0x20, 0xF5, 0x5F, 0x8A, 0xDE, 0x0B, 0xA1, 0x74,
+  0x09, 0xDC, 0x76, 0xA3, 0xF7, 0x22, 0x88, 0x5D,
+  0xD6, 0x03, 0xA9, 0x7C, 0x28, 0xFD, 0x57, 0x82,
+  0xFF, 0x2A, 0x80, 0x55, 0x01, 0xD4, 0x7E, 0xAB,
+  0x84, 0x51, 0xFB, 0x2E, 0x7A, 0xAF, 0x05, 0xD0,
+  0xAD, 0x78, 0xD2, 0x07, 0x53, 0x86, 0x2C, 0xF9
+};
+
+uint8_t crc8(const uint8_t * ptr, uint32_t len)
+{
+  uint8_t crc = 0;
+  for ( uint32_t i=0 ; i<len ; i += 1 )
+	{
+    crc = crc8tab[crc ^ *ptr++] ;
+  }
+  return crc;
+}
+
+#define CROSSFIRE_CH_CENTER         0x3E0
+#define CROSSFIRE_CH_BITS           11
+#define CROSSFIRE_CHANNELS_COUNT		16
+
+#define MODULE_ADDRESS							0xEE
+#define CHANNELS_ID									0x16
+
+// Range for pulses (channels output) is [-1024:+1024]
+uint8_t setupPulsesXfire()
+{
+	uint32_t startChan ;
+	startChan = g_model.startChannel ;
+  uint8_t *buf = Bit_pulses ;
+  *buf++ = MODULE_ADDRESS ;
+  *buf++ = 24 ; // 1(ID) + 22 + 1(CRC)
+  uint8_t *crc_start = buf ;
+  *buf++ = CHANNELS_ID ;
+  uint32_t bits = 0 ;
+  uint32_t bitsavailable = 0 ;
+  for (uint32_t i=0 ; i < CROSSFIRE_CHANNELS_COUNT ; i += 1 )
+	{
+    uint32_t val = limit(0, CROSSFIRE_CH_CENTER + (((g_chans512[startChan+i]) * 4) / 5), 2*CROSSFIRE_CH_CENTER) ;
+    bits |= val << bitsavailable ;
+    bitsavailable += CROSSFIRE_CH_BITS ;
+    while (bitsavailable >= 8)
+		{
+      *buf++ = bits ;
+      bits >>= 8 ;
+      bitsavailable -= 8 ;
+    }
+  }
+  *buf++ = crc8( crc_start, 23) ;
+  return buf - Bit_pulses ;
+}
+
+
+#endif
 
