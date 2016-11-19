@@ -40,6 +40,7 @@ void burnConfigDialog::getSettings()
     avrProgrammer =  settings.value("programmer", QString("usbasp")).toString();
     avrMCU =  settings.value("mcu", QString("m64")).toString();
     avrPort =  settings.value("avr_port", "").toString();
+		disablePreRead = settings.value("disablePreread", false).toBool() ;
 
     ui->avrdude_location->setText(getAVRDUDE());
     ui->avrArgs->setText(getAVRArgs().join(" "));
@@ -68,6 +69,7 @@ void burnConfigDialog::putSettings()
     settings.setValue("mcu", avrMCU);
     settings.setValue("avr_port", avrPort);
     settings.setValue("avr_arguments", avrArgs.join(" "));
+	  settings.setValue("disablePreread", ui->disablePreReadCB->isChecked());
 }
 
 void burnConfigDialog::populateProgrammers()

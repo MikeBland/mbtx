@@ -26,6 +26,9 @@ BIN  = $(CP) -O ihex
 BINX = $(CP) -O binary 
 
 # Object files directory
+ifeq ($(PCB), X12D)
+  OBJDIR = x12dpobj
+else
 ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   OBJDIR = x9dpobj
@@ -46,10 +49,15 @@ else
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
    else
-    OBJDIR = skyobj
+    ifeq ($(SMALL), 1)
+     OBJDIR = skySobj
+    else
+     OBJDIR = skyobj
+    endif
    endif
   endif
  endif
+endif
 endif
 
 MCU  = cortex-m3
@@ -75,6 +83,7 @@ EXT = STD
 #ifeq ($(STAMP), 1)
 AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
+PROV=$(shell sh -c "cat prov.txt")
 #REV = $(shell echo $$(( $(AREV) )))
 #endif
 
@@ -88,6 +97,9 @@ REV = $(shell echo $$(( $(AREV) + 1 )))
 
 # 
 # Define project name and Ram/Flash mode here
+ifeq ($(PCB), X12D)
+  PROJECT        = x12d
+else
 ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   PROJECT        = x9dp
@@ -108,10 +120,15 @@ else
    ifeq ($(PCB), DUE)
     PROJECT      = ersky9xd
    else
-    PROJECT      = ersky9x
+    ifeq ($(SMALL), 1)
+     PROJECT      = ersky9xs
+    else
+     PROJECT      = ersky9x
+    endif
    endif
   endif
  endif
+endif
 endif
 
 RUN_FROM_FLASH = 1
@@ -131,9 +148,16 @@ ifeq ($(RUN_FROM_FLASH), 0)
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
    else
+    ifeq ($(PCB), X12D)
+     LDSCRIPT = X12D/stm32f4_flash.ld
+     CPPDEFS += -DHSE_VALUE=12000000
+	  CPPDEFS += -DPCBX12D 
+     UDEFS = -DSTM32F429_439xx
+	 else
      LDSCRIPT = sam3s4c_ram.ld
 	  CPPDEFS += -DPCBSKY 
      UDEFS = -Dat91sam3s4
+	 endif
 	endif
  endif
  FULL_PRJ = $(PROJECT)_ram
@@ -158,7 +182,16 @@ else
 	  CPPDEFS += -DPCBX9D 
      CPPDEFS += -DUSB_JOYSTICK
    else
+    ifeq ($(PCB), X12D)
+     LDSCRIPT = X12D/stm32f4_flash.ld
+     CPPDEFS += -DHSE_VALUE=12000000
+	  CPPDEFS += -DPCBX12D 
+     UDEFS = -DSTM32F429_439xx
+	 else
     CPPDEFS += -DPCBSKY 
+	 ifeq ($(SMALL), 1)
+    	CPPDEFS += -DSMALL 
+	 endif
     ifeq ($(PCB), DUE)
       LDSCRIPT = due/sam3x8_flash.ld
       UDEFS = -Dat91sam3x8
@@ -169,9 +202,17 @@ else
       LDSCRIPT = sam3s8c_flash.ld
       UDEFS = -Dat91sam3s8
      else
-      LDSCRIPT = sam3s4c_flash.ld
-      UDEFS = -Dat91sam3s4
+      ifeq ($(SMALL), 1)
+       LDSCRIPT = sam3s4c_flash.ld
+       UDEFS = -Dat91sam3s4
+      else
+       LDSCRIPT = sam3s4c_flash.ld
+#       LDSCRIPT = sam3s8c_flash.ld
+       UDEFS = -Dat91sam3s4
+#       UDEFS = -Dat91sam3s8
+      endif
      endif
+    endif
     endif
 	endif
   endif
@@ -200,6 +241,27 @@ endif
 # Define ASM defines here
 UADEFS = 
 
+
+ifeq ($(PCB), X12D)
+# List C source files here
+SRC  = X12D/system_stm32f4xx.c \
+		 X12D/sdram_driver.c \
+		 X12D/pwr_driver.c \
+		 X12D/stm32f4xx_fmc.c \
+       X12D/stm32f4xx_rcc.c \
+		 X12D/stm32f4xx_dma2d.c \
+		 X12D/stm32f4xx_ltdc.c \
+		 X12D/stm32f4xx_tim.c \
+       X12D/stm32f4xx_gpio.c
+
+CPPSRC = X12D/e.cpp \
+         X12D/lcd_driver.cpp \
+         X12D/led_driver.cpp
+
+# List ASM source files here
+ASRC = X12D/startup_stm32f40_41xxx.s
+
+else
 ifeq ($(PCB), X9D)
 
 # List C source files here
@@ -269,6 +331,7 @@ CPPSRC = ersky9x.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -280,6 +343,8 @@ CPPSRC = ersky9x.cpp \
 #         massstorage.cpp \
 #         X9D/usbd_usr.cpp \
 #         X9D/usbd_storage_msd.cpp \
+
+CPPSRC += pdi.cpp
 
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
@@ -307,6 +372,7 @@ CPPSRC = stamp.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
          debug.cpp \
          file.cpp \
          pers.cpp \
@@ -371,6 +437,7 @@ CPPSRC = ersky9x.cpp \
 			it.cpp \
 			pl.cpp \
 			vi.cpp \
+			sp.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
@@ -383,6 +450,8 @@ CPPSRC = ersky9x.cpp \
 #         X9D/lcd_driver.cpp \
 #       	X9D/i2c_ee.cpp \
 #         X9D/eeprom_rlc.cpp \
+
+CPPSRC += pdi.cpp
 
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
@@ -397,11 +466,17 @@ SRC  = core_cm3.c \
        port.c \
        coos.c
 
-#       usb/hid_device_descriptor.c \
-#       usb/hidJoystick.c \
-#       usb/HIDDMouseDriver.c \
-#       usb/USBDDriver.c \
 
+#       sky/usb/udi_hid.c \
+
+#       sky/usb/USBEndpointDescriptor.c sky/usb/USBGenericRequest.c \
+#       sky/usb/USBD_UDP.c sky/usb/USBDDriver.c sky/usb/USBDCallbacks.c \
+#       sky/usb/USBFeatureRequest.c sky/usb/USBInterfaceRequest.c sky/usb/USBGetDescriptorRequest.c \
+#       sky/usb/USBSetAddressRequest.c sky/usb/USBSetConfigurationRequest.c \
+#       sky/usb/USBConfigurationDescriptor.c sky/usb/USBGenericDescriptor.c \
+#       sky/usb/hidJoystick.c \
+#       sky/usb/HIDDMouseDriver.c \
+#       sky/usb/hid_device_descriptor.c \
 
 #       usb/device/core/USBD_UDP.c usb/device/core/USBDDriver.c usb/device/core/USBDCallbacks.c \
 #       usb/device/massstorage/MSDDriver.c usb/device/massstorage/MSDDStateMachine.c usb/device/massstorage/MSDLun.c usb/device/massstorage/MSDDriverDescriptors.c usb/device/massstorage/SBCMethods.c \
@@ -431,24 +506,24 @@ CPPSRC = stamp.cpp \
          pulses.cpp \
 			en.cpp \
 			de.cpp \
-			no.cpp \
 			fr.cpp \
-			se.cpp \
-			it.cpp \
-			pl.cpp \
-			vi.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			logs.cpp
 
+	 ifeq ($(SMALL), 1)
+	 else
+CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
+	 endif
+
 #         gtime.cpp \
 #         massstorage.cpp \
 
 
 #ifeq ($(REVX), 1)
-# CPPSRC += pl.cpp
+ CPPSRC += pdi.cpp
 #endif
 
 # List ASM source files here
@@ -460,6 +535,7 @@ endif
 
 endif
 
+endif
 
 # List all user directories here
 UINCDIR = ./inc
@@ -543,13 +619,14 @@ endif
 # If REVX board
 ifeq ($(REVX), 1)
  CPPDEFS += -DREVX
+ CPPDEFS += -DXFIRE
  EXT_MOD=REVB-X
 endif
 
 # If Flight Phases
-ifeq ($(PHASES), 1)
- CPPDEFS += -DPHASES
-endif
+#ifeq ($(PHASES), 1)
+# CPPDEFS += -DPHASES
+#endif
 
 ifeq ($(PCB), 9XT)
   EXT_MOD=9XT
@@ -611,10 +688,10 @@ stamp:
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
 	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
  ifeq ($(PCB), X9D)
-	@echo "#define SVN_VERS \"erx9d-r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
  else	
-	@echo "#define SVN_VERS \"ersky9x-r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
  endif
 #	@cat stamp-ersky9x.h
@@ -660,8 +737,10 @@ clean:
 	-rm -f x9dobj/*.*
 	-rm -f x9eobj/*.*
 	-rm -f x9dpobj/*.*
+	-rm -f x12dobj/*.*
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
+	-rm -f skySobj/*.*
 	-rm -f skyDobj/*.*
 	-rm -f sky9XTobj/*.*
 	-rm -f $(FULL_PRJ).elf

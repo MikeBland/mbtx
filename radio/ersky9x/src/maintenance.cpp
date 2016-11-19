@@ -42,16 +42,21 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #include "core_cm3.h"
+// #ifdef REVX
+  #include "pdi.h"
+// #endif
 #endif
 #ifdef PCBX9D
 #include "stm32f2xx.h"
 #include "stm32f2xx_flash.h"
 #include "X9D/hal.h"
+#include "pdi.h"
 #endif
 #ifdef PCB9XT
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_flash.h"
 #include "X9D/hal.h"
+#include "pdi.h"
 #endif
 
 
@@ -72,7 +77,19 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 #endif
 #include "maintenance.h"
+#include "myeeprom.h"
 
+#if defined(PCBX9D) || defined(PCB9XT)
+extern uchar PdiErrors0 ;
+extern uchar PdiErrors1 ;
+extern uchar PdiErrors2 ;
+extern uchar PdiErrors3 ;
+extern uchar PdiErrors4 ;
+extern uchar PdiErrors5 ;
+extern uchar PdiErrors6 ;
+extern uchar PdiErrors7 ;
+extern uchar PdiErrors8 ;
+#endif
 //#if defined(PCB9XT)
 //uint16_t lastPacketType ;
 //#endif
@@ -99,10 +116,12 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #define UPDATE_TYPE_SPORT_EXT			3
 #define UPDATE_TYPE_CHANGE_ID			4
 #define UPDATE_TYPE_AVR						5
+#define UPDATE_TYPE_XMEGA					6
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
 
+extern void copyFileName( char *dest, char *source, uint32_t size ) ;
 #ifdef PCBSKY
  #ifndef REVX
 void init_mtwi( void ) ;
@@ -117,6 +136,7 @@ uint8_t CoProresult ;
 #endif
 
 uint32_t sportUpdate( uint32_t external ) ;
+uint32_t xmegaUpdate() ;
 
 TCHAR Filenames[8][50] ;
 extern FATFS g_FATFS ;
@@ -144,10 +164,10 @@ uint8_t SportVerValid ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 
-const uint8_t SportIds[32] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
+const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
 															0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7,
-															0x98, 0x39, 0xBA, 0x1B, 0x7C, 0xDD, 0x5E, 0xFF } ;
+															0x98, 0x39, 0xBA, 0x1B/*, 0x7C, 0xDD, 0x5E, 0xFF*/ } ;
 
 uint8_t SportState ;
 #define SPORT_IDLE				0
@@ -160,6 +180,19 @@ uint8_t SportState ;
 #define SPORT_END					7
 #define SPORT_FAIL				8
 #define SPORT_COMPLETE		9
+
+uint8_t XmegaState ;
+#define XMEGA_IDLE				0
+#define XMEGA_START				1
+#define XMEGA_POWER				2
+#define XMEGA_BEGIN				3
+#define XMEGA_FLASHING		4
+#define XMEGA_DONE				5
+
+uint8_t XmegaSubState ;
+uint8_t XmegaSignature[4] ;
+uint8_t Fuses[8] ;
+
 
 #ifdef PCBSKY
 uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
@@ -307,7 +340,14 @@ uint32_t validateFile( uint32_t *block )
 #if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( block[0] & 0xFFFC0000 ) != 0x20000000 )
 	{
+#ifdef REV9E
+		if ( ( block[0] & 0xFFFC0000 ) != 0x10000000 )	// Cover silly openTx stack
+		{
+			return 0 ;
+		}
+#else
 		return 0 ;
+#endif
 	}
 	if ( ( block[1] & 0xFFF00000 ) != 0x08000000 )
 	{
@@ -355,6 +395,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 {
 	FRESULT fr ;
 	uint32_t loop ;
+
 	do
 	{
 		loop = 0 ;
@@ -368,41 +409,55 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 		{
 			cpystr( (uint8_t *)fno->lfname, (uint8_t *)fno->fname ) ;		// Copy 8.3 name
 		}
-		int32_t len = strlen(fno->lfname) - 4 ;
-		if ( fc->ext[3] )
+		if ( fc->ext[0] )
 		{
-			len -= 1 ;			
-		}
-		if ( len < 0 )
-		{
-			loop = 1 ;
-		}
-		if ( fno->lfname[len] != '.' )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+1] & ~0x20 ) != fc->ext[0] )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+2] & ~0x20 ) != fc->ext[1] )
-		{
-			loop = 1 ;
-		}
-		if ( ( fno->lfname[len+3] & ~0x20 ) != fc->ext[2] )
-		{
-			loop = 1 ;
-		}
-		if ( fc->ext[3] )
-		{
-			if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
+			int32_t len = strlen(fno->lfname) - 4 ;
+			if ( fc->ext[3] )
+			{
+				len -= 1 ;			
+			}
+			if ( len < 0 )
 			{
 				loop = 1 ;
 			}
+			if ( fno->lfname[len] != '.' )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+1] & ~0x20 ) != fc->ext[0] )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+2] & ~0x20 ) != fc->ext[1] )
+			{
+				loop = 1 ;
+			}
+			if ( ( fno->lfname[len+3] & ~0x20 ) != fc->ext[2] )
+			{
+				loop = 1 ;
+			}
+			if ( fc->ext[3] )
+			{
+				if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
+				{
+					loop = 1 ;
+				}
+			}
 		}
+		else // looking for a Directory
+		{
+			if ( ( fno->fattrib & AM_DIR ) == 0 )
+			{
+				loop = 1 ;
+			}
+		}	
 	} while ( loop ) ;
 	return fr ;
 }
+
+DIR Djp ;
+extern uint8_t VoiceFileType ;
+#define VOICE_FILE_TYPE_MUSIC	2
 
 uint32_t fillNames( uint32_t index, struct fileControl *fc )
 {
@@ -410,13 +465,20 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	FRESULT fr ;
 	Finfo.lfname = Filenames[0] ;
 	Finfo.lfsize = 48 ;
-	fr = f_readdir ( &Dj, 0 ) ;					// rewind
-	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip .
-	fr = f_readdir ( &Dj, &Finfo ) ;		// Skip ..
+  WatchdogTimeout = 200 ;
+	DIR *pDj = &Dj ;	
+	if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
+	{
+		pDj = &Djp ;
+	}
+	fr = f_readdir ( pDj, 0 ) ;					// rewind
+	fr = f_readdir ( pDj, &Finfo ) ;		// Skip .
+	fr = f_readdir ( pDj, &Finfo ) ;		// Skip ..
 	i = 0 ;
 	while ( i <= index )
 	{
-		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
+  	WatchdogTimeout = 200 ;
+		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
 		FileSize[0] = Finfo.fsize ;
 		i += 1 ;
 		if ( fr != FR_OK || Finfo.fname[0] == 0 )
@@ -426,8 +488,9 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	}
 	for ( i = 1 ; i < 7 ; i += 1 )
 	{
+ 		WatchdogTimeout = 200 ;
 		Finfo.lfname = Filenames[i] ;
-		fr = readBinDir( &Dj, &Finfo, fc ) ;		// First entry
+		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
 		FileSize[i] = Finfo.fsize ;
 		if ( fr != FR_OK || Finfo.fname[0] == 0 )
 		{
@@ -435,6 +498,52 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 		}
 	}
 	return i ;
+}
+
+extern char PlayListNames[][MUSIC_NAME_LENGTH+2] ;
+extern uint16_t PlayListCount ;
+
+uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
+{
+	uint32_t i ;
+	FRESULT fr ;
+	Finfo.lfsize = 19 ;
+	char filename[20] ;
+  WatchdogTimeout = 200 ;
+
+	fr = f_chdir( dir ) ;
+	if ( fr == FR_OK )
+	{
+		fc->index = 0 ;
+		fr = f_opendir( &Djp, (TCHAR *) "." ) ;
+		if ( fr == FR_OK )
+		{
+			fc->ext[0] = *ext++ ;
+			fc->ext[1] = *ext++ ;
+			fc->ext[2] = *ext++ ;
+			fc->ext[3] = *ext ;
+			fc->index = 0 ;
+
+			fr = f_readdir ( &Djp, 0 ) ;					// rewind
+			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip .
+			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip ..
+			for ( i = 0 ; i < PLAYLIST_COUNT ; i += 1 )
+			{
+ 				WatchdogTimeout = 200 ;
+				Finfo.lfname = filename ;
+				fr = readBinDir( &Djp, &Finfo, fc ) ;		// First entry
+				if ( fr != FR_OK || Finfo.fname[0] == 0 )
+				{
+					break ;
+				}
+				copyFileName( PlayListNames[i], filename, MUSIC_NAME_LENGTH ) ;
+
+			}
+			PlayListCount = i ;
+			return i ;
+		}
+	}
+	return 0 ;
 }
 
 #define DISPLAY_CHAR_WIDTH	21
@@ -480,7 +589,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		lcd_putsn_P( 0, 16+FH*i, &Filenames[i][x], len ) ;
 	}
 
-#if !defined(PCBTARANIS)
+#if !defined(PCBTARANIS) || defined(REV9E)
 	if ( event == 0 )
 	{
 extern int32_t Rotary_diff ;
@@ -691,7 +800,7 @@ void menuChangeId(uint8_t event)
 			if ( --SendCount == 0 )
 			{
 				SendCount = 2 ;
-				if ( ++IdIndex > 0x1B )
+				if ( ++IdIndex > 27 )
 				{
 					IdIndex = 0 ;
 				}
@@ -745,14 +854,6 @@ void menuChangeId(uint8_t event)
 		lcd_outhex4( 25, 6*FH, AppId ) ;
 	}
 
-//extern uint16_t TelemetryDebug ;
-//extern uint16_t TelemetryDebug1 ;
-//extern uint16_t TelemetryDebug2 ;
-//extern uint16_t TelemetryDebug3 ;
-//	lcd_outhex4( 0, 6*FH, TelemetryDebug ) ;
-//	lcd_outhex4( 25, 6*FH, TelemetryDebug1 ) ;
-//	lcd_outhex4( 50, 6*FH, TelemetryDebug2 ) ;
-//	lcd_outhex4( 75, 6*FH, TelemetryDebug3 ) ;
 }
 
 void menuUp1(uint8_t event)
@@ -766,6 +867,10 @@ void menuUp1(uint8_t event)
 	uint32_t width ;
    
 	wdt_reset() ;
+	if ( WatchdogTimeout < 50 )
+	{
+ 		WatchdogTimeout = 50 ;
+	}
 	 
 	if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{
@@ -788,6 +893,10 @@ void menuUp1(uint8_t event)
 		if (UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
   		TITLE( "UPDATE Int. XJT" ) ;
+		}
+ 		else if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
 		}
 		else
 		{
@@ -812,13 +921,26 @@ void menuUp1(uint8_t event)
 		}
  #endif
 #endif
-
-
+#ifdef PCBSKY
+// #ifdef REVX
+ 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
+		}
+// #endif
+#endif
+#ifdef PCB9XT
+ 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+		{
+  		TITLE( "UPDATE XMEGA" ) ;
+		}
+#endif
 
 	}
 	switch(event)
 	{
     case EVT_ENTRY:
+  		WatchdogTimeout = 200 ;
 			state = UPDATE_NO_FILES ;
 			if ( mounted == 0 )
 			{
@@ -849,7 +971,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) )
+ 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) && (UpdateItem != 6 ) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -906,6 +1028,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
 				}
+ 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -917,13 +1043,24 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
 				}
+ 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
 				}
 				CoProcReady = 0 ;
  #else
-				lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+ 				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
+				else
+				{
+					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+				}
  #endif
 #endif
 #ifdef PCB9XT
@@ -931,6 +1068,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
 					SportVerValid = 0 ;
+				}
+				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
 				else
 				{
@@ -992,12 +1133,45 @@ void menuUp1(uint8_t event)
 					}
 				}
  #endif
+ // REVX
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					XmegaState = XMEGA_START ;
+#if defined(PCBX9D) || defined(PCB9XT)
+					PdiErrors0 = 0 ;
+					PdiErrors1 = 0 ;
+					PdiErrors2 = 0 ;
+					PdiErrors3 = 0 ;
+					PdiErrors4 = 0 ;
+					PdiErrors5 = 0 ;
+					PdiErrors6 = 0 ;
+					PdiErrors7 = 0 ;
+					PdiErrors8 = 0 ;
+#endif
+				}
+
 #endif
 #ifdef PCB9XT
 				else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
 				{
 					width = 50 ;	// Not used
-					
+				}
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					EXTERNAL_RF_ON() ;
+					XmegaState = XMEGA_START ;
+				}
+#endif
+#ifdef PCBX9D
+				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					XmegaState = XMEGA_START ;
 				}
 #endif
 				else
@@ -1095,13 +1269,63 @@ void menuUp1(uint8_t event)
 				}
 			}
  #endif
+ // REVX
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				lcd_outhex4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
+				lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
+				lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
+			}
 #endif
 			
 #ifdef PCB9XT
-			else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
+			else if (UpdateItem == UPDATE_TYPE_AVR )
 			{
 				// No more display, never return, check for power off when finished
 				
+			}
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+			}
+#endif
+#ifdef PCBX9D
+			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			{
+//				uint32_t size = FileSize[fc->vpos] ;
+				width = xmegaUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 			}
 #endif
 			else		// Internal/External Sport
@@ -1180,6 +1404,15 @@ void menuUp1(uint8_t event)
   #endif 			
  #endif 			
 			}
+#ifdef PCB9XT
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+#endif
 
 			if ( event == EVT_KEY_FIRST(KEY_EXIT) )
 			{
@@ -1205,19 +1438,23 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
 	lcd_puts_Pleft( 4*FH, "  Update SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
  #endif
 #endif
 #ifdef PCBX9D
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Update Avr CPU" );
+	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
 #endif
 
   switch(event)
@@ -1249,6 +1486,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
  #else
 			if ( position == 3*FH )
 			{
@@ -1259,6 +1501,11 @@ void menuUpdate(uint8_t event)
 			{
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
 			}
  #endif
 #endif
@@ -1278,6 +1525,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )
@@ -1289,6 +1541,11 @@ void menuUpdate(uint8_t event)
 			{
 				UpdateItem = UPDATE_TYPE_AVR ;
 	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
 			}
 #endif
     	killEvents(event) ;
@@ -1302,7 +1559,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCBSKY
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -1316,7 +1573,7 @@ void menuUpdate(uint8_t event)
 		break ;
  #else
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 4*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1332,7 +1589,7 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -1348,7 +1605,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCB9XT
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
-			if ( position < 3*FH )
+			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}
@@ -1795,6 +2052,105 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 	}
 }
 
+
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
+// This is called repeatedly every 10mS while update is in progress
+uint32_t xmegaUpdate()
+{
+	
+	switch ( XmegaState )
+	{
+		case XMEGA_IDLE :
+		break ;
+
+		case XMEGA_START :
+			BytesFlashed = 0 ;
+		  XmegaSubState = 0 ;
+			XmegaState = XMEGA_POWER ;
+		break ;
+		
+		case XMEGA_POWER :
+			BytesFlashed = 0 ;
+			if ( ++XmegaSubState > 5 )
+			{
+		  	XmegaSubState = 0 ;
+				XmegaState = XMEGA_BEGIN ;
+			}
+		break ;
+		
+		case XMEGA_BEGIN :
+			__disable_irq() ;
+			pdiInit() ;
+			pdiReadBlock(XNVM_DATA_BASE+ 0x90, XmegaSignature, 4 ) ;
+			pdiReadBlock(0x08F0020, Fuses, 8 ) ;
+			if ( ( XmegaSignature[0] == 0x1E ) && (Fuses[7] != 0xFF ) )
+			{
+				pdiChipErase() ;
+				if ( ( Fuses[2] & 0x40 ) == 0 )
+				{ // Boot reset
+ 					wdt_reset() ;
+					pdiWriteFuse( 2, Fuses[2] | 0x40 ) ;
+				}
+ 				wdt_reset() ;
+				pdiWritePageMemory( 0, FileData, 256 ) ;
+		 		wdt_reset() ;
+				__enable_irq() ;
+				BytesFlashed = 256 ;
+				BlockOffset = 256 ;
+				ByteEnd = 1024 ;
+				XmegaState = XMEGA_FLASHING ;
+
+		  	XmegaSubState = 0 ;
+			}
+			else
+			{
+ 				wdt_reset() ;
+				__enable_irq() ;
+				SportVerValid = 0x00FF ; // Abort with failed
+				XmegaState = XMEGA_DONE ;
+			}
+		break ;
+		
+		case XMEGA_FLASHING :
+		  XmegaSubState += 1 ;
+			
+			if ( ( XmegaSubState & 3 ) == 0 )
+			{
+				__disable_irq() ;
+				pdiInit() ;
+				pdiWritePageMemory( BytesFlashed, &FileData[BlockOffset], 256 ) ;
+		 		wdt_reset() ;
+				__enable_irq() ;
+				BytesFlashed += 256 ;
+				BlockOffset += 256 ;
+				if ( BytesFlashed >= ByteEnd )
+				{
+					f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+					BlockOffset = 0 ;
+					ByteEnd += BlockCount ;
+		 			wdt_reset() ;
+				}
+				if ( BytesFlashed >= FirmwareSize )
+				{
+					XmegaState = XMEGA_DONE ;
+					BytesFlashed = FirmwareSize ;
+				}
+			}
+		break ;
+		
+		case XMEGA_DONE :
+			pdiCleanup() ;
+			XmegaState = XMEGA_IDLE ;
+#ifdef PCB9XT
+			EXTERNAL_RF_OFF() ;
+#endif
+			BytesFlashed = FirmwareSize + 1 ;
+		break ;
+	}
+	return BytesFlashed ;
+}	
+#endif
+
 // This is called repeatedly every 10mS while update is in progress
 uint32_t sportUpdate( uint32_t external )
 {
@@ -1816,15 +2172,16 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
-			x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ;
+			com1_Configure( 57600, SERIAL_NORM, 0 ) ;
 #endif
 #endif
 #ifdef PCBSKY
  #ifdef REVX
 		clearMfp() ;
  #endif
-			UART2_Configure( 57600, Master_frequency ) ;
-			startPdcUsartReceive() ;
+			com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//			UART2_Configure( 57600, Master_frequency ) ;
+//			startPdcUsartReceive() ;
 #endif
 			SportTimer = 5 ;		// 50 mS
 #ifdef PCBX9D
@@ -1926,7 +2283,12 @@ void maintenanceBackground()
 #endif
 		
 #ifdef PCBSKY
-	rxPdcUsart( frsky_receive_byte ) ;		// Send serial data here
+	uint16_t rxchar ;
+	while ( ( rxchar = get_fifo64( &Com1_fifo ) ) != 0xFFFF )
+	{
+		frsky_receive_byte( rxchar ) ;
+	}
+//	rxPdcUsart( frsky_receive_byte ) ;		// Send serial data here
 #endif
 
 #else

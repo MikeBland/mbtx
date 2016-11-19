@@ -61,6 +61,7 @@ void RTT_IRQHandler (void) __attribute__((weak));
 void WDT_IRQHandler (void) __attribute__((weak));
 void PMC_IRQHandler (void) __attribute__((weak));
 void EEFC_IRQHandler (void) __attribute__((weak));
+void SW7_IRQHandler (void) __attribute__((weak));
 void UART0_IRQHandler (void) __attribute__((weak));
 void UART1_IRQHandler (void) __attribute__((weak));
 void SMC_IRQHandler (void) __attribute__((weak));
@@ -117,7 +118,7 @@ void (* const gVectors[])(void) =
    WDT_IRQHandler,      /*  4  WATCHDOG TIMER */
    PMC_IRQHandler,      /*  5  PMC */
    EEFC_IRQHandler,     /*  6  EEFC */
-   0,                   /*  7  Reserved */
+   SW7_IRQHandler,      /*  7  Reserved */
    UART0_IRQHandler,    /*  8  UART0 */
    UART1_IRQHandler,    /*  9  UART1 */
    SMC_IRQHandler,      /*  10 SMC */
@@ -168,6 +169,7 @@ void RTT_IRQHandler (void) { while(1); }
 void WDT_IRQHandler (void) { while(1); }
 void PMC_IRQHandler (void) { while(1); }
 void EEFC_IRQHandler (void) { while(1); }
+void SW7_IRQHandler (void) { while(1); }
 void UART0_IRQHandler (void) { while(1); }
 void UART1_IRQHandler (void) { while(1); }
 void SMC_IRQHandler (void) { while(1); }

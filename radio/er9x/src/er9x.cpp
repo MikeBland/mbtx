@@ -31,6 +31,11 @@ const
 #include "splashmarker.h"
 #endif
 
+#if defined(CPUM128) || defined(CPUM2561)
+const uint8_t 
+#include "..\..\common\hand.lbm"
+#endif
+
 /*
 mode1 rud ele thr ail
 mode2 rud thr ele ail
@@ -160,6 +165,7 @@ const prog_uint8_t APM stickScramble[]= {
 uint8_t Arduino = 0 ;
 #endif
 
+const prog_char APM Str_Hyphens[] = "----" ;
 
 uint8_t modeFixValue( uint8_t value )
 {
@@ -229,7 +235,7 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 		att &= ~MIX_SOURCE ;		
 	}
     if(idx==0)
-        lcd_putsnAtt(x,y,PSTR("----"),4,att);
+        lcd_putsnAtt(x,y,Str_Hyphens,4,att);
     else if(idx<=4)
 		{
 			if ( g_model.useCustomStickNames )
@@ -458,7 +464,7 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 {
     
 		switch(idx1){
-    case  0:            lcd_putsAtt(x+FW,y,PSTR("---"),att);return;
+    case  0:            lcd_putsAtt(x+FW,y,&Str_Hyphens[1],att);return;
     case  MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_ON,att);return;
     case -MAX_DRSWITCH: lcd_putsAtt(x+FW,y,Str_OFF,att);return;
     }
@@ -1583,7 +1589,19 @@ void checkTHR()
 		}
 
     // first - display warning
+
+#if defined(CPUM128) || defined(CPUM2561)
+	lcd_clear();
+  lcd_img( 1, 0, HandImage,0 ) ;
+  lcd_putsAtt(32,0*FH,PSTR("THROTTLE"),DBLSIZE);
+  lcd_putsAtt(32,2*FH,PSTR("WARNING"),DBLSIZE);
+	lcd_puts_P(0,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
+	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
+	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+	audioVoiceDefevent(AU_ERROR, V_ALERT);
+#else
 		almess( PSTR(STR_THR_NOT_IDLE"\037"STR_RST_THROTTLE), ALERT_SKIP | ALERT_VOICE ) ;
+#endif
     refreshDiplay() ;
     clearKeyEvents();
 
@@ -1631,8 +1649,11 @@ static void checkWarnings()
 
 void putWarnSwitch( uint8_t x, uint8_t idx )
 {
+#if defined(CPUM128) || defined(CPUM2561)
+  lcd_putsAttIdx( x, 5*FH, Str_Switches, idx, 0) ;
+#else
   lcd_putsAttIdx( x, 2*FH, Str_Switches, idx, 0) ;
-
+#endif
 }
 
 #ifdef XSW_MOD
@@ -1844,7 +1865,19 @@ void checkSwitches()
         uint8_t y = j ^ exWarningStates ;
 #endif
 
-				almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#if defined(CPUM128) || defined(CPUM2561)
+				lcd_clear();
+    		lcd_img( 1, 0, HandImage,0 ) ;
+	  		lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
+	  		lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
+				lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+				if ( voice )
+				{
+					audioVoiceDefevent(AU_ERROR, V_ALERT);
+				}
+#else
+		    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#endif
 				voice = 0 ;
 
         if(x & SWP_THRB)
@@ -2231,6 +2264,13 @@ uint8_t getFlightPhase()
   }
   return 0 ;
 }
+
+// Using this will save 14 bytes flash
+//NOINLINE int16_t *phaseTrimAddress( uint8_t phase, uint8_t index )
+//{
+//	return &g_model.phaseData[phase-1].trim[index] ;
+//}
+
 
 int16_t getRawTrimValue( uint8_t phase, uint8_t idx )
 {
@@ -3495,7 +3535,7 @@ static void perMain()
 					}
 					else
 					{
-						v = g_model.gvars[g_model.anaVolume-4].gvar + 125 ;
+						v = g_model.gvars[g_model.anaVolume-4+3].gvar + 125 ;	// +3 to get to GV4-GV7
 						divisor = 250 ;
 					}
 					requiredVolume = v * (NUM_VOL_LEVELS-1) / divisor ;
@@ -4148,9 +4188,12 @@ extern uint8_t serialDat0 ;
   uint8_t mcusr = MCUSR; // save the WDT (etc) flags
 	SaveMcusr = mcusr ;
   MCUSR = 0; // must be zeroed before disabling the WDT
+	MCUCR = 0x80 ;
+	MCUCR = 0x80 ;	// Must be done twice
 #else
   uint8_t mcusr = MCUCSR;
-  MCUCSR = 0;
+  MCUCSR = 0x80 ;
+  MCUCSR = 0x80;	// Must be done twice
 #endif
 //RebootReason = mcusr ;
 #ifdef CPUM2561
@@ -4571,7 +4614,7 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 		}
 		else// No switch, no function
 		{ // Check for source with numeric rate
-			if ( pvad->rate >= 3 )	// A time
+			if ( pvad->rate >= 4 )	// A time
 			{
 				if ( pvad->vsource )
 				{
@@ -4651,7 +4694,7 @@ void procOneVoiceAlarm( VoiceAlarmData *pvad, uint8_t i )
 
 	if ( pvad->mute )
 	{
-		if ( pvad->source > ( CHOUT_BASE - NUM_CHNOUT ) )
+		if ( pvad->source > ( CHOUT_BASE + NUM_CHNOUT ) )
 		{ // Telemetry item
 			if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_CHNOUT ) )
 			{
@@ -4751,7 +4794,6 @@ NOINLINE void processVoiceAlarms()
 		pvad += 1 ;		
 	}
 }
-
 
 void mainSequence()
 {
@@ -4866,16 +4908,16 @@ void mainSequence()
 			uint8_t mode ;
 			uint8_t value ;
     	VoiceSwData *pvd = &g_model.voiceSw[i];
-			
+
 			mode = pvd->mode ;
 			value = pvd->val ;
-			if ( mode <= 5 )
-			{
-				if ( value > 250 )
-				{
-					value = g_model.gvars[value-248].gvar ; //Gvars 3-7
-				}
-			}
+//			if ( mode <= 5 )
+//			{
+//				if ( value > 250 )
+//				{
+//					value = g_model.gvars[value-248].gvar ; //Gvars 3-7
+//				}
+//			}
 
 			if ( pvd->swtch )		// Configured
 			{
@@ -4907,9 +4949,9 @@ void mainSequence()
 			 			uint8_t pos = switchPosition( pvd->swtch ) ;
 						if ( Vs_state[i] != pos )
 						{
-							curent_state = pos ;
 							putVoiceQueue( value + pos ) ;
 						}
+						curent_state = pos ;
 					}
 				}
 				else
@@ -4921,6 +4963,13 @@ void mainSequence()
 					}
 				}
 				Vs_state[i] = curent_state ;
+			}
+			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+			{
+				if ( g_model.eScalers[i].dest )
+				{
+					calc_scaler( i, 0, 0 ) ;					
+				}
 			}
 		}
 #else

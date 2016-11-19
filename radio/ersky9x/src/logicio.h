@@ -43,7 +43,7 @@
 #define PIN_PER_13			0x00D0
 #define PIN_PER_14			0x00E0
 #define PIN_PER_15			0x00F0
-#define PIN_PORT_MASK		0x0700
+#define PIN_PORT_MASK		0x0F00
 #define PIN_PORTA				0x0000
 #define PIN_PORTB				0x0100
 #define PIN_PORTC				0x0200
@@ -51,6 +51,10 @@
 #define PIN_PORTE				0x0400
 #define PIN_PORTF				0x0500
 #define PIN_PORTG				0x0600
+#define PIN_PORTH				0x0700
+#define PIN_PORTI				0x0800
+#define PIN_PORTJ				0x0900
+#define PIN_PORTK				0x0A00
 #define PIN_LOW					0x0000
 #define PIN_HIGH				0x1000
 #define PIN_SPEED_MASK	0x6000

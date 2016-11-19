@@ -20,6 +20,7 @@ signals:
 
 
 protected:
+    virtual QStringList mimeTypes() const;
 
 public slots:
     bool dropMimeData(int index, const QMimeData *data, Qt::DropAction action);

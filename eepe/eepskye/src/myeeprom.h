@@ -32,6 +32,7 @@
 #endif
 #define MAX_MIXERS  32
 #define MAX_SKYMIXERS  48
+#define EXTRA_SKYMIXERS	0
 #define MAX_CURVE5  8
 #define MAX_CURVE9  8
 #define MDVERS_r9   1
@@ -52,7 +53,12 @@
 #define NUM_SKY_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
 
-#define NUM_GVAR_ADJUST	8
+#define NUM_GVAR_ADJUST		8
+#define EXTRA_GVAR_ADJUST	12
+
+#define MUSIC_NAME_LENGTH		14
+#define MUSIC_DIR_LENGTH		8
+#define PLAYLIST_COUNT			16
 
 //OBSOLETE - USE ONLY MDVERS NOW
 //#define GENERAL_MYVER_r261 3
@@ -96,8 +102,8 @@
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
-  int8_t  swtch:5;
-  int8_t  studWeight:6;
+  int8_t  swtch:5;			// Now moved to exTrainerMix
+  int8_t  studWeight:6; // Now moved to exTrainerMix
   uint8_t mode:2;   //off,add-mode,subst-mode
 }) TrainerMix; //
 
@@ -177,7 +183,8 @@ PACK(typedef struct t_TrainerChannel
 {
   int16_t calib ;
   uint8_t srcChn:3 ; //0-7 = ch1-8
-	uint8_t spare:3 ;
+  uint8_t source:2 ;	// Only used on index 0
+	uint8_t spare:1 ;
   uint8_t mode:2;   //off,add-mode,subst-mode
   int8_t  swtch ;
   int8_t  studWeight ;
@@ -196,44 +203,44 @@ PACK(typedef struct t_btDevice {
 }) btDeviceData ;
 
 PACK(typedef struct t_EEGeneral {
-    uint8_t   myVers;
-    int16_t   calibMid[7];
-    int16_t   calibSpanNeg[7];
-    int16_t   calibSpanPos[7];
-    uint16_t  chkSum;
-    uint8_t   currModel; //0..15
-    uint8_t   contrast;
-    uint8_t   vBatWarn;
-    int8_t    vBatCalib;
-    int8_t    lightSw;
-    TrainerData trainer;
-    uint8_t   view;
-    uint8_t   disableThrottleWarning:1;
-    uint8_t   disableSwitchWarning:1;
-    uint8_t   disableMemoryWarning:1;
-    uint8_t   beeperVal:3;
-    uint8_t   reserveWarning:1;
-    uint8_t   disableAlarmWarning:1;
-    uint8_t   stickMode;
-    int8_t    inactivityTimer;
-    uint8_t   throttleReversed:1;
-    uint8_t   minuteBeep:1;
-    uint8_t   preBeep:1;
-    uint8_t   flashBeep:1;
-    uint8_t   disableSplashScreen:1;
-    uint8_t   disablePotScroll:1;
-  	uint8_t   stickScroll:1 ;
-    uint8_t   frskyinternalalarm:1;
-    uint8_t   filterInput;
-    uint8_t   lightAutoOff;
-    uint8_t   templateSetup;  //RETA order according to chout_ar array
-    int8_t    PPM_Multiplier;
-    uint8_t   FRSkyYellow:4;
-    uint8_t   FRSkyOrange:4;
-    uint8_t   FRSkyRed:4;
-    uint8_t   hideNameOnSplash:1;
-  	uint8_t   optrexDisplay:1;
-	  uint8_t   unexpectedShutdown:1;
+  uint8_t   myVers;
+  int16_t   calibMid[7];
+  int16_t   calibSpanNeg[7];
+  int16_t   calibSpanPos[7];
+  uint16_t  chkSum;
+  uint8_t   currModel; //0..15
+  uint8_t   contrast;
+  uint8_t   vBatWarn;
+  int8_t    vBatCalib;
+  int8_t    lightSw;
+  TrainerData trainer;
+  uint8_t   view;
+  uint8_t   disableThrottleWarning:1;
+  uint8_t   disableSwitchWarning:1;
+  uint8_t   disableMemoryWarning:1;
+  uint8_t   beeperVal:3;
+  uint8_t   reserveWarning:1;
+  uint8_t   disableAlarmWarning:1;
+  uint8_t   stickMode;
+  int8_t    inactivityTimer;
+  uint8_t   throttleReversed:1;
+  uint8_t   minuteBeep:1;
+  uint8_t   preBeep:1;
+  uint8_t   flashBeep:1;
+  uint8_t   disableSplashScreen:1;
+  uint8_t   disablePotScroll:1;
+  uint8_t   stickScroll:1 ;
+  uint8_t   frskyinternalalarm:1;
+  uint8_t   filterInput;
+  uint8_t   lightAutoOff;
+  uint8_t   templateSetup;  //RETA order according to chout_ar array
+  int8_t    PPM_Multiplier;
+  uint8_t   FRSkyYellow:4;
+  uint8_t   FRSkyOrange:4;
+  uint8_t   FRSkyRed:4;
+  uint8_t   hideNameOnSplash:1;
+  uint8_t   optrexDisplay:1;
+	uint8_t   unexpectedShutdown:1;
   uint8_t   softwareVolume:1;
     uint8_t   speakerPitch;
     uint8_t   hapticStrength;
@@ -300,6 +307,13 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		pb4source ;
 	uint8_t	extraPotsSource[4] ;
 	uint8_t btComPort ;
+	uint8_t gpsFormat:1 ;
+	uint8_t reverseScreen:1 ;
+	uint8_t musicLoop:1 ;
+	uint8_t musicType:1 ;
+	uint8_t spare:4 ;
+	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
+	uint8_t playListIndex ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -487,7 +501,8 @@ PACK(typedef struct t_PhaseData {
   char name[6];
   uint8_t fadeIn:4;
   uint8_t fadeOut:4;
-	uint16_t spare ;		// Future expansion
+  int8_t swtch2;       // swtch of phase[0] is not used
+	uint8_t spare ;		// Future expansion
 }) PhaseData;
 
 PACK(typedef struct te_MixData {
@@ -505,11 +520,11 @@ PACK(typedef struct te_MixData {
   uint8_t lateOffset:1;      // Add offset later
   uint8_t mixWarn:2;         // mixer warning
   uint8_t disableExpoDr:1;
-  uint8_t differential:1;
+  uint8_t differential:1 ;
   int8_t  sOffset;
-  uint8_t  modeControl;
-	uint8_t switchSource ;
-  uint8_t  res[2];
+	uint8_t modeControl ;
+	uint8_t	switchSource ;
+	uint8_t	res[2] ;
 }) SKYMixData;
 
 PACK(typedef struct te_CSwData { // Custom Switches data
@@ -526,13 +541,14 @@ PACK(typedef struct te_SafetySwData { // Custom Switches data
 		struct ss
 		{	
 	    int8_t  swtch ;
-			uint8_t mode ;
+			uint8_t mode:2 ;
+			int8_t source:6 ;
     	int8_t  val ;
 			uint8_t res ;
 		} ss ;
 		struct vs
 		{
-  		uint8_t vswtch ;
+  		int8_t vswtch ;
 			uint8_t vmode ; // ON, OFF, BOTH, 15Secs, 30Secs, 60Secs, Varibl
     	uint8_t vval;
 			uint8_t vres ;
@@ -555,8 +571,8 @@ PACK(typedef struct te_FrSkyData {
 }) SKYFrSkyData;
 
 PACK(typedef struct te_swVoice {
-  uint8_t  swtch ;
-	uint8_t mode ; // ON, OFF, BOTH, 15Secs, 30Secs, 60Secs
+  int8_t  swtch ;
+	uint8_t mode ; // ON, OFF, BOTH, 15Secs, 30Secs, 60Secs, Varibl
   uint8_t  val ;
   uint8_t vres ;
 }) voiceSwData ;
@@ -644,11 +660,35 @@ PACK(typedef struct t_customCheck
 	int8_t  max ;
 }) CustomCheckData ;
 
+PACK(typedef struct t_protocol
+{
+  uint8_t   protocol:4 ;
+  uint8_t   country:2 ;
+  uint8_t   not_sub_protocol:1 ;
+  uint8_t   pulsePol:1 ;
+  int8_t    ppmNCH ;
+  int8_t    ppmDelay ;
+  int8_t    ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
+	uint8_t		startChannel ;			// for main output 0 = ch1
+	uint8_t		pxxRxNum ;
+	int8_t		option_protocol ;
+  uint8_t		sub_protocol ;
+}) ProtocolData ;
+
+PACK(typedef struct t_music
+{
+	int8_t musicStartSwitch ;
+	int8_t musicPauseSwitch ;
+	int8_t musicPrevSwitch ;
+	int8_t musicNextSwitch ;
+}) MusicData ;
+
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
-  uint8_t   modelVoice ;		// Index to model name voice (260+value)
-  uint8_t   RxNum ;						// was timer trigger source, now RxNum for model match
+  int8_t		modelVoice ;			// Index to model name voice (260+value)
+  uint8_t   RxNum_unused ;						// was timer trigger source, now RxNum for model match
   uint8_t   telemetryRxInvert:1 ;	// was tmrDir, now use tmrVal>0 => count down
   uint8_t   traineron:1;  		// 0 disable trainer, 1 allow trainer
   uint8_t   autoBtConnect:1 ;
@@ -665,7 +705,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t   xnumBlades:2;					// RPM scaling, now elsewhere as uint8_t
 	uint8_t   extendedTrims:1;			// Only applies to phases
   uint8_t   thrExpo:1;            // Enable Throttle Expo
-	uint8_t   frskyComPort:1;
+	uint8_t   frskyComPort:1 ;
 	uint8_t		DsmTelemetry:1 ;
 	uint8_t   useCustomStickNames:1 ;
   int8_t    trimInc;          // Trim Increments
@@ -687,12 +727,12 @@ PACK(typedef struct te_ModelData {
   int8_t    trim[4];
   int8_t    curves5[MAX_CURVE5][5];
   int8_t    curves9[MAX_CURVE9][9];
-  int8_t    curvexy[18];
+  int8_t    curvexy[18] ;
   SKYCSwData   customSw[NUM_SKYCSW];
 //  uint8_t   rxnum;
   uint8_t   frSkyVoltThreshold ;
   uint8_t   bt_telemetry;
-  uint8_t   numVoice;		// 0-16, rest are Safety switches
+  uint8_t   numVoice;		// -8-16, rest are Safety switches
   SKYSafetySwData  safetySw[NUM_SKYCHNOUT];
 	voiceSwData	voiceSwitches[NUM_VOICE] ;
   SKYFrSkyData frsky;
@@ -707,7 +747,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t		startChannel ;			// for main output 0 = ch1
 	uint8_t		startPPM2channel ;	// for PPM2 output 0 follow
   int8_t		ppm2NCH ;
-	uint8_t sub_trim_limit ;
+	uint8_t	 sub_trim_limit ;
 	uint8_t 	FASoffset ;			// 0.0 to 1.5
 	VarioData varioData ;
 	uint8_t		anaVolume ;	// analog volume control
@@ -722,7 +762,8 @@ PACK(typedef struct te_ModelData {
   int8_t    xppmDelay ;
   uint8_t   xpulsePol:1 ;
   uint8_t   trainPulsePol:1 ;
-  uint8_t   polSpare:6 ;
+	uint8_t		dsmAasRssi:1 ;
+  uint8_t   polSpare:5 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;
@@ -744,7 +785,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t timer2Cdown:1 ;
 	uint8_t timer1Mbeep:1 ;
 	uint8_t timer2Mbeep:1 ;
-	uint8_t tspare:4 ;
+	uint8_t timer1Haptic:2 ;
+	uint8_t timer2Haptic:2 ;
   int8_t mlightSw ;
 	uint8_t ppmOpenDrain ;
 	char modelVname[VOICE_NAME_SIZE] ;
@@ -776,11 +818,29 @@ PACK(typedef struct te_ModelData {
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
+	uint8_t xoption_protocol ;
+	uint8_t trainerProfile ;
+  int8_t  curve2xy[18] ;
+  int8_t	curve6[6] ;
+	uint8_t customDisplay1Extra[7] ;
+	uint8_t customDisplay2Extra[7] ;
+	MusicData musicData ;
+	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;
+#if EXTRA_SKYMIXERS
+  SKYMixData exmixData[EXTRA_SKYMIXERS] ;
+#endif
+#if EXTRA_SKYCHANNELS
+  LimitData elimitData[EXTRA_SKYCHANNELS];
+#endif
+	
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 
 
 // extern SKYModelData g_model;
+
+
+
 
 #endif
 /*eof*/

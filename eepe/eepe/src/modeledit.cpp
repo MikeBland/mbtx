@@ -679,6 +679,111 @@ void ModelEdit::updateToMV4()
   updateSettings() ;
 }
 	 
+void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
+{
+	int x = 8 ;
+	b->clear() ;
+  if ( type > 17 )
+	{
+		b->addItem("0");
+		b->addItem("1");
+		b->addItem("2");
+		b->addItem("3");
+		b->addItem("4");
+		b->addItem("5");
+		b->addItem("6");
+		b->addItem("7");
+		return ;
+	}
+	switch ( type )
+	{
+		case M_Flysky :
+			b->addItem("Flysky");
+			b->addItem("V9x9");
+			b->addItem("V6x6");
+			b->addItem("V912");
+			x = 4 ;
+		break ;
+		case M_Hisky :
+			b->addItem("Hisky");
+			b->addItem("HK310");
+			x = 2 ;
+		break ;
+		case M_DSM2 :
+			b->addItem("DSM2");
+			b->addItem("DSMX");
+			x = 2 ;
+		break ;
+		case M_YD717 :
+			b->addItem("YD717");
+			b->addItem("SKYWLKR");
+			b->addItem("SYMAX2");
+      b->addItem("XINXUN");
+			b->addItem("NIHUI");
+			x = 5 ;
+		break ;
+		case M_KN :
+			b->addItem("WLTOYS");
+			b->addItem("FEILUN");
+			x = 2 ;
+		break ;
+		case M_CX10 :
+			b->addItem("GREEN");
+			b->addItem("BLUE");
+			b->addItem("DM007");
+			b->addItem("Q282");
+			b->addItem("J3015_1");
+			b->addItem("J3015_2");
+			b->addItem("MK33041");
+			b->addItem("Q242");
+			x = 8 ;
+		break ;
+		case M_CG023 :
+			b->addItem("CG023");
+			b->addItem("YD829");
+			b->addItem("H8_3D");
+			x = 3 ;
+		break ;
+		case M_MT99XX :
+			b->addItem("MT");
+			b->addItem("H7");
+			b->addItem("YZ");
+			x = 3 ;
+		break ;
+		case M_MJXQ :
+			b->addItem("WLH08");
+			b->addItem("X600");
+			b->addItem("X800");
+			b->addItem("H26D");
+			x = 4 ;
+		break ;
+		default :
+			b->addItem("NONE");
+			x = 1 ;
+		break ;
+	}
+	switch ( x )
+	{
+		case 0 :
+			b->addItem("0");
+		case 1 :
+			b->addItem("1");
+		case 2 :
+			b->addItem("2");
+		case 3 :
+			b->addItem("3");
+		case 4 :
+			b->addItem("4");
+		case 5 :
+			b->addItem("5");
+		case 6 :
+			b->addItem("6");
+		case 7 :
+			b->addItem("7");
+		break ;
+	}
+}
+
 void ModelEdit::setProtocolBoxes()
 {
     protocolEditLock = true;
@@ -691,7 +796,9 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
-        ui->DSM_Type->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(true);
         ui->countryCB->setEnabled(true);
         ui->typeCB->setEnabled(true);
@@ -707,7 +814,9 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
-        ui->DSM_Type->setEnabled(true);
+        ui->DSM_Type->show() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(false);
 
         ui->DSM_Type->setCurrentIndex(g_model.sub_protocol);
@@ -719,11 +828,34 @@ void ModelEdit::setProtocolBoxes()
         ui->countryCB->setEnabled(false);
         ui->typeCB->setEnabled(false);
         break;
+			
+			case (PROTO_MULTI):
+        ui->ppmDelaySB->setEnabled(false);
+        ui->numChannelsSB->setEnabled(true);
+        ui->ppmFrameLengthDSB->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->show() ;
+        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
+        ui->SubSubProtocolCB->show() ;
+        {
+          int x = g_model.sub_protocol&0x1F ;
+          setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
+          ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
+        }
+        ui->pxxRxNum->setEnabled(false);
+        ui->typeCB->setEnabled(false);
+        ui->countryCB->setEnabled(false);
+//				ui->startChannelsSB->setEnabled(true);
+				ui->pulsePolCB->setEnabled(false);
+      break ;
+
     default:
         ui->ppmDelaySB->setEnabled(true);
         ui->numChannelsSB->setEnabled(true);
         ui->ppmFrameLengthDSB->setEnabled(true);
-        ui->DSM_Type->setEnabled(false);
+        ui->DSM_Type->hide() ;
+        ui->SubProtocolCB->hide() ;
+        ui->SubSubProtocolCB->hide() ;
         ui->pxxRxNum->setEnabled(false);
 
         ui->ppmDelaySB->setValue(300+50*g_model.ppmDelay);
@@ -1002,13 +1134,12 @@ void ModelEdit::expoEdited()
     updateSettings();
 }
 
-void ModelEdit::tabVoiceAlarms()
+void ModelEdit::voiceAlarmsList()
 {
 	QByteArray qba ;
   uint32_t i ;
 
-	ui->VoiceAlarmList->setFont(QFont("Courier New",12)) ;
-	ui->VoiceAlarmList->clear() ;
+  VoiceListWidget->clear() ;
 	for(i=0 ; i<NUM_VOICE_ALARMS ; i += 1)
 	{
 		VoiceAlarmData *vad = &g_model.vad[i] ;
@@ -1081,9 +1212,206 @@ void ModelEdit::tabVoiceAlarms()
 //				str += tr("Alarm(%1)").arg(getAudioAlarmName(vad->file.vfile) ) ;
 //			break ;
     }
-    ui->VoiceAlarmList->addItem(str) ;
+    VoiceListWidget->addItem(str) ;
 	}
 }
+
+void ModelEdit::tabVoiceAlarms()
+{
+	VoiceListWidget = new VoiceList(this) ;
+  ui->voiceLayout->addWidget(VoiceListWidget,1,1,1,1);
+
+	voiceAlarmsList() ;
+  VoiceListWidget->setCurrentRow(0) ;
+
+  connect( VoiceListWidget, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showVoiceContextMenu(const QPoint&)));
+  connect( VoiceListWidget,SIGNAL(doubleClicked(QModelIndex)),this,SLOT( voiceAlarmList_doubleClicked(QModelIndex)));
+  connect( VoiceListWidget, SIGNAL(keyWasPressed(QKeyEvent*)), this, SLOT(voice_KeyPress(QKeyEvent*)));
+	
+}
+
+void ModelEdit::voiceAlarmsBlank( int i )
+{
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		vad->source = 0 ;
+		vad->func = 0 ;
+		vad->swtch = 0  ;
+		vad->rate = 0  ;
+		vad->fnameType = 0 ;
+		vad->haptic = 0 ;
+		vad->vsource = 0 ;
+		vad->mute = 0 ;
+		vad->offset = 0 ;
+		vad->vfile = 0 ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceBlank()
+{
+  int index = VoiceListWidget->currentRow() ;
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+}
+
+void ModelEdit::voiceAdd()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+	for( i=NUM_VOICE_ALARMS-1 ; i > index ; i -= 1)
+	{
+		int j ;
+		j = i - 1 ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[j] ;
+		*vad = *xvad ;
+	}
+	voiceAlarmsBlank( index ) ;
+	voiceAlarmsList() ;
+	VoiceAlarmData *vad = &g_model.vad[index] ;
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  dlg->setWindowTitle(tr("Voice Alarm %1").arg(index+1)) ;
+  if(dlg->exec())
+  {
+    updateSettings() ;
+		voiceAlarmsList() ;
+  }
+}
+
+void ModelEdit::voiceRemove()
+{
+  int index = VoiceListWidget->currentRow() ;
+	int i ;
+
+  if ( ( index >= 0 ) && ( index < NUM_VOICE_ALARMS ) )
+	{
+		for( i= index ; i < NUM_VOICE_ALARMS-1 ; i += 1)
+		{
+			int j ;
+			j = i + 1 ;
+			VoiceAlarmData *vad = &g_model.vad[i] ;
+			VoiceAlarmData *xvad = &g_model.vad[j] ;
+			*vad = *xvad ;
+		}
+		voiceAlarmsBlank( NUM_VOICE_ALARMS-1 ) ;
+		voiceAlarmsList() ;
+	}
+}
+
+void ModelEdit::voiceMoveUp()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[i-1] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+		voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i-1) ;
+	  updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceMoveDown()
+{
+  int i = VoiceListWidget->currentRow() ;
+  VoiceAlarmData temp ;
+
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS-1 ) )
+	{
+		int j = i + 1 ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		VoiceAlarmData *xvad = &g_model.vad[j] ;
+		temp = *xvad ;
+    *xvad = *vad ;
+    *vad = temp ;
+    voiceAlarmsList() ;
+  	VoiceListWidget->setCurrentRow(i+1) ;
+  	updateSettings() ;
+	}
+}
+
+void ModelEdit::voiceCopy()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+		QByteArray vData ;
+		VoiceAlarmData *vad = &g_model.vad[i] ;
+		vData.append((char*)vad,sizeof(*vad));
+    QMimeData *mimeData = new QMimeData;
+    mimeData->setData("application/x-eepe-voice", vData);
+    QApplication::clipboard()->setMimeData(mimeData,QClipboard::Clipboard);
+	}
+}
+
+void ModelEdit::voicePaste()
+{
+  int i = VoiceListWidget->currentRow() ;
+  if ( ( i >= 0 ) && ( i < NUM_VOICE_ALARMS ) )
+	{
+    const QClipboard *clipboard = QApplication::clipboard();
+    const QMimeData *mimeData = clipboard->mimeData();
+		
+    if(mimeData->hasFormat("application/x-eepe-voice"))
+		{
+			VoiceAlarmData *vad = &g_model.vad[i] ;
+      QByteArray vData = mimeData->data("application/x-eepe-voice");
+      memcpy( vad,vData,sizeof(*vad));
+			voiceAlarmsList() ;
+		  updateSettings() ;
+		}
+	}
+}
+
+void ModelEdit::showVoiceContextMenu(QPoint pos)
+{
+	QPoint globalPos = VoiceListWidget->mapToGlobal(pos) ;
+	
+	QMenu contextMenu;
+	
+	contextMenu.addAction(QIcon(":/images/add.png"), tr("&Insert"),this, SLOT(voiceAdd()),tr("Ctrl+A"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("C&lear"),this,SLOT(voiceBlank()),tr("Delete"));
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("&Remove"),this,SLOT(voiceRemove()),tr("Ctrl+R"));
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/copy.png"), tr("&Copy"),this,SLOT(voiceCopy()),tr("Ctrl+C"));
+	contextMenu.addAction(QIcon(":/images/paste.png"), tr("&Paste"),this,SLOT(voicePaste()),tr("Ctrl+V")) ;
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/moveup.png"), tr("Move Up"),this,SLOT(voiceMoveUp()),tr("Ctrl+Up"));
+	contextMenu.addAction(QIcon(":/images/movedown.png"), tr("Move Down"),this,SLOT(voiceMoveDown()),tr("Ctrl+Down"));
+  contextMenu.exec(globalPos);
+}
+
+void ModelEdit::voice_KeyPress(QKeyEvent *event)
+{
+  if(event->matches(QKeySequence::SelectAll)) voiceAdd();  //Ctrl A
+  if(event->matches(QKeySequence::Delete))    voiceBlank();
+  if(event->matches(QKeySequence::Copy))      voiceCopy();
+  if(event->matches(QKeySequence::Paste))     voicePaste();
+	if(event->modifiers().testFlag(Qt::ControlModifier))
+  {
+		if(event->key() == Qt::Key_R)
+    {
+			voiceRemove() ;
+    }
+		if(event->key() == Qt::Key_Down)
+    {
+			voiceMoveDown() ;
+    }
+    if(event->key() == Qt::Key_Up)
+    {
+			voiceMoveUp() ;
+    }
+  }
+}
+
 
 void ModelEdit::tabMixes()
 {
@@ -1232,12 +1560,12 @@ void ModelEdit::tabMixes()
 #endif
 				
 				{
-        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayUp/5).arg((double)md->delayDown/5) ;
+        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((double)md->delayDown/5).arg((double)md->delayUp/5) ;
 	        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg((double)md->speedUp/5).arg((double)md->speedDown/5) ;
 				}
 				else
         {
-        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayUp).arg(md->delayDown) ;
+        	if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayDown).arg(md->delayUp) ;
 	        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg(md->speedUp).arg(md->speedDown) ;
 				}
 
@@ -1746,12 +2074,47 @@ void ModelEdit::updateCurvesTab()
    ControlCurveSignal(false);
 }
 
+const QColor colors[16] =
+{
+  QColor(0,0,127),
+  QColor(0,127,0),
+  QColor(127,0,0),
+  QColor(0,127,127),
+  QColor(127,0,127),
+  QColor(127,127,0),
+  QColor(127,127,127),
+  QColor(0,0,255),
+  QColor(0,127,255),
+  QColor(127,0,255),
+  QColor(0,255,0),
+  QColor(0,255,127),
+  QColor(127,255,0),
+  QColor(255,0,0),
+  QColor(255,0,127),
+  QColor(255,127,0),
+//  QColor(0,0,127),
+//  QColor(0,127,0),
+//  QColor(127,0,0),
+//  QColor(0,127,127),
+//  QColor(127,0,127),
+//  QColor(127,127,0),
+//  QColor(127,127,127),
+//  QColor(0,0,255),
+//  QColor(0,127,255),
+//  QColor(127,0,255),
+//  QColor(0,255,0),
+//  QColor(0,255,127),
+//  QColor(127,255,0),
+//  QColor(255,0,0),
+//  QColor(255,0,127),
+//  QColor(255,127,0),
+};
 
 void ModelEdit::tabCurves()
 {
    for (int i=0; i<16;i++)
 	 {
-     plot_curve[i]=0;
+     plot_curve[i]=false;
    }
    redrawCurve=true;
    updateCurvesTab();
@@ -1762,6 +2125,76 @@ void ModelEdit::tabCurves()
    currentCurve = 0;
 
    connect(ui->clearMixesPB,SIGNAL(pressed()),this,SLOT(clearCurves()));
+
+	int i ;
+	for ( i = 0 ; i < 16 ; i += 1 )
+	{
+		QPalette palette ;
+		QPushButton *p ;
+		switch ( i )
+		{
+			default:
+			case 0 :
+				p = ui->curveEdit_1 ;
+			break ;
+			case 1 :
+				p = ui->curveEdit_2 ;
+			break ;
+			case 2 :
+				p = ui->curveEdit_3 ;
+			break ;
+			case 3 :
+				p = ui->curveEdit_4 ;
+			break ;
+			case 4 :
+				p = ui->curveEdit_5 ;
+			break ;
+			case 5 :
+				p = ui->curveEdit_6 ;
+			break ;
+			case 6 :
+				p = ui->curveEdit_7 ;
+			break ;
+			case 7 :
+				p = ui->curveEdit_8 ;
+			break ;
+			case 8 :
+				p = ui->curveEdit_9 ;
+			break ;
+			case 9 :
+				p = ui->curveEdit_10 ;
+			break ;
+			case 10 :
+				p = ui->curveEdit_11 ;
+			break ;
+			case 11 :
+				p = ui->curveEdit_12 ;
+			break ;
+			case 12 :
+				p = ui->curveEdit_13 ;
+			break ;
+			case 13 :
+				p = ui->curveEdit_14 ;
+			break ;
+			case 14 :
+				p = ui->curveEdit_15 ;
+			break ;
+			case 15 :
+				p = ui->curveEdit_16 ;
+			break ;
+		}
+
+		palette.setBrush(QPalette::Active, QPalette::Button, QBrush(colors[i]));
+		palette.setBrush(QPalette::Active, QPalette::ButtonText, QBrush(Qt::white));
+
+#ifdef __APPLE__
+		p->setStyleSheet(QString("color: %1;").arg(colors[i].name()));
+#else
+		p->setStyleSheet(QString("background-color: %1; color: white;").arg(colors[i].name()));
+#endif
+		p->setPalette(palette);
+		p->setText(tr("Curve %1").arg(i+1));
+	}
 
    connect(ui->curvePt1_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
    connect(ui->curvePt2_1,SIGNAL(valueChanged(int)),this,SLOT(curvePointEdited()));
@@ -3876,6 +4309,16 @@ void ModelEdit::on_DSM_Type_currentIndexChanged(int index)
     updateSettings();
 }
 
+void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.sub_protocol = index;
+    setProtocolBoxes();
+    updateSettings();
+}
+
+
 void ModelEdit::on_VoiceNumberSB_editingFinished()
 {
     g_model.modelVoice = ui->VoiceNumberSB->value()-260;
@@ -4536,7 +4979,7 @@ int ModelEdit::getMixerIndex(int dch)
     return i;
 }
 
-void ModelEdit::on_VoiceAlarmList_doubleClicked( QModelIndex index )
+void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
   VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &g_model.vad[index.row()], eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
   dlg->setWindowTitle(tr("Voice Alarm %1").arg(index.row()+1)) ;
@@ -4905,6 +5348,7 @@ void ModelEdit::on_resetCurve_1_clicked()
 
 void ModelEdit::on_resetCurve_2_clicked()
 {
+
     memset(&g_model.curves5[1],0,sizeof(g_model.curves5[0]));
     updateCurvesTab();
     updateSettings();
@@ -5620,6 +6064,19 @@ void ModelEdit::ControlCurveSignal(bool flag)
   ui->curvePt7_16->blockSignals(flag);
   ui->curvePt8_16->blockSignals(flag);
   ui->curvePt9_16->blockSignals(flag);
+}
+
+VoiceList::VoiceList(QWidget *parent) :
+    QListWidget(parent)
+{
+    setFont(QFont("Courier New",12));
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    setSelectionMode(QAbstractItemView::SingleSelection);
+}
+
+void VoiceList::keyPressEvent(QKeyEvent *event)
+{
+  emit keyWasPressed(event);
 }
 
 

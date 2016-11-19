@@ -16,7 +16,7 @@
 *
 *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
 *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
-*  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+*  LIMITED TO, THE IMPLIED ARRANTIES OF MERCHANTABILITY AND FITNESS
 *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
 *  THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
@@ -108,6 +108,7 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 
 #endif // PCB9XT
 
+
 #include "sbus.h"
 
 #include "ff.h"
@@ -117,6 +118,8 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 #ifndef SIMU
 #include "CoOS.h"
 #endif
+
+#include "../../common/hand.lbm"
 
 //#define PCB_TEST_9XT	1
 
@@ -161,6 +164,87 @@ uint8_t Host10ms ;
 #endif
 
 
+//uint16_t DebugSport0 ;
+//uint16_t DebugSport1 ;
+//uint16_t DebugSport2 ;
+//uint16_t DebugSport3 ;
+
+
+//uint32_t IdleCount ;
+//uint32_t IdlePercent ;
+
+//#define SLAVE_RESET	1
+
+#ifdef SLAVE_RESET
+uint8_t SlaveResetSwitch ;
+uint8_t SlavePanicSwitch ;
+void panicDebugMenu() ;
+
+extern uint8_t SlaveTempReceiveBuffer[] ;
+extern uint8_t RemData[] ;
+
+void menuProcPanic( uint8_t event )
+{
+	TITLE( XPSTR( "Panic" )) ;
+	static MState2 mstate2;
+	event = mstate2.check_columns( event, 0 ) ;
+	uint8_t *p	= SlaveTempReceiveBuffer ;
+	uint16_t x ;
+	uint32_t i ;
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 1*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 2*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 3*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 4*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 5*FH, x ) ;
+	}
+	p = RemData ;
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 6*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x <<= 8 ;
+		x |= *p++ ;
+		lcd_outhex4( i*25, 7*FH, x ) ;
+	}
+	
+}
+#endif
+
 const char * const *Language = English ;
 
 const uint8_t splashdata[] = { 'S','P','S',0,
@@ -179,7 +263,10 @@ t_time Time ;
 
 uint8_t unexpectedShutdown = 0;
 uint8_t SdMounted = 0;
+uint8_t SectorsPerCluster ;
+#ifdef PCBX9D
 uint8_t CurrentTrainerSource ;
+#endif
 uint8_t HardwareMenuEnabled = 0 ;
 
 #define SW_STACK_SIZE	6
@@ -235,16 +322,22 @@ volatile int32_t Rotary_position ;
 volatile int32_t Rotary_count ;
 int32_t LastRotaryValue ;
 int32_t Rotary_diff ;
-uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE] ;
+uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE+EXTRA_SKYCHANNELS] ;
 uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+int16_t Nvs_delay[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
 uint8_t HoldVolume ;
 int8_t RotaryControl ;
 uint8_t ppmInValid = 0 ;
 uint8_t Activated = 0 ;
 uint8_t Tevent ;
-uint16_t SbusTimer = 0 ;
+extern uint16_t SbusTimer ;
+
+uint8_t LastMusicStartSwitchState ;
+uint8_t LastMusicPauseSwitchState ;
+uint8_t LastMusicPrevSwitchState ;
+uint8_t LastMusicNextSwitchState ;
 
 #ifdef BLUETOOTH
 void tmrBt_Handle( void ) ;
@@ -260,7 +353,7 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 #endif
 void txmit( uint8_t c ) ;
 void uputs( char *string ) ;
-uint16_t rxuart( void ) ;
+uint16_t rxCom2( void ) ;
 
 #ifdef PCB_TEST_9XT
 void test_loop( void* pdata ) ;
@@ -268,11 +361,6 @@ void test_loop( void* pdata ) ;
 
 #ifdef PCBSKY
 extern "C" void TC2_IRQHandler( void ) ;
-//#ifdef SIMU
-//#define sam_boot()
-//#else
-//extern "C" void sam_boot( void ) ;
-//#endif
 #ifdef	DEBUG
 void handle_serial( void* pdata ) ;
 #endif
@@ -378,10 +466,8 @@ uint8_t CoProcAlerted ;
 int main( void ) ;
 
 EEGeneral  g_eeGeneral;
-#if defined(PCBSKY) || defined(PCB9XT)
-ModelData  g_oldmodel;
-#endif
 SKYModelData  g_model;
+ProtocolData Protocols[2] ;
 
 //const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 //                                1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
@@ -408,7 +494,9 @@ uint8_t AlarmTimer = 100 ;		// Units of 10 mS
 uint8_t AlarmCheckFlag = 0 ;
 //uint8_t CsCheckFlag = 0 ;
 uint8_t VoiceTimer = 10 ;		// Units of 10 mS
-uint8_t VoiceCheckFlag = 0 ;
+uint8_t VoiceCheckFlag100mS = 0 ;
+uint8_t CheckFlag20mS = 0 ;
+uint8_t CheckTimer = 2 ;
 //#ifdef TELEMETRY_LOST
 //uint8_t TelemetryStatus ;
 //#endif
@@ -474,7 +562,7 @@ uint8_t  EnterMenu = 0 ;
 // Temporary to allow compile
 uint8_t g_vbat100mV ;//= 98 ;
 //int16_t calibratedStick[7] ;
-//int16_t g_chans512[NUM_SKYCHNOUT] ;
+//int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 uint8_t heartbeat ;
 uint8_t heartbeat_running ;
 
@@ -620,6 +708,7 @@ void setLanguage()
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
 		break ;
+#ifndef SMALL
 		case 3 :
 			Language = Norwegian ;
 			ExtraFont = font_se_extra ;
@@ -645,6 +734,12 @@ void setLanguage()
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
 		break ;
+		case 8 :
+			Language = Spanish ;
+			ExtraFont = NULL ;
+			ExtraBigFont = NULL ;
+		break ;
+#endif		
 		default :
 			Language = English ;
 			ExtraFont = NULL ;
@@ -655,7 +750,7 @@ void setLanguage()
 
 const uint8_t csTypeTable[] =
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16
 } ;
 
 uint8_t CS_STATE( uint8_t x)
@@ -800,11 +895,12 @@ void update_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 	MaintenanceRunning = 1 ;
 #if defined(PCBX9D) || defined(PCB9XT)
-	x9dSPortInit( 57600, SPORT_MODE_HARDWARE, SPORT_POLARITY_NORMAL, 0 ) ; // Kick off at 57600 baud
+	com1_Configure( 57600, SERIAL_NORM, 0 ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCBSKY
-	UART2_Configure( 57600, Master_frequency ) ;
-	startPdcUsartReceive() ;
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//	UART2_Configure( 57600, Master_frequency ) ;
+//	startPdcUsartReceive() ;
 #endif
 #ifdef PCB9XT
 	BlSetAllColours( 0, 30, 60 ) ;
@@ -827,10 +923,44 @@ void update_mode(void* pdata)
 	  lastTMR = t10ms ;
 
 		maintenanceBackground() ;
-
+#ifdef REV9E
+extern void checkRotaryEncoder() ;
+		checkRotaryEncoder() ;
+#endif
 		if(!tick10ms) continue ; //make sure the rest happen only every 10ms.
-
 	  uint8_t evt=getEvent();
+#ifdef REV9E
+		{
+			int32_t x ;
+			if ( g_eeGeneral.rotaryDivisor == 1)
+			{
+				x = Rotary_count >> 2 ;
+			}
+			else if ( g_eeGeneral.rotaryDivisor == 2)
+			{
+				x = Rotary_count >> 1 ;
+			}
+			else
+			{
+				x = Rotary_count ;
+			}
+			Rotary_diff = x - LastRotaryValue ;
+			LastRotaryValue = x ;
+		}
+		if ( evt == 0 )
+		{
+	extern int32_t Rotary_diff ;
+			if ( Rotary_diff > 0 )
+			{
+				evt = EVT_KEY_FIRST(KEY_DOWN) ;
+			}
+			else if ( Rotary_diff < 0 )
+			{
+				evt = EVT_KEY_FIRST(KEY_UP) ;
+			}
+			Rotary_diff = 0 ;
+		}
+#endif
 
 //	check_backlight() ;
 
@@ -872,7 +1002,8 @@ void update_mode(void* pdata)
 
 void checkTrainerSource()
 {
-	if ( CurrentTrainerSource	!= g_eeGeneral.trainerSource )
+	uint32_t tSource = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0].source ;
+	if ( CurrentTrainerSource	!= tSource )
 	{
 		switch ( CurrentTrainerSource )
 		{
@@ -891,11 +1022,11 @@ void checkTrainerSource()
 				stop_trainer_ppm() ;
 			break ;
 		}
-		CurrentTrainerSource = g_eeGeneral.trainerSource ;
+		CurrentTrainerSource = tSource ;
 		switch ( CurrentTrainerSource )
 		{
 			case 0 :
-				init_trainer_capture() ;
+				init_trainer_capture(0) ;
 				EXTERNAL_RF_OFF() ;
 			break ;
 			case 1 :
@@ -914,7 +1045,6 @@ void checkTrainerSource()
 	}
 }
 #endif
-
 
 void com2Configure()
 {
@@ -947,7 +1077,8 @@ void com2Configure()
 	else
 	{
 #ifdef PCBSKY
-		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
+		com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+//		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 #ifdef PCBX9D
 		x9dConsoleInit() ;
@@ -1008,22 +1139,82 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 }
 #endif
 
+//#ifdef PCB9XT
+//uint16_t PpmTestH ;
+//uint16_t PpmTestL ;
+
+//void CheckPpm()
+//{
+//	if ( ( PpmTestH != 0x0080 ) || ( PpmTestL != 0 ) )
+//	{
+//		alert(XPSTR("PPM Output\037Self Test Failure"));
+//	}
+//}
+//#endif
+
+//#ifdef REVX
+//uint16_t SportTest ;
+//void checkSport()
+//{
+//	if ( SportTest )
+//	{
+//		alert(XPSTR("SPort Output\037Self Test Failure"));
+//	}
+//}
+//#endif
+
+//#ifdef REVX
+//static void sportTest()
+//{
+//	// Test SPort output signal
+//	SportTest = 0 ;
+//	configure_pins( (PIO_PA25 | PIO_PA6), PIN_ENABLE | PIN_HIGH | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
+//	configure_pins( PIO_PA5 , PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
+//	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
+//	while ( TC0->TC_CHANNEL[0].TC_CV < 32*40 )		// Value depends on MCK/2)
+//	{
+//		// Wait
+//	}
+//	uint32_t input ;
+//	input = PIOA->PIO_PDSR & PIO_PA5 ;
+//	PIOA->PIO_CODR = PIO_PA6 ;
+//	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
+//	while ( TC0->TC_CHANNEL[0].TC_CV < 32*40 )		// Value depends on MCK/2)
+//	{
+//		// Wait
+//	}
+//	input ^= PIOA->PIO_PDSR & PIO_PA5 ;
+//	PIOA->PIO_CODR = PIO_PA25 ;	// Set bit A25 OFF, disable SPort output
+//	if ( ( input & PIO_PA25 ) != 0 )
+//	{
+//		SportTest = 1 ;
+//	}
+//}	
+//#endif
+
+//#ifdef WATCHDOG_DEGUG		
+
+//#endif
 
 int main( void )
 {
 	
-#ifdef PCB9XT
  	{
 		uint32_t i ;
+#if defined(PCBX9D) || defined(PCB9XT)
 		for ( i = 0 ; i < 81 ; i += 1 )
+#endif
+#ifdef PCBSKY
+		for ( i = 0 ; i < 35 ; i += 1 )
+#endif
 		{
 			NVIC->IP[i] = 0x80 ;
 		}
 	}
-#endif
-	
+
 #ifdef PCBSKY
 	register Pio *pioptr ;
+	module_output_low() ;
 #endif
 
 #ifdef PCBSKY
@@ -1082,7 +1273,13 @@ int main( void )
 	if ( ( pioptr->PIO_PDSR & 0x02000000 ) == 0 )
 	{
 		// USB not the power source
+//#ifdef WATCHDOG_DEGUG		
+//		NVIC_SetPriority( WDT_IRQn, 0 ) ; // Highest priority
+//		NVIC_EnableIRQ(WDT_IRQn) ;
+//		WDT->WDT_MR = 0x3FFF107F ;				// Enable watchdog 0.5 Secs interrupt
+//#else	
 		WDT->WDT_MR = 0x3FFF207F ;				// Enable watchdog 0.5 Secs
+//#endif
 	}
 
 #ifdef REVB	
@@ -1114,7 +1311,8 @@ int main( void )
 	PMC->PMC_SCER |= 0x0400 ;								// PCK2 enabled
 	PMC->PMC_PCK[2] = 2 ;										// PCK2 is PLLA
 
-	UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
+	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+//	UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 
 #ifdef PCBX9D
@@ -1129,6 +1327,23 @@ int main( void )
   WatchdogTimeout = 100 ;
 	
 	init_hw_timer() ;
+	
+//#ifdef PCB9XT
+//	// Test PPM output signal
+//	// On port A pin 7
+//	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+//	GPIOA->BSRRL = PIN_EXTPPM_OUT ;		// High
+//	hw_delay( 40 ) ; // units of 0.1uS
+//	PpmTestH = GPIOA->IDR & 0x0080 ;
+//	GPIOA->BSRRH = PIN_EXTPPM_OUT ;		// Low
+//	hw_delay( 40 ) ; // units of 0.1uS
+//	PpmTestL = GPIOA->IDR & 0x0080 ;
+//#endif
+
+//#ifdef REVX
+//	sportTest() ;
+//#endif
+
 	init_adc() ;
 
 #ifdef PCBX9D
@@ -1167,8 +1382,37 @@ int main( void )
 #endif
 
 	lcd_init() ;
-#ifdef PCBSKY
-	lcdSetOrientation() ;
+
+#ifdef REV9E
+// Check for real power on
+	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
+	{
+		lcd_clear() ;
+		lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+		refreshDisplay() ;
+		while ( get_tmr10ms() < 150 )
+		{
+			uint32_t switchValue ;
+			switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+			wdt_reset() ;
+			if ( !switchValue )
+			{
+				// Don't power on
+				soft_power_off() ;		// Only turn power off if necessary
+				for(;;)
+				{
+					wdt_reset() ;
+ 					PWR->CR |= PWR_CR_CWUF;
+ 					/* Select STANDBY mode */
+ 					PWR->CR |= PWR_CR_PDDS;
+ 					/* Set SLEEPDEEP bit of Cortex System Control Register */
+ 					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+ 					/* Request Wait For Event */
+ 					__WFE();
+				}
+			}
+		}
+	}
 #endif
 
 #ifdef PCBX9D
@@ -1648,25 +1892,16 @@ OS_FlagID Bt_flag ;
 struct t_fifo128 Bt_fifo ;
 struct t_serial_tx Bt_tx ;
 struct t_serial_tx Com2_tx ;
+struct t_serial_tx Com1_tx ;
 uint8_t BtTxBuffer[32] ;
 uint8_t Com2TxBuffer[32] ;
+uint8_t Com1TxBuffer[32] ;
 uint8_t BtLinked ;
-
-//uint8_t BtStartDebug[128] ;
-//uint8_t BtStartIndex ;
-
-//void btStartLog( uint8_t c )
-//{
-//	if ( BtStartIndex < 128 )
-//	{
-//		BtStartDebug[BtStartIndex++] = c ;
-//	}
-//}
 
 struct btRemote_t BtRemote[3] ;
 uint8_t NumberBtremotes ;
 
-uint16_t Bt_debug ;
+//uint16_t Bt_debug ;
 
 uint8_t BtMode[4] ;
 uint8_t BtPswd[6] ;
@@ -1723,19 +1958,19 @@ void flushBtFifo()
 {
 	uint16_t rxchar ;
 
-#ifdef PCBSKY
-	txmit( '[' ) ;
-#endif
+//#ifdef PCBSKY
+//	txmit( '[' ) ;
+//#endif
 	while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 	{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 		// null body, flush fifo
 	}
-#ifdef PCBSKY
-	txmit( ']' ) ;
-#endif
+//#ifdef PCBSKY
+//	txmit( ']' ) ;
+//#endif
 }
 
 uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
@@ -1755,9 +1990,9 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 //			btStartLog( rxchar ) ;
 
 			if ( rxchar == x )
@@ -1808,9 +2043,9 @@ txmit( rxchar ) ;
 
 uint32_t poll_bt_device()
 {
-#ifdef PCBSKY
-txmit('P') ;
-#endif
+//#ifdef PCBSKY
+//txmit('P') ;
+//#endif
 	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
@@ -1952,9 +2187,9 @@ uputs( (char *)command ) ;
 	{
 		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 		{
-#ifdef PCBSKY
-			txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//			txmit( rxchar ) ;
+//#endif
 			if ( length )
 			{
 //				if ( ( rxchar >= ' ' ) && ( rxchar < 0x80 ) )
@@ -1988,9 +2223,9 @@ uputs( (char *)command ) ;
 			{
 				if ( ( rxchar = rxBtuart() ) != 0xFFFF )
 				{
-#ifdef PCBSKY
-txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//txmit( rxchar ) ;
+//#endif
 					if ( rxchar == 10 )
 					{
 						if ( x == 13 )
@@ -2175,7 +2410,8 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 					BtRxOccured = 1 ;
 					if ( BtRxChecksum == 0 )
 					{
-						if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
+						TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+						if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
 						{
 							BtSbusReceived = 1 ;
 						}
@@ -2198,7 +2434,8 @@ void processBtRx( int32_t x, uint32_t rxTimeout )
 //		{
 //			ppmInValid = 99 ;
 //		}
-		if ( processSBUSframe( BtSbusFrame, ( g_eeGeneral.trainerSource == 1 ) ? g_ppmIns : 0, BtSbusIndex ) )
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
 		{
 			BtSbusReceived = 1 ;
 		}
@@ -2661,28 +2898,28 @@ uint32_t btLink( uint32_t index )
 	CoTickDelay(10) ;					// 40mS
 	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
 
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	if ( i == 0 )
 	{
 		for ( x = 0 ; x < 10 ; x += 1 )
 		{
 			CoTickDelay(10) ;					// 40mS
 			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 			if ( i )
 			{
-#ifdef PCBSKY
-txmit('V') ;
-#endif
+//#ifdef PCBSKY
+//txmit('V') ;
+//#endif
 				break ;
 			}
-#ifdef PCBSKY
-txmit('U') ;
-#endif
+//#ifdef PCBSKY
+//txmit('U') ;
+//#endif
 		}
 	}
 	return i ;
@@ -2691,7 +2928,7 @@ txmit('U') ;
 
 void btConfigure()
 {
-	uint32_t i ;
+//	uint32_t i ;
 	uint32_t j ;
 	
 	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
@@ -2699,17 +2936,19 @@ void btConfigure()
 	BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
-	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+	getBtOK(0, BT_POLL_TIMEOUT ) ;
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	BtConfigure = 0x41 ;
 	btTransaction( (uint8_t *)"AT+CMODE=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
-	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+	getBtOK(0, BT_POLL_TIMEOUT ) ;
+//	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 	BtConfigure = 0x42 ;
 //	btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
 //	CoTickDelay(10) ;					// 20mS
@@ -2717,12 +2956,13 @@ txmit(i+'=') ;
 //	BtConfigure = 0x43 ;
 	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
-	i = getBtOK(0, 2000 ) ;
+//	i = getBtOK(0, 2000 ) ;
+	getBtOK(0, 2000 ) ;
 	BtConfigure = 0x44 ;
-#ifdef PCBSKY
-txmit('R') ;
-txmit(i+'=') ;
-#endif
+//#ifdef PCBSKY
+//txmit('R') ;
+//txmit(i+'=') ;
+//#endif
 // AT+PAIR=address,timeout
 //	uint8_t *end ;
 //	for ( j = 0 ; j < 4 ; j += 1 )
@@ -2758,10 +2998,11 @@ txmit(i+'=') ;
 	CoTickDelay(10) ;					// 40mS
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
-		i = getBtOK(0, 225 ) ;
-#ifdef PCBSKY
-txmit(i+'=') ;
-#endif
+//		i = getBtOK(0, 225 ) ;
+		getBtOK(0, 225 ) ;
+//#ifdef PCBSKY
+//txmit(i+'=') ;
+//#endif
 		BtConfigure = 0x49 + j ;
 	}
 	BtConfigure = 0 ;
@@ -2769,9 +3010,9 @@ txmit(i+'=') ;
 	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 
-#ifndef PCBSKY
-	(void ) i ;
-#endif
+//#ifndef PCBSKY
+//	(void ) i ;
+//#endif
 }
 
 
@@ -2909,7 +3150,7 @@ void bt_task(void* pdata)
 #ifndef PCB9XT 
 		if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
 		{
-			static uint32_t pqrs = 0 ;
+//			static uint32_t pqrs = 0 ;
 			if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 			{
 				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
@@ -2933,14 +3174,14 @@ void bt_task(void* pdata)
 				}
 			}
 
-			if ( ++pqrs > 500 )
-			{
-				pqrs = 0 ;
-				Com2TxBuffer[Com2_tx.size++] = '@' ;
-				Com2_tx.buffer = Com2TxBuffer ;
-				txPdcCom2( &Com2_tx ) ;
-				Bt_ok += 1 ;
-			}
+//			if ( ++pqrs > 500 )
+//			{
+//				pqrs = 0 ;
+//				Com2TxBuffer[Com2_tx.size++] = '@' ;
+//				Com2_tx.buffer = Com2TxBuffer ;
+//				txPdcCom2( &Com2_tx ) ;
+//				Bt_ok += 1 ;
+//			}
 			if ( Com2_tx.ready == 0 )	// Buffer available
 			{
 				Com2_tx.size = 0 ;
@@ -2963,7 +3204,6 @@ void bt_task(void* pdata)
 		else
 #endif	// nPCB9XT
 		{
-		
 			x = CoWaitForSingleFlag( Bt_flag, 1 ) ;		// Wait for data in Fifo
 			if ( x == E_OK )
 			{
@@ -3072,9 +3312,9 @@ void bt_task(void* pdata)
 					{
 						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 						{
-#ifdef PCBSKY
-							txmit( rxchar ) ;
-#endif
+//#ifdef PCBSKY
+//							txmit( rxchar ) ;
+//#endif
 							if ( rxchar == '+' )
 							{
 								x = 1 ;
@@ -3365,22 +3605,70 @@ void bt_task(void* pdata)
 			}
 			else
 			{
-				while( ( x = rxBtuart() ) != (uint32_t)-1 )
+#ifdef REVX
+				if ( g_model.bt_telemetry > 1 )
 				{
-					if ( BtRxTimer < 100 )
+					if ( g_model.frskyComPort )				
 					{
-						BtRxTimer = 100 ;
+						if ( Com2_tx.ready == 0 )	// Buffer available
+						{
+							Com2_tx.size = 0 ;
+							while( ( x = rxBtuart() ) != (uint32_t)-1 )
+							{
+								Com2TxBuffer[Com2_tx.size++] = x ;
+								if ( Com2_tx.size > 31 )
+								{
+									break ;
+								}	
+							}
+							if ( Com2_tx.size )
+							{
+								Com2_tx.buffer = Com2TxBuffer ;
+								txPdcCom2( &Com2_tx ) ;
+							}
+						}
 					}
-					processBtRx( x, 0 ) ;
-					lastTimer = getTmr2MHz() ;
-					btBits &= ~BT_RX_TIMEOUT ;
-				}
-				if ( (btBits & BT_RX_TIMEOUT) == 0 )
-				{
-					if ( ( ( getTmr2MHz() - lastTimer ) & 0x0000FFFF ) > 10000 )
+					else
 					{
-						btBits |= BT_RX_TIMEOUT ;
-						processBtRx( 0, 1 ) ;
+						if ( Com1_tx.ready == 0 )	// Buffer available
+						{
+							Com1_tx.size = 0 ;
+							while( ( x = rxBtuart() ) != (uint32_t)-1 )
+							{
+								Com1TxBuffer[Com1_tx.size++] = x ;
+								if ( Com1_tx.size > 31 )
+								{
+									break ;
+								}	
+							}
+							if ( Com1_tx.size )
+							{
+								Com1_tx.buffer = Com1TxBuffer ;
+								txPdcCom1( &Com1_tx ) ;
+							}
+						}
+					}
+				}
+				else
+#endif
+				{				 
+					while( ( x = rxBtuart() ) != (uint32_t)-1 )
+					{
+						if ( BtRxTimer < 100 )
+						{
+							BtRxTimer = 100 ;
+						}
+						processBtRx( x, 0 ) ;
+						lastTimer = getTmr2MHz() ;
+						btBits &= ~BT_RX_TIMEOUT ;
+					}
+					if ( (btBits & BT_RX_TIMEOUT) == 0 )
+					{
+						if ( ( ( getTmr2MHz() - lastTimer ) & 0x0000FFFF ) > 10000 )
+						{
+							btBits |= BT_RX_TIMEOUT ;
+							processBtRx( 0, 1 ) ;
+						}
 					}
 				}
 			}
@@ -3431,6 +3719,8 @@ extern void closeLogs( void ) ;
 
 uint8_t LogsRunning = 0 ;
 uint16_t LogTimer = 0 ;
+extern uint8_t RawLogging ;
+extern void rawStartLogging() ;
 
 void log_task(void* pdata)
 {
@@ -3448,6 +3738,10 @@ void log_task(void* pdata)
 		do
 		{
 			CoTickDelay(5) ;					// 10mS
+			if ( ( RawLogging ) && ( LogsRunning & 1 ) )
+			{
+				writeLogs() ;
+			}
 		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) ;
 //		LogTimer = 0 ;
   	tgtime += 50 ;
@@ -3485,6 +3779,7 @@ void log_task(void* pdata)
 					SdAccessRequest = 0 ;
 					result = openLogs() ;
 					unlockVoice() ;
+					rawStartLogging() ;
 					if ( result != NULL )
 					{
     				audioDefevent( AU_SIREN ) ;
@@ -3501,17 +3796,16 @@ void log_task(void* pdata)
 			if ( LogsRunning & 1 )
 			{
 				// log Data (depending on Rate)
-				LogsRunning += 0x40 ;
-				uint8_t mask = 0x40 ;
+				uint8_t mask = 0x0001 ;
 				if ( g_model.logRate == 2 )		// 0.5 secs
 				{
 					mask = 0 ;
 				}
 				else if ( g_model.logRate )		// 2.0 secs
 				{
-					mask = 0xC0 ;
+					mask = 0x0003 ;
 				}
-				if ( ( LogsRunning & mask ) == 0 )
+				if ( ( LogTimer & mask ) == 0 )
 				{
 					writeLogs() ;
 				}
@@ -3614,17 +3908,53 @@ uint32_t countExtraPots()
 }
 #endif
 
+#ifdef REV9E
+uint32_t countExtraPots()
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	return count ;
+}
+#endif
+
+void speakModelVoice()
+{
+	if ( g_model.modelVoice == -1 )
+	{
+		putNamedVoiceQueue( g_model.modelVname, VLOC_MNAMES ) ;
+	}
+	else
+	{
+		putVoiceQueue( ( g_model.modelVoice + 260 ) | VLOC_NUMUSER  ) ;
+	}
+}
+
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
 #ifdef PCBX9D
+ #ifdef REV9E
+	NumExtraPots = NUM_EXTRA_POTS - 2 ;
+ #else
 	NumExtraPots = NUM_EXTRA_POTS ;
+ #endif
 #else
 	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
 #endif
 
 #ifdef PCB9XT
 	backlight_on() ;
+#endif
+
+#ifdef PCBSKY
+	lcdSetOrientation() ;
 #endif
 
 #ifdef PCBSKY
@@ -3642,20 +3972,19 @@ void main_loop(void* pdata)
 		checkAlarm();
 //		checkCalibrate() ;
 		checkWarnings();
+#ifdef PCB9XT
+//		CheckPpm() ;
+//		checkSport() ;
+#endif
 		clearKeyEvents(); //make sure no keys are down before proceeding
 		wdt_reset() ;
   	WatchdogTimeout = 100 ;
 
-		if ( g_model.modelVoice == -1 )
-		{
-			putNamedVoiceQueue( g_model.modelVname, VLOC_MNAMES ) ;
-		}
-		else
-		{
-			putVoiceQueue( ( g_model.modelVoice + 260 ) | VLOC_NUMUSER ) ;
-		}
+		speakModelVoice() ;
+		parseMultiData() ;
+
 	}
-	VoiceCheckFlag |= 2 ;// Set switch current states
+	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 
 
 // Preload battery voltage
@@ -3678,10 +4007,11 @@ void main_loop(void* pdata)
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
 	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
+	init_ppm2( 3000, 0 ) ;
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
-
 	start_ppm_capture() ;
+	checkTrainerSource() ;
 
 //  FrskyAlarmSendState |= 0x40 ;
 #endif
@@ -3695,9 +4025,11 @@ void main_loop(void* pdata)
 
 //	init_trainer_ppm() ;
 
-	init_trainer_capture() ;
+	init_trainer_capture(0) ;
 
 	rtcInit() ;
+
+	init_xjt_heartbeat() ;
 #endif
 
 #ifdef PCB9XT
@@ -3706,7 +4038,7 @@ void main_loop(void* pdata)
 
 //	init_trainer_ppm() ;
 
-	init_trainer_capture() ;
+	init_trainer_capture(0) ;
 
 	rtcInit() ;
 
@@ -3726,6 +4058,10 @@ void main_loop(void* pdata)
 #endif
 
 	Activated = 1 ;
+
+#ifdef REV9E
+	static uint8_t powerIsOn = 1 ;
+#endif
   
 	while (1)
 	{
@@ -3733,26 +4069,78 @@ void main_loop(void* pdata)
 #if defined(REVB) || defined(PCBX9D) || defined(PCB9XT)
 		
 #ifdef REV9E
-		uint32_t powerState = check_soft_power() ;
-		if ( ( powerState == POWER_X9E_STOP ) || ( powerState == POWER_OFF ) )		// power now off
+		uint8_t stopMenus = MENUS ;
+ 		static uint16_t tgtime = 0 ;
+		if ( GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET )
+		{
+			if ( powerIsOn == 1 )
+			{
+				powerIsOn = 2 ;
+	  		tgtime = get_tmr10ms() ;
+			}
+			else
+			{
+				if ( powerIsOn == 2 )
+				{
+					stopMenus = NO_MENU ;
+					if ( ( get_tmr10ms() & 3 ) == 0 )
+					{
+						lcd_clear() ;
+						lcd_putsAtt( 3*FW, 3*FH, "STOPPING", DBLSIZE ) ;
+						refreshDisplay() ;
+					}
+					if ( (uint16_t)(get_tmr10ms() - tgtime ) > 150 )
+					{
+						powerIsOn = 3 ;
+					}
+				}
+			}
+		}	
+		else
+		{
+			powerIsOn = 1 ;
+		}
+		if ( powerIsOn == 3 )
 #else
 // #ifdef PCB9XT
 //		PowerStatus = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) ;
 //		PowerStatus = check_soft_power() ;
 //    if ( 0 )
 // #else
+#ifdef PCBSKY
+ 		static uint16_t tgtime = 0 ;
+		uint32_t powerState ;
+		powerState = check_soft_power() ;
+		if ( ( powerState == POWER_ON ) || ( powerState == POWER_TRAINER ) )
+		{
+	  	tgtime = get_tmr10ms() ;	// Re-trigger timer
+		}
+		else
+		{
+			if ( powerState == POWER_OFF )
+			{
+				if ( (uint16_t)(get_tmr10ms() - tgtime ) < 40 )
+				{ // Allow time for trainer power to establish if necessary
+					powerState = POWER_ON ;
+				}
+			}
+		}
+		if ( powerState == POWER_OFF )
+#else
 		if ( ( check_soft_power() == POWER_OFF ) )		// power now off
+#endif
 // #endif
 #endif
 		{
 			// Time to switch off
+			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 			lcd_clear() ;
-			lcd_putsn_P( 4*FW, 3*FH, "SHUTTING DOWN", 13 ) ;
+			lcd_puts_P( 4*FW, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 
-#ifdef REV9E
-extern uint8_t PowerState ;
-	lcd_outhex4( 20, 0, PowerState ) ;
-#endif
+//#ifdef REV9E
+//extern uint8_t PowerState ;
+//	lcd_outhex4( 20, 0, PowerState ) ;
+//#endif
 
 #ifdef PCBSKY
 			// Stop pulses out at this point, hold pin low
@@ -3778,15 +4166,19 @@ extern uint8_t PowerState ;
 
   		g_eeGeneral.unexpectedShutdown = 0;
 #ifdef PCBSKY
-			MAh_used += Current_used/3600 ;
-			if ( g_eeGeneral.mAh_used != MAh_used )
+			if ( g_eeGeneral.ar9xBoard == 0 )
 			{
-				g_eeGeneral.mAh_used = MAh_used ;
+				MAh_used += Current_used/3600 ;
+				if ( g_eeGeneral.mAh_used != MAh_used )
+				{
+					g_eeGeneral.mAh_used = MAh_used ;
+				}
 			}
 #endif
       STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
 
   		uint16_t tgtime = get_tmr10ms() ;
+  		uint16_t long_tgtime = tgtime ;
 	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 70 ) // 50 - Half second
 //	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 200 ) // 50 - Half second
   		{
@@ -3807,10 +4199,38 @@ extern uint8_t PowerState ;
 				}
 				wdt_reset() ;
 
+				if ( AudioActive )
+				{
+					if ( (uint16_t)(get_tmr10ms() - long_tgtime ) < 600 )		// 6 seconds
+					{
+						tgtime = get_tmr10ms() ;
+					}
+				}
+
 				if ( ee32_check_finished() == 0 )
 				{
 					lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
 					tgtime = get_tmr10ms() ;
+
+#ifdef PCB9XT
+extern uint16_t General_timer ;
+extern uint16_t Model_timer ;
+extern uint8_t	Eeprom32_process_state ;
+extern uint8_t Ee32_general_write_pending ;
+extern uint8_t Ee32_model_write_pending ;
+extern uint8_t Ee32_model_delete_pending ;
+
+	lcd_outdez( 3*FW, 7*FH, General_timer ) ;
+	lcd_outdez( 7*FW, 7*FH, Model_timer ) ;
+	lcd_outdez( 10*FW, 7*FH, Eeprom32_process_state ) ;
+	lcd_outdez( 13*FW, 7*FH, Ee32_general_write_pending ) ;
+	lcd_outdez( 16*FW, 7*FH, Ee32_model_write_pending ) ;
+	lcd_outdez( 19*FW, 7*FH, Ee32_model_delete_pending ) ;
+
+
+#endif
+
+
 				}
 				else
 				{
@@ -3831,7 +4251,12 @@ extern uint8_t PowerState ;
 
 #ifndef REV9E				 
 #ifdef PCBSKY
+#ifdef REVX
+			powerState = check_soft_power() ;
+			if ( ( powerState == POWER_ON ) || ( powerState == POWER_TRAINER ) )
+#else
 			if ( check_soft_power() == POWER_ON )
+#endif
 			{
 				module_output_active() ;
 				startPulses() ;		// using the required protocol
@@ -3912,7 +4337,11 @@ extern uint8_t PowerState ;
 #ifdef SERIAL_HOST
 		mainSequence( NO_MENU ) ;
 #else
+ #ifdef REV9E
+		mainSequence( stopMenus ) ;
+ #else
 		mainSequence( MENUS ) ;
+ #endif
 #endif
 #ifndef SIMU
 		CoTickDelay(1) ;					// 2mS for now
@@ -3988,7 +4417,6 @@ uint8_t StickScrollTimer ;
 extern int16_t AltOffset ;
 #endif
 
-//uint16_t Debug_analog[8] ;
 static void almess( const char * s, uint8_t type )
 {
 	const char *h ;
@@ -4056,6 +4484,40 @@ void doVoiceAlarmSource( VoiceAlarmData *pvad )
 	}
 }
 
+uint32_t rssiOffsetValue( uint32_t type )
+{
+	uint32_t offset = 45 ;
+
+#ifdef ASSAN
+#if defined(PCBX9D) || defined(PCB9XT)
+	if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#else
+	if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#endif // PCBX9D
+#else // ASSAN
+#if defined(PCBX9D) || defined(PCB9XT)
+	if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#else
+	if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
+#endif // PCBX9D
+#endif // ASSAN
+	{
+		if ( !g_model.dsmAasRssi )
+		{
+			offset = 20 ;
+		}
+	}
+	if ( type )
+	{
+		offset -= 3 ;
+		if ( offset == 17 )
+		{
+			offset = 18 ;
+		}
+	}				 
+	return offset ;
+}
+
 
 static void processVoiceAlarms()
 {
@@ -4065,6 +4527,7 @@ static void processVoiceAlarms()
 	for ( i = 0 ; i < NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
 	{
 		uint32_t play = 0 ;
+		uint32_t functionTrue = 0 ;
 		curent_state = 0 ;
 		int16_t ltimer = Nvs_timer[i] ;
 	 	if ( i == NUM_VOICE_ALARMS )
@@ -4103,7 +4566,11 @@ static void processVoiceAlarms()
 				case 6 :
 					x = x == y ;
 				break ;
+				case 7 :
+					x = (x & y) != 0 ;
+				break ;
 			}
+			functionTrue = x ;
 // Start of invalid telemetry detection
 //					if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
 //					{ // Telemetry item
@@ -4115,7 +4582,14 @@ static void processVoiceAlarms()
 // End of invalid telemetry detection
 			if ( pvad->swtch )
 			{
-				if ( getSwitch00( pvad->swtch ) == 0 )
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					if ( getFlightPhase() == 0 )
+					{
+						x = 0 ;
+					}
+				}
+				else if ( getSwitch00( pvad->swtch ) == 0 )
 				{
 					x = 0 ;
 				}
@@ -4133,7 +4607,14 @@ static void processVoiceAlarms()
 		{
 			if ( pvad->swtch )
 			{
-				curent_state = getSwitch00( pvad->swtch ) ;
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					curent_state = getFlightPhase() ? 1 : 0 ;
+				}
+				else
+				{
+					curent_state = getSwitch00( pvad->swtch ) ;
+				}
 				if ( curent_state == 0 )
 				{
 //							Nvs_state[i] = 0 ;
@@ -4153,34 +4634,55 @@ static void processVoiceAlarms()
 		}
 		play |= curent_state ;
 
-		if ( ( VoiceCheckFlag & 2 ) == 0 )
+		if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
 		{
 		 if ( pvad->rate == 3 )	// All
 		 {
-		 		uint32_t pos = switchPosition( pvad->swtch ) ;
-				uint32_t state = Nvs_state[i] ;
-				play = 0 ;
-				if ( state != pos )
+		 		uint32_t pos ;
+				pos = 1 ;
+				if ( pvad->func && ( functionTrue == 0 ) )
 				{
-					if ( state > 0x80 )
+					pos = 0 ;
+				}
+		 		if ( pos )
+				{
+					if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
 					{
-						if ( --state == 0x80 )
-						{
-							state = pos ;
-							ltimer = 0 ;
-							play = pos + 1 ;
-						}
+						pos = getFlightPhase() ;
 					}
 					else
 					{
-						state = 0x83 ;
+						pos = switchPosition( pvad->swtch ) ;
 					}
-					Nvs_state[i] = state ;
+					uint32_t state = Nvs_state[i] ;
+					play = 0 ;
+					if ( state != pos )
+					{
+						if ( state > 0x80 )
+						{
+							if ( --state == 0x80 )
+							{
+								state = pos ;
+								ltimer = 0 ;
+								play = pos + 1 ;
+							}
+						}
+						else
+						{
+							state = 0x83 ;
+						}
+						Nvs_state[i] = state ;
+					}
+
+//					else
+//					{
+//						play = 0 ;
+//					}
 				}
-//				else
-//				{
-//					play = 0 ;
-//				}
+				else
+				{
+					Nvs_state[i] = 0x40 ;
+				}
 		 }
 		 else
 		 {
@@ -4190,6 +4692,10 @@ static void processVoiceAlarms()
 				{ // just turned ON
 					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
 					{ // ON
+						if ( pvad->delay )
+						{
+							Nvs_delay[i] = pvad->delay + 1 ;
+						}
 						ltimer = 0 ;
 					}
 				}
@@ -4198,9 +4704,17 @@ static void processVoiceAlarms()
 				{
 					play = 0 ;
 				}
+				if ( Nvs_delay[i] )
+				{
+					if ( --Nvs_delay[i] )
+					{
+						play = 0 ;
+					}
+				}
 			}
 			else
 			{
+				Nvs_delay[i] = 0 ;
 				if ( Nvs_state[i] == 1 )
 				{
 					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
@@ -4224,14 +4738,30 @@ static void processVoiceAlarms()
 		}
 		else
 		{
-			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
+		 	uint32_t pos ;
+			if ( pvad->rate == 3 )
+			{
+				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+				{
+					pos = getFlightPhase() ;
+				}
+				else
+				{
+					pos = switchPosition( pvad->swtch ) ;
+				}
+			}
+			else
+			{
+				pos = play ;
+			}
+			Nvs_state[i] = pos ;
 			play = ( pvad->rate == 33 ) ? 1 : 0 ;
 			ltimer = -1 ;
 		}
 
 		if ( pvad->mute )
 		{
-			if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+			if ( pvad->source > ( CHOUT_BASE + NUM_SKYCHNOUT ) )
 			{ // Telemetry item
 				if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
 				{
@@ -4244,7 +4774,7 @@ static void processVoiceAlarms()
 		{
 			if ( ltimer < 0 )
 			{
-				if ( pvad->rate >= 3 )	// A time or ONCE
+				if ( pvad->rate >= 4 )	// A time or ONCE
 				{
 					ltimer = 0 ;
 				}
@@ -4285,7 +4815,10 @@ static void processVoiceAlarms()
 					{
 						*(p-1) += ( play - 1 ) ;
 					}
-					putUserVoice( name, 0 ) ;
+					if ( name[0] && ( name[0] != ' ' ) )
+					{
+						putUserVoice( name, 0 ) ;
+					}
 				}
 				else if ( pvad->fnameType == 2 )	// Number
 				{
@@ -4352,11 +4885,162 @@ static void processVoiceAlarms()
 	}
 }
 
+#define MUSIC_SWITCH_SAME 0
+#define MUSIC_SWITCH_ON		1
+#define MUSIC_SWITCH_OFF	2
+
+extern uint16_t PlayListCount ;
+extern uint16_t PlaylistIndex ;
+
+uint32_t musicSwitch( int16_t mSwitch, uint8_t *state )
+{
+  if(mSwitch)
+	{
+		if ( mSwitch < -HSW_MAX )
+		{
+			mSwitch += 256 ;
+		}
+		if ( VoiceCheckFlag100mS & 2 )
+		{
+  	  *state = getSwitch00( mSwitch-(HSW_MAX) ) ;
+			return MUSIC_SWITCH_SAME ;
+		}
+		
+  	if(mSwitch>(HSW_MAX))	 // toggeled switch
+		{
+  	  uint8_t swPos = getSwitch00( mSwitch-(HSW_MAX) ) ;
+			if ( swPos != *state )
+			{
+				*state = swPos ;
+				if ( swPos )	// Now on
+				{
+					return MUSIC_SWITCH_ON ;
+				}
+			}
+		}
+		else
+		{
+			// normal switch
+  	  uint8_t swPos = getSwitch00( mSwitch ) ;
+			if ( swPos != *state )
+			{
+				*state = swPos ;
+				if ( swPos )	// Now on
+				{
+					return MUSIC_SWITCH_ON ;
+				}
+				else
+				{ // now off
+					return MUSIC_SWITCH_OFF ;
+				}
+			}
+		}
+	}
+	return MUSIC_SWITCH_SAME ;
+}
+
+void processMusicSwitches()
+{
+  int16_t mSwitch ;
+	uint32_t state ;
+	mSwitch = g_model.musicData.musicStartSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicStartSwitchState ) ;
+
+	if ( state == MUSIC_SWITCH_ON )	// Now on
+	{
+		if ( ( MusicPlaying == MUSIC_PLAYING ) || ( MusicPlaying == MUSIC_PAUSED ) )
+		{
+			MusicPlaying = MUSIC_STOPPING ;
+		}
+		else if ( MusicPlaying == MUSIC_STOPPED )
+		{
+			MusicPlaying = MUSIC_STARTING ;
+		}
+	}
+	else if ( state == MUSIC_SWITCH_OFF )
+	{
+		if ( ( MusicPlaying == MUSIC_PLAYING ) || ( MusicPlaying == MUSIC_PAUSED ) )
+		{
+			MusicPlaying = MUSIC_STOPPING ;
+		}
+	}
+
+	mSwitch = g_model.musicData.musicPauseSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicPauseSwitchState ) ;
+	if ( state == MUSIC_SWITCH_ON )	// Now on
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			MusicPlaying = MUSIC_PAUSING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSED )
+		{
+			MusicPlaying = MUSIC_RESUMING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSING )
+		{
+			MusicPlaying = MUSIC_PLAYING ;
+		}
+	}
+	else if ( state == MUSIC_SWITCH_OFF )
+	{
+		if ( MusicPlaying == MUSIC_PAUSED )
+		{
+			MusicPlaying = MUSIC_RESUMING ;
+		}
+		else if ( MusicPlaying == MUSIC_PAUSING )
+		{
+			MusicPlaying = MUSIC_PLAYING ;
+		}
+	}
+	
+	mSwitch = g_model.musicData.musicPrevSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicPrevSwitchState ) ;
+	if ( g_eeGeneral.musicType )
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			if ( state == MUSIC_SWITCH_ON )	// Now on
+			{
+				MusicPrevNext = MUSIC_NP_PREV ;
+//				if ( PlaylistIndex == 0 )
+//				{
+//					PlaylistIndex = PlayListCount - 1 ;
+//				}
+//				else
+//				{
+//					PlaylistIndex -= 1 ;
+//				}
+//				MusicPlaying = MUSIC_STARTING ;
+			}
+		}
+	}
+
+	mSwitch = g_model.musicData.musicNextSwitch ;
+	state = musicSwitch( mSwitch, &LastMusicNextSwitchState ) ;
+	if ( g_eeGeneral.musicType )
+	{
+		if ( MusicPlaying == MUSIC_PLAYING )
+		{
+			if ( state == MUSIC_SWITCH_ON )	// Now on
+			{
+				MusicPrevNext = MUSIC_NP_NEXT ;
+//		 		PlaylistIndex += 1 ;
+//		 		if ( PlaylistIndex >= PlayListCount )
+//		 		{
+//		 			PlaylistIndex = 0 ;
+//		 		}
+//		 		MusicPlaying = MUSIC_STARTING ;
+			}
+		}
+	}
+}
+
 
 uint32_t MixerRate ;
 uint32_t MixerCount ;
 
-uint8_t AlarmTimers[NUM_SKYCHNOUT] ;
+uint8_t AlarmTimers[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 
 uint8_t EncoderI2cData[2] ;
 
@@ -4433,16 +5117,28 @@ void mainSequence( uint32_t no_menu )
 
 #ifdef PCBX9D
 	checkTrainerSource() ;
-	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) || ( CurrentTrainerSource == 1 ) )
+	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) || ( CurrentTrainerSource == TRAINER_SBUS ) )
 #endif
 #ifdef PCBSKY
 	if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
 #endif
 	{
-		processSbusInput() ;
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( tProf->channel[0].source != TRAINER_JACK )
+		{
+			processSbusInput() ;
+		}
 	}
 
-
+extern uint8_t TrainerMode ;
+	if ( TrainerMode == 1 )
+	{
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( tProf->channel[0].source == TRAINER_JACK )
+		{
+			processSbusInput() ;
+		}
+	}
 
 	if ( Tenms )
 	{
@@ -4462,7 +5158,38 @@ void mainSequence( uint32_t no_menu )
 #endif
 #ifdef PCB9XT
 		m64_10mS() ;
-#endif
+#ifdef SLAVE_RESET
+		if ( getSwitch00( 32 ) ) // LN
+		{
+			if ( SlaveResetSwitch == 0 )
+			{
+extern void resetM64() ;
+				resetM64() ;
+extern uint8_t M64ResetCount ;
+				M64ResetCount += 1 ;
+			}
+			SlaveResetSwitch = 1 ;
+		}
+		else
+		{
+			SlaveResetSwitch = 0 ;
+		}
+		
+		g_model.customSw[21].func = CS_AND ;
+		if ( getSwitch00( 31 ) ) // LM
+		{
+			if ( SlavePanicSwitch == 0 )
+			{
+				panicDebugMenu() ;
+				SlavePanicSwitch = 1 ;
+			}
+		}
+		else
+		{
+			SlavePanicSwitch = 0 ;
+		}
+#endif // SLAVE_RESET
+#endif // PCB9XT
 #if defined(PCB9XT) || defined(PCBX9D)
 		handleUsbConnection() ;
 #endif
@@ -4489,6 +5216,38 @@ extern void btCountersToTotals() ;
 			}
 			MixerRate = MixerCount ;
 			MixerCount = 0 ;
+#ifdef REV9E
+void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
+void setTopRssi( uint32_t rssi ) ;
+void setTopVoltage( uint32_t volts ) ;
+void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
+
+static uint8_t RssiTestCount ;
+			setTopRssi( FrskyHubData[FR_RXRSI_COPY] ) ;
+			setTopVoltage( g_vbat100mV ) ;
+			setTopOpTime( Time.hour, Time.minute, Time.second ) ;
+			if ( ++RssiTestCount > 149 )
+			{
+				RssiTestCount = 0 ;
+			}
+			uint32_t bstate = g_vbat100mV ;
+			if ( bstate < 92 )
+			{
+				bstate = 0 ;
+			}
+			else
+			{
+				bstate -= 92 ;
+				bstate /= 2 ;
+			}
+			updateTopLCD( s_timer[0].s_timerVal, bstate ) ;
+#endif
+//			uint32_t x ;
+//			x = IdleCount * 10000 ;
+//			x /= 2000000 ;
+//			IdleCount = 0 ;
+//			IdlePercent = x ;
+
 		}
 #ifndef SIMU
 		sdPoll10mS() ;
@@ -4529,6 +5288,7 @@ extern void readExtRtc() ;
 #endif
 			}
 		}
+
 
 	 	if ( g_eeGeneral.ar9xBoard )
 		{
@@ -4590,6 +5350,7 @@ extern uint32_t i2c2_result() ;
 	rtc_gettime( &Time ) ;
 #endif
 	}
+	
 	processAdjusters() ;
 
 	t0 = getTmr2MHz() - t0;
@@ -4631,7 +5392,7 @@ extern uint32_t i2c2_result() ;
       }
 			uint16_t total_volts = 0 ;
 			CPU_UINT audio_sounded = 0 ;
-			uint8_t low_cell = 220 ;		// 4.4V
+			uint16_t low_cell = 440 ;		// 4.4V
 			uint8_t totalCells = FrskyBattCells[0] + FrskyBattCells[1] ;
 		  for (uint8_t k=0 ; k<totalCells ; k++)
 			{
@@ -4643,7 +5404,7 @@ extern uint32_t i2c2_result() ;
 
 				if ( audio_sounded == 0 )
 				{
-		      if ( FrskyVolts[k] < g_model.frSkyVoltThreshold )
+		      if ( FrskyVolts[k] < g_model.frSkyVoltThreshold * 2 )
 					{
 		        audioDefevent(AU_WARNING3);
 						audio_sounded = 1 ;
@@ -4651,8 +5412,8 @@ extern uint32_t i2c2_result() ;
 			  }
 	  	}
 			// Now we have total volts available
-			FrskyHubData[FR_CELLS_TOT] = total_volts / 5 ;
-			if ( low_cell < 220 )
+			FrskyHubData[FR_CELLS_TOT] = total_volts / 10 ;
+			if ( low_cell < 440 )
 			{
 				FrskyHubData[FR_CELL_MIN] = low_cell ;
 			}
@@ -4765,34 +5526,71 @@ extern uint32_t i2c2_result() ;
 				}
 			}
 		}
-#ifdef REV9E
-void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
-void setTopRssi( uint32_t rssi ) ;
-void setTopVoltage( uint32_t volts ) ;
-void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
-
-static uint8_t RssiTestCount ;
-		setTopRssi( RssiTestCount ) ;
-		setTopVoltage( RssiTestCount ) ;
-		setTopOpTime( RssiTestCount%100, RssiTestCount%100, RssiTestCount%100 ) ;
-		if ( ++RssiTestCount > 149 )
-		{
-			RssiTestCount = 0 ;
-		}
-		updateTopLCD( Time.hour*60+Time.minute, RssiTestCount%6 ) ;
-#endif
   }
+	
+	
 	// New switch voices
 	// New entries, Switch, (on/off/both), voice file index
 
-	if ( VoiceCheckFlag )	// Every 100mS
+	if ( CheckFlag20mS )
+	{
+		uint32_t i ;
+		
+		CheckFlag20mS = 0 ;
+		for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
+		{
+ 	  	SKYCSwData &cs = g_model.customSw[i];
+			if ( cs.func == CS_LATCH )
+			{
+		    if (getSwitch00( cs.v1) )
+				{
+					Last_switch[i] = 1 ;
+				}
+				else
+				{
+			    if (getSwitch00( cs.v2) )
+					{
+						Last_switch[i] = 0 ;
+					}
+				}
+			}
+			if ( cs.func == CS_FLIP )
+			{
+		    if (getSwitch00( cs.v1) )
+				{
+					if ( ( Last_switch[i] & 2 ) == 0 )
+					{
+						// Clock it!
+			      if (getSwitch00( cs.v2) )
+						{
+							Last_switch[i] = 3 ;
+						}
+						else
+						{
+							Last_switch[i] = 2 ;
+						}
+					}
+				}
+				else
+				{
+					Last_switch[i] &= ~2 ;
+				}
+			}
+		}
+	}
+
+	if ( VoiceCheckFlag100mS )	// Every 100mS
   {
 		uint32_t i ;
 		static uint32_t timer ;
 		static uint32_t delayTimer = 0 ;
     
-		if ( VoiceCheckFlag & 1 )
+		if ( VoiceCheckFlag100mS & 1 )
 		{
+			TrimInUse[0] <<= 1 ;
+			TrimInUse[1] <<= 1 ;
+			TrimInUse[2] <<= 1 ;
+			TrimInUse[3] <<= 1 ;
 //#ifdef TELEMETRY_LOST
 //			if ( TelemetryStatus && ( frskyStreaming == 0 ) )
 //			{ // We have lost telemetry
@@ -4813,26 +5611,12 @@ static uint8_t RssiTestCount ;
 
 			if ( frskyStreaming )
 			{
+				int8_t offset ;
 				if ( g_model.enRssiRed == 0 )
 				{
-#ifdef ASSAN
-					int8_t offset ;
-#ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
-#else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
-#endif // PCBX9D
-					{
-						offset = 18 ;
-					}
-					else
-					{
-						offset = 42 ;
-					}
+					offset = rssiOffsetValue( 1 ) ;
+
 					if ( rssiValue && rssiValue < g_model.rssiRed + offset )
-#else // ASSAN
-					if ( rssiValue && rssiValue < g_model.rssiRed + 42 )
-#endif // ASSAN
 					{
 						// Alarm
 						redAlert = 1 ;
@@ -4854,24 +5638,8 @@ static uint8_t RssiTestCount ;
 				}
 				if ( ( redAlert == 0 ) && ( g_model.enRssiOrange == 0 ) )
 				{
-#ifdef ASSAN
-					int8_t offset ;
-#ifdef PCBX9D
-					if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) )
-#else
-					if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) )
-#endif // PCBX9D
-					{
-						offset = 20 ;
-					}
-					else
-					{
-						offset = 45 ;
-					}
+					offset = rssiOffsetValue( 0 ) ;
 					if ( rssiValue && rssiValue < g_model.rssiOrange + offset )
-#else // ASSAN
-					if ( rssiValue && rssiValue < g_model.rssiOrange + 45 )
-#endif // ASSAN
 					{
 						// Alarm
 						if ( ++orangeCounter > 3 )
@@ -4913,6 +5681,13 @@ static uint8_t RssiTestCount ;
 			    }
 				}
 			}
+			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+			{
+				if ( g_model.eScalers[i].dest )
+				{
+					calc_scaler( i, 0, 0 ) ;					
+				}
+			}
 		}
 		 
 		for ( i = numSafety ; i < NUM_SKYCHNOUT+NUM_VOICE ; i += 1 )
@@ -4939,7 +5714,7 @@ static uint8_t RssiTestCount ;
 			if ( sd->opt.vs.vswtch )		// Configured
 			{
 				curent_state = getSwitch00( sd->opt.vs.vswtch ) ;
-				if ( ( VoiceCheckFlag & 2 ) == 0 )
+				if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
 				{
 					if ( ( mode == 0 ) || ( mode == 2 ) )
 					{ // ON
@@ -5067,45 +5842,9 @@ static uint8_t RssiTestCount ;
 					}
 					CsTimer[i] = y ;
 				}
-				if ( cs.func == CS_LATCH )
-				{
-		      if (getSwitch00( cs.v1) )
-					{
-						Last_switch[i] = 1 ;
-					}
-					else
-					{
-			      if (getSwitch00( cs.v2) )
-						{
-							Last_switch[i] = 0 ;
-						}
-					}
-				}
-				if ( cs.func == CS_FLIP )
-				{
-		      if (getSwitch00( cs.v1) )
-					{
-						if ( ( Last_switch[i] & 2 ) == 0 )
-						{
-							// Clock it!
-			      	if (getSwitch00( cs.v2) )
-							{
-								Last_switch[i] = 3 ;
-							}
-							else
-							{
-								Last_switch[i] = 2 ;
-							}
-						}
-					}
-					else
-					{
-						Last_switch[i] &= ~2 ;
-					}
-				}
 				if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
 				{
-					if ( VoiceCheckFlag & 2 )
+					if ( VoiceCheckFlag100mS & 2 )
 					{
 						// Resetting, retrigger any monostables
 						Last_switch[i] &= ~2 ;
@@ -5201,8 +5940,9 @@ static uint8_t RssiTestCount ;
 //extern VoiceAlarmData vad[NUM_VOICE_ALARMS] ;	// Temporary for RAM based testing
 		// Now test for the new voice alarms
 		processVoiceAlarms() ;
+		processMusicSwitches() ;
 
-		VoiceCheckFlag = 0 ;
+		VoiceCheckFlag100mS = 0 ;
 
 		// Vario
 		{
@@ -5422,7 +6162,12 @@ void check_backlight()
 //#ifdef REV9E
 //		BACKLIGHT_ON ;
 //#else
-  if(getSwitch00(g_eeGeneral.lightSw) || getSwitch00(g_model.mlightSw ) || g_LightOffCounter)
+	int8_t sw = g_model.mlightSw ;
+	if ( !sw )
+	{
+		sw = g_eeGeneral.lightSw ;
+	}
+  if(getSwitch00(sw) || g_LightOffCounter)
 	{
 		BACKLIGHT_ON ;
 	}
@@ -5433,9 +6178,9 @@ void check_backlight()
 //#endif
 }
 
-#ifdef SPLASH_DEBUG
-uint16_t SplashDebug[9] ;
-#endif
+//#ifdef SPLASH_DEBUG
+//uint16_t SplashDebug[9] ;
+//#endif
 
 uint16_t stickMoveValue()
 {
@@ -5443,9 +6188,9 @@ uint16_t stickMoveValue()
 		uint8_t i ;
     for( i=0; i<4; i++)
 		{
-#ifdef SPLASH_DEBUG
-			SplashDebug[i] = anaIn(i) ;
-#endif
+//#ifdef SPLASH_DEBUG
+//			SplashDebug[i] = anaIn(i) ;
+//#endif
       sum += anaIn(i) ;
 		}
 	return sum ;
@@ -5464,9 +6209,9 @@ void doSplash()
 	uint32_t i ;
 	uint32_t j ;
 
-#ifdef SPLASH_DEBUG
-	SplashDebug[8] = 0 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//	SplashDebug[8] = 0 ;
+//#endif
 
 	if( (!g_eeGeneral.disableSplashScreen) || ( HardwareMenuEnabled ) )
   {
@@ -5483,10 +6228,10 @@ void doSplash()
 
   	uint16_t inacSum = stickMoveValue() ;
 
-#ifdef SPLASH_DEBUG
-  	for( i=0; i<4 ; i++)
-			SplashDebug[i+4] = SplashDebug[i] ;
-#endif
+//#ifdef SPLASH_DEBUG
+//  	for( i=0; i<4 ; i++)
+//			SplashDebug[i+4] = SplashDebug[i] ;
+//#endif
 
   	uint16_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;  
   	uint16_t scrtime = get_tmr10ms() ;
@@ -5539,26 +6284,26 @@ void doSplash()
 			uint8_t xxx ;
 			if ( ( xxx = keyDown() ) )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = xxx ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = xxx ;
+//#endif
 				return ;  //wait for key release
 			}
 				  
 			if ( hasStickMoved( inacSum ) )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = 0xF000 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = 0xF000 ;
+//#endif
 		   return ;  //wait for key release
 			}
 //			if(keyDown() || (tsum!=inacSum))   return;  //wait for key release
 
 			if ( check_power_or_usb() )
 			{
-#ifdef SPLASH_DEBUG
-				SplashDebug[8] = 0xC000 ;
-#endif
+//#ifdef SPLASH_DEBUG
+//				SplashDebug[8] = 0xC000 ;
+//#endif
 				return ;		// Usb on or power off
 			}
 			check_backlight() ;
@@ -5836,11 +6581,11 @@ uint32_t calcStickScroll( uint32_t index )
 
 static void	processAdjusters()
 {
-static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
-	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
+	for ( CPU_UINT i = 0 ; i < NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
-		pgvaradj = &g_model.gvarAdjuster[i] ;
+		pgvaradj = ( i >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
 		uint32_t idx = pgvaradj->gvarIndex ;
 	
 		int8_t sw0 = pgvaradj->swtch ;
@@ -5970,6 +6715,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
 
 uint8_t AnaEncSw = 0 ;
 
+#ifdef PCBX9D
 void valueprocessAnalogEncoder( uint32_t x )
 {
 	uint32_t y ;
@@ -6039,15 +6785,15 @@ void valueprocessAnalogEncoder( uint32_t x )
 		Rotary_position = ( Rotary_position & ~0x45 ) | dummy ;
 	}
 }
-
-#ifdef PCBSKY
-void processAnaEncoder()
-{
-	read_adc() ;		// need to just read the 1 channel
-	uint32_t x = Analog_values[5] >> 1 ;
-	valueprocessAnalogEncoder( x ) ;
-}
 #endif
+//#ifdef PCBSKY
+//void processAnaEncoder()
+//{
+//	read_adc() ;		// need to just read the 1 channel
+//	uint32_t x = Analog_values[5] >> 1 ;
+//	valueprocessAnalogEncoder( x ) ;
+//}
+//#endif
 
 uint8_t GvarSource[4] ;
 
@@ -6057,12 +6803,13 @@ int8_t getGvarSourceValue( uint8_t src )
 
 	if ( src >= EXTRA_POTS_START )
 	{
-		value = calibratedStick[src-EXTRA_POTS_START+8] / 8 ;
+		value = calibratedStick[src-EXTRA_POTS_START+7] / 8 ;
 	}
 	else if ( src <= 4 )
 	{
 //#ifdef FIX_MODE
 		value = getTrimValue( CurrentPhase, src - 1 ) ;
+		TrimInUse[src-1] |= 1 ;
 //#else
 //		value = getTrimValue( CurrentPhase, convert_mode_helper(src) - 1 ) ;
 //#endif
@@ -6185,7 +6932,11 @@ void perMain( uint32_t no_menu )
 #endif
 	if ( ppmInValid )
 	{
-		ppmInValid -= 1 ;
+		if ( --ppmInValid == 0 )
+		{
+			// Announce trainer lost
+			putSystemVoice( SV_TRN_LOST, 0 ) ;
+		}
 	}
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -6540,7 +7291,19 @@ void perMain( uint32_t no_menu )
 			}
 	 		StepSize = 20 ;
 	 		Tevent = evt ;
-			
+
+#ifdef PCBX9D
+//#ifdef REVPLUS
+//  if (view != e_telemetry)
+	{
+extern uint8_t ImageDisplay ;
+extern uint8_t ImageX ;
+extern uint8_t ImageY ;
+		ImageX = 130 ;
+		ImageY = 32 ;
+		ImageDisplay = 1 ;
+	} 
+#endif
 			g_menuStack[g_menuStackPtr](evt);
 		}
 #ifdef PCBX9D
@@ -6565,14 +7328,15 @@ void perMain( uint32_t no_menu )
 	}
 
 #ifdef PCBSKY
-	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
-	{
-		PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
-	}
-	else
-	{
-		PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
-	}
+	checkTrainerSource() ;
+//	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+//	{
+//		PIOC->PIO_PDR = PIO_PC22 ;						// Disable bit C22 Assign to peripheral
+//	}
+//	else
+//	{
+//		PIOC->PIO_PER = PIO_PC22 ;						// Enable bit C22 as input
+//	}
 #endif
 
 #ifdef PCB9XT
@@ -6592,7 +7356,7 @@ void perMain( uint32_t no_menu )
 		{
 			stop_trainer_ppm() ;
 			trainerActive = 0 ;
-			init_trainer_capture() ;
+			init_trainer_capture(0) ;
 		}
 	}
 #endif
@@ -6640,7 +7404,10 @@ void perMain( uint32_t no_menu )
 #ifdef PCBSKY
 					else if ( ( g_eeGeneral.mAh_alarm ) && ( ( MAh_used + Current_used/3600 ) / 500 >= g_eeGeneral.mAh_alarm ) )
 					{
-						voiceSystemNameNumberAudio( SV_TXBATLOW, V_BATTERY_LOW, AU_TX_BATTERY_LOW ) ;
+						if ( g_eeGeneral.ar9xBoard == 0 )
+						{
+							voiceSystemNameNumberAudio( SV_TXBATLOW, V_BATTERY_LOW, AU_TX_BATTERY_LOW ) ;
+						}
 //            audioVoiceDefevent(AU_TX_BATTERY_LOW, V_BATTERY_LOW | 0x1000 ) ;
 					}
 #endif
@@ -6791,11 +7558,19 @@ void interrupt5ms()
 			AlarmTimer = 100 ;		// Restart timer
 			AlarmCheckFlag += 1 ;	// Flag time to check alarms
 		}
+		if ( --CheckTimer == 0 )
+		{
+			CheckTimer = 2 ;
+			__disable_irq() ;
+			CheckFlag20mS = 1 ;
+			__enable_irq() ;
+		}
+
 		if (--VoiceTimer == 0 )
 		{
 			VoiceTimer = 10 ;		// Restart timer
 			__disable_irq() ;
-			VoiceCheckFlag |= 1 ;	// Flag time to check alarms
+			VoiceCheckFlag100mS |= 1 ;	// Flag time to check alarms
 			__enable_irq() ;
 		}
 		
@@ -6889,12 +7664,12 @@ uint16_t anaIn(uint8_t chan)
 			LastAnaIn[chan] = temp ;
 		}
 	}
-#ifdef PCBX9D
-		if ( chan == 5 )
-		{
-			temp = 2048 - temp ;
-		}
-#endif
+//#ifdef PCBX9D
+//		if ( chan == 5 )
+//		{
+//			temp = 2048 - temp ;
+//		}
+//#endif
   return temp ;
 }
 #endif
@@ -6920,7 +7695,8 @@ uint32_t getAnalogIndex( uint32_t index )
 }
 
 
-uint16_t g_timeAdc ;
+//uint16_t g_timeAdc ;
+
 //void ogetADC_single()
 //{
 //	register uint32_t x ;
@@ -6969,16 +7745,16 @@ void getADC_single()
 	uint16_t temp ;
 	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
-#ifdef PCBSKY
-  uint16_t t0 = getTmr2MHz();
-#endif
+//#ifdef PCBSKY
+//  uint16_t t0 = getTmr2MHz();
+//#endif
 	
 	read_adc() ;
 
-#ifdef PCBSKY
-	t0 = getTmr2MHz() - t0;
-  if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
-#endif
+//#ifdef PCBSKY
+//	t0 = getTmr2MHz() - t0;
+//  if ( t0 > g_timeAdc ) g_timeAdc = t0 ;
+//#endif
 
 	for( x = 0 ; x < numAnalog ; x += 1 )
 	{
@@ -7000,8 +7776,6 @@ void getADC_single()
 //#define OSMP_TOTAL		32768
 //#define OSMP_SHIFT		4
 #endif
-
-//uint16_t AdcDebug[OSMP_SAMPLES] ;
 
 //void ogetADC_osmp()
 //{
@@ -7223,10 +7997,30 @@ uint32_t getFlightPhase()
   for ( i = 0 ; i < MAX_MODES ; i += 1 )
 	{
     PhaseData *phase = &g_model.phaseData[i];
-    if ( phase->swtch && getSwitch00( phase->swtch ) )
+    if ( phase->swtch )
 		{
-      return i + 1 ;
-    }
+    	if ( getSwitch00( phase->swtch ) )
+			{
+    		if ( phase->swtch2 )
+				{
+					if ( getSwitch00( phase->swtch2 ) )
+					{
+						return i + 1 ;
+					}
+				}
+				else
+				{
+					return i + 1 ;
+				}
+    	}
+		}
+		else
+		{
+    	if ( phase->swtch2 && getSwitch00( phase->swtch2 ) )
+			{
+    	  return i + 1 ;
+    	}
+		}
   }
   return 0 ;
 }
@@ -7270,7 +8064,6 @@ int16_t getTrimValue( uint8_t phase, uint8_t idx )
   return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
 }
 
-
 void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 {
 	if ( phase )
@@ -7299,6 +8092,7 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
   STORE_MODELVARS_TRIM ;
 }
 
+uint8_t TrimBits ;
 
 static uint8_t checkTrim(uint8_t event)
 {
@@ -7318,74 +8112,68 @@ static uint8_t checkTrim(uint8_t event)
 			}
 		}
 
-  if( (k>=0) && (k<8) && !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
-  {
-    //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
-    uint8_t idx = k/2;
+  if( (k>=0) && (k<8) )
+	{
+		if ( !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
+  	{
+			TrimBits |= (1 << k ) ;
+			
+  	  //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
+  	  uint8_t idx = k/2;
 		
-// SORT idx for stickmode if FIX_MODE on
-//#ifdef FIX_MODE
-				idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
-//#endif
-		if ( g_eeGeneral.crosstrim )
-		{
-			idx = 3 - idx ;			
-		}
-		uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
-    int16_t tm = getTrimValue( phaseNo, idx ) ;
-    int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
-//#ifdef FIX_MODE
-    bool thrChan = (2 == idx) ;
-//#else
-//		bool thrChan = ((2-(g_eeGeneral.stickMode&1)) == idx);
-//#endif
-		bool thro = (thrChan && (g_model.thrTrim));
-    if(thro) v = 2; // if throttle trim and trim trottle then step=2
-
-		if ( GvarSource[idx] )
-		{
-			v = 1 ;
-		}
-
-    if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
-    int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
-
-    if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0))
-		{
-			setTrimValue( phaseNo, idx, 0 ) ;
-      killEvents(event);
-      audioDefevent(AU_TRIM_MIDDLE);
-    }
-		else if(x>-125 && x<125)
-		{
-			setTrimValue( phaseNo, idx, x ) ;
-//      STORE_MODELVARS_TRIM;
-      //if(event & _MSK_KEY_REPT) warble = true;
-			if(x <= 125 && x >= -125)
+	// SORT idx for stickmode if FIX_MODE on
+			idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
+			if ( g_eeGeneral.crosstrim )
 			{
-//				if(g_eeGeneral.speakerMode == 0){
-//					audioDefevent(AU_TRIM_MOVE);
-//				}
-//				else
-//				{
-					audio.event(AU_TRIM_MOVE,(abs(x)/4)+60);
-//				}
-			}	
-    }
-    else
-    {
-			setTrimValue( phaseNo, idx, (x>0) ? 125 : -125 ) ;
-//      STORE_MODELVARS_TRIM;
-			if(x <= 125 && x >= -125){
-//				if(g_eeGeneral.speakerMode == 0){
-//					audioDefevent(AU_TRIM_MOVE);
-//				} else {
-					audio.event(AU_TRIM_MOVE,(-abs(x)/4)+60);
-//				}
-			}	
-    }
-    return 0;
-  }
+				idx = 3 - idx ;			
+			}
+			if ( TrimInUse[idx] )
+			{
+				uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
+  	  	int16_t tm = getTrimValue( phaseNo, idx ) ;
+  	  	int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
+  	  	bool thrChan = (2 == idx) ;
+				bool thro = (thrChan && (g_model.thrTrim));
+  	  	if(thro) v = 2; // if throttle trim and trim trottle then step=2
+
+				if ( GvarSource[idx] )
+				{
+					v = 1 ;
+				}
+
+  	  	if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
+  	  	int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
+
+  	  	if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0))
+				{
+					setTrimValue( phaseNo, idx, 0 ) ;
+  	  	  killEvents(event);
+  	  	  audioDefevent(AU_TRIM_MIDDLE);
+  	  	}
+				else if(x>-125 && x<125)
+				{
+					setTrimValue( phaseNo, idx, x ) ;
+					if(x <= 125 && x >= -125)
+					{
+						audio.event(AU_TRIM_MOVE,(abs(x)/4)+60);
+					}	
+  	  	}
+  	  	else
+  	  	{
+					setTrimValue( phaseNo, idx, (x>0) ? 125 : -125 ) ;
+					if(x <= 125 && x >= -125)
+					{
+						audio.event(AU_TRIM_MOVE,(-abs(x)/4)+60);
+					}	
+  	  	}
+			}
+  	  return 0;
+  	}
+		else
+		{
+			TrimBits &= ~(1 << k ) ;
+		}
+	}
   return event;
 }
 
@@ -7496,8 +8284,8 @@ uint8_t MaxSwitchIndex = MAX_SKYDRSWITCH ;		// For ON and OFF
 
 #if defined(PCBSKY) || defined(PCB9XT)
 
-uint8_t switchMapTable[80] ;
-uint8_t switchUnMapTable[80] ;
+uint8_t switchMapTable[100] ;
+uint8_t switchUnMapTable[100] ;
 uint8_t MaxSwitchIndex ;		// For ON and OFF
 uint8_t Sw3PosList[8] ;
 uint8_t Sw3PosCount[8] ;
@@ -7601,6 +8389,14 @@ void createSwitchMapping()
 	{
 		*p++ = HSW_Pb4 ;
 	}
+	*p++ = HSW_Ttrmup ;
+	*p++ = HSW_Ttrmdn ;
+	*p++ = HSW_Rtrmup ;
+	*p++ = HSW_Rtrmdn ;
+	*p++ = HSW_Atrmup ;
+	*p++ = HSW_Atrmdn ;
+	*p++ = HSW_Etrmup ;
+	*p++ = HSW_Etrmdn ;
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
 	{
 		*p++ = i ;	// Custom switches
@@ -7609,11 +8405,11 @@ void createSwitchMapping()
 	MaxSwitchIndex = p - switchMapTable ;
 	*++p = MAX_SKYDRSWITCH+1 ;
 	*++p = MAX_SKYDRSWITCH+2 ;
-	*++p = MAX_SKYDRSWITCH+3 ;
-	*++p = MAX_SKYDRSWITCH+4 ;
-	*++p = MAX_SKYDRSWITCH+5 ;
+//	*++p = MAX_SKYDRSWITCH+3 ;
+//	*++p = MAX_SKYDRSWITCH+4 ;
+//	*++p = MAX_SKYDRSWITCH+5 ;
 
-	for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex+5 ; i += 1  )
+	for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex+2 ; i += 1  )
 	{
 		switchUnMapTable[switchMapTable[i]] = i ;
 	}
@@ -7669,16 +8465,19 @@ void create6posTable()
 {
 	uint32_t i ;
 
-
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
-		uint32_t j = i ;
+		uint32_t j ;
+		j = (g_eeGeneral.SixPositionCalibration[i+1] + g_eeGeneral.SixPositionCalibration[i]) / 2 ;
 		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
 		{
-			j = 4 - i ;
+#ifdef PCBSKY
+			j = 4095 - j ;
+#else
+			j = 2047 - j ;		// 9XT is 11 bit
+#endif
 		}
-		SixPositionTable[j] = 
-		(g_eeGeneral.SixPositionCalibration[i+1] + g_eeGeneral.SixPositionCalibration[i]) / 2 ;
+		SixPositionTable[i] = j ;
 	}
 }
 
@@ -7712,9 +8511,9 @@ void createSwitchMapping()
 	*p++ = HSW_SC2 ;
 	
 #ifdef REV9E
-	*p++ = HSW_SF0 ;
-	*p++ = HSW_SF1 ;
-	*p++ = HSW_SF2 ;
+	*p++ = HSW_SD0 ;
+	*p++ = HSW_SD1 ;
+	*p++ = HSW_SD2 ;
 #else
 	*p++ = HSW_SD0 ;
 	*p++ = HSW_SD1 ;
@@ -7727,7 +8526,7 @@ void createSwitchMapping()
 
 //	*p++ = HSW_SF0 ;
 #ifdef REV9E
-	*p++ = HSW_SD2 ;
+	*p++ = HSW_SF2 ;
 #else
 	*p++ = HSW_SF2 ;
 #endif
@@ -7740,37 +8539,56 @@ void createSwitchMapping()
 	*p++ = HSW_SH2 ;
 
 #ifdef REV9E
-	*p++ = HSW_SI0 ;
-	*p++ = HSW_SI1 ;
-	*p++ = HSW_SI2 ;
-	*p++ = HSW_SJ0 ;
-	*p++ = HSW_SJ1 ;
-	*p++ = HSW_SJ2 ;
-	*p++ = HSW_SK0 ;
-	*p++ = HSW_SK1 ;
-	*p++ = HSW_SK2 ;
-	*p++ = HSW_SL0 ;
-	*p++ = HSW_SL1 ;
-	*p++ = HSW_SL2 ;
-	*p++ = HSW_SM0 ;
-	*p++ = HSW_SM1 ;
-	*p++ = HSW_SM2 ;
-	*p++ = HSW_SN0 ;
-	*p++ = HSW_SN1 ;
-	*p++ = HSW_SN2 ;
-	*p++ = HSW_SO0 ;
-	*p++ = HSW_SO1 ;
-	*p++ = HSW_SO2 ;
-	*p++ = HSW_SP0 ;
-	*p++ = HSW_SP1 ;
-	*p++ = HSW_SP2 ;
-	*p++ = HSW_SQ0 ;
-	*p++ = HSW_SQ1 ;
-	*p++ = HSW_SQ2 ;
-	*p++ = HSW_SR0 ;
-	*p++ = HSW_SR1 ;
-	*p++ = HSW_SR2 ;
+	if ( g_eeGeneral.ailsource & 1 )
+	{
+		*p++ = HSW_SI0 ;
+		*p++ = HSW_SI1 ;
+		*p++ = HSW_SI2 ;
+	}
+	if ( g_eeGeneral.ailsource & 2 )
+	{
+		*p++ = HSW_SJ0 ;
+		*p++ = HSW_SJ1 ;
+		*p++ = HSW_SJ2 ;
+	}
+	if ( g_eeGeneral.ailsource & 4 )
+	{
+		*p++ = HSW_SK0 ;
+		*p++ = HSW_SK1 ;
+		*p++ = HSW_SK2 ;
+	}
+//	*p++ = HSW_SL0 ;
+//	*p++ = HSW_SL1 ;
+//	*p++ = HSW_SL2 ;
+//	*p++ = HSW_SM0 ;
+//	*p++ = HSW_SM1 ;
+//	*p++ = HSW_SM2 ;
+//	*p++ = HSW_SN0 ;
+//	*p++ = HSW_SN1 ;
+//	*p++ = HSW_SN2 ;
+//	*p++ = HSW_SO0 ;
+//	*p++ = HSW_SO1 ;
+//	*p++ = HSW_SO2 ;
+//	*p++ = HSW_SP0 ;
+//	*p++ = HSW_SP1 ;
+//	*p++ = HSW_SP2 ;
+//	*p++ = HSW_SQ0 ;
+//	*p++ = HSW_SQ1 ;
+//	*p++ = HSW_SQ2 ;
+//	*p++ = HSW_SR0 ;
+//	*p++ = HSW_SR1 ;
+//	*p++ = HSW_SR2 ;
 #endif	// REV9E
+
+
+	if ( g_eeGeneral.switchMapping & USE_PB1 )
+	{
+		*p++ = HSW_Pb1 ;
+	}
+	if ( g_eeGeneral.switchMapping & USE_PB2 )
+	{
+		*p++ = HSW_Pb2 ;
+	}
 
 	if ( g_eeGeneral.analogMapping & MASK_6POS )
 	{
@@ -7839,7 +8657,7 @@ int8_t switchMap( int8_t x )
 void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)
 {
   int16_t tm = idx1 ;
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 	if ( tm < -HSW_MAX )
 	{
 		tm += 256 ;
@@ -7882,19 +8700,30 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 	{
     lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att);return;
 	}
+	else if ( idx1 == MAX_SKYDRSWITCH + 1 )
+	{
+    lcd_putsAtt(x+FW,y,XPSTR("Fmd"),att) ;
+		return  ;;
+	}
 
 	if ( idx1 < 0 )
 	{
   	lcd_putcAtt(x,y, '!',att);
 	}
-#if defined(PCBSKY) || defined(PCB9XT)
 	int8_t z ;
 	z = idx1 ;
 	if ( z < 0 )
 	{
 		z = -idx1 ;			
 	}
+	if ( ( z <= HSW_Ttrmup ) && ( z >= HSW_Etrmdn ) )
+	{
+		z -= HSW_Etrmdn ;
+	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtdEtuAtdAtuRtdRtuTtdTtu"),z,att) ;
+		return ;
+	}
 	z -= 1 ;
+#if defined(PCBSKY) || defined(PCB9XT)
 //		z *= 3 ;
 	if ( z > MAX_SKYDRSWITCH )
 	{
@@ -7904,13 +8733,6 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 #endif
 
 #ifdef PCBX9D
-	int8_t z ;
-	z = idx1 ;
-	if ( z < 0 )
-	{
-		z = -idx1 ;			
-	}
-	z -= 1 ;
 //		z *= 3 ;
 	if ( z > MAX_SKYDRSWITCH )
 	{
@@ -8009,7 +8831,7 @@ int16_t getValue(uint8_t i)
 		x = g_ppmIns[i-PPM_BASE] ;
 		if(i<PPM_BASE+4)
 		{
-			x -= g_eeGeneral.trainer.calib[i-PPM_BASE] ;
+			x -= g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i-PPM_BASE].calib ;
 		}
 		return x*2;
 	}
@@ -8238,6 +9060,14 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 	case (CS_LATCH) :
   case (CS_FLIP) :
     ret_value = Last_switch[cs_index] & 1 ;
+  break ;
+  case (CS_BIT_AND) :
+	{	
+    x = getValue(cs.v1-1);
+		y = (uint8_t) cs.v2 ;
+		y |= cs.res << 8 ;
+    ret_value = ( x & y ) != 0 ;
+	}
   break ;
   default:
       ret_value = false;
@@ -8686,7 +9516,8 @@ uint8_t checkThrottlePosition()
 {
   uint8_t thrchn=(2-(g_eeGeneral.stickMode&1));//stickMode=0123 -> thr=2121
 	int16_t v = scaleAnalog( anaIn(thrchn), thrchn ) ;
-	
+//	lcd_outhex4( 90, 2*FH, v ) ;
+//  refreshDisplay();
 //	if ( g_model.throttleIdle == 2 )
 //	{
 //  	if(v >= RESX - THRCHK_DEADBAND  )
@@ -8744,7 +9575,16 @@ void checkTHR()
 	}
 
   // first - display warning
-  alertMessages( PSTR(STR_THR_NOT_IDLE), PSTR(STR_RST_THROTTLE) ) ;
+
+
+	lcd_clear();
+  lcd_img( 1, 0, HandImage,0,0 ) ;
+  lcd_putsAtt(36,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
+  lcd_putsAtt(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+	lcd_puts_P(0,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
+	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
+	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+//  alertMessages( PSTR(STR_THR_NOT_IDLE), PSTR(STR_RST_THROTTLE) ) ;
   refreshDisplay();
   clearKeyEvents();
 	putSystemVoice( SV_TH_WARN, V_THR_WARN ) ;
@@ -8804,6 +9644,7 @@ void checkCustom()
 		idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
 	}
 
+
 	
 #ifndef SIMU
   getADC_osmp() ;
@@ -8818,6 +9659,9 @@ void checkCustom()
   clearKeyEvents();
 
   timer = 0 ;
+	
+	putSystemVoice( SV_CUSTOM_WARN, V_CUSTOM_WARN ) ;
+
   while (1)
   {
 //		static uint32_t counter = 0 ;
@@ -8842,7 +9686,7 @@ void checkCustom()
 			timer = 0 ;
 		}
 	  alertMessages( XPSTR("Custom Check"), XPSTR("Set Control") ) ;
-		putsChnRaw( 9*FW, 2*FH, pdata->source, 0 ) ;
+		putsChnRaw( 9*FW, 2*FH, unmapPots( pdata->source ), 0 ) ;
 		lcd_outdezAtt( 5*FW, 3*FH, pdata->min, 0) ;
 		lcd_outdezAtt( 11*FW, 3*FH, value, 0) ;
 		lcd_outdezAtt( 17*FW, 3*FH, pdata->max, 0) ;
@@ -8967,7 +9811,8 @@ void putWarnSwitch( uint8_t x, uint8_t idx )
 	{
 		idx = oneSwitchText( idx+1, getCurrentSwitchStates() ) ;
 	}
-  lcd_putsAttIdx( x, 2*FH, PSTR(SWITCHES_STR), idx, 0) ;
+  lcd_putsAttIdx( x, 5*FH, PSTR(SWITCHES_STR), idx, 0) ;
+//  lcd_putsAttIdx( x, 2*FH, PSTR(SWITCHES_STR), idx, 0) ;
 }
 
 uint16_t getCurrentSwitchStates()
@@ -9061,12 +9906,17 @@ void checkSwitches()
         //first row - THR, GEA, AIL, ELE, ID0/1/2
         uint16_t x = i ^ warningStates ;
 
-		    alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
-//				lcd_outhex4( 0, 0, g_model.modelswitchWarningStates ) ;
-//				lcd_outhex4( 25, 0, i ) ;
-//				lcd_outhex4( 50, 0, warningStates ) ;
-//				lcd_outhex4( 75, 0, AnalogSwitches ) ;
-//        lcd_putsnAtt(0*FW, 2*FH, PSTR("                      "), 22, 0);
+  			lcd_clear();
+		    lcd_img( 1, 0, HandImage,0,0 ) ;
+			  lcd_putsAtt(36,0*FH,PSTR(STR_SWITCH),DBLSIZE|CONDENSED);
+  			lcd_putsAtt(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+  			lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+//				alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
+////				lcd_outhex4( 0, 0, g_model.modelswitchWarningStates ) ;
+////				lcd_outhex4( 25, 0, i ) ;
+////				lcd_outhex4( 50, 0, warningStates ) ;
+////				lcd_outhex4( 75, 0, AnalogSwitches ) ;
+////        lcd_putsnAtt(0*FW, 2*FH, PSTR("                      "), 22, 0);
 
         if(x & SWP_THRB)
             putWarnSwitch(2 + 0*FW, 0 );
@@ -9113,15 +9963,22 @@ void checkSwitches()
 			return ;
 		}
 #endif
- 		alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
+		lcd_clear();
+    lcd_img( 1, 0, HandImage,0,0 ) ;
+	  lcd_putsAtt(32,0*FH,XPSTR("SWITCH"),DBLSIZE);
+	  lcd_putsAtt(32,2*FH,XPSTR("WARNING"),DBLSIZE);
+		lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+// 		alertMessages( PSTR(STR_SWITCH_WARN), PSTR(STR_RESET_SWITCHES) ) ;
  		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
 		{
  		  uint16_t mask = ( 0x03 << (i*2) ) ;
  		  uint8_t attr = ((warningStates & mask) == (ss & mask)) ? 0 : INVERS ;
 			if ( ~g_model.modelswitchWarningDisables & mask )
 			{
-  		  lcd_putcAtt( 3*FW+i*(2*FW+2), 2*FH, 'A'+i, attr ) ;
-				lcd_putcAtt( 4*FW+i*(2*FW+2), 2*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
+  		  lcd_putcAtt( 3*FW+i*(2*FW+2), 5*FH, 'A'+i, attr ) ;
+				lcd_putcAtt( 4*FW+i*(2*FW+2), 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
+//  		  lcd_putcAtt( 3*FW+i*(2*FW+2), 2*FH, 'A'+i, attr ) ;
+//				lcd_putcAtt( 4*FW+i*(2*FW+2), 2*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}
 		}
 #endif
@@ -9140,6 +9997,14 @@ void checkSwitches()
 #endif
   }
 }
+
+#ifdef SLAVE_RESET
+void panicDebugMenu()
+{
+	popMenu(true) ; //return to uppermost, beeps itself
+	pushMenu(menuProcPanic) ;
+}
+#endif
 
 
 MenuFuncP lastPopMenu()
@@ -9230,18 +10095,6 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x )
 	return 0 ;
 }
 
-uint8_t IS_THROTTLE( uint8_t x )
-{
-//#ifdef FIX_MODE
-	return x == 2 ;
-//#else
-//	uint8_t y ;
-//	y = g_eeGeneral.stickMode&1 ;
-//	y = 2 - y ;
-//	return (((y) == x) && (x<4)) ;
-//#endif
-}
-
 void checkXyCurve()
 {
 	if ( g_model.curvexy[9] == 0 )
@@ -9251,6 +10104,15 @@ void checkXyCurve()
 		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
 		{
 			g_model.curvexy[i] = j ;
+		}
+	}
+	if ( g_model.curve2xy[9] == 0 )
+	{
+		uint32_t i ;
+		int8_t j = -100 ;
+		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+		{
+			g_model.curve2xy[i] = j ;
 		}
 	}
 }

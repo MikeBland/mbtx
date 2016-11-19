@@ -77,31 +77,30 @@ endif
 #CPPSRC = $(TARGET).cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
 
 ifeq ($(SLAVE), YES)
-CPPSRC = slave.cpp lcdslave.cpp
+ CPPSRC = slave.cpp lcdSlave.cpp
 else
-CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+ CPPSRC = er9x.cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
+ ifeq ($(EXT), JETI)
+  CPPSRC += jeti.cpp
+ endif
+
+ ifeq ($(EXT), FRSKY)
+  CPPSRC += frsky.cpp
+ endif
+
+ ifeq ($(EXT), ARDUPILOT)
+  CPPSRC += ardupilot.cpp
+ endif
+
+ ifeq ($(EXT), NMEA)
+  CPPSRC += nmea.cpp
+ endif
 endif
 
 ifeq ($(BOOT),YES)
  CPPSRC += optiboot.cpp
 endif
 
-
-ifeq ($(EXT), JETI)
- CPPSRC += jeti.cpp
-endif
-
-ifeq ($(EXT), FRSKY)
- CPPSRC += frsky.cpp
-endif
-
-ifeq ($(EXT), ARDUPILOT)
- CPPSRC += ardupilot.cpp
-endif
-
-ifeq ($(EXT), NMEA)
- CPPSRC += nmea.cpp
-endif
 
 #ifeq ($(CPU), 2561)
 #ifneq ($(SLAVE), YES)
@@ -485,6 +484,8 @@ LDFLAGS += -Wl,--section-start=.boottext=0x1Fd00 -Wl,--section-start=.bootjump=0
 else
  ifneq ($(CPU), 2561)
 LDFLAGS += -Wl,--section-start=.boottext=0xFe00 -Wl,--section-start=.bootjump=0xFFFC
+ else
+LDFLAGS += -Wl,--section-start=.boottext=0x3Fd00 -Wl,--section-start=.bootjump=0x3FFFC
  endif
 endif
 
@@ -581,6 +582,7 @@ WINSHELL = cmd
 XBM2LBM = ruby ../util/xbm2lbm.rb
 AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
+PROV=$(shell sh -c "cat prov.txt")
 
 
 # Define Messages
@@ -656,9 +658,9 @@ stamp:
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-er9x.h
 	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-er9x.h
 ifeq ($(V2), YES)
-	@echo "#define SVN_VERS \"er9xV2-r$(REV)\"" >> stamp-er9x.h
+	@echo "#define SVN_VERS \"er9xV2-$(PROV)r$(REV)\"" >> stamp-er9x.h
 else
-	@echo "#define SVN_VERS \"er9x-r$(REV)\"" >> stamp-er9x.h
+	@echo "#define SVN_VERS \"er9x-$(PROV)r$(REV)\"" >> stamp-er9x.h
 endif
 	@echo "#define MOD_VERS \"$(EXT_MOD) $(HT_MOD) $(BEEPER_MOD) $(CPU_MOD) $(SC_MOD) \"" >> stamp-er9x.h
 #	@cat stamp-er9x.h

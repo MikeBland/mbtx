@@ -96,3 +96,9 @@ void rtcInit()
 //  rtc_gettime(&utm);
 //  g_rtcTime = gmktime(&utm);
 }
+
+void rtcSetCal( uint32_t RTC_CalibSign, uint32_t Value )
+{
+	RTC_CoarseCalibConfig( RTC_CalibSign, Value) ;
+}
+

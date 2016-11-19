@@ -93,6 +93,8 @@
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Uwaga1""Uwaga2""Cheap ""Dzwon ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Syrena""AlmClk""Ratata""Tick  ""Wibr 1""Wibr 2""Wibr 3"
 #define ISTR_SWITCH_WARN	   "SPRAWD\317 PRZE\306\301CZNIKI"
+//#define ISTR_SWITCH				   "PRZELACZNIKI"
+#define ISTR_WARNING			    "SPRAWDZ"
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          "Stoper"
 
@@ -125,9 +127,15 @@
 #define ISTR_CHANS_EXTRA   "\004P4  P5  P6  P7  "
 #endif
 #ifdef PCBX9D
+ #ifdef REV9E
 #define ISTR_CHANS_GV	     "\004P1  P2  SL  P\311\305 Ca\305yCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW	   "\004P1  P2  SL  P\311\305 Ca\305yCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
+#define ISTR_CHANS_EXTRA   "\004SR  S1  S2  P3  P4  "
+ #else
+#define ISTR_CHANS_GV	     "\004S1  S2  SL  P\311\305 Ca\305yCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
+#define ISTR_CHANS_RAW	   "\004S1  S2  SL  P\311\305 Ca\305yCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
 #define ISTR_CHANS_EXTRA   "\004SR  P3  P4  P5  P6  "
+ #endif
 #endif
 
 #define ISTR_CH	           "CH"
@@ -156,13 +164,13 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOK"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBST"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"
 #define ISTR_HYPH_INV       FWx18"\001""\003---INV"
 #define ISTR_VERSION        "WERSJA"
-#define ISTR_TRAINER        "TRENER"
+#define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Drugi" 
 #define ISTR_MENU_DONE      "  [MENU]-> DALEJ"
 #define ISTR_CURVES         "KRZYWE"
@@ -175,7 +183,7 @@
 #define ISTR_COPY_TRIM      "Kopi\311j TRYM [MENU]"
 #define ISTR_TELEMETRY      "TELEMETRIA"
 #define ISTR_USR_PROTO      "ProtUrzyt"
-#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHub"
+#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk "
 #define ISTR_MET_IMP        "\003MetAng"
 #define ISTR_A_CHANNEL      "A  kana\305"
 #define ISTR_ALRM           "alrm"
@@ -194,11 +202,11 @@
 #define ISTR_2SENSITIVITY   "\001Czu\305o\312\302  "
 #define ISTR_GLOBAL_VARS    "ODCHYLENIE"
 #if defined(PCBSKY) || defined(PCB9XT)
-#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 P3 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24RtsEtsTtsAts"
+#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 P3 c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24"
 #define ISTR_EXTRA_SOURCE   ""
 #endif
 #ifdef PCBX9D
-#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 SL SR c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24RtsEtsTtsAts"
+#define ISTR_GV_SOURCE      "\003---RtmEtmTtmAtmRENSk Sw GazLotP1 P2 SL SR c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24SC1SC2SC3SC4SC5SC6SC7SC8O1 O2 O3 O4 O5 O6 O7 O8 O9 O10O11O12O13O14O15O16O17O18O19O20O21O22O23O24"
 #define ISTR_EXTRA_SOURCE   "\003WejP3 P4 P5 P6 "
 #endif
 #define ISTR_TEMPLATES      "SZABLONY"
@@ -236,7 +244,7 @@
 #define ISTR_YES_NO         "\003TAK\013NIE"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "USU\310 MIX?"
-#define ISTR_MIX_POPUP      "EDYCJA\0ZAWARTO\313\303\0KOPIUJ\0PRZENIE\313\0USU\310\0KASUJ WSZYSTKO"
+#define ISTR_MIX_POPUP      "EDYCJA\0ZAWARTO\313\303\0KOPIUJ\0PRZENIE\313\0USU\310\0KASUJ WSZYSTKO\0TEMPLATES"
 #define ISTR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -257,8 +265,8 @@
 #define ISTR_SETUP          "Ustawienia modelu"
 #define ISTR_NAME           "Nazwa"
 #define ISTR_VOICE_INDEX    "G\305os \021MENU"
-#define ISTR_TRIGGERA       "Spust  "
-#define ISTR_TRIGGERB       "Spust B"
+#define ISTR_TRIGGERA       "Stan   "
+#define ISTR_TRIGGERB       "Spust  "
 //ISTR_COUNT_DOWN_UP indexed, 10 chars each
 #define ISTR_COUNT_DOWN_UP  "\012Licz w d\311\305Licz w g\311r"
 #define ISTR_T_TRIM         "Trymer Gazu"
@@ -276,7 +284,7 @@
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US          "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC  " PPM FrLen\015mSek"
+#define ISTR_PPMFRAME_MSEC  " PPM FrLen\016mSek"
 #define ISTR_SEND_RX_NUM    " Wy\312lij Rx Numer [MENU]"
 #define ISTR_DSM_TYPE       " DSM Typ "
 #define ISTR_PPM_1ST_CHAN   " 1-y Kan."
@@ -304,7 +312,7 @@
 #define ISTR_AIL_DIRECTION  "AIL_DIRECTION"
 #define ISTR_COL_DIRECTION  "COL_DIRECTION"
 //#define ISTR_MODEL_POPUP    "WYBIERZ\0KOPIUJ\0ZOBACZ\0USU\310"
-#define ISTR_MODEL_POPUP    "EDYTUJ\0WYBIERZ\0KOPIUJ\0PRZENIE\313\0USU\310\0KOPIA\0PRZYWR\311\303"
+#define ISTR_MODEL_POPUP    "EDYTUJ\0WYBIERZ\0KOPIUJ\0PRZENIE\313\0USU\310\0KOPIA\0PRZYWR\311\303\0REPLACE"
 #define ISTR_MODELSEL       "Wyb\311r modelu"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE        "\011free"
@@ -375,7 +383,7 @@
 #define ISWITCHES_STR				 "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"\
 														 "SI\200SI-SI\201SJ\200SJ-SJ\201SK\200SK-SK\201SL\200SL-SL\201SM\200SM-SM\201SN\200SN-SN\201SO\200SO-SO\201SP\200SP-SP\201SQ\200SQ-SQ\201SR\200SR-SR\201"
 #else
-#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
 #endif	// REV9E
 
 #ifdef REV9E
@@ -390,7 +398,7 @@
 // c17-c24 added for timer mode A display
 #define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
 // CSWITCH_STR indexed 7 chars each
-#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val"
+#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  "
 
 #define ISWASH_TYPE_STR     FWx17"\004""\004----""120 ""120X""140 ""90  "
 
@@ -416,11 +424,11 @@
 #define ISTR_ST_CARD_STAT   "STATYST. KARTY PAM."
 #define ISTR_4_READY        "\004Gotowy"
 #define ISTR_NOT            "NIE"
-#define ISTR_BOOT_REASON    "Spos\311 Uruchomienia"
+#define ISTR_BOOT_REASON    "Spos\311b Uruchom.  "
 #define ISTR_6_WATCHDOG     "\006PRZYCZYNA"
 #define ISTR_5_UNEXPECTED   "\002NIEWYJA\31NIONY"
 #define ISTR_6_SHUTDOWN     "\006ZAMYKANIE"
-#define ISTR_6_POWER_ON     "\004ZA\306\301CZENIE"
+#define ISTR_6_POWER_ON     "\004 ZA\306\301CZENIE"
 // ISTR_MONTHS indexed 3 chars each
 #define ISTR_MONTHS         "\003XxxStyLutMarKwiMajCzeLipSieWrzPa\316LisGru"
 #define ISTR_MENU_REFRESH   "[MENU] od\312wie\314"
@@ -465,7 +473,11 @@
 #define ISTR_RANGE_RSSI			"Sprawd\316 zakres RSSI:"
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"G\305o\312no\312\302"
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#ifdef ASSAN
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
+#else
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiXfire"
+#endif
 #define ISTR_TYPE						" Typ"
 #define ISTR_COUNTRY				" Kraj"
 #define ISTR_SP_FAILSAFE		" Failsafe"
@@ -473,7 +485,7 @@
 #define ISTR_FOLLOW					"\313LED\316"
 #define ISTR_PPM2_CHANNELS	"PPM2 Kana\305y"
 #define ISTR_FILTER_ADC			"Filtr ADC"
-#define ISTR_SCROLLING			"Przes\311wanie"
+#define ISTR_SCROLLING			"Przesuwanie"
 #define ISTR_ALERT_YEL			"Alert [\315\311\305]"
 #define ISTR_ALERT_ORG			"Alert [Pom]"
 #define ISTR_ALERT_RED			"Alert [Cze]"
@@ -486,7 +498,11 @@
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Krytyczne"
 #define ISTR_BT_TRAINER		  "BT jako trener"
-#define ISTR_MULTI_TYPE     "Protok\311\305\037Typ \037Autobind\037Zasilanie"
+#define ISTR_MULTI_TEXT     "Protok\311\305\037Typ \037Autobind\037Zasilanie"
+#define ISTR_MULTI_PROTO    "Protok\311\305"
+#define ISTR_MULTI_TYPE	    "Typ"
+#define ISTR_MULTI_AUTO	    "Autobind"
+#define ISTR_MULTI_POWER    "Zasilanie\014Rate\023mS"
 #define ISTR_MULTI_OPTION   "\014Opcje "
 
 #define ISTR_Display		     "Ekran" 
@@ -502,7 +518,6 @@
 #define ISTR_DateTime			   "Data-Czas" 
 #define ISTR_DiagSwtch		   "DiagPrze\305"  
 #define ISTR_DiagAna		     "DiagDr\300\314k" 
-#define ISTR_Eeprom			     "EEPROM" 
 
 #define ISTR_Mixer		      "Mixer" 
 #define ISTR_Cswitches		  "Prze\305 Log." 
@@ -515,10 +530,27 @@
 #define ISTR_Globals		    "Globalne" 
 #define ISTR_Timer		      "Stoper" 
 #define ISTR_Modes			 		"Tryby Lotu" 
-#define ISTR_Voice		      "Dzwi\304k" 
+#define ISTR_Voice		      "D\316wi\304k" 
 #define ISTR_Protocol			  "Protok\311\305" 
 #define ISTR_Safety					"Wy\305 Bezp."
+#define ISTR_Eeprom			     "EEPROM" 
 
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help"
+#define ISTR_ROTATE_SCREEN			"Rotate Screen"
+#define ISTR_REVERSE_SCREEN			"Reverse Screen"
+#define ISTR_MENU_ONLY_EDIT			"MENU only Edit"
+#define ISTR_Voice_Alarm				"Voice Alarm"
+#define ISTR_Voice_Alarms				"Voice Alarms"
+#define ISTR_CUSTOM_CHECK				"Custom Check"
+#define ISTR_CUSTOM_STK_NAMES		"CustomStkNames"
+#define ISTR_HAPTIC							"Haptic"
+#define ISTR_RESET_SWITCH				"Reset Switch"
+#define ISTR_THROTTLE_OPEN			"Throttle Open"
+#define ISTR_THR_DEFAULT				"Thr. Default"
+#define ISTR_TOTAL_TIME					"Total Time"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates"
+
+#define ISTR_SHUT_DOWN					"Shutting Down"
 
 //"Aktualne \317r\311d\305o"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "

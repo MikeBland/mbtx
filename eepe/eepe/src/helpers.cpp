@@ -78,10 +78,19 @@ QString TelemItems[] = {
 	"RTC ",
 #endif
 	"TmOK"  // 41 or 46(SKY)
+#ifdef SKY
+	,"Aspd"
+	,"Cel1"
+	,"Cel2"
+	,"Cel3"
+	,"Cel4"
+	,"Cel5"
+	,"Cel6"
+#endif
 } ;
 
 #ifdef SKY
-#define NUM_TELEM_ITEMS	47
+#define NUM_TELEM_ITEMS	54
 #else
 #define NUM_TELEM_ITEMS	42
 #endif
@@ -155,7 +164,11 @@ QString GvarItems[] = {
 	"O21",
 	"O22",
 	"O23",
-	"O24"
+	"O24",
+	"Rts",
+	"Ets",
+	"Tts",
+	"Ats"
 } ;
 
 QString ExtraGvarItems[] = {
@@ -244,10 +257,10 @@ uint8_t Sw3PosCount[8] ;
 void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 {
   uint16_t map = pgeneral->switchMapping ;
-	int x = ( (type == 1 ) || ( type == 2 ) ) ? 1 : 0 ;
+	int x = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
 	uint8_t *p = switchMapTable[x] ;
 	*p++ = 0 ;
-	if ( ( (type == 1 ) || ( type == 2 ) ) )
+	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
 	{
 		*p++ = HSW_SA0 ;
 		*p++ = HSW_SA1 ;
@@ -452,7 +465,7 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 
 int8_t switchUnMap( int8_t x, int type )
 {
-	int y = ( (type == 1 ) || ( type == 2 ) ) ? 1 : 0 ;
+	int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -469,7 +482,7 @@ int8_t switchUnMap( int8_t x, int type )
 
 int8_t switchMap( int8_t x, int type )
 {
-  int y = ( (type == 1 ) || ( type == 2 ) ) ? 1 : 0 ;
+  int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -633,11 +646,11 @@ void populateAnaVolumeCB( QComboBox *b, int value )
   for(int i=0; i<8; i++)
 	{
 #ifdef SKY
-    if ( ( (type == 1 ) || ( type == 2 ) ) && (i == 3) )
+    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) && (i == 3) )
 		{
     	b->addItem( "SL " );
 		}
-		else if ( ( (type == 1 ) || ( type == 2 ) ) && (i == 4) )
+		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) && (i == 4) )
 		{
     	b->addItem( "SR " );
 		}
@@ -662,22 +675,72 @@ void populateHardwareSwitch(QComboBox *b, int value )
 
 
 #ifdef SKY
-void populateGvarCB(QComboBox *b, int value, int type)
+QString gvarSourceString( int index, int type, uint32_t extraPots)
+{
+	int limit = 36+8+24+4 ;
+	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
+	{
+		limit = 37+8+24+4 ;
+	}
+	if ( index <= limit )
+	{
+		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )	// Taranis
+		{
+			if ( index == 12 )
+			{
+    		return "S1  " ;
+			}
+			if ( index == 13 )
+			{
+    		return "S2  " ;
+			}
+			if ( index > 13 )
+			{
+				index -= 1 ;
+			}
+		}
+    return GvarItems[index] ;
+	}
+	if ( extraPots )
+	{
+		index -= limit ;
+		switch ( index )
+		{
+			case 0 :
+				return "P4" ;
+			break ;
+      case 1 :
+				return "P5" ;
+			break ;
+      case 2 :
+				return "P6" ;
+			break ;
+      case 3 :
+				return "P7" ;
+			break ;
+		}
+	}
+	return "----" ;
+}
+#endif
+
+#ifdef SKY
+void populateGvarCB(QComboBox *b, int value, int type, uint32_t extraPots)
 #else
 void populateGvarCB(QComboBox *b, int value, int type)
 #endif
 {
     b->clear();
 #ifdef SKY
-		int limit = 36+8+24 ;
-		if ( ( (type == 1 ) || ( type == 2 ) ) )
+		int limit = 36+8+24+4 ;
+		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
 		{
-			limit = 37+8+24 ;
+			limit = 37+8+24+4 ;
 		}
     for(int i=0; i<=limit; i++)
 		{
 			int idx = i ;
-				if ( ( (type == 1 ) || ( type == 2 ) ) )	// Taranis
+				if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )	// Taranis
 				{
 					if ( idx == 12 )
 					{
@@ -695,6 +758,22 @@ void populateGvarCB(QComboBox *b, int value, int type)
 					}
 				}
         b->addItem(GvarItems[idx]);
+		}
+		if ( extraPots )
+		{
+      b->addItem("P4") ;
+			if ( extraPots > 1 )
+			{
+      	b->addItem("P5") ;
+			}
+			if ( extraPots > 2 )
+			{
+      	b->addItem("P6") ;
+			}
+			if ( extraPots > 3 )
+			{
+      	b->addItem("P7") ;
+			}
 		}
 //    for(int i=0; i<=11; i++)
 //        b->addItem(ExtraGvarItems[i]);
@@ -895,6 +974,28 @@ int16_t m_to_ft( int16_t metres )
 //	"Gvr6",
 //	"Gvr7",
 #define FR_WATT	32
+#define FR_RXV			33
+#define FR_COURSE   34
+#define FR_A3       35
+#define FR_A4       36
+#define V_SC1       37
+#define V_SC2       38
+#define V_SC3       39
+#define V_SC4       40
+#define V_SC5       41
+#define V_SC6       42
+#define V_SC7       43
+#define V_SC8       44
+#define V_RTC       45
+#define TMOK        46
+#define FR_AIRSPEED 47
+#define CELL_1      48
+#define CELL_2      49
+#define CELL_3      50
+#define CELL_4      51
+#define CELL_5      52
+#define CELL_6      53
+
 
 
 // This routine converts an 8 bit value for custom switch use
@@ -909,6 +1010,11 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
 	result = value + 125 ;
   switch (index)
 	{
+#ifdef SKY
+    case V_RTC :
+      result *= 12 ;
+    break;
+#endif
     case TIMER1 :	// Timer1
     case TIMER2 :	// Timer2
       result *= 10 ;
@@ -950,6 +1056,14 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
       result *= 50;
     break;
 
+#ifdef SKY
+		case CELL_1:
+		case CELL_2:
+		case CELL_3:
+		case CELL_4:
+		case CELL_5:
+		case CELL_6:
+#endif
 		case 15:	// Cell volts
       result *= 2;
 		break ;
@@ -957,7 +1071,7 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
 		case 20 :	// FAS100 volts
       result *= 2;
 		break ;
-    case 32:
+    case FR_WATT:
       result *= 8 ;
     break;
 		case FR_VSPD :
@@ -1103,6 +1217,14 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
       unit = 'A' ;
 		break ;
 
+#ifdef SKY
+		case CELL_1:
+		case CELL_2:
+		case CELL_3:
+		case CELL_4:
+		case CELL_5:
+		case CELL_6:
+#endif
 		case 15:
 			att |= PREC2 ;
       unit = 'v' ;
@@ -1268,7 +1390,7 @@ QString getSWName(int val, int extra )
 //	}
 //	else
 //	{
-	if ( (eepromType == 1 ) || ( eepromType == 2 ) )
+//	if ( (eepromType == 1 ) || ( eepromType == 2 ) )
 	{
 		int mval = switchUnMap( val, eepromType ) ;
 #else
@@ -1277,6 +1399,7 @@ QString getSWName(int val, int extra )
     if(mval == limit) return "ON";
   	if(mval == -limit) return "OFF";
 #ifdef SKY
+    if(mval == limit+1) return "Fmd";
   }
 //  }
 #endif
@@ -1997,7 +2120,7 @@ void populateCurvesCB(QComboBox *b, int value)
   QString str = CURV_STR;
   j = (str.length()/3)-1 ;
 #ifdef SKY
-	j -= 8 ;
+	j -= 5 ;
 #endif
 
     b->clear();
@@ -2006,11 +2129,11 @@ void populateCurvesCB(QComboBox *b, int value)
 			b->addItem(str.mid(i*3,3).replace("c","!Curve "));
 		}
     for(int i=0; i<=j; i++)  b->addItem(str.mid(i*3,3).replace("c","Curve "));
-//#ifdef SKY    
-//		b->setCurrentIndex(value+24);
-//#else
+#ifdef SKY    
+		b->setCurrentIndex(value+19);
+#else
     b->setCurrentIndex(value+16);
-//#endif
+#endif
     b->setMaxVisibleItems(10);
 }
 
@@ -2126,9 +2249,6 @@ QString getTimerMode(int tm, int eepromType )
 
 }
 
-
-
-
 #define MODI_STR  "Rud Ele Thr Ail Rud Thr Ele Ail Ail Ele Thr Rud Ail Thr Ele Rud "
 #ifdef SKY    
 #define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
@@ -2137,7 +2257,7 @@ QString getTimerMode(int tm, int eepromType )
 #endif
 
 #ifdef SKY    
-QString getSourceStr(int stickMode, int idx, int modelVersion, int type )
+QString getSourceStr(int stickMode, int idx, int modelVersion, int type, uint32_t extraPots )
 #else
 QString getSourceStr(int stickMode, int idx, int modelVersion )
 #endif
@@ -2157,7 +2277,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
     {
         QString str = SRCP_STR;
 #ifdef SKY
-        if ( ( type == 1 ) || ( type == 2 ) )	// Taranis
+        if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 				{
 					if ( idx == 7 )
 					{
@@ -2168,7 +2288,22 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						return "SR  " ;
 					}
 //					int offset = 1 ;
-					if ( type == 2 )	// Plus
+					if ( type == RADIO_TYPE_X9E )
+					{
+						if ( idx == 9 )
+						{
+							return "S1  " ;
+						}
+						if ( idx == 10 )
+						{
+							return "S2  " ;
+						}
+						if ( idx > 10 )
+						{
+              idx -= 3 ;
+						}
+					}
+					else if ( type == RADIO_TYPE_TPLUS )	// Plus
 					{
 						if ( idx == 9 )
 						{
@@ -2184,6 +2319,39 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						if ( idx > 8 )
 						{
 							idx -= 1 ;
+						}
+					}
+				}
+				else if ( type == RADIO_TYPE_SKY )
+				{
+					if ( extraPots )
+					{
+						switch ( idx )
+						{
+							case 8 :
+							return "P4  " ;
+							case 9 :
+								if ( extraPots > 1 )
+								{
+									return "P5  " ;
+								}
+							break ;
+							case 10 :
+								if ( extraPots > 2 )
+								{
+									return "P6  " ;
+								}
+							break ;
+							case 11 :
+								if ( extraPots > 1 )
+								{
+									return "P7  " ;
+								}
+							break ;
+						}
+						if ( idx > 7 )
+						{
+							idx -= extraPots ;
 						}
 					}
 				}
@@ -2204,7 +2372,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 }
 
 #ifdef SKY    
-void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion, int type)
+void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion, int type, uint32_t extraPots )
 #else
 void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion)
 #endif
@@ -2218,15 +2386,23 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 
 #ifdef SKY    
 		int limit = 45 ;
-		if ( ( type == 1 ) || ( type == 2 ) )
+    if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 		{
 			limit = 46 ;
-			if ( type == 2 )
+			if ( type == RADIO_TYPE_TPLUS )
 			{
 				limit = 47 ;
 			}
+			if ( type == RADIO_TYPE_X9E )
+			{
+				limit = 48 ;
+			}
 		}
-    for(int i=0; i<limit; i++) b->addItem(getSourceStr(stickMode,i,modelVersion, type));
+		if ( type == RADIO_TYPE_SKY )
+		{
+			limit += extraPots ;
+		}
+    for(int i=0; i<limit; i++) b->addItem(getSourceStr(stickMode,i,modelVersion, type, extraPots));
 #else
     for(int i=0; i<37; i++) b->addItem(getSourceStr(stickMode,i));
 #endif
@@ -2236,7 +2412,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
     	    b->addItem(TelemItems[i]);
 		}
 #ifdef SKY    
-		if ( ( type == 1 ) || ( type == 2 ) )
+		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -2250,15 +2426,29 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				}
 			}
 		}
+		if ( type == RADIO_TYPE_SKY )
+		{
+			if ( value >= EXTRA_POTS_POSITION )
+			{
+				if ( value >= EXTRA_POTS_START )
+				{
+					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+				}
+				else
+				{
+					value += extraPots ;
+				}
+			}
+		}
 #endif
     b->setCurrentIndex(value);
     b->setMaxVisibleItems(10);
 }
 
 #ifdef SKY    
-uint32_t decodePots( uint32_t value, int type )
+uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
-	if ( ( type == 1 ) || ( type == 2 ) )
+	if ( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) )
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{
@@ -2269,6 +2459,20 @@ uint32_t decodePots( uint32_t value, int type )
 			else
 			{
         value -= type == 2 ? 2 : NUM_EXTRA_POTS ;
+			}
+		}
+	}
+	if ( type == RADIO_TYPE_SKY )
+	{
+		if ( value >= EXTRA_POTS_POSITION )
+		{
+      if ( value < EXTRA_POTS_POSITION + extraPots )
+			{
+				value += EXTRA_POTS_START - EXTRA_POTS_POSITION ;
+			}
+			else
+			{
+        value -= extraPots ;
 			}
 		}
 	}
@@ -2782,7 +2986,7 @@ void populateCustomAlarmCB( QComboBox *b, int type )
   b->addItem("Ail") ;
   b->addItem("P1") ;
   b->addItem("P2") ;
-	if ( ( (type == 1 ) || ( type == 2 ) ) )	// Taranis
+	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )	// Taranis
 	{
 	  b->addItem("SL") ;
   	b->addItem("SR") ;
@@ -2874,7 +3078,7 @@ QString FindErskyPath( int type )
 					{
 						eepromfile = eepromfile.left( eepromfile.size() - 1 ) ;
 					}
-          eepromfile.append( ( type == 1 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
+          eepromfile.append( ( type == RADIO_TYPE_TARANIS ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
           if (QFile::exists(eepromfile))
 					{
             pathcount++;
@@ -2888,7 +3092,7 @@ QString FindErskyPath( int type )
 					{
 						eepromfile = eepromfile.left( eepromfile.size() - 1 ) ;
 					}
-          eepromfile.append( ( type == 1 ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
+          eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
           if (QFile::exists(eepromfile))
 					{
             pathcount++;
@@ -2908,7 +3112,7 @@ QString FindErskyPath( int type )
         drives.append(entry->me_devname);
         eepromfile=entry->me_mountdir;
 				saveeepromfile = eepromfile ;
-        eepromfile.append( ( type == 1 ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
+        eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
 //  #if !defined __APPLE__ && !defined WIN32
 //        QString fstype=entry->me_type;
 //        qDebug() << fstype;
@@ -2923,7 +3127,7 @@ QString FindErskyPath( int type )
 				else
 				{
 					eepromfile = saveeepromfile ;
-        	eepromfile.append( ( type == 1 ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
+        	eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
 	        if (QFile::exists(eepromfile))
 					{
 	          pathcount++;
@@ -3006,6 +3210,7 @@ void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model )
 				for ( k = 0 ; k < 2 ; k += 1 )
 				{ // 0=Right, 1=Left
     			dest = CONVERT_MODE(1, 2, g_eeGeneral->stickMode)-1 ;
+
     			src = CONVERT_MODE(1, 1, g_eeGeneral->stickMode)-1 ;
 					lexpoData[dest].expo[i][j][k] = g_model->expoData[src].expo[i][j][k] ;
     			dest = CONVERT_MODE(2, 2, g_eeGeneral->stickMode)-1 ;
@@ -3013,6 +3218,7 @@ void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model )
 					lexpoData[dest].expo[i][j][k] = g_model->expoData[src].expo[i][j][k] ;
     			dest = CONVERT_MODE(3, 2, g_eeGeneral->stickMode)-1 ;
     			src = CONVERT_MODE(3, 1, g_eeGeneral->stickMode)-1 ;
+
 					lexpoData[dest].expo[i][j][k] = g_model->expoData[src].expo[i][j][k] ;
     			dest = CONVERT_MODE(4, 2, g_eeGeneral->stickMode)-1 ;
     			src = CONVERT_MODE(4, 1, g_eeGeneral->stickMode)-1 ;

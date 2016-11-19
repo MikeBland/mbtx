@@ -10,6 +10,57 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 22-Jan-2016  MPB (r219)
+H8_3D MULTI supported
+Correct direction of P2 on Taranis
+Add P3 and P4 as sources for GVARS
+Add Encoder switch to DIAG_SWITCH display
+Re-label delay up/down to match slow up/down directions
+Fix missing haptic output when using model specific countdown beeps
+Add SD Card present data on SD STAT display
+Force Ar9x option off on 'PRO
+Add one second watchdog disable at start up
+Improve SD card disable in bootloader
+Further MULTI improvements
+Fix bugs in DSM-9XR support for 9Xtreme
+GVARs for RGB backlight on 9Xtreme
+Start to MAVLINK support
+Add Q242 sub-protocol on MULTI
+Attempt RTC calibration on Taranis
+Add Spanish language
+Allow choice of GPS Lat/Long units
+GVARs for RGB backlight on 9Xtreme
+MAVLINK over FrSky support
+X9E supported
+Add OFF options for module/PPM2 outputs (SKY/PRO)
+Add Spanish language
+Fix bugs in 6-pos calibration/operation
+Add extra mode names to MavLink (ArduP/ArduC)
+FIx watchdog timeouts on Taranis in maintenance mode
+Fix Trainer startup bug
+MavLink Teensy support
+Add extended MULTI protocol settings
+EEPROM BACKUP and RESTORE
+Trainer profiles from model menu
+9Xtreme supports MULTI on internal module
+Display MavLink flight mode when TEMP1 is selected if in ArduX mode
+Include XMEGA flashing option (not Taranis)
+Taranis supports MULTI DSM telemetry
+Add second XY-curve and a 6-point curve
+Add individual cells to telemetry items
+SKY/AR9X support ERC lcd
+Taranis sync PXX with XJT to reduce latency
+Taranis allow 9 custom telemetry values
+Add PXX option for only 8 channels
+DSM telemetry, add "Use 'A' as RSSI value"
+Remove ASSAN protocol
+Improve custom telemetry editing menu
+Language updates
+Add background music, merge beeps into voice
+Add RAW telemetry logging
+Initialise telemetry on model load
+
+******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)
 Taranis & 9Xtreme add trainer polarity
 SWR on early Taranis Plus fixes

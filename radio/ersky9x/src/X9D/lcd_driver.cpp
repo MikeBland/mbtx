@@ -41,6 +41,11 @@ void setupSPIdma( void ) ;
 extern uint8_t DisplayBuf[] ;
 extern uint8_t Main_running ;
 
+uint8_t speaker[] = {
+4,8,0,
+0x38,0x38,0x7C,0xFE
+} ;
+
 void Set_Address(uint8_t x, uint8_t y)
 {
   AspiCmd(x&0x0F);	//Set Column Address LSB CA[3:0]
@@ -138,6 +143,16 @@ extern uint8_t ImageX ;
 extern uint8_t ImageY ;
 extern uint8_t ModelImage[] ;
 extern uint8_t ModelImageValid ;
+
+	if ( ImageDisplay )
+	{
+		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
+extern uint8_t CurrentVolume ;
+		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hline( 130, 31, 61 ) ;
+		lcd_vline( 129, 0, 64 ) ;
+	}
 
 	uint8_t *d = GreyDisplayBuf ;
 	for (uint32_t y=0; y<DISPLAY_H; y += 2)
@@ -260,6 +275,22 @@ void refreshDisplay()
 
 void convertDisplay()
 {
+extern uint8_t ImageDisplay ;
+extern uint8_t ImageX ;
+extern uint8_t ImageY ;
+extern uint8_t ModelImage[] ;
+extern uint8_t ModelImageValid ;
+
+	if ( ImageDisplay )
+	{
+		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
+extern uint8_t CurrentVolume ;
+		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hline( 130, 31, 61 ) ;
+		lcd_vline( 129, 0, 64 ) ;
+	}
+	
 	uint8_t *d = GreyDisplayBuf ;
 	for (uint32_t y=0; y<DISPLAY_H; y += 1)
 	{
@@ -274,11 +305,7 @@ void convertDisplay()
 			*d++ = data ;
 		}			 
 	}
-extern uint8_t ImageDisplay ;
-extern uint8_t ImageX ;
-extern uint8_t ImageY ;
-extern uint8_t ModelImage[] ;
-extern uint8_t ModelImageValid ;
+
 
 	if ( ImageDisplay && ModelImageValid )
 	{

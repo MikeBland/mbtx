@@ -57,12 +57,14 @@ extern int32_t get_fifo128( struct t_fifo128 *pfifo ) ;
 extern struct t_serial_tx Bt_tx ;
 extern uint32_t txPdcBt( struct t_serial_tx *data ) ;
 extern uint32_t txPdcCom2( struct t_serial_tx *data ) ;
+extern uint32_t txPdcCom1( struct t_serial_tx *data ) ;
 extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
 extern struct t_fifo64 CaptureRx_fifo ;
+extern struct t_fifo64 Com1_fifo ;
 
-extern uint16_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
+extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
 #ifdef REVX
 extern int32_t getJetiWord( void ) ;
@@ -73,8 +75,10 @@ extern volatile uint16_t Analog_values[] ;
 extern uint16_t Temperature ;		// Raw temp reading
 extern uint16_t Max_temperature ;
 
+void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
+void com2_Configure( uint32_t baudrate, uint32_t parity ) ;
 
-extern volatile uint32_t Spi_complete ;
+extern volatile uint8_t Spi_complete ;
 
 #ifdef PCB9XT
 extern uint16_t rxTelemetry( void ) ;
@@ -86,31 +90,47 @@ extern void x9dConsoleInit( void ) ;
 extern uint16_t rxTelemetry( void ) ;
 extern void USART6_Sbus_configure( void ) ;
 extern void stop_USART6_Sbus( void ) ;
+extern void com1Parity( uint32_t even ) ;
+extern void com2Parity( uint32_t even ) ;
 #endif
 
-extern uint16_t DsmRxTimeout ;
+//extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
+
+#ifdef PCBX9D
+struct t_XjtHeartbeatCapture
+{
+	uint16_t value ;
+	uint16_t valid ;
+} ;
+extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+#endif                              
 
 extern void putEvent( register uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
-extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
+//extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void UART2_9dataOdd1stop( void ) ;
-extern void UART2_timeout_enable( void ) ;
-extern void UART2_timeout_disable( void ) ;
+extern void com1_timeout_enable( void ) ;
+//extern void com1_timeout_disable( void ) ;
 extern void UART_Sbus_configure( uint32_t masterClock ) ;
 extern void UART_Sbus57600_configure( uint32_t masterClock ) ;
 extern void jetiSendWord( uint16_t word ) ;
+#ifdef PCBX9D
+void init_xjt_heartbeat( void ) ;
+void stop_xjt_heartbeat( void ) ;
+#endif
 extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 //extern void UART_Stop( void ) ;
 //extern void Bt_UART_Stop( void ) ;
 extern void txmit( uint8_t c ) ;
 extern void uputs( register char *string ) ;
-extern uint16_t rxuart( void ) ;
+extern uint16_t rxCom2( void ) ;
 extern void txmit2nd( uint8_t c ) ;
 extern uint16_t rx2nduart( void ) ;
 extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
+extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 
 extern void poll2ndUsart10mS( void ) ;
 //extern void charProcess( uint8_t byte ) ;
@@ -169,14 +189,14 @@ extern void UART4SetBaudrate ( uint32_t baudrate ) ;
 
 extern void disable_ssc( void ) ;
 
-#define SPORT_MODE_HARDWARE		0
-#define SPORT_MODE_SOFTWARE		1
-#define SPORT_POLARITY_NORMAL	0
-#define SPORT_POLARITY_INVERT	1
+//#define SPORT_MODE_HARDWARE		0
+//#define SPORT_MODE_SOFTWARE		1
+//#define SPORT_POLARITY_NORMAL	0
+//#define SPORT_POLARITY_INVERT	1
 
-extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity ) ;
+//extern void x9dSPortInit( uint32_t baudRate, uint32_t mode, uint32_t invert, uint32_t parity ) ;
 extern void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive ) ;
-void disable_software_com1( void ) ;
+//void disable_software_com1( void ) ;
 #ifdef PCB9XT
 void x9dHubTxStart( uint8_t *buffer, uint32_t count ) ;
 uint32_t hubTxPending( void ) ;
@@ -189,8 +209,8 @@ void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
 
 #ifdef PCBSKY
-void com1Parity( uint32_t even ) ;
-void com2Parity( uint32_t even ) ;
+//void com1Parity( uint32_t even ) ;
+//void com2Parity( uint32_t even ) ;
 #endif
 
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
@@ -254,6 +274,13 @@ public:
 };
 
 extern Key keys[NUM_KEYS] ;
+
+// Soft Serial options
+#define SERIAL_NORM		0
+#define SERIAL_INVERT	1
+
+#define SERIAL_NO_PARITY		0
+#define SERIAL_EVEN_PARITY	1
 
 
 #endif

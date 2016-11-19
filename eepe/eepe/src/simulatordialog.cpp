@@ -266,7 +266,6 @@ void simulatorDialog::timerEvent()
     ui->label_beep->setStyleSheet(beepShow ? CBEEP_ON : CBEEP_OFF);
     if(beepShow) beepShow--;
 
-
 		if ( ++one_sec_precount >= 10 )
 		{
 			one_sec_precount -= 10 ;
@@ -497,7 +496,6 @@ void simulatorDialog::timerEvent()
 #endif
 			} 
 		}
-
 		// Now send serial data
 		if ( serialSending )
 		{
@@ -3182,5 +3180,4 @@ void simulatorDialog::on_SendDataButton_clicked()
 
 	}
 }
-
 

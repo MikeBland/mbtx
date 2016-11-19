@@ -40,13 +40,15 @@
 
 uint8_t SbusFrame[28] ;
 uint8_t SbusIndex = 0 ;
-extern uint16_t SbusTimer ;
+uint16_t SbusTimer = 0 ;
 
 uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 {
 	uint32_t inputbitsavailable = 0 ;
 	uint32_t i ;
 	uint32_t inputbits = 0 ;
+	uint8_t sum ;
+	sum = 0 ;
 	if ( *sbus++ != 0x0F )
 	{
 		return 0 ;		// Not a valid SBUS frame
@@ -59,7 +61,13 @@ uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 	{
 		while ( inputbitsavailable < 11 )
 		{
-			inputbits |= *sbus++ << inputbitsavailable ;
+			uint8_t temp ;
+			temp = *sbus++ ;
+			if ( i < 4 )
+			{
+				sum |= temp ;
+			}
+			inputbits |= temp << inputbitsavailable ;
 			inputbitsavailable += 8 ;
 		}
 		if ( pulses )
@@ -71,18 +79,37 @@ uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 	}
 	if ( pulses )
 	{
-		ppmInValid = 100 ;
+		if ( ( *sbus & 0x08 ) || ( sum == 0 ) )
+		{
+			if ( ppmInValid )
+			{
+				ppmInValid = 1 ;	// Will count down to 0 and announce soon
+			}
+		}
+		else
+		{
+			if ( ( (*sbus & 0x04) == 0 ) && sum )
+			{
+				ppmInValid = 100 ;
+			}
+		}
 	}
 	SbusTimer = 1000 ;
 	return 1 ;
 }
 
+//uint16_t SbusCounter ;
+//uint16_t SbusCounter1 ;
+
 void processSbusInput()
 {
+//	SbusCounter += 1 ;
 	uint16_t rxchar ;
 	uint32_t active = 0 ;
 	while ( ( rxchar = get_fifo64( &Sbus_fifo ) ) != 0xFFFF )
 	{
+//		SbusCounter1 += 1 ;
+		
 		active = 1 ;
 		SbusFrame[SbusIndex++] = rxchar ;
 		if ( SbusIndex > 27 )

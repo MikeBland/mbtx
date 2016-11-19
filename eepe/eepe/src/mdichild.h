@@ -105,6 +105,8 @@ private:
     void saveModelToXML(QDomDocument * qdoc, QDomElement * pe, int model_id, int mdver);
     void getNotesFromXML(QDomDocument * qdoc, int model_id);
     struct t_radioData radioData ;
+		void v1ModelTov2( int i ) ;
+		void v2ModelTov1( int i ) ;
 
 //    ModelData g_model;
 //    EEGeneral g_eeGeneral;
@@ -174,6 +176,7 @@ public slots:
     void setModified(ModelEdit * me = 0);
     void viableModelSelected(int idx);
 		void wizardEdit() ;
+		void setActive() ;
 
 
 

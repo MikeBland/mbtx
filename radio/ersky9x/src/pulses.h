@@ -57,9 +57,12 @@
 
 extern void module_output_low( void ) ;
 extern void module_output_active( void ) ;
+extern void PPM2OutputLow( void ) ;
+extern void PPM2OutputActive( void ) ;
 
 
 extern void init_main_ppm( uint32_t period, uint32_t out_enable ) ;
+extern void init_ppm2( uint32_t period, uint32_t out_enable ) ;
 extern void disable_main_ppm( void ) ;
 //extern void disable_ppm2( void ) ;
 extern void perOut( int16_t *chanOut, uint8_t att ) ;
@@ -70,4 +73,7 @@ extern void setupPulsesPPM2( void ) ;
 extern void setupPulsesDsm2(uint8_t chns) ;
 extern void setupPulsesPXX( void ) ;
 extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
+extern void checkTrainerSource( void ) ;
+extern void pausePulses( void ) ;
+extern void resumePulses( void ) ;
 

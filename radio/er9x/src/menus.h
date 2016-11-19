@@ -66,7 +66,7 @@ struct MState2
 {
   uint8_t m_posVert;
 //  uint8_t m_posHorz;
-  void init(){m_posVert=0;};
+//  void init(){m_posVert=0;};
 //  void check(uint8_t event, const prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
 	void check_columns( uint8_t event, uint8_t maxrow) ;
 

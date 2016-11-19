@@ -83,6 +83,8 @@
 #define ISTR_A_EQ		       "A ="
 #define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
 #define ISTR_SWITCH_WARN	   "Bryter Advarsel"
+//#define ISTR_SWITCH				   "Bryter"
+#define ISTR_WARNING 				 "Advarsel"
 // ISTR_TIMER exactly 5 chars long
 #define ISTR_TIMER          "Timer"
 
@@ -115,9 +117,15 @@
 #define ISTR_CHANS_EXTRA   "\004P4  P5  P6  P7  "
 #endif
 #ifdef PCBX9D
+ #ifdef REV9E
 #define ISTR_CHANS_GV	     "\004P1  P2  SL  HALVFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW	   "\004P1  P2  SL  HALVFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
+#define ISTR_CHANS_EXTRA   "\004SR  S1  S2  P3  P4  "
+ #else
+#define ISTR_CHANS_GV	     "\004S1  S2  SL  HALVFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
+#define ISTR_CHANS_RAW	   "\004S1  S2  SL  HALVFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCH"
 #define ISTR_CHANS_EXTRA   "\004SR  P3  P4  P5  P6  "
+ #endif
 #endif
 
 #define ISTR_CH	           "CH"
@@ -146,13 +154,13 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOK"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBST"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "GV"
 #define ISTR_OFF_ON         "AV PA "
 #define ISTR_HYPH_INV       FWx18"\001""\003---INV"
 #define ISTR_VERSION        "VERSION"
-#define ISTR_TRAINER        "TRAINER"
+#define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Slave" 
 #define ISTR_MENU_DONE      "[MENU] Når du er ferdig"
 #define ISTR_CURVES         "KURVER"
@@ -165,7 +173,7 @@
 #define ISTR_COPY_TRIM      "Kopier TRIM [MENU]"
 #define ISTR_TELEMETRY      "TELEMETRY"
 #define ISTR_USR_PROTO      "UsrProto"
-#define ISTR_FRHUB_WSHHI    "\005FrSkyWSHhiDSMx Jeti MavlkArduPFrHub"
+#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk "
 #define ISTR_MET_IMP        "\003MetImp"
 #define ISTR_A_CHANNEL      "A  channel"
 #define ISTR_ALRM           "alrm"
@@ -226,7 +234,7 @@
 #define ISTR_YES_NO         "\003JA \013NEI"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "SLETTE MIX?"
-#define ISTR_MIX_POPUP      "Rediger\0Legg til\0Kopier\0Flytt\0Slette\0CLEAR ALL"
+#define ISTR_MIX_POPUP      "Rediger\0Legg til\0Kopier\0Flytt\0Slette\0CLEAR ALL\0TEMPLATES"
 #define ISTR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define ICHR_S              "T"
@@ -266,7 +274,7 @@
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US          "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC  " PPM FrLen\015mSec"
+#define ISTR_PPMFRAME_MSEC  " PPM FrLen\016mSec"
 #define ISTR_SEND_RX_NUM    " Send Rx Number [MENU]"
 #define ISTR_DSM_TYPE       " DSM Type"
 #define ISTR_PPM_1ST_CHAN   " 1st Kanal"
@@ -293,7 +301,7 @@
 #define ISTR_ELE_DIRECTION  "ELE Direction"
 #define ISTR_AIL_DIRECTION  "AIL Direction"
 #define ISTR_COL_DIRECTION  "COL Direction"
-#define ISTR_MODEL_POPUP    "EDIT\0Velg\0SEL/EDIT\0Kopier\0Flytt\0SLETTE\0BACKUP\0RESTORE"
+#define ISTR_MODEL_POPUP    "EDIT\0Velg\0SEL/EDIT\0Kopier\0Flytt\0SLETTE\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL       "MODELSEL"
 // ISTR_11_FREE after \011 max 4 chars
 #define ISTR_11_FREE        "\011free"
@@ -325,8 +333,8 @@
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Beeper    ""PiSpkr    ""BeeprVoice""PiSpkVoice""MegaSound "
 #define ISTR_VOLUME         " Volum"
-#define ISTR_SPEAKER_PITCH  " Speaker Pitch"
-#define ISTR_HAPTICSTRENGTH " Viberator styrke"
+#define ISTR_SPEAKER_PITCH  "Speaker Pitch"
+#define ISTR_HAPTICSTRENGTH "Viberator styrke"
 #define ISTR_CONTRAST       "Kontrast"
 #define ISTR_BATT_WARN      "Batteri alarm" 
 // ISTR_INACT_ALARM m for minutes after \023 - single char
@@ -360,8 +368,13 @@
 #define IHW_SWITCHARROW_STR  "\200-\201"
 #endif
 #ifdef PCBX9D
+#ifdef REV9E
 #define ISWITCHES_STR				 "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5"\
 														 "SI\200SI-SI\201SJ\200SJ-SJ\201SK\200SK-SK\201SL\200SL-SL\201SM\200SM-SM\201SN\200SN-SN\201SO\200SO-SO\201SP\200SP-SP\201SQ\200SQ-SQ\201SR\200SR-SR\201"
+#else
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
+#endif	// REV9E
+
 #ifdef REV9E
 #define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSHSISJSKSLSMSNSOSPSQSR6P"
 #else
@@ -374,7 +387,7 @@
 // c17-c24 added for timer mode A display
 #define ICURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
 // CSWITCH_STR indexed 7 chars each
-#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOff1-Shot 1-ShotRv\140=val"
+#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOff1-Shot 1-ShotRv\140=val v&val  "
 
 #define ISWASH_TYPE_STR     FWx17"\004""\004----""120 ""120X""140 ""90  "
 
@@ -449,7 +462,11 @@
 #define ISTR_RANGE_RSSI			"RANGE CHECK RSSI:"
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"Volume Control"
-#define ISTR_PROT_OPT				"\005PPM  PXX  DSM2 MultiAssan"
+#ifdef ASSAN
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
+#else
+#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiXfire"
+#endif
 #define ISTR_TYPE						" Type"
 #define ISTR_COUNTRY				" Country"
 #define ISTR_SP_FAILSAFE		" Failsafe"
@@ -470,7 +487,11 @@
 #define ISTR_FADESLOSSHOLDS "\006fades lossesholds "
 #define ISTR_DSM_CRITICAL	  "DSM Critical"
 #define ISTR_BT_TRAINER		  "BT as Trainer"
-#define ISTR_MULTI_TYPE     "Protocol\037Type\037Autobind\037Power"
+#define ISTR_MULTI_TEXT     "Protocol\037Type\037Autobind\037Power"
+#define ISTR_MULTI_PROTO    "Protocol"
+#define ISTR_MULTI_TYPE	    "Type"
+#define ISTR_MULTI_AUTO	    "Autobind"
+#define ISTR_MULTI_POWER    "Power\014Rate\023mS"
 #define ISTR_MULTI_OPTION   "\014Option"
 
 #define ISTR_Display		     "Display" 
@@ -486,7 +507,6 @@
 #define ISTR_DateTime			   "Date-Time" 
 #define ISTR_DiagSwtch		   "DiagSwtch"  
 #define ISTR_DiagAna		     "DiagAna" 
-#define ISTR_Eeprom			     "EEPROM" 
 
 #define ISTR_Mixer		      "Mixer" 
 #define ISTR_Cswitches		  "L.Switches" 
@@ -502,7 +522,24 @@
 #define ISTR_Voice		      "Voice" 
 #define ISTR_Protocol			  "Protocol" 
 #define ISTR_Safety					"Safety Sws"
+#define ISTR_Eeprom			     "EEPROM" 
 
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help"
+#define ISTR_ROTATE_SCREEN			"Rotate Screen"
+#define ISTR_REVERSE_SCREEN			"Reverse Screen"
+#define ISTR_MENU_ONLY_EDIT			"MENU only Edit"
+#define ISTR_Voice_Alarm				"Voice Alarm"
+#define ISTR_Voice_Alarms				"Voice Alarms"
+#define ISTR_CUSTOM_CHECK				"Custom Check"
+#define ISTR_CUSTOM_STK_NAMES		"CustomStkNames"
+#define ISTR_HAPTIC							"Haptic"
+#define ISTR_RESET_SWITCH				"Reset Switch"
+#define ISTR_THROTTLE_OPEN			"Throttle Open"
+#define ISTR_THR_DEFAULT				"Thr. Default"
+#define ISTR_TOTAL_TIME					"Total Time"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates"
+
+#define ISTR_SHUT_DOWN					"Shutting Down"
 
 //"RSSI Warn"
 //"RSSI Critical"

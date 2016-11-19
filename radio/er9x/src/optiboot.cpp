@@ -326,6 +326,10 @@ void appStart(void) ; // __attribute__ ((naked));
 // correct for a bug in avr-libc
 #undef SIGNATURE_2
 #define SIGNATURE_2 0x02
+#elif defined (__AVR_ATmega2561__)
+#define BOOTSTART (0x1FD00)
+#define RAMSTART (0x100)
+#define NRWWSTART (0xE000)
 #elif defined (__AVR_ATmega1284P__)
 #define RAMSTART (0x100)
 #define NRWWSTART (0xE000)
@@ -380,7 +384,7 @@ void appStart(void) ; // __attribute__ ((naked));
 # define UART_UDR UDR3
 #endif
 
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
 #define WDTCSR WDTCR
 #endif
 
@@ -431,7 +435,7 @@ eeprom_write_byte_cmp (uint8_t dat, uint16_t pointer_eeprom)
 void bootmain(void) {
   uint8_t ch;
 	uint8_t eeprom ;
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
 	uint8_t GPIOR0 ;
 #endif
 
@@ -461,7 +465,7 @@ void bootmain(void) {
 #endif
 
   // Adaboot no-wait mod
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
   ch = MCUCSR;
   MCUCSR = 0;
 #define TIFR1 TIFR
@@ -567,7 +571,7 @@ void bootmain(void) {
       uint16_t newAddress ;
       newAddress = getch() ;
       newAddress = (newAddress & 0xff) | (getch() << 8);
-#if defined (__AVR_ATmega128__)
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
 #ifdef RAMPZ
       // Transfer top bit to RAMPZ
       RAMPZ = (newAddress & 0x8000) ? 1 : 0;
@@ -600,10 +604,14 @@ void bootmain(void) {
       // If we are in RWW section, immediately start page erase
 	    if ( eeprom == 0 )
 			{
-#if defined (__AVR_ATmega128__)
+#ifdef __AVR_ATmega2561__
+      	__boot_page_erase_extended((uint32_t)(uint16_t)(void*)address|(uint32_t)RAMPZ<<16);
+#else
+#if defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
       	if ( (RAMPZ == 0 ) || (address < NRWWSTART)) __boot_page_erase_extended((uint32_t)(uint16_t)(void*)address|(uint32_t)RAMPZ<<16);
 #else
       	if ( address < NRWWSTART) __boot_page_erase_normal((uint16_t)(void*)address);
+#endif
 #endif
 			}
 
@@ -615,6 +623,7 @@ void bootmain(void) {
 
       // If we are in NRWW section, page erase has to be delayed until now.
       // Todo: Take RAMPZ into account
+#ifndef __AVR_ATmega2561__
 #if defined (__AVR_ATmega128__)
       if ( ( RAMPZ==0) || (address < BOOTSTART) )
 			{
@@ -623,6 +632,7 @@ void bootmain(void) {
       if ( address < BOOTSTART)
 			{
       	if ( address >= NRWWSTART) __boot_page_erase_normal((uint16_t)(void*)address);
+#endif
 #endif
 
       	// Read command terminator, start reply
@@ -674,19 +684,27 @@ void bootmain(void) {
 						a = *((uint16_t *)bufPtr) ;
 						bufPtr += 2 ;
 
+#ifdef __AVR_ATmega2561__
+      		  __boot_page_fill_extended((uint32_t)(uint16_t)(void*)addrPtr|(uint32_t)RAMPZ<<16,a);
+#else
 #if defined (__AVR_ATmega128__)
       		  __boot_page_fill_extended((uint32_t)(uint16_t)(void*)addrPtr|(uint32_t)RAMPZ<<16,a);
 #else
       		  __boot_page_fill_normal((uint16_t)(void*)addrPtr,a);
 #endif
+#endif
       		  addrPtr += 2;
       		} while (--ch);
 
       		// Write from programming buffer
+#ifdef __AVR_ATmega2561__
+      		__boot_page_write_extended((uint32_t)(uint16_t)(void*)address|(uint32_t)RAMPZ<<16);
+#else
 #if defined (__AVR_ATmega128__)
       		__boot_page_write_extended((uint32_t)(uint16_t)(void*)address|(uint32_t)RAMPZ<<16);
 #else
       		__boot_page_write_normal((uint16_t)(void*)address);
+#endif
 #endif
       		boot_spm_busy_wait();
 

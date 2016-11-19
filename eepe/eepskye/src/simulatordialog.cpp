@@ -8,6 +8,7 @@
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
 #include <QMessageBox>
+#include <QSound>
 
 
 #define GBALL_SIZE  20
@@ -23,6 +24,8 @@
 //#define IS_THROTTLE(x)  (((2-(g_eeGeneral.stickMode&1)) == x) && (x<4))
 
 const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2 } ;
+
+int32_t WelcomePlayed = 0 ;
 
 uint8_t simulatorDialog::IS_THROTTLE( uint8_t x)
 {
@@ -274,7 +277,13 @@ void simulatorDialog::timerEvent()
 #define CBEEP_OFF "QLabel { }"
 
     ui->label_beep->setStyleSheet(beepShow ? CBEEP_ON : CBEEP_OFF);
-    if(beepShow) beepShow--;
+    if(beepShow)
+		{
+			if ( --beepShow == 0 )
+			{
+			  ui->label_beep->setText( "BEEP" ) ;
+			}
+		}
 
 
 		if ( ++one_sec_precount >= 10 )
@@ -475,7 +484,9 @@ void simulatorDialog::timerEvent()
 				}
 			}
 		}
-
+			
+    processVoiceAlarms() ;
+		
 		// Now send serial data
 		if ( serialSending )
 		{
@@ -577,6 +588,7 @@ void simulatorDialog::configSwitches()
 			ui->SBwidget->show() ;
 			ui->SEwidget->show() ;
 			ui->SFwidget->show() ;
+			ui->SFslider->setMaximum(1) ;
 			ui->SCwidget->show() ;
 			ui->SDwidget->show() ;
 			ui->SGwidget->show() ;
@@ -634,9 +646,10 @@ void simulatorDialog::configSwitches()
 			ui->dialP_3->show() ;
 			if ( g_eeGeneral.switchMapping & USE_THR_3POS )
 			{
-				ui->SEwidget->show() ;
+				ui->SFwidget->show() ;
+				ui->SFslider->setMaximum(2) ;
 				ui->switchTHR->hide() ;
-				ui->labelSE->setText("THR") ;
+				ui->labelSF->setText("THR") ;
 			}
 			else
 			{
@@ -819,6 +832,12 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int 
 
 		configSwitches() ;
     setupTimer();
+		if ( WelcomePlayed == 0 )
+		{
+			voiceDisplay( "WELCOME" ) ;
+//			QSound::play( "C:/Progs/eepe/voice/WELCOME.wav" ) ;
+			WelcomePlayed = 1 ;
+		}
 }
 
 
@@ -828,10 +847,30 @@ uint32_t simulatorDialog::getFlightPhase()
   for ( i = 0 ; i < MAX_PHASES ; i += 1 )
 	{
     PhaseData *phase = &g_model.phaseData[i];
-    if ( phase->swtch && getSwitch( phase->swtch, 0 ) )
+    if ( phase->swtch )
 		{
-      return i + 1 ;
-    }
+    	if ( getSwitch( phase->swtch, 0, 0 ) )
+			{
+    		if ( phase->swtch2 )
+				{
+					if ( getSwitch( phase->swtch2, 0, 0 ) )
+					{
+						return i + 1 ;
+					}
+				}
+				else
+				{
+					return i + 1 ;
+				}
+    	}
+		}
+		else
+		{
+    	if ( phase->swtch2 && getSwitch( phase->swtch2, 0, 0 ) )
+			{
+    	  return i + 1 ;
+    	}
+		}
   }
   return 0 ;
 }
@@ -844,7 +883,8 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 	}	
 	else
 	{
-		return *trimptr[idx] ;
+//		return *trimptr[idx] ;
+		return g_model.trim[idx] ;
 	}
 }
 
@@ -891,7 +931,8 @@ void simulatorDialog::setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 		{
 			trim = ( trim > 0 ) ? 125 : -125 ;
 		}	
-   	*trimptr[idx] = trim ;
+//   	*trimptr[idx] = trim ;
+		g_model.trim[idx] = trim ;
 	}
 }
 
@@ -1205,6 +1246,12 @@ void simulatorDialog::getValues()
     	calibratedStick[6] = ui->dialP_3->value();
 		}
 
+// May be for none X9D??
+		if ( g_eeGeneral.extraPotsSource[0] )
+		{
+    	calibratedStick[7] = ui->SliderL->value(); // For X9D
+		}
+
 		if ( throttleReversed( &g_eeGeneral, &g_model ) )
     {
       StickValues[THR_STICK] *= -1;
@@ -1402,19 +1449,39 @@ void simulatorDialog::setValues()
 
 	if ( j == 0)
 	{
-		j = g_model.startChannel + g_model.ppmNCH*2+8 ;
+		uint8_t chans = g_model.ppmNCH + 4 ;
+		chans *= 2 ;
+		if ( chans > 16 )
+		{
+			chans -= 13 ;
+		}
+		j = g_model.startChannel + chans ;
 	}
 	else
 	{
 		j -= 1 ;
 	}
-	k = j + g_model.ppm2NCH*2+8 ;
+	{
+		uint8_t chans = g_model.ppm2NCH + 4 ;
+		chans *= 2 ;
+		if ( chans > 16 )
+		{
+			chans -= 13 ;
+		}
+		k = j + chans ;
+	}
 	for ( i = 0 ; i < 16 ; i += 1 )
 	{
 		onoff[i] = 0 ;
 		if ( i >= g_model.startChannel )
 		{
-			if ( i < g_model.startChannel + g_model.ppmNCH*2+8 )
+			uint8_t chans = g_model.ppmNCH + 4 ;
+			chans *= 2 ;
+			if ( chans > 16 )
+			{
+				chans -= 13 ;
+			}
+			if ( i < g_model.startChannel + chans )
 			{
 				onoff[i] |= 1 ;
 			}
@@ -1451,7 +1518,37 @@ void simulatorDialog::setValues()
 	ui->Gvar5->setText( tr("%1").arg(g_model.gvars[4].gvar) ) ;
 	ui->Gvar6->setText( tr("%1").arg(g_model.gvars[5].gvar) ) ;
 	ui->Gvar7->setText( tr("%1").arg(g_model.gvars[6].gvar) ) ;
+
+	i = getFlightPhase() ;
+	if ( i && g_model.phaseData[i-1].name[0] )
+	{
+		QString n = g_model.phaseData[i-1].name ;
+		while ( n.endsWith(" ") )
+		{
+			n = n.left(n.size()-1) ;			
+		}
+		if ( n.length() )
+		{
+			ui->FlightMode->setText( n ) ;
+			i = -1 ;
+		}
+	}
+	if ( i >= 0 )
+	{
+		ui->FlightMode->setText( tr("FM%1").arg(i) ) ;
+	}
+
+
+
+
 }
+
+void simulatorDialog::voiceDisplay( QString name )
+{
+  ui->label_beep->setText( name ) ;
+	beepShow = 150 ;
+}
+
 
 void simulatorDialog::beepWarn1()
 {
@@ -1558,9 +1655,9 @@ bool simulatorDialog::hwKeyState(int key)
     	case (HSW_Gear):    return ui->switchGEA->isChecked(); break;
     	case (HSW_Trainer): return ui->switchTRN->isDown(); break;
 			
-			case HSW_Thr3pos0	:	return ui->SEslider->value() == 0 ; break ;
-			case HSW_Thr3pos1	:	return ui->SEslider->value() == 1 ; break ;
-			case HSW_Thr3pos2	:	return ui->SEslider->value() == 2 ; break ;
+			case HSW_Thr3pos0	:	return ui->SFslider->value() == 0 ; break ;
+			case HSW_Thr3pos1	:	return ui->SFslider->value() == 1 ; break ;
+			case HSW_Thr3pos2	:	return ui->SFslider->value() == 2 ; break ;
 			case HSW_Rud3pos0	:	return ui->SEslider->value() == 0 ; break ;
 			case HSW_Rud3pos1	:	return ui->SEslider->value() == 1 ; break ;
 			case HSW_Rud3pos2	:	return ui->SEslider->value() == 2 ; break ;
@@ -1813,7 +1910,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
     else if(s == CS_VCOMP)
     {
         x = getValue(a-1);
-        y = getValue(a-1);
+        y = getValue(b-1);
     }
 
     switch (cs.func) {
@@ -1999,25 +2096,100 @@ int16_t simulatorDialog::intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 
 {
 #define D9 (RESX * 2 / 8)
 #define D5 (RESX * 2 / 4)
-    bool    cv9 = idx >= MAX_CURVE5;
-    int8_t *crv = cv9 ? g_model.curves9[idx-MAX_CURVE5] : g_model.curves5[idx];
+#define D6 (RESX * 2 / 5)
+    uint32_t    cv9 = idx >= MAX_CURVE5;
+		int8_t *crv ;
+		if ( idx == MAX_CURVE5 + MAX_CURVE9 )
+		{ // The xy curve
+			crv = g_model.curvexy ;
+			cv9 = 2 ;
+		}
+		else if ( idx == MAX_CURVE5 + MAX_CURVE9 + 1)
+		{ // The xy curve
+			crv = g_model.curve2xy ;
+			cv9 = 2 ;
+		}
+		else if ( idx == MAX_CURVE5 + MAX_CURVE9 + 2 )
+		{
+			crv = g_model.curve6 ;
+			cv9 = 3 ;
+		}
+		else
+		{
+    	crv = cv9 ? g_model.curves9[idx-MAX_CURVE5] : g_model.curves5[idx];
+		}
     int16_t erg;
 
     x+=RESXu;
-    if(x < 0) {
+    if(x < 0)
+		{
         erg = (int16_t)crv[0] * (RESX/4);
-    } else if(x >= (RESX*2)) {
+    }
+		else if(x >= (RESX*2))
+		{
+			if ( cv9 == 3 )
+			{
+      	erg = (int16_t)crv[5] * (RESX/4);
+			}
+			else
+			{
         erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
-    } else {
-        int16_t a,dx;
-        if(cv9){
-            a   = (uint16_t)x / D9;
-            dx  =((uint16_t)x % D9) * 2;
-        } else {
-            a   = (uint16_t)x / D5;
-            dx  = (uint16_t)x % D5;
+			}
+    }
+		else
+		{
+			int16_t deltax ;
+			div_t qr ;
+			if ( cv9 == 2 ) // xy curve
+			{
+		    int16_t a = 0 ;
+				int16_t b ;
+				int16_t c ;
+				uint32_t i ;
+
+				// handle end points
+  	    c = RESX + calc100toRESX(crv[17]) ;
+				if ((uint16_t)x>c)
+				{
+					return calc100toRESX(crv[8]) ;
+				}
+  	    b = RESX + calc100toRESX(crv[9]) ;
+				if ((uint16_t)x<b)
+				{
+					return calc100toRESX(crv[0]) ;
+				}
+
+				for ( i = 0 ; i < 8 ; i += 1 )
+				{
+	        a = b ;
+  	      b = (i==7 ? c : RESX + calc100toRESX(crv[i+10]));
+    	    if ((uint16_t)x<=b) break;
+				}
+				qr.quot = i ;
+				qr.rem = x - a ;
+				deltax = b - a ;
+			}
+			else
+			{
+        if(cv9 == 3)
+				{
+					qr = div( x, D6 ) ;
+					deltax = D6 ;
+				}
+				else if ( cv9 )
+				{
+					qr = div( x, D9 ) ;
+					deltax = D9 ;
         }
-        erg  = (int16_t)crv[a]*((D5-dx)/2) + (int16_t)crv[a+1]*(dx/2);
+				else
+				{
+					qr = div( x, D5 ) ;
+					deltax = D5 ;
+        }
+			}
+			int32_t y1 = (int16_t)crv[qr.quot] * (RESX/4) ;
+			int32_t deltay = (int16_t)crv[qr.quot+1] * (RESX/4) - y1 ;
+			erg = y1 + ( qr.rem ) * deltay / deltax ;
     }
     return erg / 25; // 100*D5/RESX;
 }
@@ -3278,33 +3450,73 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 								if ( g_model.safetySw[i].opt.ss.mode == 3 )
 								{
+									int8_t thr = g_model.safetySw[i].opt.ss.source ;
+									uint32_t rev_thr = 0 ;
+									if ( thr == 0 )
+									{
+										thr = 2 ;
+									}
+									else
+									{
+										if ( thr > 0 )
+										{
+											thr += 3 ;
+										}
+										else
+										{
+											rev_thr = 1 ;
+											thr = -thr + 3 ;
+										}
+									}	
 									// Special case, sticky throttle
 									if( applySafety )
 									{
-										sticky = 0 ;
+										sticky &= ~(1<<i) ;
 									}
 									else
 									{
 						  			if ( g_model.modelVersion >= 2 )
 										{
 											uint32_t throttleOK = 0 ;
+//											if ( g_model.throttleIdle )
+//											{
+//												if ( abs( calibratedStick[2] ) < 20 )
+//												{
+//													throttleOK = 1 ;
+//												}
+//											}
+//											else
 											if ( g_model.throttleIdle )
 											{
-												if ( abs( calibratedStick[2] ) < 20 )
+												if ( abs( calibratedStick[thr] ) < 20 )
 												{
 													throttleOK = 1 ;
 												}
 											}
 											else
 											{
-  											if(calibratedStick[2] < -1004)
-  											{
-													throttleOK = 1 ;
-  											}
+												if ( rev_thr )
+												{
+  												if(calibratedStick[thr] > 1004)
+  												{
+														throttleOK = 1 ;
+  												}
+												}
+												else
+												{
+  												if(calibratedStick[thr] < -1004)
+	  											{
+														throttleOK = 1 ;
+  												}
+												}
 											}
 											if ( throttleOK )
 											{
-												sticky = 1 ;
+												sticky |= (1<<i) ;
+											}
+											if ( ( sticky & (1<<i) ) == 0 )
+											{
+												applySafety = 1 ;
 											}
 										}
 										else
@@ -3313,11 +3525,11 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 											{
 												sticky = 1 ;
 											}
+											if ( sticky == 0 )
+											{
+												applySafety = 1 ;
+											}
 										}
-									}
-									if ( sticky == 0 )
-									{
-										applySafety = 1 ;
 									}
 								}
 								if ( applySafety ) result = calc100toRESX(g_model.safetySw[i].opt.ss.val) ;
@@ -3466,4 +3678,262 @@ void simulatorDialog::on_SendDataButton_clicked()
 
 	}
 }
+
+void simulatorDialog::processVoiceAlarms()
+{
+//	uint32_t i ;
+//	uint32_t curent_state ;
+//	VoiceAlarmData *pvad = &g_model.vad[0] ;
+//  for ( i = 0 ; i < NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
+//	{
+//		uint32_t play = 0 ;
+//		curent_state = 0 ;
+//		int16_t ltimer = Nvs_timer[i] ;
+//	 	if ( i == NUM_VOICE_ALARMS )
+//		{
+//			pvad = &g_model.vadx[0] ;
+//		}
+//		if ( pvad->func )		// Configured
+//		{
+//  		int16_t x ;
+//			int16_t y = pvad->offset ;
+//			x = getValue( pvad->source - 1 ) ;
+//  		switch (pvad->func)
+//			{
+//				case 1 :
+//					x = x > y ;
+//				break ;
+//				case 2 :
+//					x = x < y ;
+//				break ;
+//				case 3 :
+//					x = abs(x) > y ;
+//				break ;
+//				case 4 :
+//					x = abs(x) < y ;
+//				break ;
+//				case 5 :
+//				{
+//					if ( isAgvar( pvad->source ) )
+//					{
+//						x *= 10 ;
+//						y *= 10 ;
+//					}
+//    			x = abs(x-y) < 32 ;
+//				}
+//				break ;
+//				case 6 :
+//					x = x == y ;
+//				break ;
+//			}
+//// Start of invalid telemetry detection
+////					if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+////					{ // Telemetry item
+////						if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
+////						{
+////							x = 0 ;	// Treat as OFF
+////						}
+////					}
+//// End of invalid telemetry detection
+//			if ( pvad->swtch )
+//			{
+//				if ( getSwitch( pvad->swtch,0,0 ) == 0 )
+//				{
+//					x = 0 ;
+//				}
+//			}
+//			if ( x == 0 )
+//			{
+//				ltimer = 0 ;
+//			}
+//			else
+//			{
+//				play = 1 ;
+//			}
+//		}
+//		else // No function
+//		{
+//			if ( pvad->swtch )
+//			{
+//				curent_state = getSwitch( pvad->swtch,0,0 ) ;
+//				if ( curent_state == 0 )
+//				{
+////							Nvs_state[i] = 0 ;
+//					ltimer = -1 ;
+//				}
+//			}
+//			else// No switch, no function
+//			{ // Check for source with numeric rate
+//				if ( pvad->rate >= 4 )	// A time
+//				{
+//					if ( pvad->vsource )
+//					{
+//						play = 1 ;
+//					}
+//				}
+//			}
+//		}
+//		play |= curent_state ;
+
+//		if ( ( VoiceCheckFlag & 2 ) == 0 )
+//		{
+//		 if ( pvad->rate == 3 )	// All
+//		 {
+//		 		uint32_t pos = switchPosition( pvad->swtch ) ;
+//				uint32_t state = Nvs_state[i] ;
+//				play = 0 ;
+//				if ( state != pos )
+//				{
+//					if ( state > 0x80 )
+//					{
+//						if ( --state == 0x80 )
+//						{
+//							state = pos ;
+//							ltimer = 0 ;
+//							play = pos + 1 ;
+//						}
+//					}
+//					else
+//					{
+//						state = 0x83 ;
+//					}
+//					Nvs_state[i] = state ;
+//				}
+//		 }
+//		 else
+//		 {
+//			if ( play == 1 )
+//			{
+//				if ( Nvs_state[i] == 0 )
+//				{ // just turned ON
+//					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
+//					{ // ON
+//						ltimer = 0 ;
+//					}
+//				}
+//				Nvs_state[i] = 1 ;
+//				if ( ( pvad->rate == 1 ) )
+//				{
+//					play = 0 ;
+//				}
+//			}
+//			else
+//			{
+//				if ( Nvs_state[i] == 1 )
+//				{
+//					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
+//					{
+//						ltimer = 0 ;
+//						play = 1 ;
+//						if ( pvad->rate == 2 )
+//						{
+//							play = 2 ;
+//						}
+//					}
+//				}
+//				Nvs_state[i] = 0 ;
+//			}
+//			if ( pvad->rate == 33 )
+//			{
+//				play = 0 ;
+//				ltimer = -1 ;
+//			}
+//		 }
+//		}
+//		else
+//		{
+//			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
+//			play = ( pvad->rate == 33 ) ? 1 : 0 ;
+//			ltimer = -1 ;
+//		}
+
+//		if ( pvad->mute )
+//		{
+//			if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
+//			{ // Telemetry item
+//				if ( !telemItemValid( pvad->source - 1 - CHOUT_BASE - NUM_SKYCHNOUT ) )
+//				{
+//					play = 0 ;	// Mute it
+//				}
+//			}
+//		}
+
+//		if ( play )
+//		{
+//			if ( ltimer < 0 )
+//			{
+//				if ( pvad->rate >= 4 )	// A time or ONCE
+//				{
+//					ltimer = 0 ;
+//				}
+//			}
+//			if ( ltimer == 0 )
+//			{
+//				if ( pvad->vsource == 1 )
+//				{
+//					doVoiceAlarmSource( pvad ) ;
+//				}
+//				if ( pvad->fnameType == 0 )	// None
+//				{
+//					// Nothing!
+//				}
+//				else if ( pvad->fnameType == 1 )	// Name
+//				{
+//					char name[10] ;
+//					char *p ;
+//					p = (char *)ncpystr( (uint8_t *)name, pvad->file.name, 8 ) ;
+//					if ( play >= 2 )
+//					{
+//						*(p-1) += ( play - 1 ) ;
+//					}
+//					putUserVoice( name, 0 ) ;
+//				}
+//				else if ( pvad->fnameType == 2 )	// Number
+//				{
+//					uint16_t value = pvad->file.vfile ;
+//					if ( value > 507 )
+//					{
+//						value = calc_scaler( value-508, 0, 0 ) ;
+//					}
+//					else if ( value > 500 )
+//					{
+//						value = g_model.gvars[value-501].gvar ;
+//					}
+//					putVoiceQueue( ( value + ( play - 1 ) ) | VLOC_NUMUSER ) ;
+//				}
+//				else
+//				{ // Audio
+//					audio.event( pvad->file.vfile, 0, 1 ) ;
+//				}
+//				if ( pvad->vsource == 2 )
+//				{
+//					doVoiceAlarmSource( pvad ) ;
+//				}
+////        if ( pvad->haptic )
+////				{
+////					audioDefevent( (pvad->haptic > 1) ? ( ( pvad->haptic == 3 ) ? AU_HAPTIC3 : AU_HAPTIC2 ) : AU_HAPTIC1 ) ;
+////				}
+//				if ( ( pvad->rate < 4 ) || ( pvad->rate > 32 ) )	// Not a time
+//				{
+//					ltimer = -1 ;
+//				}
+//				else
+//				{
+//					ltimer = 1 ;
+//				}
+//			}
+//			else if ( ltimer > 0 )
+//			{
+//				ltimer += 1 ;
+//				if ( ltimer > ( (pvad->rate-2) * 10 ) )
+//				{
+//					ltimer = 0 ;
+//				}
+//			}
+//		}
+//		pvad += 1 ;
+//		Nvs_timer[i] = ltimer ;
+//	}
+}
+
 

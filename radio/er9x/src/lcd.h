@@ -85,6 +85,9 @@ uint8_t lcd_outdezNAtt(uint8_t x,uint8_t y,int32_t val,uint8_t mode,int8_t len);
 extern void lcd_outdez(unsigned char x,unsigned char y,int16_t val);
 
 extern void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;
+#if defined(CPUM128) || defined(CPUM2561)
+extern void lcd_vbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;// Extra data for Mavlink via FrSky
+#endif
 extern void lcd_plot(unsigned char x,unsigned char y);
 extern void lcd_hline(unsigned char x,unsigned char y, signed char w);
 extern void lcd_hlineStip(unsigned char x,unsigned char y, signed char w,uint8_t pat);

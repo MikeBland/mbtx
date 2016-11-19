@@ -76,11 +76,11 @@ extern uint8_t CurrentVolume ;
 
 //volatile uint8_t Buzzer_count ;
 
-uint32_t CoProcTimer ;
-uint32_t Debug_I2C_event ;
-//uint32_t Debug_I2C_restart ;
-//uint32_t Debug_I2C_index ;
-//uint32_t Debug_I2C_value[8] ;
+uint8_t CoProcTimer ;
+uint8_t AudioVoiceUnderrun ;
+uint8_t AudioVoiceCountUnderruns ;
+uint8_t VoiceCount ;
+
 
 
 struct t_sound_globals Sound_g ;
@@ -93,7 +93,6 @@ struct t_VoiceBuffer VoiceBuffer[NUM_VOICE_BUFFERS] ;
 //#define SOUND_STOP	3
 
 struct t_VoiceBuffer *PtrVoiceBuffer[NUM_VOICE_BUFFERS] ;
-uint8_t VoiceCount ;
 //uint8_t SoundType ;
 
 	 
@@ -365,9 +364,6 @@ void init_dac()
 //}
 //#endif
 
-uint8_t AudioVoiceUnderrun ;
-uint8_t AudioVoiceCountUnderruns ;
-
 #ifndef SIMU
 extern "C" void DAC_IRQHandler()
 {
@@ -460,7 +456,6 @@ void sound_5ms()
 	{
 		if ( --CoProcTimer == 0 )
 		{
-//			Debug_I2C_restart += 1 ;
 			init_twi() ;
 		}
 	}
@@ -479,6 +474,7 @@ void sound_5ms()
 		if ( Sound_g.VoiceRequest )
 		{
 			// audioOn() ;
+			
 			dacptr->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
 			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
 			if ( dacptr->DACC_ISR & DACC_ISR_TXBUFE )	// All sent
@@ -559,66 +555,69 @@ void sound_5ms()
 #endif // TONE_MODE_2
 }
 
-static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
-{
-//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
-	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
-	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
-} ;
+//const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+//{
+////	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+//	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
+//	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+//} ;
 
-uint16_t swVolumeLevel()
-{
-	return SwVolume_scale[CurrentVolume] ;
-}
+//uint16_t swVolumeLevel()
+//{
+//	return SwVolume_scale[CurrentVolume] ;
+//}
 
-void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
-{
-	if ( g_eeGeneral.softwareVolume )
-	{
-		uint32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
-		while( count-- )
-		{
-			value = (int8_t) (*src++ - 128 ) ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = *src++ << 4 ;
-		}
-	}
-}
+//void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
+//{
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//		uint32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+//		while( count-- )
+//		{
+//			value = (int8_t) (*src++ - 128 ) ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = *src++ << 4 ;
+//		}
+//	}
+//}
 
-void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
-{
-	if ( g_eeGeneral.softwareVolume )
-	{
-		uint32_t multiplier ;
-		int32_t value ;
-		multiplier = SwVolume_scale[CurrentVolume] ;
-		while( count-- )
-		{
-			value = (int16_t) *src++ ;
-			value *= multiplier ;
-			value += 32768 * 256 ;
-			*dest++ = value >> 12 ;
-		}
-	}
-	else
-	{
-		while( count-- )
-		{
-			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
-		}
-	}
-}
+//void wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count )
+//{
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//		uint32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] ;
+//		while( count-- )
+//		{
+//			value = (int16_t) *src++ ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+//		}
+//	}
+//}
 
+uint16_t g_timeAppendVoice ;
+uint16_t g_timeAppendMaxVoice ;
+uint16_t g_timeAppendtime ;
 
 void startVoice( uint32_t count )		// count of filled in buffers
 {
@@ -645,6 +644,11 @@ void startVoice( uint32_t count )		// count of filled in buffers
 //	}
 	VoiceCount = count ;
 	Sound_g.VoiceRequest = 1 ;
+
+	g_timeAppendVoice = 0 ;
+	g_timeAppendMaxVoice = 0 ;
+	g_timeAppendtime = get_tmr10ms() ;
+
 }
 
 void endVoice()
@@ -653,10 +657,7 @@ void endVoice()
 	{
 		Sound_g.VoiceActive = 0 ;
 	}
-//	else
-//	{
-//		DebugVoice += 1 ;
-//	}
+
 }
 
 void appendVoice( uint32_t index )		// index of next buffer
@@ -708,6 +709,17 @@ void appendVoice( uint32_t index )		// index of next buffer
 		}
 	}
 	__enable_irq() ;
+	
+	uint16_t t10ms ;
+	uint16_t now ;
+	now = get_tmr10ms() ;
+	t10ms = now - g_timeAppendtime ;
+	g_timeAppendtime = now ;
+	if ( t10ms > g_timeAppendMaxVoice )
+	{
+		g_timeAppendMaxVoice = t10ms ;
+	}
+	g_timeAppendVoice = t10ms ;
 }
 
 // frequency in Hz, time in mS
@@ -821,9 +833,9 @@ uint8_t Coproc_read ;
 int8_t Coproc_valid ;
 int8_t Rtc_valid ;
 //static uint8_t Twi_mode ;
+uint8_t TwiOperation ;
 static uint8_t *Twi_read_address ;
 //static uint8_t TwiDevice ;
-uint8_t TwiOperation ;
 //const uint8_t *CoProgBufPtr ;
 //uint8_t Program_coprocessor ;
 //uint8_t Program_blocks_written ;
@@ -1186,11 +1198,6 @@ void i2c_check_for_request()
 			(void) TWI0->TWI_RHR ;
 		}
 
-		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-		{
-			Debug_I2C_event += 1 ;
-		}
-
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
 		TWI0->TWI_IER = TWI_IER_RXBUFF | TWI_IER_TXCOMP ;
@@ -1246,10 +1253,10 @@ void i2c_check_for_request()
 			(void) TWI0->TWI_RHR ;
 		}
 
-		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-		{
-			Debug_I2C_event += 1 ;
-		}
+//		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
+//		{
+//			Debug_I2C_event += 1 ;
+//		}
 
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
@@ -1488,6 +1495,7 @@ extern "C" void TWI0_IRQHandler()
 {
 	uint32_t status ;
 	status = TWI0->TWI_SR ;		// Read only once, some bits cleared on read
+//	ErtcDebug |= 4 ;
 	if ( TwiOperation == TWI_READ_VOL )
 	{
 		if ( status & TWI_SR_RXRDY )
@@ -1665,6 +1673,7 @@ extern "C" void TWI0_IRQHandler()
 	{
 		if ( status & TWI_SR_RXBUFF )
 		{
+//			ErtcDebug |= 8 ;
 			TWI0->TWI_IDR = TWI_IDR_RXBUFF ;
 			TwiOperation = TWI_WAIT_BUFFER ;
 			TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
@@ -1676,10 +1685,12 @@ extern "C" void TWI0_IRQHandler()
 			// must be TXCOMP, prob. NAK in data
 			if ( TWI0->TWI_RCR > 0 )
 			{
+//				ErtcDebug |= 0x10 ;
 				TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
 		  }
 			else
 			{
+//				ErtcDebug |= 0x20 ;
 				TwiOperation = TWI_NONE ;
 				I2cCurrentPointer->done = 1 ;
 				I2cCurrentPointer = (struct t_I2C_request *) NULL ;
@@ -1712,7 +1723,7 @@ extern "C" void TWI0_IRQHandler()
 	 
 	if ( status & TWI_SR_NACK )
 	{
-		Debug_I2C_event += 0x100 ;
+//		Debug_I2C_event += 0x100 ;
 		(void) TWI0->TWI_RHR ;
 		uint32_t save = TWI0->TWI_CWGR ;
 		TWI0->TWI_CR = TWI_CR_SWRST ;				// Reset in case we are restarting
@@ -1720,13 +1731,13 @@ extern "C" void TWI0_IRQHandler()
 		TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 	}
 
-	if ( status & TWI_SR_RXBUFF )
-	{
-		if ( TWI0->TWI_IMR & TWI_IMR_RXBUFF )
-		{
-			Debug_I2C_event += 0x1000000 ;
-		}
-	}
+//	if ( status & TWI_SR_RXBUFF )
+//	{
+//		if ( TWI0->TWI_IMR & TWI_IMR_RXBUFF )
+//		{
+//			Debug_I2C_event += 0x1000000 ;
+//		}
+//	}
 
 	TWI0->TWI_IDR = TWI_IDR_TXCOMP | TWI_IDR_TXBUFE | TWI_IDR_RXBUFF ;
 	TWI0->TWI_PTCR = TWI_PTCR_TXTDIS | TWI_PTCR_RXTDIS ;	// Stop transfers

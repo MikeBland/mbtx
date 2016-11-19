@@ -64,7 +64,7 @@ class Node : public QGraphicsItem
 {
 
 public:
-    Node(QSpinBox *sb = 0);
+    Node(QSpinBox *sb = 0, QSpinBox *xsb = 0);
 
     void addEdge(Edge *edge);
     QList<Edge *> edges() const;
@@ -86,6 +86,8 @@ public:
     void setFixedX(bool val) {fixedX = val;}
     void setFixedY(bool val) {fixedY = val;}
 		void stepToBottom() ;
+    void setMinX(int val) {minX = val;};
+    void setMaxX(int val) {maxX = val;};
 
 protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant &value);
@@ -102,7 +104,10 @@ private:
     bool fixedY;
     bool moveToBottom;
     int  ballSize;
+    int minX;
+    int maxX;
     QSpinBox *qsb;
+    QSpinBox *qxsb;
     QList<Edge *> edgeList;
     QPointF newPos;
 };

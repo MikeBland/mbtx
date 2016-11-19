@@ -119,6 +119,9 @@
 
 /* Check for SPM Control Register in processor. */
 
+#if defined (__AVR_ATmega2561__)
+#  define __SPM_REG    SPMCSR
+#else
 #if defined (__AVR_ATmega128__)
 #  define __SPM_REG    SPMCSR
 #else
@@ -131,6 +134,7 @@
 #  define __SPM_REG    SPMCR
 #else
 #  error AVR processor does not provide bootloader support!
+#endif
 #endif
 #endif
 #endif
@@ -774,7 +778,7 @@
 #define boot_rww_enable()             __boot_rww_enable_alternate()
 #define boot_lock_bits_set(lock_bits) __boot_lock_bits_set_alternate(lock_bits)
 
-#elif defined(__AVR_ATmega128__)
+#elif defined (__AVR_ATmega128__) || defined (__AVR_ATmega2561__)
 #define boot_page_fill(address, data) __boot_page_fill_extended(address, data)
 #define boot_page_erase(address)      __boot_page_erase_extended(address)
 #define boot_page_write(address)      __boot_page_write_extended(address)

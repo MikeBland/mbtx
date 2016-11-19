@@ -74,7 +74,7 @@ uint32_t check_soft_power()
 #if defined(SIMU)
   return POWER_ON;
 #else
- #ifdef REV9E
+#ifdef REV9E
 	switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
 	switch ( PowerState )
 	{

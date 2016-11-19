@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "en.h"
 
 extern const char * const English[] ;

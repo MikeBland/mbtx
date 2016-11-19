@@ -25,6 +25,7 @@ uint8_t lcd_buf[DISPLAY_W*DISPLAY_H/8];
 #endif // SIMU
 
 uint8_t Lcd_lastPos;
+extern uint8_t Orientation ;
 
 uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8];
 #define DISPLAY_END (DisplayBuf+sizeof(displayBuf))
@@ -203,6 +204,30 @@ void lcdSetRefVolt(uint8_t val)
 	LcdLock = 0 ;						// Free LCD data lines
 }
 
+void lcdSetOrientation()
+{
+  if (Orientation & 1)
+	{
+    lcdSendCtl(0xA0);     // ADC = 0: norm direction(SEG1->SEG132/SEG128)
+    lcdSendCtl(0xC8);     // SHL = 1: rev direction(COM64->COM1)
+  }
+	else
+	{
+    lcdSendCtl(0xA1);     // ADC = 1: rev direction(SEG132/SEG128->SEG1)
+    lcdSendCtl(0xC0);     // SHL = 0: norm direction(COM1->COM64)
+  }
+  
+	if (Orientation & 2)
+	{
+    lcdSendCtl(0xA7) ;
+  }
+	else
+	{
+    lcdSendCtl(0xA6) ;
+  }
+}
+
+
 volatile uint8_t LcdLock ;
 
 void refreshDiplay()
@@ -212,6 +237,7 @@ void refreshDiplay()
   lcd_refresh = true;
 #else
 	LcdLock = 1 ;						// Lock LCD data lines
+
   uint8_t column_start_lo = 0x04; // skip first 4 columns for normal ST7565
   uint8_t *p=DisplayBuf;
   for(uint8_t y=0xB0; y < 0xB8; y++) {

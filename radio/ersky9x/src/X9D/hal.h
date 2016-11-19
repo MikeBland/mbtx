@@ -35,16 +35,18 @@
 #endif // REV9E
 
 // Trims
+#ifdef REV9E
+#define	PIN_TRIMLV_DN		        GPIO_Pin_4	//PE.04
+#define PIN_TRIMLV_UP           GPIO_Pin_3  //PE.03
+#define PIN_TRIMRH_UP		        GPIO_Pin_13	//PC.13
+#define	PIN_TRIMRH_DN		        GPIO_Pin_1	//PC.01
+#define	PIN_TRIMRV_DN		        GPIO_Pin_3	//PC.03
+#define	PIN_TRIMRV_UP	          GPIO_Pin_2	//PC.02
+#define PIN_TRIMLH_UP           GPIO_Pin_0  //PG.00
+#define PIN_TRIMLH_DN           GPIO_Pin_1  //PG.01
+#else
 #define	PIN_TRIMLH_DN		        GPIO_Pin_4	//PE.04
 #define PIN_TRIMLH_UP           GPIO_Pin_3  //PE.03
-#ifdef REV9E
-#define PIN_TRIMRV_UP		        GPIO_Pin_13	//PC.13
-#define	PIN_TRIMRV_DN		        GPIO_Pin_1	//PC.01
-#define	PIN_TRIMRH_UP		        GPIO_Pin_3	//PC.03
-#define	PIN_TRIMRH_DN	          GPIO_Pin_2	//PC.02
-#define PIN_TRIMLV_UP           GPIO_Pin_0  //PG.00
-#define PIN_TRIMLV_DN           GPIO_Pin_1  //PG.01
-#else
 #define	PIN_TRIMRV_UP	          GPIO_Pin_2	//PC.02
 #define	PIN_TRIMRV_DN		        GPIO_Pin_3	//PC.03
 #define PIN_TRIMRH_UP		        GPIO_Pin_13	//PC.13
@@ -100,10 +102,10 @@
 
 #define	PIN_SW_A_L		        GPIO_Pin_13	//PE.13
 #define	PIN_SW_A_H		        GPIO_Pin_7	//PE.07
-#define	PIN_SW_B_H		        GPIO_Pin_14	//PD.14
-#define	PIN_SW_B_L		        GPIO_Pin_10	//PD.10
-#define	PIN_SW_C_H		        GPIO_Pin_10	//PG.10
-#define	PIN_SW_C_L		        GPIO_Pin_11	//PG.11
+#define	PIN_SW_B_H		        GPIO_Pin_10	//PD.10
+#define	PIN_SW_B_L		        GPIO_Pin_14	//PD.14
+#define	PIN_SW_C_H		        GPIO_Pin_11	//PG.11
+#define	PIN_SW_C_L		        GPIO_Pin_10	//PG.10
 //#define	PIN_SW_D_H		        
 #define	PIN_SW_D_L		        GPIO_Pin_11	//PE.11
 #define	PIN_SW_E_L		        GPIO_Pin_4	//PF.04

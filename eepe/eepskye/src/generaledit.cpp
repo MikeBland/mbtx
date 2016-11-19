@@ -123,8 +123,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		switch ( rData->type )
 		{
-			case 0 :
-			case 1 :
+			case RADIO_TYPE_SKY :
+			case RADIO_TYPE_TARANIS :
 				ui->brightGreenSB->hide() ;
 				ui->brightBlueSB->hide() ;
 				ui->label_BrightGreen->hide() ;
@@ -132,7 +132,8 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->label_Bright->setText("Brightness") ;
 			break ;
 				
-			case 2 :
+			case RADIO_TYPE_TPLUS :
+			case RADIO_TYPE_X9E :
 				ui->label_Bright->setText("Brightness (Colour)") ;
 				ui->label_BrightGreen->setText("Brightness (White)") ;
 				ui->label_BrightGreen->show() ;
@@ -141,7 +142,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->brightBlueSB->hide() ;
 			break ;
 
-			case 3 :
+			case RADIO_TYPE_9XTREME :
 				ui->brightGreenSB->show() ;
 				ui->brightBlueSB->show() ;
 				ui->label_BrightGreen->show() ;
@@ -216,10 +217,12 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->StickRVdeadbandSB->setValue( g_eeGeneral.stickDeadband[2] ) ;
     ui->StickRHdeadbandSB->setValue( g_eeGeneral.stickDeadband[3] ) ;
 
+		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
+		loadTrainerFromProfile() ;
 		updateTrainerTab();
 
 
-		if ( ( rData->type < 1 ) || ( rData->type == 3 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 		{
 			ui->label_AilSw->show() ;
 			ui->label_EleSw->show() ;
@@ -234,7 +237,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			ui->Pot4CB->show() ;
 
       int xtype = 0 ;
-			if ( rData->type == 3 )
+			if ( rData->type == RADIO_TYPE_9XTREME )
 			{
 				xtype = 2 ;
 				ui->label_Pot5->show() ;
@@ -276,7 +279,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 //			ui->SixPosCB->hide() ;
 			ui->AilCB->setCurrentIndex( g_eeGeneral.ailsource ) ;
 			uint8_t value = g_eeGeneral.elesource ;
-			if ( rData->type != 3 )
+			if ( rData->type != RADIO_TYPE_9XTREME )
 			{
 				if ( value > 5 )
 				{
@@ -359,6 +362,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     connect(ui->trainerCalib_4, SIGNAL(editingFinished()), this, SLOT(trainerTabValueChanged()));
 
     connect(ui->PPM_MultiplierDSB, SIGNAL(editingFinished()), this, SLOT(trainerTabValueChanged()));
+    connect(ui->TrainerSourceCB, SIGNAL(currentIndexChanged(int)), this, SLOT(trainerTabValueChanged()));
 
     connect(ui->weightSB_1, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_2, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
@@ -604,6 +608,10 @@ void GeneralEdit::saveTrainerToProfile()
 		tc->mode = td->mode ;
 		tc->swtch = xtd->swtch ;
 		tc->studWeight = xtd->studWeight ;
+//		if ( i == 0 )
+//		{
+//			tc->source = g_eeGeneral.trainerSource ;
+//		}
 	}
 }
 
@@ -620,6 +628,10 @@ void GeneralEdit::loadTrainerFromProfile()
 		td->mode = tc->mode ;
 		xtd->swtch = tc->swtch ;
 		xtd->studWeight = tc->studWeight ;
+//		if ( i == 0 )
+//		{
+//			g_eeGeneral.trainerSource = tc->source ;
+//		}
 	}
 }
 
@@ -641,8 +653,9 @@ void GeneralEdit::updateTrainerTab()
 	trainerTabLock = 1 ;
     on_tabWidget_selected(""); // updates channel name labels
 
-		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
 		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
+		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
+		ui->TrainerSourceCB->setCurrentIndex( g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source ) ;
     ui->modeCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
     ui->sourceCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].srcChn);
     if ( g_eeGeneral.trainer.mix[0].swtch == -16)
@@ -784,6 +797,9 @@ void GeneralEdit::trainerTabValueChanged()
     g_eeGeneral.trainer.calib[3] = ui->trainerCalib_4->value();
 
     g_eeGeneral.PPM_Multiplier = ((quint16)(ui->PPM_MultiplierDSB->value()*10))-10;
+		
+		g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source = ui->TrainerSourceCB->currentIndex() ;
+		saveTrainerToProfile() ;
 
     updateSettings();
 }
@@ -989,7 +1005,6 @@ void GeneralEdit::on_BluetoothTypeCB_currentIndexChanged(int index)
     g_eeGeneral.BtType = index ;
     updateSettings();
 }
-
 
 void GeneralEdit::on_backlightautoSB_editingFinished()
 {
@@ -1452,10 +1467,10 @@ void GeneralEdit::on_hapticStengthSB_editingFinished()
 
 void GeneralEdit::on_tabWidget_selected(QString )
 {
-    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,2,0));
-    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,2,0));
-    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,2,0));
-    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,2,0));
+    ui->chnLabel_1->setText(getSourceStr(g_eeGeneral.stickMode,1,2,0,0));
+    ui->chnLabel_2->setText(getSourceStr(g_eeGeneral.stickMode,2,2,0,0));
+    ui->chnLabel_3->setText(getSourceStr(g_eeGeneral.stickMode,3,2,0,0));
+    ui->chnLabel_4->setText(getSourceStr(g_eeGeneral.stickMode,4,2,0,0));
 }
 
 
@@ -1647,6 +1662,7 @@ void GeneralEdit::on_AilCB_currentIndexChanged(int x )
 	uint16_t value = x ? USE_AIL_3POS : 0 ;
 	g_eeGeneral.switchMapping &= ~USE_AIL_3POS ;
 	g_eeGeneral.switchMapping |= value ;
+	g_eeGeneral.ailsource = x ;
 	if ( x )
 	{
 //		g_eeGeneral.switchMapping &= ~USE_GEA_3POS  ;
@@ -1664,7 +1680,7 @@ void GeneralEdit::on_EleCB_currentIndexChanged(int x )
 	}
   g_eeGeneral.switchMapping &= ~(USE_ELE_3POS | USE_ELE_6POS | USE_ELE_6PSB ) ;
 	uint16_t value = x ;
-	if ( rData->type != 3 )
+	if ( rData->type != RADIO_TYPE_9XTREME )
 	{
 		if ( value > 5 )
 		{

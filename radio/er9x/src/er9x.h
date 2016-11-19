@@ -683,15 +683,15 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
 #ifdef MULTI_PROTOCOL
  #ifdef SBUS_PROTOCOL	
-#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI SBUS  "
+#define PROT_STR "\006PPM   XJT   DSM2  PPM16 PPMSIMMULTI SBUS  "
  #else
-#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMMULTI "
+#define PROT_STR "\006PPM   XJT   DSM2  PPM16 PPMSIMMULTI "
  #endif // SBUS_PROTOCOL
 #else
  #ifdef SBUS_PROTOCOL	
-#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIMSBUS  "
+#define PROT_STR "\006PPM   XJT   DSM2  PPM16 PPMSIMSBUS  "
  #else
-#define PROT_STR "\006PPM   PXX   DSM2  PPM16 PPMSIM"
+#define PROT_STR "\006PPM   XJT   DSM2  PPM16 PPMSIM"
  #endif // SBUS_PROTOCOL
 #endif // MULTI_PROTOCOL
 
@@ -704,32 +704,54 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  "
-//#define MULTI_STR_LEN    6
-#define M_Flysky           0
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2S"
+#define M_Flysky          0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
-#define M_Hubsan           1
-#define M_Frsky            2
-#define M_Hisky            3
+#define M_Hubsan          1
+#define M_Frsky           2
+#define M_Hisky           3
 #define M_HISKY_STR "\005HiskyHK310"
-#define M_V2x2             4
-#define M_DSM2             5
-#define M_DSM2_STR "\004DSM2DSMX"
-#define M_Devo  	       6
-#define M_YD717	           7
+#define M_V2x2            4
+#define M_DSM	            5
+#if defined(CPUM128) || defined(CPUM2561)
+#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
+#else
+#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11"
+#endif
+#define M_Devo  	      	6
+#define M_YD717	          7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
-#define M_KN	           8
+#define M_KN	          	8
 #define M_KN_STR "\006WLTOYSFEILUN"
-#define M_SymaX	           9
+#define M_SymaX	          9
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
-#define M_SLT		       10
+#define M_SLT		       	 10
 #define M_CX10		       11
-#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041"
+#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
 #define M_CG023		       12
 #define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
 #define M_FRSKYX	       14
+#define M_FRSKY_STR "\005CH_16CH_8 "
 #define M_ESKY		       15
+#define M_MT99XX	       16
+#define M_MT99XX_STR "\002MTH7YZLS"
+#define M_MJXQ		       17
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
+#define M_SHENQI				 18
+#define M_FY326					 19
+#define M_SFHSS					 20
+#define M_J6PRO					 21
+#define M_FQ777					 22
+#define M_ASSAN					 23
+#define M_FrskyV				 24
+#define M_HONTAI				 25
+#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
+#define M_OPENLRS				 26
+#define M_AFHD2SA_STR "\007PWMIBUSPPMIBUSPWMSBUSPPM_SBUS"
+#define M_AFHD2SA				 27
+
+#define M_LAST_MULTI		 27
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -1423,6 +1445,25 @@ void displayOneSwitch( uint8_t x, uint8_t y, uint8_t index ) ;
 #ifdef QUICK_SELECT
 void putsDblSizeName( uint8_t y ) ;
 #endif
+
+//
+// Auto Pilot modes from ArduCopter
+//
+#define STABILIZE 0                     // hold level position
+#define ACRO 1                          // rate control
+#define ALT_HOLD 2                      // AUTO control
+#define AUTO 3                          // AUTO control
+#define GUIDED 4                        // AUTO control
+#define LOITER 5                        // Hold a single location
+#define RTL 6                           // AUTO control
+#define CIRCLE 7                        // AUTO control
+#define LAND 9                          // AUTO control
+#define OF_LOITER 10                    // Hold a single location using optical flow sensor
+#define DRIFT 11                        // DRIFT mode (Note: 12 is no longer used)
+#define SPORT 13                        // earth frame rate control
+#define FLIP        14                  // flip the vehicle on the roll axis
+#define AUTOTUNE    15                  // autotune the vehicle's roll and pitch gains
+#define POSHOLD     16                  // position hold with manual override
 
 #endif // er9x_h
 /*eof*/

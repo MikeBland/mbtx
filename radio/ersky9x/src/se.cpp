@@ -45,6 +45,7 @@
 *
 ****************************************************************************/
 
+#include "ersky9x.h"
 #include "se.h"
 
 extern const char * const Swedish[] ;

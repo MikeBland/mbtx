@@ -1128,6 +1128,13 @@ Please consult the programmer's documentation and the AVRDUDE documentation to s
        </property>
       </widget>
      </item>
+     <item row="7" column="2">
+      <widget class="QCheckBox" name="disablePreReadCB">
+       <property name="text">
+        <string>Disable EEPROM pre-read</string>
+       </property>
+      </widget>
+     </item>
     </layout>
    </item>
    <item row="5" column="0" colspan="2">

@@ -10,6 +10,24 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 22-Jan-2016  MPB (r821)
+Further MULTI changes
+Re-label Delay up and down
+Add Q242 sub-protocol on MULTI
+V2 Voice alarm update
+Add FY326 SFHSS on MULTI
+Add FRSKYX 18/8 sub-protocols on MULTI
+Fix GVARS as volume control bug
+Add disable JTAG interface
+Fix minor bugs in voice alarms
+Add XY curve in '128 and '2561 versions
+Add MavLink over FrSky suppport in '128 and '2561 versions
+
+******************************************
+CHANGELOG: 11-Jan-2016  MPB (r820)
+H8_3D MULTI supported
+
+******************************************
 CHANGELOG: 23-Nov-2015  MPB (r819)
 V-tail and Elevon templates
 RAM and flash savings

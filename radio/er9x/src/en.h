@@ -53,6 +53,7 @@
 #define STR_TXEQ		       "\003Tx=Swr"
 #define STR_RXEQ		       "Rx="
 #define STR_RX  		       "Rx"
+#define STR_TX				   "Tx" //Extra data for MavLink via FrSky
 #define STR_TRE012AG	     "TRE012AGG"
 
 // STR_YELORGRED indexed 3 char each
@@ -125,7 +126,7 @@
 #define STR_SLAVE          "\007Slave" 
 #define STR_MENU_DONE      "[MENU] WHEN DONE"
 #define STR_CURVES         "Curves"
-#define STR_CURVE          "CURVE"
+#define STR_CURVE          "Curve"
 #define STR_GLOBAL_VAR     "GLOBAL VAR"
 #define STR_VALUE          "Value"
 #define STR_PRESET         "PRESET"
@@ -136,6 +137,8 @@
 #define STR_USR_PROTO_UNITS "UsrProto\037Units"
 #define STR_USR_PROTO			 "UsrProto"
 #define STR_FRHUB_WSHHI    "\005FrHubWSHhi"
+#define STR_MAVLINK        "\003StdMav" //Extra data for MavLink via FrSky
+#define STR_MAVTELEM        "MavTelem" //Extra data for MavLink via FrSky
 #define STR_MET_IMP        "\003MetImp"
 #define STR_A_CHANNEL      "A  chan."
 #define STR_ALRM           "alrm"
@@ -196,7 +199,7 @@
 #define STR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define STR_DELETE_MIX     "DELETE MIX?"
 #define STR_MIX_POPUP      "EDIT\0INSERT\0COPY\0MOVE\0DELETE\0CLEAR ALL"
-#define STR_MIXER          "MIXER"
+//#define STR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define CHR_S              'S'
 // CHR_D D for Delay
@@ -247,7 +250,11 @@
 #define STR_PPMFRAME_MSEC  "PPM FrLen\015mSec"
 #define STR_SEND_RX_NUM    "Bind  Range"
 #define STR_DSM_TYPE       "DSM Type"
-#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#if defined(CPUM128) || defined(CPUM2561)
+#define STR_PXX_TYPE       " Type\037 Chans\037 Country\037Bind\037Range"
+//#else
+//#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#endif
 #ifdef MULTI_PROTOCOL
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
@@ -367,7 +374,7 @@
 #endif  // XSW_MOD
 #define SWITCH_WARN_STR	   "Switch Warning"
 // CURV_STR indexed 3 chars each
-#define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16"
+#define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17"
 // CSWITCH_STR indexed 7 chars each
 #ifdef VERSION3
 #if defined(CPUM128) || defined(CPUM2561)
@@ -460,4 +467,68 @@
 #define MODEL_SETUP_OFFSET	13
 #define RADIO_SETUP_OFFSET	35
 
+
+/* Extra data for MavLink via FrSky
+*/
+#define STR_MAV_FM_0     "STAB"
+#define STR_MAV_FM_1     "ACRO"
+#define STR_MAV_FM_2     "A-Hold"
+#define STR_MAV_FM_3     "AUTO"
+#define STR_MAV_FM_4     "GUIDED"
+#define STR_MAV_FM_5     "LOITER"
+#define STR_MAV_FM_6   	 "RTL"
+#define STR_MAV_FM_7     "CIRCLE"
+#define STR_MAV_FM_8     "MODE8"
+#define STR_MAV_FM_9 		 "LAND"
+#define STR_MAV_ARMED  		 "ARMED"
+#define STR_MAV_DISARMED  	 "DISARM"
+#define STR_MAV_NODATA 		 "NODATA"
+#define STR_MAV_CURRENT      "Cur"
+#define STR_MAV_GPS_NO_GPS   "No GPS"
+#define STR_MAV_GPS      	 "GPS:"
+#define STR_MAV_GPS_NO_FIX	 "No Fix" // 1
+#define STR_MAV_GPS_2DFIX	 "2D Fix" // 2
+#define STR_MAV_GPS_3DFIX	 "3D Fix" // 3
+#define STR_MAV_GPS_SAT_COUNT "sat"
+#define STR_MAV_GPS_HDOP     "hdop"
+#define STR_MAV_THR_OUT	     "THR%"
+#define STR_MAV_WP_DIST "WP"
+#define STR_MAV_ALT          "alt"
+#define STR_MAV_GALT         "gAl"
+#define STR_MAV_HOME         "dth"
+#define STR_MAV_CPU          "cpu"
+#define STR_RSSI		     "Rssi"
+#define STR_RCQ		         "Rcq"
+#define STR_MAV_HEALTH  "Health"
+#define STR_MAV_OK  "Ok"
+/* Extra data for er9x FrSky+MavLink firmware End  */
+#if defined(CPUM128) || defined(CPUM2561)
+// Actual for THISFIRMWARE "ArduCopter V3.3-dev"
+// check actual data at https://github.com/diydrones/ardupilot/search?q=SEVERITY_HIGH
+#define STR_MAV_ERR_01 "    ARMING MOTORS    "
+#define STR_MAV_ERR_02 "PreArm: RC not calibr"
+#define STR_MAV_ERR_03 "PreArm: BaroBadHealth"
+#define STR_MAV_ERR_04 "PreArm: CompassHealth"
+#define STR_MAV_ERR_05 "PreArm: Bad GPS Pos  "
+#define STR_MAV_ERR_06 "   Compass disabled  "
+#define STR_MAV_ERR_07 "    Check compass    "
+#define STR_MAV_ERR_08 "MotorTest:RC NotCalib"
+#define STR_MAV_ERR_09 "MotorTest: Not landed"
+#define STR_MAV_ERR_10 "   Crash: Disarming  "
+#define STR_MAV_ERR_11 "Parachute: Released! "
+#define STR_MAV_ERR_12 "Error SettingRallyPnt"
+#define STR_MAV_ERR_13 "  AutoTune: Started  "
+#define STR_MAV_ERR_14 "  AutoTune: Stopped  "
+#define STR_MAV_ERR_15 "      Trim saved     "
+#define STR_MAV_ERR_16 "EKF: Compass Variance"
+#define STR_MAV_ERR_17 "Verify: InvalidNavCMD"
+#define STR_MAV_ERR_18 "Verify: InvlidCondCMD"
+#define STR_MAV_ERR_19 "Disable fence failed "
+#define STR_MAV_ERR_20 "ESC Cal:Restart Board"
+#define STR_MAV_ERR_21 "ESC Cal:PassThrToESCs"
+#define STR_MAV_ERR_22 "---- Low Battery ----"
+#define STR_MAV_ERR_23 "----- Lost GPS ------"
+#define STR_MAV_ERR_24 "  Fence autodisabled "
+#endif
+/* Extra data for er9x FrSky+MavLink firmware End  */
 

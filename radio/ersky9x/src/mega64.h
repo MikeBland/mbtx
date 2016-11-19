@@ -25,6 +25,8 @@ extern uint16_t M64Overruns ;
 extern uint16_t M64CountErrors ;
 extern uint8_t M64Received ;
 extern uint8_t M64Revision ;
+extern uint8_t M64ResetCount ;
+extern uint8_t M64RestartCount ;
 
 extern uint8_t M64SetHaptic ;
 extern uint8_t M64HapticOnOff ;

@@ -11,7 +11,7 @@ namespace Ui {
 class MixerDialog : public QDialog {
     Q_OBJECT
 public:
-		MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, int eeType);
+		MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData );
     ~MixerDialog();
 
 //    QString getComment();
@@ -29,6 +29,7 @@ private:
     Ui::MixerDialog *ui;
     QString * mixCommennt;
 		int leeType ;
+		uint32_t lextraPots ;
     bool ValuesEditLock ;
 };
 

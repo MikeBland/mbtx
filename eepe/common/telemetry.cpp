@@ -216,7 +216,7 @@ void telemetryDialog::on_startButtonModule_clicked()
 #else
 		port = new QextSerialPort(portname, QextSerialPort::Polling) ;
 #endif /*Q_OS_UNIX*/
-		port->setBaudRate(BAUD115200) ;
+		port->setBaudRate(BAUD9600) ;
   	port->setFlowControl(FLOW_OFF) ;
 		port->setParity(PAR_NONE) ;
   	port->setDataBits(DATA_8) ;

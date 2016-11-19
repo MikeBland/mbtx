@@ -249,7 +249,11 @@
 #define STR_PPMFRAME_MSEC  "PPM Laenge\015mSek" // Puls Pausen Modulation
 #define STR_SEND_RX_NUM    "Bind  Range"
 #define STR_DSM_TYPE       "DSM Typ" 
-#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#if defined(CPUM128) || defined(CPUM2561)
+#define STR_PXX_TYPE       " Type\037 Chans\037 Country\037Bind\037Range"
+//#else
+//#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
+//#endif
 #ifdef MULTI_PROTOCOL
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
@@ -451,5 +455,70 @@
 #define STR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics"
 #define MODEL_SETUP_OFFSET	13
 #define RADIO_SETUP_OFFSET	35
+
+
+/* Extra data for MavLink via FrSky
+*/
+#define STR_MAV_FM_0     "STAB"
+#define STR_MAV_FM_1     "ACRO"
+#define STR_MAV_FM_2     "A-Hold"
+#define STR_MAV_FM_3     "AUTO"
+#define STR_MAV_FM_4     "GUIDED"
+#define STR_MAV_FM_5     "LOITER"
+#define STR_MAV_FM_6   	 "RTL"
+#define STR_MAV_FM_7     "CIRCLE"
+#define STR_MAV_FM_8     "MODE8"
+#define STR_MAV_FM_9 		 "LAND"
+#define STR_MAV_ARMED  		 "ARMED"
+#define STR_MAV_DISARMED  	 "DISARM"
+#define STR_MAV_NODATA 		 "NODATA"
+#define STR_MAV_CURRENT      "Cur"
+#define STR_MAV_GPS_NO_GPS   "No GPS"
+#define STR_MAV_GPS      	 "GPS:"
+#define STR_MAV_GPS_NO_FIX	 "No Fix" // 1
+#define STR_MAV_GPS_2DFIX	 "2D Fix" // 2
+#define STR_MAV_GPS_3DFIX	 "3D Fix" // 3
+#define STR_MAV_GPS_SAT_COUNT "sat"
+#define STR_MAV_GPS_HDOP     "hdop"
+#define STR_MAV_THR_OUT	     "THR%"
+#define STR_MAV_WP_DIST "WP"
+#define STR_MAV_ALT          "alt"
+#define STR_MAV_GALT         "gAl"
+#define STR_MAV_HOME         "dth"
+#define STR_MAV_CPU          "cpu"
+#define STR_RSSI		     "Rssi"
+#define STR_RCQ		         "Rcq"
+#define STR_MAV_HEALTH  "Health"
+#define STR_MAV_OK  "Ok"
+/* Extra data for er9x FrSky+MavLink firmware End  */
+#if defined(CPUM128) || defined(CPUM2561)
+// Actual for THISFIRMWARE "ArduCopter V3.3-dev"
+// check actual data at https://github.com/diydrones/ardupilot/search?q=SEVERITY_HIGH
+#define STR_MAV_ERR_01 "    ARMING MOTORS    "
+#define STR_MAV_ERR_02 "PreArm: RC not calibr"
+#define STR_MAV_ERR_03 "PreArm: BaroBadHealth"
+#define STR_MAV_ERR_04 "PreArm: CompassHealth"
+#define STR_MAV_ERR_05 "PreArm: Bad GPS Pos  "
+#define STR_MAV_ERR_06 "   Compass disabled  "
+#define STR_MAV_ERR_07 "    Check compass    "
+#define STR_MAV_ERR_08 "MotorTest:RC NotCalib"
+#define STR_MAV_ERR_09 "MotorTest: Not landed"
+#define STR_MAV_ERR_10 "   Crash: Disarming  "
+#define STR_MAV_ERR_11 "Parachute: Released! "
+#define STR_MAV_ERR_12 "Error SettingRallyPnt"
+#define STR_MAV_ERR_13 "  AutoTune: Started  "
+#define STR_MAV_ERR_14 "  AutoTune: Stopped  "
+#define STR_MAV_ERR_15 "      Trim saved     "
+#define STR_MAV_ERR_16 "EKF: Compass Variance"
+#define STR_MAV_ERR_17 "Verify: InvalidNavCMD"
+#define STR_MAV_ERR_18 "Verify: InvlidCondCMD"
+#define STR_MAV_ERR_19 "Disable fence failed "
+#define STR_MAV_ERR_20 "ESC Cal:Restart Board"
+#define STR_MAV_ERR_21 "ESC Cal:PassThrToESCs"
+#define STR_MAV_ERR_22 "---- Low Battery ----"
+#define STR_MAV_ERR_23 "----- Lost GPS ------"
+#define STR_MAV_ERR_24 "  Fence autodisabled "
+#endif
+/* Extra data for er9x FrSky+MavLink firmware End  */
 
 

@@ -101,8 +101,7 @@ MdiChild::MdiChild()
     radioData.ModelNames[i][0] = '\0' ;
 	}
 	radioData.type = 0 ;
-
-
+	radioData.extraPots = 0 ;
 
 	generalDefault() ;
 
@@ -120,8 +119,33 @@ MdiChild::MdiChild()
     setDragEnabled(true);
     setAcceptDrops(true);
     setDropIndicatorShown(true);
+	radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
 
 }
+
+
+uint32_t MdiChild::countExtraPots(EEGeneral *g_eeGeneral)
+{
+	uint32_t count = 0 ;
+	if ( g_eeGeneral->extraPotsSource[0] )
+	{
+		count = 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[1] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[2] )
+	{
+		count += 1 ;
+	}
+	if ( g_eeGeneral->extraPotsSource[3] )
+	{
+		count += 1 ;
+	}
+	return count ;
+}
+
 
 void MdiChild::mousePressEvent(QMouseEvent *event)
 {
@@ -165,6 +189,10 @@ void MdiChild::dragEnterEvent(QDragEnterEvent *event)
          clearSelection();
          itemAt(event->pos())->setSelected(true);
     }
+		else if (event->mimeData()->hasFormat("text/uri-list"))
+		{
+	    event->acceptProposedAction();
+		}
 }
 
 void MdiChild::dragMoveEvent(QDragMoveEvent *event)
@@ -186,6 +214,17 @@ void MdiChild::dropEvent(QDropEvent *event)
         QByteArray gmData = event->mimeData()->data("application/x-eepe");
         doPaste(&gmData,i);
     }
+		else
+		{
+		  QList<QUrl> urls = event->mimeData()->urls();
+  		if (urls.isEmpty())
+    		return ;
+			QString fileName = urls.first().toLocalFile();
+  		if (fileName.isEmpty())
+  		  return ;
+			setCurrentRow( i ) ;
+      loadModelFromFile( fileName ) ;
+		}
     event->acceptProposedAction();
 }
 
@@ -206,7 +245,7 @@ void MdiChild::refreshList()
         str.prepend(" - ");
     addItem(tr("General Settings") + str);
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -234,6 +273,12 @@ void MdiChild::refreshList()
 	    	buf[4] = '\0';
 			}
       addItem(QString(buf));
+    }
+    if (radioData.generalSettings.currModel < 60 )
+		{
+			QFont f = QFont("Courier New", 12) ;
+			f.setBold(true) ;
+      this->item(radioData.generalSettings.currModel+1)->setFont(f) ;
     }
 }
 
@@ -356,7 +401,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
     uint32_t id = index;
     if(!id) id++;
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -403,7 +448,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
           gData += sizeof(er9x::EmodelData);
           i     += sizeof(er9x::EmodelData);
           id++;
-          QMessageBox::critical(this, tr("Error"),
+          QMessageBox::critical(this, tr("Warning"),
                         tr("Only part pasted from er9x file\nPlease check model settings"));
 				}
 
@@ -519,7 +564,7 @@ bool MdiChild::loadModelFromFile(QString fn)
             xmlOK = doc.setContent(&file);
             if(xmlOK)
             {
-                xmlOK = loadGeneralDataXML(&doc, &tgen);
+              xmlOK = loadGeneralDataXML(&doc, &tgen);
             }
             file.close();
         }
@@ -556,8 +601,23 @@ bool MdiChild::loadModelFromFile(QString fn)
             xmlOK = doc.setContent(&file);
             if(xmlOK)
             {
-                xmlOK = loadModelDataXML(&doc, &tmod);
-                getNotesFromXML(&doc, cmod);
+							QDomDocumentType type = doc.doctype() ;
+							if ( ( type.name() == ERSKY9X_MODEL_FILE_TYPE ) || ( type.name() == ERSKY9X_EEPROM_FILE_TYPE ) )
+							{
+              	xmlOK = loadModelDataXML(&doc, &tmod);
+              	getNotesFromXML(&doc, -cmod ) ;
+							}
+							else if ( ( type.name() == ER9X_MODEL_FILE_TYPE ) || ( type.name() == ER9X_EEPROM_FILE_TYPE ) )
+							{
+        				SKYModelData emod;
+								
+              	xmlOK = loadModelDataXML( &doc, &emod ) ;
+              	memcpy( &er9x::EmodelData, &emod, sizeof(er9x::EmodelData) ) ;
+								convertFromEr9x( &tmod, 0 ) ;
+              	getNotesFromXML(&doc, -cmod ) ;
+			          QMessageBox::critical(this, tr("Warning"),
+                        tr("Only part pasted from er9x file\nPlease check model settings"));
+							}
             }
             file.close();
         }
@@ -689,7 +749,7 @@ void MdiChild::duplicate()
 {
     uint32_t i = this->currentRow();
 		uint32_t max_models = MAX_MODELS ;
-		if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -777,11 +837,12 @@ void MdiChild::OpenEditWindow()
             setModified();
         }
 
+				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
     		QString mname = modelName(i-1) ;
         ModelEdit *t = new ModelEdit( &radioData,(i-1),this);
         
 				if(isNew) t->applyBaseTemplate();
-    		QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
+				QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
 				if ( radioData.type == 2 )
 				{
     		  type = " (Taranis Plus)" ;
@@ -812,6 +873,7 @@ void MdiChild::OpenEditWindow()
         GeneralEdit *t = new GeneralEdit(&radioData, this);
         connect(t,SIGNAL(modelValuesChanged()),this,SLOT(setModified()));
         t->show();
+				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
     }
 
 }
@@ -821,8 +883,11 @@ void MdiChild::newFile()
     static int sequenceNumber = 1 ;
     QSettings settings("er9x-eePskye", "eePskye");
 		radioData.type = 0 ;
+		radioData.bitType = 0 ;
+		radioData.sub_type = 0 ;
 		int x ;
 		x = settings.value("download-version", 0).toInt() ;
+		radioData.bitType = 1 << x ;
 		if ( x >= 2 )
 		{
 			radioData.type = x-1 ;
@@ -840,6 +905,17 @@ void MdiChild::newFile()
 		else if ( x == 4 )
 		{
     	type = " (9Xtreme)" ;
+		}
+		if ( x == 5 )
+		{
+			radioData.type = 2 ;
+    	type = " (Taranis X9E)" ;
+			radioData.sub_type = 1 ;
+		}
+		if ( x == 6 )
+		{
+			radioData.type = 0 ;
+    	type = " (Sky AR9X)" ;
 		}
 
     isUntitled = true;
@@ -910,7 +986,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 								
           }
 					uint32_t max_models = MAX_MODELS ;
-					if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+          if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 					{
 						max_models = MAX_IMODELS ;
 					}
@@ -991,14 +1067,17 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
           /*long result = */ file.read((char*)&temp,32768);
   	      file.close();
 
-					radioData.type = 1 ;
+					radioData.type = RADIO_TYPE_TARANIS ;
+					radioData.bitType = RADIO_BITTYPE_TARANIS ;
 					int x ;
 			    QSettings settings("er9x-eePskye", "eePskye");
 					x = settings.value("download-version", 0).toInt() ;
 					if ( x >= 2 )
 					{
 						radioData.type = x-1 ;
+						radioData.bitType = x == 3 ? RADIO_BITTYPE_TPLUS : RADIO_BITTYPE_X9E ;
 					}
+
 	        if(!rawloadFileRlc( &radioData, temp) )
   	      {
             QMessageBox::critical(this, tr("Error"),
@@ -1071,6 +1150,8 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
         }
 				defaultModelType = DefaultModelType ;
 				radioData.type = 0 ;
+				radioData.bitType = RADIO_BITTYPE_SKY ;
+
 				int x ;
 		    QSettings settings("er9x-eePskye", "eePskye");
 				x = settings.value("download-version", 0).toInt() ;
@@ -1078,6 +1159,11 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				{
 					radioData.type = 3 ;	// 9Xtreme
 					radioData.T9xr_pro = 1 ;
+					radioData.bitType = RADIO_BITTYPE_9XTREME ;
+				}
+				if ( x == 6 )
+				{
+					radioData.bitType = RADIO_BITTYPE_AR9X ;
 				}
         refreshList();
         if(resetCurrentFile) setCurrentFile(fileName);
@@ -1112,6 +1198,13 @@ bool MdiChild::saveAs()
 
 void MdiChild::getNotesFromXML(QDomDocument * qdoc, int model_id)
 {
+	int whichModel = model_id ;
+
+	if ( model_id < 0 )
+	{
+		whichModel = -model_id ;
+		model_id = 0 ;
+	}
     //look for MODEL_DATA with modelNum attribute.
     //if modelNum = -1 then just pick the first one
     QDomNodeList ndl = qdoc->elementsByTagName("MODEL_DATA");
@@ -1139,7 +1232,7 @@ void MdiChild::getNotesFromXML(QDomDocument * qdoc, int model_id)
         {
             QDomElement e = n.toElement();
             int mixNum = QString(e.attribute("mix")).toInt();
-            modelNotes[model_id][mixNum] = e.firstChild().toText().data();
+            modelNotes[whichModel][mixNum] = e.firstChild().toText().data();
         }
         n = n.nextSibling();
     }
@@ -1210,7 +1303,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
 
         //Save model data one by one
 				uint32_t max_models = MAX_MODELS ;
-				if ( ( radioData.type == 0 ) || ( radioData.type == 3 ) )
+        if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
 				{
 					max_models = MAX_IMODELS ;
 				}
@@ -1263,7 +1356,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-        if ( ( radioData.type ) && ( radioData.type < 3) )
+				if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1465,7 +1558,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-		        if ( ( radioData.type ) && ( radioData.type < 3) )
+						if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}
@@ -1521,6 +1614,8 @@ void MdiChild::ShowContextMenu(const QPoint& pos)
     contextMenu.addAction(QIcon(":/images/simulate.png"), tr("Simulate"),this,SLOT(simulate()),tr("Alt+S"));
     contextMenu.addSeparator();
     contextMenu.addAction(QIcon(":/images/write_eeprom.png"), tr("&Write To Tx"),this,SLOT(burnTo()),tr("Ctrl+Alt+W"));
+    contextMenu.addSeparator();
+    contextMenu.addAction(QIcon(":/images/edit.png"), tr("Set &Active Model"),this,SLOT(setActive()));
 
     contextMenu.exec(globalPos);
 }
@@ -1537,6 +1632,17 @@ void MdiChild::setModified(ModelEdit * me)
         for(int j=0; j<MAX_SKYMIXERS; j++)
             modelNotes[id][j] = me->getNote(j);
     }
+}
+
+void MdiChild::setActive()
+{
+  int i = this->currentRow() ;
+  
+	if ( i )
+	{
+		radioData.generalSettings.currModel = i - 1 ;
+		refreshList();
+	}
 }
 
 void MdiChild::simulate()
@@ -1679,7 +1785,7 @@ void MdiChild::modelDefault(uint8_t id)
 		}
 		radioData.models[id].modelVersion = 3 ;
 	}
-  if ( ( radioData.type ) && ( radioData.type < 4) ) // Taranis/9Xtreme
+	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME ) )
 	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;
@@ -1701,6 +1807,8 @@ void MdiChild::setModelFile(uint8_t id)
 
 void convertEr9xSwitch( int8_t *p )
 {
+	int x = *p ;
+	*p = x ;
 }
 
 
@@ -1778,6 +1886,7 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
   	dst->lateOffset = er9x::srcMix->lateOffset ;
   	dst->modeControl = er9x::srcMix->modeControl ;
 		dst->switchSource = er9x::srcMix->sw23pos ;
+		dst->differential = er9x::srcMix->differential ;
 	}
 	for ( i = 0 ; i < NUM_CHNOUT ; i += 1 )
 	{
@@ -1880,17 +1989,74 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 
 	for ( i = 0 ; i < 2 ; i += 1 )
 	{
-//		dest->timer[i] = er9x::EmodelData.timer[i] ;
+		int x ;
+		if ( i == 0 )
+		{
+			dest->timer[i].tmrModeA = er9x::EmodelData.tmrMode ;
+			dest->timer[i].tmrDir = er9x::EmodelData.tmrDir ;
+			x = er9x::EmodelData.tmrModeB ;
+			if ( x > 21 )
+			{
+				x += 13 ;
+			}
+			dest->timer[i].tmrModeB = x ;
+			dest->timer[i].tmrVal = er9x::EmodelData.tmrVal ;
+			dest->timer1RstSw  = er9x::EmodelData.timer1RstSw ;
+			convertEr9xSwitch( (int8_t *)&dest->timer1RstSw ) ;
+			dest->timer1Cdown  = er9x::EmodelData.timer1Cdown ;
+			dest->timer1Mbeep  = er9x::EmodelData.timer1Mbeep ;
+		}
+		else
+		{
+			dest->timer[i].tmrModeA = er9x::EmodelData.tmr2Mode ;
+			dest->timer[i].tmrDir = er9x::EmodelData.tmr2Dir ;
+			x = er9x::EmodelData.tmr2ModeB ;
+			if ( x > 21 )
+			{
+				x += 13 ;
+			}
+			dest->timer[i].tmrModeB = x ;
+			dest->timer[i].tmrVal = er9x::EmodelData.tmr2Val ;
+			dest->timer2RstSw  = er9x::EmodelData.timer2RstSw ;
+			convertEr9xSwitch( (int8_t *)&dest->timer2RstSw ) ;
+			dest->timer2Cdown  = er9x::EmodelData.timer2Cdown ;
+			dest->timer2Mbeep  = er9x::EmodelData.timer2Mbeep ;
+		}
+		
+		
   	if( dest->timer[i].tmrModeB>=(MAX_DRSWITCH))	 //momentary on-off
 		{
 			dest->timer[i].tmrModeB += (NUM_SKYCSW - NUM_CSW) ;
-		}
+    }
 	}
 
 	for ( i = 0 ; i < MAX_GVARS ; i += 1 )
 	{
 		dest->gvars[i] = (GvarData&)er9x::EmodelData.gvars[i] ;
 	}
+
+	// Voice alarms
+	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
+	{
+		int x ;
+		x = er9x::EmodelData.vad[i].source ;
+		if ( x > 35 )
+		{
+			x += 8 ; //extra channels 
+		}
+		dest->vad[i].source = x ;
+		dest->vad[i].func = er9x::EmodelData.vad[i].func ;
+		dest->vad[i].swtch = er9x::EmodelData.vad[i].swtch ;
+		convertEr9xSwitch( (int8_t *)&dest->vad[i].swtch ) ;
+		dest->vad[i].rate = er9x::EmodelData.vad[i].rate ;
+		dest->vad[i].fnameType = er9x::EmodelData.vad[i].fnameType ;
+		dest->vad[i].haptic = er9x::EmodelData.vad[i].haptic ;
+		dest->vad[i].vsource = er9x::EmodelData.vad[i].vsource ;
+		dest->vad[i].mute = er9x::EmodelData.vad[i].mute ;
+		dest->vad[i].offset = er9x::EmodelData.vad[i].offset ;
+		dest->vad[i].file.vfile = er9x::EmodelData.vad[i].vfile ;
+	}
+
 
 //	dest->frskyAlarms = er9x::EmodelData.frskyAlarms ;
 

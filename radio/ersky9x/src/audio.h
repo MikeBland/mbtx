@@ -24,6 +24,7 @@
 #define VLOC_SYSTEM		0xE000
 #define VLOC_USER			0xD000
 #define VLOC_MNAMES		0xC000
+#define VLOC_MUSIC		0xB000
 #define VLOC_NUMSYS		0x1000
 #define VLOC_NUMUSER	0x2000
 
@@ -189,7 +190,9 @@ class audioQueue
 
 void beginToneFill( void ) ;
 //int32_t xtoneFill( uint16_t *buffer, uint32_t frequency, uint32_t timeMs ) ;
-int32_t toneFill( uint16_t *buffer ) ;
+#define TONE_SET	0
+#define TONE_ADD	1
+int32_t toneFill( uint16_t *buffer, uint32_t add ) ;
 
 //wrapper function - dirty but results in a space saving!!!
 extern audioQueue audio;
@@ -223,6 +226,7 @@ void audioNamedVoiceDefevent( uint8_t e, uint16_t v ) ;
 #define VOICE_Q_LENGTH		16
 
 extern uint8_t SdAccessRequest ;
+extern uint8_t AudioActive ;
 
 struct t_voice
 {
@@ -312,6 +316,7 @@ extern void unlockVoice( void ) ;
 #define V_THR_WARN			74
 #define V_SW_WARN				75
 //#define V_BT_LOST				76
+#define V_CUSTOM_WARN		77
 
 //#define V_HUNDRED			 100
 #define V_THOUSAND		 110
@@ -323,6 +328,18 @@ extern void unlockVoice( void ) ;
 
 
 // Defines for system voice names
+
+//Are these needed?
+//TX_VOLT
+//ALTITUDE
+//CURRENT
+//PACKVOLT
+//RX_VOLT
+//TEMPERAT
+//DB
+//RX_V_LOW
+//TEMPWARN
+
 #define	SV_ALERT			 0
 #define	SV_SW_WARN		 1
 #define	SV_TH_WARN		 2
@@ -380,6 +397,26 @@ extern void unlockVoice( void ) ;
 #define	SV_BT_LOST		54
 #define	SV_HUNDRED		55
 #define	SV_THOUSAND		56
+#define	SV_CUSTOM_WARN	57
+#define	SV_SHUTDOWN		58
+#define	SV_TRN_LOST		59
+
+
+#define MUSIC_STOPPED			0
+#define MUSIC_PLAYING			1
+#define MUSIC_PAUSED			2
+#define MUSIC_STARTING		3
+#define MUSIC_PAUSING			4
+#define MUSIC_STOPPING		5
+#define MUSIC_RESUMING		6
+
+#define MUSIC_NP_NORMAL		0
+#define MUSIC_NP_PREV			1
+#define MUSIC_NP_NEXT			2
+
+extern uint8_t MusicPlaying ;
+extern uint8_t MusicInterrupted ;
+extern uint8_t MusicPrevNext ;
 
 
 #endif // audio_h     

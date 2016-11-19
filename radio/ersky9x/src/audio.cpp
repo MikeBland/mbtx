@@ -1,5 +1,7 @@
+
 /*
- * Author - Rob Thomson & Bertrand Songis
+ * Current Author - Mike Blandford
+ * Original Author - Rob Thomson & Bertrand Songis
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -42,10 +44,17 @@
 #define SOFTWARE_VOLUME	1
 #endif
 
+uint8_t MusicPlaying ;
+uint8_t MusicInterrupted ;
+uint8_t MusicPrevNext ;
+uint8_t AudioActive ;
+
 extern uint8_t CurrentVolume ;
 extern uint8_t Activated ;
 
 extern uint8_t AudioVoiceCountUnderruns ;
+
+extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 
 //#ifdef PCB9XT
 //void txmit( uint8_t c ) ;
@@ -65,6 +74,37 @@ struct toneQentry ToneQueue[AUDIO_QUEUE_LENGTH] ;
 uint8_t ToneQueueRidx ;
 uint8_t ToneQueueWidx ;
 uint8_t SdAccessRequest ;
+
+/*static*/ uint16_t toneCount ;
+/*static*/ uint16_t toneTimer ;
+/*static*/ uint8_t toneTimeLeft ;
+/*static*/ int8_t toneFreqIncr ;
+/*static*/ uint8_t toneFrequency ;
+/*static*/ uint8_t tonePause ;
+/*static*/ uint8_t toneRepeat ;
+/*static*/ uint8_t toneOrPause ;
+/*static*/ uint8_t toneActive ;
+
+
+//uint16_t Sine16k[32] =
+//{
+////	2048,2268,2471,2605,2648,2605,2471,2268,
+////	2048,1826,1623,1490,1448,1490,1623,1826
+//	2048,2165,2278,2381,2472,2547,2602,2636,
+//	2648,2636,2602,2547,2472,2381,2278,2165,
+//	2048,1931,1818,1715,1624,1549,1494,1460,
+//	1448,1460,1494,1549,1624,1715,1818,1931
+//} ;
+
+int16_t Sine16kInt[32] =
+{
+	  0, 117, 230, 333, 424, 499, 554, 588,
+	600, 588, 554, 499, 424, 333, 230, 117,
+	   0,-117,-230,-333,-424,-499,-554,-588,
+	-600,-588,-554,-499,-424,-333,-230,-117
+} ;
+
+
 
 void nextToneData( void ) ;
 
@@ -629,7 +669,10 @@ void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index )
 		{
 //			putVoiceQueue( decimals + 400 ) ;
 //			putSysNumVoiceQueue( decimals + 400 ) ;
-			voice0to99Name( decimals ) ;
+			if ( decimals )
+			{
+				voice0to99Name( decimals ) ;
+			}
 			flag = 1 ;
 		}
 		if ( ( flag == 0 ) && (qr.rem) )
@@ -744,7 +787,10 @@ const char SysVoiceNames[][VOICE_NAME_SIZE+1] =
 	"CAP_WARN",
 	"BT_LOST",
 	"HUNDRED",
-	"THOUSAND"
+	"THOUSAND",
+	"CST_WARN",
+	"SHUTDOWN",
+	"TRN_LOST",
 } ;
 
 void putSystemVoice( uint16_t sname, uint16_t value )
@@ -799,10 +845,21 @@ void voiceSystemNameNumberAudio( uint16_t sname, uint16_t number, uint8_t audio 
 uint8_t SaveVolume ;
 TCHAR VoiceFilename[48] ;
 uint8_t FileData[1024] ;
+uint8_t BgFileData[1024] ;
 FATFS g_FATFS ;
 FIL Vfile ;
+FIL BgFile ;
 uint32_t SDlastError ;
+uint32_t BgSizeLeft ;
+extern uint8_t SectorsPerCluster ;
 
+uint32_t BgSizePlayed ;
+uint32_t BgTotalSize ;
+
+UINT BgNread ;
+uint8_t Bgindex ;
+uint8_t BgLastBuffer ;
+uint16_t BgFrequency ;
 //uint8_t PlayingTone = 0 ;
 uint8_t PlayingFreq ;
 int32_t ToneTime ;
@@ -832,6 +889,11 @@ void buildFilename( uint32_t v_index, uint8_t *name )
 		if ( index == VLOC_MNAMES )
 		{
 			dirName = ( uint8_t*)"modelNames\\" ;
+		}
+		else if ( index == VLOC_MUSIC )
+		{
+			ptr = &VoiceFilename[1] ;	// Discard 'voice\'
+			dirName = ( uint8_t*)"music\\" ;
 		}
 		else if ( ( index == VLOC_USER ) || ( index == VLOC_NUMUSER ) )
 		{
@@ -880,6 +942,212 @@ void unlockVoice()
 	Voice.VoiceLock = 0 ;
 }
 
+static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+{
+//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
+	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
+	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
+} ;
+
+static uint16_t swVolumeLevel()
+{
+	return SwVolume_scale[CurrentVolume] ;
+}
+
+//void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
+//{
+//#ifndef PCB9XT
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//#endif
+//		int32_t multiplier ;
+//		int32_t value ;
+//		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
+//		while( count-- )
+//		{
+//			value = (int8_t) (*src++ - 128 ) ;
+//			value *= multiplier ;
+//			value += 32768 * 256 ;
+//			*dest++ = value >> 12 ;
+//		}
+//#ifndef PCB9XT
+//	}
+//	else
+//	{
+//		while( count-- )
+//		{
+//			*dest++ = *src++ << 4 ;
+//		}
+//	}
+//#endif
+//}
+
+uint32_t wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count, uint32_t addTone )
+{
+	uint16_t *saveDest = dest ;
+	uint32_t returnValue = 1 ;
+	uint32_t padSize ;
+	if ( count > VOICE_BUFFER_SIZE )
+	{
+		count = VOICE_BUFFER_SIZE ;
+	}
+	padSize = VOICE_BUFFER_SIZE - count ;
+#ifndef PCB9XT
+	if ( ( g_eeGeneral.softwareVolume ) || addTone )
+#endif
+	{
+		int32_t multiplier ;
+		int32_t value ;
+#ifndef PCB9XT
+		if ( g_eeGeneral.softwareVolume )
+		{
+#endif
+			multiplier = SwVolume_scale[CurrentVolume] ;
+#ifndef PCB9XT
+		}
+		else
+		{
+			multiplier = 256 ;
+		}
+#endif
+		if ( addTone )
+		{
+			if ( multiplier > 179 )
+			{
+				multiplier = 179 ;	// Limit to 70%
+			}
+		}
+		while( count-- )
+		{
+			value = (int16_t) *src++ ;
+			value *= multiplier ;
+			value += 32768 * 256 ;
+			*dest++ = value >> 12 ;
+		}
+	}
+#ifndef PCB9XT
+	else
+	{
+		while( count-- )
+		{
+			*dest++ = (uint16_t)( (int16_t )*src++ + 32768) >> 4 ;
+		}
+	}
+#endif
+	while( padSize-- )
+	{
+		*dest++ = 2048 ;
+	}
+
+	if ( addTone )
+	{
+		returnValue = toneFill( saveDest, TONE_ADD ) ;
+	}
+	return returnValue ;
+}
+
+
+//void wavU16ConvertPlusTone( uint16_t *src, uint16_t *dest, uint32_t count )
+//{
+//	int32_t toneMultiplier ;
+//	int32_t voiceMultiplier ;
+//	int32_t value ;
+//	int32_t total = VOICE_BUFFER_SIZE - count ;
+
+//	if ( toneTimeLeft == 0 )
+//	{
+//		nextToneData() ;
+//	}
+
+//#ifndef PCB9XT
+//	if ( g_eeGeneral.softwareVolume )
+//	{
+//#endif
+//		voiceMultiplier = SwVolume_scale[CurrentVolume] ;
+//		if ( voiceMultiplier > 179 )
+//		{
+//			voiceMultiplier = 179 ;
+//		}
+//#ifndef PCB9XT
+//	}
+//	else
+//	{
+//#endif
+//		voiceMultiplier = 179 ;
+//#ifndef PCB9XT
+//	}	
+//#endif
+//	while( count-- )
+//	{
+//		value = (int16_t) *src++ ;
+//		value *= voiceMultiplier ;
+//		value += 32768 * 256 ;
+//		*dest++ = value >> 12 ;
+//	}
+//	while ( total-- )
+//	{
+//		*dest++ = 2048 ;
+//	}
+
+//// not software volume
+//	voiceMultiplier = 179 ;	// 70%
+//	while( count-- )
+//	{
+//		value = (int16_t) *src++ ;
+//		value *= voiceMultiplier ;
+//		value += 32768 * 256 ;
+//		value >>= 12 ;
+//		if ( toneTimer-- )
+//		{
+//			uint32_t y ;
+//			toneCount += toneFrequency ;
+//			y = ( toneCount & 0x01F0) >> 4 ;
+//			if ( toneFrequency )
+//			{
+//				value += Sine16kInt[y] ;
+//			}
+//		}
+//		else
+//		{
+//			if ( --toneTimeLeft == 0 )
+//			{
+//				break ;
+//			}
+//			else
+//			{
+//				if ( toneFrequency )
+//				{
+//					toneFrequency += toneFreqIncr ;
+//				}
+//				toneTimer = 160 ;
+//			}
+//		}
+//		*dest++ = value ;
+//	}
+
+
+
+
+//}
+
+
+
+void waitVoiceAllSent( uint32_t index )
+{
+	uint32_t x ;
+	// Now wait for last buffer to have been sent
+	x = 100 ;
+ 	while ( ( VoiceBuffer[index].flags & VF_SENT ) == 0 )
+	{
+		CoTickDelay(1) ;					// 2mS for now
+		if ( --x == 0 )
+		{
+			break ;		// Timeout, 200 mS
+		}
+	}
+	endVoice() ;
+}
+
 static uint32_t currentFrequency ;
 
 void doTone()
@@ -895,13 +1163,13 @@ void doTone()
 	}
 
 	beginToneFill() ;
-	toneFill( VoiceBuffer[0].dataw ) ;
-	VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
 	currentFrequency = VoiceBuffer[0].frequency = 16000 ;		// sample rate
-	toneFill( VoiceBuffer[1].dataw ) ;
+	toneFill( VoiceBuffer[0].dataw, TONE_SET ) ;
+	VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
+	toneFill( VoiceBuffer[1].dataw, TONE_SET ) ;
 	VoiceBuffer[1].count = VOICE_BUFFER_SIZE ;
 	VoiceBuffer[1].frequency = currentFrequency ;
-	toneFill( VoiceBuffer[2].dataw ) ;
+	toneFill( VoiceBuffer[2].dataw, TONE_SET ) ;
 	VoiceBuffer[2].count = VOICE_BUFFER_SIZE ;
 	VoiceBuffer[2].frequency = currentFrequency ;
 	startVoice( NUM_VOICE_BUFFERS ) ;
@@ -912,7 +1180,7 @@ void doTone()
 		{
 			CoTickDelay(1) ;					// 2mS for now
 		}
-		toneOver = toneFill( VoiceBuffer[x].dataw ) ;
+		toneOver = toneFill( VoiceBuffer[x].dataw, TONE_SET ) ;
 		VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
 		VoiceBuffer[x].frequency = currentFrequency ;
 		appendVoice( x ) ;		// index of next buffer
@@ -925,21 +1193,416 @@ void doTone()
 		if ( toneOver )
 		{
 			// finish
-			x = 100 ;
- 			while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
-			{
-				CoTickDelay(1) ;					// 2mS for now
-				if ( --x == 0 )
-				{
-					break ;		// Timeout, 200 mS
-				}
-			}
-			endVoice() ;
+			waitVoiceAllSent( v_index ) ;
 			break ;
 		}
 	}
 }
 
+//uint16_t DebugMusic1 ;
+//uint16_t DebugMusic2 ;
+//uint16_t DebugMusic3 ;
+//uint16_t DebugMusic4 ;
+//uint16_t DebugMusic5 ;
+//uint16_t DebugMusic6 ;
+
+void waitAudioAllSentWithTone( uint32_t x, uint32_t v_index)
+{
+	uint32_t toneMerging = 0 ;
+	for(;;)
+	{
+		while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
+		{
+			CoTickDelay(1) ;					// 2mS for now
+		}
+		toneMerging = !toneFill( VoiceBuffer[x].dataw, TONE_SET ) ;
+		VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
+		VoiceBuffer[x].frequency = currentFrequency ;
+		appendVoice( x ) ;		// index of next buffer
+		v_index = x ;		// Last buffer sent
+		x += 1 ;
+		if ( x > NUM_VOICE_BUFFERS - 1 )
+		{
+			x = 0 ;							
+		}
+		if ( toneMerging == 0 )
+		{
+			// finish
+			break ;
+		}
+	}
+	waitVoiceAllSent( v_index ) ;
+}
+
+
+
+
+// BgNread should be valid
+void beginMusic( uint32_t offset, uint32_t size, uint32_t frequency )
+{
+	uint32_t x ;
+	UINT nread ;
+//	FRESULT fr ;
+	uint16_t numBuffers = 0 ;
+
+	nread = BgNread ;
+	if ( nread == 0 )
+	{
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		size -= nread ;
+	}
+	if ( nread == 0 )
+	{
+		f_close( &BgFile ) ;
+		MusicPlaying = MUSIC_STOPPED ;
+		MusicInterrupted = 0 ;
+		return ;
+	}
+
+	nread /= 2 ;
+	for( x = 0 ; x < offset ; x += 1 )
+	{
+		BgFileData[x] = 0 ;
+	}
+	 	
+	wavU16Convert( (uint16_t *)&BgFileData[0], VoiceBuffer[0].dataw, VOICE_BUFFER_SIZE, 0 ) ;
+	VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
+	size -= VOICE_BUFFER_SIZE * 2 - offset ;
+	BgFrequency = currentFrequency = VoiceBuffer[0].frequency = frequency ;		// sample rate
+	numBuffers = 1 ;
+
+	// Buffer 1 is now set, now fill the rest
+	for ( x = 1 ; x < NUM_VOICE_BUFFERS ; x += 1 )
+	{
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		if ( nread == 0 )
+		{
+			break ;
+		}
+		size -= nread ;
+		nread /= 2 ;
+		wavU16Convert( (uint16_t *)&BgFileData[0], VoiceBuffer[x].dataw, nread, 0 ) ;
+		VoiceBuffer[x].count = nread ;
+		numBuffers += 1 ;
+	}
+	if ( nread )
+	{
+		f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+//		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		size -= nread ;
+	}
+	BgNread = nread ;
+
+	startVoice( numBuffers ) ;
+	BgLastBuffer = numBuffers - 1 ;
+	MusicPlaying = MUSIC_PLAYING ;
+	BgSizeLeft = size ;
+}
+
+extern TCHAR PlaylistDirectory[] ;
+extern struct fileControl PlayFileControl ;
+extern char PlayListNames[][MUSIC_NAME_LENGTH+2] ;
+extern uint16_t PlayListCount ;
+uint16_t PlaylistIndex ;
+char CurrentPlayName[MUSIC_NAME_LENGTH+2] ;
+
+void bgStart()
+{
+	FRESULT fr ;
+	UINT nread ;
+	uint32_t x ;
+//	uint32_t w8or16 ;
+	uint32_t size ;
+	char plfilename[2*MUSIC_NAME_LENGTH+20] ;
+	uint8_t *ptr ;
+	
+	if ( g_eeGeneral.musicType )
+	{
+		ptr = cpystr( (uint8_t *)plfilename, (uint8_t *)g_eeGeneral.musicVoiceFileName ) ;
+		*ptr++ = '\\' ;
+		if ( PlaylistIndex >= PlayListCount )
+		{
+			PlaylistIndex = 0 ;
+		}
+		g_eeGeneral.playListIndex = PlaylistIndex ;
+		cpystr( ptr, (uint8_t *) PlayListNames[PlaylistIndex] ) ;
+		cpystr( (uint8_t *)CurrentPlayName, (uint8_t *) PlayListNames[PlaylistIndex] ) ;
+		buildFilename( VLOC_MUSIC, (uint8_t *)plfilename ) ;
+	}
+	else
+	{
+		cpystr( (uint8_t *)CurrentPlayName, g_eeGeneral.musicVoiceFileName ) ;
+		buildFilename( VLOC_MUSIC, g_eeGeneral.musicVoiceFileName ) ;
+	}
+	fr = f_open( &BgFile, VoiceFilename, FA_READ ) ;
+	if ( fr == FR_OK )
+	{
+		uint32_t offset ;
+		fr = f_read( &BgFile, BgFileData, VOICE_BUFFER_SIZE*2, &nread ) ;
+		x = BgFileData[34] + ( BgFileData[35] << 8 ) ;		// sample size
+		if ( x != 16 )
+		{
+			fr = f_close( &BgFile ) ;
+			MusicPlaying = MUSIC_STOPPED ;
+		 	return ;	
+		}
+		x = BgFileData[24] + ( BgFileData[25] << 8 ) ;		// sample rate
+		offset = 39 ;
+		while ( BgFileData[offset] != 'a' )
+		{
+			size = BgFileData[offset+1] + ( BgFileData[offset+2] << 8 ) + ( BgFileData[offset+3] << 16 ) ;		// data size
+			offset += 8 + size ;
+			if ( offset > 300 )
+			{
+				break ;
+			}
+		}
+		if ( offset <= 300 )
+		{
+			size = BgFileData[offset+1] + ( BgFileData[offset+2] << 8 ) + ( BgFileData[offset+3] << 16 ) + ( BgFileData[offset+4] << 24 ) ;		// data size
+			BgTotalSize = size ;
+			offset += 5 ;
+			BgNread = nread ;
+			beginMusic( offset, size, x ) ;
+		}
+		Bgindex = 0 ;
+	}
+	else
+	{
+		MusicPlaying = MUSIC_STOPPED ;
+	}
+}
+
+extern uint16_t g_timeBgRead ;
+
+void BgPlaying()
+{
+	uint32_t x ;
+	uint32_t size ;
+	uint32_t v_index ;
+	UINT nread ;
+//	FRESULT fr ;
+	uint32_t toneMerging = 0 ;
+
+	size = BgSizeLeft ;
+	v_index = BgLastBuffer ;
+	nread = BgNread ;
+
+	for(x = Bgindex;;)
+	{
+		uint32_t amount = VOICE_BUFFER_SIZE*2 ;
+							
+		if ( size < amount )
+		{
+			amount = size ;
+		}
+
+		if ( nread == 0 )
+		{
+			uint16_t t1 = getTmr2MHz() ;
+			f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
+//			fr = f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
+			t1 = getTmr2MHz() - t1 ;
+			g_timeBgRead = t1 ;
+			size -= nread ;
+		}
+		BgSizePlayed = size ;
+		if ( nread == 0 )
+		{
+			if ( toneMerging )
+			{
+				waitAudioAllSentWithTone( x, v_index ) ;
+			}
+			else
+			{
+				waitVoiceAllSent( v_index ) ;
+			}
+			f_close( &BgFile ) ;
+			MusicPlaying = MUSIC_STOPPED ;
+			break ;
+		}
+	  while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
+		{
+			uint32_t stop = 0 ;
+			if ( Voice.VoiceQueueCount )
+			{
+				MusicInterrupted = 160 ;
+				stop = 1 ;
+			}
+//			if (ToneQueueRidx != ToneQueueWidx)
+//			{
+//				MusicInterrupted = 1 ;
+//				stop = 1 ;
+//			}
+			if ( (MusicPlaying == MUSIC_PAUSING ) || (MusicPlaying == MUSIC_STOPPING ) || (MusicPlaying == MUSIC_STARTING ) )
+			{
+				stop = 1 ;
+			}
+			if ( MusicPrevNext )
+			{
+				if ( g_eeGeneral.musicType )
+				{				
+					stop = 1 ;
+				}
+				else
+				{
+					MusicPrevNext = MUSIC_NP_NORMAL ;
+				}
+			}
+			
+			if ( stop )
+			{
+				
+				// wait for all buffers sent
+				if ( toneMerging )
+				{
+					waitAudioAllSentWithTone( x, v_index ) ;
+				}
+				else
+				{
+					waitVoiceAllSent( v_index ) ;
+				}
+//				timer = 100 ;
+// 				while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
+//				{
+//					CoTickDelay(1) ;					// 2mS for now
+//					if ( --timer == 0 )
+//					{
+//						break ;		// Timeout, 200 mS
+//					}
+//				}
+//				endVoice() ;
+				if (MusicPlaying == MUSIC_PAUSING )
+				{
+					MusicPlaying = MUSIC_PAUSED ;
+				}
+				if ( MusicPlaying == MUSIC_STOPPING )
+				{
+					MusicPlaying = MUSIC_STOPPED ;
+					f_close( &BgFile ) ;
+				}
+				if ( MusicPlaying == MUSIC_STARTING )
+				{
+					f_close( &BgFile ) ;
+				}
+				if ( MusicPrevNext )
+				{
+					if ( g_eeGeneral.musicType )
+					{
+						f_close( &BgFile ) ;
+						if ( MusicPrevNext == MUSIC_NP_PREV )
+						{
+							if ( PlaylistIndex == 0 )
+							{
+								PlaylistIndex = PlayListCount - 1 ;
+							}
+							else
+							{
+								PlaylistIndex -= 1 ;
+							}
+						}
+						else
+						{
+							PlaylistIndex += 1 ;
+							if ( PlaylistIndex >= PlayListCount )
+							{
+								PlaylistIndex = 0 ;
+							}
+						}
+						MusicPlaying = MUSIC_STARTING ;
+					}
+					MusicPrevNext = MUSIC_NP_NORMAL ;
+				}
+				BgSizeLeft = size ;
+				BgNread = nread ;
+//				Bgindex = x ;
+				return ;
+			}
+			CoTickDelay(1) ;					// 2mS for now
+		}
+		if ( AudioVoiceUnderrun )
+		{
+			// We weren't quick enough
+			AudioVoiceCountUnderruns += 100 ;
+			AudioVoiceUnderrun = 0 ;
+			endVoice() ;
+		}
+		{
+			if ( nread < VOICE_BUFFER_SIZE * 2 )
+			{
+				uint32_t index ;
+				for ( index = nread ; index < VOICE_BUFFER_SIZE * 2 ; index += 1 )
+				{
+					BgFileData[index] = 0 ;
+				}
+			}
+//			nread /= 2 ;
+			if ( toneMerging == 0 )
+			{
+				if (ToneQueueRidx != ToneQueueWidx)
+				{
+					toneMerging = 1 ;
+					beginToneFill() ;
+				}											
+			}
+			toneMerging = !wavU16Convert( (uint16_t*)&BgFileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE, toneMerging ) ;
+		}
+// May no longer need these lines									
+//		if ( nread == 1 )
+//		{
+//			nread = 2 ;
+//			VoiceBuffer[x].dataw[1] = VoiceBuffer[x].dataw[0] ;
+//		}
+// End of possible removal
+//		while ( nread < VOICE_BUFFER_SIZE )
+//		{
+//			VoiceBuffer[x].dataw[nread++] = 2048 ;		// Pad last buffer
+//		}
+		VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
+		VoiceBuffer[x].frequency = BgFrequency ;
+		appendVoice( x ) ;		// index of next buffer
+		v_index = x ;		// Last buffer sent
+		x += 1 ;
+		if ( x > NUM_VOICE_BUFFERS - 1 )
+		{
+			x = 0 ;							
+		}
+		if ( (int32_t)size <= 0 )
+		{
+			if ( toneMerging )
+			{
+				waitAudioAllSentWithTone( x, v_index ) ;
+			}
+			else
+			{
+				waitVoiceAllSent( v_index ) ;
+			}
+			f_close( &BgFile ) ;
+			MusicPlaying = MUSIC_STOPPED ;
+			if ( g_eeGeneral.musicType )
+			{
+				PlaylistIndex += 1 ;
+				if ( PlaylistIndex >= PlayListCount )
+				{
+					PlaylistIndex = 0 ;
+				}
+				else
+				{
+					MusicPlaying = MUSIC_STARTING ;
+				}
+			}
+			if ( g_eeGeneral.musicLoop )
+			{
+				MusicPlaying = MUSIC_STARTING ;
+			}
+			break ;								
+		}
+		nread = 0 ;
+	}
+	BgSizeLeft = size ;
+}
 
 void voice_task(void* pdata)
 {
@@ -947,10 +1610,12 @@ void voice_task(void* pdata)
 	FRESULT fr ;
 	UINT nread ;
 	uint32_t x ;
-	uint32_t w8or16 ;
+//	uint32_t w8or16 ;
 	uint32_t mounted = 0 ;
 	uint32_t size ;
+	uint32_t toneMerging = 0 ;
 	uint8_t *name ;
+	uint32_t playListRead = 0 ;
 //#ifdef PCB9XT
 //	uint32_t muted ;
 //	muted = 0 ;
@@ -988,10 +1653,25 @@ void voice_task(void* pdata)
 		if ( fr == FR_OK)
 		{
 		 SdMounted = mounted = 1 ;
+		 SectorsPerCluster = g_FATFS.csize ;
 		 CoTickDelay( SdAccessRequest ? 10 : 1) ;					// 4mS for now
-	
+
+		 if ( ( g_eeGeneral.musicType ) && ( playListRead == 0 ) )
+		 {
+				// load playlist
+				cpystr( cpystr( (uint8_t *)PlaylistDirectory, (uint8_t *)"\\music\\" ), g_eeGeneral.musicVoiceFileName ) ;
+				fillPlaylist( PlaylistDirectory, &PlayFileControl, (char *)"WAV" ) ;
+				PlaylistIndex = g_eeGeneral.playListIndex ;
+				if ( PlaylistIndex > PlayListCount )
+				{
+					PlaylistIndex = 0 ;
+				}
+				playListRead = 1 ;
+		 }
+	 
 		 while ( ( Voice.VoiceQueueCount == 0 ) && (ToneQueueRidx == ToneQueueWidx) )
 		 {
+				AudioActive = 0 ;
 //#ifdef PCB9XT
 //		 	if ( muted == 0 )
 //			{
@@ -1005,7 +1685,43 @@ void voice_task(void* pdata)
 //				muted = 1 ;
 //			}
 //#endif
-		 	CoTickDelay(3) ;					// 6mS for now
+			if ( MusicInterrupted )
+			{
+				if ( --MusicInterrupted == 0 )
+				{
+					if ( MusicPlaying == MUSIC_PLAYING )
+					{
+						beginMusic( 0, BgSizeLeft, BgFrequency ) ;
+					}
+				}
+			}
+			if ( MusicPlaying == MUSIC_STARTING )
+			{
+				bgStart() ;
+			}
+			else if ( MusicPlaying == MUSIC_RESUMING )
+			{
+				beginMusic( 0, BgSizeLeft, BgFrequency ) ;
+			}
+			else if ( MusicPlaying == MUSIC_STOPPING )
+			{
+				waitVoiceAllSent( Bgindex ) ;
+				f_close( &BgFile ) ;
+				MusicPlaying = MUSIC_STOPPED ;
+			}
+			else if (MusicPlaying == MUSIC_PAUSING )
+			{
+				MusicPlaying = MUSIC_PAUSED ;
+			}
+			
+			if ( ( MusicPlaying == MUSIC_PLAYING ) && (!MusicInterrupted ) )
+			{
+				BgPlaying() ;
+			}	
+			else
+			{
+		 		CoTickDelay(3) ;					// 6mS for now
+			}
 		 }
 //#ifdef PCB9XT
 //		 if ( muted )
@@ -1021,11 +1737,16 @@ void voice_task(void* pdata)
 //		 	muted = 0 ;
 //		 }
 //#endif
+		 if ( MusicInterrupted )
+		 {
+		 	MusicInterrupted = 160 ;
+		 }
 		 if ( Voice.VoiceQueueCount )
 		 {
 		 	uint32_t processed = 0 ;
+			AudioActive = 1 ;
 		 	
-			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
+//			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
 		 	
 			name = Voice.NamedVoiceQueue[Voice.VoiceQueueOutIndex] ;
 			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex] ;
@@ -1079,7 +1800,7 @@ void voice_task(void* pdata)
 						}
 						else
 						{
-							if ( ( (v_index & VLOC_MASK) == VLOC_NUMSYS ) || ( (v_index & 0xF000) == 0x2000 ) )
+							if ( ( (v_index & VLOC_MASK) == VLOC_NUMSYS ) || ( (v_index & VLOC_MASK) == VLOC_NUMUSER ) )
 							v_index &= ~VLOC_MASK ;
 							if ( v_index )
 							{
@@ -1093,57 +1814,60 @@ void voice_task(void* pdata)
 						uint32_t offset ;
 						fr = f_read( &Vfile, FileData, VOICE_BUFFER_SIZE*2, &nread ) ;
 						x = FileData[34] + ( FileData[35] << 8 ) ;		// sample size
-						w8or16 = x ;
-						x = FileData[24] + ( FileData[25] << 8 ) ;		// sample rate
-//						if ( FileData[39] == 'a' )
-//						{
-//							size = FileData[40] + ( FileData[41] << 8 ) + ( FileData[42] << 16 ) ;		// data size
-//							offset = 44 ;
-//						}
-//						else
-//						{
-//							size = FileData[62] + ( FileData[63] << 8 ) + ( FileData[64] << 16 ) ;		// data size
-//							offset = 66 ;
-//						}
+						if ( x == 16 )
+						{
+							
+	//						w8or16 = x ;
+								x = FileData[24] + ( FileData[25] << 8 ) ;		// sample rate
+	//						if ( FileData[39] == 'a' )
+	//						{
+	//							size = FileData[40] + ( FileData[41] << 8 ) + ( FileData[42] << 16 ) ;		// data size
+	//							offset = 44 ;
+	//						}
+	//						else
+	//						{
+	//							size = FileData[62] + ( FileData[63] << 8 ) + ( FileData[64] << 16 ) ;		// data size
+	//							offset = 66 ;
+	//						}
 
-						offset = 39 ;
-						while ( FileData[offset] != 'a' )
-						{
-							size = FileData[offset+1] + ( FileData[offset+2] << 8 ) + ( FileData[offset+3] << 16 ) ;		// data size
-							offset += 8 + size ;
-							if ( offset > 300 )
+							offset = 39 ;
+							while ( FileData[offset] != 'a' )
 							{
-								break ;
+								size = FileData[offset+1] + ( FileData[offset+2] << 8 ) + ( FileData[offset+3] << 16 ) ;		// data size
+								offset += 8 + size ;
+								if ( offset > 300 )
+								{
+									break ;
+								}
 							}
-						}
-						if ( offset <= 300 )
-						{
-							uint32_t y ;
-							size = FileData[offset+1] + ( FileData[offset+2] << 8 ) + ( FileData[offset+3] << 16 ) ;		// data size
-							offset += 5 ;
+							if ( offset <= 300 )
+							{
+								uint32_t y ;
+								size = FileData[offset+1] + ( FileData[offset+2] << 8 ) + ( FileData[offset+3] << 16 ) ;		// data size
+								offset += 5 ;
 						
-							size -= VOICE_BUFFER_SIZE-offset ;
+								size -= VOICE_BUFFER_SIZE-offset ;
 
-							if ( w8or16 == 8 )
-							{
-								wavU8Convert( &FileData[offset], &VoiceBuffer[0].dataw[offset], VOICE_BUFFER_SIZE-offset ) ;
-								y = offset ;
-								VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
-							}
-							else if ( w8or16 == 16 )
-							{
-								wavU16Convert( (uint16_t*)&FileData[offset], &VoiceBuffer[0].dataw[offset/2], VOICE_BUFFER_SIZE-offset/2 ) ;
-								y = offset/2 ;
-								VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
-								size -= VOICE_BUFFER_SIZE ;
-							}
-							else
-							{
-								w8or16 = 0 ;		// can't convert
-							}
+//								if ( w8or16 == 8 )
+//								{
+//									wavU8Convert( &FileData[offset], &VoiceBuffer[0].dataw[offset], VOICE_BUFFER_SIZE-offset ) ;
+//									y = offset ;
+//									VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
+//								}
+//								else if ( w8or16 == 16 )
+								{
+									wavU16Convert( (uint16_t*)&FileData[offset], &VoiceBuffer[0].dataw[offset/2], VOICE_BUFFER_SIZE-offset/2, 0 ) ;
+									y = offset/2 ;
+									VoiceBuffer[0].count = VOICE_BUFFER_SIZE ;
+									size -= VOICE_BUFFER_SIZE ;
+								}
+//								else
+//								{
+//									w8or16 = 0 ;		// can't convert
+//								}
 				
-							if ( w8or16 )
-							{
+//								if ( w8or16 )
+//								{
 								uint32_t amount ;
 								VoiceBuffer[0].frequency = x ;		// sample rate
 								currentFrequency = VoiceBuffer[0].frequency = x ;		// sample rate
@@ -1153,34 +1877,35 @@ void voice_task(void* pdata)
 									VoiceBuffer[0].dataw[x] = 2048 ;
 								}
 								 
-								if ( w8or16 == 8 )
-								{
-									wavU8Convert( &FileData[VOICE_BUFFER_SIZE], VoiceBuffer[1].dataw, VOICE_BUFFER_SIZE ) ;
-									size -= 512 ;
-								}
-								else
+//								if ( w8or16 == 8 )
+//								{
+//									wavU8Convert( &FileData[VOICE_BUFFER_SIZE], VoiceBuffer[1].dataw, VOICE_BUFFER_SIZE ) ;
+//									size -= 512 ;
+//								}
+//								else
 								{
 									fr = f_read( &Vfile, FileData, VOICE_BUFFER_SIZE*2, &nread ) ;
-									wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[1].dataw, VOICE_BUFFER_SIZE ) ;
+									wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[1].dataw, VOICE_BUFFER_SIZE, 0 ) ;
 									size -= nread ;
 								}
 //								VoiceBuffer[1].count = 512 ;
 								VoiceBuffer[1].count = VOICE_BUFFER_SIZE ;
 					
 //								amount = (w8or16 == 8) ? 512 : 1024 ;
-								amount = (w8or16 == 8) ? VOICE_BUFFER_SIZE : VOICE_BUFFER_SIZE*2 ;
+//								amount = (w8or16 == 8) ? VOICE_BUFFER_SIZE : VOICE_BUFFER_SIZE*2 ;
+								amount = VOICE_BUFFER_SIZE*2 ;
 
 								for ( x = 2 ; x < NUM_VOICE_BUFFERS ; x += 1 )
 								{
-									if ( w8or16 == 8 )
-									{
-										fr = f_read( &Vfile, &FileData[VOICE_BUFFER_SIZE], amount, &nread ) ;		// Read next buffer
-										wavU8Convert( &FileData[VOICE_BUFFER_SIZE], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE ) ;
-									}
-									else
+//									if ( w8or16 == 8 )
+//									{
+//										fr = f_read( &Vfile, &FileData[VOICE_BUFFER_SIZE], amount, &nread ) ;		// Read next buffer
+//										wavU8Convert( &FileData[VOICE_BUFFER_SIZE], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE ) ;
+//									}
+//									else
 									{
 										fr = f_read( &Vfile, &FileData[0], amount, &nread ) ;		// Read next buffer
-										wavU16Convert( (uint16_t *)&FileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE ) ;
+										wavU16Convert( (uint16_t *)&FileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE, 0 ) ;
 									}
 									size -= nread ;
 									VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
@@ -1198,7 +1923,15 @@ void voice_task(void* pdata)
 									{
 										break ;
 									}
-	  							while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
+									if ( nread < VOICE_BUFFER_SIZE * 2 )
+									{
+										uint32_t index ;
+										for ( index = nread ; index < VOICE_BUFFER_SIZE * 2 ; index += 1 )
+										{
+											FileData[index] = 0 ;
+										}
+									}
+		  						while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
 									{
 										CoTickDelay(1) ;					// 2mS for now
 									}
@@ -1207,27 +1940,36 @@ void voice_task(void* pdata)
 										// We weren't quick enough
 										AudioVoiceCountUnderruns += 1 ;
 										AudioVoiceUnderrun = 0 ;
+										endVoice() ;
 									}
-									if ( w8or16 == 8 )
-									{
-										wavU8Convert( &FileData[0], VoiceBuffer[x].dataw, nread ) ;
-									}
-									else
+//									if ( w8or16 == 8 )
+//									{
+//										wavU8Convert( &FileData[0], VoiceBuffer[x].dataw, nread ) ;
+//									}
+//									else
 									{
 										nread /= 2 ;
-										wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[x].dataw, nread ) ;
+										if ( toneMerging == 0 )
+										{
+											if (ToneQueueRidx != ToneQueueWidx)
+											{
+												toneMerging = 1 ;
+												beginToneFill() ;
+											}											
+										}
+										toneMerging = !wavU16Convert( (uint16_t*)&FileData[0], VoiceBuffer[x].dataw, VOICE_BUFFER_SIZE, toneMerging ) ;
 									}
-// May no longer need these lines									
-									if ( nread == 1 )
-									{
-										nread = 2 ;
-										VoiceBuffer[x].dataw[1] = VoiceBuffer[x].dataw[0] ;
-									}
-// End of possible removal
-									while ( nread < VOICE_BUFFER_SIZE )
-									{
-										VoiceBuffer[x].dataw[nread++] = 2048 ;		// Pad last buffer
-									}
+//// May no longer need these lines									
+//									if ( nread == 1 )
+//									{
+//										nread = 2 ;
+//										VoiceBuffer[x].dataw[1] = VoiceBuffer[x].dataw[0] ;
+//									}
+//// End of possible removal
+//									while ( nread < VOICE_BUFFER_SIZE )
+//									{
+//										VoiceBuffer[x].dataw[nread++] = 2048 ;		// Pad last buffer
+//									}
 									VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
 									VoiceBuffer[x].frequency = currentFrequency ;
 									appendVoice( x ) ;		// index of next buffer
@@ -1242,20 +1984,30 @@ void voice_task(void* pdata)
 										break ;								
 									}
 								}
+//								}
 							}
-						}
-						fr = f_close( &Vfile ) ;
-						// Now wait for last buffer to have been sent
-						x = 100 ;
- 						while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
-						{
-							CoTickDelay(1) ;					// 2mS for now
-							if ( --x == 0 )
+							fr = f_close( &Vfile ) ;
+							// Now wait for last buffer to have been sent
+
+							if ( toneMerging )
 							{
-								break ;		// Timeout, 200 mS
+								waitAudioAllSentWithTone( x, v_index ) ;
 							}
+							else
+							{
+								waitVoiceAllSent( v_index ) ;
+							}
+//						x = 100 ;
+// 						while ( ( VoiceBuffer[v_index].flags & VF_SENT ) == 0 )
+//						{
+//							CoTickDelay(1) ;					// 2mS for now
+//							if ( --x == 0 )
+//							{
+//								break ;		// Timeout, 200 mS
+//							}
+//						}
+//						endVoice() ;
 						}
-						endVoice() ;
 					}
 					else if (fr != FR_NO_FILE)			// There is no file to open
 					{
@@ -1287,7 +2039,7 @@ void voice_task(void* pdata)
 			}
 			else
 			{
-		 		CoTickDelay(3) ;					// 6mS for now
+	 			CoTickDelay(3) ;					// 6mS for now
 			}
 		 }
 		}
@@ -1297,6 +2049,7 @@ void voice_task(void* pdata)
 		 	// Play a tone
 			if (ToneQueueRidx != ToneQueueWidx)
 			{
+				AudioActive = 1 ;
 				doTone() ;
 			}
 
@@ -1305,29 +2058,8 @@ void voice_task(void* pdata)
 	} // for(;;)
 }
 
-uint16_t Sine16k[32] =
-{
-//	2048,2268,2471,2605,2648,2605,2471,2268,
-//	2048,1826,1623,1490,1448,1490,1623,1826
-	2048,2165,2278,2381,2472,2547,2602,2636,
-	2648,2636,2602,2547,2472,2381,2278,2165,
-	2048,1931,1818,1715,1624,1549,1494,1460,
-	1448,1460,1494,1549,1624,1715,1818,1931
-} ;
-
 //static uint8_t toneIndex ;
 //static uint16_t toneTime ;
-
-/*static*/ uint16_t toneCount ;
-/*static*/ uint8_t toneTimer ;
-/*static*/ uint8_t toneTimeLeft ;
-/*static*/ int8_t toneFreqIncr ;
-/*static*/ uint8_t frequency ;
-/*static*/ uint8_t tonePause ;
-/*static*/ uint8_t toneRepeat ;
-/*static*/ uint8_t toneOrPause ;
-/*static*/ uint8_t toneActive ;
-
 
 void beginToneFill()
 {
@@ -1358,16 +2090,19 @@ void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8
 			return ;
 		}
 	}
-  nextWidx = (ToneQueueWidx + 1) % AUDIO_QUEUE_LENGTH;
-  if (nextWidx != ToneQueueRidx)
+	if ( freq )
 	{
-		ptr_queue = &ToneQueue[ToneQueueWidx] ;
-		ptr_queue->toneFreq = freq ;
-		ptr_queue->toneFreqIncr = freqInc ;
-		ptr_queue->toneTimeLeft = time ;
-		ptr_queue->tonePause = pause ;
-		ptr_queue->toneRepeat = repeat ;
-		ToneQueueWidx = nextWidx ;
+  	nextWidx = (ToneQueueWidx + 1) % AUDIO_QUEUE_LENGTH;
+  	if (nextWidx != ToneQueueRidx)
+		{
+			ptr_queue = &ToneQueue[ToneQueueWidx] ;
+			ptr_queue->toneFreq = freq ;
+			ptr_queue->toneFreqIncr = freqInc ;
+			ptr_queue->toneTimeLeft = time ;
+			ptr_queue->tonePause = pause ;
+			ptr_queue->toneRepeat = repeat ;
+			ToneQueueWidx = nextWidx ;
+		}
 	}
 }
 
@@ -1375,11 +2110,11 @@ void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8
 
 void nextToneData()
 {
-	if ( SdMounted && Voice.VoiceQueueCount )
-	{
-		ToneQueueWidx = ToneQueueRidx ;		// Discard queue
-		return ;
-	}
+//	if ( SdMounted && Voice.VoiceQueueCount )
+//	{
+//		ToneQueueWidx = ToneQueueRidx ;		// Discard queue
+//		return ;
+//	}
 
 	if ( toneActive == 0 )
 	{
@@ -1389,7 +2124,7 @@ void nextToneData()
 			ToneQueueRidx = (ToneQueueRidx + 1) % AUDIO_QUEUE_LENGTH;
 			toneTimeLeft = ToneEntry.toneTimeLeft ;
 			toneFreqIncr = ToneEntry.toneFreqIncr ;
-			frequency = ToneEntry.toneFreq ;
+			toneFrequency = ToneEntry.toneFreq ;
 			tonePause = ToneEntry.tonePause ;
 			toneRepeat = ToneEntry.toneRepeat ;
 			toneOrPause = 0 ;		// Tone
@@ -1408,7 +2143,7 @@ void nextToneData()
 		{
 			toneOrPause = 1 ;		// Pause
 			toneTimer = 160 ;
-			frequency = 0 ;
+			toneFrequency = 0 ;
 			toneTimeLeft = tonePause ;
 			tonePause = 0 ;
 			if ( toneRepeat == 0 )
@@ -1426,7 +2161,7 @@ void nextToneData()
 			toneCount = 0 ;
 			toneTimeLeft = ToneEntry.toneTimeLeft ;
 			toneFreqIncr = ToneEntry.toneFreqIncr ;
-			frequency = ToneEntry.toneFreq ;
+			toneFrequency = ToneEntry.toneFreq ;
 			tonePause = ToneEntry.tonePause ;
 			toneOrPause = 0 ;		// Tone
 			if ( (tonePause == 0) && (toneRepeat == 0) )
@@ -1437,12 +2172,10 @@ void nextToneData()
 	}
 }
 
-uint16_t swVolumeLevel( void ) ;
-
 // This for 16kHz sample rate
 // Returns +ve or zero, remaining time
 //   -ve offset into buffer of blank time
-int32_t toneFill( uint16_t *buffer )
+int32_t toneFill( uint16_t *buffer, uint32_t add )
 {
 	uint32_t i = 0 ;
 	uint32_t y ;
@@ -1461,29 +2194,59 @@ int32_t toneFill( uint16_t *buffer )
 		{
 			if ( toneTimer-- )
 			{
-				toneCount += frequency ;
-				y = ( toneCount & 0x01F0) >> 4 ;
+				toneCount += toneFrequency ;
+				if ( currentFrequency == 32000 )
+				{
+					y = ( toneCount & 0x03E0) >> 5 ;
+				}
+				else
+				{
+					y = ( toneCount & 0x01F0) >> 4 ;
+				}
 #ifndef PCB9XT
 				if ( g_eeGeneral.softwareVolume )
 				{
 #endif
-					if ( frequency )
+					if ( add == TONE_SET )
 					{
-						value = (int32_t)Sine16k[y] - 2048 ;
-						value *= multiplier ;
-						value += 2048 * 256 ;
-						value >>= 8 ;
+						if ( toneFrequency )
+						{
+							value = (int32_t)Sine16kInt[y] ;
+							value *= multiplier ;
+							value += 2048 * 256 ;
+							value >>= 8 ;
+						}
+						else
+						{
+							value = 2048 ;
+						}
+						*buffer++ = value ;
 					}
 					else
-					{
-						value = 2048 ;
+					{ // adding
+						if ( toneFrequency )
+						{
+							value = (int32_t)Sine16kInt[y] ;
+							value *= multiplier ;
+							value >>= 8 ;
+							*buffer++ += value ;
+						}
 					}
-					*buffer++ = value ;
 #ifndef PCB9XT
 				}
 				else
 				{
-					*buffer++ = frequency ? Sine16k[y] : 2048 ;
+					if ( add == TONE_SET )
+					{
+						*buffer++ = toneFrequency ? Sine16kInt[y]+2048 : 2048 ;
+					}
+					else
+					{
+						if ( toneFrequency )
+						{
+							*buffer++ += Sine16kInt[y] ;
+						}
+					}
 				}
 #endif
 				i += 1 ;
@@ -1496,11 +2259,18 @@ int32_t toneFill( uint16_t *buffer )
 				}
 				else
 				{
-					if ( frequency )
+					if ( toneFrequency )
 					{
-						frequency += toneFreqIncr ;
+						toneFrequency += toneFreqIncr ;
 					}
-					toneTimer = 160 ;
+					if ( currentFrequency == 32000 )
+					{
+						toneTimer = 320 ;
+					}
+					else
+					{
+						toneTimer = 160 ;
+					}
 				}
 			}
 		}
@@ -1510,10 +2280,13 @@ int32_t toneFill( uint16_t *buffer )
 		}
 		nextToneData() ;
 	}
-	while ( i < 512 )
+	if ( add == TONE_SET )
 	{
-  	*buffer++ = 2048 ;
-		i += 1 ;
+		while ( i < 512 )
+		{
+  		*buffer++ = 2048 ;
+			i += 1 ;
+		}
 	}
 	return toneTimeLeft == 0 ;
 }

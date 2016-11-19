@@ -187,17 +187,28 @@ uint32_t read_adc()
 
 	AnalogData[0] = Analog_values[0] ;
 #ifdef PCBX9D
+#ifdef REV9E
+	AnalogData[1] = Analog_values[1] ;
+#else
 	AnalogData[1] = 4096 - Analog_values[1] ;
+#endif
 #else
 	AnalogData[1] = Analog_values[1] ;
 #endif
+#ifdef REV9E
+	AnalogData[2] = 4096 - Analog_values[2] ;
+#else
 	AnalogData[2] = Analog_values[2] ;
+#endif
+
 #ifdef PCBX9D
 	AnalogData[3] = 4096 - Analog_values[3] ;
 #else
 	AnalogData[3] = Analog_values[3] ;
 #endif
-#ifndef PCB9XT	
+
+#ifndef REV9E
+#ifndef PCB9XT	 
 	AnalogData[4] = Analog_values[4] ;
 	AnalogData[5] = Analog_values[5] ;
 	AnalogData[6] = Analog_values[6] ;
@@ -218,12 +229,20 @@ uint32_t read_adc()
 #endif
 #ifdef REVPLUS
 	AnalogData[8] = Analog_values[9] ;
-#ifdef REV9E
-	AnalogData[9] = Analog_values[10] ;
-	AnalogData[10] = Analog_values[11] ;
-	AnalogData[11] = Analog_values[12] ;
-#endif	// REV9E
 #endif
+#endif // nREV9E
+
+#ifdef REV9E
+	AnalogData[4] = 4096 - Analog_values[10] ;
+	AnalogData[5] = 4096 - Analog_values[5] ;
+	AnalogData[6] = Analog_values[4] ;
+	AnalogData[7] = 4096 - Analog_values[9] ;
+	AnalogData[8] = 4096 - Analog_values[12] ;
+	AnalogData[9] = 4096 - Analog_values[11] ;
+	AnalogData[10] = Analog_values[6] ;
+	AnalogData[11] = Analog_values[7] ;
+	AnalogData[12] = Analog_values[8] ;
+#endif	// REV9E
 
 
 
@@ -313,13 +332,13 @@ void init_adc3()
 
 #ifndef PCB9XT
 uint16_t RotaryAnalogValue ;
-uint16_t REDebug1 ;
+//uint16_t REDebug1 ;
 
 extern "C" void ADC_IRQHandler()
 {
 	uint32_t x ;
 	x = ADC2->DR ;
-	REDebug1 = x ;
+//	REDebug1 = x ;
 	int32_t diff = x - RotaryAnalogValue ;
 	if ( diff < 0 )
 	{

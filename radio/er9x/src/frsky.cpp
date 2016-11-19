@@ -64,10 +64,26 @@ const prog_uint8_t APM Fr_indices[] =
 	FR_FUEL,
 	FR_TEMP2,
 	FR_CELL_V,
+#if defined(CPUM128) || defined(CPUM2561)
+	FR_VCC,           // 0x07  Extra data for Mavlink via FrSky
+	HUBDATALENGTH-1,
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_GPS_ALTd,
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data 1 for Mavlink via FrSky */
+	FR_HOME_DIR,      // 0x0A
+	FR_HOME_DIST,     // 0x0B
+	FR_CPU_LOAD,      // 0x0C
+	FR_GPS_HDOP,      // 0x0D
+	FR_WP_NUM,        // 0x0E
+	FR_WP_BEARING,    // 0x0F
+/* Extra data 1 for Mavlink via FrSky */
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,		// 10,11
 	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_ALT_BARO | FR_INDEX_FLAG,
 	FR_GPS_SPEED | FR_INDEX_FLAG,
 	FR_GPS_LONG | FR_INDEX_FLAG,
@@ -81,7 +97,16 @@ const prog_uint8_t APM Fr_indices[] =
 	FR_GPS_LONGd,
 	FR_GPS_LATd,
 	FR_COURSEd,			// 28
+#if defined(CPUM128) || defined(CPUM2561)
+/* Extra data 2 for Mavlink via FrSky */
+	FR_BASEMODE,
+	FR_WP_DIST,
+	FR_HEALTH,
+	FR_MSG,
+/* Extra data 2 for Mavlink via FrSky */
+#else
 	HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,HUBDATALENGTH-1,
+#endif
 	FR_ALT_BAROd,		// 33
 	FR_LONG_E_W,
 	FR_LAT_N_S,
@@ -103,7 +128,7 @@ int16_t WholeAltitude ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 
-uint8_t frskyRxBuffer[19];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
+uint8_t frskyRxBuffer[20];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
 
 struct t_frskyTx
 {
@@ -145,6 +170,8 @@ uint8_t FrskyBattCells=0;
 int16_t Frsky_Amp_hour_prescale ;
 
 uint8_t FrskyTelemetryType ;
+
+uint16_t DsmABLRFH[6] ;
 
 #if defined(VARIO)
 struct t_vario VarioData ;
@@ -199,6 +226,31 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 	store_hub_data( index, value ) ;
 }
 
+#if defined(CPUM128) || defined(CPUM2561)
+void store_telemetry_scaler( uint8_t index, uint16_t value )
+{
+	switch ( index )
+	{
+		case 1 :
+			store_hub_data( FR_BASEMODE, value ) ;
+		break ;
+		case 2 :
+			store_hub_data( FR_CURRENT, value ) ;
+		break ;
+		case 3 :
+			store_hub_data( FR_AMP_MAH, value ) ;
+		break ;
+		case 4 :
+			store_hub_data( FR_VOLTS, value ) ;
+		break ;
+		case 5 :
+			store_hub_data( FR_FUEL, value ) ;
+		break ;
+	}
+}
+#endif
+
+
 NOINLINE void store_cell_data( uint8_t battnumber, uint16_t cell )
 {
 	if ( battnumber < FRSKY_VOLTS_SIZE )
@@ -220,16 +272,17 @@ void store_hub_data( uint8_t index, uint16_t value )
 	}
 	if ( index == FR_ALT_BAROd )
 	{
+		int16_t val = (int16_t)value ;
 		AltitudeDecimals |= 1 ;
-		if ( value > 9 )
+		if ( ( val > 9 ) || ( val < -9 ) )
 		{
 			AltitudeDecimals |= 2 ;
 		}
 		if ( AltitudeDecimals & 2 )
 		{
-			value /= 10 ;			
+			val /= 10 ;			
 		}
-		FrskyHubData[FR_ALT_BARO] = WholeAltitude + ( (WholeAltitude > 0) ? value : -value ) ;
+		FrskyHubData[FR_ALT_BARO] = WholeAltitude + val ;
 	}
 
 	if ( index == FR_SPORT_ALT )
@@ -510,6 +563,254 @@ void processFrskyPacket(uint8_t *packet)
   frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
 }
 
+// DSM data
+
+//0[00] 22(0x16)
+//1[01] 00
+//2[02] Altitude LSB (Decimal) //In 0.1m
+//3[03] Altitude MSB (Decimal)
+//4[04] 1/100th of a degree second latitude (Decimal) (XX YY.SSSS)
+//5[05] degree seconds latitude (Decimal)
+//6[06] degree minutes latitude (Decimal)
+//7[07] degrees latitude (Decimal)
+//8[08] 1/100th of a degree second longitude (Decimal) (XX YY.SSSS)
+//9[09] degree seconds longitude (Decimal)
+//10[0A] degree minutes longitude (Decimal)
+//11[0B] degrees longitude (Decimal)
+//12[0C] Heading LSB (Decimal)
+//13[0D] Heading MSB (Decimal) Divide by 10 for Degrees
+//14[0E] Unknown
+//15[0F] First bit for latitude: 1=N(+), 0=S(-);
+//Second bit for longitude: 1=E(+), 0=W(-);
+//Third bit for longitude over 99 degrees: 1=+-100 degrees
+
+//0[00] 23(0x17)
+//1[01] 00
+//2[02] Speed LSB (Decimal)
+//3[03] Speed MSB (Decimal) Divide by 10 for Knots. Multiply by 0.185 for Kph and 0.115 for Mph
+//4[04] UTC Time LSB (Decimal) 1/100th sec. (HH:MM:SS.SS)
+//5[05] UTC Time (Decimal) = SS
+//6[06] UTC Time (Decimal) = MM
+//7[07] UTC Time MSB (Decimal) = HH
+//8[08] Number of Sats (Decimal)
+//9[09] Altitude in 1000m (Decimal) Altitude = Value * 10000 + Altitude(0x16) (in 0.1m)
+//10[0A]-15[0F] Unused (But contains Data left in buffer)
+
+
+//===============================================================
+
+//Data type = 0x03 High Current Sensor
+
+#define DSM_AMPS			3
+
+//0 [00] 03
+//1 [01] 00
+//2 [02] MSB (Hex) //16bit signed integer
+//3 [03] LSB (Hex) //In 0.196791A
+//4 [04] 00
+//5 [05] 00
+//6 [06] 00
+//7 [07] 00
+//8 [08] 00
+//9 [09] 00
+//10 [0A] 00
+//11 [0B] 00
+//12 [0C] 00
+//13 [0D] 00
+//14 [0E] 00
+//15 [0F] 00
+
+//===============================================================
+
+//Data type = 0x0A PowerBox Sensor
+
+#define DSM_PBOX			0x0A
+
+//0 [00] 0x0A
+//1 [01] 00
+//2 [02] V1 MSB (Hex)
+//3 [03] V1 LSB (Hex) //In 0.01V
+//4 [04] V2 MSB (Hex)
+//5 [05] V2 LSB (Hex) //In 0.01V
+//6 [06] Cap1 MSB (Hex)
+//7 [07] Cap1 LSB (Hex) //In 1mAh
+//8 [08] Cap2 MSB (Hex)
+//9 [09] Cap2 LSB (Hex) //In 1mAh
+//10 [0A] 00
+//11 [0B] 00
+//12 [0C] 00
+//13 [0D] 00
+//14 [0E] 00
+//15 [0F] Alarm // The fist bit is alarm V1, the second V2, the third Capacity 1, the 4th capacity 2.
+
+//===============================================================
+
+//Data type = 0x11 AirSpeed Sensor
+
+#define DSM_AIRSPEED			17
+
+//0[00] 17(0x11)
+//1[01] 00
+//2[02] Speed MSB (Hex)
+//3[03] Speed LSB (Hex) //In 1 km/h
+//4[04] Unknown
+//5[05] Unknown
+//6[06] Unknown
+//7[07] Unknown
+//8[08] Unknown
+//9[09] Unknown
+//10[0A] Unknown
+//11[0B] Unknown
+//12[0C] Unknown
+//13[0D] Unknown
+//14[0E] Unknown
+//15[0F] Unknown
+
+//===============================================================
+
+//Data type = 0x12 Altimeter Sensor
+
+#define DSM_ALT			18
+
+//0[00] 18(0x12)
+//1[01] 00
+//2[02] Altitude MSB (Hex)
+//3[03] Altitude LSB (Hex) 16bit signed integer, in 0.1m
+//4[04] Max Altitude MSB (Hex)
+//5[05] Max Altitude LSB (Hex) 16bit signed integer, in 0.1m
+//6[05] Unknown
+//7[07] Unknown
+//8[08] Unknown
+//9[09] Unknown
+//10[0A] Unknown
+//11[0B] Unknown
+//12[0C] Unknown
+//13[0D] Unknown
+//14[0E] Unknown
+//15[0F] Unknown
+
+//===============================================================
+
+//Data type = 0x14 Gforce Sensor
+
+#define DSM_GFORCE			20
+
+
+//0[00] 20(0x14)
+//1[01] 00
+//2[02] x MSB (Hex, signed integer)
+//3[03] x LSB (Hex, signed integer) //In 0.01g
+//4[04] y MSB (Hex, signed integer)
+//5[05] y LSB (Hex, signed integer) //In 0.01g
+//6[06] z MSB (Hex, signed integer)
+//7[07] z LSB (Hex, signed integer) //In 0.01g
+//8[08] x max MSB (Hex, signed integer)
+//9[09] x max LSB (Hex, signed integer) //In 0.01g
+//10[0A] y max MSB (Hex, signed integer)
+//11[0B] y max LSB (Hex, signed integer) //In 0.01g
+//12[0C] z max MSB (Hex, signed integer)
+//13[0D] z max LSB (Hex, signed integer) //In 0.01g
+//14[0E] z min MSB (Hex, signed integer)
+//15[0F] z min LSB (Hex, signed integer) //In 0.01g
+
+//===============================================================
+
+//Data type = 0x15 JetCat Sensor
+
+//0[00] 21(0x15)
+//1[01] 00
+//2[02] Status
+//3[03] Throttle //up to 159% (the upper nibble is 0-f, the lower nibble 0-9)
+//4[04] Pack_Volt LSB (Decimal)
+//5[05] Pack_Volt MSB (Decimal) //In 0.01V
+//6[06] Pump_Volt LSB (Decimal)
+//7[07] Pump_Volt MSB (Decimal) //In 0.01V
+//8[08] RPM LSB (Decimal) //Up to 999999rpm
+//9[09] RPM Mid (Decimal)
+//10[0A] RPM MSB (Decimal)
+//11[0B] 00
+//12[0C] TempEGT (Decimal) LSB
+//13[0D] TempEGT (Decimal) MSB //used only lover nibble, up to 999°C
+//14[0E] Off_Condition
+//15[0F] 00
+
+//===============================================================
+
+//Data type = 7E{TM1000} or FE{TM1100}
+
+#define DSM_VTEMP1	0x7E
+#define DSM_VTEMP2	0xFE
+
+//0[00] 7E or FE
+//1[01] 00
+//2[02] RPM MSB (Hex)
+//3[03] RPM LSB (Hex) //RPM = 120000000 / number_of_poles(2, 4, ... 32) / gear_ratio(0.01 - 30.99) / Value
+//4[04] Volt MSB (Hex)
+//5[05] Volt LSB (Hex) //In 0.01V
+//6[06] Temp MSB (Hex)
+//7[07] Temp LSB (Hex) //Value (Decimal) is in Fahrenheit, for Celsius (Value (Decimal) - 32) * 5) / 9)
+//8[08] Unknown
+//9[09] Unknown
+//10[0A] Unknown
+//11[0B] Unknown
+//12[0C] Unknown
+//13[0D] Unknown	// Assan when 7E type is Rx RSSI
+//14[0E] Unknown
+//15[0F] Unknown
+
+//===============================================================
+
+//Data type = 7F{TM1000} or FF{TM1100}
+
+#define DSM_STAT1	0x7F
+#define DSM_STAT2	0xFF
+
+//0[00] 7F or FF
+//1[01] 00
+//2[02] A MSB (Hex)
+//3[03] A LSB (Hex)
+//4[04] B MSB (Hex)
+//5[05] B LSB (Hex)
+//6[06] L MSB (Hex)
+//7[07] L LSB (Hex) //0xFFFF = NC (not connected)
+//8[08] R MSB (Hex)
+//9[09] R LSB (Hex) //0xFFFF = NC (not connected)
+//10[0A] Frame loss MSB (Hex)
+//11[0B] Frame loss LSB (Hex)
+//12[0C] Holds MSB (Hex)
+//13[0D] Holds LSB (Hex)
+//14[0E] Receiver Volts MSB (Hex) //In 0.01V
+//15[0F] Receiver Volts LSB (Hex)
+
+//answer from TX module:
+//header: 0xAA
+//0x00 - no telemetry
+//0x01 - telemetry packet present and telemetry block (TM1000, TM1100)
+//answer in 16 bytes body from
+//http://www.deviationtx.com/forum/protocol-development/1192-dsm-telemetry-support?start=60
+//..
+//0x1F - this byte also used as RSSI signal for receiving telemetry
+//block. readed from CYRF in a TX module
+//0x80 - BIND packet answer, receiver return his type
+//aa bb cc dd ee......
+//aa ORTX_USExxxx from main.h
+//bb
+//cc - max channel, AR6115e work only in 6 ch mode (0xA2)
+//0xFF - sysinfo
+//aa.aa.aa.aa - CYRF manufacturer ID
+//bb.bb - firmware version
+//	if(ortxRxBuffer[1] == 0x80){//BIND packet answer
+//		ortxMode = ortxRxBuffer[2];
+//		if(ortxMode & ORTX_USE_DSMX)
+//			g_model.ppmNCH = DSM2_DSMX;
+//		else
+//			g_model.ppmNCH = DSM2only;
+//		//ortxTxBuffer[3];//power
+//		g_model.unused1[0] = ortxRxBuffer[4];//channels number
+
+//===============================================================
+
+
 // Receive buffer state machine state defs
 #define frskyDataIdle    0
 #define frskyDataStart   1
@@ -726,6 +1027,153 @@ void processSportPacket()
 }
 
 
+
+#if defined(CPUM128) || defined(CPUM2561)
+
+
+void dsmBindResponse( uint8_t mode, int8_t channels )
+{
+	// Process mode here
+	uint8_t dsm_mode_response ;
+extern uint8_t MultiResponseData ;
+	dsm_mode_response = channels ;
+	if ( mode & 0x80 )
+	{
+		dsm_mode_response |= 0x80 ;
+	}
+	if ( mode & 0x10 )
+	{
+		dsm_mode_response |= 0x40 ;
+	}
+	MultiResponseData = dsm_mode_response ;
+extern uint8_t MultiResponseFlag ;
+	MultiResponseFlag = 1 ;
+}
+
+
+void processDsmPacket(uint8_t *packet, uint8_t byteCount)
+{
+	int16_t ivalue ;
+	uint8_t type ;
+		
+	packet += 1 ;			// Skip the 0xAA
+	type = *packet++ ;
+	
+	if ( type && (type < 0x20) )
+	{
+		
+   	frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid packets are being detected
+  	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid packets are being detected
+
+   	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
+  	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
+
+		ivalue = (int16_t) ( (packet[2] << 8 ) | packet[3] ) ;
+   	
+		frskyTelemetry[2].set(type, FR_RXRSI_COPY );	// RSSI
+		
+		switch ( *packet )
+		{
+			case DSM_ALT :
+				store_hub_data( FR_ALT_BARO, ivalue ) ;	 // Store altitude info
+//				storeAltitude( ivalue ) ;
+			break ;
+			
+			case DSM_AMPS :
+				ivalue *= 2015 ;
+				ivalue /= 1024 ;
+				store_hub_data( FR_CURRENT, ivalue ) ;	// Handles FAS Offset
+			break ;
+	
+			case DSM_PBOX :
+				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+ 				FrskyHubData[FR_AMP_MAH] = ivalue ;
+			break ;
+		
+			case DSM_GFORCE :
+				// check units (0.01G)
+				FrskyHubData[FR_ACCX] = ivalue ;
+				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
+				FrskyHubData[FR_ACCY] = ivalue ;
+				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+				FrskyHubData[FR_ACCZ] = ivalue ;
+			break ;
+
+			case DSM_VTEMP1 :
+			case DSM_VTEMP2 :
+				// RPM
+				if ( (uint16_t)ivalue == 0xFFFF )
+				{
+					ivalue = 0 ;
+				}
+				else
+				{
+					ivalue = 120000000L / g_model.numBlades / (uint16_t)ivalue ;
+				}
+				FrskyHubData[FR_RPM] = ivalue ;
+				// volts
+				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
+//				FrskyHubData[FR_A2_COPY] = ivalue ;
+				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+				FrskyHubData[FR_TEMP1] = (ivalue-32)*5/9 ;
+			break ;
+
+			case DSM_STAT1 :
+			case DSM_STAT2 :
+//				if ( g_model.dsmAasRssi )
+//				{
+//					if ( ivalue < 1000 )
+//					{
+//   					frskyTelemetry[2].set(ivalue, FR_RXRSI_COPY ) ;	// RSSI
+//					}
+//				}
+				DsmABLRFH[0] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
+				DsmABLRFH[1] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+				DsmABLRFH[2] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[8] << 8 ) | packet[9] ) ;
+				DsmABLRFH[3] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[10] << 8 ) | packet[11] ) ;
+				DsmABLRFH[4] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[12] << 8 ) | packet[13] ) ;
+				DsmABLRFH[5] = ivalue + 1 ;
+				ivalue = (int16_t) ( (packet[14] << 8 ) | packet[15] ) ;
+				{
+					uint16_t x = (uint16_t)ivalue ;
+//					x *= 128 ;
+//					x /= 717 ;		// was 1155 ;
+					store_hub_data( FR_RXV, x / 10 ) ;
+				}
+			break ;
+		}	 
+	}
+	else if ( type == 0x80 )
+	{
+		dsmBindResponse( *(packet+6), *(packet+5) ) ;
+		
+	}	
+//	else if ( type == 0xFF )
+//	{
+//		DsmManCode[0] = *packet++ ;
+//		DsmManCode[1] = *packet++ ;
+//		DsmManCode[2] = *packet++ ;
+//		DsmManCode[3] = *packet ;
+//	}
+//	else if (type == 0 )
+//	{
+//		if ( !g_model.dsmAasRssi )
+//		{
+//   		frskyTelemetry[2].set(type, FR_RXRSI_COPY ) ;	// RSSI
+//		}
+		
+//	}
+
+}
+#endif // 128/2561
+
 #ifndef N2F
 	#define PRIVATE_COUNT	4
 	#define PRIVATE_VALUE	5
@@ -751,6 +1199,7 @@ void processSportPacket()
 
 uint8_t Private_count ;
 uint8_t Private_position ;
+uint8_t Private_enable ;
 //extern uint8_t TrotCount ;
 //extern uint8_t TezRotary ;
 
@@ -825,6 +1274,13 @@ ISR(USART0_RX_vect)
   { // discard buffer and start fresh on any comms error
 //    FrskyRxBufferReady = 0;
     numbytes = 0;
+#if defined(CPUM128) || defined(CPUM2561)
+		
+	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+	 {
+			dataState = frskyDataIdle ;
+	 }
+#endif
 //		Uerror = stat & ((1 << FE0) | (1 << DOR0) | (1 << UPE0)) ;
 //		Uecount += 1 ;
   } 
@@ -833,7 +1289,48 @@ ISR(USART0_RX_vect)
 //    if (FrskyRxBufferReady == 0) // can't get more data if the buffer hasn't been cleared
 //    {
 //		TezDebug0 += 1 ;		
-      switch (dataState) 
+		
+#if defined(CPUM128) || defined(CPUM2561)
+		
+	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+	 {
+    	switch (dataState) 
+			{
+    	  case frskyDataIdle:
+    	    if (data == 0xAA)
+					{
+    	     	dataState = frskyDataInFrame ;
+    	      numbytes = 0 ;
+	  	      frskyRxBuffer[numbytes++] = data ;
+					}
+				break ;
+
+    	  case frskyDataInFrame:
+    	    if (numbytes < 19)
+					{
+	  	      frskyRxBuffer[numbytes++] = data ;
+						if ( numbytes >= 18 )
+						{
+							processDsmPacket( frskyRxBuffer, numbytes ) ;
+							numbytes = 0 ;
+						}
+					}
+    	  break ;
+			}
+	 	
+	 }
+	 else if ( g_model.telemetryProtocol == 7 )
+	 {
+  		frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
+	    frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+			frsky_proc_user_byte( data ) ;		
+	 }
+	 else
+	 {
+      
+#endif			
+			
+			switch (dataState) 
       {
         case frskyDataStart:
 //-------------------------------------------------------------------------------------
@@ -966,37 +1463,60 @@ ISR(USART0_RX_vect)
 					dataState = PRIVATE_VALUE ;
           Private_count = data ;		// Count of bytes to receive
 					Private_position = 0 ;
+					if ( data > 3 )
+					{
+         		dataState = frskyDataIdle ;
+					}
         break;
         case PRIVATE_VALUE :
-					if ( Private_position == 0 )
+				{
+					uint8_t lEnable ;
+					uint8_t lPosition ;
+					lPosition = Private_position ;
+					lEnable = Private_enable ;
+					if ( lEnable < 50 )
 					{
-						// Process first private data byte
-						// PC6, PC7
-						if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+						lEnable += 12 ;
+					}
+					else
+					{
+						lEnable = 100 ;
+						if ( lPosition == 0 )
 						{
-							DDRC |= 0xC0 ;		// Set as outputs
-							PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+							// Process first private data byte
+							// PC6, PC7
+							if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+							{
+								DDRC |= 0xC0 ;		// Set as outputs
+								PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+							}
+						}
+						else if( lPosition==1) {
+							Rotary.TrotCount = data;
+						}
+						else if(lPosition==2) { // rotary encoder switch
+							Rotary.TezRotary = data;
 						}
 					}
-					else if(Private_position==1) {
-						Rotary.TrotCount = data;
-					}
-					else if(Private_position==2) { // rotary encoder switch
-						Rotary.TezRotary = data;
-					}
-					Private_position++;
-					if ( Private_position == Private_count )
+					Private_enable = lEnable ;
+					lPosition += 1 ;
+					Private_position = lPosition ;
+					if ( lPosition == Private_count )
 					{
           	dataState = frskyDataIdle;
     				FrskyAlarmSendState |= 0x80 ;		// Send ACK
 					}
+				}
         break;
 //---------------------------------------------------------------------------------
 #endif
 
       } // switch
 //    } // if (FrskyRxBufferReady == 0)
-  }
+#if defined(CPUM128) || defined(CPUM2561)
+   }
+#endif
+	}
 
 	if ( FrskyTelemetryType )		// SPORT
 	{
@@ -1320,20 +1840,10 @@ void FRSKY_Init( uint8_t brate)
 		brate = 1 ;
 	}
 
-  	if ( brate == 0 ) // 9600
+  if ( brate == 0 ) // 9600
 	{
-#ifdef MULTI_PROTOCOL
-		if ( g_model.protocol == PROTO_MULTI ) // 100000bps
-		{
-			UBRR0L = 9;
-			UBRR0H = 0;
-		}
-		else
-#endif // MULTI_PROTOCOL
-		{
-			UBRR0L = UBRRL_VALUE;
-			UBRR0H = UBRRH_VALUE;
-		}
+		UBRR0L = UBRRL_VALUE;
+		UBRR0H = UBRRH_VALUE;
 	}
 	else // 57600
 	{
@@ -1345,8 +1855,15 @@ void FRSKY_Init( uint8_t brate)
   // set 8 N1
   UCSR0B = 0 | (0 << RXCIE0) | (0 << TXCIE0) | (0 << UDRIE0) | (0 << RXEN0) | (0 << TXEN0) | (0 << UCSZ02);
 #ifdef MULTI_PROTOCOL
-	if ( g_model.protocol == PROTO_MULTI ) // set 8e2
-		UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+	if ( g_model.protocol == PROTO_MULTI ) // set 100000bps 8e2
+	{
+		if ( !g_eeGeneral.TEZr90 )
+		{
+			UBRR0L = 9;
+			UBRR0H = 0;
+			UCSR0C = 0 | (1<<UPM01)|(1<<USBS0)|(1<<UCSZ01)|(1<<UCSZ00);
+		}
+	}
 	else
 #endif // MULTI_PROTOCOL
 		UCSR0C = 0 | (1 << UCSZ01) | (1 << UCSZ00);
@@ -1465,6 +1982,7 @@ void resetTelemetry()
 	FrskyHubData[FR_CELL_MIN] = 0 ;			// 0 volts
 	Frsky_Amp_hour_prescale = 0 ;
 	FrskyHubData[FR_AMP_MAH] = 0 ;
+	FrskyBattCells = 0 ;
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
 }
 
@@ -1506,7 +2024,12 @@ void check_frsky()
 		return ;
 #endif
 
-	uint8_t telemetryType = g_model.protocol == PROTO_PXX ;
+	if ( Private_enable )
+	{
+		Private_enable -= 1 ;
+	}
+
+	uint8_t telemetryType = (g_model.protocol == PROTO_PXX )||((g_model.protocol == PROTO_MULTI) && ((g_model.sub_protocol&0x1F)==M_FRSKYX));
 	if ( telemetryType != FrskyTelemetryType )
 	{
 		FRSKY_Init( telemetryType ) ;	

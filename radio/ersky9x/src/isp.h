@@ -20,6 +20,8 @@
 #define ISP_SCK_SLOW 0
 #define ISP_SCK_FAST 1
 
+void resetM64() ;
+
 /* Prepare connection to target device */
 void ispConnect();
 

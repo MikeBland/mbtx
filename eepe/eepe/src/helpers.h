@@ -22,7 +22,7 @@
 #define SPLASH_SIZE (SPLASH_WIDTH*SPLASH_HEIGHT/8)
 #define SPLASH_OFFSET (6+1+3) // "Splash" + zero + 3 header bytes
 #define HEX_FILE_SIZE (1024*256)	// Allow for M2561 processor
-#define BIN_FILE_SIZE (1024*256)
+#define BIN_FILE_SIZE (1024*1024)
 
 
 #ifdef SKY
@@ -35,9 +35,13 @@ void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, 
 int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar ) ;
 
 #ifdef SKY
-void populateGvarCB(QComboBox *b, int value, int type) ;
+void populateGvarCB(QComboBox *b, int value, int type, uint32_t extraPots) ;
 #else
 void populateGvarCB(QComboBox *b, int value, int type) ;
+#endif
+
+#ifdef SKY
+QString gvarSourceString( int index, int type, uint32_t extraPots) ;
 #endif
 
 void populateNumericGVarCB( QComboBox *b, int value, int min, int max) ;
@@ -88,12 +92,12 @@ void populateTmrBSwitchCB(QComboBox *b, int value, int extra ) ;
 #endif
 
 #ifdef SKY
-void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion, int type) ;
+void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion, int type, uint32_t extraPots ) ;
 #else
 void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion) ;
 #endif
 #ifdef SKY    
-uint32_t decodePots( uint32_t value, int type ) ;
+uint32_t decodePots( uint32_t value, int type, uint32_t extraPots ) ;
 #endif
 void populateCSWCB(QComboBox *b, int value, uint8_t modelVersion );
 #ifdef SKY
@@ -103,7 +107,7 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model ) ;
 #endif
 QString getTelemString( int index ) ;
 #ifdef SKY    
-QString getSourceStr(int stickMode, int idx, int modelVersion, int type ) ;
+QString getSourceStr(int stickMode, int idx, int modelVersion, int type, uint32_t extraPots ) ;
 #else
 QString getSourceStr(int stickMode=1, int idx=0, int modelVersion=0 ) ;
 #endif

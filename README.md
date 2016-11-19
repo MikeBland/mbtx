@@ -39,7 +39,7 @@ eePe Quickstart video: http://www.youtube.com/watch?v=ZNzRAPGo8uY
 eePe and er9x are free to use under the GNU v2.0 License. Feel free to use, copy and modify it as you wish!
 I have spent a lot of time (and will continue to) to make this software as good as possible. If you feel that this software has been beneficial to you please show your support by donating. This will be greatly appreciated and you'll be added to the "contributors" list in the code (optional of-course).
 <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=YHX43JR3J7XGW"><img src="https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif" alt="[paypal]" /></a> 
-										 
+
  
 
 ## Help! Where do I start?

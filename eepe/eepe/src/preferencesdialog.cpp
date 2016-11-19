@@ -51,6 +51,10 @@ void preferencesDialog::write_values()
 	settings.setValue("mcu", avrMCU);
 	settings.setValue("avr_port", avrPort);
 	settings.setValue("avr_arguments", avrArgs.join(" "));
+#ifndef SKY
+  settings.setValue("disablePreread", ui->disablePreReadCB->isChecked());
+#endif
+
 }
 
 
@@ -88,6 +92,9 @@ void preferencesDialog::initSettings()
 	avrLoc = settings.value("avrdude_location", "/usr/local/bin/avrdude").toString();
 #else
 	avrLoc = settings.value("avrdude_location", "avrdude").toString();
+#endif
+#ifndef SKY
+	ui->disablePreReadCB->setChecked(settings.value("disablePreread", false).toBool());
 #endif
 
   populateProgrammers() ;

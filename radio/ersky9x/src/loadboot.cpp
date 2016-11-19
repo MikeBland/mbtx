@@ -103,7 +103,11 @@ const uint8_t BootCode[] = {
 #else
   #ifdef PCBX9D
    #ifdef REVPLUS
-    #include "bootloader/bootflashXp.lbm"
+	  #ifdef REV9E
+     #include "bootloader/bootflashx9e.lbm"
+		#else
+     #include "bootloader/bootflashXp.lbm"
+		#endif
    #else
     #include "bootloader/bootflashX.lbm"
    #endif

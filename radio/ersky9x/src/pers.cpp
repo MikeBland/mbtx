@@ -178,9 +178,10 @@ void modelDefault(uint8_t id)
 		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
 		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
 	}
-#ifdef PCB9XT
+//#ifdef PCB9XT
 	g_model.protocol = PROTO_OFF ;
-#endif
+	g_model.xprotocol = PROTO_OFF ;
+//#endif
 }
 
 bool eeDuplicateModel(uint8_t id)
@@ -232,11 +233,11 @@ void eeReadAll()
   uint32_t i ;
 	for ( i = 0 ; i < 4 ; i += 1 )
 	{
-		if ( g_eeGeneral.trainer.mix[i].swtch != -16 )
+		if ( g_eeGeneral.Xtrainer.mix[i].swtch != -16 )
 		{
-			g_eeGeneral.exTrainer[i].swtch = g_eeGeneral.trainer.mix[i].swtch ;
-			g_eeGeneral.exTrainer[i].studWeight = g_eeGeneral.trainer.mix[i].studWeight * 13 / 4 ;
-			g_eeGeneral.trainer.mix[i].swtch = -16 ;
+			g_eeGeneral.XexTrainer[i].swtch = g_eeGeneral.Xtrainer.mix[i].swtch ;
+			g_eeGeneral.XexTrainer[i].studWeight = g_eeGeneral.Xtrainer.mix[i].studWeight * 13 / 4 ;
+			g_eeGeneral.Xtrainer.mix[i].swtch = -16 ;
 			STORE_GENERALVARS ;
 		}
 	}
@@ -258,5 +259,59 @@ void eeDirty(uint8_t msk)
 	}
 
 }
+
+// SKY/AR9X/9XR-PRO - use [0] for module, [1] for PPM2
+// X9D/X9E/9Xtreme - use [0] for internal, [1] for external
+
+//void fetchProtocolData()
+//{
+//	Protocols[0].protocol = g_model.protocol ;
+//	Protocols[0].country = g_model.country ;
+//	Protocols[0].pulsePol = g_model.pulsePol ;
+//	Protocols[0].ppmNCH = g_model.ppmNCH ;
+//	Protocols[0].ppmDelay = g_model.ppmDelay ;
+//	Protocols[0].ppmFrameLength = g_model.ppmFrameLength ;
+//	Protocols[0].startChannel = g_model.startChannel ;
+//	Protocols[0].pxxRxNum = g_model.pxxRxNum ;
+//	Protocols[0].option_protocol = g_model.option_protocol ;
+//	Protocols[0].sub_protocol = g_model.sub_protocol ;
+
+//	Protocols[1].protocol = g_model.xprotocol ;
+//	Protocols[1].country = g_model.xcountry ;
+//	Protocols[1].pulsePol = g_model.xpulsePol ;
+//	Protocols[1].ppmNCH = g_model.xppmNCH ;
+//	Protocols[1].ppmDelay = g_model.xppmDelay ;
+//	Protocols[1].ppmFrameLength = g_model.xppmFrameLength ;
+//	Protocols[1].startChannel = g_model.xstartChannel ;
+//	Protocols[1].pxxRxNum = g_model.xPxxRxNum ;
+//	Protocols[1].option_protocol = g_model.xoption_protocol ;
+//	Protocols[1].sub_protocol = g_model.xsub_protocol ;
+//}
+
+//void storeProtocolData()
+//{
+//	g_model.protocol = Protocols[0].protocol ;
+//	g_model.country = Protocols[0].country ;
+//	g_model.pulsePol = Protocols[0].pulsePol ;
+//	g_model.ppmNCH = Protocols[0].ppmNCH ;
+//	g_model.ppmDelay = Protocols[0].ppmDelay ;
+//	g_model.ppmFrameLength = Protocols[0].ppmFrameLength ;
+//	g_model.startChannel = Protocols[0].startChannel ;
+//	g_model.pxxRxNum = Protocols[0].pxxRxNum ;
+//	g_model.option_protocol = Protocols[0].option_protocol ;
+//	g_model.sub_protocol = Protocols[0].sub_protocol ;
+
+//	g_model.xprotocol = Protocols[1].protocol ;
+//	g_model.xcountry = Protocols[1].country ;
+//	g_model.xpulsePol = Protocols[1].pulsePol ;
+//	g_model.xppmNCH = Protocols[1].ppmNCH ;
+//	g_model.xppmDelay = Protocols[1].ppmDelay ;
+//	g_model.xppmFrameLength = Protocols[1].ppmFrameLength ;
+//	g_model.xstartChannel = Protocols[1].startChannel ;
+//	g_model.xPxxRxNum = Protocols[1].pxxRxNum ;
+//	g_model.xoption_protocol = Protocols[1].option_protocol ;
+//	g_model.xsub_protocol = Protocols[1].sub_protocol ;
+//}
+
 
 

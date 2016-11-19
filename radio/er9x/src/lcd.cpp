@@ -640,6 +640,35 @@ void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
 	}
 }
 
+//#if defined(CPUM128) || defined(CPUM2561)
+//// Extra data for Mavlink via FrSky
+//void lcd_vbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
+//{
+//	uint8_t solid ;
+//	if ( percent > 100 )
+//	{
+//		percent = 100 ;
+//	}
+//	solid = (h-2) * percent / 100 ;
+//	lcd_rect( x, y, w, h ) ;
+
+//	if ( solid )
+//	{
+//		y += ( h - solid ) - 1 ;
+//        lcd_plot(x + w, y);
+//		w = w + x - 1 ;
+//		x += 1 ;
+//		while ( x < w )
+//		{
+//		  	lcd_vline(x, y, solid ) ;
+
+//			x += 1 ;
+//		}
+//	}
+//}
+//// Extra data for Mavlink via FrSky
+//#endif
+
 // Reverse video 8 pixels high, w pixels wide
 // Vertically on an 8 pixel high boundary
 void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink )

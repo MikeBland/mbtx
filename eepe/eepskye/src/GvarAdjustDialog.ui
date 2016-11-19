@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GvarAdjustDialog</class>
+ <widget class="QDialog" name="GvarAdjustDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>344</width>
+    <height>274</height>
+   </rect>
+  </property>
+  <property name="font">
+   <font>
+    <family>Sans Serif</family>
+    <pointsize>8</pointsize>
+   </font>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <property name="windowIcon">
+   <iconset>
+    <normaloff>:/icon.png</normaloff>:/icon.png</iconset>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>220</y>
+     <width>160</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="switchCB">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>90</y>
+     <width>74</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="whatsThis">
+    <string>Switch used by the mix.
+If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
+   </property>
+  </widget>
+  <widget class="QSpinBox" name="valueSB">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>120</y>
+     <width>81</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="switch2CB">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>150</y>
+     <width>74</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="whatsThis">
+    <string>The curve used by the mix</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_7">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>90</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Here you select the switch to control the mix. If a switch is not selected then the mix is ON by default. Options are the physical switches, the logical switches and the inverse of all of them.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Switch</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="valueLabel">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>120</y>
+     <width>91</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;This value &lt;/span&gt;&lt;span style=&quot; text-decoration: underline; color:#000000;&quot;&gt;multiplies&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; the value from the input. It can range from -125% to +125%. Default is 100%.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Value</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>60</y>
+     <width>51</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the input for the mix. It can be a Stick or Potentiometer, HALF, FULL, Switches, CYC1/2/3 (Heli), Trainer Inputs (PPM1-8), Mixer Channel Outputs (CH1-16), Real Channel Outputs (OP1-16), GVARs (GV1-5), THIS, and Scalers (SC1-8).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Function</string>
+   </property>
+  </widget>
+  <widget class="QComboBox" name="functionCB">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>60</y>
+     <width>74</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="whatsThis">
+    <string>The source for the mixer</string>
+   </property>
+   <item>
+    <property name="text">
+     <string>--------</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Add</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Set C</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Set V</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Inc/Dec</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Inc/Zero</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Dec/Zero</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Inc/Limit</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Dec/limit</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QComboBox" name="gvarCB">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>30</y>
+     <width>74</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="whatsThis">
+    <string>The source for the mixer</string>
+   </property>
+   <item>
+    <property name="text">
+     <string>GVAR1</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR2</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR3</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR4</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR5</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR6</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>GVAR7</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QLabel" name="label_4">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>30</y>
+     <width>51</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is the input for the mix. It can be a Stick or Potentiometer, HALF, FULL, Switches, CYC1/2/3 (Heli), Trainer Inputs (PPM1-8), Mixer Channel Outputs (CH1-16), Real Channel Outputs (OP1-16), GVARs (GV1-5), THIS, and Scalers (SC1-8).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Gvar</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="switch2Label">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>150</y>
+     <width>81</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; color:#000000;&quot;&gt;Here you select the switch to control the mix. If a switch is not selected then the mix is ON by default. Options are the physical switches, the logical switches and the inverse of all of them.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+   </property>
+   <property name="text">
+    <string>Switch 2</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>GvarAdjustDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>354</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>GvarAdjustDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>199</x>
+     <y>360</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>208</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

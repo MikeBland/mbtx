@@ -49,6 +49,9 @@
 #include "drivers.h"
 #include "stringidx.h"
 #include "ff.h"
+#ifndef SIMU
+#include "CoOS.h"
+#endif
   
 #define memclear(p, s) memset(p, 0, s)
 
@@ -64,9 +67,11 @@ void ee32_read_model_names( void ) ;
 unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
 
 SKYModelData TempModelStore ;
+extern union t_xmem Xmem ;
 
 extern void generalDefault() ;
 extern void modelDefault(uint8_t id)  ;
+extern void setFilenameDateTime( char *filename ) ;
 
 // EEPROM driver
 #if !defined(SIMU)
@@ -1640,4 +1645,119 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
   return "MODEL RESTORED" ;
 
 }
+
+#define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
+
+uint16_t AmountEeBackedUp ;
+FIL g_eebackupFile = {0};
+
+const char *openRestoreEeprom( char *filename )
+{
+  FRESULT result;
+
+	AmountEeBackedUp = 0 ;
+
+extern uint32_t sdMounted( void ) ;
+  if ( sdMounted() == 0 )
+    return "NO SD CARD" ;
+
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
+	CoTickDelay(1) ;					// 2mS
+  if (result != FR_OK)
+	{
+    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+  return NULL ;
+}
+
+
+const char *openBackupEeprom()
+{
+  FRESULT result;
+  DIR folder;
+  char filename[34]; // /EEPROM/eeprom-2013-01-01.bin
+
+	AmountEeBackedUp = 0 ;
+
+extern uint32_t sdMounted( void ) ;
+  if ( sdMounted() == 0 )
+    return "NO SD CARD" ;
+
+  strcpy( filename, EEPROM_PATH ) ;
+
+  result = f_opendir( &folder, filename) ;
+  if (result != FR_OK)
+	{
+    if (result == FR_NO_PATH)
+      result = f_mkdir(filename) ;
+    if (result != FR_OK)
+      return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+
+  strcpy( &filename[7], "/eeprom" ) ;
+	setFilenameDateTime( &filename[14] ) ;
+  strcpy_P(&filename[14+11], ".bin" ) ;
+
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+	CoTickDelay(1) ;					// 2mS
+  if (result != FR_OK)
+	{
+    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+  return NULL ;
+}
+
+const char *processBackupEeprom( uint16_t blockNo )
+{
+  FRESULT result ;
+	UINT written ;
+
+	if ( blockNo != AmountEeBackedUp )
+	{
+		return "Sync Error" ;
+	}
+	I2C_EE_BufferRead( Xmem.file_buffer, (blockNo << 9), 512 ) ;
+	result = f_write( &g_eebackupFile, ( BYTE *)&Xmem.file_buffer, 512, &written ) ;
+	wdt_reset() ;
+	if ( result != FR_OK )
+	{
+		return "Write Error" ;
+	}
+	AmountEeBackedUp += 1 ;
+	return NULL ;
+}
+
+const char *processRestoreEeprom( uint16_t blockNo )
+{
+  FRESULT result ;
+	UINT nread ;
+
+	if ( blockNo != AmountEeBackedUp )
+	{
+		return "Sync Error" ;
+	}
+	result = f_read( &g_eebackupFile, Xmem.file_buffer, 512, &nread ) ;
+	CoTickDelay(1) ;					// 2mS
+// Write eeprom here
+	I2C_EE_BufferWrite( Xmem.file_buffer, (blockNo << 9), 512 ) ;
+//	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
+	
+//  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
+	wdt_reset() ;
+	if ( result != FR_OK )
+	{
+		return "Write Error" ;
+	}
+	AmountEeBackedUp += 1 ;
+	return NULL ;
+}
+
+void closeBackupEeprom()
+{
+	f_close( &g_eebackupFile ) ;
+}
+
+
 

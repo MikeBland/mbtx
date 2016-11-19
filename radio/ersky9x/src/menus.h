@@ -162,11 +162,28 @@ extern void menuUpdate(uint8_t event) ;
 //extern void inactivityCheck( void ) ;
 extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
 
+extern void parseMultiData( void ) ;
+
 const char *get_curve_string() ;
+
+extern uint8_t unmapPots( uint8_t value ) ;
 
 extern int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals) ;
 
 extern uint8_t CalcScaleNest ;
+
+#define CELL_1		-33
+#define CELL_2		-32
+#define CELL_3		-31
+#define CELL_4		-30
+#define CELL_5		-29
+#define CELL_6		-28
+#define CELL_7		-27
+#define CELL_8		-26
+#define CELL_9		-25
+#define CELL_10		-24
+#define CELL_11		-23
+#define CELL_12		-22
 
 #define TMOK			-21
 
@@ -241,6 +258,22 @@ extern uint8_t CalcScaleNest ;
 #define TEL_ITEM_SC7		43
 #define TEL_ITEM_SC8		44
 #define TEL_ITEM_RTC		45
+#define TEL_ITEM_TMOK		46
+#define TEL_ITEM_ASPD		47
+#define TEL_ITEM_CELL1	48
+#define TEL_ITEM_CELL2	49
+#define TEL_ITEM_CELL3	50
+#define TEL_ITEM_CELL4	51
+#define TEL_ITEM_CELL5	52
+#define TEL_ITEM_CELL6	53
+#define TEL_ITEM_RBV1		54
+#define TEL_ITEM_RBA1		55
+#define TEL_ITEM_RBV2		56
+#define TEL_ITEM_RBA2		57
+#define TEL_ITEM_RBM1		58
+#define TEL_ITEM_RBM2		59
+#define TEL_ITEM_RBSERVO	60
+#define TEL_ITEM_RBSTATE	61
 
 
 // units

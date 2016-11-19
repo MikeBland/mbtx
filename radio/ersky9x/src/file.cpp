@@ -198,15 +198,17 @@ struct t_eeprom_buffer
 		EEGeneral general_data ;
 		ModelData model_data ;
 		SKYModelData sky_model_data ;
+#if defined(PCBSKY) || defined(PCB9XT)
+		ModelData  oldmodel ;
+#endif
 		uint32_t words[ EEPROM_BUFFER_SIZE ] ;
 		uint8_t buffer2K[2048] ;
 	} data ;	
 } Eeprom_buffer ;
-
-uint8_t *eepromBufferAddress()
-{
-	return Eeprom_buffer.data.buffer2K ;
-}
+//uint8_t *eepromBufferAddress()
+//{
+//	return Eeprom_buffer.data.buffer2K ;
+//}
 
 static void ee32WaitFinished()
 {
@@ -345,6 +347,61 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
   Eeprom32_file_index = id1 ;																							// This file system entry
   Eeprom32_process_state = E32_BLANKCHECK ;
   ee32WaitFinished();
+}
+
+uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
+{
+	uint32_t i ;
+	uint8_t *p ;
+
+	if ( ( eeAddress & 0x00000FFF ) == 0 )
+	{
+		// Erase block
+		eeprom_write_enable() ;
+		p = Spi_tx_buf ;
+		*p = 0x20 ;		// Block Erase command
+		*(p+1) = eeAddress >> 16 ;
+		*(p+2) = eeAddress >> 8 ;
+		*(p+3) = eeAddress ;		// 3 bytes address
+		spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		wdt_reset() ;
+		// Wait for erase to complete
+		while ( Spi_complete == 0 )
+		{
+			CoTickDelay(1) ;					// 2mS
+			wdt_reset() ;
+		}
+		while ( eeprom_read_status() & 1 )
+		{
+			CoTickDelay(1) ;					// 2mS
+			wdt_reset() ;
+		}
+	}
+	for ( i = 0 ; i < 8 ; i += 1 )
+	{
+		// Write 256 byte page
+		uint32_t j ;
+		for ( j = 0 ; j < 256 ; j += 1 )
+		{
+			if ( buffer[j] != 0xFF )
+			{
+				break ;
+			}
+		}
+		if ( j < 256 )
+		{
+			write32_eeprom_block( eeAddress, buffer, 256, 0 ) ;
+			while ( eeprom_read_status() & 1 )
+			{
+				CoTickDelay(1) ;					// 2mS
+				wdt_reset() ;
+			}
+		}
+		buffer += 256 ;
+		eeAddress += 256 ;
+		wdt_reset() ;
+	}
+	return 0 ;
 }
 
 // Read eeprom data starting at random address
@@ -626,10 +683,10 @@ void ee32LoadModel(uint8_t id)
 
 			if ( size < 720 )
 			{
-				memset(&g_oldmodel, 0, sizeof(g_oldmodel));
-				if ( size > sizeof(g_oldmodel) )
+				memset(&Eeprom_buffer.data.oldmodel, 0, sizeof(Eeprom_buffer.data.oldmodel));
+				if ( size > sizeof(Eeprom_buffer.data.oldmodel) )
 				{
-					size = sizeof(g_oldmodel) ;
+					size = sizeof(Eeprom_buffer.data.oldmodel) ;
 				}
 			}
        
@@ -646,8 +703,8 @@ void ee32LoadModel(uint8_t id)
 			{
 				if ( size < 720 )
 				{
-					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_oldmodel, size, 0 ) ;
-					convertModel( &g_model, &g_oldmodel ) ;
+					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.oldmodel, size, 0 ) ;
+					convertModel( &g_model, &Eeprom_buffer.data.oldmodel ) ;
 				}
 				else
 				{
@@ -752,12 +809,16 @@ void ee32LoadModel(uint8_t id)
 				}
 			}
 			g_model.modelVersion = 3 ;
+	 		STORE_MODELVARS ;
 		}
 
 
 #ifdef FRSKY
-  FrskyAlarmSendState |= 0x40 ;		// Get RSSI Alarms
-        FRSKY_setModelAlarms();
+		if ( g_model.bt_telemetry < 2 )
+		{
+  		FrskyAlarmSendState |= 0x40 ;		// Get RSSI Alarms
+		}
+  	FRSKY_setModelAlarms();
 #endif
   }
 
@@ -803,7 +864,15 @@ void ee32LoadModel(uint8_t id)
 			g_model.not_xsub_protocol = 0 ;
 		}
 	}
+#ifdef XFIRE
+ #ifdef REVX
+	if ( g_model.protocol > PROT_MAX + 1 )
+ #else
 	if ( g_model.protocol > PROT_MAX )
+ #endif
+#else
+	if ( g_model.protocol > PROT_MAX )
+#endif
 	{
 		if ( g_model.protocol != PROTO_OFF )
 		{
@@ -1155,7 +1224,7 @@ void convertModel( SKYModelData *dest, ModelData *source )
 	memset( dest, 0, sizeof(*dest) ) ;
   memcpy( dest->name, source->name, MODEL_NAME_LEN) ;
 	dest->modelVoice = source->modelVoice ;
-	dest->RxNum = source->RxNum ;
+	dest->RxNum_unused = source->RxNum ;
 	dest->traineron = source->traineron ;
 	dest->FrSkyUsrProto = source->FrSkyUsrProto ;
 	dest->FrSkyGpsAlt = source->FrSkyGpsAlt ;
@@ -1671,6 +1740,32 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 uint16_t AmountEeBackedUp ;
 FIL g_eebackupFile = {0};
 
+const char *openRestoreEeprom( char *filename )
+{
+  FRESULT result;
+
+	AmountEeBackedUp = 0 ;
+
+#ifdef PCBSKY
+  if ( SdMounted == 0 )
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+extern uint32_t sdMounted( void ) ;
+  if ( sdMounted() == 0 )
+#endif
+    return "NO SD CARD" ;
+
+	CoTickDelay(1) ;					// 2mS
+  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
+	CoTickDelay(1) ;					// 2mS
+  if (result != FR_OK)
+	{
+    return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
+  }
+  return NULL ;
+}
+
+
 const char *openBackupEeprom()
 {
   FRESULT result;
@@ -1724,6 +1819,30 @@ const char *processBackupEeprom( uint16_t blockNo )
 	}
   read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
 	result = f_write( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &written ) ;
+	wdt_reset() ;
+	if ( result != FR_OK )
+	{
+		return "Write Error" ;
+	}
+	AmountEeBackedUp += 1 ;
+	return NULL ;
+}
+
+const char *processRestoreEeprom( uint16_t blockNo )
+{
+  FRESULT result ;
+	UINT nread ;
+
+	if ( blockNo != AmountEeBackedUp )
+	{
+		return "Sync Error" ;
+	}
+	result = f_read( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &nread ) ;
+	CoTickDelay(1) ;					// 2mS
+// Write eeprom here
+	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
+	
+//  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{

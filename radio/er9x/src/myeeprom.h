@@ -489,6 +489,12 @@ PACK(typedef struct t_scale
 	uint8_t name[4] ;
 }) ScaleData ;
 
+PACK(typedef struct t_extScale
+{
+	uint8_t mod ;
+	uint8_t dest ;
+} ) ExtScaleData ;
+
 PACK(typedef struct t_voiceAlarm
 {
   uint8_t source ;
@@ -592,7 +598,7 @@ PACK(typedef struct t_ModelData {
     uint8_t   tmrMode;              // timer trigger source -> off, abs, stk, stk%, sw/!sw, !m_sw/!m_sw
     uint8_t   tmrDir:1;    //0=>Count Down, 1=>Count Up
     uint8_t   traineron:1;  // 0 disable trainer, 1 allow trainer
-    uint8_t   unused_xt2throttle:1 ;  // Start timer2 using throttle
+    uint8_t   pxxChans:1 ;  // 
     uint8_t   FrSkyUsrProto:1 ;  // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
     uint8_t   FrSkyGpsAlt:1 ;  	// Use Gps Altitude as main altitude reading
     uint8_t   FrSkyImperial:1 ;  // Convert FrSky values to imperial units
@@ -657,14 +663,17 @@ PACK(typedef struct t_ModelData {
 #ifdef MULTI_PROTOCOL
 		int8_t sub_protocol;		// Extending sub_protocol values for MULTI protocol
 		int8_t option_protocol;		// Option byte for MULTI protocol
-		int8_t pxxFailsafe[14];		// Currently unused
+		uint8_t telemetryProtocol ;
+		int8_t pxxFailsafe[13];		// Currently unused
 #else
-		int8_t pxxFailsafe[16] ;	// Currently unused
+		int8_t sparepxxFailsafe[2];		// Currently unused
+		uint8_t telemetryProtocol ;
+		int8_t pxxFailsafe[13];		// Currently unused
 #endif // MULTI_PROTOCOL
 		SafetySwData xvoiceSw[EXTRA_VOICE_SW] ;
     CxSwData xcustomSw[EXTRA_CSW];
 	uint8_t   currentSource ;
-	uint8_t   altSource ;		// Currently unused
+	uint8_t Mavlink; //Extra data for Mavlink via FrSky 
 	uint8_t unused_phaseNames[MAX_MODES][6] ;
 	ScaleData Scalers[NUM_SCALERS] ;
 	int8_t timer1RstSw ;
@@ -683,6 +692,9 @@ PACK(typedef struct t_ModelData {
 #ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
 #endif
+  int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
+//	uint8_t   altSource ;		// Currently unused
 
 }) ModelData;
 
@@ -695,7 +707,7 @@ PACK(typedef struct t_V2ModelData
 	V2TimerMode	timer[2] ;
   uint8_t   unused_tmrDir:1;    //0=>Count Down, 1=>Count Up
   uint8_t   traineron:1;  // 0 disable trainer, 1 allow trainer
-  uint8_t   unused_xt2throttle:1 ;  // Start timer2 using throttle
+  uint8_t   pxxChans:1 ;  // 
   uint8_t   FrSkyUsrProto:1 ;  // Protocol in FrSky User Data, 0=FrSky Hub, 1=WS HowHigh
   uint8_t   FrSkyGpsAlt:1 ;  	// Use Gps Altitude as main altitude reading
   uint8_t   FrSkyImperial:1 ;  // Convert FrSky values to imperial units
@@ -760,6 +772,9 @@ PACK(typedef struct t_V2ModelData
 	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
 	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
+	uint8_t telemetryProtocol ;
+  int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
 }) V2ModelData ;
 #endif
 

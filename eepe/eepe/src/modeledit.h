@@ -15,6 +15,30 @@ class QCheckBox;
 #include "pers.h"
 #include "mixerslist.h"
 
+#include <QListWidget>
+class VoiceList : public QListWidget
+{
+    Q_OBJECT
+public:
+    explicit VoiceList(QWidget *parent = 0);
+//    QMimeData * mimeData ( const QList<QListWidgetItem *> items );
+
+    void keyPressEvent(QKeyEvent *event);
+
+signals:
+//    void mimeDropped(int index, const QMimeData *data, Qt::DropAction action);
+    void keyWasPressed(QKeyEvent *event);
+
+protected:
+
+public slots:
+//    bool dropMimeData(int index, const QMimeData *data, Qt::DropAction action);
+
+private:
+//    QPoint dragStartPosition;
+
+};
+
 namespace Ui {
     class ModelEdit;
 }
@@ -56,6 +80,7 @@ private:
     bool switchDefPosEditLock;
 
     MixersList *MixerlistWidget;
+		VoiceList *VoiceListWidget ;
 
     QString mixNotes[MAX_MIXERS];
 
@@ -118,6 +143,7 @@ private:
 		void tabPhase();
 		void tabGvar();
 		void tabVoiceAlarms() ;
+		void voiceAlarmsList() ;
     void updateCurvesTab();
     void setSwitchWidgetVisibility(int i);
 		void setSafetyWidgetVisibility(int i);
@@ -132,6 +158,7 @@ private:
     void resizeEvent(QResizeEvent *event  = 0);
 
     void setProtocolBoxes();
+		void setSubSubProtocol( QComboBox *b, int type ) ;
 
     void drawCurve();
     int currentCurve;
@@ -154,6 +181,7 @@ private:
     void setSwitch(uint8_t idx, uint8_t func, int8_t v1, int8_t v2);
 
 		struct t_templateValues templateValues ;
+	void voiceAlarmsBlank( int i ) ;
 
 signals:
     void modelValuesChanged(ModelEdit * = 0);
@@ -200,7 +228,7 @@ private slots:
     void mixerlistWidget_doubleClicked(QModelIndex index);
     void mixerlistWidget_KeyPress(QKeyEvent *event);
 
-    void on_VoiceAlarmList_doubleClicked(QModelIndex index) ;
+    void voiceAlarmList_doubleClicked(QModelIndex index) ;
 
     void on_curveEdit_1_clicked();
     void on_curveEdit_2_clicked();
@@ -295,6 +323,7 @@ private slots:
     void on_ppmFrameLengthDSB_editingFinished();
     void ControlCurveSignal(bool flag);
     void on_DSM_Type_currentIndexChanged(int index);
+		void on_SubProtocolCB_currentIndexChanged(int index) ;
     void on_pxxRxNum_editingFinished();
 		void on_VoiceNumberSB_editingFinished() ;
 		void on_autoLimitsSB_editingFinished() ;
@@ -314,6 +343,16 @@ private slots:
     void on_switchDefPos_6_stateChanged(int );
     void on_switchDefPos_7_stateChanged(int );
     void on_switchDefPos_8_stateChanged(int );
+
+		void voiceAdd() ;
+		void voiceRemove() ;
+	void voiceBlank() ;
+	void voiceMoveUp() ;
+	void voiceMoveDown() ;
+    void showVoiceContextMenu(QPoint pos);
+	void voiceCopy() ;
+	void voicePaste() ;
+	void voice_KeyPress(QKeyEvent *event) ;
 
 };
 

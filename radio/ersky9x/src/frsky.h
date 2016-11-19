@@ -64,14 +64,52 @@
 #define FR_RXV				40
 #define FR_A3					41
 #define FR_A4					42
-#define FR_TRASH			43	// Used for invalid id
+
+/* Extra data for Mavlink via FrSky */
+#define FR_BASEMODE             43
+#define FR_WP_DIST              44
+#define FR_HEALTH               45
+#define FR_MSG                  46
+#define FR_HOME_DIR             47
+#define FR_HOME_DIST            48
+#define FR_CPU_LOAD             49
+#define FR_GPS_HDOP             50
+#define FR_WP_NUM               51
+#define FR_WP_BEARING           52
+#define FR_VCC                  53
+/* Extra data for Mavlink via FrSky */
+#define FR_AIRSPEED             54
+
+#define FR_RBOX_B1_V						55
+#define FR_RBOX_B1_A						56
+#define FR_RBOX_B2_V            57
+#define FR_RBOX_B2_A            58
+#define FR_RBOX_B1_CAP          59
+#define FR_RBOX_B2_CAP          60
+#define FR_RBOX_SERVO	          61
+#define FR_RBOX_STATE	          62
+
+#define FR_TRASH			63  // Used for invalid id
+//#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH 44
+#define HUBDATALENGTH  64
+//#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
+
+/* Extra data for Mavlink via FrSky - MAV_MODE_FLAG */
+//#define MAV_MODE_FLAG_CUSTOM_MODE_ENABLED	  1 /* 0b00000001 Reserved for future use. | */
+//#define MAV_MODE_FLAG_TEST_ENABLED          2	/* 0b00000010 system has a test mode enabled. This flag is intended for temporary system tests and should not be used for stable implementations. | */
+//#define MAV_MODE_FLAG_AUTO_ENABLED          4	/* 0b00000100 autonomous mode enabled, system finds its own goal positions. Guided flag can be set or not, depends on the actual implementation. | */
+//#define MAV_MODE_FLAG_GUIDED_ENABLED        8	/* 0b00001000 guided mode enabled, system flies MISSIONs / mission items. | */
+//#define MAV_MODE_FLAG_STABILIZE_ENABLED    16	/* 0b00010000 system stabilizes electronically its attitude (and optionally position). It needs however further control inputs to move around. | */
+//#define MAV_MODE_FLAG_HIL_ENABLED          32	/* 0b00100000 hardware in the loop simulation. All motors / actuators are blocked, but internal software is full operational. | */
+//#define MAV_MODE_FLAG_MANUAL_INPUT_ENABLED 64	/* 0b01000000 remote control input is enabled. | */
+#define MAV_MODE_FLAG_SAFETY_ARMED			128	// 0b10000000 MAV safety set to armed. Motors are enabled / running / can start. Ready to fly.
+/* Extra data for Mavlink via FrSky */
 
 /*  FrSky Hub Info
 DataID Meaning       Unit   Range   Note
@@ -224,7 +262,45 @@ DataID Meaning       Unit   Range   Note
 #define A4_FIRST_ID      0x0910
 #define A4_LAST_ID       0x091f
 #define A4_ID_8						0x91
+#define AIRSPEED_FIRST_ID 0x0A00
+#define AIRSPEED_LAST_ID  0x0A0f
+#define AIRSPEED_ID_8			0xA0
 
+#define FUEL_QTY_FIRST_ID  0x0A10
+#define FUEL_QTY_LAST_ID   0x0A1F
+#define FUEL_QTY_ID_8      0xA1
+
+#define RBOX_BATT1_FIRST_ID    0x0b00
+#define RBOX_BATT1_LAST_ID     0x0b0f
+#define RBOX_BATT1_ID_8        0xb0
+
+#define RBOX_BATT2_FIRST_ID    0x0b10
+#define RBOX_BATT2_LAST_ID     0x0b1f
+#define RBOX_BATT2_ID_8        0xb1
+#define RBOX_STATE_FIRST_ID    0x0b20
+#define RBOX_STATE_LAST_ID     0x0b2f
+#define RBOX_STATE_ID_8        0xb2
+#define RBOX_CNSP_FIRST_ID     0x0b30
+#define RBOX_CNSP_LAST_ID      0x0b3f
+#define RBOX_CNSP_ID_8         0xb3
+
+#define S6R_FIRST_ID			     0x0c30
+#define S6R_LAST_ID						 0x0c3f
+#define S6R_ID_8			         0xc3
+
+#define DIY_FIRST_ID           0x5000
+#define DIY_LAST_ID            0x50ff
+#define DIY_ID_8	             0x00
+
+// Craft and Theory
+#define	ARDUP_ID_8				0x00
+#define	ARDUP_AP_STAT_ID	0x01
+#define	ARDUP_GPS_STAT_ID	0x02
+#define	ARDUP_BATT_ID			0x03
+#define	ARDUP_HOME_ID			0x04
+#define	ARDUP_VandYAW_ID	0x05
+#define	ARDUP_ATTandRNGID	0x06
+#define	ARDUP_PARAM_ID		0x07
 
 
 #define BETA_VARIO_ID      0x8030
@@ -258,6 +334,24 @@ DataID Meaning       Unit   Range   Note
 // 0720   FR_ACCZ
 // 0830		FR_GPS_SPEED
 
+#define MAV_SYS_STATUS_SENSOR_3D_GYRO			 1  /* 0x01 3D gyro | */
+#define MAV_SYS_STATUS_SENSOR_3D_ACCEL			 2  /* 0x02 3D accelerometer | */
+#define MAV_SYS_STATUS_SENSOR_3D_MAG			 4  /* 0x04 3D magnetometer | */
+#define MAV_SYS_STATUS_SENSOR_ABSOLUTE_PRESSURE		 8  /* 0x08 absolute pressure | */
+#define MAV_SYS_STATUS_SENSOR_DIFFERENTIAL_PRESSURE     16  /* 0x10 differential pressure | */
+#define MAV_SYS_STATUS_SENSOR_GPS			32  /* 0x20 GPS | */
+#define MAV_SYS_STATUS_SENSOR_OPTICAL_FLOW              64  /* 0x40 optical flow | */
+#define MAV_SYS_STATUS_GEOFENCE                    1048576  /* 0x100000 geofence | */
+#define MAV_SYS_STATUS_AHRS                        2097152  /* 0x200000 AHRS subsystem health | */
+#define MAV_SYS_ERR_GYRO     "GYRO"
+#define MAV_SYS_ERR_ACCEL    "ACCEL"
+#define MAV_SYS_ERR_MAG      "MAG"
+#define MAV_SYS_ERR_PRESSURE "PRESS"
+#define MAV_SYS_ERR_AIRSPEED "AIRSP"
+#define MAV_SYS_ERR_GPS      "GPS"
+#define MAV_SYS_ERR_OPTICAL  "OPTIC"
+#define MAV_SYS_ERR_GEOFENCE "FENCE"
+#define MAV_SYS_ERR_AHRS     "AHRS"
 
 
 
@@ -288,6 +382,15 @@ struct FrskyData {
 	void setoffset();
 };
 
+struct t_s6r
+{
+	uint8_t fieldIndex ;
+	uint8_t valid ;
+	int16_t value ;
+} ;
+
+extern struct t_s6r S6Rdata ;
+
 //struct Frsky_current_info
 //{
 //uint16_t Amp_hour_boundary ;
@@ -309,7 +412,7 @@ struct FrSky_Q_t
 } ;
 
 extern void put_frsky_q( uint8_t index, uint16_t value ) ;
-extern void process_frsky_q( void ) ;
+//extern void process_frsky_q( void ) ;
 
 //extern Frsky_current_info Frsky_current[2] ;
 
@@ -325,7 +428,7 @@ extern FrskyData frskyTelemetry[4];
 extern int16_t FrskyHubData[] ;
 //extern int16_t FrskyHubMin[] ;
 //extern int16_t FrskyHubMax[] ;
-extern uint8_t FrskyVolts[];
+extern uint16_t FrskyVolts[];
 extern uint8_t FrskyBattCells[] ;
 extern uint8_t FrskyAlarmCheckFlag ;
 //extern uint8_t MaxGpsSpeed ;
@@ -367,17 +470,23 @@ struct t_hub_max_min
 #define TEL_DSM					5
 #define TEL_ASSAN	      6
 #define TEL_MULTI	      7
+#define TEL_HUB_RAW			8
+#define TEL_XFIRE				9
+#define TEL_UNKNOWN			255
 extern uint8_t TelemetryType ;
 
 // Values in EEPROM
-#define TELEMETRY_UNDEFINED	0		// To detect not yet configured
-#define TELEMETRY_FRSKY			1
-#define TELEMETRY_WSHHI			2
-#define TELEMETRY_DSM				3
-#define TELEMETRY_JETI			4
-#define TELEMETRY_MAVLINK		5
-#define TELEMETRY_ARDUPILOT	6
-#define TELEMETRY_FRHUB			7
+#define TELEMETRY_UNDEFINED		0		// To detect not yet configured
+#define TELEMETRY_FRSKY				1
+#define TELEMETRY_WSHHI				2
+#define TELEMETRY_DSM					3
+#define TELEMETRY_JETI				4
+#define TELEMETRY_ARDUPLANE		5
+#define TELEMETRY_ARDUCOPTER	6
+#define TELEMETRY_FRHUB				7
+#define TELEMETRY_HUBRAW			8
+#define TELEMETRY_FRMAV				9
+#define TELEMETRY_MAVLINK			10
 
 
 extern uint16_t DsmABLRFH[] ;
@@ -388,6 +497,92 @@ extern struct t_hub_max_min FrskyHubMaxMin ;
 
 extern uint16_t A1A2toScaledValue( uint8_t channel, uint8_t *dplaces ) ;
 extern uint16_t logAxScale( uint8_t channel, uint8_t *dps ) ;
+extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
+
+// Crossfire telemetry
+// Frame id
+#define CRSF_GPS_ID                         0x02
+#define CRSF_BATTERY_ID                     0x08
+#define CRSF_LINK_ID                        0x14
+#define CRSF_CHANNELS_ID                    0x16
+#define CRSF_ATTITUDE_ID                    0x1E
+#define CRSF_FLIGHT_MODE_ID                 0x21
+#define CRSF_PING_DEVICES_ID                0x28
+#define CRSF_DEVICE_INFO_ID                 0x29
+#define CRSF_REQUEST_SETTINGS_ID            0x2A
+
+
+// LogEnable index
+#define LOG_A1		0
+#define LOG_A2		1
+#define LOG_RSSI	2
+#define LOG_TSSI	3
+#define LOG_ALT		6
+#define LOG_GALT	7
+#define LOG_GSPD	8
+#define LOG_TEMP1	9
+#define LOG_TEMP2	10
+#define LOG_RPM		11
+#define LOG_FUEL	12
+#define LOG_MAH1	13//
+#define LOG_MAH2	14//
+#define LOG_CVLT	15
+#define LOG_BATT	16
+#define LOG_AMPS	17
+#define LOG_MAH		18
+#define LOG_CTOT	19
+#define LOG_FASV	20
+#define LOG_ACCX	21//
+#define LOG_ACCY	22//
+#define LOG_ACCZ	23//
+#define LOG_VSPD	24
+#define LOG_GVAR1	25
+#define LOG_GVAR2	26
+#define LOG_GVAR3	27
+#define LOG_GVAR4	28
+#define LOG_GVAR5	29
+#define LOG_GVAR6	30
+#define LOG_GVAR7	31
+#define LOG_FWAT	32//
+#define LOG_RXV   33
+#define LOG_HDG   34//
+#define LOG_A3    35//
+#define LOG_A4    36//
+#define LOG_SC1		37
+#define LOG_SC2		38
+#define LOG_SC3		39
+#define LOG_SC4		40
+#define LOG_SC5		41
+#define LOG_SC6		42
+#define LOG_SC7		43
+#define LOG_SC8		44
+
+#define LOG_RTC		45//
+#define LOG_TMOK	46//
+#define LOG_ASPD	47
+
+#define LOG_CEL1	48
+#define LOG_CEL2	49
+#define LOG_CEL3	50
+#define LOG_CEL4	51
+#define LOG_CEL5	52
+#define LOG_CEL6	53
+
+#define LOG_RBV1	54
+#define LOG_RBA1  55
+#define LOG_RBV2  56
+#define LOG_RBA2  57
+#define LOG_RBM1  58
+#define LOG_RBM2  59
+#define LOG_RBSV  60
+#define LOG_RBST  61
+
+#define LOG_BTRX  125
+#define LOG_LAT	  126
+#define LOG_LONG  127
+
+
+
 
 #endif
 
