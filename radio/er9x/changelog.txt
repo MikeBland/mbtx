@@ -10,18 +10,19 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 22-Jan-2016  MPB (r821)
+CHANGELOG: 21-Nov-2016  MPB (r821)
 Further MULTI changes
 Re-label Delay up and down
 Add Q242 sub-protocol on MULTI
 V2 Voice alarm update
 Add FY326 SFHSS on MULTI
-Add FRSKYX 18/8 sub-protocols on MULTI
+Add FRSKYX 16/8 sub-protocols on MULTI
 Fix GVARS as volume control bug
 Add disable JTAG interface
 Fix minor bugs in voice alarms
 Add XY curve in '128 and '2561 versions
 Add MavLink over FrSky suppport in '128 and '2561 versions
+Add "hubraw" telemetry in '128 and '2561 versions
 
 ******************************************
 CHANGELOG: 11-Jan-2016  MPB (r820)

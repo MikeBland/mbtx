@@ -144,6 +144,7 @@ private:
     int currentERSKYX9Drev;
     int currentERSKYX9DPrev;
 		int currentERSKY9XTrev ;
+    int currentERSKYX9Erev;
     int currentERSKY9Xrev_temp;
     int currentEEPSKYErev;
     int currentEEPSKYErelease ;

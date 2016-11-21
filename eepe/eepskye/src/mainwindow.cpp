@@ -99,7 +99,7 @@
 #define DNLD_VER_ERSKYX9DP			 3
 #define DNLD_VER_ERSKYX9XT			 4
 #define DNLD_VER_ERSKYX9E				 5
-#define DNLD_VER_ERSKYX9A				 6
+#define DNLD_VER_ERSKY9XA				 6
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -269,6 +269,12 @@ void MainWindow::title()
 		case 4 :
 			type = "9Xtreme" ;
     break ;
+		case 5 :
+			type = "X9E" ;
+    break ;
+		case 6 :
+			type = "AR9X" ;
+    break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -281,11 +287,11 @@ void MainWindow::releaseNotes()
 	
 	QString rnotes =
 	"Release files will now be found at: http://er9x.com.\n"
-	"Googlecode is closing down. This project will move to Github.\n"
-	"It may be found at: https://github.com/MikeBland/mbtx in due course.\n"
+	"Googlecode has closed down. This project has moved to Github.\n"
+	"It may be found at: https://github.com/MikeBland/mbtx \n"
 	"Googlecode has blocked downloads of .exe files\n"
 	"Windows users will now find eepskye updates are in a .zip file\n\n"
-  "ersky9x rev 203 changes the Custom Switch options.\n"
+  "From ersky9x rev 203 changes to the Custom Switch options.\n"
 	"v1>=v2 and v1<=v2 are removed and replaced by Latch and F-Flop\n"
 	"Loading a model into er9x from before will change:\n"
 	"v1>=v2 into v1>v2 and change v1<=v2 into v1<v2\n"
@@ -300,8 +306,6 @@ void MainWindow::releaseNotes()
 	"ON for at least 0.1 seconds, the F-Flop is set to the same state as the 'data'.\n\n"
 	"The model version is now 3, a button is available in the SETUP tab to convert\n"
 	"models within eepe."
-	"ADVANCE WARNING: The mixer function 'FlightMode Trim' will be REMOVED in a future revision.\n"
-	"Please now use a 'real' flight mode for this function."
 	 ;
 	
 	reviewOutput *rO = new reviewOutput(this);
@@ -399,6 +403,12 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
           case 4 :
 						currentRev = currentERSKY9XTrev ;
 					break ;
+          case 5 :
+						currentRev = currentERSKYX9Erev ;
+					break ;
+          case 6 :
+						currentRev = currentERSKY9Xrev ;
+					break ;
 				}
 
         if(rev>currentRev)
@@ -432,8 +442,8 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
                 baseFileName = "x9e_rom.bin";
                 break;
 
-						case (DNLD_VER_ERSKYX9A):
-                dnldURL = ERSKYX9XT_URL;
+						case (DNLD_VER_ERSKY9XA):
+                dnldURL = ERSKY9X_URL;
                 baseFileName = "ersky9x_rom.bin";
                 break;
 
@@ -488,6 +498,14 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 											case 4 :
                     		settings.setValue("currentERSKY9XTrev", rev);
 											break ;
+											
+											case 5 :
+                    		settings.setValue("currentERSKYX9Erev", rev);
+											break ;
+											
+											case 6 :
+                    		settings.setValue("currentERSKY9Xrev", rev);
+											break ;
 										}
                 }
             }
@@ -537,6 +555,16 @@ void MainWindow::downloadLatester9x()
           dnldURL = ERSKYX9XT_URL;
           baseFileName = "ersky9x9XT_rom.bin";
       break;
+            
+			case (DNLD_VER_ERSKYX9E):
+           dnldURL = ERSKYX9E_URL;
+           baseFileName = "x9e_rom.bin";
+      break;
+
+      case (DNLD_VER_ERSKY9XA) :
+          dnldURL = ERSKY9X_URL;
+          baseFileName = "ersky9x_rom.bin";
+      break;
     }
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),settings.value("lastDir").toString() + "/" + baseFileName,tr(HEX_FILES_FILTER));
@@ -560,6 +588,12 @@ void MainWindow::downloadLatester9x()
 			break ;
 			case 4 :
         currentERSKY9Xrev_temp = currentERSKY9XTrev ;
+			break ;
+      case 5 :
+    		currentERSKY9Xrev_temp = currentERSKYX9Erev ;
+			break ;
+      case 6 :
+    		currentERSKY9Xrev_temp = currentERSKY9Xrev;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -652,6 +686,14 @@ void MainWindow::reply1Accepted()
 											
 			case 4 :
         settings.setValue("currentERSKY9XTrev", currentERSKY9XTrev);
+			break ;
+											
+			case 5 :
+        settings.setValue("currentERSKYX9Erev", currentERSKYX9Erev);
+			break ;
+
+			case 6 :
+    		settings.setValue("currentERSKY9Xrev", currentERSKY9Xrev);
 			break ;
 		}	
 }

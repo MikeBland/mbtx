@@ -10,7 +10,7 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 22-Jan-2016  MPB (r219)
+CHANGELOG: 19-Nov-2016  MPB (r219)
 H8_3D MULTI supported
 Correct direction of P2 on Taranis
 Add P3 and P4 as sources for GVARS
@@ -59,6 +59,23 @@ Language updates
 Add background music, merge beeps into voice
 Add RAW telemetry logging
 Initialise telemetry on model load
+Taranis add PB1 and PB2 on JTMS/JTCK - also use these for PDI flashing of Orange MULTI module
+Now 20 GVAR adjusters instead of 8
+9xtreme only, add "Reverse video screen"
+Flight modes use TWO switches
+Include Fmd (Flight Mode) as switch source in Voice alarm
+Add pot4 to custom check
+Add pot4 to centre beep
+Improve the look of warning screens
+Use checkboxes not OFF/ON in menus
+Native Mavlink support
+Add shutdown voice message
+Add FrSky Redundancy box telemetry
+Add software shutdown signal filter on Atmel
+Voice alarms and Logical switches have v&val
+New Logging menu, select items to log
+9XR-PRO only, add TBS Crossfire protocol
+Ad FrSky S6R configuration feature
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)

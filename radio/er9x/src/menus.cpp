@@ -766,13 +766,16 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
         unit = 'f' ;
 			}
 
-			if ( val < 1000 )
+		  if (channel == FR_ALT_BARO )
 			{
-				att |= PREC1 ;
-			}
-			else
-			{
-				val /= 10 ;
+				if ( val < 1000 )
+				{
+					att |= PREC1 ;
+				}
+				else
+				{
+					val /= 10 ;
+				}
 			}
     break;
 		
