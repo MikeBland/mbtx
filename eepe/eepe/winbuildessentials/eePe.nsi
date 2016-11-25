@@ -84,6 +84,7 @@ Section "eePe" SecDummy
   File "license.txt"
   File "eepe.exe"
   File "eepskye.exe"
+  File "SportSet.exe"
   File "libgcc_s_dw2-1.dll"
   File "mingwm10.dll"
   File "QtCore4.dll"
@@ -121,6 +122,7 @@ Section "eePe" SecDummy
     CreateDirectory "$SMPROGRAMS\$StartMenuFolder"
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\eePe.lnk" "$INSTDIR\eePe.exe"
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\eePskye.lnk" "$INSTDIR\eePskye.exe"
+	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\eePskye.lnk" "$INSTDIR\SportSet.exe"
 	CreateShortCut "$SMPROGRAMS\$StartMenuFolder\er9x Users Manual.lnk" "$INSTDIR\ER9x_Manual_2015-v01.pdf"
     CreateShortCut "$SMPROGRAMS\$StartMenuFolder\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 

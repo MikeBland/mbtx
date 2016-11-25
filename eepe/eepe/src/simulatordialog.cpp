@@ -883,6 +883,7 @@ void simulatorDialog::getValues()
 		if ( g_model.gvars[i].gvsource )
 		{
 			int value ;
+      value = 0 ;
 			uint8_t src = g_model.gvars[i].gvsource ;
 			if ( src <= 4 )
 			{
@@ -1710,7 +1711,7 @@ void simulatorDialog::timerTick()
 //      val = chanOut[tm-TMR_VAROFS] ;
 //    }
   	int8_t tmb ;
-		uint8_t switch_b ;
+//		uint8_t switch_b ;
 		uint8_t max_drswitch ;
 		max_drswitch = ( ee_type ) ? MAX_DRSWITCH+EXTRA_CSW : MAX_DRSWITCH ;
 
@@ -1835,7 +1836,7 @@ void simulatorDialog::timerTick()
 
 #ifndef V2
       s_timerVal[0] = g_model.tmrVal;
-    	uint8_t tmrM = abs(g_model.tmrMode);
+//    	uint8_t tmrM = abs(g_model.tmrMode);
       uint16_t subtrahend = 0 ;
       if(tma==TMRMODE_NONE)// s_timerState[0] = TMR_OFF;
 			{

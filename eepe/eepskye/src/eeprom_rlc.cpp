@@ -307,7 +307,7 @@ void EeFsFormat( uint8_t *eeprom )
 	{
     EeFsSetLink(i, i+1) ;
   }
-  EeFsSetLink(BLOCKS-1, 0);
+  EeFsSetLink((uint8_t)BLOCKS-1, 0);
   eeFs.freeList = FIRSTBLK;
   freeBlocks = BLOCKS ;
   EeFsFlush();

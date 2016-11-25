@@ -89,7 +89,7 @@ void WizMix::addMix(ModelData &model, Input input, int weight, int channel, int 
       mix.destCh = channel+1;
       if (isTaranis){
 //        int channel = settings.getDefaultChannel(input-1);
-        int channel = 1 ;
+//        int channel = 1 ;
 //        mix.srcRaw = RawSource(SOURCE_TYPE_VIRTUAL_INPUT, channel);
       }
       else
@@ -132,7 +132,7 @@ WizMix::operator ModelData()
 {
   int throttleChannel = -1;
   //    bool isTaranis = IS_TARANIS(GetEepromInterface()->getBoard());
-      bool isTaranis = false ;
+//      bool isTaranis = false ;
 
   ModelData model;
   memset(&model, 0, sizeof(model));
@@ -142,7 +142,7 @@ WizMix::operator ModelData()
 //  model.setDefaultInputs(settings);
 
   int mixIndex = 0;
-  int switchIndex = 0;
+//  int switchIndex = 0;
   int timerIndex = 0;
 
   // Safe copy model name

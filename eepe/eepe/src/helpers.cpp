@@ -1532,7 +1532,7 @@ int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+//  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex ;
 	value = b->currentIndex()-(limit-1) ;
 	if ( value > limit-1 )

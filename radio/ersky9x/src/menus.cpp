@@ -15150,6 +15150,15 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			}
 		}
 	}
+	else if ( channel < 7 )
+	{
+		if ( ( channel - 3 ) == ( ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ) )
+		{
+			// Pot mapped as 6-pos switch
+			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * (int32_t)RESX*2 - (int32_t)RESX*5)/5 ;
+			return v ;
+		}
+	}
 
 //#ifdef REVX
 //	if ( channel < 4 )
