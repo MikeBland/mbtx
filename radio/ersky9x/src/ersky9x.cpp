@@ -1704,9 +1704,21 @@ uint32_t updateSlave() ;
 	
 	}
 
-	if ( ( read_trims() & 0x01 )== 0x01 )
+	while ( ( read_trims() & 0x01 )== 0x01 )
 	{
 		HardwareMenuEnabled = 1 ;
+		lcd_puts_Pleft( FH, XPSTR("Hardware Menu Enabled") ) ;
+		refreshDisplay() ;
+
+#ifdef PCBSKY
+		if ( ( ( ResetReason & RSTC_SR_RSTTYP ) == (2 << 8) ) || unexpectedShutdown )	// Not watchdog
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+		if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) == RCC_CSR_WDGRSTF ) || unexpectedShutdown )	// Not watchdog
+#endif
+		{
+			break ;
+		}
 	}
 
   resetTimer();
@@ -6213,7 +6225,7 @@ void doSplash()
 //	SplashDebug[8] = 0 ;
 //#endif
 
-	if( (!g_eeGeneral.disableSplashScreen) || ( HardwareMenuEnabled ) )
+	if( !g_eeGeneral.disableSplashScreen )
   {
    	check_backlight() ;
     lcd_clear();

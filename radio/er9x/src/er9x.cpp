@@ -4330,6 +4330,10 @@ extern uint8_t serialDat0 ;
 #if defined(CPUM128) || defined(CPUM2561)
 		lcd_puts_Pleft( FH, PSTR("Hardware Menu Enabled") ) ;
 		refreshDiplay() ;
+  	if ( mcusr & (1<<WDRF) )
+		{
+			break ;
+		}
 #endif
 	}
 	if ( in == 0x82 )

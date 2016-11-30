@@ -780,7 +780,9 @@ static inline uint8_t mavlink_msg_heartbeat_get_type(const mavlink_message_t* ms
 
 static inline uint32_t mavlink_msg_heartbeat_get_custom_mode(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_uint32_t(msg,  0);
+//	return _MAV_RETURN_uint32_t(msg,  0);
+	uint32_t *p = (uint32_t *)((msg)->payload64) ;
+	return *p ;
 }
 
 static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_t* msg)
@@ -790,22 +792,30 @@ static inline uint8_t mavlink_msg_heartbeat_get_base_mode(const mavlink_message_
 
 static inline int16_t mavlink_msg_sys_status_get_current_battery(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_int16_t(msg,  16);
+//	return _MAV_RETURN_int16_t(msg,  16);
+	int16_t *p = (int16_t *)((msg)->payload64) ;
+	return p[8] ;
 }
 
 static inline float mavlink_msg_vfr_hud_get_alt(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_float(msg,  8);
+//	return _MAV_RETURN_float(msg,  8);
+	float *p = (float *)((msg)->payload64) ;
+	return p[2] ;
 }
 
 static inline uint16_t mavlink_msg_hwstatus_get_Vcc(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_uint16_t(msg,  0);
+//	return _MAV_RETURN_uint16_t(msg,  0);
+	uint16_t *p = (uint16_t *)((msg)->payload64) ;
+	return p[0] ;
 }
 
 static inline uint16_t mavlink_msg_sys_status_get_load(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_uint16_t(msg,  12);
+//	return _MAV_RETURN_uint16_t(msg,  12);
+	uint16_t *p = (uint16_t *)((msg)->payload64) ;
+	return p[6] ;
 }
 
 static inline uint16_t mavlink_msg_sys_status_get_voltage_battery(const mavlink_message_t* msg)
@@ -815,7 +825,9 @@ static inline uint16_t mavlink_msg_sys_status_get_voltage_battery(const mavlink_
 
 static inline int16_t mavlink_msg_vfr_hud_get_heading(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_int16_t(msg,  16);
+//	return _MAV_RETURN_int16_t(msg,  16);
+	int16_t *p = (int16_t *)((msg)->payload64) ;
+	return p[8] ;
 }
 
 static inline float mavlink_msg_vfr_hud_get_climb(const mavlink_message_t* msg)
@@ -830,17 +842,23 @@ static inline int8_t mavlink_msg_sys_status_get_battery_remaining(const mavlink_
 
 static inline int32_t mavlink_msg_gps_raw_int_get_lat(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_int32_t(msg,  8);
+//	return _MAV_RETURN_int32_t(msg,  8);
+	int32_t *p = (int32_t *)((msg)->payload64) ;
+	return p[2] ;
 }
 
 static inline int32_t mavlink_msg_gps_raw_int_get_lon(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_int32_t(msg,  12);
+//	return _MAV_RETURN_int32_t(msg,  12);
+	int32_t *p = (int32_t *)((msg)->payload64) ;
+	return p[3] ;
 }
 
 static inline int32_t mavlink_msg_gps_raw_int_get_alt(const mavlink_message_t* msg)
 {
-	return _MAV_RETURN_int32_t(msg,  16);
+//	return _MAV_RETURN_int32_t(msg,  16);
+	int32_t *p = (int32_t *)((msg)->payload64) ;
+	return p[4] ;
 }
 static inline uint16_t mavlink_msg_gps_raw_int_get_epv(const mavlink_message_t* msg)
 {

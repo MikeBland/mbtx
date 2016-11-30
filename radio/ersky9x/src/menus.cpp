@@ -11852,6 +11852,8 @@ void menuProcS6R(uint8_t event)
 			{
   			lcd_putsAttIdx( 12*FW, 3*FH, XPSTR("\006Hor   HorRevVer   VerRev"), value, 0 ) ;
 			}
+			lcd_img( 12, 4*FH, value<2 ? S6Rimg1 : S6Rimg3, value<3 ? value & 1 : 2, 0 ) ;
+			lcd_puts_Pleft( 7*FH, "<-Heading" ) ;
 		break ;
 		case 3 :
 		case 4 :
