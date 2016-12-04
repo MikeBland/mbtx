@@ -10,6 +10,11 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 04-Dec-2016  MPB (r220)
+Fix bug in 9Xtreme/Taranis external XJT
+Fix encoder problem after EEPROM backup/restore
+
+******************************************
 CHANGELOG: 19-Nov-2016  MPB (r219)
 H8_3D MULTI supported
 Correct direction of P2 on Taranis
