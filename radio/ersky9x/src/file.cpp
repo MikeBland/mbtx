@@ -879,7 +879,15 @@ void ee32LoadModel(uint8_t id)
 			g_model.protocol = 0 ;
 		}
 	}
+#ifdef XFIRE
+ #ifdef PCB9XT
+	if ( g_model.xprotocol > PROT_MAX + 1 )
+ #else
 	if ( g_model.xprotocol > PROT_MAX )
+ #endif
+#else
+	if ( g_model.xprotocol > PROT_MAX )
+#endif
 	{
 		if ( g_model.xprotocol != PROTO_OFF )
 		{

@@ -62,6 +62,8 @@ extern void init_multi(uint32_t port) ;
 extern void disable_dsm2(uint32_t port) ;
 extern void init_assan(uint32_t port) ;
 extern void disable_assan(uint32_t port) ;
+extern void init_xfire(uint32_t port) ;
+extern void disable_xfire(uint32_t port) ;
 void setupPulsesDsm2(uint8_t channels, uint32_t module ) ;
 extern void init_cppm_on_heartbeat_capture( void ) ;
 extern void stop_cppm_on_heartbeat_capture( void ) ;

@@ -108,7 +108,6 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 
 #endif // PCB9XT
 
-
 #include "sbus.h"
 
 #include "ff.h"

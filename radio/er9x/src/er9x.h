@@ -704,9 +704,9 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2_DSMX        2
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2S"
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  "
 #define M_Flysky          0
-#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
+#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  CX20  "
 #define M_Hubsan          1
 #define M_Frsky           2
 #define M_Hisky           3
@@ -727,7 +727,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		       	 10
 #define M_CX10		       11
-#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
+#define M_CX10_STR "\007GREEN  BLUE   DM007  ---    J3015_1J3015_2MK33041"
 #define M_CG023		       12
 #define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
@@ -748,10 +748,12 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_HONTAI				 25
 #define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
 #define M_OPENLRS				 26
-#define M_AFHD2SA_STR "\007PWMIBUSPPMIBUSPWMSBUSPPM_SBUS"
 #define M_AFHD2SA				 27
+#define M_AFHD2SA_STR "\007PWMIBUSPPMIBUSPWMSBUSPPM_SBUS"
+#define M_Q2X2					 28
+#define M_Q2X2_STR	 "\004Q242Q282"
 
-#define M_LAST_MULTI		 27
+#define M_LAST_MULTI		 28
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

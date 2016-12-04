@@ -19,7 +19,11 @@
 #include <stdint.h>
 
 #ifndef PACK
-#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#if __GNUC__
+#define PACK( __Declaration__ )      __Declaration__ __attribute__((__packed__))
+#else
+#define PACK( __Declaration__ )      __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+#endif
 #endif
 
 //eeprom data
@@ -106,7 +110,6 @@ PACK(typedef struct t_TrainerMix {
   int8_t  studWeight:6; // Now moved to exTrainerMix
   uint8_t mode:2;   //off,add-mode,subst-mode
 }) TrainerMix; //
-
 PACK(typedef struct t_TrainerData {
   int16_t        calib[4];
   TrainerMix     mix[4];
@@ -684,6 +687,18 @@ PACK(typedef struct t_music
 }) MusicData ;
 
 
+#if EXTRA_SKYMIXERS
+#define EXTRA_MIXERS SKYMixData exmixData[EXTRA_SKYMIXERS]
+#else
+#define EXTRA_MIXERS
+#endif
+
+#if EXTRA_SKYCHANNELS
+#define EXTRA_CHANNELS LimitData elimitData[EXTRA_SKYCHANNELS]
+#else
+#define EXTRA_CHANNELS
+#endif
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -826,12 +841,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t customDisplay2Extra[7] ;
 	MusicData musicData ;
 	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;
-#if EXTRA_SKYMIXERS
-  SKYMixData exmixData[EXTRA_SKYMIXERS] ;
-#endif
-#if EXTRA_SKYCHANNELS
-  LimitData elimitData[EXTRA_SKYCHANNELS];
-#endif
+
+	EXTRA_MIXERS ;
+	EXTRA_CHANNELS ;
 	
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;

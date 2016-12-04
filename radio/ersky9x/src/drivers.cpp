@@ -2981,7 +2981,9 @@ extern "C" void USART2_IRQHandler()
 	{
 		USART2->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
 //		DebugSport3 += 1 ;
+#ifdef ASSAN
 		if ( g_model.xprotocol != PROTO_ASSAN )
+#endif
 		{
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable

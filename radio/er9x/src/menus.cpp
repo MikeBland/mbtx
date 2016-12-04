@@ -12114,7 +12114,7 @@ Str_Protocol
 #endif
 					if ( x == M_Flysky)
 					{
-						s=PSTR(FWx10"\003"M_FLYSKY_STR);
+						s=PSTR(FWx10"\004"M_FLYSKY_STR);
 					}
 					else if ( x == M_FRSKYX )
 					{
@@ -12146,7 +12146,7 @@ Str_Protocol
 					}
 					else if ( x == M_CX10 )
 					{
-						s=PSTR(FWx10"\007"M_CX10_STR);
+						s=PSTR(FWx10"\006"M_CX10_STR);
 					}
 					else if ( x == M_CG023 )
 					{
@@ -12167,6 +12167,10 @@ Str_Protocol
 					else if ( x == M_AFHD2SA )
 					{
 						s = PSTR(FWx10"\004"M_AFHD2SA_STR);
+					}
+					else if ( x == M_Q2X2 )
+					{
+						s = PSTR(FWx10"\001"M_Q2X2_STR);
 					}
 					else
 					{

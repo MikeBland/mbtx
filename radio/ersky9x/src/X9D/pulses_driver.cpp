@@ -61,12 +61,17 @@ uint8_t s_current_protocol[NUM_MODULES] = { 255, 255 } ;
 
 extern void setupPulses(unsigned int port);
 void setupPulsesPPM(unsigned int port);
+uint8_t setupPulsesXfire() ;
 //void setupPulsesPXX(unsigned int port);
 
 uint16_t *ppmStreamPtr[NUM_MODULES];
 uint16_t ppmStream[NUM_MODULES+1][20];
 uint16_t pxxStream[NUM_MODULES][400];
 uint16_t dsm2Stream[2][400];
+
+#ifdef XFIRE
+extern uint8_t Bit_pulses[] ;
+#endif
 
 static void init_pa10_pxx( void ) ;
 static void disable_pa10_pxx( void ) ;
@@ -87,6 +92,10 @@ static void init_pa10_multi( void ) ;
 #ifdef ASSAN
 static void init_pa7_assan( void ) ;
 static void disable_pa7_assan( void ) ;
+#endif
+#ifdef XFIRE
+static void init_pa7_xfire( void ) ;
+static void disable_pa7_xfire( void ) ;
 #endif
 static void init_pa10_none( void ) ;
 static void disable_pa10_none( void ) ;
@@ -165,6 +174,24 @@ void disable_assan(uint32_t port)
   if (port == EXTERNAL_MODULE)
 	{
     disable_pa7_assan() ;
+  }
+}
+#endif
+
+#ifdef XFIRE
+void init_xfire(uint32_t port)
+{
+  if (port == EXTERNAL_MODULE)
+	{
+    init_pa7_xfire() ;
+  }
+}
+
+void disable_xfire(uint32_t port)
+{
+  if (port == EXTERNAL_MODULE)
+	{
+    disable_pa7_xfire() ;
   }
 }
 #endif
@@ -783,6 +810,53 @@ static void disable_pa7_assan()
 }
 #endif
 
+#ifdef XFIRE
+static void init_pa7_xfire()
+{
+	com1_Configure( 400000, 0, 0 ) ;
+  EXTERNAL_RF_ON();
+	setupPulsesXfire() ;
+  
+	configure_pins( PIN_EXTPPM_OUT, PIN_INPUT | PIN_PORTA ) ;
+		
+//	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+//  GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
+  
+	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
+
+  TIM8->CR1 &= ~TIM_CR1_CEN ;
+  TIM8->ARR = 8000 ;    // 4mS
+  TIM8->CCR2 = 5000 ;   // Update time
+//  TIM8->CCR1 = 10000 ;   // Tx back on time
+//  TIM8->CCR3 = 1936*2 ;   // Tx hold on until time
+  TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;  // 0.5uS from 30MHz
+#if defined(REV3)
+  TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
+#else
+  TIM8->CCER = TIM_CCER_CC1NE ;
+#endif
+  TIM8->EGR = 0 ;                                                         // Restart
+  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+//  TIM8->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
+  TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+  TIM8->DIER |= TIM_DIER_UIE ;
+  TIM8->CR1 |= TIM_CR1_CEN ;
+	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 3 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(TIM8_CC_IRQn) ;
+  NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn) ;
+}
+
+static void disable_pa7_xfire()
+{
+  NVIC_DisableIRQ(TIM8_UP_TIM13_IRQn) ;
+  NVIC_DisableIRQ(TIM8_CC_IRQn) ;
+  TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
+  TIM8->CR1 &= ~TIM_CR1_CEN ;
+  EXTERNAL_RF_OFF() ;
+}
+#endif
+
 static void init_pa7_dsm2()
 {
 	init_pa7_serial( PA7_TYPE_DSM ) ;
@@ -953,6 +1027,13 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_ASSAN)
 	{
 		x9dSPortTxStart( (uint8_t *)dsm2Stream, 20, 0 ) ;
+	}
+	else
+#endif
+#ifdef XFIRE
+	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_XFIRE )
+	{
+		x9dSPortTxStart( (uint8_t *)Bit_pulses, 26, 0 ) ;
 	}
 	else
 #endif

@@ -2276,11 +2276,11 @@ void telemetry_init( uint8_t telemetryType )
 		break ;
 
 #ifdef XFIRE
- #ifdef REVX
+// #ifdef REVX
 		case TEL_XFIRE :
 			FRSKY_Init( TEL_TYPE_XFIRE ) ;
 		break ;
- #endif
+// #endif
 #endif
 		 
 #ifdef ASSAN
@@ -2357,12 +2357,21 @@ void FRSKY_Init( uint8_t brate )
 				FrskyTelemetryType = 3 ;	// AFHD2SA
 			}
 		}
+#ifdef XFIRE
+ #ifdef PCB9XT
+		if ( g_model.xprotocol == PROTO_XFIRE )
+		{
+			baudrate = 400000 ;
+		}
+ #endif
+#endif
 		if ( g_model.frskyComPort == 0 )
 		{
 #ifdef REVX
 			com1_Configure( baudrate, SERIAL_NORM, parity ) ;
 #else
 			com1_Configure( baudrate, g_model.telemetryRxInvert, parity ) ;
+
 //			com1_timeout_disable() ;
 
 //			if ( g_model.telemetryRxInvert )
@@ -2412,13 +2421,13 @@ void FRSKY_Init( uint8_t brate )
 	}
 #endif
 #ifdef XFIRE
- #ifdef REVX
+// #ifdef REVX
 	else if ( brate == TEL_TYPE_XFIRE )
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
 		com1_Configure( 400000, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 	}
- #endif
+// #endif
 #endif
 #ifdef REVX
 	else	// brate == TEL_TYPE_DSM, DSM telemetry

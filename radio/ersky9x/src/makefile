@@ -629,7 +629,8 @@ endif
 #endif
 
 ifeq ($(PCB), 9XT)
-  EXT_MOD=9XT
+# CPPDEFS += -DXFIRE
+ EXT_MOD=9XT
 endif
 
 ifeq ($(PCB), X9D)

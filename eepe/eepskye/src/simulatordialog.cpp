@@ -8,7 +8,7 @@
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
 #include <QMessageBox>
-#include <QSound>
+//#include <QSound>
 
 
 #define GBALL_SIZE  20

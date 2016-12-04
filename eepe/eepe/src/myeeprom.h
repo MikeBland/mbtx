@@ -19,7 +19,11 @@
 #include <stdint.h>
 
 #ifndef PACK
-#define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
+#if __GNUC__
+#define PACK( __Declaration__ )      __Declaration__ __attribute__((__packed__))
+#else
+#define PACK( __Declaration__ )      __pragma( pack(push, 1) ) __Declaration__ __pragma( pack(pop) )
+#endif
 #endif
 
 #define MULTI_PROTOCOL	1
@@ -122,10 +126,65 @@ PACK(typedef struct t_V2TrainerData {
 }) V2TrainerData ;
 
 #ifdef SKY
-PACK(typedef struct t_OldEEGeneral {
+#define EE_EGN t_OldEEGeneral
 #else
-PACK(typedef struct t_EEGeneral {
+#define EE_GEN t_EEGeneral
 #endif
+
+#ifdef SKY
+#define EEGEN_BITFIELDS \
+	uint8_t   FRSkyYellow:4;\
+  uint8_t   FRSkyOrange:4;\
+  uint8_t   FRSkyRed:4;\
+  uint8_t   hideNameOnSplash:1;\
+  uint8_t   optrexDisplay:1;\
+	uint8_t   unexpectedShutdown:1;\
+  uint8_t   spare:1
+#else
+ #ifdef XSW_MOD
+//  uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+//  uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+ #define EEGEN_BITFIELDS \
+	uint8_t   unused1;\
+  uint8_t   unused2:2;\
+  uint8_t   pb7backlight:1 ;\      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+  uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+  uint8_t   hideNameOnSplash:1;\
+  uint8_t   enablePpmsim:1;\
+  uint8_t   blightinv:1;\
+  uint8_t   stickScroll:1
+ #else
+ #define EEGEN_BITFIELDS \
+	uint8_t   unused1;\
+  uint8_t   unused2:4;\
+  uint8_t   hideNameOnSplash:1;\
+  uint8_t   enablePpmsim:1;\
+  uint8_t   blightinv:1;\
+  uint8_t   stickScroll:1
+ #endif
+#endif
+
+#ifdef XSW_MOD
+ #define SWITCH_MAPPING \
+    uint8_t   switchSources[(MAX_XSWITCH+1)/2] // packed nibble array [0..(MAX_XSWITCH-1)]
+		                                           // wasted 4b if MAX_XSWITCH is an odd number
+#else
+ #define SWITCH_MAPPING \
+    uint8_t   switchMapping ;\
+		uint8_t	ele2source:4 ;\
+		uint8_t	ail2source:4 ;\
+		uint8_t	rud2source:4 ;\
+		uint8_t	gea2source:4 ;\
+		uint8_t pb1source:4 ;\
+		uint8_t pb2source:4 ;\
+    uint8_t pg2Input:1 ;\
+    uint8_t pb7Input:1 ;\
+    uint8_t lcd_wrInput:1 ;\
+    uint8_t  spare5:5 ;\
+    uint8_t  exSwitchWarningStates
+#endif
+		 
+PACK(typedef struct EE_GEN {
     uint8_t   myVers;
     int16_t   calibMid[7];
     int16_t   calibSpanNeg[7];
@@ -158,30 +217,31 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   lightAutoOff;
     uint8_t   templateSetup;  //RETA order according to chout_ar array
     int8_t    PPM_Multiplier;
-#ifdef SKY
-		uint8_t   FRSkyYellow:4;
-    uint8_t   FRSkyOrange:4;
-    uint8_t   FRSkyRed:4;
-#else
-		uint8_t   unused1;
-#ifdef XSW_MOD
-    uint8_t   unused2:2;
-   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
-    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
-#else
-    uint8_t   unused2:4;
-#endif
-#endif
-    uint8_t   hideNameOnSplash:1;
-#ifdef SKY
-  	uint8_t   optrexDisplay:1;
-	  uint8_t   unexpectedShutdown:1;
-    uint8_t   spare:1;
-#else
-    uint8_t   enablePpmsim:1;
-    uint8_t   blightinv:1;
-    uint8_t   stickScroll:1;
-#endif
+		EEGEN_BITFIELDS ;
+//#ifdef SKY
+//		uint8_t   FRSkyYellow:4;
+//    uint8_t   FRSkyOrange:4;
+//    uint8_t   FRSkyRed:4;
+//#else
+//		uint8_t   unused1;
+//#ifdef XSW_MOD
+//    uint8_t   unused2:2;
+//   	uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
+//    uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
+//#else
+//    uint8_t   unused2:4;
+//#endif
+//#endif
+//    uint8_t   hideNameOnSplash:1;
+//#ifdef SKY
+//  	uint8_t   optrexDisplay:1;
+//	  uint8_t   unexpectedShutdown:1;
+//    uint8_t   spare:1;
+//#else
+//    uint8_t   enablePpmsim:1;
+//    uint8_t   blightinv:1;
+//    uint8_t   stickScroll:1;
+//#endif
     uint8_t   speakerPitch;
     uint8_t   hapticStrength;
     uint8_t   speakerMode;
@@ -217,22 +277,23 @@ PACK(typedef struct t_EEGeneral {
 		uint8_t		stickReverse ;
 #endif
 		uint8_t		customStickNames[16] ;
-#ifdef XSW_MOD
-    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
-#else                                           // wasted 4b if MAX_XSWITCH is an odd number
-    uint8_t   switchMapping ;
-		uint8_t	ele2source:4 ;
-		uint8_t	ail2source:4 ;
-		uint8_t	rud2source:4 ;
-		uint8_t	gea2source:4 ;
-		uint8_t pb1source:4 ;
-		uint8_t pb2source:4 ;
-    uint8_t pg2Input:1 ;
-    uint8_t pb7Input:1 ;
-    uint8_t lcd_wrInput:1 ;
-    uint8_t  spare5:5 ;
-    uint8_t  exSwitchWarningStates ;
-#endif
+		SWITCH_MAPPING ;
+//#ifdef XSW_MOD
+//    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
+//#else                                           // wasted 4b if MAX_XSWITCH is an odd number
+//    uint8_t   switchMapping ;
+//		uint8_t	ele2source:4 ;
+//		uint8_t	ail2source:4 ;
+//		uint8_t	rud2source:4 ;
+//		uint8_t	gea2source:4 ;
+//		uint8_t pb1source:4 ;
+//		uint8_t pb2source:4 ;
+//    uint8_t pg2Input:1 ;
+//    uint8_t pb7Input:1 ;
+//    uint8_t lcd_wrInput:1 ;
+//    uint8_t  spare5:5 ;
+//    uint8_t  exSwitchWarningStates ;
+//#endif
 }) EEGeneral;
 
 

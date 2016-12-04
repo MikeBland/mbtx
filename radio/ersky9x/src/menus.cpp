@@ -165,7 +165,7 @@ uint8_t MultiText[MULTI_TEXT_SIZE] ;
 uint8_t MultiMapping[64] ;
 
 const uint8_t MfileData[] = 
-"1,Flysky,Flysky,V9x9,V6x6,V912\r\n"
+"1,Flysky,Flysky,V9x9,V6x6,V912,CX20\r\n"
 "2,Hubsan\r\n"
 "3,FrskyD\r\n"
 "4,Hisky,Hisky,HK310\r\n"
@@ -175,10 +175,10 @@ const uint8_t MfileData[] =
 "8,YD717,YD717,SKYWLKR,SYMAX4,XINXUN,NIHUI\r\n"
 "9,KN,WLTOYS,FEILUN\r\n"
 "10,SymaX,SYMAX,SYMAX5C\r\n"
-"11,SLT\r\n"
-"12,CX10,GREEN,BLUE,DM007,Q282,J3015_1,J3015_2,MK33041,Q242\r\n"
+"11,SLT,SLT,VISTA\r\n"
+"12,CX10,GREEN,BLUE,DM007,---,J3015_1,J3015_2,MK33041\r\n"
 "13,CG023,CG023,YD829,H8_3D\r\n"
-"14,Bayang\r\n"
+"14,Bayang,Bayang,H8S3D\r\n"
 "15,FrskyX,CH_16,CH_8\r\n"
 "16,ESky\r\n"
 "17,MT99xx,MT,H7,YZ,LS\r\n"
@@ -191,9 +191,13 @@ const uint8_t MfileData[] =
 "24,ASSAN\r\n"
 "25,FrskyV\r\n"
 "26,HONTAI,HONTAI,JJRCX1,X5C1\r\n"
-"27,OpnLrs"
-"28,AFHD2SA,PWM_IBUS,PPM_IBUS,PWM_SBUS,PPM_SBUS" ;
+"27,OpnLrs\r\n"
+"28,AFHD2SA,PWM_IBUS,PPM_IBUS,PWM_SBUS,PPM_SBUS\r\n"
+"29,Q2X2,Q242,Q282" ;
 
+//I have 2 more requests not addressed by Multi.txt:
+//- modify Option to Rate when protocol AFHD2SA is selected
+//- modify Option to VTX when protocol Hubsan is selected
 
 const uint8_t IconLogging[] =
 {
@@ -7209,8 +7213,12 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 				display = 0 ;
 				option *= 5 ;
 				option += 50 ;
-				return ;
 			}
+		break ;
+		
+		case M_Hubsan :
+			lcd_puts_Pleft( y, XPSTR("\014VTX") ) ;
+			display = 0 ;
 		break ;
 
 	}
@@ -8554,7 +8562,11 @@ uint8_t blink = InverseBlink ;
 			 Columns = (protocol == PROTO_PPM) ? 2 : 1 ;
 			 if (s_editing )
 			 {
+ #ifdef XFIRE
+			  uint8_t prot_max = PROT_MAX + 1 ;
+ #else
 			  uint8_t prot_max = PROT_MAX ;
+ #endif
   	    switch (subSub)
 				{
   	     	case 0:
@@ -18338,6 +18350,9 @@ STR_DiagAna
 
 			if ( Tevent==EVT_KEY_BREAK(KEY_MENU) ) // || Tevent == EVT_KEY_BREAK(BTN_RE)  )
 			{
+//    		killEvents(Tevent) ;
+//				Tevent = 0 ;
+  	  	s_editMode = 0 ;
 				if ( sub == 0 )
 				{
 					pushMenu(menuBackupEeprom) ;
