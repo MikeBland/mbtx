@@ -13,9 +13,11 @@
 #include "mainwindow.h"
 #include <QtGui>
 #include "qextserialenumerator.h"
+#include "helpers.h"
 #include <QtCore/QList>
 #include <QString>
 #include <QMessageBox>
+#include <QColorDialog>
 
 // Receive buffer state machine state defs
 #define frskyDataIdle    0
@@ -85,6 +87,9 @@
 //0x3A   Voltage(amp sensor) 0.5v 0-48V Before “.”
 //0x3B   Voltage(amp sensor)            After “.”
 
+int TabHeight ;
+
+#define X9D_EXTRA		84
 
 telemetryDialog::telemetryDialog(QWidget *parent) :
     QDialog(parent),
@@ -108,10 +113,345 @@ telemetryDialog::telemetryDialog(QWidget *parent) :
 	timer = NULL ;
 	sending = 0 ;
 	telemetry = 0 ;
+	lcdScreen = 0 ;
 	Frsky_user_state = 0 ;
+	lcdSize = 0 ;
+	screenDumpIndex = 1 ;
+	buttonStatus = 0 ;
+	lastButtonStatus = 0 ;
+	switchStatusLow = 0 ;
+	switchStatusHigh = 0 ;
+	displayType = 0 ;
+	screenDumpSize = 1024 ;
+	ui->_9X_RB->setChecked(true) ;
 	ui->startButton->setText("Start") ;
   ui->WSvalue->setText(tr("%1").arg(ui->WSdial->value())) ;
+  QSettings settings("er9x-eePskye", "eePskye");
+	temp = settings.value( "LcdDumpDir", "/home" ).toString() ;
+	ui->saveDirectory->setText( temp ) ;
+	ui->saveName->setText( "screenDump" ) ;
+	
+	ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcurs.png"));
+	ui->LeftLabel->setPixmap(QPixmap(":/images/9xdl.png"));
+	ui->RightLabel->setPixmap(QPixmap(":/images/9xdr.png"));
+	ui->MenuExitLabel->setPixmap(QPixmap(":/images/9xmenu.png"));
+	ui->TopLabel->setPixmap(QPixmap(":/images/9xdt.png"));
+	ui->BottomLabel->setPixmap(QPixmap(":/images/9xdb.png"));
+	ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l0.png"));
+	ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r0.png"));
+	ui->xTopLabel->setPixmap(QPixmap(":/images/x9t0.png"));
+	ui->xBottomLabel->setPixmap(QPixmap(":/images/x9b0.png"));
 
+	ui->SFslider->setValue(0) ;
+  ui->SFwidget->hide() ;
+	 
+	backColour = settings.value( "LcdBacklight", 0x0000C0FF ).toInt() ;
+	setBkColour() ;
+
+  QImage image(424, 128, QImage::Format_RGB32);
+  uchar b[212*8] = {0} ;
+	uint32_t i ;
+	for ( i = 0 ; i < 212*8 ; i += 1 )
+	{
+		b[i] = 4 ;
+	}
+  for(int y=0; y<SPLASH_HEIGHT; y++)
+	{
+  	for(int x=0; x<212; x++)
+		{
+			uint32_t pix ;
+			int lx ;
+			int ly ;
+			lx = 2 * x ;
+			ly = 2 * y ;
+			pix = ((b[212*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+      image.setPixel(lx,ly, pix );
+      image.setPixel(lx+1,ly, pix );
+      image.setPixel(lx,ly+1, pix );
+      image.setPixel(lx+1,ly+1, pix );
+		}
+	}
+  ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
+
+  lPolygon[0].setPoints(6, 68, 83, 28, 45, 51, 32, 83, 32, 105, 45, 68, 83);
+  lPolygon[1].setPoints(6, 74, 90, 114, 51, 127, 80, 127, 106, 114, 130, 74, 90);
+  lPolygon[2].setPoints(6, 68, 98, 28, 137, 51, 151, 83, 151, 105, 137, 68, 98);
+  lPolygon[3].setPoints(6, 58, 90, 20, 51, 7, 80, 7, 106, 20, 130, 58, 90);
+
+
+  lPolygon[4].setPoints(6, 20, 59, 27, 50, 45, 52, 56, 59, 50, 71, 26, 72);
+  lPolygon[5].setPoints(6, 23, 107, 30, 99, 46, 100, 55, 106, 47, 117, 28, 117);
+  lPolygon[6].setPoints(6, 24, 154, 32, 144, 46, 146, 57, 156, 46, 167, 29, 166);
+  lPolygon[7].setPoints(6, 64, 60, 71, 50, 90, 50, 100, 60, 90, 73, 72, 73);
+  lPolygon[8].setPoints(6, 63, 109, 73, 100, 88, 100, 98, 109, 88, 119, 72, 119);
+  lPolygon[9].setPoints(6, 63, 155, 72, 146, 90, 146, 98, 155, 88, 166, 72, 166);
+
+
+	ui->ButtonsLabel->installEventFilter(this) ;
+	ui->MenuExitLabel->installEventFilter(this) ;
+	ui->Lx9dButtonsLabel->installEventFilter(this) ;
+	ui->Rx9dButtonsLabel->installEventFilter(this) ;
+
+}
+
+bool telemetryDialog::eventFilter(QObject *obj, QEvent *event)
+{
+//     if (obj == ui->tabWidget->widget(3) )
+	if (obj == ui->ButtonsLabel )
+	{
+		if (event->type() == QEvent::MouseButtonPress)
+ 		{
+      leftMousePressEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else if (event->type() == QEvent::MouseButtonRelease)
+ 		{
+      leftMouseReleaseEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else
+ 		{
+ 		  return false;
+ 		}
+  }
+	else if (obj == ui->MenuExitLabel )
+	{
+		if (event->type() == QEvent::MouseButtonPress)
+ 		{
+      rightMousePressEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else if (event->type() == QEvent::MouseButtonRelease)
+ 		{
+      rightMouseReleaseEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else
+ 		{
+ 		  return false;
+ 		}
+	}
+	else if (obj == ui->Lx9dButtonsLabel )
+	{
+		if (event->type() == QEvent::MouseButtonPress)
+ 		{
+      leftXMousePressEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else if (event->type() == QEvent::MouseButtonRelease)
+ 		{
+      leftXMouseReleaseEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else
+ 		{
+ 		  return false;
+ 		}
+	}
+	else if (obj == ui->Rx9dButtonsLabel )
+	{
+		if (event->type() == QEvent::MouseButtonPress)
+ 		{
+      rightXMousePressEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else if (event->type() == QEvent::MouseButtonRelease)
+ 		{
+      rightXMouseReleaseEvent((QMouseEvent *) event) ;
+ 		  return true;
+ 		}
+ 		else
+ 		{
+ 		  return false;
+ 		}
+	}
+	else
+	{
+		// pass the event on to the parent class
+		return telemetryDialog::eventFilter(obj, event);
+	}
+}
+
+void telemetryDialog::leftMouseReleaseEvent(QMouseEvent * event)
+{
+	ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcurs.png"));
+	buttonStatus = 0 ;
+}
+
+void telemetryDialog::rightMouseReleaseEvent(QMouseEvent * event)
+{
+	ui->MenuExitLabel->setPixmap(QPixmap(":/images/9xmenu.png"));
+	buttonStatus = 0 ;
+}
+
+void telemetryDialog::leftXMouseReleaseEvent(QMouseEvent * event)
+{
+	ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l0.png"));
+	buttonStatus = 0 ;
+}
+
+void telemetryDialog::rightXMouseReleaseEvent(QMouseEvent * event)
+{
+	ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r0.png"));
+	buttonStatus = 0 ;
+}
+
+void telemetryDialog::rightXMousePressEvent(QMouseEvent * event)
+{
+	if ( ui->tabWidget->currentIndex() == 3 )
+	{
+		int x = event->x();
+		int y = event->y();
+//		ui->spinBox_10->setValue(x) ;
+//		ui->spinBox_11->setValue(y) ;
+	
+	// Bit 1 is Menu, 2 is Exit
+		int i ;
+		for ( i = 7 ; i < 10 ; i += 1 )
+		{
+      if (lPolygon[i].containsPoint(QPoint(x, y), Qt::OddEvenFill))
+			{
+				switch ( i )
+				{
+					case 7 :
+						ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r1.png"));
+						buttonStatus = 0x02 ;
+					break ;
+					case 8 :
+						ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r2.png"));
+						buttonStatus = 0x20 ;
+					break ;
+					case 9 :
+						ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r3.png"));
+						buttonStatus = 0x04 ;
+					break ;
+				}
+			}
+		}
+  }
+}
+
+void telemetryDialog::leftXMousePressEvent(QMouseEvent * event)
+{
+	if ( ui->tabWidget->currentIndex() == 3 )
+	{
+		int x = event->x();
+		int y = event->y();
+		ui->spinBox_10->setValue(x) ;
+		ui->spinBox_11->setValue(y) ;
+
+		if ( ( ( x >= 90 ) && ( x <= 118 ) ) && ( ( y >= 177 ) && ( y <= 197 ) ) )
+		{
+			// snapshot pressed
+       ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l4.png"));
+			makeScreenshot() ;
+		}
+		else
+		{
+			int i ;
+			for ( i = 4 ; i < 7 ; i += 1 )
+			{
+      	if (lPolygon[i].containsPoint(QPoint(x, y), Qt::OddEvenFill))
+				{
+	// Bits 3-6 are down, up, right and left
+					switch ( i )
+					{
+						case 4 :
+							ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l1.png"));
+							buttonStatus = 0x10 ;
+						break ;
+						case 5 :
+							ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l2.png"));
+							buttonStatus = 0x40 ;
+						break ;
+						case 6 :
+							ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l3.png"));
+							buttonStatus = 0x08 ;
+						break ;
+					}
+				}
+			}
+		}
+	}
+}
+
+void telemetryDialog::rightMousePressEvent(QMouseEvent * event)
+{
+	if ( ui->tabWidget->currentIndex() == 3 )
+	{
+		int x = event->x();
+		int y = event->y();
+//		ui->spinBox_10->setValue(x) ;
+//		ui->spinBox_11->setValue(y) ;
+	
+	// Bit 1 is Menu, 2 is Exit
+		if ( ( ( x >= 25 ) && ( x <= 71 ) ) && ( ( y >= 60 ) && ( y <= 81 ) ) )
+		{
+			ui->MenuExitLabel->setPixmap(QPixmap(":/images/9xmenumenu.png"));
+			buttonStatus = 0x02 ;
+		}
+		else if ( ( ( x >= 25 ) && ( x <= 71 ) ) && ( ( y >= 117 ) && ( y <= 139 ) ) )
+		{
+			ui->MenuExitLabel->setPixmap(QPixmap(":/images/9xmenuexit.png"));
+			buttonStatus = 0x04 ;
+		}
+	}
+}
+
+void telemetryDialog::leftMousePressEvent(QMouseEvent * event)
+{
+	if ( ui->tabWidget->currentIndex() == 3 )
+	{
+		int x = event->x();
+		int y = event->y();
+		ui->spinBox_10->setValue(x) ;
+		ui->spinBox_11->setValue(y) ;
+
+		if ( ( ( x >= 5 ) && ( x <= 39 ) ) && ( ( y >= 148 ) && ( y <= 182 ) ) )
+		{
+			// snapshot pressed
+       ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcursphoto.png"));
+			makeScreenshot() ;
+		}
+		else
+		{
+			int i ;
+			for ( i = 0 ; i < 4 ; i += 1 )
+			{
+      	if (lPolygon[i].containsPoint(QPoint(x, y), Qt::OddEvenFill))
+				{
+	// Bits 3-6 are down, up, right and left
+					switch ( i )
+					{
+						case 0 :
+							ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcursup.png"));
+							buttonStatus = 0x10 ;
+						break ;
+						case 1 :
+							ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcursmin.png"));
+							buttonStatus = 0x20 ;
+						break ;
+						case 2 :
+							ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcursdown.png"));
+							buttonStatus = 0x08 ;
+						break ;
+						case 3 :
+							ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcursplus.png"));
+							buttonStatus = 0x40 ;
+						break ;
+					}
+				}
+			}
+		}
+	}
+}
+
+void telemetryDialog::setBkColour()
+{
+  QImage image(2, 1, QImage::Format_RGB32) ;
+  image.setPixel( 0, 0, backColour ) ;
+  image.setPixel( 1, 0, backColour ) ;
+  ui->ColourLabel->setPixmap(QPixmap::fromImage(image));
 }
 
 telemetryDialog::~telemetryDialog()
@@ -177,7 +517,13 @@ void telemetryDialog::clearCurrentConnection()
 		telemetry = 0 ;
 		ui->startButtonModule->setText("Start") ;
 	}
-	
+
+	if ( lcdScreen )
+	{
+		lcdScreen = 0 ;
+		ui->startButtonScreen->setText("Start") ;
+	}
+	 
 	if ( timer )
 	{
  	  timer->stop() ;
@@ -201,6 +547,10 @@ void telemetryDialog::on_startButtonModule_clicked()
 	QString portname ;
 
 	if ( sending )
+	{
+		clearCurrentConnection() ;
+	}
+	if ( lcdScreen )
 	{
 		clearCurrentConnection() ;
 	}
@@ -256,6 +606,10 @@ int telemetryDialog::on_startButtonUart_clicked()
 	{
 		clearCurrentConnection() ;
 	}
+	if ( lcdScreen )
+	{
+		clearCurrentConnection() ;
+	}
 
   portname = ui->TelPortCB->currentText() ;
 	port = new QextSerialPort(portname, QextSerialPort::EventDriven) ;
@@ -285,11 +639,71 @@ int telemetryDialog::on_startButtonUart_clicked()
 }
 
 
+
+void telemetryDialog::on_saveButtonScreen_clicked()
+{
+	makeScreenshot() ;
+}
+
+void telemetryDialog::on_startButtonScreen_clicked()
+{
+	QString portname ;
+	lcdState = 0 ;
+
+	if ( telemetry )
+	{
+		clearCurrentConnection() ;
+	}
+	if ( sending )
+	{
+		clearCurrentConnection() ;
+	}
+	if ( lcdScreen )
+	{
+		clearCurrentConnection() ;
+	}
+	else
+	{
+	  portname = ui->TelPortCB->currentText() ;
+#ifdef Q_OS_UNIX
+  	port = new QextSerialPort(portname, QextSerialPort::Polling) ;
+#else
+	  port = new QextSerialPort(portname, QextSerialPort::Polling) ;
+#endif /*Q_OS_UNIX*/
+	  port->setBaudRate(BAUD115200) ;
+  	port->setFlowControl(FLOW_OFF) ;
+	  port->setParity(PAR_NONE) ;
+  	port->setDataBits(DATA_8) ;
+	  port->setStopBits(STOP_1) ;
+    //set timeouts to 500 ms
+  	port->setTimeout(50) ;
+  	if (!port->open(QIODevice::ReadWrite | QIODevice::Unbuffered) )
+  	{
+  	  QMessageBox::critical(this, "eePe", tr("Com Port Unavailable"));
+			if (port->isOpen())
+			{
+  	  	port->close();
+			}
+  	  delete port ;
+			port = NULL ;
+			return ;	// Failed
+		}
+		setupTimer(20) ;
+		lcdScreen = 1 ;
+		ui->startButtonScreen->setText("Stop") ;
+	}
+}
+
+
 void telemetryDialog::on_startButton_clicked()
 {
 	QString portname ;
 
 	if ( telemetry )
+	{
+		clearCurrentConnection() ;
+	}
+	if ( lcdScreen )
 	{
 		clearCurrentConnection() ;
 	}
@@ -629,6 +1043,12 @@ void telemetryDialog::processTelByte( unsigned char data )
   numPktBytes = numbytes ;
 }
 
+//uint16_t RxOK ;
+uint32_t TotalBytes ;
+uint16_t RxZero ;
+uint16_t RxAA ;
+uint16_t Rx55 ;
+
 void telemetryDialog::timerEvent()
 {
 	if ( sending )
@@ -641,6 +1061,302 @@ void telemetryDialog::timerEvent()
   		port->write( QByteArray::fromRawData ( (char *)data, 2 ), 2 ) ;
 		}
 	}
+//	if ( lcdScreen )
+//	{
+//		QByteArray data ;
+//		int count ;
+//		int index ;
+//		uint32_t i ;
+//		index = 0 ;
+//		if ( port )
+//		{
+//      data = port->read( 400 ) ;
+//      count = data.size() ;
+//			TotalBytes += count ;
+//			ui->spinBox_4->setValue( TotalBytes ) ;
+
+//			if ( count == 0 )
+//			{
+//				RxZero += 1 ;
+//				ui->spinBox_5->setValue( RxZero ) ;
+//				lcdState = 1 ;
+//				lcdCounter = 0 ;
+//			}
+//			if ( lcdState == 0 )
+//			{
+//				if ( count == 0 )
+//				{
+//					lcdState = 1 ;
+//					lcdCounter = 0 ;
+//				}
+//			}
+//			else if ( lcdState == 1 )
+//			{
+//				if ( count )
+//				{
+//					uint8_t byte ;
+//					byte = data.data()[0] ;
+//					if ( byte == 0xAA )
+//					{
+////						RxAA += 1 ;
+////						ui->spinBox_6->setValue( RxAA ) ;
+//						lcdState = 2 ;
+//						count -= 1 ;
+//						index = 1 ;
+//						while ( count )
+//						{
+//							lcdImage[lcdCounter] = data.data()[index++] ;
+//							count -= 1 ;
+//							lcdCounter += 1 ;
+//						}
+//					}
+//				}
+//			}
+//			else if ( lcdState == 2 )
+//			{
+//				if ( count )
+//				{
+//					index = 0 ;
+//					while ( count )
+//					{
+//						lcdImage[lcdCounter] = data.data()[index++] ;
+//						count -= 1 ;
+//						if ( ++lcdCounter >= 1024 )
+//						{
+//							lcdState = 3 ;
+//							break ;
+//						}
+//					}
+//				}
+//			}
+//			if ( lcdState == 3 )
+//			{
+////				RxOK += 1 ;
+////				ui->spinBox_3->setValue( RxOK ) ;
+//				if ( count )
+//				{
+//					uint8_t byte ;
+//					byte = data.data()[index] ;
+////					ui->spinBox_6->setValue( byte ) ;
+//					if ( byte == 0x55 )
+//					{
+//						// got a complete screen image
+//					  QImage image(256, 128, QImage::Format_RGB32);
+//						lcdState = 1 ;
+//						lcdCounter = 0 ;
+
+//  					for(int y=0; y<SPLASH_HEIGHT; y++)
+//						{
+//  					  for(int x=0; x<SPLASH_WIDTH; x++)
+//							{
+//								uint32_t pix ;
+//								int lx ;
+//								int ly ;
+//								lx = 2 * x ;
+//								ly = 2 * y ;
+//								pix = ((lcdImage[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+//      					image.setPixel(2*x,2*y, pix );
+//      					image.setPixel(2*x+1,2*y, pix );
+//      					image.setPixel(2*x,2*y+1, pix );
+//      					image.setPixel(2*x+1,2*y+1, pix );
+//							}
+//						}
+//  					ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
+//					}
+//				}
+//			}
+//		}
+//	}
+	
+	
+	if ( lcdScreen )
+	{
+		QByteArray data ;
+		int count ;
+		int index ;
+		uint32_t i ;
+		index = 0 ;
+		if ( port )
+		{
+	  	
+//			unsigned char sendData[8] ;
+//			switchStatusLow = 0 ;
+//			if ( ui->SFslider->value() )
+//			{
+//				switchStatusLow |= 0x20 ;
+//			}
+//			if ( buttonStatus )
+//			{
+//				sendData[0] = buttonStatus | 0x80 ;
+//			}
+//			else
+//			{
+//				sendData[0] = lastButtonStatus | 0x80  ;
+//			}
+//			sendData[1] = switchStatusLow  ;
+//			sendData[2] = switchStatusHigh  ;
+//			lastButtonStatus = buttonStatus ;
+//  		port->write( QByteArray::fromRawData ( (char *)sendData, 3 ), 3 ) ;
+  		
+			unsigned char sendData[1] ;
+			if ( buttonStatus )
+			{
+				sendData[0] = buttonStatus ;
+			}
+			else
+			{
+				sendData[0] = lastButtonStatus  ;
+			}
+			lastButtonStatus = buttonStatus ;
+			port->write( QByteArray::fromRawData ( (char *)sendData, 1 ), 1 ) ;
+			ui->spinBox_10->setValue(buttonStatus) ;
+      data = port->read( 400 ) ;
+      count = data.size() ;
+			TotalBytes += count ;
+			ui->spinBox_4->setValue( TotalBytes ) ;
+			ui->spinBox_3->setValue(screenDumpSize) ;
+
+			if ( count == 0 )
+			{
+				RxZero += 1 ;
+				ui->spinBox_5->setValue( RxZero ) ;
+				if ( lcdCounter == 0 )
+				{
+					lcdState = 1 ;
+				}
+//				lcdCounter = 0 ;
+			}
+			if ( lcdState == 0 )
+			{
+				if ( count == 0 )
+				{
+					lcdState = 1 ;
+					lcdCounter = 0 ;
+				}
+			}
+
+			for ( i = 0 ; i < 400 && count ; i += 1 )
+//			while ( count )
+			{
+				if ( lcdState == 1 )
+				{
+					uint8_t byte ;
+					byte = data.data()[index++] ;
+					if ( byte == 0xAA )
+					{
+						RxAA += 1 ;
+						ui->spinBox_6->setValue( RxAA ) ;
+						lcdState = 2 ;
+						count -= 1 ;
+						while ( count )
+						{
+							lcdImage[lcdCounter] = data.data()[index++] ;
+							count -= 1 ;
+							lcdCounter += 1 ;
+						}
+					}
+					else
+					{
+						count = 0 ;
+						lcdState = 0 ;
+					}
+				}
+				else if ( lcdState == 2 )
+				{
+					if ( count )
+					{
+						index = 0 ;
+						while ( count )
+						{
+							lcdImage[lcdCounter] = data.data()[index++] ;
+							count -= 1 ;
+							if ( ++lcdCounter >= screenDumpSize )
+							{
+								lcdState = 3 ;
+								break ;
+							}
+						}
+					}
+				}
+				if ( lcdState == 3 )
+				{
+	//				RxOK += 1 ;
+	//				ui->spinBox_3->setValue( RxOK ) ;
+					if ( count )
+					{
+						uint8_t byte ;
+						byte = data.data()[index++] ;
+						count -= 1 ;
+
+						Rx55 += 1 ;
+						ui->spinBox_7->setValue( byte ) ;
+						if ( byte == 0x55 )
+						{
+							// got a complete screen image
+							if ( displayType )
+							{
+						  	QImage image(256+X9D_EXTRA+X9D_EXTRA, 128, QImage::Format_RGB32);
+								lcdState = 1 ;
+
+  							for(int y=0; y<64 ; y++)
+								{
+  							  for(int x=0; x<128+X9D_EXTRA; x++)
+									{
+										uint32_t pix ;
+										int lx ;
+										int ly ;
+										lx = 2 * x ;
+										ly = 2 * y ;
+										pix = ((lcdImage[(128+X9D_EXTRA)*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+      							image.setPixel(2*x,2*y, pix );
+      							image.setPixel(2*x+1,2*y, pix );
+      							image.setPixel(2*x,2*y+1, pix );
+      							image.setPixel(2*x+1,2*y+1, pix );
+									}
+								}
+                ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
+              }
+							else
+							{
+						  	QImage image(256, 128, QImage::Format_RGB32);
+								lcdState = 1 ;
+
+  							for(int y=0; y<SPLASH_HEIGHT; y++)
+								{
+  							  for(int x=0; x<SPLASH_WIDTH; x++)
+									{
+										uint32_t pix ;
+										int lx ;
+										int ly ;
+										lx = 2 * x ;
+										ly = 2 * y ;
+										pix = ((lcdImage[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+      							image.setPixel(2*x,2*y, pix );
+      							image.setPixel(2*x+1,2*y, pix );
+      							image.setPixel(2*x,2*y+1, pix );
+      							image.setPixel(2*x+1,2*y+1, pix );
+									}
+								}
+                ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
+              }
+						}
+						else
+						{
+							lcdState = 0 ;
+							count = 0 ;
+						}
+						lcdCounter = 0 ;
+					}
+				}
+				if ( count == 0 )
+				{
+					break ;
+				}
+			}
+		}
+	}
+	
+
 	if ( telemetry )
 	{
 		QByteArray data ;
@@ -696,4 +1412,176 @@ void telemetryDialog::timerEvent()
 	}
 }
 
+
+void telemetryDialog::setGraphics( bool checked )
+{
+	if ( ( lcdSize ) || ( checked ) )
+	{
+		lcdSize = 0 ;
+		ui->ImageLabel->setGeometry( 170, 98, 258, 130) ;
+		ui->sizeButtonScreen->setText("Larger") ;
+	}
+	if ( lcdSize )
+	{
+		ui->ImageLabel->setScaledContents( true ) ;
+		ui->ButtonsLabel->hide() ;
+		ui->LeftLabel->hide() ;
+		ui->RightLabel->hide() ;
+		ui->MenuExitLabel->hide() ;
+		ui->TopLabel->hide() ;
+		ui->BottomLabel->hide() ;
+	}
+	else if ( checked )
+	{
+		screenDumpSize = 1024 ;
+		ui->ImageLabel->setScaledContents( false ) ;
+		displayType = 0 ;
+		ui->ButtonsLabel->show() ;
+		ui->LeftLabel->show() ;
+		ui->RightLabel->show() ;
+		ui->MenuExitLabel->show() ;
+		ui->TopLabel->show() ;
+		ui->BottomLabel->show() ;
+		ui->Lx9dButtonsLabel->hide() ;
+		ui->Rx9dButtonsLabel->hide() ;
+		ui->xTopLabel->hide() ;
+		ui->xBottomLabel->hide() ;
+	}
+	else
+	{
+		displayType = 1 ;
+		ui->ImageLabel->setScaledContents( false ) ;
+		screenDumpSize = 1024 + X9D_EXTRA*8 ;
+    ui->ImageLabel->setGeometry( 120, 98, 426, 130) ;
+		ui->ButtonsLabel->hide() ;
+		ui->LeftLabel->hide() ;
+		ui->RightLabel->hide() ;
+		ui->MenuExitLabel->hide() ;
+		ui->TopLabel->hide() ;
+		ui->BottomLabel->hide() ;
+		ui->Lx9dButtonsLabel->show() ;
+		ui->Rx9dButtonsLabel->show() ;
+		ui->xTopLabel->show() ;
+		ui->xBottomLabel->show() ;
+	}
+}
+
+void telemetryDialog::on__9X_RB_toggled( bool checked )
+{
+	setGraphics( checked ) ;
+}
+
+void telemetryDialog::on_backlightButtonScreen_clicked()
+{
+  QColor c ;
+	c = QColorDialog::getColor ( backColour, this ) ;	// , const QString & title, ColorDialogOptions options = 0 ) [static]
+	backColour = c.rgb() ;
+  QSettings settings("er9x-eePskye", "eePskye");
+	settings.setValue("LcdBacklight", backColour ) ;
+	setBkColour() ;
+}
+
+void telemetryDialog::on_setDirButtonScreen_clicked()
+{
+	QString directory = QFileDialog::getExistingDirectory(this, tr("Select Save Directory"),
+                                                 "/home",
+                                                 QFileDialog::ShowDirsOnly
+                                                 | QFileDialog::DontResolveSymlinks);
+	ui->saveDirectory->setText(directory) ;
+  QSettings settings("er9x-eePskye", "eePskye");
+	settings.setValue("LcdDumpDir", directory ) ;
+}
+
+void telemetryDialog::on_sizeButtonScreen_clicked()
+{
+	if ( displayType )
+	{
+		ui->sizeButtonScreen->setText("Larger") ;
+		return ;
+	}
+	if ( lcdSize )
+	{
+		lcdSize = 0 ;
+		ui->sizeButtonScreen->setText("Larger") ;
+		ui->ImageLabel->setScaledContents( false ) ;
+		ui->ImageLabel->setGeometry( 170, 100, 258, 130 ) ;
+		ui->ButtonsLabel->show() ;
+		ui->LeftLabel->show() ;
+		ui->RightLabel->show() ;
+		ui->MenuExitLabel->show() ;
+		ui->TopLabel->show() ;
+		ui->BottomLabel->show() ;
+	}
+	else
+	{
+		lcdSize = 1 ;
+		ui->ImageLabel->setScaledContents( true ) ;
+		ui->sizeButtonScreen->setText("Smaller") ;
+		ui->ImageLabel->setGeometry( 170-64, 60, 384+2, 192+2 ) ;
+		ui->ButtonsLabel->hide() ;
+		ui->LeftLabel->hide() ;
+		ui->RightLabel->hide() ;
+		ui->MenuExitLabel->hide() ;
+		ui->TopLabel->hide() ;
+		ui->BottomLabel->hide() ;
+	}
+}
+
+
+void telemetryDialog::makeScreenshot()
+{
+	int t ;
+	QString path = ui->saveDirectory->text() ;
+	QString name = ui->saveName->text() ;
+	if ( name.length() == 0 )
+	{
+		name = "screenDump" ;
+	}
+  path.append(QDir::separator() + name + tr("_%1.png").arg(screenDumpIndex ) ) ;
+	if ( displayType )
+	{
+		QImage image(256+X9D_EXTRA+X9D_EXTRA, 128, QImage::Format_RGB32);
+
+  	for(int y=0; y<64 ; y++)
+		{
+  		for(int x=0; x<128+X9D_EXTRA; x++)
+			{
+				uint32_t pix ;
+				int lx ;
+				int ly ;
+				lx = 2 * x ;
+				ly = 2 * y ;
+				pix = ((lcdImage[(128+X9D_EXTRA)*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+      	image.setPixel(2*x,2*y, pix );
+      	image.setPixel(2*x+1,2*y, pix );
+      	image.setPixel(2*x,2*y+1, pix );
+      	image.setPixel(2*x+1,2*y+1, pix );
+			}
+		}
+		t = image.save( path ) ;
+	}
+	else
+	{
+		QImage image(256, 128, QImage::Format_RGB32);
+  	for(int y=0; y<SPLASH_HEIGHT; y++)
+		{
+  		for(int x=0; x<SPLASH_WIDTH; x++)
+			{
+				uint32_t pix ;
+				int lx ;
+				int ly ;
+				lx = 2 * x ;
+				ly = 2 * y ;
+				pix = ((lcdImage[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
+  	    image.setPixel(2*x,2*y, pix );
+  	    image.setPixel(2*x+1,2*y, pix );
+  	    image.setPixel(2*x,2*y+1, pix );
+  	    image.setPixel(2*x+1,2*y+1, pix );
+			}
+		}
+		t = image.save( path ) ;
+	}
+	screenDumpIndex += 1 ;
+//	ui->spinBox_3->setValue(screenDumpIndex) ;
+}
 

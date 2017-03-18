@@ -288,6 +288,7 @@ int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 s
 	quint32 bytesCopied = 0 ;
 	quint32 count ;
 	quint32 blocks = 0 ;
+	quint32 totalSize = size ;
 
 	QFile source(sourceFile);
   QFile dest(destFile);
@@ -336,6 +337,16 @@ int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 s
 					bytesCopied += count ;
 					blocks += 1 ;
     			ui->progressBar->setValue(blocks) ;
+					repaint() ;
+
+					if ( totalSize > 40000 )
+					{
+    				QTime dieTime = QTime::currentTime().addMSecs( 25 );
+    				while( QTime::currentTime() < dieTime )
+    				{
+    				    QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
+    				}
+					}
 				}
 			} while ( count && ( bytesCopied < size ) ) ;
 		}

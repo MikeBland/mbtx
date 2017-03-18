@@ -10,6 +10,30 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 28-Feb-2017  MPB (r221)
+New editing method for custom telemetry screen
+Fix search path for Helptel file
+Extend to scalers source, voice alerts source and mix source
+Extend to logical switch functions.
+Enable encoder button for new editing
+Fix Multi/DSM on 9XT and Taranis
+Fix PDI flashing bug
+Add MULTI Status processing
+Add timers on individual telemetry items
+Fix X9E switches bug
+Improve CVLT and CTOT operation
+Enlarge "multi.txt" text buffer.
+Support MULTI bind changes
+Add 8 extra channels and 16 extra mixers
+Add 8 more channels and 16 more mixers
+Support FrSky Taranis QX7
+Improve text editing operation
+Fix trim bug when using Heli mixes only
+Allow mix weight up to 250
+Allow A1/A2 scaling to 1000
+Remove FrSky specific alarms for A1/A2
+
+******************************************
 CHANGELOG: 04-Dec-2016  MPB (r220)
 Fix bug in 9Xtreme/Taranis external XJT
 Fix encoder problem after EEPROM backup/restore
@@ -80,7 +104,7 @@ Add software shutdown signal filter on Atmel
 Voice alarms and Logical switches have v&val
 New Logging menu, select items to log
 9XR-PRO only, add TBS Crossfire protocol
-Ad FrSky S6R configuration feature
+Add FrSky S6R configuration feature
 
 ******************************************
 CHANGELOG: 18-Aug-2015  MPB (r218)

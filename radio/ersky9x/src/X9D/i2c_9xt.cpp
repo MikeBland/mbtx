@@ -444,7 +444,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
 {
   uint32_t lastevent = 0 ;
   uint32_t flag1 = 0, flag2 = 0 ;
-	uint32_t processed = 0 ;
+//	uint32_t processed = 0 ;
 
 //	I2C_debug[4] += 1 ;
 
@@ -501,7 +501,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
 		{
   	  I2C2->CR1 &= (uint16_t)~((uint16_t)I2C_CR1_ACK) ;
 		}
-		processed = 1 ;
+//		processed = 1 ;
 	}
 	
 	if ( ( lastevent & I2C_EVENT_MASTER_BYTE_RECEIVED ) ==
@@ -525,7 +525,7 @@ extern "C" void I2C2_EV_IRQHandler( void )
 			NVIC_DisableIRQ(I2C2_ER_IRQn) ;
   		I2C2->CR1 |= I2C_CR1_STOP ;
 		}
-		processed = 1 ;
+//		processed = 1 ;
 	}
 //	if ( processed == 0 )
 //	{

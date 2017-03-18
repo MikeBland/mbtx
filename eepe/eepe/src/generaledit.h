@@ -20,8 +20,13 @@ public:
 private:
     Ui::GeneralEdit *ui;
     EEPFILE *eeFile;
+    struct t_radioData *rData ;
 
-    EEGeneral g_eeGeneral;
+#ifdef V2
+    V2EEGeneral *p_eeGeneral ;
+#else
+    EEGeneral *p_eeGeneral ;
+#endif
     int StudWeight1,StudWeight2, StudWeight3, StudWeight4;
 
     bool switchDefPosEditLock;
@@ -32,7 +37,7 @@ signals:
     void modelValuesChanged();
 
 private slots:
-    void updateTrianerTab();
+    void updateTrainerTab();
     void trainerTabValueChanged();
     void validateWeightSB();
 

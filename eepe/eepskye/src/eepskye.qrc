@@ -57,5 +57,29 @@
         <file>images/wizard/throttle.png</file>
         <file>images/wizard/vtail.png</file>
         <file>images/wizard/wingtype.png</file>
+        <file>images/9xcurs.png</file>
+        <file>images/9xdl.png</file>
+        <file>images/9xdr.png</file>
+        <file>images/9xmenu.png</file>
+        <file>images/9xdt.png</file>
+        <file>images/9xdb.png</file>
+        <file>images/9xcursphoto.png</file>
+        <file>images/9xcursdown.png</file>
+        <file>images/9xcursmin.png</file>
+        <file>images/9xcursplus.png</file>
+        <file>images/9xcursup.png</file>
+        <file>images/9xmenuexit.png</file>
+        <file>images/9xmenumenu.png</file>
+        <file>images/x9l0.png</file>
+        <file>images/x9r0.png</file>
+        <file>images/x9b0.png</file>
+        <file>images/x9l1.png</file>
+        <file>images/x9l2.png</file>
+        <file>images/x9l3.png</file>
+        <file>images/x9l4.png</file>
+        <file>images/x9r1.png</file>
+        <file>images/x9r2.png</file>
+        <file>images/x9r3.png</file>
+        <file>images/x9t0.png</file>
     </qresource>
 </RCC>

@@ -291,18 +291,24 @@ static void setMaxSwitchIndex()
   MaxSwitchIndex = mappedSw + MAX_CSWITCH + 2;  // +2: DSW___ and DSW_TRN
 #else
   int8_t *p = switchMapTable;
-  int8_t i3 = 0;
+  uint8_t i3 = 0;
   *p++ = 0;   // DSW____
-  for (int8_t i2 = 0; i2 < (MAX_XSWITCH+1); i2++, i3 += 3) { // +1 for IDL
-    if (qSwitchMapped(i2)) {  // either 3-pos or push butt
-      if (i2 < MAX_PSW3POS) { // ID0,ID1,ID2,THR^,THR-,THRv,...,GE,^GE-,GEv
+  for (uint8_t i2 = 0; i2 < (MAX_XSWITCH+1); i2++, i3 += 3) { // +1 for IDL
+    if (qSwitchMapped(i2))
+		{  // either 3-pos or push butt
+      if (i2 < MAX_PSW3POS)
+			{ // ID0,ID1,ID2,THR^,THR-,THRv,...,GE,^GE-,GEv
         *p++ = DSW_ID0 + i3 + 0;
         *p++ = DSW_ID0 + i3 + 1;
         *p++ = DSW_ID0 + i3 + 2;
-      } else {    // PB1/PB2
+      }
+			else
+			{    // PB1/PB2
         *p++ = DSW_IDL + i2;
       }
-    } else if (i2 < MAX_PSW3POS) {
+    }
+		else if (i2 < MAX_PSW3POS)
+		{
       *p++ = DSW_IDL + i2;    // DSW_THR,DSW_RUD,DSW_ELE,DSW_AIL,DSW_GEA
     }
   }
@@ -432,10 +438,13 @@ uint8_t getSwitchSource( uint8_t xsw )
 
 void unsetSwitchSource( uint8_t src )
 {
-  for (uint8_t i = 0; i < MAX_XSWITCH; i++) {
+  for (uint8_t i = 0; i < MAX_XSWITCH; i++)
+	{
     uint8_t s = getSwitchSource(i);
     if (s == src)
+		{
       setSwitchSource(i, SSW_NONE);
+		}
   }
 }
 
@@ -569,7 +578,7 @@ int8_t switchUnMap( int8_t drswitch )
 #ifdef SAVE_RAM
     int8_t mi = 1;                      // menu index after "---"
     int8_t i3 = DSW_ID0;
-    for (int8_t i2 = DSW_IDL; i2 <= DSW_PB2; i2++, i3 += 3) {
+    for (uint8_t i2 = DSW_IDL; i2 <= DSW_PB2; i2++, i3 += 3) {
       if (is3PosSwitch(i2)) {
         if (i3 == mIndex) break;        // ID0/TH^/RU^/EL^/AI^/GE^
         mi++;

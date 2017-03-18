@@ -37,6 +37,8 @@
 #define STUFF_MASK      0x20
 #define PRIVATE					0x1B
 
+#define MPRIVATE				'M'
+
 // SPORT defines
 #define DATA_FRAME         0x10
 
@@ -120,6 +122,8 @@ const prog_uint8_t APM Fr_indices[] =
 	FR_VOLTS,
 	HUBDATALENGTH-1,		// 44
 } ;
+
+uint8_t TxLqi ;
 
 uint8_t TmOK ;
 
@@ -491,6 +495,11 @@ static uint8_t frskyPushValue( uint8_t i, uint8_t value);
     - User Data packets
 */
 
+void setTxLqi( uint8_t value )
+{
+	TxLqi = ( ( TxLqi * 7 ) + value + 4 ) / 8 ;	// Multi only
+}
+
 //uint8_t LinkAveCount ;
 
 void processFrskyPacket(uint8_t *packet)
@@ -505,6 +514,8 @@ void processFrskyPacket(uint8_t *packet)
       frskyTelemetry[1].set(packet[2], FR_A2_COPY ); //FrskyHubData[] =  frskyTelemetry[1].value ;
       frskyTelemetry[2].set(packet[3], FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
       frskyTelemetry[3].set(packet[4] / 2, FR_TXRSI_COPY ); //FrskyHubData[] =  frskyTelemetry[3].value ;
+			setTxLqi( packet[6] ) ;
+
 //			if ( LinkAveCount > 15 )
 //			{
 //				LinkAveCount = 0 ;
@@ -855,6 +866,7 @@ void processSportPacket()
 			{
 				case 1 :
       		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
 				break ;
 
 				case 4 :		// Battery from X8R
@@ -1062,8 +1074,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	if ( type && (type < 0x20) )
 	{
 		
-   	frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid packets are being detected
-  	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid packets are being detected
+//   	frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid packets are being detected
+//  	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid packets are being detected
 
    	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
   	frskyStreaming = 255 ; // reset counter only if valid packets are being detected

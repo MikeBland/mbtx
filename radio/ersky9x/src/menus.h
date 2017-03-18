@@ -68,6 +68,7 @@ extern bool warble;*/
 
 
 extern uint8_t CurrentPhase ;
+extern uint8_t s_noHi ;
 
 // Menus related stuff ...
 struct MState2
@@ -153,9 +154,10 @@ extern void menuProcStatistic(uint8_t event) ;
 extern void menuProcBattery(uint8_t event) ;
 extern void menuProc0(uint8_t event) ;
 extern void menuProcModelSelect(uint8_t event) ;
-extern void perOutPhase( int16_t *chanOut, uint8_t att ) ;
-extern void perOut( int16_t *chanOut, uint8_t att ) ;
 extern void menuProcGlobals(uint8_t event) ;
+extern int16_t expo(int16_t x, int16_t k) ;
+extern int16_t calcExpo( uint8_t channel, int16_t value ) ;
+extern void timer(int16_t throttle_val) ;
 
 extern void menuUp1(uint8_t event) ;
 extern void menuUpdate(uint8_t event) ;
@@ -172,18 +174,23 @@ extern int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals
 
 extern uint8_t CalcScaleNest ;
 
-#define CELL_1		-33
-#define CELL_2		-32
-#define CELL_3		-31
-#define CELL_4		-30
-#define CELL_5		-29
-#define CELL_6		-28
-#define CELL_7		-27
-#define CELL_8		-26
-#define CELL_9		-25
-#define CELL_10		-24
-#define CELL_11		-23
-#define CELL_12		-22
+#define MAXTRACE 120
+extern uint8_t s_traceBuf[] ;
+extern uint8_t s_traceWr;
+extern uint16_t s_traceCnt;
+
+//#define CELL_1		-33
+//#define CELL_2		-32
+//#define CELL_3		-31
+//#define CELL_4		-30
+//#define CELL_5		-29
+//#define CELL_6		-28
+//#define CELL_7		-27
+//#define CELL_8		-26
+//#define CELL_9		-25
+//#define CELL_10		-24
+//#define CELL_11		-23
+//#define CELL_12		-22
 
 #define TMOK			-21
 
@@ -274,6 +281,12 @@ extern uint8_t CalcScaleNest ;
 #define TEL_ITEM_RBM2		59
 #define TEL_ITEM_RBSERVO	60
 #define TEL_ITEM_RBSTATE	61
+#define TEL_ITEM_CELL7	  62
+#define TEL_ITEM_CELL8	  63
+#define TEL_ITEM_CELL9	  64
+#define TEL_ITEM_CELL10	  65
+#define TEL_ITEM_CELL11	  66
+#define TEL_ITEM_CELL12	  67
 
 
 // units

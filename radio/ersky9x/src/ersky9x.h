@@ -32,9 +32,17 @@
 //#define	SERIAL_HOST		1
 #endif
 
+//#define TRIMS_SCALED
+
 #define TELEMETRY_LOST	1
 
 //#define ENABLE_DSM_MATCH	1
+
+#ifdef PCBX9D	
+ #ifndef PCBX7
+  #define WIDE_SCREEN	1
+ #endif
+#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 //#ifdef PCBSKY
@@ -50,7 +58,6 @@
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
-//#define wdt_reset()	(IWDG->KR = 0x0000AAAAL)
 extern void wdt_reset() ;
 #endif
 #endif
@@ -62,28 +69,9 @@ extern void wdt_reset() ;
 #define VERSION9XT	"9xt-0.30"
 #endif
 
-#define GVARS		1
+//#define GVARS		1
 
-//#define DATE_STR "xx.xx.2012"
-//#define TIME_STR "xx:xx:xx"
-//#define SUB_VERS VERSION
-//#define SVN_VERS "trunk-rxxx"
-//#define MOD_VERS "Normal"
-
-//#define STR2(s) #s
-//#define DEFNUMSTR(s)  STR2(s)
-
-//extern const char stamp1[] ;
-//extern const char stamp2[] ;
-//extern const char stamp3[] ;
-//extern const char stamp4[] ;
-//extern const char stamp5[] ;
 extern const char Stamps[] ;
-
-//extern const char *Str_OFF ;
-//extern const char *Str_ON ;
-//extern const char *Str_Switches ;
-//extern const char *Str_Switch_warn ;
 
 #define CPU_INT		int32_t
 #define CPU_UINT	uint32_t
@@ -110,6 +98,9 @@ extern const char * const Spanish[] ;
 #define pgm_read_byte(p)	(*(p))
 
 
+#ifdef PCBX7
+#define NUMBER_ANALOG		7
+#else // PCBX7
 #ifdef PCBX9D
  #ifdef REVPLUS
 	#ifdef REV9E
@@ -138,6 +129,7 @@ extern const char * const Spanish[] ;
  #endif
 #endif
 #endif
+#endif // PCBX7
 
 #ifdef REV9E
 #define NUM_EXTRA_ANALOG		3
@@ -151,7 +143,6 @@ extern const char * const Spanish[] ;
 
 extern uint8_t SystemOptions ;
 
-//#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNSW1SW2SW3SW4SW5SW6SW7SW8SW9SWASWBSWCSWDSWESWFSWGSWHSWISWJSWKSWLSWMSWNSWO"
 #define NUM_CSW  12 //number of custom switches
 #define NUM_SKYCSW  24 //number of custom switches
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -159,7 +150,6 @@ extern uint8_t SystemOptions ;
 #endif
 #ifdef PCBX9D
 #define CSW_INDEX	9	// Index of first custom switch
-//#define CSW_INDEX	22	// Index of first custom switch
 #endif
 
 #define DIM(arr) (sizeof((arr))/sizeof((arr)[0]))
@@ -232,29 +222,6 @@ enum EnumKeys {
 #define HSW_AileDR		7
 #define HSW_Gear			8
 #define HSW_Trainer		9
-//#define HSW_Thr3pos0	35
-//#define HSW_Thr3pos1	36
-//#define HSW_Thr3pos2	37
-//#define HSW_Rud3pos0	38
-//#define HSW_Rud3pos1	39
-//#define HSW_Rud3pos2	40
-//#define HSW_Ele3pos0	41
-//#define HSW_Ele3pos1	42
-//#define HSW_Ele3pos2	43
-//#define HSW_Ail3pos0	44
-//#define HSW_Ail3pos1	45
-//#define HSW_Ail3pos2	46
-//#define HSW_Gear3pos0	47
-//#define HSW_Gear3pos1	48
-//#define HSW_Gear3pos2	49
-//#define HSW_Ele6pos0	50
-//#define HSW_Ele6pos1	51
-//#define HSW_Ele6pos2	52
-//#define HSW_Ele6pos3	53
-//#define HSW_Ele6pos4	54
-//#define HSW_Ele6pos5	55
-//#define HSW_MAX				55
-
 
 #define HSW_Thr3pos0	45	// Skip some values because of safety switch values
 #define HSW_Thr3pos1	46
@@ -299,8 +266,6 @@ enum EnumKeys {
 #define	USE_PB3				0x200
 #define	USE_PB4				0x400
 
-//extern uint8_t switchMap[] ;
-//extern uint8_t switchUnMap[] ;
 uint16_t oneSwitchText( uint8_t swtch, uint16_t state ) ;
 extern uint8_t Sw3PosList[] ;
 extern uint8_t Sw3PosCount[] ;
@@ -318,17 +283,14 @@ int8_t switchMap( int8_t x ) ;
 
 #ifdef REV9E
 #define HSW_SF2				1
-//#define HSW_SD2				1
 #else
 #define HSW_SF2				1
 #endif
-//#define HSW_SF2				2
 
 #define HSW_SC0				4
 #define HSW_SC1				5
 #define HSW_SC2				6
 
-//#define HSW_SH0				8
 #define HSW_SH2				9
 
 #define HSW_SB0				45	// Skip some values because of safety switch values
@@ -417,11 +379,8 @@ int8_t switchMap( int8_t x ) ;
 
 extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 
-// c17-c24 added for timer mode A display
-//#define CURV_STR "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
 #define CURVE_BASE 7
 
-//#define CSWITCH_STR  "----   v>ofs  v<ofs  |v|>ofs|v|<ofsAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 TimeOff"
 #define CSW_LEN_FUNC 7
 
 
@@ -445,7 +404,8 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_RMONO	   17	// Monostable with reset
 #define CS_EXEQUAL   18	// V~=offset
 #define CS_BIT_AND   19
-#define CS_MAXF      19  //max function
+#define CS_VXEQUAL   20	// V1~=V2
+#define CS_MAXF      20  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -466,17 +426,11 @@ uint8_t CS_STATE( uint8_t x) ;
 #endif
 
 #ifdef PCBX9D
-//#define SW_BASE      SW_SA0
 #define SW_BASE      SW_SF2
-//#define SW_BASE_DIAG SW_SA0
 #define SW_BASE_DIAG SW_SF2
-//#define MAX_PSWITCH   (SW_SH2-SW_SA0+1)  // 9 physical switches
 #define MAX_PSWITCH   (SW_SH2-SW_SF2+1)  // 9 physical switches
-//#define MAX_DRSWITCH (1+SW_SH2-SW_SA0+1+NUM_CSW)
-//#define MAX_SKYDRSWITCH (1+SW_SH2-SW_SA0+1+NUM_SKYCSW)
 #define MAX_SKYDRSWITCH (1+SW_SH2-SW_SF2+1+NUM_SKYCSW)
 #endif
-
 
 #define SWP_RUD (SW_RuddDR-SW_BASE)
 #define SWP_ELE (SW_ElevDR-SW_BASE)
@@ -558,18 +512,18 @@ uint8_t CS_STATE( uint8_t x) ;
 //number of real outputchannels CH1-CH16
 #define NUM_CHNOUT  16
 #define NUM_SKYCHNOUT  24
-#define EXTRA_SKYCHANNELS	0
+#define EXTRA_SKYCHANNELS	8
 ///number of real input channels (1-9) plus virtual input channels X1-X4
 #define PPM_BASE    MIX_CYC3
 #define CHOUT_BASE  (PPM_BASE+NUM_PPM)
+#define EXTRA_PPM_BASE ( MIX_3POS + MAX_GVARS + 1 + NUM_SCALERS )
+#define EXTRA_CHANS_BASE ( EXTRA_PPM_BASE + NUM_EXTRA_PPM )
 
 #define NUM_FSW			16
 
 #define NUM_STICKS	4
 
 #define NUM_SCALERS	8
-
-//#define SWASH_TYPE_STR   "---   ""120   ""120X  ""140   ""90    "
 
 #define SWASH_TYPE_120   1
 #define SWASH_TYPE_120X  2
@@ -619,16 +573,23 @@ extern uint32_t countExtraPots( void ) ;
  #ifdef REVPLUS
 #define	NUM_EXTRA_POTS 2
  #else
-#define	NUM_EXTRA_POTS 1
+  #ifdef PCBX7
+   #define	NUM_EXTRA_POTS 0
+  #else
+   #define	NUM_EXTRA_POTS 1
+  #endif	// PCBX7
  #endif	// REVPLUS
 #endif	// REV9E
 #endif	// PCBX9D
 
 #define	NUM_POSSIBLE_EXTRA_POTS 5
 
-
 #define EXTRA_POTS_START	120
-extern uint8_t NumExtraPots ;
+extern int8_t NumExtraPots ;
+
+// For scalers:
+#define EXTRA_PPM_START	180
+#define EXTRA_CHANNELS_START 200
 
 #define DR_HIGH   0
 #define DR_MID    1
@@ -668,7 +629,6 @@ extern uint8_t NumExtraPots ;
 #define THRCHK_DEADBAND 31
 #define SPLASH_TIMEOUT  (4*100)  //400 msec - 4 seconds
 
-//uint8_t IS_THROTTLE( uint8_t x ) ;
 #define IS_THROTTLE( x ) ( x== 2 )
 uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
@@ -699,27 +659,27 @@ extern uint8_t Ee_lock ;
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
 #define PROTO_MULTI      3
-#define PROTO_ASSAN      4
+//#define PROTO_ASSAN      4
 #define PROTO_XFIRE	     4
 
 #define PROTO_SBUS	     5
 
-#ifdef ASSAN
-#define PROT_MAX         4
-#else
+//#ifdef ASSAN
+//#define PROT_MAX         4
+//#else
 #define PROT_MAX         3
-#endif
+//#endif
 #define PROTO_PPM16			 3		// No longer needed
 #define PROTO_OFF		     15		// For X9D
 #define PROT_STR_LEN      6
 
 
 
-#ifdef ASSAN
+//#ifdef ASSAN
+//#define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
+//#else
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
-#else
-#define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
-#endif
+//#endif
 #define DSM2_STR_LEN   9
 #define LPXDSM2          0
 #define DSM2only         1
@@ -728,8 +688,6 @@ extern uint8_t Ee_lock ;
 
 #define NUM_MULTI_PROTOCOLS 40
 
-//#define MULTI_STR "\006FlyskyHubsanFrsky Hisky V2x2  DSM2  Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN "
-//#define MULTI_STR_LEN    6
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
@@ -739,7 +697,6 @@ extern uint8_t Ee_lock ;
 #define M_V2x2             4
 #define M_DSM	             5
 #define M_DSM_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
-//#define M_DSM_STR "\004DSM2DSMXAUTO"
 #define M_Devo	  	       6
 #define M_YD717	           7
 #define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
@@ -774,8 +731,10 @@ extern uint8_t Ee_lock ;
 #define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
 #define M_OPENLRS				 26
 #define M_AFHD2SA				 27
+#define M_Q2X2					 28
+#define M_WK2x01			 	 29
 
-#define M_LAST_MULTI		 27
+#define M_LAST_MULTI		 29
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01
@@ -789,11 +748,7 @@ extern uint8_t Ee_lock ;
 #define POWER_X9E_STOP	3
 
 
-#if defined(PCBX9D) || defined(PCB9XT)
 extern uint8_t PxxFlag[2] ;
-#else
-extern uint8_t pxxFlag[2] ;
-#endif
 extern uint8_t InactivityMonitor ;
 extern uint16_t InacCounter ;
 
@@ -821,11 +776,10 @@ const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz012
 #define PPM_BASE    MIX_CYC3
 #define CHOUT_BASE  (PPM_BASE+NUM_PPM)
 
-//extern const char *Str_telemItems ;
 extern const int8_t TelemIndex[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 62
+#define NUM_TELEM_ITEMS 68
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
 #define NUM_SKYXCHNRAW (CHOUT_BASE+NUM_SKYCHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -856,13 +810,8 @@ extern uint16_t Current_max ;
 extern uint16_t MAh_used ;
 extern uint16_t Run_time ;
 
-//#ifdef FIX_MODE
 extern const char stickScramble[] ;
-//extern const char modeFix[] ;
 uint8_t modeFixValue( uint8_t value ) ;
-//#else
-//extern const char modn12x3[] ;
-//#endif
 
 extern const uint8_t bchout_ar[] ;
 
@@ -871,7 +820,6 @@ extern const uint8_t bchout_ar[] ;
 extern uint8_t convert_mode_helper(uint8_t x) ;
 
 #define CONVERT_MODE(x)  (((x)<=4) ? convert_mode_helper(x) : (x))
-//#define CHANNEL_ORDER(x) (chout_ar[g_eeGeneral.templateSetup*4 + (x)-1])
 #define CHANNEL_ORDER(x) ( ( (bchout_ar[g_eeGeneral.templateSetup] >> (6-(x-1) * 2)) & 3 ) + 1 )
 #define THR_STICK       (2-(g_eeGeneral.stickMode&1))
 #define ELE_STICK       (1+(g_eeGeneral.stickMode&1))
@@ -953,19 +901,14 @@ struct t_alpha
 
 union t_xmem
 {
-//	struct MixTab s_mixTab[MAX_MIXERS+NUM_XCHNOUT+1] ;	
 	struct t_calib Cal_data ;
 #ifndef CPUARM
 	char buf[sizeof(g_model.name)+5];
 #endif
 	struct t_alpha Alpha ;
-//#if defined(CPUM128) || defined(CPUM2561)
 #ifdef PCBX9D  
 	uint8_t file_buffer[512];
 #endif
-//#else
-//  uint8_t file_buffer[128];
-//#endif
 } ;
 
 extern union t_xmem Xmem ;
@@ -1015,17 +958,16 @@ int8_t checkIncDec_hm0( int8_t i_val, int8_t i_max);
 #define CHECK_INCDEC_GENERALSWITCH( event, var, min, max) \
   var = checkIncDecSwitch(var,min,max,EE_GENERAL|INCDEC_SWITCH)
 
+extern void setLastIdx( char *s, uint8_t idx ) ;
 
 extern uint8_t heartbeat ;
 extern int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
-//extern uint8_t eeprom[4096] ;
 extern uint8_t BtAsPpm ;
 extern uint8_t BtBaudrateChanged ;
 
 uint8_t char2idx(char c);
 char idx2char(uint8_t idx);
 
-//extern volatile uint32_t Timer2_count ;		// Modified in interrupt routine
 extern volatile uint16_t g_tmr10ms ;
 extern volatile uint8_t  g_blinkTmr10ms;
 extern volatile uint8_t tick10ms ;
@@ -1037,10 +979,6 @@ extern void message(const char * s);
 void resetTimer();
 void resetTimer1( void ) ;
 void resetTimer2( void ) ;
-
-//extern uint8_t Timer2_running ;
-//extern uint16_t Timer2 ;
-//void resetTimer2( void ) ;
 
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
@@ -1068,16 +1006,10 @@ extern int16_t ex_chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 extern void modelDefault( uint8_t id ) ;
 extern uint8_t VoiceCheckFlag100mS ;
 
-//void eeWaitComplete( void ) ;
 void eeDirty(uint8_t msk);
-//void eeCheck(bool immediately=false ) ;
 void eeReadAll( void ) ;
-//void eeLoadModelName(uint8_t id,char*buf,uint8_t len);
-//uint16_t eeFileSize(uint8_t id);
-//void eeLoadModel(uint8_t id);
-//void eeSaveModel(uint8_t id);
 bool eeDuplicateModel(uint8_t id);
-//bool eeModelExists(uint8_t id);
+void protocolsToModules( void ) ;
 
 extern char idx2char(uint8_t idx) ;
 extern uint8_t char2idx(char c) ;
@@ -1109,14 +1041,11 @@ extern bool getSwitch00( int8_t swtch ) ;
 extern bool getSwitch(int8_t swtch, bool nc, uint8_t level = 0 ) ;
 extern int8_t getMovedSwitch( void ) ;
 extern uint8_t g_vbat100mV ;
-//extern uint16_t Timer2 ;
 extern void doSplash( void ) ;
 extern void mainSequence( uint32_t no_menu ) ;
-#ifdef FRSKY
 extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att ) ;
 extern void telem_byte_to_bt( uint8_t data ) ;
 extern int16_t scale_telem_value( int16_t val, uint8_t channel, uint8_t *dplaces ) ;
-#endif
 uint8_t telemItemValid( uint8_t index ) ;
 
 extern int16_t get_telemetry_value( int8_t channel ) ;
@@ -1138,6 +1067,7 @@ extern void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
 
 extern uint8_t TrimInUse[4] ;
 
+extern void checkMultiPower( void ) ;
 extern void checkSwitches( void ) ;
 extern void checkTHR( void ) ;
 extern void checkCustom( void ) ;
@@ -1177,10 +1107,8 @@ extern void valueprocessAnalogEncoder( uint32_t x ) ;
 
 extern uint8_t Tevent ;
 
-#if GVARS
 extern int8_t REG100_100(int8_t x) ;
 extern int8_t REG(int8_t x, int8_t min, int8_t max) ;
-#endif
 
 enum PowerState
 {
@@ -1236,9 +1164,9 @@ extern uint8_t HoldVolume ;
 extern const char *AlertMessage ;
 extern uint8_t AlertType ;
 
-#if defined(PCBX9D) || defined(PCB9XT)
 #define INTERNAL_MODULE 0
 #define EXTERNAL_MODULE 1
+#if defined(PCBX9D) || defined(PCB9XT)
 #define TRAINER_MODULE  2
 #endif
 
@@ -1249,9 +1177,11 @@ extern uint8_t AlertType ;
 #ifdef PCBSKY
 #define COM2_FUNC_BTDIRECT		3
 #define COM2_FUNC_FMS					4
+#define COM2_FUNC_LCD					5
 #endif
 #ifdef PCBX9D
 #define COM2_FUNC_CPPMTRAIN		3
+#define COM2_FUNC_LCD					4
 #endif
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
@@ -1266,6 +1196,7 @@ extern uint8_t AlertType ;
 #define TRAINER_COM2		2
 #endif
 #define TRAINER_SLAVE		3
+#define TRAINER_J_SBUS	4
 
 void com2Configure( void ) ;
 
@@ -1324,5 +1255,31 @@ extern uint8_t LastMusicPauseSwitchState ;
 #define FAILSAFE_NO_PULSES	4
 
 extern uint16_t FailsafeCounter[2] ;
+
+// Bluetooth function defines
+#define BT_OFF					0
+#define BT_TRAIN_RX			1
+#define BT_TRAIN_TXRX		2
+#define BT_LCDDUMP			3
+
+// Physical radio types
+#define PHYSICAL_UNKNOWN			0
+#define PHYSICAL_SKY					1
+#define PHYSICAL_9XRPRO				2
+#define PHYSICAL_AR9X					3
+#define PHYSICAL_TARANIS			4
+#define PHYSICAL_TARANIS_PLUS	5
+#define PHYSICAL_TARANIS_X9E	6
+#define PHYSICAL_9XTREME			7
+#define PHYSICAL_QX7					8
+
+// Power control type
+#ifdef REV9E
+#define POWER_BUTTON	1
+#endif // REV9E
+#ifdef PCBX7
+#define POWER_BUTTON	1
+#endif // PCBX7
+
 
 #endif

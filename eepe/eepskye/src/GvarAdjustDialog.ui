@@ -62,6 +62,12 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
      <height>20</height>
     </rect>
    </property>
+   <property name="minimum">
+    <number>-125</number>
+   </property>
+   <property name="maximum">
+    <number>125</number>
+   </property>
   </widget>
   <widget class="QComboBox" name="switch2CB">
    <property name="geometry">

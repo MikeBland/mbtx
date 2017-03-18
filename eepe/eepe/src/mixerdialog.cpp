@@ -1,4 +1,5 @@
 #include "mixerdialog.h"
+#include "modeledit.h"
 #include "ui_mixerdialog.h"
 #include "pers.h"
 #include "helpers.h"
@@ -8,7 +9,9 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
     ui(new Ui::MixerDialog)
 {
     ui->setupUi(this);
-    md = mixdata;
+    rData = ((ModelEdit *)parent)->rData ;
+    
+		md = mixdata;
 		mType = eepromType ;
 #ifndef V2
 		delaySlowSpeed = delaySpeed ;
@@ -88,10 +91,11 @@ MixerDialog::MixerDialog(QWidget *parent, MixData *mixdata, int stickMode, QStri
     ui->trimChkB->setChecked(md->carryTrim==0);
 #ifndef V2
     ui->lateOffsetChkB->setChecked(md->lateOffset);
+    populateSwitchCB(ui->switchesCB,md->swtch, eepromType ) ;
 #else
     ui->lateOffsetChkB->setChecked(md->hiResSlow);
+    rData->populateSwitchCB(ui->switchesCB,md->swtch, eepromType ) ;
 #endif
-    populateSwitchCB(ui->switchesCB,md->swtch, eepromType ) ;
     ui->warningCB->setCurrentIndex(md->mixWarn);
     ui->mltpxCB->setCurrentIndex(md->mltpx);
 		
@@ -299,7 +303,11 @@ void MixerDialog::valuesChanged()
     md->weight       = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100 ) ;
     md->sOffset      = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0 ) ;
     md->carryTrim    = ui->trimChkB->checkState() ? 0 : 1;
+#ifdef V2
+    md->swtch        = rData->getSwitchCbValue( ui->switchesCB, mType ) ;
+#else
     md->swtch        = getSwitchCbValue( ui->switchesCB, mType ) ;
+#endif
     md->mixWarn      = ui->warningCB->currentIndex();
     md->mltpx        = ui->mltpxCB->currentIndex();
 

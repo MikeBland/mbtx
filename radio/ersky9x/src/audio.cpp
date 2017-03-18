@@ -56,19 +56,6 @@ extern uint8_t AudioVoiceCountUnderruns ;
 
 extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 
-//#ifdef PCB9XT
-//void txmit( uint8_t c ) ;
-//#endif
-
-//#ifdef PCBX9D
-//#ifdef REVPLUS
-//#define hapticOn( x )
-//#define hapticOff( x )
-//#endif
-//#endif
-
-//#define SPEAKER_OFF  PORTE &= ~(1 << OUT_E_BUZZER) // speaker output 'low'
-
 struct t_voice Voice ;
 struct toneQentry ToneQueue[AUDIO_QUEUE_LENGTH] ;
 uint8_t ToneQueueRidx ;
@@ -84,6 +71,7 @@ uint8_t SdAccessRequest ;
 /*static*/ uint8_t toneRepeat ;
 /*static*/ uint8_t toneOrPause ;
 /*static*/ uint8_t toneActive ;
+/*static*/ uint8_t toneVarioVolume ;
 
 
 //uint16_t Sine16k[32] =
@@ -162,7 +150,6 @@ bool audioQueue::freeslots()
 	temp %= AUDIO_QUEUE_LENGTH ;
 	temp = AUDIO_QUEUE_LENGTH - temp ;
 	return temp >= AUDIO_QUEUE_FREESLOTS ;
-//  return AUDIO_QUEUE_LENGTH - ((t_queueWidx + AUDIO_QUEUE_LENGTH - t_queueRidx) % AUDIO_QUEUE_LENGTH) >= AUDIO_QUEUE_FREESLOTS;
 }
 
 
@@ -263,7 +250,7 @@ void audioQueue::heartbeat()
 //  }
 }
 
-inline uint8_t audioQueue::getToneLength(uint8_t tLen)
+uint8_t audioQueue::getToneLength(uint8_t tLen)
 {
   uint8_t result = tLen; // default
   if (g_eeGeneral.beeperVal == 2) {
@@ -335,8 +322,10 @@ void audioQueue::playASAP(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
 		}
 	}
 	
-	queueTone( 0, tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0, tFreqIncr, tLen, tPause, tRepeat ) ;	// Now
-	
+  if (g_eeGeneral.beeperVal)
+	{
+		queueTone( 0, tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0, tFreqIncr, tLen, tPause, tRepeat ) ;	// Now
+	}
 //	if(!freeslots()){
 //			return;
 //	}	
@@ -433,23 +422,23 @@ void audioQueue::event(uint8_t e, uint8_t f, uint8_t hapticOff) {
 		      break;
 		    case AU_KEYPAD_UP:
 		      if (beepVal != BEEP_NOKEYS) {
-		        playNow(BEEP_KEY_UP_FREQ, 10, 1);
+		        playNow(BEEP_KEY_UP_FREQ, getToneLength(10), 1);
 		      }
 		      break;
 		    case AU_KEYPAD_DOWN:
 		      if (beepVal != BEEP_NOKEYS) {
-		        playNow(BEEP_KEY_DOWN_FREQ, 10, 1);
+		        playNow(BEEP_KEY_DOWN_FREQ, getToneLength(10), 1);
 		      }
 		      break;
 		    case AU_TRIM_MOVE:
 		      playNow(f, 6, 1);
 		      break;
 		    case AU_TRIM_MIDDLE:
-		      playNow(BEEP_DEFAULT_FREQ, 20, 2, 0, hapticOff);
+		      playNow(BEEP_DEFAULT_FREQ, getToneLength(20), 2, 0, hapticOff);
 		      break;
 		    case AU_MENUS:
 		      if (beepVal != BEEP_NOKEYS) {
-		        playNow(BEEP_DEFAULT_FREQ, 10, 2, 0, 0);
+		        playNow(BEEP_DEFAULT_FREQ, getToneLength(10), 2, 0, 0);
 		      }
 		      break;
 		    case AU_POT_STICK_MIDDLE:
@@ -485,11 +474,11 @@ void audioQueue::event(uint8_t e, uint8_t f, uint8_t hapticOff) {
 		      break;
 				
 				case AU_VARIO_UP :
-		      playNow(BEEP_DEFAULT_FREQ + 15+f, 10, 0, 0, 0, 1 ) ;
+		      playNow(BEEP_DEFAULT_FREQ + g_model.varioExtraData.baseFrequency + g_model.varioExtraData.offsetFrequency + 1 + f, 10, 0, 0x80, 0, 3 ) ;
 		    break ;
 		    
 				case AU_VARIO_DOWN :
-		      playNow(BEEP_DEFAULT_FREQ - 15-f, 10, 0, 0, 0, -1 ) ;
+		      playNow(BEEP_DEFAULT_FREQ + g_model.varioExtraData.baseFrequency - g_model.varioExtraData.offsetFrequency - 1 - f, 10, 0, 0x80, 0, -3 ) ;
 		    break ;
 
 		    case AU_LONG_TONE :
@@ -710,7 +699,6 @@ void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index )
 	if ( units_index )
 	{
 		putSystemVoice( units_index, 0 ) ;
-//		putSysNumVoiceQueue( units_index ) ;
 	}
 }
 
@@ -860,14 +848,11 @@ UINT BgNread ;
 uint8_t Bgindex ;
 uint8_t BgLastBuffer ;
 uint16_t BgFrequency ;
-//uint8_t PlayingTone = 0 ;
 uint8_t PlayingFreq ;
 int32_t ToneTime ;
 
 struct toneQentry ToneEntry ;
 
-//uint8_t DebugFilename[40] ;
-//uint16_t DebugNumber ;
 
 // v_index Exxx - \\system\name
 // v_index Dxxx - \\user\name
@@ -902,7 +887,14 @@ void buildFilename( uint32_t v_index, uint8_t *name )
 		ptr = (TCHAR *)cpystr( (uint8_t *)ptr, dirName ) ;
 		if ( ( index != VLOC_NUMSYS ) && ( index != VLOC_NUMUSER ) )
 		{
-			ptr = (TCHAR *)cpystr( (uint8_t *)ptr, name ) ;
+			if ( index == VLOC_MUSIC )
+			{
+				ptr = (TCHAR *)cpystr( (uint8_t *)ptr, name ) ;
+			}
+			else
+			{
+				ptr = (TCHAR *)ncpystr( (uint8_t *)ptr, name, VOICE_NAME_SIZE ) ;
+			}
 			x = 1 ;
 		}
 	}
@@ -944,7 +936,6 @@ void unlockVoice()
 
 static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
 {
-//	 0,  15,  30,   40,   47,  55,  64,  74,  84,  94,  104,  114,
 	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
 	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
 } ;
@@ -953,34 +944,6 @@ static uint16_t swVolumeLevel()
 {
 	return SwVolume_scale[CurrentVolume] ;
 }
-
-//void wavU8Convert( uint8_t *src, uint16_t *dest , uint32_t count )
-//{
-//#ifndef PCB9XT
-//	if ( g_eeGeneral.softwareVolume )
-//	{
-//#endif
-//		int32_t multiplier ;
-//		int32_t value ;
-//		multiplier = SwVolume_scale[CurrentVolume] * 256 ;
-//		while( count-- )
-//		{
-//			value = (int8_t) (*src++ - 128 ) ;
-//			value *= multiplier ;
-//			value += 32768 * 256 ;
-//			*dest++ = value >> 12 ;
-//		}
-//#ifndef PCB9XT
-//	}
-//	else
-//	{
-//		while( count-- )
-//		{
-//			*dest++ = *src++ << 4 ;
-//		}
-//	}
-//#endif
-//}
 
 uint32_t wavU16Convert( uint16_t *src, uint16_t *dest , uint32_t count, uint32_t addTone )
 {
@@ -1604,6 +1567,15 @@ void BgPlaying()
 	BgSizeLeft = size ;
 }
 
+void stopMusic()
+{
+	if ( MusicPlaying != MUSIC_STOPPED )
+	{
+		MusicPlaying = MUSIC_STOPPING ;
+	}
+}
+
+
 void voice_task(void* pdata)
 {
 	uint32_t v_index ;
@@ -2126,7 +2098,8 @@ void nextToneData()
 			toneFreqIncr = ToneEntry.toneFreqIncr ;
 			toneFrequency = ToneEntry.toneFreq ;
 			tonePause = ToneEntry.tonePause ;
-			toneRepeat = ToneEntry.toneRepeat ;
+			toneRepeat = ToneEntry.toneRepeat & 0x7F ;
+			toneVarioVolume = ToneEntry.toneRepeat & 0x80 ? 1 : 0 ;
 			toneOrPause = 0 ;		// Tone
 			toneTimer = 160 ;
 //			if ( tonePause || toneRepeat)
@@ -2186,6 +2159,24 @@ int32_t toneFill( uint16_t *buffer, uint32_t add )
 	if ( toneTimeLeft == 0 )
 	{
 		nextToneData() ;
+	}
+
+	if ( toneVarioVolume )
+	{
+		if ( multiplier )
+		{	// Mute if master volume is zero
+			if ( g_model.varioExtraData.volume )
+			{
+				// 0 means use master volume
+				multiplier = SwVolume_scale[g_model.varioExtraData.volume] ;
+			}
+		}
+	}
+	
+	if ( toneFrequency < BEEP_DEFAULT_FREQ - 5 )
+	{
+		multiplier *= 15 ;
+		multiplier /= 10 ;
 	}
 
 	while ( toneTimeLeft )

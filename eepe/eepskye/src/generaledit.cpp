@@ -101,6 +101,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
+		if ( rData->bitType & RADIO_BITTYPE_QX7)
+		{
+			g_eeGeneral.softwareVolume = 1 ;
+		}
     ui->SoftwareVolumeChkB->setChecked(g_eeGeneral.softwareVolume ) ;
     ui->Ar9xChkB->setChecked(g_eeGeneral.ar9xBoard ) ;
     ui->MenuEditChkB->setChecked(g_eeGeneral.forceMenuEdit ) ;
@@ -125,6 +129,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		{
 			case RADIO_TYPE_SKY :
 			case RADIO_TYPE_TARANIS :
+			case RADIO_TYPE_QX7 :
 				ui->brightGreenSB->hide() ;
 				ui->brightBlueSB->hide() ;
 				ui->label_BrightGreen->hide() ;
@@ -363,6 +368,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
     connect(ui->PPM_MultiplierDSB, SIGNAL(editingFinished()), this, SLOT(trainerTabValueChanged()));
     connect(ui->TrainerSourceCB, SIGNAL(currentIndexChanged(int)), this, SLOT(trainerTabValueChanged()));
+    connect(ui->InvertChkB, SIGNAL(stateChanged(int)), this, SLOT(trainerTabValueChanged()));
 
     connect(ui->weightSB_1, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_2, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
@@ -656,6 +662,7 @@ void GeneralEdit::updateTrainerTab()
 		CurrentTrainerProfile = g_eeGeneral.CurrentTrainerProfile ;
 		ui->TrainerProfileSB->setValue( g_eeGeneral.CurrentTrainerProfile ) ;
 		ui->TrainerSourceCB->setCurrentIndex( g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source ) ;
+		ui->InvertChkB->setChecked( g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[1].source ) ;
     ui->modeCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].mode);
     ui->sourceCB_1->setCurrentIndex(g_eeGeneral.trainer.mix[0].srcChn);
     if ( g_eeGeneral.trainer.mix[0].swtch == -16)
@@ -799,6 +806,8 @@ void GeneralEdit::trainerTabValueChanged()
     g_eeGeneral.PPM_Multiplier = ((quint16)(ui->PPM_MultiplierDSB->value()*10))-10;
 		
 		g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[0].source = ui->TrainerSourceCB->currentIndex() ;
+		g_eeGeneral.trainerProfile[CurrentTrainerProfile].channel[1].source = ui->InvertChkB->isChecked() ;
+
 		saveTrainerToProfile() ;
 
     updateSettings();
@@ -1113,7 +1122,14 @@ void GeneralEdit::on_StickScrollEnableChkB_stateChanged(int )
 
 void GeneralEdit::on_SoftwareVolumeChkB_stateChanged(int )
 {
-    g_eeGeneral.softwareVolume = ui->SoftwareVolumeChkB->isChecked() ? 1 : 0 ;
+		if ( rData->bitType & RADIO_BITTYPE_QX7)
+		{
+			g_eeGeneral.softwareVolume = 1 ;
+		}
+		else
+		{
+		  g_eeGeneral.softwareVolume = ui->SoftwareVolumeChkB->isChecked() ? 1 : 0 ;
+		}
     updateSettings();
 }
 

@@ -26,8 +26,8 @@
 #define FR_TXRSI_COPY	3
 #define FR_ALT_BARO		4
 #define FR_ALT_BAROd	5
-#define FR_GPS_ALT		6
-#define FR_GPS_ALTd		7
+#define TELEM_GPS_ALT		6
+#define TELEM_GPS_ALTd		7
 #define FR_GPS_SPEED	8 
 #define FR_GPS_SPEEDd	9 
 #define FR_TEMP1			10
@@ -88,14 +88,26 @@
 #define FR_RBOX_B2_CAP          60
 #define FR_RBOX_SERVO	          61
 #define FR_RBOX_STATE	          62
+#define FR_CELL1			          63
+#define FR_CELL2			          64
+#define FR_CELL3			          65
+#define FR_CELL4			          66
+#define FR_CELL5			          67
+#define FR_CELL6			          68
+#define FR_CELL7			          69
+#define FR_CELL8			          70
+#define FR_CELL9			          71
+#define FR_CELL10			          72
+#define FR_CELL11			          73
+#define FR_CELL12			          74
 
-#define FR_TRASH			63  // Used for invalid id
+#define FR_TRASH			75  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  64
+#define HUBDATALENGTH  76
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -367,8 +379,8 @@ enum AlarmLevel {
   alarm_red = 3
 };
 
-#define ALARM_GREATER(channel, alarm) ((g_model.frsky.channels[channel].alarms_greater >> alarm) & 1)
-#define ALARM_LEVEL(channel, alarm) ((g_model.frsky.channels[channel].alarms_level >> (2*alarm)) & 3)
+//#define ALARM_GREATER(channel, alarm) ((g_model.frsky.channels[channel].alarms_greater >> alarm) & 1)
+//#define ALARM_LEVEL(channel, alarm) ((g_model.frsky.channels[channel].alarms_level >> (2*alarm)) & 3)
 
 struct FrskyData {
   uint8_t value;
@@ -426,9 +438,10 @@ extern uint8_t FrskyAlarmSendState;
 extern FrskyData frskyTelemetry[4];
 //extern FrskyData frskyRSSI[2];
 extern int16_t FrskyHubData[] ;
+extern uint8_t TelemetryDataValid[] ;
 //extern int16_t FrskyHubMin[] ;
 //extern int16_t FrskyHubMax[] ;
-extern uint16_t FrskyVolts[];
+//extern uint16_t FrskyVolts[];
 extern uint8_t FrskyBattCells[] ;
 extern uint8_t FrskyAlarmCheckFlag ;
 //extern uint8_t MaxGpsSpeed ;
@@ -472,6 +485,7 @@ struct t_hub_max_min
 #define TEL_MULTI	      7
 #define TEL_HUB_RAW			8
 #define TEL_XFIRE				9
+#define TEL_AFHD2SA		 10
 #define TEL_UNKNOWN			255
 extern uint8_t TelemetryType ;
 
@@ -492,6 +506,9 @@ extern uint8_t TelemetryType ;
 extern uint16_t DsmABLRFH[] ;
 extern uint32_t LastDsmfades ;
 extern uint16_t LastDsmFH[] ;
+
+extern uint8_t RxLqi ;
+extern uint8_t TxLqi ;
 
 extern struct t_hub_max_min FrskyHubMaxMin ;
 
@@ -576,6 +593,13 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_RBM2  59
 #define LOG_RBSV  60
 #define LOG_RBST  61
+
+#define LOG_CEL7	62
+#define LOG_CEL8	63
+#define LOG_CEL9	64
+#define LOG_CEL10	65
+#define LOG_CEL11	66
+#define LOG_CEL12	67
 
 #define LOG_BTRX  125
 #define LOG_LAT	  126

@@ -117,6 +117,7 @@ extern uchar PdiErrors8 ;
 #define UPDATE_TYPE_CHANGE_ID			4
 #define UPDATE_TYPE_AVR						5
 #define UPDATE_TYPE_XMEGA					6
+#define UPDATE_TYPE_MULTI					7
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
@@ -137,6 +138,7 @@ uint8_t CoProresult ;
 
 uint32_t sportUpdate( uint32_t external ) ;
 uint32_t xmegaUpdate() ;
+uint32_t multiUpdate() ;
 
 TCHAR Filenames[8][50] ;
 extern FATFS g_FATFS ;
@@ -161,6 +163,7 @@ uint8_t UpdateItem ;
 uint8_t MaintenanceRunning = 0 ;
 uint8_t BlockInUse ;
 uint8_t SportVerValid ;
+uint8_t MultiResult ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 
@@ -189,9 +192,103 @@ uint8_t XmegaState ;
 #define XMEGA_FLASHING		4
 #define XMEGA_DONE				5
 
-uint8_t XmegaSubState ;
+uint8_t AllSubState ;
 uint8_t XmegaSignature[4] ;
 uint8_t Fuses[8] ;
+
+uint8_t MultiState ;
+#define MULTI_IDLE				0
+#define MULTI_START				1
+#define MULTI_WAIT1				2
+#define MULTI_WAIT2				3
+#define MULTI_BEGIN				4
+#define MULTI_FLASHING		5
+#define MULTI_DONE				6
+
+
+#ifdef PCBSKY
+#define CLEAR_TX_BIT() PIOA->PIO_CODR = PIO_PA17
+#define SET_TX_BIT() PIOA->PIO_SODR = PIO_PA17		
+#else
+#ifdef PCB9XT
+#define CLEAR_TX_BIT() GPIOA->BSRRH = 0x0080
+#define SET_TX_BIT() GPIOA->BSRRL = 0x0080
+#else
+#define CLEAR_TX_BIT() GPIOA->BSRRL = 0x0080
+#define SET_TX_BIT() GPIOA->BSRRH = 0x0080
+#endif
+#endif
+
+void initMultiMode()
+{
+	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+#ifdef PCBSKY
+	SET_TX_BIT() ;
+	configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+#endif
+#ifdef PCB9XT
+	EXTERNAL_RF_ON() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+#endif
+#ifdef PCBX9D
+	EXTERNAL_RF_ON() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+#endif
+}
+
+void stopMultiMode()
+{
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+#ifdef PCBSKY
+	configure_pins( PIO_PA17, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+#endif
+#ifdef PCB9XT
+	EXTERNAL_RF_OFF() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+#endif
+#ifdef PCBX9D
+	EXTERNAL_RF_OFF() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+#endif
+}
+
+void sendMultiByte( uint8_t byte )
+{
+	uint16_t time ;
+	uint32_t i ;
+
+	__disable_irq() ;
+	time = getTmr2MHz() ;
+	CLEAR_TX_BIT() ;
+	while ( (uint16_t) (getTmr2MHz() - time) < 34 )
+	{
+		// wait
+	}
+	time += 34 ;
+	for ( i = 0 ; i < 8 ; i += 1 )
+	{
+		if ( byte & 1 )
+		{
+			SET_TX_BIT() ;
+		}
+		else
+		{
+			CLEAR_TX_BIT() ;
+		}
+		byte >>= 1 ;
+		while ( (uint16_t) (getTmr2MHz() - time) < 35 )
+		{
+			// wait
+		}
+		time += 35 ;
+	}
+	SET_TX_BIT() ;
+	__enable_irq() ;	// No need to wait for the stop bit to complete
+	while ( (uint16_t) (getTmr2MHz() - time) < 34 )
+	{
+		// wait
+	}
+}
 
 
 #ifdef PCBSKY
@@ -856,6 +953,16 @@ void menuChangeId(uint8_t event)
 
 }
 
+void displayXmegaData()
+{
+	lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+	lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+	lcd_outhex4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
+	lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
+	lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
+}
+
+
 void menuUp1(uint8_t event)
 {
 	FRESULT fr ;
@@ -875,6 +982,10 @@ void menuUp1(uint8_t event)
 	if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{
   	TITLE( "UPDATE BOOT" ) ;
+	}
+	else if (UpdateItem == UPDATE_TYPE_MULTI )
+	{
+  	TITLE( "UPDATE MULTI" ) ;
 	}
 	else
 	{
@@ -971,7 +1082,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) && (UpdateItem != 6 ) )
+ 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) && (UpdateItem != 6 ) && (UpdateItem != 7) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -1032,6 +1143,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
+				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -1047,6 +1162,10 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
+				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+				}
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
@@ -1056,6 +1175,10 @@ void menuUp1(uint8_t event)
  				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
+				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
 				else
 				{
@@ -1072,6 +1195,10 @@ void menuUp1(uint8_t event)
 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+				}
+				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
 				else
 				{
@@ -1174,6 +1301,13 @@ void menuUp1(uint8_t event)
 					XmegaState = XMEGA_START ;
 				}
 #endif
+				else if (UpdateItem == UPDATE_TYPE_MULTI )
+				{
+					FirmwareSize = FileSize[fc->vpos] ;
+					firmwareAddress = 0x00000000 ;
+					MultiState = MULTI_START ;
+					MultiResult = 0 ;
+				}
 				else
 				{
 // SPort update
@@ -1280,11 +1414,7 @@ void menuUp1(uint8_t event)
 				}
 				width *= 64 ;
 				width /= FirmwareSize ;
-				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
-				lcd_outhex4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
-				lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
-				lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
+				displayXmegaData() ;
 			}
 #endif
 			
@@ -1304,8 +1434,7 @@ void menuUp1(uint8_t event)
 				}
 				width *= 64 ;
 				width /= FirmwareSize ;
-				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				displayXmegaData() ;
 				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
 				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
 				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
@@ -1324,10 +1453,26 @@ void menuUp1(uint8_t event)
 				}
 				width *= 64 ;
 				width /= FirmwareSize ;
+				displayXmegaData() ;
+			}
+#endif
+			else if (UpdateItem == UPDATE_TYPE_MULTI )
+			{
+				if ( MultiState == MULTI_WAIT1	)
+				{
+					lcd_puts_Pleft( 4*FH, "Power on Delay" ) ;
+				}
+				width = multiUpdate() ;
+				if ( width > FirmwareSize )
+				{
+					state = UPDATE_COMPLETE ;
+					stopMultiMode() ;
+				}
+				width *= 64 ;
+				width /= FirmwareSize ;
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 			}
-#endif
 			else		// Internal/External Sport
 			{
 #ifdef PCBX9D
@@ -1347,10 +1492,6 @@ void menuUp1(uint8_t event)
 					lcd_outhex4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
 					lcd_outhex4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
 				}
-//#if defined(PCB9XT)
-//				lcd_outhex4( 60, 7*FH, lastPacketType ) ;
-//				lcd_outhex4( 85, 7*FH, SportState ) ;
-//#endif
 
 				if ( SportState == SPORT_POWER_ON )
 				{
@@ -1383,6 +1524,19 @@ void menuUp1(uint8_t event)
  					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  				}
 #endif
+				if (UpdateItem == UPDATE_TYPE_MULTI )
+				{
+					if ( MultiResult )
+					{
+						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+					}
+				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				}
+				if (UpdateItem == UPDATE_TYPE_XMEGA )
+				{
+					displayXmegaData() ;
+				}
 #ifdef PCBSKY
  #ifndef REVX
 				if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
@@ -1399,14 +1553,18 @@ void menuUp1(uint8_t event)
 	 				{
  						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  					}
+					if (UpdateItem == UPDATE_TYPE_MULTI )
+					{
+						lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+						lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+					}
   #ifndef REVX
 			  }
   #endif 			
  #endif 			
 			}
 #ifdef PCB9XT
-				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				displayXmegaData() ;
 				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
 				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
 				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
@@ -1439,10 +1597,12 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 4*FH, "  Update SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
+	lcd_puts_Pleft( 7*FH, "  Update Multi" );
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
+	lcd_puts_Pleft( 6*FH, "  Update Multi" );
  #endif
 #endif
 #ifdef PCBX9D
@@ -1450,11 +1610,13 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
+	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Update Avr CPU" );
 	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
+	lcd_puts_Pleft( 6*FH, "  Update Multi" );
 #endif
 
   switch(event)
@@ -1464,6 +1626,9 @@ void menuUpdate(uint8_t event)
     break ;
     
 		case EVT_KEY_FIRST(KEY_MENU):
+#ifdef PCBX7
+		case EVT_KEY_BREAK(BTN_RE):
+#endif
 			if ( position == 2*FH )
 			{
 				UpdateItem = UPDATE_TYPE_BOOTLOADER ;
@@ -1491,6 +1656,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
+			if ( position == 7*FH )
+			{
+				UpdateItem = UPDATE_TYPE_MULTI ;
+	      chainMenu(menuUp1) ;
+			}
  #else
 			if ( position == 3*FH )
 			{
@@ -1505,6 +1675,11 @@ void menuUpdate(uint8_t event)
 			if ( position == 5*FH )
 			{
 				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_MULTI ;
 	      chainMenu(menuUp1) ;
 			}
  #endif
@@ -1530,6 +1705,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
+			if ( position == 7*FH )
+			{
+				UpdateItem = UPDATE_TYPE_MULTI ;
+	      chainMenu(menuUp1) ;
+			}
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )
@@ -1547,6 +1727,11 @@ void menuUpdate(uint8_t event)
 				UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
+			if ( position == 6*FH )
+			{
+				UpdateItem = UPDATE_TYPE_MULTI ;
+	      chainMenu(menuUp1) ;
+			}
 #endif
     	killEvents(event) ;
 			reboot = 0 ;
@@ -1559,7 +1744,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCBSKY
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 6*FH )
+			if ( position < 7*FH )
 			{
 				position += FH ;				
 			}
@@ -1573,7 +1758,7 @@ void menuUpdate(uint8_t event)
 		break ;
  #else
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -1589,7 +1774,7 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
-			if ( position < 6*FH )
+			if ( position < 7*FH )
 			{
 				position += FH ;				
 			}
@@ -1605,7 +1790,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCB9XT
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
-			if ( position < 5*FH )
+			if ( position < 6*FH )
 			{
 				position += FH ;				
 			}
@@ -2053,6 +2238,187 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 }
 
 
+
+uint32_t eat( uint8_t byte )
+{
+	uint16_t time ;
+	uint16_t rxchar ;
+
+	time = getTmr2MHz() ;
+	while ( (uint16_t) (getTmr2MHz() - time) < 4000 )	// 2mS
+	{
+		if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+		{
+			if ( rxchar == byte )
+			{
+				return 1 ;
+			}
+		}
+	}
+	return 0 ;
+}
+
+uint32_t multiUpdate()
+{
+	uint32_t i ;
+	uint16_t time ;
+
+	switch ( MultiState )
+	{
+		case MULTI_IDLE :
+		break ;
+
+		case MULTI_START :
+			initMultiMode() ;
+			BytesFlashed = 0 ;
+		  AllSubState = 0 ;
+			MultiState = MULTI_WAIT1 ;
+		break ;
+
+		case MULTI_WAIT1 :
+#if defined(PCBX9D) || defined(PCB9XT)
+			if ( ++AllSubState > 120 )	// Allow for power on time
+#else
+			if ( ++AllSubState > 50 )
+#endif
+			{
+				MultiState = MULTI_WAIT2 ;
+				AllSubState = 0 ;
+			}
+		break ;
+
+		case MULTI_WAIT2 :
+		{	
+			uint16_t rxchar ;
+			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			{
+				// flush receive fifo
+			}
+			sendMultiByte( 0x30 ) ;
+			sendMultiByte( 0x20 ) ;
+			if ( eat(0x14) )
+			{
+				eat( 0x10 ) ;
+				MultiState = MULTI_BEGIN ;
+				AllSubState = 0 ;
+			}
+			else
+			{
+				if ( ++AllSubState > 10 )
+				{
+					MultiResult = 1 ;
+					MultiState = MULTI_DONE ;
+				}
+			}
+		}
+		break ;
+
+		case MULTI_BEGIN :
+		{
+			uint16_t rxchar ;
+			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			{
+				// flush receive fifo
+			}
+			XmegaSignature[0] = 0 ;
+			sendMultiByte( 0x75 ) ;
+			sendMultiByte( 0x20 ) ;
+			eat(0x14) ;
+			time = getTmr2MHz() ;
+			i = 0 ;
+			while ( (uint16_t) (getTmr2MHz() - time) < 10000 )	// 5mS
+			{
+				if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				{
+					XmegaSignature[i++] = rxchar ;
+					if ( i > 3 )
+					{
+						break ;
+					}
+				}
+			}
+			if ( XmegaSignature[0] != 0x1E )
+			{
+				if ( ++AllSubState > 10 )
+				{
+					MultiResult = 1 ;
+					MultiState = MULTI_DONE ;
+				}
+			}
+			else
+			{
+				MultiState = MULTI_FLASHING ;
+			}
+			BlockOffset = 0 ;
+		}
+		break ;
+
+		case MULTI_FLASHING :
+		{	
+			uint16_t rxchar ;
+			sendMultiByte( 0x55 ) ;
+			sendMultiByte( BytesFlashed >> 1 ) ;
+			sendMultiByte( BytesFlashed >> 9 ) ;
+			sendMultiByte( 0x20 ) ;
+			eat(0x14) ;
+			eat(0x10) ;
+			sendMultiByte( 0x64 ) ;
+			sendMultiByte( 0 ) ;
+			sendMultiByte( 128 ) ;
+			sendMultiByte( 0 ) ;
+			for ( i = 0 ; i < 128 ; i += 1 )
+			{
+				sendMultiByte( FileData[BlockOffset+i] ) ;
+			}
+			sendMultiByte( 0x20 ) ;
+			eat(0x14) ;
+
+			time = getTmr2MHz() ;
+			while ( (uint16_t) (getTmr2MHz() - time) < 30000 )	// 15mS
+			{
+				if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				{
+					break ;
+				}
+			}
+			if ( rxchar != 0x10 )
+			{
+				MultiResult = 1 ;
+				MultiState = MULTI_DONE ;
+				break ;
+			}
+			
+			BytesFlashed += 128 ;
+			BlockOffset += 128 ;
+			if ( BytesFlashed >= ByteEnd )
+			{
+				f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+				BlockOffset = 0 ;
+				ByteEnd += BlockCount ;
+		 		wdt_reset() ;
+			}
+			if ( BytesFlashed >= FirmwareSize )
+			{
+				MultiState = MULTI_DONE ;
+				BytesFlashed = FirmwareSize ;
+			}
+		}
+		break ;
+
+		case MULTI_DONE :
+			stopMultiMode() ;
+			MultiState = MULTI_IDLE ;
+//#ifdef PCB9XT
+//			EXTERNAL_RF_OFF() ;
+//#endif
+			BytesFlashed = FirmwareSize + 1 ;
+		break ;
+	
+	}
+	return BytesFlashed ;
+}
+
+
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 // This is called repeatedly every 10mS while update is in progress
 uint32_t xmegaUpdate()
@@ -2065,15 +2431,15 @@ uint32_t xmegaUpdate()
 
 		case XMEGA_START :
 			BytesFlashed = 0 ;
-		  XmegaSubState = 0 ;
+		  AllSubState = 0 ;
 			XmegaState = XMEGA_POWER ;
 		break ;
 		
 		case XMEGA_POWER :
 			BytesFlashed = 0 ;
-			if ( ++XmegaSubState > 5 )
+			if ( ++AllSubState > 5 )
 			{
-		  	XmegaSubState = 0 ;
+		  	AllSubState = 0 ;
 				XmegaState = XMEGA_BEGIN ;
 			}
 		break ;
@@ -2083,9 +2449,12 @@ uint32_t xmegaUpdate()
 			pdiInit() ;
 			pdiReadBlock(XNVM_DATA_BASE+ 0x90, XmegaSignature, 4 ) ;
 			pdiReadBlock(0x08F0020, Fuses, 8 ) ;
-			if ( ( XmegaSignature[0] == 0x1E ) && (Fuses[7] != 0xFF ) )
+			if ( XmegaSignature[0] == 0x1E )
 			{
-				pdiChipErase() ;
+				if (Fuses[7] != 0xFF )
+				{
+					pdiChipErase() ;
+				}
 				if ( ( Fuses[2] & 0x40 ) == 0 )
 				{ // Boot reset
  					wdt_reset() ;
@@ -2100,7 +2469,7 @@ uint32_t xmegaUpdate()
 				ByteEnd = 1024 ;
 				XmegaState = XMEGA_FLASHING ;
 
-		  	XmegaSubState = 0 ;
+		  	AllSubState = 0 ;
 			}
 			else
 			{
@@ -2112,9 +2481,9 @@ uint32_t xmegaUpdate()
 		break ;
 		
 		case XMEGA_FLASHING :
-		  XmegaSubState += 1 ;
+		  AllSubState += 1 ;
 			
-			if ( ( XmegaSubState & 3 ) == 0 )
+			if ( ( AllSubState & 3 ) == 0 )
 			{
 				__disable_irq() ;
 				pdiInit() ;

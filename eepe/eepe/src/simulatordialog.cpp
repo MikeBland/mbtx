@@ -36,9 +36,14 @@ uint8_t simulatorDialog::IS_THROTTLE( uint8_t x)
     DR_MID : DR_LOW);
 
 extern int GlobalModified ;
+#ifdef V2
+extern V2EEGeneral Sim_g ;
+extern V2ModelData Sim_m ;
+#else
 extern EEGeneral Sim_g ;
-extern int GeneralDataValid ;
 extern ModelData Sim_m ;
+#endif
+extern int GeneralDataValid ;
 extern int ModelDataValid ;
 
 uint8_t Last_switch[NUM_CSW+EXTRA_CSW] ;
@@ -193,7 +198,11 @@ void simulatorDialog::timerEvent()
 		{
 			if ( GeneralDataValid )
 			{
+#ifdef V2
+	    	memcpy(&g_eeGeneral,&Sim_g,sizeof(V2EEGeneral));
+#else
 	    	memcpy(&g_eeGeneral,&Sim_g,sizeof(EEGeneral));
+#endif
 				GeneralDataValid = 0 ;
 				configSwitches() ;
 			}
@@ -576,8 +585,12 @@ void simulatorDialog::setType( uint8_t type )
 
 void simulatorDialog::configSwitches()
 {
-	if ( g_eeGeneral.switchMapping & USE_ELE_3POS )
-	{
+#ifdef V2
+  if ( g_eeGeneral.switchSources[1] & 0x0F )
+#else
+  if ( g_eeGeneral.switchMapping & USE_ELE_3POS )
+#endif
+  {
 		ui->SAwidget->show() ;
 		ui->switchELE->hide() ;
 	}
@@ -588,8 +601,12 @@ void simulatorDialog::configSwitches()
 		ui->switchELE->show() ;
 		ui->SAwidget->hide() ;
 	}
-	if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
-	{
+#ifdef V2
+  if ( g_eeGeneral.switchSources[1] & 0xF0 )
+#else
+  if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
+#endif
+  {
 		ui->SBwidget->show() ;
 		ui->switchAIL->hide() ;
 	}
@@ -600,16 +617,24 @@ void simulatorDialog::configSwitches()
 		ui->switchAIL->show() ;
 		ui->SBwidget->hide() ;
 	}
-	if ( g_eeGeneral.switchMapping & USE_PB1 )
-	{
+#ifdef V2
+  if ( g_eeGeneral.switchSources[2] & 0xF0 )
+#else
+  if ( g_eeGeneral.switchMapping & USE_PB1 )
+#endif
+  {
 		ui->switchPB1->show() ;
 	}
 	else
 	{
 		ui->switchPB1->hide() ;
 	}
-	if ( g_eeGeneral.switchMapping & USE_PB2 )
-	{
+#ifdef V2
+  if ( g_eeGeneral.switchSources[3] & 0x0F )
+#else
+  if ( g_eeGeneral.switchMapping & USE_PB2 )
+#endif
+  {
 		ui->switchPB2->show() ;
 	}
 	else
@@ -621,10 +646,19 @@ void simulatorDialog::configSwitches()
 
 
 
+#ifdef V2
+void simulatorDialog::loadParams(const V2EEGeneral gg, const V2ModelData gm)
+#else
 void simulatorDialog::loadParams(const EEGeneral gg, const ModelData gm)
+#endif
 {
+#ifdef V2
+    memcpy(&g_eeGeneral,&gg,sizeof(V2EEGeneral));
+    memcpy(&g_model,&gm,sizeof(V2ModelData));
+#else
     memcpy(&g_eeGeneral,&gg,sizeof(EEGeneral));
     memcpy(&g_model,&gm,sizeof(ModelData));
+#endif
 
     char buf[sizeof(g_model.name)+1];
     memcpy(&buf,&g_model.name,sizeof(g_model.name));
@@ -1204,6 +1238,7 @@ inline qint16 calc1000toRESX(qint16 x)
 
 bool simulatorDialog::hwKeyState(int key)
 {
+#ifndef V2
   switch (key)
   {
     case (HSW_ThrCt):   return ui->switchTHR->isChecked(); break;
@@ -1245,10 +1280,14 @@ bool simulatorDialog::hwKeyState(int key)
       return keyState( (EnumKeys) key ) ;
     break;
 	}
+#else
+  return 0 ;
+#endif
 }
 
 bool simulatorDialog::keyState(EnumKeys key)
 {
+#ifndef V2
     switch (key)
     {
     case (SW_ThrCt):   return ui->switchTHR->isChecked(); break;
@@ -1264,6 +1303,9 @@ bool simulatorDialog::keyState(EnumKeys key)
         return false;
         break;
     }
+#else
+  return 0 ;
+#endif
 }
 
 qint16 simulatorDialog::getValue(qint8 i)
@@ -1283,6 +1325,11 @@ qint16 simulatorDialog::getValue(qint8 i)
 			if ( ( j >= 12 ) && ( j <= 15 ) )
 			{
         return calc_scaler( j - 12 ) ;
+			}
+			j = i-CHOUT_BASE-NUM_CHNOUT - 4 ;
+			if ( ( j == 0 ) || ( j == 1 ) )
+			{
+    		return s_timerVal[j] ;
 			}
 		}
 		return 0;
@@ -2523,6 +2570,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 						}
 						else if( k == MIX_3POS-1 )
 						{
+#ifndef V2
               uint8_t sw = md->sw23pos ;
 							if ( sw )
 							{
@@ -2537,7 +2585,10 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							{
         				v = keyState(SW_ID0) ? -1024 : (keyState(SW_ID1) ? 0 : 1024) ;
 							}
-						}
+#else
+              v = 0 ;
+#endif
+            }
 						else if ( k < MIX_3POS+MAX_GVARS )	// GVAR
 						{
 			        v = g_model.gvars[k-MIX_3POS].gvar * 8 ;

@@ -78,15 +78,34 @@ struct t_radioData
     EEGeneral generalSettings ;
     V2EEGeneral v2generalSettings ;
     ModelData models[MAX_MODELS] ;
-		V2ModelData v2models[MAX_MODELS] ;
+		V1ModelData v1models[MAX_MODELS] ;
     unsigned char ModelNames[MAX_MODELS+1][MODEL_NAME_LEN+2] ;		// Allow for general
 		uint8_t valid ;
 		uint8_t type ;
 		uint8_t channels ;
 		uint8_t number_voice_alarms ;
+#ifdef V2
+	int8_t  MaxSwitchIndex;     // max switch selection menu list index
+	uint8_t MappedSwitchState;  // mapped switch state bit flag
+	int8_t switchMapTable[MAX_PSW3POS*3+3];  // +3: "---","PB1","PB2"
+
+  void mapSwitch(uint8_t swidx0) { MappedSwitchState |= (1 << swidx0) ; } ;
+	void unmapSwitch(uint8_t swidx0) { MappedSwitchState &= ~(1 << swidx0) ; } ;
+	bool qSwitchMapped(uint8_t swidx0) { return (MappedSwitchState & (1 << swidx0)) ; } ;
+	bool is3PosSwitch( uint8_t dswitch ) { return (dswitch <= DSW_GEA && qSwitchMapped(dswitch - DSW_IDL)) ; } ;
+	void initSwitchMapping() ;
+	int8_t switchMap( int8_t mIndex ) ;
+	int8_t switchUnMap( int8_t drswitch ) ;
+	uint8_t getSwitchSource( uint8_t xsw ) ;
+	void setMaxSwitchIndex() ;
+	QString getMappedSWName(int val, int eepromType ) ;
+	void populateSwitchCB(QComboBox *b, int value, int type ) ;
+	int getSwitchCbValue( QComboBox *b, int eepromType ) ;
+	void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion) ;
+	void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType ) ;
+	int getTimerSwitchCbValue( QComboBox *b, int eepromType ) ;
+#endif
 } ;
-
-
 
 class EFile
 {

@@ -10,6 +10,10 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 15-Jan-2017  MPB (r822)
+Add more Multi names
+
+******************************************
 CHANGELOG: 21-Nov-2016  MPB (r821)
 Further MULTI changes
 Re-label Delay up and down

@@ -64,7 +64,7 @@ namespace er9x
 #define EXTRA_CSW	6
 #define EXTRA_VOICE_SW	8
   #include "../../eepe/src/myeeprom.h"
-  ModelData EmodelData ;
+  V1ModelData EmodelData ;
 	MixData *srcMix ;
 }	
 
@@ -245,7 +245,7 @@ void MdiChild::refreshList()
         str.prepend(" - ");
     addItem(tr("General Settings") + str);
 		uint32_t max_models = MAX_MODELS ;
-    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -843,13 +843,17 @@ void MdiChild::OpenEditWindow()
         
 				if(isNew) t->applyBaseTemplate();
 				QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
-				if ( radioData.type == 2 )
+				if ( radioData.type == RADIO_TYPE_TPLUS )
 				{
-    		  type = " (Taranis Plus)" ;
+    		  type = radioData.sub_type ? " (Taranis X9E)" : " (Taranis Plus)" ;
 				}
-				else if ( radioData.type == 3 )
+				else if ( radioData.type == RADIO_TYPE_9XTREME )
 				{
     			type = " (9Xtreme)" ;
+				}
+				else if ( radioData.type == RADIO_TYPE_QX7 )
+				{
+    			type = " (Taranis QX7)" ;
 				}
         t->setWindowTitle(tr("Editing model %1: ").arg(i) + mname + type ) ;
 
@@ -878,6 +882,81 @@ void MdiChild::OpenEditWindow()
 
 }
 
+void MdiChild::getPhysicalType()
+{
+	uint32_t x ;
+	radioData.sub_type = 0 ;
+	x = radioData.generalSettings.physicalRadioType ;
+	if ( x && x < 9 )
+	{
+		switch ( x )
+		{
+			case PHYSICAL_SKY :
+				radioData.type = RADIO_TYPE_SKY ;
+				radioData.bitType = RADIO_BITTYPE_SKY ;
+			break ;
+			case PHYSICAL_9XRPRO :
+				radioData.type = RADIO_TYPE_SKY ;
+				radioData.bitType = RADIO_BITTYPE_9XRPRO ;
+			break ;
+			case PHYSICAL_AR9X :
+				radioData.type = RADIO_TYPE_SKY ;
+				radioData.bitType = RADIO_BITTYPE_AR9X ;
+			break ;
+			case PHYSICAL_TARANIS :
+				radioData.type = RADIO_TYPE_TARANIS ;
+				radioData.bitType = RADIO_BITTYPE_TARANIS ;
+			break ;
+			case PHYSICAL_TARANIS_PLUS :
+				radioData.type = RADIO_TYPE_TPLUS ;
+				radioData.bitType = RADIO_BITTYPE_TPLUS ;
+			break ;
+			case PHYSICAL_TARANIS_X9E :
+				radioData.type = RADIO_TYPE_TPLUS ;
+				radioData.bitType = RADIO_BITTYPE_X9E ;
+				radioData.sub_type = 1 ;
+			break ;
+			case PHYSICAL_9XTREME :
+				radioData.type = RADIO_TYPE_9XTREME ;
+				radioData.bitType = RADIO_BITTYPE_9XTREME ;
+			break ;
+			case PHYSICAL_QX7 :
+				radioData.type = RADIO_TYPE_QX7 ;
+				radioData.bitType = RADIO_BITTYPE_QX7 ;
+			break ;
+
+		}
+	}
+	else
+	{
+    QSettings settings("er9x-eePskye", "eePskye");
+		radioData.type = 0 ;
+		radioData.bitType = 0 ;
+		radioData.sub_type = 0 ;
+		int x ;
+		x = settings.value("download-version", 0).toInt() ;
+		radioData.bitType = 1 << x ;
+		if ( x >= 2 )
+		{
+			radioData.type = x-1 ;
+		}
+		radioData.T9xr_pro = 0 ;
+		if ( x == 1 )
+		{
+			radioData.T9xr_pro = 1 ;
+		}
+		if ( x == 5 )
+		{
+			radioData.type = 2 ;
+			radioData.sub_type = 1 ;
+		}
+		if ( x == 6 )
+		{
+			radioData.type = 0 ;
+		}
+	}
+}
+
 void MdiChild::newFile()
 {
     static int sequenceNumber = 1 ;
@@ -885,6 +964,7 @@ void MdiChild::newFile()
 		radioData.type = 0 ;
 		radioData.bitType = 0 ;
 		radioData.sub_type = 0 ;
+		getPhysicalType() ;
 		int x ;
 		x = settings.value("download-version", 0).toInt() ;
 		radioData.bitType = 1 << x ;
@@ -908,7 +988,7 @@ void MdiChild::newFile()
 		}
 		if ( x == 5 )
 		{
-			radioData.type = 2 ;
+			radioData.type = RADIO_TYPE_TPLUS ;
     	type = " (Taranis X9E)" ;
 			radioData.sub_type = 1 ;
 		}
@@ -916,6 +996,12 @@ void MdiChild::newFile()
 		{
 			radioData.type = 0 ;
     	type = " (Sky AR9X)" ;
+		}
+
+		if ( x == 7 )
+		{
+			radioData.type = RADIO_TYPE_QX7 ;
+    	type = " (Taranis QX7)" ;
 		}
 
     isUntitled = true;
@@ -983,7 +1069,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
                 
             radioData.File_system[0].size = sizeof(tgen) ;
 			  		memcpy( &radioData.generalSettings, &tgen, sizeof(tgen) ) ;
-								
+						getPhysicalType() ;
           }
 					uint32_t max_models = MAX_MODELS ;
           if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
@@ -1066,19 +1152,32 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 
           /*long result = */ file.read((char*)&temp,32768);
   	      file.close();
+					
+//					radioData.type = RADIO_TYPE_TARANIS ;
+//					radioData.bitType = RADIO_BITTYPE_TARANIS ;
+//					int x ;
+//			    QSettings settings("er9x-eePskye", "eePskye");
+//					x = settings.value("download-version", 0).toInt() ;
+//					radioData.bitType = 1 << x ;
+//					if ( x >= 2 )
+//					{
+//						radioData.type = x-1 ;
+//					}
+//					radioData.T9xr_pro = 0 ;
+//					if ( x == 5 )
+//					{
+//						radioData.type = 2 ;
+//						radioData.sub_type = 1 ;
+//					}
+//					if ( x == 6 )
+//					{
+//						radioData.type = 0 ;
+//					}				
 
-					radioData.type = RADIO_TYPE_TARANIS ;
-					radioData.bitType = RADIO_BITTYPE_TARANIS ;
-					int x ;
-			    QSettings settings("er9x-eePskye", "eePskye");
-					x = settings.value("download-version", 0).toInt() ;
-					if ( x >= 2 )
-					{
-						radioData.type = x-1 ;
-						radioData.bitType = x == 3 ? RADIO_BITTYPE_TPLUS : RADIO_BITTYPE_X9E ;
-					}
 
-	        if(!rawloadFileRlc( &radioData, temp) )
+//						radioData.bitType = x == 3 ? RADIO_BITTYPE_TPLUS : RADIO_BITTYPE_X9E ;
+	        
+					if(!rawloadFileRlc( &radioData, temp) )
   	      {
             QMessageBox::critical(this, tr("Error"),
                                  tr("Error loading file %1:\n"
@@ -1088,6 +1187,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
             return false;
     	    }
 					defaultModelType = DefaultModelType ;
+					getPhysicalType() ;
         	refreshList();
         	if(resetCurrentFile) setCurrentFile(fileName);
           return true ;
@@ -1152,19 +1252,21 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				radioData.type = 0 ;
 				radioData.bitType = RADIO_BITTYPE_SKY ;
 
-				int x ;
-		    QSettings settings("er9x-eePskye", "eePskye");
-				x = settings.value("download-version", 0).toInt() ;
-				if ( ( x == 4 ) || ( radioData.generalSettings.is9Xtreme ) )
-				{
-					radioData.type = 3 ;	// 9Xtreme
-					radioData.T9xr_pro = 1 ;
-					radioData.bitType = RADIO_BITTYPE_9XTREME ;
-				}
-				if ( x == 6 )
-				{
-					radioData.bitType = RADIO_BITTYPE_AR9X ;
-				}
+				getPhysicalType() ;
+				
+//				int x ;
+//		    QSettings settings("er9x-eePskye", "eePskye");
+//				x = settings.value("download-version", 0).toInt() ;
+//				if ( ( x == 4 ) || ( radioData.generalSettings.is9Xtreme ) )
+//				{
+//					radioData.type = 3 ;	// 9Xtreme
+//					radioData.T9xr_pro = 1 ;
+//					radioData.bitType = RADIO_BITTYPE_9XTREME ;
+//				}
+//				if ( x == 6 )
+//				{
+//					radioData.bitType = RADIO_BITTYPE_AR9X ;
+//				}
         refreshList();
         if(resetCurrentFile) setCurrentFile(fileName);
 
@@ -1356,7 +1458,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-				if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
+				if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1423,11 +1525,48 @@ bool MdiChild::maybeSave()
 
 void MdiChild::setCurrentFile(const QString &fileName)
 {
-    QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
-		if ( radioData.type == 3 )
+		int x ;
+		x = radioData.type ;
+    QString type = x ? " (Taranis)" : " (Sky)" ;
+
+		if ( x == RADIO_TYPE_SKY )
 		{
- 			type = " (9Xtreme)" ;
+			if ( radioData.T9xr_pro )
+			{
+    		type = " (Sky 9XR-PRO)" ;
+			}
+			if ( radioData.generalSettings.ar9xBoard )
+			{
+	    	type = " (Sky AR9X)" ;
+			}
 		}
+		if ( x == RADIO_TYPE_TPLUS )
+		{
+			if ( radioData.sub_type )
+			{
+    		type = " (Taranis X9E)" ;
+			}
+			else
+			{
+    		type = " (Taranis Plus)" ;
+			}
+		}
+		else if ( x == RADIO_TYPE_9XTREME )
+		{
+    	type = " (9Xtreme)" ;
+		}
+		else if ( x == RADIO_TYPE_QX7 )
+		{
+    	type = " (Taranis QX7)" ;
+		}
+//		if ( x == 5 )
+//		{
+//    	type = " (Sky AR9X)" ;
+//		}
+//		if ( radioData.type == 3 )
+//		{
+// 			type = " (9Xtreme)" ;
+//		}
     
 		curFile = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;
@@ -1785,8 +1924,16 @@ void MdiChild::modelDefault(uint8_t id)
 		}
 		radioData.models[id].modelVersion = 3 ;
 	}
-	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME ) )
+  if ( defaultModelVersion > 3 )
 	{
+    radioData.models[id].modelVersion = 4 ;
+		radioData.models[id].Module[0].protocol = PROTO_OFF ;
+		radioData.models[id].Module[1].protocol = PROTO_OFF ;
+	}
+	else
+	{
+//	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 ) )
+//	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;
 	}
@@ -1816,7 +1963,7 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 {
 	uint32_t i ;
 	
-  er9x::ModelData *source ;
+  er9x::V1ModelData *source ;
 	source = &er9x::EmodelData ;
 
 	memset( dest, 0, sizeof(*dest) ) ;

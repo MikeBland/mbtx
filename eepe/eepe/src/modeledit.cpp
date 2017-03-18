@@ -8,6 +8,9 @@
 #include "simulatordialog.h"
 #include "VoiceAlarmDialog.h"
 #include "TemplateDialog.h"
+//#ifdef V2
+#include "mdichild.h"
+//#endif
 
 #include <QtGui>
 #include <QMessageBox>
@@ -35,10 +38,15 @@
 
 extern class simulatorDialog *SimPointer ;
 
-int GlobalModified = 0 ;
+#ifdef V2
+V2EEGeneral Sim_g ;
+V2ModelData Sim_m ;
+#else
 EEGeneral Sim_g ;
-int GeneralDataValid = 0 ;
 ModelData Sim_m ;
+#endif
+int GlobalModified = 0 ;
+int GeneralDataValid = 0 ;
 int ModelDataValid = 0 ;
 
 ModelEdit::ModelEdit(EEPFILE *eFile, uint8_t id, QWidget *parent) :
@@ -46,6 +54,13 @@ ModelEdit::ModelEdit(EEPFILE *eFile, uint8_t id, QWidget *parent) :
     ui(new Ui::ModelEdit)
 {
 		unsigned int size ;
+    rData = &((MdiChild *)parent)->radioData ;
+#ifdef V2
+	p_eeGeneral = &rData->v2generalSettings ;
+//	p_model = &rData->v2generalSettings ;
+#else
+	p_eeGeneral = &rData->generalSettings ;
+#endif
     ui->setupUi(this);
 
     eeFile = eFile;
@@ -57,7 +72,7 @@ ModelEdit::ModelEdit(EEPFILE *eFile, uint8_t id, QWidget *parent) :
     switchDefPosEditLock = false;
 
     if(!eeFile->eeLoadGeneral())  eeFile->generalDefault();
-    eeFile->getGeneralSettings(&g_eeGeneral);
+    eeFile->getGeneralSettings(p_eeGeneral);
     size = eeFile->getModel(&g_model,id);
 		if ( size < sizeof(g_model) )
 		{
@@ -77,7 +92,14 @@ ModelEdit::ModelEdit(EEPFILE *eFile, uint8_t id, QWidget *parent) :
 		}
 #endif
 
-		createSwitchMapping( &g_eeGeneral, eeFile->mee_type ) ;
+#ifdef V2
+    rData->initSwitchMapping() ;
+    rData->setMaxSwitchIndex() ;
+#endif
+
+#ifndef V2
+		createSwitchMapping( p_eeGeneral, eeFile->mee_type ) ;
+#endif
     setupMixerListWidget();
 
     QSettings settings("er9x-eePe", "eePe");
@@ -188,8 +210,13 @@ void ModelEdit::updateSettings()
     eeFile->putModel(&g_model,id_model);
     emit modelValuesChanged(this);
 		
-    memcpy(&Sim_g, &g_eeGeneral,sizeof(EEGeneral));
+#ifdef V2
+    memcpy(&Sim_g, p_eeGeneral,sizeof(V2EEGeneral));
+    memcpy(&Sim_m,&g_model,sizeof(V2ModelData));
+#else
+    memcpy(&Sim_g, p_eeGeneral,sizeof(EEGeneral));
     memcpy(&Sim_m,&g_model,sizeof(ModelData));
+#endif
 		GeneralDataValid = 1 ;
 		ModelDataValid = 1 ;
 		GlobalModified = 1 ;
@@ -233,25 +260,29 @@ void ModelEdit::tabModelEditSetup()
     populateTmrBSwitchCB(ui->timer2ResetCB,g_model.timer2RstSw,eeFile->mee_type);
 #else
     populateTimerSwitchCB(ui->timerModeCB,g_model.timer[0].tmrModeA,eeFile->mee_type);
-    populateTmrBSwitchCB(ui->timerModeBCB,g_model.timer[0].tmrModeB,eeFile->mee_type);
+    rData->populateTmrBSwitchCB(ui->timerModeBCB,g_model.timer[0].tmrModeB,eeFile->mee_type);
     int min = g_model.timer[0].tmrVal/60;
     int sec = g_model.timer[0].tmrVal%60;
     ui->timerValTE->setTime(QTime(0,min,sec));
     ui->timerDirCB->setCurrentIndex(g_model.timer[0].tmrDir);
-    populateTmrBSwitchCB(ui->timerResetCB,g_model.timer[0].tmrRstSw,eeFile->mee_type);
+    rData->populateTmrBSwitchCB(ui->timerResetCB,g_model.timer[0].tmrRstSw,eeFile->mee_type);
 
     populateTimerSwitchCB(ui->timer2ModeCB,g_model.timer[1].tmrModeA,eeFile->mee_type);
-    populateTmrBSwitchCB(ui->timer2ModeBCB,g_model.timer[1].tmrModeB,eeFile->mee_type);
+    rData->populateTmrBSwitchCB(ui->timer2ModeBCB,g_model.timer[1].tmrModeB,eeFile->mee_type);
     min = g_model.timer[1].tmrVal/60;
     sec = g_model.timer[1].tmrVal%60;
     ui->timer2ValTE->setTime(QTime(0,min,sec));
     ui->timer2DirCB->setCurrentIndex(g_model.timer[1].tmrDir);
-    populateTmrBSwitchCB(ui->timer2ResetCB,g_model.timer[1].tmrRstSw,eeFile->mee_type);
+    rData->populateTmrBSwitchCB(ui->timer2ResetCB,g_model.timer[1].tmrRstSw,eeFile->mee_type);
 #endif
 
     //trim inc, thro trim, thro expo, instatrim
     ui->trimIncCB->setCurrentIndex(g_model.trimInc);
+#ifdef V2
+    rData->populateSwitchCB(ui->trimSWCB,g_model.trimSw,eeFile->mee_type);
+#else
     populateSwitchCB(ui->trimSWCB,g_model.trimSw,eeFile->mee_type);
+#endif
     ui->thrExpoChkB->setChecked(g_model.thrExpo);
     ui->thrTrimChkB->setChecked(g_model.thrTrim);
 	  ui->throttleOffCB->setCurrentIndex(g_model.throttleIdle) ;
@@ -286,8 +317,13 @@ void ModelEdit::tabModelEditSetup()
 	  ui->countryCB->setCurrentIndex(g_model.country) ;
 	  ui->typeCB->setCurrentIndex(g_model.sub_protocol) ;
 		ui->label_version->setText( tr("%1").arg( g_model.modelVersion ) ) ;
+#ifdef V2
+		ui->updateButton->setVisible( false ) ;
+		ui->updateButton3->setVisible( false ) ;
+#else
 		ui->updateButton->setVisible( g_model.modelVersion < 2 ) ;
 		ui->updateButton3->setVisible( g_model.modelVersion < 3 ) ;
+#endif
     
 		ui->useCustomStickNamesChkb->setChecked(g_model.useCustomStickNames) ;
 
@@ -393,9 +429,15 @@ uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 void ModelEdit::setSwitchDefPos()
 {
 //	if ( rData->type == 0 )
+#ifdef XSW_MOD
+    switchDefPosEditLock = true;
+		
+		switchDefPosEditLock = false;
+#else
   {
 		
-    quint16 y = (g_model.switchWarningStates >> 1 ) ;
+//    quint16 y = (g_model.switchWarningStates >> 1 ) ;
+    quint16 y = (g_model.switchWarningStates ) ;
     quint16 x = y & SWP_IL5 ;
     if(x==SWP_IL1 || x==SWP_IL2 || x==SWP_IL3 || x==SWP_IL4 || x==SWP_IL5) //illegal states for ID0/1/2
     {
@@ -459,6 +501,7 @@ void ModelEdit::setSwitchDefPos()
 
 		switchDefPosEditLock = false;
 	}
+#endif
 //	else
 //	{
 //    quint16 y = (g_model.modelswitchWarningStates >> 1 ) ;
@@ -500,7 +543,7 @@ void ModelEdit::updateToMV2()
 			{
         if (md->srcRaw <= 4)		// Stick
 				{
-					md->srcRaw = stickScramble[g_eeGeneral.stickMode*4+md->srcRaw-1] + 1 ;
+					md->srcRaw = stickScramble[p_eeGeneral->stickMode*4+md->srcRaw-1] + 1 ;
 				}
 			}
 		}
@@ -515,7 +558,7 @@ void ModelEdit::updateToMV2()
 				{
     		  if (cs->v1 <= 4)		// Stick
 					{
-    	    	cs->v1 = stickScramble[g_eeGeneral.stickMode*4+cs->v1-1] + 1 ;
+    	    	cs->v1 = stickScramble[p_eeGeneral->stickMode*4+cs->v1-1] + 1 ;
 					}
 				}
 			}
@@ -525,14 +568,14 @@ void ModelEdit::updateToMV2()
 				{
     		  if (cs->v1 <= 4)		// Stick
 					{
-		    	  cs->v1 = stickScramble[g_eeGeneral.stickMode*4+cs->v1-1] + 1 ;
+		    	  cs->v1 = stickScramble[p_eeGeneral->stickMode*4+cs->v1-1] + 1 ;
     	    }
 				}
       	if (cs->v2)
 				{
     		  if (cs->v2 <= 4)		// Stick
 					{
-						cs->v2 = stickScramble[g_eeGeneral.stickMode*4+cs->v2-1] + 1 ;
+						cs->v2 = stickScramble[p_eeGeneral->stickMode*4+cs->v2-1] + 1 ;
 				  }
 				}
 			}
@@ -552,7 +595,7 @@ void ModelEdit::updateToMV2()
 					{
     		  	if (cs->v1 <= 4)		// Stick
 						{
-    	    		cs->v1 = stickScramble[g_eeGeneral.stickMode*4+cs->v1-1] + 1 ;
+    	    		cs->v1 = stickScramble[p_eeGeneral->stickMode*4+cs->v1-1] + 1 ;
 						}
 					}
 				}
@@ -562,14 +605,14 @@ void ModelEdit::updateToMV2()
 					{
     		  	if (cs->v1 <= 4)		// Stick
 						{
-		    		  cs->v1 = stickScramble[g_eeGeneral.stickMode*4+cs->v1-1] + 1 ;
+		    		  cs->v1 = stickScramble[p_eeGeneral->stickMode*4+cs->v1-1] + 1 ;
     	    	}
 					}
       		if (cs->v2)
 					{
     		  	if (cs->v2 <= 4)		// Stick
 						{
-							cs->v2 = stickScramble[g_eeGeneral.stickMode*4+cs->v2-1] + 1 ;
+							cs->v2 = stickScramble[p_eeGeneral->stickMode*4+cs->v2-1] + 1 ;
 				  	}
 					}
 				}
@@ -589,25 +632,25 @@ void ModelEdit::updateToMV2()
 			{ // 0=Weight, 1=Expo - WRONG - 0=expo, 1=weight
 				for ( k = 0 ; k < 2 ; k += 1 )
 				{ // 0=Right, 1=Left
-          dest = CONVERT_MODE(1, 2, g_eeGeneral.stickMode)-1 ;
-          src = CONVERT_MODE(1, 1, g_eeGeneral.stickMode)-1 ;
+          dest = CONVERT_MODE(1, 2, p_eeGeneral->stickMode)-1 ;
+          src = CONVERT_MODE(1, 1, p_eeGeneral->stickMode)-1 ;
           lexpoData[dest].expo[i][j][k] = g_model.expoData[src].expo[i][j][k] ;
-          dest = CONVERT_MODE(2, 2, g_eeGeneral.stickMode)-1 ;
-          src = CONVERT_MODE(2, 1, g_eeGeneral.stickMode)-1 ;
+          dest = CONVERT_MODE(2, 2, p_eeGeneral->stickMode)-1 ;
+          src = CONVERT_MODE(2, 1, p_eeGeneral->stickMode)-1 ;
           lexpoData[dest].expo[i][j][k] = g_model.expoData[src].expo[i][j][k] ;
-          dest = CONVERT_MODE(3, 2, g_eeGeneral.stickMode)-1 ;
-          src = CONVERT_MODE(3, 1, g_eeGeneral.stickMode)-1 ;
+          dest = CONVERT_MODE(3, 2, p_eeGeneral->stickMode)-1 ;
+          src = CONVERT_MODE(3, 1, p_eeGeneral->stickMode)-1 ;
           lexpoData[dest].expo[i][j][k] = g_model.expoData[src].expo[i][j][k] ;
-          dest = CONVERT_MODE(4, 2, g_eeGeneral.stickMode)-1 ;
-          src = CONVERT_MODE(4, 1, g_eeGeneral.stickMode)-1 ;
+          dest = CONVERT_MODE(4, 2, p_eeGeneral->stickMode)-1 ;
+          src = CONVERT_MODE(4, 1, p_eeGeneral->stickMode)-1 ;
           lexpoData[dest].expo[i][j][k] = g_model.expoData[src].expo[i][j][k] ;
 		    }
 			}
 		}
 		for ( i = 1 ; i < 4 ; i += 1 )
 		{
-      dest = CONVERT_MODE(i, 2, g_eeGeneral.stickMode)-1 ;
-      src = CONVERT_MODE(i, 1, g_eeGeneral.stickMode)-1 ;
+      dest = CONVERT_MODE(i, 2, p_eeGeneral->stickMode)-1 ;
+      src = CONVERT_MODE(i, 1, p_eeGeneral->stickMode)-1 ;
       lexpoData[dest].drSw1 = g_model.expoData[src].drSw1 ;
       lexpoData[dest].drSw2 = g_model.expoData[src].drSw2 ;
 		}
@@ -875,15 +918,25 @@ void ModelEdit::tabExpo()
 {
 	int x ;
 	int y ;
-    populateSwitchCB(ui->RUD_edrSw1,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1,eeFile->mee_type);
-    populateSwitchCB(ui->RUD_edrSw2,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2,eeFile->mee_type);
-    populateSwitchCB(ui->ELE_edrSw1,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1,eeFile->mee_type);
-    populateSwitchCB(ui->ELE_edrSw2,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2,eeFile->mee_type);
-    populateSwitchCB(ui->THR_edrSw1,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1,eeFile->mee_type);
-    populateSwitchCB(ui->THR_edrSw2,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2,eeFile->mee_type);
-    populateSwitchCB(ui->AIL_edrSw1,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1,eeFile->mee_type);
-    populateSwitchCB(ui->AIL_edrSw2,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2,eeFile->mee_type);
-
+#ifdef V2
+    rData->populateSwitchCB(ui->RUD_edrSw1,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    rData->populateSwitchCB(ui->RUD_edrSw2,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    rData->populateSwitchCB(ui->ELE_edrSw1,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    rData->populateSwitchCB(ui->ELE_edrSw2,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    rData->populateSwitchCB(ui->THR_edrSw1,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    rData->populateSwitchCB(ui->THR_edrSw2,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    rData->populateSwitchCB(ui->AIL_edrSw1,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    rData->populateSwitchCB(ui->AIL_edrSw2,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+#else
+    populateSwitchCB(ui->RUD_edrSw1,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    populateSwitchCB(ui->RUD_edrSw2,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    populateSwitchCB(ui->ELE_edrSw1,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    populateSwitchCB(ui->ELE_edrSw2,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    populateSwitchCB(ui->THR_edrSw1,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    populateSwitchCB(ui->THR_edrSw2,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+    populateSwitchCB(ui->AIL_edrSw1,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1,eeFile->mee_type);
+    populateSwitchCB(ui->AIL_edrSw2,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2,eeFile->mee_type);
+#endif
 
 
 //#define DR_HIGH   0
@@ -932,7 +985,7 @@ void ModelEdit::tabExpo()
 					chkb = expoDrGvar[1][i][j][k] = new QCheckBox(this) ;
     			ui->gridLayout_Ail->addWidget( chkb,i*2+2,xpos);
 					chkb->setText( "Gvar" ) ;
-          x = g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          x = g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					y = -100 ;
 					if ( j == 1 )
 					{
@@ -955,7 +1008,7 @@ void ModelEdit::tabExpo()
     			ui->gridLayout_Rud->addWidget( chkb,i*2+2,xpos);
 					chkb->setText( "Gvar" ) ;
 
-          x = g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          x = g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					y = -100 ;
 					if ( j == 1 )
 					{
@@ -978,7 +1031,7 @@ void ModelEdit::tabExpo()
     			ui->gridLayout_Thr->addWidget( chkb,i*2+2,xpos);
 					chkb->setText( "Gvar" ) ;
 
-          x = g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          x = g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					y = -100 ;
 					if ( j == 1 )
 					{
@@ -1010,7 +1063,7 @@ void ModelEdit::tabExpo()
     			ui->gridLayout_Ele->addWidget( chkb,i*2+2,xpos);
 					chkb->setText( "Gvar" ) ;
 
-          x = g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          x = g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					y = -100 ;
 					if ( j == 1 )
 					{
@@ -1053,15 +1106,26 @@ void ModelEdit::expoEdited()
 		QComboBox *cb ;
 		QCheckBox *chkb ;
   int8_t *pval ;
-    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->RUD_edrSw1, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->RUD_edrSw2, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->ELE_edrSw1, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->ELE_edrSw2, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->THR_edrSw1, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->THR_edrSw2, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->AIL_edrSw1, eeFile->mee_type ) ;
-    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->AIL_edrSw2, eeFile->mee_type ) ;
-		
+#ifdef V2
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = rData->getSwitchCbValue( ui->RUD_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = rData->getSwitchCbValue( ui->RUD_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = rData->getSwitchCbValue( ui->ELE_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = rData->getSwitchCbValue( ui->ELE_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = rData->getSwitchCbValue( ui->THR_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = rData->getSwitchCbValue( ui->THR_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = rData->getSwitchCbValue( ui->AIL_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = rData->getSwitchCbValue( ui->AIL_edrSw2, eeFile->mee_type ) ;
+#else
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = getSwitchCbValue( ui->RUD_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = getSwitchCbValue( ui->RUD_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = getSwitchCbValue( ui->ELE_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = getSwitchCbValue( ui->ELE_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = getSwitchCbValue( ui->THR_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = getSwitchCbValue( ui->THR_edrSw2, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw1 = getSwitchCbValue( ui->AIL_edrSw1, eeFile->mee_type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].drSw2 = getSwitchCbValue( ui->AIL_edrSw2, eeFile->mee_type ) ;
+#endif
+		 
 		for ( i = 0 ; i < 3 ; i += 1 )
 		{ // 0=High, 1=Mid, 2=Low
 			for ( j = 0 ; j < 2 ; j += 1 )
@@ -1071,7 +1135,7 @@ void ModelEdit::expoEdited()
 					sb = expoDrSpin[1][i][j][k] ;
 					cb = expoDrVal[1][i][j][k] ;
 					chkb = expoDrGvar[1][i][j][k] ;
-          pval = &g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          pval = &g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					if ( j==0 )
 					{
     				*pval = numericSpinGvarValue( sb, cb, chkb, *pval, 0 ) ;
@@ -1086,7 +1150,7 @@ void ModelEdit::expoEdited()
 					sb = expoDrSpin[0][i][j][k] ;
 					cb = expoDrVal[0][i][j][k] ;
           chkb = expoDrGvar[0][i][j][k] ;
-          pval = &g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          pval = &g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					if ( j==0 )
 					{
     				*pval = numericSpinGvarValue( sb, cb, chkb, *pval, 0 ) ;
@@ -1101,7 +1165,7 @@ void ModelEdit::expoEdited()
 					sb = expoDrSpin[2][i][j][k] ;
 					cb = expoDrVal[2][i][j][k] ;
           chkb = expoDrGvar[2][i][j][k] ;
-          pval = &g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          pval = &g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					if ( j==0 )
 					{
     				*pval = numericSpinGvarValue( sb, cb, chkb, *pval, 0 ) ;
@@ -1116,7 +1180,7 @@ void ModelEdit::expoEdited()
 					sb = expoDrSpin[3][i][j][k] ;
 					cb = expoDrVal[3][i][j][k] ;
           chkb = expoDrGvar[3][i][j][k] ;
-          pval = &g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
+          pval = &g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,p_eeGeneral->stickMode)-1].expo[i][j][k] ;
 					if ( j==0 )
 					{
     				*pval = numericSpinGvarValue( sb, cb, chkb, *pval, 0 ) ;
@@ -1140,7 +1204,11 @@ void ModelEdit::voiceAlarmsList()
   uint32_t i ;
 
   VoiceListWidget->clear() ;
+#ifdef V2
+	for(i=0 ; i<V2_NUM_VOICE_ALARMS ; i += 1)
+#else
 	for(i=0 ; i<NUM_VOICE_ALARMS ; i += 1)
+#endif
 	{
 		VoiceAlarmData *vad = &g_model.vad[i] ;
 		QString str = "";
@@ -1153,7 +1221,7 @@ void ModelEdit::voiceAlarmsList()
 //		}
 		if ( vad->source < limit )
 		{
-      str += tr("(%1) ").arg(getSourceStr(g_eeGeneral.stickMode,vad->source,g_model.modelVersion )) ;//, rData->type )) ;
+      str += tr("(%1) ").arg(getSourceStr(p_eeGeneral->stickMode,vad->source,g_model.modelVersion )) ;//, rData->type )) ;
 		}
 		else
 		{
@@ -1171,7 +1239,11 @@ void ModelEdit::voiceAlarmsList()
 		{
 			str += tr("(%1) ").arg(vad->offset) ;
 		}
+#ifdef V2
+    str += tr("Switch(%1) ").arg(rData->getMappedSWName(vad->swtch, eeFile->mee_type)) ;// rData->type)) ;
+#else
     str += tr("Switch(%1) ").arg(getSWName(vad->swtch, eeFile->mee_type)) ;// rData->type)) ;
+#endif
 		if ( vad->rate < 3 )
 		{
 			srcstr = vad->rate ? (vad->rate == 1 ? "OFF " : "BOTH ") : "ON " ;
@@ -1272,7 +1344,7 @@ void ModelEdit::voiceAdd()
 	voiceAlarmsBlank( index ) ;
 	voiceAlarmsList() ;
 	VoiceAlarmData *vad = &g_model.vad[index] ;
-  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, eeFile->mee_type, p_eeGeneral->stickMode, g_model.modelVersion, &g_model ) ;
   dlg->setWindowTitle(tr("Voice Alarm %1").arg(index+1)) ;
   if(dlg->exec())
   {
@@ -1488,12 +1560,16 @@ void ModelEdit::tabMixes()
 					}
 					else
 					{
-        		str += getSourceStr(g_eeGeneral.stickMode,md->srcRaw, g_model.modelVersion ) ;
+        		str += getSourceStr(p_eeGeneral->stickMode,md->srcRaw, g_model.modelVersion ) ;
 					}
 //				}
 
-        if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,eeFile->mee_type) + ")";
-        if(md->carryTrim) str += tr(" noTrim");
+    #ifdef V2
+		    if(md->swtch) str += tr(" Switch(") + rData->getMappedSWName(md->swtch,eeFile->mee_type) + ")";
+    #else
+		    if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,eeFile->mee_type) + ")";
+    #endif
+		    if(md->carryTrim) str += tr(" noTrim");
 				j = md->sOffset ;
         if(j)
 				{
@@ -1645,7 +1721,7 @@ void ModelEdit::tabPhase()
 
 void ModelEdit::updatePhaseTab()
 {
-	uint8_t smode = g_eeGeneral.stickMode ;
+	uint8_t smode = p_eeGeneral->stickMode ;
   if ( g_model.modelVersion >= 2 )
 	{
 		smode = 0 ;
@@ -1673,10 +1749,17 @@ void ModelEdit::updatePhaseTab()
 		ui->label_M4->setText("Aileron") ;
 	}
 
+#ifdef V2
+	rData->populateSwitchCB( ui->FP1_sw, g_model.phaseData[0].swtch, eeFile->mee_type ) ;
+	rData->populateSwitchCB( ui->FP2_sw, g_model.phaseData[1].swtch, eeFile->mee_type ) ;
+	rData->populateSwitchCB( ui->FP3_sw, g_model.phaseData[2].swtch, eeFile->mee_type ) ;
+	rData->populateSwitchCB( ui->FP4_sw, g_model.phaseData[3].swtch, eeFile->mee_type ) ;
+#else
 	populateSwitchShortCB( ui->FP1_sw, g_model.phaseData[0].swtch, eeFile->mee_type ) ;
 	populateSwitchShortCB( ui->FP2_sw, g_model.phaseData[1].swtch, eeFile->mee_type ) ;
 	populateSwitchShortCB( ui->FP3_sw, g_model.phaseData[2].swtch, eeFile->mee_type ) ;
 	populateSwitchShortCB( ui->FP4_sw, g_model.phaseData[3].swtch, eeFile->mee_type ) ;
+#endif
 
 	populatePhasetrim( ui->FP1_RudCB, 1,  g_model.phaseData[0].trim[0] ) ;
 	populatePhasetrim( ui->FP1_EleCB, 1,  g_model.phaseData[0].trim[1] ) ;
@@ -1818,7 +1901,7 @@ void ModelEdit::updateHeliTab()
     heliEditLock = true;
 
     ui->swashTypeCB->setCurrentIndex(g_model.swashType);
-    populateSourceCB(ui->swashCollectiveCB,g_eeGeneral.stickMode,0,g_model.swashCollectiveSource,g_model.modelVersion);
+    populateSourceCB(ui->swashCollectiveCB,p_eeGeneral->stickMode,0,g_model.swashCollectiveSource,g_model.modelVersion);
     ui->swashRingValSB->setValue(g_model.swashRingValue);
     ui->swashInvertELE->setChecked(g_model.swashInvertELE);
     ui->swashInvertAIL->setChecked(g_model.swashInvertAIL);
@@ -2705,7 +2788,7 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
         	cswitchOffset[i]->setMinimum(-125);
 				}
         cswitchOffset0[i]->setVisible(false);
-        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,v1,g_model.modelVersion);
+        populateSourceCB(cswitchSource1[i],p_eeGeneral->stickMode,1,v1,g_model.modelVersion);
         cswitchOffset[i]->setValue(v2);
 				if ( cswitchSource1[i]->currentIndex() > 36 )
 				{
@@ -2727,8 +2810,14 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
         cswitchSource2[i]->setVisible(true);
         cswitchOffset[i]->setVisible(false);
         cswitchOffset0[i]->setVisible(false);
-        populateSwitchCB(cswitchSource1[i],v1, eeFile->mee_type ) ;
+
+#ifdef V2
+				rData->populateSwitchCB(cswitchSource1[i],v1, eeFile->mee_type ) ;
+        rData->populateSwitchCB(cswitchSource2[i],v2, eeFile->mee_type ) ;
+#else        
+				populateSwitchCB(cswitchSource1[i],v1, eeFile->mee_type ) ;
         populateSwitchCB(cswitchSource2[i],v2, eeFile->mee_type ) ;
+#endif
 				cswitchText1[i]->setVisible(false) ;
 				cswitchText2[i]->setVisible(false) ;
         break;
@@ -2737,8 +2826,13 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
         cswitchSource2[i]->setVisible(true);
         cswitchOffset[i]->setVisible(false);
         cswitchOffset0[i]->setVisible(false);
-        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,v1,g_model.modelVersion);
-        populateSourceCB(cswitchSource2[i],g_eeGeneral.stickMode,1,v2,g_model.modelVersion);
+#ifdef V2
+        rData->populateSourceCB(cswitchSource1[i],p_eeGeneral->stickMode,1,v1,g_model.modelVersion);
+        rData->populateSourceCB(cswitchSource2[i],p_eeGeneral->stickMode,1,v2,g_model.modelVersion);
+#else        
+        populateSourceCB(cswitchSource1[i],p_eeGeneral->stickMode,1,v1,g_model.modelVersion);
+        populateSourceCB(cswitchSource2[i],p_eeGeneral->stickMode,1,v2,g_model.modelVersion);
+#endif
 				cswitchText1[i]->setVisible(false) ;
 				cswitchText2[i]->setVisible(false) ;
         break;
@@ -2934,7 +3028,7 @@ void ModelEdit::tabSwitches()
           populateSwitchxAndCB(cswitchAndSwitch[i], g_model.xcustomSw[i-NUM_CSW].andsw, eeFile->mee_type ) ;
 				}
 #else
-        populateSwitchxAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw, 1 ) ;
+				rData->populateSwitchCB( cswitchAndSwitch[i], g_model.customSw[i].andsw, 1 ) ;
 #endif
         if ( !switchesTabDone )
 			{
@@ -3621,7 +3715,7 @@ void ModelEdit::switchesEdited()
 #else
     for(int i=0; i<NUM_CSW+EXTRA_CSW; i++)
     {
-			g_model.customSw[i].andsw = getxAndSwitchCbValue( cswitchAndSwitch[i], 1 ) ;
+			g_model.customSw[i].andsw = rData->getSwitchCbValue( cswitchAndSwitch[i], 1 ) ;
       if(chAr[i])
       {
           g_model.customSw[i].v1 = 0;
@@ -3642,8 +3736,8 @@ void ModelEdit::switchesEdited()
 					}
           break;
 	      case (CS_VBOOL):
-          g_model.customSw[i].v1 = getSwitchCbValue( cswitchSource1[i], 1 ) ;
-          g_model.customSw[i].v2 = getSwitchCbValue( cswitchSource2[i], 1 ) ;
+          g_model.customSw[i].v1 = rData->getSwitchCbValue( cswitchSource1[i], 1 ) ;
+          g_model.customSw[i].v2 = rData->getSwitchCbValue( cswitchSource2[i], 1 ) ;
           break;
   	    case (CS_VCOMP):
           g_model.customSw[i].v1 = cswitchSource1[i]->currentIndex();
@@ -3670,13 +3764,13 @@ void ModelEdit::switchesEdited()
 
 void ModelEdit::tabTrims()
 {
-		ui->spinBox_S1->setValue(g_model.trim[(g_eeGeneral.stickMode>1)   ? 3 : 0]);//CONVERT_MODE(RUD)-1]);
-    ui->spinBox_S2->setValue(g_model.trim[(g_eeGeneral.stickMode & 1) ? 2 : 1]);//CONVERT_MODE(ELE)-1]);
-    ui->spinBox_S3->setValue(g_model.trim[(g_eeGeneral.stickMode & 1) ? 1 : 2]);//CONVERT_MODE(THR)-1]);
-    ui->spinBox_S4->setValue(g_model.trim[(g_eeGeneral.stickMode>1)   ? 0 : 3]);//CONVERT_MODE(AIL)-1]);
+		ui->spinBox_S1->setValue(g_model.trim[(p_eeGeneral->stickMode>1)   ? 3 : 0]);//CONVERT_MODE(RUD)-1]);
+    ui->spinBox_S2->setValue(g_model.trim[(p_eeGeneral->stickMode & 1) ? 2 : 1]);//CONVERT_MODE(ELE)-1]);
+    ui->spinBox_S3->setValue(g_model.trim[(p_eeGeneral->stickMode & 1) ? 1 : 2]);//CONVERT_MODE(THR)-1]);
+    ui->spinBox_S4->setValue(g_model.trim[(p_eeGeneral->stickMode>1)   ? 0 : 3]);//CONVERT_MODE(AIL)-1]);
 
-		int i = g_eeGeneral.stickMode ;
-		if ( g_eeGeneral.crosstrim )
+		int i = p_eeGeneral->stickMode ;
+		if ( p_eeGeneral->crosstrim )
 		{
 			i = 3 - i ;
 		}
@@ -3776,7 +3870,7 @@ void ModelEdit::tabGvar()
       pucb[i]->setCurrentIndex(g_model.Scalers[i].unit ) ;
       psgncb[i]->setCurrentIndex(g_model.Scalers[i].neg ) ;
 			poffcb[i]->setCurrentIndex(g_model.Scalers[i].offsetLast ) ;
-      populateSourceCB(psrccb[i],g_eeGeneral.stickMode,1,g_model.Scalers[i].source,g_model.modelVersion ) ;
+      populateSourceCB(psrccb[i],p_eeGeneral->stickMode,1,g_model.Scalers[i].source,g_model.modelVersion ) ;
       QString n = (char *)g_model.Scalers[i].name ;
 			while ( n.endsWith(" ") )
 			{
@@ -3820,13 +3914,13 @@ void ModelEdit::tabGvar()
     populateSwitchCB(ui->GvSw6CB,g_model.gvswitch[5], eeFile->mee_type);
     populateSwitchCB(ui->GvSw7CB,g_model.gvswitch[6], eeFile->mee_type);
 #else
-    populateSwitchCB(ui->GvSw1CB,g_model.gvars[0].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw2CB,g_model.gvars[1].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw3CB,g_model.gvars[2].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw4CB,g_model.gvars[3].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw5CB,g_model.gvars[4].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw6CB,g_model.gvars[5].gvswitch, eeFile->mee_type);
-    populateSwitchCB(ui->GvSw7CB,g_model.gvars[6].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw1CB,g_model.gvars[0].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw2CB,g_model.gvars[1].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw3CB,g_model.gvars[2].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw4CB,g_model.gvars[3].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw5CB,g_model.gvars[4].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw6CB,g_model.gvars[5].gvswitch, eeFile->mee_type);
+    rData->populateSwitchCB(ui->GvSw7CB,g_model.gvars[6].gvswitch, eeFile->mee_type);
 #endif
 
     connect(ui->Gvar1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
@@ -3889,13 +3983,13 @@ void ModelEdit::GvarEdited()
 		g_model.gvswitch[5] = getSwitchCbValue( ui->GvSw6CB, eeFile->mee_type ) ;
 		g_model.gvswitch[6] = getSwitchCbValue( ui->GvSw7CB, eeFile->mee_type ) ;
 #else
-    g_model.gvars[0].gvswitch = getSwitchCbValue( ui->GvSw1CB, eeFile->mee_type ) ;
-		g_model.gvars[1].gvswitch = getSwitchCbValue( ui->GvSw2CB, eeFile->mee_type ) ;
-		g_model.gvars[2].gvswitch = getSwitchCbValue( ui->GvSw3CB, eeFile->mee_type ) ;
-		g_model.gvars[3].gvswitch = getSwitchCbValue( ui->GvSw4CB, eeFile->mee_type ) ;
-		g_model.gvars[4].gvswitch = getSwitchCbValue( ui->GvSw5CB, eeFile->mee_type ) ;
-		g_model.gvars[5].gvswitch = getSwitchCbValue( ui->GvSw6CB, eeFile->mee_type ) ;
-		g_model.gvars[6].gvswitch = getSwitchCbValue( ui->GvSw7CB, eeFile->mee_type ) ;
+    g_model.gvars[0].gvswitch = rData->getSwitchCbValue( ui->GvSw1CB, eeFile->mee_type ) ;
+		g_model.gvars[1].gvswitch = rData->getSwitchCbValue( ui->GvSw2CB, eeFile->mee_type ) ;
+		g_model.gvars[2].gvswitch = rData->getSwitchCbValue( ui->GvSw3CB, eeFile->mee_type ) ;
+		g_model.gvars[3].gvswitch = rData->getSwitchCbValue( ui->GvSw4CB, eeFile->mee_type ) ;
+		g_model.gvars[4].gvswitch = rData->getSwitchCbValue( ui->GvSw5CB, eeFile->mee_type ) ;
+		g_model.gvars[5].gvswitch = rData->getSwitchCbValue( ui->GvSw6CB, eeFile->mee_type ) ;
+		g_model.gvars[6].gvswitch = rData->getSwitchCbValue( ui->GvSw7CB, eeFile->mee_type ) ;
 #endif
 
 		int i ;
@@ -3966,7 +4060,11 @@ void ModelEdit::tabFrsky()
     ui->BladesSpinBox->setValue(g_model.numBlades);
     ui->FASoffsetSB->setValue( (double)g_model.frsky.FASoffset/10 + 0.049) ;
 
+#ifdef V2
+    rData->populateSwitchCB(ui->VarioSwitchCB, g_model.varioData.swtch,eeFile->mee_type ) ;
+#else
     populateSwitchCB(ui->VarioSwitchCB, g_model.varioData.swtch,eeFile->mee_type ) ;
+#endif
     ui->VarioSourceCB->setCurrentIndex( g_model.varioData.varioSource ) ;
     ui->VarioSensitivitySB->setValue( g_model.varioData.param ) ;
     ui->SinkTonesOff->setChecked(g_model.varioData.sinkTonesOff);
@@ -4063,7 +4161,11 @@ void ModelEdit::FrSkyEdited()
    	limit += EXTRA_CSW ;
 	}
 #endif
+#ifdef V2
+		g_model.varioData.swtch = rData->getSwitchCbValue( ui->VarioSwitchCB, eeFile->mee_type ) ;
+#else
 		g_model.varioData.swtch = getSwitchCbValue( ui->VarioSwitchCB, eeFile->mee_type ) ;
+#endif
 		g_model.varioData.varioSource = ui->VarioSourceCB->currentIndex() ;
 		g_model.varioData.param = ui->VarioSensitivitySB->value() ;
     g_model.varioData.sinkTonesOff = ui->SinkTonesOff->isChecked();
@@ -4136,7 +4238,7 @@ void ModelEdit::on_timerModeBCB_currentIndexChanged(int index)
 #ifndef V2
   g_model.tmrModeB = getTimerSwitchCbValue( ui->timerModeBCB, eeFile->mee_type ) ;
 #else
-  g_model.timer[0].tmrModeB = getTimerSwitchCbValue( ui->timerModeBCB, eeFile->mee_type ) ;
+  g_model.timer[0].tmrModeB = rData->getTimerSwitchCbValue( ui->timerModeBCB, eeFile->mee_type ) ;
 #endif
   updateSettings();
 }
@@ -4164,7 +4266,7 @@ void ModelEdit::on_timerResetCB_currentIndexChanged(int index)
 #ifndef V2
   g_model.timer1RstSw = getTimerSwitchCbValue( ui->timerResetCB, eeFile->mee_type ) ;
 #else
-  g_model.timer[0].tmrRstSw = getTimerSwitchCbValue( ui->timerResetCB, eeFile->mee_type ) ;
+  g_model.timer[0].tmrRstSw = rData->getTimerSwitchCbValue( ui->timerResetCB, eeFile->mee_type ) ;
 #endif
   updateSettings() ;
 }
@@ -4192,7 +4294,7 @@ void ModelEdit::on_timer2ModeBCB_currentIndexChanged(int index)
 #ifndef V2
   g_model.tmr2ModeB = getTimerSwitchCbValue( ui->timer2ModeBCB, eeFile->mee_type ) ;
 #else
-  g_model.timer[1].tmrModeB = getTimerSwitchCbValue( ui->timer2ModeBCB, eeFile->mee_type ) ;
+  g_model.timer[1].tmrModeB = rData->getTimerSwitchCbValue( ui->timer2ModeBCB, eeFile->mee_type ) ;
 #endif
   updateSettings();
 }
@@ -4220,7 +4322,7 @@ void ModelEdit::on_timer2ResetCB_currentIndexChanged(int index)
 #ifndef V2
   g_model.timer2RstSw = getTimerSwitchCbValue( ui->timer2ResetCB, eeFile->mee_type ) ;
 #else
-  g_model.timer[1].tmrRstSw = getTimerSwitchCbValue( ui->timer2ResetCB, eeFile->mee_type ) ;
+  g_model.timer[1].tmrRstSw = rData->getTimerSwitchCbValue( ui->timer2ResetCB, eeFile->mee_type ) ;
 #endif
   updateSettings() ;
 }
@@ -4239,7 +4341,11 @@ void ModelEdit::on_volumeControlCB_currentIndexChanged(int index)
 
 void ModelEdit::on_trimSWCB_currentIndexChanged(int index)
 {
+#ifdef V2
+    g_model.trimSw = rData->getSwitchCbValue( ui->trimSWCB, eeFile->mee_type ) ;
+#else
     g_model.trimSw = getSwitchCbValue( ui->trimSWCB, eeFile->mee_type ) ;
+#endif
     updateSettings();
 }
 
@@ -4479,18 +4585,18 @@ void ModelEdit::getModelSwitchDefPos(int i, bool val)
 void ModelEdit::on_switchDefPos_1_stateChanged(int )
 {
     if(switchDefPosEditLock) return;
-    getModelSwitchDefPos(1,ui->switchDefPos_1->isChecked());
+    getModelSwitchDefPos(0,ui->switchDefPos_1->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_2_stateChanged(int )
 {
     if(switchDefPosEditLock) return;
-    getModelSwitchDefPos(2,ui->switchDefPos_2->isChecked());
+    getModelSwitchDefPos(1,ui->switchDefPos_2->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_3_stateChanged(int )
 {
-    getModelSwitchDefPos(3,ui->switchDefPos_3->isChecked());
+    getModelSwitchDefPos(2,ui->switchDefPos_3->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_4_stateChanged(int )
@@ -4507,8 +4613,8 @@ void ModelEdit::on_switchDefPos_4_stateChanged(int )
     else
         return;
 
-    g_model.switchWarningStates &= ~(0x30<<1); //turn off ID1/2
-    getModelSwitchDefPos(4,ui->switchDefPos_4->isChecked());
+    g_model.switchWarningStates &= ~(0x30); //turn off ID1/2
+    getModelSwitchDefPos(3,ui->switchDefPos_4->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_5_stateChanged(int )
@@ -4525,8 +4631,8 @@ void ModelEdit::on_switchDefPos_5_stateChanged(int )
     else
         return;
 
-    g_model.switchWarningStates &= ~(0x28<<1); //turn off ID0/2
-    getModelSwitchDefPos(5,ui->switchDefPos_5->isChecked());
+    g_model.switchWarningStates &= ~(0x28); //turn off ID0/2
+    getModelSwitchDefPos(4,ui->switchDefPos_5->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_6_stateChanged(int )
@@ -4543,44 +4649,44 @@ void ModelEdit::on_switchDefPos_6_stateChanged(int )
     else
         return;
 
-    g_model.switchWarningStates &= ~(0x18<<1); //turn off ID1/2
-    getModelSwitchDefPos(6,ui->switchDefPos_6->isChecked());
+    g_model.switchWarningStates &= ~(0x18); //turn off ID1/2
+    getModelSwitchDefPos(5,ui->switchDefPos_6->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_7_stateChanged(int )
 {
     if(switchDefPosEditLock) return;
-    getModelSwitchDefPos(7,ui->switchDefPos_7->isChecked());
+    getModelSwitchDefPos(6,ui->switchDefPos_7->isChecked());
     updateSettings();
 }
 void ModelEdit::on_switchDefPos_8_stateChanged(int )
 {
     if(switchDefPosEditLock) return;
-    getModelSwitchDefPos(8,ui->switchDefPos_8->isChecked());
+    getModelSwitchDefPos(7,ui->switchDefPos_8->isChecked());
     updateSettings();
 }
 
 void ModelEdit::on_spinBox_S1_valueChanged(int value)
 {
-        g_model.trim[(g_eeGeneral.stickMode>1) ? 3 : 0] = value;
+        g_model.trim[(p_eeGeneral->stickMode>1) ? 3 : 0] = value;
         updateSettings();
 }
 
 void ModelEdit::on_spinBox_S2_valueChanged(int value)
 {
-        g_model.trim[(g_eeGeneral.stickMode & 1) ? 2 : 1] = value;
+        g_model.trim[(p_eeGeneral->stickMode & 1) ? 2 : 1] = value;
         updateSettings();
 }
 
 void ModelEdit::on_spinBox_S3_valueChanged(int value)
 {
-        g_model.trim[(g_eeGeneral.stickMode & 1) ? 1 : 2] = value;
+        g_model.trim[(p_eeGeneral->stickMode & 1) ? 1 : 2] = value;
         updateSettings();
 }
 
 void ModelEdit::on_spinBox_S4_valueChanged(int value)
 {
-        g_model.trim[(g_eeGeneral.stickMode>1)   ? 0 : 3] = value;
+        g_model.trim[(p_eeGeneral->stickMode>1)   ? 0 : 3] = value;
         updateSettings();
 }
 
@@ -4956,9 +5062,9 @@ void ModelEdit::gm_openMix(int index)
     QString comment = mixNotes[index];
 
 #ifndef V2
-    MixerDialog *g = new MixerDialog(this,&mixd,g_eeGeneral.stickMode, &comment, g_model.modelVersion, eeFile->mee_type, g_model.mixTime ) ;
+    MixerDialog *g = new MixerDialog(this,&mixd,p_eeGeneral->stickMode, &comment, g_model.modelVersion, eeFile->mee_type, g_model.mixTime ) ;
 #else
-    MixerDialog *g = new MixerDialog(this,&mixd,g_eeGeneral.stickMode, &comment, g_model.modelVersion, eeFile->mee_type, 0 ) ;
+    MixerDialog *g = new MixerDialog(this,&mixd,p_eeGeneral->stickMode, &comment, g_model.modelVersion, eeFile->mee_type, 0 ) ;
 #endif
     if(g->exec())
     {
@@ -4981,7 +5087,7 @@ int ModelEdit::getMixerIndex(int dch)
 
 void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
-  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &g_model.vad[index.row()], eeFile->mee_type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &g_model.vad[index.row()], eeFile->mee_type, p_eeGeneral->stickMode, g_model.modelVersion, &g_model ) ;
   dlg->setWindowTitle(tr("Voice Alarm %1").arg(index.row()+1)) ;
   if(dlg->exec())
   {
@@ -5301,7 +5407,7 @@ void ModelEdit::moveMixDown()
 void ModelEdit::launchSimulation()
 {
     EEGeneral gg;
-    memcpy(&gg, &g_eeGeneral,sizeof(gg));
+    memcpy(&gg, p_eeGeneral,sizeof(gg));
 
     ModelData gm;
     memcpy(&gm, &g_model,sizeof(gm));
@@ -5689,10 +5795,10 @@ void ModelEdit::applyTemplate(uint8_t idx)
         {
           clearMixes();
         }
-        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100;
-        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100;
-        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100;
-        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100;
+        md=setDest(ICC(STK_RUD));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100;
+        md=setDest(ICC(STK_ELE));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100;
+        md=setDest(ICC(STK_THR));  md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100;
+        md=setDest(ICC(STK_AIL));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100;
     }
 
     //T-Cut
@@ -5709,7 +5815,7 @@ void ModelEdit::applyTemplate(uint8_t idx)
 //        md=setDest(14);            md->srcRaw=MIX_MAX;  md->weight=-100;  md->swtch=DSW_SWB;  md->mltpx=MLTPX_REP;
 //        md=setDest(14);            md->srcRaw=MIX_MAX;  md->weight= 100;  md->swtch=DSW_THR;  md->mltpx=MLTPX_REP;
 
-//        setSwitch(0xB,CS_VNEG, CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode), -99);
+//        setSwitch(0xB,CS_VNEG, CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode), -99);
 //        setSwitch(0xC,CS_VPOS, CH(14), 0);
 
 #ifndef V2
@@ -5732,20 +5838,20 @@ void ModelEdit::applyTemplate(uint8_t idx)
     if(idx==j++)
     {
         clearMixes();
-        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
+        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
+        md=setDest(ICC(RUD_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=-100;
+        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_RUD,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
+        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
     }
 
     //Elevon\\Delta
     if(idx==j++)
     {
         clearMixes();
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100;
-        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=-100;
+        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
+        md=setDest(ICC(ELE_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
+        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_ELE,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100;
+        md=setDest(ICC(AIL_STICK+1));  md->srcRaw=CM(STK_AIL,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=-100;
     }
 
 
@@ -5762,21 +5868,21 @@ void ModelEdit::applyTemplate(uint8_t idx)
         md=setDest(3);  md->srcRaw=MIX_CYC3;  md->weight= 100;
 
         //rudder
-        md=setDest(4);  md->srcRaw=CM(STK_RUD,g_model.modelVersion,g_eeGeneral.stickMode); md->weight=100;
+        md=setDest(4);  md->srcRaw=CM(STK_RUD,g_model.modelVersion,p_eeGeneral->stickMode); md->weight=100;
 
         //Throttle
-        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100; md->swtch= DSW_ID0; md->curve=CV(1); md->carryTrim=TRIM_OFF;
-        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100; md->swtch= DSW_ID1; md->curve=CV(2); md->carryTrim=TRIM_OFF;
-        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight= 100; md->swtch= DSW_ID2; md->curve=CV(3); md->carryTrim=TRIM_OFF;
+        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100; md->swtch= DSW_ID0; md->curve=CV(1);// md->carryTrim=TRIM_OFF;
+        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100; md->swtch= DSW_ID1; md->curve=CV(2);// md->carryTrim=TRIM_OFF;
+        md=setDest(5);  md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight= 100; md->swtch= DSW_ID2; md->curve=CV(3);// md->carryTrim=TRIM_OFF;
         md=setDest(5);  md->srcRaw=MIX_MAX;      md->weight=-100; md->swtch= DSW_THR; md->mltpx=MLTPX_REP;
 
         //gyro gain
         md=setDest(6);  md->srcRaw=MIX_FULL; md->weight=30; md->swtch=-DSW_GEA;
 
         //collective
-        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100; md->swtch= DSW_ID0; md->curve=CV(4); md->carryTrim=TRIM_OFF;
-        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100; md->swtch= DSW_ID1; md->curve=CV(5); md->carryTrim=TRIM_OFF;
-        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,g_eeGeneral.stickMode);  md->weight=100; md->swtch= DSW_ID2; md->curve=CV(6); md->carryTrim=TRIM_OFF;
+        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100; md->swtch= DSW_ID0; md->curve=CV(4); md->carryTrim=TRIM_OFF;
+        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100; md->swtch= DSW_ID1; md->curve=CV(5); md->carryTrim=TRIM_OFF;
+        md=setDest(11); md->srcRaw=CM(STK_THR,g_model.modelVersion,p_eeGeneral->stickMode);  md->weight=100; md->swtch= DSW_ID2; md->curve=CV(6); md->carryTrim=TRIM_OFF;
 
         g_model.swashType = SWASH_TYPE_120;
         g_model.swashCollectiveSource = CH(11);
@@ -5831,13 +5937,13 @@ void ModelEdit::applyTemplate(uint8_t idx)
     // Progressive
     if(idx==j++)
     {
-			md=setDest(templateValues.helperChannel); md->srcRaw=CM(templateValues.stick,g_model.modelVersion,g_eeGeneral.stickMode); md->weight= 20;
+			md=setDest(templateValues.helperChannel); md->srcRaw=CM(templateValues.stick,g_model.modelVersion,p_eeGeneral->stickMode); md->weight= 20;
 			md=setDest(templateValues.outputChannel); md->srcRaw=CH(templateValues.outputChannel); md->weight= 100;
 			md=setDest(templateValues.outputChannel); md->srcRaw=CH(templateValues.helperChannel); md->weight= 2;
 			md=setDest(templateValues.outputChannel); md->srcRaw=MIX_FULL; md->weight= 100; md->swtch=DSW_SW1-1+templateValues.switch2; md->mltpx=MLTPX_REP;
 			md=setDest(templateValues.outputChannel); md->srcRaw=MIX_FULL; md->weight= -100; md->swtch=DSW_SW1-1+templateValues.switch3; md->mltpx=MLTPX_REP;
 
-      setSwitch(templateValues.switch1,CS_APOS, CM(templateValues.stick,g_model.modelVersion,g_eeGeneral.stickMode), 1);
+      setSwitch(templateValues.switch1,CS_APOS, CM(templateValues.stick,g_model.modelVersion,p_eeGeneral->stickMode), 1);
       setSwitch(templateValues.switch2,CS_VPOS, CH(templateValues.outputChannel), 100);
       setSwitch(templateValues.switch3,CS_VNEG, CH(templateValues.outputChannel), -100);
       updateSwitchesTab();

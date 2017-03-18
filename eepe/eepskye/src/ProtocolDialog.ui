@@ -1,0 +1,1046 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ProtocolDialog</class>
+ <widget class="QDialog" name="ProtocolDialog">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>441</width>
+    <height>483</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QDialogButtonBox" name="buttonBox">
+   <property name="geometry">
+    <rect>
+     <x>70</x>
+     <y>440</y>
+     <width>361</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QWidget" name="gridLayoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>19</x>
+     <y>10</y>
+     <width>361</width>
+     <height>470</height>
+    </rect>
+   </property>
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="1">
+     <widget class="QComboBox" name="ProtocolCB"/>
+    </item>
+    <item row="0" column="0">
+     <widget class="QLabel" name="label">
+      <property name="text">
+       <string>Protocol</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QComboBox" name="ppmFrameLengthCB">
+      <item>
+       <property name="text">
+        <string>12.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>13.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>13.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>14.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>14.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>15.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>15.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>16.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>16.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>17.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>17.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>18.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>18.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>19.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>19.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>20.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>20.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>21.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>21.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>22.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>22.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>23.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>23.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>24.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>24.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>25.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>25.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>26.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>26.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>27.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>27.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>28.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>28.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>29.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>29.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>30.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>30.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>31.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>31.5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>32.0</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>32.5</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="ppmFrameLabel">
+      <property name="text">
+       <string>PPM Frame Length</string>
+      </property>
+     </widget>
+    </item>
+    <item row="5" column="1">
+     <widget class="QComboBox" name="ppmDelayCB">
+      <item>
+       <property name="text">
+        <string>100</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>150</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>200</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>250</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>300</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>350</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>400</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>450</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>500</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>550</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>600</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>650</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>700</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>750</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>800</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="ppmDelayLabel">
+      <property name="text">
+       <string>PPM Delay</string>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="1">
+     <widget class="QComboBox" name="ppmPolarityCB">
+      <item>
+       <property name="text">
+        <string>Positive</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Negative</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="6" column="0">
+     <widget class="QLabel" name="ppmPolarityLabel">
+      <property name="text">
+       <string>Polarity</string>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="1">
+     <widget class="QSpinBox" name="channelsSB">
+      <property name="minimum">
+       <number>4</number>
+      </property>
+      <property name="maximum">
+       <number>16</number>
+      </property>
+      <property name="value">
+       <number>8</number>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="0">
+     <widget class="QLabel" name="channelsLabel">
+      <property name="text">
+       <string># Channels</string>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="1">
+     <widget class="QSpinBox" name="rxNumberSB">
+      <property name="minimum">
+       <number>0</number>
+      </property>
+      <property name="maximum">
+       <number>124</number>
+      </property>
+      <property name="value">
+       <number>8</number>
+      </property>
+     </widget>
+    </item>
+    <item row="8" column="0">
+     <widget class="QLabel" name="rxNumberLabel">
+      <property name="text">
+       <string>Rx Number</string>
+      </property>
+     </widget>
+    </item>
+    <item row="9" column="1">
+     <widget class="QComboBox" name="xjtChannelsCB">
+      <item>
+       <property name="text">
+        <string>16</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>8</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="9" column="0">
+     <widget class="QLabel" name="xjtChannelsLabel">
+      <property name="text">
+       <string># channels</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="multiTypeLabel">
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="1">
+     <widget class="QComboBox" name="multiTypeCB">
+      <item>
+       <property name="text">
+        <string>Flysky</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Hubsan</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FrskyD</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Hisky</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>V2x2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>DSM</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Devo</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>YD717</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>KN</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SymaX</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SLT</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>CX10</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>CG023</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Bayang</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FrskyX</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>ESky</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>MT99xx</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>MJXq</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Shenqi</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FY326</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>SFHSS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>J6PRO</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FQ777</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>ASSAN</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FrskyV</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Hontai</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>OpenLRS</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>AFHD2SA</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>28</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>29</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>30</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>31</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>32</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>33</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>34</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>35</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>36</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>37</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>38</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>39</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>40</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>41</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>42</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>43</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>44</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>45</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>46</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>47</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>48</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>49</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>50</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>51</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>52</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>53</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>54</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>55</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>56</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>57</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>58</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>59</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>60</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>61</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>62</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="10" column="0">
+     <widget class="QLabel" name="xjtTypeLabel">
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </widget>
+    </item>
+    <item row="10" column="1">
+     <widget class="QComboBox" name="xjtTypeCB">
+      <item>
+       <property name="text">
+        <string>D16</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>D8</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>LRP</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="11" column="0">
+     <widget class="QLabel" name="dsmTypeLabel">
+      <property name="text">
+       <string>Type</string>
+      </property>
+     </widget>
+    </item>
+    <item row="11" column="1">
+     <widget class="QComboBox" name="dsmTypeCB">
+      <item>
+       <property name="text">
+        <string>LP4/LP5</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>DSM2only</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>DSM2/DSMX</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>9XR-DSM</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="12" column="0">
+     <widget class="QLabel" name="xjtCountryLabel">
+      <property name="text">
+       <string>Country</string>
+      </property>
+     </widget>
+    </item>
+    <item row="12" column="1">
+     <widget class="QComboBox" name="xjtCountryCB">
+      <item>
+       <property name="text">
+        <string>America</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Japan</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Europe</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="13" column="0">
+     <widget class="QLabel" name="optionLabel">
+      <property name="text">
+       <string>Option</string>
+      </property>
+     </widget>
+    </item>
+    <item row="13" column="1">
+     <widget class="QSpinBox" name="optionSB">
+      <property name="minimum">
+       <number>-128</number>
+      </property>
+      <property name="maximum">
+       <number>127</number>
+      </property>
+      <property name="value">
+       <number>8</number>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="0">
+     <widget class="QLabel" name="autobindLabel">
+      <property name="text">
+       <string>Autobind</string>
+      </property>
+     </widget>
+    </item>
+    <item row="14" column="1">
+     <widget class="QComboBox" name="autobindCB">
+      <item>
+       <property name="text">
+        <string>No</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Yes</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="15" column="0">
+     <widget class="QLabel" name="powerLabel">
+      <property name="text">
+       <string>Power</string>
+      </property>
+     </widget>
+    </item>
+    <item row="15" column="1">
+     <widget class="QComboBox" name="powerCB">
+      <item>
+       <property name="text">
+        <string>High</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Low</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="17" column="0">
+     <widget class="QLabel" name="startChannelLabel">
+      <property name="text">
+       <string>First Channel</string>
+      </property>
+     </widget>
+    </item>
+    <item row="17" column="1">
+     <widget class="QSpinBox" name="startChannelSB">
+      <property name="minimum">
+       <number>1</number>
+      </property>
+      <property name="maximum">
+       <number>17</number>
+      </property>
+      <property name="value">
+       <number>1</number>
+      </property>
+     </widget>
+    </item>
+    <item row="18" column="1">
+     <spacer name="verticalSpacer">
+      <property name="orientation">
+       <enum>Qt::Vertical</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>20</width>
+        <height>40</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+    <item row="2" column="0">
+     <widget class="QLabel" name="multiSubProtocolLabel">
+      <property name="text">
+       <string>Sub Protocol</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="1">
+     <widget class="QComboBox" name="rateCB">
+      <item>
+       <property name="text">
+        <string>7ms</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>8ms</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>9ms</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>10ms</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>11ms</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="16" column="0">
+     <widget class="QLabel" name="rateLabel">
+      <property name="text">
+       <string>Rate</string>
+      </property>
+     </widget>
+    </item>
+    <item row="2" column="1">
+     <widget class="QComboBox" name="multiSubProtocolCB">
+      <item>
+       <property name="text">
+        <string>None</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="17" column="2">
+     <widget class="QLabel" name="followLabel">
+      <property name="text">
+       <string>=Follow</string>
+      </property>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QLabel" name="followLabel_2">
+      <property name="text">
+       <string/>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <zorder>gridLayoutWidget</zorder>
+  <zorder>buttonBox</zorder>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>ProtocolDialog</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>248</x>
+     <y>254</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>ProtocolDialog</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>316</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>274</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

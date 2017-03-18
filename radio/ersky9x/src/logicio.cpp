@@ -35,6 +35,7 @@
 #endif
 
 #include "ersky9x.h"
+#include "myeeprom.h"
 #include "drivers.h"
 #include "logicio.h"
 
@@ -50,6 +51,8 @@
 #include "myeeprom.h"
 
 extern uint8_t TrimBits ;
+extern uint16_t ExternalSwitches ;
+extern uint8_t ExternalSwitchesValid ;
 
 #ifndef SIMU
 #ifdef PCBSKY
@@ -338,6 +341,11 @@ void config_free_pins()
 
 #endif // 
 
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
+uint8_t ExternalKeys ;
+uint8_t ExternalSet ;
+#endif
+
 // keys:
 // KEY_EXIT    PA31 (PC24)
 // KEY_MENU    PB6 (PB5)
@@ -366,8 +374,17 @@ void init_trims()
 
 uint32_t read_keys()
 {
+	uint8_t keys ;
 	checkM64() ;
-	return ~M64Buttons ;
+	keys = ~M64Buttons ;
+	if ( g_model.BTfunction == BT_LCDDUMP )
+	{
+		if ( ExternalSet )
+		{
+			keys &= ~ExternalKeys ;
+		}
+	}
+	return keys ;
 }
 
 uint32_t readKeyUpgradeBit( uint8_t index )
@@ -898,6 +915,13 @@ extern uint8_t Co_proc_status[] ;
 			y |= 2 ;		// MENU
 		}
 	}
+	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
+	{
+		if ( ExternalSet )
+		{
+			y &= ~ExternalKeys ;
+		}
+	}
 	return y ;
 }
 #endif
@@ -1025,6 +1049,15 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 
 uint32_t hwKeyState( uint8_t key )
 {
+	uint32_t externalOK = 0 ;
+	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
+	{
+		if ( ExternalSwitchesValid )
+		{
+			externalOK = 1 ;
+		}
+	}
+	
 	register uint32_t a ;
 	register uint32_t c ;
 	uint32_t av9 = Analog_values[9] ;
@@ -1053,6 +1086,13 @@ uint32_t hwKeyState( uint8_t key )
 
 	if ( ( key >= HSW_ThrCt ) && ( key <= HSW_Trainer ) )
 	{
+		if ( externalOK )
+		{
+			if ( key == HSW_ThrCt )
+			{
+				return ( ExternalSwitches & 0x20 ) ? 1 : 0 ;
+			}
+		}
 		return keyState( (EnumKeys)(key + ( SW_ThrCt - HSW_ThrCt ) ) ) ;
 	}
 
@@ -1497,6 +1537,23 @@ uint32_t switchPosition( uint32_t swtch )
 
 uint32_t keyState(EnumKeys enuk)
 {
+	uint32_t externalOK = 0 ;
+	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
+	{
+		if ( ExternalSwitchesValid )
+		{
+			externalOK = 1 ;
+		}
+	}
+
+	if ( externalOK )
+	{
+		if ( enuk == SW_ThrCt )
+		{
+			return ( ExternalSwitches & 0x20 ) ? 1 : 0 ;
+		}
+	}
+
 	register uint32_t a ;
 	register uint32_t c ;
 
@@ -1558,6 +1615,12 @@ uint32_t keyState(EnumKeys enuk)
 #ifdef PCBX9D
 void init_keys()
 {
+#ifdef PCBX7
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( 0x0400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+#else // PCBX7
 #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN ; 		// Enable portF clock
@@ -1571,11 +1634,21 @@ void init_keys()
 // Extra inputs
 	configure_pins( 0x6000, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 #endif // REV9E
+#endif // PCBX7
 }
 
 void init_trims()
 {
 // Trims 
+#ifdef PCBX7
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( 0x0078, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	configure_pins( 0x000E, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( 0x8000, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+#else
+	
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 #ifdef REV9E
@@ -1586,6 +1659,7 @@ void init_trims()
 	configure_pins( 0x0078, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 #endif // REV9E
 	configure_pins( 0x200E, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+#endif // PCBX7
 }
 
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
@@ -1597,6 +1671,23 @@ uint32_t read_keys()
 	x = GPIOD->IDR ; // 7 MENU, 3 PAGE(UP), 2 EXIT
 	y = 0 ;
 
+#ifdef PCBX7
+	if ( x & PIN_BUTTON_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & PIN_BUTTON_PAGE )
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	if ( x & PIN_BUTTON_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	y |= 0x02 << KEY_UP ;			// up
+	y |= 0x02 << KEY_DOWN ;		// DOWN
+#else
 #ifdef REV9E
 	if ( x & PIN_BUTTON_MENU )
 	{
@@ -1616,7 +1707,7 @@ uint32_t read_keys()
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 //	}
 
-	y |= 0x02 << KEY_RIGHT ;		// RIGHT
+	y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	y |= 0x02 << KEY_UP ;			// up
 	y |= 0x02 << KEY_DOWN ;		// DOWN
 
@@ -1655,6 +1746,11 @@ uint32_t read_keys()
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 	}
 #endif // REV9E
+#endif // PCBX7
+	if ( ExternalSet )
+	{
+		y &= ~ExternalKeys ;
+	}
 	return y ;
 }
 
@@ -1723,7 +1819,61 @@ uint32_t read_trims()
 	}
 
 #else
+#ifdef PCBX7
+	trima = GPIOE->IDR ;
+// TRIM_LV_DOWN
+	if ( ( trima & PIN_TRIMLV_DN ) == 0 )
+	{
+		trims |= 4 ;
+	}
 
+// TRIM_LV_UP
+	if ( ( trima & PIN_TRIMLV_UP ) == 0 )
+	{
+		trims |= 8 ;
+	}
+
+// TRIM_RH_DOWN
+	if ( ( trima & PIN_TRIMRH_DN ) == 0 )
+	{
+		trims |= 0x40 ;
+	}
+
+// TRIM_RH_UP
+	if ( ( trima & PIN_TRIMRH_UP ) == 0 )
+	{
+		trims |= 0x80 ;
+	}
+
+	trima = GPIOC->IDR ;
+
+// TRIM_LH_UP
+	if ( ( trima & PIN_TRIMLH_UP ) == 0 )
+	{
+		trims |= 2 ;
+	}
+
+// TRIM_RV_UP
+	if ( ( trima & PIN_TRIMRV_UP ) == 0 )
+	{
+		trims |= 0x20 ;
+	}
+
+
+// TRIM_RV_DOWN
+	if ( ( trima & PIN_TRIMRV_DN ) == 0 )
+	{
+		trims |= 0x10 ;
+	}
+
+	trima = GPIOD->IDR ;
+// TRIM_LH_DOWN
+	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
+	{
+		trims |= 1 ;
+	}
+ 
+#else
 	trima = GPIOE->IDR ;
 // TRIM_LH_DOWN
 	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
@@ -1775,6 +1925,7 @@ uint32_t read_trims()
 	{
 		trims |= 0x80 ;
 	}
+#endif // PCBX7
 #endif
 
 	return trims ;
@@ -1785,6 +1936,15 @@ uint32_t read_trims()
 // 
 void setup_switches()
 {
+#ifdef PCBX7
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( 0x0020, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( PIN_SW_H | PIN_SW_C_L, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( 0xE087, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	 
+#else // PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 #ifdef REVPLUS
@@ -1824,6 +1984,7 @@ void setup_switches()
 	configure_pins( PIN_SW_C_L | PIN_SW_C_H | PIN_SW_J_L | PIN_SW_J_H,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTG) ;
 #endif	// REV9E
+#endif // PCBX7
 }
 
 uint32_t readKeyUpgradeBit( uint8_t index )
@@ -1837,6 +1998,11 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 
 uint32_t hwKeyState( uint8_t key )
 {
+#ifdef PCBX7
+  register uint32_t a = GPIOA->IDR;
+  register uint32_t d = GPIOD->IDR;
+  register uint32_t e = GPIOE->IDR;
+#else // PCBX7
   register uint32_t a = GPIOA->IDR;
   register uint32_t b = GPIOB->IDR;
   register uint32_t e = GPIOE->IDR;
@@ -1845,6 +2011,7 @@ uint32_t hwKeyState( uint8_t key )
   register uint32_t g = GPIOG->IDR;
   register uint32_t d = GPIOD->IDR;
 #endif	// REV9E
+#endif // PCBX7
 
   uint32_t xxx = 0 ;
   uint32_t analog = 0 ;
@@ -1937,6 +2104,77 @@ uint32_t hwKeyState( uint8_t key )
 			xxx = TrimBits & (1 << (2*xxx+1)) ;
 //			xxx = TrimBits & 0x80 ;
     break ;
+
+#ifdef PCBX7
+    case HSW_SA0:
+      xxx = ~e & PIN_SW_A_L;
+      break;
+    case HSW_SA1:
+      xxx = ((e & PIN_SW_A_L) | (e & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
+      break;
+    case HSW_SA2:
+      xxx = ~e & PIN_SW_A_H;
+      break;
+
+    case HSW_SB0:
+      xxx = ~e & PIN_SW_B_L ;
+      break;
+    case HSW_SB1:
+      xxx = ((e & PIN_SW_B_L) | (a & PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
+      break;
+    case HSW_SB2:
+      xxx = ~a & PIN_SW_B_H ;
+      break;
+
+    case HSW_SC0:
+      xxx = ~d & PIN_SW_C_L ;
+      break;
+    case HSW_SC1:
+      xxx = ((d & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+      break;
+    case HSW_SC2:
+      xxx = ~e & PIN_SW_C_H ;
+      break;
+
+    case HSW_SD0:
+      xxx = ~e & PIN_SW_D_L ;
+			break;
+    case HSW_SD1:
+      xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+      break;
+    case HSW_SD2:
+      xxx = ~e & PIN_SW_D_H ;
+      break;
+
+    case HSW_SF2:
+      xxx = ~e & PIN_SW_F ;
+      break;
+
+    case HSW_SH2:
+      xxx = ~d & PIN_SW_H;
+      break;
+
+    case HSW_SE0:
+      xxx = 1 ;
+      break;
+//    case HSW_SE1:
+//      xxx = 0 ;
+//      break;
+//    case HSW_SE2:
+//      xxx = ~b & PIN_SW_E_H ;
+//      break;
+
+    case HSW_SG0:
+      xxx = 1 ;
+      break;
+//    case HSW_SG1:
+//      xxx = (f & (PIN_SW_E_H | PIN_SW_E_L)) == (PIN_SW_E_H | PIN_SW_E_L) ;
+//      break;
+//    case HSW_SG2:
+//      xxx = ~f & PIN_SW_E_H ;
+//      break;
+
+#else // PCBX7
 		
 #ifndef REV9E
     case HSW_SA0:
@@ -2030,6 +2268,7 @@ uint32_t hwKeyState( uint8_t key )
       break;
 
 #endif // nREV9E
+#endif // PCBX7
 
 #ifdef REV9E
     

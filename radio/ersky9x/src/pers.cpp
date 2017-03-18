@@ -33,9 +33,7 @@
 #include "debug.h"
 #include "stringidx.h"
 
-#ifdef FRSKY
 #include "frsky.h"
-#endif
 
 int16_t *const CalibMid[] =
 { 
@@ -165,7 +163,7 @@ void modelDefault(uint8_t id)
   strncpy_P(g_model.name,PSTR(STR_MODEL), 10 );
   g_model.name[5]='0'+(id+1)/10;
   g_model.name[6]='0'+(id+1)%10;
-	g_model.modelVersion = MDSKYVERS;
+	g_model.modelVersion = 4 ;
 	g_model.trimInc = 2 ;
 
   applyTemplate(0); //default 4 channel template
@@ -179,8 +177,10 @@ void modelDefault(uint8_t id)
 		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
 	}
 //#ifdef PCB9XT
-	g_model.protocol = PROTO_OFF ;
-	g_model.xprotocol = PROTO_OFF ;
+//	g_model.protocol = PROTO_OFF ;
+//	g_model.xprotocol = PROTO_OFF ;
+	g_model.Module[0].protocol = PROTO_OFF ;
+	g_model.Module[1].protocol = PROTO_OFF ;
 //#endif
 }
 

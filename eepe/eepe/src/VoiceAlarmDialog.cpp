@@ -1,4 +1,5 @@
 #include "VoiceAlarmDialog.h"
+#include "modeledit.h"
 #include "ui_VoiceAlarmDialog.h"
 #include "pers.h"
 #include "helpers.h"
@@ -9,11 +10,17 @@ VoiceAlarmDialog::VoiceAlarmDialog(QWidget *parent, VoiceAlarmData *invad, int e
     ui(new Ui::VoiceAlarmDialog)
 {
   ui->setupUi(this);
+  rData = ((ModelEdit *)parent)->rData ;
 	leeType = eeType ;
   lpModel = pModel ;
 	vad = invad ;
+#ifdef V2
+  rData->populateSourceCB( ui->SourceCB, stickmode, 1, vad->source, modelVersion ) ; // , eeType ) ;
+	rData->populateSwitchCB( ui->SwitchCB, vad->swtch, eeType ) ;
+#else
   populateSourceCB( ui->SourceCB, stickmode, 1, vad->source, modelVersion ) ; // , eeType ) ;
 	populateSwitchCB( ui->SwitchCB, vad->swtch, eeType ) ;
+#endif
 	ui->FunctionCB->setCurrentIndex( vad->func ) ;
 	ui->RateCB->setCurrentIndex( vad->rate ) ;
 	ui->HapticCB->setCurrentIndex( vad->haptic ) ;
@@ -109,7 +116,11 @@ void VoiceAlarmDialog::updateDisplay()
 
 void VoiceAlarmDialog::valuesChanged()
 {
+#ifdef V2
+	vad->swtch = rData->getSwitchCbValue( ui->SwitchCB, leeType ) ;
+#else
 	vad->swtch = getSwitchCbValue( ui->SwitchCB, leeType ) ;
+#endif
 //	int limit = MAX_DRSWITCH ;
 //  if ( leeType )
 //	{

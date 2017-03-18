@@ -351,7 +351,7 @@ PACK(typedef struct t_SafetySwData { // Custom Switches data
 
 PACK(typedef struct t_VoiceSwData
 {
-  uint8_t swtch ;
+  int8_t swtch ;
 	uint8_t mode ; // ON, OFF, BOTH, ALL, ONCE
   uint8_t val ;
 }) VoiceSwData ;

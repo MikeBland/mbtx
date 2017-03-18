@@ -22,6 +22,11 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				type = RADIO_TYPE_X9E ;
 			}
 		}
+    lType = type ;
+
+		ValuesEditLock = true ;
+
+//		ui->spinBox->setValue(md->srcRaw);
 
     populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, type, lextraPots ) ;
     
@@ -80,7 +85,24 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->sourceCB->addItem("SC6 ");
     ui->sourceCB->addItem("SC7 ");
     ui->sourceCB->addItem("SC8 ");
-
+    ui->sourceCB->addItem("PPM9");
+    ui->sourceCB->addItem("PPM10");
+    ui->sourceCB->addItem("PPM11");
+    ui->sourceCB->addItem("PPM12");
+    ui->sourceCB->addItem("PPM13");
+    ui->sourceCB->addItem("PPM14");
+    ui->sourceCB->addItem("PPM15");
+    ui->sourceCB->addItem("PPM16");
+#ifdef EXTRA_SKYCHANNELS
+    ui->sourceCB->addItem("CH25");
+    ui->sourceCB->addItem("CH26");
+    ui->sourceCB->addItem("CH27");
+    ui->sourceCB->addItem("CH28");
+    ui->sourceCB->addItem("CH29");
+    ui->sourceCB->addItem("CH30");
+    ui->sourceCB->addItem("CH31");
+    ui->sourceCB->addItem("CH32");
+#endif
 //		int x = md->srcRaw ;
 //		if ( x >= MIX_3POS )
 //		{
@@ -107,7 +129,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 #ifdef SKY    
 		int value ;
 		value = md->srcRaw ;
-		if ( ( leeType == 1 ) || ( leeType == 2 ) )
+		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -117,7 +139,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				}
 				else
 				{
-					value += leeType == 2 ? 2 : NUM_EXTRA_POTS ;
+					value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
 				}
 			}
 		}
@@ -133,6 +155,13 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				{
 					value += lextraPots ;
 				}
+			}
+		}
+		if ( type == RADIO_TYPE_QX7 )
+		{
+			if ( value > 6 )
+			{
+			 value -= 1 ;	
 			}
 		}
 #endif
@@ -158,8 +187,12 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     
 		ui->sourceCB->removeItem(0);
 
-		ValuesEditLock = true ;
+#ifdef EXTRA_SKYCHANNELS
+  if ( ( md->srcRaw >= 21 && md->srcRaw <= 21+23 ) ||
+			 ( md->srcRaw >= 70 && md->srcRaw <= 70+7 ) )
+#else
 	  if ( md->srcRaw >= 21 && md->srcRaw <= 44 )
+#endif
 		{
 	  	ui->FMtrimChkB->setChecked(md->disableExpoDr) ;
 		}
@@ -168,19 +201,24 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 	  	ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
 		}
 		updateChannels() ;
-		ValuesEditLock = false ;
 
 		ui->sourceSwitchCB->clear();
 
- 		if ( ( (leeType == 1 ) || ( leeType == 2 ) ) )	// Taranis
+ 		if ( ( (leeType == RADIO_TYPE_TARANIS ) || ( leeType == RADIO_TYPE_TPLUS ) || ( leeType == RADIO_TYPE_QX7 ) ) )	// Taranis
 		{
     	ui->sourceSwitchCB->addItem("SA");
     	ui->sourceSwitchCB->addItem("SB");
     	ui->sourceSwitchCB->addItem("SC");
     	ui->sourceSwitchCB->addItem("SD");
-    	ui->sourceSwitchCB->addItem("SE");
+			if ( leeType != RADIO_TYPE_QX7 )
+			{
+    		ui->sourceSwitchCB->addItem("SE");
+			}
     	ui->sourceSwitchCB->addItem("SF");
-    	ui->sourceSwitchCB->addItem("SG");
+			if ( leeType != RADIO_TYPE_QX7 )
+			{
+    		ui->sourceSwitchCB->addItem("SG");
+			}
     	ui->sourceSwitchCB->addItem("SH");
 
 		}
@@ -224,9 +262,25 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     	ui->sourceSwitchCB->addItem("6POS");
 		}
     
-		
-		ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
-		
+
+		if ( leeType == RADIO_TYPE_QX7 ) 
+		{
+			uint32_t index = md->switchSource ;
+			if ( md->switchSource > 4 )
+			{
+				index -= 1 ;
+			}
+			if ( md->switchSource > 6 )
+			{
+				index -= 1 ;
+			}
+			ui->sourceSwitchCB->setCurrentIndex(index) ;
+		}
+		else
+		{
+			ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
+		}
+
 		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -125, 125 ) ;
     populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -125, 125 ) ;
     
@@ -285,6 +339,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		ui->Fm4CB->setChecked( !(md->modeControl & 16) ) ;
 		ui->Fm5CB->setChecked( !(md->modeControl & 32) ) ;
 		ui->Fm6CB->setChecked( !(md->modeControl & 64) ) ;
+		ValuesEditLock = false ;
 
     valuesChanged();
 
@@ -340,16 +395,29 @@ void MixerDialog::changeEvent(QEvent *e)
 
 void MixerDialog::updateChannels()
 {
-  uint32_t lowBound = leeType ? 22 : 21 ;
-	if ( leeType == 2 )
+  uint32_t lowBound = lType ? 21 : 21 ;
+  if ( lType == RADIO_TYPE_TPLUS )
 	{
 		lowBound = 23 ;
 	}
-	if ( leeType == 3 )
+  if ( lType == RADIO_TYPE_9XTREME )
 	{
 		lowBound = 21 ;
 	}
-  if ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 )
+  if ( lType == RADIO_TYPE_X9E )
+  {
+    lowBound = 24 ;
+  }
+  if ( lType == RADIO_TYPE_QX7 )
+  {
+    lowBound = 20 ;
+  }
+#ifdef EXTRA_SKYCHANNELS
+  if ( ( md->srcRaw >= 21 && md->srcRaw <= 21+23 ) ||
+			 ( md->srcRaw >= 70 && md->srcRaw <= 70+7 ) )
+#else
+  if ( md->srcRaw >= 21 && md->srcRaw <= 21+23 )
+#endif
 	{
 		ui->label_expo_output->setText( "Use Output" ) ;
 		ui->label_expo_comment->setText( "(or Expo/Dr enable)" ) ;
@@ -357,6 +425,16 @@ void MixerDialog::updateChannels()
 		if ( md->disableExpoDr )
 		{
 			uint32_t i ;
+			uint32_t j ;
+
+#ifdef EXTRA_SKYCHANNELS
+			j = 25 ;
+      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
+			{
+				ui->sourceCB->setItemText( i, QString("OP%1").arg(j) ) ;
+				j += 1 ;
+			}
+#endif
       for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
 			{
 				ui->sourceCB->setItemText( i, QString("OP%1").arg(i-(lowBound-2)) ) ;
@@ -365,6 +443,15 @@ void MixerDialog::updateChannels()
 		else
 		{
 			uint32_t i ;
+			uint32_t j ;
+#ifdef EXTRA_SKYCHANNELS
+			j = 25 ;
+      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
+			{
+				ui->sourceCB->setItemText( i, QString("CH%1").arg(j) ) ;
+				j += 1 ;
+			}
+#endif
       for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
 			{
 				ui->sourceCB->setItemText( i, QString("CH%1").arg(i-(lowBound-2)) ) ;
@@ -410,11 +497,34 @@ void MixerDialog::valuesChanged()
 //		}
 //    md->srcRaw       = x ;
 		
-		
-		value = decodePots( value, leeType, lextraPots ) ;
+		if ( lType == RADIO_TYPE_QX7 )
+		{
+      if ( value >= 7 )
+			{
+				value += 1 ;
+			}
+		}
+    value = decodePots( value, lType, lextraPots ) ;
 		md->srcRaw       = value ;
-		
-		md->switchSource = ui->sourceSwitchCB->currentIndex() ;
+//		ui->spinBox->setValue(md->srcRaw);
+
+		if ( leeType == RADIO_TYPE_QX7 ) 
+		{
+			uint32_t index = ui->sourceSwitchCB->currentIndex() ;
+			if ( index > 3 )
+			{
+				index += 1 ;
+			}
+			if ( index > 5 )
+			{
+				index += 1 ;
+			}
+		 	md->switchSource = index ;
+		}
+		else
+		{
+			md->switchSource = ui->sourceSwitchCB->currentIndex() ;
+		}
 		ui->sourceSwitchCB->setVisible( md->srcRaw == MIX_3POS ) ;
     md->weight       = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100 ) ;
     md->sOffset      = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0 ) ;
@@ -434,9 +544,17 @@ void MixerDialog::valuesChanged()
     md->lateOffset   = ui->lateOffsetChkB->checkState() ? 1 : 0;
 
 		int lowBound = leeType ? 21 : 21 ;
+#ifdef EXTRA_SKYCHANNELS
+	  if ( ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 ) ||
+				 ( md->srcRaw >= lowBound-21+70 && md->srcRaw <= lowBound-21+70+7 ) )
+		{
+		  if ( ( oldSrcRaw >= lowBound && oldSrcRaw <= lowBound+23 ) ||
+					 ( oldSrcRaw >= lowBound-21+70 && oldSrcRaw <= lowBound-21+70+7 ) )
+#else
     if ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 )
 		{
 			if ( oldSrcRaw >= lowBound && oldSrcRaw <= lowBound+23 )
+#endif
 			{
 	    	md->disableExpoDr = ui->FMtrimChkB->checkState() ? 1 : 0 ;
 				updateChannels() ;
@@ -449,7 +567,12 @@ void MixerDialog::valuesChanged()
 		}
 		else
 		{
+#ifdef EXTRA_SKYCHANNELS
+			if ( ( oldSrcRaw >= 21 && oldSrcRaw <= 44 ) ||
+			 ( oldSrcRaw >= 70 && oldSrcRaw <= 70+7 ) )
+#else
 			if ( oldSrcRaw >= 21 && oldSrcRaw <= 44 )
+#endif
 			{
 				updateChannels() ;
 			}

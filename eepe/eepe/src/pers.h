@@ -19,6 +19,10 @@
 
 #define VERS 1
 
+#ifdef V2
+#define XSW_MOD	1
+#endif
+
 #include <stdint.h>
 #include <string.h>
 
@@ -31,6 +35,9 @@ const uint8_t modn12x3[4][4]= {
 #ifdef V2
 #define EEGeneral V2EEGeneral
 #define ModelData V2ModelData
+#else
+#define EEGeneral V1EEGeneral
+#define ModelData V1ModelData
 #endif
 
 //convert from mode 1 to mode g_eeGeneral.stickMode
@@ -83,6 +90,17 @@ enum EnumKeys {
   TRM_RH_UP   ,
   //SW_NC     ,
   //SW_ON     ,
+#ifdef XSW_MOD
+  SW_IDL ,            // ID0/ID1/ID2
+  SW_ThrCt  ,         // TH^/TH-/THv
+  SW_RuddDR ,         // RU^/RU-/RUv
+  SW_ElevDR ,         // EL^/EL-/ELv
+  SW_AileDR ,         // AI^/AI-/AIv
+  SW_Gear   ,         // GE^/GE-/GEv
+  SW_PB1,             // push button 1
+  SW_PB2,             // push button 2
+  SW_Trainer
+#else
   SW_ThrCt  ,
   SW_RuddDR ,
   SW_ElevDR ,
@@ -92,7 +110,68 @@ enum EnumKeys {
   SW_AileDR ,
   SW_Gear   ,
   SW_Trainer
+#endif
 };
+
+#ifdef XSW_MOD
+
+// physical switch base indices
+#define PSW_BASE      SW_IDL        // the first physical/3-pos switch
+#define PSW_3POS_END  SW_Gear       // the last 3-pos switch
+#define PSW_END       SW_Trainer    // the last physical switch
+#define XSW_BASE      SW_ThrCt      // the first extra switch
+#define XSW_3POS_END  SW_Gear       // the last extra 3-pos switch
+#define XSW_END       SW_PB2        // the last extra switch
+
+// max values
+#define MAX_PSW3POS     (PSW_3POS_END-PSW_BASE+1) // 6 physical 3-pos switches
+#define MAX_PSW2POS     (PSW_END-PSW_3POS_END)    // 3 physical 2-pos switches
+#define MAX_PSWITCH     (MAX_PSW3POS+MAX_PSW2POS) // 9 physical switches
+#define MAX_XSWITCH     (XSW_END-XSW_BASE+1)      // 7 extra switches
+
+// extra switch sources: 4bits [0..15]
+#define SSW_NONE        0       // No source
+#define SSW_PB7         1       // Backlight, parallel Voice card strobe
+#define SSW_PC0         2       // NC - other LCD CS, rerouted LV trim UP
+#define SSW_PC4         3       // LCD_WR - serial LCD SCL, rerouted LV trim DWN
+#define SSW_PC6         4       // FrSky - rerouted ThrCt
+#define SSW_PC7         5       // FrSky - rerouted AileDR
+#define SSW_PG2         6       // Haptic
+#define SSW_PG5         7       // M2561 only
+#define SSW_XPB0        8       // voice module PB0 - D3 (EXT1)
+#define SSW_XPD2        9       // voice module PD2 - CLK
+#define SSW_XPD3        10      // voice module PD3 - D0 (TRIM_LV_DWN)
+#define SSW_XPD4        11      // voice module PD4 - D1 (TRIM_LV_UP)
+#define SSW_XPB1        12      // voice module PB1 - BL
+#define SSW_XPC0        13      // voice module PC0 - BUSY
+#define SSW_XPD7        14      // voice module PD7 - D2 (EXT2)
+
+
+#define DSW____  0    // "---"
+#define DSW_IDL  1
+#define DSW_THR  2
+#define DSW_RUD  3
+#define DSW_ELE  4
+#define DSW_AIL  5
+#define DSW_GEA  6
+#define DSW_PB1  7
+#define DSW_PB2  8
+#define DSW_TRN  9
+
+#define DSW_ID0  SW_3POS_BASE
+#define DSW_ID1  (DSW_ID0+1)
+#define DSW_ID2  (DSW_ID0+2)
+
+#define MAX_DRSWITCH    (1+MAX_PSWITCH+MAX_CSWITCH)
+#define SW_3POS_BASE    (MAX_DRSWITCH+1)          // ID0,1,2,TH^,-,v,RU^,-,v,EL^,-,v,AI^,-,v,GE^,-,v
+#define SW_3POS_END     (SW_3POS_BASE+3*MAX_PSW3POS-1)
+
+#define MAX_CSWITCH     (NUM_CSW+EXTRA_CSW)       // max 18 custom switches (L1..L9,LA..LI)
+
+#define V2TOGGLE_INDEX    (SW_3POS_END)
+
+//#else	// !XSW_MOD
+#endif  // XSW_MOD
 
 // Hardware switch mappings:
 #define HSW_ThrCt			1
@@ -121,7 +200,8 @@ enum EnumKeys {
 #define HSW_Pb2				44
 #define HSW_MAX				44
 
-#define TOGGLE_INDEX	HSW_MAX
+#define V1TOGGLE_INDEX	HSW_MAX
+
 
 #define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI EL^EL-ELvRU^RU-RUvAI^AI-AIvGE^GE-GEvPB1PB2"
 #define NUM_CSW  12 //number of custom switches
@@ -133,7 +213,9 @@ enum EnumKeys {
 #define SW_BASE      SW_ThrCt
 #define SW_BASE_DIAG SW_ThrCt
 //#define SWITCHES_STR "  NC  ON THR RUD ELE ID0 ID1 ID2 AILGEARTRNR"
+#ifndef V2
 #define MAX_DRSWITCH (1+SW_Trainer-SW_ThrCt+1+NUM_CSW)
+#endif
 #define PHY_SWITCH		(1+SW_Trainer-SW_ThrCt+1)
 
 #define SWP_ID0 (SW_ID0-SW_BASE)
@@ -218,6 +300,7 @@ enum EnumKeys {
 #define DR_DRSW1  99
 #define DR_DRSW2  98
 
+#ifndef V2
 #define DSW_THR   1
 #define DSW_RUD   2
 #define DSW_ELE   3
@@ -226,6 +309,7 @@ enum EnumKeys {
 #define DSW_ID2   6
 #define DSW_AIL   7
 #define DSW_GEA   8
+#endif
 #define DSW_TRN   9
 #define DSW_SW1   10
 #define DSW_SW2   11
@@ -301,6 +385,17 @@ enum EnumKeys {
 #define M_ESKY		       15
 #define M_MT99XX	       16
 #define M_MJXQ		       17
+#define M_SHENQI				 18
+#define M_FY326					 19
+#define M_SFHSS					 20
+#define M_J6PRO					 21
+#define M_FQ777					 22
+#define M_ASSAN					 23
+#define M_FRSKYV	       24
+#define M_HONTAI	       25
+#define M_OPENLRS	       26
+#define M_AFHDS2A	       27
+#define M_Q2X2		       28
 
 
 #define GETADC_SING = 0
@@ -351,9 +446,11 @@ bool eeLoadGeneral();
 //uint8_t checkSubGen(uint8_t event,uint8_t num, uint8_t sub, uint8_t mode);
 
 
-
-
 #ifndef SKY
+#ifdef V2
+#include <QString>
+#include <QComboBox>
+#endif
 #include "myeeprom.h"
 #include "file.h"
 
@@ -383,8 +480,13 @@ public:
 
     int  getModel(ModelData* model, uint8_t id);
     bool putModel(ModelData* model, uint8_t id);
+#ifdef V2
+    int  getGeneralSettings(V2EEGeneral* setData);
+    bool putGeneralSettings(V2EEGeneral* setData);
+#else
     int  getGeneralSettings(EEGeneral* setData);
     bool putGeneralSettings(EEGeneral* setData);
+#endif
 
     int eesize() {return theFile->m_type ? EESIZE128 : EESIZE64;}
     void setSize( int size) { mee_type = size ; theFile->m_type = mee_type ; }

@@ -39,7 +39,7 @@
 #include "stm32f2xx_gpio.h"
 #include "stm32f2xx_rcc.h"
 
-#ifdef REV9E
+#ifdef POWER_BUTTON
 #define POWER_STATE_OFF				0
 #define POWER_STATE_START			1
 #define POWER_STATE_RUNNING		2
@@ -68,13 +68,13 @@ uint32_t SoftPowerOff ;
 
 uint32_t check_soft_power()
 {
-#ifdef REV9E
+#ifdef POWER_BUTTON
 	uint32_t switchValue ;
 #endif
 #if defined(SIMU)
   return POWER_ON;
 #else
-#ifdef REV9E
+#ifdef POWER_BUTTON
 	switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
 	switch ( PowerState )
 	{
@@ -170,6 +170,9 @@ void init_soft_power()
 #ifdef REVPLUS
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 #endif
+#ifdef PCBX7
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+#endif
 #ifdef PCB9XT
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 #endif
@@ -182,12 +185,17 @@ void init_soft_power()
 	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
 	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 #else
-#ifdef PCB9XT
+ #ifdef PCBX7
 	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
-	configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
-#else
-	configure_pins( PIN_INT_RF_PWR | PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
-#endif
+	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+ #else
+  #ifdef PCB9XT
+		configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
+		configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+  #else
+		configure_pins( PIN_INT_RF_PWR | PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+  #endif
+ #endif
 #endif
 //	configure_pins( PIN_INT_RF_PWR | PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 
@@ -232,7 +240,7 @@ void init_soft_power()
 #ifndef PCB9XT
 	GPIO_SetBits(GPIOPWR,PIN_MCU_PWR);
 #endif
-#ifdef REV9E
+#ifdef POWER_BUTTON
 	PowerState = POWER_STATE_START ;
 #endif
 

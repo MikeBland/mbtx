@@ -25,6 +25,7 @@ public:
 private:
     Ui::printDialog *ui;
 
+    struct t_radioData *rData ;
     void printTitle();
     void printSetup();
     void printExpo();

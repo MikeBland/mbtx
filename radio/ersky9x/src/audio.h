@@ -401,6 +401,7 @@ extern void unlockVoice( void ) ;
 #define	SV_SHUTDOWN		58
 #define	SV_TRN_LOST		59
 
+extern void stopMusic( void ) ;
 
 #define MUSIC_STOPPED			0
 #define MUSIC_PLAYING			1

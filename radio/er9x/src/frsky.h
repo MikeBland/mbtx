@@ -416,6 +416,8 @@ extern uint8_t FrskyAlarmCheckFlag ;
 //extern uint8_t MaxGpsSpeed ;
 //extern int16_t MaxGpsAlt ;
 
+extern uint8_t TxLqi ;
+
 void FRSKY_Init( uint8_t brate ) ;	// 0 for 9600, 1 for 57600
 // static void FRSKY10mspoll(void);
 void FRSKY_setTxPacket( uint8_t type, uint8_t value, uint8_t p1, uint8_t p2 ) ;

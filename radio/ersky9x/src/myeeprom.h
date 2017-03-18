@@ -28,7 +28,10 @@
 #endif
 #define MAX_MIXERS  32
 #define MAX_SKYMIXERS  48
-#define EXTRA_SKYMIXERS	0
+
+#define TOTAL_EXTRA_SKYMIXERS 32
+#define EXTRA_SKYMIXERS	16
+#define SPARE_SKYMIXERS (TOTAL_EXTRA_SKYMIXERS-EXTRA_SKYMIXERS)
 #define MAX_CURVE5  8
 #define MAX_CURVE9  8
 #define MDVERS_r9   1
@@ -117,8 +120,8 @@ PACK(typedef struct t_TrainerChannel
 {
   int16_t calib ;
   uint8_t srcChn:3 ; //0-7 = ch1-8
-  uint8_t source:2 ;	// Only used on index 0
-	uint8_t spare:1 ;
+  uint8_t source:3 ;	// Only used on index 0, invert option on channel 1
+//	uint8_t spare:1 ;
   uint8_t mode:2;   //off,add-mode,subst-mode
   int8_t  swtch ;
   int8_t  studWeight ;
@@ -250,6 +253,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t spare:4 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
+	uint8_t physicalRadioType ;
+	uint8_t potDetents ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -449,7 +454,10 @@ PACK(typedef struct te_MixData {
   int8_t  sOffset;
 	uint8_t modeControl ;
 	uint8_t	switchSource ;
-	uint8_t	res[2] ;
+  uint8_t extWeight:2 ;
+  uint8_t extOffset:2 ;
+	uint8_t	res:4 ;
+	uint8_t	res1 ;
 }) SKYMixData;
 
 PACK(typedef struct te_CSwData { // Custom Switches data
@@ -482,13 +490,13 @@ PACK(typedef struct te_SafetySwData { // Safety Switches data
 }) SKYSafetySwData;
 
 PACK(typedef struct te_FrSkyChannelData {
-  uint8_t   ratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
-  uint8_t   offset ;              // 
+  uint16_t   lratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+//  uint16_t  lratio ;              // 
   uint8_t   gain ;                // 
-  uint8_t   alarms_value[2] ;     // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
-  uint8_t   alarms_level ;
-  uint8_t   alarms_greater ;      // 0=LT(<), 1=GT(>)
-  uint8_t   type ;                // 0=volts, 1=raw, 2=volts*2, 3=Amps
+  uint8_t   unused_alarms_value[2] ;     // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+  uint8_t   unused_alarms_level ;
+  uint8_t   unused_alarms_greater ;      // 0=LT(<), 1=GT(>)
+  uint8_t   units ;               // 0=volts, 1=raw, 2=volts*2, 3=Amps
 }) SKYFrSkyChannelData;
 
 PACK(typedef struct te_FrSkyData {
@@ -518,6 +526,13 @@ PACK(typedef struct t_Vario
   uint8_t spare:1 ;
   uint8_t param:6 ;
 }) VarioData ;	
+
+PACK(typedef struct t_Extra_Vario
+{
+  int8_t baseFrequency ;
+  int8_t offsetFrequency  ;
+  uint8_t volume ;
+}) VarioExtraData ;	
 
 PACK(typedef struct t_gvar {
 	int8_t gvar ;
@@ -593,20 +608,20 @@ PACK(typedef struct t_customCheck
 	int8_t  max ;
 }) CustomCheckData ;
 
-PACK(typedef struct t_protocol
-{
-  uint8_t   protocol:4 ;
-  uint8_t   country:2 ;
-  uint8_t   not_sub_protocol:1 ;
-  uint8_t   pulsePol:1 ;
-  int8_t    ppmNCH ;
-  int8_t    ppmDelay ;
-  int8_t    ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
-	uint8_t		startChannel ;			// for main output 0 = ch1
-	uint8_t		pxxRxNum ;
-	int8_t		option_protocol ;
-  uint8_t		sub_protocol ;
-}) ProtocolData ;
+//PACK(typedef struct t_protocol
+//{
+//  uint8_t   protocol:4 ;
+//  uint8_t   country:2 ;
+//  uint8_t   not_sub_protocol:1 ;
+//  uint8_t   pulsePol:1 ;
+//  int8_t    ppmNCH ;
+//  int8_t    ppmDelay ;
+//  int8_t    ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
+//	uint8_t		startChannel ;			// for main output 0 = ch1
+//	uint8_t		pxxRxNum ;
+//	int8_t		option_protocol ;
+//  uint8_t		sub_protocol ;
+//}) ProtocolData ;
 
 PACK(typedef struct t_music
 {
@@ -615,6 +630,54 @@ PACK(typedef struct t_music
 	int8_t musicPrevSwitch ;
 	int8_t musicNextSwitch ;
 }) MusicData ;
+
+
+#if EXTRA_SKYMIXERS
+#define EXTRA_MIXERS SKYMixData exmixData[EXTRA_SKYMIXERS+SPARE_SKYMIXERS]
+#else
+#define EXTRA_MIXERS
+#endif
+
+#if EXTRA_SKYCHANNELS
+#define EXTRA_CHANNELS LimitData elimitData[EXTRA_SKYCHANNELS]
+#else
+#define EXTRA_CHANNELS
+#endif
+
+
+// g_model.protocol / xprotocol - 4-bits
+// g_model.sub_protocol / xsub_protocol
+// g_model.ppmFrameLength / xppmFrameLength
+// g_model.ppmNCH / xppmNCH / ppm2NCH
+// g_model.ppmDelay / xppmDelay
+// g_model.pxxRxNum / xPxxRxNum
+// g_model.option_protocol / xoption_protocol
+// g_model.startPPM2channel
+// g_model.pulsePol / xpulsePol - 1-bit
+// g_model.ppmOpenDrain
+// g_model.failsafeMode[0]
+// g_model.country / xcountry - 2-bits
+// g_model.dsmMode
+// g_model.startChannel / xstartChannel
+
+// Use 0 for internal, 1 for external
+struct t_module
+{
+	uint8_t protocol:4 ;
+  uint8_t country:2 ;
+	uint8_t ppmOpenDrain:1 ;
+	uint8_t pulsePol:1 ;
+  int8_t channels ;
+	uint8_t startChannel ;
+  uint8_t	sub_protocol ;
+	uint8_t	pxxRxNum ;
+ 	int8_t ppmDelay ;
+  int8_t ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
+	int8_t option_protocol ;
+	uint8_t failsafeMode ;
+	int8_t failsafe[16] ;
+	uint8_t sparex[3] ;
+} ;
 
 
 
@@ -686,7 +749,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t		anaVolume ;	// analog volume control
 	int8_t pxxFailsafe[16] ;
 	int8_t logSwitch ;
-	uint8_t logRate ;
+	uint8_t logRate:4 ;
+	uint8_t logNew:1 ;
+	uint8_t logSpare:3 ;
   // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
@@ -696,7 +761,8 @@ PACK(typedef struct te_ModelData {
   uint8_t   xpulsePol:1 ;
   uint8_t   trainPulsePol:1 ;
 	uint8_t		dsmAasRssi:1 ;
-  uint8_t   polSpare:5 ;
+  uint8_t   polSpare:4 ;
+  uint8_t   ForceTelemetryType:1 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;
@@ -735,7 +801,11 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	uint8_t disableThrottleCheck:1 ;
-	uint8_t thrSpare:2 ;
+//#ifdef TRIMS_SCALED
+//	uint8_t trimsScaled:1 ;
+//#else
+	uint8_t thrSpare:1 ;
+//#endif
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E
@@ -763,20 +833,19 @@ PACK(typedef struct te_ModelData {
 	ExtScaleData eScalers[NUM_SCALERS] ;
 	uint32_t LogDisable[4] ;	// Up to 128 sensors etc.
 	uint8_t failsafeMode[2] ;
-#if EXTRA_SKYMIXERS
-  SKYMixData exmixData[EXTRA_SKYMIXERS] ;
-#endif
-#if EXTRA_SKYCHANNELS
-  LimitData elimitData[EXTRA_SKYCHANNELS];
-#endif
+	struct t_module Module[2] ;
 
+	EXTRA_MIXERS ;
+	EXTRA_CHANNELS ;
+
+	VarioExtraData varioExtraData ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 
 
 extern SKYModelData g_model;
 
-extern ProtocolData Protocols[2] ;
+//extern ProtocolData Protocols[2] ;
 
 #endif
 /*eof*/

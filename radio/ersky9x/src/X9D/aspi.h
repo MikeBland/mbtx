@@ -13,6 +13,18 @@
 
 #include "stm32f2xx.h"
 
+#ifdef PCBX7
+
+#define LCD_NCS_HIGH()                 LCD_NCS_GPIO->BSRRL = LCD_NCS_GPIO_PIN
+#define LCD_NCS_LOW()                  LCD_NCS_GPIO->BSRRH = LCD_NCS_GPIO_PIN
+
+#define LCD_A0_HIGH()                  LCD_SPI_GPIO->BSRRL = LCD_A0_GPIO_PIN
+#define LCD_A0_LOW()                   LCD_SPI_GPIO->BSRRH = LCD_A0_GPIO_PIN
+
+#define LCD_RST_HIGH()                 LCD_RST_GPIO->BSRRL = LCD_RST_GPIO_PIN
+#define LCD_RST_LOW()                  LCD_RST_GPIO->BSRRH = LCD_RST_GPIO_PIN
+
+#else // PCBX7
 #ifdef REVPLUS
 #define	LCD_NCS_HIGH()		    (GPIO_LCD_NCS->BSRRL = PIN_LCD_NCS)
 #define	LCD_NCS_LOW()		    	(GPIO_LCD_NCS->BSRRH = PIN_LCD_NCS)
@@ -31,13 +43,13 @@
 #define LCD_RST_HIGH()		    (GPIO_LCD->BSRRL = PIN_LCD_RST)
 #define LCD_RST_LOW()		    	(GPIO_LCD->BSRRH = PIN_LCD_RST)
 #endif
+#endif // PCBX7
 
 #define LCD_CLK_HIGH()		    (GPIO_LCD->BSRRL = PIN_LCD_CLK)
 #define LCD_CLK_LOW()		    	(GPIO_LCD->BSRRH = PIN_LCD_CLK)
 
 #define LCD_MOSI_HIGH()		    (GPIO_LCD->BSRRL = PIN_LCD_MOSI)
 #define LCD_MOSI_LOW()		    (GPIO_LCD->BSRRH = PIN_LCD_MOSI)
-
 
 void AspiCmd(u8 Command_Byte);
 void AspiData(u8 Para_data);

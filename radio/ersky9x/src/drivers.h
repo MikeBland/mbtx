@@ -48,6 +48,22 @@ struct t_fifo128
 
 extern uint8_t CaptureMode ;
 
+struct t_softSerial
+{
+	uint8_t lineState ;
+	uint8_t captureMode ;
+	uint16_t bitTime ;
+	uint16_t HtoLtime ;
+	uint16_t LtoHtime ;
+	uint16_t byte ;
+	uint8_t softSerInvert ;
+	uint8_t bitState ;
+	uint8_t bitCount ;
+	uint8_t softSerialEvenParity ;
+} ;
+
+extern struct t_softSerial SoftSerial1 ;
+
 //extern void put_fifo32( struct t_fifo32 *pfifo, uint8_t byte ) ;
 //extern int32_t get_fifo32( struct t_fifo32 *pfifo ) ;
 extern void put_fifo64( struct t_fifo64 *pfifo, uint8_t byte ) ;
@@ -86,7 +102,7 @@ extern void init_software_remote( void ) ;
 #endif
 
 #ifdef PCBX9D
-extern void x9dConsoleInit( void ) ;
+extern void ConsoleInit( void ) ;
 extern uint16_t rxTelemetry( void ) ;
 extern void USART6_Sbus_configure( void ) ;
 extern void stop_USART6_Sbus( void ) ;
@@ -160,6 +176,7 @@ extern void p4hex( uint16_t value ) ;
 extern void p2hex( unsigned char c ) ;
 extern void hex_digit_send( unsigned char c ) ;
 #ifdef PCBSKY
+extern void start_timer4( void ) ;
 extern void read_adc(void ) ;
 #endif
 extern void xread_9_adc(void ) ;
@@ -183,7 +200,7 @@ extern void BlSetColour( uint32_t level, uint32_t colour ) ;
 extern void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel ) ;
 extern void backlightSend() ;
 //extern void backlightReset( void ) ;
-extern void console9xtInit( void ) ;
+extern void consoleInit( void ) ;
 extern void UART4SetBaudrate ( uint32_t baudrate ) ;
 #endif	// PCB9XT
 

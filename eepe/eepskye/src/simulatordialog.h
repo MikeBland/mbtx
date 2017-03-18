@@ -103,6 +103,7 @@ private:
 		quint8  CalcScaleNest ;
     
 		quint8  current_limits ;
+		quint8  gvar_or_scalers ;
 
     SKYModelData g_model;
     EEGeneral g_eeGeneral;
@@ -165,6 +166,7 @@ private slots:
     void on_holdLeftY_clicked(bool checked);
     void on_holdLeftX_clicked(bool checked);
 		void on_SendDataButton_clicked() ;
+		void on_GvarButton_clicked() ;
     void timerEvent();
 		void voiceDisplay( QString name ) ;
 		void processVoiceAlarms( void ) ;

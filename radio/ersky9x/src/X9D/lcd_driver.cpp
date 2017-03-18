@@ -9,7 +9,7 @@
   ******************************************************************************
 */
 
-#include "../ersky9x.h"
+#include "..\ersky9x.h"
 
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
@@ -25,6 +25,339 @@
 #include "CoOS.h"
 #endif
 #include <stdlib.h>
+#include <string.h>
+
+
+#ifdef PCBX7
+
+#define GPIO_PinSource_HAPTIC           GPIO_PinSource8
+
+#define LCD_CONTRAST_OFFSET            20
+#define RESET_WAIT_DELAY_MS            300 // Wait time after LCD reset before first command
+#define WAIT_FOR_DMA_END()             do { } while (lcd_busy)
+
+
+#define LCD_W	 128
+#define IS_LCD_RESET_NEEDED()          true
+
+bool lcdInitFinished = false;
+void lcdInitFinish();
+
+extern uint8_t DisplayBuf[] ;
+
+void delay_ms(uint32_t ms)
+{
+  while (ms--) {
+		hw_delay( 10000 ) ; // units of 0.1uS
+  }
+}
+
+void lcdWriteCommand(uint8_t byte)
+{
+  LCD_A0_LOW();
+  LCD_NCS_LOW();
+  while ((SPI3->SR & SPI_SR_TXE) == 0) {
+    // Wait
+  }
+  (void)SPI3->DR; // Clear receive
+  LCD_SPI->DR = byte;
+  while ((SPI3->SR & SPI_SR_RXNE) == 0) {
+    // Wait
+  }
+  LCD_NCS_HIGH();
+}
+
+void lcdHardwareInit()
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN ;
+  RCC->APB1ENR |= RCC_APB1ENR_SPI3EN ;    // Enable clock
+	
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  // APB1 clock / 2 = 133nS per clock
+  LCD_SPI->CR1 = 0; // Clear any mode error
+  LCD_SPI->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA;
+  LCD_SPI->CR2 = 0;
+  LCD_SPI->CR1 |= SPI_CR1_MSTR;	// Make sure in case SSM/SSI needed to be set first
+  LCD_SPI->CR1 |= SPI_CR1_SPE;
+  
+  LCD_NCS_HIGH();
+  
+  GPIO_InitStructure.GPIO_Pin = LCD_NCS_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_25MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(LCD_NCS_GPIO, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = LCD_RST_GPIO_PIN;
+  GPIO_Init(LCD_RST_GPIO, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = LCD_A0_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_Init(LCD_SPI_GPIO, &GPIO_InitStructure);
+
+  GPIO_InitStructure.GPIO_Pin = LCD_CLK_GPIO_PIN | LCD_MOSI_GPIO_PIN;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_Init(LCD_SPI_GPIO, &GPIO_InitStructure);
+  
+  GPIO_PinAFConfig(LCD_SPI_GPIO, LCD_MOSI_GPIO_PinSource, LCD_GPIO_AF);
+  GPIO_PinAFConfig(LCD_SPI_GPIO, LCD_CLK_GPIO_PinSource, LCD_GPIO_AF);
+
+  LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+  LCD_DMA->HIFCR = LCD_DMA_FLAGS; // Write ones to clear bits
+  LDC_DMA_Stream->CR =  DMA_SxCR_PL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0;
+  LDC_DMA_Stream->PAR = (uint32_t)&LCD_SPI->DR;
+
+  LDC_DMA_Stream->NDTR = LCD_W;
+
+  LDC_DMA_Stream->FCR = 0x05; // DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0;
+
+	NVIC_SetPriority( LCD_DMA_Stream_IRQn, 8 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(LCD_DMA_Stream_IRQn);
+}
+
+void lcdStart()
+{
+  lcdWriteCommand(0xe2); // (14) Soft reset
+  lcdWriteCommand(0xa1); // Set seg
+  lcdWriteCommand(0xc0); // Set com
+  lcdWriteCommand(0xf8); // Set booster
+  lcdWriteCommand(0x00); // 5x
+  lcdWriteCommand(0xa3); // Set bias=1/6
+  lcdWriteCommand(0x22); // Set internal rb/ra=5.0
+  lcdWriteCommand(0x2f); // All built-in power circuits on
+  lcdWriteCommand(0x81); // Set contrast
+  lcdWriteCommand(0x36); // Set Vop
+  lcdWriteCommand(0xa6); // Set display mode
+}
+
+volatile bool lcd_busy;
+
+void refreshDisplay()
+{
+  if (!lcdInitFinished) {
+    lcdInitFinish();
+  }
+
+  uint8_t * p = DisplayBuf;
+  for (uint8_t y=0; y < 8; y++, p+=LCD_W) {
+    lcdWriteCommand(0x10); // Column addr 0
+    lcdWriteCommand(0xB0 | y); // Page addr y
+    lcdWriteCommand(0x04);
+    
+    LCD_NCS_LOW();
+    LCD_A0_HIGH();
+
+    lcd_busy = true;
+    LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+    LCD_DMA->HIFCR = LCD_DMA_FLAGS; // Write ones to clear bits
+    LDC_DMA_Stream->M0AR = (uint32_t)p;
+    LDC_DMA_Stream->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE; // Enable DMA & TC interrupts
+    LCD_SPI->CR2 |= SPI_CR2_TXDMAEN;
+  
+    WAIT_FOR_DMA_END();
+
+    LCD_NCS_HIGH();
+    LCD_A0_HIGH();
+  }
+}
+
+extern "C" void LCD_DMA_Stream_IRQHandler()
+{
+//  DEBUG_INTERRUPT(INT_LCD);
+
+  LDC_DMA_Stream->CR &= ~DMA_SxCR_TCIE; // Stop interrupt
+  LCD_DMA->HIFCR |= LCD_DMA_FLAG_INT; // Clear interrupt flag
+  LCD_SPI->CR2 &= ~SPI_CR2_TXDMAEN;
+  LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+
+  while (LCD_SPI->SR & SPI_SR_BSY) {
+    /* Wait for SPI to finish sending data
+    The DMA TX End interrupt comes two bytes before the end of SPI transmission,
+    therefore we have to wait here.
+    */
+  }
+  LCD_NCS_HIGH();
+  lcd_busy = false;
+}
+
+/*
+  Proper method for turning of LCD module. It must be used,
+  otherwise we might damage LCD crystals in the long run!
+*/
+void lcdOff()
+{
+  WAIT_FOR_DMA_END();
+
+  /*
+  LCD Sleep mode is also good for draining capacitors and enables us
+  to re-init LCD without any delay
+  */
+  lcdWriteCommand(0xAE); // LCD sleep
+  delay_ms(3); // Wait for caps to drain
+}
+
+void lcdReset()
+{
+  LCD_RST_LOW();
+  delay_ms(150);
+  LCD_RST_HIGH();
+}
+
+
+static void backlightInit()
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;    // Enable clock
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOD, &GPIO_InitStructure);
+  GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_TIM4);
+  TIM4->ARR = 100;
+  TIM4->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;
+  TIM4->CCMR1 = TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2; // PWM
+  TIM4->CCER = TIM_CCER_CC2E;
+  TIM4->CCR2 = 100;
+  TIM4->EGR = 0;
+  TIM4->CR1 = TIM_CR1_CEN; // Counter enable
+}
+
+
+/*
+  Starts LCD initialization routine. It should be called as
+  soon as possible after the reset because LCD takes a lot of
+  time to properly power-on.
+
+  Make sure that delay_ms() is functional before calling this function!
+*/
+void lcd_init()
+{
+  lcdHardwareInit();
+
+  if (IS_LCD_RESET_NEEDED()) {
+    lcdReset();
+  }
+	backlightInit() ;
+	backlight_set( 50 ) ;
+}
+
+/*
+  Finishes LCD initialization. It is called auto-magically when first LCD command is
+  issued by the other parts of the code.
+*/
+void lcdInitFinish()
+{
+  lcdInitFinished = true;
+
+  /*
+    LCD needs longer time to initialize in low temperatures. The data-sheet
+    mentions a time of at least 150 ms. The delay of 1300 ms was obtained
+    experimentally. It was tested down to -10 deg Celsius.
+
+    The longer initialization time seems to only be needed for regular Taranis,
+    the Taranis Plus (9XE) has been tested to work without any problems at -18 deg Celsius.
+    Therefore the delay for T+ is lower.
+    
+    If radio is reset by watchdog or boot-loader the wait is skipped, but the LCD
+    is initialized in any case.
+
+    This initialization is needed in case the user moved power switch to OFF and
+    then immediately to ON position, because lcdOff() was called. In any case the LCD
+    initialization (without reset) is also recommended by the data sheet.
+  */
+
+//  if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) {
+//#if !defined(BOOT)
+//    while (g_tmr10ms < (RESET_WAIT_DELAY_MS/10)); // wait measured from the power-on
+//#else
+    delay_ms(RESET_WAIT_DELAY_MS);
+//#endif
+//  }
+  
+  lcdStart();
+  lcdWriteCommand(0xAF); // dc2=1, IC into exit SLEEP MODE, dc3=1 gray=ON, dc4=1 Green Enhanc mode disabled
+  delay_ms(20); // needed for internal DC-DC converter startup
+}
+
+void lcdSetRefVolt(uint8_t val)
+{
+  if (!lcdInitFinished) {
+    lcdInitFinish();
+  }
+
+  lcdWriteCommand(0x81); // Set Vop
+  lcdWriteCommand(val+LCD_CONTRAST_OFFSET); // 0-255
+}
+
+void initHaptic()
+{
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOHAPTIC, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin =GPIO_Pin_HAPTIC;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOHAPTIC, &GPIO_InitStructure);
+
+  GPIO_PinAFConfig(GPIOHAPTIC, GPIO_PinSource_HAPTIC ,GPIO_AF_TIM10);
+
+	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
+	TIM10->ARR = 100 ;
+	TIM10->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;		// 100uS from 30MHz
+	TIM10->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 ;	// PWM
+	TIM10->CCER = TIM_CCER_CC1E ;
+	
+	TIM10->CCR1 = 0 ;
+	TIM10->EGR = 0 ;
+	TIM10->CR1 = TIM_CR1_CEN ;				// Counter enable
+}
+
+void hapticOff()
+{
+	TIM10->CCR1 = 0 ;
+}
+
+
+// pwmPercent 0-100
+void hapticOn( uint32_t pwmPercent )
+{
+	if ( pwmPercent > 100 )
+	{
+		pwmPercent = 100 ;		
+	}
+	TIM10->CCR1 = pwmPercent ;
+}
+
+uint16_t BacklightBrightness ;
+
+void backlight_on()
+{
+	TIM4->CCR2 = 100 - BacklightBrightness ;
+}
+
+void backlight_off()
+{
+	TIM4->CCR2 = 0 ;
+}
+
+void backlight_set( uint16_t brightness )
+{
+	BacklightBrightness = brightness ;
+	TIM4->CCR2 = 100 - BacklightBrightness ;
+}
+
+
+#else // PCBX7
+
 
 //#define	WriteData(x)	 AspiData(x)
 //#define	WriteCommand(x)	 AspiCmd(x)
@@ -45,6 +378,16 @@ uint8_t speaker[] = {
 4,8,0,
 0x38,0x38,0x7C,0xFE
 } ;
+
+//uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
+#ifdef PCBX9D
+#define X9D_EXTRA		84
+uint8_t ExtDisplayBuf[1024+8*X9D_EXTRA + 2] ;
+#else
+uint8_t ExtDisplayBuf[1024 + 2] ;
+#endif
+int8_t ExtDisplayCounter ;
+uint8_t ExtDisplaySend ;
 
 void Set_Address(uint8_t x, uint8_t y)
 {
@@ -144,16 +487,6 @@ extern uint8_t ImageY ;
 extern uint8_t ModelImage[] ;
 extern uint8_t ModelImageValid ;
 
-	if ( ImageDisplay )
-	{
-		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
-		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
-extern uint8_t CurrentVolume ;
-		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
-		lcd_hline( 130, 31, 61 ) ;
-		lcd_vline( 129, 0, 64 ) ;
-	}
-
 	uint8_t *d = GreyDisplayBuf ;
 	for (uint32_t y=0; y<DISPLAY_H; y += 2)
 	{
@@ -196,6 +529,36 @@ extern uint8_t CurrentVolume ;
 #ifdef REVPLUS
 void refreshDisplay()
 {
+extern uint8_t ImageDisplay ;
+	if ( ImageDisplay )
+	{
+		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
+extern uint8_t CurrentVolume ;
+		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hline( 130, 31, 61 ) ;
+		lcd_vline( 129, 0, 64 ) ;
+	}
+	
+	if ( g_model.com2Function == COM2_FUNC_LCD )
+	{
+		if ( --ExtDisplayCounter < 0 )
+		{
+  		memcpy(&ExtDisplayBuf[1],        &DisplayBuf[0],     128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+128+X9D_EXTRA], &DisplayBuf[212],   128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+256+X9D_EXTRA*2], &DisplayBuf[212*2], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+384+X9D_EXTRA*3], &DisplayBuf[212*3], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+512+X9D_EXTRA*4], &DisplayBuf[212*4], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+640+X9D_EXTRA*5], &DisplayBuf[212*5], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+768+X9D_EXTRA*6], &DisplayBuf[212*6], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+896+X9D_EXTRA*7], &DisplayBuf[212*7], 128+X9D_EXTRA);
+			ExtDisplayBuf[0] = 0xAA ;
+			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
+			ExtDisplayCounter = 5 ;
+			ExtDisplaySend = 1 ;
+		}
+	}
+	
 	Set_Address( 0, 0 ) ;
 	
   LCD_NCS_LOW() ;  
@@ -281,16 +644,6 @@ extern uint8_t ImageY ;
 extern uint8_t ModelImage[] ;
 extern uint8_t ModelImageValid ;
 
-	if ( ImageDisplay )
-	{
-		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
-		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
-extern uint8_t CurrentVolume ;
-		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
-		lcd_hline( 130, 31, 61 ) ;
-		lcd_vline( 129, 0, 64 ) ;
-	}
-	
 	uint8_t *d = GreyDisplayBuf ;
 	for (uint32_t y=0; y<DISPLAY_H; y += 1)
 	{
@@ -338,8 +691,38 @@ extern uint8_t CurrentVolume ;
 
 void refreshDisplay()
 {  
-	convertDisplay() ;
+extern uint8_t ImageDisplay ;
+	if ( ImageDisplay )
+	{
+		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
+extern uint8_t CurrentVolume ;
+		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hline( 130, 31, 61 ) ;
+		lcd_vline( 129, 0, 64 ) ;
+	}
 	
+	convertDisplay() ;
+
+	if ( g_model.com2Function == COM2_FUNC_LCD )
+	{
+		if ( --ExtDisplayCounter < 0 )
+		{
+  		memcpy(&ExtDisplayBuf[1],        &DisplayBuf[0],     128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+128+X9D_EXTRA], &DisplayBuf[212],   128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+256+X9D_EXTRA*2], &DisplayBuf[212*2], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+384+X9D_EXTRA*3], &DisplayBuf[212*3], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+512+X9D_EXTRA*4], &DisplayBuf[212*4], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+640+X9D_EXTRA*5], &DisplayBuf[212*5], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+768+X9D_EXTRA*6], &DisplayBuf[212*6], 128+X9D_EXTRA);
+  		memcpy(&ExtDisplayBuf[1+896+X9D_EXTRA*7], &DisplayBuf[212*7], 128+X9D_EXTRA);
+			ExtDisplayBuf[0] = 0xAA ;
+			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
+			ExtDisplayCounter = 5 ;
+			ExtDisplaySend = 1 ;
+		}
+	}
+	 
   for (uint32_t y=0; y<DISPLAY_H; y++)
 	{
 //    uint8_t *p = &GreyDisplayBuf[(y>>3)*DISPLAY_W];
@@ -1281,4 +1664,6 @@ void updateTopLCD( uint32_t time, uint32_t batteryState )
 
 
 #endif
+
+#endif // PCBX7
 

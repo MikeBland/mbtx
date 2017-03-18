@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>770</width>
-    <height>572</height>
+    <height>573</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -4248,16 +4248,6 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>GVARs</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
      <item row="2" column="3">
       <widget class="QTextEdit" name="Gvar2">
        <property name="maximumSize">
@@ -4333,6 +4323,19 @@ border-radius: 4px;
        </property>
        <property name="verticalScrollBarPolicy">
         <enum>Qt::ScrollBarAlwaysOff</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="GvarButton">
+       <property name="maximumSize">
+        <size>
+         <width>45</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>GVARs</string>
        </property>
       </widget>
      </item>

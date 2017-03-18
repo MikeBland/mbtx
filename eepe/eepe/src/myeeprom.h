@@ -49,7 +49,11 @@
 #define MDVERS_r365 8
 #define MDVERS_r668 9
 #define MDVERS_r803 10
+#ifdef V2
 #define MDVERS      11
+#else
+#define MDVERS      11
+#endif
 
 #define MDSKYVERS   1
 
@@ -99,7 +103,7 @@
 #define V2_NUM_VOICE_ALARMS	10
 #define NUM_VOICE_ALARMS	8
 #define NUM_SAFETY				16
-#define V2_NUM_GVAR_ADJUST		4
+#define NUM_GVAR_ADJUST		4
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
@@ -126,9 +130,11 @@ PACK(typedef struct t_V2TrainerData {
 }) V2TrainerData ;
 
 #ifdef SKY
-#define EE_EGN t_OldEEGeneral
+#define EE_GEN t_OldEEGeneral
 #else
-#define EE_GEN t_EEGeneral
+ #ifndef V2
+  #define EE_GEN t_EEGeneral
+ #endif
 #endif
 
 #ifdef SKY
@@ -141,19 +147,19 @@ PACK(typedef struct t_V2TrainerData {
 	uint8_t   unexpectedShutdown:1;\
   uint8_t   spare:1
 #else
- #ifdef XSW_MOD
+// #ifdef XSW_MOD
 //  uint8_t   pb7backlight:1 ;      // valid only if (!(speakerMode & 2) || MegasoundSerial)
 //  uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
- #define EEGEN_BITFIELDS \
-	uint8_t   unused1;\
-  uint8_t   unused2:2;\
-  uint8_t   pb7backlight:1 ;\      // valid only if (!(speakerMode & 2) || MegasoundSerial)
-  uint8_t   LVTrimMod:1;          // LV trim rerouted to (UP:PC0,DN:PC4)
-  uint8_t   hideNameOnSplash:1;\
-  uint8_t   enablePpmsim:1;\
-  uint8_t   blightinv:1;\
-  uint8_t   stickScroll:1
- #else
+// #define EEGEN_BITFIELDS
+//	uint8_t   unused1;
+//  uint8_t   unused2:2;
+//  uint8_t   pb7backlight:1 ;
+//  uint8_t   LVTrimMod:1;
+//  uint8_t   hideNameOnSplash:1;
+//  uint8_t   enablePpmsim:1;
+//  uint8_t   blightinv:1;
+//  uint8_t   stickScroll:1
+// #else
  #define EEGEN_BITFIELDS \
 	uint8_t   unused1;\
   uint8_t   unused2:4;\
@@ -161,7 +167,7 @@ PACK(typedef struct t_V2TrainerData {
   uint8_t   enablePpmsim:1;\
   uint8_t   blightinv:1;\
   uint8_t   stickScroll:1
- #endif
+// #endif
 #endif
 
 #ifdef XSW_MOD
@@ -294,7 +300,7 @@ PACK(typedef struct EE_GEN {
 //    uint8_t  spare5:5 ;
 //    uint8_t  exSwitchWarningStates ;
 //#endif
-}) EEGeneral;
+}) V1EEGeneral;
 
 
 PACK(typedef struct t_V2EEGeneral {
@@ -460,7 +466,7 @@ PACK(typedef struct t_SafetySwData { // Custom Switches data
 
 PACK(typedef struct t_VoiceSwData
 {
-  uint8_t swtch ;
+  int8_t swtch ;
 	uint8_t mode ; // ON, OFF, BOTH, ALL, ONCE
   uint8_t val ;
 }) VoiceSwData ;
@@ -577,6 +583,12 @@ PACK(typedef struct t_scale
 	uint8_t spare:4 ;
 	uint8_t name[4] ;
 }) ScaleData ;
+
+PACK(typedef struct t_extScale
+{
+	uint8_t mod ;
+	uint8_t dest ;
+} ) ExtScaleData ;
 
 PACK(typedef struct t_voiceAlarm
 {
@@ -729,11 +741,11 @@ typedef struct t_ModelData {
   uint16_t  tmr2Val;
   int8_t    tmr2Mode;              // timer2 trigger source -> off, abs, stk, stk%, sw/!sw, !m_sw/!m_sw
   int8_t		tmr2ModeB;
-#ifdef XSW_MOD
-		uint16_t switchWarningStates ;
-#else
+//#ifdef XSW_MOD
+//		uint16_t switchWarningStates ;
+//#else
 	uint8_t switchWarningStates ;
-#endif
+//#endif
 	uint8_t sub_trim_limit ;
 	uint8_t CustomDisplayIndex[6] ;
 	GvarData gvars[MAX_GVARS] ;
@@ -743,9 +755,12 @@ typedef struct t_ModelData {
 #ifdef MULTI_PROTOCOL
 	int8_t sub_protocol;		// Extending sub_protocol values for MULTI protocol
 	int8_t option_protocol;		// Option byte for MULTI protocol
-	int8_t pxxFailsafe[14];		// Currently unused
+	uint8_t telemetryProtocol ;
+	int8_t pxxFailsafe[13];		// Currently unused
 #else
-	int8_t pxxFailsafe[16] ;	// Currently unused
+	int8_t sparepxxFailsafe[2];		// Currently unused
+	uint8_t telemetryProtocol ;
+	int8_t pxxFailsafe[13];		// Currently unused
 #endif // MULTI_PROTOCOL
 	SafetySwData xvoiceSw[EXTRA_VOICE_SW] ;
   CxSwData xcustomSw[EXTRA_CSW];
@@ -765,11 +780,11 @@ typedef struct t_ModelData {
   uint8_t tmr2Dir:1;    //0=>Count Down, 1=>Count Up
 	int8_t gvswitch[MAX_GVARS] ;
   VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
-#ifndef XSW_MOD
+//#ifndef XSW_MOD
   uint8_t  exSwitchWarningStates ;
-#endif
+//#endif
   int8_t    curvexy[18] ;
-} __attribute__((packed)) ModelData;
+} __attribute__((packed)) V1ModelData;
 
 PACK(typedef struct t_V2ModelData
 {
@@ -828,7 +843,7 @@ PACK(typedef struct t_V2ModelData
 	uint16_t switchWarningStates ;
 #else
 	uint8_t switchWarningStates ;
-  uint8_t exSwitchWarningStates ;	// MAy combine as 16 bit value
+  uint8_t exSwitchWarningStates ;	// May combine as 16 bit value
 #endif
 	uint8_t sub_trim_limit ;
 	uint8_t	customStickNames[16] ;
@@ -840,9 +855,12 @@ PACK(typedef struct t_V2ModelData
 	uint8_t useCustomStickNames:2 ;
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
-  GvarAdjust gvarAdjuster[V2_NUM_GVAR_ADJUST] ;
+  GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
 	VoiceAlarmData vad[V2_NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
+	uint8_t telemetryProtocol ;
+  int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
 }) V2ModelData ;
 
 

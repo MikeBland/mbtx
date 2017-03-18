@@ -61,6 +61,11 @@ class QtXml;
 #define ER9X_MODEL_FILE_TYPE         "ER9X_MODEL_FILE"
 #define ER9X_GENERAL_FILE_TYPE       "ER9X_GENERAL_FILE"
 
+#define MBTX_EEPROM_FILE_TYPE        "MBTX_EEPROM_FILE"
+#define MBTX_MODEL_FILE_TYPE         "MBTX_MODEL_FILE"
+#define MBTX_GENERAL_FILE_TYPE       "MBTX_GENERAL_FILE"
+
+
 #define EEPE_EEPROM_FILE_HEADER  "EEPE EEPROM FILE"
 #define EEPE_MODEL_FILE_HEADER  "EEPE MODEL FILE"
 #define EEPE_GENERAL_FILE_HEADER  "EEPE GENERAL SETTINGS FILE"
@@ -104,15 +109,18 @@ private:
 
     void saveModelToXML(QDomDocument * qdoc, QDomElement * pe, int model_id, int mdver);
     void getNotesFromXML(QDomDocument * qdoc, int model_id);
-    struct t_radioData radioData ;
+#ifdef V2
+		int v1SwitchTov2( int i ) ;
 		void v1ModelTov2( int i ) ;
 		void v2ModelTov1( int i ) ;
+#endif
 
 //    ModelData g_model;
 //    EEGeneral g_eeGeneral;
 
 
 public:
+    struct t_radioData radioData ;
     MdiChild();
 
     void newFile();

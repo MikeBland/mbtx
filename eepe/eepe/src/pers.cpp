@@ -39,7 +39,11 @@ bool EEPFILE::loadFile(void* buf)
     theFile->m_type = mee_type ;
     theFile->load(buf);
 
-    EEGeneral g_eeGeneral;
+#ifdef V2
+	  V2EEGeneral g_eeGeneral;
+#else
+  	EEGeneral g_eeGeneral;
+#endif
     int sz = getGeneralSettings(&g_eeGeneral);
 
     if(sz<40)
@@ -70,7 +74,11 @@ void EEPFILE::setChanged(bool v)
 
 void EEPFILE::generalDefault()
 {
+#ifdef V2
+  V2EEGeneral g_eeGeneral;
+#else
   EEGeneral g_eeGeneral;
+#endif
   memset(&g_eeGeneral,0,sizeof(g_eeGeneral));
   memset(&g_eeGeneral.ownerName,' ',sizeof(g_eeGeneral.ownerName));
   g_eeGeneral.myVers   =  MDVERS;
@@ -96,7 +104,11 @@ void EEPFILE::generalDefault()
 
 bool EEPFILE::eeLoadGeneral()
 {
-  EEGeneral g_eeGeneral;
+#ifdef V2
+  V2EEGeneral g_eeGeneral;
+#else
+ 	EEGeneral g_eeGeneral;
+#endif
   int ret = getGeneralSettings(&g_eeGeneral);
 
   if (ret<(int)(sizeof(EEGeneral)-20)) return false;
@@ -170,7 +182,11 @@ void EEPFILE::eeLoadModelName(uint8_t id,char*buf,uint8_t len)
 
 void EEPFILE::eeLoadOwnerName(char*buf,uint8_t len)
 {
-    EEGeneral g_eeGeneral;
+#ifdef V2
+  V2EEGeneral g_eeGeneral;
+#else
+ 	EEGeneral g_eeGeneral;
+#endif
     int ret = getGeneralSettings(&g_eeGeneral);
 
     memset(buf,0,len);
@@ -223,6 +239,16 @@ bool EEPFILE::putModel(ModelData* model, uint8_t id)
     return (sz == sizeof(ModelData));
 }
 
+#ifdef V2
+int EEPFILE::getGeneralSettings(V2EEGeneral* setData)
+{
+	  memset(setData, 0, sizeof(V2EEGeneral));
+    theFile->openRd(FILE_GENERAL);
+    int sz = theFile->readRlc((uint8_t*)setData, sizeof(V2EEGeneral));
+
+    return sz;
+}
+#else
 int EEPFILE::getGeneralSettings(EEGeneral* setData)
 {
 	  memset(setData, 0, sizeof(EEGeneral));
@@ -231,6 +257,7 @@ int EEPFILE::getGeneralSettings(EEGeneral* setData)
 
     return sz;
 }
+#endif
 
 void EEPFILE::formatEFile()
 {
@@ -239,6 +266,18 @@ void EEPFILE::formatEFile()
     fileChanged = true;
 }
 
+#ifdef V2
+bool EEPFILE::putGeneralSettings(V2EEGeneral* setData)
+{
+    int sz = 0;
+
+    sz = theFile->writeRlc(FILE_GENERAL, FILE_TYP_GENERAL, (uint8_t*)setData, sizeof(V2EEGeneral));
+//    sz = theFile->writeRlc(FILE_TMP, FILE_TYP_GENERAL, (uint8_t*)setData, sizeof(EEGeneral));
+//    if(sz == sizeof(EEGeneral)) theFile->swap(FILE_GENERAL,FILE_TMP);
+
+    return (sz == sizeof(V2EEGeneral));
+}
+#else
 bool EEPFILE::putGeneralSettings(EEGeneral* setData)
 {
     int sz = 0;
@@ -249,3 +288,4 @@ bool EEPFILE::putGeneralSettings(EEGeneral* setData)
 
     return (sz == sizeof(EEGeneral));
 }
+#endif

@@ -26,6 +26,7 @@ private slots:
 
 
 private:
+    struct t_radioData *rData ;
     MixData *md;
     Ui::MixerDialog *ui;
     QString * mixCommennt;

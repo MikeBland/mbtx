@@ -44,7 +44,16 @@
 #include "analog.h"
 #include "myeeprom.h"
 
+#ifdef PCBX7
+#define STICK_LV	2
+#define STICK_LH  3
+#define STICK_RV  0
+#define STICK_RH  1
+#define POT_L			8
+#define POT_R			6
+#define BATTERY		10
 
+#else // PCBX7
 #ifndef PCB9XT
 #define STICK_LV	3
 #define STICK_LH  2
@@ -66,6 +75,7 @@
 #define DIG2			9
 #define DIG3			14
 #endif // nPCB9XT
+#endif // PCBX7
 
 #ifdef REV9E
 #define FLAP_3		6
@@ -92,6 +102,12 @@ void init_adc()
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
 
+#ifdef PCBX7
+	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
+									PIN_FLP_J1 , PIN_ANALOG | PIN_PORTA ) ;
+	configure_pins( PIN_FLP_J2, PIN_ANALOG | PIN_PORTB ) ;
+	configure_pins( PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+#else // PCBX7
 #ifndef PCB9XT
 	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
 									PIN_FLP_J1 , PIN_ANALOG | PIN_PORTA ) ;
@@ -112,12 +128,23 @@ void init_adc()
 	configure_pins( PIN_MVOLT | PIN_SW2, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( PIN_SW1, PIN_ANALOG | PIN_PORTA ) ;
 #endif // PCB9XT
+#endif // PCBX7
 				
 
 	ADC1->CR1 = ADC_CR1_SCAN ;
 	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
 	
-	
+#ifdef PCBX7
+	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
+
+	ADC1->SQR2 = BATTERY ;
+	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<<20) + (POT_R<<25) ;
+
+	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
+//	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
+//								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
+	#else // PCBX7
 #ifndef PCB9XT
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 #ifdef REVPLUS
@@ -144,6 +171,9 @@ void init_adc()
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
 
 #endif // PCB9XT
+#endif // PCBX7
+
+
 	 
 	ADC->CCR = 0 ; //ADC_CCR_ADCPRE_0 ;		// Clock div 2
 	
@@ -185,6 +215,16 @@ uint32_t read_adc()
 	}
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 
+#ifdef PCBX7
+	AnalogData[0] = 4096 - Analog_values[0] ;
+	AnalogData[1] = Analog_values[1] ;
+	AnalogData[2] = 4096 - Analog_values[2] ;
+	AnalogData[3] = Analog_values[3] ;
+	AnalogData[4] = Analog_values[4] ;
+	AnalogData[5] = Analog_values[5] ;
+	AnalogData[6] = 0 ;	// Dummy
+	AnalogData[12] = Analog_values[6] ;
+#else // PCBX7
 	AnalogData[0] = Analog_values[0] ;
 #ifdef PCBX9D
 #ifdef REV9E
@@ -231,6 +271,7 @@ uint32_t read_adc()
 	AnalogData[8] = Analog_values[9] ;
 #endif
 #endif // nREV9E
+#endif // PCBX7
 
 #ifdef REV9E
 	AnalogData[4] = 4096 - Analog_values[10] ;

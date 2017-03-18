@@ -172,7 +172,7 @@ mavlink_status_t MavlinkStatus ;
 uint8_t HeartCounter ;
 
 
-extern void store_hub_data( uint8_t index, uint16_t value ) ;
+extern void storeTelemetryData( uint8_t index, uint16_t value ) ;
 extern void storeRSSI( uint8_t value ) ;
 
 //extern "C" uint32_t millis( void ) ;
@@ -1016,11 +1016,11 @@ void mavlinkReceive( uint8_t data )
         
 				value1 = mavlink_msg_heartbeat_get_type(&Msg) ; // apm_mav_type
         value2 = (unsigned int)mavlink_msg_heartbeat_get_custom_mode(&Msg) ; // apmMode
-				store_hub_data( FR_TEMP1, value2 | ( value1 << 8 ) ) ;
+				storeTelemetryData( FR_TEMP1, value2 | ( value1 << 8 ) ) ;
 
 				value1 = mavlink_msg_heartbeat_get_base_mode(&Msg);
 //				apmBaseMode       = mavlink_msg_heartbeat_get_base_mode(&Msg);
-				store_hub_data( FR_BASEMODE, value1 ) ;
+				storeTelemetryData( FR_BASEMODE, value1 ) ;
 //        if (getBit( value1, MOTORS_ARMED))
 //				{
 //          Motor_armed = 1 ;
@@ -1037,7 +1037,7 @@ void mavlinkReceive( uint8_t data )
       {
 //				float batteryVoltage = (mavlink_msg_sys_status_get_voltage_battery(&Msg) / 100.0f) * 0.5238f ;
 				float batteryVoltage = (mavlink_msg_sys_status_get_voltage_battery(&Msg) / 100.0f) ;
-				store_hub_data( FR_VOLTS, batteryVoltage ) ;
+				storeTelemetryData( FR_VOLTS, batteryVoltage ) ;
         
 //				batteryVoltage = (mavlink_msg_sys_status_get_voltage_battery(&Msg) / 1000.0f); // Volts, Battery voltage, in millivolts (1 = 1 millivolt)
 //        ncell = batteryVoltage / 43f ;
@@ -1048,15 +1048,15 @@ void mavlinkReceive( uint8_t data )
 //				if (cell < 1000) cell = 0;
 
 ////				current          = mavlink_msg_sys_status_get_current_battery(&Msg) / 10; //0.1A Battery current, in 10*milliamperes (1 = 10 milliampere)         
-				store_hub_data( FR_CURRENT, mavlink_msg_sys_status_get_current_battery(&Msg) / 10 ) ;
+				storeTelemetryData( FR_CURRENT, mavlink_msg_sys_status_get_current_battery(&Msg) / 10 ) ;
 ////				batteryRemaining = mavlink_msg_sys_status_get_battery_remaining(&Msg); //Remaining battery energy: (0%: 0, 100%: 100)
-				store_hub_data( FR_FUEL, mavlink_msg_sys_status_get_battery_remaining(&Msg) ) ;
+				storeTelemetryData( FR_FUEL, mavlink_msg_sys_status_get_battery_remaining(&Msg) ) ;
         
 //				sensors_enabled  = mavlink_msg_sys_status_get_onboard_control_sensors_enabled(&Msg);
 //        health           = mavlink_msg_sys_status_get_onboard_control_sensors_health(&Msg); // Bitmask showing which onboard controllers and sensors are operational or have an error:  Value of 0: not enabled. Value of 1: enabled. Indices defined by ENUM MAV_SYS_STATUS_SENSOR
         
 //				cpu_load         = mavlink_msg_sys_status_get_load(&Msg) / 10; // Maximum usage in percent of the mainloop time, (0%: 0, 100%: 1000) should be always below 1000
-				store_hub_data( FR_CPU_LOAD, mavlink_msg_sys_status_get_load(&Msg) / 10 ) ;
+				storeTelemetryData( FR_CPU_LOAD, mavlink_msg_sys_status_get_load(&Msg) / 10 ) ;
 
 //				sensors_health   = 0; // Default - All sensors status: ok
 //        if ( sensors_enabled & MAV_SYS_STATUS_SENSOR_3D_GYRO )
@@ -1096,15 +1096,15 @@ void mavlinkReceive( uint8_t data )
 					value = 1 ;
 					gps = -gps ;
 				}
-				store_hub_data( FR_LAT_N_S, ( value & 1 ) ? 'S' : 'N' ) ;
+				storeTelemetryData( FR_LAT_N_S, ( value & 1 ) ? 'S' : 'N' ) ;
 				value = gps * 6 ;
 				value /= 100 ;
 				value &= 0x3FFFFFFF ;
 				uint16_t bp ;
 				temp = value / 10000 ;
 				bp = (temp/ 60 * 100) + (temp % 60) ;
-				store_hub_data( FR_GPS_LAT, bp ) ;
-				store_hub_data( FR_GPS_LATd, value % 10000 ) ;
+				storeTelemetryData( FR_GPS_LAT, bp ) ;
+				storeTelemetryData( FR_GPS_LATd, value % 10000 ) ;
 
         gps = mavlink_msg_gps_raw_int_get_lon(&Msg);
 				value = 0 ;
@@ -1113,24 +1113,24 @@ void mavlinkReceive( uint8_t data )
 					value = 1 ;
 					gps = - gps ;
 				}
-				store_hub_data( FR_LONG_E_W, ( value & 1 ) ? 'W' : 'E' ) ;
+				storeTelemetryData( FR_LONG_E_W, ( value & 1 ) ? 'W' : 'E' ) ;
 				value = gps * 6 ;
 				value /= 100 ;
 				value &= 0x3FFFFFFF ;
 				temp = value / 10000 ;
 				bp = (temp/ 60 * 100) + (temp % 60) ;
-				store_hub_data( FR_GPS_LONG, bp ) ;
-				store_hub_data( FR_GPS_LONGd, value % 10000 ) ;
+				storeTelemetryData( FR_GPS_LONG, bp ) ;
+				storeTelemetryData( FR_GPS_LONGd, value % 10000 ) ;
 
         value2 = mavlink_msg_gps_raw_int_get_fix_type(&Msg);
         value1 = mavlink_msg_gps_raw_int_get_satellites_visible(&Msg);
-				store_hub_data( FR_TEMP2, value1 * 10 + value2 ) ;
+				storeTelemetryData( FR_TEMP2, value1 * 10 + value2 ) ;
 				
 //				gpsHdop           = mavlink_msg_gps_raw_int_get_eph(&Msg);
-				store_hub_data( FR_GPS_HDOP, mavlink_msg_gps_raw_int_get_eph(&Msg) ) ;
+				storeTelemetryData( FR_GPS_HDOP, mavlink_msg_gps_raw_int_get_eph(&Msg) ) ;
 
 //        gpsAltitude       = mavlink_msg_gps_raw_int_get_alt(&Msg); // meters * 1000
-				store_hub_data( FR_SPORT_GALT, mavlink_msg_gps_raw_int_get_alt(&Msg) / 100 ) ;
+				storeTelemetryData( FR_SPORT_GALT, mavlink_msg_gps_raw_int_get_alt(&Msg) / 100 ) ;
 //        gpsCourse         = mavlink_msg_gps_raw_int_get_cog(&Msg);
         
 ////				return MAVLINK_MSG_ID_GPS_RAW_INT;
@@ -1149,12 +1149,12 @@ void mavlinkReceive( uint8_t data )
 				{
 					course += 360 ;
 				}
-				store_hub_data( FR_COURSE, course ) ;
+				storeTelemetryData( FR_COURSE, course ) ;
 //        throttle = mavlink_msg_vfr_hud_get_throttle(&Msg);
         fvalue = mavlink_msg_vfr_hud_get_alt(&Msg)  * 100.0f ; // meters
-				store_hub_data( FR_SPORT_ALT, fvalue ) ;
+				storeTelemetryData( FR_SPORT_ALT, fvalue ) ;
 				fvalue = mavlink_msg_vfr_hud_get_climb(&Msg) ;
-				store_hub_data( FR_VSPD, fvalue ) ;
+				storeTelemetryData( FR_VSPD, fvalue ) ;
 ////        return MAVLINK_MSG_ID_VFR_HUD;
       }
       break ;
@@ -1213,7 +1213,7 @@ void mavlinkReceive( uint8_t data )
       break ;
       case MAVLINK_MSG_ID_HWSTATUS:  
       {
-				store_hub_data( FR_VCC, mavlink_msg_hwstatus_get_Vcc(&Msg) / 100 ) ;
+				storeTelemetryData( FR_VCC, mavlink_msg_hwstatus_get_Vcc(&Msg) / 100 ) ;
 
 ////				return MAVLINK_MSG_ID_HWSTATUS;
       }

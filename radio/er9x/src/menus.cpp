@@ -2766,7 +2766,7 @@ void menuProcGlobals(uint8_t event)
 			}
       else if ( j == 1 )
 			{
-  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgv->gvsource, 37+9 ) ;
+  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgv->gvsource, 37+9-18 ) ;
 				if ( pgv->gvsource < 13 )
 				{
 					lcd_putsAttIdx( 10*FW, y, Str_Gv_Source, pgv->gvsource, attr ) ;
@@ -2775,12 +2775,12 @@ void menuProcGlobals(uint8_t event)
 				{
 					lcd_putsAttIdx( 10*FW, y, Str_Chans_Gv, pgv->gvsource+3, attr ) ;
 				}
-				else
-				{
-					uint8_t val = pgv->gvsource-29 ;
-					lcd_putsAttIdx( 11*FW, y, PSTR("\004L1L2L3L4L5L6L7L8L9LALBLCLDLELFLGLHLI"), val/2, attr ) ;
-					lcd_putcAtt( 10*FW, y, val & 1 ? '-' : '+', attr ) ;
-				}
+//				else
+//				{
+//					uint8_t val = pgv->gvsource-29 ;
+//					lcd_putsAttIdx( 11*FW, y, PSTR("\004L1L2L3L4L5L6L7L8L9LALBLCLDLELFLGLHLI"), val/2, attr ) ;
+//					lcd_putcAtt( 10*FW, y, val & 1 ? '-' : '+', attr ) ;
+//				}
 			}
 			else
 			{
@@ -2799,7 +2799,7 @@ void menuProcGlobals(uint8_t event)
 			}
       if ( j == 0 )
 			{
-  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgv->gvsource, 34 ) ;
+  			if(active) CHECK_INCDEC_H_MODELVAR_0( pgv->gvsource, 34-6 ) ;
 				if ( pgv->gvsource < 13 )
 				{
 					lcd_putsAttIdx( 10*FW, y, Str_Gv_Source, pgv->gvsource, attr ) ;
@@ -2808,10 +2808,10 @@ void menuProcGlobals(uint8_t event)
 				{
 					lcd_putsAttIdx( 10*FW, y, Str_Chans_Gv, pgv->gvsource+3, attr ) ;
 				}
-				else
-				{
-					lcd_putsAttIdx( 10*FW, y, PSTR("\004L1L2L3L4L5L6L7L8L9LALBLC"), pgv->gvsource-29, attr ) ;
-				}
+//				else
+//				{
+//					lcd_putsAttIdx( 10*FW, y, PSTR("\004L1L2L3L4L5L6L7L8L9LALBLC"), pgv->gvsource-29, attr ) ;
+//				}
 			}
 			else
 			{
@@ -9065,6 +9065,78 @@ void perOut(int16_t *chanOut, uint8_t att)
 }
 
 
+#if defined(CPUM128) || defined(CPUM2561)
+void multiOption( uint8_t x, uint8_t y, int8_t option, uint8_t attr, uint8_t protocol )
+{
+	uint8_t display = 1 ;
+	switch ( protocol )
+	{
+		case M_DSM :
+			if ( ( option >= 4 ) && ( option <= 12 ) )
+			{
+				lcd_putsAttIdx( x-4*FW, y, PSTR("\004 4ch 5ch 6ch 7ch 8ch 9ch10ch11ch12ch"), option-4, attr ) ;
+				return ;
+			}
+		break ;
+
+		case M_FRSKYX :
+		case M_Frsky :
+		case M_FrskyV :
+		case M_SFHSS :
+			lcd_puts_Pleft( y, PSTR("\013Freq.") ) ;
+			display = 0 ;
+		break ;
+		
+		case M_Devo :
+			if ( ( option >= 0 ) && ( option <= 1 ) )
+			{
+				lcd_putsAttIdx( x-6*FW, y, PSTR("\006AutoIDFixdID"), option, attr ) ;
+				return ;
+			}
+		break ;
+
+		case M_AFHD2SA :
+		{
+			uint8_t xoption = option ;
+			if ( xoption & 0x80 )
+			{
+				lcd_puts_Pleft( y, PSTR("\013T-") ) ;
+				xoption &= 0x7F ;
+				option = xoption ;
+			}
+			if ( xoption <= 70 )
+			{
+				lcd_puts_Pleft( y, PSTR("\015Rate") ) ;
+				display = 0 ;
+				option *= 5 ;
+				option += 50 ;
+			}
+		}
+		break ;
+		
+		case M_Hubsan :
+			lcd_puts_Pleft( y, PSTR("\013VTX   ") ) ;
+			display = 0 ;
+		break ;
+
+		case M_BAYANG :
+			if ( ( option >= 0 ) && ( option <= 1 ) )
+			{
+				lcd_puts_Pleft( y, PSTR("\013Telem.") ) ;
+				lcd_putsAttIdx( 20*FW, y, PSTR("\001NY"), option, attr ) ;
+				return ;
+			}
+		break ;
+	}
+	if ( display )
+	{
+		lcd_puts_Pleft( y, PSTR(STR_MULTI_OPTION) ) ;
+	}
+	lcd_outdezAtt( x, y, option, attr ) ;
+}
+#endif
+
+
 #define M_INDEX			0
 #define M_DISPLAY		1
 #define M_AUDIO			2
@@ -10701,7 +10773,7 @@ void menuProcVoiceAlarm(uint8_t event)
 					lcd_xlabel_decimal( FW*3-1, y, k+1-NUM_VOICE_ALARMS, 0, PSTR(STR_VS) ) ;
     			if(active)
 					{
-    			  CHECK_INCDEC_MODELSWITCH( pvd->swtch, 0, MaxSwitchIndex-1 ) ;
+    			  CHECK_INCDEC_MODELSWITCH( pvd->swtch, -(MaxSwitchIndex-1), MaxSwitchIndex-1 ) ;
     			}
   			  putsDrSwitches(5*FW, y, pvd->swtch, attr);
 				}
@@ -12116,10 +12188,6 @@ Str_Protocol
 					{
 						s=PSTR(FWx10"\004"M_FLYSKY_STR);
 					}
-					else if ( x == M_FRSKYX )
-					{
-						s=PSTR(FWx10"\001"M_FRSKY_STR);
-					}
 					else if ( x == M_Hisky )
 					{
 						s=PSTR(FWx10"\001"M_HISKY_STR);
@@ -12144,6 +12212,10 @@ Str_Protocol
 					{
 						s=PSTR(FWx10"\001"M_SYMAX_STR);
 					}
+					else if ( x == M_SLT )
+					{
+						s=PSTR(FWx10"\001"M_SLT_STR);
+					}
 					else if ( x == M_CX10 )
 					{
 						s=PSTR(FWx10"\006"M_CX10_STR);
@@ -12152,13 +12224,25 @@ Str_Protocol
 					{
 						s=PSTR(FWx10"\002"M_CG023_STR);
 					}
+					else if ( x == M_BAYANG )
+					{
+						s=PSTR(FWx10"\001"M_BAYANG_STR);
+					}
+					else if ( x == M_FRSKYX )
+					{
+						s=PSTR(FWx10"\003"M_FRSKY_STR);
+					}
 					else if ( x == M_MT99XX )
 					{
-						s=PSTR(FWx10"\003"M_MT99XX_STR);
+						s=PSTR(FWx10"\004"M_MT99XX_STR);
 					}
 					else if ( x == M_MJXQ )
 					{
-						s=PSTR(FWx10"\004"M_MJXQ_STR);
+						s=PSTR(FWx10"\005"M_MJXQ_STR);
+					}
+					else if ( x == M_FY326 )
+					{
+						s=PSTR(FWx10"\001"M_FY326_STR);
 					}
 					else if ( x == M_HONTAI )
 					{
@@ -12166,11 +12250,19 @@ Str_Protocol
 					}
 					else if ( x == M_AFHD2SA )
 					{
-						s = PSTR(FWx10"\004"M_AFHD2SA_STR);
+						s = PSTR(FWx10"\003"M_AFHD2SA_STR);
 					}
 					else if ( x == M_Q2X2 )
 					{
-						s = PSTR(FWx10"\001"M_Q2X2_STR);
+						s = PSTR(FWx10"\002"M_Q2X2_STR);
+					}
+					else if ( x == M_WK2x01 )
+					{
+						s=PSTR(FWx10"\005"M_WK2x01_STR);
+					}
+					else if ( x == M_Q303 )
+					{
+						s=PSTR(FWx10"\003"M_Q303_STR);
 					}
 					else
 					{
@@ -12217,8 +12309,12 @@ Str_Protocol
 				uint8_t value = (ppmNch>>7)&0x01 ;
 				lcd_putsAttIdx(  6*FW, y, PSTR(M_LH_STR), value, (sub==subN && subSub==0 ? blink:0) );
 //				lcd_xlabel_decimal( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), PSTR(STR_MULTI_OPTION) ) ;
+#if defined(CPUM128) || defined(CPUM2561)
+				multiOption( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0), g_model.sub_protocol & 0x3F ) ;
+#else
 				lcd_outdezAtt( 21*FW, y, g_model.option_protocol, (sub==subN && subSub==1 ? blink:0) ) ;
 				lcd_puts_Pleft( y, PSTR(STR_MULTI_OPTION) ) ;
+#endif
 				if(sub==subN)
 				{
 					Columns = 1;
@@ -12233,7 +12329,7 @@ Str_Protocol
 						g_model.ppmNCH = ppmNch ;
 					}
 					if(subSub==1 && s_editing)
-						CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -127, 127);
+						CHECK_INCDEC_H_MODELVAR(g_model.option_protocol, -128, 127);
 				}
 				y += FH ;
 				subN++;
@@ -12261,6 +12357,13 @@ Str_Protocol
 				subN++;
 
 				// Range use PXX_RANGE_CHECK
+				uint8_t sp = g_model.sub_protocol & 0x3F ;
+				if ( ( sp == M_FRSKYX ) || ( sp == M_Frsky ) )
+				{
+					lcd_puts_Pleft( y, PSTR("\017Lqi") ) ;
+					lcd_outdezAtt(  21*FW, y, TxLqi, 0 ) ;
+				}
+
 				if(sub==subN)
 					rangeBindAction( y, PXX_RANGE_CHECK ) ;
 			}

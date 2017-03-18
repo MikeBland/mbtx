@@ -214,7 +214,11 @@ MainWindow::MainWindow()
 
     readSettings();
 
+#ifdef V2
+    setWindowTitle(tr("eePeV2 - EEPROM Editor"));
+#else
     setWindowTitle(tr("eePe - EEPROM Editor"));
+#endif
     
 		setAcceptDrops(true);
 		

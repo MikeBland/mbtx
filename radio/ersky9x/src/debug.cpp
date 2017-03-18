@@ -304,7 +304,7 @@ void handle_serial(void* pdata)
 	}
 #endif
 #ifndef PCBDUE
-		while ( g_model.frskyComPort || ( g_model.com2Baudrate == 0 ) )		// Leave the port alone!
+		while ( g_model.frskyComPort || ( g_model.com2Baudrate == 0 ) || ( g_model.com2Function != COM2_FUNC_TELEMETRY ) )		// Leave the port alone!
 		{
 			CoTickDelay(50) ;					// 100mS for now
 		}
@@ -321,14 +321,14 @@ void handle_serial(void* pdata)
 		{
 			CoTickDelay(5) ;					// 10mS for now
 #ifndef PCBDUE
-			if ( g_model.frskyComPort )		// Leave the port alone!
+			if ( ( g_model.frskyComPort ) || ( g_model.com2Function != COM2_FUNC_TELEMETRY ) )	// Leave the port alone!
 			{
 				break ;
 			}
 #endif
 		}
 #ifndef PCBDUE
-		if ( g_model.frskyComPort )		// Leave the port alone!
+		if ( ( g_model.frskyComPort ) || ( g_model.com2Function != COM2_FUNC_TELEMETRY ) )		// Leave the port alone!
 		{
 			continue ;
 		}
@@ -740,21 +740,6 @@ extern void initWatchdog( void ) ;
 			}
 		}
 		 
-		if ( rxchar == 'P' )
-		{
-			txmit( 'p' ) ;
-			if ( g_model.protocol == PROTO_PPM )
-			{
-				g_model.protocol = PROTO_PXX ;
-				txmit( 'x' ) ;
-			}
-			else
-			{
-				g_model.protocol = PROTO_PPM ;
-				txmit( 'm' ) ;
-			}
-		}
-
 //		static uint32_t bk_address = 0 ;
 //		if ( rxchar == 'X' )
 //		{

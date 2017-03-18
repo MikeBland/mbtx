@@ -72,6 +72,7 @@ public:
     void updateToMV2( void ) ;
     void updateToMV3( void ) ;
     void updateToMV4( void ) ;
+    struct t_radioData *rData ;
 
 private:
     Ui::ModelEdit *ui;
@@ -84,6 +85,11 @@ private:
 
     QString mixNotes[MAX_MIXERS];
 
+#ifdef V2
+    V2EEGeneral *p_eeGeneral ;
+#else
+    EEGeneral *p_eeGeneral ;
+#endif
     EEGeneral g_eeGeneral;
     ModelData g_model;
     int       id_model;

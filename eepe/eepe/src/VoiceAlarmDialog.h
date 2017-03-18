@@ -25,6 +25,7 @@ private slots:
 
 
 private:
+  struct t_radioData *rData ;
 	VoiceAlarmData *vad ;
   Ui::VoiceAlarmDialog *ui;
 	int leeType ;

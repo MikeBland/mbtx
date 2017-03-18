@@ -52,6 +52,7 @@
 #ifndef SIMU
 #include "CoOS.h"
 #endif
+#include "lcd.h"
   
 #define memclear(p, s) memset(p, 0, s)
 
@@ -71,7 +72,7 @@ extern union t_xmem Xmem ;
 
 extern void generalDefault() ;
 extern void modelDefault(uint8_t id)  ;
-extern void setFilenameDateTime( char *filename ) ;
+extern void setFilenameDateTime( char *filename, uint32_t includeTime ) ;
 
 // EEPROM driver
 #if !defined(SIMU)
@@ -203,7 +204,7 @@ void modelDefault(uint8_t id)
   strncpy_P(g_model.name,PSTR(STR_MODEL), 10 );
   g_model.name[5]='0'+(id+1)/10;
   g_model.name[6]='0'+(id+1)%10;
-	g_model.modelVersion = MDSKYVERS;
+	g_model.modelVersion = 4 ;
 	g_model.trimInc = 1 ;
 
   applyTemplate(0) ; //default 4 channel template
@@ -1072,7 +1073,6 @@ void eeLoadModel(uint8_t id)
 {
   if (id<MAX_MODELS)
 	{
-
 		WatchdogTimeout = 200 ;		// 2 seconds
 //    watchdogSetTimeout(500/*5s*/);
 
@@ -1133,6 +1133,7 @@ void eeLoadModel(uint8_t id)
 //#endif
     resumeMixerCalculations();
     // TODO pulses should be started after mixer calculations ...
+		ppmInValid = 0 ;
 
 #if defined(FRSKY)
 //    frskySendAlarms();
@@ -1264,7 +1265,8 @@ bool eeCopyModel(uint8_t dst, uint8_t src)
 
 void ee32SwapModels(uint8_t id1, uint8_t id2)
 {
-  EFile::swap(FILE_MODEL(id1), FILE_MODEL(id2));
+//  EFile::swap(FILE_MODEL(id1), FILE_MODEL(id2));
+  EFile::swap(id1, id2) ; // Make compatible with SKY board
 
   unsigned char tmp[sizeof(g_model.name)];
   memcpy(tmp, ModelNames[id1], sizeof(g_model.name));
@@ -1696,7 +1698,7 @@ extern uint32_t sdMounted( void ) ;
   }
 
   strcpy( &filename[7], "/eeprom" ) ;
-	setFilenameDateTime( &filename[14] ) ;
+	setFilenameDateTime( &filename[14], 0 ) ;
   strcpy_P(&filename[14+11], ".bin" ) ;
 
 	CoTickDelay(1) ;					// 2mS

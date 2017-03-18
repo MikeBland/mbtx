@@ -8,6 +8,44 @@
 #include <QCheckBox>
 #include <QSpinBox>
 
+uint8_t ProtocolOptionsX9de[2][5] = { {2,0,1}, {4,0,1,2,3} };
+uint8_t ProtocolOptionsSKY[2][5] = { {3,0,2,3}, {4,0,1,2,3} };
+uint8_t ProtocolOptions9XT[2][5] = { {4,0,1,2,3}, {4,0,1,2,3} };
+
+QString MultiProtocols[] = {
+"Flysky",
+"Hubsan",
+"FrskyD",
+"Hisky",
+"V2x2",
+"DSM",
+"Devo",
+"YD717",
+"KN",
+"SymaX",
+"SLT",
+"CX10",
+"CG023",
+"Bayang",
+"FrskyX",
+"ESky",
+"MT99xx",
+"MJXq",
+"Shenqi",
+"FY326",
+"SFHSS",
+"J6PRO",
+"FQ777",
+"ASSAN",
+"FrskyV",
+"HONTAI",
+"OpnLrs",
+"AFHD2SA",
+"Q2X2"
+} ;
+
+uint32_t MultiProtocolCount = sizeof( MultiProtocols ) ;
+
 QString AudioAlarms[] = {
   "Warn1",
 	"Warn2",
@@ -186,6 +224,25 @@ QString ExtraGvarItems[] = {
 	"LNLO"
 } ;
 
+#ifdef V2
+#define NUM_HW_ITEMS	12
+QString HardwareItems[] = {
+	"NONE",
+	"PB7 ",
+	"PC0 ",
+	"PC4 ",
+	"PG2 ",
+	"PG5 ",
+	"EXT1",
+	"XPD2",
+	"XPD3",
+	"XPD4",
+	"XPB1",
+	"XPC0",
+	"EXT2",
+} ;
+#else
+#define NUM_HW_ITEMS	7
 QString HardwareItems[] = {
 	"NONE",
 	"EXT1",
@@ -196,7 +253,7 @@ QString HardwareItems[] = {
 	"PG5 ",
 	"L-WR"
 } ;
-
+#endif
 
 QString AnaVolumeItems[] = {
 	"---",
@@ -212,13 +269,284 @@ QString AnaVolumeItems[] = {
 const uint8_t csTypeTable[] =
 #ifdef SKY
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP
 } ;
 #else
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
  CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER
 } ;
 #endif
+
+QString subSubProtocolText( int type, int index, QComboBox *b )
+{
+	QString names[8] ;
+	names[0] = "0" ;
+	names[1] = "1" ;
+	names[2] = "2" ;
+	names[3] = "3" ;
+	names[4] = "4" ;
+	names[5] = "5" ;
+	names[6] = "6" ;
+	names[7] = "7" ;
+
+	switch ( type )
+	{
+		case M_Flysky :
+			names[0] = "Flysky" ;
+			names[1] = "V9x9" ;
+			names[2] = "V6x6" ;
+			names[3] = "V912" ;
+			names[4] = "CX20" ;
+		break ;
+		case M_Hisky :
+			names[0] = "Hisky" ;
+			names[1] = "HK310" ;
+		break ;
+		case M_V2x2 :
+			names[0] = "V2x2" ;
+			names[1] = "JXD506" ;
+		break ;
+		case M_DSM2 :
+			names[0] = "DSM2-22" ;
+			names[1] = "DSM2-11" ;
+			names[2] = "DSMX-22" ;
+			names[3] = "DSMX-11" ;
+			names[4] = "AUTO" ;
+		break ;
+		case M_YD717 :
+			names[0] = "YD717" ;
+			names[1] = "SKYWLKR" ;
+			names[2] = "SYMAX4" ;
+      names[3] = "XINXUN" ;
+      names[4] = "NIHUI" ;
+		break ;
+		case M_KN :
+			names[0] = "WLTOYS" ;
+			names[1] = "FEILUN" ;
+		break ;
+		case M_SymaX :
+			names[0] = "SYMAX" ;
+			names[1] = "SYMAX5C" ;
+		break ;
+		case M_SLT :
+			names[0] = "SLT" ;
+			names[1] = "VISTA" ;
+		break ;
+		case M_CX10 :
+			names[0] = "GREEN" ;
+			names[1] = "BLUE" ;
+			names[2] = "DM007" ;
+			names[3] = "---" ;
+			names[4] = "J3015_1" ;
+			names[5] = "J3015_2" ;
+			names[6] = "MK33041" ;
+		break ;
+		case M_FRSKYX :
+			names[0] = "CH-16" ;
+			names[1] = "CH-8" ;
+		break ;
+		case M_CG023 :
+			names[0] = "CG023" ;
+			names[1] = "YD829" ;
+			names[2] = "H8_3D" ;
+		break ;
+		case M_MT99XX :
+			names[0] = "MT" ;
+			names[1] = "H7" ;
+			names[2] = "YZ" ;
+			names[3] = "LS" ;
+		break ;
+		case M_MJXQ :
+			names[0] = "WLH08" ;
+			names[1] = "X600" ;
+			names[2] = "X800" ;
+			names[3] = "H26D" ;
+		break ;
+		case M_HONTAI :
+			names[0] = "HONTAI" ;
+			names[1] = "JJRCX1" ;
+			names[2] = "X5C1" ;
+		break ;
+		case M_AFHDS2A :
+			names[0] = "PWM_IBUS" ;
+			names[1] = "PPM_IBUS" ;
+			names[2] = "PWM_SBUS" ;
+			names[3] = "PPM_SBUS" ;
+		break ;
+		case M_Q2X2 :
+			names[0] = "Q222" ;
+			names[1] = "Q242" ;
+			names[2] = "Q282" ;
+		break ;
+
+		default :
+			names[0] = "NONE" ;
+		break ;
+	}
+	if ( b )
+	{
+		b->clear() ;
+		b->addItem(names[0]);
+		b->addItem(names[1]);
+		b->addItem(names[2]);
+		b->addItem(names[3]);
+		b->addItem(names[4]);
+		b->addItem(names[5]);
+		b->addItem(names[6]);
+		b->addItem(names[7]);
+	}
+
+	return names[index] ;
+}
+
+//void setSubSubProtocol( QComboBox *b, int type )
+//{
+//	int x = 8 ;
+//	b->clear() ;
+//  if ( type > 29 )
+//	{
+//		b->addItem("0");
+//		b->addItem("1");
+//		b->addItem("2");
+//		b->addItem("3");
+//		b->addItem("4");
+//		b->addItem("5");
+//		b->addItem("6");
+//		b->addItem("7");
+//		return ;
+//	}
+//	switch ( type )
+//	{
+//		case M_Flysky :
+//			b->addItem("Flysky");
+//			b->addItem("V9x9");
+//			b->addItem("V6x6");
+//			b->addItem("V912");
+//			b->addItem("CX20");
+//			x = 5 ;
+//		break ;
+//		case M_Hisky :
+//			b->addItem("Hisky");
+//			b->addItem("HK310");
+//			x = 2 ;
+//		break ;
+//		case M_V2x2 :
+//			b->addItem("V2x2");
+//			b->addItem("JXD506");
+//			x = 2 ;
+//		break ;
+//		case M_DSM2 :
+//			b->addItem("DSM2-22");
+//			b->addItem("DSM2-11");
+//			b->addItem("DSMX-22");
+//			b->addItem("DSMX-11");
+//			b->addItem("AUTO");
+//			x = 5 ;
+//		break ;
+//		case M_YD717 :
+//			b->addItem("YD717");
+//			b->addItem("SKYWLKR");
+//			b->addItem("SYMAX4");
+//      b->addItem("XINXUN");
+//      b->addItem("NIHUI");
+//			x = 5 ;
+//		break ;
+//		case M_KN :
+//			b->addItem("WLTOYS");
+//			b->addItem("FEILUN");
+//			x = 2 ;
+//		break ;
+//		case M_SymaX :
+//			b->addItem("SYMAX");
+//			b->addItem("SYMAX5C");
+//			x = 2 ;
+//		break ;
+//		case M_SLT :
+//			b->addItem("SLT");
+//			b->addItem("VISTA");
+//			x = 2 ;
+//		break ;
+//		case M_CX10 :
+//			b->addItem("GREEN");
+//			b->addItem("BLUE");
+//			b->addItem("DM007");
+//			b->addItem("---");
+//			b->addItem("J3015_1");
+//			b->addItem("J3015_2");
+//			b->addItem("MK33041");
+//			x = 7 ;
+//		break ;
+//		case M_FRSKYX :
+//			b->addItem("CH-16");
+//			b->addItem("CH-8");
+//			x = 2 ;
+//		break ;
+//		case M_CG023 :
+//			b->addItem("CG023");
+//			b->addItem("YD829");
+//			b->addItem("H8_3D");
+//			x = 3 ;
+//		break ;
+//		case M_MT99XX :
+//			b->addItem("MT");
+//			b->addItem("H7");
+//			b->addItem("YZ");
+//			b->addItem("LS");
+//			x = 4 ;
+//		break ;
+//		case M_MJXQ :
+//			b->addItem("WLH08");
+//			b->addItem("X600");
+//			b->addItem("X800");
+//			b->addItem("H26D");
+//			x = 4 ;
+//		break ;
+//		case M_HONTAI :
+//			b->addItem("HONTAI");
+//			b->addItem("JJRCX1");
+//			b->addItem("X5C1");
+//			x = 3 ;
+//		break ;
+//		case M_AFHDS2A :
+//			b->addItem("PWM_IBUS");
+//			b->addItem("PPM_IBUS");
+//			b->addItem("PWM_SBUS");
+//			b->addItem("PPM_SBUS");
+//			x = 4 ;
+//		break ;
+//		case M_Q2X2 :
+//			b->addItem("Q222");
+//			b->addItem("Q242");
+//			b->addItem("Q282");
+//			x = 3 ;
+//		break ;
+
+//		default :
+//			b->addItem("NONE");
+//			x = 1 ;
+//		break ;
+//	}
+//	switch ( x )
+//	{
+//		case 0 :
+//			b->addItem("0");
+//		case 1 :
+//			b->addItem("1");
+//		case 2 :
+//			b->addItem("2");
+//		case 3 :
+//			b->addItem("3");
+//		case 4 :
+//			b->addItem("4");
+//		case 5 :
+//			b->addItem("5");
+//		case 6 :
+//			b->addItem("6");
+//		case 7 :
+//			b->addItem("7");
+//		break ;
+//	}
+//}
 
 
 uint8_t CS_STATE( uint8_t x, uint8_t modelVersion )
@@ -257,10 +585,10 @@ uint8_t Sw3PosCount[8] ;
 void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 {
   uint16_t map = pgeneral->switchMapping ;
-	int x = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
+	int x = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
 	uint8_t *p = switchMapTable[x] ;
 	*p++ = 0 ;
-	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
+	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )
 	{
 		*p++ = HSW_SA0 ;
 		*p++ = HSW_SA1 ;
@@ -277,18 +605,24 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 		*p++ = HSW_SD0 ;
 		*p++ = HSW_SD1 ;
 		*p++ = HSW_SD2 ;
-	
-		*p++ = HSW_SE0 ;
-		*p++ = HSW_SE1 ;
-		*p++ = HSW_SE2 ;
+
+	  if ( type != RADIO_TYPE_QX7 )
+		{
+			*p++ = HSW_SE0 ;
+			*p++ = HSW_SE1 ;
+			*p++ = HSW_SE2 ;
+		}
 
 	//	*p++ = HSW_SF0 ;
 		*p++ = HSW_SF2 ;
 
-		*p++ = HSW_SG0 ;
-		*p++ = HSW_SG1 ;
-		*p++ = HSW_SG2 ;
-	
+	  if ( type != RADIO_TYPE_QX7 )
+		{
+			*p++ = HSW_SG0 ;
+			*p++ = HSW_SG1 ;
+			*p++ = HSW_SG2 ;
+	  }
+
 	//	*p++ = HSW_SH0 ;
 		*p++ = HSW_SH2 ;
 	
@@ -465,7 +799,7 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 
 int8_t switchUnMap( int8_t x, int type )
 {
-	int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
+	int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -482,7 +816,7 @@ int8_t switchUnMap( int8_t x, int type )
 
 int8_t switchMap( int8_t x, int type )
 {
-  int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) ? 1 : 0 ;
+  int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -517,6 +851,7 @@ uint8_t getSw3PosCount( int index )
 
 #else // SKY
 
+#ifndef V2
 uint8_t switchMapTable[80] ;
 uint8_t switchUnMapTable[80] ;
 uint8_t MaxSwitchIndex ;		// For ON and OFF
@@ -584,7 +919,11 @@ void createSwitchMapping( EEGeneral *pgeneral, int type )
 		*p++ = HSW_Pb2 ;
 	}
 
+#ifdef V2
+	uint8_t limit = 27 ;
+#else
 	uint8_t limit = ( (type == 1 ) || ( type == 2 ) ) ? 27 : 21 ;
+#endif
 	 
 	for ( uint32_t i = 10 ; i <=limit ; i += 1  )
 	{
@@ -631,7 +970,7 @@ int8_t switchMap( int8_t x )
 	}
 	return x ;
 }
-
+#endif
 
 #endif // SKY
 
@@ -646,11 +985,11 @@ void populateAnaVolumeCB( QComboBox *b, int value )
   for(int i=0; i<8; i++)
 	{
 #ifdef SKY
-    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) && (i == 3) )
+    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) && (i == 3) )
 		{
     	b->addItem( "SL " );
 		}
-		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) && (i == 4) )
+		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) && (i == 4) )
 		{
     	b->addItem( "SR " );
 		}
@@ -666,7 +1005,7 @@ void populateAnaVolumeCB( QComboBox *b, int value )
 
 void populateHardwareSwitch(QComboBox *b, int value )
 {
-  for(int i=0; i<=7; i++)
+  for(int i=0; i<=NUM_HW_ITEMS; i++)
 	{
 		b->addItem(HardwareItems[i]) ;
 	}
@@ -678,13 +1017,13 @@ void populateHardwareSwitch(QComboBox *b, int value )
 QString gvarSourceString( int index, int type, uint32_t extraPots)
 {
 	int limit = 36+8+24+4 ;
-	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
+	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )
 	{
 		limit = 37+8+24+4 ;
 	}
 	if ( index <= limit )
 	{
-		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )	// Taranis
+		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )	// Taranis
 		{
 			if ( index == 12 )
 			{
@@ -733,14 +1072,14 @@ void populateGvarCB(QComboBox *b, int value, int type)
     b->clear();
 #ifdef SKY
 		int limit = 36+8+24+4 ;
-		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )
+		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )
 		{
 			limit = 37+8+24+4 ;
 		}
     for(int i=0; i<=limit; i++)
 		{
 			int idx = i ;
-				if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ) )	// Taranis
+				if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )	// Taranis
 				{
 					if ( idx == 12 )
 					{
@@ -966,13 +1305,13 @@ int16_t m_to_ft( int16_t metres )
 //	"AccY",
 //	"AccZ",
 #define FR_VSPD	24
-//	"Gvr1",
+#define V_GVAR1	25	//	"Gvr1",
 //	"Gvr2",
 //	"Gvr3",
 //	"Gvr4", // 28
 //	"Gvr5",
 //	"Gvr6",
-//	"Gvr7",
+#define V_GVAR7	31	 //	"Gvr7",
 #define FR_WATT	32
 #define FR_RXV			33
 #define FR_COURSE   34
@@ -1007,6 +1346,10 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
 {
   int16_t result;
 
+	if ( ( index <= V_GVAR7 ) && ( index >= V_GVAR1 ) )
+	{
+		return value ;
+	}
 	result = value + 125 ;
   switch (index)
 	{
@@ -1324,10 +1667,11 @@ void populateAlarmCB(QComboBox *b, int value=0)
     b->setMaxVisibleItems(16);
 }
 
+#ifndef V2
 #ifdef SKY
 QString getMappedSWName(int val, int eepromType)
 {
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 
   if(!val) return "---";
@@ -1361,7 +1705,7 @@ QString getSWName(int val, int extra )
   int x ;
 	if ( eepromType >= 0 )
 	{
-		x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  	x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
 	}
 	else
 	{
@@ -1436,12 +1780,13 @@ QString getSWName(int val, int extra )
   temp = switches.mid((sw-1)*3,3) ;
   return QString(val<0 ? "!" : "") + temp ;
 }
+#endif
 
 #ifdef SKY
 int getSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )
 //	{
@@ -1451,6 +1796,7 @@ int getSwitchCbValue( QComboBox *b, int eepromType )
 	return switchMap( value, eepromType ) ;
 }
 #else
+#ifndef V2
 int getSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
@@ -1458,6 +1804,7 @@ int getSwitchCbValue( QComboBox *b, int eepromType )
 	value = b->currentIndex()-limit ;
   return switchMap( value ) ;
 }
+#endif
 #endif
 
 #ifdef SKY
@@ -1505,9 +1852,9 @@ int getSwitchCbValueShort( QComboBox *b, int eepromType )
 int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
-  int hsw_max = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? HSW_MAX_X9D : HSW_MAX ;
+  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? HSW_MAX_X9D : HSW_MAX ;
 
 //	if ( eepromType )
 //	{
@@ -1529,6 +1876,7 @@ int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 }
 
 #else
+#ifndef V2
 int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
@@ -1546,10 +1894,11 @@ int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 	return value ;
 }
 
-
+#endif
 #endif
 
 
+#ifndef V2
 #ifdef SKY
 void populateSwitchCB(QComboBox *b, int value, int eepromType)
 #else
@@ -1558,7 +1907,7 @@ void populateSwitchCB(QComboBox *b, int value, int eepromType)
 {
   b->clear();
 #ifdef SKY
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )
 //	{
@@ -1581,7 +1930,10 @@ void populateSwitchCB(QComboBox *b, int value, int eepromType)
     b->setCurrentIndex(j+limit);
     b->setMaxVisibleItems(10);
 }
+#endif
 
+
+#ifndef V2
 void populateTrainerSwitchCB(QComboBox *b, int value=0)
 {
     b->clear();
@@ -1594,8 +1946,10 @@ void populateTrainerSwitchCB(QComboBox *b, int value=0)
     b->setCurrentIndex(value+15);
     b->setMaxVisibleItems(10);
 }
+#endif
 
 
+#ifndef V2
 #ifdef SKY
 void populateSwitchShortCB(QComboBox *b, int value, int eepromType)
 #else
@@ -1611,7 +1965,7 @@ void populateSwitchShortCB(QComboBox *b, int value, int eepromType)
 	}
 #endif
 #ifdef SKY
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
 //	if ( eepromType )
 //	{
@@ -1637,6 +1991,7 @@ void populateSwitchShortCB(QComboBox *b, int value, int eepromType)
 #endif
     b->setMaxVisibleItems(10);
 }
+#endif
 
 int populatePhasetrim(QComboBox *b, int which, int value)
 {	// which i s0 for FP1, 1 for FP2 etc.
@@ -1702,6 +2057,7 @@ int decodePhaseTrim( int16_t *existing, int index )
 	return index ;
 }
 
+#ifndef V2
 #ifndef SKY
 void populateSwitchxAndCB(QComboBox *b, int value, int eepromType)
 {
@@ -1746,7 +2102,9 @@ void populateSwitchxAndCB(QComboBox *b, int value, int eepromType)
   b->setCurrentIndex(x+limit);
 	b->setMaxVisibleItems(10);
 }
+#endif
 
+#ifndef SKY
 int getxAndSwitchCbValue( QComboBox *b, int eepromType )
 {
   int limit = MaxSwitchIndex - 1 ;
@@ -1775,6 +2133,7 @@ int getxAndSwitchCbValue( QComboBox *b, int eepromType )
 
 	return value ;
 }
+#endif
 #endif
 
 void x9dPopulateSwitchAndCB(QComboBox *b, int value=0)
@@ -1833,6 +2192,7 @@ void x9dPopulateSwitchAndCB(QComboBox *b, int value=0)
 }
 
 
+#ifndef V2
 void populateSwitchAndCB(QComboBox *b, int value=0)
 {
 	char name[6] ;
@@ -1923,6 +2283,8 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 #endif
   b->setMaxVisibleItems(10);
 }
+#endif
+
 //void populateSwitchAndCB(QComboBox *b, int value=0)
 //{
 //	char name[4] ;
@@ -1942,6 +2304,7 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 //    b->setMaxVisibleItems(10);
 //}
 
+#ifndef V2
 #ifdef SKY
 void populateSafetySwitchCB(QComboBox *b, int type, int value, int eepromType )
 #else
@@ -1952,7 +2315,7 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
 	int start = -MAX_DRSWITCH ;
 	int last = MAX_DRSWITCH ;
 #ifdef SKY
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
 //	if ( eepromType )
 //	{
 //		offset = MAX_XDRSWITCH ;
@@ -2009,6 +2372,7 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
 #endif
     b->setMaxVisibleItems(10);
 }
+#endif
 
 
 QString SafetyType[] = {"S","A","V", "X"};
@@ -2033,6 +2397,7 @@ void populateSafetyVoiceTypeCB(QComboBox *b, int type, int value=0)
 		}
 }
 
+#ifndef V2
 #ifdef SKY
 void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType)
 #else
@@ -2042,9 +2407,9 @@ void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType )
 	int i ;
     b->clear();
 #ifdef SKY
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
-  int hsw_max = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? HSW_MAX_X9D : HSW_MAX ;
+  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? HSW_MAX_X9D : HSW_MAX ;
 //	if ( eepromType )
 //	{
 //		limit = MAX_XDRSWITCH - 1 ;
@@ -2113,6 +2478,7 @@ void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType )
 #endif
     b->setMaxVisibleItems(10);
 }
+#endif
 
 void populateCurvesCB(QComboBox *b, int value)
 {
@@ -2251,7 +2617,7 @@ QString getTimerMode(int tm, int eepromType )
 
 #define MODI_STR  "Rud Ele Thr Ail Rud Thr Ele Ail Ail Ele Thr Rud Ail Thr Ele Rud "
 #ifdef SKY    
-#define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
+#define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 PPM9PP10PP11PP12PP13PP14PP15PP16CH25CH26CH27CH28CH29CH30CH31CH32"
 #else
 #define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH163POSGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #endif
@@ -2300,7 +2666,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						}
 						if ( idx > 10 )
 						{
-              idx -= 3 ;
+          	  idx -= 3 ;
 						}
 					}
 					else if ( type == RADIO_TYPE_TPLUS )	// Plus
@@ -2398,11 +2764,26 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				limit = 48 ;
 			}
 		}
+		if ( type == RADIO_TYPE_QX7 )
+		{
+			limit = 44 ;
+		}
 		if ( type == RADIO_TYPE_SKY )
 		{
 			limit += extraPots ;
 		}
-    for(int i=0; i<limit; i++) b->addItem(getSourceStr(stickMode,i,modelVersion, type, extraPots));
+    for(int i=0; i<limit; i++)
+		{
+			int j = i ;
+			if ( type == RADIO_TYPE_QX7 )
+			{
+				if ( j > 6 )
+				{
+					j += 1 ;	// Skip 3rd pot
+				}
+			}
+			b->addItem(getSourceStr(stickMode,j,modelVersion, type, extraPots));
+		}
 #else
     for(int i=0; i<37; i++) b->addItem(getSourceStr(stickMode,i));
 #endif
@@ -2412,7 +2793,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
     	    b->addItem(TelemItems[i]);
 		}
 #ifdef SKY    
-		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) )
+    if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -2422,7 +2803,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				}
 				else
 				{
-					value += type == 2 ? 2 : NUM_EXTRA_POTS ;
+					value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
 				}
 			}
 		}
@@ -2440,6 +2821,13 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				}
 			}
 		}
+		if ( type == RADIO_TYPE_QX7 )
+		{
+			if ( value > 6 )
+			{
+			 value -= 1 ;	
+			}
+		}
 #endif
     b->setCurrentIndex(value);
     b->setMaxVisibleItems(10);
@@ -2448,17 +2836,17 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 #ifdef SKY    
 uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
-	if ( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) )
+  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{
-      if ( value < EXTRA_POTS_POSITION + ( type == 2 ? 2 : NUM_EXTRA_POTS) )
+      if ( value < EXTRA_POTS_POSITION + ( type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS) )
 			{
 				value += EXTRA_POTS_START - EXTRA_POTS_POSITION ;
 			}
 			else
 			{
-        value -= type == 2 ? 2 : NUM_EXTRA_POTS ;
+        value -= type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
 			}
 		}
 	}
@@ -3085,7 +3473,7 @@ QString FindErskyPath( int type )
             path=eepromfile;
           }
         }
-				else if (vName.contains("TARANIS"))
+				else if ( (vName.contains("TARANIS")) || (vName.contains("Taranis")) )
 				{
           eepromfile=drive.absolutePath();
 					if ( eepromfile.right(1) == "/" )

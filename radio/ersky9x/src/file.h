@@ -47,8 +47,8 @@ extern void closeBackupEeprom( void ) ;
 extern const char *openRestoreEeprom( char *filename ) ;
 extern const char *processRestoreEeprom( uint16_t blockNo ) ;
 
-extern void setFilenameDateTime( char *filename ) ;
-
+extern void setFilenameDateTime( char *filename, uint32_t includeTime ) ;
+extern uint32_t loadModelImage( void ) ;
 
 struct t_file_entry
 {

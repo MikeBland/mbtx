@@ -109,7 +109,11 @@ const uint8_t BootCode[] = {
      #include "bootloader/bootflashXp.lbm"
 		#endif
    #else
-    #include "bootloader/bootflashX.lbm"
+    #ifdef PCBX7
+     #include "bootloader/bootflashX7.lbm"
+    #else
+     #include "bootloader/bootflashX.lbm"
+		#endif
    #endif
   #else
    #ifdef REVX
@@ -149,11 +153,18 @@ void _bootStart()
  #ifdef REV9E
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
  #endif
+ #ifdef PCBX7
+	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+ #endif
 	{
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
 	}
 #endif
+#ifdef PCBX7
+	GPIOC->BSRRL = 0x0010 ; // set Green LED on
+	GPIOC->MODER = (GPIOC->MODER & 0xFFFFFCFF) | 0x00000100 ; // General purpose output mode
+#endif // PCBX7
 
 #ifdef PCB9XT
 	GPIOA->PUPDR = 0x14000000 ;
@@ -178,8 +189,20 @@ void _bootStart()
 // then we must have a power button pressed. If not then we are in power on/off loop
 // and to terminate it, just wait here without turning on PWR pin. The power supply will
 // eventually exhaust and the radio will turn off.
- #ifdef REV9E
+#ifdef REV9E
 #define PWR_GPIO_PIN_SWITCH	0x0001
+	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+	{
+		// wait here until the power key is pressed
+		while (GPIOD->IDR & PWR_GPIO_PIN_SWITCH)
+		{
+			bwdt_reset();
+		}
+	}
+#endif
+
+#ifdef PCBX7
+#define PWR_GPIO_PIN_SWITCH	0x0002
 	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
 		// wait here until the power key is pressed

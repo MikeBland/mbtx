@@ -25,10 +25,9 @@
  #endif
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 #include "X9D/stm32f2xx.h"
 #endif
-
 
 
 /*---------------------------- Variable Define -------------------------------*/
@@ -1402,27 +1401,27 @@ void RemoveLinkNode(P_FLAG_NODE pnode)
  * @details    This function is system IDLE task code.	 
  *******************************************************************************
  */
-//extern uint32_t IdleCount ;
+extern volatile uint32_t IdleCount ;
 
 void CoIdleTask(void* pdata)
 {
 	uint16_t i ;
-//	static uint16_t last ;
+	static uint16_t last = 0 ;
   /* Add your codes here */
   for(; ;) 
   {
-//#ifdef PCBSKY
-//		i = TC1->TC_CHANNEL[0].TC_CV ;
-//#endif
-//#if defined(PCBX9D) || defined(PCB9XT)
-//		i = TIM7->CNT ;
-//#endif
-//      /* Add your codes here */
-//		if ( i != last )
-//		{
-//			last = i ;
-//			IdleCount += 1 ;
-//		}
+#ifdef PCBSKY
+		i = TC1->TC_CHANNEL[0].TC_CV ;
+#endif
+#if defined(PCBX9D) || defined(PCB9XT)
+		i = TIM7->CNT ;
+#endif
+      /* Add your codes here */
+		if ( i != last )
+		{
+			last = i ;
+			IdleCount += 1 ;
+		}
 	// Toggle bits BACKLIGHT and EXT1, Backlight now on PWM
 //#ifdef PCBSKY
 //#define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
@@ -1432,7 +1431,7 @@ void CoIdleTask(void* pdata)
 //#endif
 		
 //    wdt_reset();
-		i += 1 ;
+//		i += 1 ;
   }
 }
 

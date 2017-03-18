@@ -22,9 +22,14 @@
 #define lcd_h
 
 #ifdef PCBX9D
+#ifdef PCBX7
+#define DISPLAY_W 128
+#define DISPLAY_H  64
+#else // PCBX7
 #define DISPLAY_W 212
 #define DISPLAY_H  64
 #endif
+#endif // PCBX7
 
 #if defined(PCBSKY) || defined(PCB9XT)
 #define DISPLAY_W 128
@@ -45,6 +50,9 @@
 // putsChnRaw flags
 #define MIX_SOURCE    0x10
 
+// putTxSwr flags
+#define TSSI_TEXT			0x20
+
 /* lcd outdez flags */
 #define LEADING0      0x10
 #define PREC1         0x20
@@ -56,6 +64,7 @@
 
 // GVAR flags
 #define GVAR_100			0x100
+#define GVAR_250			0x200
 
 
 extern uint8_t LcdLock ;
@@ -91,6 +100,7 @@ extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
 extern void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
+extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;
 extern uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode ) ;
 extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
 extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
@@ -113,6 +123,10 @@ extern void lcdSendCtl(uint8_t val) ;
 extern void refreshDisplay( void ) ;
 extern void lcdSetContrast( void ) ;
 extern void lcdSetOrientation( void ) ;
+
+#ifdef PCBX7
+extern void lcdOff( void ) ;
+#endif // PCBX7
 
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;

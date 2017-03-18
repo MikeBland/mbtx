@@ -141,6 +141,7 @@ public:
 
 //    int modelSize(int id) {return eeFile.size(id);}
     int eepromVersion();
+		void getPhysicalType() ;
     QString modelName(int id);
     QString ownerName();
 

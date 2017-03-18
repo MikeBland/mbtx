@@ -29,6 +29,7 @@ private:
     Ui::MixerDialog *ui;
     QString * mixCommennt;
 		int leeType ;
+		int lType ;
 		uint32_t lextraPots ;
     bool ValuesEditLock ;
 };

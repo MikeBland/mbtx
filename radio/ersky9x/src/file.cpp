@@ -31,9 +31,7 @@
 #include "drivers.h"
 #include "file.h"
 #include "ff.h"
-#ifdef FRSKY
 #include "frsky.h"
-#endif
 #ifndef SIMU
 #include "CoOS.h"
 #endif
@@ -53,26 +51,7 @@ extern PROGMEM s9xsplash[] ;
 // General 0x00000 - 0x01FFF
 // Model01 0x02000 - 0x03FFF
 // Model02 0x04000 - 0x05FFF
-// Model03 0x06000 - 0x07FFF
-// Model04 0x08000 - 0x09FFF
-// Model05 0x0A000 - 0x0BFFF
-// Model06 0x0C000 - 0x0DFFF
-// Model07 0x0E000 - 0x0FFFF
-// Model08 0x10000 - 0x11FFF
-// Model09 0x12000 - 0x13FFF
-// Model10 0x14000 - 0x15FFF
-// Model11 0x16000 - 0x17FFF
-// Model12 0x18000 - 0x19FFF
-// Model13 0x1A000 - 0x1BFFF
-// Model14 0x1C000 - 0x1DFFF
-// Model15 0x1E000 - 0x1FFFF
-// Model16 0x20000 - 0x21FFF
-// Model17 0x22000 - 0x23FFF
-// Model18 0x24000 - 0x25FFF
-// Model19 0x26000 - 0x27FFF
-// Model20 0x28000 - 0x29FFF
-
-
+// . . .
 
 // Logic for storing to EEPROM/loading from EEPROM
 // If main needs to wait for the eeprom, call mainsequence without actioning menus
@@ -86,11 +65,7 @@ extern PROGMEM s9xsplash[] ;
 
 // 'main' set flag STORE_MODEL_TRIM(n)
 
-
 // 'main' needs to load a model
-
-
-
 
 // These may not be needed, or might just be smaller
 uint8_t Spi_tx_buf[24] ;
@@ -104,7 +79,6 @@ unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for g
 
 uint16_t General_timer ;
 uint16_t Model_timer ;
-//uint32_t Update_timer ;
 uint8_t General_dirty ;
 uint8_t Model_dirty ;
 
@@ -137,11 +111,6 @@ uint32_t Eeprom32_data_size ;
 #define E32_BLANKCHECK				8
 #define E32_WRITESTART				9
 
-//#define E32_READING						10		// Set elsewhere as a lock
-
-
-//void handle_serial( void ) ;
-
 bool eeModelExists(uint8_t id) ;
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq ) ;
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
@@ -152,9 +121,6 @@ void ee32_update_name( uint32_t id, uint8_t *source ) ;
 void convertModel( SKYModelData *dest, ModelData *source ) ;
 
 
-
-//void eeprom_process( void ) ;
-//uint32_t ee32_process( void ) ;
 
 // New file system
 
@@ -205,10 +171,6 @@ struct t_eeprom_buffer
 		uint8_t buffer2K[2048] ;
 	} data ;	
 } Eeprom_buffer ;
-//uint8_t *eepromBufferAddress()
-//{
-//	return Eeprom_buffer.data.buffer2K ;
-//}
 
 static void ee32WaitFinished()
 {
@@ -325,8 +287,24 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
   ee32WaitFinished();
 //  // eeCheck(true) should have been called before entering here
 
+  uint32_t id2_block_no ;
   uint16_t id2_size = File_system[id2].size ;
-  uint32_t id2_block_no = File_system[id2].block_no ;
+  uint16_t id1_size = File_system[id1].size ;
+	
+	if ( id1_size == 0 )
+	{ // Copying blank entry
+		if ( id2_size == 0 )
+		{ // To blank entry
+			return ;	// Nothing to do
+		}
+		// Copy blank entry to model, swap the copy
+		uint8_t temp = id1 ;
+		id1 = id2 ;
+		id2 = temp ;
+	}
+  
+  id2_size = File_system[id2].size ;
+	id2_block_no = File_system[id2].block_no ;
 
   ee32CopyModel(id2, id1);
 
@@ -407,9 +385,6 @@ uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
 // Read eeprom data starting at random address
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
-//	txmit( 'r' ) ;
-//	if ( immediate )
-//		txmit( 'i' ) ;
 
 #ifdef SIMU
   assert(size);
@@ -446,26 +421,6 @@ uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint3
     sleep(5/*ms*/);
 #endif
 	}
-//#ifdef PCB9XT
-//	txmit( (x<1000000) ? 'z' : 'y' ) ;
-//#endif
-
-//	p4hex((uint16_t)DMA2_Stream0->NDTR) ;
-//	txmit('+') ;
-//	p4hex((uint16_t)DMA2_Stream3->NDTR) ;
-//	txmit('~') ;
-//	p8hex( (uint32_t) DMA2_Stream0->M0AR ) ;
-
-//extern void p2hex( unsigned char c ) ;
-//	p2hex( buffer[0] ) ;
-//	p2hex( buffer[1] ) ;
-//	p2hex( buffer[2] ) ;
-//	p2hex( buffer[3] ) ;
-//	p2hex( buffer[4] ) ;
-//	p2hex( buffer[5] ) ;
-//	p2hex( buffer[6] ) ;
-//	p2hex( buffer[7] ) ;
-
 
 	return x ;
 }
@@ -616,15 +571,8 @@ bool ee32LoadGeneral()
 		return false ;		// No data to load
 	}
 
-//  for(uint8_t i=0; i<sizeof(g_eeGeneral.ownerName);i++) // makes sure name is valid
-//  {
-//      uint8_t idx = char2idx(g_eeGeneral.ownerName[i]);
-//      g_eeGeneral.ownerName[i] = idx2char(idx);
-//  }
-
   if(g_eeGeneral.myVers<MDVERS)
       sysFlags = sysFLAG_OLD_EEPROM; // if old EEPROM - Raise flag
-//      sysFlags |= sysFLAG_OLD_EEPROM; // if old EEPROM - Raise flag
 
   g_eeGeneral.myVers   =  MDVERS; // update myvers
 
@@ -635,7 +583,9 @@ bool ee32LoadGeneral()
 #endif
 
   uint16_t sum=0;
-  if(size>(43)) for(uint8_t i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+//  uint16_t *u = (uint16_t *) g_eeGeneral.calibMid ;
+//  if(size>(43)) for(uint8_t i=0; i<12;i++) sum += *u++ ;
+  if(size>(43)) sum = evalChkSum() ;
 	else return false ;
   return g_eeGeneral.chkSum == sum;
 }
@@ -655,7 +605,9 @@ void ee32WaitLoadModel(uint8_t id)
 	while( ( Eeprom32_process_state != E32_IDLE )
 			|| ( General_timer )
 			|| ( Model_timer )
-			|| ( Ee32_model_delete_pending) )
+			|| ( Ee32_model_delete_pending)
+			|| ( Ee32_general_write_pending)
+			|| ( Ee32_model_write_pending) )
 	{
 		mainSequence( NO_MENU ) ;		// Wait for EEPROM to be IDLE
 	}
@@ -723,18 +675,10 @@ void ee32LoadModel(uint8_t id)
           g_model.name[i] = idx2char(idx);
       }
 
-//			g_model.modelVersion = MDSKYVERS ; //update mdvers
-
 			if ( g_model.numBlades == 0 )
 			{
 				g_model.numBlades = g_model.xnumBlades + 2 ;				
 			}
-//			if ( g_model.protocol == PROTO_PPM16 )			// PPM16 ?
-//			{
-//				g_model.protocol = PROTO_PPM ;
-//			}
-
-//#ifdef FIX_MODE
 
 // check for updating mix sources
 	if ( g_model.modelVersion < 2 )
@@ -792,7 +736,6 @@ void ee32LoadModel(uint8_t id)
 		g_model.modelVersion = 2 ;
 		STORE_MODELVARS ;
 	}
-//#endif
 
 		if ( g_model.modelVersion < 3 )
 		{
@@ -812,14 +755,13 @@ void ee32LoadModel(uint8_t id)
 	 		STORE_MODELVARS ;
 		}
 
+		ppmInValid = 0 ;
 
-#ifdef FRSKY
 		if ( g_model.bt_telemetry < 2 )
 		{
   		FrskyAlarmSendState |= 0x40 ;		// Get RSSI Alarms
 		}
   	FRSKY_setModelAlarms();
-#endif
   }
 
 #ifdef REVX
@@ -847,6 +789,7 @@ void ee32LoadModel(uint8_t id)
 		}
 	}
 	checkXyCurve() ;
+	loadModelImage() ;
 	// Now check the sub_protocol(s)
 	if ( g_model.sub_protocol == 0 )
 	{
@@ -1017,7 +960,6 @@ void ee32_process()
 			Eeprom32_data_size = sizeof(g_eeGeneral) ;						// This much
 			Eeprom32_file_index = 0 ;								// This file system entry
 			Eeprom32_process_state = E32_BLANKCHECK ;
-//			Writing_model = 0 ;
 		}
 		else if ( Ee32_model_write_pending )
 		{
@@ -1046,37 +988,6 @@ void ee32_process()
 		eeAddress = File_system[Eeprom32_file_index].block_no ^ 1 ;
 		eeAddress <<= 12 ;		// Block start address
 		Eeprom32_address = eeAddress ;						// Where to put new data
-//		x = Eeprom32_data_size + sizeof( struct t_eeprom_header ) ;	// Size needing to be checked
-//		p = (uint8_t *) &Eeprom_buffer ;
-//		read32_eeprom_data( eeAddress, p, x, 1 ) ;
-//		Eeprom32_process_state = E32_READSENDING ;
-//	}
-
-//	if ( Eeprom32_process_state == E32_READSENDING )
-//	{
-//		if ( Spi_complete )
-//		{
-//			uint32_t blank = 1 ;
-//			x = Eeprom32_data_size + sizeof( struct t_eeprom_header ) ;	// Size needing to be checked
-//			p = (uint8_t *) &Eeprom_buffer ;
-//			while ( x )
-//			{
-//				if ( *p++ != 0xFF )
-//				{
-//					blank = 0 ;
-//					break ;					
-//				}
-//				x -= 1 ;
-//			}
-//			// If not blank, sort erasing here
-//			if ( blank )
-//			{
-//				Eeprom32_state_after_erase = E32_IDLE ;
-//				Eeprom32_process_state = E32_WRITESTART ;
-//			}
-//			else
-//			{
-//				eeAddress = Eeprom32_address ;
 				eeprom_write_enable() ;
 				p = Spi_tx_buf ;
 				*p = 0x20 ;		// Block Erase command
@@ -1086,8 +997,6 @@ void ee32_process()
 				spi_PDC_action( p, 0, 0, 4, 0 ) ;
 				Eeprom32_process_state = E32_ERASESENDING ;
 				Eeprom32_state_after_erase = E32_WRITESTART ;
-//			}
-//		}
 	}
 
 	if ( Eeprom32_process_state == E32_WRITESTART )
@@ -1149,17 +1058,6 @@ void ee32_process()
 			else
 			{
 				File_system[Eeprom32_file_index].block_no ^= 1 ;		// This is now the current block
-				// now erase the other block
-//				eeAddress = Eeprom32_address ^ 0x00001000 ;		// Address of block to erase
-//				eeprom_write_enable() ;
-//				p = Spi_tx_buf ;
-//				*p = 0x20 ;		// Block Erase command
-//				*(p+1) = eeAddress >> 16 ;
-//				*(p+2) = eeAddress >> 8 ;
-//				*(p+3) = eeAddress ;		// 3 bytes address
-//				spi_PDC_action( p, 0, 0, 4, 0 ) ;
-//				Eeprom32_process_state = E32_ERASESENDING ;
-//				Eeprom32_state_after_erase = E32_IDLE ;
 				Eeprom32_process_state = E32_IDLE ;
 			}
 		}
@@ -1182,14 +1080,6 @@ void ee32_process()
 		}			
 	}
 
-//	if ( Eeprom32_process_state == E32_IDLE )
-//	{
-//		return 0 ;			// inactive
-//	}
-//	else
-//	{
-//		return 1 ;
-//	}
 }
 
 
@@ -1369,13 +1259,13 @@ void convertModel( SKYModelData *dest, ModelData *source )
 	{
 		FrSkyChannelData *src = &source->frsky.channels[i] ;
 		SKYFrSkyChannelData *dst = &dest->frsky.channels[i] ;
-		dst->ratio = src->ratio ;
-		dst->alarms_value[0] = src->alarms_value[0] ;
-		dst->alarms_value[1] = src->alarms_value[1] ;
-		dst->alarms_level = src->alarms_level ;
-		dst->alarms_greater = src->alarms_greater ;
-		dst->type = src->type ;
-		dst->gain = 1 ;
+		dst->lratio = src->ratio ;
+//		dst->alarms_value[0] = src->alarms_value[0] ;
+//		dst->alarms_value[1] = src->alarms_value[1] ;
+//		dst->alarms_level = src->alarms_level ;
+//		dst->alarms_greater = src->alarms_greater ;
+		dst->units = src->type ;
+//		dst->gain = 1 ;
 	}
 
 	for ( i = 0 ; i < 2 ; i += 1 )
@@ -1400,7 +1290,6 @@ void setModelFilename( uint8_t *filename, uint8_t modelIndex, uint32_t type )
 	
 	bptr = cpystr( filename, type ? (uint8_t *)"/TEXT/" : (uint8_t *)"/MODELS/" ) ;
   memcpy( bptr, ModelNames[modelIndex], sizeof(g_model.name)) ;
-//  memcpy( bptr, Eeprom_buffer.data.sky_model_data.name, sizeof(g_model.name)) ;
 	bptr += sizeof(g_model.name) - 1 ;
 	for ( i = 0 ; i < sizeof(g_model.name) ; i += 1 )
 	{
@@ -1436,7 +1325,6 @@ FRESULT writeXMLfile( FIL *archiveFile, uint8_t *data, uint32_t size, UINT *tota
 
   result = f_write( archiveFile, (BYTE *)"<!DOCTYPE ERSKY9X_EEPROM_FILE>\n<ERSKY9X_EEPROM_FILE>\n <MODEL_DATA number=\0420\042>\n  <Version>", 89, &written ) ;
 	total += written ;
-// MDVERS (2)
   bytes[0] = MDSKYVERS + '0' ;
   bytes[1] = 0 ;
   result = f_write( archiveFile, bytes, 1, &written) ;
@@ -1651,7 +1539,6 @@ const char *ee32BackupModel( uint8_t modelIndex )
 	// Build filename
 	setModelFilename( filename, modelIndex, FILE_TYPE_MODEL ) ;
 
-//  strcpy(buf, STR_MODELS_PATH);
   result = f_opendir(&archiveFolder, "/MODELS") ;
   if (result != FR_OK)
 	{
@@ -1672,7 +1559,6 @@ const char *ee32BackupModel( uint8_t modelIndex )
    	return "CREATE ERROR" ;
   }
 
-//  result = f_write(&archiveFile, (uint8_t *)&Eeprom_buffer.data.sky_model_data, size, &written) ;
 	result = writeXMLfile( &archiveFile, (uint8_t *)&Eeprom_buffer.data.sky_model_data, size, &written) ;
   
 	f_close(&archiveFile) ;
@@ -1803,7 +1689,7 @@ extern uint32_t sdMounted( void ) ;
   }
 
   strcpy( &filename[7], "/eeprom" ) ;
-	setFilenameDateTime( &filename[14] ) ;
+	setFilenameDateTime( &filename[14], 0 ) ;
   strcpy_P(&filename[14+11], ".bin" ) ;
 
 	CoTickDelay(1) ;					// 2mS
@@ -1850,7 +1736,6 @@ const char *processRestoreEeprom( uint16_t blockNo )
 // Write eeprom here
 	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
 	
-//  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{
@@ -1864,4 +1749,106 @@ void closeBackupEeprom()
 {
 	f_close( &g_eebackupFile ) ;
 }
+
+uint8_t ModelImage[64*32/8] ;
+uint8_t ModelImageValid = 0 ;
+TCHAR ImageFilename[60] ;
+uint8_t LoadImageResult = 0xFF ;
+uint8_t TNAME[VOICE_NAME_SIZE+4] ;
+uint32_t loadModelImage()
+{
+  FIL imageFile ;
+	FRESULT result ;
+  UINT nread ;
+	TCHAR *ptr ;
+	uint8_t name[VOICE_NAME_SIZE+4] ;
+//  uint8_t palette[2];
+  uint8_t temp[64];
+	ModelImageValid = 0 ;
+  memmove( name, g_model.modelImageName, VOICE_NAME_SIZE+2 ) ;
+	for ( uint8_t i=VOICE_NAME_SIZE+1 ; i ; i -= 1)
+	{
+		if ( name[i] == ' ' )
+		{
+			name[i] = '\0' ;
+		}
+		else
+		{
+			break ;
+		}
+	}
+  memmove( TNAME, name, VOICE_NAME_SIZE+2 ) ;
+  name[VOICE_NAME_SIZE+2] = '\0' ;
+  TNAME[VOICE_NAME_SIZE+2] = '\0' ;
+	ptr = (TCHAR *)cpystr( ( uint8_t*)ImageFilename, ( uint8_t*)"\\IMAGES\\" ) ;
+	ptr = (TCHAR *)cpystr( (uint8_t *)ptr, name ) ;
+	cpystr( ( uint8_t*)ptr, ( uint8_t*)".bmp" ) ;
+	
+	result = f_open( &imageFile, ImageFilename, FA_READ) ;
+  if (result != FR_OK)
+	{
+		LoadImageResult = 1 ;
+   	return 1 ;	// Error
+  }
+	result = f_read(&imageFile, ModelImage, 62, &nread) ;
+
+//	for (uint8_t i=0; i<16; i += 1 )
+//	{
+//		palette[i] = ModelImage[54+4*i] >> 4 ;
+//	}
+	
+	result = f_read(&imageFile, ModelImage, 64*32/8, &nread) ;
+	f_close(&imageFile) ;
+	if ( nread != 64*32/8 )
+	{
+		LoadImageResult = 2 ;
+   	return 1 ;	// Error
+	}
+	uint32_t i ;
+	uint32_t j ;
+	uint32_t k ;
+	uint8_t *p ;
+	
+	for ( j = 0 ; j < 4 ; j += 1 )
+	{
+		for ( i = 0 ; i < 64 ; )
+		{
+			temp[i++] = 0 ;
+		}
+		for ( i = 0 ; i < 64 ; i += 1 )
+		{
+			uint8_t t = 0 ;
+			uint8_t u = 1 << ((63-i) & 7 ) ;
+			p = &ModelImage[j*64 + (i / 8)] ;
+			for ( k = 0 ; k < 8 ; k += 1 )
+			{
+				if ( ( p[k*8] & u ) == 0 )
+				{
+					t |= 1 << ( 7 - k ) ;
+				}
+			}
+			temp[i] = t ;
+		}
+		p = &ModelImage[j*64] ;
+		for ( i = 0 ; i < 64 ; i += 1 )
+		{
+			*p++ = temp[i] ;
+		}
+	}
+	for ( i = 0 ; i < 64 ; i += 1 )
+	{
+		temp[0] = ModelImage[i] ;
+		ModelImage[i] = ModelImage[i+192] ;
+		ModelImage[i+192] = temp[0] ;
+		temp[0] = ModelImage[i+64] ;
+		ModelImage[i+64] = ModelImage[i+128] ;
+		ModelImage[i+128] = temp[0] ;
+	}
+
+	ModelImageValid = 1 ;
+	LoadImageResult = 0 ;
+	return 0 ;
+}
+
+
 

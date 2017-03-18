@@ -81,13 +81,15 @@ private:
     MixersList *MixerlistWidget;
 		VoiceList *VoiceListWidget ;
 
-    QString mixNotes[MAX_SKYMIXERS];
+    QString mixNotes[MAX_SKYMIXERS + EXTRA_SKYMIXERS];
 
     EEGeneral g_eeGeneral;
     SKYModelData g_model;
     int       id_model;
 
-    bool switchEditLock;
+		struct t_module oldModules[2] ;
+    
+		bool switchEditLock;
     bool heliEditLock;
     bool protocolEditLock;
     bool plot_curve[19];
@@ -167,7 +169,7 @@ private:
     void resizeEvent(QResizeEvent *event  = 0);
 
     void setProtocolBoxes();
-		void setSubSubProtocol( QComboBox *b, int type ) ;
+//		void setSubSubProtocol( QComboBox *b, int type ) ;
 
     void drawCurve();
     int currentCurve;
@@ -175,6 +177,7 @@ private:
 
     QSpinBox *getNodeSB(int i);
 
+    SKYMixData *mixAddress( uint32_t index ) ;
     bool gm_insertMix(int idx);
     int getMixerIndex(int dch);
     void gm_deleteMix(int index);
@@ -227,6 +230,7 @@ private slots:
     void on_pushButton_clicked();
 		void on_updateButton_clicked() ;
 		void on_updateButton3_clicked() ;
+		void on_updateButton4_clicked() ;
     void mixersDelete(bool ask=true);
     void mixersCut();
     void mixersCopy();
@@ -324,12 +328,18 @@ private slots:
     void on_thrIdleChkB_toggled(bool checked) ;
 		void on_thrRevChkB_toggled(bool checked) ;
 		void on_trainerCB_currentIndexChanged(int index) ;
+    void on_trimScaledChkB_toggled(bool checked);
 //    void on_T2ThrTrgChkB_toggled(bool checked);
 		
     void on_ppmDelaySB_editingFinished();
     void on_numChannelsSB_editingFinished();
     void on_xnumChannelsSB_editingFinished();
 		void on_numChannels2SB_editingFinished() ;
+		void on_TrainerChannelsSB_editingFinished() ;
+		void on_TrainerDelaySB_editingFinished() ;
+		void on_TrainerFrameLengthDSB_editingFinished() ;
+		void on_TrainerStartChannelSB_editingFinished() ;
+		void on_TrainerPolarityCB_currentIndexChanged(int index) ;
 		void on_startChannelsSB_editingFinished() ;
 		void on_xstartChannelsSB_editingFinished() ;
 		void on_startChannels2SB_valueChanged( int x ) ;
@@ -380,7 +390,13 @@ private slots:
 		void on_xpowerCB_currentIndexChanged(int index) ;
 		void updateToMV2( void ) ;
 		void updateToMV3( void ) ;
+		void updateToMV4( void ) ;
+		void convertToModules( struct t_module *modules ) ;
+		void convertFromModules( struct t_module *modules ) ;
+		void buildProtocoText( struct t_module *pmodule, QListWidget *pdisplayList, int module ) ;
 		void on_Com2BaudrateCB_currentIndexChanged(int index) ;
+		void on_internalModuleDisplayList_doubleClicked() ;
+		void on_externalModuleDisplayList_doubleClicked() ;
 
 		void on_switchwarnChkB_stateChanged(int ) ;
 		void getModelSwitchDefPos(int i, bool val) ;

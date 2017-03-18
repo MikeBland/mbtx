@@ -24,6 +24,8 @@
 #define HEX_FILE_SIZE (1024*256)	// Allow for M2561 processor
 #define BIN_FILE_SIZE (1024*1024)
 
+//void setSubSubProtocol( QComboBox *b, int type ) ;
+QString subSubProtocolText( int type, int index, QComboBox *b ) ;
 
 #ifdef SKY
 void populateAnaVolumeCB( QComboBox *b, int value, int type ) ;
@@ -119,7 +121,9 @@ QString getTimerMode(int tm, int modelVersion ) ;
 #ifdef SKY
 QString getSWName(int val, int eepromType);
 #else
+#ifndef V2
 QString getSWName(int val, int extra ) ;
+#endif
 #endif
 QString getMappedSWName(int val, int eepromType) ;
 QString getCSWFunc(int val, uint8_t modelVersion ) ;

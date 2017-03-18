@@ -63,6 +63,7 @@ simulatorDialog::simulatorDialog(QWidget *parent) :
     g_tmr10ms = 0;
 		one_sec_precount = 0 ;
 		serialSending = 0 ;
+		gvar_or_scalers = 0 ;
 		port = NULL ;
 
     memset(&chanOut,0,sizeof(chanOut));
@@ -285,6 +286,54 @@ void simulatorDialog::timerEvent()
 			}
 		}
 
+		if ( one_sec_precount & 1 )	// Every 20mS
+		{
+			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
+			{
+        SKYCSwData &cs = g_model.customSw[i];
+        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
+  			if ( g_model.modelVersion >= 3 )
+				{
+					if ( cs.func == CS_LATCH )
+					{
+		    	  if (getSwitch( cs.v1, 0, 0) )
+						{
+							Last_switch[i] = 1 ;
+						}
+						else
+						{
+			  	    if (getSwitch( cs.v2, 0, 0) )
+							{
+								Last_switch[i] = 0 ;
+							}
+						}
+					}
+					if ( cs.func == CS_FLIP )
+					{
+		    	  if (getSwitch( cs.v1, 0, 0) )
+						{
+							if ( ( Last_switch[i] & 2 ) == 0 )
+							{
+								// Clock it!
+			  	    	if (getSwitch( cs.v2, 0, 0) )
+								{
+									Last_switch[i] = 3 ;
+								}
+								else
+								{
+									Last_switch[i] = 2 ;
+								}
+							}
+						}
+						else
+						{
+							Last_switch[i] &= ~2 ;
+						}
+					}
+			  }
+			}
+		}
+
 
 		if ( ++one_sec_precount >= 10 )
 		{
@@ -376,42 +425,6 @@ void simulatorDialog::timerEvent()
 				}
   			if ( g_model.modelVersion >= 3 )
 				{
-					if ( cs.func == CS_LATCH )
-					{
-		    	  if (getSwitch( cs.v1, 0, 0) )
-						{
-							Last_switch[i] = 1 ;
-						}
-						else
-						{
-			  	    if (getSwitch( cs.v2, 0, 0) )
-							{
-								Last_switch[i] = 0 ;
-							}
-						}
-					}
-					if ( cs.func == CS_FLIP )
-					{
-		    	  if (getSwitch( cs.v1, 0, 0) )
-						{
-							if ( ( Last_switch[i] & 2 ) == 0 )
-							{
-								// Clock it!
-			  	    	if (getSwitch( cs.v2, 0, 0) )
-								{
-									Last_switch[i] = 3 ;
-								}
-								else
-								{
-									Last_switch[i] = 2 ;
-								}
-							}
-						}
-						else
-						{
-							Last_switch[i] &= ~2 ;
-						}
-					}
 					if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
 					{
 						int8_t andSwOn = 1 ;
@@ -1511,13 +1524,26 @@ void simulatorDialog::setValues()
   ui->chnout_15->setStyleSheet( color[onoff[14]] ) ;
   ui->chnout_16->setStyleSheet( color[onoff[14]] ) ;
 
-	ui->Gvar1->setText( tr("%1").arg(g_model.gvars[0].gvar) ) ;
-	ui->Gvar2->setText( tr("%1").arg(g_model.gvars[1].gvar) ) ;
-	ui->Gvar3->setText( tr("%1").arg(g_model.gvars[2].gvar) ) ;
-	ui->Gvar4->setText( tr("%1").arg(g_model.gvars[3].gvar) ) ;
-	ui->Gvar5->setText( tr("%1").arg(g_model.gvars[4].gvar) ) ;
-	ui->Gvar6->setText( tr("%1").arg(g_model.gvars[5].gvar) ) ;
-	ui->Gvar7->setText( tr("%1").arg(g_model.gvars[6].gvar) ) ;
+	if ( gvar_or_scalers )
+	{
+		ui->Gvar1->setText( tr("%1").arg( calc_scaler(0) ) ) ;
+		ui->Gvar2->setText( tr("%1").arg( calc_scaler(1) ) ) ;
+		ui->Gvar3->setText( tr("%1").arg( calc_scaler(2) ) ) ;
+		ui->Gvar4->setText( tr("%1").arg( calc_scaler(3) ) ) ;
+		ui->Gvar5->setText( tr("%1").arg( calc_scaler(4) ) ) ;
+		ui->Gvar6->setText( tr("%1").arg( calc_scaler(5) ) ) ;
+		ui->Gvar7->setText( tr("%1").arg( calc_scaler(6) ) ) ;
+	}
+	else
+	{
+		ui->Gvar1->setText( tr("%1").arg(g_model.gvars[0].gvar) ) ;
+		ui->Gvar2->setText( tr("%1").arg(g_model.gvars[1].gvar) ) ;
+		ui->Gvar3->setText( tr("%1").arg(g_model.gvars[2].gvar) ) ;
+		ui->Gvar4->setText( tr("%1").arg(g_model.gvars[3].gvar) ) ;
+		ui->Gvar5->setText( tr("%1").arg(g_model.gvars[4].gvar) ) ;
+		ui->Gvar6->setText( tr("%1").arg(g_model.gvars[5].gvar) ) ;
+		ui->Gvar7->setText( tr("%1").arg(g_model.gvars[6].gvar) ) ;
+	}	
 
 	i = getFlightPhase() ;
 	if ( i && g_model.phaseData[i-1].name[0] )
@@ -1790,9 +1816,27 @@ qint16 simulatorDialog::getValue(qint8 i)
 			{
         return calc_scaler( j-12 ) ;
 			}
+			j = i-CHOUT_BASE-NUM_SKYCHNOUT - 4 ;
+			if ( ( j == 0 ) || ( j == 1 ) )
+			{
+    		return s_timer[j].s_timerVal ;
+			}
 		}
     return 0;
 }
+
+int32_t isAgvar(uint8_t value)
+{
+	if ( value >= 70 )
+	{
+		if ( value <= 76 )
+		{
+			return 1 ;
+		}
+	}
+	return 0 ;
+}
+
 
 #define SW_STACK_SIZE	6
 int8_t SwitchStack[SW_STACK_SIZE] ;
@@ -1899,8 +1943,10 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
         x = getValue(a-1);
       if (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT)
 			{
+        uint8_t idx = cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1 ;
+        y = convertTelemConstant( idx, cs.v2, &g_model ) ;
 //        y = convertTelemConstant( cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
-				y = b ;
+//				y = b ;
 			}
 			else
 			{
@@ -1927,6 +1973,19 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
         ret_value = (abs(x)<y) ;
         break;
 		case CS_EXEQUAL:
+			if ( isAgvar( a ) )
+			{
+				x *= 10 ;
+				y *= 10 ;
+			}
+    	ret_value = abs(x-y) < 32 ;
+	  break ;
+		case CS_VXEQUAL:
+			if ( isAgvar( a ) || isAgvar( b ) )
+			{
+				x *= 10 ;
+				y *= 10 ;
+			}
     	ret_value = abs(x-y) < 32 ;
 	  break ;
 
@@ -1939,6 +1998,12 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
     case (CS_XOR):
         ret_value = (getSwitch(a,0,level+1) ^ getSwitch(b,0,level+1));
         break;
+  	case (CS_BIT_AND) :
+  	  x = getValue(a-1);
+			y = (uint8_t) cs.v2 ;
+			y |= cs.res << 8 ;
+  	  ret_value = ( x & y ) != 0 ;
+    break;
 
     case (CS_EQUAL):
         ret_value = (x==y);
@@ -2448,6 +2513,7 @@ void simulatorDialog::timerTick()
 					else
 					{
 						audioControl = g_model.timer2Mbeep ;
+
 					}
             if( audioControl && ((mins.rem)==0)) //short beep every minute
             {
@@ -3312,7 +3378,28 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 				}
 
         //========== TRIM ===============
-        if((md.carryTrim==0) && (md.srcRaw>0) && (md.srcRaw<=4)) v += trimA[md.srcRaw-1];  //  0 = Trim ON  =  Default
+        if((md.carryTrim==0) && (md.srcRaw>0) && (md.srcRaw<=4))
+				{
+					int32_t trim = trimA[md.srcRaw-1] ;
+					if ( ( md.srcRaw-1 != 2 ) || ( !g_model.thrTrim ) )
+					{
+          	if ( g_model.trimsScaled )
+						{
+							int32_t scale = 1024 ;
+              if ( ( trim > 0 ) && ( v > 0 ) )
+							{
+								scale -= trim ;
+							}
+              else if ( ( trim < 0 ) && ( v < 0 ) )
+							{
+								scale += trim ;
+							}
+							scale *= v ;
+							v = scale / 1024 ;
+						}
+					}
+ 					v += trim ;  //  0 = Trim ON  =  Default
+				}
 
         //========== MULTIPLEX ===============
 #if GVARS
@@ -3543,6 +3630,12 @@ void simulatorDialog::perOut(bool init, uint8_t att)
     }
 }
 
+
+void simulatorDialog::on_GvarButton_clicked()
+{
+	gvar_or_scalers = !gvar_or_scalers ;
+  ui->GvarButton->setText( gvar_or_scalers ? "Scalers" : "GVARs" ) ;
+}
 
 void simulatorDialog::on_holdLeftX_clicked(bool checked)
 {

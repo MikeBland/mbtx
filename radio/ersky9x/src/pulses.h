@@ -57,8 +57,8 @@
 
 extern void module_output_low( void ) ;
 extern void module_output_active( void ) ;
-extern void PPM2OutputLow( void ) ;
-extern void PPM2OutputActive( void ) ;
+extern void InternalOutputLow( void ) ;
+extern void InternalOutputActive( void ) ;
 
 
 extern void init_main_ppm( uint32_t period, uint32_t out_enable ) ;

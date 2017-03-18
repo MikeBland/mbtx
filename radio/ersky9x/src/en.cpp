@@ -52,4 +52,3 @@ extern const char * const English[] ;
 
 const char * const English[] =
 #include "str_indices.h"
-

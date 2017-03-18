@@ -30,7 +30,11 @@ public:
     explicit simulatorDialog( QWidget *parent = 0);
     ~simulatorDialog();
 
+#ifdef V2
+    void loadParams(const V2EEGeneral gg, const V2ModelData gm);
+#else
     void loadParams(const EEGeneral gg, const ModelData gm);
+#endif
 		void setType( uint8_t type ) ;
 
 private:
@@ -90,8 +94,13 @@ private:
 
 		quint8  current_limits ;
 
+#ifdef V2
+    V2ModelData g_model;
+    V2EEGeneral g_eeGeneral;
+#else
     ModelData g_model;
     EEGeneral g_eeGeneral;
+#endif
 
 		int chVal(int val) ;
     void setupSticks();

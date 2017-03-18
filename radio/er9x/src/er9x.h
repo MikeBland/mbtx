@@ -703,8 +703,41 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define DSM2only         1
 #define DSM2_DSMX        2
 
+
+//1,Flysky,Flysky,V9x9,V6x6,V912,CX20
+//2,Hubsan
+//3,FrskyD
+//4,Hisky,Hisky,HK310
+//5,V2x2,V2x2,JXD506
+//6,DSM,DSM2-22,DSM2-11,DSMX-22,DSMX-11,AUTO
+//7,Devo
+//8,YD717,YD717,SKYWLKR,SYMAX4,XINXUN,NIHUI
+//9,KN,WLTOYS,FEILUN
+//10,SymaX,SYMAX,SYMAX5C
+//11,SLT,SLT,VISTA
+//12,CX10,GREEN,BLUE,DM007,---,J3015_1,J3015_2,MK33041
+//13,CG023,CG023,YD829,H8_3D
+//14,Bayang,Bayang,H8S3D
+//15,FrskyX,CH_16,CH_8
+//16,ESky
+//17,MT99xx,MT,H7,YZ,LS,FY805
+//18,MJXq,WLH08,X600,X800,H26D,E010,H26WH
+//19,Shenqi
+//20,FY326,FY326,FY319
+//21,SFHSS
+//22,J6PRO
+//23,FQ777
+//24,ASSAN
+//25,FrskyV
+//26,HONTAI,HONTAI,JJRCX1,X5C1,FQ777_951
+//27,OpnLrs
+//28,AFHD2SA,PWM_IBUS,PPM_IBUS,PWM_SBUS,PPM_SBUS
+//29,Q2X2,Q222,Q242,Q282
+//30,WK2x01,WK2801,WK2401,W6_5_1,W6_6_1,W6_HEL,W6_HEL_I
+
+
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  "
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  "
 #define M_Flysky          0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  CX20  "
 #define M_Hubsan          1
@@ -726,34 +759,40 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_SymaX	          9
 #define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		       	 10
+#define M_SLT_STR "\005SLT  VISTA"
 #define M_CX10		       11
 #define M_CX10_STR "\007GREEN  BLUE   DM007  ---    J3015_1J3015_2MK33041"
 #define M_CG023		       12
 #define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
+#define M_BAYANG_STR	"\006BayangH8S3D "
 #define M_FRSKYX	       14
-#define M_FRSKY_STR "\005CH_16CH_8 "
+#define M_FRSKY_STR "\005CH_16CH_8 EU_16EU_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
-#define M_MT99XX_STR "\002MTH7YZLS"
+#define M_MT99XX_STR "\005MT   H7   YZ   LS   FY805"
 #define M_MJXQ		       17
-#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
+#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 H26WH"
 #define M_SHENQI				 18
 #define M_FY326					 19
+#define M_FY326_STR	"\005FY326FY319"
 #define M_SFHSS					 20
 #define M_J6PRO					 21
 #define M_FQ777					 22
 #define M_ASSAN					 23
 #define M_FrskyV				 24
 #define M_HONTAI				 25
-#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
+#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1FQ777_"
 #define M_OPENLRS				 26
 #define M_AFHD2SA				 27
 #define M_AFHD2SA_STR "\007PWMIBUSPPMIBUSPWMSBUSPPM_SBUS"
 #define M_Q2X2					 28
-#define M_Q2X2_STR	 "\004Q242Q282"
-
-#define M_LAST_MULTI		 28
+#define M_Q2X2_STR	 "\004Q222Q242Q282"
+#define M_WK2x01			 	 29
+#define M_WK2x01_STR	"\006WK2801WK2401W6_5_1W6_6_1W6_HELW6HELI"
+#define M_Q303				 	 30
+#define M_Q303_STR "\006Q303  CX35  CX10D CX10WD"
+#define M_LAST_MULTI		 30
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

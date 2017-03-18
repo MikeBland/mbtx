@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -1449,6 +1449,9 @@ This value will be added to the measured battery voltage.  Use this value to cal
          </item>
          <item row="0" column="2">
           <widget class="QSpinBox" name="weightSB_1">
+           <property name="accelerated">
+            <bool>false</bool>
+           </property>
            <property name="minimum">
             <number>-102</number>
            </property>
@@ -2175,145 +2178,117 @@ This value will be added to the measured battery voltage.  Use this value to cal
       <attribute name="title">
        <string>Hardware</string>
       </attribute>
-      <widget class="QLabel" name="label_41">
+      <widget class="QWidget" name="gridLayoutWidget">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>61</width>
-         <height>16</height>
+         <width>191</width>
+         <height>271</height>
         </rect>
        </property>
-       <property name="text">
-        <string>Ele Switch</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_42">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>40</y>
-         <width>61</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Ail Switch</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_43">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>70</y>
-         <width>61</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>PB1 Switch</string>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_44">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>100</y>
-         <width>61</width>
-         <height>16</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>PB2 Switch</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="EleSwitchSource">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>10</y>
-         <width>74</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="AilSwitchSource">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>40</y>
-         <width>74</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="Pb1SwitchSource">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>70</y>
-         <width>74</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="Pb2SwitchSource">
-       <property name="geometry">
-        <rect>
-         <x>90</x>
-         <y>100</y>
-         <width>74</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="Pg2InputCB">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>140</y>
-         <width>91</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
-       <property name="text">
-        <string>PG2 Input</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="Pb7InputCB">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>170</y>
-         <width>91</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
-       <property name="text">
-        <string>PB7 Input</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="L_wrInputCB">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>200</y>
-         <width>91</width>
-         <height>20</height>
-        </rect>
-       </property>
-       <property name="layoutDirection">
-        <enum>Qt::RightToLeft</enum>
-       </property>
-       <property name="text">
-        <string>L-WR Input</string>
-       </property>
+       <layout class="QGridLayout" name="gridLayout_10">
+        <item row="6" column="0">
+         <widget class="QLabel" name="label_44">
+          <property name="text">
+           <string>PB2 Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="1">
+         <widget class="QComboBox" name="Pb2SwitchSource"/>
+        </item>
+        <item row="5" column="1">
+         <widget class="QComboBox" name="Pb1SwitchSource"/>
+        </item>
+        <item row="5" column="0">
+         <widget class="QLabel" name="label_43">
+          <property name="text">
+           <string>PB1 Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_AilSw">
+          <property name="text">
+           <string>Ail Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QLabel" name="label_41">
+          <property name="text">
+           <string>Ele Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QComboBox" name="AilSwitchSource"/>
+        </item>
+        <item row="0" column="1">
+         <widget class="QComboBox" name="EleSwitchSource"/>
+        </item>
+        <item row="2" column="1">
+         <widget class="QComboBox" name="ThrSwitchSource"/>
+        </item>
+        <item row="3" column="1">
+         <widget class="QComboBox" name="GeaSwitchSource"/>
+        </item>
+        <item row="4" column="1">
+         <widget class="QComboBox" name="RudSwitchSource"/>
+        </item>
+        <item row="7" column="0">
+         <widget class="QCheckBox" name="Pg2InputCB">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>PG2 Input</string>
+          </property>
+         </widget>
+        </item>
+        <item row="8" column="0">
+         <widget class="QCheckBox" name="Pb7InputCB">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>PB7 Input</string>
+          </property>
+         </widget>
+        </item>
+        <item row="9" column="0">
+         <widget class="QCheckBox" name="L_wrInputCB">
+          <property name="layoutDirection">
+           <enum>Qt::RightToLeft</enum>
+          </property>
+          <property name="text">
+           <string>L-WR Input</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_ThrSw">
+          <property name="text">
+           <string>Thr Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_GeaSw">
+          <property name="text">
+           <string>Gea Switch</string>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="0">
+         <widget class="QLabel" name="label_RudSw">
+          <property name="text">
+           <string>Rud Switch</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </widget>

@@ -6,6 +6,9 @@
 #include <QPrinter>
 
 #include <QPrintDialog>
+#ifdef V2
+#include "mdichild.h"
+#endif
 
 
 printDialog::printDialog(QWidget *parent, EEGeneral *gg, ModelData *gm) :
@@ -13,6 +16,9 @@ printDialog::printDialog(QWidget *parent, EEGeneral *gg, ModelData *gm) :
     ui(new Ui::printDialog)
 {
     ui->setupUi(this);
+#ifdef V2
+    rData = &((MdiChild *)parent)->radioData ;
+#endif
     g_model = gm;
     g_eeGeneral = gg;
     te = ui->textEdit;
@@ -124,7 +130,11 @@ void printDialog::printSetup()
     str.append(fv(tr("Pulse Polarity"), g_model->pulsePol ? "NEG" : "POS"));
     str.append(fv(tr("Throttle Trim"), g_model->thrTrim ? tr("Enabled") : tr("Disabled")));
     str.append(fv(tr("Throttle Expo"), g_model->thrExpo ? tr("Enabled") : tr("Disabled")));
+#ifdef V2
+    str.append(fv(tr("Trim Switch"), rData->getMappedSWName(g_model->trimSw,0)));
+#else
     str.append(fv(tr("Trim Switch"), getSWName(g_model->trimSw,0)));
+#endif
     str.append(fv(tr("Trim Increment"), getTrimInc()));
     str.append(fv(tr("Center Beep"), getCenterBeep())); // specify which channels beep
     str.append("<br><br>");
@@ -152,8 +162,13 @@ void printDialog::printExpo()
         str.append("<h3>" + getSourceStr(0, i+1, g_model->modelVersion) + "</h3>");
         //high, mid, low
         //left right / expo, dr
+#ifdef V2
+        str.append(fv(tr("Switch 1:"), rData->getMappedSWName(g_model->expoData[index].drSw1,0)));
+        str.append(fv(tr("Switch 2:"), rData->getMappedSWName(g_model->expoData[index].drSw2,0)));
+#else
         str.append(fv(tr("Switch 1:"), getSWName(g_model->expoData[index].drSw1,0)));
         str.append(fv(tr("Switch 2:"), getSWName(g_model->expoData[index].drSw2,0)));
+#endif
         str.append("<table border=1 cellspacing=0 cellpadding=3>");
 
         str.append("<tr>");
@@ -243,7 +258,11 @@ void printDialog::printMixes()
         //str += " " + srcStr.mid(CONVERT_MODE(md->srcRaw+1)*4,4);
         str += getSourceStr(g_eeGeneral->stickMode,md->srcRaw, g_model->modelVersion);
 
+#ifdef V2
+        if(md->swtch) str += tr(" Switch(") + rData->getMappedSWName(md->swtch,0) + ")";
+#else
         if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,0) + ")";
+#endif
         if(md->carryTrim) str += tr(" noTrim");
         if(md->sOffset)  str += tr(" Offset(%1\%)").arg(md->sOffset);
         if(md->curve)
@@ -380,7 +399,11 @@ void printDialog::printSwitches()
 
 
             case CS_VBOOL:
+#ifdef V2
+                tstr = rData->getMappedSWName(g_model->customSw[i].v1,0);
+#else
                 tstr = getSWName(g_model->customSw[i].v1,0);
+#endif
 
                 switch (g_model->customSw[i].func)
                 {
@@ -397,7 +420,11 @@ void printDialog::printSwitches()
                     break;
                 }
 
+#ifdef V2
+                tstr = rData->getMappedSWName(g_model->customSw[i].v2,0);
+#else
                 tstr += getSWName(g_model->customSw[i].v2,0);
+#endif
                 break;
 
 

@@ -36,7 +36,11 @@ ifeq ($(PCB), X9D)
   ifeq ($(REV9E), 1)
    OBJDIR = x9eobj
   else
-   OBJDIR = x9dobj
+   ifeq ($(PCBX7), 1)
+    OBJDIR = x7obj
+   else
+    OBJDIR = x9dobj
+   endif
   endif
  endif
 else
@@ -107,7 +111,11 @@ ifeq ($(PCB), X9D)
   ifeq ($(REV9E), 1)
    PROJECT        = x9e
   else
-   PROJECT        = x9d
+   ifeq ($(PCBX7), 1)
+    PROJECT        = x7
+   else
+    PROJECT        = x9d
+   endif
   endif
  endif
 else
@@ -181,6 +189,9 @@ else
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
      CPPDEFS += -DUSB_JOYSTICK
+     ifeq ($(PCBX7), 1)
+      CPPDEFS += -DPCBX7
+     endif
    else
     ifeq ($(PCB), X12D)
      LDSCRIPT = X12D/stm32f4_flash.ld
@@ -317,9 +328,9 @@ CPPSRC = ersky9x.cpp \
          timers.cpp \
          logicio.cpp \
          analog.cpp \
-         debug.cpp \
 			frsky.cpp \
          menus.cpp \
+         mixer.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -345,6 +356,9 @@ CPPSRC = ersky9x.cpp \
 #         X9D/usbd_storage_msd.cpp \
 
 CPPSRC += pdi.cpp
+ifeq ($(DEBUG), 1)
+CPPSRC += debug.cpp
+endif
 
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
@@ -373,7 +387,6 @@ CPPSRC = stamp.cpp \
 			pl.cpp \
 			vi.cpp \
 			sp.cpp \
-         debug.cpp \
          file.cpp \
          pers.cpp \
          templates.cpp \
@@ -421,11 +434,11 @@ CPPSRC = ersky9x.cpp \
          timers.cpp \
          logicio.cpp \
          analog.cpp \
-         debug.cpp \
          file.cpp \
 			frsky.cpp \
          pers.cpp \
          menus.cpp \
+         mixer.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -452,6 +465,9 @@ CPPSRC = ersky9x.cpp \
 #         X9D/eeprom_rlc.cpp \
 
 CPPSRC += pdi.cpp
+ifeq ($(DEBUG), 1)
+CPPSRC += debug.cpp
+endif
 
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
@@ -493,11 +509,11 @@ CPPSRC = stamp.cpp \
          sky/diskio.cpp \
          sky/power.cpp \
          lcd.cpp \
-         debug.cpp \
          file.cpp \
          templates.cpp \
          pers.cpp \
          menus.cpp \
+         mixer.cpp \
          frsky.cpp \
          audio.cpp \
          ersky9x.cpp \
@@ -525,6 +541,9 @@ CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 #ifeq ($(REVX), 1)
  CPPSRC += pdi.cpp
 #endif
+ifeq ($(DEBUG), 1)
+CPPSRC += debug.cpp
+endif
 
 # List ASM source files here
 ASRC =
@@ -623,11 +642,6 @@ ifeq ($(REVX), 1)
  EXT_MOD=REVB-X
 endif
 
-# If Flight Phases
-#ifeq ($(PHASES), 1)
-# CPPDEFS += -DPHASES
-#endif
-
 ifeq ($(PCB), 9XT)
 # CPPDEFS += -DXFIRE
  EXT_MOD=9XT
@@ -650,7 +664,7 @@ ifeq ($(PCB), X9D)
  endif
 endif
 
-CPPDEFS += -DFRSKY
+#CPPDEFS += -DFRSKY
 CPPDEFS += -DCPUARM
 
 # If serial Debug required
@@ -744,6 +758,7 @@ clean:
 	-rm -f skySobj/*.*
 	-rm -f skyDobj/*.*
 	-rm -f sky9XTobj/*.*
+	-rm -f x7obj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

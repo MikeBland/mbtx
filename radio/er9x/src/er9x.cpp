@@ -3535,7 +3535,11 @@ static void perMain()
 					}
 					else
 					{
+#ifdef V2
+						v = g_model.gvars[g_model.anaVolume-4].gvar + 125 ;
+#else
 						v = g_model.gvars[g_model.anaVolume-4+3].gvar + 125 ;	// +3 to get to GV4-GV7
+#endif // V2
 						divisor = 250 ;
 					}
 					requiredVolume = v * (NUM_VOL_LEVELS-1) / divisor ;
@@ -3659,6 +3663,7 @@ static void perMain()
 						value = Rotary.RotaryControl ;
 	#endif
 					}
+// The following is to action GVAR adjustment
 					else
 					{
 						value = getGvarSourceValue( src ) ;
@@ -4822,7 +4827,7 @@ void mainSequence()
   perMain();      // Give bandgap plenty of time to settle
   getADC_bandgap() ;
   //while(get_tmr10ms()==old10ms) sleep_mode();
-  if(heartbeat == 0x3)
+	if(heartbeat == 0x3)
   {
       wdt_reset();
       heartbeat = 0;
@@ -4968,12 +4973,12 @@ void mainSequence()
 				}
 				Vs_state[i] = curent_state ;
 			}
-			for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+		}
+		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+		{
+			if ( g_model.eScalers[i].dest )
 			{
-				if ( g_model.eScalers[i].dest )
-				{
-					calc_scaler( i, 0, 0 ) ;					
-				}
+				calc_scaler( i, 0, 0 ) ;					
 			}
 		}
 #else

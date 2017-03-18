@@ -40,6 +40,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_ER9XM128V1	6
 #define RADIO_TYPE_ER9XM128V2	7
 #define RADIO_TYPE_X9E				8
+#define RADIO_TYPE_QX7				9
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -48,11 +49,14 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_9XTREME			16
 #define RADIO_BITTYPE_X9E					32
 #define RADIO_BITTYPE_AR9X				64
+#define RADIO_BITTYPE_QX7					128
 
-#define RADIO_BITTYPE_ER9XM64V1		128
-#define RADIO_BITTYPE_ER9XM64V2		256
-#define RADIO_BITTYPE_ER9XM128V1	512
-#define RADIO_BITTYPE_ER9XM128V2	1024
+#define RADIO_BITTYPE_ER9XM64V1		1024
+#define RADIO_BITTYPE_ER9XM64V2		2048
+#define RADIO_BITTYPE_ER9XM128V1	4096
+#define RADIO_BITTYPE_ER9XM128V2	8192
+#define RADIO_BITTYPE_ER9XM2561V1	16384
+#define RADIO_BITTYPE_ER9XM2561V2	32768
 
 //convert from mode 1 to mode g_eeGeneral.stickMode
 //NOTICE!  =>  1..4 -> 1..4
@@ -251,6 +255,7 @@ enum EnumKeys {
 #define NUM_SKYCSW  24 //number of custom switches
 #define CSW_INDEX	9	// Index of first custom switch
 #define NUM_FSW			16
+#define EXTRA_SKYCHANNELS	8
 
 //#define SW_BASE      SW_NC
 #define SW_BASE      SW_ThrCt
@@ -275,8 +280,8 @@ enum EnumKeys {
 
 #define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
 #define CURVE_BASE 7
-#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val "
-#define CSW_NUM_FUNC 19
+#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 "
+#define CSW_NUM_FUNC 21
 #define CSW_LEN_FUNC 7
 
 #define CS_OFF       0
@@ -300,13 +305,16 @@ enum EnumKeys {
 #define CS_MONO			 16
 #define CS_RMONO	   17	// Monostable with reset
 #define CS_EXEQUAL   18	// V~=offset
-#define CS_MAXF      18  //max function
+#define CS_BIT_AND   19
+#define CS_VXEQUAL   20	// V1~=V2
+#define CS_MAXF      20  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
 #define CS_VCOMP      2
 #define CS_TIMER			3
 #define CS_TMONO			4
+#define CS_U16	      5
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)>=CS_LATCH)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
 
 #define CHAR_FOR_NAMES " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-."
@@ -441,6 +449,7 @@ enum EnumKeys {
 #define M_HONTAI	       25
 #define M_OPENLRS	       26
 #define M_AFHDS2A	       27
+#define M_Q2X2		       28
 
 
 #define GETADC_SING = 0
@@ -486,7 +495,16 @@ bool eeLoadGeneral();
 #define SUB_MODE_H_DBL 3
 //uint8_t checkSubGen(uint8_t event,uint8_t num, uint8_t sub, uint8_t mode);
 
-
+// Physical radio types
+#define PHYSICAL_UNKNOWN			0
+#define PHYSICAL_SKY					1
+#define PHYSICAL_9XRPRO				2
+#define PHYSICAL_AR9X					3
+#define PHYSICAL_TARANIS			4
+#define PHYSICAL_TARANIS_PLUS	5
+#define PHYSICAL_TARANIS_X9E	6
+#define PHYSICAL_9XTREME			7
+#define PHYSICAL_QX7					8
 
 #include "myeeprom.h"
 
