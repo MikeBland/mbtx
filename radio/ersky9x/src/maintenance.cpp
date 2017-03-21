@@ -159,6 +159,7 @@ UINT XblockCount ;
 uint32_t BytesFlashed ;
 uint32_t ByteEnd ;
 uint32_t BlockOffset ;
+uint16_t MultiPageSize ;
 uint8_t UpdateItem ;
 uint8_t MaintenanceRunning = 0 ;
 uint8_t BlockInUse ;
@@ -2348,6 +2349,10 @@ uint32_t multiUpdate()
 			else
 			{
 				MultiState = MULTI_FLASHING ;
+				if ( XmegaSignature[2] == 0x42 )
+				{
+					MultiPageSize = 256 ;
+				}
 			}
 			BlockOffset = 0 ;
 		}
@@ -2357,16 +2362,21 @@ uint32_t multiUpdate()
 		{	
 			uint16_t rxchar ;
 			sendMultiByte( 0x55 ) ;
-			sendMultiByte( BytesFlashed >> 1 ) ;
-			sendMultiByte( BytesFlashed >> 9 ) ;
+			rxchar = BytesFlashed ;
+			if ( MultiPageSize == 128 )
+			{
+				rxchar >>= 1 ;
+			}
+			sendMultiByte( rxchar ) ;
+			sendMultiByte( rxchar >> 8 ) ;
 			sendMultiByte( 0x20 ) ;
 			eat(0x14) ;
 			eat(0x10) ;
 			sendMultiByte( 0x64 ) ;
 			sendMultiByte( 0 ) ;
-			sendMultiByte( 128 ) ;
+			sendMultiByte( MultiPageSize & 0x00FF ) ;
 			sendMultiByte( 0 ) ;
-			for ( i = 0 ; i < 128 ; i += 1 )
+			for ( i = 0 ; i < MultiPageSize ; i += 1 )
 			{
 				sendMultiByte( FileData[BlockOffset+i] ) ;
 			}
@@ -2388,8 +2398,8 @@ uint32_t multiUpdate()
 				break ;
 			}
 			
-			BytesFlashed += 128 ;
-			BlockOffset += 128 ;
+			BytesFlashed += MultiPageSize ;
+			BlockOffset += MultiPageSize ;
 			if ( BytesFlashed >= ByteEnd )
 			{
 				f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
@@ -2406,6 +2416,10 @@ uint32_t multiUpdate()
 		break ;
 
 		case MULTI_DONE :
+			sendMultiByte( 0x51 ) ;	// Exit bootloader
+			sendMultiByte( 0x20 ) ;
+			eat(0x14) ;
+			eat(0x10) ;
 			stopMultiMode() ;
 			MultiState = MULTI_IDLE ;
 //#ifdef PCB9XT
@@ -2455,10 +2469,10 @@ uint32_t xmegaUpdate()
 				{
 					pdiChipErase() ;
 				}
-				if ( ( Fuses[2] & 0x40 ) == 0 )
+				if ( Fuses[2] & 0x40 )
 				{ // Boot reset
  					wdt_reset() ;
-					pdiWriteFuse( 2, Fuses[2] | 0x40 ) ;
+					pdiWriteFuse( 2, Fuses[2] & ~0x40 ) ;
 				}
  				wdt_reset() ;
 				pdiWritePageMemory( 0, FileData, 256 ) ;

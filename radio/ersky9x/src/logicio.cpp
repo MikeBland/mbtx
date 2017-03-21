@@ -2501,122 +2501,140 @@ uint32_t hwKeyState( uint8_t key )
 
 uint32_t keyState(EnumKeys enuk)
 {
-  register uint32_t a = GPIOA->IDR;
-//  register uint32_t b = GPIOB->IDR;
-  register uint32_t e = GPIOE->IDR;
+//#ifdef PCBX7
+//  register uint32_t d = GPIOD->IDR;
+//#else
+//  register uint32_t a = GPIOA->IDR;
+//#endif
+////  register uint32_t b = GPIOB->IDR;
+//  register uint32_t e = GPIOE->IDR;
 
-  register uint32_t xxx = 0;
+//  register uint32_t xxx = 0;
 
   if (enuk < (int) DIM(keys)) return keys[enuk].state() ? 1 : 0;
 
-  switch ((uint8_t) enuk) {
-//    case SW_SA0:
-//      xxx = ~e & PIN_SW_A_L;
-//      break;
-//    case SW_SA1:
-//      xxx = ((e & PIN_SW_A_L) | (b & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
-//      break;
-//    case SW_SA2:
-//      xxx = ~b & PIN_SW_A_H;
-//      break;
+	return hwKeyState( (uint8_t) enuk -SW_BASE + 1 ) ;
+//  switch ((uint8_t) enuk) {
+////    case SW_SA0:
+////      xxx = ~e & PIN_SW_A_L;
+////      break;
+////    case SW_SA1:
+////      xxx = ((e & PIN_SW_A_L) | (b & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
+////      break;
+////    case SW_SA2:
+////      xxx = ~b & PIN_SW_A_H;
+////      break;
 
-//    case SW_SB0:
-//      xxx = ~e & PIN_SW_B_L ;
-//      break;
-//    case SW_SB1:
-//      xxx = (e & (PIN_SW_B_L | PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
-//      break;
-//    case SW_SB2:
-//      xxx = ~e & PIN_SW_B_H ;
-//      break;
+////    case SW_SB0:
+////      xxx = ~e & PIN_SW_B_L ;
+////      break;
+////    case SW_SB1:
+////      xxx = (e & (PIN_SW_B_L | PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
+////      break;
+////    case SW_SB2:
+////      xxx = ~e & PIN_SW_B_H ;
+////      break;
 
-    case SW_SC0:
-      xxx = ~a & PIN_SW_C_L ;
-      break;
-    case SW_SC1:
-      xxx = ((a & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
-      break;
-    case SW_SC2:
-      xxx = ~e & PIN_SW_C_H ;
-      break;
-
-//    case SW_SD0:
-//#ifdef REVPLUS
-//      xxx = ~e & PIN_SW_D_L ;
+//#ifdef PCBX7
+//    case SW_SC0:
+//      xxx = ~d & PIN_SW_C_L ;
+//      break;
+//    case SW_SC1:
+//      xxx = ((d & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+//      break;
 //#else
-//      xxx = ~b & PIN_SW_D_L ;
+//    case SW_SC0:
+//      xxx = ~a & PIN_SW_C_L ;
+//      break;
+//    case SW_SC1:
+//      xxx = ((a & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+//      break;
 //#endif
-//			break;
-//    case SW_SD1:
-//#ifdef REVPLUS
-//      xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+//    case SW_SC2:
+//      xxx = ~e & PIN_SW_C_H ;
+//      break;
+
+////    case SW_SD0:
+////#ifdef REVPLUS
+////      xxx = ~e & PIN_SW_D_L ;
+////#else
+////      xxx = ~b & PIN_SW_D_L ;
+////#endif
+////			break;
+////    case SW_SD1:
+////#ifdef REVPLUS
+////      xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+////#else
+////      xxx = ((b & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+////#endif
+////      break;
+////    case SW_SD2:
+////      xxx = ~e & PIN_SW_D_H ;
+////      break;
+
+////    case SW_SE0:
+////      xxx = ~b & PIN_SW_E_L ;
+////      break;
+////    case SW_SE1:
+////      xxx = ((b & PIN_SW_E_H) | (b & PIN_SW_E_L)) == (PIN_SW_E_H | PIN_SW_E_L) ;
+////      break;
+////    case SW_SE2:
+////      xxx = ~b & PIN_SW_E_H ;
+////      break;
+
+////    case SW_SF0:
+////      xxx = e & PIN_SW_F ;
+////      break;
+//    case SW_SF2:
+//#ifdef REV9E
+//      xxx = e & PIN_SW_D_L ;
 //#else
-//      xxx = ((b & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
-//#endif
-//      break;
-//    case SW_SD2:
-//      xxx = ~e & PIN_SW_D_H ;
-//      break;
-
-//    case SW_SE0:
-//      xxx = ~b & PIN_SW_E_L ;
-//      break;
-//    case SW_SE1:
-//      xxx = ((b & PIN_SW_E_H) | (b & PIN_SW_E_L)) == (PIN_SW_E_H | PIN_SW_E_L) ;
-//      break;
-//    case SW_SE2:
-//      xxx = ~b & PIN_SW_E_H ;
-//      break;
-
-//    case SW_SF0:
-//      xxx = e & PIN_SW_F ;
-//      break;
-    case SW_SF2:
-#ifdef REV9E
-      xxx = e & PIN_SW_D_L ;
-#else
-      xxx = ~e & PIN_SW_F ;
-#endif
-      break;
-
-//    case SW_SG0:
-//      xxx = ~e & PIN_SW_G_L ;
-//      break;
-//    case SW_SG1:
-//      xxx = (e & (PIN_SW_G_H | PIN_SW_G_L)) == (PIN_SW_G_H | PIN_SW_G_L) ;
-//      break;
-//    case SW_SG2:
-//      xxx = ~e & PIN_SW_G_H ;
-//      break;
-
-//    case SW_SH0:
-//#ifdef REVPLUS
-//      xxx = GPIOD->IDR & PIN_SW_H;
-//#else
-//      xxx = e & PIN_SW_H;
+//      xxx = ~e & PIN_SW_F ;
 //#endif
 //      break;
-    case SW_SH2:
-#ifdef REVPLUS
-#ifdef REV9E
-      xxx = GPIOF->IDR & PIN_SW_H_L ;
-#else
-      xxx = ~GPIOD->IDR & PIN_SW_H;
-#endif
-#else
-      xxx = ~e & PIN_SW_H;
-#endif
-      break;
 
-    default:
-      break;
-  }
+////    case SW_SG0:
+////      xxx = ~e & PIN_SW_G_L ;
+////      break;
+////    case SW_SG1:
+////      xxx = (e & (PIN_SW_G_H | PIN_SW_G_L)) == (PIN_SW_G_H | PIN_SW_G_L) ;
+////      break;
+////    case SW_SG2:
+////      xxx = ~e & PIN_SW_G_H ;
+////      break;
 
-  if (xxx) {
-    return 1;
-  }
+////    case SW_SH0:
+////#ifdef REVPLUS
+////      xxx = GPIOD->IDR & PIN_SW_H;
+////#else
+////      xxx = e & PIN_SW_H;
+////#endif
+////      break;
+//    case SW_SH2:
+//#ifdef REVPLUS
+//#ifdef REV9E
+//      xxx = GPIOF->IDR & PIN_SW_H_L ;
+//#else
+//      xxx = ~GPIOD->IDR & PIN_SW_H;
+//#endif
+//#else
+//#ifdef PCBX7
+//      xxx = ~d & PIN_SW_H;
+//#else
+//      xxx = ~e & PIN_SW_H;
+//#endif
+//#endif
+//      break;
 
-  return 0;
+//    default:
+//      break;
+//  }
+
+//  if (xxx) {
+//    return 1;
+//  }
+
+//  return 0;
 }
 
 // Returns 0, 1 or 2 for ^ - or v

@@ -2882,7 +2882,7 @@ void menuLogging(uint8_t event)
 {
 	TITLE(XPSTR("Logging"));
 	static MState2 mstate2;
-	event = mstate2.check_columns( event, 1+sizeof(LogLookup)+4 ) ;
+	event = mstate2.check_columns( event, 1+sizeof(LogLookup)+5 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
 	uint8_t blink = InverseBlink ;
@@ -2914,23 +2914,32 @@ void menuLogging(uint8_t event)
 			lcd_puts_Pleft( y, XPSTR("New File") ) ;
 			g_model.logNew = onoffItem( g_model.logNew, y, attr ) ;
 		}
+		else if ( k == 3 )
+		{
+			lcd_puts_Pleft( y, XPSTR("Data Timeout(s)") ) ;
+			lcd_outdezAtt( 18*FW, y, g_model.telemetryTimeout + 25, attr|PREC1 ) ;
+ 			if(attr)
+			{
+				CHECK_INCDEC_H_MODELVAR_0( g_model.telemetryTimeout, 75 ) ;
+   		}
+		}
 		else
 		{
-			uint32_t index = LogLookup[k-3]-1 ;
+			uint32_t index = LogLookup[k-4]-1 ;
 			uint32_t bit ;
 			uint32_t offset ;
 			uint32_t value ;
-			if ( k == 3+sizeof(LogLookup) )
+			if ( k == 4+sizeof(LogLookup) )
 			{
 				index = LOG_LAT ;
 				lcd_puts_Pleft( y, XPSTR("Lat") ) ;
 			}
-			else if ( k == 4+sizeof(LogLookup) )
+			else if ( k == 5+sizeof(LogLookup) )
 			{
 				index = LOG_LONG ;
 				lcd_puts_Pleft( y, XPSTR("Long") ) ;
 			}
-			else if ( k == 5+sizeof(LogLookup) )
+			else if ( k == 6+sizeof(LogLookup) )
 			{
 				index = LOG_BTRX ;
 				lcd_puts_Pleft( y, XPSTR("BtRx") ) ;

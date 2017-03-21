@@ -351,9 +351,9 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 //		FrskyVolts[battnumber] = cell ;
 //		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
 		FrskyHubData[FR_CELL1+battnumber] = cell ;
-		TelemetryDataValid[FR_CELL1+battnumber] = 40 ;
-		TelemetryDataValid[FR_CELLS_TOT] = 40 ;
-		TelemetryDataValid[FR_CELL_MIN] = 40 ;
+		TelemetryDataValid[FR_CELL1+battnumber] = 40 + g_model.telemetryTimeout ;
+		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
+		TelemetryDataValid[FR_CELL_MIN] = 40 + g_model.telemetryTimeout ;
 		if ( battnumber == 0 )
 		{
 			if ( FrskyHubData[FR_CELL_MIN] == 0 )
@@ -371,7 +371,7 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 void storeAltitude( int16_t value )
 {
 	FrskyHubData[FR_ALT_BARO] = value ;
-	TelemetryDataValid[FR_ALT_BARO] = 25 ;
+	TelemetryDataValid[FR_ALT_BARO] = 25 + g_model.telemetryTimeout ;
 	if ( !AltitudeZeroed )
 	{
 		AltOffset = -FrskyHubData[FR_ALT_BARO] ;
@@ -429,7 +429,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 	{
 		index = TELEM_GPS_ALT ;         // For max and min
 		FrskyHubData[TELEM_GPS_ALT] = value ;
-		TelemetryDataValid[TELEM_GPS_ALT] = 25 ;
+		TelemetryDataValid[TELEM_GPS_ALT] = 25 + g_model.telemetryTimeout ;
 	}
 
 	if ( index < HUBDATALENGTH )
@@ -437,7 +437,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
     if ( !g_model.FrSkyGpsAlt )         
     {
 			FrskyHubData[index] = value ;
-			TelemetryDataValid[index] = 25 ;
+			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
     }                     
 		else
 		{
@@ -450,7 +450,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
          storeAltitude( FrskyHubData[TELEM_GPS_ALT] * 10 ) ;      // Copy Gps Alt instead
          index = FR_ALT_BARO ;         // For max and min
       }
-			TelemetryDataValid[index] = 25 ;
+			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
 		}
 		
 #if defined(VARIO)
@@ -471,7 +471,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 				value = 0 ;
 			}
 			FrskyHubData[index] = value ;
-			TelemetryDataValid[index] = 25 ;
+			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
 		}
 
 		if ( index < HUBMINMAXLEN )
@@ -553,13 +553,13 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 				g_model.numBlades = 1 ;
 			}
 			FrskyHubData[FR_RPM] = x / g_model.numBlades ;
-			TelemetryDataValid[FR_RPM] = 25 ;
+			TelemetryDataValid[FR_RPM] = 25 + g_model.telemetryTimeout ;
 //			FrskyHubData[FR_RPM] = x / ( g_model.Mavlink == 0 ? g_model.numBladesb : g_model.numBlades * 30) ;
 		}
 		if ( index == FR_V_AMPd )
 		{
 			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
-			TelemetryDataValid[index] = 25 ;
+			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
 		}
 	}	
 }

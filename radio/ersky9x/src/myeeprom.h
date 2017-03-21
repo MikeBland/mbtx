@@ -839,6 +839,7 @@ PACK(typedef struct te_ModelData {
 	EXTRA_CHANNELS ;
 
 	VarioExtraData varioExtraData ;
+	uint8_t telemetryTimeout ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 
