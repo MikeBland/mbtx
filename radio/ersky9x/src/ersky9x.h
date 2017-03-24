@@ -992,6 +992,7 @@ extern const char *get_switches_string( void ) ;
 void putsDblSizeName( uint8_t y ) ;
 void clearKeyEvents( void ) ;
 void speakModelVoice( void ) ;
+void prepareForShutdown( void ) ;
 
 extern void interrupt5ms() ;
 extern uint16_t getTmr2MHz( void ) ;

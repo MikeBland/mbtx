@@ -805,7 +805,7 @@ void update_mode(void* pdata)
 
   while (1)
 	{
-		if ( g_menuStack[0] == menuUpdate )
+		if ( (g_menuStackPtr==0) && (g_menuStack[0] == menuUpdate) )
 		{
 			if ( ( check_soft_power() == POWER_OFF )/* || ( goto_usb ) */ )		// power now off
 			{
@@ -869,6 +869,7 @@ extern void checkRotaryEncoder() ;
 			evt = EnterMenu ;
 			EnterMenu = 0 ;
 		}
+	 	Tevent = evt ;
 		g_menuStack[g_menuStackPtr](evt);
 		// Only update display every 40mS, improves SPort update throughput
 		if ( ++displayTimer >= 4 )
@@ -1765,9 +1766,16 @@ uint32_t updateSlave() ;
 #endif
 
 	// At this point, check for "maintenance mode"
+#ifdef PCBSKY
+	if ( ( ( read_trims() & 0x81 )== 0x81 ) || ( GPBR->SYS_GPBR0 == 0x5555AAAA ) )
+#else
 	if ( ( read_trims() & 0x81 )== 0x81 )
+#endif
 	{
 		// Do maintenance mode
+#ifdef PCBSKY
+		GPBR->SYS_GPBR0 = 0 ;
+#endif
 #ifndef SIMU
 		CoInitOS();
 
@@ -3534,6 +3542,19 @@ void speakModelVoice()
 	}
 }
 
+void prepareForShutdown()
+{
+	if ( LogsRunning & 1 )
+	{
+		closeLogs() ;
+	}
+  g_eeGeneral.unexpectedShutdown = 0 ;
+	STORE_MODELVARS ;			// To make sure we write model persistent timer
+  STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
+	
+}
+
+
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
@@ -3739,12 +3760,6 @@ extern uint8_t ModelImageValid ;
 			// Wait for OK to turn off
 			// Currently wait 1 sec, needs to check eeprom finished
 
-			if ( LogsRunning & 1 )
-			{
-				closeLogs() ;
-			}
-
-  		g_eeGeneral.unexpectedShutdown = 0;
 #ifdef PCBSKY
 			if ( ( g_eeGeneral.ar9xBoard == 0 ) && ( g_eeGeneral.extraPotsSource[0] != 2 ) && ( g_eeGeneral.extraPotsSource[1] != 2 ) )
 			{
@@ -3755,8 +3770,7 @@ extern uint8_t ModelImageValid ;
 				}
 			}
 #endif
-      STORE_MODELVARS ;			// To make sure we write model persistent timer
-      STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
+			prepareForShutdown() ;
 
   		uint16_t tgtime = get_tmr10ms() ;
   		uint16_t long_tgtime = tgtime ;

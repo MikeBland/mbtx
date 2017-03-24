@@ -121,11 +121,12 @@ extern uchar PdiErrors8 ;
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
+uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edit ) ;
 
 extern void copyFileName( char *dest, char *source, uint32_t size ) ;
 #ifdef PCBSKY
- #ifndef REVX
 void init_mtwi( void ) ;
+ #ifndef REVX
 uint32_t check_ready( void ) ;
 uint32_t write_CoProc( uint32_t coInternalAddr, uint8_t *buf, uint32_t number ) ;
 uint32_t coProcBoot( void ) ;
@@ -134,6 +135,9 @@ uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number ) ;
 uint8_t Twi_rx_buf[26] ;
 uint8_t CoProresult ;
  #endif
+#ifdef REVX
+uint32_t clearMfp() ;
+#endif
 #endif
 
 uint32_t sportUpdate( uint32_t external ) ;
@@ -165,8 +169,14 @@ uint8_t MaintenanceRunning = 0 ;
 uint8_t BlockInUse ;
 uint8_t SportVerValid ;
 uint8_t MultiResult ;
+uint8_t MultiType ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
+uint32_t HexFileIndex ;
+uint32_t HexFileRead ;
+
+//uint16_t HexCount ;
+//uint16_t HexDebug ;
 
 const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
@@ -226,6 +236,10 @@ void initMultiMode()
 #ifdef PCBSKY
 	SET_TX_BIT() ;
 	configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+#ifdef REVX
+	init_mtwi() ;
+	clearMfp() ;
+#endif
 #endif
 #ifdef PCB9XT
 	EXTERNAL_RF_ON() ;
@@ -963,6 +977,28 @@ void displayXmegaData()
 	lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
 }
 
+void menuUpMulti(uint8_t event)
+{
+	TITLE( "Multi Options" ) ;
+	static MState2 mstate2 ;
+	mstate2.check_columns(event, 1 ) ;
+	uint32_t sub = mstate2.m_posVert ;
+	uint32_t subN = 0 ;
+	uint32_t y = FH ;
+  lcd_putsAtt(0, y, XPSTR("Update"), (sub==subN) ? INVERS : 0 ) ;
+  if(sub==subN)
+	{
+		if ( event == EVT_KEY_BREAK(KEY_MENU) )
+		{
+			popMenu() ;
+			chainMenu(menuUp1) ;
+		}
+	}
+	y += FH ;
+	subN += 1 ;
+	lcd_puts_Pleft( y, XPSTR("File Type") ) ;
+	MultiType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), MultiType, (sub==subN) ) ;
+}
 
 void menuUp1(uint8_t event)
 {
@@ -1083,7 +1119,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem > 1 ) && (UpdateItem != 5 ) && (UpdateItem != 6 ) && (UpdateItem != 7) )
+ 						if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) || (UpdateItem == UPDATE_TYPE_SPORT_EXT ) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -1091,9 +1127,18 @@ void menuUp1(uint8_t event)
 						}
 						else
 						{
-							fc->ext[0] = 'B' ;
-							fc->ext[1] = 'I' ;
-							fc->ext[2] = 'N' ;
+							if ( (UpdateItem == UPDATE_TYPE_MULTI ) && MultiType )
+							{
+								fc->ext[0] = 'H' ;
+								fc->ext[1] = 'E' ;
+								fc->ext[2] = 'X' ;
+							}
+							else
+							{
+								fc->ext[0] = 'B' ;
+								fc->ext[1] = 'I' ;
+								fc->ext[2] = 'N' ;
+							}
 						}
 						fc->ext[3] = 0 ;
 						fc->index = 0 ;
@@ -1473,6 +1518,23 @@ void menuUp1(uint8_t event)
 				width /= FirmwareSize ;
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+//				lcd_outhex4( 50, 7*FH, (UpdateItem << 8) + MultiState ) ;
+//				lcd_outhex4( 75, 7*FH, HexCount++ ) ;
+				
+//				lcd_outhex4( 100, 6*FH, HexDebug ) ;
+//				lcd_outhex4( 100, 5*FH, BlockCount ) ;
+//				lcd_outhex4( 100, 4*FH, XblockCount ) ;
+//				lcd_outhex4( 100, 3*FH, HexFileRead ) ;
+//				lcd_outhex4( 100, 2*FH, BytesFlashed ) ;
+//				lcd_outhex4( 100, 1*FH, FirmwareSize ) ;
+
+// Temporary				
+				if (event == EVT_KEY_FIRST(KEY_EXIT))
+				{
+  	    	chainMenu(menuUpdate) ;
+    			killEvents(event) ;
+				}
+				 
 			}
 			else		// Internal/External Sport
 			{
@@ -1660,7 +1722,7 @@ void menuUpdate(uint8_t event)
 			if ( position == 7*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
-	      chainMenu(menuUp1) ;
+	      pushMenu(menuUpMulti) ;
 			}
  #else
 			if ( position == 3*FH )
@@ -1681,7 +1743,7 @@ void menuUpdate(uint8_t event)
 			if ( position == 6*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
-	      chainMenu(menuUp1) ;
+	      pushMenu(menuUpMulti) ;
 			}
  #endif
 #endif
@@ -1709,7 +1771,7 @@ void menuUpdate(uint8_t event)
 			if ( position == 7*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
-	      chainMenu(menuUp1) ;
+	      pushMenu(menuUpMulti) ;
 			}
 #endif
 #ifdef PCB9XT
@@ -1731,7 +1793,7 @@ void menuUpdate(uint8_t event)
 			if ( position == 6*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
-	      chainMenu(menuUp1) ;
+	      pushMenu(menuUpMulti) ;
 			}
 #endif
     	killEvents(event) ;
@@ -2246,7 +2308,7 @@ uint32_t eat( uint8_t byte )
 	uint16_t rxchar ;
 
 	time = getTmr2MHz() ;
-	while ( (uint16_t) (getTmr2MHz() - time) < 4000 )	// 2mS
+	while ( (uint16_t) (getTmr2MHz() - time) < 15000 )	// 7.5mS
 	{
 		if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
 		{
@@ -2257,6 +2319,190 @@ uint32_t eat( uint8_t byte )
 		}
 	}
 	return 0 ;
+}
+
+
+//void hexDebug( uint8_t x, uint8_t y )
+//{
+//	lcd_putc( 0, 0, x ) ;
+//	lcd_putc( 6, 0, y ) ;
+//	HexDebug = (x << 8 ) | y ;
+//}
+
+
+uint32_t hexFileNextByte()
+{
+	if ( HexFileIndex >= XblockCount )
+	{
+		if ( XblockCount < 1024 )
+		{
+			
+			return 0 ;
+		}
+		f_read( &FlashFile, (BYTE *)ExtraFileData, 1024, &XblockCount ) ;
+		HexFileRead += XblockCount ;
+		HexFileIndex = 0 ;
+
+	}
+	return ExtraFileData[HexFileIndex++] ;
+}
+
+uint32_t fromHex( uint32_t data )
+{
+	if ( data > 0x60 )
+	{
+		data -= 0x20 ;
+	}
+	data -= '0' ;
+	if ( data > 9 )
+	{
+		data -= 7 ;
+	}
+	return data ;
+}
+
+uint8_t recordSize ;
+uint8_t inRecord ;
+uint8_t recordOffset ;
+uint16_t recordAddress ;
+uint8_t recordData[32] ;
+
+#define RECORD_START			0
+#define RECORD_LENGTH1	  1
+#define RECORD_LENGTH2	  2
+#define RECORD_ADD1			  3
+#define RECORD_ADD2	  		4
+#define RECORD_ADD3	  		5
+#define RECORD_ADD4	  		6
+#define RECORD_DATA1	  	7
+#define RECORD_DATA2	  	8
+#define RECORD_DONE		  	9
+
+void hexFileReadRecord()
+{
+	uint32_t data ;
+	uint32_t state = RECORD_START ;
+	uint32_t length = 0 ;
+	uint32_t byte = 0 ;
+	recordOffset = 0 ;
+	recordSize = 0 ;
+
+	while ( state != RECORD_DONE )
+	{
+		data = hexFileNextByte() ;
+		if ( data == 0 )
+		{
+			// End of File
+			return ;
+		}
+		else
+		{
+			switch ( state )
+			{
+				case RECORD_START :
+					if ( data == ':' )
+					{
+						state = RECORD_LENGTH1 ;
+					}
+				break ;
+			
+				case RECORD_LENGTH1 :
+					length = fromHex( data ) ;
+					state = RECORD_LENGTH2 ;
+				break ;
+				case RECORD_LENGTH2 :
+					length = (length << 4) + fromHex( data ) ;
+					if ( length == 0 )
+					{
+						return ;
+					}
+//					state = RECORD_ADD1 ;
+//				break ;
+//				case RECORD_ADD1 :
+////					length = (length << 4) + fromHex( data ) ;
+//					state = RECORD_ADD2 ;
+//				break ;
+//				case RECORD_ADD2 :
+////					length = (length << 4) + fromHex( data ) ;
+//					state = RECORD_ADD3 ;
+//				break ;
+//				case RECORD_ADD3 :
+////					length = (length << 4) + fromHex( data ) ;
+//					state = RECORD_ADD4 ;
+//				break ;
+//				case RECORD_ADD4 :
+////					length = (length << 4) + fromHex( data ) ;
+					hexFileNextByte() ;	// skip four characters
+					hexFileNextByte() ;	// address
+					hexFileNextByte() ;	// address
+					hexFileNextByte() ;	// address
+					hexFileNextByte() ;	// skip two characters
+					hexFileNextByte() ;	// (record type)
+					state = RECORD_DATA1 ;
+				break ;
+				case RECORD_DATA1 :
+					byte = fromHex( data ) ;
+					state = RECORD_DATA2 ;
+				break ;
+				case RECORD_DATA2 :
+					byte = (byte << 4) + fromHex( data ) ;
+					recordData[recordSize++] = byte ;
+					length -= 1 ;
+					if ( length == 0 )
+					{
+						return ;
+					}
+					if ( recordSize >= 32 )
+					{
+						return ;
+					}
+					state = RECORD_DATA1 ;
+				break ;
+			}
+		}
+	}
+}
+
+void hexFileStart()
+{
+	
+	recordSize = 0 ;
+	inRecord = 0 ;
+	HexFileIndex = 0 ;
+	memmove(ExtraFileData, FileData, 1024 ) ;	// Hex data to here
+	XblockCount = 1024 ;
+	HexFileRead = 1024 ;
+}
+
+// Read file data to ExtraFileData, put binary into FileData
+void hexFileRead1024( uint32_t address, UINT *blockCount )
+{
+	
+	uint32_t i ;
+	i = 0 ;
+	while ( i < 1024 )
+	{
+		if ( inRecord )
+		{
+			FileData[i++] = recordData[recordOffset++] ;
+			if ( recordOffset >= recordSize )
+			{
+				inRecord = 0 ;
+			}
+		}
+		else
+		{
+			hexFileReadRecord() ;
+			if ( recordSize == 0 )
+			{
+				*blockCount = i ;
+				return ;
+			}
+			inRecord = 1 ;
+		}
+	}
+	*blockCount = i ;
+	return ;
 }
 
 uint32_t multiUpdate()
@@ -2273,6 +2519,11 @@ uint32_t multiUpdate()
 			initMultiMode() ;
 			BytesFlashed = 0 ;
 		  AllSubState = 0 ;
+			if ( MultiType )	// Hex file
+			{
+				hexFileStart() ;
+				hexFileRead1024( 0, &BlockCount ) ;
+			}
 			MultiState = MULTI_WAIT1 ;
 		break ;
 
@@ -2305,7 +2556,7 @@ uint32_t multiUpdate()
 			}
 			else
 			{
-				if ( ++AllSubState > 10 )
+				if ( ++AllSubState > 80 )
 				{
 					MultiResult = 1 ;
 					MultiState = MULTI_DONE ;
@@ -2349,6 +2600,7 @@ uint32_t multiUpdate()
 			else
 			{
 				MultiState = MULTI_FLASHING ;
+				MultiPageSize = 128 ;
 				if ( XmegaSignature[2] == 0x42 )
 				{
 					MultiPageSize = 256 ;
@@ -2402,15 +2654,33 @@ uint32_t multiUpdate()
 			BlockOffset += MultiPageSize ;
 			if ( BytesFlashed >= ByteEnd )
 			{
-				f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+				if ( MultiType )	// Hex file
+				{
+					hexFileRead1024( BytesFlashed, &BlockCount ) ;
+				}
+				else
+				{
+					f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+				}
 				BlockOffset = 0 ;
 				ByteEnd += BlockCount ;
 		 		wdt_reset() ;
 			}
-			if ( BytesFlashed >= FirmwareSize )
+			if ( MultiType )
 			{
-				MultiState = MULTI_DONE ;
-				BytesFlashed = FirmwareSize ;
+				if ( BlockCount == 0 )
+				{
+					MultiState = MULTI_DONE ;
+					BytesFlashed = FirmwareSize ;
+				}
+			}
+			else
+			{
+				if ( BytesFlashed >= FirmwareSize )
+				{
+					MultiState = MULTI_DONE ;
+					BytesFlashed = FirmwareSize ;
+				}
 			}
 		}
 		break ;
@@ -2425,11 +2695,11 @@ uint32_t multiUpdate()
 //#ifdef PCB9XT
 //			EXTERNAL_RF_OFF() ;
 //#endif
-			BytesFlashed = FirmwareSize + 1 ;
+			HexFileRead = BytesFlashed = FirmwareSize + 1 ;
 		break ;
 	
 	}
-	return BytesFlashed ;
+	return MultiType ? HexFileRead : BytesFlashed ;
 }
 
 
@@ -2560,6 +2830,7 @@ uint32_t sportUpdate( uint32_t external )
 #endif
 #ifdef PCBSKY
  #ifdef REVX
+		init_mtwi() ;
 		clearMfp() ;
  #endif
 			com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;

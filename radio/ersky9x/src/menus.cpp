@@ -22,6 +22,7 @@
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
+#include "core_cm3.h"
 #endif
 #include "ersky9x.h"
 #include "myeeprom.h"
@@ -1948,6 +1949,7 @@ void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr)
 uint8_t g_posHorz ;
 uint8_t M_longMenuTimer ;
 uint8_t M_lastVerticalPosition ;
+uint8_t MaskRotaryLong ;
 
 //#define MAXCOL(row) (horTab ? pgm_read_byte(horTab+min(row, horTabMax)) : (const uint8_t)0)
 
@@ -2215,7 +2217,11 @@ uint8_t MState2::check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t 
     break;
         //fallthrough
     case EVT_KEY_LONG(BTN_RE):
-        killEvents(event);
+			if ( MaskRotaryLong )
+			{
+				break ;
+			}
+			killEvents(event) ;
     case EVT_KEY_BREAK(KEY_EXIT):
         if(s_editMode) {
             s_editMode = false;
@@ -2273,6 +2279,7 @@ uint8_t MState2::check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t 
 	g_posHorz = l_posHorz ;
 	InverseBlink = (s_editMode) ? BLINK : INVERS ;
 	Columns = 0 ;
+	MaskRotaryLong = 0 ;
 	return event ;
 }
 
@@ -4866,7 +4873,8 @@ void menuProcSafetySwitches(uint8_t event)
     			  if(active)
 						{
     		      sd->opt.vs.vval = checkIncDec16( sd->opt.vs.vval, 0, max, EE_MODEL);
-							if ( event==EVT_KEY_LONG(KEY_MENU))
+							MaskRotaryLong = 1 ;
+							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 							{
 								if ( sd->opt.vs.vval <= 250 )
 								{
@@ -5496,7 +5504,8 @@ void menuProcVoiceOne(uint8_t event)
 						alphaEditName( 12*FW, y, (uint8_t *)pvad->file.name, sizeof(pvad->file.name), attr | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FileName") ) ;
 	  				if( attr )
 						{
-							if (event == EVT_KEY_LONG(KEY_MENU) )
+							MaskRotaryLong = 1 ;
+							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 							{
 								VoiceFileType = VOICE_FILE_TYPE_USER ;
       				 	pushMenu( menuProcSelectVoiceFile ) ;
@@ -5553,7 +5562,8 @@ void menuProcVoiceOne(uint8_t event)
   					}
 						if (attr)
 						{
-							if ( event == EVT_KEY_LONG(KEY_MENU) )
+							MaskRotaryLong = 1 ;
+							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 							{
 								if ( pvad->file.vfile <= 500)
 								{
@@ -5579,7 +5589,8 @@ void menuProcVoiceOne(uint8_t event)
 					lcd_putsAtt( 12*FW, y, XPSTR("MENU LONG"), attr ) ;
   				if( attr )
 					{
-						if (event == EVT_KEY_LONG(KEY_MENU) )
+						MaskRotaryLong = 1 ;
+						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 						{
 							pvad->source = 0 ;
 							pvad->func = 0 ;
@@ -7788,7 +7799,8 @@ void menuProcProtocol(uint8_t event)
 					pModule->failsafeMode = checkIndexed( y, XPSTR(FWx9"\004""\007Not Set     Rx Custom   HoldNoPulse"), pModule->failsafeMode, sub==subN ) ;
 					if ( sub == subN )
 					{
-						if (event == EVT_KEY_LONG(KEY_MENU) )
+						MaskRotaryLong = 1 ;
+						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 						{
 							s_currIdx = module ;
     			   	pushMenu( menuSetFailsafe ) ;
@@ -7853,8 +7865,9 @@ void menuProcProtocol(uint8_t event)
 
   		    if(sub==subN)
 					{
+						MaskRotaryLong = 1 ;
 						lcd_char_inverse( 0, y, 4*FW, 0 ) ;
-						if ( event==EVT_KEY_LONG(KEY_MENU))
+						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
 						{
   		  		  PxxFlag[module] = PXX_BIND ;		    	//send bind code or range check code
 							s_currIdx = module ;
@@ -7869,6 +7882,7 @@ void menuProcProtocol(uint8_t event)
 			{
 				if(t_pgOfs<=subN)
 				{
+					MaskRotaryLong = 1 ;
 					lcd_puts_Pleft( y, PSTR(STR_RANGE) ) ;
 					if ( (pModule->protocol == PROTO_MULTI ) && ( PrivateData[1] ) )
 					{
@@ -7885,7 +7899,7 @@ void menuProcProtocol(uint8_t event)
   		    if(sub==subN)
 					{
 						lcd_char_inverse( 0, y, 11*FW, 0 ) ;
-						if ( event==EVT_KEY_LONG(KEY_MENU))
+						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || event==( EVT_KEY_LONG(BTN_RE) ) )
 						{
   		  	    PxxFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 							s_currIdx = module ;
@@ -7993,7 +8007,8 @@ void menuProcTrainProtocol(uint8_t event)
   if(sub==subN)
 	{
 		CHECK_INCDEC_H_MODELVAR_0( value, 4 ) ;
-		if ( ( value > 0) && ( event == EVT_KEY_LONG(KEY_MENU) ) )
+		MaskRotaryLong = 1 ;
+		if ( ( value > 0) && ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) ) )
 		{
 			SingleExpoChan = 1 ;
 			s_expoChan = value-1 ;
@@ -15554,7 +15569,11 @@ STR_DiagAna
 		{
 			uint8_t subN = 0 ;
 #if defined(PCBSKY) || defined(PCB9XT)
+#ifdef PCBSKY
+			IlinesCount = 9 ;
+#else
 			IlinesCount = 8 ;
+#endif
 #else
 			IlinesCount = 7 ;
 #endif
@@ -15630,6 +15649,29 @@ STR_DiagAna
 			}
  			y += FH ;
 			subN += 1 ;
+
+#ifdef PCBSKY
+  		lcd_putsAtt(0, y, XPSTR("Run Maintenance"), (sub==subN) ? INVERS : 0 ) ;
+  		if(sub==subN)
+			{
+				if ( event == EVT_KEY_LONG(KEY_MENU) )
+				{
+					GPBR->SYS_GPBR0 = 0x5555AAAA ;
+					// save EEPROM and reboot
+					prepareForShutdown() ;
+  				uint16_t tgtime = get_tmr10ms() ;
+	  			while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) // 50 - Half second
+					{
+						wdt_reset() ;
+						if ( ee32_check_finished() )
+						{
+							break ;
+						}
+					}
+		  		NVIC_SystemReset() ;
+				}
+			}
+#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
   	 }	

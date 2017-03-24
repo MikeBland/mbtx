@@ -605,7 +605,7 @@ uchar pdiWriteFuse( uint32_t address, uint8_t value )
 
 	register_address = XNVM_FUSE_BASE + address ;
 
-	memmove((uint8_t*)&register_address, (cmd + 1), 4);
+	memmove((cmd + 1), (uint8_t*)&register_address, 4);
 	cmd[5] = value;
 
 	pdiSendBytes(cmd,6);
@@ -747,6 +747,7 @@ uint8_t pdiWritePageMemory( uint32_t writeAddress, uint8_t* writeBuffer, uint16_
 {
 	// Wait until the NVM controller is no longer busy
 	uint8_t status = pdiWaitNVM() ;
+	uint32_t boot = writeAddress >= 0x8000 ? 1 : 0 ;
 	if (status != PDI_STATUS_OK )
 	{
 		pdiEnableTimerClock();
@@ -805,7 +806,14 @@ uint8_t pdiWritePageMemory( uint32_t writeAddress, uint8_t* writeBuffer, uint16_
 		return status ;
 	}	
 	// Send the memory write command to the target */
-	pdiWriteCtrl( NVM_COMMAND_REG, XNVM_CMD_ERASE_AND_WRITE_APP_SECTION) ;
+	if ( boot )
+	{
+		pdiWriteCtrl( NVM_COMMAND_REG, XNVM_CMD_ERASE_AND_WRITE_BOOT_PAGE) ;
+	}
+	else
+	{
+		pdiWriteCtrl( NVM_COMMAND_REG, XNVM_CMD_ERASE_AND_WRITE_APP_SECTION) ;
+	}
 	// Send the address of the first page location to write the memory page */
 	pdiWriteCtrl( writeAddress, 0 ) ;
 	
