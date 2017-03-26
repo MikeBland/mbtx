@@ -78,10 +78,10 @@
 
 #define I_REMOVED						0
 
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ON             " W\306"
 #define ISTR_OFF            "WY\306"
+#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "Wys=" 
 #define ISTR_TXEQ			       "\003Tx=Swr"
@@ -221,7 +221,7 @@
 #define ISTR_CUST_SWITCH    "PRZE\306\301CZNIKI LOGICZNE"
 #define ISTR_S              "S"
 #define ISTR_15_ON          "\015W\305"
-#define ISTR_EDIT_MIX       "EDYTUJ MIX "
+#define ISTR_EDIT_MIX       "EDYTUJ MIX"
 #define ISTR_2SOURCE        "\001\317r\311d\305o"
 #define ISTR_2WEIGHT        "\001Waga"
 #define ISTR_FMTRIMVAL      "FmTrimVal"
@@ -271,10 +271,10 @@
 #define ISTR_COUNT_DOWN_UP  "\012Licz w d\311\305Licz w g\311r"
 #define ISTR_T_TRIM         "Trymer Gazu"
 #define ISTR_T_EXPO         "Gaz-Expo-Dr"
-#define ISTR_TRIM_INC       "Dok\305. Trymera""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Exp   PrecyzDok\305ad\313redniNiedok"
 #define ISTR_TRIM_SWITCH    "Prze\305.Trymera"
+#define ISTR_TRIM_INC       "Dok\305. Trymera""\037"ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Sygna\305 Cnt"
 #define ISTR_RETA123        "RETA1234"
 #define ISTR_PROTO          "Proto"
@@ -304,13 +304,13 @@
 #define ISTR_SP_FM0         " TL0"
 #define ISTR_SP_FM          " TL"
 #define ISTR_HELI_SETUP     "USTAWIENIA HELI."
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_SWASH_TYPE     "Swash Type"
 #define ISTR_COLLECTIVE     "Collective"
 #define ISTR_SWASH_RING     "Swash Ring"
 #define ISTR_ELE_DIRECTION  "ELE_DIRECTION"
 #define ISTR_AIL_DIRECTION  "AIL_DIRECTION"
 #define ISTR_COL_DIRECTION  "COL_DIRECTION"
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 //#define ISTR_MODEL_POPUP    "WYBIERZ\0KOPIUJ\0ZOBACZ\0USU\310"
 #define ISTR_MODEL_POPUP    "EDYTUJ\0WYBIERZ\0KOPIUJ\0PRZENIE\313\0USU\310\0KOPIA\0PRZYWR\311\303\0REPLACE"
 #define ISTR_MODELSEL       "Wyb\311r modelu"
@@ -411,7 +411,7 @@
 #define ISTR_TTM            "TrymGazu"
 #define ISTR_FUEL           "Paliwo"
 #define ISTR_12_RPM         "\012RPM"
-#define ISTR_LAT_EQ         "Sze=""\037"ICHR_D"\305u_EQ\037ISTR_Wys_MAX\037ISTR_Pr\304_KTS_MAX"
+#define ISTR_LAT_EQ         "Sze=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_LON_EQ         "D\305U="
 #define ISTR_ALT_MAX        "Wys=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Pr\304=\011kts Max="

@@ -105,8 +105,9 @@ uint32_t check_soft_power()
 			if ( !switchValue )
 			{
 				PowerState = POWER_STATE_STOPPED ;
+ 				return POWER_OFF ;
 			}
- 			return POWER_OFF ;
+ 			return POWER_X9E_STOP ;
 		break ;
 
 		case POWER_STATE_STOPPED :

@@ -830,7 +830,7 @@ extern void checkRotaryEncoder() ;
 #endif
 		if(!tick10ms) continue ; //make sure the rest happen only every 10ms.
 	  uint8_t evt=getEvent();
-#if defined(REV9E) || defined(PCBX7)
+//#if defined(REV9E) || defined(PCBX7)
 		{
 			int32_t x ;
 			if ( g_eeGeneral.rotaryDivisor == 1)
@@ -861,7 +861,7 @@ extern void checkRotaryEncoder() ;
 			}
 			Rotary_diff = 0 ;
 		}
-#endif
+//#endif
 
     lcd_clear() ;
 		if ( EnterMenu )
@@ -1788,6 +1788,7 @@ uint32_t updateSlave() ;
 
 	while ( ( read_trims() & 0x01 )== 0x01 )
 	{
+		wdt_reset() ;
 		HardwareMenuEnabled = 1 ;
 		lcd_puts_Pleft( FH, XPSTR("Hardware Menu Enabled") ) ;
 		refreshDisplay() ;
@@ -3823,14 +3824,17 @@ extern uint8_t Ee32_model_delete_pending ;
 
 
 #endif
-
-
 				}
 				else
 				{
 					lcd_putsn_P( 5*FW, 5*FH, "           ", 11 ) ;
 				}
-
+#ifdef POWER_BUTTON
+				if ( check_soft_power() == POWER_X9E_STOP )	// button still pressed
+				{
+  				tgtime = get_tmr10ms() ;
+				}
+#endif
 				refreshDisplay() ;
   		}
 
@@ -8268,7 +8272,7 @@ int8_t getMovedSwitch()
 	for ( uint8_t i=8 ; i>0 ; i-- )
 	{
     uint8_t prev = (switches_states & mask) >> (i*2-2) ;
-		uint8_t next ;
+		uint8_t next = 0 ;	// Avoid compiler warning
 		uint8_t swtchIndex = i ;
 		switch ( i )
 		{

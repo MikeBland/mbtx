@@ -80,10 +80,10 @@ v.xx.01-german
 
 #define I_REMOVED						0
 
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ON             "AN "
 #define ISTR_OFF            "AUS"
+#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "H\303h=" 
 #define ISTR_TXEQ			       "\003Sn=Swr" // TX Transmitter - Sender
@@ -223,7 +223,7 @@ v.xx.01-german
 #define ISTR_CUST_SWITCH    "IND. SCHALTER" // Individueller Schalter
 #define ISTR_S              "S"
 #define ISTR_15_ON          "\015An"
-#define ISTR_EDIT_MIX       "Bearb MISCHER " // Bearbeite Mischer
+#define ISTR_EDIT_MIX       "Bearb MISCHER" // Bearbeite Mischer
 #define ISTR_2SOURCE        "\001Quelle"
 #define ISTR_2WEIGHT        "\001Gewicht"
 #define ISTR_FMTRIMVAL      "FmTrimVal"
@@ -273,10 +273,10 @@ v.xx.01-german
 #define ISTR_COUNT_DOWN_UP  "\012Z\301hl runteZ\301hl hoch"
 #define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
-#define ISTR_TRIM_INC       "Trim Ink""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Expon ExFeinFein  MittelGrob  "
 #define ISTR_TRIM_SWITCH    "Insta-Trim Sch"
+#define ISTR_TRIM_INC       "Trim Ink""\037"ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Piep Frq" //TonhÃ¶he Frequenz
 #define ISTR_RETA123        "SHGQ1234"
 #define ISTR_PROTO          "Proto" // Protokoll
@@ -306,13 +306,13 @@ v.xx.01-german
 #define ISTR_SP_FM0         " FM0"
 #define ISTR_SP_FM          " FM"
 #define ISTR_HELI_SETUP     "HELI EINST"
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_SWASH_TYPE     "Taumel Typ" 
 #define ISTR_COLLECTIVE     "Kollektive"
 #define ISTR_SWASH_RING     "Taumel Ring"
 #define ISTR_ELE_DIRECTION  "H\302H Richtung"
 #define ISTR_AIL_DIRECTION  "QUE Richtung"
 #define ISTR_COL_DIRECTION  "KOL Richtung" //Kollektive
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_MODEL_POPUP    "EDIT\0BEARBEI\0SEL/EDIT\0KOPIER\0BEWEGE\0L\302SCHE\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL       "MODELWAHL"
 // ISTR_11_FREE after \011 max 4 chars
@@ -412,10 +412,10 @@ v.xx.01-german
 #define ISTR_TTM            "GTm" // Gas Trim
 #define ISTR_FUEL           "TANK"
 #define ISTR_12_RPM         "\012UPM"
-#define ISTR_LAT_EQ         "Bre=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_LON_EQ         "L\301n="
 #define ISTR_ALT_MAX        "H\302h=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Ges=\011kts Max="
+#define ISTR_LAT_EQ         "Bre=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH         "\011mph"
 
 #define ISTR_SINK_TONES	   "Sink Tones"

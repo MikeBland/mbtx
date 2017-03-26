@@ -136,6 +136,9 @@ void init_xjt_heartbeat( void ) ;
 void stop_xjt_heartbeat( void ) ;
 #endif
 extern void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
+extern void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
+extern void disable_software_com1( void ) ;
+extern void disable_software_com2( void ) ;
 //extern void UART_Stop( void ) ;
 //extern void Bt_UART_Stop( void ) ;
 extern void txmit( uint8_t c ) ;

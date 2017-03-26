@@ -68,10 +68,10 @@
 
 #define I_REMOVED						0
 
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ON              "P\303 "
 #define ISTR_OFF             "AV "
+#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ           "Hjd=" 
 #define ISTR_TXEQ			       "\003Tx=Swr"
@@ -261,10 +261,10 @@
 #define ISTR_COUNT_DOWN_UP   "\012R\301kna ned R\301kna upp "
 #define ISTR_T_TRIM          "GasTrim"
 #define ISTR_T_EXPO          "GasExpo-Dr"
-#define ISTR_TRIM_INC        "GasOkning""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS    FWx14"\004""\006Exp   xFin  Fin   MediumGrov  "
 #define ISTR_TRIM_SWITCH     "Insta-TrimBr."
+#define ISTR_TRIM_INC        "GasOkning""\037"ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE     "Centerpip"
 #define ISTR_RETA123         "RHGS1234"
 #define ISTR_PROTO           "Proto"
@@ -294,13 +294,13 @@
 #define ISTR_SP_FM0          " FF0"
 #define ISTR_SP_FM           " FF"
 #define ISTR_HELI_SETUP      "HELIKOPTER"
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_SWASH_TYPE      "Swash-typ"
 #define ISTR_COLLECTIVE      "Collective"
 #define ISTR_SWASH_RING      "Swash-ring"
 #define ISTR_ELE_DIRECTION   "HJD-riktning"
 #define ISTR_AIL_DIRECTION   "SKEV-riktning"
 #define ISTR_COL_DIRECTION   "COL-riktning"
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_MODEL_POPUP     "EDIT\0VALJ\0SEL/EDIT\0KOPIA\0FLYTTA\0RADERA\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL        "MODELLVAL"
 // ISTR_11_FREE after \011 max 4 chars
@@ -400,10 +400,10 @@
 #define ISTR_TTM             "TTm"
 #define ISTR_FUEL            "Tank"
 #define ISTR_12_RPM          "\012RPM"
-#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_LON_EQ          "Lon="
 #define ISTR_ALT_MAX         "Hjd=\011m   Max="
 #define ISTR_SPD_KTS_MAX     "Kmh=\011kts Max="
+#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH          "\011mph"
 
 #define ISTR_SINK_TONES      "Sjunktoner"

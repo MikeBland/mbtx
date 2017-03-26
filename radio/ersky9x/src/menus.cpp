@@ -665,6 +665,26 @@ uint8_t telemItemValid( uint8_t index )
 	return 0 ;	
 }
 
+#define WBAR2 (50/2)
+void singleBar( uint8_t x0, uint8_t y0, int16_t val )
+{
+  int16_t limit = (g_model.extendedLimits ? 1280 : 1024);
+  int8_t l = (abs(val) * WBAR2 + 512) / limit ;
+  if(l>WBAR2)  l =  WBAR2;  // prevent bars from going over the end - comment for debugging
+
+  lcd_hlineStip(x0-WBAR2,y0,WBAR2*2+1,0x55);
+  lcd_vline(x0,y0-2,5);
+  if(val>0)
+	{
+    x0+=1;
+  }else{
+    x0-=l;
+  }
+  lcd_hline(x0,y0+1,l);
+  lcd_hline(x0,y0-1,l);
+}
+
+
 void voice_telem_item( int8_t index )
 {
 	int16_t value ;
@@ -1950,6 +1970,12 @@ uint8_t g_posHorz ;
 uint8_t M_longMenuTimer ;
 uint8_t M_lastVerticalPosition ;
 uint8_t MaskRotaryLong ;
+
+uint32_t checkForMenuEncoderLong( uint8_t event )
+{
+	MaskRotaryLong = 1 ;
+	return ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) ;
+}
 
 //#define MAXCOL(row) (horTab ? pgm_read_byte(horTab+min(row, horTabMax)) : (const uint8_t)0)
 
@@ -4873,8 +4899,7 @@ void menuProcSafetySwitches(uint8_t event)
     			  if(active)
 						{
     		      sd->opt.vs.vval = checkIncDec16( sd->opt.vs.vval, 0, max, EE_MODEL);
-							MaskRotaryLong = 1 ;
-							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+							if ( checkForMenuEncoderLong( event ) )
 							{
 								if ( sd->opt.vs.vval <= 250 )
 								{
@@ -5504,8 +5529,7 @@ void menuProcVoiceOne(uint8_t event)
 						alphaEditName( 12*FW, y, (uint8_t *)pvad->file.name, sizeof(pvad->file.name), attr | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FileName") ) ;
 	  				if( attr )
 						{
-							MaskRotaryLong = 1 ;
-							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+							if ( checkForMenuEncoderLong( event ) )
 							{
 								VoiceFileType = VOICE_FILE_TYPE_USER ;
       				 	pushMenu( menuProcSelectVoiceFile ) ;
@@ -5562,8 +5586,7 @@ void menuProcVoiceOne(uint8_t event)
   					}
 						if (attr)
 						{
-							MaskRotaryLong = 1 ;
-							if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+							if ( checkForMenuEncoderLong( event ) )
 							{
 								if ( pvad->file.vfile <= 500)
 								{
@@ -5589,8 +5612,7 @@ void menuProcVoiceOne(uint8_t event)
 					lcd_putsAtt( 12*FW, y, XPSTR("MENU LONG"), attr ) ;
   				if( attr )
 					{
-						MaskRotaryLong = 1 ;
-						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+						if ( checkForMenuEncoderLong( event ) )
 						{
 							pvad->source = 0 ;
 							pvad->func = 0 ;
@@ -6510,6 +6532,10 @@ void menuProcMix(uint8_t event)
         	 		lcd_putsAttIdx( 4*FW-8, y, XPSTR("\001+*R"),pmd->mltpx,0 ) ;
 
 						putsChnOpRaw( 8*FW ,y, pmd->srcRaw, pmd->switchSource, pmd->disableExpoDr, attr ) ;
+						if ( attr )
+						{
+							singleBar( 96, 4, g_chans512[chan-1] ) ;
+						}
 //						putsChnOpRaw( 8*FW, y, pmd, 0 ) ;
 extern uint8_t swOn[] ;
 						attr = 0 ;
@@ -7799,8 +7825,7 @@ void menuProcProtocol(uint8_t event)
 					pModule->failsafeMode = checkIndexed( y, XPSTR(FWx9"\004""\007Not Set     Rx Custom   HoldNoPulse"), pModule->failsafeMode, sub==subN ) ;
 					if ( sub == subN )
 					{
-						MaskRotaryLong = 1 ;
-						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+						if ( checkForMenuEncoderLong( event ) )
 						{
 							s_currIdx = module ;
     			   	pushMenu( menuSetFailsafe ) ;
@@ -7865,9 +7890,8 @@ void menuProcProtocol(uint8_t event)
 
   		    if(sub==subN)
 					{
-						MaskRotaryLong = 1 ;
 						lcd_char_inverse( 0, y, 4*FW, 0 ) ;
-						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) )
+						if ( checkForMenuEncoderLong( event ) )
 						{
   		  		  PxxFlag[module] = PXX_BIND ;		    	//send bind code or range check code
 							s_currIdx = module ;
@@ -7882,7 +7906,6 @@ void menuProcProtocol(uint8_t event)
 			{
 				if(t_pgOfs<=subN)
 				{
-					MaskRotaryLong = 1 ;
 					lcd_puts_Pleft( y, PSTR(STR_RANGE) ) ;
 					if ( (pModule->protocol == PROTO_MULTI ) && ( PrivateData[1] ) )
 					{
@@ -7899,7 +7922,7 @@ void menuProcProtocol(uint8_t event)
   		    if(sub==subN)
 					{
 						lcd_char_inverse( 0, y, 11*FW, 0 ) ;
-						if ( ( event==EVT_KEY_LONG(KEY_MENU)) || event==( EVT_KEY_LONG(BTN_RE) ) )
+						if ( checkForMenuEncoderLong( event ) )
 						{
   		  	    PxxFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 							s_currIdx = module ;
@@ -13680,21 +13703,7 @@ void menuProc0(uint8_t event)
 #define WBAR2 (50/2)
           x0       = i<4 ? 128/4+2 : 128*3/4-2;
           y0       = 38+(i%4)*5;
-    			int16_t limit = (g_model.extendedLimits ? 1280 : 1024);
-          int8_t l = (abs(val) * WBAR2 + 512) / limit ;
-          if(l>WBAR2)  l =  WBAR2;  // prevent bars from going over the end - comment for debugging
-
-          lcd_hlineStip(x0-WBAR2,y0,WBAR2*2+1,0x55);
-          lcd_vline(x0,y0-2,5);
-          if(val>0)
-					{
-            x0+=1;
-          }else{
-            x0-=l;
-          }
-          lcd_hline(x0,y0+1,l);
-          lcd_hline(x0,y0-1,l);
-                
+					singleBar( x0, y0, val ) ;
 				break;
       }
     }

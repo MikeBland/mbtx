@@ -135,6 +135,12 @@ event = mstate2.check(event,menu,tab,DIM(tab),mstate_tab,DIM(mstate_tab)-1,lines
 //SIMPLE_SUBMENU_NOTITLE(lines_count-1)
 	*/
 
+#define YN_NONE	0
+#define YN_YES	1
+#define YN_NO		2
+
+uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
+
 struct t_popupData
 {
 	uint8_t PopupActive ;

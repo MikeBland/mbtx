@@ -144,8 +144,6 @@ void eeprom_write_enable( void ) ;
 uint32_t spi_operation( uint8_t *tx, uint8_t *rx, uint32_t count ) ;
 uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count ) ;
 
-static void disable_software_com1( void ) ;
-
 void read_adc(void ) ;
 void init_adc( void ) ;
 void init_ssc( uint16_t baudrate ) ;
@@ -2155,12 +2153,13 @@ void stop_timer5()
 	NVIC_DisableIRQ(TC5_IRQn) ;
 }
 
-// Handle software serial on COM1 input (for non-inverted input)
-void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
+uint32_t SoftwareComBit ;
+void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint32_t bit)
 {
+	SoftwareComBit = bit ;
 	SoftSerial1.bitTime = 2000000 / baudrate ;
 
-	SoftSerial1.softSerInvert = invert ? 0 : PIO_PA5 ;
+	SoftSerial1.softSerInvert = invert ? 0 : bit ;
 	SoftSerial1.softSerialEvenParity = parity ? 1 : 0 ;
 
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
@@ -2168,20 +2167,42 @@ void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
 	SoftSerial1.lineState = LINE_IDLE ;
 	CaptureMode = CAP_COM1 ;
-	configure_pins( PIO_PA5, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
-	PIOA->PIO_IER = PIO_PA5 ;
+	configure_pins( bit, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
+	PIOA->PIO_IER = bit ;
 	NVIC_SetPriority( PIOA_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ(PIOA_IRQn) ;
 	start_timer5() ;
 }
 
-static void disable_software_com1()
+// Handle software serial on COM1 input (for non-inverted input)
+void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
+{
+	init_software_com(baudrate, invert, parity, PIO_PA5) ;
+}
+
+static void disable_software_com( uint32_t bit)
 {
 	stop_timer5() ;
 	CaptureMode = CAP_PPM ;
-	PIOA->PIO_IDR = PIO_PA5 ;
+	PIOA->PIO_IDR = bit ;
 	NVIC_DisableIRQ(PIOA_IRQn) ;
 }
+
+void disable_software_com1()
+{
+	disable_software_com( PIO_PA5 ) ;
+}
+
+void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity)
+{
+	init_software_com(baudrate, invert, parity, PIO_PA9) ;
+}
+
+void disable_software_com2()
+{
+	disable_software_com( PIO_PA9 ) ;
+}
+
 
 extern "C" void PIOA_IRQHandler()
 {
@@ -2193,7 +2214,7 @@ extern "C" void PIOA_IRQHandler()
 	(void) dummy ;		// Discard value - prevents compiler warning
 
 	dummy = PIOA->PIO_PDSR ;
-	if ( ( dummy & PIO_PA5 ) == SoftSerial1.softSerInvert )
+	if ( ( dummy & SoftwareComBit ) == SoftSerial1.softSerInvert )
 	{
 		// L to H transition
 		SoftSerial1.LtoHtime = capture ;

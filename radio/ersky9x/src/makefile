@@ -217,10 +217,10 @@ else
        LDSCRIPT = sam3s4c_flash.ld
        UDEFS = -Dat91sam3s4
       else
-       LDSCRIPT = sam3s4c_flash.ld
-#       LDSCRIPT = sam3s8c_flash.ld
-       UDEFS = -Dat91sam3s4
-#       UDEFS = -Dat91sam3s8
+#       LDSCRIPT = sam3s4c_flash.ld
+       LDSCRIPT = sam3s8c_flash.ld
+#       UDEFS = -Dat91sam3s4
+       UDEFS = -Dat91sam3s8
       endif
      endif
     endif
@@ -252,6 +252,9 @@ endif
 # Define ASM defines here
 UADEFS = 
 
+#    LUASRC = $(LUADIR)/lapi.c $(LUADIR)/lcode.c $(LUADIR)/lctype.c $(LUADIR)/ldebug.c $(LUADIR)/ldo.c $(LUADIR)/ldump.c $(LUADIR)/lfunc.c $(LUADIR)/lgc.c $(LUADIR)/llex.c $(LUADIR)/lmem.c \
+#           $(LUADIR)/lobject.c $(LUADIR)/lopcodes.c $(LUADIR)/lparser.c $(LUADIR)/lstate.c $(LUADIR)/lstring.c $(LUADIR)/ltable.c $(LUADIR)/lrotable.c $(LUADIR)/ltm.c $(LUADIR)/lundump.c $(LUADIR)/lvm.c $(LUADIR)/lzio.c \
+#           $(LUADIR)/lbaselib.c $(LUADIR)/linit.c $(LUADIR)/lmathlib.c $(LUADIR)/lbitlib.c $(LUADIR)/loadlib.c $(LUADIR)/lauxlib.c $(LUADIR)/ltablib.c $(LUADIR)/lcorolib.c $(LUADIR)/liolib.c
 
 ifeq ($(PCB), X12D)
 # List C source files here

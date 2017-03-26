@@ -170,6 +170,8 @@ uint8_t BlockInUse ;
 uint8_t SportVerValid ;
 uint8_t MultiResult ;
 uint8_t MultiType ;
+uint8_t MultiPort ;
+uint8_t MultiModule ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 uint32_t HexFileIndex ;
@@ -218,8 +220,10 @@ uint8_t MultiState ;
 
 
 #ifdef PCBSKY
-#define CLEAR_TX_BIT() PIOA->PIO_CODR = PIO_PA17
-#define SET_TX_BIT() PIOA->PIO_SODR = PIO_PA17		
+#define CLEAR_TX_BIT_EXT() PIOA->PIO_CODR = PIO_PA17
+#define SET_TX_BIT_EXT() PIOA->PIO_SODR = PIO_PA17
+#define CLEAR_TX_BIT_INT() PIOC->PIO_CODR = PIO_PC15
+#define SET_TX_BIT_INT() PIOC->PIO_SODR = PIO_PC15
 #else
 #ifdef PCB9XT
 #define CLEAR_TX_BIT() GPIOA->BSRRH = 0x0080
@@ -232,20 +236,46 @@ uint8_t MultiState ;
 
 void initMultiMode()
 {
-	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 #ifdef PCBSKY
-	SET_TX_BIT() ;
-	configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
 #ifdef REVX
 	init_mtwi() ;
 	clearMfp() ;
 #endif
+	USART0->US_IDR = US_IDR_RXRDY ;
+	if ( MultiPort )
+	{
+		init_software_com2( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
+		if ( PIOA->PIO_PDSR & PIO_PA9 )
+		{
+			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+		}
+	}
+	else
+	{
+		init_software_com1( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
+		if ( PIOA->PIO_PDSR & PIO_PA5 )
+		{
+			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+		}
+	}
+	if ( MultiModule )
+	{
+		SET_TX_BIT_INT() ;
+		configure_pins( PIO_PC15, PIN_ENABLE | PIN_OUTPUT | PIN_PORTC | PIN_HIGH ) ;
+	}
+	else
+	{
+		SET_TX_BIT_EXT() ;
+		configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+	}
 #endif
 #ifdef PCB9XT
+	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
 #endif
 #ifdef PCBX9D
+	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
@@ -253,15 +283,34 @@ void initMultiMode()
 
 void stopMultiMode()
 {
-	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	
 #ifdef PCBSKY
-	configure_pins( PIO_PA17, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+	if ( MultiPort )
+	{
+		disable_software_com2() ;
+	}
+	else
+	{
+		disable_software_com1() ;
+	}
+	if ( MultiModule )
+	{
+		SET_TX_BIT_INT() ;
+		configure_pins( PIO_PC15, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;
+	}
+	else
+	{
+		configure_pins( PIO_PA17, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+	}
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCB9XT
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
 #endif
 #ifdef PCBX9D
+	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
@@ -271,6 +320,24 @@ void sendMultiByte( uint8_t byte )
 {
 	uint16_t time ;
 	uint32_t i ;
+	
+#ifdef PCBSKY
+	Pio *pioptr ;
+	uint32_t bit ;
+	
+	if ( MultiModule )
+	{
+		pioptr = PIOC ;
+		bit = PIO_PC15 ;
+	}
+	else
+	{
+		pioptr = PIOA ;
+		bit = PIO_PA17 ;
+	}
+#define CLEAR_TX_BIT() pioptr->PIO_CODR = bit
+#define SET_TX_BIT() pioptr->PIO_SODR = bit
+#endif
 
 	__disable_irq() ;
 	time = getTmr2MHz() ;
@@ -849,6 +916,7 @@ void menuChangeId(uint8_t event)
     break ;
     
 		case EVT_KEY_FIRST(KEY_EXIT):
+		case EVT_KEY_LONG(BTN_RE) :
      	chainMenu(menuUpdate) ;
    		killEvents(event) ;
     break ;
@@ -981,14 +1049,18 @@ void menuUpMulti(uint8_t event)
 {
 	TITLE( "Multi Options" ) ;
 	static MState2 mstate2 ;
+#ifdef PCBSKY
+	mstate2.check_columns(event, 3 ) ;
+#else
 	mstate2.check_columns(event, 1 ) ;
+#endif
 	uint32_t sub = mstate2.m_posVert ;
 	uint32_t subN = 0 ;
 	uint32_t y = FH ;
   lcd_putsAtt(0, y, XPSTR("Update"), (sub==subN) ? INVERS : 0 ) ;
   if(sub==subN)
 	{
-		if ( event == EVT_KEY_BREAK(KEY_MENU) )
+		if ( ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
 		{
 			popMenu() ;
 			chainMenu(menuUp1) ;
@@ -998,6 +1070,16 @@ void menuUpMulti(uint8_t event)
 	subN += 1 ;
 	lcd_puts_Pleft( y, XPSTR("File Type") ) ;
 	MultiType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), MultiType, (sub==subN) ) ;
+	y += FH ;
+	subN += 1 ;
+#ifdef PCBSKY
+	lcd_puts_Pleft( y, XPSTR("Module") ) ;
+	MultiModule = checkIndexed( y, XPSTR("\110\001\010ExternalInternal"), MultiModule, (sub==subN) ) ;
+	y += FH ;
+	subN += 1 ;
+	lcd_puts_Pleft( y, XPSTR("COM Port") ) ;
+	MultiPort = checkIndexed( y, XPSTR("\110\001\00112"), MultiPort, (sub==subN) ) ;
+#endif
 }
 
 void menuUp1(uint8_t event)
@@ -1155,6 +1237,7 @@ void menuUp1(uint8_t event)
     break ;
     
 		case EVT_KEY_FIRST(KEY_EXIT):
+		case EVT_KEY_LONG(BTN_RE) :
 			if ( state < UPDATE_ACTION )
 			{
       	chainMenu(menuUpdate) ;
@@ -1263,13 +1346,17 @@ void menuUp1(uint8_t event)
 #else
 			lcd_putsnAtt0( 0, 4*FH, Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
 #endif
-			if ( event == EVT_KEY_LONG(KEY_MENU) )
+			switch ( event )
 			{
-				state = UPDATE_SELECTED ;
-			}
-			if ( event == EVT_KEY_LONG(KEY_EXIT) )
-			{
-				state = UPDATE_FILE_LIST ;		// Canceled
+    		case EVT_KEY_LONG(KEY_MENU):
+				case EVT_KEY_BREAK(BTN_RE):
+					state = UPDATE_SELECTED ;
+    		break ;
+
+				case EVT_KEY_LONG(BTN_RE):
+    		case EVT_KEY_LONG(KEY_EXIT):
+					state = UPDATE_FILE_LIST ;		// Canceled
+    		break;
 			}
     break ;
 		case UPDATE_SELECTED :
@@ -1371,7 +1458,7 @@ void menuUp1(uint8_t event)
 		case UPDATE_INVALID :
 			lcd_puts_Pleft( 2*FH, "Invalid File" ) ;
 			lcd_puts_Pleft( 4*FH, "Press EXIT" ) ;
-			if ( event == EVT_KEY_FIRST(KEY_EXIT) )
+			if ( ( event == EVT_KEY_FIRST(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
 			{
 				state = UPDATE_FILE_LIST ;		// Canceled
     		killEvents(event) ;
@@ -1518,23 +1605,6 @@ void menuUp1(uint8_t event)
 				width /= FirmwareSize ;
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
-//				lcd_outhex4( 50, 7*FH, (UpdateItem << 8) + MultiState ) ;
-//				lcd_outhex4( 75, 7*FH, HexCount++ ) ;
-				
-//				lcd_outhex4( 100, 6*FH, HexDebug ) ;
-//				lcd_outhex4( 100, 5*FH, BlockCount ) ;
-//				lcd_outhex4( 100, 4*FH, XblockCount ) ;
-//				lcd_outhex4( 100, 3*FH, HexFileRead ) ;
-//				lcd_outhex4( 100, 2*FH, BytesFlashed ) ;
-//				lcd_outhex4( 100, 1*FH, FirmwareSize ) ;
-
-// Temporary				
-				if (event == EVT_KEY_FIRST(KEY_EXIT))
-				{
-  	    	chainMenu(menuUpdate) ;
-    			killEvents(event) ;
-				}
-				 
 			}
 			else		// Internal/External Sport
 			{
@@ -1561,7 +1631,7 @@ void menuUp1(uint8_t event)
 					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
 				}
 
-				if ( event == EVT_KEY_LONG(KEY_EXIT) )
+				if ( ( event == EVT_KEY_LONG(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
 				{
 					state = UPDATE_COMPLETE ;
 					SportVerValid = 0x00FF ; // Abort with failed
@@ -1635,7 +1705,7 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
 #endif
 
-			if ( event == EVT_KEY_FIRST(KEY_EXIT) )
+			if ( ( event == EVT_KEY_FIRST(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
 			{
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
@@ -1689,9 +1759,9 @@ void menuUpdate(uint8_t event)
     break ;
     
 		case EVT_KEY_FIRST(KEY_MENU):
-#ifdef PCBX7
+//#ifdef PCBX7
 		case EVT_KEY_BREAK(BTN_RE):
-#endif
+//#endif
 			if ( position == 2*FH )
 			{
 				UpdateItem = UPDATE_TYPE_BOOTLOADER ;
@@ -1801,6 +1871,7 @@ void menuUpdate(uint8_t event)
     break ;
 
     case EVT_KEY_LONG(KEY_EXIT):
+		case EVT_KEY_LONG(BTN_RE) :
 			reboot = 1 ;
 		break ;
 

@@ -59,10 +59,10 @@
 
 #define I_REMOVED						0
 
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ON             "MO "
 #define ISTR_OFF            "TAT"
+#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "Alt=" 
 #define ISTR_TXEQ			       "\003Tx=Swr"
@@ -202,7 +202,7 @@
 #define ISTR_CUST_SWITCH    "CONG TAC LOGIC"
 #define ISTR_S              "S"
 #define ISTR_15_ON          "\015Mo"
-#define ISTR_EDIT_MIX       "C.SUA MIX "
+#define ISTR_EDIT_MIX       "C.SUA MIX"
 #define ISTR_2SOURCE        "\001Nguon"
 #define ISTR_2WEIGHT        "\001Nang"
 #define ISTR_FMTRIMVAL      "FmTrimVal"
@@ -252,10 +252,10 @@
 #define ISTR_COUNT_DOWN_UP  "\012Dem Xuong Dem Len   "
 #define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
-#define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Exp   ExFineFine  MediumCoarse"
 #define ISTR_TRIM_SWITCH    "Trim Sw"
+#define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Beep Cnt"
 #define ISTR_RETA123        "RETA1234"
 #define ISTR_PROTO          "Proto"
@@ -285,13 +285,13 @@
 #define ISTR_SP_FM0         " FM0"
 #define ISTR_SP_FM          " FM"
 #define ISTR_HELI_SETUP     "HELI C.DAT"
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 #define ISTR_SWASH_TYPE     "Swash Type"
 #define ISTR_COLLECTIVE     "Collective"
 #define ISTR_SWASH_RING     "Swash Ring"
 #define ISTR_ELE_DIRECTION  "ELE Direction"
 #define ISTR_AIL_DIRECTION  "AIL Direction"
 #define ISTR_COL_DIRECTION  "COL Direction"
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
 //#define ISTR_MODEL_POPUP    "SELECT\0COPY\0MOVE\0DELETE"
 #define ISTR_MODEL_POPUP    "CHINH SUA\0CHON\0SAO CHEP\0DI CHUYEN\0XOA\0SAO LUU\0KHOI PHUC\0REPLACE"
 #define ISTR_MODELSEL       "MODELSEL"
@@ -392,10 +392,10 @@
 #define ISTR_TTM            "TTm"
 #define ISTR_FUEL           "Fuel"
 #define ISTR_12_RPM         "\012RPM"
-#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_LON_EQ         "Lon="
 #define ISTR_ALT_MAX        "Alt=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Spd=\011kts Max="
+#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH         "\011mph"
 
 #define ISTR_SINK_TONES	   "Sink"

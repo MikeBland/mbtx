@@ -179,6 +179,31 @@ void _bootStart()
  #endif
 #endif
 
+//#ifdef PCBX9D
+//	uint32_t j ;
+//	uint32_t k ;
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	GPIOB->MODER = (GPIOB->MODER & 0xFFFCFFFF) | 0x00010000 ; // General purpose output mode
+//	for ( k = 0 ; k < 20 ; k += 1 )
+//	{
+//		GPIOB->BSRRL = 0x00000100 ; // set backlight ON
+//		for ( j = 0 ; j < 1000000 ; j += 1 )
+//		{
+//			bwdt_reset() ;
+//		}
+//		GPIOB->BSRRH = 0x00000100 ; // set backlight ON
+//		for ( j = 0 ; j < 1000000 ; j += 1 )
+//		{
+//			bwdt_reset() ;
+//		}
+//		GPIOB->BSRRH = 0x00000100 ; // set backlight ON
+//	}
+//#endif
+
+
+
+
+
 	uint32_t i ;
 	for ( i = 0 ; i < 50000 ; i += 1 )
 	{
