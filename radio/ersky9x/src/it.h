@@ -66,7 +66,7 @@
 
 #define ISTR_ON             "ON "
 #define ISTR_OFF            "OFF"
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
+#define ISTR_X_OFF_ON				FWx17 "\001" "\003" ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "Alt=" 
 #define ISTR_TXEQ			       "\003Tx=Swr"
@@ -153,7 +153,7 @@
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "GV"
 #define ISTR_OFF_ON         "OFFON "
-#define ISTR_HYPH_INV       FWx18"\001""\003---INV"
+#define ISTR_HYPH_INV       FWx18 "\001" "\003---INV"
 #define ISTR_VERSION        "VERSIONE"
 #define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Servo" 
@@ -257,9 +257,9 @@
 #define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 // ISTR_TRIM_OPTIONS indexed 6 chars each
-#define ISTR_TRIM_OPTIONS   FWx14"\004""\006Exp   ExFineFine  MediumCoarse"
+#define ISTR_TRIM_OPTIONS   FWx14 "\004" "\006Exp   ExFineFine  MediumCoarse"
 #define ISTR_TRIM_SWITCH    "Insta-Trim Sw"
-#define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
+#define ISTR_TRIM_INC       "Trim Inc"  "\037" ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Beep Cnt"
 #define ISTR_RETA123        "RETA1234"
 #define ISTR_PROTO          "Proto"
@@ -295,7 +295,7 @@
 #define ISTR_ELE_DIRECTION  "ELE Direzione"
 #define ISTR_AIL_DIRECTION  "AIL Direzione"
 #define ISTR_COL_DIRECTION  "COL Direzione"
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE  "\037" ISTR_COLLECTIVE  "\037" ISTR_SWASH_RING  "\037" ISTR_ELE_DIRECTION  "\037" ISTR_AIL_DIRECTION  "\037" ISTR_COL_DIRECTION
 //#define ISTR_MODEL_POPUP    "SELEZIONA\0COPIA\0SPOSTA\0CANCELLA"
 #define ISTR_MODEL_POPUP    "MODIFICA\0SELEZIONA\0SEL/EDIT\0COPIA\0SPOSTA\0CANCELLA\0BACKUP\0RIPRISTINO\0REPLACE"
 #define ISTR_MODELSEL       "MODELSEL"
@@ -399,7 +399,7 @@
 #define ISTR_LON_EQ         "Lon="
 #define ISTR_ALT_MAX        "Alt=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Spd=\011kts Max="
-#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
+#define ISTR_LAT_EQ         "Lat="  "\037" ISTR_LON_EQ  "\037" ISTR_ALT_MAX  "\037" ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH         "\011mph"
 
 #define ISTR_SINK_TONES	   "Sink Tones"

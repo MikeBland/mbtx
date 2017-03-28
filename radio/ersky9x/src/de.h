@@ -276,7 +276,7 @@ v.xx.01-german
 // ISTR_TRIM_OPTIONS indexed 6 chars each
 #define ISTR_TRIM_OPTIONS   FWx14"\004""\006Expon ExFeinFein  MittelGrob  "
 #define ISTR_TRIM_SWITCH    "Insta-Trim Sch"
-#define ISTR_TRIM_INC       "Trim Ink""\037"ISTR_TRIM_SWITCH
+#define ISTR_TRIM_INC       "Trim Ink" "\037" ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Piep Frq" //TonhÃ¶he Frequenz
 #define ISTR_RETA123        "SHGQ1234"
 #define ISTR_PROTO          "Proto" // Protokoll
@@ -312,7 +312,7 @@ v.xx.01-german
 #define ISTR_ELE_DIRECTION  "H\302H Richtung"
 #define ISTR_AIL_DIRECTION  "QUE Richtung"
 #define ISTR_COL_DIRECTION  "KOL Richtung" //Kollektive
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE "\037" ISTR_COLLECTIVE "\037" ISTR_SWASH_RING "\037" ISTR_ELE_DIRECTION "\037" ISTR_AIL_DIRECTION "\037" ISTR_COL_DIRECTION
 #define ISTR_MODEL_POPUP    "EDIT\0BEARBEI\0SEL/EDIT\0KOPIER\0BEWEGE\0L\302SCHE\0BACKUP\0RESTORE\0REPLACE"
 #define ISTR_MODELSEL       "MODELWAHL"
 // ISTR_11_FREE after \011 max 4 chars
@@ -415,7 +415,7 @@ v.xx.01-german
 #define ISTR_LON_EQ         "L\301n="
 #define ISTR_ALT_MAX        "H\302h=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Ges=\011kts Max="
-#define ISTR_LAT_EQ         "Bre=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
+#define ISTR_LAT_EQ         "Bre=" "\037" ISTR_LON_EQ "\037" ISTR_ALT_MAX "\037" ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH         "\011mph"
 
 #define ISTR_SINK_TONES	   "Sink Tones"

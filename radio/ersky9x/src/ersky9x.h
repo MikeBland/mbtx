@@ -1282,5 +1282,6 @@ extern uint16_t FailsafeCounter[2] ;
 #define POWER_BUTTON	1
 #endif // PCBX7
 
+//#define IMAGE_128
 
 #endif

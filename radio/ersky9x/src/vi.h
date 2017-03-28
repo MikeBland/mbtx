@@ -62,7 +62,7 @@
 
 #define ISTR_ON             "MO "
 #define ISTR_OFF            "TAT"
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
+#define ISTR_X_OFF_ON				FWx17 "\001" "\003" ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "Alt=" 
 #define ISTR_TXEQ			       "\003Tx=Swr"
@@ -149,7 +149,7 @@
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "GV"
 #define ISTR_OFF_ON         "TATMO "
-#define ISTR_HYPH_INV       FWx18"\001""\003---INV"
+#define ISTR_HYPH_INV       FWx18 "\001" "\003---INV"
 #define ISTR_VERSION        "PHIEN BAN"
 #define ISTR_Music	        "Music"
 #define ISTR_SLAVE          "\007Slave" 
@@ -253,9 +253,9 @@
 #define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 // ISTR_TRIM_OPTIONS indexed 6 chars each
-#define ISTR_TRIM_OPTIONS   FWx14"\004""\006Exp   ExFineFine  MediumCoarse"
+#define ISTR_TRIM_OPTIONS   FWx14 "\004" "\006Exp   ExFineFine  MediumCoarse"
 #define ISTR_TRIM_SWITCH    "Trim Sw"
-#define ISTR_TRIM_INC       "Trim Inc""\037"ISTR_TRIM_SWITCH
+#define ISTR_TRIM_INC       "Trim Inc" "\037" ISTR_TRIM_SWITCH
 #define ISTR_BEEP_CENTRE    "Beep Cnt"
 #define ISTR_RETA123        "RETA1234"
 #define ISTR_PROTO          "Proto"
@@ -291,7 +291,7 @@
 #define ISTR_ELE_DIRECTION  "ELE Direction"
 #define ISTR_AIL_DIRECTION  "AIL Direction"
 #define ISTR_COL_DIRECTION  "COL Direction"
-#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE"\037"ISTR_COLLECTIVE"\037"ISTR_SWASH_RING"\037"ISTR_ELE_DIRECTION"\037"ISTR_AIL_DIRECTION"\037"ISTR_COL_DIRECTION
+#define ISTR_HELI_TEXT			ISTR_SWASH_TYPE "\037" ISTR_COLLECTIVE "\037" ISTR_SWASH_RING "\037" ISTR_ELE_DIRECTION "\037" ISTR_AIL_DIRECTION "\037" ISTR_COL_DIRECTION
 //#define ISTR_MODEL_POPUP    "SELECT\0COPY\0MOVE\0DELETE"
 #define ISTR_MODEL_POPUP    "CHINH SUA\0CHON\0SAO CHEP\0DI CHUYEN\0XOA\0SAO LUU\0KHOI PHUC\0REPLACE"
 #define ISTR_MODELSEL       "MODELSEL"
@@ -381,7 +381,7 @@
 // CSWITCH_STR indexed 7 chars each
 #define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  v1\140=v2 "
 
-#define ISWASH_TYPE_STR     FWx17"\004""\004----""120 ""120X""140 ""90  "
+#define ISWASH_TYPE_STR     FWx17 "\004" "\004----""120 ""120X""140 ""90  "
 
 #define ISTR_STICK_NAMES    "\005Rud \0Ele \0Thr \0Ail "
 
@@ -395,7 +395,7 @@
 #define ISTR_LON_EQ         "Lon="
 #define ISTR_ALT_MAX        "Alt=\011m   Max="
 #define ISTR_SPD_KTS_MAX    "Spd=\011kts Max="
-#define ISTR_LAT_EQ         "Lat=""\037"ISTR_LON_EQ"\037"ISTR_ALT_MAX"\037"ISTR_SPD_KTS_MAX
+#define ISTR_LAT_EQ         "Lat=" "\037" ISTR_LON_EQ "\037" ISTR_ALT_MAX "\037" ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH         "\011mph"
 
 #define ISTR_SINK_TONES	   "Sink"

@@ -3672,11 +3672,13 @@ void main_loop(void* pdata)
 
 //	CoTickDelay(10) ;					// See if Idle task does anything
   
+#if defined(PCBX9D) || defined(IMAGE_128)
 extern uint8_t ModelImageValid ;
 	if ( !ModelImageValid )
 	{
 		loadModelImage() ;
 	}
+#endif	
 	Activated = 1 ;
 
 #ifdef POWER_BUTTON

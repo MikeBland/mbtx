@@ -134,9 +134,13 @@ uint8_t FileSelectResult ;
 char SelectedVoiceFileName[16] ;
 
 void menuProcSelectVoiceFile(uint8_t event) ;
-//#ifdef PCBX9D
+#ifdef PCBX9D
 void menuProcSelectImageFile(uint8_t event) ;
-//#endif
+#endif
+#ifdef IMAGE_128
+void menuProcSelectImageFile(uint8_t event) ;
+#endif
+
 int8_t getAndSwitch( SKYCSwData &cs ) ;
 
 static int16_t hdg_home ;// Extra data for Mavlink via FrSky
@@ -176,7 +180,7 @@ const uint8_t MfileData[] =
 "12,CX10,GREEN,BLUE,DM007,---,J3015_1,J3015_2,MK33041\r\n"
 "13,CG023,CG023,YD829,H8_3D\r\n"
 "14,Bayang,Bayang,H8S3D\r\n"
-"15,FrskyX,CH_16,CH_8\r\n"
+"15,FrskyX,CH_16,CH_8,EU_16,EU_8\r\n"
 "16,ESky\r\n"
 "17,MT99xx,MT,H7,YZ,LS,FY805\r\n"
 "18,MJXq,WLH08,X600,X800,H26D,E010,H26WH\r\n"
@@ -257,7 +261,7 @@ void parseMultiData()
 			break ;
 		}
 	}
-	result = f_open( &TextFile, "Multi.txt", FA_READ ) ;
+	result = f_open( &TextFile, "/Multi.txt", FA_READ ) ;
 
 	src = (uint8_t *)MfileData ;
 	text = MultiText ;
@@ -429,11 +433,6 @@ uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y,
 		if ( value & 0x8000 )
 		{
 			uint32_t limit = (value >> 11) & 0x0F ;
-			if ( limit == 0 )
-			{
-				lcd_putsAtt( FW*10, y, "None", attr ) ;
-				return 0 ;
-			}
 			if ( subIndex < limit )
 			{
 				value &= 0x07FF ;
@@ -452,7 +451,15 @@ uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y,
 			}
 			else
 			{
-				return limit - 1 ;
+				if ( subIndex == 0 )
+				{
+					lcd_putsAtt( FW*10, y, "None", attr ) ;
+	//				return 0 ;
+				}
+				else
+				{
+					lcd_outdezAtt( 21*FW, y, subIndex, attr ) ;
+				}
 			}
 			return subIndex ;
 		}
@@ -1646,7 +1653,9 @@ void menuProcAlpha(uint8_t event) ;
 void menuProcTrainDdiag(uint8_t event) ;
 void menuProcS6R(uint8_t event) ;
 void menuDebug(uint8_t event) ;
+#ifdef IMAGE_128
 void menuImage(uint8_t event) ;
+#endif
 void menuTextHelp(uint8_t event) ;
 void menuVario(uint8_t event) ;
 
@@ -1697,7 +1706,9 @@ enum EnumTabStat
 	e_debug,
   e_Setup3,
 #if defined(PCBSKY) || defined(PCB9XT)
+#ifdef IMAGE_128
 	e_image,
+#endif
 	e_bluetooth,
 #endif
 #ifdef PCB9XT
@@ -1719,7 +1730,9 @@ MenuFuncP menuTabStat[] =
 	menuDebug,
 	menuProcSDstat,
 #if defined(PCBSKY) || defined(PCB9XT)
+#ifdef IMAGE_128
 	menuImage,
+#endif
 	menuProcBt,
 #endif
 #ifdef PCB9XT
@@ -11127,6 +11140,7 @@ extern uint32_t IdlePercent ;
 }
 
 
+#ifdef IMAGE_128
 #if defined(PCBSKY) || defined(PCB9XT)
 extern uint8_t ModelImage[] ;
 extern uint8_t ModelImageValid ;
@@ -11267,6 +11281,7 @@ void menuImage(uint8_t event)
 
 
 }
+#endif
 #endif
 
 extern uint8_t RawLogging ;
@@ -12571,7 +12586,8 @@ void menuProcSelectVoiceFile(uint8_t event)
 	FileSelectResult = i ;
 }
 
-//#ifdef PCBX9D
+#if defined(PCBX9D) || defined(IMAGE_128)
+
 void menuProcSelectImageFile(uint8_t event)
 {
 	struct fileControl *fc = &FileControl ;
@@ -12601,7 +12617,7 @@ void menuProcSelectImageFile(uint8_t event)
 	}
 	FileSelectResult = i ;
 }
-//#endif
+#endif
 
 
 void menuProcBattery(uint8_t event)
@@ -16976,21 +16992,25 @@ STR_Protocol
 #ifdef PCBX9D
 			IlinesCount = 18 ;//+ 1 ;
 #else // PCBX9D
+#ifdef IMAGE_128
 			IlinesCount = 19 ;//+ 1 ;
+#else
+			IlinesCount = 18 ;//+ 1 ;
+#endif
 #endif // PCBX9D
 
 			if ( voiceCall )
 			{
 				if ( FileSelectResult == 1 )
 				{
-//#ifdef PCBX9D
+#if defined(PCBX9D) || defined(IMAGE_128)
 					if ( voiceCall == 2 )
 					{
 						copyFileName( g_model.modelImageName, SelectedVoiceFileName, 10 ) ;
 						loadModelImage() ;
 					}
 					else
-//#endif
+#endif
 					{
 						g_model.modelVoice = -1 ;
 						copyFileName( g_model.modelVname, SelectedVoiceFileName, 8 ) ;
@@ -17526,6 +17546,7 @@ extern uint16_t switches_states ;
             STORE_MODELVARS;
 	        }
   		  }
+#if defined(PCBX9D) || defined(IMAGE_128)
 //#ifdef PCBX9D
 //#ifndef PCBX7
 				y += FH ;
@@ -17551,7 +17572,7 @@ extern uint16_t switches_states ;
 					alphaEditName( 11*FW-2, y, (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName), type | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FIlename") ) ;
 				}
 //#endif // PCBX7
-//#endif
+#endif
 			}
 		}	
 		break ;

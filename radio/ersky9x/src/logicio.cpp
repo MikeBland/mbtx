@@ -81,6 +81,15 @@ void configure_pins( uint32_t pins, uint16_t config )
 		pioptr->PIO_PPDDR = pins ;
 	}
 
+	if ( config & PIN_HIGH )
+	{
+		pioptr->PIO_SODR = pins ;		
+	}
+	else
+	{
+		pioptr->PIO_CODR = pins ;		
+	}
+	 
 	if ( config & PIN_INPUT )
 	{
 		pioptr->PIO_ODR = pins ;
@@ -116,15 +125,6 @@ void configure_pins( uint32_t pins, uint16_t config )
 		pioptr->PIO_PDR = pins ;		
 	}
 
-	if ( config & PIN_HIGH )
-	{
-		pioptr->PIO_SODR = pins ;		
-	}
-	else
-	{
-		pioptr->PIO_CODR = pins ;		
-	}
-	 
 	if ( config & PIN_ODRAIN )
 	{
 		pioptr->PIO_MDER = pins ;		

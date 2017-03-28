@@ -789,7 +789,9 @@ void ee32LoadModel(uint8_t id)
 		}
 	}
 	checkXyCurve() ;
+#if defined(IMAGE_128)
 	loadModelImage() ;
+#endif
 	// Now check the sub_protocol(s)
 	if ( g_model.sub_protocol == 0 )
 	{
@@ -1750,6 +1752,7 @@ void closeBackupEeprom()
 	f_close( &g_eebackupFile ) ;
 }
 
+#if defined(IMAGE_128)
 uint8_t ModelImage[64*32/8] ;
 uint8_t ModelImageValid = 0 ;
 TCHAR ImageFilename[60] ;
@@ -1849,6 +1852,7 @@ uint32_t loadModelImage()
 	LoadImageResult = 0 ;
 	return 0 ;
 }
+#endif
 
 
 
