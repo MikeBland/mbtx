@@ -3041,7 +3041,7 @@ void menuLogging(uint8_t event)
 extern char LastItem[] ;
 
 #if defined(PCBSKY) || defined(PCB9XT)
-const char SW_3_IDX[] = "\004sIDxsTHRsRUDsELEsAILsGEAsTRNL1  L2  L3  L4  L5  L6  L7  L8  L9  LA  LB  LC  LD  LE  LF  LG  LH  LI  LJ  LK  LL  LM  LN  LO  6POS" ;
+//const char SW_3_IDX[] = "\004sIDxsTHRsRUDsELEsAILsGEAsTRNL1  L2  L3  L4  L5  L6  L7  L8  L9  LA  LB  LC  LD  LE  LF  LG  LH  LI  LJ  LK  LL  LM  LN  LO  6POS" ;
 #define NUM_MIX_SWITCHES	(7+NUM_SKYCSW)
 #endif
 #ifdef PCBX9D
@@ -3062,8 +3062,10 @@ void putsChnOpRaw( uint8_t x, uint8_t y, uint8_t source, uint8_t switchSource, u
 	if ( source == MIX_3POS )
 	{
 #if defined(PCBSKY) || defined(PCB9XT)
-		lcd_putsAttIdx( x, y, SW_3_IDX,switchSource, attr ) ;
-		setLastIdx( (char *) SW_3_IDX, switchSource ) ;
+    lcd_putsAttIdx( x, y, PSTR(HW_SWITCHES_STR), switchSource, attr ) ;
+		setLastIdx( (char *) PSTR(HW_SWITCHES_STR), switchSource ) ;
+//		lcd_putsAttIdx( x, y, SW_3_IDX,switchSource, attr ) ;
+//		setLastIdx( (char *) SW_3_IDX, switchSource ) ;
 #endif
 #ifdef PCBX9D
     lcd_putsAttIdx( x, y, PSTR(HW_SWITCHES_STR), switchSource, attr ) ;
@@ -12675,7 +12677,8 @@ void menuProcBattery(uint8_t event)
 	disp_datetime( 5*FH ) ;
 #endif
 
-
+extern uint32_t Master_frequency ;
+ 	lcd_outdezAtt( 5*FW, 7*FH, Master_frequency/1000000, 0 ) ;
 }
 
 

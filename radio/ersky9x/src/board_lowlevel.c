@@ -129,6 +129,10 @@ static uint32_t BOARD_ConfigurePmc(void)
          | (0x1 << AT91C_CKGR_PLLCOUNT_SHIFT) | (0x2 << AT91C_CKGR_DIV_SHIFT))
  #endif
 #endif
+  
+// Settings at 240MHz/2 = 120MHz
+#define BOARD120_PLLR ((1 << 29) | (0x14 << AT91C_CKGR_MUL_SHIFT) \
+         | (0x1 << AT91C_CKGR_PLLCOUNT_SHIFT) | (0x2 << AT91C_CKGR_DIV_SHIFT))
 
 #define BOARD_MCKR (PMC_MCKR_CSS_PLLA_CLK)
 
@@ -140,6 +144,8 @@ static uint32_t BOARD_ConfigurePmc(void)
 		register Pmc *pmcptr ;
 
 		pmcptr = PMC ;
+		uint32_t ChipId = CHIPID->CHIPID_CIDR ;
+
 
     /* Enable NRST reset
      ************************************/
@@ -177,7 +183,7 @@ static uint32_t BOARD_ConfigurePmc(void)
     while (!(pmcptr->PMC_SR & PMC_SR_MCKRDY) && (++timeout < CLOCK_TIMEOUT));
 
     /* Initialize PLLA 72 MHz (or 108 MHz) */
-    pmcptr->CKGR_PLLAR = BOARD_PLLR;
+    pmcptr->CKGR_PLLAR = ( ChipId & 0x0080 ) ? BOARD120_PLLR : BOARD_PLLR;
     timeout = 0;
     while (!(pmcptr->PMC_SR & PMC_SR_LOCKA) && (++timeout < CLOCK_TIMEOUT));
 
@@ -198,14 +204,19 @@ static uint32_t BOARD_ConfigurePmc(void)
   timeout = 0;
   while (!(PMC->PMC_SR & PMC_SR_MCKRDY) && (timeout++ < CLOCK_TIMEOUT));
 
+	if ( ChipId & 0x0080 )
+	{
+		return 120000000L ;
+	}
+	else
 #endif
 #ifdef USE_54_MHZ
-	return 54000000L ;		// Master_frequency
+		return 54000000L ;		// Master_frequency
 #else	
  #ifdef USE_64_MHZ
-	return 64000000L ;		// Master_frequency
+		return 64000000L ;		// Master_frequency
  #else	
-	return 36000000L ;		// Master_frequency
+		return 36000000L ;		// Master_frequency
  #endif
 #endif
 }
@@ -289,6 +300,12 @@ uint32_t SystemInit (void)
 	lowLevelUsbCheck() ;
 #endif
 #endif
+	if ( CHIPID->CHIPID_CIDR & 0x0080 )
+	{
+	   EFC->EEFC_FMR = (5 << 8) ;
+	}
+	else
+
 #ifdef USE_54_MHZ
     /** Set 3 cycle (2 WS) for Embedded Flash Access */
 		// Max clock is 64 MHz (1.8V VVDCORE)

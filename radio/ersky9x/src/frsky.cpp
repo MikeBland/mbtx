@@ -282,7 +282,7 @@ void dsmTelemetryStartReceive()
 
 uint16_t convertRxv( uint16_t value )
 {
-	if ( FrskyTelemetryType != 2 )		// DSM telemetry
+	if ( ( FrskyTelemetryType != 2 ) && (( FrskyTelemetryType != 3 )) )		// DSM or AFHDS2 telemetry 
 	{
 		value *= g_model.rxVratio ;
 		value /= 255 ;
@@ -1831,6 +1831,7 @@ void processSportPacket()
 //#endif
 
 
+// FE?
 void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 {
   frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
@@ -1845,7 +1846,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 		switch ( id )
 		{
 			case 0 :	// Rx voltage
-				storeTelemetryData( FR_RXV, value ) ;
+				storeTelemetryData( FR_RXV, value/10 ) ;
 			break ;
 			case 1 :	// Temp
 				storeTelemetryData( FR_TEMP1, value ) ;
@@ -1854,7 +1855,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 				storeTelemetryData( FR_RPM, value ) ;
 			break ;
 			case 3 :	// External voltage
-				storeTelemetryData( FR_VOLTS, value ) ;
+				storeTelemetryData( FR_VOLTS, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
 				storeRSSI( value ) ;
@@ -2856,7 +2857,7 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 	averaging_total += value ;
 	uint8_t count = 16 ;
 	uint8_t shift = 4 ;
-	if ( FrskyTelemetryType == 1 )	// SPORT
+	if ( ( FrskyTelemetryType == 1 ) || ( FrskyTelemetryType == 1 ) )	// SPORT or AFHDS2
 	{
 		count = 4 ;
 		shift = 2 ;
