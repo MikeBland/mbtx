@@ -89,11 +89,11 @@ struct t_rxUartBuffer
 
 uint8_t JetiTxBuffer[16] ;
 
-struct t_fifo64 Com1_fifo ;
+struct t_fifo128 Com1_fifo ;
 struct t_fifo128 Com2_fifo ;
 struct t_fifo128 BtRx_fifo ;
 
-struct t_fifo64 CaptureRx_fifo ;
+//struct t_fifo64 CaptureRx_fifo ;
 
 #ifdef PCB9XT
 struct t_fifo64 RemoteRx_fifo ;
@@ -669,6 +669,7 @@ int32_t get_16bit_fifo32( struct t_16bit_fifo32 *pfifo )
 #define BIT_FRAMING		2
 
 struct t_softSerial SoftSerial1 ;
+struct t_softSerial SoftSerial2 ;
 
 //uint8_t LineState ;
 uint8_t CaptureMode ;
@@ -688,23 +689,21 @@ uint16_t USART_NE ;
 uint16_t USART_FE ;
 uint16_t USART_PE ;
 
-uint16_t CaptureDebug1 ;
-uint16_t CaptureDebug2 ;
+//uint16_t CaptureDebug1 ;
+//uint16_t CaptureDebug2 ;
 
 // time in units of 0.5uS, value is 1 or 0
-void putCaptureTime( uint16_t time, uint32_t value )
+void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value )
 {
-	struct t_softSerial *pss = &SoftSerial1 ;
-	
 	time += pss->bitTime/2 ;
 	time /= pss->bitTime ;		// Now number of bits
-	CaptureDebug1 += 1 ;
+//	CaptureDebug1 += 1 ;
 	if ( value == 3 )
 	{
 		return ;
 	}
 
-	CaptureDebug2 += 1 ;
+//	CaptureDebug2 += 1 ;
 	if ( pss->bitState == BIT_IDLE )
 	{ // Starting, value should be 0
 		pss->bitState = BIT_ACTIVE ;
@@ -740,7 +739,10 @@ void putCaptureTime( uint16_t time, uint32_t value )
 							}
 							else
 							{
-								put_fifo64( &CaptureRx_fifo, pss->byte ) ;
+								if ( pss->pfifo )
+								{
+									put_fifo128( pss->pfifo, pss->byte ) ;
+								}
 							}
 						}
 						else
@@ -750,7 +752,10 @@ void putCaptureTime( uint16_t time, uint32_t value )
 					}
 					else
 					{
-						put_fifo64( &CaptureRx_fifo, pss->byte ) ;
+						if ( pss->pfifo )
+						{
+							put_fifo128( pss->pfifo, pss->byte ) ;
+						}
 					}
 					pss->bitState = BIT_IDLE ;
 					time = 0 ;
@@ -1081,17 +1086,25 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock)
 
 }
 
-void com2_Configure( uint32_t baudrate, uint32_t parity )
+void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
-	UART_Configure( baudrate, Master_frequency) ;
-  register Uart *pUart = CONSOLE_USART ;
-	if ( parity )
+	if ( invert )
 	{
-  	pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
+		CONSOLE_USART->UART_IDR = UART_IDR_RXRDY ;
+		init_software_com2( baudrate, SERIAL_INVERT, parity ) ;
 	}
 	else
 	{
-		pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
+		UART_Configure( baudrate, Master_frequency) ;
+  	register Uart *pUart = CONSOLE_USART ;
+		if ( parity )
+		{
+  		pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
+		}
+		else
+		{
+			pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
+		}
 	}
 }
 
@@ -1445,7 +1458,7 @@ extern "C" void USART0_IRQHandler()
 	if ( pUsart->US_CSR & US_CSR_RXRDY )
 	{
     uint8_t data = pUsart->US_RHR ;
-		put_fifo64( &Com1_fifo, data ) ;
+		put_fifo128( &Com1_fifo, data ) ;
 
 // 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
 // 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
@@ -2099,14 +2112,15 @@ extern uint8_t TrainerPolarity ;
 
 void setCaptureMode(uint32_t mode)
 {
+	struct t_softSerial *pss = &SoftSerial1 ;
 	CaptureMode = mode ;
 
 	NVIC_DisableIRQ(PIOA_IRQn) ;
 	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
 	if ( mode == CAP_SERIAL )
 	{
-		SoftSerial1.lineState = LINE_IDLE ;
-		SoftSerial1.bitTime = BIT_TIME_100K ;
+		pss->lineState = LINE_IDLE ;
+		pss->bitTime = BIT_TIME_100K ;
 		NVIC_SetPriority( TC3_IRQn, 1 ) ; // High to handle 100K
 		if ( TrainerPolarity )
 		{
@@ -2118,7 +2132,7 @@ void setCaptureMode(uint32_t mode)
 			TC1->TC_CHANNEL[0].TC_CMR = 0x00090005 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC0, A rise, B fall
 		}
 		TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
-		SoftSerial1.softSerialEvenParity = 1 ;
+		pss->softSerialEvenParity = 1 ;
 	}
 	else
 	{
@@ -2153,22 +2167,31 @@ void stop_timer5()
 	NVIC_DisableIRQ(TC5_IRQn) ;
 }
 
-uint32_t SoftwareComBit ;
-void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint32_t bit)
+void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint32_t port )
 {
-	SoftwareComBit = bit ;
-	SoftSerial1.bitTime = 2000000 / baudrate ;
+	struct t_softSerial *pss = &SoftSerial1 ;
+	if ( port == 0 )
+	{
+		pss->softwareComBit = PIO_PA5 ;
+		pss->pfifo = &Com1_fifo ;
+	}
+	else
+	{
+		pss->softwareComBit = PIO_PA9 ;
+		pss->pfifo = &Com2_fifo ;
+	}
+	pss->bitTime = 2000000 / baudrate ;
 
-	SoftSerial1.softSerInvert = invert ? 0 : bit ;
-	SoftSerial1.softSerialEvenParity = parity ? 1 : 0 ;
+	pss->softSerInvert = invert ? 0 : pss->softwareComBit ;
+	pss->softSerialEvenParity = parity ? 1 : 0 ;
 
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
 	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
-	SoftSerial1.lineState = LINE_IDLE ;
+	pss->lineState = LINE_IDLE ;
 	CaptureMode = CAP_COM1 ;
-	configure_pins( bit, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
-	PIOA->PIO_IER = bit ;
+	configure_pins( pss->softwareComBit, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
+	PIOA->PIO_IER = pss->softwareComBit ;
 	NVIC_SetPriority( PIOA_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ(PIOA_IRQn) ;
 	start_timer5() ;
@@ -2177,7 +2200,7 @@ void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
 {
-	init_software_com(baudrate, invert, parity, PIO_PA5) ;
+	init_software_com(baudrate, invert, parity, 0 ) ;
 }
 
 static void disable_software_com( uint32_t bit)
@@ -2195,7 +2218,7 @@ void disable_software_com1()
 
 void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity)
 {
-	init_software_com(baudrate, invert, parity, PIO_PA9) ;
+	init_software_com(baudrate, invert, parity, 1 ) ;
 }
 
 void disable_software_com2()
@@ -2203,47 +2226,47 @@ void disable_software_com2()
 	disable_software_com( PIO_PA9 ) ;
 }
 
-
 extern "C" void PIOA_IRQHandler()
 {
   register uint32_t capture ;
   register uint32_t dummy ;
 	
 	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
+	struct t_softSerial *pss = &SoftSerial1 ;
 	dummy = PIOA->PIO_ISR ;			// Read and clear status register
 	(void) dummy ;		// Discard value - prevents compiler warning
 
 	dummy = PIOA->PIO_PDSR ;
-	if ( ( dummy & SoftwareComBit ) == SoftSerial1.softSerInvert )
+	if ( ( dummy & pss->softwareComBit ) == pss->softSerInvert )
 	{
 		// L to H transition
-		SoftSerial1.LtoHtime = capture ;
+		pss->LtoHtime = capture ;
 		TC1->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
-		TC1->TC_CHANNEL[2].TC_RC = SoftSerial1.bitTime * 10 ;
+		TC1->TC_CHANNEL[2].TC_RC = pss->bitTime * 10 ;
 		uint32_t time ;
-		capture -= SoftSerial1.HtoLtime ;
+		capture -= pss->HtoLtime ;
 		time = capture ;
-		putCaptureTime( time, 0 ) ;
+		putCaptureTime( pss, time, 0 ) ;
 		TC1->TC_CHANNEL[2].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
 		(void) TC1->TC_CHANNEL[2].TC_SR ;
 	}
 	else
 	{
 		// H to L transition
-		SoftSerial1.HtoLtime = capture ;
-		if ( SoftSerial1.lineState == LINE_IDLE )
+		pss->HtoLtime = capture ;
+		if ( pss->lineState == LINE_IDLE )
 		{
-			SoftSerial1.lineState = LINE_ACTIVE ;
-//			putCaptureTime( 0, 3 ) ;
-			TC1->TC_CHANNEL[2].TC_RC = capture + (SoftSerial1.bitTime * 20) ;
+			pss->lineState = LINE_ACTIVE ;
+//			putCaptureTime( pss, 0, 3 ) ;
+			TC1->TC_CHANNEL[2].TC_RC = capture + (pss->bitTime * 20) ;
 			(void) TC1->TC_CHANNEL[2].TC_SR ;
 		}
 		else
 		{
 			uint32_t time ;
-			capture -= SoftSerial1.LtoHtime ;
+			capture -= pss->LtoHtime ;
 			time = capture ;
-			putCaptureTime( time, 1 ) ;
+			putCaptureTime( pss, time, 1 ) ;
 		}
 		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
 	}
@@ -2252,14 +2275,15 @@ extern "C" void PIOA_IRQHandler()
 extern "C" void TC5_IRQHandler()
 {
 	uint32_t status ;
+	struct t_softSerial *pss = &SoftSerial1 ;
 
 	status = TC1->TC_CHANNEL[2].TC_SR ;
 	if ( status & TC_SR0_CPCS )
 	{		
 		uint32_t time ;
-		time = TC1->TC_CHANNEL[0].TC_CV - SoftSerial1.LtoHtime ;
-		putCaptureTime( time, 2 ) ;
-		SoftSerial1.lineState = LINE_IDLE ;
+		time = TC1->TC_CHANNEL[0].TC_CV - pss->LtoHtime ;
+		putCaptureTime( pss, time, 2 ) ;
+		pss->lineState = LINE_IDLE ;
 		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
 	}
 }
@@ -2273,21 +2297,22 @@ extern "C" void TC5_IRQHandler()
 // (The timer is free-running and is thus not reset to zero at each capture interval.)
 // Timer 4 generates the 2MHz clock to clock Timer 3
 
-uint16_t DebugTIMER3 ;
-uint16_t DebugTIMER3B ;
+//uint16_t DebugTIMER3 ;
+//uint16_t DebugTIMER3B ;
 
 extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 {
   uint16_t capture ;
   static uint16_t lastCapt ;
   uint16_t val ;
+	struct t_softSerial *pss = &SoftSerial1 ;
 
 	uint32_t status ;
 	status = TC1->TC_CHANNEL[0].TC_SR ;
-	DebugTIMER3 += 1 ;
+//	DebugTIMER3 += 1 ;
 	if ( CaptureMode == CAP_SERIAL )
 	{
-		DebugTIMER3B += 1 ;
+//		DebugTIMER3B += 1 ;
 		if ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
 		{
 			while ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
@@ -2295,12 +2320,12 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 				if ( TC1->TC_CHANNEL[0].TC_IMR & TC_IMR0_LDRAS )
 				{	// L->H edge
 					capture = TC1->TC_CHANNEL[0].TC_RA ;
-					SoftSerial1.LtoHtime = capture ;
-					TC1->TC_CHANNEL[0].TC_RC = capture + (SoftSerial1.bitTime * 13) ;
+					pss->LtoHtime = capture ;
+					TC1->TC_CHANNEL[0].TC_RC = capture + (pss->bitTime * 13) ;
 					uint32_t time ;
-					capture -= SoftSerial1.HtoLtime ;
+					capture -= pss->HtoLtime ;
 					time = capture ;
-					putCaptureTime( time, 0 ) ;
+					putCaptureTime( pss, time, 0 ) ;
 					TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
 					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
 					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
@@ -2309,17 +2334,17 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 				else
 				{	// H->L edge
 					capture = TC1->TC_CHANNEL[0].TC_RB ;
-					SoftSerial1.HtoLtime = capture ;
-					if ( SoftSerial1.lineState == LINE_IDLE )
+					pss->HtoLtime = capture ;
+					if ( pss->lineState == LINE_IDLE )
 					{
-						SoftSerial1.lineState = LINE_ACTIVE ;
+						pss->lineState = LINE_ACTIVE ;
 				  }
 					else
 					{
 						uint32_t time ;
-						capture -= SoftSerial1.LtoHtime ;
+						capture -= pss->LtoHtime ;
 						time = capture ;
-						putCaptureTime( time, 1 ) ;
+						putCaptureTime( pss, time, 1 ) ;
 					}
 					TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRAS ;		// Int on rising edge
 					TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
@@ -2331,9 +2356,9 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 		else
 		{ // Compare interrupt
 			uint32_t time ;
-			time = TC1->TC_CHANNEL[0].TC_CV - SoftSerial1.LtoHtime ;
-			putCaptureTime( time, 2 ) ;
-			SoftSerial1.lineState = LINE_IDLE ;
+			time = TC1->TC_CHANNEL[0].TC_CV - pss->LtoHtime ;
+			putCaptureTime( pss, time, 2 ) ;
+			pss->lineState = LINE_IDLE ;
 			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
 			TC1->TC_CHANNEL[0].TC_IER = TC_IER0_LDRBS ;		// Int on falling edge
 			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
@@ -2348,9 +2373,9 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 		if ( status & TC_SR0_CPCS )
 		{		
 			uint32_t time ;
-			time = TC1->TC_CHANNEL[0].TC_RC - SoftSerial1.LtoHtime ;
-			putCaptureTime( time, 2 ) ;
-			SoftSerial1.lineState = LINE_IDLE ;
+			time = TC1->TC_CHANNEL[0].TC_RC - pss->LtoHtime ;
+			putCaptureTime( pss, time, 2 ) ;
+			pss->lineState = LINE_IDLE ;
 			TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
 		}
 	}
@@ -2596,7 +2621,7 @@ void ConsoleInit()
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
 
-void com2_Configure( uint32_t baudrate, uint32_t parity )
+void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
 	ConsoleInit() ;
 	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
@@ -2792,7 +2817,7 @@ extern "C" void USART2_IRQHandler()
     if (!(status & USART_FLAG_ERRORS))
 		{
 			RxIntCount += 1 ;
-			put_fifo64( &Com1_fifo, data ) ;
+			put_fifo128( &Com1_fifo, data ) ;
 			if ( FrskyTelemetryType == 1 )		// SPORT
 			{
 				if ( LastReceivedSportByte == 0x7E && SportTx.count > 0 && data == SportTx.index )
@@ -2805,7 +2830,7 @@ extern "C" void USART2_IRQHandler()
 		}
 		else
 		{
-			put_fifo64( &Com1_fifo, data ) ;
+			put_fifo128( &Com1_fifo, data ) ;
 			USART_ERRORS += 1 ;
 			if ( status & USART_FLAG_ORE )
 			{
@@ -2845,7 +2870,7 @@ void start_2Mhz_timer()
 
 uint16_t rxTelemetry()
 {
-	return get_fifo64( &Com1_fifo ) ;
+	return get_fifo128( &Com1_fifo ) ;
 }
 
 #ifndef PCB9XT
@@ -2985,18 +3010,20 @@ void stop_xjt_heartbeat()
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
+	struct t_softSerial *pss = &SoftSerial1 ;
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	
-	SoftSerial1.bitTime = 2000000 / baudrate ;
-	SoftSerial1.softSerialEvenParity = parity ? 1 : 0 ;
+	pss->bitTime = 2000000 / baudrate ;
+	pss->softSerialEvenParity = parity ? 1 : 0 ;
 
 #ifdef PCB9XT
-	SoftSerial1.softSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
+	pss->softSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
 #else
-	SoftSerial1.softSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
+	pss->softSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
 #endif
+	pss->pfifo = &Com1_fifo ;
 
-	SoftSerial1.lineState = LINE_IDLE ;
+	pss->lineState = LINE_IDLE ;
 	CaptureMode = CAP_COM1 ;
 
 #ifdef PCB9XT
@@ -3054,7 +3081,7 @@ void consoleInit()
   NVIC_EnableIRQ(UART4_IRQn) ;
 }
 
-void com2_Configure( uint32_t baudrate, uint32_t parity )
+void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
 	consoleInit() ;
 	UART4SetBaudrate( baudrate ) ;
@@ -3468,6 +3495,7 @@ extern "C" void EXTI9_5_IRQHandler()
 {
   register uint32_t capture ;
   register uint32_t dummy ;
+	struct t_softSerial *pss = &SoftSerial1 ;
 
 	capture =  TIM7->CNT ;	// Capture time
 	
@@ -3486,40 +3514,40 @@ extern "C" void EXTI9_5_IRQHandler()
 	
 #ifdef PCB9XT
 	dummy = GPIOA->IDR ;
-	if ( ( dummy & GPIO_Pin_3 ) == SoftSerial1.softSerInvert )
+	if ( ( dummy & GPIO_Pin_3 ) == pss->softSerInvert )
 #else
 	dummy = GPIOD->IDR ;
-	if ( ( dummy & GPIO_Pin_6 ) == SoftSerial1.softSerInvert )
+	if ( ( dummy & GPIO_Pin_6 ) == pss->softSerInvert )
 #endif
 	{
 		// L to H transition
-		SoftSerial1.LtoHtime = capture ;
+		pss->LtoHtime = capture ;
 		TIM11->CNT = 0 ;
-		TIM11->CCR1 = SoftSerial1.bitTime * 12 ;
+		TIM11->CCR1 = pss->bitTime * 12 ;
 		uint32_t time ;
-		capture -= SoftSerial1.HtoLtime ;
+		capture -= pss->HtoLtime ;
 		time = capture ;
-		putCaptureTime( time, 0 ) ;
+		putCaptureTime( pss, time, 0 ) ;
 		TIM11->DIER = TIM_DIER_CC1IE ;
 	}
 	else
 	{
 		// H to L transition
-		SoftSerial1.HtoLtime = capture ;
-		if ( SoftSerial1.lineState == LINE_IDLE )
+		pss->HtoLtime = capture ;
+		if ( pss->lineState == LINE_IDLE )
 		{
-			SoftSerial1.lineState = LINE_ACTIVE ;
-			putCaptureTime( 0, 3 ) ;
+			pss->lineState = LINE_ACTIVE ;
+			putCaptureTime( pss, 0, 3 ) ;
 		}
 		else
 		{
 			uint32_t time ;
-			capture -= SoftSerial1.LtoHtime ;
+			capture -= pss->LtoHtime ;
 			time = capture ;
-			putCaptureTime( time, 1 ) ;
+			putCaptureTime( pss, time, 1 ) ;
 		}
 		TIM11->DIER = 0 ;
-		TIM11->CCR1 = SoftSerial1.bitTime * 20 ;
+		TIM11->CCR1 = pss->bitTime * 20 ;
 		TIM11->CNT = 0 ;
 		TIM11->SR = 0 ;
 	}
@@ -3528,14 +3556,15 @@ extern "C" void EXTI9_5_IRQHandler()
 extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 {
 	uint32_t status ;
+	struct t_softSerial *pss = &SoftSerial1 ;
 
 	status = TIM11->SR ;
 	if ( status & TIM_SR_CC1IF )
 	{		
 		uint32_t time ;
-		time = TIM7->CNT - SoftSerial1.LtoHtime ;
-		putCaptureTime( time, 2 ) ;
-		SoftSerial1.lineState = LINE_IDLE ;
+		time = TIM7->CNT - pss->LtoHtime ;
+		putCaptureTime( pss, time, 2 ) ;
+		pss->lineState = LINE_IDLE ;
 		TIM11->DIER = 0 ;
 		TIM11->SR = 0 ;
 	}

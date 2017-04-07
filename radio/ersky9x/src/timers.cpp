@@ -90,7 +90,7 @@ uint16_t LastTransition ;
 //extern uint16_t HtoLtime ;
 //extern uint16_t LtoHtime ;
 //extern uint8_t LineState ;
-extern void putCaptureTime( uint16_t time, uint32_t value ) ;
+extern void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value ) ;
 //extern uint8_t SoftSerInvert ;
 //extern uint8_t SoftSerialEvenParity ;
 extern void start_timer11(void) ;
@@ -1505,6 +1505,7 @@ void stop_trainer_ppm()
 // Soft Serial capture, PC8, Timer 3 channel 3
 void init_trainer_capture(uint32_t mode)
 {
+	struct t_softSerial *pss = &SoftSerial1 ;
 	
 	if ( CaptureMode != CAP_COM1 )
 	{	
@@ -1521,10 +1522,10 @@ void init_trainer_capture(uint32_t mode)
 	TIM3->CR2 = 0 ;
 	if ( mode == CAP_SERIAL )
 	{
-		SoftSerial1.lineState = LINE_IDLE ;
-		SoftSerial1.bitTime = BIT_TIME_100K ;
-		SoftSerial1.softSerialEvenParity = 1 ;
-		SoftSerial1.softSerInvert = TrainerPolarity ;
+		pss->lineState = LINE_IDLE ;
+		pss->bitTime = BIT_TIME_100K ;
+		pss->softSerialEvenParity = 1 ;
+		pss->softSerInvert = TrainerPolarity ;
 		TIM3->CCMR2 = TIM_CCMR2_IC4F_0 | TIM_CCMR2_IC4F_1 | TIM_CCMR2_CC4S_1 | TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
 		TIM3->CCER = TIM_CCER_CC3E | TIM_CCER_CC4E | TIM_CCER_CC4P ;
 		TIM3->SR &= ~(TIM_SR_CC4IF | TIM_SR_CC3IF) ;				// Clear flags
@@ -1690,6 +1691,7 @@ extern "C" void TIM3_IRQHandler()
   static uint16_t lastCapt ;
   uint16_t val ;
 	uint32_t doCapture = 0 ;
+	struct t_softSerial *pss = &SoftSerial1 ;
 	if ( CaptureMode == CAP_SERIAL )
 	{
 //		TIM3Captures += 1 ;
@@ -1707,7 +1709,7 @@ extern "C" void TIM3_IRQHandler()
 		}
 
   	val = LastTransition ;
-		if ( SoftSerial1.softSerInvert )
+		if ( pss->softSerInvert )
 		{
 			val = !val ;
 		}
@@ -1715,41 +1717,41 @@ extern "C" void TIM3_IRQHandler()
 		if ( val == 0 )	// LtoH
 		{
 			// L to H transition
-			SoftSerial1.LtoHtime = capture ;
+			pss->LtoHtime = capture ;
 			TIM11->CNT = 0 ;
-			TIM11->CCR1 = SoftSerial1.bitTime * 12 ;
+			TIM11->CCR1 = pss->bitTime * 12 ;
 			uint32_t time ;
-			capture -= SoftSerial1.HtoLtime ;
+			capture -= pss->HtoLtime ;
 			time = capture ;
 //			putCapValues( time, 0 ) ;
-			putCaptureTime( time, 0 ) ;
+			putCaptureTime( pss, time, 0 ) ;
 			TIM11->DIER = TIM_DIER_CC1IE ;
 		}
 		else
 		{
 			// H to L transition
-			SoftSerial1.HtoLtime = capture ;
-			if ( SoftSerial1.lineState == LINE_IDLE )
+			pss->HtoLtime = capture ;
+			if ( pss->lineState == LINE_IDLE )
 			{
-				SoftSerial1.lineState = LINE_ACTIVE ;
+				pss->lineState = LINE_ACTIVE ;
 //				if ( ++CapCount > 200 )
 //				{
 //					CapIndex = 0 ;
 //					CapCount = 0 ;
 //				}
 //				putCapValues( 0, 3 ) ;
-				putCaptureTime( 0, 3 ) ;
+				putCaptureTime( pss, 0, 3 ) ;
 			}
 			else
 			{
 				uint32_t time ;
-				capture -= SoftSerial1.LtoHtime ;
+				capture -= pss->LtoHtime ;
 				time = capture ;
 //				putCapValues( time, 1 ) ;
-				putCaptureTime( time, 1 ) ;
+				putCaptureTime( pss, time, 1 ) ;
 			}
 			TIM11->DIER = 0 ;
-			TIM11->CCR1 = SoftSerial1.bitTime * 20 ;
+			TIM11->CCR1 = pss->bitTime * 20 ;
 			TIM11->CNT = 0 ;
 			TIM11->SR = 0 ;
 		}

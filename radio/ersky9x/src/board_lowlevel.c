@@ -131,7 +131,7 @@ static uint32_t BOARD_ConfigurePmc(void)
 #endif
   
 // Settings at 240MHz/2 = 120MHz
-#define BOARD120_PLLR ((1 << 29) | (0x14 << AT91C_CKGR_MUL_SHIFT) \
+#define BOARD120_PLLR ((1 << 29) | (0x13 << AT91C_CKGR_MUL_SHIFT) \
          | (0x1 << AT91C_CKGR_PLLCOUNT_SHIFT) | (0x2 << AT91C_CKGR_DIV_SHIFT))
 
 #define BOARD_MCKR (PMC_MCKR_CSS_PLLA_CLK)

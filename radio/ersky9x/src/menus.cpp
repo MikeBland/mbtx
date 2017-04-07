@@ -1648,7 +1648,9 @@ void menuProcStatistic(uint8_t event) ;
 void menuProcMusic(uint8_t event) ;
 void menuProcMusicList(uint8_t event) ;
 void menuProcStatistic2(uint8_t event) ;
+#ifndef SMALL
 void menuProcDsmDdiag(uint8_t event) ;
+#endif
 void menuProcAlpha(uint8_t event) ;
 void menuProcTrainDdiag(uint8_t event) ;
 void menuProcS6R(uint8_t event) ;
@@ -1701,7 +1703,9 @@ enum EnumTabStat
 	e_stat2,
 	e_music,
 	e_music1,
+#ifndef SMALL
 	e_dsm,
+#endif
 	e_traindiag,
 	e_debug,
   e_Setup3,
@@ -1725,7 +1729,9 @@ MenuFuncP menuTabStat[] =
 	menuProcStatistic2,
 	menuProcMusic,
 	menuProcMusicList,
+#ifndef SMALL
 	menuProcDsmDdiag,
+#endif
 	menuProcTrainDdiag,
 	menuDebug,
 	menuProcSDstat,
@@ -4039,26 +4045,66 @@ uint8_t y = 2*FH;
 		if (attr) CHECK_INCDEC_H_MODELVAR_0( g_model.frskyComPort, 1 ) ;
 	  y += FH ;
 		subN += 1 ;
-  	
-		uint8_t previous = g_model.telemetryRxInvert ;
-		lcd_puts_Pleft( y, PSTR(STR_INVERT_COM1) );
-  	menu_lcd_onoff( PARAM_OFS, y, g_model.telemetryRxInvert, sub==subN ) ;
-  	if(sub==subN) CHECK_INCDEC_H_MODELVAR_0( g_model.telemetryRxInvert, 1);
-		if ( g_model.telemetryRxInvert != previous )
-		{
+
 #ifdef REVX
-			if ( g_model.telemetryRxInvert )
-			{
-				setMFP() ;
-			}
-			else
-			{
-				clearMFP() ;
-			}
-#else
+		uint8_t previous = g_model.telemetryRxInvert ;
+		previous |= g_model.telemetry2RxInvert << 1 ;
+		uint8_t next = previous ;
+
+		lcd_puts_Pleft( y, XPSTR("Com Port Invert") );
+		attr = 0 ;
+		if(sub==subN)
+		{
+			attr = InverseBlink ;
+			CHECK_INCDEC_H_MODELVAR_0( next, 3 ) ;
+		}
+		lcd_putsAttIdx(17*FW, y, XPSTR("\004None   1   2BOTH"), next, attr ) ;
+		if ( next != previous )
+		{
+			g_model.telemetryRxInvert = next & 0x01 ;
+			g_model.telemetry2RxInvert = (next >> 1 ) & 0x01 ;
 			TelemetryType = TEL_UNKNOWN ;
+		}
+//		uint8_t previous = g_model.telemetryRxInvert ;
+//		lcd_puts_Pleft( y, PSTR(STR_INVERT_COM1) );
+//  	menu_lcd_onoff( PARAM_OFS, y, g_model.telemetryRxInvert, sub==subN ) ;
+//  	if(sub==subN) CHECK_INCDEC_H_MODELVAR_0( g_model.telemetryRxInvert, 1);
+//		if ( g_model.telemetryRxInvert != previous )
+//		{
+//			if ( g_model.telemetryRxInvert )
+//			{
+//				setMFP() ;
+//			}
+//			else
+//			{
+//				clearMFP() ;
+//			}
+//  	}
+#else
+		uint8_t previous = g_model.telemetryRxInvert ;
+		previous |= g_model.telemetry2RxInvert << 1 ;
+		uint8_t next = previous ;
+
+		lcd_puts_Pleft( y, XPSTR("Com Port Invert") );
+		attr = 0 ;
+		if(sub==subN)
+		{
+			attr = InverseBlink ;
+#ifdef PCBSKY
+			CHECK_INCDEC_H_MODELVAR_0( next, 2 ) ;
+#else
+			CHECK_INCDEC_H_MODELVAR_0( next, 1 ) ;
 #endif
 		}
+		lcd_putsAttIdx(17*FW, y, XPSTR("\004None   1   2"), next, attr ) ;
+
+		if ( next != previous )
+		{
+			g_model.telemetryRxInvert = next & 0x01 ;
+			g_model.telemetry2RxInvert = (next >> 1 ) & 0x01 ;
+			TelemetryType = TEL_UNKNOWN ;
+		}
+#endif
 	  y += FH ;
 		subN += 1 ;
 		 
@@ -4130,7 +4176,7 @@ uint8_t y = 2*FH;
 			{
 				if ( g_model.com2Baudrate )
 				{
-					com2_Configure( g_model.com2Baudrate-1, SERIAL_NO_PARITY ) ;
+					com2_Configure( g_model.com2Baudrate-1, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 				}
 			}
 		}
@@ -5801,7 +5847,7 @@ void menuProcMixOne(uint8_t event)
 
 					}
 						
-  				if ( (attr) && ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) ) )
+  				if ( checkForMenuEncoderLong( event ) && (attr) )
 					{
 						if ( ( md2->srcRaw) && ( md2->srcRaw <= 4 ) )
 						{
@@ -11399,13 +11445,13 @@ void menuProcTrainDdiag(uint8_t event)
 
 extern uint16_t SbusCounter ;
 extern uint16_t SbusCounter1 ;
-extern uint16_t CaptureDebug1 ;
-extern uint16_t CaptureDebug2 ;
+//extern uint16_t CaptureDebug1 ;
+//extern uint16_t CaptureDebug2 ;
 lcd_outhex4( 0*FW,  4*FH, ppmInValid ) ;
 lcd_outhex4( 5*FW,  4*FH, SbusCounter ) ;
 lcd_outhex4( 10*FW, 4*FH, SbusCounter1 ) ;
-lcd_outhex4( 15*FW, 4*FH, CaptureDebug1 ) ;
-lcd_outhex4( 0*FW, 5*FH, CaptureDebug2 ) ;
+//lcd_outhex4( 15*FW, 4*FH, CaptureDebug1 ) ;
+//lcd_outhex4( 0*FW, 5*FH, CaptureDebug2 ) ;
 extern uint8_t CaptureMode ;
 lcd_outhex4( 5*FW,  5*FH, CaptureMode ) ;
 
@@ -12119,6 +12165,7 @@ void menuProcS6R(uint8_t event)
 //  lcd_outhex4( 100, 7*FH, S6Rdata.value ) ;
 }
 
+#ifndef SMALL
 uint16_t DsmFrameRequired ;
 
 void menuProcDsmDdiag(uint8_t event)
@@ -12236,6 +12283,7 @@ extern uint16_t DsmDbgCounters[20] ;
 
 #endif
 }
+#endif
 
 
 #ifdef PCBSKY
@@ -17098,7 +17146,21 @@ STR_Protocol
 				y += FH ;
 				subN += 1 ;
 
-				g_model.thrTrim = onoffMenuItem( g_model.thrTrim, y, PSTR(STR_T_TRIM), sub==subN) ;
+				uint8_t subSub = g_posHorz ;
+				g_model.thrTrim = onoffMenuItem( g_model.thrTrim, y, PSTR(STR_T_TRIM), ( sub==subN ) && (subSub==0 ) ) ;
+				attr = 0 ;
+				uint8_t t = 100 - g_model.throttleIdleScale ;
+				if ( sub==subN )
+				{
+					Columns = 1 ;
+					if ( subSub == 1 )
+					{
+						attr = InverseBlink ;
+						CHECK_INCDEC_H_MODELVAR_0( t, 100 ) ;
+						g_model.throttleIdleScale = 100 - t ;
+					}
+				}
+				lcd_outdezAtt(  127, y, t, attr ) ;
 				y += FH ;
 				subN += 1 ;
 			

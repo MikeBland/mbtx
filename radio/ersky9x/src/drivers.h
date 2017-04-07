@@ -45,21 +45,24 @@ struct t_fifo128
 #define CAP_PPM				0
 #define CAP_SERIAL		1
 #define CAP_COM1			2
+#define CAP_COM2			3
 
 extern uint8_t CaptureMode ;
 
 struct t_softSerial
 {
-	uint8_t lineState ;
-	uint8_t captureMode ;
+	uint32_t softwareComBit ;
 	uint16_t bitTime ;
 	uint16_t HtoLtime ;
 	uint16_t LtoHtime ;
 	uint16_t byte ;
+	uint8_t lineState ;
+	uint8_t captureMode ;
 	uint8_t softSerInvert ;
 	uint8_t bitState ;
 	uint8_t bitCount ;
 	uint8_t softSerialEvenParity ;
+	struct t_fifo128 *pfifo ;
 } ;
 
 extern struct t_softSerial SoftSerial1 ;
@@ -77,8 +80,9 @@ extern uint32_t txPdcCom1( struct t_serial_tx *data ) ;
 extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
-extern struct t_fifo64 CaptureRx_fifo ;
-extern struct t_fifo64 Com1_fifo ;
+//extern struct t_fifo64 CaptureRx_fifo ;
+extern struct t_fifo128 Com1_fifo ;
+extern struct t_fifo128 Com2_fifo ;
 
 extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
@@ -92,7 +96,7 @@ extern uint16_t Temperature ;		// Raw temp reading
 extern uint16_t Max_temperature ;
 
 void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
-void com2_Configure( uint32_t baudrate, uint32_t parity ) ;
+void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity ) ;
 
 extern volatile uint8_t Spi_complete ;
 

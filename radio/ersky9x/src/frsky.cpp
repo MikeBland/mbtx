@@ -254,7 +254,7 @@ void dsmTelemetryStartReceive()
 		if ( CaptureMode == CAP_COM1 )
 		{
 			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 			{
 				// flush Rx buffer
 			}	
@@ -269,7 +269,7 @@ void dsmTelemetryStartReceive()
 		if ( CaptureMode == CAP_COM1 )
 		{
 			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 			{
 				// flush Rx buffer
 			}	
@@ -1009,11 +1009,13 @@ void processFrskyPacket(uint8_t *packet)
 
 //===============================================================
 
+#ifndef SMALL
 uint8_t DsmDebug[20] ;
 uint8_t DsmControlDebug[20] ;
 uint16_t DsmControlCounter ;
 uint16_t DsmDbgCounters[20] ;
 extern uint16_t DsmFrameRequired ;
+#endif
 uint16_t TelRxCount ;
 
 
@@ -1026,10 +1028,12 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 //	static uint8_t newCount ;
 //#endif
 
+#ifndef SMALL
 	DsmDbgCounters[10] = packet[0] ;
 	DsmDbgCounters[11] = packet[1] ;
 	DsmDbgCounters[12] = packet[2] ;
 	DsmDbgCounters[13] = packet[3] ;
+#endif
 
 //#ifdef ASSAN
 //#ifdef PCBSKY
@@ -1130,6 +1134,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
    	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
   	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 		
+#ifndef SMALL
 		// Debug code
 		uint16_t temp = *packet ;
 		temp |= packet[1] << 8 ;
@@ -1144,6 +1149,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			}
 		}
 		// End debug code
+#endif
 		 
 		ivalue = (int16_t) ( (packet[2] << 8 ) | packet[3] ) ;
 		// Telemetry
@@ -1186,14 +1192,18 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			case DSM_ALT :
 	//2[02] Altitude MSB (Hex)
 	//3[03] Altitude LSB (Hex) 16bit signed integer, in 0.1m
+#ifndef SMALL
 				DsmDbgCounters[0] += 1 ;
+#endif
 				storeAltitude( ivalue ) ;
 			break ;
 		
 			case DSM_AMPS :
 	//2 [02] MSB (Hex) //16bit signed integer
 	//3 [03] LSB (Hex) //In 0.196791A
+#ifndef SMALL
 				DsmDbgCounters[1] += 1 ;
+#endif
 				ivalue *= 2015 ;
 				ivalue /= 1024 ;
 				storeTelemetryData( FR_CURRENT, ivalue ) ;	// Handles FAS Offset
@@ -1201,19 +1211,25 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 
 			case DSM_PBOX :
+#ifndef SMALL
 				DsmDbgCounters[2] += 1 ;
+#endif
 				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
  				FrskyHubData[FR_AMP_MAH] = ivalue ;
 			break ;
 
 			case DSM_AIRSPEED :
+#ifndef SMALL
 				DsmDbgCounters[3] += 1 ;
+#endif
 				// airspeed in km/h
 			break ;
 
 			case DSM_GFORCE :
+#ifndef SMALL
 				DsmDbgCounters[4] += 1 ;
+#endif
 				// check units (0.01G)
 				FrskyHubData[FR_ACCX] = ivalue ;
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
@@ -1224,7 +1240,9 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			
 			case DSM_VTEMP1 :
 			case DSM_VTEMP2 :
+#ifndef SMALL
 				DsmDbgCounters[5] += 1 ;
+#endif
 				// RPM
 				if ( (uint16_t)ivalue == 0xFFFF )
 				{
@@ -1265,8 +1283,10 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 			case DSM_STAT1 :
 			case DSM_STAT2 :
+#ifndef SMALL
 				DsmDbgCounters[6] += 1 ;
-				
+#endif
+				 
 				if ( g_model.dsmAasRssi )
 				{
 					if ( ivalue < 1000 )
@@ -1296,8 +1316,10 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 
 			default :
+#ifndef SMALL
 				DsmDbgCounters[7] += 1 ;
 				DsmDebug[17] = *packet ;
+#endif
 			break ;
 		}
 	}
@@ -1315,6 +1337,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		{
 			dsmBindResponse( *packet, *(packet+2) ) ;
 		}
+#ifndef SMALL
 		// Debug code
 		uint8_t i ;
 		DsmControlDebug[0] = byteCount ;
@@ -1324,9 +1347,11 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		}
 		DsmControlCounter += 1 ;
 		// End debug code
+#endif
 	}
 	else if ( type == 0xFF )
 	{
+#ifndef SMALL
 		// Debug code
 		{	
 			uint8_t i ;
@@ -1339,7 +1364,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		}
 		DsmControlCounter += 1 ;
 		// End debug code
-		
+#endif
+		 
 		DsmManCode[0] = *packet++ ;
 		DsmManCode[1] = *packet++ ;
 		DsmManCode[2] = *packet++ ;
@@ -2488,11 +2514,11 @@ void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 {
 	if ( g_model.frskyComPort == 0 )
 	{
-		com1_Configure( baudRate, invert, parity ) ;
+		com1_Configure( baudRate, invert & 1, parity ) ;
 	}
 	else
 	{
-		com2_Configure( baudRate, parity ) ;
+		com2_Configure( baudRate, invert & 2, parity ) ;
 	}
 }
 
@@ -2519,12 +2545,12 @@ void FRSKY_Init( uint8_t brate )
 #ifdef PCBSKY
 	if ( g_model.com2Function == COM2_FUNC_FMS )
 	{
-		com2_Configure( 19200, SERIAL_NO_PARITY ) ;
+		com2_Configure( 19200, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 		return ;
 	}
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
-		com2_Configure( 115200, 0 ) ;
+		com2_Configure( 115200, SERIAL_NORM, 0 ) ;
 		return ;
 	}
 #endif
@@ -2578,8 +2604,16 @@ void FRSKY_Init( uint8_t brate )
 
 #ifdef REVX
 		initComPort( baudrate, SERIAL_NORM, parity ) ;
+		if ( g_model.telemetryRxInvert )
+		{
+			setMFP() ;
+		}
+		else
+		{
+			clearMFP() ;
+		}
 #else
-		initComPort( baudrate, g_model.telemetryRxInvert, parity ) ;
+		initComPort( baudrate, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, parity ) ;
 #endif
 	}
 	else if ( brate == TEL_TYPE_FRSKY_SPORT )
@@ -2641,7 +2675,7 @@ void FRSKY_Init( uint8_t brate )
 			{
 				FrskyTelemetryType = 2 ;	// DSM
 			}
-			initComPort( 100000, g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
+			initComPort( 100000, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
 //			if ( g_model.telemetryRxInvert )
 //			{
 //				init_software_com1( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;
@@ -3107,38 +3141,49 @@ void check_frsky( uint32_t fivems )
 
 		if ( g_model.frskyComPort == 0 )
 		{
-#ifndef REVX
-			if ( CaptureMode == CAP_COM1 )
-			{
+//#ifndef REVX
+//			if ( CaptureMode == CAP_COM1 )
+//			{
 				uint16_t rxchar ;
-				while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 				{
 					frsky_receive_byte( rxchar ) ;
 				}
-			}
-			else
-			{
-				uint16_t rxchar ;
-				while ( ( rxchar = get_fifo64( &Com1_fifo ) ) != 0xFFFF )
-				{
-					frsky_receive_byte( rxchar ) ;
-				}
-			}
-#else			 
-			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo64( &Com1_fifo ) ) != 0xFFFF )
-			{
-				frsky_receive_byte( rxchar ) ;
-			}
-#endif
+//			}
+//			else
+//			{
+//				uint16_t rxchar ;
+//				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
+//				{
+//					frsky_receive_byte( rxchar ) ;
+//				}
+//			}
+//#else			 
+//			uint16_t rxchar ;
+//			while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
+//			{
+//				frsky_receive_byte( rxchar ) ;
+//			}
+//#endif
 		}
 		else
 		{
-			uint16_t rxchar ;
-			while ( ( rxchar = rxCom2() ) != 0xFFFF )
-			{
-				frsky_receive_byte( rxchar ) ;
-			}
+//			if ( CaptureMode == CAP_COM2 )
+//			{
+				uint16_t rxchar ;
+				while ( ( rxchar = rxCom2() ) != 0xFFFF )
+				{
+					frsky_receive_byte( rxchar ) ;
+				}
+//			}
+//			else
+//			{
+//				uint16_t rxchar ;
+//				while ( ( rxchar = rxCom2() ) != 0xFFFF )
+//				{
+//					frsky_receive_byte( rxchar ) ;
+//				}
+//			}
 		}
 #ifdef REVX
 	}
@@ -3161,21 +3206,21 @@ void check_frsky( uint32_t fivems )
 		uint16_t rxchar ;
 		if ( g_model.frskyComPort == 0 )
 		{
-			if ( CaptureMode == CAP_COM1 )
-			{
+//			if ( CaptureMode == CAP_COM1 )
+//			{
 				uint16_t rxchar ;
-				while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 				{
 					frsky_receive_byte( rxchar ) ;
 				}
-			}
-			else
-			{
-				while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
-				{
-					frsky_receive_byte( rxchar ) ;
-				}
-			}
+//			}
+//			else
+//			{
+//				while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+//				{
+//					frsky_receive_byte( rxchar ) ;
+//				}
+//			}
 		}
 		else
 		{

@@ -761,7 +761,8 @@ PACK(typedef struct te_ModelData {
   uint8_t   xpulsePol:1 ;
   uint8_t   trainPulsePol:1 ;
 	uint8_t		dsmAasRssi:1 ;
-  uint8_t   polSpare:4 ;
+	uint8_t	telemetry2RxInvert:1 ;
+  uint8_t   polSpare:3 ;
   uint8_t   ForceTelemetryType:1 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
@@ -840,6 +841,7 @@ PACK(typedef struct te_ModelData {
 
 	VarioExtraData varioExtraData ;
 	uint8_t telemetryTimeout ;
+	uint8_t throttleIdleScale ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

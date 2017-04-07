@@ -172,6 +172,7 @@ uint8_t MultiResult ;
 uint8_t MultiType ;
 uint8_t MultiPort ;
 uint8_t MultiModule ;
+uint8_t MultiInvert ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 uint32_t HexFileIndex ;
@@ -242,21 +243,22 @@ void initMultiMode()
 	clearMfp() ;
 #endif
 	USART0->US_IDR = US_IDR_RXRDY ;
+	UART0->UART_IDR = UART_IDR_RXRDY ;
 	if ( MultiPort )
 	{
-		init_software_com2( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
-		if ( PIOA->PIO_PDSR & PIO_PA9 )
-		{
-			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-		}
+		init_software_com2( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ;
+//		if ( PIOA->PIO_PDSR & PIO_PA9 )
+//		{
+//			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//		}
 	}
 	else
 	{
-		init_software_com1( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ;
-		if ( PIOA->PIO_PDSR & PIO_PA5 )
-		{
-			init_software_com2( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-		}
+		init_software_com1( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ;
+//		if ( PIOA->PIO_PDSR & PIO_PA5 )
+//		{
+//			init_software_com1( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//		}
 	}
 	if ( MultiModule )
 	{
@@ -314,6 +316,18 @@ void stopMultiMode()
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
+}
+
+uint16_t getMultiFifo()
+{
+	if ( MultiPort )
+	{
+		return get_fifo128( &Com2_fifo ) ;
+	}
+	else
+	{
+		return get_fifo128( &Com1_fifo ) ;
+	}
 }
 
 void sendMultiByte( uint8_t byte )
@@ -375,13 +389,14 @@ void sendMultiByte( uint8_t byte )
 
 #ifdef PCBSKY
 uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
-
+extern uint32_t ChipId ;
 
 uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 {
 	uint32_t FlashSectorNum ;
 	uint32_t flash_cmd = 0 ;
 	uint32_t i ;
+	uint32_t size ;
 	
 	if ( (uint32_t) address >= 0x00408000 )
 	{
@@ -391,18 +406,44 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 	// Always initialise this here, setting a default doesn't seem to work
 	IAP_Function = (uint32_t (*)(uint32_t, uint32_t))  *(( uint32_t *)0x00800008) ;
 	FlashSectorNum = (uint32_t) address ;
-	FlashSectorNum >>= 8 ;		// page size is 256 bytes
-	FlashSectorNum &= 2047 ;	// max page number
 	
+	if ( ChipId & 0x0080 )
+	{
+		size = 128 ;
+		FlashSectorNum >>= 9 ;		// page size is 512 bytes
+		FlashSectorNum &= 1023 ;	// max page number
+	}
+	else
+	{
+		size = 64 ;
+		FlashSectorNum >>= 8 ;		// page size is 256 bytes
+		FlashSectorNum &= 2047 ;	// max page number
+	}
+
 	/* Send data to the sector here */
-	for ( i = 0 ; i < 64 ; i += 1 )
+	for ( i = 0 ; i < size ; i += 1 )
 	{
 		*address++ = *buffer++ ;		
 	}
 
-	/* build the command to send to EEFC */
-	flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x03 ; //AT91C_MC_FCMD_EWP ;
-	
+	if ( ChipId & 0x0080 )
+	{
+		if ( ( FlashSectorNum & 7 ) == 0 )
+		{
+			flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x00000100 | 0x07 ; //AT91C_MC_FCMD_EPA = erase (8) pages
+			__disable_irq() ;
+			/* Call the IAP function with appropriate command */
+			i = IAP_Function( 0, flash_cmd ) ;
+			__enable_irq() ;
+		}
+		flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x01 ; //AT91C_MC_FCMD_WP = write page
+	}
+	else
+	{
+		/* build the command to send to EEFC */
+		flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x03 ; //AT91C_MC_FCMD_EWP ;
+	}
+
 	__disable_irq() ;
 	/* Call the IAP function with appropriate command */
 	i = IAP_Function( 0, flash_cmd ) ;
@@ -1050,7 +1091,7 @@ void menuUpMulti(uint8_t event)
 	TITLE( "Multi Options" ) ;
 	static MState2 mstate2 ;
 #ifdef PCBSKY
-	mstate2.check_columns(event, 3 ) ;
+	mstate2.check_columns(event, 4 ) ;
 #else
 	mstate2.check_columns(event, 1 ) ;
 #endif
@@ -1078,7 +1119,11 @@ void menuUpMulti(uint8_t event)
 	y += FH ;
 	subN += 1 ;
 	lcd_puts_Pleft( y, XPSTR("COM Port") ) ;
-	MultiPort = checkIndexed( y, XPSTR("\110\001\00112"), MultiPort, (sub==subN) ) ;
+	MultiPort = checkIndexed( y, XPSTR("\150\001\00112"), MultiPort, (sub==subN) ) ;
+	y += FH ;
+	subN += 1 ;
+	lcd_puts_Pleft( y, XPSTR("Invert Com Port") ) ;
+	MultiInvert = checkIndexed( y, XPSTR("\150\001\003 NOYES"), MultiInvert, (sub==subN) ) ;
 #endif
 }
 
@@ -1473,9 +1518,20 @@ void menuUp1(uint8_t event)
 				if ( BytesFlashed < ByteEnd )
 				{
 					program( (uint32_t *)firmwareAddress, &((uint32_t *)FileData)[BlockOffset] ) ;	// size is 256 bytes
-					BlockOffset += 64 ;		// 32-bit words (256 bytes)
-					firmwareAddress += 256 ;
-					BytesFlashed += 256 ;
+#ifdef PCBSKY
+					if ( ChipId & 0x0080 )
+					{
+						BlockOffset += 128 ;		// 32-bit words (256 bytes)
+						firmwareAddress += 512 ;
+						BytesFlashed += 512;
+					}
+					else
+#endif
+					{
+						BlockOffset += 64 ;		// 32-bit words (256 bytes)
+						firmwareAddress += 256 ;
+						BytesFlashed += 256 ;
+					}	 
 				}
 				else
 				{
@@ -2381,7 +2437,7 @@ uint32_t eat( uint8_t byte )
 	time = getTmr2MHz() ;
 	while ( (uint16_t) (getTmr2MHz() - time) < 15000 )	// 7.5mS
 	{
-		if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+		if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 		{
 			if ( rxchar == byte )
 			{
@@ -2613,7 +2669,7 @@ uint32_t multiUpdate()
 		case MULTI_WAIT2 :
 		{	
 			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			while ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 			{
 				// flush receive fifo
 			}
@@ -2639,7 +2695,7 @@ uint32_t multiUpdate()
 		case MULTI_BEGIN :
 		{
 			uint16_t rxchar ;
-			while ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+			while ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 			{
 				// flush receive fifo
 			}
@@ -2651,7 +2707,7 @@ uint32_t multiUpdate()
 			i = 0 ;
 			while ( (uint16_t) (getTmr2MHz() - time) < 10000 )	// 5mS
 			{
-				if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 				{
 					XmegaSignature[i++] = rxchar ;
 					if ( i > 3 )
@@ -2709,7 +2765,7 @@ uint32_t multiUpdate()
 			time = getTmr2MHz() ;
 			while ( (uint16_t) (getTmr2MHz() - time) < 30000 )	// 15mS
 			{
-				if ( ( rxchar = get_fifo64( &CaptureRx_fifo ) ) != 0xFFFF )
+				if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 				{
 					break ;
 				}
@@ -3009,7 +3065,7 @@ void maintenanceBackground()
 		
 #ifdef PCBSKY
 	uint16_t rxchar ;
-	while ( ( rxchar = get_fifo64( &Com1_fifo ) ) != 0xFFFF )
+	while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 	{
 		frsky_receive_byte( rxchar ) ;
 	}

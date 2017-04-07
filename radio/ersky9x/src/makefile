@@ -41,6 +41,7 @@ ifeq ($(PCB), X9D)
    else
     OBJDIR = x9dobj
 	 LUA = 1
+    CPPDEFS += -DLUA
    endif
   endif
  endif
@@ -313,12 +314,12 @@ SRC  = X9D/system_stm32f2xx.c \
 #       X9D/usb/src/usbd_msc_bot.c \
 #       X9D/usb/src/usbd_msc_core.c \
 
-#ifeq ($(LUA), 1)
-#SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-#           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-#           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
-#           syscalls.c
-#endif
+ifeq ($(LUA), 1)
+SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
+           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
+           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+           syscalls.c
+endif
 
 
 CPPSRC = ersky9x.cpp \
@@ -359,6 +360,10 @@ CPPSRC = ersky9x.cpp \
 			sbus.cpp \
          X9D/usbd_usr.cpp \
 		   lcd.cpp
+
+ifeq ($(LUA), 1)
+CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp
+endif
 
 #         gtime.cpp \
 #         massstorage.cpp \

@@ -77,6 +77,9 @@ extern uint32_t SystemInit (void) ; // __attribute__((weak));
 //} /* SystemInit */
 
 extern uint32_t Master_frequency ;
+extern void __set_MSP(uint32_t mainStackPointer) ;
+
+#include "board.h"
 
 /***************************************************************************/
 /*  ResetHandler                                                           */
@@ -96,6 +99,17 @@ void ResetHandler (void)
   	  * SystemInit is a week function which can be override
   	  * by an external function.
   	  */
+		m_freq = CHIPID->CHIPID_CIDR >> 16 ;
+		m_freq &= 0x000F ;
+		if ( m_freq == 0x000B )
+		{ // 64K RAM
+			__set_MSP(0x20010000) ;
+		}
+		else if ( m_freq == 0x000C )
+		{ // 128K RAM
+			__set_MSP(0x20020000) ;
+		}
+
   	m_freq = SystemInit();    
    
   	/*

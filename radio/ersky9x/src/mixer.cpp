@@ -448,7 +448,16 @@ void perOut(int16_t *chanOut, uint8_t att )
 					{
 						ttrim = -ttrim ;
 					}
-         	trimA[2] = ((int32_t)ttrim+125)*(RESX-anas[2])/(RESX) ;
+		      int16_t tmp = calc100toRESX( 100 - g_model.throttleIdleScale ) * 2 ;	// 0 to 2 * RESX
+					if ( ( anas[2] + RESX) > tmp )
+					{
+						trimA[2] = 0 ;
+					}
+					else
+					{
+						tmp = ( tmp - ( anas[2] + RESX ) ) * RESX / tmp ;
+	         	trimA[2] = ((int32_t)ttrim+125) * tmp / (RESX) ;
+					}
 				}
 			if ( att & FADE_FIRST )
 			{

@@ -80,6 +80,10 @@
 #include "X9D/usb_bsp.h"
 #include "X9D/usbd_conf.h"
 
+#ifdef LUA
+#include "lua/lua_api.h"
+#endif
+
 extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev, 
                                  uint8_t *report,
                                  uint16_t len) ;
@@ -305,9 +309,16 @@ volatile int32_t Rotary_count ;
 int32_t LastRotaryValue ;
 int32_t Rotary_diff ;
 uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE+EXTRA_SKYCHANNELS] ;
-uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
-int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
-int16_t Nvs_delay[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+
+struct t_NvsControl
+{
+	uint8_t nvs_state ;
+	uint8_t nvs_delay ;
+	int16_t nvs_timer ;
+} NvsControl[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+//uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+//int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+//uint8_t Nvs_delay[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
 uint8_t HoldVolume ;
 int8_t RotaryControl ;
@@ -668,7 +679,7 @@ void setLanguage()
 
 const uint8_t csTypeTable[] =
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS
 } ;
 
 uint8_t CS_STATE( uint8_t x)
@@ -1073,13 +1084,13 @@ void com2Configure()
 	}
 	else if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
-		com2_Configure( 115200, 0 ) ;
+		com2_Configure( 115200, SERIAL_NORM, 0 ) ;
 	}
 #endif
 	else
 	{
 #ifdef PCBSKY
-		com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+		com2_Configure( CONSOLE_BAUDRATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 //		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 #ifdef PCBX9D
@@ -1095,9 +1106,13 @@ void com2Configure()
 static void checkAr9x()
 {
  #ifndef REVX
-	uint32_t x = ChipId & 0x00000F00 ;
-	if ( x <= 0x00000900 )
+	uint32_t x = ChipId ;
+	if ( ( x & 0x00000F00 )<= 0x00000900 )
 	{
+		return ;
+	}
+	if ( x & 0x00000080 )
+	{ // M4 chip so not guaranteed to be AR9X
 		return ;
 	}
 	g_eeGeneral.ar9xBoard = 1 ;
@@ -1337,7 +1352,7 @@ int main( void )
 	PMC->PMC_SCER |= 0x0400 ;								// PCK2 enabled
 	PMC->PMC_PCK[2] = 2 ;										// PCK2 is PLLA
 
-	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NO_PARITY ) ;
+	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 #endif
 
 #ifdef PCBX9D
@@ -4058,10 +4073,11 @@ static void processVoiceAlarms()
 	VoiceAlarmData *pvad = &g_model.vad[0] ;
 	for ( i = 0 ; i < NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
 	{
+		struct t_NvsControl *pc = &NvsControl[i] ;
 		uint32_t play = 0 ;
 		uint32_t functionTrue = 0 ;
 		curent_state = 0 ;
-		int16_t ltimer = Nvs_timer[i] ;
+		int16_t ltimer = pc->nvs_timer ;
 	 	if ( i == NUM_VOICE_ALARMS )
 		{
 			pvad = &g_model.vadx[0] ;
@@ -4185,7 +4201,7 @@ static void processVoiceAlarms()
 					{
 						pos = switchPosition( pvad->swtch ) ;
 					}
-					uint32_t state = Nvs_state[i] ;
+					uint32_t state = pc->nvs_state ;
 					play = 0 ;
 					if ( state != pos )
 					{
@@ -4202,37 +4218,37 @@ static void processVoiceAlarms()
 						{
 							state = 0x83 ;
 						}
-						Nvs_state[i] = state ;
+						pc->nvs_state = state ;
 					}
 				}
 				else
 				{
-					Nvs_state[i] = 0x40 ;
+					pc->nvs_state = 0x40 ;
 				}
 		 }
 		 else
 		 {
 			if ( play == 1 )
 			{
-				if ( Nvs_state[i] == 0 )
+				if ( pc->nvs_state == 0 )
 				{ // just turned ON
 					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
 					{ // ON
 						if ( pvad->delay )
 						{
-							Nvs_delay[i] = pvad->delay + 1 ;
+							pc->nvs_delay = pvad->delay + 1 ;
 						}
 						ltimer = 0 ;
 					}
 				}
-				Nvs_state[i] = 1 ;
+				pc->nvs_state = 1 ;
 				if ( ( pvad->rate == 1 ) )
 				{
 					play = 0 ;
 				}
-				if ( Nvs_delay[i] )
+				if ( pc->nvs_delay )
 				{
-					if ( --Nvs_delay[i] )
+					if ( --pc->nvs_delay )
 					{
 						play = 0 ;
 					}
@@ -4240,8 +4256,8 @@ static void processVoiceAlarms()
 			}
 			else
 			{
-				Nvs_delay[i] = 0 ;
-				if ( Nvs_state[i] == 1 )
+				pc->nvs_delay = 0 ;
+				if ( pc->nvs_state == 1 )
 				{
 					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
 					{
@@ -4253,7 +4269,7 @@ static void processVoiceAlarms()
 						}
 					}
 				}
-				Nvs_state[i] = 0 ;
+				pc->nvs_state = 0 ;
 			}
 			if ( pvad->rate == 33 )
 			{
@@ -4280,7 +4296,7 @@ static void processVoiceAlarms()
 			{
 				pos = play ;
 			}
-			Nvs_state[i] = pos ;
+			pc->nvs_state = pos ;
 			play = ( pvad->rate == 33 ) ? 1 : 0 ;
 			ltimer = -1 ;
 		}
@@ -4373,7 +4389,7 @@ static void processVoiceAlarms()
 			}
 		}
 		pvad += 1 ;
-		Nvs_timer[i] = ltimer ;
+		pc->nvs_timer = ltimer ;
 	}
 }
 
@@ -5350,6 +5366,16 @@ extern uint32_t i2c2_result() ;
 						CsTimer[i] = y ;
 					}
 				}
+//				if ( cs.func == CS_DELAY )
+//				{
+//					if ( VoiceCheckFlag100mS & 2 )
+//					{
+//						// Resetting, retrigger any monostables
+//						Last_switch[i] &= ~2 ;
+//					}
+					
+//				}
+
 			}
 		
 			// Check CVLT and CTOT every 100 mS
@@ -6687,28 +6713,41 @@ void perMain( uint32_t no_menu )
 	 		Tevent = evt ;
 
 #ifdef PCBX9D
-	{
+			{
 extern uint8_t ImageDisplay ;
 extern uint8_t ImageX ;
 extern uint8_t ImageY ;
-		ImageX = 130 ;
-		ImageY = 32 ;
-		ImageDisplay = 1 ;
-	} 
+				ImageX = 130 ;
+				ImageY = 32 ;
+				ImageDisplay = 1 ;
+			} 
 #endif
-			g_menuStack[g_menuStackPtr](evt);
-		}
-#ifdef PCBX9D
-		if ( ( lastTMR & 3 ) == 0 )
-#endif
-#if defined(PCBSKY) || defined(PCB9XT)
-		if ( ( lastTMR & 3 ) == 0 )
+  
+#ifdef LUA
+  // if Lua standalone, run it and don't clear the screen (Lua will do it)
+  					// else if Lua telemetry view, run it and don't clear the screen
+  // else clear screen and show normal menus
+  	if (luaTask(evt, RUN_STNDAL_SCRIPT, true))
+		{
+  	  // standalone script is active
+  	}
+		else
 #endif
 		{
-			uint16_t t1 = getTmr2MHz() ;
-  	  refreshDisplay();
-			t1 = getTmr2MHz() - t1 ;
-			g_timeRfsh = t1 ;
+			g_menuStack[g_menuStackPtr](evt);
+			}
+	#ifdef PCBX9D
+			if ( ( lastTMR & 3 ) == 0 )
+	#endif
+	#if defined(PCBSKY) || defined(PCB9XT)
+			if ( ( lastTMR & 3 ) == 0 )
+	#endif
+			{
+				uint16_t t1 = getTmr2MHz() ;
+  		  refreshDisplay();
+				t1 = getTmr2MHz() - t1 ;
+				g_timeRfsh = t1 ;
+			}
 		}
 	}
 
@@ -8508,6 +8547,37 @@ int8_t getMovedSwitch()
     }
   }
 #else // REV9E
+#ifdef PCBX7
+  for (uint8_t i=0 ; i<8 ; i += 1 )
+	{
+    uint16_t mask = (0x03 << (i*2)) ;
+    uint8_t prev = (switches_states & mask) >> (i*2) ;
+		uint8_t next = switchPosition( i ) ;
+
+    if (prev != next)
+		{
+      switches_states = (switches_states & (~mask)) | (next << (i*2));
+      if (i<4)
+        result = 1+(3*i)+next;
+      else if (i==4)
+			{
+				result = 0 ;
+			}
+      else if (i==5)
+			{
+        result = -(1+(3*4)) ;
+				if (next!=0) result = -result ;
+			}
+      else if (i==6)
+        result = 0 ;
+      else
+			{
+        result = -(1+(3*4)+1) ;
+				if (next!=0) result = -result ;
+			}
+    }
+  }
+#else // PCBX7
   for (uint8_t i=0 ; i<8 ; i += 1 )
 	{
     uint16_t mask = (0x03 << (i*2)) ;
@@ -8533,6 +8603,7 @@ int8_t getMovedSwitch()
 			}
     }
   }
+#endif // PCBX7
 #endif // REV9E
 #endif
 
