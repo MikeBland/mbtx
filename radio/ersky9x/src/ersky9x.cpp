@@ -474,6 +474,7 @@ uint8_t AlarmTimer = 100 ;		// Units of 10 mS
 uint8_t AlarmCheckFlag = 0 ;
 uint8_t VoiceTimer = 10 ;		// Units of 10 mS
 uint8_t VoiceCheckFlag100mS = 0 ;
+uint8_t CheckFlag50mS = 0 ;
 uint8_t CheckFlag20mS = 0 ;
 uint8_t CheckTimer = 2 ;
 uint8_t DsmCheckTimer = 50 ;		// Units of 10 mS
@@ -4529,6 +4530,12 @@ void processMusicSwitches()
 	}
 }
 
+void processSwitches()
+{
+	
+}
+
+
 
 uint32_t MixerRate ;
 uint32_t MixerCount ;
@@ -5019,6 +5026,13 @@ extern uint32_t i2c2_result() ;
 				}
 			}
 		}
+	}
+
+	if ( CheckFlag50mS )
+	{
+		CheckFlag50mS = 0 ;
+		// Process all switches for delay etc.
+
 	}
 
 	if ( VoiceCheckFlag100mS )	// Every 100mS
@@ -6984,9 +6998,14 @@ extern void checkRotaryEncoder() ;
 		if (--VoiceTimer == 0 )
 		{
 			VoiceTimer = 10 ;		// Restart timer
+			CheckFlag50mS = 1 ;
 			__disable_irq() ;
 			VoiceCheckFlag100mS |= 1 ;	// Flag time to check alarms
 			__enable_irq() ;
+		}
+		if (VoiceTimer == 5 )
+		{
+			CheckFlag50mS = 1 ;
 		}
 		
 		if (--DsmCheckTimer == 0 )

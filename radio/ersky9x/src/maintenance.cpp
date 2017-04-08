@@ -935,18 +935,30 @@ uint8_t PhyId ;
 uint8_t NewPhyId ;
 uint16_t AppId ;
 
+void setCrc()
+{
+  uint16_t crc = 0 ;
+  for ( uint8_t i=2; i<9; i++)
+	{
+  	crc += TxPhyPacket[i]; //0-1FF
+  	crc += crc >> 8; //0-100
+  	crc &= 0x00ff;
+  }
+	TxPhyPacket[9] = ~crc ;
+}
+
 void menuChangeId(uint8_t event)
 {
 	static uint32_t state ;
  	
 	TITLE( "CHANGE SPort Id" ) ;
 
-	lcd_puts_Pleft( 2*FH, "Not Implemented(yet)" ) ;
-
+//	lcd_puts_Pleft( 2*FH, "Not Implemented(yet)" ) ;
 
 	switch(event)
 	{
     case EVT_ENTRY:
+			RxPacket[1] = 0 ;			
 			RxCount = 0 ;
 			RxLastCount = 0 ;
 			FrskyTelemetryType = 1 ;
@@ -982,11 +994,18 @@ void menuChangeId(uint8_t event)
 			}
     break ;
 
+		case EVT_KEY_LONG(KEY_MENU):
+			if ( ( state == CHANGE_SCANNING ) && IdFound )
+			{
+				state = CHANGE_ENTER_ID ;
+			}
+    break ;
+		
 		case EVT_KEY_FIRST(KEY_MENU):
 			if ( state == CHANGE_ENTER_ID )
 			{
 				TxPhyPacket[0] = 0x7E ;
-				TxPhyPacket[1] = PhyId ;
+				TxPhyPacket[1] = 0x1C ;
 				TxPhyPacket[2] = 0x21 ;
 				TxPhyPacket[3] = 0xFF ;
 				TxPhyPacket[4] = 0xFF ;
@@ -995,14 +1014,7 @@ void menuChangeId(uint8_t event)
 				TxPhyPacket[7] = 0 ;
 				TxPhyPacket[8] = 0 ;
 
-  			uint16_t crc = 0 ;
-  			for ( uint8_t i=2; i<9; i++)
-				{
-  			  crc += TxPhyPacket[i]; //0-1FF
-  			  crc += crc >> 8; //0-100
-  			  crc &= 0x00ff;
-  			}
-				TxPhyPacket[9] = ~crc ;
+				setCrc() ;
 #if defined(PCBX9D) || defined(PCB9XT)
 				x9dSPortTxStart( TxPhyPacket, 10, NO_RECEIVE ) ;
 #endif
@@ -1010,6 +1022,7 @@ void menuChangeId(uint8_t event)
 				txPdcUsart( TxPhyPacket, 10, NO_RECEIVE ) ;
 #endif
 				state = CHANGE_SET_IDLE ;
+				SendCount = 100 ;
 			}
     break ;
 	}
@@ -1043,36 +1056,91 @@ void menuChangeId(uint8_t event)
 
 		case CHANGE_SET_IDLE :
 			lcd_puts_Pleft( 3*FH, "Set Idle state" ) ;
-		break ;
+			if ( --SendCount == 0)
+			{
+				TxPhyPacket[0] = 0x7E ;
+				TxPhyPacket[1] = 0x1C ;
+				TxPhyPacket[2] = 0x31 ;
+				TxPhyPacket[3] = AppId ;
+				TxPhyPacket[4] = AppId >> 8 ;
+				TxPhyPacket[5] = 1 ;
+				TxPhyPacket[6] = NewPhyId ;
+				TxPhyPacket[7] = 0 ;
+				TxPhyPacket[8] = 0 ;
 
+				setCrc() ;
+#if defined(PCBX9D) || defined(PCB9XT)
+				x9dSPortTxStart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+#ifdef PCBSKY
+				txPdcUsart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+				state = CHANGE_SET_VALUE ;
+				SendCount = 100 ;
+			}
+		break ;
+		
+		case CHANGE_SET_VALUE :
+			lcd_puts_Pleft( 3*FH, "Set Active state" ) ;
+			if ( --SendCount == 0)
+			{
+				TxPhyPacket[0] = 0x7E ;
+				TxPhyPacket[1] = 0x1C ;
+				TxPhyPacket[2] = 0x20 ;
+				TxPhyPacket[3] = 0xFF ;
+				TxPhyPacket[4] = 0xFF ;
+				TxPhyPacket[5] = 0 ;
+				TxPhyPacket[6] = 0 ;
+				TxPhyPacket[7] = 0 ;
+				TxPhyPacket[8] = 0 ;
+
+				setCrc() ;
+#if defined(PCBX9D) || defined(PCB9XT)
+				x9dSPortTxStart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+#ifdef PCBSKY
+				txPdcUsart( TxPhyPacket, 10, NO_RECEIVE ) ;
+#endif
+				state = CHANGE_FINISHED ;
+			}
+		break ;
+		
+		case CHANGE_FINISHED :
+			lcd_puts_Pleft( 3*FH, "Id Changed" ) ;
+			PhyId = NewPhyId ;
+		break ;
 	}
 
-	lcd_outhex4( 0, 7*FH, RxCount ) ;
+//	lcd_outhex4( 0, 7*FH, RxCount ) ;
 	if ( RxPacket[1] == 0x10 )
 	{
-		IdFound = 1 ;
-		PhyId = RxPacket[0] ;
-		NewPhyId = PhyId & 0x1F ;
-		if ( NewPhyId > 0x1B )
+		if ( IdFound == 0 )
 		{
-			NewPhyId = 0x1B ;
+			IdFound = 1 ;
+			PhyId = RxPacket[0] ;
+			NewPhyId = PhyId & 0x1F ;
+			if ( NewPhyId > 0x1B )
+			{
+				NewPhyId = 0x1B ;
+			}
 		}
 		AppId = RxPacket[2] | ( RxPacket[3] << 8 ) ;
-		lcd_outhex4( 0, 4*FH, RxPacket[0] ) ;
-		lcd_outhex4( 25, 4*FH, RxPacket[1] ) ;
-		lcd_outhex4( 50, 4*FH, RxPacket[2] ) ;
-		lcd_outhex4( 75, 4*FH, RxPacket[3] ) ;
-		lcd_outhex4( 100, 4*FH, RxPacket[4] ) ;
-		lcd_outhex4( 0, 5*FH, RxPacket[5] ) ;
-		lcd_outhex4( 25, 5*FH, RxPacket[6] ) ;
-		lcd_outhex4( 50, 5*FH, RxPacket[7] ) ;
-		lcd_outhex4( 75, 5*FH, RxPacket[8] ) ;
+//		lcd_outhex4( 0, 4*FH, RxPacket[0] ) ;
+//		lcd_outhex4( 25, 4*FH, RxPacket[1] ) ;
+//		lcd_outhex4( 50, 4*FH, RxPacket[2] ) ;
+//		lcd_outhex4( 75, 4*FH, RxPacket[3] ) ;
+//		lcd_outhex4( 100, 4*FH, RxPacket[4] ) ;
+//		lcd_outhex4( 0, 5*FH, RxPacket[5] ) ;
+//		lcd_outhex4( 25, 5*FH, RxPacket[6] ) ;
+//		lcd_outhex4( 50, 5*FH, RxPacket[7] ) ;
+//		lcd_outhex4( 75, 5*FH, RxPacket[8] ) ;
 //		lcd_outhex4( 100, 5*FH, RxPacket[9] ) ;
 	}
 	if ( IdFound )
 	{
-		lcd_outhex4( 0, 6*FH, PhyId ) ;
-		lcd_outhex4( 25, 6*FH, AppId ) ;
+		lcd_puts_Pleft( 6*FH, "Id    AppId" ) ;
+		lcd_outdez( 5*FW, 6*FH, PhyId & 0x1F ) ;
+		lcd_outhex4( 12*FW, 6*FH, AppId ) ;
 	}
 
 }

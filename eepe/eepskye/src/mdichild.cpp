@@ -401,7 +401,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
     uint32_t id = index;
     if(!id) id++;
 		uint32_t max_models = MAX_MODELS ;
-    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
