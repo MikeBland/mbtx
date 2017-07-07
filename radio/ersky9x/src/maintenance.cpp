@@ -58,6 +58,12 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "X9D/hal.h"
 #include "pdi.h"
 #endif
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_flash.h"
+#include "X12D/hal.h"
+#include "pdi.h"
+#endif
 
 
 #include "ersky9x.h"
@@ -78,6 +84,8 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #endif
 #include "maintenance.h"
 #include "myeeprom.h"
+
+extern union t_sharedMemory SharedMemory ;
 
 #if defined(PCBX9D) || defined(PCB9XT)
 extern uchar PdiErrors0 ;
@@ -144,7 +152,17 @@ uint32_t sportUpdate( uint32_t external ) ;
 uint32_t xmegaUpdate() ;
 uint32_t multiUpdate() ;
 
-TCHAR Filenames[8][50] ;
+
+struct t_maintenance
+{
+	TCHAR FlashFilename[60] ;
+	FIL FlashFile ;
+	UINT BlockCount ;
+	UINT XblockCount ;
+} Mdata ;
+
+
+
 extern FATFS g_FATFS ;
 extern uint8_t FileData[] ;	// Share with voice task
 #if defined(PCBTARANIS)
@@ -153,13 +171,8 @@ uint8_t ExtraFileData[1024] ;
 #else
 uint8_t *ExtraFileData = (uint8_t *) &VoiceBuffer[0] ;	// Share with voice task
 #endif
-FILINFO Finfo ;
-DIR Dj ;
 uint32_t FileSize[8] ;
-TCHAR FlashFilename[60] ;
-FIL FlashFile ;
-UINT BlockCount ;
-UINT XblockCount ;
+
 uint32_t BytesFlashed ;
 uint32_t ByteEnd ;
 uint32_t BlockOffset ;
@@ -452,7 +465,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 //After reset, write is not allowed in the Flash control register (FLASH_CR) to protect the
 //Flash memory against possible unwanted operations due, for example, to electric
 //disturbances. The following sequence is used to unlock this register:
@@ -683,25 +696,25 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 {
 	uint32_t i ;
 	FRESULT fr ;
-	Finfo.lfname = Filenames[0] ;
-	Finfo.lfsize = 48 ;
+	SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[0] ;
+	SharedMemory.FileList.Finfo.lfsize = 48 ;
   WatchdogTimeout = 200 ;
-	DIR *pDj = &Dj ;	
+	DIR *pDj = &SharedMemory.FileList.Dj ;	
 	if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
 	{
 		pDj = &Djp ;
 	}
 	fr = f_readdir ( pDj, 0 ) ;					// rewind
-	fr = f_readdir ( pDj, &Finfo ) ;		// Skip .
-	fr = f_readdir ( pDj, &Finfo ) ;		// Skip ..
+	fr = f_readdir ( pDj, &SharedMemory.FileList.Finfo ) ;		// Skip .
+	fr = f_readdir ( pDj, &SharedMemory.FileList.Finfo ) ;		// Skip ..
 	i = 0 ;
 	while ( i <= index )
 	{
   	WatchdogTimeout = 200 ;
-		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
-		FileSize[0] = Finfo.fsize ;
+		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
+		FileSize[0] = SharedMemory.FileList.Finfo.fsize ;
 		i += 1 ;
-		if ( fr != FR_OK || Finfo.fname[0] == 0 )
+		if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
 		{
 			return 0 ;
 		}
@@ -709,10 +722,10 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	for ( i = 1 ; i < 7 ; i += 1 )
 	{
  		WatchdogTimeout = 200 ;
-		Finfo.lfname = Filenames[i] ;
-		fr = readBinDir( pDj, &Finfo, fc ) ;		// First entry
-		FileSize[i] = Finfo.fsize ;
-		if ( fr != FR_OK || Finfo.fname[0] == 0 )
+		SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[i] ;
+		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
+		FileSize[i] = SharedMemory.FileList.Finfo.fsize ;
+		if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
 		{
 			break ;
 		}
@@ -727,7 +740,7 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 {
 	uint32_t i ;
 	FRESULT fr ;
-	Finfo.lfsize = 19 ;
+	SharedMemory.FileList.Finfo.lfsize = 19 ;
 	char filename[20] ;
   WatchdogTimeout = 200 ;
 
@@ -745,14 +758,14 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 			fc->index = 0 ;
 
 			fr = f_readdir ( &Djp, 0 ) ;					// rewind
-			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip .
-			fr = f_readdir ( &Djp, &Finfo ) ;		// Skip ..
+			fr = f_readdir ( &Djp, &SharedMemory.FileList.Finfo ) ;		// Skip .
+			fr = f_readdir ( &Djp, &SharedMemory.FileList.Finfo ) ;		// Skip ..
 			for ( i = 0 ; i < PLAYLIST_COUNT ; i += 1 )
 			{
  				WatchdogTimeout = 200 ;
-				Finfo.lfname = filename ;
-				fr = readBinDir( &Djp, &Finfo, fc ) ;		// First entry
-				if ( fr != FR_OK || Finfo.fname[0] == 0 )
+				SharedMemory.FileList.Finfo.lfname = filename ;
+				fr = readBinDir( &Djp, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
+				if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
 				{
 					break ;
 				}
@@ -785,7 +798,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 	{
 		uint32_t x ;
 		uint32_t len ;
-		len = x = strlen( Filenames[i] ) ;
+		len = x = strlen( SharedMemory.FileList.Filenames[i] ) ;
 		if ( x > maxhsize )
 		{
 			maxhsize = x ;							
@@ -806,7 +819,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		{
 			x = 0 ;
 		}
-		lcd_putsn_P( 0, 16+FH*i, &Filenames[i][x], len ) ;
+		lcd_putsn_P( 0, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
 	}
 
 #if !defined(PCBTARANIS) || defined(REV9E)
@@ -1311,7 +1324,7 @@ void menuUp1(uint8_t event)
 				{
 					state = UPDATE_NO_FILES ;
 					fc->index = 0 ;
-					fr = f_opendir( &Dj, (TCHAR *) "." ) ;
+					fr = f_opendir( &SharedMemory.FileList.Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
  						if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) || (UpdateItem == UPDATE_TYPE_SPORT_EXT ) )
@@ -1453,11 +1466,11 @@ void menuUp1(uint8_t event)
 			{
 				lcd_puts_Pleft( 2*FH, "Flash Bootloader from" ) ;
 			}
-			cpystr( cpystr( (uint8_t *)FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)Filenames[fc->vpos] ) ;
+			cpystr( cpystr( (uint8_t *)Mdata.FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
 #if defined(PCBTARANIS)
-			lcd_putsnAtt( 0, 4*FH, Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
+			lcd_putsnAtt( 0, 4*FH, SharedMemory.FileList.Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
 #else
-			lcd_putsnAtt0( 0, 4*FH, Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
+			lcd_putsnAtt0( 0, 4*FH, SharedMemory.FileList.Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
 #endif
 			switch ( event )
 			{
@@ -1473,8 +1486,8 @@ void menuUp1(uint8_t event)
 			}
     break ;
 		case UPDATE_SELECTED :
-			f_open( &FlashFile, FlashFilename, FA_READ ) ;
-			f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+			f_open( &Mdata.FlashFile, Mdata.FlashFilename, FA_READ ) ;
+			f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
 			i = 1 ;
 			if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 			{
@@ -1560,7 +1573,7 @@ void menuUp1(uint8_t event)
 					SportState = SPORT_START ;
 					FirmwareSize = FileSize[fc->vpos] ;
 					BlockInUse = 0 ;
-					f_read( &FlashFile, (BYTE *)ExtraFileData, 1024, &XblockCount ) ;
+					f_read( &Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &Mdata.XblockCount ) ;
 				}
 				BytesFlashed = 0 ;
 				BlockOffset = 0 ;
@@ -1609,7 +1622,7 @@ void menuUp1(uint8_t event)
 					}
 					else
 					{
-						f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+						f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
 						ByteEnd += 1024 ;
 						BlockOffset = 0 ;
 					}
@@ -1647,8 +1660,8 @@ void menuUp1(uint8_t event)
 						}
 						else
 						{
-							f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
-							ByteEnd += BlockCount ;
+							f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+							ByteEnd += Mdata.BlockCount ;
 							BlockOffset = 0 ;
 						}
 					}
@@ -2415,7 +2428,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 			case PRIM_REQ_DATA_ADDR :
 			{
 				UINT bcount ;
-				bcount = BlockInUse ? XblockCount : BlockCount ;
+				bcount = BlockInUse ? Mdata.XblockCount : Mdata.BlockCount ;
 				
 				if ( BytesFlashed >= FirmwareSize )
 				{
@@ -2448,11 +2461,11 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 					}
 					if ( BlockInUse )
 					{
-						XblockCount = bcount ;
+						Mdata.XblockCount = bcount ;
 					}
 					else
 					{
-						BlockCount = bcount ;
+						Mdata.BlockCount = bcount ;
 					}
 					if ( bcount == 0 )
 					{
@@ -2527,15 +2540,15 @@ uint32_t eat( uint8_t byte )
 
 uint32_t hexFileNextByte()
 {
-	if ( HexFileIndex >= XblockCount )
+	if ( HexFileIndex >= Mdata.XblockCount )
 	{
-		if ( XblockCount < 1024 )
+		if ( Mdata.XblockCount < 1024 )
 		{
 			
 			return 0 ;
 		}
-		f_read( &FlashFile, (BYTE *)ExtraFileData, 1024, &XblockCount ) ;
-		HexFileRead += XblockCount ;
+		f_read( &Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &Mdata.XblockCount ) ;
+		HexFileRead += Mdata.XblockCount ;
 		HexFileIndex = 0 ;
 
 	}
@@ -2665,7 +2678,7 @@ void hexFileStart()
 	inRecord = 0 ;
 	HexFileIndex = 0 ;
 	memmove(ExtraFileData, FileData, 1024 ) ;	// Hex data to here
-	XblockCount = 1024 ;
+	Mdata.XblockCount = 1024 ;
 	HexFileRead = 1024 ;
 }
 
@@ -2717,7 +2730,7 @@ uint32_t multiUpdate()
 			if ( MultiType )	// Hex file
 			{
 				hexFileStart() ;
-				hexFileRead1024( 0, &BlockCount ) ;
+				hexFileRead1024( 0, &Mdata.BlockCount ) ;
 			}
 			MultiState = MULTI_WAIT1 ;
 		break ;
@@ -2851,19 +2864,19 @@ uint32_t multiUpdate()
 			{
 				if ( MultiType )	// Hex file
 				{
-					hexFileRead1024( BytesFlashed, &BlockCount ) ;
+					hexFileRead1024( BytesFlashed, &Mdata.BlockCount ) ;
 				}
 				else
 				{
-					f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+					f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
 				}
 				BlockOffset = 0 ;
-				ByteEnd += BlockCount ;
+				ByteEnd += Mdata.BlockCount ;
 		 		wdt_reset() ;
 			}
 			if ( MultiType )
 			{
-				if ( BlockCount == 0 )
+				if ( Mdata.BlockCount == 0 )
 				{
 					MultiState = MULTI_DONE ;
 					BytesFlashed = FirmwareSize ;
@@ -2973,9 +2986,9 @@ uint32_t xmegaUpdate()
 				BlockOffset += 256 ;
 				if ( BytesFlashed >= ByteEnd )
 				{
-					f_read( &FlashFile, (BYTE *)FileData, 1024, &BlockCount ) ;
+					f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
 					BlockOffset = 0 ;
-					ByteEnd += BlockCount ;
+					ByteEnd += Mdata.BlockCount ;
 		 			wdt_reset() ;
 				}
 				if ( BytesFlashed >= FirmwareSize )
@@ -3097,8 +3110,8 @@ uint32_t sportUpdate( uint32_t external )
 			uint32_t *ptr ;
 			UINT *pcount ;
 			ptr = ( uint32_t *) (BlockInUse ? FileData : ExtraFileData ) ;
-			pcount = BlockInUse ? &BlockCount : &XblockCount ;
-			f_read( &FlashFile, (BYTE *)ptr, 1024, pcount ) ;
+			pcount = BlockInUse ? &Mdata.BlockCount : &Mdata.XblockCount ;
+			f_read( &Mdata.FlashFile, (BYTE *)ptr, 1024, pcount ) ;
 			SportState = SPORT_DATA ;
 		}
 		break ;

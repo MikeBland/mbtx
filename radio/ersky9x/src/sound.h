@@ -117,7 +117,7 @@ void readLed( uint8_t *ptrData ) ;
 uint32_t readI2cEncoder( uint8_t *ptrData ) ;
 uint32_t hwreadI2cEncoder( uint8_t *ptrData ) ;
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 void initHaptic() ;
 #endif
 

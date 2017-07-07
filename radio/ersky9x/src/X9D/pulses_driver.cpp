@@ -65,6 +65,7 @@ uint8_t setupPulsesXfire() ;
 //void setupPulsesPXX(unsigned int port);
 
 uint16_t *ppmStreamPtr[NUM_MODULES];
+uint16_t pulseStreamCount[NUM_MODULES] ;
 uint16_t ppmStream[NUM_MODULES+1][20];
 uint16_t pxxStream[NUM_MODULES][400];
 uint16_t dsm2Stream[2][400];

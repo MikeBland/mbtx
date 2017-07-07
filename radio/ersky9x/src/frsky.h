@@ -101,13 +101,22 @@
 #define FR_CELL11			          73
 #define FR_CELL12			          74
 
-#define FR_TRASH			75  // Used for invalid id
+#define FR_CUST1			          75
+#define FR_CUST2			          76
+#define FR_CUST3			          77
+#define FR_CUST4			          78
+#define FR_CUST5			          79
+#define FR_CUST6			          80
+//#define FR_CUST7			          81
+//#define FR_CUST8			          82
+
+#define FR_TRASH			81  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  76
+#define HUBDATALENGTH  82
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -128,7 +137,8 @@ DataID Meaning       Unit   Range   Note
 0x01   GPS altitude  m              Before”.”
 0x02   Temperature1  °C     -30-250
 0x03   RPM           BPS    0-60000
-0x04   Fuel Level    %      0, 25, 50, 75, 100
+0x04   Fuel Level
+     %      0, 25, 50, 75, 100
 0x05   Temperature2  °C     -30-250
 0x06   Cell Volt     1/500v 0-4.2v, top 4 bits are cell #
 0x09   GPS altitude  m              After “.”
@@ -517,6 +527,11 @@ extern uint16_t logAxScale( uint8_t channel, uint8_t *dps ) ;
 extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 
 // Crossfire telemetry
+// Device address
+#define BROADCAST_ADDRESS              0x00
+#define RADIO_ADDRESS                  0xEA
+#define MODULE_ADDRESS                 0xEE
+
 // Frame id
 #define CRSF_GPS_ID                         0x02
 #define CRSF_BATTERY_ID                     0x08
@@ -562,7 +577,7 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_GVAR7	31
 #define LOG_FWAT	32//
 #define LOG_RXV   33
-#define LOG_HDG   34//
+#define LOG_HDG   34
 #define LOG_A3    35//
 #define LOG_A4    36//
 #define LOG_SC1		37
@@ -600,6 +615,20 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_CEL10	65
 #define LOG_CEL11	66
 #define LOG_CEL12	67
+
+#define LOG_CUST1	  68
+#define LOG_CUST2	  69
+#define LOG_CUST3	  70
+#define LOG_CUST4	  71
+#define LOG_CUST5	  72
+#define LOG_CUST6	  73
+//#define LOG_CUST7	  74
+//#define LOG_CUST8	  75
+
+#define LOG_STK_THR 100
+#define LOG_STK_AIL 101
+#define LOG_STK_ELE 102
+#define LOG_STK_RUD 103
 
 #define LOG_BTRX  125
 #define LOG_LAT	  126

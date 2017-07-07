@@ -4088,6 +4088,10 @@ bool reachMixerCountLimit()
 
 uint8_t mixToDelete;
 
+#define YN_NONE	0
+#define YN_YES	1
+#define YN_NO		2
+
 uint8_t yesNoMenuExit( uint8_t event, const prog_char * s )
 {
 	uint8_t reply = YN_NONE ;

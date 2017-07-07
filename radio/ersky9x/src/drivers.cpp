@@ -52,6 +52,14 @@
 #include "timers.h"
 #endif
 
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_usart.h"
+//#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/hal.h"
+extern void wdt_reset() ;
+#define wdt_reset()
+#endif
 
 #define SERIAL_TRAINER	1
 
@@ -93,6 +101,9 @@ struct t_fifo128 Com1_fifo ;
 struct t_fifo128 Com2_fifo ;
 struct t_fifo128 BtRx_fifo ;
 
+#if defined(LUA) || defined(BASIC)
+struct t_fifo128 Lua_fifo ;
+#endif
 //struct t_fifo64 CaptureRx_fifo ;
 
 #ifdef PCB9XT
@@ -289,7 +300,8 @@ void killEvents(uint8_t event)
 
 volatile uint8_t  g_blinkTmr10ms;
 
-volatile uint16_t g_tmr10ms;
+volatile uint16_t g_tmr10ms ;
+volatile uint32_t g_ltmr10ms ;
 extern uint8_t StickScrollTimer ;
 
 #ifdef PCBSKY
@@ -370,7 +382,8 @@ void per10ms()
 {
 	register uint32_t i ;
 
-  g_tmr10ms++;
+  g_tmr10ms++ ;
+	g_ltmr10ms += 1 ;
   if (WatchdogTimeout)
 	{
   	if (WatchdogTimeout>200)
@@ -506,6 +519,15 @@ extern uint8_t AnaEncSw ;
 #endif
 #endif
 
+#ifdef PCBX12D
+	uint8_t value = (~GPIOC->IDR & 0x0002) ? 1 : 0 ;
+	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+	}
+#endif // X12D
+
 #if defined(PCBX9D) || defined(PCB9XT)
 	sdPoll10mS() ;
 #endif
@@ -609,6 +631,17 @@ void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte )
 		pfifo->fifo[pfifo->in] = byte ;
 		pfifo->in = next ;
 	}
+}
+
+uint32_t fifo128Space( struct t_fifo128 *pfifo )
+{
+	uint32_t space ;
+	space = pfifo->out + 128 ;
+	if ( pfifo->out > pfifo->in )
+	{
+		space -= 128 ;
+	}
+	return space - pfifo->in ;
 }
 
 int32_t get_fifo128( struct t_fifo128 *pfifo )
@@ -1187,17 +1220,22 @@ extern "C" void UART0_IRQHandler()
 	}
 	if ( pUart->UART_SR & UART_SR_RXRDY )
 	{
+		uint8_t chr = CONSOLE_USART->UART_RHR ;
 		if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
 		{
-			put_fifo64( &Sbus_fifo, CONSOLE_USART->UART_RHR ) ;	
+			put_fifo64( &Sbus_fifo, chr ) ;	
 		}
 		else if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
 		{
-			telem_byte_to_bt( CONSOLE_USART->UART_RHR ) ;
+			telem_byte_to_bt( chr ) ;
 		}
 		else
 		{
-			put_fifo128( &Com2_fifo, CONSOLE_USART->UART_RHR ) ;	
+			put_fifo128( &Com2_fifo, chr ) ;	
+			if ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY )	// BT <-> COM2
+			{
+				telem_byte_to_bt( chr ) ;
+			}
 		}	 
 	}
 }
@@ -1794,13 +1832,15 @@ void read_adc()
 	register Adc *padc ;
 	register uint32_t y ;
 	register uint32_t x ;
+#ifndef ARUNI
 	static uint16_t timer = 0 ;
+#endif
 
 //	PMC->PMC_PCER0 |= 0x20000000L ;		// Enable peripheral clock to ADC
 
 	padc = ADC ;
 #ifdef REVB
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 	padc->ADC_CHER = 0x00000400 ;  // channel 10 on
 #endif
 #endif
@@ -1820,7 +1860,7 @@ void read_adc()
 		x = padc->ADC_LCDR ;		// Clear DRSY flag
 	}
 #ifdef REVB
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 	padc->ADC_CHDR = 0x00000400 ;  // channel 10 off
 #endif
 #endif
@@ -1879,6 +1919,9 @@ void read_adc()
 //#endif
 #ifdef REVB
 	Analog_values[8] = ADC->ADC_CDR8 ;
+#ifdef ARUNI
+	Analog_values[9] = ADC->ADC_CDR10 ;
+#else
 	x = ADC->ADC_CDR10 ;
 	if ( ( g_eeGeneral.extraPotsSource[0] != 1 ) && ( g_eeGeneral.extraPotsSource[1] != 1 ) )
 	{
@@ -1906,7 +1949,8 @@ void read_adc()
 	{
 		Analog_values[9] = x ;
 	}
-#endif
+#endif // ARUNI
+#endif // REVB
 	Temperature = ( Temperature * 7 + ADC->ADC_CDR15 ) >> 3 ;	// Filter it
 	if ( Temperature > Max_temperature )
 	{
@@ -1921,7 +1965,7 @@ void read_adc()
 	AnalogData[4] = Analog_values[4] ;
 	AnalogData[5] = Analog_values[5] ;
 	AnalogData[6] = Analog_values[6] ;
-	AnalogData[12] = Analog_values[7] ;
+	AnalogData[12] = Analog_values[7] ;   // vbat
 	if ( g_eeGeneral.ar9xBoard == 0 )
 	{
 		AnalogData[13] = Analog_values[8] ;
@@ -1972,6 +2016,18 @@ void read_adc()
 #define OFF_RV      0x00004000
 #define OFF_RH      0x00000002
 
+#ifdef ARUNI
+// Stick P1 AD3  Gain:0x00000080 Offset:0x00000008
+// Stick P2 AD13 Gain:0x08000000 Offset:0x00002000
+// Stick P3 AD5  Gain:0x00000800 Offset:0x00000020
+#define GAIN_P1	    0x00000080
+#define GAIN_P2	    0x08000000
+#define GAIN_P3	    0x00000800
+#define OFF_P1      0x00000008
+#define OFF_P2      0x00002000
+#define OFF_P3      0x00000020
+#endif
+
 // 9xR-PRO needs AD10 for extra 3-pos switch
 
 void init_adc()
@@ -1986,7 +2042,7 @@ void init_adc()
 	padc->ADC_MR = 0x3FB60000 | timer ;  // 0011 1111 1011 0110 xxxx xxxx 0000 0000
 	padc->ADC_ACR = ADC_ACR_TSON ;			// Turn on temp sensor
 #ifdef REVB
-#ifdef REVX
+#if defined(REVX) || defined(ARUNI)
 	padc->ADC_CHER = 0x0000E73E ;  // channels 1,2,3,4,5,8,9,10,13,14,15
 #else
 	padc->ADC_CHER = 0x0000E33E ;  // channels 1,2,3,4,5,8,9,13,14,15
@@ -2034,6 +2090,23 @@ void set_stick_gain( uint32_t gains )
 		offset |= OFF_RH ;
 	}
 
+#ifdef ARUNI
+	if ( gains & STICK_P1_GAIN )
+	{
+		gain |= GAIN_P1 ;
+		offset |= OFF_P1 ;
+	}
+	if ( gains & STICK_P2_GAIN )
+	{
+		gain |= GAIN_P2 ;
+		offset |= OFF_P2 ;
+	}
+	if ( gains & STICK_P3_GAIN )
+	{
+		gain |= GAIN_P3 ;
+		offset |= OFF_P3 ;
+	}
+#endif
 	padc->ADC_CGR = gain ;
 	padc->ADC_COR = offset ;
 
@@ -2525,47 +2598,20 @@ extern "C" void SSC_IRQHandler()
 //	configure_pins( PIO_PA17, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 }
 
-#endif
+#endif // PCBSKY
 
-#if defined(PCBX9D) || defined(PCB9XT)
 
-//  /* Determine the integer part */
-//  if ((USARTx->CR1 & USART_CR1_OVER8) != 0)
-//  {
-//    /* Integer part computing in case Oversampling mode is 8 Samples */
-//    integerdivider = ((25 * apbclock) / (2 * (USART_InitStruct->USART_BaudRate)));    
-//  }
-//  else /* if ((USARTx->CR1 & USART_CR1_OVER8) == 0) */
-//  {
-//    /* Integer part computing in case Oversampling mode is 16 Samples */
-//    integerdivider = ((25 * apbclock) / (4 * (USART_InitStruct->USART_BaudRate)));    
-//  }
-//  tmpreg = (integerdivider / 100) << 4;
+//-------------------------------------------------------------------------
 
-//  /* Determine the fractional part */
-//  fractionaldivider = integerdivider - (100 * (tmpreg >> 4));
 
-//  /* Implement the fractional part in the register */
-//  if ((USARTx->CR1 & USART_CR1_OVER8) != 0)
-//  {
-//    tmpreg |= ((((fractionaldivider * 8) + 50) / 100)) & ((uint8_t)0x07);
-//  }
-//  else /* if ((USARTx->CR1 & USART_CR1_OVER8) == 0) */
-//  {
-//    tmpreg |= ((((fractionaldivider * 16) + 50) / 100)) & ((uint8_t)0x0F);
-//  }
-  
-//  /* Write to USART BRR register */
-//  USARTx->BRR = (uint16_t)tmpreg;
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 
-//extern uint32_t Peri1_frequency ;
-//extern uint32_t Peri2_frequency ;
-
+#ifndef PCBX12D
 void USART6_Sbus_configure()
 {
-#ifdef PCBX9D
+ #ifdef PCBX9D
 	stop_xjt_heartbeat() ;
-#endif
+ #endif
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
@@ -2582,15 +2628,16 @@ void stop_USART6_Sbus()
 {
 	configure_pins( 0x0080, PIN_INPUT | PIN_PORTC ) ;
   NVIC_DisableIRQ(USART6_IRQn) ;
-#ifdef PCBX9D
+ #ifdef PCBX9D
 	init_xjt_heartbeat() ;
-#endif
+ #endif
 }
 
 extern "C" void USART6_IRQHandler()
 {
 	put_fifo64( &Sbus_fifo, USART6->DR ) ;	
 }
+#endif // #ifndef PCBX12D
 
 #ifndef PCB9XT
 void UART_Sbus_configure( uint32_t masterClock )
@@ -2628,9 +2675,7 @@ void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 	com2Parity( parity ) ;
 }
 
-
-
-#endif
+#endif // #ifndef PCB9XT
 
 void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 {
@@ -2770,6 +2815,8 @@ extern "C" void USART2_IRQHandler()
 {
   uint32_t status;
   uint8_t data;
+	
+	RxIntCount += 0x1000 ;
 
   status = USART2->SR ;
 
@@ -2874,6 +2921,7 @@ uint16_t rxTelemetry()
 }
 
 #ifndef PCB9XT
+#ifndef PCBX12D
 void txmit( uint8_t c )
 {
 	/* Wait for the transmitter to be ready */
@@ -2956,7 +3004,9 @@ extern "C" void USART3_IRQHandler()
 	}
 }
 #endif
+#endif
 
+//#ifndef PCBX12D
 void start_timer11()
 {
 #ifndef SIMU
@@ -2982,7 +3032,8 @@ void stop_timer11()
 	NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
 }
 
-#ifdef PCBX9D
+#ifndef PCBX12D
+ #ifdef PCBX9D
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3005,7 +3056,8 @@ void stop_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 0 ;
 }
 
-#endif
+ #endif // PCBX9D
+#endif // n PCBX12D
 
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
@@ -3062,6 +3114,7 @@ void disable_software_com1()
 #endif
 }
 
+//#endif
 
 #ifdef PCB9XT
 void consoleInit()
@@ -3100,7 +3153,7 @@ void com3Init( uint32_t baudrate )
 	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
 	puart->CR2 = 0 ;
 	puart->CR3 = 0 ;
-	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
+	NVIC_SetPriority( USART3_IRQn, 3 ) ; // Changed to 3 for telemetry receive
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
 
@@ -3486,6 +3539,7 @@ extern "C" void timer10_interrupt()
 //  return(result);
 //}
 
+//#ifndef PCBX12D
 
 #ifdef PCB9XT
 extern "C" void EXTI3_IRQHandler()
@@ -3571,6 +3625,7 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 	
 }
 
+//#endif // nX12D
 
 
 #endif // X9D || SP
@@ -4060,6 +4115,12 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 	uint32_t j ;
 	uint32_t crc ;
 	uint32_t byte ;
+
+	if ( pdata == 0 )	// Test for buffer available
+	{
+		return SportTx.count ? 0 : 1 ;
+	}
+
 	if ( SportTx.count )
 	{
 		return 0 ;	// Can't send, packet already queued

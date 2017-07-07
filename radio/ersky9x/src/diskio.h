@@ -50,9 +50,13 @@
 #endif
 
 
+#ifndef PCBX12D
+
 #if !defined(SIMU)
 #include "core_cm3.h"
 #endif
+#endif
+
 #include "integer.h"
 
 #define DN_MCI		0	/* Physical drive number for MCI */
@@ -169,7 +173,7 @@ extern uint32_t sd_acmd6( void ) ;
 extern uint32_t sd_acmd51( uint32_t *presult ) ;
 extern uint32_t sd_cmd13( uint32_t *status) ;
 extern void sdPoll10mS( void ) ;
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 extern void sdInit( void ) ;
 #endif
 extern uint32_t sd_card_ready( void ) ;

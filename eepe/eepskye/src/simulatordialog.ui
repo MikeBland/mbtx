@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>770</width>
-    <height>573</height>
+    <height>577</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -1209,6 +1209,34 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
+           <widget class="QPushButton" name="switchTRN">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QPushButton {
+     background-color: #EEEEEE;
+     border-style: outset;
+     border-width: 1px;
+     border-radius: 4px;
+     border-color: black;
+     padding: 2px;
+ } 
+
+QPushButton:pressed {
+     background-color: #4CC417;
+     border-style: inset;
+ }</string>
+            </property>
+            <property name="text">
+             <string>TRN</string>
+            </property>
+           </widget>
+          </item>
+          <item>
            <widget class="QWidget" name="SGwidget" native="true">
             <property name="minimumSize">
              <size>
@@ -1366,34 +1394,6 @@ QPushButton:checked {
             </widget>
             <zorder>labelSD</zorder>
             <zorder>SDslider</zorder>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="switchTRN">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:pressed {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>TRN</string>
-            </property>
            </widget>
           </item>
           <item>

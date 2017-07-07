@@ -25,9 +25,16 @@
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/hal.h"
 #endif
+
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/hal.h"
+#endif
+
 #if !defined(SIMU)
 // Mike I think this include is not needed (already present in diskio.h)
-#include "core_cm3.h"
+//#include "core_cm3.h"
 #endif
 #include "ersky9x.h"
 #include "myeeprom.h"
@@ -934,11 +941,19 @@ void unlockVoice()
 	Voice.VoiceLock = 0 ;
 }
 
+#ifdef PCBX12D
+static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
+{
+	 0,  3,  5,   8,   12,  17,  24,  33,  45,  57,  70,  85,
+	100, 118, 140, 163, 190, 207, 224, 239, 244, 248, 252, 255 	
+} ;
+#else
 static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
 {
 	 0,  5,  10,   15,   30,  45,  60,  74,  84,  94,  104,  114,
 	128, 164, 192, 210, 224, 234, 240, 244, 248, 251, 253, 255 	
 } ;
+#endif
 
 static uint16_t swVolumeLevel()
 {
@@ -1139,6 +1154,7 @@ void doTone()
 	
 	for(x = 0;;)
 	{
+		
 		while ( ( VoiceBuffer[x].flags & VF_SENT ) == 0 )
 		{
 			CoTickDelay(1) ;					// 2mS for now
@@ -2004,6 +2020,7 @@ void voice_task(void* pdata)
 		 }
 		 else
 		 {
+		 	
 		 	// Play a tone
 			if (ToneQueueRidx != ToneQueueWidx)
 			{

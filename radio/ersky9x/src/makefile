@@ -27,21 +27,39 @@ BINX = $(CP) -O binary
 
 # Object files directory
 ifeq ($(PCB), X12D)
-  OBJDIR = x12dpobj
+  OBJDIR = x12dobj
+  BASIC = 1
+  CPPDEFS += -DBASIC 
+#  LUA = 1
+#  CPPDEFS += -DLUA
 else
 ifeq ($(PCB), X9D)
  ifeq ($(REVPLUS), 1)
   OBJDIR = x9dpobj
+  BASIC = 1
+  CPPDEFS += -DBASIC 
+#  LUA = 1
+#  CPPDEFS += -DLUA
  else
   ifeq ($(REV9E), 1)
    OBJDIR = x9eobj
+   BASIC = 1
+   CPPDEFS += -DBASIC 
+#   LUA = 1
+#   CPPDEFS += -DLUA
   else
    ifeq ($(PCBX7), 1)
     OBJDIR = x7obj
+    BASIC = 1
+    CPPDEFS += -DBASIC 
+#    LUA = 1
+#    CPPDEFS += -DLUA
    else
     OBJDIR = x9dobj
-	 LUA = 1
-    CPPDEFS += -DLUA
+    BASIC = 1
+    CPPDEFS += -DBASIC 
+#	 LUA = 1
+#    CPPDEFS += -DLUA
    endif
   endif
  endif
@@ -51,14 +69,32 @@ else
  else
   ifeq ($(PCB), 9XT)
     OBJDIR = sky9XTobj
+    BASIC = 1
+    CPPDEFS += -DBASIC 
+#    LUA = 1
+#    CPPDEFS += -DLUA
   else
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
+    BASIC = 1
+    CPPDEFS += -DBASIC 
+#    LUA = 1
+#    CPPDEFS += -DLUA
    else
     ifeq ($(SMALL), 1)
      OBJDIR = skySobj
+     BASIC = 1
+     CPPDEFS += -DBASIC 
     else
-     OBJDIR = skyobj
+     BASIC = 1
+     CPPDEFS += -DBASIC 
+#     LUA = 1
+#     CPPDEFS += -DLUA
+     ifeq ($(LARGE), 1)
+      OBJDIR = skyLobj
+     else
+      OBJDIR = skyobj
+     endif
     endif
    endif
   endif
@@ -133,7 +169,11 @@ else
     ifeq ($(SMALL), 1)
      PROJECT      = ersky9xs
     else
-     PROJECT      = ersky9x
+     ifeq ($(LARGE), 1)
+      PROJECT      = ersky9xl
+     else
+      PROJECT      = ersky9x
+     endif
     endif
    endif
   endif
@@ -199,6 +239,7 @@ else
      LDSCRIPT = X12D/stm32f4_flash.ld
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX12D 
+     CPPDEFS += -DUSB_JOYSTICK
      UDEFS = -DSTM32F429_439xx
 	 else
     CPPDEFS += -DPCBSKY 
@@ -219,10 +260,13 @@ else
        LDSCRIPT = sam3s4c_flash.ld
        UDEFS = -Dat91sam3s4
       else
-#       LDSCRIPT = sam3s4c_flash.ld
-       LDSCRIPT = sam3s8c_flash.ld
-#       UDEFS = -Dat91sam3s4
-       UDEFS = -Dat91sam3s8
+       ifeq ($(LARGE), 1)
+        LDSCRIPT = sam4s8c_flash.ld
+        UDEFS = -Dat91sam3s8
+       else
+        LDSCRIPT = sam3s8c_flash.ld
+        UDEFS = -Dat91sam3s8
+       endif
       endif
      endif
     endif
@@ -261,21 +305,95 @@ UADEFS =
 ifeq ($(PCB), X12D)
 # List C source files here
 SRC  = X12D/system_stm32f4xx.c \
+       X12D/stm32f4xx_gpio.c \
+       X12D/stm32f4xx_spi.c \
+       X12D/stm32f4xx_rtc.c \
+       X12D/stm32f4xx_pwr.c \
+       X12D/stm32f4xx_rcc.c \
+       X12D/misc.c \
 		 X12D/sdram_driver.c \
 		 X12D/pwr_driver.c \
 		 X12D/stm32f4xx_fmc.c \
-       X12D/stm32f4xx_rcc.c \
 		 X12D/stm32f4xx_dma2d.c \
+		 X12D/stm32f4xx_dma.c \
 		 X12D/stm32f4xx_ltdc.c \
-		 X12D/stm32f4xx_tim.c \
-       X12D/stm32f4xx_gpio.c
+       X12D/stm32f4xx_sdio.c \
+		 X12D/sdio_sd.c \
+       X12D/usbd_desc.c   \
+       X12D/usb_core.c    \
+       X12D/usb_dcd.c     \
+       X12D/usb_bsp.c     \
+       X12D/usb_dcd_int.c \
+       X12D/usbd_core.c   \
+       X12D/usbd_ioreq.c  \
+       X12D/usbd_req.c    \
+       X12D/usbd_hid_joystick.c \
+       X12D/usb_driver.c    \
+       port.c \
+       coos.c
 
-CPPSRC = X12D/e.cpp \
+#		 X12D/stm32f4xx_tim.c \
+#		 X12D/led.c
+
+ifeq ($(LUA), 1)
+SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
+           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
+           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+           syscalls.c
+endif
+
+CPPSRC = ersky9x.cpp \
          X12D/lcd_driver.cpp \
-         X12D/led_driver.cpp
+         X12D/hdrivers.cpp \
+         X12D/sound.cpp \
+         X12D/diskio.cpp \
+         X12D/watchdog.cpp \
+			X12D/i2c_ee.cpp \
+         X12D/rtc_driver.cpp \
+         X12D/persX12d.cpp \
+		 	X12D/pulses_driver.cpp \
+			stamp.cpp \
+         templates.cpp \
+         drivers.cpp \
+         timers.cpp \
+         logicio.cpp \
+         X12D/adc_driver.cpp \
+			frsky.cpp \
+         menus.cpp \
+         mixer.cpp \
+         ff.cpp \
+			logs.cpp \
+         audio.cpp \
+			en.cpp \
+			de.cpp \
+			no.cpp \
+			fr.cpp \
+			se.cpp \
+			it.cpp \
+			pl.cpp \
+			vi.cpp \
+			sp.cpp \
+			maintenance.cpp \
+			mavlink.cpp \
+			sbus.cpp \
+         X12D/t.cpp \
+         X12D/led_driver.cpp \
+         X12D/usbd_usr.cpp \
+			lcd.cpp
+
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
+ifeq ($(LUA), 1)
+CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+endif
+
+#         audio.cpp \
+#         X9D/sound.cpp \
+#         logs.cpp \
 
 # List ASM source files here
-ASRC = X12D/startup_stm32f40_41xxx.s
+ASRC = X12D/startup_stm32f42_43xxx.s
 
 else
 ifeq ($(PCB), X9D)
@@ -361,8 +479,11 @@ CPPSRC = ersky9x.cpp \
          X9D/usbd_usr.cpp \
 		   lcd.cpp
 
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp
+CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
 endif
 
 #         gtime.cpp \
@@ -433,6 +554,12 @@ SRC  = X9D/system_stm32f2xx.c \
        port.c \
        coos.c
 
+ifeq ($(LUA), 1)
+SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
+           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
+           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+           syscalls.c
+endif
 
 CPPSRC = ersky9x.cpp \
          X9D/aspi.cpp \
@@ -475,6 +602,13 @@ CPPSRC = ersky9x.cpp \
          X9D/usbd_usr.cpp \
 		   lcd.cpp
 
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
+ifeq ($(LUA), 1)
+CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+endif
+
 #         X9D/lcd_driver.cpp \
 #       	X9D/i2c_ee.cpp \
 #         X9D/eeprom_rlc.cpp \
@@ -496,6 +630,13 @@ SRC  = core_cm3.c \
        vectors_sam3s.c \
        port.c \
        coos.c
+
+ifeq ($(LUA), 1)
+SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
+           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
+           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+           syscalls.c
+endif
 
 
 #       sky/usb/udi_hid.c \
@@ -543,6 +684,13 @@ CPPSRC = stamp.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			logs.cpp
+
+ifeq ($(LUA), 1)
+CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+endif
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
 
 	 ifeq ($(SMALL), 1)
 	 else
@@ -650,6 +798,12 @@ ifeq ($(REVB), 1)
  EXT_MOD=REVB
 endif
 
+# If ARUNI board
+ifeq ($(ARUNI), 1)
+ CPPDEFS += -DREVB -DARUNI
+ EXT_MOD=ARUNI
+endif
+
 # If REVX board
 ifeq ($(REVX), 1)
  CPPDEFS += -DREVX
@@ -660,6 +814,10 @@ endif
 ifeq ($(PCB), 9XT)
 # CPPDEFS += -DXFIRE
  EXT_MOD=9XT
+endif
+
+ifeq ($(PCB), X12D)
+ EXT_MOD=X12D
 endif
 
 ifeq ($(PCB), X9D)
@@ -771,7 +929,7 @@ clean:
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
 	-rm -f skySobj/*.*
-	-rm -f skyDobj/*.*
+	-rm -f skyLobj/*.*
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
 	-rm -f $(FULL_PRJ).elf

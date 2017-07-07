@@ -28,6 +28,9 @@
 #if defined(PCBX9D) || defined(PCB9XT)
 #include "X9D/stm32f2xx.h"
 #endif
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#endif
 
 
 /*---------------------------- Variable Define -------------------------------*/
@@ -1413,7 +1416,7 @@ void CoIdleTask(void* pdata)
 #ifdef PCBSKY
 		i = TC1->TC_CHANNEL[0].TC_CV ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 		i = TIM7->CNT ;
 #endif
       /* Add your codes here */

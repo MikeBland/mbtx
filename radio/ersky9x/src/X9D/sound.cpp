@@ -533,9 +533,9 @@ void tone_stop()
 #endif // TONE_MODE_2
 
 
-uint16_t g_timeAppendVoice ;
-uint16_t g_timeAppendMaxVoice ;
-uint16_t g_timeAppendtime ;
+//uint16_t g_timeAppendVoice ;
+//uint16_t g_timeAppendMaxVoice ;
+//uint16_t g_timeAppendtime ;
 
 void startVoice( uint32_t count )		// count of filled in buffers
 {
@@ -555,9 +555,9 @@ void startVoice( uint32_t count )		// count of filled in buffers
 	VoiceCount = count ;
 	Sound_g.VoiceRequest = 1 ;
 
-	g_timeAppendVoice = 0 ;
-	g_timeAppendMaxVoice = 0 ;
-	g_timeAppendtime = get_tmr10ms() ;
+//	g_timeAppendVoice = 0 ;
+//	g_timeAppendMaxVoice = 0 ;
+//	g_timeAppendtime = get_tmr10ms() ;
 
 }
 
@@ -590,16 +590,16 @@ void appendVoice( uint32_t index )		// index of next buffer
 		DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 ;			// Enable DAC
 #endif
 	}
-	uint16_t t10ms ;
-	uint16_t now ;
-	now = get_tmr10ms() ;
-	t10ms = now - g_timeAppendtime ;
-	g_timeAppendtime = now ;
-	if ( t10ms > g_timeAppendMaxVoice )
-	{
-		g_timeAppendMaxVoice = t10ms ;
-	}
-	g_timeAppendVoice = t10ms ;
+//	uint16_t t10ms ;
+//	uint16_t now ;
+//	now = get_tmr10ms() ;
+//	t10ms = now - g_timeAppendtime ;
+//	g_timeAppendtime = now ;
+//	if ( t10ms > g_timeAppendMaxVoice )
+//	{
+//		g_timeAppendMaxVoice = t10ms ;
+//	}
+//	g_timeAppendVoice = t10ms ;
 }
 
 //#ifdef REV9E

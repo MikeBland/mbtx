@@ -430,7 +430,7 @@ void simulatorDialog::timerEvent()
 						int8_t andSwOn = 1 ;
 						if ( ( cs.func == CS_RMONO ) )
 						{
-							andSwOn = ((txType==1) || (txType == 2)) ? cs.andsw : getAndSwitch( cs ) ;
+							andSwOn = ((txType==1) || (txType == 2) || (txType == 9)) ? cs.andsw : getAndSwitch( cs ) ;
 							if ( andSwOn )
 							{
 								andSwOn = getSwitch( andSwOn, 0, 0) ;
@@ -594,20 +594,42 @@ void simulatorDialog::centerSticks()
 
 void simulatorDialog::configSwitches()
 {
-		if ((txType==1) || (txType == 2))
+		if ((txType==1) || (txType == 2) || (txType == 9) )
 		{
 			ui->SAslider->setMaximum( 2 ) ;
 			ui->SAwidget->show() ;
 			ui->SBwidget->show() ;
-			ui->SEwidget->show() ;
+			if (txType == 9)
+			{
+				ui->SEwidget->hide() ;
+			}
+			else
+			{
+				ui->SEwidget->show() ;
+			}
 			ui->SFwidget->show() ;
 			ui->SFslider->setMaximum(1) ;
 			ui->SCwidget->show() ;
 			ui->SDwidget->show() ;
-			ui->SGwidget->show() ;
+			if (txType == 9)
+			{
+				ui->SGwidget->hide() ;
+			}
+			else
+			{
+				ui->SGwidget->show() ;
+			}	 
 			ui->SHwidget->show() ;
-			ui->SliderL->show() ;
-			ui->SliderR->show() ;
+			if (txType == 9)
+			{
+				ui->SliderL->hide() ;
+				ui->SliderR->hide() ;
+			}
+			else
+			{
+				ui->SliderL->show() ;
+				ui->SliderR->show() ;
+			}
 			if ( txType == 2 )
 			{
 				ui->dialP_3->show() ;
@@ -616,11 +638,14 @@ void simulatorDialog::configSwitches()
 			{
 				ui->dialP_3->hide() ;
 			}
+			ui->switchTRN->setText("SH") ;
+			ui->switchTRN->setVisible( true ) ;
+			ui->SHwidget->hide() ;
+			
 			ui->switchTHR->setVisible( false ) ;
 			ui->switchRUD->setVisible( false ) ;
 			ui->switchELE->setVisible( false ) ;
 			ui->switchAIL->setVisible( false ) ;
-			ui->switchTRN->setVisible( false ) ;
 			ui->switchGEA->setVisible( false ) ;
 			ui->switchID0->setVisible( false ) ;
 			ui->switchID1->setVisible( false ) ;
@@ -640,6 +665,8 @@ void simulatorDialog::configSwitches()
 			ui->SDwidget->hide() ;
 			ui->SGwidget->hide() ;
 			ui->SHwidget->hide() ;
+			ui->switchTRN->setText("TRN") ;
+
       if ( g_eeGeneral.extraPotsSource[0] )
 			{
 				ui->SliderL->show() ;
@@ -1734,8 +1761,9 @@ bool simulatorDialog::hwKeyState(int key)
 			case HSW_SG1 : return ui->SGslider->value() == 1 ; break ;
 			case HSW_SG2 : return ui->SGslider->value() == 2 ; break ;
 //			case HSW_SH0 : return ui->SHslider->value() == 0 ; break ;
-			case HSW_SH2 : return ui->SHslider->value() == 1 ; break ;
-    	default:
+//			case HSW_SH2 : return ui->SHslider->value() == 1 ; break ;
+			case HSW_SH2 : return ui->switchTRN->isDown() ; break ;
+			default:
         return keyState( (EnumKeys) key ) ;
       break;
 		}
@@ -1788,7 +1816,8 @@ bool simulatorDialog::keyState(EnumKeys key)
 //			case SW_SG1 : return ui->SGslider->value() == 1 ; break ;
 //			case SW_SG2 : return ui->SGslider->value() == 2 ; break ;
 //			case SW_SH0 : return ui->SHslider->value() == 0 ; break ;
-			case SW_SH2 : return ui->SHslider->value() == 1 ; break ;
+//			case SW_SH2 : return ui->SHslider->value() == 1 ; break ;
+			case SW_SH2 : return ui->switchTRN->isDown() ; break ;
     	default:
         return false;
       break;
@@ -1850,7 +1879,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 	aswitch = abs(swtch) ;
  	SwitchStack[level] = aswitch ;
 
-	int limit = ((txType==1) || (txType == 2)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
+	int limit = ((txType==1) || (txType == 2) || (txType == 9)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
    cs_index = abs(swtch)-(limit-NUM_SKYCSW);
 
 	{
@@ -2304,7 +2333,7 @@ void simulatorDialog::timerTick()
 
   s_cnt++;			// Number of times val added in
 
-	int hsw_max = ((txType==1) || (txType == 2)) ? HSW_MAX_X9D : HSW_MAX ;
+	int hsw_max = ((txType==1) || (txType == 2) || (txType == 9)) ? HSW_MAX_X9D : HSW_MAX ;
 	for( timer = 0 ; timer < 2 ; timer += 1 )
 	{
 		struct t_timer *ptimer = &s_timer[timer] ;
@@ -2703,7 +2732,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 
 		uint8_t num_analog = 7 ;
-		if ( ((txType==1) || (txType == 2)) )
+		if ( ((txType==1) || (txType == 2) || (txType == 9)) )
 		{
 			num_analog = 8 ;
 			if ( txType == 2 )
@@ -2866,7 +2895,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 //    calibratedStick[Mix_max-1]=calibratedStick[Mix_full-1]=1024;
     anas[Mix_max-1]  = RESX;     // MAX
     anas[Mix_full-1] = RESX;     // FULL
-	  if ( ((txType==1) || (txType == 2)) )
+	  if ( ((txType==1) || (txType == 2) || (txType == 9)) )
 		{
 			anas[Mix_3pos-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
 		}
@@ -2907,7 +2936,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         int16_t vc = 0;
         if(g_model.swashCollectiveSource)
 				{
-					if ( ((txType==1) || (txType == 2)) )
+					if ( ((txType==1) || (txType == 2) || (txType == 9)) )
 					{
 						if ( g_model.swashCollectiveSource >= EXTRA_POTS_START )
 						{
@@ -3090,17 +3119,21 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							}
 						}
 
-				  	if ( ((txType==1) || (txType == 2)) )
+				  	if ( ((txType==1) || (txType == 2) || (txType == 9)) )
 						{
 							if ( k == MIX_3POS-1 )
 							{
                 uint32_t sw = switchIndex[md.switchSource] ;
 //                EnumKeys sw = (EnumKeys)md.switchSource ;
-                if ( ( md.switchSource == 5) || ( md.switchSource == 7) )
+								if ( md.switchSource > 7 )	// Logical switch
+								{
+									v = getSwitch( md.switchSource+2, 0, 0) ? 1024 : -1024 ;
+								}
+								else if ( ( md.switchSource == 5) || ( md.switchSource == 7) )
 								{ // 2-POS switch
                   v = hwKeyState(sw) ? 1024 : -1024 ;
 								}
-                else if( md.switchSource == 8)
+                else if( md.switchSource == 32)
 								{
 									v = 0 ;
 									if ( hwKeyState( HSW_Ele6pos1 ) )

@@ -41,7 +41,8 @@ PACK(typedef struct {
 
 
 
-//#include "../../opentx.h"
+#include "../ersky9x.h"
+#include "stddef.h"
 #include "stm32f4xx.h"
 #include "stm32f4xx_rcc.h"
 #include "stm32f4xx_gpio.h"
@@ -49,9 +50,13 @@ PACK(typedef struct {
 #include "stm32f4xx_tim.h"
 #include "stm32f4xx_ltdc.h"
 #include "stm32f4xx_dma2d.h"
+#include "stm32f4xx_fmc.h"
 #include "board_horus.h"
 #include "hal.h"
-#include "lcd.h"
+
+extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
+#include "lcd_driver.h"
+#include "../lcd.h"
 
 #define HBP  42
 #define VBP  12
@@ -70,6 +75,8 @@ PACK(typedef struct {
 
 #define LCD_BKLIGHT_PWM_FREQ           300
 
+#define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
+
 #define LCD_FIRST_FRAME_BUFFER         SDRAM_BANK_ADDR
 #define LCD_SECOND_FRAME_BUFFER        (SDRAM_BANK_ADDR + DISPLAY_BUFFER_SIZE)
 #define LCD_BACKUP_FRAME_BUFFER        (SDRAM_BANK_ADDR + 2*DISPLAY_BUFFER_SIZE)
@@ -80,9 +87,16 @@ uint32_t CurrentLayer = LCD_FIRST_LAYER;
 #define NRST_LOW()   do { LCD_GPIO_NRST->BSRRH = LCD_GPIO_PIN_NRST; } while(0)
 #define NRST_HIGH()  do { LCD_GPIO_NRST->BSRRL = LCD_GPIO_PIN_NRST; } while(0)
 
+uint8_t speaker[] = {
+4,8,0,
+0x38,0x38,0x7C,0xFE
+} ;
+
+
 
 // Temp from lcd.cpp
 uint16_t lcdColorTable[LCD_COLOR_COUNT];
+void backlightEnable(uint8_t dutyCycle) ;
 
 void lcdColorsInit()
 {
@@ -187,17 +201,17 @@ static void LCD_AF_GPIOConfig(void)
   GPIO_Init(GPIOK, &GPIO_InitStructure);
 }
 
-static void LCD_Backlight_Config(void)
-{
-  GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = LCD_GPIO_PIN_BL;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
-  GPIO_Init(LCD_GPIO_BL, &GPIO_InitStructure);
-  GPIO_PinAFConfig(LCD_GPIO_BL, LCD_GPIO_PinSource_BL, LCD_GPIO_AF_BL);
-}
+//static void LCD_Backlight_Config(void)
+//{
+//  GPIO_InitTypeDef GPIO_InitStructure;
+//  GPIO_InitStructure.GPIO_Pin = LCD_GPIO_PIN_BL;
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+//  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+//  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+//  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+//  GPIO_Init(LCD_GPIO_BL, &GPIO_InitStructure);
+//  GPIO_PinAFConfig(LCD_GPIO_BL, LCD_GPIO_PinSource_BL, LCD_GPIO_AF_BL);
+//}
 
 static void LCD_NRSTConfig(void)
 {
@@ -384,53 +398,131 @@ static void LCD_LayerInit()
   LTDC_DitherCmd(ENABLE);
 }
 
-void LCD_ControlLight(uint16_t dutyCycle)
+void backlightInit()
 {
-//  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-  TIM_OCInitTypeDef  TIM_OCInitStructure;
+//  if (IS_HORUS_PROD())
+//  if (0)
+	if ( isProdVersion() )
+//  if (GPIOI->IDR & 0x0800)
+	{
+  	// PIN init
+	  RCC_APB1PeriphClockCmd( BL_RCC_APB1Periph, ENABLE ) ;
+  	GPIO_InitTypeDef GPIO_InitStructure;
+  	GPIO_InitStructure.GPIO_Pin = BL_GPIO_PIN;
+  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  	GPIO_Init(BL_GPIO, &GPIO_InitStructure);
+  	GPIO_PinAFConfig(BL_GPIO, BL_GPIO_PinSource, BL_GPIO_AF);
+	}
+	else
+	{
+  	// PIN init
+  	GPIO_InitTypeDef GPIO_InitStructure;
+  	GPIO_InitStructure.GPIO_Pin = BLP_GPIO_PIN;
+  	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
+  	GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  	GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  	GPIO_Init(BL_GPIO, &GPIO_InitStructure);
+  	GPIO_PinAFConfig(BL_GPIO, BLP_GPIO_PinSource, BLP_GPIO_AF);
+  }
 
-  uint16_t freq = LCD_BKLIGHT_PWM_FREQ;
-
-  uint32_t temp = 0;
-  temp = 1000000 / freq - 1;
-
-//  TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock / 1000000 - 1 ;
-//  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-//  TIM_TimeBaseStructure.TIM_Period = temp;
-//  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-//  TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-
-//  TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
-
-	TIM8->CR1 = 0 ;
-	TIM8->ARR = temp ;
-	TIM8->PSC = SystemCoreClock / 1000000 - 1 ;
-  TIM8->RCR = 0 ;
-  TIM8->EGR = TIM_EGR_UG ;
-
-  unsigned long tempValue;
-  tempValue = (unsigned long)divRoundClosest((temp+1)*(100-dutyCycle), dutyCycle);
-
-//  TIM_Cmd(TIM8, DISABLE);
-	TIM8->CR1 &= (uint16_t)~TIM_CR1_CEN ;
-
-  /* Channel 1 Configuration in PWM mode */
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-  TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
-  TIM_OCInitStructure.TIM_Pulse = (uint32_t)tempValue;
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-  TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-  TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-  TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-  TIM_OC1Init(TIM8, &TIM_OCInitStructure);
-
-  TIM8->CR1 |= TIM_CR1_CEN ;
-//  TIM_Cmd(TIM8, ENABLE);
-  TIM8->BDTR |= TIM_BDTR_MOE ;
-//  TIM_CtrlPWMOutputs(TIM8, ENABLE);
-
+  // TIMER init
+#if defined(PCBX12D)
+	if ( isProdVersion() )
+//  if (IS_HORUS_PROD())
+	{
+    BL_TIMER->ARR = 100;
+    BL_TIMER->PSC = BL_TIMER_FREQ / 10000 - 1; // 1kHz
+    BL_TIMER->CCMR2 = TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2; // PWM
+    BL_TIMER->CCER = TIM_CCER_CC4E;
+    BL_TIMER->CCR4 = 0;
+    BL_TIMER->EGR = 0;
+    BL_TIMER->CR1 = TIM_CR1_CEN; // Counter enable
+  }
+  else
+	{
+	  
+		RCC_APB1PeriphClockCmd( BL_RCC_APB1Periph, ENABLE ) ;
+		
+    BL_TIMER->ARR = 100;
+    BL_TIMER->PSC = BL_TIMER_FREQ / 10000 - 1; // 1kHz
+    BL_TIMER->CCMR2 = TIM_CCMR2_OC4M_1 | TIM_CCMR2_OC4M_2; // PWM
+    BL_TIMER->CCER = TIM_CCER_CC4E;
+    BL_TIMER->CCR4 = 0;
+    BL_TIMER->EGR = 0;
+    BL_TIMER->CR1 = TIM_CR1_CEN; // Counter enable
+    
+		BLP_TIMER->ARR = 100;
+    BLP_TIMER->PSC = BL_TIMER_FREQ / 10000 - 1; // 1kHz
+    BLP_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2; // PWM
+    BLP_TIMER->CCER = TIM_CCER_CC1E | TIM_CCER_CC1NE;
+    BLP_TIMER->CCR1 = 100;
+    BLP_TIMER->EGR = 1;
+    BLP_TIMER->CR1 |= TIM_CR1_CEN; // Counter enable
+    BLP_TIMER->BDTR |= TIM_BDTR_MOE;
+  }
+#elif defined(PCBX10)
+  BL_TIMER->ARR = 100;
+  BL_TIMER->PSC = BL_TIMER_FREQ / 10000 - 1; // 1kHz
+  BL_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3PE; // PWM mode 1
+  BL_TIMER->CCER = TIM_CCER_CC3E | TIM_CCER_CC3NE;
+  BL_TIMER->CCR3 = 100;
+  BL_TIMER->EGR = TIM_EGR_UG;
+  BL_TIMER->CR1 |= TIM_CR1_CEN; // Counter enable
+  BL_TIMER->BDTR |= TIM_BDTR_MOE;
+#endif
 }
+
+
+//void LCD_ControlLight(uint16_t dutyCycle)
+//{
+////  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+//  TIM_OCInitTypeDef  TIM_OCInitStructure;
+
+//  uint16_t freq = LCD_BKLIGHT_PWM_FREQ;
+
+//  uint32_t temp = 0;
+//  temp = 1000000 / freq - 1;
+
+////  TIM_TimeBaseStructure.TIM_Prescaler = SystemCoreClock / 1000000 - 1 ;
+////  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+////  TIM_TimeBaseStructure.TIM_Period = temp;
+////  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+////  TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+
+////  TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
+
+//	TIM8->CR1 = 0 ;
+//	TIM8->ARR = temp ;
+//	TIM8->PSC = SystemCoreClock / 1000000 - 1 ;
+//  TIM8->RCR = 0 ;
+//  TIM8->EGR = TIM_EGR_UG ;
+
+//  unsigned long tempValue;
+//  tempValue = (unsigned long)divRoundClosest((temp+1)*(100-dutyCycle), dutyCycle);
+
+////  TIM_Cmd(TIM8, DISABLE);
+//	TIM8->CR1 &= (uint16_t)~TIM_CR1_CEN ;
+
+//  /* Channel 1 Configuration in PWM mode */
+//  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+//  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+//  TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Enable;
+//  TIM_OCInitStructure.TIM_Pulse = (uint32_t)tempValue;
+//  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+//  TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+//  TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+//  TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+//  TIM_OC1Init(TIM8, &TIM_OCInitStructure);
+
+//  TIM8->CR1 |= TIM_CR1_CEN ;
+////  TIM_Cmd(TIM8, ENABLE);
+//  TIM8->BDTR |= TIM_BDTR_MOE ;
+////  TIM_CtrlPWMOutputs(TIM8, ENABLE);
+//}
 
 /*********************************output****************************************/
 /**
@@ -440,6 +532,7 @@ void LCD_ControlLight(uint16_t dutyCycle)
   */
 void LCD_Init(void)
 {
+//	uint32_t save ;
   /* Reset the LCD --------------------------------------------------------*/
   LCD_NRSTConfig();
   lcd_reset();
@@ -450,10 +543,20 @@ void LCD_Init(void)
   LCD_Init_LTDC();
 
   //config backlight
-  LCD_Backlight_Config();
+	backlightInit() ;
+//  LCD_Backlight_Config();
 
   //Max Value
-  LCD_ControlLight(100);
+	backlightEnable(50) ;
+//  LCD_ControlLight(100);
+
+//	save = CurrentFrameBuffer ;
+	 
+//	CurrentFrameBuffer = LCD_SECOND_FRAME_BUFFER ;
+//	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0x001F ) ;
+//	CurrentFrameBuffer = LCD_FIRST_FRAME_BUFFER ;
+//	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0x001F ) ;
+//	CurrentFrameBuffer = save ;
 }
 
 /**
@@ -512,9 +615,13 @@ void lcdInit(void)
   LCD_SetTransparency(255);
 }
 
-void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+volatile uint8_t Dma2DdoneFlag ;
+volatile uint8_t LcdClearing ;
+
+
+void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
-  uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
+	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
   uint8_t red = (0xF800 & color) >> 11;
   uint8_t blue = 0x001F & color;
   uint8_t green = (0x07E0 & color) >> 5;
@@ -536,10 +643,69 @@ void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, u
 
   /* Start Transfer */
   DMA2D_StartTransfer();
+	Dma2DdoneFlag = 0 ;
+	
+	NVIC_SetPriority( DMA2D_IRQn, 12 ) ;
+  DMA2D->CR |= DMA2D_CR_TCIE ;
+	NVIC_EnableIRQ(DMA2D_IRQn) ;
 
-  /* Wait for CTC Flag activation */
-  while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
 }
+
+void waitDma2Ddone()
+{
+	while ( Dma2DdoneFlag == 0 )
+	{
+		// wait
+	}
+}
+
+void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+{
+	startLcdDrawSolidFilledRectDMA( x, y, w, h, color) ;
+	
+	waitDma2Ddone() ;
+	/* Wait for CTC Flag activation */
+//  while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+}
+
+
+extern "C" void DMA2D_IRQHandler( void )
+{
+  DMA2D->CR &= ~DMA2D_CR_TCIE ;
+	Dma2DdoneFlag	= 1 ;
+	if ( LcdClearing )
+	{
+		if ( LcdClearing == 1 )
+		{
+			LcdClearing = 2 ;
+//			startLcdDrawSolidFilledRectDMA( 426, 0, 480-426, 128, 0 ) ;
+//		}
+//		else if ( LcdClearing == 2 )
+//		{
+//			LcdClearing = 3 ;
+			startLcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+		}
+		else
+		{
+			LcdClearing = 0 ;
+		}
+	}
+}
+
+void lcd_clearBackground()
+{
+	LcdClearing = 1 ;
+	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
+}
+
+void waitLcdClearDdone()
+{
+	while ( LcdClearing )
+	{
+		// wait
+	}
+}
+
 
 void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap)
 {
@@ -627,6 +793,16 @@ int lcdRestoreBackupBuffer()
 
 void lcdRefresh()
 {
+extern uint8_t ImageDisplay ;
+	if ( ImageDisplay )
+	{
+		putsTime( 187, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+		lcd_img( 171, 2*FH, speaker, 0, 0 ) ;
+extern uint8_t CurrentVolume ;
+		lcd_hbar( 176, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hline( 157, 31, 61 ) ;
+		lcd_vline( 156, 0, 64 ) ;
+	}
   LCD_SetTransparency(255);
   if (CurrentLayer == LCD_FIRST_LAYER)
     LCD_SetLayer(LCD_SECOND_LAYER);
@@ -634,3 +810,52 @@ void lcdRefresh()
     LCD_SetLayer(LCD_FIRST_LAYER);
   LCD_SetTransparency(0);
 }
+
+void backlightEnable(uint8_t dutyCycle)
+{
+//  if (dutyCycle < 5)
+//	{
+//    dutyCycle = 5;
+//  }
+  
+#if defined(PCBX12D)
+//  if (IS_HORUS_PROD())
+//  if (0)
+	if ( isProdVersion() )
+//  if (GPIOI->IDR & 0x0800)
+	{
+    BL_TIMER->CCR4 = (100 - dutyCycle) ;
+  }
+  else
+	{
+    
+		BL_TIMER->CCR4 = (100 - dutyCycle) ;
+    
+		BLP_TIMER->CCR1 = dutyCycle ;
+  }
+#elif defined(PCBX10)
+  BL_TIMER->CCR3 = dutyCycle ;
+#endif
+}
+
+uint16_t BacklightBrightness ;
+
+void backlight_on()
+{
+	backlightEnable(BacklightBrightness) ;
+}
+
+void backlight_off()
+{
+	backlightEnable(10) ;
+}
+
+void backlight_set( uint16_t brightness )
+{
+	BacklightBrightness = brightness ;
+	backlightEnable(BacklightBrightness) ;
+}
+
+
+
+

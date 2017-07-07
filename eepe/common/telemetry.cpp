@@ -18,6 +18,7 @@
 #include <QString>
 #include <QMessageBox>
 #include <QColorDialog>
+#include <QFileDialog>
 
 // Receive buffer state machine state defs
 #define frskyDataIdle    0

@@ -19,9 +19,14 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "../horus/sdio_sd.h"
+#include "stm32f4xx.h"
+#include "stm32f4xx_sdio.h"
+#include "stm32f4xx_rcc.h"
+#include "stm32f4xx_dma.h"
+#include "sdio_sd.h"
+#include "misc.h"
 
-#include "../../debug.h"
+//#include "../../debug.h"
 
 /** @addtogroup Utilities
   * @{
@@ -368,7 +373,7 @@ SD_Error SD_Init(void)
   errorstatus = SD_PowerON();
   if (errorstatus != SD_OK)
   {
-    TRACE("SD_PowerON() status=%d", errorstatus);
+//    TRACE("SD_PowerON() status=%d", errorstatus);
     /*!< CMD Response TimeOut (wait for CMDSENT flag) */
     return(errorstatus);
   }
@@ -376,7 +381,7 @@ SD_Error SD_Init(void)
   errorstatus = SD_InitializeCards();
   if (errorstatus != SD_OK)
   {
-    TRACE("SD_InitializeCards() status=%d", errorstatus);
+//    TRACE("SD_InitializeCards() status=%d", errorstatus);
     /*!< CMD Response TimeOut (wait for CMDSENT flag) */
     return(errorstatus);
   }
@@ -531,7 +536,7 @@ OPTIMIZE("O0") SD_Error SD_PowerON(void)
 
   if (errorstatus != SD_OK)
   {
-    TRACE("SD_CMD_GO_IDLE_STATE status=%d", errorstatus);
+//    TRACE("SD_CMD_GO_IDLE_STATE status=%d", errorstatus);
     /*!< CMD Response TimeOut (wait for CMDSENT flag) */
     return(errorstatus);
   }
@@ -598,7 +603,7 @@ OPTIMIZE("O0") SD_Error SD_PowerON(void)
 
       if (errorstatus != SD_OK)
       {
-        TRACE("SD_CMD_APP_CMD status=%d", errorstatus);
+//        TRACE("SD_CMD_APP_CMD status=%d", errorstatus);
         return(errorstatus);
       }
       SDIO_CmdInitStructure.SDIO_Argument = SD_VOLTAGE_WINDOW_SD | SDType;
@@ -611,7 +616,7 @@ OPTIMIZE("O0") SD_Error SD_PowerON(void)
       errorstatus = CmdResp3Error();
       if (errorstatus != SD_OK)
       {
-        TRACE("SD_CMD_SD_APP_OP_COND status=%d", errorstatus);
+//        TRACE("SD_CMD_SD_APP_OP_COND status=%d", errorstatus);
         return(errorstatus);
       }
 

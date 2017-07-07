@@ -287,10 +287,14 @@
 #define STR_CAPACITY_ALARM  267
 #define STR_BT_BAUDRATE     268
 #define STR_ROTARY_DIVISOR  269
-#define STR_STICK_LV_GAIN   270
-#define STR_STICK_LH_GAIN   271
-#define STR_STICK_RV_GAIN   272
-#define STR_STICK_RH_GAIN   273
+#define STR_LV              270
+//#define STR_STICK_LV_GAIN   270
+#define STR_LH              271
+#define STR_RV              272
+#define STR_RH              273
+//#define STR_STICK_LH_GAIN   271
+//#define STR_STICK_RV_GAIN   272
+//#define STR_STICK_RH_GAIN   273
 #define STR_BIND					  274
 #define STR_RANGE					  275
 #define STR_ALRMS_OFF				276
@@ -384,6 +388,15 @@
 #define STR_TOTAL_TIME			360
 #define STR_POPUP_GLOBALS		361
 #define STR_WARNING					362
+#define STR_STICK_GAIN      363
+#define STR_STICK_DEADBAND  364
+#ifdef ARUNI
+#define STR_ALT_SW_NAMES    365
+#define STR_SOFTWARE_VOL    366
+#define STR_CHANGE_MAY      367
+#define STR_BRICK_RADIO     368
+#define STR_MENU_PROCEED    369
+#endif
 
 //"Current Source"
 //"\004----A1  A2  FASVSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "

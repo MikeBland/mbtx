@@ -37,7 +37,7 @@
 #define WAIT_FOR_DMA_END()             do { } while (lcd_busy)
 
 
-#define LCD_W	 128
+//#define LCD_W	 128
 #define IS_LCD_RESET_NEEDED()          true
 
 bool lcdInitFinished = false;

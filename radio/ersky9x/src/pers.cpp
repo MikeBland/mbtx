@@ -131,7 +131,7 @@ uint16_t evalChkSum()
 void generalDefault()
 {
   memset(&g_eeGeneral,0,sizeof(g_eeGeneral));
-  g_eeGeneral.myVers   =  MDVERS;
+  g_eeGeneral.myVers   =  MDSKYVERS;
 //  g_eeGeneral.currModel=  0;
 #ifdef PCB9XT
   g_eeGeneral.contrast = 25 ;
@@ -155,6 +155,7 @@ void generalDefault()
   }
   strncpy_P(g_eeGeneral.ownerName,PSTR(STR_ME), 10);
   g_eeGeneral.chkSum = evalChkSum() ;
+	eeDirty(EE_GENERAL) ;
 }
 
 void modelDefault(uint8_t id)
@@ -182,6 +183,7 @@ void modelDefault(uint8_t id)
 	g_model.Module[0].protocol = PROTO_OFF ;
 	g_model.Module[1].protocol = PROTO_OFF ;
 //#endif
+	eeDirty(EE_MODEL) ;
 }
 
 bool eeDuplicateModel(uint8_t id)

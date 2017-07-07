@@ -36,6 +36,19 @@
 #define DISPLAY_H  64
 #endif
 
+#ifdef PCBX12D
+#define DISPLAY_W	480
+#define DISPLAY_H	272
+#endif
+
+#ifndef LCD_W
+#define LCD_W	DISPLAY_W
+#endif
+#ifndef LCD_H
+#define LCD_H DISPLAY_H
+#endif
+
+
 #define FW          6
 #define FWNUM       5
 #define FH          8
@@ -61,6 +74,14 @@
 
 /* time & telemetry flags */
 #define NO_UNIT       0x80
+
+/* line, rect, square flags */
+#define FORCE                          0x02
+#define ERASE                          0x04
+#define ROUND                          0x08
+
+#define SOLID                          0xff
+#define DOTTED                         0x55
 
 // GVAR flags
 #define GVAR_100			0x100
@@ -93,7 +114,6 @@ extern const uint8_t *ExtraBigFont ;
 extern uint8_t plotType ;
 
 extern uint8_t lcd_putc(uint8_t x,uint8_t y,const char c ) ;
-extern uint8_t lcd_putcAtt( uint8_t x, uint8_t y, const char c, uint8_t mode ) ;
 extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
 extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
@@ -111,11 +131,34 @@ extern uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, 
 
 extern void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;
 extern void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h ) ;
-extern void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink ) ;
-extern void lcd_plot( uint8_t x, uint8_t y ) ;
-extern void lcd_hlineStip( unsigned char x, unsigned char y, signed char w, uint8_t pat ) ;
+extern void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, uint8_t att ) ;
+#ifdef PCBX12D
+extern "C" void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
+extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
+extern "C" void waitDma2Ddone(void) ;
+extern void lcd_clearBackground( void ) ;
+extern void waitLcdClearDdone( void ) ;
+extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode ) ;
+extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour ) ;
+extern void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat ) ;
+extern void lcd_hline( uint16_t x, uint16_t y, int8_t w ) ;
+extern void lcd_vline( uint16_t x, uint16_t y, int8_t h ) ;
+extern void lcd_plot( uint16_t x, uint16_t y ) ;
+extern void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink ) ;
+extern uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour) ;
+extern void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att ) ;
+#define LCD_RED			0xF800
+#define LCD_GREEN		0x07E0
+#define LCD_BLUE		0x001F
+#else
+extern uint8_t lcd_putcAtt( uint8_t x, uint8_t y, const char c, uint8_t mode ) ;
+extern void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat ) ;
 extern void lcd_hline( uint8_t x, uint8_t y, int8_t w ) ;
 extern void lcd_vline( uint8_t x, uint8_t y, int8_t h ) ;
+extern void lcd_plot( uint8_t x, uint8_t y ) ;
+extern void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink ) ;
+extern void lcdDrawFilledRect( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t pat, uint8_t att ) ;
+#endif
 extern void lcd_clear( void ) ;
 extern void lcd_init( void ) ;
 extern void lcdSetRefVolt(uint8_t val) ;
@@ -138,6 +181,9 @@ extern void backlight_set( uint16_t brightness, uint16_t w_or_b ) ;
 #else
 extern void backlight_set( uint16_t brightness ) ;
 #endif
+#endif
+#ifdef PCBX12D
+extern void backlight_set( uint16_t brightness ) ;
 #endif
 
 #define BLINK_ON_PHASE (g_blinkTmr10ms & (1<<6))

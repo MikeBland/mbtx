@@ -75,6 +75,10 @@ void ispForceResetOff()
 	RST_HIGH() ;   /* RST high */
 }
 
+#ifdef PCB9XT
+uint16_t hwTimerValue() ;
+#endif
+
 void ispDelay()
 {
 	uint16_t startTime ;

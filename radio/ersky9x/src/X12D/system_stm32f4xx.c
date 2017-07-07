@@ -90,7 +90,7 @@ void SDRAM_Init(void) ;
   * @{
   */
 
-  uint32_t SystemCoreClock = 180000000;
+  uint32_t SystemCoreClock = 168000000 ;
 
   __I uint8_t AHBPrescTable[16] = {0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 6, 7, 8, 9};
 
@@ -101,6 +101,16 @@ void SDRAM_Init(void) ;
 /** @addtogroup STM32F4xx_System_Private_FunctionPrototypes
   * @{
   */
+
+extern uint32_t Master_frequency ;
+struct t_PeripheralSpeeds
+{
+	uint32_t Peri1_frequency ;
+	uint32_t Peri2_frequency ;
+	uint32_t Timer_mult1 ;
+	uint32_t Timer_mult2 ;
+} ;
+struct t_PeripheralSpeeds PeripheralSpeeds ;
 
 static void SetSysClock(void);
 #ifdef DATA_IN_ExtSRAM
@@ -147,7 +157,7 @@ void SystemInit(void)
   /* Disable all interrupts */
   RCC->CIR = 0x00000000;
 
-  SDRAM_Init();
+//  SDRAM_Init();
   void FMC_SDRAMWriteProtectionConfig(uint32_t SDRAM_Bank, FunctionalState NewState);
 
   SDRAM_Init(); // calls SDRAM_GPIOConfig()
@@ -332,6 +342,13 @@ static void SetSysClock(void)
   { /* If HSE fails to start-up, the application will have wrong clock
          configuration. User can add here some code to deal with this error */
   }
+
+
+	Master_frequency = 168000000 ;
+	PeripheralSpeeds.Peri1_frequency = 42000000 ;
+	PeripheralSpeeds.Peri2_frequency = 84000000 ;
+	PeripheralSpeeds.Timer_mult1 = 2 ;
+	PeripheralSpeeds.Timer_mult2 = 2 ;
 
 }
 

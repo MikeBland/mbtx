@@ -21,7 +21,7 @@
 
 //eeprom data
 //#define EE_VERSION 2
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D)
 #define MAX_MODELS  60
 #else
 #define MAX_MODELS  32
@@ -81,10 +81,20 @@
 #define BEEP_VAL     ( (g_eeGeneral.warnOpts & WARN_BVAL_BIT) >>3 )
 
 // Bits in stickGain
+#ifndef ARUNI
 #define STICK_LV_GAIN	0x40
 #define STICK_LH_GAIN	0x10
 #define STICK_RV_GAIN	0x04
 #define STICK_RH_GAIN	0x01
+#else
+#define STICK_LV_GAIN	0x02  // ch.1
+#define STICK_LH_GAIN	0x01  // ch.0
+#define STICK_RV_GAIN	0x04  // ch.2
+#define STICK_RH_GAIN	0x08  // ch.3
+#define STICK_P1_GAIN 0x10  // ch.4
+#define STICK_P2_GAIN 0x20  // ch.5
+#define STICK_P3_GAIN 0x40  // ch.6
+#endif
 
 #define GENERAL_OWNER_NAME_LEN 10
 #define MODEL_NAME_LEN         10
@@ -196,8 +206,9 @@ PACK(typedef struct t_EEGeneral {
 //	uint8_t		bt_baudrate:4 ;
 //	uint8_t		bt_correction:4 ;
 	uint8_t		rotaryDivisor ;
-	uint8_t   crosstrim:1;
-	uint8_t   hapticMinRun:7;
+	uint8_t   crosstrim:1 ;
+	uint8_t   hapticMinRun:6 ;
+	uint8_t   xcrosstrim:1 ;
 	int8_t    rtcCal ;
   int16_t   x9dcalibMid ;			// X9D
   int16_t   x9dcalibSpanNeg ;	// X9D
@@ -241,7 +252,12 @@ PACK(typedef struct t_EEGeneral {
 	btDeviceData btDevice[4] ;
 	TrainerProfile trainerProfile[4] ;
 	uint8_t CurrentTrainerProfile ;
+#ifdef ARUNI
+  uint8_t SixPositionTable[5];
+  uint8_t reserved[7];
+#else
 	uint16_t SixPositionCalibration[6] ;
+#endif
 	uint8_t		pb3source ;
 	uint8_t		pb4source ;
 	uint8_t	extraPotsSource[4] ;
@@ -250,7 +266,9 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t reverseScreen:1 ;
 	uint8_t musicLoop:1 ;
 	uint8_t musicType:1 ;
-	uint8_t spare:4 ;
+	uint8_t altSwitchNames:1 ;    // use alternative switch names (ARUNI)
+	uint8_t sixPosDelayFilter:1 ; // 6POS switch delay filtering (ARUNI)
+	uint8_t spare:2 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;
@@ -707,7 +725,7 @@ PACK(typedef struct te_ModelData {
   int8_t    trimInc;          // Trim Increments
   int8_t    ppmDelay;
   int8_t    trimSw;
-  uint8_t   beepANACenter;    // 1<<0->A1.. 1<<6->A7
+  uint8_t   beepANACenter;    // 1<<0->A1.. 1<<6->A7, 1<<7->P4
   uint8_t   pulsePol:1;
   uint8_t   extendedLimits:1;
   uint8_t   swashInvertELE:1;
@@ -751,7 +769,8 @@ PACK(typedef struct te_ModelData {
 	int8_t logSwitch ;
 	uint8_t logRate:4 ;
 	uint8_t logNew:1 ;
-	uint8_t logSpare:3 ;
+	//uint8_t logSpare:3 ;
+  uint8_t   beepANACenter3:3;    // 1<<0->P5, 1<<1->P6, 1<<2->P7
   // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
@@ -842,6 +861,8 @@ PACK(typedef struct te_ModelData {
 	VarioExtraData varioExtraData ;
 	uint8_t telemetryTimeout ;
 	uint8_t throttleIdleScale ;
+	uint8_t switchDelay[NUM_SKYCSW] ;
+	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

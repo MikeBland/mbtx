@@ -28,8 +28,15 @@
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
+#ifdef PCBX12D
+#ifndef SIMU
+#include "X12D/stm32f4xx.h"
+#include "X12D/core_cm4.h"
+#endif
+#else
 #ifndef SIMU
 #include "core_cm3.h"
+#endif
 #endif
 #include "lcd.h"
 #include "ff.h"
@@ -137,13 +144,16 @@ uint8_t AltitudeDecimals ;
 uint8_t AltitudeZeroed = 0 ;
 extern int16_t AltOffset ;
 int16_t WholeAltitude ;
+uint16_t PixHawkCapacity ;
 uint8_t VfasVoltageTimer ;
 //uint8_t RssiSetTimer ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 #define FLYSKY_TELEMETRY_LENGTH (2+7*4)
 
-uint8_t frskyRxBuffer[FLYSKY_TELEMETRY_LENGTH+2];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
+#define TELEMETRY_RX_PACKET_SIZE	128
+
+uint8_t frskyRxBuffer[128];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1), 128 for XFIRE
 uint8_t frskyTxBuffer[20];   // Ditto for transmit buffer
 //uint8_t frskyTxBufferCount = 0;
 //uint8_t FrskyRxBufferReady = 0;
@@ -221,6 +231,38 @@ uint16_t DsmABLRFH[6] ;
 uint32_t LastDsmfades ;
 uint16_t LastDsmFH[2] ;
 
+#ifdef XFIRE
+void processCrossfireTelemetryData( uint8_t data ) ;
+
+enum CrossfireSensorIndexes {
+  RX_RSSI1_INDEX,
+  RX_RSSI2_INDEX,
+  RX_QUALITY_INDEX,
+  RX_SNR_INDEX,
+  RX_ANTENNA_INDEX,
+  RF_MODE_INDEX,
+  TX_POWER_INDEX,
+  TX_RSSI_INDEX,
+  TX_QUALITY_INDEX,
+  TX_SNR_INDEX,
+  BATT_VOLTAGE_INDEX,
+  BATT_CURRENT_INDEX,
+  BATT_CAPACITY_INDEX,
+  GPS_LATITUDE_INDEX,
+  GPS_LONGITUDE_INDEX,
+  GPS_GROUND_SPEED_INDEX,
+  GPS_HEADING_INDEX,
+  GPS_ALTITUDE_INDEX,
+  GPS_SATELLITES_INDEX,
+  ATTITUDE_PITCH_INDEX,
+  ATTITUDE_ROLL_INDEX,
+  ATTITUDE_YAW_INDEX,
+  FLIGHT_MODE_INDEX,
+  UNKNOWN_INDEX,
+};
+
+#endif
+
 #if defined(VARIO)
 stuct t_vario VarioData ;
 #endif
@@ -263,7 +305,7 @@ void dsmTelemetryStartReceive()
  #endif // nREVX
 #endif // PCBSKY
 	
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 	if ( g_model.frskyComPort == 0 )
 	{
 		if ( CaptureMode == CAP_COM1 )
@@ -350,8 +392,18 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 		cell = ( cell & 0x0FFF ) / 5 ;
 //		FrskyVolts[battnumber] = cell ;
 //		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
-		FrskyHubData[FR_CELL1+battnumber] = cell ;
-		TelemetryDataValid[FR_CELL1+battnumber] = 40 + g_model.telemetryTimeout ;
+		uint32_t index ;
+		uint32_t bit ;
+		uint32_t offset ;
+	  index = FR_CELL1+battnumber ;
+		offset = index >> 5 ;
+		bit = 1 << (index & 0x0000001F) ;
+		if ( g_model.LogNotExpected[offset] & bit )
+		{
+			return ;
+		}
+		FrskyHubData[index] = cell ;
+		TelemetryDataValid[index] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELL_MIN] = 40 + g_model.telemetryTimeout ;
 		if ( battnumber == 0 )
@@ -396,6 +448,15 @@ void storeRSSI( uint8_t value )
 
 void storeTelemetryData( uint8_t index, uint16_t value )
 {
+	uint32_t bit ;
+	uint32_t offset ;
+	
+	offset = index >> 5 ;
+	bit = 1 << (index & 0x0000001F) ;
+	if ( g_model.LogNotExpected[offset] & bit )
+	{
+		return ;
+	}
 	if ( index == FR_ALT_BARO )
 	{
 		value *= 10 ;
@@ -1325,7 +1386,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 	else if ( type == 0x80 )
 	{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
@@ -1424,6 +1485,21 @@ static bool checkSportPacket()
 
 uint8_t ARDUPtype ;
 
+#if defined(LUA) || defined(BASIC)
+static void postSportToLua( uint8_t *packet )
+{
+	if ( fifo128Space( &Lua_fifo ) >= 8 )
+	{
+		uint32_t i ;
+		for ( i = 0 ; i < 8 ; i += 1 )
+		{
+			put_fifo128( &Lua_fifo, *packet++ ) ;
+		}
+	}
+}
+#endif
+
+
 // Physical ID in packet[0] ;
 void processSportPacket()
 {
@@ -1441,6 +1517,13 @@ void processSportPacket()
 	{
     return;
 	}
+
+#if defined(LUA) || defined(BASIC)
+	if ( ( prim == 0x32 ) || ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
+	{
+		postSportToLua( packet ) ;
+	}
+#endif
   
 	if ( ( prim == DATA_FRAME ) || ( prim == 0x32 ) )
 	{
@@ -1811,6 +1894,20 @@ void processSportPacket()
 							storeTelemetryData( FR_CURRENT, xvalue ) ;
 							xvalue = (value >> 17) ;
 							storeTelemetryData( FR_AMP_MAH, xvalue ) ;
+							if ( PixHawkCapacity )
+							{
+								storeTelemetryData( FR_FUEL, 100 - (xvalue * 100 / PixHawkCapacity) ) ;
+							}
+						}
+						else if ( t == ARDUP_VandYAW_ID )
+						{
+							uint16_t xvalue ;
+							xvalue = (value >> 9) & 0x7F ;
+							if ( value & 0x0000100 )
+							{
+								xvalue *= 10 ;
+							}
+							storeTelemetryData( FR_AIRSPEED, xvalue ) ;
 						}
 						else if ( t == ARDUP_PARAM_ID )
 						{
@@ -1832,11 +1929,9 @@ void processSportPacket()
 	//						}
 							else if ( id == 4 )
 							{
-								uint32_t xvalue ;
-								xvalue = FrskyHubData[FR_AMP_MAH] * 100 ;
 								if ( value )
 								{
-									storeTelemetryData( FR_FUEL, 100 - (xvalue / value) ) ;
+									PixHawkCapacity = value ;
 								}
 							}
 						}
@@ -1956,6 +2051,8 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 extern uint8_t RawLogging ;
 void rawLogByte( uint8_t byte ) ;
 
+
+
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
@@ -1979,9 +2076,10 @@ void frsky_receive_byte( uint8_t data )
 
 #ifdef XFIRE
  #ifdef REVX
-		if ( g_model.protocol == PROTO_XFIRE )
+		if ( g_model.Module[1].protocol == PROTO_XFIRE )
 		{
 			// process Xfire data here
+			processCrossfireTelemetryData( data ) ;
 			return ;
 		}
  #endif
@@ -2132,7 +2230,7 @@ void frsky_receive_byte( uint8_t data )
 //#endif
           break;
         }
-        else if ( (data == PRIVATE) && (numbytes == 0) )
+        else if ( (data == PRIVATE) && ( (numbytes == 0) || (numbytes == 19) ) )
 				{
 					dataState = PRIVATE_COUNT ;
 					break ;
@@ -2555,12 +2653,12 @@ void FRSKY_Init( uint8_t brate )
 	}
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D)
 	if ( brate == TEL_TYPE_FRSKY_HUB )
 	{
 		uint32_t baudrate = 9600 ;
 		uint32_t parity = SERIAL_NO_PARITY ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
@@ -2568,7 +2666,7 @@ void FRSKY_Init( uint8_t brate )
 		{
 			baudrate = 100000 ;
 			parity = SERIAL_EVEN_PARITY ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FRSKYX ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX ) )
@@ -2576,7 +2674,7 @@ void FRSKY_Init( uint8_t brate )
 			{
 				FrskyTelemetryType = 1 ;
 			}
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FrskyD ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD ) )
@@ -2584,7 +2682,7 @@ void FRSKY_Init( uint8_t brate )
 			{
 				FrskyTelemetryType = 0 ;
 			}
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_AFHD2SA ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA ) )
@@ -2595,7 +2693,7 @@ void FRSKY_Init( uint8_t brate )
 		}
 #ifdef XFIRE
  #ifdef PCB9XT
-		if ( g_model.xprotocol == PROTO_XFIRE )
+		if ( g_model.Module[1].protocol == PROTO_XFIRE )
 		{
 			baudrate = 400000 ;
 		}
@@ -2661,13 +2759,13 @@ void FRSKY_Init( uint8_t brate )
 	else	// brate == 2, DSM telemetry
 	{
 		FrskyComPort = g_model.frskyComPort ;
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
 #endif
 		{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM ) )
@@ -2926,6 +3024,7 @@ void resetTelemetry()
 	Frsky_Amp_hour_prescale = 0 ;
 	FrskyHubData[FR_AMP_MAH] = 0 ;
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
+	PixHawkCapacity = 0 ;
 }
 
 uint8_t decodeMultiTelemetry()
@@ -2985,7 +3084,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBX12D)
 	type = g_model.Module[0].protocol == PROTO_PXX ;
 	if ( g_model.Module[0].protocol == PROTO_OFF )
 	{
@@ -3023,7 +3122,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D)
 	if ( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
 	{
 		type = TEL_DSM ;
@@ -3073,6 +3172,12 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		type = TEL_XFIRE ;
 	}
  #endif
+ #ifdef PCB9XT
+	if ( g_model.Module[1].protocol == PROTO_XFIRE )
+	{
+		type = TEL_XFIRE ;
+	}
+ #endif
 #endif
 	return type ;
 }
@@ -3090,7 +3195,7 @@ void check_frsky( uint32_t fivems )
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
@@ -3201,14 +3306,14 @@ void check_frsky( uint32_t fivems )
 //	}
 //#endif
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 	{
 		uint16_t rxchar ;
 		if ( g_model.frskyComPort == 0 )
 		{
 //			if ( CaptureMode == CAP_COM1 )
 //			{
-				uint16_t rxchar ;
+//				uint16_t rxchar ;
 				while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )
 				{
 					frsky_receive_byte( rxchar ) ;
@@ -3222,6 +3327,7 @@ void check_frsky( uint32_t fivems )
 //				}
 //			}
 		}
+#ifndef PCBX12D
 		else
 		{
 			while ( ( rxchar = rxCom2() ) != 0xFFFF )
@@ -3229,6 +3335,7 @@ void check_frsky( uint32_t fivems )
 				frsky_receive_byte( rxchar ) ;
 			}
 		}
+#endif
 	}
 #endif
 
@@ -3616,4 +3723,185 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
 		return unit ;
 }
 
+#ifdef XFIRE
 
+uint8_t crc8(const uint8_t * ptr, uint32_t len) ;
+
+static bool checkCrossfireTelemetryFrameCRC()
+{
+  uint8_t len = frskyRxBuffer[1] ;
+  uint8_t crc = crc8(&frskyRxBuffer[2], len-1) ;
+  return (crc == frskyRxBuffer[len+1]) ;
+}
+
+template<int N>
+bool getCrossfireTelemetryValue(uint8_t index, uint32_t &value)
+{
+  bool result = false ;
+  value = 0 ;
+  uint8_t *byte = &frskyRxBuffer[index] ;
+  for ( uint32_t i = 0 ; i < N ; i += 1 )
+	{
+    value <<= 8 ;
+    if (*byte != 0xff)
+		{
+      result = true ;
+    }
+    value += *byte++ ;
+  }
+  return result ;
+}
+
+
+void processCrossfireTelemetryFrame()
+{
+  if (!checkCrossfireTelemetryFrameCRC())
+	{
+    return ;
+  }
+
+  uint8_t id = frskyRxBuffer[2] ;
+  uint32_t value ;
+  switch(id)
+	{
+//    case GPS_ID:
+//      if (getCrossfireTelemetryValue<4>(3, value))
+//        processCrossfireTelemetryValue(GPS_LATITUDE_INDEX, value/10);
+//      if (getCrossfireTelemetryValue<4>(7, value))
+//        processCrossfireTelemetryValue(GPS_LONGITUDE_INDEX, value/10);
+//      if (getCrossfireTelemetryValue<2>(11, value))
+//        processCrossfireTelemetryValue(GPS_GROUND_SPEED_INDEX, value);
+//      if (getCrossfireTelemetryValue<2>(13, value))
+//        processCrossfireTelemetryValue(GPS_HEADING_INDEX, value);
+//      if (getCrossfireTelemetryValue<2>(15, value))
+//        processCrossfireTelemetryValue(GPS_ALTITUDE_INDEX,  value - 1000);
+//      if (getCrossfireTelemetryValue<1>(17, value))
+//        processCrossfireTelemetryValue(GPS_SATELLITES_INDEX, value);
+//    break;
+
+    case CRSF_LINK_ID :
+      frskyStreaming = FRSKY_TIMEOUT10ms ;
+      for ( uint32_t i=0 ; i<=TX_SNR_INDEX; i += 1 )
+			{
+        if (getCrossfireTelemetryValue<1>(3+i, value))
+				{
+//          if (i == TX_POWER_INDEX)
+//					{
+//            static const uint32_t power_values[] = { 0, 10, 25, 100, 500, 1000, 2000 } ;
+//            value = (value < DIM(power_values) ? power_values[value] : 0) ;
+//          }
+//          processCrossfireTelemetryValue(i, value) ;
+  				if ( i == TX_QUALITY_INDEX )
+					{
+			    	frskyTelemetry[3].set(value, FR_TXRSI_COPY ) ;	// TSSI
+					}
+					
+          if ( i == RX_QUALITY_INDEX )
+					{
+						storeRSSI( value ) ;
+//            telemetryData.rssi.set(value) ;
+          }
+					if ( i < 6 )
+					{
+						storeTelemetryData( FR_CUST1 + i, value ) ;
+					}
+        }
+      }
+    break ;
+
+    case CRSF_BATTERY_ID :
+      frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+      if (getCrossfireTelemetryValue<2>( 3, value) )
+			{
+				storeTelemetryData( FR_VOLTS, value ) ;
+			}
+//        processCrossfireTelemetryValue(BATT_VOLTAGE_INDEX, value);
+      if (getCrossfireTelemetryValue<2>(5, value))
+			{
+				storeTelemetryData( FR_CURRENT, value ) ;
+			}
+//        processCrossfireTelemetryValue(BATT_CURRENT_INDEX, value);
+      if (getCrossfireTelemetryValue<3>(7, value))
+			{
+				storeTelemetryData( FR_AMP_MAH, value ) ;
+			}
+//      if (getCrossfireTelemetryValue<3>(7, value))
+//        processCrossfireTelemetryValue(BATT_CAPACITY_INDEX, value);
+    break ;
+
+//    case ATTITUDE_ID:
+//      if (getCrossfireTelemetryValue<2>(3, value))
+//        processCrossfireTelemetryValue(ATTITUDE_PITCH_INDEX, value/10);
+//      if (getCrossfireTelemetryValue<2>(5, value))
+//        processCrossfireTelemetryValue(ATTITUDE_ROLL_INDEX, value/10);
+//      if (getCrossfireTelemetryValue<2>(7, value))
+//        processCrossfireTelemetryValue(ATTITUDE_YAW_INDEX, value/10);
+//    break;
+
+//    case FLIGHT_MODE_ID:
+//    {
+//      const CrossfireSensor & sensor = crossfireSensors[FLIGHT_MODE_INDEX];
+//      for (int i=0; i<min<int>(16, telemetryRxBuffer[1]-2); i+=4) {
+//        uint32_t value = *((uint32_t *)&telemetryRxBuffer[3+i]);
+//        setTelemetryValue(TELEM_PROTO_CROSSFIRE, sensor.id, 0, sensor.subId, value, sensor.unit, i);
+//      }
+//      break;
+//    }
+
+//#if defined(LUA)
+//    default:
+//      if (luaInputTelemetryFifo && luaInputTelemetryFifo->hasSpace(telemetryRxBufferCount-2) ) {
+//        for (uint8_t i=1; i<telemetryRxBufferCount-1; i++) {
+//          // destination address and CRC are skipped
+//          luaInputTelemetryFifo->push(telemetryRxBuffer[i]);
+//        }
+//      }
+//    break;
+//#endif
+  }
+}
+
+void processCrossfireTelemetryData(uint8_t data)
+{
+	
+	if ( g_model.telemetryProtocol == TELEMETRY_MAVLINK )
+	{
+		mavlinkReceive( data ) ;
+		return ;
+	}
+	
+  uint8_t numbytes = numPktBytes ;
+	
+  if ( numbytes == 0 && data != RADIO_ADDRESS)
+	{
+		return ;
+	}
+	
+  if ( numbytes == 1 && (data < 2 || data > TELEMETRY_RX_PACKET_SIZE-2))
+	{
+    numPktBytes = 0 ;
+    return ;
+  }
+  
+	if ( numbytes < TELEMETRY_RX_PACKET_SIZE)
+	{
+    frskyRxBuffer[numbytes++] = data ;
+  }
+  else
+	{
+    numPktBytes = 0 ;
+  }
+  
+	if ( numbytes > 4)
+	{
+    uint8_t length = frskyRxBuffer[1] ;
+    if (length + 2 == numbytes )
+		{
+      processCrossfireTelemetryFrame() ;
+      numbytes = 0;
+    }
+  }
+	numPktBytes = numbytes ;
+}
+
+#endif

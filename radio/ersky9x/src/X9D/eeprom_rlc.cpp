@@ -186,6 +186,7 @@ void generalDefault()
 	g_eeGeneral.bright = 50 ;
 	g_eeGeneral.volume = 2 ;
 	g_eeGeneral.lightSw = MAX_SKYDRSWITCH ;	// ON
+	g_eeGeneral.filterInput = 1 ;
 
   for (int i = 0; i < NUM_ANALOG_CALS ; ++i )
 	{
@@ -209,8 +210,19 @@ void modelDefault(uint8_t id)
 
   applyTemplate(0) ; //default 4 channel template
   memcpy(ModelNames[id+1], g_model.name, sizeof(g_model.name));
-	g_model.protocol = PROTO_OFF ;
-	g_model.xprotocol = PROTO_OFF ;
+	// Set all mode trims to be copies of FM0
+	for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
+	{
+		g_model.phaseData[i].trim[0] = TRIM_EXTENDED_MAX + 1 ;
+		g_model.phaseData[i].trim[1] = TRIM_EXTENDED_MAX + 1 ;
+		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
+		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
+	}
+//#ifdef PCB9XT
+//	g_model.protocol = PROTO_OFF ;
+//	g_model.xprotocol = PROTO_OFF ;
+	g_model.Module[0].protocol = PROTO_OFF ;
+	g_model.Module[1].protocol = PROTO_OFF ;
 	eeDirty(EE_MODEL) ;
 }
 
@@ -1158,7 +1170,7 @@ void eeReadAll()
        EeFsck() < 0 ||
       !eeLoadGeneral())
   {
-    generalDefault();
+     generalDefault();
 
 //    ALERT(STR_ALERT, STR_BAD_EEPROM, AU_BAD_EEPROM);
     alert((char const *)PSTR(STR_BAD_EEPROM), true);

@@ -73,6 +73,7 @@ extern void put_fifo64( struct t_fifo64 *pfifo, uint8_t byte ) ;
 extern int32_t get_fifo64( struct t_fifo64 *pfifo ) ;
 extern void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte ) ;
 extern int32_t get_fifo128( struct t_fifo128 *pfifo ) ;
+extern uint32_t fifo128Space( struct t_fifo128 *pfifo ) ;
 extern struct t_serial_tx Bt_tx ;
 extern uint32_t txPdcBt( struct t_serial_tx *data ) ;
 extern uint32_t txPdcCom2( struct t_serial_tx *data ) ;
@@ -83,6 +84,10 @@ extern struct t_fifo64 Sbus_fifo ;
 //extern struct t_fifo64 CaptureRx_fifo ;
 extern struct t_fifo128 Com1_fifo ;
 extern struct t_fifo128 Com2_fifo ;
+
+#if defined(LUA) || defined(BASIC)
+extern struct t_fifo128 Lua_fifo ;
+#endif
 
 extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
 
@@ -113,6 +118,12 @@ extern void stop_USART6_Sbus( void ) ;
 extern void com1Parity( uint32_t even ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
+
+#ifdef PCBX12D
+extern void ConsoleInit( void ) ;
+extern void com2Parity( uint32_t even ) ;
+#endif
+
 
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;

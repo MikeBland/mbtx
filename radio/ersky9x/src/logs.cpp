@@ -296,6 +296,10 @@ extern uint32_t sdMounted( void ) ;
 	{
 		f_puts(",RxV", &g_oLogFile);
 	}
+	if ( isLogEnabled( LOG_HDG ) )
+	{
+		f_puts(",Hdg", &g_oLogFile);
+	}
 	if ( isLogEnabled( LOG_LAT ) )
 	{
 		f_puts(",Lat", &g_oLogFile);
@@ -388,6 +392,22 @@ extern uint32_t sdMounted( void ) ;
 		}
 	}
   
+	if ( isLogEnabled( LOG_STK_THR ) )
+	{
+		f_puts(",Stk_THR", &g_oLogFile);
+	}
+	if ( isLogEnabled( LOG_STK_AIL ) )
+	{
+		f_puts(",Stk_AIL", &g_oLogFile);
+	}
+	if ( isLogEnabled( LOG_STK_ELE ) )
+	{
+		f_puts(",Stk_ELE", &g_oLogFile);
+	}
+	if ( isLogEnabled( LOG_STK_RUD ) )
+	{
+		f_puts(",Stk_RUD", &g_oLogFile);
+	}
 	f_puts("\n", &g_oLogFile);
 
   return NULL ;
@@ -530,6 +550,10 @@ void writeLogs()
 				qr = div( value, 10);
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
+			if ( isLogEnabled( LOG_HDG ) )
+			{
+				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
+			}
 			
 			if ( isLogEnabled( LOG_LAT ) )
 			{
@@ -625,6 +649,13 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 				}
 #endif
 
+#ifdef BLUETOOTH
+				if ( isLogEnabled( LOG_BTRX ) )
+				{
+extern uint8_t BtRxOccured ;
+					f_printf(&g_oLogFile, ",%d", BtRxOccured ) ;
+				}
+#endif
 			if ( isLogEnabled( LOG_ASPD ) )
 			{
 				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AIRSPEED] ) ;
@@ -672,6 +703,23 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 					qr = div( FrskyHubData[FR_CELL1 + i], 100 ) ;
 					f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 				}
+			}
+
+			if ( isLogEnabled( LOG_STK_THR ) )
+			{
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[2]*100/1024 ) ;
+			}
+			if ( isLogEnabled( LOG_STK_AIL ) )
+			{
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[0]*100/1024 ) ;
+			}
+			if ( isLogEnabled( LOG_STK_ELE ) )
+			{
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[1]*100/1024 ) ;
+			}
+			if ( isLogEnabled( LOG_STK_RUD ) )
+			{
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[3]*100/1024 ) ;
 			}
 
 			f_printf(&g_oLogFile, "\n" ) ;

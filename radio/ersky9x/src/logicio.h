@@ -13,7 +13,7 @@
 *
 ****************************************************************************/
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 #define PIN_MODE_MASK		0x0003
 #define PIN_INPUT				0x0000
 #define PIN_OUTPUT			0x0001
@@ -123,9 +123,10 @@ extern void init_trims( void ) ;
 extern void setup_switches( void ) ;
 extern void config_free_pins( void ) ;
 
+//#ifndef PCBX12D
 #define GPIO_ResetBits( port, bits ) (port->BSRRH = bits)
 #define GPIO_SetBits( port, bits ) (port->BSRRL = bits)
 #define GPIO_ReadInputDataBit( port, bit) ( (port->IDR & bit) ? Bit_SET : Bit_RESET)
-
+//#endif
 uint32_t switchPosition( uint32_t swtch ) ;
 

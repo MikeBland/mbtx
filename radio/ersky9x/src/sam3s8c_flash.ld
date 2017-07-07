@@ -47,6 +47,20 @@
  * "The MEMORY command describes the location and size of 
  * blocks of memory in the target."
  */
+
+
+
+/* Highest address of the user mode stack */
+_estack = 0x20010000;    /* end of 128K SRAM */
+
+/* Generate a link error if heap and stack don't fit into RAM */
+_Min_Heap_Size = 0;      /* required amount of heap  */
+_Min_Stack_Size = 0 ; /* required amount of stack */
+
+/* Main stack end */
+_main_stack_start = _estack - _Min_Stack_Size;
+_heap_end = _main_stack_start;
+
 MEMORY
 {
    FLASH (rx)  : ORIGIN = 0x00400000, LENGTH = 512K
@@ -136,13 +150,24 @@ SECTIONS
       . = ALIGN(4);        /* Align the end of the section */
    } > RAM
    _ebss = .;              /* Provide the name for the end of this section */
+   __bss_end__ = _ebss;
    
+  PROVIDE ( end = _ebss );
+  PROVIDE ( _end = _ebss );
    
    /* 
     * The ".stack" section is our stack.
     * Here this section starts at the end of the ram segment.
     */
    _estack = ORIGIN(RAM) + LENGTH(RAM);
+
+  /* Remove information from the standard libraries */
+  /DISCARD/ :
+  {
+/*     libc.a ( * ) */
+     libm.a ( * )
+/*     libgcc.a ( * ) */
+  }
 
 }
 

@@ -29,9 +29,20 @@
 #include "X9D/hal.h"
 #endif
 
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/hal.h"
+#endif
 
+#ifdef PCBX12D
+#ifndef SIMU
+#include "X12D/core_cm4.h"
+#endif
+#else
 #ifndef SIMU
 #include "core_cm3.h"
+#endif
 #endif
 
 #include "ersky9x.h"
@@ -137,7 +148,7 @@ void configure_pins( uint32_t pins, uint16_t config )
 #endif
 
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 void configure_pins( uint32_t pins, uint16_t config )
 {
 	uint32_t address ;
@@ -190,7 +201,9 @@ void configure_pins( uint32_t pins, uint16_t config )
 
 void initExtraInput()
 {
-	configure_pins( 0x00004000, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
+#ifndef ARUNI
+	configure_pins( 0x00004000, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;   // PB14 is already on the free pin list
+#endif
 }
 	 
 void init_keys()
@@ -200,10 +213,17 @@ void init_keys()
 	pioptr = PIOC ;
 	// Next section configures the key inputs on the LCD data
 #ifdef REVB	
+#ifdef ARUNI
+	pioptr->PIO_PER = 0x0000003BL ;		// Enable bits 0,1,3,4,5
+	pioptr->PIO_OER = 0 ;		          // Set no output bit
+	pioptr->PIO_ODR = 0x0000003BL ;		// Set bits 0, 1, 3, 4, 5 input
+	pioptr->PIO_PUER = 0x0000003BL ;	// Set bits 0, 1, 3, 4, 5 with pullups
+#else
 	pioptr->PIO_PER = 0x0000003BL ;		// Enable bits 1,3,4,5, 0
 	pioptr->PIO_OER = PIO_PC0 ;		// Set bit 0 output
 	pioptr->PIO_ODR = 0x0000003AL ;		// Set bits 1, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x0000003AL ;		// Set bits 1, 3, 4, 5 with pullups
+#endif
 #else	
 	pioptr->PIO_PER = 0x0000003DL ;		// Enable bits 2,3,4,5, 0
 	pioptr->PIO_OER = PIO_PC0 ;		// Set bit 0 output
@@ -311,6 +331,9 @@ void config_free_pins()
 {
 	
 #ifdef REVB
+#ifdef ARUNI
+	configure_pins( PIO_PA25, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+#endif
 //	configure_pins( PIO_PB6 | PIO_PB14, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
 	configure_pins( PIO_PB14, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
 
@@ -332,7 +355,7 @@ void config_free_pins()
 	pioptr->PIO_PER = 0x01700000L ;		// Enable bits C24,22,21,20
 	pioptr->PIO_ODR = 0x01700000L ;		// Set as input
 	pioptr->PIO_PUER = 0x01700000L ;	// Enable pullups
-#endif 
+#endif  // REVB
 }
 
 
@@ -798,7 +821,7 @@ uint16_t ExtraInputs ;
 uint32_t read_keys()
 {
 	register uint32_t x ;
-	register uint32_t y ;
+	register uint32_t y ; // target y: LEFT:6 RIGHT:5 UP:4 DOWN:3 EXIT:2 MENU:1
 
 	x = LcdLock ? LcdInputs : (PIOC->PIO_PDSR << 1) ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
 #ifdef REVB
@@ -815,6 +838,19 @@ uint32_t read_keys()
 	{
 		y |= 0x00000008 ;			// DOWN
 	}
+#ifdef ARUNI
+  // target x: CS:6 PB14:5 PA25:4 KEY3:3 KEY2:2 KEY1:1 COM:0
+  register uint32_t z = ~x;
+  x = ((z >> 1) & 0x01);  // COM
+  x |= ((z >> 2) & 0x02); // KEY1
+  x |= ((z >> 5) & 0x0C); // KEY3,KEY2
+	if (~PIOA->PIO_PDSR & 0x02000000) // PA25
+    x |= 0x10;
+	if (~PIOB->PIO_PDSR & 0x00004000) // PB14
+    x |= 0x20;
+	if (~PIOC->PIO_PDSR & 0x04000000) // PC26(LCD_CS)
+    x |= 0x40;
+#else
 	x = ~x ;
 	x &= ~0x40 ;
 	if ( x & 8 )
@@ -856,8 +892,7 @@ extern uint8_t Co_proc_status[] ;
 			x |= 0x0100 ;
 		}
 	}
-
-	ExtraInputs = x ;
+#endif  // ARUNI
 #else	
 	y = x & 0x00000060 ;
 	if ( x & 0x00000008 )
@@ -889,8 +924,8 @@ extern uint8_t Co_proc_status[] ;
 	{
 		x |= 0x08 ;
 	}
+#endif  // REVB
 	ExtraInputs = x ;
-#endif
 
 	if (LcdLock)
 	{
@@ -1026,6 +1061,9 @@ uint32_t read_trims()
 
 uint32_t readKeyUpgradeBit( uint8_t index )
 {
+#ifdef ARUNI
+	CPU_UINT xxx = (ExtraInputs & (1 << (index - 1))) ;
+#else
   CPU_UINT xxx = 0 ;
 	uint32_t t = 1 << (index-1) ;
 	if ( t == 8 )
@@ -1044,6 +1082,7 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 		}
 		xxx = ExtraInputs & t ;
 	}
+#endif
 	return xxx ;
 }
 
@@ -1060,10 +1099,23 @@ uint32_t hwKeyState( uint8_t key )
 	
 	register uint32_t a ;
 	register uint32_t c ;
+#ifdef ARUNI
+	uint8_t avpot = 0 ;
+	uint32_t anaIndex = 8 ;   // NONE:0,COMM:1,EXT1:2,EXT2:3,EXT3:4,PA25:5,PB14:6,PC26:7
+#else
 	uint32_t av9 = Analog_values[9] ;
 	uint32_t avpot = 0xFFFF ;
 	uint32_t anaIndex = g_eeGeneral.ar9xBoard ? 6 : 9 ;
 
+#endif
+
+#ifdef ARUNI
+	uint8_t sixpos = g_eeGeneral.analogMapping & MASK_6POS ;
+	if ( sixpos )
+	{
+			avpot = anaIn( (sixpos >> 2) + 3) >> 3 ; // truncate 11b to 8b
+	}
+#else
 	a = g_eeGeneral.analogMapping & MASK_6POS ;
 	if ( a )
 	{
@@ -1080,6 +1132,7 @@ uint32_t hwKeyState( uint8_t key )
 			avpot = 4095 - avpot ;
 		}
 	}
+#endif
 
   CPU_UINT xxx = 0 ;
   if( key > HSW_MAX )  return 0 ;
@@ -1098,11 +1151,12 @@ uint32_t hwKeyState( uint8_t key )
 
 	a = PIOA->PIO_PDSR ;
 	c = PIOC->PIO_PDSR ;
+	uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
 	switch(key)
 	{
 		case HSW_Ttrmup :
 			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1112,7 +1166,7 @@ uint32_t hwKeyState( uint8_t key )
 		
 		case HSW_Ttrmdn :
 			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1121,7 +1175,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Rtrmup :
 			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct == 1 )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1130,7 +1184,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Rtrmdn :
 			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct == 1 )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1139,7 +1193,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Atrmup :
 			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct == 1 )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1148,7 +1202,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Atrmdn :
 			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct == 1 )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1157,7 +1211,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Etrmup :
 			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1166,7 +1220,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		case HSW_Etrmdn :
 			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
+			if ( ct )
 			{
 				xxx = 3 - xxx ;
 			}
@@ -1243,7 +1297,26 @@ uint32_t hwKeyState( uint8_t key )
 				xxx = readKeyUpgradeBit( g_eeGeneral.thrsource ) ;
 			}
     break ;
-			 
+		
+#ifdef ARUNI
+		case HSW_Ele3pos0 :
+			{
+			  xxx = ~c & 0x80000000 ;	// ELE_DR   PC31
+			}
+    break ;
+
+		case HSW_Ele3pos1 :
+			{
+				xxx = c & 0x80000000 ; if ( xxx ) xxx = !readKeyUpgradeBit( g_eeGeneral.elesource ) ;
+			}
+    break ;
+
+		case HSW_Ele3pos2 :
+			{
+				xxx = readKeyUpgradeBit( g_eeGeneral.elesource ) ;
+			}
+    break ;
+#else
 		case HSW_Ele3pos0 :
 			xxx = ( g_eeGeneral.elesource == 5 ) ? ExtraInputs & 0x40 : ~c & 0x80000000 ;	// ELE_DR   PC31
     break ;
@@ -1269,6 +1342,7 @@ uint32_t hwKeyState( uint8_t key )
 				xxx = readKeyUpgradeBit( g_eeGeneral.elesource ) ;
 			}
     break ;
+#endif
 
 		case HSW_Rud3pos0 :
 			if ( g_eeGeneral.rudsource == anaIndex )
@@ -1376,6 +1450,12 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 
 		case HSW_Ele6pos0 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot <= g_eeGeneral.SixPositionTable[0]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = avpot > SixPositionTable[0] ;
@@ -1388,9 +1468,17 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = av9 > 0x7E0 ;
 			}
+#endif
     break ;
 			
 		case HSW_Ele6pos1 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot > g_eeGeneral.SixPositionTable[0] &&
+				       avpot <= g_eeGeneral.SixPositionTable[1]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = ( avpot <= SixPositionTable[0] ) && ( avpot >= SixPositionTable[1] ) ;
@@ -1403,9 +1491,17 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = ( av9 <= 0x7E0 ) && ( av9 >= 0x7A8 ) ;
 			}
+#endif
     break ;
 			
 		case HSW_Ele6pos2 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot > g_eeGeneral.SixPositionTable[1] &&
+				       avpot <= g_eeGeneral.SixPositionTable[2]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = ( avpot <= SixPositionTable[1] ) && ( avpot >= SixPositionTable[2] ) ;
@@ -1418,9 +1514,17 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = ( av9 <= 0x7A8 ) && ( av9 >= 0x770 ) ;
 			}
+#endif
     break ;
 			
 		case HSW_Ele6pos3 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot > g_eeGeneral.SixPositionTable[2] &&
+				       avpot <= g_eeGeneral.SixPositionTable[3]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = ( avpot <= SixPositionTable[2] ) && ( avpot >= SixPositionTable[3] ) ;
@@ -1433,9 +1537,17 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = ( av9 <= 0x770 ) && ( av9 >= 0x340 ) ;
 			}
+#endif
     break ;
 			
 		case HSW_Ele6pos4 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot > g_eeGeneral.SixPositionTable[3] &&
+				       avpot <= g_eeGeneral.SixPositionTable[4]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = ( avpot <= SixPositionTable[3] ) && ( avpot >= SixPositionTable[4] ) ;
@@ -1448,9 +1560,16 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = ( av9 <= 0x340 ) && ( av9 >= 0x070 ) ;
 			}
+#endif
     break ;
 			
 		case HSW_Ele6pos5 :
+#ifdef ARUNI
+			if ( sixpos )
+			{
+				xxx = (avpot > g_eeGeneral.SixPositionTable[4]) ;
+			}
+#else
 			if ( avpot != 0xFFFF )
 			{
 				xxx = avpot < SixPositionTable[4] ;
@@ -1463,6 +1582,7 @@ uint32_t hwKeyState( uint8_t key )
 			{
 				xxx = av9 < 0x070 ;
 			}
+#endif
     break ;
 
 		case HSW_Pb1 :
@@ -2501,140 +2621,10 @@ uint32_t hwKeyState( uint8_t key )
 
 uint32_t keyState(EnumKeys enuk)
 {
-//#ifdef PCBX7
-//  register uint32_t d = GPIOD->IDR;
-//#else
-//  register uint32_t a = GPIOA->IDR;
-//#endif
-////  register uint32_t b = GPIOB->IDR;
-//  register uint32_t e = GPIOE->IDR;
-
-//  register uint32_t xxx = 0;
 
   if (enuk < (int) DIM(keys)) return keys[enuk].state() ? 1 : 0;
 
 	return hwKeyState( (uint8_t) enuk -SW_BASE + 1 ) ;
-//  switch ((uint8_t) enuk) {
-////    case SW_SA0:
-////      xxx = ~e & PIN_SW_A_L;
-////      break;
-////    case SW_SA1:
-////      xxx = ((e & PIN_SW_A_L) | (b & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
-////      break;
-////    case SW_SA2:
-////      xxx = ~b & PIN_SW_A_H;
-////      break;
-
-////    case SW_SB0:
-////      xxx = ~e & PIN_SW_B_L ;
-////      break;
-////    case SW_SB1:
-////      xxx = (e & (PIN_SW_B_L | PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
-////      break;
-////    case SW_SB2:
-////      xxx = ~e & PIN_SW_B_H ;
-////      break;
-
-//#ifdef PCBX7
-//    case SW_SC0:
-//      xxx = ~d & PIN_SW_C_L ;
-//      break;
-//    case SW_SC1:
-//      xxx = ((d & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
-//      break;
-//#else
-//    case SW_SC0:
-//      xxx = ~a & PIN_SW_C_L ;
-//      break;
-//    case SW_SC1:
-//      xxx = ((a & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
-//      break;
-//#endif
-//    case SW_SC2:
-//      xxx = ~e & PIN_SW_C_H ;
-//      break;
-
-////    case SW_SD0:
-////#ifdef REVPLUS
-////      xxx = ~e & PIN_SW_D_L ;
-////#else
-////      xxx = ~b & PIN_SW_D_L ;
-////#endif
-////			break;
-////    case SW_SD1:
-////#ifdef REVPLUS
-////      xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
-////#else
-////      xxx = ((b & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
-////#endif
-////      break;
-////    case SW_SD2:
-////      xxx = ~e & PIN_SW_D_H ;
-////      break;
-
-////    case SW_SE0:
-////      xxx = ~b & PIN_SW_E_L ;
-////      break;
-////    case SW_SE1:
-////      xxx = ((b & PIN_SW_E_H) | (b & PIN_SW_E_L)) == (PIN_SW_E_H | PIN_SW_E_L) ;
-////      break;
-////    case SW_SE2:
-////      xxx = ~b & PIN_SW_E_H ;
-////      break;
-
-////    case SW_SF0:
-////      xxx = e & PIN_SW_F ;
-////      break;
-//    case SW_SF2:
-//#ifdef REV9E
-//      xxx = e & PIN_SW_D_L ;
-//#else
-//      xxx = ~e & PIN_SW_F ;
-//#endif
-//      break;
-
-////    case SW_SG0:
-////      xxx = ~e & PIN_SW_G_L ;
-////      break;
-////    case SW_SG1:
-////      xxx = (e & (PIN_SW_G_H | PIN_SW_G_L)) == (PIN_SW_G_H | PIN_SW_G_L) ;
-////      break;
-////    case SW_SG2:
-////      xxx = ~e & PIN_SW_G_H ;
-////      break;
-
-////    case SW_SH0:
-////#ifdef REVPLUS
-////      xxx = GPIOD->IDR & PIN_SW_H;
-////#else
-////      xxx = e & PIN_SW_H;
-////#endif
-////      break;
-//    case SW_SH2:
-//#ifdef REVPLUS
-//#ifdef REV9E
-//      xxx = GPIOF->IDR & PIN_SW_H_L ;
-//#else
-//      xxx = ~GPIOD->IDR & PIN_SW_H;
-//#endif
-//#else
-//#ifdef PCBX7
-//      xxx = ~d & PIN_SW_H;
-//#else
-//      xxx = ~e & PIN_SW_H;
-//#endif
-//#endif
-//      break;
-
-//    default:
-//      break;
-//  }
-
-//  if (xxx) {
-//    return 1;
-//  }
-
-//  return 0;
 }
 
 // Returns 0, 1 or 2 for ^ - or v
@@ -2717,5 +2707,430 @@ uint32_t switchPosition( uint32_t swtch )
 
 
 #endif
+#endif
+
+
+#ifdef PCBX12D
+
+void setup_switches()
+{
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOHEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN ; 		// Enable portA clock
+	configure_pins( SWITCHES_GPIO_PIN_B_L | SWITCHES_GPIO_PIN_C_L, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( SWITCHES_GPIO_PIN_C_H, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( SWITCHES_GPIO_PIN_E_L, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	configure_pins( SWITCHES_GPIO_PIN_D_L | SWITCHES_GPIO_PIN_G_L | SWITCHES_GPIO_PIN_G_H | SWITCHES_GPIO_PIN_H, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+	configure_pins( SWITCHES_GPIO_PIN_F | SWITCHES_GPIO_PIN_E_H | SWITCHES_GPIO_PIN_A_H | SWITCHES_GPIO_PIN_B_H, PIN_INPUT | PIN_PULLUP | PIN_PORTH ) ;
+	configure_pins( SWITCHES_GPIO_PIN_A_L, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+	configure_pins( SWITCHES_GPIO_PIN_D_H, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
+}
+
+void init_keys()
+{
+	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_RIGHT, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_LEFT | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+	configure_pins( KEYS_GPIO_PIN_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+}
+
+// Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
+uint32_t read_keys()
+{
+	register uint32_t x ;
+	register uint32_t y ;
+
+	x = GPIOC->IDR ;
+	y = 0 ;
+	if ( x & KEYS_GPIO_PIN_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & KEYS_GPIO_PIN_RIGHT )
+	{
+		y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	}
+	x = GPIOI->IDR ;
+	if ( x & KEYS_GPIO_PIN_LEFT )
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	if ( x & KEYS_GPIO_PIN_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	if ( x & KEYS_GPIO_PIN_DOWN )
+	{
+		y |= 0x02 << KEY_DOWN ;		// DOWN
+	}
+	x = GPIOG->IDR ;
+	if ( x & KEYS_GPIO_PIN_UP )
+	{
+		y |= 0x02 << KEY_UP ;			// up
+	}
+	return y ;
+}
+
+
+void init_trims()
+{
+// Trims 
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN ;
+	configure_pins( TRIMS_GPIO_PIN_RHL, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( TRIMS_GPIO_PIN_RHR, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+	configure_pins( TRIMS_GPIO_PIN_RVD, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+	configure_pins( TRIMS_GPIO_PIN_LHL | TRIMS_GPIO_PIN_LHR, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( TRIMS_GPIO_PIN_LVU | TRIMS_GPIO_PIN_LVD | TRIMS_GPIO_PIN_RVU, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
+
+// Now the extra ones
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
+	configure_pins( GPIO_Pin_8, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
+	configure_pins( GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( GPIO_Pin_13 | GPIO_Pin_14, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+
+}
+
+uint32_t read_trims()
+{
+	uint32_t trims ;
+	uint32_t trima ;
+
+	trims = 0 ;
+
+	trima = GPIOC->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_RHL ) == 0 )
+	{
+		trims |= 0x40 ;
+	}
+
+	trima = GPIOI->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_RHR ) == 0 )
+	{
+		trims |= 0x80 ;
+	}
+
+	trima = GPIOG->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_RVD ) == 0 )
+	{
+		trims |= 0x10 ;
+	}
+
+	trima = GPIOD->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LHL ) == 0 )
+	{
+		trims |= 1 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_LHR ) == 0 )
+	{
+		trims |= 2 ;
+	}
+
+	trima = GPIOJ->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LVU ) == 0 )
+	{
+		trims |= 8 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_LVD ) == 0 )
+	{
+		trims |= 4 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_RVU ) == 0 )
+	{
+		trims |= 0x20 ;
+	}
+
+	return trims ;
+}
+
+uint32_t hwKeyState( uint8_t key )
+{
+  register uint32_t b = GPIOB->IDR ;
+  register uint32_t g = GPIOG->IDR ;
+  register uint32_t h = GPIOH->IDR ;
+
+  uint32_t xxx = 0 ;
+//  uint32_t analog = 0 ;
+	uint32_t avpot = AnalogData[10] ;
+	if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
+	{
+		avpot = 4095 - avpot ;
+	}
+	
+	if( key > HSW_MAX )  return 0 ;
+
+  switch ( key )
+	{
+		case HSW_Ttrmup :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+    break ;
+		
+		case HSW_Ttrmdn :
+			xxx = THR_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+    break ;
+		case HSW_Rtrmup :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+    break ;
+		case HSW_Rtrmdn :
+			xxx = RUD_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+    break ;
+		case HSW_Atrmup :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+    break ;
+		case HSW_Atrmdn :
+			xxx = AIL_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+    break ;
+		case HSW_Etrmup :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx)) ;
+    break ;
+		case HSW_Etrmdn :
+			xxx = ELE_STICK ;
+			if ( g_eeGeneral.crosstrim )
+			{
+				xxx = 3 - xxx ;
+			}
+			xxx = TrimBits & (1 << (2*xxx+1)) ;
+    break ;
+
+    case HSW_SA0:
+      xxx = ~GPIOI->IDR & SWITCHES_GPIO_PIN_A_L ;
+      break;
+    case HSW_SA1:
+      xxx = ((GPIOI->IDR & SWITCHES_GPIO_PIN_A_L) | (h & SWITCHES_GPIO_PIN_A_H)) == (SWITCHES_GPIO_PIN_A_L | SWITCHES_GPIO_PIN_A_H) ;
+      break;
+    case HSW_SA2:
+      xxx = ~h & SWITCHES_GPIO_PIN_A_H ;
+      break;
+
+    case HSW_SB0:
+      xxx = ~b & SWITCHES_GPIO_PIN_B_L ;
+      break;
+    case HSW_SB1:
+      xxx = ( ( b & SWITCHES_GPIO_PIN_B_L ) == SWITCHES_GPIO_PIN_B_L )
+						&& ( ( h & SWITCHES_GPIO_PIN_B_H ) == SWITCHES_GPIO_PIN_B_H ) ;
+      break;
+    case HSW_SB2:
+      xxx = ~h & SWITCHES_GPIO_PIN_B_H ;
+      break;
+
+    case HSW_SC0:
+      xxx = ~b & SWITCHES_GPIO_PIN_C_L ;
+      break;
+    case HSW_SC1:
+      xxx = ((b & SWITCHES_GPIO_PIN_C_L) | (GPIOD->IDR & SWITCHES_GPIO_PIN_C_H)) == (SWITCHES_GPIO_PIN_C_L | SWITCHES_GPIO_PIN_C_H) ;
+      break;
+    case HSW_SC2:
+      xxx = ~GPIOD->IDR & SWITCHES_GPIO_PIN_C_H ;
+      break;
+
+    case HSW_SD0:
+      xxx = ~g & SWITCHES_GPIO_PIN_D_L ;
+			break;
+    case HSW_SD1:
+      xxx = ((g & SWITCHES_GPIO_PIN_D_L) | (GPIOJ->IDR & SWITCHES_GPIO_PIN_D_H)) == (SWITCHES_GPIO_PIN_D_L | SWITCHES_GPIO_PIN_D_H) ;
+      break;
+    case HSW_SD2:
+      xxx = ~GPIOJ->IDR & SWITCHES_GPIO_PIN_D_H ;
+      break;
+
+    case HSW_SE0:
+      xxx = ~GPIOE->IDR & SWITCHES_GPIO_PIN_E_L ;
+      break;
+    case HSW_SE1:
+      xxx = ((h & SWITCHES_GPIO_PIN_E_H) | (GPIOE->IDR & SWITCHES_GPIO_PIN_E_L)) == (SWITCHES_GPIO_PIN_E_H | SWITCHES_GPIO_PIN_E_L) ;
+      break;
+    case HSW_SE2:
+      xxx = ~h & SWITCHES_GPIO_PIN_E_H ;
+      break;
+
+    case HSW_SF2:
+      xxx = ~h & SWITCHES_GPIO_PIN_F ;
+      break;
+
+    case HSW_SG0:
+      xxx = ~g & SWITCHES_GPIO_PIN_G_L ;
+      break;
+    case HSW_SG1:
+      xxx = (g & (SWITCHES_GPIO_PIN_G_H | SWITCHES_GPIO_PIN_G_L)) == (SWITCHES_GPIO_PIN_G_H | SWITCHES_GPIO_PIN_G_L) ;
+      break;
+    case HSW_SG2:
+      xxx = ~g & SWITCHES_GPIO_PIN_G_H ;
+      break;
+
+    case HSW_SH2:
+      xxx = ~g & SWITCHES_GPIO_PIN_H;
+      break;
+
+		case HSW_Pb1 :
+			xxx = ~GPIOB->IDR & GPIO_Pin_13 ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = ~GPIOB->IDR & GPIO_Pin_14 ;
+    break ;
+
+		case HSW_Pb3 :
+			xxx = ~GPIOD->IDR & GPIO_Pin_13 ;
+    break ;
+			 
+		case HSW_Pb4 :
+			xxx = ~GPIOJ->IDR & GPIO_Pin_8 ;
+    break ;
+
+		case HSW_Ele6pos0 :
+			
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot > SixPositionTable[0] ;
+			}
+    break ;
+
+		case HSW_Ele6pos1 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[0] ) && ( avpot >= SixPositionTable[1] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos2 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[1] ) && ( avpot >= SixPositionTable[2] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos3 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[2] ) && ( avpot >= SixPositionTable[3] ) ;
+			}
+    break ;
+		
+		case HSW_Ele6pos4 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = ( avpot <= SixPositionTable[3] ) && ( avpot >= SixPositionTable[4] ) ;
+			}
+    break ;
+
+		case HSW_Ele6pos5 :
+			if ( avpot != 0xFFFF )
+			{
+				xxx = avpot < SixPositionTable[4] ;
+			}
+    break ;
+	}
+  
+	if ( xxx )
+  {
+    return 1 ;
+  }
+  return 0;
+}
+
+uint32_t keyState(EnumKeys enuk)
+{
+
+  if (enuk < (int) DIM(keys)) return keys[enuk].state() ? 1 : 0;
+
+	return hwKeyState( (uint8_t) enuk -SW_BASE + 1 ) ;
+}
+
+// Returns 0, 1 or 2 for ^ - or v
+static const uint8_t SwitchIndices[] = {HSW_SA0,HSW_SB0,HSW_SC0,HSW_SD0,HSW_SE0,HSW_SF2,HSW_SG0,HSW_SH2} ;
+
+uint32_t switchPosition( uint32_t swtch )
+{
+	if ( swtch < sizeof(SwitchIndices) )
+	{
+		swtch = SwitchIndices[swtch] ;
+	}
+
+	if ( swtch == HSW_SF2 )
+	{
+		if ( hwKeyState( swtch ) )
+		{
+			return 2 ;
+		}
+		return 0 ;
+	} 
+	if ( swtch == HSW_SH2 )
+	{
+		if ( hwKeyState( swtch ) )
+		{
+			return 2 ;
+		}
+		return 0 ;
+	} 
+	if ( hwKeyState( swtch ) )
+	{
+		return 0 ;
+	}
+	swtch += 1 ;
+	if ( hwKeyState( swtch ) )
+	{
+		return 1 ;			
+	}
+	if ( swtch == HSW_Ele6pos1 )
+	{
+		if ( hwKeyState( HSW_Ele6pos3 ) )
+		{
+			return 3 ;
+		}
+		if ( hwKeyState( HSW_Ele6pos4 ) )
+		{
+			return 4 ;
+		}
+		if ( hwKeyState( HSW_Ele6pos5 ) )
+		{
+			return 5 ;
+		}
+	}
+	return 2 ;
+	
+}
+
 #endif
 

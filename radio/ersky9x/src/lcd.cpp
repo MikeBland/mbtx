@@ -76,12 +76,23 @@ const uint8_t *ExtraBigFont = NULL ;
 
 // Local data
 uint8_t Lcd_lastPos ;
+
+#ifndef PCBX12D
 #ifdef GREY_SCALE
 uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8*4] ;
 #else
 uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
 #endif
 #define DISPLAY_END (DisplayBuf+sizeof(DisplayBuf))
+#endif
+
+#ifdef PCBX12D
+extern uint32_t CurrentFrameBuffer ;
+
+#define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
+//#define LCD_W	480
+//#define LCD_H	272
+#endif
 
 #ifdef PCBX7
 #define X9D_OFFSET		0
@@ -193,13 +204,82 @@ void putsVBat(uint8_t x,uint8_t y,uint8_t att)
 	putsVolts(x, y, g_vbat100mV, att);
 }
 
+#ifdef PCBX12D
+void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode )
+{
+	uint32_t yb ;
+	uint32_t x ;
+	uint16_t *p ;
+	uint8_t mask ;
+	
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
+  for( yb = 0; yb < h; yb++)
+	{
+		p = ( uint16_t *) CurrentFrameBuffer ;
+		p += i_x*2 ;
+		p += i_y * LCD_W * 2 ;
+		p += yb * LCD_W * 2 * 8 ;
+    for(x=0; x < w; x++)
+		{
+      register uint8_t b = *bitmap++ ;
+			if ( inv )
+			{
+				b = ~b ;
+			}
+			uint16_t *q = p ;
 
+			for ( mask = 1 ; mask ; mask <<= 1 )
+			{
+				uint16_t value = (b & mask) ? 0 : 0xFFFF ;
+				*q = value ;
+				*(q+1) = value ;
+				*(q+LCD_W) = value ;
+				*(q+LCD_W+1) = value ;
+				q += LCD_W * 2 ;
+			}
+			p += 2 ;
+    }
+  }
+}
+
+void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode )
+{
+  register const unsigned char *q = imgdat ;
+  register uint8_t w    = *q++ ;
+  register uint32_t hb   = (*q++ +7) / 8 ;
+  register uint8_t sze1 = *q++ ;
+//	uint32_t yb ;
+//	uint32_t x ;
+
+  q += idx * sze1 ;
+  
+	lcd_bitmap( i_x, i_y, q, w, hb, mode ) ;
+}
+
+void lcdSetRefVolt( uint8_t val )
+{
+	
+}
+
+#else
 void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode )
 {
 	uint32_t yb ;
 	uint32_t x ;
 	
-	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
   for( yb = 0; yb < h; yb++)
 	{
     register uint8_t *p = &DISPLAY_START[ (i_y / 8 + yb) * DISPLAY_W + i_x ];
@@ -231,12 +311,563 @@ void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mo
   
 	lcd_bitmap( i_x, i_y, q, w, hb, mode ) ;
 }
+#endif
 
 uint8_t lcd_putc(uint8_t x,uint8_t y,const char c )
 {
   return lcd_putcAtt(x,y,c,0);
 }
 
+#ifdef PCBX12D
+uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour )
+{
+	uint16_t *p ;
+	uint16_t *r ;
+  uint8_t *q ;
+	uint8_t mask ;
+	int32_t i ;
+
+	r = ( uint16_t *) CurrentFrameBuffer ;
+	r += x*2 ;
+	r += y * LCD_W * 2 ;
+	if ( c < 22 )
+	{
+		x = c*FW ;
+		if ( (mode & CONDENSED) )
+		{
+			x = c*8 ;
+		}
+			else
+		{
+			x += x ;
+		}	 
+		return x ;
+	}
+	x += FW ;
+	uint32_t doNormal = 1 ;
+	unsigned char c_mapped = c ;
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+	
+	if ( (mode & CONDENSED) )
+	{
+		doNormal = 0 ;
+			
+		if ( doNormal == 0 )
+		{
+			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
+		/* each letter consists of 8 top bytes followed by
+	 	* five bottom by 8 bottom bytes (16 bytes per 
+	 	* char) */
+			if( c < 0xC0 )
+			{
+				c_mapped = c - 0x20 ;
+				q = (uint8_t *) &font_12x8[c_mapped*14] ;
+			}
+			else
+			{
+				q = (uint8_t *) &font_12x8[0] ;
+			}
+    		
+			for( i=7 ; i>=0 ; i-- )
+			{
+				uint8_t b1 ;
+				uint8_t b3 ;
+
+  		  /*top byte*/
+   		  b1 = *q ;
+  		  /*bottom byte*/
+   		  b3 = *(q+7) ;
+   		  q++;
+				if ( i == 0 )
+				{
+					b1 = 0 ;
+					b3 = 0 ;
+				}
+    		if(inv)
+				{
+				  b1=~b1;
+				  b3=~b3;
+    		}
+				p = r ;
+				for ( mask = 1 ; mask ; mask <<= 1 )
+				{
+					if ( b1 & mask )
+					{
+						*p ^= 0xFFFF ;
+						*(p+1) ^= 0xFFFF ;
+						*(p+LCD_W) ^= 0xFFFF ;
+						*(p+LCD_W+1) ^= 0xFFFF ;
+					}
+					if ( b3 & mask )
+					{
+						*(p+LCD_W*16) ^= 0xFFFF ;
+						*(p+LCD_W*16+1) ^= 0xFFFF ;
+						*(p+LCD_W*17) ^= 0xFFFF ;
+						*(p+LCD_W*17+1) ^= 0xFFFF ;
+					}
+					p += LCD_W * 2 ;
+				}
+				r += 2 ;
+    	}
+		}
+	}
+
+	if ( doNormal )
+	{
+		if ( (c!=0x2E)) x+=FW; //check for decimal point
+	/* each letter consists of ten top bytes followed by
+ 	* five bottom by ten bottom bytes (20 bytes per 
+ 	* char) */
+		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
+	  for( i=11 ; i>=0 ; i-- )
+		{
+			uint8_t b1 ;
+			uint8_t b2 ;
+
+		  /*top byte*/
+	    b1 = i>1 ? *q : 0;
+		  /*bottom byte*/
+	    b2 = i>1 ? *(q+10) : 0;
+	    q++;
+			p = r ;
+			for ( mask = 1 ; mask ; mask <<= 1 )
+			{
+				if ( b1 & mask )
+				{
+					*p = colour ;
+					*(p+1) = colour ;
+					*(p+LCD_W) = colour ;
+					*(p+LCD_W+1) = colour ;
+				}
+				if ( b2 & mask )
+				{
+					*(p+LCD_W*16) = colour ;
+					*(p+LCD_W*16+1) = colour ;
+					*(p+LCD_W*17) = colour ;
+					*(p+LCD_W*17+1) = colour ;
+				}
+				p += LCD_W * 2 ;
+			}
+			r += 2 ;
+		}
+	}
+	return x ;
+}
+
+uint16_t lcd_putcAttDbl(uint16_t x,uint16_t y,const char c,uint8_t mode)
+{
+	uint16_t *p ;
+	uint16_t *r ;
+  uint8_t *q ;
+	uint8_t mask ;
+	int32_t i ;
+
+	r = ( uint16_t *) CurrentFrameBuffer ;
+	r += x*2 ;
+	r += y * LCD_W * 2 ;
+	if ( c < 22 )
+	{
+		x = c*FW ;
+		if ( (mode & CONDENSED) )
+		{
+			x = c*8 ;
+		}
+			else
+		{
+			x += x ;
+		}	 
+		return x ;
+	}
+	x += FW ;
+	uint32_t doNormal = 1 ;
+	unsigned char c_mapped = c ;
+  
+	register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+	
+	if ( (mode & CONDENSED) )
+	{
+		doNormal = 0 ;
+			
+		if ( doNormal == 0 )
+		{
+			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
+		/* each letter consists of 8 top bytes followed by
+	 	* five bottom by 8 bottom bytes (16 bytes per 
+	 	* char) */
+			if( c < 0xC0 )
+			{
+				c_mapped = c - 0x20 ;
+				q = (uint8_t *) &font_12x8[c_mapped*14] ;
+			}
+			else
+			{
+				q = (uint8_t *) &font_12x8[0] ;
+			}
+    		
+			for( i=7 ; i>=0 ; i-- )
+			{
+				uint8_t b1 ;
+				uint8_t b3 ;
+
+  		  /*top byte*/
+   		  b1 = *q ;
+  		  /*bottom byte*/
+   		  b3 = *(q+7) ;
+   		  q++;
+				if ( i == 0 )
+				{
+					b1 = 0 ;
+					b3 = 0 ;
+				}
+    		if(inv)
+				{
+				  b1=~b1;
+				  b3=~b3;
+    		}
+				p = r ;
+				for ( mask = 1 ; mask ; mask <<= 1 )
+				{
+					if ( b1 & mask )
+					{
+						*p ^= 0xFFFF ;
+						*(p+1) ^= 0xFFFF ;
+						*(p+LCD_W) ^= 0xFFFF ;
+						*(p+LCD_W+1) ^= 0xFFFF ;
+					}
+					if ( b3 & mask )
+					{
+						*(p+LCD_W*16) ^= 0xFFFF ;
+						*(p+LCD_W*16+1) ^= 0xFFFF ;
+						*(p+LCD_W*17) ^= 0xFFFF ;
+						*(p+LCD_W*17+1) ^= 0xFFFF ;
+					}
+					p += LCD_W * 2 ;
+				}
+				r += 2 ;
+    	}
+		}
+	}
+
+	if ( doNormal )
+	{
+		if ( (c!=0x2E)) x+=FW; //check for decimal point
+	/* each letter consists of ten top bytes followed by
+ 	* five bottom by ten bottom bytes (20 bytes per 
+ 	* char) */
+		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
+	  for( i=11 ; i>=0 ; i-- )
+		{
+			uint8_t b1 ;
+			uint8_t b2 ;
+
+		  /*top byte*/
+	    b1 = i>1 ? *q : 0;
+		  /*bottom byte*/
+	    b2 = i>1 ? *(q+10) : 0;
+	    q++;
+			p = r ;
+			for ( mask = 1 ; mask ; mask <<= 1 )
+			{
+				if ( b1 & mask )
+				{
+					*p ^= 0xFFFF ;
+					*(p+1) ^= 0xFFFF ;
+					*(p+LCD_W) ^= 0xFFFF ;
+					*(p+LCD_W+1) ^= 0xFFFF ;
+				}
+				if ( b2 & mask )
+				{
+					*(p+LCD_W*16) ^= 0xFFFF ;
+					*(p+LCD_W*16+1) ^= 0xFFFF ;
+					*(p+LCD_W*17) ^= 0xFFFF ;
+					*(p+LCD_W*17+1) ^= 0xFFFF ;
+				}
+				p += LCD_W * 2 ;
+			}
+			r += 2 ;
+		}
+	}
+	return x ;
+	
+}
+
+uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour )
+{
+	uint16_t *p ;
+  uint8_t *q ;
+	uint8_t mask ;
+	uint16_t v ;
+
+	if ( mode & DBLSIZE )
+	{
+		return lcd_putcAttDblColour( x, y, c, mode, colour ) ;
+	}
+	p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x*2 ;
+	p += y * LCD_W * 2 ;
+
+	if ( c < 22 )		// Move to specific x position (c)*FW
+	{
+		x = c*FW ;
+  	if(mode&DBLSIZE)
+		{
+			if ( (mode & CONDENSED) )
+			{
+				x = c*8 ;
+			}
+		 	else
+			{
+				x += x ;
+			}	 
+		}
+		return x ;
+	}
+	x += FW ;
+	
+	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+	
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+
+	uint8_t condense = 0 ;
+
+	if (mode & CONDENSED)
+	{
+//		*p = inv ? ~0 : 0;
+		p += 1 ;
+		condense=1;
+		x += FWNUM-FW ;
+	}
+	 
+	for ( mask = 1 ; mask ; mask <<= 1 )
+	{
+		uint16_t *r = p ;
+		uint8_t b ;
+
+		b = *q ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? colour : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		if ( condense == 0 )
+		{
+			b = *(q+1) ;
+			if ( inv ) b = ~b ;
+			v = ( b & mask ) ? colour : 0xFFFF ;
+			*r = v ;
+			*(r+1) = v ;
+			*(r+LCD_W) = v ;
+			*(r+LCD_W+1) = v ;
+			r += 2 ;
+		}
+		b = *(q+2) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? colour : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		b = *(q+3) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? colour : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		b = *(q+4) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? colour : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		v = ( inv ) ? colour : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+
+		p += LCD_W * 2 ;
+	}
+	return x ;
+}
+
+uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
+{
+	uint16_t *p ;
+  uint8_t *q ;
+	uint8_t mask ;
+	uint16_t v ;
+
+	if ( mode & DBLSIZE )
+	{
+		return lcd_putcAttDbl( x, y, c, mode ) ;
+	}
+	p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x*2 ;
+	p += y * LCD_W * 2 ;
+
+	if ( c < 22 )		// Move to specific x position (c)*FW
+	{
+		x = c*FW ;
+  	if(mode&DBLSIZE)
+		{
+			if ( (mode & CONDENSED) )
+			{
+				x = c*8 ;
+			}
+		 	else
+			{
+				x += x ;
+			}	 
+		}
+		return x ;
+	}
+	x += FW ;
+	
+	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+	
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+
+	uint8_t condense = 0 ;
+
+	if (mode & CONDENSED)
+	{
+//		*p = inv ? ~0 : 0;
+		p += 1 ;
+		condense=1;
+		x += FWNUM-FW ;
+	}
+	 
+	for ( mask = 1 ; mask ; mask <<= 1 )
+	{
+		uint16_t *r = p ;
+		uint8_t b ;
+
+		b = *q ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? 0 : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		if ( condense == 0 )
+		{
+			b = *(q+1) ;
+			if ( inv ) b = ~b ;
+			v = ( b & mask ) ? 0 : 0xFFFF ;
+			*r = v ;
+			*(r+1) = v ;
+			*(r+LCD_W) = v ;
+			*(r+LCD_W+1) = v ;
+			r += 2 ;
+		}
+		b = *(q+2) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? 0 : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		b = *(q+3) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? 0 : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		b = *(q+4) ;
+		if ( inv ) b = ~b ;
+		v = ( b & mask ) ? 0 : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+		r += 2 ;
+		v = ( inv ) ? 0 : 0xFFFF ;
+		*r = v ;
+		*(r+1) = v ;
+		*(r+LCD_W) = v ;
+		*(r+LCD_W+1) = v ;
+
+		p += LCD_W * 2 ;
+	}
+	return x ;
+}
+
+uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour)
+{
+	uint16_t *p ;
+  uint8_t *q ;
+	uint8_t mask ;
+
+	p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x ;
+	p += y * LCD_W ;
+	// p -> char position
+	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+	for ( mask = 1 ; mask ; mask <<= 1 )
+	{
+		if ( *q & mask )
+		{
+			*p = colour ;
+		}
+		if ( *(q+1) & mask )
+		{
+			*(p+1) = colour ;
+		}
+		if ( *(q+2) & mask )
+		{
+			*(p+2) = colour ;
+		}
+		if ( *(q+3) & mask )
+		{
+			*(p+3) = colour ;
+		}
+		if ( *(q+4) & mask )
+		{
+			*(p+4) = colour ;
+		}
+		p += LCD_W ;
+	}
+	return x+6 ;
+}
+
+
+
+#else
 static uint8_t *dispBufAddress( uint8_t x, uint8_t y )
 {
 #if (DISPLAY_W==128)
@@ -290,7 +921,12 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 			q = (uint8_t *) &font_5x8_x20_x7f[0] ;
 		}
 	}
-  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
   
 	if(mode&DBLSIZE)
   {
@@ -437,6 +1073,10 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
     	for( i=5 ; i!=0 ; i-- )
 			{
       	uint16_t b = *q++ ;
+				if ( inv )
+				{
+					b = ~b & 0x00FF ;
+				}
 				b <<= y ;
       	if(p<DISPLAY_END) *p ^= b ;
       	if(&p[DISPLAY_W] < DISPLAY_END)
@@ -468,6 +1108,7 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
   }
 	return x ;
 }
+#endif
 
 // Puts sub-string from string options
 // First byte of string is sub-string length
@@ -518,10 +1159,17 @@ uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode )
     if(!c) break ;
 		if ( c == 31 )
 		{
+#ifndef PCBX12D			
 			if ( (y += FH) >= DISPLAY_H )	// Screen height
 			{
 				break ;
 			}	
+#else
+			if ( (y += FH) >= 64 )	// Screen height
+			{
+				break ;
+			}	
+#endif
 			x = 0 ;
 		}
 		else
@@ -764,6 +1412,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 
 uint8_t plotType = PLOT_XOR ;
 
+#ifndef PCBX12D
 void lcd_write_bits( uint8_t *p, uint8_t mask )
 {
   if(p<DISPLAY_END)
@@ -780,6 +1429,147 @@ void lcd_write_bits( uint8_t *p, uint8_t mask )
 		*p = temp ;
 	}
 }
+#endif
+
+#ifdef PCBX12D
+void lcd_plot( uint16_t x, uint16_t y )
+{
+	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x*2 ;
+	p += y * LCD_W * 2 ;
+	if ( plotType == PLOT_BLACK )
+	{
+		*p = 0 ;
+		*(p+1) = 0 ;
+		*(p+LCD_W) = 0 ;
+		*(p+LCD_W+1) = 0 ;
+	}
+	else if ( plotType == PLOT_BLACK )
+	{
+		*p = 0xFFFF ;
+		*(p+1) = 0xFFFF ;
+		*(p+LCD_W) = 0xFFFF ;
+		*(p+LCD_W+1) = 0xFFFF ;
+	}
+	else
+	{
+		*p ^= 0xFFFF ;
+		*(p+1) ^= 0xFFFF ;
+		*(p+LCD_W) ^= 0xFFFF ;
+		*(p+LCD_W+1) ^= 0xFFFF ;
+	}
+}
+
+void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat )
+{
+  if(w<0) {x+=w; w=-w;}
+
+	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x*2 ;
+	p += y * LCD_W * 2 ;
+
+	while(w)
+	{
+//    if ( p>=DISPLAY_END)
+//    {
+//      break ;			
+//    }
+    if(pat&1)
+		{
+			if ( plotType == PLOT_BLACK )
+			{
+				*p = 0 ;
+				*(p+1) = 0 ;
+				*(p+LCD_W) = 0 ;
+				*(p+LCD_W+1) = 0 ;
+			}
+			else if ( plotType == PLOT_WHITE )
+			{
+				*p = 0xFFFF ;
+				*(p+1) = 0xFFFF ;
+				*(p+LCD_W) = 0xFFFF ;
+				*(p+LCD_W+1) = 0xFFFF ;
+			}
+			else
+			{
+				*p ^= 0xFFFF ;
+				*(p+1) ^= 0xFFFF ;
+				*(p+LCD_W) ^= 0xFFFF ;
+				*(p+LCD_W+1) ^= 0xFFFF ;
+			}
+      pat = (pat >> 1) | 0x80;
+    }
+		else
+		{
+      pat = pat >> 1;
+    }
+    w -= 1 ;
+    p += 2 ;
+  }
+}
+
+void lcd_hline( uint16_t x, uint16_t y, int8_t w )
+{
+  lcd_hlineStip(x,y,w,0xff);
+}
+
+void lcd_vline( uint16_t x, uint16_t y, int8_t h )
+{
+	int16_t y1 ;
+	y1 = y ;
+  if (h<0) { y1+=h; h=-h; }
+	while ( y1 < 0 )
+	{
+		y1 += 1 ;
+		h -= 1 ;
+	}
+	if ( h <= 0 )
+	{
+		return ;
+	}
+	if ( y1 + h >= 272/2 )
+	{
+		h -= 272/2 - y1 ;
+	}
+	if ( h <= 0 )
+	{
+		return ;
+	}
+
+	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x*2 ;
+	p += y1 * LCD_W * 2 ;
+  
+  while( h )
+	{
+		h -= 1 ;
+		if ( plotType == PLOT_BLACK )
+		{
+			*p = 0 ;
+			*(p+1) = 0 ;
+			*(p+LCD_W) = 0 ;
+			*(p+LCD_W+1) = 0 ;
+		}
+		else if ( plotType == PLOT_WHITE )
+		{
+			*p = 0xFFFF ;
+			*(p+1) = 0xFFFF ;
+			*(p+LCD_W) = 0xFFFF ;
+			*(p+LCD_W+1) = 0xFFFF ;
+		}
+		else
+		{
+			*p ^= 0xFFFF ;
+			*(p+1) ^= 0xFFFF ;
+			*(p+LCD_W) ^= 0xFFFF ;
+			*(p+LCD_W+1) ^= 0xFFFF ;
+		}
+		p += LCD_W * 2 ;
+  }
+}
+
+
+#else
 
 void lcd_plot( register uint8_t x, register uint8_t y )
 {
@@ -796,7 +1586,7 @@ void lcd_plot( register uint8_t x, register uint8_t y )
 #endif
 }
 
-void lcd_hlineStip( unsigned char x, unsigned char y, signed char w, uint8_t pat )
+void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat )
 {
   if(w<0) {x+=w; w=-w;}
 #ifdef GREY_SCALE
@@ -825,6 +1615,45 @@ void lcd_hlineStip( unsigned char x, unsigned char y, signed char w, uint8_t pat
     p++;
   }
 }
+#endif // X12D
+
+#ifdef PCBX12D
+void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att )
+{
+	uint8_t oldPlotType = plotType ;
+	uint32_t i ;
+  
+	for ( i=y; i<y+h; i++ )
+	{
+  	lcd_hlineStip( x, i, w, 0xff ) ;
+	}
+	plotType = oldPlotType ;
+}
+#else
+void lcdDrawFilledRect( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t pat, uint8_t att )
+{
+	uint8_t oldPlotType = plotType ;
+
+	uint32_t i ;
+	plotType = PLOT_BLACK ;
+	if ( att & ERASE )
+	{
+		plotType = PLOT_WHITE ;
+	}
+  for ( i=y; i<y+h; i++ )
+	{
+  	lcd_hlineStip( x, i, w, 0xff ) ;
+		
+//    if ((att&ROUND) && (i==y || i==y+h-1))
+//      lcdDrawHorizontalLine(x+1, i, w-2, pat, att);
+//    else
+//      lcdDrawHorizontalLine(x, i, w, pat, att);
+//    pat = (pat >> 1) + ((pat & 1) << 7);
+  }
+	plotType = oldPlotType ;
+}
+#endif
+
 
 void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
 {
@@ -849,6 +1678,34 @@ void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
 	}
 }
 
+#ifdef PCBX12D
+void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink )
+{
+	if ( blink && BLINK_ON_PHASE )
+	{
+		return ;
+	}
+	x *= 2 ;
+	w *= 2 ;
+	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
+	p += x ;
+	p += y * LCD_W * 2 ;
+	uint16_t end = x + w ;
+
+	while ( x < end )
+	{
+		uint32_t i ;
+		uint16_t *q = p ;
+		for ( i = 0 ; i < 16 ; i += 1 )
+		{
+			*q ^= 0xFFFF ;
+			q += LCD_W ;
+		}
+		p += 1 ;
+		x += 1 ;
+	}
+}
+#else
 // Reverse video 8 pixels high, w pixels wide
 // Vertically on an 8 pixel high boundary
 void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink )
@@ -903,6 +1760,7 @@ void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink )
 		}
 	}
 }
+#endif
 
 void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 {
@@ -926,6 +1784,7 @@ void lcd_hline( uint8_t x, uint8_t y, int8_t w )
   lcd_hlineStip(x,y,w,0xff);
 }
 
+#ifndef PCBX12D
 void lcd_vline( uint8_t x, uint8_t y, int8_t h )
 {
   if (h<0) { y+=h; h=-h; }
@@ -976,6 +1835,61 @@ void lcd_vline( uint8_t x, uint8_t y, int8_t h )
 	}
 #endif
 }
+#endif
+
+void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, uint8_t att )
+{
+  int dx = x2-x1 ;      /* the horizontal distance of the line */
+  int dy = y2-y1 ;      /* the vertical distance of the line */
+  int dxabs = abs(dx) ;
+  int dyabs = abs(dy) ;
+  int sdx = dx > 0 ? 1 : dx < 0 ? -1 : 0 ;
+  int sdy = dy > 0 ? 1 : dy < 0 ? -1 : 0 ;
+  int x = dyabs>>1 ;
+  int y = dxabs>>1 ;
+  int px = x1 ;
+  int py = y1 ;
+
+  if (dxabs >= dyabs)
+	{
+    /* the line is more horizontal than vertical */
+    for (int i=0; i<=dxabs; i++)
+		{
+      y += dyabs ;
+      if (y>=dxabs)
+			{
+        y -= dxabs ;
+        py += sdy ;
+      }
+      if ((1<<(px%8)) & pat)
+			{
+//        lcdDrawPoint(px, py, att);
+        lcd_plot(px, py ) ;
+      }
+      px += sdx ;
+    }
+  }
+  else
+	{
+    /* the line is more vertical than horizontal */
+    for (int i=0; i<=dyabs; i++)
+		{
+      x += dxabs;
+      if (x >= dyabs)
+			{
+        x -= dyabs ;
+        px += sdx ;
+      }
+      if ((1<<(py%8)) & pat)
+			{
+//        lcdDrawPoint(px, py, att);
+        lcd_plot(px, py ) ;
+      }
+      py += sdy ;
+    }
+  }
+}
+
 
 #ifdef SIMU
 bool lcd_refresh = true;
@@ -1013,6 +1927,19 @@ uint8_t ImageX ;
 uint8_t ImageY ;
 #endif
 
+#ifdef PCBX12D
+uint8_t ImageDisplay = 0 ;
+uint8_t ImageX ;
+uint8_t ImageY ;
+void lcd_clear()
+{
+	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
+//	lcdDrawSolidFilledRectDMA( 426, 0, 480-426, 128, 0 ) ;
+	lcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+	
+//	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0 ) ;
+}
+#else
 void lcd_clear()
 {
   memset( DisplayBuf, 0, sizeof( DisplayBuf) ) ;
@@ -1027,6 +1954,7 @@ void lcd_clear()
 
 #endif // PCBX9D
 }
+#endif // X12D
 
 // LCD i/o pins
 // LCD_RES     PC27
@@ -1143,15 +2071,15 @@ void lcd_init()
 	lock_lcd() ;
 	pioptr = PIOC ;
 
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 	pioptr->PIO_MDER = LCD_RnW ;		// Open drain
-#endif
+#endif // nREVX && nARUNI
 	 
-#ifdef REVX
-	pioptr->PIO_PER = PIO_PC27 | PIO_PC12 | 0xFF ;		// Enable bits 27,26,13,12,7-0
+#if defined(REVX) || defined(ARUNI)
+	pioptr->PIO_PER = PIO_PC27 | PIO_PC12 | 0xFF ;		// Enable bits 27,12,7-0
 #else
 	pioptr->PIO_PER = PIO_PC27 | PIO_PC26 | PIO_PC13 | PIO_PC12 | 0xFF ;		// Enable bits 27,26,13,12,7-0
-#endif // REVX
+#endif // REVX || ARUNI
 
 #ifdef REVX
 	pioptr->PIO_CODR = LCD_E ;
@@ -1160,7 +2088,11 @@ void lcd_init()
 	pioptr->PIO_CODR = LCD_E | LCD_RnW | LCD_CS1 ;
 #endif // REVX
 	pioptr->PIO_SODR = LCD_RES ;
+#ifdef ARUNI
+	pioptr->PIO_OER = PIO_PC27 | PIO_PC12 | 0xFF ;// Enable bits 27,12,7-0 output
+#else
 	pioptr->PIO_OER = PIO_PC27 | PIO_PC26 | PIO_PC13 | PIO_PC12 | 0xFF ;		// Set bits 27,26,13,12,7-0 output
+#endif
 	pioptr->PIO_OWER = 0x000000FFL ;		// Allow write to ls 8 bits in ODSR
 #else 
 	pioptr = PIOC ;
@@ -1183,7 +2115,7 @@ void lcd_init()
 #ifdef REVB
   if ( ( PIOA->PIO_PDSR & LCD_A0 ) == 0 )
 	{
-		ErcLcd = 1 ;
+		ErcLcd = 1 ;   // ERC12864-2
 	}	 
 	configure_pins( LCD_A0, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
 #endif // REVB
@@ -1220,12 +2152,17 @@ extern uint16_t ResetReason ;
 		}
 	}
   lcdSendCtl(0xAF) ; //DON = 1: display ON
-#endif // REVB
+#endif // REVX
 
 #ifdef REVB
+#ifdef ARUNI
+	pioptr->PIO_ODR = 0x0000003BL ;		// Set bits 0, 1, 3, 4, 5 input
+	pioptr->PIO_PUER = 0x0000003BL ;		// Set bits 0, 1, 3, 4, 5 with pullups
+#else
 	pioptr->PIO_ODR = 0x0000003AL ;		// Set bits 1, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x0000003AL ;		// Set bits 1, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
+#endif  // ARUNI
 #else
 	pioptr->PIO_ODR = 0x0000003CL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x0000003CL ;		// Set bits 2, 3, 4, 5 with pullups
@@ -1250,7 +2187,11 @@ void lcdSetRefVolt(uint8_t val)
 // read the inputs, and lock the LCD lines
 	lock_lcd() ;
 
+#ifdef ARUNI
+	pioptr->PIO_OER = 0x080090FFL ;		// Set bits 27,15,12,7-0 output
+#else
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
+#endif
 
   lcdSendCtl(0x81);
 	if ( val == 0 )
@@ -1260,9 +2201,14 @@ void lcdSetRefVolt(uint8_t val)
   lcdSendCtl(val);
 	
 #ifdef REVB
+#ifdef ARUNI
+	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
+	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
+#else
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 1, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
+#endif
 #else
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 2, 3, 4, 5 with pullups
@@ -1279,7 +2225,11 @@ void lcdSetOrientation()
 // read the inputs, and lock the LCD lines
 	lock_lcd() ;
 
+#ifdef ARUNI
+	pioptr->PIO_OER = 0x080090FFL ;		// Set bits 27,15,12,7-0 output
+#else
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
+#endif
 
 	uint8_t c1 = 0xA1 ;
 	uint8_t c2 = 0xC0 ;
@@ -1297,9 +2247,14 @@ void lcdSetOrientation()
 	}	
   lcdSendCtl(c1);
 #ifdef REVB
+#ifdef ARUNI
+	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
+	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
+#else
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 1, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
+#endif
 #else
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 2, 3, 4, 5 with pullups
@@ -1316,13 +2271,13 @@ void lcdSendCtl(uint8_t val)
 	
 #ifdef REVB
 	pioptr = PIOC ;
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 	pioptr->PIO_CODR = LCD_CS1 ;		// Select LCD
-#endif 
+#endif // nREVX && nARUNI
 	PIOA->PIO_CODR = LCD_A0 ;
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 	pioptr->PIO_CODR = LCD_RnW ;		// Write
-#endif
+#endif // nREVX && nARUNI
 	pioptr->PIO_ODSR = val ;
 #else
 	pioptr = PIOC ;
@@ -1395,7 +2350,11 @@ void refreshDisplay()
 
 	pioptr = PIOC ;
 #ifdef REVB
-	pioptr->PIO_OER = 0x0C0030FFL ;		// Set bits 27,26,15,13,12,7-0 output
+#ifdef ARUNI
+	pioptr->PIO_OER = 0x080090FFL ;		// Set bits 27,15,12,7-0 output
+#else
+	pioptr->PIO_OER = 0x0C0030FFL ;		// Set bits 27,26,13,12,7-0 output
+#endif
 #else
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
 #endif // REVB
@@ -1415,14 +2374,14 @@ void refreshDisplay()
     lcdSendCtl(0x10); //column addr 0
     lcdSendCtl( y | 0xB0); //page addr y
     
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 		pioptr->PIO_CODR = LCD_CS1 ;		// Select LCD
-#endif // REVX
+#endif // nREVX && nARUNI
 
 		PIOA->PIO_SODR = LCD_A0 ;			// Data
-#ifndef REVX
+#if (!defined(REVX) && !defined(ARUNI))
 		pioptr->PIO_CODR = LCD_RnW ;		// Write
-#endif // REVX
+#endif // nREVX && nARUNI
 		 
 #ifdef REVB
 		x =	*p ;
@@ -1445,6 +2404,10 @@ void refreshDisplay()
     }
   }
 	pioptr->PIO_ODSR = 0xFF ;					// Drive lines high
+#ifdef ARUNI
+	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
+	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
+#else
 #ifdef REVB
 	pioptr->PIO_PUER = 0x000000FEL ;	// Set bits 1, 3, 4, 5 with pullups
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input
@@ -1453,6 +2416,7 @@ void refreshDisplay()
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
 #endif // REVB
 	pioptr->PIO_ODSR = 0xFE ;					// Drive D0 low
+#endif
 
 	LcdLock = 0 ;
 

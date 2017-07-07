@@ -2546,7 +2546,7 @@ p, li { white-space: pre-wrap; }
        <item row="1" column="0">
         <widget class="QLabel" name="label_15">
          <property name="text">
-          <string>ANALOG 1</string>
+          <string>ANALOG 1 (LH)</string>
          </property>
         </widget>
        </item>
@@ -2595,7 +2595,7 @@ p, li { white-space: pre-wrap; }
        <item row="2" column="0">
         <widget class="QLabel" name="label_16">
          <property name="text">
-          <string>ANALOG 2</string>
+          <string>ANALOG 2 (LV)</string>
          </property>
         </widget>
        </item>
@@ -2641,7 +2641,7 @@ p, li { white-space: pre-wrap; }
        <item row="3" column="0">
         <widget class="QLabel" name="label_17">
          <property name="text">
-          <string>ANALOG 3</string>
+          <string>ANALOG 3 (RV)</string>
          </property>
         </widget>
        </item>
@@ -2687,7 +2687,7 @@ p, li { white-space: pre-wrap; }
        <item row="4" column="0">
         <widget class="QLabel" name="label_18">
          <property name="text">
-          <string>ANALOG 4</string>
+          <string>ANALOG 4 (RH)</string>
          </property>
         </widget>
        </item>

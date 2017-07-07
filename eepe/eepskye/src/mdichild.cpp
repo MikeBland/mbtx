@@ -954,6 +954,10 @@ void MdiChild::getPhysicalType()
 		{
 			radioData.type = 0 ;
 		}
+		if ( x == 7 )	// Qx7
+		{
+			radioData.type = RADIO_TYPE_QX7 ;
+		}
 	}
 }
 

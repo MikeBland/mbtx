@@ -293,6 +293,14 @@ extern uint16_t s_traceCnt;
 #define TEL_ITEM_CELL10	  65
 #define TEL_ITEM_CELL11	  66
 #define TEL_ITEM_CELL12	  67
+#define TEL_ITEM_CUST1	  68
+#define TEL_ITEM_CUST2	  69
+#define TEL_ITEM_CUST3	  70
+#define TEL_ITEM_CUST4	  71
+#define TEL_ITEM_CUST5	  72
+#define TEL_ITEM_CUST6	  73
+#define TEL_ITEM_CUST7	  74
+#define TEL_ITEM_CUST8	  75
 
 
 // units
