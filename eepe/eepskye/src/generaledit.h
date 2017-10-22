@@ -49,6 +49,7 @@ private slots:
     void on_TrainerProfileSB_valueChanged( int ) ;
 
     void on_ownerNameLE_editingFinished();
+		void on_welcomeFileNameLE_editingFinished() ;
 		void on_BtNameText_editingFinished() ;
 		void on_BtDev1Name_editingFinished() ;
 		void on_BtDev2Name_editingFinished() ;
@@ -100,6 +101,7 @@ private slots:
     void on_channelorderCB_currentIndexChanged(int index);
     void on_languageCB_currentIndexChanged(int index);
     void on_beeperCB_currentIndexChanged(int index);
+		void on_WelcomeCB_currentIndexChanged(int index) ;
 //    void on_memwarnChkB_stateChanged(int );
 //    void on_switchwarnChkB_stateChanged(int );
     void on_thrwarnChkB_stateChanged(int );
@@ -122,6 +124,11 @@ private slots:
 		void on_StickScrollEnableChkB_stateChanged(int ) ;
 		void on_SoftwareVolumeChkB_stateChanged(int ) ;
 		void on_Ar9xChkB_stateChanged(int ) ;
+		void on_Pot1DetCB_stateChanged(int ) ;
+		void on_Pot2DetCB_stateChanged(int ) ;
+		void on_Pot3DetCB_stateChanged(int ) ;
+		void on_Pot4DetCB_stateChanged(int ) ;
+		void on_Pot5DetCB_stateChanged(int ) ;
 		void on_MenuEditChkB_stateChanged(int ) ;
 		void on_CrossTrimChkB_stateChanged(int ) ;
 		void on_hapticMinRunSB_editingFinished() ;

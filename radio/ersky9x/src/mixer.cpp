@@ -601,8 +601,24 @@ void perOut(int16_t *chanOut, uint8_t att )
 						lweight -= 125 ; 
 					}
 				}
-				
 				int16_t mixweight = lweight ;
+				int16_t loffset = md->sOffset ;
+				if ( (loffset <= -126) || (loffset >= 126) )
+				{
+					loffset = REG100_100( loffset ) ;
+				}
+				else
+				{
+					if ( md->extOffset == 1 )
+					{
+						loffset += 125 ; 
+					}
+					else if ( md->extOffset == 3 )
+					{
+						loffset -= 125 ; 
+					}
+				}
+				int16_t mixoffset = loffset ;
 
         if((md->destCh==0) || (md->destCh>NUM_SKYCHNOUT+EXTRA_SKYCHANNELS)) break;
 
@@ -791,7 +807,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         //========== INPUT OFFSET ===============
         if ( md->lateOffset == 0 )
         {
-            if(md->sOffset) v += calc100toRESX( REG( md->sOffset, -125, 125 )	) ;
+            if(mixoffset) v += calc100toRESX( mixoffset	) ;
         }
 
         //========== DELAY and PAUSE ===============
@@ -1003,7 +1019,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         //========== lateOffset ===============
 				if ( md->lateOffset )
         {
-            if(md->sOffset) dv += calc100toRESX( REG( md->sOffset, -125, 125 )	) * 100 ;
+            if(mixoffset) dv += calc100toRESX( mixoffset ) * 100 ;
         }
 				
 				int32_t *ptr ;			// Save calculating address several times

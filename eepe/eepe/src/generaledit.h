@@ -130,11 +130,20 @@ private slots:
 
 		void on_EleSwitchSource_currentIndexChanged(int index) ;
 		void on_AilSwitchSource_currentIndexChanged(int index) ;
+		void on_ThrSwitchSource_currentIndexChanged(int index) ;
+		void on_GeaSwitchSource_currentIndexChanged(int index) ;
+		void on_RudSwitchSource_currentIndexChanged(int index) ;
 		void on_Pb1SwitchSource_currentIndexChanged(int index) ;
 		void on_Pb2SwitchSource_currentIndexChanged(int index) ;
 		void on_Pb7InputCB_stateChanged(int x ) ;
 		void on_Pg2InputCB_stateChanged(int x ) ;
 		void on_L_wrInputCB_stateChanged(int x ) ;
+		void on_LvTrimModCB_stateChanged(int x ) ;
+		void on_PB7BacklightCB_stateChanged(int x ) ;
+		void on_StickLVdeadbandSB_editingFinished() ;
+		void on_StickLHdeadbandSB_editingFinished() ;
+		void on_StickRVdeadbandSB_editingFinished() ;
+		void on_StickRHdeadbandSB_editingFinished() ;
 
 };
 

@@ -38,6 +38,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
     QRegExp rx(CHAR_FOR_NAMES_REGEX);
     ui->ownerNameLE->setValidator(new QRegExpValidator(rx, this));
+    ui->welcomeFileNameLE->setValidator(new QRegExpValidator(rx, this));
 
     populateSwitchCB(ui->backlightswCB,g_eeGeneral.lightSw, rData->type );
 
@@ -98,7 +99,11 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->CrossTrimChkB->setChecked(g_eeGeneral.crosstrim);
 //    ui->BandGapEnableChkB->setChecked(!g_eeGeneral.disableBG);//Default is zero=checked
     ui->beeperCB->setCurrentIndex(g_eeGeneral.beeperVal);
-    ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
+    
+    ui->WelcomeCB->setCurrentIndex(g_eeGeneral.welcomeType);
+    ui->welcomeFileNameLE->setText((char *)g_eeGeneral.welcomeFileName) ;
+		
+		ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
 		if ( rData->bitType & RADIO_BITTYPE_QX7)
@@ -125,11 +130,17 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->brightGreenSB->setValue(100-g_eeGeneral.bright_white ) ;
     ui->brightBlueSB->setValue(100-g_eeGeneral.bright_blue ) ;
 
+		if ( rData->type ==  RADIO_TYPE_SKY )
+		{
+			ui->Ar9xChkB->show() ;
+		}
+
 		switch ( rData->type )
 		{
-			case RADIO_TYPE_SKY :
 			case RADIO_TYPE_TARANIS :
 			case RADIO_TYPE_QX7 :
+				ui->Ar9xChkB->hide() ;
+			case RADIO_TYPE_SKY :
 				ui->brightGreenSB->hide() ;
 				ui->brightBlueSB->hide() ;
 				ui->label_BrightGreen->hide() ;
@@ -139,6 +150,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				
 			case RADIO_TYPE_TPLUS :
 			case RADIO_TYPE_X9E :
+				ui->Ar9xChkB->hide() ;
 				ui->label_Bright->setText("Brightness (Colour)") ;
 				ui->label_BrightGreen->setText("Brightness (White)") ;
 				ui->label_BrightGreen->show() ;
@@ -148,6 +160,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			break ;
 
 			case RADIO_TYPE_9XTREME :
+				ui->Ar9xChkB->hide() ;
 				ui->brightGreenSB->show() ;
 				ui->brightBlueSB->show() ;
 				ui->label_BrightGreen->show() ;
@@ -308,13 +321,34 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		}
 		else
 		{
+			if ( rData->type == RADIO_TYPE_QX7 )
+			{
+				ui->PB1CB->show() ;
+				ui->PB2CB->show() ;
+				ui->label_PB1Sw->show() ;
+				ui->label_PB2Sw->show() ;
+				setHardwareSwitchCB( ui->PB1CB, 1, 3 ) ;
+				setHardwareSwitchCB( ui->PB2CB, 1, 3 ) ;
+				ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
+				ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
+			}
+			else
+			{
+				ui->label_PB1Sw->show() ;
+				ui->label_PB2Sw->show() ;
+				setHardwareSwitchCB( ui->PB1CB, 1, 3 ) ;
+				setHardwareSwitchCB( ui->PB2CB, 1, 3 ) ;
+				ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
+				ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
+//				ui->label_PB1Sw->hide() ;
+//				ui->label_PB2Sw->hide() ;
+			}
+			
 			ui->label_AilSw->hide() ;
 			ui->label_EleSw->hide() ;
 			ui->label_ThrSw->hide() ;
 			ui->label_GeaSw->hide() ;
 			ui->label_RudSw->hide() ;
-			ui->label_PB1Sw->hide() ;
-			ui->label_PB2Sw->hide() ;
 			ui->label_PB3Sw->hide() ;
 			ui->label_PB4Sw->hide() ;
 			ui->label_Pot4->hide() ;
@@ -324,8 +358,6 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
       ui->GeaCB->hide() ;
       ui->RudCB->hide() ;
 			ui->ThrCB->hide() ;
-			ui->PB1CB->hide() ;
-			ui->PB2CB->hide() ;
 			ui->PB3CB->hide() ;
 			ui->PB4CB->hide() ;
 			ui->Pot4CB->hide() ;
@@ -374,6 +406,28 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     connect(ui->weightSB_2, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_3, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
     connect(ui->weightSB_4, SIGNAL(valueChanged(int)), this, SLOT(validateWeightSB()));
+
+    ui->Pot1DetCB->setChecked( g_eeGeneral.potDetents & 1 ) ;
+    ui->Pot2DetCB->setChecked( g_eeGeneral.potDetents & 2 ) ;
+    ui->Pot3DetCB->setChecked( g_eeGeneral.potDetents & 4 ) ;
+    ui->Pot4DetCB->setChecked( g_eeGeneral.potDetents & 8 ) ;
+    ui->Pot5DetCB->setChecked( g_eeGeneral.potDetents & 16 ) ;
+
+		uint32_t numberOfPots = 2 ;
+
+		if ( rData->bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_TYPE_9XTREME | RADIO_BITTYPE_AR9X ) )
+		{
+			numberOfPots = 3 ;
+		}
+		if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+		{
+			numberOfPots = 4 ;
+		}
+		numberOfPots += rData->extraPots ;
+
+		ui->Pot5DetCB->setVisible( numberOfPots > 4 ) ;
+		ui->Pot4DetCB->setVisible( numberOfPots > 3 ) ;
+		ui->Pot3DetCB->setVisible( numberOfPots > 2 ) ;
 
 		hardwareTabLock = 0 ;
 }
@@ -469,6 +523,13 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 				b->addItem( "EXT6" ) ;
 				b->addItem( "EXT7" ) ;
 				b->addItem( "EXT8" ) ;
+			break ;
+			case 3 :
+				b->addItem( "NONE" ) ;
+				b->addItem( "JTMS" ) ;
+				b->addItem( "JTCK" ) ;
+				b->addItem( "EXT1" ) ;
+				b->addItem( "EXT2" ) ;
 			break ;
 		}
 	}
@@ -1139,6 +1200,36 @@ void GeneralEdit::on_Ar9xChkB_stateChanged(int )
     updateSettings();
 }
 
+void GeneralEdit::on_Pot1DetCB_stateChanged(int )
+{
+    g_eeGeneral.potDetents = (g_eeGeneral.potDetents & ~1) | ( ui->Pot1DetCB->isChecked() ? 1 : 0 ) ;
+    updateSettings();
+}
+
+void GeneralEdit::on_Pot2DetCB_stateChanged(int )
+{
+    g_eeGeneral.potDetents = (g_eeGeneral.potDetents & ~2) | ( ui->Pot2DetCB->isChecked() ? 2 : 0 ) ;
+    updateSettings();
+}
+
+void GeneralEdit::on_Pot3DetCB_stateChanged(int )
+{
+    g_eeGeneral.potDetents = (g_eeGeneral.potDetents & ~4) | ( ui->Pot3DetCB->isChecked() ? 4 : 0 ) ;
+    updateSettings();
+}
+
+void GeneralEdit::on_Pot4DetCB_stateChanged(int )
+{
+    g_eeGeneral.potDetents = (g_eeGeneral.potDetents & ~8) | ( ui->Pot4DetCB->isChecked() ? 8 : 0 ) ;
+    updateSettings();
+}
+
+void GeneralEdit::on_Pot5DetCB_stateChanged(int )
+{
+    g_eeGeneral.potDetents = (g_eeGeneral.potDetents & ~16) | ( ui->Pot5DetCB->isChecked() ? 16 : 0 ) ;
+    updateSettings();
+}
+
 void GeneralEdit::on_MenuEditChkB_stateChanged(int )
 {
     g_eeGeneral.forceMenuEdit = ui->MenuEditChkB->isChecked() ? 1 : 0 ;
@@ -1160,6 +1251,12 @@ void GeneralEdit::on_CrossTrimChkB_stateChanged(int )
 void GeneralEdit::on_beeperCB_currentIndexChanged(int index)
 {
     g_eeGeneral.beeperVal = index;
+    updateSettings();
+}
+
+void GeneralEdit::on_WelcomeCB_currentIndexChanged(int index)
+{
+    g_eeGeneral.welcomeType = index ;
     updateSettings();
 }
 
@@ -1395,7 +1492,17 @@ void GeneralEdit::on_ownerNameLE_editingFinished()
         if(i>=sizeof(g_eeGeneral.ownerName)) break;
         g_eeGeneral.ownerName[i] = ui->ownerNameLE->text().toStdString()[i];
     }
+    updateSettings();
+}
 
+void GeneralEdit::on_welcomeFileNameLE_editingFinished()
+{
+    memset(&g_eeGeneral.welcomeFileName,' ',sizeof(g_eeGeneral.welcomeFileName));
+    for(quint8 i=0; i<(ui->welcomeFileNameLE->text().length()); i++)
+    {
+        if(i>=sizeof(g_eeGeneral.welcomeFileName)) break ;
+        g_eeGeneral.welcomeFileName[i] = ui->welcomeFileNameLE->text().toStdString()[i];
+    }
     updateSettings();
 }
 
@@ -1837,7 +1944,7 @@ void GeneralEdit::on_PB4CB_currentIndexChanged(int x )
 		return ;
 	}
 	uint16_t value = x ? USE_PB4 : 0 ;
-	g_eeGeneral.switchMapping &= ~USE_PB3 ;
+	g_eeGeneral.switchMapping &= ~USE_PB4 ;
 	g_eeGeneral.switchMapping |= value ;
 	g_eeGeneral.pb4source = x ;
 	setHwSwitchActive() ;

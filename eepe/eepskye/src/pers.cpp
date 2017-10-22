@@ -71,7 +71,7 @@ void EEPFILE::generalDefault()
   EEGeneral g_eeGeneral;
   memset(&g_eeGeneral,0,sizeof(g_eeGeneral));
   memset(&g_eeGeneral.ownerName,' ',sizeof(g_eeGeneral.ownerName));
-  g_eeGeneral.myVers   =  MDVERS;
+  g_eeGeneral.myVers   =  MDSKYVERS ;
   g_eeGeneral.currModel=  0;
   g_eeGeneral.contrast = 30;
   g_eeGeneral.vBatWarn = 90;

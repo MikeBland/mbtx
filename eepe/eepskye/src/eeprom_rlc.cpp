@@ -576,6 +576,7 @@ void RlcFile::writeRlc(uint8_t i_fileId, uint8_t typ, uint8_t *buf, uint16_t i_l
   m_rlc_buf = buf;
   m_rlc_len = i_len;
   m_cur_rlc_len = 0;
+	s_write_err = 0 ;
 
   do {
     nextRlcWriteStep();

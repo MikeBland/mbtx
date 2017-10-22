@@ -58,7 +58,7 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
     ui->ownerNameLE->setValidator(new QRegExpValidator(rx, this));
 
 #ifdef V2
-		rData->populateSwitchCB(ui->backlightswCB,p_eeGeneral->lightSw,eeFile->mee_type ) ;
+		rData->populateSwitchCB(ui->backlightswCB,p_eeGeneral->lightSw,eeFile->mee_type, 0 ) ;
 #else
     populateSwitchCB(ui->backlightswCB,p_eeGeneral->lightSw,eeFile->mee_type);
 #endif
@@ -119,14 +119,43 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
 		ui->internalFrskyAlarmChkB->hide() ;
 #endif
     ui->backlightinvertChkB->setChecked(p_eeGeneral->blightinv);
-
 #ifndef V2
     ui->beepMinuteChkB->setChecked(p_eeGeneral->minuteBeep);
     ui->beepCountDownChkB->setChecked(p_eeGeneral->preBeep);
+		ui->LvTrimModCB->hide() ;
+		ui->PB7BacklightCB->hide() ;
+#else
+    ui->LvTrimModCB->setChecked(p_eeGeneral->LVTrimMod) ;
+    ui->PB7BacklightCB->setChecked(p_eeGeneral->pb7backlight) ;
+    ui->beepMinuteChkB->hide() ;
+    ui->beepCountDownChkB->hide() ;
+		ui->battcalibDSB->hide() ;
+		ui->labelBatCal->hide() ;
+		ui->labelDefSwitch->hide() ;
+		ui->switchDefPos_1->hide() ;
+		ui->switchDefPos_2->hide() ;
+		ui->switchDefPos_3->hide() ;
+		ui->switchDefPos_4->hide() ;
+		ui->switchDefPos_5->hide() ;
+		ui->switchDefPos_6->hide() ;
+		ui->switchDefPos_7->hide() ;
+		ui->switchDefPos_8->hide() ;
+		ui->Pb7InputCB->hide() ;
+		ui->Pg2InputCB->hide() ;
+		ui->L_wrInputCB->hide() ;
 #endif
     ui->beepFlashChkB->setChecked(p_eeGeneral->flashBeep);
     ui->splashScreenChkB->setChecked(!p_eeGeneral->disableSplashScreen);
     ui->splashScreenNameChkB->setChecked(!p_eeGeneral->hideNameOnSplash);
+
+    uint8_t db = (p_eeGeneral->stickDeadband & 0x00F0 ) >> 4 ;
+		ui->StickLVdeadbandSB->setValue(db) ;
+    db = p_eeGeneral->stickDeadband & 0x000F ;
+		ui->StickLHdeadbandSB->setValue(db) ;
+    db = (p_eeGeneral->stickDeadband & 0x0F00 ) >> 8 ;
+		ui->StickRVdeadbandSB->setValue(db) ;
+    db = (p_eeGeneral->stickDeadband & 0xF000 ) >> 12 ;
+		ui->StickRHdeadbandSB->setValue(db) ;
 
     ui->ana1Neg->setValue(p_eeGeneral->calibSpanNeg[0]);
     ui->ana2Neg->setValue(p_eeGeneral->calibSpanNeg[1]);
@@ -306,7 +335,7 @@ void GeneralEdit::updateTrainerTab()
     ui->weightSB_1->setValue(p_eeGeneral->trainer.mix[0].studWeight*13/4);
     StudWeight1=p_eeGeneral->trainer.mix[0].studWeight*13/4;
 #else
-		rData->populateSwitchCB(ui->swtchCB_1,p_eeGeneral->trainer.mix[0].swtch, eeFile->mee_type );
+		rData->populateSwitchCB(ui->swtchCB_1,p_eeGeneral->trainer.mix[0].swtch, eeFile->mee_type, 0 );
     ui->weightSB_1->setValue(p_eeGeneral->trainer.mix[0].studWeight );
     StudWeight1=p_eeGeneral->trainer.mix[0].studWeight ;
 #endif
@@ -317,7 +346,7 @@ void GeneralEdit::updateTrainerTab()
     ui->weightSB_2->setValue(p_eeGeneral->trainer.mix[1].studWeight*13/4);
     StudWeight2=p_eeGeneral->trainer.mix[1].studWeight*13/4;
 #else
-    rData->populateSwitchCB(ui->swtchCB_2,p_eeGeneral->trainer.mix[1].swtch, eeFile->mee_type );
+    rData->populateSwitchCB(ui->swtchCB_2,p_eeGeneral->trainer.mix[1].swtch, eeFile->mee_type, 0 );
     ui->weightSB_2->setValue(p_eeGeneral->trainer.mix[1].studWeight );
     StudWeight2=p_eeGeneral->trainer.mix[1].studWeight ;
 #endif
@@ -329,7 +358,7 @@ void GeneralEdit::updateTrainerTab()
     ui->weightSB_3->setValue(p_eeGeneral->trainer.mix[2].studWeight*13/4);
     StudWeight3=p_eeGeneral->trainer.mix[2].studWeight*13/4;
 #else
-    rData->populateSwitchCB(ui->swtchCB_3,p_eeGeneral->trainer.mix[2].swtch, eeFile->mee_type );
+    rData->populateSwitchCB(ui->swtchCB_3,p_eeGeneral->trainer.mix[2].swtch, eeFile->mee_type, 0 );
     ui->weightSB_3->setValue(p_eeGeneral->trainer.mix[2].studWeight );
     StudWeight3=p_eeGeneral->trainer.mix[3].studWeight ;
 #endif
@@ -341,7 +370,7 @@ void GeneralEdit::updateTrainerTab()
     ui->weightSB_4->setValue(p_eeGeneral->trainer.mix[3].studWeight*13/4);
     StudWeight4=p_eeGeneral->trainer.mix[3].studWeight*13/4;
 #else
-    rData->populateSwitchCB(ui->swtchCB_4,p_eeGeneral->trainer.mix[3].swtch, eeFile->mee_type );
+    rData->populateSwitchCB(ui->swtchCB_4,p_eeGeneral->trainer.mix[3].swtch, eeFile->mee_type, 0 );
     ui->weightSB_4->setValue(p_eeGeneral->trainer.mix[3].studWeight );
     StudWeight4=p_eeGeneral->trainer.mix[3].studWeight ;
 #endif
@@ -484,7 +513,7 @@ void GeneralEdit::on_backlightswCB_currentIndexChanged(int index)
 //	}
 //#endif
 #ifdef V2
-		p_eeGeneral->lightSw = rData->getSwitchCbValue( ui->backlightswCB, eeFile->mee_type ) ;
+		p_eeGeneral->lightSw = rData->getSwitchCbValue( ui->backlightswCB, eeFile->mee_type, 0 ) ;
 #else    
 		p_eeGeneral->lightSw = getSwitchCbValue( ui->backlightswCB, eeFile->mee_type ) ;
 #endif
@@ -1113,6 +1142,61 @@ void GeneralEdit::on_AilSwitchSource_currentIndexChanged(int index)
   updateSettings();
 }
 
+void GeneralEdit::on_ThrSwitchSource_currentIndexChanged(int index)
+{
+#ifdef V2
+	uint8_t x = p_eeGeneral->switchSources[0] & 0xF0 ;
+	x |= index & 0x0F ;
+	p_eeGeneral->switchSources[0] = x ;
+#else
+	p_eeGeneral->thr2source = index ;
+	p_eeGeneral->switchMapping &= ~USE_THR_3POS ;
+	if ( index )
+	{
+		p_eeGeneral->switchMapping |= USE_THR_3POS ;
+	}
+	createSwitchMapping( p_eeGeneral, eeFile->mee_type ) ;
+#endif
+  updateSettings();
+}
+
+void GeneralEdit::on_RudSwitchSource_currentIndexChanged(int index)
+{
+#ifdef V2
+	uint8_t x = p_eeGeneral->switchSources[0] & 0x0F ;
+	x |= ( index << 4 ) & 0xF0 ;
+	p_eeGeneral->switchSources[0] = x ;
+#else
+	p_eeGeneral->rud2source = index ;
+	p_eeGeneral->switchMapping &= ~USE_RUD_3POS ;
+	if ( index )
+	{
+		p_eeGeneral->switchMapping |= USE_RUD_3POS ;
+	}
+	createSwitchMapping( p_eeGeneral, eeFile->mee_type ) ;
+#endif
+  updateSettings();
+}
+
+void GeneralEdit::on_GeaSwitchSource_currentIndexChanged(int index)
+{
+#ifdef V2
+	uint8_t x = p_eeGeneral->switchSources[2] & 0xF0 ;
+	x |= index & 0x0F ;
+	p_eeGeneral->switchSources[2] = x ;
+#else
+	p_eeGeneral->gea2source = index ;
+	p_eeGeneral->switchMapping &= ~USE_GEA_3POS ;
+	if ( index )
+	{
+		p_eeGeneral->switchMapping |= USE_GEA_3POS ;
+	}
+	createSwitchMapping( p_eeGeneral, eeFile->mee_type ) ;
+#endif
+  updateSettings();
+}
+
+
 void GeneralEdit::on_Pb1SwitchSource_currentIndexChanged(int index)
 {
 #ifdef V2
@@ -1173,9 +1257,49 @@ void GeneralEdit::on_L_wrInputCB_stateChanged(int x )
   updateSettings();
 }
 
+void GeneralEdit::on_LvTrimModCB_stateChanged(int x )
+{
+#ifdef V2
+  p_eeGeneral->LVTrimMod = x ;
+  updateSettings();
+#endif
+}
 
+void GeneralEdit::on_PB7BacklightCB_stateChanged(int x )
+{
+#ifdef V2
+  p_eeGeneral->pb7backlight = x ;
+  updateSettings();
+#endif
+}
 
+void GeneralEdit::on_StickLVdeadbandSB_editingFinished()
+{
+  uint16_t db = ui->StickLVdeadbandSB->value() ;
+  p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xFF0F ) | ( db << 4 ) ;
+  updateSettings();
+}
 
+void GeneralEdit::on_StickLHdeadbandSB_editingFinished()
+{
+  uint16_t db = ui->StickLVdeadbandSB->value() ;
+  p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xFFF0 ) | db ;
+  updateSettings();
+}
+
+void GeneralEdit::on_StickRVdeadbandSB_editingFinished()
+{
+  uint16_t db = ui->StickLVdeadbandSB->value() ;
+  p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xF0FF ) | ( db << 8 ) ;
+  updateSettings();
+}
+
+void GeneralEdit::on_StickRHdeadbandSB_editingFinished()
+{
+  uint16_t db = ui->StickLVdeadbandSB->value() ;
+  p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0x0FFF ) | ( db << 12 ) ;
+  updateSettings();
+}
 
 
 

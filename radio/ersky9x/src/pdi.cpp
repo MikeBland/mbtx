@@ -48,8 +48,10 @@ uchar PdiErrors8 = 0 ;
 const static uint8_t pdi_key[8]={0xFF,0x88,0xD8,0xCD,0x45,0xAB,0x89,0x12};
 
 #ifdef PCBSKY
+// Timer now clocked at 8MHz (0.125uS) or 16MHz
 void hw_delay( uint16_t time )
 {
+	time *= HwDelayScale ;
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	while ( TC0->TC_CHANNEL[0].TC_CV < time )		// Value depends on MCK/2 (used 18MHz)
 	{
@@ -65,7 +67,7 @@ extern void hw_delay( uint16_t time ) ;
 static void pdiWaitBit()
 {
 #ifdef PCBSKY
-	hw_delay(96) ;	// 3 uS
+	hw_delay(3*HW_COUNT_PER_US) ;	// 3 uS
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(35) ;	// 3.5 uS
@@ -143,7 +145,7 @@ uchar pdiInit()
 	pdiSetClk1();
 	pdiSetData0();
 #ifdef PCBSKY
-	hw_delay(3520) ;	// 110 uS
+	hw_delay(110*HW_COUNT_PER_US) ;	// 110 uS
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(2200) ;	// 220 uS
@@ -152,7 +154,7 @@ uchar pdiInit()
 	pdiSetData1();
 //	pdiSetClk1();
 #ifdef PCBSKY
-	hw_delay(320) ;	// 10uS
+	hw_delay(10*HW_COUNT_PER_US) ;	// 10uS
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 	hw_delay(250) ;	// 25uS

@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>745</width>
-    <height>674</height>
+    <width>732</width>
+    <height>569</height>
    </rect>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>16777215</width>
+    <height>660</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>General Edit</string>
@@ -28,7 +34,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -62,61 +68,7 @@ These will be relevant for all models in the same EEPROM.</string>
          </property>
         </widget>
        </item>
-       <item row="1" column="1">
-        <widget class="QComboBox" name="beeperCB">
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="statusTip">
-          <string/>
-         </property>
-         <property name="whatsThis">
-          <string>Beeper volume
-
-0 - Quiet.  No beeps at all.
-1 - No Keys.  Normal beeps but menu keys do not beep.
-2 - Normal.
-3 - Loud.
-4 - Extra loud.</string>
-         </property>
-         <item>
-          <property name="text">
-           <string>Quiet</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>No Keys</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>xShort</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Short</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Norm</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>Long</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>xLong</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="2" column="0">
+       <item row="3" column="0">
         <widget class="QLabel" name="label_32">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Values from 1 to 100 may be set. The pitch varies one tone up for every five value increments.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -126,34 +78,7 @@ These will be relevant for all models in the same EEPROM.</string>
          </property>
         </widget>
        </item>
-       <item row="2" column="1">
-        <widget class="QSpinBox" name="speakerPitchSB">
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="statusTip">
-          <string/>
-         </property>
-         <property name="whatsThis">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;LCD Screen Contrast&lt;/span&gt;&lt;/p&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Values can be 20-45&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-         <property name="value">
-          <number>1</number>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
+       <item row="6" column="0">
         <widget class="QLabel" name="label_37">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This option sets the general Audio volume (0 to 23).&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -163,14 +88,14 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="6" column="1">
         <widget class="QSpinBox" name="volumeSB">
          <property name="maximum">
           <number>23</number>
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
+       <item row="8" column="0">
         <widget class="QLabel" name="label_8">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600; text-decoration: underline;&quot;&gt;Filter ADC:&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;SING:&lt;/span&gt; Single conversion. This is the fastest conversion but base resolution is&lt;/p&gt;&lt;p&gt;1024.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;OSMP:&lt;/span&gt; Oversampling. This uses extra samples to increase resolution to&lt;/p&gt;&lt;p&gt;2048. Just slightly slower than SING&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;FILT:&lt;/span&gt; Filtered. This is in case you have excessive noise from the conversion&lt;/p&gt;&lt;p&gt;(servo jitters). This will filter the input and prevent that noise. It will, however,&lt;/p&gt;&lt;p&gt;increase latency by about 30 msec.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -180,7 +105,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="6" column="1">
+       <item row="8" column="1">
         <widget class="QComboBox" name="inputfilterCB">
          <item>
           <property name="text">
@@ -199,7 +124,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="7" column="0">
+       <item row="9" column="0">
         <widget class="QLabel" name="label_2">
          <property name="toolTip">
           <string extracomment="Low Battery Voltage warning [5v-10v]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When the voltage of the transmitter battery drops below this l&lt;span style=&quot; color:#000000;&quot;&gt;evel&lt;/span&gt;&lt;span style=&quot; color:#000000;&quot;&gt; the transmitter will warn you to land soon.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -209,7 +134,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="7" column="1">
+       <item row="9" column="1">
         <widget class="QDoubleSpinBox" name="battwarningDSB">
          <property name="toolTip">
           <string/>
@@ -246,7 +171,7 @@ Acceptable values are 5v..10v</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="0">
+       <item row="14" column="0">
         <widget class="QLabel" name="label_28">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
@@ -259,7 +184,7 @@ Acceptable values are 5v..10v</string>
          </property>
         </widget>
        </item>
-       <item row="12" column="1">
+       <item row="14" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout">
          <property name="spacing">
           <number>6</number>
@@ -313,7 +238,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="13" column="0" colspan="2">
+       <item row="15" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_3">
          <property name="sizeConstraint">
           <enum>QLayout::SetNoConstraint</enum>
@@ -577,7 +502,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="5" column="0" colspan="2">
+       <item row="7" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_9" rowstretch="0,0,0" columnstretch="0,0,0,0,0,0">
          <property name="verticalSpacing">
           <number>0</number>
@@ -832,7 +757,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="16" column="0" colspan="2">
+       <item row="18" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_11">
          <item row="1" column="0">
           <widget class="QLabel" name="label_9">
@@ -841,16 +766,6 @@ p, li { white-space: pre-wrap; }
            </property>
            <property name="text">
             <string>MaH Alarm</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_11">
-           <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the baudrate for the Bluettooth module when available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Bluetooth Baudrate</string>
            </property>
           </widget>
          </item>
@@ -921,6 +836,16 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="toolTip">
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Sets the baudrate for the Bluettooth module when available&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Bluetooth Baudrate</string>
+           </property>
+          </widget>
+         </item>
          <item row="2" column="1">
           <widget class="QComboBox" name="BtBaudrateCB">
            <property name="toolTip">
@@ -976,129 +901,6 @@ Mode 4:
           </widget>
          </item>
          <item row="2" column="2">
-          <widget class="QLabel" name="label_29">
-           <property name="toolTip">
-            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some Encoders might need their output divided, otherwise the cursor might jump 2 or more lines/settings per click, instead of only one. The range of values is 1,2, and 4.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Rotary Divisor</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="3">
-          <widget class="QComboBox" name="RotaryDivisorCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>1</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>4</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>2</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_14">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stick Mode determines how the four physical stick axes are assigned to the four primary control inputs (Rudder, Elevator, Throttle, Aileron). Mode 1 uses the left stick for Rudder and Elevator and the right for Throttle and Aileron, while Mode 2 has Rudder and Throttle on the left stick and Aileron and Elevator on the right (they are sometimes called “Throttle right” and “Throttle left” modes respectively). Modes 3 and 4 are similar except that Rudder is on the right and Aileron on the left. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Stick Mode</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QComboBox" name="stickmodeCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>1</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>Mode 1 (RUD ELE THR AIL)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Mode 2 (RUD THR ELE AIL)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Mode 3 (AIL ELE THR RUD)</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>Mode 4 (AIL THR ELE RUD)</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="3" column="2">
           <widget class="QLabel" name="label_53">
            <property name="toolTip">
             <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ersky9x at the moment supports 2 types of Bluetooth modules. The &amp;quot;HC-05&amp;quot; that can be programmed by the radio to work as Master or Slave, and the &amp;quot;HC-06&amp;quot; that is configured (normally as Slave) before it leaves the factory&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1108,7 +910,7 @@ Mode 4:
            </property>
           </widget>
          </item>
-         <item row="3" column="3">
+         <item row="2" column="3">
           <widget class="QComboBox" name="BluetoothTypeCB">
            <property name="toolTip">
             <string/>
@@ -1154,344 +956,7 @@ Mode 4:
          </item>
         </layout>
        </item>
-       <item row="22" column="0" colspan="2">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="18" column="0" colspan="2">
-        <layout class="QGridLayout" name="gridLayout_13">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_27">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is only needed if another type of stick gimbal, such as Aurora 9, is fitted to the transmitter. ‘LV’ means Left Vertical, etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Stick Gain</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="label_30">
-           <property name="text">
-            <string>LV</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="7">
-          <widget class="QComboBox" name="stickgainRVCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>1</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>2</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="0" column="6">
-          <widget class="QLabel" name="label_35">
-           <property name="text">
-            <string>RV</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="9">
-          <widget class="QComboBox" name="stickgainRHCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>1</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>2</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="0" column="8">
-          <widget class="QLabel" name="label_39">
-           <property name="text">
-            <string>RH</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QLabel" name="label_40">
-           <property name="text">
-            <string>LH</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="5">
-          <widget class="QComboBox" name="stickgainLHCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>1</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>2</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QComboBox" name="stickgainLVCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>Mode selection:
-
-Mode 1:
-  Left stick:  Elevator, Rudder
-  Right stick:  Throttle, Aileron
-
-Mode 2:
-  Left stick:  Throttle, Rudder
-  Right stick:  Elevator, Aileron
-
-Mode 3:
-  Left stick:  Elevator, Aileron
-  Right stick:  Throttle, Rudder
-
-Mode 4:
-  Left stick:  Throttle, Aileron
-  Right stick:  Elevator, Rudder
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>0</number>
-           </property>
-           <item>
-            <property name="text">
-             <string>1</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>2</string>
-            </property>
-           </item>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="20" column="0" colspan="2">
-        <layout class="QGridLayout" name="gridLayout_14">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_42">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Stick Reverse</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="label_43">
-           <property name="text">
-            <string>LV</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="5">
-          <widget class="QLabel" name="label_44">
-           <property name="text">
-            <string>RV</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="7">
-          <widget class="QLabel" name="label_45">
-           <property name="text">
-            <string>RH</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="3">
-          <widget class="QLabel" name="label_46">
-           <property name="text">
-            <string>LH</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="2">
-          <widget class="QCheckBox" name="StickRevLV">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="4">
-          <widget class="QCheckBox" name="StickRevLH">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="6">
-          <widget class="QCheckBox" name="StickRevRV">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="8">
-          <widget class="QCheckBox" name="StickRevRH">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-        </layout>
-       </item>
-       <item row="14" column="0" colspan="2">
+       <item row="16" column="0" colspan="2">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QLabel" name="label_13">
@@ -1688,7 +1153,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="8" column="1">
+       <item row="10" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_3">
          <item>
           <widget class="QSpinBox" name="inactimerSB">
@@ -1743,7 +1208,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="8" column="0">
+       <item row="10" column="0">
         <widget class="QLabel" name="label_6">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This will set up a warning that will play an audio &lt;span style=&quot; color:#000000;&quot;&gt;alarm if&lt;/span&gt; the Tx is left unattended for the specified amount of time. The default value is 10 minutes. To turn OFF the Inactivity Alarm, set the value to zero. Values can be from 1 to 250 minutes. To reset the timer (and stop the alarm) simply move one of the sticks. When the Tx is running on USB power, the alarm is inactive. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1753,7 +1218,7 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="5" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QSpinBox" name="hapticStengthSB">
@@ -1777,6 +1242,18 @@ This is used by the templated to determine which channel goes to what number out
          </item>
          <item>
           <widget class="QSpinBox" name="hapticMinRunSB">
+           <property name="minimumSize">
+            <size>
+             <width>180</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>180</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="minimum">
             <number>20</number>
            </property>
@@ -1787,7 +1264,7 @@ This is used by the templated to determine which channel goes to what number out
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="label_36">
          <property name="toolTip">
           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:mediuml;&quot;&gt;(&lt;/span&gt;&lt;span style=&quot; font-size:mediuml; font-style:italic;&quot;&gt;Haptic modification needed)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Values from 0 to 5 may be set. This parameter determines the strength of the vibration. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -1797,37 +1274,69 @@ This is used by the templated to determine which channel goes to what number out
          </property>
         </widget>
        </item>
-       <item row="21" column="0" colspan="2">
-        <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <item row="1" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_9">
          <item>
-          <widget class="QLabel" name="label_49">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
+          <widget class="QComboBox" name="beeperCB">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string/>
            </property>
-           <property name="text">
-            <string>Music Switches</string>
+           <property name="statusTip">
+            <string/>
            </property>
+           <property name="whatsThis">
+            <string>Beeper volume
+
+0 - Quiet.  No beeps at all.
+1 - No Keys.  Normal beeps but menu keys do not beep.
+2 - Normal.
+3 - Loud.
+4 - Extra loud.</string>
+           </property>
+           <item>
+            <property name="text">
+             <string>Quiet</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>No Keys</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>xShort</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Short</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Norm</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Long</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>xLong</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_50">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
+          <widget class="QLabel" name="label_63">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Haptic min run is the startup time for the haptic motor, the minimum time power is applied to the motor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Start/Stop</string>
+            <string>Welcome Voice Type</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1835,7 +1344,19 @@ This is used by the templated to determine which channel goes to what number out
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="MusicStartCB">
+          <widget class="QComboBox" name="WelcomeCB">
+           <property name="minimumSize">
+            <size>
+             <width>180</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>180</width>
+             <height>16777215</height>
+            </size>
+           </property>
            <property name="toolTip">
             <string/>
            </property>
@@ -1848,68 +1369,31 @@ This is used by the templated to determine which channel goes to what number out
 </string>
            </property>
            <property name="currentIndex">
-            <number>-1</number>
+            <number>0</number>
            </property>
+           <item>
+            <property name="text">
+             <string>System</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>None</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Custom</string>
+            </property>
+           </item>
           </widget>
          </item>
+        </layout>
+       </item>
+       <item row="3" column="1">
+        <layout class="QHBoxLayout" name="horizontalLayout_10">
          <item>
-          <widget class="QLabel" name="label_52">
-           <property name="minimumSize">
-            <size>
-             <width>75</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Pause/Resume</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="MusicPauseCB">
-           <property name="toolTip">
-            <string/>
-           </property>
-           <property name="statusTip">
-            <string/>
-           </property>
-           <property name="whatsThis">
-            <string>This is the switch selectrion for turning on the backlight (if installed).
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>-1</number>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QLabel" name="label_61">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Previous</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QComboBox" name="MusicPrevCB">
+          <widget class="QSpinBox" name="speakerPitchSB">
            <property name="toolTip">
             <string/>
            </property>
@@ -1917,28 +1401,44 @@ This is used by the templated to determine which channel goes to what number out
             <string/>
            </property>
            <property name="whatsThis">
-            <string>This is the switch selectrion for turning on the backlight (if installed).
-
-</string>
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;LCD Screen Contrast&lt;/span&gt;&lt;/p&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt;&quot;&gt;Values can be 20-45&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
-           <property name="currentIndex">
-            <number>-1</number>
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="value">
+            <number>1</number>
            </property>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_62">
-           <property name="minimumSize">
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
             <size>
-             <width>70</width>
-             <height>0</height>
+             <width>40</width>
+             <height>20</height>
             </size>
            </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_64">
            <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Haptic min run is the startup time for the haptic motor, the minimum time power is applied to the motor.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>
            <property name="text">
-            <string>Next</string>
+            <string>Welcome FileName</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1946,20 +1446,21 @@ This is used by the templated to determine which channel goes to what number out
           </widget>
          </item>
          <item>
-          <widget class="QComboBox" name="MusicNextCB">
-           <property name="toolTip">
-            <string/>
+          <widget class="QLineEdit" name="welcomeFileNameLE">
+           <property name="minimumSize">
+            <size>
+             <width>180</width>
+             <height>0</height>
+            </size>
            </property>
-           <property name="statusTip">
-            <string/>
+           <property name="maximumSize">
+            <size>
+             <width>180</width>
+             <height>16777215</height>
+            </size>
            </property>
-           <property name="whatsThis">
-            <string>This is the switch selectrion for turning on the backlight (if installed).
-
-</string>
-           </property>
-           <property name="currentIndex">
-            <number>-1</number>
+           <property name="maxLength">
+            <number>8</number>
            </property>
           </widget>
          </item>
@@ -3030,7 +2531,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="6" column="0">
+         <item row="5" column="0">
           <widget class="QLabel" name="label_PB1Sw">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -3040,7 +2541,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="6" column="2">
+         <item row="5" column="2">
           <widget class="QComboBox" name="PB1CB">
            <item>
             <property name="text">
@@ -3089,7 +2590,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
-         <item row="7" column="2">
+         <item row="6" column="2">
           <widget class="QComboBox" name="PB2CB">
            <item>
             <property name="text">
@@ -3138,7 +2639,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
-         <item row="7" column="0">
+         <item row="6" column="0">
           <widget class="QLabel" name="label_PB2Sw">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -3403,7 +2904,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
-         <item row="8" column="0">
+         <item row="7" column="0">
           <widget class="QLabel" name="label_PB3Sw">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -3413,7 +2914,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="9" column="0">
+         <item row="8" column="0">
           <widget class="QLabel" name="label_PB4Sw">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Extra 2 position switch. Select from the list the input pin you have connected it to.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -3423,7 +2924,7 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="8" column="2">
+         <item row="7" column="2">
           <widget class="QComboBox" name="PB3CB">
            <item>
             <property name="text">
@@ -3472,7 +2973,7 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
-         <item row="9" column="2">
+         <item row="8" column="2">
           <widget class="QComboBox" name="PB4CB">
            <item>
             <property name="text">
@@ -3521,6 +3022,19 @@ p, li { white-space: pre-wrap; }
            </item>
           </widget>
          </item>
+         <item row="9" column="2">
+          <spacer name="verticalSpacer_2">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>40</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
         </layout>
        </item>
        <item row="2" column="3">
@@ -3532,19 +3046,6 @@ p, li { white-space: pre-wrap; }
           <size>
            <width>40</width>
            <height>20</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-       <item row="8" column="0">
-        <spacer name="verticalSpacer_4">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
           </size>
          </property>
         </spacer>
@@ -3855,7 +3356,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="3" column="0" colspan="2">
         <layout class="QGridLayout" name="gridLayout_15">
          <item row="0" column="0">
           <widget class="QLabel" name="label_StickLHdb">
@@ -3925,22 +3426,85 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_14">
+           <property name="minimumSize">
+            <size>
+             <width>65</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Stick Mode determines how the four physical stick axes are assigned to the four primary control inputs (Rudder, Elevator, Throttle, Aileron). Mode 1 uses the left stick for Rudder and Elevator and the right for Throttle and Aileron, while Mode 2 has Rudder and Throttle on the left stick and Aileron and Elevator on the right (they are sometimes called “Throttle right” and “Throttle left” modes respectively). Modes 3 and 4 are similar except that Rudder is on the right and Aileron on the left. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Stick Mode</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QComboBox" name="stickmodeCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string>Mode selection:
+
+Mode 1:
+  Left stick:  Elevator, Rudder
+  Right stick:  Throttle, Aileron
+
+Mode 2:
+  Left stick:  Throttle, Rudder
+  Right stick:  Elevator, Aileron
+
+Mode 3:
+  Left stick:  Elevator, Aileron
+  Right stick:  Throttle, Rudder
+
+Mode 4:
+  Left stick:  Throttle, Aileron
+  Right stick:  Elevator, Rudder
+
+</string>
+           </property>
+           <property name="currentIndex">
+            <number>1</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>Mode 1 (RUD ELE THR AIL)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Mode 2 (RUD THR ELE AIL)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Mode 3 (AIL ELE THR RUD)</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Mode 4 (AIL THR ELE RUD)</string>
+            </property>
+           </item>
+          </widget>
+         </item>
         </layout>
-       </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="Ar9xChkB">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>AR9X Board</string>
-         </property>
-        </widget>
        </item>
        <item row="6" column="0">
         <layout class="QGridLayout" name="gridLayout_16">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_EleSw_2">
+          <widget class="QLabel" name="label_ExtRtc">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3970,16 +3534,6 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
         </layout>
-       </item>
-       <item row="7" column="0">
-        <widget class="QCheckBox" name="MenuEditChkB">
-         <property name="toolTip">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this option is ON we always have to press the MENU button (or encoder center button) to be able to edit a setting. Press the MENU button, the field will blink, edit it, and press MENU again to leave editing. Then you can proceed to the next field. That means editing using the LEFT and RIGHT keys without pressing MENU is not allowed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="text">
-          <string>Force Menu Edit</string>
-         </property>
-        </widget>
        </item>
        <item row="2" column="2">
         <layout class="QGridLayout" name="gridLayout_20">
@@ -4055,22 +3609,6 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QLabel" name="label_Encoder_2">
-           <property name="minimumSize">
-            <size>
-             <width>70</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bluetooth Module's Name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Bluetooth Name</string>
-           </property>
-          </widget>
-         </item>
          <item row="0" column="2">
           <widget class="QLineEdit" name="BtNameText">
            <property name="maxLength">
@@ -4126,7 +3664,534 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Bluetooth Name</string>
+           </property>
+          </widget>
+         </item>
         </layout>
+       </item>
+       <item row="8" column="0" colspan="3">
+        <layout class="QGridLayout" name="gridLayout_14">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_42">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If the stock stick assemblies are replaced with a different type (such as Taranis or Aurora 9 gimbals), one or more stick&lt;span style=&quot; color:#000000;&quot;&gt; axes &lt;/span&gt;may work in directions opposite to the associated trims. The Stick Reverse function is provided purely to correct this situation.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Stick Reverse</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_43">
+           <property name="text">
+            <string>LV</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5">
+          <widget class="QLabel" name="label_44">
+           <property name="text">
+            <string>RV</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="7">
+          <widget class="QLabel" name="label_45">
+           <property name="text">
+            <string>RH</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="label_46">
+           <property name="text">
+            <string>LH</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QCheckBox" name="StickRevLV">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QCheckBox" name="StickRevLH">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="6">
+          <widget class="QCheckBox" name="StickRevRV">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="8">
+          <widget class="QCheckBox" name="StickRevRH">
+           <property name="text">
+            <string/>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="9" column="0" colspan="3">
+        <layout class="QGridLayout" name="gridLayout_13">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_27">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is only needed if another type of stick gimbal, such as Aurora 9, is fitted to the transmitter. ‘LV’ means Left Vertical, etc.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Stick Gain</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_30">
+           <property name="text">
+            <string>LV</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="7">
+          <widget class="QComboBox" name="stickgainRVCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string/>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="6">
+          <widget class="QLabel" name="label_35">
+           <property name="text">
+            <string>RV</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="9">
+          <widget class="QComboBox" name="stickgainRHCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string/>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="8">
+          <widget class="QLabel" name="label_39">
+           <property name="text">
+            <string>RH</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="4">
+          <widget class="QLabel" name="label_40">
+           <property name="text">
+            <string>LH</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="5">
+          <widget class="QComboBox" name="stickgainLHCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string/>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QComboBox" name="stickgainLVCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;/p&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:8pt;&quot;&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item row="11" column="0">
+        <spacer name="verticalSpacer_4">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="10" column="0" colspan="3">
+        <layout class="QHBoxLayout" name="horizontalLayout_6">
+         <item>
+          <widget class="QCheckBox" name="Ar9xChkB">
+           <property name="minimumSize">
+            <size>
+             <width>90</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>AR9X Board</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QCheckBox" name="MenuEditChkB">
+           <property name="minimumSize">
+            <size>
+             <width>120</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When this option is ON we always have to press the MENU button (or encoder center button) to be able to edit a setting. Press the MENU button, the field will blink, edit it, and press MENU again to leave editing. Then you can proceed to the next field. That means editing using the LEFT and RIGHT keys without pressing MENU is not allowed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Force Menu Edit</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="label_29">
+           <property name="toolTip">
+            <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some Encoders might need their output divided, otherwise the cursor might jump 2 or more lines/settings per click, instead of only one. The range of values is 1,2, and 4.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Rotary Divisor</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="RotaryDivisorCB">
+           <property name="toolTip">
+            <string/>
+           </property>
+           <property name="statusTip">
+            <string/>
+           </property>
+           <property name="whatsThis">
+            <string>Mode selection:
+
+Mode 1:
+  Left stick:  Elevator, Rudder
+  Right stick:  Throttle, Aileron
+
+Mode 2:
+  Left stick:  Throttle, Rudder
+  Right stick:  Elevator, Aileron
+
+Mode 3:
+  Left stick:  Elevator, Aileron
+  Right stick:  Throttle, Rudder
+
+Mode 4:
+  Left stick:  Throttle, Aileron
+  Right stick:  Elevator, Rudder
+
+</string>
+           </property>
+           <property name="currentIndex">
+            <number>0</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>1</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>4</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>2</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item row="3" column="2" colspan="2">
+        <widget class="QFrame" name="frame">
+         <property name="autoFillBackground">
+          <bool>false</bool>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(207, 207, 207);</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::StyledPanel</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Raised</enum>
+         </property>
+         <widget class="QWidget" name="layoutWidget">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>10</y>
+            <width>284</width>
+            <height>63</height>
+           </rect>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_18">
+           <item row="1" column="0">
+            <widget class="QCheckBox" name="Pot1DetCB">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Pot1</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QCheckBox" name="Pot2DetCB">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Pot2</string>
+             </property>
+            </widget>
+           </item>
+           <item row="0" column="1">
+            <widget class="QLabel" name="label_Encoder_2">
+             <property name="minimumSize">
+              <size>
+               <width>70</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bluetooth Module's Name.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="text">
+              <string>Pot Detents</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="2">
+            <widget class="QCheckBox" name="Pot3DetCB">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Pot3</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="0">
+            <widget class="QCheckBox" name="Pot4DetCB">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Pot4</string>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="1">
+            <widget class="QCheckBox" name="Pot5DetCB">
+             <property name="minimumSize">
+              <size>
+               <width>90</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If you have an Ar9x board installed in the Tx and running Ersky9x, check this box&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Pot5</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </widget>
        </item>
       </layout>
      </widget>

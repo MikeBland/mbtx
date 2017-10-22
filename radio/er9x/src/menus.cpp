@@ -328,7 +328,32 @@ uint8_t telemItemValid( uint8_t index )
 #endif
 }
 
+#define WBAR2 (50/2)
+static void singleBar( uint8_t x0, uint8_t y0, int16_t val )
+{
+  int16_t limit = (g_model.extendedLimits ? 1280 : 1024);
+  int8_t l = (abs(val) * WBAR2 + 512) / limit ;
+  if(l>WBAR2)  l =  WBAR2;  // prevent bars from going over the end - comment for debugging
+
+  lcd_hlineStip(x0-WBAR2,y0,WBAR2*2+1,0x55);
+  lcd_vline(x0,y0-2,5);
+  if(val>0)
+	{
+    x0+=1;
+  }else{
+    x0-=l;
+  }
+  lcd_hline(x0,y0+1,l);
+  lcd_hline(x0,y0-1,l);
+}
+
+
 extern uint8_t Unit ;
+
+void voiceMinutes( uint8_t value )
+{
+	voice_numeric( value, 0, (value == 1) ? V_MINUTE : V_MINUTES ) ;
+}
 
 void voice_telem_item( uint8_t indexIn )
 {
@@ -376,7 +401,7 @@ void voice_telem_item( uint8_t indexIn )
 		{	
 			div_t qr ;
 			qr = div( value, 60 ) ;
-			voice_numeric( qr.quot, 0, V_MINUTES ) ;
+			voiceMinutes( qr.quot ) ;
 			value = qr.rem ;
 			unit = V_SECONDS ;			
 		}
@@ -1114,7 +1139,7 @@ void putsTxStr( uint8_t x, uint8_t y )
 	lcd_putsAttIdx( x, y, Str_TXeq, ( g_model.protocol == PROTO_PXX ), 0 ) ;
 }
 
-void putsOffDecimal( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
+void putsOffDecimal( uint8_t x, uint8_t y, uint16_t value, uint8_t attr )
 {
   if(value)
       lcd_outdezAtt( x+3*FW-2,y,value,attr) ;
@@ -2227,7 +2252,11 @@ void menuProcTelemetry(uint8_t event)
   	  lcd_putc(FW, y, '1'+i);
   	  putsTelemValue( 21*FW, y, frskyTelemetry[i].value, i,  NO_UNIT ) ;
   	  
+#ifdef V2
+  	  putsTelemValue(12*FW, y, 256, i, (sub==subN && subSub==0 ? blink:0)|NO_UNIT ) ;
+#else
   	  putsTelemValue(12*FW, y, 255, i, (sub==subN && subSub==0 ? blink:0)|NO_UNIT ) ;
+#endif
 
 	#ifndef NOPOTSCROLL
   	  if (sub==subN && (s_editing ) )	// Use s_editing???
@@ -4468,6 +4497,13 @@ void menuProcMix(uint8_t event)
         	 		lcd_putsAttIdx( 3*FW+1, y, PSTR("\001+*R"),pmd->mltpx,0 ) ;
 
 						putsChnOpRaw( 8*FW, y, pmd, 0 ) ;
+						
+#if defined(CPUM128) || defined(CPUM2561)
+						if ( attr )
+						{
+							singleBar( 96, 4, g_chans512[chan-1] ) ;
+						}
+#endif
 
 						pmd->weight = gvarMenuItem125( 7*FW+FW/2, y, pmd->weight, attr ) ;
     	  	  if( pmd->swtch) putsDrSwitches( 12*FW, y, pmd->swtch, 0 ) ; //tattr);
@@ -5037,7 +5073,15 @@ void menuPhaseOne(uint8_t event)
   uint8_t sub = mstate2.m_posVert;
 //  int8_t editMode = s_editMode;
 	
+#ifdef V2
+ #if defined(CPUM128) || defined(CPUM2561)
+  for (uint8_t i = 0 ; i < 5 ; i += 1 )
+ #else  
   for (uint8_t i = 0 ; i < 4 ; i += 1 )
+ #endif
+#else  
+  for (uint8_t i = 0 ; i < 4 ; i += 1 )
+#endif
 	{
     uint8_t y = (i+1) * FH;
 		uint8_t attr = (sub==i ? InverseBlink : 0);
@@ -5091,6 +5135,14 @@ void menuPhaseOne(uint8_t event)
   			if( attr ) CHECK_INCDEC_H_MODELVAR_0( phase->fadeOut, 15 ) ;
 			  lcd_outdezAtt( 17*FW, y, phase->fadeOut * 5, attr | PREC1 ) ;
 			break ;
+
+#ifdef V2
+#if defined(CPUM128) || defined(CPUM2561)
+			case 4 : // fadeOut
+				alphaEditName( 11*FW-2, y, (uint8_t *)phase->name, sizeof(phase->name), attr, (char *)PSTR( "Mode Name") ) ;
+			break ;
+#endif
+#endif
 	  }
 	}
 }
@@ -5883,7 +5935,7 @@ static void timerBeeps()
       {
 				if ( g_eeGeneral.speakerMode & 2 )
 				{
-					if ( mins.quot ) {voice_numeric( mins.quot, 0, V_MINUTES ) ;}
+					if ( mins.quot ) { voiceMinutes( mins.quot ) ;}
 				}
 				else
 				{
@@ -6750,7 +6802,7 @@ void menuProc0(uint8_t event)
 		 break;
 	  }
 #ifdef V2
-	  if (( view == e_telemetry) && (( tview & 0x70) == 0x20) ) 	
+	  if (( view == e_telemetry) && (( tview & 0x70) == 0x30) ) 	
 #else
 	  if (( view == e_telemetry) && (( tview & 0x30) == 0x20) ) 	
 #endif
@@ -6774,7 +6826,7 @@ void menuProc0(uint8_t event)
 #else
 #ifdef FRSKY
 #ifdef V2
-        if( (view == e_telemetry) && ((tview & 0x70) == 0x20 ) )
+        if( (view == e_telemetry) && ((tview & 0x70) == 0x30 ) )
 #else
         if( (view == e_telemetry) && ((tview & 0x30) == 0x20 ) )
 #endif
@@ -6801,7 +6853,7 @@ void menuProc0(uint8_t event)
 				      frskyTelemetry[1].setoffset() ;
 						}
         }
-        else if( (view == e_telemetry) && ((tview & 0x70) == 0x30 ) )	// GPS
+        else if( (view == e_telemetry) && ((tview & 0x70) == 0x40 ) )	// GPS
 				{
 					struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
 					FORCE_INDIRECT( maxMinPtr) ;
@@ -6864,7 +6916,7 @@ void menuProc0(uint8_t event)
 				{
 #ifdef V2
 					tview += 0x10 ;
-					if ( tview > 0x40 )
+					if ( tview > 0x50 )
 					{
 						tview = 0 ;
 					}
@@ -6916,7 +6968,7 @@ void menuProc0(uint8_t event)
 					tview -= 0x10 ;
 					if ( tview > 0x60 )
 					{
-						tview = 0x40 ;
+						tview = 0x50 ;
 					}
           g_eeGeneral.view = e_telemetry | tview ;
 #else
@@ -7183,19 +7235,20 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 #define WBAR2 (50/2)
                 x0       = i<4 ? 128/4+2 : 128*3/4-2;
                 y0       = 38+(i%4)*5;
-    						int16_t limit = (g_model.extendedLimits ? 1280 : 1024);
-                int8_t l = (abs(val) * WBAR2 + 512) / limit ;
-                if(l>WBAR2)  l =  WBAR2;  // prevent bars from going over the end - comment for debugging
+								singleBar( x0, y0, val ) ;
+//    						int16_t limit = (g_model.extendedLimits ? 1280 : 1024);
+//                int8_t l = (abs(val) * WBAR2 + 512) / limit ;
+//                if(l>WBAR2)  l =  WBAR2;  // prevent bars from going over the end - comment for debugging
 
-                lcd_hlineStip(x0-WBAR2,y0,WBAR2*2+1,0x55);
-                lcd_vline(x0,y0-2,5);
-                if(val>0){
-                    x0+=1;
-                }else{
-                    x0-=l;
-                }
-                lcd_hline(x0,y0+1,l);
-                lcd_hline(x0,y0-1,l);
+//                lcd_hlineStip(x0-WBAR2,y0,WBAR2*2+1,0x55);
+//                lcd_vline(x0,y0-2,5);
+//                if(val>0){
+//                    x0+=1;
+//                }else{
+//                    x0-=l;
+//                }
+//                lcd_hline(x0,y0+1,l);
+//                lcd_hline(x0,y0-1,l);
                 break;
             }
         }
@@ -7205,7 +7258,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 				int16_t value ;
 				{
             uint8_t x0;//, blink;
-            if ( tview == 0x10 )
+            if ( tview == 0x20 )
             {
                     x0 = 3*FW ;
 							dispA1A2Dbl( 3*FH ) ;
@@ -7255,7 +7308,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
                 lcd_outdez(15 * FW - 2, 7*FH, maxMinPtr->hubMin[3] );
                 lcd_outdezAtt(17 * FW - 2, 7*FH, maxMinPtr->hubMax[3], LEFT);
             }
-            else if ( tview == 0x20 )
+            else if ( tview == 0x30 )
             {
                 if (frskyUsrStreaming)
                 {
@@ -7286,6 +7339,9 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 				lcd_outdezAtt(16*FW, 4*FH,m_to_ft(value), LEFT) ;			// Home Altitude
 			  }												//!!!!!!!!!!!
 #endif
+#else
+									lcd_puts_P(12*FW, 4*FH, PSTR("Amax="));
+									putsTelemetryChannel( 17*FW, 4*FH, TEL_ITEM_BALT, FrskyHubMaxMin.hubMax[FR_ALT_BARO] + AltOffset, LEFT, 0 ) ;
 #endif
 
 
@@ -7296,7 +7352,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 //    						lcd_putsAttIdx( 8 * FW, 7*FH, Str_TXeq, ( g_model.protocol == PROTO_PXX ), 0 ) ;
                 lcd_outdezAtt(11 * FW, 7*FH, FrskyHubData[FR_TXRSI_COPY], LEFT);
             }
-            else if ( tview == 0x30 )
+            else if ( tview == 0x40 )
             {
 							uint8_t blink = BLINK | LEADING0 ;
 							uint16_t mspeed ;
@@ -7378,7 +7434,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 							}
             }
 #if defined(CPUM128) || defined(CPUM2561)
-            else if ( tview == 0x40 )
+            else if ( tview == 0x50 )
 						{
 						 if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
 						 {
@@ -7630,7 +7686,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
             {
 							lcd_vline( 63, 8, 48 ) ;
 #ifdef V2
-							uint8_t *pindex = g_model.CustomDisplayIndex[( tview == 0x40 ) ? 0 : 1] ;
+							uint8_t *pindex = g_model.CustomDisplayIndex[( tview == 0 ) ? 0 : 1] ;
               
 							for (uint8_t i=0; i<6; i++)
 							{
@@ -8085,11 +8141,45 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 int16_t scaleAnalog( int16_t v, uint8_t channel )
 {
 #ifndef SIMU
+#if defined(CPUM128) || defined(CPUM2561)
+	int16_t mid ;
+	int16_t neg ;
+	int16_t pos ;
+	mid = g_eeGeneral.calibMid[channel] ;
+  pos = g_eeGeneral.calibSpanPos[channel] ;
+  neg = g_eeGeneral.calibSpanNeg[channel] ;
+
+	v -= mid ;
+	if ( channel < 4 )
+	{
+		int16_t deadband = ( g_eeGeneral.stickDeadband >> ( 4 * channel ) ) & 0x0F ;
+	  pos -= deadband ;
+  	neg -= deadband ;
+	
+		if ( ( v > -deadband) && ( v < deadband ) )
+		{
+			v = 0 ;
+		}
+		else
+		{
+			if ( v > 0 )
+			{
+				v -= deadband ;
+			}
+			else
+			{
+				v += deadband ;
+			}
+		}
+	}
+	v  =  v * (int32_t)RESX /  (max((int16_t)100,(v>0 ? pos : neg ) ) ) ;
+#else
 	v -= g_eeGeneral.calibMid[channel];
 	v  =  v * (int32_t)RESX /  (max((int16_t)100,(v>0 ?
                                                     g_eeGeneral.calibSpanPos[channel] :
                                                     g_eeGeneral.calibSpanNeg[channel])));
 #endif
+#endif // SIMU
 	if(v <= -RESX) v = -RESX;
 	if(v >=  RESX) v =  RESX;
 	if ( throttleReversed() )
@@ -9526,7 +9616,7 @@ Str_Hardware
 			attr = LEFT ;
       if(sub==subN)
 			{
-				attr = INVERS | LEFT ;
+				attr = blink | LEFT ;
         CHECK_INCDEC_H_GENVAR( g_eeGeneral.speakerPitch, 1, 100);
       }
       lcd_outdezAtt(PARAM_OFS,y,g_eeGeneral.speakerPitch,attr);
@@ -9536,7 +9626,7 @@ Str_Hardware
   		attr = LEFT ;
       if(sub==subN)
 			{
-				attr = INVERS | LEFT ;
+				attr = blink | LEFT ;
         CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.hapticStrength, 5);
 #ifdef XSW_MOD
         initHapticPin();
@@ -9942,6 +10032,12 @@ Str_Hardware
 			}
 			else
 			{
+				
+//#if defined(CPUM128) || defined(CPUM2561)
+//extern uint16_t SingleTrainerPulseWidth ;
+//				lcd_puts_Pleft( 0, PSTR("\009Singlepw"));
+//   			lcd_outdez( FW*20, 0, SingleTrainerPulseWidth ) ;
+//#endif
 				y = 2*FH;
 		    uint8_t attr;
 				lcd_puts_Pleft( 1*FH, PSTR(STR_MODE_SRC_SW));
@@ -10068,7 +10164,7 @@ Str_Hardware
  #define HW_EXTRA_LINES 0
 #endif
 
-	  IlinesCount = HW_LINES + HW_EXTRA_LINES;
+	  IlinesCount = HW_LINES + HW_EXTRA_LINES + 4;
 
 #if HW_EXTRA_LINES
 		if (sub < (HW_LINES + 5)) // 3 page menus (5 3-pos switches)
@@ -10158,7 +10254,7 @@ Str_Hardware
 #endif
     }
 #if HW_EXTRA_LINES
-    else
+		else if ( sub < HW_LINES + HW_EXTRA_LINES )
     {
      uint16_t qmask = getSwitchSourceMask();
       if (sub < (HW_LINES + 5)) {
@@ -10176,6 +10272,43 @@ Str_Hardware
         selectSwitchSource(6, y+FH*2, (sub==(subN+1)), qmask);
       }
     }
+		else
+		{
+			uint8_t subN = HW_LINES + HW_EXTRA_LINES ;
+
+			uint8_t attr = 0 ;
+			uint8_t db = (g_eeGeneral.stickDeadband & 0x00F0 ) >> 4 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LV deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFF0F ) | ( db << 4 ) ;
+			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = g_eeGeneral.stickDeadband & 0x000F ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LH deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFFF0 ) | db ;
+ 			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = (g_eeGeneral.stickDeadband & 0x0F00 ) >> 8 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RV deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xF0FF ) | ( db << 8 ) ;
+ 			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = (g_eeGeneral.stickDeadband & 0xF000 ) >> 12 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RH deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0x0FFF ) | ( db << 12 ) ;
+ 			y += FH ;
+ 			subN++;
+
+		}
 #endif
 
 #else // !XSW_MOD
@@ -10201,7 +10334,11 @@ Str_Hardware
 #define HW_EXTRA_LINES		0
 #endif
 
+#if defined(CPUM128) || defined(CPUM2561)
+	IlinesCount = HW_LINES + HW_EXTRA_LINES + 4 ;
+#else
 	IlinesCount = HW_LINES + HW_EXTRA_LINES ;
+#endif
 
 #if HW_EXTRA_LINES
 		if ( sub < HW_LINES )
@@ -10274,7 +10411,7 @@ Str_Hardware
 
 #if HW_EXTRA_LINES
 		}
-		else
+		else if ( sub < HW_LINES + HW_EXTRA_LINES )
 		{
 			uint8_t subN = HW_LINES ;
 #endif
@@ -10357,6 +10494,43 @@ Str_Hardware
  #endif
  #endif
 #if HW_EXTRA_LINES
+		}
+		else
+		{
+			uint8_t subN = HW_LINES + HW_EXTRA_LINES ;
+
+			uint8_t attr = 0 ;
+			uint8_t db = g_eeGeneral.stickDeadband & 0x000F ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LV deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFFF0 ) | db ;
+			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = (g_eeGeneral.stickDeadband & 0x00F0 ) >> 4 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LH deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFF0F ) | ( db << 4 ) ;
+ 			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = (g_eeGeneral.stickDeadband & 0x0F00 ) >> 8 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RV deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xF0FF ) | ( db << 8 ) ;
+ 			y += FH ;
+ 			subN++;
+
+			attr = 0 ;
+			db = (g_eeGeneral.stickDeadband & 0xF000 ) >> 12 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RH deadband") ) ;
+			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0x0FFF ) | ( db << 12 ) ;
+ 			y += FH ;
+ 			subN++;
+
 		}
 #endif
 #endif  // XSW_MOD
@@ -12356,6 +12530,7 @@ Str_Protocol
 				y += FH ;
 				subN++;
 
+#ifdef FRSKY
 				// Range use PXX_RANGE_CHECK
 				uint8_t sp = g_model.sub_protocol & 0x3F ;
 				if ( ( sp == M_FRSKYX ) || ( sp == M_Frsky ) )
@@ -12363,6 +12538,7 @@ Str_Protocol
 					lcd_puts_Pleft( y, PSTR("\017Lqi") ) ;
 					lcd_outdezAtt(  21*FW, y, TxLqi, 0 ) ;
 				}
+#endif
 
 				if(sub==subN)
 					rangeBindAction( y, PXX_RANGE_CHECK ) ;

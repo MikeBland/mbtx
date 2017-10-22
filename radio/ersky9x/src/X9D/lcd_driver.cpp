@@ -535,7 +535,7 @@ extern uint8_t ImageDisplay ;
 		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
 		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
 extern uint8_t CurrentVolume ;
-		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hbar( 149, 2*FH+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
 		lcd_hline( 130, 31, 61 ) ;
 		lcd_vline( 129, 0, 64 ) ;
 	}
@@ -688,7 +688,6 @@ extern uint8_t ModelImageValid ;
 
 
 
-
 void refreshDisplay()
 {  
 extern uint8_t ImageDisplay ;
@@ -697,7 +696,7 @@ extern uint8_t ImageDisplay ;
 		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
 		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
 extern uint8_t CurrentVolume ;
-		lcd_hbar( 149, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+		lcd_hbar( 149, 2*FH+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
 		lcd_hline( 130, 31, 61 ) ;
 		lcd_vline( 129, 0, 64 ) ;
 	}

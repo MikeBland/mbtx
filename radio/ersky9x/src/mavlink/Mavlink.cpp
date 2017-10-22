@@ -22,7 +22,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "Mavlink.h"
+#include "mavlink.h"
 #include <math.h>
 
 //#include "include/mavlink/v1.0/mavlink_types.h"

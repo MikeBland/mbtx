@@ -711,7 +711,7 @@ extern uint8_t BtRxOccured ;
 			}
 			if ( isLogEnabled( LOG_STK_AIL ) )
 			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[0]*100/1024 ) ;
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[3]*100/1024 ) ;
 			}
 			if ( isLogEnabled( LOG_STK_ELE ) )
 			{
@@ -719,7 +719,7 @@ extern uint8_t BtRxOccured ;
 			}
 			if ( isLogEnabled( LOG_STK_RUD ) )
 			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[3]*100/1024 ) ;
+				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[0]*100/1024 ) ;
 			}
 
 			f_printf(&g_oLogFile, "\n" ) ;

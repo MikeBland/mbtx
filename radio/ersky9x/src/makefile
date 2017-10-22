@@ -74,6 +74,7 @@ else
 #    LUA = 1
 #    CPPDEFS += -DLUA
   else
+   USB_JOYSTICK = 1
    ifeq ($(REVX), 1)
     OBJDIR = skyRobj
     BASIC = 1
@@ -293,6 +294,10 @@ else
  ifeq ($(LANG), DE)
   CPPDEFS += -DLANG_DE
  endif
+endif
+
+ifeq ($(USB_JOYSTICK), 1)
+  CPPDEFS += -DUSB_JOYSTICK
 endif
 
 # Define ASM defines here
@@ -650,12 +655,6 @@ endif
 #       sky/usb/HIDDMouseDriver.c \
 #       sky/usb/hid_device_descriptor.c \
 
-#       usb/device/core/USBD_UDP.c usb/device/core/USBDDriver.c usb/device/core/USBDCallbacks.c \
-#       usb/device/massstorage/MSDDriver.c usb/device/massstorage/MSDDStateMachine.c usb/device/massstorage/MSDLun.c usb/device/massstorage/MSDDriverDescriptors.c usb/device/massstorage/SBCMethods.c \
-#       usb/common/core/USBEndpointDescriptor.c usb/common/core/USBGenericRequest.c usb/common/core/USBFeatureRequest.c usb/common/core/USBInterfaceRequest.c usb/common/core/USBGetDescriptorRequest.c \
-#       usb/common/core/USBSetAddressRequest.c usb/common/core/USBSetConfigurationRequest.c \
-#       usb/common/core/USBConfigurationDescriptor.c usb/common/core/USBGenericDescriptor.c \
-#       MEDSdcard.c
 
 CPPSRC = stamp.cpp \
          drivers.cpp \
@@ -697,8 +696,41 @@ endif
 CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 	 endif
 
-#         gtime.cpp \
-#         massstorage.cpp \
+#CPPSRC += sky/gtime.cpp sky/massstorage.cpp
+#SRC +=  sky/usb/USBD_UDP.c sky/usb/USBDDriver.c sky/usb/USBDCallbacks.c \
+#       sky/usb/USBEndpointDescriptor.c sky/usb/USBGenericRequest.c sky/usb/USBFeatureRequest.c sky/usb/USBInterfaceRequest.c sky/usb/USBGetDescriptorRequest.c \
+#       sky/usb/USBSetAddressRequest.c sky/usb/USBSetConfigurationRequest.c \
+#       sky/usb/USBConfigurationDescriptor.c sky/usb/USBGenericDescriptor.c \
+#       sky/usb/MSDDriver.c sky/usb/MSDLun.c sky/usb/MSDDriverDescriptors.c sky/usb/SBCMethods.c \
+#       sky/MEDSdcard.c sky/usb/MSDDStateMachine.c 
+
+ifeq ($(USB_JOYSTICK), 1)
+SRC += sky/joy/HIDDJoystickDriver.c
+SRC += sky/joy/HIDDFunction.c
+SRC += sky/joy/USBDDriver.c
+SRC += sky/joy/USBD.c
+SRC += sky/joy/USBRequests.c
+SRC += sky/joy/USBDescriptors.c
+SRC += sky/joy/USBDDriverCallbacks.c
+SRC += sky/joy/USBDCallbacks.c
+SRC += sky/joy/HIDIdleRequest.c
+SRC += sky/joy/HIDReportRequest.c
+SRC += sky/joy/HIDDTransferDriver.c
+SRC += sky/joy/USBD_HAL.c
+SRC += sky/joy/pmc.c
+SRC += sky/joy/device_descriptor.c
+endif
+
+#SRC += usb/device/core/USBD_UDP.c usb/device/core/USBDDriver.c usb/device/core/USBDCallbacks.c \
+#       usb/common/core/USBEndpointDescriptor.c usb/common/core/USBGenericRequest.c \
+#		 usb/common/core/USBFeatureRequest.c usb/common/core/USBInterfaceRequest.c usb/common/core/USBGetDescriptorRequest.c \
+#       usb/common/core/USBSetAddressRequest.c usb/common/core/USBSetConfigurationRequest.c \
+#       usb/common/core/USBConfigurationDescriptor.c usb/common/core/USBGenericDescriptor.c \
+#		 usb/device/hid-joystick/HIDDJoystickDriver.c
+#		  \
+#       usb/device/massstorage/MSDDriver.c usb/device/massstorage/MSDDStateMachine.c \
+#		 usb/device/massstorage/MSDLun.c usb/device/massstorage/MSDDriverDescriptors.c usb/device/massstorage/SBCMethods.c \
+#		 sky/MEDSdcard.c
 
 
 #ifeq ($(REVX), 1)
@@ -720,7 +752,7 @@ endif
 endif
 
 # List all user directories here
-UINCDIR = ./inc
+UINCDIR = ./sky/joy/inc
 # \
 #          ./cmsis/core \
 #          ./cmsis/device

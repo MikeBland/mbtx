@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>943</width>
-    <height>720</height>
+    <height>730</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -15,6 +15,70 @@
     <width>820</width>
     <height>0</height>
    </size>
+  </property>
+  <property name="palette">
+   <palette>
+    <active>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>160</red>
+        <green>220</green>
+        <blue>160</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </active>
+    <inactive>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>255</red>
+        <green>255</green>
+        <blue>255</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>160</red>
+        <green>220</green>
+        <blue>160</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </inactive>
+    <disabled>
+     <colorrole role="Base">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>160</red>
+        <green>220</green>
+        <blue>160</blue>
+       </color>
+      </brush>
+     </colorrole>
+     <colorrole role="Window">
+      <brush brushstyle="SolidPattern">
+       <color alpha="255">
+        <red>160</red>
+        <green>220</green>
+        <blue>160</blue>
+       </color>
+      </brush>
+     </colorrole>
+    </disabled>
+   </palette>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
@@ -45,6 +109,70 @@
     <widget class="QTabWidget" name="tabWidget">
      <property name="enabled">
       <bool>true</bool>
+     </property>
+     <property name="palette">
+      <palette>
+       <active>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Window">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>160</red>
+           <green>220</green>
+           <blue>160</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </active>
+       <inactive>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>255</red>
+           <green>255</green>
+           <blue>255</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Window">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>160</red>
+           <green>220</green>
+           <blue>160</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </inactive>
+       <disabled>
+        <colorrole role="Base">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>160</red>
+           <green>220</green>
+           <blue>160</blue>
+          </color>
+         </brush>
+        </colorrole>
+        <colorrole role="Window">
+         <brush brushstyle="SolidPattern">
+          <color alpha="255">
+           <red>160</red>
+           <green>220</green>
+           <blue>160</blue>
+          </color>
+         </brush>
+        </colorrole>
+       </disabled>
+      </palette>
      </property>
      <property name="currentIndex">
       <number>0</number>
@@ -183,6 +311,26 @@
            <item row="5" column="1">
             <widget class="QComboBox" name="timerResetCB"/>
            </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="T1MinBeepChkB">
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Minute Beep</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QCheckBox" name="T1BeepdownChkB">
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Beep Countdown</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
          <item row="0" column="1">
@@ -265,18 +413,38 @@
            <item row="5" column="1">
             <widget class="QComboBox" name="timer2ResetCB"/>
            </item>
+           <item row="6" column="0">
+            <widget class="QCheckBox" name="T2MinBeepChkB">
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Minute Beep</string>
+             </property>
+            </widget>
+           </item>
+           <item row="6" column="1">
+            <widget class="QCheckBox" name="T2BeepdownChkB">
+             <property name="layoutDirection">
+              <enum>Qt::RightToLeft</enum>
+             </property>
+             <property name="text">
+              <string>Beep Countdown</string>
+             </property>
+            </widget>
+           </item>
           </layout>
          </item>
         </layout>
        </item>
-       <item row="3" column="0">
+       <item row="4" column="0">
         <widget class="QLabel" name="label_10">
          <property name="text">
           <string>Trim Increment</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="1">
+       <item row="4" column="1">
         <widget class="QComboBox" name="trimIncCB">
          <item>
           <property name="text">
@@ -305,14 +473,14 @@
          </item>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item row="5" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
           <string>Throttle Trim</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="1">
+       <item row="5" column="1">
         <layout class="QHBoxLayout" name="horizontalLayout_2">
          <item>
           <widget class="QCheckBox" name="thrTrimChkB">
@@ -369,6 +537,25 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_11">
+           <property name="minimumSize">
+            <size>
+             <width>120</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>InstaTrim Switch</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QComboBox" name="trimSWCB"/>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_9">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>
@@ -382,16 +569,6 @@
           </spacer>
          </item>
         </layout>
-       </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_11">
-         <property name="text">
-          <string>instaTrim Switch</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QComboBox" name="trimSWCB"/>
        </item>
        <item row="6" column="0">
         <widget class="QLabel" name="label_12">
@@ -510,7 +687,7 @@
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLabel" name="label_145">
+          <widget class="QLabel" name="label_fastmix">
            <property name="text">
             <string>Fast Mix Delay</string>
            </property>
@@ -631,7 +808,7 @@
            </item>
            <item>
             <property name="text">
-             <string>PXX</string>
+             <string>PXX/XJT</string>
             </property>
            </item>
            <item>
@@ -1028,6 +1205,166 @@
              <string>31</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>32</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>33</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>34</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>35</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>37</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>38</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>39</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>40</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>41</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>42</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>43</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>44</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>45</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>46</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>47</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>48</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>49</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>50</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>51</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>52</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>53</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>54</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>55</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>56</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>57</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>58</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>59</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>60</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>61</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>62</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>63</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item>
@@ -1177,7 +1514,7 @@
         </widget>
        </item>
        <item row="19" column="1">
-        <layout class="QGridLayout" name="gridLayout_Swarn" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+        <layout class="QGridLayout" name="gridLayout_Swarn" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
          <item row="0" column="0">
           <widget class="QCheckBox" name="switchwarnChkB">
            <property name="sizePolicy">
@@ -1188,7 +1525,7 @@
            </property>
            <property name="minimumSize">
             <size>
-             <width>80</width>
+             <width>70</width>
              <height>0</height>
             </size>
            </property>
@@ -1273,7 +1610,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QWidget" name="widgetDefSA" native="true">
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>47</width>
              <height>35</height>
             </size>
            </property>
@@ -1320,7 +1657,7 @@ p, li { white-space: pre-wrap; }
            <widget class="QLabel" name="label_DSA">
             <property name="geometry">
              <rect>
-              <x>4</x>
+              <x>0</x>
               <y>0</y>
               <width>20</width>
               <height>13</height>
@@ -1333,7 +1670,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>SA</string>
+             <string>THR</string>
             </property>
            </widget>
            <zorder>label_DSA</zorder>
@@ -1344,7 +1681,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QWidget" name="widgetDefSB" native="true">
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>47</width>
              <height>35</height>
             </size>
            </property>
@@ -1391,7 +1728,7 @@ p, li { white-space: pre-wrap; }
            <widget class="QLabel" name="label_DSB">
             <property name="geometry">
              <rect>
-              <x>4</x>
+              <x>0</x>
               <y>0</y>
               <width>20</width>
               <height>13</height>
@@ -1404,7 +1741,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>SB</string>
+             <string>RUD</string>
             </property>
            </widget>
           </widget>
@@ -1413,7 +1750,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QWidget" name="widgetDefSC" native="true">
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>47</width>
              <height>35</height>
             </size>
            </property>
@@ -1460,7 +1797,7 @@ p, li { white-space: pre-wrap; }
            <widget class="QLabel" name="label_DSC">
             <property name="geometry">
              <rect>
-              <x>4</x>
+              <x>0</x>
               <y>0</y>
               <width>20</width>
               <height>13</height>
@@ -1473,7 +1810,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>SC</string>
+             <string>ELE</string>
             </property>
            </widget>
           </widget>
@@ -1482,7 +1819,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QWidget" name="widgetDefSE" native="true">
            <property name="minimumSize">
             <size>
-             <width>0</width>
+             <width>47</width>
              <height>35</height>
             </size>
            </property>
@@ -1529,7 +1866,7 @@ p, li { white-space: pre-wrap; }
            <widget class="QLabel" name="label_DSE">
             <property name="geometry">
              <rect>
-              <x>4</x>
+              <x>0</x>
               <y>0</y>
               <width>20</width>
               <height>13</height>
@@ -1542,12 +1879,81 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>SE</string>
+             <string>GEA</string>
             </property>
            </widget>
           </widget>
          </item>
-         <item row="0" column="25">
+         <item row="0" column="16">
+          <widget class="QWidget" name="widgetDefSD" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>47</width>
+             <height>35</height>
+            </size>
+           </property>
+           <widget class="QSlider" name="SwitchDefSD">
+            <property name="geometry">
+             <rect>
+              <x>20</x>
+              <y>0</y>
+              <width>26</width>
+              <height>35</height>
+             </rect>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>35</height>
+             </size>
+            </property>
+            <property name="maximum">
+             <number>2</number>
+            </property>
+            <property name="pageStep">
+             <number>1</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="invertedAppearance">
+             <bool>true</bool>
+            </property>
+            <property name="invertedControls">
+             <bool>false</bool>
+            </property>
+            <property name="tickPosition">
+             <enum>QSlider::TicksBothSides</enum>
+            </property>
+           </widget>
+           <widget class="QLabel" name="label_DSD">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>20</width>
+              <height>13</height>
+             </rect>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>20</width>
+              <height>16777215</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>AIL</string>
+            </property>
+           </widget>
+          </widget>
+         </item>
+         <item row="0" column="2">
           <widget class="QWidget" name="widgetDefSG" native="true">
            <property name="minimumSize">
             <size>
@@ -1611,76 +2017,7 @@ p, li { white-space: pre-wrap; }
              </size>
             </property>
             <property name="text">
-             <string>SG</string>
-            </property>
-           </widget>
-          </widget>
-         </item>
-         <item row="0" column="16">
-          <widget class="QWidget" name="widgetDefSD" native="true">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>35</height>
-            </size>
-           </property>
-           <widget class="QSlider" name="SwitchDefSD">
-            <property name="geometry">
-             <rect>
-              <x>20</x>
-              <y>0</y>
-              <width>26</width>
-              <height>35</height>
-             </rect>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>35</height>
-             </size>
-            </property>
-            <property name="maximum">
-             <number>2</number>
-            </property>
-            <property name="pageStep">
-             <number>1</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-            <property name="invertedAppearance">
-             <bool>true</bool>
-            </property>
-            <property name="invertedControls">
-             <bool>false</bool>
-            </property>
-            <property name="tickPosition">
-             <enum>QSlider::TicksBothSides</enum>
-            </property>
-           </widget>
-           <widget class="QLabel" name="label_DSD">
-            <property name="geometry">
-             <rect>
-              <x>4</x>
-              <y>0</y>
-              <width>20</width>
-              <height>13</height>
-             </rect>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>20</width>
-              <height>16777215</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>SD</string>
+             <string>IDL</string>
             </property>
            </widget>
           </widget>
@@ -1756,7 +2093,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </layout>
        </item>
-       <item row="20" column="1">
+       <item row="21" column="1">
         <spacer name="verticalSpacer_6">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -10315,7 +10652,7 @@ Right</string>
         </widget>
        </item>
        <item row="0" column="2">
-        <widget class="QLabel" name="label_83">
+        <widget class="QLabel" name="label_NumVoice">
          <property name="font">
           <font>
            <pointsize>10</pointsize>
@@ -10880,119 +11217,137 @@ Right</string>
            </item>
           </widget>
          </item>
-         <item row="1" column="1" colspan="2">
-          <layout class="QGridLayout" name="gridLayout_21">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_105">
-             <property name="text">
-              <string>Alarm 1</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="frsky_level_0_0">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QComboBox" name="frsky_gr_0_0">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_109">
-             <property name="text">
-              <string>Alarm 2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="frsky_level_0_1">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QComboBox" name="frsky_gr_0_1">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QSpinBox" name="frsky_val_0_1">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="frsky_val_0_0">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="frsky_ratio_0">
            <property name="maximum">
             <number>255</number>
            </property>
+          </widget>
+         </item>
+         <item row="1" column="1" colspan="2">
+          <widget class="QWidget" name="widgetAlarm1" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <widget class="QWidget" name="layoutWidget">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>599</width>
+              <height>48</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_21">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_105">
+               <property name="text">
+                <string>Alarm 1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="frsky_level_0_0">
+               <item>
+                <property name="text">
+                 <string>---</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Yellow</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Orange</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Red</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QComboBox" name="frsky_gr_0_0">
+               <item>
+                <property name="text">
+                 <string>&lt;</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>&gt;</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_109">
+               <property name="text">
+                <string>Alarm 2</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="frsky_level_0_1">
+               <item>
+                <property name="text">
+                 <string>---</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Yellow</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Orange</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Red</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="frsky_gr_0_1">
+               <item>
+                <property name="text">
+                 <string>&lt;</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>&gt;</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QSpinBox" name="frsky_val_0_1">
+               <property name="maximum">
+                <number>255</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QSpinBox" name="frsky_val_0_0">
+               <property name="maximum">
+                <number>255</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </widget>
          </item>
         </layout>
@@ -11030,114 +11385,6 @@ Right</string>
            </item>
           </widget>
          </item>
-         <item row="1" column="1" colspan="2">
-          <layout class="QGridLayout" name="gridLayout_24">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_111">
-             <property name="text">
-              <string>Alarm 1</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="frsky_level_1_0">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QComboBox" name="frsky_gr_1_0">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_112">
-             <property name="text">
-              <string>Alarm 2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="frsky_level_1_1">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QComboBox" name="frsky_gr_1_1">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QSpinBox" name="frsky_val_1_1">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="frsky_val_1_0">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="frsky_ratio_1">
            <property name="maximum">
@@ -11145,15 +11392,144 @@ Right</string>
            </property>
           </widget>
          </item>
+         <item row="1" column="1" colspan="2">
+          <widget class="QWidget" name="widgetAlarm2" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <widget class="QWidget" name="layoutWidget1">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>599</width>
+              <height>50</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_24">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_111">
+               <property name="text">
+                <string>Alarm 1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="frsky_level_1_0">
+               <item>
+                <property name="text">
+                 <string>---</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Yellow</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Orange</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Red</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="0" column="2">
+              <widget class="QComboBox" name="frsky_gr_1_0">
+               <item>
+                <property name="text">
+                 <string>&lt;</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>&gt;</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_112">
+               <property name="text">
+                <string>Alarm 2</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="frsky_level_1_1">
+               <item>
+                <property name="text">
+                 <string>---</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Yellow</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Orange</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>Red</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="frsky_gr_1_1">
+               <item>
+                <property name="text">
+                 <string>&lt;</string>
+                </property>
+               </item>
+               <item>
+                <property name="text">
+                 <string>&gt;</string>
+                </property>
+               </item>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QSpinBox" name="frsky_val_1_1">
+               <property name="maximum">
+                <number>255</number>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="3">
+              <widget class="QSpinBox" name="frsky_val_1_0">
+               <property name="maximum">
+                <number>255</number>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
-        <layout class="QFormLayout" name="formLayout_3">
-         <property name="verticalSpacing">
-          <number>6</number>
-         </property>
+        <layout class="QGridLayout" name="gridLayout_6">
          <item row="0" column="0">
           <widget class="QLabel" name="label_122">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
            <property name="maximumSize">
             <size>
              <width>100</width>
@@ -11282,87 +11658,310 @@ Right</string>
            </property>
           </widget>
          </item>
-        </layout>
-       </item>
-       <item>
-        <layout class="QGridLayout" name="gridLayout_25" columnstretch="0,0,0,0">
-         <item row="0" column="0">
-          <widget class="QLabel" name="label_86">
-           <property name="text">
-            <string>Custom Telemetry 1</string>
+         <item row="1" column="3">
+          <widget class="QLabel" name="label_RxRssiCritical">
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <property name="text">
+            <string>Rx RSSI Critical</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_88">
-           <property name="text">
-            <string>Custom Telemetry 3</string>
+         <item row="1" column="4">
+          <widget class="QSpinBox" name="RxRssiCriticalSB">
+           <property name="maximumSize">
+            <size>
+             <width>150</width>
+             <height>16777215</height>
+            </size>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <property name="maximum">
+            <number>80</number>
            </property>
           </widget>
          </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_89">
-           <property name="text">
-            <string>Custom Telemetry 5</string>
+         <item row="0" column="4">
+          <widget class="QSpinBox" name="RxRssiLowSB">
+           <property name="minimumSize">
+            <size>
+             <width>60</width>
+             <height>0</height>
+            </size>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <property name="maximumSize">
+            <size>
+             <width>150</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="maximum">
+            <number>80</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QLabel" name="label_RxRssiLow">
+           <property name="minimumSize">
+            <size>
+             <width>70</width>
+             <height>0</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>100</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Rx RSSI Low</string>
            </property>
           </widget>
          </item>
          <item row="0" column="2">
-          <widget class="QLabel" name="label_87">
-           <property name="text">
-            <string>Custom Telemetry 2</string>
+          <spacer name="horizontalSpacer_12">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_8">
+         <item>
+          <widget class="QWidget" name="widgetCt1" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>10</width>
+             <height>100</height>
+            </size>
+           </property>
+           <widget class="QWidget" name="layoutWidget2">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>441</width>
+              <height>93</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_25" columnstretch="0,0,0,0">
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_86">
+               <property name="text">
+                <string>Custom Telemetry 1</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_88">
+               <property name="text">
+                <string>Custom Telemetry 3</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_89">
+               <property name="text">
+                <string>Custom Telemetry 5</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QLabel" name="label_87">
+               <property name="text">
+                <string>Custom Telemetry 2</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QLabel" name="label_90">
+               <property name="text">
+                <string>Custom Telemetry 4</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="2">
+              <widget class="QLabel" name="label_91">
+               <property name="text">
+                <string>Custom Telemetry 6</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="Ct1"/>
+             </item>
+             <item row="1" column="3">
+              <widget class="QComboBox" name="Ct2"/>
+             </item>
+             <item row="3" column="1">
+              <widget class="QComboBox" name="Ct3"/>
+             </item>
+             <item row="3" column="3">
+              <widget class="QComboBox" name="Ct4"/>
+             </item>
+             <item row="5" column="1">
+              <widget class="QComboBox" name="Ct5"/>
+             </item>
+             <item row="5" column="3">
+              <widget class="QComboBox" name="Ct6"/>
+             </item>
+             <item row="0" column="1">
+              <widget class="QLabel" name="label_200">
+               <property name="text">
+                <string>Screen1</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <widget class="Line" name="line">
+           <property name="lineWidth">
+            <number>3</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
            </property>
           </widget>
          </item>
-         <item row="2" column="2">
-          <widget class="QLabel" name="label_90">
-           <property name="text">
-            <string>Custom Telemetry 4</string>
+         <item>
+          <widget class="QWidget" name="widgetCt2" native="true">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>100</height>
+            </size>
            </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
+           <widget class="QWidget" name="layoutWidget3">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>0</y>
+              <width>441</width>
+              <height>93</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_27" columnstretch="0,0,0,0,0">
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_194">
+               <property name="text">
+                <string>Custom Telemetry 1</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLabel" name="label_195">
+               <property name="text">
+                <string>Custom Telemetry 3</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QLabel" name="label_196">
+               <property name="text">
+                <string>Custom Telemetry 5</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QLabel" name="label_197">
+               <property name="text">
+                <string>Custom Telemetry 2</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QLabel" name="label_198">
+               <property name="text">
+                <string>Custom Telemetry 4</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="3">
+              <widget class="QLabel" name="label_199">
+               <property name="text">
+                <string>Custom Telemetry 6</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QComboBox" name="Ct1_2"/>
+             </item>
+             <item row="1" column="4">
+              <widget class="QComboBox" name="Ct2_2"/>
+             </item>
+             <item row="3" column="2">
+              <widget class="QComboBox" name="Ct3_2"/>
+             </item>
+             <item row="3" column="4">
+              <widget class="QComboBox" name="Ct4_2"/>
+             </item>
+             <item row="5" column="2">
+              <widget class="QComboBox" name="Ct5_2"/>
+             </item>
+             <item row="5" column="4">
+              <widget class="QComboBox" name="Ct6_2"/>
+             </item>
+             <item row="0" column="2">
+              <widget class="QLabel" name="label_201">
+               <property name="text">
+                <string>Screen2</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
           </widget>
-         </item>
-         <item row="4" column="2">
-          <widget class="QLabel" name="label_91">
-           <property name="text">
-            <string>Custom Telemetry 6</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="1">
-          <widget class="QComboBox" name="Ct1"/>
-         </item>
-         <item row="0" column="3">
-          <widget class="QComboBox" name="Ct2"/>
-         </item>
-         <item row="2" column="1">
-          <widget class="QComboBox" name="Ct3"/>
-         </item>
-         <item row="2" column="3">
-          <widget class="QComboBox" name="Ct4"/>
-         </item>
-         <item row="4" column="1">
-          <widget class="QComboBox" name="Ct5"/>
-         </item>
-         <item row="4" column="3">
-          <widget class="QComboBox" name="Ct6"/>
          </item>
         </layout>
        </item>
@@ -13483,10 +14082,192 @@ Right</string>
          <x>10</x>
          <y>30</y>
          <width>891</width>
-         <height>601</height>
+         <height>291</height>
         </rect>
        </property>
        <layout class="QGridLayout" name="voiceLayout"/>
+      </widget>
+      <widget class="QWidget" name="voiceWidget" native="true">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>330</y>
+         <width>461</width>
+         <height>241</height>
+        </rect>
+       </property>
+       <widget class="QWidget" name="gridLayoutWidget_3">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>10</y>
+          <width>451</width>
+          <height>221</height>
+         </rect>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_VS">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_83">
+           <property name="text">
+            <string>VS1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_116">
+           <property name="text">
+            <string>VS2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_145">
+           <property name="text">
+            <string>VS3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_188">
+           <property name="text">
+            <string>VS4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_189">
+           <property name="text">
+            <string>VS5</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_190">
+           <property name="text">
+            <string>VS6</string>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="0">
+          <widget class="QLabel" name="label_191">
+           <property name="text">
+            <string>VS7</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="label_193">
+           <property name="text">
+            <string>VS8</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QComboBox" name="vs1switchCB"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="QComboBox" name="vs1modeCB"/>
+         </item>
+         <item row="0" column="3">
+          <widget class="QSpinBox" name="vs1valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QComboBox" name="vs2switchCB"/>
+         </item>
+         <item row="2" column="1">
+          <widget class="QComboBox" name="vs3switchCB"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QComboBox" name="vs4switchCB"/>
+         </item>
+         <item row="4" column="1">
+          <widget class="QComboBox" name="vs5switchCB"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QComboBox" name="vs6switchCB"/>
+         </item>
+         <item row="6" column="1">
+          <widget class="QComboBox" name="vs7switchCB"/>
+         </item>
+         <item row="7" column="1">
+          <widget class="QComboBox" name="vs8switchCB"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QComboBox" name="vs2modeCB"/>
+         </item>
+         <item row="2" column="2">
+          <widget class="QComboBox" name="vs3modeCB"/>
+         </item>
+         <item row="3" column="2">
+          <widget class="QComboBox" name="vs4modeCB"/>
+         </item>
+         <item row="4" column="2">
+          <widget class="QComboBox" name="vs5modeCB"/>
+         </item>
+         <item row="5" column="2">
+          <widget class="QComboBox" name="vs6modeCB"/>
+         </item>
+         <item row="6" column="2">
+          <widget class="QComboBox" name="vs7modeCB"/>
+         </item>
+         <item row="7" column="2">
+          <widget class="QComboBox" name="vs8modeCB"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QSpinBox" name="vs2valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="3">
+          <widget class="QSpinBox" name="vs3valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
+          <widget class="QSpinBox" name="vs4valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="3">
+          <widget class="QSpinBox" name="vs5valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="3">
+          <widget class="QSpinBox" name="vs6valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="6" column="3">
+          <widget class="QSpinBox" name="vs7valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="3">
+          <widget class="QSpinBox" name="vs8valSB">
+           <property name="maximum">
+            <number>249</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
       </widget>
      </widget>
     </widget>

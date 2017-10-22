@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>441</width>
+    <width>611</width>
     <height>483</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QDialogButtonBox" name="buttonBox">
    <property name="geometry">
     <rect>
-     <x>70</x>
+     <x>220</x>
      <y>440</y>
      <width>361</width>
      <height>32</height>
@@ -40,10 +40,35 @@
    </property>
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="1">
-     <widget class="QComboBox" name="ProtocolCB"/>
+     <widget class="QComboBox" name="ProtocolCB">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item row="0" column="0">
      <widget class="QLabel" name="label">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="text">
        <string>Protocol</string>
       </property>
@@ -997,16 +1022,89 @@
      </widget>
     </item>
     <item row="0" column="2">
-     <widget class="QLabel" name="followLabel_2">
+     <widget class="QLabel" name="failsafeLabel">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
       <property name="text">
-       <string/>
+       <string>Failsafe</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
     </item>
+    <item row="1" column="2">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
    </layout>
   </widget>
-  <zorder>gridLayoutWidget</zorder>
-  <zorder>buttonBox</zorder>
+  <widget class="QComboBox" name="FailsafeCB">
+   <property name="geometry">
+    <rect>
+     <x>390</x>
+     <y>10</y>
+     <width>115</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>115</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>115</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <item>
+    <property name="text">
+     <string>Not Set</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Rx</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Custom</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>Hold</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>No Pulses</string>
+    </property>
+   </item>
+  </widget>
  </widget>
  <resources/>
  <connections>

@@ -81,8 +81,16 @@ void rtcInit()
   RCC_APB1PeriphClockCmd(RCC_APB1Periph_PWR, ENABLE);
   PWR_BackupAccessCmd(ENABLE);
   RCC_LSEConfig(RCC_LSE_ON);
-  while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET);
-  RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
+	uint32_t i ;
+	i = 0 ;
+  while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
+	{
+		if ( ++i > 1000000 )
+		{
+			return ;
+		}
+	}
+ 	RCC_RTCCLKConfig(RCC_RTCCLKSource_LSE);
   RCC_RTCCLKCmd(ENABLE);
   RTC_WaitForSynchro();
 

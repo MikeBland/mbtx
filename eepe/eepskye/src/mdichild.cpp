@@ -749,7 +749,7 @@ void MdiChild::duplicate()
 {
     uint32_t i = this->currentRow();
 		uint32_t max_models = MAX_MODELS ;
-    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -1076,7 +1076,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 						getPhysicalType() ;
           }
 					uint32_t max_models = MAX_MODELS ;
-          if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
+          if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
 					{
 						max_models = MAX_IMODELS ;
 					}
@@ -1409,7 +1409,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
 
         //Save model data one by one
 				uint32_t max_models = MAX_MODELS ;
-        if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) )
+        if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
 				{
 					max_models = MAX_IMODELS ;
 				}
@@ -1701,7 +1701,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-						if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E) )
+						if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}

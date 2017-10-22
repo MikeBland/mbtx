@@ -58,8 +58,9 @@
 #define	NUM_VOICE		8
 #define NUM_SKY_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
+#define NUM_GLOBAL_VOICE_ALARMS 8
 
-#define NUM_GVAR_ADJUST		8
+#define NUM_GVAR_ADJUST_SKY		8
 #define EXTRA_GVAR_ADJUST	12
 
 #define MUSIC_NAME_LENGTH		14
@@ -207,6 +208,26 @@ PACK(typedef struct t_btDevice {
   uint8_t  name[8] ;
 }) btDeviceData ;
 
+typedef struct t_voiceAlarm
+{
+  uint8_t source ;
+	uint8_t func;
+  int8_t  swtch ;
+	uint8_t rate ;
+	uint8_t fnameType:3 ;
+	uint8_t haptic:2 ;
+	uint8_t vsource:2 ;
+	uint8_t mute:1 ;
+	uint8_t delay ;
+  int16_t  offset ;		//offset
+	union
+	{
+		int16_t vfile ;
+		uint8_t name[8] ;
+	} file ;
+} VoiceAlarmData ;
+
+
 PACK(typedef struct t_EEGeneral {
   uint8_t   myVers;
   int16_t   calibMid[7];
@@ -316,10 +337,16 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t reverseScreen:1 ;
 	uint8_t musicLoop:1 ;
 	uint8_t musicType:1 ;
-	uint8_t spare:4 ;
+	uint8_t altSwitchNames:1 ;    // use alternative switch names (ARUNI)
+	uint8_t sixPosDelayFilter:1 ; // 6POS switch delay filtering (ARUNI)
+	uint8_t spare:2 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;
+	uint8_t potDetents ;
+	VoiceAlarmData gvad[NUM_GLOBAL_VOICE_ALARMS] ;
+	uint8_t welcomeType ;
+	uint8_t welcomeFileName[8] ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -540,7 +567,7 @@ PACK(typedef struct te_CSwData { // Custom Switches data
   int8_t  v2; 		//offset
 	uint8_t func;
 	int8_t andsw;
-	uint8_t res ;
+	uint8_t bitAndV3 ;
 }) SKYCSwData;
 
 PACK(typedef struct te_SafetySwData { // Custom Switches data
@@ -602,6 +629,13 @@ PACK(typedef struct t_Vario
   uint8_t param:6 ;
 }) VarioData ;	
 
+PACK(typedef struct t_Extra_Vario
+{
+  int8_t baseFrequency ;
+  int8_t offsetFrequency  ;
+  uint8_t volume ;
+}) VarioExtraData ;	
+
 PACK(typedef struct t_gvar {
 	int8_t gvar ;
 	uint8_t gvsource ;
@@ -640,25 +674,6 @@ PACK(typedef struct t_dsmLink
   uint8_t sourceCritical;
 	uint8_t levelCritical ;
 }) DsmLinkData ;
-
-typedef struct t_voiceAlarm
-{
-  uint8_t source ;
-	uint8_t func;
-  int8_t  swtch ;
-	uint8_t rate ;
-	uint8_t fnameType:3 ;
-	uint8_t haptic:2 ;
-	uint8_t vsource:2 ;
-	uint8_t mute:1 ;
-	uint8_t res1 ;			// Spare for expansion
-  int16_t  offset ;		//offset
-	union
-	{
-		int16_t vfile ;
-		uint8_t name[8] ;
-	} file ;
-} VoiceAlarmData ;
 
 typedef struct t_gvarAdjust
 {
@@ -870,7 +885,7 @@ PACK(typedef struct te_ModelData {
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E
   uint8_t ymodelswitchWarningStates ;	// Enough bits for Taranis X9E
 	uint8_t customDisplay2Index[6] ;
-	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
+  GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST_SKY] ;
 	uint16_t modelswitchWarningDisables ;
 	uint16_t xmodelswitchWarningDisables ;
 	uint8_t ymodelswitchWarningDisables ;
@@ -896,7 +911,13 @@ PACK(typedef struct te_ModelData {
 
 	EXTRA_MIXERS ;
 	EXTRA_CHANNELS ;
-	
+
+	VarioExtraData varioExtraData ;
+	uint8_t telemetryTimeout ;
+	uint8_t throttleIdleScale ;
+	uint8_t switchDelay[NUM_SKYCSW] ;
+	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
+	 
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

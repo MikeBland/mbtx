@@ -650,8 +650,22 @@ void simulatorDialog::configSwitches()
 			ui->switchID0->setVisible( false ) ;
 			ui->switchID1->setVisible( false ) ;
 			ui->switchID2->setVisible( false ) ;
-			ui->switchPB1->hide() ;
-			ui->switchPB2->hide() ;
+			if ( g_eeGeneral.switchMapping & USE_PB1 )
+			{
+				ui->switchPB1->show() ;
+			}
+			else
+			{
+				ui->switchPB1->hide() ;
+			}
+			if ( g_eeGeneral.switchMapping & USE_PB2 )
+			{
+				ui->switchPB2->show() ;
+			}
+			else
+			{
+				ui->switchPB2->hide() ;
+			}
 			ui->switchPB3->hide() ;
 			ui->switchPB4->hide() ;
 		}
@@ -1030,8 +1044,8 @@ const uint8_t stickScramble[] =
 
 void simulatorDialog::processAdjusters()
 {
-static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST][2] ;
-	for ( uint32_t i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
+static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST_SKY][2] ;
+  for ( uint32_t i = 0 ; i < NUM_GVAR_ADJUST_SKY ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
 		pgvaradj = &g_model.gvarAdjuster[i] ;
@@ -2030,7 +2044,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
   	case (CS_BIT_AND) :
   	  x = getValue(a-1);
 			y = (uint8_t) cs.v2 ;
-			y |= cs.res << 8 ;
+      y |= cs.bitAndV3 << 8 ;
   	  ret_value = ( x & y ) != 0 ;
     break;
 

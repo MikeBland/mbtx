@@ -400,6 +400,7 @@ extern void unlockVoice( void ) ;
 #define	SV_CUSTOM_WARN	57
 #define	SV_SHUTDOWN		58
 #define	SV_TRN_LOST		59
+#define	SV_KMSPH			60
 
 extern void stopMusic( void ) ;
 

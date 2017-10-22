@@ -103,7 +103,7 @@
 #define V2_NUM_VOICE_ALARMS	10
 #define NUM_VOICE_ALARMS	8
 #define NUM_SAFETY				16
-#define NUM_GVAR_ADJUST		4
+#define NUM_GVAR_ADJUST_AVR		4
 
 PACK(typedef struct t_TrainerMix {
   uint8_t srcChn:3; //0-7 = ch1-8
@@ -271,7 +271,7 @@ PACK(typedef struct EE_GEN {
 	uint8_t   crosstrim:1;
 	uint8_t   spare9:7;
 #else
-		uint8_t   res[3];
+//		uint8_t   res[3];
     uint8_t   crosstrim:1;
     uint8_t   FrskyPins:1 ;
     uint8_t   rotateScreen:1 ;
@@ -284,22 +284,6 @@ PACK(typedef struct EE_GEN {
 #endif
 		uint8_t		customStickNames[16] ;
 		SWITCH_MAPPING ;
-//#ifdef XSW_MOD
-//    uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
-//#else                                           // wasted 4b if MAX_XSWITCH is an odd number
-//    uint8_t   switchMapping ;
-//		uint8_t	ele2source:4 ;
-//		uint8_t	ail2source:4 ;
-//		uint8_t	rud2source:4 ;
-//		uint8_t	gea2source:4 ;
-//		uint8_t pb1source:4 ;
-//		uint8_t pb2source:4 ;
-//    uint8_t pg2Input:1 ;
-//    uint8_t pb7Input:1 ;
-//    uint8_t lcd_wrInput:1 ;
-//    uint8_t  spare5:5 ;
-//    uint8_t  exSwitchWarningStates ;
-//#endif
 }) V1EEGeneral;
 
 
@@ -355,7 +339,6 @@ PACK(typedef struct t_V2EEGeneral {
     char      ownerName[GENERAL_OWNER_NAME_LEN];
 //    uint8_t   switchWarningStates;
 		int8_t		volume ;
-//    uint8_t   res[3];
     uint8_t   crosstrim:1 ;
     uint8_t   FrskyPins:1 ;
     uint8_t   rotateScreen:1 ;
@@ -381,6 +364,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
 #endif
+		uint16_t 	stickDeadband ;
 }) V2EEGeneral;
 
 
@@ -855,7 +839,7 @@ PACK(typedef struct t_V2ModelData
 	uint8_t useCustomStickNames:2 ;
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
-  GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
+  GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST_AVR] ;
 	VoiceAlarmData vad[V2_NUM_VOICE_ALARMS] ;
 //	int8_t unused_pxxFailsafe[16] ;	// Currently unused
 	uint8_t telemetryProtocol ;

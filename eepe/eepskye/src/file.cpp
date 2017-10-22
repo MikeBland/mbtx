@@ -869,11 +869,11 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 		EeFsFormat( eeprom ) ;
     RlcFile *filePtr = new RlcFile ;
     filePtr->writeRlc( FILE_GENERAL, FILE_TYP_GENERAL, (uint8_t *) &radioData->generalSettings, sizeof(EEGeneral), 1 ) ;
-		for ( i = 1 ; i <= MAX_IMODELS ; i += 1 )
+    for ( i = 1 ; i <= MAX_MODELS ; i += 1 )
 		{
 			if ( radioData->File_system[i].size )
 			{		
-      	filePtr->writeRlc( i, FILE_TYP_GENERAL, (uint8_t*) &radioData->models[i-1], sizeof(SKYModelData), 1 ) ;
+        filePtr->writeRlc( i, FILE_TYP_MODEL, (uint8_t*) &radioData->models[i-1], sizeof(SKYModelData), 1 ) ;
 			}
 		}
 		delete filePtr ;

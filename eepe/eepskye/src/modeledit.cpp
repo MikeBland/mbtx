@@ -11,6 +11,7 @@
 #include "simulatordialog.h"
 #include "VoiceAlarmDialog.h"
 #include "TemplateDialog.h"
+#include "SwitchDialog.h"
 
 #include <QtGui>
 #include <QMessageBox>
@@ -2449,11 +2450,21 @@ void ModelEdit::voiceAlarmsList()
 
 //	ui->VoiceAlarmList->setFont(QFont("Courier New",12)) ;
 //	ui->VoiceAlarmList->clear() ;
-	for(i=0 ; i<NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ; i += 1)
+	for(i=0 ; i<NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i += 1)
 	{
 		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
 		QString str = "";
-		str = tr("VA%1%2  ").arg((i+1)/10).arg((i+1)%10) ;
+    if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+      uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			
+			vad = &g_eeGeneral.gvad[z] ;
+			str = tr("GVA%1  ").arg(z+1) ;
+		}
+		else
+		{
+			str = tr("VA%1%2  ").arg((i+1)/10).arg((i+1)%10) ;
+		}
 		QString srcstr ;
     uint32_t limit = 45 ;
 		uint32_t value = vad->source ;
@@ -2568,6 +2579,10 @@ void ModelEdit::voiceAlarmsList()
 				str += tr("Alarm(%1)").arg(getAudioAlarmName(vad->file.vfile) ) ;
 			break ;
 		}
+		if ( vad->delay )
+		{
+      str += tr(" delay(%1)").arg((float)vad->delay / 10.0) ;
+		}
 //    ui->VoiceAlarmList->addItem(str) ;
     VoiceListWidget->addItem(str) ;
 	}
@@ -2602,7 +2617,7 @@ void ModelEdit::voiceAlarmsBlank( int i )
 		vad->haptic = 0 ;
 		vad->vsource = 0 ;
 		vad->mute = 0 ;
-		vad->res1 = 0 ;
+		vad->delay = 0 ;
 		vad->offset = 0 ;
 		vad->file.vfile = 0 ;
 		vad->file.name[0] = 0 ;
@@ -4730,7 +4745,7 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 				{
 					int32_t y ;
 					y = (uint8_t) g_model.customSw[i].v2 ;
-          y |= g_model.customSw[i].res << 8 ;
+          y |= g_model.customSw[i].bitAndV3 << 8 ;
 					y -= 32768 ;
         	cswitchOffset[i]->setValue( y ) ;
        		cswitchTlabel[i]->setVisible(false);
@@ -4848,6 +4863,167 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
   }
 }
 
+uint32_t encodePots( uint32_t value, int type, uint32_t extraPots )
+{
+  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
+	{
+		if ( value >= EXTRA_POTS_POSITION )
+		{
+			if ( value >= EXTRA_POTS_START )
+			{
+				value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+			}
+			else
+			{
+				value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
+			}
+		}
+	}
+	if ( type == RADIO_TYPE_SKY )
+	{
+		if ( value >= EXTRA_POTS_POSITION )
+		{
+			if ( value >= EXTRA_POTS_START )
+			{
+				value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+			}
+			else
+			{
+				value += extraPots ;
+			}
+		}
+	}
+	if ( type == RADIO_TYPE_QX7 )
+	{
+		if ( value > 6 )
+		{
+		 value -= 1 ;	
+		}
+	}
+	 return value ;
+}
+
+void ModelEdit::updateSwitchesList( int lOrR )
+{
+	QListWidget *list ;
+	uint32_t start ;
+  list = ui->SwListL	;
+	start = 0 ;
+	if ( lOrR )
+	{
+    list = ui->SwListR	;
+		start = NUM_SKYCSW/2 ;
+	}
+	list->setFont(QFont("Courier New",12)) ;
+	list->clear() ;
+//	for(uint32_t i=start ; i<start+NUM_SKYCSW/2 ; i+=1)
+  for(uint32_t i=start ; i<start+5 ; i+=1)
+	{
+		uint32_t j ;
+		char telText[20] ;
+		int16_t value ;
+		uint32_t cType ;
+		cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
+		QString str = "";
+		QString srcstr ;
+		if ( i < 9 )
+		{
+      str = tr("L%1: ").arg(i+1) ;
+		}
+		else
+		{
+      str = tr("L%1: ").arg(QChar( i+56 )) ;
+		}
+		j = g_model.customSw[i].func ;
+		str += getCSWFunc( j, g_model.modelVersion ) ;
+	  switch ( cType )
+  	{
+		  case CS_VCOMP:
+			{
+				uint32_t source ;
+				source =  encodePots( g_model.customSw[i].v1, rData->type, rData->extraPots ) ;
+      	str += getSourceStr(g_eeGeneral.stickMode, source, g_model.modelVersion, rData->type, rData->extraPots) ;
+				source =  encodePots( g_model.customSw[i].v2, rData->type, rData->extraPots ) ;
+      	str += tr(" %1 ").arg(getSourceStr(g_eeGeneral.stickMode, source, g_model.modelVersion, rData->type, rData->extraPots)) ;
+			}
+			break ;
+    	case CS_VOFS:
+			{	
+				uint32_t source ;
+				source =  encodePots( g_model.customSw[i].v1, rData->type, rData->extraPots ) ;
+				str += getSourceStr(g_eeGeneral.stickMode, source, g_model.modelVersion, rData->type, rData->extraPots) ;
+      	str += tr(" %1 ").arg(g_model.customSw[i].v2) ;
+			}
+			break ;
+			case CS_U16:
+			{	
+				uint32_t source ;
+				source =  encodePots( g_model.customSw[i].v1, rData->type, rData->extraPots ) ;
+				str += getSourceStr(g_eeGeneral.stickMode, source, g_model.modelVersion, rData->type, rData->extraPots) ;
+			}
+			break ;
+		  case CS_TMONO:
+      	str += tr("%1 ").arg(getSWName(g_model.customSw[i].v1, rData->type)) ;
+      	str += tr("%1 ").arg(g_model.customSw[i].v2) ;
+			break ;
+		  case CS_VBOOL:
+				if ( j )
+				{
+	      	str += tr("%1 %2 ").arg(getSWName(g_model.customSw[i].v1, rData->type)).arg(getSWName(g_model.customSw[i].v2, rData->type)) ;
+				}
+			break ;
+    	case CS_TIMER:
+			{
+				int32_t x ;
+				x = g_model.customSw[i].v1+1 ;
+				if ( x <= 0 )
+				{
+					x = -x +1 ;
+	      	str += tr("%1.%2 ").arg(x/10).arg(x%10) ;
+				}
+				else
+				{
+	      	str += tr("%1 ").arg(x) ;
+				}
+				x = g_model.customSw[i].v2+1 ;
+				if ( x <= 0 )
+				{
+					x = -x +1 ;
+	      	str += tr("%1.%2 ").arg(x/10).arg(x%10) ;
+				}
+				else
+				{
+	      	str += tr("%1 ").arg(x) ;
+				}
+			}
+			break ;
+		}
+		if ( g_model.customSw[i].andsw != 0 )
+		{
+			uint32_t x ;
+			x = g_model.customSw[i].andsw ;
+	    if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+			{
+//  				x = switchUnMap(x, 1 ) ;
+			}
+			else
+			{
+				x = andSwitchMap( x ) ;
+			}
+      str += tr("AND %1 ").arg(getSWName(x, rData->type)) ;
+		}
+		if ( g_model.switchDelay[i] )
+		{
+			uint32_t dec ;
+			j = g_model.switchDelay[i] ;
+			dec= j % 10 ;
+      str += tr("Delay %1.%2").arg(j/10).arg(dec) ;
+		}
+		list->addItem(str) ;
+	}
+}
+
+
 void ModelEdit::updateSwitchesTab()
 {
     switchEditLock = true;
@@ -4897,7 +5073,7 @@ void ModelEdit::tabSwitches()
 			if ( i > 11 )
 			{
 				j = i - 12 ;
-				k = 8 ;
+				k = 9 ;
 			}
       if ( !switchesTabDone )
 			{
@@ -4916,6 +5092,16 @@ void ModelEdit::tabSwitches()
         connect(cswitchAndSwitch[i],SIGNAL(currentIndexChanged(int)),this,SLOT(switchesEdited()));
         ui->gridLayout_8->addWidget(cswitchAndSwitch[i],j+1,k+3);
         cswitchAndSwitch[i]->setVisible(true);
+
+        cswitchDelay[i] = new QDoubleSpinBox(this);
+        connect(cswitchDelay[i],SIGNAL(valueChanged(double)),this,SLOT(switchesEdited()));
+        ui->gridLayout_8->addWidget(cswitchDelay[i],j+1,k+4);
+        cswitchDelay[i]->setVisible(true);
+        cswitchDelay[i]->setMaximum(2.5);
+        cswitchDelay[i]->setMinimum(0);
+        cswitchDelay[i]->setSingleStep(0.1);
+        cswitchDelay[i]->setDecimals(1);
+				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 			}
     	if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
 			{
@@ -4973,6 +5159,30 @@ void ModelEdit::tabSwitches()
     }
 
     updateSwitchesTab();
+
+		ui->SwListL->hide() ;
+		ui->SwListR->hide() ;
+
+		updateSwitchesList( 0 ) ;
+		updateSwitchesList( 1 ) ;
+		
+//		ui->SwListR->setFont(QFont("Courier New",12)) ;
+//    ui->SwListR->clear() ;
+//    for(int i=NUM_SKYCSW/2 ; i<NUM_SKYCSW ; i+=1)
+//		{
+//			uint32_t j ;
+//			char telText[20] ;
+//			int16_t value ;
+//			uint32_t cType ;
+//			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
+//			QString str = "";
+//			QString srcstr ;
+//     	str = tr("L%1: ").arg(QChar( i+56 )) ;
+//			j = g_model.customSw[i].func ;
+//			str += getCSWFunc( j, g_model.modelVersion ) ;
+//			ui->SwListR->addItem(str) ;
+//		}
+
 
     //connects
   if ( !switchesTabDone )
@@ -5102,6 +5312,7 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
 
 		if ( sd->opt.vs.vmode > 5 )
 		{
+
 			safetySwitchValue[i]->setVisible(false);
   		safetySwitchAlarm[i]->setVisible(true);
 			safetySwitchGvar[i]->setVisible(false) ;
@@ -5469,7 +5680,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 ) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -5496,7 +5707,7 @@ void ModelEdit::switchesEdited()
 							int32_t y ;
 							y = cswitchOffset[i]->value() ;
 							y += 32768 ;
-							g_model.customSw[i].res = y >> 8 ;
+              g_model.customSw[i].bitAndV3 = y >> 8 ;
 							g_model.customSw[i].v2 = y ;
 						}
 						else
@@ -5530,12 +5741,17 @@ void ModelEdit::switchesEdited()
         default:
             break;
         }
+			
+			g_model.switchDelay[i] = (cswitchDelay[i]->value() + 0.05 ) * 10 ; 
     }
 
     for(int i=0; i<NUM_SKYCSW; i++)
         setSwitchWidgetVisibility(i);
 
     updateSettings();
+		
+		updateSwitchesList( 0 ) ;
+		updateSwitchesList( 1 ) ;
 
     switchEditLock = false;
 }
@@ -5731,6 +5947,24 @@ void ModelEdit::tabGvar()
 		psname[5] = ui->SC6Name ;
 		psname[6] = ui->SC7Name ;
 		psname[7] = ui->SC8Name ;
+		
+		pmodsb[0] = ui->Sc1ModSB ;
+		pmodsb[1] = ui->Sc2ModSB ;
+		pmodsb[2] = ui->Sc3ModSB ;
+		pmodsb[3] = ui->Sc4ModSB ;
+		pmodsb[4] = ui->Sc5ModSB ;
+		pmodsb[5] = ui->Sc6ModSB ;
+		pmodsb[6] = ui->Sc7ModSB ;
+		pmodsb[7] = ui->Sc8ModSB ;
+
+		pdestcb[0] = ui->Sc1DestCB ;
+		pdestcb[1] = ui->Sc2DestCB ;
+		pdestcb[2] = ui->Sc3DestCB ;
+		pdestcb[3] = ui->Sc4DestCB ;
+		pdestcb[4] = ui->Sc5DestCB ;
+		pdestcb[5] = ui->Sc6DestCB ;
+		pdestcb[6] = ui->Sc7DestCB ;
+		pdestcb[7] = ui->Sc8DestCB ;
 		 
 		int i ;
 		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
@@ -5749,6 +5983,8 @@ void ModelEdit::tabGvar()
 				n = n.left(n.size()-1) ;			
 			}
   		psname[i]->setText( n ) ;
+			pmodsb[i]->setValue( g_model.eScalers[i].mod ) ;
+			pdestcb[i]->setCurrentIndex(g_model.eScalers[i].dest ) ;
 
     	connect(posb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
     	connect(pmsb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
@@ -5759,6 +5995,8 @@ void ModelEdit::tabGvar()
     	connect(poffcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     	connect(psrccb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 			connect(psname[i], SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+    	connect(pmodsb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+    	connect(pdestcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 		}
 		 
     populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type, rData->extraPots ) ;
@@ -5913,10 +6151,10 @@ void ModelEdit::tabGvar()
 //	QByteArray qba ;
 //  uint32_t i ;
 
-	for ( i = 0 ; i < NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST ; i += 1 )
+  for ( i = 0 ; i < NUM_GVAR_ADJUST_SKY + EXTRA_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
-		pgvaradj = ( i >= NUM_GVAR_ADJUST ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
+    pgvaradj = ( i >= NUM_GVAR_ADJUST_SKY ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST_SKY] : &g_model.gvarAdjuster[i] ;
 		
 		QString srcstr ;
 		QString str = "";
@@ -6006,6 +6244,8 @@ void ModelEdit::GvarEdited()
 			g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
       g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
       textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
+			g_model.eScalers[i].mod = pmodsb[i]->value() ;
+			g_model.eScalers[i].dest = pdestcb[i]->currentIndex() ;
 		}
 
 //		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
@@ -6128,6 +6368,8 @@ void ModelEdit::tabFrsky()
     ui->BT_telemetry->setChecked(g_model.bt_telemetry) ;
     ui->FASoffsetSB->setValue( (double)g_model.FASoffset/10 + 0.049) ;
 		ui->currentSource->setCurrentIndex(g_model.currentSource) ;
+    ui->TelemetryTimeoutSB->setValue(g_model.telemetryTimeout ) ;
+    ui->ThrIdleScaleSB->setValue( 100 - g_model.throttleIdleScale ) ;
 
     ui->Com2BaudrateCB->setCurrentIndex(g_model.com2Baudrate) ;
 
@@ -6135,9 +6377,23 @@ void ModelEdit::tabFrsky()
     ui->VarioSourceCB->setCurrentIndex( g_model.varioData.varioSource ) ;
     ui->VarioSensitivitySB->setValue( g_model.varioData.param ) ;
     ui->SinkTonesOff->setChecked(g_model.varioData.sinkTonesOff);
+    ui->VarioBaseFreqSB->setValue( g_model.varioExtraData.baseFrequency ) ;
+    ui->VarioOffsetFreqSB->setValue( g_model.varioExtraData.offsetFrequency ) ;
+    ui->VarioVolumeCB->setCurrentIndex( g_model.varioExtraData.volume ) ;
 
     populateSwitchCB(ui->LogSwitchCB, g_model.logSwitch, rData->type ) ;
-    ui->LogRateCB->setCurrentIndex( g_model.logRate ) ;
+		{
+			uint32_t temp = g_model.logRate ;
+			if ( temp == 2 )
+			{
+        temp = 0 ;
+			}
+			else
+			{
+				temp += 1 ;
+			}
+    	ui->LogRateCB->setCurrentIndex( temp ) ;
+		}
 		
 		ui->frsky_RSSI_Warn->setValue( g_model.rssiOrange + 45 ) ;
 		ui->frsky_RSSI_Critical->setValue( g_model.rssiRed + 42 ) ;
@@ -6172,6 +6428,8 @@ void ModelEdit::tabFrsky()
 		connect(ui->BladesSpinBox,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
 		connect(ui->COMportCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect(ui->BT_telemetry,SIGNAL(stateChanged(int)),this,SLOT(FrSkyEdited()));
+		connect(ui->TelemetryTimeoutSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+    connect(ui->ThrIdleScaleSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
     
 		connect( ui->Ct1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->Ct2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
@@ -6199,6 +6457,9 @@ void ModelEdit::tabFrsky()
 		connect( ui->VarioSourceCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->VarioSwitchCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->SinkTonesOff,SIGNAL(stateChanged(int)),this,SLOT(FrSkyEdited()));
+		connect( ui->VarioBaseFreqSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+		connect( ui->VarioOffsetFreqSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+		connect( ui->VarioVolumeCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 
 		connect( ui->LogSwitchCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 		connect( ui->LogRateCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
@@ -6261,7 +6522,9 @@ void ModelEdit::FrSkyEdited()
 		g_model.FrSkyUsrProto = ui->HubComboBox->currentIndex();
     g_model.FrSkyImperial = ui->UnitsComboBox->currentIndex();
     g_model.numBlades = ui->BladesSpinBox->value() ;
-
+		g_model.telemetryTimeout = ui->TelemetryTimeoutSB->value() ;
+		g_model.throttleIdleScale = 100 - ui->ThrIdleScaleSB->value() ;
+		
 		g_model.frskyComPort = ui->COMportCB->currentIndex() ;
     g_model.bt_telemetry = ui->BT_telemetry->isChecked() ;
 
@@ -6292,9 +6555,23 @@ void ModelEdit::FrSkyEdited()
 		g_model.varioData.varioSource = ui->VarioSourceCB->currentIndex() ;
 		g_model.varioData.param = ui->VarioSensitivitySB->value() ;
     g_model.varioData.sinkTonesOff = ui->SinkTonesOff->isChecked();
-		
+    
+		g_model.varioExtraData.baseFrequency = ui->VarioBaseFreqSB->value() ;
+		g_model.varioExtraData.offsetFrequency = ui->VarioOffsetFreqSB->value() ;
+		g_model.varioExtraData.volume = ui->VarioVolumeCB->currentIndex() ;
+
 		g_model.logSwitch = getSwitchCbValue( ui->LogSwitchCB, rData->type ) ;
-    g_model.logRate = ui->LogRateCB->currentIndex() ;
+    
+		uint32_t temp = ui->LogRateCB->currentIndex() ;
+		if ( temp == 0 )
+		{
+      temp = 2 ;
+		}
+		else
+		{
+			temp -= 1 ;
+		}
+		g_model.logRate = temp ;
 
 		g_model.rssiOrange = ui->frsky_RSSI_Warn->value() - 45 ;
 		g_model.rssiRed = ui->frsky_RSSI_Critical->value() - 42 ;
@@ -7976,8 +8253,21 @@ void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
 	int i = index.row() ;
 	VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+	{
+    uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+		vad = &g_eeGeneral.gvad[z] ;
+	}
   VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
-  dlg->setWindowTitle(tr("Voice Alarm %1").arg(index.row()+1)) ;
+  if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+	{
+		i -= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ;
+  	dlg->setWindowTitle(tr("Global Voice Alarm %1").arg(i+1)) ;
+	}
+	else
+	{
+  	dlg->setWindowTitle(tr("Voice Alarm %1").arg(i+1)) ;
+	}
   if(dlg->exec())
   {
     updateSettings() ;
@@ -7989,7 +8279,7 @@ void ModelEdit::on_AdjusterList_doubleClicked( QModelIndex index )
 {
 	int i = index.row() ;
 	GvarAdjust gvad ;
-	GvarAdjust *gad = ( i >= NUM_GVAR_ADJUST) ? &g_model.egvarAdjuster[i-NUM_GVAR_ADJUST] : &g_model.gvarAdjuster[i] ;
+  GvarAdjust *gad = ( i >= NUM_GVAR_ADJUST_SKY) ? &g_model.egvarAdjuster[i-NUM_GVAR_ADJUST_SKY] : &g_model.gvarAdjuster[i] ;
   gvad.function = gad->function ;
   gvad.gvarIndex = gad->gvarIndex ;
   gvad.swtch = gad->swtch ;
@@ -8051,6 +8341,55 @@ void ModelEdit::on_internalModuleDisplayList_doubleClicked()
     updateSettings();
 		setProtocolBoxes() ;
   }
+}
+
+void ModelEdit::on_SwListL_doubleClicked( QModelIndex index )
+{
+	int i = index.row() ;
+	struct t_switchData data ;
+  data.swData.v1 = g_model.customSw[i].v1 ;
+	data.swData.v2 = g_model.customSw[i].v2 ;
+	data.swData.func = g_model.customSw[i].func ;
+	data.swData.andsw = g_model.customSw[i].andsw ;
+	data.swData.bitAndV3 = g_model.customSw[i].bitAndV3 ;
+	data.switchDelay = g_model.switchDelay[i] ;
+
+	SwitchDialog *g = new SwitchDialog( this, i, &data, g_model.modelVersion, rData ) ;
+  g->setWindowTitle(tr("Logical Switch") ) ;
+  if ( g->exec() )
+	{
+		g_model.customSw[i].v1 = data.swData.v1 ;
+		g_model.customSw[i].v2 = data.swData.v2 ;
+		g_model.customSw[i].func = data.swData.func ;
+		g_model.customSw[i].andsw = data.swData.andsw ;
+		g_model.customSw[i].bitAndV3 = data.swData.bitAndV3 ;
+		g_model.switchDelay[i] = data.switchDelay ;
+	}
+}
+
+void ModelEdit::on_SwListR_doubleClicked( QModelIndex index )
+{
+	int i = index.row() + NUM_SKYCSW/2 ;
+	struct t_switchData data ;
+	data.swData.v1 = g_model.customSw[i].v1 ;
+	data.swData.v2 = g_model.customSw[i].v2 ;
+	data.swData.func = g_model.customSw[i].func ;
+	data.swData.andsw = g_model.customSw[i].andsw ;
+	data.swData.bitAndV3 = g_model.customSw[i].bitAndV3 ;
+	data.switchDelay = g_model.switchDelay[i] ;
+
+  SwitchDialog *g = new SwitchDialog( this, i, &data, g_model.modelVersion, rData ) ;
+  g->setWindowTitle(tr("Logical Switch") ) ;
+  if ( g->exec() )
+	{
+		g_model.customSw[i].v1 = data.swData.v1 ;
+		g_model.customSw[i].v2 = data.swData.v2 ;
+		g_model.customSw[i].func = data.swData.func ;
+		g_model.customSw[i].andsw = data.swData.andsw ;
+		g_model.customSw[i].bitAndV3 = data.swData.bitAndV3 ;
+		g_model.switchDelay[i] = data.switchDelay ;
+	}
+	
 }
 
 void ModelEdit::on_externalModuleDisplayList_doubleClicked()

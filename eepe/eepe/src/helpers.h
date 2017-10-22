@@ -11,7 +11,7 @@
 //#include "../eepskye/src/myeeprom.h"
 
 #ifdef SKY
-#define TMR_NUM_OPTION  (TMR_VAROFS+24)
+#define TMR_NUM_OPTION  (TMR_VAROFS+24+8)
 #else
 #define TMR_NUM_OPTION  (TMR_VAROFS+16)
 //#define TMR_NUM_OPTION  (TMR_VAROFS+2*MAX_DRSWITCH-3)
@@ -82,6 +82,7 @@ void populateTimerSwitchCB(QComboBox *b, int value, int eepromType) ;
 #endif
 void populateSwitchxAndCB(QComboBox *b, int value, int eepromType) ;
 int getxAndSwitchCbValue( QComboBox *b, int eepromType ) ;
+int32_t andSwitchMap( int32_t x ) ;
 void populateSwitchAndCB(QComboBox *b, int value) ;
 void x9dPopulateSwitchAndCB(QComboBox *b, int value) ;
 
@@ -178,7 +179,7 @@ void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model ) ;
 
 #ifdef SKY
 void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type ) ;
-int8_t switchUnMap( int8_t x ) ;
+int8_t switchUnMap( int8_t x, int type ) ;
 int8_t switchMap( int8_t x ) ;
 int getSwitchCbValue( QComboBox *b, int eepromType ) ;
 int getSwitchCbValueShort( QComboBox *b, int eepromType ) ;

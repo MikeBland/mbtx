@@ -97,7 +97,7 @@ private:
     bool customAlarmLock ;
     bool curveEditLock ;
     
-		int oldAdjFunction[NUM_GVAR_ADJUST] ;
+    int oldAdjFunction[NUM_GVAR_ADJUST_SKY] ;
     QSpinBox  * cswitchOffset[NUM_SKYCSW];
     QSpinBox  * cswitchOffset0[NUM_SKYCSW];
     QComboBox * cswitchSource1[NUM_SKYCSW];
@@ -106,6 +106,7 @@ private:
     QLabel		* cswitchTlabel[NUM_SKYCSW];
 		QTextBrowser * cswitchText1[NUM_SKYCSW];
 		QTextBrowser * cswitchText2[NUM_SKYCSW];
+    QDoubleSpinBox  *cswitchDelay[NUM_SKYCSW];
 
     QSpinBox  * safetySwitchValue[NUM_SKYCHNOUT+NUM_VOICE];
     QComboBox * safetySwitchSwtch[NUM_SKYCHNOUT+NUM_VOICE];
@@ -128,6 +129,9 @@ private:
 		QComboBox *poffcb[NUM_SCALERS] ;
 		QComboBox *psrccb[NUM_SCALERS] ;
 		QLineEdit *psname[NUM_SCALERS] ;
+		QSpinBox *pmodsb[NUM_SCALERS] ;
+		QComboBox *pdestcb[NUM_SCALERS] ;
+
 
     void setupMixerListWidget();
     void updateSettings();
@@ -153,6 +157,7 @@ private:
 //		void gvarVisibility() ;
 //		void oneGvarGetValue(int index, QComboBox *b, QSpinBox *sb ) ;
     void setLimitMinMax();
+    void updateSwitchesList( int lOrR ) ;
     void updateSwitchesTab();
     void updateHeliTab();
 		void setSafetyLabels() ;
@@ -397,6 +402,8 @@ private slots:
 		void on_Com2BaudrateCB_currentIndexChanged(int index) ;
 		void on_internalModuleDisplayList_doubleClicked() ;
 		void on_externalModuleDisplayList_doubleClicked() ;
+		void on_SwListL_doubleClicked( QModelIndex index ) ;
+		void on_SwListR_doubleClicked( QModelIndex index ) ;
 
 		void on_switchwarnChkB_stateChanged(int ) ;
 		void getModelSwitchDefPos(int i, bool val) ;

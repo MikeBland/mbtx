@@ -15,7 +15,13 @@
 #include "drivers.h"
 #include "ff.h"
 #include "basic.h"
+#include "audio.h"
+#include "menus.h"
+
+uint8_t LoadingIndex ;
+
 #else
+#include "basic.h"
 /* lcd outdez flags */
 #define LEADING0      0x10
 #define PREC1         0x20
@@ -26,12 +32,16 @@ uint8_t ScriptFlags ;
 
 #endif
 
-//#ifndef	QT
+
 //extern uint16_t BasicDebug1 ;
 //extern uint16_t BasicDebug2 ;
 //extern uint16_t BasicDebug3 ;
 //extern uint16_t BasicDebug4 ;
-//#endif
+//extern uint16_t BasicDebug5 ;
+//extern uint16_t BasicDebug6 ;
+//extern uint16_t BasicDebug7 ;
+//extern uint16_t BasicDebug8 ;
+
 
 /*
  * token types
@@ -71,6 +81,9 @@ uint8_t ScriptFlags ;
 #define DEFBYTE				19
 #define NGOTO					20
 #define WHILE					21
+#define ELSE					22
+#define ELSEIF				23
+#define DEFCONST			24
 
 //#define FOR  					25
 //#define NEXT 					22
@@ -79,7 +92,6 @@ uint8_t ScriptFlags ;
 //#define WEND					26
 //#define REPEAT				27
 //#define UNTIL					28
-//#define ELSE					29
 
 //#define CONTINUE 31
 //#define BREAK	30
@@ -87,9 +99,14 @@ uint8_t ScriptFlags ;
 //#define WAIT	18
 //#define TRACE	19
 
+#define EXCLAIM			33
+#define DQUOTE			34
 #define HASHCHAR		35
+//#define DOLLAR			36
+#define BITXOR			36
 #define PERCENT			37
 #define BITAND			38
+#define SQUOTE			39
 #define OPENPAR			40	
 #define CLOSEPAR		41
 #define MULTIPLY		42	
@@ -98,34 +115,44 @@ uint8_t ScriptFlags ;
 #define MINUS       45
 #define	DOT					46
 #define DIVIDE		  47
+// 48-57 digits, these codes might be available
+#define BITOR				48
+
 #define COLON				58
 #define SEMICOLON		59		
 #define LESS				60
 #define EQUALS		  61
 #define GREATER			62	
-#define BITOR				63
+//#define BITOR				63
+#define QMARK				63
 // UNARY_NOT ??
 
 				 
 // Internal Functions
-#define DRAWCLEAR		1
-#define DRAWNUMBER	2
-#define DRAWLINE		3
-#define DRAWTEXT		4
-#define PLAYNUMBER	5
-#define GETVALUE		6
-#define DRAWPOINT		7
-#define DRAWRECT		8
-#define IDLETIME		9
-#define GETTIME			10
-#define SPORTSEND		11
+#define DRAWCLEAR			1
+#define DRAWNUMBER		2
+#define DRAWLINE			3
+#define DRAWTEXT			4
+#define PLAYNUMBER		5
+#define GETVALUE			6
+#define DRAWPOINT			7
+#define DRAWRECT			8
+#define IDLETIME			9
+#define GETTIME				10
+#define SPORTSEND			11
 #define SPORTRECEIVE	12
-#define NOT					13
-#define ABS					14
-#define GETLASTPOS	15
-#define DRAWTIMER		16
-#define SYSFLAGS		17
-#define SETTELITEM	18
+#define NOT						13
+#define ABS						14
+#define GETLASTPOS		15
+#define DRAWTIMER			16
+#define SYSFLAGS			17
+#define SETTELITEM		18
+#define STRTOARRAY		19
+#define GETSWITCH			20
+#define SETSWITCH			21
+#define PLAYFILE			22
+#define GETRAWVALUE		23
+#define KILLEVENTS		24
 
 // Assignment options:
 #define SETEQUALS			0
@@ -134,10 +161,15 @@ uint8_t ScriptFlags ;
 #define TIMESEQUALS		3
 #define DIVIDEEQUALS	4
 #define PERCENTEQUALS	5
+#define ANDEQUALS			6
+#define OREQUALS			7
+#define XOREQUALS			8
 
 // Type for struct t_control
 #define TYPE_IF				0
 #define TYPE_WHILE		1
+#define TYPE_ELSE			2
+//#define TYPE_ELSEIF		3
 
 
 // & = 0x26 = 38
@@ -153,9 +185,6 @@ uint8_t ScriptFlags ;
 
 // More general interface items
 // getDateTime
-// playFile
-// sportTelemetryPush
-// sportTelemetryPop
 
 
 // Symbol types
@@ -163,6 +192,7 @@ uint8_t ScriptFlags ;
 #define SYM_VARIABLE	2
 #define SYM_FUNCTION	3
 #define SYM_ARRAY			4
+#define SYM_CONST			5
 
 #define SYM_LAB_REF		1
 #define SYM_LAB_DEF		2
@@ -189,11 +219,12 @@ uint8_t ScriptFlags ;
 #define SE_NO_FUNCTION		9
 #define SE_TOO_LARGE			10
 #define SE_DIMENSION			11
+#define SE_TOO_MANY_CALLS	12
 
-#define MAX_VARIABLES	100
+#define MAX_VARIABLES	2
 
 #define MAX_CALL_STACK	20
-#define MAX_PARAM_STACK	40
+#define MAX_PARAM_STACK	20
 
 //#define MAX_EXP_STACK	10
 
@@ -239,17 +270,20 @@ struct t_basicRunTime
 	uint32_t RunError ;
 	uint32_t RunErrorLine ;
 	uint32_t RunLineNumber ;
+//	uint32_t RunLastLineNumber ;
 	uint8_t *ExecProgPtr ;
 	uint32_t ExecLinesProcessed ;
 	uint32_t CallIndex ;
 	uint8_t *CallStack[MAX_CALL_STACK] ;
+	uint8_t *ByteArrayStart ;
+	int32_t *IntArrayStart ;
 	union t_parameter ParameterStack[MAX_PARAM_STACK] ;
-	int32_t Variables[MAX_VARIABLES] ;
 	union t_array	// Place holder, the arrays extend as declared
 	{
+		int32_t Variables[MAX_VARIABLES] ;
 		uint8_t byteArray[8] ;
 		int32_t intArray[2] ;
-	} Arrays ;
+	} Vars ;
 } ;
 
 struct t_control
@@ -259,16 +293,25 @@ struct t_control
 	uint16_t middle ;
 } ;
 
-#define MAX_CONTROL_INDEX		10
+struct t_loadedScripts
+{
+//	struct t_basicRunTime *runtime ;
+	uint32_t offsetOfStart ;
+	uint16_t size ;
+	uint8_t loaded ;
+	uint8_t type ;
+} ;
+
+
+#define MAX_CONTROL_INDEX		20
 struct t_control CodeControl[MAX_CONTROL_INDEX] ;		// Max Nesting of control structures
 uint8_t ControlIndex ;
 
-// struct t_basicRunTime ThisRunTime ;
-
 struct t_basicRunTime *RunTime ;
 
+struct t_loadedScripts LoadedScripts[3] ;
+
 #ifdef	QT
-uint32_t basicExecute( uint32_t begin, uint8_t event ) ;
 int32_t expression( void ) ;
 #endif
 #ifndef	QT
@@ -277,12 +320,14 @@ int32_t expression( void ) ;
 
 #ifndef	QT
 int32_t basicFindValueIndexByName( const char * name ) ;
+int32_t basicFindSwitchIndexByName( const char * name ) ;
 #endif
 
 // Symbols
 // Label: EntryLen, SYM_LABEL, StrLen, String/0, SYM_LAB_DEF/REF, Poslow, Poshi
 // Variable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_INT/UNS/FLOAT, Poslow, Poshi
 // ArrayVariable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_ARRAY_INT/UNS/FLOAT, Poslow, Poshi, dimension
+// Const: EntryLen, SYM_CONST, StrLen, String/0, Val0, Val1, Val2, Val3
 
 struct commands
 { /* keyword lookup table */
@@ -311,15 +356,17 @@ const struct commands Table[] =
 //  { "trace", TRACE},
   { "while", WHILE},
 //  { "wend", WEND},
-///  { "break", BREAK},
+//  { "break", BREAK},
 //  { "continue", CONTINUE},
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
-//  { "else", ELSE},
+  { "elseif", ELSEIF},
+  { "else", ELSE},
 //  { "function", FUNC},
 	{ "int", DEFINT},
 	{ "byte", DEFBYTE},
 	{ "array", DEFARRAY},
+	{ "const", DEFCONST},
 	{ "end", END},
   { "", 0 } /* mark end of table */
 } ;
@@ -344,8 +391,14 @@ const struct commands InternalFunctions[] =
   { "drawtimer", DRAWTIMER },
   { "sysflags", SYSFLAGS },
 	{ "settelitem", SETTELITEM },
-//setSwitch( L3, "v<val", "batt", 73, L2 )
-//  { "setTelemetryValue", luaSetTelemetryValue },
+	{ "strtoarray", STRTOARRAY },
+	{ "getswitch", GETSWITCH },
+	{ "setswitch", SETSWITCH },
+	{ "playfile", PLAYFILE },
+  { "getrawvalue", GETRAWVALUE },
+	{ "killevents", KILLEVENTS },
+//configSwitch( "L3", "v<val", "batt", 73, "L2" )
+//configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
 } ;
 
@@ -434,6 +487,8 @@ const struct commands Constants[] =
   { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
   { "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
   { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
+  { "EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
+  { "EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
 //  { "SOLID", SOLID },
 //  { "DOTTED", DOTTED },
 //  { "FORCE", FORCE },
@@ -449,6 +504,7 @@ const struct commands Constants[] =
 
 int32_t FirstLabel ;
 int32_t PreviousToken ;
+uint8_t LoadIndex ;
 
 // In program:
 // Byte 
@@ -457,9 +513,18 @@ int32_t PreviousToken ;
 #ifdef	QT
 uint8_t *RunTimeData ;
 uint8_t RunTimeBuffer[100] ;
+uint8_t CodeBuffer[200] ;
 #endif
 
-#define PROGRAM_SIZE	6000
+#ifdef	QT
+#define PROGRAM_SIZE	2000
+#else
+#ifdef SMALL
+#define PROGRAM_SIZE	8000
+#else
+#define PROGRAM_SIZE	12000
+#endif
+#endif
 
 union t_program
 {
@@ -484,8 +549,8 @@ uint16_t NgotoLocation ;
 
 #ifdef	QT
 FILE *File ;
-#else
-FIL File ;
+//#else
+//FIL File ;
 #endif
 char InputLine[200] ;
 
@@ -501,6 +566,7 @@ uint8_t BasicErrorText[48] ;
 #ifndef	QT
 uint32_t strMatch( const char *a, const char *b, uint32_t length )
 {
+	uint8_t c ;
 	if ( length == 0 )
 	{
 		return 1 ;
@@ -511,7 +577,16 @@ uint32_t strMatch( const char *a, const char *b, uint32_t length )
 		{
 			return 1 ;
 		}
-		if ( *a++ == *b++ )
+		c = *a++ ;
+		if ( c == '\200' )
+		{
+			c = '^' ;
+		}
+		else if ( c == '\201' )
+		{
+			c = 'v' ;
+		}
+		if ( (char)c == *b++ )
 		{
 			if ( --length == 0 )
 			{
@@ -527,30 +602,75 @@ uint32_t strMatch( const char *a, const char *b, uint32_t length )
 }
 #endif
 
+
+// Get a number in a number base for a maximum # of digits
+// (digits = 0 means no limit)
+unsigned int get_number( int base, int digits )
+{
+	unsigned value ;
+	char c ;
+
+	value = 0 ;
+	do
+	{
+		c = *ProgPtr ;
+		if ( isdigit( c ) )		/* convert numeric digits */
+		{
+			c -= '0' ;
+		}
+		else if(c >= 'a')				/* convert lower case alphabetics */
+		{
+			c -= ('a' - 10) ;
+		}
+		else if(c >= 'A')				/* convert upper case alphabetics */
+		{
+			c -= ('A' - 10);
+		}
+		else							/* not a valid "digit" */
+		{
+			break ;
+		}
+		if( c >= (char) base )					/* outside of base */
+		{
+			break ;
+		}
+		value = ( value * base ) + c ;		/* include in total */
+		ProgPtr += 1 ;
+	} while( --digits )	;					/* enforce maximum digits */
+//	if ( ( *ProgPtr == 'L' ) || ( *ProgPtr == 'l' ) )
+//	{
+//		ProgPtr += 1 ;
+//	}
+
+	return value ;
+}
+
+
 int32_t asctoi( char *string )
 {
 	int32_t result = 0 ;
 	uint32_t digit ;
 	uint32_t base ;
+	uint32_t sign = 0 ;
 
     /*
      * Skip any leading blanks.
      */
 
-//  while (isspace(*string))
-//	{
-//		string += 1;
-//  }
+  while (isspace(*string))
+	{
+		string += 1;
+  }
 
     /*
      * Check for a sign.
      */
 
-//	if (*string == '-')
-//	{
-//		sign = 1 ;
-//		string += 1 ;
-//  }
+	if (*string == '-')
+	{
+		sign = 1 ;
+		string += 1 ;
+  }
 //	else
 //	{
 //		sign = 0 ;
@@ -604,8 +724,8 @@ int32_t asctoi( char *string )
 		result = (base*result) + digit ;
   }
 
-  return result ;
-//  return sign ? - result : result ;
+//  return result ;
+  return sign ? - result : result ;
 }
 
 #ifndef	QT
@@ -630,19 +750,93 @@ uint8_t *utoasc( uint8_t *p, uint32_t value )
 	return q ;
 }
 
+//uint8_t BasicErrorDebug ;
 void setErrorText( uint32_t error, uint32_t line )
 {
 	uint8_t *p ;
+//	BasicErrorDebug += 1 ;
 	p = BasicErrorText ;
 	p = cpystr( p, (uint8_t *)"Error " ) ;
 	p = utoasc( p, error ) ;
 	p = cpystr( p, (uint8_t *)" at line " ) ;
-	utoasc( p, line ) ;
+	p = utoasc( p, line ) ;
+//	p = cpystr( p, (uint8_t *)"\037" ) ;
+//	utoasc( p, RunTime->RunLastLineNumber ) ;
 	AlertType = ALERT_TYPE ;
 	AlertMessage = "Script Error" ;
 }
 
 #endif
+
+// Read special character (with translations)
+//unsigned int read_special( char delim )
+unsigned int read_special()
+{
+	char chr ;
+
+	chr = *ProgPtr++ ;
+
+//	if ( ( chr = *ProgPtr++ ) == delim )
+//	{
+////		String_continue = 0 ;
+//		return 0 ;
+//	}
+//	if ( chr == '\\' )
+//	{
+		switch( chr )
+		{
+//			case '\0' :
+				// Backslash at end of line
+//				String_continue = 1 ;
+//				ProgPtr -= 1 ;
+//			break ;
+
+			case 'n':
+				/* newline */
+				chr = 0x0a ;
+			break ;
+
+			case 'r':
+				/* return */
+				chr = 0x0d ;
+			break ;
+
+			case 't':
+				/* tab */
+				chr = 0x09 ;
+			break ;
+
+			case 'f' :
+				/* formfeed */
+				chr = 0x0c ;
+			break ;
+
+			case 'b':
+				/* backspace */
+				chr = 0x08 ;
+			break ;
+
+			case 'x' :
+				/* hex value */
+				chr = (char) get_number( 16, 2 ) ;
+			break ;
+
+			case '"' :
+				chr = '"' ;
+			break ;
+
+			default:
+				if( isdigit( chr ) )
+				{	/* octal value */
+					ProgPtr -= 1 ;
+					chr = (char) get_number( 8, 3 ) ;
+				}
+			break ;
+		}
+//	}
+	return chr ;
+}
+
 
 int openFile( char *filename )
 {
@@ -650,7 +844,7 @@ int openFile( char *filename )
 	File = fopen( filename,"r") ;
 	return File ? 1 : 0 ;
 #else
-	if ( f_open( &File, filename, FA_READ) == FR_OK )
+	if ( f_open( &MultiBasicFile, filename, FA_READ) == FR_OK )
 	{
 		return 1 ;
 	}
@@ -664,7 +858,7 @@ void closeFile()
 #ifdef	QT
 	fclose( File ) ;
 #else
-	f_close( &File ) ;
+	f_close( &MultiBasicFile ) ;
 #endif
 }
 
@@ -709,7 +903,7 @@ uint32_t look_up( char *s, const struct commands *table )
 /* Return true if c is a delimiter. */
 uint32_t isdelim(char c)
 {
-  if(strchr(" :;,+-<>/*%=#()&|[]", c) || c==9 || c=='\n' || c=='\r' || c==0) // removed '^'
+  if(strchr(" :;,+-<>/*%=#()&|[]^", c) || c==9 || c=='\n' || c=='\r' || c==0) // removed '^'
 	{
     return 1 ;
 	}
@@ -732,8 +926,11 @@ uint32_t serror( uint32_t x )
 
 uint32_t runError( uint32_t x )
 {
-	RunTime->RunError = x ;
-  RunTime->RunErrorLine = RunTime->RunLineNumber ;
+	if ( RunTime->RunError == 0 )	// Keep first error
+	{
+		RunTime->RunError = x ;
+  	RunTime->RunErrorLine = RunTime->RunLineNumber ;
+	}
 	return 0 ;
 }
 
@@ -782,13 +979,17 @@ uint32_t scanForKeyword( char *dest )
     return ( Token_type = DELIMITER ) ;
   }
 
-  if(strchr("+-*/%=#;(),><&|]", *ProgPtr))
+  if(strchr("+-*/%=#;(),><&|]^", *ProgPtr))
 	{ /* delimiter */
 		char c ;
     c = *ProgPtr ;
 		if ( c == '|' )
 		{
 			c = BITOR ;
+		}
+		if ( c == '^' )
+		{
+			c = BITXOR ;
 		}
     *temp = c ;
     ProgPtr += 1 ; /* advance to next position */
@@ -806,6 +1007,13 @@ uint32_t scanForKeyword( char *dest )
 //    //printf( "DELIM\n" );
     return ( Token_type = DELIMITER ) ;
   }
+	if ( ( *ProgPtr == '!' ) && ( *(ProgPtr+1) == '=' ) )
+	{
+		*temp++ = HASHCHAR ;
+    *temp = 0 ; 
+		ProgPtr += 2 ;
+    return ( Token_type = DELIMITER ) ;
+	}
     
 //  /*
 //   * now that we've skipped spaces and delimiters, take a copy of *prog
@@ -820,7 +1028,16 @@ uint32_t scanForKeyword( char *dest )
 		temp += 1 ;
     while( *ProgPtr != '"' && *ProgPtr !='\n')
 		{
-			*temp++ = *ProgPtr++ ;
+			if ( *ProgPtr == '\\' )
+			{
+				ProgPtr += 1 ;
+//				*temp++ = read_special( '"' ) ;
+				*temp++ = read_special() ;
+			}
+			else
+			{
+				*temp++ = *ProgPtr++ ;
+			}
 		}
     if(*ProgPtr == '\n')
 		{
@@ -971,10 +1188,15 @@ uint8_t *appendSymbols( uint8_t *p )
 		}
 	}
   p = cpystr( p, (uint8_t *)"\nCode:\n" ) ;
-	r = &Program.Bytes[4] ;
+	r = &Program.Bytes[0] ;
 	j = 0 ;
-	for ( i = 0 ; i < 192 ; i += 1 )
+	for ( i = 0 ; i < 1024 ; i += 1 )
 	{
+		if ( j == 0 )
+		{
+    	sprintf( Tbuf, "%04x: ", i ) ;
+    	p = cpystr( p, (uint8_t *)Tbuf ) ;
+		}
     sprintf( Tbuf, "%02x ", *r++ ) ;
     p = cpystr( p, (uint8_t *)Tbuf ) ;
 		if ( ++j > 15 )
@@ -1008,34 +1230,47 @@ int32_t findSymbol( uint8_t type )
 	return -1 ;
 }
 
-void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint8_t dimension )
+void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimension )
 {
 	uint32_t tindex ;
 	uint32_t tstart ;
-	uint32_t i ;	
+	uint32_t i ;
+	uint32_t end ;
 	
-	tstart = EndOfSymbols++ ;
-	Program.Bytes[EndOfSymbols++] = type ;
-	tindex = EndOfSymbols++ ;
+	end = EndOfSymbols ;
+	tstart = end++ ;
+	Program.Bytes[end++] = type ;
+	tindex = end++ ;
 	i = 0 ;
 	while ( Token[i] )
 	{
-		Program.Bytes[EndOfSymbols++] = Token[i++] ;
+		Program.Bytes[end++] = Token[i++] ;
 	}
-	Program.Bytes[tindex] = EndOfSymbols - tindex ;
-	Program.Bytes[EndOfSymbols++] = '\0' ;
-	Program.Bytes[EndOfSymbols++] = sub_type ;
-	Program.Bytes[EndOfSymbols++] = value ;
-	Program.Bytes[EndOfSymbols++] = value >> 8 ;
-	if ( sub_type & SYM_VAR_ARRAY_TYPE )
+	Program.Bytes[tindex] = end - tindex ;
+	Program.Bytes[end++] = '\0' ;
+	if ( type != SYM_CONST )
 	{
-		Program.Bytes[EndOfSymbols++] = dimension ;
+		Program.Bytes[end++] = sub_type ;
+		Program.Bytes[end++] = value ;
+		Program.Bytes[end++] = value >> 8 ;
+		if ( sub_type & SYM_VAR_ARRAY_TYPE )
+		{
+			Program.Bytes[end++] = dimension ;
+		}
 	}
-	Program.Bytes[tstart] = EndOfSymbols - tstart ;
+	else
+	{
+		Program.Bytes[end++] = value ;
+		Program.Bytes[end++] = value >> 8 ;
+		Program.Bytes[end++] = dimension  ;
+		Program.Bytes[end++] = dimension  >> 8 ;
+	}
+	Program.Bytes[tstart] = end - tstart ;
+	EndOfSymbols = end ;
 }
 
 #ifdef QT	
-void loadBasic( char *fileName, uint32_t type ) ;
+uint32_t loadBasic( char *fileName, uint32_t type ) ;
 uint32_t basicTask( uint8_t event, uint8_t flags ) ;
 
 void parse()
@@ -1043,7 +1278,7 @@ void parse()
 	uint32_t i ;
   uint32_t j ;
   uint8_t *p ;
-	loadBasic( (char *)"C:/Data/C/Interpreter/test.bas", 0 ) ;
+	loadBasic( (char *)"C:/Data/C/Interpreter/test.bas", BASIC_LOAD_ALONE ) ;
 	for ( i = 0 ; i < 300 ; i += 1 )
 	{
 		if ( basicTask( 0, 0 ) == 2 )
@@ -1052,21 +1287,35 @@ void parse()
 		}
 	}
 	p = RunTimeData ;
-	uint8_t *r ;
-	r = (uint8_t *) RunTime->Variables ;
-	j = 0 ;
-	for ( i = 0 ; i < 48 ; i += 1 )
+	if ( p )
 	{
-    sprintf( Tbuf, "%02x ", *r++ ) ;
-    p = cpystr( p, (uint8_t *)Tbuf ) ;
-		if ( ++j > 15 )
+		uint8_t *r ;
+  	r = (uint8_t *) RunTime->Vars.Variables ;
+		j = 0 ;
+		for ( i = 0 ; i < 96 ; i += 1 )
 		{
-			j = 0 ;
-			*p++ = '\n' ;
+  	  sprintf( Tbuf, "%02x ", *r++ ) ;
+  	  p = cpystr( p, (uint8_t *)Tbuf ) ;
+			if ( ++j > 15 )
+			{
+				j = 0 ;
+				*p++ = '\n' ;
+			}
 		}
+		*p++ = '\n' ;
+  	*p = '\0' ;
 	}
-	*p++ = '\n' ;
-  *p = '\0' ;
+//  r = (uint8_t *) &RunTime->Vars ;
+//	for ( i = 0 ; i < 48 ; i += 1 )
+//	{
+//    sprintf( Tbuf, "%02x ", *r++ ) ;
+//    p = cpystr( p, (uint8_t *)Tbuf ) ;
+//		if ( ++j > 15 )
+//		{
+//			j = 0 ;
+//			*p++ = '\n' ;
+//		}
+//	}
 }
 #endif
 
@@ -1083,13 +1332,72 @@ uint8_t *QtPtr ;
 
 char LastBasicFname[60] ;
 
-void loadBasic( char *fileName, uint32_t type )
+
+// locate where to load
+uint32_t findStartOffset()
 {
+	uint32_t position = 0 ;
+	uint32_t i ;
+	uint32_t x ;
+	
+	for ( i = 0 ; i <= 2 ; i += 1 )
+	{
+		if ( LoadedScripts[i].loaded )
+		{
+			x = LoadedScripts[i].offsetOfStart ;
+			x += LoadedScripts[i].size ;
+			if ( x > position )
+			{
+				position = x ;
+			}
+		}
+	}
+	return position ;
+}
+
+
+uint32_t loadBasic( char *fileName, uint32_t type )
+{
+	if ( type == BASIC_LOAD_ALONE )
+	{
+		LoadedScripts[0].loaded = 0 ;
+		LoadedScripts[1].loaded = 0 ;
+		LoadedScripts[2].loaded = 0 ;
+//		LoadedScripts[0].offsetOfStart = 0 ;
+		LoadedScripts[0].type = type ;
+		LoadIndex = 0 ;
+	}
+	else if ( type == BASIC_LOAD_BG )
+	{
+		LoadedScripts[0].loaded = 0 ;
+		LoadedScripts[0].type = type ;
+		LoadIndex = 0 ;
+	}
+	else if ( type == BASIC_LOAD_TEL0 )
+	{
+		LoadedScripts[1].loaded = 0 ;
+		LoadedScripts[1].type = type ;
+		LoadIndex = 1 ;
+	}
+	else if ( type == BASIC_LOAD_TEL1 )
+	{
+		LoadedScripts[2].loaded = 0 ;
+		LoadedScripts[2].type = type ;
+		LoadIndex = 2 ;
+	}
+	
+	CurrentPosition = findStartOffset() ;
+	
+	// temp
+//	CurrentPosition = 0 ;
+	
+	LoadedScripts[LoadIndex].offsetOfStart = CurrentPosition ;
+	CurrentPosition += 8 ;
+	
+	StartOfSymbols = CurrentPosition + 92 ;
+	EndOfSymbols = StartOfSymbols ;
 	FirstLabel = -1 ;
 	PreviousToken = -1 ;
-	StartOfSymbols = 100 ;
-	EndOfSymbols = 100 ;
-	CurrentPosition = 4 ;
 	CurrentArrayIndex = 0 ;
 	CurrentVariableIndex = 0 ;
 	LineNumber = 0 ;
@@ -1106,14 +1414,57 @@ void loadBasic( char *fileName, uint32_t type )
 #else
 		BasicLoadedType = type ;
 #endif
+		return 1 ;		// Loading started
 
 	}
+#ifndef QT	
 	else
 	{
 		BasicState = BASIC_IDLE ;
 		BasicLoadedType = BASIC_LOAD_NONE ;
+		return 0 ;		// Didn't load
 	}
+#endif
 }
+
+void setJumpAddress( uint32_t offset, uint32_t value )
+{
+	Program.Bytes[offset] = value ;
+	Program.Bytes[offset+1] = value >> 8 ;
+}
+
+
+void setLinkedJumpAddress( uint32_t offset, uint32_t value )
+{
+	uint32_t index ;
+  do
+	{
+		index = Program.Bytes[offset] ;
+		index += Program.Bytes[offset+1] << 8 ;
+		Program.Bytes[offset++] = value ;
+		Program.Bytes[offset] = value >> 8 ;
+		offset = index ;
+	} while ( index ) ;
+}
+
+
+uint16_t codeNumeric( int32_t value )
+{
+	if ( value >=0 && value <=7 )
+	{
+		return 0x48 + value ;
+	}
+	else if ( value >= -128 && value <= 127 )
+	{
+		return 0x0158 ;
+	}
+	else if ( value >= -32768 && value <= 32767 )
+	{
+		return 0x0240 ;
+	}
+	return 0x0450 ;
+}
+
 
 
 // return  values:
@@ -1130,7 +1481,11 @@ uint32_t partLoadBasic()
 	uint32_t i ;
 	uint32_t j ;
 	uint32_t processWhile ;
+	uint32_t processIf ;
+	uint32_t cPosition ;
+	uint32_t lineNumberPosition ;
 
+	cPosition = CurrentPosition ;
 #ifdef QT	
 	p = QtPtr ;
 #endif
@@ -1138,7 +1493,7 @@ uint32_t partLoadBasic()
 	q = 0 ;
 	for ( i = 0 ; i < 200 ; i += 1 )
 	{
-		j = StartOfSymbols - CurrentPosition ;
+		j = StartOfSymbols - cPosition ;
 		if ( j < 200 )
 		{
 			j = 300 - j ;
@@ -1159,12 +1514,14 @@ uint32_t partLoadBasic()
 #ifdef QT
     q = (uint8_t *)fgets( InputLine, 200, File ) ;
 #else
-    q = (uint8_t *)f_gets( InputLine, 200, &File ) ;
+    q = (uint8_t *)f_gets( InputLine, 200, &MultiBasicFile ) ;
 #endif
 		LineNumber += 1 ;
-		Program.Bytes[CurrentPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
-		Program.Bytes[CurrentPosition++] = LineNumber >> 7 ;
+		lineNumberPosition = cPosition ;
+		Program.Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
+		Program.Bytes[cPosition++] = LineNumber >> 7 ;
 		processWhile = 0 ;
+		processIf = 0 ;
 		if ( q )
 		{
 #ifdef QT
@@ -1181,10 +1538,10 @@ uint32_t partLoadBasic()
 						if ( Tok != GOTO && Tok != GOSUB )
 					  {
 							// Must be statement, put in NGOTO
-							Program.Bytes[CurrentPosition++] = NGOTO ;
-							NgotoLocation = CurrentPosition ;
-							Program.Bytes[CurrentPosition++] = 0 ;
-							Program.Bytes[CurrentPosition++] = 0 ;
+							Program.Bytes[cPosition++] = NGOTO ;
+							NgotoLocation = cPosition ;
+							Program.Bytes[cPosition++] = 0 ;
+							Program.Bytes[cPosition++] = 0 ;
 						}
 					}
 					
@@ -1193,7 +1550,10 @@ uint32_t partLoadBasic()
 #ifdef QT
             p = cpystr( p, (uint8_t *)"Rem" ) ;
 #endif
-						CurrentPosition -= 2 ; // Remove line number
+						if ( lineNumberPosition == cPosition - 2 )
+						{
+							cPosition -= 2 ; // Remove line number if whole line is a REM
+						}
 						break ;
 					}
 					else if ( Tok == LET )
@@ -1209,7 +1569,7 @@ uint32_t partLoadBasic()
 #ifdef QT
             p = cpystr( p, (uint8_t *)"Array " ) ;
 #endif
-						CurrentPosition -= 2 ; // Remove line number
+						cPosition -= 2 ; // Remove line number
 						// What is array type
 						j = scanForKeyword( Token ) ;
 						if ( Tok == DEFBYTE )
@@ -1260,11 +1620,113 @@ uint32_t partLoadBasic()
 						}
 						continue ;
 					}
+					else if ( Tok == DEFCONST )
+					{
+						uint32_t sign = 0 ;
+						j = scanForKeyword( Token ) ;
+						j = scanForKeyword( Numeric ) ;
+						if ( j == DELIMITER )
+						{
+							if ( Numeric[0] == '-' )
+							{
+								sign = 1 ;
+								j = scanForKeyword( Numeric ) ;
+							}
+						}
+						if ( j != NUMBER )
+						{
+							serror( SE_SYNTAX ) ;
+						}
+						else
+						{
+							int32_t value ;	
+							ProgPtr += 1 ;
+							value = asctoi( Numeric ) ;
+							if ( sign )
+							{
+								value = -value ;
+							}
+							addSymbol( SYM_CONST, 0, value, value >> 16 ) ;
+							cPosition -= 2 ;		// Remove line number
+						}
+					}
 					else if ( Tok == WHILE )
 					{
 						processWhile = 1 ;
 						CodeControl[ControlIndex].type = TYPE_WHILE ;
-						CodeControl[ControlIndex].first = CurrentPosition - 2 ;
+						CodeControl[ControlIndex].first = cPosition - 2 ;
+					}
+					else if ( Tok == IF )
+					{
+						CodeControl[ControlIndex].type = TYPE_IF ;
+						CodeControl[ControlIndex].middle = 0 ;
+						processIf = 1 ;
+					}
+					else if ( Tok == ELSEIF )
+					{
+						if ( ControlIndex )
+						{
+							ControlIndex -= 1 ;
+							if ( CodeControl[ControlIndex].type == TYPE_IF )
+							{
+								uint32_t index ;
+								processIf = 2 ;
+								Program.Bytes[cPosition++] = GOTO ;
+	//              CodeControl[ControlIndex].type = TYPE_ELSE ;
+            	  index = CodeControl[ControlIndex].middle ;
+								CodeControl[ControlIndex].middle = cPosition ;
+								Program.Bytes[cPosition++] = index ;
+            	  Program.Bytes[cPosition++] = index >> 8 ;
+	//							Program.Bytes[cPosition++] = 0 ;
+	//              Program.Bytes[cPosition++] = 0 ;
+								setJumpAddress( CodeControl[ControlIndex].first, cPosition ) ;
+            	  ControlIndex += 1 ;
+								Program.Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
+								Program.Bytes[cPosition++] = LineNumber >> 7 ;
+							}
+							else
+							{
+								serror( SE_SYNTAX ) ;
+							}
+						}
+						else
+						{
+							serror( SE_SYNTAX ) ;
+						}
+					}
+					else if ( Tok == THEN )
+					{
+						processIf = 0 ;
+					}
+					else if ( Tok == ELSE )
+					{
+						if ( ControlIndex )
+						{
+							ControlIndex -= 1 ;
+							if ( CodeControl[ControlIndex].type == TYPE_IF )
+							{
+								uint32_t index ;
+								Program.Bytes[cPosition++] = GOTO ;
+            	  CodeControl[ControlIndex].type = TYPE_ELSE ;
+            	  index = CodeControl[ControlIndex].middle ;
+								CodeControl[ControlIndex].middle = cPosition ;
+								Program.Bytes[cPosition++] = index ;
+            	  Program.Bytes[cPosition++] = index >> 8 ;
+	//							Program.Bytes[cPosition++] = 0 ;
+	//              Program.Bytes[cPosition++] = 0 ;
+								setJumpAddress( CodeControl[ControlIndex].first, cPosition ) ;
+								ControlIndex += 1 ;
+								Tok = 0 ;
+							}
+							else
+							{
+								serror( SE_SYNTAX ) ;
+							}
+						}
+						else
+						{
+							serror( SE_SYNTAX ) ;
+						}
 					}
 					else if ( Tok == END )
 					{
@@ -1273,12 +1735,27 @@ uint32_t partLoadBasic()
 							ControlIndex -= 1 ;
 							if ( CodeControl[ControlIndex].type == TYPE_WHILE )
 							{
-								Program.Bytes[CurrentPosition++] = GOTO ;
-								Program.Bytes[CurrentPosition++] = CodeControl[ControlIndex].first ;
-                Program.Bytes[CurrentPosition++] = CodeControl[ControlIndex].first >> 8 ;
-                Program.Bytes[CodeControl[ControlIndex].middle] = CurrentPosition ;
-								Program.Bytes[CodeControl[ControlIndex].middle+1] = CurrentPosition >> 8 ;
+								Program.Bytes[cPosition++] = GOTO ;
+								Program.Bytes[cPosition++] = CodeControl[ControlIndex].first ;
+                Program.Bytes[cPosition++] = CodeControl[ControlIndex].first >> 8 ;
+								setJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
 							}
+							else if ( CodeControl[ControlIndex].type == TYPE_IF )
+							{
+								cPosition -= 2 ;		// Remove line number
+								setJumpAddress( CodeControl[ControlIndex].first, cPosition ) ;
+								if ( CodeControl[ControlIndex].middle )
+								{
+									setLinkedJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
+								}
+							}
+							else if ( CodeControl[ControlIndex].type == TYPE_ELSE )
+							{
+								cPosition -= 2 ;		// Remove line number
+								setLinkedJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
+//								setJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
+							}
+							Tok = 0 ;
 						}
 //						else
 //						{
@@ -1298,25 +1775,49 @@ uint32_t partLoadBasic()
 						}
 						*p++ = ']' ;
 #endif
-						Program.Bytes[CurrentPosition++] = Tok ;
+						if ( Tok )
+						{
+							Program.Bytes[cPosition++] = Tok ;
+						}
 					}
 					else
 					{
 						if ( NgotoLocation )
 						{
-							Program.Bytes[NgotoLocation++] = CurrentPosition ;
-							Program.Bytes[NgotoLocation] = CurrentPosition >> 8 ;
+							setJumpAddress( NgotoLocation, cPosition ) ;
 							NgotoLocation = 0 ;
 						}
 						if ( processWhile )
 						{
-							Program.Bytes[CurrentPosition++] = NGOTO ;
-							CodeControl[ControlIndex].middle = CurrentPosition ;
-							Program.Bytes[CurrentPosition++] = 0 ;
-							Program.Bytes[CurrentPosition++] = 0 ;
+							Program.Bytes[cPosition++] = NGOTO ;
+							CodeControl[ControlIndex].middle = cPosition ;
+							Program.Bytes[cPosition++] = 0 ;
+							Program.Bytes[cPosition++] = 0 ;
 							ControlIndex += 1 ;
 							processWhile = 0 ;
 						}
+						if ( processIf )
+						{
+							// Didn't see a "then"
+              if (processIf == 2 )	// Doing elseif
+							{
+              	ControlIndex -= 1 ;
+							}
+							Program.Bytes[cPosition++] = THEN ;
+							Program.Bytes[cPosition++] = NGOTO ;
+							CodeControl[ControlIndex].first = cPosition ;
+							Program.Bytes[cPosition++] = 0 ;
+							Program.Bytes[cPosition++] = 0 ;
+              ControlIndex += 1 ;
+							processIf = 0 ;
+						}
+#ifdef QT
+						uint32_t i ;
+						for ( i = 0 ; i < 200 ; i += 1 )
+						{
+              CodeBuffer[i] = Program.Bytes[i] ;
+						}
+#endif
 					}
 					PreviousToken = Tok ;
 				}
@@ -1336,10 +1837,10 @@ uint32_t partLoadBasic()
 //						if ( Tok != GOTO && Tok != GOSUB )
 //					  {
 							// Must be statement, put in NGOTO
-							Program.Bytes[CurrentPosition++] = NGOTO ;
-							NgotoLocation = CurrentPosition ;
-							Program.Bytes[CurrentPosition++] = 0 ;
-							Program.Bytes[CurrentPosition++] = 0 ;
+							Program.Bytes[cPosition++] = NGOTO ;
+							NgotoLocation = cPosition ;
+							Program.Bytes[cPosition++] = 0 ;
+							Program.Bytes[cPosition++] = 0 ;
 //						}
 					}
           switch ( j )
@@ -1358,9 +1859,9 @@ uint32_t partLoadBasic()
 								loc = findSymbol( SYM_LABEL ) ;
                 if ( loc == -1 )
 								{
-                	addSymbol( SYM_LABEL, SYM_LAB_REF, CurrentPosition, 0 ) ;
-									Program.Bytes[CurrentPosition++] = 0 ;
-									Program.Bytes[CurrentPosition++] = 0 ;
+                	addSymbol( SYM_LABEL, SYM_LAB_REF, cPosition, 0 ) ;
+									Program.Bytes[cPosition++] = 0 ;
+									Program.Bytes[cPosition++] = 0 ;
 								}
 								else
 								{
@@ -1372,15 +1873,15 @@ uint32_t partLoadBasic()
 										index = Program.Bytes[loc] ;
 										index += Program.Bytes[loc+1] << 8 ;
 
-										Program.Bytes[loc++] = CurrentPosition ;
-										Program.Bytes[loc] = CurrentPosition >> 8 ;
-										Program.Bytes[CurrentPosition++] = index ;
-										Program.Bytes[CurrentPosition++] = index >> 8 ;
+										Program.Bytes[loc++] = cPosition ;
+										Program.Bytes[loc] = cPosition >> 8 ;
+										Program.Bytes[cPosition++] = index ;
+										Program.Bytes[cPosition++] = index >> 8 ;
 									}
 									else
 									{
-										Program.Bytes[CurrentPosition++] = Program.Bytes[loc++] ;
-										Program.Bytes[CurrentPosition++] = Program.Bytes[loc] ;
+										Program.Bytes[cPosition++] = Program.Bytes[loc++] ;
+										Program.Bytes[cPosition++] = Program.Bytes[loc] ;
 									}
 								}
 							}
@@ -1388,6 +1889,7 @@ uint32_t partLoadBasic()
 							{
 								int32_t index ;
 								uint8_t code ;
+								uint8_t constant = 0 ;
 #ifdef QT
 	              p = cpystr( p, (uint8_t *)"Var " ) ;
 								*p++ = Token[0] ;
@@ -1395,29 +1897,86 @@ uint32_t partLoadBasic()
 								index = findSymbol( SYM_VARIABLE ) ;
 								if ( index == -1 )
 								{
-									if ( CurrentVariableIndex >= MAX_VARIABLES )
+									index = findSymbol( SYM_CONST ) ;
+									if ( index == -1 )
 									{
-                    serror( SE_TOO_MANY_VARS ) ;
+//										if ( CurrentVariableIndex >= MAX_VARIABLES )
+//										{
+//    	                serror( SE_TOO_MANY_VARS ) ;
+//										}
+										index = CurrentVariableIndex++ ;
+                		addSymbol( SYM_VARIABLE, SYM_VAR_INT, index, 0 ) ;
 									}
-									index = CurrentVariableIndex++ ;
-                	addSymbol( SYM_VARIABLE, SYM_VAR_INT, index, 0 ) ;
+									else
+									{
+										// Found a constant
+										int32_t value ;
+                    uint32_t bytes ;
+                    index += Program.Bytes[index] - 4 ; // Index of value
+										value = Program.Bytes[index++] ;
+										value |= Program.Bytes[index++] << 8 ;
+										value |= Program.Bytes[index++] << 16 ;
+										value |= Program.Bytes[index++] << 24 ;
+							
+										bytes = codeNumeric( value ) ;
+										code = bytes ;
+										bytes >>= 8 ;
+										
+//										if ( value < 0 )
+//										{
+//											code = 0x50 ;
+//											bytes = 4 ;
+//										}
+//										else
+//										{
+//											if ( value <=7 )
+//											{
+//              				  code = 0x48 + value ;
+//											}
+//											else if ( value <= 127 )
+//											{
+//												code = 0x58 ;
+//												bytes = 1 ;
+//											}
+//											else if ( value <= 32767 )
+//											{
+//												code = 0x40 ;
+//												bytes = 2 ;
+//											}
+//											else
+//											{
+//												code = 0x50 ;
+//												bytes = 4 ;
+//											}
+//										}
+										Program.Bytes[cPosition++] = code ;
+										while ( bytes-- )
+										{
+											Program.Bytes[cPosition++] = value ;
+											value >>= 8 ;
+										}
+										constant = 1 ;
+									}
 								}
 								else
 								{
 									index += Program.Bytes[index] - 2 ; // Index of index
 									index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
 								}
-								code = 0x60 ;
-								if ( index > 255 )
+								if ( constant == 0 )
 								{
-									code = 0x68 ;
-								}
-								Program.Bytes[CurrentPosition++] = code ;
-								Program.Bytes[CurrentPosition++] = index ;
-								if ( code == 0x68 )
-								{
-									Program.Bytes[CurrentPosition++] = index >> 8 ;
-								}
+									code = 0x60 ;
+									if ( index > 255 )
+									{
+										code = 0x68 ;
+									}
+									Program.Bytes[cPosition++] = code ;
+									Program.Bytes[cPosition++] = index ;
+									if ( code == 0x68 )
+									{
+										Program.Bytes[cPosition++] = index >> 8 ;
+									}
+								}	
 							}
 						}
 						break ;
@@ -1448,13 +2007,13 @@ uint32_t partLoadBasic()
 								{
 									code |= 0x08 ;
 								}
-								Program.Bytes[CurrentPosition++] = code ;
-								Program.Bytes[CurrentPosition++] = index ;
+								Program.Bytes[cPosition++] = code ;
+								Program.Bytes[cPosition++] = index ;
 								if ( code &= 0x08 )
 								{
-									Program.Bytes[CurrentPosition++] = index >> 8 ;
+									Program.Bytes[cPosition++] = index >> 8 ;
 								}
-								Program.Bytes[CurrentPosition++] = dimension ;
+								Program.Bytes[cPosition++] = dimension ;
 							}
 						}	
 						break ;
@@ -1471,29 +2030,32 @@ uint32_t partLoadBasic()
 							sprintf( Tbuf, "%d,", value ) ;
               p = cpystr( p, (uint8_t *) Tbuf ) ;
 #endif
-							if ( value <=7 )
-							{
-                code = 0x48 + value ;
-							}
-							else if ( value <= 127 )
-							{
-								code = 0x58 ;
-								bytes = 1 ;
-							}
-							else if ( value <= 32767 )
-							{
-								code = 0x40 ;
-								bytes = 2 ;
-							}
-							else
-							{
-								code = 0x50 ;
-								bytes = 4 ;
-							}
-							Program.Bytes[CurrentPosition++] = code ;
+							bytes = codeNumeric( value ) ;
+							code = bytes ;
+							bytes >>= 8 ;
+//							if ( value <=7 )
+//							{
+//                code = 0x48 + value ;
+//							}
+//							else if ( value <= 127 )
+//							{
+//								code = 0x58 ;
+//								bytes = 1 ;
+//							}
+//							else if ( value <= 32767 )
+//							{
+//								code = 0x40 ;
+//								bytes = 2 ;
+//							}
+//							else
+//							{
+//								code = 0x50 ;
+//								bytes = 4 ;
+//							}
+							Program.Bytes[cPosition++] = code ;
 							while ( bytes-- )
 							{
-								Program.Bytes[CurrentPosition++] = value ;
+								Program.Bytes[cPosition++] = value ;
 								value >>= 8 ;
 							}
 						}	
@@ -1503,36 +2065,19 @@ uint32_t partLoadBasic()
 						{
 							int32_t value ;	
 							uint8_t code ;
-							uint32_t bytes = 0 ;
+							uint32_t bytes ;
 							value = asctoi( Token ) ;
 #ifdef QT
               p = cpystr( p, (uint8_t *)"Num " ) ;
               p = cpystr( p, (uint8_t *)Token ) ;
 #endif
-							code = 0x40 ;
-							if ( value >=0 && value <=7 )
-							{
-                code = 0x48 + value ;
-							}
-							else if ( value >= -128 && value <= 127 )
-							{
-								code = 0x58 ;
-								bytes = 1 ;
-							}
-							else if ( value >= -32768 && value <= 32767 )
-							{
-								code = 0x40 ;
-								bytes = 2 ;
-							}
-							else
-							{
-								code = 0x50 ;
-								bytes = 4 ;
-							}
-							Program.Bytes[CurrentPosition++] = code ;
+							bytes = codeNumeric( value ) ;
+							code = bytes ;
+							bytes >>= 8 ;
+							Program.Bytes[cPosition++] = code ;
 							while ( bytes-- )
 							{
-								Program.Bytes[CurrentPosition++] = value ;
+								Program.Bytes[cPosition++] = value ;
 								value >>= 8 ;
 							}
 						}
@@ -1556,13 +2101,13 @@ uint32_t partLoadBasic()
 								*p++ = Token[0] ;
 							}
 #endif
-							Program.Bytes[CurrentPosition++] = Token[0] ;
+							Program.Bytes[cPosition++] = Token[0] ;
 						}
 						break ;
 						case LABEL :
 						{	
 							int32_t loc ;
-							uint32_t index ;
+//							uint32_t index ;
 							uint32_t type ;
 #ifdef QT
               p = cpystr( p, (uint8_t *)"Label " ) ;
@@ -1572,7 +2117,7 @@ uint32_t partLoadBasic()
 							loc = findSymbol( SYM_LABEL ) ;
 							if ( loc == -1 )
 							{
-                addSymbol( SYM_LABEL, SYM_LAB_DEF, CurrentPosition, 0 ) ;
+                addSymbol( SYM_LABEL, SYM_LAB_DEF, cPosition, 0 ) ;
 							}
 							else
 							{
@@ -1587,14 +2132,7 @@ uint32_t partLoadBasic()
 									// A ref, these need updating
 									Program.Bytes[loc] = SYM_LAB_DEF ;
                   loc += 1 ;
-                  do
-									{
-										index = Program.Bytes[loc] ;
-										index += Program.Bytes[loc+1] << 8 ;
-										Program.Bytes[loc++] = CurrentPosition ;
-										Program.Bytes[loc] = CurrentPosition >> 8 ;
-										loc = index ;
-									} while ( index ) ;
+									setLinkedJumpAddress( loc, cPosition ) ;
 								}
 							}
 						}
@@ -1603,13 +2141,15 @@ uint32_t partLoadBasic()
 						{
 							uint8_t *temp ;
               uint8_t c ;
+							uint32_t count ;
               temp = (uint8_t *)Token ;
-							Program.Bytes[CurrentPosition++] = 0x70 ;
+							Program.Bytes[cPosition++] = 0x70 ;
+							count = *temp + 1 ;
 							do
 							{
 								c = *temp++ ;
-								Program.Bytes[CurrentPosition++] = c ;
-							} while ( c ) ;
+								Program.Bytes[cPosition++] = c ;
+							} while ( --count ) ;
 						}	
 						break ;
 						case FUNCTION :
@@ -1618,8 +2158,8 @@ uint32_t partLoadBasic()
 							inFunction = look_up( Token, InternalFunctions ) ;
 							if ( inFunction )
 							{
-								Program.Bytes[CurrentPosition++] = IN_FUNCTION ;
-								Program.Bytes[CurrentPosition++] = inFunction ;
+								Program.Bytes[cPosition++] = IN_FUNCTION ;
+								Program.Bytes[cPosition++] = inFunction ;
 							}
 							else
 							{
@@ -1657,6 +2197,7 @@ uint32_t partLoadBasic()
 			break ;
 		}
 	}
+	CurrentPosition = cPosition ;
 	if ( ParseError )
 	{
 		closeFile() ;
@@ -1675,13 +2216,26 @@ uint32_t partLoadBasic()
 	 
 	CurrentPosition += 3 ;
 	CurrentPosition /= 4 ;	// Rounded word offset
-	Program.Words[0] = CurrentPosition ;
+	i = LoadedScripts[LoadIndex].offsetOfStart / 4 ;
+//	BasicDebug5 = i ;
+	Program.Words[i] = CurrentPosition ;
+//	BasicDebug6 = CurrentPosition >> 8 ;
+//	BasicDebug7 = CurrentPosition ;
+	j = CurrentPosition*4 + sizeof(struct t_basicRunTime) - (MAX_VARIABLES*4) + (CurrentVariableIndex*4) + CurrentArrayIndex * 4 ;
+	Program.Words[i+1] = j ;
+	LoadedScripts[LoadIndex].size = j ;
+
+	RunTime = (struct t_basicRunTime *) &Program.Words[CurrentPosition] ;
+	RunTime->IntArrayStart = &RunTime->Vars.Variables[CurrentVariableIndex] ;
+	RunTime->ByteArrayStart = &RunTime->Vars.byteArray[CurrentVariableIndex*4] ;
 
 #ifdef QT
 	p = appendSymbols( p ) ;
 	RunTimeData = p ;
 #endif
-	i = basicExecute( 1, 0 ) ;
+
+	i = basicExecute( 1, 0, LoadIndex ) ;
+
 #ifdef QT
 	p = RunTimeData ;
 	if ( i )
@@ -1689,9 +2243,9 @@ uint32_t partLoadBasic()
     cpystr( p, (uint8_t *)InputLine ) ;
 	}
 	uint8_t *r ;
-	r = (uint8_t *) RunTime->Variables ;
+  r = (uint8_t *) RunTime->Vars.Variables ;
 	j = 0 ;
-	for ( i = 0 ; i < 48 ; i += 1 )
+	for ( i = 0 ; i < 96 ; i += 1 )
 	{
     sprintf( Tbuf, "%02x ", *r++ ) ;
     p = cpystr( p, (uint8_t *)Tbuf ) ;
@@ -1702,125 +2256,250 @@ uint32_t partLoadBasic()
 		}
 	}
 	*p++ = '\n' ;
-  r = (uint8_t *) &RunTime->Arrays ;
-	for ( i = 0 ; i < 48 ; i += 1 )
-	{
-    sprintf( Tbuf, "%02x ", *r++ ) ;
-    p = cpystr( p, (uint8_t *)Tbuf ) ;
-		if ( ++j > 15 )
-		{
-			j = 0 ;
-			*p++ = '\n' ;
-		}
-	}
+//  r = (uint8_t *) &RunTime->Arrays ;
+//	for ( i = 0 ; i < 48 ; i += 1 )
+//	{
+//    sprintf( Tbuf, "%02x ", *r++ ) ;
+//    p = cpystr( p, (uint8_t *)Tbuf ) ;
+//		if ( ++j > 15 )
+//		{
+//			j = 0 ;
+//			*p++ = '\n' ;
+//		}
+//	}
 #endif
 	return 2 ;
 }
 
-void basicLoadModelScripts()
+
+
+#ifndef QT
+
+void setScriptFilename( uint8_t *filepath, uint8_t *name )
 {
-	uint8_t *pindex ;
-	uint8_t *q ;
 	uint32_t i ;
-	pindex = g_model.customDisplayIndex ;
-	uint32_t type ;
-
-	// First 
-	type = BASIC_LOAD_TEL0 ;
-	if ( g_model.customDisplay1Extra[6] == 0 )
-	{		
-		if ( g_model.customDisplay2Extra[6] == 0 )
-		{	
-//			return false ;
-			return ;
-		}
-		else
-		{
-			pindex = g_model.customDisplay2Index ;
-			type = BASIC_LOAD_TEL1 ;
-
-		}
-	}
-	if ( ( *pindex == ' ' ) || ( *pindex == '\0' ) )
-	{
-		return ;
-//		return false ;
-	}
-	// We have a filename
-
-//  if (luaScriptsCount < MAX_SCRIPTS)
-	uint8_t scriptFilename[60] ;
-	q = cpystr( scriptFilename, (uint8_t *)"/SCRIPTS/TELEMETRY/" ) ;
+	
+	filepath = cpystr( filepath, (uint8_t *)"/SCRIPTS/" ) ;
+	filepath = cpystr( filepath, ( LoadingIndex == 0 ) ? (uint8_t *)"MODEL/" : (uint8_t *)"TELEMETRY/" ) ;
+	
 	for ( i = 0 ; i < 6 ; i += 1 )
 	{
-		if ( ( *pindex == ' ' ) || ( *pindex == '\0' ) )
+		if ( ( *name == ' ' ) || ( *name == '\0' ) )
 		{
 			break ;
 		}
-		*q++ = *pindex++ ;
+		*filepath++ = *name++ ;
 	}
-	cpystr( q, (uint8_t *)".BAS" ) ;
-
-	loadBasic( (char *) scriptFilename, type ) ;
-	return ;
-
-//extern uint32_t mainScreenDisplaying( void ) ;
-//  uint8_t view = g_model.mview & 0xf;
-// 	uint8_t tview = g_model.mview & 0x70 ;
-//	if ( !mainScreenDisplaying() )
-//	{
-//		view = 0 ; // Not 4!
-//	}
-
-
-
-//  if ( (view == 4) && (tview <= 0x10) )
-	
+	cpystr( filepath, (uint8_t *)".BAS" ) ;
 }
+
+void loadNextScript()
+{
+	uint8_t *pindex ;
+	uint32_t type ;
+	uint8_t scriptFilename[60] ;
+	
+	type = BASIC_LOAD_BG ;
+	while ( LoadingIndex < 3 )
+	{
+		LoadedScripts[LoadingIndex].loaded = 0 ;
+		pindex = (uint8_t*)"" ;
+		
+		switch ( LoadingIndex )
+		{
+			case 0 :
+				pindex = g_model.backgroundScript ;
+			break ;
+			
+			case 1 :
+				type = BASIC_LOAD_TEL0 ;
+				if ( g_model.customDisplay1Extra[6] )
+				{
+					pindex = g_model.customDisplayIndex ;
+				}
+			break ;
+			
+			case 2 :
+				type = BASIC_LOAD_TEL1 ;
+				if ( g_model.customDisplay2Extra[6] )
+				{
+					pindex = g_model.customDisplay2Index ;
+				}
+			break ;
+		}
+		
+		if ( !( ( *pindex == ' ' ) || ( *pindex == '\0' ) ) )
+		{
+		// We have a filename
+			setScriptFilename( scriptFilename, pindex ) ;
+			if ( loadBasic( (char *) scriptFilename, type ) )
+			{
+				return ;
+			}
+		}
+		LoadingIndex += 1 ;
+	} 
+}
+
+
+
+void basicLoadModelScripts()
+{
+	LoadingIndex = 0 ;
+	BasicState = BASIC_IDLE ;	// Terminate existing script(s)
+	loadNextScript() ;
+}
+#endif
+
+
+
+//#ifndef QT
+//void xbasicLoadModelScripts()
+//{
+//	uint8_t *pindex ;
+////	uint8_t *q ;
+////	uint32_t i ;
+//	uint32_t type ;
+//	uint8_t scriptFilename[60] ;
+
+//	BasicState = BASIC_IDLE ;	// Terminate existing script(s)
+//	BasicLoadedType = BASIC_LOAD_NONE ;
+
+//	// First 
+//	type = BASIC_LOAD_BG ;
+//	pindex = g_model.backgroundScript ;
+//	if ( ( *pindex == ' ' ) || ( *pindex == '\0' ) )
+//	{
+//		pindex = g_model.customDisplayIndex ;
+//		type = BASIC_LOAD_TEL0 ;
+//		if ( g_model.customDisplay1Extra[6] == 0 )
+//		{		
+//			if ( g_model.customDisplay2Extra[6] == 0 )
+//			{	
+//	//			return false ;
+//				return ;
+//			}
+//			else
+//			{
+//				pindex = g_model.customDisplay2Index ;
+//				type = BASIC_LOAD_TEL1 ;
+//			}
+//		}
+//	}
+//	if ( ( *pindex == ' ' ) || ( *pindex == '\0' ) )
+//	{
+//		return ;
+////		return false ;
+//	}
+//	// We have a filename
+//	setScriptFilename( scriptFilename, pindex ) ;
+//	loadBasic( (char *) scriptFilename, type ) ;
+//	return ;
+
+////extern uint32_t mainScreenDisplaying( void ) ;
+////  uint8_t view = g_model.mview & 0xf;
+//// 	uint8_t tview = g_model.mview & 0x70 ;
+////	if ( !mainScreenDisplaying() )
+////	{
+////		view = 0 ; // Not 4!
+////	}
+
+
+
+////  if ( (view == 4) && (tview <= 0x10) )
+	
+//}
+//#endif
+
+// Return values:
+// 0 No script running
+// 1 After begin or Still running or RunError
+// 2 Found Stop
+// 3 Script finished (unloaded)
 
 uint32_t basicTask( uint8_t event, uint8_t flags )
 {
 	uint32_t result ;
 	ScriptFlags = flags ;
+//	BasicDebug4 = BasicState ;
+		
+//	BasicDebug3 = LoadedScripts[0].loaded << 8 ;
+//	BasicDebug3 |= LoadedScripts[1].loaded << 4 ;
+//	BasicDebug3 |= LoadedScripts[2].loaded ;
+
 	if ( BasicState == BASIC_LOADING )
 	{
 		result = partLoadBasic() ;
+//		BasicDebug2 = result | ( LoadingIndex<< 8 ) ;
+
 		if ( result == 0 )
 		{
 			// Parse Error
-			BasicState = BASIC_IDLE ;
-			BasicLoadedType = BASIC_LOAD_NONE ;
+#ifndef QT
+			if ( BasicLoadedType == BASIC_LOAD_ALONE )
+			{
+				BasicState = BASIC_IDLE ;
+				BasicLoadedType = BASIC_LOAD_NONE ;
+				LoadedScripts[0].loaded = 0 ;
+				basicLoadModelScripts() ;
+			}
+			else
+			{
+				LoadingIndex += 1 ;
+				loadNextScript() ;
+			}
+#endif
 			return 0 ;
 		}
 		else if ( result == 2 )
 		{
 			BasicState = BASIC_RUNNING ;
-			return basicExecute( 1, event ) ;
+#ifndef QT
+			LoadedScripts[LoadingIndex].loaded = 1 ;
+			if ( BasicLoadedType != BASIC_LOAD_ALONE )
+			{
+				if ( LoadingIndex < 3 )
+				{
+					LoadingIndex += 1 ;
+					loadNextScript() ;
+				}
+			}
+#endif
+
+//#ifndef QT
+//			return basicExecute( 1, ( BasicLoadedType == BASIC_LOAD_BG ) ? 0 : event ) ;
+//#else
+//			return basicExecute( 1, 0 ) ;
+//#endif
 		}
-		return 1 ;
+//		return 1 ;
+		return 0 ;
 	}
 	else if ( BasicState == BASIC_RUNNING )
 	{
+#ifndef QT
 		if ( flags & SCRIPT_TELEMETRY )
 		{
+//			return 0 ;
 extern uint32_t mainScreenDisplaying( void ) ;
 		  uint8_t view = g_model.mview & 0xf;
   		uint8_t tview = g_model.mview & 0x70 ;
 			uint32_t nav = 0 ;
+			uint32_t lcd = 0 ;
 			if ( mainScreenDisplaying() )
 			{
 				if ( view == 4 )
 				{
-					if ( ( tview == 0 ) && ( BasicLoadedType == BASIC_LOAD_TEL0 ))
+					if ( ( tview == 0 ) && ( LoadedScripts[1].loaded ))
 					{
-						ScriptFlags |= SCRIPT_LCD_OK ;
+						lcd = 1 ;
 						nav = 1 ;
 					}
 					else
 					{
-						if ( ( tview == 0x10 ) && ( BasicLoadedType == BASIC_LOAD_TEL1 ) )
+						if ( ( tview == 0x10 ) && ( LoadedScripts[2].loaded ) )
 						{
-							ScriptFlags |= SCRIPT_LCD_OK ;
+							lcd |= 2 ;
 							nav = 1 ;
 						}
 					}
@@ -1832,10 +2511,45 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 					}
 				}
 			}
-			if ( ( BasicLoadedType == BASIC_LOAD_TEL0 ) || ( BasicLoadedType == BASIC_LOAD_TEL1 ) )
+
+			uint32_t running = 0 ;
+			uint32_t retvalue ;
+			retvalue = 0 ;
+			if ( LoadedScripts[0].loaded )
 			{
-				uint32_t retvalue ;
-				retvalue = basicExecute( 0, event ) ;
+				retvalue = basicExecute( 0, 0, 0 ) ;
+//				if ( retvalue != 3 )
+//				{
+//					running = 1 ;
+//				}
+			}
+			if ( LoadedScripts[1].loaded )
+			{
+				if ( lcd & 1 )
+				{
+					ScriptFlags |= SCRIPT_LCD_OK ;
+				}			 
+				retvalue = basicExecute( 0, event, 1 ) ;
+				if ( retvalue != 3 )
+				{
+					running = 1 ;
+				}
+				ScriptFlags &= ~SCRIPT_LCD_OK ;
+			}
+			if ( LoadedScripts[2].loaded )
+			{
+				if ( lcd & 2 )
+				{
+					ScriptFlags |= SCRIPT_LCD_OK ;
+				}			 
+				retvalue = basicExecute( 0, event, 2 ) ;
+				if ( retvalue != 3 )
+				{
+					running |= 2 ;
+				}
+			}
+			if ( running )
+			{
 				if ( nav )
 				{
 					return retvalue ;
@@ -1844,15 +2558,23 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 				{
 					return 0 ;
 				}
-			}
+			}	
 		}
+#endif
+#ifndef QT
 		if ( flags & SCRIPT_STANDALONE )
 		{
 			if ( BasicLoadedType == BASIC_LOAD_ALONE )
 			{
-				return basicExecute( 0, event ) ;
+//				if ( LoadedScripts[0].loaded )
+//				{
+					return basicExecute( 0, event, 0 ) ;
+//				}
 			}
 		}
+#else
+		return basicExecute( 0, event, 0 ) ;
+#endif
 	}
   return 0 ;
 }
@@ -1877,25 +2599,29 @@ int32_t getInteger( uint8_t opcode )
 {
 	int32_t value ;		
 	int16_t val16 ;
+	uint8_t *execPtr ;
+
+	execPtr = RunTime->ExecProgPtr ;
 	value = opcode & 7 ;
 	opcode &= 0xF8 ;
   if ( opcode == 0x58 )
 	{
-		value = (int8_t) *RunTime->ExecProgPtr++ ;
+		value = (int8_t) *execPtr++ ;
 	}
 	else if ( opcode == 0x40 )
 	{
-		val16 = *RunTime->ExecProgPtr++ ;
-		val16 |= *RunTime->ExecProgPtr++ << 8 ;	// Index to dest variable
+		val16 = *execPtr++ ;
+		val16 |= *execPtr++ << 8 ;	// Index to dest variable
 		value = val16 ;	// sign extend
   }
 	else if ( opcode == 0x50 )
 	{
-		value = *RunTime->ExecProgPtr++ ;
-		value |= *RunTime->ExecProgPtr++ << 8 ;	// Index to dest variable
-		value |= *RunTime->ExecProgPtr++ << 16 ;	// Index to dest variable
-		value |= *RunTime->ExecProgPtr++ << 24 ;	// Index to dest variable
+		value = *execPtr++ ;
+		value |= *execPtr++ << 8 ;	// Index to dest variable
+		value |= *execPtr++ << 16 ;	// Index to dest variable
+		value |= *execPtr++ << 24 ;	// Index to dest variable
 	}
+	RunTime->ExecProgPtr = execPtr ;
 	return value ;
 }
 
@@ -1943,17 +2669,17 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 				val16 += value ;
 				if ( destType & 1 )
 				{
-					value = RunTime->Arrays.byteArray[val16] ;
+					value = RunTime->ByteArrayStart[val16] ;
 				}
 				else
 				{
-					value = RunTime->Arrays.intArray[val16] ;
+					value = RunTime->IntArrayStart[val16] ;
 				}
 			}
 			else
 			{
 				val16 = getVarIndex( opcode ) ;
-				value = RunTime->Variables[val16] ;
+				value = RunTime->Vars.Variables[val16] ;
 			}
 		}
 		else
@@ -1974,7 +2700,7 @@ uint32_t getParamVarAddress( union t_varAddress *ptr )
 {
 	uint8_t opcode ;
 	uint32_t result = 0 ;
-	int32_t value ;
+  uint32_t value ;
 	uint16_t val16 ;
 	
 	ptr->ipointer = 0 ;
@@ -2000,26 +2726,26 @@ uint32_t getParamVarAddress( union t_varAddress *ptr )
 				return 0 ;
 			}
 			val16 += value ;
-			if ( val16 >= dimension )
+			if ( value >= dimension )
 			{
 				runError( SE_DIMENSION ) ;
 				return 0 ;
 			}
 			if ( destType & 1 )
 			{
-				ptr->bpointer = &RunTime->Arrays.byteArray[val16] ;
+				ptr->bpointer = &RunTime->ByteArrayStart[val16] ;
 				result = 1 ;
 			}
 			else
 			{
-        ptr->ipointer = &RunTime->Arrays.intArray[val16] ;
+        ptr->ipointer = &RunTime->IntArrayStart[val16] ;
 				result = 2 ;
 			}
 		}
 		else
 		{
 			val16 = getVarIndex( opcode ) ;
-			ptr->ipointer = &RunTime->Variables[val16] ;
+			ptr->ipointer = &RunTime->Vars.Variables[val16] ;
 			result = 2 ;
 		}
 	}
@@ -2088,6 +2814,9 @@ void logic( uint8_t op, int32_t *r, int32_t *h )
     break ;
     case BITOR :
       *r = *r | *h; 
+    break ; 
+    case BITXOR :
+      *r = *r ^ *h; 
     break ; 
   }
 }
@@ -2265,7 +2994,7 @@ void level2( int32_t *result )
 	opcode = *RunTime->ExecProgPtr++ ;
   while( opcode == '#' || opcode == '=' || opcode == '<' || opcode == '>' || opcode == LESSEQUAL || opcode == GREATEQUAL )
 	{
-    level4( &hold ) ; 
+    level3( &hold ) ; 
     compare( opcode, result, &hold ) ;
 		opcode = *RunTime->ExecProgPtr++ ;
 	}
@@ -2279,7 +3008,7 @@ void level1( int32_t *result )
 	
 	level2( result) ;
 	opcode = *RunTime->ExecProgPtr++ ;
-  while( opcode == BITAND || opcode == BITOR )
+  while( opcode == BITAND || opcode == BITOR || opcode == BITXOR )
 	{
     level2( &hold ) ; 
     logic( opcode, result, &hold ) ;
@@ -2316,7 +3045,7 @@ void exec_while()
 	opcode = *RunTime->ExecProgPtr++ ;
 	if ( opcode != NGOTO )
 	{
-		runError( SE_NO_THEN ) ;
+		runError( SE_SYNTAX ) ;
 	}
 	destination = *RunTime-> ExecProgPtr++ ;
   destination |= *RunTime->ExecProgPtr++ << 8 ;
@@ -2341,7 +3070,7 @@ void exec_if()
 	}
 	opcode = *RunTime->ExecProgPtr++ ;
 
-	if ( opcode == GOTO || opcode == GOSUB ||  opcode == NGOTO )
+	if ( opcode == GOTO || opcode == GOSUB || opcode == NGOTO )
 	{
 		destination = *RunTime-> ExecProgPtr++ ;
     destination |= *RunTime->ExecProgPtr++ << 8 ;
@@ -2361,9 +3090,12 @@ void exec_if()
 		 
 			if ( test )
 			{
-			
 				if ( opcode == GOSUB )
 				{
+					if ( RunTime->CallIndex >= MAX_CALL_STACK )
+					{
+						runError( SE_TOO_MANY_CALLS ) ;
+					}
 					RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
 				}
 				RunTime->ExecProgPtr = &Program.Bytes[destination] ;
@@ -2398,6 +3130,10 @@ void exec_gosub()
 	if ( ( *RunTime->ExecProgPtr & 0x80 ) == 0 )
 	{
     runError( SE_SYNTAX ) ;
+	}
+	if ( RunTime->CallIndex >= MAX_CALL_STACK )
+	{
+		runError( SE_TOO_MANY_CALLS ) ;
 	}
 	RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
 	RunTime->ExecProgPtr = &Program.Bytes[destination] ;
@@ -2435,6 +3171,28 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 			{
 				RunTime->ExecProgPtr += 1 ;
 			}
+			return 2 ;
+		}
+		else if( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+		{
+			uint32_t dimension ;
+			uint16_t val16 ;
+			uint32_t value ;
+			val16 = getVarIndex( opcode ) ;
+			dimension = *RunTime->ExecProgPtr++ ;
+			value = expression() ;
+			opcode = *RunTime->ExecProgPtr++ ;
+			if ( opcode != ']' )
+			{
+				runError( SE_SYNTAX ) ;
+				return 0 ;
+			}
+			if ( value >= dimension )
+			{
+				runError( SE_DIMENSION ) ;
+				return 0 ; ;
+			}
+			param->cpointer = &RunTime->ByteArrayStart[val16 + value] ;
 			return 2 ;
 		}
 		else
@@ -2721,7 +3479,17 @@ void exec_drawtext()
 					}
 				}
 #ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawText()\n" ) ;
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawText(" ) ;
+				for ( uint32_t i = 0 ; i < 20 ; i += 1 )
+				{
+					if ( *p == 0 )
+					{
+						break ;
+					}
+					*RunTimeData++ = *p++ ;
+				}
+//        RunTimeData = cpystr( RunTimeData, p ) ;
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)")\n" ) ;
 #else
 				if ( ScriptFlags & SCRIPT_LCD_OK )
 				{
@@ -2828,6 +3596,9 @@ int32_t exec_settelitem()
 			if ( result == 1 )
 			{
 				value = param.var ;
+#ifdef QT			
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)"setTelItem()\n" ) ;
+#else
 				number -= 44 ;
 				if ( number < NUM_TELEM_ITEMS )
 				{
@@ -2838,7 +3609,24 @@ int32_t exec_settelitem()
 					{
 						storeTelemetryData( number, value ) ;
 					}
+					else if ( result == 0 )
+					{
+						if ( ( number >= V_GVAR1 ) && ( number <= V_GVAR7 ) )
+						{
+							number -= V_GVAR1 ;
+				    }
+						if ( value < -125 )
+						{
+							value = -125 ;
+						}
+						if ( value > 125 )
+						{
+							value = 125 ;
+						}
+						g_model.gvars[number].gvar = value ;
+					}
 				}
+#endif
 			}
 		}
 	}
@@ -2846,7 +3634,7 @@ int32_t exec_settelitem()
 }
 
 
-int32_t exec_getvalue()
+int32_t exec_getvalue(uint32_t type)
 {
 	int32_t number ;
 	uint32_t result ;
@@ -2882,7 +3670,16 @@ int32_t exec_getvalue()
 #else
 		if ( number >= 0 )
 		{
-		  number = getValue(number) ; // ignored for GPS, DATETIME, and CELLS
+			result = number ;
+		  number = getValue(result) ; // ignored for GPS, DATETIME, and CELLS
+			if ( type == 0 )
+			{
+  		  if ( (result <= CHOUT_BASE+NUM_SKYCHNOUT) || ( result >= EXTRA_POTS_START ) )
+				{
+					number *= 100 ;
+					number /= RESX ;
+				}
+			}
 		}
 #endif
 	}
@@ -2959,6 +3756,16 @@ static int32_t exec_abs()
   return value >= 0 ? value : -value ;
 }
 
+static void exec_killEvents()
+{
+	int32_t value ;
+	value = getSingleNumericParameter() ;
+#ifndef QT
+  killEvents(value) ;
+#endif
+}
+
+
 
 const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
@@ -2976,7 +3783,7 @@ int32_t exec_sportsend()
 	if ( result == 1 )
 	{
 		x = param.var ;
-		if ( x == 0 )
+		if ( x == 0xFF )
 		{
 #ifdef QT
       RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
@@ -3060,7 +3867,7 @@ int32_t exec_sportreceive()
 						{
 							*param[0].ipointer = value ;
 						}
-						value = get_fifo128( &Lua_fifo ) & 0x1F ;
+						value = get_fifo128( &Lua_fifo ) ;
 						if ( type[1] == 1 )
 						{
 							*param[1].bpointer = value ;
@@ -3105,6 +3912,278 @@ int32_t exec_sportreceive()
 	}
 	return result ;
 }
+
+void exec_strToArray()
+{
+	uint8_t opcode ;
+	uint16_t val16 ;
+	opcode = *RunTime->ExecProgPtr++ ;
+	uint32_t value ;
+
+	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+	{
+		uint32_t dimension ;
+		val16 = getVarIndex( opcode ) ;
+		dimension = *RunTime->ExecProgPtr++ ;
+		value = expression() ;
+		opcode = *RunTime->ExecProgPtr++ ;
+		if ( opcode != ']' )
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+		if ( value >= dimension )
+		{
+			runError( SE_DIMENSION ) ;
+			return ;
+		}
+		// Now we need the string
+		if ( *RunTime->ExecProgPtr != ',' )
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+		RunTime->ExecProgPtr += 1 ;
+		opcode = *RunTime->ExecProgPtr++ ;
+		if ( opcode == 0x70 )	// Quoted string
+		{
+			// Now copy the string
+			uint32_t length = *RunTime->ExecProgPtr++ ;
+			while ( length-- )
+			{
+				uint8_t c ;
+				c = *RunTime->ExecProgPtr++ ;
+				if ( value < dimension )
+				{
+					RunTime->ByteArrayStart[val16 + value] = c ;
+					value += 1 ;
+				}
+				else
+				{
+					RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
+				}
+			}
+			if ( *RunTime->ExecProgPtr != ')' )
+			{
+				runError( SE_SYNTAX ) ;
+				return ;
+			}
+		}
+		else
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+	}
+}
+
+
+//void exec_systemStrToArray()
+//{
+//	uint8_t opcode ;
+//	uint16_t val16 ;
+//	opcode = *RunTime->ExecProgPtr++ ;
+//	uint32_t value ;
+//	union t_parameter param ;
+//	uint32_t result ;
+
+//	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+//	{
+//		uint32_t dimension ;
+//		val16 = getVarIndex( opcode ) ;
+//		dimension = *RunTime->ExecProgPtr++ ;
+//		value = expression() ;
+//		opcode = *RunTime->ExecProgPtr++ ;
+//		if ( opcode != ']' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return ;
+//		}
+//		if ( value >= dimension )
+//		{
+//			runError( SE_DIMENSION ) ;
+//			return ;
+//		}
+//		// Now we need the index
+//		if ( *RunTime->ExecProgPtr != ',' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return ;
+//		}
+//		RunTime->ExecProgPtr += 1 ;
+
+//		result = get_parameter( &param, 0 ) ;
+//		if ( result == 1 )
+//		{
+//			uint8_t *p = 0 ;
+//			uint32_t length = 0 ;
+
+//			eatCloseBracket() ;
+//			// Find the string
+//			switch ( param.var )
+//			{
+//				case 0 :
+//					p = (uint8_t *)g_model.name ;
+//					length = MODEL_NAME_LEN ;
+//				break ;
+//				case 1 :
+//					p = (uint8_t *)g_eeGeneral.ownerName ;
+//					length = GENERAL_OWNER_NAME_LEN ;
+//				break ;
+//			}
+
+//			// Now copy the string
+//			if ( p )
+//			{
+//				while ( length-- )
+//				{
+//					uint8_t c ;
+//					c = *p++ ;
+//					if ( value < dimension )
+//					{
+//						RunTime->ByteArrayStart[val16 + value] = c ;
+//						value += 1 ;
+//					}
+//					else
+//					{
+//						RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
+//					}
+//				}
+//				RunTime->ByteArrayStart[val16+value] = '\0' ;
+//			}
+//			else
+//			{
+//				RunTime->ByteArrayStart[val16+value] = '\0' ;
+//			}
+//		}
+//		else
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return ;
+//		}
+//	}
+//}
+
+
+
+#ifndef QT
+#if defined(PCBSKY) || defined(PCB9XT)
+const uint8_t SwTranslate[] = {
+HSW_ThrCt,HSW_RuddDR,HSW_ElevDR,HSW_ID0,HSW_ID1,HSW_ID2,HSW_AileDR,HSW_Gear,HSW_Trainer,
+10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,
+HSW_Thr3pos0,HSW_Thr3pos1,HSW_Thr3pos2,HSW_Rud3pos0,HSW_Rud3pos1,HSW_Rud3pos2,HSW_Ele3pos0,
+HSW_Ele3pos1,HSW_Ele3pos2,HSW_Ail3pos0,HSW_Ail3pos1,HSW_Ail3pos2,HSW_Gear3pos0,HSW_Gear3pos1,
+HSW_Gear3pos2,HSW_Ele6pos0,HSW_Ele6pos1,HSW_Ele6pos2,HSW_Ele6pos3,HSW_Ele6pos4,HSW_Ele6pos5,
+HSW_Pb1,HSW_Pb2,HSW_Pb3,HSW_Pb4,HSW_Etrmdn,HSW_Etrmup,HSW_Atrmdn,HSW_Atrmup,HSW_Rtrmdn,HSW_Rtrmup,HSW_Ttrmdn,HSW_Ttrmup
+} ;
+#else
+const uint8_t SwTranslate[] = {
+HSW_SF2,0,0,HSW_SC0,HSW_SC1,HSW_SC2,0,0,HSW_SH2,
+10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,
+HSW_SB0,HSW_SB1,HSW_SB2,HSW_SE0,HSW_SE1,HSW_SE2,HSW_SA0,
+HSW_SA1,HSW_SA2,HSW_SD0,HSW_SD1,HSW_SD2,HSW_SG0,HSW_SG1,
+HSW_SG2,HSW_Ele6pos0,HSW_Ele6pos1,HSW_Ele6pos2,HSW_Ele6pos3,HSW_Ele6pos4,HSW_Ele6pos5,
+HSW_Pb1,HSW_Pb2,HSW_Etrmdn,HSW_Etrmup,HSW_Atrmdn,HSW_Atrmup,HSW_Rtrmdn,HSW_Rtrmup,HSW_Ttrmdn,HSW_Ttrmup
+} ;
+#endif
+#endif
+
+
+
+int32_t exec_getSwitch()
+{
+	int32_t number ;
+	uint32_t result ;
+	union t_parameter param ;
+	uint8_t *p ;
+
+	number = -1 ;
+	result = get_parameter( &param, 1 ) ;
+	if ( result == 2 )
+	{
+		p = param.cpointer ;
+#ifdef QT
+		number = 0 ;
+#else
+		number = basicFindSwitchIndexByName( (char *)p ) ;
+		if ( ( number >= 0 ) && (number < HSW_MAX+8) )
+		{
+			number = SwTranslate[number] ;
+			number = getSwitch00( number ) ;
+		}
+		else
+		{
+			number = -1 ;
+		}
+#endif
+		eatCloseBracket() ;
+	}
+	return number ;
+}
+
+extern uint8_t Now_switch[] ;
+
+void exec_setSwitch()
+{
+	int32_t number ;
+	uint32_t result ;
+	union t_parameter param ;
+	uint8_t *p ;
+
+	result = get_parameter( &param, 1 ) ;
+	if ( result == 2 )
+	{
+		p = param.cpointer ;
+		result = get_parameter( &param, 0 ) ;
+		if ( result == 1 )
+		{
+#ifdef QT			
+			number = 0 ;
+#else
+			number = basicFindSwitchIndexByName( (char *)p ) ;
+			if (number < HSW_MAX)
+			{
+				number = SwTranslate[number] ;
+				number -= 10 ;
+				if ( ( number >= 0 ) && ( number < NUM_SKYCSW ) )
+				{
+  				SKYCSwData &cs = g_model.customSw[number] ;
+  				if( cs.func == 0 )
+					{
+						Now_switch[number] = param.var ? 1 : 0 ;
+					}
+				}
+			}
+#endif
+    }
+	}
+}
+
+
+void exec_playFile()
+{
+	uint32_t result ;
+	union t_parameter param ;
+	uint8_t *p ;
+#ifndef QT
+  char name[10] ;
+#endif
+
+	result = get_parameter( &param, 1 ) ;
+	if ( result == 2 )
+	{
+		p = param.cpointer ;
+#ifndef QT
+    ncpystr( (uint8_t *)name, p, 8 ) ;
+		if ( name[0] && ( name[0] != ' ' ) )
+		{
+			putUserVoice( name, 0 ) ;
+		}
+#endif
+  }
+}
+
+
 
 //void exec_print()
 //{
@@ -3161,7 +4240,11 @@ int32_t execInFunction()
 		break ;
 
 		case GETVALUE :
-			result = exec_getvalue() ;
+			result = exec_getvalue(0) ;
+		break ;
+
+		case GETRAWVALUE :
+			result = exec_getvalue(1) ;
 		break ;
 
     case IDLETIME :
@@ -3174,6 +4257,10 @@ int32_t execInFunction()
 
     case SPORTSEND :
 			result = exec_sportsend() ;
+		break ;
+
+    case SPORTRECEIVE :
+			result = exec_sportreceive() ;
 		break ;
 
     case NOT :
@@ -3195,7 +4282,27 @@ int32_t execInFunction()
 		case SETTELITEM :
 			result = exec_settelitem() ;
 		break ;
-		
+
+		case STRTOARRAY :
+			exec_strToArray() ;
+		break ;
+
+		case GETSWITCH :
+			result = exec_getSwitch() ;
+		break ;
+		 
+		case SETSWITCH :
+			exec_setSwitch() ;
+		break ;
+
+		case PLAYFILE :
+			exec_playFile() ;
+		break ;
+
+		case KILLEVENTS :
+			exec_killEvents() ;
+		break ;
+		 
 		default :
 			runError( SE_NO_FUNCTION ) ;
 		break ;
@@ -3206,7 +4313,10 @@ int32_t execInFunction()
 
 //uint8_t BasicDump[32] ;
 
-
+// Return values:
+// 0 Still running or RunError
+// 1 Found Finish
+// 2 Found Stop
 uint32_t execOneLine()
 {
 	uint8_t opcode ;
@@ -3220,7 +4330,8 @@ uint32_t execOneLine()
 	{
 		return runError( SE_EXEC_BADLINE ) ;
 	}
-  RunTime->RunLineNumber = (opcode & 0x7F) | (*RunTime->ExecProgPtr++ << 8 ) ;
+//  RunTime->RunLastLineNumber = RunTime->RunLineNumber ;
+  RunTime->RunLineNumber = (opcode & 0x7F) | (*RunTime->ExecProgPtr++ << 7 ) ;
 //	sprintf( InputLine, "%d\n", RunTime->RunLineNumber ) ;
 //  RunTimeData = cpystr( RunTimeData, (uint8_t *) InputLine ) ;
 	do
@@ -3291,6 +4402,15 @@ uint32_t execOneLine()
 					case '%' :
 						assignType = PERCENTEQUALS ;
 					break ;
+					case '&' :
+						assignType = ANDEQUALS ;
+					break ;
+					case BITOR :
+						assignType = OREQUALS ;
+					break ;
+					case BITXOR :
+						assignType = XOREQUALS ;
+					break ;
 					default :
 //						{
 ////							uint8_t *p = RunTime->ExecProgPtr - 8 ;
@@ -3318,16 +4438,16 @@ uint32_t execOneLine()
 				{
 					if ( destType & 1 )
 					{
-						oldValue = RunTime->Arrays.byteArray[val16] ;
+						oldValue = RunTime->ByteArrayStart[val16] ;
 					}
 					else
 					{
-						oldValue = RunTime->Arrays.intArray[val16] ;
+						oldValue = RunTime->IntArrayStart[val16] ;
 					}
 				}
 				else
 				{
-					oldValue = RunTime->Variables[val16] ;
+					oldValue = RunTime->Vars.Variables[val16] ;
 				}
 				switch ( assignType )
 				{
@@ -3346,6 +4466,15 @@ uint32_t execOneLine()
 					case PERCENTEQUALS :
 						oldValue %= value ;
 					break ;
+					case ANDEQUALS :
+						oldValue &= value ;
+					break ;
+					case OREQUALS :
+						oldValue |= value ;
+					break ;
+					case XOREQUALS :
+						oldValue ^= value ;
+					break ;
 				}
 				value = oldValue ;
 			}
@@ -3353,16 +4482,16 @@ uint32_t execOneLine()
 			{
 				if ( destType & 1 )
 				{
-					RunTime->Arrays.byteArray[val16] = value ;
+					RunTime->ByteArrayStart[val16] = value ;
 				}
 				else
 				{
-					RunTime->Arrays.intArray[val16] = value ;
+					RunTime->IntArrayStart[val16] = value ;
 				}
 			}
 			else
 			{
-				RunTime->Variables[val16] = value ;
+				RunTime->Vars.Variables[val16] = value ;
 			}
 		}
 		else
@@ -3370,6 +4499,7 @@ uint32_t execOneLine()
 			switch ( opcode )
 			{
 				case IF :
+				case ELSEIF :
 					exec_if() ;
 				break ;
 
@@ -3407,58 +4537,146 @@ uint32_t execOneLine()
 	return 0 ;
 }
 
+// Return values:
+// 0 
+// 1 After begin or Still running or RunError
+// 2 Found Stop
+// 3 Script finished (unloaded)
 
-uint32_t basicExecute( uint32_t begin, uint8_t event )
+//uint16_t BasDeb1 ;
+//uint16_t BasDeb2 ;
+//uint16_t BasDeb3 ;
+//uint16_t BasDeb4 ;
+
+uint8_t LastBasicEvent[3] ;
+
+uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 {
 	uint32_t execLinesProcessed ;
 	uint32_t finished ;
+	uint32_t i ;
+	uint32_t j ;
+	j = LoadedScripts[index].offsetOfStart ;
+	i = j / 4 ;
+	RunTime = (struct t_basicRunTime *) &Program.Words[Program.Words[i]] ;
 
 	if ( begin )
 	{
-		uint32_t i ;
-		RunTime = (struct t_basicRunTime *) &Program.Words[Program.Words[0]] ;
+//		BasDeb1 = 1 ;
+//		BasicDebug8 = Program.Words[i] ;
+		RunTime->ExecProgPtr = &Program.Bytes[j+8] ;
     RunTime->RunError = 0 ;
-		RunTime->ExecProgPtr = &Program.Bytes[4] ;
 		RunTime->CallIndex = 0 ;
     RunTime->ParameterIndex = 0 ;
-		for ( i = 0 ; i < MAX_VARIABLES ; i += 1 )
+
+    j = (uint32_t *)&RunTime->Vars.Variables[0] - &Program.Words[i] ;
+		j = Program.Words[i+1] / 4 - j ;
+
+		for ( i = 0 ; i < j ; i += 1 )
 		{
-			RunTime->Variables[i] = 0 ;
+			RunTime->Vars.Variables[i] = 0 ;
 		}
 		return 1 ;
 	}
-	RunTime->Variables[0] = event ;
-	
-	RunTime->ExecProgPtr = &Program.Bytes[4] ;
-	
+
+#ifndef QT
+  if ( index == 0 )
+	{
+    if ( BasicLoadedType == BASIC_LOAD_ALONE )
+		{
+			if ( event == EVT_KEY_LONG(KEY_EXIT) )
+			{
+      	killEvents( event ) ;
+				LoadedScripts[0].loaded = 0 ;
+				BasicLoadedType = BASIC_LOAD_NONE ;
+				basicLoadModelScripts() ;
+			}
+		}
+	}
+#endif
+	if ( RunTime->ExecProgPtr != &Program.Bytes[j+8] )
+	{
+		// Resuming, not at start
+#ifndef QT
+    ScriptFlags |= SCRIPT_RESUME ;
+#endif
+    //		BasDeb4 += 1 ;
+		if ( event )
+		{
+			LastBasicEvent[index] = event ;
+			RunTime->Vars.Variables[0] = event ;
+		}
+	}
+	else
+	{
+//		BasDeb1 += 1 ;
+		if ( LastBasicEvent[index] )
+		{
+			LastBasicEvent[index] = 0 ;
+		}
+		else
+		{
+			RunTime->Vars.Variables[0] = event ;
+		}
+	}
+
+//#ifndef QT
+//uputs( (char *)"------" ) ;
+//crlf() ;
+//#endif
+	 
 	execLinesProcessed = 0 ;
-	while ( execLinesProcessed < 300 )
+	while ( execLinesProcessed < 150 )
 	{
 		finished = execOneLine() ;
+//#ifndef QT
+//p4hex( RunTime->RunLineNumber ) ;
+//uputs( (char *)" " ) ;
+//p4hex( RunTime->CallIndex ) ;
+//crlf() ;
+//#endif
+
+#ifdef QT
+		uint32_t i ;
+		for ( i = 0 ; i < 100 ; i += 1 )
+		{
+			RunTimeBuffer[i] = Program.Bytes[i] ;			
+		}
+#endif
 		if ( finished == 1 )	// Found Finish
 		{
 			finished = 3 ;
-			BasicState = BASIC_IDLE ;
-			BasicLoadedType = BASIC_LOAD_NONE ;
 #ifndef QT
+//			BasicState = BASIC_IDLE ;
+//			BasicLoadedType = BASIC_LOAD_NONE ;
       killEvents( event ) ;
+			LoadedScripts[index].loaded = 0 ;
 #endif
       break ;
 		}
 		if ( finished == 2 )
 		{
-			RunTime->ExecProgPtr = &Program.Bytes[4] ;
+			RunTime->ExecProgPtr = &Program.Bytes[j+8] ;
 			break ;
 		}
 		finished = 1 ;
 		if ( RunTime->RunError )
 		{
-			BasicState = BASIC_IDLE ;
-			BasicLoadedType = BASIC_LOAD_NONE ;
+#ifndef QT
+			LoadedScripts[index].loaded = 0 ;
+			if ( BasicLoadedType == BASIC_LOAD_ALONE )
+			{
+				BasicLoadedType = BASIC_LOAD_NONE ;
+			}
+//			BasicState = BASIC_IDLE ;
+//			BasicLoadedType = BASIC_LOAD_NONE ;
+#endif
 			break ;
 		}
 		execLinesProcessed += 1 ;
+
 	}
+//	BasDeb2 += execLinesProcessed ;
 	if ( RunTime->RunError )
 	{
 #ifdef QT			
@@ -3470,8 +4688,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event )
 	}
 	return finished ;
 }
-
-
 
 #ifndef QT			
 int32_t basicFindValueIndexByName( const char * name )
@@ -3613,137 +4829,29 @@ int32_t basicFindValueIndexByName( const char * name )
 
   return -1 ;  // not found
 }
+
+int32_t basicFindSwitchIndexByName( const char * name )
+{
+	const char *names = PSTR(SWITCHES_STR) ;
+	uint32_t i ;
+	uint32_t nameLength = *names++ ;
+
+	for ( i = 0 ; i < HSW_MAX+8 ; i += 1 )
+	{
+		if ( i == HSW_MAX )
+		{
+			names = "\003EtdEtuAtdAtuRtdRtuTtuTtd" ;
+			nameLength = *names++ ;
+		}
+    if (strMatch( names, name, nameLength ))
+		{
+			return i ;
+		}
+		names += nameLength ;
+	}
+	return -1 ;  // not found
+}
+
+
 #endif
-
-
-//// Read special character (with translations)
-//unsigned int read_special( char delim )
-//{
-//	char chr ;
-
-//	if ( ( chr = *Input_pos++ ) == delim )
-//	{
-//		String_continue = 0 ;
-//		return 0 ;
-//	}
-//	if ( chr == '\\' )
-//	{
-//		switch( chr = *Input_pos++ )
-//		{
-//			case '\0' :
-//				// Backslash at end of line
-//				String_continue = 1 ;
-//				Input_pos -= 1 ;
-//			break ;
-
-//			case 'n':
-//				/* newline */
-//				chr = 0x0a ;
-//			break ;
-
-//			case 'r':
-//				/* return */
-//				chr = 0x0d ;
-//			break ;
-
-//			case 't':
-//				/* tab */
-//				chr = 0x09 ;
-//			break ;
-
-//			case 'f' :
-//				/* formfeed */
-//				chr = 0x0c ;
-//			break ;
-
-//			case 'b':
-//				/* backspace */
-//				chr = 0x08 ;
-//			break ;
-
-//			case 'x' :
-//				/* hex value */
-//				chr = (char) get_number( 16, 2 ) ;
-//			break ;
-
-//			default:
-//				if( isnum( chr ) )
-//				{	/* octal value */
-//					Input_pos -= 1 ;
-//					chr = (char) get_number( 8, 3 ) ;
-//				}
-//			break ;
-//		}
-//	}
-//	return chr ;
-//}
-
-//// Get a number in a number base for a maximum # of digits
-//// (digits = 0 means no limit)
-//unsigned int get_number( int base, int digits )
-//{
-//	unsigned value ;
-//	char c ;
-
-//	value = 0 ;
-//	do
-//	{
-//		if ( isnum( c = *Input_pos ) )		/* convert numeric digits */
-//		{
-//			c -= '0' ;
-//		}
-//		else if(c >= 'a')				/* convert lower case alphabetics */
-//		{
-//			c -= ('a' - 10) ;
-//		}
-//		else if(c >= 'A')				/* convert upper case alphabetics */
-//		{
-//			c -= ('A' - 10);
-//		}
-//		else							/* not a valid "digit" */
-//		{
-//			break ;
-//		}
-//		if( c >= (char) base )					/* outside of base */
-//		{
-//			break ;
-//		}
-//		value = ( value * base ) + c ;		/* include in total */
-//		Input_pos += 1 ;
-//	} while( --digits )	;					/* enforce maximum digits */
-//	if ( ( *Input_pos == 'L' ) || ( *Input_pos == 'l' ) )
-//	{
-//		Input_pos += 1 ;
-//	}
-
-//	return value ;
-//}
-
-
-//			if ( isnum( *ptr ) )
-//			{
-//				// A number
-//				if ( *ptr == '0' )
-//				{
-//					base = 8 ;
-//					if ( ( *(ptr+1) == 'x' ) || ( *(ptr+1) == 'X' ) )
-//					{
-//						base = 16 ;
-//						ptr += 1 ;
-//					}
-//					else if ( ( *(ptr+1) == 'b' ) || ( *(ptr+1) == 'B' ) )
-//					{
-//						base = 2 ;
-//						ptr += 1 ;
-//					}
-//					ptr += 1 ;
-//					Input_pos = ptr ;
-//					value = get_number( base, 0 ) ;
-////					printf("----gotnumber %d", value ) ;
-//				}
-//				else
-//				{
-//					Input_pos = ptr ;
-//					value = get_number( 10, 0 ) ;
-//				}
 

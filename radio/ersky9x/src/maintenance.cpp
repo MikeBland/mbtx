@@ -186,6 +186,7 @@ uint8_t MultiType ;
 uint8_t MultiPort ;
 uint8_t MultiModule ;
 uint8_t MultiInvert ;
+uint8_t MultiStm ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
 uint32_t HexFileIndex ;
@@ -240,8 +241,10 @@ uint8_t MultiState ;
 #define SET_TX_BIT_INT() PIOC->PIO_SODR = PIO_PC15
 #else
 #ifdef PCB9XT
-#define CLEAR_TX_BIT() GPIOA->BSRRH = 0x0080
-#define SET_TX_BIT() GPIOA->BSRRL = 0x0080
+#define CLEAR_TX_BIT_EXT() GPIOA->BSRRH = 0x0080
+#define SET_TX_BIT_EXT() GPIOA->BSRRL = 0x0080
+#define CLEAR_TX_BIT_INT() GPIOA->BSRRH = 0x0400
+#define SET_TX_BIT_INT() GPIOA->BSRRL = 0x0400
 #else
 #define CLEAR_TX_BIT() GPIOA->BSRRL = 0x0080
 #define SET_TX_BIT() GPIOA->BSRRH = 0x0080
@@ -285,9 +288,24 @@ void initMultiMode()
 	}
 #endif
 #ifdef PCB9XT
-	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	EXTERNAL_RF_ON() ;
-	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+	if ( MultiPort )
+	{
+		com2_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	}
+	else
+	{
+		com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	}
+	if ( MultiModule )
+	{
+		configure_pins( PIN_INTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+		INTERNAL_RF_ON() ;
+	}
+	else
+	{
+		configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+		EXTERNAL_RF_ON() ;
+	}
 #endif
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
@@ -320,9 +338,24 @@ void stopMultiMode()
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 #endif
 #ifdef PCB9XT
-	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
-	EXTERNAL_RF_OFF() ;
-	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+	if ( MultiPort )
+	{
+		com2_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	}
+	else
+	{
+		com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	}
+	if ( MultiModule )
+	{
+		INTERNAL_RF_OFF() ;
+		configure_pins( PIN_INTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+	}
+	else
+	{
+		EXTERNAL_RF_OFF() ;
+		configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
+	}
 #endif
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
@@ -364,6 +397,21 @@ void sendMultiByte( uint8_t byte )
 	}
 #define CLEAR_TX_BIT() pioptr->PIO_CODR = bit
 #define SET_TX_BIT() pioptr->PIO_SODR = bit
+#endif
+
+#ifdef PCB9XT
+	uint32_t bit ;
+	
+	if ( MultiModule )
+	{
+		bit = 0x0400 ;
+	}
+	else
+	{
+		bit = 0x0080 ;
+	}
+#define CLEAR_TX_BIT() GPIOA->BSRRH = bit
+#define SET_TX_BIT() GPIOA->BSRRL = bit
 #endif
 
 	__disable_irq() ;
@@ -979,12 +1027,18 @@ void menuChangeId(uint8_t event)
 			IdFound = 0 ;
 			state = CHANGE_SCANNING ;
 			SendCount = 2 ;
+#if defined(PCBX9D) || defined(PCB9XT)
+			EXTERNAL_RF_ON() ;
+#endif
     break ;
     
 		case EVT_KEY_FIRST(KEY_EXIT):
 		case EVT_KEY_LONG(BTN_RE) :
      	chainMenu(menuUpdate) ;
    		killEvents(event) ;
+#if defined(PCBX9D) || defined(PCB9XT)
+			EXTERNAL_RF_OFF() ;
+#endif
     break ;
 		
 		case EVT_KEY_FIRST(KEY_UP):
@@ -1171,7 +1225,7 @@ void menuUpMulti(uint8_t event)
 {
 	TITLE( "Multi Options" ) ;
 	static MState2 mstate2 ;
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 	mstate2.check_columns(event, 4 ) ;
 #else
 	mstate2.check_columns(event, 1 ) ;
@@ -1194,7 +1248,7 @@ void menuUpMulti(uint8_t event)
 	MultiType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), MultiType, (sub==subN) ) ;
 	y += FH ;
 	subN += 1 ;
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCB9XT)
 	lcd_puts_Pleft( y, XPSTR("Module") ) ;
 	MultiModule = checkIndexed( y, XPSTR("\110\001\010ExternalInternal"), MultiModule, (sub==subN) ) ;
 	y += FH ;
@@ -1238,6 +1292,10 @@ void menuUp1(uint8_t event)
  		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
 		{
   		TITLE( "UPDATE Ext. SPort" ) ;
+		}
+		else if (UpdateItem == UPDATE_TYPE_SPORT_INT )
+		{
+  		TITLE( "UPDATE Int. XJT" ) ;
 		}
 		else
 		{
@@ -1445,6 +1503,11 @@ void menuUp1(uint8_t event)
 		 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					SportVerValid = 0 ;
+				}
+ 				else if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
 					SportVerValid = 0 ;
 				}
 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
@@ -1692,7 +1755,7 @@ void menuUp1(uint8_t event)
 			else if (UpdateItem == UPDATE_TYPE_AVR )
 			{
 				// No more display, never return, check for power off when finished
-				
+				width = 0 ;
 			}
 			else if (UpdateItem == UPDATE_TYPE_XMEGA )
 			{
@@ -1745,7 +1808,7 @@ void menuUp1(uint8_t event)
 			}
 			else		// Internal/External Sport
 			{
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 				width = sportUpdate( (UpdateItem == UPDATE_TYPE_SPORT_INT) ? SPORT_INTERNAL : SPORT_EXTERNAL ) ;
 #else
 				width = sportUpdate( SPORT_EXTERNAL ) ;
@@ -1884,9 +1947,11 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Update Avr CPU" );
-	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 6*FH, "  Update Multi" );
+	lcd_puts_Pleft( 4*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+//	lcd_puts_Pleft( 5*FH, "  Update Avr CPU" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
+	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
 
   switch(event)
@@ -1989,15 +2054,21 @@ void menuUpdate(uint8_t event)
 			}
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_AVR ;
-	      chainMenu(menuChangeId) ;
+				UpdateItem = UPDATE_TYPE_SPORT_INT ;
+	      chainMenu(menuUp1) ;
 			}
 			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+//				UpdateItem = UPDATE_TYPE_AVR ;
+	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 6*FH )
 			{
 				UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
-			if ( position == 6*FH )
+			if ( position == 7*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
@@ -2061,7 +2132,7 @@ void menuUpdate(uint8_t event)
 #ifdef PCB9XT
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
-			if ( position < 6*FH )
+			if ( position < 7*FH )
 			{
 				position += FH ;				
 			}
@@ -2516,7 +2587,7 @@ uint32_t eat( uint8_t byte )
 	uint16_t rxchar ;
 
 	time = getTmr2MHz() ;
-	while ( (uint16_t) (getTmr2MHz() - time) < 15000 )	// 7.5mS
+	while ( (uint16_t) (getTmr2MHz() - time) < 25000 )	// 12.5mS
 	{
 		if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 		{
@@ -2725,6 +2796,7 @@ uint32_t multiUpdate()
 
 		case MULTI_START :
 			initMultiMode() ;
+			MultiStm = 0 ;
 			BytesFlashed = 0 ;
 		  AllSubState = 0 ;
 			if ( MultiType )	// Hex file
@@ -2813,6 +2885,11 @@ uint32_t multiUpdate()
 				{
 					MultiPageSize = 256 ;
 				}
+				if ( ( XmegaSignature[1] == 0x55 ) && ( XmegaSignature[2] == 0xAA ) )
+				{
+					MultiPageSize = 256 ;
+					MultiStm = 1 ;
+				}
 			}
 			BlockOffset = 0 ;
 		}
@@ -2821,19 +2898,25 @@ uint32_t multiUpdate()
 		case MULTI_FLASHING :
 		{	
 			uint16_t rxchar ;
+			uint32_t addOffset ;
 			sendMultiByte( 0x55 ) ;
-			rxchar = BytesFlashed ;
+			addOffset = BytesFlashed ;
 			if ( MultiPageSize == 128 )
 			{
-				rxchar >>= 1 ;
+				addOffset >>= 1 ;
 			}
-			sendMultiByte( rxchar ) ;
-			sendMultiByte( rxchar >> 8 ) ;
+			if ( MultiStm )
+			{
+				addOffset >>= 1 ;
+				addOffset += 0x1000 ;	// Word (16-bit) address offset
+			}
+			sendMultiByte( addOffset ) ;
+			sendMultiByte( addOffset >> 8 ) ;
 			sendMultiByte( 0x20 ) ;
 			eat(0x14) ;
 			eat(0x10) ;
 			sendMultiByte( 0x64 ) ;
-			sendMultiByte( 0 ) ;
+			sendMultiByte( MultiPageSize >> 8 ) ;
 			sendMultiByte( MultiPageSize & 0x00FF ) ;
 			sendMultiByte( 0 ) ;
 			for ( i = 0 ; i < MultiPageSize ; i += 1 )
@@ -2844,13 +2927,27 @@ uint32_t multiUpdate()
 			eat(0x14) ;
 
 			time = getTmr2MHz() ;
-			while ( (uint16_t) (getTmr2MHz() - time) < 30000 )	// 15mS
+			// For the STM module we need at least 30mS
+			while ( (uint16_t) (getTmr2MHz() - time) < 40000 )	// 20mS
 			{
 				if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
 				{
 					break ;
 				}
 			}
+			if ( rxchar == 0xFFFF )
+			{
+				time = getTmr2MHz() ;
+				// For the STM module we need at least 30mS
+				while ( (uint16_t) (getTmr2MHz() - time) < 40000 )	// 20mS
+				{
+					if ( ( rxchar = getMultiFifo() ) != 0xFFFF )
+					{
+						break ;
+					}
+				}
+			}
+
 			if ( rxchar != 0x10 )
 			{
 				MultiResult = 1 ;
@@ -3046,7 +3143,7 @@ uint32_t sportUpdate( uint32_t external )
 //			startPdcUsartReceive() ;
 #endif
 			SportTimer = 5 ;		// 50 mS
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
   			EXTERNAL_RF_ON();
@@ -3055,9 +3152,6 @@ uint32_t sportUpdate( uint32_t external )
 			{
   			INTERNAL_RF_ON();
 			}
-#endif
-#ifdef PCB9XT
- 			EXTERNAL_RF_ON() ;
 #endif
 			SportState = SPORT_POWER_ON ;
 		break ;

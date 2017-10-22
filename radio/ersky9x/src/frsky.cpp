@@ -225,8 +225,9 @@ uint8_t Private_position ;
 uint8_t PrivateData[6] ;
 uint8_t InputPrivateData[12] ;
 
-
+#ifndef SMALL
 uint8_t DsmManCode[4] ;
+#endif
 uint16_t DsmABLRFH[6] ;
 uint32_t LastDsmfades ;
 uint16_t LastDsmFH[2] ;
@@ -382,6 +383,14 @@ void store_telemetry_scaler( uint8_t index, uint16_t value )
 		case 6 :
 			storeTelemetryData( FR_RBOX_STATE, value ) ;
 		break ;
+		case 7 :
+		case 8 :
+		case 9 :
+		case 10 :
+		case 11 :
+		case 12 :
+			storeTelemetryData( FR_CUST1 - 7 + index, value ) ;
+		break ;
 	}
 }
 
@@ -393,15 +402,19 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 //		FrskyVolts[battnumber] = cell ;
 //		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
 		uint32_t index ;
+#ifdef BLOCKING
 		uint32_t bit ;
 		uint32_t offset ;
+#endif
 	  index = FR_CELL1+battnumber ;
+#ifdef BLOCKING
 		offset = index >> 5 ;
 		bit = 1 << (index & 0x0000001F) ;
 		if ( g_model.LogNotExpected[offset] & bit )
 		{
 			return ;
 		}
+#endif
 		FrskyHubData[index] = cell ;
 		TelemetryDataValid[index] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
@@ -448,6 +461,7 @@ void storeRSSI( uint8_t value )
 
 void storeTelemetryData( uint8_t index, uint16_t value )
 {
+#ifdef BLOCKING
 	uint32_t bit ;
 	uint32_t offset ;
 	
@@ -457,6 +471,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 	{
 		return ;
 	}
+#endif
 	if ( index == FR_ALT_BARO )
 	{
 		value *= 10 ;
@@ -478,6 +493,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			value /= 10 ;			
 		}
 		storeAltitude( WholeAltitude + value ) ;
+		index = FR_ALT_BARO ;	// For max/min
 	}
 	
 	if ( index == FR_SPORT_ALT )
@@ -508,7 +524,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			}
       if ( index == TELEM_GPS_ALT )
       {
-         storeAltitude( FrskyHubData[TELEM_GPS_ALT] * 10 ) ;      // Copy Gps Alt instead
+         storeAltitude( FrskyHubData[TELEM_GPS_ALT] ) ;      // Copy Gps Alt instead
          index = FR_ALT_BARO ;         // For max and min
       }
 			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
@@ -614,13 +630,13 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 				g_model.numBlades = 1 ;
 			}
 			FrskyHubData[FR_RPM] = x / g_model.numBlades ;
-			TelemetryDataValid[FR_RPM] = 25 + g_model.telemetryTimeout ;
+//			TelemetryDataValid[FR_RPM] = 25 + g_model.telemetryTimeout ;
 //			FrskyHubData[FR_RPM] = x / ( g_model.Mavlink == 0 ? g_model.numBladesb : g_model.numBlades * 30) ;
 		}
 		if ( index == FR_V_AMPd )
 		{
 			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
-			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
+			TelemetryDataValid[FR_VOLTS] = 25 + g_model.telemetryTimeout ;
 		}
 	}	
 }
@@ -1275,9 +1291,11 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifndef SMALL
 				DsmDbgCounters[2] += 1 ;
 #endif
-				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;	// Handles FAS Offset
+//				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
- 				FrskyHubData[FR_AMP_MAH] = ivalue ;
+				storeTelemetryData( FR_AMP_MAH, ivalue ) ;
+// 				FrskyHubData[FR_AMP_MAH] = ivalue ;
 			break ;
 
 			case DSM_AIRSPEED :
@@ -1292,11 +1310,14 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				DsmDbgCounters[4] += 1 ;
 #endif
 				// check units (0.01G)
-				FrskyHubData[FR_ACCX] = ivalue ;
+				storeTelemetryData( FR_ACCX, ivalue ) ;
+//				FrskyHubData[FR_ACCX] = ivalue ;
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
-				FrskyHubData[FR_ACCY] = ivalue ;
+				storeTelemetryData( FR_ACCY, ivalue ) ;
+//				FrskyHubData[FR_ACCY] = ivalue ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
-				FrskyHubData[FR_ACCZ] = ivalue ;
+				storeTelemetryData( FR_ACCZ, ivalue ) ;
+//				FrskyHubData[FR_ACCZ] = ivalue ;
 			break ;
 			
 			case DSM_VTEMP1 :
@@ -1313,14 +1334,17 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				{
 					ivalue = 120000000L / g_model.numBlades / (uint16_t)ivalue ;
 				}
-				FrskyHubData[FR_RPM] = ivalue ;
+				storeTelemetryData( FR_RPM, ivalue ) ;
+//				FrskyHubData[FR_RPM] = ivalue ;
 				// volts
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
 //				FrskyHubData[FR_A2_COPY] = ivalue ;
-				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;
+//				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				// temp
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
-				FrskyHubData[FR_TEMP1] = (ivalue-32)*5/9 ;
+				storeTelemetryData( FR_TEMP1, (ivalue-32)*5/9 ) ;
+//				FrskyHubData[FR_TEMP1] = (ivalue-32)*5/9 ;
 
 //#ifdef ASSAN
 //#ifdef PCBSKY
@@ -1427,10 +1451,12 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		// End debug code
 #endif
 		 
+#ifndef SMALL
 		DsmManCode[0] = *packet++ ;
 		DsmManCode[1] = *packet++ ;
 		DsmManCode[2] = *packet++ ;
 		DsmManCode[3] = *packet ;
+#endif
 	}
 	else if (type == 0 )
 	{
@@ -1462,7 +1488,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 
 
-  dataState = frskyDataIdle ;
+//  dataState = frskyDataIdle ; // Done after call
 
 }
 
@@ -1632,7 +1658,7 @@ void processSportPacket()
 
 				case BETA_ALT_ID_8 :
 					value = (int32_t)value >> 8 ;
-					value = (int32_t)value / 10 ;
+					value = (int32_t)value ;
 					storeTelemetryData( FR_SPORT_ALT, value ) ;
 				break ;
 
@@ -1739,7 +1765,7 @@ void processSportPacket()
 				break ;
 
 				case GPS_ALT_ID_8 :
-					value = (int32_t)value / 100 ;
+					value = (int32_t)value / 10 ;
 					storeTelemetryData( FR_SPORT_GALT, value ) ;
 				break ;
 				 
@@ -1857,13 +1883,15 @@ void processSportPacket()
 							xvalue = value & 0x000F ;	// #sats
 							xvalue *= 10 ;
 							xvalue += (value >>4) & 0x0003 ;	// GPS Fix mode
-							FrskyHubData[FR_TEMP2] = xvalue ;
+							storeTelemetryData( FR_TEMP2, xvalue ) ;
+//							FrskyHubData[FR_TEMP2] = xvalue ;
 							xvalue = (value >> 7) & 0x7F ;
 							if ( value & 0x0000040 )
 							{
 								xvalue *= 10 ;
 							}
-							FrskyHubData[FR_GPS_HDOP] = xvalue * 10 ;
+							storeTelemetryData( FR_GPS_HDOP, xvalue * 10 ) ;
+//							FrskyHubData[FR_GPS_HDOP] = xvalue * 10 ;
 							xvalue = (value >> 24) & 0x7F ;
 							value >>= 22 ;
 							value &= 0x03 ;
@@ -1938,7 +1966,7 @@ void processSportPacket()
 						else if ( t == ARDUP_HOME_ID )
 						{
 							uint16_t xvalue ;
-							xvalue = value >> 25 ;
+							xvalue = ( value >> 12 ) & 0x7F ;		// 7 bits
 							xvalue *= 3 ;
 							storeTelemetryData( FR_HOME_DIR, xvalue ) ;
 						}
@@ -1953,6 +1981,8 @@ void processSportPacket()
 
 
 // FE?
+//#define FS_ID_SNR               0xfa
+//#define FS_ID_NOISE             0xfb
 void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 {
   frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
@@ -1979,7 +2009,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
-				storeRSSI( value ) ;
+				storeRSSI( 135-value ) ;
 			break ;
 		}
 		packet += 2 ;
@@ -2154,6 +2184,7 @@ void frsky_receive_byte( uint8_t data )
 							{
 								processAFHDS2Packet( frskyRxBuffer, numbytes ) ;
 								numbytes = 0 ;
+        				dataState = frskyDataIdle;
 							}
 						}
 						else // DSM
@@ -2162,6 +2193,7 @@ void frsky_receive_byte( uint8_t data )
 							{
 								processDsmPacket( frskyRxBuffer, numbytes ) ;
 								numbytes = 0 ;
+        				dataState = frskyDataIdle;
 							}
 						}
 					}
@@ -2641,11 +2673,11 @@ void FRSKY_Init( uint8_t brate )
 		}
 	}
 #ifdef PCBSKY
-	if ( g_model.com2Function == COM2_FUNC_FMS )
-	{
-		com2_Configure( 19200, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-		return ;
-	}
+//	if ( g_model.com2Function == COM2_FUNC_FMS )
+//	{
+//		com2_Configure( 19200, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+//		return ;
+//	}
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
 		com2_Configure( 115200, SERIAL_NORM, 0 ) ;
@@ -3024,6 +3056,7 @@ void resetTelemetry()
 	Frsky_Amp_hour_prescale = 0 ;
 	FrskyHubData[FR_AMP_MAH] = 0 ;
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
+	FrskyHubMaxMin.hubMax[FR_ALT_BARO] = -5000 ;
 	PixHawkCapacity = 0 ;
 }
 
@@ -3182,6 +3215,11 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	return type ;
 }
 
+//#ifdef PCB9XT
+//uint32_t DebugCom2Out ;
+//uint32_t DebugCom2Diff ;
+//#endif
+
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
 {
@@ -3226,6 +3264,7 @@ void check_frsky( uint32_t fivems )
 				}
 			}
 			else
+			
 			{
 				value &= 0x000000FF ;
 				if ( value == 0x000000DF )
@@ -3333,7 +3372,15 @@ void check_frsky( uint32_t fivems )
 			while ( ( rxchar = rxCom2() ) != 0xFFFF )
 			{
 				frsky_receive_byte( rxchar ) ;
+//#ifdef PCB9XT
+//				DebugCom2Out += 1 ;
+//#endif
 			}
+//#ifdef PCB9XT
+//extern uint32_t DebugCom2In ;
+//			DebugCom2Diff = DebugCom2In - DebugCom2Out ;
+//#endif
+
 		}
 #endif
 	}
@@ -3764,20 +3811,74 @@ void processCrossfireTelemetryFrame()
   uint32_t value ;
   switch(id)
 	{
-//    case GPS_ID:
-//      if (getCrossfireTelemetryValue<4>(3, value))
+    case CRSF_GPS_ID:
+      if (getCrossfireTelemetryValue<4>(3, value))
+			{
+				uint8_t code = 'N' ;
+				int32_t ivalue = value ;
+				if ( ivalue < 0 )
+				{
+					code = 'S' ;
+					ivalue = -ivalue ;
+				}
+				value = ivalue ;
 //        processCrossfireTelemetryValue(GPS_LATITUDE_INDEX, value/10);
-//      if (getCrossfireTelemetryValue<4>(7, value))
+				value /= 10 ;	// deg * 1000 000
+				value *= 6 ;		// min * 100 000
+				value /= 1000 ;	// min * 1000
+				uint16_t bp ;
+				uint16_t ap ;
+				uint32_t temp ;
+				temp = value / 10000 ;
+				bp = (temp/ 60 * 100) + (temp % 60) ;
+	      ap = value % 10000;
+				storeTelemetryData( FR_GPS_LAT, bp ) ;
+				storeTelemetryData( FR_GPS_LATd, ap ) ;
+				storeTelemetryData( FR_LAT_N_S, code ) ;
+			}
+      if (getCrossfireTelemetryValue<4>(7, value))
+			{
+				uint8_t code = 'E' ;
+				int32_t ivalue = value ;
+				if ( ivalue < 0 )
+				{
+					code = 'W' ;
+					ivalue = -ivalue ;
+				}
+				value = ivalue ;
 //        processCrossfireTelemetryValue(GPS_LONGITUDE_INDEX, value/10);
+				value /= 10 ;	// deg * 1000 000
+				value *= 6 ;		// min * 100 000
+				value /= 1000 ;	// min * 1 000
+				uint16_t bp ;
+				uint16_t ap ;
+				uint32_t temp ;
+				temp = value / 10000 ;
+				bp = (temp/ 60 * 100) + (temp % 60) ;
+	      ap = value % 10000;
+				storeTelemetryData( FR_GPS_LONG, bp ) ;
+				storeTelemetryData( FR_GPS_LONGd, ap ) ;
+				storeTelemetryData( FR_LONG_E_W, code ) ;
+			}	
 //      if (getCrossfireTelemetryValue<2>(11, value))
 //        processCrossfireTelemetryValue(GPS_GROUND_SPEED_INDEX, value);
-//      if (getCrossfireTelemetryValue<2>(13, value))
+      if (getCrossfireTelemetryValue<2>(13, value))
+			{
 //        processCrossfireTelemetryValue(GPS_HEADING_INDEX, value);
-//      if (getCrossfireTelemetryValue<2>(15, value))
+					storeTelemetryData( FR_COURSE, value ) ;
+			}
+      if (getCrossfireTelemetryValue<2>(15, value))
+			{
 //        processCrossfireTelemetryValue(GPS_ALTITUDE_INDEX,  value - 1000);
-//      if (getCrossfireTelemetryValue<1>(17, value))
+				storeTelemetryData( FR_SPORT_GALT, value - 1000 ) ;
+				
+			}
+      if (getCrossfireTelemetryValue<1>(17, value))
+			{
 //        processCrossfireTelemetryValue(GPS_SATELLITES_INDEX, value);
-//    break;
+				
+			}
+    break;
 
     case CRSF_LINK_ID :
       frskyStreaming = FRSKY_TIMEOUT10ms ;
@@ -3829,14 +3930,23 @@ void processCrossfireTelemetryFrame()
 //        processCrossfireTelemetryValue(BATT_CAPACITY_INDEX, value);
     break ;
 
-//    case ATTITUDE_ID:
-//      if (getCrossfireTelemetryValue<2>(3, value))
+    case CRSF_ATTITUDE_ID:
+      if (getCrossfireTelemetryValue<2>(3, value))
+			{
 //        processCrossfireTelemetryValue(ATTITUDE_PITCH_INDEX, value/10);
-//      if (getCrossfireTelemetryValue<2>(5, value))
+				storeTelemetryData( FR_ACCX, value / 10 ) ;
+			}	
+      if (getCrossfireTelemetryValue<2>(5, value))
+			{
 //        processCrossfireTelemetryValue(ATTITUDE_ROLL_INDEX, value/10);
-//      if (getCrossfireTelemetryValue<2>(7, value))
+				storeTelemetryData( FR_ACCY, value / 10 ) ;
+			}	
+      if (getCrossfireTelemetryValue<2>(7, value))
+			{
 //        processCrossfireTelemetryValue(ATTITUDE_YAW_INDEX, value/10);
-//    break;
+				storeTelemetryData( FR_ACCZ, value / 10 ) ;
+			}	
+    break;
 
 //    case FLIGHT_MODE_ID:
 //    {

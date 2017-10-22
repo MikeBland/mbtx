@@ -124,11 +124,31 @@ QString TelemItems[] = {
 	,"Cel4"
 	,"Cel5"
 	,"Cel6"
+	,"RBv1"
+	,"RBa1"
+	,"RBv2"
+	,"RBa2"
+	,"RBm1"
+	,"RBm2"
+	,"RBSV"
+	,"RBST"
+	,"Cel7"
+	,"Cel8"
+	,"Cel9"
+	,"Cl10"
+	,"Cl11"
+	,"Cl12"
+	,"Cus1"
+	,"Cus2"
+	,"Cus3"
+	,"Cus4"
+	,"Cus5"
+	,"Cus6"
 #endif
 } ;
 
 #ifdef SKY
-#define NUM_TELEM_ITEMS	54
+#define NUM_TELEM_ITEMS	74
 #else
 #define NUM_TELEM_ITEMS	42
 #endif
@@ -227,10 +247,12 @@ QString ExtraGvarItems[] = {
 #ifdef V2
 #define NUM_HW_ITEMS	12
 QString HardwareItems[] = {
-	"NONE",
+  "NONE",
 	"PB7 ",
 	"PC0 ",
 	"PC4 ",
+  "PC6 ",
+  "PC7 ",
 	"PG2 ",
 	"PG5 ",
 	"EXT1",
@@ -635,6 +657,14 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 			*p++ = HSW_Ele6pos4 ;
 			*p++ = HSW_Ele6pos5 ;
 		}
+		if ( map & USE_PB1 )
+		{
+			*p++ = HSW_Pb1 ;
+		}
+		if ( map & USE_PB2 )
+		{
+			*p++ = HSW_Pb2 ;
+		}
 	}
 	else
 	{
@@ -733,6 +763,14 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 			*p++ = HSW_Pb4 ;
 		}
 	}
+	*p++ = HSW_Ttrmup ;
+	*p++ = HSW_Ttrmdn ;
+  *p++ = HSW_Rtrmup ;
+  *p++ = HSW_Rtrmdn ;
+  *p++ = HSW_Atrmup ;
+  *p++ = HSW_Atrmdn ;
+	*p++ = HSW_Etrmup ;
+	*p++ = HSW_Etrmdn ;
 	for ( uint32_t i = 10 ; i <=33 ; i += 1  )
 	{
 		*p++ = i ;	// Custom switches
@@ -741,11 +779,11 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 	MaxSwitchIndex[x] = p - switchMapTable[x] ;
   *++p = max_switch+1 ;
   *++p = max_switch+2 ;
-  *++p = max_switch+3 ;
-  *++p = max_switch+4 ;
-  *++p = max_switch+5 ;
+//  *++p = max_switch+3 ;
+//  *++p = max_switch+4 ;
+//  *++p = max_switch+5 ;
 
-  for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex[x]+5 ; i += 1  )
+  for ( uint32_t i = 0 ; i <= (uint32_t)MaxSwitchIndex[x]+2 ; i += 1  )
 	{
 		switchUnMapTable[x][switchMapTable[x][i]] = i ;
 	}
@@ -1457,7 +1495,7 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
     case 1:
     	{
     	  uint32_t value = val ;
-    	  uint8_t times2 ;
+        uint8_t times2 = 0 ;
 #ifdef SKY
         SKYFrSkyChannelData *fd ;
 #else
@@ -1760,10 +1798,10 @@ QString getSWName(int val, int extra )
 	{
 		sw = -val ;
 	}
-  if ( sw >= limit )
-	{
-		sw -= 10 ;
-	}
+//  if ( sw >= limit )
+//	{
+//		sw -= 2 ;
+//	}
 #else
 	int sw = val ;
 	if ( sw < 0 )
@@ -1837,7 +1875,7 @@ int getAndSwitchCbValue( QComboBox *b )
 int getSwitchCbValueShort( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
 //	if ( eepromType )
 //	{
@@ -2192,7 +2230,30 @@ void x9dPopulateSwitchAndCB(QComboBox *b, int value=0)
 }
 
 
-#ifndef V2
+#ifdef SKY
+
+int32_t andSwitchMap( int32_t x )
+{
+	if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
+	{
+		x += 1 ;
+	}
+	if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
+	{
+		x -= 1 ;
+	}
+	if ( x == 9+NUM_SKYCSW+1 )
+	{
+		x = 9 ;
+	}
+	if ( x == -(9+NUM_SKYCSW+1) )
+	{
+		x = -9 ;
+	}
+  x = switchUnMap(x, 0 ) ;
+	return x ;	
+}
+
 void populateSwitchAndCB(QComboBox *b, int value=0)
 {
 	char name[6] ;
@@ -2258,26 +2319,7 @@ void populateSwitchAndCB(QComboBox *b, int value=0)
 	}
 #endif
 #ifdef SKY
-	int x = value ;
-	if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
-	{
-		x += 1 ;
-	}
-	if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
-	{
-		x -= 1 ;
-	}
-	if ( x == 9+NUM_SKYCSW+1 )
-	{
-		x = 9 ;
-	}
-	if ( x == -(9+NUM_SKYCSW+1) )
-	{
-		x = -9 ;
-	}
-  x = switchUnMap(x, 0 ) ;
-
-    b->setCurrentIndex(x+MaxSwitchIndex[0]-1) ;
+    b->setCurrentIndex(andSwitchMap( value )+MaxSwitchIndex[0]-1) ;
 #else
     b->setCurrentIndex(value);//+MAX_DRSWITCH-1);
 #endif
@@ -2376,11 +2418,16 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
 
 
 QString SafetyType[] = {"S","A","V", "X"};
+#ifndef V2
 QString VoiceType[] = {"ON", "OFF", "BOTH", "15Secs", "30Secs", "60Secs", "Varibl"} ;
+#else
+QString VoiceType[] = {"ON", "OFF", "BOTH", "ALL", "ONCE" } ;
+#endif
 
 void populateSafetyVoiceTypeCB(QComboBox *b, int type, int value=0)
 {
-    b->clear();
+  b->clear();
+#ifndef V2
 		if ( type == 0 )
 		{
     	for(int i= 0 ; i<=3; i++)
@@ -2395,6 +2442,24 @@ void populateSafetyVoiceTypeCB(QComboBox *b, int type, int value=0)
     	b->setCurrentIndex(value);
     	b->setMaxVisibleItems(7);
 		}
+#else
+	if ( type == 0 )
+	{
+	  b->addItem("Safety") ;
+  	b->addItem("Sticky") ;
+   	b->setCurrentIndex(value) ;
+	  b->setMaxVisibleItems(2) ;
+	}
+	else
+	{
+   	for(int i= 0 ; i<=4; i++)
+		{
+       b->addItem(VoiceType[i]);
+		}
+   	b->setCurrentIndex(value);
+   	b->setMaxVisibleItems(5);
+	}
+#endif
 }
 
 #ifndef V2
@@ -2643,7 +2708,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
     {
         QString str = SRCP_STR;
 #ifdef SKY
-        if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
+        if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_QX7 ) )	// Taranis
 				{
 					if ( idx == 7 )
 					{
@@ -2836,7 +2901,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 #ifdef SKY    
 uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
-  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
+  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_QX7 ) )	// Taranis
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{

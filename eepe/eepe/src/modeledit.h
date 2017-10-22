@@ -112,10 +112,15 @@ private:
     QSpinBox  * safetySwitchValue[NUM_CHNOUT+EXTRA_VOICE_SW];
     QComboBox * safetySwitchSwtch[NUM_CHNOUT+EXTRA_VOICE_SW];
 		QComboBox * safetySwitchType[NUM_CHNOUT+EXTRA_VOICE_SW];
-    QComboBox * safetySwitchAlarm[NUM_CHNOUT+EXTRA_VOICE_SW];
+#ifdef V2
+		QComboBox *voiceSwitchswtch[8] ;
+		QComboBox *voiceSwitchMode[8] ;
+		QSpinBox  *voiceSwitchvalue[8] ;
+#else    
+		QComboBox * safetySwitchAlarm[NUM_CHNOUT+EXTRA_VOICE_SW];
 		QCheckBox *safetySwitchGvar[NUM_CHNOUT+EXTRA_VOICE_SW] ;
 		QComboBox *safetySwitchGindex[NUM_CHNOUT+EXTRA_VOICE_SW] ;
-    
+#endif    
 		QSpinBox *expoDrSpin[4][3][2][2] ;
     QComboBox *expoDrVal[4][3][2][2] ;
 		QCheckBox *expoDrGvar[4][3][2][2] ;
@@ -275,6 +280,7 @@ private slots:
     void limitAuto();
     void switchesEdited();
     void safetySwitchesEdited();
+    void voiceSwitchesEdited();
     void expoEdited();
     void mixesEdited();
     void heliEdited();
@@ -340,6 +346,11 @@ private slots:
 		void on_throttleOffCB_currentIndexChanged(int index) ;
 		void on_useCustomStickNamesChkb_toggled(bool checked) ;
 
+		void on_T1MinBeepChkB_toggled(bool checked) ;
+		void on_T1BeepdownChkB_toggled(bool checked) ;
+		void on_T2MinBeepChkB_toggled(bool checked) ;
+		void on_T2BeepdownChkB_toggled(bool checked) ;
+
 		void getModelSwitchDefPos(int i, bool val) ;
     void on_switchDefPos_1_stateChanged(int );
     void on_switchDefPos_2_stateChanged(int );
@@ -349,6 +360,12 @@ private slots:
     void on_switchDefPos_6_stateChanged(int );
     void on_switchDefPos_7_stateChanged(int );
     void on_switchDefPos_8_stateChanged(int );
+		void on_SwitchDefSA_valueChanged ( int ) ;
+		void on_SwitchDefSB_valueChanged ( int ) ;
+		void on_SwitchDefSC_valueChanged ( int ) ;
+		void on_SwitchDefSD_valueChanged ( int ) ;
+		void on_SwitchDefSE_valueChanged ( int ) ;
+		void on_SwitchDefSG_valueChanged ( int ) ;
 
 		void voiceAdd() ;
 		void voiceRemove() ;

@@ -40,6 +40,7 @@
 
 #ifdef PCBSKY
 #include "board.h"
+#define CardIsConnected() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
 #endif
 #ifdef PCBX9D
 #include "X9D/stm32f2xx.h"

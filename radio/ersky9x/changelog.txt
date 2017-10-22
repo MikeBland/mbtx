@@ -10,7 +10,14 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 28-Feb-2017  MPB (r221)
+CHANGELOG: 14-Oct-2017  MPB (r221)
+Add "welcome" voice message options
+Main display now shows time and volume
+USB Joystick now available on Atmel based boards
+Fix baudrate bug when using 9XR-PRO DSM module
+Add 8 Global voice alerts	
+Fix GPS altitude scaling
+Add Update internal XJT to 9Xtreme (untested)	
 New editing method for custom telemetry screen
 Fix search path for Helptel file
 Extend to scalers source, voice alerts source and mix source
@@ -24,14 +31,66 @@ Fix X9E switches bug
 Improve CVLT and CTOT operation
 Enlarge "multi.txt" text buffer.
 Support MULTI bind changes
-Add 8 extra channels and 16 extra mixers
 Add 8 more channels and 16 more mixers
 Support FrSky Taranis QX7
 Improve text editing operation
 Fix trim bug when using Heli mixes only
 Allow mix weight up to 250
+Allow mix offset up to 250
 Allow A1/A2 scaling to 1000
 Remove FrSky specific alarms for A1/A2
+Fix "model overwrite bug"
+Vario tone enhancements
+Stop background music on model load
+Fix model move bug on SKY/AR9X/PRO/9XT
+Fix model move bug on Taranis
+Vario delay fix
+Allow move of empty slot
+Add "flash multi module" feature in maintenance mode
+Add telemetry timeout setting in logging menu
+Add 'Orange' Multi module flashing
+Fix 'PRO needing Com 1 invert set correctly
+Fix timeout when flashing large multi files
+Allow .hex files for flashing multi module
+Increase start timeout on flashing multi
+Fix encoder button problem in SKY bootloader
+Remove test screen showing image
+Attempt to improve reading of "Multi.txt"
+Multi protocol display always shows all 8 types
+Add channel output bar at top of mixers menu
+Make X7 and X9E wait for the power button release
+SKY/PRO/AR9X handle Multi serial update on internal module
+Improve encoder button handling.
+Support encoder in bootloader and maintenance mode
+Support ARM-M4 processor
+Make bootloader on SKY boards handle SAM4S8 CPU
+Better support for encoder button when editing mix source
+Atmel based boards support inversion for COM2
+Multi module flashing supported for internal module
+Support for Horus
+FIX XJT FAILSAFE BUG - Check CUSTOM FAILSAFE SETTING
+Crossfire protocol and telemetry on 9XR-PRO
+Add simple (Basic) script support
+Fix 9Xtreme serial "overrun" errors
+Fix overrun bug on COM2 for SKY/AR9X/9XR-PRO	
+Fix FasV problem
+Fix missing "Custom Check" option
+Change GPS default display format
+Add support for flashing STM Multi module
+Scalers support "mod" and "dest"
+Add delay option to logical switches
+New logical switch editing menu for testing
+Speed up EEPROM access on Taranis
+SKY/PRO - add COM2<->BT + telemetry option	
+Fix Heli trim bug
+Some changes to Multi AFHDS2A telemetry	
+Extend "Update Multi" timeout.	
+Allow multiple scripts
+Extend telemetry timeout setting in logging menu	
+Add Multi auto telemetry detection	
+Fix bug in flashing AVR multi module	
+Fix bug in setting fuses on 'Orange' multi module
+First 6 CRSF link data items put into Cus1-Cus6 telemetry items for testing.	
 
 ******************************************
 CHANGELOG: 04-Dec-2016  MPB (r220)

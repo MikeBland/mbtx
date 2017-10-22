@@ -786,6 +786,7 @@ const char SysVoiceNames[][VOICE_NAME_SIZE+1] =
 	"CST_WARN",
 	"SHUTDOWN",
 	"TRN_LOST",
+	"KMS_HOUR"
 } ;
 
 void putSystemVoice( uint16_t sname, uint16_t value )

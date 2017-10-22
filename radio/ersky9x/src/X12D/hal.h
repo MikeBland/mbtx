@@ -407,5 +407,33 @@
   #define BL_TIMER_FREQ                 (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2)
 #endif
 
+// Bluetooth
+#if defined(PCBX12D)
+  #define BT_RCC_APB2Periph             RCC_APB2Periph_USART6
+  #define BT_USART                      USART6
+  #define BT_GPIO_AF                    GPIO_AF_USART6
+  #define BT_USART_IRQn                 USART6_IRQn
+  #define BT_GPIO_TXRX                  GPIOG
+  #define BT_TX_GPIO_PIN                GPIO_Pin_14 // PG.14
+  #define BT_RX_GPIO_PIN                GPIO_Pin_9  // PG.09
+  
+	#define PROT_BT_RCC_AHB1Periph        (RCC_AHB1Periph_GPIOI | RCC_AHB1Periph_GPIOG)
+  #define PROT_BT_EN_GPIO               GPIOI
+  #define PROT_BT_EN_GPIO_PIN           GPIO_Pin_10 // PI.10
+  
+	#define BT_RCC_AHB1Periph 	          (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOG)
+  #define BT_EN_GPIO      	            GPIOA
+  #define BT_EN_GPIO_PIN	              GPIO_Pin_6 // PA.06
+  
+	#define BT_BRTS_GPIO                  GPIOG
+  #define BT_BRTS_GPIO_PIN              GPIO_Pin_10 // PG.10
+  #define BT_BCTS_GPIO                  GPIOG
+  #define BT_BCTS_GPIO_PIN              GPIO_Pin_11 // PG.11
+  #define BT_TX_GPIO_PinSource          GPIO_PinSource14
+  #define BT_RX_GPIO_PinSource          GPIO_PinSource9
+#endif
+
+
+
 
 #endif // _HAL_H_

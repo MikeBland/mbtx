@@ -99,8 +99,8 @@ struct t_radioData
 	uint8_t getSwitchSource( uint8_t xsw ) ;
 	void setMaxSwitchIndex() ;
 	QString getMappedSWName(int val, int eepromType ) ;
-	void populateSwitchCB(QComboBox *b, int value, int type ) ;
-	int getSwitchCbValue( QComboBox *b, int eepromType ) ;
+	void populateSwitchCB(QComboBox *b, int value, int type, int noends ) ;
+  int getSwitchCbValue( QComboBox *b, int eepromType, int noends ) ;
 	void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int modelVersion) ;
 	void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType ) ;
 	int getTimerSwitchCbValue( QComboBox *b, int eepromType ) ;

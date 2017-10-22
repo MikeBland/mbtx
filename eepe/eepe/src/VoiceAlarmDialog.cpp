@@ -16,7 +16,9 @@ VoiceAlarmDialog::VoiceAlarmDialog(QWidget *parent, VoiceAlarmData *invad, int e
 	vad = invad ;
 #ifdef V2
   rData->populateSourceCB( ui->SourceCB, stickmode, 1, vad->source, modelVersion ) ; // , eeType ) ;
-	rData->populateSwitchCB( ui->SwitchCB, vad->swtch, eeType ) ;
+	rData->populateSwitchCB( ui->SwitchCB, vad->swtch, eeType, 0 ) ;
+	ui->RateCB->setItemText( 3, "ALL" ) ;
+	ui->RateCB->addItem( "ONCE" ) ;
 #else
   populateSourceCB( ui->SourceCB, stickmode, 1, vad->source, modelVersion ) ; // , eeType ) ;
 	populateSwitchCB( ui->SwitchCB, vad->swtch, eeType ) ;
@@ -117,7 +119,7 @@ void VoiceAlarmDialog::updateDisplay()
 void VoiceAlarmDialog::valuesChanged()
 {
 #ifdef V2
-	vad->swtch = rData->getSwitchCbValue( ui->SwitchCB, leeType ) ;
+	vad->swtch = rData->getSwitchCbValue( ui->SwitchCB, leeType, 0 ) ;
 #else
 	vad->swtch = getSwitchCbValue( ui->SwitchCB, leeType ) ;
 #endif

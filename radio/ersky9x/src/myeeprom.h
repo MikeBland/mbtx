@@ -51,6 +51,7 @@
 #define	NUM_VOICE		8
 #define NUM_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
+#define NUM_GLOBAL_VOICE_ALARMS 8
 
 #define NUM_GVAR_ADJUST		8
 #define EXTRA_GVAR_ADJUST	12
@@ -148,6 +149,26 @@ PACK(typedef struct t_btDevice {
   uint8_t  address[6] ;
   uint8_t  name[8] ;
 }) btDeviceData ;
+
+typedef struct t_voiceAlarm
+{
+  uint8_t source ;
+	uint8_t func;
+  int8_t  swtch ;
+	uint8_t rate ;
+	uint8_t fnameType:3 ;
+	uint8_t haptic:2 ;
+	uint8_t vsource:2 ;
+	uint8_t mute:1 ;
+	uint8_t delay ;
+  int16_t  offset ;		//offset
+	union
+	{
+		int16_t vfile ;
+		uint8_t name[8] ;
+	} file ;
+} VoiceAlarmData ;
+
 
 PACK(typedef struct t_EEGeneral {
   uint8_t   myVers;
@@ -258,8 +279,8 @@ PACK(typedef struct t_EEGeneral {
 #else
 	uint16_t SixPositionCalibration[6] ;
 #endif
-	uint8_t		pb3source ;
-	uint8_t		pb4source ;
+	uint8_t	pb3source ;
+	uint8_t	pb4source ;
 	uint8_t	extraPotsSource[4] ;
 	uint8_t btComPort ;
 	uint8_t gpsFormat:1 ;
@@ -273,7 +294,10 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;
 	uint8_t potDetents ;
-	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
+	VoiceAlarmData gvad[NUM_GLOBAL_VOICE_ALARMS] ;
+	uint8_t welcomeType ;
+	uint8_t welcomeFileName[8] ;
+	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
 
@@ -483,7 +507,7 @@ PACK(typedef struct te_CSwData { // Custom Switches data
   int8_t  v2; 		//offset
 	uint8_t func;
 	int8_t andsw;
-	uint8_t res ;
+	uint8_t bitAndV3 ;
 }) SKYCSwData;
 
 PACK(typedef struct te_SafetySwData { // Safety Switches data
@@ -591,25 +615,6 @@ PACK(typedef struct t_dsmLink
   uint8_t sourceCritical;
 	uint8_t levelCritical ;
 }) DsmLinkData ;
-
-typedef struct t_voiceAlarm
-{
-  uint8_t source ;
-	uint8_t func;
-  int8_t  swtch ;
-	uint8_t rate ;
-	uint8_t fnameType:3 ;
-	uint8_t haptic:2 ;
-	uint8_t vsource:2 ;
-	uint8_t mute:1 ;
-	uint8_t delay ;
-  int16_t  offset ;		//offset
-	union
-	{
-		int16_t vfile ;
-		uint8_t name[8] ;
-	} file ;
-} VoiceAlarmData ;
 
 typedef struct t_gvarAdjust
 {
@@ -863,6 +868,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdleScale ;
 	uint8_t switchDelay[NUM_SKYCSW] ;
 	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
+	uint8_t backgroundScript[8] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

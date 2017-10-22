@@ -267,12 +267,14 @@ void store_hub_data( uint8_t index, uint16_t value )
 {
 	if ( index == FR_ALT_BARO )
 	{
-		value *= 10 ;
+		int16_t val = (int16_t)value ;
+		val *= 10 ;
 		if ( AltitudeDecimals )
 		{
-			WholeAltitude = value ;
+			WholeAltitude = val ;
 			index = FR_TRASH ;
 		}
+		value = val ;
 	}
 	if ( index == FR_ALT_BAROd )
 	{
@@ -287,12 +289,13 @@ void store_hub_data( uint8_t index, uint16_t value )
 			val /= 10 ;			
 		}
 		FrskyHubData[FR_ALT_BARO] = WholeAltitude + val ;
+		index = FR_ALT_BARO ;         // For max and min
 	}
 
 	if ( index == FR_SPORT_ALT )
 	{
-		index = FR_ALT_BARO ;         // For max and min
 		FrskyHubData[FR_ALT_BARO] = value ;
+		index = FR_ALT_BARO ;         // For max and min
 	}
 	
 //#if defined(CPUM128) || defined(CPUM2561)
@@ -1996,6 +1999,7 @@ void resetTelemetry()
 	FrskyHubData[FR_AMP_MAH] = 0 ;
 	FrskyBattCells = 0 ;
   memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
+	FrskyHubMaxMin.hubMax[FR_ALT_BARO] = -5000 ;
 }
 
 //void current_check( uint8_t i )

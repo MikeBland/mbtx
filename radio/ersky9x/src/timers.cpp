@@ -215,9 +215,9 @@ extern "C" void TC2_IRQHandler()
 
 
 
-// Starts TIMER0 at full speed (MCK/2) for delay timing
-// @ 36MHz this is 18MHz
-// This was 6 MHz, we may need to slow it to TIMER_CLOCK2 (MCK/8=4.5 MHz)
+// Starts TIMER0 at speed MCK/8 for delay timing
+// @ 64MHz this is 8MHz
+// @120MHz this is 15MHz
 void init_hw_timer()
 {
   register Tc *ptc ;
@@ -230,7 +230,7 @@ void init_hw_timer()
 	ptc->TC_CHANNEL[0].TC_CMR = 0x00008001 ;	// Waveform mode MCK/8 for 36MHz osc.(Upset be write below)
 	ptc->TC_CHANNEL[0].TC_RC = 0xFFF0 ;
 	ptc->TC_CHANNEL[0].TC_RA = 0 ;
-	ptc->TC_CHANNEL[0].TC_CMR = 0x00008040 ;	// 0000 0000 0000 0000 1000 0000 0100 0000, stop at regC, 18MHz
+	ptc->TC_CHANNEL[0].TC_CMR = 0x00008041 ;	// 0000 0000 0000 0000 1000 0000 0100 0000, stop at regC, 18MHz
 	ptc->TC_CHANNEL[0].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
 }
 
@@ -1134,8 +1134,8 @@ void init_trainer_ppm()
 	TIM3->SR &= ~TIM_SR_UIF ;				// Clear flag
 #ifdef PCBX12D
 #else
-	TIM3->SR &= ~TIM_SR_CC3IF ;				// Clear flag
-	TIM3->DIER |= TIM_DIER_CC3IE ;
+	TIM3->SR &= ~TIM_SR_CC1IF ;				// Clear flag
+	TIM3->DIER |= TIM_DIER_CC1IE ;
 #endif
 	TIM3->DIER |= TIM_DIER_UIE ;
 
@@ -1328,7 +1328,8 @@ void stop_cppm_on_heartbeat_capture()
 {
 	TIM3->DIER = 0 ;
 	TIM3->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
-	NVIC_DisableIRQ(TIM3_IRQn) ;				// Stop Interrupt
+	TIM3->DIER &= ~TIM_DIER_CC2IE ;		// Disable interrupt
+	NVIC_DisableIRQ(TIM3_IRQn) ;			// Stop Interrupt
 #ifdef PCBX9D
 	init_xjt_heartbeat() ;
 #endif
@@ -1533,11 +1534,12 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
 			{
-				g_model.xppmNCH = channels ;
+//				g_model.xppmNCH = channels ;
 				g_model.Module[1].channels = channels ;
 #else
 			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
 			{
+//				g_model.ppmNCH = channels ;
 				g_model.Module[1].channels = channels ;
 #endif
 				g_model.dsmMode = dsm_mode_response | 0x80 ;

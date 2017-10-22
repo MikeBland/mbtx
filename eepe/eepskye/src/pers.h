@@ -176,6 +176,15 @@ enum EnumKeys {
 //#define HSW_Ele6pos5	55
 //#define HSW_MAX				55
 
+#define HSW_Ttrmup			44
+#define HSW_Ttrmdn			43
+#define HSW_Rtrmup			42
+#define HSW_Rtrmdn			41
+#define HSW_Atrmup			40
+#define HSW_Atrmdn			39
+#define HSW_Etrmup			38
+#define HSW_Etrmdn			37
+
 #define HSW_Thr3pos0	45	// Skip some values because of safety switch values
 #define HSW_Thr3pos1	46
 #define HSW_Thr3pos2	47
@@ -249,8 +258,8 @@ enum EnumKeys {
 #define	USE_AUX_6POS	0x10
 #define MASK_6POS			0x1C
 
-#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfTH^TH-THvRU^RU-RUvEL^EL-ELvAI^AI-AIvGE^GE-GEv6P06P16P26P36P46P5PB1PB2"
-#define XSWITCHES_STR "SF       SC^SC-SCv      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB^SB-SBvSE^SE-SEvSA^SA-SAvSD^SD-SDvSG^SG-SGv6P06P16P26P36P46P5PB1PB2"
+#define SWITCHES_STR "THRRUDELEID0ID1ID2AILGEATRNL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfxx0xx1EtdEtuAtdAtuRtdRtuTtuTtdTH^TH-THvRU^RU-RUvEL^EL-ELvAI^AI-AIvGE^GE-GEv6P06P16P26P36P46P5PB1PB2PB3PB4"
+#define XSWITCHES_STR "SF       SC^SC-SCv      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfxx0xx1EtdEtuAtdAtuRtdRtuTtuTtdSB^SB-SBvSE^SE-SEvSA^SA-SAvSD^SD-SDvSG^SG-SGv6P06P16P26P36P46P5PB1PB2PB3PB4"
 #define NUM_CSW  12 //number of custom switches
 #define NUM_SKYCSW  24 //number of custom switches
 #define CSW_INDEX	9	// Index of first custom switch
@@ -278,7 +287,7 @@ enum EnumKeys {
 #define SWP_IL4 (SWP_ID1B | SWP_ID2B)
 #define SWP_IL5 (SWP_ID0B | SWP_ID1B | SWP_ID2B)
 
-#define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
+#define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 #define CURVE_BASE 7
 #define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 "
 #define CSW_NUM_FUNC 21

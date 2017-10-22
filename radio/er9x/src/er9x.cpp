@@ -555,7 +555,7 @@ void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t type )
 
 uint8_t Unit ;
 
-uint16_t scale_telem_value( uint8_t val, uint8_t channel, uint8_t *p_att )
+uint16_t scale_telem_value( uint16_t val, uint8_t channel, uint8_t *p_att )
 {
   uint32_t value ;
 	uint16_t ratio ;
@@ -615,7 +615,7 @@ uint16_t scale_telem_value( uint8_t val, uint8_t channel, uint8_t *p_att )
 	return value ;
 }
 
-uint8_t putsTelemValue(uint8_t x, uint8_t y, uint8_t val, uint8_t channel, uint8_t att)
+uint8_t putsTelemValue(uint8_t x, uint8_t y, uint16_t val, uint8_t channel, uint8_t att)
 {
     uint16_t value ;		// ??Can this be a uint16_t??
 		uint8_t dplaces ;
@@ -4100,6 +4100,9 @@ ISR(TIMER0_COMP_vect, ISR_NOBLOCK) //10ms timer
 
 }
 
+//#if defined(CPUM128) || defined(CPUM2561)
+//uint16_t SingleTrainerPulseWidth ;
+//#endif
 
 // Timer3 used for PPM_IN pulse width capture. Counter running at 16MHz / 8 = 2MHz
 // equating to one count every half millisecond. (2 counts = 1ms). Control channel
@@ -4121,6 +4124,12 @@ ISR(TIMER3_CAPT_vect, ISR_NOBLOCK) //capture ppm in 16MHz / 8 = 2MHz
     uint16_t val = (capture - lastCapt) / 2;
     lastCapt = capture;
 		uint8_t lppmInState = ppmInState ;
+//#if defined(CPUM128) || defined(CPUM2561)
+//		if ( val < 2500 )
+//		{
+//			SingleTrainerPulseWidth = val ;
+//		}
+//#endif
     // We prcoess g_ppmInsright here to make servo movement as smooth as possible
     //    while under trainee control
   	if (val>4000 && val < 16000) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)

@@ -17,15 +17,18 @@
 #define BASIC_LOAD_ALONE		1
 #define BASIC_LOAD_TEL0			2
 #define BASIC_LOAD_TEL1			3
+#define BASIC_LOAD_BG				4
 
-uint32_t basicExecute( uint32_t begin, uint8_t event ) ;
+uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index ) ;
 int32_t expression( void ) ;
-void loadBasic( char *fileName, uint32_t type ) ;
+uint32_t loadBasic( char *fileName, uint32_t type ) ;
 uint32_t basicTask( uint8_t event, uint8_t flags ) ;
 void basicLoadModelScripts( void ) ;
 
 extern uint8_t BasicErrorText[] ;
 extern uint8_t BasicLoadedType ;
-
+#ifndef QT	
+extern FIL MultiBasicFile ;
+#endif
 
 

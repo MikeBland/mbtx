@@ -225,8 +225,6 @@ void ProtocolDialog::setBoxes()
 		ui->xjtTypeCB->show() ;
 		ui->xjtCountryLabel->show() ;
 		ui->xjtCountryCB->show() ;
-
-		
 //		ui->startChannelLabel->hide() ;
 //    ui->startChannelSB->hide() ;
 	}
@@ -282,6 +280,17 @@ void ProtocolDialog::setBoxes()
 	  ui->multiSubProtocolLabel->show() ;
 		ui->rateLabel->show() ;
   	ui->rateCB->show() ;
+	}
+	if ( save == PROTO_PXX )
+	{
+		ui->FailsafeCB->setCurrentIndex( ppd->failsafeMode ) ;
+		ui->failsafeLabel->show() ;
+		ui->FailsafeCB->show() ;
+	}
+	else
+	{
+		ui->failsafeLabel->hide() ;
+		ui->FailsafeCB->hide() ;
 	}
 
 	protocolEditLock = false ;
@@ -441,4 +450,10 @@ void ProtocolDialog::on_rateCB_currentIndexChanged(int index)
 	ppd->ppmFrameLength = index ;
 }
 
+void ProtocolDialog::on_FailsafeCB_currentIndexChanged(int index)
+{
+	if ( protocolEditLock ) return ;
+	ppd->failsafeMode = index ;
+	
+}
 

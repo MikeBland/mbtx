@@ -46,6 +46,7 @@ VoiceAlarmDialog::VoiceAlarmDialog(QWidget *parent, VoiceAlarmData *invad, int e
 	ui->MuteCB->setCurrentIndex( vad->mute ) ;
 	ui->FileTypeCB->setCurrentIndex( vad->fnameType ) ;
 	ui->PlaySourceCB->setCurrentIndex( vad->vsource ) ;
+	ui->DelaySB->setValue( (float)vad->delay / 10.0 ) ;
 	switch ( vad->fnameType )
 	{
 		case 1 :
@@ -68,6 +69,7 @@ VoiceAlarmDialog::VoiceAlarmDialog(QWidget *parent, VoiceAlarmData *invad, int e
   connect(ui->MuteCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
   connect(ui->ValueSB,SIGNAL(valueChanged(int)),this,SLOT(valuesChanged()));
   connect(ui->FileTypeCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->DelaySB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
 
   connect(ui->PlaySourceCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
   connect(ui->FileName, SIGNAL(editingFinished()),this,SLOT(valuesChanged()));
@@ -149,6 +151,7 @@ void VoiceAlarmDialog::valuesChanged()
 	vad->offset = ui->ValueSB->value() ;
 	vad->fnameType = ui->FileTypeCB->currentIndex() ;
 	vad->vsource = ui->PlaySourceCB->currentIndex() ;
+	vad->delay = (ui->DelaySB->value() + 0.05 ) * 10 ;
 	switch ( vad->fnameType )
 	{
 		case 1 :

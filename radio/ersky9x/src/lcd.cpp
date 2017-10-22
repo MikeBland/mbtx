@@ -2108,7 +2108,7 @@ void lcd_init()
 #ifdef REVB
 	configure_pins( LCD_A0, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 #endif // REVB
-	while ( TC0->TC_CHANNEL[0].TC_CV < 500 )		// >10 uS, Value depends on MCK/2 (used 18MHz)
+	while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US*10 )		// >10 uS, Value depends on MCK/8
 	{
 		// Wait
 	}
@@ -2121,7 +2121,7 @@ void lcd_init()
 #endif // REVB
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	pioptr->PIO_SODR = LCD_RES ;		// Remove LCD reset
-	while ( TC0->TC_CHANNEL[0].TC_CV < 27000 )	// 1500 uS, Value depends on MCK/2 (used 18MHz)
+	while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US*1500 )	// 1500 uS, Value depends on MCK/8
 	{
 		// Wait
 	}
@@ -2144,7 +2144,7 @@ extern uint16_t ResetReason ;
 		for ( j = 0 ; j < 100 ; j += 1 )
 		{
 			TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
-			while ( TC0->TC_CHANNEL[0].TC_CV < 36000 )		// Value depends on MCK/2 (used 18MHz) give 2mS delay
+			while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US*2000 )		// Value depends on MCK/2 (used 18MHz) give 2mS delay
 			{
  			  wdt_reset() ;
 				// Wait
@@ -2290,7 +2290,7 @@ void lcdSendCtl(uint8_t val)
 	pioptr->PIO_SODR = LCD_E ;			// Start E pulse
 	// Need a delay here (250nS)
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
-	while ( TC0->TC_CHANNEL[0].TC_CV < 9 )		// Value depends on MCK/2 (used 18MHz)
+	while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US/4 )		// Value depends on MCK/8
 	{
 		// Wait
 	}
@@ -2317,6 +2317,8 @@ void refreshDisplay()
 	register uint32_t x ;
 	register uint32_t z ;
 	register uint32_t ebit ;
+	uint16_t delayCount ;
+	delayCount = HwDelayScale*HW_COUNT_PER_US/4 ;		// Value depends on MCK/8
 
 #ifdef PCBSKY
 	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
@@ -2394,12 +2396,17 @@ void refreshDisplay()
 			pioptr->PIO_ODSR = x ;
 			pioptr->PIO_SODR = ebit ;			// Start E pulse
 			// Need a delay here (250nS)
+			TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 			p += 1 ;
 #ifdef REVB
 		x =	*p ;
 #else 
 		x =	lookup[*p] ;
 #endif // REVB
+			while ( TC0->TC_CHANNEL[0].TC_CV < delayCount )		// Value depends on MCK/8
+			{
+				// Wait
+			}
 			pioptr->PIO_CODR = ebit ;			// End E pulse
     }
   }

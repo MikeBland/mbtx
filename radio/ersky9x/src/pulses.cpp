@@ -108,8 +108,6 @@ uint8_t DsmInitCounter = 0 ;
 uint16_t Pulses[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 uint16_t Pulses2[180] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 volatile uint32_t PulsesIndex[2] = { 0, 0 } ;		// Modified in interrupt routine
-//volatile uint32_t Pulses_index = 0 ;		// Modified in interrupt routine
-//volatile uint32_t Pulses2_index = 0 ;		// Modified in interrupt routine
 
 extern void setCaptureMode(uint32_t mode) ;
 extern void start_timer3() ;
@@ -719,6 +717,30 @@ extern uint8_t MultiResponseFlag ;
 //uint8_t *DsmDatPointer ;
 //uint16_t DebugDsmChan0 ;
 
+void setDsmHeader( uint8_t *dsmDat, uint32_t module )
+{
+  if (dsmDat[0]&BadData)  //first time through, setup header
+  {
+  	switch(g_model.Module[module].sub_protocol)
+  	{
+  		case LPXDSM2:
+  		  dsmDat[0]= 0x80;
+  		break;
+  		case DSM2only:
+  		  dsmDat[0]=0x90;
+  		break;
+  		default:
+  		  dsmDat[0]=0x98;  //dsmx, bind mode
+  		break;
+  	}
+  }
+
+	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+  if ((!(dsmDat[0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  else dsmDat[0]&=~RangeCheckBit;
+}
+
+
 //static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
 void setupPulsesDsm2(uint8_t chns)
 {
@@ -740,7 +762,7 @@ void setupPulsesDsm2(uint8_t chns)
 //	}
 //	else
 //#endif
-	if( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) )
+	if( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
 	{
 		required_baudrate = SCC_BAUD_115200 ;
 		Dsm_Type = 1 ;
@@ -954,25 +976,26 @@ void setupPulsesDsm2(uint8_t chns)
   	// If more channels needed make sure the pulses union/array is large enough
 		if(g_model.Module[1].protocol == PROTO_DSM2)
 		{
-  		if (dsmDat[0]&BadData)  //first time through, setup header
-  		{
-  		  switch(g_model.Module[1].sub_protocol)
-  		  {
-  		    case LPXDSM2:
-  		      dsmDat[0]= 0x80;
-  		    break;
-  		    case DSM2only:
-  		      dsmDat[0]=0x90;
-  		    break;
-  		    default:
-  		      dsmDat[0]=0x98;  //dsmx, bind mode
-  		    break;
-  		  }
-  		}
+			setDsmHeader( dsmDat, 1 ) ;
+//  		if (dsmDat[0]&BadData)  //first time through, setup header
+//  		{
+//  		  switch(g_model.Module[1].sub_protocol)
+//  		  {
+//  		    case LPXDSM2:
+//  		      dsmDat[0]= 0x80;
+//  		    break;
+//  		    case DSM2only:
+//  		      dsmDat[0]=0x90;
+//  		    break;
+//  		    default:
+//  		      dsmDat[0]=0x98;  //dsmx, bind mode
+//  		    break;
+//  		  }
+//  		}
 
-	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[0] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-  		else dsmDat[0]&=~RangeCheckBit;
+//	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+//  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[1] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+//  		else dsmDat[0]&=~RangeCheckBit;
 		}
 		else // Multi
 		{
@@ -1028,16 +1051,13 @@ void setupPulsesDsm2(uint8_t chns)
 			
 			for ( i = 0 ; i < 16 ; i += 1 )
 			{
-				int16_t x = g_chans512[g_model.Module[1].startChannel+i] ;
+				int16_t x ;
+				uint32_t y = g_model.Module[1].startChannel+i ;
+				x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
 				x *= 4 ;
 				x += x > 0 ? 4 : -4 ;
 				x /= 5 ;
-//#ifdef MULTI_PROTOCOL
-//				if ( g_model.Module[1].protocol == PROTO_MULTI )
-					x += 0x400 ;
-//				else
-//#endif // MULTI_PROTOCOL
-//					x += 0x3E0 ;
+				x += 0x400 ;
 				if ( x < 0 )
 				{
 					x = 0 ;
@@ -1057,9 +1077,7 @@ void setupPulsesDsm2(uint8_t chns)
 				}
 			}
 			
-//#ifdef MULTI_PROTOCOL
 			if ( g_model.Module[1].protocol == PROTO_SBUS )
-//#endif // MULTI_PROTOCOL
 			{
 				sendByteDsm2(0);
 				sendByteDsm2(0);
@@ -1259,6 +1277,27 @@ void setupPulses()
 
 #define PPM_CENTER 1500*2
 
+void setPpmPulses( uint16_t *dest, uint32_t start, uint32_t end, uint32_t total )
+{
+  uint32_t i ;
+	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
+
+	for(i= start ; i < end ; i += 1 )
+	{
+  	int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
+   	total -= v ;
+    *dest++ = v ; /* as Pat MacKenzie suggests */
+ 	}
+	if ( total<9000 )
+	{
+		total = 9000 ;
+	}
+ 	*dest++ = total ;
+ 	*dest = 0;
+}
+
+
+
 void setupPulsesPPM()			// Don't enable interrupts through here
 {
   uint32_t i ;
@@ -1279,7 +1318,6 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 	}
 	
 	// Now set up pulses
-	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
   //Total frame length = 22.5msec
   //each pulse is 0.7..1.7ms long with a 0.3ms stop tail
@@ -1311,19 +1349,21 @@ void setupPulsesPPM()			// Don't enable interrupts through here
     
 	total = 22500u*2; //Minimum Framelen=22.5 ms
   total += (int16_t(i ? g_model.ppmFrameLength : g_model.Module[1].ppmFrameLength))*1000;
+
+	setPpmPulses( ptr, i ? g_model.startChannel : g_model.Module[1].startChannel, p, total ) ;
   
-	for(i= i ? g_model.startChannel : g_model.Module[1].startChannel ; i<p ; i++ )
-	{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
-  	int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
-   	total -= v ;
-    *ptr++ = v ; /* as Pat MacKenzie suggests */
- 	}
-	if ( total<9000 )
-	{
-		total = 9000 ;
-	}
- 	*ptr++ = total ;
- 	*ptr = 0;
+//	for(i= i ? g_model.startChannel : g_model.Module[1].startChannel ; i<p ; i++ )
+//	{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
+//  	int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
+//   	total -= v ;
+//    *ptr++ = v ; /* as Pat MacKenzie suggests */
+// 	}
+//	if ( total<9000 )
+//	{
+//		total = 9000 ;
+//	}
+// 	*ptr++ = total ;
+// 	*ptr = 0;
 #if defined(PCBX9D) || defined(PCB9XT)
 	TIM1->CCR2 = total - 1000 ;		// Update time
 	TIM1->CCR3 = (g_model.Module[1].ppmDelay*50+300)*2 ;
@@ -1356,7 +1396,6 @@ void setupPulsesPPM2()
 
 	pwmptr = PWM ;
 	// Now set up pulses
-	int16_t PPM_range = g_model.extendedLimits ? 640*2 : 512*2;   //range of 0.7..1.7msec
 
   //Total frame length = 22.5msec
   //each pulse is 0.7..1.7ms long with a 0.3ms stop tail
@@ -1400,24 +1439,26 @@ void setupPulsesPPM2()
 		int32_t rest=22500u*2; //Minimum Framelen=22.5 ms
   	rest += (int16_t(g_model.Module[0].ppmFrameLength))*1000;
   	//    if(p>9) rest=p*(1720u*2 + q) + 4000u*2; //for more than 9 channels, frame must be longer
-  	for( uint32_t i = p ; i < q ; i += 1 )
-		{ //NUM_SKYCHNOUT+EXTRA_SKYCHANNELS
-  		int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
-  	 	rest-=(v);
-		//        *ptr++ = q;      //moved down two lines
-  	  	    //        pulses2MHz[j++] = q;
-  	  *ptr++ = v ; /* as Pat MacKenzie suggests */
-  	  	    //        pulses2MHz[j++] = v - q + 600; /* as Pat MacKenzie suggests */
-		//        *ptr++ = q;      //to here
- 		}
-		//    *ptr=q;       //reverse these two assignments
-		//    *(ptr+1)=rest;
-		if ( rest<9000 )
-		{
-			rest = 9000 ;
-		}
- 		*ptr = rest;
- 		*(ptr+1) = 0;
+  	
+		setPpmPulses( ptr, p, q, rest ) ;
+//		for( uint32_t i = p ; i < q ; i += 1 )
+//		{
+//  		int16_t v = max( (int)min(g_chans512[i],PPM_range),-PPM_range) + PPM_CENTER;
+//  	 	rest-=(v);
+//		//        *ptr++ = q;      //moved down two lines
+//  	  	    //        pulses2MHz[j++] = q;
+//  	  *ptr++ = v ; /* as Pat MacKenzie suggests */
+//  	  	    //        pulses2MHz[j++] = v - q + 600; /* as Pat MacKenzie suggests */
+//		//        *ptr++ = q;      //to here
+// 		}
+//		//    *ptr=q;       //reverse these two assignments
+//		//    *(ptr+1)=rest;
+//		if ( rest<9000 )
+//		{
+//			rest = 9000 ;
+//		}
+// 		*ptr = rest;
+// 		*(ptr+1) = 0;
 	}
 	else	// if ( g_model.xprotocol == PROTO_DSM2 )
 	{
@@ -1447,7 +1488,7 @@ void setupPulsesPPM2()
 //		{
 //			p -= 1 ;
 //		}
-		uint32_t q = (g_model.Module[0].channels + 8) ;
+		uint32_t q = (g_model.Module[0].channels + 16) ;
 		if ( q > NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
 		{
 			q = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
@@ -1464,25 +1505,26 @@ void setupPulsesPPM2()
 
 		if(g_model.Module[0].protocol == PROTO_DSM2 )
     {
-  		if (dsmDat[0]&BadData)  //first time through, setup header
-  		{
-  		  switch(g_model.Module[0].sub_protocol)
-  		  {
-  		    case LPXDSM2:
-  		      dsmDat[0]= 0x80;
-  		    break;
-  		    case DSM2only:
-  		      dsmDat[0]=0x90;
-  		    break;
-  		    default:
-  		      dsmDat[0]=0x98;  //dsmx, bind mode
-  		    break;
-  		  }
-  		}
+			setDsmHeader( dsmDat, 0 ) ;
+//  		if (dsmDat[0]&BadData)  //first time through, setup header
+//  		{
+//  		  switch(g_model.Module[0].sub_protocol)
+//  		  {
+//  		    case LPXDSM2:
+//  		      dsmDat[0]= 0x80;
+//  		    break;
+//  		    case DSM2only:
+//  		      dsmDat[0]=0x90;
+//  		    break;
+//  		    default:
+//  		      dsmDat[0]=0x98;  //dsmx, bind mode
+//  		    break;
+//  		  }
+//  		}
 
-	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[1] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-  		else dsmDat[0]&=~RangeCheckBit;
+//	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+//  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[0] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+//  		else dsmDat[0]&=~RangeCheckBit;
 
   		dsmDat[1]=g_model.Module[0].pxxRxNum ;  //DSM2 Header second byte for model match
 			if ( q > p + 6 )
@@ -1522,11 +1564,10 @@ void setupPulsesPPM2()
 			{
 				int16_t x ;
 				uint32_t y = p+i ;
-				x = y >= q ? 0 : g_chans512[y] ;
+				x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
 				x *= 4 ;
 				x += x > 0 ? 4 : -4 ;
 				x /= 5 ;
-//#ifdef MULTI_PROTOCOL
 				x += 0x400 ;
 				if ( x < 0 )
 				{

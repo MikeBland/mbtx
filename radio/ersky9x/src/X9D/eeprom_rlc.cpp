@@ -187,6 +187,7 @@ void generalDefault()
 	g_eeGeneral.volume = 2 ;
 	g_eeGeneral.lightSw = MAX_SKYDRSWITCH ;	// ON
 	g_eeGeneral.filterInput = 1 ;
+	g_eeGeneral.gpsFormat = 1 ;
 
   for (int i = 0; i < NUM_ANALOG_CALS ; ++i )
 	{

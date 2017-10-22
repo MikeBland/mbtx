@@ -145,7 +145,11 @@ void _bootStart()
  #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOGEN ; // Enable portD clock
  #else
+  #ifdef PCBX7
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
+  #else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
+  #endif
  #endif
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
 	__ASM volatile ("nop") ;
@@ -155,6 +159,7 @@ void _bootStart()
  #endif
  #ifdef PCBX7
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+//	if ( (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) || (GPIOA->IDR & 0x00000100 ) )	// Trainer input is high
  #endif
 	{
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1

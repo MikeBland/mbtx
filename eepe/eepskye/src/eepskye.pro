@@ -32,7 +32,8 @@ HEADERS += mainwindow.h \
     ../../common/node.h \
     ../../common/edge.h \
     GvarAdjustDialog.h \
-    ProtocolDialog.h
+    ProtocolDialog.h \
+    SwitchDialog.h
 SOURCES += main.cpp \
     mainwindow.cpp \
     file.cpp \
@@ -61,7 +62,8 @@ SOURCES += main.cpp \
     ../../common/node.cpp \
     ../../common/edge.cpp \
     GvarAdjustDialog.cpp \
-    ProtocolDialog.cpp
+    ProtocolDialog.cpp \
+    switchDialog.cpp
 unix {
 SOURCES += mountlist.cpp
 }
@@ -82,7 +84,8 @@ FORMS += modeledit.ui \
     ../../common/telemetryDialog.ui \
     ../../common/reviewOutput.ui \
     GvarAdjustDialog.ui \
-    ProtocolDialog.ui
+    ProtocolDialog.ui \
+    SwitchDialog.ui
 TRANSLATIONS = eepe_.ts    \
                eepe_he.ts  \
                eepe_pt.ts  \

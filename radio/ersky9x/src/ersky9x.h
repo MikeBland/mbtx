@@ -33,6 +33,7 @@
 #endif
 
 //#define TRIMS_SCALED
+//#define BLOCKING
 
 #define TELEMETRY_LOST	1
 
@@ -1307,6 +1308,11 @@ struct btRemote_t
 extern uint8_t BtCurrentBaudrate ;
 extern uint8_t BtLinkRequest ;
 
+#ifdef PCBSKY
+extern uint8_t HwDelayScale ;
+#define HW_COUNT_PER_US		8
+#endif
+
 #if defined(PCBSKY) || defined(PCB9XT)
 extern struct btRemote_t BtRemote[] ;
 extern uint8_t NumberBtremotes ;
@@ -1349,6 +1355,7 @@ extern uint8_t ScriptFlags ;
 #define	SCRIPT_LCD_OK					1
 #define	SCRIPT_STANDALONE			2
 #define	SCRIPT_TELEMETRY			4
+#define	SCRIPT_RESUME					8
 
 #endif
 

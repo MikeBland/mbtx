@@ -2063,6 +2063,11 @@ void setup_switches()
 	configure_pins( 0x0020, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
 	configure_pins( PIN_SW_H | PIN_SW_C_L, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0xE087, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+
+	// Extra switch inputs
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	configure_pins( PIN_SW_EXT1, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( PIN_SW_EXT2, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	 
 #else // PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
@@ -2110,6 +2115,20 @@ void setup_switches()
 uint32_t readKeyUpgradeBit( uint8_t index )
 {
   CPU_UINT xxx = 0 ;
+	
+#ifdef PCBX7
+	if ( index > 2 )	// Extra inputs
+	{
+		if ( index == 3 )
+		{
+			return ~GPIOC->IDR & PIN_SW_EXT1 ;
+		}
+		else
+		{
+			return ~GPIOD->IDR & PIN_SW_EXT2 ;
+		}
+	}
+#endif
 	uint32_t t = 1 << (index+12) ;
 	xxx = ~GPIOA->IDR & t ;
 	return xxx ;

@@ -190,9 +190,9 @@ void MdiChild::refreshList()
             addItem(QString(buf));
     }
 #ifdef V2
-    if (radioData.v2generalSettings.currModel < 60 )
+    if (radioData.v2generalSettings.currModel < 16 )
 #else
-    if (radioData.generalSettings.currModel < 60 )
+    if (radioData.generalSettings.currModel < 16 )
 #endif
 		{
 			QFont f = QFont("Courier New", 12) ;
@@ -882,7 +882,8 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				//if file is XML read and exit saying true;
         //else process as iHex
 #ifdef V2
-		    QDomDocument doc(MBTX_EEPROM_FILE_TYPE);
+        QDomDocument doc(ER9X_EEPROM_FILE_TYPE);
+//		    QDomDocument doc(MBTX_EEPROM_FILE_TYPE);
 #else
     		QDomDocument doc(ER9X_EEPROM_FILE_TYPE);
 #endif
@@ -890,8 +891,9 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
         bool xmlOK = file.open(QIODevice::ReadOnly);
         if(xmlOK)
         {
-					
-            xmlOK = doc.setContent(&file);
+          xmlOK = doc.setContent(&file);
+          if(xmlOK)
+          {
 						QString nametype = doc.doctype().name() ;
 #ifdef V2
 						if ( nametype == ER9X_EEPROM_FILE_TYPE )
@@ -911,15 +913,12 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 	            file.close();
 	            return false;
 						}
+            QDomElement gde = doc.elementsByTagName("Type").at(0).toElement();
 
-            if(xmlOK)
-            {
-              QDomElement gde = doc.elementsByTagName("Type").at(0).toElement();
-
-              if(!gde.isNull()) // couldn't find
-							{
-		            m128 = 1 ;
-							}
+            if(!gde.isNull()) // couldn't find
+						{
+	            m128 = 1 ;
+						}
 							
 								eeFile.setSize( m128 ) ;
 							
@@ -992,8 +991,8 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
                     }
 #endif
                 }
-            }
-            file.close();
+          }
+          file.close();
         }
 
         if(!xmlOK)
@@ -1351,7 +1350,7 @@ void MdiChild::v1ModelTov2( int i )
 
 	v2m->varioData        = v1m->varioData ;
 	v2m->trimInc                = v1m->trimInc       ;
-	v2m->trimSw                 = v1m->trimSw        ;
+	v2m->trimSw                 = v1SwitchTov2(v1m->trimSw)        ;
 	v2m->beepANACenter          = v1m->beepANACenter ;
 	v2m->numBlades        = v1m->numBlades        ;
 	for ( i = 0 ; i < MAX_GVARS ; i += 1 )
@@ -1413,10 +1412,29 @@ void MdiChild::v1ModelTov2( int i )
 	v2m->frsky.rxRssiCritical = 42 ;
 
 // switchWarningStates
+  // (MSB=0,Trainer:1,PB2:1,PB1:1,Gear:2,AileDR:2,ElevDR:2,RuddDR:2,ThrCt:2,IDL:2)
+	// V1  Gear, Ail, ID2, ID1, ID0, Ele, Rud, Thr
 
+	uint8_t temp = v1m->switchWarningStates ;
 	
+	v2m->switchWarningStates = (temp & 1 ) << 2 ;
+	v2m->switchWarningStates |= (temp & 2 ) << 3 ;
+	v2m->switchWarningStates |= (temp & 4 ) << 4 ;
+	v2m->switchWarningStates |= (temp & 64 ) << 2 ;
+	v2m->switchWarningStates |= (temp & 128 ) << 3 ;
+	if ( temp & 16 )
+	{
+		v2m->switchWarningStates |= 1 ;
+	}
+	if ( temp & 32 )
+	{
+		v2m->switchWarningStates |= 2 ;
+	}
 	 
 	v2m->sub_trim_limit   = v1m->sub_trim_limit ;
+	
+// customStickNames[16], nothing to do
+	
 	for ( i = 0 ; i < MAX_PHASES ; i += 1 )
 	{
 		for ( j = 0 ; j < 4 ; j += 1 )
@@ -1432,13 +1450,6 @@ void MdiChild::v1ModelTov2( int i )
 		}
 	}
 
-// Voice Switches
-	for ( i = 0 ; i < NUM_VOICE_ALARMS ; i += 1 )
-	{
-		v2m->vad[i] = v1m->vad[i] ;
-		v2m->vad[i].swtch = v1SwitchTov2(v1m->vad[i].swtch) ;
-	}
-	 
 	for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
 	{
 		v2m->Scalers[i] = v1m->Scalers[i] ;
@@ -1462,6 +1473,7 @@ void MdiChild::v1ModelTov2( int i )
 		v2m->curvexy[i] = v1m->curvexy[i] ;
 	}
 	 
+// ExtScaleData eScalers[NUM_SCALERS] nothing to do
 	
 	
 }
@@ -2131,8 +2143,10 @@ int8_t t_radioData::switchUnMap( int8_t drswitch )
 
 uint8_t t_radioData::getSwitchSource( uint8_t xsw )
 {
+  uint8_t temp ;
   uint8_t src = v2generalSettings.switchSources[xsw >> 1];
-  return ((xsw & 1) ? (src >> 4) : (src & 0x0F));
+  temp = ((xsw & 1) ? (src >> 4) : (src & 0x0F));
+  return temp ;
 }
 
 void t_radioData::setMaxSwitchIndex()
@@ -2179,21 +2193,21 @@ QString t_radioData::getMappedSWName(int val, int eepromType )
   return QString(val<0 ? "!" : "") + temp ;
 }
 
-void t_radioData::populateSwitchCB(QComboBox *b, int value, int eepromType )
+void t_radioData::populateSwitchCB(QComboBox *b, int value, int eepromType, int noends )
 {
-  for(int i=-MaxSwitchIndex; i<=MaxSwitchIndex; i++)
+	int32_t limit = noends ? MaxSwitchIndex-1 : MaxSwitchIndex ;
+  for(int i =- limit ; i <= limit ; i++ )
 	{
-    b->addItem(getMappedSWName(i,eepromType));
+    b->addItem(getMappedSWName(i,eepromType)) ;
 	}
-  b->setCurrentIndex(switchUnMap(value)+MaxSwitchIndex);
+  b->setCurrentIndex(switchUnMap(value) + limit ) ;
   b->setMaxVisibleItems(10);
-	
 }
 
-int t_radioData::getSwitchCbValue( QComboBox *b, int eepromType )
+int t_radioData::getSwitchCbValue( QComboBox *b, int eepromType, int noends )
 {
 	int value ;
-  int limit = MaxSwitchIndex ;
+	int limit = noends ? MaxSwitchIndex-1 : MaxSwitchIndex ;
 	value = b->currentIndex()-limit ;
 	value = switchMap( value ) ;
   return value ;

@@ -10,8 +10,9 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 15-Jan-2017  MPB (r822)
+CHANGELOG: 17-Jul-2017  MPB (r822)
 Add more Multi names
+Add max altitude display
 
 ******************************************
 CHANGELOG: 21-Nov-2016  MPB (r821)

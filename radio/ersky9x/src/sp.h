@@ -395,7 +395,7 @@
 #define ISWITCH_WARN_STR	   "Aviso Switch"
 // CURV_STR indexed 3 chars each
 // c17-c24 added for timer mode A display
-#define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24"
+#define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 // CSWITCH_STR indexed 7 chars each
 #define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  v1\140=v2 Delay  "
 
@@ -531,7 +531,7 @@
 #define ISTR_Bluetooth		  "BlueTooth" 
 #define ISTR_heli_setup			"Heli" 
 #define ISTR_Curves			    "Curvas" 
-#define ISTR_Expo				    "Expo/Dr" 
+#define ISTR_Expo				    "Expo/D.Rate" 
 #define ISTR_Globals		    "Globales" 
 #define ISTR_Timer		      "Tiempos" 
 #define ISTR_Modes			 		"Modos" 
@@ -540,7 +540,7 @@
 #define ISTR_Safety					"Seguridad"
 #define ISTR_Eeprom			     "EEPROM" 
 
-#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help"
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help\0Run Script"
 #define ISTR_ROTATE_SCREEN			"Rotate Screen"
 #define ISTR_REVERSE_SCREEN			"Reverse Screen"
 #define ISTR_MENU_ONLY_EDIT			"MENU only Edit"

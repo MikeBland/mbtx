@@ -11,9 +11,9 @@
 //const char stamp4[] = " SVN: " SVN_VERS;
 //const char stamp5[] = " MOD: " MOD_VERS;
 
-const char Stamps[] = "VERS: V" /*DEFNUMSTR(VERS)*/ "." DEFNUMSTR(SUB_VERS) "\037"\
+const char Stamps[] = "VERS: " /*DEFNUMSTR(VERS)*/ SVN_VERS "\037"\
 "DATE: " DATE_STR "\037"\
 "TIME: " TIME_STR "\037"\
-" SVN: " SVN_VERS "\037"\
+//" SVN: " SVN_VERS "\037"
 " MOD: " MOD_VERS;
 

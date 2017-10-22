@@ -78,8 +78,6 @@
 #include "CoOS.h"
 #endif
 
-
-
 void uputs( register char *string ) ;
 void crlf( void ) ;
 void p8hex( uint32_t value ) ;

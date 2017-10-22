@@ -88,7 +88,7 @@ extern EeFs eeFs;
 #define RESV          128 // sizeof(EeFs)  //reserv for eeprom header with directory (eeFs)
 
 #define FIRSTBLK      1
-#define BLOCKS        (1+(EESIZE-RESV)/BS)
+#define BLOCKS        (1+(EERLCSIZE-RESV)/BS)
 #define BLOCKS_OFFSET (RESV-BS)
 
 int8_t EeFsck();

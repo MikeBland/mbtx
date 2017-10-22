@@ -176,8 +176,10 @@ void disable_ssc( void ) ;
 /** Pins description corresponding to Rxd,Txd, (UART pins) */
 #define SECOND_PINS        {PINS_USART0}
 
+#ifdef PCBSKY
 #define BT_USART       UART1
 #define BT_ID          ID_UART1
+#endif
 
 extern uint8_t ExternalKeys ;
 uint16_t ExternalSwitches ;
@@ -304,30 +306,30 @@ volatile uint16_t g_tmr10ms ;
 volatile uint32_t g_ltmr10ms ;
 extern uint8_t StickScrollTimer ;
 
-#ifdef PCBSKY
-struct t_serial_tx FmsTx ;
-uint8_t FmsTxBuffer[12] ;
+//#ifdef PCBSKY
+//struct t_serial_tx FmsTx ;
+//uint8_t FmsTxBuffer[12] ;
 
-void doFms()
-{
-	uint32_t i ;
-	if ( g_tmr10ms & 1 )
-	{
-		// Send a Fms packet
-		FmsTxBuffer[0] = 0xFF ;
-		for ( i = 0 ; i < 8 ; i += 1 )
-		{
-			int32_t x = g_chans512[i] ;
-			x /= 12 ;
-			x += 128 ;
-		FmsTxBuffer[i+1] = x ;
-		}
-		FmsTx.size = 9 ;		
-		FmsTx.buffer = FmsTxBuffer ;
-		txPdcCom2( &FmsTx ) ;
-	}
-}
-#endif
+//void doFms()
+//{
+//	uint32_t i ;
+//	if ( g_tmr10ms & 1 )
+//	{
+//		// Send a Fms packet
+//		FmsTxBuffer[0] = 0xFF ;
+//		for ( i = 0 ; i < 8 ; i += 1 )
+//		{
+//			int32_t x = g_chans512[i] ;
+//			x /= 12 ;
+//			x += 128 ;
+//		FmsTxBuffer[i+1] = x ;
+//		}
+//		FmsTx.size = 9 ;		
+//		FmsTx.buffer = FmsTxBuffer ;
+//		txPdcCom2( &FmsTx ) ;
+//	}
+//}
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 #ifndef PCBX7
@@ -533,10 +535,10 @@ extern uint8_t AnaEncSw ;
 #endif
 
 #ifdef PCBSKY
-	if ( g_model.com2Function == COM2_FUNC_FMS )
-	{
-		doFms() ;
-	}
+//	if ( g_model.com2Function == COM2_FUNC_FMS )
+//	{
+//		doFms() ;
+//	}
 	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
 	{
 		doLcdDump() ;
@@ -722,6 +724,10 @@ uint16_t USART_NE ;
 uint16_t USART_FE ;
 uint16_t USART_PE ;
 
+#ifdef PCB9XT
+uint16_t USART1_ORE ;
+uint16_t USART2_ORE ;
+#endif 
 //uint16_t CaptureDebug1 ;
 //uint16_t CaptureDebug2 ;
 
@@ -1114,7 +1120,7 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock)
   pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
   pUart->UART_IER = UART_IER_RXRDY ;
 
-	NVIC_SetPriority( UART0_IRQn, 5 ) ; // Lower priority interrupt
+	NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(UART0_IRQn) ;
 
 }
@@ -1177,7 +1183,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 		pUart->UART_TCR = data->size ;
 		pUart->UART_PTCR = UART_PTCR_TXTEN ;
 		pUart->UART_IER = UART_IER_TXBUFE ;
-		NVIC_SetPriority( UART0_IRQn, 5 ) ; // Lower priority interrupt
+		NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
 		NVIC_EnableIRQ(UART0_IRQn) ;
 		return 1 ;			// Sent OK
 	}
@@ -1355,7 +1361,7 @@ static void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
   pUsart->US_CR = US_CR_RXEN | US_CR_TXEN;
 	pUsart->US_IER = US_IER_RXRDY ;
 
-	NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
+	NVIC_SetPriority( USART0_IRQn, 2 ) ; // Quite high priority interrupt
 	NVIC_EnableIRQ(USART0_IRQn) ;
 	
 }
@@ -1480,7 +1486,7 @@ extern "C" void USART0_IRQHandler()
 		}
 	}
 // Disable Tx output
-  if ( pUsart->US_IMR & US_CSR_TXEMPTY )
+  if ( pUsart->US_IMR & US_IMR_TXEMPTY )
 	{
  		if ( pUsart->US_CSR & US_CSR_TXEMPTY )
 		{
@@ -2997,7 +3003,11 @@ extern "C" void USART3_IRQHandler()
 		{
 			if ( status & USART_FLAG_ORE )
 			{
+#ifdef PCB9XT
+				USART2_ORE += 1 ;
+#else
 				USART_ORE += 1 ;
+#endif
 			}
 		}
     status = puart->SR ;
@@ -3117,6 +3127,9 @@ void disable_software_com1()
 //#endif
 
 #ifdef PCB9XT
+
+//uint32_t DebugCom2In ;
+
 void consoleInit()
 {
 	// Serial configure  
@@ -3130,7 +3143,7 @@ void consoleInit()
 	UART4->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
 	UART4->CR2 = 0 ;
 	UART4->CR3 = 0 ;
-	NVIC_SetPriority( UART4_IRQn, 5 ) ; // Lower priority interrupt
+	NVIC_SetPriority( UART4_IRQn, 2 ) ; // Changed to 3 for telemetry receive
   NVIC_EnableIRQ(UART4_IRQn) ;
 }
 
@@ -3153,7 +3166,7 @@ void com3Init( uint32_t baudrate )
 	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
 	puart->CR2 = 0 ;
 	puart->CR3 = 0 ;
-	NVIC_SetPriority( USART3_IRQn, 3 ) ; // Changed to 3 for telemetry receive
+	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
 
@@ -3263,7 +3276,11 @@ extern "C" void USART3_IRQHandler()
 		{
 			if ( status & USART_FLAG_ORE )
 			{
+#ifdef PCB9XT
+				USART2_ORE += 1 ;
+#else
 				USART_ORE += 1 ;
+#endif
 			}
 		}
     status = puart->SR ;
@@ -3299,6 +3316,57 @@ extern "C" void UART4_IRQHandler()
 	USART_TypeDef *puart = UART4 ;
 
   status = puart->SR ;
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+			{
+				put_fifo64( &Sbus_fifo, data ) ;
+			}
+			else
+			{
+				if ( g_eeGeneral.btComPort == 1 )
+				{
+					put_fifo128( &BtRx_fifo, data ) ;
+//#endif
+				}
+				else
+				{
+					put_fifo128( &Com2_fifo, data ) ;
+//					DebugCom2In += 1 ;
+				}
+			}
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+#ifdef PCB9XT
+				USART1_ORE += 1 ;
+#else
+				USART_ORE += 1 ;
+#endif
+			}
+			if ( status & USART_FLAG_NE )
+			{
+				USART_NE += 1 ;
+			}
+			if ( status & USART_FLAG_FE )
+			{
+				USART_FE += 1 ;
+			}
+			if ( status & USART_FLAG_PE )
+			{
+				USART_PE += 1 ;
+			}
+		}
+    status = puart->SR ;
+	}
+	
 	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
 	{
 		if ( Current_Com2 )
@@ -3325,50 +3393,6 @@ extern "C" void UART4_IRQHandler()
 		Current_Com2->ready = 0 ;
 	}
 	
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR;
-
-    if (!(status & USART_FLAG_ERRORS))
-		{
-			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
-			{
-				put_fifo64( &Sbus_fifo, data ) ;
-			}
-			else
-			{
-				if ( g_eeGeneral.btComPort == 1 )
-				{
-					put_fifo128( &BtRx_fifo, data ) ;
-//#endif
-				}
-				else
-				{
-					put_fifo128( &Com2_fifo, data ) ;
-				}
-			}
-		}
-		else
-		{
-			if ( status & USART_FLAG_ORE )
-			{
-				USART_ORE += 1 ;
-			}
-			if ( status & USART_FLAG_NE )
-			{
-				USART_NE += 1 ;
-			}
-			if ( status & USART_FLAG_FE )
-			{
-				USART_FE += 1 ;
-			}
-			if ( status & USART_FLAG_PE )
-			{
-				USART_PE += 1 ;
-			}
-		}
-    status = puart->SR ;
-	}
 }
 
 void txmit( uint8_t c )

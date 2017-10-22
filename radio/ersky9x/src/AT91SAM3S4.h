@@ -3087,6 +3087,8 @@ typedef struct {
 #define CKGR_PLLBR_DIVB_Msk (0xffu << CKGR_PLLBR_DIVB_Pos) /**< \brief (CKGR_PLLBR) Divider */
 #define CKGR_PLLBR_DIVB(value) ((CKGR_PLLBR_DIVB_Msk & ((value) << CKGR_PLLBR_DIVB_Pos)))
 #define CKGR_PLLBR_PLLBCOUNT (0x3f << 8) /**< \brief (CKGR_PLLBR) PLLB Counter */
+#define CKGR_PLLBR_PLLBCOUNT_Pos 8
+#define CKGR_PLLBR_PLLBCOUNT_Msk (0x3fu << CKGR_PLLBR_PLLBCOUNT_Pos) /**< \brief (CKGR_PLLBR) PLLB Counter */
 #define CKGR_PLLBR_MULB_Pos 16
 #define CKGR_PLLBR_MULB_Msk (0x7ffu << CKGR_PLLBR_MULB_Pos) /**< \brief (CKGR_PLLBR) PLLB Multiplier */
 #define CKGR_PLLBR_MULB(value) ((CKGR_PLLBR_MULB_Msk & ((value) << CKGR_PLLBR_MULB_Pos)))
@@ -5554,7 +5556,10 @@ typedef struct {
 #define UDP_GLB_STAT_RSMINPR (0x1 << 3) /**< \brief (UDP_GLB_STAT)  */
 #define UDP_GLB_STAT_RMWUPE (0x1 << 4) /**< \brief (UDP_GLB_STAT) Remote Wake Up Enable */
 /* -------- UDP_FADDR : (UDP Offset: 0x008) Function Address Register -------- */
-#define UDP_FADDR_FADD (0x7f << 0) /**< \brief (UDP_FADDR) Function Address Value */
+//#define UDP_FADDR_FADD (0x7f << 0) /**< \brief (UDP_FADDR) Function Address Value */
+#define UDP_FADDR_FADD_Pos 0
+#define UDP_FADDR_FADD_Msk (0x7fu << UDP_FADDR_FADD_Pos) /**< \brief (UDP_FADDR) Function Address Value */
+#define UDP_FADDR_FADD(value) ((UDP_FADDR_FADD_Msk & ((value) << UDP_FADDR_FADD_Pos)))
 #define UDP_FADDR_FEN (0x1 << 8) /**< \brief (UDP_FADDR) Function Enable */
 /* -------- UDP_IER : (UDP Offset: 0x010) Interrupt Enable Register -------- */
 #define UDP_IER_EP0INT (0x1 << 0) /**< \brief (UDP_IER) Enable Endpoint 0 Interrupt */
@@ -5640,6 +5645,8 @@ typedef struct {
 #define UDP_CSR_RX_DATA_BK1 (0x1 << 6) /**< \brief (UDP_CSR[8]) Receive Data Bank 1 (only used by endpoints with ping-pong attributes) */
 #define UDP_CSR_DIR (0x1 << 7) /**< \brief (UDP_CSR[8]) Transfer Direction (only available for control endpoints) */
 #define UDP_CSR_EPTYPE (0x7 << 8) /**< \brief (UDP_CSR[8]) Endpoint Type */
+#define UDP_CSR_EPTYPE_Pos 8
+#define UDP_CSR_EPTYPE_Msk (0x7u << UDP_CSR_EPTYPE_Pos) /**< \brief (UDP_CSR[8]) Endpoint Type */
 #define   UDP_CSR_EPTYPE_CTRL (0x0 << 8) /**< \brief (UDP_CSR[8]) Control */
 #define   UDP_CSR_EPTYPE_ISO_OUT (0x1 << 8) /**< \brief (UDP_CSR[8]) Isochronous OUT */
 #define   UDP_CSR_EPTYPE_BULK_OUT (0x2 << 8) /**< \brief (UDP_CSR[8]) Bulk OUT */
@@ -5649,7 +5656,10 @@ typedef struct {
 #define   UDP_CSR_EPTYPE_INT_IN (0x7 << 8) /**< \brief (UDP_CSR[8]) Interrupt IN */
 #define UDP_CSR_DTGLE (0x1 << 11) /**< \brief (UDP_CSR[8]) Data Toggle */
 #define UDP_CSR_EPEDS (0x1 << 15) /**< \brief (UDP_CSR[8]) Endpoint Enable Disable */
-#define UDP_CSR_RXBYTECNT (0x7ff << 16) /**< \brief (UDP_CSR[8]) Number of Bytes Available in the FIFO */
+//#define UDP_CSR_RXBYTECNT (0x7ff << 16) /**< \brief (UDP_CSR[8]) Number of Bytes Available in the FIFO */
+#define UDP_CSR_RXBYTECNT_Pos 16
+#define UDP_CSR_RXBYTECNT_Msk (0x7ffu << UDP_CSR_RXBYTECNT_Pos) /**< \brief (UDP_CSR[8]) Number of Bytes Available in the FIFO */
+#define UDP_CSR_RXBYTECNT(value) ((UDP_CSR_RXBYTECNT_Msk & ((value) << UDP_CSR_RXBYTECNT_Pos)))
 /* -------- UDP_FDR[8] : (UDP Offset: 0x4C) Endpoint FIFO Data Register (ept_num = 0) -------- */
 #define UDP_FDR_FIFO_DATA (0xff << 0) /**< \brief (UDP_FDR[8]) FIFO Data Value */
 /* -------- UDP_TXVC : (UDP Offset: 0x074) Transceiver Control Register -------- */

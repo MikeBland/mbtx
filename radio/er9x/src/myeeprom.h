@@ -158,7 +158,6 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   switchWarningStates;
 #endif
 		int8_t		volume ;
-    uint8_t   res[3];
     uint8_t   crosstrim:1 ;
     uint8_t   FrskyPins:1 ;
     uint8_t   rotateScreen:1 ;
@@ -266,6 +265,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
 #endif
+		uint16_t stickDeadband ;
 }) V2EEGeneral;
 
 #endif

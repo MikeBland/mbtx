@@ -181,6 +181,12 @@
 
 #endif
 
+#ifdef PCBX7
+#define	PIN_SW_EXT1		        GPIO_Pin_13	//PC.13
+#define	PIN_SW_EXT2		        GPIO_Pin_10	//PD.10
+#endif
+
+
 // ADC
 #ifdef PCBX7
 #define PIN_STK_J1                      GPIO_Pin_0  //PA.00              
@@ -301,6 +307,13 @@
 #define USB_GPIO                        GPIOA
 #define USB_GPIO_PIN_VBUS               GPIO_Pin_9  // PA.09
 
+#ifdef PCBX7
+#define RCC_AHB1Periph_GPIOHAPTIC       RCC_AHB1Periph_GPIOB
+#define GPIO_Pin_HAPTIC                 GPIO_Pin_8  //PB.08
+#define GPIOHAPTIC                      GPIOB
+#define GPIO_PinSource_HAPTIC           GPIO_PinSource8
+#endif
+
 #ifdef REVPLUS
 // Haptic PB8
 #define RCC_AHB1Periph_GPIOHAPTIC       RCC_AHB1Periph_GPIOB
@@ -338,9 +351,11 @@
 #else
 
 // Haptic
+#ifndef PCBX7
 #define RCC_AHB1Periph_GPIOHAPTIC       RCC_AHB1Periph_GPIOC
 #define GPIO_Pin_HAPTIC                 GPIO_Pin_12  //PC.12
 #define GPIOHAPTIC                      GPIOC
+#endif
 
 // BackLight PB8
 #define RCC_AHB1Periph_GPIOBL           RCC_AHB1Periph_GPIOB

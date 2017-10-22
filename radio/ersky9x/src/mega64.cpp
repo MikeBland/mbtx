@@ -94,6 +94,7 @@ uint16_t M64CountErrors ;
 uint8_t M64MainTimer ;
 uint8_t M64BackupTimer ;
 uint16_t M64ResetTimer ;
+uint16_t M64UsedBackup ;
 uint8_t M64ResetStatus ;
 uint8_t M64ResetCount ;
 uint8_t M64RestartCount ;
@@ -512,6 +513,7 @@ static void poll_mega64()
 					if ( M64MainTimer == 0 )
 					{
 						// Nothing received over the main connection
+						M64UsedBackup += 1 ;
 						int16_t byte ;
 						uint16_t switches ;
 						
