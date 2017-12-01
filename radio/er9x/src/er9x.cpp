@@ -26,6 +26,9 @@
 const
 #ifdef REMOVE_FROM_64FRSKY
 #include "s9xsplashs.lbm"
+const prog_uchar APM s9xsplashMarker[] = {
+"Spls"
+};
 #else
 #include "s9xsplash.lbm"
 #include "splashmarker.h"

@@ -1857,8 +1857,8 @@ void MdiChild::generalDefault()
 	radioData.generalSettings.bright = 50 ;
 	radioData.generalSettings.volume = 2 ;
   for (int i = 0; i < 7; ++i) {
-    radioData.generalSettings.calibMid[i]     = 0x300;
-    radioData.generalSettings.calibSpanNeg[i] = 0x400;
+    radioData.generalSettings.calibMid[i]     = 0x400;
+    radioData.generalSettings.calibSpanNeg[i] = 0x300;
     radioData.generalSettings.calibSpanPos[i] = 0x300;
   }
   int16_t sum=0;
@@ -2129,13 +2129,13 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 	{
     er9x::FrSkyChannelData *src = &er9x::EmodelData.frsky.channels[i] ;
 		SKYFrSkyChannelData *dst = &dest->frsky.channels[i] ;
-		dst->ratio = src->ratio ;
-		dst->alarms_value[0] = src->alarms_value[0] ;
-		dst->alarms_value[1] = src->alarms_value[1] ;
-		dst->alarms_level = src->alarms_level ;
-		dst->alarms_greater = src->alarms_greater ;
-		dst->type = src->type ;
-		dst->gain = 1 ;
+    dst->lratio = src->ratio ;
+//		dst->alarms_value[0] = src->alarms_value[0] ;
+//		dst->alarms_value[1] = src->alarms_value[1] ;
+//		dst->alarms_level = src->alarms_level ;
+//		dst->alarms_greater = src->alarms_greater ;
+    dst->units = src->type ;
+//		dst->gain = 1 ;
 	}
 
 	for ( i = 0 ; i < 2 ; i += 1 )

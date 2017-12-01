@@ -9,7 +9,7 @@
   ******************************************************************************
 */
 
-#include "..\ersky9x.h"
+#include "../ersky9x.h"
 
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"

@@ -84,9 +84,9 @@ uint16_t evalChkSum()
 static bool eeLoadGeneral()
 {
   theFile.openRd(FILE_GENERAL);
-  memset(&g_eeGeneral, 0, sizeof(EEGeneral));
+  memset(&g_eeGeneral, 0, sizeof(g_eeGeneral));
 //  uint8_t sz = theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(EEGeneral));
-  theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(EEGeneral));
+  theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(g_eeGeneral));
 
 	validateName( g_eeGeneral.ownerName, sizeof(g_eeGeneral.ownerName) ) ;
 
@@ -487,8 +487,8 @@ void eeWriteGeneral()
   //alert(PSTR("format ok"));
   // alert(PSTR("default ok"));
 
-  uint16_t sz = theFile.writeRlc(FILE_GENERAL,FILE_TYP_GENERAL,(uint8_t*)&g_eeGeneral,sizeof(EEGeneral),200);
-  if(sz!=sizeof(EEGeneral)) alert(PSTR(STR_GENWR_ERROR));
+  uint16_t sz = theFile.writeRlc(FILE_GENERAL,FILE_TYP_GENERAL,(uint8_t*)&g_eeGeneral,sizeof(g_eeGeneral),200);
+  if(sz!=sizeof(g_eeGeneral)) alert(PSTR(STR_GENWR_ERROR));
 
   modelDefaultWrite(0);
   //alert(PSTR("modef ok"));
@@ -561,7 +561,7 @@ void eeCheck(bool immediately)
 		
   	s_eeDirtyMsk &= ~EE_GENERAL ;
     if(theWriteFile.writeRlc(FILE_TMP, FILE_TYP_GENERAL, (uint8_t*)&g_eeGeneral,
-                        sizeof(EEGeneral),20) == sizeof(EEGeneral))
+                        sizeof(g_eeGeneral),20) == sizeof(g_eeGeneral))
     {
       EFile::swap(FILE_GENERAL,FILE_TMP);
     }else{

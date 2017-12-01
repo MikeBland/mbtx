@@ -333,7 +333,7 @@ private slots:
     void on_thrIdleChkB_toggled(bool checked) ;
 		void on_thrRevChkB_toggled(bool checked) ;
 		void on_trainerCB_currentIndexChanged(int index) ;
-    void on_trimScaledChkB_toggled(bool checked);
+//    void on_trimScaledChkB_toggled(bool checked);
 //    void on_T2ThrTrgChkB_toggled(bool checked);
 		
     void on_ppmDelaySB_editingFinished();

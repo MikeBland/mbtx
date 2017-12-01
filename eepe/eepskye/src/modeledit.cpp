@@ -331,7 +331,7 @@ void ModelEdit::tabModelEditSetup()
     populateSwitchCB(ui->trimSWCB,g_model.trimSw, rData->type);
     ui->thrExpoChkB->setChecked(g_model.thrExpo);
     ui->thrTrimChkB->setChecked(g_model.thrTrim);
-    ui->trimScaledChkB->setChecked(g_model.trimsScaled);
+//    ui->trimScaledChkB->setChecked(g_model.trimsScaled);
     ui->timerDirCB->setCurrentIndex(g_model.timer[0].tmrDir);
     ui->timer2DirCB->setCurrentIndex(g_model.timer[1].tmrDir);
 
@@ -2947,6 +2947,13 @@ void ModelEdit::tabMixes()
 							type = RADIO_TYPE_X9E ;
 						}
 					}
+					if ( type == RADIO_TYPE_QX7 )
+					{
+						if ( value > 6 )
+						{
+						 value += 1 ;
+						}
+					}
           srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, type, rData->extraPots );
 				}
 
@@ -3030,7 +3037,47 @@ void ModelEdit::tabMixes()
 
         if(md->mixWarn)  str += tr(" Warn(%1)").arg(md->mixWarn);
 
-        if(!mixNotes[i].isEmpty())
+				if ( ( md->modeControl != 0x7F ) && ( md->modeControl != 0 ) )
+				{
+					str += " FM(" ;
+					uint8_t b ;
+					char i ;
+					b = 1 ;
+					i = '0' ;
+					while ( b < 0x80 )
+					{
+						if ( ( md->modeControl & b ) == 0 )
+						{
+							if ( i > '0' )
+							{
+								QString n = g_model.phaseData[i-'1'].name ;
+								n = n.left(6) ;
+								if ( n.data()[0] != ' ' )
+								{
+									while ( n.endsWith(" ") )
+									{
+										n = n.left(n.size()-1) ;
+									}
+									str += tr("%1,").arg(n) ;
+								}
+								else
+								{
+									str += tr("%1,").arg(i) ;
+								}
+							}
+							else
+							{							
+								str += tr("%1,").arg(i) ;
+							}
+						}
+						b <<= 1 ;
+						i += 1 ;
+					}
+					str = str.left(str.size()-1) ;
+					str += ")" ;
+				}
+        
+				if(!mixNotes[i].isEmpty())
             str += " (Note)";
 
         qba.clear();
@@ -3309,36 +3356,42 @@ void ModelEdit::updatePhaseTab()
 	ui->FM6FadeOut->setValue(g_model.phaseData[5].fadeOut/2.0) ;
 
 	QString n = g_model.phaseData[0].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
-		n = n.left(n.size()-1) ;			
+		n = n.left(n.size()-1) ;
 	}
   ui->FM1Name->setText( n ) ;
   n = g_model.phaseData[1].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM2Name->setText( n ) ;
   n = g_model.phaseData[2].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM3Name->setText( n ) ;
   n = g_model.phaseData[3].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM4Name->setText( n ) ;
   n = g_model.phaseData[4].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM5Name->setText( n ) ;
   n = g_model.phaseData[5].name ;
+	n = n.left(6) ;
 	while ( n.endsWith(" ") )
 	{
 		n = n.left(n.size()-1) ;			
@@ -5625,55 +5678,101 @@ void ModelEdit::switchesEdited()
 //			limit = MAX_XDRSWITCH ;
 //		}
 
-    chAr[0]  = (CS_STATE(g_model.customSw[0].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_1->currentIndex(), g_model.modelVersion));
-    chAr[1]  = (CS_STATE(g_model.customSw[1].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_2->currentIndex(), g_model.modelVersion));
-    chAr[2]  = (CS_STATE(g_model.customSw[2].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_3->currentIndex(), g_model.modelVersion));
-    chAr[3]  = (CS_STATE(g_model.customSw[3].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_4->currentIndex(), g_model.modelVersion));
-    chAr[4]  = (CS_STATE(g_model.customSw[4].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_5->currentIndex(), g_model.modelVersion));
-    chAr[5]  = (CS_STATE(g_model.customSw[5].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_6->currentIndex(), g_model.modelVersion));
-    chAr[6]  = (CS_STATE(g_model.customSw[6].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_7->currentIndex(), g_model.modelVersion));
-    chAr[7]  = (CS_STATE(g_model.customSw[7].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_8->currentIndex(), g_model.modelVersion));
-    chAr[8]  = (CS_STATE(g_model.customSw[8].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_9->currentIndex(), g_model.modelVersion));
-    chAr[9]  = (CS_STATE(g_model.customSw[9].func, g_model.modelVersion)) !=(CS_STATE(ui->cswitchFunc_10->currentIndex(), g_model.modelVersion));
-    chAr[10] = (CS_STATE(g_model.customSw[10].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_11->currentIndex(), g_model.modelVersion));
-    chAr[11] = (CS_STATE(g_model.customSw[11].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_12->currentIndex(), g_model.modelVersion));
-    chAr[12] = (CS_STATE(g_model.customSw[12].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_13->currentIndex(), g_model.modelVersion));
-    chAr[13] = (CS_STATE(g_model.customSw[13].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_14->currentIndex(), g_model.modelVersion));
-    chAr[14] = (CS_STATE(g_model.customSw[14].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_15->currentIndex(), g_model.modelVersion));
-    chAr[15] = (CS_STATE(g_model.customSw[15].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_16->currentIndex(), g_model.modelVersion));
-    chAr[16] = (CS_STATE(g_model.customSw[16].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_17->currentIndex(), g_model.modelVersion));
-    chAr[17] = (CS_STATE(g_model.customSw[17].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_18->currentIndex(), g_model.modelVersion));
-    chAr[18] = (CS_STATE(g_model.customSw[18].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_19->currentIndex(), g_model.modelVersion));
-    chAr[19] = (CS_STATE(g_model.customSw[19].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_20->currentIndex(), g_model.modelVersion));
-    chAr[20] = (CS_STATE(g_model.customSw[20].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_21->currentIndex(), g_model.modelVersion));
-    chAr[21] = (CS_STATE(g_model.customSw[21].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_22->currentIndex(), g_model.modelVersion));
-    chAr[22] = (CS_STATE(g_model.customSw[22].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_23->currentIndex(), g_model.modelVersion));
-    chAr[23] = (CS_STATE(g_model.customSw[23].func, g_model.modelVersion))!=(CS_STATE(ui->cswitchFunc_24->currentIndex(), g_model.modelVersion));
+		value = unmapSwFunc( ui->cswitchFunc_1->currentIndex() ) ;
+    chAr[0]  = (CS_STATE(g_model.customSw[0].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[0].func  = value ;
+    
+		value = unmapSwFunc( ui->cswitchFunc_2->currentIndex() ) ;
+		chAr[1]  = (CS_STATE(g_model.customSw[1].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[1].func  = value ;
+    
+		value = unmapSwFunc( ui->cswitchFunc_3->currentIndex() ) ;
+		chAr[2]  = (CS_STATE(g_model.customSw[2].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[2].func  = value ;
+    
+		value = unmapSwFunc( ui->cswitchFunc_4->currentIndex() ) ;
+		chAr[3]  = (CS_STATE(g_model.customSw[3].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[3].func  = value ;
+    
+		value = unmapSwFunc( ui->cswitchFunc_5->currentIndex() ) ;
+		chAr[4]  = (CS_STATE(g_model.customSw[4].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[4].func  = value ;
 
-    g_model.customSw[0].func  = ui->cswitchFunc_1->currentIndex();
-    g_model.customSw[1].func  = ui->cswitchFunc_2->currentIndex();
-    g_model.customSw[2].func  = ui->cswitchFunc_3->currentIndex();
-    g_model.customSw[3].func  = ui->cswitchFunc_4->currentIndex();
-    g_model.customSw[4].func  = ui->cswitchFunc_5->currentIndex();
-    g_model.customSw[5].func  = ui->cswitchFunc_6->currentIndex();
-    g_model.customSw[6].func  = ui->cswitchFunc_7->currentIndex();
-    g_model.customSw[7].func  = ui->cswitchFunc_8->currentIndex();
-    g_model.customSw[8].func  = ui->cswitchFunc_9->currentIndex();
-    g_model.customSw[9].func  = ui->cswitchFunc_10->currentIndex();
-    g_model.customSw[10].func = ui->cswitchFunc_11->currentIndex();
-    g_model.customSw[11].func = ui->cswitchFunc_12->currentIndex();
-    g_model.customSw[12].func = ui->cswitchFunc_13->currentIndex();
-    g_model.customSw[13].func = ui->cswitchFunc_14->currentIndex();
-    g_model.customSw[14].func = ui->cswitchFunc_15->currentIndex();
-    g_model.customSw[15].func = ui->cswitchFunc_16->currentIndex();
-    g_model.customSw[16].func = ui->cswitchFunc_17->currentIndex();
-    g_model.customSw[17].func = ui->cswitchFunc_18->currentIndex();
-    g_model.customSw[18].func = ui->cswitchFunc_19->currentIndex();
-    g_model.customSw[19].func = ui->cswitchFunc_20->currentIndex();
-    g_model.customSw[20].func = ui->cswitchFunc_21->currentIndex();
-    g_model.customSw[21].func = ui->cswitchFunc_22->currentIndex();
-    g_model.customSw[22].func = ui->cswitchFunc_23->currentIndex();
-    g_model.customSw[23].func = ui->cswitchFunc_24->currentIndex();
+		value = unmapSwFunc( ui->cswitchFunc_6->currentIndex() ) ;
+    chAr[5]  = (CS_STATE(g_model.customSw[5].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[5].func  = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_7->currentIndex() ) ;
+    chAr[6]  = (CS_STATE(g_model.customSw[6].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[6].func  = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_8->currentIndex() ) ;
+    chAr[7]  = (CS_STATE(g_model.customSw[7].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[7].func  = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_9->currentIndex() ) ;
+    chAr[8]  = (CS_STATE(g_model.customSw[8].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[8].func  = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_10->currentIndex() ) ;
+    chAr[9]  = (CS_STATE(g_model.customSw[9].func, g_model.modelVersion)) !=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[9].func  = value ;
+		
+		value = unmapSwFunc( ui->cswitchFunc_11->currentIndex() ) ;
+    chAr[10] = (CS_STATE(g_model.customSw[10].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[10].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_12->currentIndex() ) ;
+    chAr[11] = (CS_STATE(g_model.customSw[11].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[11].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_13->currentIndex() ) ;
+    chAr[12] = (CS_STATE(g_model.customSw[12].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[12].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_14->currentIndex() ) ;
+    chAr[13] = (CS_STATE(g_model.customSw[13].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[13].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_15->currentIndex() ) ;
+    chAr[14] = (CS_STATE(g_model.customSw[14].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[14].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_16->currentIndex() ) ;
+    chAr[15] = (CS_STATE(g_model.customSw[15].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[15].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_17->currentIndex() ) ;
+    chAr[16] = (CS_STATE(g_model.customSw[16].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[16].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_18->currentIndex() ) ;
+    chAr[17] = (CS_STATE(g_model.customSw[17].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[17].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_19->currentIndex() ) ;
+    chAr[18] = (CS_STATE(g_model.customSw[18].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[18].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_20->currentIndex() ) ;
+    chAr[19] = (CS_STATE(g_model.customSw[19].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[19].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_21->currentIndex() ) ;
+    chAr[20] = (CS_STATE(g_model.customSw[20].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[20].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_22->currentIndex() ) ;
+    chAr[21] = (CS_STATE(g_model.customSw[21].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[21].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_23->currentIndex() ) ;
+    chAr[22] = (CS_STATE(g_model.customSw[22].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+    g_model.customSw[22].func = value ;
+
+		value = unmapSwFunc( ui->cswitchFunc_24->currentIndex() ) ;
+    chAr[23] = (CS_STATE(g_model.customSw[23].func, g_model.modelVersion))!=(CS_STATE(value, g_model.modelVersion));
+		g_model.customSw[23].func = value ;
 
 		uint32_t cType ;
     
@@ -6337,27 +6436,32 @@ void ModelEdit::tabFrsky()
     populateTelItemsCB( ui->Ct8_2, 0, g_model.customDisplay2Extra[1] ) ;
     populateTelItemsCB( ui->Ct9_2, 0, g_model.customDisplay2Extra[2] ) ;
 
-    ui->frsky_ratio_0->setValue(g_model.frsky.channels[0].ratio);
-    ui->frsky_type_0->setCurrentIndex(g_model.frsky.channels[0].type);
-    ui->frsky_ratio_1->setValue(g_model.frsky.channels[1].ratio);
-    ui->frsky_type_1->setCurrentIndex(g_model.frsky.channels[1].type);
-		FrSkyA1changed(g_model.frsky.channels[0].ratio) ;
-		FrSkyA2changed(g_model.frsky.channels[1].ratio) ;
+    ui->frsky_ratio_0->setValue(g_model.frsky.channels[0].lratio);
+    ui->frsky_type_0->setCurrentIndex(g_model.frsky.channels[0].units);
+    ui->frsky_ratio_1->setValue(g_model.frsky.channels[1].lratio);
+    ui->frsky_type_1->setCurrentIndex(g_model.frsky.channels[1].units);
+    ui->frsky_ratio_2->setValue(g_model.frsky.channels[0].ratio3_4);
+    ui->frsky_type_2->setCurrentIndex(g_model.frsky.channels[0].units3_4);
+    ui->frsky_ratio_3->setValue(g_model.frsky.channels[1].ratio3_4);
+    ui->frsky_type_3->setCurrentIndex(g_model.frsky.channels[1].units3_4);
+		
+		FrSkyA1changed(g_model.frsky.channels[0].lratio) ;
+		FrSkyA2changed(g_model.frsky.channels[1].lratio) ;
 
-    ui->frsky_val_0_0->setValue(g_model.frsky.channels[0].alarms_value[0]);
-    ui->frsky_val_0_1->setValue(g_model.frsky.channels[0].alarms_value[1]);
-    ui->frsky_val_1_0->setValue(g_model.frsky.channels[1].alarms_value[0]);
-    ui->frsky_val_1_1->setValue(g_model.frsky.channels[1].alarms_value[1]);
+//    ui->frsky_val_0_0->setValue(g_model.frsky.channels[0].alarms_value[0]);
+//    ui->frsky_val_0_1->setValue(g_model.frsky.channels[0].alarms_value[1]);
+//    ui->frsky_val_1_0->setValue(g_model.frsky.channels[1].alarms_value[0]);
+//    ui->frsky_val_1_1->setValue(g_model.frsky.channels[1].alarms_value[1]);
 
-    ui->frsky_level_0_0->setCurrentIndex(ALARM_LEVEL(0,0));
-    ui->frsky_level_0_1->setCurrentIndex(ALARM_LEVEL(0,1));
-    ui->frsky_level_1_0->setCurrentIndex(ALARM_LEVEL(1,0));
-    ui->frsky_level_1_1->setCurrentIndex(ALARM_LEVEL(1,1));
+//    ui->frsky_level_0_0->setCurrentIndex(ALARM_LEVEL(0,0));
+//    ui->frsky_level_0_1->setCurrentIndex(ALARM_LEVEL(0,1));
+//    ui->frsky_level_1_0->setCurrentIndex(ALARM_LEVEL(1,0));
+//    ui->frsky_level_1_1->setCurrentIndex(ALARM_LEVEL(1,1));
 
-    ui->frsky_gr_0_0->setCurrentIndex(ALARM_GREATER(0,0));
-    ui->frsky_gr_0_1->setCurrentIndex(ALARM_GREATER(0,1));
-    ui->frsky_gr_1_0->setCurrentIndex(ALARM_GREATER(1,0));
-    ui->frsky_gr_1_1->setCurrentIndex(ALARM_GREATER(1,1));
+//    ui->frsky_gr_0_0->setCurrentIndex(ALARM_GREATER(0,0));
+//    ui->frsky_gr_0_1->setCurrentIndex(ALARM_GREATER(0,1));
+//    ui->frsky_gr_1_0->setCurrentIndex(ALARM_GREATER(1,0));
+//    ui->frsky_gr_1_1->setCurrentIndex(ALARM_GREATER(1,1));
 
     ui->GpsAltMain->setChecked(g_model.FrSkyGpsAlt);
     ui->InvertCom1CB->setChecked(g_model.telemetryRxInvert);
@@ -6405,21 +6509,25 @@ void ModelEdit::tabFrsky()
     connect(ui->frsky_ratio_1,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
     connect(ui->frsky_type_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
     connect(ui->frsky_type_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+    connect(ui->frsky_ratio_2,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+    connect(ui->frsky_ratio_3,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+    connect(ui->frsky_type_2,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+    connect(ui->frsky_type_3,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 
-    connect(ui->frsky_val_0_0,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_val_0_1,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_val_1_0,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_val_1_1,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_val_0_0,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_val_0_1,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_val_1_0,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_val_1_1,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
 
-    connect(ui->frsky_level_0_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_level_0_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_level_1_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_level_1_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_level_0_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_level_0_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_level_1_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_level_1_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 
-    connect(ui->frsky_gr_0_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_gr_0_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_gr_1_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-    connect(ui->frsky_gr_1_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_gr_0_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_gr_0_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_gr_1_0,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
+//    connect(ui->frsky_gr_1_1,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
     
 		connect(ui->GpsAltMain,SIGNAL(stateChanged(int)),this,SLOT(FrSkyEdited()));
     connect(ui->InvertCom1CB,SIGNAL(stateChanged(int)),this,SLOT(FrSkyEdited()));
@@ -6497,25 +6605,32 @@ void ModelEdit::FrSkyEdited()
 //	{
 //		limit = MAX_XDRSWITCH ;
 //	}
-    g_model.frsky.channels[0].ratio = ui->frsky_ratio_0->value();
-    g_model.frsky.channels[1].ratio = ui->frsky_ratio_1->value();
+    g_model.frsky.channels[0].lratio = ui->frsky_ratio_0->value();
+    g_model.frsky.channels[1].lratio = ui->frsky_ratio_1->value();
 		
-		g_model.frsky.channels[0].type  = ui->frsky_type_0->currentIndex();
-    g_model.frsky.channels[1].type  = ui->frsky_type_1->currentIndex();
+		g_model.frsky.channels[0].units  = ui->frsky_type_0->currentIndex();
+    g_model.frsky.channels[1].units  = ui->frsky_type_1->currentIndex();
 
-		FrSkyA1changed(g_model.frsky.channels[0].ratio) ;
-		FrSkyA2changed(g_model.frsky.channels[1].ratio) ;
+		FrSkyA1changed(g_model.frsky.channels[0].lratio) ;
+		FrSkyA2changed(g_model.frsky.channels[1].lratio) ;
 
-    g_model.frsky.channels[0].alarms_value[0] = ui->frsky_val_0_0->value();
-    g_model.frsky.channels[0].alarms_value[1] = ui->frsky_val_0_1->value();
-    g_model.frsky.channels[1].alarms_value[0] = ui->frsky_val_1_0->value();
-    g_model.frsky.channels[1].alarms_value[1] = ui->frsky_val_1_1->value();
+    g_model.frsky.channels[0].ratio3_4 = ui->frsky_ratio_2->value();
+    g_model.frsky.channels[1].ratio3_4 = ui->frsky_ratio_3->value();
+		
+		g_model.frsky.channels[0].units3_4  = ui->frsky_type_2->currentIndex();
+    g_model.frsky.channels[1].units3_4  = ui->frsky_type_3->currentIndex();
 
-    g_model.frsky.channels[0].alarms_level = (ui->frsky_level_0_0->currentIndex() & 3) + ((ui->frsky_level_0_1->currentIndex() & 3) << 2);
-    g_model.frsky.channels[1].alarms_level = (ui->frsky_level_1_0->currentIndex() & 3) + ((ui->frsky_level_1_1->currentIndex() & 3) << 2);
 
-    g_model.frsky.channels[0].alarms_greater = (ui->frsky_gr_0_0->currentIndex() & 1) + ((ui->frsky_gr_0_1->currentIndex() & 1) << 1);
-    g_model.frsky.channels[1].alarms_greater = (ui->frsky_gr_1_1->currentIndex() & 1) + ((ui->frsky_gr_1_1->currentIndex() & 1) << 1);
+//    g_model.frsky.channels[0].alarms_value[0] = ui->frsky_val_0_0->value();
+//    g_model.frsky.channels[0].alarms_value[1] = ui->frsky_val_0_1->value();
+//    g_model.frsky.channels[1].alarms_value[0] = ui->frsky_val_1_0->value();
+//    g_model.frsky.channels[1].alarms_value[1] = ui->frsky_val_1_1->value();
+
+//    g_model.frsky.channels[0].alarms_level = (ui->frsky_level_0_0->currentIndex() & 3) + ((ui->frsky_level_0_1->currentIndex() & 3) << 2);
+//    g_model.frsky.channels[1].alarms_level = (ui->frsky_level_1_0->currentIndex() & 3) + ((ui->frsky_level_1_1->currentIndex() & 3) << 2);
+
+//    g_model.frsky.channels[0].alarms_greater = (ui->frsky_gr_0_0->currentIndex() & 1) + ((ui->frsky_gr_0_1->currentIndex() & 1) << 1);
+//    g_model.frsky.channels[1].alarms_greater = (ui->frsky_gr_1_1->currentIndex() & 1) + ((ui->frsky_gr_1_1->currentIndex() & 1) << 1);
 
     g_model.FrSkyGpsAlt = ui->GpsAltMain->isChecked();
     g_model.telemetryRxInvert = ui->InvertCom1CB->isChecked() ;
@@ -7098,11 +7213,11 @@ void ModelEdit::on_thrTrimChkB_toggled(bool checked)
     updateSettings();
 }
 
-void ModelEdit::on_trimScaledChkB_toggled(bool checked)
-{
-  g_model.trimsScaled = checked ;
-	updateSettings();
-}
+//void ModelEdit::on_trimScaledChkB_toggled(bool checked)
+//{
+//  g_model.trimsScaled = checked ;
+//	updateSettings();
+//}
 
 void ModelEdit::on_thrIdleChkB_toggled(bool checked)
 {

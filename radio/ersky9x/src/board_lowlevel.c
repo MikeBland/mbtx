@@ -41,6 +41,17 @@
 
 #include "board.h"
 
+//#define DEBUG	1
+
+#ifdef DEBUG
+void cppstartupDebugInit( void ) ;
+void cppwhere( uint8_t chr ) ;
+#else
+#define cppstartupDebugInit()
+#define cppwhere(x)
+#endif
+
+
 //#define	USE_54_MHZ	1
 #define	USE_64_MHZ	1
 
@@ -166,27 +177,32 @@ static uint32_t BOARD_ConfigurePmc(void)
      ****************************/
     if(!(pmcptr->CKGR_MOR & CKGR_MOR_MOSCSEL))
     {
+	cppwhere( 'c' ) ;
 
       pmcptr->CKGR_MOR = (0x37 << 16) | BOARD_OSCOUNT | CKGR_MOR_MOSCRCEN | CKGR_MOR_MOSCXTEN;
       timeout = 0;
       while (!(pmcptr->PMC_SR & PMC_SR_MOSCXTS) && (++timeout < CLOCK_TIMEOUT));
 
     }
+	cppwhere( 'd' ) ;
 
     /* Switch to 3-20MHz Xtal oscillator */
     pmcptr->CKGR_MOR = (0x37 << 16) | BOARD_OSCOUNT | CKGR_MOR_MOSCRCEN | CKGR_MOR_MOSCXTEN | CKGR_MOR_MOSCSEL;
     timeout = 0;
     while (!(pmcptr->PMC_SR & PMC_SR_MOSCSELS) && (++timeout < CLOCK_TIMEOUT));
 
+	cppwhere( 'e' ) ;
     pmcptr->PMC_MCKR = (PMC->PMC_MCKR & ~(uint32_t)PMC_MCKR_CSS) | PMC_MCKR_CSS_MAIN_CLK;
     timeout = 0;
     while (!(pmcptr->PMC_SR & PMC_SR_MCKRDY) && (++timeout < CLOCK_TIMEOUT));
 
+	cppwhere( 'f' ) ;
     /* Initialize PLLA 72 MHz (or 108 MHz) */
     pmcptr->CKGR_PLLAR = ( ChipId & 0x0080 ) ? BOARD120_PLLR : BOARD_PLLR;
     timeout = 0;
     while (!(pmcptr->PMC_SR & PMC_SR_LOCKA) && (++timeout < CLOCK_TIMEOUT));
 
+	cppwhere( 'g' ) ;
 
     /* Initialize UTMI for USB usage, can be disabled if not using USB for the sake of saving power*/
     //AT91C_BASE_CKGR->CKGR_UCKR |= (AT91C_CKGR_UPLLCOUNT & (3 << 20)) | AT91C_CKGR_UPLLEN;
@@ -204,6 +220,7 @@ static uint32_t BOARD_ConfigurePmc(void)
   timeout = 0;
   while (!(PMC->PMC_SR & PMC_SR_MCKRDY) && (timeout++ < CLOCK_TIMEOUT));
 
+	cppwhere( 'h' ) ;
 	if ( ChipId & 0x0080 )
 	{
 		return 120000000L ;
@@ -245,7 +262,7 @@ void revert_osc()
 
 #ifdef BOOT
 
-#ifdef REVB
+#ifndef REVA
 extern void sam_bootx( void ) ;
 extern void dispUSB( void ) ;
 extern uint32_t init
@@ -295,8 +312,10 @@ static void lowLevelUsbCheck( void )
 /*----------------------------------------------------------------------------*/
 uint32_t SystemInit (void)
 {
+	cppstartupDebugInit() ;
+	cppwhere( 'a' ) ;
 #ifdef BOOT
-#ifdef REVB
+#ifndef REVA
 	lowLevelUsbCheck() ;
 #endif
 #endif
@@ -320,6 +339,7 @@ uint32_t SystemInit (void)
  #endif
 #endif
 
+	cppwhere( 'b' ) ;
    /** Configure PMC */
   return BOARD_ConfigurePmc();
 }

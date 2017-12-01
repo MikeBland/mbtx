@@ -144,11 +144,12 @@ QString TelemItems[] = {
 	,"Cus4"
 	,"Cus5"
 	,"Cus6"
+	,"Fmd "
 #endif
 } ;
 
 #ifdef SKY
-#define NUM_TELEM_ITEMS	74
+#define NUM_TELEM_ITEMS	75
 #else
 #define NUM_TELEM_ITEMS	42
 #endif
@@ -291,7 +292,7 @@ QString AnaVolumeItems[] = {
 const uint8_t csTypeTable[] =
 #ifdef SKY
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS
 } ;
 #else
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
@@ -1372,6 +1373,7 @@ int16_t m_to_ft( int16_t metres )
 #define CELL_4      51
 #define CELL_5      52
 #define CELL_6      53
+#define FMODE	      74
 
 
 
@@ -1458,6 +1460,9 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
 		case FR_VSPD :
 			result = value * 10 ;
 		break ;
+		case FMODE :
+			result = value ;
+		break ;
   }
   return result;
 }
@@ -1509,7 +1514,11 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   			fd = &model->frsky.channels[index] ;
     	  value = val ;
 #ifndef V2
+#ifdef SKY
+        if (fd->units == 2/*V*/)
+#else
         if (fd->type == 2/*V*/)
+#endif
     		{
     		    times2 = 1 ;
     		}
@@ -1520,14 +1529,18 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 #endif
         uint16_t ratio ;
 	
-  			ratio = fd->ratio ;
+#ifdef SKY
+        ratio = fd->lratio ;
+#else
+        ratio = fd->ratio ;
+#endif
   			if ( times2 )
   			{
   			    ratio <<= 1 ;
   			}
   			value *= ratio ;
 #ifndef V2
-        if ( fd->type == 3/*A*/)
+        if ( fd->units == 3/*A*/)
   			{
   			    value /= 100 ;
   			    att = PREC1 ;
@@ -1545,14 +1558,22 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 #endif
 
 #ifndef V2
+#ifdef SKY
+        if ( (fd->units == 0/*v*/) || (fd->units == 2/*v*/) )
+#else
         if ( (fd->type == 0/*v*/) || (fd->type == 2/*v*/) )
+#endif
     	  {
  			    att = PREC1 ;
 					unit = 'v' ;
     	  }
     	  else
     	  {
-			    if (fd->type == 3/*A*/)
+#ifdef SKY
+          if (fd->units == 3/*A*/)
+#else
+          if (fd->type == 3/*A*/)
+#endif
 					{
 						unit = 'A' ;
 					}
@@ -2551,7 +2572,7 @@ void populateCurvesCB(QComboBox *b, int value)
   QString str = CURV_STR;
   j = (str.length()/3)-1 ;
 #ifdef SKY
-	j -= 5 ;
+	j = 6 + 19 ;
 #endif
 
     b->clear();
@@ -2844,7 +2865,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 			{
 				if ( j > 6 )
 				{
-					j += 1 ;	// Skip 3rd pot
+					j += 2 ;	// Skip 3rd pot
 				}
 			}
 			b->addItem(getSourceStr(stickMode,j,modelVersion, type, extraPots));
@@ -2950,6 +2971,35 @@ QString getCSWFunc(int val, uint8_t modelVersion )
   return QString(CSWITCH_STR).mid(val*CSW_LEN_FUNC,CSW_LEN_FUNC);
 }
 
+#ifdef SKY    
+const uint8_t SwitchFunctionMap[] = { 0,1,2,3,4,18,21,19,5,6,7,8,9,10,11,20,12,13,14,15,16,17} ;
+
+uint8_t locateSwFunc( int value )
+{
+	uint32_t c ;
+  uint8_t *options = ( uint8_t *)SwitchFunctionMap ;
+	for ( c = 0 ; c < sizeof(SwitchFunctionMap) ; c += 1 )
+	{
+		if ( options[c] == value )
+		{
+			value = c ;
+			break ;
+		}
+	}
+  if ( c >= sizeof(SwitchFunctionMap ) )
+	{
+		return 0 ;
+	}
+	return value ;
+}
+
+uint8_t unmapSwFunc( int value )
+{
+	return SwitchFunctionMap[value] ;
+}
+
+
+#endif
 
 void populateCSWCB(QComboBox *b, int value, uint8_t modelVersion)
 {
@@ -2960,8 +3010,13 @@ void populateCSWCB(QComboBox *b, int value, uint8_t modelVersion)
 		modelVersion &= 0x7F ;
 	}
     b->clear();
-    for(int i=0; i<last; i++) b->addItem(getCSWFunc(i, modelVersion));
+#ifdef SKY    
+    for(int i=0; i<last; i++) b->addItem(getCSWFunc( SwitchFunctionMap[i], modelVersion));
+    b->setCurrentIndex( locateSwFunc( value ) ) ;
+#else
+    for(int i=0; i<last; i++) b->addItem(getCSWFunc( i, modelVersion));
     b->setCurrentIndex(value);
+#endif
     b->setMaxVisibleItems(10);
 }
 

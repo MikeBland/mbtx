@@ -100,25 +100,33 @@ class audioQueue
 
 inline void driver() {
 #ifndef SIMU
-  if (toneTimeLeft > 0) {	
-					switch ((g_eeGeneral.speakerMode & 1)){					 
-								case 0:
-						        	//stock beeper. simply turn port on for x time!
-							        if (toneTimeLeft > 0){
-							            PORTE |=  (1<<OUT_E_BUZZER); // speaker output 'high'
-							        } 	 
-							        break;	 
-							  case 1:
-									    static uint8_t toneCounter;
-									    toneCounter += toneFreq;
-									    if ((toneCounter & 0x80) == 0x80) {
-									      PORTE |= (1 << OUT_E_BUZZER);
-									    } else {
-									      PORTE &= ~(1 << OUT_E_BUZZER);
-									    }							  	 
-											break;						  	 
-					}		 
-	} else {
+  if ( (toneTimeLeft > 0) && (toneFreq) )
+	{	 
+		switch ((g_eeGeneral.speakerMode & 1))
+		{
+			case 0:
+				//stock beeper. simply turn port on for x time!
+				if (toneTimeLeft > 0)
+				{
+						PORTE |=  (1<<OUT_E_BUZZER); // speaker output 'high'
+				} 	 
+			break;	 
+			case 1:
+				static uint8_t toneCounter;
+				toneCounter += toneFreq;
+				if ((toneCounter & 0x80) == 0x80)
+				{
+					PORTE |= (1 << OUT_E_BUZZER);
+				}
+				else
+				{
+					PORTE &= ~(1 << OUT_E_BUZZER);
+				}							  	 
+			break;						  	 
+		}		 
+	}
+	else
+	{
 			PORTE &=  ~(1<<OUT_E_BUZZER); // speaker output 'low'
 	}								  	     
 #endif

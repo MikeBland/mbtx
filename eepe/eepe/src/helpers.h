@@ -104,6 +104,8 @@ uint32_t decodePots( uint32_t value, int type, uint32_t extraPots ) ;
 #endif
 void populateCSWCB(QComboBox *b, int value, uint8_t modelVersion );
 #ifdef SKY
+uint8_t locateSwFunc( int value ) ;
+uint8_t unmapSwFunc( int value ) ;
 int16_t convertTelemConstant( int8_t index, int8_t value, SKYModelData *model ) ;
 #else
 int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model ) ;

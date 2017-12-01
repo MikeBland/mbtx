@@ -558,7 +558,8 @@ PACK(typedef struct te_MixData {
 	uint8_t modeControl ;
 	uint8_t	switchSource ;
   uint8_t extWeight:2 ;
-	uint8_t	res:6 ;
+  uint8_t extOffset:2 ;
+	uint8_t	res:4 ;
 	uint8_t	res1 ;
 }) SKYMixData;
 
@@ -592,14 +593,24 @@ PACK(typedef struct te_SafetySwData { // Custom Switches data
 }) SKYSafetySwData;
 
 PACK(typedef struct te_FrSkyChannelData {
-  uint8_t   ratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
-  uint8_t   offset ;              // 
+  uint16_t   lratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+//  uint16_t  lratio ;              // 
   uint8_t   gain ;                // 
-  uint8_t   alarms_value[2] ;     // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
-  uint8_t   alarms_level ;
-  uint8_t   alarms_greater ;      // 0=LT(<), 1=GT(>)
-  uint8_t   type ;                // 0=volts, 1=raw, 2=volts*2, 3=Amps
+  uint16_t   ratio3_4 ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+  uint8_t   unused_alarms_level ;
+  uint8_t   units3_4 ;      			// 0=volts, 1=raw, 2=volts*2, 3=Amps
+  uint8_t   units ;               // 0=volts, 1=raw, 2=volts*2, 3=Amps
 }) SKYFrSkyChannelData;
+
+//PACK(typedef struct te_FrSkyChannelData {
+//  uint8_t   ratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+//  uint8_t   offset ;              // 
+//  uint8_t   gain ;                // 
+//  uint8_t   alarms_value[2] ;     // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+//  uint8_t   alarms_level ;
+//  uint8_t   alarms_greater ;      // 0=LT(<), 1=GT(>)
+//  uint8_t   type ;                // 0=volts, 1=raw, 2=volts*2, 3=Amps
+//}) SKYFrSkyChannelData;
 
 PACK(typedef struct te_FrSkyData {
   SKYFrSkyChannelData channels[2];
@@ -647,9 +658,9 @@ PACK(typedef struct t_scale
 {
   uint8_t source ;
 	int16_t offset ;
-	uint8_t spare1 ;
+	uint8_t multx ;	// An addition using a spare byte
 	uint8_t mult ;
-	uint8_t spare2 ;
+	uint8_t divx ;	// An addition using a spare byte
 	uint8_t div ;
 	uint8_t unit ;
 	uint8_t neg:1 ;
@@ -829,7 +840,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t		anaVolume ;	// analog volume control
 	int8_t pxxFailsafe[16] ;
 	int8_t logSwitch ;
-	uint8_t logRate ;
+	uint8_t logRate:4 ;
+	uint8_t logNew:1 ;
+  uint8_t   beepANACenter3:3;    // 1<<0->P5, 1<<1->P6, 1<<2->P7
   // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
@@ -839,7 +852,9 @@ PACK(typedef struct te_ModelData {
   uint8_t   xpulsePol:1 ;
   uint8_t   trainPulsePol:1 ;
 	uint8_t		dsmAasRssi:1 ;
-  uint8_t   polSpare:5 ;
+	uint8_t	telemetry2RxInvert:1 ;
+  uint8_t   polSpare:3 ;
+  uint8_t   ForceTelemetryType:1 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
 	uint8_t		pxxRxNum ;
@@ -878,7 +893,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	uint8_t disableThrottleCheck:1 ;
-	uint8_t trimsScaled:1 ;
+//	uint8_t trimsScaled:1 ;
 	uint8_t thrSpare:1 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
@@ -917,6 +932,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdleScale ;
 	uint8_t switchDelay[NUM_SKYCSW] ;
 	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
+	uint8_t backgroundScript[8] ;
+	uint8_t voiceFlushSwitch ;
 	 
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;

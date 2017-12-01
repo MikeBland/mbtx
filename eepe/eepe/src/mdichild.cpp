@@ -1785,7 +1785,28 @@ bool MdiChild::maybeSave()
 void MdiChild::setCurrentFile(const QString &fileName)
 {
     
-    QString type = (eeFile.eesize() == EESIZE128) ? " (M128)" : " (M64)";
+    QString type ;
+		if ( (eeFile.eesize() == EESIZE128) )
+		{
+    	QSettings settings("er9x-eePe", "eePe");
+			int ptype = settings.value("processor", 1).toInt() ;
+			switch (ptype)
+			{
+				case 2 :
+					type = " (M1281)" ;
+				break ;
+				case 3 :
+					type = " (M2561)" ;
+				break ;
+				default :
+					type = " (M128)" ;
+				break ;
+			}
+		}
+		else
+		{
+			type = " (M64)" ;
+		}
 	
     curFile = QFileInfo(fileName).canonicalFilePath();
     isUntitled = false;

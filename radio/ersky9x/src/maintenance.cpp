@@ -47,8 +47,8 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 // #endif
 #endif
 #ifdef PCBX9D
-#include "stm32f2xx.h"
-#include "stm32f2xx_flash.h"
+#include "X9D/stm32f2xx.h"
+#include "X9D/stm32f2xx_flash.h"
 #include "X9D/hal.h"
 #include "pdi.h"
 #endif
@@ -1524,11 +1524,29 @@ void menuUp1(uint8_t event)
 					lcd_puts_Pleft( 2*FH, "Flash AVR from" ) ;
 				}
 #endif
+#ifdef PCBX12D
+		 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					SportVerValid = 0 ;
+				}
+// 				else if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) )
+//				{
+//					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
+//					SportVerValid = 0 ;
+//				}
+				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+				}
+#endif
 			}
+#ifndef PCBX12D
 			else
 			{
 				lcd_puts_Pleft( 2*FH, "Flash Bootloader from" ) ;
 			}
+#endif
 			cpystr( cpystr( (uint8_t *)Mdata.FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
 #if defined(PCBTARANIS)
 			lcd_putsnAtt( 0, 4*FH, SharedMemory.FileList.Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
@@ -1923,7 +1941,9 @@ void menuUpdate(uint8_t event)
 	static uint8_t reboot = 0 ;
 	static uint32_t position = 2*FH ;
   TITLE( "MAINTENANCE" ) ;
+#ifndef PCBX12D
 	lcd_puts_Pleft( 2*FH, "  Update Bootloader" );
+#endif
 #ifdef PCBSKY
  #ifndef REVX
 	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
@@ -1953,6 +1973,12 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
+#ifdef PCBX12D
+//	lcd_puts_Pleft( 2*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 2*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 3*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 4*FH, "  Update Multi" );
+#endif
 
   switch(event)
 	{
@@ -1964,11 +1990,13 @@ void menuUpdate(uint8_t event)
 //#ifdef PCBX7
 		case EVT_KEY_BREAK(BTN_RE):
 //#endif
+#ifndef PCBX12D
 			if ( position == 2*FH )
 			{
 				UpdateItem = UPDATE_TYPE_BOOTLOADER ;
 	      chainMenu(menuUp1) ;
 			}
+#endif
 #ifdef PCBSKY
  #ifndef REVX
 			if ( position == 3*FH )
@@ -2074,6 +2102,29 @@ void menuUpdate(uint8_t event)
 	      pushMenu(menuUpMulti) ;
 			}
 #endif
+#ifdef PCBX12D
+			if ( position == 2*FH )
+//			{
+//				UpdateItem = UPDATE_TYPE_SPORT_INT ;
+//	      chainMenu(menuUp1) ;
+//			}
+//			if ( position == 3*FH )
+			{
+				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 3*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+//				UpdateItem = UPDATE_TYPE_AVR ;
+	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 4*FH )
+			{
+				UpdateItem = UPDATE_TYPE_MULTI ;
+	      pushMenu(menuUpMulti) ;
+			}
+#endif
     	killEvents(event) ;
 			reboot = 0 ;
     break ;
@@ -2133,6 +2184,22 @@ void menuUpdate(uint8_t event)
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
 			if ( position < 7*FH )
+			{
+				position += FH ;				
+			}
+		break ;
+    
+		case EVT_KEY_FIRST(KEY_UP):
+			if ( position > 2*FH )
+			{
+				position -= FH ;				
+			}
+		break ;
+#endif
+#ifdef PCBX12D
+    case EVT_KEY_FIRST(KEY_DOWN):
+			if ( position < 4*FH )
+//			if ( position < 5*FH )
 			{
 				position += FH ;				
 			}

@@ -125,7 +125,7 @@ extern const char * const Spanish[] ;
 #define NUMBER_ANALOG		10
 #define CURRENT_ANALOG	8
 #else
- #ifdef REVB
+ #ifndef REVA
  #define NUMBER_ANALOG		10
  #define CURRENT_ANALOG	8
  #else
@@ -469,7 +469,8 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_EXEQUAL   18	// V~=offset
 #define CS_BIT_AND   19
 #define CS_VXEQUAL   20	// V1~=V2
-#define CS_MAXF      20  //max function
+#define CS_VEQUAL    21  //v == offset
+#define CS_MAXF      21  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -1370,6 +1371,11 @@ extern uint8_t LastMusicPauseSwitchState ;
 #define FAILSAFE_NO_PULSES	4
 
 extern uint16_t FailsafeCounter[2] ;
+
+#define BT_TYPE_HC06		0
+#define BT_TYPE_HC05		1
+#define BT_TYPE_CC41		2
+#define BT_TYPE_HM10		3
 
 // Bluetooth function defines
 #define BT_OFF					0

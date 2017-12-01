@@ -1849,6 +1849,10 @@ qint16 simulatorDialog::getValue(qint8 i)
     else if(i<(CHOUT_BASE+NUM_SKYCHNOUT+offset)) return ex_chans[i-CHOUT_BASE];
 		else
 		{
+			if ( i == 118 )
+			{
+				return getFlightPhase() ;
+			}
       int j ;
 			j = i-CHOUT_BASE-NUM_SKYCHNOUT - 25 ;
 			if ( ( j >= 0 ) && ( j < 7 ) )
@@ -2014,6 +2018,9 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
         break;
     case (CS_ANEG):
         ret_value = (abs(x)<y) ;
+        break;
+    case (CS_VEQUAL):
+        ret_value = (x==y);
         break;
 		case CS_EXEQUAL:
 			if ( isAgvar( a ) )
@@ -3428,23 +3435,23 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if((md.carryTrim==0) && (md.srcRaw>0) && (md.srcRaw<=4))
 				{
 					int32_t trim = trimA[md.srcRaw-1] ;
-					if ( ( md.srcRaw-1 != 2 ) || ( !g_model.thrTrim ) )
-					{
-          	if ( g_model.trimsScaled )
-						{
-							int32_t scale = 1024 ;
-              if ( ( trim > 0 ) && ( v > 0 ) )
-							{
-								scale -= trim ;
-							}
-              else if ( ( trim < 0 ) && ( v < 0 ) )
-							{
-								scale += trim ;
-							}
-							scale *= v ;
-							v = scale / 1024 ;
-						}
-					}
+//					if ( ( md.srcRaw-1 != 2 ) || ( !g_model.thrTrim ) )
+//					{
+//          	if ( g_model.trimsScaled )
+//						{
+//							int32_t scale = 1024 ;
+//              if ( ( trim > 0 ) && ( v > 0 ) )
+//							{
+//								scale -= trim ;
+//							}
+//              else if ( ( trim < 0 ) && ( v < 0 ) )
+//							{
+//								scale += trim ;
+//							}
+//							scale *= v ;
+//							v = scale / 1024 ;
+//						}
+//					}
  					v += trim ;  //  0 = Trim ON  =  Default
 				}
 

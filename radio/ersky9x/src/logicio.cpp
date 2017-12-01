@@ -212,7 +212,7 @@ void init_keys()
 	
 	pioptr = PIOC ;
 	// Next section configures the key inputs on the LCD data
-#ifdef REVB	
+#ifndef REVA
 #ifdef ARUNI
 	pioptr->PIO_PER = 0x0000003BL ;		// Enable bits 0,1,3,4,5
 	pioptr->PIO_OER = 0 ;		          // Set no output bit
@@ -232,7 +232,7 @@ void init_keys()
 #endif
 
 	pioptr = PIOB ;
-#ifdef REVB	
+#ifndef REVA
 	pioptr->PIO_PUER = PIO_PB5 ;					// Enable pullup on bit B5 (MENU)
 	pioptr->PIO_PER = PIO_PB5 ;					// Enable bit B5
 #else	
@@ -244,24 +244,23 @@ void init_keys()
 // Assumes PMC has already enabled clocks to ports
 void setup_switches()
 {
-#ifdef REVB
-#else
+#ifdef REVA
 	register Pio *pioptr ;
 	
 	pioptr = PIOA ;
 #endif
-#ifdef REVB
+#ifndef REVA
 	configure_pins( 0x01808087, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 #else 
 	pioptr->PIO_PER = 0xF8008184 ;		// Enable bits
 	pioptr->PIO_ODR = 0xF8008184 ;		// Set bits input
 	pioptr->PIO_PUER = 0xF8008184 ;		// Set bits with pullups
 #endif 
-#ifdef REVB
+#ifndef REVA
 #else
 	pioptr = PIOB ;
 #endif 
-#ifdef REVB
+#ifndef REVA
 	configure_pins( 0x00000030, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
 #else 
 	pioptr->PIO_PER = 0x00000010 ;		// Enable bits
@@ -269,11 +268,10 @@ void setup_switches()
 	pioptr->PIO_PUER = 0x00000010 ;		// Set bits with pullups
 #endif 
 
-#ifdef REVB
-#else
+#ifdef REVA
 	pioptr = PIOC ;
 #endif 
-#ifdef REVB
+#ifndef REVA
 	configure_pins( 0x91114900, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;
 #else 
 	pioptr->PIO_PER = 0x10014900 ;		// Enable bits
@@ -330,7 +328,7 @@ void setup_switches()
 void config_free_pins()
 {
 	
-#ifdef REVB
+#ifndef REVA
 #ifdef ARUNI
 	configure_pins( PIO_PA25, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
 #endif
@@ -355,7 +353,7 @@ void config_free_pins()
 	pioptr->PIO_PER = 0x01700000L ;		// Enable bits C24,22,21,20
 	pioptr->PIO_ODR = 0x01700000L ;		// Set as input
 	pioptr->PIO_PUER = 0x01700000L ;	// Enable pullups
-#endif  // REVB
+#endif  // REVA
 }
 
 
@@ -824,7 +822,7 @@ uint32_t read_keys()
 	register uint32_t y ; // target y: LEFT:6 RIGHT:5 UP:4 DOWN:3 EXIT:2 MENU:1
 
 	x = LcdLock ? LcdInputs : (PIOC->PIO_PDSR << 1) ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
-#ifdef REVB
+#ifndef REVA
 	y = x & 0x00000020 ;		// RIGHT
 	if ( x & 0x00000004 )
 	{
@@ -924,7 +922,7 @@ extern uint8_t Co_proc_status[] ;
 	{
 		x |= 0x08 ;
 	}
-#endif  // REVB
+#endif  // REVA
 	ExtraInputs = x ;
 
 	if (LcdLock)
@@ -933,7 +931,7 @@ extern uint8_t Co_proc_status[] ;
 	}
 	else
 	{
-#ifdef REVB
+#ifndef REVA
 		if ( PIOC->PIO_PDSR & 0x01000000 )
 #else 
 		if ( PIOA->PIO_PDSR & 0x80000000 )
@@ -941,7 +939,7 @@ extern uint8_t Co_proc_status[] ;
 		{
 			y |= 4 ;		// EXIT
 		}
-#ifdef REVB
+#ifndef REVA
 		if ( PIOB->PIO_PDSR & 0x000000020 )
 #else 
 		if ( PIOB->PIO_PDSR & 0x000000040 )
@@ -971,7 +969,7 @@ uint32_t read_trims()
 
 	trima = PIOA->PIO_PDSR ;
 // TRIM_LH_DOWN    PA7 (PA23)
-#ifdef REVB
+#ifndef REVA
  #ifndef REVX
 	if ( ( trima & 0x00800000 ) == 0 )
  #else
@@ -985,7 +983,7 @@ uint32_t read_trims()
 	}
     
 // TRIM_LV_DOWN  PA27 (PA24)
-#ifdef REVB
+#ifndef REVA
 	if ( ( trima & 0x01000000 ) == 0 )
 #else
 	if ( ( trima & 0x08000000 ) == 0 )
@@ -995,7 +993,7 @@ uint32_t read_trims()
 	}
 
 // TRIM_RV_UP    PA30 (PA1)
-#ifdef REVB
+#ifndef REVA
  #ifndef REVX
 	if ( ( trima & 0x00000002 ) == 0 )
  #else
@@ -1009,7 +1007,7 @@ uint32_t read_trims()
 	}
 
 // TRIM_RH_DOWN    PA29 (PA0)
-#ifdef REVB
+#ifndef REVA
 	if ( ( trima & 0x00000001 ) == 0 )
 #else 
 	if ( ( trima & 0x20000000 ) == 0 )
@@ -1684,7 +1682,7 @@ uint32_t keyState(EnumKeys enuk)
 	c = PIOC->PIO_PDSR ;
 	switch((uint8_t)enuk)
 	{
-#ifdef REVB
+#ifndef REVA
     case SW_ElevDR : xxx = c & 0x80000000 ;	// ELE_DR   PC31
 #else 
     case SW_ElevDR : xxx = a & 0x00000100 ;	// ELE_DR   PA8
@@ -1711,7 +1709,7 @@ uint32_t keyState(EnumKeys enuk)
 		case SW_Gear   : xxx = c & 0x00010000 ;	// SW_GEAR     PC16
     break ;
 
-#ifdef REVB
+#ifndef REVA
     case SW_ThrCt  : xxx = c & 0x00100000 ;	// SW_TCUT     PC20
 #else 
     case SW_ThrCt  : xxx = a & 0x10000000 ;	// SW_TCUT     PA28

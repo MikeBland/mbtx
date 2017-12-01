@@ -467,26 +467,6 @@
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_243">
-           <property name="toolTip">
-            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;This is a useful feature for fuel-powered models. When turned ON, (1) the centre detent for the throttle trim is removed, and (2) throttle trim affects only the “low” side of the throttle range. That means you can use the trim for setting idle while full throttle remains unchanged. When OFF, throttle trim behaves like trim on other primary controls.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-           </property>
-           <property name="text">
-            <string>Trims Scaled</string>
-           </property>
-           <property name="alignment">
-            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QCheckBox" name="trimScaledChkB">
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
           <widget class="QLabel" name="label_8">
            <property name="toolTip">
             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;When ON, this option causes throttle stick expo to apply from zero to full throttle, instead of having a centre point like the expo setting on the other stick axes.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
@@ -4956,12 +4936,11 @@ p, li { white-space: pre-wrap; }
               <property name="maximumSize">
                <size>
                 <width>16777215</width>
-                <height>24</height>
+                <height>28</height>
                </size>
               </property>
               <property name="text">
-               <string>Expo
-Left</string>
+               <string>Expo Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -4971,8 +4950,7 @@ Left</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_65">
               <property name="text">
-               <string>D/R
-Left</string>
+               <string>D/R Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -4982,8 +4960,7 @@ Left</string>
             <item row="0" column="3">
              <widget class="QLabel" name="label_69">
               <property name="text">
-               <string>D/R
-Right</string>
+               <string>D/R Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -4993,8 +4970,7 @@ Right</string>
             <item row="0" column="4">
              <widget class="QLabel" name="label_77">
               <property name="text">
-               <string>Expo
-Right</string>
+               <string>Expo Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5166,8 +5142,7 @@ Right</string>
                </size>
               </property>
               <property name="text">
-               <string>Expo
-Left</string>
+               <string>Expo Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5177,8 +5152,7 @@ Left</string>
             <item row="0" column="3">
              <widget class="QLabel" name="label_70">
               <property name="text">
-               <string>D/R
-Right</string>
+               <string>D/R Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5188,8 +5162,7 @@ Right</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_75">
               <property name="text">
-               <string>D/R
-Left</string>
+               <string>D/R Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5199,8 +5172,7 @@ Left</string>
             <item row="0" column="4">
              <widget class="QLabel" name="label_78">
               <property name="text">
-               <string>Expo
-Right</string>
+               <string>Expo Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5330,8 +5302,7 @@ Right</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_58">
               <property name="text">
-               <string>D/R
-Left</string>
+               <string>D/R Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5341,8 +5312,7 @@ Left</string>
             <item row="0" column="3">
              <widget class="QLabel" name="label_59">
               <property name="text">
-               <string>D/R
-Right</string>
+               <string>D/R Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5352,8 +5322,7 @@ Right</string>
             <item row="0" column="4">
              <widget class="QLabel" name="label_60">
               <property name="text">
-               <string>Expo
-Right</string>
+               <string>Expo Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5399,8 +5368,7 @@ Right</string>
                </size>
               </property>
               <property name="text">
-               <string>Expo
-Left</string>
+               <string>Expo Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5566,8 +5534,7 @@ Left</string>
                </size>
               </property>
               <property name="text">
-               <string>Expo
-Left</string>
+               <string>Expo Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5577,8 +5544,7 @@ Left</string>
             <item row="0" column="3">
              <widget class="QLabel" name="label_74">
               <property name="text">
-               <string>D/R
-Right</string>
+               <string>D/R Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5588,8 +5554,7 @@ Right</string>
             <item row="0" column="2">
              <widget class="QLabel" name="label_76">
               <property name="text">
-               <string>D/R
-Left</string>
+               <string>D/R Left</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -5599,8 +5564,7 @@ Left</string>
             <item row="0" column="4">
              <widget class="QLabel" name="label_79">
               <property name="text">
-               <string>Expo
-Right</string>
+               <string>Expo Right</string>
               </property>
               <property name="alignment">
                <set>Qt::AlignCenter</set>
@@ -15732,114 +15696,6 @@ Right</string>
          <property name="leftMargin">
           <number>5</number>
          </property>
-         <item row="1" column="1" colspan="2">
-          <layout class="QGridLayout" name="gridLayout_21">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_105">
-             <property name="text">
-              <string>Alarm 1</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="frsky_level_0_0">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QComboBox" name="frsky_gr_0_0">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_109">
-             <property name="text">
-              <string>Alarm 2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="frsky_level_0_1">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QComboBox" name="frsky_gr_0_1">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QSpinBox" name="frsky_val_0_1">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="frsky_val_0_0">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_104">
            <property name="toolTip">
@@ -15894,7 +15750,7 @@ Right</string>
          <item row="0" column="1">
           <widget class="QSpinBox" name="frsky_ratio_0">
            <property name="maximum">
-            <number>255</number>
+            <number>1000</number>
            </property>
           </widget>
          </item>
@@ -15915,118 +15771,10 @@ Right</string>
            </property>
           </widget>
          </item>
-         <item row="1" column="1" colspan="2">
-          <layout class="QGridLayout" name="gridLayout_24">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label_111">
-             <property name="text">
-              <string>Alarm 1</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="1">
-            <widget class="QComboBox" name="frsky_level_1_0">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QComboBox" name="frsky_gr_1_0">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_112">
-             <property name="text">
-              <string>Alarm 2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="frsky_level_1_1">
-             <item>
-              <property name="text">
-               <string>---</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Yellow</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Orange</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>Red</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QComboBox" name="frsky_gr_1_1">
-             <item>
-              <property name="text">
-               <string>&lt;</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>&gt;</string>
-              </property>
-             </item>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QSpinBox" name="frsky_val_1_1">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QSpinBox" name="frsky_val_1_0">
-             <property name="maximum">
-              <number>255</number>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </item>
          <item row="0" column="1">
           <widget class="QSpinBox" name="frsky_ratio_1">
            <property name="maximum">
-            <number>255</number>
+            <number>1000</number>
            </property>
           </widget>
          </item>
@@ -16058,6 +15806,136 @@ Right</string>
            </item>
            <item row="0" column="0">
             <widget class="QLineEdit" name="CH2Value">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout_24">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_111">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;“A1” and “A2” on this screen refer to the two analog inputs available on FrSky D-series receivers. These inputs can accept a maximum of 3.3v. To measure higher voltages, therefore, a voltage divider consisting of a pair of resistors must be used. For example, a divider with 4:1 ratio will measure voltages up to 13.2v (4 x 3.3v). &lt;/p&gt;&lt;p&gt;The numbers immediately to the right of “A1 channel” and “A2 channel” represent the measurement Range, which depends on the divider ratio of the voltage sensor. For the 4:1 ratio used to measure receiver voltage, this value should be set to 13.2 (3.3 x 4). For a 6:1 ratio sensor, the range would be set to 19.8 (3.3 x 6). The range is the maximum allowed voltage for that particular voltage divider. Higher than 19.8V and the voltage at the analog port will be over the maximum 3.3V, possibly destroying the receiver.&lt;/p&gt;&lt;p&gt;Further to the right, the lower-case ‘v’ following the Range value represents one of four scaling factors used in converting the telemetry number (0-255) into a suitable read-out value. The ‘v’ setting corresponds to a read-out range of 0 to 25.5 volts, while a capital ‘V’ setting gives 0 to 51 volts (at reduced resolution). Set to ‘A’ for current measurement, the telemetry number is converted to a range of 0 to 65 Amps. Finally, the ‘-‘ setting displays the unconverted telemetry number (0-255), which can be used for parameters other than voltage or current, such as temperature or RPM, depending on the sensor.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: Do not connect a battery (or other power source) that supplies more than 3.3v directly to the analog ports A1 and A2 or they may be destroyed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Channel 3</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="frsky_ratio_2">
+           <property name="maximum">
+            <number>4800</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <layout class="QGridLayout" name="gridLayout_38">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="frsky_type_2">
+             <item>
+              <property name="text">
+               <string>v    volts</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>---   raw</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>V     volts x 2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A     Amps</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="CH3Value">
+             <property name="enabled">
+              <bool>false</bool>
+             </property>
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridLayout_33">
+         <property name="leftMargin">
+          <number>5</number>
+         </property>
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_112">
+           <property name="toolTip">
+            <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;“A1” and “A2” on this screen refer to the two analog inputs available on FrSky D-series receivers. These inputs can accept a maximum of 3.3v. To measure higher voltages, therefore, a voltage divider consisting of a pair of resistors must be used. For example, a divider with 4:1 ratio will measure voltages up to 13.2v (4 x 3.3v). &lt;/p&gt;&lt;p&gt;The numbers immediately to the right of “A1 channel” and “A2 channel” represent the measurement Range, which depends on the divider ratio of the voltage sensor. For the 4:1 ratio used to measure receiver voltage, this value should be set to 13.2 (3.3 x 4). For a 6:1 ratio sensor, the range would be set to 19.8 (3.3 x 6). The range is the maximum allowed voltage for that particular voltage divider. Higher than 19.8V and the voltage at the analog port will be over the maximum 3.3V, possibly destroying the receiver.&lt;/p&gt;&lt;p&gt;Further to the right, the lower-case ‘v’ following the Range value represents one of four scaling factors used in converting the telemetry number (0-255) into a suitable read-out value. The ‘v’ setting corresponds to a read-out range of 0 to 25.5 volts, while a capital ‘V’ setting gives 0 to 51 volts (at reduced resolution). Set to ‘A’ for current measurement, the telemetry number is converted to a range of 0 to 65 Amps. Finally, the ‘-‘ setting displays the unconverted telemetry number (0-255), which can be used for parameters other than voltage or current, such as temperature or RPM, depending on the sensor.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Warning: Do not connect a battery (or other power source) that supplies more than 3.3v directly to the analog ports A1 and A2 or they may be destroyed.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+           </property>
+           <property name="text">
+            <string>Channel 4</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="frsky_ratio_3">
+           <property name="maximum">
+            <number>4800</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <layout class="QGridLayout" name="gridLayout_40">
+           <item row="0" column="1">
+            <widget class="QComboBox" name="frsky_type_3">
+             <item>
+              <property name="text">
+               <string>v    volts</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>---   raw</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>V     volts x 2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>A     Amps</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item row="0" column="0">
+            <widget class="QLineEdit" name="CH4Value">
              <property name="enabled">
               <bool>false</bool>
              </property>

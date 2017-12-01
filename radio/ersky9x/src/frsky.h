@@ -578,8 +578,8 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_FWAT	32//
 #define LOG_RXV   33
 #define LOG_HDG   34
-#define LOG_A3    35//
-#define LOG_A4    36//
+#define LOG_A3    35
+#define LOG_A4    36
 #define LOG_SC1		37
 #define LOG_SC2		38
 #define LOG_SC3		39

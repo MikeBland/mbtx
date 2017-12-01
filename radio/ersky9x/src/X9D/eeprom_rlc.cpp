@@ -42,7 +42,7 @@
 #include "stdio.h"
 #include "inttypes.h"
 #include "string.h"
-#include "I2C_ee.h"
+#include "i2c_ee.h"
 #include "Myeeprom.h"
 //#include "language.h"
 #include "templates.h"

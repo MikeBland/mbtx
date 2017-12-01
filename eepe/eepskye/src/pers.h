@@ -289,8 +289,8 @@ enum EnumKeys {
 
 #define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 #define CURVE_BASE 7
-#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 "
-#define CSW_NUM_FUNC 21
+#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 v=val  "
+#define CSW_NUM_FUNC 22
 #define CSW_LEN_FUNC 7
 
 #define CS_OFF       0
@@ -316,7 +316,8 @@ enum EnumKeys {
 #define CS_EXEQUAL   18	// V~=offset
 #define CS_BIT_AND   19
 #define CS_VXEQUAL   20	// V1~=V2
-#define CS_MAXF      20  //max function
+#define CS_VEQUAL	   21
+#define CS_MAXF      21  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -534,7 +535,7 @@ public:
     //bool eeLoadModel(uint8_t id);
     bool eeModelExists(uint8_t id);
     void eeLoadModelName(uint8_t id,char*buf,uint8_t len);
-    void eeLoadOwnerName(char*buf,uint8_t len);
+//    void eeLoadOwnerName(char*buf,uint8_t len);
     void getModelName(uint8_t id, char* buf);
     void modelDefault(uint8_t id);
     void DeleteModel(uint8_t id);

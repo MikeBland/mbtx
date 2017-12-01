@@ -124,7 +124,7 @@ DLIBS =
 EXT = STD
 
 #ifeq ($(STAMP), 1)
-AREV = $(shell sh -c "cat .svn/entries | sed -n '4p'")
+AREV = $(shell sh -c "cat rev.txt | sed -n '1p'")
 REV = $(shell echo $$(( $(AREV) + 1 )))
 PROV=$(shell sh -c "cat prov.txt")
 #REV = $(shell echo $$(( $(AREV) )))
@@ -906,7 +906,7 @@ stamp:
 	@echo "//Automatically generated file - do not edit" > stamp-ersky9x.h
 	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-ersky9x.h
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
-	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
+#	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
  ifeq ($(PCB), X9D)
 	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
 	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h

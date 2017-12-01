@@ -547,7 +547,7 @@ void LCD_Init(void)
 //  LCD_Backlight_Config();
 
   //Max Value
-	backlightEnable(50) ;
+	backlightEnable(100) ;
 //  LCD_ControlLight(100);
 
 //	save = CurrentFrameBuffer ;

@@ -255,8 +255,7 @@ void init_hw_timer()
 // For testing, just drive it out with PWM
 void init_pwm()
 {
-#ifdef REVB
-#else
+#ifdef REVA
 	register Pio *pioptr ;
 #endif
 	register Pwm *pwmptr ;
@@ -267,20 +266,19 @@ void init_pwm()
 	MATRIX->CCFG_SYSIO |= 0x00000020L ;				// Disable TDO let PB5 work!
 	
 	/* Configure PIO */
-#ifdef REVB
-#else
+#ifdef REVA
 	pioptr = PIOB ;
 	pioptr->PIO_PER = 0x00000020L ;		// Enable bit B5
 	pioptr->PIO_ODR = 0x00000020L ;		// set as input
 #endif
 
-#ifdef REVB
+#ifndef REVA
 	configure_pins( PIO_PA16, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_C | PIN_PORTA | PIN_NO_PULLUP ) ;
 #endif
 
 	configure_pins( PIO_PC18, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
 
-#ifdef REVB
+#ifndef REVA
 	configure_pins( PIO_PC22, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_B | PIN_PORTC | PIN_NO_PULLUP ) ;
 #endif
 
@@ -305,7 +303,7 @@ void init_pwm()
 	pwmptr->PWM_CH_NUM[0].PWM_CDTYUPD = 40 ;		// Duty
 	pwmptr->PWM_ENA = PWM_ENA_CHID0 ;						// Enable channel 0
 
-#ifdef REVB
+#ifndef REVA
 	// PWM2 for HAPTIC drive 100Hz test
 	pwmptr->PWM_CH_NUM[2].PWM_CMR = 0x0000000C ;	// CLKB
 	pwmptr->PWM_CH_NUM[2].PWM_CPDR = 100 ;			// Period

@@ -185,19 +185,7 @@ extern uint8_t s_traceBuf[] ;
 extern uint8_t s_traceWr;
 extern uint16_t s_traceCnt;
 
-//#define CELL_1		-33
-//#define CELL_2		-32
-//#define CELL_3		-31
-//#define CELL_4		-30
-//#define CELL_5		-29
-//#define CELL_6		-28
-//#define CELL_7		-27
-//#define CELL_8		-26
-//#define CELL_9		-25
-//#define CELL_10		-24
-//#define CELL_11		-23
-//#define CELL_12		-22
-
+#define FMODE			-22
 #define TMOK			-21
 
 #define V_RTC			-20

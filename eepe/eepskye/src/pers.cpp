@@ -80,8 +80,8 @@ void EEPFILE::generalDefault()
 	g_eeGeneral.bright = 50 ;
 	g_eeGeneral.volume = 2 ;
   for (int i = 0; i < 7; ++i) {
-    g_eeGeneral.calibMid[i]     = 0x300;
-    g_eeGeneral.calibSpanNeg[i] = 0x400;
+    g_eeGeneral.calibMid[i]     = 0x400;
+    g_eeGeneral.calibSpanNeg[i] = 0x300;
     g_eeGeneral.calibSpanPos[i] = 0x300;
   }
   int16_t sum=0;
@@ -168,16 +168,16 @@ void EEPFILE::eeLoadModelName(uint8_t id,char*buf,uint8_t len)
   }
 }
 
-void EEPFILE::eeLoadOwnerName(char*buf,uint8_t len)
-{
-    EEGeneral g_eeGeneral;
-    int ret = getGeneralSettings(&g_eeGeneral);
+//void EEPFILE::eeLoadOwnerName(char*buf,uint8_t len)
+//{
+//    EEGeneral g_eeGeneral;
+//    int ret = getGeneralSettings(&g_eeGeneral);
 
-    memset(buf,0,len);
+//    memset(buf,0,len);
 
-    if (ret<(int)(sizeof(EEGeneral)-20)) return;
-    memcpy(buf,&g_eeGeneral.ownerName,sizeof(g_eeGeneral.ownerName));
-}
+//    if (ret<(int)(sizeof(EEGeneral)-20)) return;
+//    memcpy(buf,&g_eeGeneral.ownerName,sizeof(g_eeGeneral.ownerName));
+//}
 
 void EEPFILE::getModelName(uint8_t id, char* buf)
 {

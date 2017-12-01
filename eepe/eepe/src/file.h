@@ -40,7 +40,11 @@
 #define BLOCKS64   (EESIZE64/BS)
 #define BLOCKS128  (EESIZE128/BS)
 #define EEFS_VERS 		4
+#ifdef V2
+#define EEFS_VERS128	7
+#else
 #define EEFS_VERS128	6
+#endif
 
 #define MAX_IMODELS 60
 

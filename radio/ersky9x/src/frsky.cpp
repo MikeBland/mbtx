@@ -1712,11 +1712,27 @@ void processSportPacket()
 				break ;
 
 				case A3_ID_8 :
+				{	
+					uint16_t ratio = g_model.frsky.channels[0].ratio3_4 ;
+					if ( ratio == 0 )
+					{
+						ratio = 330 ;
+					}
+					value = value * ratio / 330 ;					
 					storeTelemetryData( FR_A3, value ) ;
+				}
 				break ;
 
 				case A4_ID_8 :
+				{	
+					uint16_t ratio = g_model.frsky.channels[1].ratio3_4 ;
+					if ( ratio == 0 )
+					{
+						ratio = 330 ;
+					}
+					value = value * ratio / 330 ;					
 					storeTelemetryData( FR_A4, value ) ;
+				}
 				break ;
 
 				case T1_ID_8 :
@@ -1965,8 +1981,23 @@ void processSportPacket()
 						}
 						else if ( t == ARDUP_HOME_ID )
 						{
+//Distance to home
+//Angle from front of vehicle
+//Altitude relative to home - offset 19 bits - WRONG
+
+//The actual order of the data elements from LS bit side is:
+//Distance to home
+//Altitude relative to home - offset 12 bits
+//Angle from front of vehicle
+
+//as per these define statements in the APMv3.5.3 Arducopter source
+
+//// for home position related data
+//define HOME_ALT_OFFSET 12
+//define HOME_BEARING_LIMIT 0x7F
+//define HOME_BEARING_OFFSET 25
 							uint16_t xvalue ;
-							xvalue = ( value >> 12 ) & 0x7F ;		// 7 bits
+							xvalue = ( value >> 25 ) & 0x7F ;		// 7 bits
 							xvalue *= 3 ;
 							storeTelemetryData( FR_HOME_DIR, xvalue ) ;
 						}
@@ -2069,6 +2100,9 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 					{
 						len -= 1 ;
 						PrivateData[len] = InputPrivateData[len] ;
+//						storeTelemetryData( FR_CUST1, PrivateData[1] ) ;
+//						storeTelemetryData( FR_CUST2, PrivateData[2] ) ;
+//						storeTelemetryData( FR_CUST3, PrivateData[3] ) ;
 					}
 				}
 			}
@@ -3021,7 +3055,7 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 	averaging_total += value ;
 	uint8_t count = 16 ;
 	uint8_t shift = 4 ;
-	if ( ( FrskyTelemetryType == 1 ) || ( FrskyTelemetryType == 1 ) )	// SPORT or AFHDS2
+	if ( ( FrskyTelemetryType == 1 ) || ( FrskyTelemetryType == 3 ) )	// SPORT or AFHDS2
 	{
 		count = 4 ;
 		shift = 2 ;
@@ -3799,6 +3833,21 @@ bool getCrossfireTelemetryValue(uint8_t index, uint32_t &value)
   return result ;
 }
 
+uint32_t crossfireGpsConvert( uint32_t value )
+{
+	uint16_t degrees ;
+	uint16_t minutes ;
+	uint32_t result ;
+
+	degrees = value / 10000000 ;
+	value %= 10000000 ;		// Fractions of a degree
+	value *= 60 ;
+	minutes = value / 10000000 ;
+	result = ( degrees * 100 + minutes ) << 16 ;
+	value %= 10000000 ;		// Fractions of a minute
+	value /= 1000 ;
+	return result | value ;
+}
 
 void processCrossfireTelemetryFrame()
 {
@@ -3823,17 +3872,9 @@ void processCrossfireTelemetryFrame()
 				}
 				value = ivalue ;
 //        processCrossfireTelemetryValue(GPS_LATITUDE_INDEX, value/10);
-				value /= 10 ;	// deg * 1000 000
-				value *= 6 ;		// min * 100 000
-				value /= 1000 ;	// min * 1000
-				uint16_t bp ;
-				uint16_t ap ;
-				uint32_t temp ;
-				temp = value / 10000 ;
-				bp = (temp/ 60 * 100) + (temp % 60) ;
-	      ap = value % 10000;
-				storeTelemetryData( FR_GPS_LAT, bp ) ;
-				storeTelemetryData( FR_GPS_LATd, ap ) ;
+				value = crossfireGpsConvert( value ) ;
+				storeTelemetryData( FR_GPS_LAT, value >> 16 ) ;
+				storeTelemetryData( FR_GPS_LATd, value ) ;
 				storeTelemetryData( FR_LAT_N_S, code ) ;
 			}
       if (getCrossfireTelemetryValue<4>(7, value))
@@ -3847,17 +3888,9 @@ void processCrossfireTelemetryFrame()
 				}
 				value = ivalue ;
 //        processCrossfireTelemetryValue(GPS_LONGITUDE_INDEX, value/10);
-				value /= 10 ;	// deg * 1000 000
-				value *= 6 ;		// min * 100 000
-				value /= 1000 ;	// min * 1 000
-				uint16_t bp ;
-				uint16_t ap ;
-				uint32_t temp ;
-				temp = value / 10000 ;
-				bp = (temp/ 60 * 100) + (temp % 60) ;
-	      ap = value % 10000;
-				storeTelemetryData( FR_GPS_LONG, bp ) ;
-				storeTelemetryData( FR_GPS_LONGd, ap ) ;
+				value = crossfireGpsConvert( value ) ;
+				storeTelemetryData( FR_GPS_LONG, value >> 16 ) ;
+				storeTelemetryData( FR_GPS_LONGd, value ) ;
 				storeTelemetryData( FR_LONG_E_W, code ) ;
 			}	
 //      if (getCrossfireTelemetryValue<2>(11, value))

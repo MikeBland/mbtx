@@ -183,6 +183,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
 #endif
+		uint16_t stickDeadband ;
 }) EEGeneral;
 
 
@@ -197,8 +198,8 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   contrast;
     uint8_t   vBatWarn;
     int8_t    vBatCalib;
-    int8_t    lightSw;
-    V2TrainerData trainer;
+    int8_t    lightSw;// 50 bytes
+    V2TrainerData trainer;// 70 bytes
     uint8_t   view;
     uint8_t   disableThrottleWarning:1;
     uint8_t   disableSwitchWarning:1;
@@ -207,7 +208,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   unused_reserveWarning:1;
     uint8_t   disableAlarmWarning:1;
     uint8_t   stickMode;
-    int8_t    inactivityTimer;
+    int8_t    inactivityTimer;//74 bytes
     uint8_t   throttleReversed:1;
     uint8_t   unused_minuteBeep:1;
     uint8_t   unused_preBeep:1;
@@ -219,7 +220,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   unused_spare_filter ;		// No longer needed, left for eepe compatibility for now
     uint8_t   lightAutoOff;
     uint8_t   templateSetup;  //RETA order according to chout_ar array
-    int8_t    PPM_Multiplier;
+    int8_t    PPM_Multiplier;//79 bytes
 //    uint8_t   unused1;
 #ifdef XSW_MOD
     uint8_t   unused2:2;
@@ -231,12 +232,12 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   hideNameOnSplash:1;
     uint8_t   enablePpmsim:1;
     uint8_t   blightinv:1;
-    uint8_t   stickScroll:1;
+    uint8_t   stickScroll:1;// 80 bytes
     uint8_t   speakerPitch;
     uint8_t   hapticStrength;
     uint8_t   speakerMode;
     uint8_t   lightOnStickMove;
-    char      ownerName[GENERAL_OWNER_NAME_LEN];
+    char      ownerName[GENERAL_OWNER_NAME_LEN];// 94 bytes
 //    uint8_t   switchWarningStates;
 		int8_t		volume ;
 //    uint8_t   res[3];
@@ -249,7 +250,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   MegasoundSerial:1 ;
     uint8_t   spare1:1 ;
 		uint8_t		stickReverse ;
-		uint8_t		customStickNames[16] ;
+		uint8_t		customStickNames[16] ;// 113 bytes
 #ifdef XSW_MOD
     uint8_t   switchSources[(MAX_XSWITCH+1)/2]; // packed nibble array [0..(MAX_XSWITCH-1)]
 #else                                           // wasted 4b if MAX_XSWITCH is an odd number
@@ -265,7 +266,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t lcd_wrInput:1 ;
     uint8_t  spare5:5 ;
 #endif
-		uint16_t stickDeadband ;
+		uint16_t stickDeadband ; // 119 bytes
 }) V2EEGeneral;
 
 #endif

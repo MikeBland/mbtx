@@ -255,6 +255,7 @@ extern void putVoiceQueue( uint16_t value ) ;
 extern void putNamedVoiceQueue( const char *name, uint16_t value ) ;
 extern void putSystemVoice( uint16_t sname, uint16_t value ) ;
 extern void putUserVoice( char *name, uint16_t value ) ;
+extern void flushVoiceQueue( void ) ;
 extern void voice_task(void* pdata) ;
 extern bool ToneFreeSlots( void ) ;
 extern void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8_t pause, uint8_t repeat ) ;

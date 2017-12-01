@@ -350,9 +350,9 @@ static void singleBar( uint8_t x0, uint8_t y0, int16_t val )
 
 extern uint8_t Unit ;
 
-void voiceMinutes( uint8_t value )
+void voiceMinutes( int16_t value )
 {
-	voice_numeric( value, 0, (value == 1) ? V_MINUTE : V_MINUTES ) ;
+	voice_numeric( value, 0, (abs(value) == 1) ? V_MINUTE : V_MINUTES ) ;
 }
 
 void voice_telem_item( uint8_t indexIn )
@@ -5588,10 +5588,14 @@ static void qloadModel( uint8_t event, uint8_t index )
 	
 	
 	killEvents(event);
+	wdt_reset() ;
   eeWaitComplete();    // Wait to load model if writing something
+	wdt_reset() ;
   eeLoadModel( index ) ;
+	wdt_reset() ;
 	AlarmControl.VoiceCheckFlag |= 2 ;// Set switch current states
   STORE_GENERALVARS;
+	wdt_reset() ;
   eeWaitComplete();
   checkTHR() ;
   checkSwitches();
@@ -10270,15 +10274,15 @@ Str_Hardware
         lcd_puts_Pleft( y, PSTR("Push Buttons\035PB1\035PB2") );
         selectSwitchSource(5, y+FH, (sub==subN), qmask);
         selectSwitchSource(6, y+FH*2, (sub==(subN+1)), qmask);
-      }
+			}
     }
 		else
 		{
 			uint8_t subN = HW_LINES + HW_EXTRA_LINES ;
 
 			uint8_t attr = 0 ;
-			uint8_t db = (g_eeGeneral.stickDeadband & 0x00F0 ) >> 4 ;
-  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+			uint16_t db = (g_eeGeneral.stickDeadband & 0x00F0 ) >> 4 ;
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR_0( db, 15 ) ; }
 			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LV deadband") ) ;
 			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFF0F ) | ( db << 4 ) ;
 			y += FH ;
@@ -10286,7 +10290,7 @@ Str_Hardware
 
 			attr = 0 ;
 			db = g_eeGeneral.stickDeadband & 0x000F ;
-  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR_0( db, 15 ) ; }
 			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick LH deadband") ) ;
 			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xFFF0 ) | db ;
  			y += FH ;
@@ -10294,7 +10298,7 @@ Str_Hardware
 
 			attr = 0 ;
 			db = (g_eeGeneral.stickDeadband & 0x0F00 ) >> 8 ;
-  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR_0( db, 15 ) ; }
 			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RV deadband") ) ;
 			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0xF0FF ) | ( db << 8 ) ;
  			y += FH ;
@@ -10302,7 +10306,7 @@ Str_Hardware
 
 			attr = 0 ;
 			db = (g_eeGeneral.stickDeadband & 0xF000 ) >> 12 ;
-  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( db, 15 ) ; }
+  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR_0( db, 15 ) ; }
 			lcd_xlabel_decimal( 20*FW, y, db, attr, PSTR("Stick RH deadband") ) ;
 			g_eeGeneral.stickDeadband = ( g_eeGeneral.stickDeadband & 0x0FFF ) | ( db << 12 ) ;
  			y += FH ;

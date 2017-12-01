@@ -289,7 +289,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t musicType:1 ;
 	uint8_t altSwitchNames:1 ;    // use alternative switch names (ARUNI)
 	uint8_t sixPosDelayFilter:1 ; // 6POS switch delay filtering (ARUNI)
-	uint8_t spare:2 ;
+	uint8_t altMixMenu:1 ;
+	uint8_t spare:1 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;
@@ -535,9 +536,9 @@ PACK(typedef struct te_FrSkyChannelData {
   uint16_t   lratio ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
 //  uint16_t  lratio ;              // 
   uint8_t   gain ;                // 
-  uint8_t   unused_alarms_value[2] ;     // 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
+  uint16_t   ratio3_4 ;               // 0.0 means not used, 0.1V steps EG. 6.6 Volts = 66. 25.1V = 251, etc.
   uint8_t   unused_alarms_level ;
-  uint8_t   unused_alarms_greater ;      // 0=LT(<), 1=GT(>)
+  uint8_t   units3_4 ;      			// 0=volts, 1=raw, 2=volts*2, 3=Amps
   uint8_t   units ;               // 0=volts, 1=raw, 2=volts*2, 3=Amps
 }) SKYFrSkyChannelData;
 
@@ -869,6 +870,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t switchDelay[NUM_SKYCSW] ;
 	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
 	uint8_t backgroundScript[8] ;
+	uint8_t voiceFlushSwitch ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

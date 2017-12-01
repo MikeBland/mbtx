@@ -705,13 +705,13 @@ void convertModel( SKYModelData *dest, ModelData *source )
 	{
 		FrSkyChannelData *src = &source->frsky.channels[i] ;
 		SKYFrSkyChannelData *dst = &dest->frsky.channels[i] ;
-		dst->ratio = src->ratio ;
-		dst->alarms_value[0] = src->alarms_value[0] ;
-		dst->alarms_value[1] = src->alarms_value[1] ;
-		dst->alarms_level = src->alarms_level ;
-		dst->alarms_greater = src->alarms_greater ;
-		dst->type = src->type ;
-		dst->gain = 1 ;
+    dst->lratio = src->ratio ;
+//		dst->alarms_value[0] = src->alarms_value[0] ;
+//		dst->alarms_value[1] = src->alarms_value[1] ;
+//		dst->alarms_level = src->alarms_level ;
+//		dst->alarms_greater = src->alarms_greater ;
+    dst->units = src->type ;
+//		dst->gain = 1 ;
 	}
 
 	for ( i = 0 ; i < 2 ; i += 1 )

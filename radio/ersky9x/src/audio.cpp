@@ -1592,6 +1592,19 @@ void stopMusic()
 	}
 }
 
+void flushVoiceQueue()
+{
+	while ( Voice.VoiceQueueCount )
+	{
+		Voice.VoiceQueueOutIndex += 1 ;
+		Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
+		__disable_irq() ;
+		Voice.VoiceQueueCount -= 1 ;
+		__enable_irq() ;
+	}
+}
+
+
 
 void voice_task(void* pdata)
 {

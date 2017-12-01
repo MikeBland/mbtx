@@ -296,6 +296,14 @@ extern uint32_t sdMounted( void ) ;
 	{
 		f_puts(",RxV", &g_oLogFile);
 	}
+	if ( isLogEnabled( LOG_A3 ) )
+	{
+		f_puts(",A3", &g_oLogFile);
+	}
+	if ( isLogEnabled( LOG_A4 ) )
+	{
+		f_puts(",A4", &g_oLogFile);
+	}
 	if ( isLogEnabled( LOG_HDG ) )
 	{
 		f_puts(",Hdg", &g_oLogFile);
@@ -386,9 +394,17 @@ extern uint32_t sdMounted( void ) ;
 
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
-		if ( isLogEnabled( j + (j > 5) ? LOG_CEL7 : LOG_CEL1) )
+		if ( isLogEnabled( j + ((j > 5) ? LOG_CEL7-6 : LOG_CEL1)) )
 		{
   		f_puts(&",Cel1 \0,Cel2 \0,Cel3 \0,Cel4 \0,Cel5 \0,Cel6 \0,Cel7 \0,Cel8 \0,Cel9 \0,Cel10\0,Cel11\0,Cel12"[j*7], &g_oLogFile);
+		}
+	}
+	
+	for ( j = 0 ; j < 6 ; j += 1 )
+	{
+		if ( isLogEnabled( j + LOG_CUST1 ) )
+		{
+  		f_puts(&",Cus1 \0,Cus2 \0,Cus3 \0,Cus4 \0,Cus5 \0,Cus6 "[j*7], &g_oLogFile);
 		}
 	}
   
@@ -550,6 +566,14 @@ void writeLogs()
 				qr = div( value, 10);
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
+			if ( isLogEnabled( LOG_A3 ) )
+			{
+				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A3] ) ;
+			}
+			if ( isLogEnabled( LOG_A4 ) )
+			{
+				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A4] ) ;
+			}
 			if ( isLogEnabled( LOG_HDG ) )
 			{
 				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
@@ -557,11 +581,41 @@ void writeLogs()
 			
 			if ( isLogEnabled( LOG_LAT ) )
 			{
-				f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S],FrskyHubData[FR_GPS_LONG] ) ;
+				if ( g_eeGeneral.gpsFormat )
+				{
+					div_t qr ;
+					int32_t value ;
+					qr = div( FrskyHubData[FR_GPS_LAT], 100 ) ;
+					value = qr.rem ;
+					value *= 10000 ;
+					value += FrskyHubData[FR_GPS_LATd] ;
+					value *= 10 ;
+					value /= 6 ;
+					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LAT_N_S] ) ;
+				}
+				else
+				{
+					f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S] ) ;
+				}
 			}
 			if ( isLogEnabled( LOG_LONG ) )
 			{
-				f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
+				if ( g_eeGeneral.gpsFormat )
+				{
+					div_t qr ;
+					int32_t value ;
+					qr = div( FrskyHubData[FR_GPS_LONG], 100 ) ;
+					value = qr.rem ;
+					value *= 10000 ;
+					value += FrskyHubData[FR_GPS_LONGd] ;
+					value *= 10 ;
+					value /= 6 ;
+					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LAT_N_S] ) ;
+				}
+				else
+				{
+					f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
+				}
 			}
 			
 			if ( isLogEnabled( LOG_FUEL ) )
@@ -698,10 +752,17 @@ extern uint8_t BtRxOccured ;
 			}
 			for ( i = 0 ; i < 12 ; i += 1 )
 			{
-				if ( isLogEnabled( i + (i > 5) ? LOG_CEL7 : LOG_CEL1) )
+				if ( isLogEnabled( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1)) )
 				{
 					qr = div( FrskyHubData[FR_CELL1 + i], 100 ) ;
 					f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+				}
+			}
+			for ( i = 0 ; i < 6 ; i += 1 )
+			{
+				if ( isLogEnabled( i + LOG_CUST1 ) )
+				{
+					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
 				}
 			}
 

@@ -1845,7 +1845,7 @@ void read_adc()
 //	PMC->PMC_PCER0 |= 0x20000000L ;		// Enable peripheral clock to ADC
 
 	padc = ADC ;
-#ifdef REVB
+#ifndef REVA
 #if (!defined(REVX) && !defined(ARUNI))
 	padc->ADC_CHER = 0x00000400 ;  // channel 10 on
 #endif
@@ -1865,7 +1865,7 @@ void read_adc()
 		}
 		x = padc->ADC_LCDR ;		// Clear DRSY flag
 	}
-#ifdef REVB
+#ifndef REVA
 #if (!defined(REVX) && !defined(ARUNI))
 	padc->ADC_CHDR = 0x00000400 ;  // channel 10 off
 #endif
@@ -1923,7 +1923,7 @@ void read_adc()
 	Analog_values[5] = ADC->ADC_CDR13 ;
 	Analog_values[7] = ADC->ADC_CDR4 ;
 //#endif
-#ifdef REVB
+#ifndef REVA
 	Analog_values[8] = ADC->ADC_CDR8 ;
 #ifdef ARUNI
 	Analog_values[9] = ADC->ADC_CDR10 ;
@@ -1956,7 +1956,7 @@ void read_adc()
 		Analog_values[9] = x ;
 	}
 #endif // ARUNI
-#endif // REVB
+#endif // REVA
 	Temperature = ( Temperature * 7 + ADC->ADC_CDR15 ) >> 3 ;	// Filter it
 	if ( Temperature > Max_temperature )
 	{
@@ -2047,7 +2047,7 @@ void init_adc()
 	padc = ADC ;
 	padc->ADC_MR = 0x3FB60000 | timer ;  // 0011 1111 1011 0110 xxxx xxxx 0000 0000
 	padc->ADC_ACR = ADC_ACR_TSON ;			// Turn on temp sensor
-#ifdef REVB
+#ifndef REVA
 #if defined(REVX) || defined(ARUNI)
 	padc->ADC_CHER = 0x0000E73E ;  // channels 1,2,3,4,5,8,9,10,13,14,15
 #else

@@ -166,7 +166,7 @@ void start_sound()
 	init_twi() ;
 	setVolume( 2 ) ;
 
-#ifdef REVB
+#ifndef REVA
 #ifndef REVX	
 	register Pio *pioptr ;
 	pioptr = PIOA ;
@@ -188,7 +188,7 @@ void start_sound()
 }
 
 #ifndef TONE_MODE_2
-#ifdef REVB
+#ifndef REVA
 void buzzer_on()
 {
  #ifndef REVX
@@ -283,12 +283,12 @@ void init_dac()
 
   PMC->PMC_PCER0 |= 0x40000000L ;		// Enable peripheral clock to DAC
 	dacptr = DACC ;
-#ifdef REVB
+#ifndef REVA
 	dacptr->DACC_MR = 0x0B000215L ;			// 0000 1011 0000 0001 0000 0010 0001 0101
 #else
 	dacptr->DACC_MR = 0x0B010215L ;			// 0000 1011 0000 0001 0000 0010 0001 0101
 #endif
-#ifdef REVB
+#ifndef REVA
 	dacptr->DACC_CHER	= 1 ;							// Enable channel 0
 #else
 	dacptr->DACC_CHER	= 2 ;							// Enable channel 1
@@ -809,7 +809,7 @@ void init_twi()
 	
 	TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 	TWI0->TWI_MMR = 0x002F0000 ;		// Device 5E (>>1) and master is writing
-  NVIC_SetPriority(TWI0_IRQn, 5 ) ;
+  NVIC_SetPriority(TWI0_IRQn, 3 ) ;
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 }
 
@@ -890,7 +890,7 @@ static const uint8_t Volume_scale[NUM_VOL_LEVELS] =
 #define COPROC_RX_BUXSIZE		22
 #endif
 #define RTC_RX_BUXSIZE			10
-#define RTC_SIZE						7
+#define RTC_SIZE						8
  
  #ifndef REVX
 uint8_t Co_proc_status[COPROC_RX_BUXSIZE] ;
@@ -907,6 +907,7 @@ uint8_t RtcConfig[8] ;		// For initial config and writing to RTC
 #endif
 
 
+#ifndef SMALL
 static uint32_t fromBCD( uint8_t bcd_value )
 {
 	return ( ( ( bcd_value & 0xF0 ) * 10 ) >> 4 ) + ( bcd_value & 0x0F ) ;
@@ -918,6 +919,7 @@ static uint32_t toBCD( uint32_t value )
 	qr = div( value, 10 ) ;
 	return ( qr.quot << 4 ) + qr.rem ;
 }
+#endif
 
 // General I2C operation
 //#define GENERAL_I2C_WRITE_ONE								0
@@ -972,11 +974,16 @@ void submitI2cRequest( struct t_I2C_request *ptr )
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 }
 
+#ifndef SMALL
 uint8_t Mcp23008InitData[7] = {0, 0, 0, 0, 0, 0, 0 } ;
 uint8_t LedInitData[14] = {1, 0, 5, 5, 5, 0, 0, 0 ,0 ,0, 0xFF, 0, 0xAA, 0xAA } ;
 uint8_t LedLightData[3] ;
-uint8_t ExternalRtc[7] ;
+#ifndef REVX
+uint8_t ExternalRtc[RTC_SIZE] ;
+#endif
+#endif
 
+#ifndef SMALL
 void initLed()
 {
 	LedI2cRequest.mmr = 0x00480100 ;	// writing, 1 byte addr
@@ -1056,35 +1063,47 @@ uint32_t readI2cEncoder( uint8_t *ptrData )
 	return 1 ;
 }
 
+#ifndef REVX
 void readExtRtc()
 {
 	ExtRtcI2cRequest.mmr = 0x00681100 ;	// reading, 1 byte addr
 	ExtRtcI2cRequest.address = 0 ;
-	ExtRtcI2cRequest.dataSize = 7 ;
+	ExtRtcI2cRequest.dataSize = RTC_SIZE ;
 	ExtRtcI2cRequest.dataBuffer = ExternalRtc ;
 	ExtRtcI2cRequest.operationType = TWI_READ_BUFFER ;
 	ExtRtcI2cRequest.speed = TWI_LOW_SPEED ;
 	submitI2cRequest( &ExtRtcI2cRequest ) ;
 }
+#endif
 
+//uint8_t YearDebug[64] ;
+//uint8_t YearIndex ;
+
+#ifndef REVX
 void pollForRtcComplete()
 {
 	if ( ExtRtcI2cRequest.done )
 	{
 		ExtRtcI2cRequest.done = 0 ;
-		Rtc_valid = 1 ;
-		// Set the date and time
-		t_time *p = &Time ;
-		p->second = fromBCD( ExternalRtc[0] & 0x7F ) ;
-		p->minute = fromBCD( ExternalRtc[1] & 0x7F ) ;
-		p->hour = fromBCD( ExternalRtc[2] & 0x3F ) ;
-		p->date = fromBCD( ExternalRtc[4] & 0x3F ) ;
-		p->month = fromBCD( ExternalRtc[5] & 0x1F ) ;
-		p->year = fromBCD( ExternalRtc[6] ) + 2000 ;
+		if ( ExternalRtc[6] )
+		{
+			Rtc_valid = 1 ;
+			// Set the date and time
+			t_time *p = &Time ;
+			p->second = fromBCD( ExternalRtc[0] & 0x7F ) ;
+			p->minute = fromBCD( ExternalRtc[1] & 0x7F ) ;
+			p->hour = fromBCD( ExternalRtc[2] & 0x3F ) ;
+			p->date = fromBCD( ExternalRtc[4] & 0x3F ) ;
+			p->month = fromBCD( ExternalRtc[5] & 0x1F ) ;
+			p->year = fromBCD( ExternalRtc[6] ) + 2000 ;
+//			YearDebug[YearIndex++] = ExternalRtc[6] ;
+//			YearIndex &= 0x3F ;
+		}
 	}
 }
+#endif
 
-
+#ifndef REVX
 void writeExtRtc( uint8_t *ptr )
 {
 	uint32_t year ;
@@ -1105,6 +1124,8 @@ void writeExtRtc( uint8_t *ptr )
 	ExtRtcI2cWriteRequest.speed = TWI_LOW_SPEED ;
 	submitI2cRequest( &ExtRtcI2cWriteRequest ) ;
 }
+#endif
+#endif
 
 // This is called from an interrupt routine, or
 // interrupts must be disabled while it is called
@@ -1591,20 +1612,27 @@ extern "C" void TWI0_IRQHandler()
 #ifdef REVX
 	if ( TwiOperation == TWI_WAIT_RTCSTOP )
 	{
-		Rtc_valid = 1 ;
 		// Set the date and time
 		t_time *p = &Time ;
 
-		p->second = fromBCD( Rtc_status[0] & 0x7F ) ;
-		p->minute = fromBCD( Rtc_status[1] & 0x7F ) ;
-		p->hour = fromBCD( Rtc_status[2] & 0x3F ) ;
-		p->date = fromBCD( Rtc_status[4] & 0x3F ) ;
-		p->month = fromBCD( Rtc_status[5] & 0x1F ) ;
-		p->year = fromBCD( Rtc_status[6] ) + 2000 ;
+		if ( Rtc_status[6] )
+		{
+			Rtc_valid = 1 ;
+			p->second = fromBCD( Rtc_status[0] & 0x7F ) ;
+			p->minute = fromBCD( Rtc_status[1] & 0x7F ) ;
+			p->hour = fromBCD( Rtc_status[2] & 0x3F ) ;
+			p->date = fromBCD( Rtc_status[4] & 0x3F ) ;
+			p->month = fromBCD( Rtc_status[5] & 0x1F ) ;
+			p->year = fromBCD( Rtc_status[6] ) + 2000 ;
+//			YearDebug[YearIndex++] = Rtc_status[6] ;
+//			YearIndex &= 0x3F ;
+		}
 		
 		TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
 		if ( status & TWI_SR_RXRDY )
 		{
+//			YearDebug[YearIndex++] = TWI0->TWI_RHR | 0x80 ;
+//			YearIndex &= 0x3F ;
 			(void) TWI0->TWI_RHR ;			// Discard any rubbish data
 		}
 	}

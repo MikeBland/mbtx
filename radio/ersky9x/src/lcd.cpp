@@ -44,25 +44,31 @@
 
 #include "font12x8test.lbm"
 
+#ifndef SMALL
 const uint8_t font_se_extra[] = {
 #include "font_se_05x07.lbm"
 } ;
+#endif
 const uint8_t font_fr_extra[] = {
 #include "font_fr_05x07.lbm"
 } ;
 const uint8_t font_de_extra[] = {
 #include "font_de_05x07.lbm"
 } ;
+#ifndef SMALL
 const uint8_t font_it_extra[] = {
 #include "font_it_05x07.lbm"
 } ;
 const uint8_t font_pl_extra[] = {
 #include "font_pl_05x07.lbm"
 } ;
+#endif
 
+#ifndef SMALL
 const uint8_t font_se_big_extra[] = {
 #include "font_se_10x14.lbm"
 } ;
+#endif
 const uint8_t font_fr_big_extra[] = {
 #include "font_fr_10x14.lbm"
 } ;
@@ -115,8 +121,7 @@ uint8_t ExtDisplaySend ;
 #ifndef PCBDUE
 #ifdef PCBSKY
 // Lookup table for prototype board
-#ifdef REVB
-#else
+#ifdef REVA
 const uint8_t Lcd_lookup[] =
 {
 0x00,0x01,0x80,0x81,0x40,0x41,0xC0,0xC1,0x20,0x21,0xA0,0xA1,0x60,0x61,0xE0,0xE1,
@@ -1972,7 +1977,7 @@ void lcd_clear()
 // LCD_D7      PC1
 
 #define LCD_DATA	0x000000FFL
-#ifdef REVB
+#ifndef REVA
 #define LCD_A0    0x00000080L
 #else 
 #define LCD_A0    0x00008000L
@@ -1994,7 +1999,7 @@ void lock_lcd()
 	y = PIOC->PIO_PDSR ;
 	x = y << 1 ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP
 	x &= 0x00FF ;
-#ifdef REVB
+#ifndef REVA
 	if ( y & 0x01000000 )
 #else 
 	if ( PIOA->PIO_PDSR & 0x80000000 )
@@ -2002,7 +2007,7 @@ void lock_lcd()
 	{
 		x |= 0x0400 ;		// EXIT
 	}
-#ifdef REVB
+#ifndef REVA
 	if ( PIOB->PIO_PDSR & 0x000000020 )
 #else 
 	if ( PIOB->PIO_PDSR & 0x000000040 )
@@ -2018,7 +2023,7 @@ void lock_lcd()
 #ifndef PCBDUE
 #ifdef PCBSKY
 
-#ifdef REVB
+#ifndef REVA
 uint8_t ErcLcd = 0 ;
 #endif // REVB
 
@@ -2065,7 +2070,7 @@ void lcd_init()
   // ~/txt/flieger/ST7565RV17.pdf  from http://www.glyn.de/content.asp?wdid=132&sid=
 
 
-#ifdef REVB
+#ifndef REVA
 
 // read the inputs, and lock the LCD lines
 	lock_lcd() ;
@@ -2101,24 +2106,24 @@ void lcd_init()
 	pioptr->PIO_SODR = LCD_RES | LCD_CS1 ;
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
 	pioptr->PIO_OWER = 0x000000FFL ;		// Allow write to ls 8 bits in ODSR
-#endif // REVB
+#endif // REVA
 	
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	pioptr->PIO_CODR = LCD_RES ;		// Reset LCD
-#ifdef REVB
+#ifndef REVA
 	configure_pins( LCD_A0, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
-#endif // REVB
+#endif // REVA
 	while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US*10 )		// >10 uS, Value depends on MCK/8
 	{
 		// Wait
 	}
-#ifdef REVB
+#ifndef REVA
   if ( ( PIOA->PIO_PDSR & LCD_A0 ) == 0 )
 	{
 		ErcLcd = 1 ;   // ERC12864-2
 	}	 
 	configure_pins( LCD_A0, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
-#endif // REVB
+#endif // REVA
 	TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 	pioptr->PIO_SODR = LCD_RES ;		// Remove LCD reset
 	while ( TC0->TC_CHANNEL[0].TC_CV < HwDelayScale*HW_COUNT_PER_US*1500 )	// 1500 uS, Value depends on MCK/8
@@ -2127,7 +2132,7 @@ void lcd_init()
 	}
 	for ( i = 0 ; i < sizeof(Lcdinit) ; i += 1 )
 	{
-#ifdef REVB
+#ifndef REVA
 	  lcdSendCtl( ErcLcd ? Lcd_ERC12864_2[i] : Lcdinit[i] ) ;
 #else
 	  lcdSendCtl( Lcdinit[i] ) ;
@@ -2154,7 +2159,7 @@ extern uint16_t ResetReason ;
   lcdSendCtl(0xAF) ; //DON = 1: display ON
 #endif // REVX
 
-#ifdef REVB
+#ifndef REVA
 #ifdef ARUNI
 	pioptr->PIO_ODR = 0x0000003BL ;		// Set bits 0, 1, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x0000003BL ;		// Set bits 0, 1, 3, 4, 5 with pullups
@@ -2167,7 +2172,7 @@ extern uint16_t ResetReason ;
 	pioptr->PIO_ODR = 0x0000003CL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x0000003CL ;		// Set bits 2, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
-#endif // REVB
+#endif // REVA
 	LcdLock = 0 ;
 }
 
@@ -2200,7 +2205,7 @@ void lcdSetRefVolt(uint8_t val)
 	}
   lcdSendCtl(val);
 	
-#ifdef REVB
+#ifndef REVA
 #ifdef ARUNI
 	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
 	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
@@ -2213,7 +2218,7 @@ void lcdSetRefVolt(uint8_t val)
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 2, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
-#endif // REVB
+#endif // REVA
 #endif // SIMU
 	LcdLock = 0 ;
 }
@@ -2246,7 +2251,7 @@ void lcdSetOrientation()
 		c1 = 0xA7 ;		// Display inverse
 	}	
   lcdSendCtl(c1);
-#ifdef REVB
+#ifndef REVA
 #ifdef ARUNI
 	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
 	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
@@ -2259,7 +2264,7 @@ void lcdSetOrientation()
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
 	pioptr->PIO_PUER = 0x000000FEL ;		// Set bits 2, 3, 4, 5 with pullups
 	pioptr->PIO_ODSR = 0 ;							// Drive D0 low
-#endif // REVB
+#endif // REVA
 	LcdLock = 0 ;
 }
 
@@ -2269,7 +2274,7 @@ void lcdSendCtl(uint8_t val)
 	register Pio *pioptr ;
 
 	
-#ifdef REVB
+#ifndef REVA
 	pioptr = PIOC ;
 #if (!defined(REVX) && !defined(ARUNI))
 	pioptr->PIO_CODR = LCD_CS1 ;		// Select LCD
@@ -2295,7 +2300,7 @@ void lcdSendCtl(uint8_t val)
 		// Wait
 	}
 	pioptr->PIO_CODR = LCD_E ;			// End E pulse
-#ifdef REVB
+#ifndef REVA
 	PIOA->PIO_SODR = LCD_A0 ;				// Data
 #else
 	pioptr->PIO_SODR = LCD_A0 ;			// Data
@@ -2334,14 +2339,13 @@ void refreshDisplay()
 	}
 #endif	// PCBSKY
 
-#ifdef REVB
-#else
+#ifdef REVA
   register uint8_t *lookup ;
 	lookup = (uint8_t *)Lcd_lookup ;
-#endif // REVB
+#endif // REVA
 	ebit = LCD_E ;
 
-#ifdef REVB
+#ifndef REVA
 	pioptr = PIOA ;
 	pioptr->PIO_PER = 0x00000080 ;		// Enable bit 7 (LCD-A0)
 	pioptr->PIO_OER = 0x00000080 ;		// Set bit 7 output
@@ -2351,7 +2355,7 @@ void refreshDisplay()
 	lock_lcd() ;
 
 	pioptr = PIOC ;
-#ifdef REVB
+#ifndef REVA
 #ifdef ARUNI
 	pioptr->PIO_OER = 0x080090FFL ;		// Set bits 27,15,12,7-0 output
 #else
@@ -2359,7 +2363,7 @@ void refreshDisplay()
 #endif
 #else
 	pioptr->PIO_OER = 0x0C00B0FFL ;		// Set bits 27,26,15,13,12,7-0 output
-#endif // REVB
+#endif // REVA
 	
   for( y=0; y < 8; y++)
 	{
@@ -2385,11 +2389,11 @@ void refreshDisplay()
 		pioptr->PIO_CODR = LCD_RnW ;		// Write
 #endif // nREVX && nARUNI
 		 
-#ifdef REVB
+#ifndef REVA
 		x =	*p ;
 #else 
 		x =	lookup[*p] ;
-#endif // REVB
+#endif // REVA
     for( z=0; z<128; z+=1)
 		{
 
@@ -2398,11 +2402,11 @@ void refreshDisplay()
 			// Need a delay here (250nS)
 			TC0->TC_CHANNEL[0].TC_CCR = 5 ;	// Enable clock and trigger it (may only need trigger)
 			p += 1 ;
-#ifdef REVB
+#ifndef REVA
 		x =	*p ;
 #else 
 		x =	lookup[*p] ;
-#endif // REVB
+#endif // REVA
 			while ( TC0->TC_CHANNEL[0].TC_CV < delayCount )		// Value depends on MCK/8
 			{
 				// Wait
@@ -2415,13 +2419,13 @@ void refreshDisplay()
 	pioptr->PIO_PUER = 0x000000FFL ;	// Set LSB 8bits with pullups
 	pioptr->PIO_ODR = 0x000000FFL ;		// Set LSB 8bits input
 #else
-#ifdef REVB
+#ifndef REVA
 	pioptr->PIO_PUER = 0x000000FEL ;	// Set bits 1, 3, 4, 5 with pullups
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 1, 3, 4, 5 input
 #else
 	pioptr->PIO_PUER = 0x000000FEL ;	// Set bits 2, 3, 4, 5 with pullups
 	pioptr->PIO_ODR = 0x000000FEL ;		// Set bits 2, 3, 4, 5 input
-#endif // REVB
+#endif // REVA
 	pioptr->PIO_ODSR = 0xFE ;					// Drive D0 low
 #endif
 

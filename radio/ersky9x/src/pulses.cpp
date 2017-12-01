@@ -284,7 +284,7 @@ void init_ppm2( uint32_t period, uint32_t out_enable )
 	register Pwm *pwmptr ;
 	
 // This is the PPM2 output
-#ifdef REVB
+#ifndef REVA
 	if ( g_model.Module[0].protocol != PROTO_OFF )
 	{
 		InternalOutputActive() ;				
@@ -295,7 +295,7 @@ void init_ppm2( uint32_t period, uint32_t out_enable )
 	}
 #endif
 
-#ifdef REVB
+#ifndef REVA
 	// PWM1 for PPM2
 	pwmptr = PWM ;
 	pwmptr->PWM_CH_NUM[1].PWM_CMR = 0x0000000B ;	// CLKB
@@ -899,13 +899,13 @@ void setupPulsesDsm2(uint8_t chns)
 		{
   		sendByteDsm2( pass ) ;		// Actually is a 0
 			// Do init packet
-			if ( (PxxFlag[0] & PXX_BIND) || (dsmDat[0]&BindBit) )
+			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				flags |= ORTX_BIND_FLAG ;
 			}
 			// Need to choose dsmx/dsm2 as well
   		sendByteDsm2( flags ) ;
-  		sendByteDsm2( (PxxFlag[0] & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
+  		sendByteDsm2( (PxxFlag[1] & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
   		sendByteDsm2( channels ) ;			// Max channels
 //  		sendByteDsm2( g_model.Module[1].pxxRxNum ) ;		// Rx Num
 #ifdef ENABLE_DSM_MATCH  		
@@ -962,7 +962,7 @@ void setupPulsesDsm2(uint8_t chns)
 				DsmInitCounter = 0 ;
 				pass = 0 ;
 			}
-			if (dsmDat[0]&BindBit)
+			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				pass = 0 ;		// Stay here
 			}
