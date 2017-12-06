@@ -90,10 +90,6 @@ static void init_pa10_dsm2( void ) ;
 static void disable_pa10_dsm2( void ) ;
 static void init_pa10_multi( void ) ;
 #endif
-//#ifdef ASSAN
-//static void init_pa7_assan( void ) ;
-//static void disable_pa7_assan( void ) ;
-//#endif
 #ifdef XFIRE
 static void init_pa7_xfire( void ) ;
 static void disable_pa7_xfire( void ) ;
@@ -160,24 +156,6 @@ void disable_dsm2(uint32_t port)
 	}
 #endif
 }
-
-//#ifdef ASSAN
-//void init_assan(uint32_t port)
-//{
-//  if (port == EXTERNAL_MODULE)
-//	{
-//    init_pa7_assan() ;
-//  }
-//}
-
-//void disable_assan(uint32_t port)
-//{
-//  if (port == EXTERNAL_MODULE)
-//	{
-//    disable_pa7_assan() ;
-//  }
-//}
-//#endif
 
 #ifdef XFIRE
 void init_xfire(uint32_t port)
@@ -714,51 +692,6 @@ static void disable_pa7_pxx()
   EXTERNAL_RF_OFF();
 }
 
-//#ifdef ASSAN
-//static void init_pa7_assan()
-//{
-//	com1_Configure( 115200, 0, 0 ) ;
-//  EXTERNAL_RF_ON();
-// 	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
-  
-//	configure_pins( PIN_EXTPPM_OUT, PIN_INPUT | PIN_PORTA ) ;
-		
-////	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
-////  GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
-  
-//	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
-
-//  TIM8->CR1 &= ~TIM_CR1_CEN ;
-//  TIM8->ARR = 22000 ;    // 11mS
-//  TIM8->CCR2 = 19000 ;   // Update time
-//  TIM8->CCR1 = 10000 ;   // Tx back on time
-//  TIM8->CCR3 = 1936*2 ;   // Tx hold on until time
-//  TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;  // 0.5uS from 30MHz
-//#if defined(REV3)
-//  TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
-//#else
-//  TIM8->CCER = TIM_CCER_CC1NE ;
-//#endif
-//  TIM8->EGR = 0 ;                                                         // Restart
-//  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
-//  TIM8->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
-//  TIM8->DIER |= TIM_DIER_UIE ;
-//  TIM8->CR1 |= TIM_CR1_CEN ;
-//	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
-//	NVIC_SetPriority( TIM8_UP_TIM13_IRQn, 3 ) ; // Lower priority interrupt
-//  NVIC_EnableIRQ(TIM8_CC_IRQn) ;
-//  NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn) ;
-//}
-
-//static void disable_pa7_assan()
-//{
-//  NVIC_DisableIRQ(TIM8_UP_TIM13_IRQn) ;
-//  NVIC_DisableIRQ(TIM8_CC_IRQn) ;
-//  TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
-//  TIM8->CR1 &= ~TIM_CR1_CEN ;
-//  EXTERNAL_RF_OFF() ;
-//}
-//#endif
 
 #ifdef XFIRE
 static void init_pa7_xfire()
@@ -892,47 +825,6 @@ static void disable_pa7_ppm()
 
 extern "C" void TIM8_CC_IRQHandler()
 {
-//#ifdef ASSAN
-//	if ( TIM8->DIER & TIM_DIER_CC3IE )
-//	{
-//		if ( TIM8->SR & TIM_SR_CC3IF )
-//		{
-//			// must be ASSAN disable Tx output
-//  		uint32_t status;
-//		  TIM8->SR &= ~TIM_SR_CC3IF ;    // Clear flag
-//#ifdef PCB9XT
-//			GPIOB->BSRRH = 0x0004 ;		// output disable
-//#else
-//			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
-//#endif
-//			USART2->CR1 |= USART_CR1_RE ;
-//  		status = USART2->SR ;
-//  		while (status & (USART_FLAG_RXNE))
-//			{
-//    		status = USART2->DR;
-//    		status = USART2->SR ;
-//			}
-//			dsmTelemetryStartReceive() ;
-//			return ;
-//		}
-//	}
-	
-//	if ( TIM8->DIER & TIM_DIER_CC1IE )
-//	{
-//		if ( TIM8->SR & TIM_SR_CC1IF )
-//		{
-//			// must be ASSAN re-enable Tx output
-//		  TIM8->SR &= ~TIM_SR_CC1IF ;    // Clear flag
-//			USART2->CR1 &= ~USART_CR1_RE ; // Stop receive
-//#ifdef PCB9XT
-//			GPIOB->BSRRL = 0x0004 ;		// output disable
-//#else
-//			GPIOD->BSRRL = PIN_SPORT_ON ;				 // output enable
-//#endif
-//			return ;
-//		}
-//	}
-//#endif
   TIM8->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
 
@@ -973,13 +865,6 @@ extern "C" void TIM8_CC_IRQHandler()
 extern "C" void TIM8_UP_TIM13_IRQHandler()
 {
   TIM8->SR &= ~TIM_SR_UIF ;                               // Clear flag
-//#ifdef ASSAN
-//	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_ASSAN)
-//	{
-//		x9dSPortTxStart( (uint8_t *)dsm2Stream, 20, 0 ) ;
-//	}
-//	else
-//#endif
 #ifdef XFIRE
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_XFIRE )
 	{

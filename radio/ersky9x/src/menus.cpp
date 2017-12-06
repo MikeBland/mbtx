@@ -5128,6 +5128,7 @@ void menuSetFailsafe(uint8_t event)
   	  putsChn(0,y,k,0);
 			value = g_model.Module[module].failsafe[k-1] ;
 			lcd_outdezAtt(  7*FW+3, y, value, attr ) ;
+			lcd_putc(  7*FW+5, y, '%' ) ;
     	if(active)
 			{
   	    g_model.Module[module].failsafe[k-1] = checkIncDec16( value, -125, 125, EE_MODEL ) ;
@@ -8132,10 +8133,6 @@ void dsmDisplayABLRFH()
 	}
 }
 
-//#ifdef ASSAN
-//static uint8_t BindRequest = 0 ;
-//#endif
-
 uint8_t MultiResponseFlag ;
 // Bit 7 = DSMX, Bit 6 = 11mS, bits 3-0 channels
 uint8_t MultiResponseData ;
@@ -8144,9 +8141,6 @@ void menuRangeBind(uint8_t event)
 {
 	static uint8_t timer ;
 	static uint8_t binding = 0 ;
-//#ifdef ASSAN
-//	static uint8_t mode = 0 ;
-//#endif
 	uint8_t *ptrFlag ;
 
 	ptrFlag = &PxxFlag[s_currIdx] ;
@@ -8155,34 +8149,6 @@ void menuRangeBind(uint8_t event)
 	{
 		binding = flag ? 1 : 0 ;
 		timer = 255 ;
-//#ifdef ASSAN
-//#if defined(PCBX9D) || defined(PCB9XT)
-//		if ( g_model.xprotocol == PROTO_ASSAN )
-//#else
-//		if ( g_model.protocol == PROTO_ASSAN )
-//#endif // PCBX9D
-//		{
-//			if ( BindRequest == 2 )
-//			{
-//#if defined(PCBX9D) || defined(PCB9XT)
-//				if ( g_model.xcountry != 2 )
-//#else
-//				if ( g_model.country != 2 )
-//#endif // PCBX9D
-//				{
-//					binding = 2 ;		// Select DSM2/DSMX
-//					mode = 0 ;
-//				}
-//				else
-//				{
-//					mode = PXX_DSMX ;
-//					*ptrFlag |= PXX_BIND | mode ;
-//					binding = 1 ;
-//					return ;
-//				}
-//			}
-//		}
-//#endif // ASSAN
 //		if ( g_model.Module[0].protocol == PROTO_MULTI )
 //		{
 //			if ( (g_model.Module[0].sub_protocol & 0x3F) == M_DSM )
@@ -8207,57 +8173,16 @@ void menuRangeBind(uint8_t event)
 		popMenu(false) ;
 	}
 
-//#ifdef ASSAN
-//#if defined(PCBX9D) || defined(PCB9XT)
-//	if ( g_model.xprotocol == PROTO_ASSAN )
-//#else
-//	if ( g_model.protocol == PROTO_ASSAN )
-//#endif // PCBX9D
-//	{
-//		if ( binding == 2 )
-//		{
-//			lcd_puts_Pleft( 2*FH, XPSTR("\002Select Bind Mode\037\037\005DSM2  DSMX") ) ;
-//			lcd_char_inverse( mode ? 11*FW : 5*FW, 4*FH, 24, 0 ) ;
-//      if( (event==EVT_KEY_FIRST(KEY_RIGHT)) || (event==EVT_KEY_FIRST(KEY_LEFT) ) )
-//			{
-//				mode = mode ? 0 : 1 ;
-//			}
-//    	if ( (event == EVT_KEY_BREAK(BTN_RE) ) || ( event == EVT_KEY_FIRST(KEY_MENU) ) )
-//			{
-//				if (mode)
-//				{
-//					mode = PXX_DSMX ;
-//				}
-//				*ptrFlag |= PXX_BIND | mode ;
-//				binding = 1 ;
-//			}
-//			return ;
-//		}
-//	}
-//#endif // ASSAN
 
 	lcd_puts_Pleft( 2*FH, (binding) ? PSTR(STR_6_BINDING) : PSTR(STR_RANGE_RSSI) ) ;
 
 	if ( binding == 0 )
 	{
 		lcd_outdezAtt( 12 * FW, 4*FH, FrskyHubData[FR_RXRSI_COPY], DBLSIZE);
-//#ifdef ASSAN
-//#if defined(PCBX9D) || defined(PCB9XT)
-//		if ( g_model.xprotocol == PROTO_ASSAN )
-//#else
-//		if ( g_model.protocol == PROTO_ASSAN )
-//#endif
-//#endif
 //		{
 //			lcd_outdezAtt( 20 * FW, 4*FH, FrskyHubData[FR_TEMP2], DBLSIZE) ;
 //		}
 
-//#ifdef ASSAN
-//		if ( FrskyTelemetryType == 2 )		// DSM telemetry
-//		{
-//			dsmDisplayABLRFH() ;
-//		}
-//#endif // ASSAN
 	}
 
 	if ( ( ( g_model.Module[0].protocol == PROTO_MULTI ) && ( s_currIdx == 0 ) ) ||
@@ -8635,7 +8560,7 @@ void editOneProtocol( uint8_t event )
 	}
 	if (pModule->protocol == PROTO_MULTI)
 	{
-		dataItems += 4 ;
+		dataItems += 5 ;
 		need_bind_range |= 5 ;
 		if ( ( pModule->ppmFrameLength < 0 ) || ( pModule->ppmFrameLength > 4 ) )
 		{
@@ -8912,6 +8837,25 @@ void editOneProtocol( uint8_t event )
 				if((y+=FH)>7*FH) return ;
 			}
 			subN += 1 ;
+			if(t_pgOfs<=subN)
+			{
+				lcd_putsAtt( 0, y, XPSTR("Failsafe"), sub==subN ? INVERS : 0 ) ;
+				if ( pModule->failsafeMode == 0 )
+				{
+	    		lcd_puts_Pleft( y, XPSTR("\012(Not Set)") ) ;
+				}
+				if ( sub == subN )
+				{
+					if ( checkForMenuEncoderLong( event ) )
+					{
+						s_currIdx = module ;
+    			  pushMenu( menuSetFailsafe ) ;
+  				  s_editMode = 0 ;
+    			  killEvents(event);
+					}
+				}
+			  if((y+=FH)>7*FH) return ;
+			}subN++;
 		}
 
 		if ( pModule->protocol == PROTO_DSM2 )
@@ -9919,17 +9863,6 @@ void menuProcTrainProtocol(uint8_t event)
 //			need_bind_range = 4 ;
 //		}
 //	}
-////#ifdef ASSAN
-////	if (g_model.protocol == PROTO_ASSAN)
-////	{
-////#ifdef ENABLE_DSM_MATCH  		
-////		dataItems += 2 ;
-////#else
-////		dataItems += 1 ;
-////#endif
-////		need_bind_range = 1 ;
-////	}
-////#endif
 //#if defined(PCBX9D) || defined(PCB9XT)
 //	if (g_model.xprotocol == PROTO_PXX)
 //	{
@@ -9957,17 +9890,6 @@ void menuProcTrainProtocol(uint8_t event)
 //			need_bind_range |= 8 ;
 //		}
 //	}
-////#ifdef ASSAN
-////	if (g_model.xprotocol == PROTO_ASSAN)
-////	{
-////#ifdef ENABLE_DSM_MATCH  		
-////		dataItems += 2 ;
-////#else
-////		dataItems += 1 ;
-////#endif
-////		need_bind_range |= 2 ;
-////	}
-////#endif
 //	if ( g_model.protocol == PROTO_OFF )
 //	{
 //		dataItems -= 4 ;
@@ -10439,11 +10361,7 @@ void menuProcTrainProtocol(uint8_t event)
 //			    lcd_puts_Pleft( y, PSTR(STR_13_RXNUM) );
 //  	      lcd_outdezAtt(  21*FW, y,  g_model.pxxRxNum, (sub==subN && subSub==1 ? blink:0));
 //  	  }
-////#ifdef ASSAN
-////  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (protocol == PROTO_ASSAN) )
-////#else
 //  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) )
-////#endif
 //  	  {
 //		    lcd_puts_Pleft( y, XPSTR("\013Chans") );
 // 	      lcd_outdezAtt(  21*FW, y,  g_model.ppmNCH, (sub==subN && subSub==1 ? blink:0));
@@ -10461,17 +10379,9 @@ void menuProcTrainProtocol(uint8_t event)
 			
 //#if defined(PCBX9D) || defined(PCB9XT)
 // #ifdef PCB9XT
-//// #ifdef ASSAN
-////			  uint8_t prot_max = PROT_MAX - 1 ; // 4 ;		// No Assan on internal
-//// #else
 //			  uint8_t prot_max = PROT_MAX - 0 ; // 3 ;
-//// #endif
 // #else
-//// #ifdef ASSAN
-////			  uint8_t prot_max = PROT_MAX - 3 ;		// No DSM or Assan on internal
-//// #else
 //			  uint8_t prot_max = PROT_MAX - 2 ;		// No DSM on internal
-//// #endif
 //#endif
 //#else
 // #ifdef XFIRE
@@ -10526,12 +10436,6 @@ void menuProcTrainProtocol(uint8_t event)
 //  	        		CHECK_INCDEC_H_MODELVAR_0( g_model.pxxRxNum,124);
 //							}
 //						}
-////#ifdef ASSAN
-////			  	  else if (protocol == PROTO_ASSAN)
-////						{
-//// 	          	CHECK_INCDEC_H_MODELVAR( g_model.ppmNCH,6,14) ;
-////						}
-////#endif
 //						else if (protocol == PROTO_MULTI)
 //						{
 //  	        	CHECK_INCDEC_H_MODELVAR_0( g_model.pxxRxNum,15);
@@ -10721,11 +10625,7 @@ void menuProcTrainProtocol(uint8_t event)
 //		}
 
 //#ifdef ENABLE_DSM_MATCH  		
-////#ifdef ASSAN		
-////		if ( ( ( protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (protocol == PROTO_ASSAN) )
-////#else
 //		if ( ( ( protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) )
-////#endif
 //		{
 //			lcd_puts_Pleft( y, PSTR(STR_13_RXNUM)+1 );
 //      lcd_outdezAtt(  21*FW, y,  g_model.pxxRxNum, (sub==subN) ? blink:0);
@@ -10738,11 +10638,7 @@ void menuProcTrainProtocol(uint8_t event)
 //#endif // ENABLE_DSM_MATCH  		 
   	
 //#ifdef PCBSKY
-//// #ifdef ASSAN
-////		if ( (protocol == PROTO_PXX) || ( protocol == PROTO_ASSAN) )
-//// #else
 //		if (protocol == PROTO_PXX)
-//// #endif
 //#else
 //		if (protocol == PROTO_PXX)
 //#endif
@@ -10773,26 +10669,6 @@ void menuProcTrainProtocol(uint8_t event)
 //#endif
 //		if(t_pgOfs<=subN)
 //		{
-////#ifdef ASSAN
-////			if ( protocol == PROTO_ASSAN)
-////			{
-////		    lcd_puts_Pleft( y, XPSTR("\020DsM") );
-//// 	      lcd_outdezAtt(  21*FW, y,  g_model.dsmMode, (sub==subN && subSub==1 ? blink:0));
-////				uint8_t attr = 0 ;
-//// 				lcd_puts_Pleft( y, PSTR(STR_PPM_1ST_CHAN));
-////				if ( sub==subN )
-////				{
-////					Columns = 1 ;
-////					if ( subSub==1 )
-////					{
-////         		CHECK_INCDEC_H_MODELVAR( g_model.dsmMode,0,15) ;
-////					}
-////	  			if( subSub==0 ) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0( g_model.startChannel, 16 ) ; }
-////				}
-////				lcd_outdezAtt(  14*FW, y, g_model.startChannel + 1, attr ) ;
-////			}
-////			else
-////#endif
 //			{
 //				uint8_t attr = 0 ;
 //  			lcd_puts_Pleft( y, PSTR(STR_PPM_1ST_CHAN));
@@ -10831,22 +10707,7 @@ void menuProcTrainProtocol(uint8_t event)
 //						lcd_char_inverse( FW, y, 4*FW, 0 ) ;
 //						if ( event==EVT_KEY_LONG(KEY_MENU))
 //						{
-////#ifdef ASSAN
-////							if ( g_model.protocol == PROTO_ASSAN )
-////							{
-////								BindRequest = 2 ; ;
-////							}
-////							else
-////							{
-////#if defined(PCBX9D) || defined(PCB9XT)
-////	    		    	PxxFlag[0] = PXX_BIND ;		    	//send bind code or range check code
-////#else
-////    		    		pxxFlag = PXX_BIND ;		    	//send bind code or range check code
-////#endif
-////							}
-////#else
 //    		    	PxxFlag[0] = PXX_BIND ;		    	//send bind code or range check code
-////#endif
 //							s_currIdx = 0 ;
 //							pushMenu(menuRangeBind) ;
 //						}
@@ -10864,12 +10725,6 @@ void menuProcTrainProtocol(uint8_t event)
 //					lcd_char_inverse( FW, y, 11*FW, 0 ) ;
 //					if ( event==EVT_KEY_LONG(KEY_MENU))
 //					{
-////#ifdef ASSAN
-////						if ( g_model.protocol == PROTO_ASSAN )
-////						{
-////							BindRequest = 0 ;
-////						}
-////#endif
 //    	    	PxxFlag[0] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //						s_currIdx = 0 ;
 //						pushMenu(menuRangeBind) ;
@@ -10939,11 +10794,7 @@ void menuProcTrainProtocol(uint8_t event)
 //			    lcd_puts_Pleft( y, PSTR(STR_13_RXNUM) );
 //  	      lcd_outdezAtt(  21*FW, y,  g_model.xPxxRxNum, (sub==subN && subSub==1 ? blink:0));
 //  	  }
-////#ifdef ASSAN
-////  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (protocol == PROTO_ASSAN) )
-////#else
 //  	  else if ( ( ( protocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) )
-////#endif
 //  	  {
 //		    lcd_puts_Pleft( y, XPSTR("\013Chans") );
 // 	      lcd_outdezAtt(  21*FW, y,  g_model.xppmNCH, (sub==subN && subSub==1 ? blink:0));
@@ -11001,12 +10852,6 @@ void menuProcTrainProtocol(uint8_t event)
 //  	        		CHECK_INCDEC_H_MODELVAR_0( g_model.xPxxRxNum,124);
 //							}
 //						}
-////#ifdef ASSAN
-////			  	  else if (protocol == PROTO_ASSAN)
-////						{
-//// 	          	CHECK_INCDEC_H_MODELVAR( g_model.xppmNCH,6,14) ;
-////						}
-////#endif
 //						else if (protocol == PROTO_MULTI)
 //						{
 //  	        	CHECK_INCDEC_H_MODELVAR_0( g_model.xPxxRxNum,15);
@@ -11159,11 +11004,7 @@ void menuProcTrainProtocol(uint8_t event)
 //			} subN += 1 ;
 //		}
 			 
-//// #ifdef ASSAN
-////		if ( (protocol == PROTO_PXX) || ( protocol == PROTO_ASSAN) )
-//// #else
 //		if (protocol == PROTO_PXX)
-//// #endif
 //		{
 //			if(t_pgOfs<=subN)
 //			{
@@ -11183,23 +11024,6 @@ void menuProcTrainProtocol(uint8_t event)
 //	{
 //		if(t_pgOfs<=subN)
 //		{
-////#ifdef ASSAN
-////			if ( protocol == PROTO_ASSAN)
-////			{
-////				Columns = 1 ;
-////		    lcd_puts_Pleft( y, XPSTR("\020DsM") );
-//// 	      lcd_outdezAtt(  21*FW, y,  g_model.dsmMode, (sub==subN && subSub==1 ? blink:0));
-////				if ( sub==subN && subSub==1 )
-////				{
-////         	CHECK_INCDEC_H_MODELVAR( g_model.dsmMode,0,15) ;
-////				}
-////				uint8_t attr = 0 ;
-////  			lcd_puts_Pleft( y, PSTR(STR_PPM_1ST_CHAN));
-////  			if( sub==subN && subSub==0 ) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0( g_model.xstartChannel, 16 ) ; }
-////				lcd_outdezAtt(  14*FW, y, g_model.xstartChannel + 1, attr ) ;
-////			}
-////			else
-////#endif
 //			{
 //				uint8_t attr = 0 ;
 //  			lcd_puts_Pleft( y, PSTR(STR_PPM_1ST_CHAN));
@@ -11236,18 +11060,7 @@ void menuProcTrainProtocol(uint8_t event)
 //				lcd_char_inverse( FW, y, 4*FW, 0 ) ;
 //				if ( event==EVT_KEY_LONG(KEY_MENU))
 //				{
-////#ifdef ASSAN
-////					if ( g_model.xprotocol == PROTO_ASSAN )
-////					{
-////						BindRequest = 2 ; ;
-////					}
-////					else
-////					{
-////  		    	PxxFlag[1] = PXX_BIND ;		    	//send bind code or range check code
-////					}
-////#else
 // 		    	PxxFlag[1] = PXX_BIND ;		    	//send bind code or range check code
-////#endif
 //					s_currIdx = 1 ;
 //					pushMenu(menuRangeBind) ;
 //				}
@@ -11266,12 +11079,6 @@ void menuProcTrainProtocol(uint8_t event)
 //				lcd_char_inverse( FW, y, 11*FW, 0 ) ;
 //				if ( event==EVT_KEY_LONG(KEY_MENU))
 //				{
-////#ifdef ASSAN
-////						if ( g_model.xprotocol == PROTO_ASSAN )
-////						{
-////							BindRequest = 0 ;
-////						}
-////#endif
 //    	    PxxFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //					s_currIdx = 1 ;
 //					pushMenu(menuRangeBind) ;
@@ -14172,6 +13979,7 @@ void s6rRequest( uint8_t type, uint8_t index, uint8_t value )
 		//  {"RUD crab angle offset:", VALUE, 0x99, nil, -20, 20, "%", 0x6C},
 	  //	{"AUX1 select:", COMBO, 0xA8, nil, { "Disable", "Enable" } },
 		//  {"AUX2 select:", COMBO, 0xA9, nil, { "Disable", "Enable" } },
+		//  {"Qucik Mode:", COMBO, 0xAA, nil, { "Disable", "Enable" } },
 //}
 
 //local calibrationFields = {
@@ -14195,7 +14003,7 @@ void menuProcS6R(uint8_t event)
 	static uint8_t rotaryLocal ;
 #endif
 
-	MENU(XPSTR("S6R Config."), menuTabStat, e_s6r, 27, {0} ) ;
+	MENU(XPSTR("S6R Config."), menuTabStat, e_s6r, 28, {0} ) ;
 	
 	int8_t sub = mstate2.m_posVert ;
 
@@ -14203,7 +14011,7 @@ void menuProcS6R(uint8_t event)
 	{
 		if ( --statusTimer == 0 )
 		{
-			state = ( sub != 26 ) ? 0 : 1 ;
+			state = ( sub != 27 ) ? 0 : 1 ;
 		}
 	}
 	if ( event == EVT_ENTRY )
@@ -14220,7 +14028,7 @@ void menuProcS6R(uint8_t event)
 	{
 		if ( valid == 0 )
 		{
-			if ( sub != 26 )
+			if ( sub != 27 )
 			{
 				s6rRequest( 0x30, index, 0 ) ;
 				state = 1 ;			
@@ -14231,12 +14039,12 @@ void menuProcS6R(uint8_t event)
 	}
 	if ( event == EVT_KEY_LONG(KEY_MENU) )
 	{
-		if ( valid || sub == 26 )
+		if ( valid || sub == 27 )
 		{
 			s6rRequest( 0x31, index, value ) ;
 	    killEvents(event) ;
 			statusTimer = 100 ;
-			if ( sub == 26 )
+			if ( sub == 27 )
 			{
 				valid = 0 ;
 				statusTimer = 50 ;
@@ -14363,9 +14171,10 @@ void menuProcS6R(uint8_t event)
 		case 23 :
 		case 24 :
 		case 25 :
+		case 26 :
 //			lcd_puts_Pleft( 2*FH, "Active" ) ;
-  		lcd_putsAttIdx( 0, 2*FH, XPSTR("\006ActiveAux1  Aux2  "), sub-23, 0 ) ;
-			index = "\x9C\xA8\xA9"[sub-23] ;
+  		lcd_putsAttIdx( 0, 2*FH, XPSTR("\006ActiveAux1  Aux2  QuickM"), sub-23, 0 ) ;
+			index = "\x9C\xA8\xA9\xAA"[sub-23] ;
 //			index = 0x9C ;
 			max = 1 ;
 			if ( valid )
@@ -14373,7 +14182,7 @@ void menuProcS6R(uint8_t event)
   			lcd_putsAttIdx( 12*FW, 3*FH, XPSTR("\007DisableEnable "), value, InverseBlink ) ;
 			}
 		break ;
-		case 26 :
+		case 27 :
 			lcd_puts_Pleft( 1*FH, "Calibration, place\037the S6R as shown\037press MENU LONG" ) ;
 			lcd_img( 12, 4*FH, calState<2 ? S6Rimg1 : calState<4 ? S6Rimg2 : S6Rimg3, calState & 1, 0 ) ;
 			if ( calState == 1 )
@@ -14390,7 +14199,7 @@ void menuProcS6R(uint8_t event)
 			}
 		break ;
 	}
-	if ( sub != 26 )
+	if ( sub != 27 )
 	{
 		if ( valid && sub )
 		{
@@ -14518,15 +14327,6 @@ extern uint16_t USART_NE ;
   lcd_outhex4( 72, 7*FH, USART_ORE ) ;
   lcd_outhex4( 96, 7*FH, USART_NE ) ;
 #endif
-
-//#ifdef PCBX9D
-//#ifdef ASSAN
-//extern uint16_t USART_ERRORS ;
-//extern uint16_t USART_FE ;
-//  lcd_outhex4( 72, 1*FH, USART_ERRORS ) ;
-//  lcd_outhex4( 96, 1*FH, USART_FE ) ;
-//#endif
-//#endif
 
 #ifdef PCBSKY
 extern uint8_t DsmDebug[20] ;
@@ -20505,7 +20305,10 @@ void menuProcBt(uint8_t event)
 
 extern uint8_t BtBadChecksum ;
 	lcd_outdez( 25, 7*FH, BtBadChecksum ) ;
-	
+
+extern uint8_t BtLinking ;
+	lcd_outdez( 50, 7*FH, BtLinking ) ;
+	 
 #ifdef BLUETOOTH
 	lcd_outdez( 75, 7*FH, BtRxTimer ) ;
 extern uint8_t BtCurrentLinkIndex ;

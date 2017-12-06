@@ -2529,23 +2529,8 @@ void init_ssc( uint16_t baudrate )
 //  pioptr->PIO_PDR = 0x00020000 ;					// Assign to peripheral
 	
 	sscptr = SSC ;
-//#ifdef ASSAN
-//	if ( g_model.protocol == PROTO_ASSAN )
-//	{
-//		sscptr->SSC_THR = 0 ;		// Make the output low.
-//		sscptr->SSC_TFMR = 0x00000007 ; 	//  0000 0000 0000 0000 0000 0000 0000 0111 (8 bit data, lsb)
-//		NVIC_SetPriority( SSC_IRQn, 7 ) ; // Lower priority interrupt
-//		NVIC_EnableIRQ(SSC_IRQn) ;
-//	}
-//	else
-//	{
-//		sscptr->SSC_THR = 0xFF ;		// Make the output high.
-//		sscptr->SSC_TFMR = 0x00000027 ; 	//  0000 0000 0000 0000 0000 0000 1010 0111 (8 bit data, lsb)
-//	}
-//#else
 	sscptr->SSC_THR = 0xFF ;		// Make the output high.
 	sscptr->SSC_TFMR = 0x00000027 ; 	//  0000 0000 0000 0000 0000 0000 1010 0111 (8 bit data, lsb)
-//#endif
 	uint32_t divisor = 125000*2 ;
 	if ( baudrate )
 	{
@@ -2846,9 +2831,6 @@ extern "C" void USART2_IRQHandler()
 	if ( ( status & USART_SR_TC ) && (USART2->CR1 & USART_CR1_TCIE ) )
 	{
 		USART2->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-//#ifdef ASSAN
-//		if ( g_model.xprotocol != PROTO_ASSAN )
-//#endif
 		{
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable

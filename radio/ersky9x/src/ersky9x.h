@@ -740,22 +740,14 @@ extern uint8_t Ee_lock ;
 
 #define PROTO_SBUS	     5
 
-//#ifdef ASSAN
-//#define PROT_MAX         4
-//#else
 #define PROT_MAX         3
-//#endif
 #define PROTO_PPM16			 3		// No longer needed
 #define PROTO_OFF		     15		// For X9D
 #define PROT_STR_LEN      6
 
 
 
-//#ifdef ASSAN
-//#define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
-//#else
 #define DSM2_STR "\011LP4/LP5  DSM2only DSM2/DSMX9XR-DSM  "
-//#endif
 #define DSM2_STR_LEN   9
 #define LPXDSM2          0
 #define DSM2only         1

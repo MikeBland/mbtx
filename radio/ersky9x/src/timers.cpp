@@ -46,6 +46,7 @@
 #include "logicio.h"
 #include "myeeprom.h"
 #include "drivers.h"
+#include "pulses.h"
 
 extern int16_t g_chans512[] ;
 
@@ -60,7 +61,7 @@ extern void disable_pxx(uint32_t port) ;
 
 void setupPulsesPpmAll(uint32_t module) ;
 
-#define BindBit 0x80
+//#define BindBit 0x80
 
 // To Do
 #define NUM_MODULES 2
@@ -85,6 +86,8 @@ extern uint16_t pulseStreamCount[NUM_MODULES] ;
 extern uint16_t ppmStream[NUM_MODULES+1][20];
 extern uint8_t s_current_protocol[NUM_MODULES] ;
 
+uint8_t SerialData[2][28] ;
+
 static uint8_t Pass[2] ;
 #endif
 
@@ -104,8 +107,8 @@ uint8_t Bit_pulses[64] ;			// Likely more than we need
 #endif
 
 // DSM2 control bits
-#define BindBit 0x80
-#define RangeCheckBit 0x20
+//#define BindBit 0x80
+//#define RangeCheckBit 0x20
 #define FranceBit 0x10
 #define DsmxBit  0x08
 #define BadData 0x47
@@ -555,11 +558,6 @@ void setupPulses(unsigned int port)
 		    case PROTO_MULTI:
 					disable_dsm2(EXTERNAL_MODULE) ;
 	      break;
-//#ifdef ASSAN
-//	      case PROTO_ASSAN :
-//					disable_assan(EXTERNAL_MODULE) ;
-//	      break;
-//#endif
 #ifdef XFIRE
 	      case PROTO_XFIRE :
 					disable_xfire(EXTERNAL_MODULE) ;
@@ -594,11 +592,6 @@ void setupPulses(unsigned int port)
 					DsmInitCounter[port] = 0 ;
 					Pass[port] = 0 ;
 	      break;
-//#ifdef ASSAN
-//	      case PROTO_ASSAN :
-//					init_assan(EXTERNAL_MODULE) ;
-//	      break;
-//#endif
 #ifdef XFIRE
 	      case PROTO_XFIRE :
 					init_xfire(EXTERNAL_MODULE) ;
@@ -625,12 +618,6 @@ void setupPulses(unsigned int port)
       	setupPulsesDsm2( ( g_model.Module[EXTERNAL_MODULE].sub_protocol == DSM_9XR ) ? 12 : 6, EXTERNAL_MODULE ) ; 
 //	      setupPulsesDsm2(6); 
 	    break;
-//#ifdef ASSAN
-//	    case PROTO_ASSAN :
-//	      setupPulsesDsm2( 12, EXTERNAL_MODULE ) ;
-////	      setupPulsesDsm2(g_model.xppmNCH) ; 
-//	    break;
-//#endif
 #ifdef XFIRE
 	    case PROTO_XFIRE :
 				setupPulsesXfire() ;
@@ -1514,17 +1501,6 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 {
 	// Process mode here
 	uint8_t dsm_mode_response ;
-//#ifdef ASSAN
-//	if ( g_model.xprotocol == PROTO_ASSAN )
-//	{
-//		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_USE_TM ) ;
-//		g_model.dsmMode = dsm_mode_response ;
-//  	STORE_MODELVARS ;
-//		PxxFlag[0] &= ~PXX_BIND ;
-//		PxxFlag[1] &= ~PXX_BIND ;
-//	}
-//	else
-//#endif
 	{
 		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
 		if ( g_model.Module[1].protocol != PROTO_MULTI )
@@ -2039,70 +2015,77 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
  			if ((!(dsmDat[module][0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[module][0]|=RangeCheckBit;   //range check function
  			else dsmDat[module][0]&=~RangeCheckBit;
 		}
-		else // Multi
-		{
-			dsmDat[module][0] = sub_protocol+1;
-			if (PxxFlag[module] & PXX_BIND)	dsmDat[module][0] |=BindBit;		//set bind bit if bind menu is pressed
-			if (PxxFlag[module] & PXX_RANGE_CHECK)	dsmDat[module][0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
-		}
+//		else // Multi
+//		{
+//			dsmDat[module][0] = sub_protocol+1;
+//			if (PxxFlag[module] & PXX_BIND)	dsmDat[module][0] |=BindBit;		//set bind bit if bind menu is pressed
+//			if (PxxFlag[module] & PXX_RANGE_CHECK)	dsmDat[module][0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
+//		}
  		
 		if ( protocol == PROTO_MULTI )
 		{
-			uint32_t outputbitsavailable = 0 ;
-			uint32_t outputbits = 0 ;
 			uint32_t i ;
-			if ( module == 0 )
-			{
-				sendByteDsm2( ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
-			}
-			else
-			{
-				sendByteDsm2( ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
-			}
-			sendByteDsm2( dsmDat[module][0], module ) ;
+			setMultiSerialArray( SerialData[module], module ) ;
 			
-			uint8_t x ;
-			if ( module == 0 )
-			{
-				x = g_model.Module[module].channels ;
-				{
-					sendByteDsm2(( x & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ), module );
-					sendByteDsm2(g_model.Module[module].option_protocol, module);
-				}
-			}
-			else
-			{
-				x = g_model.Module[module].channels ;
-				{
-					sendByteDsm2(( x & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ), module );
-					sendByteDsm2(g_model.Module[module].option_protocol, module);
-			  }
-			}
+//			uint32_t outputbitsavailable = 0 ;
+//			uint32_t outputbits = 0 ;
+//			if ( module == 0 )
+//			{
+//				sendByteDsm2( ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
+//			}
+//			else
+//			{
+//				sendByteDsm2( ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55, module ) ;
+//			}
+//			sendByteDsm2( dsmDat[module][0], module ) ;
 			
-			for ( i = 0 ; i < 16 ; i += 1 )
+//			uint8_t x ;
+//			if ( module == 0 )
+//			{
+//				x = g_model.Module[module].channels ;
+//				{
+//					sendByteDsm2(( x & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ), module );
+//					sendByteDsm2(g_model.Module[module].option_protocol, module);
+//				}
+//			}
+//			else
+//			{
+//				x = g_model.Module[module].channels ;
+//				{
+//					sendByteDsm2(( x & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ), module );
+//					sendByteDsm2(g_model.Module[module].option_protocol, module);
+//			  }
+//			}
+			
+//			for ( i = 0 ; i < 16 ; i += 1 )
+//			{
+//				int16_t x = g_chans512[g_model.Module[module].startChannel+i] ;
+//				x *= 4 ;
+//				x += x > 0 ? 4 : -4 ;
+//				x /= 5 ;
+//				x += 0x400 ;
+//				if ( x < 0 )
+//				{
+//					x = 0 ;
+//				}
+//				if ( x > 2047 )
+//				{
+//					x = 2047 ;
+//				}
+//				outputbits |= (uint32_t)x << outputbitsavailable ;
+//				outputbitsavailable += 11 ;
+//				while ( outputbitsavailable >= 8 )
+//				{
+//					uint32_t j = outputbits ;
+//					sendByteDsm2(j, module) ;
+//					outputbits >>= 8 ;
+//					outputbitsavailable -= 8 ;
+//				}
+//			}
+
+			for ( i = 0 ; i < 26 ; i += 1 )
 			{
-				int16_t x = g_chans512[g_model.Module[module].startChannel+i] ;
-				x *= 4 ;
-				x += x > 0 ? 4 : -4 ;
-				x /= 5 ;
-				x += 0x400 ;
-				if ( x < 0 )
-				{
-					x = 0 ;
-				}
-				if ( x > 2047 )
-				{
-					x = 2047 ;
-				}
-				outputbits |= (uint32_t)x << outputbitsavailable ;
-				outputbitsavailable += 11 ;
-				while ( outputbitsavailable >= 8 )
-				{
-					uint32_t j = outputbits ;
-					sendByteDsm2(j, module) ;
-					outputbits >>= 8 ;
-					outputbitsavailable -= 8 ;
-				}
+				sendByteDsm2( SerialData[module][i], module) ;
 			}
 
 	  	putDsm2Flush(module);

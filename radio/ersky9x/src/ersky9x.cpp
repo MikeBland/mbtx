@@ -3474,6 +3474,8 @@ uint8_t BtLinkRequest ;
 uint8_t BtCurrentLinkIndex ;
 uint8_t BtPreviousLinkIndex = 0xFF ;
 
+uint8_t BtLinking ;
+
 void btAddrHex2Bin()
 {
 	uint8_t chr ;
@@ -3642,46 +3644,72 @@ uint32_t btLink( uint32_t index )
 	uint32_t i ;
 	uint8_t *end ;
 
-	btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 20mS
-	getBtOK(0, BT_POLL_TIMEOUT ) ;
-	CoTickDelay(10) ;					// 20mS
-	
-	if ( BtPreviousLinkIndex != index )
+	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
-		end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
+
+		btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
+		CoTickDelay(10) ;					// 20mS
+		getBtOK(0, BT_POLL_TIMEOUT ) ;
+		CoTickDelay(10) ;					// 20mS
+	
+		if ( BtPreviousLinkIndex != index )
+		{
+			end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
+			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
+			*end++ = '\r' ;
+			*end++ = '\n' ;
+			*end = '\0' ;
+			btTransaction( BtRname, 0, 0 ) ;
+			CoTickDelay(10) ;					// 40mS
+			i = getBtOK(0, 2000 ) ;
+		}
+	 
+		x = 0 ;
+		end = cpystr( BtRname, (uint8_t *)"AT+LINK=" ) ;
 		end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
 		*end++ = '\r' ;
 		*end++ = '\n' ;
 		*end = '\0' ;
 		btTransaction( BtRname, 0, 0 ) ;
 		CoTickDelay(10) ;					// 40mS
-		i = getBtOK(0, 2000 ) ;
-	}
-	 
-	x = 0 ;
-	end = cpystr( BtRname, (uint8_t *)"AT+LINK=" ) ;
-	end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
-	*end++ = '\r' ;
-	*end++ = '\n' ;
-	*end = '\0' ;
-	btTransaction( BtRname, 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
-	i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+		i = getBtOK(0, BT_POLL_TIMEOUT ) ;
 
-	if ( i == 0 )
-	{
-		for ( x = 0 ; x < 10 ; x += 1 )
+		if ( i == 0 )
 		{
-			CoTickDelay(10) ;					// 40mS
-			i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-			if ( i )
+			for ( x = 0 ; x < 10 ; x += 1 )
 			{
-				break ;
+				CoTickDelay(10) ;					// 40mS
+				i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+				if ( i )
+				{
+					break ;
+				}
 			}
 		}
+		return i ;
 	}
-	return i ;
+	else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	{
+		BtLinking += 1 ;
+		cpystr( BtRname, (uint8_t *)"AT+CONN1\r\n" ) ;
+		btTransaction( BtRname, 0, 0 ) ;
+		CoTickDelay(10) ;					// 40mS
+		i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+		if ( i == 0 )
+		{
+			for ( x = 0 ; x < 10 ; x += 1 )
+			{
+				CoTickDelay(10) ;					// 40mS
+				i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+				if ( i )
+				{
+					break ;
+				}
+			}
+		}
+		return i ;
+	}
+	return 0 ;
 }
 
 
@@ -4166,6 +4194,15 @@ extern uint8_t ExternalSet ;
 					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 					BtLinkRequest = 0 ;
 				}
+				else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+				{
+					btLink( 1 ) ;
+					BtCurrentLinkIndex = 1 ;
+					BtLinked = 1 ;
+					BtRxTimer = 1000 ;
+					BtRxOccured = 0 ;
+					BtLinkRequest = 0 ;
+				}
 			}
 
 			if ( ( BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
@@ -4191,6 +4228,8 @@ extern uint8_t ExternalSet ;
 						x = getTmr2MHz() - BtLastSbusSendTime ;
 					} while ( x < 28000 ) ;
 					BtLastSbusSendTime += 28000 ;
+//					} while ( x < 40000 ) ;
+//					BtLastSbusSendTime += 40000 ;
 				}
 				// Send Sbus Frame
   			uint8_t *p = BtTxBuffer ;
@@ -5242,19 +5281,11 @@ uint32_t rssiOffsetValue( uint32_t type )
 {
 	uint32_t offset = 45 ;
 
-//#ifdef ASSAN
-//#if defined(PCBX9D) || defined(PCB9XT)
-//	if ( ( ( g_model.xprotocol == PROTO_DSM2) && ( g_model.xsub_protocol == DSM_9XR ) ) || (g_model.xprotocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-//#else
-//	if ( ( ( g_model.protocol == PROTO_DSM2) && ( g_model.sub_protocol == DSM_9XR ) ) || (g_model.protocol == PROTO_ASSAN) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
-//#endif // PCBX9D
-//#else // ASSAN
 #if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( ( g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #else
 	if ( ( ( g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) ) || ( g_model.telemetryProtocol == TELEMETRY_DSM ) )
 #endif // PCBX9D
-//#endif // ASSAN
 	{
 		if ( !g_model.dsmAasRssi )
 		{

@@ -360,6 +360,7 @@ CPPSRC = ersky9x.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
+         pulses.cpp \
          timers.cpp \
          logicio.cpp \
          X12D/adc_driver.cpp \
@@ -458,6 +459,7 @@ CPPSRC = ersky9x.cpp \
          X9D/eeprom_rlc.cpp \
 			stamp.cpp \
          templates.cpp \
+         pulses.cpp \
          drivers.cpp \
          timers.cpp \
          logicio.cpp \
@@ -583,6 +585,7 @@ CPPSRC = ersky9x.cpp \
          analog.cpp \
          file.cpp \
 			frsky.cpp \
+         pulses.cpp \
          pers.cpp \
          menus.cpp \
          mixer.cpp \
@@ -675,6 +678,7 @@ CPPSRC = stamp.cpp \
          timers.cpp \
          logicio.cpp \
          pulses.cpp \
+         sky/pulses_driver.cpp \
 			en.cpp \
 			de.cpp \
 			fr.cpp \

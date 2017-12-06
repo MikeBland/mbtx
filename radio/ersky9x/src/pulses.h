@@ -55,6 +55,10 @@
 #define ORTX_AUTO_MODE		0x40 //- auto DSM2/DSMX
 #define ORTX_BIND_FLAG		0x80
 
+// Control bits
+#define BindBit 0x80
+#define RangeCheckBit 0x20
+
 extern void module_output_low( void ) ;
 extern void module_output_active( void ) ;
 extern void InternalOutputLow( void ) ;
@@ -76,4 +80,8 @@ extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
 extern void checkTrainerSource( void ) ;
 extern void pausePulses( void ) ;
 extern void resumePulses( void ) ;
+
+extern void setMultiSerialArray( uint8_t *data, uint32_t module ) ;
+
+
 
