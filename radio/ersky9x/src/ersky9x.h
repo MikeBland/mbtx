@@ -817,6 +817,7 @@ extern uint8_t Ee_lock ;
 
 
 extern uint8_t PxxFlag[2] ;
+extern uint8_t PxxExtra[] ;
 extern uint8_t InactivityMonitor ;
 extern uint16_t InacCounter ;
 
@@ -1430,7 +1431,12 @@ union t_sharedMemory
 } ;
 
 
-
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#define TIMER1_8SR_MASK	0x1FFF
+#define TIMER2_5SR_MASK	0x1E5F
+#define TIMER6_7SR_MASK	0x0001
+#define TIMER9_14SR_MASK	0x0203
+#endif
 
 
 

@@ -260,6 +260,7 @@ extern void voice_task(void* pdata) ;
 extern bool ToneFreeSlots( void ) ;
 extern void queueTone( uint8_t place, uint8_t freq, int8_t freqInc, uint8_t time, uint8_t pause, uint8_t repeat ) ;
 extern void voiceSystemNameNumberAudio( uint16_t name, uint16_t number, uint8_t audio ) ;
+extern void flushVoiceQueue( void ) ;
 
 extern uint32_t lockOutVoice( void ) ;
 extern void unlockVoice( void ) ;

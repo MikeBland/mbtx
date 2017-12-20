@@ -1540,7 +1540,11 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   			}
   			value *= ratio ;
 #ifndef V2
+#ifdef SKY
         if ( fd->units == 3/*A*/)
+#else
+        if ( fd->type == 3/*A*/)
+#endif
   			{
   			    value /= 100 ;
   			    att = PREC1 ;
@@ -2274,7 +2278,9 @@ int32_t andSwitchMap( int32_t x )
   x = switchUnMap(x, 0 ) ;
 	return x ;	
 }
+#endif
 
+#ifndef V2
 void populateSwitchAndCB(QComboBox *b, int value=0)
 {
 	char name[6] ;
@@ -3549,7 +3555,9 @@ QString FindErskyPath( int type )
     QStringList drives;
     QString eepromfile;
     QString fsname;
-		int x = 0 ;
+#if defined WIN32 || !defined __GNUC__
+    int x = 0 ;
+#endif
 
 		VolNames[0] = "" ;
 		VolNames[1] = "" ;

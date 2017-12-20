@@ -68,6 +68,7 @@ struct toneQentry ToneQueue[AUDIO_QUEUE_LENGTH] ;
 uint8_t ToneQueueRidx ;
 uint8_t ToneQueueWidx ;
 uint8_t SdAccessRequest ;
+uint8_t VoiceFlushing ;
 
 /*static*/ uint16_t toneCount ;
 /*static*/ uint16_t toneTimer ;
@@ -1594,14 +1595,7 @@ void stopMusic()
 
 void flushVoiceQueue()
 {
-	while ( Voice.VoiceQueueCount )
-	{
-		Voice.VoiceQueueOutIndex += 1 ;
-		Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
-		__disable_irq() ;
-		Voice.VoiceQueueCount -= 1 ;
-		__enable_irq() ;
-	}
+	VoiceFlushing = 1 ;
 }
 
 
@@ -1743,6 +1737,20 @@ void voice_task(void* pdata)
 		 {
 		 	MusicInterrupted = 160 ;
 		 }
+
+		 if ( VoiceFlushing )
+		 {
+			while ( Voice.VoiceQueueCount )
+			{
+				Voice.VoiceQueueOutIndex += 1 ;
+				Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;
+				__disable_irq() ;
+				Voice.VoiceQueueCount -= 1 ;
+				__enable_irq() ;
+			}
+		 	VoiceFlushing = 0 ;
+		 }
+
 		 if ( Voice.VoiceQueueCount )
 		 {
 		 	uint32_t processed = 0 ;

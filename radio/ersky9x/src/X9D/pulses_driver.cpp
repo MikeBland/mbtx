@@ -231,7 +231,7 @@ static void init_pa10_none()
   TIM1->EGR = 1 ;                                                         // Restart
 
   TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
-  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM1->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
@@ -268,7 +268,7 @@ static void init_pa7_none()
   TIM8->EGR = 1 ;                                                         // Restart
 
   TIM8->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
@@ -376,7 +376,7 @@ void init_pa10_serial( uint32_t type )
   DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
 
   TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
-  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM1->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
@@ -437,8 +437,8 @@ static void init_pa10_ppm()
   TIM1->EGR = 1 ;
   TIM1->DIER = TIM_DIER_UDE ;
 
-  TIM1->SR &= ~TIM_SR_UIF ;                               // Clear flag
-  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM1->DIER |= TIM_DIER_CC2IE ;
   TIM1->DIER |= TIM_DIER_UIE ;
 
@@ -489,7 +489,7 @@ extern "C" void TIM1_CC_IRQHandler()
 {
   uint16_t t0 = TIM3->CNT;
   TIM1->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
-  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 
 //#ifdef REV9E
 //	s_current_protocol[INTERNAL_MODULE] = PROTO_OFF ;
@@ -535,7 +535,7 @@ extern "C" void TIM1_CC_IRQHandler()
 	{
     ppmStreamPtr[INTERNAL_MODULE] = ppmStream[INTERNAL_MODULE];
     TIM1->DIER |= TIM_DIER_UDE ;
-    TIM1->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
+    TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
     TIM1->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
   }
   else {
@@ -552,12 +552,12 @@ extern "C" void TIM1_UP_TIM10_IRQHandler()
   if ( ( TIM1->DIER & TIM_DIER_UIE ) && ( TIM1->SR & TIM_SR_UIF ) )
 	{
 #endif
- 		TIM1->SR &= ~TIM_SR_UIF ;                               // Clear flag
+ 		TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
 
  		TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
  		if ( *ppmStreamPtr[INTERNAL_MODULE] == 0 )
  		{
- 		  TIM1->SR &= ~TIM_SR_CC2IF ;                     // Clear this flag
+ 		  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                     // Clear this flag
  		  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
  		}
 #ifdef PCB9XT
@@ -671,7 +671,7 @@ void init_pa7_serial( uint32_t type )
 	DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
 
   TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->CR1 |= TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM8_CC_IRQn, 3 ) ; // Lower priority interrupt
@@ -719,7 +719,7 @@ static void init_pa7_xfire()
   TIM8->CCER = TIM_CCER_CC1NE ;
 #endif
   TIM8->EGR = 0 ;                                                         // Restart
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 //  TIM8->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
   TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   TIM8->DIER |= TIM_DIER_UIE ;
@@ -802,8 +802,8 @@ static void init_pa7_ppm()
   TIM8->EGR = 1 ;
   TIM8->DIER = TIM_DIER_UDE ;
 
-  TIM8->SR &= ~TIM_SR_UIF ;                               // Clear flag
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   TIM8->DIER |= TIM_DIER_CC2IE ;
   TIM8->DIER |= TIM_DIER_UIE ;
 
@@ -826,7 +826,7 @@ static void disable_pa7_ppm()
 extern "C" void TIM8_CC_IRQHandler()
 {
   TIM8->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
-  TIM8->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 
   setupPulses(EXTERNAL_MODULE) ;
 
@@ -853,7 +853,7 @@ extern "C" void TIM8_CC_IRQHandler()
   else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM) {
     ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
     TIM8->DIER |= TIM_DIER_UDE ;
-    TIM8->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
+    TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
     TIM8->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
   }
   else
@@ -864,7 +864,7 @@ extern "C" void TIM8_CC_IRQHandler()
 
 extern "C" void TIM8_UP_TIM13_IRQHandler()
 {
-  TIM8->SR &= ~TIM_SR_UIF ;                               // Clear flag
+  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
 #ifdef XFIRE
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_XFIRE )
 	{
@@ -876,7 +876,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
   	TIM8->ARR = *ppmStreamPtr[EXTERNAL_MODULE]++ ;
 	  if (*ppmStreamPtr[EXTERNAL_MODULE] == 0)
 		{
-  	  TIM8->SR &= ~TIM_SR_CC2IF ;                     // Clear this flag
+  	  TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                     // Clear this flag
 	    TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   	}
 	}

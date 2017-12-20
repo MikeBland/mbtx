@@ -58,6 +58,7 @@
 // Control bits
 #define BindBit 0x80
 #define RangeCheckBit 0x20
+#define BadData 0x47
 
 extern void module_output_low( void ) ;
 extern void module_output_active( void ) ;
@@ -82,6 +83,9 @@ extern void pausePulses( void ) ;
 extern void resumePulses( void ) ;
 
 extern void setMultiSerialArray( uint8_t *data, uint32_t module ) ;
-
+extern uint16_t CRCTable(uint8_t val) ;
+extern uint16_t scaleForPXX( uint8_t i ) ;
+extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
+extern void setDsmHeader( uint8_t *dsmDat, uint32_t module ) ;
 
 

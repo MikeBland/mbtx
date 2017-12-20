@@ -4275,6 +4275,10 @@ int32_t execInFunction()
 			result = exec_getlastpos() ;
 		break ;
 		
+		case DRAWTIMER :
+			exec_drawtimer() ;
+		break ;
+		
 		case SYSFLAGS :
 			result = exec_sysflags() ;
 		break ;

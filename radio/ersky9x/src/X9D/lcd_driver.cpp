@@ -1434,7 +1434,7 @@ void initTopLcd()
 extern "C" void TIM8_BRK_TIM12_IRQHandler()
 {
 	struct t_top_lcd_control *pc ;
-	TIM12->SR &= ~TIM_SR_UIF ;
+	TIM12->SR = TIMER9_14SR_MASK & ~TIM_SR_UIF ;
 	pc = &TopLcdControl ;
 
 	if ( pc->state == TOP_LCD_CKLOW )

@@ -1738,12 +1738,16 @@ int16_t simulatorDialog::intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 
     return erg / 25; // 100*D5/RESX;
 }
 
+#ifndef V2
 static uint8_t lastSwPos[2] ;
+#endif
 void simulatorDialog::timerTick()
 {
   int16_t val = 0;
+#ifndef V2
   int16_t v ;
-	uint8_t tma ;
+  uint8_t tma ;
+#endif
 //    if((abs(g_model.tmrMode)>1) && (abs(g_model.tmrMode)<TMR_VAROFS)) {
 //        val = calibratedStick[CONVERT_MODE(abs(g_model.tmrMode)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
 //        val = (g_model.tmrMode<0 ? RESX-val : val+RESX ) / (RESX/16);  // only used for %
@@ -1757,16 +1761,18 @@ void simulatorDialog::timerTick()
 //    {
 //      val = chanOut[tm-TMR_VAROFS] ;
 //    }
-  	int8_t tmb ;
-//		uint8_t switch_b ;
+#ifndef V2
+    int8_t tmb ;
+#endif
+ //		uint8_t switch_b ;
 		uint8_t max_drswitch ;
 		max_drswitch = ( ee_type ) ? MAX_DRSWITCH+EXTRA_CSW : MAX_DRSWITCH ;
 
   int itimer ;
   for( itimer = 0 ; itimer < 2 ; itimer += 1 )
 	{
-		uint8_t resetting = 0 ;
 #ifndef V2
+    uint8_t resetting = 0 ;
     if ( itimer == 0 )
 		{
 			tmb = g_model.timer1RstSw ;

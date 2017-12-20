@@ -289,6 +289,7 @@
 #define INTMODULE_RCC_APB1Periph      RCC_APB1Periph_TIM12
 #define INTMODULE_RCC_APB2Periph      RCC_APB2Periph_USART1
 #define INTMODULE_TIMER               TIM12
+#define INTMODULE_TIMER_SR_MASK				0x0203
 #define INTMODULE_TIMER_IRQn          TIM8_BRK_TIM12_IRQn
 #define INTMODULE_TIMER_IRQHandler    TIM8_BRK_TIM12_IRQHandler
 #define INTMODULE_TIMER_FREQ          (PeripheralSpeeds.Peri1_frequency * PeripheralSpeeds.Timer_mult1)
@@ -318,6 +319,7 @@
 	#define PIN_EXTPPM_OUT		            GPIO_Pin_10  // PA.10
 	#define EXTMODULE_GPIO_PinSource      GPIO_PinSource10
   #define EXTMODULE_TIMER               TIM1
+	#define EXTMODULE_TIMER_SR_MASK				0x1FFF
   #define EXTMODULE_TIMER_IRQn          TIM1_CC_IRQn
   #define EXTMODULE_TIMER_IRQHandler    TIM1_CC_IRQHandler
 	#define EXTMODULE_DMA_STREAM          DMA2_Stream6
@@ -331,6 +333,7 @@
 	#define PROT_PIN_EXTPPM_OUT		        GPIO_Pin_15  // PA.15
 	#define PROT_EXTMODULE_GPIO_PinSource GPIO_PinSource15
 	#define PROT_EXTMODULE_TIMER          TIM2
+	#define PROT_EXTMODULE_TIMER_SR_MASK	0x1E5F
   #define PROT_EXTMODULE_TIMER_IRQn     TIM2_IRQn
   #define PROT_EXTMODULE_TIMER_IRQHandler    TIM2_IRQHandler
   #define PROT_EXTMODULE_DMA_STREAM     DMA1_Stream7

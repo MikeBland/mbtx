@@ -148,6 +148,7 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
     ui->splashScreenChkB->setChecked(!p_eeGeneral->disableSplashScreen);
     ui->splashScreenNameChkB->setChecked(!p_eeGeneral->hideNameOnSplash);
 
+#ifdef V2
     uint8_t db = (p_eeGeneral->stickDeadband & 0x00F0 ) >> 4 ;
 		ui->StickLVdeadbandSB->setValue(db) ;
     db = p_eeGeneral->stickDeadband & 0x000F ;
@@ -156,7 +157,7 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
 		ui->StickRVdeadbandSB->setValue(db) ;
     db = (p_eeGeneral->stickDeadband & 0xF000 ) >> 12 ;
 		ui->StickRHdeadbandSB->setValue(db) ;
-
+#endif
     ui->ana1Neg->setValue(p_eeGeneral->calibSpanNeg[0]);
     ui->ana2Neg->setValue(p_eeGeneral->calibSpanNeg[1]);
     ui->ana3Neg->setValue(p_eeGeneral->calibSpanNeg[2]);
@@ -1148,9 +1149,9 @@ void GeneralEdit::on_ThrSwitchSource_currentIndexChanged(int index)
 	uint8_t x = p_eeGeneral->switchSources[0] & 0xF0 ;
 	x |= index & 0x0F ;
 	p_eeGeneral->switchSources[0] = x ;
+//	p_eeGeneral->thr2source = index ;
 #else
-	p_eeGeneral->thr2source = index ;
-	p_eeGeneral->switchMapping &= ~USE_THR_3POS ;
+  p_eeGeneral->switchMapping &= ~USE_THR_3POS ;
 	if ( index )
 	{
 		p_eeGeneral->switchMapping |= USE_THR_3POS ;
@@ -1275,30 +1276,38 @@ void GeneralEdit::on_PB7BacklightCB_stateChanged(int x )
 
 void GeneralEdit::on_StickLVdeadbandSB_editingFinished()
 {
+#ifdef V2
   uint16_t db = ui->StickLVdeadbandSB->value() ;
   p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xFF0F ) | ( db << 4 ) ;
   updateSettings();
+#endif
 }
 
 void GeneralEdit::on_StickLHdeadbandSB_editingFinished()
 {
+#ifdef V2
   uint16_t db = ui->StickLVdeadbandSB->value() ;
   p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xFFF0 ) | db ;
   updateSettings();
+#endif
 }
 
 void GeneralEdit::on_StickRVdeadbandSB_editingFinished()
 {
+#ifdef V2
   uint16_t db = ui->StickLVdeadbandSB->value() ;
   p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0xF0FF ) | ( db << 8 ) ;
   updateSettings();
+#endif
 }
 
 void GeneralEdit::on_StickRHdeadbandSB_editingFinished()
 {
+#ifdef V2
   uint16_t db = ui->StickLVdeadbandSB->value() ;
   p_eeGeneral->stickDeadband = ( p_eeGeneral->stickDeadband & 0x0FFF ) | ( db << 12 ) ;
   updateSettings();
+#endif
 }
 
 

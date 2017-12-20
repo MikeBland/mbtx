@@ -529,6 +529,7 @@ uint8_t Main_running ;
 #ifdef PCBSKY
 uint8_t CoProcAlerted ;
 #endif
+uint8_t LastVoiceFlushSwitch ;
 int main( void ) ;
 
 EEGeneral  g_eeGeneral;
@@ -1810,6 +1811,7 @@ void where( uint8_t chr )
 	}
 }
 
+#ifdef PCBSKY
 extern "C" void cppwhere( uint8_t chr ) 
 {
 	uint32_t i ;
@@ -1824,6 +1826,7 @@ extern "C" void cppwhere( uint8_t chr )
   	wdt_reset() ;
 	}
 }
+#endif
 #endif
 
 
@@ -2064,8 +2067,12 @@ extern unsigned char *EndOfHeap ;
 	
 #if defined(PCBX9D) || defined(PCB9XT)
 //  sdInit() ;
+#ifndef PCBX7
+#ifndef REV9E
 	disk_initialize( 0 ) ;
 	sdInit() ;
+#endif
+#endif
 #endif
 
 #ifdef PCBX12D
@@ -2161,6 +2168,11 @@ void enableBackupRam(void) ;
  					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
  					/* Request Wait For Event */
  					__WFE();
+					switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+					if ( switchValue )
+					{
+		  			NVIC_SystemReset() ;
+					}
 				}
 			}
 		}
@@ -2237,6 +2249,15 @@ void enableBackupRam(void) ;
 			}
 		}
 	}
+#endif
+
+#ifdef REV9E
+	disk_initialize( 0 ) ;
+	sdInit() ;
+#endif
+#ifdef PCBX7
+	disk_initialize( 0 ) ;
+	sdInit() ;
 #endif
 
 #ifdef PCBX9D
@@ -2429,7 +2450,6 @@ uint32_t updateSlave() ;
 	setVolume( 0 ) ;
 	start_sound() ;
 #endif
-
 
 #if defined(PCBSKY) || defined(PCB9XT)
 	init_spi() ;
@@ -4871,11 +4891,13 @@ void main_loop(void* pdata)
 #endif  	 
 
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D)
+#ifndef PCBX7
 extern uint8_t ModelImageValid ;
 	if ( !ModelImageValid )
 	{
 		loadModelImage() ;
 	}
+#endif	
 #endif	
 	Activated = 1 ;
 
@@ -5308,12 +5330,22 @@ static void processVoiceAlarms()
 {
 	uint32_t i ;
 	uint32_t curent_state ;
+	uint8_t flushSwitch ;
 	VoiceAlarmData *pvad = &g_model.vad[0] ;
 	i = 0 ;
 	if ( VoiceCheckFlag100mS & 4 )
 	{
 		i = NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ;
 	}
+	flushSwitch = getSwitch00( g_model.voiceFlushSwitch ) ;
+	if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
+	{
+		if ( flushSwitch && ( LastVoiceFlushSwitch == 0 ) )
+		{
+			flushVoiceQueue() ;			
+		}
+	}
+	LastVoiceFlushSwitch = flushSwitch ;
   for ( ; i < NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i += 1 )
 	{
 		struct t_NvsControl *pc = &NvsControl[i] ;

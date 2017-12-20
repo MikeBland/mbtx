@@ -91,6 +91,12 @@ Add Multi auto telemetry detection
 Fix bug in flashing AVR multi module	
 Fix bug in setting fuses on 'Orange' multi module
 First 6 CRSF link data items put into Cus1-Cus6 telemetry items for testing.	
+Add Fmd (Flight Mode) to telemetry values
+Support FrSky XJT setting receiver mode at bind time
+Fix QX7 power cycling bug
+Fix script "drawtimer" bug
+Add failsafe "repeat send" option
+Change timer interrupt flag clearing method
 
 ******************************************
 CHANGELOG: 04-Dec-2016  MPB (r220)

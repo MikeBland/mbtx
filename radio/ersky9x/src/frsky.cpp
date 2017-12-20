@@ -388,6 +388,9 @@ void store_telemetry_scaler( uint8_t index, uint16_t value )
 		case 12 :
 			storeTelemetryData( FR_CUST1 - 7 + index, value ) ;
 		break ;
+		case 13 :
+			storeTelemetryData( FR_AIRSPEED, value ) ;
+		break ;
 	}
 }
 
@@ -1165,6 +1168,9 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				DsmDbgCounters[0] += 1 ;
 #endif
 				storeAltitude( ivalue ) ;
+				if ( FrskyHubMaxMin.hubMax[FR_ALT_BARO] < ivalue )
+				{	FrskyHubMaxMin.hubMax[FR_ALT_BARO] = ivalue ;
+				}
 				if ( *packet == DSM_VARIO )
 				{
 					ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
@@ -1178,7 +1184,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #endif
 				ivalue *= 2015 ;
 				ivalue /= 1024 ;
-				storeTelemetryData( FR_CURRENT, ivalue*10 ) ;	// Handles FAS Offset
+				storeTelemetryData( FR_CURRENT, ivalue ) ;	// Handles FAS Offset
 //				FrskyHubData[FR_CURRENT] = ivalue ;
 			break ;
 

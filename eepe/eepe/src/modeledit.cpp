@@ -1387,7 +1387,9 @@ void ModelEdit::voiceAlarmsList()
 
 void ModelEdit::tabVoiceAlarms()
 {
+#ifdef V2
 	uint32_t i ;
+#endif
 
 	VoiceListWidget = new VoiceList(this) ;
   ui->voiceLayout->addWidget(VoiceListWidget,1,1,1,1);
@@ -4216,8 +4218,8 @@ void ModelEdit::tabFrsky()
     populateTelItemsCB( ui->Ct6, 0, g_model.CustomDisplayIndex[5] ) ;
 		ui->widgetCt2->hide() ;
 		
-		ui->RxRssiLowSB->setValue( g_model.frsky.rxRssiLow + 45 ) ;
-		ui->->setValue( g_model.frsky.rxRssiCritical + 45 ) ;
+//		ui->RxRssiLowSB->setValue( g_model.frsky.rxRssiLow + 45 ) ;
+//		ui->->setValue( g_model.frsky.rxRssiCritical + 45 ) ;
 		ui->label_RxRssiLow->hide() ;
 		ui->label_RxRssiCritical->hide() ;
 		ui->RxRssiLowSB->hide() ;
@@ -4723,26 +4725,34 @@ void ModelEdit::on_thrTrimChkB_toggled(bool checked)
 
 void ModelEdit::on_T1MinBeepChkB_toggled(bool checked)
 {
+#ifdef V2
     g_model.timer[0].tmrMbeep = checked;
     updateSettings();
+#endif
 }
 
 void ModelEdit::on_T1BeepdownChkB_toggled(bool checked)
 {
+#ifdef V2
     g_model.timer[0].tmrCdown = checked;
     updateSettings();
+#endif
 }
 
 void ModelEdit::on_T2MinBeepChkB_toggled(bool checked)
 {
+#ifdef V2
     g_model.timer[1].tmrMbeep = checked;
     updateSettings();
+#endif
 }
 
 void ModelEdit::on_T2BeepdownChkB_toggled(bool checked)
 {
+#ifdef V2
     g_model.timer[1].tmrCdown = checked;
     updateSettings();
+#endif
 }
 
 void ModelEdit::on_TrainerChkB_toggled(bool checked)

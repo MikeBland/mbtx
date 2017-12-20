@@ -56,7 +56,7 @@
 
 #include "ersky9x.h"
 #include "myeeprom.h"
-//#include "logicio.h"
+#include "logicio.h"
 //#include "drivers.h"
 #include "pulses.h"
 //#include "debug.h"
@@ -71,6 +71,7 @@
 ////uint8_t Current_protocol ;
 ////uint8_t Current_xprotocol ;
 extern uint8_t PxxFlag[] ;
+extern uint8_t PxxExtra[] ;
 //uint16_t PcmCrc ;
 //uint8_t PcmOnesCount ;
 //uint8_t CurrentTrainerSource ;
@@ -596,47 +597,47 @@ extern uint8_t PxxFlag[] ;
 //}
 
 
-//void dsmBindResponse( uint8_t mode, int8_t channels )
-//{
-//	// Process mode here
-//	uint8_t dsm_mode_response ;
-//	{
-//		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
-//		if ( g_model.Module[1].protocol != PROTO_MULTI )
-//		{
-//#if defined(PCBX9D) || defined(PCB9XT)
-//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-//			{
-////				g_model.xppmNCH = channels ;
-//				g_model.Module[1].channels = channels ;
-//#else
-//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-//			{
-////				g_model.ppmNCH = channels ;
-//				g_model.Module[1].channels = channels ;
-//#endif
-//				g_model.dsmMode = dsm_mode_response | 0x80 ;
-//	  		STORE_MODELVARS ;
-//			}
-//		}
-//		else
-//		{
-//extern uint8_t MultiResponseData ;
-//		dsm_mode_response = channels ;
-//		if ( mode & 0x80 )
-//		{
-//			dsm_mode_response |= 0x80 ;
-//		}
-//		if ( mode & 0x10 )
-//		{
-//			dsm_mode_response |= 0x40 ;
-//		}
-//		MultiResponseData = dsm_mode_response ;
-//extern uint8_t MultiResponseFlag ;
-//			MultiResponseFlag = 1 ;
-//		}
-//	}
-//}
+void dsmBindResponse( uint8_t mode, int8_t channels )
+{
+	// Process mode here
+	uint8_t dsm_mode_response ;
+	{
+		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
+		if ( g_model.Module[1].protocol != PROTO_MULTI )
+		{
+#if defined(PCBX9D) || defined(PCB9XT)
+			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+			{
+//				g_model.xppmNCH = channels ;
+				g_model.Module[1].channels = channels ;
+#else
+			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+			{
+//				g_model.ppmNCH = channels ;
+				g_model.Module[1].channels = channels ;
+#endif
+				g_model.dsmMode = dsm_mode_response | 0x80 ;
+	  		STORE_MODELVARS ;
+			}
+		}
+		else
+		{
+extern uint8_t MultiResponseData ;
+		dsm_mode_response = channels ;
+		if ( mode & 0x80 )
+		{
+			dsm_mode_response |= 0x80 ;
+		}
+		if ( mode & 0x10 )
+		{
+			dsm_mode_response |= 0x40 ;
+		}
+		MultiResponseData = dsm_mode_response ;
+extern uint8_t MultiResponseFlag ;
+			MultiResponseFlag = 1 ;
+		}
+	}
+}
 
 
 void setMultiSerialArray( uint8_t *data, uint32_t module )
@@ -650,10 +651,19 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	packetType = ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
   if (g_model.Module[module].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[module].failsafeMode != FAILSAFE_RX )
 	{
-    if ( FailsafeCounter[module]-- == 0 )
+    if ( FailsafeCounter[module] )
 		{
-			FailsafeCounter[module] = 1000 ;
-			packetType += 2 ;	// Failsafe packet
+	    if ( FailsafeCounter[module]-- == 1 )
+			{
+				packetType += 2 ;	// Failsafe packet
+			}
+		}
+	  if ( FailsafeCounter[module] == 0 )
+		{
+			if ( g_model.Module[module].failsafeRepeat == 0 )
+			{
+				FailsafeCounter[module] = 1000 ;
+			}
 		}
 	}
 	*data++ = packetType ;
@@ -685,7 +695,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 				// Send failsafe value
 				int32_t value ;
 				value = ( startChan < 16 ) ? g_model.Module[module].failsafe[startChan] : 0 ;
-				value = ( value *3933 ) >> 9 ;
+				value = ( value *4193 ) >> 9 ;
 				value += 1024 ;
 				x = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
 				startChan += 1 ;
@@ -734,28 +744,32 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 ////uint8_t *DsmDatPointer ;
 ////uint16_t DebugDsmChan0 ;
 
-//void setDsmHeader( uint8_t *dsmDat, uint32_t module )
-//{
-//  if (dsmDat[0]&BadData)  //first time through, setup header
-//  {
-//  	switch(g_model.Module[module].sub_protocol)
-//  	{
-//  		case LPXDSM2:
-//  		  dsmDat[0]= 0x80;
-//  		break;
-//  		case DSM2only:
-//  		  dsmDat[0]=0x90;
-//  		break;
-//  		default:
-//  		  dsmDat[0]=0x98;  //dsmx, bind mode
-//  		break;
-//  	}
-//  }
+void setDsmHeader( uint8_t *dsmDat, uint32_t module )
+{
+  if (dsmDat[0]&BadData)  //first time through, setup header
+  {
+  	switch(g_model.Module[module].sub_protocol)
+  	{
+  		case LPXDSM2:
+  		  dsmDat[0]= 0x80;
+  		break;
+  		case DSM2only:
+  		  dsmDat[0]=0x90;
+  		break;
+  		default:
+  		  dsmDat[0]=0x98;  //dsmx, bind mode
+  		break;
+  	}
+  }
 
-//	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-//  if ((!(dsmDat[0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-//  else dsmDat[0]&=~RangeCheckBit;
-//}
+#if defined(PCBSKY) || defined(PCB9XT)
+	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+#else
+	if((dsmDat[0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
+#endif
+  if ((!(dsmDat[0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  else dsmDat[0]&=~RangeCheckBit;
+}
 
 
 ////static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
@@ -1703,15 +1717,15 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 ////  PcmCrc =(PcmCrc<<8) ^(CRCTable[((PcmCrc>>8)^data)&0xFF]);
 ////}
 
-//const uint16_t CRC_Short[]=
-//{
-//   0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
-//   0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7 };
+const uint16_t CRC_Short[]=
+{
+   0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
+   0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7 };
 
-//uint16_t CRCTable(uint8_t val)
-//{
-//	return CRC_Short[val&0x0F] ^ (0x1081 * (val>>4));
-//}
+uint16_t CRCTable(uint8_t val)
+{
+	return CRC_Short[val&0x0F] ^ (0x1081 * (val>>4));
+}
 
 
 //void crc( uint8_t data )
@@ -1785,13 +1799,13 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 //    putPcmPart( 0 ) ;
 //}
 
-//uint16_t scaleForPXX( uint8_t i )
-//{
-//	int16_t value ;
+uint16_t scaleForPXX( uint8_t i )
+{
+	int16_t value ;
 
-//	value = ( i < 24 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
-//	return limit( (int16_t)1, value, (int16_t)2046 ) ;
-//}
+	value = ( i < 32 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
+	return limit( (int16_t)1, value, (int16_t)2046 ) ;
+}
 
 
 ////uint16_t TempChannels[8] ;

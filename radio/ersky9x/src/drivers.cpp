@@ -3428,7 +3428,7 @@ void init_software_remote()
 	TIM10->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
 	TIM10->CCMR1 = TIM_CCMR1_CC1S_0 ;
 	TIM10->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP ;
-	TIM10->SR &= ~TIM_SR_CC1IF ;				// Clear flag
+	TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
 	TIM10->DIER |= TIM_DIER_CC1IE ;
 	TIM10->CR1 = TIM_CR1_CEN ;
 	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 3 ) ; // Lower priority interrupt
@@ -3442,7 +3442,7 @@ extern "C" void timer10_interrupt()
   	uint16_t capture ;
 		uint32_t level = GPIOB->IDR & 0x0100 ? 1 : 0 ;
 		capture = TIM10->CCR1 ;	// Capture time
-		TIM10->SR &= ~TIM_SR_CC1IF ;				// Clear flag
+		TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
 		RemIntCount += 1 ;
 	
 		{
@@ -4075,7 +4075,7 @@ void backlightSend()
 	DMA1_Stream0->NDTR = 26 ;
   DMA1_Stream0->CR |= DMA_SxCR_EN ;               // Enable DMA
 
-  TIM4->SR &= ~TIM_SR_CC1IF ;                             // Clear flag
+  TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;                             // Clear flag
   TIM4->CR1 |= TIM_CR1_CEN ;
 	DMA1_Stream0->CR |= DMA_SxCR_TCIE ;
 	NVIC_SetPriority( DMA1_Stream0_IRQn, 5 ) ; // Lower priority interrupt

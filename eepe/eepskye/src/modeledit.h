@@ -236,6 +236,7 @@ private slots:
 		void on_updateButton_clicked() ;
 		void on_updateButton3_clicked() ;
 		void on_updateButton4_clicked() ;
+		void on_loggingButton_clicked() ;
     void mixersDelete(bool ask=true);
     void mixersCut();
     void mixersCopy();

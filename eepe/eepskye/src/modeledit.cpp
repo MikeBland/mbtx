@@ -6,6 +6,7 @@
 #include "../../common/edge.h"
 #include "../../common/node.h"
 #include "mixerdialog.h"
+#include "loggingdialog.h"
 #include "ProtocolDialog.h"
 #include "GvarAdjustDialog.h"
 #include "simulatordialog.h"
@@ -4973,8 +4974,8 @@ void ModelEdit::updateSwitchesList( int lOrR )
   for(uint32_t i=start ; i<start+5 ; i+=1)
 	{
 		uint32_t j ;
-		char telText[20] ;
-		int16_t value ;
+//		char telText[20] ;
+//		int16_t value ;
 		uint32_t cType ;
 		cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
 		QString str = "";
@@ -6485,20 +6486,6 @@ void ModelEdit::tabFrsky()
     ui->VarioOffsetFreqSB->setValue( g_model.varioExtraData.offsetFrequency ) ;
     ui->VarioVolumeCB->setCurrentIndex( g_model.varioExtraData.volume ) ;
 
-    populateSwitchCB(ui->LogSwitchCB, g_model.logSwitch, rData->type ) ;
-		{
-			uint32_t temp = g_model.logRate ;
-			if ( temp == 2 )
-			{
-        temp = 0 ;
-			}
-			else
-			{
-				temp += 1 ;
-			}
-    	ui->LogRateCB->setCurrentIndex( temp ) ;
-		}
-		
 		ui->frsky_RSSI_Warn->setValue( g_model.rssiOrange + 45 ) ;
 		ui->frsky_RSSI_Critical->setValue( g_model.rssiRed + 42 ) ;
 		ui->RssiWarnEnabled->setChecked( !g_model.enRssiOrange ) ;
@@ -6568,9 +6555,6 @@ void ModelEdit::tabFrsky()
 		connect( ui->VarioBaseFreqSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
 		connect( ui->VarioOffsetFreqSB,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
 		connect( ui->VarioVolumeCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-
-		connect( ui->LogSwitchCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
-		connect( ui->LogRateCB,SIGNAL(currentIndexChanged(int)),this,SLOT(FrSkyEdited()));
 
     connect(ui->frsky_RSSI_Warn,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
     connect(ui->frsky_RSSI_Critical,SIGNAL(editingFinished()),this,SLOT(FrSkyEdited()));
@@ -6674,19 +6658,6 @@ void ModelEdit::FrSkyEdited()
 		g_model.varioExtraData.baseFrequency = ui->VarioBaseFreqSB->value() ;
 		g_model.varioExtraData.offsetFrequency = ui->VarioOffsetFreqSB->value() ;
 		g_model.varioExtraData.volume = ui->VarioVolumeCB->currentIndex() ;
-
-		g_model.logSwitch = getSwitchCbValue( ui->LogSwitchCB, rData->type ) ;
-    
-		uint32_t temp = ui->LogRateCB->currentIndex() ;
-		if ( temp == 0 )
-		{
-      temp = 2 ;
-		}
-		else
-		{
-			temp -= 1 ;
-		}
-		g_model.logRate = temp ;
 
 		g_model.rssiOrange = ui->frsky_RSSI_Warn->value() - 45 ;
 		g_model.rssiRed = ui->frsky_RSSI_Critical->value() - 42 ;
@@ -8873,6 +8844,31 @@ void ModelEdit::on_updateButton4_clicked()
 void ModelEdit::on_pushButton_clicked()
 {
     launchSimulation();
+}
+
+void ModelEdit::on_loggingButton_clicked()
+{
+	struct t_loggingData data ;
+	data.logBits[0] = g_model.LogDisable[0] ;
+	data.logBits[1] = g_model.LogDisable[1] ;
+	data.logBits[2] = g_model.LogDisable[2] ;
+	data.logBits[3] = g_model.LogDisable[3] ;
+	data.rate = g_model.logRate ;
+	data.lswitch = g_model.logSwitch ;
+	data.newFile = g_model.logNew ;
+	data.timeout = g_model.telemetryTimeout ;
+  loggingDialog *g = new loggingDialog(this, &data, rData ) ;
+  if(g->exec())
+  {
+		g_model.LogDisable[0] = data.logBits[0] ;
+		g_model.LogDisable[1] = data.logBits[1] ;
+		g_model.LogDisable[2] = data.logBits[2] ;
+		g_model.LogDisable[3] = data.logBits[3] ;
+		g_model.logRate = data.rate ;
+		g_model.logSwitch = data.lswitch ;
+		g_model.logNew = data.newFile ;
+		g_model.telemetryTimeout = data.timeout ;
+	}
 }
 
 void ModelEdit::on_resetCurve_1_clicked()

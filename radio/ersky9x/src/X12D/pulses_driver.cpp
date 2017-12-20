@@ -238,7 +238,7 @@ static void init_ext_none()
 
 	  TIM1->EGR = 1 ;                                                         // Restart
 
-	  TIM1->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+	  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 	  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		TIM1->CR2 = TIM_CR2_MMS_1 ;			// Update event as trigger output
 	  TIM1->CR1 |= TIM_CR1_CEN ;
@@ -406,7 +406,7 @@ static void init_ext_ppm( void )
 //	  NVIC_EnableIRQ( EXTMODULE_DMA_IRQn) ;
 
 		// Interrupt version
-	  EXTMODULE_TIMER->SR &= ~TIM_SR_UIF ;                               // Clear flag
+	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
 //  	EXTMODULE_TIMER->DIER = TIM_DIER_UDE; // Update DMA request
 //  	EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
   	EXTMODULE_TIMER->DIER |= TIM_DIER_UIE ;
@@ -1007,7 +1007,7 @@ void init_ext_serial( uint32_t type )
 	EXTMODULE_TIMER->CR2 = TIM_CR2_MMS_2 | TIM_CR2_MMS_1 | TIM_CR2_OIS3 ;			// CC3 event as trigger output
 
   EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;     // Toggle CC1 o/p
-  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;                             // Clear flag
+  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
   EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	 
 	if ( isProdVersion() == 0 )
@@ -1253,18 +1253,18 @@ extern "C" void EXTMODULE_DMA_IRQHandler()
 
   DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN & ~DMA_SxCR_TCIE ; // Disable DMA
-  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ; // Clear flag
+  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ; // Clear flag
   EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ; // Enable this interrupt
 }
 
 extern "C" void TIM1_UP_TIM10_IRQHandler()
 {
-	TIM1->SR &= ~TIM_SR_UIF ;                               // Clear flag
+	TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
 	TIM1->ARR = *ppmStreamPtr[EXTERNAL_MODULE]++ ;
 	if ( *ppmStreamPtr[EXTERNAL_MODULE] == 0 )
 	{
 		TIM1->DIER &= ~TIM_DIER_UIE ;		// Stop this interrupt
-	  TIM1->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+	  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 	  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	}
 }
@@ -1279,7 +1279,7 @@ extern "C" void TIM1_CC_IRQHandler()
 		ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE] ;
 		EXTMODULE_TIMER->CCR3 = (g_model.Module[1].ppmDelay*50+300)*2 ;
     EXTMODULE_TIMER->CCER = TIM_CCER_CC3E | (g_model.Module[1].pulsePol ? TIM_CCER_CC3P : 0 ) ;
-		EXTMODULE_TIMER->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
+		EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
 		if ( isProdVersion() == 0 )
 		{
   		PROT_EXTMODULE_TIMER->CCR1 = (g_model.Module[1].ppmDelay*50+300)*2 ;
@@ -1311,7 +1311,7 @@ extern "C" void TIM1_CC_IRQHandler()
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
 		ProtoDebug[8] = 33 ;
-	  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	}	
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
@@ -1338,12 +1338,12 @@ extern "C" void TIM1_CC_IRQHandler()
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
 		ProtoDebug[8] = 65 ;
-	  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
 	else
 	{
-	  TIM1->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+	  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	}
 }
@@ -1360,7 +1360,7 @@ extern "C" void PROT_EXTMODULE_DMA_IRQHandler()
 
   DMA_ClearITPendingBit(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC) ;
 	PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN & ~DMA_SxCR_TCIE ; // Disable DMA
-  PROT_EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ; // Clear flag
+  PROT_EXTMODULE_TIMER->SR = PROT_EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ; // Clear flag
   PROT_EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ; // Enable this interrupt
 }
 
@@ -1369,16 +1369,16 @@ extern "C" void TIM2_IRQHandler()
 	uint16_t status = TIM2->SR ;
 	if ( status & TIM_SR_CC3IF )
 	{
-		TIM2->SR &= ~TIM_SR_CC3IF ;
+		TIM2->SR = TIMER2_5SR_MASK & ~TIM_SR_CC3IF ;
 		TIM2->CNT = 0 ;		// wrap to 16 bits!
 	}
   if ( ( TIM2->DIER & TIM_DIER_UIE ) && ( status & TIM_SR_UIF ) )
 	{
- 		TIM2->SR &= ~TIM_SR_UIF ;             // Clear flag
+ 		TIM2->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;             // Clear flag
  		TIM2->ARR = *ppmStreamPtr[EXTERNAL_MODULE]++ ;
  		if ( *ppmStreamPtr[EXTERNAL_MODULE] == 0 )
 		{
- 		  TIM2->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+ 		  TIM2->SR = TIMER2_5SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
  		  TIM2->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
  		  TIM2->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		}
@@ -1442,7 +1442,7 @@ extern "C" void TIM2_IRQHandler()
 		}	
 		else
 		{
-		 	TIM2->SR &= ~TIM_SR_CC2IF ;             // Clear this flag
+		 	TIM2->SR = TIMER2_5SR_MASK & ~TIM_SR_CC2IF ;             // Clear this flag
 			TIM2->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		}
 	}
@@ -1591,7 +1591,7 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_UIE ) && ( status & TIM_SR_UIF ) )
 	{
 	  INTMODULE_TIMER->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
-	  INTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
 
@@ -1604,13 +1604,13 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 		{
 			PxxTxPtr = PxxSerial ;
 			PxxTxCount = pulseStreamCount[INTERNAL_MODULE] ;
-		  INTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
-		  INTMODULE_TIMER->SR &= ~TIM_SR_UIF ;	     // Clear this flag
+		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
+		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;	     // Clear this flag
 			INTMODULE_TIMER->DIER |= TIM_DIER_UIE ;		 // Enable this interrupt
 		}	
 		else
 		{
-		  INTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ;     // Clear this flag
+		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 			INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		}
 	}

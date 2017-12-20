@@ -338,14 +338,14 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
 
     while((i<gmData->size()) && (id<=MAX_MODELS))
     {
-        char d = '1' ;
+//        char d = '1' ;
         char c = *gData;
         i++;
         gData++;
 #ifdef V2
         if ( c == '2' )
 				{
-					d = '2' ;
+//					d = '2' ;
 					c = *gData ;
         	gData++;
 				}
@@ -877,8 +877,10 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
     if(fileType==FILE_TYPE_HEX || fileType==FILE_TYPE_EEPE) //read HEX file
     {
 				uint m128 = 0 ;
-				uint v1type = 0 ;
-        
+#ifdef V2
+        uint v1type = 0 ;
+#endif
+
 				//if file is XML read and exit saying true;
         //else process as iHex
 #ifdef V2

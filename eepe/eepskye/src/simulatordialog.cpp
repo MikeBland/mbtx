@@ -291,7 +291,7 @@ void simulatorDialog::timerEvent()
 			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
 			{
         SKYCSwData &cs = g_model.customSw[i];
-        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
+//        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
   			if ( g_model.modelVersion >= 3 )
 				{
 					if ( cs.func == CS_LATCH )

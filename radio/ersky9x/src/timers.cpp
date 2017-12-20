@@ -77,6 +77,7 @@ uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 //uint8_t Current_protocol ;
 uint8_t PxxFlag[2] = { 0, 0 } ;
+uint8_t PxxExtra[2] = { 0, 0 } ;
 
 volatile uint8_t Dsm_Type[2] = { 0, 0 } ;
 uint8_t DsmInitCounter[2] = { 0, 0 } ;
@@ -111,7 +112,6 @@ uint8_t Bit_pulses[64] ;			// Likely more than we need
 //#define RangeCheckBit 0x20
 #define FranceBit 0x10
 #define DsmxBit  0x08
-#define BadData 0x47
 
 
 // States in LineState
@@ -351,7 +351,7 @@ void init5msTimer()
 
 extern "C" void TIM8_TRG_COM_TIM14_IRQHandler()
 {
-  TIM14->SR &= ~TIM_SR_UIF ;
+  TIM14->SR = TIMER9_14SR_MASK & ~TIM_SR_UIF ;
   interrupt5ms() ;
 }
 
@@ -423,7 +423,7 @@ void init5msTimer()
 
 extern "C" void TIM8_TRG_COM_TIM14_IRQHandler()
 {
-	TIM14->SR &= ~TIM_SR_UIF ;
+	TIM14->SR = TIMER9_14SR_MASK & ~TIM_SR_UIF ;
 	interrupt5ms() ;
 }
 
@@ -1116,10 +1116,10 @@ void init_trainer_ppm()
  	TIM3->EGR = 1 ;
 //	TIM8->DIER = TIM_DIER_UDE ;
 
-	TIM3->SR &= ~TIM_SR_UIF ;				// Clear flag
+	TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;				// Clear flag
 #ifdef PCBX12D
 #else
-	TIM3->SR &= ~TIM_SR_CC1IF ;				// Clear flag
+	TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
 	TIM3->DIER |= TIM_DIER_CC1IE ;
 #endif
 	TIM3->DIER |= TIM_DIER_UIE ;
@@ -1171,7 +1171,7 @@ void init_trainer_capture(uint32_t mode)
 #else
 		TIM3->CCMR2 = TIM_CCMR2_IC4F_0 | TIM_CCMR2_IC4F_1 | TIM_CCMR2_CC4S_1 | TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
 		TIM3->CCER = TIM_CCER_CC3E | TIM_CCER_CC4E | TIM_CCER_CC4P ;
-		TIM3->SR &= ~(TIM_SR_CC4IF | TIM_SR_CC3IF) ;				// Clear flags
+		TIM3->SR = TIMER2_5SR_MASK & ~(TIM_SR_CC4IF | TIM_SR_CC3IF) ;				// Clear flags
 		TIM3->DIER |= TIM_DIER_CC4IE | TIM_DIER_CC3IE ;
 #endif
   	NVIC_SetPriority(TIM3_IRQn, 0 ) ;
@@ -1183,12 +1183,12 @@ void init_trainer_capture(uint32_t mode)
 #ifdef PCBX12D
 		TIM3->CCMR1 = TIM_CCMR1_IC1F_0 | TIM_CCMR1_IC1F_1 | TIM_CCMR1_CC1S_0 ;
 		TIM3->CCER = TIM_CCER_CC1E ;
-		TIM3->SR &= ~TIM_SR_CC1IF ;				// Clear flag
+		TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
 		TIM3->DIER |= TIM_DIER_CC1IE ;
 #else
 		TIM3->CCMR2 = TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
 		TIM3->CCER = TIM_CCER_CC3E ;	 
-		TIM3->SR &= ~TIM_SR_CC3IF ;				// Clear flag
+		TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC3IF ;				// Clear flag
 		TIM3->DIER |= TIM_DIER_CC3IE ;
 #endif
   	NVIC_SetPriority(TIM3_IRQn, 7);
@@ -1222,7 +1222,7 @@ void init_serial_trainer_capture()
 	TIM2->CR2 = 0 ;
 	TIM2->CCMR2 = TIM_CCMR2_IC4F_0 | TIM_CCMR2_IC4F_1 | TIM_CCMR2_CC4S_0 ;
 	TIM2->CCER = TIM_CCER_CC4E ;
-	TIM2->SR &= ~TIM_SR_CC4IF ;				// Clear flag
+	TIM2->SR = TIMER2_5SR_MASK & ~TIM_SR_CC4IF ;				// Clear flag
 	TIM2->DIER |= TIM_DIER_CC4IE ;
 	TIM2->CR1 = TIM_CR1_CEN ;
   NVIC_SetPriority(TIM2_IRQn, 7);
@@ -1302,7 +1302,7 @@ void init_cppm_on_heartbeat_capture()
 	TIM3->CR2 = 0 ;
 	TIM3->CCMR1 = TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 | TIM_CCMR1_CC2S_0 ;
 	TIM3->CCER = TIM_CCER_CC2E ;	 
-	TIM3->SR &= ~TIM_SR_CC2IF ;				// Clear flag
+	TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC2IF ;				// Clear flag
 	TIM3->DIER |= TIM_DIER_CC2IE ;
 	TIM3->CR1 = TIM_CR1_CEN ;
   NVIC_SetPriority(TIM3_IRQn, 7);
@@ -1473,71 +1473,71 @@ extern "C" void TIM3_IRQHandler()
 		{
   	  // compare interrupt
   	  TIM3->DIER &= ~TIM_DIER_CC1IE ;         // stop this interrupt
-  	  TIM3->SR &= ~TIM_SR_CC1IF ;                             // Clear flag
+  	  TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;                             // Clear flag
 
   	  setupTrainerPulses() ;
 
 			TrainerPulsePtr = TrainerPpmStream ;
   	  TIM3->DIER |= TIM_DIER_UDE ;
-  	  TIM3->SR &= ~TIM_SR_UIF ;                                       // Clear this flag
+  	  TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
   	  TIM3->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
   	}
 
   	// PPM out update interrupt
   	if ( (TIM3->DIER & TIM_DIER_UIE) && ( TIM3->SR & TIM_SR_UIF ) )
 		{
-  	  TIM3->SR &= ~TIM_SR_UIF ;                               // Clear flag
+  	  TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
   	  TIM3->ARR = *TrainerPulsePtr++ ;
   	  if ( *TrainerPulsePtr == 0 )
 			{
-  	    TIM3->SR &= ~TIM_SR_CC1IF ;                     // Clear this flag
+  	    TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;                     // Clear this flag
   	    TIM3->DIER |= TIM_DIER_CC1IE ;  // Enable this interrupt
   	  }
   	}
 	}
 }
 
-void dsmBindResponse( uint8_t mode, int8_t channels )
-{
-	// Process mode here
-	uint8_t dsm_mode_response ;
-	{
-		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
-		if ( g_model.Module[1].protocol != PROTO_MULTI )
-		{
-#if defined(PCBX9D) || defined(PCB9XT)
-			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-			{
-//				g_model.xppmNCH = channels ;
-				g_model.Module[1].channels = channels ;
-#else
-			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-			{
-//				g_model.ppmNCH = channels ;
-				g_model.Module[1].channels = channels ;
-#endif
-				g_model.dsmMode = dsm_mode_response | 0x80 ;
-		  	STORE_MODELVARS ;
-			}
-		}
-		else
-		{
-extern uint8_t MultiResponseData ;
-		dsm_mode_response = channels ;
-		if ( mode & 0x80 )
-		{
-			dsm_mode_response |= 0x80 ;
-		}
-		if ( mode & 0x10 )
-		{
-			dsm_mode_response |= 0x40 ;
-		}
-		MultiResponseData = dsm_mode_response ;
-extern uint8_t MultiResponseFlag ;
-			MultiResponseFlag = 1 ;
-		}
-	}
-}
+//void dsmBindResponse( uint8_t mode, int8_t channels )
+//{
+//	// Process mode here
+//	uint8_t dsm_mode_response ;
+//	{
+//		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
+//		if ( g_model.Module[1].protocol != PROTO_MULTI )
+//		{
+//#if defined(PCBX9D) || defined(PCB9XT)
+//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+//			{
+////				g_model.xppmNCH = channels ;
+//				g_model.Module[1].channels = channels ;
+//#else
+//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
+//			{
+////				g_model.ppmNCH = channels ;
+//				g_model.Module[1].channels = channels ;
+//#endif
+//				g_model.dsmMode = dsm_mode_response | 0x80 ;
+//		  	STORE_MODELVARS ;
+//			}
+//		}
+//		else
+//		{
+//extern uint8_t MultiResponseData ;
+//		dsm_mode_response = channels ;
+//		if ( mode & 0x80 )
+//		{
+//			dsm_mode_response |= 0x80 ;
+//		}
+//		if ( mode & 0x10 )
+//		{
+//			dsm_mode_response |= 0x40 ;
+//		}
+//		MultiResponseData = dsm_mode_response ;
+//extern uint8_t MultiResponseFlag ;
+//			MultiResponseFlag = 1 ;
+//		}
+//	}
+//}
 
 
 #ifdef XFIRE
@@ -1992,28 +1992,29 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
   	*dsm2StreamPtr[module]++ = dsm2Value[module];
 		if(protocol == PROTO_DSM2)
 		{
- 			if (dsmDat[module][0]&BadData)  //first time through, setup header
-			{
-  			switch(sub_protocol)
-  			{
-  				case LPXDSM2:
-  				  dsmDat[module][0]= 0x80;
-  				break;
-  				case DSM2only:
-  				  dsmDat[module][0]=0x90;
-  				break;
-  				default:
-  				  dsmDat[module][0]=0x98;  //dsmx, bind mode
-  				break;
-  			}
-    	}
-	#ifdef PCB9XT
-  		if((dsmDat[module][0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[module][0]&=~BindBit;		//clear bind bit if trainer not pulled
-	#else
-  		if((dsmDat[module][0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[module][0]&=~BindBit;		//clear bind bit if trainer not pulled
-	#endif
- 			if ((!(dsmDat[module][0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[module][0]|=RangeCheckBit;   //range check function
- 			else dsmDat[module][0]&=~RangeCheckBit;
+			setDsmHeader( dsmDat[module], module ) ;
+// 			if (dsmDat[module][0]&BadData)  //first time through, setup header
+//			{
+//  			switch(sub_protocol)
+//  			{
+//  				case LPXDSM2:
+//  				  dsmDat[module][0]= 0x80;
+//  				break;
+//  				case DSM2only:
+//  				  dsmDat[module][0]=0x90;
+//  				break;
+//  				default:
+//  				  dsmDat[module][0]=0x98;  //dsmx, bind mode
+//  				break;
+//  			}
+//    	}
+//	#ifdef PCB9XT
+//  		if((dsmDat[module][0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[module][0]&=~BindBit;		//clear bind bit if trainer not pulled
+//	#else
+//  		if((dsmDat[module][0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[module][0]&=~BindBit;		//clear bind bit if trainer not pulled
+//	#endif
+// 			if ((!(dsmDat[module][0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[module][0]|=RangeCheckBit;   //range check function
+// 			else dsmDat[module][0]&=~RangeCheckBit;
 		}
 //		else // Multi
 //		{
@@ -2095,7 +2096,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 			dsmDat[module][1] = g_model.Module[module].pxxRxNum ;  //DSM2 Header second byte for model match
   		for( uint8_t i = 0 ; i<channels; i += 1 )
   		{
-				uint16_t pulse = limit(0, ((g_chans512[g_model.xstartChannel+i]*13)>>5)+512,1023);
+				uint16_t pulse = limit(0, ((g_chans512[g_model.Module[module].startChannel+i]*13)>>5)+512,1023);
  				dsmDat[module][2+2*i] = (i<<2) | ((pulse>>8)&0x03);
   			dsmDat[module][3+2*i] = pulse & 0xff;
   		}
@@ -2123,17 +2124,6 @@ uint16_t PxxValue_x ;
 uint8_t PxxSerial[50] ;
 uint8_t *PtrSerialPxx ;
 #endif
-
-const uint16_t CRC_Short[]=
-{
-   0x0000, 0x1189, 0x2312, 0x329B, 0x4624, 0x57AD, 0x6536, 0x74BF,
-   0x8C48, 0x9DC1, 0xAF5A, 0xBED3, 0xCA6C, 0xDBE5, 0xE97E, 0xF8F7 };
-
-uint16_t CRCTable(uint8_t val)
-{
-	return CRC_Short[val&0x0F] ^ (0x1081 * (val>>4));
-}
-
 
 static void crc( uint8_t data )
 {
@@ -2306,18 +2296,18 @@ void putPcmHead_x()
 uint32_t PxxTestCounter ;
 
 
-uint16_t scaleForPXX( uint8_t i )
-{
-	int16_t value ;
+//uint16_t scaleForPXX( uint8_t i )
+//{
+//	int16_t value ;
 
-//#ifdef REVX
-//  value = g_chans512[i] *3 / 4 + 2250 ;
-//	return value ;
-//#else 
-	value = ( i < 24 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
-	return limit( (int16_t)1, value, (int16_t)2046 ) ;
-//#endif
-}
+////#ifdef REVX
+////  value = g_chans512[i] *3 / 4 + 2250 ;
+////	return value ;
+////#else 
+//	value = ( i < 24 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
+//	return limit( (int16_t)1, value, (int16_t)2046 ) ;
+////#endif
+//}
 
 void setupPulsesPXX(uint8_t module)
 {
@@ -2360,14 +2350,23 @@ void setupPulsesPXX(uint8_t module)
 		{
   		if (g_model.Module[module].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[module].failsafeMode != FAILSAFE_RX )
 			{
-    		if ( FailsafeCounter[module]-- == 0 )
+    		if ( FailsafeCounter[module] )
 				{
-      		FailsafeCounter[module] = 1000 ;
-      		flag1 |= PXX_SEND_FAILSAFE ;
+	    		if ( FailsafeCounter[module]-- == 1 )
+					{
+    	  		flag1 |= PXX_SEND_FAILSAFE ;
+					}
+    			if ( ( FailsafeCounter[module] == 1 ) && (g_model.Module[module].sub_protocol == 0 ) )
+					{
+  	    		flag1 |= PXX_SEND_FAILSAFE ;
+					}
 				}
-    		if ( ( FailsafeCounter[module] == 0 ) && (g_model.Module[module].sub_protocol == 0 ) )
+	    	if ( FailsafeCounter[module] == 0 )
 				{
-      		flag1 |= PXX_SEND_FAILSAFE ;
+					if ( g_model.Module[module].failsafeRepeat == 0 )
+					{
+						FailsafeCounter[module] = 1000 ;
+					}
 				}
 			}
 		}
@@ -2445,7 +2444,33 @@ void setupPulsesPXX(uint8_t module)
 				chan = chan_1 ;
 			}
   	}
-		putPcmByte( 0 ) ;		// Antenna flag
+	  uint8_t extra_flags = 0 ;
+		
+//		/* Ext. flag (holds antenna selection on Horus internal module, 0x00 otherwise) */
+//#if defined(PCBHORUS)
+//  if (port == INTERNAL_MODULE) {
+//    extra_flags |= g_model.moduleData[port].pxx.external_antenna;
+//  }
+//#endif
+//#if defined(BINDING_OPTIONS)
+//  extra_flags |= g_model.moduleData[port].pxx.receiver_telem_off << 1;
+//  extra_flags |= g_model.moduleData[port].pxx.receiver_channel_9_16 << 2;
+//#endif
+//  if (IS_MODULE_R9M(port)) {
+//    extra_flags |= g_model.moduleData[port].pxx.power << 3;
+//    // Disable s.port if internal module is active
+//    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
+//      extra_flags |=  (1<< 5);
+//  }
+		if ( PxxExtra[0] & 1 )
+		{
+			extra_flags = (1 << 2 ) ;
+		}
+		if ( PxxExtra[0] & 2 )
+		{
+			extra_flags |= (1 << 1 ) ;
+		}
+		putPcmByte( extra_flags ) ;
   	chan = PcmCrc ;		        // get the crc
   	putPcmByte( chan >> 8 ) ; // Checksum hi
   	putPcmByte( chan ) ; 			// Checksum lo
@@ -2498,14 +2523,23 @@ void setupPulsesPXX(uint8_t module)
 		{
   		if (g_model.Module[module].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[module].failsafeMode != FAILSAFE_RX )
 			{
-    		if ( FailsafeCounter[module]-- == 0 )
+    		if ( FailsafeCounter[module] )
 				{
-      		FailsafeCounter[module] = 1000 ;
-      		flag1 |= PXX_SEND_FAILSAFE ;
+	    		if ( FailsafeCounter[module]-- == 1 )
+					{
+    	  		flag1 |= PXX_SEND_FAILSAFE ;
+					}
+    			if ( ( FailsafeCounter[module] == 1 ) && (g_model.Module[module].sub_protocol == 0 ) )
+					{
+  	    		flag1 |= PXX_SEND_FAILSAFE ;
+					}
 				}
-    		if ( ( FailsafeCounter[1] == 0 ) && (g_model.Module[module].sub_protocol == 0 ) )
+	    	if ( FailsafeCounter[module] == 0 )
 				{
-      		flag1 |= PXX_SEND_FAILSAFE ;
+					if ( g_model.Module[module].failsafeRepeat == 0 )
+					{
+						FailsafeCounter[module] = 1000 ;
+					}
 				}
 			}
 		}
@@ -2561,8 +2595,36 @@ void setupPulsesPXX(uint8_t module)
 				chan = chan_1 ;
 			}
   	}
-		putPcmByte_x( 0 ) ;
-  	chan = PcmCrc_x ;		        // get the crc
+		
+	  uint8_t extra_flags = 0 ;
+		
+//		/* Ext. flag (holds antenna selection on Horus internal module, 0x00 otherwise) */
+//#if defined(PCBHORUS)
+//  if (port == INTERNAL_MODULE) {
+//    extra_flags |= g_model.moduleData[port].pxx.external_antenna;
+//  }
+//#endif
+//#if defined(BINDING_OPTIONS)
+//  extra_flags |= g_model.moduleData[port].pxx.receiver_telem_off << 1;
+//  extra_flags |= g_model.moduleData[port].pxx.receiver_channel_9_16 << 2;
+//#endif
+//  if (IS_MODULE_R9M(port)) {
+//    extra_flags |= g_model.moduleData[port].pxx.power << 3;
+//    // Disable s.port if internal module is active
+//    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
+//      extra_flags |=  (1<< 5);
+//  }
+		if ( PxxExtra[1] & 1 )
+		{
+			extra_flags = (1 << 2 ) ;
+		}
+		if ( PxxExtra[1] & 2 )
+		{
+			extra_flags |= (1 << 1 ) ;
+		}
+		putPcmByte( extra_flags ) ;
+		
+		chan = PcmCrc_x ;		        // get the crc
   	putPcmByte_x( chan >> 8 ) ; // Checksum hi
   	putPcmByte_x( chan ) ; 			// Checksum lo
   	putPcmHead_x(  ) ;      // sync byte
