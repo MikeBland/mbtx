@@ -169,6 +169,9 @@ extern void menuUp1(uint8_t event) ;
 extern void menuUpdate(uint8_t event) ;
 //extern void inactivityCheck( void ) ;
 extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
+#ifdef PCBX12D
+void displayStatusLine( void ) ;
+#endif
 
 extern void parseMultiData( void ) ;
 

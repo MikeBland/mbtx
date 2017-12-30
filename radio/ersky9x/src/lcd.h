@@ -39,6 +39,14 @@
 #ifdef PCBX12D
 #define DISPLAY_W	480
 #define DISPLAY_H	272
+
+#define LCD_RED			0xF800
+#define LCD_GREEN		0x07E0
+#define LCD_BLUE		0x001F
+#define LCD_WHITE		0xFFFF
+#define LCD_BLACK		0
+#define LCD_STATUS_GREY	0x3BEF
+
 #endif
 
 #ifndef LCD_W
@@ -110,6 +118,7 @@ extern const uint8_t *ExtraBigFont ;
 #define PLOT_XOR		0
 #define PLOT_BLACK	1
 #define PLOT_WHITE	2
+#define PLOT_BITS		3
 
 extern uint8_t plotType ;
 
@@ -119,15 +128,25 @@ extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t 
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
 extern void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
-extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
-extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;
 extern uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode ) ;
 extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
 extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
+#ifdef PCBX12D
+extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
+extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE) ;
+extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint8_t attr, uint16_t background = LCD_WHITE ) ;
+extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LCD_WHITE  ) ;
+extern void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint8_t mode, uint16_t background = LCD_WHITE  ) ;
+extern uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint8_t mode, int8_t len, uint16_t background = LCD_WHITE ) ;
+extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode, uint16_t background = LCD_WHITE ) ;
+#else
+extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
+extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;
+extern void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr ) ;
 extern void lcd_outdez( uint8_t x, uint8_t y, int16_t val ) ;
 extern void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint8_t mode ) ;
-extern void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr ) ;
 extern uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t len ) ;
+#endif
 
 extern void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;
 extern void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h ) ;
@@ -137,9 +156,10 @@ extern "C" void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t 
 extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void waitDma2Ddone(void) ;
 extern void lcd_clearBackground( void ) ;
+extern void lcd_blank( void ) ;
 extern void waitLcdClearDdone( void ) ;
-extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode ) ;
-extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour ) ;
+extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
+extern void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len, uint8_t mode, uint16_t colour = LCD_BLACK ) ;
 extern void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat ) ;
 extern void lcd_hline( uint16_t x, uint16_t y, int8_t w ) ;
 extern void lcd_vline( uint16_t x, uint16_t y, int8_t h ) ;
@@ -147,9 +167,6 @@ extern void lcd_plot( uint16_t x, uint16_t y ) ;
 extern void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink ) ;
 extern uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour) ;
 extern void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att ) ;
-#define LCD_RED			0xF800
-#define LCD_GREEN		0x07E0
-#define LCD_BLUE		0x001F
 #else
 extern uint8_t lcd_putcAtt( uint8_t x, uint8_t y, const char c, uint8_t mode ) ;
 extern void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat ) ;
@@ -171,7 +188,11 @@ extern void lcdSetOrientation( void ) ;
 extern void lcdOff( void ) ;
 #endif // PCBX7
 
+#ifdef PCBX12D
+extern void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t background = LCD_WHITE ) ;
+#else
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
+#endif
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
 extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
 

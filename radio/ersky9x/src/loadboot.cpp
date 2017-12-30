@@ -61,7 +61,11 @@
  #endif
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
+#ifdef PCBX12D
+ #include "X12D/stm32f4xx.h"
+#endif
+
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
 __attribute__ ((section(".bootrodata"), used))
 static void bwdt_reset()
 {
@@ -69,7 +73,7 @@ static void bwdt_reset()
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
 
 __attribute__ ((section(".bootrodata"), used))
 void _bootStart( void ) ;
@@ -82,7 +86,7 @@ const uint32_t BootVectors[] = {
 } ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
 __attribute__ ((section(".bootrodata.*"), used))
 #endif
 
@@ -91,6 +95,8 @@ __attribute__ ((section(".bootrodata"), used))
 #endif
 
 const uint8_t BootCode[] = {
+#ifdef PCBX12D
+#else
 #ifdef PCBTARANIS
   #ifdef REVPLUS
    #include "bootloader/bootflashTp.lbm"
@@ -124,10 +130,11 @@ const uint8_t BootCode[] = {
   #endif
  #endif
 #endif
+#endif
 } ;
 
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
 
 #define WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() (RCC->CSR & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_SFTRSTF))
 
@@ -135,6 +142,7 @@ __attribute__ ((section(".bootrodata"), used))
 
 void _bootStart()
 {
+#ifndef PCBX12D
 	// turn soft power on now
 #ifdef PCB9XT
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN ; 		// Enable portC and A clock
@@ -287,7 +295,7 @@ void _bootStart()
 	
 		}
 	}
-//#endif
+#endif
 
 //	run_application() ;	
 	asm(" mov.w	r1, #134217728");	// 0x8000000

@@ -75,7 +75,6 @@ extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, ui
 
 #define LCD_BKLIGHT_PWM_FREQ           300
 
-#define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
 
 #define LCD_FIRST_FRAME_BUFFER         SDRAM_BANK_ADDR
 #define LCD_SECOND_FRAME_BUFFER        (SDRAM_BANK_ADDR + DISPLAY_BUFFER_SIZE)
@@ -607,12 +606,14 @@ void lcdInit(void)
   /* Set Background layer */
   LCD_SetLayer(LCD_FIRST_LAYER);
   // lcdClear();
+  LCD_SetTransparency(255);
+  lcd_blank() ;
   LCD_SetTransparency(0);
   
   /* Set Foreground layer */
   LCD_SetLayer(LCD_SECOND_LAYER);
-  lcdClear();
   LCD_SetTransparency(255);
+  lcd_blank() ;
 }
 
 volatile uint8_t Dma2DdoneFlag ;
@@ -678,12 +679,13 @@ extern "C" void DMA2D_IRQHandler( void )
 		if ( LcdClearing == 1 )
 		{
 			LcdClearing = 2 ;
+			startLcdDrawSolidFilledRectDMA( 0, 128, 480-128, 272-128-22, 0 ) ;
 //			startLcdDrawSolidFilledRectDMA( 426, 0, 480-426, 128, 0 ) ;
-//		}
-//		else if ( LcdClearing == 2 )
-//		{
-//			LcdClearing = 3 ;
-			startLcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+		}
+		else if ( LcdClearing == 2 )
+		{
+			LcdClearing = 3 ;
+			startLcdDrawSolidFilledRectDMA( 480-128, 128+64, 128, 272-128-22-64, 0 ) ;
 		}
 		else
 		{
@@ -793,16 +795,16 @@ int lcdRestoreBackupBuffer()
 
 void lcdRefresh()
 {
-extern uint8_t ImageDisplay ;
-	if ( ImageDisplay )
-	{
-		putsTime( 187, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
-		lcd_img( 171, 2*FH, speaker, 0, 0 ) ;
-extern uint8_t CurrentVolume ;
-		lcd_hbar( 176, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
-		lcd_hline( 157, 31, 61 ) ;
-		lcd_vline( 156, 0, 64 ) ;
-	}
+//extern uint8_t ImageDisplay ;
+//	if ( ImageDisplay )
+//	{
+//		putsTime( 187, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
+//		lcd_img( 171, 2*FH, speaker, 0, 0 ) ;
+//extern uint8_t CurrentVolume ;
+//		lcd_hbar( 176, 2*FH+1, 24, 6, CurrentVolume*100/23 ) ;
+//		lcd_hline( 157, 31, 61 ) ;
+//		lcd_vline( 156, 0, 64 ) ;
+//	}
   LCD_SetTransparency(255);
   if (CurrentLayer == LCD_FIRST_LAYER)
     LCD_SetLayer(LCD_SECOND_LAYER);

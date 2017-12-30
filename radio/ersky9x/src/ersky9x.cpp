@@ -2124,12 +2124,12 @@ void enableBackupRam(void) ;
 	{
 		uint32_t i ;
 		ledRed() ;
-		for ( i = 0 ; i < 200000 ; i += 1 )
+		for ( i = 0 ; i < 100000 ; i += 1 )
 		{
 			asm("nop") ;
 		}
 		ledBlue() ;
-		for ( i = 0 ; i < 200000 ; i += 1 )
+		for ( i = 0 ; i < 100000 ; i += 1 )
 		{
 			asm("nop") ;
 		}
@@ -2224,7 +2224,7 @@ void enableBackupRam(void) ;
 	{
 		backlight_set( 0 ) ;
 		lcd_clear() ;
-		lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+		lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
 		refreshDisplay() ;
 		while ( get_tmr10ms() < 25 )
 		{
@@ -4913,7 +4913,7 @@ extern uint8_t ModelImageValid ;
 	{
 
 		
-#if defined(REVB) || defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if (not defined(REVA)) || defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 		
 #ifdef POWER_BUTTON
 		uint8_t stopMenus = MENUS ;
@@ -4933,7 +4933,7 @@ extern uint8_t ModelImageValid ;
 					if ( ( get_tmr10ms() & 3 ) == 0 )
 					{
 						lcd_clear() ;
-						lcd_putsAtt( 3*FW, 3*FH, "STOPPING", DBLSIZE ) ;
+						lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
 						refreshDisplay() ;
 					}
 #ifdef PCBX12D
@@ -4981,7 +4981,7 @@ extern uint8_t ModelImageValid ;
 			// Time to switch off
 			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 			lcd_clear() ;
-			lcd_puts_P( 4*FW, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
+			lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 //#ifdef PCBX12D
 //	lcd_outhex4( 20, FH, AudioActive ) ;
 //	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
@@ -5057,7 +5057,7 @@ extern uint8_t ModelImageValid ;
 
 #ifdef PCBX12D
 				lcd_clear() ;
-				lcd_puts_P( 4*FW, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
+				lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 //	lcd_outhex4( 20, FH, AudioActive ) ;
 //	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
 extern void eeSaveAll() ;
@@ -5071,7 +5071,7 @@ extern void eeSaveAll() ;
 #ifdef PCBX12D
 				if ( (uint16_t)(get_tmr10ms() - tgtime ) < 200 )
 				{
-					lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
+					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "EEPROM BUSY", 11 ) ;
 #else
 				if ( ee32_check_finished() == 0 )
 				{
@@ -5099,7 +5099,7 @@ extern uint8_t Ee32_model_delete_pending ;
 				}
 				else
 				{
-					lcd_putsn_P( 5*FW, 5*FH, "           ", 11 ) ;
+					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
 				}
 #ifdef POWER_BUTTON
 				if ( check_soft_power() == POWER_X9E_STOP )	// button still pressed
@@ -5152,7 +5152,7 @@ extern uint8_t PowerState ;
 					wdt_reset() ;
 					lcd_clear() ;
 					check_soft_power() ;
-					lcd_putsn_P( 6*FW, 3*FH, "POWER OFF", 9 ) ;
+					lcd_putsn_P( 6*FW + X12OFFSET, 3*FH, "POWER OFF", 9 ) ;
 					refreshDisplay() ;
 				}
 #endif
@@ -5236,17 +5236,21 @@ static void almess( const char * s, uint8_t type )
 {
 	const char *h ;
   lcd_clear();
+#ifdef PCBX12D
+  lcd_puts_P( X12OFFSET, 4*FW, s ) ;
+#else
   lcd_puts_Pleft(4*FW,s);
+#endif
 	if ( type == ALERT_TYPE)
 	{
-    lcd_puts_P(64-6*FW,7*FH,"press any Key");
+    lcd_puts_P(64-6*FW + X12OFFSET,7*FH,"press any Key");
 		h = PSTR(STR_ALERT) ;
 	}
 	else
 	{
 		h = PSTR(STR_MESSAGE) ;
 	}
-  lcd_putsAtt(64-7*FW,0*FH, h,DBLSIZE);
+  lcd_putsAtt(64-7*FW + X12OFFSET,0*FH, h,DBLSIZE);
   refreshDisplay();
 }
 
@@ -7295,9 +7299,15 @@ void doSplash()
 				uint8_t y ;
 				uint8_t z ;
 				lcd_clear();
-  	 		lcd_img(0, 0, &splashdata[4],0,0);
+#ifdef PCBX12D
+  	 		lcd_img(0 + X12OFFSET, 0, &splashdata[4],0,0, 0x03E0 );
 				if(!g_eeGeneral.hideNameOnSplash)
-				lcd_putsnAtt( 0*FW, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName),0);
+					lcd_putsnAttColour( 0*FW + X12OFFSET, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName), 0, 0x03E0 ) ;
+#else
+  	 		lcd_img(0 + X12OFFSET, 0, &splashdata[4],0,0 );
+				if(!g_eeGeneral.hideNameOnSplash)
+					lcd_putsnAtt( 0*FW + X12OFFSET, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName),0);
+#endif					 
 
 				if ( j )
 				{
@@ -7311,9 +7321,9 @@ void doSplash()
 					z = 64 ;
 					for ( y = 0 ; y < j ; y += 2 )
 					{
-						lcd_vline( y, p, z ) ;
-						lcd_vline( 127-y, p, z ) ;
-						lcd_rect( y+1, p, x, z ) ;
+						lcd_vline( y + X12OFFSET, p, z ) ;
+						lcd_vline( 127-y + X12OFFSET, p, z ) ;
+						lcd_rect( y+1 + X12OFFSET, p, x, z ) ;
 						p += 1 ;
 						z -= 2 ;
 						x -= 4 ;
@@ -8582,6 +8592,7 @@ extern int32_t Rotary_diff ;
 
 #ifdef PCBX12D
 			t1 = getTmr2MHz();
+			displayStatusLine() ;
 #endif
 			g_menuStack[g_menuStackPtr](evt);
 			refreshNeeded = 4 ;
@@ -10275,11 +10286,15 @@ uint8_t speaker[] = {
 } ;
 #endif
 
+#ifdef PCBX12D
+void putsDblSizeName( uint16_t x, uint16_t y )
+#else
 void putsDblSizeName( uint8_t y )
+#endif
 {
 	for(uint8_t i=0;i<sizeof(g_model.name);i++)
 #ifdef PCBX12D
-		lcd_putcAttColour(FW*4+i*2*FW-i-2, y, g_model.name[i],DBLSIZE, 0x001F );
+		lcd_putcAttColour( x + FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE, 0x001F, LCD_WHITE );
 #else
 #ifdef WIDE_SCREEN
 		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
@@ -10679,8 +10694,11 @@ void eeLoadModel(uint8_t id) ;
     lcd_clear();
     lcd_putsAtt(64-7*FW,0*FH,PSTR(STR_LOADING),DBLSIZE);
 
+#ifdef PCBX12D
+		putsDblSizeName( 0, 3*FH ) ;
+#else
 		putsDblSizeName( 3*FH ) ;
-
+#endif
     refreshDisplay();
     clearKeyEvents(); // wait for user to release key
   }
@@ -10803,12 +10821,16 @@ void checkTHR()
   // first - display warning
 
 	lcd_clear();
+#ifdef PCBX12D
+  lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
+#else
   lcd_img( 1, 0, HandImage,0,0 ) ;
-  lcd_putsAtt(36,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
-  lcd_putsAtt(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
-	lcd_puts_P(0,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
-	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
-	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+#endif
+  lcd_putsAtt(36 + X12OFFSET,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
+  lcd_putsAtt(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+	lcd_puts_P(0 + X12OFFSET,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
+	lcd_puts_P(0 + X12OFFSET,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
+	lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
   refreshDisplay();
   clearKeyEvents();
 	putSystemVoice( SV_TH_WARN, V_THR_WARN ) ;
@@ -11197,10 +11219,14 @@ void checkSwitches()
 		}
 #endif
 		lcd_clear();
+#ifdef PCBX12D
+    lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
+#else
     lcd_img( 1, 0, HandImage,0,0 ) ;
-	  lcd_putsAtt(32,0*FH,XPSTR("SWITCH"),DBLSIZE);
-	  lcd_putsAtt(32,2*FH,XPSTR("WARNING"),DBLSIZE);
-		lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+#endif
+	  lcd_putsAtt(32 + X12OFFSET,0*FH,XPSTR("SWITCH"),DBLSIZE);
+	  lcd_putsAtt(32 + X12OFFSET,2*FH,XPSTR("WARNING"),DBLSIZE);
+		lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
  		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
 		{
 #ifdef PCBX7
@@ -11213,8 +11239,8 @@ void checkSwitches()
  		  uint8_t attr = ((warningStates & mask) == (ss & mask)) ? 0 : INVERS ;
 			if ( ~g_model.modelswitchWarningDisables & mask )
 			{
-  		  lcd_putcAtt( 3*FW+i*(2*FW+2), 5*FH, 'A'+i, attr ) ;
-				lcd_putcAtt( 4*FW+i*(2*FW+2), 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
+  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+i, attr ) ;
+				lcd_putcAtt( 4*FW+i*(2*FW+2) + X12OFFSET, 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}
 		}
 #endif

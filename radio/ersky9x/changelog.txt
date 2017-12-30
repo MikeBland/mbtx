@@ -96,6 +96,7 @@ Support FrSky XJT setting receiver mode at bind time
 Fix QX7 power cycling bug
 Fix script "drawtimer" bug
 Add failsafe "repeat send" option
+Add "Bind options" for FrSky XJT modules
 Change timer interrupt flag clearing method
 
 ******************************************

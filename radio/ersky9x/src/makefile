@@ -385,6 +385,7 @@ CPPSRC = ersky9x.cpp \
          X12D/t.cpp \
          X12D/led_driver.cpp \
          X12D/usbd_usr.cpp \
+			loadboot.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)

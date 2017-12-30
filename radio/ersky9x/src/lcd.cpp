@@ -1,4 +1,4 @@
-/*
+ /*
  * Author - Mike Blandford
  *
  * Based on er9x by Erez Raviv <erezraviv@gmail.com>
@@ -82,6 +82,7 @@ const uint8_t *ExtraBigFont = NULL ;
 
 // Local data
 uint8_t Lcd_lastPos ;
+uint8_t plotType = PLOT_XOR ;
 
 #ifndef PCBX12D
 #ifdef GREY_SCALE
@@ -145,7 +146,11 @@ const uint8_t Lcd_lookup[] =
 #endif 
 #endif // DUE
 
+#ifdef PCBX12D
+void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t background)
+#else
 void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
+#endif
 {
 	div_t qr ;
 
@@ -160,11 +165,19 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	}
 	if ( tme<0 )
 	{
+#ifdef PCBX12D
+		lcd_putcAttColour( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att, LCD_BLACK, background ) ;
+#else
 		lcd_putcAtt( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
+#endif
 		tme = -tme;
 	}
 
+#ifdef PCBX12D
+	lcd_putcAttColour( x, y, ':',att&att2, LCD_BLACK, background ) ;
+#else
 	lcd_putcAtt( x, y, ':',att&att2);
+#endif
 	qr = div( tme, 60 ) ;
 	if ( att&DBLSIZE )
 	{
@@ -173,7 +186,11 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 			x += 2 ;
 		}
 	}
+#ifdef PCBX12D
+	lcd_2_digits( x, y, (uint16_t)qr.quot, att, background ) ;
+#else
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
+#endif
 	if ( att&DBLSIZE )
 	{
 		if ( att&CONDENSED )
@@ -189,7 +206,11 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	{
 		x += FW*3-4 ;
 	}
+#ifdef PCBX12D
+	lcd_2_digits( x, y, (uint16_t)qr.rem, att2, background ) ;
+#else
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
+#endif
 }
 
 void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att)
@@ -210,7 +231,30 @@ void putsVBat(uint8_t x,uint8_t y,uint8_t att)
 }
 
 #ifdef PCBX12D
-void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode )
+
+extern uint16_t Mimage[] ;
+extern uint16_t *SdramImage ;
+void lcd_picture( uint16_t i_x, uint16_t i_y )
+{
+	uint16_t *p ;
+	uint32_t rows ;
+	uint32_t cols ;
+	uint16_t *src = SdramImage ;
+
+	for ( rows = 0 ; rows < 64 ; rows += 1 )
+	{
+		p = ( uint16_t *) CurrentFrameBuffer ;
+		p += i_x ;
+		p += i_y * LCD_W ;
+		for ( cols = 0 ; cols < 128 ; cols += 1 )
+		{
+			*p++ = *src++ ;
+		}
+		i_y += 1 ;	 
+	} 
+}
+
+void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
 {
 	uint32_t yb ;
 	uint32_t x ;
@@ -241,7 +285,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 
 			for ( mask = 1 ; mask ; mask <<= 1 )
 			{
-				uint16_t value = (b & mask) ? 0 : 0xFFFF ;
+				uint16_t value = (b & mask) ? colour : background ;
 				*q = value ;
 				*(q+1) = value ;
 				*(q+LCD_W) = value ;
@@ -253,7 +297,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
   }
 }
 
-void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode )
+void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode, uint16_t colour, uint16_t background )
 {
   register const unsigned char *q = imgdat ;
   register uint8_t w    = *q++ ;
@@ -264,7 +308,7 @@ void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mo
 
   q += idx * sze1 ;
   
-	lcd_bitmap( i_x, i_y, q, w, hb, mode ) ;
+	lcd_bitmap( i_x, i_y, q, w, hb, mode, colour, background ) ;
 }
 
 void lcdSetRefVolt( uint8_t val )
@@ -608,7 +652,7 @@ uint16_t lcd_putcAttDbl(uint16_t x,uint16_t y,const char c,uint8_t mode)
 	
 }
 
-uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour )
+uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
 {
 	uint16_t *p ;
   uint8_t *q ;
@@ -667,49 +711,60 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 		uint8_t b ;
 
 		b = *q ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? colour : 0xFFFF ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		r += 2 ;
-		if ( condense == 0 )
+		if ( b & mask )
 		{
-			b = *(q+1) ;
-			if ( inv ) b = ~b ;
-			v = ( b & mask ) ? colour : 0xFFFF ;
+			v = inv ? background : colour ;
+			v = colour ;
 			*r = v ;
 			*(r+1) = v ;
 			*(r+LCD_W) = v ;
 			*(r+LCD_W+1) = v ;
+		}
+		r += 2 ;
+		if ( condense == 0 )
+		{
+			b = *(q+1) ;
+			if ( b & mask )
+			{
+				v = inv ? background : colour ;
+				*r = v ;
+				*(r+1) = v ;
+				*(r+LCD_W) = v ;
+				*(r+LCD_W+1) = v ;
+			}
 			r += 2 ;
 		}
 		b = *(q+2) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? colour : 0xFFFF ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
+		if ( b & mask )
+		{
+			v = inv ? background : colour ;
+			*r = v ;
+			*(r+1) = v ;
+			*(r+LCD_W) = v ;
+			*(r+LCD_W+1) = v ;
+		}
 		r += 2 ;
 		b = *(q+3) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? colour : 0xFFFF ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
+		if ( b & mask )
+		{
+			v = inv ? background : colour ;
+			*r = v ;
+			*(r+1) = v ;
+			*(r+LCD_W) = v ;
+			*(r+LCD_W+1) = v ;
+		}
 		r += 2 ;
 		b = *(q+4) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? colour : 0xFFFF ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
+		if ( b & mask )
+		{
+			v = inv ? background : colour ;
+			*r = v ;
+			*(r+1) = v ;
+			*(r+LCD_W) = v ;
+			*(r+LCD_W+1) = v ;
+		}
 		r += 2 ;
-		v = ( inv ) ? colour : 0xFFFF ;
+		v = inv ? colour : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
@@ -720,7 +775,7 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 	return x ;
 }
 
-uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
+uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t background )
 {
 	uint16_t *p ;
   uint8_t *q ;
@@ -780,7 +835,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
 
 		b = *q ;
 		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : 0xFFFF ;
+		v = ( b & mask ) ? 0 : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
@@ -790,7 +845,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
 		{
 			b = *(q+1) ;
 			if ( inv ) b = ~b ;
-			v = ( b & mask ) ? 0 : 0xFFFF ;
+			v = ( b & mask ) ? 0 : background ;
 			*r = v ;
 			*(r+1) = v ;
 			*(r+LCD_W) = v ;
@@ -799,7 +854,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
 		}
 		b = *(q+2) ;
 		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : 0xFFFF ;
+		v = ( b & mask ) ? 0 : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
@@ -807,7 +862,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
 		r += 2 ;
 		b = *(q+3) ;
 		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : 0xFFFF ;
+		v = ( b & mask ) ? 0 : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
@@ -815,18 +870,17 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode)
 		r += 2 ;
 		b = *(q+4) ;
 		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : 0xFFFF ;
+		v = ( b & mask ) ? 0 : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
 		*(r+LCD_W+1) = v ;
 		r += 2 ;
-		v = ( inv ) ? 0 : 0xFFFF ;
+		v = ( inv ) ? 0 : background ;
 		*r = v ;
 		*(r+1) = v ;
 		*(r+LCD_W) = v ;
 		*(r+LCD_W+1) = v ;
-
 		p += LCD_W * 2 ;
 	}
 	return x ;
@@ -870,7 +924,22 @@ uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint1
 	return x+6 ;
 }
 
+void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,uint8_t mode, uint16_t colour )
+{
+	register char c ;
+  while(len!=0) {
+    c = *s++ ;
+#ifdef BOOT
+		if ( c == 0 )
+		{
+			break ;			
+		}
+#endif
 
+    x = lcd_putcAttColour( x, y, c, mode, colour ) ;
+    len--;
+  }
+}
 
 #else
 static uint8_t *dispBufAddress( uint8_t x, uint8_t y )
@@ -1113,6 +1182,7 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
   }
 	return x ;
 }
+
 #endif
 
 // Puts sub-string from string options
@@ -1239,6 +1309,17 @@ void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
   }
 }
 
+#ifdef PCBX12D
+void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background )
+{
+  lcd_outdezAtt(x,y,val,0, background );
+}
+
+void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint8_t mode, uint16_t background )
+{
+  lcd_outdezNAtt( x,y,val,mode,5, background );
+}
+#else
 void lcd_outdez( uint8_t x, uint8_t y, int16_t val )
 {
   lcd_outdezAtt(x,y,val,0);
@@ -1248,14 +1329,27 @@ void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint8_t mode )
 {
   lcd_outdezNAtt( x,y,val,mode,5);
 }
+#endif
 
+#ifdef PCBX12D
+void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint8_t attr, uint16_t background )
+{
+	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2, background ) ;
+}
+#else
 void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
 {
 	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2 ) ;
 }
+#endif
 
 #define PREC(n) ((n&0x20) ? ((n&0x10) ? 2 : 1) : 0)
+
+#ifdef PCBX12D
+uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint8_t mode, int8_t len, uint16_t background )
+#else
 uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t len )
+#endif
 {
   uint8_t fw = FWNUM;
   uint8_t prec = PREC(mode);
@@ -1339,7 +1433,11 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
   for ( i=1; i<=len; i++)
 	{
     c = (tmp % 10) + '0';
-    lcd_putcAtt(x, y, c, mode);
+#ifdef PCBX12D
+		lcd_putcAtt(x, y, c, mode, background ) ;
+#else
+		lcd_putcAtt(x, y, c, mode);
+#endif
     if (prec==i)
 		{
       if (mode & DBLSIZE)
@@ -1370,10 +1468,20 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
       else
 			{
         x -= 2;
+#ifdef PCBX12D
+				uint8_t oldPlotType = plotType ;
+				plotType = PLOT_BLACK ;
         if (mode & INVERS)
           lcd_vline(x+1, y, 7);
         else
           lcd_plot(x+1, y+6);
+				plotType = oldPlotType ;
+#else
+        if (mode & INVERS)
+          lcd_vline(x+1, y, 7);
+        else
+          lcd_plot(x+1, y+6);
+#endif
       }
       if (tmp >= 10)
         prec = 0;
@@ -1407,15 +1515,26 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
     }
     x-=fw;
   }
-  if (xn) {
+  if (xn)
+	{
+#ifdef PCBX12D
+		uint8_t oldPlotType = plotType ;
+		plotType = PLOT_BLACK ;
+#endif
     lcd_hline(xn, y+2*FH-4, ln);
     lcd_hline(xn, y+2*FH-3, ln);
+#ifdef PCBX12D
+		plotType = oldPlotType ;
+#endif
   }
+#ifdef PCBX12D
+  if(val<0) lcd_putcAtt(x-fw,y,'-',mode, background ) ;
+#else
   if(val<0) lcd_putcAtt(x-fw,y,'-',mode);
+#endif
 	return 0 ;		// Stops compiler creating two sets of POPS, saves flash
 }
 
-uint8_t plotType = PLOT_XOR ;
 
 #ifndef PCBX12D
 void lcd_write_bits( uint8_t *p, uint8_t mask )
@@ -1936,13 +2055,19 @@ uint8_t ImageY ;
 uint8_t ImageDisplay = 0 ;
 uint8_t ImageX ;
 uint8_t ImageY ;
+void lcd_blank()
+{
+	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
+	lcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+}
+
 void lcd_clear()
 {
 	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
-//	lcdDrawSolidFilledRectDMA( 426, 0, 480-426, 128, 0 ) ;
 	lcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
-	
-//	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0 ) ;
+//	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
+//	lcdDrawSolidFilledRectDMA( 0, 128, 480-128, 272-128-22, 0 ) ;
+//	lcdDrawSolidFilledRectDMA( 480-128, 128+64, 128, 272-128-22-64, 0 ) ;
 }
 #else
 void lcd_clear()

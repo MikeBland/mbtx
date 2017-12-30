@@ -873,6 +873,7 @@ PACK(typedef struct te_ModelData {
 	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
+	int8_t cellScalers[12] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

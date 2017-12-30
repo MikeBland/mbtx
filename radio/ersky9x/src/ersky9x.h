@@ -46,6 +46,15 @@
 #endif
 #ifdef PCBX12D	
   #define WIDE_SCREEN	1
+  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
+#endif
+
+#ifdef PCBX12D
+#define X12OFFSET	56
+#define X12SMALL_OFFSET	42
+#else
+#define X12OFFSET	0
+#define X12SMALL_OFFSET	0
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -1054,7 +1063,7 @@ void resetTimer();
 void resetTimer1( void ) ;
 void resetTimer2( void ) ;
 
-extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
+//extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
 extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
 extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
@@ -1063,7 +1072,11 @@ extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ; //, bo
 extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
+#ifdef PCBX12D
+void putsDblSizeName( uint16_t x, uint16_t y ) ;
+#else
 void putsDblSizeName( uint8_t y ) ;
+#endif
 void clearKeyEvents( void ) ;
 void speakModelVoice( void ) ;
 void prepareForShutdown( void ) ;

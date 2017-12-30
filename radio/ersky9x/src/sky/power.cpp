@@ -42,7 +42,7 @@ uint32_t check_soft_power()
   return POWER_ON;
 #endif
 
-#ifdef REVB	
+#ifndef REVA
   if ( PIOC->PIO_PDSR & PIO_PC17 )  // Power on
   {
 	  return POWER_ON;
@@ -60,12 +60,12 @@ uint32_t check_soft_power()
 // turn off soft power
 void soft_power_off()
 {
-#ifdef REVB	
+#ifndef REVA
   configure_pins( PIO_PA8, PIN_ENABLE | PIN_OUTPUT | PIN_LOW | PIN_PORTA | PIN_NO_PULLUP | PIN_PULLDOWN ) ;
 #endif
 }
 
-#ifdef REVB	
+#ifndef REVA
 void init_soft_power()
 {
   // Configure RF_power (PC17)

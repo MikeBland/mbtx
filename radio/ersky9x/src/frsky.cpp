@@ -74,6 +74,8 @@ uint8_t TxLqi ;
 
 #define PRIVATE					'M'
 
+#define PRIVATE_BUFFER_SIZE	40
+
 // SPORT defines
 #define DATA_FRAME         0x10
 
@@ -220,7 +222,7 @@ static uint8_t A1Received = 0 ;
 uint8_t Private_count ;
 uint8_t Private_position ;
 uint8_t PrivateData[6] ;
-uint8_t InputPrivateData[12] ;
+uint8_t InputPrivateData[PRIVATE_BUFFER_SIZE] ;
 
 #ifndef SMALL
 uint8_t DsmManCode[4] ;
@@ -415,6 +417,9 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 			return ;
 		}
 #endif
+		uint32_t scaling = 1000 + g_model.cellScalers[battnumber] ;
+		scaling *= cell ;
+		cell = scaling / 1000 ;
 		FrskyHubData[index] = cell ;
 		TelemetryDataValid[index] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
@@ -1888,6 +1893,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 		uint32_t id ;
 		int32_t value ;
 		id = *packet ;
+		id |= *(packet+1) ;
 		packet += 2 ;
 		value = (packet[1] << 8)  + packet[0] ;
 		switch ( id )
@@ -1902,6 +1908,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 				storeTelemetryData( FR_RPM, value ) ;
 			break ;
 			case 3 :	// External voltage
+			case 0x0100 :	// External voltage ?
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
@@ -1935,7 +1942,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 			dataState = PRIVATE_VALUE ;
       Private_count = byte ;		// Count of bytes to receive
 			Private_position = 0 ;
-			if ( byte > 12 )
+			if ( byte > PRIVATE_BUFFER_SIZE )
 			{
         dataState = frskyDataIdle ;
 			}
