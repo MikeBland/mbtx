@@ -9235,7 +9235,15 @@ extern uint16_t XjtVersion ;
 					if ( checkForMenuEncoderLong( event ) )
 					{
 						s_currIdx = module ;
-						pushMenu( ( pModule->protocol == PROTO_PXX ) ? menuBindOptions : menuRangeBind ) ;
+						if ( pModule->protocol == PROTO_PXX )
+						{
+							pushMenu( menuBindOptions ) ;
+						}
+						else
+						{
+	  					PxxFlag[module] = PXX_BIND ;		    	//send bind code
+							pushMenu( menuRangeBind ) ;
+						}
 					}
 					s_editMode = 0 ;
 				}

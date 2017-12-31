@@ -367,6 +367,8 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 		case M_FRSKYX :
 			names[0] = "CH-16" ;
 			names[1] = "CH-8" ;
+			names[2] = "EU-16" ;
+			names[3] = "EU-8" ;
 		break ;
 		case M_CG023 :
 			names[0] = "CG023" ;

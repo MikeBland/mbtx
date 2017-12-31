@@ -86,7 +86,7 @@ uint8_t DsmInitCounter = 0 ;
 //uint8_t Dsm_mode_response = 0 ;
 
 uint16_t Pulses[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
-uint16_t Pulses2[180] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
+uint16_t Pulses2[266] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 volatile uint32_t PulsesIndex[2] = { 0, 0 } ;		// Modified in interrupt routine
 
 extern void setCaptureMode(uint32_t mode) ;
@@ -1312,7 +1312,6 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 #endif
 }
 
-
 void setupPulsesPPM2()
 {
   static uint8_t dsmDat[2+6*2+4]={0xFF,0x00,  0x00,0xAA,  0x05,0xFF,  0x09,0xFF,  0x0D,0xFF,  0x13,0x54,  0x14,0xAA } ;
@@ -1479,7 +1478,6 @@ void setupPulsesPPM2()
 //			uint32_t outputbits = 0 ;
 //			uint32_t i ;
 
-			setMultiSerialArray( Multi2Data, 0 ) ;
 			 
 //			Multi2Data[0] = ( ( (g_model.Module[0].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
 //			Multi2Data[1] = (g_model.Module[0].sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
@@ -1517,19 +1515,33 @@ void setupPulsesPPM2()
 //					outputbitsavailable -= 8 ;
 //				}
 //			}
-			
-			dataPtr = Multi2Data ;
-			uint32_t x ;
-			x = g_model.Module[0].ppmFrameLength ;
-			if ( x > 4 )
+
+			if ( g_model.Module[0].protocol == PROTO_MULTI )
 			{
-				x = 0 ;
+				setMultiSerialArray( Multi2Data, 0 ) ;
+				 
+				dataPtr = Multi2Data ;
+				uint32_t x ;
+				x = g_model.Module[0].ppmFrameLength ;
+				if ( x > 4 )
+				{
+					x = 0 ;
+				}
+				x *= 2000 ;
+				x += 7000 * 2 ;
+				rest = x ;
+				byteCount = 26 ;
+				bitTime = 10 * 2 ;
 			}
-			x *= 2000 ;
-			x += 7000 * 2 ;
-			rest = x ;
-			byteCount = 26 ;
-			bitTime = 10 * 2 ;
+			else
+			{
+				// Must be PROTO_OFF
+				Multi2Data[0] = 0 ;
+				dataPtr = Multi2Data ;
+				rest = 40000 ;		// 20mS
+				byteCount = 1 ;
+				bitTime = 10 * 2 ;
+			}
 		}
 		
 		uint32_t counter ;
@@ -1576,7 +1588,6 @@ void setupPulsesPPM2()
   	*ptr++ = 3000 ;
   	*ptr++ = 0 ;
   	*ptr = 0 ;
-
 	}
 }
 

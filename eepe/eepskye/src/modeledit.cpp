@@ -7,6 +7,7 @@
 #include "../../common/node.h"
 #include "mixerdialog.h"
 #include "loggingdialog.h"
+#include "cellDialog.h"
 #include "ProtocolDialog.h"
 #include "GvarAdjustDialog.h"
 #include "simulatordialog.h"
@@ -8868,6 +8869,24 @@ void ModelEdit::on_loggingButton_clicked()
 		g_model.logSwitch = data.lswitch ;
 		g_model.logNew = data.newFile ;
 		g_model.telemetryTimeout = data.timeout ;
+	}
+}
+
+void ModelEdit::on_cellButton_clicked()
+{
+	struct t_cellData data ;
+	uint32_t i ;
+	for ( i = 0 ; i < 12 ; i += 1 )
+	{
+		data.factors[i] = g_model.cellScalers[i] ;
+	}
+  cellDialog *g = new cellDialog(this, &data ) ;
+  if(g->exec())
+  {
+		for ( i = 0 ; i < 12 ; i += 1 )
+		{
+			g_model.cellScalers[i] = data.factors[i] ;
+		}
 	}
 }
 

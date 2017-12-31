@@ -281,20 +281,49 @@ void ProtocolDialog::setBoxes()
 		ui->rateLabel->show() ;
   	ui->rateCB->show() ;
 	}
-	if ( save == PROTO_PXX )
+	if ( hasFailsafe() )
 	{
 		ui->FailsafeCB->setCurrentIndex( ppd->failsafeMode ) ;
+		ui->RepeatSendCB->setChecked( !ppd->failsafeRepeat ) ;
 		ui->failsafeLabel->show() ;
 		ui->FailsafeCB->show() ;
+    ui->RepeatSendCB->show() ;
+		ui->RepeatLabel->show() ;
 	}
 	else
 	{
 		ui->failsafeLabel->hide() ;
 		ui->FailsafeCB->hide() ;
+    ui->RepeatSendCB->hide() ;
+		ui->RepeatLabel->hide() ;
 	}
 
 	protocolEditLock = false ;
 }
+
+uint32_t ProtocolDialog::hasFailsafe(void)
+{
+	if ( ppd->protocol == PROTO_MULTI )
+	{
+	  if ( ( ppd->sub_protocol & 0x3F ) == 6 ) return 1 ;	// Devo
+		if ( ( ppd->sub_protocol & 0x3F ) == 20 ) return 1 ;
+		if ( ( ppd->sub_protocol & 0x3F ) == 27 ) return 1 ;
+		if ( ( ppd->sub_protocol & 0x3F ) == 29 ) return 1 ;
+		if ( ( ppd->sub_protocol & 0x3F ) == 14 )	// FrskyX
+		{
+      if ( ( ( (ppd->channels >> 4) & 0x07 ) & 1 ) == 0 )
+			{
+				return 1 ;
+			}
+		}
+	}
+	if ( ppd->protocol == PROTO_PXX )
+	{
+	  if ( ppd->sub_protocol == 0 ) return 1 ;		
+	}
+	return 0 ;
+}
+
 
 void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 {
@@ -435,6 +464,7 @@ void ProtocolDialog::on_multiTypeCB_currentIndexChanged(int index)
 	ppd->sub_protocol = index + (ppd->sub_protocol & 0xC0) ;
   subSubProtocolText( ppd->sub_protocol & 0x3F, 0, ui->multiSubProtocolCB ) ;
 	ui->multiSubProtocolCB->setCurrentIndex( (ppd->channels >> 4) & 0x07 ) ;
+  setBoxes();
 }
 
 void ProtocolDialog::on_multiSubProtocolCB_currentIndexChanged(int value)
@@ -442,6 +472,7 @@ void ProtocolDialog::on_multiSubProtocolCB_currentIndexChanged(int value)
 	if ( protocolEditLock ) return ;
   if ( value < 0 ) return ;
 	ppd->channels = ( value << 4) + (ppd->channels & 0x8F);
+  setBoxes();
 }
 
 void ProtocolDialog::on_rateCB_currentIndexChanged(int index)
@@ -454,6 +485,12 @@ void ProtocolDialog::on_FailsafeCB_currentIndexChanged(int index)
 {
 	if ( protocolEditLock ) return ;
 	ppd->failsafeMode = index ;
+}
+
+void ProtocolDialog::on_RepeatSendCB_toggled(bool checked)
+{
+	if ( protocolEditLock ) return ;
+	ppd->failsafeRepeat = !checked  ;
 	
 }
 

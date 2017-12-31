@@ -835,6 +835,7 @@ void MdiChild::OpenEditWindow()
             modelDefault(i-1);
             isNew = true;//modeledit - clear mixes, apply first template
             setModified();
+						setCurrentRow( i ) ;
         }
 
 				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
@@ -878,6 +879,7 @@ void MdiChild::OpenEditWindow()
         connect(t,SIGNAL(modelValuesChanged()),this,SLOT(setModified()));
         t->show();
 				radioData.extraPots = countExtraPots( &radioData.generalSettings) ;
+				setCurrentRow( 0 ) ;
     }
 
 }
@@ -1765,6 +1767,8 @@ void MdiChild::ShowContextMenu(const QPoint& pos)
 
 void MdiChild::setModified(ModelEdit * me)
 {
+    int i = this->currentRow();
+	
     refreshList();
 //    eeFile.setChanged(true);
     documentWasModified();
@@ -1775,6 +1779,7 @@ void MdiChild::setModified(ModelEdit * me)
         for(int j=0; j<MAX_SKYMIXERS; j++)
             modelNotes[id][j] = me->getNote(j);
     }
+		setCurrentRow( i ) ;
 }
 
 void MdiChild::setActive()

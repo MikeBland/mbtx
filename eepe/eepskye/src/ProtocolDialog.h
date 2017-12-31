@@ -18,6 +18,7 @@ public:
 
 protected:
 	void setBoxes() ;
+	uint32_t hasFailsafe(void) ;
 
 //    void changeEvent(QEvent *e);
 
@@ -40,6 +41,7 @@ private slots:
 	void on_multiSubProtocolCB_currentIndexChanged(int value) ;
 	void on_rateCB_currentIndexChanged(int index) ;
   void on_FailsafeCB_currentIndexChanged(int index) ;
+	void on_RepeatSendCB_toggled(bool checked) ;
 
 //    void valuesChanged();
 //		void updateChannels() ;

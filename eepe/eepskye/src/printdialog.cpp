@@ -23,6 +23,7 @@ printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm) :
     printSetup();
     printExpo();
     printMixes();
+    printModes();
     printLimits();
     printCurves();
     printSwitches();
@@ -183,6 +184,7 @@ void printDialog::printExpo()
 
 void printDialog::printMixes()
 {
+    uint32_t j ;
     QString str = tr("<h2>Mixers</h2><br>");
 
     int lastCHN = 0;
@@ -240,6 +242,16 @@ void printDialog::printMixes()
             str += tr(" Curve(%1)").arg(crvStr.remove(' '));
         }
 
+				str += tr(" Modes(") ;
+				uint8_t b = 1 ;
+				uint8_t z = md->modeControl ;
+        for ( j = 0 ; j<MAX_MODES+1 ; j++ )
+				{
+          str += ( ( z & b ) == 0 ) ? tr("%1").arg(j) : tr(" ") ;
+					b <<= 1 ;
+				}
+				str += tr(")") ;
+
         if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayUp).arg(md->delayDown);
         if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg(md->speedUp).arg(md->speedDown);
 
@@ -248,12 +260,12 @@ void printDialog::printMixes()
         str.append("</font><br>");
     }
 
-    for(int j=lastCHN; j<NUM_SKYCHNOUT; j++)
-    {
-        str.append("<font size=+1 face='Courier New'>");
-        str.append(tr("<b>CH%1</b>").arg(j+1,2,10,QChar('0')));
-        str.append("</font><br>");
-    }
+//    for(int j=lastCHN; j<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS; j++)
+//    {
+//        str.append("<font size=+1 face='Courier New'>");
+//        str.append(tr("<b>CH%1</b>").arg(j+1,2,10,QChar('0')));
+//        str.append("</font><br>");
+//    }
     str.append("<br><br>");
     te->append(str);
 }
@@ -280,6 +292,53 @@ void printDialog::printLimits()
     str.append("<br><br>");
     te->append(str);
 }
+
+void printDialog::printModes()
+{
+//PACK(typedef struct t_PhaseData {
+//  int16_t trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of phases 1|2|3|4 instead
+//  int8_t swtch;       // swtch of phase[0] is not used
+//  char name[6];
+//  uint8_t fadeIn:4;
+//  uint8_t fadeOut:4;
+//  int8_t swtch2;       // swtch of phase[0] is not used
+//	uint8_t spare ;		// Future expansion
+//}) PhaseData;
+	int16_t value ;
+	QString str = tr("<h2>Flight Modes</h2><br>");
+  str.append("Mode 0               RETA<br>") ;
+
+	for(int i=1; i<=MAX_MODES; i++)
+	{
+		PhaseData *p = &g_model->phaseData[i-1] ;
+  	str.append( tr("Mode %1 ").arg(i) ) ;
+
+    char buf[10] ;
+		buf[0] = '"' ;
+    memcpy( &buf[1], &p->name, 6 ) ;
+    buf[7] = '"' ;
+    buf[8] = '\0' ;
+		str.append( buf ) ;
+		
+		str.append( tr(" Sw1(") + getSWName(p->swtch,0) + ")" ) ;
+		str.append( tr(" Sw2(") + getSWName(p->swtch2,0) + ") " ) ;
+
+		value = p->trim[0] - (TRIM_EXTENDED_MAX+1) ;
+		str.append( value < 0 ? "R" : tr("%1").arg(value) ) ;
+		value = p->trim[1] - (TRIM_EXTENDED_MAX+1) ;
+		str.append( value < 0 ? "E" : tr("%1").arg(value) ) ;
+		value = p->trim[2] - (TRIM_EXTENDED_MAX+1) ;
+		str.append( value < 0 ? "T" : tr("%1").arg(value) ) ;
+		value = p->trim[3] - (TRIM_EXTENDED_MAX+1) ;
+		str.append( value < 0 ? "A" : tr("%1").arg(value) ) ;
+		str.append( tr(" Fade In(%1) ").arg((qreal)p->fadeIn/2.0) ) ;
+		str.append( tr(" Fade Out(%1)").arg((qreal)p->fadeOut/2.0) ) ;
+		str.append("<br>");
+	}
+	str.append("<br><br>");
+	te->append(str);
+}
+
 
 void printDialog::printCurves()
 {

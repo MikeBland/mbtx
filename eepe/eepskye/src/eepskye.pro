@@ -34,7 +34,8 @@ HEADERS += mainwindow.h \
     GvarAdjustDialog.h \
     ProtocolDialog.h \
     SwitchDialog.h \
-    loggingDialog.h
+    loggingDialog.h \
+    cellDialog.h
 SOURCES += main.cpp \
     mainwindow.cpp \
     file.cpp \
@@ -65,7 +66,8 @@ SOURCES += main.cpp \
     GvarAdjustDialog.cpp \
     ProtocolDialog.cpp \
     switchDialog.cpp \
-    loggingDialog.cpp
+    loggingDialog.cpp \
+    cellDialog.cpp
 unix {
 SOURCES += mountlist.cpp
 }
@@ -88,7 +90,8 @@ FORMS += modeledit.ui \
     GvarAdjustDialog.ui \
     ProtocolDialog.ui \
     SwitchDialog.ui \
-    loggingDialog.ui
+    loggingDialog.ui \
+    cellDialog.ui
 TRANSLATIONS = eepe_.ts    \
                eepe_he.ts  \
                eepe_pt.ts  \

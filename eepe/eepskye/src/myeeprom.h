@@ -101,6 +101,8 @@
 #define MAX_GVARS 7
 #define NUM_SCALERS	8
 
+#define MAX_MODES		6
+
 #ifdef SKY
 #define MAX_PHASES		6
 #else
@@ -766,7 +768,9 @@ struct t_module
  	int8_t ppmDelay ;
   int8_t ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
 	int8_t option_protocol ;
-	uint8_t failsafeMode ;
+	uint8_t failsafeMode:3 ;
+	uint8_t failsafeRepeat:1 ;
+	uint8_t failsafeSpare:4 ;
 	int8_t failsafe[16] ;
 	uint8_t sparex[3] ;
 } ;
@@ -934,7 +938,7 @@ PACK(typedef struct te_ModelData {
 	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
-	 
+	int8_t cellScalers[12] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

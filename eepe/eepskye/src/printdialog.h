@@ -33,6 +33,7 @@ private:
     void printCurves();
     void printSwitches();
     void printSafetySwitches();
+		void printModes() ;
 
     QString fv(const QString name, const QString value);
     QString getModelName();
