@@ -7580,7 +7580,7 @@ static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
 		if ( mask & 1 )
 		{
 			uint32_t len = strlen( list ) ;
-			lcd_puts_P( 3*FW + X12OFFSET, y, " " ) ;
+//			lcd_puts_P( 3*FW + X12OFFSET, y, " " ) ;
 			lcd_puts_P( 4*FW + X12OFFSET, y, (const char *)(list) ) ;
 			lcd_putsn_P( (4+len)*FW + X12OFFSET, y, "              ", width-len-1 ) ;
 			entries += 1 ;
@@ -7597,7 +7597,12 @@ static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
 	{
 		y -= 1 ;
 	}
-	lcd_rect( 3*FW + X12OFFSET, 0, width*FW, y+1 ) ;
+	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, 0, 12, y*2, LCD_WHITE) ;
+//	lcd_rect( 3*FW + X12OFFSET, 0, width*FW, y+1 ) ;
+	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, 0, width*FW*2, 2, LCD_BLACK) ;
+	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, y*2, width*FW*2, 2, LCD_BLACK) ;
+	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, 0, 2, y*2, LCD_BLACK) ;
+	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET+width*FW)*2, 0, 2, y*2, LCD_BLACK) ;
 	lcd_char_inverse( 4*FW + X12OFFSET, (PopupData.PopupIdx)*FH, (width-2)*FW, 0 ) ;
 
 	return entries ;
@@ -15016,6 +15021,29 @@ void menuProcSelectImageFile(uint8_t event)
 }
 #endif
 
+//#ifdef PCBX12D
+//const uint8_t Abitmap[] =
+//{
+//	0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00,
+//	0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
+//	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
+//	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+//} ;
+//#endif
+
+extern void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type) ;
 
 void menuProcBattery(uint8_t event)
 {
@@ -15039,6 +15067,11 @@ void menuProcBattery(uint8_t event)
     break;
 
   }
+
+//#ifdef PCBX12D
+//	lcdDrawSolidFilledRectDMA( 300, 0, 100, 100, LCD_GREY ) ;
+//	lcdDrawBitmapDMA( 310, 10, 12, 16, (uint8_t*)Abitmap, 0 ) ;
+//#endif
 
 		lcd_puts_Pleft( 2*FH, PSTR(STR_Battery));
 		putsVolts( 13*FW, 2*FH, g_vbat100mV, 0 ) ;
@@ -18689,6 +18722,15 @@ STR_DiagAna
 				page3 += 6 ;
 			}
 #endif
+#ifdef PCBX9D
+			uint32_t page2 = 10 ;
+			uint32_t page3 = 11 ;
+			if ( g_eeGeneral.analogMapping & MASK_6POS )
+			{
+				IlinesCount += 6 ;
+				page3 += 6 ;
+			}
+#endif
 
 			TITLE( PSTR(STR_Hardware) ) ;
 			if ( HardwareMenuEnabled == 0 )
@@ -18708,7 +18750,7 @@ STR_DiagAna
 #ifdef PCBX12D
 			if ( sub < 2 )
 #else
-			if ( sub < 6 )
+			if ( sub < 5 )
 #endif
 #endif
 #endif
@@ -18781,18 +18823,18 @@ STR_DiagAna
 #endif	// nREV9E
 
 #ifndef PCBX12D
-  			lcd_puts_Pleft( y, XPSTR("6 Pos. Switch"));
-				value = ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ;
-	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? blink:0));
-				oldValue = value ;
-				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_MAP_POTS ) ;
- 				g_eeGeneral.analogMapping = ( g_eeGeneral.analogMapping & ~MASK_6POS ) | ( value << 2 ) ;
-				if ( value != oldValue )
-				{
-					createSwitchMapping() ;
-				}
-				y += FH ;
-				subN += 1 ;
+//  			lcd_puts_Pleft( y, XPSTR("6 Pos. Switch"));
+//				value = ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ;
+//	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? blink:0));
+//				oldValue = value ;
+//				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_MAP_POTS ) ;
+// 				g_eeGeneral.analogMapping = ( g_eeGeneral.analogMapping & ~MASK_6POS ) | ( value << 2 ) ;
+//				if ( value != oldValue )
+//				{
+//					createSwitchMapping() ;
+//				}
+//				y += FH ;
+//				subN += 1 ;
 
   			lcd_puts_Pleft( y, XPSTR("PB1 Switch\037PB2 Switch"));
 				g_eeGeneral.pb1source = edit3posSwitchSource( y, g_eeGeneral.pb1source, USE_PB1, (sub==subN), 0 ) ;
@@ -18856,9 +18898,9 @@ STR_DiagAna
 				displayNext() ;
 				subN = 2 ;
 #else
-			else if ( sub < 11 )
+			else if ( sub < 10 )
 			{
-				subN = 6 ;
+				subN = 5 ;
 #endif
 #endif
 #endif // PCBX9D
@@ -18921,7 +18963,7 @@ STR_DiagAna
 #endif
 			
 			}
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 			else if ( sub < page3 )
 			{
 				uint32_t value ;
@@ -18929,6 +18971,15 @@ STR_DiagAna
 				subN = page2 ;
   			lcd_puts_Pleft( y, XPSTR("6 Pos. Switch"));
 				value = ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ;
+
+
+
+#ifdef PCBX9D
+	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? blink:0));
+#endif
+
+
+
 #ifdef PCBSKY
 	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\003---P1 P2 P3 AUX"), value, (sub==subN ? INVERS:0));
 #define NUM_ANA_INPUTS	4
@@ -18938,7 +18989,11 @@ STR_DiagAna
 #define NUM_ANA_INPUTS	3
 #endif
 				oldValue = value ;
+#ifdef PCBX9D
+				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_MAP_POTS ) ;
+#else
 				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_ANA_INPUTS ) ;
+#endif
  				g_eeGeneral.analogMapping = ( g_eeGeneral.analogMapping & ~MASK_6POS ) | ( value << 2 ) ;
 				if ( value != oldValue )
 				{
@@ -18963,6 +19018,15 @@ STR_DiagAna
 #endif
 #ifdef PCB9XT
 					value = M64Analog[ (value >> 2) + 3] ;
+#endif
+#ifdef PCBX9D
+			  	value >>= 2 ;
+					value += 3 ;
+					if ( value > 5 )
+					{
+						value = 9 ;
+					}
+					value = Analog_values[value] ;
 #endif
 					lcd_outhex4( 12*FW, 0*FH, value ) ;
 					lcd_putsAttIdx( 17*FW, 0*FH, PSTR(SWITCHES_STR), HSW_Ele6pos0 + switchPosition(HSW_Ele6pos0)-HSW_OFFSET, 0 ) ;
@@ -19155,12 +19219,12 @@ STR_DiagAna
 				subN = page3+7 ;
 #else
 #ifdef REV9E
-				subN = 10 ;
+				subN = page3+7 ;
 #else
 #ifdef PCBX12D
 				subN = 13 ;
 #else
-				subN = 11 ;
+				subN = page3 ;
 #endif
 #endif
 #endif

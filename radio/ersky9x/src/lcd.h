@@ -45,6 +45,7 @@
 #define LCD_BLUE		0x001F
 #define LCD_WHITE		0xFFFF
 #define LCD_BLACK		0
+#define LCD_GREY		0x8410
 #define LCD_STATUS_GREY	0x3BEF
 
 #endif

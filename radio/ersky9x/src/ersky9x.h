@@ -393,6 +393,9 @@ int8_t switchMap( int8_t x ) ;
 
 #define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
 
+void create6posTable( void ) ;
+extern uint16_t SixPositionTable[5] ;
+
 #endif // PCBX9D
 
 #ifdef PCBX12D

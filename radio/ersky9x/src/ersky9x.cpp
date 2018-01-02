@@ -440,7 +440,7 @@ void handle_serial( void* pdata ) ;
 uint8_t SixPosCaptured;
 uint8_t SixPosValue;
 uint8_t SixPosDelay;
-#elif defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D)
+#elif defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX9D)
 uint16_t SixPositionTable[5] ;
 #endif
 
@@ -453,6 +453,10 @@ void getADC_filt( void ) ;
 #ifdef PCBSKY
 void read_adc( void ) ;
 void init_adc( void ) ;
+#endif
+
+#ifdef PCBX9D
+void check6pos( void ) ;
 #endif
 
 void check_backlight( void ) ;
@@ -2555,6 +2559,9 @@ uint32_t updateSlave() ;
 	}
 #endif 
 
+#ifdef PCBX9D
+	create6posTable() ;
+#endif
 
 #ifdef PCBX7
 	init_rotary_encoder() ;
@@ -4739,6 +4746,9 @@ void main_loop(void* pdata)
 		checkWarnings();
 #ifdef WHERE_DEBUG
 		where( 'G' ) ;
+#endif  	 
+#ifdef PCBX9D
+		check6pos() ;
 #endif  	 
 		checkMultiPower() ;
 #ifdef WHERE_DEBUG
@@ -9814,7 +9824,7 @@ void createSwitchMapping()
 	}
 }
 
-#ifdef PCBX12D
+#if defined(PCBX9D) || defined(PCBX12D)
 void create6posTable()
 {
 	uint32_t i ;
@@ -10758,6 +10768,24 @@ void message(const char * s)
 {
 	almess( s, MESS_TYPE ) ;
 }
+
+
+#ifdef PCBX9D
+void check6pos()
+{
+	if ( g_eeGeneral.analogMapping & MASK_6POS )
+	{
+		if ( g_eeGeneral.SixPositionCalibration[0] == 0 )
+		{
+			if ( g_eeGeneral.SixPositionCalibration[1] == 0 )
+			{
+				// 6POS enabled but not calibrated
+    		alert(XPSTR("6 Pos switch enabled\037 But NOT calibrated"));
+			}
+		}
+	}
+}
+#endif  	 
 
 uint8_t checkThrottlePosition()
 {

@@ -86,6 +86,8 @@ uint32_t CurrentLayer = LCD_FIRST_LAYER;
 #define NRST_LOW()   do { LCD_GPIO_NRST->BSRRH = LCD_GPIO_PIN_NRST; } while(0)
 #define NRST_HIGH()  do { LCD_GPIO_NRST->BSRRL = LCD_GPIO_PIN_NRST; } while(0)
 
+#define CR_MASK                     ((uint32_t)0xFFFCE0FC)  /* DMA2D CR Mask */
+
 uint8_t speaker[] = {
 4,8,0,
 0x38,0x38,0x7C,0xFE
@@ -619,29 +621,23 @@ void lcdInit(void)
 volatile uint8_t Dma2DdoneFlag ;
 volatile uint8_t LcdClearing ;
 
-
-void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
+void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour)
 {
-	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
-  uint8_t red = (0xF800 & color) >> 11;
-  uint8_t blue = 0x001F & color;
-  uint8_t green = (0x07E0 & color) >> 5;
+	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x) ;
+  DMA2D_DeInit() ;
 
-  DMA2D_DeInit();
+	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_R2M ;
 
-  DMA2D_InitTypeDef DMA2D_InitStruct;
-  DMA2D_InitStruct.DMA2D_Mode = DMA2D_R2M;
-  DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
-  DMA2D_InitStruct.DMA2D_OutputGreen = green;
-  DMA2D_InitStruct.DMA2D_OutputBlue = blue;
-  DMA2D_InitStruct.DMA2D_OutputRed = red;
-  DMA2D_InitStruct.DMA2D_OutputAlpha = 0x0F;
-  DMA2D_InitStruct.DMA2D_OutputMemoryAdd = addr;
-  DMA2D_InitStruct.DMA2D_OutputOffset = (LCD_W - w);
-  DMA2D_InitStruct.DMA2D_NumberOfLine = h;
-  DMA2D_InitStruct.DMA2D_PixelPerLine = w;
-  DMA2D_Init(&DMA2D_InitStruct);
+	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+  
+	DMA2D->OCOLR = colour ;
 
+  DMA2D->OMAR = addr ;
+  
+	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+  
+  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( h | (w << 16) ) ;
+	
   /* Start Transfer */
   DMA2D_StartTransfer();
 	Dma2DdoneFlag = 0 ;
@@ -649,8 +645,39 @@ void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t
 	NVIC_SetPriority( DMA2D_IRQn, 12 ) ;
   DMA2D->CR |= DMA2D_CR_TCIE ;
 	NVIC_EnableIRQ(DMA2D_IRQn) ;
-
+	 
 }
+
+//void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour)
+//{
+//	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
+//  uint8_t red = (0xF800 & colour) >> 11;
+//  uint8_t blue = 0x001F & colour;
+//  uint8_t green = (0x07E0 & colour) >> 5;
+
+//  DMA2D_DeInit();
+
+//  DMA2D_InitTypeDef DMA2D_InitStruct;
+//  DMA2D_InitStruct.DMA2D_Mode = DMA2D_R2M;
+//  DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
+//  DMA2D_InitStruct.DMA2D_OutputGreen = green;
+//  DMA2D_InitStruct.DMA2D_OutputBlue = blue;
+//  DMA2D_InitStruct.DMA2D_OutputRed = red;
+//  DMA2D_InitStruct.DMA2D_OutputAlpha = 0x0F;
+//  DMA2D_InitStruct.DMA2D_OutputMemoryAdd = addr;
+//  DMA2D_InitStruct.DMA2D_OutputOffset = (LCD_W - w);
+//  DMA2D_InitStruct.DMA2D_NumberOfLine = h;
+//  DMA2D_InitStruct.DMA2D_PixelPerLine = w;
+//  DMA2D_Init(&DMA2D_InitStruct);
+
+//  /* Start Transfer */
+//  DMA2D_StartTransfer();
+//	Dma2DdoneFlag = 0 ;
+	
+//	NVIC_SetPriority( DMA2D_IRQn, 12 ) ;
+//  DMA2D->CR |= DMA2D_CR_TCIE ;
+//	NVIC_EnableIRQ(DMA2D_IRQn) ;
+//}
 
 void waitDma2Ddone()
 {
@@ -709,23 +736,32 @@ void waitLcdClearDdone()
 }
 
 
-void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap)
+void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type)
 {
-  if ((uint32_t(bitmap) & 0x03) != 0)
-    return;
+//  if ((uint32_t(bitmap) & 0x03) != 0)
+//    return;
 
+	if ( type == 0 )
+	{
+		type = CM_L4 ;
+	}
+	else
+	{
+		type = CM_A4 ;
+	}
   uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
 
   DMA2D_DeInit();
 
   DMA2D_InitTypeDef DMA2D_InitStruct;
-  DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M;
+  DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M_PFC ;
+//  DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M_BLEND ;
   DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
   DMA2D_InitStruct.DMA2D_OutputMemoryAdd = addr;
-  DMA2D_InitStruct.DMA2D_OutputGreen = 0;
-  DMA2D_InitStruct.DMA2D_OutputBlue = 0;
-  DMA2D_InitStruct.DMA2D_OutputRed = 0;
-  DMA2D_InitStruct.DMA2D_OutputAlpha = 0;
+  DMA2D_InitStruct.DMA2D_OutputGreen = 0 ;
+  DMA2D_InitStruct.DMA2D_OutputBlue = 0 ;
+  DMA2D_InitStruct.DMA2D_OutputRed = 0 ;
+  DMA2D_InitStruct.DMA2D_OutputAlpha = 0 ;
   DMA2D_InitStruct.DMA2D_OutputOffset = (LCD_W - w);
   DMA2D_InitStruct.DMA2D_NumberOfLine = h;
   DMA2D_InitStruct.DMA2D_PixelPerLine = w;
@@ -733,12 +769,146 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 
   DMA2D_FG_InitTypeDef DMA2D_FG_InitStruct;
   DMA2D_FG_StructInit(&DMA2D_FG_InitStruct);
-  DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(bitmap);
+//  /*!< Initialize the DMA2D foreground memory address */
+//  DMA2D_FG_InitStruct->DMA2D_FGMA = 0x00;
+//  /*!< Initialize the DMA2D foreground offset */
+//  DMA2D_FG_InitStruct->DMA2D_FGO = 0x00;
+//  /*!< Initialize the DMA2D foreground color mode */
+//  DMA2D_FG_InitStruct->DMA2D_FGCM = CM_ARGB8888;
+//  /*!< Initialize the DMA2D foreground CLUT color mode */
+//  DMA2D_FG_InitStruct->DMA2D_FG_CLUT_CM = CLUT_CM_ARGB8888;
+//  /*!< Initialize the DMA2D foreground CLUT size */
+//  DMA2D_FG_InitStruct->DMA2D_FG_CLUT_SIZE = 0x00;
+//  /*!< Initialize the DMA2D foreground alpha mode */
+//  DMA2D_FG_InitStruct->DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE;
+//  /*!< Initialize the DMA2D foreground alpha value */
+//  DMA2D_FG_InitStruct->DMA2D_FGPFC_ALPHA_VALUE = 0x00;
+//  /*!< Initialize the DMA2D foreground blue value */
+//  DMA2D_FG_InitStruct->DMA2D_FGC_BLUE = 0x00;
+//  /*!< Initialize the DMA2D foreground green value */
+//  DMA2D_FG_InitStruct->DMA2D_FGC_GREEN = 0x00;
+//  /*!< Initialize the DMA2D foreground red value */
+//  DMA2D_FG_InitStruct->DMA2D_FGC_RED = 0x00;
+//  /*!< Initialize the DMA2D foreground CLUT memory address */
+//  DMA2D_FG_InitStruct->DMA2D_FGCMAR = 0x00;
+  
+	DMA2D_FG_InitStruct.DMA2D_FGC_RED = 0xFF ;
+//	DMA2D_FG_InitStruct.DMA2D_FGC_BLUE = 0xFF ;
+//	DMA2D_FG_InitStruct.DMA2D_FGC_GREEN = 0xFF ;
+	
+	DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(bitmap);
   DMA2D_FG_InitStruct.DMA2D_FGO = 0;
-  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565;
-  DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE;
-  DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_VALUE = 0;
+//  DMA2D_FG_InitStruct.DMA2D_FGCM = type ; //CM_RGB565;
+  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_L4 ;
+//  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565 ;
+  
+//	DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = COMBINE_ALPHA_VALUE ;// NO_MODIF_ALPHA_VALUE ;
+	DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE ;
+  DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_VALUE = 0 ;
   DMA2D_FGConfig(&DMA2D_FG_InitStruct);
+
+//  DMA2D->BGCOLR = 0 ;
+//  DMA2D->BGPFCCR = CM_L4 ;
+//  DMA2D->BGPFCCR = (1 << 16) ;
+//	DMA2D->BGMAR = DMA2D->OMAR ;
+//	DMA2D->BGOR = DMA2D->OOR ;
+//	DMA2D->BGOR = 0 ;
+
+	DMA2D->FGCLUT[0] = 0xFFFFFFFF ;
+	DMA2D->FGCLUT[15] = 0 ;
+	DMA2D->BGCLUT[0] = 0xFFFFFFFF ;
+	DMA2D->BGCLUT[15] = 0xFFFFFFFF ;
+
+
+//static int _DMA_DrawBitmapA4(void * pSrc, void * pDst,  U32 OffSrc, U32 OffDst, U32 PixelFormatDst, U32 xSize, U32 ySize) {
+//  U8 * pRD;
+//  U8 * pWR;
+//  U32 NumBytes, Color, Index;
+
+//  //
+//  // Check size of conversion buffer
+//  //
+//  NumBytes = ((xSize + 1) & ~1) * ySize / 2 ;
+//  if ((NumBytes > sizeof(_aBuffer)) || (NumBytes == 0)) {
+//    return 1;
+//  }
+//  //
+//  // Conversion (swapping nibbles)
+//  //
+//  pWR = (U8 *)_aBuffer;
+//  pRD = (U8 *)pSrc;
+//  do {
+//    *pWR++ = _aMirror[*pRD++];
+//  } while (--NumBytes);
+//  //
+//  // Get current drawing color (ABGR)
+//  //
+//  Index = LCD_GetColorIndex();
+//  Color = LCD_Index2Color(Index);
+//  //
+//  // Set up operation mode
+//  //
+//  DMA2D->CR = 0x00020000UL;
+//  //
+//  // Set up source
+//  //
+//#if (GUI_USE_ARGB == 0)
+//  DMA2D->FGCOLR  = ((Color & 0xFF) << 16)  // Red
+//                 |  (Color & 0xFF00)       // Green
+//                 | ((Color >> 16) & 0xFF); // Blue
+//#else
+//  DMA2D->FGCOLR  = Color;
+//#endif
+//  DMA2D->FGMAR   = (U32)_aBuffer;
+//  DMA2D->FGOR    = 0;
+//  DMA2D->FGPFCCR = 0xA;                    // A4 bitmap
+//  DMA2D->NLR     = (U32)((xSize + OffSrc) << 16) | ySize;
+//  DMA2D->BGMAR   = (U32)pDst;
+//  DMA2D->BGOR    = OffDst - OffSrc;
+//  DMA2D->BGPFCCR = PixelFormatDst;
+//  DMA2D->OMAR    = DMA2D->BGMAR;
+//  DMA2D->OOR     = DMA2D->BGOR;
+//  DMA2D->OPFCCR  = DMA2D->BGPFCCR;
+//  //
+//  // Execute operation
+//  //
+//  _DMA_ExecOperation();
+//  return 0;
+//}
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* Configures the FG memory address */
+//  DMA2D->FGMAR = CONVERT_PTR_UINT(bitmap) ;
+
+  /* Configures the FG offset */
+//  DMA2D->FGOR &= ~(uint32_t)DMA2D_FGOR_LO;
+//  DMA2D->FGOR |= 0 ;	// FGO = FG offset
+
+  /* Configures foreground Pixel Format Convertor */
+//  DMA2D->FGPFCCR &= (uint32_t)PFCCR_MASK;
+//  fg_clutcolormode = CLUT_CM_ARGB8888 << 4;
+//  fg_clutsize = 0 << 8;
+//  fg_alpha_mode = NO_MODIF_ALPHA_VALUE << 16;
+//  fg_alphavalue = 0 << 24;
+//  DMA2D->FGPFCCR |= (CM_RGB565 | fg_clutcolormode | fg_clutsize | fg_alpha_mode | fg_alphavalue);
+
+  /* Configures foreground color */
+//  DMA2D->FGCOLR &= ~(DMA2D_FGCOLR_BLUE | DMA2D_FGCOLR_GREEN | DMA2D_FGCOLR_RED);
+//  DMA2D->FGCOLR |= 0 ;
+
+  /* Configures foreground CLUT memory address */
+//  DMA2D->FGCMAR = 0 ;
 
   /* Start Transfer */
   DMA2D_StartTransfer();

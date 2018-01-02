@@ -2162,6 +2162,10 @@ uint32_t hwKeyState( uint8_t key )
 			analog = 9 ;
 		}
 		analog = Analog_values[analog] ;
+		if ( g_eeGeneral.SixPositionCalibration[5] >  g_eeGeneral.SixPositionCalibration[0] )
+		{
+			analog = 4095 - analog ;
+		}
 	}
   
 	if( key > HSW_MAX )  return 0 ;
@@ -2590,27 +2594,33 @@ uint32_t hwKeyState( uint8_t key )
 #endif	// REV9E
 
 		case HSW_Ele6pos0 :
-				xxx = analog < 417 ;
+				xxx = analog > SixPositionTable[0] ;
+//				xxx = analog < 417 ;
     break ;
 			
 		case HSW_Ele6pos1 :
-				xxx = ( analog <= 938 ) && ( analog >= 417 ) ;
+				xxx = ( analog <= SixPositionTable[0] ) && ( analog >= SixPositionTable[1] ) ;
+//				xxx = ( analog <= 938 ) && ( analog >= 417 ) ;
     break ;
 			
 		case HSW_Ele6pos2 :
-				xxx = ( analog <= 1211 ) && ( analog >= 938 ) ;
+				xxx = ( analog <= SixPositionTable[1] ) && ( analog >= SixPositionTable[2] ) ;
+//				xxx = ( analog <= 1211 ) && ( analog >= 938 ) ;
     break ;
 			
 		case HSW_Ele6pos3 :
-				xxx = ( analog <= 1721 ) && ( analog >= 1211 ) ;
+				xxx = ( analog <= SixPositionTable[2] ) && ( analog >= SixPositionTable[3] ) ;
+//				xxx = ( analog <= 1721 ) && ( analog >= 1211 ) ;
     break ;
 			
 		case HSW_Ele6pos4 :
-				xxx = ( analog <= 3050 ) && (+ analog >= 1721 ) ;
+				xxx = ( analog <= SixPositionTable[3] ) && ( analog >= SixPositionTable[4] ) ;
+//				xxx = ( analog <= 3050 ) && (+ analog >= 1721 ) ;
     break ;
 			
 		case HSW_Ele6pos5 :
-				xxx = analog > 3050 ;
+				xxx = analog < SixPositionTable[4] ;
+	//			xxx = analog > 3050 ;
     break ;
 
 #ifndef REV9E
