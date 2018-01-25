@@ -291,6 +291,21 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			}
 		}
 	}
+#ifdef REVPLUS
+	else if ( ( channel < 6 ) || ( channel == 8 ) )
+	{
+		uint8_t chan = channel - 3 ;
+		if ( chan == 5 )
+		{
+			chan = 3 ;
+		}
+		if ( chan == ( ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ) )
+		{
+			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * (int32_t)RESX*2 - (int32_t)RESX*5)/5 ;
+			return v ;
+		}
+	}
+#else
 	else if ( channel < 7 )
 	{
 		if ( ( channel - 3 ) == ( ( g_eeGeneral.analogMapping & MASK_6POS ) >> 2 ) )
@@ -300,6 +315,7 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			return v ;
 		}
 	}
+#endif
 
 //#ifdef REVX
 //	if ( channel < 4 )
@@ -337,7 +353,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 			TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0] ;
 			
 #ifdef PCBX9D
+#ifdef PCBX7
+			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) && ( tChan->source != TRAINER_BT ) )
+#else
 			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) )
+#endif			
 #else
 			if ( ( tChan->source != TRAINER_BT ) && ( tChan->source != TRAINER_COM2 ) )
 #endif

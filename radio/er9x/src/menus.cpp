@@ -2392,15 +2392,27 @@ void menuProcTelemetry(uint8_t event)
 		uint8_t attr = 0 ;
 		uint8_t *pindex ;
 #ifdef V2
+#ifdef MAH_LIMIT			 
 		if (sub < 15)
+#else
+		if ( sub < 14 )
+#endif
 		{
 			pindex = g_model.CustomDisplayIndex[0] ;
+#ifdef MAH_LIMIT			 
 			subN = 9 ;
+#else
+			subN = 8 ;
+#endif
 		}
 		else
 		{
 			pindex = g_model.CustomDisplayIndex[1] ;
+#ifdef MAH_LIMIT			 
 			subN = 15 ;
+#else
+			subN = 14 ;
+#endif
 		}
 #else
 			pindex = g_model.CustomDisplayIndex ;
@@ -6776,6 +6788,19 @@ void dispA1A2Dbl( uint8_t y )
 #endif
 
 
+#ifdef V2
+#define TEL_PAGE_1	0x20
+#define TEL_PAGE_2	0x30
+#define TEL_PAGE_3	0x40
+#define TEL_PAGE_4	0x50
+#else
+#define TEL_PAGE_1	0x10
+#define TEL_PAGE_2	0x20
+#define TEL_PAGE_3	0x30
+#define TEL_PAGE_4	0x40
+#endif
+
+
 void menuProc0(uint8_t event)
 {
     static uint8_t trimSwLock;
@@ -7262,7 +7287,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 				int16_t value ;
 				{
             uint8_t x0;//, blink;
-            if ( tview == 0x20 )
+            if ( tview == TEL_PAGE_1 )
             {
                     x0 = 3*FW ;
 							dispA1A2Dbl( 3*FH ) ;
@@ -7312,7 +7337,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
                 lcd_outdez(15 * FW - 2, 7*FH, maxMinPtr->hubMin[3] );
                 lcd_outdezAtt(17 * FW - 2, 7*FH, maxMinPtr->hubMax[3], LEFT);
             }
-            else if ( tview == 0x30 )
+            else if ( tview == TEL_PAGE_2 )
             {
                 if (frskyUsrStreaming)
                 {
@@ -7356,7 +7381,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 //    						lcd_putsAttIdx( 8 * FW, 7*FH, Str_TXeq, ( g_model.protocol == PROTO_PXX ), 0 ) ;
                 lcd_outdezAtt(11 * FW, 7*FH, FrskyHubData[FR_TXRSI_COPY], LEFT);
             }
-            else if ( tview == 0x40 )
+            else if ( tview == TEL_PAGE_3 )
             {
 							uint8_t blink = BLINK | LEADING0 ;
 							uint16_t mspeed ;
@@ -7438,7 +7463,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 							}
             }
 #if defined(CPUM128) || defined(CPUM2561)
-            else if ( tview == 0x50 )
+            else if ( tview == TEL_PAGE_4 )
 						{
 						 if ( g_model.telemetryProtocol == TELEMETRY_ARDUPILOT )
 						 {

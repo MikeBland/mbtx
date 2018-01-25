@@ -282,6 +282,19 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,	FR_RXRSI_COPY, FR_TXRSI_CO
 const uint8_t TelemValid[] = { 
 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2,2,2,2,2,2,0  } ;
 
+uint8_t MaskRotaryLong ;
+
+uint32_t checkForMenuEncoderLong( uint8_t event )
+{
+	MaskRotaryLong = 1 ;
+	return ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) ;
+}
+
+uint32_t checkForMenuEncoderBreak( uint8_t event )
+{
+	return ( event==EVT_KEY_BREAK(KEY_MENU)) || ( event==EVT_KEY_BREAK(BTN_RE) ) ;
+}
+
 uint16_t getUnitsVoice( uint16_t unit )
 {
 	return UnitsVoice[unit] ;
@@ -1953,7 +1966,7 @@ void menuProcIndex(uint8_t event) ;
 void menuProcModelIndex(uint8_t event) ;
 void menuCellScaling(uint8_t event) ;
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 void menuProcBt(uint8_t event) ;
 void menuProcBtScan(uint8_t event) ;
 void menuProcBtConfigure(uint8_t event) ;
@@ -2037,7 +2050,7 @@ enum EnumTabStat
 #endif
 	e_debug,
   e_Setup3,
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 #ifdef IMAGE_128
 	e_image,
 #endif
@@ -2068,7 +2081,7 @@ MenuFuncP menuTabStat[] =
 #endif
 	menuDebug,
 	menuProcSDstat,
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 #ifdef IMAGE_128
 	menuImage,
 #endif
@@ -2242,7 +2255,7 @@ void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint8_t ty
 	if ( type & ~ALPHA_NO_NAME )
 	{
 		lcd_rect( x-1, y-1, len*FW+2, 9 ) ;
-		if ( Tevent==EVT_KEY_BREAK(KEY_MENU) || Tevent == EVT_KEY_BREAK(BTN_RE)  )
+		if ( checkForMenuEncoderBreak( Tevent ) )
 		{
 			SharedMemory.Alpha.AlphaLength = len ;
 			SharedMemory.Alpha.PalphaText = name ;
@@ -2351,14 +2364,6 @@ void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr)
 uint8_t g_posHorz ;
 uint8_t M_longMenuTimer ;
 uint8_t M_lastVerticalPosition ;
-uint8_t MaskRotaryLong ;
-
-uint32_t checkForMenuEncoderLong( uint8_t event )
-{
-	MaskRotaryLong = 1 ;
-	return ( event==EVT_KEY_LONG(KEY_MENU)) || ( event==EVT_KEY_LONG(BTN_RE) ) ;
-}
-
 //#define MAXCOL(row) (horTab ? pgm_read_byte(horTab+min(row, horTabMax)) : (const uint8_t)0)
 
 
@@ -3872,7 +3877,7 @@ void menuTextHelp(uint8_t event)
 			f_gets( (TCHAR *)SharedMemory.TextControl.TextMenuStore, 30, &SharedMemory.TextControl.TextFile ) ;
 		}
 	}
-	else if ( ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
+	else if ( checkForMenuEncoderBreak( event ) )
 	{
 		TextResult = 1 ;
   	s_editMode = 0 ;
@@ -4122,16 +4127,28 @@ void menuCustomTelemetry(uint8_t event)
 	static MState2 mstate2;
 #ifdef WIDE_SCREEN	
 	ImageDisplay = 0 ;
+#ifdef PCBX12D
+	uint32_t rows = 6 ;
+	uint32_t page1limit = 1 ;
+	uint32_t page2limit = 3 ;
+#else
 	uint32_t rows = 3 ;
 	uint32_t page1limit = 1 ;
+#endif
 	if ( g_model.customDisplay1Extra[6] == 0 )
 	{
 		rows += 2 ;
 		page1limit += 2 ;
+#ifdef PCBX12D
+		page2limit += 2 ;
+#endif
 	}
 	if ( g_model.customDisplay2Extra[6] == 0 )
 	{
 		rows += 2 ;
+#ifdef PCBX12D
+		page2limit += 2 ;
+#endif
 	}
 	event = mstate2.check_columns( event, rows ) ;
 	
@@ -4160,6 +4177,14 @@ void menuCustomTelemetry(uint8_t event)
 		epindex = g_model.customDisplay2Extra ;
 		chr = '2' ;
 	}
+#ifdef PCBX12D
+	if ( sub >= page2limit + 1 )
+	{
+		subN = page1limit + 1 ;
+		pindex = &g_model.customDisplay1Extra[3] ;
+		chr = 'X' ;
+	}
+#endif
 	lcd_putc( 15*FW, 0, chr ) ;
 
 	if ( event == EVT_ENTRY_UP )
@@ -4169,17 +4194,27 @@ void menuCustomTelemetry(uint8_t event)
 		if ( TextResult )
 		{
 			uint8_t index = sub - 1 ;
-			if ( index >= page1limit + 1 )
+#ifdef PCBX12D
+			if ( sub >= page2limit )
 			{
-				index -= page1limit + 1 ;
-			}
-			if ( subSub == 2 )
-			{
-				epindex[index] = TextIndex ;
+				index -= page2limit ;
+				pindex[index] = TextIndex ;
 			}
 			else
+#endif
 			{
-				pindex[index*2+subSub] = TextIndex ;
+				if ( index >= page1limit + 1 )
+				{
+					index -= page1limit + 1 ;
+				}
+				if ( subSub == 2 )
+				{
+					epindex[index] = TextIndex ;
+				}
+				else
+				{
+					pindex[index*2+subSub] = TextIndex ;
+				}
 			}
 	    eeDirty(EE_MODEL) ;
 		}
@@ -4190,7 +4225,11 @@ void menuCustomTelemetry(uint8_t event)
    		eeDirty(EE_MODEL) ;		// Save it
 		}
 	}
-	
+
+#ifdef PCBX12D
+ if ( sub <= page2limit )
+ {
+#endif
 	lcd_puts_Pleft( FH, XPSTR("Type") ) ;
 	uint32_t oldValue = epindex[6] ;
 	epindex[6] = checkIndexed( FH, XPSTR(FWx7"\001""\006ValuesScript"), epindex[6], (sub==subN) ) ;
@@ -4275,6 +4314,51 @@ void menuCustomTelemetry(uint8_t event)
 			subN++;
 		}
 	}
+#ifdef PCBX12D
+ }
+ else
+ {
+	Columns = 0 ;
+	subN = page2limit + 1 ;
+	for ( uint8_t k = 0 ; k < 3 ; k += 1 )
+	{
+		uint8_t x = 128 ;
+		uint8_t y = ( k*2 + 2 ) * FH ;
+	  uint8_t attr = (sub==subN) ? InverseBlink : 0 ;
+		if ( attr )
+		{
+			if ( event == EVT_KEY_LONG(KEY_MENU) )
+			{
+				saveHpos = subSub ;
+				TextIndex = subSub == 2 ? epindex[sub] : pindex[sub*2+subSub] ;
+		  	TextType = 0 ;
+				killEvents(event) ;
+				pushMenu(menuTextHelp) ;
+			}
+		}
+		uint8_t *p = &pindex[k] ;
+		if ( *p )
+		{
+			uint32_t index = *p - 1 ;
+			putsAttIdxTelemItems( x, y, *p, attr | TSSI_TEXT ) ;
+			putsTelemetryChannel( x+5*FW-1, y+FH, index, get_telemetry_value(index), 0, TELEM_UNIT ) ;
+			if ( index < 2 )		// A1 or A2
+			{
+				lcd_outdezAtt( x+52, y, get_telemetry_value(index), 0 ) ;
+				lcd_putc( x+32, y, '[' ) ;
+				lcd_putc( x+54, y, ']' ) ;
+			}
+		}
+		else
+		{
+  		lcd_putsAtt(  x, y, XPSTR("----"), attr ) ;
+		}
+		if (sub==subN) CHECK_INCDEC_H_MODELVAR_0( *p, NUM_TELEM_ITEMS) ;
+		
+		subN++ ;
+	}
+ }
+#endif
 #else
 	uint32_t rows = 3 ;
 	uint32_t page1limit = 1 ;
@@ -8644,16 +8728,12 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 		case M_AFHD2SA :
 		{
 			uint8_t xoption = option ;
-			if ( xoption & 0x80 )
-			{
-				lcd_puts_Pleft( y, XPSTR("\013T-") ) ;
-				xoption &= 0x7F ;
-				option = xoption ;
-			}
+			xoption &= 0x7F ;
 			if ( xoption <= 70 )
 			{
 				lcd_puts_Pleft( y, XPSTR("\015Rate") ) ;
 				display = 0 ;
+				option = xoption ;
 				option *= 5 ;
 				option += 50 ;
 			}
@@ -11959,12 +12039,28 @@ void menuProcDiagCalib(uint8_t event)
 
   doMainScreenGrphics() ;
 #if defined(PCBSKY) || defined(PCB9XT)
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		uint8_t len ;
+    len = ((calibratedStick[7]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+    V_BAR( 26, SCREEN_HEIGHT-8, len ) ;
+	}
 	if ( g_eeGeneral.extraPotsSource[1] )
 	{
 		uint8_t len ;
     len = ((calibratedStick[8]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
     V_BAR( 101, SCREEN_HEIGHT-8, len ) ;
 	}
+#endif
+#ifdef PCBX9D
+#ifdef REVPLUS
+	if ( ( g_eeGeneral.analogMapping & MASK_6POS ) == USE_P3_6POS )
+	{
+		uint8_t len ;
+    len = ((calibratedStick[8]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+    V_BAR( 26, SCREEN_HEIGHT-8, len ) ;
+	}
+#endif
 #endif
 #if defined(REV9E)
 	uint8_t len ;
@@ -12137,7 +12233,7 @@ void menuProcDiagAna(uint8_t event)
   lcd_putc( 18*FW, 5*FH, 'A' ) ;
   lcd_putc( 19*FW, 5*FH, '1' ) ;
   lcd_putc( 20*FW, 5*FH, '0' ) ;
-  lcd_outhex4( 17*FW, 6*FH,anaIn(9));
+  lcd_outhex4( 17*FW, 6*FH,anaIn(8));
   lcd_outdezAtt(20*FW, 7*FH, (int32_t)calibratedStick[8]*1000/1024, PREC1);
 #else
 #ifndef PCBX7
@@ -12587,14 +12683,22 @@ void menuProcTrainer(uint8_t event)
 	{
 		attr = blink ;
 #if defined(PCBX9D) || defined(PCBX12D)
+#ifdef PCBX7
+		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 5 ) ;
+#else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
+#endif
 #else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
 #endif
 	}
 
 #if defined(PCBX9D) || defined(PCBX12D)
+#ifdef PCBX7
+  lcd_putsAttIdx(13*FW, 0, XPSTR("\010Jack PPMSbus    Cppm    Slave   JackSBUSBT      "), tProf->channel[0].source, attr ) ;
+#else
   lcd_putsAttIdx(13*FW, 0, XPSTR("\010Jack PPMSbus    Cppm    Slave   JackSBUS"), tProf->channel[0].source, attr ) ;
+#endif
 	if ( tProf->channel[0].source == TRAINER_SLAVE )
 	{ // i am the slave
 	    lcd_puts_P(7*FW, 3*FH, PSTR(STR_SLAVE));
@@ -13197,24 +13301,24 @@ extern uint32_t MixerRate ;
 //  lcd_outdezAtt(14*FW , 1*FH, (g_timePXX)/2 ,0);
 #endif
 
-#ifdef PCBX12D
-static uint16_t tt ;
-static uint16_t ct ;
-static uint16_t mt ;
-static uint16_t count ;
-extern uint16_t TestTime ;
-extern uint16_t ClearTime ;
-extern uint16_t MenuTime ;
-if ( ++count > 25 )
-{
-	tt = TestTime ;
-	ct = ClearTime ;
-	mt = MenuTime ;
-}
-	lcd_outhex4( 134, 2*FH, TestTime ) ; lcd_outdezAtt( 190, 2*FH, tt/2, 0 ) ;
-	lcd_outhex4( 134, 3*FH, ClearTime ) ; lcd_outdezAtt( 190, 3*FH, ct/2, 0 ) ;
-	lcd_outhex4( 134, 4*FH, MenuTime ) ; lcd_outdezAtt( 190, 4*FH, mt/2, 0 ) ;
-#endif
+//#ifdef PCBX12D
+//static uint16_t tt ;
+//static uint16_t ct ;
+//static uint16_t mt ;
+//static uint16_t count ;
+//extern uint16_t TestTime ;
+//extern uint16_t ClearTime ;
+//extern uint16_t MenuTime ;
+//if ( ++count > 25 )
+//{
+//	tt = TestTime ;
+//	ct = ClearTime ;
+//	mt = MenuTime ;
+//}
+//	lcd_outhex4( 134, 2*FH, TestTime ) ; lcd_outdezAtt( 190, 2*FH, tt/2, 0 ) ;
+//	lcd_outhex4( 134, 3*FH, ClearTime ) ; lcd_outdezAtt( 190, 3*FH, ct/2, 0 ) ;
+//	lcd_outhex4( 134, 4*FH, MenuTime ) ; lcd_outdezAtt( 190, 4*FH, mt/2, 0 ) ;
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D)
   lcd_puts_Pleft( 3*FH, XPSTR("tBgRead        ms"));
@@ -13630,6 +13734,33 @@ extern uint8_t MultiId[] ;
 
 #endif	// PCBSKY
 
+//#ifdef PCBX7
+//extern uint8_t BtRnameDebug[] ;
+//	uint32_t x ;
+//	uint32_t y ;
+//	y = FH ;
+//	for ( x = 0 ; x < 10 ; x += 2 )
+//	{
+//		lcd_outhex4( 12*x, y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
+//	}
+//	y = 2*FH ;
+//	for ( x = 10 ; x < 20 ; x += 2 )
+//	{
+//		lcd_outhex4( 12*(x-10), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
+//	}
+//	y = 3*FH ;
+//	for ( x = 20 ; x < 30 ; x += 2 )
+//	{
+//		lcd_outhex4( 12*(x-20), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
+//	}
+//	y = 4*FH ;
+//	for ( x = 30 ; x < 40 ; x += 2 )
+//	{
+//		lcd_outhex4( 12*(x-30), y, BtRnameDebug[x+1] | (BtRnameDebug[x] << 8 ) ) ;
+//	}
+
+//#endif	// PCBX7
+
 #ifdef PCBX12D
 extern uint16_t HbeatCounter ;
   lcd_outhex4( 0, 3*FH, HbeatCounter ) ;
@@ -14002,7 +14133,7 @@ void menuProcAlpha(uint8_t event)
 	}
 	index += g_posHorz ;
 
-	if ( event==EVT_KEY_BREAK(KEY_MENU) || event == EVT_KEY_BREAK(BTN_RE)  )
+	if  ( checkForMenuEncoderBreak( event ) )
 	{
 		if ( ( sub == 5 ) && ( g_posHorz != 1 ) )
 		{
@@ -15021,28 +15152,6 @@ void menuProcSelectImageFile(uint8_t event)
 }
 #endif
 
-//#ifdef PCBX12D
-//const uint8_t Abitmap[] =
-//{
-//	0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00,
-//	0x00, 0xFF, 0xFF, 0xFF, 0x00, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
-//	0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0xFF, 0x00, 0x00, 0x00, 0xFF, 0x00,
-//	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-//	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-//} ;
-//#endif
-
 extern void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type) ;
 
 void menuProcBattery(uint8_t event)
@@ -15065,13 +15174,13 @@ void menuProcBattery(uint8_t event)
       audioDefevent(AU_MENUS) ;
     	killEvents(event) ;
     break;
+  	
+//		case EVT_ENTRY :
+//extern void convertFont() ;
+//		 convertFont() ;
+//    break;
 
   }
-
-//#ifdef PCBX12D
-//	lcdDrawSolidFilledRectDMA( 300, 0, 100, 100, LCD_GREY ) ;
-//	lcdDrawBitmapDMA( 310, 10, 12, 16, (uint8_t*)Abitmap, 0 ) ;
-//#endif
 
 		lcd_puts_Pleft( 2*FH, PSTR(STR_Battery));
 		putsVolts( 13*FW, 2*FH, g_vbat100mV, 0 ) ;
@@ -15752,6 +15861,42 @@ extern uint8_t ModelImageValid ;
 #endif
 
 #ifdef PCBX12D
+	
+//	lcdDrawSolidFilledRectDMA( 0, 128, 240, 100, LCD_GREY ) ;
+	
+//	lcd_outhex4( 0, 64, GPIOB->MODER ) ;
+//	lcd_outhex4( 30, 64, GPIOB->OTYPER ) ;
+//	lcd_outhex4( 60, 64, GPIOB->PUPDR ) ;
+//	lcd_outhex4( 90, 64, GPIOB->ODR ) ;
+//	lcd_outhex4( 0, 72, GPIOB->AFR[0] ) ;
+
+
+//extern void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t background ) ;
+//	lcdDrawCharBitmapDma( 10, 70, 'A', CONDENSED, LCD_WHITE ) ;
+//	lcd_outhex4( 10, 78, 0x9AB3 ) ;
+
+//	uint32_t xi ;
+//	for ( xi = 0 ; xi < 26 ; xi += 1 )
+//	{
+//		lcdDrawCharBitmapDma( xi*6, 66, 'A'+xi, 0 ) ;
+//		lcdDrawCharBitmapDma( xi*6, 66+8, 'A'+xi, 0 ) ;
+//		lcdDrawCharBitmapDma( xi*6, 66+16, 'A'+xi, 0 ) ;
+//		lcdDrawCharBitmapDma( xi*6, 66+24, 'A'+xi, 0 ) ;
+//		lcdDrawCharBitmapDma( xi*6, 66+32, 'A'+xi, 0 ) ;
+//		lcdDrawCharBitmapDma( xi*6, 66+40, 'A'+xi, 0 ) ;
+
+//  	lcd_putc(xi*6, 66, 'A'+xi) ;
+//  	lcd_putc(xi*6, 66+8, 'A'+xi) ;
+//  	lcd_putc(xi*6, 66+16, 'A'+xi) ;
+//  	lcd_putc(xi*6, 66+24, 'A'+xi) ;
+//  	lcd_putc(xi*6, 66+32, 'A'+xi) ;
+//  	lcd_putc(xi*6, 66+40, 'A'+xi) ;
+
+
+
+//	}
+	
+//	lcdDrawCharBitmapDma( 10, 90, 'A', 1 ) ;
 
 //extern uint32_t FileSizeGeneral ;
 //	lcd_outhex4( 0, 8*FH, FileSizeGeneral ) ;
@@ -16414,6 +16559,32 @@ extern uint8_t ModelImageValid ;
 #endif
 #ifdef PCBX12D
 			ImageDisplay = 1 ;
+
+			if ( tview > 0x10 )
+			{
+				lcd_vline( 127, 8, 48 ) ;
+    		for (uint32_t i=6; i<9; i++)
+				{
+					uint32_t j ;
+					j = g_model.customDisplay1Extra[i-3] ;
+					if ( j )
+					{
+						uint32_t index = j-1 ;
+						uint32_t x = 129 ;
+						uint32_t y = (i-6)*2*FH + 2*FH ;
+						uint8_t style = TELEM_LABEL|TELEM_UNIT|TELEM_UNIT_LEFT|TELEM_VALUE_RIGHT ;
+	          if ( index == TEL_ITEM_T1 )
+						{
+							if ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) )
+							{
+								style = TELEM_ARDUX_NAME ;
+							}	
+						}
+						putsTelemetryChannel( x, y, index, get_telemetry_value(index),
+												 DBLSIZE|CONDENSED, style ) ;
+					}
+				}
+			}
 #endif
 
 #ifndef PCBX12D
@@ -18240,7 +18411,7 @@ STR_DiagAna
     		lcd_putsAtt(  0, y, XPSTR(GvaString), sub==subN ? INVERS : 0 ) ;
       	if( sub==subN )
 				{
-					if ( Tevent==EVT_KEY_BREAK(KEY_MENU) || Tevent == EVT_KEY_BREAK(BTN_RE)  )
+					if ( checkForMenuEncoderBreak( Tevent ) )
 					{
 						SubMenuCall = 0x85 ;
 						pushMenu(menuProcGlobalVoiceAlarm) ;
@@ -19349,13 +19520,14 @@ STR_DiagAna
 				if ( sub == subN )
 				{
 					attr = blink ;
+					if ( checkForMenuEncoderBreak( event ) )
+					{
+		    		killEvents( event ) ;
+						SubMenuCall = 0x80 + subN ;
+						pushMenu(menuConfigPots) ;
+					}
 				}
 				lcd_putsAtt( 0, y, XPSTR("Pot Detents"), attr ) ;
-				if ( event == EVT_KEY_BREAK(KEY_MENU) || event == EVT_KEY_BREAK(BTN_RE)  )
-				{
-		    	killEvents( event ) ;
-					pushMenu(menuConfigPots) ;
-				}
  				y += FH ;
 				subN += 1 ;
 #endif // PCBSKY
@@ -19448,7 +19620,7 @@ STR_DiagAna
 	EditType = EE_GENERAL ;
 
 extern uint8_t BtName[] ;
-extern uint8_t BtNameChange ;
+//extern uint8_t BtNameChange ;
 
 			uint8_t attr = (sub == subN) ? INVERS : 0 ;
 				
@@ -19464,9 +19636,9 @@ extern uint8_t BtNameChange ;
 				// Name was edited
 				if ( AlphaEdited )
 				{
-					if ( BtNameChange == 0 )
+					if ( BtControl.BtNameChange == 0 )
 					{
-						BtNameChange = 0x80 ;
+						BtControl.BtNameChange = 0x80 ;
 					}
 					AlphaEdited = 0 ;
 				}
@@ -19475,25 +19647,25 @@ extern uint8_t BtNameChange ;
 			y += FH ;
 			subN += 1 ;
 
-extern uint8_t BtRoleChange ;
-extern uint8_t BtMasterSlave ;
+//extern uint8_t BtRoleChange ;
+//extern uint8_t BtMasterSlave ;
 			if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
 			{
 				lcd_puts_Pleft( y, XPSTR("BT Role") ) ;
-	    	lcd_putsAttIdx( 12*FW, y, XPSTR("\007UNKNOWNSLAVE  MASTER "), BtMasterSlave, (sub==subN) ? blink:0 ) ;
+	    	lcd_putsAttIdx( 12*FW, y, XPSTR("\007UNKNOWNSLAVE  MASTER "), BtControl.BtMasterSlave, (sub==subN) ? blink:0 ) ;
 				uint8_t newRole = 0 ;
-				if ( BtMasterSlave == 2 )
+				if ( BtControl.BtMasterSlave == 2 )
 				{
 					newRole = 1 ;
 				}
 				if ( (sub == subN) )
 				{
 					newRole = checkIncDec( newRole, 0, 1, 0 ) ;
-					if ( newRole+1 != BtMasterSlave )
+					if ( newRole+1 != BtControl.BtMasterSlave )
 					{
-						if ( BtRoleChange == 0 )
+						if ( BtControl.BtRoleChange == 0 )
 						{
-							BtRoleChange = 0x80 | newRole ;
+							BtControl.BtRoleChange = 0x80 | newRole ;
 						}
 					}
 				}
@@ -19511,7 +19683,7 @@ extern uint8_t BtMasterSlave ;
 				lcd_putsAtt( 0, y, XPSTR("Scan"), attr ) ; 
 				if ( attr )
 				{
-					if ( event == EVT_KEY_BREAK(KEY_MENU) )
+					if ( checkForMenuEncoderBreak( event ) )
 					{
 						s_editMode = 0 ;
 						SubMenuCall = 0x85 ;
@@ -19524,7 +19696,7 @@ extern uint8_t BtMasterSlave ;
 				lcd_putsAtt( 10*FW, y, XPSTR("Configure"), attr ) ; 
 				if ( attr )
 				{
-					if ( event == EVT_KEY_BREAK(KEY_MENU) )
+					if ( checkForMenuEncoderBreak( event ) )
 					{
 						s_editMode = 0 ;
 						SubMenuCall = 0x86 ;
@@ -19541,7 +19713,7 @@ extern uint8_t BtPswd[] ;
 				
 				if ( attr )
 				{
-					if ( event == EVT_KEY_BREAK(KEY_MENU) )
+					if ( checkForMenuEncoderBreak( event ) )
 					{
 						s_editMode = 0 ;
 						SubMenuCall = 0x87 ;
@@ -19551,7 +19723,7 @@ extern uint8_t BtPswd[] ;
 
 				lcd_puts_Pleft( FH*7, XPSTR("Pswd\013Br")) ;
 				lcd_putsAtt( 5*FW-3, 7*FH, (char *)BtPswd, 0 ) ;
-  			lcd_putsAttIdx(  14*FW, 7*FH, XPSTR(BtBaudString), BtCurrentBaudrate, 0 ) ;
+  			lcd_putsAttIdx(  14*FW, 7*FH, XPSTR(BtBaudString), BtControl.BtCurrentBaudrate, 0 ) ;
 
 			}
 #endif
@@ -19788,7 +19960,7 @@ STR_Protocol
 			if ( sub == subN )
 			{
 				lcd_char_inverse( 0, y, 9*FW, 0 ) ;
-	 			if ( event == EVT_KEY_BREAK(KEY_MENU) || event == EVT_KEY_BREAK(BTN_RE) )
+	 			if ( checkForMenuEncoderBreak( event ) )
 				{
 					SubMenuCall = 0x80 ;
    		   	pushMenu( menuProcMusic ) ;
@@ -20579,16 +20751,16 @@ extern uint16_t switches_states ;
 }
 
 #ifdef BLUETOOTH
-extern uint8_t Bt_ok ;
+//extern uint8_t Bt_ok ;
 extern uint16_t Bt_debug ;
-extern uint8_t Bt_baudrate ;
+//extern uint8_t Bt_baudrate ;
 extern struct t_fifo128 BtRx_fifo ;
 extern uint16_t BtRxTimer ;
 //extern uint8_t BtDebug[] ;
 
 void menuProcBt(uint8_t event)
 {
-  MENU(XPSTR("BT"), menuTabStat, e_bluetooth, 6, {0/*, 0*/});
+  MENU(XPSTR("BT"), menuTabStat, e_bluetooth, 7, {0/*, 0*/});
 
 //	lcd_outhex4( 30, 0, BtDebug[0] | (BtDebug[1]<<8) ) ;
 //	lcd_outhex4( 60, 0, BtDebug[2] | (BtDebug[3]<<8) ) ;
@@ -20597,6 +20769,9 @@ void menuProcBt(uint8_t event)
 	uint16_t *p = (uint16_t *)&BtRx_fifo ;
 #endif
 #ifdef PCB9XT
+	uint16_t *p = (uint16_t *)&BtRx_fifo ;
+#endif
+#ifdef PCBX7
 	uint16_t *p = (uint16_t *)&BtRx_fifo ;
 #endif
 	uint32_t i ;
@@ -20635,6 +20810,7 @@ void menuProcBt(uint8_t event)
 	}
 #else
 	uint32_t j ;
+	p += mstate2.m_posVert * 5 ;
 	for ( j = 0 ; j < 5 ; j += 1 )
 	{
 		for ( i = 0 ; i < 5 ; i += 1 )
@@ -20654,18 +20830,18 @@ void menuProcBt(uint8_t event)
 	}
 #endif
 
-extern uint8_t BtBadChecksum ;
-	lcd_outdez( 25, 7*FH, BtBadChecksum ) ;
+//extern uint8_t BtBadChecksum ;
+	lcd_outdez( 25, 7*FH, BtControl.BtBadChecksum ) ;
 
-extern uint8_t BtLinking ;
-	lcd_outdez( 50, 7*FH, BtLinking ) ;
+//extern uint8_t BtLinking ;
+	lcd_outdez( 50, 7*FH, BtControl.BtLinking ) ;
 	 
 #ifdef BLUETOOTH
 	lcd_outdez( 75, 7*FH, BtRxTimer ) ;
-extern uint8_t BtCurrentLinkIndex ;
-extern uint8_t BtBaudChangeIndex ;
-	lcd_outdez( 100, 7*FH, BtCurrentLinkIndex ) ;
-	lcd_outdez( 125, 7*FH, BtBaudChangeIndex ) ;
+//extern uint8_t BtCurrentLinkIndex ;
+//extern uint8_t BtBaudChangeIndex ;
+	lcd_outdez( 100, 7*FH, BtControl.BtCurrentLinkIndex ) ;
+	lcd_outdez( 125, 7*FH, BtControl.BtBaudChangeIndex ) ;
 #endif
 
 }
@@ -20717,7 +20893,7 @@ void menuProcBtAddressList(uint8_t event)
 
 	if ( PopupData.PopupActive == 0 )
 	{
-		if ( (event==EVT_KEY_BREAK(KEY_MENU)) || (event == EVT_KEY_BREAK(BTN_RE))  )
+		if ( checkForMenuEncoderBreak( event ) )
 		{
 			PopupData.PopupIdx = 0 ;
 			PopupData.PopupActive = 1 ;
@@ -20747,7 +20923,7 @@ void menuProcBtAddressList(uint8_t event)
 			}
 			if ( popidx == 2 )	// Link
 			{
-				BtLinkRequest = 0x80 + sub ;
+				BtControl.BtLinkRequest = 0x80 + sub ;
 			}
 			if ( popidx == 3 )	// Delete
 			{
@@ -20771,7 +20947,7 @@ void menuProcBtAddressList(uint8_t event)
 
 }
 
-extern uint8_t BtConfigure ;
+//extern uint8_t BtConfigure ;
 void menuProcBtConfigure(uint8_t event)
 {
 	uint32_t i ;
@@ -20782,19 +20958,19 @@ void menuProcBtConfigure(uint8_t event)
 
 	if ( event == EVT_ENTRY )
 	{
-		if ( BtCurrentBaudrate != g_eeGeneral.bt_baudrate )
+		if ( BtControl.BtCurrentBaudrate != g_eeGeneral.bt_baudrate )
 		{
-			BtBaudrateChanged = 1 ;
+			BtControl.BtBaudrateChanged = 1 ;
 		}
-		BtConfigure = 0x80 ;
+		BtControl.BtConfigure = 0x80 ;
 	}
 
-	lcd_puts_Pleft( 2*FH, (BtConfigure) ? XPSTR( "\006Configuring" ) : XPSTR("\007Configured") ) ;
+	lcd_puts_Pleft( 2*FH, (BtControl.BtConfigure) ? XPSTR( "\006Configuring" ) : XPSTR("\007Configured") ) ;
 
-	if ( BtConfigure )
+	if ( BtControl.BtConfigure )
 	{
 		uint32_t width ;
-		width = BtConfigure & 0x3F ;
+		width = BtControl.BtConfigure & 0x3F ;
 		if ( width > 17 )
 		{
 			width = 17 ;
@@ -20810,8 +20986,8 @@ void menuProcBtConfigure(uint8_t event)
 	} 
 }
 
-extern uint8_t BtScan ;
-extern uint8_t BtScanState ;
+//extern uint8_t BtScan ;
+//extern uint8_t BtScanState ;
 extern uint8_t BtTempBuffer[] ;
 void menuProcBtScan(uint8_t event)
 {
@@ -20824,13 +21000,13 @@ void menuProcBtScan(uint8_t event)
 	
 	if ( event == EVT_ENTRY )
 	{
-		BtScanState = 0 ;
-		BtScan = 1 ;
+		BtControl.BtScanState = 0 ;
+		BtControl.BtScan = 1 ;
 	}
 
-	lcd_puts_Pleft( 2*FH, (BtScanState < 3) ? XPSTR( "\006Preparing" ) : ( (BtScanState < 4) ? XPSTR( "\006Scanning" ) : XPSTR("\007Scanned") ) )  ;
+	lcd_puts_Pleft( 2*FH, (BtControl.BtScanState < 3) ? XPSTR( "\006Preparing" ) : ( (BtControl.BtScanState < 4) ? XPSTR( "\006Scanning" ) : XPSTR("\007Scanned") ) )  ;
 	
-	if ( BtScanState > 2 )
+	if ( BtControl.BtScanState > 2 )
 	{
 		uint8_t chr ;
 		x = 0 ;
@@ -20861,7 +21037,7 @@ void menuProcBtScan(uint8_t event)
 				}
 			}
 		}
-		if ( NumberBtremotes )
+		if ( BtControl.NumberBtremotes )
 		{
 			i = 0 ;
 			x = 0 ;
@@ -20879,7 +21055,7 @@ void menuProcBtScan(uint8_t event)
 			}
 		}
 	}
-	lcd_outhex4( 100, 0*FH, BtScanState ) ;
+	lcd_outhex4( 100, 0*FH, BtControl.BtScanState ) ;
 
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) OpenTX
+ * Author - Mike Blandford
  *
  * Based on code named
  *   th9x - http://code.google.com/p/th9x 
@@ -24,10 +24,10 @@
 typedef const char pm_char;
 typedef int32_t swsrc_t;
 typedef uint16_t source_t;
-inline int divRoundClosest(const int n, const int d)
-{
-  return ((n < 0) ^ (d < 0)) ? ((n - d/2)/d) : ((n + d/2)/d);
-}
+//inline int divRoundClosest(const int n, const int d)
+//{
+//  return ((n < 0) ^ (d < 0)) ? ((n - d/2)/d) : ((n + d/2)/d);
+//}
 
 
 // For myeeprom.h
@@ -75,13 +75,19 @@ extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, ui
 
 #define LCD_BKLIGHT_PWM_FREQ           300
 
+uint8_t LcdFirstFrameBuffer[DISPLAY_BUFFER_SIZE] __SDRAM ;
+uint8_t LcdSecondFrameBuffer[DISPLAY_BUFFER_SIZE] __SDRAM ;
+uint8_t LcdBackupFrameBuffer[DISPLAY_BUFFER_SIZE] __SDRAM ;
 
-#define LCD_FIRST_FRAME_BUFFER         SDRAM_BANK_ADDR
-#define LCD_SECOND_FRAME_BUFFER        (SDRAM_BANK_ADDR + DISPLAY_BUFFER_SIZE)
-#define LCD_BACKUP_FRAME_BUFFER        (SDRAM_BANK_ADDR + 2*DISPLAY_BUFFER_SIZE)
+//#define LCD_FIRST_FRAME_BUFFER         SDRAM_BANK_ADDR
+//#define LCD_SECOND_FRAME_BUFFER        (SDRAM_BANK_ADDR + DISPLAY_BUFFER_SIZE)
+//#define LCD_BACKUP_FRAME_BUFFER        (SDRAM_BANK_ADDR + 2*DISPLAY_BUFFER_SIZE)
 
-uint32_t CurrentFrameBuffer = LCD_FIRST_FRAME_BUFFER;
+uint32_t CurrentFrameBuffer = (uint32_t)LcdFirstFrameBuffer;
 uint32_t CurrentLayer = LCD_FIRST_LAYER;
+
+const uint8_t *ExtraHorusFont = NULL ;
+const uint8_t *ExtraHorusBigFont = NULL ;
 
 #define NRST_LOW()   do { LCD_GPIO_NRST->BSRRH = LCD_GPIO_PIN_NRST; } while(0)
 #define NRST_HIGH()  do { LCD_GPIO_NRST->BSRRL = LCD_GPIO_PIN_NRST; } while(0)
@@ -372,7 +378,7 @@ static void LCD_LayerInit()
   LTDC_Layer_InitStruct.LTDC_CFBLineNumber = LCD_H;
 
   /* Start Address configuration : the LCD Frame buffer is defined on SDRAM w/ Offset */
-  LTDC_Layer_InitStruct.LTDC_CFBStartAdress = LCD_FIRST_FRAME_BUFFER;
+  LTDC_Layer_InitStruct.LTDC_CFBStartAdress = (uint32_t)LcdFirstFrameBuffer;
 
   /* Initialize LTDC layer 1 */
   LTDC_LayerInit(LTDC_Layer1, &LTDC_Layer_InitStruct);
@@ -382,7 +388,7 @@ static void LCD_LayerInit()
   LTDC_Layer_InitStruct.LTDC_BlendingFactor_2 = LTDC_BlendingFactor2_PAxCA;
 
   /* Start Address configuration : the LCD Frame buffer is defined on SDRAM w/ Offset */
-  LTDC_Layer_InitStruct.LTDC_CFBStartAdress = LCD_FIRST_FRAME_BUFFER + DISPLAY_BUFFER_SIZE;
+  LTDC_Layer_InitStruct.LTDC_CFBStartAdress = (uint32_t)LcdSecondFrameBuffer;
 
   /* Initialize LTDC layer 2 */
   LTDC_LayerInit(LTDC_Layer2, &LTDC_Layer_InitStruct);
@@ -569,12 +575,12 @@ void LCD_SetLayer(uint32_t Layerx)
 {
   if (Layerx == LCD_FIRST_LAYER)
   {
-    CurrentFrameBuffer = LCD_FIRST_FRAME_BUFFER;
+    CurrentFrameBuffer = (uint32_t)LcdFirstFrameBuffer;
     CurrentLayer = LCD_FIRST_LAYER;
   }
   else
   {
-    CurrentFrameBuffer = LCD_FIRST_FRAME_BUFFER + DISPLAY_BUFFER_SIZE;
+    CurrentFrameBuffer = (uint32_t)LcdSecondFrameBuffer;
     CurrentLayer = LCD_SECOND_LAYER;
   }
 }
@@ -735,6 +741,258 @@ void waitLcdClearDdone()
 	}
 }
 
+const uint8_t Font5x7h[] =
+{
+#include "..\font5x7h.lbm"
+} ;
+
+const uint8_t Font5x7hBold[] =
+{
+#include "..\font5x7hBold.lbm"
+} ;
+
+const uint8_t Font_dblsizeh[] =
+{
+#include "..\font_dblsizeh.lbm"
+} ;
+
+const uint8_t Font_12x8h[] =
+{
+#include "..\font12x8h.lbm"
+} ;
+
+
+const uint8_t font_fr_h_extra[] =
+{
+#include "..\font5x7Frh.lbm"
+} ;
+const uint8_t font_fr_h_big_extra[] =
+{
+#include "..\font_fr_10x14h.lbm"
+} ;
+const uint8_t font_de_h_extra[] =
+{
+#include "..\font5x7Deh.lbm"
+} ;
+const uint8_t font_de_h_big_extra[] =
+{
+#include "..\font_de_10x14h.lbm"
+} ;
+const uint8_t font_se_h_extra[] =
+{
+#include "..\font5x7Seh.lbm"
+} ;
+const uint8_t font_se_h_big_extra[] =
+{
+#include "..\font_se_10x14h.lbm"
+} ;
+const uint8_t font_it_h_extra[] =
+{
+#include "..\font5x7Ith.lbm"
+} ;
+const uint8_t font_pl_h_extra[] =
+{
+#include "..\font5x7Plh.lbm"
+} ;
+
+
+
+// Modes
+// Bit 0 - INVERS
+// Bit 0 = 0 - black on white
+// Bit 0 = 1 - white on black
+// Bit 1 - BLINK
+// Bit 7 - BOLD
+// Bit 7 = 0 - Normal
+// Bit 7 = 1 - Bold
+// Bit 3 - CONDENSED
+// Bit 3 = 0 - Normal
+// Bit 3 = 1 - Condensed
+
+//#define LCD_RED			0xF800
+//#define LCD_GREEN		0x07E0
+//#define LCD_BLUE		0x001F
+//#define LCD_WHITE		0xFFFF
+//#define LCD_BLACK		0
+//#define LCD_GREY		0x8410
+//#define LCD_STATUS_GREY	0x3BEF
+
+void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
+{
+	uint32_t backColour ;
+	uint32_t frontColour ;
+	
+	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
+	backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
+	backColour |= ( (background & 0x001F) << 3 ) | ( (background & 0x001C) >> 2 ) ;
+	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
+	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
+	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
+	
+  uint8_t *q ;
+	uint32_t condensed = mode & CONDENSED ;
+	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x)*2 ;
+	uint32_t w = condensed ? 16 : 24 ;
+//	w = 12 ;
+	if ( condensed )
+	{
+		if( chr < 0xC0 )
+		{
+			q = (uint8_t *) &Font_12x8h[(chr-0x20)*256] ;
+		}
+		else
+		{
+			q = (uint8_t *) &Font_12x8h[0] ;
+		}
+	}
+	else
+	{
+		if( chr < 0xC0 )
+		{
+			q = (uint8_t *) &Font_dblsizeh[(chr-0x20)*384] ;
+		}
+		else
+		{
+			if ( ExtraHorusBigFont )
+			{
+				q = (uint8_t *) &ExtraHorusBigFont[(chr-0xC0)*384] ;
+			}
+			else
+			{
+				q = (uint8_t *) &Font_12x8h[0] ;
+			}
+		}
+	}
+  DMA2D_DeInit() ;
+	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_PFC ;
+	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+  DMA2D->OMAR = addr ;
+	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 32 | (w << 16) ) ;
+
+	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour : backColour ;
+	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour ;
+  
+  DMA2D->FGPFCCR = CM_L4 ;
+  DMA2D->FGMAR   = (uint32_t) q ;
+  DMA2D->FGOR    = 0 ;
+	
+  DMA2D_StartTransfer() ;
+  while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+//	if ( condensed )
+//	{
+//  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
+//	  DMA2D->OMAR = addr + 4 ;
+//		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
+//  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
+//	  DMA2D->FGOR    = 4 ;
+//		DMA2D->IFCR = DMA2D_FLAG_TC ;
+//	  DMA2D_StartTransfer() ;
+//  	while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+//	}
+}
+
+
+
+
+
+void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
+{
+	uint32_t backColour ;
+	switch ( background )
+	{
+		case LCD_WHITE :
+		default :
+			backColour = 0xFFFFFFFF ;
+		break ;
+		case LCD_STATUS_GREY :
+			backColour = 0xFF397D7B ;
+		break ;
+	}
+
+	uint32_t frontColour ;
+	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
+	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
+	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
+
+  uint8_t *q ;
+	uint32_t condensed = mode & CONDENSED ;
+	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x)*2 + (condensed ? 4 : 0) ;
+	uint32_t w = condensed ? 2 : 12 ;
+//	w = 12 ;
+//	q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+	if ( condensed )
+	{
+		if( chr < 0xC0 )
+		{
+			q = (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+		}
+		else
+		{
+			if ( ExtraHorusFont )
+			{
+				q = (uint8_t *) &ExtraHorusFont[(chr-0xC0)*96] ;
+			}
+			else
+			{
+				q = (uint8_t *) &Font5x7h[0] ;
+			}
+		}
+	}
+	else
+	{
+		if( chr < 0xC0 )
+		{
+			q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+		}
+		else
+		{
+			if ( mode & BOLD )
+			{
+				q = (uint8_t *) &Font5x7h[0] ;
+			}
+			else
+			{
+				if ( ExtraHorusFont )
+				{
+					q = (uint8_t *) &ExtraHorusFont[(chr-0xC0)*96] ;
+				}
+				else
+				{
+					q = (uint8_t *) &Font5x7h[0] ;
+				}
+			}
+		}
+	}
+	DMA2D_DeInit() ;
+	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_PFC ;
+	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+  DMA2D->OMAR = addr ;
+	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (w << 16) ) ;
+
+	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour : backColour ;
+	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour ;
+  
+  DMA2D->FGPFCCR = CM_L4 ;
+  DMA2D->FGMAR   = (uint32_t) q ;
+  DMA2D->FGOR    = condensed ? 10 : 0 ;
+//  DMA2D->FGOR    = 0 ;
+	
+  DMA2D_StartTransfer() ;
+  while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+	if ( condensed )
+	{
+  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
+	  DMA2D->OMAR = addr + 4 ;
+		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
+  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
+	  DMA2D->FGOR    = 4 ;
+		DMA2D->IFCR = DMA2D_FLAG_TC ;
+	  DMA2D_StartTransfer() ;
+  	while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+	}
+}
 
 void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type)
 {
@@ -952,13 +1210,13 @@ void DMAcopy(void * src, void * dest, int len)
 
 void lcdStoreBackupBuffer()
 {
-  uint16_t * src = (uint16_t *)CurrentFrameBuffer, * dest = (uint16_t *)LCD_BACKUP_FRAME_BUFFER;
+  uint16_t * src = (uint16_t *)CurrentFrameBuffer, * dest = (uint16_t *)LcdBackupFrameBuffer;
   DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
 }
 
 int lcdRestoreBackupBuffer()
 {
-  uint16_t * dest = (uint16_t *)CurrentFrameBuffer, * src = (uint16_t *)LCD_BACKUP_FRAME_BUFFER;
+  uint16_t * dest = (uint16_t *)CurrentFrameBuffer, * src = (uint16_t *)LcdBackupFrameBuffer;
   DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
   return 1;
 }
@@ -1028,6 +1286,62 @@ void backlight_set( uint16_t brightness )
 	backlightEnable(BacklightBrightness) ;
 }
 
+
+// Temporary
+//#include "ff.h"
+
+////#include "font.lbm"
+//FIL FontFile = {0} ;
+
+//extern uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background ) ;
+//void convertFont()
+//{
+//// 16+16+64+3 = 99
+//// Space to /
+//// 0-9 to ?
+//// @, A-Z, a-z, ...
+//// ^, v, tick
+
+//	uint8_t c[32] ;
+////	uint8_t d[16] ;
+//	uint16_t *p ;
+//	uint32_t i ;
+//	uint32_t j ;
+//	uint32_t mask ;
+//	uint32_t chrIndex ;
+	
+//  f_open(&FontFile, "\\fontLC", FA_OPEN_ALWAYS | FA_WRITE ) ;
+	
+//	for ( chrIndex = 0 ; chrIndex < 96 ; chrIndex += 1 )
+//	{
+//		lcdDrawSolidFilledRectDMA( 0, 0, 40, 40, LCD_WHITE ) ;
+//		lcd_putcAttDblColour( 0, 0, chrIndex+0x20, DBLSIZE | CONDENSED, LCD_BLACK, LCD_WHITE ) ;
+	
+//		p = ( uint16_t *) CurrentFrameBuffer ;
+//		for ( j = 0 ; j < 32 ; j += 1 )
+//		{
+//			for ( i = 0 ; i < 16 ; i += 2 )
+//			{
+//				mask = *(p+i) ;
+//				c[i/2] = (mask == LCD_WHITE) ? 0 : 0x0F ;
+//				mask = *(p+i+1) ;
+//				c[i/2] |= (mask == LCD_WHITE) ? 0 : 0xF0 ;
+//			}
+//			for ( i = 0 ; i < 8 ; i += 1 )
+//			{
+//				f_printf(&FontFile, "0x%02x,", c[i] ) ;
+//			}
+//			if ( j == 0 )
+//			{
+//				f_printf( &FontFile, " // '%c'", chrIndex+32 ) ;
+//			}
+//			f_printf(&FontFile, "\n" ) ;
+//			p += LCD_W ;
+//		}
+//    wdt_reset();  // Retrigger hardware watchdog
+//  }
+//  f_close(&FontFile) ;
+//}
 
 
 

@@ -43,7 +43,7 @@
 bool lcdInitFinished = false;
 void lcdInitFinish();
 
-extern uint8_t DisplayBuf[] ;
+extern uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
 
 void delay_ms(uint32_t ms)
 {
@@ -142,6 +142,19 @@ void refreshDisplay()
   if (!lcdInitFinished) {
     lcdInitFinish();
   }
+	
+	if ( g_model.BTfunction == BT_LCDDUMP )
+	{
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
+		{
+			ExtDisplayTime = time ;
+  		memcpy(&ExtDisplayBuf[1], DisplayBuf, sizeof(DisplayBuf));
+			ExtDisplayBuf[0] = 0xAA ;
+			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
+			ExtDisplaySend = 1 ;
+		}
+	}
 
   uint8_t * p = DisplayBuf;
   for (uint8_t y=0; y < 8; y++, p+=LCD_W) {
@@ -386,8 +399,8 @@ uint8_t ExtDisplayBuf[1024+8*X9D_EXTRA + 2] ;
 #else
 uint8_t ExtDisplayBuf[1024 + 2] ;
 #endif
-int8_t ExtDisplayCounter ;
 uint8_t ExtDisplaySend ;
+uint16_t ExtDisplayTime ;
 
 void Set_Address(uint8_t x, uint8_t y)
 {
@@ -542,8 +555,10 @@ extern uint8_t CurrentVolume ;
 	
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
-		if ( --ExtDisplayCounter < 0 )
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
 		{
+			ExtDisplayTime = time ;
   		memcpy(&ExtDisplayBuf[1],        &DisplayBuf[0],     128+X9D_EXTRA);
   		memcpy(&ExtDisplayBuf[1+128+X9D_EXTRA], &DisplayBuf[212],   128+X9D_EXTRA);
   		memcpy(&ExtDisplayBuf[1+256+X9D_EXTRA*2], &DisplayBuf[212*2], 128+X9D_EXTRA);
@@ -554,7 +569,6 @@ extern uint8_t CurrentVolume ;
   		memcpy(&ExtDisplayBuf[1+896+X9D_EXTRA*7], &DisplayBuf[212*7], 128+X9D_EXTRA);
 			ExtDisplayBuf[0] = 0xAA ;
 			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
-			ExtDisplayCounter = 5 ;
 			ExtDisplaySend = 1 ;
 		}
 	}
@@ -705,8 +719,10 @@ extern uint8_t CurrentVolume ;
 
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
-		if ( --ExtDisplayCounter < 0 )
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
 		{
+			ExtDisplayTime = time ;
   		memcpy(&ExtDisplayBuf[1],        &DisplayBuf[0],     128+X9D_EXTRA);
   		memcpy(&ExtDisplayBuf[1+128+X9D_EXTRA], &DisplayBuf[212],   128+X9D_EXTRA);
   		memcpy(&ExtDisplayBuf[1+256+X9D_EXTRA*2], &DisplayBuf[212*2], 128+X9D_EXTRA);
@@ -717,7 +733,6 @@ extern uint8_t CurrentVolume ;
   		memcpy(&ExtDisplayBuf[1+896+X9D_EXTRA*7], &DisplayBuf[212*7], 128+X9D_EXTRA);
 			ExtDisplayBuf[0] = 0xAA ;
 			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
-			ExtDisplayCounter = 5 ;
 			ExtDisplaySend = 1 ;
 		}
 	}

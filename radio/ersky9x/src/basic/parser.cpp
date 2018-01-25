@@ -18,6 +18,9 @@
 #include "audio.h"
 #include "menus.h"
 
+extern SKYMixData *mixAddress( uint32_t index ) ;
+extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
+
 uint8_t LoadingIndex ;
 
 #else
@@ -3566,6 +3569,28 @@ void exec_playnumber()
 	}
 }
 
+//uint32_t channelUsed( uint32_t channel )
+//{
+//#if EXTRA_SKYMIXERS
+//	for(uint8_t i=0;i<MAX_SKYMIXERS+EXTRA_SKYMIXERS;i++)
+//#else
+//	for(uint8_t i=0;i<MAX_SKYMIXERS;i++)
+//#endif
+//	{
+//		SKYMixData *md = mixAddress( i ) ;
+//    if ((md->destCh==0) || (md->destCh>NUM_SKYCHNOUT+EXTRA_SKYCHANNELS))
+//		{
+//			break ;
+//		}
+//    if (md->destCh == channel)
+//		{
+//			return 1 ;
+//		}
+//	}
+//	return 0 ;
+//}
+
+
 //extern const int8_t TelemIndex[] ;
 //extern const int8_t TelemValid[] ;
 void storeTelemetryData( uint8_t index, uint16_t value ) ;
@@ -3600,7 +3625,7 @@ int32_t exec_settelitem()
         RunTimeData = cpystr( RunTimeData, (uint8_t *)"setTelItem()\n" ) ;
 #else
 				number -= 44 ;
-				if ( number < NUM_TELEM_ITEMS )
+				if ( ( number >= 0 ) && ( number < NUM_TELEM_ITEMS ) )
 				{
 					result = TelemValid[number] ;
 					number = TelemIndex[number] ;
@@ -3626,6 +3651,26 @@ int32_t exec_settelitem()
 						g_model.gvars[number].gvar = value ;
 					}
 				}
+//				else
+//				{
+//					number += 44 - 12 - 8 ;
+//					if ( (number >= 0) && (number < 24) )
+//					{
+//						if ( channelUsed( number + 1 ) == 0 )
+//						{
+//							if ( value < -125 )
+//							{
+//								value = -125 ;
+//							}
+//							if ( value > 125 )
+//							{
+//								value = 125 ;
+//							}
+//							chans[number] = value * 1024 ;
+//							retval = number + value * 100 ;
+//						}
+//					}
+//				}
 #endif
 			}
 		}
@@ -4163,6 +4208,7 @@ void exec_setSwitch()
 void exec_playFile()
 {
 	uint32_t result ;
+	uint32_t i ;
 	union t_parameter param ;
 	uint8_t *p ;
 #ifndef QT
@@ -4170,19 +4216,33 @@ void exec_playFile()
 #endif
 
 	result = get_parameter( &param, 1 ) ;
+	p = param.cpointer ;
 	if ( result == 2 )
 	{
-		p = param.cpointer ;
 #ifndef QT
-    ncpystr( (uint8_t *)name, p, 8 ) ;
+  	ncpystr( (uint8_t *)name, p, 8 ) ;
 		if ( name[0] && ( name[0] != ' ' ) )
 		{
-			putUserVoice( name, 0 ) ;
+			const char *names = PSTR(STR_SOUNDS) ;
+			uint32_t nameLength = *names++ ;
+			for ( i = 0 ; i < 16 ; i += 1 )
+			{
+  		  if (strMatch( names, name, nameLength ))
+				{
+					audio.event( i, 0, 1 ) ;
+					break ;
+				}
+				names += nameLength ;
+			}
+			if ( i >= 16 )
+			{
+				putUserVoice( name, 0 ) ;
+			}
 		}
 #endif
   }
+	eatCloseBracket() ;
 }
-
 
 
 //void exec_print()

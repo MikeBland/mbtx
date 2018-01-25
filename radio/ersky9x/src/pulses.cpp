@@ -645,11 +645,15 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	uint32_t i ;
 	uint8_t packetType ;
 	uint8_t protoByte ;
+	uint8_t optionByte ;
+	uint8_t subProtocol ;
 	uint32_t outputbitsavailable = 0 ;
 	uint32_t outputbits = 0 ;
-	uint8_t startChan = g_model.Module[module].startChannel ;
-	packetType = ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
-  if (g_model.Module[module].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[module].failsafeMode != FAILSAFE_RX )
+	struct t_module *pmodule = &g_model.Module[module] ;
+	uint8_t startChan = pmodule->startChannel ;
+	subProtocol = pmodule->sub_protocol+1 ;
+	packetType = ( ( subProtocol & 0x3F) > 31 ) ? 0x54 : 0x55 ;
+  if (pmodule->failsafeMode != FAILSAFE_NOT_SET && pmodule->failsafeMode != FAILSAFE_RX )
 	{
     if ( FailsafeCounter[module] )
 		{
@@ -660,21 +664,27 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 		}
 	  if ( FailsafeCounter[module] == 0 )
 		{
-			if ( g_model.Module[module].failsafeRepeat == 0 )
+			if ( pmodule->failsafeRepeat == 0 )
 			{
 				FailsafeCounter[module] = 1000 ;
 			}
 		}
 	}
 	*data++ = packetType ;
-	protoByte = (g_model.Module[module].sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
+	protoByte = subProtocol & 0x5F;		// load sub_protocol and clear Bind & Range flags
 	if (PxxFlag[module] & PXX_BIND)	protoByte |=BindBit ;		//set bind bit if bind menu is pressed
 	if (PxxFlag[module] & PXX_RANGE_CHECK) protoByte |=RangeCheckBit ;		//set bind bit if bind menu is pressed
 	*data++ = protoByte ;
 	
-	protoByte = g_model.Module[module].channels ;
-	*data++ = ( protoByte/*g_model.ppmNCH*/ & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ) ;
-	*data++ = g_model.Module[module].option_protocol ;
+	protoByte = pmodule->channels ;
+	*data++ = ( protoByte/*g_model.ppmNCH*/ & 0xF0) | ( pmodule->pxxRxNum & 0x0F ) ;
+  
+	optionByte = pmodule->option_protocol ;
+	if ( ( subProtocol & 0x3F ) == M_AFHD2SA + 1 )
+	{
+    optionByte |= 0x80 ;
+	}
+	*data++ = optionByte ;
 	for ( i = 0 ; i < 16 ; i += 1 )
 	{
 		int16_t x ;
@@ -682,11 +692,11 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 		x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
 		if ( packetType & 2 )
 		{
-			if ( g_model.Module[module].failsafeMode == FAILSAFE_HOLD )
+			if ( pmodule->failsafeMode == FAILSAFE_HOLD )
 			{
 				x = 2047 ;
 			}
-			else if ( g_model.Module[module].failsafeMode == FAILSAFE_NO_PULSES )
+			else if ( pmodule->failsafeMode == FAILSAFE_NO_PULSES )
 			{
 				x = 0 ;
 			}
@@ -694,7 +704,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 			{
 				// Send failsafe value
 				int32_t value ;
-				value = ( startChan < 16 ) ? g_model.Module[module].failsafe[startChan] : 0 ;
+				value = ( startChan < 16 ) ? pmodule->failsafe[startChan] : 0 ;
 				value = ( value *4193 ) >> 9 ;
 				value += 1024 ;
 				x = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;

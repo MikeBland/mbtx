@@ -1881,9 +1881,10 @@ void processSportPacket()
 //#endif
 
 
-// FE?
-//#define FS_ID_SNR               0xfa
-//#define FS_ID_NOISE             0xfb
+#define FS_ID_ERR_RATE					0xfe
+#define FS_ID_SNR               0xfa
+#define FS_ID_NOISE             0xfb
+
 void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 {
   frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
@@ -1893,7 +1894,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 		uint32_t id ;
 		int32_t value ;
 		id = *packet ;
-		id |= *(packet+1) ;
+		id |= *(packet+1) << 8 ;
 		packet += 2 ;
 		value = (packet[1] << 8)  + packet[0] ;
 		switch ( id )
@@ -1909,10 +1910,20 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 			break ;
 			case 3 :	// External voltage
 			case 0x0100 :	// External voltage ?
+			case 0x0103 :	// External voltage ?
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
 				storeRSSI( 135-value ) ;
+			break ;
+			case FS_ID_ERR_RATE :
+				storeTelemetryData( FR_CUST1, value ) ;
+			break ;
+			case FS_ID_SNR :
+				storeTelemetryData( FR_CUST2, value ) ;
+			break ;
+			case FS_ID_NOISE :
+				storeTelemetryData( FR_CUST3, value ) ;
 			break ;
 		}
 		packet += 2 ;
@@ -1992,7 +2003,7 @@ void rawLogByte( uint8_t byte ) ;
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 	if ( g_model.bt_telemetry )
 	{
 		telem_byte_to_bt( data ) ;

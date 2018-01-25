@@ -243,6 +243,13 @@ void com3Stop( void ) ;
 void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
 
+#ifdef PCBX7
+void com3Init( uint32_t baudrate ) ;
+void com3Parity( uint32_t even ) ;
+void com3Stop( void ) ;
+void Com3SetBaudrate ( uint32_t baudrate ) ;
+#endif
+
 #ifdef PCBSKY
 //void com1Parity( uint32_t even ) ;
 //void com2Parity( uint32_t even ) ;

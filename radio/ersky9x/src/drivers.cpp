@@ -111,6 +111,10 @@ struct t_fifo64 RemoteRx_fifo ;
 struct t_fifo128 Com3_fifo ;
 #endif
 
+#ifdef PCBX7
+struct t_fifo128 Com3_fifo ;
+#endif
+
 struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
@@ -127,6 +131,9 @@ struct t_SportTx
 struct t_serial_tx *Current_Com1 ;
 struct t_serial_tx *Current_Com2 ;
 #ifdef PCB9XT
+struct t_serial_tx *Current_Com3 ;
+#endif
+#ifdef PCBX7
 struct t_serial_tx *Current_Com3 ;
 #endif
 
@@ -354,8 +361,8 @@ extern uint8_t ExtDisplaySend ;
 #else
 		if ( g_model.BTfunction == BT_LCDDUMP )
 		{
-extern uint8_t BtReady ;
-			if ( BtReady )
+//extern uint8_t BtReady ;
+			if ( BtControl.BtReady )
 			{
 				txPdcBt( &LcdDumpBuf ) ;
 			}
@@ -372,6 +379,30 @@ extern uint8_t BtReady ;
 #endif // PCBX7
 
 #endif
+
+#ifdef PCBX7
+struct t_serial_tx LcdDumpBuf ;
+
+void doLcdDump()
+{
+extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
+extern uint8_t ExtDisplaySend ;
+	if ( ExtDisplaySend )
+	{
+		ExtDisplaySend = 0 ;
+		LcdDumpBuf.buffer = ExtDisplayBuf ;
+		LcdDumpBuf.size = sizeof(ExtDisplayBuf) ; 
+		if ( g_model.BTfunction == BT_LCDDUMP )
+		{
+//extern uint8_t BtReady ;
+			if ( BtControl.BtReady )
+			{
+				txPdcBt( &LcdDumpBuf ) ;
+			}
+		}
+	}	 
+}
+#endif // PCBX7
 
 
 //static uint8_t LcdDumpState ;
@@ -579,6 +610,12 @@ extern uint8_t AnaEncSw ;
 	}
 #endif
 #ifdef PCB9XT
+	if ( g_model.BTfunction == BT_LCDDUMP )
+	{
+		doLcdDump() ;
+	}
+#endif
+#ifdef PCBX7
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		doLcdDump() ;
@@ -2932,7 +2969,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	return 1 ;			// Sent OK
 }
 
-
+#ifndef PCBX7
 extern "C" void USART3_IRQHandler()
 {
   uint32_t status;
@@ -2995,6 +3032,7 @@ extern "C" void USART3_IRQHandler()
     status = puart->SR ;
 	}
 }
+#endif
 #endif
 #endif
 
@@ -3534,6 +3572,121 @@ extern "C" void timer10_interrupt()
 
 
 #endif
+
+#ifdef PCBX7
+void com3Init( uint32_t baudrate )
+{
+	USART_TypeDef *puart = USART3 ;
+	// Serial configure  
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+	puart->CR2 = 0 ;
+	puart->CR3 = 0 ;
+	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
+  NVIC_EnableIRQ(USART3_IRQn) ;
+}
+
+void com3Stop()
+{
+	USART3->CR1 = 0 ;
+	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
+  NVIC_DisableIRQ(USART3_IRQn) ;
+}
+
+void Com3SetBaudrate ( uint32_t baudrate )
+{
+	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+}
+
+void com3Parity( uint32_t even )
+{
+	if ( even )
+	{
+		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+	}
+	else
+	{
+		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+	}
+}
+
+extern "C" void USART3_IRQHandler()
+{
+  uint32_t status;
+  uint8_t data;
+	USART_TypeDef *puart = USART3 ;
+
+  status = puart->SR ;
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( Current_Com3 )
+		{
+			if ( Current_Com3->size )
+			{
+				puart->DR = *Current_Com3->buffer++ ;
+				if ( --Current_Com3->size == 0 )
+				{
+					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+				}
+			}
+			else
+			{
+				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+			}
+		}
+	}
+	
+	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+	{
+		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+		Current_Com3->ready = 0 ;
+	}
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR ;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+			put_fifo128( &BtRx_fifo, data ) ;	
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+#ifdef PCB9XT
+				USART2_ORE += 1 ;
+#else
+				USART_ORE += 1 ;
+#endif
+			}
+		}
+    status = puart->SR ;
+	}
+}
+
+
+int32_t rxBtuart()
+{
+	return get_fifo128( &BtRx_fifo ) ;
+}
+
+uint32_t txPdcBt( struct t_serial_tx *data )
+{
+	data->ready = 1 ;
+	Current_Com3 = data ;
+	USART3->CR1 |= USART_CR1_TXEIE ;
+	return 1 ;			// Sent OK
+}
+
+#endif
+
+
 
 //uint32_t __get_PSP(void)
 //{

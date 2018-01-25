@@ -760,50 +760,95 @@ void setLanguage()
 	{
 		case 1 :
 			Language = French ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_fr_h_extra ;
+			ExtraHorusBigFont = font_fr_h_big_extra ;
+#else
 			ExtraFont = font_fr_extra ;
 			ExtraBigFont = font_fr_big_extra ;
+#endif		
 		break ;
 		case 2 :
 			Language = German ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_de_h_extra ;
+			ExtraHorusBigFont = font_de_h_big_extra ;
+#else
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
+#endif		
 		break ;
 #ifndef SMALL
 		case 3 :
 			Language = Norwegian ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_se_h_extra ;
+			ExtraHorusBigFont = font_se_h_big_extra ;
+#else
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
+#endif		
 		break ;
 		case 4 :
 			Language = Swedish ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_se_h_extra ;
+			ExtraHorusBigFont = font_se_h_big_extra ;
+#else
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
+#endif		
 		break ;
 		case 5 :
 			Language = Italian ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_it_h_extra ;
+			ExtraHorusBigFont = NULL ;
+#else
 			ExtraFont = font_it_extra ;
 			ExtraBigFont = NULL ;
+#endif		
 		break ;
 		case 6 :
 			Language = Polish ;
+#ifdef PCBX12D
+			ExtraHorusFont = font_pl_h_extra ;
+			ExtraHorusBigFont = NULL ;
+#else
 			ExtraFont = font_pl_extra ;
 			ExtraBigFont = NULL ;
+#endif		
 		break ;
 		case 7 :
 			Language = Vietnamese ;
+#ifdef PCBX12D
+			ExtraHorusFont = NULL ;
+			ExtraHorusBigFont = NULL ;
+#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+#endif		
 		break ;
 		case 8 :
 			Language = Spanish ;
+#ifdef PCBX12D
+			ExtraHorusFont = NULL ;
+			ExtraHorusBigFont = NULL ;
+#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+#endif		
 		break ;
 #endif		
 		default :
 			Language = English ;
+#ifdef PCBX12D
+			ExtraHorusFont = NULL ;
+			ExtraHorusBigFont = NULL ;
+#else
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+#endif		
 		break ;
 	}
 }
@@ -883,11 +928,10 @@ int32_t isAgvar(uint8_t value)
 
 #define NUM_BT_BAUDRATES 5
 
-uint8_t Bt_baudrate ;
+//uint8_t Bt_baudrate ;
 
 void setBtBaudrate( uint32_t index )
 {
-	Bt_baudrate = index ;
 	uint32_t brate ;
 	if ( index == 1 )
 	{
@@ -930,7 +974,11 @@ void setBtBaudrate( uint32_t index )
 		Com3SetBaudrate ( brate ) ;
 	}
 #else
+#ifdef PCBX7
+	Com3SetBaudrate ( brate ) ;
+#else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
+#endif
 #endif
 }
 #endif
@@ -1952,6 +2000,12 @@ extern unsigned char *EndOfHeap ;
 	GPIOA->BSRRH = GPIO_Pin_5 ;		// Set low
 #endif
 
+#ifdef PCBX7
+// Configure pin PA5 as an output, low for Bluetooth use
+	configure_pins( GPIO_Pin_12, PIN_PORTE| PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+	GPIOE->BSRRH = GPIO_Pin_12 ;		// Set low
+#endif
+
 //#if defined(PCBX9D) || defined(PCB9XT)
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 	initWatchdog() ;
@@ -2868,6 +2922,11 @@ void initTopLcd() ;
 #define HC05_ENABLE_LOW			(GPIOA->BSRRH = GPIO_Pin_5)			// Set bit PA5 LOW
 #endif // PCB9XT
 
+#ifdef PCBX7
+#define HC05_ENABLE_HIGH		(GPIOE->BSRRL = GPIO_Pin_12)			// Set bit PE12 HIGH
+#define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
+#endif // PCB9XT
+
 
 #ifdef BLUETOOTH
 
@@ -2895,21 +2954,56 @@ struct t_serial_tx Com1_tx ;
 uint8_t BtTxBuffer[32] ;
 uint8_t Com2TxBuffer[32] ;
 uint8_t Com1TxBuffer[32] ;
-uint8_t BtLinked ;
+//uint8_t BtLinked ;
 
 struct btRemote_t BtRemote[3] ;
-uint8_t NumberBtremotes ;
+//uint8_t NumberBtremotes ;
 
-uint8_t BtMode[4] ;
+struct t_bt_control BtControl ;
+
+//uint8_t BtMode[4] ;
 uint8_t BtPswd[8] ;
 uint8_t BtName[16] ;
-uint8_t BtRole[4] ;
-uint8_t BtIac[10] ;
+//uint8_t BtRole[4] ;
+//uint8_t BtIac[10] ;
 //uint8_t BtDebug[4] ;
 
-uint8_t BtMasterSlave = 0 ;
-uint8_t BtReady = 0 ;
+#define BT_RX_IDLE		0
+#define BT_RX_RECEIVE	1
+#define BT_RX_STUFF		2
+
+//uint8_t BtCurrentBaudrate ;
+//uint8_t BtFirstByte ; 
+//uint8_t BtChannelNumber ;
+//uint8_t BtRxState ;
+//uint8_t BtRxChecksum ;
+//uint8_t BtBadChecksum ;
+
+uint8_t BtSbusFrame[28] ;
+//uint8_t BtSbusIndex ;
+//uint8_t BtSbusReceived ;
+//uint8_t BtRxOccured ;
+
+//uint8_t BtMasterSlave ;
+//uint8_t BtReady ;
 uint16_t BtLastSbusSendTime ;
+
+//uint8_t Bt_ok ;
+//uint8_t BtBaudrateChanged ;
+uint8_t BtTempBuffer[100] ;
+//uint8_t BtRoleChange ;
+//uint8_t BtNameChange ;
+//uint8_t BtConfigure ;
+//uint8_t BtScanInit ;
+uint8_t BtRname[32] ;
+uint16_t BtRxTimer ;
+uint8_t BtBinAddr[6] ;
+//uint8_t BtLinkRequest ;
+//uint8_t BtCurrentLinkIndex ;
+uint8_t BtPreviousLinkIndex = 0xFF ;
+
+//uint8_t BtLinking ;
+
 
 uint32_t btAddressValid( uint8_t *address )
 {
@@ -3041,16 +3135,16 @@ uint32_t poll_bt_device()
 	return getBtOK(1, BT_POLL_TIMEOUT ) ;
 }
 
-uint8_t BtBaudChangeCount = 0 ;
-uint8_t BtBaudChangeIndex = 9 ;
+//uint8_t BtBaudChangeCount ;
+//uint8_t BtBaudChangeIndex ;
 
 uint32_t changeBtBaudrate( uint32_t baudIndex )
 {
 	uint16_t x ;
 	uint8_t *p ;
 
-	BtBaudChangeCount += 1 ;
-	BtBaudChangeIndex = baudIndex ;
+//	BtControl.BtBaudChangeCount += 1 ;
+	BtControl.BtBaudChangeIndex = baudIndex ;
 
 	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
 	{
@@ -3266,6 +3360,7 @@ void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
 		}
 	}
 	*dest = '\0' ;
+	CoTickDelay(10) ;					// 20mS
 }
 
 
@@ -3277,6 +3372,7 @@ void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
 uint32_t getBtRole()
 {
 	uint8_t buffer[20] ;
+	uint8_t btRole[4] ;
 	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
 	{
 		btTransaction( (uint8_t *)"AT+ROLE\r\n", buffer, 19 ) ;
@@ -3285,21 +3381,21 @@ uint32_t getBtRole()
 	{
 		btTransaction( (uint8_t *)"AT+ROLE?\r\n", buffer, 19 ) ;
 	}
-	btParse( BtRole, buffer, 3 ) ;
-	if ( BtRole[0] == '1' )
+	btParse( btRole, buffer, 3 ) ;
+	if ( btRole[0] == '1' )
 	{
-		BtMasterSlave = 2 ;
+		BtControl.BtMasterSlave = 2 ;
 	}
-	else if ( BtRole[0] == '0' )
+	else if ( btRole[0] == '0' )
 	{
-		BtMasterSlave = 1 ;
+		BtControl.BtMasterSlave = 1 ;
 	}
 	else
 	{
-		BtMasterSlave = 0 ;
+		BtControl.BtMasterSlave = 0 ;
 	}
 	CoTickDelay(1) ;					// 2mS
-	return BtMasterSlave ;
+	return BtControl.BtMasterSlave ;
 }
 
 uint32_t setBtRole( uint32_t role )
@@ -3326,7 +3422,7 @@ uint32_t setBtRole( uint32_t role )
 	return getBtOK(0, BT_POLL_TIMEOUT ) ;
 }
 
-uint32_t setBtName( uint8_t *name )	// Max 14 chars
+static uint32_t setBtName( uint8_t *name )	// Max 14 chars
 {
 	uint8_t *end ;
 	end = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+NAME" ) ;
@@ -3344,7 +3440,40 @@ uint32_t setBtName( uint8_t *name )	// Max 14 chars
 	return getBtOK(0, BT_POLL_TIMEOUT ) ;
 }
 
-void getBtValues()
+
+//AT+ADCN?
+//+ADCN:<Param>
+//OK
+//Param: Authenticated Device
+//Count
+//Example:
+//at+adcn?
+//+ADCN:0 ----There is no authenticated device in the pair list.
+//OK
+
+void removeAddressList()
+{
+	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
+	CoTickDelay(10) ;					// 20mS
+	getBtOK(0, 2000 ) ;
+	CoTickDelay(10) ;					// 20mS
+}
+
+
+static void checkAddressList()
+{
+	uint8_t buffer[12] ;
+	uint8_t count[6] ;
+	btTransaction( (uint8_t *)"AT+ADCN?\r\n", buffer, 11 ) ;
+	btParse( count, buffer, 5 ) ;
+	if ( count[0] != '0' )
+	{
+		removeAddressList() ;
+	}
+}
+
+
+static void getBtValues()
 {
 	uint8_t buffer[20] ;
 
@@ -3352,12 +3481,9 @@ void getBtValues()
 	CoTickDelay(10) ;					// 20mS
 	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
+		checkAddressList() ;
 		btTransaction( (uint8_t *)"AT+NAME?\r\n", buffer, 19 ) ;
 		btParse( BtName, buffer, 19 ) ;
-		CoTickDelay(10) ;					// 20mS
-	}
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-	{
 		btTransaction( (uint8_t *)"AT+PSWD?\r\n", buffer, 19 ) ;
 	}
 	else
@@ -3365,25 +3491,9 @@ void getBtValues()
 		btTransaction( (uint8_t *)"AT+PASS\r\n", buffer, 19 ) ;	// CC41
 	}
 	btParse( BtPswd, buffer, 6 ) ;
-	CoTickDelay(10) ;					// 20mS
 }
 
-#define BT_RX_IDLE		0
-#define BT_RX_RECEIVE	1
-#define BT_RX_STUFF		2
-
-uint8_t BtFirstByte ; 
-uint8_t BtChannelNumber ;
-uint8_t BtRxState ;
-uint8_t BtRxChecksum ;
-uint8_t BtBadChecksum ;
-
-uint8_t BtSbusFrame[28] ;
-uint8_t BtSbusIndex = 0 ;
-uint8_t BtSbusReceived ;
-uint8_t BtRxOccured ;
-
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 void processBtRx( int32_t data, uint32_t rxTimeout )
 {
 	uint16_t rxchar ;
@@ -3392,44 +3502,44 @@ void processBtRx( int32_t data, uint32_t rxTimeout )
 	{
 		if ( data == 2 )
 		{
-			BtRxState = BT_RX_RECEIVE ;
-			BtSbusIndex = 0 ;
-			BtRxChecksum = 0 ;
+			BtControl.BtRxState = BT_RX_RECEIVE ;
+			BtControl.BtSbusIndex = 0 ;
+			BtControl.BtRxChecksum = 0 ;
 		}
 		else
 		{
-			if ( BtRxState == BT_RX_STUFF )
+			if ( BtControl.BtRxState == BT_RX_STUFF )
 			{
 				data = data ^ 0x80 ;
-				BtRxState = BT_RX_RECEIVE ;
+				BtControl.BtRxState = BT_RX_RECEIVE ;
 			}
 			else
 			{
 				if ( data == 3 )
 				{
-					BtRxState = BT_RX_STUFF ;
+					BtControl.BtRxState = BT_RX_STUFF ;
 				}
 			}
-			if ( BtRxState == BT_RX_RECEIVE )
+			if ( BtControl.BtRxState == BT_RX_RECEIVE )
 			{
-				BtSbusFrame[BtSbusIndex++] = data ;
-				BtRxChecksum += data ;
-				if ( BtSbusIndex > 25 )
+				BtSbusFrame[BtControl.BtSbusIndex++] = data ;
+				BtControl.BtRxChecksum += data ;
+				if ( BtControl.BtSbusIndex > 25 )
 				{
-					BtRxOccured = 1 ;
-					if ( BtRxChecksum == 0 )
+					BtControl.BtRxOccured = 1 ;
+					if ( BtControl.BtRxChecksum == 0 )
 					{
 						TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
-						if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
+						if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtControl.BtSbusIndex ) )
 						{
-							BtSbusReceived = 1 ;
+							BtControl.BtSbusReceived = 1 ;
 						}
 					}
 					else
 					{
-						BtBadChecksum = BtRxChecksum ;
+						BtControl.BtBadChecksum = BtControl.BtRxChecksum ;
 					}
-					BtRxState = BT_RX_IDLE ;
+					BtControl.BtRxState = BT_RX_IDLE ;
 				}
 			}
 		}
@@ -3439,19 +3549,19 @@ void processBtRx( int32_t data, uint32_t rxTimeout )
 	if ( rxTimeout )
 	{
 		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
-		if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtSbusIndex ) )
+		if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtControl.BtSbusIndex ) )
 		{
-			BtSbusReceived = 1 ;
+			BtControl.BtSbusReceived = 1 ;
 		}
-		BtSbusIndex = 0 ;	 
+		BtControl.BtSbusIndex = 0 ;	 
 	}
 	else
 	{
 		rxchar = data ;
-		BtSbusFrame[BtSbusIndex++] = rxchar ;
-		if ( BtSbusIndex > 27 )
+		BtSbusFrame[BtControl.BtSbusIndex++] = rxchar ;
+		if ( BtControl.BtSbusIndex > 27 )
 		{
-			BtSbusIndex = 27 ;
+			BtControl.BtSbusIndex = 27 ;
 		}
 	}
 }
@@ -3484,25 +3594,6 @@ Then we can change the baudrate to the required value.
 Or maybe just AT and get OK back
 */
 
-uint8_t Bt_ok ;
-uint8_t BtBaudrateChanged ;
-uint8_t BtScan ;
-uint8_t BtScanState ;
-uint8_t BtTempBuffer[100] ;
-uint8_t BtRoleChange ;
-uint8_t BtNameChange ;
-uint8_t BtConfigure ;
-uint8_t BtScanInit = 0 ;
-uint8_t BtRname[32] ;
-uint8_t BtCurrentBaudrate ;
-uint16_t BtRxTimer ;
-uint8_t BtBinAddr[6] ;
-uint8_t BtLinkRequest ;
-uint8_t BtCurrentLinkIndex ;
-uint8_t BtPreviousLinkIndex = 0xFF ;
-
-uint8_t BtLinking ;
-
 void btAddrHex2Bin()
 {
 	uint8_t chr ;
@@ -3515,7 +3606,7 @@ void btAddrHex2Bin()
 	y = 0 ;
 	z = 0 ;
 	value = 0 ;
-	
+
 	for ( ;x<14; )
 	{
 		chr = BtRemote[0].address[x++] ;
@@ -3533,7 +3624,10 @@ void btAddrHex2Bin()
 		}
 		else
 		{
-			z = 0x80 ;
+			if ( z > 0 )
+			{
+				z = 0x80 ;
+			}
 		}
 		if ( ( y == 0 ) && ( z > 3 ) )
 		{
@@ -3559,6 +3653,7 @@ void btAddrHex2Bin()
 			break ;
 		}
 	}
+
 	if ( y > 2 )
 	{
 		for ( y = 0 ; y < 4 ; y += 1 )
@@ -3627,37 +3722,44 @@ uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
 uint8_t *copyBtAddress( uint8_t *end, uint32_t index )
 {
 	uint32_t x ;
+	uint32_t y ;
 	uint8_t chr ;
 	
 	x = 0 ;
+	y = 0 ;
 
 	while ( ( chr = BtRemote[index].address[x] ) != ':' )
 	{
 		x += 1 ;
+		y += 1 ;
 		*end++ = chr ;
-		if ( x > 4 )
+		if ( y > 4 )
 		{
 			break ;
 		}
 	}
 	*end++ = ',' ;
 	x += 1 ;	// Skip ':'
+	y = 0 ;
 	while ( ( chr = BtRemote[index].address[x] ) != ':' )
 	{
 		x += 1 ;
+		y += 1 ;
 		*end++ = chr ;
-		if ( x > 4 )
+		if ( y > 4 )
 		{
 			break ;
 		}
 	}
 	*end++ = ',' ;
 	x += 1 ;	// Skip ':'
+	y = 0 ;
 	while ( ( chr = BtRemote[index].address[x] ) )
 	{
 		x += 1 ;
+		y += 1 ;
 		*end++ = chr ;
-		if ( x > 8 )
+		if ( y > 8 )
 		{
 			break ;
 		}
@@ -3679,17 +3781,17 @@ uint32_t btLink( uint32_t index )
 		getBtOK(0, BT_POLL_TIMEOUT ) ;
 		CoTickDelay(10) ;					// 20mS
 	
-		if ( BtPreviousLinkIndex != index )
-		{
-			end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
-			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
-			*end++ = '\r' ;
-			*end++ = '\n' ;
-			*end = '\0' ;
-			btTransaction( BtRname, 0, 0 ) ;
-			CoTickDelay(10) ;					// 40mS
-			i = getBtOK(0, 2000 ) ;
-		}
+//		if ( BtPreviousLinkIndex != index )
+//		{
+//			end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
+//			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
+//			*end++ = '\r' ;
+//			*end++ = '\n' ;
+//			*end = '\0' ;
+//			btTransaction( BtRname, 0, 0 ) ;
+//			CoTickDelay(10) ;					// 40mS
+//			i = getBtOK(0, 2000 ) ;
+//		}
 	 
 		x = 0 ;
 		end = cpystr( BtRname, (uint8_t *)"AT+LINK=" ) ;
@@ -3717,7 +3819,7 @@ uint32_t btLink( uint32_t index )
 	}
 	else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
 	{
-		BtLinking += 1 ;
+		BtControl.BtLinking += 1 ;
 		cpystr( BtRname, (uint8_t *)"AT+CONN1\r\n" ) ;
 		btTransaction( BtRname, 0, 0 ) ;
 		CoTickDelay(10) ;					// 40mS
@@ -3746,28 +3848,25 @@ void btConfigure()
 	
 	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
-	BtConfigure = 0x40 ;
+	BtControl.BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	getBtOK(0, BT_POLL_TIMEOUT ) ;
-	BtConfigure = 0x41 ;
-	btTransaction( (uint8_t *)"AT+CMODE=0\r\n", 0, 0 ) ;
+	BtControl.BtConfigure = 0x41 ;
+	btTransaction( (uint8_t *)"AT+CMODE=1\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	getBtOK(0, BT_POLL_TIMEOUT ) ;
-	BtConfigure = 0x42 ;
-	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
-//	i = getBtOK(0, 2000 ) ;
-	getBtOK(0, 2000 ) ;
-	BtConfigure = 0x44 ;
+	BtControl.BtConfigure = 0x42 ;
+	removeAddressList() ;
+	BtControl.BtConfigure = 0x44 ;
 	btTransaction( (uint8_t *)"AT+INQM=0,5,4\r\n", 0, 0 ) ;
 	CoTickDelay(10) ;					// 40mS
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
 		getBtOK(0, 225 ) ;
-		BtConfigure = 0x49 + j ;
+		BtControl.BtConfigure = 0x49 + j ;
 	}
-	BtConfigure = 0 ;
+	BtControl.BtConfigure = 0 ;
 	CoTickDelay(10) ;					// 20mS
 	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
@@ -3780,6 +3879,8 @@ void btConfigure()
 #define BT_IS_SLAVE					4
 #define BT_RX_DATA					8
 
+//uint8_t BtRnameDebug[40] ;
+
 
 void bt_task(void* pdata)
 {
@@ -3787,6 +3888,8 @@ void bt_task(void* pdata)
 	int32_t y ;
 	uint16_t lastTimer = 0 ;
 	uint32_t btBits = 0 ;
+	struct t_bt_control *pBtControl ;
+	pBtControl = &BtControl ;
 
 	while ( Activated == 0 )
 	{
@@ -3808,6 +3911,9 @@ void bt_task(void* pdata)
 		}
 	}
 #endif
+#ifdef PCBX7
+	com3Init( 115200 ) ;
+#endif
 
 	Bt_flag = CoCreateFlag(TRUE,0) ;
 	Bt_tx.size = 0 ;
@@ -3827,11 +3933,11 @@ void bt_task(void* pdata)
 	uint32_t found = 0 ;
 	do
 	{
-		Bt_ok = poll_bt_device() ;		// Do we get a response?
+		pBtControl->Bt_ok = poll_bt_device() ;		// Do we get a response?
 
 		for ( y = 0 ; y <= NUM_BT_BAUDRATES ; y += 1 )
 		{
-			if ( Bt_ok == 0 )
+			if ( pBtControl->Bt_ok == 0 )
 			{
 				x += 1 ;
 				if ( x >= NUM_BT_BAUDRATES )
@@ -3840,20 +3946,20 @@ void bt_task(void* pdata)
 				}
 				setBtBaudrate( x ) ;
 				CoTickDelay(5) ;					// 10mS
-				Bt_ok = poll_bt_device() ;		// Do we get a response?
+				pBtControl->Bt_ok = poll_bt_device() ;		// Do we get a response?
 			}
 		}
 
-		if ( Bt_ok )
+		if ( pBtControl->Bt_ok )
 		{
 //			BtDebug[0] = x + 1 ;
-			Bt_ok = x + 1 ;		
-			BtCurrentBaudrate = x ;
+			pBtControl->Bt_ok = x + 1 ;		
+			pBtControl->BtCurrentBaudrate = x ;
 			if ( x != g_eeGeneral.bt_baudrate )
 			{
 				x = g_eeGeneral.bt_baudrate ;
 				// Need to change Bt Baudrate
-				Bt_ok = changeBtBaudrate( x ) ;
+				pBtControl->Bt_ok = changeBtBaudrate( x ) ;
 				CoTickDelay(10) ;	// 20mS, give time for the <crlf> to be sent
 				// Continue with the current baudrate, HC-05 needs power cycle to change
 			}
@@ -3870,7 +3976,7 @@ void bt_task(void* pdata)
 		CoTickDelay(1) ;					// 2mS
 		getBtValues() ;
 		CoTickDelay(1) ;					// 2mS
-		BtNameChange = 0x80 ;
+		pBtControl->BtNameChange = 0x80 ;
 	}
 	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
@@ -3888,13 +3994,13 @@ void bt_task(void* pdata)
 		HC05_ENABLE_LOW ;							// Set bit B12 LOW
 	}
 
-	BtCurrentLinkIndex = g_model.btDefaultAddress ;
+	pBtControl->BtCurrentLinkIndex = g_model.btDefaultAddress ;
 
-	BtReady = 1 ; 
+	pBtControl->BtReady = 1 ; 
 	while(1)
 	{
 		if ( ( g_eeGeneral.BtType == BT_TYPE_HC06 )
-				 || ( ( g_eeGeneral.BtType >= BT_TYPE_HC05 ) && ( BtMasterSlave == 1 ) ) )
+				 || ( ( g_eeGeneral.BtType >= BT_TYPE_HC05 ) && ( pBtControl->BtMasterSlave == 1 ) ) )
 		{
 			btBits |= BT_IS_SLAVE ;			
 		}
@@ -3904,6 +4010,7 @@ void bt_task(void* pdata)
 		}
 
 #ifndef PCB9XT 
+#ifndef PCBX7
 		if ( ( g_model.com2Function == COM2_FUNC_BTDIRECT )
 				 || ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY ) )
 		{
@@ -3950,8 +4057,9 @@ void bt_task(void* pdata)
 			CoTickDelay(1) ;					// 2mS for now
 		}
 		else
+#endif	// nPCBX7
 #endif	// nPCB9XT
-		if ( ( g_model.BTfunction == BT_LCDDUMP ) && ( BtMasterSlave == 1 ) )	// LcdDump and SLAVE
+		if ( ( g_model.BTfunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
 		{
 extern struct t_fifo128 BtRx_fifo ;
 			while ( ( y = get_fifo128( &BtRx_fifo ) ) != -1 )
@@ -3983,7 +4091,7 @@ extern uint8_t ExternalSet ;
 			{
 				bt_send_buffer() ;
 			}
-			else if ( BtBaudrateChanged )
+			else if ( pBtControl->BtBaudrateChanged )
 			{
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
@@ -3996,22 +4104,22 @@ extern uint8_t ExternalSet ;
 				{
 					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 				}
-				BtBaudrateChanged = 0 ;
+				pBtControl->BtBaudrateChanged = 0 ;
 			}
-			else if ( BtRoleChange & 0x80 )
+			else if ( pBtControl->BtRoleChange & 0x80 )
 			{
 				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-				uint8_t newRole = BtRoleChange & 0x01 ;
-				BtRoleChange = 0x40 ;
-				if ( newRole+1 != BtMasterSlave )
+				uint8_t newRole = pBtControl->BtRoleChange & 0x01 ;
+				pBtControl->BtRoleChange = 0x40 ;
+				if ( newRole+1 != pBtControl->BtMasterSlave )
 				{
 					setBtRole( newRole ) ;
 					getBtRole() ;
 				}
-				BtRoleChange = 0 ;
+				pBtControl->BtRoleChange = 0 ;
 				HC05_ENABLE_LOW ;							// Set bit B12 LOW
 			}
-			else if ( BtNameChange & 0x80 )
+			else if ( pBtControl->BtNameChange & 0x80 )
 			{
 				uint8_t *pname = g_eeGeneral.btName ;
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
@@ -4019,52 +4127,55 @@ extern uint8_t ExternalSet ;
 					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					pname = BtName ;
 				}
-				BtNameChange = 0x40 ;
+				pBtControl->BtNameChange = 0x40 ;
 				setBtName( pname ) ;
-				BtNameChange = 0 ;
+				pBtControl->BtNameChange = 0 ;
 				HC05_ENABLE_LOW ;							// Set bit B12 LOW
 			}
-			else if ( BtConfigure & 0x80 )
+			else if ( pBtControl->BtConfigure & 0x80 )
 			{
 				btConfigure() ;
 			}
-			else if ( BtScan )
+			else if ( pBtControl->BtScan )
 			{
-				BtScan = 0 ;
+				pBtControl->BtScan = 0 ;
 				if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
 				{
 					uint32_t i ;
 					uint32_t j ;
 					uint16_t rxchar ;
 
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					CoTickDelay(1) ;					// 2mS
-					flushBtFifo() ;
-					if ( BtScanInit == 0)
+					for ( i = 0 ; i < 100 ; i += 1 )
 					{
-						BtScanInit = 1 ;
+						BtTempBuffer[0] = 0 ;
+					}
+					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+					CoTickDelay(5) ;					// 10mS
+					flushBtFifo() ;
+					if ( pBtControl->BtScanInit == 0)
+					{
+						pBtControl->BtScanInit = 1 ;
 						setBtRole( 1 ) ;
-						for ( i = 0 ; i < 100 ; i += 1 )
-						{
-							BtTempBuffer[0] = 0 ;
-						}
-						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-						{
-							BtScanState = 1 ;
+//						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+//						{
+							pBtControl->BtScanState = 1 ;
 							CoTickDelay(20) ;					// 40mS
 							btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
 							CoTickDelay(10) ;					// 20mS
 							i = getBtOK(1, BT_POLL_TIMEOUT ) ;
-						}
+//						}
 					}
-					BtScanState = 2 ;
+					btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
+					CoTickDelay(20) ;					// 40mS
+					getBtOK(1, BT_POLL_TIMEOUT ) ;
+					pBtControl->BtScanState = 2 ;
 					CoTickDelay(100) ;					// 200mS
 					flushBtFifo() ;
 					btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
-					BtScanState = 3 ;
+					pBtControl->BtScanState = 3 ;
 					j = 0 ;
 					x = 0 ;
-					for ( i = 0 ; i < 2800 ; i += 1 )
+					for ( i = 0 ; i < 3800 ; i += 1 )
 					{
 						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
 						{
@@ -4089,7 +4200,7 @@ extern uint8_t ExternalSet ;
 					uint32_t y ;
 					// Looking for: +INQ:2:72:D2224,3E0104,FFBC
 					// Or +INQ:1 0x00158300E442
-					NumberBtremotes = 0 ;
+					pBtControl->NumberBtremotes = 0 ;
 					if ( j >= 4 )
 					{
 						while ( i < j-3 )
@@ -4112,7 +4223,7 @@ extern uint8_t ExternalSet ;
 													{
 														break ;
 													}
-													BtRemote[NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
+													BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
 													if ( y > 14 )
 													{
 														y = 14 ;
@@ -4133,7 +4244,7 @@ extern uint8_t ExternalSet ;
 												i += 9 ;		// Skip ':'
 												while ( BtTempBuffer[i] != 13 )
 												{
-													BtRemote[NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
+													BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
 													if ( y > 12 )
 													{
 														y = 12 ;
@@ -4148,8 +4259,8 @@ extern uint8_t ExternalSet ;
 											BtTempBuffer[x++] = '\n' ;
 											if ( y > 2 )
 											{
-												BtRemote[NumberBtremotes].address[y] = '\0' ;
-												NumberBtremotes += 1 ;
+												BtRemote[pBtControl->NumberBtremotes].address[y] = '\0' ;
+												pBtControl->NumberBtremotes += 1 ;
 											}
 										}
 									}
@@ -4159,14 +4270,14 @@ extern uint8_t ExternalSet ;
 						}
 					}
 					BtTempBuffer[x] = '\0' ;
-					BtScanState = 4 ;
+					pBtControl->BtScanState = 4 ;
 					// Next we want the remote name
-					if ( NumberBtremotes )
+					if ( pBtControl->NumberBtremotes )
 					{
 						btAddrHex2Bin() ;
 					}
 
-					if ( NumberBtremotes )
+					if ( pBtControl->NumberBtremotes )
 					{
 						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 						{
@@ -4180,6 +4291,9 @@ extern uint8_t ExternalSet ;
 							*end++ = '\r' ;
 							*end++ = '\n' ;
 							*end = '\0' ;
+							
+//							ncpystr( BtRnameDebug, BtRname, 38 ) ;
+
 							if ( btTransaction( BtRname, BtRemote[0].name, 14 ) )
 							{
 							}
@@ -4206,39 +4320,39 @@ extern uint8_t ExternalSet ;
 					HC05_ENABLE_LOW ;							// Set bit B12 LOW
 				}
 			}
-			else if ( BtLinkRequest )
+			else if ( pBtControl->BtLinkRequest )
 			{
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
 					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					CoTickDelay(10) ;					// 40mS
-					btLink( BtLinkRequest & 3 ) ;
-					BtCurrentLinkIndex = BtLinkRequest & 3 ;
-					BtLinked = 1 ;
+					btLink( pBtControl->BtLinkRequest & 3 ) ;
+					pBtControl->BtCurrentLinkIndex = pBtControl->BtLinkRequest & 3 ;
+					pBtControl->BtLinked = 1 ;
 					BtRxTimer = 1000 ;
-					BtRxOccured = 0 ;
+					pBtControl->BtRxOccured = 0 ;
 					CoTickDelay(10) ;					// 40mS
 					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-					BtLinkRequest = 0 ;
+					pBtControl->BtLinkRequest = 0 ;
 				}
 				else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
 				{
 					btLink( 1 ) ;
-					BtCurrentLinkIndex = 1 ;
-					BtLinked = 1 ;
+					pBtControl->BtCurrentLinkIndex = 1 ;
+					pBtControl->BtLinked = 1 ;
 					BtRxTimer = 1000 ;
-					BtRxOccured = 0 ;
-					BtLinkRequest = 0 ;
+					pBtControl->BtRxOccured = 0 ;
+					pBtControl->BtLinkRequest = 0 ;
 				}
 			}
 
-			if ( ( BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
-					btAddressValid( g_eeGeneral.btDevice[BtCurrentLinkIndex].address ) )
+			if ( ( pBtControl->BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
+					btAddressValid( g_eeGeneral.btDevice[pBtControl->BtCurrentLinkIndex].address ) )
 			{
-				BtLinked = 1 ;
+				pBtControl->BtLinked = 1 ;
 			}
 
-			if ( ( ( BtMasterSlave == 2 ) && ( g_model.BTfunction == BT_TRAIN_TXRX ) && BtLinked )
+			if ( ( ( pBtControl->BtMasterSlave == 2 ) && ( g_model.BTfunction == BT_TRAIN_TXRX ) && pBtControl->BtLinked )
 					 || ( btBits & BT_SLAVE_SEND_SBUS ) )
 			{
 				uint32_t i ;
@@ -4319,9 +4433,9 @@ extern uint8_t ExternalSet ;
 						BtRxTimer = 100 ;
 					}
 					processBtRx( x, 0 ) ;
-					if ( BtSbusReceived )
+					if ( pBtControl->BtSbusReceived )
 					{
-						BtSbusReceived = 0 ;
+						pBtControl->BtSbusReceived = 0 ;
 						if ( btBits & BT_IS_SLAVE )
 						{
 							btBits |= BT_SLAVE_SEND_SBUS ;						
@@ -4404,15 +4518,15 @@ extern uint8_t ExternalSet ;
 
 		if ( BtRxTimer == 0 )
 		{
-			if ( BtLinked )
+			if ( pBtControl->BtLinked )
 			{
-				if ( BtRxOccured )
+				if ( pBtControl->BtRxOccured )
 				{
 					putSystemVoice( SV_BT_LOST, 0 ) ;
 				}
 				if ( g_model.autoBtConnect )
 				{
-					BtCurrentLinkIndex =  g_model.btDefaultAddress ;
+					pBtControl->BtCurrentLinkIndex =  g_model.btDefaultAddress ;
 				}
 
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
@@ -4420,9 +4534,9 @@ extern uint8_t ExternalSet ;
 					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
 					CoTickDelay(10) ;					// 40mS
 				}
-				btLink(BtCurrentLinkIndex) ;
+				btLink(pBtControl->BtCurrentLinkIndex) ;
 				BtRxTimer = 1000 ;
-				BtRxOccured = 0 ;
+				pBtControl->BtRxOccured = 0 ;
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
 					CoTickDelay(10) ;					// 40mS
@@ -4537,7 +4651,7 @@ void log_task(void* pdata)
 
 #endif	// SIMU
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 void telem_byte_to_bt( uint8_t data )
 {
 #ifndef SIMU
@@ -8013,7 +8127,7 @@ void perMain( uint32_t no_menu )
 //	usbMassStorage() ;
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 	if ( BtRxTimer )
 	{
 		BtRxTimer -= 1 ;

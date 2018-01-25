@@ -575,13 +575,14 @@ uint16_t scale_telem_value( uint16_t val, uint8_t channel, uint8_t *p_att )
   
 #ifdef V2
 	ratio = fd->ratio ;
-	value *= ratio ;
-	value /= 256 ;
-	unit = fd->unit ;
 	if ( ratio < 100 )
 	{
 		places = 2 ;
+		value *= 10 ;
 	}
+	value *= ratio ;
+	value /= 256 ;
+	unit = fd->unit ;
 #else	
 	ratio = fd->opt.alarm.ratio ;
   if (fd->opt.alarm.type == 2/*V*/)

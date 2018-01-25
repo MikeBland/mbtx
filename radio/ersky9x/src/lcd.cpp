@@ -36,6 +36,7 @@
 #include "mega64.h"
 #endif
 
+#ifndef PCBX12D
 #include "font.lbm"
 #define font_5x8_x20_x7f (font)
 
@@ -75,6 +76,7 @@ const uint8_t font_fr_big_extra[] = {
 const uint8_t font_de_big_extra[] = {
 #include "font_de_10x14.lbm"
 } ;
+#endif
 
 
 const uint8_t *ExtraFont = NULL ;
@@ -113,9 +115,9 @@ extern uint32_t CurrentFrameBuffer ;
 #endif 
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
-int8_t ExtDisplayCounter ;
+uint16_t ExtDisplayTime ;
 uint8_t ExtDisplaySend ;
 #endif 
 
@@ -260,6 +262,8 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 	uint32_t x ;
 	uint16_t *p ;
 	uint8_t mask ;
+  uint32_t hb   = (h + 7) / 8 ;
+  uint32_t hlast ;
 	
   register bool inv = false ;
 	if (mode & INVERS) inv = true ;
@@ -268,7 +272,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 		inv = !inv ;
 	}
 //	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
-  for( yb = 0; yb < h; yb++)
+  for( yb = 0; yb < hb; yb++)
 	{
 		p = ( uint16_t *) CurrentFrameBuffer ;
 		p += i_x*2 ;
@@ -283,6 +287,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 			}
 			uint16_t *q = p ;
 
+			hlast = ( h < 8 ) ? h : 9 ;
 			for ( mask = 1 ; mask ; mask <<= 1 )
 			{
 				uint16_t value = (b & mask) ? colour : background ;
@@ -291,9 +296,14 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 				*(q+LCD_W) = value ;
 				*(q+LCD_W+1) = value ;
 				q += LCD_W * 2 ;
+				if ( --hlast == 0 )
+				{
+					break ;
+				}
 			}
 			p += 2 ;
     }
+		h -= 8 ;
   }
 }
 
@@ -301,7 +311,7 @@ void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mo
 {
   register const unsigned char *q = imgdat ;
   register uint8_t w    = *q++ ;
-  register uint32_t hb   = (*q++ +7) / 8 ;
+  register uint32_t hb   = *q++ ;
   register uint8_t sze1 = *q++ ;
 //	uint32_t yb ;
 //	uint32_t x ;
@@ -368,305 +378,306 @@ uint8_t lcd_putc(uint8_t x,uint8_t y,const char c )
 }
 
 #ifdef PCBX12D
-uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour )
+uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
 {
-	uint16_t *p ;
-	uint16_t *r ;
-  uint8_t *q ;
-	uint8_t mask ;
-	int32_t i ;
-
-	r = ( uint16_t *) CurrentFrameBuffer ;
-	r += x*2 ;
-	r += y * LCD_W * 2 ;
-	if ( c < 22 )
+	if ( c < 31 )
 	{
 		x = c*FW ;
 		if ( (mode & CONDENSED) )
 		{
 			x = c*8 ;
 		}
-			else
+		else
 		{
 			x += x ;
 		}	 
 		return x ;
 	}
-	x += FW ;
-	uint32_t doNormal = 1 ;
-	unsigned char c_mapped = c ;
-  register bool inv = false ;
-	if (mode & INVERS) inv = true ;
-	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	lcdDrawCharBitmapDoubleDma( x, y, c, mode, colour, background ) ;
+	if (mode & CONDENSED)
 	{
-		inv = !inv ;
+		x += 8 ;
 	}
-//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
-	
-	if ( (mode & CONDENSED) )
+	else
 	{
-		doNormal = 0 ;
-			
-		if ( doNormal == 0 )
-		{
-			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
-		/* each letter consists of 8 top bytes followed by
-	 	* five bottom by 8 bottom bytes (16 bytes per 
-	 	* char) */
-			if( c < 0xC0 )
-			{
-				c_mapped = c - 0x20 ;
-				q = (uint8_t *) &font_12x8[c_mapped*14] ;
-			}
-			else
-			{
-				q = (uint8_t *) &font_12x8[0] ;
-			}
-    		
-			for( i=7 ; i>=0 ; i-- )
-			{
-				uint8_t b1 ;
-				uint8_t b3 ;
-
-  		  /*top byte*/
-   		  b1 = *q ;
-  		  /*bottom byte*/
-   		  b3 = *(q+7) ;
-   		  q++;
-				if ( i == 0 )
-				{
-					b1 = 0 ;
-					b3 = 0 ;
-				}
-    		if(inv)
-				{
-				  b1=~b1;
-				  b3=~b3;
-    		}
-				p = r ;
-				for ( mask = 1 ; mask ; mask <<= 1 )
-				{
-					if ( b1 & mask )
-					{
-						*p ^= 0xFFFF ;
-						*(p+1) ^= 0xFFFF ;
-						*(p+LCD_W) ^= 0xFFFF ;
-						*(p+LCD_W+1) ^= 0xFFFF ;
-					}
-					if ( b3 & mask )
-					{
-						*(p+LCD_W*16) ^= 0xFFFF ;
-						*(p+LCD_W*16+1) ^= 0xFFFF ;
-						*(p+LCD_W*17) ^= 0xFFFF ;
-						*(p+LCD_W*17+1) ^= 0xFFFF ;
-					}
-					p += LCD_W * 2 ;
-				}
-				r += 2 ;
-    	}
-		}
-	}
-
-	if ( doNormal )
-	{
-		if ( (c!=0x2E)) x+=FW; //check for decimal point
-	/* each letter consists of ten top bytes followed by
- 	* five bottom by ten bottom bytes (20 bytes per 
- 	* char) */
-		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
-	  for( i=11 ; i>=0 ; i-- )
-		{
-			uint8_t b1 ;
-			uint8_t b2 ;
-
-		  /*top byte*/
-	    b1 = i>1 ? *q : 0;
-		  /*bottom byte*/
-	    b2 = i>1 ? *(q+10) : 0;
-	    q++;
-			p = r ;
-			for ( mask = 1 ; mask ; mask <<= 1 )
-			{
-				if ( b1 & mask )
-				{
-					*p = colour ;
-					*(p+1) = colour ;
-					*(p+LCD_W) = colour ;
-					*(p+LCD_W+1) = colour ;
-				}
-				if ( b2 & mask )
-				{
-					*(p+LCD_W*16) = colour ;
-					*(p+LCD_W*16+1) = colour ;
-					*(p+LCD_W*17) = colour ;
-					*(p+LCD_W*17+1) = colour ;
-				}
-				p += LCD_W * 2 ;
-			}
-			r += 2 ;
-		}
+		x += FW*2 ;
 	}
 	return x ;
+
+
+//	uint16_t *p ;
+//	uint16_t *r ;
+//  uint8_t *q ;
+//	uint8_t mask ;
+//	int32_t i ;
+
+//	r = ( uint16_t *) CurrentFrameBuffer ;
+//	r += x*2 ;
+//	r += y * LCD_W * 2 ;
+//	x += FW ;
+//	uint32_t doNormal = 1 ;
+//	unsigned char c_mapped = c ;
+//  register bool inv = false ;
+//	if (mode & INVERS) inv = true ;
+//	if ( (mode & BLINK) && BLINK_ON_PHASE )
+//	{
+//		inv = !inv ;
+//	}
+////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+	
+//	if ( (mode & CONDENSED) )
+//	{
+//		doNormal = 0 ;
+			
+//		if ( doNormal == 0 )
+//		{
+//			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
+//		/* each letter consists of 8 top bytes followed by
+//	 	* five bottom by 8 bottom bytes (16 bytes per 
+//	 	* char) */
+//			if( c < 0xC0 )
+//			{
+//				c_mapped = c - 0x20 ;
+//				q = (uint8_t *) &font_12x8[c_mapped*14] ;
+//			}
+//			else
+//			{
+//				q = (uint8_t *) &font_12x8[0] ;
+//			}
+    		
+//			for( i=7 ; i>=0 ; i-- )
+//			{
+//				uint8_t b1 ;
+//				uint8_t b3 ;
+
+//  		  /*top byte*/
+//   		  b1 = *q ;
+//  		  /*bottom byte*/
+//   		  b3 = *(q+7) ;
+//   		  q++;
+//				if ( i == 0 )
+//				{
+//					b1 = 0 ;
+//					b3 = 0 ;
+//				}
+//    		if(inv)
+//				{
+//				  b1=~b1;
+//				  b3=~b3;
+//    		}
+//				p = r ;
+//				for ( mask = 1 ; mask ; mask <<= 1 )
+//				{
+//					uint16_t v = ( b1 & mask ) ? colour : background ;
+//					*p = v ;
+//					*(p+1) = v ;
+//					*(p+LCD_W) = v ;
+//					*(p+LCD_W+1) = v ;
+//					v = ( b3 & mask ) ? colour : background ;
+//					*(p+LCD_W*16) = v ;
+//					*(p+LCD_W*16+1) = v ;
+//					*(p+LCD_W*17) = v ;
+//					*(p+LCD_W*17+1) = v ;
+//					p += LCD_W * 2 ;
+//				}
+//				r += 2 ;
+//    	}
+//		}
+//	}
+
+//	if ( doNormal )
+//	{
+//		if ( (c!=0x2E)) x+=FW; //check for decimal point
+//	/* each letter consists of ten top bytes followed by
+// 	* five bottom by ten bottom bytes (20 bytes per 
+// 	* char) */
+//		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
+//	  for( i=11 ; i>=0 ; i-- )
+//		{
+//			uint8_t b1 ;
+//			uint8_t b2 ;
+
+//		  /*top byte*/
+//	    b1 = i>1 ? *q : 0;
+//		  /*bottom byte*/
+//	    b2 = i>1 ? *(q+10) : 0;
+//			if ( inv )
+//			{
+//				b1 = ~b1 ;
+//				b2 = ~b2 ;
+//			}
+//	    q++;
+//			p = r ;
+//			for ( mask = 1 ; mask ; mask <<= 1 )
+//			{
+//				uint16_t v = ( b1 & mask ) ? colour : background ;
+//				*p = v ;
+//				*(p+1) = v ;
+//				*(p+LCD_W) = v ;
+//				*(p+LCD_W+1) = v ;
+//				v = ( b2 & mask ) ? colour : background ;
+//				*(p+LCD_W*16) = v ;
+//				*(p+LCD_W*16+1) = v ;
+//				*(p+LCD_W*17) = v ;
+//				*(p+LCD_W*17+1) = v ;
+//				p += LCD_W * 2 ;
+//			}
+//			r += 2 ;
+//		}
+//	}
+//	return x ;
 }
 
-uint16_t lcd_putcAttDbl(uint16_t x,uint16_t y,const char c,uint8_t mode)
-{
-	uint16_t *p ;
-	uint16_t *r ;
-  uint8_t *q ;
-	uint8_t mask ;
-	int32_t i ;
+//uint16_t lcd_putcAttDbl(uint16_t x,uint16_t y,const char c,uint8_t mode)
+//{
+//	uint16_t *p ;
+//	uint16_t *r ;
+//  uint8_t *q ;
+//	uint8_t mask ;
+//	int32_t i ;
 
-	r = ( uint16_t *) CurrentFrameBuffer ;
-	r += x*2 ;
-	r += y * LCD_W * 2 ;
-	if ( c < 22 )
-	{
-		x = c*FW ;
-		if ( (mode & CONDENSED) )
-		{
-			x = c*8 ;
-		}
-			else
-		{
-			x += x ;
-		}	 
-		return x ;
-	}
-	x += FW ;
-	uint32_t doNormal = 1 ;
-	unsigned char c_mapped = c ;
+//	r = ( uint16_t *) CurrentFrameBuffer ;
+//	r += x*2 ;
+//	r += y * LCD_W * 2 ;
+//	if ( c < 22 )
+//	{
+//		x = c*FW ;
+//		if ( (mode & CONDENSED) )
+//		{
+//			x = c*8 ;
+//		}
+//			else
+//		{
+//			x += x ;
+//		}	 
+//		return x ;
+//	}
+//	x += FW ;
+//	uint32_t doNormal = 1 ;
+//	unsigned char c_mapped = c ;
   
-	register bool inv = false ;
-	if (mode & INVERS) inv = true ;
-	if ( (mode & BLINK) && BLINK_ON_PHASE )
-	{
-		inv = !inv ;
-	}
-//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+//	register bool inv = false ;
+//	if (mode & INVERS) inv = true ;
+//	if ( (mode & BLINK) && BLINK_ON_PHASE )
+//	{
+//		inv = !inv ;
+//	}
+////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
 	
-	if ( (mode & CONDENSED) )
-	{
-		doNormal = 0 ;
+//	if ( (mode & CONDENSED) )
+//	{
+//		doNormal = 0 ;
 			
-		if ( doNormal == 0 )
-		{
-			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
-		/* each letter consists of 8 top bytes followed by
-	 	* five bottom by 8 bottom bytes (16 bytes per 
-	 	* char) */
-			if( c < 0xC0 )
-			{
-				c_mapped = c - 0x20 ;
-				q = (uint8_t *) &font_12x8[c_mapped*14] ;
-			}
-			else
-			{
-				q = (uint8_t *) &font_12x8[0] ;
-			}
+//		if ( doNormal == 0 )
+//		{
+//			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
+//		/* each letter consists of 8 top bytes followed by
+//	 	* five bottom by 8 bottom bytes (16 bytes per 
+//	 	* char) */
+//			if( c < 0xC0 )
+//			{
+//				c_mapped = c - 0x20 ;
+//				q = (uint8_t *) &font_12x8[c_mapped*14] ;
+//			}
+//			else
+//			{
+//				q = (uint8_t *) &font_12x8[0] ;
+//			}
     		
-			for( i=7 ; i>=0 ; i-- )
-			{
-				uint8_t b1 ;
-				uint8_t b3 ;
+//			for( i=7 ; i>=0 ; i-- )
+//			{
+//				uint8_t b1 ;
+//				uint8_t b3 ;
 
-  		  /*top byte*/
-   		  b1 = *q ;
-  		  /*bottom byte*/
-   		  b3 = *(q+7) ;
-   		  q++;
-				if ( i == 0 )
-				{
-					b1 = 0 ;
-					b3 = 0 ;
-				}
-    		if(inv)
-				{
-				  b1=~b1;
-				  b3=~b3;
-    		}
-				p = r ;
-				for ( mask = 1 ; mask ; mask <<= 1 )
-				{
-					if ( b1 & mask )
-					{
-						*p ^= 0xFFFF ;
-						*(p+1) ^= 0xFFFF ;
-						*(p+LCD_W) ^= 0xFFFF ;
-						*(p+LCD_W+1) ^= 0xFFFF ;
-					}
-					if ( b3 & mask )
-					{
-						*(p+LCD_W*16) ^= 0xFFFF ;
-						*(p+LCD_W*16+1) ^= 0xFFFF ;
-						*(p+LCD_W*17) ^= 0xFFFF ;
-						*(p+LCD_W*17+1) ^= 0xFFFF ;
-					}
-					p += LCD_W * 2 ;
-				}
-				r += 2 ;
-    	}
-		}
-	}
+//  		  /*top byte*/
+//   		  b1 = *q ;
+//  		  /*bottom byte*/
+//   		  b3 = *(q+7) ;
+//   		  q++;
+//				if ( i == 0 )
+//				{
+//					b1 = 0 ;
+//					b3 = 0 ;
+//				}
+//    		if(inv)
+//				{
+//				  b1=~b1;
+//				  b3=~b3;
+//    		}
+//				p = r ;
+//				for ( mask = 1 ; mask ; mask <<= 1 )
+//				{
+//					if ( b1 & mask )
+//					{
+//						*p ^= 0xFFFF ;
+//						*(p+1) ^= 0xFFFF ;
+//						*(p+LCD_W) ^= 0xFFFF ;
+//						*(p+LCD_W+1) ^= 0xFFFF ;
+//					}
+//					if ( b3 & mask )
+//					{
+//						*(p+LCD_W*16) ^= 0xFFFF ;
+//						*(p+LCD_W*16+1) ^= 0xFFFF ;
+//						*(p+LCD_W*17) ^= 0xFFFF ;
+//						*(p+LCD_W*17+1) ^= 0xFFFF ;
+//					}
+//					p += LCD_W * 2 ;
+//				}
+//				r += 2 ;
+//    	}
+//		}
+//	}
 
-	if ( doNormal )
-	{
-		if ( (c!=0x2E)) x+=FW; //check for decimal point
-	/* each letter consists of ten top bytes followed by
- 	* five bottom by ten bottom bytes (20 bytes per 
- 	* char) */
-		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
-	  for( i=11 ; i>=0 ; i-- )
-		{
-			uint8_t b1 ;
-			uint8_t b2 ;
+//	if ( doNormal )
+//	{
+//		if ( (c!=0x2E)) x+=FW; //check for decimal point
+//	/* each letter consists of ten top bytes followed by
+// 	* five bottom by ten bottom bytes (20 bytes per 
+// 	* char) */
+//		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
+//	  for( i=11 ; i>=0 ; i-- )
+//		{
+//			uint8_t b1 ;
+//			uint8_t b2 ;
 
-		  /*top byte*/
-	    b1 = i>1 ? *q : 0;
-		  /*bottom byte*/
-	    b2 = i>1 ? *(q+10) : 0;
-	    q++;
-			p = r ;
-			for ( mask = 1 ; mask ; mask <<= 1 )
-			{
-				if ( b1 & mask )
-				{
-					*p ^= 0xFFFF ;
-					*(p+1) ^= 0xFFFF ;
-					*(p+LCD_W) ^= 0xFFFF ;
-					*(p+LCD_W+1) ^= 0xFFFF ;
-				}
-				if ( b2 & mask )
-				{
-					*(p+LCD_W*16) ^= 0xFFFF ;
-					*(p+LCD_W*16+1) ^= 0xFFFF ;
-					*(p+LCD_W*17) ^= 0xFFFF ;
-					*(p+LCD_W*17+1) ^= 0xFFFF ;
-				}
-				p += LCD_W * 2 ;
-			}
-			r += 2 ;
-		}
-	}
-	return x ;
+//		  /*top byte*/
+//	    b1 = i>1 ? *q : 0;
+//		  /*bottom byte*/
+//	    b2 = i>1 ? *(q+10) : 0;
+//	    q++;
+//			p = r ;
+//			for ( mask = 1 ; mask ; mask <<= 1 )
+//			{
+//				if ( b1 & mask )
+//				{
+//					*p ^= 0xFFFF ;
+//					*(p+1) ^= 0xFFFF ;
+//					*(p+LCD_W) ^= 0xFFFF ;
+//					*(p+LCD_W+1) ^= 0xFFFF ;
+//				}
+//				if ( b2 & mask )
+//				{
+//					*(p+LCD_W*16) ^= 0xFFFF ;
+//					*(p+LCD_W*16+1) ^= 0xFFFF ;
+//					*(p+LCD_W*17) ^= 0xFFFF ;
+//					*(p+LCD_W*17+1) ^= 0xFFFF ;
+//				}
+//				p += LCD_W * 2 ;
+//			}
+//			r += 2 ;
+//		}
+//	}
+//	return x ;
 	
-}
+//}
 
 uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
 {
-	uint16_t *p ;
-  uint8_t *q ;
-	uint8_t mask ;
-	uint16_t v ;
 
 	if ( mode & DBLSIZE )
 	{
 		return lcd_putcAttDblColour( x, y, c, mode, colour ) ;
 	}
-	p = ( uint16_t *) CurrentFrameBuffer ;
-	p += x*2 ;
-	p += y * LCD_W * 2 ;
-
 	if ( c < 22 )		// Move to specific x position (c)*FW
 	{
 		x = c*FW ;
@@ -683,113 +694,108 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 		}
 		return x ;
 	}
+
+	lcdDrawCharBitmapDma( x, y, c, mode, colour, background ) ;
 	x += FW ;
-	
-	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
-	
-  register bool inv = false ;
-	if (mode & INVERS) inv = true ;
-	if ( (mode & BLINK) && BLINK_ON_PHASE )
-	{
-		inv = !inv ;
-	}
-//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
-
-	uint8_t condense = 0 ;
-
 	if (mode & CONDENSED)
 	{
-//		*p = inv ? ~0 : 0;
-		p += 1 ;
-		condense=1;
 		x += FWNUM-FW ;
 	}
-	 
-	for ( mask = 1 ; mask ; mask <<= 1 )
-	{
-		uint16_t *r = p ;
-		uint8_t b ;
-
-		b = *q ;
-		if ( b & mask )
-		{
-			v = inv ? background : colour ;
-			v = colour ;
-			*r = v ;
-			*(r+1) = v ;
-			*(r+LCD_W) = v ;
-			*(r+LCD_W+1) = v ;
-		}
-		r += 2 ;
-		if ( condense == 0 )
-		{
-			b = *(q+1) ;
-			if ( b & mask )
-			{
-				v = inv ? background : colour ;
-				*r = v ;
-				*(r+1) = v ;
-				*(r+LCD_W) = v ;
-				*(r+LCD_W+1) = v ;
-			}
-			r += 2 ;
-		}
-		b = *(q+2) ;
-		if ( b & mask )
-		{
-			v = inv ? background : colour ;
-			*r = v ;
-			*(r+1) = v ;
-			*(r+LCD_W) = v ;
-			*(r+LCD_W+1) = v ;
-		}
-		r += 2 ;
-		b = *(q+3) ;
-		if ( b & mask )
-		{
-			v = inv ? background : colour ;
-			*r = v ;
-			*(r+1) = v ;
-			*(r+LCD_W) = v ;
-			*(r+LCD_W+1) = v ;
-		}
-		r += 2 ;
-		b = *(q+4) ;
-		if ( b & mask )
-		{
-			v = inv ? background : colour ;
-			*r = v ;
-			*(r+1) = v ;
-			*(r+LCD_W) = v ;
-			*(r+LCD_W+1) = v ;
-		}
-		r += 2 ;
-		v = inv ? colour : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-
-		p += LCD_W * 2 ;
-	}
 	return x ;
+	
+//	uint16_t *p ;
+//  uint8_t *q ;
+//	uint8_t mask ;
+//	uint16_t v ;
+//	p = ( uint16_t *) CurrentFrameBuffer ;
+//	p += x*2 ;
+//	p += y * LCD_W * 2 ;
+	 
+//	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+	
+//  register bool inv = false ;
+//	if (mode & INVERS) inv = true ;
+//	if ( (mode & BLINK) && BLINK_ON_PHASE )
+//	{
+//		inv = !inv ;
+//	}
+////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+
+//	uint8_t condense = 0 ;
+
+//	if (mode & CONDENSED)
+//	{
+////		*p = inv ? ~0 : 0;
+//		p += 2 ;
+//		condense = 1 ;
+//		x += FWNUM-FW ;
+//	}
+	 
+//	for ( mask = 1 ; mask ; mask <<= 1 )
+//	{
+//		uint16_t *r = p ;
+//		uint8_t b ;
+
+//		b = *q ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? colour : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		if ( condense == 0 )
+//		{
+//			b = *(q+1) ;
+//			if ( inv ) b = ~b ;
+//			v = ( b & mask ) ? colour : background ;
+//			*r = v ;
+//			*(r+1) = v ;
+//			*(r+LCD_W) = v ;
+//			*(r+LCD_W+1) = v ;
+//			r += 2 ;
+//		}
+//		b = *(q+2) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? colour : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		b = *(q+3) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? colour : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		b = *(q+4) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? colour : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		v = inv ? colour : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+
+//		p += LCD_W * 2 ;
+//	}
+//	return x ;
 }
 
 uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t background )
 {
-	uint16_t *p ;
-  uint8_t *q ;
-	uint8_t mask ;
-	uint16_t v ;
-
 	if ( mode & DBLSIZE )
 	{
-		return lcd_putcAttDbl( x, y, c, mode ) ;
+		return lcd_putcAttDblColour( x, y, c, mode ) ;
 	}
-	p = ( uint16_t *) CurrentFrameBuffer ;
-	p += x*2 ;
-	p += y * LCD_W * 2 ;
-
 	if ( c < 22 )		// Move to specific x position (c)*FW
 	{
 		x = c*FW ;
@@ -806,123 +812,151 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t b
 		}
 		return x ;
 	}
-	x += FW ;
 	
-	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+//extern void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t background ) ;
+//	if ( (mode & BOLD) == 0 )
+//	{
+		if ( (mode & BLINK) && BLINK_ON_PHASE )
+		{
+			mode ^= INVERS ;
+		}
+		lcdDrawCharBitmapDma( x, y, c, mode & (INVERS | CONDENSED | BOLD), LCD_BLACK, background ) ;
+		return (mode & CONDENSED) ? x + FWNUM : x + FW ;
+//	}
+
+//	uint16_t *p ;
+//  uint8_t *q ;
+//	uint8_t mask ;
+//	uint16_t v ;
+//	uint16_t ov ;
+
+//  register bool inv = false ;
+//	if (mode & INVERS) inv = true ;
+//	if ( (mode & BLINK) && BLINK_ON_PHASE )
+//	{
+//		inv = !inv ;
+//	}
+
+//	p = ( uint16_t *) CurrentFrameBuffer ;
+//	p += x*2 ;
+//	p += y * LCD_W * 2 ;
+
+//	x += FW ;
 	
-  register bool inv = false ;
-	if (mode & INVERS) inv = true ;
-	if ( (mode & BLINK) && BLINK_ON_PHASE )
-	{
-		inv = !inv ;
-	}
-//  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
 
-	uint8_t condense = 0 ;
+//	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
 
-	if (mode & CONDENSED)
-	{
-//		*p = inv ? ~0 : 0;
-		p += 1 ;
-		condense=1;
-		x += FWNUM-FW ;
-	}
+//	uint8_t condense = 0 ;
+
+//	if (mode & CONDENSED)
+//	{
+////		*p = inv ? ~0 : 0;
+//		p += 2 ;
+//		condense=1;
+//		x += FWNUM-FW ;
+//	}
 	 
-	for ( mask = 1 ; mask ; mask <<= 1 )
-	{
-		uint16_t *r = p ;
-		uint8_t b ;
+//	for ( mask = 1 ; mask ; mask <<= 1 )
+//	{
+//		uint16_t *r = p ;
+//		uint8_t b ;
 
-		b = *q ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		r += 2 ;
-		if ( condense == 0 )
-		{
-			b = *(q+1) ;
-			if ( inv ) b = ~b ;
-			v = ( b & mask ) ? 0 : background ;
-			*r = v ;
-			*(r+1) = v ;
-			*(r+LCD_W) = v ;
-			*(r+LCD_W+1) = v ;
-			r += 2 ;
-		}
-		b = *(q+2) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		r += 2 ;
-		b = *(q+3) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		r += 2 ;
-		b = *(q+4) ;
-		if ( inv ) b = ~b ;
-		v = ( b & mask ) ? 0 : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		r += 2 ;
-		v = ( inv ) ? 0 : background ;
-		*r = v ;
-		*(r+1) = v ;
-		*(r+LCD_W) = v ;
-		*(r+LCD_W+1) = v ;
-		p += LCD_W * 2 ;
-	}
-	return x ;
+//		b = *q ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? 0 : background ;
+//		*r = v ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		ov = (mode & BOLD) ? v : 0xFFFF ;
+//		if ( condense == 0 )
+//		{
+//			b = *(q+1) ;
+//			if ( inv ) b = ~b ;
+//			v = ( b & mask ) ? 0 : background ;
+//			*r = v & ov ;
+//			*(r+1) = v ;
+//			*(r+LCD_W) = v & ov ;
+//			*(r+LCD_W+1) = v ;
+//			r += 2 ;
+//			ov = (mode & BOLD) ? v : 0xFFFF ;
+//		}
+//		b = *(q+2) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? 0 : background ;
+//		*r = v & ov ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v & ov ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		ov = (mode & BOLD) ? v : 0xFFFF ;
+//		b = *(q+3) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? 0 : background ;
+//		*r = v & ov ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v & ov ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		ov = (mode & BOLD) ? v : 0xFFFF ;
+//		b = *(q+4) ;
+//		if ( inv ) b = ~b ;
+//		v = ( b & mask ) ? 0 : background ;
+//		*r = v & ov ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v & ov ;
+//		*(r+LCD_W+1) = v ;
+//		r += 2 ;
+//		ov = (mode & BOLD) ? v : 0xFFFF ;
+//		v = ( inv ) ? 0 : background ;
+//		*r = v & ov ;
+//		*(r+1) = v ;
+//		*(r+LCD_W) = v & ov ;
+//		*(r+LCD_W+1) = v ;
+//		p += LCD_W * 2 ;
+//	}
+//	return x ;
 }
 
-uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour)
-{
-	uint16_t *p ;
-  uint8_t *q ;
-	uint8_t mask ;
+//uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour)
+//{
+//	uint16_t *p ;
+//  uint8_t *q ;
+//	uint8_t mask ;
 
-	p = ( uint16_t *) CurrentFrameBuffer ;
-	p += x ;
-	p += y * LCD_W ;
-	// p -> char position
-	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
-	for ( mask = 1 ; mask ; mask <<= 1 )
-	{
-		if ( *q & mask )
-		{
-			*p = colour ;
-		}
-		if ( *(q+1) & mask )
-		{
-			*(p+1) = colour ;
-		}
-		if ( *(q+2) & mask )
-		{
-			*(p+2) = colour ;
-		}
-		if ( *(q+3) & mask )
-		{
-			*(p+3) = colour ;
-		}
-		if ( *(q+4) & mask )
-		{
-			*(p+4) = colour ;
-		}
-		p += LCD_W ;
-	}
-	return x+6 ;
-}
+//	p = ( uint16_t *) CurrentFrameBuffer ;
+//	p += x ;
+//	p += y * LCD_W ;
+//	// p -> char position
+//	q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
+//	for ( mask = 1 ; mask ; mask <<= 1 )
+//	{
+//		if ( *q & mask )
+//		{
+//			*p = colour ;
+//		}
+//		if ( *(q+1) & mask )
+//		{
+//			*(p+1) = colour ;
+//		}
+//		if ( *(q+2) & mask )
+//		{
+//			*(p+2) = colour ;
+//		}
+//		if ( *(q+3) & mask )
+//		{
+//			*(p+3) = colour ;
+//		}
+//		if ( *(q+4) & mask )
+//		{
+//			*(p+4) = colour ;
+//		}
+//		p += LCD_W ;
+//	}
+//	return x+6 ;
+//}
 
 void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,uint8_t mode, uint16_t colour )
 {
@@ -1365,11 +1399,12 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
 		fullwidth = 1 ;
 		len = -len ;		
 	}
+#ifndef PCBX12D
 	if (mode & BOLD)
 	{
 		fw = FW ;
 	}
-
+#endif
   if (mode & DBLSIZE)
   {
 		if ( (mode & CONDENSED) )
@@ -1893,6 +1928,13 @@ void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 	{
 		plotType = PLOT_BLACK ;
 	}
+#ifdef PCBX12D
+	uint16_t colour = (plotType == PLOT_BLACK) ? LCD_BLACK : LCD_WHITE ;
+	lcdDrawSolidFilledRectDMA( x*2, y*2, 2, h*2, colour) ;
+	lcdDrawSolidFilledRectDMA( (x+w-1)*2, y*2, 2, h*2, colour) ;
+	lcdDrawSolidFilledRectDMA( (x+1)*2, (y+h-1)*2, (w-2)*2, 2, colour) ;
+	lcdDrawSolidFilledRectDMA( (x+1)*2, y*2, (w-2)*2, 2, colour) ;
+#else
   lcd_vline(x, y, h ) ;
 	if ( w > 1 )
 	{
@@ -1900,6 +1942,7 @@ void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 	}
  	lcd_hline(x+1, y+h-1, w-2 ) ;
  	lcd_hline(x+1, y, w-2 ) ;
+#endif
 	plotType = oldPlotType ;
 }
 
@@ -2453,12 +2496,13 @@ void refreshDisplay()
 #ifdef PCBSKY
 	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
 	{
-		if ( --ExtDisplayCounter < 0 )
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
 		{
+			ExtDisplayTime = time ;
   		memcpy(&ExtDisplayBuf[1], DisplayBuf, sizeof(DisplayBuf));
 			ExtDisplayBuf[0] = 0xAA ;
 			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
-			ExtDisplayCounter = 4 ;
 			ExtDisplaySend = 1 ;
 		}
 	}
@@ -2567,12 +2611,13 @@ void refreshDisplay()
 {
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
-		if ( --ExtDisplayCounter < 0 )
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
 		{
+			ExtDisplayTime = time ;
   		memcpy(&ExtDisplayBuf[1], DisplayBuf, sizeof(DisplayBuf));
 			ExtDisplayBuf[0] = 0xAA ;
 			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
-			ExtDisplayCounter = 4 ;
 			ExtDisplaySend = 1 ;
 		}
 	}

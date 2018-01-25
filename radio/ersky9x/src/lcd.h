@@ -25,6 +25,9 @@
 #ifdef PCBX7
 #define DISPLAY_W 128
 #define DISPLAY_H  64
+extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
+extern uint16_t ExtDisplayTime ;
+extern uint8_t ExtDisplaySend ;
 #else // PCBX7
 #define DISPLAY_W 212
 #define DISPLAY_H  64
@@ -116,6 +119,21 @@ extern const uint8_t font_de_big_extra[] ;
 extern const uint8_t *ExtraFont ;
 extern const uint8_t *ExtraBigFont ;
 
+#ifdef PCBX12D
+
+extern const uint8_t font_fr_h_extra[] ;
+extern const uint8_t font_fr_h_big_extra[] ;
+extern const uint8_t font_de_h_extra[] ;
+extern const uint8_t font_de_h_big_extra[] ;
+extern const uint8_t font_se_h_extra[] ;
+extern const uint8_t font_se_h_big_extra[] ;
+extern const uint8_t font_it_h_extra[] ;
+extern const uint8_t font_pl_h_extra[] ;
+
+extern const uint8_t *ExtraHorusFont ;
+extern const uint8_t *ExtraHorusBigFont ;
+#endif
+
 #define PLOT_XOR		0
 #define PLOT_BLACK	1
 #define PLOT_WHITE	2
@@ -156,11 +174,14 @@ extern void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_
 extern "C" void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void waitDma2Ddone(void) ;
+extern void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background ) ;
 extern void lcd_clearBackground( void ) ;
 extern void lcd_blank( void ) ;
 extern void waitLcdClearDdone( void ) ;
 extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
 extern void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len, uint8_t mode, uint16_t colour = LCD_BLACK ) ;
+extern uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
+extern void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
 extern void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat ) ;
 extern void lcd_hline( uint16_t x, uint16_t y, int8_t w ) ;
 extern void lcd_vline( uint16_t x, uint16_t y, int8_t h ) ;

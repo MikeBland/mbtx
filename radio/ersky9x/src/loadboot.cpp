@@ -142,6 +142,8 @@ __attribute__ ((section(".bootrodata"), used))
 
 void _bootStart()
 {
+#ifdef PCBX12D
+#endif
 #ifndef PCBX12D
 	// turn soft power on now
 #ifdef PCB9XT

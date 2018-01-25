@@ -2762,6 +2762,7 @@ void init_keys()
 	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_RIGHT, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 	configure_pins( KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_LEFT | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
 	configure_pins( KEYS_GPIO_PIN_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+	AnalogData[11] = AnalogData[13] = 0x0800 ;
 }
 
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
@@ -2776,12 +2777,12 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
 	}
-	if ( x & KEYS_GPIO_PIN_RIGHT )
+	if ( ( x & KEYS_GPIO_PIN_RIGHT ) && (AnalogData[11] < 0xA80 ) )
 	{
 		y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	}
 	x = GPIOI->IDR ;
-	if ( x & KEYS_GPIO_PIN_LEFT )
+	if ( ( x & KEYS_GPIO_PIN_LEFT ) && (AnalogData[11] > 0x580 ) )
 	{
 		y |= 0x02 << KEY_LEFT ;		// LEFT
 	}
@@ -2789,12 +2790,12 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_EXIT ;			// EXIT
 	}
-	if ( x & KEYS_GPIO_PIN_DOWN )
+	if ( ( x & KEYS_GPIO_PIN_DOWN ) && (AnalogData[13] > 0x580 ) )
 	{
 		y |= 0x02 << KEY_DOWN ;		// DOWN
 	}
 	x = GPIOG->IDR ;
-	if ( x & KEYS_GPIO_PIN_UP )
+	if ( ( x & KEYS_GPIO_PIN_UP ) && (AnalogData[13] < 0xA80 ) )
 	{
 		y |= 0x02 << KEY_UP ;			// up
 	}

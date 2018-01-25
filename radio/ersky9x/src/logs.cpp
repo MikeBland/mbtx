@@ -706,8 +706,8 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 #ifdef BLUETOOTH
 				if ( isLogEnabled( LOG_BTRX ) )
 				{
-extern uint8_t BtRxOccured ;
-					f_printf(&g_oLogFile, ",%d", BtRxOccured ) ;
+//extern uint8_t BtRxOccured ;
+					f_printf(&g_oLogFile, ",%d", BtControl.BtRxOccured ) ;
 				}
 #endif
 			if ( isLogEnabled( LOG_ASPD ) )

@@ -46,7 +46,8 @@
 #endif
 #ifdef PCBX12D	
   #define WIDE_SCREEN	1
-  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
+//  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
+	#define __SDRAM __attribute__((section(".sdram"), aligned(32)))
 #endif
 
 #ifdef PCBX12D
@@ -58,7 +59,10 @@
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
-//#ifdef PCBSKY
+#define BLUETOOTH	1
+#endif
+
+#ifdef PCBX7
 #define BLUETOOTH	1
 #endif
 
@@ -1048,7 +1052,7 @@ extern void setLastIdx( char *s, uint8_t idx ) ;
 extern uint8_t heartbeat ;
 extern int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 extern uint8_t BtAsPpm ;
-extern uint8_t BtBaudrateChanged ;
+//extern uint8_t BtBaudrateChanged ;
 
 uint8_t char2idx(char c);
 char idx2char(uint8_t idx);
@@ -1296,6 +1300,11 @@ extern uint8_t AlertType ;
 #ifdef PCBX9D
 #define TRAINER_SBUS		1
 #define TRAINER_CPPM		2
+
+#ifdef PCBX7
+#define TRAINER_BT			5
+#endif
+
 #else
 #define TRAINER_BT			1
 #define TRAINER_COM2		2
@@ -1315,17 +1324,46 @@ struct btRemote_t
 	uint8_t address[16] ;
 	uint8_t name[16] ;
 } ;
-extern uint8_t BtCurrentBaudrate ;
-extern uint8_t BtLinkRequest ;
+
+struct t_bt_control
+{
+	uint8_t BtCurrentBaudrate ;
+	uint8_t BtLinkRequest ;
+	uint8_t BtScan ;
+	uint8_t BtScanState ;
+	uint8_t BtBaudrateChanged ;
+	uint8_t BtConfigure ;
+	uint8_t BtScanInit ;
+	uint8_t BtCurrentLinkIndex ;
+	uint8_t BtRoleChange ;
+	uint8_t BtNameChange ;
+	uint8_t BtMasterSlave ;
+	uint8_t BtReady ;
+	uint8_t BtLinking ;
+	uint8_t BtRxState ;
+	uint8_t BtSbusIndex ;
+	uint8_t BtSbusReceived ;
+	uint8_t BtRxOccured ;
+	uint8_t BtRxChecksum ;
+	uint8_t BtBadChecksum ;
+	uint8_t BtBaudChangeIndex ;
+	uint8_t BtLinked ;
+	uint8_t NumberBtremotes ;
+	uint8_t Bt_ok ;
+
+
+} ;
+
+extern struct t_bt_control BtControl ;
 
 #ifdef PCBSKY
 extern uint8_t HwDelayScale ;
 #define HW_COUNT_PER_US		8
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
 extern struct btRemote_t BtRemote[] ;
-extern uint8_t NumberBtremotes ;
+//extern uint8_t NumberBtremotes ;
 #endif
 
 extern uint8_t HardwareMenuEnabled ;
