@@ -169,6 +169,8 @@ void ProtocolDialog::setBoxes()
 	ui->rateLabel->hide() ;
   ui->rateCB->hide() ;
 	ui->followLabel->hide() ;
+	ui->R9MpowerLabel->hide() ;
+  ui->R9MpowerCB->hide() ;
 
 
   if ( ( lModule == 0 ) && ( lVersion < 4 ) && ( rData->bitType & (RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) ) )
@@ -225,6 +227,28 @@ void ProtocolDialog::setBoxes()
 		ui->xjtTypeCB->show() ;
 		ui->xjtCountryLabel->show() ;
 		ui->xjtCountryCB->show() ;
+		if ( ppd->sub_protocol == 3 )	// R9M
+		{
+	    ui->R9MpowerCB->clear();
+			if ( ppd->country == 2 )
+			{
+				ui->R9MpowerCB->addItem("25 mW") ;
+				ui->R9MpowerCB->addItem("500 mW") ;
+			}
+			else
+			{
+				ui->R9MpowerCB->addItem("10 mW") ;
+				ui->R9MpowerCB->addItem("100 mW") ;
+				ui->R9MpowerCB->addItem("500 mW") ;
+				ui->R9MpowerCB->addItem("1000 mW") ;
+			}
+			ui->R9MpowerCB->setCurrentIndex(ppd->r9mPower) ;
+			ui->R9MpowerLabel->show() ;
+		  ui->R9MpowerCB->show() ;
+		}
+
+
+
 //		ui->startChannelLabel->hide() ;
 //    ui->startChannelSB->hide() ;
 	}
@@ -320,6 +344,7 @@ uint32_t ProtocolDialog::hasFailsafe(void)
 	if ( ppd->protocol == PROTO_PXX )
 	{
 	  if ( ppd->sub_protocol == 0 ) return 1 ;		
+	  if ( ppd->sub_protocol == 3 ) return 1 ;		
 	}
 	return 0 ;
 }
@@ -359,6 +384,14 @@ void ProtocolDialog::on_xjtCountryCB_currentIndexChanged(int index)
 {
 	if ( protocolEditLock ) return ;
 	ppd->country = index ;
+	if ( ppd->sub_protocol == 3 )	// R9M
+	{
+		if ( index > 1 )
+		{
+ 			ppd->r9mPower = 0 ;
+		}
+	}
+  setBoxes();
 }
 
 void ProtocolDialog::on_xjtChannelsCB_currentIndexChanged(int index)
@@ -411,6 +444,7 @@ void ProtocolDialog::on_xjtTypeCB_currentIndexChanged(int index)
 {
 	if ( protocolEditLock ) return ;
 	ppd->sub_protocol = index ;
+  setBoxes();
 }
 
 void ProtocolDialog::on_ppmPolarityCB_currentIndexChanged(int index)
@@ -494,3 +528,8 @@ void ProtocolDialog::on_RepeatSendCB_toggled(bool checked)
 	
 }
 
+void ProtocolDialog::on_R9MpowerCB_currentIndexChanged(int index)
+{
+	if ( protocolEditLock ) return ;
+  ppd->r9mPower = index ;
+}

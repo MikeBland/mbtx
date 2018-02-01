@@ -2462,13 +2462,17 @@ void setupPulsesPXX(uint8_t module)
 //    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
 //      extra_flags |=  (1<< 5);
 //  }
-		if ( PxxExtra[0] & 1 )
+		if ( PxxExtra[module] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
 		}
-		if ( PxxExtra[0] & 2 )
+		if ( PxxExtra[module] & 2 )
 		{
 			extra_flags |= (1 << 1 ) ;
+		}
+		if ( g_model.Module[module].sub_protocol == 3 )	// R9M
+		{
+			extra_flags |= g_model.Module[module].r9mPower << 3 ;
 		}
 		putPcmByte( extra_flags ) ;
   	chan = PcmCrc ;		        // get the crc
@@ -2614,15 +2618,19 @@ void setupPulsesPXX(uint8_t module)
 //    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
 //      extra_flags |=  (1<< 5);
 //  }
-		if ( PxxExtra[1] & 1 )
+		if ( PxxExtra[module] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
 		}
-		if ( PxxExtra[1] & 2 )
+		if ( PxxExtra[module] & 2 )
 		{
 			extra_flags |= (1 << 1 ) ;
 		}
-		putPcmByte( extra_flags ) ;
+		if ( g_model.Module[module].sub_protocol == 3 )	// R9M
+		{
+			extra_flags |= g_model.Module[module].r9mPower << 3 ;
+		}
+		putPcmByte_x( extra_flags ) ;
 		
 		chan = PcmCrc_x ;		        // get the crc
   	putPcmByte_x( chan >> 8 ) ; // Checksum hi

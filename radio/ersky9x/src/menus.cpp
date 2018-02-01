@@ -2290,7 +2290,10 @@ uint8_t checkIndexed( uint8_t y, const char *s, uint8_t value, uint8_t edit )
 		max = 1 ;
 		menu_lcd_onoff( x, y, value, edit ) ;
 	}
-	
+	if ( value > max )
+	{
+		value = max ;
+	}
 	if(edit)
 	{
 		if ( ( EditColumns == 0 ) || ( s_editMode ) )
@@ -5018,8 +5021,11 @@ uint8_t y = 2*FH;
 #ifdef PCBSKY
 	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 6 ) ;
 #endif
-#if defined(PCBX9D) || defined(PCBX12D)
+#ifdef PCBX9D
 	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;
+#endif
+#ifdef PCBX12D
+	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;	// No LCD DUmp
 #endif
 #ifdef PCB9XT
 	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 2 ) ;
@@ -5028,8 +5034,11 @@ uint8_t y = 2*FH;
 #ifdef PCBSKY
 		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect Unused   LCDdump  Tel+BTdir"), g_model.com2Function, attr ) ;
 #endif
-#if defined(PCBX9D) || defined(PCBX12D)
+#ifdef PCBX9D
 		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600CppmTrainLCDdump  "), g_model.com2Function, attr ) ;
+#endif
+#ifdef PCBX12D
+		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect CppmTrain"), g_model.com2Function, attr ) ;
 #endif
 #ifdef PCB9XT
 		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600"), g_model.com2Function, attr ) ;
@@ -7315,7 +7324,8 @@ void menuProcMixOne(uint8_t event)
         case 9:
 					{	
 						uint8_t b = 1 ;
-            lcd_puts_Pleft( y,XPSTR("\001MODES"));
+						lcd_puts_P( FW, y, PSTR(STR_MODES) ) ;
+//            lcd_puts_Pleft( y,XPSTR("\001MODES"));
 						
 						if ( attr )
 						{
@@ -7592,7 +7602,7 @@ static uint8_t popupProcess( uint8_t event, uint8_t max )
 		PopupData.PopupTimer = 255 ;
   }
 
-  event = Tevent ;
+//  event = Tevent ;
 	switch(event)
 	{
     case EVT_KEY_BREAK(KEY_MENU) :
@@ -8863,6 +8873,10 @@ void editOneProtocol( uint8_t event )
 	{
 		dataItems += 4 ;
 		need_bind_range |= 5 ;
+		if ( pModule->sub_protocol == 3 )	// R9M
+		{
+			dataItems += 1 ;
+		}
 	}
 	if (pModule->protocol == PROTO_MULTI)
 	{
@@ -9231,7 +9245,7 @@ void editOneProtocol( uint8_t event )
 			if(t_pgOfs<=subN)
 			{
 				lcd_puts_Pleft( y, PSTR(STR_TYPE) ) ;
-				pModule->sub_protocol = checkIndexed( y, XPSTR(FWx10"\002""\006D16(X)D8(D) LRP   "), pModule->sub_protocol, (sub==subN) ) ;
+				pModule->sub_protocol = checkIndexed( y, XPSTR(FWx10"\003""\006D16(X)D8(D) LRP   R9M   "), pModule->sub_protocol, (sub==subN) ) ;
 			  if((y+=FH)>7*FH) return ;
 			}subN++;
 			if(t_pgOfs<=subN)
@@ -9240,6 +9254,17 @@ void editOneProtocol( uint8_t event )
 				pModule->channels = checkIndexed( y, XPSTR(FWx10"\001""\00216 8"), pModule->channels, (sub==subN) ) ;
 			  if((y+=FH)>7*FH) return ;
 			}subN++;
+			if ( pModule->sub_protocol == 3 )	// R9M
+			{
+				if(t_pgOfs<=subN)
+				{
+					char *s ;
+					s = ( pModule->country == 2 ) ? XPSTR(FWx10"\001""\003 25500") : XPSTR(FWx10"\003""\004  10 100 5001000") ;
+				  lcd_puts_Pleft( y, XPSTR("Power (mW)") );
+					pModule->r9mPower = checkIndexed( y, s, pModule->r9mPower, (sub==subN) ) ;
+				  if((y+=FH)>7*FH) return ;
+				}subN++;
+			}
 			if(t_pgOfs<=subN)
 			{
 				lcd_putsAtt( 0, y, XPSTR("Failsafe"), sub==subN ? INVERS : 0 ) ;
@@ -13571,11 +13596,11 @@ extern int32_t Rotary_diff ;
 //	    killEvents(event) ;
 //			popMenu(false) ;
 //    break ;
-#if defined(PCBX7) || defined(REV9E)
-		case EVT_KEY_BREAK(BTN_RE):
-			event = 0 ;
-    break ;
-#endif
+//#if defined(PCBX7) || defined(REV9E)
+//		case EVT_KEY_BREAK(BTN_RE):
+//			event = 0 ;
+//    break ;
+//#endif
 	}
 
 	i = fileList( event, &FileControl ) ;
@@ -15819,6 +15844,97 @@ void navigateCustomTelemetry(uint8_t event, uint32_t mode )
 	}
 }
 
+
+void actionMainPopup( uint8_t event )
+{
+	uint16_t mask = 0x143F ;
+
+  if(PopupData.PopupActive == 1)
+	{
+		mask = 0x03C0 ;
+	}
+  else if(PopupData.PopupActive == 3)
+	{
+		mask = 0x183F ;
+	}
+		
+	uint8_t popaction = doPopup( PSTR( STR_MAIN_POPUP ), mask, 14, event ) ;
+																 
+	UseLastSubmenuIndex = 0 ;
+  if ( popaction == POPUP_SELECT )
+	{
+		uint8_t popidx = PopupData.PopupSel ;
+		if ( popidx == 0 )	// Model Select
+		{
+      pushMenu(menuProcModelSelect) ;
+		}
+		else if( popidx == 1 )	// Edit Model
+		{
+			RotaryState = ROTARY_MENU_UD ;
+	  	pushMenu(menuProcModelIndex) ;
+		}
+		else if( popidx == 2 )	// Last Menu
+		{
+			UseLastSubmenuIndex = 1 ;
+      pushMenu(lastPopMenu());
+		}
+		else if ( popidx == 3 )	// Radio Setup
+		{
+      pushMenu(menuProcIndex) ;
+		}
+		else if( popidx == 4 )	// Statistics
+		{
+	  	pushMenu(menuProcBattery) ;
+		}
+		else if( popidx == 5 )	// Notes
+		{
+			SharedMemory.TextControl.TextHelp = 0 ;
+	  	pushMenu(menuProcText) ;
+		}
+		else if( popidx == 6 )	// Zero Alt.
+		{
+      AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+		}
+		else if( popidx == 7 )	// A1 Offset
+		{
+      if ( g_model.frsky.channels[0].units == 3 )		// Current (A)
+			{
+				frskyTelemetry[0].setoffset() ;
+			}
+		}
+		else if( popidx == 8 )	// A2 Offset
+		{
+      if ( g_model.frsky.channels[1].units == 3 )		// Current (A)
+			{
+				frskyTelemetry[1].setoffset() ;
+			}
+		}
+		else if( popidx == 9 )	// GPS reset
+		{
+			struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
+
+			maxMinPtr->hubMax[FR_GPS_SPEED] = 0 ;
+			maxMinPtr->hubMax[TELEM_GPS_ALT] = 0 ;
+		}
+		else if( popidx == 10 )	// Help
+		{
+			SharedMemory.TextControl.TextHelp = 1 ;
+	  	pushMenu(menuProcText) ;
+		}
+		else if( popidx == 11 )	// Main Display
+		{
+			g_model.mview = 0 ;
+		}
+		else if( popidx == 12 )	// Run Script
+		{
+//				SharedMemory.TextControl.TextHelp = 1 ;
+	  	pushMenu(menuScript) ;
+		}
+	}
+}
+
+
+
 uint8_t PictureDrawn = 0 ;
 
 void menuProc0(uint8_t event)
@@ -16141,6 +16257,16 @@ extern uint8_t ModelImageValid ;
       	  view = MAX_VIEWS-1 ;
   	    audioDefevent(AU_KEYPAD_DOWN) ;
 	      g_model.mview = view | tview ;
+				eeModelChanged() ;
+				io_subview = 0 ;
+	    break ;
+			
+			case EVT_KEY_LONG(KEY_LEFT) :
+        killEvents(event) ;
+				view += 1 ;
+    	  if( view>=MAX_VIEWS) view = 0 ;
+    	  audioDefevent(AU_KEYPAD_UP) ;
+    	  g_model.mview = view | tview ;
 				eeModelChanged() ;
 				io_subview = 0 ;
 	    break ;
@@ -17131,84 +17257,8 @@ extern uint8_t LogsRunning ;
 
 	if ( PopupData.PopupActive )
 	{
-		uint16_t mask = 0x0C3F ;
-
-    if(PopupData.PopupActive == 1)
-		{
-			mask = 0x03C0 ;
-		}
-		
-		uint8_t popaction = doPopup( PSTR( STR_MAIN_POPUP ), mask, 14, event ) ;
-																 
-		UseLastSubmenuIndex = 0 ;
-  	if ( popaction == POPUP_SELECT )
-		{
-			uint8_t popidx = PopupData.PopupSel ;
-			if ( popidx == 0 )	// Model Select
-			{
-        pushMenu(menuProcModelSelect) ;
-			}
-			else if( popidx == 1 )	// Edit Model
-			{
-				RotaryState = ROTARY_MENU_UD ;
-	  	  pushMenu(menuProcModelIndex) ;
-			}
-			else if( popidx == 2 )	// Last Menu
-			{
-				UseLastSubmenuIndex = 1 ;
-        pushMenu(lastPopMenu());
-			}
-			else if ( popidx == 3 )	// Radio Setup
-			{
-        pushMenu(menuProcIndex) ;
-			}
-			else if( popidx == 4 )	// Statistics
-			{
-	  	  pushMenu(menuProcBattery) ;
-			}
-			else if( popidx == 5 )	// Notes
-			{
-				SharedMemory.TextControl.TextHelp = 0 ;
-	  	  pushMenu(menuProcText) ;
-			}
-			else if( popidx == 6 )	// Zero Alt.
-			{
-        AltOffset = -FrskyHubData[FR_ALT_BARO] ;
-			}
-			else if( popidx == 7 )	// A1 Offset
-			{
-        if ( g_model.frsky.channels[0].units == 3 )		// Current (A)
-				{
-				  frskyTelemetry[0].setoffset() ;
-				}
-			}
-			else if( popidx == 8 )	// A2 Offset
-			{
-        if ( g_model.frsky.channels[1].units == 3 )		// Current (A)
-				{
-				  frskyTelemetry[1].setoffset() ;
-				}
-			}
-			else if( popidx == 9 )	// GPS reset
-			{
-				struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
-
-				maxMinPtr->hubMax[FR_GPS_SPEED] = 0 ;
-				maxMinPtr->hubMax[TELEM_GPS_ALT] = 0 ;
-			}
-			else if( popidx == 10 )	// Help
-			{
-				SharedMemory.TextControl.TextHelp = 1 ;
-	  	  pushMenu(menuProcText) ;
-			}
-			else if( popidx == 11 )	// Run Script
-			{
-//				SharedMemory.TextControl.TextHelp = 1 ;
-	  	  pushMenu(menuScript) ;
-			}
-		}
+		actionMainPopup( event ) ;
 	}
-
 }
 
 int16_t intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 0 ,25 ,50, 75, 100

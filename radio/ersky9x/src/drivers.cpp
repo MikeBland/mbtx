@@ -56,6 +56,7 @@
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_usart.h"
 //#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
 #include "X12D/hal.h"
 extern void wdt_reset() ;
 #define wdt_reset()
@@ -63,6 +64,7 @@ extern void wdt_reset() ;
 
 #define SERIAL_TRAINER	1
 
+#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
 // Timer usage
 // TIMER3 for input capture
@@ -135,6 +137,10 @@ struct t_serial_tx *Current_Com3 ;
 #endif
 #ifdef PCBX7
 struct t_serial_tx *Current_Com3 ;
+#endif
+
+#ifdef PCBX12D
+struct t_serial_tx *Current_Com6 ;
 #endif
 
 volatile uint8_t Spi_complete ;
@@ -1845,23 +1851,23 @@ uint16_t rx2nduart()
 	return 0xFFFF ;
 }
 
-void txmitBt( uint8_t c )
-{
-  Uart *pUart=BT_USART ;
-	uint32_t x ;
+//void txmitBt( uint8_t c )
+//{
+//  Uart *pUart=BT_USART ;
+//	uint32_t x ;
 
-	/* Wait for the transmitter to be ready */
-	x = 10000 ;
-  while ( (pUart->UART_SR & UART_SR_TXEMPTY) == 0 )
-	{
-		if ( --x == 0 )
-		{
-			break ;			// Timeout so we don't hang
-		}
-	}
-  /* Send character */
-  pUart->UART_THR=c ;
-}
+//	/* Wait for the transmitter to be ready */
+//	x = 10000 ;
+//  while ( (pUart->UART_SR & UART_SR_TXEMPTY) == 0 )
+//	{
+//		if ( --x == 0 )
+//		{
+//			break ;			// Timeout so we don't hang
+//		}
+//	}
+//  /* Send character */
+//  pUart->UART_THR=c ;
+//}
 
 int32_t rxBtuart()
 {
@@ -2667,6 +2673,109 @@ extern "C" void USART6_IRQHandler()
 }
 #endif // #ifndef PCBX12D
 
+
+#ifdef PCBX12D
+void USART6_configure()
+{
+	if ( isProdVersion() == 0 )
+	{
+		RCC->AHB1ENR |= PROT_BT_RCC_AHB1Periph ;
+		configure_pins( PROT_BT_EN_GPIO_PIN, PIN_OUTPUT | PIN_PORTA ) ;
+	}
+	else
+	{
+		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
+		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
+	}
+	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
+	configure_pins( BT_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;
+	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_M ;
+	USART6->CR2 = 0 ;
+	USART6->CR3 = 0 ;
+	(void) USART6->DR ;
+	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(USART6_IRQn) ;
+	
+}
+
+void USART6SetBaudrate( uint32_t baudrate )
+{
+	USART6->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+}
+
+uint32_t txPdcBt( struct t_serial_tx *data )
+{
+	data->ready = 1 ;
+	Current_Com6 = data ;
+	USART6->CR1 |= USART_CR1_TXEIE ;
+	return 1 ;			// Sent OK
+}
+
+
+
+extern "C" void USART6_IRQHandler()
+{
+  uint32_t status;
+  uint8_t data;
+	USART_TypeDef *puart = USART6 ;
+
+  status = puart->SR ;
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( Current_Com6 )
+		{
+			if ( Current_Com6->size )
+			{
+				puart->DR = *Current_Com6->buffer++ ;
+				if ( --Current_Com6->size == 0 )
+				{
+					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+				}
+			}
+			else
+			{
+				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+			}
+		}
+	}
+
+	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+	{
+		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+		Current_Com6->ready = 0 ;
+	}
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR ;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+			put_fifo128( &BtRx_fifo, data ) ;	
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+				USART_ORE += 1 ;
+			}
+		}
+    status = puart->SR ;
+	}
+}
+
+
+int32_t rxBtuart()
+{
+	return get_fifo128( &BtRx_fifo ) ;
+}
+
+#endif // #ifdef PCBX12D
+
+
+
 #ifndef PCB9XT
 void UART_Sbus_configure( uint32_t masterClock )
 {
@@ -2835,7 +2944,6 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 
 #if !defined(SIMU)
 
-#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
 uint16_t RxIntCount ;
 
@@ -2946,7 +3054,6 @@ uint16_t rxTelemetry()
 }
 
 #ifndef PCB9XT
-#ifndef PCBX12D
 void txmit( uint8_t c )
 {
 	/* Wait for the transmitter to be ready */
@@ -2961,6 +3068,7 @@ uint16_t rxCom2()
 	return get_fifo128( &Com2_fifo ) ;
 }
 
+#ifndef PCBX7
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -2969,7 +3077,6 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	return 1 ;			// Sent OK
 }
 
-#ifndef PCBX7
 extern "C" void USART3_IRQHandler()
 {
   uint32_t status;
@@ -3032,7 +3139,6 @@ extern "C" void USART3_IRQHandler()
     status = puart->SR ;
 	}
 }
-#endif
 #endif
 #endif
 

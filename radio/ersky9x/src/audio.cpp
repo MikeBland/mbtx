@@ -1595,7 +1595,7 @@ void stopMusic()
 
 void flushVoiceQueue()
 {
-	VoiceFlushing = 1 ;
+	VoiceFlushing = 0x80 + Voice.VoiceQueueInIndex ;
 }
 
 
@@ -1740,7 +1740,8 @@ void voice_task(void* pdata)
 
 		 if ( VoiceFlushing )
 		 {
-			while ( Voice.VoiceQueueCount )
+		 	VoiceFlushing &= 0x7F ;
+			while ( ( Voice.VoiceQueueOutIndex != VoiceFlushing ) && (Voice.VoiceQueueCount) )
 			{
 				Voice.VoiceQueueOutIndex += 1 ;
 				Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;

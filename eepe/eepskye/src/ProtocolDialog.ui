@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>611</width>
-    <height>483</height>
+    <height>508</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
      <x>19</x>
      <y>10</y>
      <width>361</width>
-     <height>470</height>
+     <height>490</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -808,6 +808,11 @@
         <string>LRP</string>
        </property>
       </item>
+      <item>
+       <property name="text">
+        <string>R9M</string>
+       </property>
+      </item>
      </widget>
     </item>
     <item row="11" column="0">
@@ -929,14 +934,14 @@
       </item>
      </widget>
     </item>
-    <item row="17" column="0">
+    <item row="18" column="0">
      <widget class="QLabel" name="startChannelLabel">
       <property name="text">
        <string>First Channel</string>
       </property>
      </widget>
     </item>
-    <item row="17" column="1">
+    <item row="18" column="1">
      <widget class="QSpinBox" name="startChannelSB">
       <property name="minimum">
        <number>1</number>
@@ -949,7 +954,7 @@
       </property>
      </widget>
     </item>
-    <item row="18" column="1">
+    <item row="19" column="1">
      <spacer name="verticalSpacer">
       <property name="orientation">
        <enum>Qt::Vertical</enum>
@@ -969,7 +974,7 @@
       </property>
      </widget>
     </item>
-    <item row="16" column="1">
+    <item row="17" column="1">
      <widget class="QComboBox" name="rateCB">
       <item>
        <property name="text">
@@ -998,7 +1003,7 @@
       </item>
      </widget>
     </item>
-    <item row="16" column="0">
+    <item row="17" column="0">
      <widget class="QLabel" name="rateLabel">
       <property name="text">
        <string>Rate</string>
@@ -1014,7 +1019,7 @@
       </item>
      </widget>
     </item>
-    <item row="17" column="2">
+    <item row="18" column="2">
      <widget class="QLabel" name="followLabel">
       <property name="text">
        <string>=Follow</string>
@@ -1043,19 +1048,6 @@
       </property>
      </widget>
     </item>
-    <item row="16" column="2">
-     <spacer name="horizontalSpacer">
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="sizeHint" stdset="0">
-       <size>
-        <width>40</width>
-        <height>20</height>
-       </size>
-      </property>
-     </spacer>
-    </item>
     <item row="1" column="2">
      <widget class="QLabel" name="RepeatLabel">
       <property name="minimumSize">
@@ -1077,6 +1069,40 @@
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
      </widget>
+    </item>
+    <item row="16" column="0">
+     <widget class="QLabel" name="R9MpowerLabel">
+      <property name="text">
+       <string>R9M Power</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="1">
+     <widget class="QComboBox" name="R9MpowerCB">
+      <item>
+       <property name="text">
+        <string>High</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Low</string>
+       </property>
+      </item>
+     </widget>
+    </item>
+    <item row="19" column="2">
+     <spacer name="horizontalSpacer">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
     </item>
    </layout>
   </widget>

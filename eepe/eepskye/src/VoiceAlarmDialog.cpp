@@ -47,6 +47,7 @@ VoiceAlarmDialog::VoiceAlarmDialog(QWidget *parent, VoiceAlarmData *invad, int e
 	ui->FileTypeCB->setCurrentIndex( vad->fnameType ) ;
 	ui->PlaySourceCB->setCurrentIndex( vad->vsource ) ;
 	ui->DelaySB->setValue( (float)vad->delay / 10.0 ) ;
+	populateAlarmCB(ui->AudioCB, 0 ) ;
 	switch ( vad->fnameType )
 	{
 		case 1 :

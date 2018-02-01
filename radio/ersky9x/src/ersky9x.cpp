@@ -436,6 +436,12 @@ void handle_serial( void* pdata ) ;
 #endif
 #endif
 
+#ifdef PCBX12D
+#ifdef	DEBUG
+void handle_serial( void* pdata ) ;
+#endif
+#endif
+
 #ifdef ARUNI
 uint8_t SixPosCaptured;
 uint8_t SixPosValue;
@@ -1572,6 +1578,9 @@ void com2Configure()
 #endif
 #ifdef PCB9XT
 		consoleInit() ;
+#endif
+#ifdef PCBX12D
+		ConsoleInit() ;
 #endif
 	}	 
 }
@@ -2930,7 +2939,7 @@ void initTopLcd() ;
 
 #ifdef BLUETOOTH
 
-// Strings for FrSky BT module
+// Strings for FrSky BT module (HM-10?)
 //AT+NAME?
 //AT+ADDR?
 //AT+ROLE?
@@ -2945,6 +2954,17 @@ void initTopLcd() ;
 //AT+IMME1
 //AT+STAT?
 //AT+TXPW0
+
+//HM-10 default 9600,8,n,1 - PSW = 000000
+//HM-10 doesn't need /r/n
+//AT+NAME? - OK+NAMEnnnnnnnn
+//AT+BAUD?
+//AT+BAUD4 - OK_set4  (0-9600, 1-19200, 2-38400, 3-57600, 4-115200 5,6,7,8
+//AT+ROLE?
+//AT+ROLE0, AT+ROLE1 - 0-slave, 1-master
+
+
+
 
 OS_FlagID Bt_flag ;
 struct t_fifo128 Bt_fifo ;
@@ -8653,6 +8673,7 @@ extern int32_t Rotary_diff ;
 //#endif
 		
 		uint32_t refreshNeeded = 0 ;
+		uint32_t telemetryScriptRunning = 0 ;
 #ifdef LUA
 		refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
   	if ( !refreshNeeded )
@@ -8679,7 +8700,11 @@ extern int32_t Rotary_diff ;
 		{
 	  	if ( !refreshNeeded )
 			{
-    		refreshNeeded = basicTask( evt, SCRIPT_TELEMETRY ) ;
+    		refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt, SCRIPT_TELEMETRY ) ;
+				if ( refreshNeeded )
+				{
+					telemetryScriptRunning = 1 ;
+				}
 //				if ( refreshNeeded == 3 )
 //				{
 //					refreshNeeded = 0 ;
@@ -8700,6 +8725,26 @@ extern int32_t Rotary_diff ;
 			if (evtAsRotary)
 			{
 				Rotary_diff = 0 ;
+			}
+			
+			if ( PopupData.PopupActive )
+			{
+//				Tevent = evt ;
+				actionMainPopup( evt ) ;
+			}
+			else
+			{
+				if ( telemetryScriptRunning )
+				{
+					if ( ( evt==EVT_KEY_LONG(KEY_MENU)) || ( evt==EVT_KEY_LONG(BTN_RE) ) )
+					{
+						PopupData.PopupActive = 3 ;
+						PopupData.PopupIdx = 0 ;
+      			killEvents(evt) ;
+						evt = 0 ;
+						Tevent = 0 ;
+					}
+				}
 			}
 		}
 #endif

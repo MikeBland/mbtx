@@ -2930,7 +2930,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 #ifdef SKY    
 uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
-  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_QX7 ) )	// Taranis
+  if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{
@@ -2956,6 +2956,13 @@ uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 			{
         value -= extraPots ;
 			}
+		}
+	}
+	if ( type == RADIO_TYPE_QX7 )
+	{
+		if ( value > 6 )
+		{
+		 value += 1 ;	
 		}
 	}
   return value ;

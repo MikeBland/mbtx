@@ -542,7 +542,7 @@
 #define ISTR_Safety					"Safety Sws"
 #define ISTR_Eeprom			     "EEPROM" 
 
-#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help\0Run Script"
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help\0Main Display\0Run Script"
 #define ISTR_ROTATE_SCREEN			"Rotate Screen"
 #define ISTR_REVERSE_SCREEN			"Reverse Screen"
 #define ISTR_MENU_ONLY_EDIT			"MENU only Edit"

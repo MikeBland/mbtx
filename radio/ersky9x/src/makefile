@@ -394,6 +394,9 @@ endif
 ifeq ($(LUA), 1)
 CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
 endif
+ifeq ($(DEBUG), 1)
+CPPSRC += debug.cpp
+endif
 
 #         audio.cpp \
 #         X9D/sound.cpp \

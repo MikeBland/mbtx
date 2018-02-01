@@ -546,7 +546,7 @@
 #define ISTR_Safety			"Int.S\300cur."
 #define ISTR_Eeprom			"EEPROM" 
 
-#define ISTR_MAIN_POPUP			"Choix Mod\301le\0Config.Mod\301le\0Dernier Menu\0Conf.Radio\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0RAZ GPS\0Aide\0Run Script"
+#define ISTR_MAIN_POPUP			"Choix Mod\301le\0Config.Mod\301le\0Dernier Menu\0Conf.Radio\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0RAZ GPS\0Aide\0Main Display\0Run Script"
 #define ISTR_ROTATE_SCREEN		"Rotation Ecran"
 #define ISTR_REVERSE_SCREEN		"Inverser Ecran"
 #define ISTR_MENU_ONLY_EDIT		"MENU Modifie"

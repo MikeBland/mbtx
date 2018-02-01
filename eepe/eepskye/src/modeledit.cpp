@@ -52,7 +52,7 @@ extern uint8_t ProtocolOptionsSKY[][5] ;
 extern uint8_t ProtocolOptions9XT[][5] ;
 QString ProtocolNames[] = {"PPM", "XJT", "DSM", "MULTI", "XFIRE" } ;
 QString Polarity[] = {"POS", "NEG" } ;
-QString PxxTypes[] = {"D16", "D8", "LRP" } ;
+QString PxxTypes[] = {"D16", "D8", "LRP", "R9M" } ;
 QString PxxCountry[] = {"America", "Japan", "Europe" } ;
 QString DsmTypes[] = {"LP4/LP5", "DSM2only", "DSM2/DSMX", "9XR-DSM" } ;
 extern QString MultiProtocols[] ;
@@ -2638,6 +2638,7 @@ void ModelEdit::voiceAdd()
 {
   int index = VoiceListWidget->currentRow() ;
 	int i ;
+	VoiceAlarmData voiceData ;
 
 	for( i=NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ; i > index ; i -= 1)
 	{
@@ -2650,10 +2651,13 @@ void ModelEdit::voiceAdd()
 	voiceAlarmsBlank( index ) ;
 	voiceAlarmsList() ;
 	VoiceAlarmData *vad = ( index >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[index-NUM_SKY_VOICE_ALARMS] : &g_model.vad[index] ;
-  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  memcpy(&voiceData, vad,sizeof(VoiceAlarmData));
+
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &voiceData, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
   dlg->setWindowTitle(tr("Voice Alarm %1").arg(index+1)) ;
   if(dlg->exec())
   {
+    memcpy(vad,&voiceData,sizeof(VoiceAlarmData));
     updateSettings() ;
 		voiceAlarmsList() ;
   }
@@ -5781,7 +5785,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 ) )
+    	if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 ) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -8339,13 +8343,16 @@ int ModelEdit::getMixerIndex(int dch)
 void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 {
 	int i = index.row() ;
+	VoiceAlarmData voiceData ;
+
 	VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
   if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
 	{
     uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
 		vad = &g_eeGeneral.gvad[z] ;
 	}
-  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, vad, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
+  memcpy(&voiceData, vad,sizeof(VoiceAlarmData));
+  VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &voiceData, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
   if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
 	{
 		i -= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ;
@@ -8355,8 +8362,10 @@ void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
 	{
   	dlg->setWindowTitle(tr("Voice Alarm %1").arg(i+1)) ;
 	}
+
   if(dlg->exec())
   {
+    memcpy(vad,&voiceData,sizeof(VoiceAlarmData));
     updateSettings() ;
 		voiceAlarmsList() ;
   }

@@ -4133,8 +4133,6 @@ HSW_Pb1,HSW_Pb2,HSW_Etrmdn,HSW_Etrmup,HSW_Atrmdn,HSW_Atrmup,HSW_Rtrmdn,HSW_Rtrmu
 #endif
 #endif
 
-
-
 int32_t exec_getSwitch()
 {
 	int32_t number ;
@@ -4151,7 +4149,7 @@ int32_t exec_getSwitch()
 		number = 0 ;
 #else
 		number = basicFindSwitchIndexByName( (char *)p ) ;
-		if ( ( number >= 0 ) && (number < HSW_MAX+8) )
+		if ( ( number >= 0 ) && (number < (int32_t)sizeof(SwTranslate)) )
 		{
 			number = SwTranslate[number] ;
 			number = getSwitch00( number ) ;
@@ -4654,6 +4652,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 				LoadedScripts[0].loaded = 0 ;
 				BasicLoadedType = BASIC_LOAD_NONE ;
 				basicLoadModelScripts() ;
+				return 3 ;
 			}
 		}
 	}
@@ -4900,9 +4899,9 @@ int32_t basicFindSwitchIndexByName( const char * name )
 	uint32_t i ;
 	uint32_t nameLength = *names++ ;
 
-	for ( i = 0 ; i < HSW_MAX+8 ; i += 1 )
+	for ( i = 0 ; i < sizeof(SwTranslate) ; i += 1 )
 	{
-		if ( i == HSW_MAX )
+		if ( i == sizeof(SwTranslate) - 8 )
 		{
 			names = "\003EtdEtuAtdAtuRtdRtuTtuTtd" ;
 			nameLength = *names++ ;

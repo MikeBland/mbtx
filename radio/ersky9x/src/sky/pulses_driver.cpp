@@ -1936,7 +1936,10 @@ void setupPulsesPXX()
 		{
 			extra_flags |= (1 << 1 ) ;
 		}
-
+		if ( g_model.Module[1].sub_protocol == 3 )	// R9M
+		{
+			extra_flags |= g_model.Module[1].r9mPower << 3 ;
+		}
 		putPcmByte( extra_flags ) ;
 
     chan = PcmCrc ;		        // get the crc

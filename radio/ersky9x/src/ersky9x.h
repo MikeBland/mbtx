@@ -1292,6 +1292,11 @@ extern uint8_t AlertType ;
 #define COM2_FUNC_CPPMTRAIN		3
 #define COM2_FUNC_LCD					4
 #endif
+#ifdef PCBX12D
+#define COM2_FUNC_BTDIRECT		3
+#define COM2_FUNC_CPPMTRAIN		4
+#define COM2_FUNC_LCD					5
+#endif
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
 

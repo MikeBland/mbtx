@@ -420,13 +420,13 @@
   #define BT_TX_GPIO_PIN                GPIO_Pin_14 // PG.14
   #define BT_RX_GPIO_PIN                GPIO_Pin_9  // PG.09
   
-	#define PROT_BT_RCC_AHB1Periph        (RCC_AHB1Periph_GPIOI | RCC_AHB1Periph_GPIOG)
-  #define PROT_BT_EN_GPIO               GPIOI
-  #define PROT_BT_EN_GPIO_PIN           GPIO_Pin_10 // PI.10
+	#define BT_RCC_AHB1Periph			        (RCC_AHB1Periph_GPIOI | RCC_AHB1Periph_GPIOG)
+  #define BT_EN_GPIO            			  GPIOI
+  #define BT_EN_GPIO_PIN           			GPIO_Pin_10 // PI.10
   
-	#define BT_RCC_AHB1Periph 	          (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOG)
-  #define BT_EN_GPIO      	            GPIOA
-  #define BT_EN_GPIO_PIN	              GPIO_Pin_6 // PA.06
+	#define PROT_BT_RCC_AHB1Periph 	      (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOG)
+  #define PROT_BT_EN_GPIO      	        GPIOA
+  #define PROT_BT_EN_GPIO_PIN	          GPIO_Pin_6 // PA.06
   
 	#define BT_BRTS_GPIO                  GPIOG
   #define BT_BRTS_GPIO_PIN              GPIO_Pin_10 // PG.10

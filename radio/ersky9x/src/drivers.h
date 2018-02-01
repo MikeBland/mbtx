@@ -250,6 +250,11 @@ void com3Stop( void ) ;
 void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
 
+#ifdef PCBX12D
+void USART6_configure( void ) ;
+void USART6SetBaudrate( uint32_t baudrate ) ;
+#endif
+
 #ifdef PCBSKY
 //void com1Parity( uint32_t even ) ;
 //void com2Parity( uint32_t even ) ;

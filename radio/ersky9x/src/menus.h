@@ -159,6 +159,7 @@ extern void menuProcStatistic2(uint8_t event) ;
 extern void menuProcStatistic(uint8_t event) ;
 extern void menuProcBattery(uint8_t event) ;
 extern void menuProc0(uint8_t event) ;
+extern void actionMainPopup( uint8_t event ) ;
 extern void menuProcModelSelect(uint8_t event) ;
 extern void menuProcGlobals(uint8_t event) ;
 extern int16_t expo(int16_t x, int16_t k) ;

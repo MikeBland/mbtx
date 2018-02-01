@@ -60,7 +60,12 @@
 #include "X9D/hal.h"
 #endif
 
+#ifdef PCBX12D
+#include "X12D/stm32f4xx.h"
+#include "X12D/core_cm4.h"
+#else
 #include "core_cm3.h"
+#endif
 
 #include "ersky9x.h"
 #include "sound.h"
@@ -273,6 +278,11 @@ extern uint8_t Activated ;
 //uint8_t EEdata[256] ;
 uint32_t Tcap_index ;
 
+#ifdef PCBX12D
+uint8_t BtTxBuffer[32] ;
+struct t_serial_tx Bt_tx ;
+#endif
+
 void handle_serial(void* pdata)
 {
 	uint16_t rxchar ;
@@ -406,6 +416,62 @@ void handle_serial(void* pdata)
 //			crlf() ;
 //		}
 
+#ifdef PCBX12D
+		if ( rxchar == 'b' )	// BT test
+		{
+			uint16_t txchar ;
+			
+			USART6_configure() ;
+			for(;;)
+			{
+				while ( ( rxchar = rxCom2() ) == 0xFFFF )
+				{
+					CoTickDelay(5) ;					// 10mS for now
+					while ( ( txchar = rxBtuart() ) != 0xFFFF )
+					{
+						txmit( txchar ) ;
+					}
+				}
+				if ( rxchar == '!' )
+				{
+					rxchar = 0 ;
+					break ;
+				}
+				switch ( rxchar )
+				{
+					case '0' :
+						USART6SetBaudrate( 9600 ) ;
+					break ;
+					case '1' :
+						USART6SetBaudrate( 19200 ) ;
+					break ;
+					case '2' :
+						USART6SetBaudrate( 38400 ) ;
+					break ;
+					case '3' :
+						USART6SetBaudrate( 57600 ) ;
+					break ;
+					case '4' :
+						USART6SetBaudrate( 115200 ) ;
+					break ;
+
+					default :
+						BtTxBuffer[0] = rxchar ;
+						Bt_tx.size = 1 ;
+						Bt_tx.buffer = BtTxBuffer ;
+						txPdcBt( &Bt_tx ) ;
+						while ( Bt_tx.ready == 1 )
+						{
+							// Wait
+							CoTickDelay(1) ;					// 2mS for now
+						}
+						Bt_tx.size = 0 ;
+					break ;
+				}
+			} 
+		}
+
+#endif
 #ifdef PCB9XT
 		if ( rxchar == 'w' )
 		{
@@ -821,55 +887,55 @@ extern void initWatchdog( void ) ;
 			eeReadAll() ;
 		}
 
-#ifdef REV9E
-//extern void ht1621WrData( uint8_t data, uint8_t count ) ;
-//extern void ht1621WrAllData( uint8_t *pData, uint8_t chip  ) ;
-extern void initTopLcd( void ) ;
-static uint8_t Ht1621Data[16] = {	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff } ;
-		if ( rxchar == 'a' )
-		{
-			txmit( 'a' ) ;
-			initTopLcd() ;			
-		}
+//#ifdef REV9E
+////extern void ht1621WrData( uint8_t data, uint8_t count ) ;
+////extern void ht1621WrAllData( uint8_t *pData, uint8_t chip  ) ;
+//extern void initTopLcd( void ) ;
+//static uint8_t Ht1621Data[16] = {	0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff } ;
+//		if ( rxchar == 'a' )
+//		{
+//			txmit( 'a' ) ;
+//			initTopLcd() ;			
+//		}
 
-		if ( rxchar == 'b' )
-		{
-			txmit( 'b' ) ;
-//			ht1621WrAllData( Ht1621Data, 0 ) ;
-//			ht1621WrAllData( Ht1621Data, 1 ) ;
-			uint32_t i ;
-			uint8_t j = 0 ;
-			uint8_t k = 0 ;
-			for ( i = 0 ; i < 16 ; i += 1 )
-			{
-				if ( j )
-				{
-					Ht1621Data[i] = j ;
-					j = 0 ;
-				}
-				else
-				{
-					if ( Ht1621Data[i] == 1 )
-					{
-						j = 0x80 ;
-					}
-					else
-					{
-						j = 0 ;
-					}
-					Ht1621Data[i] >>= 1 ;
-				}
-				k |= Ht1621Data[i] ;
-			}
-			if ( ( k == 0 ) || ( k == 0xFF ) )
-			{
-				Ht1621Data[0] = 0x80 ;
-			}
-			p2hex( Ht1621Data[0] ) ;
-			p2hex( Ht1621Data[1] ) ;
-			p2hex( Ht1621Data[2] ) ;
-		}
-#endif
+//		if ( rxchar == 'b' )
+//		{
+//			txmit( 'b' ) ;
+////			ht1621WrAllData( Ht1621Data, 0 ) ;
+////			ht1621WrAllData( Ht1621Data, 1 ) ;
+//			uint32_t i ;
+//			uint8_t j = 0 ;
+//			uint8_t k = 0 ;
+//			for ( i = 0 ; i < 16 ; i += 1 )
+//			{
+//				if ( j )
+//				{
+//					Ht1621Data[i] = j ;
+//					j = 0 ;
+//				}
+//				else
+//				{
+//					if ( Ht1621Data[i] == 1 )
+//					{
+//						j = 0x80 ;
+//					}
+//					else
+//					{
+//						j = 0 ;
+//					}
+//					Ht1621Data[i] >>= 1 ;
+//				}
+//				k |= Ht1621Data[i] ;
+//			}
+//			if ( ( k == 0 ) || ( k == 0xFF ) )
+//			{
+//				Ht1621Data[0] = 0x80 ;
+//			}
+//			p2hex( Ht1621Data[0] ) ;
+//			p2hex( Ht1621Data[1] ) ;
+//			p2hex( Ht1621Data[2] ) ;
+//		}
+//#endif
 
 //extern int8_t EeFsck() ;
 //extern bool eeLoadGeneral() ;
