@@ -501,7 +501,7 @@ void MixerDialog::valuesChanged()
 		{
       if ( value >= 7 )
 			{
-				value += 2 ;
+        value += 0 ;
 			}
 		}
     value = decodePots( value, lType, lextraPots ) ;

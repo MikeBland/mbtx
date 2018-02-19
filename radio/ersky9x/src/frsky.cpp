@@ -3053,6 +3053,12 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		type = TEL_XFIRE ;
 	}
  #endif
+ #ifdef PCBX9D
+	if ( g_model.Module[1].protocol == PROTO_XFIRE )
+	{
+		type = TEL_XFIRE ;
+	}
+ #endif
 #endif
 	return type ;
 }

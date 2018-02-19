@@ -737,10 +737,11 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  "
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONA"
 #define M_Flysky          0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  CX20  "
 #define M_Hubsan          1
+#define M_HUBSAN_STR "\004H107H301H501"
 #define M_Frsky           2
 #define M_Hisky           3
 #define M_HISKY_STR "\005HiskyHK310"
@@ -792,7 +793,17 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_WK2x01_STR	"\006WK2801WK2401W6_5_1W6_6_1W6_HELW6HELI"
 #define M_Q303				 	 30
 #define M_Q303_STR "\006Q303  CX35  CX10D CX10WD"
-#define M_LAST_MULTI		 30
+
+#define M_GW008					 31
+#define M_DM002          32
+#define M_CABELL         33
+#define M_CABELL_STR "\006CAB_V3C_TELEM-     -     -     -     F_SAFEUNBIND"
+#define M_ESKY150        34
+#define M_H8_3D          35
+#define M_H8_3D_STR		"\007H8_3D  H20H   H20MiniH30Mini"
+#define M_CORONA         36
+#define M_CORONA_STR	"\006COR_V1COR_V2"
+#define M_LAST_MULTI		 36
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

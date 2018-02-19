@@ -96,6 +96,7 @@ __attribute__ ((section(".bootrodata"), used))
 
 const uint8_t BootCode[] = {
 #ifdef PCBX12D
+//	#include "bootloader/bootflashH.lbm"
 #else
 #ifdef PCBTARANIS
   #ifdef REVPLUS
@@ -143,7 +144,70 @@ __attribute__ ((section(".bootrodata"), used))
 void _bootStart()
 {
 #ifdef PCBX12D
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOJEN ; 		// Enable ports C, D and J clocks
+	__ASM volatile ("nop") ;	// Needed for the STM32F4
+	__ASM volatile ("nop") ;
+	
+	GPIOJ->PUPDR = 0x0008 ;	// PWR_GPIO_PIN_ON, pull down
+
+	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+	{
+		GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
+		GPIOJ->MODER = (GPIOD->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+	}
+
+	GPIOC->PUPDR = 0x00000001 ;
+	GPIOD->PUPDR = 0x00004000 ;
+
+	uint32_t i ;
+	for ( i = 0 ; i < 50000 ; i += 1 )
+	{
+		bwdt_reset() ;
+	}
+
+//#define PWR_GPIO_PIN_SWITCH	0x0001
+//	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+//	{
+//		// wait here until the power key is pressed
+//		while (GPIO1->IDR & PWR_GPIO_PIN_SWITCH)
+//		{
+//			bwdt_reset();
+//		}
+//	}
+
+
+	if ( (GPIOD->IDR & 0x00000080 ) == 0 )
+	{
+		if ( (GPIOC->IDR & 0x00000001 ) == 0 )
+		{
+			// Bootloader needed
+			const uint8_t *src ;
+			uint8_t *dest ;
+			uint32_t size ;
+
+			bwdt_reset() ;
+			size = sizeof(BootCode) ;
+			src = BootCode ;
+			dest = (uint8_t *)0x20000000 ;
+
+			for ( ; size ; size -= 1 )
+			{
+				*dest++ = *src++ ;		
+			}	
+			// Could check for a valid copy to RAM here
+			// Go execute bootloader
+			bwdt_reset() ;
+			
+			uint32_t address = *(uint32_t *)0x20000004 ;
+	
+//			((void (*)(void)) (address))() ;		// Go execute the loaded application
+	
+		}
+	}
+
+
 #endif
+
 #ifndef PCBX12D
 	// turn soft power on now
 #ifdef PCB9XT

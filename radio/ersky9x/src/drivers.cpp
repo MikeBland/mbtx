@@ -2650,7 +2650,7 @@ void USART6_Sbus_configure()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
 	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 100000 ;
-	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_M | USART_CR1_PCE ;
+	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
 	USART6->CR2 = 0 ;
 	USART6->CR3 = 0 ;
 	(void) USART6->DR ;
@@ -2681,16 +2681,20 @@ void USART6_configure()
 	{
 		RCC->AHB1ENR |= PROT_BT_RCC_AHB1Periph ;
 		configure_pins( PROT_BT_EN_GPIO_PIN, PIN_OUTPUT | PIN_PORTA ) ;
+		GPIOA->BSRRH = PROT_BT_EN_GPIO_PIN ;
 	}
 	else
 	{
 		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
 		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
+		GPIOI->BSRRH = BT_EN_GPIO_PIN ;
 	}
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
-	configure_pins( BT_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+	configure_pins( BT_TX_GPIO_PIN|BT_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+	configure_pins( BT_BRTS_GPIO_PIN, PIN_OUTPUT | PIN_PORTG ) ;
+	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
 	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;
-	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_M ;
+	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE ;
 	USART6->CR2 = 0 ;
 	USART6->CR3 = 0 ;
 	(void) USART6->DR ;
@@ -2713,6 +2717,9 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 }
 
 
+uint16_t Last6Rx ;
+uint16_t Last6Status ;
+uint16_t Last6Count ;
 
 extern "C" void USART6_IRQHandler()
 {
@@ -2721,6 +2728,7 @@ extern "C" void USART6_IRQHandler()
 	USART_TypeDef *puart = USART6 ;
 
   status = puart->SR ;
+	Last6Status = status ;
 	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
 	{
 		if ( Current_Com6 )
@@ -2750,6 +2758,8 @@ extern "C" void USART6_IRQHandler()
   while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
 	{
     data = puart->DR ;
+		Last6Rx = ( Last6Rx << 8 ) | data ;
+		Last6Count += 1 ;
 
     if (!(status & USART_FLAG_ERRORS))
 		{
@@ -2757,6 +2767,7 @@ extern "C" void USART6_IRQHandler()
 		}
 		else
 		{
+			USART_ERRORS += 1 ;
 			if ( status & USART_FLAG_ORE )
 			{
 				USART_ORE += 1 ;

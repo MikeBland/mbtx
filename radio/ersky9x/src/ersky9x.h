@@ -1330,6 +1330,12 @@ struct btRemote_t
 	uint8_t name[16] ;
 } ;
 
+#define BT_BITTYPE_HC06		1
+#define BT_BITTYPE_HC05		2
+#define BT_BITTYPE_CC41		4
+#define BT_BITTYPE_HM10		8
+#define BT_BITTYPE_HORUS 16
+
 struct t_bt_control
 {
 	uint8_t BtCurrentBaudrate ;
@@ -1355,6 +1361,7 @@ struct t_bt_control
 	uint8_t BtLinked ;
 	uint8_t NumberBtremotes ;
 	uint8_t Bt_ok ;
+	uint8_t BtModuleType ;
 
 
 } ;
@@ -1428,6 +1435,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define BT_TYPE_HC05		1
 #define BT_TYPE_CC41		2
 #define BT_TYPE_HM10		3
+#define BT_TYPE_HORUS		4
 
 // Bluetooth function defines
 #define BT_OFF					0

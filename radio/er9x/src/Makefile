@@ -656,7 +656,7 @@ stamp:
 	@echo "//Automatically generated file - do not edit" > stamp-er9x.h
 	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-er9x.h
 	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-er9x.h
-	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-er9x.h
+	@echo "#define SUB_VERS $(USER)" >> stamp-er9x.h
 ifeq ($(V2), YES)
 	@echo "#define SVN_VERS \"er9xV2-$(PROV)r$(REV)\"" >> stamp-er9x.h
 else

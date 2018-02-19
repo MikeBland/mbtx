@@ -78,6 +78,10 @@
 #include "audio.h"
 #include "timers.h"
 
+#ifdef PCBX12D
+#include "logicio.h"
+#include "X12D/hal.h"
+#endif
 
 #ifndef SIMU
 #include "CoOS.h"
@@ -281,6 +285,47 @@ uint32_t Tcap_index ;
 #ifdef PCBX12D
 uint8_t BtTxBuffer[32] ;
 struct t_serial_tx Bt_tx ;
+
+void sendHbt( uint8_t *s )
+{
+	uint8_t *p ;
+	GPIOG->BSRRH = BT_BRTS_GPIO_PIN ;
+	p = cpystr( BtTxBuffer, s ) ;
+	p = cpystr( p, (uint8_t *)"\r\n" ) ;
+	Bt_tx.size = p - BtTxBuffer ;
+	Bt_tx.buffer = BtTxBuffer ;
+	txPdcBt( &Bt_tx ) ;
+	while ( Bt_tx.ready == 1 )
+	{
+		// Wait
+		CoTickDelay(1) ;					// 2mS for now
+	}
+	Bt_tx.size = 0 ;
+	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
+}
+#endif
+
+#ifdef REVX
+extern uint8_t BtTxBuffer[] ;
+//struct t_serial_tx Bt_tx ;
+
+void sendHbt( uint8_t *s )
+{
+	uint8_t *p ;
+//	GPIOG->BSRRH = BT_BRTS_GPIO_PIN ;
+	p = cpystr( BtTxBuffer, s ) ;
+//	p = cpystr( p, (uint8_t *)"\r\n" ) ;
+	Bt_tx.size = p - BtTxBuffer ;
+	Bt_tx.buffer = BtTxBuffer ;
+	txPdcBt( &Bt_tx ) ;
+	while ( Bt_tx.ready == 1 )
+	{
+		// Wait
+		CoTickDelay(1) ;					// 2mS for now
+	}
+	Bt_tx.size = 0 ;
+//	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
+}
 #endif
 
 void handle_serial(void* pdata)
@@ -416,18 +461,28 @@ void handle_serial(void* pdata)
 //			crlf() ;
 //		}
 
+
+// BT RTS G10
+// BT EN PROT A6
+// BT EN I10
+//  GPIO_ResetBits(BT_EN_GPIO, BT_EN_GPIO_PIN); // open bluetooth
+//  GPIO_SetBits(BT_BRTS_GPIO, BT_BRTS_GPIO_PIN);
+//	GPIO_ResetBits(BT_BRTS_GPIO, BT_BRTS_GPIO_PIN);
+
 #ifdef PCBX12D
 		if ( rxchar == 'b' )	// BT test
 		{
 			uint16_t txchar ;
 			
+			txmit( 'b' ) ;
 			USART6_configure() ;
 			for(;;)
 			{
+				txmit( '>' ) ;
 				while ( ( rxchar = rxCom2() ) == 0xFFFF )
 				{
 					CoTickDelay(5) ;					// 10mS for now
-					while ( ( txchar = rxBtuart() ) != 0xFFFF )
+					if ( ( txchar = rxBtuart() ) != 0xFFFF )
 					{
 						txmit( txchar ) ;
 					}
@@ -441,21 +496,83 @@ void handle_serial(void* pdata)
 				{
 					case '0' :
 						USART6SetBaudrate( 9600 ) ;
+						txmit( rxchar ) ;
 					break ;
 					case '1' :
 						USART6SetBaudrate( 19200 ) ;
+						txmit( rxchar ) ;
 					break ;
 					case '2' :
 						USART6SetBaudrate( 38400 ) ;
+						txmit( rxchar ) ;
 					break ;
 					case '3' :
 						USART6SetBaudrate( 57600 ) ;
+						txmit( rxchar ) ;
 					break ;
 					case '4' :
 						USART6SetBaudrate( 115200 ) ;
+						txmit( rxchar ) ;
 					break ;
-
+					case 'a' :
+						sendHbt( (uint8_t *)"AT" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'c' :
+						sendHbt( (uint8_t *)"AT+CLEAR" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'C' :
+						sendHbt( (uint8_t *)"AT+CON00158300E442" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'r' :
+						sendHbt( (uint8_t *)"AT+ROLE?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'R' :
+						sendHbt( (uint8_t *)"AT+ROLE1" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'g' :
+						sendHbt( (uint8_t *)"AT+ROLE0" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'h' :
+						sendHbt( (uint8_t *)"AT+TXPW3" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'A' :
+						sendHbt( (uint8_t *)"AT+ADDR?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'i' :
+						sendHbt( (uint8_t *)"AT+IMME1" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'd' :
+						sendHbt( (uint8_t *)"AT+DISC?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 's' :
+						sendHbt( (uint8_t *)"AT+STAT?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'n' :
+						sendHbt( (uint8_t *)"AT+NAME?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'p' :
+						sendHbt( (uint8_t *)"AT+PASS?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'm' :
+						sendHbt( (uint8_t *)"AT+NAMEHorus" ) ;
+						txmit( rxchar ) ;
+					break ;
+					
 					default :
+	GPIOG->BSRRH = BT_BRTS_GPIO_PIN ;
 						BtTxBuffer[0] = rxchar ;
 						Bt_tx.size = 1 ;
 						Bt_tx.buffer = BtTxBuffer ;
@@ -466,12 +583,172 @@ void handle_serial(void* pdata)
 							CoTickDelay(1) ;					// 2mS for now
 						}
 						Bt_tx.size = 0 ;
+						txmit( rxchar ) ;
+	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
 					break ;
 				}
 			} 
+			txmit( '!' ) ;
 		}
 
 #endif
+
+
+#ifdef REVX
+extern void setBtBaudrate( uint32_t index ) ;
+		if ( rxchar == 'b' )	// BT test
+		{
+			uint16_t txchar ;
+			
+			txmit( 'b' ) ;
+			setBtBaudrate( 0 ) ;
+			for(;;)
+			{
+				txmit( '>' ) ;
+				while ( ( rxchar = rxCom2() ) == 0xFFFF )
+				{
+					CoTickDelay(5) ;					// 10mS for now
+					if ( ( txchar = rxBtuart() ) != 0xFFFF )
+					{
+						txmit( txchar ) ;
+					}
+				}
+				if ( rxchar == '!' )
+				{
+					rxchar = 0 ;
+					break ;
+				}
+				switch ( rxchar )
+				{
+					case '0' :
+						setBtBaudrate( 1 ) ;
+						txmit( rxchar ) ;
+					break ;
+					case '1' :
+						setBtBaudrate( 2 ) ;
+						txmit( rxchar ) ;
+					break ;
+					case '2' :
+						setBtBaudrate( 4 ) ;
+						txmit( rxchar ) ;
+					break ;
+					case '3' :
+						setBtBaudrate( 3 ) ;
+						txmit( rxchar ) ;
+					break ;
+					case '4' :
+						setBtBaudrate( 0 ) ;
+						txmit( rxchar ) ;
+					break ;
+					case '$' :
+						sendHbt( (uint8_t *)"AT+BAUD4" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'a' :
+						sendHbt( (uint8_t *)"AT" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'c' :
+						sendHbt( (uint8_t *)"AT+CLEAR" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'C' :
+						sendHbt( (uint8_t *)"AT+CON00158300E442" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'r' :
+						sendHbt( (uint8_t *)"AT+ROLE?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'R' :
+						sendHbt( (uint8_t *)"AT+ROLE1" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'g' :
+						sendHbt( (uint8_t *)"AT+ROLE0" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'h' :
+						sendHbt( (uint8_t *)"AT+TXPW3" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'A' :
+						sendHbt( (uint8_t *)"AT+ADDR?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'i' :
+						sendHbt( (uint8_t *)"AT+IMME1" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'd' :
+						sendHbt( (uint8_t *)"AT+DISC?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'D' :
+						sendHbt( (uint8_t *)"AT+DISA?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 's' :
+						sendHbt( (uint8_t *)"AT+STAT?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'n' :
+						sendHbt( (uint8_t *)"AT+NAME?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'p' :
+						sendHbt( (uint8_t *)"AT+PASS?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'v' :
+						sendHbt( (uint8_t *)"AT+VERS?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'u' :
+						sendHbt( (uint8_t *)"AT+UUID?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'v' :
+						sendHbt( (uint8_t *)"AT+UUID0xFFE0" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'V' :
+						sendHbt( (uint8_t *)"AT+UUID0xFFF0" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'w' :
+						sendHbt( (uint8_t *)"AT+CHAR?" ) ;
+						txmit( rxchar ) ;
+					break ;
+					case 'm' :
+						sendHbt( (uint8_t *)"AT+NAMEHM-10" ) ;
+						txmit( rxchar ) ;
+					break ;
+					
+					default :
+//	GPIOG->BSRRH = BT_BRTS_GPIO_PIN ;
+						BtTxBuffer[0] = rxchar ;
+						Bt_tx.size = 1 ;
+						Bt_tx.buffer = BtTxBuffer ;
+						txPdcBt( &Bt_tx ) ;
+						while ( Bt_tx.ready == 1 )
+						{
+							// Wait
+							CoTickDelay(1) ;					// 2mS for now
+						}
+						Bt_tx.size = 0 ;
+						txmit( rxchar ) ;
+//	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
+					break ;
+				}
+			} 
+			txmit( '!' ) ;
+		}
+
+#endif
+
+
+
 #ifdef PCB9XT
 		if ( rxchar == 'w' )
 		{

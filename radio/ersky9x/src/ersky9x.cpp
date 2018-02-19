@@ -2878,7 +2878,9 @@ uint32_t updateSlave() ;
 #endif
 
 #ifdef BLUETOOTH
+ #ifndef DEBUG
 	BtTask = CoCreateTask(bt_task,NULL,19,&Bt_stk[BT_STACK_SIZE-1],BT_STACK_SIZE);
+ #endif
 #endif
 
 	MainTask = CoCreateTask( main_loop,NULL,5,&main_stk[MAIN_STACK_SIZE-1],MAIN_STACK_SIZE);
@@ -2936,10 +2938,45 @@ void initTopLcd() ;
 #define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
 #endif // PCB9XT
 
+struct t_bt_control BtControl ;
 
 #ifdef BLUETOOTH
 
 // Strings for FrSky BT module (HM-10?)
+//AT\r\n
+//AT+NAME?\r\n
+//AT+ADDR?\r\n
+//AT+ROLE?\r\n
+//AT+ROLE0\r\n
+//AT+VERS?\r\n
+//AT+CLEAR\r\n
+//AT+RESET\r\n
+//AT+CONxxxxxxxxxxxx\r\n
+//AT+DISC?\r\n
+//AT+CONNX\r\n
+//AT+IMME?\r\n
+//AT+IMME1\r\n
+//AT+STAT?\r\n
+//AT+TXPW0\r\n
+
+// Sample responses
+//Central:7CEC796B210A
+//OK+ROLE:1
+//OK+STAT:64
+//OK+NAME:FrSkyBT
+//OK+DISCS
+
+
+//OK+ 
+//AT+
+//OK+DISCE
+//OK+DISC:
+//Connected
+//Central 
+//Peripheral
+//DisConnected
+//B4994C761243
+//0:/FIRMWARE /   blemodule.bin   blemodule.tst   Remaining Size %d
 //AT+NAME?
 //AT+ADDR?
 //AT+ROLE?
@@ -2948,12 +2985,15 @@ void initTopLcd() ;
 //AT+CLEAR
 //AT+RESET
 //AT+CONxxxxxxxxxxxx
-//AT_DISC?
+//AT+DISC?
 //AT+CONNX
 //AT+IMME?
 //AT+IMME1
 //AT+STAT?
 //AT+TXPW0
+
+
+
 
 //HM-10 default 9600,8,n,1 - PSW = 000000
 //HM-10 doesn't need /r/n
@@ -2963,7 +3003,12 @@ void initTopLcd() ;
 //AT+ROLE?
 //AT+ROLE0, AT+ROLE1 - 0-slave, 1-master
 
-
+// X9E module
+// TTM:CIT-Xms X= "20", "50", "100", "200", "300", "400", "500", "1000", "1500", or "2000" 
+// TTM:REN-nnnnn   Name
+// TTM:BPS-115200
+// TTM:MAC-?
+// TTM:PID-"+ Data   where “Data”is for a two-byte product identification code (ranging from 0x0000 range to 0xFFFF
 
 
 OS_FlagID Bt_flag ;
@@ -2979,7 +3024,6 @@ uint8_t Com1TxBuffer[32] ;
 struct btRemote_t BtRemote[3] ;
 //uint8_t NumberBtremotes ;
 
-struct t_bt_control BtControl ;
 
 //uint8_t BtMode[4] ;
 uint8_t BtPswd[8] ;
@@ -3081,9 +3125,10 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	uint16_t rxchar ;
 	uint16_t a = 0 ;
 	uint16_t b = 0 ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 	x = 'O' ;
-	if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
 	{
 		x = 13 ;	// <CR>
 	}
@@ -3096,7 +3141,7 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 				if ( ( x == 'O' ) || ( x == 13 ) )
 				{
 					x = 'K' ;
-					if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+					if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
 					{
 						x = 10 ;	// <LF>
 					}
@@ -3119,7 +3164,7 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	}
 	if ( y < timeout )
 	{
-		if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+		if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
 		{
 			if ( errorAllowed == 0 )
 			{
@@ -3139,11 +3184,12 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 
 uint32_t poll_bt_device()
 {
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
 	Bt_tx.size = 2 ;
-	if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
 	{
 		BtTxBuffer[2] = 13 ;
 		BtTxBuffer[3] = 10 ;
@@ -3162,11 +3208,12 @@ uint32_t changeBtBaudrate( uint32_t baudIndex )
 {
 	uint16_t x ;
 	uint8_t *p ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 //	BtControl.BtBaudChangeCount += 1 ;
 	BtControl.BtBaudChangeIndex = baudIndex ;
 
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	if ( bitfieldtype & BT_BITTYPE_CC41 )
 	{
 		x = 0 ;		// 9600
 		if ( baudIndex == 0 )
@@ -3209,11 +3256,11 @@ uint32_t changeBtBaudrate( uint32_t baudIndex )
 	p = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+BAUD" ) ;
 
 	*p++ = '0' + x ;
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	if ( bitfieldtype & BT_BITTYPE_CC41 )
 	{
 		p = cpystr( p, (uint8_t *)"\r\n" ) ;
 	}
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+	if ( bitfieldtype & BT_BITTYPE_HC05 )
 	{
 		p = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+UART=" ) ;
 		switch ( x )
@@ -3268,13 +3315,14 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 	uint8_t *end ;
 	uint8_t a ;
 	uint8_t b ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 	CoTickDelay(5) ;	// 10mS
 	flushBtFifo() ;
 
 	a = 'O' ;
 	b = 'K' ;
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	if ( bitfieldtype & BT_BITTYPE_CC41 )
 	{
 		a = '\r' ;
 		b = '\n' ;
@@ -3321,7 +3369,7 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 
 	if ( y < BT_POLL_TIMEOUT )
 	{
-		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		if ( bitfieldtype & BT_BITTYPE_HC05 )
 		{
 			// flush the CR-LF
 			while ( y < BT_POLL_TIMEOUT )
@@ -3357,9 +3405,10 @@ void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
 	// pick out data between : and \r
 	uint8_t x ;
 	uint32_t copy = 0 ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 	while ( (x = *src++) )
 	{
-		if ( x == ( ( g_eeGeneral.BtType == BT_TYPE_CC41 ) ? '=' : ':' ) )
+		if ( x == ( ( bitfieldtype & BT_BITTYPE_CC41 ) ? '=' : ':' ) )
 		{
 			copy = 1 ;
 		}
@@ -3393,7 +3442,9 @@ uint32_t getBtRole()
 {
 	uint8_t buffer[20] ;
 	uint8_t btRole[4] ;
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+
+	if ( bitfieldtype & (BT_BITTYPE_CC41) )
 	{
 		btTransaction( (uint8_t *)"AT+ROLE\r\n", buffer, 19 ) ;
 	}
@@ -3420,7 +3471,9 @@ uint32_t getBtRole()
 
 uint32_t setBtRole( uint32_t role )
 {
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+
+	if ( bitfieldtype & (BT_BITTYPE_CC41) )
 	{
 		cpystr( &BtTxBuffer[0], (uint8_t *)"AT+ROLE0\r\n" ) ;
 		if ( role )
@@ -3445,13 +3498,15 @@ uint32_t setBtRole( uint32_t role )
 static uint32_t setBtName( uint8_t *name )	// Max 14 chars
 {
 	uint8_t *end ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+
 	end = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+NAME" ) ;
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+	if ( bitfieldtype & (BT_BITTYPE_HC05) )
 	{
 		*end++ = '=' ;
 	}
 	end = cpystr( end, name ) ;
-	if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
 	{
 		end = cpystr( end, (uint8_t *)"\r\n" ) ;
 	}
@@ -3496,10 +3551,11 @@ static void checkAddressList()
 static void getBtValues()
 {
 	uint8_t buffer[20] ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 	getBtRole() ;	
 	CoTickDelay(10) ;					// 20mS
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+	if ( bitfieldtype & (BT_BITTYPE_HC05) )
 	{
 		checkAddressList() ;
 		btTransaction( (uint8_t *)"AT+NAME?\r\n", buffer, 19 ) ;
@@ -3910,6 +3966,7 @@ void bt_task(void* pdata)
 	uint32_t btBits = 0 ;
 	struct t_bt_control *pBtControl ;
 	pBtControl = &BtControl ;
+	pBtControl->BtModuleType = 1 << g_eeGeneral.BtType ;
 
 	while ( Activated == 0 )
 	{

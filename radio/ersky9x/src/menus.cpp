@@ -8782,7 +8782,7 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 //#if 0
 // PPM PXX DSM MULTI XFIRE
 #ifdef PCBX9D
-const uint8_t ProtocolOptions[2][5] = { {2,0,1}, {4,0,1,2,3} };
+const uint8_t ProtocolOptions[2][6] = { {2,0,1}, {5,0,1,2,3,4} };
 #endif
 #ifdef PCBX12D
 const uint8_t ProtocolOptions[2][5] = { {2,0,1}, {4,0,1,2,3} };
@@ -8795,7 +8795,7 @@ const uint8_t ProtocolOptions[2][5] = { {3,0,2,3}, {4,0,1,2,3} };
  #endif
 #endif
 #ifdef PCB9XT
-const uint8_t ProtocolOptions[2][5] = { {4,0,1,2,3}, {4,0,1,2,3} };
+const uint8_t ProtocolOptions[2][6] = { {4,0,1,2,3}, {5,0,1,2,3,4} };
 #endif
 
 void checkProtocolOptions( uint8_t module )
@@ -8905,10 +8905,14 @@ void editOneProtocol( uint8_t event )
 		}
 	}
 
-#ifdef REVX
+#ifdef XFIRE
 	if ( module && (pModule->protocol == PROTO_XFIRE ) )
 	{
+#ifdef REVX
 		dataItems -= 4 ;
+#else
+		dataItems -= 2 ;
+#endif
 	}
 #endif
 	
@@ -15979,7 +15983,20 @@ extern uint8_t ModelImageValid ;
 #ifdef PCBX12D
 	
 //	lcdDrawSolidFilledRectDMA( 0, 128, 240, 100, LCD_GREY ) ;
+
+//extern uint16_t Last6Rx ;
+//extern uint16_t Last6Status ;
+//extern uint16_t Last6Count ;
+//	lcd_outhex4( 0, 64, Com2_fifo.in ) ;
+//	lcd_outhex4( 30, 64, Com2_fifo.out ) ;
+//	lcd_outhex4( 60, 64, USART6->CR1 ) ;
+//	lcd_outhex4( 90, 64, Last6Rx ) ;
+//	lcd_outhex4( 0, 72, Last6Status ) ;
+//	lcd_outhex4( 30, 72, Last6Count ) ;
+//	lcd_outhex4( 60, 72, GPIOA->IDR ) ;
+//	lcd_outhex4( 90, 72, GPIOG->IDR ) ;
 	
+
 //	lcd_outhex4( 0, 64, GPIOB->MODER ) ;
 //	lcd_outhex4( 30, 64, GPIOB->OTYPER ) ;
 //	lcd_outhex4( 60, 64, GPIOB->PUPDR ) ;
@@ -19657,7 +19674,8 @@ STR_DiagAna
 			}
 			lcd_puts_Pleft( y,XPSTR("\013Type"));
 			// Change 001 to 002 to enable CC-41
-			g_eeGeneral.BtType = checkIndexed( y, XPSTR(FWx16"\001""\005HC-06HC-05CC-41"), g_eeGeneral.BtType, (sub==subN) ) ;
+			g_eeGeneral.BtType = checkIndexed( y, XPSTR(FWx16"\002""\005HC-06HC-05CC-41HM-10Horus"), g_eeGeneral.BtType, (sub==subN) ) ;
+			BtControl.BtModuleType = 1 << g_eeGeneral.BtType ;
 			y += FH ;
 			subN += 1 ;
 

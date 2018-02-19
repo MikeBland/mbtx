@@ -852,7 +852,7 @@ ifeq ($(REVX), 1)
 endif
 
 ifeq ($(PCB), 9XT)
-# CPPDEFS += -DXFIRE
+ CPPDEFS += -DXFIRE
  EXT_MOD=9XT
 endif
 
@@ -861,6 +861,7 @@ ifeq ($(PCB), X12D)
 endif
 
 ifeq ($(PCB), X9D)
+ CPPDEFS += -DXFIRE
 # If Taranis+
  ifeq ($(REVPLUS), 1)
   CPPDEFS += -DREVPLUS

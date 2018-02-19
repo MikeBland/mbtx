@@ -12395,6 +12395,10 @@ Str_Protocol
 					{
 						s=PSTR(FWx10"\001"M_HISKY_STR);
 					}
+					else if ( x == M_Hubsan )
+					{
+						s=PSTR(FWx10"\002"M_HUBSAN_STR);
+					}
 					else if ( x == M_DSM )
 					{
 #if defined(CPUM128) || defined(CPUM2561)
@@ -12467,15 +12471,52 @@ Str_Protocol
 					{
 						s=PSTR(FWx10"\003"M_Q303_STR);
 					}
+					else if ( x == M_CABELL )
+					{
+						s=PSTR(FWx10"\007"M_CABELL_STR);
+					}
+					else if ( x == M_H8_3D )
+					{
+						s=PSTR(FWx10"\003"M_H8_3D_STR);
+					}
+					else if ( x == M_CORONA )
+					{
+						s=PSTR(FWx10"\001"M_CORONA_STR);
+					}
 					else
 					{
 						s=PSTR(FWx10"\000"M_NONE_STR);
 					}
-//#if defined(CPUM128) || defined(CPUM2561)
-//					uint8_t old = attr ;
-//#endif
+#if defined(CPUM128) || defined(CPUM2561)
+					s += 1 ;
+					uint8_t max = pgm_read_byte(s++) ;
+					uint8_t value = attr ;
+					attr = 0 ;
+					if(sub==subN)
+					{
+						CHECK_INCDEC_H_MODELVAR_0( value, 7 ) ;
+						attr = InverseBlink ;
+					}
+
+					if ( attr <= max )
+					{
+						lcd_putsAttIdx( 10*FW, y, s, value, attr ) ;
+					} 
+					else
+					{
+						lcd_outdezAtt( 11*FW, y, value, attr ) ;
+					
+					}
+					g_model.ppmNCH = (value << 4) + (ppmNch & 0x8F);
+#else
 					attr = checkIndexed( y, s, attr, (sub==subN) ) ;
 					g_model.ppmNCH = (attr << 4) + (ppmNch & 0x8F);
+#endif
+
+
+
+
+
 //#if defined(CPUM128) || defined(CPUM2561)
 //					if ( x == M_DSM )
 //					{
