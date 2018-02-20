@@ -7761,29 +7761,69 @@ extern uint8_t HIDDJoystickDriver_Change( uint8_t *data ) ;
 #ifdef USB_JOYSTICK
 void usbJoystickUpdate(void)
 {
-  static uint8_t HID_Buffer[HID_IN_PACKET];
-  
-  //buttons
-  HID_Buffer[0] = 0; //buttons
-  for (int i = 0; i < 8; ++i) {
-    if ( g_chans512[i+8] > 0 ) {
-      HID_Buffer[0] |= (1 << i);
-    } 
-  }
+	static uint8_t HID_Buffer[HID_IN_PACKET];
 
-  //analog values
-  for (int i = 0; i < 8; ++i) {
-    int16_t value = g_chans512[i] / 8;
-    if ( value > 127 ) value = 127;
-    else if ( value < -127 ) value = -127;
-    HID_Buffer[i+1] = static_cast<int8_t>(value);  
-  }
+	//buttons
+	HID_Buffer[0] = 0;
+
+	if(keyState(SW_ThrCt))
+	{
+		HID_Buffer[0] |= (1 << 0);
+	}
+	if(keyState(SW_RuddDR))
+	{
+		HID_Buffer[0] |= (1 << 1);
+	}
+	if(keyState(SW_ElevDR))
+	{
+		HID_Buffer[0] |= (1 << 2);
+	}
+	if(keyState(SW_AileDR))
+	{
+		HID_Buffer[0] |= (1 << 3);
+	}
+	if(keyState(SW_Gear))
+	{
+		HID_Buffer[0] |= (1 << 4);
+	}
+	if(keyState(SW_Trainer))
+	{
+		HID_Buffer[0] |= (1 << 5);
+	}
+
+	//analog values
+	for(uint8_t i = 0; i < 8; i++)
+	{
+		HID_Buffer[i + 1] = 0;
+
+		int16_t value = 0;
+		uint8_t index = i;
+
+		if(i < 4)
+		{
+			index = stickScramble[g_eeGeneral.stickMode * 4 + i];
+		}
+		if(i < 7)
+		{
+			value = (int32_t)calibratedStick[index] / 8;
+		}
+		else
+			if(i == 7)
+			{
+				value = -127 + 127 * switchPosition(HSW_ID0);
+			}
+
+		value = value > 127 ? 127 : value;
+		value = value < -127 ? -127 : value;
+
+		HID_Buffer[i + 1] = (int8_t)(value);
+	}
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
-  USBD_HID_SendReport (&USB_OTG_dev, HID_Buffer, HID_IN_PACKET );
+	USBD_HID_SendReport(&USB_OTG_dev, HID_Buffer, HID_IN_PACKET);
 #endif
 #ifdef PCBSKY
-	HIDDJoystickDriver_Change( HID_Buffer ) ;
+	HIDDJoystickDriver_Change(HID_Buffer);
 #endif
 }
 #endif
