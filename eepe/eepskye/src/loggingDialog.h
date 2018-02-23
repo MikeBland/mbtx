@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QtGui>
 #include <stdint.h>
+#include <QCheckBox>
 
 namespace Ui {
     class loggingDialog ;

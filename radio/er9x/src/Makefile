@@ -73,6 +73,10 @@ ifeq ($(CPU), 128)
 BOOT = YES
 endif
 
+ifeq ($(CPU), 2561)
+BOOT = YES
+endif
+
 # List C++ source files here. (C dependencies are automatically generated.)
 #CPPSRC = $(TARGET).cpp stamp.cpp menus.cpp pers.cpp file.cpp lcd.cpp drivers.cpp templates.cpp pulses.cpp audio.cpp
 

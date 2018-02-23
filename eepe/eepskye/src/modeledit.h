@@ -5,6 +5,7 @@
 #include <QtGui>
 #include "pers.h"
 #include "mixerslist.h"
+#include <QDoubleSpinBox>
 
 #include <QListWidget>
 class VoiceList : public QListWidget

@@ -4370,7 +4370,11 @@ extern uint8_t serialDat0 ;
 		uint8_t i = 175 ;	// 152
 		for(;;)
 		{
+#ifdef CPUM2561
+			if ( TIFR3 & (1<<TOV3) )
+#else
 			if ( ETIFR & (1<<TOV3) )
+#endif
 			{
 				lcd_clear() ;
 				if ( ( i & 0x10 ) == 0 )
@@ -4382,14 +4386,23 @@ extern uint8_t serialDat0 ;
 				{
 					break ;
 				}
+#ifdef CPUM2561
+				TIFR3 = (1<<TOV3) ;
+#else
 				ETIFR = (1<<TOV3) ;
+#endif
 			}
 		} 
 //		bootmain() ;
 #ifdef CPUM128
 		((void (*)(void)) (0xFFFE))() ;	// Goes to 0x1FFFC
 #else	
+#ifdef CPUM2561
+		EIND = 1 ;
+		((void (*)(void)) (0x1FFFE))() ;	// Goes to 0x3FFFC
+#else	
 		((void (*)(void)) (0x7FFE))() ;	// Goes to 0xFFFC
+#endif
 #endif
 
 #endif // BOOTL
