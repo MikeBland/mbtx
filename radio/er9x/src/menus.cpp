@@ -3741,16 +3741,16 @@ int8_t edit_dr_switch( uint8_t x, uint8_t y, int8_t drswitch, uint8_t attr, uint
 	return drswitch ;
 }
 
-#ifdef V2
-uint8_t HiResSlow ;
-#endif
+//#ifdef V2
+//uint8_t HiResSlow ;
+//#endif
 
 static uint8_t editSlowDelay( uint8_t y, uint8_t attr, uint8_t value)
 {
   if(attr)  CHECK_INCDEC_H_MODELVAR_0( value, 15); //!! bitfield
 	uint8_t lval = value ;
 #ifdef V2
-	if ( HiResSlow )
+	if ( Xmem.HiResSlow )
 #else
 	if ( g_model.mixTime )
 #endif
@@ -3790,7 +3790,7 @@ void menuProcMixOne(uint8_t event)
 {
   MixData *md2 = mixaddress( s_currMixIdx ) ;
 #ifdef V2
-	HiResSlow = md2->hiResSlow ;
+	Xmem.HiResSlow = md2->hiResSlow ;
 #endif
 
 	static MState2 mstate2 ;
@@ -4127,6 +4127,7 @@ bool reachMixerCountLimit()
     }
 }
 
+// May be able to put this in Xmem
 uint8_t mixToDelete;
 
 #define YN_NONE	0
@@ -5821,14 +5822,14 @@ const prog_char APM menuWhenDone[] = STR_MENU_DONE ;
 
 #ifdef XSW_MOD
 #define	PUT_ARROW   4
-const char ITREAG[] = { 'I', 'T', 'R', 'E', 'A', 'G' };
-const char arrows[] = { '\200', '-', '\201' };
+const prog_char APM ITREAG[] = { 'I', 'T', 'R', 'E', 'A', 'G' };
+const prog_char APM arrows[] = { '\200', '-', '\201' };
 
 void putc_0_1( uint8_t x, uint8_t y, uint8_t sst )
 {
   uint8_t chr, att = 0;
   if (sst & PUT_ARROW) {
-    chr = arrows[sst &= 3];
+    chr = pgm_read_byte(&arrows[sst &= 3]) ;
     if (sst == ST_DN)
       att = INVERS;
   } else {
@@ -11279,7 +11280,7 @@ Str_Protocol
         uint8_t x = 9 * FW;
         uint16_t wstate = g_model.switchWarningStates ;
       	for (uint8_t i = 0; i < MAX_PSW3POS; i++) {		// I-T-R-E-A-G-
-	        lcd_putc( x, y, ITREAG[i] ) ;
+	        lcd_putc( x, y, pgm_read_byte(&ITREAG[i]) ) ;
           x += FW;
 	        lcd_putc( x, y, arrows[wstate & 3] ) ;
           x += FW;

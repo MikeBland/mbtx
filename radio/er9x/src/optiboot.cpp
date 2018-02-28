@@ -649,7 +649,9 @@ void bootmain(void) {
 
 				if (eeprom)
 				{		                //Write to EEPROM one byte at a time
+#ifndef __AVR_ATmega2561__
 					address >>= 1 ; // Back to byte address
+#endif
 		  	  for(count=0;count<length ; count += 1 )
 					{
 						eeprom_write_byte_cmp( buff[count], (uint16_t)address ) ;
@@ -739,7 +741,9 @@ void bootmain(void) {
 	    if (getch() == 'E') // getch();
 			{
 				eeprom = 1 ;
+#ifndef __AVR_ATmega2561__
 				address >>= 1 ;
+#endif
 			}
       verifySpace();
 	    if (eeprom)

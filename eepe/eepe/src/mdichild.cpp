@@ -338,16 +338,17 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
 
     while((i<gmData->size()) && (id<=MAX_MODELS))
     {
-//        char d = '1' ;
+        char d = '1' ;
         char c = *gData;
         i++;
         gData++;
 #ifdef V2
         if ( c == '2' )
 				{
-//					d = '2' ;
+					d = '2' ;
 					c = *gData ;
         	gData++;
+	        i++;
 				}
 #endif
         if(c=='G')  //general settings
@@ -370,7 +371,7 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
 #endif
         }
 #ifdef V2
-        else if ( c == '2' ) //model data
+        else if ( ( d == '2' ) && ( ( c & 0x7F) == 'M' ) )//model data
 				{
           if(!eeFile.putModel((ModelData*)gData,id-1))
           {

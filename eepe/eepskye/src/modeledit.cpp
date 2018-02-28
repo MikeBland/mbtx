@@ -6,7 +6,7 @@
 #include "../../common/edge.h"
 #include "../../common/node.h"
 #include "mixerdialog.h"
-#include "loggingdialog.h"
+#include "loggingDialog.h"
 #include "cellDialog.h"
 #include "ProtocolDialog.h"
 #include "GvarAdjustDialog.h"

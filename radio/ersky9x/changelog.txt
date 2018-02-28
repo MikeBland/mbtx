@@ -10,7 +10,7 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 14-Oct-2017  MPB (r221)
+CHANGELOG: 28-Feb-2018  MPB (r221)
 Add "welcome" voice message options
 Main display now shows time and volume
 USB Joystick now available on Atmel based boards

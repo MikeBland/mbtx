@@ -78,12 +78,12 @@ void eeWriteBlockCmp(const void *i_pointer_ram, uint16_t i_pointer_eeprom, size_
 //uint8_t ExtraInputs ;
 uint8_t s_evt;
 
-uint8_t getEvent()
-{
-  uint8_t evt = s_evt;
-  s_evt=0;
-  return evt;
-}
+//uint8_t getEvent()
+//{
+//  uint8_t evt = s_evt;
+//  s_evt=0;
+//  return evt;
+//}
 
 class Key
 {

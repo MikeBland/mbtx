@@ -834,7 +834,7 @@ typedef void (*MenuFuncP)(uint8_t event);
 /// stoppt alle events von dieser taste bis eine kurze Zeit abgelaufen ist
 void pauseEvents(uint8_t enuk);
 /// liefert die Zahl der schnellen Wiederholungen dieser Taste
-uint8_t getEventDbl(uint8_t event);
+//uint8_t getEventDbl(uint8_t event);
 /// stoppt alle events von dieser taste bis diese wieder losgelassen wird
 void    killEvents(uint8_t enuk);
 
@@ -873,9 +873,15 @@ uint8_t hwKeyState( uint8_t key ) ;
 /// Liefert das naechste Tasten-Event, auch trim-Tasten.
 /// Das Ergebnis hat die Form:
 /// EVT_KEY_BREAK(key), EVT_KEY_FIRST(key), EVT_KEY_REPT(key) oder EVT_KEY_LONG(key)
-uint8_t getEvent();
 
 extern uint8_t s_evt;
+
+inline uint8_t getEvent() {
+	uint8_t t_evt = s_evt ;
+	s_evt = 0 ;
+	return t_evt ;
+}
+
 #define putEvent(evt) (s_evt = evt)
 
 
@@ -1436,6 +1442,9 @@ union t_xmem
 	struct t_alpha Alpha ;
 #endif
 	struct t_stickCentre stickCentreData ;
+#ifdef V2
+	uint8_t HiResSlow ;
+#endif
 //  uint8_t file_buffer[256];
 //#else
 //  uint8_t file_buffer[128];
