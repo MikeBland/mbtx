@@ -2060,7 +2060,7 @@ void frsky_receive_byte( uint8_t data )
 				break ;
 
     	  case frskyDataInFrame:
-    	    if (numbytes < ( FrskyTelemetryType == 3 ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19)
+    	    if (numbytes < ( FrskyTelemetryType == 3 ? FLYSKY_TELEMETRY_LENGTH+1 : 19 ))
 					{
 	  	      frskyRxBuffer[numbytes++] = data ;
 						if ( FrskyTelemetryType == 3 )	// AFHDS2A
