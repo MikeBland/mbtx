@@ -187,6 +187,13 @@ extern void ee32_process( void ) ;
 #define DEBUG_STACK_SIZE	300
 #define VOICE_STACK_SIZE	130+200
 
+//#ifdef PCBSKY
+#define CHECKRSSI		1
+//#endif
+//#ifdef PCB9XT
+//#define CHECKRSSI		1
+//#endif
+
 OS_TID MainTask;
 OS_STK main_stk[MAIN_STACK_SIZE] ;
 
@@ -4876,6 +4883,76 @@ void prepareForShutdown()
 	
 }
 
+#ifdef CHECKRSSI
+void checkRssi()
+{
+#ifdef PCBSKY
+	uint32_t i ;
+#endif
+  if(g_eeGeneral.disableRxCheck) return;
+
+	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+	{
+		return ;
+	}
+
+  // first - display warning
+
+	lcd_clear();
+#ifdef PCBX12D
+  lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
+#else
+  lcd_img( 1, 0, HandImage,0,0 ) ;
+#endif
+  lcd_putsAtt(36 + X12OFFSET,0*FH,XPSTR("Receiver"),DBLSIZE|CONDENSED);
+  lcd_putsAtt(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+#ifdef PCBSKY
+	lcd_puts_P(0 + X12OFFSET,5*FH,  XPSTR("Rx was still powered") ) ;
+#else
+	lcd_puts_P(0 + X12OFFSET,5*FH,  XPSTR("Rx still powered") ) ;
+#endif
+	lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+  refreshDisplay();
+  clearKeyEvents();
+	putSystemVoice( SV_ALERT, 0 ) ;
+  
+#ifdef PCBSKY
+	i = 0 ;
+#endif
+  while (1)
+  {
+#ifdef SIMU
+    if (!main_thread_running) return;
+    sleep(1/*ms*/);
+#endif
+		check_backlight() ;
+
+#ifdef PCBSKY
+		if ( ++i > 300 )
+		{
+			return ;
+		}
+#else
+		if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+		{
+			return ;
+		}
+#endif
+    if( keyDown() )
+    {
+			clearKeyEvents() ;
+      return;
+    }
+    wdt_reset();
+		CoTickDelay(5) ;					// 10mS for now
+		getADC_osmp() ;
+		perOutPhase(g_chans512, 0);
+		check_frsky( 0 ) ;
+  }
+}
+#endif
+
+
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
@@ -5179,6 +5256,9 @@ extern uint8_t ModelImageValid ;
 // #endif
 #endif
 		{
+#ifdef CHECKRSSI
+			checkRssi() ;
+#endif
 			// Time to switch off
 			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 			lcd_clear() ;
@@ -10519,16 +10599,20 @@ void putsDblSizeName( uint8_t y )
 #endif
 {
 	for(uint8_t i=0;i<sizeof(g_model.name);i++)
+	{
 #ifdef PCBX12D
 		lcd_putcAttColour( x + FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE, 0x001F, LCD_WHITE );
+	}
 #else
 #ifdef WIDE_SCREEN
 		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
+	}
 #else
 		lcd_putcAtt(FW*2-4+i*(2*FW-4), y, g_model.name[i],DBLSIZE|CONDENSED);
-		putsTime( 105, 0, Time.hour*60+Time.minute, 0, 0 ) ;
-		lcd_img( 91, 8, speaker, 0, 0 ) ;
-		lcd_hbar( 96, 9, 23, 6, (CurrentVolume*100+16)/23 ) ;
+	}
+	putsTime( 105, 0, Time.hour*60+Time.minute, 0, 0 ) ;
+	lcd_img( 91, 8, speaker, 0, 0 ) ;
+	lcd_hbar( 96, 9, 23, 6, (CurrentVolume*100+16)/23 ) ;
 #endif
 #endif
 }

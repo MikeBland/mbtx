@@ -184,6 +184,7 @@ void modelDefault(uint8_t id)
 	g_model.Module[0].protocol = PROTO_OFF ;
 	g_model.Module[1].protocol = PROTO_OFF ;
 //#endif
+	g_model.modelVoice = -1 ;
 	eeDirty(EE_MODEL) ;
 }
 

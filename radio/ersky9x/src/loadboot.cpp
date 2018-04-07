@@ -227,18 +227,18 @@ void _bootStart()
  #endif
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
 	__ASM volatile ("nop") ;
-	
- #ifdef REV9E
-	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
- #endif
- #ifdef PCBX7
+
+//  if (GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET)
+// PD.01
+
+ #if defined(REV9E) || defined(PCBX7)
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 //	if ( (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) || (GPIOA->IDR & 0x00000100 ) )	// Trainer input is high
- #endif
 	{
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
 	}
+ #endif
 #endif
 #ifdef PCBX7
 	GPIOC->BSRRL = 0x0010 ; // set Green LED on

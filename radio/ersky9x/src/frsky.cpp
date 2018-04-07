@@ -263,6 +263,8 @@ enum CrossfireSensorIndexes {
 
 #endif
 
+//uint16_t FasVdebug ;
+
 #if defined(VARIO)
 stuct t_vario VarioData ;
 #endif
@@ -375,6 +377,7 @@ void store_telemetry_scaler( uint8_t index, uint16_t value )
 		break ;
 		case 4 :
 			storeTelemetryData( FR_VOLTS, value ) ;
+//			FasVdebug |= 1 ;
 		break ;
 		case 5 :
 			storeTelemetryData( FR_FUEL, value ) ;
@@ -641,6 +644,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		if ( index == FR_V_AMPd )
 		{
 			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
+//			FasVdebug |= 2 ;
 			TelemetryDataValid[FR_VOLTS] = 25 + g_model.telemetryTimeout ;
 		}
 	}	
@@ -1198,6 +1202,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				DsmDbgCounters[2] += 1 ;
 #endif
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;	// Handles FAS Offset
+//				FasVdebug |= 4 ;
 //				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 				storeTelemetryData( FR_AMP_MAH, ivalue ) ;
@@ -1246,6 +1251,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
 //				FrskyHubData[FR_A2_COPY] = ivalue ;
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;
+//				FasVdebug |= 8 ;
 //				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				// temp
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
@@ -1574,6 +1580,7 @@ void processSportPacket()
 
 				case VFAS_ID_8 :
 					storeTelemetryData( FR_VOLTS, value / 10 ) ;
+//					FasVdebug |= 16 ;
 					VfasVoltageTimer = 50 ;
 				break ;
 				
@@ -1745,7 +1752,29 @@ void processSportPacket()
 					}
 					S6Rdata.valid = 1 ;
 				break ;
-				
+
+				case ESC_POWER_ID_8 :
+				// Low 16 bits volts 0.001 - 26.4
+				// High 16 bits amps 0.01 - 30
+					storeTelemetryData( FR_VOLTS, (value & 0x0000FFFF) / 10 ) ;
+					storeTelemetryData( FR_CURRENT, (value >> 16) / 10 ) ;
+				break ;
+
+				case ESC_RPM_ID_8 :
+				// Bit:0~15 RPM/1~65535RP
+					storeTelemetryData( FR_RPM, value & 0x0000FFFF ) ;
+					if ( g_model.numBlades == 0 )
+					{
+						g_model.numBlades = 1 ;
+					}
+					storeTelemetryData( FR_AMP_MAH, (uint32_t)(value >> 16) * 100 / g_model.numBlades ) ;
+				break ;
+
+				case ESC_TEMPERATURE_ID_8 :
+				// Bit:0-7 0.1Celsius/0~255
+					storeTelemetryData( FR_TEMP2, value & 0x000000FF ) ;
+				break ;
+				 
 				case ARDUP_ID_8 :
 					if ( ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
 					{
@@ -1799,6 +1828,7 @@ void processSportPacket()
 							else
 							{
 								storeTelemetryData( FR_VOLTS, value & 0x01FF ) ;
+//								FasVdebug |= 32 ;
 							}
 							xvalue = (value >> 10) & 0x7F ;
 							if ( value & 0x0000200 )
@@ -1908,10 +1938,16 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 			case 2 :	// RPM
 				storeTelemetryData( FR_RPM, value ) ;
 			break ;
-			case 3 :	// External voltage
 			case 0x0100 :	// External voltage ?
+//				storeTelemetryData( FR_CUST4, value/10 ) ;
+				storeTelemetryData( FR_VOLTS, value/10 ) ;
+//				FasVdebug |= 64 ;
+//				storeTelemetryData( FR_CUST5, FasVdebug ) ;
+			break ;
+			case 3 :	// External voltage
 			case 0x0103 :	// External voltage ?
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
+//				storeTelemetryData( FR_CUST6, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
 				storeRSSI( 135-value ) ;
@@ -2060,7 +2096,7 @@ void frsky_receive_byte( uint8_t data )
 				break ;
 
     	  case frskyDataInFrame:
-    	    if (numbytes < ( FrskyTelemetryType == 3 ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19)
+    	    if (numbytes < (( FrskyTelemetryType == 3 ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19))
 					{
 	  	      frskyRxBuffer[numbytes++] = data ;
 						if ( FrskyTelemetryType == 3 )	// AFHDS2A
@@ -3755,6 +3791,7 @@ void processCrossfireTelemetryFrame()
       if (getCrossfireTelemetryValue<2>( 3, value) )
 			{
 				storeTelemetryData( FR_VOLTS, value ) ;
+//				FasVdebug |= 128 ;
 			}
 //        processCrossfireTelemetryValue(BATT_VOLTAGE_INDEX, value);
       if (getCrossfireTelemetryValue<2>(5, value))
@@ -3798,6 +3835,23 @@ void processCrossfireTelemetryFrame()
 //      break;
 //    }
 
+#if defined(LUA) || defined(BASIC)
+    default:
+		{
+			uint8_t *packet = &frskyRxBuffer[1] ;
+			uint8_t len = *packet - 1 ;
+
+			if ( fifo128Space( &Lua_fifo ) >= len )
+			{
+				uint32_t i ;
+				for ( i = 0 ; i < len ; i += 1 )
+				{
+					put_fifo128( &Lua_fifo, *packet++ ) ;
+				}
+			}
+		}
+    break;
+#endif
 //#if defined(LUA)
 //    default:
 //      if (luaInputTelemetryFifo && luaInputTelemetryFifo->hasSpace(telemetryRxBufferCount-2) ) {

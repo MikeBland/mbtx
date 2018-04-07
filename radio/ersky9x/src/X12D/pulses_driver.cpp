@@ -76,6 +76,7 @@ extern void setupPulsesPpmAll(uint32_t module) ;
 
 #ifdef XFIRE
 extern uint8_t Bit_pulses[] ;
+extern uint16_t XfireLength ;
 #endif
 
 #define EXT_TYPE_PXX		0

@@ -311,8 +311,36 @@ DataID Meaning       Unit   Range   Note
 #define S6R_ID_8			         0xc3
 
 #define DIY_FIRST_ID           0x5000
-#define DIY_LAST_ID            0x50ff
+#define DIY_LAST_ID            0x52ff
 #define DIY_ID_8	             0x00
+
+#define DIY_STREAM_FIRST_ID       0x5000
+#define DIY_STREAM_LAST_ID        0x50ff
+
+#define FACT_TEST_ID              0xf000
+
+#define ESC_POWER_FIRST_ID        0x0b50
+#define ESC_POWER_LAST_ID         0x0b5f
+#define ESC_POWER_ID_8	        	0xb5
+#define ESC_RPM_CONS_FIRST_ID     0x0b60
+#define ESC_RPM_CONS_LAST_ID      0x0b6f
+#define ESC_RPM_ID_8	        		0xb6
+#define ESC_TEMPERATURE_FIRST_ID  0x0b70
+#define ESC_TEMPERATURE_LAST_ID   0x0b7f
+#define ESC_TEMPERATURE_ID_8     	0xb7
+
+#define X8R_FIRST_ID              0x0c20
+#define X8R_LAST_ID               0x0c2f
+
+#define GASSUIT_TEMP_FIRST_ID     0x0d00
+#define GASSUIT_TEMP_LAST_ID      0x0d0f
+#define GASSUIT_SPEED_FIRST_ID    0x0d10
+#define GASSUIT_SPEED_LAST_ID     0x0d1f
+#define GASSUIT_FUEL_FIRST_ID     0x0d20
+#define GASSUIT_FUEL_LAST_ID      0x0d2f
+
+#define SP2UART_A_ID              0xfd00
+#define SP2UART_B_ID              0xfd01
 
 // Craft and Theory
 #define	ARDUP_ID_8				0x00

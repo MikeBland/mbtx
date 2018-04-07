@@ -454,10 +454,12 @@ void USBDDriver_Initialize(
 
     /* Initialize interfaces array if not null */
 
+#if 0
     if (pInterfaces != 0) {
 
-        memset(pInterfaces, sizeof(pInterfaces), 0);
+        memset(pInterfaces, 0, sizeof(pInterfaces) ) ; // Really wrong, but never happens :)
     }
+#endif
 }
 
 /**

@@ -119,7 +119,7 @@ extern uchar PdiErrors8 ;
 
 // Update Types
 #define UPDATE_TYPE_BOOTLOADER		0
-#define UPDATE_TYPE_COPROCESSOR		1
+//#define UPDATE_TYPE_COPROCESSOR		1
 #define UPDATE_TYPE_SPORT_INT			2
 #define UPDATE_TYPE_SPORT_EXT			3
 #define UPDATE_TYPE_CHANGE_ID			4
@@ -135,17 +135,22 @@ extern void copyFileName( char *dest, char *source, uint32_t size ) ;
 #ifdef PCBSKY
 void init_mtwi( void ) ;
  #ifndef REVX
-uint32_t check_ready( void ) ;
-uint32_t write_CoProc( uint32_t coInternalAddr, uint8_t *buf, uint32_t number ) ;
-uint32_t coProcBoot( void ) ;
-uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number ) ;
+//uint32_t check_ready( void ) ;
+//uint32_t write_CoProc( uint32_t coInternalAddr, uint8_t *buf, uint32_t number ) ;
+//uint32_t coProcBoot( void ) ;
+//uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number ) ;
 
 uint8_t Twi_rx_buf[26] ;
-uint8_t CoProresult ;
+//uint8_t CoProresult ;
  #endif
 #ifdef REVX
 uint32_t clearMfp() ;
 #endif
+
+ #ifdef SMALL
+	#define NO_MULTI	1
+ #endif
+
 #endif
 
 uint32_t sportUpdate( uint32_t external ) ;
@@ -251,6 +256,7 @@ uint8_t MultiState ;
 #endif
 #endif
 
+#ifndef NO_MULTI
 void initMultiMode()
 {
 #ifdef PCBSKY
@@ -446,6 +452,7 @@ void sendMultiByte( uint8_t byte )
 		// wait
 	}
 }
+#endif
 
 
 #ifdef PCBSKY
@@ -948,7 +955,7 @@ extern int32_t Rotary_diff ;
 	return result ;
 }
 
-uint8_t CoProcReady ;
+//uint8_t CoProcReady ;
 
 #if !defined(PCBTARANIS)
 void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
@@ -996,6 +1003,7 @@ uint8_t PhyId ;
 uint8_t NewPhyId ;
 uint16_t AppId ;
 
+#ifndef SMALL
 void setCrc()
 {
   uint16_t crc = 0 ;
@@ -1211,6 +1219,7 @@ void menuChangeId(uint8_t event)
 	}
 
 }
+#endif
 
 void displayXmegaData()
 {
@@ -1221,6 +1230,7 @@ void displayXmegaData()
 	lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
 }
 
+#ifndef NO_MULTI
 void menuUpMulti(uint8_t event)
 {
 	TITLE( "Multi Options" ) ;
@@ -1261,6 +1271,7 @@ void menuUpMulti(uint8_t event)
 	MultiInvert = checkIndexed( y, XPSTR("\150\001\003 NOYES"), MultiInvert, (sub==subN) ) ;
 #endif
 }
+#endif
 
 void menuUp1(uint8_t event)
 {
@@ -1282,10 +1293,12 @@ void menuUp1(uint8_t event)
 	{
   	TITLE( "UPDATE BOOT" ) ;
 	}
+#ifndef NO_MULTI
 	else if (UpdateItem == UPDATE_TYPE_MULTI )
 	{
   	TITLE( "UPDATE MULTI" ) ;
 	}
+#endif
 	else
 	{
 #ifdef PCB9XT
@@ -1320,11 +1333,11 @@ void menuUp1(uint8_t event)
 
 #ifdef PCBSKY
  #ifndef REVX
- 		if (UpdateItem == UPDATE_TYPE_COPROCESSOR )
-		{
-  		TITLE( "UPDATE COPROC" ) ;
-		}
-		else
+// 		if (UpdateItem == UPDATE_TYPE_COPROCESSOR )
+//		{
+//  		TITLE( "UPDATE COPROC" ) ;
+//		}
+//		else
 		{
   		TITLE( "UPDATE SPort" ) ;
 		}
@@ -1393,6 +1406,7 @@ void menuUp1(uint8_t event)
 						}
 						else
 						{
+#ifndef NO_MULTI
 							if ( (UpdateItem == UPDATE_TYPE_MULTI ) && MultiType )
 							{
 								fc->ext[0] = 'H' ;
@@ -1400,6 +1414,7 @@ void menuUp1(uint8_t event)
 								fc->ext[2] = 'X' ;
 							}
 							else
+#endif
 							{
 								fc->ext[0] = 'B' ;
 								fc->ext[1] = 'I' ;
@@ -1467,23 +1482,26 @@ void menuUp1(uint8_t event)
 				SportVerValid = 0 ;
 #else
  #ifndef REVX
- 				if ( (UpdateItem == UPDATE_TYPE_COPROCESSOR ) )
-				{
-					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
-				}
- 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+// 				if ( (UpdateItem == UPDATE_TYPE_COPROCESSOR ) )
+//				{
+//					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
+//				}
+// 				else
+				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
+  #ifndef NO_MULTI
 				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
+	#endif
 				else
 				{
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
 				}
-				CoProcReady = 0 ;
+//				CoProcReady = 0 ;
  #else
  				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
@@ -1591,14 +1609,14 @@ void menuUp1(uint8_t event)
 				}
 #ifdef PCBSKY
  #ifndef REVX
-				else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// Bootloader
-				{
-					firmwareAddress = 0x00000080 ;
-					if ( check_ready() == 0 )
-					{
-						CoProcReady = 1 ;
-					}
-				}
+//				else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// Bootloader
+//				{
+//					firmwareAddress = 0x00000080 ;
+//					if ( check_ready() == 0 )
+//					{
+//						CoProcReady = 1 ;
+//					}
+//				}
  #endif
  // REVX
 				else if (UpdateItem == UPDATE_TYPE_XMEGA )
@@ -1641,6 +1659,7 @@ void menuUp1(uint8_t event)
 					XmegaState = XMEGA_START ;
 				}
 #endif
+#ifndef NO_MULTI
 				else if (UpdateItem == UPDATE_TYPE_MULTI )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
@@ -1648,6 +1667,7 @@ void menuUp1(uint8_t event)
 					MultiState = MULTI_START ;
 					MultiResult = 0 ;
 				}
+#endif
 				else
 				{
 // SPort update
@@ -1712,47 +1732,47 @@ void menuUp1(uint8_t event)
 
 #ifdef PCBSKY
  #ifndef REVX
-			else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
-			{
-				uint32_t size = FileSize[fc->vpos] ;
-				width = BytesFlashed * 64 / size ;
-				CoProresult = 0 ;
-				if ( CoProcReady )
-				{
-					if ( BytesFlashed < ByteEnd )
-					{
-						uint32_t number ;
+//			else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
+//			{
+//				uint32_t size = FileSize[fc->vpos] ;
+//				width = BytesFlashed * 64 / size ;
+//				CoProresult = 0 ;
+//				if ( CoProcReady )
+//				{
+//					if ( BytesFlashed < ByteEnd )
+//					{
+//						uint32_t number ;
 
-						number = ByteEnd - BytesFlashed ;
-						if ( number > 128 )
-						{
-							number = 128 ;						
-						}
-						i = write_CoProc( (uint32_t)firmwareAddress, &FileData[BlockOffset], number ) ;
-						BlockOffset += 128 ;		// 8-bit bytes
-						firmwareAddress += 128 ;
-						BytesFlashed += 128 ;
-					}
-					else
-					{
-						if ( ByteEnd >= size )
-						{
-							state = UPDATE_COMPLETE ;
-						}
-						else
-						{
-							f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
-							ByteEnd += Mdata.BlockCount ;
-							BlockOffset = 0 ;
-						}
-					}
-				}
-				else
-				{
-					CoProresult = 1 ;
-					state = UPDATE_COMPLETE ;
-				}
-			}
+//						number = ByteEnd - BytesFlashed ;
+//						if ( number > 128 )
+//						{
+//							number = 128 ;						
+//						}
+//						i = write_CoProc( (uint32_t)firmwareAddress, &FileData[BlockOffset], number ) ;
+//						BlockOffset += 128 ;		// 8-bit bytes
+//						firmwareAddress += 128 ;
+//						BytesFlashed += 128 ;
+//					}
+//					else
+//					{
+//						if ( ByteEnd >= size )
+//						{
+//							state = UPDATE_COMPLETE ;
+//						}
+//						else
+//						{
+//							f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+//							ByteEnd += Mdata.BlockCount ;
+//							BlockOffset = 0 ;
+//						}
+//					}
+//				}
+//				else
+//				{
+//					CoProresult = 1 ;
+//					state = UPDATE_COMPLETE ;
+//				}
+//			}
  #endif
  // REVX
 			else if (UpdateItem == UPDATE_TYPE_XMEGA )
@@ -1807,6 +1827,7 @@ void menuUp1(uint8_t event)
 				displayXmegaData() ;
 			}
 #endif
+#ifndef NO_MULTI
 			else if (UpdateItem == UPDATE_TYPE_MULTI )
 			{
 				if ( MultiState == MULTI_WAIT1	)
@@ -1824,6 +1845,7 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 			}
+#endif
 			else		// Internal/External Sport
 			{
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -1875,6 +1897,7 @@ void menuUp1(uint8_t event)
  					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  				}
 #endif
+#ifndef NO_MULTI
 				if (UpdateItem == UPDATE_TYPE_MULTI )
 				{
 					if ( MultiResult )
@@ -1884,31 +1907,34 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 				}
+#endif
 				if (UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					displayXmegaData() ;
 				}
 #ifdef PCBSKY
  #ifndef REVX
-				if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
-				{
-					if ( CoProresult )
-					{
-						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
-					}
-				}
-				else
+//				if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
+//				{
+//					if ( CoProresult )
+//					{
+//						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+//					}
+//				}
+//				else
 				{
  #endif 			
  					if ( SportVerValid & 1 )
 	 				{
  						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  					}
+  #ifndef NO_MULTI
 					if (UpdateItem == UPDATE_TYPE_MULTI )
 					{
 						lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 						lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 					}
+	#endif
   #ifndef REVX
 			  }
   #endif 			
@@ -1946,11 +1972,17 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBSKY
  #ifndef REVX
-	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
-	lcd_puts_Pleft( 4*FH, "  Update SPort" );
-	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+//	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
+	lcd_puts_Pleft( 3*FH, "  Update SPort" );
+  #ifdef SMALL
+	lcd_puts_Pleft( 4*FH, "  Update Xmega" );
+	#else
+	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
+	#endif
+  #ifndef NO_MULTI
+	 lcd_puts_Pleft( 7*FH, "  Update Multi" );
+	#endif
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
@@ -1993,37 +2025,48 @@ void menuUpdate(uint8_t event)
 #ifndef PCBX12D
 			if ( position == 2*FH )
 			{
+				
 				UpdateItem = UPDATE_TYPE_BOOTLOADER ;
 	      chainMenu(menuUp1) ;
 			}
 #endif
 #ifdef PCBSKY
  #ifndef REVX
+//			if ( position == 3*FH )
+//			{
+//				UpdateItem = UPDATE_TYPE_COPROCESSOR ;
+//	      chainMenu(menuUp1) ;
+//			}
 			if ( position == 3*FH )
-			{
-				UpdateItem = UPDATE_TYPE_COPROCESSOR ;
-	      chainMenu(menuUp1) ;
-			}
-			if ( position == 4*FH )
 			{
 				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
-			if ( position == 5*FH )
-			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
-	      chainMenu(menuChangeId) ;
-			}
-			if ( position == 6*FH )
+  #ifdef SMALL
+			if ( position == 4*FH )
 			{
 				UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
-			if ( position == 7*FH )
+	#else
+			if ( position == 4*FH )
+			{
+				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
+			}
+	#endif
+  #ifndef NO_MULTI
+			if ( position == 6*FH )
 			{
 				UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
+	#endif
  #else
 			if ( position == 3*FH )
 			{
@@ -2137,7 +2180,15 @@ void menuUpdate(uint8_t event)
 #ifdef PCBSKY
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
+  #ifndef NO_MULTI
 			if ( position < 7*FH )
+	#else
+   #ifdef SMALL
+			if ( position < 4*FH )
+	 #else
+			if ( position < 5*FH )
+	 #endif
+	#endif
 			{
 				position += FH ;				
 			}
@@ -2288,191 +2339,191 @@ uint32_t clearMfp()
 
  #ifndef REVX
 
-uint8_t Addr_buffer[132] ;
+//uint8_t Addr_buffer[132] ;
 
-uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number )
-{
-	uint32_t i ;
+//uint32_t read_status_CoProc( uint32_t bufaddr, uint32_t number )
+//{
+//	uint32_t i ;
 	
-	TWI0->TWI_MMR = 0x00351000 ;		// Device 35 and master is reading,
-	TWI0->TWI_RPR = bufaddr ;
-	TWI0->TWI_RCR = number-1 ;
-	if ( TWI0->TWI_SR & TWI_SR_RXRDY )
-	{
-		(void) TWI0->TWI_RHR ;
-	}
-	TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
-	TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
+//	TWI0->TWI_MMR = 0x00351000 ;		// Device 35 and master is reading,
+//	TWI0->TWI_RPR = bufaddr ;
+//	TWI0->TWI_RCR = number-1 ;
+//	if ( TWI0->TWI_SR & TWI_SR_RXRDY )
+//	{
+//		(void) TWI0->TWI_RHR ;
+//	}
+//	TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
+//	TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
 	
-	// Now wait for completion
+//	// Now wait for completion
 	
-	for ( i = 0 ; i < 1000000 ; i += 1 )
-	{
-		if ( TWI0->TWI_SR & TWI_SR_RXBUFF )
-		{
-			break ;
-		}
-	}
-	// Finished reading
-	TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
-	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Rx
-	TWI0->TWI_RCR = 1 ;						// Last byte
+//	for ( i = 0 ; i < 1000000 ; i += 1 )
+//	{
+//		if ( TWI0->TWI_SR & TWI_SR_RXBUFF )
+//		{
+//			break ;
+//		}
+//	}
+//	// Finished reading
+//	TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
+//	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Rx
+//	TWI0->TWI_RCR = 1 ;						// Last byte
 
-	if ( i >= 1000000 )
-	{
-		return 0 ;
-	}
-	// Now wait for completion
+//	if ( i >= 1000000 )
+//	{
+//		return 0 ;
+//	}
+//	// Now wait for completion
 	
-	for ( i = 0 ; i < 100000 ; i += 1 )
-	{
-		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
-		{
-			break ;
-		}	
-	}
-	if ( i >= 100000 )
-	{
-		return 0 ;
-	}
-	return 1 ;
-}
+//	for ( i = 0 ; i < 100000 ; i += 1 )
+//	{
+//		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
+//		{
+//			break ;
+//		}	
+//	}
+//	if ( i >= 100000 )
+//	{
+//		return 0 ;
+//	}
+//	return 1 ;
+//}
 
-#define TWI_CMD_REBOOT							0x55	// TWI Command to restart back in the bootloader
+//#define TWI_CMD_REBOOT							0x55	// TWI Command to restart back in the bootloader
 
-uint32_t coProcBoot()
-{
-	uint32_t i ;
+//uint32_t coProcBoot()
+//{
+//	uint32_t i ;
 	
-	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
-	TWI0->TWI_THR = TWI_CMD_REBOOT ;	// Send reboot command
-	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
+//	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
+//	TWI0->TWI_THR = TWI_CMD_REBOOT ;	// Send reboot command
+//	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
 
-	for ( i = 0 ; i < 100000 ; i += 1 )
-	{
-		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
-		{
-			break ;
-		}	
-	}
+//	for ( i = 0 ; i < 100000 ; i += 1 )
+//	{
+//		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
+//		{
+//			break ;
+//		}	
+//	}
 	
-	if ( i >= 100000 )
-	{
-		return 0 ;
-	}
-	return 1 ;
-}
+//	if ( i >= 100000 )
+//	{
+//		return 0 ;
+//	}
+//	return 1 ;
+//}
 
-uint32_t write_CoProc( uint32_t coInternalAddr, uint8_t *buf, uint32_t number )
-{
-	uint32_t i ;
-	uint8_t *ptr ;
+//uint32_t write_CoProc( uint32_t coInternalAddr, uint8_t *buf, uint32_t number )
+//{
+//	uint32_t i ;
+//	uint8_t *ptr ;
 
-	Addr_buffer[0] = 0x01 ;		// Command, PROGRAM
-	Addr_buffer[1] = coInternalAddr >> 8 ;
-	Addr_buffer[2] = coInternalAddr ;
-	ptr = buf ;
-	// Copy data
-	for ( i = 0 ; i < number ; i += 1 )
-	{
-		Addr_buffer[i+3] = *ptr++ ;		
-	}
-	// Pad to 128 bytes
-	while ( i < 128 )
-	{
-		Addr_buffer[i+3] = 0xFF ;
-		i += 1 ;	
-	}
-	// Now send TWI data using PDC
-	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
-	// init PDC
-	TWI0->TWI_TPR = (uint32_t)&Addr_buffer[1] ;
-	TWI0->TWI_TCR = 130 ;
+//	Addr_buffer[0] = 0x01 ;		// Command, PROGRAM
+//	Addr_buffer[1] = coInternalAddr >> 8 ;
+//	Addr_buffer[2] = coInternalAddr ;
+//	ptr = buf ;
+//	// Copy data
+//	for ( i = 0 ; i < number ; i += 1 )
+//	{
+//		Addr_buffer[i+3] = *ptr++ ;		
+//	}
+//	// Pad to 128 bytes
+//	while ( i < 128 )
+//	{
+//		Addr_buffer[i+3] = 0xFF ;
+//		i += 1 ;	
+//	}
+//	// Now send TWI data using PDC
+//	TWI0->TWI_MMR = 0x00350000 ;		// Device 35 and master is writing
+//	// init PDC
+//	TWI0->TWI_TPR = (uint32_t)&Addr_buffer[1] ;
+//	TWI0->TWI_TCR = 130 ;
 			
-	TWI0->TWI_THR = Addr_buffer[0] ;		// Send data
-	// kick off PDC, enable PDC end interrupt
-	TWI0->TWI_PTCR = TWI_PTCR_TXTEN ;	// Start transfers
+//	TWI0->TWI_THR = Addr_buffer[0] ;		// Send data
+//	// kick off PDC, enable PDC end interrupt
+//	TWI0->TWI_PTCR = TWI_PTCR_TXTEN ;	// Start transfers
 	
-	// Now wait for completion
+//	// Now wait for completion
 	
-	for ( i = 0 ; i < 1000000 ; i += 1 )
-	{
-		if ( TWI0->TWI_SR & TWI_SR_TXBUFE )
-		{
-			break ;
-		}
-	}
-	// Finished reading
-	TWI0->TWI_PTCR = TWI_PTCR_TXTDIS ;	// Stop transfers
-	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
-	if ( i >= 1000000 )
-	{
-		return 0 ;
-	}
+//	for ( i = 0 ; i < 1000000 ; i += 1 )
+//	{
+//		if ( TWI0->TWI_SR & TWI_SR_TXBUFE )
+//		{
+//			break ;
+//		}
+//	}
+//	// Finished reading
+//	TWI0->TWI_PTCR = TWI_PTCR_TXTDIS ;	// Stop transfers
+//	TWI0->TWI_CR = TWI_CR_STOP ;		// Stop Tx
+//	if ( i >= 1000000 )
+//	{
+//		return 0 ;
+//	}
 	
-	for ( i = 0 ; i < 100000 ; i += 1 )
-	{
-		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
-		{
-			break ;
-		}	
-	}
+//	for ( i = 0 ; i < 100000 ; i += 1 )
+//	{
+//		if ( TWI0->TWI_SR & TWI_SR_TXCOMP )
+//		{
+//			break ;
+//		}	
+//	}
 	
-	if ( i >= 100000 )
-	{
-		return 0 ;
-	}
+//	if ( i >= 100000 )
+//	{
+//		return 0 ;
+//	}
 
-	return 1 ;
-}
+//	return 1 ;
+//}
 
-// returns 0 = OK, not 0 error
-uint32_t check_ready()
-{
-	uint32_t result ;
-	result = 0 ;				// OK
-	init_mtwi() ;
+//// returns 0 = OK, not 0 error
+//uint32_t check_ready()
+//{
+//	uint32_t result ;
+//	result = 0 ;				// OK
+//	init_mtwi() ;
 
-	// initialise for updating
-	if ( read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) )
-	{
-		if ( ( Twi_rx_buf[0] & 0x80 ) == 0 )
-		{ // Not in bootloader
-			if ( coProcBoot() == 0 )		// Make sure we are in the bootloader
-			{
-   		  result = 1 ;
-			}
-			else
-			{
-				uint32_t i ;
+//	// initialise for updating
+//	if ( read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) )
+//	{
+//		if ( ( Twi_rx_buf[0] & 0x80 ) == 0 )
+//		{ // Not in bootloader
+//			if ( coProcBoot() == 0 )		// Make sure we are in the bootloader
+//			{
+//   		  result = 1 ;
+//			}
+//			else
+//			{
+//				uint32_t i ;
 
-				for ( i = 0 ; i < 10000 ; i += 1 )
-				{
-					asm("nop") ;
-				}
-				if ( read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) )
-				{
-					if ( ( Twi_rx_buf[0] & 0x80 ) != 0x80 )
-					{
-		   		  result = 2 ;
-					}
-				}
-				else
-				{
-   		  	result = 3 ;
-				}	 
-			}
-		}
-	}
-	else
-	{
-   	result = 4 ;
-	}
+//				for ( i = 0 ; i < 10000 ; i += 1 )
+//				{
+//					asm("nop") ;
+//				}
+//				if ( read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) )
+//				{
+//					if ( ( Twi_rx_buf[0] & 0x80 ) != 0x80 )
+//					{
+//		   		  result = 2 ;
+//					}
+//				}
+//				else
+//				{
+//   		  	result = 3 ;
+//				}	 
+//			}
+//		}
+//	}
+//	else
+//	{
+//   	result = 4 ;
+//	}
 
-	read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) ;
+//	read_status_CoProc( (uint32_t)Twi_rx_buf, 22 ) ;
 
-	return result ;
-}
+//	return result ;
+//}
 
  #endif
 #endif
@@ -2648,6 +2699,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 
 
 
+#ifndef NO_MULTI
 uint32_t eat( uint8_t byte )
 {
 	uint16_t time ;
@@ -2666,7 +2718,7 @@ uint32_t eat( uint8_t byte )
 	}
 	return 0 ;
 }
-
+#endif
 
 //void hexDebug( uint8_t x, uint8_t y )
 //{
@@ -2851,6 +2903,7 @@ void hexFileRead1024( uint32_t address, UINT *blockCount )
 	return ;
 }
 
+#ifndef NO_MULTI
 uint32_t multiUpdate()
 {
 	uint32_t i ;
@@ -3073,7 +3126,7 @@ uint32_t multiUpdate()
 	}
 	return MultiType ? HexFileRead : BytesFlashed ;
 }
-
+#endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 // This is called repeatedly every 10mS while update is in progress

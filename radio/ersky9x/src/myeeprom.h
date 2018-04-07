@@ -290,7 +290,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t altSwitchNames:1 ;    // use alternative switch names (ARUNI)
 	uint8_t sixPosDelayFilter:1 ; // 6POS switch delay filtering (ARUNI)
 	uint8_t altMixMenu:1 ;
-	uint8_t spare:1 ;
+	uint8_t disableRxCheck:1 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;

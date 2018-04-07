@@ -1193,6 +1193,12 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 				}
 				p += 1 ;
 			}
+			if ( inv )
+			{
+				uint16_t b = 0xFF ;
+     		if(p<DISPLAY_END) *p ^= ( b <<= y) ;
+     		if(&p[DISPLAY_W] < DISPLAY_END) p[DISPLAY_W] ^= b >> 8 ;
+			}
 		}
 		else
 		{

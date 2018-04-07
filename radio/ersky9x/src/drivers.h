@@ -65,6 +65,29 @@ struct t_softSerial
 	struct t_fifo128 *pfifo ;
 } ;
 
+
+struct t_SportTx
+{
+	uint8_t *ptr ;
+	uint16_t count ;
+	uint8_t busy ;
+	uint8_t index ;
+	uint8_t data[16] ;
+} ;
+
+struct t_XfireTx
+{
+	uint16_t count ;
+	uint8_t command ;
+	uint8_t data[16] ;
+} ;
+
+union t_telemetryTx
+{
+	struct t_SportTx SportTx ;
+	struct t_XfireTx XfireTx ;
+} ;
+
 extern struct t_softSerial SoftSerial1 ;
 
 //extern void put_fifo32( struct t_fifo32 *pfifo, uint8_t byte ) ;
@@ -74,6 +97,7 @@ extern int32_t get_fifo64( struct t_fifo64 *pfifo ) ;
 extern void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte ) ;
 extern int32_t get_fifo128( struct t_fifo128 *pfifo ) ;
 extern uint32_t fifo128Space( struct t_fifo128 *pfifo ) ;
+extern int32_t peek_fifo128( struct t_fifo128 *pfifo ) ;
 extern struct t_serial_tx Bt_tx ;
 extern uint32_t txPdcBt( struct t_serial_tx *data ) ;
 extern uint32_t txPdcCom2( struct t_serial_tx *data ) ;
@@ -165,6 +189,7 @@ extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
 extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
+extern uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data ) ;
 
 extern void poll2ndUsart10mS( void ) ;
 //extern void charProcess( uint8_t byte ) ;
@@ -314,7 +339,7 @@ class Key
 public:
   void input(bool val, EnumKeys enuk);
   bool state()       { return m_vals==FFVAL;                }
-  bool isKilled()    { return m_state == KSTATE_KILLED ;    }
+	bool isKilled()    { return m_state == KSTATE_KILLED ;    }
   void pauseEvents() { m_state = KSTATE_PAUSE;  m_cnt   = 0;}
   void killEvents()  { m_state = KSTATE_KILLED; m_dblcnt=0; }
   uint8_t getDbl()   { return m_dblcnt;                     }

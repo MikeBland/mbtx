@@ -35,6 +35,7 @@ uint8_t ScriptFlags ;
 
 #endif
 
+#define IsDigit(c)	(((c)>='0')&&((c)<='9'))
 
 //extern uint16_t BasicDebug1 ;
 //extern uint16_t BasicDebug2 ;
@@ -156,6 +157,10 @@ uint8_t ScriptFlags ;
 #define PLAYFILE			22
 #define GETRAWVALUE		23
 #define KILLEVENTS		24
+#define BITFIELD			25
+#define POWER					26
+#define CROSSFIRERECEIVE	27
+#define CROSSFIRESEND	28
 
 // Assignment options:
 #define SETEQUALS			0
@@ -400,6 +405,10 @@ const struct commands InternalFunctions[] =
 	{ "playfile", PLAYFILE },
   { "getrawvalue", GETRAWVALUE },
 	{ "killevents", KILLEVENTS },
+	{ "bitfield", BITFIELD },
+	{ "power", POWER },
+	{ "crossfirereceive", CROSSFIRERECEIVE },
+	{ "crossfiresend", CROSSFIRESEND },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -617,7 +626,7 @@ unsigned int get_number( int base, int digits )
 	do
 	{
 		c = *ProgPtr ;
-		if ( isdigit( c ) )		/* convert numeric digits */
+		if ( IsDigit( c ) )		/* convert numeric digits */
 		{
 			c -= '0' ;
 		}
@@ -703,7 +712,7 @@ int32_t asctoi( char *string )
   for ( ; ; string += 1)
 	{
 		digit = *string ;
-		if ( isdigit( digit ) )
+		if ( IsDigit( digit ) )
 		{
 			digit -= '0' ;
 		}
@@ -829,7 +838,7 @@ unsigned int read_special()
 			break ;
 
 			default:
-				if( isdigit( chr ) )
+				if( IsDigit( chr ) )
 				{	/* octal value */
 					ProgPtr -= 1 ;
 					chr = (char) get_number( 8, 3 ) ;
@@ -1053,7 +1062,7 @@ uint32_t scanForKeyword( char *dest )
     return( Token_type = QUOTE ) ;
   }
   
-  if(isdigit(*ProgPtr))
+  if(IsDigit(*ProgPtr))
 	{ /* number */
     while(!isdelim(*ProgPtr)) *temp++ = *ProgPtr++ ;
     *temp = '\0';
@@ -1420,14 +1429,14 @@ uint32_t loadBasic( char *fileName, uint32_t type )
 		return 1 ;		// Loading started
 
 	}
-#ifndef QT	
 	else
 	{
+#ifndef QT	
 		BasicState = BASIC_IDLE ;
 		BasicLoadedType = BASIC_LOAD_NONE ;
+#endif
 		return 0 ;		// Didn't load
 	}
-#endif
 }
 
 void setJumpAddress( uint32_t offset, uint32_t value )
@@ -1468,6 +1477,34 @@ uint16_t codeNumeric( int32_t value )
 	return 0x0450 ;
 }
 
+uint32_t setArray( uint32_t index, uint32_t cPosition )
+{
+	uint32_t dimension ;
+	uint32_t type ;
+	uint8_t code ;
+	// Found
+	index += Program.Bytes[index] - 3 ; // Index of index
+	type = Program.Bytes[index-1] ;
+	dimension = Program.Bytes[index+2] ;
+	index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+	code = 0x64 ;
+	if ( type == SYM_VAR_ARRAY_BYTE )
+	{
+		code = 0x66 ;
+	}
+	if ( index > 255 )
+	{
+		code |= 0x08 ;
+	}
+	Program.Bytes[cPosition++] = code ;
+	Program.Bytes[cPosition++] = index ;
+	if ( code &= 0x08 )
+	{
+		Program.Bytes[cPosition++] = index >> 8 ;
+	}
+	Program.Bytes[cPosition++] = dimension ;
+	return cPosition ;
+}
 
 
 // return  values:
@@ -1578,6 +1615,10 @@ uint32_t partLoadBasic()
 						if ( Tok == DEFBYTE )
 						{
 							type = SYM_VAR_ARRAY_BYTE ;
+							j = scanForKeyword( Token ) ;
+						}
+						if ( Tok == DEFINT )
+						{
 							j = scanForKeyword( Token ) ;
 						}
 						if ( j != ARRAY )
@@ -1897,6 +1938,15 @@ uint32_t partLoadBasic()
 	              p = cpystr( p, (uint8_t *)"Var " ) ;
 								*p++ = Token[0] ;
 #endif
+								index = findSymbol( SYM_ARRAY ) ;	// Is it an array with no subscript?
+								if ( index != -1 )
+								{
+									// Found
+									cPosition = setArray( index, cPosition ) ;
+									Program.Bytes[cPosition++] = 0x48 ;	// number 0
+									Program.Bytes[cPosition++] = ']' ;
+									break ;
+								}
 								index = findSymbol( SYM_VARIABLE ) ;
 								if ( index == -1 )
 								{
@@ -1987,9 +2037,6 @@ uint32_t partLoadBasic()
 						case ARRAY :
 						{	
 							int32_t index ;
-							uint32_t type ;
-							uint32_t dimension ;
-							uint8_t code ;
 							index = findSymbol( SYM_ARRAY ) ;
 							if ( index == -1 )
 							{
@@ -1997,26 +2044,7 @@ uint32_t partLoadBasic()
 							}
 							else
 							{
-								index += Program.Bytes[index] - 3 ; // Index of index
-								type = Program.Bytes[index-1] ;
-								dimension = Program.Bytes[index+2] ;
-								index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
-								code = 0x64 ;
-								if ( type == SYM_VAR_ARRAY_BYTE )
-								{
-									code = 0x66 ;
-								}
-								if ( index > 255 )
-								{
-									code |= 0x08 ;
-								}
-								Program.Bytes[cPosition++] = code ;
-								Program.Bytes[cPosition++] = index ;
-								if ( code &= 0x08 )
-								{
-									Program.Bytes[cPosition++] = index >> 8 ;
-								}
-								Program.Bytes[cPosition++] = dimension ;
+								cPosition = setArray( index, cPosition ) ;
 							}
 						}	
 						break ;
@@ -2699,7 +2727,8 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 // 1 byte
 // 2 int
 
-uint32_t getParamVarAddress( union t_varAddress *ptr )
+// size is for byte array with that much space
+uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
 {
 	uint8_t opcode ;
 	uint32_t result = 0 ;
@@ -2729,7 +2758,7 @@ uint32_t getParamVarAddress( union t_varAddress *ptr )
 				return 0 ;
 			}
 			val16 += value ;
-			if ( value >= dimension )
+			if ( value + size >= dimension )
 			{
 				runError( SE_DIMENSION ) ;
 				return 0 ;
@@ -3273,6 +3302,78 @@ void exec_drawnumber()
 	}
 }
 
+
+int32_t exec_power()
+{
+	int32_t value ;
+	int32_t answer = 1 ;
+	uint32_t power ;
+	uint32_t result ;
+	union t_parameter param ;
+	
+	result = get_parameter( &param, 0 ) ;
+	if ( result == 1 )
+	{
+		value = param.var ;
+		result = get_parameter( &param, 0 ) ;
+    if ( result == 1 )
+		{
+			power = param.var ;
+#ifdef QT
+      RunTimeData = cpystr( RunTimeData, (uint8_t *)"Power()\n" ) ;
+#else
+			if ( power > 20 )
+			{
+				power = 20 ;
+			}
+			while ( power )
+			{
+				answer *= value ;
+				power -= 1 ;
+			}
+#endif
+			eatCloseBracket() ;
+		}
+	}
+	return answer ;
+}
+
+int32_t exec_bitField()
+{
+	uint32_t value = 0 ;
+	uint32_t offset ;
+	uint16_t size ;
+	uint32_t result ;
+	union t_parameter param ;
+
+	// get 3 parameters
+	result = get_parameter( &param, 0 ) ;
+	if ( result == 1 )
+	{
+		value = param.var ;
+		result = get_parameter( &param, 0 ) ;
+		if ( result == 1 )
+		{
+			offset = param.var ;
+			result = get_parameter( &param, 0 ) ;
+      if ( result == 1 )
+			{
+				size = param.var ;
+#ifdef QT
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)"BitField()\n" ) ;
+#else
+				value >>= offset ;
+				// now pick out size 
+				uint32_t mask = ( 1 << (size) ) - 1 ;
+				value &= mask ;
+#endif
+				eatCloseBracket() ;
+			}
+		}
+	}
+	return value ;
+}
+
 void exec_drawtimer()
 {
 	int32_t x ;
@@ -3678,7 +3779,6 @@ int32_t exec_settelitem()
 	return retval ;
 }
 
-
 int32_t exec_getvalue(uint32_t type)
 {
 	int32_t number ;
@@ -3717,9 +3817,13 @@ int32_t exec_getvalue(uint32_t type)
 		{
 			result = number ;
 		  number = getValue(result) ; // ignored for GPS, DATETIME, and CELLS
+  		if ( (result == CHOUT_BASE+NUM_SKYCHNOUT) || (result == CHOUT_BASE+NUM_SKYCHNOUT+1) ) // A1 or A2
+			{
+				number = scale_telem_value( number, result - (CHOUT_BASE+NUM_SKYCHNOUT), 0 ) ;
+			}
 			if ( type == 0 )
 			{
-  		  if ( (result <= CHOUT_BASE+NUM_SKYCHNOUT) || ( result >= EXTRA_POTS_START ) )
+  		  if ( (result < CHOUT_BASE+NUM_SKYCHNOUT) || ( result >= EXTRA_POTS_START ) )
 				{
 					number *= 100 ;
 					number /= RESX ;
@@ -3880,19 +3984,19 @@ int32_t exec_sportreceive()
 	union t_varAddress param[4] ;
 	uint8_t type[4] ;
 	uint32_t result ;
-	result = getParamVarAddress( &param[0] ) ;
+	result = getParamVarAddress( &param[0], 0 ) ;
 	if ( result )
 	{
 		type[0] = result ;
-		result = getParamVarAddress( &param[1] ) ;
+		result = getParamVarAddress( &param[1], 0 ) ;
 		if ( result )
 		{
 			type[1] = result ;
-			result = getParamVarAddress( &param[2] ) ;
+			result = getParamVarAddress( &param[2], 0 ) ;
 			if ( result )
 			{
 				type[2] = result ;
-				result = getParamVarAddress( &param[3] ) ;
+				result = getParamVarAddress( &param[3], 0 ) ;
 				if ( result )
 				{
 					type[3] = result ;
@@ -3900,7 +4004,7 @@ int32_t exec_sportreceive()
         	RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportReceive()\n" ) ;
           result = 1 ;
 #else
-					if ( fifo128Space( &Lua_fifo ) <= ( 128 - 8 ) )
+					if ( fifo128Space( &Lua_fifo ) <= ( 127 - 8 ) )
 					{
 						uint32_t value ;
 						value = get_fifo128( &Lua_fifo ) & 0x1F ;
@@ -3954,6 +4058,141 @@ int32_t exec_sportreceive()
 				}
 			}
 		}
+	}
+	return result ;
+}
+
+
+int32_t exec_crossfirereceive()
+{
+	union t_varAddress param[3] ;
+	uint8_t type[4] ;
+  uint8_t length ;
+	int32_t value ;
+	uint32_t result ;
+	uint32_t tidy = 1 ;
+	
+	result = getParamVarAddress( &param[0], 0 ) ;
+	if ( result )
+	{
+		type[0] = result ;
+		result = getParamVarAddress( &param[1], 0 ) ;
+		if ( result )
+		{
+			type[1] = result ;
+			if ( result )
+			{
+#ifdef QT
+        value = 0 ;
+#else
+				value = peek_fifo128( &Lua_fifo ) ;
+#endif
+				if ( value != -1 )
+				{
+					length = value ;
+#ifndef QT
+					if ( fifo128Space( &Lua_fifo ) <= (uint32_t)(127 - length ) )
+					{
+						// OK to read packet
+						// values to return : length, command = byte after length, data into array if possible
+						result = getParamVarAddress( &param[2], length-2 ) ;
+						tidy = 0 ;
+						if ( result )
+						{
+							value = get_fifo128( &Lua_fifo ) ;
+							if ( type[0] == 1 )
+							{
+								*param[0].bpointer = value ;
+							}
+							else
+							{
+								*param[0].ipointer = value ;
+							}
+							value = get_fifo128( &Lua_fifo ) ;
+							if ( type[1] == 1 )
+							{
+								*param[1].bpointer = value ;
+							}
+							else
+							{
+								*param[1].ipointer = value ;
+							}
+							length -= 2 ;
+							for ( ; length ; length -= 1 )
+							{
+								*param[2].bpointer++ = get_fifo128( &Lua_fifo ) ;
+							}
+							result = 1 ;
+						}
+					}
+#endif
+				}
+				if ( tidy )
+				{
+					result = 0 ;
+					getParamVarAddress( &param[2], 0 ) ;
+				}
+				eatCloseBracket() ;
+			}
+		}
+	}
+  return result ;
+}
+
+// command, count(# of bytes), byte_array
+int32_t exec_crossfiresend()
+{
+//	send MODULE_ADDRESS, count+2, command, byte_array, crc
+	uint32_t result = 0 ;
+	union t_parameter param ;
+	union t_varAddress address ;
+	int32_t command ;
+	uint32_t length ;
+
+	result = get_parameter( &param, 0 ) ;
+	if ( result == 1 )
+	{
+		command = param.var ;
+		if ( command == 0xFF )
+		{
+#ifdef QT
+      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
+      result = 0 ;
+#else
+			result = xfirePacketSend( 0, 0, 0 ) ;
+#endif
+		}
+		else
+		{
+			result = get_parameter( &param, 0 ) ;
+			if ( result == 1 )
+			{
+				length = param.var ;
+				result = getParamVarAddress( &address, 0 ) ;
+				if ( result == 1 )	// Byte array
+				{
+#ifdef QT
+      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
+      result = 0 ;
+#else
+					result = xfirePacketSend( length, command, address.bpointer ) ;
+#endif
+				}
+				else
+				{
+					runError( SE_SYNTAX ) ;
+				}
+			}	
+			else
+			{
+				runError( SE_SYNTAX ) ;
+			}
+			eatCloseBracket() ;
+		}
+	}
+	else
+	{
+		runError( SE_SYNTAX ) ;
 	}
 	return result ;
 }
@@ -4206,7 +4445,9 @@ void exec_setSwitch()
 void exec_playFile()
 {
 	uint32_t result ;
+#ifndef QT
 	uint32_t i ;
+#endif
 	union t_parameter param ;
 	uint8_t *p ;
 #ifndef QT
@@ -4363,6 +4604,22 @@ int32_t execInFunction()
 
 		case KILLEVENTS :
 			exec_killEvents() ;
+		break ;
+		 
+		case BITFIELD :
+			result = exec_bitField() ;
+		break ;
+
+		case POWER :
+			result = exec_power() ;
+		break ;
+
+		case CROSSFIRERECEIVE :
+			result = exec_crossfirereceive() ;
+		break ;
+		 
+		case CROSSFIRESEND :
+			result = exec_crossfiresend() ;
 		break ;
 		 
 		default :

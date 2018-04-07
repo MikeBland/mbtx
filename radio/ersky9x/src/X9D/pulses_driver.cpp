@@ -72,6 +72,7 @@ uint16_t dsm2Stream[2][400];
 
 #ifdef XFIRE
 extern uint8_t Bit_pulses[] ;
+uint16_t XfireLength ;
 #endif
 
 static void init_pa10_pxx( void ) ;
@@ -868,7 +869,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 #ifdef XFIRE
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_XFIRE )
 	{
-		x9dSPortTxStart( (uint8_t *)Bit_pulses, 26, 0 ) ;
+		x9dSPortTxStart( (uint8_t *)Bit_pulses, XfireLength, 0 ) ;
 	}
 	else
 #endif

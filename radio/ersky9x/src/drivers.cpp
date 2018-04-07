@@ -121,14 +121,7 @@ struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
-struct t_SportTx
-{
-	uint8_t *ptr ;
-	uint16_t count ;
-	uint8_t busy ;
-	uint8_t index ;
-	uint8_t data[16] ;
-} SportTx ;
+union t_telemetryTx TelemetryTx ;
 
 struct t_serial_tx *Current_Com1 ;
 struct t_serial_tx *Current_Com2 ;
@@ -681,7 +674,7 @@ void put_fifo128( struct t_fifo128 *pfifo, uint8_t byte )
 uint32_t fifo128Space( struct t_fifo128 *pfifo )
 {
 	uint32_t space ;
-	space = pfifo->out + 128 ;
+	space = pfifo->out + 127 ;
 	if ( pfifo->out > pfifo->in )
 	{
 		space -= 128 ;
@@ -700,6 +693,16 @@ int32_t get_fifo128( struct t_fifo128 *pfifo )
 	}
 	return -1 ;
 }
+
+int32_t peek_fifo128( struct t_fifo128 *pfifo )
+{
+	if ( pfifo->in != pfifo->out )				// Look for char available
+	{
+		return pfifo->fifo[pfifo->out] ;
+	}
+	return -1 ;
+}
+
 
 void put_16bit_fifo32( struct t_16bit_fifo32 *pfifo, uint16_t word )
 {
@@ -1513,7 +1516,7 @@ extern "C" void USART0_IRQHandler()
 		{
 			pUsart->US_RTOR = 0 ;		// Off
 			pUsart->US_IDR = US_IDR_TIMEOUT ;
-			txPdcUsart( SportTx.ptr, SportTx.count, 0 ) ;
+			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
 		}
 		
 //	  pUsart->US_CR = US_CR_STTTO ;		// Clears timeout bit
@@ -1523,7 +1526,7 @@ extern "C" void USART0_IRQHandler()
 	{
 	 	if ( pUsart->US_CSR & US_CSR_ENDTX )
 		{
-			SportTx.count = 0 ;
+			TelemetryTx.SportTx.count = 0 ;
 			pUsart->US_IER = US_IER_TXEMPTY ;
 			pUsart->US_IDR = US_IDR_ENDTX ;
 		}
@@ -1550,12 +1553,12 @@ extern "C" void USART0_IRQHandler()
 // 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
 // 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
 		
-		if ( LastReceivedSportByte == 0x7E && SportTx.count > 0 && data == SportTx.index )
+		if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
 		{
 			pUsart->US_RTOR = 60 ;		// Bits @ 57600 ~= 1050uS
 			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
 			pUsart->US_IER = US_IER_TIMEOUT ;
-			SportTx.index = 0x7E ;
+			TelemetryTx.SportTx.index = 0x7E ;
     }
     LastReceivedSportByte = data ;
 	}
@@ -2900,14 +2903,14 @@ void x9dHubTxStart( uint8_t *buffer, uint32_t count )
 	{	
 		SendingSportPacket.buffer = buffer ;
 		SendingSportPacket.count = count ;
-		SportTx.busy = 1 ;
+		TelemetryTx.SportTx.busy = 1 ;
 		USART2->CR1 |= USART_CR1_TXEIE ;
 	}
 }
 
 uint32_t hubTxPending()
 {
-	return SportTx.busy ;
+	return TelemetryTx.SportTx.busy ;
 }
 
 #ifndef PCB9XT
@@ -2994,8 +2997,8 @@ extern "C" void USART2_IRQHandler()
 #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
 #endif
-			SportTx.count = 0 ;
-			SportTx.busy = 0 ;
+			TelemetryTx.SportTx.count = 0 ;
+			TelemetryTx.SportTx.busy = 0 ;
 			USART2->CR1 |= USART_CR1_RE ;
 		}
 	}
@@ -3011,10 +3014,10 @@ extern "C" void USART2_IRQHandler()
 			put_fifo128( &Com1_fifo, data ) ;
 			if ( FrskyTelemetryType == 1 )		// SPORT
 			{
-				if ( LastReceivedSportByte == 0x7E && SportTx.count > 0 && data == SportTx.index )
+				if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
 				{
-					x9dSPortTxStart( SportTx.ptr, SportTx.count, 0 ) ;
-      		SportTx.index = 0x7E ;
+					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
+      		TelemetryTx.SportTx.index = 0x7E ;
 				}
 				LastReceivedSportByte = data ;
 			}
@@ -4394,10 +4397,10 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 
 	if ( pdata == 0 )	// Test for buffer available
 	{
-		return SportTx.count ? 0 : 1 ;
+		return TelemetryTx.SportTx.count ? 0 : 1 ;
 	}
 
-	if ( SportTx.count )
+	if ( TelemetryTx.SportTx.count )
 	{
 		return 0 ;	// Can't send, packet already queued
 	}
@@ -4415,14 +4418,41 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 		crc &= 0x00FF ;
 		if ( ( byte == 0x7E ) || ( byte == 0x7D ) )
 		{
-			SportTx.data[j++] = 0x7D ;
+			TelemetryTx.SportTx.data[j++] = 0x7D ;
 			byte &= ~0x20 ;
 		}
-		SportTx.data[j++] = byte ;
+		TelemetryTx.SportTx.data[j++] = byte ;
 	}
-	SportTx.ptr = SportTx.data ;
-	SportTx.index = index ;
-	SportTx.count = j ;
+	TelemetryTx.SportTx.ptr = TelemetryTx.SportTx.data ;
+	TelemetryTx.SportTx.index = index ;
+	TelemetryTx.SportTx.count = j ;
+	return 1 ;
+}
+
+uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data )
+{
+	uint32_t i ;
+
+	if ( length == 0 )	// Test for buffer available
+	{
+		return TelemetryTx.XfireTx.count ? 0 : 1 ;
+	}
+
+	if ( TelemetryTx.XfireTx.count )
+	{
+		return 0 ;	// Can't send, packet already queued
+	}
+	TelemetryTx.XfireTx.command = command ;
+//	j = TelemetryTx.XfireTx.count ;
+	if ( length > 16 )
+	{
+		return 0 ;	// Can't send, packet too long
+	}
+	for ( i = 0 ; i < length ; i += 1 )
+	{
+		TelemetryTx.XfireTx.data[i] = *data++ ;
+	}
+	TelemetryTx.XfireTx.count = length ;
 	return 1 ;
 }
 

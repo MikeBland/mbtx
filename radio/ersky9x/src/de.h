@@ -83,7 +83,7 @@ v.xx.01-german
 
 #define ISTR_ON             "AN "
 #define ISTR_OFF            "AUS"
-#define ISTR_X_OFF_ON				FWx17"\001""\003"ISTR_OFF ISTR_ON
+#define ISTR_X_OFF_ON				FWx17 "\001" "\003" ISTR_OFF ISTR_ON
 
 #define ISTR_ALTEQ	         "H\303h=" 
 #define ISTR_TXEQ			       "\003Sn=Swr" // TX Transmitter - Sender

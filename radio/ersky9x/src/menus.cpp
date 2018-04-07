@@ -5305,6 +5305,7 @@ void menuSetFailsafe(uint8_t event)
 						g_model.Module[module].failsafe[j] = value ;
 					}
 					StatusTimer = 50 ;
+		    	eeDirty(EE_MODEL) ;
 				}
 			}
 		  lcd_putsAtt( 0, y, XPSTR( "Use Actual" ), StatusTimer ? 0 : attr ) ;
@@ -7947,7 +7948,9 @@ void menuProcMix(uint8_t event)
 						putsChnOpRaw( 8*FW ,y, pmd->srcRaw, pmd->switchSource, pmd->disableExpoDr, attr ) ;
 						if ( attr )
 						{
-							singleBar( 96, 4, g_chans512[chan-1] ) ;
+							uint32_t value = g_chans512[chan-1] ;
+							singleBar( 96, 4, value ) ;
+					    lcd_outdez( 11*FW, 0, value/2 + 1500 ) ;
 						}
 //						putsChnOpRaw( 8*FW, y, pmd, 0 ) ;
 extern uint8_t swOn[] ;
@@ -7986,7 +7989,7 @@ extern uint8_t swOn[] ;
 						{
 							lcd_vline( 78, 8, 55 ) ;
 		          
-							lcd_puts_P( 13*FW+2, FH, XPSTR("Off") ) ;
+							lcd_puts_P( 13*FW+2, FH, XPSTR("Ofst") ) ;
 							extendedValueEdit( pmd->sOffset, pmd->extOffset, 0, FH, 0, FW*21+1 ) ;
 
 							lcd_puts_P( 13*FW+2, 2*FH, XPSTR("Sw") ) ;
@@ -13755,6 +13758,7 @@ void menuDebug(uint8_t event)
   lcd_outhex4( 90, 4*FH, FrskyHubData[FR_FUEL      ] ) ;
 
   lcd_outhex4( 0,  5*FH, FrskyHubData[FR_TEMP1     ] ) ;
+  lcd_outhex4( 30, 5*FH, FrskyHubData[FR_A1_COPY   ] ) ;
 
 extern uint8_t MultiId[] ;
   lcd_outhex4( 60,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
@@ -15590,7 +15594,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 
 
 #define NUM_HELP_PAGES	2
-const uint8_t HelpText0[] = "Enable the Hardware\nMenu: Power on\nholding the left\nhorizontal trim left\n\nMore->" ;
+const uint8_t HelpText0[] = "Enable the Hardware\nand EEPROM\nMenus: Power on\nholding the left\nhorizontal trim left\n\nMore->" ;
 const uint8_t HelpText1[] = "Access Bootloader by\nPower on holding\nboth horizontal trims\nto the centre.\n\n"
 														"MUTE: Power on with\nMENU & EXIT\nboth pressed." ;
 
@@ -16591,9 +16595,17 @@ extern uint8_t ModelImageValid ;
     putsTmrMode(x+7*FW-FW/2 + X12SMALL_OFFSET,FH*3,0, 0, 0 ) ;
 
 		i = getFlightPhase() ;
-		if ( i && g_model.phaseData[i-1].name[0] )
+		if ( i )
 		{
-			lcd_putsnAtt( 6*FW+2 + X12SMALL_OFFSET, 2*FH, g_model.phaseData[i-1].name, 6, /*BSS*/ 0 ) ;
+			if (g_model.phaseData[i-1].name[0] != ' ' )
+			{
+				lcd_putsnAtt( 6*FW+2 + X12SMALL_OFFSET, 2*FH, g_model.phaseData[i-1].name, 6, /*BSS*/ 0 ) ;
+			}
+			else
+			{
+  			lcd_putc( 6*FW+2 + X12SMALL_OFFSET, 2*FH, 'F' ) ;
+  			lcd_putc( 7*FW+2 + X12SMALL_OFFSET, 2*FH, '0'+ i ) ;
+			}
 #ifndef ARUNI
 			lcd_rect( 6*FW+1 + X12SMALL_OFFSET, 2*FH-1, 6*FW+2, 9 ) ;   // put a bounding box
 #endif
@@ -18094,7 +18106,7 @@ void menuProcIndex(uint8_t event)
 	switch ( SubmenuIndex )
 	{
 		case 0 :
-			lcd_putsAtt(0 + X12OFFSET,0,"Radio SETUP",INVERS) ;
+			lcd_putsAtt(0 + X12OFFSET,0,"Radio Setup",INVERS) ;
 			IlinesCount = 15 ;
 			sub += 1 ;
 			
@@ -18535,9 +18547,9 @@ STR_DiagAna
 		{
 			uint8_t subN = 0 ;
 #ifdef PCBSKY
-#define NUM_ALARMS			6
+#define NUM_ALARMS			7
 #else
-#define NUM_ALARMS			5
+#define NUM_ALARMS			6
 #endif
 			IlinesCount = NUM_ALARMS ;
 			if ( g_eeGeneral.ar9xBoard )
@@ -18604,6 +18616,12 @@ STR_DiagAna
       	g_eeGeneral.disableAlarmWarning = offonMenuItem( b, y, PSTR(STR_ALARM_WARN), sub == subN ) ;
  				y += FH ;
 				subN += 1 ;
+
+      	b = g_eeGeneral.disableRxCheck;
+      	g_eeGeneral.disableRxCheck = offonMenuItem( b, y, XPSTR("Receiver Warning"), sub == subN ) ;
+ 				y += FH ;
+				subN += 1 ;
+
 //			}
 //			else
 //			{
