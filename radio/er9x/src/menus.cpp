@@ -68,6 +68,9 @@ static uint8_t IlinesCount ;
 extern int16_t AltOffset ;
 extern uint8_t SystemOptions ;
 static uint8_t s_currIdx;
+#ifdef FAILSAFE  			
+static uint8_t StatusTimer ;
+#endif
 
 NOINLINE void resetTimer1(void) ;
 
@@ -1001,12 +1004,27 @@ int8_t qRotary()
 }
 
 #if defined(CPUM128) || defined(CPUM2561)
+
+void validateText( uint8_t *text, uint32_t length )
+{
+	for( uint8_t i=0 ; i<length ; i += 1 ) // makes sure text is valid
+  {
+		if ( text[i] < ' ' )
+		{
+			text[i] = ' ' ;
+		}
+//    uint8_t idx = char2idx(text[i]);
+//    text[i] = idx2char(idx);
+  }
+}
+
 void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint8_t type, const char *heading )
 {
 	if ( ( type & ALPHA_NO_NAME ) == 0 )
 	{
 		lcd_puts_Pleft( y, Str_Name ) ;
 	}
+	validateText( name, len ) ;
 	lcd_putsnAtt( x, y, (char *)name, len, BSS ) ;
 	if ( type & ~ALPHA_NO_NAME )
 	{
@@ -1069,6 +1087,7 @@ void lcd_xlabel_decimal( uint8_t x, uint8_t y, uint16_t value, uint8_t attr, con
 #define FWx6		"\044"
 #define FWx7		"\052"
 #define FWx8		"\060"
+#define FWx9		"\066"
 #define FWx10		"\074"
 #define FWx11		"\102"
 #define FWx12		"\110"
@@ -2993,7 +3012,11 @@ static void menuProcSafetySwitches(uint8_t sub)
 	}
 #else
 
+#ifdef NOVOICE_SW
+	IlinesCount = NUM_CHNOUT+1-1 ;
+#else
 	IlinesCount = NUM_CHNOUT+1+1+EXTRA_VOICE_SW-1 ;
+#endif
 	uint8_t y = 0 ;
 	uint8_t k = 0 ;
 	uint8_t subSub = g_posHorz ;
@@ -3005,6 +3028,7 @@ static void menuProcSafetySwitches(uint8_t sub)
  {
   y=(i+1)*FH;
   k=i+t_pgOfs;
+#ifndef NOVOICE_SW
 	if ( k == 0 )
 	{
 		uint8_t attr = 0 ;
@@ -3017,8 +3041,13 @@ static void menuProcSafetySwitches(uint8_t sub)
 		lcd_xlabel_decimal( 18*FW, y, g_model.numVoice+8, attr, PSTR(STR_NUM_VOICE_SW) ) ;
 	}
   else // if(k<NUM_CHNOUT+1)
+#endif
 	{
+#ifdef NOVOICE_SW
+		uint8_t numSafety = 16 ;
+#else
 		uint8_t numSafety = 16 - g_model.numVoice ;
+#endif
     SafetySwData *sd = &g_model.safetySw[k-1];
 		if ( sub==k )
 		{
@@ -3110,6 +3139,7 @@ static void menuProcSafetySwitches(uint8_t sub)
             }
         }
 			}
+#ifndef NOVOICE_SW
 			else
 			{
     		if (j == 0)
@@ -3154,6 +3184,7 @@ static void menuProcSafetySwitches(uint8_t sub)
     		  }
 				}	 
 			}
+#endif
 		}
 	}
  }
@@ -4875,54 +4906,6 @@ void menuRangeBind(uint8_t event)
 	asm("") ;
 }
 
-//#if defined(CPUM128) || defined(CPUM2561)
-
-//void menuFailsafe(uint8_t event)
-//{
-//	TITLE("FAILSAFE") ;
-//	static MState2 mstate2 ;
-//	mstate2.check_columns( event, 16-1 ) ;
-	
-//	uint8_t sub = mstate2.m_posVert ;
-//	uint8_t t_pgOfs = evalOffset( sub ) ;
-////  uint8_t current = 1 ;
-
-//	uint8_t y ;
-//	uint8_t k ;
-//	for (uint8_t j=0 ; j<7 ; j += 1 )
-//	{
-//    y = (j+1) * FH ;
-//    k = j + t_pgOfs ;
-//		uint8_t attr = 0 ;
-//	 	if(sub==k)
-//		{
-//			attr = INVERS ;
-//			if ( event == EVT_KEY_BREAK(KEY_MENU) )
-//			{
-//				int16_t value = g_chans512[k] ;
-//				value /= 10 ;
-//				if ( value > 100 )
-//				{
-//					value = 100 ;					
-//				}
-//				if ( value < -100 )
-//				{
-//					value = -100 ;					
-//				}
-//				s_editMode = false ;
-//				g_model.pxxFailsafe[k] = value ;
-//			}
-//			else
-//			{
-//        CHECK_INCDEC_H_MODELVAR( g_model.pxxFailsafe[k], -100, 100 ) ;
-//			}
-//		}
-////		uint8_t y = j+1 ;
-//		lcd_outdezAtt( 8*FW, y, g_model.pxxFailsafe[k], attr ) ;
-//    putsChn( 0, y, k+1, 0 ) ; // show CHx
-//	}
-//}
-//#endif
 
 static void editTimer( uint8_t sub )
 {
@@ -5069,6 +5052,20 @@ void putsTrimMode( uint8_t x, uint8_t y, uint8_t phase, uint8_t idx, uint8_t att
 	asm("") ;
 }
 
+#ifdef V2
+ #if defined(CPUM128) || defined(CPUM2561)
+  #define NUM_PHASE_ITEMS		5
+ #else
+  #define NUM_PHASE_ITEMS		4
+ #endif
+#else
+ #if defined(CPUM128) || defined(CPUM2561)
+  #define NUM_PHASE_ITEMS		5
+ #else
+  #define NUM_PHASE_ITEMS		4
+ #endif
+#endif
+
 void menuPhaseOne(uint8_t event)
 {
 #ifdef V2
@@ -5079,22 +5076,14 @@ void menuPhaseOne(uint8_t event)
 	
 	TITLE(STR_FL_MODE) ;
 	static MState2 mstate2 ;
-	mstate2.check_columns(event,4-1) ;
+	mstate2.check_columns(event,NUM_PHASE_ITEMS-1) ;
 
 	lcd_putc( 8*FW, 0, '1'+s_currIdx ) ;
 
   uint8_t sub = mstate2.m_posVert;
 //  int8_t editMode = s_editMode;
 	
-#ifdef V2
- #if defined(CPUM128) || defined(CPUM2561)
-  for (uint8_t i = 0 ; i < 5 ; i += 1 )
- #else  
-  for (uint8_t i = 0 ; i < 4 ; i += 1 )
- #endif
-#else  
-  for (uint8_t i = 0 ; i < 4 ; i += 1 )
-#endif
+  for (uint8_t i = 0 ; i < NUM_PHASE_ITEMS ; i += 1 )
 	{
     uint8_t y = (i+1) * FH;
 		uint8_t attr = (sub==i ? InverseBlink : 0);
@@ -5151,8 +5140,14 @@ void menuPhaseOne(uint8_t event)
 
 #ifdef V2
 #if defined(CPUM128) || defined(CPUM2561)
-			case 4 : // fadeOut
+			case 4 : // Phase Name
 				alphaEditName( 11*FW-2, y, (uint8_t *)phase->name, sizeof(phase->name), attr, (char *)PSTR( "Mode Name") ) ;
+			break ;
+#endif
+#else
+#if defined(CPUM128) || defined(CPUM2561)
+			case 4 : // Phase Name
+				alphaEditName( 11*FW-2, y, (uint8_t *)g_model.phaseNames[s_currIdx], sizeof(g_model.phaseNames[0]), attr, (char *)PSTR( "Mode Name") ) ;
 			break ;
 #endif
 #endif
@@ -5586,10 +5581,20 @@ void menuModelPhases(uint8_t event)
 		{
 			putsTrimMode( (10+t)*FW, y, i+1, t, attr ) ;
 		}
+#ifdef V2
+#if defined(CPUM128) || defined(CPUM2561)
+		lcd_putsnAtt( 15*FW, y, (char *)p->name, sizeof(p->name), BSS ) ;
+#endif
+#else
+#if defined(CPUM128) || defined(CPUM2561)
+		lcd_putsnAtt( 15*FW, y, (char *)g_model.phaseNames[i], sizeof(g_model.phaseNames[0]), BSS ) ;
+#endif
+#endif
 	}
 
 	i = getFlightPhase() ;
 	lcd_rect( 0, (i+2)*FH-1, 4*FW+2, 9 ) ;
+
 }
 
 static void qloadModel( uint8_t event, uint8_t index )
@@ -7146,7 +7151,33 @@ void menuProc0(uint8_t event)
 				i = getFlightPhase() ;
 				if ( i )
 				{
+#ifdef V2
+ #if defined(CPUM128) || defined(CPUM2561)
+					if ( g_model.phaseData[i-1].name[0] != ' ' )
+					{
+						lcd_putsnAtt( 6*FW+2, 2*FH, (prog_char *)g_model.phaseData[i-1].name, 6, BSS ) ;
+					}
+					else
+					{
+						dispFlightModename( 6*FW+2, 2*FH, i ) ;
+					}
+ #else
 					dispFlightModename( 6*FW+2, 2*FH, i ) ;
+ #endif
+#else
+ #if defined(CPUM128) || defined(CPUM2561)
+					if ( g_model.phaseNames[i-1][0] != ' ' )
+					{
+						lcd_putsnAtt( 6*FW+2, 2*FH, (prog_char *)g_model.phaseNames[i-1], 6, BSS ) ;
+					}
+					else
+					{
+						dispFlightModename( 6*FW+2, 2*FH, i ) ;
+					}
+ #else
+					dispFlightModename( 6*FW+2, 2*FH, i ) ;
+ #endif
+#endif
 					lcd_rect( 6*FW+1, 2*FH-1, 6*FW+2, 9 ) ;
 				}
 				else
@@ -10194,7 +10225,11 @@ Str_Hardware
  #define HW_EXTRA_LINES 0
 #endif
 
+#if defined(CPUM128) || defined(CPUM2561)
 	  IlinesCount = HW_LINES + HW_EXTRA_LINES + 4;
+#else
+	  IlinesCount = HW_LINES + HW_EXTRA_LINES ;
+#endif
 
 #if HW_EXTRA_LINES
 		if (sub < (HW_LINES + 5)) // 3 page menus (5 3-pos switches)
@@ -11086,6 +11121,138 @@ void displayLetterArrow( uint8_t x, uint8_t y, uint8_t letter, uint8_t value )
 #endif
 
 
+#ifdef FAILSAFE  			
+void menuSetFailsafe(uint8_t event)
+{
+	static MState2 mstate2 ;
+	mstate2.check_columns(event, 16-1+1+1+1+1 ) ;	
+  lcd_puts_Pleft( 0, PSTR( "Set Failsafe" ) ) ;
+  int8_t sub = mstate2.m_posVert ;
+	uint8_t y = 0;
+	uint8_t k = 0;
+	uint8_t t_pgOfs ;
+	int32_t value ;
+	t_pgOfs = evalOffset(sub);
+	
+	StickScrollAllowed = 0 ;		// Block while editing
+
+	if ( event == EVT_ENTRY )
+	{
+		StatusTimer = 0 ;
+	}
+	if ( StatusTimer )
+	{
+		StatusTimer -= 1 ;
+	}
+
+//	switch(event)
+//	{
+//    case EVT_KEY_LONG(KEY_MENU):
+//			FailsafeCounter = 5 ;		// Send failsafe values soon
+//      killEvents(event);
+//  	  s_editMode = 0 ;
+//		break ;
+//	}		
+	for(uint8_t i=0; i<7; i++)
+	{
+    y=(i+1)*FH;
+    k=i+t_pgOfs;
+    uint8_t attr = ((sub==k) ? InverseBlink : 0);
+		uint8_t active = (attr && s_editMode ) ;
+
+		if ( k == 0 )
+		{
+		  lcd_puts_Pleft( y, PSTR( "Mode" ) ) ;
+			EditColumns = 1 ;
+			g_model.failsafeMode = checkIndexed( y, PSTR(FWx9"\004""\007Not Set     Rx Custom   HoldNoPulse"), g_model.failsafeMode, attr ) ;
+			EditColumns = 0 ;
+		}
+		else if ( k == 1 )
+		{
+			if ( attr )
+			{
+				if ( event==EVT_KEY_LONG(KEY_MENU))
+				{
+					FailsafeCounter = 6 ;		// Send failsafe values soon
+  	  	  killEvents(event);
+  			  s_editMode = 0 ;
+					StatusTimer = 50 ;
+				}
+			}
+		  lcd_putsAtt( 0, y, PSTR( "Send Now" ), StatusTimer ? 0 : attr ) ;
+		}
+		else if ( k == 2 )
+		{
+			uint8_t b ;
+			b = g_model.failsafeRepeat ;
+     	g_model.failsafeRepeat = offonMenuItem( b, y, PSTR("Repeat Send"), sub == k ) ;
+			if ( b != g_model.failsafeRepeat )
+			{
+				if ( b == 0 )
+				{
+					FailsafeCounter = 6 ;		// Send failsafe values soon
+				}
+				else
+				{
+					FailsafeCounter = 0 ;		// Stop sending
+				}
+			}
+		}
+		else if ( k == 3 )
+		{
+			if ( attr )
+			{
+				if ( event==EVT_KEY_LONG(KEY_MENU))
+				{
+					uint32_t j ;
+  	  	  killEvents(event);
+  			  s_editMode = 0 ;
+					for ( j = 0 ; j < 16 ; j += 1 )
+					{
+						value = g_chans512[j] * 25 / (RESX/4) ;
+  					if(value > 125)
+						{
+							value = 125 ;
+						}	
+  					if(value < -125 )
+						{
+							value = -125 ;
+						}	
+#ifndef V2
+						int8_t *p = j < 8 ? &g_model.Failsafe[j] : &g_model.XFailsafe[j-8] ;
+						*p = value ;
+#else
+						g_model.Failsafe[j] = value ;
+#endif
+					}
+					StatusTimer = 50 ;
+		    	eeDirty(EE_MODEL) ;
+				}
+			}
+		  lcd_putsAtt( 0, y, PSTR( "Use Actual" ), StatusTimer ? 0 : attr ) ;
+		}
+		else
+		{
+  	  putsChn(0,y,k-3,0);
+			uint8_t index = k-4 ;
+#ifndef V2
+			int8_t *p = index < 8 ? &g_model.Failsafe[index] : &g_model.XFailsafe[index-8] ;
+#else
+			int8_t *p = &g_model.Failsafe[index] ;
+#endif
+			value = *p ;
+			lcd_outdezAtt(  7*FW+3, y, value, attr ) ;
+			lcd_putc(  7*FW+5, y, '%' ) ;
+    	if(active)
+			{
+  	    *p = checkIncDec16( value, -125, 125, EE_MODEL ) ;
+    	}
+		}
+	}
+}
+#endif
+
+
 const prog_char APM StrNZ_country[] = { FW*10, 2, 3, 'A','m','e','J','a','p','E','u','r'};
 const prog_char APM StrNZ_xjtType[] = { FW*10, 2, 3, 'D','1','6','D','8',' ','L','R','P' };
 
@@ -11282,7 +11449,7 @@ Str_Protocol
       	for (uint8_t i = 0; i < MAX_PSW3POS; i++) {		// I-T-R-E-A-G-
 	        lcd_putc( x, y, pgm_read_byte(&ITREAG[i]) ) ;
           x += FW;
-	        lcd_putc( x, y, arrows[wstate & 3] ) ;
+	        lcd_putc( x, y, pgm_read_byte(&arrows[wstate & 3]) ) ;
           x += FW;
           wstate >>= 2;
         }
@@ -12184,7 +12351,11 @@ Str_Protocol
 			if (protocol == PROTO_PXX)
 			{
 //#if defined(CPUM128) || defined(CPUM2561)
+#ifdef FAILSAFE  			
+				dataItems = 8 ;
+#else
 				dataItems = 7 ;
+#endif
 //#else
 //				dataItems = 6 ;
 //#endif
@@ -12196,7 +12367,11 @@ Str_Protocol
 #ifdef MULTI_PROTOCOL
 			if (protocol == PROTO_MULTI)
 			{
+#ifdef FAILSAFE  			
+				dataItems = 8 ;
+#else
 				dataItems = 7 ;
+#endif
 			}
 #endif
 
@@ -12208,6 +12383,7 @@ Str_Protocol
 			uint8_t subN = 0 ;
 
   		uint8_t attr = 0 ;
+			y = 0 ;
   		lcd_puts_Pleft(    y, PSTR(STR_1ST_CHAN_PROTO));
   		if(sub==subN) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0(g_model.ppmStart,7) ; }
   		lcd_putcAtt( 19*FW, y, '1'+g_model.ppmStart, attr);
@@ -12613,6 +12789,26 @@ Str_Protocol
 
 				if(sub==subN)
 					rangeBindAction( y, PXX_RANGE_CHECK ) ;
+#ifdef FAILSAFE  			
+				y += FH ;
+				subN++;
+				lcd_puts_Pleft( y, PSTR("Failsafe") ) ;
+				if ( g_model.failsafeMode == 0 )
+				{
+  	  		lcd_puts_Pleft( y, PSTR("\012(Not Set)") ) ;
+				}
+				if(sub==subN)
+		    {
+					lcd_char_inverse( 0, y, 8*FW, 0 ) ;
+					if ( Tevent==EVT_KEY_LONG(KEY_MENU))
+					{
+    			  pushMenu( menuSetFailsafe ) ;
+  				  s_editMode = 0 ;
+    			  killEvents(Tevent);
+						Tevent = 0 ;
+					}
+				}
+#endif
 			}
 #endif // MULTI_PROTOCOL
 			if (protocol == PROTO_DSM2)
@@ -12637,7 +12833,26 @@ Str_Protocol
 				y += FH ;
 				subN++;
 //#endif
-			 
+#ifdef FAILSAFE  			
+				if ( g_model.failsafeMode == 0 )
+				{
+  	  		lcd_puts_Pleft( y, PSTR("\012(Not Set)") ) ;
+				}
+				if(sub==subN)
+		    {
+					lcd_char_inverse( 0, y, 8*FW, 0 ) ;
+					if ( Tevent==EVT_KEY_LONG(KEY_MENU))
+					{
+    			  pushMenu( menuSetFailsafe ) ;
+  				  s_editMode = 0 ;
+    			  killEvents(Tevent);
+						Tevent = 0 ;
+					}
+				}
+				y += FH ;
+				subN++;
+#endif
+					 
 				g_model.country = checkIndexed( y, StrNZ_country, g_model.country, (sub==subN) ) ;
 				y += FH ;
 				subN++;

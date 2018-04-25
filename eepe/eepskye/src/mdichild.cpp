@@ -1832,7 +1832,7 @@ void MdiChild::print()
     if(!eeFile.getGeneralSettings(&gg)) return;
     if(!eeFile.getModel(&gm,currentRow()-1)) return;
 #endif
-    printDialog *pd = new printDialog(this, &gg, &gm);
+    printDialog *pd = new printDialog(this, &gg, &gm, &radioData );
     pd->show();
 }
 

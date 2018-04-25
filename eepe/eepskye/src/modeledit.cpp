@@ -5338,6 +5338,7 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
   	    safetySwitchAlarm[i]->setVisible(false);
 				safetySwitchValue[i]->setMaximum(125);
   	    safetySwitchValue[i]->setMinimum(-125);
+				safetySwitchValue[i]->setDecimals(1) ;
 			break ;
 			case 2 :		// 'V'
 				if ( g_model.safetySw[i].opt.ss.swtch > limit )
@@ -5349,6 +5350,7 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
 				{
   	    	safetySwitchValue[i]->setVisible(true);
   	    	safetySwitchAlarm[i]->setVisible(false);
+					safetySwitchValue[i]->setDecimals(0) ;
 				}	 
 			break ;
 		
@@ -5363,6 +5365,7 @@ void ModelEdit::setSafetyWidgetVisibility(int i)
 		safetySwitchSource[i]->hide() ;
 		safetySwitchValue[i]->setMaximum(250);
     safetySwitchValue[i]->setMinimum(0);
+		safetySwitchValue[i]->setDecimals(0) ;
 		SKYSafetySwData *sd = &g_model.safetySw[i];
 		if ( i >= NUM_SKYCHNOUT )
 		{
@@ -5415,7 +5418,7 @@ void ModelEdit::tabSafetySwitches()
         safetySwitchType[i] = new QComboBox(this);
         safetySwitchSwtch[i] = new QComboBox(this);
 				safetySwitchAlarm[i] = new QComboBox(this);
-        safetySwitchValue[i] = new QSpinBox(this);
+        safetySwitchValue[i] = new QDoubleSpinBox(this);
 				safetySwitchGvar[i] = new QCheckBox(this) ;
 				safetySwitchGindex[i] = new QComboBox(this) ;
 				safetySwitchSource[i] = new QComboBox(this) ;
@@ -5468,13 +5471,20 @@ void ModelEdit::tabSafetySwitches()
 						}
 						safetySwitchValue[i]->setMaximum(239);
        			safetySwitchValue[i]->setMinimum(0);
+       			safetySwitchValue[i]->setSingleStep(1);
+						safetySwitchValue[i]->setDecimals(0) ;
        			safetySwitchValue[i]->setValue(sd->opt.ss.val+128);
 					}
 					else
 					{
 						safetySwitchValue[i]->setMaximum(125);
         		safetySwitchValue[i]->setMinimum(-125);
-        		safetySwitchValue[i]->setValue(sd->opt.ss.val);
+       			safetySwitchValue[i]->setSingleStep(1);
+						safetySwitchValue[i]->setDecimals(1) ;
+						int x ;
+						x = sd->opt.ss.val * 10 ;
+						x += (x >= 0) ? sd->opt.ss.tune : -sd->opt.ss.tune ;
+        		safetySwitchValue[i]->setValue((double)x / 10.0 );
 					}
 				}	 
 				else // voice switch
@@ -5488,6 +5498,8 @@ void ModelEdit::tabSafetySwitches()
           populateSafetySwitchCB(safetySwitchSwtch[i],VOICE_SWITCH,sd->opt.vs.vswtch, rData->type);
 					safetySwitchValue[i]->setMaximum(250);
      			safetySwitchValue[i]->setMinimum(0);
+     			safetySwitchValue[i]->setSingleStep(1);
+					safetySwitchValue[i]->setDecimals(0) ;
        		safetySwitchValue[i]->setValue(sd->opt.vs.vval);
 					populateTelItemsCB( safetySwitchAlarm[i], 1,sd->opt.vs.vval ) ;
 					if ( g_model.safetySw[i].opt.vs.vval > 250 )
@@ -5573,6 +5585,16 @@ void ModelEdit::safetySwitchesEdited()
 				}
 
         sd->opt.ss.val = val ;
+        if ( ( sd->opt.ss.mode == 0) || (sd->opt.ss.mode == 3) )
+				{
+      		val = safetySwitchValue[i]->value() * 10 ;
+					val %= 10 ;
+					if ( val < 0 )
+					{
+						val = -val ;
+					}
+        	sd->opt.ss.tune = val ;
+				}
 
         sd->opt.ss.mode  = safetySwitchType[i]->currentIndex() ;
         sd->opt.ss.swtch = getSwitchCbValue( safetySwitchSwtch[i], rData->type ) ;
@@ -5632,7 +5654,10 @@ void ModelEdit::safetySwitchesEdited()
 					}
 					else
 					{
-      		  safetySwitchValue[i]->setValue(g_model.safetySw[i].opt.ss.val);
+						int x ;
+						x = g_model.safetySw[i].opt.ss.val * 10 ;
+						x += (x >= 0) ? g_model.safetySw[i].opt.ss.tune : -g_model.safetySw[i].opt.ss.tune ;
+        		safetySwitchValue[i]->setValue((double)x / 10.0 );
 					}
 				}
 				if ( g_model.safetySw[i].opt.ss.swtch > limit )

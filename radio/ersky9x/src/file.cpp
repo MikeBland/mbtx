@@ -46,7 +46,6 @@
 
 extern PROGMEM s9xsplash[] ;
 
-
 // EEPROM Addresses
 // General 0x00000 - 0x01FFF
 // Model01 0x02000 - 0x03FFF
@@ -385,7 +384,6 @@ uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
 // Read eeprom data starting at random address
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
-
 #ifdef SIMU
   assert(size);
   eeprom_pointer = eeAddress;
@@ -571,10 +569,10 @@ bool ee32LoadGeneral()
 		return false ;		// No data to load
 	}
 
-  if(g_eeGeneral.myVers<MDVERS)
+  if(g_eeGeneral.myVers<MDSKYVERS)
       sysFlags = sysFLAG_OLD_EEPROM; // if old EEPROM - Raise flag
 
-  g_eeGeneral.myVers   =  MDVERS; // update myvers
+  g_eeGeneral.myVers   =  MDSKYVERS; // update myvers
 
 #ifdef PCB9XT
 	g_eeGeneral.is9Xtreme = 1 ;

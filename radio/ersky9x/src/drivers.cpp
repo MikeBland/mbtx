@@ -4444,7 +4444,7 @@ uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data )
 	}
 	TelemetryTx.XfireTx.command = command ;
 //	j = TelemetryTx.XfireTx.count ;
-	if ( length > 16 )
+	if ( length > 64 )
 	{
 		return 0 ;	// Can't send, packet too long
 	}

@@ -1,12 +1,13 @@
 #include "printdialog.h"
 #include "ui_printdialog.h"
 #include "pers.h"
+#include "file.h"
 #include "helpers.h"
 #include <QtGui>
 #include <QPrinter>
 #include <QPrintDialog>
 
-printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm) :
+printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm, struct t_radioData *radioData) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
     ui(new Ui::printDialog)
 {
@@ -14,6 +15,7 @@ printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm) :
     g_model = gm;
     g_eeGeneral = gg;
     te = ui->textEdit;
+    rData = radioData ;
 
     setWindowTitle(tr("Setup for: ") + getModelName());
     ui->textEdit->clear();
@@ -28,6 +30,7 @@ printDialog::printDialog(QWidget *parent, EEGeneral *gg, SKYModelData *gm) :
     printCurves();
     printSwitches();
     printSafetySwitches();
+		printVoice() ;
 
     te->scrollToAnchor("1");
 }
@@ -123,6 +126,9 @@ void printDialog::printSetup()
     str.append(fv(tr("Trainer"), g_model->traineron ? tr("Enabled") : tr("Disabled")));
     str.append(fv(tr("Trim Switch"), getSWName(g_model->trimSw,0)));
     str.append(fv(tr("Trim Increment"), getTrimInc()));
+    str.append(fv(tr("Extended Limits"), g_model->extendedLimits ? tr("Enabled") : tr("Disabled")));
+    str.append(fv(tr("Throttle Reverse"), g_model->throttleReversed ? tr("Reversed") : tr("Normal")));
+    str.append(fv(tr("Auto Limits"), tr(" %1").arg((double)g_model->sub_trim_limit/10.0 ) ));
     str.append(fv(tr("Center Beep"), getCenterBeep())); // specify which channels beep
     str.append("<br><br>");
     te->append(str);
@@ -252,8 +258,8 @@ void printDialog::printMixes()
 				}
 				str += tr(")") ;
 
-        if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg(md->delayUp).arg(md->delayDown);
-        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg(md->speedUp).arg(md->speedDown);
+        if(md->delayDown || md->delayUp) str += tr(" Delay(u%1:d%2)").arg((qreal)md->delayDown/10.0).arg((qreal)md->delayUp/10.0);
+        if(md->speedDown || md->speedUp) str += tr(" Slow(u%1:d%2)").arg((qreal)md->speedUp/10.0).arg((qreal)md->speedDown/10.0);
 
         if(md->mixWarn)  str += tr(" Warn(%1)").arg(md->mixWarn);
 
@@ -320,6 +326,8 @@ void printDialog::printModes()
     buf[8] = '\0' ;
 		str.append( buf ) ;
 		
+    str.append("<font color=green>");
+		
 		str.append( tr(" Sw1(") + getSWName(p->swtch,0) + ")" ) ;
 		str.append( tr(" Sw2(") + getSWName(p->swtch2,0) + ") " ) ;
 
@@ -333,7 +341,7 @@ void printDialog::printModes()
 		str.append( value < 0 ? "A" : tr("%1").arg(value) ) ;
 		str.append( tr(" Fade In(%1) ").arg((qreal)p->fadeIn/2.0) ) ;
 		str.append( tr(" Fade Out(%1)").arg((qreal)p->fadeOut/2.0) ) ;
-		str.append("<br>");
+		str.append("</font><br>");
 	}
 	str.append("<br><br>");
 	te->append(str);
@@ -386,7 +394,7 @@ void printDialog::printCurves()
 
 void printDialog::printSwitches()
 {
-    QString str = tr("<h2>Custom Switches</h2>");
+    QString str = tr("<h2>Logical Switches</h2>");
 
 
     str.append("<table border=1 cellspacing=0 cellpadding=3>");
@@ -483,7 +491,18 @@ void printDialog::printSwitches()
                 break;
             }
         }
-
+				if(g_model->customSw[i].andsw)
+				{
+					tstr += " AND(";
+					tstr += getSWName(g_model->customSw[i].andsw,0);
+					tstr += ")";
+				}
+				if(g_model->switchDelay[i])
+				{
+					tstr += " Delay(";
+					tstr += QString::number((double)g_model->switchDelay[i]/10.0);
+					tstr += ")";
+				}
         str.append(doTC(tstr,"green"));
         str.append("</tr>");
     }
@@ -492,6 +511,144 @@ void printDialog::printSwitches()
 
     str.append("<br><br>");
     te->append(str);
+}
+
+
+void printDialog::printVoice()
+{
+	uint32_t j ;
+	QString str = tr("<h2>Voice Alerts</h2><br>");
+	
+	for(int i = 0 ; i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i++)
+	{
+    VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model->vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model->vad[i] ;
+    if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+      uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			
+      vad = &g_eeGeneral->gvad[z] ;
+			str += tr("GVA%1  ").arg(z+1) ;
+		}
+		else
+		{
+			str += tr("VA%1%2  ").arg((i+1)/10).arg((i+1)%10) ;
+		}
+    str.append("<font color=green>");
+		QString srcstr ;
+		uint32_t value = vad->source ;
+    uint32_t limit = 45 ;
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+		{
+			limit = 46 ;
+    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+			{
+				limit = 47 ;
+			}
+			if ( value == EXTRA_POTS_START )
+			{
+        value = 8 ;
+			}
+			else
+			{
+    		if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+				{
+					if ( value == EXTRA_POTS_START + 1 )
+					{
+        		value = 9 ;
+					}
+					else if ( value >= EXTRA_POTS_POSITION )
+					{
+						value += 2 ;
+					}
+				}
+				else if ( value >= EXTRA_POTS_POSITION )
+				{
+					value += 1 ;
+				}
+			}
+		}
+		if ( value < limit )
+		{
+			int type = rData->type ;
+			if ( type == RADIO_TYPE_TPLUS )
+			{
+				if ( rData->sub_type == 1 )
+				{
+					type = RADIO_TYPE_X9E ;
+				}
+			}
+			str += tr("(%1) ").arg(getSourceStr(g_eeGeneral->stickMode,value,g_model->modelVersion, type, rData->extraPots )) ;
+		}
+		else
+		{
+      str += tr("(%1) ").arg(getTelemString(value-limit+1 )) ;
+		}
+    srcstr = "-------   v&gt;val  v&lt;val  |v|&gt;val|v|&lt;valv~=val    " ;
+		str += tr("%1 ").arg(srcstr.mid( vad->func * 10, 10 )) ;
+  	if ( vad->source > 44 )
+		{
+			char telText[20] ;
+      stringTelemetryChannel( telText, vad->source - 45, vad->offset, g_model ) ;
+			str += tr("(%1) ").arg(telText) ;
+		}
+		else
+		{
+			str += tr("(%1) ").arg(vad->offset) ;
+		}
+		str += tr("Switch(%1) ").arg(getSWName(vad->swtch, rData->type)) ;
+		if ( vad->rate < 4 )
+		{
+			srcstr = (vad->rate > 1 ) ? (vad->rate == 2 ? "BOTH " : "ALL ") : (vad->rate == 0 ? "ON " : "OFF " ) ;
+			str += srcstr ;
+		}
+		else if ( vad->rate > 32 )
+		{
+			str += "ONCE " ;
+		}
+		else
+		{
+			str += tr("Rate(%1) ").arg(vad->rate-2) ;
+		}
+		if ( vad->mute )
+		{
+			str += tr("Mute ") ;
+		}
+		if ( vad->haptic )
+		{
+			str += tr("Haptic(%1) ").arg(vad->haptic) ;
+		}
+		if ( vad->vsource )
+		{
+			srcstr = ( vad->vsource == 1 ) ? "Before" : "After " ;
+			str += tr("PlaySrc(%1) ").arg(srcstr) ;
+		}
+		switch ( vad->fnameType )
+		{
+			case 1 :
+      {
+        QString xstr = (char *)vad->file.name ;
+				xstr = xstr.left(8) ;
+        str += tr("File(%1)").arg(xstr ) ;
+      }
+			break ;
+			case 2 :
+				str += tr("File(%1)").arg(vad->file.vfile ) ;
+			break ;
+			case 3 :
+				str += tr("Alarm(%1)").arg(getAudioAlarmName(vad->file.vfile) ) ;
+			break ;
+		}
+		if ( vad->delay )
+		{
+      str += tr(" delay(%1)").arg((float)vad->delay / 10.0) ;
+		}
+
+		 
+		str.append("</font><br>");
+	}
+	
+	str.append("<br><br>");
+  te->append(str);
 }
 
 

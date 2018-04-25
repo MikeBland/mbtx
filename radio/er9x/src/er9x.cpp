@@ -99,7 +99,11 @@ uint8_t SlaveMode ;
 #ifdef V2
 uint8_t Vs_state[EXTRA_VOICE_SW] ;
 #else
+#ifdef NOVOICE_SW
+//uint8_t Vs_state[NUM_CHNOUT] ;
+#else
 uint8_t Vs_state[NUM_CHNOUT+EXTRA_VOICE_SW] ;
+#endif
 #endif
 uint8_t Nvs_state[NUM_VOICE_ALARMS] ;
 int16_t Nvs_timer[NUM_VOICE_ALARMS] ;
@@ -5009,6 +5013,7 @@ void mainSequence()
 		}
 #else
 //#if defined(CPUM128) || defined(CPUM2561)
+#ifndef NOVOICE_SW
 		uint16_t ltimer = timer ;
 #ifndef V2
 		uint8_t numSafety = 16 - g_model.numVoice ;
@@ -5089,6 +5094,7 @@ void mainSequence()
 				Vs_state[i] = curent_state ;
 			}
 		}
+#endif // nNOVOICE_SW
 #endif // V2
 		
 #ifdef V2

@@ -45,7 +45,9 @@ static uint8_t PulsePol ;
 static uint8_t PulsePol16 ;
 
 uint8_t serialDat0 ;	// Set to 0xFF in main()
-
+#ifdef FAILSAFE  			
+uint16_t FailsafeCounter ;
+#endif
 
 #define CTRL_END 0
 #define CTRL_CNT 1
@@ -796,7 +798,33 @@ static void setupPulsesPXX()
   else
 	{
     flag1 = (g_model.sub_protocol << 6) | pxxFlag ;
-	}	
+	}
+#ifdef FAILSAFE
+	if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
+	{
+  	if (g_model.failsafeMode != FAILSAFE_NOT_SET && g_model.failsafeMode != FAILSAFE_RX )
+		{
+    	if ( FailsafeCounter )
+			{
+	    	if ( FailsafeCounter-- == 1 )
+				{
+    	  	flag1 |= PXX_SEND_FAILSAFE ;
+				}
+    		if ( ( FailsafeCounter == 1 ) && (g_model.sub_protocol == 0 ) )
+				{
+  	    	flag1 |= PXX_SEND_FAILSAFE ;
+				}
+			}
+	    if ( FailsafeCounter == 0 )
+			{
+				if ( g_model.failsafeRepeat == 0 )
+				{
+					FailsafeCounter = 1000 ;
+				}
+			}
+		}
+	}
+#endif		 
 	 putPcmByte( flag1 ) ;     // First byte of flags
 
 		putPcmByte( 0 ) ;     // Second byte of flags
@@ -806,6 +834,55 @@ static void setupPulsesPXX()
 		{
 			startChan += 8 ;			
 		}
+#ifdef FAILSAFE
+		chan = 0 ;
+    for ( i = 0 ; i < 8 ; i += 1 )		// First 8 channels only
+		{
+    	if (flag1 & PXX_SEND_FAILSAFE)
+			{
+				if ( g_model.failsafeMode == FAILSAFE_HOLD )
+				{
+					chan_1 = 2047 ;
+				}
+				else if ( g_model.failsafeMode == FAILSAFE_NO_PULSES )
+				{
+					chan_1 = 0 ;
+				}
+				else
+				{
+					// Send failsafe value
+					int32_t value ;
+#ifdef V2
+					value = ( startChan < 16 ) ? g_model.Failsafe[startChan] : 0 ;
+#else
+					value = ( startChan < 8 ) ? g_model.Failsafe[startChan] : ( ( startChan < 16 ) ? g_model.XFailsafe[startChan-8] : 0 ) ;
+#endif
+					value = ( value *3933 ) >> 9 ;
+					value += 1024 ;					
+					chan_1 = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
+				}
+			}
+			else
+			{
+	     	chan_1 = scaleForPXX( startChan ) ;
+			}
+			if ( lpass & 1 )
+			{
+				chan_1 += 2048 ;
+			}
+			startChan += 1 ;
+			if ( i & 1 )
+			{
+				putPcmByte( chan ) ; // Low byte of channel
+				putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
+      	putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
+			}
+			else
+			{
+				chan = chan_1 ;
+			}
+		}
+#else
     for ( i = 0 ; i < 4 ; i += 1 )		// First 8 channels only
     {																	// Next 8 channels would have 2048 added
       chan = scaleForPXX( startChan ) ;
@@ -824,7 +901,8 @@ static void setupPulsesPXX()
 			putPcmByte( ( ( chan >> 8 ) & 0x0F ) | ( chan_1 << 4) ) ;  // 4 bits each from 2 channels
       putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
     }
-		putPcmByte( 0 ) ;
+#endif
+		putPcmByte( 0 ) ;	// Extra flags
     chan = PcmControl.PcmCrc ;		        // get the crc
     putPcmByte( chan >> 8 ) ; // Checksum hi
     putPcmByte( chan ) ; 			// Checksum lo
@@ -1059,6 +1137,10 @@ static void sendByteSerial(uint8_t b) //max 10changes 0 10 10 10 10 1
 void setupPulsesSerial(void)
 {
 	struct t_pcm_control *ptrControl ;
+#ifdef MULTI_PROTOCOL
+	uint8_t packetType ;
+	packetType = ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
+#endif
 
 	ptrControl = &PcmControl ;
 	FORCE_INDIRECT(ptrControl) ;
@@ -1126,7 +1208,26 @@ void setupPulsesSerial(void)
 #ifdef MULTI_PROTOCOL
 		else
 		{
-			sendByteSerial( ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ) ;
+#ifdef FAILSAFE
+  		if (g_model.failsafeMode != FAILSAFE_NOT_SET && g_model.failsafeMode != FAILSAFE_RX )
+			{
+  		  if ( FailsafeCounter )
+				{
+			    if ( FailsafeCounter-- == 1 )
+					{
+						packetType += 2 ;	// Failsafe packet
+					}
+				}
+			  if ( FailsafeCounter == 0 )
+				{
+					if ( g_model.failsafeRepeat == 0 )
+					{
+						FailsafeCounter = 1000 ;
+					}
+				}
+			}
+#endif			
+			sendByteSerial( packetType ) ;
 			serialdat0copy= (g_model.sub_protocol+1) & 0x5F;
 			if (pxxFlag & PXX_BIND)			serialdat0copy|=BindBit;		//set bind bit if BIND menu is pressed
 			if (pxxFlag & PXX_RANGE_CHECK)	serialdat0copy|=RangeCheckBit;	//set range bit if RANGE menu is pressed
@@ -1137,18 +1238,51 @@ void setupPulsesSerial(void)
 		}
 #endif // MULTI_PROTOCOL
 		
+		uint8_t startChan = g_model.ppmStart ;
+
 		for ( i = 0 ; i < 16 ; i += 1 )
 		{
-			int16_t x = g_chans512[g_model.ppmStart+i] ;
-			x *= 4 ;
-			x += x > 0 ? 4 : -4 ;
-			x /= 5 ;
+			int16_t x = g_chans512[startChan] ;
+#ifdef FAILSAFE			
+			if ( packetType & 2 )
+			{
+				if ( g_model.failsafeMode == FAILSAFE_HOLD )
+				{
+					x = 2047 ;
+				}
+				else if ( g_model.failsafeMode == FAILSAFE_NO_PULSES )
+				{
+					x = 0 ;
+				}
+				else
+				{
+					// Send failsafe value
+					int16_t value ;
+#ifdef V2
+					value = ( startChan < 16 ) ? g_model.Failsafe[startChan] : 0 ;
+#else
+					value = ( startChan < 8 ) ? g_model.Failsafe[startChan] : ( ( startChan < 16 ) ? g_model.XFailsafe[startChan-8] : 0 ) ;
+#endif
+					x = value * 8 ;
+					x += value >> 3 ;
+					x += 1024 ;
+					x = limit( (int16_t)1, (int16_t)x, (int16_t)2046 ) ;
+				}
+			}
+			else
+#endif			
+			{			
+				x *= 4 ;
+				x += x > 0 ? 4 : -4 ;
+				x /= 5 ;
 #ifdef MULTI_PROTOCOL
 			if ( protocol == PROTO_MULTI )
 				x += 0x400 ;
 			else
 #endif // MULTI_PROTOCOL
 				x += 0x3E0 ;
+			}
+			startChan += 1 ;
 			if ( x < 0 )
 			{
 				x = 0 ;

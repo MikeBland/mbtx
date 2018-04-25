@@ -16,7 +16,7 @@ class printDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit printDialog(QWidget *parent = 0, EEGeneral *gg = 0, SKYModelData *gm = 0);
+    explicit printDialog(QWidget *parent = 0, EEGeneral *gg = 0, SKYModelData *gm = 0, struct t_radioData *radioData = 0 );
     ~printDialog();
 
     SKYModelData *g_model;
@@ -24,6 +24,7 @@ public:
 
 private:
     Ui::printDialog *ui;
+    struct t_radioData *rData ;
 
     void printTitle();
     void printSetup();
@@ -34,6 +35,7 @@ private:
     void printSwitches();
     void printSafetySwitches();
 		void printModes() ;
+		void printVoice() ;
 
     QString fv(const QString name, const QString value);
     QString getModelName();

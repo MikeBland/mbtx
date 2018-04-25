@@ -54,14 +54,14 @@ void audioQueue::aqinit()
   //make sure haptic off by default
   HAPTIC_OFF();
 
-  toneTimeLeft = 0;
-  tonePause = 0;
+//  toneTimeLeft = 0;
+//  tonePause = 0;
 
-  t_queueRidx = 0;
-  t_queueWidx = 0;
+//  t_queueRidx = 0;
+//  t_queueWidx = 0;
 
-  toneHaptic = 0;
-  hapticTick = 0;
+//  toneHaptic = 0;
+//  hapticTick = 0;
 
 }
 

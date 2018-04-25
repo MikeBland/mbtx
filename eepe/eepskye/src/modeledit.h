@@ -109,7 +109,7 @@ private:
 		QTextBrowser * cswitchText2[NUM_SKYCSW];
     QDoubleSpinBox  *cswitchDelay[NUM_SKYCSW];
 
-    QSpinBox  * safetySwitchValue[NUM_SKYCHNOUT+NUM_VOICE];
+    QDoubleSpinBox  * safetySwitchValue[NUM_SKYCHNOUT+NUM_VOICE];
     QComboBox * safetySwitchSwtch[NUM_SKYCHNOUT+NUM_VOICE];
 		QComboBox * safetySwitchType[NUM_SKYCHNOUT+NUM_VOICE];
     QComboBox * safetySwitchAlarm[NUM_SKYCHNOUT+NUM_VOICE];

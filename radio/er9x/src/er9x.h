@@ -37,6 +37,7 @@
 #if ( defined(CPUM64) && defined(FRSKY) )
  #define NOPOTSCROLL          1
  #define NOSAFETY_A_OR_V      1
+// #define NOVOICE_SW						1
  #define MINIMISE_CODE        1
  #define SWITCH_MAPPING       1
  #ifdef SERVOICEONLY
@@ -59,7 +60,8 @@
 //#define USE_ADJUSTERS			1
 
 #if defined(CPUM128) || defined(CPUM2561)
-#define USE_ADJUSTERS			1
+#define USE_ADJUSTERS		1
+#define FAILSAFE				1
 #endif
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
@@ -259,7 +261,11 @@ typedef uint32_t  prog_uint32_t __attribute__((__progmem__));//,deprecated("prog
 #define SLAVE_MODE (PING & (1<<INP_G_RF_POW))
 
 #define read_keys() ((PINB) & 0x7E)
+#ifdef FAILSAFE
+uint8_t menuPressed( void ) ;
+#else
 #define menuPressed() ( ( read_keys() & 2 ) == 0 )
+#endif
 
 extern uint8_t SlaveMode ;
 extern uint8_t Backup_RestoreRunning ;
@@ -1288,6 +1294,17 @@ extern const prog_char APM Str_telemItems[] ;
 extern const prog_int8_t APM TelemIndex[] ;
 extern int16_t convertTelemConstant( uint8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
+
+// Failsafe values
+#define FAILSAFE_NOT_SET		0
+#define FAILSAFE_RX					1
+#define FAILSAFE_CUSTOM			2
+#define FAILSAFE_HOLD				3
+#define FAILSAFE_NO_PULSES	4
+
+#ifdef FAILSAFE  			
+extern uint16_t FailsafeCounter ;
+#endif
 
 #ifdef FRSKY
 #if defined(CPUM128) || defined(CPUM2561)

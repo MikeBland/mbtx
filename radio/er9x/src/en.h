@@ -251,7 +251,11 @@
 #define STR_SEND_RX_NUM    "Bind  Range"
 #define STR_DSM_TYPE       "DSM Type"
 //#if defined(CPUM128) || defined(CPUM2561)
+#ifdef FAILSAFE
+#define STR_PXX_TYPE       " Type\037Chans\037Failsafe\037Country\037Bind\037Range"
+#else
 #define STR_PXX_TYPE       " Type\037 Chans\037 Country\037Bind\037Range"
+#endif
 //#else
 //#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
 //#endif
@@ -262,8 +266,8 @@
 #define M_NY_STR			"\001NY"
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
-#define STR_1ST_CHAN_PROTO "1st Chan\037Proto"
-#define STR_PPM_1ST_CHAN   "1st Chan"
+#define STR_1ST_CHAN_PROTO "\0121st Chan\037Proto"
+//#define STR_PPM_1ST_CHAN   "1st Chan"
 #define STR_SHIFT_SEL      "Polarity"
 // STR_POS_NEG indexed 3 chars each
 #define STR_POS_NEG        "\003POSNEG"

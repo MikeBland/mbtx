@@ -156,9 +156,12 @@ extern void ee32_process( void ) ;
 //#define PCB_TEST_9XT	1
 //#define SERIAL_TEST_PRO	1
 
+#ifdef PCB9XT
 //#define WHERE_DEBUG	1
+//#define WHERE_STORE	1
+#endif
 //#define STARTUP_DEBUG 1
-#define STACK_PROBES	1
+//#define STACK_PROBES	1
 
 
 #ifdef REV9E
@@ -1706,16 +1709,16 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 #ifdef PCBX7
 void ledOff()
 {
-  GPIO_ResetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
-  GPIO_ResetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+//  GPIO_ResetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
+//  GPIO_ResetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
   GPIO_ResetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
 }
 
-void ledRed()
-{
-  ledOff();
-  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
-}
+//void ledRed()
+//{
+//  ledOff();
+//  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
+//}
 
 void ledGreen()
 {
@@ -1723,11 +1726,11 @@ void ledGreen()
   GPIO_SetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
 }
 
-void ledBlue()
-{
-  ledOff();
-  GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
-}
+//void ledBlue()
+//{
+//  ledOff();
+//  GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+//}
 #endif // PCBX7
 
 #ifdef PCBX12D
@@ -1866,8 +1869,12 @@ extern "C" void cppstartupDebugInit()
 #ifdef WHERE_DEBUG
 void where( uint8_t chr )
 {
-	uint32_t i ;
 //	lcd_clear() ;
+#ifdef WHERE_STORE
+	uint8_t *p = (uint8_t *) BKPSRAM_BASE ;
+	*p = chr ;
+#else
+	uint32_t i ;
 	lcd_putc( 0, 0, chr ) ;
 //	lcd_outhex4( 0, 16, ~read_keys() ) ;
 	refreshDisplay() ;
@@ -1877,6 +1884,7 @@ void where( uint8_t chr )
 	{
   	wdt_reset() ;
 	}
+#endif
 }
 
 #ifdef PCBSKY
@@ -1897,21 +1905,38 @@ extern "C" void cppwhere( uint8_t chr )
 #endif
 #endif
 
+#ifdef PCB9XT
+uint32_t WatchdogPosition ;
+static void enableBackupRam()
+{
+	PWR->CR |= PWR_CR_DBP ;
+//	PWR->CSR |= PWR_CSR_BRE ;
+//	while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
+//	{
+//		wdt_reset() ;
+//	}
+	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
+}
+
+#endif	
+
 
 int main( void )
 {
-#ifdef STARTUP_DEBUG	
+#ifdef PCB9XT
+	enableBackupRam() ;
+#endif
+#ifdef STARTUP_DEBUG	 
 	startupDebugInit() ;
-#endif  	 
-#ifdef WHERE_DEBUG
-		where( '1' ) ;
 #endif  	 
 	 
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-	configure_pins( GPIO_Pin_5|GPIO_Pin_4, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-	configure_pins( GPIO_Pin_1, PIN_PORTB | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+	// Only configure green LED, allow others to be used as analog inputs
+	configure_pins( GPIO_Pin_5, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+//	configure_pins( GPIO_Pin_5|GPIO_Pin_4, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+//	configure_pins( GPIO_Pin_1, PIN_PORTB | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
 //	ledOff() ;
 //	ledRed() ;
 	init_soft_power() ;
@@ -1952,10 +1977,6 @@ extern void CheckForPrototype(void) ;
 	module_output_low() ;
 #endif
 
-#ifdef WHERE_DEBUG
-		where( '2' ) ;
-#endif  	 
-
 #ifdef PCBSKY
 	ResetReason = RSTC->RSTC_SR ;
 	ChipId = CHIPID->CHIPID_CIDR ;
@@ -1975,6 +1996,14 @@ extern unsigned char *EndOfHeap ;
 	ChipId = *((uint16_t *)0x1FFF7A22) ;
 	ResetReason = RCC->CSR ;
   RCC->CSR |= RCC_CSR_RMVF ;
+#ifdef PCB9XT
+	if ( ResetReason & RCC_CSR_WDGRSTF ) // watchdog
+	{
+		uint8_t *p = (uint8_t *) BKPSRAM_BASE ;
+		WatchdogPosition = *p ;
+		*p = 0 ;
+	}
+#endif	 
 #endif
 
 #ifdef PCBSKY
@@ -1990,9 +2019,6 @@ extern unsigned char *EndOfHeap ;
 
 	pioptr = PIOA ;
 
-#ifdef WHERE_DEBUG
-		where( '3' ) ;
-#endif  	 
  #ifndef REVA
 	init_soft_power() ;
  #else	
@@ -2005,10 +2031,6 @@ extern unsigned char *EndOfHeap ;
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 	init_soft_power() ;
 #endif
-
-#ifdef WHERE_DEBUG
-		where( '4' ) ;
-#endif  	 
 
 #ifdef PCB9XT
 // Configure pin PA5 as an output, low for Bluetooth use
@@ -2047,27 +2069,19 @@ extern unsigned char *EndOfHeap ;
 #ifdef PCBSKY
 	config_free_pins() ;
 #endif
-#ifdef WHERE_DEBUG
-		where( '5' ) ;
-#endif  	 
-
 	init_keys() ;
 	
-#ifdef WHERE_DEBUG
-		where( '6' ) ;
-#endif  	 
 #ifdef PCBSKY
 	initExtraInput() ;		// PB14/DAC1 as input
 #endif
 
-#ifdef WHERE_DEBUG
-		where( '7' ) ;
-#endif  	 
 	setup_switches() ;
 
-#ifdef WHERE_DEBUG
-		where( '8' ) ;
-#endif  	 
+//#ifdef PCBX7
+//	configure_pins( PIN_SW_EXT1, PIN_LOW | PIN_OUTPUT | PIN_PULLUP | PIN_PORTC ) ;
+//	configure_pins( PIN_SW_EXT2, PIN_LOW | PIN_OUTPUT | PIN_PULLUP | PIN_PORTD ) ;
+//#endif
+
 #ifdef PCBSKY
   // Enable PCK2 on PB3, This is for testing of Timer 2 working
 	// It will be used as serial data to the Bluetooth module
@@ -2089,9 +2103,6 @@ extern unsigned char *EndOfHeap ;
 	consoleInit() ;
 #endif
 
-#ifdef WHERE_DEBUG
-		where( '9' ) ;
-#endif  	 
 	init5msTimer() ;
   WatchdogTimeout = 100 ;
 
@@ -2688,10 +2699,14 @@ uint32_t updateSlave() ;
 	lcdSetOrientation() ;
 #endif
 
+#ifdef PCB9XT
+	backlight_on() ;
+#endif
 	while ( ( read_trims() & 0x01 )== 0x01 )
 	{
 		wdt_reset() ;
 		HardwareMenuEnabled = 1 ;
+	  WatchdogTimeout = 100 ;
 #ifdef PCBX12D
 		lcd_clear() ;
 #endif
@@ -2709,6 +2724,9 @@ uint32_t updateSlave() ;
 		}
 	}
 
+#ifdef WHERE_DEBUG
+		where( 'a' ) ;
+#endif  	 
 
 #ifdef PCBSKY
  #ifdef REVX
@@ -2753,10 +2771,16 @@ uint32_t updateSlave() ;
 #endif
 
 	telemetry_init( decodeTelemetryType( g_model.telemetryProtocol ) ) ;
+#ifdef WHERE_DEBUG
+		where( 'b' ) ;
+#endif  	 
 
 #if defined(PCBSKY) || defined(PCB9XT)
   checkQuickSelect();
 #endif
+#ifdef WHERE_DEBUG
+		where( 'c' ) ;
+#endif  	 
 
 #if defined(PCBX9D) || defined(PCBX12D)
 	{
@@ -2775,6 +2799,9 @@ uint32_t updateSlave() ;
 #ifdef USB_JOYSTICK
 	startJoystick() ;
 #endif
+#ifdef WHERE_DEBUG
+		where( 'd' ) ;
+#endif  	 
 
 #endif
 #ifdef PCBX9D
@@ -2803,8 +2830,11 @@ uint32_t updateSlave() ;
 
 #ifdef PCB9XT
   usbInit() ;
-	backlight_on() ;
+//	backlight_on() ;
 #endif
+#ifdef WHERE_DEBUG
+		where( 'e' ) ;
+#endif  	 
 
 	uint16_t x ;
 	x = g_eeGeneral.volume ;
@@ -2832,6 +2862,9 @@ uint32_t updateSlave() ;
 		}
 	}
 	setVolume( x ) ;
+#ifdef WHERE_DEBUG
+		where( 'f' ) ;
+#endif  	 
 
 	// Choose here between PPM and PXX
 
@@ -2844,6 +2877,9 @@ uint32_t updateSlave() ;
   if(g_eeGeneral.lightAutoOff <= g_eeGeneral.lightOnStickMove)
     g_LightOffCounter = g_eeGeneral.lightOnStickMove*500;
   check_backlight();
+#ifdef WHERE_DEBUG
+		where( 'g' ) ;
+#endif  	 
 
 	// moved here and logic added to only play statup tone if splash screen enabled.
   // that way we save a bit, but keep the option for end users!
@@ -2910,6 +2946,9 @@ void initTopLcd() ;
 #endif 
 
 	Main_running = 1 ;
+#ifdef WHERE_DEBUG
+		where( 'h' ) ;
+#endif  	 
 
 	CoStartOS();
 
@@ -4843,7 +4882,7 @@ uint32_t countExtraPots()
 #endif // ARUNI
 #endif
 
-#ifdef REV9E
+#if defined(REV9E) || defined(PCBX7)
 uint32_t countExtraPots()
 {
 	uint32_t count = 0 ;
@@ -4960,7 +4999,11 @@ void main_loop(void* pdata)
  #ifdef REV9E
 	NumExtraPots = NUM_EXTRA_POTS - 2 ;
  #else
+  #ifdef PCBX7
+	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+	#else
 	NumExtraPots = NUM_EXTRA_POTS ;
+  #endif
  #endif
 #else // X9D
 #ifdef PCBX12D
@@ -5473,9 +5516,9 @@ extern uint8_t PowerState ;
 //			}
 		}
 #endif
-#ifdef WHERE_DEBUG
-		where( 'T' ) ;
-#endif  	 
+//#ifdef WHERE_DEBUG
+//		where( 'T' ) ;
+//#endif  	 
 #ifdef SERIAL_HOST
 		mainSequence( NO_MENU ) ;
 #else
@@ -9176,6 +9219,10 @@ extern void checkRotaryEncoder() ;
 		if (VoiceTimer == 5 )
 		{
 			CheckFlag50mS = 1 ;
+//#ifdef PCBX7
+//	GPIOC->ODR ^= PIN_SW_EXT1 ;
+//	GPIOD->ODR ^= PIN_SW_EXT2 ;
+//#endif
 		}
 		
 		if (--DsmCheckTimer == 0 )

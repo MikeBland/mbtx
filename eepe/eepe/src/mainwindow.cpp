@@ -1305,8 +1305,8 @@ void MainWindow::customizeSplash()
 void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepe-title.png\"><br>";
-    aboutStr.append(tr("Copyright") +" Erez Raviv &copy;2010<br>");
-    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
+    aboutStr.append(tr("Copyright") +" Mike Blandford &copy;2012<br>");
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: p%1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the er9x firmware useful please support by donating<br>"));
 		aboutStr.append(" <a href='" DONATE_MB_STR "'>");
     aboutStr.append(tr("to Mike Blandford (current maintainer)") + "</a><br>");

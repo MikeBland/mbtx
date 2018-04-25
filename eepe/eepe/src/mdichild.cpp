@@ -2220,6 +2220,7 @@ QString t_radioData::getMappedSWName(int val, int eepromType )
 void t_radioData::populateSwitchCB(QComboBox *b, int value, int eepromType, int noends )
 {
 	int32_t limit = noends ? MaxSwitchIndex-1 : MaxSwitchIndex ;
+  b->clear() ;
   for(int i =- limit ; i <= limit ; i++ )
 	{
     b->addItem(getMappedSWName(i,eepromType)) ;

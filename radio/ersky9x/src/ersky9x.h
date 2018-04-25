@@ -121,7 +121,7 @@ extern const char * const Spanish[] ;
 
 
 #ifdef PCBX7
-#define NUMBER_ANALOG		7
+#define NUMBER_ANALOG		9
 #else // PCBX7
 #ifdef PCBX9D
  #ifdef REVPLUS
@@ -640,6 +640,9 @@ extern uint32_t countExtraPots( void ) ;
 extern uint32_t countExtraPots( void ) ;
 #endif
 #ifdef PCBX12D	
+extern uint32_t countExtraPots( void ) ;
+#endif
+#ifdef PCBX7
 extern uint32_t countExtraPots( void ) ;
 #endif
 

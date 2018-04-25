@@ -2058,14 +2058,14 @@ void frsky_receive_byte( uint8_t data )
 //#endif
 
 #ifdef XFIRE
- #ifdef REVX
+// #ifdef REVX
 		if ( g_model.Module[1].protocol == PROTO_XFIRE )
 		{
 			// process Xfire data here
 			processCrossfireTelemetryData( data ) ;
 			return ;
 		}
- #endif
+// #endif
 #endif
 
   uint8_t numbytes = numPktBytes ;
@@ -3839,7 +3839,7 @@ void processCrossfireTelemetryFrame()
     default:
 		{
 			uint8_t *packet = &frskyRxBuffer[1] ;
-			uint8_t len = *packet - 1 ;
+			uint8_t len = *packet ;	// # bytes to copy, add length, drop crc
 
 			if ( fifo128Space( &Lua_fifo ) >= len )
 			{

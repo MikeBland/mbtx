@@ -97,7 +97,7 @@ void writeModelToBackupRam( uint8_t index ) ;
 //#define USE_EXT_RTC		1
 //#endif
 
-#define STACK_PROBES	1
+//#define STACK_PROBES	1
 
 
 #define PARAM_OFS   17*FW
@@ -2798,20 +2798,49 @@ void doMainScreenGrphics()
 #endif
 #if defined(PCBX9D)
 #ifdef PCBX7
-        for( x = -3, y = 5 ; y < 7 ; x += 5, y += 1 )
+        for( x = -8, y = 4 ; y < 8 ; x += 5, y += 1 )
         {
+					if ( y == 4 )
+					{
+						if (g_eeGeneral.extraPotsSource[0] == 0 )
+						{
+							continue ;
+						}
+					}
+					if ( y == 7 )
+					{
+						if (g_eeGeneral.extraPotsSource[1] == 0 )
+						{
+							continue ;
+						}
+					}
         	uint8_t z = y - 1 ;
-//					if ( z == 6 )
-//					{
-//						z = 7 ;
-//					}
-//					else if ( z == 3 )
-//					{
-//						z = 6 ;
-//					}
+					if ( z == 6 )
+					{
+						z = 7 ;
+					}
+					else if ( z == 3 )
+					{
+						z = 6 ;
+					}
           len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
           V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
         }
+        
+//				for( x = -3, y = 5 ; y < 7 ; x += 5, y += 1 )
+//        {
+//        	uint8_t z = y - 1 ;
+////					if ( z == 6 )
+////					{
+////						z = 7 ;
+////					}
+////					else if ( z == 3 )
+////					{
+////						z = 6 ;
+////					}
+//          len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//          V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
+//        }
 #else // PCBX7
         for( x = -8, y = 4 ; y < 8 ; x += 5, y += 1 )
         {
@@ -5775,6 +5804,11 @@ void menuProcSafetySwitches(uint8_t event)
 
 	t_pgOfs = evalOffset(sub);
 
+	if ( sub )
+	{
+    lcd_outdez( 20*FW, 0, g_chans512[sub-1]/2 + 1500 ) ;
+	}
+
 	for(uint8_t i=0; i<7; i++)
 	{
     y=(i+1)*FH;
@@ -5811,13 +5845,13 @@ void menuProcSafetySwitches(uint8_t event)
     	putsChn(0,y,k,attr);
 			if ( k <= numSafety )
 			{
-  	  	for(uint8_t j=0; j<4;j++)
+  	  	for(uint8_t j=0; j<5;j++)
 				{
     		  attr = ((sub==k && subSub==j) ? InverseBlink : 0);
 					uint8_t active = (attr && (s_editMode || P1values.p1valdiff)) ;
   	  	  if (j == 0)
 					{
-						lcd_putsAttIdx( 5*FW, y, XPSTR("\001SAVX"), sd->opt.ss.mode, attr ) ;
+						lcd_putsAttIdx( 5*FW-3, y, XPSTR("\001SAVX"), sd->opt.ss.mode, attr ) ;
 	      	  if(active)
 						{
 							uint8_t b = sd->opt.ss.mode ;
@@ -5840,11 +5874,11 @@ void menuProcSafetySwitches(uint8_t event)
 						}	 
 						if ( ( sd->opt.ss.swtch > MAX_SKYDRSWITCH ) && ( sd->opt.ss.swtch <= MAX_SKYDRSWITCH + 3 ) )
 						{
-							lcd_putsAttIdx( 7*FW, y, PSTR(STR_V_OPT1), sd->opt.ss.swtch-MAX_SKYDRSWITCH-1, attr ) ;
+							lcd_putsAttIdx( 6*FW, y, PSTR(STR_V_OPT1), sd->opt.ss.swtch-MAX_SKYDRSWITCH-1, attr ) ;
 						}
 						else
 						{
-         	  	putsDrSwitches(7*FW, y, sd->opt.ss.swtch, attr);
+         	  	putsDrSwitches(6*FW, y, sd->opt.ss.swtch, attr);
 						}
 	    	    if(active)
 						{
@@ -5859,7 +5893,7 @@ void menuProcSafetySwitches(uint8_t event)
 							min = 0 ;
 							max = 15 ;
 							sd->opt.ss.val = limit( min, sd->opt.ss.val, max) ;
-							lcd_putsAttIdx(15*FW, y, PSTR(STR_SOUNDS), sd->opt.ss.val,attr);
+							lcd_putsAttIdx(14*FW, y, PSTR(STR_SOUNDS), sd->opt.ss.val,attr);
 						}
 						else if ( sd->opt.ss.mode == 2 )
 						{
@@ -5868,21 +5902,22 @@ void menuProcSafetySwitches(uint8_t event)
 								min = 0 ;
 								max = NUM_TELEM_ITEMS-1 ;
 								sd->opt.ss.val = limit( min, sd->opt.ss.val, max) ;
-  							putsAttIdxTelemItems( 16*FW, y, sd->opt.ss.val+1, attr ) ;
+  							putsAttIdxTelemItems( 15*FW, y, sd->opt.ss.val+1, attr ) ;
 							}
 							else
 							{
 								min = -128 ;
 								max = 111 ;
 								sd->opt.ss.val = limit( min, sd->opt.ss.val, max) ;
-        				lcd_outdezAtt( 16*FW, y, sd->opt.ss.val+128, attr);
+        				lcd_outdezAtt( 15*FW, y, sd->opt.ss.val+128, attr);
 							}
 						}
 						else
 						{
+        			lcd_putc( 14*FW, y, '.' ) ;
 							min = -125 ;
 							max = 125 ;
-        			lcd_outdezAtt(  15*FW, y, sd->opt.ss.val, attr);
+        			lcd_outdezAtt(  14*FW, y, sd->opt.ss.val, attr);
 // Option to display current channel value, before limits etc., for failsafe
 						}
   	  	    if(active)
@@ -5890,13 +5925,28 @@ void menuProcSafetySwitches(uint8_t event)
 		          CHECK_INCDEC_H_MODELVAR( sd->opt.ss.val, min,max);
     	  	  }
 					}
+					else if ( j == 3 )
+					{
+						if ( ( sd->opt.ss.mode == 0 ) || ( sd->opt.ss.mode == 3 ) )
+						{
+    					if(sub==k)
+							{							
+								Columns = 3 ;
+							}
+        			lcd_outdezAtt(  15*FW+3, y, sd->opt.ss.tune, attr);
+	  	  	    if(active)
+							{
+			          CHECK_INCDEC_H_MODELVAR( sd->opt.ss.tune, 0, 9 ) ;
+    		  	  }
+						}
+					}
 					else
 					{
 						if ( sd->opt.ss.mode == 3 )
 						{
     					if(sub==k)
 							{							
-								Columns = 3 ;
+								Columns = 4 ;
 							}
 							int8_t temp = sd->opt.ss.source ;
 							if ( temp == 0 )
@@ -7620,7 +7670,7 @@ static uint8_t popupProcess( uint8_t event, uint8_t max )
 			popidxud = 1 ;
 		break ;
     
-		case EVT_KEY_FIRST(KEY_EXIT) :
+		case EVT_KEY_BREAK(KEY_EXIT) :
 		case EVT_KEY_LONG(BTN_RE) :
 			killEvents( event ) ;
 			Tevent = 0 ;
@@ -8032,7 +8082,6 @@ extern uint8_t swOn[] ;
 								}
 								b <<= 1 ;
 							}
-
 							lcd_puts_P( 13*FW+2, 6*FH, XPSTR("D    :") ) ;
 						  lcd_outdezAtt( FW*18+2, 6*FH, pmd->delayUp, PREC1 ) ;
 						  lcd_outdezAtt( FW*21+1, 6*FH, pmd->delayDown, PREC1 ) ;
@@ -11914,7 +11963,11 @@ void menuProcDiagCalib(uint8_t event)
 	uint32_t numAnalogCals = NUM_ANALOG_CALS + countExtraPots() ;
  #endif // ARUNI
 #else
+ #ifdef PCBX7
+	uint32_t numAnalogCals = NUM_ANALOG_CALS + countExtraPots() ;
+ #else
 	uint32_t numAnalogCals = NUM_ANALOG_CALS ;
+ #endif
 #endif
 
 #ifdef ARUNI
@@ -12084,6 +12137,20 @@ void menuProcDiagCalib(uint8_t event)
     V_BAR( 101, SCREEN_HEIGHT-8, len ) ;
 	}
 #endif
+//#ifdef PCBX7
+//	if ( g_eeGeneral.extraPotsSource[0] )
+//	{
+//		uint8_t len ;
+//    len = ((calibratedStick[6]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//    V_BAR( 26, SCREEN_HEIGHT-8, len ) ;
+//	}
+//	if ( g_eeGeneral.extraPotsSource[1] )
+//	{
+//		uint8_t len ;
+//    len = ((calibratedStick[7]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//    V_BAR( 101, SCREEN_HEIGHT-8, len ) ;
+//	}
+//#endif
 #ifdef PCBX9D
 #ifdef REVPLUS
 	if ( ( g_eeGeneral.analogMapping & MASK_6POS ) == USE_P3_6POS )
@@ -12215,6 +12282,21 @@ void menuProcDiagAna(uint8_t event)
  #endif
 #endif
 #endif  // ARUNI
+
+#ifdef PCBX7
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		lcd_puts_P( 4*FW-3, 6*FH, XPSTR("SR") ) ;
+    lcd_outhex4( 6*FW, 6*FH, anaIn(6) ) ;
+    lcd_outdezAtt(15*FW, 6*FH, (int32_t)calibratedStick[6]*1000/1024, PREC1);
+	}
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		lcd_puts_P( 18*FW, 5*FH, XPSTR("P3") ) ;
+    lcd_outhex4( 17*FW, 6*FH, anaIn(7) ) ;
+    lcd_outdezAtt(20*FW, 7*FH, (int32_t)calibratedStick[7]*1000/1024, PREC1);
+	}
+#endif // PCBX7
 
 #ifdef PCB9XT
 	lcd_outhex4( 100, 5*FH, Analog_values[5] ) ;
@@ -13764,7 +13846,6 @@ extern uint8_t MultiId[] ;
   lcd_outhex4( 60,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
   lcd_outhex4( 90,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
 #endif	// nSMALL
-
 #endif	// PCBSKY
 
 //#ifdef PCBX7
@@ -18917,7 +18998,7 @@ STR_DiagAna
 			IlinesCount = 5 + 4 + 1 + 3 + 3 ;
   #else
    #ifdef PCBX7
-			IlinesCount = 6 + 4 + 1 + 1 + 2 ;
+			IlinesCount = 7 + 4 + 1 + 1 + 2 ;
    #else
     #ifdef PCBX12D
 			IlinesCount = 2 + 5 + 6 + 4 + 1 ;
@@ -18979,8 +19060,13 @@ STR_DiagAna
 			}
 #endif
 #ifdef PCBX9D
+	#ifdef PCBX7
+			uint32_t page2 = 11 ;
+			uint32_t page3 = 12 ;
+	#else
 			uint32_t page2 = 10 ;
 			uint32_t page3 = 11 ;
+	#endif
 			if ( g_eeGeneral.analogMapping & MASK_6POS )
 			{
 				IlinesCount += 6 ;
@@ -19006,7 +19092,11 @@ STR_DiagAna
 #ifdef PCBX12D
 			if ( sub < 2 )
 #else
-			if ( sub < 5 )
+#ifdef PCBX7
+			if ( sub < 6 )
+#else
+ 			if ( sub < 5 )
+#endif
 #endif
 #endif
 #endif
@@ -19058,11 +19148,14 @@ STR_DiagAna
 #endif
 
 #ifndef PCBX12D
+	#ifndef PCBX7
 				uint32_t value ;
 				uint32_t oldValue ;
+	#endif	// nX7
 #endif
 #ifndef REV9E
-#ifndef PCBX12D
+ #ifndef PCBX12D
+	#ifndef PCBX7
   			lcd_puts_Pleft( y, XPSTR("Encoder"));
 				value = g_eeGeneral.analogMapping & ENC_MASK ;
 	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? BLINK:0));
@@ -19075,7 +19168,8 @@ STR_DiagAna
 				}
 				y += FH ;
 				subN += 1 ;
-#endif	// nX12D
+	#endif	// nX7
+ #endif	// nX12D
 #endif	// nREV9E
 
 #ifndef PCBX12D
@@ -19099,6 +19193,21 @@ STR_DiagAna
 				g_eeGeneral.pb2source = edit3posSwitchSource( y, g_eeGeneral.pb2source, USE_PB2, (sub==subN), 0 ) ;
 				y += FH ;
 				subN += 1 ;
+
+#ifdef PCBX7
+  			lcd_puts_Pleft( y, XPSTR("Pot 3\037Pot 4"));
+				g_eeGeneral.extraPotsSource[0] = checkIndexed(y,
+      			XPSTR(FWx17"\002\004NONEPC5 PB1 "), g_eeGeneral.extraPotsSource[0], (sub==subN));
+				NumExtraPots = countExtraPots() ;
+				y += FH ;
+				subN += 1 ;
+				g_eeGeneral.extraPotsSource[1] = checkIndexed(y,
+      			XPSTR(FWx17"\002\004NONEPC5 PB1 "), g_eeGeneral.extraPotsSource[1], (sub==subN));
+				NumExtraPots = countExtraPots() ;
+				y += FH ;
+				subN += 1 ;
+
+#endif	// X7
 
 #endif	// nX12D
 
@@ -19143,22 +19252,28 @@ STR_DiagAna
 #endif // PCB9XT
 
 #if defined(PCBX9D) || defined(PCBX12D)
-#ifdef REV9E
+ #ifdef REV9E
 			else if ( sub < 10 )
 			{
 				subN = 5 ;
-#else
-#ifdef PCBX12D
+ #else
+  #ifdef PCBX12D
 			else if ( sub < page2 )
 			{
 				displayNext() ;
 				subN = 2 ;
-#else
+  #else
+	 #ifdef PCBX7
+			else if ( sub < 11 )
+			{
+				subN = 6 ;
+   #else
 			else if ( sub < 10 )
 			{
 				subN = 5 ;
-#endif
-#endif
+   #endif
+  #endif
+ #endif
 #endif // PCBX9D
 //				uint8_t attr = 0 ;
 //	  		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_eeGeneral.stickDeadband[0], 15 ) ; }
@@ -21175,6 +21290,13 @@ extern uint16_t M64UsedBackup ;
 
   lcd_outdez( 14*FW, 7*FH, M64ResetCount ) ;
   lcd_outdez( 20*FW, 7*FH, M64RestartCount ) ;
+
+//extern uint16_t M64RxCount ;
+//extern uint8_t M64MainTimer ;
+//extern uint8_t SlaveState ;
+//	lcd_outhex4( 17*FW, 2*FH, M64RxCount ) ;
+//	lcd_outhex4( 17*FW, 3*FH, M64MainTimer ) ;
+//	lcd_outhex4( 17*FW, 4*FH, SlaveState ) ;
 }
 #endif // PCB9XT
 
@@ -21208,6 +21330,10 @@ void menuProcBoot(uint8_t event)
 	if ( ResetReason & RCC_CSR_WDGRSTF )	// Watchdog
 	{
 		lcd_puts_Pleft( 2*FH, PSTR(STR_6_WATCHDOG) ) ;
+#ifdef PCB9XT
+extern uint32_t WatchdogPosition ;
+	lcd_outhex4( 0, 3*FH, WatchdogPosition ) ;
+#endif
 	}
 	else if ( unexpectedShutdown )
 	{

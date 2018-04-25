@@ -79,7 +79,7 @@ struct t_XfireTx
 {
 	uint16_t count ;
 	uint8_t command ;
-	uint8_t data[16] ;
+	uint8_t data[64] ;
 } ;
 
 union t_telemetryTx

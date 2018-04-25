@@ -104,7 +104,7 @@ static uint8_t Pass[2] ;
 uint8_t PulsesPaused ;
 
 #ifdef XFIRE
-uint8_t Bit_pulses[64] ;			// Likely more than we need
+uint8_t Bit_pulses[80] ;			// To allow for Xfire telemetry
 #endif
 
 // DSM2 control bits

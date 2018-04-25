@@ -61,7 +61,7 @@
 #include "pulses.h"
 #include "debug.h"
 
-uint8_t Bit_pulses[64] ;			// Likely more than we need
+uint8_t Bit_pulses[80] ;			// To allow for Xfire telemetry
 uint16_t XfireLength ;
 uint8_t *Pulses2MHzptr ;
 

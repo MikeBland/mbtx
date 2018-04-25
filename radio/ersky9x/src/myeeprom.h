@@ -520,7 +520,7 @@ PACK(typedef struct te_SafetySwData { // Safety Switches data
 			uint8_t mode:2 ;
 			int8_t source:6 ;
     	int8_t  val ;
-			uint8_t res ;
+			uint8_t tune ;
 		} ss ;
 		struct vs
 		{

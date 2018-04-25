@@ -102,6 +102,9 @@ class Key
 public:
   void input(bool val, EnumKeys enuk);
   bool state()       { return m_vals==FFVAL;                }
+#ifdef FAILSAFE
+  bool isKilled()    { return m_state == KSTATE_KILLED ;    }
+#endif
   void pauseEvents() { m_state = KSTATE_PAUSE;  m_cnt   = 0;}
   void killEvents()  { m_state = KSTATE_KILLED; /*m_dblcnt=0;*/ }
 //  uint8_t getDbl()   { return m_dblcnt;                     }
@@ -188,6 +191,17 @@ void Key::input(bool val, EnumKeys enuk)
       break;
   }
 }
+
+#ifdef FAILSAFE
+uint8_t menuPressed()
+{
+	if ( keys[KEY_MENU].isKilled() )
+	{
+		return 0 ;
+	}
+	return ( read_keys() & 2 ) == 0 ;
+}
+#endif
 
 static uint8_t readAilIp()
 {
@@ -944,7 +958,10 @@ void per10ms()
     }
   #ifdef SERIAL_VOICE
     else
-  #ifndef SERIAL_VOICE_ONLY
+  #endif
+ #endif
+ #ifdef SERIAL_VOICE
+	#ifndef SERIAL_VOICE_ONLY
 		if ( g_eeGeneral.MegasoundSerial )
   #endif
 		{
@@ -952,8 +969,8 @@ void per10ms()
 			in |= (Voice.VoiceSerialValue) & 0x0C ;  // get XPD4/XPD3
 //			in |= (Voice.VoiceSerialValue >> 2) & 0x0C ;  // get XPD4/XPD3
 		} // NOTE: bit order of VoiceSerialValue changed
-  #endif
  #endif
+ 
 #else // !XSW_MOD
 #ifdef SERIAL_VOICE
 #ifndef SERIAL_VOICE_ONLY
@@ -977,7 +994,8 @@ void per10ms()
 	uint8_t value = Rotary.RotEncoder & 0x20 ;
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	
-	value |= ~PINB & 0x7E ;
+	in = ~PINB & 0x7E ;
+	value |= in ;
 	if ( value )
 	{
 		StickScrollTimer = STICK_SCROLL_TIMEOUT ;

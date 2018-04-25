@@ -740,16 +740,26 @@ typedef struct t_ModelData {
 	int8_t sub_protocol;		// Extending sub_protocol values for MULTI protocol
 	int8_t option_protocol;		// Option byte for MULTI protocol
 	uint8_t telemetryProtocol ;
-	int8_t pxxFailsafe[13];		// Currently unused
+		int8_t Failsafe[8];		// Currently unused
+		uint8_t failsafeMode:3 ;
+		uint8_t failsafeRepeat:1 ;
+		uint8_t r9mPower:2 ;
+		uint8_t failsafeSpare:2 ;
+		int8_t NotFailsafe[4];		// Currently unused
 #else
 	int8_t sparepxxFailsafe[2];		// Currently unused
 	uint8_t telemetryProtocol ;
-	int8_t pxxFailsafe[13];		// Currently unused
+		int8_t Failsafe[8];		// Currently unused
+		uint8_t failsafeMode:3 ;
+		uint8_t failsafeRepeat:1 ;
+		uint8_t r9mPower:2 ;
+		uint8_t failsafeSpare:2 ;
+		int8_t NotFailsafe[4];		// Currently unused
 #endif // MULTI_PROTOCOL
 	SafetySwData xvoiceSw[EXTRA_VOICE_SW] ;
   CxSwData xcustomSw[EXTRA_CSW];
 	uint8_t   currentSource ;
-	uint8_t   altSource ;
+	uint8_t Mavlink; //Extra data for Mavlink via FrSky 
   uint8_t phaseNames[MAX_PHASES][6] ;
 	ScaleData Scalers[NUM_SCALERS] ;
 	int8_t timer1RstSw ;
@@ -768,6 +778,8 @@ typedef struct t_ModelData {
   uint8_t  exSwitchWarningStates ;
 //#endif
   int8_t    curvexy[18] ;
+	ExtScaleData eScalers[NUM_SCALERS] ;
+	int8_t XFailsafe[8];		// Currently unused
 } __attribute__((packed)) V1ModelData;
 
 PACK(typedef struct t_V2ModelData
@@ -841,10 +853,14 @@ PACK(typedef struct t_V2ModelData
   uint8_t throttleReversed:1;
   GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST_AVR] ;
 	VoiceAlarmData vad[V2_NUM_VOICE_ALARMS] ;
-//	int8_t unused_pxxFailsafe[16] ;	// Currently unused
 	uint8_t telemetryProtocol ;
   int8_t    curvexy[18] ;
 	ExtScaleData eScalers[NUM_SCALERS] ;
+	uint8_t failsafeMode:3 ;
+	uint8_t failsafeRepeat:1 ;
+	uint8_t r9mPower:2 ;
+	uint8_t failsafeSpare:2 ;
+	int8_t Failsafe[16] ;	// Currently unused
 }) V2ModelData ;
 
 

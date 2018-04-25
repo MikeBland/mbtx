@@ -371,7 +371,11 @@ void perOut(int16_t *chanOut, uint8_t att )
         ail_stick = 3 ; //AIL_STICK ;
 
 				uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
+#ifdef PCBX7
+        for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
+#else
         for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
+#endif
 				{
             //Normalization  [0..2048] ->   [-1024..1024]
 					int16_t v = anaIn( i ) ;
@@ -817,7 +821,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 							else if ( k >= EXTRA_POTS_START-1 )
 							{
 								// An extra pot
+#ifdef PCBX7
+								v = calibratedStick[k-EXTRA_POTS_START+7] ;
+#else
 								v = calibratedStick[k-EXTRA_POTS_START+8] ;
+#endif
 							}
 						}
 						if(md->mixWarn) mixWarning |= 1<<(md->mixWarn-1); // Mix warning
@@ -1240,7 +1248,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 									}
 									ThrottleStickyOn = applySafety ;
 								}
-								if ( applySafety ) q = calc100toRESX(g_model.safetySw[i].opt.ss.val) ;
+								if ( applySafety )
+								{
+									q = calc100toRESX(g_model.safetySw[i].opt.ss.val) ;
+									q += (q>=0) ? g_model.safetySw[i].opt.ss.tune : -g_model.safetySw[i].opt.ss.tune ;
+								}
 							}
 						}
 					}

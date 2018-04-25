@@ -52,6 +52,8 @@
 #define POT_L			8
 #define POT_R			6
 #define BATTERY		10
+#define SLIDE_L		15
+#define SLIDE_R		9
 
 #else // PCBX7
 #ifndef PCB9XT
@@ -107,6 +109,10 @@ void init_adc()
 									PIN_FLP_J1 , PIN_ANALOG | PIN_PORTA ) ;
 	configure_pins( PIN_FLP_J2, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+
+	configure_pins( LED_BLUE_GPIO_PIN, PIN_ANALOG | PIN_PORTB ) ;
+	configure_pins( LED_RED_GPIO_PIN, PIN_ANALOG | PIN_PORTC ) ;
+
 #else // PCBX7
 #ifndef PCB9XT
 	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
@@ -137,7 +143,7 @@ void init_adc()
 #ifdef PCBX7
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 
-	ADC1->SQR2 = BATTERY ;
+	ADC1->SQR2 = BATTERY + (SLIDE_L<<5) + (SLIDE_R<<10) ;
 	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<<20) + (POT_R<<25) ;
 
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
@@ -222,7 +228,10 @@ uint32_t read_adc()
 	AnalogData[3] = Analog_values[3] ;
 	AnalogData[4] = Analog_values[4] ;
 	AnalogData[5] = Analog_values[5] ;
-	AnalogData[6] = 0 ;	// Dummy
+//	AnalogData[6] = 0 ; // Dummy
+
+	AnalogData[6] = 4096 - ( (g_eeGeneral.extraPotsSource[0]) ? Analog_values[6+g_eeGeneral.extraPotsSource[0]] : 0 ) ; 
+	AnalogData[7] = 4096 - ( (g_eeGeneral.extraPotsSource[1]) ? Analog_values[6+g_eeGeneral.extraPotsSource[1]] : 0 ) ; 
 	AnalogData[12] = Analog_values[6] ;
 #else // PCBX7
 	AnalogData[0] = Analog_values[0] ;

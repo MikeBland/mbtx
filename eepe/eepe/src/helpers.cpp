@@ -246,7 +246,7 @@ QString ExtraGvarItems[] = {
 } ;
 
 #ifdef V2
-#define NUM_HW_ITEMS	12
+#define NUM_HW_ITEMS	14
 QString HardwareItems[] = {
   "NONE",
 	"PB7 ",
@@ -1784,7 +1784,7 @@ QString getSWName(int val, int extra )
 #endif
 #ifndef SKY
 //  int x = extra ? 1 : 0 ;
-  int limit = MAX_DRSWITCH ;
+  int limit = MaxSwitchIndex ; //MAX_DRSWITCH ;
 	if ( extra )
 	{
 		limit += EXTRA_CSW ;
@@ -3555,7 +3555,7 @@ uint8_t throttleReversed( EEGeneral *g_eeGeneral, ModelData *g_model )
 
 int Found9Xtreme ;
 
-QString VolNames[8] ;
+//QString VolNames[8] ;
 
 QString FindErskyPath( int type )
 {
@@ -3564,18 +3564,18 @@ QString FindErskyPath( int type )
     QStringList drives;
     QString eepromfile;
     QString fsname;
-#if defined WIN32 || !defined __GNUC__
-    int x = 0 ;
-#endif
+//#if defined WIN32 || !defined __GNUC__
+//    int x = 0 ;
+//#endif
 
-		VolNames[0] = "" ;
-		VolNames[1] = "" ;
-		VolNames[2] = "" ;
-		VolNames[3] = "" ;
-		VolNames[4] = "" ;
-		VolNames[5] = "" ;
-		VolNames[6] = "" ;
-		VolNames[7] = "" ;
+//		VolNames[0] = "" ;
+//		VolNames[1] = "" ;
+//		VolNames[2] = "" ;
+//		VolNames[3] = "" ;
+//		VolNames[4] = "" ;
+//		VolNames[5] = "" ;
+//		VolNames[6] = "" ;
+//		VolNames[7] = "" ;
 
 #if defined WIN32 || !defined __GNUC__
     foreach( QFileInfo drive, QDir::drives() )
@@ -3591,7 +3591,11 @@ QString FindErskyPath( int type )
 			{
 				Found9Xtreme = 0 ;
         QString vName=QString::fromUtf16 ( (const ushort *) szVolumeName) ;
-				VolNames[x++] = vName ;
+//				VolNames[x++] = vName ;
+//				if ( x > 7 )
+//				{
+//					x = 7 ;
+//				}
 				if ( (vName.contains("ERSKY_9X")) || (vName.contains("9XTREME")) )
 				{
 					if ( vName.contains("9XTREME") )

@@ -63,7 +63,7 @@ uint8_t ScriptFlags ;
 #define LABEL					9
 #define CONSTANT			10
 
-
+// Opcodes 0x01 to 0x3F (1-63)
 #define IF   				1
 #define THEN 				2
 #define GOTO 				3
@@ -161,6 +161,7 @@ uint8_t ScriptFlags ;
 #define POWER					26
 #define CROSSFIRERECEIVE	27
 #define CROSSFIRESEND	28
+#define POPUP					29
 
 // Assignment options:
 #define SETEQUALS			0
@@ -186,10 +187,8 @@ uint8_t ScriptFlags ;
 // More draw functions:
 // refresh ?
 // filled rectangle
-// timer
 // switch
 // screen title
-// getlastpos
 
 // More general interface items
 // getDateTime
@@ -238,18 +237,42 @@ uint8_t ScriptFlags ;
 
 // Compiled coding:
 // 1 - 0x3F, opcodes
-// 0x80 Line number in 15 bits				1xxx
-// 0x70 String                        0111
+// 0x80 ( to 0xFF) Line number in 15 bits				1xxx
+// 0x70 String                        0111 0000
 // 0x60 Variable, index in 8 bits			0110
 // 0x68 Variable, index in 16 bits
 // 0x64 Variable int array, index in 8 bits, dimension in 8 bits
 // 0x6C Variable int array, index in 16 bits, dimension in 8 bits
 // 0x66 Variable byte array, index in 8 bits, dimension in 8 bits
 // 0x6E Variable byte array, index in 16 bits, dimension in 8 bits
+
+// Possible Enhancement
+// 0x65 Variable int array, index in 8 bits, dimension in 16 bits
+// 0x6D Variable int array, index in 16 bits, dimension in 16 bits
+// 0x67 Variable byte array, index in 8 bits, dimension in 16 bits
+// 0x6F Variable byte array, index in 16 bits, dimension in 16 bits
+
 // 0x58 Number in 8 bits ??           010x
 // 0x50 Number in 32 bits
-// 0x48 Number in 3 bits (0-7)
+// 0x48 (to 0x4F) Number in 3 bits (0-7)
 // 0x40 Number in 16 bits
+
+// unused 0x41 - 0x47
+// unused 0x61, 0x62, 0x63, 0x69, 0x6A, 0x6B
+
+// Possible Enhancement
+// 0x71-0x7F Could be for indirection
+
+// Consider:
+// Change string to 0x7F
+// 0x70 pointer to string, index in 8 bits
+// 0x78 pointer to string, index in 16 bits
+// 0x74 array of pointer to string, index in 8 bits, dimension in 8 bits
+// 0x7C array of pointer to string, index in 16 bits, dimension in 8 bits
+// 0x76 array of pointer to int array, index in 8 bits, dimension in 8 bits
+// 0x7E array of pointer to int array, index in 16 bits, dimension in 8 bits
+// 0x72 array of pointer to byte array, index in 8 bits, dimension in 8 bits
+// 0x7A array of pointer to byte array, index in 16 bits, dimension in 8 bits
 
 
 union t_parameter
@@ -314,6 +337,7 @@ struct t_loadedScripts
 #define MAX_CONTROL_INDEX		20
 struct t_control CodeControl[MAX_CONTROL_INDEX] ;		// Max Nesting of control structures
 uint8_t ControlIndex ;
+uint8_t ScriptPopupActive ;
 
 struct t_basicRunTime *RunTime ;
 
@@ -345,37 +369,37 @@ struct commands
 
 const struct commands Table[] =
 { 		/* Commands must be entered lowercase */
-//  { "print", PRINT},
-//  { "input", INPUT},
   { "if", IF},
   { "then", THEN},
   { "goto", GOTO},
-//  { "for", FOR},
-//  { "next", NEXT},
-//  { "to", TO},
-//  { "step", STEP},
   { "gosub", GOSUB},
   { "return", RETURN},
   { "let", LET},
   { "rem", REM},
   { "stop", STOP},
   { "finish", FINISH },
-//  { "wait", WAIT},
-//  { "trace", TRACE},
   { "while", WHILE},
-//  { "wend", WEND},
-//  { "break", BREAK},
-//  { "continue", CONTINUE},
-//  { "repeat", REPEAT},
-//  { "until", UNTIL},
   { "elseif", ELSEIF},
   { "else", ELSE},
-//  { "function", FUNC},
 	{ "int", DEFINT},
 	{ "byte", DEFBYTE},
 	{ "array", DEFARRAY},
 	{ "const", DEFCONST},
 	{ "end", END},
+//  { "print", PRINT},
+//  { "input", INPUT},
+//  { "for", FOR},
+//  { "next", NEXT},
+//  { "to", TO},
+//  { "step", STEP},
+//  { "wait", WAIT},
+//  { "trace", TRACE},
+//  { "wend", WEND},
+//  { "break", BREAK},
+//  { "continue", CONTINUE},
+//  { "repeat", REPEAT},
+//  { "until", UNTIL},
+//  { "function", FUNC},
   { "", 0 } /* mark end of table */
 } ;
 
@@ -408,7 +432,7 @@ const struct commands InternalFunctions[] =
 	{ "bitfield", BITFIELD },
 	{ "power", POWER },
 	{ "crossfirereceive", CROSSFIRERECEIVE },
-	{ "crossfiresend", CROSSFIRESEND },
+	{ "popup", POPUP },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -1641,7 +1665,13 @@ uint32_t partLoadBasic()
 								}
 								ProgPtr += 1 ;
 								value = asctoi( Numeric ) ;
-								if ( value >= 0 && value <= 100 )
+                int32_t limit ;
+								limit = 100 ;
+                if ( type == SYM_VAR_ARRAY_BYTE )
+								{
+									limit = 252 ;
+								}
+								if ( value >= 0 && value <= limit )
 								{
 									uint32_t index ;
 									uint32_t allocWords ;
@@ -3225,6 +3255,10 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 				return 0 ; ;
 			}
 			param->cpointer = &RunTime->ByteArrayStart[val16 + value] ;
+			if ( *RunTime->ExecProgPtr == ',' )
+			{
+				RunTime->ExecProgPtr += 1 ;
+			}
 			return 2 ;
 		}
 		else
@@ -4062,7 +4096,6 @@ int32_t exec_sportreceive()
 	return result ;
 }
 
-
 int32_t exec_crossfirereceive()
 {
 	union t_varAddress param[3] ;
@@ -4089,24 +4122,25 @@ int32_t exec_crossfirereceive()
 #endif
 				if ( value != -1 )
 				{
-					length = value ;
+					length = value ;	// Includes length byte
 #ifndef QT
 					if ( fifo128Space( &Lua_fifo ) <= (uint32_t)(127 - length ) )
 					{
 						// OK to read packet
 						// values to return : length, command = byte after length, data into array if possible
-						result = getParamVarAddress( &param[2], length-2 ) ;
+						length -= 2 ;
+						result = getParamVarAddress( &param[2], length ) ;
 						tidy = 0 ;
 						if ( result )
 						{
 							value = get_fifo128( &Lua_fifo ) ;
 							if ( type[0] == 1 )
 							{
-								*param[0].bpointer = value ;
+								*param[0].bpointer = length ;
 							}
 							else
 							{
-								*param[0].ipointer = value ;
+								*param[0].ipointer = length ;
 							}
 							value = get_fifo128( &Lua_fifo ) ;
 							if ( type[1] == 1 )
@@ -4117,7 +4151,6 @@ int32_t exec_crossfirereceive()
 							{
 								*param[1].ipointer = value ;
 							}
-							length -= 2 ;
 							for ( ; length ; length -= 1 )
 							{
 								*param[2].bpointer++ = get_fifo128( &Lua_fifo ) ;
@@ -4195,6 +4228,69 @@ int32_t exec_crossfiresend()
 		runError( SE_SYNTAX ) ;
 	}
 	return result ;
+}
+
+extern uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event ) ;
+extern struct t_popupData PopupData ;
+
+#define POPUP_NONE			0
+#define POPUP_SELECT		1
+#define POPUP_EXIT			2
+
+// int32_t popup( string, mask, width )
+// returns 0 - nothing
+//				 1 - 16 item eelected
+//				99 - EXIT
+int32_t exec_popup()
+{
+	uint32_t result ;
+	char *list ;
+	uint16_t mask ;
+	uint8_t width ;
+	union t_parameter param ;
+			
+	result = get_parameter( &param, 1 ) ;
+  if ( result == 2 )
+	{
+    list = (char *)param.cpointer ;
+		result = get_parameter( &param, 0 ) ;
+		if ( result == 1 )
+		{
+			mask = param.var ;
+			result = get_parameter( &param, 0 ) ;
+			if ( result == 1 )
+			{
+        width = param.var ;
+#ifdef QT
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)"popup()" ) ;
+				result = 0 ;
+#else
+				if ( ScriptPopupActive == 0 )
+				{
+					ScriptPopupActive = 1 ;
+					PopupData.PopupIdx = 0 ;
+				}
+				result = doPopup( list, mask, width, RunTime->Vars.Variables[0] ) ;
+				eatCloseBracket() ;
+				if ( result )
+				{
+					if ( result == POPUP_SELECT )
+					{
+						result = PopupData.PopupSel + 1 ;
+					}
+					else if ( result == POPUP_EXIT )
+					{
+						result = 99 ;
+					}
+					RunTime->Vars.Variables[0] = 0 ;
+					ScriptPopupActive = 0 ;
+				}
+#endif
+				return result ;
+			}
+		}
+	}
+	return 0 ;
 }
 
 void exec_strToArray()
@@ -4621,6 +4717,10 @@ int32_t execInFunction()
 		case CROSSFIRESEND :
 			result = exec_crossfiresend() ;
 		break ;
+
+		case POPUP :
+			result = exec_popup() ;
+		break ;
 		 
 		default :
 			runError( SE_NO_FUNCTION ) ;
@@ -4895,6 +4995,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		{
 			RunTime->Vars.Variables[i] = 0 ;
 		}
+		ScriptPopupActive = 0 ;
 		return 1 ;
 	}
 

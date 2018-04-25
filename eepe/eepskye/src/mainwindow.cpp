@@ -922,7 +922,7 @@ void MainWindow::burnFrom()
 	  if ( path.isEmpty() )
 		{
       QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
-			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
+//			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
       return;
 		}
 		else
@@ -1390,7 +1390,7 @@ void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepskye-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Michael Blandford &copy;2013<br>");
-    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: p%1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the ersky9x firmware useful please support by"));
     aboutStr.append(" <a href='" DONATE_MB_STR "'>");
 //    aboutStr.append(tr("donating") + "</a></center><br>");
@@ -1789,7 +1789,7 @@ void MainWindow::readSettings()
     currentERSKYX9DPrev = settings.value("currentERSKYX9DPrev", 1).toInt();
     currentERSKY9XTrev = settings.value("currentERSKY9XTrev", 1).toInt();
 		currentEEPSKYErelease = settings.value("currentEEPSKYErelease", 1).toInt();
-    currentEEPSKYErev = SVN_VER_NUM;
+    currentEEPSKYErev = SVN_VER_NUM ;
 
     checkERSKY9X  = settings.value("startup_check_ersky9x", true).toBool();
     checkEEPSKYE  = settings.value("startup_check_eepskye", true).toBool();

@@ -2108,7 +2108,7 @@ uint8_t setupPulsesXfire()
   	for ( i = 0 ; i < TelemetryTx.XfireTx.count ; i += 1 )
 		{
 			*buf++ = TelemetryTx.XfireTx.data[i] ;
-			if ( i > 14 )
+			if ( i > 62 )
 			{
 				break ;
 			}
@@ -2116,7 +2116,6 @@ uint8_t setupPulsesXfire()
 		i = buf - crc_start ;
 		*buf++ = crc8( crc_start, i ) ;
 		TelemetryTx.XfireTx.count = 0 ;
-//  return (XfireLength = 40) ;
 	}
 	else
 	{
