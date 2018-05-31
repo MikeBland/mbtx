@@ -727,6 +727,7 @@ extern "C" void DMA2D_IRQHandler( void )
 	}
 }
 
+
 void lcd_clearBackground()
 {
 	LcdClearing = 1 ;

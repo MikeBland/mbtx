@@ -152,13 +152,18 @@ extern void com2Parity( uint32_t even ) ;
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCBSKY)
 struct t_XjtHeartbeatCapture
 {
 	uint16_t value ;
 	uint16_t valid ;
 } ;
 extern struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+#endif                              
+
+#ifdef PCBSKY
+void init_pb14_heartbeat() ;
+void stop_pb14_heartbeat() ;
 #endif                              
 
 extern void putEvent( register uint8_t evt) ;

@@ -136,7 +136,11 @@ uint8_t frskyRxBuffer[20];   // Receive buffer. 9 bytes (full packet), worst cas
 
 struct t_frskyTx
 {
+#ifndef V2
 	uint8_t frskyTxBuffer[13];   // Ditto for transmit buffer
+#else
+	uint8_t frskyTxBuffer[6];   // V2 only sends 4 bytes of private data
+#endif
 	uint8_t frskyTxBufferCount ;
 	uint8_t frskyTxISRIndex ;
 } FrskyTx ;
@@ -1478,9 +1482,11 @@ ISR(USART0_RX_vect)
 					dataState = PRIVATE_VALUE ;
           Private_count = data ;		// Count of bytes to receive
 					Private_position = 0 ;
+
 					if ( data > 3 )
 					{
          		dataState = frskyDataIdle ;
+    				FrskyAlarmSendState |= 0x80 ;		// Send ACK
 					}
         break;
         case PRIVATE_VALUE :

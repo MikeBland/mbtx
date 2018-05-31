@@ -37,6 +37,7 @@ const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HS
 #endif	// REV9E
 #endif
 
+//#define LATENCY 1
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 
@@ -160,7 +161,13 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	uint8_t thisPhase ;
 	struct t_fade *pFade ;
 	pFade = &Fade ;
-	
+
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	GPIOA->ODR |= 0x4000 ;
+// #endif	
+//#endif
+
 	thisPhase = getFlightPhase() ;
 	if ( thisPhase != lastPhase )
 	{
@@ -257,6 +264,11 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			fadeMask <<= 1 ;
 		}
 	}
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	GPIOA->ODR &= ~0x4000 ;
+// #endif	
+//#endif
 }
 
 int16_t scaleAnalog( int16_t v, uint8_t channel )

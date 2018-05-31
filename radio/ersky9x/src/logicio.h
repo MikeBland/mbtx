@@ -123,6 +123,10 @@ extern void init_trims( void ) ;
 extern void setup_switches( void ) ;
 extern void config_free_pins( void ) ;
 
+#ifdef PCBSKY
+uint32_t extraInputInUse( uint32_t input ) ;
+#endif
+
 //#ifndef PCBX12D
 #define GPIO_ResetBits( port, bits ) (port->BSRRH = bits)
 #define GPIO_SetBits( port, bits ) (port->BSRRL = bits)

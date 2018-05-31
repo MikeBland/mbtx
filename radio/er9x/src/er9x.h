@@ -1228,7 +1228,7 @@ extern int16_t intpol(int16_t, uint8_t);
 extern uint16_t anaIn(uint8_t chan);
 extern int16_t calibratedStick[7];
 extern int8_t phyStick[4] ;
-extern int16_t ex_chans[NUM_CHNOUT];
+extern int16_t Ex_chans[NUM_CHNOUT];
 
 void getADC_osmp();
 //void getADC_filt();
@@ -1430,6 +1430,7 @@ struct t_backup_restore
 	uint8_t subState ;
 	uint16_t size ;
 	uint8_t modelIndex ;
+	uint8_t restoreState ;
 	uint8_t restoreDirBuffer[8][12] ;
 } ;
 
@@ -1489,8 +1490,10 @@ extern struct t_rotary Rotary ;
 
 struct t_latency
 {
+#ifndef REMOVE_FROM_64FRSKY
 	uint8_t g_tmr1Latency_min ;
 	uint8_t g_tmr1Latency_max ;
+#endif
 	uint16_t g_timeMain ;
 } ;
 

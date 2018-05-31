@@ -145,11 +145,12 @@ QString TelemItems[] = {
 	,"Cus5"
 	,"Cus6"
 	,"Fmd "
+	,"RunT"	// 75
 #endif
 } ;
 
 #ifdef SKY
-#define NUM_TELEM_ITEMS	75
+#define NUM_TELEM_ITEMS	76
 #else
 #define NUM_TELEM_ITEMS	42
 #endif
@@ -1171,7 +1172,7 @@ void populateGvarCB(QComboBox *b, int value, int type)
     b->setMaxVisibleItems(13);
 }
 
-int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar )
+int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extended )
 {
 	if ( ( value < -125 ) || ( value > 125) )
 	{
@@ -1179,11 +1180,18 @@ int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value,
 		if ( ck->checkState() )
 		{ // stil is
 			value = cb->currentIndex() ;
-			value += 126 ;
-			if ( value > 127 )
+			if ( extended )
 			{
-        value -= 256 ;
+				value += 501 ;
 			}
+			else
+			{
+				value += 126 ;
+				if ( value > 127 )
+				{
+      	  value -= 256 ;
+				}
+      }
 		}
 		else
 		{
@@ -1198,7 +1206,7 @@ int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value,
 	{ // Not a GVAR
 		if ( ck->checkState() )
 		{ // Now is a GVAR
-			value = 126 ;
+      value = extended ? 501 : 126 ;
 			cb->setCurrentIndex( 0 ) ;
 			cb->setVisible( true ) ;
 			sb->setVisible( false ) ;
@@ -1211,7 +1219,7 @@ int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value,
 	return value ;		 
 }
 
-void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max )
+void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue )
 {
   cb->clear() ;
   for (int i=1; i<=5; i++)
@@ -1241,6 +1249,14 @@ void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, 
 	else
 	{
 		ck->setChecked( false ) ;
+		if ( xvalue == 1 )
+		{
+			value += 125 ; 
+		}
+		else if ( xvalue == 3 )
+		{
+			value -= 125 ; 
+		}
 		sb->setValue( value ) ;
 		sb->setVisible( true ) ;
 		cb->setVisible( false ) ;
@@ -1376,6 +1392,7 @@ int16_t m_to_ft( int16_t metres )
 #define CELL_5      52
 #define CELL_6      53
 #define FMODE	      74
+#define RUNTIME     (75+8)
 
 
 
@@ -1396,6 +1413,9 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
   switch (index)
 	{
 #ifdef SKY
+    case RUNTIME :
+      result *= 3 ;
+    break;
     case V_RTC :
       result *= 12 ;
     break;
@@ -1484,8 +1504,12 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 
   switch (index)
 	{
-    case 4 :
-    case 5 :
+#ifdef SKY
+    case V_RTC :
+    case RUNTIME :
+#endif
+    case TIMER1 :
+    case TIMER2 :
 			{	
 				int16_t rem ;
 
@@ -1601,7 +1625,7 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   		}
     break;
     
-		case 6:
+		case FR_ALT_BARO:
       unit = 'm' ;
 			if (model->FrSkyUsrProto == 1)  // WS How High
 			{
@@ -1609,7 +1633,7 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
         	unit = 'f' ;
 				break ;
 			}
-    case 7:
+    case FR_GPS_ALT:
       unit = 'm' ;
       if ( model->FrSkyImperial )
       {
@@ -1702,6 +1726,10 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 
 QString getTelemString( int index )
 {
+	if ( index >= 75 )
+	{
+		index -= 8 ;
+	}
   return TelemItems[index] ;
 }
 
@@ -2782,7 +2810,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						}
 					}
 				}
-				else if ( type == RADIO_TYPE_SKY )
+				else if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 				{
 					if ( extraPots )
 					{
@@ -2803,7 +2831,7 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 								}
 							break ;
 							case 11 :
-								if ( extraPots > 1 )
+								if ( extraPots > 3 )
 								{
 									return "P7  " ;
 								}
@@ -2862,7 +2890,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 		{
 			limit = 44 ;
 		}
-		if ( type == RADIO_TYPE_SKY )
+		if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 		{
 			limit += extraPots ;
 		}
@@ -2893,21 +2921,37 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 			{
 				if ( value >= EXTRA_POTS_START )
 				{
-					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+					if ( value < EXTRA_POTS_START + 8 )
+					{
+						value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+					}
+					else
+					{
+						value -= 8 ;
+						value += (type == RADIO_TYPE_TPLUS) ? 2 : (type == RADIO_TYPE_X9E) ? 3 : NUM_EXTRA_POTS ;
+					}
 				}
 				else
 				{
-					value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
+					value += (type == RADIO_TYPE_TPLUS) ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
 				}
 			}
 		}
-		if ( type == RADIO_TYPE_SKY )
+		if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
 				if ( value >= EXTRA_POTS_START )
 				{
-					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+					if ( value < EXTRA_POTS_START + 8 )
+					{
+						value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+					}
+					else
+					{
+						value -= 8 ;
+						value += extraPots ;
+					}
 				}
 				else
 				{
@@ -2930,6 +2974,13 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 #ifdef SKY    
 uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
+	if ( type == RADIO_TYPE_QX7 )
+	{
+		if ( value > 6 )
+		{
+		 value += 1 ;	
+		}
+	}
   if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )	// Taranis
 	{
 		if ( value >= EXTRA_POTS_POSITION )
@@ -2941,10 +2992,14 @@ uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 			else
 			{
         value -= type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
+				if ( value >= EXTRA_POTS_START )
+				{
+					value += 8 ;
+				}
 			}
 		}
 	}
-	if ( type == RADIO_TYPE_SKY )
+	if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{
@@ -2955,14 +3010,11 @@ uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 			else
 			{
         value -= extraPots ;
+				if ( value >= EXTRA_POTS_START )
+				{
+					value += 8 ;
+				}
 			}
-		}
-	}
-	if ( type == RADIO_TYPE_QX7 )
-	{
-		if ( value > 6 )
-		{
-		 value += 1 ;	
 		}
 	}
   return value ;

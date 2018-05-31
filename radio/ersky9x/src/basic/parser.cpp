@@ -1153,6 +1153,13 @@ uint32_t scanForKeyword( char *dest )
          	Token_type = FUNCTION ;
 					ProgPtr += 1 ;
 				}
+				if ( Cur_token == InputLine )
+				{
+				  if ( ( *ProgPtr == '\r') || ( *ProgPtr == '\n') || ( *ProgPtr == '\0') )
+					{
+	         	Token_type = LABEL ;
+					}
+				}
 		  }
 		}
     else 

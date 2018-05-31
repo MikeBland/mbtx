@@ -2852,6 +2852,15 @@ void ModelEdit::tabMixes()
 				}
 				else
 				{
+					if ( md->extWeight == 1 )
+					{
+						j += 125 ; 
+					}
+					else if ( md->extWeight == 3 )
+					{
+						j -= 125 ; 
+					}
+					
         	str += j<0 ? QString(" %1\%").arg(j).rightJustified(6,' ') :
                               QString(" +%1\%").arg(j).rightJustified(6, ' ');
 				}
@@ -2931,7 +2940,7 @@ void ModelEdit::tabMixes()
 							}
 						}
 					}
-					if ( rData->type == RADIO_TYPE_SKY )
+					if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
 					{
 						if ( value >= EXTRA_POTS_START )
 						{
@@ -2992,6 +3001,14 @@ void ModelEdit::tabMixes()
 					}
 					else
 					{
+						if ( md->extOffset == 1 )
+						{
+							j += 125 ; 
+						}
+						else if ( md->extOffset == 3 )
+						{
+							j -= 125 ; 
+						}
         		str += tr(" Offset(%1\%)").arg(j);
 					}
 				}
@@ -4799,7 +4816,7 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 				}
         cswitchOffset[i]->setAccelerated(true);
         cswitchOffset0[i]->setVisible(false);
-        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1,g_model.modelVersion, rData->type, rData->extraPots ) ;
+        populateSourceCB(cswitchSource1[i],g_eeGeneral.stickMode,1,g_model.customSw[i].v1u,g_model.modelVersion, rData->type, rData->extraPots ) ;
 				if ( cType == CS_U16 )
 				{
 					int32_t y ;
@@ -4815,8 +4832,8 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 					if ( cswitchSource1[i]->currentIndex() > 36 )
 					{
         		cswitchTlabel[i]->setVisible(true);
-						value = convertTelemConstant( cswitchSource1[i]->currentIndex() - 45, g_model.customSw[i].v2, &g_model ) ;
-        	  stringTelemetryChannel( telText, g_model.customSw[i].v1 - 45, value, &g_model ) ;
+						value = convertTelemConstant( g_model.customSw[i].v1u - 45, g_model.customSw[i].v2, &g_model ) ;
+        	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - 45, value, &g_model ) ;
 	//					sprintf( telText, "%d", value ) ;
         		cswitchTlabel[i]->setText(telText);
 					}
@@ -4938,7 +4955,7 @@ uint32_t encodePots( uint32_t value, int type, uint32_t extraPots )
 			}
 		}
 	}
-	if ( type == RADIO_TYPE_SKY )
+	if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 	{
 		if ( value >= EXTRA_POTS_POSITION )
 		{
@@ -5838,15 +5855,15 @@ void ModelEdit::switchesEdited()
 							y = cswitchOffset[i]->value() ;
 							y += 32768 ;
               g_model.customSw[i].bitAndV3 = y >> 8 ;
-							g_model.customSw[i].v2 = y ;
+							g_model.customSw[i].v2u = y ;
 						}
 						else
 						{
 							g_model.customSw[i].v2 = cswitchOffset[i]->value();
-							if ( g_model.customSw[i].v1 > 36 )
+							if ( g_model.customSw[i].v1u > 36 )
 							{
-								value = convertTelemConstant( g_model.customSw[i].v1 - 37, g_model.customSw[i].v2, &g_model ) ;
-            	  stringTelemetryChannel( telText, g_model.customSw[i].v1 - 37, value, &g_model ) ;
+								value = convertTelemConstant( g_model.customSw[i].v1u - 45, g_model.customSw[i].v2, &g_model ) ;
+            	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - 45, value, &g_model ) ;
 								//sprintf( telText, "%d", value ) ;
         				cswitchTlabel[i]->setText(telText);
 							}
@@ -5857,8 +5874,8 @@ void ModelEdit::switchesEdited()
             g_model.customSw[i].v2 =  getSwitchCbValue( cswitchSource2[i] , rData->type ) ;
             break;
         case (CS_VCOMP):
-            g_model.customSw[i].v1 = decodePots( cswitchSource1[i]->currentIndex(), rData->type, rData->extraPots ) ;
-            g_model.customSw[i].v2 = decodePots( cswitchSource2[i]->currentIndex(), rData->type, rData->extraPots ) ;
+            g_model.customSw[i].v1u = decodePots( cswitchSource1[i]->currentIndex(), rData->type, rData->extraPots ) ;
+            g_model.customSw[i].v2u = decodePots( cswitchSource2[i]->currentIndex(), rData->type, rData->extraPots ) ;
             break;
         case (CS_TIMER):
             g_model.customSw[i].v2 = cswitchOffset[i]->value()-1;

@@ -78,7 +78,9 @@ ISR(TIMER1_COMPA_vect) //2MHz pulse generation
     //    uint8_t i = 0;
     //    while((TCNT1L < 10) && (++i < 50))  // Timer does not read too fast, so i
     //        ;
+#ifndef REMOVE_FROM_64FRSKY
     uint16_t dt=TCNT1;//-OCR1A;
+#endif
 
     if(PulsePol)
     {
@@ -114,6 +116,7 @@ ISR(TIMER1_COMPA_vect) //2MHz pulse generation
     OCR1A  = *pulsePtr ;
 		pulsePtr += 1 ;
     
+#ifndef REMOVE_FROM_64FRSKY
 		{
 			struct t_latency *ptrLat = &g_latency ;
 			
@@ -121,6 +124,7 @@ ISR(TIMER1_COMPA_vect) //2MHz pulse generation
   	  if ( (uint8_t)dt > ptrLat->g_tmr1Latency_max) ptrLat->g_tmr1Latency_max = dt ;    // max has leap, therefore vary in length
 	    if ( (uint8_t)dt < ptrLat->g_tmr1Latency_min) ptrLat->g_tmr1Latency_min = dt ;    // max has leap, therefore vary in length
 		}
+#endif
     if( *pulsePtr == 0) {
         //currpulse=0;
         pulsePtr = pulses2MHz.pword;
@@ -312,6 +316,9 @@ void setupPulses()
         setupPulsesPPM( PROTO_PPM );		// Don't enable interrupts through here
         // PPM16 pulses are set up automatically within the interrupts
         break ;
+		case PROTO_NONE :
+      PORTB ^= (1<<OUT_B_PPM) ;	// Keep TelemetreZ running
+		break ;
     }
     //    SPY_OFF;
 //extern void nothing() ;
@@ -902,7 +909,16 @@ static void setupPulsesPXX()
       putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
     }
 #endif
+#if defined(CPUM128) || defined(CPUM2561)
+		flag1 = 0 ;
+		if ( g_model.sub_protocol == 3 )	// R9M
+		{
+			flag1 |= g_model.r9mPower << 3 ;
+		}
+		putPcmByte( flag1 ) ;	// Extra flags
+#else
 		putPcmByte( 0 ) ;	// Extra flags
+#endif
     chan = PcmControl.PcmCrc ;		        // get the crc
     putPcmByte( chan >> 8 ) ; // Checksum hi
     putPcmByte( chan ) ; 			// Checksum lo

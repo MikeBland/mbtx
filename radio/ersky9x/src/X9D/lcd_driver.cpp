@@ -21,16 +21,18 @@
 #include "lcd.h"
 #include "logicio.h"
 #include "myeeprom.h"
+#include "mixer.h"
 #ifndef SIMU
 #include "CoOS.h"
 #endif
 #include <stdlib.h>
 #include <string.h>
 
+#if defined(PCBX7) || defined(PCBXLITE)
 
-#ifdef PCBX7
-
+#ifndef PCBXLITE
 #define GPIO_PinSource_HAPTIC           GPIO_PinSource8
+#endif
 
 #define LCD_CONTRAST_OFFSET            20
 #define RESET_WAIT_DELAY_MS            300 // Wait time after LCD reset before first command
@@ -107,14 +109,14 @@ void lcdHardwareInit()
   GPIO_PinAFConfig(LCD_SPI_GPIO, LCD_MOSI_GPIO_PinSource, LCD_GPIO_AF);
   GPIO_PinAFConfig(LCD_SPI_GPIO, LCD_CLK_GPIO_PinSource, LCD_GPIO_AF);
 
-  LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+  LCD_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
   LCD_DMA->HIFCR = LCD_DMA_FLAGS; // Write ones to clear bits
-  LDC_DMA_Stream->CR =  DMA_SxCR_PL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0;
-  LDC_DMA_Stream->PAR = (uint32_t)&LCD_SPI->DR;
+  LCD_DMA_Stream->CR =  DMA_SxCR_PL_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0;
+  LCD_DMA_Stream->PAR = (uint32_t)&LCD_SPI->DR;
 
-  LDC_DMA_Stream->NDTR = LCD_W;
+  LCD_DMA_Stream->NDTR = LCD_W;
 
-  LDC_DMA_Stream->FCR = 0x05; // DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0;
+  LCD_DMA_Stream->FCR = 0x05; // DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0;
 
 	NVIC_SetPriority( LCD_DMA_Stream_IRQn, 8 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(LCD_DMA_Stream_IRQn);
@@ -143,6 +145,7 @@ void refreshDisplay()
     lcdInitFinish();
   }
 	
+#ifndef PCBXLITE
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		uint16_t time = get_tmr10ms() ;
@@ -155,6 +158,7 @@ void refreshDisplay()
 			ExtDisplaySend = 1 ;
 		}
 	}
+#endif
 
   uint8_t * p = DisplayBuf;
   for (uint8_t y=0; y < 8; y++, p+=LCD_W) {
@@ -166,10 +170,10 @@ void refreshDisplay()
     LCD_A0_HIGH();
 
     lcd_busy = true;
-    LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+    LCD_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
     LCD_DMA->HIFCR = LCD_DMA_FLAGS; // Write ones to clear bits
-    LDC_DMA_Stream->M0AR = (uint32_t)p;
-    LDC_DMA_Stream->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE; // Enable DMA & TC interrupts
+    LCD_DMA_Stream->M0AR = (uint32_t)p;
+    LCD_DMA_Stream->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE; // Enable DMA & TC interrupts
     LCD_SPI->CR2 |= SPI_CR2_TXDMAEN;
   
     WAIT_FOR_DMA_END();
@@ -183,10 +187,10 @@ extern "C" void LCD_DMA_Stream_IRQHandler()
 {
 //  DEBUG_INTERRUPT(INT_LCD);
 
-  LDC_DMA_Stream->CR &= ~DMA_SxCR_TCIE; // Stop interrupt
+  LCD_DMA_Stream->CR &= ~DMA_SxCR_TCIE; // Stop interrupt
   LCD_DMA->HIFCR |= LCD_DMA_FLAG_INT; // Clear interrupt flag
   LCD_SPI->CR2 &= ~SPI_CR2_TXDMAEN;
-  LDC_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
+  LCD_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
 
   while (LCD_SPI->SR & SPI_SR_BSY) {
     /* Wait for SPI to finish sending data
@@ -310,6 +314,7 @@ void lcdSetRefVolt(uint8_t val)
   lcdWriteCommand(val+LCD_CONTRAST_OFFSET); // 0-255
 }
 
+#ifndef PCBXLITE
 void initHaptic()
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOHAPTIC, ENABLE);
@@ -349,6 +354,7 @@ void hapticOn( uint32_t pwmPercent )
 	}
 	TIM10->CCR1 = pwmPercent ;
 }
+#endif
 
 uint16_t BacklightBrightness ;
 
@@ -589,7 +595,28 @@ extern uint8_t CurrentVolume ;
 //	uint32_t x ;
 	if ( Main_running )
 	{
-		CoWaitForSingleFlag( LcdFlag, 10 ) ;
+		uint32_t result ;
+		uint32_t count ;
+
+		for ( count = 0 ; count < 10 ; count += 1 )
+		{
+			result = CoWaitForSingleFlag( LcdFlag, 1 ) ;
+			if ( result == E_OK )
+			{
+				break ;
+			}
+extern uint32_t MixerCount ;
+extern uint16_t g_timeMixer ;
+			MixerCount += 1 ;		
+			uint16_t t1 = getTmr2MHz() ;
+#ifdef PCBX9D
+extern uint16_t MixerRunAtTime ;
+			MixerRunAtTime = t1 ;
+#endif
+			perOutPhase(g_chans512, 0);
+			t1 = getTmr2MHz() - t1 ;
+			g_timeMixer = t1 ;
+		}
 		DmaDebugDone = 0x80 ;
 	}
 

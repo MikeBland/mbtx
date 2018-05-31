@@ -564,6 +564,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define EVT_ENTRY               (0xff - _MSK_KEY_REPT)
 #define EVT_ENTRY_UP            (0xfe - _MSK_KEY_REPT)
 #define EVT_TOGGLE_GVAR         (0xfd - _MSK_KEY_REPT)
+//#define EVT_EXIT	              (0xfc - _MSK_KEY_REPT)
 #define EVT_KEY_MASK             0x0f
 
 #define HEART_TIMER_PULSES 1 ;
@@ -869,7 +870,8 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 75
+#define NUM_TELEM_ITEMS 76
+#define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
 #define NUM_SKYXCHNRAW (CHOUT_BASE+NUM_SKYCHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -989,6 +991,7 @@ struct t_alpha
 	uint8_t AlphaIndex ;
 	uint8_t lastSub ;
 	uint8_t AlphaLength ;
+	uint8_t AlphaChanged ;
 	uint8_t *PalphaText ;
 	uint8_t *PalphaHeading ;
 } ;
@@ -1422,8 +1425,15 @@ extern uint8_t ScriptFlags ;
 
 #endif
 
-extern uint8_t LastMusicStartSwitchState ;
-extern uint8_t LastMusicPauseSwitchState ;
+struct t_MusicSwitches
+{
+	uint8_t LastMusicStartSwitchState ;
+	uint8_t LastMusicPauseSwitchState ;
+	uint8_t LastMusicPrevSwitchState ;
+	uint8_t LastMusicNextSwitchState ;
+} ;
+ 
+extern struct t_MusicSwitches MusicSwitches ;
 
 // Failsafe values
 #define FAILSAFE_NOT_SET		0
@@ -1492,12 +1502,36 @@ struct t_filelist
 	DIR Dj ;
 } ;
 
+struct t_maintenance
+{
+	UINT BlockCount ;
+	UINT XblockCount ;
+	uint8_t UpdateItem ;
+	uint8_t BlockInUse ;
+	uint8_t SportVerValid ;
+	uint8_t SportState ;
+	uint32_t HexFileIndex ;
+	uint32_t HexFileRead ;
+	TCHAR FlashFilename[60] ;
+	FIL FlashFile ;
+#ifdef PCBSKY
+uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
+#endif
+} ;
+
 union t_sharedMemory
 {
-	struct t_text TextControl ;	
+	struct
+	{
+		struct t_alpha Alpha ;
+		struct t_text TextControl ;	
+	} ;
 	struct t_calib Cal_data ;
-	struct t_alpha Alpha ;
-	struct t_filelist FileList ;
+	struct
+	{
+		struct t_filelist FileList ;
+		struct t_maintenance Mdata ;
+	} ;
 } ;
 
 

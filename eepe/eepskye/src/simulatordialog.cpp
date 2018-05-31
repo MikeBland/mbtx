@@ -118,6 +118,7 @@ simulatorDialog::simulatorDialog(QWidget *parent) :
 	  		ui->serialPortCB->addItem(info.portName) ;
 			}
 		}
+		VoiceCheckFlag100mS = 2 ;
 //    setupTimer();
 }
 
@@ -194,6 +195,398 @@ int8_t getAndSwitch( SKYCSwData &cs )
 	return x ;
 }
 
+// every 20mS
+void simulatorDialog::processSwitchTimer( uint32_t i )
+{
+  SKYCSwData &cs = g_model.customSw[i];
+//  uint8_t cstate = CS_STATE(cs.func);
+
+//  if(cstate == CS_TIMER)
+//	{
+		int16_t y ;
+		y = CsTimer[i] ;
+		if ( y == 0 )
+		{
+			int8_t z ;
+			z = cs.v1 ;
+			if ( z >= 0 )
+			{
+				z = -z-1 ;
+				y = z * 50 ;
+			}
+			else
+			{
+				y = z * 5 ;
+			}
+		}
+		else if ( y < 0 )
+		{
+			if ( ++y == 0 )
+			{
+				int8_t z ;
+				z = cs.v2 ;
+				if ( z >= 0 )
+				{
+					z += 1 ;
+					y = z * 50 - 1 ;
+				}
+				else
+				{
+					y = -(z*5)-1 ;
+				}
+			}
+		}
+		else  // if ( CsTimer[i] > 0 )
+		{
+			y -= 1 ;
+		}
+
+		int8_t x = getAndSwitch( cs ) ;
+		if ( x )
+		{
+      if (getSwitch( x,0,0) == 0 )
+			{
+				Last_switch[i] = 0 ;
+				if ( cs.func == CS_NTIME )
+				{
+					int8_t z ;
+					z = cs.v1 ;
+					if ( z >= 0 )
+					{
+						z = -z-1 ;
+						y = z * 50 ;					
+					}
+					else
+					{
+						y = z * 5 ;
+					}
+				}
+				else
+				{
+					y = -1 ;
+				}
+			}
+			else
+			{
+				Last_switch[i] = 2 ;
+			}
+		}
+		CsTimer[i] = y ;
+//	}
+}
+
+inline qint16 calc100toRESX(qint8 x)
+{
+    return (qint16)x*10 + x/4 - x/64;
+}
+
+inline qint16 calc1000toRESX(qint16 x)
+{
+    return x + x/32 - x/128 + x/512;
+}
+
+
+void simulatorDialog::processSwitches()
+{
+	uint32_t cs_index ;
+	for ( cs_index = 0 ; cs_index < NUM_SKYCSW ; cs_index += 1 )
+	{
+  	SKYCSwData &cs = g_model.customSw[cs_index] ;
+  	uint8_t ret_value = false ;
+
+  	if( cs.func )
+		{
+  		int8_t a = cs.v1 ;
+  		int8_t b = cs.v2 ;
+  		int16_t x = 0 ;
+  		int16_t y = 0 ;
+  		uint8_t s = CS_STATE( cs.func, g_model.modelVersion ) ;
+
+  		if(s == CS_VOFS)
+  		{
+  		  x = getValue(cs.v1u-1);
+    		if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
+				{
+  		    y = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2, &g_model ) ;
+				}
+  		  else
+  		  y = calc100toRESX(cs.v2);
+  		}
+  		else if(s == CS_VCOMP)
+  		{
+ 		    x = getValue(cs.v1u-1);
+ 		    y = getValue(cs.v2u-1);
+  		}
+
+  		switch (cs.func)
+			{
+	  		case (CS_VPOS):
+  		    ret_value = (x>y);
+  	    break;
+  			case (CS_VNEG):
+  		    ret_value = (x<y) ;
+  	    break;
+  			case (CS_APOS):
+	  	    ret_value = (abs(x)>y) ;
+  		  break;
+	  		case (CS_ANEG):
+  		    ret_value = (abs(x)<y) ;
+  	    break;
+				case CS_VEQUAL :
+  		    ret_value = (x == y) ;
+  	    break;
+				case CS_EXEQUAL:
+					if ( isAgvar( cs.v1 ) )
+					{
+						x *= 10 ;
+						y *= 10 ;
+					}
+  		  	ret_value = abs(x-y) < 32 ;
+  			break;
+	
+				case CS_VXEQUAL:
+					if ( isAgvar( cs.v1 ) || isAgvar( cs.v2 ) )
+					{
+						x *= 10 ;
+						y *= 10 ;
+					}
+  			  ret_value = abs(x-y) < 32 ;
+  			break;
+		
+  			case (CS_AND):
+  			case (CS_OR):
+  			case (CS_XOR):
+  			{
+  			  bool res1 = getSwitch(a,0,0) ;
+  			  bool res2 = getSwitch(b,0,0) ;
+  			  if ( cs.func == CS_AND )
+  			  {
+  			    ret_value = res1 && res2 ;
+  			  }
+  			  else if ( cs.func == CS_OR )
+  			  {
+  			    ret_value = res1 || res2 ;
+  			  }
+  			  else  // CS_XOR
+  			  {
+  			    ret_value = res1 ^ res2 ;
+  			  }
+  			}
+  			break;
+
+	  		case (CS_EQUAL):
+  		    ret_value = (x==y);
+  	    break;
+  			case (CS_NEQUAL):
+  		    ret_value = (x!=y);
+  	    break;
+  			case (CS_GREATER):
+  		    ret_value = (x>y);
+  		   break;
+	  		case (CS_LESS):
+  		    ret_value = (x<y);
+  	    break;
+	  		case (CS_NTIME):
+					processSwitchTimer( cs_index ) ;
+					ret_value = CsTimer[cs_index] >= 0 ;
+  			break ;
+				case (CS_TIME):
+				{	
+					processSwitchTimer( cs_index ) ;
+  			  ret_value = CsTimer[cs_index] >= 0 ;
+					int8_t x = getAndSwitch( cs ) ;
+					if ( x )
+					{
+					  if (getSwitch( x, 0, 0 ) )
+						{
+							if ( ( Last_switch[cs_index] & 2 ) == 0 )
+							{ // Triggering
+								ret_value = 1 ;
+							}	
+						}
+					}
+				}
+  			break ;
+  			case (CS_MONO):
+  			case (CS_RMONO):
+				{
+					if ( VoiceCheckFlag100mS & 2 )
+					{
+						// Resetting, retrigger any monostables
+						Last_switch[cs_index] &= ~2 ;
+					}
+					int8_t andSwOn = 1 ;
+					if ( ( cs.func == CS_RMONO ) )
+					{
+						andSwOn = getAndSwitch( cs ) ;
+						if ( andSwOn )
+						{
+							andSwOn = getSwitch( andSwOn,0,0) ;
+						}
+						else
+						{
+							andSwOn = 1 ;
+						}
+					}
+					
+				  if (getSwitch( cs.v1,0,0) )
+					{
+						if ( ( Last_switch[cs_index] & 2 ) == 0 )
+						{
+							// Trigger monostable
+							uint8_t trigger = 1 ;
+							if ( ( cs.func == CS_RMONO ) )
+							{
+								if ( ! andSwOn )
+								{
+									trigger = 0 ;
+								}
+							}
+							if ( trigger )
+							{
+								Last_switch[cs_index] = 3 ;
+								int16_t x ;
+								x = cs.v2 * 5 ;
+								if ( x < 0 )
+								{
+									x = -x ;
+								}
+								else
+								{
+									x += 5 ;
+									x *= 10 ;
+								}
+								CsTimer[cs_index] = x ;							
+							}
+						}
+					}
+					else
+					{
+						Last_switch[cs_index] &= ~2 ;
+					}
+					int16_t y ;
+					y = CsTimer[cs_index] ;
+					if ( Now_switch[cs_index] < 2 )	// not delayed
+					{
+						if ( y )
+						{
+							if ( ( cs.func == CS_RMONO ) )
+							{
+								if ( ! andSwOn )
+								{
+									y = 1 ;
+								}	
+							}
+							if ( --y == 0 )
+							{
+								Last_switch[cs_index] &= ~1 ;
+							}
+							CsTimer[cs_index] = y ;
+						}
+					}
+ 			  	ret_value = CsTimer[cs_index] > 0 ;
+				}
+  			break ;
+  
+				case (CS_LATCH) :
+		  		if (getSwitch( cs.v1,0,0) )
+					{
+						Last_switch[cs_index] = 1 ;
+					}
+					else
+					{
+					  if (getSwitch( cs.v2,0,0) )
+						{
+							Last_switch[cs_index] = 0 ;
+						}
+					}
+  			  ret_value = Last_switch[cs_index] & 1 ;
+  			break ;
+  			
+				case (CS_FLIP) :
+		  		if (getSwitch( cs.v1,0,0) )
+					{
+						if ( ( Last_switch[cs_index] & 2 ) == 0 )
+						{
+							// Clock it!
+					    if (getSwitch( cs.v2,0,0) )
+							{
+								Last_switch[cs_index] = 3 ;
+							}
+							else
+							{
+								Last_switch[cs_index] = 2 ;
+							}
+						}
+					}
+					else
+					{
+						Last_switch[cs_index] &= ~2 ;
+					}
+  			  ret_value = Last_switch[cs_index] & 1 ;
+  			break ;
+  			case (CS_BIT_AND) :
+				{	
+  			  x = getValue(cs.v1-1);
+					y = (uint8_t) cs.v2 ;
+					y |= cs.bitAndV3 << 8 ;
+  			  ret_value = ( x & y ) != 0 ;
+				}
+  			break ;
+  			default:
+  		    ret_value = false;
+ 		    break;
+  		}
+
+			if ( ret_value )
+			{
+				int8_t x = getAndSwitch( cs ) ;
+				if ( x )
+				{
+  		    ret_value = getSwitch( x, 0, 0 ) ;
+				}
+			}
+			if ( ( cs.func < CS_LATCH ) || ( cs.func > CS_RMONO ) )
+			{
+				Last_switch[cs_index] = ret_value ;
+			}
+			if ( Now_switch[cs_index] == 0 )	// was off
+			{
+				if ( ret_value )
+				{
+					if ( g_model.switchDelay[cs_index] )
+					{
+						ret_value = g_model.switchDelay[cs_index] * 10 ;
+					}
+				}
+			}
+			else
+			{
+				if ( Now_switch[cs_index] > 1 )	// delayed
+				{
+					if ( ret_value )
+					{
+						uint8_t temp = Now_switch[cs_index] - 2 ;
+						if ( temp )
+						{
+							ret_value = temp ;
+						}
+					}
+				}
+			}
+			Now_switch[cs_index] = ret_value ;
+		}
+		else // no function
+		{
+			if ( VoiceCheckFlag100mS & 2 )
+			{
+				Now_switch[cs_index] = 0 ;
+			}
+		}
+	}
+	
+}
+
 void simulatorDialog::timerEvent()
 {
 		uint8_t i ;
@@ -211,6 +604,7 @@ void simulatorDialog::timerEvent()
 			{
         memcpy(&g_model,&Sim_m,sizeof(SKYModelData));
 				ModelDataValid = 0 ;
+				VoiceCheckFlag100mS = 2 ;
 			}
     	
 			char buf[sizeof(g_model.name)+1];
@@ -288,50 +682,54 @@ void simulatorDialog::timerEvent()
 
 		if ( one_sec_precount & 1 )	// Every 20mS
 		{
-			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
-			{
-        SKYCSwData &cs = g_model.customSw[i];
-//        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
-  			if ( g_model.modelVersion >= 3 )
-				{
-					if ( cs.func == CS_LATCH )
-					{
-		    	  if (getSwitch( cs.v1, 0, 0) )
-						{
-							Last_switch[i] = 1 ;
-						}
-						else
-						{
-			  	    if (getSwitch( cs.v2, 0, 0) )
-							{
-								Last_switch[i] = 0 ;
-							}
-						}
-					}
-					if ( cs.func == CS_FLIP )
-					{
-		    	  if (getSwitch( cs.v1, 0, 0) )
-						{
-							if ( ( Last_switch[i] & 2 ) == 0 )
-							{
-								// Clock it!
-			  	    	if (getSwitch( cs.v2, 0, 0) )
-								{
-									Last_switch[i] = 3 ;
-								}
-								else
-								{
-									Last_switch[i] = 2 ;
-								}
-							}
-						}
-						else
-						{
-							Last_switch[i] &= ~2 ;
-						}
-					}
-			  }
-			}
+			processSwitches() ;
+			VoiceCheckFlag100mS = 0 ;
+
+			
+//			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
+//			{
+//        SKYCSwData &cs = g_model.customSw[i];
+////        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
+//  			if ( g_model.modelVersion >= 3 )
+//				{
+//					if ( cs.func == CS_LATCH )
+//					{
+//		    	  if (getSwitch( cs.v1, 0, 0) )
+//						{
+//							Last_switch[i] = 1 ;
+//						}
+//						else
+//						{
+//			  	    if (getSwitch( cs.v2, 0, 0) )
+//							{
+//								Last_switch[i] = 0 ;
+//							}
+//						}
+//					}
+//					if ( cs.func == CS_FLIP )
+//					{
+//		    	  if (getSwitch( cs.v1, 0, 0) )
+//						{
+//							if ( ( Last_switch[i] & 2 ) == 0 )
+//							{
+//								// Clock it!
+//			  	    	if (getSwitch( cs.v2, 0, 0) )
+//								{
+//									Last_switch[i] = 3 ;
+//								}
+//								else
+//								{
+//									Last_switch[i] = 2 ;
+//								}
+//							}
+//						}
+//						else
+//						{
+//							Last_switch[i] &= ~2 ;
+//						}
+//					}
+//			  }
+//			}
 		}
 
 
@@ -1696,16 +2094,6 @@ void simulatorDialog::resizeEvent(QResizeEvent *event)
 }
 
 
-inline qint16 calc100toRESX(qint8 x)
-{
-    return (qint16)x*10 + x/4 - x/64;
-}
-
-inline qint16 calc1000toRESX(qint16 x)
-{
-    return x + x/32 - x/128 + x/512;
-}
-
 bool simulatorDialog::hwKeyState(int key)
 {
   if ( ( txType == 0 ) || ( txType == 3 ) )
@@ -1872,7 +2260,7 @@ qint16 simulatorDialog::getValue(qint8 i)
     return 0;
 }
 
-int32_t isAgvar(uint8_t value)
+int32_t simulatorDialog::isAgvar(uint8_t value)
 {
 	if ( value >= 70 )
 	{
@@ -1890,15 +2278,15 @@ int8_t SwitchStack[SW_STACK_SIZE] ;
 
 bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 {
-    bool ret_value ;
-    uint8_t cs_index ;
-    uint8_t aswitch ;
+  bool ret_value ;
+  uint8_t cs_index ;
+  uint8_t aswitch ;
 
 	aswitch = abs(swtch) ;
  	SwitchStack[level] = aswitch ;
 
 	int limit = ((txType==1) || (txType == 2) || (txType == 9)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
-   cs_index = abs(swtch)-(limit-NUM_SKYCSW);
+	cs_index = abs(swtch)-(limit-NUM_SKYCSW);
 
 	{
 		int32_t index ;
@@ -1911,257 +2299,259 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 			}
 		}
 	}
-    
-	  if ( level > SW_STACK_SIZE - 1 )
-  	{
-  	  ret_value = Last_switch[cs_index] & 1 ;
-  	  return swtch>0 ? ret_value : !ret_value ;
-  	}
+	if ( level > SW_STACK_SIZE - 1 )
+  {
+  	ret_value = Last_switch[cs_index] & 1 ;
+  	return swtch>0 ? ret_value : !ret_value ;
+  }
 
-		if ( swtch == 0 )
-		{
-			return nc ;
-		}
-		if ( swtch == limit )
-		{
-			return true ;
-		}
-		if ( swtch == -limit )
-		{
-			return false ;
-		}
+	if ( swtch == 0 )
+	{
+		return nc ;
+	}
+	if ( swtch == limit )
+	{
+		return true ;
+	}
+	if ( swtch == -limit )
+	{
+		return false ;
+	}
 
-
-		if ( ( txType == 0 ) || ( txType == 3 ) )
+	if ( ( txType == 0 ) || ( txType == 3 ) )
+	{
+		if ( abs(swtch) > MAX_DRSWITCH )
 		{
-			if ( abs(swtch) > MAX_DRSWITCH )
+			uint8_t value = hwKeyState( abs(swtch) ) ;
+			if ( swtch > 0 )
 			{
-				uint8_t value = hwKeyState( abs(swtch) ) ;
-				if ( swtch > 0 )
-				{
-					return value ;
-				}
-				else
-				{
-					return ! value ;
-				}
+				return value ;
+			}
+			else
+			{
+				return ! value ;
 			}
 		}
-		else
+	}
+	else
+	{
+    if ( swtch > limit )
 		{
-    	if ( swtch > limit )
+			uint8_t value = hwKeyState( abs(swtch) ) ;
+			if ( swtch > 0 )
 			{
-				uint8_t value = hwKeyState( abs(swtch) ) ;
-				if ( swtch > 0 )
-				{
-					return value ;
-				}
-				else
-				{
-					return ! value ;
-				}
+				return value ;
+			}
+			else
+			{
+				return ! value ;
 			}
 		}
+	}
 
-    uint8_t dir = swtch>0;
-    if(abs(swtch)<(limit-NUM_SKYCSW)) {
-        if(!dir) return ! keyState((EnumKeys)(SW_BASE-swtch-1));
-        return            keyState((EnumKeys)(SW_BASE+swtch-1));
-    }
+  uint8_t dir = swtch>0;
+  if(abs(swtch)<(limit-NUM_SKYCSW))
+	{
+    if(!dir) return ! keyState((EnumKeys)(SW_BASE-swtch-1));
+    return            keyState((EnumKeys)(SW_BASE+swtch-1));
+  }
 
     //custom switch, Issue 78
     //use putsChnRaw
     //input -> 1..4 -> sticks,  5..8 pots
     //MAX,FULL - disregard
     //ppm
-    SKYCSwData &cs = g_model.customSw[cs_index];
-    if(!cs.func) return false;
-		
-    int8_t a = cs.v1;
-    int8_t b = cs.v2;
-    int16_t x = 0;
-    int16_t y = 0;
-
-    // init values only if needed
-    uint8_t s = CS_STATE(cs.func, g_model.modelVersion);
     
-		if(s == CS_VOFS)
-    {
-        x = getValue(a-1);
-      if (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT)
-			{
-        uint8_t idx = cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1 ;
-        y = convertTelemConstant( idx, cs.v2, &g_model ) ;
-//        y = convertTelemConstant( cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
-//				y = b ;
-			}
-			else
-			{
-        y = calc100toRESX(b);
-			}
-    }
-    else if(s == CS_VCOMP)
-    {
-        x = getValue(a-1);
-        y = getValue(b-1);
-    }
+	ret_value = Now_switch[cs_index] & 1 ;
+		
+//		SKYCSwData &cs = g_model.customSw[cs_index];
+//    if(!cs.func) return false;
+		
+//    int8_t a = cs.v1;
+//    int8_t b = cs.v2;
+//    int16_t x = 0;
+//    int16_t y = 0;
 
-    switch (cs.func) {
-    case (CS_VPOS):
-        ret_value = (x>y);
-        break;
-    case (CS_VNEG):
-        ret_value = (x<y) ;
-        break;
-    case (CS_APOS):
-        ret_value = (abs(x)>y) ;
-        break;
-    case (CS_ANEG):
-        ret_value = (abs(x)<y) ;
-        break;
-    case (CS_VEQUAL):
-        ret_value = (x==y);
-        break;
-		case CS_EXEQUAL:
-			if ( isAgvar( a ) )
-			{
-				x *= 10 ;
-				y *= 10 ;
-			}
-    	ret_value = abs(x-y) < 32 ;
-	  break ;
-		case CS_VXEQUAL:
-			if ( isAgvar( a ) || isAgvar( b ) )
-			{
-				x *= 10 ;
-				y *= 10 ;
-			}
-    	ret_value = abs(x-y) < 32 ;
-	  break ;
+//    // init values only if needed
+//    uint8_t s = CS_STATE(cs.func, g_model.modelVersion);
+    
+//		if(s == CS_VOFS)
+//    {
+//        x = getValue(a-1);
+//      if (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT)
+//			{
+//        uint8_t idx = cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1 ;
+//        y = convertTelemConstant( idx, cs.v2, &g_model ) ;
+////        y = convertTelemConstant( cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+////				y = b ;
+//			}
+//			else
+//			{
+//        y = calc100toRESX(b);
+//			}
+//    }
+//    else if(s == CS_VCOMP)
+//    {
+//        x = getValue(a-1);
+//        y = getValue(b-1);
+//    }
 
-    case (CS_AND):
-        ret_value = (getSwitch(a,0,level+1) && getSwitch(b,0,level+1));
-        break;
-    case (CS_OR):
-        ret_value = (getSwitch(a,0,level+1) || getSwitch(b,0,level+1));
-        break;
-    case (CS_XOR):
-        ret_value = (getSwitch(a,0,level+1) ^ getSwitch(b,0,level+1));
-        break;
-  	case (CS_BIT_AND) :
-  	  x = getValue(a-1);
-			y = (uint8_t) cs.v2 ;
-      y |= cs.bitAndV3 << 8 ;
-  	  ret_value = ( x & y ) != 0 ;
-    break;
+//    switch (cs.func) {
+//    case (CS_VPOS):
+//        ret_value = (x>y);
+//        break;
+//    case (CS_VNEG):
+//        ret_value = (x<y) ;
+//        break;
+//    case (CS_APOS):
+//        ret_value = (abs(x)>y) ;
+//        break;
+//    case (CS_ANEG):
+//        ret_value = (abs(x)<y) ;
+//        break;
+//    case (CS_VEQUAL):
+//        ret_value = (x==y);
+//        break;
+//		case CS_EXEQUAL:
+//			if ( isAgvar( a ) )
+//			{
+//				x *= 10 ;
+//				y *= 10 ;
+//			}
+//    	ret_value = abs(x-y) < 32 ;
+//	  break ;
+//		case CS_VXEQUAL:
+//			if ( isAgvar( a ) || isAgvar( b ) )
+//			{
+//				x *= 10 ;
+//				y *= 10 ;
+//			}
+//    	ret_value = abs(x-y) < 32 ;
+//	  break ;
 
-    case (CS_EQUAL):
-        ret_value = (x==y);
-        break;
-    case (CS_NEQUAL):
-        ret_value = (x!=y);
-        break;
-    case (CS_GREATER):
-        ret_value = (x>y);
-        break;
-    case (CS_LESS):
-        ret_value = (x<y);
-        break;
-    		case (CS_EGREATER):	// CS_LATCH
-    		    if ( g_model.modelVersion < 3 )
-						{
-							ret_value = (x>=y);
-						}
-						else
-						{
-							ret_value = Last_switch[cs_index] & 1 ;
-						}
-    		    break;
-    		case (CS_ELESS):		// CS_FLIP
-    		    if ( g_model.modelVersion < 3 )
-						{
-    		    	ret_value = (x<=y);
-						}
-						else
-						{
-							ret_value = Last_switch[cs_index] & 1 ;
-						}
-    		    break;
-    case (CS_NTIME):
-        ret_value = CsTimer[cs_index] >= 0 ;
-    break ;
-    case (CS_TIME):
-		{	
-  	  ret_value = CsTimer[cs_index] >= 0 ;
-			int8_t x ;
-			if ( ( txType == 0 ) || ( txType == 3 ) )
-			{
-				x = getAndSwitch( cs ) ;
-			}
-			else
-			{
-				x = cs.andsw ;
-			}
-			if ( x )
-			{
-			  if (getSwitch( x, 0, level+1) )
-				{
-          if ( ( Last_switch[cs_index] & 2 ) == 0 )
-					{ // Triggering
-						ret_value = 1 ;
-					}	
-				}
-			}
-		}
-    break ;
-  	case (CS_MONO):
-  	case (CS_RMONO):
-    	ret_value = CsTimer[cs_index] > 0 ;
-	  break ;
-    default:
-        return false;
-        break;
-    }
-		if ( ret_value )
-		{
-			if ( cs.andsw )
-			{
-				int8_t x ;
-				x = cs.andsw ;
-				if ( ( txType == 0 ) || ( txType == 3 ) )
-				{
-					if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
-					{
-						x += 1 ;
-					}
-					if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
-					{
-						x -= 1 ;
-					}
-					if ( x == 9+NUM_SKYCSW+1 )
-					{
-						x = 9 ;			// Tag TRN on the end, keep EEPROM values
-					}
-					if ( x == -(9+NUM_SKYCSW+1) )
-					{
-						x = -9 ;			// Tag TRN on the end, keep EEPROM values
-					}
-				}
-        ret_value = getSwitch( x, 0, level+1) ;
-			}
-		}
-    if ( g_model.modelVersion >= 3 )
-		{
-      if ( cs.func < CS_LATCH )
-			{
-				Last_switch[cs_index] = ret_value ;
-			}
-		}
-		else
-		{
-			Last_switch[cs_index] = ret_value ;
-		}
-		return swtch>0 ? ret_value : !ret_value ;
+//    case (CS_AND):
+//        ret_value = (getSwitch(a,0,level+1) && getSwitch(b,0,level+1));
+//        break;
+//    case (CS_OR):
+//        ret_value = (getSwitch(a,0,level+1) || getSwitch(b,0,level+1));
+//        break;
+//    case (CS_XOR):
+//        ret_value = (getSwitch(a,0,level+1) ^ getSwitch(b,0,level+1));
+//        break;
+//  	case (CS_BIT_AND) :
+//  	  x = getValue(a-1);
+//			y = (uint8_t) cs.v2 ;
+//      y |= cs.bitAndV3 << 8 ;
+//  	  ret_value = ( x & y ) != 0 ;
+//    break;
+
+//    case (CS_EQUAL):
+//        ret_value = (x==y);
+//        break;
+//    case (CS_NEQUAL):
+//        ret_value = (x!=y);
+//        break;
+//    case (CS_GREATER):
+//        ret_value = (x>y);
+//        break;
+//    case (CS_LESS):
+//        ret_value = (x<y);
+//        break;
+//    		case (CS_EGREATER):	// CS_LATCH
+//    		    if ( g_model.modelVersion < 3 )
+//						{
+//							ret_value = (x>=y);
+//						}
+//						else
+//						{
+//							ret_value = Last_switch[cs_index] & 1 ;
+//						}
+//    		    break;
+//    		case (CS_ELESS):		// CS_FLIP
+//    		    if ( g_model.modelVersion < 3 )
+//						{
+//    		    	ret_value = (x<=y);
+//						}
+//						else
+//						{
+//							ret_value = Last_switch[cs_index] & 1 ;
+//						}
+//    		    break;
+//    case (CS_NTIME):
+//        ret_value = CsTimer[cs_index] >= 0 ;
+//    break ;
+//    case (CS_TIME):
+//		{	
+//  	  ret_value = CsTimer[cs_index] >= 0 ;
+//			int8_t x ;
+//			if ( ( txType == 0 ) || ( txType == 3 ) )
+//			{
+//				x = getAndSwitch( cs ) ;
+//			}
+//			else
+//			{
+//				x = cs.andsw ;
+//			}
+//			if ( x )
+//			{
+//			  if (getSwitch( x, 0, level+1) )
+//				{
+//          if ( ( Last_switch[cs_index] & 2 ) == 0 )
+//					{ // Triggering
+//						ret_value = 1 ;
+//					}	
+//				}
+//			}
+//		}
+//    break ;
+//  	case (CS_MONO):
+//  	case (CS_RMONO):
+//    	ret_value = CsTimer[cs_index] > 0 ;
+//	  break ;
+//    default:
+//        return false;
+//        break;
+//    }
+//		if ( ret_value )
+//		{
+//			if ( cs.andsw )
+//			{
+//				int8_t x ;
+//				x = cs.andsw ;
+//				if ( ( txType == 0 ) || ( txType == 3 ) )
+//				{
+//					if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
+//					{
+//						x += 1 ;
+//					}
+//					if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
+//					{
+//						x -= 1 ;
+//					}
+//					if ( x == 9+NUM_SKYCSW+1 )
+//					{
+//						x = 9 ;			// Tag TRN on the end, keep EEPROM values
+//					}
+//					if ( x == -(9+NUM_SKYCSW+1) )
+//					{
+//						x = -9 ;			// Tag TRN on the end, keep EEPROM values
+//					}
+//				}
+//        ret_value = getSwitch( x, 0, level+1) ;
+//			}
+//		}
+//    if ( g_model.modelVersion >= 3 )
+//		{
+//      if ( cs.func < CS_LATCH )
+//			{
+//				Last_switch[cs_index] = ret_value ;
+//			}
+//		}
+//		else
+//		{
+//			Last_switch[cs_index] = ret_value ;
+//		}
+	return swtch>0 ? ret_value : !ret_value ;
 }
 
 

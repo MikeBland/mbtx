@@ -682,7 +682,7 @@ int16_t getValue(uint8_t i)
 			}
 			return x*2;
 		}
-		else if(i<CHOUT_BASE+NUM_CHNOUT) return ex_chans[i-CHOUT_BASE];
+		else if(i<CHOUT_BASE+NUM_CHNOUT) return Ex_chans[i-CHOUT_BASE];
     else if(i<CHOUT_BASE+NUM_CHNOUT+NUM_TELEM_ITEMS)
 		{
 			return get_telemetry_value( i-CHOUT_BASE-NUM_CHNOUT ) ;
@@ -2326,11 +2326,11 @@ int16_t validatePlusMinus125( int16_t trim )
 {
   if(trim > 125)
 	{
-		trim = 125 ;
+		return 125 ;
 	}	
   if(trim < -125 )
 	{
-		trim = -125 ;
+		return -125 ;
 	}	
 	return trim ;
 }
@@ -2341,9 +2341,10 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 	{
 		phase = getTrimFlightPhase( phase, idx ) ;
 	}
+	trim = validatePlusMinus125( trim ) ;
 	if ( phase )
 	{
-		trim = validatePlusMinus125( trim ) ;
+//		trim = validatePlusMinus125( trim ) ;
 //    if(trim < -125 || trim > 125)
 //    if(trim < -500 || trim > 500)
 //		{
@@ -2354,7 +2355,7 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 	}
 	else
 	{
-		trim = validatePlusMinus125( trim ) ;
+//		trim = validatePlusMinus125( trim ) ;
 //    if(trim < -125 || trim > 125)
 //		{
 //			trim = ( trim > 0 ) ? 125 : -125 ;
@@ -3344,7 +3345,7 @@ int8_t getGvarSourceValue( uint8_t src )
 	}
 	else if ( src <= 28 )	// Chans
 	{
-		value = ex_chans[src-13] / 10 ;
+		value = Ex_chans[src-13] / 10 ;
 	}
 //	else
 //	{
@@ -4500,8 +4501,10 @@ extern uint8_t serialDat0 ;
         eeWaitComplete() ;
     }
 #endif // QUICK_SELECT
-#ifdef FRSKY
+#ifndef V2
+ #ifdef FRSKY
     FrskyAlarmSendState |= 0x40 ;
+ #endif
 #endif
 
     // This bit depends on protocol

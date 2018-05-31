@@ -349,6 +349,7 @@ PACK(typedef struct t_EEGeneral {
 	VoiceAlarmData gvad[NUM_GLOBAL_VOICE_ALARMS] ;
 	uint8_t welcomeType ;
 	uint8_t welcomeFileName[8] ;
+	uint8_t SavedBatteryVoltage ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -565,9 +566,18 @@ PACK(typedef struct te_MixData {
 	uint8_t	res1 ;
 }) SKYMixData;
 
-PACK(typedef struct te_CSwData { // Custom Switches data
-  int8_t  v1; //input
-  int8_t  v2; 		//offset
+PACK(typedef struct te_CSwData
+{ // Custom Switches data
+	union
+	{
+  	int8_t  v1 ; //input
+		uint8_t v1u ;
+	} ;
+	union
+	{
+  	int8_t  v2 ; 		//offset
+		uint8_t v2u ;
+	} ;
 	uint8_t func;
 	int8_t andsw;
 	uint8_t bitAndV3 ;

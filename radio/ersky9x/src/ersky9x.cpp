@@ -44,6 +44,7 @@
 #endif
 #endif
 
+//#define LATENCY 1
 
 #include "ersky9x.h"
 #include "myeeprom.h"
@@ -234,6 +235,7 @@ extern "C" void USBD_Disconnect(void) ;
 #endif
 
 void processSwitches( void ) ;
+uint32_t check_power_or_usb( void ) ;
 
 #ifdef BASIC
 uint8_t ScriptFlags ;
@@ -407,10 +409,7 @@ uint8_t Activated = 0 ;
 uint8_t Tevent ;
 extern uint16_t SbusTimer ;
 
-uint8_t LastMusicStartSwitchState ;
-uint8_t LastMusicPauseSwitchState ;
-uint8_t LastMusicPrevSwitchState ;
-uint8_t LastMusicNextSwitchState ;
+struct t_MusicSwitches MusicSwitches ;
 
 #ifdef BLUETOOTH
 void tmrBt_Handle( void ) ;
@@ -576,7 +575,7 @@ uint8_t AlarmTimer = 100 ;		// Units of 10 mS
 uint8_t AlarmCheckFlag = 0 ;
 uint8_t VoiceTimer = 10 ;		// Units of 10 mS
 uint8_t VoiceCheckFlag100mS = 0 ;
-uint8_t CheckFlag50mS = 0 ;
+//uint8_t CheckFlag50mS = 0 ;
 uint8_t CheckFlag20mS = 0 ;
 uint8_t CheckTimer = 2 ;
 uint8_t DsmCheckTimer = 50 ;		// Units of 10 mS
@@ -2074,6 +2073,12 @@ extern unsigned char *EndOfHeap ;
 #ifdef PCBSKY
 	initExtraInput() ;		// PB14/DAC1 as input
 #endif
+
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	configure_pins( 0x6000, PIN_OUTPUT | PIN_PORTA | PIN_PUSHPULL | PIN_OS25 | PIN_NO_PULLUP ) ;
+// #endif
+//#endif
 
 	setup_switches() ;
 
@@ -4917,6 +4922,7 @@ void prepareForShutdown()
 		closeLogs() ;
 	}
   g_eeGeneral.unexpectedShutdown = 0 ;
+	g_eeGeneral.SavedBatteryVoltage = g_vbat100mV ;
 	STORE_MODELVARS ;			// To make sure we write model persistent timer
   STORE_GENERALVARS ;		// To make sure we write "unexpectedShutdown"
 	
@@ -5230,6 +5236,45 @@ extern uint8_t ModelImageValid ;
 #ifdef WHERE_DEBUG
 		where( 'S' ) ;
 #endif  	 
+
+#ifdef PCBSKY
+	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
+#endif
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+	if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) != RCC_CSR_WDGRSTF ) && !unexpectedShutdown )	// Not watchdog
+#endif
+	{
+		if ( g_vbat100mV > g_eeGeneral.SavedBatteryVoltage + 4 )
+		{
+			uint8_t result ;
+  		clearKeyEvents() ;
+			while(1)
+			{
+				lcd_clear() ;
+
+				lcd_puts_P(0 + X12OFFSET,2*FH,  XPSTR("\002Battery Charged?") ) ;
+				lcd_puts_P(0 + X12OFFSET,3*FH,  XPSTR("\004Reset Timer?") ) ;
+			  lcd_puts_Pleft( 5*FH,PSTR(STR_YES_NO));
+			  lcd_puts_Pleft( 6*FH,PSTR(STR_MENU_EXIT));
+			  refreshDisplay() ;
+
+				result = keyDown() & 0x86 ;
+      	if( result )
+	      {
+				  clearKeyEvents() ;
+					if ( result & 0x82 )
+					{
+						g_eeGeneral.totalElapsedTime = 0 ;
+					}
+    	    break ;
+	      }
+		    wdt_reset();
+				CoTickDelay(5) ;					// 10mS for now
+				if ( check_power_or_usb() ) break ;		// Usb on or power off
+			}
+		}
+	}
+
 	while (1)
 	{
 
@@ -6073,7 +6118,7 @@ void processMusicSwitches()
   int16_t mSwitch ;
 	uint32_t state ;
 	mSwitch = g_model.musicData.musicStartSwitch ;
-	state = musicSwitch( mSwitch, &LastMusicStartSwitchState ) ;
+	state = musicSwitch( mSwitch, &MusicSwitches.LastMusicStartSwitchState ) ;
 
 	if ( state == MUSIC_SWITCH_ON )	// Now on
 	{
@@ -6095,7 +6140,7 @@ void processMusicSwitches()
 	}
 
 	mSwitch = g_model.musicData.musicPauseSwitch ;
-	state = musicSwitch( mSwitch, &LastMusicPauseSwitchState ) ;
+	state = musicSwitch( mSwitch, &MusicSwitches.LastMusicPauseSwitchState ) ;
 	if ( state == MUSIC_SWITCH_ON )	// Now on
 	{
 		if ( MusicPlaying == MUSIC_PLAYING )
@@ -6124,7 +6169,7 @@ void processMusicSwitches()
 	}
 	
 	mSwitch = g_model.musicData.musicPrevSwitch ;
-	state = musicSwitch( mSwitch, &LastMusicPrevSwitchState ) ;
+	state = musicSwitch( mSwitch, &MusicSwitches.LastMusicPrevSwitchState ) ;
 	if ( g_eeGeneral.musicType )
 	{
 		if ( MusicPlaying == MUSIC_PLAYING )
@@ -6137,7 +6182,7 @@ void processMusicSwitches()
 	}
 
 	mSwitch = g_model.musicData.musicNextSwitch ;
-	state = musicSwitch( mSwitch, &LastMusicNextSwitchState ) ;
+	state = musicSwitch( mSwitch, &MusicSwitches.LastMusicNextSwitchState ) ;
 	if ( g_eeGeneral.musicType )
 	{
 		if ( MusicPlaying == MUSIC_PLAYING )
@@ -6281,18 +6326,18 @@ void processSwitches()
 
   		if(s == CS_VOFS)
   		{
-  		  x = getValue(cs.v1-1);
-  		  if ( (cs.v1 > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1 < EXTRA_POTS_START ) )
+  		  x = getValue(cs.v1u-1);
+    		if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
 				{
-  		    y = convertTelemConstant( cs.v1-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+  		    y = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
 				}
   		  else
-  		  y = calc100toRESX(cs.v2);
+  		  	y = calc100toRESX(cs.v2);
   		}
   		else if(s == CS_VCOMP)
   		{
- 		    x = getValue(cs.v1-1);
- 		    y = getValue(cs.v2-1);
+ 		    x = getValue(cs.v1u-1);
+ 		    y = getValue(cs.v2u-1);
   		}
 
   		switch (cs.func)
@@ -6504,8 +6549,8 @@ void processSwitches()
   			break ;
   			case (CS_BIT_AND) :
 				{	
-  			  x = getValue(cs.v1-1);
-					y = (uint8_t) cs.v2 ;
+  			  x = getValue(cs.v1u-1);
+					y = cs.v2u ;
 					y |= cs.bitAndV3 << 8 ;
   			  ret_value = ( x & y ) != 0 ;
 				}
@@ -6668,6 +6713,11 @@ void mainSequence( uint32_t no_menu )
 		HbeatCounter += 1 ;
 #endif
   }
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	configure_pins( 0x6000, PIN_OUTPUT | PIN_PORTA | PIN_PUSHPULL | PIN_OS25 | PIN_NO_PULLUP ) ;
+// #endif
+//#endif
 
 #ifdef PCBX12D
 	checkTrainerSource() ;
@@ -7072,12 +7122,12 @@ extern uint32_t i2c2_result() ;
 		processSwitches() ;
 	}
 
-	if ( CheckFlag50mS )
-	{
-		CheckFlag50mS = 0 ;
-		// Process all switches for delay etc.
-//		processTimer() ;
-	}
+//	if ( CheckFlag50mS )
+//	{
+//		CheckFlag50mS = 0 ;
+//		// Process all switches for delay etc.
+////		processTimer() ;
+//	}
 
 	if ( VoiceCheckFlag100mS )	// Every 100mS
   {
@@ -8285,6 +8335,11 @@ extern char lua_warning_info[] ;
 
 uint8_t ScriptActive ;
 
+
+#ifdef PCBX9D
+uint16_t MixerRunAtTime ;
+#endif
+
 void perMain( uint32_t no_menu )
 {
   static uint16_t lastTMR;
@@ -8297,6 +8352,9 @@ void perMain( uint32_t no_menu )
 	{
 		MixerCount += 1 ;		
 		uint16_t t1 = getTmr2MHz() ;
+#ifdef PCBX9D
+		MixerRunAtTime = t1 ;
+#endif
 		perOutPhase(g_chans512, 0);
 		t1 = getTmr2MHz() - t1 ;
 		g_timeMixer = t1 ;
@@ -9118,6 +9176,8 @@ void checkRotaryEncoder()
 }
 #endif	// PCB9XT
 
+uint32_t TempTimer ;
+
 #ifdef PCBSKY
 #if !defined(SIMU)
 static void init_rotary_encoder()
@@ -9191,6 +9251,23 @@ extern void checkRotaryEncoder() ;
 	
 	if ( ++pre_scale >= 2 )
 	{
+		
+//		if ( TempTimer == 0 )
+//		{
+//			TempTimer = 5 ;
+////				PE.08 ;
+//			configure_pins( 0x0200, PIN_OUTPUT | PIN_PORTE ) ;
+//			GPIOE->ODR &= ~0x0200 ;
+//		}
+//		else
+//		{
+//			TempTimer -= 1 ;
+//			if ( TempTimer == 1 )
+//			{
+//				GPIOE->ODR |= 0x0200 ;
+//			}
+//		}
+		
 		PowerOnTime += 1 ;
 		Tenms |= 1 ;			// 10 mS has passed
 		pre_scale = 0 ;
@@ -9211,19 +9288,19 @@ extern void checkRotaryEncoder() ;
 		if (--VoiceTimer == 0 )
 		{
 			VoiceTimer = 10 ;		// Restart timer
-			CheckFlag50mS = 1 ;
+//			CheckFlag50mS = 1 ;
 			__disable_irq() ;
 			VoiceCheckFlag100mS |= 1 ;	// Flag time to check alarms
 			__enable_irq() ;
 		}
-		if (VoiceTimer == 5 )
-		{
-			CheckFlag50mS = 1 ;
-//#ifdef PCBX7
-//	GPIOC->ODR ^= PIN_SW_EXT1 ;
-//	GPIOD->ODR ^= PIN_SW_EXT2 ;
-//#endif
-		}
+//		if (VoiceTimer == 5 )
+//		{
+//			CheckFlag50mS = 1 ;
+////#ifdef PCBX7
+////	GPIOC->ODR ^= PIN_SW_EXT1 ;
+////	GPIOD->ODR ^= PIN_SW_EXT2 ;
+////#endif
+//		}
 		
 		if (--DsmCheckTimer == 0 )
 		{
@@ -9787,7 +9864,16 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 	}
 	else
 	{
-		setLastIdx( (char *) PSTR(STR_CHANS_EXTRA), idx-EXTRA_POTS_START ) ;
+		if(idx < EXTRA_POTS_START + 8)
+		{
+			setLastIdx( (char *) PSTR(STR_CHANS_EXTRA), idx-EXTRA_POTS_START ) ;
+		}
+		else
+		{
+			// Extra telemetry items
+			setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW-8 ) ;
+			
+		}
 	}
 	lcd_putsAtt(x,y,LastItem,att);
 }
@@ -10350,6 +10436,10 @@ int16_t getValue(uint8_t i)
   if(i<7) return calibratedStick[i];//-512..512
 	if ( i >= EXTRA_POTS_START-1 )
 	{
+		if ( i >= EXTRA_POTS_START-1+8 )
+		{
+			return get_telemetry_value( i-CHOUT_BASE-NUM_SKYCHNOUT ) ;
+		}
   	if( i >= EXTRA_PPM_START )
 		{
 			if ( i < EXTRA_PPM_START + NUM_EXTRA_PPM )
@@ -10459,7 +10549,8 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 #endif
 
   uint8_t dir = swtch>0;
-  if(abs(swtch)<(MAX_SKYDRSWITCH-NUM_SKYCSW)) {
+  if(abs(swtch)<(MAX_SKYDRSWITCH-NUM_SKYCSW))
+	{
     if(!dir) return ! keyState((enum EnumKeys)(SW_BASE-swtch-1));
     return            keyState((enum EnumKeys)(SW_BASE+swtch-1));
   }

@@ -55,12 +55,18 @@ ifeq ($(PCB), X9D)
 #    LUA = 1
 #    CPPDEFS += -DLUA
    else
-    OBJDIR = x9dobj
-    BASIC = 1
-    CPPDEFS += -DBASIC 
-#	 LUA = 1
-#    CPPDEFS += -DLUA
-   endif
+    ifeq ($(PCBXLITE), 1)
+     OBJDIR = xliteobj
+     BASIC = 1
+     CPPDEFS += -DBASIC 
+    else
+     OBJDIR = x9dobj
+     BASIC = 1
+     CPPDEFS += -DBASIC 
+#     LUA = 1
+#     CPPDEFS += -DLUA
+	 endif
+	endif
   endif
  endif
 else
@@ -153,7 +159,11 @@ ifeq ($(PCB), X9D)
    ifeq ($(PCBX7), 1)
     PROJECT        = x7
    else
-    PROJECT        = x9d
+    ifeq ($(PCBXLITE), 1)
+     PROJECT        = xlite
+    else
+     PROJECT        = x9d
+    endif
    endif
   endif
  endif
@@ -234,6 +244,9 @@ else
      CPPDEFS += -DUSB_JOYSTICK
      ifeq ($(PCBX7), 1)
       CPPDEFS += -DPCBX7
+     endif
+     ifeq ($(PCBXLITE), 1)
+      CPPDEFS += -DPCBXLITE
      endif
    else
     ifeq ($(PCB), X12D)
@@ -973,6 +986,7 @@ clean:
 	-rm -f skyLobj/*.*
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
+	-rm -f xliteobj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

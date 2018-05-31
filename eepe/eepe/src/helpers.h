@@ -33,8 +33,8 @@ void populateCustomAlarmCB( QComboBox *b, int type ) ;
 #else
 void populateAnaVolumeCB( QComboBox *b, int value ) ;
 #endif
-void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max) ;
-int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar ) ;
+void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue = 0 ) ;
+int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extended = 0 ) ;
 
 #ifdef SKY
 void populateGvarCB(QComboBox *b, int value, int type, uint32_t extraPots) ;

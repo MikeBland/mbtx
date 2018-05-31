@@ -72,6 +72,8 @@ private:
     bool    swOn[MAX_SKYMIXERS];
     quint16 one_sec_precount;
 		int16_t	CsTimer[NUM_SKYCSW] ;
+		uint8_t Last_switch[NUM_SKYCSW] ;
+		uint8_t Now_switch[NUM_SKYCSW] ;
     quint8  fadePhases ;
     qint32  fade[NUM_SKYCHNOUT];
 		quint16	fadeScale[MAX_PHASES+1] ;
@@ -104,6 +106,7 @@ private:
     
 		quint8  current_limits ;
 		quint8  gvar_or_scalers ;
+		quint8	VoiceCheckFlag100mS ;
 
     SKYModelData g_model;
     EEGeneral g_eeGeneral;
@@ -121,6 +124,9 @@ private:
     void centerSticks();
     void timerTick();
 		void processAdjusters() ;
+		void processSwitches(void) ;
+    void processSwitchTimer( uint32_t i ) ;
+		int32_t isAgvar(uint8_t value) ;
 
     bool keyState(EnumKeys key);
 		bool hwKeyState(int key) ;

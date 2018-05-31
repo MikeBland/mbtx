@@ -339,6 +339,7 @@ extern uint8_t StickScrollTimer ;
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 #ifndef PCBX7
+#ifndef PCBXLITE
 struct t_serial_tx LcdDumpBuf ;
 
 void doLcdDump()
@@ -375,6 +376,7 @@ extern uint8_t ExtDisplaySend ;
 #endif
 	}	 
 }
+#endif // PCBXLITE
 #endif // PCBX7
 
 #endif
@@ -622,6 +624,7 @@ extern uint8_t AnaEncSw ;
 #endif
 #ifdef PCBX9D
 #ifndef PCBX7
+#ifndef PCBXLITE
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
 		doLcdDump() ;
@@ -634,6 +637,7 @@ extern uint8_t ExternalSet ;
 			ExternalSet = 50 ;
 		}
 	}
+#endif // PCBXLITE
 #endif // PCBX7
 #endif
 }
@@ -2397,6 +2401,47 @@ extern "C" void PIOA_IRQHandler()
 	}
 }
 
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_pb14_heartbeat()
+{
+	Pio *pioptr ;
+	pioptr = PIOB ;
+	
+	XjtHeartbeatCapture.valid = 1 ;
+	configure_pins( 0x00004000, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;   // PB14 is already on the free pin list
+	pioptr->PIO_ESR = 0x00004000 ;
+	pioptr->PIO_FELLSR = 0x00004000 ;
+	pioptr->PIO_AIMER = 0x00004000 ;
+	pioptr->PIO_IER = 0x00004000 ;
+	NVIC_SetPriority( PIOB_IRQn, 1 ) ;
+	NVIC_EnableIRQ(PIOB_IRQn) ;
+	
+}
+
+void stop_pb14_heartbeat()
+{
+	Pio *pioptr ;
+	pioptr = PIOB ;
+	
+	XjtHeartbeatCapture.valid = 0 ;
+	pioptr->PIO_IDR = 0x00004000 ;
+	NVIC_DisableIRQ(PIOB_IRQn) ;
+}
+
+
+extern "C" void PIOB_IRQHandler()
+{
+  uint32_t capture ;
+  uint32_t dummy ;
+	
+	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
+	dummy = PIOB->PIO_ISR ;			// Read and clear status register
+	(void) dummy ;		// Discard value - prevents compiler warning
+	XjtHeartbeatCapture.value = capture ;
+}
+
+
 extern "C" void TC5_IRQHandler()
 {
 	uint32_t status ;
@@ -2575,8 +2620,8 @@ void init_ssc( uint16_t baudrate )
 //  pioptr->PIO_PDR = 0x00020000 ;					// Assign to peripheral
 	
 	sscptr = SSC ;
-	sscptr->SSC_THR = 0xFF ;		// Make the output high.
-	sscptr->SSC_TFMR = 0x00000027 ; 	//  0000 0000 0000 0000 0000 0000 1010 0111 (8 bit data, lsb)
+	sscptr->SSC_THR = 0 ;		// Make the output low.
+	sscptr->SSC_TFMR = 0x00000007 ; 	//  0000 0000 0000 0000 0000 0000 1010 0111 (8 bit data, lsb)
 	uint32_t divisor = 125000*2 ;
 	if ( baudrate )
 	{

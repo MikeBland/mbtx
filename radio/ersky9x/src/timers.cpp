@@ -18,6 +18,7 @@
 #include <ctype.h>
 #include <string.h>
 
+//#define LATENCY 1
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
@@ -2226,12 +2227,25 @@ void setupPulsesPXX(uint8_t module)
   uint16_t chan_1 ;
 	uint8_t lpass ;
 
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	GPIOA->ODR |= 0x2000 ;
+// #endif	
+//#endif
+
 	if ( module == 0 )
 	{
 		lpass = Pass[module] ;
 #ifndef PCBX12D
 		PtrPxx = &pxxStream[module][0] ;
 		PxxValue = 0 ;
+		if ( g_model.Module[module].pxxDoubleRate )
+		{
+			if (lpass & 1)
+			{		
+				PxxValue = 9000 ;
+			}
+		}
 #else
 		PtrSerialPxx = PxxSerial ;
 #endif
@@ -2408,6 +2422,22 @@ void setupPulsesPXX(uint8_t module)
 			}
 		}
 		Pass[module] = lpass ;
+
+		if ( g_model.Module[module].pxxDoubleRate )
+		{
+			if (lpass & 1)
+			{		
+				TIM1->CCR2 = 8000 ;	            // Update time
+			}	 
+			else
+			{
+	  		TIM1->CCR2 = 17000 ;            // Update time
+			}
+		}
+		else
+		{
+  		TIM1->CCR2 = 17000 ;            // Update time
+		}
 	}  
 	else
 	{
@@ -2417,6 +2447,13 @@ void setupPulsesPXX(uint8_t module)
 		PcmCrc_x = 0 ;
   	PcmOnesCount_x = 0 ;
 		PxxValue_x = 0 ;
+		if ( g_model.Module[module].pxxDoubleRate )
+		{
+			if (lpass & 1)
+			{		
+				PxxValue_x = 9000 ;
+			}
+		}
   	putPcmPart_x( 0 ) ;
   	putPcmPart_x( 0 ) ;
   	putPcmPart_x( 0 ) ;
@@ -2563,7 +2600,27 @@ void setupPulsesPXX(uint8_t module)
 			}
 		}
 		Pass[module] = lpass ;
+		if ( g_model.Module[module].pxxDoubleRate )
+		{
+			if (lpass & 1)
+			{		
+				TIM8->CCR2 = 8000 ;	            // Update time
+			}
+			else
+			{
+	  		TIM8->CCR2 = 17000 ;            // Update time
+			}
+		}
+		else
+		{
+  		TIM8->CCR2 = 17000 ;            // Update time
+		}
 	}
+//#ifdef PCBX9D
+// #ifdef LATENCY
+//	GPIOA->ODR &= ~0x2000 ;
+// #endif	
+//#endif
 }
 
 

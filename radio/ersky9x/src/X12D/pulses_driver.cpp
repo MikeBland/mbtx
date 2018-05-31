@@ -951,12 +951,12 @@ void init_ext_serial( uint32_t type )
 	
 	if ( type == EXT_TYPE_PXX )
 	{
-		EXTMODULE_TIMER->ARR = 18000 ;                     // 9mS
+		EXTMODULE_TIMER->ARR = 17999 ;                     // 9mS
   	EXTMODULE_TIMER->CCR2 = 15000 ;            // Update time
 	}
 	else if ( type == EXT_TYPE_DSM )
 	{
-		EXTMODULE_TIMER->ARR = 44000 ;                     // 22mS
+		EXTMODULE_TIMER->ARR = 43999 ;                     // 22mS
   	EXTMODULE_TIMER->CCR2 = 40000 ;            // Update time
 	}
 	else // type == EXT_TYPE_MULTI

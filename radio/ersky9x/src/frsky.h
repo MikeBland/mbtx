@@ -60,7 +60,7 @@
 #define FR_AMP_MAH		36
 #define FR_CELLS_TOT	37
 #define FR_VOLTS			38
-#define FR_VSPD				39
+#define FR_VSPD				39	// Moved from 0x30 (48)
 #define FR_RXV				40
 #define FR_A3					41
 #define FR_A4					42

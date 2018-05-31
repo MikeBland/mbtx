@@ -101,7 +101,7 @@ uint8_t Multi2Data[28] ;
 //#define FranceBit 0x10
 //#define DsmxBit  0x08
 
-static uint8_t pass ;		// For PXX and DSM-9XR and ASSAN
+static uint8_t Pass ;		// For PXX and DSM-9XR and ASSAN
 static uint8_t bitlen ;
 //uint8_t DebugDsmPass ;
 uint8_t PulsesPaused ;
@@ -361,6 +361,8 @@ extern "C" void SW7_IRQHandler( void )
 	setupPulses() ;
 }
 
+uint16_t XjtHbeatOffset ;
+
 #ifndef SIMU
 extern "C" void PWM_IRQHandler (void)
 {
@@ -442,18 +444,51 @@ extern "C" void PWM_IRQHandler (void)
 			break ;
 
       case PROTO_PXX:
-				// Alternate periods of 6.5mS and 2.5 mS
+				// Alternate periods of 8.0/3.5mS and 1.0 mS
 				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
-				if ( period == 5000 )	// 2.5 mS
+				if ( period == 2000 )	// 1.0 mS
 				{
-					period = 6500*2 ;
+					XjtHbeatOffset = TC1->TC_CHANNEL[0].TC_CV - XjtHeartbeatCapture.value ;
+					if ( g_model.Module[1].pxxDoubleRate )
+					{
+						period = 3500*2 ;	// Use 4.5mS period total
+						if ( (Pass & 1) == 0 )
+						{
+							if ( XjtHeartbeatCapture.valid )
+							{
+								if ( XjtHbeatOffset > 0x2500 )
+								{
+									period -= 20 ;                     // 9mS
+								}
+								else
+								{
+									period += 20 ;                     // 9mS
+								}
+							}
+						}
+					}
+					else
+					{
+						period = 8000*2 ;
+						if ( XjtHeartbeatCapture.valid )
+						{
+							if ( XjtHbeatOffset > 0x2500 )
+							{
+								period -= 20 ;                     // 9mS
+							}
+							else
+							{
+								period += 20 ;                     // 9mS
+							}
+						}
+					}	 
 				}
 				else
 				{
-					period = 5000 ;	// 2.5 mS
+					period = 2000 ;	// 2.5 mS
 				}
 				pwmptr->PWM_CH_NUM[3].PWM_CPDRUPD = period ;	// Period in half uS
-				if ( period != 5000 )	// 2.5 mS
+				if ( period != 2000 )	// 2.5 mS
 				{
 					NVIC->STIR = SW7_IRQn ;
 //					setupPulses() ;
@@ -828,9 +863,9 @@ void setupPulsesDsm2(uint8_t chns)
 		uint8_t startChan = g_model.Module[1].startChannel ;
 //		DebugDsmPass = pass ;
 		sendByteDsm2( 0xAA );
-		if ( pass == 0 )
+		if ( Pass == 0 )
 		{
-  		sendByteDsm2( pass ) ;		// Actually is a 0
+  		sendByteDsm2( Pass ) ;		// Actually is a 0
 			// Do init packet
 			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
@@ -846,16 +881,16 @@ void setupPulsesDsm2(uint8_t chns)
 #else
   		sendByteDsm2( 1 ) ;		// 'Model Match' disabled
 #endif
-			pass = 1 ;
+			Pass = 1 ;
 		}
 		else
 		{
 //			DsmPassIndex = 0 ;
-			if ( pass == 2 )
+			if ( Pass == 2 )
 			{
 				startChan += 7 ;
 			}
-  		sendByteDsm2( pass );
+  		sendByteDsm2( Pass );
 
 			for(uint8_t i=0 ; i<7 ; i += 1 )
 			{
@@ -881,23 +916,23 @@ void setupPulsesDsm2(uint8_t chns)
     			sendByteDsm2( 0xff ) ;
 				}
 			}
-			if ( ++pass > 2 )
+			if ( ++Pass > 2 )
 			{
-				pass = 1 ;				
+				Pass = 1 ;				
 			}
 			if ( channels < 8 )
 			{
-				pass = 1 ;				
+				Pass = 1 ;				
 			}
 			DsmInitCounter += 1 ;
 			if( DsmInitCounter > 100)
 			{
 				DsmInitCounter = 0 ;
-				pass = 0 ;
+				Pass = 0 ;
 			}
 			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
-				pass = 0 ;		// Stay here
+				Pass = 0 ;		// Stay here
 			}
 		}
 	}
@@ -1105,7 +1140,7 @@ void startPulses()
 {
 	CurrentProtocol[1] = g_model.Module[1].protocol + 1 ;		// Not the same!
 	setupPulses() ;	// For DSM-9XR this won't be sent
-	pass = 0 ;			// Force a type 0 packet
+	Pass = 0 ;			// Force a type 0 packet
 }
 
 void setupPulses()
@@ -1132,6 +1167,10 @@ void setupPulses()
 				disable_main_ppm() ;
       break;
       case PROTO_PXX:
+				if ( XjtHeartbeatCapture.valid )
+				{
+					stop_pb14_heartbeat() ;					
+				}
 				disable_ssc() ;
       break;
       case PROTO_DSM2:
@@ -1168,7 +1207,7 @@ void setupPulses()
 //				Dsm_Type_channels = 12 ;
 //				Dsm_Type_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
 //				Dsm_mode_response = 0 ;
-				pass = 0 ;
+				Pass = 0 ;
       break;
 #ifdef XFIRE
       case PROTO_XFIRE :
@@ -1189,7 +1228,21 @@ void setupPulses()
     break;
   	case PROTO_PXX:
 //      sei() ;							// Interrupts allowed here
-      setupPulsesPXX();
+			if ( g_model.Module[1].pxxHeartbeatPB14 )
+			{
+				if ( XjtHeartbeatCapture.valid == 0 )
+				{
+					init_pb14_heartbeat() ;					
+				}
+			}
+			else
+			{
+				if ( XjtHeartbeatCapture.valid )
+				{
+					stop_pb14_heartbeat() ;					
+				}
+			}
+			setupPulsesPXX();
     break;
 	  case PROTO_DSM2:
     case PROTO_MULTI:
@@ -1735,7 +1788,7 @@ void putPcmFlush()
 {
   while ( Serial_bit_count != 0 )
 	{
-		put_serial_bit( 1 ) ;		// Line idle level
+		put_serial_bit( 0 ) ;		// Line idle level
   }
 }
 
@@ -1801,7 +1854,7 @@ void setupPulsesPXX()
     uint8_t i ;
     uint16_t chan ;
     uint16_t chan_1 ;
-		uint8_t lpass = pass ;
+		uint8_t lpass = Pass ;
 
 		Serial_byte = 0 ;
 		Serial_bit_count = 0 ;
@@ -1948,19 +2001,26 @@ void setupPulsesPXX()
     putPcmByte( chan ) ; 			// Checksum lo
     putPcmHead(  ) ;      // sync byte
     putPcmFlush() ;
-		if (g_model.Module[1].sub_protocol == 1 )		// D8
+		if ( g_model.Module[1].pxxDoubleRate )
 		{
-			lpass = 0 ;
+			lpass += 1 ;
 		}
 		else
 		{
-			lpass += 1 ;
-			if ( g_model.Module[1].channels == 1 )
+			if (g_model.Module[1].sub_protocol == 1 )		// D8
 			{
 				lpass = 0 ;
 			}
+			else
+			{
+				lpass += 1 ;
+				if ( g_model.Module[1].channels == 1 )
+				{
+					lpass = 0 ;
+				}
+			}
 		}
-		pass = lpass ;
+		Pass = lpass ;
 }
 
 

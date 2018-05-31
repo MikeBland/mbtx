@@ -167,13 +167,13 @@ void start_sound()
 	setVolume( 2 ) ;
 
 #ifndef REVA
-#ifndef REVX	
-	register Pio *pioptr ;
-	pioptr = PIOA ;
-	pioptr->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
-	pioptr->PIO_PER = 0x02000000L ;		// Enable bit A25 (Stock buzzer)
-	pioptr->PIO_OER = 0x02000000L ;		// Set bit A25 as output
-#endif
+//#ifndef REVX	
+//	register Pio *pioptr ;
+//	pioptr = PIOA ;
+//	pioptr->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
+//	pioptr->PIO_PER = 0x02000000L ;		// Enable bit A25 (Stock buzzer)
+//	pioptr->PIO_OER = 0x02000000L ;		// Set bit A25 as output
+//#endif
 #else
 	register Pio *pioptr ;
 	pioptr = PIOA ;
@@ -187,41 +187,41 @@ void start_sound()
 #endif
 }
 
-#ifndef TONE_MODE_2
-#ifndef REVA
-void buzzer_on()
-{
- #ifndef REVX
-	PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON
- #endif
-}
+//#ifndef TONE_MODE_2
+//#ifndef REVA
+////void buzzer_on()
+////{
+//// #ifndef REVX
+////	PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON
+//// #endif
+////}
 
-void buzzer_off()
-{
- #ifndef REVX
-	PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 ON
- #endif
-}
-#else
-void buzzer_on()
-{
-	PIOA->PIO_SODR = 0x00010000L ;	// Set bit A16 ON
-}
+////void buzzer_off()
+////{
+//// #ifndef REVX
+////	PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 ON
+//// #endif
+////}
+//#else
+//void buzzer_on()
+//{
+//	PIOA->PIO_SODR = 0x00010000L ;	// Set bit A16 ON
+//}
 
-void buzzer_off()
-{
-	PIOA->PIO_CODR = 0x00010000L ;	// Set bit A16 ON
-}
-#endif
+//void buzzer_off()
+//{
+//	PIOA->PIO_CODR = 0x00010000L ;	// Set bit A16 ON
+//}
+//#endif
 
-void buzzer_sound( uint8_t time )
-{
- #ifndef REVX
-	buzzer_on() ;
-	Buzzer_count = time ;
- #endif
-}
-#endif // TONE_MODE_2
+//void buzzer_sound( uint8_t time )
+//{
+// #ifndef REVX
+//	buzzer_on() ;
+//	Buzzer_count = time ;
+// #endif
+//}
+//#endif // TONE_MODE_2
 
 void set_frequency( uint32_t frequency )
 {

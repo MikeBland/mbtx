@@ -158,14 +158,7 @@ uint32_t xmegaUpdate() ;
 uint32_t multiUpdate() ;
 
 
-struct t_maintenance
-{
-	TCHAR FlashFilename[60] ;
-	FIL FlashFile ;
-	UINT BlockCount ;
-	UINT XblockCount ;
-} Mdata ;
-
+//struct t_maintenance Mdata ;
 
 
 extern FATFS g_FATFS ;
@@ -182,10 +175,10 @@ uint32_t BytesFlashed ;
 uint32_t ByteEnd ;
 uint32_t BlockOffset ;
 uint16_t MultiPageSize ;
-uint8_t UpdateItem ;
+//uint8_t UpdateItem ;
 uint8_t MaintenanceRunning = 0 ;
-uint8_t BlockInUse ;
-uint8_t SportVerValid ;
+//uint8_t BlockInUse ;
+//uint8_t SportVerValid ;
 uint8_t MultiResult ;
 uint8_t MultiType ;
 uint8_t MultiPort ;
@@ -194,8 +187,8 @@ uint8_t MultiInvert ;
 uint8_t MultiStm ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
-uint32_t HexFileIndex ;
-uint32_t HexFileRead ;
+//uint32_t HexFileIndex ;
+//uint32_t HexFileRead ;
 
 //uint16_t HexCount ;
 //uint16_t HexDebug ;
@@ -205,7 +198,7 @@ const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 															0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7,
 															0x98, 0x39, 0xBA, 0x1B/*, 0x7C, 0xDD, 0x5E, 0xFF*/ } ;
 
-uint8_t SportState ;
+//uint8_t SportState ;
 #define SPORT_IDLE				0
 #define SPORT_START				1
 #define SPORT_POWER_ON		2
@@ -456,7 +449,7 @@ void sendMultiByte( uint8_t byte )
 
 
 #ifdef PCBSKY
-uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
+//uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
 extern uint32_t ChipId ;
 
 uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
@@ -472,7 +465,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 	}
 
 	// Always initialise this here, setting a default doesn't seem to work
-	IAP_Function = (uint32_t (*)(uint32_t, uint32_t))  *(( uint32_t *)0x00800008) ;
+	SharedMemory.Mdata.IAP_Function = (uint32_t (*)(uint32_t, uint32_t))  *(( uint32_t *)0x00800008) ;
 	FlashSectorNum = (uint32_t) address ;
 	
 	if ( ChipId & 0x0080 )
@@ -501,7 +494,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 			flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x00000100 | 0x07 ; //AT91C_MC_FCMD_EPA = erase (8) pages
 			__disable_irq() ;
 			/* Call the IAP function with appropriate command */
-			i = IAP_Function( 0, flash_cmd ) ;
+			i = SharedMemory.Mdata.IAP_Function( 0, flash_cmd ) ;
 			__enable_irq() ;
 		}
 		flash_cmd = (0x5A << 24) | (FlashSectorNum << 8) | 0x01 ; //AT91C_MC_FCMD_WP = write page
@@ -514,7 +507,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 
 	__disable_irq() ;
 	/* Call the IAP function with appropriate command */
-	i = IAP_Function( 0, flash_cmd ) ;
+	i = SharedMemory.Mdata.IAP_Function( 0, flash_cmd ) ;
 	__enable_irq() ;
 	return i ;
 }
@@ -1282,6 +1275,7 @@ void menuUp1(uint8_t event)
 	static uint32_t firmwareAddress ;
 	uint32_t i ;
 	uint32_t width ;
+	struct t_maintenance *mdata = &SharedMemory.Mdata ;
    
 	wdt_reset() ;
 	if ( WatchdogTimeout < 50 )
@@ -1289,12 +1283,12 @@ void menuUp1(uint8_t event)
  		WatchdogTimeout = 50 ;
 	}
 	 
-	if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
+	if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 	{
   	TITLE( "UPDATE BOOT" ) ;
 	}
 #ifndef NO_MULTI
-	else if (UpdateItem == UPDATE_TYPE_MULTI )
+	else if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_MULTI )
 	{
   	TITLE( "UPDATE MULTI" ) ;
 	}
@@ -1302,11 +1296,11 @@ void menuUp1(uint8_t event)
 	else
 	{
 #ifdef PCB9XT
- 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+ 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 		{
   		TITLE( "UPDATE Ext. SPort" ) ;
 		}
-		else if (UpdateItem == UPDATE_TYPE_SPORT_INT )
+		else if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
   		TITLE( "UPDATE Int. XJT" ) ;
 		}
@@ -1317,11 +1311,11 @@ void menuUp1(uint8_t event)
 #endif
 		
 #ifdef PCBX9D
-		if (UpdateItem == UPDATE_TYPE_SPORT_INT )
+		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
   		TITLE( "UPDATE Int. XJT" ) ;
 		}
- 		else if (UpdateItem == UPDATE_TYPE_XMEGA )
+ 		else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 		{
   		TITLE( "UPDATE XMEGA" ) ;
 		}
@@ -1333,7 +1327,7 @@ void menuUp1(uint8_t event)
 
 #ifdef PCBSKY
  #ifndef REVX
-// 		if (UpdateItem == UPDATE_TYPE_COPROCESSOR )
+// 		if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )
 //		{
 //  		TITLE( "UPDATE COPROC" ) ;
 //		}
@@ -1342,7 +1336,7 @@ void menuUp1(uint8_t event)
   		TITLE( "UPDATE SPort" ) ;
 		}
  #else
- 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+ 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 		{
   		TITLE( "UPDATE SPort" ) ;
 		}
@@ -1350,14 +1344,14 @@ void menuUp1(uint8_t event)
 #endif
 #ifdef PCBSKY
 // #ifdef REVX
- 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+ 		if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 		{
   		TITLE( "UPDATE XMEGA" ) ;
 		}
 // #endif
 #endif
 #ifdef PCB9XT
- 		if (UpdateItem == UPDATE_TYPE_XMEGA )
+ 		if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 		{
   		TITLE( "UPDATE XMEGA" ) ;
 		}
@@ -1398,7 +1392,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &SharedMemory.FileList.Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
- 						if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) || (UpdateItem == UPDATE_TYPE_SPORT_EXT ) )
+ 						if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) || (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT ) )
 						{
 							fc->ext[0] = 'F' ;
 							fc->ext[1] = 'R' ;
@@ -1407,7 +1401,7 @@ void menuUp1(uint8_t event)
 						else
 						{
 #ifndef NO_MULTI
-							if ( (UpdateItem == UPDATE_TYPE_MULTI ) && MultiType )
+							if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) && MultiType )
 							{
 								fc->ext[0] = 'H' ;
 								fc->ext[1] = 'E' ;
@@ -1453,25 +1447,25 @@ void menuUp1(uint8_t event)
     break ;
 		
 		case UPDATE_FILE_LIST :
-			SportVerValid = 0 ;
+			mdata->SportVerValid = 0 ;
 			if ( fileList( event, &FileControl ) == 1 )
 			{
 				state = UPDATE_CONFIRM ;
 			}
     break ;
 		case UPDATE_CONFIRM :
- 			if ( (UpdateItem > UPDATE_TYPE_BOOTLOADER ) )
+ 			if ( (mdata->UpdateItem > UPDATE_TYPE_BOOTLOADER ) )
 			{
 #ifdef PCBX9D
- 				if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) )
+ 				if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
 				}
- 				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+ 				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
-				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
@@ -1479,20 +1473,20 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
 				}
-				SportVerValid = 0 ;
+				mdata->SportVerValid = 0 ;
 #else
  #ifndef REVX
-// 				if ( (UpdateItem == UPDATE_TYPE_COPROCESSOR ) )
+// 				if ( (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR ) )
 //				{
 //					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
 //				}
 // 				else
-				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
   #ifndef NO_MULTI
-				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
@@ -1503,11 +1497,11 @@ void menuUp1(uint8_t event)
 				}
 //				CoProcReady = 0 ;
  #else
- 				if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+ 				if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
-				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				else if ( (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
@@ -1518,21 +1512,21 @@ void menuUp1(uint8_t event)
  #endif
 #endif
 #ifdef PCB9XT
-		 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+		 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
-					SportVerValid = 0 ;
+					mdata->SportVerValid = 0 ;
 				}
- 				else if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) )
+ 				else if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
-					SportVerValid = 0 ;
+					mdata->SportVerValid = 0 ;
 				}
-				else if ( (UpdateItem == UPDATE_TYPE_XMEGA ) )
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
 				}
-				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
@@ -1543,17 +1537,17 @@ void menuUp1(uint8_t event)
 				}
 #endif
 #ifdef PCBX12D
-		 		if (UpdateItem == UPDATE_TYPE_SPORT_EXT )
+		 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
-					SportVerValid = 0 ;
+					mdata->SportVerValid = 0 ;
 				}
-// 				else if ( (UpdateItem == UPDATE_TYPE_SPORT_INT ) )
+// 				else if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 //				{
 //					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
-//					SportVerValid = 0 ;
+//					mdata->SportVerValid = 0 ;
 //				}
-				else if ( (UpdateItem == UPDATE_TYPE_MULTI ) )
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
@@ -1565,7 +1559,7 @@ void menuUp1(uint8_t event)
 				lcd_puts_Pleft( 2*FH, "Flash Bootloader from" ) ;
 			}
 #endif
-			cpystr( cpystr( (uint8_t *)Mdata.FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
+			cpystr( cpystr( (uint8_t *)mdata->FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
 #if defined(PCBTARANIS)
 			lcd_putsnAtt( 0, 4*FH, SharedMemory.FileList.Filenames[fc->vpos], DISPLAY_CHAR_WIDTH, 0 ) ;
 #else
@@ -1585,10 +1579,10 @@ void menuUp1(uint8_t event)
 			}
     break ;
 		case UPDATE_SELECTED :
-			f_open( &Mdata.FlashFile, Mdata.FlashFilename, FA_READ ) ;
-			f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+			f_open( &mdata->FlashFile, mdata->FlashFilename, FA_READ ) ;
+			f_read( &mdata->FlashFile, (BYTE *)FileData, 1024, &mdata->BlockCount ) ;
 			i = 1 ;
-			if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
+			if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 			{
 				i = validateFile( (uint32_t *) FileData ) ;
 			}
@@ -1598,7 +1592,7 @@ void menuUp1(uint8_t event)
 			}
 			else
 			{
-				if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
+				if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 				{
 #if defined(PCBX9D) || defined(PCB9XT)
 					firmwareAddress = 0x08000000 ;
@@ -1609,7 +1603,7 @@ void menuUp1(uint8_t event)
 				}
 #ifdef PCBSKY
  #ifndef REVX
-//				else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// Bootloader
+//				else if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )		// Bootloader
 //				{
 //					firmwareAddress = 0x00000080 ;
 //					if ( check_ready() == 0 )
@@ -1619,7 +1613,7 @@ void menuUp1(uint8_t event)
 //				}
  #endif
  // REVX
-				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
@@ -1639,11 +1633,11 @@ void menuUp1(uint8_t event)
 
 #endif
 #ifdef PCB9XT
-				else if (UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
+				else if (mdata->UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
 				{
 					width = 50 ;	// Not used
 				}
-				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
@@ -1652,7 +1646,7 @@ void menuUp1(uint8_t event)
 				}
 #endif
 #ifdef PCBX9D
-				else if (UpdateItem == UPDATE_TYPE_XMEGA )
+				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
@@ -1660,7 +1654,7 @@ void menuUp1(uint8_t event)
 				}
 #endif
 #ifndef NO_MULTI
-				else if (UpdateItem == UPDATE_TYPE_MULTI )
+				else if (mdata->UpdateItem == UPDATE_TYPE_MULTI )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
@@ -1671,10 +1665,10 @@ void menuUp1(uint8_t event)
 				else
 				{
 // SPort update
-					SportState = SPORT_START ;
+					mdata->SportState = SPORT_START ;
 					FirmwareSize = FileSize[fc->vpos] ;
-					BlockInUse = 0 ;
-					f_read( &Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &Mdata.XblockCount ) ;
+					mdata->BlockInUse = 0 ;
+					f_read( &mdata->FlashFile, (BYTE *)ExtraFileData, 1024, &mdata->XblockCount ) ;
 				}
 				BytesFlashed = 0 ;
 				BlockOffset = 0 ;
@@ -1694,7 +1688,7 @@ void menuUp1(uint8_t event)
 		case UPDATE_ACTION :
 			// Do the flashing
 			lcd_puts_Pleft( 3*FH, "Flashing" ) ;
-			if (UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
+			if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 			{
 				width = ByteEnd >> 9 ;
 				if ( BytesFlashed < ByteEnd )
@@ -1723,7 +1717,7 @@ void menuUp1(uint8_t event)
 					}
 					else
 					{
-						f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+						f_read( &mdata->FlashFile, (BYTE *)FileData, 1024, &mdata->BlockCount ) ;
 						ByteEnd += 1024 ;
 						BlockOffset = 0 ;
 					}
@@ -1732,7 +1726,7 @@ void menuUp1(uint8_t event)
 
 #ifdef PCBSKY
  #ifndef REVX
-//			else if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
+//			else if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
 //			{
 //				uint32_t size = FileSize[fc->vpos] ;
 //				width = BytesFlashed * 64 / size ;
@@ -1761,8 +1755,8 @@ void menuUp1(uint8_t event)
 //						}
 //						else
 //						{
-//							f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
-//							ByteEnd += Mdata.BlockCount ;
+//							f_read( &mdata->FlashFile, (BYTE *)FileData, 1024, &mdata->BlockCount ) ;
+//							ByteEnd += mdata->BlockCount ;
 //							BlockOffset = 0 ;
 //						}
 //					}
@@ -1775,7 +1769,7 @@ void menuUp1(uint8_t event)
 //			}
  #endif
  // REVX
-			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
 //				uint32_t size = FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
@@ -1790,12 +1784,12 @@ void menuUp1(uint8_t event)
 #endif
 			
 #ifdef PCB9XT
-			else if (UpdateItem == UPDATE_TYPE_AVR )
+			else if (mdata->UpdateItem == UPDATE_TYPE_AVR )
 			{
 				// No more display, never return, check for power off when finished
 				width = 0 ;
 			}
-			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
 //				uint32_t size = FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
@@ -1814,7 +1808,7 @@ void menuUp1(uint8_t event)
 			}
 #endif
 #ifdef PCBX9D
-			else if (UpdateItem == UPDATE_TYPE_XMEGA )
+			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
 //				uint32_t size = FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
@@ -1828,7 +1822,7 @@ void menuUp1(uint8_t event)
 			}
 #endif
 #ifndef NO_MULTI
-			else if (UpdateItem == UPDATE_TYPE_MULTI )
+			else if (mdata->UpdateItem == UPDATE_TYPE_MULTI )
 			{
 				if ( MultiState == MULTI_WAIT1	)
 				{
@@ -1849,24 +1843,24 @@ void menuUp1(uint8_t event)
 			else		// Internal/External Sport
 			{
 #if defined(PCBX9D) || defined(PCB9XT)
-				width = sportUpdate( (UpdateItem == UPDATE_TYPE_SPORT_INT) ? SPORT_INTERNAL : SPORT_EXTERNAL ) ;
+				width = sportUpdate( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT) ? SPORT_INTERNAL : SPORT_EXTERNAL ) ;
 #else
 				width = sportUpdate( SPORT_EXTERNAL ) ;
 #endif
 				if ( width > FirmwareSize )
 				{
 					state = UPDATE_COMPLETE ;
-					SportVerValid = width ;
+					mdata->SportVerValid = width ;
 				}
 				width *= 64 ;
 				width /= FirmwareSize ;
-				if ( SportVerValid )
+				if ( mdata->SportVerValid )
 				{
 					lcd_outhex4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
 					lcd_outhex4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
 				}
 
-				if ( SportState == SPORT_POWER_ON )
+				if ( mdata->SportState == SPORT_POWER_ON )
 				{
 					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
 				}
@@ -1874,8 +1868,8 @@ void menuUp1(uint8_t event)
 				if ( ( event == EVT_KEY_LONG(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
 				{
 					state = UPDATE_COMPLETE ;
-					SportVerValid = 0x00FF ; // Abort with failed
-					SportState = SPORT_IDLE ;
+					mdata->SportVerValid = 0x00FF ; // Abort with failed
+					mdata->SportState = SPORT_IDLE ;
 				}
 			}	
 			lcd_hline( 0, 5*FH-1, 65 ) ;
@@ -1889,16 +1883,16 @@ void menuUp1(uint8_t event)
 		
 		case UPDATE_COMPLETE :
 			lcd_puts_Pleft( 3*FH, "Flashing Complete" ) ;
- 			if ( (UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
+ 			if ( (mdata->UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
  			{
 #if defined(PCBX9D) || defined(PCB9XT)
- 				if ( SportVerValid & 1 )
+ 				if ( mdata->SportVerValid & 1 )
  				{
  					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  				}
 #endif
 #ifndef NO_MULTI
-				if (UpdateItem == UPDATE_TYPE_MULTI )
+				if (mdata->UpdateItem == UPDATE_TYPE_MULTI )
 				{
 					if ( MultiResult )
 					{
@@ -1908,13 +1902,13 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 				}
 #endif
-				if (UpdateItem == UPDATE_TYPE_XMEGA )
+				if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					displayXmegaData() ;
 				}
 #ifdef PCBSKY
  #ifndef REVX
-//				if (UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
+//				if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
 //				{
 //					if ( CoProresult )
 //					{
@@ -1924,12 +1918,12 @@ void menuUp1(uint8_t event)
 //				else
 				{
  #endif 			
- 					if ( SportVerValid & 1 )
+ 					if ( mdata->SportVerValid & 1 )
 	 				{
  						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
  					}
   #ifndef NO_MULTI
-					if (UpdateItem == UPDATE_TYPE_MULTI )
+					if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_MULTI )
 					{
 						lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 						lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
@@ -2026,7 +2020,7 @@ void menuUpdate(uint8_t event)
 			if ( position == 2*FH )
 			{
 				
-				UpdateItem = UPDATE_TYPE_BOOTLOADER ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_BOOTLOADER ;
 	      chainMenu(menuUp1) ;
 			}
 #endif
@@ -2034,58 +2028,58 @@ void menuUpdate(uint8_t event)
  #ifndef REVX
 //			if ( position == 3*FH )
 //			{
-//				UpdateItem = UPDATE_TYPE_COPROCESSOR ;
+//				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_COPROCESSOR ;
 //	      chainMenu(menuUp1) ;
 //			}
 			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
   #ifdef SMALL
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_XMEGA ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
 	#else
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
 			if ( position == 5*FH )
 			{
-				UpdateItem = UPDATE_TYPE_XMEGA ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
 	#endif
   #ifndef NO_MULTI
 			if ( position == 6*FH )
 			{
-				UpdateItem = UPDATE_TYPE_MULTI ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
 	#endif
  #else
 			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
 			if ( position == 5*FH )
 			{
-				UpdateItem = UPDATE_TYPE_XMEGA ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 6*FH )
 			{
-				UpdateItem = UPDATE_TYPE_MULTI ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
  #endif
@@ -2093,78 +2087,78 @@ void menuUpdate(uint8_t event)
 #ifdef PCBX9D
 			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_INT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 5*FH )
 			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
 			if ( position == 6*FH )
 			{
-				UpdateItem = UPDATE_TYPE_XMEGA ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 7*FH )
 			{
-				UpdateItem = UPDATE_TYPE_MULTI ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_INT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 5*FH )
 			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
-//				UpdateItem = UPDATE_TYPE_AVR ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+//				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_AVR ;
 	      chainMenu(menuChangeId) ;
 			}
 			if ( position == 6*FH )
 			{
-				UpdateItem = UPDATE_TYPE_XMEGA ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 7*FH )
 			{
-				UpdateItem = UPDATE_TYPE_MULTI ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
 #endif
 #ifdef PCBX12D
 			if ( position == 2*FH )
 //			{
-//				UpdateItem = UPDATE_TYPE_SPORT_INT ;
+//				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
 //	      chainMenu(menuUp1) ;
 //			}
 //			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 3*FH )
 			{
-				UpdateItem = UPDATE_TYPE_CHANGE_ID ;
-//				UpdateItem = UPDATE_TYPE_AVR ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+//				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_AVR ;
 	      chainMenu(menuChangeId) ;
 			}
 			if ( position == 4*FH )
 			{
-				UpdateItem = UPDATE_TYPE_MULTI ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
 #endif
@@ -2594,30 +2588,30 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 		switch( packet[2] )
 		{
 			case PRIM_ACK_POWERUP :
-				if ( SportState == SPORT_POWER_ON )
+				if ( SharedMemory.Mdata.SportState == SPORT_POWER_ON )
 				{
 					SportTimer = 2 ;
-					SportState = SPORT_VERSION ;
+					SharedMemory.Mdata.SportState = SPORT_VERSION ;
 				}
 			break ;
         
 			case PRIM_ACK_VERSION:
-				if ( SportState == SPORT_VERSION )
+				if ( SharedMemory.Mdata.SportState == SPORT_VERSION )
 				{
 					SportTimer = 2 ;
-					SportState = SPORT_DATA_START ;
+					SharedMemory.Mdata.SportState = SPORT_DATA_START ;
 					SportVersion[0] = packet[3] ;
 					SportVersion[1] = packet[4] ;
 					SportVersion[2] = packet[5] ;
 					SportVersion[3] = packet[6] ;
-					SportVerValid = 1 ;
+					SharedMemory.Mdata.SportVerValid = 1 ;
 				}
 			break ;
 
 			case PRIM_REQ_DATA_ADDR :
 			{
 				UINT bcount ;
-				bcount = BlockInUse ? Mdata.XblockCount : Mdata.BlockCount ;
+				bcount = SharedMemory.Mdata.BlockInUse ? SharedMemory.Mdata.XblockCount : SharedMemory.Mdata.BlockCount ;
 				
 				if ( BytesFlashed >= FirmwareSize )
 				{
@@ -2627,7 +2621,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 					TxPacket[1] = PRIM_DATA_EOF ;
 					SportTimer = 20 ;		// 200 mS
 					writePacket( TxPacket, 0xFF ) ;
-					SportState = SPORT_END ;
+					SharedMemory.Mdata.SportState = SPORT_END ;
 				}
 				else
 				{				
@@ -2641,31 +2635,31 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 						TxPacket[1] = PRIM_DATA_WORD ;
         		TxPacket[6] = addr & 0x000000FF ;
 						addr = ( addr & 1023 ) >> 2 ;		// 32 bit word offset into buffer
-						ptr = ( uint32_t *) (BlockInUse ? ExtraFileData : FileData ) ;
+						ptr = ( uint32_t *) (SharedMemory.Mdata.BlockInUse ? ExtraFileData : FileData ) ;
 						ptr += addr ;
 						uint32_t *dptr = (uint32_t *)(&TxPacket[2]) ;
         		*dptr = *ptr ;
 						SportTimer = 5 ;		// 50 mS
 						writePacket( TxPacket, 0xFF ) ;
 					}
-					if ( BlockInUse )
+					if ( SharedMemory.Mdata.BlockInUse )
 					{
-						Mdata.XblockCount = bcount ;
+						SharedMemory.Mdata.XblockCount = bcount ;
 					}
 					else
 					{
-						Mdata.BlockCount = bcount ;
+						SharedMemory.Mdata.BlockCount = bcount ;
 					}
 					if ( bcount == 0 )
 					{
-						SportState = SPORT_DATA_READ ;
-						if ( BlockInUse )
+						SharedMemory.Mdata.SportState = SPORT_DATA_READ ;
+						if ( SharedMemory.Mdata.BlockInUse )
 						{
-							BlockInUse = 0 ;						
+							SharedMemory.Mdata.BlockInUse = 0 ;						
 						}
 						else
 						{
-							BlockInUse = 1 ;
+							SharedMemory.Mdata.BlockInUse = 1 ;
 						}
 					}
 				}
@@ -2673,11 +2667,11 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 			break ;
 
 			case PRIM_END_DOWNLOAD :
-					SportState = SPORT_COMPLETE ;
+					SharedMemory.Mdata.SportState = SPORT_COMPLETE ;
 			break ;
 				
 			case PRIM_DATA_CRC_ERR :
-					SportState = SPORT_FAIL ;
+					SharedMemory.Mdata.SportState = SPORT_FAIL ;
 			break ;
 		}
 	}
@@ -2730,19 +2724,19 @@ uint32_t eat( uint8_t byte )
 
 uint32_t hexFileNextByte()
 {
-	if ( HexFileIndex >= Mdata.XblockCount )
+	if ( SharedMemory.Mdata.HexFileIndex >= SharedMemory.Mdata.XblockCount )
 	{
-		if ( Mdata.XblockCount < 1024 )
+		if ( SharedMemory.Mdata.XblockCount < 1024 )
 		{
 			
 			return 0 ;
 		}
-		f_read( &Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &Mdata.XblockCount ) ;
-		HexFileRead += Mdata.XblockCount ;
-		HexFileIndex = 0 ;
+		f_read( &SharedMemory.Mdata.FlashFile, (BYTE *)ExtraFileData, 1024, &SharedMemory.Mdata.XblockCount ) ;
+		SharedMemory.Mdata.HexFileRead += SharedMemory.Mdata.XblockCount ;
+		SharedMemory.Mdata.HexFileIndex = 0 ;
 
 	}
-	return ExtraFileData[HexFileIndex++] ;
+	return ExtraFileData[SharedMemory.Mdata.HexFileIndex++] ;
 }
 
 uint32_t fromHex( uint32_t data )
@@ -2866,10 +2860,10 @@ void hexFileStart()
 	
 	recordSize = 0 ;
 	inRecord = 0 ;
-	HexFileIndex = 0 ;
+	SharedMemory.Mdata.HexFileIndex = 0 ;
 	memmove(ExtraFileData, FileData, 1024 ) ;	// Hex data to here
-	Mdata.XblockCount = 1024 ;
-	HexFileRead = 1024 ;
+	SharedMemory.Mdata.XblockCount = 1024 ;
+	SharedMemory.Mdata.HexFileRead = 1024 ;
 }
 
 // Read file data to ExtraFileData, put binary into FileData
@@ -2922,7 +2916,7 @@ uint32_t multiUpdate()
 			if ( MultiType )	// Hex file
 			{
 				hexFileStart() ;
-				hexFileRead1024( 0, &Mdata.BlockCount ) ;
+				hexFileRead1024( 0, &SharedMemory.Mdata.BlockCount ) ;
 			}
 			MultiState = MULTI_WAIT1 ;
 		break ;
@@ -3081,19 +3075,19 @@ uint32_t multiUpdate()
 			{
 				if ( MultiType )	// Hex file
 				{
-					hexFileRead1024( BytesFlashed, &Mdata.BlockCount ) ;
+					hexFileRead1024( BytesFlashed, &SharedMemory.Mdata.BlockCount ) ;
 				}
 				else
 				{
-					f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+					f_read( &SharedMemory.Mdata.FlashFile, (BYTE *)FileData, 1024, &SharedMemory.Mdata.BlockCount ) ;
 				}
 				BlockOffset = 0 ;
-				ByteEnd += Mdata.BlockCount ;
+				ByteEnd += SharedMemory.Mdata.BlockCount ;
 		 		wdt_reset() ;
 			}
 			if ( MultiType )
 			{
-				if ( Mdata.BlockCount == 0 )
+				if ( SharedMemory.Mdata.BlockCount == 0 )
 				{
 					MultiState = MULTI_DONE ;
 					BytesFlashed = FirmwareSize ;
@@ -3120,11 +3114,11 @@ uint32_t multiUpdate()
 //#ifdef PCB9XT
 //			EXTERNAL_RF_OFF() ;
 //#endif
-			HexFileRead = BytesFlashed = FirmwareSize + 1 ;
+			SharedMemory.Mdata.HexFileRead = BytesFlashed = FirmwareSize + 1 ;
 		break ;
 	
 	}
-	return MultiType ? HexFileRead : BytesFlashed ;
+	return MultiType ? SharedMemory.Mdata.HexFileRead : BytesFlashed ;
 }
 #endif
 
@@ -3184,7 +3178,7 @@ uint32_t xmegaUpdate()
 			{
  				wdt_reset() ;
 				__enable_irq() ;
-				SportVerValid = 0x00FF ; // Abort with failed
+				SharedMemory.Mdata.SportVerValid = 0x00FF ; // Abort with failed
 				XmegaState = XMEGA_DONE ;
 			}
 		break ;
@@ -3203,9 +3197,9 @@ uint32_t xmegaUpdate()
 				BlockOffset += 256 ;
 				if ( BytesFlashed >= ByteEnd )
 				{
-					f_read( &Mdata.FlashFile, (BYTE *)FileData, 1024, &Mdata.BlockCount ) ;
+					f_read( &SharedMemory.Mdata.FlashFile, (BYTE *)FileData, 1024, &SharedMemory.Mdata.BlockCount ) ;
 					BlockOffset = 0 ;
-					ByteEnd += Mdata.BlockCount ;
+					ByteEnd += SharedMemory.Mdata.BlockCount ;
 		 			wdt_reset() ;
 				}
 				if ( BytesFlashed >= FirmwareSize )
@@ -3236,7 +3230,7 @@ uint32_t sportUpdate( uint32_t external )
 	{
 		SportTimer -= 1 ;
 	}
-	switch ( SportState )
+	switch ( SharedMemory.Mdata.SportState )
 	{
 		case SPORT_IDLE :
 			SportTimer = 0 ;
@@ -3273,7 +3267,7 @@ uint32_t sportUpdate( uint32_t external )
   			INTERNAL_RF_ON();
 			}
 #endif
-			SportState = SPORT_POWER_ON ;
+			SharedMemory.Mdata.SportState = SPORT_POWER_ON ;
 		break ;
 		
 		case SPORT_POWER_ON :
@@ -3294,7 +3288,7 @@ uint32_t sportUpdate( uint32_t external )
 				TxPacket[0] = 0x50 ;
 				TxPacket[1] = PRIM_REQ_VERSION ;
 				SportTimer = 20 ;		// 200 mS
-				SportState = SPORT_VERSION ;
+				SharedMemory.Mdata.SportState = SPORT_VERSION ;
 				writePacket( TxPacket, 0xFF ) ;
 			}
 		break ;
@@ -3304,7 +3298,7 @@ uint32_t sportUpdate( uint32_t external )
 			TxPacket[0] = 0x50 ;
 			TxPacket[1] = PRIM_CMD_DOWNLOAD ;
 			SportTimer = 20 ;		// 200 mS
-			SportState = SPORT_DATA ;
+			SharedMemory.Mdata.SportState = SPORT_DATA ;
 // Stop here for testing
 			writePacket( TxPacket, 0xFF ) ;
 		break ;
@@ -3323,10 +3317,10 @@ uint32_t sportUpdate( uint32_t external )
 		{	
 			uint32_t *ptr ;
 			UINT *pcount ;
-			ptr = ( uint32_t *) (BlockInUse ? FileData : ExtraFileData ) ;
-			pcount = BlockInUse ? &Mdata.BlockCount : &Mdata.XblockCount ;
-			f_read( &Mdata.FlashFile, (BYTE *)ptr, 1024, pcount ) ;
-			SportState = SPORT_DATA ;
+			ptr = ( uint32_t *) (SharedMemory.Mdata.BlockInUse ? FileData : ExtraFileData ) ;
+			pcount = SharedMemory.Mdata.BlockInUse ? &SharedMemory.Mdata.BlockCount : &SharedMemory.Mdata.XblockCount ;
+			f_read( &SharedMemory.Mdata.FlashFile, (BYTE *)ptr, 1024, pcount ) ;
+			SharedMemory.Mdata.SportState = SPORT_DATA ;
 		}
 		break ;
 		

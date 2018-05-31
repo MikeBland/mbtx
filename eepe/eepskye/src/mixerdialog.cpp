@@ -143,7 +143,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				}
 			}
 		}
-		if ( leeType == RADIO_TYPE_SKY )
+    if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -281,8 +281,8 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 			ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		}
 
-		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -125, 125 ) ;
-    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -125, 125 ) ;
+		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -250, 250, md->extWeight ) ;
+    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -250, 250, md->extOffset ) ;
     
 		ui->trimChkB->setChecked(md->carryTrim==0);
 //    ui->FMtrimChkB->setChecked(!md->disableExpoDr);
@@ -526,8 +526,61 @@ void MixerDialog::valuesChanged()
 			md->switchSource = ui->sourceSwitchCB->currentIndex() ;
 		}
 		ui->sourceSwitchCB->setVisible( md->srcRaw == MIX_3POS ) ;
-    md->weight       = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100 ) ;
-    md->sOffset      = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0 ) ;
+		{
+			int value ;
+			int extValue = 0 ;
+	    value = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, 1 ) ;
+			if ( value > 500 )
+			{
+				value -= 501 - 126 ;
+				if ( value > 128 )
+				{
+					value -= 256 ;
+				}
+			}
+			else
+			{
+				if ( value > 125 )
+				{
+					extValue = 1 ;
+					value -= 125 ;
+				}
+				else if ( value < -125 )
+				{
+					extValue = 3 ;
+					value += 125 ;
+				}
+			}
+			md->weight = value ;
+			md->extWeight = extValue ;
+  	  
+			value = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, 1 ) ;
+			extValue = 0 ;
+			if ( value > 500 )
+			{
+				value -= 501 - 126 ;
+				if ( value > 128 )
+				{
+					value -= 256 ;
+				}
+			}
+			else
+			{
+				if ( value > 125 )
+				{
+					extValue = 1 ;
+					value -= 125 ;
+				}
+				else if ( value < -125 )
+				{
+					extValue = 3 ;
+					value += 125 ;
+				}
+			}
+
+  	  md->sOffset = value ;
+			md->extOffset = extValue ;
+		}
     md->carryTrim    = ui->trimChkB->checkState() ? 0 : 1;
 		int limit = MAX_DRSWITCH ;
 		if ( leeType )

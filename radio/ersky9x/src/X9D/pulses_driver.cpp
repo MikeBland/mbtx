@@ -222,7 +222,7 @@ static void init_pa10_none()
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
 
   TIM1->CR1 &= ~TIM_CR1_CEN ;
-  TIM1->ARR = 36000 ;             // 18mS
+  TIM1->ARR = 35999 ;             // 18mS
   TIM1->CCR2 = 32000 ;            // Update time
   TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
   
@@ -261,7 +261,7 @@ static void init_pa7_none()
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
 
   TIM8->CR1 &= ~TIM_CR1_CEN ;
-  TIM8->ARR = 36000 ;             // 18mS
+  TIM8->ARR = 35999 ;             // 18mS
   TIM8->CCR2 = 32000 ;            // Update time
   TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
   
@@ -311,12 +311,12 @@ void init_pa10_serial( uint32_t type )
   
 	if ( type == PA10_TYPE_PXX )
 	{
-		TIM1->ARR = 18000 ;                     // 9mS
-  	TIM1->CCR2 = 15000 ;            // Update time
+		TIM1->ARR = 17999 ;                     // 9mS
+  	TIM1->CCR2 = 16000 ;            // Update time
 	}
 	else if ( type == PA10_TYPE_DSM )
 	{
-		TIM1->ARR = 44000 ;                     // 22mS
+		TIM1->ARR = 43999 ;                     // 22mS
   	TIM1->CCR2 = 40000 ;            // Update time
 	}
 	else // type == PA10_TYPE_MULTI
@@ -330,7 +330,7 @@ void init_pa10_serial( uint32_t type )
 			x = 0 ;
 		}
 		x *= 2000 ;
-		x += 7000 * 2 ;
+		x += 7000 * 2 - 1 ;
   	TIM8->ARR = x ;             // 11mS
   	TIM8->CCR2 = x-4000 ;       // Update time
 	}
@@ -496,7 +496,7 @@ extern "C" void TIM1_CC_IRQHandler()
 //	s_current_protocol[INTERNAL_MODULE] = PROTO_OFF ;
 //#endif
 //  DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
-	setupPulses(0) ;
+	setupPulses(INTERNAL_MODULE) ;
 
   if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX)
 	{
@@ -504,13 +504,14 @@ extern "C" void TIM1_CC_IRQHandler()
 		XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
 		if ( XjtHeartbeatCapture.valid )
 		{
-			if ( XjtHbeatOffset > 0x2200 )
+			if ( XjtHbeatOffset > 0x2A00 )
+//			if ( XjtHbeatOffset > 0x2200 )
 			{
-				TIM1->ARR = 17980 ;                     // 9mS
+				TIM1->ARR = 17979 ;                     // 9mS
 			}
 			else
 			{
-				TIM1->ARR = 18020 ;                     // 9mS
+				TIM1->ARR = 18019 ;                     // 9mS
 			}
 		}
 #endif
@@ -601,12 +602,12 @@ void init_pa7_serial( uint32_t type )
 
 	if ( type == PA7_TYPE_PXX )
 	{
-		TIM8->ARR = 18000 ;                     // 9mS
-  	TIM8->CCR2 = 15000 ;            // Update time
+		TIM8->ARR = 17999 ;                     // 9mS
+  	TIM8->CCR2 = 16000 ;            // Update time
 	}
 	else if ( type == PA7_TYPE_DSM )
 	{
-		TIM8->ARR = 44000 ;                     // 22mS
+		TIM8->ARR = 43999 ;                     // 22mS
   	TIM8->CCR2 = 40000 ;            // Update time
 	}
 	else // type == PA7_TYPE_MULTI
@@ -709,7 +710,7 @@ static void init_pa7_xfire()
 	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
 
   TIM8->CR1 &= ~TIM_CR1_CEN ;
-  TIM8->ARR = 8000 ;    // 4mS
+  TIM8->ARR = 7999 ;    // 4mS
   TIM8->CCR2 = 5000 ;   // Update time
 //  TIM8->CCR1 = 10000 ;   // Tx back on time
 //  TIM8->CCR3 = 1936*2 ;   // Tx hold on until time
@@ -833,6 +834,23 @@ extern "C" void TIM8_CC_IRQHandler()
 
   if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
 	{
+#ifdef PCBX9D
+	  if (s_current_protocol[INTERNAL_MODULE] != PROTO_PXX)
+		{
+			XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
+			if ( XjtHeartbeatCapture.valid )
+			{
+				if ( XjtHbeatOffset > 0x2200 )
+				{
+					TIM8->ARR = 17979 ;                     // 9mS
+				}
+				else
+				{
+					TIM8->ARR = 18019 ;                     // 9mS
+				}
+			}
+		}
+#endif
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
     DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
