@@ -2408,6 +2408,11 @@ void setupPulsesPXX(uint8_t module)
 #endif
 #ifdef PCBX12D
 		pulseStreamCount[module] = PtrSerialPxx - PxxSerial ;
+extern volatile uint8_t *PxxTxPtr ;
+extern volatile uint8_t PxxTxCount ;
+		PxxTxPtr = PxxSerial ;
+		PxxTxCount = pulseStreamCount[INTERNAL_MODULE] ;
+		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
 #endif
 		if (g_model.Module[module].sub_protocol == 1 )		// D8
 		{
@@ -2427,17 +2432,32 @@ void setupPulsesPXX(uint8_t module)
 		{
 			if (lpass & 1)
 			{		
+#ifdef PCBX12D
+				INTMODULE_TIMER->CCR2 = 8000 ;
+#else
 				TIM1->CCR2 = 8000 ;	            // Update time
-			}	 
+#endif
+			}
 			else
 			{
+#ifdef PCBX12D
+				INTMODULE_TIMER->CCR2 = 17000 ;
+#else
 	  		TIM1->CCR2 = 17000 ;            // Update time
+#endif
 			}
 		}
 		else
 		{
+#ifdef PCBX12D
+			INTMODULE_TIMER->CCR2 = 17000 ;
+#else
   		TIM1->CCR2 = 17000 ;            // Update time
+#endif
 		}
+#ifdef PCBX12D
+	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+#endif
 	}  
 	else
 	{
@@ -2600,6 +2620,25 @@ void setupPulsesPXX(uint8_t module)
 			}
 		}
 		Pass[module] = lpass ;
+		
+#ifdef PCBX12D
+		if ( g_model.Module[module].pxxDoubleRate )
+		{
+			if (lpass & 1)
+			{		
+				EXTMODULE_TIMER->CCR2 = 8000 ;	            // Update time
+			}
+			else
+			{
+	  		EXTMODULE_TIMER->CCR2 = 17000 ;            // Update time
+			}
+		}
+		else
+		{
+  		EXTMODULE_TIMER->CCR2 = 17000 ;            // Update time
+		}
+			
+#else
 		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
@@ -2615,6 +2654,7 @@ void setupPulsesPXX(uint8_t module)
 		{
   		TIM8->CCR2 = 17000 ;            // Update time
 		}
+#endif
 	}
 //#ifdef PCBX9D
 // #ifdef LATENCY

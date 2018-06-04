@@ -272,7 +272,7 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,	FR_RXRSI_COPY, FR_TXRSI_CO
 															FR_AIRSPEED, FR_CELL1,FR_CELL2,FR_CELL3,FR_CELL4,FR_CELL5,FR_CELL6,FR_RBOX_B1_V,FR_RBOX_B1_A,	// 47-55
 															FR_RBOX_B2_V,FR_RBOX_B2_A, FR_RBOX_B1_CAP, FR_RBOX_B2_CAP,FR_RBOX_SERVO,FR_RBOX_STATE,	// 56-61
 															FR_CELL7, FR_CELL8, FR_CELL9, FR_CELL10, FR_CELL11, FR_CELL12,                          // 62-67
-															FR_CUST1,FR_CUST2,FR_CUST3,FR_CUST4,FR_CUST5,FR_CUST6,FMODE,RUNTIME } ;							// 68-75
+															FR_CUST1,FR_CUST2,FR_CUST3,FR_CUST4,FR_CUST5,FR_CUST6,FMODE,RUNTIME,MODELTIME } ;							// 68-76
 
 
 // TXRSSI is always considered valid as it is forced to zero on loss of telemetry
@@ -280,7 +280,7 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,	FR_RXRSI_COPY, FR_TXRSI_CO
 
 // Make scalers always OK! Removed again
 const uint8_t TelemValid[] = { 
-1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2,2,2,2,2,2,0,0  } ;
+1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2,2,2,2,2,2,0,0,0  } ;
 
 uint8_t MaskRotaryLong ;
 
@@ -754,7 +754,7 @@ void putsAttIdxTelemItems( uint8_t x, uint8_t y, uint8_t index, uint8_t attr )
 		}
 	}
 	attr &= ~TSSI_TEXT ;
-	if ( index > TELEM_GAP_START )
+	if ( index >= TELEM_GAP_START + 8 )
 	{
 		index -= 8 ;
 	}
@@ -865,7 +865,7 @@ uint8_t telemItemValid( uint8_t index )
 {
 	uint8_t x ;
 
-	if ( index > TELEM_GAP_START )
+	if ( index >= TELEM_GAP_START + 8 )
 	{
 		index -= 8 ;
 	}
@@ -970,7 +970,7 @@ void voice_telem_item( int8_t index )
 //#endif
 		spoken = 1 ;
 	}
-	if ( index > TELEM_GAP_START )
+	if ( index >= TELEM_GAP_START + 8 )
 	{
 		index -= 8 ;
 	}
@@ -1194,7 +1194,7 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
 {
   int16_t result;
 
-	if ( channel > TELEM_GAP_START )
+	if ( channel >= TELEM_GAP_START + 8 )
 	{
 		channel -= 8 ;
 	}
@@ -1210,6 +1210,9 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
     case V_RTC :
       result *= 12 ;
     break;
+    case MODELTIME :
+      result *= 20 ;
+    break ;
     case RUNTIME :
       result *= 3 ;
     break ;
@@ -1305,7 +1308,7 @@ int16_t get_telemetry_value( int8_t channel )
 		return 0 ;
 	}
 //#endif	
-	if ( channel > TELEM_GAP_START )
+	if ( channel >= TELEM_GAP_START + 8 )
 	{
 		channel -= 8 ;
 	}
@@ -1322,6 +1325,9 @@ int16_t get_telemetry_value( int8_t channel )
 	{
     case RUNTIME :
     return g_eeGeneral.totalElapsedTime / 60 ;
+
+    case MODELTIME :
+    return g_model.totalTime / 60 ;
 
     case TIMER1 :
     case TIMER2 :
@@ -1470,7 +1476,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 	uint8_t fieldW = FW ;
 	uint8_t displayed = 0 ;
 	uint8_t valid = telemItemValid( channel ) ;
-	uint8_t mappedChannel = ( channel > TELEM_GAP_START ) ? channel - 8 : channel ;
+	uint8_t mappedChannel = ( channel >= TELEM_GAP_START + 8 ) ? channel - 8 : channel ;
 	 
 	if ( style & TELEM_LABEL )
 	{
@@ -1543,6 +1549,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		}	
 		break ;
 
+    case MODELTIME :
     case RUNTIME :
 //		break ;
     case V_RTC :
@@ -3558,7 +3565,7 @@ void menuLogging(uint8_t event)
 				if ( index < HUBDATALENGTH )
 				{
 					int8_t i ;
-					if ( index > TELEM_GAP_START )
+					if ( index >= TELEM_GAP_START + 8 )
 					{
 						index -= 8 ;
 					}
@@ -3642,7 +3649,7 @@ void menuBlocking(uint8_t event)
 		if ( index < HUBDATALENGTH )
 		{
 			int8_t i ;
-			if ( index > TELEM_GAP_START )
+			if ( index >= TELEM_GAP_START + 8 )
 			{
 				index -= 8 ;
 			}
@@ -3991,8 +3998,9 @@ void menuTextHelp(uint8_t event)
 		}
 		mstate2.m_posVert = TextIndex / width ;
 		g_posHorz = TextIndex % width ;
+
 	}
-	
+
 	uint8_t sub = mstate2.m_posVert ;
 	Columns = sub == rows ? lastCol : width - 1 ;
 	item[0] = '\0' ;
@@ -4373,7 +4381,7 @@ void menuCustomTelemetry(uint8_t event)
 			  uint8_t attr = ((sub==subN && subSub==k)) ? InverseBlink : 0 ;
 				if ( attr )
 				{
-					if ( event == EVT_KEY_LONG(KEY_MENU) )
+					if ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
 					{
 					// Long MENU pressed
 //					if ( sub >= page1limit + 1 )
@@ -4381,7 +4389,11 @@ void menuCustomTelemetry(uint8_t event)
 //						sub -= page1limit + 1 ;
 //					}
 						saveHpos = subSub ;
-						TextIndex = subSub == 2 ? epindex[sub] : pindex[sub*2+subSub] ;
+						TextIndex = (k == 2) ? epindex[j] : pindex[j*2+k] ;
+						if ( TextIndex >= TELEM_GAP_START + 8 )
+						{
+							TextIndex -= 8 ;
+						}
   			  	TextType = 0 ;
 						killEvents(event) ;
 						pushMenu(menuTextHelp) ;
@@ -4411,7 +4423,7 @@ void menuCustomTelemetry(uint8_t event)
   			if ((sub==subN && subSub==k))
 				{ 
 					uint8_t val = *p ;
-					if ( val > TELEM_GAP_START )
+					if ( val >= TELEM_GAP_START + 8 )
 					{
 						val -= 8 ;
 					}
@@ -4439,10 +4451,13 @@ void menuCustomTelemetry(uint8_t event)
 	  uint8_t attr = (sub==subN) ? InverseBlink : 0 ;
 		if ( attr )
 		{
-			if ( event == EVT_KEY_LONG(KEY_MENU) )
+			if ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
 			{
-				saveHpos = subSub ;
-				TextIndex = subSub == 2 ? epindex[sub] : pindex[sub*2+subSub] ;
+				TextIndex = pindex[k] ;
+				if ( TextIndex >= TELEM_GAP_START + 8 )
+				{
+					TextIndex -= 8 ;
+				}
 		  	TextType = 0 ;
 				killEvents(event) ;
 				pushMenu(menuTextHelp) ;
@@ -4465,8 +4480,18 @@ void menuCustomTelemetry(uint8_t event)
 		{
   		lcd_putsAtt(  x, y, XPSTR("----"), attr ) ;
 		}
-		if (sub==subN) CHECK_INCDEC_H_MODELVAR_0( *p, NUM_TELEM_ITEMS) ;
-		
+		uint8_t val = *p ;
+		if ( val >= TELEM_GAP_START + 8 )
+		{
+			val -= 8 ;
+		}
+		CHECK_INCDEC_H_MODELVAR_0( val, NUM_TELEM_ITEMS) ;
+		if ( val > TELEM_GAP_START )
+		{
+			val += 8 ;
+		}
+		*p = val ;
+//		if (sub==subN) CHECK_INCDEC_H_MODELVAR_0( *p, NUM_TELEM_ITEMS) ;
 		subN++ ;
 	}
  }
@@ -4581,7 +4606,7 @@ void menuCustomTelemetry(uint8_t event)
 //					}
 //					TextIndex = pindex[sub-1] ;
 					TextIndex = pindex[j] ;
-					if ( TextIndex > TELEM_GAP_START + 8 )
+					if ( TextIndex >= TELEM_GAP_START + 8 )
 					{
 						TextIndex -= 8 ;
 					}
@@ -4609,12 +4634,12 @@ void menuCustomTelemetry(uint8_t event)
   		if(sub==subN)
 			{
 				uint8_t val = pindex[j] ;
-				if ( val > TELEM_GAP_START + 8 )
+				if ( val >= TELEM_GAP_START + 8 )
 				{
 					val -= 8 ;
 				}
 				CHECK_INCDEC_H_MODELVAR_0( val, NUM_TELEM_ITEMS) ;
-				if ( val > TELEM_GAP_START )
+				if ( val >= TELEM_GAP_START )
 				{
 					val += 8 ;
 				}
@@ -16448,7 +16473,6 @@ extern uint8_t ModelImageValid ;
 //		lcd_outhex4( 30, 10*FH, TIM2->ARR >> 16 ) ;
 //		lcd_outhex4( 30, 11*FH, TIM2->CCR1 >> 16 ) ;
 //		lcd_outhex4( 30, 12*FH, TIM2->CCR2 >> 16 ) ;
-//	}
 
 //extern uint16_t pulseStreamCount[] ;
 //	lcd_outhex4( 90, 8*FH, pulseStreamCount[0] ) ;
@@ -16495,6 +16519,7 @@ extern uint8_t ModelImageValid ;
 //	lcd_outhex4( 180, 11*FH, temp[3] ) ;
 //	lcd_outhex4( 180, 12*FH, temp[4] ) ;
 //	lcd_outhex4( 180, 13*FH, temp[5] ) ;
+//	}
 
 //#endif
 

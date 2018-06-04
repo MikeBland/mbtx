@@ -274,6 +274,8 @@ uint8_t ScriptFlags ;
 // 0x72 array of pointer to byte array, index in 8 bits, dimension in 8 bits
 // 0x7A array of pointer to byte array, index in 16 bits, dimension in 8 bits
 
+// 0x71 could be used for "Shift", next byte is extended coding byte
+
 
 union t_parameter
 {
@@ -3864,7 +3866,7 @@ int32_t exec_getvalue(uint32_t type)
 			}
 			if ( type == 0 )
 			{
-  		  if ( (result < CHOUT_BASE+NUM_SKYCHNOUT) || ( result >= EXTRA_POTS_START ) )
+  		  if ( (result < CHOUT_BASE+NUM_SKYCHNOUT) || ( ( result >= EXTRA_POTS_START ) && (result < EXTRA_POTS_START + 8) ) )
 				{
 					number *= 100 ;
 					number /= RESX ;

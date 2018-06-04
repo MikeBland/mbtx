@@ -189,6 +189,7 @@ extern uint8_t s_traceBuf[] ;
 extern uint8_t s_traceWr;
 extern uint16_t s_traceCnt;
 
+#define MODELTIME	-24
 #define RUNTIME		-23
 #define FMODE			-22
 #define TMOK			-21

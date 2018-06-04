@@ -202,8 +202,8 @@ static void init_int_none()
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  INTMODULE_TIMER->ARR = 36000;             // 18mS
-  INTMODULE_TIMER->CCR2 = 32000;            // Update time
+  INTMODULE_TIMER->ARR = 17999 ;            // 9 mS
+  INTMODULE_TIMER->CCR2 = 16999 ;           // Update time
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
   INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
@@ -233,8 +233,8 @@ static void init_ext_none()
 	  GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
 	  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
 	  TIM1->CR1 &= ~TIM_CR1_CEN ;
-	  TIM1->ARR = 36000 ;             // 18mS
-	  TIM1->CCR2 = 32000 ;            // Update time
+	  TIM1->ARR = 17999 ;             // 9 mS
+	  TIM1->CCR2 = 16999 ;            // Update time
 	  TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
 
 	  TIM1->EGR = 1 ;                                                         // Restart
@@ -254,7 +254,7 @@ static void init_ext_none()
 	  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
 	  TIM2->CR1 &= ~TIM_CR1_CEN ;
 		TIM2->SMCR = TIM_SMCR_SMS_2 ;
-	  TIM2->ARR = 100000 ;             // 18mS
+	  TIM2->ARR = 99999 ;             // 18mS
 //	  TIM2->CCR2 = 32000 ;            // Update time
 	  TIM2->PSC = (PeripheralSpeeds.Peri1_frequency * PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;               // 0.5uS from 30MHz
 
@@ -291,8 +291,8 @@ static void init_int_pxx( void )
   RCC->APB1ENR |= RCC_APB1ENR_TIM12EN ;     // Enable clock
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  INTMODULE_TIMER->ARR = 36000;             // 18mS
-  INTMODULE_TIMER->CCR2 = 32000;            // Update time
+  INTMODULE_TIMER->ARR = 17999 ;             // 9 mS
+  INTMODULE_TIMER->CCR2 = 16999 ;            // Update time
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
   INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
@@ -371,7 +371,7 @@ static void disable_ext_dsm2( void )
 //	}
 //}
 
-uint16_t ProtoDebug[9] ;
+//uint16_t ProtoDebug[9] ;
 
 static void init_ext_ppm( void )
 {
@@ -388,8 +388,8 @@ static void init_ext_ppm( void )
   	EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN; // Stop timer
   	EXTMODULE_TIMER->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ; // 0.5uS (2Mhz)
 //  	EXTMODULE_TIMER->PSC = 65535 ;
-	  EXTMODULE_TIMER->ARR = 45000 ;
-  	EXTMODULE_TIMER->CCR2 = 43000 ;
+	  EXTMODULE_TIMER->ARR = 44999 ;
+  	EXTMODULE_TIMER->CCR2 = 42999 ;
     EXTMODULE_TIMER->CCER = TIM_CCER_CC3E | (g_model.Module[1].pulsePol ? TIM_CCER_CC3P : 0 ) ;
   	EXTMODULE_TIMER->CCR3 = (g_model.Module[1].ppmDelay*50+300)*2 ;
   	EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 ; // PWM mode 1
@@ -429,8 +429,8 @@ static void init_ext_ppm( void )
   	PROT_EXTMODULE_TIMER->PSC = (PeripheralSpeeds.Peri1_frequency * PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ; // 0.5uS (2Mhz)
 //  	PROT_EXTMODULE_TIMER->PSC = 32767 ;
 		PROT_EXTMODULE_TIMER->SMCR = TIM_SMCR_SMS_2 ;
-  	PROT_EXTMODULE_TIMER->ARR = 100000 ;
-  	PROT_EXTMODULE_TIMER->CCR2 = 100000 - 4000 ;
+  	PROT_EXTMODULE_TIMER->ARR = 99999 ;
+  	PROT_EXTMODULE_TIMER->CCR2 = 99999 - 4000 ;
   	PROT_EXTMODULE_TIMER->CCR1 = (g_model.Module[1].ppmDelay*50+300)*2 ;
   	PROT_EXTMODULE_TIMER->CCER = TIM_CCER_CC1E | (g_model.Module[1].pulsePol ? TIM_CCER_CC1P : 0 ) ;
   	PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0; // Force O/P high
@@ -1013,7 +1013,7 @@ void init_ext_serial( uint32_t type )
 	 
 	if ( isProdVersion() == 0 )
 	{
-		ProtoDebug[4] += 1 ;
+//		ProtoDebug[4] += 1 ;
 		convertPulsesProto( type ) ;
  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&ProtoPulses[1] ) ;
 		configure_pins( PROT_PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
@@ -1025,7 +1025,7 @@ void init_ext_serial( uint32_t type )
 		PROT_EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN; // Stop timer
   	PROT_EXTMODULE_TIMER->PSC = (PeripheralSpeeds.Peri1_frequency * PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ; // 0.5uS (2Mhz)
 
-		PROT_EXTMODULE_TIMER->ARR = 100000 ;
+		PROT_EXTMODULE_TIMER->ARR = 99999 ;
 		PROT_EXTMODULE_TIMER->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
 		if ( type == EXT_TYPE_PXX )
 		{
@@ -1060,7 +1060,7 @@ static void disable_ext_pxx()
 {
 //  DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
 	PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-	ProtoDebug[8] = 16 ;
+//	ProtoDebug[8] = 16 ;
 //  NVIC_DisableIRQ(TIM8_CC_IRQn) ;
  	NVIC_DisableIRQ( PROT_EXTMODULE_TIMER_IRQn) ;
 //  TIM8->DIER &= ~TIM_DIER_CC2IE ;
@@ -1270,6 +1270,7 @@ extern "C" void TIM1_UP_TIM10_IRQHandler()
 	}
 }
 
+extern uint16_t XjtHbeatOffset ;
 
 extern "C" void TIM1_CC_IRQHandler()
 {
@@ -1290,10 +1291,25 @@ extern "C" void TIM1_CC_IRQHandler()
   }
 	else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX )
 	{
-		ProtoDebug[7] += 1 ;
+		
+		XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
+		if ( XjtHeartbeatCapture.valid )
+		{
+			if ( XjtHbeatOffset > 0x2A00 )
+//			if ( XjtHbeatOffset > 0x2200 )
+			{
+				EXTMODULE_TIMER->ARR = 17979 ;                     // 9mS
+			}
+			else
+			{
+				EXTMODULE_TIMER->ARR = 18019 ;                     // 9mS
+			}
+		}
+		
+//		ProtoDebug[7] += 1 ;
   	EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-		ProtoDebug[8] = 32 ;
+//		ProtoDebug[8] = 32 ;
 		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
@@ -1307,20 +1323,20 @@ extern "C" void TIM1_CC_IRQHandler()
 			convertPulsesProto( EXT_TYPE_PXX ) ;
   		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&ProtoPulses[1]) ;
 	  	PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0 ;
-			PROT_EXTMODULE_TIMER->EGR = 1 ;                                                         // Restart
+			PROT_EXTMODULE_TIMER->EGR = 1 ;         // Restart
   		PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;       // Toggle CC1 o/p
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
-		ProtoDebug[8] = 33 ;
+//		ProtoDebug[8] = 33 ;
 	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	}	
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
 	{
-		ProtoDebug[7] += 1 ;
+//		ProtoDebug[7] += 1 ;
   	EXTMODULE_TIMER->CCR3 = dsm2Stream[1][0] ;
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-		ProtoDebug[8] = 64 ;
+//		ProtoDebug[8] = 64 ;
 		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
@@ -1338,7 +1354,7 @@ extern "C" void TIM1_CC_IRQHandler()
   		PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;       // Toggle CC1 o/p
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
-		ProtoDebug[8] = 65 ;
+//		ProtoDebug[8] = 65 ;
 	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
@@ -1354,10 +1370,10 @@ extern "C" void PROT_EXTMODULE_DMA_IRQHandler()
 {
   if (!DMA_GetITStatus(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC))
 	{
-		ProtoDebug[0] += 1 ;
+//		ProtoDebug[0] += 1 ;
     return ;
 	}
-	ProtoDebug[1] += 1 ;
+//	ProtoDebug[1] += 1 ;
 
   DMA_ClearITPendingBit(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC) ;
 	PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN & ~DMA_SxCR_TCIE ; // Disable DMA
@@ -1386,14 +1402,14 @@ extern "C" void TIM2_IRQHandler()
 	}
   if ( ( TIM2->DIER & TIM_DIER_CC2IE ) && ( status & TIM_SR_CC2IF ) )
 	{
-		ProtoDebug[2] = status ;
-		ProtoDebug[3] += 1 ;
-		ProtoDebug[5] = s_current_protocol[EXTERNAL_MODULE] ;
+//		ProtoDebug[2] = status ;
+//		ProtoDebug[3] += 1 ;
+//		ProtoDebug[5] = s_current_protocol[EXTERNAL_MODULE] ;
   	TIM2->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
 		setupPulses(EXTERNAL_MODULE) ;
 		if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)
 		{
-			ProtoDebug[6] += 1 ;
+//			ProtoDebug[6] += 1 ;
 //			convertPpmPulsesProto() ;
 //			ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE] ;
   		TIM2->CCR1 = (g_model.Module[1].ppmDelay*50+300)*2 ;
@@ -1414,20 +1430,20 @@ extern "C" void TIM2_IRQHandler()
 		}
 		else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX )
 		{
-			ProtoDebug[7] += 1 ;
+//			ProtoDebug[6] += 1 ;
 //			convertPxxPulsesProto() ;
 			
 //			PROT_EXTMODULE_TIMER->CCR2 = ProtoPxxPulses[pulseStreamCount[EXTERNAL_MODULE]-1] - 2000 ;
 //		  PROT_EXTMODULE_TIMER->ARR = ProtoPxxPulses[0] ;
 			PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-		ProtoDebug[8] = 32 ;
+//		ProtoDebug[8] = 32 ;
 			PROT_EXTMODULE_DMA_STREAM->CR |= PROT_EXTMODULE_DMA_CHANNEL | DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_0 | DMA_SxCR_PL_1 ;
   		PROT_EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&PROT_EXTMODULE_TIMER->ARR) ;	// or DMAR?
 //			PROT_EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(ProtoPxxPulses) ;
 			PROT_EXTMODULE_DMA_STREAM->NDTR = pulseStreamCount[EXTERNAL_MODULE] ;
 			DMA_ClearITPendingBit(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC) ;
   		PROT_EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ; // Enable DMA
-		ProtoDebug[8] = 33 ;
+//		ProtoDebug[8] = 33 ;
 			
 //			PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
 //	    PROT_EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&PROT_EXTMODULE_TIMER->CCR1) ;
@@ -1586,16 +1602,36 @@ extern uint8_t PxxSerial[] ;
 volatile uint8_t *PxxTxPtr ;
 volatile uint8_t PxxTxCount ;
 
+uint16_t XjtHbeatOffset ;
+
 extern "C" void TIM8_BRK_TIM12_IRQHandler()
 {
 	uint16_t status = INTMODULE_TIMER->SR ;
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_UIE ) && ( status & TIM_SR_UIF ) )
 	{
 	  INTMODULE_TIMER->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
-	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
-	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
-		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
-
+//	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
+//	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+//		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
+		if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX )
+		{
+			if ( XjtHeartbeatCapture.valid )
+			{
+				XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
+				if ( XjtHeartbeatCapture.valid )
+				{
+		//			if ( XjtHbeatOffset > 0x2A00 )
+					if ( XjtHbeatOffset > 0x3A00 )
+					{
+						INTMODULE_TIMER->ARR = 17979 ;                     // 9mS
+					}
+					else
+					{
+						INTMODULE_TIMER->ARR = 18019 ;                     // 9mS
+					}
+				}
+			}
+		}
 	}
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_CC2IE ) && ( status & TIM_SR_CC2IF ) )
 	{
@@ -1603,8 +1639,8 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
   	setupPulses(INTERNAL_MODULE) ;
 		if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX )
 		{
-			PxxTxPtr = PxxSerial ;
-			PxxTxCount = pulseStreamCount[INTERNAL_MODULE] ;
+//			PxxTxPtr = PxxSerial ;
+//			PxxTxCount = pulseStreamCount[INTERNAL_MODULE] ;
 		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;	     // Clear this flag
 			INTMODULE_TIMER->DIER |= TIM_DIER_UIE ;		 // Enable this interrupt

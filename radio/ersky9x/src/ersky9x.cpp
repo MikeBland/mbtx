@@ -5186,6 +5186,7 @@ void main_loop(void* pdata)
 //		where( '8' ) ;
 	init_trainer_capture(0) ;
 	
+	init_xjt_heartbeat() ;
 	rtcInit() ;
 #endif
 //		where( '9' ) ;

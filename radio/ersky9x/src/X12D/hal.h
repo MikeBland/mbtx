@@ -378,6 +378,10 @@
 #define PCBREV_GPIO_PIN                 GPIO_Pin_11  // PI.11
 #define PCBREV_PORT			                PIN_PORTI
 
+// Heartbeat
+#define HEARTBEAT_GPIO                GPIOD
+#define HEARTBEAT_GPIO_PIN            GPIO_Pin_12 // PD.12
+
 // Backlight
 #if defined(PCBX12D)
   #define BL_RCC_AHB1Periph             RCC_AHB1Periph_GPIOA

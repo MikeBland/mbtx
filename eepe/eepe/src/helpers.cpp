@@ -146,11 +146,12 @@ QString TelemItems[] = {
 	,"Cus6"
 	,"Fmd "
 	,"RunT"	// 75
+	,"ModT"	// 76
 #endif
 } ;
 
 #ifdef SKY
-#define NUM_TELEM_ITEMS	76
+#define NUM_TELEM_ITEMS	77
 #else
 #define NUM_TELEM_ITEMS	42
 #endif
@@ -1393,6 +1394,7 @@ int16_t m_to_ft( int16_t metres )
 #define CELL_6      53
 #define FMODE	      74
 #define RUNTIME     (75+8)
+#define MODELTIME   (76+8)
 
 
 
@@ -1413,6 +1415,9 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model )
   switch (index)
 	{
 #ifdef SKY
+    case MODELTIME :
+      result *= 20 ;
+    break ;
     case RUNTIME :
       result *= 3 ;
     break;
@@ -1505,6 +1510,7 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
   switch (index)
 	{
 #ifdef SKY
+    case MODELTIME :
     case V_RTC :
     case RUNTIME :
 #endif

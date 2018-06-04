@@ -3254,6 +3254,44 @@ void stop_xjt_heartbeat()
  #endif // PCBX9D
 #endif // n PCBX12D
 
+#ifdef PCBX12D
+#define XJT_HEARTBEAT_BIT	0x1000		// PD12
+
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_xjt_heartbeat()
+{
+	SYSCFG->EXTICR[3] |= 0x0003 ;		// PD12
+	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
+	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
+	configure_pins( HEARTBEAT_GPIO_PIN, PIN_INPUT | PIN_PORTD ) ;
+	NVIC_SetPriority( EXTI15_10_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
+	XjtHeartbeatCapture.valid = 1 ;
+}
+
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
+
+extern "C" void EXTI15_10_IRQHandler()
+{
+  register uint32_t capture ;
+
+	capture =  TIM7->CNT ;	// Capture time
+	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+	{
+		XjtHeartbeatCapture.value = capture ;
+		EXTI->PR = XJT_HEARTBEAT_BIT ;
+	}
+}
+
+#endif // PCBX12D
+
+
+
 // Handle software serial on COM1 input (for non-inverted input)
 void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
 {

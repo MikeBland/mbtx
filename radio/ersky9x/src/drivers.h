@@ -152,7 +152,7 @@ extern void com2Parity( uint32_t even ) ;
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
-#if defined(PCBX9D) || defined(PCBSKY)
+#if defined(PCBX9D) || defined(PCBSKY) || defined(PCBX12D)
 struct t_XjtHeartbeatCapture
 {
 	uint16_t value ;
@@ -176,6 +176,10 @@ extern void UART_Sbus_configure( uint32_t masterClock ) ;
 extern void UART_Sbus57600_configure( uint32_t masterClock ) ;
 extern void jetiSendWord( uint16_t word ) ;
 #ifdef PCBX9D
+void init_xjt_heartbeat( void ) ;
+void stop_xjt_heartbeat( void ) ;
+#endif
+#ifdef PCBX12D
 void init_xjt_heartbeat( void ) ;
 void stop_xjt_heartbeat( void ) ;
 #endif
