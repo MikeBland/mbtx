@@ -228,23 +228,33 @@ void lcdReset()
 
 static void backlightInit()
 {
+#ifdef PCBXLITE
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
+  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;    // Enable clock
+	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+  TIM1->ARR = 100;
+  TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
+  TIM1->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2; // PWM
+  TIM1->CCER = TIM_CCER_CC1E;
+  TIM1->CCR1 = 100;
+	TIM1->BDTR |= TIM_BDTR_MOE ;
+  TIM1->EGR = 0;
+  TIM1->CR1 = TIM_CR1_CEN; // Counter enable
+
+#else	
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
   RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;    // Enable clock
-  GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_2MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOD, &GPIO_InitStructure);
-  GPIO_PinAFConfig(GPIOD, GPIO_PinSource13, GPIO_AF_TIM4);
-  TIM4->ARR = 100;
+  
+	configure_pins( GPIO_Pin_13, PIN_PERIPHERAL | PIN_PER_2 | PIN_PORTD | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+	
+	TIM4->ARR = 100;
   TIM4->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;
   TIM4->CCMR1 = TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2; // PWM
   TIM4->CCER = TIM_CCER_CC2E;
   TIM4->CCR2 = 100;
   TIM4->EGR = 0;
   TIM4->CR1 = TIM_CR1_CEN; // Counter enable
+#endif
 }
 
 
@@ -354,10 +364,42 @@ void hapticOn( uint32_t pwmPercent )
 	}
 	TIM10->CCR1 = pwmPercent ;
 }
-#endif
+
+#else
+
+void initHaptic()
+{
+}
+void hapticOff()
+{
+}
+
+void hapticOn( uint32_t pwmPercent )
+{
+}
+#endif // PCBXLITE
 
 uint16_t BacklightBrightness ;
 
+
+
+#ifdef PCBXLITE
+void backlight_on()
+{
+	TIM1->CCR1 = 100 - BacklightBrightness ;
+}
+
+void backlight_off()
+{
+	TIM1->CCR1 = 0 ;
+}
+
+void backlight_set( uint16_t brightness )
+{
+	BacklightBrightness = brightness ;
+	TIM1->CCR1 = 100 - BacklightBrightness ;
+}
+#else // PCBXLITE
 void backlight_on()
 {
 	TIM4->CCR2 = 100 - BacklightBrightness ;
@@ -373,6 +415,7 @@ void backlight_set( uint16_t brightness )
 	BacklightBrightness = brightness ;
 	TIM4->CCR2 = 100 - BacklightBrightness ;
 }
+#endif // PCBXLITE
 
 
 #else // PCBX7
@@ -1078,16 +1121,19 @@ void backlight_set( uint16_t brightness )
 /**Init the Backlight GPIO */
 static void LCD_BL_Config()
 {
-  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOBL, ENABLE);
-  GPIO_InitTypeDef GPIO_InitStructure;
-  GPIO_InitStructure.GPIO_Pin =GPIO_Pin_BL;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
-  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
-  GPIO_Init(GPIOBL, &GPIO_InitStructure);
+//  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOBL, ENABLE);
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
+//  GPIO_InitTypeDef GPIO_InitStructure;
+//  GPIO_InitStructure.GPIO_Pin =GPIO_Pin_BL;
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+//  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+//  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+//  GPIO_Init(GPIOBL, &GPIO_InitStructure);
 
-  GPIO_PinAFConfig(GPIOBL, GPIO_PinSource_BL ,GPIO_AF_TIM10);
+//  GPIO_PinAFConfig(GPIOBL, GPIO_PinSource_BL ,GPIO_AF_TIM10);
+
+	configure_pins( GPIO_Pin_BL, PIN_PERIPHERAL | PIN_PER_3 | PIN_PORTB | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
 
 	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
 	TIM10->ARR = 100 ;

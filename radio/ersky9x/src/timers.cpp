@@ -2031,7 +2031,7 @@ uint16_t PxxValue ;
 uint16_t *PtrPxx_x ;
 uint16_t PxxValue_x ;
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 uint8_t PxxSerial[50] ;
 uint8_t *PtrSerialPxx ;
 #endif
@@ -2083,7 +2083,7 @@ void putPcmBit( uint8_t bit )
 void putPcmByte( uint8_t byte )
 {
     crc( byte ) ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
   if ( byte == 0x7E )
 	{
 		*PtrSerialPxx++ = 0x7D ;
@@ -2109,7 +2109,7 @@ void putPcmByte( uint8_t byte )
 void putPcmHead()
 {
     // send 7E, do not CRC
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 	*PtrSerialPxx++ = 0x7E ;
 #else
     // 01111110
@@ -2236,7 +2236,10 @@ void setupPulsesPXX(uint8_t module)
 	if ( module == 0 )
 	{
 		lpass = Pass[module] ;
-#ifndef PCBX12D
+
+#if defined(PCBX12D) || defined(PCBXLITE)
+		PtrSerialPxx = PxxSerial ;
+#else
 		PtrPxx = &pxxStream[module][0] ;
 		PxxValue = 0 ;
 		if ( g_model.Module[module].pxxDoubleRate )
@@ -2246,17 +2249,17 @@ void setupPulsesPXX(uint8_t module)
 				PxxValue = 9000 ;
 			}
 		}
-#else
-		PtrSerialPxx = PxxSerial ;
 #endif
     
 		PcmCrc = 0 ;
 #ifndef PCBX12D
+ #ifndef PCBXLITE
   	PcmOnesCount = 0 ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
+ #endif
 #endif
   	putPcmHead(  ) ;  // sync byte
   	putPcmByte( g_model.Module[module].pxxRxNum ) ;     // putPcmByte( g_model.rxnum ) ;  //
@@ -2404,9 +2407,11 @@ void setupPulsesPXX(uint8_t module)
   	putPcmByte( chan ) ; 			// Checksum lo
   	putPcmHead(  ) ;      // sync byte
 #ifndef PCBX12D
+ #ifndef PCBXLITE
   	putPcmFlush() ;
+ #endif
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 		pulseStreamCount[module] = PtrSerialPxx - PxxSerial ;
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
@@ -2428,20 +2433,29 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		Pass[module] = lpass ;
 
-		if ( g_model.Module[module].pxxDoubleRate )
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+//		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
 			{		
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
+ #if defined(PCBXLITE)
+				INTMODULE_TIMER->CCR2 = 14999 ;
+ #else
 				INTMODULE_TIMER->CCR2 = 8000 ;
+ #endif
 #else
 				TIM1->CCR2 = 8000 ;	            // Update time
 #endif
 			}
 			else
 			{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
+ #if defined(PCBXLITE)
+				INTMODULE_TIMER->CCR2 = 17499 ;
+ #else
 				INTMODULE_TIMER->CCR2 = 17000 ;
+ #endif
 #else
 	  		TIM1->CCR2 = 17000 ;            // Update time
 #endif
@@ -2449,13 +2463,13 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		else
 		{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 			INTMODULE_TIMER->CCR2 = 17000 ;
 #else
   		TIM1->CCR2 = 17000 ;            // Update time
 #endif
 		}
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 #endif
 	}  
@@ -2585,6 +2599,16 @@ extern volatile uint8_t PxxTxCount ;
 //    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
 //      extra_flags |=  (1<< 5);
 //  }
+
+// Bit 0: 0 internal, 1 external antenna
+// Bit 1: 0 Telemetry ON, 1 Telemetry OFF
+// Bit 2: 0 PPM 1-8, 1 PPM 9-16
+// Bit 4:3: R9M power nonEU 10, 100, 500, 1000
+// Bit 4:3: R9M power EU 25, 500
+// Bit 5: 0 Sport enabled, 1 Sport disabled
+// Bits 7:6 unused
+
+
 		if ( PxxExtra[module] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
@@ -2597,6 +2621,15 @@ extern volatile uint8_t PxxTxCount ;
 		{
 			extra_flags |= g_model.Module[module].r9mPower << 3 ;
 		}
+#ifdef ALLOW_EXTERNAL_ANTENNA
+		if ( module == 0 )
+		{
+			if ( g_model.Module[module].externalAntenna )
+			{
+				extra_flags |= 1 ;
+			}
+		}
+#endif
 		putPcmByte_x( extra_flags ) ;
 		
 		chan = PcmCrc_x ;		        // get the crc
@@ -2604,7 +2637,7 @@ extern volatile uint8_t PxxTxCount ;
   	putPcmByte_x( chan ) ; 			// Checksum lo
   	putPcmHead_x(  ) ;      // sync byte
   	putPcmFlush_x() ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBXLITE)
 		pulseStreamCount[module] = PtrPxx_x - pxxStream[module] ;
 #endif
 		if (g_model.Module[module].sub_protocol == 1 )		// D8
@@ -2621,8 +2654,9 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		Pass[module] = lpass ;
 		
-#ifdef PCBX12D
-		if ( g_model.Module[module].pxxDoubleRate )
+#if defined(PCBX12D) || defined(PCBXLITE)
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+//		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
 			{		
@@ -2639,7 +2673,8 @@ extern volatile uint8_t PxxTxCount ;
 		}
 			
 #else
-		if ( g_model.Module[module].pxxDoubleRate )
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+//		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
 			{		

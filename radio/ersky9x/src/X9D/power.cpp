@@ -75,7 +75,11 @@ uint32_t check_soft_power()
   return POWER_ON;
 #else
 #ifdef POWER_BUTTON
+#if defined(PCBXLITE)
+	switchValue = GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET ;
+#else
 	switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+#endif
 	switch ( PowerState )
 	{
 		case POWER_STATE_OFF :
@@ -115,7 +119,7 @@ uint32_t check_soft_power()
 		break ;
 	}
 
- #else // REV9E
+ #else // POWER_BUTTON
 #ifdef PCB9XT
 	SoftPowerCalls += 1 ;
 	static uint32_t c1 = 0 ;
@@ -159,12 +163,28 @@ uint32_t check_soft_power()
 #endif
     return POWER_OFF;
 	}
- #endif // REV9E
+ #endif // POWER_BUTTON
 #endif
 }
 
 void init_soft_power()
 {
+#if defined(PCBXLITE)
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	
+	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
+	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
+	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
+
+	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTE ) ;
+
+	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTA ) ;
+
+#else	
 //  GPIO_InitTypeDef GPIO_InitStructure;
   /* GPIOC GPIOD clock enable */
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -236,6 +256,7 @@ void init_soft_power()
   
   // Soft power ON
   
+#endif
 	
 // Not yet!!!!*********	
 #ifndef PCB9XT

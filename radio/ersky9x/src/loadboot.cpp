@@ -119,7 +119,11 @@ const uint8_t BootCode[] = {
     #ifdef PCBX7
      #include "bootloader/bootflashX7.lbm"
     #else
-     #include "bootloader/bootflashX.lbm"
+     #ifdef PCBXLITE
+      #include "bootloader/bootflashL.lbm"
+     #else
+      #include "bootloader/bootflashX.lbm"
+		 #endif
 		#endif
    #endif
   #else
@@ -222,7 +226,11 @@ void _bootStart()
   #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
   #else
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
+   #ifdef PCBXLITE
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portA,C,E clock
+   #else
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
+   #endif
   #endif
  #endif
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
@@ -231,15 +239,28 @@ void _bootStart()
 //  if (GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET)
 // PD.01
 
- #if defined(REV9E) || defined(PCBX7)
+ #if defined(REV9E) || defined(PCBX7) || defined(PCBXLITE)
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 //	if ( (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) || (GPIOA->IDR & 0x00000100 ) )	// Trainer input is high
 	{
+#ifdef PCBXLITE
+		GPIOE->BSRRL = GPIO_Pin_9 ; // set PWR_GPIO_PIN_ON pin to 1
+		GPIOE->MODER = (GPIOE->MODER & 0xFFF3FFFF) | 0x00040000 ; // General purpose output mode
+#else
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
+#endif
 	}
  #endif
 #endif
+
+#ifdef PCBXLITE
+	GPIOE->BSRRH = 0x0020 ; // set Green LED on
+	GPIOE->MODER = (GPIOE->MODER & 0xFFFFF3FF) | 0x00000100 ; // General purpose output mode
+
+	GPIOC->PUPDR = 0x00000500 ;		// PortC clock enabled above
+
+#else
 #ifdef PCBX7
 	GPIOC->BSRRL = 0x0010 ; // set Green LED on
 	GPIOC->MODER = (GPIOC->MODER & 0xFFFFFCFF) | 0x00000100 ; // General purpose output mode
@@ -256,6 +277,7 @@ void _bootStart()
  #else
 	GPIOE->PUPDR = 0x00000040 ;
  #endif
+#endif
 #endif
 
 //#ifdef PCBX9D
@@ -317,7 +339,25 @@ void _bootStart()
 	}
 #endif
 
+#ifdef PCBXLITE
+#define PWR_GPIO_PIN_SWITCH	0x0080
+	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+	{
+		// wait here until the power key is pressed
+		while (GPIOA->IDR & PWR_GPIO_PIN_SWITCH)
+		{
+			bwdt_reset();
+		}
+	}
+#endif
+
 //#ifndef PCB9XT
+#ifdef PCBXLITE
+	if ( (GPIOC->IDR & 0x00000010 ) == 0 )
+	{
+		if ( (GPIOC->IDR & 0x00000020 ) == 0 )
+		{
+#else
 #ifdef PCB9XT
 //	if ( 1 )
 //	{
@@ -336,6 +376,7 @@ void _bootStart()
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{
+#endif
 #endif
 			// Bootloader needed
 			const uint8_t *src ;

@@ -2891,7 +2891,11 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	GPIOB->BSRRH = 0x0004 ;		// output disable
 #else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+#ifdef PCBXLITE
+	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+#else
 	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+#endif
 #endif
 #ifdef PCB9XT
 // PB2 as SPort enable
@@ -2899,7 +2903,7 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	configure_pins( 0x00000008, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTA ) ;
 	configure_pins( 0x00000004, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTA ) ;
 #else
-	configure_pins( 0x00000010, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
 	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
 #endif
@@ -2992,7 +2996,11 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 #ifdef PCB9XT
 	GPIOB->BSRRL = 0x0004 ;		// output enable
 #else
+ #ifdef PCBXLITE
+	GPIOD->BSRRH = 0x0010 ;		// output enable
+ #else
 	GPIOD->BSRRL = 0x0010 ;		// output enable
+ #endif
 #endif
 	if ( receive == 0 )
 	{
@@ -3038,9 +3046,12 @@ extern "C" void USART2_IRQHandler()
 		{
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable
-
 #else
+ #ifdef PCBXLITE
+			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+ #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+ #endif
 #endif
 			TelemetryTx.SportTx.count = 0 ;
 			TelemetryTx.SportTx.busy = 0 ;
@@ -3229,6 +3240,7 @@ void stop_timer11()
 
 #ifndef PCBX12D
  #ifdef PCBX9D
+  #ifndef PCBXLITE
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3251,6 +3263,7 @@ void stop_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 0 ;
 }
 
+  #endif // n PCBXLITE
  #endif // PCBX9D
 #endif // n PCBX12D
 
@@ -3290,6 +3303,41 @@ extern "C" void EXTI15_10_IRQHandler()
 
 #endif // PCBX12D
 
+#ifdef PCBXLITE
+#define XJT_HEARTBEAT_BIT	0x8000		// PD15
+
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_xjt_heartbeat()
+{
+	SYSCFG->EXTICR[3] |= 0x3000 ;		// PD15
+	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
+	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
+	configure_pins( HEARTBEAT_GPIO_PIN, PIN_INPUT | PIN_PORTD ) ;
+	NVIC_SetPriority( EXTI15_10_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
+	XjtHeartbeatCapture.valid = 1 ;
+}
+
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
+
+extern "C" void EXTI15_10_IRQHandler()
+{
+  register uint32_t capture ;
+
+	capture =  TIM7->CNT ;	// Capture time
+	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+	{
+		XjtHeartbeatCapture.value = capture ;
+		EXTI->PR = XJT_HEARTBEAT_BIT ;
+	}
+}
+
+#endif // PCBXLITE
 
 
 // Handle software serial on COM1 input (for non-inverted input)

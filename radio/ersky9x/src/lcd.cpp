@@ -103,7 +103,7 @@ extern uint32_t CurrentFrameBuffer ;
 //#define LCD_H	272
 #endif
 
-#ifdef PCBX7
+#if defined(PCBX7) || defined (PCBXLITE)
 #define X9D_OFFSET		0
 #define DISPLAY_START (DisplayBuf + 0)
 #else // PCBX7
@@ -115,7 +115,7 @@ extern uint32_t CurrentFrameBuffer ;
 #endif 
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE)
 uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
 uint16_t ExtDisplayTime ;
 uint8_t ExtDisplaySend ;
@@ -2125,8 +2125,10 @@ void lcd_clear()
 #if PCBX9D
 #ifndef REV9E
  #ifndef PCBX7
+  #ifndef PCBXLITE
 	lcd_img( 212-X9D_OFFSET, 0, arrows, 0, 0 ) ;
 	lcd_img( 212-X9D_OFFSET-10, 0, arrows, 1, 0 ) ;
+  #endif // PCBXLITE
  #endif // PCBX7
 #endif	// nREV9E
 

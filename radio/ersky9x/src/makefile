@@ -886,7 +886,11 @@ ifeq ($(PCB), X9D)
    CPPDEFS += -DREV9E
    EXT_MOD=X9E
   else
-   EXT_MOD=X9D
+   ifeq ($(PCBXLITE), 1)
+    EXT_MOD=XLITE
+   else
+    EXT_MOD=X9D
+   endif
   endif
  endif
 endif

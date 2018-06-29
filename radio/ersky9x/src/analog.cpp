@@ -23,7 +23,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE)
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
@@ -56,7 +56,22 @@
 #define SLIDE_R		9
 
 #else // PCBX7
+
 #ifndef PCB9XT
+
+#ifdef PCBXLITE
+
+#define STICK_LV	0
+#define STICK_LH  1
+#define STICK_RV  3
+#define STICK_RH  2
+
+#define POT_L			11
+#define POT_R			12
+#define BATTERY		10
+
+#else // PCBXLITE
+
 #define STICK_LV	3
 #define STICK_LH  2
 #define STICK_RV  0
@@ -67,6 +82,7 @@
 #define SLIDE_R		15
 #define BATTERY		10
 #define POT_3			9
+#endif // PCBXLITE
 #else
 #define STICK_LV	10
 #define STICK_LH  11
@@ -93,16 +109,155 @@ void init_adc3( void ) ;
 
 // Sample time should exceed 1uS
 #define SAMPTIME	2		// sample time = 28 cycles
-//#define SAMPTIME	3		// sample time = 56 cycles
-//#define SAMPTIME	6		// sample time = 144 cycles
 
 volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
+
+#ifdef PCBXLITE
+
+extern void delay_ms( uint32_t ms ) ;
+
+volatile uint16_t PwmInterruptCount ;
+uint8_t SticksPwmDisabled = 0 ;
+
+struct t_PWMcontrol
+{
+volatile uint32_t timer_capture_rising_time ;
+volatile uint32_t timer_capture_value ;
+volatile uint32_t timer_capture_period ;
+} PWMcontrol[4] ;
+
+
+static void initSticksPwm()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN ;		// Enable clock
+	
+	configure_pins( PIN_STICK_RV | PIN_STICK_RH | PIN_STICK_LV | PIN_STICK_LH, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_2 | PIN_NO_PULLUP ) ;
+
+  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+  TIM5->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+  TIM5->ARR = 0xffffffff ;
+  TIM5->CCMR1 = TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0 ;
+  TIM5->CCMR2 = TIM_CCMR2_CC3S_0 | TIM_CCMR2_CC4S_0 ;
+  TIM5->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E ;
+  TIM5->DIER |= TIM_DIER_CC1IE|TIM_DIER_CC2IE|TIM_DIER_CC3IE|TIM_DIER_CC4IE ;
+  TIM5->EGR = 1; // Restart
+  TIM5->CR1 = TIM_CR1_CEN ; // Start timer
+
+  NVIC_SetPriority(TIM5_IRQn, 1 ) ;
+  NVIC_EnableIRQ(TIM5_IRQn) ;
+}
+
+static void disableSticksPwm()
+{
+  NVIC_DisableIRQ(TIM5_IRQn) ;
+  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+}
+
+extern "C" void TIM5_IRQHandler(void)
+{
+  uint32_t capture ;
+	uint32_t value ;
+	struct t_PWMcontrol *p ;
+
+	PwmInterruptCount += 1 ; // overflow may happen but we only use this to detect PWM / ADC on radio startup
+
+  if ( PWM_TIMER->SR & TIM_DIER_CC1IE )
+	{
+		capture = TIM5->CCR1 ;
+		p = &PWMcontrol[0] ;
+    if (TIM5->CCER & TIM_CCER_CC1P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC1P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC1P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC2IE )
+	{
+		capture = TIM5->CCR2 ;
+		p = &PWMcontrol[1] ;
+    if (TIM5->CCER & TIM_CCER_CC2P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC2P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC2P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC3IE )
+	{
+		capture = TIM5->CCR3 ;
+		p = &PWMcontrol[2] ;
+    if (TIM5->CCER & TIM_CCER_CC3P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC3P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC3P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC4IE )
+	{
+		capture = TIM5->CCR4 ;
+		p = &PWMcontrol[3] ;
+    if (TIM5->CCER & TIM_CCER_CC4P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC4P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC4P ; // Falling
+		}
+	}
+}
+
+#endif // PCBXLITE
 
 void init_adc()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN ;			// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
+
+#ifdef PCBXLITE
+	initSticksPwm() ;
+  delay_ms(20) ;
+  if (PwmInterruptCount < 8 )
+	{
+    SticksPwmDisabled = true ;
+		disableSticksPwm() ;
+  }
+#endif // PCBXLITE
+
+#ifdef PCBXLITE
+
+	configure_pins( PIN_FLP_J1 | PIN_FLP_J2 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+  if ( SticksPwmDisabled )
+	{
+		configure_pins( ADC_GPIO_PIN_STICK_LH | ADC_GPIO_PIN_STICK_LV | ADC_GPIO_PIN_STICK_RV | ADC_GPIO_PIN_STICK_RH, PIN_ANALOG | PIN_PORTA ) ;
+	}
+
+#else // PCBXLITE
 
 #ifdef PCBX7
 	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
@@ -135,11 +290,30 @@ void init_adc()
 	configure_pins( PIN_SW1, PIN_ANALOG | PIN_PORTA ) ;
 #endif // PCB9XT
 #endif // PCBX7
+#endif // PCBXLITE
 				
 
 	ADC1->CR1 = ADC_CR1_SCAN ;
 	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
-	
+
+#ifdef PCBXLITE
+
+  if ( SticksPwmDisabled )
+	{
+		ADC1->SQR1 = (NUMBER_ANALOG-1+4) << 20 ;		// NUMBER_ANALOG Channels
+		
+		ADC1->SQR2 = BATTERY ;
+		ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<< 20) + (POT_R<<25) ;
+	}
+	else
+	{
+		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
+		ADC1->SQR3 = POT_L + (POT_R<<5) + (BATTERY<<10) ;
+	}
+	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
+#else // PCBXLITE
+
 #ifdef PCBX7
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 
@@ -178,6 +352,7 @@ void init_adc()
 
 #endif // PCB9XT
 #endif // PCBX7
+#endif // PCBXLITE
 
 
 	 
@@ -190,6 +365,7 @@ void init_adc()
 #ifdef REV9E
 	init_adc3() ;
 #endif	// REV9E
+
 }
 
 uint32_t read_adc()
@@ -220,6 +396,67 @@ uint32_t read_adc()
 		}
 	}
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
+
+#ifdef PCBXLITE
+
+	AnalogData[4] = Analog_values[0] ;
+	AnalogData[5] = Analog_values[1] ;
+	AnalogData[12] = Analog_values[2] ;
+
+  if ( SticksPwmDisabled )
+	{
+		AnalogData[0] = 4096 - Analog_values[0] ;
+		AnalogData[1] = Analog_values[1] ;
+		AnalogData[2] = 4096 - Analog_values[2] ;
+		AnalogData[3] = Analog_values[3] ;
+	}
+	else
+	{
+		struct t_PWMcontrol *p ;
+		p = &PWMcontrol[0] ;
+
+		uint16_t value ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[0] = value ;
+		}
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[1] = 4095 - value ;
+		}
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[3] = value ;
+		}
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[2] = 4095 - value ;
+		}
+	}
+#else // PCBXLITE
 
 #ifdef PCBX7
 	AnalogData[0] = 4096 - Analog_values[0] ;
@@ -294,6 +531,7 @@ uint32_t read_adc()
 	AnalogData[12] = Analog_values[8] ;
 #endif	// REV9E
 
+#endif // PCBXLITE
 
 
 
@@ -303,6 +541,7 @@ uint32_t read_adc()
 #ifndef REV9E
 #ifndef PCB9XT
 
+#ifndef PCBXLITE
 // This to read a single channel for use as a rotary encoder
 // Channel is POT_L (6) or POT_R (8) or POT_3 (9)
 void init_adc2()
@@ -349,6 +588,7 @@ void init_adc2()
 		RCC->APB1ENR &= ~RCC_APB1ENR_TIM5EN ;		// Disable clock
 	}
 }
+#endif // nPCBXLITE
 #endif // nPCB9XT
 #endif // nREV9E
 

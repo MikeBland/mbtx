@@ -8920,6 +8920,7 @@ void ModelEdit::on_loggingButton_clicked()
 		g_model.logSwitch = data.lswitch ;
 		g_model.logNew = data.newFile ;
 		g_model.telemetryTimeout = data.timeout ;
+    updateSettings();
 	}
 }
 
@@ -8938,6 +8939,7 @@ void ModelEdit::on_cellButton_clicked()
 		{
 			g_model.cellScalers[i] = data.factors[i] ;
 		}
+    updateSettings();
 	}
 }
 

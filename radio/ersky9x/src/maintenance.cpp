@@ -1985,11 +1985,17 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
+#ifndef PCBXLITE
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+#else
+	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 5*FH, "  Update Multi" );
+#endif
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
@@ -2085,6 +2091,7 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
+ #ifndef PCBXLITE
 			if ( position == 3*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
@@ -2110,6 +2117,23 @@ void menuUpdate(uint8_t event)
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
+ #else
+			if ( position == 3*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 4*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 5*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
+	      pushMenu(menuUpMulti) ;
+			}
+ #endif
 #endif
 #ifdef PCB9XT
 			if ( position == 3*FH )

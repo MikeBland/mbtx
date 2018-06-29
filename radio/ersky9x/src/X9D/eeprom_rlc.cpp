@@ -1130,6 +1130,8 @@ void eeLoadModel(uint8_t id)
     	modelDefault(id);
       eeCheck(true);
 	  }
+		
+		validateName( (uint8_t *)g_model.name, sizeof(g_model.name) ) ;
 
 //    resetAll();
 

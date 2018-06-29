@@ -841,10 +841,18 @@ void lcdSetContrast()
 #define ALWAYS_INLINE   __attribute__((always_inline))
 
 // to select either stock LCD controller or SSD1306 OLED controller
+#ifdef COOLLVSE
+#define _SSD1306         1       // Stock(ST7565/NT7532)=0, _SSD1306=1
+#else
 #define _SSD1306         0       // Stock(ST7565/NT7532)=0, _SSD1306=1
+#endif
 
 // controller independent options
+#ifdef COOLLVSE
+#define SERIAL_LCD      1       // parallel=0, 4W_serial=1
+#else
 #define SERIAL_LCD      0       // parallel=0, 4W_serial=1
+#endif
 #define ROTATE_SCREEN   0       // don't-rotate-screen=0, rotate-180-degree=1
 #define	REVERSE_VIDEO   0       // normal-video=0, reverse-video=1
 
@@ -967,7 +975,11 @@ static void lcdSendDataBytes(uint8_t *p, uint8_t COLUMN_START_LO)
 #if !LCD_EEPE   // compile time LCD configuration
 
 #if (_SSD1306 || ROTATE_SCREEN)
+ #ifdef COOLLVSE
+  #define COLUMN_START_LO 0x02        // skip first 2 columns
+ #else
   #define COLUMN_START_LO 0x00
+ #endif
 #else  // ST7565
   #define COLUMN_START_LO 0x04        // skip first 4 columns
 #endif

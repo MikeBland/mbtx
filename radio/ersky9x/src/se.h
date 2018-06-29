@@ -124,7 +124,7 @@
  #else
 #define ISTR_CHANS_GV        "\004S1  S2  SL  HALVFULLCYK1CYK2CYK3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8KN1 KN2 KN3 KN4 KN5 KN6 KN7 KN8 KN9 KN10KN11KN12KN13KN14KN15KN16KN17KN18KN19KN20KN21KN22KN23KN24SWCHGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #define ISTR_CHANS_RAW       "\004S1  S2  SL  HALVFULLCYK1CYK2CYK3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8KN1 KN2 KN3 KN4 KN5 KN6 KN7 KN8 KN9 KN10KN11KN12KN13KN14KN15KN16KN17KN18KN19KN20KN21KN22KN23KN24SWCH"
-  #ifdef PCBX7
+	#if defined(PCBX7) || defined (PCBXLITE)
 #define ISTR_CHANS_EXTRA   "\004SL  SR  P4  P5  P6  "
   #else
 #define ISTR_CHANS_EXTRA   "\004SR  P3  P4  P5  P6  "
@@ -550,7 +550,7 @@
 #define ISTR_Safety					"Safety Sws"
 #define ISTR_Eeprom			     "EEPROM" 
 
-#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help\0Main Display\0Run Script"
+#define ISTR_MAIN_POPUP			"Model Select\0Model Setup\0Last Menu\0Radio Setup\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0Reset GPS\0Help\0Main Display\0Run Script\0Reset Telemetry"
 #define ISTR_ROTATE_SCREEN			"Rotate Screen"
 #define ISTR_REVERSE_SCREEN			"Reverse Screen"
 #define ISTR_MENU_ONLY_EDIT			"MENU only Edit"

@@ -141,6 +141,7 @@ void module_output_active()
 {
 	register Pio *pioptr ;
 	
+//	if ( ( CurrentTrainerSource != TRAINER_SLAVE ) || (g_model.Module[1].protocol != PROTO_PPM) )
 	if ( CurrentTrainerSource != TRAINER_SLAVE )
 	{
 		pioptr = PIOA ;
@@ -449,7 +450,7 @@ extern "C" void PWM_IRQHandler (void)
 				if ( period == 2000 )	// 1.0 mS
 				{
 					XjtHbeatOffset = TC1->TC_CHANNEL[0].TC_CV - XjtHeartbeatCapture.value ;
-					if ( g_model.Module[1].pxxDoubleRate )
+					if ( ( g_model.Module[1].pxxDoubleRate ) && ( (PxxFlag[1] & PXX_BIND) == 0 ) )
 					{
 						period = 3500*2 ;	// Use 4.5mS period total
 						if ( (Pass & 1) == 0 )
@@ -824,6 +825,7 @@ void setupPulsesDsm2(uint8_t chns)
 	if ( required_baudrate != Scc_baudrate )
 	{
 		init_ssc( required_baudrate ) ;
+		SSC->SSC_TFMR |= 0x00000020 ;
 	}
 #endif // PCBSKY
 
@@ -1193,6 +1195,7 @@ void setupPulses()
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
 				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+				SSC->SSC_TFMR &= ~0x00000020 ;
       break;
   	  case PROTO_OFF:
 				init_main_ppm( 3000, 0 ) ;		// Initial period 1.5 mS, output on
@@ -1202,6 +1205,8 @@ void setupPulses()
       case PROTO_DSM2:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
+				SSC->SSC_TFMR |= 0x00000020 ;
+				SSC->SSC_THR = 0xFF ;		// Make the output High
 				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
 				DsmInitCounter = 0 ;
 //				Dsm_Type_channels = 12 ;
@@ -1982,6 +1987,16 @@ void setupPulsesPXX()
 //    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
 //      extra_flags |=  (1<< 5);
 //  }
+		
+// Bit 0: 0 internal, 1 external antenna
+// Bit 1: 0 Telemetry ON, 1 Telemetry OFF
+// Bit 2: 0 PPM 1-8, 1 PPM 9-16
+// Bit 4:3: R9M power nonEU 10, 100, 500, 1000
+// Bit 4:3: R9M power EU 25, 500
+// Bit 5: 0 Sport enabled, 1 Sport disabled
+// Bits 7:6 unused
+
+		 
 		if ( PxxExtra[1] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;

@@ -705,6 +705,7 @@ void hapticOn( uint32_t pwmPercent )
 
 #else
 #ifndef PCBX7
+#ifndef PCBXLITE
 void initHaptic()
 {
 	configure_pins( GPIO_Pin_HAPTIC, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
@@ -721,6 +722,7 @@ void hapticOn( uint32_t pwmPercent )
 {
 	GPIOHAPTIC->BSRRL = GPIO_Pin_HAPTIC ;
 }
+#endif // PCBXLITE
 #endif // PCBX7
 #endif
 #endif

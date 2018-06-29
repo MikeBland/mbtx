@@ -323,6 +323,11 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[3] = "V912" ;
 			names[4] = "CX20" ;
 		break ;
+		case M_Hubsan :
+			names[0] = "H107" ;
+			names[1] = "H301" ;
+			names[2] = "H501" ;
+		break ;
 		case M_Hisky :
 			names[0] = "Hisky" ;
 			names[1] = "HK310" ;
@@ -366,28 +371,41 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[5] = "J3015_2" ;
 			names[6] = "MK33041" ;
 		break ;
+		case M_CG023 :
+			names[0] = "CG023" ;
+			names[1] = "YD829" ;
+			names[2] = "H8_3D" ;
+		break ;
+		case M_BAYANG :
+			names[0] = "Bayang" ;
+			names[1] = "H8S3D" ;
+			names[2] = "X16_AH" ;
+			names[3] = "IRDRONE" ;
+		break ;
 		case M_FRSKYX :
 			names[0] = "CH-16" ;
 			names[1] = "CH-8" ;
 			names[2] = "EU-16" ;
 			names[3] = "EU-8" ;
 		break ;
-		case M_CG023 :
-			names[0] = "CG023" ;
-			names[1] = "YD829" ;
-			names[2] = "H8_3D" ;
-		break ;
 		case M_MT99XX :
 			names[0] = "MT" ;
 			names[1] = "H7" ;
 			names[2] = "YZ" ;
 			names[3] = "LS" ;
+			names[4] = "FY805" ;
 		break ;
 		case M_MJXQ :
 			names[0] = "WLH08" ;
 			names[1] = "X600" ;
 			names[2] = "X800" ;
 			names[3] = "H26D" ;
+			names[4] = "E010" ;
+			names[5] = "H26WH" ;
+		break ;
+		case M_FY326 :
+			names[0] = "FY326" ;
+			names[1] = "FY319" ;
 		break ;
 		case M_HONTAI :
 			names[0] = "HONTAI" ;
@@ -405,7 +423,36 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[1] = "Q242" ;
 			names[2] = "Q282" ;
 		break ;
-
+		case M_WK2x01 :
+			names[0] = "WK2801" ;
+			names[1] = "WK2401" ;
+			names[2] = "W6_5_1" ;
+			names[3] = "W6_6_1" ;
+			names[4] = "W6_HEL" ;
+			names[5] = "W6_HEL_I" ;
+		break ;
+		case M_Q303 :
+			names[0] = "Q303" ;
+			names[1] = "CX35" ;
+			names[2] = "CX10D" ;
+			names[3] = "CX10WD" ;
+		break ;
+		case M_CABELL :
+			names[0] = "CAB_V3" ;
+			names[1] = "C_TELEM" ;
+			names[6] = "F_SAFE" ;
+			names[7] = "UNBIND" ;
+		break ;
+    case M_H8_3D :
+			names[0] = "H8_3D" ;
+			names[1] = "H20H" ;
+			names[2] = "H20Mini" ;
+			names[3] = "H30Mini" ;
+		break ;
+    case M_CORONA :
+			names[0] = "COR_V1" ;
+			names[1] = "COR_V2" ;
+		break ;
 		default :
 			names[0] = "NONE" ;
 		break ;

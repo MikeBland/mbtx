@@ -714,7 +714,9 @@ struct t_module
 	uint8_t pxxDoubleRate:1 ;
 	uint8_t pxxHeartbeatPB14:1 ;
 	int8_t failsafe[16] ;
-	uint8_t sparex[3] ;
+	uint8_t externalAntenna:1 ;
+	uint8_t spare:7 ;
+	uint8_t sparex[2] ;
 } ;
 
 

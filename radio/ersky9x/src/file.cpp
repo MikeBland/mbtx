@@ -667,11 +667,13 @@ void ee32LoadModel(uint8_t id)
 				}
 			}
 
-      for(uint8_t i=0; i<sizeof(g_model.name);i++) // makes sure name is valid
-      {
-          uint8_t idx = char2idx(g_model.name[i]);
-          g_model.name[i] = idx2char(idx);
-      }
+			validateName( (uint8_t *)g_model.name, sizeof(g_model.name) ) ;
+
+//      for(uint8_t i=0; i<sizeof(g_model.name);i++) // makes sure name is valid
+//      {
+//          uint8_t idx = char2idx(g_model.name[i]);
+//          g_model.name[i] = idx2char(idx);
+//      }
 
 			if ( g_model.numBlades == 0 )
 			{

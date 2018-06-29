@@ -144,10 +144,12 @@ uint8_t TmOK ;
 
 uint8_t AltitudeDecimals ;
 uint8_t AltitudeZeroed = 0 ;
+uint8_t GpsAltitudeDecimals ;
+uint8_t VfasVoltageTimer ;
 extern int16_t AltOffset ;
 int16_t WholeAltitude ;
+int16_t WholeGpsAltitude ;
 uint16_t PixHawkCapacity ;
-uint8_t VfasVoltageTimer ;
 //uint8_t RssiSetTimer ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
@@ -515,6 +517,27 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		index = TELEM_GPS_ALT ;         // For max and min
 		FrskyHubData[TELEM_GPS_ALT] = value ;
 		TelemetryDataValid[TELEM_GPS_ALT] = 25 + g_model.telemetryTimeout ;
+	}
+
+	if ( index == TELEM_GPS_ALT )
+	{
+		value *= 10 ;
+		WholeGpsAltitude = value ;
+		index = FR_TRASH ;
+	}
+	if ( index == TELEM_GPS_ALTd )
+	{
+		GpsAltitudeDecimals |= 1 ;
+		if ( ( value > 9 ) || ( value < -9 ) )
+		{
+			GpsAltitudeDecimals |= 2 ;
+		}
+		if ( GpsAltitudeDecimals & 2 )
+		{
+			value /= 10 ;			
+		}
+		index = TELEM_GPS_ALT ;	// For max/min
+		value += WholeGpsAltitude ;
 	}
 
 	if ( index < HUBDATALENGTH )

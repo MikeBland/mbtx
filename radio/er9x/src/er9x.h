@@ -82,14 +82,20 @@
 #define SYS_OPT_HARDWARE_EDIT	1
 #define SYS_OPT_MUTE					2
 
+//#define COOLLVSE   1
 
 /* Building an er9x hex for custom transmitter */
 #ifdef CUSTOM9X
 #define LCD_OTHER   1
 #define LCD_EEPE    1
 #else
+#ifdef COOLLVSE
+#define LCD_OTHER   1
+#define LCD_EEPE    0
+#else
 #define LCD_OTHER   0    /* turn on these if you know what you're doing */
 #define LCD_EEPE    0
+#endif
 #endif
 
 #include <stdint.h>

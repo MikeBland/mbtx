@@ -41,7 +41,9 @@
 
 #ifdef PCBX9D	
  #ifndef PCBX7
-  #define WIDE_SCREEN	1
+  #ifndef PCBXLITE
+   #define WIDE_SCREEN	1
+  #endif
  #endif
 #endif
 #ifdef PCBX12D	
@@ -120,6 +122,10 @@ extern const char * const Spanish[] ;
 #define pgm_read_byte(p)	(*(p))
 
 
+#ifdef PCBXLITE
+#define NUMBER_ANALOG		3
+
+#else // PCBXLITE
 #ifdef PCBX7
 #define NUMBER_ANALOG		9
 #else // PCBX7
@@ -152,6 +158,7 @@ extern const char * const Spanish[] ;
 #endif
 #endif
 #endif // PCBX7
+#endif // PCBXLITE
 
 #ifdef REV9E
 #define NUM_EXTRA_ANALOG		3
@@ -671,7 +678,11 @@ extern uint32_t countExtraPots( void ) ;
 	 #ifdef PCBX12D	 
 		#define	NUM_EXTRA_POTS 3
 	 #else
-  	#define	NUM_EXTRA_POTS 1
+		#if defined (PCBXLITE)
+  	 #define	NUM_EXTRA_POTS 0
+		#else
+  	 #define	NUM_EXTRA_POTS 1
+		#endif
 	 #endif
   #endif	// PCBX7
  #endif	// REVPLUS
@@ -734,10 +745,12 @@ extern uint8_t Ee_lock ;
 #define EE_LOCK      1
 #define EE_TRIM_LOCK 2
 
+// Flags for check_inc_dec
 #define EE_GENERAL 1
 #define EE_MODEL   2
 #define EE_TRIM    4           // Store model because of trim
 #define INCDEC_SWITCH   0x08
+#define NO_MENU_ONLY_EDIT   0x80
 
 // Bits in SystemOptions
 #define SYS_OPT_HARDWARE_EDIT	1
@@ -957,7 +970,11 @@ extern int16_t *const CalibSpanNeg[] ;
 	 #define NUM_ANALOG_CALS	9
 	#endif
  #else
+  #ifdef PCBXLITE
+  #define NUM_ANALOG_CALS	6
+  #else
   #define NUM_ANALOG_CALS	8
+  #endif
  #endif
 #else
 #ifdef PCBX12D	
@@ -1114,6 +1131,8 @@ void protocolsToModules( void ) ;
 
 extern char idx2char(uint8_t idx) ;
 extern uint8_t char2idx(char c) ;
+extern void validateText( uint8_t *text, uint32_t length ) ;
+extern void validateName( uint8_t *text, uint32_t length ) ;
 
 extern int16_t            g_ppmIns[];
 extern uint8_t ppmInState ; //0=unsync 1..8= wait for value i-1
@@ -1467,6 +1486,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_9XTREME			7
 #define PHYSICAL_QX7					8
 #define PHYSICAL_HORUS				9
+#define PHYSICAL_XLITE				10
 
 // Power control type
 #ifdef REV9E
@@ -1478,6 +1498,9 @@ extern uint16_t FailsafeCounter[2] ;
 #ifdef PCBX12D
 #define POWER_BUTTON	1
 #endif // PCBX12D
+#ifdef PCBXLITE
+#define POWER_BUTTON	1
+#endif // PCBXLITE
 
 //#define IMAGE_128
 
@@ -1540,6 +1563,11 @@ union t_sharedMemory
 #define TIMER2_5SR_MASK	0x1E5F
 #define TIMER6_7SR_MASK	0x0001
 #define TIMER9_14SR_MASK	0x0203
+#endif
+
+
+#if defined(PCBXLITE)
+#define ALLOW_EXTERNAL_ANTENNA		1
 #endif
 
 

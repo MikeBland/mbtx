@@ -2064,28 +2064,29 @@ uint32_t read_trims()
 #else
 #ifdef PCBXLITE
 	trima = GPIOB->IDR ;
+	uint32_t shift = GPIOE->IDR & 0x0100 ;
 	if ( ( trima & PIN_TRIMLV_DN ) == 0 )
 	{
-		trims |= 4 ;
+		trims |= shift ? 0x10 : 4 ;
 	}
 
 // TRIM_LV_UP
 	if ( ( trima & PIN_TRIMLV_UP ) == 0 )
 	{
-		trims |= 8 ;
+		trims |= shift ? 0x20 : 8 ;
 	}
 	
 	trima = GPIOC->IDR ;
 // TRIM_LH_DOWN
 	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
 	{
-		trims |= 1 ;
+		trims |= shift ? 0x40 : 1 ;
 	}
     
 // TRIM_LH_UP
 	if ( ( trima & PIN_TRIMLH_UP ) == 0 )
 	{
-		trims |= 2 ;
+		trims |= shift ? 0x80 : 2 ;
 	}
 
 #else
@@ -2169,6 +2170,8 @@ void setup_switches()
 #ifdef PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x000F, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	configure_pins( 0x0060, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( 0x0030, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
 #else // PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
@@ -2240,29 +2243,39 @@ uint32_t hwKeyState( uint8_t key )
 {
 #ifdef PCBXLITE
   uint32_t xxx = 0 ;
-  register uint32_t e = GPIOE->IDR ;
+  uint32_t e = GPIOE->IDR ;
+  uint32_t a = GPIOA->IDR ;
   
   switch ( key )
 	{
     case HSW_SA0:
       xxx = ~e & PIN_SW_A_L ;
-      break ;
+    break ;
     case HSW_SA1:
       xxx = ((e & PIN_SW_A_L) | (e & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
-      break ;
+    break ;
     case HSW_SA2:
       xxx = ~e & PIN_SW_A_H ;
-      break ;
+    break ;
 
     case HSW_SB0:
-      xxx = ~e & PIN_SW_B_L ;
-      break ;
+      xxx = ~a & PIN_SW_B_L ;
+    break ;
     case HSW_SB1:
-      xxx = ((e & PIN_SW_B_L) | (e & PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
-      break;
+      xxx = ((a & PIN_SW_B_L) | (a & PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
+    break;
     case HSW_SB2:
-      xxx = ~e & PIN_SW_B_H ;
-      break ;
+      xxx = ~a & PIN_SW_B_H ;
+    break ;
+    
+		case HSW_SF2:
+      xxx = ~e & PIN_SW_C_L ;
+    break ;
+
+    case HSW_SH2:
+      xxx = GPIOB->IDR & PIN_SW_D_L ;
+    break ;
+
 	}
 #else
 
