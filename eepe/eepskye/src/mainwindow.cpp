@@ -101,6 +101,7 @@
 #define DNLD_VER_ERSKYX9E				 5
 #define DNLD_VER_ERSKY9XA				 6
 #define DNLD_VER_ERSKY9XQX7			 7
+#define DNLD_VER_ERSKY9XXLITE		 8
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -139,6 +140,7 @@
 #define ERSKYX9E_URL "http://www.er9x.com/x9e_rom.bin"
 #define ERSKY9XRA_URL "http://www.er9x.com/ersky9x_rom.bin"
 #define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
+#define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -280,6 +282,9 @@ void MainWindow::title()
 		case 7 :
 			type = "QX7" ;
     break ;
+		case 8 :
+			type = "XLITE" ;
+    break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -417,6 +422,9 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 					case 7 :
 						currentRev = currentERSKY9XQX7rev ;
 					break ;
+          case 8 :
+						currentRev = currentERSKY9XXLITErev ;
+					break ;
 
 				}
 
@@ -459,6 +467,11 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 						case (DNLD_VER_ERSKY9XQX7):
                 dnldURL = ERSKY9X_URL;
                 baseFileName = "ersky9x_rom.bin";
+                break;
+								
+						case (DNLD_VER_ERSKY9XXLITE):
+                dnldURL = ERSKY9X_URL;
+                baseFileName = "xlite_rom.bin";
                 break;
 								
             default:
@@ -523,6 +536,10 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 										
 											case 7 :
                     		settings.setValue("currentERSKY9XQX7rev", rev);
+											break ;
+										
+											case 8 :
+                    		settings.setValue("currentERSKY9XXLITErev", rev);
 											break ;
 										}
                 }
@@ -621,6 +638,9 @@ void MainWindow::downloadLatester9x()
 			break ;
 			case 7 :
 				currentERSKY9Xrev_temp = currentERSKY9XQX7rev ;
+			break ;
+			case 8 :
+				currentERSKY9Xrev_temp = currentERSKY9XXLITErev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -726,6 +746,11 @@ void MainWindow::reply1Accepted()
 			case 7 :
     		settings.setValue("currentERSKY9Xrev", currentERSKY9XQX7rev);
 			break ;
+			
+			case 8 :
+    		settings.setValue("currentERSKY9XXrev", currentERSKY9XXLITErev);
+			break ;
+
 		}	
 }
 

@@ -973,7 +973,7 @@ extern MixData *mixaddress( uint8_t idx ) ;
 
 const
 #include "sticks.lbm"
-typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
+//typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
 
 void menuProcAlpha(uint8_t event) ;
 void menuProcIndex(uint8_t event) ;

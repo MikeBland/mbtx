@@ -308,18 +308,18 @@ void ProtocolDialog::setBoxes()
 	if ( hasFailsafe() )
 	{
 		ui->FailsafeCB->setCurrentIndex( ppd->failsafeMode ) ;
-		ui->RepeatSendCB->setChecked( !ppd->failsafeRepeat ) ;
+//		ui->RepeatSendCB->setChecked( !ppd->failsafeRepeat ) ;
 		ui->failsafeLabel->show() ;
 		ui->FailsafeCB->show() ;
-    ui->RepeatSendCB->show() ;
-		ui->RepeatLabel->show() ;
+//    ui->RepeatSendCB->show() ;
+//		ui->RepeatLabel->show() ;
 	}
 	else
 	{
 		ui->failsafeLabel->hide() ;
 		ui->FailsafeCB->hide() ;
-    ui->RepeatSendCB->hide() ;
-		ui->RepeatLabel->hide() ;
+//    ui->RepeatSendCB->hide() ;
+//		ui->RepeatLabel->hide() ;
 	}
 
 	protocolEditLock = false ;
@@ -521,12 +521,12 @@ void ProtocolDialog::on_FailsafeCB_currentIndexChanged(int index)
 	ppd->failsafeMode = index ;
 }
 
-void ProtocolDialog::on_RepeatSendCB_toggled(bool checked)
-{
-	if ( protocolEditLock ) return ;
-	ppd->failsafeRepeat = !checked  ;
+//void ProtocolDialog::on_RepeatSendCB_toggled(bool checked)
+//{
+//	if ( protocolEditLock ) return ;
+//	ppd->failsafeRepeat = !checked  ;
 	
-}
+//}
 
 void ProtocolDialog::on_R9MpowerCB_currentIndexChanged(int index)
 {

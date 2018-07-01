@@ -2267,6 +2267,26 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SB2:
       xxx = ~a & PIN_SW_B_H ;
     break ;
+
+    case HSW_SC0:
+      xxx = ~e & PIN_SW_C_L ;
+    break;
+    case HSW_SC1:
+      xxx = ((e & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+    break;
+    case HSW_SC2:
+      xxx = ~e & PIN_SW_C_H ;
+    break;
+
+    case HSW_SD0:
+      xxx = ~GPIOB->IDR & PIN_SW_D_L ;
+		break;
+    case HSW_SD1:
+      xxx = ((GPIOB->IDR & PIN_SW_D_L) | (GPIOB->IDR & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
+    break;
+    case HSW_SD2:
+      xxx = ~GPIOB->IDR & PIN_SW_D_H ;
+    break;
     
 		case HSW_SF2:
       xxx = ~e & PIN_SW_C_L ;

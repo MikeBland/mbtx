@@ -2290,10 +2290,10 @@ void setupPulsesPXX(uint8_t module)
 				}
 	    	if ( FailsafeCounter[module] == 0 )
 				{
-					if ( g_model.Module[module].failsafeRepeat == 0 )
-					{
+//					if ( g_model.Module[module].failsafeRepeat == 0 )
+//					{
 						FailsafeCounter[module] = 1000 ;
-					}
+//					}
 				}
 			}
 		}
@@ -2521,10 +2521,10 @@ extern volatile uint8_t PxxTxCount ;
 				}
 	    	if ( FailsafeCounter[module] == 0 )
 				{
-					if ( g_model.Module[module].failsafeRepeat == 0 )
-					{
+//					if ( g_model.Module[module].failsafeRepeat == 0 )
+//					{
 						FailsafeCounter[module] = 1000 ;
-					}
+//					}
 				}
 			}
 		}

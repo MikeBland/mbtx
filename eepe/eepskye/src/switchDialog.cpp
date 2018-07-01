@@ -49,7 +49,7 @@ void SwitchDialog::update()
 
 	populateCSWCB( ui->functionCB, lsdata->swData.func, lmodelVersion);
 	ui->delaySB->setValue( (double) lsdata->switchDelay / 10 ) ;
-  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 	{
     x9dPopulateSwitchAndCB( ui->andSwCB, lsdata->swData.andsw ) ;
 	}

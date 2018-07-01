@@ -664,10 +664,10 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 		}
 	  if ( FailsafeCounter[module] == 0 )
 		{
-			if ( pmodule->failsafeRepeat == 0 )
-			{
+//			if ( pmodule->failsafeRepeat == 0 )
+//			{
 				FailsafeCounter[module] = 1000 ;
-			}
+//			}
 		}
 	}
 	*data++ = packetType ;

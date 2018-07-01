@@ -421,7 +421,7 @@ void ModelEdit::tabModelEditSetup()
       ui->TrainerPolarityCB->setCurrentIndex(g_model.trainPulsePol) ;
 			ui->TrainerStartChannelSB->setValue(g_model.startChannel+1) ;
 
-	    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
 				ui->protocolCB->addItem("XJT");
 			}	
@@ -465,7 +465,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -477,8 +477,18 @@ void ModelEdit::tabModelEditSetup()
 			ui->switchDefPos_8->hide() ;
 			ui->widgetDefSA->show() ;
 			ui->widgetDefSB->show() ;
-			ui->widgetDefSC->show() ;
-			ui->widgetDefSD->show() ;
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+			{
+				ui->widgetDefSC->show() ;
+				ui->widgetDefSD->show() ;
+			}
+			else
+			{
+				ui->widgetDefSC->hide() ;
+				ui->widgetDefSD->hide() ;
+				ui->EnC->hide() ;
+				ui->EnD->hide() ;
+			}
     	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
 			{
 				ui->widgetDefSE->show() ;
@@ -502,8 +512,11 @@ void ModelEdit::tabModelEditSetup()
 			ui->EnGea->hide() ;
 			ui->EnA->show() ;
 			ui->EnB->show() ;
-			ui->EnC->show() ;
-			ui->EnD->show() ;
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+			{
+				ui->EnC->show() ;
+				ui->EnD->show() ;
+			}
 			ui->EnF->show() ;
 		}
 		else
@@ -1571,7 +1584,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -5078,7 +5091,7 @@ void ModelEdit::updateSwitchesList( int lOrR )
 		{
 			uint32_t x ;
 			x = g_model.customSw[i].andsw ;
-	    if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
 //  				x = switchUnMap(x, 1 ) ;
 			}
@@ -5179,7 +5192,7 @@ void ModelEdit::tabSwitches()
         cswitchDelay[i]->setDecimals(1);
 				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 			}
-    	if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
         x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 			}
@@ -5827,7 +5840,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-    	if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -6942,7 +6955,7 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
 				p = &ProtocolOptionsX9de[0][1] ;
 			}
@@ -6991,7 +7004,7 @@ void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 			{
 				p = &ProtocolOptionsX9de[1][1] ;
 			}

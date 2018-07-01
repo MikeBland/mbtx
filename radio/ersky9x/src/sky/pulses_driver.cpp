@@ -1901,10 +1901,10 @@ void setupPulsesPXX()
 				}
 	    	if ( FailsafeCounter[1] == 0 )
 				{
-					if ( g_model.Module[1].failsafeRepeat == 0 )
-					{
+//					if ( g_model.Module[1].failsafeRepeat == 0 )
+//					{
 						FailsafeCounter[1] = 1000 ;
-					}
+//					}
 				}
 			}
 		}

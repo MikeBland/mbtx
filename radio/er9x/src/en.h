@@ -233,9 +233,9 @@
 // STR_TRIM_OPTIONS indexed 6 chars each
 #define STR_TRIM_OPTIONS   "\006Exp   ExFineFine  MediumCoarse"
 #ifdef V2
-#define STR_TRIM_PAGE			 STR_TRIM_INC"\037"STR_TRIM_SWITCH"\037"STR_TRAINER"\037"STR_BEEP_CENTRE
+#define STR_TRIM_PAGE			 STR_TRIM_INC "\037" STR_TRIM_SWITCH "\037" STR_TRAINER "\037" STR_BEEP_CENTRE
 #else
-#define STR_TRIM_PAGE			 STR_TRIM_INC"\037"STR_TRIM_SWITCH"\037Hi.Res Slow/Delay\037"STR_TRAINER"\037"STR_BEEP_CENTRE
+#define STR_TRIM_PAGE			 STR_TRIM_INC "\037" STR_TRIM_SWITCH "\037Hi.Res Slow/Delay\037" STR_TRAINER "\037" STR_BEEP_CENTRE
 #endif
 #define STR_TRIM_SWITCH    "Trim Sw"
 #define STR_BEEP_CENTRE    "Beep Cnt"
@@ -271,7 +271,7 @@
 #define STR_SHIFT_SEL      "Polarity"
 // STR_POS_NEG indexed 3 chars each
 #define STR_POS_NEG        "\003POSNEG"
-#define STR_VOL_PAGE				STR_E_LIMITS"\037""Thr. Default\037"STR_THR_REVERSE"\037""Throttle Open""\037"STR_T_TRIM"\037"STR_T_EXPO
+#define STR_VOL_PAGE				STR_E_LIMITS "\037" "Thr. Default\037" STR_THR_REVERSE "\037" "Throttle Open" "\037" STR_T_TRIM "\037" STR_T_EXPO
 #define STR_E_LIMITS       "E. Limits"
 #define STR_Trainer        "Trainer"
 #define STR_T2THTRIG       "T2ThTrig"

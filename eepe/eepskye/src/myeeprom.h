@@ -779,7 +779,7 @@ struct t_module
   int8_t ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
 	int8_t option_protocol ;
 	uint8_t failsafeMode:3 ;
-	uint8_t failsafeRepeat:1 ;
+	uint8_t notfailsafeRepeat:1 ;
 	uint8_t r9mPower:2 ;
 	uint8_t failsafeSpare:2 ;
 	int8_t failsafe[16] ;

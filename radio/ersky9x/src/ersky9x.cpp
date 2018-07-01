@@ -10261,10 +10261,15 @@ void createSwitchMapping()
 	*p++ = HSW_SB1 ;
 	*p++ = HSW_SB2 ;
 
-#ifndef PCBXLITE
+#ifdef PCBXLITE
+	if (g_eeGeneral.ailsource)
+	{
+#endif
 	*p++ = HSW_SC0 ;
 	*p++ = HSW_SC1 ;
 	*p++ = HSW_SC2 ;
+#ifdef PCBXLITE
+	}
 #endif
 	 
 #ifndef PCBXLITE
@@ -10281,7 +10286,14 @@ void createSwitchMapping()
 #endif
 #endif
 
+#ifdef PCBXLITE
+	if (g_eeGeneral.ailsource == 0)
+	{
+#endif
 	*p++ = HSW_SF2 ;
+#ifdef PCBXLITE
+	}
+#endif
 
 #ifndef PCBX7
 #ifndef PCBXLITE

@@ -856,6 +856,10 @@ void MdiChild::OpenEditWindow()
 				{
     			type = " (Taranis QX7)" ;
 				}
+				else if ( radioData.type == RADIO_TYPE_XLITE )
+				{
+    			type = " (Taranis XLITE)" ;
+				}
         t->setWindowTitle(tr("Editing model %1: ").arg(i) + mname + type ) ;
 
         for(int j=0; j<MAX_SKYMIXERS; j++)
@@ -926,6 +930,10 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_QX7 ;
 				radioData.bitType = RADIO_BITTYPE_QX7 ;
 			break ;
+			case PHYSICAL_XLITE :
+				radioData.type = RADIO_TYPE_XLITE ;
+				radioData.bitType = RADIO_BITTYPE_XLITE ;
+			break ;
 
 		}
 	}
@@ -959,6 +967,10 @@ void MdiChild::getPhysicalType()
 		if ( x == 7 )	// Qx7
 		{
 			radioData.type = RADIO_TYPE_QX7 ;
+		}
+    if ( x == 8 )	// XLITE
+		{
+			radioData.type = RADIO_TYPE_XLITE ;
 		}
 	}
 }
@@ -1008,6 +1020,12 @@ void MdiChild::newFile()
 		{
 			radioData.type = RADIO_TYPE_QX7 ;
     	type = " (Taranis QX7)" ;
+		}
+
+    if ( x == 8 )	// XLITE
+		{
+			radioData.type = RADIO_TYPE_XLITE ;
+    	type = " (Taranis XLITE)" ;
 		}
 
     isUntitled = true;
@@ -1464,7 +1482,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-				if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7) )
+        if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1703,7 +1721,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-						if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7) )
+            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}

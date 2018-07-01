@@ -255,8 +255,8 @@ PACK(typedef struct t_EEGeneral {
 	int8_t		inactivityVolume ;
 	uint8_t		pb1source ;
 	uint8_t		pb2source ;
-	uint8_t		ailsource ;
-	uint8_t		rudsource ;
+	uint8_t		ailsource ;	// Switch F type for Xlite
+	uint8_t		rudsource ;	// Switch H type for Xlite
 	uint8_t		geasource ;
 	uint8_t		thrsource ;
 	uint8_t		elesource ;
@@ -709,7 +709,7 @@ struct t_module
   int8_t ppmFrameLength ;   //0=22.5  (10msec-30msec) 0.5msec increments
 	int8_t option_protocol ;
 	uint8_t failsafeMode:3 ;
-	uint8_t failsafeRepeat:1 ;
+	uint8_t notfailsafeRepeat:1 ;
 	uint8_t r9mPower:2 ;
 	uint8_t pxxDoubleRate:1 ;
 	uint8_t pxxHeartbeatPB14:1 ;

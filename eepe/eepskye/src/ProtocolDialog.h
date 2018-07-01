@@ -41,7 +41,7 @@ private slots:
 	void on_multiSubProtocolCB_currentIndexChanged(int value) ;
 	void on_rateCB_currentIndexChanged(int index) ;
   void on_FailsafeCB_currentIndexChanged(int index) ;
-	void on_RepeatSendCB_toggled(bool checked) ;
+//	void on_RepeatSendCB_toggled(bool checked) ;
 	void on_R9MpowerCB_currentIndexChanged(int index) ;
 
 //    void valuesChanged();

@@ -143,6 +143,17 @@ void preferencesDialog::populateLocale()
 
 
 #ifdef SKY
+
+// 0 - SKY
+// 1 - PRO
+// 2 - X9D
+// 3 - X9D+
+// 4 - 9Xtreme
+// 5 - X9E
+// 6 - AR9X
+// 7 - QX7
+// 8 - XLITE
+
 void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
 {
 	QSettings settings("er9x-eePskye", "eePskye");
@@ -166,10 +177,30 @@ void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
     currentER9Xrev = settings.value("currentERSKYX9DPrev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - erskyX9DP" ) ;
 	}
-	else
+	else if ( index == 4 )
 	{
     currentER9Xrev = settings.value("currentERSKY9XTrev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - ersky9XT" ) ;
+	}
+	else if ( index == 5 )
+	{
+    currentER9Xrev = settings.value("currentERSKYX9Erev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - erskyX9E" ) ;
+	}
+	else if ( index == 7 )
+	{
+    currentER9Xrev = settings.value("currentERSKY9XQX7rev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - erskyQX7" ) ;
+	}
+	else if ( index == 8 )
+	{
+    currentER9Xrev = settings.value("currentERSKY9XXLITErev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - erskyXLITE" ) ;
+	}
+	else
+	{
+    currentER9Xrev = settings.value("currentERSKY9XRrev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - ersky9xr" ) ;
 	}
   ui->er9x_ver_label->setText(QString("r%1").arg(currentER9Xrev));
   settings.setValue("download-version", ui->downloadVerCB->currentIndex());

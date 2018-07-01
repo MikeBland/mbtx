@@ -5389,7 +5389,7 @@ extern uint8_t frskyRSSItype[2] ;
 void menuSetFailsafe(uint8_t event)
 {
 	static MState2 mstate2 ;
-	mstate2.check_columns(event, 16-1+1+1+1+1 ) ;	
+	mstate2.check_columns(event, 16-1+1+1+1 ) ;	
   lcd_puts_Pleft( 0, XPSTR( "Set Failsafe" ) ) ;
   int8_t sub = mstate2.m_posVert ;
 	uint8_t y = 0;
@@ -5447,23 +5447,23 @@ void menuSetFailsafe(uint8_t event)
 		  lcd_putsAtt( 0, y, XPSTR( "Send Now" ), StatusTimer ? 0 : attr ) ;
 		}
 		else if ( k == 2 )
-		{
-			uint8_t b ;
-			b = g_model.Module[module].failsafeRepeat ;
-     	g_model.Module[module].failsafeRepeat = offonMenuItem( b, y, XPSTR("Repeat Send"), sub == k ) ;
-			if ( b != g_model.Module[module].failsafeRepeat )
-			{
-				if ( b == 0 )
-				{
-					FailsafeCounter[module] = 6 ;		// Send failsafe values soon
-				}
-				else
-				{
-					FailsafeCounter[module] = 0 ;		// Stop sending
-				}
-			}
-		}
-		else if ( k == 3 )
+//		{
+//			uint8_t b ;
+//			b = g_model.Module[module].failsafeRepeat ;
+//     	g_model.Module[module].failsafeRepeat = offonMenuItem( b, y, XPSTR("Repeat Send"), sub == k ) ;
+//			if ( b != g_model.Module[module].failsafeRepeat )
+//			{
+//				if ( b == 0 )
+//				{
+//					FailsafeCounter[module] = 6 ;		// Send failsafe values soon
+//				}
+//				else
+//				{
+//					FailsafeCounter[module] = 0 ;		// Stop sending
+//				}
+//			}
+//		}
+//		else if ( k == 3 )
 		{
 			if ( attr )
 			{
@@ -5493,8 +5493,8 @@ void menuSetFailsafe(uint8_t event)
 		}
 		else
 		{
-  	  putsChn(0,y,k-3,0);
-			value = g_model.Module[module].failsafe[k-4] ;
+  	  putsChn(0,y,k-2,0);
+			value = g_model.Module[module].failsafe[k-3] ;
 			lcd_outdezAtt(  7*FW+3, y, value, attr ) ;
 			lcd_putc(  7*FW+5, y, '%' ) ;
     	if(active)
@@ -19588,23 +19588,39 @@ STR_DiagAna
 #ifndef REV9E
  #ifndef PCBX12D
 	#ifndef PCBX7
+   #ifndef PCBXLITE
   			lcd_puts_Pleft( y, XPSTR("Encoder"));
 				value = g_eeGeneral.analogMapping & ENC_MASK ;
 	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? BLINK:0));
 				oldValue = value ;
 				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_MAP_POTS ) ;
  				g_eeGeneral.analogMapping = ( g_eeGeneral.analogMapping & ~ENC_MASK ) | value ;
-#ifndef PCBXLITE
 				if ( value != oldValue )
 				{
 					init_adc2() ;
 				}
-#endif
 				y += FH ;
 				subN += 1 ;
+   #endif // nXlite
 	#endif	// nX7
  #endif	// nX12D
 #endif	// nREV9E
+
+#ifdef PCBXLITE
+  			lcd_puts_Pleft( y, XPSTR("Switch F/C"));
+				value = g_eeGeneral.ailsource ;
+	  		lcd_putsAttIdx( 14*FW, y, XPSTR("\0072-Pos=F3-Pos=C"), value, (sub==subN ? BLINK:0));
+				oldValue = value ;
+				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, 1 ) ;
+				g_eeGeneral.ailsource = value ;
+				if ( value != oldValue )
+				{
+					createSwitchMapping() ;
+				}
+				y += FH ;
+				subN += 1 ;
+
+#endif // Xlite
 
 #ifndef PCBX12D
 //  			lcd_puts_Pleft( y, XPSTR("6 Pos. Switch"));
