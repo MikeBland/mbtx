@@ -502,7 +502,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		{
 			value /= 10 ;			
 		}
-		storeAltitude( WholeAltitude + value ) ;
+		storeAltitude( WholeAltitude + ((WholeAltitude >= 0) ? value : -value) ) ;
 		index = FR_ALT_BARO ;	// For max/min
 	}
 	
@@ -544,8 +544,11 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 	{
     if ( !g_model.FrSkyGpsAlt )         
     {
-			FrskyHubData[index] = value ;
-			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
+      if ( index != FR_ALT_BARO )
+			{
+				FrskyHubData[index] = value ;
+				TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
+			}
     }                     
 		else
 		{

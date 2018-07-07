@@ -2275,7 +2275,14 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ((e & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
     break;
     case HSW_SC2:
-      xxx = ~e & PIN_SW_C_H ;
+			if (g_eeGeneral.ailsource)
+			{
+				xxx = ~e & PIN_SW_C_H ;
+			}
+			else
+			{
+      	xxx = e & PIN_SW_C_L ;
+			}
     break;
 
     case HSW_SD0:
@@ -2285,7 +2292,14 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ((GPIOB->IDR & PIN_SW_D_L) | (GPIOB->IDR & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
     break;
     case HSW_SD2:
-      xxx = ~GPIOB->IDR & PIN_SW_D_H ;
+			if (g_eeGeneral.rudsource)
+			{
+      	xxx = ~GPIOB->IDR & PIN_SW_D_H ;
+			}
+			else
+			{
+      	xxx = GPIOB->IDR & PIN_SW_D_L ;
+			}
     break;
     
 		case HSW_SF2:
@@ -2829,9 +2843,17 @@ static const uint8_t SwitchIndices[] = {HSW_SA0,HSW_SB0,HSW_SC0,HSW_SD0,HSW_SE0,
 #endif	// REV9E
 uint32_t switchPosition( uint32_t swtch )
 {
+#ifdef PCBXLITE
+	if ( swtch < 4 )
+#else
 	if ( swtch < sizeof(SwitchIndices) )
+#endif
 	{
 		swtch = SwitchIndices[swtch] ;
+	}
+	else
+	{
+		return 0 ;
 	}
 
 	if ( swtch == HSW_SF2 )

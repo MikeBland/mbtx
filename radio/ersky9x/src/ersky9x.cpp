@@ -3127,16 +3127,16 @@ struct t_bt_control BtControl ;
 //OK+DISCS
 
 
-//OK+ 
+//OK+
 //AT+
 //OK+DISCE
 //OK+DISC:
 //Connected
-//Central 
+//Central
 //Peripheral
 //DisConnected
 //B4994C761243
-//0:/FIRMWARE /   blemodule.bin   blemodule.tst   Remaining Size %d
+//0:/FIRMWARE
 //AT+NAME?
 //AT+ADDR?
 //AT+ROLE?
@@ -6126,12 +6126,16 @@ static void processVoiceAlarms()
 					char name[10] ;
 					char *p ;
 					p = (char *)ncpystr( (uint8_t *)name, pvad->file.name, 8 ) ;
-					if ( play >= 2 )
-					{
-						*(p-1) += ( play - 1 ) ;
-					}
 					if ( name[0] && ( name[0] != ' ' ) )
 					{
+						if ( play >= 2 )
+						{
+							while ( *(p-1) == ' ' )
+							{
+								p -= 1 ;
+							}
+							*(p-1) += ( play - 1 ) ;
+						}
 						putUserVoice( name, 0 ) ;
 					}
 				}
@@ -10261,22 +10265,27 @@ void createSwitchMapping()
 	*p++ = HSW_SB1 ;
 	*p++ = HSW_SB2 ;
 
+	*p++ = HSW_SC0 ;
 #ifdef PCBXLITE
 	if (g_eeGeneral.ailsource)
 	{
 #endif
-	*p++ = HSW_SC0 ;
 	*p++ = HSW_SC1 ;
-	*p++ = HSW_SC2 ;
 #ifdef PCBXLITE
 	}
 #endif
+	*p++ = HSW_SC2 ;
 	 
-#ifndef PCBXLITE
 	*p++ = HSW_SD0 ;
-	*p++ = HSW_SD1 ;
-	*p++ = HSW_SD2 ;
+#ifdef PCBXLITE
+	if (g_eeGeneral.rudsource)
+	{
 #endif
+	*p++ = HSW_SD1 ;
+#ifdef PCBXLITE
+	}
+#endif
+	*p++ = HSW_SD2 ;
 	 
 #ifndef PCBX7
 #ifndef PCBXLITE
@@ -10286,13 +10295,8 @@ void createSwitchMapping()
 #endif
 #endif
 
-#ifdef PCBXLITE
-	if (g_eeGeneral.ailsource == 0)
-	{
-#endif
+#ifndef PCBXLITE
 	*p++ = HSW_SF2 ;
-#ifdef PCBXLITE
-	}
 #endif
 
 #ifndef PCBX7
@@ -10303,7 +10307,9 @@ void createSwitchMapping()
 #endif
 #endif
 	 
+#ifndef PCBXLITE
 	*p++ = HSW_SH2 ;
+#endif
 
 #ifdef REV9E
 	if ( g_eeGeneral.ailsource & 1 )
@@ -11184,43 +11190,100 @@ int8_t getMovedSwitch()
     if (prev != next)
 		{
       switches_states = (switches_states & (~mask)) | (next << (i*2));
+#ifdef PCBXLITE
+      if (i<2)
+#else
       if (i<4)
+#endif			
+			{
         result = 1+(3*i)+next;
+			}
 #ifdef PCBXLITE
 			else if (i==2)
 			{
-				result = 0 ;
+				if (g_eeGeneral.ailsource)
+				{
+        	result = 1+(3*i)+next;
+				}
+				else
+				{
+        	result = 1+(3*i)+ ( next ? 1 : 0 ) ;
+				}
 			}
 			else if (i==3)
 			{
-				result = 0 ;
+        result = 1+(3*i) ;
+				if (g_eeGeneral.ailsource == 0)
+				{
+					result -= 1 ;
+				}
+				if (g_eeGeneral.rudsource)
+				{
+					result += next ;
+				}
+				else
+				{
+					if ( next )
+					{
+        		result += 1 ;
+					}
+				}
 			}
-#endif			
+			else
+			{
+        result = 0 ;
+#else
 			else if (i==4)
 			{
 				result = 0 ;
 			}
       else if (i==5)
 			{
-#ifdef PCBXLITE
-        result = -(1+(3*2)) ;
-#else
         result = -(1+(3*4)) ;
-#endif
 				if (next!=0) result = -result ;
 			}
       else if (i==6)
         result = 0 ;
       else
 			{
-#ifdef PCBXLITE
-        result = -(1+(3*2)+1) ;
-#else
         result = -(1+(3*4)+1) ;
-#endif
 				if (next!=0) result = -result ;
+#endif
 			}
     }
+#ifdef PCBXLITE
+	if ( g_eeGeneral.pb1source )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb1 ) << 14 ;
+			if ( ( mask ^ switches_states ) & 0x4000 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb1 ;
+				}
+				switches_states ^= 0x4000 ;
+			}
+		}
+	}
+	if ( g_eeGeneral.pb2source )
+	{
+		if ( result == 0 )
+		{
+			mask = getSwitch00( HSW_Pb2 ) << 15 ;
+			if ( ( mask ^ switches_states ) & 0x8000 )
+			{
+				if ( mask )
+				{
+					result = HSW_Pb1 ;
+				}
+				switches_states ^= 0x8000 ;
+			}
+		}
+	}
+		
+#endif
   }
 #else // PCBX7 || PCBXLITE
   for (uint8_t i=0 ; i<8 ; i += 1 )
@@ -11837,7 +11900,7 @@ void checkSwitches()
 			if ( ( ss & 0x0CFF ) == warningStates )	// Miss E and G
 #else
 #ifdef PCBXLITE
-			if ( ( ss & 0x0C0F ) == (warningStates & 0x0C0F ) )
+			if ( ( ss & 0x00FF ) == (warningStates & 0x00FF ) )
 #else
 			if ( ( ss & 0x3FFF ) == warningStates )
 #endif
@@ -11871,7 +11934,7 @@ void checkSwitches()
 			}
 #endif
 #ifdef PCBXLITE
-			if ( ( i == 4 ) || ( i == 6 ) || ( i == 2 ) || ( i == 3 ) )
+			if ( i >= 4 )
 			{
 				continue ;	// Skip E and G
 			}

@@ -129,8 +129,8 @@
   #define	PIN_SW_A_H		        GPIO_Pin_1	//PE.01
   #define	PIN_SW_B_L		        GPIO_Pin_6	//PA.06
   #define	PIN_SW_B_H		        GPIO_Pin_5	//PA.05
-  #define	PIN_SW_C_L		        GPIO_Pin_3	//PE.03
-  #define	PIN_SW_C_H		        GPIO_Pin_2	//PE.02
+  #define	PIN_SW_C_L		        GPIO_Pin_2	//PE.02
+  #define	PIN_SW_C_H		        GPIO_Pin_3	//PE.03
   #define	PIN_SW_D_L		        GPIO_Pin_4	//PB.04
   #define	PIN_SW_D_H		        GPIO_Pin_5	//PB.05
  #else // PCBX7

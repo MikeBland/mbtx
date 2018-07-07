@@ -5499,7 +5499,7 @@ void menuSetFailsafe(uint8_t event)
 			lcd_putc(  7*FW+5, y, '%' ) ;
     	if(active)
 			{
-  	    g_model.Module[module].failsafe[k-4] = checkIncDec16( value, -125, 125, EE_MODEL ) ;
+  	    g_model.Module[module].failsafe[k-3] = checkIncDec16( value, -125, 125, EE_MODEL ) ;
     	}
 		}
 	}
@@ -12807,7 +12807,7 @@ void menuProcDiagKeys(uint8_t event)
 		if ( ( i != 4) && ( i != 6 ) )
 #endif // PCBX7
 #ifdef PCBXLITE
-		if ( ( i != 4) && ( i != 6 ) && ( i != 2 ) && ( i != 3 ) )
+		if ( i < 4 )
 #endif // PCBXLITE
 		{
 			putHwSwitchName( x, y, i, 0 ) ;
@@ -13061,6 +13061,7 @@ void menuProcDiagVers(uint8_t event)
 #endif
 
 
+#ifndef PCBXLITE	
 void menuProcRSSI(uint8_t event)
 {
 	TITLE( XPSTR( "Module RSSI" ) ) ;
@@ -13115,6 +13116,7 @@ void menuProcRSSI(uint8_t event)
   	subN++; y+=FH;
 	}
 }
+#endif
 
 // From Bertrand, allow trainer inputs without using mixers.
 // Raw trianer inputs replace raw sticks.
@@ -13186,7 +13188,11 @@ void menuProcTrainer(uint8_t event)
 #ifdef PCBX7
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 5 ) ;
 #else
+ #ifdef PCBXLITE
+		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 2 ) ;
+ #else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
+ #endif
 #endif
 #else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
@@ -16037,13 +16043,9 @@ void switchDisplay( uint8_t j, uint8_t a )
 #ifdef PCBXLITE
 		uint32_t p ;
 		p = i ;
-		if ( p > 1 )
+		if ( p > 3 )
 		{
-			p += 3 ;
-		}
-		if ( p > 5 )
-		{
-			p += 1 ;
+			p += 4 ;
 		}
 #endif // PCBXLITE
 #ifdef REV9E
@@ -18300,22 +18302,46 @@ void menuRestoreEeprom( uint8_t event )
 
 const char Str_General[] =     "General" ;
 			
-#define M_INDEX			0
-#define M_DISPLAY		1
-#define M_AUDIO			2
-#define M_ALARMS		3
-#define M_GENERAL		4
-#define M_CONTROLS	5
-#define M_HARDWARE	6
-#define M_CALIB			7
-#define M_BLUETOOTH	8
-#define M_TRAINER		9
-#define M_VERSION		10
-#define M_MODULE		11
-#define M_EEPROM		12
-#define M_DATE			13
-#define M_DIAGKEYS	14
-#define M_DIAGANA		15
+//#define M_INDEX			0
+//#define M_DISPLAY		1
+//#define M_AUDIO			2
+//#define M_ALARMS		3
+//#define M_GENERAL		4
+//#define M_CONTROLS	5
+//#define M_HARDWARE	6
+//#define M_CALIB			7
+//#define M_BLUETOOTH	8
+//#define M_TRAINER		9
+//#define M_VERSION		10
+//#define M_MODULE		11
+//#define M_EEPROM		12
+//#define M_DATE			13
+//#define M_DIAGKEYS	14
+//#define M_DIAGANA		15
+
+enum GENERAL_INDEX
+{
+	M_INDEX,
+	M_DISPLAY,
+	M_AUDIO,
+	M_ALARMS,
+	M_GENERAL,
+	M_CONTROLS,
+	M_HARDWARE,
+	M_CALIB,
+	M_BLUETOOTH,
+	M_TRAINER,
+	M_VERSION,
+#ifndef PCBXLITE	
+	M_MODULE,
+#endif
+	M_EEPROM,
+	M_DATE,
+	M_DIAGKEYS,
+	M_DIAGANA		
+} ;
+
+
 
 static void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight )
 {
@@ -18573,7 +18599,11 @@ void menuProcIndex(uint8_t event)
 	static MState2 mstate;
 	EditType = EE_GENERAL ;
 
+#ifndef PCBXLITE	
 	event = indexProcess( event, &mstate, 8 ) ;
+#else
+	event = indexProcess( event, &mstate, 7 ) ;
+#endif		 
 	event = mstate.check_columns( event, IlinesCount-1 ) ;
 
 		switch ( SubmenuIndex )
@@ -18590,9 +18620,11 @@ void menuProcIndex(uint8_t event)
 			case M_DATE :
         pushMenu(menuProcDate) ;
 			break ;
+#ifndef PCBXLITE	
 			case M_MODULE :
         pushMenu(menuProcRSSI) ;
 			break ;
+#endif
 			case M_DIAGKEYS :
         pushMenu(menuProcDiagKeys) ;
 			break ;
@@ -18616,7 +18648,11 @@ void menuProcIndex(uint8_t event)
 	{
 		case 0 :
 			lcd_putsAtt(0 + X12OFFSET,0,"Radio Setup",INVERS) ;
+#ifdef PCBXLITE	
+			IlinesCount = 14 ;
+#else
 			IlinesCount = 15 ;
+#endif
 			sub += 1 ;
 			
 			
@@ -18631,15 +18667,20 @@ STR_Calibration,
 STR_Bluetooth,
 STR_Trainer,
 STR_Version,
+#ifndef PCBXLITE	
 STR_ModuleRssi,
+#endif
 STR_Eeprom,
 STR_DateTime,
 STR_DiagSwtch,
 STR_DiagAna
 };
 	
+#ifndef PCBXLITE	
 			displayIndex( in_Strings, 8, 7, sub ) ;
-		
+#else
+			displayIndex( in_Strings, 7, 7, sub ) ;
+#endif		 
 		break ;
 		
 		case M_DISPLAY :
@@ -19411,6 +19452,13 @@ STR_DiagAna
 		break ;
 
 
+// Filter ADC - ALL
+// Rotary divisor - Not X7 or XLITE
+// I2C Function - 9XT only
+// BT Com port - 9XT only
+
+
+
 		case M_HARDWARE :
 		{
 			uint8_t subN = 0 ;
@@ -19433,7 +19481,11 @@ STR_DiagAna
     #ifdef PCBX12D
 			IlinesCount = 2 + 5 + 6 + 4 + 1 ;
     #else
+     #ifdef PCBXLITE
+			IlinesCount = 6 + 4 + 3 ;
+     #else
 			IlinesCount = 6 + 4 + 1 + 1 + 4 ;
+     #endif
     #endif
    #endif
   #endif
@@ -19494,14 +19546,18 @@ STR_DiagAna
 			uint32_t page2 = 11 ;
 			uint32_t page3 = 12 ;
 	#else
+   #ifndef PCBXLITE
 			uint32_t page2 = 10 ;
 			uint32_t page3 = 11 ;
+   #endif
 	#endif
+#ifndef PCBXLITE
 			if ( g_eeGeneral.analogMapping & MASK_6POS )
 			{
 				IlinesCount += 6 ;
 				page3 += 6 ;
 			}
+#endif
 #endif
 
 			TITLE( PSTR(STR_Hardware) ) ;
@@ -19522,7 +19578,7 @@ STR_DiagAna
 #ifdef PCBX12D
 			if ( sub < 2 )
 #else
-#ifdef PCBX7
+#if defined(PCBX7) || defined (PCBXLITE)
 			if ( sub < 6 )
 #else
  			if ( sub < 5 )
@@ -19607,12 +19663,25 @@ STR_DiagAna
 #endif	// nREV9E
 
 #ifdef PCBXLITE
-  			lcd_puts_Pleft( y, XPSTR("Switch F/C"));
+  			lcd_puts_Pleft( y, XPSTR("Switch C"));
 				value = g_eeGeneral.ailsource ;
-	  		lcd_putsAttIdx( 14*FW, y, XPSTR("\0072-Pos=F3-Pos=C"), value, (sub==subN ? BLINK:0));
+	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\0052-Pos3-Pos"), value, (sub==subN ? BLINK:0));
 				oldValue = value ;
 				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, 1 ) ;
 				g_eeGeneral.ailsource = value ;
+				if ( value != oldValue )
+				{
+					createSwitchMapping() ;
+				}
+				y += FH ;
+				subN += 1 ;
+
+  			lcd_puts_Pleft( y, XPSTR("Switch D"));
+				value = g_eeGeneral.rudsource ;
+	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\0052-Pos3-Pos"), value, (sub==subN ? BLINK:0));
+				oldValue = value ;
+				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, 1 ) ;
+				g_eeGeneral.rudsource = value ;
 				if ( value != oldValue )
 				{
 					createSwitchMapping() ;
@@ -19727,9 +19796,15 @@ STR_DiagAna
 			{
 				subN = 6 ;
    #else
+	  #ifdef PCBXLITE
+			else if ( sub < 10 )
+			{
+				subN = 6 ;
+    #else
 			else if ( sub < 10 )
 			{
 				subN = 5 ;
+    #endif
    #endif
   #endif
  #endif
@@ -19762,6 +19837,7 @@ STR_DiagAna
   			subN++;
 
 #if defined(PCBSKY) || defined(PCBX9D) || defined(PCBX12D)
+ #ifndef PCBXLITE
 				{
 					uint8_t lastValue = g_eeGeneral.softwareVolume ;
 			  	g_eeGeneral.softwareVolume = onoffMenuItem( lastValue, y, XPSTR("Software Vol."), sub==subN ) ;
@@ -19772,6 +19848,7 @@ STR_DiagAna
 				}
 	  		y += FH ;
 				subN += 1 ;
+ #endif
 #endif
 
 #ifdef PCBSKY
@@ -19794,6 +19871,7 @@ STR_DiagAna
 			
 			}
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
+#ifndef PCBXLITE
 			else if ( sub < page3 )
 			{
 				uint32_t value ;
@@ -19885,6 +19963,7 @@ STR_DiagAna
 					}
 				}
 			}
+#endif // nXLITE
 #endif
 
 #ifdef PCBX12D
@@ -20054,7 +20133,11 @@ STR_DiagAna
 #ifdef PCBX12D
 				subN = 13 ;
 #else
+ #ifdef PCBXLITE
+				subN = 10 ;
+ #else
 				subN = page3 ;
+ #endif
 #endif
 #endif
 #endif
@@ -20154,6 +20237,7 @@ STR_DiagAna
 				subN += 1 ;
 
 #ifndef PCBX7
+ #ifndef PCBXLITE
 				{
 					uint8_t value = (g_eeGeneral.potDetents >> 2) & 1 ;
 			  	value = onoffMenuItem( value, y, XPSTR("P3/SL has Detent"), sub==subN ) ;
@@ -20170,6 +20254,7 @@ STR_DiagAna
  				y += FH ;
 				subN += 1 ;
 
+ #endif // PCBXLITE
 #endif // PCBX7
 #endif // nREV9E
 #endif // PCBX9D
@@ -20771,11 +20856,15 @@ STR_Protocol
 #if defined(PCBX9D) || defined(PCBX12D)
 			IlinesCount = 21 ;//+ 1 ;
 #else // PCBX9D
-#ifdef IMAGE_128
+ #ifdef IMAGE_128
 			IlinesCount = 21 ;//+ 1 ;
-#else
+ #else
+  #if defined(PCBX7) || defined (PCBXLITE)
+			IlinesCount = 17 ;//+ 1 ;
+  #else
 			IlinesCount = 19 ;//+ 1 ;
-#endif
+  #endif
+ #endif
 #endif // PCBX9D
 
 			if ( voiceCall )
@@ -21152,7 +21241,7 @@ STR_Protocol
 					if ( ( i != 4) && ( i != 6 ) )
 #endif // PCBX7
 #ifdef PCBXLITE
-					if ( ( i != 4) && ( i != 6 )  && ( i != 2 )  && ( i != 3 ) )
+					if ( i < 4 )
 #endif // PCBXLITE
 					{
 						uint8_t attr = 0 ;
@@ -21163,13 +21252,13 @@ STR_Protocol
 						if ( sub == subN )
 						{
 #ifdef PCBX7
-							if ( ( subSub==i ) || ( (i == 5) && (subSub == 4) ) )
+							if ( ( subSub==i ) || ( (i == 5) && (subSub == 2) ) )
 							{
 								attr = BLINK ;	
 							}
 #else // PCBX7
 #ifdef PCBXLITE
-							if ( ( subSub==i ) || ( (i == 5) && (subSub == 2) ) )
+							if ( subSub==i )
 							{
 								attr = BLINK ;	
 							}
@@ -21190,7 +21279,7 @@ STR_Protocol
 					Columns = 4 ;
 #else // PCBX7
 #ifdef PCBXLITE
-					Columns = 2 ;
+					Columns = 3 ;
 #else // PCBXLITE
 					Columns = 6 ;
 #endif // PCBXLITE
@@ -21204,12 +21293,12 @@ STR_Protocol
 							shift = 5 ;
 						}
 #endif // PCBX7
-#ifdef PCBXLITE
-						if ( shift == 2 )
-						{
-							shift = 5 ;
-						}
-#endif // PCBXLITE
+//#ifdef PCBXLITE
+//						if ( ( shift == 2 ) && (g_eeGeneral.ailsource == 0) )
+//						{
+//							shift = 5 ;
+//						}
+//#endif // PCBXLITE
             killEvents(event);
             s_editMode = false;
             enables ^= (1<<(shift));
@@ -21277,7 +21366,7 @@ STR_Protocol
 					if ( ( i != 4) && ( i != 6 ) )
 #endif // PCBX7
 #ifdef PCBXLITE
-					if ( ( i != 4) && ( i != 6 )  && ( i != 2 )  && ( i != 3 ) )
+					if ( i < 4 )
 #endif // PCBXLITE
 					{
 	    		  lcd_putc( 2*FW+i*(2*FW+3), y, 'A'+i ) ;
@@ -21352,7 +21441,7 @@ extern uint16_t switches_states ;
     		for(uint8_t i=0;i<=width;i++)
 #endif
 #if defined(PCBX9D) || defined(PCBX12D)
-#ifdef PCBX7
+#if defined(PCBX7) || defined (PCBXLITE)
     		for(uint8_t i=0;i<6;i++)
 #else // PCBX7
     		for(uint8_t i=0;i<8;i++)
@@ -21368,7 +21457,7 @@ extern uint16_t switches_states ;
 #endif
 #if defined(PCBX9D) || defined(PCBX12D)
 					Columns = 5 ;
-#ifdef PCBX7
+#if defined(PCBX7) || defined (PCBXLITE)
 #else // PCBX7
 					Columns = 7 ;
 #endif // PCBX7
@@ -21383,7 +21472,8 @@ extern uint16_t switches_states ;
   		  }
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D)
 //#ifdef PCBX9D
-//#ifndef PCBX7
+#ifndef PCBX7
+#ifndef PCBXLITE
 				y += FH ;
 				subN += 1 ;
     		
@@ -21407,7 +21497,8 @@ extern uint16_t switches_states ;
 					alphaEditName( 11*FW-2, y, (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName), type | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FIlename") ) ;
 					validateName( (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName) ) ;
 				}
-//#endif // PCBX7
+#endif // PCBXLITE
+#endif // PCBX7
 #endif
 
 				y += FH ;
