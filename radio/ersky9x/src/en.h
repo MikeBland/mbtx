@@ -481,11 +481,11 @@
 #define ISTR_RANGE_RSSI			"RANGE CHECK RSSI:"
 #define ISTR_FAILSAFE				"FAILSAFE"
 #define ISTR_VOLUME_CTRL		"Volume Control"
-#ifdef ASSAN
-#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
-#else
+//#ifdef ASSAN
+//#define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiAssan"
+//#else
 #define ISTR_PROT_OPT				"\005PPM  XJT  DSM2 MultiXfire"
-#endif
+//#endif
 #define ISTR_TYPE						" Type"
 #define ISTR_COUNTRY				" Country"
 #define ISTR_SP_FAILSAFE		" Failsafe"

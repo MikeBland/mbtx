@@ -114,6 +114,10 @@ extern uchar PdiErrors8 ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+ #ifdef PCBXLITE
+#define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
+#define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
+#endif
 #endif
 #endif
 
@@ -126,6 +130,12 @@ extern uchar PdiErrors8 ;
 #define UPDATE_TYPE_AVR						5
 #define UPDATE_TYPE_XMEGA					6
 #define UPDATE_TYPE_MULTI					7
+
+#ifdef PCBXLITE
+#define SPORT_MODULE		0
+#define SPORT_EXT				1
+uint8_t SportModuleExt ;
+#endif
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
@@ -1039,6 +1049,9 @@ void menuChangeId(uint8_t event)
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_OFF() ;
+#ifdef PCBXLITE
+			SPORT_RF_OFF() ;
+#endif
 #endif
     break ;
 		
@@ -1321,7 +1334,11 @@ void menuUp1(uint8_t event)
 		}
 		else
 		{
+#ifdef PCBXLITE
+  		TITLE( (SportModuleExt == SPORT_MODULE) ? "UPDATE Ext. Module" : "UPDATE Ext. SPort" ) ;
+#else
   		TITLE( "UPDATE Ext. SPort" ) ;
+#endif
 		}
 #endif
 
@@ -1471,7 +1488,11 @@ void menuUp1(uint8_t event)
 				}
 				else
 				{
+#ifdef PCBXLITE
+					lcd_puts_Pleft( 2*FH, (SportModuleExt == SPORT_MODULE) ? "Flash Ext.mod from" : "Flash Ext.SP from" ) ;
+#else
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+#endif
 				}
 				mdata->SportVerValid = 0 ;
 #else
@@ -1948,6 +1969,9 @@ void menuUp1(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
+#ifdef PCBXLITE
+				SPORT_RF_OFF() ;
+#endif
 #endif
 				state = UPDATE_FILE_LIST ;
     		killEvents(event) ;
@@ -1992,9 +2016,10 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #else
-	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 5*FH, "  Update Multi" );
+	lcd_puts_Pleft( 3*FH, "  Update Ext. Module" );
+	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Multi" );
 #endif
 #endif
 #ifdef PCB9XT
@@ -2121,14 +2146,21 @@ void menuUpdate(uint8_t event)
 			if ( position == 3*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SportModuleExt = SPORT_MODULE ;
 	      chainMenu(menuUp1) ;
 			}
 			if ( position == 4*FH )
 			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+				SportModuleExt = SPORT_EXT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 5*FH )
+			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
 			}
-			if ( position == 5*FH )
+			if ( position == 6*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
@@ -2236,7 +2268,11 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
+ #ifdef PCBXLITE
+			if ( position < 6*FH )
+#else
 			if ( position < 7*FH )
+#endif
 			{
 				position += FH ;				
 			}
@@ -3284,7 +3320,18 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
+#ifdef PCBXLITE
+				if (SportModuleExt == SPORT_MODULE)
+				{
+					EXTERNAL_RF_ON();
+				}
+				else
+				{
+					SPORT_RF_ON() ;
+				}
+#else
   			EXTERNAL_RF_ON();
+#endif
 			}
 			else
 			{

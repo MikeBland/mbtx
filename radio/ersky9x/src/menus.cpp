@@ -14020,11 +14020,6 @@ extern unsigned char *EndOfHeap ;
 //uint16_t BasicDebug8 ;
 //#endif
 
-//extern uint16_t BasDeb1 ;
-//extern uint16_t BasDeb2 ;
-//extern uint16_t BasDeb3 ;
-//extern uint16_t BasDeb4 ;
-
 void menuScript(uint8_t event)
 {
 	struct fileControl *fc = &FileControl ;
@@ -14135,11 +14130,6 @@ extern int32_t Rotary_diff ;
 //	lcd_outhex4( 90, 5*FH, BasicDebug8 ) ;
 
 //	lcd_outhex4( 0, 6*FH, BasicLoadedType ) ;
-	
-//	lcd_outhex4( 0, 7*FH, BasDeb1 ) ;
-//	lcd_outhex4( 30, 7*FH, BasDeb2 ) ;
-//	lcd_outhex4( 60, 7*FH, BasDeb3 ) ;
-//	lcd_outhex4( 90, 7*FH, BasDeb4 ) ;
 	
 //extern uint8_t LoadingIndex ;
 	
@@ -19883,7 +19873,7 @@ STR_DiagAna
 
 
 #ifdef PCBX9D
-	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\002--P1P2P3"), value, (sub==subN ? blink:0));
+	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\003--P1P2P3P4"), value, (sub==subN ? blink:0));
 #endif
 
 
@@ -19898,7 +19888,23 @@ STR_DiagAna
 #endif
 				oldValue = value ;
 #ifdef PCBX9D
+ #ifdef PCBX7
+				if(sub==subN)
+				{
+					uint32_t max = NUM_MAP_POTS ;
+					if ( g_eeGeneral.extraPotsSource[0] )
+					{
+						max += 1 ;
+					}
+					if ( g_eeGeneral.extraPotsSource[1] )
+					{
+						max += 1 ;
+					}
+					CHECK_INCDEC_H_GENVAR_0( value, max ) ;
+				}
+ #else
 				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_MAP_POTS ) ;
+ #endif
 #else
 				if(sub==subN) CHECK_INCDEC_H_GENVAR_0( value, NUM_ANA_INPUTS ) ;
 #endif

@@ -1518,10 +1518,14 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
           lcd_plot(x+1, y+6);
 				plotType = oldPlotType ;
 #else
+				uint8_t oldPlotType = plotType ;
+				plotType = PLOT_BLACK ;
         if (mode & INVERS)
-          lcd_vline(x+1, y, 7);
-        else
-          lcd_plot(x+1, y+6);
+				{
+          lcd_vline(x+1, y, 8);
+				}
+				plotType = oldPlotType ;
+        lcd_plot(x+1, y+6);
 #endif
       }
       if (tmp >= 10)

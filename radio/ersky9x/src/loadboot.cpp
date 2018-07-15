@@ -406,8 +406,11 @@ void _bootStart()
 
 //	run_application() ;	
 	asm(" mov.w	r1, #134217728");	// 0x8000000
-  asm(" add.w	r1, #32768");			// 0x8000
-	
+#ifdef PCBX12D
+	asm(" add.w	r1, #131072");		// 0x20000
+#else  
+	asm(" add.w	r1, #32768");			// 0x8000
+#endif
 	asm(" movw	r0, #60680");			// 0xED08
   asm(" movt	r0, #57344");			// 0xE000
   asm(" str	r1, [r0, #0]");			// Set the VTOR

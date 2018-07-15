@@ -17,6 +17,7 @@
 #include "basic.h"
 #include "audio.h"
 #include "menus.h"
+#include "frsky.h"
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
@@ -88,6 +89,7 @@ uint8_t ScriptFlags ;
 #define ELSE					22
 #define ELSEIF				23
 #define DEFCONST			24
+#define FUNC					25
 
 //#define FOR  					25
 //#define NEXT 					22
@@ -99,7 +101,6 @@ uint8_t ScriptFlags ;
 
 //#define CONTINUE 31
 //#define BREAK	30
-//#define FUNC	37
 //#define WAIT	18
 //#define TRACE	19
 
@@ -162,6 +163,8 @@ uint8_t ScriptFlags ;
 #define CROSSFIRERECEIVE	27
 #define CROSSFIRESEND	28
 #define POPUP					29
+#define SYSTOARRAY		30
+
 
 // Assignment options:
 #define SETEQUALS			0
@@ -246,11 +249,14 @@ uint8_t ScriptFlags ;
 // 0x66 Variable byte array, index in 8 bits, dimension in 8 bits
 // 0x6E Variable byte array, index in 16 bits, dimension in 8 bits
 
+// 0x61 local variable/parameter offset (8 bits) for functions
+
 // Possible Enhancement
 // 0x65 Variable int array, index in 8 bits, dimension in 16 bits
 // 0x6D Variable int array, index in 16 bits, dimension in 16 bits
 // 0x67 Variable byte array, index in 8 bits, dimension in 16 bits
 // 0x6F Variable byte array, index in 16 bits, dimension in 16 bits
+
 
 // 0x58 Number in 8 bits ??           010x
 // 0x50 Number in 32 bits
@@ -299,7 +305,6 @@ uint8_t BasicLoadedType ;
 
 struct t_basicRunTime
 {
-	uint32_t ParameterIndex ;
 	uint32_t RunError ;
 	uint32_t RunErrorLine ;
 	uint32_t RunLineNumber ;
@@ -310,6 +315,8 @@ struct t_basicRunTime
 	uint8_t *CallStack[MAX_CALL_STACK] ;
 	uint8_t *ByteArrayStart ;
 	int32_t *IntArrayStart ;
+	uint16_t ParamFrameIndex ;
+	uint16_t ParamStackIndex ;
 	union t_parameter ParameterStack[MAX_PARAM_STACK] ;
 	union t_array	// Place holder, the arrays extend as declared
 	{
@@ -362,6 +369,7 @@ int32_t basicFindSwitchIndexByName( const char * name ) ;
 // Variable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_INT/UNS/FLOAT, Poslow, Poshi
 // ArrayVariable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_ARRAY_INT/UNS/FLOAT, Poslow, Poshi, dimension
 // Const: EntryLen, SYM_CONST, StrLen, String/0, Val0, Val1, Val2, Val3
+// Function: EntryLen, SYM_FUNCTION, StrLen, String/0, ParamCount, LocalCount, Poslow, Poshi
 
 struct commands
 { /* keyword lookup table */
@@ -401,7 +409,7 @@ const struct commands Table[] =
 //  { "continue", CONTINUE},
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
-//  { "function", FUNC},
+  { "function", FUNC},
   { "", 0 } /* mark end of table */
 } ;
 
@@ -434,7 +442,9 @@ const struct commands InternalFunctions[] =
 	{ "bitfield", BITFIELD },
 	{ "power", POWER },
 	{ "crossfirereceive", CROSSFIRERECEIVE },
+	{ "crossfiresend", CROSSFIRESEND },
 	{ "popup", POPUP },
+	{ "sysstrtoarray", SYSTOARRAY },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -2748,8 +2758,17 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 			}
 			else
 			{
-				val16 = getVarIndex( opcode ) ;
-				value = RunTime->Vars.Variables[val16] ;
+				if ( opcode == 0x61 )
+				{
+					uint32_t index ;
+					index = *RunTime->ExecProgPtr++ ;	// Index to dest variable
+					value = RunTime->ParameterStack[RunTime->ParamFrameIndex + index].var ;
+				}
+				else
+				{
+					val16 = getVarIndex( opcode ) ;
+					value = RunTime->Vars.Variables[val16] ;
+				}
 			}
 		}
 		else
@@ -3304,7 +3323,7 @@ void exec_drawnumber()
 {
 	int32_t x ;
 	int32_t y ;
-	int16_t value ;
+	int32_t value ;
 	uint32_t result ;
 	uint8_t attr ;
 	union t_parameter param ;
@@ -3336,7 +3355,8 @@ void exec_drawnumber()
 #else
 				if ( ScriptFlags & SCRIPT_LCD_OK )
 				{
-  				lcd_outdezAtt(x, y, value, attr ) ;
+					lcd_outdezNAtt( x, y, value, attr, 10 ) ;
+//  				lcd_outdezAtt(x, y, value, attr ) ;
 				}
 #endif
 				eatCloseBracket() ;
@@ -3499,6 +3519,7 @@ void exec_drawline()
 	int32_t x2 ;
   int32_t y2 ;
 	uint32_t result ;
+	uint32_t paintType ;
 	union t_parameter param ;
 
 	// get 4 parameters
@@ -3518,11 +3539,29 @@ void exec_drawline()
 	      if ( result == 1 )
 				{
 					y2 = param.var ;
+					paintType = 0 ;
+					if ( *RunTime->ExecProgPtr != ')' )
+					{
+						result = get_parameter( &param, 0 ) ;
+	    		  if ( result == 1 )
+						{
+							if ( param.var < 4 )
+							{
+								paintType = param.var ;
+							}
+						}
+					}
 #ifdef QT
           RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawLine()\n" ) ;
 #else
 					if ( ScriptFlags & SCRIPT_LCD_OK )
 					{
+extern uint8_t plotType ;
+					 	uint8_t oldPlotType = plotType ;
+						if ( paintType )
+						{
+							plotType = PLOT_BLACK ;
+						}
 			  	  if (x1 == x2)
 						{
     				  lcd_vline(x1, y2 >= y1 ? y1 : y1+1, y2 >= y1 ? y2-y1+1 : y2-y1-1 ) ;
@@ -3535,6 +3574,7 @@ void exec_drawline()
 						{
 							lcd_line(x1, y1, x2, y2, 0xFF, 0) ;
 						}
+					 	plotType = oldPlotType ;
 					}
 #endif
 					eatCloseBracket() ;
@@ -3550,6 +3590,7 @@ void exec_drawrect()
 	int32_t y ;
 	int32_t w ;
   int32_t h ;
+  uint32_t percent ;
 	uint32_t result ;
 	union t_parameter param ;
 
@@ -3570,12 +3611,29 @@ void exec_drawrect()
 	      if ( result == 1 )
 				{
 					h = param.var ;
+					percent = 0 ;
+					if ( *RunTime->ExecProgPtr != ')' )
+					{
+						result = get_parameter( &param, 0 ) ;
+	    		  if ( result == 1 )
+						{
+							percent = param.var ;
+							if ( percent > 100 )
+							{
+								percent = 100 ;
+							}
+							if ( percent < 0 )
+							{
+								percent = 0 ;
+							}
+						}
+					}
 #ifdef QT
           RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawRect()\n" ) ;
 #else
 					if ( ScriptFlags & SCRIPT_LCD_OK )
 					{
-					  lcd_rect(x, y, w, h);
+					  lcd_hbar( x, y, w, h, percent ) ;
 					}
 #endif
 					eatCloseBracket() ;
@@ -3822,6 +3880,22 @@ int32_t exec_settelitem()
 	return retval ;
 }
 
+int32_t convertGpsValue( uint16_t whole, uint16_t frac, uint16_t sign )
+{
+	int32_t result ;
+	int32_t value ;
+	div_t qr ;
+	qr = div( whole, 100 ) ;
+	result = qr.quot * 1000000 ;
+	value = qr.rem ;
+	value *= 10000 ;
+	value += frac ;
+	value *= 10 ;
+	value /= 6 ;
+	result += value ;
+	return sign ? -result : result ;
+}
+
 int32_t exec_getvalue(uint32_t type)
 {
 	int32_t number ;
@@ -3872,6 +3946,14 @@ int32_t exec_getvalue(uint32_t type)
 					number /= RESX ;
 				}
 			}
+		}
+		else if ( number == -2 )	// Latitude
+		{
+			return convertGpsValue( FrskyHubData[FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], FrskyHubData[FR_LAT_N_S] == 'S' ) ;
+		}
+		else if ( number == -3 )	// Longitude
+		{
+			return convertGpsValue( FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], FrskyHubData[FR_LONG_E_W] == 'E' ) ;
 		}
 #endif
 	}
@@ -4367,91 +4449,101 @@ void exec_strToArray()
 }
 
 
-//void exec_systemStrToArray()
-//{
-//	uint8_t opcode ;
-//	uint16_t val16 ;
-//	opcode = *RunTime->ExecProgPtr++ ;
-//	uint32_t value ;
-//	union t_parameter param ;
-//	uint32_t result ;
+void exec_systemStrToArray()
+{
+	uint8_t opcode ;
+	uint16_t val16 ;
+	opcode = *RunTime->ExecProgPtr++ ;
+	uint32_t value ;
+	union t_parameter param ;
+	uint32_t result ;
 
-//	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
-//	{
-//		uint32_t dimension ;
-//		val16 = getVarIndex( opcode ) ;
-//		dimension = *RunTime->ExecProgPtr++ ;
-//		value = expression() ;
-//		opcode = *RunTime->ExecProgPtr++ ;
-//		if ( opcode != ']' )
-//		{
-//			runError( SE_SYNTAX ) ;
-//			return ;
-//		}
-//		if ( value >= dimension )
-//		{
-//			runError( SE_DIMENSION ) ;
-//			return ;
-//		}
-//		// Now we need the index
-//		if ( *RunTime->ExecProgPtr != ',' )
-//		{
-//			runError( SE_SYNTAX ) ;
-//			return ;
-//		}
-//		RunTime->ExecProgPtr += 1 ;
+	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+	{
+		uint32_t dimension ;
+		val16 = getVarIndex( opcode ) ;
+		dimension = *RunTime->ExecProgPtr++ ;
+		value = expression() ;
+		opcode = *RunTime->ExecProgPtr++ ;
+		if ( opcode != ']' )
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+		if ( value >= dimension )
+		{
+			runError( SE_DIMENSION ) ;
+			return ;
+		}
+		// Now we need the index
+		if ( *RunTime->ExecProgPtr != ',' )
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+		RunTime->ExecProgPtr += 1 ;
 
-//		result = get_parameter( &param, 0 ) ;
-//		if ( result == 1 )
-//		{
-//			uint8_t *p = 0 ;
-//			uint32_t length = 0 ;
+		result = get_parameter( &param, 0 ) ;
+		if ( result == 1 )
+		{
+			uint8_t *p = 0 ;
+			uint32_t length = 0 ;
 
-//			eatCloseBracket() ;
-//			// Find the string
-//			switch ( param.var )
-//			{
-//				case 0 :
-//					p = (uint8_t *)g_model.name ;
-//					length = MODEL_NAME_LEN ;
-//				break ;
-//				case 1 :
-//					p = (uint8_t *)g_eeGeneral.ownerName ;
-//					length = GENERAL_OWNER_NAME_LEN ;
-//				break ;
-//			}
+			eatCloseBracket() ;
+			// Find the string
+			switch ( param.var )
+			{
+				case 0 :
+#ifndef QT
+					p = (uint8_t *)g_model.name ;
+					length = MODEL_NAME_LEN ;
+#else
+					p = (uint8_t *)"MODEL01   " ;
+					length = 10 ;
+#endif 
+				break ;
+				case 1 :
+#ifndef QT
+					p = (uint8_t *)g_eeGeneral.ownerName ;
+					length = GENERAL_OWNER_NAME_LEN ;
+#else
+					p = (uint8_t *)"OWNER     " ;
+					length = 10 ;
+#endif 
+				break ;
+			}
 
-//			// Now copy the string
-//			if ( p )
-//			{
-//				while ( length-- )
-//				{
-//					uint8_t c ;
-//					c = *p++ ;
-//					if ( value < dimension )
-//					{
-//						RunTime->ByteArrayStart[val16 + value] = c ;
-//						value += 1 ;
-//					}
-//					else
-//					{
-//						RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
-//					}
-//				}
-//				RunTime->ByteArrayStart[val16+value] = '\0' ;
-//			}
-//			else
-//			{
-//				RunTime->ByteArrayStart[val16+value] = '\0' ;
-//			}
-//		}
-//		else
-//		{
-//			runError( SE_SYNTAX ) ;
-//			return ;
-//		}
-//	}
-//}
+			// Now copy the string
+			if ( p )
+			{
+				while ( length-- )
+				{
+					uint8_t c ;
+					c = *p++ ;
+					if ( value < dimension )
+					{
+						RunTime->ByteArrayStart[val16 + value] = c ;
+						value += 1 ;
+					}
+					else
+					{
+						RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
+					}
+				}
+				RunTime->ByteArrayStart[val16+value] = '\0' ;
+			}
+			else
+			{
+				RunTime->ByteArrayStart[val16+value] = '\0' ;
+			}
+		}
+		else
+		{
+			runError( SE_SYNTAX ) ;
+			return ;
+		}
+	}
+}
 
 
 
@@ -4731,6 +4823,10 @@ int32_t execInFunction()
 			result = exec_popup() ;
 		break ;
 		 
+		case SYSTOARRAY :
+      exec_systemStrToArray() ;
+		break ;
+		 
 		default :
 			runError( SE_NO_FUNCTION ) ;
 		break ;
@@ -4971,11 +5067,6 @@ uint32_t execOneLine()
 // 2 Found Stop
 // 3 Script finished (unloaded)
 
-//uint16_t BasDeb1 ;
-//uint16_t BasDeb2 ;
-//uint16_t BasDeb3 ;
-//uint16_t BasDeb4 ;
-
 uint8_t LastBasicEvent[3] ;
 
 uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
@@ -4990,12 +5081,11 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 
 	if ( begin )
 	{
-//		BasDeb1 = 1 ;
-//		BasicDebug8 = Program.Words[i] ;
 		RunTime->ExecProgPtr = &Program.Bytes[j+8] ;
     RunTime->RunError = 0 ;
 		RunTime->CallIndex = 0 ;
-    RunTime->ParameterIndex = 0 ;
+    RunTime->ParamFrameIndex = 0 ;
+    RunTime->ParamStackIndex = 0 ;
 
     j = (uint32_t *)&RunTime->Vars.Variables[0] - &Program.Words[i] ;
 		j = Program.Words[i+1] / 4 - j ;
@@ -5030,7 +5120,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 #ifndef QT
     ScriptFlags |= SCRIPT_RESUME ;
 #endif
-    //		BasDeb4 += 1 ;
 		if ( event )
 		{
 			LastBasicEvent[index] = event ;
@@ -5039,7 +5128,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 	}
 	else
 	{
-//		BasDeb1 += 1 ;
 		if ( LastBasicEvent[index] )
 		{
 			LastBasicEvent[index] = 0 ;
@@ -5106,7 +5194,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		execLinesProcessed += 1 ;
 
 	}
-//	BasDeb2 += execLinesProcessed ;
 	if ( RunTime->RunError )
 	{
 #ifdef QT			
@@ -5165,98 +5252,15 @@ int32_t basicFindValueIndexByName( const char * name )
 		}
 		names += nameLength ;
 	}
-//	for ( i = 20 ; i < 29 ;  i += 1 )
-//	{
-//    if (strMatch( names, name, 3 ))
-//		{
-//			return i ;
-//		}
-//		names += nameLength ;
-//	}
-//	for ( i = 29 ; i < 44 ;  i += 1 )
-//	{
-//    if (strMatch( names, name, nameLength ))
-//		{
-//			return i ;
-//		}
-//		names += nameLength ;
-//	}
 
-	
-	// TODO better search method (binary lookup)
-//  for (unsigned int n=0; n<DIM(luaSingleFields); ++n)
-//	{
-//    if (!strcmp(name, luaSingleFields[n].name))
-//		{
-//      field.id = luaSingleFields[n].id;
-//      if (flags & FIND_FIELD_DESC)
-//			{
-//        strncpy(field.desc, luaSingleFields[n].desc, sizeof(field.desc)-1);
-//        field.desc[sizeof(field.desc)-1] = '\0';
-//      }
-//      else {
-//        field.desc[0] = '\0';
-//      }
-//      return true;
-//    }
-//  }
-
-//  // search in multiples
-//  unsigned int len = strlen(name);
-//  for (unsigned int n=0; n<DIM(luaMultipleFields); ++n) {
-//    const char * fieldName = luaMultipleFields[n].name;
-//    unsigned int fieldLen = strlen(fieldName);
-//    if (!strncmp(name, fieldName, fieldLen)) {
-//      unsigned int index;
-//      if (len == fieldLen+1 && isdigit(name[fieldLen])) {
-//        index = name[fieldLen] - '1';
-//      }
-//      else if (len == fieldLen+2 && isdigit(name[fieldLen]) && isdigit(name[fieldLen+1])) {
-//        index = 10 * (name[fieldLen] - '0') + (name[fieldLen+1] - '1');
-//      }
-//      else {
-//        continue;
-//      }
-//      if (index < luaMultipleFields[n].count) {
-//        field.id = luaMultipleFields[n].id + index;
-//        if (flags & FIND_FIELD_DESC) {
-//          snprintf(field.desc, sizeof(field.desc)-1, luaMultipleFields[n].desc, index+1);
-//          field.desc[sizeof(field.desc)-1] = '\0';
-//        }
-//        else {
-//          field.desc[0] = '\0';
-//        }
-//        return true;
-//      }
-//    }
-//  }
-
-//  // search in telemetry
-//  field.desc[0] = '\0';
-//  for (int i=0; i<MAX_TELEMETRY_SENSORS; i++) {
-//    if (isTelemetryFieldAvailable(i)) {
-//      char sensorName[TELEM_LABEL_LEN+1];
-//      int len = zchar2str(sensorName, g_model.telemetrySensors[i].label, TELEM_LABEL_LEN);
-//      if (!strncmp(sensorName, name, len)) {
-//        if (name[len] == '\0') {
-//          field.id = MIXSRC_FIRST_TELEM + 3*i;
-//          field.desc[0] = '\0';
-//          return true;
-//        }
-//        else if (name[len] == '-' && name[len+1] == '\0') {
-//          field.id = MIXSRC_FIRST_TELEM + 3*i + 1;
-//          field.desc[0] = '\0';
-//          return true;
-//        }
-//        else if (name[len] == '+' && name[len+1] == '\0') {
-//          field.id = MIXSRC_FIRST_TELEM + 3*i + 2;
-//          field.desc[0] = '\0';
-//          return true;
-//        }
-//      }
-//    }
-//  }
-
+	if (strMatch( "LAT", name, 3 ))
+	{
+		return -2 ;
+	}
+	if (strMatch( "LONG", name, 4 ))
+	{
+		return -3 ;
+	}
   return -1 ;  // not found
 }
 

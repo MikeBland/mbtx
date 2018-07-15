@@ -630,170 +630,6 @@ void sendByteDsm2(uint8_t b) //max 10changes 0 10 10 10 10 1
 	}
 }
 
-
-//void dsmBindResponse( uint8_t mode, int8_t channels )
-//{
-//	// Process mode here
-//	uint8_t dsm_mode_response ;
-//	{
-//		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
-//		if ( g_model.Module[1].protocol != PROTO_MULTI )
-//		{
-//#if defined(PCBX9D) || defined(PCB9XT)
-//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-//			{
-////				g_model.xppmNCH = channels ;
-//				g_model.Module[1].channels = channels ;
-//#else
-//			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
-//			{
-////				g_model.ppmNCH = channels ;
-//				g_model.Module[1].channels = channels ;
-//#endif
-//				g_model.dsmMode = dsm_mode_response | 0x80 ;
-//	  		STORE_MODELVARS ;
-//			}
-//		}
-//		else
-//		{
-//extern uint8_t MultiResponseData ;
-//		dsm_mode_response = channels ;
-//		if ( mode & 0x80 )
-//		{
-//			dsm_mode_response |= 0x80 ;
-//		}
-//		if ( mode & 0x10 )
-//		{
-//			dsm_mode_response |= 0x40 ;
-//		}
-//		MultiResponseData = dsm_mode_response ;
-//extern uint8_t MultiResponseFlag ;
-//			MultiResponseFlag = 1 ;
-//		}
-//	}
-//}
-
-
-//void setMultiSerialArray( uint8_t *data, uint32_t module )
-//{
-//	uint32_t i ;
-//	uint8_t packetType ;
-//	uint8_t protoByte ;
-//	uint32_t outputbitsavailable = 0 ;
-//	uint32_t outputbits = 0 ;
-//	uint8_t startChan = g_model.Module[module].startChannel ;
-//	packetType = ( ( (g_model.Module[module].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
-//  if (g_model.Module[module].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[module].failsafeMode != FAILSAFE_RX )
-//	{
-//    if ( FailsafeCounter[module]-- == 0 )
-//		{
-//     		FailsafeCounter[module] = 1000 ;
-//			packetType += 2 ;	// Failsafe packet
-//		}
-//	}
-//	*data++ = packetType ;
-//	protoByte = (g_model.Module[module].sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
-//	if (PxxFlag[module] & PXX_BIND)	protoByte |=BindBit ;		//set bind bit if bind menu is pressed
-//	if (PxxFlag[module] & PXX_RANGE_CHECK) protoByte |=RangeCheckBit ;		//set bind bit if bind menu is pressed
-//	*data++ = protoByte ;
-	
-//	protoByte = g_model.Module[module].channels ;
-//	*data++ = ( protoByte/*g_model.ppmNCH*/ & 0xF0) | ( g_model.Module[module].pxxRxNum & 0x0F ) ;
-//	*data++ = g_model.Module[module].option_protocol ;
-//	for ( i = 0 ; i < 16 ; i += 1 )
-//	{
-//		int16_t x ;
-//		uint32_t y = startChan + i ;
-//		x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
-//		if ( packetType & 2 )
-//		{
-//			if ( g_model.Module[module].failsafeMode == FAILSAFE_HOLD )
-//			{
-//				x = 2047 ;
-//			}
-//			else if ( g_model.Module[module].failsafeMode == FAILSAFE_NO_PULSES )
-//			{
-//				x = 0 ;
-//			}
-//			else
-//			{
-//				// Send failsafe value
-//				int32_t value ;
-//				value = ( startChan < 16 ) ? g_model.Module[module].failsafe[startChan] : 0 ;
-//				value = ( value *3933 ) >> 9 ;
-//				value += 1024 ;
-//				x = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
-//				startChan += 1 ;
-//			}
-//		}
-//		else
-//		{
-//			x *= 4 ;
-//			x += x > 0 ? 4 : -4 ;
-//			x /= 5 ;
-//			x += 0x400 ;
-//		}
-//		if ( x < 0 )
-//		{
-//			x = 0 ;
-//		}
-//		if ( x > 2047 )
-//		{
-//			x = 2047 ;
-//		}
-//		outputbits |= (uint32_t)x << outputbitsavailable ;
-//		outputbitsavailable += 11 ;
-//		while ( outputbitsavailable >= 8 )
-//		{
-//			uint32_t j = outputbits ;
-//			*data++ = j ;
-//			outputbits >>= 8 ;
-//			outputbitsavailable -= 8 ;
-//		}
-//	}
-//}
-
-
-
-
-//static void sendByteCrcSerial(uint8_t b)
-//{
-//	crc(b) ;
-//	sendByteDsm2(b) ;
-//}
-
-
-// This is the data stream to send, prepare after 19.5 mS
-// Send after 22.5 mS
-
-//uint8_t *DsmDatPointer ;
-//uint16_t DebugDsmChan0 ;
-
-//void setDsmHeader( uint8_t *dsmDat, uint32_t module )
-//{
-//  if (dsmDat[0]&BadData)  //first time through, setup header
-//  {
-//  	switch(g_model.Module[module].sub_protocol)
-//  	{
-//  		case LPXDSM2:
-//  		  dsmDat[0]= 0x80;
-//  		break;
-//  		case DSM2only:
-//  		  dsmDat[0]=0x90;
-//  		break;
-//  		default:
-//  		  dsmDat[0]=0x98;  //dsmx, bind mode
-//  		break;
-//  	}
-//  }
-
-//	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-//  if ((!(dsmDat[0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-//  else dsmDat[0]&=~RangeCheckBit;
-//}
-
-
-//static uint8_t *Dsm2_pulsePtr = pulses2MHz.pbyte ;
 void setupPulsesDsm2(uint8_t chns)
 {
   static uint8_t dsmDat[2+6*2+4]={0xFF,0x00,  0x00,0xAA,  0x05,0xFF,  0x09,0xFF,  0x0D,0xFF,  0x13,0x54,  0x14,0xAA } ;
@@ -802,7 +638,6 @@ void setupPulsesDsm2(uint8_t chns)
 	uint8_t counter ;
 #endif // PCBSKY
 
-//	DsmDatPointer = &dsmDat[0] ;
 
 	required_baudrate = SCC_BAUD_125000 ;
 	if( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
@@ -944,113 +779,12 @@ void setupPulsesDsm2(uint8_t chns)
 		if(g_model.Module[1].protocol == PROTO_DSM2)
 		{
 			setDsmHeader( dsmDat, 1 ) ;
-//  		if (dsmDat[0]&BadData)  //first time through, setup header
-//  		{
-//  		  switch(g_model.Module[1].sub_protocol)
-//  		  {
-//  		    case LPXDSM2:
-//  		      dsmDat[0]= 0x80;
-//  		    break;
-//  		    case DSM2only:
-//  		      dsmDat[0]=0x90;
-//  		    break;
-//  		    default:
-//  		      dsmDat[0]=0x98;  //dsmx, bind mode
-//  		    break;
-//  		  }
-//  		}
-
-//	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-//  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[1] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-//  		else dsmDat[0]&=~RangeCheckBit;
 		}
-//		else // Multi
-//		{
-//			dsmDat[0] = (g_model.Module[1].sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
-//			if (PxxFlag[1] & PXX_BIND)	dsmDat[0] |=BindBit;		//set bind bit if bind menu is pressed
-//			if (PxxFlag[1] & PXX_RANGE_CHECK)	dsmDat[0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
-//		}
 
 		if(g_model.Module[1].protocol == PROTO_MULTI)
 		{
 			setMultiSerialArray( SerialExternalData, 1 ) ;
-//			uint32_t outputbitsavailable = 0 ;
-//			uint32_t outputbits = 0 ;
 			uint32_t i ;
-//			uint8_t packetType ;
-//			bitlen = BITLEN_SBUS ;
-//			uint8_t startChan = g_model.Module[1].startChannel ;
-//			packetType = ( ( (g_model.Module[1].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
-//  		if (g_model.Module[1].failsafeMode != FAILSAFE_NOT_SET && g_model.Module[1].failsafeMode != FAILSAFE_RX )
-//			{
-//    		if ( FailsafeCounter[1]-- == 0 )
-//				{
-//      		FailsafeCounter[1] = 1000 ;
-//					packetType += 2 ;	// Failsafe packet
-//				}
-//			}
-//			sendByteDsm2( packetType ) ;
-//			sendByteDsm2( dsmDat[0] ) ;
-			
-//			uint8_t x ;
-//			x = g_model.Module[1].channels ;
-
-//			{
-//				sendByteDsm2(( x/*g_model.ppmNCH*/ & 0xF0) | ( g_model.Module[1].pxxRxNum & 0x0F ) );
-//				sendByteDsm2(g_model.Module[1].option_protocol);
-//			}
-			
-//			for ( i = 0 ; i < 16 ; i += 1 )
-//			{
-//				int16_t x ;
-//				uint32_t y = startChan + i ;
-//				x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
-//				if ( packetType & 2 )
-//				{
-//					if ( g_model.Module[1].failsafeMode == FAILSAFE_HOLD )
-//					{
-//						x = 2047 ;
-//					}
-//					else if ( g_model.Module[1].failsafeMode == FAILSAFE_NO_PULSES )
-//					{
-//						x = 0 ;
-//					}
-//					else
-//					{
-//						// Send failsafe value
-//						int32_t value ;
-//						value = ( startChan < 16 ) ? g_model.Module[1].failsafe[startChan] : 0 ;
-//						value = ( value *3933 ) >> 9 ;
-//						value += 1024 ;
-//						x = limit( (int16_t)1, (int16_t)value, (int16_t)2046 ) ;
-//						startChan += 1 ;
-//					}
-//				}
-//				else
-//				{
-//					x *= 4 ;
-//					x += x > 0 ? 4 : -4 ;
-//					x /= 5 ;
-//					x += 0x400 ;
-//				}
-//				if ( x < 0 )
-//				{
-//					x = 0 ;
-//				}
-//				if ( x > 2047 )
-//				{
-//					x = 2047 ;
-//				}
-//				outputbits |= (uint32_t)x << outputbitsavailable ;
-//				outputbitsavailable += 11 ;
-//				while ( outputbitsavailable >= 8 )
-//				{
-//					uint32_t j = outputbits ;
-//					sendByteDsm2(j) ;
-//					outputbits >>= 8 ;
-//					outputbitsavailable -= 8 ;
-//				}
-//			}
 			for ( i = 0 ; i < 26 ; i += 1 )
 			{
 				sendByteDsm2( SerialExternalData[i] ) ;
@@ -1061,56 +795,6 @@ void setupPulsesDsm2(uint8_t chns)
 				sendByteDsm2(0);
 				sendByteDsm2(0);
 			}
-			
-//			uint16_t serialH = 0 ;
-//			for(uint8_t i=0; i<8; i++)
-//			{
-//				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
-//				sendByteCrcSerial(pulse & 0xff);
-//				serialH<<=2;
-//				serialH|=((pulse>>8)&0x03);
-//			}
-//			sendByteCrcSerial((serialH>>8)&0xff);
-//			sendByteCrcSerial(serialH&0xff);
-//			sendByteCrcSerial( PcmCrc&0xff);
-//		}
-////		else if ( g_model.Module[1].protocol == PROTO_SBUS )
-////		{
-////			*p++ = 0x0F ;
-////			for ( i = 0 ; i < 16 ; i += 1 )
-////			{
-////				int16_t x = g_chans512[i] ;
-////				x *= 4 ;
-////				x += x > 0 ? 4 : -4 ;
-////				x /= 5 ;
-////				x += 0x3E0 ;
-////				if ( x < 0 )
-////				{
-////					x = 0 ;
-////				}
-////				if ( x > 2047 )
-////				{
-////					x = 2047 ;
-////				}
-////				outputbits |= x << outputbitsavailable ;
-////				outputbitsavailable += 11 ;
-////				while ( outputbitsavailable >= 8 )
-////				{
-////					uint8_t j = outputbits ;
-////					checksum += j ;
-////					if ( ( j == 2 ) || ( j == 3 ) )
-////					{
-////						j ^= 0x80 ;
-////						*p++ = 3 ;		// "stuff"
-////					}
-////          *p++ = j ;
-////					outputbits >>= 8 ;
-////					outputbitsavailable -= 8 ;
-////				}
-////			}
-////			*p++ = 0 ;
-////			*p++ = 0 ;
-////		}
 		}
 		else// not MULTI
 		{
@@ -1120,10 +804,6 @@ void setupPulsesDsm2(uint8_t chns)
 				uint16_t pulse = limit(0, ((g_chans512[g_model.Module[1].startChannel+i]*13)>>5)+512,1023);
  			  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
   		 	dsmDat[3+2*i] = pulse & 0xff;
-//				if ( i == 0 )
-//				{
-//					DebugDsmChan0 = pulse ;
-//				}
   		}
 
   		for ( counter = 0 ; counter < 14 ; counter += 1 )
@@ -1480,38 +1160,11 @@ void setupPulsesPPM2()
 			q = NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ;	// Don't run off the end		
 		}
 
-//		if (g_model.pulsePol == 0)
-//		{
-//			pwmptr->PWM_CH_NUM[1].PWM_CMR &= ~0x00000200 ;	// CPOL
-//		}
-//		else
-//		{
 		pwmptr->PWM_CH_NUM[1].PWM_CMR |= 0x00000200 ;	// CPOL
-//		}
 
 		if(g_model.Module[0].protocol == PROTO_DSM2 )
     {
 			setDsmHeader( dsmDat, 0 ) ;
-//  		if (dsmDat[0]&BadData)  //first time through, setup header
-//  		{
-//  		  switch(g_model.Module[0].sub_protocol)
-//  		  {
-//  		    case LPXDSM2:
-//  		      dsmDat[0]= 0x80;
-//  		    break;
-//  		    case DSM2only:
-//  		      dsmDat[0]=0x90;
-//  		    break;
-//  		    default:
-//  		      dsmDat[0]=0x98;  //dsmx, bind mode
-//  		    break;
-//  		  }
-//  		}
-
-//	  	if((dsmDat[0]&BindBit)&&(!keyState(SW_Trainer)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
-//  		if ((!(dsmDat[0]&BindBit))&& (PxxFlag[0] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
-//  		else dsmDat[0]&=~RangeCheckBit;
-
   		dsmDat[1]=g_model.Module[0].pxxRxNum ;  //DSM2 Header second byte for model match
 			if ( q > p + 6 )
 			{
@@ -1533,48 +1186,6 @@ void setupPulsesPPM2()
 		}
 		else
 		{
-//			uint32_t outputbitsavailable = 0 ;
-//			uint32_t outputbits = 0 ;
-//			uint32_t i ;
-
-			 
-//			Multi2Data[0] = ( ( (g_model.Module[0].sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
-//			Multi2Data[1] = (g_model.Module[0].sub_protocol+1) & 0x5F;		// load sub_protocol and clear Bind & Range flags
-//			if (PxxFlag[0] & PXX_BIND)	Multi2Data[1] |=BindBit;		//set bind bit if bind menu is pressed
-//			if (PxxFlag[0] & PXX_RANGE_CHECK)	Multi2Data[1] |=RangeCheckBit;		//set bind bit if bind menu is pressed
-//			Multi2Data[2] = (g_model.Module[0].channels & 0xF0) | ( g_model.Module[0].pxxRxNum & 0x0F ) ;
-//			Multi2Data[3] = g_model.Module[0].option_protocol ;
-
-//			dataPtr = &Multi2Data[4] ;
-
-//			for ( i = 0 ; i < 16 ; i += 1 )
-//			{
-//				int16_t x ;
-//				uint32_t y = p+i ;
-//				x = y >= ( NUM_SKYCHNOUT+EXTRA_SKYCHANNELS ) ? 0 : g_chans512[y] ;
-//				x *= 4 ;
-//				x += x > 0 ? 4 : -4 ;
-//				x /= 5 ;
-//				x += 0x400 ;
-//				if ( x < 0 )
-//				{
-//					x = 0 ;
-//				}
-//				if ( x > 2047 )
-//				{
-//					x = 2047 ;
-//				}
-//				outputbits |= (uint32_t)x << outputbitsavailable ;
-//				outputbitsavailable += 11 ;
-//				while ( outputbitsavailable >= 8 )
-//				{
-//					uint32_t j = outputbits ;
-//					*dataPtr++ = j ;
-//					outputbits >>= 8 ;
-//					outputbitsavailable -= 8 ;
-//				}
-//			}
-
 			if ( g_model.Module[0].protocol == PROTO_MULTI )
 			{
 				setMultiSerialArray( Multi2Data, 0 ) ;

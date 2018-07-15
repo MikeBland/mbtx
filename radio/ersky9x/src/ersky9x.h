@@ -26,8 +26,6 @@
 #define prog_char char
 //#define FIX_MODE		1
 
-//#define ASSAN		1
-
 #ifdef PCBX9D
 //#define	SERIAL_HOST		1
 #endif
@@ -768,7 +766,6 @@ extern uint8_t Ee_lock ;
 #define PROTO_PXX        1
 #define PROTO_DSM2       2
 #define PROTO_MULTI      3
-//#define PROTO_ASSAN      4
 #define PROTO_XFIRE	     4
 
 #define PROTO_SBUS	     5
