@@ -265,8 +265,10 @@ void init_adc()
 	configure_pins( PIN_FLP_J2, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
 
+#ifndef PCBT12
 	configure_pins( LED_BLUE_GPIO_PIN, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( LED_RED_GPIO_PIN, PIN_ANALOG | PIN_PORTC ) ;
+#endif
 
 #else // PCBX7
 #ifndef PCB9XT

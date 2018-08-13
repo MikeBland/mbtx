@@ -21,6 +21,7 @@
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
+extern uint32_t isqrt32( uint32_t x ) ;
 
 uint8_t LoadingIndex ;
 
@@ -164,6 +165,7 @@ uint8_t ScriptFlags ;
 #define CROSSFIRESEND	28
 #define POPUP					29
 #define SYSTOARRAY		30
+#define SQRT					31
 
 
 // Assignment options:
@@ -315,6 +317,7 @@ struct t_basicRunTime
 	uint8_t *CallStack[MAX_CALL_STACK] ;
 	uint8_t *ByteArrayStart ;
 	int32_t *IntArrayStart ;
+	int32_t FunctionReturnValue ;
 	uint16_t ParamFrameIndex ;
 	uint16_t ParamStackIndex ;
 	union t_parameter ParameterStack[MAX_PARAM_STACK] ;
@@ -364,12 +367,14 @@ int32_t basicFindValueIndexByName( const char * name ) ;
 int32_t basicFindSwitchIndexByName( const char * name ) ;
 #endif
 
+uint32_t execOneLine(void) ;
+
 // Symbols
 // Label: EntryLen, SYM_LABEL, StrLen, String/0, SYM_LAB_DEF/REF, Poslow, Poshi
 // Variable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_INT/UNS/FLOAT, Poslow, Poshi
 // ArrayVariable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_ARRAY_INT/UNS/FLOAT, Poslow, Poshi, dimension
 // Const: EntryLen, SYM_CONST, StrLen, String/0, Val0, Val1, Val2, Val3
-// Function: EntryLen, SYM_FUNCTION, StrLen, String/0, ParamCount, LocalCount, Poslow, Poshi
+// Function: EntryLen, SYM_FUNCTION, StrLen, String/0, SYM_LAB_DEF/REF, [ParamCount, LocalCount,] Poslow, Poshi
 
 struct commands
 { /* keyword lookup table */
@@ -409,7 +414,7 @@ const struct commands Table[] =
 //  { "continue", CONTINUE},
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
-  { "function", FUNC},
+//  { "function", FUNC},
   { "", 0 } /* mark end of table */
 } ;
 
@@ -445,6 +450,7 @@ const struct commands InternalFunctions[] =
 	{ "crossfiresend", CROSSFIRESEND },
 	{ "popup", POPUP },
 	{ "sysstrtoarray", SYSTOARRAY },
+  { "sqrt", SQRT },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -517,6 +523,7 @@ const struct commands Constants[] =
   { "LEFT", LEFT },
   { "PREC1", PREC1 },
   { "PREC2", PREC2 },
+  { "LEAD0", LEADING0 },
 #ifndef	QT
   { "DBLSIZE", DBLSIZE },
   { "INVERS", INVERS },
@@ -600,7 +607,8 @@ FILE *File ;
 //#else
 //FIL File ;
 #endif
-char InputLine[200] ;
+#define LINE_LENGTH		160
+char InputLine[LINE_LENGTH] ;
 
 #ifdef	QT
 uint8_t Data[8192] ;
@@ -1595,9 +1603,9 @@ uint32_t partLoadBasic()
 			EndOfSymbols += j ;
 		}
 #ifdef QT
-    q = (uint8_t *)fgets( InputLine, 200, File ) ;
+    q = (uint8_t *)fgets( InputLine, LINE_LENGTH, File ) ;
 #else
-    q = (uint8_t *)f_gets( InputLine, 200, &MultiBasicFile ) ;
+    q = (uint8_t *)f_gets( InputLine, LINE_LENGTH, &MultiBasicFile ) ;
 #endif
 		LineNumber += 1 ;
 		lineNumberPosition = cPosition ;
@@ -1820,6 +1828,22 @@ uint32_t partLoadBasic()
 						{
 							serror( SE_SYNTAX ) ;
 						}
+					}
+					else if ( Tok == FUNC )
+					{
+						// defining a user function
+						j = scanForKeyword( Token ) ;
+						if ( j != FUNCTION )
+						{
+							serror( SE_SYNTAX ) ;
+						}
+           	addSymbol( SYM_FUNCTION, SYM_LAB_DEF, cPosition, 0 ) ;
+						j = scanForKeyword( Token ) ;
+						if ( ( j != DELIMITER ) && (Token[0] != ')' ) )
+						{
+							serror( SE_SYNTAX ) ;
+						}
+						// found a function
 					}
 					else if ( Tok == END )
 					{
@@ -2244,7 +2268,29 @@ uint32_t partLoadBasic()
 							else
 							{
 								// No user functions (yet)
-								serror( SE_NO_FUNCTION ) ;
+								int32_t loc ;
+								uint32_t type ;
+								loc = findSymbol( SYM_FUNCTION ) ;
+                if ( loc != -1 )
+								{
+									loc += Program.Bytes[loc] - 3 ; // Index of type
+									type = Program.Bytes[loc] ;
+									loc += 1 ;
+									if ( type == SYM_LAB_DEF )
+									{
+										Program.Bytes[cPosition++] = USER_FUNCTION ;
+										Program.Bytes[cPosition++] = Program.Bytes[loc++] ;
+										Program.Bytes[cPosition++] = Program.Bytes[loc] ;
+									}
+									else
+									{								
+										serror( SE_NO_FUNCTION ) ;
+									}
+								}
+								else
+								{								
+									serror( SE_NO_FUNCTION ) ;
+								}
 							}
 						}			 
 						break ;
@@ -2966,6 +3012,7 @@ void level7( int32_t *result )
 }
 
 int32_t execInFunction( void ) ;
+//int32_t execUserFunction( void ) ;
 
 /* Is it a function or array? */
 void level6( int32_t *result )
@@ -2979,6 +3026,14 @@ void level6( int32_t *result )
     *result = execInFunction() ;
 		return ;
 	}
+//	else if ( opcode == USER_FUNCTION )
+//	{
+//		uint32_t destination ;
+//		RunTime->ExecProgPtr += 1 ;
+//    *result = execUserFunction() ;
+//		return ;
+//	}
+
 	level7( result) ;
 //   char f[16];
 
@@ -3233,6 +3288,11 @@ void exec_return()
 {
 	if ( RunTime->CallIndex )
 	{
+		if ( ( *RunTime->ExecProgPtr & 0x80 ) == 0 )
+		{
+			// must be return <value>
+			RunTime->FunctionReturnValue = expression() ;
+		}
 		RunTime->ExecProgPtr = RunTime->CallStack[--RunTime->CallIndex] ;
 	}
 	else
@@ -3311,6 +3371,33 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
   return 0 ;
 }
 
+uint32_t get_numeric_parameters( union t_parameter *param, uint32_t count )
+{
+	uint32_t result ;
+	while ( count )
+	{
+		result = get_parameter( param, 0 ) ;
+		if ( result != 1 )
+		{
+			return 0 ;
+		}
+		param += 1 ;
+		count -= 1 ;		
+	}
+	return 1 ;
+}
+
+uint32_t get_optional_numeric_parameter( union t_parameter *param )
+{
+	uint32_t result ;
+	result = 0 ;
+	if ( *RunTime->ExecProgPtr != ')' )
+	{
+		result = get_parameter( param, 0 ) ;
+	}
+	return result ;
+}
+
 void eatCloseBracket()
 {
 	if ( *RunTime->ExecProgPtr++ != ')' )
@@ -3326,42 +3413,39 @@ void exec_drawnumber()
 	int32_t value ;
 	uint32_t result ;
 	uint8_t attr ;
-	union t_parameter param ;
+	uint8_t width ;
+	union t_parameter params[3] ;
 
 	// get 3 (or 4) parameters
 	attr = 0 ;
-	result = get_parameter( &param, 0 ) ;
+	width = 10 ;
+	
+	result = get_numeric_parameters( params, 3 ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
-		result = get_parameter( &param, 0 ) ;
+		x = params[0].var ;
+		y = params[1].var ;
+		value = params[2].var ;
+		result = get_optional_numeric_parameter( params ) ;
 		if ( result == 1 )
 		{
-			y = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
+			attr = params[0].var ;
+			result = get_optional_numeric_parameter( params ) ;
+			if ( result == 1 )
 			{
-				value = param.var ;
-				if ( *RunTime->ExecProgPtr != ')' )
-				{
-					result = get_parameter( &param, 0 ) ;
-    		  if ( result == 1 )
-					{
-						attr = param.var ;
-					}
-				}
-#ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawNumber()\n" ) ;
-#else
-				if ( ScriptFlags & SCRIPT_LCD_OK )
-				{
-					lcd_outdezNAtt( x, y, value, attr, 10 ) ;
-//  				lcd_outdezAtt(x, y, value, attr ) ;
-				}
-#endif
-				eatCloseBracket() ;
+				width = params[0].var ;
 			}
 		}
+#ifdef QT
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawNumber()\n" ) ;
+#else
+		if ( ScriptFlags & SCRIPT_LCD_OK )
+		{
+			lcd_outdezNAtt( x, y, value, attr, width ) ;
+//				lcd_outdezAtt(x, y, value, attr ) ;
+		}
+#endif
+		eatCloseBracket() ;
 	}
 }
 
@@ -3372,31 +3456,27 @@ int32_t exec_power()
 	int32_t answer = 1 ;
 	uint32_t power ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[2] ;
 	
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 2 ) ;
 	if ( result == 1 )
 	{
-		value = param.var ;
-		result = get_parameter( &param, 0 ) ;
-    if ( result == 1 )
-		{
-			power = param.var ;
+		value = params[0].var ;
+	 	power = params[1].var ;
 #ifdef QT
-      RunTimeData = cpystr( RunTimeData, (uint8_t *)"Power()\n" ) ;
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"Power()\n" ) ;
 #else
-			if ( power > 20 )
-			{
-				power = 20 ;
-			}
-			while ( power )
-			{
-				answer *= value ;
-				power -= 1 ;
-			}
-#endif
-			eatCloseBracket() ;
+		if ( power > 20 )
+		{
+			power = 20 ;
 		}
+		while ( power )
+		{
+			answer *= value ;
+			power -= 1 ;
+		}
+#endif
+		eatCloseBracket() ;
 	}
 	return answer ;
 }
@@ -3407,32 +3487,24 @@ int32_t exec_bitField()
 	uint32_t offset ;
 	uint16_t size ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[3] ;
 
 	// get 3 parameters
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 3 ) ;
 	if ( result == 1 )
 	{
-		value = param.var ;
-		result = get_parameter( &param, 0 ) ;
-		if ( result == 1 )
-		{
-			offset = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
-			{
-				size = param.var ;
+		value = params[0].var ;
+		offset = params[1].var ;
+		size = params[2].var ;
 #ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"BitField()\n" ) ;
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"BitField()\n" ) ;
 #else
-				value >>= offset ;
-				// now pick out size 
-				uint32_t mask = ( 1 << (size) ) - 1 ;
-				value &= mask ;
+		value >>= offset ;
+		// now pick out size 
+		uint32_t mask = ( 1 << (size) ) - 1 ;
+		value &= mask ;
 #endif
-				eatCloseBracket() ;
-			}
-		}
+		eatCloseBracket() ;
 	}
 	return value ;
 }
@@ -3444,41 +3516,30 @@ void exec_drawtimer()
 	int16_t value ;
 	uint32_t result ;
 	uint8_t attr ;
-	union t_parameter param ;
+	union t_parameter params[3] ;
 
 	// get 3 (or 4) parameters
 	attr = 0 ;
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 3 ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
-		result = get_parameter( &param, 0 ) ;
+		x = params[0].var ;
+		y = params[1].var ;
+		value = params[2].var ;
+		result = get_optional_numeric_parameter( params ) ;
 		if ( result == 1 )
 		{
-			y = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
-			{
-				value = param.var ;
-				if ( *RunTime->ExecProgPtr != ')' )
-				{
-					result = get_parameter( &param, 0 ) ;
-    		  if ( result == 1 )
-					{
-						attr = param.var ;
-					}
-				}
-#ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawTimer()\n" ) ;
-#else
-				if ( ScriptFlags & SCRIPT_LCD_OK )
-				{
-					putsTime( x, y, value, attr, attr ) ;
-				}
-#endif
-				eatCloseBracket() ;
-			}
+			attr = params[0].var ;
 		}
+#ifdef QT
+      RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawTimer()\n" ) ;
+#else
+		if ( ScriptFlags & SCRIPT_LCD_OK )
+		{
+			putsTime( x, y, value, attr, attr ) ;
+		}
+#endif
+		eatCloseBracket() ;
 	}
 }
 
@@ -3487,29 +3548,24 @@ void exec_drawpoint()
 	int32_t x1 ;
 	int32_t y1 ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[2] ;
 
-	// get 3 (or 4) parameters
-	result = get_parameter( &param, 0 ) ;
+	// get 2 parameters
+	result = get_numeric_parameters( params, 2 ) ;
 	if ( result == 1 )
 	{
-		x1 = param.var ;
-		result = get_parameter( &param, 0 ) ;
-		if ( result == 1 )
-		{
-			y1 = param.var ;
+		x1 = params[0].var ;
+		y1 = params[1].var ;
 #ifdef QT
-			RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawPoint()\n" ) ;
+		RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawPoint()\n" ) ;
 #else
-			if ( ScriptFlags & SCRIPT_LCD_OK )
-			{
-			  lcd_plot(x1, y1 ) ;
-			}
-#endif
-			eatCloseBracket() ;
+		if ( ScriptFlags & SCRIPT_LCD_OK )
+		{
+		  lcd_plot(x1, y1 ) ;
 		}
+#endif
+		eatCloseBracket() ;
 	}
-	 
 }
 
 void exec_drawline()
@@ -3520,67 +3576,52 @@ void exec_drawline()
   int32_t y2 ;
 	uint32_t result ;
 	uint32_t paintType ;
-	union t_parameter param ;
+	union t_parameter params[4] ;
 
 	// get 4 parameters
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 4 ) ;
 	if ( result == 1 )
 	{
-		x1 = param.var ;
-		result = get_parameter( &param, 0 ) ;
+		x1 = params[0].var ;
+		y1 = params[1].var ;
+		x2 = params[2].var ;
+		y2 = params[3].var ;
+		paintType = 0 ;
+		result = get_optional_numeric_parameter( params ) ;
 		if ( result == 1 )
 		{
-			y1 = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
+			if ( params[0].var < 3 )
 			{
-				x2 = param.var ;
-				result = get_parameter( &param, 0 ) ;
-	      if ( result == 1 )
-				{
-					y2 = param.var ;
-					paintType = 0 ;
-					if ( *RunTime->ExecProgPtr != ')' )
-					{
-						result = get_parameter( &param, 0 ) ;
-	    		  if ( result == 1 )
-						{
-							if ( param.var < 4 )
-							{
-								paintType = param.var ;
-							}
-						}
-					}
-#ifdef QT
-          RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawLine()\n" ) ;
-#else
-					if ( ScriptFlags & SCRIPT_LCD_OK )
-					{
-extern uint8_t plotType ;
-					 	uint8_t oldPlotType = plotType ;
-						if ( paintType )
-						{
-							plotType = PLOT_BLACK ;
-						}
-			  	  if (x1 == x2)
-						{
-    				  lcd_vline(x1, y2 >= y1 ? y1 : y1+1, y2 >= y1 ? y2-y1+1 : y2-y1-1 ) ;
-    				}
-    				else if (y1 == y2)
-						{
-    				  lcd_hline(x2 >= x1 ? x1 : x1+1, y1, x2 >= x1 ? x2-x1+1 : x2-x1-1 ) ;
-    				}
-						else
-						{
-							lcd_line(x1, y1, x2, y2, 0xFF, 0) ;
-						}
-					 	plotType = oldPlotType ;
-					}
-#endif
-					eatCloseBracket() ;
-				}
+				paintType = params[0].var ;
 			}
 		}
+#ifdef QT
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawLine()\n" ) ;
+#else
+		if ( ScriptFlags & SCRIPT_LCD_OK )
+		{
+extern uint8_t plotType ;
+			uint8_t oldPlotType = plotType ;
+			if ( paintType )
+			{
+				plotType = PLOT_BLACK ;
+			}
+			if (x1 == x2)
+			{
+    		lcd_vline(x1, y2 >= y1 ? y1 : y1+1, y2 >= y1 ? y2-y1+1 : y2-y1-1 ) ;
+    	}
+    	else if (y1 == y2)
+			{
+    		lcd_hline(x2 >= x1 ? x1 : x1+1, y1, x2 >= x1 ? x2-x1+1 : x2-x1-1 ) ;
+    	}
+			else
+			{
+				lcd_line(x1, y1, x2, y2, 0xFF, 0) ;
+			}
+			plotType = oldPlotType ;
+		}
+#endif
+		eatCloseBracket() ;
 	}
 }
 
@@ -3592,54 +3633,39 @@ void exec_drawrect()
   int32_t h ;
   uint32_t percent ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[4] ;
 
 	// get 4 parameters
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 4 ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
-		result = get_parameter( &param, 0 ) ;
+		x = params[0].var ;
+		y = params[1].var ;
+		w = params[2].var ;
+		h = params[3].var ;
+		percent = 0 ;
+		result = get_optional_numeric_parameter( params ) ;
 		if ( result == 1 )
 		{
-			y = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
+			percent = params[0].var ;
+			if ( percent > 100 )
 			{
-				w = param.var ;
-				result = get_parameter( &param, 0 ) ;
-	      if ( result == 1 )
-				{
-					h = param.var ;
-					percent = 0 ;
-					if ( *RunTime->ExecProgPtr != ')' )
-					{
-						result = get_parameter( &param, 0 ) ;
-	    		  if ( result == 1 )
-						{
-							percent = param.var ;
-							if ( percent > 100 )
-							{
-								percent = 100 ;
-							}
-							if ( percent < 0 )
-							{
-								percent = 0 ;
-							}
-						}
-					}
-#ifdef QT
-          RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawRect()\n" ) ;
-#else
-					if ( ScriptFlags & SCRIPT_LCD_OK )
-					{
-					  lcd_hbar( x, y, w, h, percent ) ;
-					}
-#endif
-					eatCloseBracket() ;
-				}
+				percent = 100 ;
+			}
+			if ( percent < 0 )
+			{
+				percent = 0 ;
 			}
 		}
+#ifdef QT
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawRect()\n" ) ;
+#else
+		if ( ScriptFlags & SCRIPT_LCD_OK )
+		{
+		  lcd_hbar( x, y, w, h, percent ) ;
+		}
+#endif
+		eatCloseBracket() ;
 	}
 }
 
@@ -3667,20 +3693,14 @@ void exec_drawtext()
       if ( result == 2 )
 			{
 				p = param.cpointer ;
-				if ( *RunTime->ExecProgPtr != ')' )
+				result = get_optional_numeric_parameter( &param ) ;
+				if ( result == 1 )
 				{
-					result = get_parameter( &param, 0 ) ;
-    		  if ( result == 1 )
+					attr = param.var ;
+					result = get_optional_numeric_parameter( &param ) ;
+					if ( result == 1 )
 					{
-						attr = param.var ;
-						if ( *RunTime->ExecProgPtr != ')' )	// length param
-						{
-							result = get_parameter( &param, 0 ) ;
-    				  if ( result == 1 )
-							{
-								length = param.var ;
-							}
-						}
+						length = param.var ;
 					}
 				}
 #ifdef QT
@@ -3737,37 +3757,29 @@ void exec_playnumber()
 	int32_t unit ;
 	uint8_t att ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[3] ;
 
 	// get 3 (or 4) parameters
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 3 ) ;
 	if ( result == 1 )
 	{
-		number = param.var ;
-		result = get_parameter( &param, 0 ) ;
-		if ( result == 1 )
-		{
-			unit = param.var ;
-			result = get_parameter( &param, 0 ) ;
-      if ( result == 1 )
-			{
-				att = param.var ;
+		number = params[0].var ;
+		unit = params[1].var ;
+		att = params[2].var ;
 #ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
+    RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
 #else
-				if ( unit > 0 && unit < 10 )
-				{
-					unit = getUnitsVoice( unit ) ;
-				}
-				else
-				{
-					unit = 0 ;
-				}
-					voice_numeric( number, att, unit ) ;
-#endif
-				eatCloseBracket() ;
-			}
+		if ( unit > 0 && unit < 10 )
+		{
+			unit = getUnitsVoice( unit ) ;
 		}
+		else
+		{
+			unit = 0 ;
+		}
+		voice_numeric( number, att, unit ) ;
+#endif
+		eatCloseBracket() ;
 	}
 }
 
@@ -4028,6 +4040,17 @@ static int32_t exec_abs()
 	int32_t value ;
 	value = getSingleNumericParameter() ;
   return value >= 0 ? value : -value ;
+}
+
+static int32_t exec_sqrt()
+{
+	int32_t value ;
+	value = getSingleNumericParameter() ;
+	if ( value < 0 )
+	{
+		return 0 ;
+	}
+  return isqrt32(value) ;
 }
 
 static void exec_killEvents()
@@ -4702,6 +4725,36 @@ void exec_playFile()
 //	RunTime->ExecProgPtr -= 1 ;
 //}
 
+
+//int32_t execUserFunction()
+//{
+//	uint32_t destination ;
+//	uint32_t execLinesProcessed ;
+//	uint32_t finished ;
+//	uint32_t callLevel ;
+
+// 	destination = *RunTime->ExecProgPtr++ ;
+// 	destination |= *RunTime->ExecProgPtr++ << 8 ;
+// 	if ( RunTime->CallIndex >= MAX_CALL_STACK )
+// 	{
+// 		runError( SE_TOO_MANY_CALLS ) ;
+// 	}
+//	callLevel = RunTime->CallIndex ;
+// 	RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
+// 	RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+
+//	execLinesProcessed = 0 ;
+//	while ( execLinesProcessed < 150 )
+//	{
+//		finished = execOneLine() ;
+//		if ( callLevel == RunTime->CallIndex )
+//		{
+//			break ;
+//		}
+//	}
+//	return RunTime->FunctionReturnValue ;
+//}
+
 int32_t execInFunction()
 {
 	int32_t result = 0 ;
@@ -4765,6 +4818,10 @@ int32_t execInFunction()
     
 		case ABS :
 			result = exec_abs() ;
+		break ;
+
+		case SQRT :
+			result = exec_sqrt() ;
 		break ;
 
 		case GETLASTPOS :

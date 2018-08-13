@@ -328,7 +328,7 @@ void dsmTelemetryStartReceive()
 
 uint16_t convertRxv( uint16_t value )
 {
-	if ( ( FrskyTelemetryType != 2 ) && (( FrskyTelemetryType != 3 )) )		// DSM or AFHDS2 telemetry 
+	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && (( FrskyTelemetryType != FRSKY_TEL_AFH )) )		// DSM or AFHDS2 telemetry 
 	{
 		value *= g_model.rxVratio ;
 		value /= 255 ;
@@ -1394,11 +1394,69 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 }
 
+// Full telemetry 
+// packet[0] = TX RSSI value
+// packet[1] = TX LQI value
+// packet[2] = frame number
+// packet[3-7] telemetry data
+void processHitecPacket( uint8_t *packet )
+{
+	int32_t ivalue ;
+	
+	frskyTelemetry[2].set( packet[0], FR_RXRSI_COPY );	// RSSI
+	setTxLqi( packet[1] ) ;			// packet[1] is  TX_LQI for MULTI
+	switch ( packet[2] )
+	{
+		case 0 :
+			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+			ivalue *= 10 ;
+			ivalue /= 28 ;
+			storeTelemetryData( FR_RXV, ivalue ) ;
+		break ;
+		
+		case 0x11 :
+			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+			ivalue *= 10 ;
+			ivalue /= 28 ;
+			storeTelemetryData( FR_RXV, ivalue ) ;
+		break ;
 
-//#ifndef DISABLE_PXX_SPORT
+		case 0x13 :
+			storeTelemetryData( FR_TEMP2, packet[7]-40 ) ;
+		break ;
+
+		case 0x14 :
+			
+			storeTelemetryData( FR_TEMP1, packet[7]-40 ) ;
+		break ;
+
+		case 0x15 :
+			storeTelemetryData( FR_FUEL, packet[3] ) ;
+			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+			storeTelemetryData( FR_RPM, ivalue ) ;
+		break ;
+
+		case 0x18 :
+			ivalue = (int16_t) ( (packet[3] << 8 ) | packet[4] ) ;
+			storeTelemetryData( FR_VOLTS, ivalue ) ;
+			ivalue = (int16_t) ( (packet[5] << 8 ) | packet[6] ) ;
+			ivalue *= 10 ;
+			ivalue /= 14 ;
+			storeTelemetryData( FR_CURRENT, ivalue ) ;
+		break ;
+
+	}
+}
+
+
+
+#ifndef DISABLE_PXX_SPORT
 //#ifndef REVX
 static bool checkSportPacket()
 {
+#ifdef PCBT12
+	return 0 ;
+#endif
 	uint8_t *packet = frskyRxBuffer ;
   uint16_t crc = 0 ;
   for ( uint8_t i=1; i<FRSKY_SPORT_PACKET_SIZE; i++)
@@ -1426,7 +1484,6 @@ static void postSportToLua( uint8_t *packet )
 	}
 }
 #endif
-
 
 // Physical ID in packet[0] ;
 void processSportPacket()
@@ -1934,7 +1991,7 @@ void processSportPacket()
 		}
 	}
 }
-//#endif
+#endif
 
 
 #define FS_ID_ERR_RATE					0xfe
@@ -2027,7 +2084,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 			if ( byte & 0xC0 )
 			{
         dataState = frskyDataIdle ;
-				return 1 ;
+				return 0 ;
 			}
 			else if ( ( Private_position == Private_count ) || ( Private_position >= 12 ) )
 			{
@@ -2054,7 +2111,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 		}
     break ;
 	}
-	return 0 ;
+	return 1 ;
 }
 
 extern uint8_t RawLogging ;
@@ -2096,7 +2153,7 @@ void frsky_receive_byte( uint8_t data )
 
   uint8_t numbytes = numPktBytes ;
 
-	if ( ( FrskyTelemetryType == 2 ) || ( FrskyTelemetryType == 3 ) )		// DSM telemetry || AFHDS2A telemetry
+	if ( ( FrskyTelemetryType == FRSKY_TEL_DSM ) || ( FrskyTelemetryType == FRSKY_TEL_AFH ) )		// DSM telemetry || AFHDS2A telemetry
 	{
     	switch (dataState) 
 			{
@@ -2122,10 +2179,10 @@ void frsky_receive_byte( uint8_t data )
 				break ;
 
     	  case frskyDataInFrame:
-    	    if (numbytes < (( FrskyTelemetryType == 3 ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19))
+    	    if (numbytes < (( FrskyTelemetryType == FRSKY_TEL_AFH ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19))
 					{
 	  	      frskyRxBuffer[numbytes++] = data ;
-						if ( FrskyTelemetryType == 3 )	// AFHDS2A
+						if ( FrskyTelemetryType == FRSKY_TEL_AFH )	// AFHDS2A
 						{
 							if ( numbytes >= FLYSKY_TELEMETRY_LENGTH )
 							{
@@ -2160,7 +2217,7 @@ void frsky_receive_byte( uint8_t data )
       case frskyDataStart:
         if (data == START_STOP)
 				{
-//#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_PXX_SPORT
 //#ifndef REVX
 					if ( FrskyTelemetryType )		// SPORT
 					{
@@ -2203,7 +2260,7 @@ void frsky_receive_byte( uint8_t data )
 	          processFrskyPacket(frskyRxBuffer); // FrskyRxBufferReady = 1;
   	        dataState = frskyDataIdle;
 					}
-//#endif
+#endif
           break;
         }
         else if ( (data == PRIVATE) && ( (numbytes == 0) || (numbytes == 19) ) )
@@ -2211,6 +2268,12 @@ void frsky_receive_byte( uint8_t data )
 					dataState = PRIVATE_COUNT ;
 					break ;
 				}
+				if ( ( FrskyTelemetryType ) && ( numbytes == 1 ) && (data == PRIVATE) )
+				{
+					dataState = PRIVATE_COUNT ;
+					break ;
+				}
+
         if (numbytes < 19)
 	        frskyRxBuffer[numbytes++] = data;
         break;
@@ -2243,9 +2306,9 @@ void frsky_receive_byte( uint8_t data )
 	    
     } // switch
   }
-//#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_PXX_SPORT
 //#ifndef REVX
-	if ( FrskyTelemetryType == 1 )		// SPORT
+	if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 	{
   	if (numbytes >= FRSKY_SPORT_PACKET_SIZE)
 		{
@@ -2268,7 +2331,7 @@ void frsky_receive_byte( uint8_t data )
 //		}
 //#endif
 	}
-//#endif
+#endif
   numPktBytes = numbytes ;
 }
 
@@ -2643,7 +2706,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FRSKYX ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX ) )
 #endif
 			{
-				FrskyTelemetryType = 1 ;
+				FrskyTelemetryType = FRSKY_TEL_SPORT ;
 			}
 #if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD )
@@ -2651,7 +2714,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FrskyD ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD ) )
 #endif
 			{
-				FrskyTelemetryType = 0 ;
+				FrskyTelemetryType = FRSKY_TEL_HUB ;
 			}
 #if defined(PCBX9D) || defined(PCBX12D)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA )
@@ -2659,7 +2722,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_AFHD2SA ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA ) )
 #endif
 			{
-				FrskyTelemetryType = 3 ;	// AFHD2SA
+				FrskyTelemetryType = FRSKY_TEL_AFH ;	// AFHD2SA
 			}
 		}
 #ifdef XFIRE
@@ -2708,7 +2771,7 @@ void FRSKY_Init( uint8_t brate )
 		{
 			if ( ( ( g_model.Module[0].sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM ) )
 			{
-				FrskyTelemetryType = 2 ;	// DSM
+				FrskyTelemetryType = FRSKY_TEL_DSM ;	// DSM
 			}
 			initComPort( 100000, SERIAL_NORM, SERIAL_EVEN_PARITY ) ;
 		}
@@ -2733,7 +2796,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM ) )
 #endif
 			{
-				FrskyTelemetryType = 2 ;	// DSM
+				FrskyTelemetryType = FRSKY_TEL_DSM ;	// DSM
 			}
 			initComPort( 100000, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
 //			if ( g_model.telemetryRxInvert )
@@ -2937,7 +3000,7 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 	averaging_total += value ;
 	uint8_t count = 16 ;
 	uint8_t shift = 4 ;
-	if ( ( FrskyTelemetryType == 1 ) || ( FrskyTelemetryType == 3 ) )	// SPORT or AFHDS2
+	if ( ( FrskyTelemetryType == FRSKY_TEL_SPORT ) || ( FrskyTelemetryType == FRSKY_TEL_AFH ) )	// SPORT or AFHDS2
 	{
 		count = 4 ;
 		shift = 2 ;
@@ -2979,13 +3042,16 @@ void resetTelemetry()
 uint8_t decodeMultiTelemetry()
 {
 	uint32_t type = TEL_FRSKY_HUB ;
+	uint32_t subType = 0 ;
 	if ( g_model.Module[0].protocol == PROTO_MULTI )
 	{
 		type = g_model.Module[0].sub_protocol ;
+		subType = (g_model.Module[0].channels >> 4) & 0x07 ;
 	}
 	else if ( g_model.Module[1].protocol == PROTO_MULTI )
 	{
 		type = g_model.Module[1].sub_protocol ;
+		subType = (g_model.Module[1].channels >> 4) & 0x07 ;
 	}
 	switch ( type )
 	{
@@ -2993,21 +3059,28 @@ uint8_t decodeMultiTelemetry()
 		case M_BAYANG :
 		case M_Hubsan :
 			type = TEL_FRSKY_SPORT ;
-			FrskyTelemetryType = 0 ;
+			FrskyTelemetryType = FRSKY_TEL_HUB ;
 		break ;
 		case M_FRSKYX :
 			type = TEL_FRSKY_SPORT ;
-			FrskyTelemetryType = 1 ;
+			FrskyTelemetryType = FRSKY_TEL_SPORT ;
 		break ;
 	
 		case M_DSM :
 			type = TEL_DSM ;
-			FrskyTelemetryType = 2 ;
+			FrskyTelemetryType = FRSKY_TEL_DSM ;
 		break ;
 		
 		case M_AFHD2SA :
 			type = TEL_AFHD2SA ;
-			FrskyTelemetryType = 3 ;
+			FrskyTelemetryType = FRSKY_TEL_AFH ;
+		break ;
+
+		case M_Hitec :
+			if ( subType == 0 )
+			{
+				FrskyTelemetryType = FRSKY_TEL_HITEC ;
+			}
 		break ;
 	}
 	return type ;
@@ -3306,7 +3379,7 @@ void check_frsky( uint32_t fivems )
 	{
 		if ( --frskyStreaming == 0 )
 		{
-			if ( FrskyTelemetryType != 1 )
+			if ( FrskyTelemetryType != FRSKY_TEL_SPORT )
 			{ // Don't zero SWR
  				FrskyHubData[FR_TXRSI_COPY] = 0 ;
 			}

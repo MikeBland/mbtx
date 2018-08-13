@@ -83,7 +83,9 @@ void writeModelToBackupRam( uint8_t index ) ;
  #define PAGE_NAVIGATION 1
 #endif // REV9E
 #ifdef PCBX7
- #define PAGE_NAVIGATION 1
+ #ifndef PCBT12
+  #define PAGE_NAVIGATION 1
+ #endif
 #endif // PCBX7
 //#ifdef PCBX12D
 // #define PAGE_NAVIGATION 1
@@ -117,7 +119,9 @@ extern uint8_t ImageDisplay ;
 extern uint8_t ImageDisplay ;
 #endif
 
+#ifndef PCBSKY
 union t_xmem Xmem ;
+#endif
 
 extern int32_t Rotary_diff ;
 extern int16_t AltOffset ;
@@ -194,7 +198,7 @@ const uint8_t UnitsString[] = "\005Feet VoltsDeg_CDeg_FmAh  Amps MetreWattsPcent
 const uint8_t GvaString[] = "Global Voice Alerts" ;
 
 uint16_t Multiprotocols[NUM_MULTI_PROTOCOLS] ;
-#define MULTI_TEXT_SIZE	800
+#define MULTI_TEXT_SIZE	860
 uint8_t MultiText[MULTI_TEXT_SIZE] ;
 uint8_t MultiMapping[64] ;
 uint8_t AlphaEdited ;
@@ -210,7 +214,7 @@ uint8_t AlphaEdited ;
 
 const uint8_t MfileData[] = 
 "1,Flysky,Flysky,V9x9,V6x6,V912,CX20\n"
-"2,Hubsan\n"
+"2,Hubsan,H107,H301,H501\n"
 "3,FrskyD\n"
 "4,Hisky,Hisky,HK310\n"
 "5,V2x2,V2x2,JXD506\n"
@@ -244,7 +248,10 @@ const uint8_t MfileData[] =
 "33,DM002\n"
 "34,CABELL,CAB_V3,C_TELEM,-,-,-,-,F_SAFE,UNBIND\n"
 "35,ESKY150\n"
-"36,H8_3D,H8_3D,H20H,H20Mini,H30Mini\n" ;
+"36,H8_3D,H8_3D,H20H,H20Mini,H30Mini\n"
+"37,CORONA,COR_V1,COR_V2,FD_V3\n"
+"38,CFlie\n"
+"39,Hitec,Opt_FW,Opt_Hub,Minima\n" ;
 
 #ifndef PCBX12D
 const uint8_t IconLogging[] =
@@ -732,7 +739,7 @@ SKYMixData *mixAddress( uint32_t index )
 uint32_t putTxSwr( uint8_t x, uint8_t y, uint8_t attr )
 {
 	uint32_t index = 0 ;
-	if ( FrskyTelemetryType == 1 )
+	if ( FrskyTelemetryType == FRSKY_TEL_SPORT )
 	{
 		index = 1 ;
 	}
@@ -4685,21 +4692,21 @@ void menuCustomTelemetry(uint8_t event)
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifdef REVX
-  #define MAX_TEL_OPTIONS		9
-  const uint8_t TelOptions[] = {1,2,3,4,5,6,7,8,10} ;
+  #define MAX_TEL_OPTIONS		10
+  const uint8_t TelOptions[] = {1,2,3,4,5,6,7,8,10,11} ;
  #else
-  #define MAX_TEL_OPTIONS			8
-  const uint8_t TelOptions[] = {1,2,3,5,6,7,8,10} ;
+  #define MAX_TEL_OPTIONS			9
+  const uint8_t TelOptions[] = {1,2,3,5,6,7,8,10,11} ;
  #endif
 #endif
 
 #ifdef PCBX9D
- #define MAX_TEL_OPTIONS		6
- const uint8_t TelOptions[] = {1,2,3,5,6,7} ;
+ #define MAX_TEL_OPTIONS		7
+ const uint8_t TelOptions[] = {1,2,3,5,6,7,11} ;
 #endif
 #ifdef PCBX12D
- #define MAX_TEL_OPTIONS		6
- const uint8_t TelOptions[] = {1,2,3,5,6,7} ;
+ #define MAX_TEL_OPTIONS		7
+ const uint8_t TelOptions[] = {1,2,3,5,6,7,11} ;
 #endif
 
 
@@ -4708,7 +4715,7 @@ void menuProcTelemetry(uint8_t event)
 	uint32_t page2SizeExtra = 0 ;
 //	if ( g_model.telemetryProtocol == TELEMETRY_DSM )
 //	page2SizeExtra = 1 ;
-	if ( FrskyTelemetryType == 2 )
+	if ( FrskyTelemetryType == FRSKY_TEL_DSM )
 	{
 		page2SizeExtra += 3 ;
 	}
@@ -7032,10 +7039,10 @@ void menuProcVoiceOne(uint8_t event)
 
 				case 1 :	// func;
   	  		lcd_puts_Pleft( y, XPSTR("Function") ) ;
-					lcd_putsAttIdx( 13*FW, y, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val"), pvad->func, attr ) ;	// v1>v2  v1<v2  
+					lcd_putsAttIdx( 13*FW, y, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val|d|>val"), pvad->func, attr ) ;	// v1>v2  v1<v2  
 	    		if(attr)
 					{
-      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 7 ) ;
+      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 8 ) ;
 					}	
 				break ;
 
@@ -9096,6 +9103,8 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 		case M_FrskyD :
 		case M_FRSKYV :
 		case M_SFHSS :
+		case M_CORONA :
+		case M_Hitec :
 			lcd_puts_Pleft( y, XPSTR("\013Freq.") ) ;
 			display = 0 ;
 		break ;
@@ -9155,7 +9164,11 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 //#if 0
 // PPM PXX DSM MULTI XFIRE
 #ifdef PCBX9D
+ #ifdef DISABLE_PXX_SPORT
+const uint8_t ProtocolOptions[2][5] = { {1,0}, {4,0,2,3,4} };
+ #else
 const uint8_t ProtocolOptions[2][6] = { {2,0,1}, {5,0,1,2,3,4} };
+ #endif
 #endif
 #ifdef PCBX12D
 const uint8_t ProtocolOptions[2][5] = { {2,0,1}, {4,0,1,2,3} };
@@ -9825,8 +9838,11 @@ extern uint16_t XjtVersion ;
 
 void menuProcProtocol(uint8_t event)
 {
+#ifdef PCBT12
+	uint8_t dataItems = 2 ;
+#else
 	uint8_t dataItems = 3 ;
-	
+#endif	
 	uint8_t need_range = 0 ;
 	uint32_t i ;
 //	EditType = EE_MODEL ;
@@ -9838,6 +9854,9 @@ void menuProcProtocol(uint8_t event)
 //	}
 //#endif
 
+#ifdef PCBT12
+	g_model.Module[0].protocol = PROTO_OFF ;
+#endif
 	switch ( g_model.Module[0].protocol )
 	{
 		case PROTO_PXX :
@@ -9847,6 +9866,7 @@ void menuProcProtocol(uint8_t event)
 			dataItems += 1 ;
 		break ;
 	}
+
 	switch ( g_model.Module[1].protocol )
 	{
 		case PROTO_PXX :
@@ -9967,7 +9987,11 @@ void menuProcProtocol(uint8_t event)
   y += FH ;
 	subN += 1 ;
 
+#ifdef PCBT12
+	i = 1 ;
+#else
 	for ( i = 0 ; i < 2 ; i += 1 )
+#endif
 	{
 		
 		attr = 0 ;
@@ -9984,7 +10008,11 @@ void menuProcProtocol(uint8_t event)
 
 	}
 		
+#ifdef PCBT12
+	if ( sub <= 1 )
+#else
 	if ( sub <= 2 )
+#endif
 	{
   	switch (event)
 		{
@@ -9997,13 +10025,19 @@ void menuProcProtocol(uint8_t event)
 						pushMenu(menuProcTrainProtocol) ;
 					break ;
 					case 1 :
+#ifdef PCBT12
+						EditingModule = 1 ;
+#else
 						EditingModule = 0 ;
+#endif
 						pushMenu( editOneProtocol ) ;
 					break ;
+#ifndef PCBT12
 					case 2 :
 						EditingModule = 1 ;
 						pushMenu( editOneProtocol ) ;
 					break ;
+#endif
 				}
 
 			break ;
@@ -12922,17 +12956,21 @@ void menuProcDiagKeys(uint8_t event)
   for(uint8_t i=0; i<6; i++)
   {
 #ifdef PCBX7
+ #ifndef PCBT12
 		if ( ( i < 2 ) || ( i == 5 ) )
+ #endif // PCBT12
 #endif // PCBX7
 		{
     	uint8_t y=(5-i)*FH+2*FH;
     	bool t=keyState((EnumKeys)(KEY_MENU+i));
    		lcd_putsAttIdx(  x, y, PSTR(STR_KEYNAMES),i,0);
 #ifdef PCBX7
+ #ifndef PCBT12
 			if ( i == 5 )
 			{
 			  lcd_puts_Pleft( y,XPSTR(" Page") ) ;
 			}
+ #endif // PCBT12
 #endif // PCBX7
     	lcd_putcAtt(x+FW*5+2,  y,t+'0',t);
 		}		 
@@ -16292,7 +16330,7 @@ void navigateCustomTelemetry(uint8_t event, uint32_t mode )
 				{
 					uint32_t t_limit = 0x40 ;
 					tview += 0x10 ;
-					if ( ( FrskyTelemetryType == 2 ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) )
+					if ( ( FrskyTelemetryType == FRSKY_TEL_DSM ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) )
 					{
 						t_limit = 0x50 ;
 					}
@@ -16308,7 +16346,7 @@ void navigateCustomTelemetry(uint8_t event, uint32_t mode )
 				{
 					tview -= 0x10 ;
 					uint32_t t_limit = 0x40 ;
-					if ( ( FrskyTelemetryType == 2 ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) )
+					if ( ( FrskyTelemetryType == FRSKY_TEL_DSM ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) )
 					{
 						t_limit = 0x50 ;
 					}
@@ -16427,7 +16465,9 @@ void actionMainPopup( uint8_t event )
 
 
 
+#ifdef PCBX12D
 uint8_t PictureDrawn = 0 ;
+#endif
 
 void menuProc0(uint8_t event)
 {
@@ -16933,7 +16973,7 @@ extern uint8_t ModelImageValid ;
         if(view == e_telemetry)
 				{
 					tview += 0x10 ;
-					if ( tview > ( ( FrskyTelemetryType != 2 ) ? 0x30 : 0x40 ) )
+					if ( tview > ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) ? 0x30 : 0x40 ) )
 					{
 						tview = 0 ;
 					}
@@ -16957,7 +16997,7 @@ extern uint8_t ModelImageValid ;
 					tview -= 0x10 ;
 					if ( tview > 0x40 )
 					{
-						tview = ( FrskyTelemetryType != 2 ) ? 0x30 : 0x40 ;
+						tview = ( FrskyTelemetryType != FRSKY_TEL_DSM ) ? 0x30 : 0x40 ;
 					}
             g_model.mview = e_telemetry | tview ;
 						eeModelChanged() ;
@@ -17641,7 +17681,7 @@ extern uint8_t LogsRunning ;
 								if (rx > 100) rx = 100;
                 lcd_outdezAtt( 7 * FW-3, 6*FH, rx, blink);
 //         line 6 right  "Rcq"
-                lcd_puts_P( 15*FW-2, 6*FH, XPSTR( ( FrskyTelemetryType == 1 ) ? "Swr" : "Rcq") ); // "Rcq"
+                lcd_puts_P( 15*FW-2, 6*FH, XPSTR( ( FrskyTelemetryType == FRSKY_TEL_SPORT ) ? "Swr" : "Rcq") ); // "Rcq"
 								uint8_t tx = FrskyHubData[FR_TXRSI_COPY];
 								if (tx > 100) tx = 100;
                 lcd_outdezAtt( 21*FW+1, 6*FH, tx, blink);

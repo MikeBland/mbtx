@@ -360,6 +360,7 @@ void handle_serial(void* pdata)
 		while ( g_model.frskyComPort || ( g_model.com2Baudrate == 0 ) || ( g_model.com2Function != COM2_FUNC_TELEMETRY ) )		// Leave the port alone!
 		{
 			CoTickDelay(50) ;					// 100mS for now
+
 		}
 #endif
 #ifdef PCB9XT
@@ -373,6 +374,7 @@ void handle_serial(void* pdata)
 		while ( ( rxchar = rxCom2() ) == 0xFFFF )
 		{
 			CoTickDelay(5) ;					// 10mS for now
+
 #ifndef PCBDUE
 			if ( ( g_model.frskyComPort ) || ( g_model.com2Function != COM2_FUNC_TELEMETRY ) )	// Leave the port alone!
 			{
@@ -1247,6 +1249,21 @@ extern void initWatchdog( void ) ;
 			Mem_address = 0 ;
 			txmit( '>' ) ;
 		}
+		
+		if ( rxchar == 'k' )
+		{
+extern uint8_t DebugUnderRun ;
+			DebugUnderRun = 1 ;
+		}
+
+//		if ( rxchar == 'l' )
+//		{
+//			crlf() ;
+//			p8hex( DACC->DACC_IMR ) ;
+//			crlf() ;
+//			p8hex( DACC->DACC_ISR ) ;
+//			crlf() ;
+//		}
 
 		if ( rxchar == 'V' )
 		{
@@ -1724,65 +1741,65 @@ int32_t Ymodem_Receive( uint8_t *buf ) ;
 		}
 #endif
 
-#ifndef PCBDUE
-		if ( rxchar == 'i' )
-		{
-			txmit( 'i' ) ;
-			init23008() ;
-			crlf() ;
-		}
+//#ifndef PCBDUE
+//		if ( rxchar == 'i' )
+//		{
+//			txmit( 'i' ) ;
+//			init23008() ;
+//			crlf() ;
+//		}
 
-		if ( rxchar == 'j' )
-		{
-			txmit( 'j' ) ;
-			I2CwriteValue += 4 ;
-			I2CwriteValue &= 0xFC ;
-			write23008( I2CwriteValue ) ;
-			crlf() ;
-		}
+//		if ( rxchar == 'j' )
+//		{
+//			txmit( 'j' ) ;
+//			I2CwriteValue += 4 ;
+//			I2CwriteValue &= 0xFC ;
+//			write23008( I2CwriteValue ) ;
+//			crlf() ;
+//		}
 
-		if ( rxchar == 'k' )
-		{
-			txmit( 'k' ) ;
-			read23008( &I2CreadValue ) ;
-			crlf() ;
-		}
+//		if ( rxchar == 'k' )
+//		{
+//			txmit( 'k' ) ;
+//			read23008( &I2CreadValue ) ;
+//			crlf() ;
+//		}
 		
-//extern uint8_t I2Cdebug ;
-		if ( rxchar == 'l' )
-		{
-			txmit( 'l' ) ;
-			p2hex( I2CreadValue & 3 ) ;
-//			txmit( I2Cdebug ) ;
-			crlf() ;
-		}
+////extern uint8_t I2Cdebug ;
+//		if ( rxchar == 'l' )
+//		{
+//			txmit( 'l' ) ;
+//			p2hex( I2CreadValue & 3 ) ;
+////			txmit( I2Cdebug ) ;
+//			crlf() ;
+//		}
 
-		if ( rxchar == 'p' )
-		{
-			txmit( 'p' ) ;
-			initLed() ;
-//			txmit( I2Cdebug ) ;
-			crlf() ;
-		}
+//		if ( rxchar == 'p' )
+//		{
+//			txmit( 'p' ) ;
+//			initLed() ;
+////			txmit( I2Cdebug ) ;
+//			crlf() ;
+//		}
 
-		if ( rxchar == 'q' )
-		{
-			txmit( 'q' ) ;
-			LedWriteValue += 4 ;
-			writeLed( LedWriteValue ) ;
-//			txmit( I2Cdebug ) ;
-			crlf() ;
-		}
+//		if ( rxchar == 'q' )
+//		{
+//			txmit( 'q' ) ;
+//			LedWriteValue += 4 ;
+//			writeLed( LedWriteValue ) ;
+////			txmit( I2Cdebug ) ;
+//			crlf() ;
+//		}
 
-		if ( rxchar == 'r' )
-		{
-			txmit( 'r' ) ;
-			readLed( &I2CreadValue ) ;
-			p2hex( I2CreadValue ) ;
-//			txmit( I2Cdebug ) ;
-			crlf() ;
-		}
-#endif
+//		if ( rxchar == 'r' )
+//		{
+//			txmit( 'r' ) ;
+//			readLed( &I2CreadValue ) ;
+//			p2hex( I2CreadValue ) ;
+////			txmit( I2Cdebug ) ;
+//			crlf() ;
+//		}
+//#endif
 
 //extern uint16_t SerTimes[] ;
 //extern uint16_t SerValues[] ;

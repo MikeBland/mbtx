@@ -507,8 +507,8 @@ void per10ms()
 #if !defined(SIMU)
 	uint8_t value = ~PIOB->PIO_PDSR & 0x40 ;
 
-extern uint8_t AnaEncSw ;
-	value |= AnaEncSw ;
+//extern uint8_t AnaEncSw ;
+//	value |= AnaEncSw ;
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	if ( value )
 	{
@@ -536,7 +536,11 @@ extern uint8_t EncoderI2cData[] ;
 #ifdef PCBX9D
 #if !defined(SIMU)
 #ifdef PCBX7
+ #ifdef PCBT12
+	uint8_t value = 0 ;
+ #else
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
+ #endif
 #else // PCBX7
 #ifdef REV9E
 	uint8_t value = ~GPIOF->IDR & PIN_BUTTON_ENCODER ;
@@ -708,6 +712,7 @@ int32_t peek_fifo128( struct t_fifo128 *pfifo )
 }
 
 
+#ifdef REVX
 void put_16bit_fifo32( struct t_16bit_fifo32 *pfifo, uint16_t word )
 {
   uint32_t next = (pfifo->in + 1) & 0x1f;
@@ -729,6 +734,18 @@ int32_t get_16bit_fifo32( struct t_16bit_fifo32 *pfifo )
 	}
 	return -1 ;
 }
+#endif
+
+uint16_t rxCom2()
+{
+	return get_fifo128( &Com2_fifo ) ;
+}
+
+int32_t rxBtuart()
+{
+	return get_fifo128( &BtRx_fifo ) ;
+}
+
 
 #ifdef SERIAL_TRAINER
 // 9600 baud, bit time 104.16uS
@@ -1449,6 +1466,7 @@ void UART2_9dataOdd1stop()
 extern "C" void USART0_IRQHandler()
 {
   register Usart *pUsart = SECOND_USART;
+	uint32_t status ;
 
 #ifdef REVX
 	if ( g_model.bt_telemetry > 1 )
@@ -1548,11 +1566,23 @@ extern "C" void USART0_IRQHandler()
 			pUsart->US_CR = US_CR_RXEN ;
 		}
 	}
-	
-	if ( pUsart->US_CSR & US_CSR_RXRDY )
+
+	status = pUsart->US_CSR ;
+	if ( status & US_CSR_RXRDY )
 	{
     uint8_t data = pUsart->US_RHR ;
-		put_fifo128( &Com1_fifo, data ) ;
+		if ( status & US_CSR_RXBRK )
+		{
+			if ( data )
+			{
+				put_fifo128( &Com1_fifo, data ) ;
+			}
+			pUsart->US_CR = US_CR_RSTSTA ;
+		}
+		else
+		{
+			put_fifo128( &Com1_fifo, data ) ;
+		}
 
 // 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
 // 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
@@ -1563,6 +1593,12 @@ extern "C" void USART0_IRQHandler()
 			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
 			pUsart->US_IER = US_IER_TIMEOUT ;
 			TelemetryTx.SportTx.index = 0x7E ;
+#ifdef REVX
+			if ( g_model.Module[1].protocol == PROTO_MULTI )
+			{
+				PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
+			}
+#endif
     }
     LastReceivedSportByte = data ;
 	}
@@ -1831,11 +1867,6 @@ void txmit( uint8_t c )
 
 // Outputs a string to the UART
 
-uint16_t rxCom2()
-{
-	return get_fifo128( &Com2_fifo ) ;
-}
-
 void txmit2nd( uint8_t c )
 {
   register Usart *pUsart = SECOND_USART;
@@ -1875,11 +1906,6 @@ uint16_t rx2nduart()
 //  /* Send character */
 //  pUart->UART_THR=c ;
 //}
-
-int32_t rxBtuart()
-{
-	return get_fifo128( &BtRx_fifo ) ;
-}
 
 // Read 8 (9 for REVB) ADC channels
 // Documented bug, must do them 1 by 1
@@ -2826,11 +2852,6 @@ extern "C" void USART6_IRQHandler()
 }
 
 
-int32_t rxBtuart()
-{
-	return get_fifo128( &BtRx_fifo ) ;
-}
-
 #endif // #ifdef PCBX12D
 
 
@@ -2948,7 +2969,7 @@ struct t_sendingSport
 
 void x9dHubTxStart( uint8_t *buffer, uint32_t count )
 {
-	if ( FrskyTelemetryType == 0 )		// Hub
+	if ( FrskyTelemetryType == FRSKY_TEL_HUB )		// Hub
 	{	
 		SendingSportPacket.buffer = buffer ;
 		SendingSportPacket.count = count ;
@@ -2991,6 +3012,9 @@ void com2Parity( uint32_t even )
 
 void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 {
+	
+	USART2->CR1 &= ~USART_CR1_TE ;
+	
 	SendingSportPacket.buffer = buffer ;
 	SendingSportPacket.count = count ;
 #ifdef PCB9XT
@@ -3006,7 +3030,7 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 	{
 		USART2->CR1 &= ~USART_CR1_RE ;
 	}
-	USART2->CR1 |= USART_CR1_TXEIE ;
+	USART2->CR1 |= USART_CR1_TXEIE | USART_CR1_TE ;	// Force an idle frame
 }
 
 #if !defined(SIMU)
@@ -3068,7 +3092,7 @@ extern "C" void USART2_IRQHandler()
 		{
 			RxIntCount += 1 ;
 			put_fifo128( &Com1_fifo, data ) ;
-			if ( FrskyTelemetryType == 1 )		// SPORT
+			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 			{
 				if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
 				{
@@ -3080,7 +3104,18 @@ extern "C" void USART2_IRQHandler()
 		}
 		else
 		{
-			put_fifo128( &Com1_fifo, data ) ;
+			if ( status & USART_FLAG_FE )
+			{
+				USART_FE += 1 ;
+				if ( data )
+				{ // A 0 byte is a line break
+					put_fifo128( &Com1_fifo, data ) ;
+				}
+			}
+			else
+			{
+				put_fifo128( &Com1_fifo, data ) ;
+			}
 			USART_ERRORS += 1 ;
 			if ( status & USART_FLAG_ORE )
 			{
@@ -3089,10 +3124,6 @@ extern "C" void USART2_IRQHandler()
 			if ( status & USART_FLAG_NE )
 			{
 				USART_NE += 1 ;
-			}
-			if ( status & USART_FLAG_FE )
-			{
-				USART_FE += 1 ;
 			}
 			if ( status & USART_FLAG_PE )
 			{
@@ -3131,11 +3162,6 @@ void txmit( uint8_t c )
 
   /* Send character */
 	USART3->DR = c ;
-}
-
-uint16_t rxCom2()
-{
-	return get_fifo128( &Com2_fifo ) ;
 }
 
 #ifndef PCBX7
@@ -3559,11 +3585,6 @@ extern "C" void USART3_IRQHandler()
 }
 
 
-int32_t rxBtuart()
-{
-	return get_fifo128( &BtRx_fifo ) ;
-}
-
 uint32_t txPdcBt( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -3673,11 +3694,6 @@ void txmit( uint8_t c )
 
   /* Send character */
 	UART4->DR = c ;
-}
-
-uint16_t rxCom2()
-{
-	return get_fifo128( &Com2_fifo ) ;
 }
 
 void UART_Sbus_configure( uint32_t masterClock )
@@ -3921,11 +3937,6 @@ extern "C" void USART3_IRQHandler()
 	}
 }
 
-
-int32_t rxBtuart()
-{
-	return get_fifo128( &BtRx_fifo ) ;
-}
 
 uint32_t txPdcBt( struct t_serial_tx *data )
 {

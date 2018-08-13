@@ -173,7 +173,9 @@ extern void ee32_process( void ) ;
  #define PAGE_NAVIGATION 1
 #endif // REV9E
 #ifdef PCBX7
- #define PAGE_NAVIGATION 1
+ #ifndef PCBT12
+  #define PAGE_NAVIGATION 1
+ #endif
 #endif // PCBX7
 
 #ifndef SIMU
@@ -401,6 +403,7 @@ struct t_NvsControl
 	uint8_t nvs_state ;
 	uint8_t nvs_delay ;
 	int16_t nvs_timer ;
+	int16_t nvs_last_value ;
 } NvsControl[NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS] ;
 //uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 //int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
@@ -509,7 +512,9 @@ static void	processAdjusters( void ) ;
 #endif
 
 #ifdef PCBX7
+ #ifndef PCBT12
   static void init_rotary_encoder( void ) ;
+ #endif
 #endif // PCBX7
 #ifdef REV9E
   static void init_rotary_encoder( void ) ;
@@ -902,7 +907,9 @@ inline uint8_t keyDown()
 {
 #if defined(REV9E) || defined(PCBX7) || defined(PCBX12D)
 #ifdef PCBX7
+ #ifndef PCBT12
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
+ #endif
 #endif // PCBX7
 #ifdef REV9E
 	uint8_t value = (~GPIOF->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
@@ -910,10 +917,14 @@ inline uint8_t keyDown()
 #ifdef PCBX12D
 	uint8_t value = (~GPIOC->IDR & 0x0002) ? 0x80 : 0 ;
 #endif // PCBX12D
+ #ifndef PCBT12
 	return (~read_keys() & 0x7E ) | value ; 
-#else		
-		return ~read_keys() & 0x7E ;
+ #else		
+	return ~read_keys() & 0x7E ;
  #endif
+#else		
+	return ~read_keys() & 0x7E ;
+#endif
 }
 
 void clearKeyEvents()
@@ -1301,8 +1312,10 @@ void update_mode(void* pdata)
 
 		maintenanceBackground() ;
 #ifdef PCBX7
+ #ifndef PCBT12
 extern void checkRotaryEncoder() ;
 		checkRotaryEncoder() ;
+ #endif
 #endif // PCBX7
 #ifdef REV9E
 extern void checkRotaryEncoder() ;
@@ -1717,11 +1730,13 @@ void ledOff()
   GPIO_ResetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
 }
 
-//void ledRed()
-//{
-//  ledOff();
-//  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
-//}
+#ifdef PCBT12
+void ledRed()
+{
+  ledOff();
+  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
+}
+#endif
 
 void ledGreen()
 {
@@ -1729,11 +1744,13 @@ void ledGreen()
   GPIO_SetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
 }
 
-//void ledBlue()
-//{
-//  ledOff();
-//  GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
-//}
+#ifdef PCBT12
+void ledBlue()
+{
+  ledOff();
+  GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+}
+#endif
 #endif // PCBX7
 
 #if defined (PCBXLITE)
@@ -1969,8 +1986,10 @@ int main( void )
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 	// Only configure green LED, allow others to be used as analog inputs
 	configure_pins( GPIO_Pin_5, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-//	configure_pins( GPIO_Pin_5|GPIO_Pin_4, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-//	configure_pins( GPIO_Pin_1, PIN_PORTB | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#ifdef PCBT12
+	configure_pins( GPIO_Pin_4, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+	configure_pins( GPIO_Pin_1, PIN_PORTB | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#endif
 //	ledOff() ;
 //	ledRed() ;
 	init_soft_power() ;
@@ -2320,6 +2339,9 @@ void enableBackupRam(void) ;
 		}
 	}
 	ledGreen() ;
+#ifdef PCBT12
+	ledBlue() ;	// Green Led!
+#endif
 #endif // PCBX7 | PCBXLITE
 
 #ifdef REV9E
@@ -2678,7 +2700,11 @@ uint32_t updateSlave() ;
   #endif
  #else
   #ifdef PCBX7
+   #ifdef PCBT12
+		g_eeGeneral.physicalRadioType = PHYSICAL_T12 ;
+	 #else
 		g_eeGeneral.physicalRadioType = PHYSICAL_QX7 ;
+   #endif
   #else
    #ifdef PCBXLITE
 		g_eeGeneral.physicalRadioType = PHYSICAL_XLITE ;
@@ -2741,7 +2767,9 @@ uint32_t updateSlave() ;
 #endif
 
 #ifdef PCBX7
+ #ifndef PCBT12
 	init_rotary_encoder() ;
+ #endif
 #endif // PCBX7
 #ifdef REV9E
 	init_rotary_encoder() ;
@@ -5893,6 +5921,22 @@ static void processVoiceAlarms()
 				case 7 :
 					x = (x & y) != 0 ;
 				break ;
+				case 8 :
+				{	
+  				int16_t z ;
+					z = x - pc->nvs_last_value ;
+					z = abs(z) ;
+					if ( z > y )
+					{
+						pc->nvs_last_value = x ;
+						x = 1 ;
+					}
+					else
+					{
+						x = 0 ;
+					}
+				}
+				break ;
 			}
 			functionTrue = x ;
 // Start of invalid telemetry detection
@@ -6017,6 +6061,20 @@ static void processVoiceAlarms()
 						ltimer = 0 ;
 					}
 				}
+				else
+				{ // just turned OFF
+					if ( pvad->rate == 1 )
+					{
+						if ( pvad->func == 8 )	// |d|>val
+						{
+							if ( pvad->delay )
+							{
+								pc->nvs_delay = pvad->delay + 1 ;
+								play = 0 ;
+							}
+						}
+					}
+				}
 				pc->nvs_state = 1 ;
 				if ( ( pvad->rate == 1 ) )
 				{
@@ -6032,16 +6090,27 @@ static void processVoiceAlarms()
 			}
 			else
 			{
-				pc->nvs_delay = 0 ;
-				if ( pc->nvs_state == 1 )
+				if ( ( pvad->func == 8 ) && ( pc->nvs_delay ) )	// |d|>val
 				{
-					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
+					play = 0 ;
+					if ( --pc->nvs_delay == 0 )
 					{
-						ltimer = 0 ;
 						play = 1 ;
-						if ( pvad->rate == 2 )
+					}
+				}
+				else
+				{
+					pc->nvs_delay = 0 ;
+					if ( pc->nvs_state == 1 )
+					{
+						if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
 						{
-							play = 2 ;
+							ltimer = 0 ;
+							play = 1 ;
+							if ( pvad->rate == 2 )
+							{
+								play = 2 ;
+							}
 						}
 					}
 				}
@@ -6057,6 +6126,10 @@ static void processVoiceAlarms()
 		else //( ( VoiceCheckFlag100mS & 2 ) != 0 )
 		{
 		 	uint32_t pos ;
+			if ( pvad->func == 8 )	// |d|>val
+			{
+				pc->nvs_last_value = getValue( pvad->source - 1 ) ;
+			}
 			if ( pvad->rate == 3 )
 			{
 				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
@@ -8267,7 +8340,9 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 	}
 }
 
+#ifdef PCBX9D
 uint8_t AnaEncSw = 0 ;
+#endif
 
 #ifdef PCBX9D
 void valueprocessAnalogEncoder( uint32_t x )
@@ -9239,6 +9314,7 @@ extern int32_t Rotary_diff ;
 }
 
 #ifdef PCBX7
+ #ifndef PCBT12
 static void init_rotary_encoder()
 {
 	configure_pins( 0x0A00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
@@ -9266,6 +9342,7 @@ void checkRotaryEncoder()
 		Rotary_position |= dummy ;
 	}
 }
+ #endif
 
 #endif // PCBX7
 
@@ -9372,8 +9449,10 @@ void interrupt5ms()
 	sound_5ms() ;
 
 #ifdef PCBX7
+ #ifndef PCBT12
 extern void checkRotaryEncoder() ;
 		checkRotaryEncoder() ;
+ #endif
 #endif // PCBX7
 #ifdef REV9E
 	checkRotaryEncoder() ;

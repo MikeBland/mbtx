@@ -80,7 +80,7 @@ uint8_t CoProcTimer ;
 uint8_t AudioVoiceUnderrun ;
 uint8_t AudioVoiceCountUnderruns ;
 uint8_t VoiceCount ;
-
+uint8_t DacIdle ;
 
 
 struct t_sound_globals Sound_g ;
@@ -111,22 +111,22 @@ struct t_VoiceBuffer *PtrVoiceBuffer[NUM_VOICE_BUFFERS] ;
 // 872, 976,1084,1196,1311,1429,1550,1673,1797,1922
 //} ;
 
-#ifndef TONE_MODE_2
-// Amplitude reduced to 30% to allow for voice volume
-uint16_t Sine_values[] =
-{
-2048,2085,2123,2160,2197,2233,2268,2303,2336,2369,
-2400,2430,2458,2485,2510,2533,2554,2573,2590,2605,
-2618,2629,2637,2643,2646,2648,2646,2643,2637,2629,
-2618,2605,2590,2573,2554,2533,2510,2485,2458,2430,
-2400,2369,2336,2303,2268,2233,2197,2160,2123,2085,
-2048,2010,1972,1935,1898,1862,1826,1792,1758,1726,
-1695,1665,1637,1610,1585,1562,1541,1522,1505,1490,
-1477,1466,1458,1452,1448,1448,1448,1452,1458,1466,
-1477,1490,1505,1522,1541,1562,1585,1610,1637,1665,
-1695,1726,1758,1792,1826,1862,1898,1935,1972,2010
-} ;
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//// Amplitude reduced to 30% to allow for voice volume
+//uint16_t Sine_values[] =
+//{
+//2048,2085,2123,2160,2197,2233,2268,2303,2336,2369,
+//2400,2430,2458,2485,2510,2533,2554,2573,2590,2605,
+//2618,2629,2637,2643,2646,2648,2646,2643,2637,2629,
+//2618,2605,2590,2573,2554,2533,2510,2485,2458,2430,
+//2400,2369,2336,2303,2268,2233,2197,2160,2123,2085,
+//2048,2010,1972,1935,1898,1862,1826,1792,1758,1726,
+//1695,1665,1637,1610,1585,1562,1541,1522,1505,1490,
+//1477,1466,1458,1452,1448,1448,1448,1452,1458,1466,
+//1477,1490,1505,1522,1541,1562,1585,1610,1637,1665,
+//1695,1726,1758,1792,1826,1862,1898,1935,1972,2010
+//} ;
+//#endif // TONE_MODE_2
 
 // Must NOT be in flash, PDC needs a RAM source.
 // We'll use these for higher frequencies
@@ -281,6 +281,7 @@ void init_dac()
 
 //	SoundType = SOUND_NONE ;
 
+	DacIdle = 1 ;
   PMC->PMC_PCER0 |= 0x40000000L ;		// Enable peripheral clock to DAC
 	dacptr = DACC ;
 #ifndef REVA
@@ -295,15 +296,15 @@ void init_dac()
 #endif
 	dacptr->DACC_CDR = 2048 ;						// Half amplitude
 // Data for PDC must NOT be in flash, PDC needs a RAM source.
-#ifndef TONE_MODE_2
-#ifndef SIMU
-	dacptr->DACC_TPR = (uint32_t) Sine_values ;
-	dacptr->DACC_TNPR = (uint32_t) Sine_values ;
-#endif
-	dacptr->DACC_TCR = 50 ;		// words, 100 16 bit values
-	dacptr->DACC_TNCR = 50 ;	// words, 100 16 bit values
-	dacptr->DACC_PTCR = DACC_PTCR_TXTEN ;
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//#ifndef SIMU
+//	dacptr->DACC_TPR = (uint32_t) Sine_values ;
+//	dacptr->DACC_TNPR = (uint32_t) Sine_values ;
+//#endif
+//	dacptr->DACC_TCR = 50 ;		// words, 100 16 bit values
+//	dacptr->DACC_TNCR = 50 ;	// words, 100 16 bit values
+//	dacptr->DACC_PTCR = DACC_PTCR_TXTEN ;
+//#endif // TONE_MODE_2
 	NVIC_SetPriority( DACC_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(DACC_IRQn) ;
 }
@@ -380,6 +381,7 @@ extern "C" void DAC_IRQHandler()
 			VoiceCount = 0 ;
 			AudioVoiceUnderrun = 1 ;		// For debug
 			Sound_g.VoiceActive = 2 ;
+			DacIdle = 1 ;
 		}
 		else
 		{
@@ -405,20 +407,20 @@ extern "C" void DAC_IRQHandler()
 	{
 		DACC->DACC_IDR = DACC_IDR_ENDTX ;
 	}
-#ifndef TONE_MODE_2
-	else if ( Sound_g.VoiceActive == 0 )
-	{
-		DACC->DACC_TNPR = (uint32_t) Sine_values ;
-		DACC->DACC_TNCR = 50 ;	// words, 100 16 bit values
-		if ( Sound_g.Tone_timer )
-		{
-			if ( --Sound_g.Tone_timer == 0 )
-			{
-				DACC->DACC_IDR = DACC_IDR_ENDTX ;
-			}
-		}
-	}
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	else if ( Sound_g.VoiceActive == 0 )
+//	{
+//		DACC->DACC_TNPR = (uint32_t) Sine_values ;
+//		DACC->DACC_TNCR = 50 ;	// words, 100 16 bit values
+//		if ( Sound_g.Tone_timer )
+//		{
+//			if ( --Sound_g.Tone_timer == 0 )
+//			{
+//				DACC->DACC_IDR = DACC_IDR_ENDTX ;
+//			}
+//		}
+//	}
+//#endif // TONE_MODE_2
 }
 #endif
 
@@ -462,19 +464,20 @@ void sound_5ms()
 
 	dacptr = DACC ;
 
-#ifndef TONE_MODE_2
-	if ( Sound_g.Tone_ms_timer > 0 )
-	{
-		Sound_g.Tone_ms_timer -= 1 ;
-	}
+//#ifndef TONE_MODE_2
+//	if ( Sound_g.Tone_ms_timer > 0 )
+//	{
+//		Sound_g.Tone_ms_timer -= 1 ;
+//	}
 		
-	if ( Sound_g.Tone_ms_timer == 0 )
-	{
-#endif // TONE_MODE_2
+//	if ( Sound_g.Tone_ms_timer == 0 )
+//	{
+//#endif // TONE_MODE_2
 		if ( Sound_g.VoiceRequest )
 		{
 			// audioOn() ;
 			
+			DacIdle = 0 ;
 			dacptr->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
 			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
 			if ( dacptr->DACC_ISR & DACC_ISR_TXBUFE )	// All sent
@@ -501,58 +504,58 @@ void sound_5ms()
 			return ;
 		}
 		
-#ifndef TONE_MODE_2
-		if ( ( Sound_g.VoiceActive ) || ( ( Voice.VoiceQueueCount ) && sd_card_ready() ) )
-		{
-			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
-			return ;
-		}
+//#ifndef TONE_MODE_2
+//		if ( ( Sound_g.VoiceActive ) || ( ( Voice.VoiceQueueCount ) && sd_card_ready() ) )
+//		{
+//			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
+//			return ;
+//		}
 				
-		if ( Sound_g.Sound_time )
-		{
-			// audioOn() ;
-			Sound_g.Tone_ms_timer = ( Sound_g.Sound_time + 4 ) / 5 ;
-			if ( Sound_g.Next_freq )		// 0 => silence for time
-			{
-				Sound_g.Frequency = Sound_g.Next_freq ;
-				Sound_g.Frequency_increment = Sound_g.Next_frequency_increment ;
-				set_frequency( Sound_g.Frequency * 100 ) ;
-#ifndef SIMU
-				dacptr->DACC_TPR = (uint32_t) Sine_values ;
-				dacptr->DACC_TNPR = (uint32_t) Sine_values ;
-#endif
-				dacptr->DACC_TCR = 50 ;		// words, 100 16 bit values
-				dacptr->DACC_TNCR = 50 ;	// words, 100 16 bit values
-				tone_start( 0 ) ;
-			}
-			else
-			{
-				dacptr->DACC_IDR = DACC_IDR_ENDTX ;		// Silence
-			}
-			Sound_g.Sound_time = 0 ;
-		}
-		else
-		{
-			dacptr->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
-			Sound_g.Tone_timer = 0 ;
-			// audioOff() ;
-		}
-#endif // TONE_MODE_2
+//		if ( Sound_g.Sound_time )
+//		{
+//			// audioOn() ;
+//			Sound_g.Tone_ms_timer = ( Sound_g.Sound_time + 4 ) / 5 ;
+//			if ( Sound_g.Next_freq )		// 0 => silence for time
+//			{
+//				Sound_g.Frequency = Sound_g.Next_freq ;
+//				Sound_g.Frequency_increment = Sound_g.Next_frequency_increment ;
+//				set_frequency( Sound_g.Frequency * 100 ) ;
+//#ifndef SIMU
+//				dacptr->DACC_TPR = (uint32_t) Sine_values ;
+//				dacptr->DACC_TNPR = (uint32_t) Sine_values ;
+//#endif
+//				dacptr->DACC_TCR = 50 ;		// words, 100 16 bit values
+//				dacptr->DACC_TNCR = 50 ;	// words, 100 16 bit values
+//				tone_start( 0 ) ;
+//			}
+//			else
+//			{
+//				dacptr->DACC_IDR = DACC_IDR_ENDTX ;		// Silence
+//			}
+//			Sound_g.Sound_time = 0 ;
+//		}
+//		else
+//		{
+//			dacptr->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
+//			Sound_g.Tone_timer = 0 ;
+//			// audioOff() ;
+//		}
+//#endif // TONE_MODE_2
 
-#ifndef TONE_MODE_2
-	}
-	else if ( ( Sound_g.Tone_ms_timer & 1 ) == 0 )		// Every 10 mS
-	{
-		if ( Sound_g.Frequency )
-		{
-			if ( Sound_g.Frequency_increment )
-			{
-				Sound_g.Frequency += Sound_g.Frequency_increment ;
-				set_frequency( Sound_g.Frequency * 100 ) ;
-			}
-		}
-	}
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	}
+//	else if ( ( Sound_g.Tone_ms_timer & 1 ) == 0 )		// Every 10 mS
+//	{
+//		if ( Sound_g.Frequency )
+//		{
+//			if ( Sound_g.Frequency_increment )
+//			{
+//				Sound_g.Frequency += Sound_g.Frequency_increment ;
+//				set_frequency( Sound_g.Frequency * 100 ) ;
+//			}
+//		}
+//	}
+//#endif // TONE_MODE_2
 }
 
 //const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
@@ -615,39 +618,31 @@ void sound_5ms()
 //	}
 //}
 
-uint16_t g_timeAppendVoice ;
-uint16_t g_timeAppendMaxVoice ;
-uint16_t g_timeAppendtime ;
+//uint16_t g_timeAppendVoice ;
+//uint16_t g_timeAppendMaxVoice ;
+//uint16_t g_timeAppendtime ;
 
 void startVoice( uint32_t count )		// count of filled in buffers
 {
-	uint32_t i ;
-
 	AudioVoiceUnderrun = 0 ;
 	VoiceBuffer[0].flags &= ~VF_SENT ;
 	PtrVoiceBuffer[0] = &VoiceBuffer[0] ;
-	
-	for ( i = 1 ; i < count ; i += 1 )
+	if ( count > 1 )
 	{
-		VoiceBuffer[i].flags &= ~VF_SENT ;
-		PtrVoiceBuffer[i] = &VoiceBuffer[i] ;
+		VoiceBuffer[1].flags &= ~VF_SENT ;
+		PtrVoiceBuffer[1] = &VoiceBuffer[1] ;
 	}
-//	if ( count > 1 )
-//	{
-//		VoiceBuffer[1].flags &= ~VF_SENT ;
-//		PtrVoiceBuffer[1] = &VoiceBuffer[1] ;
-//	}
-//	if ( count > 2 )
-//	{
-//		VoiceBuffer[2].flags &= ~VF_SENT ;
-//		PtrVoiceBuffer[2] = &VoiceBuffer[2] ;
-//	}
+	if ( count > 2 )
+	{
+		VoiceBuffer[2].flags &= ~VF_SENT ;
+		PtrVoiceBuffer[2] = &VoiceBuffer[2] ;
+	}
 	VoiceCount = count ;
 	Sound_g.VoiceRequest = 1 ;
 
-	g_timeAppendVoice = 0 ;
-	g_timeAppendMaxVoice = 0 ;
-	g_timeAppendtime = get_tmr10ms() ;
+//	g_timeAppendVoice = 0 ;
+//	g_timeAppendMaxVoice = 0 ;
+//	g_timeAppendtime = get_tmr10ms() ;
 
 }
 
@@ -657,13 +652,11 @@ void endVoice()
 	{
 		Sound_g.VoiceActive = 0 ;
 	}
-
 }
 
 void appendVoice( uint32_t index )		// index of next buffer
 {
 	register Dacc *dacptr ;
-	
 	VoiceBuffer[index].flags &= ~VF_SENT ;
 	dacptr = DACC ;
 	__disable_irq() ;
@@ -676,8 +669,10 @@ void appendVoice( uint32_t index )		// index of next buffer
 
 	PtrVoiceBuffer[VoiceCount++] = &VoiceBuffer[index] ;
 
-	if ( Sound_g.VoiceActive == 2 )
+	if ( DacIdle )	// All sent
+//	if ( Sound_g.VoiceActive == 2 )
 	{
+		DacIdle = 0 ;
 		Sound_g.VoiceActive = 1 ;
 		uint32_t x ;
 		uint32_t y ;
@@ -710,16 +705,16 @@ void appendVoice( uint32_t index )		// index of next buffer
 	}
 	__enable_irq() ;
 	
-	uint16_t t10ms ;
-	uint16_t now ;
-	now = get_tmr10ms() ;
-	t10ms = now - g_timeAppendtime ;
-	g_timeAppendtime = now ;
-	if ( t10ms > g_timeAppendMaxVoice )
-	{
-		g_timeAppendMaxVoice = t10ms ;
-	}
-	g_timeAppendVoice = t10ms ;
+//	uint16_t t10ms ;
+//	uint16_t now ;
+//	now = get_tmr10ms() ;
+//	t10ms = now - g_timeAppendtime ;
+//	g_timeAppendtime = now ;
+//	if ( t10ms > g_timeAppendMaxVoice )
+//	{
+//		g_timeAppendMaxVoice = t10ms ;
+//	}
+//	g_timeAppendVoice = t10ms ;
 }
 
 // frequency in Hz, time in mS
@@ -743,34 +738,34 @@ void appendVoice( uint32_t index )		// index of next buffer
 //	return 0 ;
 //}
 
-#ifndef TONE_MODE_2
-uint32_t queueTone( uint32_t frequency, uint32_t time, uint32_t frequency_increment, uint32_t lock )
-{
-	if ( Sound_g.Sound_time == 0 )
-	{
-		Sound_g.Next_freq = frequency ;
-		Sound_g.Next_frequency_increment = frequency_increment ;
-		Sound_g.Sound_time = time ;
-		Sound_g.toneLock = lock ;
-		return 1 ;
-	}
-	return 0 ;	
-}
+//#ifndef TONE_MODE_2
+//uint32_t queueTone( uint32_t frequency, uint32_t time, uint32_t frequency_increment, uint32_t lock )
+//{
+//	if ( Sound_g.Sound_time == 0 )
+//	{
+//		Sound_g.Next_freq = frequency ;
+//		Sound_g.Next_frequency_increment = frequency_increment ;
+//		Sound_g.Sound_time = time ;
+//		Sound_g.toneLock = lock ;
+//		return 1 ;
+//	}
+//	return 0 ;	
+//}
 
-// Time is in milliseconds
-void tone_start( register uint32_t time )
-{
-  PMC->PMC_PCER0 |= 0x40000000L ;		// Enable peripheral clock to DAC
-	Sound_g.Tone_timer = Sound_g.Frequency * time / 1000 ;
-	DACC->DACC_IER = DACC_IER_ENDTX ;
-}
+//// Time is in milliseconds
+//void tone_start( register uint32_t time )
+//{
+//  PMC->PMC_PCER0 |= 0x40000000L ;		// Enable peripheral clock to DAC
+//	Sound_g.Tone_timer = Sound_g.Frequency * time / 1000 ;
+//	DACC->DACC_IER = DACC_IER_ENDTX ;
+//}
 
-void tone_stop()
-{
-	DACC->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
-	Sound_g.Tone_timer = 0 ;	
-}
-#endif // TONE_MODE_2
+//void tone_stop()
+//{
+//	DACC->DACC_IDR = DACC_IDR_ENDTX ;	// Disable interrupt
+//	Sound_g.Tone_timer = 0 ;	
+//}
+//#endif // TONE_MODE_2
 
 
 uint32_t TwiHighSpeed ;

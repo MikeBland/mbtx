@@ -524,6 +524,7 @@ struct t_hub_max_min
 #define TEL_HUB_RAW			8
 #define TEL_XFIRE				9
 #define TEL_AFHD2SA		 10
+#define TEL_HITEC			 11
 #define TEL_UNKNOWN			255
 extern uint8_t TelemetryType ;
 
@@ -539,6 +540,14 @@ extern uint8_t TelemetryType ;
 #define TELEMETRY_HUBRAW			8
 #define TELEMETRY_FRMAV				9
 #define TELEMETRY_MAVLINK			10
+#define TELEMETRY_HITEC				11
+
+// Values in FrskyTelemetryType
+#define FRSKY_TEL_HUB		0
+#define FRSKY_TEL_SPORT	1
+#define FRSKY_TEL_DSM		2
+#define FRSKY_TEL_AFH		3
+#define FRSKY_TEL_HITEC	4
 
 
 extern uint16_t DsmABLRFH[] ;

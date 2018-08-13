@@ -97,22 +97,22 @@ uint8_t DacIdle ;
 
 	 
 // Must NOT be in flash, PDC needs a RAM source.
-#ifndef TONE_MODE_2
-// Amplitude reduced to 30% to allow for voice volume
-uint16_t Sine_values[] =
-{
-2048,2085,2123,2160,2197,2233,2268,2303,2336,2369,
-2400,2430,2458,2485,2510,2533,2554,2573,2590,2605,
-2618,2629,2637,2643,2646,2648,2646,2643,2637,2629,
-2618,2605,2590,2573,2554,2533,2510,2485,2458,2430,
-2400,2369,2336,2303,2268,2233,2197,2160,2123,2085,
-2048,2010,1972,1935,1898,1862,1826,1792,1758,1726,
-1695,1665,1637,1610,1585,1562,1541,1522,1505,1490,
-1477,1466,1458,1452,1448,1448,1448,1452,1458,1466,
-1477,1490,1505,1522,1541,1562,1585,1610,1637,1665,
-1695,1726,1758,1792,1826,1862,1898,1935,1972,2010
-} ;
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//// Amplitude reduced to 30% to allow for voice volume
+//uint16_t Sine_values[] =
+//{
+//2048,2085,2123,2160,2197,2233,2268,2303,2336,2369,
+//2400,2430,2458,2485,2510,2533,2554,2573,2590,2605,
+//2618,2629,2637,2643,2646,2648,2646,2643,2637,2629,
+//2618,2605,2590,2573,2554,2533,2510,2485,2458,2430,
+//2400,2369,2336,2303,2268,2233,2197,2160,2123,2085,
+//2048,2010,1972,1935,1898,1862,1826,1792,1758,1726,
+//1695,1665,1637,1610,1585,1562,1541,1522,1505,1490,
+//1477,1466,1458,1452,1448,1448,1448,1452,1458,1466,
+//1477,1490,1505,1522,1541,1562,1585,1610,1637,1665,
+//1695,1726,1758,1792,1826,1862,1898,1935,1972,2010
+//} ;
+//#endif // TONE_MODE_2
 
 
 // Must NOT be in flash, PDC needs a RAM source.
@@ -242,11 +242,11 @@ void init_dac()
 	DMA1_Stream5->CR = DMA_SxCR_CHSEL_0 | DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | 
 										 DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_CIRC ;
 	DMA1_Stream5->PAR = (uint32_t) &DAC->DHR12R1 ;
-#ifndef TONE_MODE_2
-	DMA1_Stream5->M0AR = (uint32_t) Sine_values ;
-	DMA1_Stream5->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
-	DMA1_Stream5->NDTR = 100 ;
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	DMA1_Stream5->M0AR = (uint32_t) Sine_values ;
+//	DMA1_Stream5->FCR = 0x05 ; //DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
+//	DMA1_Stream5->NDTR = 100 ;
+//#endif // TONE_MODE_2
 
 	DAC->DHR12R1 = 2048 ;
 	DAC->SR = DAC_SR_DMAUDR1 ;		// Write 1 to clear flag
@@ -331,22 +331,22 @@ void end_sound()
 
 void sound_5ms()
 {
-#ifndef TONE_MODE_2
-	if ( Sound_g.Tone_ms_timer > 0 )
-	{
+//#ifndef TONE_MODE_2
+//	if ( Sound_g.Tone_ms_timer > 0 )
+//	{
 		
-		if ( --Sound_g.Tone_ms_timer == 0 )
-		{
-			DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;		// Stops DMA at end of cycle
-//			Sound_g.Tone_timer = 0 ;	
-		}
-	}
-#endif // TONE_MODE_2
+//		if ( --Sound_g.Tone_ms_timer == 0 )
+//		{
+//			DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;		// Stops DMA at end of cycle
+////			Sound_g.Tone_timer = 0 ;	
+//		}
+//	}
+//#endif // TONE_MODE_2
 		
-#ifndef TONE_MODE_2
-	if ( Sound_g.Tone_ms_timer == 0 )
-	{
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	if ( Sound_g.Tone_ms_timer == 0 )
+//	{
+//#endif // TONE_MODE_2
 		if ( Sound_g.VoiceRequest )
 		{
 			
@@ -373,60 +373,60 @@ void sound_5ms()
 			return ;
 		}
 		
-#ifndef TONE_MODE_2
-		if ( ( Sound_g.VoiceActive ) || ( ( Voice.VoiceQueueCount ) && sd_card_ready() ) )
-//		if ( Sound_g.VoiceActive )
-		{
-			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
-			return ;
-		}
+//#ifndef TONE_MODE_2
+//		if ( ( Sound_g.VoiceActive ) || ( ( Voice.VoiceQueueCount ) && sd_card_ready() ) )
+////		if ( Sound_g.VoiceActive )
+//		{
+//			Sound_g.Sound_time = 0 ;						// Remove any pending tone requests
+//			return ;
+//		}
 				
-		if ( Sound_g.Sound_time )
-		{
-			Sound_g.Tone_ms_timer = ( Sound_g.Sound_time + 4 ) / 5 ;
-			if ( Sound_g.Next_freq )		// 0 => silence for time
-			{
-				Sound_g.Frequency = Sound_g.Next_freq ;
-				Sound_g.Frequency_increment = Sound_g.Next_frequency_increment ;
-				set_frequency( Sound_g.Frequency * 100 ) ;
-#ifndef SIMU
-				DMA1_Stream5->CR &= ~DMA_SxCR_EN ;				// Disable DMA channel
-				DMA1_Stream5->M0AR = (uint32_t) Sine_values ;
-				DMA1_Stream5->NDTR = 100 ;
-#endif
-				DacIdle = 0 ;
-				tone_start( 0 ) ;
-			}
-			else
-			{
-				DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;		// Stops DMA at end of cycle
-				DMA1_Stream5->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ;	// Enable DMA channel
-			}
-			Sound_g.Sound_time = 0 ;
-		}
-		else
-#endif // TONE_MODE_2
+//		if ( Sound_g.Sound_time )
+//		{
+//			Sound_g.Tone_ms_timer = ( Sound_g.Sound_time + 4 ) / 5 ;
+//			if ( Sound_g.Next_freq )		// 0 => silence for time
+//			{
+//				Sound_g.Frequency = Sound_g.Next_freq ;
+//				Sound_g.Frequency_increment = Sound_g.Next_frequency_increment ;
+//				set_frequency( Sound_g.Frequency * 100 ) ;
+//#ifndef SIMU
+//				DMA1_Stream5->CR &= ~DMA_SxCR_EN ;				// Disable DMA channel
+//				DMA1_Stream5->M0AR = (uint32_t) Sine_values ;
+//				DMA1_Stream5->NDTR = 100 ;
+//#endif
+//				DacIdle = 0 ;
+//				tone_start( 0 ) ;
+//			}
+//			else
+//			{
+//				DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;		// Stops DMA at end of cycle
+//				DMA1_Stream5->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ;	// Enable DMA channel
+//			}
+//			Sound_g.Sound_time = 0 ;
+//		}
+//		else
+//#endif // TONE_MODE_2
 		{
 			DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;		// Stops DMA at end of cycle
 //			Sound_g.Tone_timer = 0 ;	
 		}
 	
-#ifndef TONE_MODE_2
-	}
-#endif // TONE_MODE_2
-#ifndef TONE_MODE_2
-	else if ( ( Sound_g.Tone_ms_timer & 1 ) == 0 )		// Every 10 mS
-	{
-		if ( Sound_g.Frequency )
-		{
-			if ( Sound_g.Frequency_increment )
-			{
-				Sound_g.Frequency += Sound_g.Frequency_increment ;
-				set_frequency( Sound_g.Frequency * 100 ) ;
-			}
-		}
-	}
-#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	}
+//#endif // TONE_MODE_2
+//#ifndef TONE_MODE_2
+//	else if ( ( Sound_g.Tone_ms_timer & 1 ) == 0 )		// Every 10 mS
+//	{
+//		if ( Sound_g.Frequency )
+//		{
+//			if ( Sound_g.Frequency_increment )
+//			{
+//				Sound_g.Frequency += Sound_g.Frequency_increment ;
+//				set_frequency( Sound_g.Frequency * 100 ) ;
+//			}
+//		}
+//	}
+//#endif // TONE_MODE_2
 }
 
 //const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
@@ -499,38 +499,38 @@ void sound_5ms()
 //}
 
 
-#ifndef TONE_MODE_2
-uint32_t queueTone( uint32_t frequency, uint32_t time, uint32_t frequency_increment, uint32_t lock )
-{
-	if ( Sound_g.Sound_time == 0 )
-	{
-		Sound_g.Next_freq = frequency ;
-		Sound_g.Next_frequency_increment = frequency_increment ;
-		Sound_g.Sound_time = time ;
-		Sound_g.toneLock = lock ;
-		return 1 ;
-	}
-	return 0 ;	
-}
+//#ifndef TONE_MODE_2
+//uint32_t queueTone( uint32_t frequency, uint32_t time, uint32_t frequency_increment, uint32_t lock )
+//{
+//	if ( Sound_g.Sound_time == 0 )
+//	{
+//		Sound_g.Next_freq = frequency ;
+//		Sound_g.Next_frequency_increment = frequency_increment ;
+//		Sound_g.Sound_time = time ;
+//		Sound_g.toneLock = lock ;
+//		return 1 ;
+//	}
+//	return 0 ;	
+//}
 
-// Time is in milliseconds
-void tone_start( register uint32_t time )
-{
-//	Sound_g.Tone_timer = Sound_g.Frequency * time / 1000 ;
+//// Time is in milliseconds
+//void tone_start( register uint32_t time )
+//{
+////	Sound_g.Tone_timer = Sound_g.Frequency * time / 1000 ;
 
-	DMA1->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5 ; // Write ones to clear bits
-	DMA1_Stream5->CR |= DMA_SxCR_CIRC | DMA_SxCR_EN ;				// Enable DMA channel
-	DAC->SR = DAC_SR_DMAUDR1 ;			// Write 1 to clear flag
-	DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 | DAC_CR_DMAUDRIE1 ;			// Enable DAC
-	DMA1_Stream5->CR |= DMA_SxCR_TCIE ;	// Enable DMA interrupt
-}
+//	DMA1->HIFCR = DMA_HIFCR_CTCIF5 | DMA_HIFCR_CHTIF5 | DMA_HIFCR_CTEIF5 | DMA_HIFCR_CDMEIF5 | DMA_HIFCR_CFEIF5 ; // Write ones to clear bits
+//	DMA1_Stream5->CR |= DMA_SxCR_CIRC | DMA_SxCR_EN ;				// Enable DMA channel
+//	DAC->SR = DAC_SR_DMAUDR1 ;			// Write 1 to clear flag
+//	DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 | DAC_CR_DMAUDRIE1 ;			// Enable DAC
+//	DMA1_Stream5->CR |= DMA_SxCR_TCIE ;	// Enable DMA interrupt
+//}
 
-void tone_stop()
-{
-	DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;
-//	Sound_g.Tone_timer = 0 ;	
-}
-#endif // TONE_MODE_2
+//void tone_stop()
+//{
+//	DMA1_Stream5->CR &= ~DMA_SxCR_CIRC ;
+////	Sound_g.Tone_timer = 0 ;	
+//}
+//#endif // TONE_MODE_2
 
 
 //uint16_t g_timeAppendVoice ;
@@ -560,7 +560,6 @@ void startVoice( uint32_t count )		// count of filled in buffers
 //	g_timeAppendtime = get_tmr10ms() ;
 
 }
-
 
 void endVoice()
 {

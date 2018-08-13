@@ -2027,21 +2027,23 @@ void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, 
   int px = x1 ;
   int py = y1 ;
 
+	lcd_plot( x2, y2 ) ;
+
   if (dxabs >= dyabs)
 	{
     /* the line is more horizontal than vertical */
-    for (int i=0; i<=dxabs; i++)
+    for (int i=0; i<dxabs; i++)
 		{
+      if ((1<<(px%8)) & pat)
+			{
+//        lcdDrawPoint(px, py, att);
+        lcd_plot(px, py ) ;
+      }
       y += dyabs ;
       if (y>=dxabs)
 			{
         y -= dxabs ;
         py += sdy ;
-      }
-      if ((1<<(px%8)) & pat)
-			{
-//        lcdDrawPoint(px, py, att);
-        lcd_plot(px, py ) ;
       }
       px += sdx ;
     }
@@ -2049,18 +2051,18 @@ void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, 
   else
 	{
     /* the line is more vertical than horizontal */
-    for (int i=0; i<=dyabs; i++)
+    for (int i=0; i<dyabs; i++)
 		{
+      if ((1<<(py%8)) & pat)
+			{
+//        lcdDrawPoint(px, py, att);
+        lcd_plot(px, py ) ;
+      }
       x += dxabs;
       if (x >= dyabs)
 			{
         x -= dyabs ;
         px += sdx ;
-      }
-      if ((1<<(py%8)) & pat)
-			{
-//        lcdDrawPoint(px, py, att);
-        lcd_plot(px, py ) ;
       }
       py += sdy ;
     }

@@ -238,7 +238,7 @@ extern uint32_t sdMounted( void ) ;
 	}
 	if ( isLogEnabled( LOG_TSSI ) )
 	{
-  	f_puts( FrskyTelemetryType == 1 ? ",Swr" : ",TxRSSI", &g_oLogFile ) ;
+  	f_puts( FrskyTelemetryType == FRSKY_TEL_SPORT ? ",Swr" : ",TxRSSI", &g_oLogFile ) ;
 	}
   if ( g_model.DsmTelemetry )
 	{

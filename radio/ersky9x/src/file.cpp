@@ -67,9 +67,9 @@ extern PROGMEM s9xsplash[] ;
 // 'main' needs to load a model
 
 // These may not be needed, or might just be smaller
-uint8_t Spi_tx_buf[24] ;
+uint8_t Spi_tx_buf[8] ;
 
-uint8_t Spi_rx_buf[24] ;
+uint8_t Spi_rx_buf[8] ;
 
 
 struct t_file_entry File_system[MAX_MODELS+1] ;

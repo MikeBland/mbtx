@@ -43,13 +43,13 @@
 
 //#define DEBUG	1
 
-#ifdef DEBUG
-void cppstartupDebugInit( void ) ;
-void cppwhere( uint8_t chr ) ;
-#else
+//#ifdef DEBUG
+//void cppstartupDebugInit( void ) ;
+//void cppwhere( uint8_t chr ) ;
+//#else
 #define cppstartupDebugInit()
 #define cppwhere(x)
-#endif
+//#endif
 
 
 //#define	USE_54_MHZ	1

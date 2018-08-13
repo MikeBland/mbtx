@@ -20,10 +20,19 @@
 
 // Keys
 #ifdef PCBX7
+ #ifdef PCBT12
+  #define PIN_BUTTON_MENU		        GPIO_Pin_10	// PE.10
+	#define	PIN_BUTTON_EXIT           GPIO_Pin_2	// PD.02
+  #define	PIN_BUTTON_UP		          GPIO_Pin_9	// PE.09
+  #define	PIN_BUTTON_DOWN		        GPIO_Pin_11	// PE.11
+  #define	PIN_BUTTON_LEFT	          GPIO_Pin_7	// PD.07
+  #define	PIN_BUTTON_RIGHT          GPIO_Pin_3	// PD.03
+ #else
 #define PIN_BUTTON_MENU		        GPIO_Pin_7	// PD.07
 #define	PIN_BUTTON_EXIT           GPIO_Pin_2	// PD.02
 #define PIN_BUTTON_PAGE           GPIO_Pin_3  // PD.03
 #define PIN_BUTTON_ENCODER        GPIO_Pin_10 // PE.10
+ #endif
 #else
  #ifdef REV9E
  #define PIN_BUTTON_MENU		        GPIO_Pin_7	//SW4 PD.07

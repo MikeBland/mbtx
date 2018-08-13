@@ -125,15 +125,24 @@ void lcdHardwareInit()
 void lcdStart()
 {
   lcdWriteCommand(0xe2); // (14) Soft reset
+#ifdef PCBT12
+	lcdWriteCommand(0xA0); // Set seg
+  lcdWriteCommand(0xC8); // Set com
+#else  
   lcdWriteCommand(0xa1); // Set seg
   lcdWriteCommand(0xc0); // Set com
+#endif
   lcdWriteCommand(0xf8); // Set booster
   lcdWriteCommand(0x00); // 5x
   lcdWriteCommand(0xa3); // Set bias=1/6
   lcdWriteCommand(0x22); // Set internal rb/ra=5.0
   lcdWriteCommand(0x2f); // All built-in power circuits on
   lcdWriteCommand(0x81); // Set contrast
+#ifdef PCBT12
+  lcdWriteCommand(0x2A); // Set Vop
+#else  
   lcdWriteCommand(0x36); // Set Vop
+#endif
   lcdWriteCommand(0xa6); // Set display mode
 }
 
@@ -164,8 +173,11 @@ void refreshDisplay()
   for (uint8_t y=0; y < 8; y++, p+=LCD_W) {
     lcdWriteCommand(0x10); // Column addr 0
     lcdWriteCommand(0xB0 | y); // Page addr y
+#ifdef PCBT12
+    lcdWriteCommand(0x0);
+#else
     lcdWriteCommand(0x04);
-    
+#endif    
     LCD_NCS_LOW();
     LCD_A0_HIGH();
 

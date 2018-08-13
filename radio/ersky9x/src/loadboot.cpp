@@ -117,7 +117,11 @@ const uint8_t BootCode[] = {
 		#endif
    #else
     #ifdef PCBX7
-     #include "bootloader/bootflashX7.lbm"
+     #ifdef PCBT12
+      #include "bootloader/bootflashT12.lbm"
+		 #else
+      #include "bootloader/bootflashX7.lbm"
+		 #endif
     #else
      #ifdef PCBXLITE
       #include "bootloader/bootflashL.lbm"

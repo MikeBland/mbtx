@@ -1033,7 +1033,7 @@ void menuChangeId(uint8_t event)
 			RxPacket[1] = 0 ;			
 			RxCount = 0 ;
 			RxLastCount = 0 ;
-			FrskyTelemetryType = 1 ;
+			FrskyTelemetryType = FRSKY_TEL_SPORT ;
 			IdIndex = 0x1B ;
 			IdFound = 0 ;
 			state = CHANGE_SCANNING ;
@@ -3298,7 +3298,7 @@ uint32_t sportUpdate( uint32_t external )
 		
 		case SPORT_START :
 #if !defined(PCBTARANIS)
-			FrskyTelemetryType = 1 ;
+			FrskyTelemetryType = FRSKY_TEL_SPORT ;
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 #if defined(PCBTARANIS)

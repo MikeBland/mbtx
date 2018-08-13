@@ -175,7 +175,7 @@
 #define ISTR_COPY_TRIM      "COPIA TRIM [MENU]"
 #define ISTR_TELEMETRY      "TELEMETRIA"
 #define ISTR_USR_PROTO      "UsrProto"
-#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk "
+#define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk Hitec "
 #define ISTR_MET_IMP        "\003MetImp"
 #define ISTR_A_CHANNEL      "Un canal"
 #define ISTR_ALRM           "alarma"

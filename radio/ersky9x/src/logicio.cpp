@@ -1764,8 +1764,13 @@ void init_keys()
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+ #ifdef PCBT12
+	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( 0x0E00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+ #else
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+ #endif
 #else // PCBX7
 #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -1859,6 +1864,33 @@ uint32_t read_keys()
 	y = 0 ;
 
 #ifdef PCBX7
+ #ifdef PCBT12
+	if ( x & PIN_BUTTON_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	if ( x & PIN_BUTTON_RIGHT )
+	{
+		y |= 0x02 << KEY_RIGHT ;		// RIGHT
+	}
+	if ( x & PIN_BUTTON_LEFT )
+	{
+		y |= 0x02 << KEY_LEFT ;		// RIGHT
+	}
+	x = GPIOE->IDR ;
+	if ( x & PIN_BUTTON_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & PIN_BUTTON_UP )
+	{
+		y |= 0x02 << KEY_UP ;			// up
+	}
+	if ( x & PIN_BUTTON_DOWN )
+	{
+		y |= 0x02 << KEY_DOWN ;		// DOWN
+	}
+ #else
 	if ( x & PIN_BUTTON_MENU )
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
@@ -1874,6 +1906,7 @@ uint32_t read_keys()
 	y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	y |= 0x02 << KEY_UP ;			// up
 	y |= 0x02 << KEY_DOWN ;		// DOWN
+ #endif
 #else
 #ifdef REV9E
 	if ( x & PIN_BUTTON_MENU )

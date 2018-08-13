@@ -66,6 +66,10 @@
 #define BLUETOOTH	1
 #endif
 
+#ifdef PCBT12
+#define DISABLE_PXX_SPORT	1
+#endif
+
 #ifdef SIMU
 #include "simpgmspace.h"
 #else
@@ -831,8 +835,17 @@ extern uint8_t Ee_lock ;
 #define M_AFHD2SA				 27
 #define M_Q2X2					 28
 #define M_WK2x01			 	 29
+#define M_Q303					 30
+#define M_GW008          31
+#define M_DM002          32
+#define M_CABELL         33
+#define M_ESKY150        34
+#define M_H8_3D          35
+#define M_CORONA         36
+#define M_CFlie          37
+#define M_Hitec          38
 
-#define M_LAST_MULTI		 29
+#define M_LAST_MULTI		 38
 
 // PXX_SEND_RXNUM == BIND
 #define PXX_BIND			     0x01
@@ -1484,6 +1497,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_QX7					8
 #define PHYSICAL_HORUS				9
 #define PHYSICAL_XLITE				10
+#define PHYSICAL_T12					11
 
 // Power control type
 #ifdef REV9E

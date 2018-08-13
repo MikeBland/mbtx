@@ -49,7 +49,12 @@ ifeq ($(PCB), X9D)
 #   CPPDEFS += -DLUA
   else
    ifeq ($(PCBX7), 1)
-    OBJDIR = x7obj
+    ifeq ($(PCBT12), 1)
+     CPPDEFS += -DPCBT12
+     OBJDIR = t12obj
+	 else
+     OBJDIR = x7obj
+	 endif
     BASIC = 1
     CPPDEFS += -DBASIC 
 #    LUA = 1
@@ -157,7 +162,11 @@ ifeq ($(PCB), X9D)
    PROJECT        = x9e
   else
    ifeq ($(PCBX7), 1)
-    PROJECT        = x7
+    ifeq ($(PCBT12), 1)
+	  PROJECT        = t12
+    else
+	  PROJECT        = x7
+	 endif
    else
     ifeq ($(PCBXLITE), 1)
      PROJECT        = xlite
@@ -889,7 +898,15 @@ ifeq ($(PCB), X9D)
    ifeq ($(PCBXLITE), 1)
     EXT_MOD=XLITE
    else
-    EXT_MOD=X9D
+    ifeq ($(PCBX7), 1)
+     ifeq ($(PCBT12), 1)
+      EXT_MOD=T12
+     else
+      EXT_MOD=QX7
+	  endif
+	 else
+     EXT_MOD=X9D
+    endif
    endif
   endif
  endif

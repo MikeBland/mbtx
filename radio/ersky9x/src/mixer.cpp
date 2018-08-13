@@ -108,7 +108,7 @@ void trace()   // called in perOut - once every 0.01sec
 }
 
 
-static uint16_t isqrt32(uint32_t n)
+uint16_t isqrt32(uint32_t n)
 {
   uint16_t c = 0x8000;
   uint16_t g = 0x8000;
