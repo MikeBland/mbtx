@@ -39,16 +39,6 @@ uint8_t ScriptFlags ;
 
 #define IsDigit(c)	(((c)>='0')&&((c)<='9'))
 
-//extern uint16_t BasicDebug1 ;
-//extern uint16_t BasicDebug2 ;
-//extern uint16_t BasicDebug3 ;
-//extern uint16_t BasicDebug4 ;
-//extern uint16_t BasicDebug5 ;
-//extern uint16_t BasicDebug6 ;
-//extern uint16_t BasicDebug7 ;
-//extern uint16_t BasicDebug8 ;
-
-
 /*
  * token types
  * as the input is parsed it is broken down into one of these token types
@@ -166,6 +156,7 @@ uint8_t ScriptFlags ;
 #define POPUP					29
 #define SYSTOARRAY		30
 #define SQRT					31
+#define DRAWBITMAP		32
 
 
 // Assignment options:
@@ -451,6 +442,7 @@ const struct commands InternalFunctions[] =
 	{ "popup", POPUP },
 	{ "sysstrtoarray", SYSTOARRAY },
   { "sqrt", SQRT },
+	{ "drawbitmap", DRAWBITMAP },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -513,9 +505,6 @@ const struct commands InternalFunctions[] =
 //  { "setOutput", luaModelSetOutput },
 //  { "getGlobalVariable", luaModelGetGlobalVariable },
 //  { "setGlobalVariable", luaModelSetGlobalVariable },
-
-
-
 
 
 const struct commands Constants[] =
@@ -806,11 +795,9 @@ uint8_t *utoasc( uint8_t *p, uint32_t value )
 	return q ;
 }
 
-//uint8_t BasicErrorDebug ;
 void setErrorText( uint32_t error, uint32_t line )
 {
 	uint8_t *p ;
-//	BasicErrorDebug += 1 ;
 	p = BasicErrorText ;
 	p = cpystr( p, (uint8_t *)"Error " ) ;
 	p = utoasc( p, error ) ;
@@ -2343,10 +2330,7 @@ uint32_t partLoadBasic()
 	CurrentPosition += 3 ;
 	CurrentPosition /= 4 ;	// Rounded word offset
 	i = LoadedScripts[LoadIndex].offsetOfStart / 4 ;
-//	BasicDebug5 = i ;
 	Program.Words[i] = CurrentPosition ;
-//	BasicDebug6 = CurrentPosition >> 8 ;
-//	BasicDebug7 = CurrentPosition ;
 	j = CurrentPosition*4 + sizeof(struct t_basicRunTime) - (MAX_VARIABLES*4) + (CurrentVariableIndex*4) + CurrentArrayIndex * 4 ;
 	Program.Words[i+1] = j ;
 	LoadedScripts[LoadIndex].size = j ;
@@ -2547,16 +2531,10 @@ uint32_t basicTask( uint8_t event, uint8_t flags )
 {
 	uint32_t result ;
 	ScriptFlags = flags ;
-//	BasicDebug4 = BasicState ;
-		
-//	BasicDebug3 = LoadedScripts[0].loaded << 8 ;
-//	BasicDebug3 |= LoadedScripts[1].loaded << 4 ;
-//	BasicDebug3 |= LoadedScripts[2].loaded ;
 
 	if ( BasicState == BASIC_LOADING )
 	{
 		result = partLoadBasic() ;
-//		BasicDebug2 = result | ( LoadingIndex<< 8 ) ;
 
 		if ( result == 0 )
 		{
@@ -3734,6 +3712,46 @@ void exec_drawtext()
 	}
 }
 
+
+// drawbitmap( x, y, bitmap )
+void exec_drawbitmap()
+{
+	int32_t x ;
+	int32_t y ;
+	uint8_t *p ;
+	uint32_t result ;
+	union t_parameter param ;
+	uint32_t w ;
+
+	// get 3 (or 4) parameters
+	result = get_parameter( &param, 0 ) ;
+	if ( result == 1 )
+	{
+		x = param.var ;
+		result = get_parameter( &param, 0 ) ;
+		if ( result == 1 )
+		{
+			y = param.var ;
+			result = get_parameter( &param, 1 ) ;
+      if ( result == 2 )
+			{
+				p = param.cpointer ;
+				w = *p++ ;
+#ifdef QT
+        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawBitmap(" ) ;
+#else
+				if ( ScriptFlags & SCRIPT_LCD_OK )
+				{
+					lcd_bitmap( x, y, p, w, 1, 0 ) ;
+				}
+#endif
+				eatCloseBracket() ;
+			}
+		}
+	}
+}
+
+
 void exec_drawclear()
 {
 	// call clear lcd
@@ -3965,7 +3983,7 @@ int32_t exec_getvalue(uint32_t type)
 		}
 		else if ( number == -3 )	// Longitude
 		{
-			return convertGpsValue( FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], FrskyHubData[FR_LONG_E_W] == 'E' ) ;
+			return convertGpsValue( FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], FrskyHubData[FR_LONG_E_W] == 'W' ) ;
 		}
 #endif
 	}
@@ -4883,7 +4901,11 @@ int32_t execInFunction()
 		case SYSTOARRAY :
       exec_systemStrToArray() ;
 		break ;
-		 
+
+		case DRAWBITMAP  :
+      exec_drawbitmap() ;
+		break ;
+			
 		default :
 			runError( SE_NO_FUNCTION ) ;
 		break ;

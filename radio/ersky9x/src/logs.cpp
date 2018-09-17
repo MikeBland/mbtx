@@ -46,6 +46,10 @@
 #include "CoOS.h"
 #endif
 
+#ifdef BLUETOOTH
+#include "bluetooth.h"
+#endif
+
 //#define NULL 0
 
 extern int16_t AltOffset ;

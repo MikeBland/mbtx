@@ -117,6 +117,12 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
 	subProtocol = pmodule->sub_protocol+1 ;
+#if PCBT12
+	if ( subProtocol == M_FRSKYX+1 )
+	{
+		subProtocol = ( subProtocol & 0xC0 ) | 63 ;
+	}
+#endif
 	packetType = ( ( subProtocol & 0x3F) > 31 ) ? 0x54 : 0x55 ;
   if (pmodule->failsafeMode != FAILSAFE_NOT_SET && pmodule->failsafeMode != FAILSAFE_RX )
 	{

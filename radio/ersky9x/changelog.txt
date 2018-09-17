@@ -10,6 +10,47 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG: 28-Aug-2018  MPB (r222)
+Fix SPort telemetry passing to script bug
+Add uS value at top of MIXER display
+Fix bug in telemetry buffer size testing
+Script adds "bitfield" and "power" and "crossfirereceive" functions
+Minor edits to remove warnings from newer compilers
+Fix failsafe settings not being saved when changed
+Display "FMx" when no name available for flight mode
+Add "Run APP" in bootloader
+Fix inverse video bug fix for "off grid" text.
+Fix bug in script language bitfield function.
+Limit exponent in script power function to a max of 20.
+Fix value of A1 and A2 in a script
+Add safety switches display of channel uSec output and ability to set the safety value to a resolution of 0.1%
+Add ability to edit model notes
+Add RunT "telemetry" value - Radio on time
+Prompt for reset of Radio on time when battery detected as possibly charged
+XJT module has "double rate" option to reduce latency
+Atmel based radios add PB14 option for XJT heartbeat
+Atmel based radios, offer PA25 as extra switch input where possible
+Add ModT "telemetry" value - Model use time
+Horus, implement the "doublerate" XJT driver.
+Wide screen radios, fix bug when editing custom telemetry screens.
+Support FrSky XLite
+Fix bug on SKY/PRO/AR9X module output for Multi/Dsm
+Fix General menu model voice file bug
+Reset Telemetry now a popup option, not on LONG EXIT
+Fix problem editing S6R/S8R values when "Menu only Edit" is enabled
+Fix GPS altitude display scaling
+Fix problem using encoder on Script selection
+Fix FrSky Hub Altitude bug
+Fix Voice alert BOTH with short filenames
+Enhancements to script language
+Add crossfiresend()
+Fix voice overrun problem on Atmel radios (SKY/AR9X/9XR-PRO)
+Add |d|<val to voice alert functions
+Support inverted SPort polling on COM 1 for Multi Module
+Support Jumper T12
+
+
+******************************************
 CHANGELOG: 28-Feb-2018  MPB (r221)
 Add "welcome" voice message options
 Main display now shows time and volume

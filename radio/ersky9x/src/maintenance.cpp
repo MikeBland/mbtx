@@ -197,11 +197,6 @@ uint8_t MultiInvert ;
 uint8_t MultiStm ;
 uint8_t SportVersion[4] ;
 uint32_t FirmwareSize ;
-//uint32_t HexFileIndex ;
-//uint32_t HexFileRead ;
-
-//uint16_t HexCount ;
-//uint16_t HexDebug ;
 
 const uint8_t SportIds[28] = {0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67,
 				                      0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D, 0x8E, 0x2F,
@@ -1999,7 +1994,7 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
 	#endif
   #ifndef NO_MULTI
-	 lcd_puts_Pleft( 7*FH, "  Update Multi" );
+	 lcd_puts_Pleft( 6*FH, "  Update Multi" );
 	#endif
  #else
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
@@ -2231,7 +2226,7 @@ void menuUpdate(uint8_t event)
  #ifndef REVX
     case EVT_KEY_FIRST(KEY_DOWN):
   #ifndef NO_MULTI
-			if ( position < 7*FH )
+			if ( position < 6*FH )
 	#else
    #ifdef SMALL
 			if ( position < 4*FH )
@@ -2774,14 +2769,6 @@ uint32_t eat( uint8_t byte )
 }
 #endif
 
-//void hexDebug( uint8_t x, uint8_t y )
-//{
-//	lcd_putc( 0, 0, x ) ;
-//	lcd_putc( 6, 0, y ) ;
-//	HexDebug = (x << 8 ) | y ;
-//}
-
-
 uint32_t hexFileNextByte()
 {
 	if ( SharedMemory.Mdata.HexFileIndex >= SharedMemory.Mdata.XblockCount )
@@ -3010,7 +2997,12 @@ uint32_t multiUpdate()
 			}
 			else
 			{
-				if ( ++AllSubState > 80 )
+				if ( ++AllSubState == 80 )
+				{
+					MultiInvert ^= 1 ;
+					initMultiMode() ;
+				}
+				if ( AllSubState > 160 )
 				{
 					MultiResult = 1 ;
 					MultiState = MULTI_DONE ;
@@ -3445,6 +3437,16 @@ extern void processSerialData(uint8_t data) ;
 }
 
 /* CRC16 implementation acording to CCITT standards */
+
+//const uint16_t CRC16_Short[] =
+//{
+//	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
+//	0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef
+
+//uint16_t CRC16Table(uint8_t val)
+//{
+//	return CRC_Short[val&0x0F] ^ (0x1231 * (val>>4));
+//}
 
 static const unsigned short crc16tab[256]= {
 	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,

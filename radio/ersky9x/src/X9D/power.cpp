@@ -49,6 +49,10 @@
 uint8_t PowerState = POWER_STATE_OFF ;
 #endif
 
+#ifdef PCBT12
+uint8_t PowerCount ;
+#endif
+
 void soft_power_off()
 {
 //#ifdef REV9E
@@ -99,9 +103,26 @@ uint32_t check_soft_power()
 		case POWER_STATE_RUNNING :
 			if ( switchValue )
 			{
+#ifdef PCBT12
+				if ( ++PowerCount > 20 )
+				{
+					PowerState = POWER_STATE_STOPPING ;
+   				return POWER_X9E_STOP ;
+				}
+				else
+				{
+   				return POWER_ON ;
+				}
+#endif
 				PowerState = POWER_STATE_STOPPING ;
    			return POWER_X9E_STOP ;
 			}
+#ifdef PCBT12
+			else
+			{
+				PowerCount = 0 ;
+			}
+#endif
    		return POWER_ON ;
 		break ;
 

@@ -547,7 +547,8 @@ extern uint8_t TelemetryType ;
 #define FRSKY_TEL_SPORT	1
 #define FRSKY_TEL_DSM		2
 #define FRSKY_TEL_AFH		3
-#define FRSKY_TEL_HITEC	4
+#define FRSKY_TEL_XFIRE	4
+#define FRSKY_TEL_HITEC	5
 
 
 extern uint16_t DsmABLRFH[] ;

@@ -63,12 +63,16 @@
 #endif
 
 #ifdef PCBX7
+#ifndef PCBT12
 #define BLUETOOTH	1
+#endif
 #endif
 
 #ifdef PCBT12
 #define DISABLE_PXX_SPORT	1
 #endif
+
+#define HAPTIC		1
 
 #ifdef SIMU
 #include "simpgmspace.h"
@@ -788,7 +792,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define NUM_MULTI_PROTOCOLS 40
+#define NUM_MULTI_PROTOCOLS 62
 
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -1370,38 +1374,6 @@ struct btRemote_t
 #define BT_BITTYPE_CC41		4
 #define BT_BITTYPE_HM10		8
 #define BT_BITTYPE_HORUS 16
-
-struct t_bt_control
-{
-	uint8_t BtCurrentBaudrate ;
-	uint8_t BtLinkRequest ;
-	uint8_t BtScan ;
-	uint8_t BtScanState ;
-	uint8_t BtBaudrateChanged ;
-	uint8_t BtConfigure ;
-	uint8_t BtScanInit ;
-	uint8_t BtCurrentLinkIndex ;
-	uint8_t BtRoleChange ;
-	uint8_t BtNameChange ;
-	uint8_t BtMasterSlave ;
-	uint8_t BtReady ;
-	uint8_t BtLinking ;
-	uint8_t BtRxState ;
-	uint8_t BtSbusIndex ;
-	uint8_t BtSbusReceived ;
-	uint8_t BtRxOccured ;
-	uint8_t BtRxChecksum ;
-	uint8_t BtBadChecksum ;
-	uint8_t BtBaudChangeIndex ;
-	uint8_t BtLinked ;
-	uint8_t NumberBtremotes ;
-	uint8_t Bt_ok ;
-	uint8_t BtModuleType ;
-
-
-} ;
-
-extern struct t_bt_control BtControl ;
 
 #ifdef PCBSKY
 extern uint8_t HwDelayScale ;

@@ -154,6 +154,10 @@ extern void ee32_process( void ) ;
 
 #include "../../common/hand.lbm"
 
+#ifdef BLUETOOTH
+#include "bluetooth.h"
+#endif
+
 //#define PCB_TEST_9XT	1
 //#define SERIAL_TEST_PRO	1
 
@@ -208,7 +212,6 @@ OS_TID MainTask;
 OS_STK main_stk[MAIN_STACK_SIZE] ;
 
 #ifdef BLUETOOTH
-uint8_t BtType ;
 OS_TID BtTask;
 OS_STK Bt_stk[BT_STACK_SIZE] ;
 #endif
@@ -405,9 +408,6 @@ struct t_NvsControl
 	int16_t nvs_timer ;
 	int16_t nvs_last_value ;
 } NvsControl[NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS] ;
-//uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
-//int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
-//uint8_t Nvs_delay[NUM_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
 uint8_t HoldVolume ;
 int8_t RotaryControl ;
@@ -418,10 +418,6 @@ extern uint16_t SbusTimer ;
 
 struct t_MusicSwitches MusicSwitches ;
 
-#ifdef BLUETOOTH
-void tmrBt_Handle( void ) ;
-void bt_task(void* pdata) ;
-#endif
 void log_task(void* pdata) ;
 void main_loop( void* pdata ) ;
 void mainSequence( uint32_t no_menu ) ;
@@ -948,70 +944,6 @@ int32_t isAgvar(uint8_t value)
 	}
 	return 0 ;
 }
-
-#ifdef BLUETOOTH
-#define BT_115200		0
-#define BT_9600			1
-#define BT_19200		2
-#define BT_57600		3
-#define BT_38400		4
-
-#define NUM_BT_BAUDRATES 5
-
-//uint8_t Bt_baudrate ;
-
-void setBtBaudrate( uint32_t index )
-{
-	uint32_t brate ;
-	if ( index == 1 )
-	{
-		brate = 9600 ;
-	}
-	else if ( index == 2 )
-	{
-		brate = 19200 ;
-	}
-	else if ( index == 3 )
-	{
-		brate = 57600 ;
-	}
-	else if ( index == 4 )
-	{
-		brate = 38400 ;
-	}
-	else
-	{
-		brate = 115200 ;
-	}
-
-//	if ( g_eeGeneral.bt_correction )
-//	{
-//		uint32_t value = g_eeGeneral.bt_correction ;
-//		value += 100 ;
-//		if ( value > 107 )
-//		{
-//			value -= 16 ;
-//		}
-//		brate = brate * value / 100 ;
-//	}
-#ifdef PCB9XT	
-	if ( g_eeGeneral.btComPort == 1 )
-	{
-		UART4SetBaudrate ( brate ) ;
-	}
-	else if ( g_eeGeneral.btComPort == 2 )
-	{
-		Com3SetBaudrate ( brate ) ;
-	}
-#else
-#ifdef PCBX7
-	Com3SetBaudrate ( brate ) ;
-#else
-	UART3_Configure( brate, Master_frequency ) ;		// Testing
-#endif
-#endif
-}
-#endif
 
 #ifdef PCBSKY
  #ifdef REVX
@@ -1597,7 +1529,6 @@ void com2Configure()
 	{
 #ifdef PCBSKY
 		com2_Configure( CONSOLE_BAUDRATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
-//		UART_Configure( CONSOLE_BAUDRATE, Master_frequency ) ;
 #endif
 #ifdef PCBX9D
 		ConsoleInit() ;
@@ -1870,7 +1801,7 @@ void startupDebugInit()
 //		PIOC->PIO_SODR = PIO_PC18 ;		// Set bit C18 HIGH
 //	}
 	init_hw_timer() ;
-	lcd_init() ;
+	lcdInit() ;
 }
 
 extern "C" void cppstartupDebugInit()
@@ -2074,10 +2005,10 @@ extern unsigned char *EndOfHeap ;
 	MATRIX->CCFG_SYSIO |= 0x000010F0L ;		// Disable syspins, enable B4,5,6,7,12
 
 // Configure the ERASE pin as an output, low for Bluetooth use
-	pioptr = PIOB ;
-	pioptr->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
-	pioptr->PIO_PER = PIO_PB12 ;		// Enable bit B12 (ERASE)
-	pioptr->PIO_OER = PIO_PB12 ;		// Set bit B12 as output
+//	pioptr = PIOB ;
+//	pioptr->PIO_CODR = PIO_PB12 ;		// Set bit B12 LOW
+//	pioptr->PIO_PER = PIO_PB12 ;		// Enable bit B12 (ERASE)
+//	pioptr->PIO_OER = PIO_PB12 ;		// Set bit B12 as output
 
 	pioptr = PIOA ;
 
@@ -2094,16 +2025,20 @@ extern unsigned char *EndOfHeap ;
 	init_soft_power() ;
 #endif
 
-#ifdef PCB9XT
-// Configure pin PA5 as an output, low for Bluetooth use
-	configure_pins( GPIO_Pin_5, PIN_PORTA | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-	GPIOA->BSRRH = GPIO_Pin_5 ;		// Set low
-#endif
+//#ifdef PCB9XT
+//// Configure pin PA5 as an output, low for Bluetooth use
+//	configure_pins( GPIO_Pin_5, PIN_PORTA | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+//	GPIOA->BSRRH = GPIO_Pin_5 ;		// Set low
+//#endif
 
-#ifdef PCBX7
-// Configure pin PA5 as an output, low for Bluetooth use
-	configure_pins( GPIO_Pin_12, PIN_PORTE| PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-	GPIOE->BSRRH = GPIO_Pin_12 ;		// Set low
+//#ifdef PCBX7
+//// Configure pin PA5 as an output, low for Bluetooth use
+//	configure_pins( GPIO_Pin_12, PIN_PORTE| PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+//	GPIOE->BSRRH = GPIO_Pin_12 ;		// Set low
+//#endif
+
+#ifdef BLUETOOTH
+	initBluetooth() ;
 #endif
 
 //#if defined(PCBX9D) || defined(PCB9XT)
@@ -2273,12 +2208,11 @@ void enableBackupRam(void) ;
 	lcdColorsInit() ;
 #endif
 	
-#ifdef PCBX12D
 	lcdInit() ;
+#ifdef PCBX12D
 	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0x001F ) ;
 	refreshDisplay() ;
 
-#ifdef PCBX12D
 	uint32_t j ;
 	j = 0 ;
 	for( j = 0 ; j < 3 ; j += 1 )
@@ -2298,25 +2232,39 @@ void enableBackupRam(void) ;
 	ledRed() ;
 #endif
 
-#else
-	lcd_init() ;
-#endif
-
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (REV9E)
 //	ledOff() ;
 //	ledBlue() ;
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
 	{
-		lcd_clear() ;
-		lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
-		refreshDisplay() ;
+		uint8_t dtimer = 0 ;
+#ifdef PCBT12
+		uint32_t dbounceTimer = 0 ;
+#endif
 		while ( get_tmr10ms() < 150 )
 		{
 			uint32_t switchValue ;
 			switchValue = GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET ;
 			wdt_reset() ;
+	
+			if ( get_tmr10ms() != dtimer )
+			{
+				dtimer = get_tmr10ms() ;
+				if ( dtimer & 1 )
+				{
+					lcd_clear() ;
+					lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+					lcd_hbar( 13, 49, 102, 6, dtimer * 100 / 150 ) ;
+					refreshDisplay() ;
+				}
+			}		 
+
 			if ( !switchValue )
 			{
+#ifdef PCBT12
+			 if (++dbounceTimer > 3 )
+			 {
+#endif
 				// Don't power on
 				soft_power_off() ;		// Only turn power off if necessary
 				for(;;)
@@ -2329,52 +2277,76 @@ void enableBackupRam(void) ;
  					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
  					/* Request Wait For Event */
  					__WFE();
+#ifndef REV9E
 					switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
 					if ( switchValue )
 					{
 		  			NVIC_SystemReset() ;
 					}
+#endif
 				}
+#ifdef PCBT12
+			 }
+#endif
 			}
+#ifdef PCBT12
+			else
+			{
+				dbounceTimer = 0 ;
+			}
+#endif
 		}
 	}
+#ifndef REV9E
 	ledGreen() ;
+#endif
 #ifdef PCBT12
 	ledBlue() ;	// Green Led!
 #endif
 #endif // PCBX7 | PCBXLITE
 
-#ifdef REV9E
-// Check for real power on
-	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
-	{
-		lcd_clear() ;
-		lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
-		refreshDisplay() ;
-		while ( get_tmr10ms() < 150 )
-		{
-			uint32_t switchValue ;
-			switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
-			wdt_reset() ;
-			if ( !switchValue )
-			{
-				// Don't power on
-				soft_power_off() ;		// Only turn power off if necessary
-				for(;;)
-				{
-					wdt_reset() ;
- 					PWR->CR |= PWR_CR_CWUF;
- 					/* Select STANDBY mode */
- 					PWR->CR |= PWR_CR_PDDS;
- 					/* Set SLEEPDEEP bit of Cortex System Control Register */
- 					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
- 					/* Request Wait For Event */
- 					__WFE();
-				}
-			}
-		}
-	}
-#endif
+//#ifdef REV9E
+//// Check for real power on
+//	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
+//	{
+//		uint8_t dtimer = 0 ;
+//		while ( get_tmr10ms() < 150 )
+//		{
+//			uint32_t switchValue ;
+//			switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+//			wdt_reset() ;
+
+//			if ( get_tmr10ms() != dtimer )
+//			{
+//				dtimer = get_tmr10ms() ;
+//				if ( dtimer & 1 )
+//				{
+//					lcd_clear() ;
+//					lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+//					lcd_hbar( 13, 49, 102, 6, dtimer * 100 / 150 ) ;
+//					refreshDisplay() ;
+//				}
+//			}		 
+
+//			if ( !switchValue )
+//			{
+//				// Don't power on
+//				soft_power_off() ;		// Only turn power off if necessary
+//				for(;;)
+//				{
+//					wdt_reset() ;
+// 					PWR->CR |= PWR_CR_CWUF;
+// 					/* Select STANDBY mode */
+// 					PWR->CR |= PWR_CR_PDDS;
+// 					/* Set SLEEPDEEP bit of Cortex System Control Register */
+// 					SCB->SCR |= SCB_SCR_SLEEPDEEP_Msk;
+// 					/* Request Wait For Event */
+// 					__WFE();
+//				}
+//			}
+//		}
+//	}
+//#endif
 
 #ifdef PCBX12D
 // Check for real power on
@@ -2427,10 +2399,6 @@ void enableBackupRam(void) ;
   lcd_clear() ;
 	refreshDisplay() ;
 #endif
-
-#ifdef WHERE_DEBUG
-		where( 'A' ) ;
-#endif  	 
 
 	g_menuStack[0] =  menuProc0 ;
 
@@ -2598,27 +2566,12 @@ uint32_t updateSlave() ;
 
 #ifdef PCBX9D
 	init_trims() ;
-#ifdef WHERE_DEBUG
-		where( 'B' ) ;
-#endif  	 
 #ifndef PCBXLITE
 	initHaptic() ;
 #endif  	 
-#ifdef WHERE_DEBUG
-		where( 'C' ) ;
-#endif  	 
 	start_2Mhz_timer() ;
-#ifdef WHERE_DEBUG
-		where( 'D' ) ;
-#endif  	 
 	setVolume( 0 ) ;
-#ifdef WHERE_DEBUG
-		where( 'E' ) ;
-#endif  	 
 	start_sound() ;
-#ifdef WHERE_DEBUG
-		where( 'F' ) ;
-#endif  	 
 #endif
 
 #ifdef PCB9XT
@@ -2665,13 +2618,10 @@ uint32_t updateSlave() ;
 	WatchdogTimeout = 200 ;			
 #endif
 	eeReadAll() ;
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBT12)
 	g_eeGeneral.softwareVolume = 1 ;
 #endif // PCBX7
 	protocolsToModules() ;
-#ifdef WHERE_DEBUG
-		where( 'G' ) ;
-#endif  	 
 #ifdef PCBSKY
 	checkAr9x() ;
 #endif
@@ -2723,9 +2673,6 @@ uint32_t updateSlave() ;
 	setLanguage() ;
 	lcdSetRefVolt(g_eeGeneral.contrast) ;
 
-#ifdef WHERE_DEBUG
-		where( 'H' ) ;
-#endif  	 
 
 #ifdef PCB9XT
 	delay_setbl( 0, 100, 0 ) ;
@@ -2739,9 +2686,6 @@ uint32_t updateSlave() ;
 #endif // nREV9E
 #endif
 
-#ifdef WHERE_DEBUG
-		where( 'I' ) ;
-#endif  	 
 	createSwitchMapping() ;
 #ifdef PCBSKY
 #ifndef ARUNI
@@ -2861,9 +2805,6 @@ uint32_t updateSlave() ;
 		}
 	}
 
-#ifdef WHERE_DEBUG
-		where( 'a' ) ;
-#endif  	 
 
 #ifdef PCBSKY
  #ifdef REVX
@@ -2908,16 +2849,10 @@ uint32_t updateSlave() ;
 #endif
 
 	telemetry_init( decodeTelemetryType( g_model.telemetryProtocol ) ) ;
-#ifdef WHERE_DEBUG
-		where( 'b' ) ;
-#endif  	 
 
 #if defined(PCBSKY) || defined(PCB9XT)
   checkQuickSelect();
 #endif
-#ifdef WHERE_DEBUG
-		where( 'c' ) ;
-#endif  	 
 
 #if defined(PCBX9D) || defined(PCBX12D)
 	{
@@ -2936,9 +2871,6 @@ uint32_t updateSlave() ;
 #ifdef USB_JOYSTICK
 	startJoystick() ;
 #endif
-#ifdef WHERE_DEBUG
-		where( 'd' ) ;
-#endif  	 
 
 #endif
 #ifdef PCBX9D
@@ -2969,9 +2901,6 @@ uint32_t updateSlave() ;
   usbInit() ;
 //	backlight_on() ;
 #endif
-#ifdef WHERE_DEBUG
-		where( 'e' ) ;
-#endif  	 
 
 	uint16_t x ;
 	x = g_eeGeneral.volume ;
@@ -3004,9 +2933,6 @@ uint32_t updateSlave() ;
 
 	}
 	setVolume( x ) ;
-#ifdef WHERE_DEBUG
-		where( 'f' ) ;
-#endif  	 
 
 	// Choose here between PPM and PXX
 
@@ -3016,12 +2942,9 @@ uint32_t updateSlave() ;
   //if we have a switch on backlight it will be able to turn on the backlight.
   if(g_eeGeneral.lightAutoOff > g_eeGeneral.lightOnStickMove)
     g_LightOffCounter = g_eeGeneral.lightAutoOff*500;
-  if(g_eeGeneral.lightAutoOff <= g_eeGeneral.lightOnStickMove)
+  else //if(g_eeGeneral.lightAutoOff <= g_eeGeneral.lightOnStickMove)
     g_LightOffCounter = g_eeGeneral.lightOnStickMove*500;
   check_backlight();
-#ifdef WHERE_DEBUG
-		where( 'g' ) ;
-#endif  	 
 
 	// moved here and logic added to only play statup tone if splash screen enabled.
   // that way we save a bit, but keep the option for end users!
@@ -3063,9 +2986,9 @@ uint32_t updateSlave() ;
 #endif
 
 #ifdef BLUETOOTH
- #ifndef DEBUG
+// #ifndef DEBUG
 	BtTask = CoCreateTask(bt_task,NULL,19,&Bt_stk[BT_STACK_SIZE-1],BT_STACK_SIZE);
- #endif
+// #endif
 #endif
 
 	MainTask = CoCreateTask( main_loop,NULL,5,&main_stk[MAIN_STACK_SIZE-1],MAIN_STACK_SIZE);
@@ -3088,9 +3011,6 @@ void initTopLcd() ;
 #endif 
 
 	Main_running = 1 ;
-#ifdef WHERE_DEBUG
-		where( 'h' ) ;
-#endif  	 
 
 	CoStartOS();
 
@@ -3111,1707 +3031,6 @@ void initTopLcd() ;
 
 #ifndef SIMU
 
-#ifdef PCBSKY
-#define HC05_ENABLE_HIGH		(PIOB->PIO_SODR = PIO_PB12)			// Set bit B12 HIGH
-#define HC05_ENABLE_LOW			(PIOB->PIO_CODR = PIO_PB12)			// Set bit B12 LOW
-#endif // PCBSKY
-
-#ifdef PCB9XT
-#define HC05_ENABLE_HIGH		(GPIOA->BSRRL = GPIO_Pin_5)			// Set bit PA5 HIGH
-#define HC05_ENABLE_LOW			(GPIOA->BSRRH = GPIO_Pin_5)			// Set bit PA5 LOW
-#endif // PCB9XT
-
-#ifdef PCBX7
-#define HC05_ENABLE_HIGH		(GPIOE->BSRRL = GPIO_Pin_12)			// Set bit PE12 HIGH
-#define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
-#endif // PCB9XT
-
-struct t_bt_control BtControl ;
-
-#ifdef BLUETOOTH
-
-// Strings for FrSky BT module (HM-10?)
-//AT\r\n
-//AT+NAME?\r\n
-//AT+ADDR?\r\n
-//AT+ROLE?\r\n
-//AT+ROLE0\r\n
-//AT+VERS?\r\n
-//AT+CLEAR\r\n
-//AT+RESET\r\n
-//AT+CONxxxxxxxxxxxx\r\n
-//AT+DISC?\r\n
-//AT+CONNX\r\n
-//AT+IMME?\r\n
-//AT+IMME1\r\n
-//AT+STAT?\r\n
-//AT+TXPW0\r\n
-
-// Sample responses
-//Central:7CEC796B210A
-//OK+ROLE:1
-//OK+STAT:64
-//OK+NAME:FrSkyBT
-//OK+DISCS
-
-
-//OK+
-//AT+
-//OK+DISCE
-//OK+DISC:
-//Connected
-//Central
-//Peripheral
-//DisConnected
-//B4994C761243
-//0:/FIRMWARE
-//AT+NAME?
-//AT+ADDR?
-//AT+ROLE?
-//AT+ROLE0
-//AT+VERS?
-//AT+CLEAR
-//AT+RESET
-//AT+CONxxxxxxxxxxxx
-//AT+DISC?
-//AT+CONNX
-//AT+IMME?
-//AT+IMME1
-//AT+STAT?
-//AT+TXPW0
-
-
-
-
-//HM-10 default 9600,8,n,1 - PSW = 000000
-//HM-10 doesn't need /r/n
-//AT+NAME? - OK+NAMEnnnnnnnn
-//AT+BAUD?
-//AT+BAUD4 - OK_set4  (0-9600, 1-19200, 2-38400, 3-57600, 4-115200 5,6,7,8
-//AT+ROLE?
-//AT+ROLE0, AT+ROLE1 - 0-slave, 1-master
-
-// X9E module
-// TTM:CIT-Xms X= "20", "50", "100", "200", "300", "400", "500", "1000", "1500", or "2000" 
-// TTM:REN-nnnnn   Name
-// TTM:BPS-115200
-// TTM:MAC-?
-// TTM:PID-"+ Data   where “Data”is for a two-byte product identification code (ranging from 0x0000 range to 0xFFFF
-
-
-OS_FlagID Bt_flag ;
-struct t_fifo128 Bt_fifo ;
-struct t_serial_tx Bt_tx ;
-struct t_serial_tx Com2_tx ;
-struct t_serial_tx Com1_tx ;
-uint8_t BtTxBuffer[32] ;
-uint8_t Com2TxBuffer[32] ;
-uint8_t Com1TxBuffer[32] ;
-//uint8_t BtLinked ;
-
-struct btRemote_t BtRemote[3] ;
-//uint8_t NumberBtremotes ;
-
-
-//uint8_t BtMode[4] ;
-uint8_t BtPswd[8] ;
-uint8_t BtName[16] ;
-//uint8_t BtRole[4] ;
-//uint8_t BtIac[10] ;
-//uint8_t BtDebug[4] ;
-
-#define BT_RX_IDLE		0
-#define BT_RX_RECEIVE	1
-#define BT_RX_STUFF		2
-
-//uint8_t BtCurrentBaudrate ;
-//uint8_t BtFirstByte ; 
-//uint8_t BtChannelNumber ;
-//uint8_t BtRxState ;
-//uint8_t BtRxChecksum ;
-//uint8_t BtBadChecksum ;
-
-uint8_t BtSbusFrame[28] ;
-//uint8_t BtSbusIndex ;
-//uint8_t BtSbusReceived ;
-//uint8_t BtRxOccured ;
-
-//uint8_t BtMasterSlave ;
-//uint8_t BtReady ;
-uint16_t BtLastSbusSendTime ;
-
-//uint8_t Bt_ok ;
-//uint8_t BtBaudrateChanged ;
-uint8_t BtTempBuffer[100] ;
-//uint8_t BtRoleChange ;
-//uint8_t BtNameChange ;
-//uint8_t BtConfigure ;
-//uint8_t BtScanInit ;
-uint8_t BtRname[32] ;
-uint16_t BtRxTimer ;
-uint8_t BtBinAddr[6] ;
-//uint8_t BtLinkRequest ;
-//uint8_t BtCurrentLinkIndex ;
-uint8_t BtPreviousLinkIndex = 0xFF ;
-
-//uint8_t BtLinking ;
-
-
-uint32_t btAddressValid( uint8_t *address )
-{
-	uint8_t x ;
-	x = *address++ ;
-	x |= *address++ ;
-	x |= *address++ ;
-	x |= *address++ ;
-	x |= *address++ ;
-	x |= *address ;
-	return x ;
-}
-
-uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 )
-{
-	uint32_t x ;
-	for ( x = 0 ; x < 6 ; x += 1 )
-	{
-		if ( *address1++ != *address2++ )
-		{
-			return 0 ;
-		}
-	}
-	return 1 ;
-}
-
-void bt_send_buffer()
-{
-	Bt_tx.buffer = BtTxBuffer ;
-	txPdcBt( &Bt_tx ) ;
-	while ( Bt_tx.ready == 1 )
-	{
-		// Wait
-		CoTickDelay(1) ;					// 2mS for now
-	}
-	Bt_tx.size = 0 ;
-}
-
-#define BT_POLL_TIMEOUT		800
-
-void flushBtFifo()
-{
-	uint16_t rxchar ;
-
-	while ( ( rxchar = rxBtuart() ) != 0xFFFF )
-	{
-		// null body, flush fifo
-	}
-}
-
-uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
-{
-	uint16_t x ;
-	uint32_t y ;
-	uint16_t rxchar ;
-	uint16_t a = 0 ;
-	uint16_t b = 0 ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	x = 'O' ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
-	{
-		x = 13 ;	// <CR>
-	}
-	for( y = 0 ; y < timeout ;  y += 1 )
-	{
-		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
-		{
-			if ( rxchar == x )
-			{
-				if ( ( x == 'O' ) || ( x == 13 ) )
-				{
-					x = 'K' ;
-					if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
-					{
-						x = 10 ;	// <LF>
-					}
-				}
-				else
-				{
-					break ;			// Found "OK"
-				}
-			}
-			if ( rxchar != 13 )
-			{
-				a = b ;
-				b = rxchar ;
-			}
-		}
-		else
-		{
-			CoTickDelay(1) ;					// 2mS
-		}				 
-	}
-	if ( y < timeout )
-	{
-		if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
-		{
-			if ( errorAllowed == 0 )
-			{
-				if ( ( a != 'O') || ( b != 'K' ) )
-				{
-					return 0 ;
-				}
-			}
-		}
-		return 1 ;
-	}
-	else
-	{
-		return 0 ;
-	}
-}
-
-uint32_t poll_bt_device()
-{
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-	
-	BtTxBuffer[0] = 'A' ;
-	BtTxBuffer[1] = 'T' ;
-	Bt_tx.size = 2 ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
-	{
-		BtTxBuffer[2] = 13 ;
-		BtTxBuffer[3] = 10 ;
-		Bt_tx.size = 4 ;
-	}
-	CoTickDelay(10) ;					// 20mS
-	flushBtFifo() ;
-	bt_send_buffer() ;
-	return getBtOK(1, BT_POLL_TIMEOUT ) ;
-}
-
-//uint8_t BtBaudChangeCount ;
-//uint8_t BtBaudChangeIndex ;
-
-uint32_t changeBtBaudrate( uint32_t baudIndex )
-{
-	uint16_t x ;
-	uint8_t *p ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-//	BtControl.BtBaudChangeCount += 1 ;
-	BtControl.BtBaudChangeIndex = baudIndex ;
-
-	if ( bitfieldtype & BT_BITTYPE_CC41 )
-	{
-		x = 0 ;		// 9600
-		if ( baudIndex == 0 )
-		{
-			x = 4 ;		// 115200
-		}
-		else if ( baudIndex == 2 )
-		{
-			x = 1 ;		// 19200		
-		}
-		else if ( baudIndex == 3 )
-		{
-			x = 3 ;		// 57600
-		}
-		else if ( baudIndex == 4 )
-		{
-			x = 2 ;		// 38400
-		}
-	}
-	else
-	{
-		x = 4 ;		// 9600
-		if ( baudIndex == 0 )
-		{
-			x = 8 ;		// 115200
-		}
-		else if ( baudIndex == 2 )
-		{
-			x = 5 ;		// 19200		
-		}
-		else if ( baudIndex == 3 )
-		{
-			x = 7 ;		// 57600
-		}
-		else if ( baudIndex == 4 )
-		{
-			x = 6 ;		// 38400
-		}
-	}
-	p = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+BAUD" ) ;
-
-	*p++ = '0' + x ;
-	if ( bitfieldtype & BT_BITTYPE_CC41 )
-	{
-		p = cpystr( p, (uint8_t *)"\r\n" ) ;
-	}
-	if ( bitfieldtype & BT_BITTYPE_HC05 )
-	{
-		p = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+UART=" ) ;
-		switch ( x )
-		{
-			case 4 :
-				p = cpystr( p, (uint8_t *)"9600" ) ;
-			break ;
-			case 5 :
-				p = cpystr( p, (uint8_t *)"19200" ) ;
-			break ;
-			case 6 :
-				p = cpystr( p, (uint8_t *)"38400" ) ;
-			break ;
-			case 7 :
-				p = cpystr( p, (uint8_t *)"57600" ) ;
-			break ;
-			case 8 :
-				p = cpystr( p, (uint8_t *)"115200" ) ;
-			break ;
-		}
-		p = cpystr( p, (uint8_t *)",0,0\r\n" ) ;
-	}
-	Bt_tx.size = p - BtTxBuffer ;
-	bt_send_buffer() ;
-	return getBtOK(0, BT_POLL_TIMEOUT ) ;
-}
-
-// Getting Master working
-// AT+RMAAD - clears paired list
-// AT+ROLE=1
-// AT+RESET - may be needed
-// AT+CMODE=0 - search specific
-// AT+INQM=0,5,4 - 5 devices, 4*1.28 seconds search time
-// (AT+PSWD=1234) - default value
-// AT+INIT - may be needed (Error:(17) allowed
-// AT+INQ - searches
-// Replies:
-// +INQ:address,type,signal
-// Pick up address ad pass to:
-// AT_RNAME?address
-// Replies:
-// +RNAME:name
-// AT+PAIR=address,timeout
-// AT+BIND=address - may not be needed
-// AT+LINK=address
-
-uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
-{
-	uint8_t x ;
-	uint32_t y ;
-	uint16_t rxchar ;
-	uint8_t *end ;
-	uint8_t a ;
-	uint8_t b ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	CoTickDelay(5) ;	// 10mS
-	flushBtFifo() ;
-
-	a = 'O' ;
-	b = 'K' ;
-	if ( bitfieldtype & BT_BITTYPE_CC41 )
-	{
-		a = '\r' ;
-		b = '\n' ;
-	}
-	if ( command )
-	{
-		end = cpystr( &BtTxBuffer[0], command ) ;
-		Bt_tx.size = end - BtTxBuffer ;
-
-//uputs( (char *)command ) ;
-
-		bt_send_buffer() ;
-
-	}
-	if ( receive == 0 )
-	{
-		return 1 ;
-	}
-	x = 0 ;
-	for( y = 0 ; y < BT_POLL_TIMEOUT ;  y += 1 )
-	{
-		if ( ( rxchar = rxBtuart() ) != 0xFFFF )
-		{
-			if ( length )
-			{
-				*receive++ = rxchar ;
-				length -= 1 ;
-			}
-			if ( rxchar == b )
-			{
-				if ( x == a )
-				{
-					*receive = '\0' ;
-					break ;			// Found "OK" or (CRLF)
-				}
-			}
-			x = rxchar ;
-		}
-		else
-		{
-			CoTickDelay(1) ;					// 2mS
-		}				 
-	}
-
-	if ( y < BT_POLL_TIMEOUT )
-	{
-		if ( bitfieldtype & BT_BITTYPE_HC05 )
-		{
-			// flush the CR-LF
-			while ( y < BT_POLL_TIMEOUT )
-			{
-				if ( ( rxchar = rxBtuart() ) != 0xFFFF )
-				{
-					if ( rxchar == 10 )
-					{
-						if ( x == 13 )
-						{
-							break ;			// Found CRLF
-						}
-					}
-					x = rxchar ;
-				}
-				else
-				{
-					CoTickDelay(1) ;					// 2mS
-				}				 
-			}
-		}
-		return 1 ;
-	}
-	if ( length )
-	{
-		*receive = '!' ;
-	}					
-	return 0 ;
-}
-
-void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
-{
-	// pick out data between : and \r
-	uint8_t x ;
-	uint32_t copy = 0 ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-	while ( (x = *src++) )
-	{
-		if ( x == ( ( bitfieldtype & BT_BITTYPE_CC41 ) ? '=' : ':' ) )
-		{
-			copy = 1 ;
-		}
-		else
-		{
-			if ( copy )
-			{
-				if ( x == '\r' )
-				{
-					break ;
-				}
-				*dest++ = x ;
-				if ( --length == 0 )
-				{
-					break ;
-				}
-			}
-		}
-	}
-	*dest = '\0' ;
-	CoTickDelay(10) ;					// 20mS
-}
-
-
-
-#define BT_ROLE_SLAVE		0
-#define BT_ROLE_MASTER	1
-
-
-uint32_t getBtRole()
-{
-	uint8_t buffer[20] ;
-	uint8_t btRole[4] ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	if ( bitfieldtype & (BT_BITTYPE_CC41) )
-	{
-		btTransaction( (uint8_t *)"AT+ROLE\r\n", buffer, 19 ) ;
-	}
-	else
-	{
-		btTransaction( (uint8_t *)"AT+ROLE?\r\n", buffer, 19 ) ;
-	}
-	btParse( btRole, buffer, 3 ) ;
-	if ( btRole[0] == '1' )
-	{
-		BtControl.BtMasterSlave = 2 ;
-	}
-	else if ( btRole[0] == '0' )
-	{
-		BtControl.BtMasterSlave = 1 ;
-	}
-	else
-	{
-		BtControl.BtMasterSlave = 0 ;
-	}
-	CoTickDelay(1) ;					// 2mS
-	return BtControl.BtMasterSlave ;
-}
-
-uint32_t setBtRole( uint32_t role )
-{
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	if ( bitfieldtype & (BT_BITTYPE_CC41) )
-	{
-		cpystr( &BtTxBuffer[0], (uint8_t *)"AT+ROLE0\r\n" ) ;
-		if ( role )
-		{
-			BtTxBuffer[7] = '1' ;
-		}
-		Bt_tx.size = 10 ;
-	}
-	else
-	{
-		cpystr( &BtTxBuffer[0], (uint8_t *)"AT+ROLE=0\r\n" ) ;
-		if ( role )
-		{
-			BtTxBuffer[8] = '1' ;
-		}
-		Bt_tx.size = 11 ;
-	}
-	bt_send_buffer() ;
-	return getBtOK(0, BT_POLL_TIMEOUT ) ;
-}
-
-static uint32_t setBtName( uint8_t *name )	// Max 14 chars
-{
-	uint8_t *end ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	end = cpystr( &BtTxBuffer[0], (uint8_t *)"AT+NAME" ) ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05) )
-	{
-		*end++ = '=' ;
-	}
-	end = cpystr( end, name ) ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
-	{
-		end = cpystr( end, (uint8_t *)"\r\n" ) ;
-	}
-	Bt_tx.size = end - BtTxBuffer ;
-	bt_send_buffer() ;
-	return getBtOK(0, BT_POLL_TIMEOUT ) ;
-}
-
-
-//AT+ADCN?
-//+ADCN:<Param>
-//OK
-//Param: Authenticated Device
-//Count
-//Example:
-//at+adcn?
-//+ADCN:0 ----There is no authenticated device in the pair list.
-//OK
-
-void removeAddressList()
-{
-	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 20mS
-	getBtOK(0, 2000 ) ;
-	CoTickDelay(10) ;					// 20mS
-}
-
-
-static void checkAddressList()
-{
-	uint8_t buffer[12] ;
-	uint8_t count[6] ;
-	btTransaction( (uint8_t *)"AT+ADCN?\r\n", buffer, 11 ) ;
-	btParse( count, buffer, 5 ) ;
-	if ( count[0] != '0' )
-	{
-		removeAddressList() ;
-	}
-}
-
-
-static void getBtValues()
-{
-	uint8_t buffer[20] ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
-
-	getBtRole() ;	
-	CoTickDelay(10) ;					// 20mS
-	if ( bitfieldtype & (BT_BITTYPE_HC05) )
-	{
-		checkAddressList() ;
-		btTransaction( (uint8_t *)"AT+NAME?\r\n", buffer, 19 ) ;
-		btParse( BtName, buffer, 19 ) ;
-		btTransaction( (uint8_t *)"AT+PSWD?\r\n", buffer, 19 ) ;
-	}
-	else
-	{
-		btTransaction( (uint8_t *)"AT+PASS\r\n", buffer, 19 ) ;	// CC41
-	}
-	btParse( BtPswd, buffer, 6 ) ;
-}
-
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
-void processBtRx( int32_t data, uint32_t rxTimeout )
-{
-	uint16_t rxchar ;
-
-	if ( g_model.BTfunction == BT_TRAIN_TXRX )
-	{
-		if ( data == 2 )
-		{
-			BtControl.BtRxState = BT_RX_RECEIVE ;
-			BtControl.BtSbusIndex = 0 ;
-			BtControl.BtRxChecksum = 0 ;
-		}
-		else
-		{
-			if ( BtControl.BtRxState == BT_RX_STUFF )
-			{
-				data = data ^ 0x80 ;
-				BtControl.BtRxState = BT_RX_RECEIVE ;
-			}
-			else
-			{
-				if ( data == 3 )
-				{
-					BtControl.BtRxState = BT_RX_STUFF ;
-				}
-			}
-			if ( BtControl.BtRxState == BT_RX_RECEIVE )
-			{
-				BtSbusFrame[BtControl.BtSbusIndex++] = data ;
-				BtControl.BtRxChecksum += data ;
-				if ( BtControl.BtSbusIndex > 25 )
-				{
-					BtControl.BtRxOccured = 1 ;
-					if ( BtControl.BtRxChecksum == 0 )
-					{
-						TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
-						if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtControl.BtSbusIndex ) )
-						{
-							BtControl.BtSbusReceived = 1 ;
-						}
-					}
-					else
-					{
-						BtControl.BtBadChecksum = BtControl.BtRxChecksum ;
-					}
-					BtControl.BtRxState = BT_RX_IDLE ;
-				}
-			}
-		}
-		return ;
-	}
-
-	if ( rxTimeout )
-	{
-		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
-		if ( processSBUSframe( BtSbusFrame, ( tProf->channel[0].source == TRAINER_BT ) ? g_ppmIns : 0, BtControl.BtSbusIndex ) )
-		{
-			BtControl.BtSbusReceived = 1 ;
-		}
-		BtControl.BtSbusIndex = 0 ;	 
-	}
-	else
-	{
-		rxchar = data ;
-		BtSbusFrame[BtControl.BtSbusIndex++] = rxchar ;
-		if ( BtControl.BtSbusIndex > 27 )
-		{
-			BtControl.BtSbusIndex = 27 ;
-		}
-	}
-}
-
-#endif
-
-/*
-Commands to BT module
-AT+VERSION 	Returns the software version of the module
-AT+BAUDx 	Sets the baud rate of the module:
-1 	1200
-2 	2400
-3 	4800
-4 	9600 (Default)
-5 	19200
-6 	38400
-7 	57600
-8 	115200
-9 	230400
-AT+NAME<name here> 	Sets the name of the module
-
-Any name can be specified up to 20 characters
-AT+PINxxxx 	Sets the pairing password of the device
-
-Any 4 digit number can be used, the default pincode is 1234
-AT+PN 	Sets the parity of the module 
-
-So we could send AT+VERSION at different baudrates until we get a response
-Then we can change the baudrate to the required value.
-Or maybe just AT and get OK back
-*/
-
-void btAddrHex2Bin()
-{
-	uint8_t chr ;
-	uint32_t x ;
-	uint32_t y ;
-	uint32_t z ;
-	uint32_t value ;
-
-	x = 0 ;
-	y = 0 ;
-	z = 0 ;
-	value = 0 ;
-
-	for ( ;x<14; )
-	{
-		chr = BtRemote[0].address[x++] ;
-		chr = toupper( chr ) ;
-		if ( ( ( chr >= '0' ) && ( chr <= '9' ) ) || ( ( chr >= 'A' ) && ( chr <= 'F' ) ) )
-		{
-			chr -= '0' ;
-			if ( chr > 9 )
-			{
-				chr -= 7 ;				
-			}
-			value <<= 4 ;
-			value |= chr ;
-			z += 1 ;
-		}
-		else
-		{
-			if ( z > 0 )
-			{
-				z = 0x80 ;
-			}
-		}
-		if ( ( y == 0 ) && ( z > 3 ) )
-		{
-			BtBinAddr[0] = value >> 8 ;
-			BtBinAddr[1] = value ;
-			y = 1 ;
-			value = 0 ;
-			z = 0 ;
-		}
-		else if ( ( y == 1 ) && ( z > 1 ) )
-		{
-			BtBinAddr[2] = value ;
-			y = 2 ;
-			value = 0 ;
-			z = 0 ;
-		}
-		else if ( z > 5 )
-		{
-			BtBinAddr[3] = value >> 16 ;
-			BtBinAddr[4] = value >> 8 ;
-			BtBinAddr[5] = value ;
-			y = 3 ;
-			break ;
-		}
-	}
-
-	if ( y > 2 )
-	{
-		for ( y = 0 ; y < 4 ; y += 1 )
-		{
-			if ( btAddressValid( g_eeGeneral.btDevice[y].address ) )
-			{
-				if ( btAddressMatch( g_eeGeneral.btDevice[y].address, BtBinAddr ) )
-				{
-					break ;
-				}
-			}
-			else
-			{
-				g_eeGeneral.btDevice[y].address[0] = BtBinAddr[0] ;
-				g_eeGeneral.btDevice[y].address[1] = BtBinAddr[1] ;
-				g_eeGeneral.btDevice[y].address[2] = BtBinAddr[2] ;
-				g_eeGeneral.btDevice[y].address[3] = BtBinAddr[3] ;
-				g_eeGeneral.btDevice[y].address[4] = BtBinAddr[4] ;
-				g_eeGeneral.btDevice[y].address[5] = BtBinAddr[5] ;
-				STORE_GENERALVARS ;
-				break ;
-			}
-		}
-	}
-}
-
-uint8_t b2hex( uint8_t c )
-{
-	c &= 0x0F ;
-	if ( c > 9 )
-	{
-		c += 7 ;
-	}
-	c += '0' ;
-	return c ;
-}
-
-uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
-{
-	uint8_t c ;
-	
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	*dest++ = ',' ;
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	*dest++ = ',' ;
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	c = *source++ ;
-	*dest++ = b2hex( c >> 4 ) ;
-	*dest++ = b2hex( c ) ;
-	*dest = '\0' ;
-	return dest ;
-}
-
-uint8_t *copyBtAddress( uint8_t *end, uint32_t index )
-{
-	uint32_t x ;
-	uint32_t y ;
-	uint8_t chr ;
-	
-	x = 0 ;
-	y = 0 ;
-
-	while ( ( chr = BtRemote[index].address[x] ) != ':' )
-	{
-		x += 1 ;
-		y += 1 ;
-		*end++ = chr ;
-		if ( y > 4 )
-		{
-			break ;
-		}
-	}
-	*end++ = ',' ;
-	x += 1 ;	// Skip ':'
-	y = 0 ;
-	while ( ( chr = BtRemote[index].address[x] ) != ':' )
-	{
-		x += 1 ;
-		y += 1 ;
-		*end++ = chr ;
-		if ( y > 4 )
-		{
-			break ;
-		}
-	}
-	*end++ = ',' ;
-	x += 1 ;	// Skip ':'
-	y = 0 ;
-	while ( ( chr = BtRemote[index].address[x] ) )
-	{
-		x += 1 ;
-		y += 1 ;
-		*end++ = chr ;
-		if ( y > 8 )
-		{
-			break ;
-		}
-	}
-	return end ;
-}
-
-uint32_t btLink( uint32_t index )
-{
-	uint32_t x ;
-	uint32_t i ;
-	uint8_t *end ;
-
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-	{
-
-		btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
-		CoTickDelay(10) ;					// 20mS
-		getBtOK(0, BT_POLL_TIMEOUT ) ;
-		CoTickDelay(10) ;					// 20mS
-	
-//		if ( BtPreviousLinkIndex != index )
-//		{
-//			end = cpystr( BtRname, (uint8_t *)"AT+BIND=" ) ;
-//			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
-//			*end++ = '\r' ;
-//			*end++ = '\n' ;
-//			*end = '\0' ;
-//			btTransaction( BtRname, 0, 0 ) ;
-//			CoTickDelay(10) ;					// 40mS
-//			i = getBtOK(0, 2000 ) ;
-//		}
-	 
-		x = 0 ;
-		end = cpystr( BtRname, (uint8_t *)"AT+LINK=" ) ;
-		end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
-		*end++ = '\r' ;
-		*end++ = '\n' ;
-		*end = '\0' ;
-		btTransaction( BtRname, 0, 0 ) ;
-		CoTickDelay(10) ;					// 40mS
-		i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-
-		if ( i == 0 )
-		{
-			for ( x = 0 ; x < 10 ; x += 1 )
-			{
-				CoTickDelay(10) ;					// 40mS
-				i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-				if ( i )
-				{
-					break ;
-				}
-			}
-		}
-		return i ;
-	}
-	else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
-	{
-		BtControl.BtLinking += 1 ;
-		cpystr( BtRname, (uint8_t *)"AT+CONN1\r\n" ) ;
-		btTransaction( BtRname, 0, 0 ) ;
-		CoTickDelay(10) ;					// 40mS
-		i = getBtOK(1, BT_POLL_TIMEOUT ) ;
-		if ( i == 0 )
-		{
-			for ( x = 0 ; x < 10 ; x += 1 )
-			{
-				CoTickDelay(10) ;					// 40mS
-				i = getBtOK(1, BT_POLL_TIMEOUT ) ;
-				if ( i )
-				{
-					break ;
-				}
-			}
-		}
-		return i ;
-	}
-	return 0 ;
-}
-
-
-void btConfigure()
-{
-	uint32_t j ;
-	
-	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-	CoTickDelay(10) ;					// 20mS
-	BtControl.BtConfigure = 0x40 ;
-	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
-	getBtOK(0, BT_POLL_TIMEOUT ) ;
-	BtControl.BtConfigure = 0x41 ;
-	btTransaction( (uint8_t *)"AT+CMODE=1\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
-	getBtOK(0, BT_POLL_TIMEOUT ) ;
-	BtControl.BtConfigure = 0x42 ;
-	removeAddressList() ;
-	BtControl.BtConfigure = 0x44 ;
-	btTransaction( (uint8_t *)"AT+INQM=0,5,4\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
-	for ( j = 0 ; j < 12 ; j += 1 )
-	{
-		getBtOK(0, 225 ) ;
-		BtControl.BtConfigure = 0x49 + j ;
-	}
-	BtControl.BtConfigure = 0 ;
-	CoTickDelay(10) ;					// 20mS
-	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-	CoTickDelay(10) ;					// 20mS
-}
-
-
-// Bits in btBits
-#define BT_RX_TIMEOUT				1
-#define BT_SLAVE_SEND_SBUS	2
-#define BT_IS_SLAVE					4
-#define BT_RX_DATA					8
-
-//uint8_t BtRnameDebug[40] ;
-
-
-void bt_task(void* pdata)
-{
-	uint32_t x ;
-	int32_t y ;
-	uint16_t lastTimer = 0 ;
-	uint32_t btBits = 0 ;
-	struct t_bt_control *pBtControl ;
-	pBtControl = &BtControl ;
-	pBtControl->BtModuleType = 1 << g_eeGeneral.BtType ;
-
-	while ( Activated == 0 )
-	{
-		CoTickDelay(10) ;					// 20mS
-	}
-
-	while ( (x = CoGetOSTime() ) < 400 )
-	{
-		CoTickDelay(10) ;					// 20mS
-	}
-
-#ifdef PCB9XT
-	if ( g_eeGeneral.enableI2C == 2 )
-	{
-		if ( g_eeGeneral.btComPort == 2 )
-		{
-			stop_I2C2() ;
-			com3Init( 115200 ) ;
-		}
-	}
-#endif
-#ifdef PCBX7
-	com3Init( 115200 ) ;
-#endif
-
-	Bt_flag = CoCreateFlag(TRUE,0) ;
-	Bt_tx.size = 0 ;
-
-// Look for BT module baudrate, try 115200, and 9600
-// Already initialised to g_eeGeneral.bt_baudrate
-// 0 : 115200, 1 : 9600, 2 : 19200, 3 : 57600, 4 : 38400
-	
-	x = g_eeGeneral.bt_baudrate ;
-
-	if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
-	{
-		HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-		CoTickDelay(5) ;					// 10mS
-	}
-
-	uint32_t found = 0 ;
-	do
-	{
-		pBtControl->Bt_ok = poll_bt_device() ;		// Do we get a response?
-
-		for ( y = 0 ; y <= NUM_BT_BAUDRATES ; y += 1 )
-		{
-			if ( pBtControl->Bt_ok == 0 )
-			{
-				x += 1 ;
-				if ( x >= NUM_BT_BAUDRATES )
-				{
-					x = 0 ;
-				}
-				setBtBaudrate( x ) ;
-				CoTickDelay(5) ;					// 10mS
-				pBtControl->Bt_ok = poll_bt_device() ;		// Do we get a response?
-			}
-		}
-
-		if ( pBtControl->Bt_ok )
-		{
-//			BtDebug[0] = x + 1 ;
-			pBtControl->Bt_ok = x + 1 ;		
-			pBtControl->BtCurrentBaudrate = x ;
-			if ( x != g_eeGeneral.bt_baudrate )
-			{
-				x = g_eeGeneral.bt_baudrate ;
-				// Need to change Bt Baudrate
-				pBtControl->Bt_ok = changeBtBaudrate( x ) ;
-				CoTickDelay(10) ;	// 20mS, give time for the <crlf> to be sent
-				// Continue with the current baudrate, HC-05 needs power cycle to change
-			}
-			else
-			{
-				found = 1 ;
-			}
-		}
-	} while (found == 0 ) ;
-
-	CoTickDelay(1) ;					// 2mS
-	if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
-	{
-		CoTickDelay(1) ;					// 2mS
-		getBtValues() ;
-		CoTickDelay(1) ;					// 2mS
-		pBtControl->BtNameChange = 0x80 ;
-	}
-	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-	{
-		CoTickDelay(1) ;					// 2mS
-		getBtValues() ;
-		CoTickDelay(1) ;					// 2mS
-		btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
-		CoTickDelay(10) ;					// 20mS
-		getBtOK(1, BT_POLL_TIMEOUT ) ;
-		CoTickDelay(10) ;					// 20mS
-		btTransaction( (uint8_t *)"AT\r\n", 0, 0 ) ;
-		CoTickDelay(10) ;					// 20mS
-		getBtOK(0, BT_POLL_TIMEOUT ) ;
-		CoTickDelay(10) ;					// 20mS
-		HC05_ENABLE_LOW ;							// Set bit B12 LOW
-	}
-
-	pBtControl->BtCurrentLinkIndex = g_model.btDefaultAddress ;
-
-	pBtControl->BtReady = 1 ; 
-	while(1)
-	{
-		if ( ( g_eeGeneral.BtType == BT_TYPE_HC06 )
-				 || ( ( g_eeGeneral.BtType >= BT_TYPE_HC05 ) && ( pBtControl->BtMasterSlave == 1 ) ) )
-		{
-			btBits |= BT_IS_SLAVE ;			
-		}
-		else
-		{
-			btBits &= ~BT_IS_SLAVE ;
-		}
-
-#ifndef PCB9XT 
-#ifndef PCBX7
-		if ( ( g_model.com2Function == COM2_FUNC_BTDIRECT )
-				 || ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY ) )
-		{
-			if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-			{
-				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-			}
-			// Send data to COM2
-			if ( Bt_tx.ready == 0 )	// Buffer available
-			{
-				Bt_tx.size = 0 ;
-				while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
-				{
-					BtTxBuffer[Bt_tx.size++] = y ;
-					if ( Bt_tx.size > 31 )
-					{
-						break ;
-					}	
-				}
-				if ( Bt_tx.size )
-				{
-					Bt_tx.buffer = BtTxBuffer ;
-					txPdcBt( &Bt_tx ) ;
-				}
-			}
-
-			if ( Com2_tx.ready == 0 )	// Buffer available
-			{
-				Com2_tx.size = 0 ;
-				while( ( x = rxBtuart() ) != (uint32_t)-1 )
-				{
-					Com2TxBuffer[Com2_tx.size++] = x ;
-					if ( Com2_tx.size > 31 )
-					{
-						break ;
-					}	
-				}
-				if ( Com2_tx.size )
-				{
-					Com2_tx.buffer = Com2TxBuffer ;
-					txPdcCom2( &Com2_tx ) ;
-				}
-			}
-			CoTickDelay(1) ;					// 2mS for now
-		}
-		else
-#endif	// nPCBX7
-#endif	// nPCB9XT
-		if ( ( g_model.BTfunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
-		{
-extern struct t_fifo128 BtRx_fifo ;
-			while ( ( y = get_fifo128( &BtRx_fifo ) ) != -1 )
-			{
-extern uint8_t ExternalKeys ;
-extern uint8_t ExternalSet ;
-				ExternalKeys = y ;
-				ExternalSet = 50 ;
-			}
-			CoTickDelay(5) ;					// 10mS for now
-
-		}
-		else
-		{
-			x = CoWaitForSingleFlag( Bt_flag, 1 ) ;		// Wait for data in Fifo
-			if ( x == E_OK )
-			{
-				// We have some data in the Fifo
-				while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
-				{
-					BtTxBuffer[Bt_tx.size++] = y ;
-					if ( Bt_tx.size > 31 )
-					{
-						bt_send_buffer() ;
-					}
-				}
-			}
-			else if ( Bt_tx.size )
-			{
-				bt_send_buffer() ;
-			}
-			else if ( pBtControl->BtBaudrateChanged )
-			{
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-				}
-				CoTickDelay(10) ;					// 20mS for now
-				changeBtBaudrate( g_eeGeneral.bt_baudrate ) ;
-				CoTickDelay(10) ;					// 20mS for now
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-				}
-				pBtControl->BtBaudrateChanged = 0 ;
-			}
-			else if ( pBtControl->BtRoleChange & 0x80 )
-			{
-				HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-				uint8_t newRole = pBtControl->BtRoleChange & 0x01 ;
-				pBtControl->BtRoleChange = 0x40 ;
-				if ( newRole+1 != pBtControl->BtMasterSlave )
-				{
-					setBtRole( newRole ) ;
-					getBtRole() ;
-				}
-				pBtControl->BtRoleChange = 0 ;
-				HC05_ENABLE_LOW ;							// Set bit B12 LOW
-			}
-			else if ( pBtControl->BtNameChange & 0x80 )
-			{
-				uint8_t *pname = g_eeGeneral.btName ;
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					pname = BtName ;
-				}
-				pBtControl->BtNameChange = 0x40 ;
-				setBtName( pname ) ;
-				pBtControl->BtNameChange = 0 ;
-				HC05_ENABLE_LOW ;							// Set bit B12 LOW
-			}
-			else if ( pBtControl->BtConfigure & 0x80 )
-			{
-				btConfigure() ;
-			}
-			else if ( pBtControl->BtScan )
-			{
-				pBtControl->BtScan = 0 ;
-				if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
-				{
-					uint32_t i ;
-					uint32_t j ;
-					uint16_t rxchar ;
-
-					for ( i = 0 ; i < 100 ; i += 1 )
-					{
-						BtTempBuffer[0] = 0 ;
-					}
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					CoTickDelay(5) ;					// 10mS
-					flushBtFifo() ;
-					if ( pBtControl->BtScanInit == 0)
-					{
-						pBtControl->BtScanInit = 1 ;
-						setBtRole( 1 ) ;
-//						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-//						{
-							pBtControl->BtScanState = 1 ;
-							CoTickDelay(20) ;					// 40mS
-							btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
-							CoTickDelay(10) ;					// 20mS
-							i = getBtOK(1, BT_POLL_TIMEOUT ) ;
-//						}
-					}
-					btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
-					CoTickDelay(20) ;					// 40mS
-					getBtOK(1, BT_POLL_TIMEOUT ) ;
-					pBtControl->BtScanState = 2 ;
-					CoTickDelay(100) ;					// 200mS
-					flushBtFifo() ;
-					btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
-					pBtControl->BtScanState = 3 ;
-					j = 0 ;
-					x = 0 ;
-					for ( i = 0 ; i < 3800 ; i += 1 )
-					{
-						while ( ( rxchar = rxBtuart() ) != 0xFFFF )
-						{
-							if ( rxchar == '+' )
-							{
-								x = 1 ;
-							}
-							if ( x && ( j < 99 ) )
-							{
-								BtTempBuffer[j++] = rxchar ;
-							}
-							if ( rxchar == '\r' )
-							{
-								x = 0 ;
-							}
-						}
-						CoTickDelay(1) ;					// 2mS
-					}
-					BtTempBuffer[j] = 0 ;
-					i = 0 ;
-					x = 0 ;
-					uint32_t y ;
-					// Looking for: +INQ:2:72:D2224,3E0104,FFBC
-					// Or +INQ:1 0x00158300E442
-					pBtControl->NumberBtremotes = 0 ;
-					if ( j >= 4 )
-					{
-						while ( i < j-3 )
-						{
-							if ( BtTempBuffer[i] == '+' )
-							{
-								if ( BtTempBuffer[i+1] == 'I' )
-								{
-									if ( BtTempBuffer[i+2] == 'N' )
-									{
-										if ( BtTempBuffer[i+3] == 'Q' )
-										{
-											y = 0 ;
-											if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-											{											
-												i += 5 ;		// Skip ':'
-												while ( BtTempBuffer[i] != ',' )
-												{
-													if ( i >= j )
-													{
-														break ;
-													}
-													BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
-													if ( y > 14 )
-													{
-														y = 14 ;
-													}
-												}
-											}
-											else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
-											{
-												if ( BtTempBuffer[i+4] == 'S' )
-												{
-													i += 5 ;
-													continue ;
-												}
-												if ( BtTempBuffer[i+4] == 'E' )
-												{
-													break ;
-												}
-												i += 9 ;		// Skip ':'
-												while ( BtTempBuffer[i] != 13 )
-												{
-													BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
-													if ( y > 12 )
-													{
-														y = 12 ;
-													}
-													if ( i >= j )
-													{
-														break ;
-													}
-												}
-											}
-											BtTempBuffer[x++] = '\r' ;
-											BtTempBuffer[x++] = '\n' ;
-											if ( y > 2 )
-											{
-												BtRemote[pBtControl->NumberBtremotes].address[y] = '\0' ;
-												pBtControl->NumberBtremotes += 1 ;
-											}
-										}
-									}
-								}
-							}
-							i += 1 ;
-						}
-					}
-					BtTempBuffer[x] = '\0' ;
-					pBtControl->BtScanState = 4 ;
-					// Next we want the remote name
-					if ( pBtControl->NumberBtremotes )
-					{
-						btAddrHex2Bin() ;
-					}
-
-					if ( pBtControl->NumberBtremotes )
-					{
-						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-						{
-							// Got a response from the +INQ
-							// Send AT+RNAME?xxxx,xx,xxxxxx\r\n
-							uint8_t *end ;
-							x = 0 ;
-							end = cpystr( BtRname, (uint8_t *)"AT+RNAME?" ) ;
-							end = copyBtAddress( end, 0 ) ;
-
-							*end++ = '\r' ;
-							*end++ = '\n' ;
-							*end = '\0' ;
-							
-//							ncpystr( BtRnameDebug, BtRname, 38 ) ;
-
-							if ( btTransaction( BtRname, BtRemote[0].name, 14 ) )
-							{
-							}
-							else
-							{
-								for ( i = 0 ; i < 7 ; i += 1 )
-								{
-									if ( btTransaction( 0, BtRemote[0].name, 14 ) )
-									{
-										break ;
-									}
-								}
-							}
-							btTransaction( (uint8_t *)"AT+STATE?\r\n", 0, 0 ) ;
-							CoTickDelay(10) ;					// 40mS
-							i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-							btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
-							CoTickDelay(10) ;					// 40mS
-							i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-						
-							CoTickDelay(10) ;					// 40mS
-						}
-					}
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-				}
-			}
-			else if ( pBtControl->BtLinkRequest )
-			{
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					CoTickDelay(10) ;					// 40mS
-					btLink( pBtControl->BtLinkRequest & 3 ) ;
-					pBtControl->BtCurrentLinkIndex = pBtControl->BtLinkRequest & 3 ;
-					pBtControl->BtLinked = 1 ;
-					BtRxTimer = 1000 ;
-					pBtControl->BtRxOccured = 0 ;
-					CoTickDelay(10) ;					// 40mS
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-					pBtControl->BtLinkRequest = 0 ;
-				}
-				else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
-				{
-					btLink( 1 ) ;
-					pBtControl->BtCurrentLinkIndex = 1 ;
-					pBtControl->BtLinked = 1 ;
-					BtRxTimer = 1000 ;
-					pBtControl->BtRxOccured = 0 ;
-					pBtControl->BtLinkRequest = 0 ;
-				}
-			}
-
-			if ( ( pBtControl->BtMasterSlave == 2 ) && ( g_model.autoBtConnect ) && 
-					btAddressValid( g_eeGeneral.btDevice[pBtControl->BtCurrentLinkIndex].address ) )
-			{
-				pBtControl->BtLinked = 1 ;
-			}
-
-			if ( ( ( pBtControl->BtMasterSlave == 2 ) && ( g_model.BTfunction == BT_TRAIN_TXRX ) && pBtControl->BtLinked )
-					 || ( btBits & BT_SLAVE_SEND_SBUS ) )
-			{
-				uint32_t i ;
-				if ( btBits & BT_SLAVE_SEND_SBUS )
-				{
-					btBits &= ~BT_SLAVE_SEND_SBUS ;
-				}
-				else
-				{
-					uint16_t x ;
-					do
-					{
-						CoTickDelay(1) ;					// 2mS
-						x = getTmr2MHz() - BtLastSbusSendTime ;
-					} while ( x < 28000 ) ;
-					BtLastSbusSendTime += 28000 ;
-//					} while ( x < 40000 ) ;
-//					BtLastSbusSendTime += 40000 ;
-				}
-				// Send Sbus Frame
-  			uint8_t *p = BtTxBuffer ;
-				uint32_t outputbitsavailable = 0 ;
-				uint32_t outputbits = 0 ;
-				uint8_t checksum = 0x0F ;
-
-				*p++ = 2 ;		// Marker 
-				*p++ = 0x0F ;
-				for ( i = 0 ; i < 16 ; i += 1 )
-			 	{
-					int16_t x = g_chans512[i] ;
-					x *= 4 ;
-					x += x > 0 ? 4 : -4 ;
-					x /= 5 ;
-					x += 0x3E0 ;
-					if ( x < 0 )
-					{
-						x = 0 ;
-					}
-					if ( x > 2047 )
-					{
-						x = 2047 ;
-					}
-					outputbits |= x << outputbitsavailable ;
-					outputbitsavailable += 11 ;
-					while ( outputbitsavailable >= 8 )
-					{
-						uint8_t j = outputbits ;
-						checksum += j ;
-						if ( ( j == 2 ) || ( j == 3 ) )
-						{
-							j ^= 0x80 ;
-							*p++ = 3 ;		// "stuff"
-						}
-            *p++ = j ;
-						outputbits >>= 8 ;
-						outputbitsavailable -= 8 ;
-					}
-				}
-				*p++ = 0 ;
-				*p++ = 0 ;
-				checksum = -checksum ;
-				if ( ( checksum == 2 ) || ( checksum == 3 ) )
-				{
-					*p++ = 3 ;		// "stuff"
-					checksum ^= 0x80 ;
-				}
-				*p++ = checksum ;
-				Bt_tx.size = p - BtTxBuffer ;
-				bt_send_buffer() ;
-			}
-
-			if ( g_model.BTfunction == BT_TRAIN_TXRX )
-			{
-				while( ( x = rxBtuart() ) != (uint32_t)-1 )
-				{
-					if ( BtRxTimer < 100 )
-					{
-						BtRxTimer = 100 ;
-					}
-					processBtRx( x, 0 ) ;
-					if ( pBtControl->BtSbusReceived )
-					{
-						pBtControl->BtSbusReceived = 0 ;
-						if ( btBits & BT_IS_SLAVE )
-						{
-							btBits |= BT_SLAVE_SEND_SBUS ;						
-						}
-					}
-					lastTimer = getTmr2MHz() ;
-					btBits &= ~BT_RX_TIMEOUT ;
-				}
-			}
-			else
-			{
-#ifdef REVX
-				if ( g_model.bt_telemetry > 1 )
-				{
-					if ( g_model.frskyComPort )				
-					{
-						if ( Com2_tx.ready == 0 )	// Buffer available
-						{
-							Com2_tx.size = 0 ;
-							while( ( x = rxBtuart() ) != (uint32_t)-1 )
-							{
-								Com2TxBuffer[Com2_tx.size++] = x ;
-								if ( Com2_tx.size > 31 )
-								{
-									break ;
-								}	
-							}
-							if ( Com2_tx.size )
-							{
-								Com2_tx.buffer = Com2TxBuffer ;
-								txPdcCom2( &Com2_tx ) ;
-							}
-						}
-					}
-					else
-					{
-						if ( Com1_tx.ready == 0 )	// Buffer available
-						{
-							Com1_tx.size = 0 ;
-							while( ( x = rxBtuart() ) != (uint32_t)-1 )
-							{
-								Com1TxBuffer[Com1_tx.size++] = x ;
-								if ( Com1_tx.size > 31 )
-								{
-									break ;
-								}	
-							}
-							if ( Com1_tx.size )
-							{
-								Com1_tx.buffer = Com1TxBuffer ;
-								txPdcCom1( &Com1_tx ) ;
-							}
-						}
-					}
-				}
-				else
-#endif
-				{				 
-					while( ( x = rxBtuart() ) != (uint32_t)-1 )
-					{
-						if ( BtRxTimer < 100 )
-						{
-							BtRxTimer = 100 ;
-						}
-						processBtRx( x, 0 ) ;
-						lastTimer = getTmr2MHz() ;
-						btBits &= ~BT_RX_TIMEOUT ;
-					}
-					if ( (btBits & BT_RX_TIMEOUT) == 0 )
-					{
-						if ( ( ( getTmr2MHz() - lastTimer ) & 0x0000FFFF ) > 10000 )
-						{
-							btBits |= BT_RX_TIMEOUT ;
-							processBtRx( 0, 1 ) ;
-						}
-					}
-				}
-			}
-		}
-
-		if ( BtRxTimer == 0 )
-		{
-			if ( pBtControl->BtLinked )
-			{
-				if ( pBtControl->BtRxOccured )
-				{
-					putSystemVoice( SV_BT_LOST, 0 ) ;
-				}
-				if ( g_model.autoBtConnect )
-				{
-					pBtControl->BtCurrentLinkIndex =  g_model.btDefaultAddress ;
-				}
-
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					CoTickDelay(10) ;					// 40mS
-				}
-				btLink(pBtControl->BtCurrentLinkIndex) ;
-				BtRxTimer = 1000 ;
-				pBtControl->BtRxOccured = 0 ;
-				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-				{
-					CoTickDelay(10) ;					// 40mS
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-				}
-			}
-		}
-	}
-}
-#endif	// BLUETOOTH
 
 extern const char *openLogs( void ) ;
 extern void writeLogs( void ) ;
@@ -4917,6 +3136,7 @@ void log_task(void* pdata)
 #endif	// SIMU
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#ifdef BLUETOOTH
 void telem_byte_to_bt( uint8_t data )
 {
 #ifndef SIMU
@@ -4924,6 +3144,7 @@ void telem_byte_to_bt( uint8_t data )
         CoSetFlag( Bt_flag ) ;                  // Tell the Bt task something to do
 #endif
 }
+#endif
 #endif
 
 uint16_t PowerStatus ;
@@ -5174,62 +3395,26 @@ void main_loop(void* pdata)
 		uint8_t evt ;
 		doSplash() ;
 
-#ifdef WHERE_DEBUG
-		where( 'A' ) ;
-#endif  	 
 		getADC_single();
-#ifdef WHERE_DEBUG
-		where( 'B' ) ;
-#endif  	 
   	checkTHR();
-#ifdef WHERE_DEBUG
-		where( 'C' ) ;
-#endif  	 
 		checkCustom() ;
-#ifdef WHERE_DEBUG
-		where( 'D' ) ;
-#endif  	 
   	checkSwitches();
-#ifdef WHERE_DEBUG
-		where( 'E' ) ;
-#endif  	 
 		checkAlarm();
-#ifdef WHERE_DEBUG
-		where( 'F' ) ;
-#endif  	 
 		checkWarnings();
-#ifdef WHERE_DEBUG
-		where( 'G' ) ;
-#endif  	 
 #ifdef PCBX9D
 		check6pos() ;
 #endif  	 
 		checkMultiPower() ;
-#ifdef WHERE_DEBUG
-		where( 'H' ) ;
-#endif  	 
 		clearKeyEvents(); //make sure no keys are down before proceeding
 		wdt_reset() ;
   	WatchdogTimeout = 200 ;
-#ifdef WHERE_DEBUG
-		where( 'I' ) ;
-#endif  	 
 		VoiceCheckFlag100mS |= 6 ;// Set switch current states (global)
 		processVoiceAlarms() ;
 		VoiceCheckFlag100mS = 0 ;
-#ifdef WHERE_DEBUG
-		where( 'J' ) ;
-#endif  	 
 		speakModelVoice() ;
-#ifdef WHERE_DEBUG
-		where( 'K' ) ;
-#endif  	 
 		parseMultiData() ;
 		evt = getEvent() ;
 		killEvents( evt ) ;
-#ifdef WHERE_DEBUG
-		where( 'L' ) ;
-#endif  	 
 
 #ifdef LUA
 		luaLoadModelScripts() ;
@@ -5240,9 +3425,6 @@ void main_loop(void* pdata)
 	}
 	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 	processSwitches() ;	// Guarantee unused switches are cleared
-#ifdef WHERE_DEBUG
-		where( 'M' ) ;
-#endif  	 
 
 
 #ifdef PCBX12D
@@ -5303,24 +3485,12 @@ void main_loop(void* pdata)
 	configure_pins( 0x6384, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 #endif
 
-#ifdef WHERE_DEBUG
-		where( 'N' ) ;
-#endif  	 
 	init_no_pulses( 0 ) ;
-#ifdef WHERE_DEBUG
-		where( 'O' ) ;
-#endif  	 
 	init_no_pulses( 1 ) ;
-#ifdef WHERE_DEBUG
-		where( 'P' ) ;
-#endif  	 
 
 	init_trainer_capture(0) ;
 
 	rtcInit() ;
-#ifdef WHERE_DEBUG
-		where( 'Q' ) ;
-#endif  	 
 
 	init_xjt_heartbeat() ;
 #endif
@@ -5328,13 +3498,11 @@ void main_loop(void* pdata)
 #ifdef PCBX12D
 	init_no_pulses( 0 ) ;
 	init_no_pulses( 1 ) ;
-//		where( '8' ) ;
 	init_trainer_capture(0) ;
 	
 	init_xjt_heartbeat() ;
 	rtcInit() ;
 #endif
-//		where( '9' ) ;
 
 
 #ifdef PCB9XT
@@ -5359,9 +3527,6 @@ void main_loop(void* pdata)
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 	startPulses() ;		// using the required protocol
 #endif
-#ifdef WHERE_DEBUG
-		where( 'R' ) ;
-#endif  	 
 
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D)
 #ifndef PCBX7
@@ -5377,11 +3542,7 @@ extern uint8_t ModelImageValid ;
 #ifdef POWER_BUTTON
 	static uint8_t powerIsOn = 1 ;
 #endif
-//		where( 'A' ) ;
 
-#ifdef WHERE_DEBUG
-		where( 'S' ) ;
-#endif  	 
 
 #ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
@@ -5390,7 +3551,7 @@ extern uint8_t ModelImageValid ;
 	if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) != RCC_CSR_WDGRSTF ) && !unexpectedShutdown )	// Not watchdog
 #endif
 	{
-		if ( g_vbat100mV > g_eeGeneral.SavedBatteryVoltage + 4 )
+		if ( g_vbat100mV > g_eeGeneral.SavedBatteryVoltage + 3 )
 		{
 			uint8_t result ;
   		clearKeyEvents() ;
@@ -5452,6 +3613,13 @@ extern uint8_t ModelImageValid ;
 					{
 						lcd_clear() ;
 						lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+						uint8_t dtimer = get_tmr10ms() - tgtime ;
+#ifdef PCBX12D
+						dtimer = ( 80 - dtimer ) * 100 / 80 ;
+#else
+						dtimer = ( 150 - dtimer ) * 100 / 150 ;
+#endif
+						lcd_hbar( 13, 49, 102, 6, dtimer ) ;
 						refreshDisplay() ;
 					}
 #ifdef PCBX12D
@@ -5713,9 +3881,6 @@ extern uint8_t PowerState ;
 //			}
 		}
 #endif
-//#ifdef WHERE_DEBUG
-//		where( 'T' ) ;
-//#endif  	 
 #ifdef SERIAL_HOST
 		mainSequence( NO_MENU ) ;
 #else
@@ -8597,10 +6762,12 @@ void perMain( uint32_t no_menu )
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#ifdef BLUETOOTH	
 	if ( BtRxTimer )
 	{
 		BtRxTimer -= 1 ;
 	}
+#endif
 #endif
 	if ( SbusTimer )
 	{
@@ -9913,7 +8080,7 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
   STORE_MODELVARS_TRIM ;
 }
 
-uint8_t TrimBits ;
+//uint8_t TrimBits ;
 
 static uint8_t checkTrim(uint8_t event)
 {
@@ -9936,7 +8103,7 @@ static uint8_t checkTrim(uint8_t event)
 	{
 		if ( !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
   	{
-			TrimBits |= (1 << k ) ;
+//			TrimBits |= (1 << k ) ;
 			
   	  //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
   	  uint8_t idx = k/2;
@@ -9995,10 +8162,10 @@ static uint8_t checkTrim(uint8_t event)
 			}
   	  return 0;
   	}
-		else
-		{
-			TrimBits &= ~(1 << k ) ;
-		}
+//		else
+//		{
+//			TrimBits &= ~(1 << k ) ;
+//		}
 	}
   return event;
 }
@@ -10996,12 +9163,12 @@ static uint8_t trainer_state = 0 ;
 uint32_t switches_states = 0 ;
 uint8_t extSwitches_states = 0 ;
 #else
-uint16_t switches_states = 0 ;
+uint32_t switches_states = 0 ;
 #endif
 
 #endif
 #ifdef PCBX12D
-uint16_t switches_states = 0 ;
+uint32_t switches_states = 0 ;
 #endif
 
 int8_t getMovedSwitch()
@@ -11260,7 +9427,11 @@ int8_t getMovedSwitch()
   }
 #else // REV9E
 #if defined(PCBX7) || defined (PCBXLITE)
+#ifdef PCBT12
   for (uint8_t i=0 ; i<8 ; i += 1 )
+#else
+  for (uint8_t i=0 ; i<8 ; i += 1 )
+#endif
 	{
     uint16_t mask = (0x03 << (i*2)) ;
     uint8_t prev = (switches_states & mask) >> (i*2) ;
@@ -11323,6 +9494,13 @@ int8_t getMovedSwitch()
 			}
       else if (i==6)
         result = 0 ;
+#ifdef PCBT12
+      else if (i==7)
+			{
+        result = -(1+(3*4)) ;
+				if (next!=0) result = -result ;
+			}
+#endif
       else
 			{
         result = -(1+(3*4)+1) ;
@@ -11973,10 +10151,21 @@ void checkSwitches()
   		getMovedSwitch() ;	// loads switches_states
 
     	uint16_t ss = switches_states ;
+#ifdef PCBT12
+			if ( ss & 0x8000 )
+			{
+				ss &= ~0xF000 ;
+				ss |= 0x2000 ;
+			}
+#endif			
 			ss &= ~g_model.modelswitchWarningDisables ;
 
 #ifdef PCBX7
+#ifdef PCBT12
+			if ( ( ss & 0x3CFF ) == warningStates )	// Miss E and G, inc H
+#else
 			if ( ( ss & 0x0CFF ) == warningStates )	// Miss E and G
+#endif
 #else
 #ifdef PCBXLITE
 			if ( ( ss & 0x00FF ) == (warningStates & 0x00FF ) )
@@ -12004,10 +10193,15 @@ void checkSwitches()
 	  lcd_putsAtt(32 + X12OFFSET,0*FH,XPSTR("SWITCH"),DBLSIZE);
 	  lcd_putsAtt(32 + X12OFFSET,2*FH,XPSTR("WARNING"),DBLSIZE);
 		lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
- 		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
+
+		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
 		{
 #ifdef PCBX7
+#ifdef PCBT12
+			if ( i == 4 )
+#else
 			if ( ( i == 4 ) || ( i == 6 ) )
+#endif
 			{
 				continue ;	// Skip E and G
 			}
@@ -12022,7 +10216,17 @@ void checkSwitches()
  		  uint8_t attr = ((warningStates & mask) == (ss & mask)) ? 0 : INVERS ;
 			if ( ~g_model.modelswitchWarningDisables & mask )
 			{
+#ifdef PCBT12
+				uint32_t j ;
+				j = i ;
+				if ( j > 4 )
+				{
+					j += 1 ;
+				}
+  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
+#else
   		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+i, attr ) ;
+#endif
 				lcd_putcAtt( 4*FW+i*(2*FW+2) + X12OFFSET, 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}
 		}

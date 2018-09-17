@@ -371,8 +371,6 @@ static void disable_ext_dsm2( void )
 //	}
 //}
 
-//uint16_t ProtoDebug[9] ;
-
 static void init_ext_ppm( void )
 {
 //  EXTERNAL_RF_OFF() ;
@@ -1013,7 +1011,6 @@ void init_ext_serial( uint32_t type )
 	 
 	if ( isProdVersion() == 0 )
 	{
-//		ProtoDebug[4] += 1 ;
 		convertPulsesProto( type ) ;
  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&ProtoPulses[1] ) ;
 		configure_pins( PROT_PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
@@ -1060,7 +1057,6 @@ static void disable_ext_pxx()
 {
 //  DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
 	PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-//	ProtoDebug[8] = 16 ;
 //  NVIC_DisableIRQ(TIM8_CC_IRQn) ;
  	NVIC_DisableIRQ( PROT_EXTMODULE_TIMER_IRQn) ;
 //  TIM8->DIER &= ~TIM_DIER_CC2IE ;
@@ -1131,10 +1127,8 @@ extern "C" void TIM1_CC_IRQHandler()
 			}
 		}
 		
-//		ProtoDebug[7] += 1 ;
   	EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-//		ProtoDebug[8] = 32 ;
 		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
@@ -1152,16 +1146,13 @@ extern "C" void TIM1_CC_IRQHandler()
   		PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;       // Toggle CC1 o/p
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
-//		ProtoDebug[8] = 33 ;
 	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 	}	
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
 	{
-//		ProtoDebug[7] += 1 ;
   	EXTMODULE_TIMER->CCR3 = dsm2Stream[1][0] ;
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-//		ProtoDebug[8] = 64 ;
 		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
@@ -1179,7 +1170,6 @@ extern "C" void TIM1_CC_IRQHandler()
   		PROT_EXTMODULE_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;       // Toggle CC1 o/p
 		}
   	EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
-//		ProtoDebug[8] = 65 ;
 	  EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
@@ -1195,10 +1185,8 @@ extern "C" void PROT_EXTMODULE_DMA_IRQHandler()
 {
   if (!DMA_GetITStatus(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC))
 	{
-//		ProtoDebug[0] += 1 ;
     return ;
 	}
-//	ProtoDebug[1] += 1 ;
 
   DMA_ClearITPendingBit(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC) ;
 	PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN & ~DMA_SxCR_TCIE ; // Disable DMA
@@ -1227,14 +1215,10 @@ extern "C" void TIM2_IRQHandler()
 	}
   if ( ( TIM2->DIER & TIM_DIER_CC2IE ) && ( status & TIM_SR_CC2IF ) )
 	{
-//		ProtoDebug[2] = status ;
-//		ProtoDebug[3] += 1 ;
-//		ProtoDebug[5] = s_current_protocol[EXTERNAL_MODULE] ;
   	TIM2->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
 		setupPulses(EXTERNAL_MODULE) ;
 		if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)
 		{
-//			ProtoDebug[6] += 1 ;
 //			convertPpmPulsesProto() ;
 //			ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE] ;
   		TIM2->CCR1 = (g_model.Module[1].ppmDelay*50+300)*2 ;
@@ -1255,20 +1239,17 @@ extern "C" void TIM2_IRQHandler()
 		}
 		else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX )
 		{
-//			ProtoDebug[6] += 1 ;
 //			convertPxxPulsesProto() ;
 			
 //			PROT_EXTMODULE_TIMER->CCR2 = ProtoPxxPulses[pulseStreamCount[EXTERNAL_MODULE]-1] - 2000 ;
 //		  PROT_EXTMODULE_TIMER->ARR = ProtoPxxPulses[0] ;
 			PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-//		ProtoDebug[8] = 32 ;
 			PROT_EXTMODULE_DMA_STREAM->CR |= PROT_EXTMODULE_DMA_CHANNEL | DMA_SxCR_DIR_0 | DMA_SxCR_MINC | DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1 | DMA_SxCR_PL_0 | DMA_SxCR_PL_1 ;
   		PROT_EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&PROT_EXTMODULE_TIMER->ARR) ;	// or DMAR?
 //			PROT_EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(ProtoPxxPulses) ;
 			PROT_EXTMODULE_DMA_STREAM->NDTR = pulseStreamCount[EXTERNAL_MODULE] ;
 			DMA_ClearITPendingBit(PROT_EXTMODULE_DMA_STREAM, PROT_EXTMODULE_DMA_FLAG_TC) ;
   		PROT_EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ; // Enable DMA
-//		ProtoDebug[8] = 33 ;
 			
 //			PROT_EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
 //	    PROT_EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&PROT_EXTMODULE_TIMER->CCR1) ;

@@ -2244,7 +2244,7 @@ const static uint8_t Lcd_ERC12864_2[] =
 
 
 
-void lcd_init()
+void lcdInit()
 {
 	register Pio *pioptr ;
 	uint32_t i ;
@@ -2654,7 +2654,7 @@ void lcdSetOrientation()
 	M64SetContrast = 1 ;
 }
 
-void lcd_init()
+void lcdInit()
 {
 }
 

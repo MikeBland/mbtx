@@ -1071,9 +1071,6 @@ void readExtRtc()
 }
 #endif
 
-//uint8_t YearDebug[64] ;
-//uint8_t YearIndex ;
-
 #ifndef REVX
 void pollForRtcComplete()
 {
@@ -1091,8 +1088,6 @@ void pollForRtcComplete()
 			p->date = fromBCD( ExternalRtc[4] & 0x3F ) ;
 			p->month = fromBCD( ExternalRtc[5] & 0x1F ) ;
 			p->year = fromBCD( ExternalRtc[6] ) + 2000 ;
-//			YearDebug[YearIndex++] = ExternalRtc[6] ;
-//			YearIndex &= 0x3F ;
 		}
 	}
 }
@@ -1268,11 +1263,6 @@ void i2c_check_for_request()
 		{
 			(void) TWI0->TWI_RHR ;
 		}
-
-//		if ( ( TWI0->TWI_SR & TWI_SR_TXCOMP ) == 0 )
-//		{
-//			Debug_I2C_event += 1 ;
-//		}
 
 		TWI0->TWI_PTCR = TWI_PTCR_RXTEN ;	// Start transfers
 		TWI0->TWI_CR = TWI_CR_START ;		// Start Rx
@@ -1511,7 +1501,6 @@ extern "C" void TWI0_IRQHandler()
 {
 	uint32_t status ;
 	status = TWI0->TWI_SR ;		// Read only once, some bits cleared on read
-//	ErtcDebug |= 4 ;
 	if ( TwiOperation == TWI_READ_VOL )
 	{
 		if ( status & TWI_SR_RXRDY )
@@ -1619,15 +1608,11 @@ extern "C" void TWI0_IRQHandler()
 			p->date = fromBCD( Rtc_status[4] & 0x3F ) ;
 			p->month = fromBCD( Rtc_status[5] & 0x1F ) ;
 			p->year = fromBCD( Rtc_status[6] ) + 2000 ;
-//			YearDebug[YearIndex++] = Rtc_status[6] ;
-//			YearIndex &= 0x3F ;
 		}
 		
 		TWI0->TWI_PTCR = TWI_PTCR_RXTDIS ;	// Stop transfers
 		if ( status & TWI_SR_RXRDY )
 		{
-//			YearDebug[YearIndex++] = TWI0->TWI_RHR | 0x80 ;
-//			YearIndex &= 0x3F ;
 			(void) TWI0->TWI_RHR ;			// Discard any rubbish data
 		}
 	}
@@ -1696,7 +1681,6 @@ extern "C" void TWI0_IRQHandler()
 	{
 		if ( status & TWI_SR_RXBUFF )
 		{
-//			ErtcDebug |= 8 ;
 			TWI0->TWI_IDR = TWI_IDR_RXBUFF ;
 			TwiOperation = TWI_WAIT_BUFFER ;
 			TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
@@ -1708,12 +1692,10 @@ extern "C" void TWI0_IRQHandler()
 			// must be TXCOMP, prob. NAK in data
 			if ( TWI0->TWI_RCR > 0 )
 			{
-//				ErtcDebug |= 0x10 ;
 				TWI0->TWI_CR = TWI_CR_STOP ;	// Stop Rx
 		  }
 			else
 			{
-//				ErtcDebug |= 0x20 ;
 				TwiOperation = TWI_NONE ;
 				I2cCurrentPointer->done = 1 ;
 				I2cCurrentPointer = (struct t_I2C_request *) NULL ;
@@ -1746,21 +1728,12 @@ extern "C" void TWI0_IRQHandler()
 	 
 	if ( status & TWI_SR_NACK )
 	{
-//		Debug_I2C_event += 0x100 ;
 		(void) TWI0->TWI_RHR ;
 		uint32_t save = TWI0->TWI_CWGR ;
 		TWI0->TWI_CR = TWI_CR_SWRST ;				// Reset in case we are restarting
 		TWI0->TWI_CWGR = save ;
 		TWI0->TWI_CR = TWI_CR_MSEN | TWI_CR_SVDIS ;		// Master mode enable
 	}
-
-//	if ( status & TWI_SR_RXBUFF )
-//	{
-//		if ( TWI0->TWI_IMR & TWI_IMR_RXBUFF )
-//		{
-//			Debug_I2C_event += 0x1000000 ;
-//		}
-//	}
 
 	TWI0->TWI_IDR = TWI_IDR_TXCOMP | TWI_IDR_TXBUFE | TWI_IDR_RXBUFF ;
 	TWI0->TWI_PTCR = TWI_PTCR_TXTDIS | TWI_PTCR_RXTDIS ;	// Stop transfers

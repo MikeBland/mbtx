@@ -61,7 +61,7 @@
 
 #include "myeeprom.h"
 
-extern uint8_t TrimBits ;
+//extern uint8_t TrimBits ;
 extern uint16_t ExternalSwitches ;
 extern uint8_t ExternalSwitchesValid ;
 
@@ -219,7 +219,8 @@ void initExtraInput()
 	configure_pins( 0x00004000, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;   // PB14 is already on the free pin list
 #endif
 }
-	 
+
+// PCBSKY
 void init_keys()
 {
 	register Pio *pioptr ;
@@ -256,43 +257,34 @@ void init_keys()
 }
 
 // Assumes PMC has already enabled clocks to ports
+// PCBSKY
 void setup_switches()
 {
+	
+#ifndef REVA
+	configure_pins( 0x01808087, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
+	configure_pins( 0x00000030, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
+	configure_pins( 0x91114900, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;
+#endif 
+	
 #ifdef REVA
 	register Pio *pioptr ;
 	
 	pioptr = PIOA ;
-#endif
-#ifndef REVA
-	configure_pins( 0x01808087, PIN_ENABLE | PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
-#else 
 	pioptr->PIO_PER = 0xF8008184 ;		// Enable bits
 	pioptr->PIO_ODR = 0xF8008184 ;		// Set bits input
 	pioptr->PIO_PUER = 0xF8008184 ;		// Set bits with pullups
-#endif 
-#ifndef REVA
-#else
+
 	pioptr = PIOB ;
-#endif 
-#ifndef REVA
-	configure_pins( 0x00000030, PIN_ENABLE | PIN_INPUT | PIN_PORTB | PIN_PULLUP ) ;
-#else 
 	pioptr->PIO_PER = 0x00000010 ;		// Enable bits
 	pioptr->PIO_ODR = 0x00000010 ;		// Set bits input
 	pioptr->PIO_PUER = 0x00000010 ;		// Set bits with pullups
-#endif 
 
-#ifdef REVA
 	pioptr = PIOC ;
-#endif 
-#ifndef REVA
-	configure_pins( 0x91114900, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;
-#else 
 	pioptr->PIO_PER = 0x10014900 ;		// Enable bits
 	pioptr->PIO_ODR = 0x10014900 ;		// Set bits input
 	pioptr->PIO_PUER = 0x10014900 ;		// Set bits with pullups
 #endif 
-
 }
 
 
@@ -339,6 +331,8 @@ void setup_switches()
 // PA25, use for stock buzzer
 // PB14, PB6
 // PC21, PC19, PC15 (PPM2 output)
+
+// PCBSKY
 void config_free_pins()
 {
 	
@@ -468,81 +462,131 @@ uint32_t hwKeyState( uint8_t key )
 	xxx = 0 ; 
 	uint32_t as = AnalogSwitches ;
 
+	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+	{
+		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		if ( ct )
+		{
+			key -= HSW_Etrmdn ;		// 0 - 7
+			key ^= 0x06 ;
+	 		if ( ct == 2 ) // Vintage style crosstrim
+ 			{
+	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+				{
+					key ^= 0x06 ;
+				}
+ 			}
+			key += HSW_Etrmdn ;		// 0 - 7
+		}
+	}
+
 	switch(key)
 	{
 		case HSW_Ttrmup :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 1 ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 2 ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
+		
 		case HSW_Rtrmup :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 4 ;
+			xxx = keyState( (EnumKeys) TRM_LH_DWN ) ;
     break ;
+		
 		case HSW_Rtrmdn :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 8 ;
+			xxx = keyState( (EnumKeys) TRM_LH_UP ) ;
     break ;
+		
 		case HSW_Atrmup :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x10 ;
+			xxx = keyState( (EnumKeys) TRM_RH_DWN ) ;
     break ;
+		
 		case HSW_Atrmdn :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x20 ;
+			xxx = keyState( (EnumKeys) TRM_RH_UP ) ;
     break ;
+		
 		case HSW_Etrmup :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x40 ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
+		
 		case HSW_Etrmdn :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x80 ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
+		
+//		case HSW_Ttrmup :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 1 ;
+//    break ;
+		
+//		case HSW_Ttrmdn :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 2 ;
+//    break ;
+//		case HSW_Rtrmup :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 4 ;
+//    break ;
+//		case HSW_Rtrmdn :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 8 ;
+//    break ;
+//		case HSW_Atrmup :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x10 ;
+//    break ;
+//		case HSW_Atrmdn :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x20 ;
+//    break ;
+//		case HSW_Etrmup :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x40 ;
+//    break ;
+//		case HSW_Etrmdn :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x80 ;
+//    break ;
 		
 		case HSW_Thr3pos0 :
     	xxx = as & AS_THR_SW ;	// SW_TCUT     PC20
@@ -1177,82 +1221,134 @@ uint32_t hwKeyState( uint8_t key )
 
 	a = PIOA->PIO_PDSR ;
 	c = PIOC->PIO_PDSR ;
-	uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+	
+	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+	{
+		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		if ( ct )
+		{
+			key -= HSW_Etrmdn ;		// 0 - 7
+			key ^= 0x06 ;
+	 		if ( ct == 2 ) // Vintage style crosstrim
+ 			{
+	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+				{
+					key ^= 0x06 ;
+				}
+ 			}
+			key += HSW_Etrmdn ;		// 0 - 7
+		}
+	}
+	
 	switch(key)
 	{
+		
 		case HSW_Ttrmup :
-			xxx = THR_STICK ;
-			if ( ct )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 1 ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = THR_STICK ;
-			if ( ct )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 2 ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
+		
 		case HSW_Rtrmup :
-			xxx = RUD_STICK ;
-			if ( ct == 1 )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 4 ;
+			xxx = keyState( (EnumKeys) TRM_LH_DWN ) ;
     break ;
+		
 		case HSW_Rtrmdn :
-			xxx = RUD_STICK ;
-			if ( ct == 1 )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 8 ;
+			xxx = keyState( (EnumKeys) TRM_LH_UP ) ;
     break ;
+		
 		case HSW_Atrmup :
-			xxx = AIL_STICK ;
-			if ( ct == 1 )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x10 ;
+			xxx = keyState( (EnumKeys) TRM_RH_DWN ) ;
     break ;
+		
 		case HSW_Atrmdn :
-			xxx = AIL_STICK ;
-			if ( ct == 1 )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x20 ;
+			xxx = keyState( (EnumKeys) TRM_RH_UP ) ;
     break ;
+		
 		case HSW_Etrmup :
-			xxx = ELE_STICK ;
-			if ( ct )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x40 ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
+		
 		case HSW_Etrmdn :
-			xxx = ELE_STICK ;
-			if ( ct )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x80 ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
+		
+		
+//		case HSW_Ttrmup :
+//			xxx = THR_STICK ;
+//			if ( ct )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 1 ;
+//    break ;
+		
+//		case HSW_Ttrmdn :
+//			xxx = THR_STICK ;
+//			if ( ct )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 2 ;
+//    break ;
+//		case HSW_Rtrmup :
+//			xxx = RUD_STICK ;
+//			if ( ct == 1 )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 4 ;
+//    break ;
+//		case HSW_Rtrmdn :
+//			xxx = RUD_STICK ;
+//			if ( ct == 1 )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 8 ;
+//    break ;
+//		case HSW_Atrmup :
+//			xxx = AIL_STICK ;
+//			if ( ct == 1 )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x10 ;
+//    break ;
+//		case HSW_Atrmdn :
+//			xxx = AIL_STICK ;
+//			if ( ct == 1 )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x20 ;
+//    break ;
+//		case HSW_Etrmup :
+//			xxx = ELE_STICK ;
+//			if ( ct )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x40 ;
+//    break ;
+//		case HSW_Etrmdn :
+//			xxx = ELE_STICK ;
+//			if ( ct )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x80 ;
+//    break ;
 		
 //#ifdef REVB
 //    case HSW_ElevDR : xxx = c & 0x80000000 ;	// ELE_DR   PC31
@@ -2383,81 +2479,131 @@ uint32_t hwKeyState( uint8_t key )
   
 	if( key > HSW_MAX )  return 0 ;
 
+	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+	{
+		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		if ( ct )
+		{
+			key -= HSW_Etrmdn ;		// 0 - 7
+			key ^= 0x06 ;
+	 		if ( ct == 2 ) // Vintage style crosstrim
+ 			{
+	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+				{
+					key ^= 0x06 ;
+				}
+ 			}
+			key += HSW_Etrmdn ;		// 0 - 7
+		}
+	}
+
   switch ( key )
 	{
 		case HSW_Ttrmup :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 1 ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 2 ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
+		
 		case HSW_Rtrmup :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 4 ;
+			xxx = keyState( (EnumKeys) TRM_LH_DWN ) ;
     break ;
+		
 		case HSW_Rtrmdn :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 8 ;
+			xxx = keyState( (EnumKeys) TRM_LH_UP ) ;
     break ;
+		
 		case HSW_Atrmup :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x10 ;
+			xxx = keyState( (EnumKeys) TRM_RH_DWN ) ;
     break ;
+		
 		case HSW_Atrmdn :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x20 ;
+			xxx = keyState( (EnumKeys) TRM_RH_UP ) ;
     break ;
+		
 		case HSW_Etrmup :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
-//			xxx = TrimBits & 0x40 ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
+		
 		case HSW_Etrmdn :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
-//			xxx = TrimBits & 0x80 ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
+		
+//		case HSW_Ttrmup :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 1 ;
+//    break ;
+		
+//		case HSW_Ttrmdn :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 2 ;
+//    break ;
+//		case HSW_Rtrmup :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 4 ;
+//    break ;
+//		case HSW_Rtrmdn :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 8 ;
+//    break ;
+//		case HSW_Atrmup :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x10 ;
+//    break ;
+//		case HSW_Atrmdn :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x20 ;
+//    break ;
+//		case HSW_Etrmup :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+////			xxx = TrimBits & 0x40 ;
+//    break ;
+//		case HSW_Etrmdn :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+////			xxx = TrimBits & 0x80 ;
+//    break ;
 
 #ifdef PCBX7
     case HSW_SA0:
@@ -3115,73 +3261,123 @@ uint32_t hwKeyState( uint8_t key )
 	
 	if( key > HSW_MAX )  return 0 ;
 
+	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+	{
+		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		if ( ct )
+		{
+			key -= HSW_Etrmdn ;		// 0 - 7
+			key ^= 0x06 ;
+	 		if ( ct == 2 ) // Vintage style crosstrim
+ 			{
+	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+				{
+					key ^= 0x06 ;
+				}
+ 			}
+			key += HSW_Etrmdn ;		// 0 - 7
+		}
+	}
+
   switch ( key )
 	{
 		case HSW_Ttrmup :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = THR_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
+		
 		case HSW_Rtrmup :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
+			xxx = keyState( (EnumKeys) TRM_LH_DWN ) ;
     break ;
+		
 		case HSW_Rtrmdn :
-			xxx = RUD_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
+			xxx = keyState( (EnumKeys) TRM_LH_UP ) ;
     break ;
+		
 		case HSW_Atrmup :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
+			xxx = keyState( (EnumKeys) TRM_RH_DWN ) ;
     break ;
+		
 		case HSW_Atrmdn :
-			xxx = AIL_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
+			xxx = keyState( (EnumKeys) TRM_RH_UP ) ;
     break ;
+		
 		case HSW_Etrmup :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx)) ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
+		
 		case HSW_Etrmdn :
-			xxx = ELE_STICK ;
-			if ( g_eeGeneral.crosstrim )
-			{
-				xxx = 3 - xxx ;
-			}
-			xxx = TrimBits & (1 << (2*xxx+1)) ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
+		
+//		case HSW_Ttrmup :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+//    break ;
+		
+//		case HSW_Ttrmdn :
+//			xxx = THR_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//    break ;
+//		case HSW_Rtrmup :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+//    break ;
+//		case HSW_Rtrmdn :
+//			xxx = RUD_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//    break ;
+//		case HSW_Atrmup :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+//    break ;
+//		case HSW_Atrmdn :
+//			xxx = AIL_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//    break ;
+//		case HSW_Etrmup :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx)) ;
+//    break ;
+//		case HSW_Etrmdn :
+//			xxx = ELE_STICK ;
+//			if ( g_eeGeneral.crosstrim )
+//			{
+//				xxx = 3 - xxx ;
+//			}
+//			xxx = TrimBits & (1 << (2*xxx+1)) ;
+//    break ;
 
     case HSW_SA0:
       xxx = ~GPIOI->IDR & SWITCHES_GPIO_PIN_A_L ;

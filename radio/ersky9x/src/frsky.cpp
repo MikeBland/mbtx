@@ -46,11 +46,12 @@
 
 void txmit( uint8_t c ) ;
 
-#define TEL_TYPE_FRSKY_HUB		0
-#define TEL_TYPE_FRSKY_SPORT	1
-#define TEL_TYPE_DSM					2
-#define TEL_TYPE_ASSAN				3
-#define TEL_TYPE_XFIRE				4
+//#define TEL_TYPE_FRSKY_HUB		0
+//#define TEL_TYPE_FRSKY_SPORT	1
+//#define TEL_TYPE_DSM					2
+//#define TEL_TYPE_AFH					3
+//#define TEL_TYPE_XFIRE				4
+//#define TEL_TYPE_HITEC				5
 
 uint8_t MultiId[4] ;
 uint8_t RxLqi ;
@@ -154,6 +155,7 @@ uint16_t PixHawkCapacity ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 #define FLYSKY_TELEMETRY_LENGTH (2+7*4)
+#define HITEC_TELEMETRY_LENGTH 		9
 
 #define TELEMETRY_RX_PACKET_SIZE	128
 
@@ -265,8 +267,6 @@ enum CrossfireSensorIndexes {
 
 #endif
 
-//uint16_t FasVdebug ;
-
 #if defined(VARIO)
 stuct t_vario VarioData ;
 #endif
@@ -328,7 +328,8 @@ void dsmTelemetryStartReceive()
 
 uint16_t convertRxv( uint16_t value )
 {
-	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && (( FrskyTelemetryType != FRSKY_TEL_AFH )) )		// DSM or AFHDS2 telemetry 
+	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && ( FrskyTelemetryType != FRSKY_TEL_AFH )
+			 && ( FrskyTelemetryType != FRSKY_TEL_HITEC ) )		// DSM or AFHDS2 or Hitec telemetry 
 	{
 		value *= g_model.rxVratio ;
 		value /= 255 ;
@@ -379,7 +380,6 @@ void store_telemetry_scaler( uint8_t index, uint16_t value )
 		break ;
 		case 4 :
 			storeTelemetryData( FR_VOLTS, value ) ;
-//			FasVdebug |= 1 ;
 		break ;
 		case 5 :
 			storeTelemetryData( FR_FUEL, value ) ;
@@ -670,7 +670,6 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		if ( index == FR_V_AMPd )
 		{
 			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
-//			FasVdebug |= 2 ;
 			TelemetryDataValid[FR_VOLTS] = 25 + g_model.telemetryTimeout ;
 		}
 	}	
@@ -1228,7 +1227,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				DsmDbgCounters[2] += 1 ;
 #endif
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;	// Handles FAS Offset
-//				FasVdebug |= 4 ;
 //				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 				storeTelemetryData( FR_AMP_MAH, ivalue ) ;
@@ -1277,7 +1275,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
 //				FrskyHubData[FR_A2_COPY] = ivalue ;
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;
-//				FasVdebug |= 8 ;
 //				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				// temp
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
@@ -1394,7 +1391,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 }
 
-// Full telemetry 
+// Full telemetry ( after 0xAA ) 
 // packet[0] = TX RSSI value
 // packet[1] = TX LQI value
 // packet[2] = frame number
@@ -1402,8 +1399,12 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 void processHitecPacket( uint8_t *packet )
 {
 	int32_t ivalue ;
-	
-	frskyTelemetry[2].set( packet[0], FR_RXRSI_COPY );	// RSSI
+
+  frskyStreaming = 255 ; // reset counter only if valid packets are being detected
+	packet += 1 ;		// skip 0xAA 
+// RSSI is signed 8-bit value	
+	ivalue = (int8_t)packet[0] + 128 ;
+	frskyTelemetry[3].set( ivalue/2, FR_TXRSI_COPY );	// RSSI
 	setTxLqi( packet[1] ) ;			// packet[1] is  TX_LQI for MULTI
 	switch ( packet[2] )
 	{
@@ -1432,8 +1433,15 @@ void processHitecPacket( uint8_t *packet )
 
 		case 0x15 :
 			storeTelemetryData( FR_FUEL, packet[3] ) ;
-			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+			ivalue = (int16_t) ( (packet[5] << 8 ) | packet[4] ) ;
 			storeTelemetryData( FR_RPM, ivalue ) ;
+			ivalue = (int16_t) ( (packet[7] << 8 ) | packet[6] ) ;
+			storeTelemetryData( FR_CUST3, ivalue ) ;
+		break ;
+
+		case 0x17 :
+			storeTelemetryData( FR_CUST1, packet[6]-40 ) ;
+			storeTelemetryData( FR_CUST2, packet[7]-40 ) ;
 		break ;
 
 		case 0x18 :
@@ -1663,7 +1671,6 @@ void processSportPacket()
 
 				case VFAS_ID_8 :
 					storeTelemetryData( FR_VOLTS, value / 10 ) ;
-//					FasVdebug |= 16 ;
 					VfasVoltageTimer = 50 ;
 				break ;
 				
@@ -1911,7 +1918,6 @@ void processSportPacket()
 							else
 							{
 								storeTelemetryData( FR_VOLTS, value & 0x01FF ) ;
-//								FasVdebug |= 32 ;
 							}
 							xvalue = (value >> 10) & 0x7F ;
 							if ( value & 0x0000200 )
@@ -2024,7 +2030,6 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 			case 0x0100 :	// External voltage ?
 //				storeTelemetryData( FR_CUST4, value/10 ) ;
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
-//				FasVdebug |= 64 ;
 //				storeTelemetryData( FR_CUST5, FasVdebug ) ;
 			break ;
 			case 3 :	// External voltage
@@ -2123,10 +2128,12 @@ void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#ifdef BLUETOOTH	
 	if ( g_model.bt_telemetry )
 	{
 		telem_byte_to_bt( data ) ;
 	}
+#endif
 #endif
 	if ( RawLogging )
 	{
@@ -2153,7 +2160,8 @@ void frsky_receive_byte( uint8_t data )
 
   uint8_t numbytes = numPktBytes ;
 
-	if ( ( FrskyTelemetryType == FRSKY_TEL_DSM ) || ( FrskyTelemetryType == FRSKY_TEL_AFH ) )		// DSM telemetry || AFHDS2A telemetry
+	if ( ( FrskyTelemetryType == FRSKY_TEL_DSM ) || ( FrskyTelemetryType == FRSKY_TEL_AFH ) 
+		 || ( FrskyTelemetryType == FRSKY_TEL_HITEC ) )		// DSM telemetry || AFHDS2A telemetry || Hitec
 	{
     	switch (dataState) 
 			{
@@ -2179,7 +2187,14 @@ void frsky_receive_byte( uint8_t data )
 				break ;
 
     	  case frskyDataInFrame:
-    	    if (numbytes < (( FrskyTelemetryType == FRSKY_TEL_AFH ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19))
+				{
+					uint32_t length ;
+    	    length = ( FrskyTelemetryType == FRSKY_TEL_AFH ) ? FLYSKY_TELEMETRY_LENGTH+1 : 19 ;
+					if ( FrskyTelemetryType == FRSKY_TEL_HITEC )
+					{
+						length = HITEC_TELEMETRY_LENGTH ;
+					}
+    	    if (numbytes < length )
 					{
 	  	      frskyRxBuffer[numbytes++] = data ;
 						if ( FrskyTelemetryType == FRSKY_TEL_AFH )	// AFHDS2A
@@ -2187,6 +2202,15 @@ void frsky_receive_byte( uint8_t data )
 							if ( numbytes >= FLYSKY_TELEMETRY_LENGTH )
 							{
 								processAFHDS2Packet( frskyRxBuffer, numbytes ) ;
+								numbytes = 0 ;
+        				dataState = frskyDataIdle;
+							}
+						}
+						else if ( FrskyTelemetryType == FRSKY_TEL_HITEC )
+						{
+							if ( numbytes >= HITEC_TELEMETRY_LENGTH )
+							{
+								processHitecPacket( frskyRxBuffer ) ;
 								numbytes = 0 ;
         				dataState = frskyDataIdle;
 							}
@@ -2201,6 +2225,7 @@ void frsky_receive_byte( uint8_t data )
 							}
 						}
 					}
+				}
     	  break ;
 			}
 	}
@@ -2225,6 +2250,7 @@ void frsky_receive_byte( uint8_t data )
            	numbytes = 0 ;
 					}
 //#endif
+#endif
 					break ; // Remain in userDataStart if possible 0x7e,0x7e doublet found.
 				}
         else if (data == PRIVATE)
@@ -2245,7 +2271,7 @@ void frsky_receive_byte( uint8_t data )
         }
         if (data == START_STOP) // end of frame detected
         {
-//#ifdef DISABLE_PXX_SPORT
+#ifdef DISABLE_PXX_SPORT
 //#ifdef REVX
 //	          processFrskyPacket(frskyRxBuffer); // FrskyRxBufferReady = 1;
 //  	        dataState = frskyDataIdle;
@@ -2256,11 +2282,11 @@ void frsky_receive_byte( uint8_t data )
            	numbytes = 0;
 					}
 					else
+#endif
 					{
 	          processFrskyPacket(frskyRxBuffer); // FrskyRxBufferReady = 1;
   	        dataState = frskyDataIdle;
 					}
-#endif
           break;
         }
         else if ( (data == PRIVATE) && ( (numbytes == 0) || (numbytes == 19) ) )
@@ -2560,11 +2586,11 @@ void telemetry_init( uint8_t telemetryType )
 	{
 		case TEL_FRSKY_HUB :
 		case TEL_MULTI :
-			FRSKY_Init( TEL_TYPE_FRSKY_HUB ) ;
+			FRSKY_Init( FRSKY_TEL_HUB ) ;
 		break ;
 		
 		case TEL_FRSKY_SPORT :
-			FRSKY_Init( TEL_TYPE_FRSKY_SPORT ) ;
+			FRSKY_Init( FRSKY_TEL_SPORT ) ;
 		break ;
 
 #ifdef REVX
@@ -2628,13 +2654,17 @@ void telemetry_init( uint8_t telemetryType )
 #endif
 
 		case TEL_DSM :
-			FRSKY_Init( TEL_TYPE_DSM ) ;
+			FRSKY_Init( FRSKY_TEL_DSM ) ;
+		break ;
+
+		case TEL_HITEC :
+			FRSKY_Init( FRSKY_TEL_HITEC ) ;
 		break ;
 
 #ifdef XFIRE
 // #ifdef REVX
 		case TEL_XFIRE :
-			FRSKY_Init( TEL_TYPE_XFIRE ) ;
+			FRSKY_Init( FRSKY_TEL_XFIRE ) ;
 		break ;
 // #endif
 #endif
@@ -2658,7 +2688,9 @@ void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 // 0 FrSky hub / Multi
 // 1 FrSky SPort
 // 2 DSM
-// 3 ASSAN (no longer used)
+// 3 AFH
+// 4 XFIRE
+// 5 HITEC
 
 void FRSKY_Init( uint8_t brate )
 {
@@ -2688,7 +2720,7 @@ void FRSKY_Init( uint8_t brate )
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D)
-	if ( brate == TEL_TYPE_FRSKY_HUB )
+	if ( brate == FRSKY_TEL_HUB )
 	{
 		uint32_t baudrate = 9600 ;
 		uint32_t parity = SERIAL_NO_PARITY ;
@@ -2748,7 +2780,7 @@ void FRSKY_Init( uint8_t brate )
 		initComPort( baudrate, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, parity ) ;
 #endif
 	}
-	else if ( brate == TEL_TYPE_FRSKY_SPORT )
+	else if ( brate == FRSKY_TEL_SPORT )
 	{
 		numPktBytes = 0 ;
 		dataState = frskyDataIdle ;
@@ -2756,7 +2788,7 @@ void FRSKY_Init( uint8_t brate )
 	}
 #ifdef XFIRE
 // #ifdef REVX
-	else if ( brate == TEL_TYPE_XFIRE )
+	else if ( brate == FRSKY_TEL_XFIRE )
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
 		com1_Configure( 400000, SERIAL_NORM, SERIAL_NO_PARITY ) ;
@@ -2781,7 +2813,7 @@ void FRSKY_Init( uint8_t brate )
 		}
 	}
 #else
-	else	// brate == 2, DSM telemetry
+	else	// brate == 2, DSM telemetry or TEL_TYPE_HITEC
 	{
 		FrskyComPort = g_model.frskyComPort ;
 #if defined(PCBX9D) || defined(PCBX12D)
@@ -2798,7 +2830,11 @@ void FRSKY_Init( uint8_t brate )
 			{
 				FrskyTelemetryType = FRSKY_TEL_DSM ;	// DSM
 			}
-			initComPort( 100000, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
+			if ( brate == FRSKY_TEL_HITEC )
+			{
+				FrskyTelemetryType = FRSKY_TEL_HITEC ;
+			}
+		 	initComPort( 100000, (g_model.telemetry2RxInvert << 1) | g_model.telemetryRxInvert, SERIAL_EVEN_PARITY ) ;
 //			if ( g_model.telemetryRxInvert )
 //			{
 //				init_software_com1( 100000, SERIAL_INVERT, SERIAL_EVEN_PARITY ) ;
@@ -3174,6 +3210,9 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 				type = TEL_FRSKY_HUB ;
 			}
 		break ;
+		case TELEMETRY_HITEC :
+			type = TEL_HITEC ;
+		break ;
 	}
 #ifdef XFIRE
  #ifdef REVX
@@ -3197,11 +3236,6 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 #endif
 	return type ;
 }
-
-//#ifdef PCB9XT
-//uint32_t DebugCom2Out ;
-//uint32_t DebugCom2Diff ;
-//#endif
 
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
@@ -3355,15 +3389,7 @@ void check_frsky( uint32_t fivems )
 			while ( ( rxchar = rxCom2() ) != 0xFFFF )
 			{
 				frsky_receive_byte( rxchar ) ;
-//#ifdef PCB9XT
-//				DebugCom2Out += 1 ;
-//#endif
 			}
-//#ifdef PCB9XT
-//extern uint32_t DebugCom2In ;
-//			DebugCom2Diff = DebugCom2In - DebugCom2Out ;
-//#endif
-
 		}
 #endif
 	}
@@ -3890,7 +3916,6 @@ void processCrossfireTelemetryFrame()
       if (getCrossfireTelemetryValue<2>( 3, value) )
 			{
 				storeTelemetryData( FR_VOLTS, value ) ;
-//				FasVdebug |= 128 ;
 			}
 //        processCrossfireTelemetryValue(BATT_VOLTAGE_INDEX, value);
       if (getCrossfireTelemetryValue<2>(5, value))

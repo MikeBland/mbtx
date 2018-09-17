@@ -155,6 +155,7 @@ void refreshDisplay()
   }
 	
 #ifndef PCBXLITE
+ #ifndef PCBT12
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		uint16_t time = get_tmr10ms() ;
@@ -167,6 +168,7 @@ void refreshDisplay()
 			ExtDisplaySend = 1 ;
 		}
 	}
+ #endif
 #endif
 
   uint8_t * p = DisplayBuf;
@@ -197,10 +199,8 @@ void refreshDisplay()
 
 extern "C" void LCD_DMA_Stream_IRQHandler()
 {
-//  DEBUG_INTERRUPT(INT_LCD);
-
   LCD_DMA_Stream->CR &= ~DMA_SxCR_TCIE; // Stop interrupt
-  LCD_DMA->HIFCR |= LCD_DMA_FLAG_INT; // Clear interrupt flag
+  LCD_DMA->HIFCR = LCD_DMA_FLAG_INT; // Clear interrupt flag
   LCD_SPI->CR2 &= ~SPI_CR2_TXDMAEN;
   LCD_DMA_Stream->CR &= ~DMA_SxCR_EN; // Disable DMA
 
@@ -277,7 +277,7 @@ static void backlightInit()
 
   Make sure that delay_ms() is functional before calling this function!
 */
-void lcd_init()
+void lcdInit()
 {
   lcdHardwareInit();
 
@@ -365,7 +365,6 @@ void hapticOff()
 {
 	TIM10->CCR1 = 0 ;
 }
-
 
 // pwmPercent 0-100
 void hapticOn( uint32_t pwmPercent )
@@ -479,9 +478,8 @@ uint8_t GreyDisplayBuf[DISPLAY_W*DISPLAY_H/8*4] ;
 
 OS_FlagID LcdFlag ;
 volatile uint8_t DmaDone = 0 ;
-uint8_t DmaDebugDone ;
-uint16_t DmaDebugCount ;
-uint16_t DmaDebugNDTR ;
+//uint16_t DmaDebugCount ;
+//uint16_t DmaDebugNDTR ;
 
 // New hardware SPI driver for LCD
 void initLcdSpi()
@@ -540,9 +538,9 @@ extern "C" void DMA1_Stream7_IRQHandler()
 	DMA1_Stream7->CR &= ~DMA_SxCR_TCIE ;		// Stop interrupt
 	DMA1->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7 ; // Write ones to clear flags
 	SPI3->CR2 &= ~SPI_CR2_TXDMAEN ;
-	DmaDebugNDTR = DMA1_Stream7->NDTR ;
+//	DmaDebugNDTR = DMA1_Stream7->NDTR ;
 	DmaDone = 1 ;
-	DmaDebugCount += 1 ;
+//	DmaDebugCount += 1 ;
 
 	if ( Main_running )
 	{
@@ -642,7 +640,7 @@ extern uint8_t CurrentVolume ;
 	convertDisplay() ;
 
 //	setupSPIdma() ;
-	DmaDebugDone = 0 ;
+//	DmaDebugDone = 0 ;
 	startSpiDma() ;
 
 //	DMA1_Stream7->CR |= DMA_SxCR_EN ;		// Enable DMA
@@ -672,7 +670,7 @@ extern uint16_t MixerRunAtTime ;
 			t1 = getTmr2MHz() - t1 ;
 			g_timeMixer = t1 ;
 		}
-		DmaDebugDone = 0x80 ;
+//		DmaDebugDone = 0x80 ;
 	}
 
 //	if ( x == E_OK )
@@ -700,11 +698,11 @@ extern uint16_t MixerRunAtTime ;
 //			break ;
 //		}
 	}
-	DmaDebugDone |= 1 ;
-	if ( DMA1_Stream7->CR & DMA_SxCR_EN )
-	{
-		DmaDebugDone |= 0x10 ;
-	}
+//	DmaDebugDone |= 1 ;
+//	if ( DMA1_Stream7->CR & DMA_SxCR_EN )
+//	{
+//		DmaDebugDone |= 0x10 ;
+//	}
 
 //	if ( DMA1_Stream7->NDTR )
 //	{
@@ -1327,7 +1325,7 @@ static void Delay(volatile unsigned int ms)
   }
 }
 
-void lcd_init()
+void lcdInit()
 {
 	GPIO_TypeDef *gpiod = GPIOD ;
 

@@ -515,6 +515,14 @@ CPPSRC = ersky9x.cpp \
 ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
+
+ifeq ($(PCBX7), 1)
+ ifneq ($(PCBT12), 1)
+     CPPSRC += bluetooth.cpp
+ endif
+endif
+
+
 ifeq ($(LUA), 1)
 CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
 endif
@@ -618,6 +626,7 @@ CPPSRC = ersky9x.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
+         bluetooth.cpp \
 			en.cpp \
 			de.cpp \
 			no.cpp \
@@ -704,6 +713,7 @@ CPPSRC = stamp.cpp \
          timers.cpp \
          logicio.cpp \
          pulses.cpp \
+         bluetooth.cpp \
          sky/pulses_driver.cpp \
 			en.cpp \
 			de.cpp \
@@ -1008,6 +1018,7 @@ clean:
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
 	-rm -f xliteobj/*.*
+	-rm -f t12obj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

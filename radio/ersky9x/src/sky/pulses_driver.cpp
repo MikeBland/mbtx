@@ -103,7 +103,6 @@ uint8_t Multi2Data[28] ;
 
 static uint8_t Pass ;		// For PXX and DSM-9XR and ASSAN
 static uint8_t bitlen ;
-//uint8_t DebugDsmPass ;
 uint8_t PulsesPaused ;
 
 void crc( uint8_t data ) ;
@@ -698,7 +697,6 @@ void setupPulsesDsm2(uint8_t chns)
 		}
 
 		uint8_t startChan = g_model.Module[1].startChannel ;
-//		DebugDsmPass = pass ;
 		sendByteDsm2( 0xAA );
 		if ( Pass == 0 )
 		{

@@ -624,13 +624,11 @@ void init_adc3()
 
 #ifndef PCB9XT
 uint16_t RotaryAnalogValue ;
-//uint16_t REDebug1 ;
 
 extern "C" void ADC_IRQHandler()
 {
 	uint32_t x ;
 	x = ADC2->DR ;
-//	REDebug1 = x ;
 	int32_t diff = x - RotaryAnalogValue ;
 	if ( diff < 0 )
 	{

@@ -199,7 +199,7 @@ extern void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink ) ;
 extern void lcdDrawFilledRect( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t pat, uint8_t att ) ;
 #endif
 extern void lcd_clear( void ) ;
-extern void lcd_init( void ) ;
+extern void lcdInit( void ) ;
 extern void lcdSetRefVolt(uint8_t val) ;
 extern void lcdSendCtl(uint8_t val) ;
 extern void refreshDisplay( void ) ;

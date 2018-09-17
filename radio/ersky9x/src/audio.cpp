@@ -264,14 +264,17 @@ uint8_t audioQueue::getToneLength(uint8_t tLen)
   if (g_eeGeneral.beeperVal == 2) {
     result /= 3;
   }
-  else if (g_eeGeneral.beeperVal == 3) {
+  else if (g_eeGeneral.beeperVal == 3)
+	{
     result /= 2;
   }
-  else if (g_eeGeneral.beeperVal == 5) {
+  else if (g_eeGeneral.beeperVal == 5)
+	{
     //long
     result *= 2;
   }
-  else if (g_eeGeneral.beeperVal == 6) {
+  else if (g_eeGeneral.beeperVal == 6)
+	{
     //xlong
     result *= 3;
   }
@@ -1177,13 +1180,6 @@ void doTone()
 		}
 	}
 }
-
-//uint16_t DebugMusic1 ;
-//uint16_t DebugMusic2 ;
-//uint16_t DebugMusic3 ;
-//uint16_t DebugMusic4 ;
-//uint16_t DebugMusic5 ;
-//uint16_t DebugMusic6 ;
 
 void waitAudioAllSentWithTone( uint32_t x, uint32_t v_index)
 {

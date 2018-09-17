@@ -101,7 +101,6 @@ static uint8_t Pass[2] ;
 // TC5 - Software COM1
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
-//uint8_t DebugDsmPass ;
 uint8_t PulsesPaused ;
 
 #ifdef XFIRE

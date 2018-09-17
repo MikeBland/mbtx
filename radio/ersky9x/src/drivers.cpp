@@ -62,6 +62,10 @@ extern void wdt_reset() ;
 #define wdt_reset()
 #endif
 
+#ifdef BLUETOOTH
+#include "bluetooth.h"
+#endif
+
 #define SERIAL_TRAINER	1
 
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
@@ -101,7 +105,9 @@ uint8_t JetiTxBuffer[16] ;
 
 struct t_fifo128 Com1_fifo ;
 struct t_fifo128 Com2_fifo ;
+#ifdef BLUETOOTH
 struct t_fifo128 BtRx_fifo ;
+#endif
 
 #if defined(LUA) || defined(BASIC)
 struct t_fifo128 Lua_fifo ;
@@ -150,8 +156,10 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 void txmit( uint8_t c ) ;
 uint16_t rxCom2( void ) ;
 void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
+#ifdef BLUETOOTH
 void txmitBt( uint8_t c ) ;
 int32_t rxBtuart( void ) ;
+#endif
 
 uint32_t keyState( enum EnumKeys enuk) ;
 void init_spi( void ) ;
@@ -359,6 +367,7 @@ extern uint8_t ExtDisplaySend ;
 #ifdef PCBX9D
 		txPdcCom2( &LcdDumpBuf ) ;
 #else
+#ifdef BLUETOOTH
 		if ( g_model.BTfunction == BT_LCDDUMP )
 		{
 //extern uint8_t BtReady ;
@@ -367,8 +376,11 @@ extern uint8_t ExtDisplaySend ;
 				txPdcBt( &LcdDumpBuf ) ;
 			}
 		}
+#endif
 #ifndef PCB9XT
+#ifdef BLUETOOTH
 		else
+#endif
 		{
 			txPdcCom2( &LcdDumpBuf ) ;
 		}
@@ -396,10 +408,12 @@ extern uint8_t ExtDisplaySend ;
 		if ( g_model.BTfunction == BT_LCDDUMP )
 		{
 //extern uint8_t BtReady ;
+#ifdef BLUETOOTH
 			if ( BtControl.BtReady )
 			{
 				txPdcBt( &LcdDumpBuf ) ;
 			}
+#endif
 		}
 	}	 
 }
@@ -621,10 +635,12 @@ extern uint8_t AnaEncSw ;
 	}
 #endif
 #ifdef PCBX7
+ #ifdef BLUETOOTH
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		doLcdDump() ;
 	}
+ #endif
 #endif
 #ifdef PCBX9D
 #ifndef PCBX7
@@ -741,10 +757,12 @@ uint16_t rxCom2()
 	return get_fifo128( &Com2_fifo ) ;
 }
 
+#ifdef BLUETOOTH
 int32_t rxBtuart()
 {
 	return get_fifo128( &BtRx_fifo ) ;
 }
+#endif
 
 
 #ifdef SERIAL_TRAINER
@@ -795,21 +813,17 @@ uint16_t USART_PE ;
 uint16_t USART1_ORE ;
 uint16_t USART2_ORE ;
 #endif 
-//uint16_t CaptureDebug1 ;
-//uint16_t CaptureDebug2 ;
 
 // time in units of 0.5uS, value is 1 or 0
 void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value )
 {
 	time += pss->bitTime/2 ;
 	time /= pss->bitTime ;		// Now number of bits
-//	CaptureDebug1 += 1 ;
 	if ( value == 3 )
 	{
 		return ;
 	}
 
-//	CaptureDebug2 += 1 ;
 	if ( pss->bitState == BIT_IDLE )
 	{ // Starting, value should be 0
 		pss->bitState = BIT_ACTIVE ;
@@ -1298,17 +1312,21 @@ extern "C" void UART0_IRQHandler()
 		{
 			put_fifo64( &Sbus_fifo, chr ) ;	
 		}
+#ifdef BLUETOOTH
 		else if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
 		{
 			telem_byte_to_bt( chr ) ;
 		}
+#endif
 		else
 		{
 			put_fifo128( &Com2_fifo, chr ) ;	
+#ifdef BLUETOOTH
 			if ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY )	// BT <-> COM2
 			{
 				telem_byte_to_bt( chr ) ;
 			}
+#endif
 		}	 
 	}
 }
@@ -1802,6 +1820,7 @@ uint32_t txPdcPending()
 }
 
 
+#ifdef BLUETOOTH
 struct t_serial_tx *Current_bt ;
 
 uint32_t txPdcBt( struct t_serial_tx *data )
@@ -1824,6 +1843,7 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 	}
 	return 0 ;				// Busy
 }
+#endif
 
 //void end_bt_tx_interrupt()
 //{
@@ -2493,8 +2513,6 @@ extern "C" void TC5_IRQHandler()
 // (The timer is free-running and is thus not reset to zero at each capture interval.)
 // Timer 4 generates the 2MHz clock to clock Timer 3
 
-//uint16_t DebugTIMER3 ;
-//uint16_t DebugTIMER3B ;
 
 extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 {
@@ -2505,10 +2523,8 @@ extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 
 	uint32_t status ;
 	status = TC1->TC_CHANNEL[0].TC_SR ;
-//	DebugTIMER3 += 1 ;
 	if ( CaptureMode == CAP_SERIAL )
 	{
-//		DebugTIMER3B += 1 ;
 		if ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
 		{
 			while ( status & (TC_SR0_LDRBS | TC_SR0_LDRAS) )
@@ -2782,6 +2798,7 @@ void USART6SetBaudrate( uint32_t baudrate )
 	USART6->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
 }
 
+#ifdef BLUETOOTH
 uint32_t txPdcBt( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -2789,7 +2806,7 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 	USART6->CR1 |= USART_CR1_TXEIE ;
 	return 1 ;			// Sent OK
 }
-
+#endif
 
 uint16_t Last6Rx ;
 uint16_t Last6Status ;
@@ -2837,7 +2854,11 @@ extern "C" void USART6_IRQHandler()
 
     if (!(status & USART_FLAG_ERRORS))
 		{
+#ifdef BLUETOOTH
 			put_fifo128( &BtRx_fifo, data ) ;	
+#else
+			(void) data ;	
+#endif
 		}
 		else
 		{
@@ -3425,8 +3446,6 @@ void disable_software_com1()
 
 #ifdef PCB9XT
 
-//uint32_t DebugCom2In ;
-
 void consoleInit()
 {
 	// Serial configure  
@@ -3629,7 +3648,6 @@ extern "C" void UART4_IRQHandler()
 				else
 				{
 					put_fifo128( &Com2_fifo, data ) ;
-//					DebugCom2In += 1 ;
 				}
 			}
 		}
@@ -3920,7 +3938,11 @@ extern "C" void USART3_IRQHandler()
 
     if (!(status & USART_FLAG_ERRORS))
 		{
-			put_fifo128( &BtRx_fifo, data ) ;	
+#ifdef BLUETOOTH
+			put_fifo128( &BtRx_fifo, data ) ;
+#else
+			(void) data ;	
+#endif
 		}
 		else
 		{
@@ -3938,6 +3960,7 @@ extern "C" void USART3_IRQHandler()
 }
 
 
+#ifdef BLUETOOTH
 uint32_t txPdcBt( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -3945,6 +3968,7 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 	USART3->CR1 |= USART_CR1_TXEIE ;
 	return 1 ;			// Sent OK
 }
+#endif
 
 #endif
 
