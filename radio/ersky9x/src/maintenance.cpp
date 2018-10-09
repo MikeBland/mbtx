@@ -42,9 +42,9 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #include "core_cm3.h"
-// #ifdef REVX
+ #ifndef SMALL
   #include "pdi.h"
-// #endif
+ #endif
 #endif
 #ifdef PCBX9D
 #include "X9D/stm32f2xx.h"
@@ -164,7 +164,9 @@ uint32_t clearMfp() ;
 #endif
 
 uint32_t sportUpdate( uint32_t external ) ;
+ #ifndef SMALL
 uint32_t xmegaUpdate() ;
+ #endif
 uint32_t multiUpdate() ;
 
 
@@ -1222,6 +1224,7 @@ void menuChangeId(uint8_t event)
 }
 #endif
 
+ #ifndef SMALL
 void displayXmegaData()
 {
 	lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
@@ -1230,6 +1233,7 @@ void displayXmegaData()
 	lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
 	lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
 }
+ #endif
 
 #ifndef NO_MULTI
 void menuUpMulti(uint8_t event)
@@ -1355,12 +1359,12 @@ void menuUp1(uint8_t event)
  #endif
 #endif
 #ifdef PCBSKY
-// #ifdef REVX
+#ifndef SMALL
  		if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 		{
   		TITLE( "UPDATE XMEGA" ) ;
 		}
-// #endif
+#endif
 #endif
 #ifdef PCB9XT
  		if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
@@ -1497,6 +1501,7 @@ void menuUp1(uint8_t event)
 //					lcd_puts_Pleft( 2*FH, "Flash Co-Proc. from" ) ;
 //				}
 // 				else
+ #ifndef SMALL
 				if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
@@ -1508,6 +1513,7 @@ void menuUp1(uint8_t event)
 				}
 	#endif
 				else
+#endif
 				{
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
 				}
@@ -1629,6 +1635,7 @@ void menuUp1(uint8_t event)
 //				}
  #endif
  // REVX
+ #ifndef SMALL
 				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					FirmwareSize = FileSize[fc->vpos] ;
@@ -1646,7 +1653,7 @@ void menuUp1(uint8_t event)
 					PdiErrors8 = 0 ;
 #endif
 				}
-
+ #endif
 #endif
 #ifdef PCB9XT
 				else if (mdata->UpdateItem == UPDATE_TYPE_AVR )		// Bootloader
@@ -1785,6 +1792,7 @@ void menuUp1(uint8_t event)
 //			}
  #endif
  // REVX
+ #ifndef SMALL
 			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
 //				uint32_t size = FileSize[fc->vpos] ;
@@ -1797,6 +1805,7 @@ void menuUp1(uint8_t event)
 				width /= FirmwareSize ;
 				displayXmegaData() ;
 			}
+ #endif
 #endif
 			
 #ifdef PCB9XT
@@ -1918,10 +1927,12 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 				}
 #endif
+ #ifndef SMALL
 				if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
 					displayXmegaData() ;
 				}
+ #endif
 #ifdef PCBSKY
  #ifndef REVX
 //				if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
@@ -1988,7 +1999,7 @@ void menuUpdate(uint8_t event)
 //	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
 	lcd_puts_Pleft( 3*FH, "  Update SPort" );
   #ifdef SMALL
-	lcd_puts_Pleft( 4*FH, "  Update Xmega" );
+//	lcd_puts_Pleft( 4*FH, "  Update Xmega" );
 	#else
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
@@ -2063,11 +2074,11 @@ void menuUpdate(uint8_t event)
 	      chainMenu(menuUp1) ;
 			}
   #ifdef SMALL
-			if ( position == 4*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
-	      chainMenu(menuUp1) ;
-			}
+//			if ( position == 4*FH )
+//			{
+//				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
+//	      chainMenu(menuUp1) ;
+//			}
 	#else
 			if ( position == 4*FH )
 			{
@@ -3176,6 +3187,7 @@ uint32_t multiUpdate()
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 // This is called repeatedly every 10mS while update is in progress
+ #ifndef SMALL
 uint32_t xmegaUpdate()
 {
 	
@@ -3273,6 +3285,7 @@ uint32_t xmegaUpdate()
 	}
 	return BytesFlashed ;
 }	
+ #endif
 #endif
 
 // This is called repeatedly every 10mS while update is in progress

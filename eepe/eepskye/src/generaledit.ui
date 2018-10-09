@@ -34,7 +34,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>2</number>
+      <number>3</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -3594,7 +3594,7 @@ Mode 4:
           </widget>
          </item>
          <item row="1" column="0">
-          <widget class="QLabel" name="label_Encoder_3">
+          <widget class="QLabel" name="label_BTadd1">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3617,7 +3617,7 @@ Mode 4:
           </widget>
          </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_Encoder_4">
+          <widget class="QLabel" name="label_BTadd2">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3633,7 +3633,7 @@ Mode 4:
           </widget>
          </item>
          <item row="3" column="0">
-          <widget class="QLabel" name="label_Encoder_5">
+          <widget class="QLabel" name="label_BTadd3">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3649,7 +3649,7 @@ Mode 4:
           </widget>
          </item>
          <item row="4" column="0">
-          <widget class="QLabel" name="label_Encoder_6">
+          <widget class="QLabel" name="label_BTadd4">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3665,7 +3665,7 @@ Mode 4:
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLabel" name="label_3">
+          <widget class="QLabel" name="label_BT_name">
            <property name="text">
             <string>Bluetooth Name</string>
            </property>
@@ -3764,7 +3764,7 @@ Mode 4:
        <item row="9" column="0" colspan="3">
         <layout class="QGridLayout" name="gridLayout_13">
          <item row="0" column="0">
-          <widget class="QLabel" name="label_27">
+          <widget class="QLabel" name="label_StickGain">
            <property name="minimumSize">
             <size>
              <width>70</width>
@@ -3780,7 +3780,7 @@ Mode 4:
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QLabel" name="label_30">
+          <widget class="QLabel" name="label_stickgainLV">
            <property name="text">
             <string>LV</string>
            </property>
@@ -3816,7 +3816,7 @@ Mode 4:
           </widget>
          </item>
          <item row="0" column="6">
-          <widget class="QLabel" name="label_35">
+          <widget class="QLabel" name="label_stickgainRV">
            <property name="text">
             <string>RV</string>
            </property>
@@ -3852,7 +3852,7 @@ Mode 4:
           </widget>
          </item>
          <item row="0" column="8">
-          <widget class="QLabel" name="label_39">
+          <widget class="QLabel" name="label_stickgainRH">
            <property name="text">
             <string>RH</string>
            </property>
@@ -3862,7 +3862,7 @@ Mode 4:
           </widget>
          </item>
          <item row="0" column="4">
-          <widget class="QLabel" name="label_40">
+          <widget class="QLabel" name="label_stickgainLH">
            <property name="text">
             <string>LH</string>
            </property>
@@ -3978,7 +3978,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="label_29">
+          <widget class="QLabel" name="label_Rotary_div">
            <property name="toolTip">
             <string extracomment="Screen Contrast [20-45]">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Some Encoders might need their output divided, otherwise the cursor might jump 2 or more lines/settings per click, instead of only one. The range of values is 1,2, and 4.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
            </property>

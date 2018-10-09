@@ -275,24 +275,28 @@ bool telemetryDialog::eventFilter(QObject *obj, QEvent *event)
 
 void telemetryDialog::leftMouseReleaseEvent(QMouseEvent * event)
 {
+	(void) event ;
 	ui->ButtonsLabel->setPixmap(QPixmap(":/images/9xcurs.png"));
 	buttonStatus = 0 ;
 }
 
 void telemetryDialog::rightMouseReleaseEvent(QMouseEvent * event)
 {
+	(void) event ;
 	ui->MenuExitLabel->setPixmap(QPixmap(":/images/9xmenu.png"));
 	buttonStatus = 0 ;
 }
 
 void telemetryDialog::leftXMouseReleaseEvent(QMouseEvent * event)
 {
+	(void) event ;
 	ui->Lx9dButtonsLabel->setPixmap(QPixmap(":/images/x9l0.png"));
 	buttonStatus = 0 ;
 }
 
 void telemetryDialog::rightXMouseReleaseEvent(QMouseEvent * event)
 {
+	(void) event ;
 	ui->Rx9dButtonsLabel->setPixmap(QPixmap(":/images/x9r0.png"));
 	buttonStatus = 0 ;
 }
@@ -1309,10 +1313,10 @@ void telemetryDialog::timerEvent()
 										lx = 2 * x ;
 										ly = 2 * y ;
 										pix = ((lcdImage[(128+X9D_EXTRA)*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
-      							image.setPixel(2*x,2*y, pix );
-      							image.setPixel(2*x+1,2*y, pix );
-      							image.setPixel(2*x,2*y+1, pix );
-      							image.setPixel(2*x+1,2*y+1, pix );
+      							image.setPixel(lx,ly, pix );
+      							image.setPixel(lx+1,ly, pix );
+      							image.setPixel(lx,ly+1, pix );
+      							image.setPixel(lx+1,ly+1, pix );
 									}
 								}
                 ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
@@ -1332,10 +1336,10 @@ void telemetryDialog::timerEvent()
 										lx = 2 * x ;
 										ly = 2 * y ;
 										pix = ((lcdImage[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
-      							image.setPixel(2*x,2*y, pix );
-      							image.setPixel(2*x+1,2*y, pix );
-      							image.setPixel(2*x,2*y+1, pix );
-      							image.setPixel(2*x+1,2*y+1, pix );
+      							image.setPixel(lx,ly, pix );
+      							image.setPixel(lx+1,ly, pix );
+      							image.setPixel(lx,ly+1, pix );
+      							image.setPixel(lx+1,ly+1, pix );
 									}
 								}
                 ui->ImageLabel->setPixmap(QPixmap::fromImage(image));
@@ -1531,7 +1535,7 @@ void telemetryDialog::on_sizeButtonScreen_clicked()
 
 void telemetryDialog::makeScreenshot()
 {
-	int t ;
+//	int t ;
 	QString path = ui->saveDirectory->text() ;
 	QString name = ui->saveName->text() ;
 	if ( name.length() == 0 )
@@ -1553,13 +1557,13 @@ void telemetryDialog::makeScreenshot()
 				lx = 2 * x ;
 				ly = 2 * y ;
 				pix = ((lcdImage[(128+X9D_EXTRA)*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
-      	image.setPixel(2*x,2*y, pix );
-      	image.setPixel(2*x+1,2*y, pix );
-      	image.setPixel(2*x,2*y+1, pix );
-      	image.setPixel(2*x+1,2*y+1, pix );
+      	image.setPixel(lx,ly, pix );
+      	image.setPixel(lx+1,ly, pix );
+      	image.setPixel(lx,ly+1, pix );
+      	image.setPixel(lx+1,ly+1, pix );
 			}
 		}
-		t = image.save( path ) ;
+		image.save( path ) ;
 	}
 	else
 	{
@@ -1574,13 +1578,13 @@ void telemetryDialog::makeScreenshot()
 				lx = 2 * x ;
 				ly = 2 * y ;
 				pix = ((lcdImage[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : backColour ;
-  	    image.setPixel(2*x,2*y, pix );
-  	    image.setPixel(2*x+1,2*y, pix );
-  	    image.setPixel(2*x,2*y+1, pix );
-  	    image.setPixel(2*x+1,2*y+1, pix );
+  	    image.setPixel(lx,ly, pix );
+  	    image.setPixel(lx+1,ly, pix );
+  	    image.setPixel(lx,ly+1, pix );
+  	    image.setPixel(lx+1,ly+1, pix );
 			}
 		}
-		t = image.save( path ) ;
+		image.save( path ) ;
 	}
 	screenDumpIndex += 1 ;
 //	ui->spinBox_3->setValue(screenDumpIndex) ;

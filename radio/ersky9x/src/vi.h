@@ -243,7 +243,7 @@
 #define ISTR_YES_NO         "\003DONG Y\013KHONG"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "XOA MIX?"
-#define ISTR_MIX_POPUP      "CHINH SUA\0CHEN VAO\0SAO CHEP\0DI CHUYEN\0XOA\0XOA HET\0TEMPLATES"
+#define ISTR_MIX_POPUP      "CHINH SUA\0CHEN VAO\0SAO CHEP\0DI CHUYEN\0XOA\0XOA HET\0TEMPLATES\0PASTE"
 #define ISTR_MIXER          "MIXER"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -567,7 +567,7 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario\0Sensors"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

@@ -45,7 +45,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>11</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -1323,7 +1323,7 @@ p, li { white-space: pre-wrap; }
              <enum>QSlider::TicksBothSides</enum>
             </property>
            </widget>
-           <widget class="QLabel" name="label_233">
+           <widget class="QLabel" name="label_SwG">
             <property name="geometry">
              <rect>
               <x>4</x>
@@ -1461,7 +1461,7 @@ p, li { white-space: pre-wrap; }
              <enum>QSlider::TicksBothSides</enum>
             </property>
            </widget>
-           <widget class="QLabel" name="label_232">
+           <widget class="QLabel" name="label_SwF">
             <property name="geometry">
              <rect>
               <x>4</x>
@@ -20178,13 +20178,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc2ModSB">
@@ -20203,13 +20203,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc3ModSB">
@@ -20228,13 +20228,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc4ModSB">
@@ -20253,13 +20253,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc5ModSB">
@@ -20278,13 +20278,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc6ModSB">
@@ -20303,13 +20303,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc7ModSB">
@@ -20328,13 +20328,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QSpinBox" name="Sc8ModSB">
@@ -20353,13 +20353,13 @@ p, li { white-space: pre-wrap; }
         <bool>true</bool>
        </property>
        <property name="minimum">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="maximum">
-        <number>2047</number>
+        <number>256</number>
        </property>
        <property name="value">
-        <number>0</number>
+        <number>1</number>
        </property>
       </widget>
       <widget class="QComboBox" name="Sc1DestCB">

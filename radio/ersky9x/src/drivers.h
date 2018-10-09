@@ -214,6 +214,7 @@ extern void per10ms( void ) ;
 extern uint8_t getEvent( void ) ;
 extern void pauseEvents(uint8_t event) ;
 extern void killEvents(uint8_t event) ;
+extern uint8_t getEventDbl(uint8_t event) ;
 extern void init_spi( void ) ;
 extern void end_spi( void ) ;
 extern void eeprom_write_enable( void ) ;

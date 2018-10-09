@@ -30,6 +30,10 @@
 //#define	SERIAL_HOST		1
 #endif
 
+//#ifndef SMALL
+#define MOVE_VOICE		1
+//#endif
+
 //#define TRIMS_SCALED
 //#define BLOCKING
 
@@ -613,6 +617,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define CHOUT_BASE  (PPM_BASE+NUM_PPM)
 #define EXTRA_PPM_BASE ( MIX_3POS + MAX_GVARS + 1 + NUM_SCALERS )
 #define EXTRA_CHANS_BASE ( EXTRA_PPM_BASE + NUM_EXTRA_PPM )
+#define MIX_TRIMS_START ( EXTRA_CHANS_BASE + EXTRA_SKYCHANNELS )
 
 #define NUM_FSW			16
 
@@ -1016,6 +1021,7 @@ struct t_calib
 } ;
 
 uint8_t menuPressed( void ) ;
+uint8_t encoderPressed( void ) ;
 
 struct t_alpha
 {
@@ -1456,6 +1462,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define BT_TRAIN_RX			1
 #define BT_TRAIN_TXRX		2
 #define BT_LCDDUMP			3
+#define BT_TELEM				4
 
 // Physical radio types
 #define PHYSICAL_UNKNOWN			0

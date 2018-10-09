@@ -749,7 +749,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONA"
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec "
 #define M_Flysky          0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  CX20  "
 #define M_Hubsan          1
@@ -814,8 +814,11 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_H8_3D          35
 #define M_H8_3D_STR		"\007H8_3D  H20H   H20MiniH30Mini"
 #define M_CORONA         36
-#define M_CORONA_STR	"\006COR_V1COR_V2"
-#define M_LAST_MULTI		 36
+#define M_CORONA_STR	"\006COR_V1COR_V2FD_V3 "
+#define M_CFlie          37
+#define M_Hitec          38
+#define M_HITEC_STR	"\006Opt_FwOptHubMinima"
+#define M_LAST_MULTI		 38
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -834,6 +837,7 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define TRIM_EXTENDED_MAX	500
 
 extern uint8_t pxxFlag;
+extern uint8_t PxxExtra ;
 extern uint8_t stickMoved;
 
 uint16_t stickMoveValue( void ) ;

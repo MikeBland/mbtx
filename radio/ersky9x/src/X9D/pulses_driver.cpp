@@ -568,10 +568,10 @@ static void disable_pa10_dsm2()
 uint16_t XjtHbeatOffset ;
 #endif
 
-extern uint16_t g_timePXX;
+//extern uint16_t g_timePXX;
 extern "C" void TIM1_CC_IRQHandler()
 {
-  uint16_t t0 = TIM3->CNT;
+//  uint16_t t0 = TIM3->CNT;
   TIM1->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 
@@ -626,8 +626,8 @@ extern "C" void TIM1_CC_IRQHandler()
   else {
     TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
-  t0 = TIM3->CNT - t0;
-	g_timePXX = t0 ;
+//  t0 = TIM3->CNT - t0;
+//	g_timePXX = t0 ;
 
 }
 

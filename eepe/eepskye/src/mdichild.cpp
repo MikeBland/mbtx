@@ -860,6 +860,10 @@ void MdiChild::OpenEditWindow()
 				{
     			type = " (Taranis XLITE)" ;
 				}
+				else if ( radioData.type == RADIO_TYPE_T12 )
+				{
+    			type = " (Jumper T12)" ;
+				}
         t->setWindowTitle(tr("Editing model %1: ").arg(i) + mname + type ) ;
 
         for(int j=0; j<MAX_SKYMIXERS; j++)
@@ -934,6 +938,10 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_XLITE ;
 				radioData.bitType = RADIO_BITTYPE_XLITE ;
 			break ;
+			case PHYSICAL_T12 :
+				radioData.type = RADIO_TYPE_T12 ;
+				radioData.bitType = RADIO_BITTYPE_T12 ;
+			break ;
 
 		}
 	}
@@ -971,6 +979,10 @@ void MdiChild::getPhysicalType()
     if ( x == 8 )	// XLITE
 		{
 			radioData.type = RADIO_TYPE_XLITE ;
+		}
+    if ( x == 9 )	// T12
+		{
+			radioData.type = RADIO_TYPE_T12 ;
 		}
 	}
 }
@@ -1027,7 +1039,11 @@ void MdiChild::newFile()
 			radioData.type = RADIO_TYPE_XLITE ;
     	type = " (Taranis XLITE)" ;
 		}
-
+    if ( x == 9 )	// T12
+		{
+			radioData.type = RADIO_TYPE_T12 ;
+    	type = " (Jumper T12)" ;
+		}
     isUntitled = true;
     curFile = tr("document%1.bin").arg(sequenceNumber++);
     setWindowTitle(curFile + "[*]" + type );
@@ -1482,7 +1498,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-        if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+        if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1582,6 +1598,11 @@ void MdiChild::setCurrentFile(const QString &fileName)
 		else if ( x == RADIO_TYPE_QX7 )
 		{
     	type = " (Taranis QX7)" ;
+		}
+    else if ( ( x == RADIO_TYPE_T12 ) )
+		{
+    	type = " (Jumper T12)" ;
+			
 		}
 //		if ( x == 5 )
 //		{
@@ -1721,7 +1742,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE  | RADIO_BITTYPE_T12) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}

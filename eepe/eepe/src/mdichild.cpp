@@ -338,7 +338,9 @@ void MdiChild::doPaste(QByteArray *gmData, int index)
 
     while((i<gmData->size()) && (id<=MAX_MODELS))
     {
+#ifdef V2
         char d = '1' ;
+#endif
         char c = *gData;
         i++;
         gData++;

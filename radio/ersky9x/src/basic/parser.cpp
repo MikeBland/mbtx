@@ -24,6 +24,7 @@ extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 extern uint32_t isqrt32( uint32_t x ) ;
 
 uint8_t LoadingIndex ;
+uint8_t LoadingNeeded ;
 
 #else
 #include "basic.h"
@@ -2457,6 +2458,11 @@ void basicLoadModelScripts()
 {
 	LoadingIndex = 0 ;
 	BasicState = BASIC_IDLE ;	// Terminate existing script(s)
+	if ( !sd_card_ready() )
+	{
+		LoadingNeeded = 1 ;
+		return ;
+	}
 	loadNextScript() ;
 }
 #endif
@@ -2525,7 +2531,7 @@ void basicLoadModelScripts()
 // 0 No script running
 // 1 After begin or Still running or RunError
 // 2 Found Stop
-// 3 Script finished (unloaded)
+// 3 Script finished (unloaded) or Loading needed
 
 uint32_t basicTask( uint8_t event, uint8_t flags )
 {
@@ -2679,6 +2685,14 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 #else
 		return basicExecute( 0, event, 0 ) ;
 #endif
+	}
+	else if ( BasicState == BASIC_IDLE )
+	{
+		if ( LoadingNeeded )
+		{
+			LoadingNeeded = 0 ;
+			return 3 ;
+		}
 	}
   return 0 ;
 }
@@ -4002,8 +4016,49 @@ extern uint32_t IdlePercent ;
 #endif
 }
 
+int32_t getSingleNumericParameter()
+{
+	uint32_t result ;
+	union t_parameter param ;
+
+	result = get_parameter( &param, 0 ) ;
+	if ( result != 1 )
+	{
+		runError( SE_SYNTAX ) ;
+	}
+	eatCloseBracket() ;
+	return param.var ;
+}
+
 static int32_t exec_gettime()
 {
+	if ( *RunTime->ExecProgPtr != ')' )
+	{
+		int32_t index ;
+		index = getSingleNumericParameter() ;
+		switch ( index )
+		{
+			case 0 :
+				return Time.year ;
+			break ;
+			case 1 :
+				return Time.month ;
+			break ;
+			case 2 :
+				return Time.date ;
+			break ;
+			case 3 :
+				return Time.hour ;
+			break ;
+			case 4 :
+				return Time.minute ;
+			break ;
+			case 5 :
+				return Time.second ;
+			break ;
+		}
+		return 0 ;
+	}
 	eatCloseBracket() ;
 #ifdef QT			
   return 100 ;
@@ -4031,21 +4086,6 @@ static int32_t exec_sysflags()
 #else
 	return ScriptFlags ;
 #endif
-}
-
-
-int32_t getSingleNumericParameter()
-{
-	uint32_t result ;
-	union t_parameter param ;
-
-	result = get_parameter( &param, 0 ) ;
-	if ( result != 1 )
-	{
-		runError( SE_SYNTAX ) ;
-	}
-	eatCloseBracket() ;
-	return param.var ;
 }
 
 static int32_t exec_not()
@@ -5215,6 +5255,8 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		{
 			RunTime->Vars.Variables[0] = event ;
 		}
+		// Clear call stack?
+		RunTime->CallIndex = 0 ;
 	}
 
 //#ifndef QT

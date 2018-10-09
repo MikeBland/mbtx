@@ -42,6 +42,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_X9E				8
 #define RADIO_TYPE_QX7				9
 #define RADIO_TYPE_XLITE		 10
+#define RADIO_TYPE_T12			 11
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -52,6 +53,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_AR9X				64
 #define RADIO_BITTYPE_QX7					128
 #define RADIO_BITTYPE_XLITE				256
+#define RADIO_BITTYPE_T12					512
 
 #define RADIO_BITTYPE_ER9XM64V1		1024
 #define RADIO_BITTYPE_ER9XM64V2		2048
@@ -526,6 +528,7 @@ bool eeLoadGeneral();
 #define PHYSICAL_9XTREME			7
 #define PHYSICAL_QX7					8
 #define PHYSICAL_XLITE				9
+#define PHYSICAL_T12					10
 
 #include "myeeprom.h"
 

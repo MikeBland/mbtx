@@ -129,6 +129,7 @@ uint8_t TmOK ;
 
 uint8_t AltitudeDecimals ;
 int16_t WholeAltitude ;
+uint8_t A1Received = 0 ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 
@@ -879,9 +880,13 @@ void processSportPacket()
 				case 4 :		// Battery from X8R
 //		      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
 					store_hub_data( FR_RXV, value ) ;
-//				break ;
+					if ( A1Received )
+					{
+						break ;
+					}
 				case 2 :
 		      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
+					A1Received = 1 ;
 				break ;
   		    
 				case 3 :

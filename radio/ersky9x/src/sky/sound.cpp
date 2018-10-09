@@ -486,7 +486,7 @@ void sound_5ms()
 				Sound_g.VoiceRequest = 0 ;
 				Sound_g.VoiceActive = 1 ;
 
-				set_frequency( VoiceBuffer[0].frequency ? VoiceBuffer[0].frequency : 15999 ) ;
+				set_frequency( VoiceBuffer[0].frequency ? VoiceBuffer[0].frequency : 16000 ) ;
 #ifndef SIMU
 				dacptr->DACC_PTCR = DACC_PTCR_TXTDIS ;
 				dacptr->DACC_TPR = (uint32_t) VoiceBuffer[0].dataw ;

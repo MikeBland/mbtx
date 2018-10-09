@@ -102,6 +102,7 @@
 #define DNLD_VER_ERSKY9XA				 6
 #define DNLD_VER_ERSKY9XQX7			 7
 #define DNLD_VER_ERSKY9XXLITE		 8
+#define DNLD_VER_ERSKY9XT12			 9
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -141,6 +142,7 @@
 #define ERSKY9XRA_URL "http://www.er9x.com/ersky9x_rom.bin"
 #define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
 #define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
+#define ERSKY9XT12_URL "http://www.er9x.com/t12_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -285,6 +287,9 @@ void MainWindow::title()
 		case 8 :
 			type = "XLITE" ;
     break ;
+		case 9 :
+			type = "T12" ;
+    break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -425,6 +430,9 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
           case 8 :
 						currentRev = currentERSKY9XXLITErev ;
 					break ;
+          case 9 :
+						currentRev = currentERSKY9XT12rev ;
+					break ;
 
 				}
 
@@ -470,8 +478,13 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
                 break;
 								
 						case (DNLD_VER_ERSKY9XXLITE):
-                dnldURL = ERSKY9X_URL;
+                dnldURL = ERSKY9XXLITE_URL;
                 baseFileName = "xlite_rom.bin";
+                break;
+								
+						case (DNLD_VER_ERSKY9XT12):
+                dnldURL = ERSKY9XT12_URL;
+                baseFileName = "t12_rom.bin";
                 break;
 								
             default:
@@ -541,6 +554,10 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 											case 8 :
                     		settings.setValue("currentERSKY9XXLITErev", rev);
 											break ;
+											
+											case 9 :
+                    		settings.setValue("currentERSKY9XT12rev", rev);
+											break ;
 										}
                 }
             }
@@ -601,7 +618,16 @@ void MainWindow::downloadLatester9x()
            baseFileName = "ersky9x_rom.bin";
       break;
 								
-
+			case (DNLD_VER_ERSKY9XXLITE):
+          dnldURL = ERSKY9XXLITE_URL;
+          baseFileName = "xlite_rom.bin";
+          break;
+								
+			case (DNLD_VER_ERSKY9XT12):
+          dnldURL = ERSKY9XT12_URL;
+          baseFileName = "t12_rom.bin";
+          break;
+								
       case (DNLD_VER_ERSKY9XA) :
           dnldURL = ERSKY9X_URL;
           baseFileName = "ersky9x_rom.bin";
@@ -641,6 +667,9 @@ void MainWindow::downloadLatester9x()
 			break ;
 			case 8 :
 				currentERSKY9Xrev_temp = currentERSKY9XXLITErev ;
+			break ;
+			case 9 :
+				currentERSKY9Xrev_temp = currentERSKY9XT12rev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -749,6 +778,10 @@ void MainWindow::reply1Accepted()
 			
 			case 8 :
     		settings.setValue("currentERSKY9XXrev", currentERSKY9XXLITErev);
+			break ;
+
+			case 9 :
+    		settings.setValue("currentERSKY9XXrev", currentERSKY9XT12rev);
 			break ;
 
 		}	

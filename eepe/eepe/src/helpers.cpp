@@ -8,9 +8,10 @@
 #include <QCheckBox>
 #include <QSpinBox>
 
-uint8_t ProtocolOptionsX9de[2][5] = { {2,0,1}, {4,0,1,2,3} };
-uint8_t ProtocolOptionsSKY[2][5] = { {3,0,2,3}, {4,0,1,2,3} };
-uint8_t ProtocolOptions9XT[2][5] = { {4,0,1,2,3}, {4,0,1,2,3} };
+uint8_t ProtocolOptionsX9de[2][6] = { {2,0,1}, {5,0,1,2,3,4} };
+uint8_t ProtocolOptionsSKY[2][6] = { {3,0,2,3}, {5,0,1,2,3,4} };
+uint8_t ProtocolOptions9XT[2][6] = { {4,0,1,2,3}, {5,0,1,2,3,4} };
+uint8_t ProtocolOptionsT12[2][6] = { {0}, {4,0,2,3,4} };
 
 QString MultiProtocols[] = {
 "Flysky",
@@ -666,10 +667,10 @@ uint8_t Sw3PosCount[8] ;
 void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 {
   uint16_t map = pgeneral->switchMapping ;
-	int x = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
 	uint8_t *p = switchMapTable[x] ;
 	*p++ = 0 ;
-	if ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) )
+  if ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) )
 	{
 		*p++ = HSW_SA0 ;
 		*p++ = HSW_SA1 ;
@@ -679,14 +680,20 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 		*p++ = HSW_SB1 ;
 		*p++ = HSW_SB2 ;
 
-		if ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) )
+    if ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) )
 		{
 			*p++ = HSW_SC0 ;
-			*p++ = HSW_SC1 ;
+      if ( ( type != RADIO_TYPE_XLITE ) || (pgeneral->ailsource) )
+			{
+				*p++ = HSW_SC1 ;
+			}
 			*p++ = HSW_SC2 ;
 	
 			*p++ = HSW_SD0 ;
-			*p++ = HSW_SD1 ;
+      if ( ( type != RADIO_TYPE_XLITE ) || (pgeneral->rudsource) )
+			{
+				*p++ = HSW_SD1 ;
+			}
 			*p++ = HSW_SD2 ;
 		}
 
@@ -698,7 +705,10 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 		}
 
 	//	*p++ = HSW_SF0 ;
-		*p++ = HSW_SF2 ;
+		if ( type != RADIO_TYPE_XLITE )
+		{
+			*p++ = HSW_SF2 ;
+		}
 
 		if ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) )
 		{
@@ -708,7 +718,10 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 	  }
 
 	//	*p++ = HSW_SH0 ;
-		*p++ = HSW_SH2 ;
+		if ( type != RADIO_TYPE_XLITE )
+		{
+			*p++ = HSW_SH2 ;
+		}
 	
     if ( pgeneral->analogMapping & 0x0C /*MASK_6POS*/ )
 		{
@@ -899,7 +912,7 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type )
 
 int8_t switchUnMap( int8_t x, int type )
 {
-	int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+	int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -916,7 +929,7 @@ int8_t switchUnMap( int8_t x, int type )
 
 int8_t switchMap( int8_t x, int type )
 {
-  int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int y = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
 	uint8_t sign = 0 ;
 	if ( x < 0 )
 	{
@@ -1085,11 +1098,23 @@ void populateAnaVolumeCB( QComboBox *b, int value )
   for(int i=0; i<8; i++)
 	{
 #ifdef SKY
-    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) && (i == 3) )
+    if ( (type == RADIO_TYPE_T12 ) && ( i >= 1 ) && ( i <= 3 ) )
 		{
-    	b->addItem( "SL " );
+			
+    	b->addItem( (i==1) ? "AUX4" : (i==2) ? "AUX5" : "GV3" ) ;
 		}
-		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) && (i == 4) )
+		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) && (i == 3) )
+		{
+			if ( type == RADIO_TYPE_QX7 )
+			{
+    		b->addItem( "GV3" );
+			}
+			else
+			{
+    		b->addItem( "SL " );
+			}
+		}
+		else if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) ) && (i == 4) )
 		{
     	b->addItem( "SR " );
 		}
@@ -1117,13 +1142,13 @@ void populateHardwareSwitch(QComboBox *b, int value )
 QString gvarSourceString( int index, int type, uint32_t extraPots)
 {
 	int limit = 36+8+24+4 ;
-	if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )
+  if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) ) )
 	{
 		limit = 37+8+24+4 ;
 	}
 	if ( index <= limit )
 	{
-		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )	// Taranis
+    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) ) )	// Taranis
 		{
 			if ( index == 12 )
 			{
@@ -1132,6 +1157,21 @@ QString gvarSourceString( int index, int type, uint32_t extraPots)
 			if ( index == 13 )
 			{
     		return "S2  " ;
+			}
+			if ( index > 13 )
+			{
+				index -= 1 ;
+			}
+		}
+		if ( type == RADIO_TYPE_T12 )
+		{
+			if ( index == 12 )
+			{
+    		return "AUX4" ;
+			}
+			if ( index == 13 )
+			{
+    		return "AUX5" ;
 			}
 			if ( index > 13 )
 			{
@@ -1172,14 +1212,14 @@ void populateGvarCB(QComboBox *b, int value, int type)
     b->clear();
 #ifdef SKY
 		int limit = 36+8+24+4 ;
-		if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) )
+    if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) ) )
 		{
 			limit = 37+8+24+4 ;
 		}
     for(int i=0; i<=limit; i++)
 		{
 			int idx = i ;
-				if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) )	// Taranis
+        if ( ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) ) )	// Taranis
 				{
 					if ( idx == 12 )
 					{
@@ -1189,6 +1229,23 @@ void populateGvarCB(QComboBox *b, int value, int type)
 					if ( idx == 13 )
 					{
 		        b->addItem("S2  ");
+						continue ;
+					}
+					if ( idx > 13 )
+					{
+						idx -= 1 ;
+					}
+				}
+				if ( type == RADIO_TYPE_T12 )
+				{
+					if ( idx == 10 )
+					{
+		        b->addItem("AUX4");
+						continue ;
+					}
+					if ( idx == 11 )
+					{
+		        b->addItem("AUX5");
 						continue ;
 					}
 					if ( idx > 13 )
@@ -1689,7 +1746,6 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
     break;
     
 		case FR_ALT_BARO:
-      unit = 'm' ;
 			if (model->FrSkyUsrProto == 1)  // WS How High
 			{
       	if ( model->FrSkyImperial )
@@ -1698,11 +1754,12 @@ void stringTelemetryChannel( char *string, int8_t index, int16_t val, ModelData 
 			}
     case FR_GPS_ALT:
       unit = 'm' ;
+			att |= PREC1 ;
       if ( model->FrSkyImperial )
       {
         // m to ft *105/32
-        val *= 105 ;
-				val /= 32 ;
+//        val *= 105 ;
+//				val /= 32 ;
         unit = 'f' ;
       }
     break;
@@ -1827,7 +1884,7 @@ void populateAlarmCB(QComboBox *b, int value=0)
 #ifdef SKY
 QString getMappedSWName(int val, int eepromType)
 {
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 
   if(!val) return "---";
@@ -1861,7 +1918,7 @@ QString getSWName(int val, int extra )
   int x ;
 	if ( eepromType >= 0 )
 	{
-  	x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  	x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
 	}
 	else
 	{
@@ -1933,7 +1990,16 @@ QString getSWName(int val, int extra )
 #endif
 
   QString temp ;
-  temp = switches.mid((sw-1)*3,3) ;
+#ifdef SKY
+  if ( ( ( eepromType == RADIO_TYPE_T12 ) || ( eepromType == -RADIO_TYPE_T12-1 ) ) && ( sw == 1 ) )
+	{
+		temp = "SG" ;
+	}
+	else
+#endif
+	{
+		temp = switches.mid((sw-1)*3,3) ;
+	}
   return QString(val<0 ? "!" : "") + temp ;
 }
 #endif
@@ -1942,7 +2008,7 @@ QString getSWName(int val, int extra )
 int getSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )
 //	{
@@ -1955,6 +2021,7 @@ int getSwitchCbValue( QComboBox *b, int eepromType )
 #ifndef V2
 int getSwitchCbValue( QComboBox *b, int eepromType )
 {
+	(void) eepromType ;
 	int value ;
   int limit = MaxSwitchIndex ;
 	value = b->currentIndex()-limit ;
@@ -1993,7 +2060,7 @@ int getAndSwitchCbValue( QComboBox *b )
 int getSwitchCbValueShort( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
 //	if ( eepromType )
 //	{
@@ -2008,9 +2075,9 @@ int getSwitchCbValueShort( QComboBox *b, int eepromType )
 int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 {
 	int value ;
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
-  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_QX7 ) ) ? HSW_MAX_X9D : HSW_MAX ;
+  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_T12 ) ) ? HSW_MAX_X9D : HSW_MAX ;
 
 //	if ( eepromType )
 //	{
@@ -2035,6 +2102,7 @@ int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 #ifndef V2
 int getTimerSwitchCbValue( QComboBox *b, int eepromType )
 {
+	(void) eepromType ;
 	int value ;
 //  int x = ( (eepromType == 1 ) || ( eepromType == 2 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex ;
@@ -2063,7 +2131,7 @@ void populateSwitchCB(QComboBox *b, int value, int eepromType)
 {
   b->clear();
 #ifdef SKY
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )
 //	{
@@ -2121,7 +2189,7 @@ void populateSwitchShortCB(QComboBox *b, int value, int eepromType)
 	}
 #endif
 #ifdef SKY
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
 //	if ( eepromType )
 //	{
@@ -2263,6 +2331,7 @@ void populateSwitchxAndCB(QComboBox *b, int value, int eepromType)
 #ifndef SKY
 int getxAndSwitchCbValue( QComboBox *b, int eepromType )
 {
+	(void) eepromType ;
   int limit = MaxSwitchIndex - 1 ;
 	int value = b->currentIndex() - limit ;
 //	if ( abs(value) == limit )
@@ -2292,9 +2361,9 @@ int getxAndSwitchCbValue( QComboBox *b, int eepromType )
 #endif
 #endif
 
+#ifdef SKY
 void x9dPopulateSwitchAndCB(QComboBox *b, int value=0)
 {
-#ifdef SKY
 	char name[6] ;
 	name[0] = '!' ;
 	name[1] = 'L' ;
@@ -2343,9 +2412,9 @@ void x9dPopulateSwitchAndCB(QComboBox *b, int value=0)
   j = switchUnMap(value, 1) ;
   b->setCurrentIndex(j+MaxSwitchIndex[1]-1) ;
   b->setMaxVisibleItems(10);
-#endif
 	 
 }
+#endif
 
 
 #ifdef SKY
@@ -2477,7 +2546,7 @@ void populateSafetySwitchCB(QComboBox *b, int type, int value, int extra )
 	int start = -MAX_DRSWITCH ;
 	int last = MAX_DRSWITCH ;
 #ifdef SKY
-  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
+  int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? 1 : 0 ;
 //	if ( eepromType )
 //	{
 //		offset = MAX_XDRSWITCH ;
@@ -2594,7 +2663,7 @@ void populateTmrBSwitchCB(QComboBox *b, int value, int eepromType )
 #ifdef SKY
   int x = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? 1 : 0 ;
   int limit = MaxSwitchIndex[x]-1 ;
-  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) ) ? HSW_MAX_X9D : HSW_MAX ;
+  int hsw_max = ( (eepromType == RADIO_TYPE_TARANIS ) || ( eepromType == RADIO_TYPE_TPLUS ) || ( eepromType == RADIO_TYPE_QX7 ) || ( eepromType == RADIO_TYPE_XLITE ) || ( eepromType == RADIO_TYPE_T12 ) ) ? HSW_MAX_X9D : HSW_MAX ;
 //	if ( eepromType )
 //	{
 //		limit = MAX_XDRSWITCH - 1 ;
@@ -2723,7 +2792,7 @@ QString getTimerMode(int tm)
 QString getTimerMode(int tm, int eepromType )
 #endif
 {
-
+	(void) eepromType ;
 //#ifdef SKY    
     QString str = CURV_STR;
     QString stt = "OFFON THsTH%";
@@ -2802,7 +2871,7 @@ QString getTimerMode(int tm, int eepromType )
 
 #define MODI_STR  "Rud Ele Thr Ail Rud Thr Ele Ail Ail Ele Thr Rud Ail Thr Ele Rud "
 #ifdef SKY    
-#define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 PPM9PP10PP11PP12PP13PP14PP15PP16CH25CH26CH27CH28CH29CH30CH31CH32"
+#define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH16CH17CH18CH19CH20CH21CH22CH23CH24SWCHGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 PPM9PP10PP11PP12PP13PP14PP15PP16CH25CH26CH27CH28CH29CH30CH31CH32Rtm Etm Ttm Atm "
 #else
 #define SRCP_STR  "P1  P2  P3  HALFFULLCYC1CYC2CYC3PPM1PPM2PPM3PPM4PPM5PPM6PPM7PPM8CH1 CH2 CH3 CH4 CH5 CH6 CH7 CH8 CH9 CH10CH11CH12CH13CH14CH15CH163POSGV1 GV2 GV3 GV4 GV5 GV6 GV7 THISSC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 "
 #endif
@@ -2906,6 +2975,17 @@ QString getSourceStr(int stickMode, int idx, int modelVersion )
 						}
 					}
 				}
+				else if ( type == RADIO_TYPE_T12 )
+				{
+					if ( idx == 5 )
+					{
+						return "AUX4" ;
+					}
+					if ( idx == 6 )
+					{
+						return "AUX5" ;
+					}
+				}
 #endif
 				idx -= 5 ;
 #ifdef SKY
@@ -2949,7 +3029,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				limit = 48 ;
 			}
 		}
-		if ( type == RADIO_TYPE_QX7 )
+		if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 		{
 			limit = 44 ;
 		}
@@ -2964,11 +3044,11 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
     for(int i=0; i<limit; i++)
 		{
 			int j = i ;
-			if ( type == RADIO_TYPE_QX7 )
+			if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_XLITE ) || ( type == RADIO_TYPE_T12 ) )
 			{
 				if ( j > 6 )
 				{
-					j += 2 ;	// Skip 3rd pot
+					j += 2 ;	// Skip 2 pots
 				}
 			}
 			b->addItem(getSourceStr(stickMode,j,modelVersion, type, extraPots));
@@ -3026,7 +3106,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 				}
 			}
 		}
-		if ( type == RADIO_TYPE_QX7 )
+		if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 		{
 			if ( value > 6 )
 			{
@@ -3041,7 +3121,7 @@ void populateSourceCB(QComboBox *b, int stickMode, int telem, int value, int mod
 #ifdef SKY    
 uint32_t decodePots( uint32_t value, int type, uint32_t extraPots )
 {
-	if ( type == RADIO_TYPE_QX7 )
+  if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 	{
 		if ( value > 6 )
 		{

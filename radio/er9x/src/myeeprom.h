@@ -670,7 +670,8 @@ PACK(typedef struct t_ModelData {
 		uint8_t failsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
 		uint8_t failsafeSpare:2 ;
-		int8_t NotFailsafe[4];		// Currently unused
+		int8_t NotFailsafe[3];		// Currently unused
+		uint8_t		rxVratio ;
 #else
 		int8_t sparepxxFailsafe[2];		// Currently unused
 		uint8_t telemetryProtocol ;
@@ -679,7 +680,8 @@ PACK(typedef struct t_ModelData {
 		uint8_t failsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
 		uint8_t failsafeSpare:2 ;
-		int8_t NotFailsafe[4];		// Currently unused
+		int8_t NotFailsafe[3];		// Currently unused
+		uint8_t		rxVratio ;
 #endif // MULTI_PROTOCOL
 		SafetySwData xvoiceSw[EXTRA_VOICE_SW] ;
     CxSwData xcustomSw[EXTRA_CSW];
@@ -790,6 +792,7 @@ PACK(typedef struct t_V2ModelData
 	uint8_t r9mPower:2 ;
 	uint8_t failsafeSpare:2 ;
 	int8_t Failsafe[16] ;	// Currently unused
+	uint8_t		rxVratio ;
 }) V2ModelData ;
 #endif
 

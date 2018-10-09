@@ -48,7 +48,14 @@ Fix voice overrun problem on Atmel radios (SKY/AR9X/9XR-PRO)
 Add |d|<val to voice alert functions
 Support inverted SPort polling on COM 1 for Multi Module
 Support Jumper T12
-
+Add "double click" on encoder button - toggle GVAR
+Press and hold encoder button for fast editing
+Delay loading of model scripts
+Support MOVE for voice alerts
+Bluetooth Tx signal held low for external power switch
+Handle unknown SPort IDs
+Add trims as Mix sources
+FrSky XJT Rx numbers default to model slot
 
 ******************************************
 CHANGELOG: 28-Feb-2018  MPB (r221)

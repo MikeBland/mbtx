@@ -103,6 +103,10 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->sourceCB->addItem("CH31");
     ui->sourceCB->addItem("CH32");
 #endif
+    ui->sourceCB->addItem("Rtm");
+    ui->sourceCB->addItem("Etm");
+    ui->sourceCB->addItem("Ttm");
+    ui->sourceCB->addItem("Atm");
 //		int x = md->srcRaw ;
 //		if ( x >= MIX_3POS )
 //		{
@@ -157,7 +161,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 				}
 			}
 		}
-		if ( type == RADIO_TYPE_QX7 )
+		if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 		{
 			if ( value > 6 )
 			{
@@ -204,18 +208,18 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 		ui->sourceSwitchCB->clear();
 
- 		if ( ( (leeType == RADIO_TYPE_TARANIS ) || ( leeType == RADIO_TYPE_TPLUS ) || ( leeType == RADIO_TYPE_QX7 ) ) )	// Taranis
+    if ( (leeType == RADIO_TYPE_TARANIS ) || ( leeType == RADIO_TYPE_TPLUS ) || ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )	// Taranis
 		{
     	ui->sourceSwitchCB->addItem("SA");
     	ui->sourceSwitchCB->addItem("SB");
     	ui->sourceSwitchCB->addItem("SC");
     	ui->sourceSwitchCB->addItem("SD");
-			if ( leeType != RADIO_TYPE_QX7 )
+			if ( ( leeType != RADIO_TYPE_QX7 ) && ( leeType != RADIO_TYPE_T12 ) )
 			{
     		ui->sourceSwitchCB->addItem("SE");
 			}
     	ui->sourceSwitchCB->addItem("SF");
-			if ( leeType != RADIO_TYPE_QX7 )
+			if ( ( leeType != RADIO_TYPE_QX7 ) && ( leeType != RADIO_TYPE_T12 ) )
 			{
     		ui->sourceSwitchCB->addItem("SG");
 			}
@@ -263,7 +267,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		}
     
 
-		if ( leeType == RADIO_TYPE_QX7 ) 
+		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )
 		{
 			uint32_t index = md->switchSource ;
 			if ( md->switchSource > 4 )
@@ -408,7 +412,7 @@ void MixerDialog::updateChannels()
   {
     lowBound = 24 ;
   }
-  if ( lType == RADIO_TYPE_QX7 )
+	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) )
   {
     lowBound = 20 ;
   }
@@ -497,7 +501,7 @@ void MixerDialog::valuesChanged()
 //		}
 //    md->srcRaw       = x ;
 		
-		if ( lType == RADIO_TYPE_QX7 )
+		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) )
 		{
       if ( value >= 7 )
 			{
@@ -508,7 +512,7 @@ void MixerDialog::valuesChanged()
 		md->srcRaw       = value ;
 //		ui->spinBox->setValue(md->srcRaw);
 
-		if ( leeType == RADIO_TYPE_QX7 ) 
+		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )
 		{
 			uint32_t index = ui->sourceSwitchCB->currentIndex() ;
 			if ( index > 3 )

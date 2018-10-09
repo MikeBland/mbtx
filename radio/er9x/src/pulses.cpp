@@ -36,6 +36,7 @@ uint8_t *pulses2MHzptr = pulses2MHz.pbyte ;
 uint8_t heartbeat;
 uint8_t Current_protocol;
 uint8_t pxxFlag = 0;					// also used for MULTI_PROTOCOL for bind flag
+uint8_t PxxExtra ;
 uint8_t PausePulses = 0 ;
 static uint8_t *Serial_pulsePtr = pulses2MHz.pbyte ;
 
@@ -909,8 +910,20 @@ static void setupPulsesPXX()
       putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
     }
 #endif
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 #if defined(CPUM128) || defined(CPUM2561)
 		flag1 = 0 ;
+		if ( PxxExtra & 1 )
+		{
+			flag1 = (1 << 2 ) ;
+		}
+		if ( PxxExtra & 2 )
+		{
+			flag1 |= (1 << 1 ) ;
+		}
+#else
+		flag1 = 0 ;
+#endif		
 		if ( g_model.sub_protocol == 3 )	// R9M
 		{
 			flag1 |= g_model.r9mPower << 3 ;

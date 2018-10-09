@@ -321,7 +321,21 @@ void createSwitchMapping()
 	FORCE_INDIRECT(p) ;
 	uint8_t map = g_eeGeneral.switchMapping ;
 	*p++ = 0 ;
+	
+#ifdef XSW_MOD
+	if ( map & USE_THR_3POS )
+	{
+		*p++ = HSW_Thr3pos0 ;
+		*p++ = HSW_Thr3pos1 ;
+		*p++ = HSW_Thr3pos2 ;
+	}
+	else
+	{
+		*p++ = HSW_ThrCt ;
+	}
+#else	
 	*p++ = HSW_ThrCt ;
+#endif
 	if ( map & USE_RUD_3POS )
 	{
 		*p++ = HSW_Rud3pos0 ;
@@ -1607,6 +1621,7 @@ void checkTHR()
 	lcd_puts_P(0,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
 	lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
 	audioVoiceDefevent(AU_ERROR, V_ALERT);
+	putVoiceQueue( V_THR_WARN ) ;
 #else
 		almess( PSTR(STR_THR_NOT_IDLE"\037"STR_RST_THROTTLE), ALERT_SKIP | ALERT_VOICE ) ;
 #endif
@@ -1767,13 +1782,19 @@ int8_t getMovedSwitch()
   int8_t swi = 0, swi3 = SW_3POS_BASE, result = 0 ;
   uint16_t cstate = switches_state;
   xstate ^= cstate;
-  while (swi++ < MAX_PSW3POS) {
-    if (xstate & 3) {           // 3pos switch moved
-      if (is3PosSwitch(swi)) {  // 3pos pin connected/mapped?
-        uint8_t s3 = (cstate & 3);
-        result = swi3 + s3;
-      } else {
-        result = (cstate & 2) ? swi : (-swi);
+  while (swi < MAX_PSW3POS)
+	{
+		swi += 1 ;
+    if (xstate & 3)           // 3pos switch moved
+		{
+      if (is3PosSwitch(swi))  // 3pos pin connected/mapped?
+			{
+        uint8_t s3 = (cstate & 3) ;
+        result = swi3 + s3 ;
+      }
+			else
+			{
+        result = (cstate & 2) ? swi : (-swi) ;
       }
       break;
     }
@@ -1781,17 +1802,20 @@ int8_t getMovedSwitch()
     cstate >>= 2;
     swi3 += 3;
   }
-  if (result == 0) {
-    while (swi++ < MAX_PSWITCH) {
-      if (xstate & 1) {       // 2pos switch moved
-        result = ((cstate & 1) ? swi : (-swi));
+  if (result == 0)
+	{
+    while (swi++ < MAX_PSWITCH)
+		{
+      if (xstate & 1)       // 2pos switch moved
+			{
+        result = ((cstate & 1) ? swi : (-swi)) ;
         break;
       }
-      xstate >>= 1;
-      cstate >>= 1;
+      xstate >>= 1 ;
+      cstate >>= 1 ;
     }
   }
-  return result;
+  return result ;
 }
 #endif
 
@@ -1882,6 +1906,7 @@ void checkSwitches()
 				if ( voice )
 				{
 					audioVoiceDefevent(AU_ERROR, V_ALERT);
+					putVoiceQueue( V_SW_WARN ) ;
 				}
 #else
 		    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;

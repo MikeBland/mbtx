@@ -243,9 +243,16 @@ void read_adc()
 //  if (GPIOI->IDR & 0x0800)
 	{
 		AnalogData[0] = AdcBuffer[0] ;
-		AnalogData[1] = 4096 - AdcBuffer[1] ;
+		if ( isProdVersion() )
+		{
+			AnalogData[1] = 4095 - AdcBuffer[1] ;
+		}
+		else
+		{
+			AnalogData[1] = AdcBuffer[1] ;
+		}
 		AnalogData[2] = AdcBuffer[2] ;
-		AnalogData[3] = 4096 - AdcBuffer[3] ;
+		AnalogData[3] = 4095 - AdcBuffer[3] ;
 	}
 	else
 	{
@@ -309,13 +316,13 @@ void read_adc()
 		}
 		AnalogData[2] = t ;
 	}
-	AnalogData[4] = 4096 - AdcBuffer[4] ;
-	AnalogData[5] = 4096 - AdcBuffer[5] ;
+	AnalogData[4] = 4095 - AdcBuffer[4] ;
+	AnalogData[5] = 4095 - AdcBuffer[5] ;
 	AnalogData[6] = AdcBuffer[6] ;
 	AnalogData[7] = AdcBuffer[7] ;
-	AnalogData[8] = 4096 - AdcBuffer[8] ;
+	AnalogData[8] = 4095 - AdcBuffer[8] ;
 	AnalogData[12] = AdcBuffer[9] ;
-	AnalogData[9] = 4096 - AdcBuffer[10] ;
+	AnalogData[9] = 4095 - AdcBuffer[10] ;
 	uint16_t temp = AnalogData[10] ;
 	uint16_t temp1 = AdcBuffer[11] ;
 	uint16_t temp2 ;

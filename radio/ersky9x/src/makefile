@@ -774,7 +774,9 @@ endif
 
 
 #ifeq ($(REVX), 1)
+ifneq ($(SMALL), 1)
  CPPSRC += pdi.cpp
+endif
 #endif
 ifeq ($(DEBUG), 1)
 CPPSRC += debug.cpp

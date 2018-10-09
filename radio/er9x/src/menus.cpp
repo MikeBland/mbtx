@@ -975,6 +975,13 @@ const
 #include "sticks.lbm"
 //typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
 
+#if defined(CPUM128) || defined(CPUM2561)
+const prog_uchar speaker[] = {
+4,8,0,
+0x1C,0x1C,0x3E,0x7F
+} ;
+#endif
+
 void menuProcAlpha(uint8_t event) ;
 void menuProcIndex(uint8_t event) ;
 
@@ -2255,10 +2262,6 @@ void menuProcTelemetry(uint8_t event)
 		y += FH ;
 		subN += 1 ;
 
-		if(sub==subN)
-		{
-			Columns = 1 ;
-		}
 		for (int i=0; i<2; i++)
 		{
 #ifdef V2
@@ -2266,6 +2269,10 @@ void menuProcTelemetry(uint8_t event)
 #else
 			FrSkyChannelData *fd ;
 #endif
+			if(sub==subN)
+			{
+				Columns = 1 ;
+			}
 	 
 			fd = &g_model.frsky.channels[i] ;
 
@@ -4962,6 +4969,43 @@ void menuRangeBind(uint8_t event)
 	asm("") ;
 }
 
+#if defined(CPUM128) || defined(CPUM2561)
+void menuBindOptions(uint8_t event)
+{
+	uint8_t b ;
+	TITLEP(PSTR("Bind Options"));
+	static MState2 mstate2;
+	mstate2.check_columns( event, 2 ) ;
+  switch(event)
+  {
+		case EVT_ENTRY:
+			PxxExtra = 0 ;
+		break ;
+	
+    case EVT_KEY_BREAK(BTN_RE):
+    case EVT_KEY_FIRST(KEY_MENU):
+			if ( mstate2.m_posVert == 0 )
+		  {
+	  		pxxFlag = PXX_BIND ;		    	//send bind code
+				chainMenu( menuRangeBind ) ;
+			}
+		break ;
+	}
+	int8_t sub = mstate2.m_posVert ;
+	
+	lcd_puts_Pleft( 1*FH, PSTR("Bind") ) ;
+	if(sub == 0)
+	{
+		lcd_char_inverse( 0, 1*FH, 4*FW, 0 ) ;
+	}
+	b = PxxExtra & 1 ;
+	b = checkIndexed( 2*FH, PSTR("\0""\001""\012Chans 1-8 Chans 9-16"), b, (sub==1) ) ;
+	PxxExtra =	( PxxExtra & ~1 ) | b ;
+	b = (PxxExtra & 2) ? 1 : 0 ;
+	b = checkIndexed( 3*FH, PSTR("\0""\001""\014Telemetry   No Telemetry"), b, (sub==2) ) ;
+	PxxExtra =	( PxxExtra & ~2 ) | ( b ? 2 : 0 ) ;
+}
+#endif
 
 static void editTimer( uint8_t sub )
 {
@@ -5469,7 +5513,7 @@ static uint16_t count = 0 ;
 				{
 					serialVoiceTxHeader( 13 ) ;
 					uint8_t *p = rPtr->restoreDirBuffer[sub - rPtr->dirOffset] ;
-					p[11] = sizeof(g_model) ;
+					p[11] = (uint8_t)sizeof(g_model) ;
 					p[12] = sizeof(g_model) >> 8 ;
 					serialVoiceBlockSend( p, 13 ) ;
 					rPtr->byteCount = 0 ;
@@ -5529,7 +5573,7 @@ static uint16_t count = 0 ;
 					serialVoiceTxHeader( 13 ) ;
 					serialVoiceBlockSend( (uint8_t *)g_model.name, 10 ) ;
 					serialVoiceTx( MDVERS ) ;
-					serialVoiceTx( sizeof(g_model) ) ;
+					serialVoiceTx( (uint8_t) sizeof(g_model) ) ;
 					serialVoiceTx( sizeof(g_model) >> 8 ) ;
 					rPtr->subState = 1 ;
 				}
@@ -6774,7 +6818,13 @@ static
 void putsDblSizeName( uint8_t y )
 {
 #ifdef SMALL_DBL
+#if defined(CPUM128) || defined(CPUM2561)
+	lcd_putsnAtt( 8, y, g_model.name, 10, DBLSIZE | BSS ) ;
+	lcd_img( 91, 8, speaker, 0 ) ;
+	lcd_hbar( 96, 9, 23, 6, (CurrentVolume*100+4)/7 ) ;
+#else	
 	lcd_putsnAtt( 24, y, g_model.name, 10, DBLSIZE | BSS ) ;
+#endif
 #else	
 	for(uint8_t i=0;i<sizeof(g_model.name);i++)
 		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
@@ -9326,6 +9376,8 @@ void multiOption( uint8_t x, uint8_t y, int8_t option, uint8_t attr, uint8_t pro
 		case M_Frsky :
 		case M_FrskyV :
 		case M_SFHSS :
+		case M_CORONA :
+		case M_Hitec :
 			lcd_puts_Pleft( y, PSTR("\013Freq.") ) ;
 			display = 0 ;
 		break ;
@@ -10046,7 +10098,6 @@ Str_Hardware
 		case M_DIAGKEYS	:
 		{
       TITLEP( PSTR(STR_DIAG) ) ;
-		
 	    uint8_t x=7*FW;
 #ifdef XSW_MOD
       y = 0;
@@ -10137,7 +10188,6 @@ Str_Hardware
 				putc_0_1( FW*20, 2*FH, getSwitch00(HSW_Pb2) ) ;
 			}
 #endif
-		
 		}			 
 		break ;
 
@@ -11183,8 +11233,20 @@ void rangeBindAction( uint8_t y, uint8_t newFlag )
 	lcd_char_inverse( 0, y, 5*FW, 0 ) ;
 	if ( Tevent==EVT_KEY_LONG(KEY_MENU))
 	{
+#if defined(CPUM128) || defined(CPUM2561)
+		if ( newFlag == PXX_BIND )
+		{
+			pushMenu( menuBindOptions ) ;
+		}
+		else
+		{
+	  	pxxFlag = newFlag ;		    	//send bind code or range check code
+			pushMenu(menuRangeBind) ;
+		}
+#else
   	pxxFlag = newFlag ;		    	//send bind code or range check code
 		pushMenu(menuRangeBind) ;
+#endif
 	}
 	s_editMode = 0 ;
 }
@@ -11347,7 +11409,7 @@ void menuSetFailsafe(uint8_t event)
 
 
 const prog_char APM StrNZ_country[] = { FW*10, 2, 3, 'A','m','e','J','a','p','E','u','r'};
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 const prog_char APM StrNZ_xjtType[] = { FW*6, 3, 3, 'D','1','6','D','8',' ','L','R','P','R','9','M' };
 #else
 const prog_char APM StrNZ_xjtType[] = { FW*10, 2, 3, 'D','1','6','D','8',' ','L','R','P' };
@@ -12456,12 +12518,12 @@ Str_Protocol
 //#else
 //				dataItems = 6 ;
 //#endif
-#if defined(CPUM128) || defined(CPUM2561)
-				if ( g_model.sub_protocol == 3 )	// R9M
-				{
-					dataItems += 1 ;
-				}
-#endif
+//#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+//				if ( g_model.sub_protocol == 3 )	// R9M
+//				{
+//					dataItems += 1 ;
+//				}
+//#endif
 			}
 			if ( protocol == PROTO_DSM2 )
 			{
@@ -12761,7 +12823,11 @@ Str_Protocol
 					}
 					else if ( x == M_CORONA )
 					{
-						s=PSTR(FWx10"\001"M_CORONA_STR);
+						s=PSTR(FWx10"\002"M_CORONA_STR);
+					}
+					else if ( x == M_Hitec )
+					{
+						s=PSTR(FWx10"\002"M_HITEC_STR);
 					}
 					else
 					{
@@ -12778,7 +12844,7 @@ Str_Protocol
 						attr = InverseBlink ;
 					}
 
-					if ( attr <= max )
+					if ( value <= max )
 					{
 						lcd_putsAttIdx( 10*FW, y, s, value, attr ) ;
 					} 
@@ -12792,10 +12858,6 @@ Str_Protocol
 					attr = checkIndexed( y, s, attr, (sub==subN) ) ;
 					g_model.ppmNCH = (attr << 4) + (ppmNch & 0x8F);
 #endif
-
-
-
-
 
 //#if defined(CPUM128) || defined(CPUM2561)
 //					if ( x == M_DSM )
@@ -12926,19 +12988,20 @@ Str_Protocol
 			if (protocol == PROTO_PXX)
 			{
 				lcd_puts_Pleft( y, PSTR(STR_PXX_TYPE) ) ;
-				uint8_t edit = (sub==subN) ;
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 				if ( g_model.sub_protocol == 3 )	// R9M
 				{
-					const char *s ;
-					Columns = 1 ;
+//					const char *s ;
 				  lcd_puts_Pleft( y, PSTR("\012Power") ) ;
-					s = ( g_model.country == 2 ) ? PSTR(FWx17"\001""\003 25500") : PSTR(FWx17"\003""\004  10 100 5001000") ;
-					g_model.r9mPower = checkIndexed( y, s, g_model.r9mPower, edit && (subSub == 1) ) ;
-					edit |= (subSub == 0) ;
+//					s = ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000") ;
+					if (sub==subN)
+					{
+						Columns = 1 ;
+						g_model.r9mPower = checkIndexed( y, ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000"), g_model.r9mPower, (subSub == 1) ) ;
+					}
 	      }
 #endif
-				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, edit ) ;
+				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) && (subSub == 0) ) ;
 				y += FH ;
 				subN++;
 

@@ -217,6 +217,16 @@ uint8_t menuPressed()
 	return ( read_keys() & 2 ) == 0 ;
 }
 
+uint8_t encoderPressed()
+{
+	if ( keys[BTN_RE].isKilled() )
+	{
+		return 0 ;
+	}
+	return keys[BTN_RE].state() ;
+}
+
+
 uint8_t getEvent()
 {
   register uint8_t evt = s_evt;
@@ -235,7 +245,11 @@ void Key::input(bool val, EnumKeys enuk)
   if(m_state && m_vals==0){  //gerade eben sprung auf 0
     if(m_state!=KSTATE_KILLED) {
       putEvent(EVT_KEY_BREAK(enuk));
+#ifdef KSTATE_RPTDELAY
+      if(!( m_state == KSTATE_RPTDELAY && m_cnt<20)){
+#else
       if(!( m_state == 16 && m_cnt<16)){
+#endif
         m_dblcnt=0;
       }
         //      }
@@ -247,9 +261,16 @@ void Key::input(bool val, EnumKeys enuk)
     case KSTATE_OFF:
       if(m_vals==FFVAL){ //gerade eben sprung auf ff
         m_state = KSTATE_START;
-        if(m_cnt>16) m_dblcnt=0; //pause zu lang fuer double
+        if(m_cnt>20) m_dblcnt=0; //pause zu lang fuer double
         m_cnt   = 0;
       }
+			else
+			{
+				if( m_vals == 0 )
+				{
+	        if(m_cnt>30) m_dblcnt=0; //pause zu lang fuer double
+				}
+			}
       break;
       //fallthrough
     case KSTATE_START:
@@ -312,7 +333,12 @@ void killEvents(uint8_t event)
   if(event < (int)DIM(keys))  keys[event].killEvents();
 }
 
-
+uint8_t getEventDbl(uint8_t event)
+{
+  event=event & EVT_KEY_MASK;
+  if(event < (int)DIM(keys))  return keys[event].getDbl();
+  return 0;
+}
 
 volatile uint8_t  g_blinkTmr10ms;
 

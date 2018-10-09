@@ -182,6 +182,54 @@ uint8_t BtPreviousLinkIndex = 0xFF ;
 extern uint8_t Activated ;
 
 
+static void btPowerOn()
+{
+#ifdef PCBSKY
+	configure_pins( PIO_PB3, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTB | PIN_NO_PULLUP ) ;
+#endif	
+
+#ifdef PCB9XT	
+	if ( g_eeGeneral.btComPort == 1 )
+	{
+		configure_pins( GPIO_Pin_0, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA | PIN_PER_8 ) ;
+	}
+	else if ( g_eeGeneral.btComPort == 2 )
+	{
+		configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+	}
+#endif	
+
+#ifdef PCBX7
+	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+#endif
+
+}
+
+static void btPowerOff()
+{
+#ifdef PCBSKY
+	configure_pins( PIO_PB3, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTB| PIN_NO_PULLUP ) ;
+#endif	
+
+#ifdef PCB9XT	
+	if ( g_eeGeneral.btComPort == 1 )
+	{
+		configure_pins( GPIO_Pin_0, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+		GPIOA->BSRRH = GPIO_Pin_0 ;		// Set low
+	}
+	else if ( g_eeGeneral.btComPort == 2 )
+	{
+		configure_pins( GPIO_Pin_10, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+		GPIOB->BSRRH = GPIO_Pin_10 ;		// Set low
+	}
+#endif	
+
+#ifdef PCBX7
+	configure_pins( GPIO_Pin_10, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+	GPIOB->BSRRH = GPIO_Pin_10 ;		// Set low
+#endif
+}
+
 void initBluetooth()
 {
 #ifdef PCBSKY
@@ -1145,7 +1193,16 @@ void bt_task(void* pdata)
 // Already initialised to g_eeGeneral.bt_baudrate
 // 0 : 115200, 1 : 9600, 2 : 19200, 3 : 57600, 4 : 38400
 
+
+	for(;;)
 	{
+		btPowerOff() ;
+		while ( g_model.BTfunction == BT_OFF )
+		{
+			CoTickDelay(50) ;					// 100mS
+		}
+		btPowerOn() ;
+		
 		x = g_eeGeneral.bt_baudrate ;
 
 		if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
@@ -1191,8 +1248,16 @@ void bt_task(void* pdata)
 					found = 1 ;
 				}
 			}
+			if ( g_model.BTfunction == BT_OFF )
+			{
+				break ;
+			}
 		} while (found == 0 ) ;
-
+		
+		if ( g_model.BTfunction == BT_OFF )
+		{
+			continue ;
+		}
 		CoTickDelay(1) ;					// 2mS
 		if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
 		{
@@ -1222,6 +1287,11 @@ void bt_task(void* pdata)
 		pBtControl->BtReady = 1 ; 
 		while(1)
 		{
+			if ( g_model.BTfunction == BT_OFF )
+			{
+				break ;
+			}
+			
 			if ( ( g_eeGeneral.BtType == BT_TYPE_HC06 )
 					 || ( ( g_eeGeneral.BtType >= BT_TYPE_HC05 ) && ( pBtControl->BtMasterSlave == 1 ) ) )
 			{
@@ -1298,6 +1368,10 @@ void bt_task(void* pdata)
 			else
 			{
 				x = CoWaitForSingleFlag( Bt_flag, 1 ) ;		// Wait for data in Fifo
+				if ( g_model.BTfunction == BT_OFF )
+				{
+					continue ;
+				}
 				if ( x == E_OK )
 				{
 					// We have some data in the Fifo

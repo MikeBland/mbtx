@@ -251,7 +251,7 @@
 #define ISTR_YES_NO         "\003OUI\013NON"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "EFFACER MIX?"
-#define ISTR_MIX_POPUP      "EDITER\0AJOUTER\0COPIER\0DEPLACER\0EFFACER\0EFF.TOUT\0TEMPLATES"
+#define ISTR_MIX_POPUP      "EDITER\0AJOUTER\0COPIER\0DEPLACER\0EFFACER\0EFF.TOUT\0TEMPLATES\0PASTE"
 #define ISTR_MIXER          "MIXAGE"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -575,7 +575,7 @@
 #define ISTR_THROTTLE_OPEN		"Gaz Ouvert"
 #define ISTR_THR_DEFAULT		"D/300faut Gaz"
 #define ISTR_TOTAL_TIME			"Temps Total"
-#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario"
+#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario\0Sensors"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

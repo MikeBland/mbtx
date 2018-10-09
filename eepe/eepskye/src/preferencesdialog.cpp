@@ -153,6 +153,7 @@ void preferencesDialog::populateLocale()
 // 6 - AR9X
 // 7 - QX7
 // 8 - XLITE
+// 9 - T12
 
 void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
 {
@@ -196,6 +197,11 @@ void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
 	{
     currentER9Xrev = settings.value("currentERSKY9XXLITErev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - erskyXLITE" ) ;
+	}
+	else if ( index == 9 )
+	{
+    currentER9Xrev = settings.value("currentERSKY9XT12rev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - erskyT12" ) ;
 	}
 	else
 	{

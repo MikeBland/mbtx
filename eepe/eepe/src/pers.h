@@ -396,6 +396,17 @@ enum EnumKeys {
 #define M_OPENLRS	       26
 #define M_AFHDS2A	       27
 #define M_Q2X2		       28
+#define M_WK2x01			 	 29
+#define M_Q303				 	 30
+#define M_GW008					 31
+#define M_DM002          32
+#define M_CABELL         33
+#define M_ESKY150        34
+#define M_H8_3D          35
+#define M_CORONA         36
+#define M_CFlie          37
+#define M_Hitec          38
+#define M_LAST_MULTI		 38
 
 
 #define GETADC_SING = 0

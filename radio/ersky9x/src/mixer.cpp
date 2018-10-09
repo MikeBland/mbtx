@@ -815,6 +815,14 @@ void perOut(int16_t *chanOut, uint8_t att )
 										}
 									}
 								}
+								else
+								{
+									if(k <= MIX_TRIMS_START + 4 )
+									{
+										uint32_t t = k - MIX_TRIMS_START ;
+										v = trimA[t] ;
+									}
+								}
 							}
 #endif
 						}

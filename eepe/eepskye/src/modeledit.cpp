@@ -1,4 +1,5 @@
 #include "modeledit.h"
+//#include "generaledit.h"
 #include "ui_modeledit.h"
 #include "pers.h"
 #include "file.h"
@@ -47,9 +48,10 @@ int GeneralDataValid = 0 ;
 SKYModelData Sim_m ;
 int ModelDataValid = 0 ;
 
-extern uint8_t ProtocolOptionsX9de[][5] ;
-extern uint8_t ProtocolOptionsSKY[][5] ;
-extern uint8_t ProtocolOptions9XT[][5] ;
+extern uint8_t ProtocolOptionsX9de[][6] ;
+extern uint8_t ProtocolOptionsSKY[][6] ;
+extern uint8_t ProtocolOptions9XT[][6] ;
+extern uint8_t ProtocolOptionsT12[][6] ;
 QString ProtocolNames[] = {"PPM", "XJT", "DSM", "MULTI", "XFIRE" } ;
 QString Polarity[] = {"POS", "NEG" } ;
 QString PxxTypes[] = {"D16", "D8", "LRP", "R9M" } ;
@@ -94,7 +96,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 //		}
     id_model = id;
 
-		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
+		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
     setupMixerListWidget();
 
     QSettings settings("er9x-eePskye", "eePskye");
@@ -267,7 +269,7 @@ void ModelEdit::tabModelEditSetup()
 		}
     ui->modelImageLE->setText( n ) ;
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) )
 		{
 			ui->modelImageLE->hide() ;
 			ui->label_ModelImage->hide() ;
@@ -431,7 +433,10 @@ void ModelEdit::tabModelEditSetup()
   	  	ui->protocolCB->addItem("Multi");
 			}	
 			
-			ui->xprotocolCB->addItem("XJT");
+      if ( ( rData->bitType & RADIO_BITTYPE_T12 ) == 0 )
+			{
+				ui->xprotocolCB->addItem("XJT");
+			}
     	ui->xprotocolCB->addItem("DSM");
     	ui->xprotocolCB->addItem("Multi");
 //	    if ( rData->bitType & RADIO_BITTYPE_9XRPRO )
@@ -465,7 +470,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -477,7 +482,7 @@ void ModelEdit::tabModelEditSetup()
 			ui->switchDefPos_8->hide() ;
 			ui->widgetDefSA->show() ;
 			ui->widgetDefSB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 			{
 				ui->widgetDefSC->show() ;
 				ui->widgetDefSD->show() ;
@@ -503,7 +508,22 @@ void ModelEdit::tabModelEditSetup()
 				ui->EnE->hide() ;
 				ui->EnG->hide() ;
 			}
-			ui->widgetDefSF->show() ;
+    	if (rData->bitType & RADIO_BITTYPE_XLITE )
+			{
+				ui->widgetDefSF->hide() ;
+			}
+			else
+			{
+				ui->widgetDefSF->show() ;
+				ui->label_SwF->setText( ( rData->bitType & RADIO_BITTYPE_T12 ) ? "SG" : "SF" ) ;
+				ui->label_SwG->setText( ( rData->bitType & RADIO_BITTYPE_T12 ) ? "SH" : "SG" ) ;
+			}
+			if ( rData->bitType & RADIO_BITTYPE_T12 )
+			{
+				ui->widgetDefSG->show() ;
+				ui->SwitchDefSG->setMaximum(1) ;
+				ui->EnG->show() ;
+			}
 			ui->EnThr->hide() ;
 			ui->EnEle->hide() ;
 			ui->EnRud->hide() ;
@@ -512,12 +532,24 @@ void ModelEdit::tabModelEditSetup()
 			ui->EnGea->hide() ;
 			ui->EnA->show() ;
 			ui->EnB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 			{
 				ui->EnC->show() ;
 				ui->EnD->show() ;
+    		if ( rData->bitType & RADIO_BITTYPE_XLITE )
+				{
+					ui->SwitchDefSC->setMaximum( g_eeGeneral.ailsource ? 2 : 1 ) ;
+					ui->SwitchDefSD->setMaximum( g_eeGeneral.rudsource ? 2 : 1 ) ;
+				}
 			}
-			ui->EnF->show() ;
+    	if ( rData->bitType & RADIO_BITTYPE_XLITE )
+			{
+				ui->EnF->hide() ;
+			}
+			else
+			{
+				ui->EnF->show() ;
+			}
 		}
 		else
 		{
@@ -780,9 +812,23 @@ void ModelEdit::setSwitchDefPos()
 		y >>= 2 ;
     ui->SwitchDefSB->setValue(y & 0x03) ;
 		y >>= 2 ;
-    ui->SwitchDefSC->setValue(y & 0x03) ;
+ 		if ( rData->bitType & RADIO_BITTYPE_XLITE )
+		{
+    	ui->SwitchDefSC->setValue( g_eeGeneral.ailsource ? y & 0x03 : ( (y & 0x03) ? 1 : 0 ) ) ;
+		}
+		else
+		{
+    	ui->SwitchDefSC->setValue(y & 0x03) ;
+		}
 		y >>= 2 ;
-    ui->SwitchDefSD->setValue(y & 0x03) ;
+ 		if ( rData->bitType & RADIO_BITTYPE_XLITE )
+		{
+    	ui->SwitchDefSD->setValue( g_eeGeneral.rudsource ? y & 0x03 : ( (y & 0x03) ? 1 : 0 ) ) ;
+		}
+		else
+		{
+    	ui->SwitchDefSD->setValue(y & 0x03) ;
+		}
 		y >>= 2 ;
     ui->SwitchDefSE->setValue(y & 0x03) ;
 		y >>= 2 ;
@@ -1584,7 +1630,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -1674,7 +1720,21 @@ void ModelEdit::setProtocolBoxes()
 		for ( module = 0 ; module < 2 ; module += 1 )
 		{
 			pdisplayList = module ? ui->externalModuleDisplayList : ui->internalModuleDisplayList ;
-			pdisplayList->show() ;
+			if ( rData->bitType & RADIO_BITTYPE_T12 )
+			{
+				if ( module == 0 )
+				{
+					pdisplayList->hide() ;
+				}
+				else
+				{
+					pdisplayList->show() ;
+				}
+			}
+			else
+			{
+				pdisplayList->show() ;
+			}
 			pdisplayList->clear() ;
 		
 			QString string = "Protocol: " ;
@@ -2483,7 +2543,7 @@ void ModelEdit::voiceAlarmsList()
 		QString srcstr ;
     uint32_t limit = 45 ;
 		uint32_t value = vad->source ;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 ) )
 		{
 			limit = 46 ;
     	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
@@ -2529,7 +2589,7 @@ void ModelEdit::voiceAlarmsList()
 		{
       str += tr("(%1) ").arg(getTelemString(value-limit+1 )) ;
 		}
-    srcstr = "-------v>val  v<val  |v|>val|v|<valv~=val " ;
+    srcstr = "-------v>val  v<val  |v|>val|v|<valv~=val v=val  v & val|d|>val" ;
 		str += tr("%1 ").arg(srcstr.mid( vad->func * 7, 7 )) ;
   	if ( vad->source > 44 )
 		{
@@ -2621,9 +2681,14 @@ void ModelEdit::tabVoiceAlarms()
 
 void ModelEdit::voiceAlarmsBlank( int i )
 {
-  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS ) )
 	{
 		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  	if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+  	  uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			vad = &g_eeGeneral.gvad[z] ;
+		}
 		vad->source = 0 ;
 		vad->func = 0 ;
 		vad->swtch = 0  ;
@@ -2636,7 +2701,15 @@ void ModelEdit::voiceAlarmsBlank( int i )
 		vad->offset = 0 ;
 		vad->file.vfile = 0 ;
 		vad->file.name[0] = 0 ;
-  	updateSettings() ;
+		
+//  	if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+//		{
+//      GeneralEdit::updateSettings() ;
+//		}
+//		else
+//		{
+	  	updateSettings() ;
+//		}
 	}
 }
 
@@ -2701,10 +2774,20 @@ void ModelEdit::voiceMoveUp()
   int i = VoiceListWidget->currentRow() ;
   VoiceAlarmData temp ;
 
-  if ( ( i > 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+  if ( ( i > 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS ) )
 	{
 		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  	if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+  	  uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			vad = &g_eeGeneral.gvad[z] ;
+		}
 		VoiceAlarmData *xvad = ( i-1 >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-1-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i-1] ;
+  	if ( i-1 >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+  	  uint8_t z = i-1 - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			xvad = &g_eeGeneral.gvad[z] ;
+		}
 		temp = *xvad ;
     *xvad = *vad ;
     *vad = temp ;
@@ -2720,11 +2803,21 @@ void ModelEdit::voiceMoveDown()
   int i = VoiceListWidget->currentRow() ;
   VoiceAlarmData temp ;
 
-  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS-1 ) )
+  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS-1 ) )
 	{
 		int j = i + 1 ;
 		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  	if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+  	  uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			vad = &g_eeGeneral.gvad[z] ;
+		}
 		VoiceAlarmData *xvad = ( j >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[j-NUM_SKY_VOICE_ALARMS] : &g_model.vad[j] ;
+  	if ( j >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+		{
+  	  uint8_t z = j - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+			xvad = &g_eeGeneral.gvad[z] ;
+		}
 		temp = *xvad ;
     *xvad = *vad ;
     *vad = temp ;
@@ -2737,10 +2830,17 @@ void ModelEdit::voiceMoveDown()
 void ModelEdit::voiceCopy()
 {
   int i = VoiceListWidget->currentRow() ;
-  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+	{
+    uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+		vad = &g_eeGeneral.gvad[z] ;
+	}
+  
+	if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS ) )
 	{
 		QByteArray vData ;
-		VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+//		*vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
 		vData.append((char*)vad,sizeof(*vad));
     QMimeData *mimeData = new QMimeData;
     mimeData->setData("application/x-eepskye-voice", vData);
@@ -2751,14 +2851,20 @@ void ModelEdit::voiceCopy()
 void ModelEdit::voicePaste()
 {
   int i = VoiceListWidget->currentRow() ;
-  if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS ) )
+	VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
+  if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+	{
+    uint8_t z = i - ( NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ) ;
+		vad = &g_eeGeneral.gvad[z] ;
+	}
+  
+	if ( ( i >= 0 ) && ( i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS ) )
 	{
     const QClipboard *clipboard = QApplication::clipboard();
     const QMimeData *mimeData = clipboard->mimeData();
 		
     if(mimeData->hasFormat("application/x-eepskye-voice"))
 		{
-			VoiceAlarmData *vad = ( i >= NUM_SKY_VOICE_ALARMS) ? &g_model.vadx[i-NUM_SKY_VOICE_ALARMS] : &g_model.vad[i] ;
       QByteArray vData = mimeData->data("application/x-eepskye-voice");
       memcpy( vad,vData,sizeof(*vad));
 			voiceAlarmsList() ;
@@ -2975,7 +3081,7 @@ void ModelEdit::tabMixes()
 							type = RADIO_TYPE_X9E ;
 						}
 					}
-					if ( type == RADIO_TYPE_QX7 )
+					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 					{
 						if ( value > 6 )
 						{
@@ -2988,7 +3094,7 @@ void ModelEdit::tabMixes()
         str += srcstr ;
 				if ( srcstr == "s" )
 				{
-    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 ) )
 					{
 						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
 					}
@@ -4845,8 +4951,13 @@ void ModelEdit::setSwitchWidgetVisibility(int i)
 					if ( cswitchSource1[i]->currentIndex() > 36 )
 					{
         		cswitchTlabel[i]->setVisible(true);
-						value = convertTelemConstant( g_model.customSw[i].v1u - 45, g_model.customSw[i].v2, &g_model ) ;
-        	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - 45, value, &g_model ) ;
+						uint32_t offset = 45 ;
+            if ( rData->type == RADIO_TYPE_XLITE )
+						{
+							offset = 44 ;
+						}
+						value = convertTelemConstant( g_model.customSw[i].v1u - offset, g_model.customSw[i].v2, &g_model ) ;
+        	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - offset, value, &g_model ) ;
 	//					sprintf( telText, "%d", value ) ;
         		cswitchTlabel[i]->setText(telText);
 					}
@@ -4982,7 +5093,7 @@ uint32_t encodePots( uint32_t value, int type, uint32_t extraPots )
 			}
 		}
 	}
-	if ( type == RADIO_TYPE_QX7 )
+	if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
 	{
 		if ( value > 6 )
 		{
@@ -5091,7 +5202,7 @@ void ModelEdit::updateSwitchesList( int lOrR )
 		{
 			uint32_t x ;
 			x = g_model.customSw[i].andsw ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 			{
 //  				x = switchUnMap(x, 1 ) ;
 			}
@@ -5192,7 +5303,7 @@ void ModelEdit::tabSwitches()
         cswitchDelay[i]->setDecimals(1);
 				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 			}
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 			{
         x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 			}
@@ -5840,7 +5951,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -5875,8 +5986,13 @@ void ModelEdit::switchesEdited()
 							g_model.customSw[i].v2 = cswitchOffset[i]->value();
 							if ( g_model.customSw[i].v1u > 36 )
 							{
-								value = convertTelemConstant( g_model.customSw[i].v1u - 45, g_model.customSw[i].v2, &g_model ) ;
-            	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - 45, value, &g_model ) ;
+								uint32_t offset = 45 ;
+                if ( rData->type == RADIO_TYPE_XLITE )
+								{
+									offset = 44 ;
+								}
+								value = convertTelemConstant( g_model.customSw[i].v1u - offset, g_model.customSw[i].v2, &g_model ) ;
+            	  stringTelemetryChannel( telText, g_model.customSw[i].v1u - offset, value, &g_model ) ;
 								//sprintf( telText, "%d", value ) ;
         				cswitchTlabel[i]->setText(telText);
 							}
@@ -6143,7 +6259,7 @@ void ModelEdit::tabGvar()
 				n = n.left(n.size()-1) ;			
 			}
   		psname[i]->setText( n ) ;
-			pmodsb[i]->setValue( g_model.eScalers[i].mod ) ;
+			pmodsb[i]->setValue( g_model.eScalers[i].mod+1 ) ;
 			pdestcb[i]->setCurrentIndex(g_model.eScalers[i].dest ) ;
 
     	connect(posb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
@@ -6404,7 +6520,7 @@ void ModelEdit::GvarEdited()
 			g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
       g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
       textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
-			g_model.eScalers[i].mod = pmodsb[i]->value() ;
+			g_model.eScalers[i].mod = pmodsb[i]->value()-1 ;
 			g_model.eScalers[i].dest = pdestcb[i]->currentIndex() ;
 		}
 
@@ -6458,7 +6574,7 @@ void ModelEdit::GvarEdited()
 void ModelEdit::tabFrsky()
 {
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) )
 		{
 			ui->Ct7->hide() ;
 			ui->Ct8->hide() ;
@@ -6955,13 +7071,17 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE ) )
 			{
 				p = &ProtocolOptionsX9de[0][1] ;
 			}
 			else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 			{
 				p = &ProtocolOptions9XT[0][1] ;
+			}
+			else if ( rData->bitType &  RADIO_BITTYPE_T12 )
+			{
+        p = &ProtocolOptionsT12[0][1] ;
 			}
 			index = p[index] ;
 		}
@@ -7004,7 +7124,7 @@ void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
 			{
 				p = &ProtocolOptionsX9de[1][1] ;
 			}
@@ -7693,7 +7813,7 @@ void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
 	    x <<= 3 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0018 ) | x ;
@@ -7721,8 +7841,18 @@ void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
+    	if ( rData->bitType & RADIO_BITTYPE_XLITE )
+			{
+				if ( g_eeGeneral.ailsource == 0 )
+				{
+					if ( x )
+					{
+						x = 2 ;
+					}
+				}
+			}
 	    x <<= 5 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0060 ) | x ;
 		}
@@ -7748,8 +7878,18 @@ void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
+    	if ( rData->bitType & RADIO_BITTYPE_XLITE )
+			{
+				if ( g_eeGeneral.rudsource == 0 )
+				{
+					if ( x )
+					{
+						x = 2 ;
+					}
+				}
+			}
 	    x <<= 7 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0180 ) | x ;
 		}
@@ -7775,7 +7915,7 @@ void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 void ModelEdit::on_SwitchDefSE_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
 	    x <<= 9 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0600 ) | x ;
@@ -8410,8 +8550,7 @@ void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
   VoiceAlarmDialog *dlg = new VoiceAlarmDialog( this, &voiceData, rData->type, g_eeGeneral.stickMode, g_model.modelVersion, &g_model ) ;
   if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
 	{
-		i -= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ;
-  	dlg->setWindowTitle(tr("Global Voice Alarm %1").arg(i+1)) ;
+  	dlg->setWindowTitle(tr("Global Voice Alarm %1").arg(i-(NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS)+1)) ;
 	}
 	else
 	{
@@ -8421,7 +8560,14 @@ void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
   if(dlg->exec())
   {
     memcpy(vad,&voiceData,sizeof(VoiceAlarmData));
-    updateSettings() ;
+//  	if ( i >= NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+//		{
+//      GeneralEdit::updateSettings() ;
+//		}
+//		else
+//		{
+	  	updateSettings() ;
+//		}
 		voiceAlarmsList() ;
   }
 }

@@ -52,7 +52,7 @@
 #define NUM_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
 #define NUM_GLOBAL_VOICE_ALARMS 8
-
+#define NUMBER_EXTRA_IDS				4
 #define NUM_GVAR_ADJUST		8
 #define EXTRA_GVAR_ADJUST	12
 
@@ -168,6 +168,12 @@ typedef struct t_voiceAlarm
 		uint8_t name[8] ;
 	} file ;
 } VoiceAlarmData ;
+
+PACK(typedef struct t_gvar {
+	int8_t gvar ;
+	uint8_t gvsource ;
+//	int8_t gvswitch ;
+}) GvarData ;
 
 
 PACK(typedef struct t_EEGeneral {
@@ -299,6 +305,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t welcomeType ;
 	uint8_t welcomeFileName[8] ;
 	uint8_t SavedBatteryVoltage ;
+//	GvarData	gvars[MAX_GVARS] ;
 	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -587,12 +594,6 @@ PACK(typedef struct t_Extra_Vario
   uint8_t volume ;
 }) VarioExtraData ;	
 
-PACK(typedef struct t_gvar {
-	int8_t gvar ;
-	uint8_t gvsource ;
-//	int8_t gvswitch ;
-}) GvarData ;
-
 
 // Scale a value
 PACK(typedef struct t_scale
@@ -719,6 +720,12 @@ struct t_module
 	uint8_t sparex[2] ;
 } ;
 
+PACK(typedef struct t_extraId
+{
+	uint16_t id ;
+	uint8_t dest ;
+	uint8_t spare ;
+} ) ExtraId ;
 
 
 PACK(typedef struct te_ModelData {
@@ -889,6 +896,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t voiceFlushSwitch ;
 	int8_t cellScalers[12] ;
 	uint8_t	customTelemetryNames[24] ;
+	uint8_t extraSensors ;
+	ExtraId extraId[NUMBER_EXTRA_IDS] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

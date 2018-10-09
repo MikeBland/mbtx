@@ -357,6 +357,7 @@ void ModelEdit::tabModelEditSetup()
 uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 {
 	uint8_t index = 0 ;
+	(void) states ;
 //	uint8_t sm = g_eeGeneral.switchMapping ;
 
 	switch ( swtch )
@@ -4508,6 +4509,7 @@ void ModelEdit::on_timerDirCB_currentIndexChanged(int index)
 
 void ModelEdit::on_timerResetCB_currentIndexChanged(int index)
 {
+	(void) index ;
 //	int limit = MAX_DRSWITCH-1 ;
 //#ifndef SKY
 //  if ( eeFile->mee_type )
@@ -4564,6 +4566,7 @@ void ModelEdit::on_timer2DirCB_currentIndexChanged(int index)
 
 void ModelEdit::on_timer2ResetCB_currentIndexChanged(int index)
 {
+	(void) index ;
 //	int limit = MAX_DRSWITCH-1 ;
 //#ifndef SKY
 //  if ( eeFile->mee_type )
@@ -4594,6 +4597,7 @@ void ModelEdit::on_volumeControlCB_currentIndexChanged(int index)
 
 void ModelEdit::on_trimSWCB_currentIndexChanged(int index)
 {
+	(void) index ;
 #ifdef V2
     g_model.trimSw = rData->getSwitchCbValue( ui->trimSWCB, eeFile->mee_type, 0 ) ;
 #else
@@ -4728,6 +4732,8 @@ void ModelEdit::on_T1MinBeepChkB_toggled(bool checked)
 #ifdef V2
     g_model.timer[0].tmrMbeep = checked;
     updateSettings();
+#else
+	(void) checked ;
 #endif
 }
 
@@ -4736,6 +4742,8 @@ void ModelEdit::on_T1BeepdownChkB_toggled(bool checked)
 #ifdef V2
     g_model.timer[0].tmrCdown = checked;
     updateSettings();
+#else
+	(void) checked ;
 #endif
 }
 
@@ -4744,6 +4752,8 @@ void ModelEdit::on_T2MinBeepChkB_toggled(bool checked)
 #ifdef V2
     g_model.timer[1].tmrMbeep = checked;
     updateSettings();
+#else
+	(void) checked ;
 #endif
 }
 
@@ -4752,6 +4762,8 @@ void ModelEdit::on_T2BeepdownChkB_toggled(bool checked)
 #ifdef V2
     g_model.timer[1].tmrCdown = checked;
     updateSettings();
+#else
+	(void) checked ;
 #endif
 }
 

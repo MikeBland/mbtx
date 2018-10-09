@@ -355,6 +355,8 @@ uint8_t Now_switch[NUM_SKYCSW] ;
 int16_t CsTimer[NUM_SKYCSW] ;
 int8_t SwitchStack[SW_STACK_SIZE] ;
 
+uint8_t MuteTimer ;
+
 int8_t NumExtraPots ;
 uint8_t ExtraPotBits;
 
@@ -3419,10 +3421,10 @@ void main_loop(void* pdata)
 #ifdef LUA
 		luaLoadModelScripts() ;
 #endif
-#ifdef BASIC
-		basicLoadModelScripts() ;
-#endif
 	}
+#ifdef BASIC
+	basicLoadModelScripts() ;
+#endif
 	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 	processSwitches() ;	// Guarantee unused switches are cleared
 
@@ -4422,6 +4424,11 @@ static void processVoiceAlarms()
 		}
 		pvad += 1 ;
 		pc->nvs_timer = ltimer ;
+	}
+	
+	if ( MuteTimer )
+	{
+		MuteTimer -= 1 ;
 	}
 }
 
@@ -6107,7 +6114,7 @@ void doSplash()
 //global helper vars
 bool    checkIncDec_Ret;
 struct t_p1 P1values ;
-static uint8_t LongMenuTimer ;
+uint8_t LongMenuTimer ;
 uint8_t StepSize = 20 ;
 
 int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flags)
@@ -6180,7 +6187,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 		{
       s_editMode = false;
       newval=!val;
-      killEvents(event);
+     	killEvents(EVT_KEY_FIRST(KEY_MENU)) ; // Allow Dbl for BTN_RE
 			if ( event==EVT_KEY_BREAK(BTN_RE) )
 			{
 				RotaryState = ROTARY_MENU_UD ;
@@ -6211,7 +6218,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   newval -= P1values.p1valdiff;
 	if ( RotaryState == ROTARY_VALUE )
 	{
-		newval += ( menuPressed() ) ? Rotary_diff * 20 : Rotary_diff ;
+		newval += ( menuPressed() || encoderPressed() ) ? Rotary_diff * 20 : Rotary_diff ;
 //#ifdef PCBX12D
 //		Rotary_diff = 0 ;
 //#endif
@@ -8223,10 +8230,17 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 #if EXTRA_SKYCHANNELS							
 				if ( idx > 16 )
 				{
-					idx += 8 ;
-					ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"CH" ) ;
-					*ptr++ = (idx / 10) + '0' ;
-					*ptr = (idx % 10) + '0' ;
+					if ( idx <= 16 + 8  )
+					{
+						idx += 8 ;
+						ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"CH" ) ;
+						*ptr++ = (idx / 10) + '0' ;
+						*ptr = (idx % 10) + '0' ;
+					}
+					else
+					{
+						ptr = ncpystr( (uint8_t *)LastItem, (uint8_t *)&PSTR(STR_GV_SOURCE)[1+3*(idx-24)], 3 ) ;
+					}
 				}
 				else
 #endif

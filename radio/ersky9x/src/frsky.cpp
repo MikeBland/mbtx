@@ -175,7 +175,6 @@ FrskyData frskyTelemetry[4];
 uint8_t frskyRSSIlevel[2] ;
 uint8_t frskyRSSItype[2] ;
 
-
 struct FrskyAlarm {
   uint8_t level;    // The alarm's 'urgency' level. 0=disabled, 1=yellow, 2=orange, 3=red
   uint8_t greater;  // 1 = 'if greater than'. 0 = 'if less than'
@@ -365,39 +364,18 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 	storeTelemetryData( index, value ) ;
 }
 
+
+const uint8_t DestIndex[] = { FR_BASEMODE, FR_CURRENT, FR_AMP_MAH, FR_VOLTS, FR_FUEL, FR_RBOX_STATE, FR_CUST1, 
+FR_CUST2, FR_CUST3, FR_CUST4, FR_CUST5, FR_CUST6, FR_AIRSPEED	 } ;
+
 void store_telemetry_scaler( uint8_t index, uint16_t value )
 {
-	switch ( index )
+	if ( index )
 	{
-		case 1 :
-			storeTelemetryData( FR_BASEMODE, value ) ;
-		break ;
-		case 2 :
-			storeTelemetryData( FR_CURRENT, value ) ;
-		break ;
-		case 3 :
-			storeTelemetryData( FR_AMP_MAH, value ) ;
-		break ;
-		case 4 :
-			storeTelemetryData( FR_VOLTS, value ) ;
-		break ;
-		case 5 :
-			storeTelemetryData( FR_FUEL, value ) ;
-		break ;
-		case 6 :
-			storeTelemetryData( FR_RBOX_STATE, value ) ;
-		break ;
-		case 7 :
-		case 8 :
-		case 9 :
-		case 10 :
-		case 11 :
-		case 12 :
-			storeTelemetryData( FR_CUST1 - 7 + index, value ) ;
-		break ;
-		case 13 :
-			storeTelemetryData( FR_AIRSPEED, value ) ;
-		break ;
+		if ( index <= sizeof(DestIndex) )
+		{
+			storeTelemetryData( DestIndex[index-1], value ) ;
+		}
 	}
 }
 
@@ -674,6 +652,27 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		}
 	}	
 }
+
+
+void handleUnknownId( uint16_t id, uint32_t value )
+{
+	uint32_t i ;
+	for ( i = 0 ; i < g_model.extraSensors ; i += 1 )
+	{
+		if ( g_model.extraId[i].id == id )
+		{
+			// do something with it?
+			store_telemetry_scaler( g_model.extraId[i].dest, value ) ;
+			return ;
+		}
+	}
+
+	if ( g_model.extraSensors < NUMBER_EXTRA_IDS )
+	{
+		g_model.extraId[g_model.extraSensors++].id = id ;
+	}
+}
+
 
 #ifdef DEBUG_MAVLINK
 uint16_t Mcounter ;
@@ -1993,6 +1992,10 @@ void processSportPacket()
 					}
 				break ;
 
+				default :
+					// Handle unknown ID
+					handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
+				break ;
 			}
 		}
 	}
@@ -2028,14 +2031,11 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 				storeTelemetryData( FR_RPM, value ) ;
 			break ;
 			case 0x0100 :	// External voltage ?
-//				storeTelemetryData( FR_CUST4, value/10 ) ;
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
-//				storeTelemetryData( FR_CUST5, FasVdebug ) ;
 			break ;
 			case 3 :	// External voltage
 			case 0x0103 :	// External voltage ?
 				storeTelemetryData( FR_VOLTS, value/10 ) ;
-//				storeTelemetryData( FR_CUST6, value/10 ) ;
 			break ;
 			case 0xFC :	// RSSI
 				storeRSSI( 135-value ) ;
@@ -2107,9 +2107,6 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 					{
 						len -= 1 ;
 						PrivateData[len] = InputPrivateData[len] ;
-//						storeTelemetryData( FR_CUST1, PrivateData[1] ) ;
-//						storeTelemetryData( FR_CUST2, PrivateData[2] ) ;
-//						storeTelemetryData( FR_CUST3, PrivateData[3] ) ;
 					}
 				}
 			}

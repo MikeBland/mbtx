@@ -169,28 +169,35 @@ void simulatorDialog::setupTimer()
   ticktimer->start(10);
 }
 
-int8_t getAndSwitch( SKYCSwData &cs )
+int8_t getAndSwitch( SKYCSwData &cs, uint32_t txType )
 {
-	int8_t x = 0 ;
-	if ( cs.andsw )	// Code repeated later, could be a function
+  int8_t x = 0 ;
+  if ( ( txType == RADIO_TYPE_SKY ) || ( txType == RADIO_TYPE_9XTREME ) )
+	{
+		if ( cs.andsw )	// Code repeated later, could be a function
+		{
+			x = cs.andsw ;
+			if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
+			{
+				x += 1 ;
+			}
+			if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
+			{
+				x -= 1 ;
+			}
+			if ( x == 9+NUM_SKYCSW+1 )
+			{
+				x = 9 ;			// Tag TRN on the end, keep EEPROM values
+			}
+			if ( x == -(9+NUM_SKYCSW+1) )
+			{
+				x = -9 ;			// Tag TRN on the end, keep EEPROM values
+			}
+		}
+	}
+	else
 	{
 		x = cs.andsw ;
-		if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
-		{
-			x += 1 ;
-		}
-		if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
-		{
-			x -= 1 ;
-		}
-		if ( x == 9+NUM_SKYCSW+1 )
-		{
-			x = 9 ;			// Tag TRN on the end, keep EEPROM values
-		}
-		if ( x == -(9+NUM_SKYCSW+1) )
-		{
-			x = -9 ;			// Tag TRN on the end, keep EEPROM values
-		}
 	}
 	return x ;
 }
@@ -218,6 +225,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 			{
 				y = z * 5 ;
 			}
+			g_model.gvars[5].gvar = y ;
 		}
 		else if ( y < 0 )
 		{
@@ -234,6 +242,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 				{
 					y = -(z*5)-1 ;
 				}
+				g_model.gvars[6].gvar = y ;
 			}
 		}
 		else  // if ( CsTimer[i] > 0 )
@@ -241,7 +250,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 			y -= 1 ;
 		}
 
-		int8_t x = getAndSwitch( cs ) ;
+		int8_t x = getAndSwitch( cs, txType ) ;
 		if ( x )
 		{
       if (getSwitch( x,0,0) == 0 )
@@ -394,7 +403,7 @@ void simulatorDialog::processSwitches()
 				{	
 					processSwitchTimer( cs_index ) ;
   			  ret_value = CsTimer[cs_index] >= 0 ;
-					int8_t x = getAndSwitch( cs ) ;
+					int8_t x = getAndSwitch( cs, txType ) ;
 					if ( x )
 					{
 					  if (getSwitch( x, 0, 0 ) )
@@ -418,7 +427,7 @@ void simulatorDialog::processSwitches()
 					int8_t andSwOn = 1 ;
 					if ( ( cs.func == CS_RMONO ) )
 					{
-						andSwOn = getAndSwitch( cs ) ;
+						andSwOn = getAndSwitch( cs, txType ) ;
 						if ( andSwOn )
 						{
 							andSwOn = getSwitch( andSwOn,0,0) ;
@@ -527,8 +536,8 @@ void simulatorDialog::processSwitches()
   			break ;
   			case (CS_BIT_AND) :
 				{	
-  			  x = getValue(cs.v1-1);
-					y = (uint8_t) cs.v2 ;
+  			  x = getValue(cs.v1u-1);
+					y = (uint8_t) cs.v2u ;
 					y |= cs.bitAndV3 << 8 ;
   			  ret_value = ( x & y ) != 0 ;
 				}
@@ -540,7 +549,7 @@ void simulatorDialog::processSwitches()
 
 			if ( ret_value )
 			{
-				int8_t x = getAndSwitch( cs ) ;
+				int8_t x = getAndSwitch( cs, txType ) ;
 				if ( x )
 				{
   		    ret_value = getSwitch( x, 0, 0 ) ;
@@ -737,163 +746,163 @@ void simulatorDialog::timerEvent()
 		{
 			one_sec_precount -= 10 ;
 			// One tenth second has elapsed			
-			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
-			{
-        SKYCSwData &cs = g_model.customSw[i];
-        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
+//			for ( i = 0 ; i < NUM_SKYCSW ; i += 1 )
+//			{
+//        SKYCSwData &cs = g_model.customSw[i];
+//        uint8_t cstate = CS_STATE(cs.func, g_model.modelVersion);
 
-    		if(cstate == CS_TIMER)
-				{
-					int16_t y ;
-					y = CsTimer[i] ;
-					if ( y == 0 )
-					{
-						int8_t z ;
-						z = cs.v1 ;
-						if ( z >= 0 )
-						{
-							z = -z-1 ;
-							y = z * 10 ;					
-						}
-						else
-						{
-							y = z ;
-						}
-					}
-					else if ( y < 0 )
-					{
-						if ( ++y == 0 )
-						{
-							int8_t z ;
-							z = cs.v2 ;
-							if ( z >= 0 )
-							{
-								z += 1 ;
-								y = z * 10 - 1 ;
-							}
-							else
-							{
-								y = -z-1 ;
-							}
-						}
-					}
-					else  // if ( CsTimer[i] > 0 )
-					{
-						y -= 1 ;
-					}
-					int8_t x ;
-					if ( ( txType == 0 ) || ( txType == 3 ) )
-					{
-						x = getAndSwitch( cs ) ;
-					}
-					else
-					{
-						x = cs.andsw ;
-					}
-					if ( x )
-					{
-	      	  if (getSwitch( x, 0, 0) == 0 )
-					  {
-							Last_switch[i] = 0 ;
-							if ( cs.func == CS_NTIME )
-							{
-								int8_t z ;
-								z = cs.v1 ;
-								if ( z >= 0 )
-								{
-									z = -z-1 ;
-									y = z * 10 ;					
-								}
-								else
-								{
-									y = z ;
-								}
-							}
-							else
-							{
-								y = -1 ;
-							}
-						}	
-						else
-						{
-							Last_switch[i] = 2 ;
-						}
-					}
-					CsTimer[i] = y ;
-				}
-  			if ( g_model.modelVersion >= 3 )
-				{
-					if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
-					{
-						int8_t andSwOn = 1 ;
-						if ( ( cs.func == CS_RMONO ) )
-						{
-							andSwOn = ((txType==1) || (txType == 2) || (txType == 9)) ? cs.andsw : getAndSwitch( cs ) ;
-							if ( andSwOn )
-							{
-								andSwOn = getSwitch( andSwOn, 0, 0) ;
-							}
-							else
-							{
-								andSwOn = 1 ;
-							}
-						}
+//    		if(cstate == CS_TIMER)
+//				{
+//					int16_t y ;
+//					y = CsTimer[i] ;
+//					if ( y == 0 )
+//					{
+//						int8_t z ;
+//						z = cs.v1 ;
+//						if ( z >= 0 )
+//						{
+//							z = -z-1 ;
+//							y = z * 10 ;					
+//						}
+//						else
+//						{
+//							y = z ;
+//						}
+//					}
+//					else if ( y < 0 )
+//					{
+//						if ( ++y == 0 )
+//						{
+//							int8_t z ;
+//							z = cs.v2 ;
+//							if ( z >= 0 )
+//							{
+//								z += 1 ;
+//								y = z * 10 - 1 ;
+//							}
+//							else
+//							{
+//								y = -z-1 ;
+//							}
+//						}
+//					}
+//					else  // if ( CsTimer[i] > 0 )
+//					{
+//						y -= 1 ;
+//					}
+//					int8_t x ;
+//					if ( ( txType == 0 ) || ( txType == 3 ) )
+//					{
+//						x = getAndSwitch( cs, txType ) ;
+//					}
+//					else
+//					{
+//						x = cs.andsw ;
+//					}
+//					if ( x )
+//					{
+//	      	  if (getSwitch( x, 0, 0) == 0 )
+//					  {
+//							Last_switch[i] = 0 ;
+//							if ( cs.func == CS_NTIME )
+//							{
+//								int8_t z ;
+//								z = cs.v1 ;
+//								if ( z >= 0 )
+//								{
+//									z = -z-1 ;
+//									y = z * 10 ;					
+//								}
+//								else
+//								{
+//									y = z ;
+//								}
+//							}
+//							else
+//							{
+//								y = -1 ;
+//							}
+//						}	
+//						else
+//						{
+//							Last_switch[i] = 2 ;
+//						}
+//					}
+//					CsTimer[i] = y ;
+//				}
+//  			if ( g_model.modelVersion >= 3 )
+//				{
+//					if ( ( cs.func == CS_MONO ) || ( cs.func == CS_RMONO ) )
+//					{
+//						int8_t andSwOn = 1 ;
+//						if ( ( cs.func == CS_RMONO ) )
+//						{
+//							andSwOn = ((txType==1) || (txType == 2) || (txType == 9)) ? cs.andsw : getAndSwitch( cs, txType ) ;
+//							if ( andSwOn )
+//							{
+//								andSwOn = getSwitch( andSwOn, 0, 0) ;
+//							}
+//							else
+//							{
+//								andSwOn = 1 ;
+//							}
+//						}
 		    	  
-						if (getSwitch( cs.v1, 0, 0) )
-						{
-							if ( ( Last_switch[i] & 2 ) == 0 )
-							{
-								// Trigger monostable
-								uint8_t trigger = 1 ;
-								if ( ( cs.func == CS_RMONO ) )
-								{
-									if ( ! andSwOn )
-									{
-										trigger = 0 ;
-									}
-								}
-								if ( trigger )
-								{
-									Last_switch[i] = 3 ;
-									int16_t x ;
-									x = cs.v2 ;
-									if ( x < 0 )
-									{
-										x = -x ;
-									}
-									else
-									{
-										x += 1 ;
-										x *= 10 ;
-									}
-									CsTimer[i] = x ;							
-								}
-						  }
-						}
-						else
-						{
-							Last_switch[i] &= ~2 ;
-						}
-						int16_t y ;
-						y = CsTimer[i] ;
-						if ( y )
-						{
-							if ( ( cs.func == CS_RMONO ) )
-							{
-								if ( ! andSwOn )
-								{
-									y = 1 ;
-								}	
-							}
-							if ( --y == 0 )
-							{
-								Last_switch[i] &= ~1 ;
-							}
-							CsTimer[i] = y ;
-						}
-					}
-				}
-			}
+//						if (getSwitch( cs.v1, 0, 0) )
+//						{
+//							if ( ( Last_switch[i] & 2 ) == 0 )
+//							{
+//								// Trigger monostable
+//								uint8_t trigger = 1 ;
+//								if ( ( cs.func == CS_RMONO ) )
+//								{
+//									if ( ! andSwOn )
+//									{
+//										trigger = 0 ;
+//									}
+//								}
+//								if ( trigger )
+//								{
+//									Last_switch[i] = 3 ;
+//									int16_t x ;
+//									x = cs.v2 ;
+//									if ( x < 0 )
+//									{
+//										x = -x ;
+//									}
+//									else
+//									{
+//										x += 1 ;
+//										x *= 10 ;
+//									}
+//									CsTimer[i] = x ;							
+//								}
+//						  }
+//						}
+//						else
+//						{
+//							Last_switch[i] &= ~2 ;
+//						}
+//						int16_t y ;
+//						y = CsTimer[i] ;
+//						if ( y )
+//						{
+//							if ( ( cs.func == CS_RMONO ) )
+//							{
+//								if ( ! andSwOn )
+//								{
+//									y = 1 ;
+//								}	
+//							}
+//							if ( --y == 0 )
+//							{
+//								Last_switch[i] &= ~1 ;
+//							}
+//							CsTimer[i] = y ;
+//						}
+//					}
+//				}
+//			}
 		}
 			
     processVoiceAlarms() ;
@@ -2285,7 +2294,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 	aswitch = abs(swtch) ;
  	SwitchStack[level] = aswitch ;
 
-	int limit = ((txType==1) || (txType == 2) || (txType == 9)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
+	int limit = ((txType==1) || (txType == 2) || (txType == 9) || (txType == 10)) ? MAX_XDRSWITCH : MAX_DRSWITCH ;
 	cs_index = abs(swtch)-(limit-NUM_SKYCSW);
 
 	{
@@ -2335,7 +2344,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 	}
 	else
 	{
-    if ( swtch > limit )
+    if ( abs(swtch) > limit )
 		{
 			uint8_t value = hwKeyState( abs(swtch) ) ;
 			if ( swtch > 0 )
@@ -2486,7 +2495,7 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 //			int8_t x ;
 //			if ( ( txType == 0 ) || ( txType == 3 ) )
 //			{
-//				x = getAndSwitch( cs ) ;
+//				x = getAndSwitch( cs, txType ) ;
 //			}
 //			else
 //			{
@@ -3639,6 +3648,12 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 								v = calibratedStick[k-EXTRA_POTS_START+8] ;
 							}
 						}
+#define MIX_TRIMS_START 78
+						if ( ( k >= MIX_TRIMS_START-1) && (k <= MIX_TRIMS_START-1 + 4 ) )
+						{
+              uint32_t t = k - MIX_TRIMS_START+1 ;
+							v = trimA[t] ;
+						}
 
             if(md.mixWarn) mixWarning |= 1<<(md.mixWarn-1); // Mix warning
 //            if ( md.enableFmTrim )
@@ -4126,15 +4141,19 @@ void simulatorDialog::on_FixRightY_clicked(bool checked)
 int16_t simulatorDialog::calc_scaler( uint8_t index )
 {
 	int32_t value ;
+	uint8_t lnest ;
 	ScaleData *pscaler ;
+	ExtScaleData *epscaler ;
 	
-	if ( CalcScaleNest > 5 )
+	lnest = CalcScaleNest ;
+	if ( lnest > 5 )
 	{
 		return 0 ;
 	}
-	CalcScaleNest += 1 ;
+	CalcScaleNest = lnest + 1 ;
 	// process
 	pscaler = &g_model.Scalers[index] ;
+	epscaler = &g_model.eScalers[index] ;
 	if ( pscaler->source )
 	{
 		value = getValue( pscaler->source - 1 ) ;
@@ -4143,12 +4162,20 @@ int16_t simulatorDialog::calc_scaler( uint8_t index )
 	{
 		value = 0 ;
 	}
+	CalcScaleNest = lnest ;
 	if ( pscaler->offsetLast == 0 )
 	{
 		value += pscaler->offset ;
 	}
-	value *= pscaler->mult+1 ;
-	value /= pscaler->div+1 ;
+	uint16_t t ;
+	t = pscaler->mult + ( pscaler->multx << 8 ) ;
+	value *= t+1 ;
+	t = pscaler->div + ( pscaler->divx << 8 ) ;
+	value /= t+1 ;
+	if ( epscaler->mod )
+	{
+		value %= epscaler->mod+1 ;
+	}
 	if ( pscaler->offsetLast )
 	{
 		value += pscaler->offset ;
@@ -4158,7 +4185,6 @@ int16_t simulatorDialog::calc_scaler( uint8_t index )
 		value = -value ;
 	}
 
-	CalcScaleNest -= 1 ;
 	return value ;
 }
 									 
@@ -4220,15 +4246,35 @@ void simulatorDialog::processVoiceAlarms()
 {
 //	uint32_t i ;
 //	uint32_t curent_state ;
+//	uint8_t flushSwitch ;
 //	VoiceAlarmData *pvad = &g_model.vad[0] ;
-//  for ( i = 0 ; i < NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ; i += 1 )
+//	i = 0 ;
+//	if ( VoiceCheckFlag100mS & 4 )
+//	{
+//		i = NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS ;
+//	}
+//	flushSwitch = getSwitch00( g_model.voiceFlushSwitch ) ;
+//	if ( ( VoiceCheckFlag100mS & 2 ) == 0 )
+//	{
+//		if ( flushSwitch && ( LastVoiceFlushSwitch == 0 ) )
+//		{
+//			flushVoiceQueue() ;			
+//		}
+//	}
+//	LastVoiceFlushSwitch = flushSwitch ;
+//  for ( ; i < NUM_SKY_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i += 1 )
 //	{
 //		uint32_t play = 0 ;
+//		uint32_t functionTrue = 0 ;
 //		curent_state = 0 ;
 //		int16_t ltimer = Nvs_timer[i] ;
 //	 	if ( i == NUM_VOICE_ALARMS )
 //		{
 //			pvad = &g_model.vadx[0] ;
+//		}
+//	 	if ( i == NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+//		{
+//			pvad = &g_eeGeneral.gvad[0] ;
 //		}
 //		if ( pvad->func )		// Configured
 //		{
@@ -4262,7 +4308,27 @@ void simulatorDialog::processVoiceAlarms()
 //				case 6 :
 //					x = x == y ;
 //				break ;
+//				case 7 :
+//					x = (x & y) != 0 ;
+//				break ;
+//				case 8 :
+//				{	
+//  				int16_t z ;
+//					z = x - pc->nvs_last_value ;
+//					z = abs(z) ;
+//					if ( z > y )
+//					{
+//						pc->nvs_last_value = x ;
+//						x = 1 ;
+//					}
+//					else
+//					{
+//						x = 0 ;
+//					}
+//				}
+//				break ;
 //			}
+//			functionTrue = x ;
 //// Start of invalid telemetry detection
 ////					if ( pvad->source > ( CHOUT_BASE - NUM_SKYCHNOUT ) )
 ////					{ // Telemetry item
@@ -4274,7 +4340,14 @@ void simulatorDialog::processVoiceAlarms()
 //// End of invalid telemetry detection
 //			if ( pvad->swtch )
 //			{
-//				if ( getSwitch( pvad->swtch,0,0 ) == 0 )
+//				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+//				{
+//					if ( getFlightPhase() == 0 )
+//					{
+//						x = 0 ;
+//					}
+//				}
+//				else if ( getSwitch( pvad->swtch,0,0 ) == 0 )
 //				{
 //					x = 0 ;
 //				}
@@ -4292,10 +4365,16 @@ void simulatorDialog::processVoiceAlarms()
 //		{
 //			if ( pvad->swtch )
 //			{
-//				curent_state = getSwitch( pvad->swtch,0,0 ) ;
+//				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+//				{
+//					curent_state = getFlightPhase() ? 1 : 0 ;
+//				}
+//				else
+//				{
+//					curent_state = getSwitch( pvad->swtch,0,0 ) ;
+//				}	
 //				if ( curent_state == 0 )
 //				{
-////							Nvs_state[i] = 0 ;
 //					ltimer = -1 ;
 //				}
 //			}
@@ -4316,27 +4395,47 @@ void simulatorDialog::processVoiceAlarms()
 //		{
 //		 if ( pvad->rate == 3 )	// All
 //		 {
-//		 		uint32_t pos = switchPosition( pvad->swtch ) ;
-//				uint32_t state = Nvs_state[i] ;
-//				play = 0 ;
-//				if ( state != pos )
+//		 		uint32_t pos
+//				pos = 1 ;
+//				if ( pvad->func && ( functionTrue == 0 ) )
 //				{
-//					if ( state > 0x80 )
+//					pos = 0 ;
+//				}
+//		 		if ( pos )
+//				{
+//					if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
 //					{
-//						if ( --state == 0x80 )
-//						{
-//							state = pos ;
-//							ltimer = 0 ;
-//							play = pos + 1 ;
-//						}
+//						pos = getFlightPhase() ;
 //					}
 //					else
 //					{
-//						state = 0x83 ;
+//						pos = switchPosition( pvad->swtch ) ;
 //					}
-//					Nvs_state[i] = state ;
+//					uint32_t state = Nvs_state[i] ;
+//					play = 0 ;
+//					if ( state != pos )
+//					{
+//						if ( state > 0x80 )
+//						{
+//							if ( --state == 0x80 )
+//							{
+//								state = pos ;
+//								ltimer = 0 ;
+//								play = pos + 1 ;
+//							}
+//						}
+//						else
+//						{
+//							state = 0x83 ;
+//						}
+//						Nvs_state[i] = state ;
+//					}
+//			  }
+//				else
+//				{
+//					pc->nvs_state = 0x40 ;
 //				}
-//		 }
+//		 }	
 //		 else
 //		 {
 //			if ( play == 1 )
@@ -4345,7 +4444,25 @@ void simulatorDialog::processVoiceAlarms()
 //				{ // just turned ON
 //					if ( ( pvad->rate == 0 ) || ( pvad->rate == 2 ) )
 //					{ // ON
+//						if ( pvad->delay )
+//						{
+//							pc->nvs_delay = pvad->delay + 1 ;
+//						}
 //						ltimer = 0 ;
+//					}
+//				}
+//				else
+//				{ // just turned OFF
+//					if ( ( pvad->rate == 1 ) )
+//					{
+//						if ( pvad->func == 8 )	// |d|>val
+//						{
+//							if ( pvad->delay )
+//							{
+//								pc->nvs_delay = pvad->delay + 1 ;
+//								play = 0 ;
+//							}
+//						}
 //					}
 //				}
 //				Nvs_state[i] = 1 ;
@@ -4353,18 +4470,37 @@ void simulatorDialog::processVoiceAlarms()
 //				{
 //					play = 0 ;
 //				}
+//				if ( pc->nvs_delay )
+//				{
+//					if ( --pc->nvs_delay )
+//					{
+//						play = 0 ;
+//					}
+//				}
 //			}
 //			else
 //			{
-//				if ( Nvs_state[i] == 1 )
+//				if ( ( pvad->func == 8 ) && ( pc->nvs_delay ) )	// |d|>val
 //				{
-//					if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
+//					play = 0 ;
+//					if ( --pc->nvs_delay == 0 )
 //					{
-//						ltimer = 0 ;
 //						play = 1 ;
-//						if ( pvad->rate == 2 )
+//					}
+//				}
+//				else
+//				{
+//					pc->nvs_delay = 0 ;
+//					if ( Nvs_state[i] == 1 )
+//					{
+//						if ( ( pvad->rate == 1 ) || ( pvad->rate == 2 ) )
 //						{
-//							play = 2 ;
+//							ltimer = 0 ;
+//							play = 1 ;
+//							if ( pvad->rate == 2 )
+//							{
+//								play = 2 ;
+//							}
 //						}
 //					}
 //				}
@@ -4377,10 +4513,44 @@ void simulatorDialog::processVoiceAlarms()
 //			}
 //		 }
 //		}
-//		else
+//		else //( ( VoiceCheckFlag100mS & 2 ) != 0 )
 //		{
-//			Nvs_state[i] = ( pvad->rate == 3 ) ? switchPosition( pvad->swtch ) : play ;
-//			play = ( pvad->rate == 33 ) ? 1 : 0 ;
+//		 	uint32_t pos ;
+//			if ( pvad->func == 8 )	// |d|>val
+//			{
+//				pc->nvs_last_value = getValue( pvad->source - 1 ) ;
+//			}
+//			if ( pvad->rate == 3 )
+//			{
+//				if ( pvad->swtch == MAX_SKYDRSWITCH + 1 )
+//				{
+//					pos = getFlightPhase() ;
+//				}
+//				else
+//				{
+//					pos = switchPosition( pvad->swtch ) ;
+//				}
+//			}
+//			else
+//			{
+//				pos = play ;
+//			}
+//			Nvs_state[i] = pos ;
+//			play = 0 ;
+//			if ( pvad->rate == 33 )	// ONCE
+//			{
+//	 			if ( i >= NUM_VOICE_ALARMS + NUM_EXTRA_VOICE_ALARMS )
+//				{	// Global alert
+//					if ( VoiceCheckFlag100mS & 4 )
+//					{
+//						play = 1 ;
+//					}
+//				}
+//				else
+//				{
+//					play = 1 ;
+//				}
+//			}
 //			ltimer = -1 ;
 //		}
 
@@ -4419,11 +4589,18 @@ void simulatorDialog::processVoiceAlarms()
 //					char name[10] ;
 //					char *p ;
 //					p = (char *)ncpystr( (uint8_t *)name, pvad->file.name, 8 ) ;
-//					if ( play >= 2 )
+//					if ( name[0] && ( name[0] != ' ' ) )
 //					{
-//						*(p-1) += ( play - 1 ) ;
+//						if ( play >= 2 )
+//						{
+//							while ( *(p-1) == ' ' )
+//							{
+//								p -= 1 ;
+//							}
+//							*(p-1) += ( play - 1 ) ;
+//						}
+//						putUserVoice( name, 0 ) ;
 //					}
-//					putUserVoice( name, 0 ) ;
 //				}
 //				else if ( pvad->fnameType == 2 )	// Number
 //				{

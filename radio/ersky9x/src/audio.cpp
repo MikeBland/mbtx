@@ -58,7 +58,7 @@ uint8_t AudioActive ;
 
 extern uint8_t CurrentVolume ;
 extern uint8_t Activated ;
-
+extern uint8_t MuteTimer ;
 extern uint8_t AudioVoiceCountUnderruns ;
 
 extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
@@ -297,7 +297,7 @@ void audioQueue::playNow(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
 //		toneFreq = (tFreq ? tFreq + g_eeGeneral.speakerPitch + BEEP_OFFSET : 0); // add pitch compensator
 //    toneTimeLeft = getToneLength(tLen);
 //    tonePause = tPause;
-		if ( tHaptic )
+		if ( tHaptic && !MuteTimer )
 		{
   		buzzTimeLeft = toneTimeLeft ;
 			uint8_t hapticSpinup = g_eeGeneral.hapticMinRun + 20 ;
@@ -321,7 +321,7 @@ void audioQueue::playASAP(uint8_t tFreq, uint8_t tLen, uint8_t tPause,
     uint8_t tRepeat, uint8_t tHaptic, int8_t tFreqIncr)
 {
 			
-	if ( tHaptic )
+	if ( tHaptic && !MuteTimer )
 	{
     uint8_t next_hqueueWidx = (t_hapticQueueWidx + 1) % HAPTIC_QUEUE_LENGTH ;
 		if (next_hqueueWidx != t_hapticQueueRidx)
@@ -1757,7 +1757,7 @@ void voice_task(void* pdata)
 		 	
 			name = Voice.NamedVoiceQueue[Voice.VoiceQueueOutIndex] ;
 			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex] ;
-			if ( SystemOptions & SYS_OPT_MUTE )
+			if ( ( SystemOptions & SYS_OPT_MUTE ) || MuteTimer )
 			{
 				Voice.VoiceQueueOutIndex += 1 ;
 				Voice.VoiceQueueOutIndex &= ( VOICE_Q_LENGTH - 1 ) ;

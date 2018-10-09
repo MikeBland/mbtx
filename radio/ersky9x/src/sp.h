@@ -244,7 +244,7 @@
 #define ISTR_YES_NO         "\003SI\013NO"
 #define ISTR_MENU_EXIT      "\003[MENU]\013[EXIT]"
 #define ISTR_DELETE_MIX     "BORRAR MEXCLAS?"
-#define ISTR_MIX_POPUP      "EDITAR\0INSERT\0COPIAR\0MOVER\0BORRAR\0B.TODO\0TEMPLATES"
+#define ISTR_MIX_POPUP      "EDITAR\0INSERT\0COPIAR\0MOVER\0BORRAR\0B.TODO\0TEMPLATES\0PASTE"
 #define ISTR_MIXER          "MEXCLAS"
 // CHR_S S for Slow
 #define ICHR_S              "S"
@@ -569,7 +569,7 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mexclas\0Templates\0Logging\0Blocking\0Vario"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mexclas\0Templates\0Logging\0Blocking\0Vario\0Sensors"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

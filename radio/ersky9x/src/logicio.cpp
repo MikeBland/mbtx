@@ -3032,7 +3032,17 @@ uint32_t switchPosition( uint32_t swtch )
 	}
 	else
 	{
-		return 0 ;
+		if ( ( swtch < HSW_Ele6pos0 ) && ( swtch > HSW_Ele6pos5 ) )
+		{
+			return 0 ;
+		}
+		else
+		{
+			if ( ( g_eeGeneral.analogMapping & MASK_6POS ) == 0 )
+			{
+				return 0 ;
+			}
+		}
 	}
 
 	if ( swtch == HSW_SF2 )

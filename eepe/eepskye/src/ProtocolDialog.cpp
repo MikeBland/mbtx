@@ -4,9 +4,10 @@
 #include "file.h"
 #include "helpers.h"
 
-extern uint8_t ProtocolOptionsX9de[][5] ;
-extern uint8_t ProtocolOptionsSKY[][5] ;
-extern uint8_t ProtocolOptions9XT[][5] ;
+extern uint8_t ProtocolOptionsX9de[][6] ;
+extern uint8_t ProtocolOptionsSKY[][6] ;
+extern uint8_t ProtocolOptions9XT[][6] ;
+extern uint8_t ProtocolOptionsT12[][6] ;
 extern QString ProtocolNames[] ;
 extern QString Polarity[] ;
 extern QString PxxTypes[] ;
@@ -99,10 +100,14 @@ void ProtocolDialog::setBoxes()
 	}
 	else
 	{
-		ui->ProtocolCB->addItem("XJT");
+    if ( (rData->bitType & (RADIO_BITTYPE_T12 ) ) == 0 )
+		{
+			ui->ProtocolCB->addItem("XJT");
+		}
   	ui->ProtocolCB->addItem("DSM");
   	ui->ProtocolCB->addItem("MULTI");
 	}
+  ui->ProtocolCB->addItem("CRSF");
   ui->ProtocolCB->addItem("OFF");
   uint32_t i = ppd->protocol ;
 	uint32_t save = i ;
@@ -122,6 +127,10 @@ void ProtocolDialog::setBoxes()
 		else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 		{
 			options = &ProtocolOptions9XT[lModule][0] ;
+		}
+		else if ( rData->bitType &  RADIO_BITTYPE_T12 )
+		{
+			options = &ProtocolOptionsT12[lModule][0] ;
 		}
 		uint32_t count = *options++ ;
 		i = PROTO_OFF ;
@@ -369,6 +378,10 @@ void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 		else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 		{
 			p = &ProtocolOptions9XT[lModule][1] ;
+		}
+		else if ( rData->bitType &  RADIO_BITTYPE_T12 )
+		{
+      p = &ProtocolOptionsT12[lModule][1] ;
 		}
 		index = p[index] ;
 	}

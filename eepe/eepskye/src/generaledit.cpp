@@ -106,7 +106,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
-		if ( rData->bitType & RADIO_BITTYPE_QX7)
+		if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
 		}
@@ -169,6 +169,92 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->label_BrightGreen->setText("Brightness (Green)") ;
 				ui->label_BrightBlue->setText("Brightness (Blue)") ;
 			break ;
+
+			case RADIO_TYPE_XLITE :
+				ui->Ar9xChkB->hide() ;
+				ui->brightGreenSB->hide() ;
+				ui->brightBlueSB->hide() ;
+				ui->label_BrightGreen->hide() ;
+				ui->label_BrightBlue->hide() ;
+				ui->label_Bright->setText("Brightness") ;
+				ui->ExtRtcCB->hide() ;
+				ui->label_ExtRtc->hide() ;
+				ui->label_Rotary_div->hide() ;
+				ui->RotaryDivisorCB->hide() ;
+				ui->SixCal0_SB->hide() ;
+				ui->SixCal1_SB->hide() ;
+				ui->SixCal2_SB->hide() ;
+				ui->SixCal3_SB->hide() ;
+				ui->SixCal4_SB->hide() ;
+				ui->SixCal5_SB->hide() ;
+				ui->label_6Pos_2->hide() ;
+				ui->label_6Pos_3->hide() ;
+				ui->label_6Pos_4->hide() ;
+				ui->label_6Pos_5->hide() ;
+				ui->label_6Pos_6->hide() ;
+				ui->label_6Pos_7->hide() ;
+				ui->label_StickGain->hide() ;
+				ui->stickgainLHCB->hide() ;
+				ui->stickgainLVCB->hide() ;
+				ui->stickgainRHCB->hide() ;
+				ui->stickgainRVCB->hide() ;
+				ui->label_stickgainLH->hide() ;
+				ui->label_stickgainLV->hide() ;
+				ui->label_stickgainRH->hide() ;
+				ui->label_stickgainRV->hide() ;
+			break ;
+
+			case RADIO_TYPE_T12 :
+				ui->Ar9xChkB->hide() ;
+				ui->brightGreenSB->hide() ;
+				ui->brightBlueSB->hide() ;
+				ui->label_BrightGreen->hide() ;
+				ui->label_BrightBlue->hide() ;
+				ui->label_Bright->setText("Brightness") ;
+				ui->ExtRtcCB->hide() ;
+				ui->label_ExtRtc->hide() ;
+				ui->label_Rotary_div->hide() ;
+				ui->RotaryDivisorCB->hide() ;
+				ui->SixCal0_SB->hide() ;
+				ui->SixCal1_SB->hide() ;
+				ui->SixCal2_SB->hide() ;
+				ui->SixCal3_SB->hide() ;
+				ui->SixCal4_SB->hide() ;
+				ui->SixCal5_SB->hide() ;
+				ui->label_6Pos_2->hide() ;
+				ui->label_6Pos_3->hide() ;
+				ui->label_6Pos_4->hide() ;
+				ui->label_6Pos_5->hide() ;
+				ui->label_6Pos_6->hide() ;
+				ui->label_6Pos_7->hide() ;
+				ui->label_StickGain->hide() ;
+				ui->stickgainLHCB->hide() ;
+				ui->stickgainLVCB->hide() ;
+				ui->stickgainRHCB->hide() ;
+				ui->stickgainRVCB->hide() ;
+				ui->label_Encoder->hide() ;
+				ui->label_6Pos->hide() ;
+				ui->EncoderCB->hide() ;
+				ui->SixPosCB->hide() ;
+				ui->BtDev1Address->hide() ;
+				ui->BtDev2Address->hide() ;
+				ui->BtDev3Address->hide() ;
+				ui->BtDev4Address->hide() ;
+				ui->BtDev1Name->hide() ;
+				ui->BtDev2Name->hide() ;
+				ui->BtDev3Name->hide() ;
+				ui->BtDev4Name->hide() ;
+				ui->label_BT_name->hide() ;
+				ui->label_BTadd1->hide() ;
+				ui->label_BTadd2->hide() ;
+				ui->label_BTadd3->hide() ;
+				ui->label_BTadd4->hide() ;
+        ui->BtNameText->hide() ;
+
+			break ;
+
+
+
 		}
 
 		ui->BtBaudrateCB->setCurrentIndex(g_eeGeneral.bt_baudrate) ;
@@ -334,40 +420,75 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 			}
 			else
 			{
-				ui->label_PB1Sw->show() ;
-				ui->label_PB2Sw->show() ;
-				setHardwareSwitchCB( ui->PB1CB, 1, 3 ) ;
-				setHardwareSwitchCB( ui->PB2CB, 1, 3 ) ;
-				ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
-				ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
-//				ui->label_PB1Sw->hide() ;
-//				ui->label_PB2Sw->hide() ;
+				if ( rData->type == RADIO_TYPE_T12 )
+				{
+					ui->label_PB1Sw->hide() ;
+					ui->label_PB2Sw->hide() ;
+					ui->PB1CB->hide() ;
+					ui->PB2CB->hide() ;
+				}
+				else
+				{
+					ui->label_PB1Sw->show() ;
+					ui->label_PB2Sw->show() ;
+					setHardwareSwitchCB( ui->PB1CB, 1, 3 ) ;
+					setHardwareSwitchCB( ui->PB2CB, 1, 3 ) ;
+					ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
+					ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
+				}
 			}
-			
-			ui->label_AilSw->hide() ;
-			ui->label_EleSw->hide() ;
+
+			if ( rData->type == RADIO_TYPE_XLITE )
+			{
+      	ui->AilCB->clear() ;
+				ui->AilCB->addItem("2-pos");
+				ui->AilCB->addItem("3-pos");
+    		ui->AilCB->setCurrentIndex(g_eeGeneral.ailsource) ;
+      	ui->RudCB->clear() ;
+				ui->RudCB->addItem("2-pos");
+				ui->RudCB->addItem("3-pos");
+    		ui->RudCB->setCurrentIndex(g_eeGeneral.rudsource) ;
+				ui->label_AilSw->show() ;
+				ui->label_RudSw->show() ;
+      	ui->AilCB->show() ;
+      	ui->RudCB->show() ;
+				ui->label_Encoder->hide() ;
+				ui->EncoderCB->hide() ;
+				ui->label_6Pos->hide() ;
+				ui->SixPosCB->hide() ;
+				ui->label_AilSw->setText("Switch C") ;
+				ui->label_RudSw->setText("Switch D") ;
+			}
+			else
+			{
+				ui->label_AilSw->hide() ;
+				ui->label_RudSw->hide() ;
+      	ui->AilCB->hide() ;
+     		ui->RudCB->hide() ;
+				if ( rData->type != RADIO_TYPE_T12 )
+				{
+					ui->label_Encoder->show() ;
+					ui->EncoderCB->show() ;
+				}
+			}	
 			ui->label_ThrSw->hide() ;
+			ui->label_EleSw->hide() ;
 			ui->label_GeaSw->hide() ;
-			ui->label_RudSw->hide() ;
 			ui->label_PB3Sw->hide() ;
 			ui->label_PB4Sw->hide() ;
 			ui->label_Pot4->hide() ;
 			ui->label_Pot5->hide() ;
-      ui->AilCB->hide() ;
+     	ui->GeaCB->hide() ;
       ui->EleCB->hide() ;
-      ui->GeaCB->hide() ;
-      ui->RudCB->hide() ;
 			ui->ThrCB->hide() ;
 			ui->PB3CB->hide() ;
 			ui->PB4CB->hide() ;
 			ui->Pot4CB->hide() ;
 			ui->Pot5CB->hide() ;
-			ui->label_Encoder->show() ;
-//			ui->label_6Pos->show() ;
-			ui->EncoderCB->show() ;
-//			ui->SixPosCB->show() ;
+	//			ui->label_6Pos->show() ;
+	//			ui->SixPosCB->show() ;
 			ui->EncoderCB->setCurrentIndex(g_eeGeneral.analogMapping & 3) ;
-			//g_eeGeneral.analogMapping
+				//g_eeGeneral.analogMapping
 		}
 		ui->SixPosCB->setCurrentIndex((g_eeGeneral.analogMapping >> 2) & 7) ;
 		
@@ -528,8 +649,11 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 				b->addItem( "NONE" ) ;
 				b->addItem( "JTMS" ) ;
 				b->addItem( "JTCK" ) ;
-				b->addItem( "EXT1" ) ;
-				b->addItem( "EXT2" ) ;
+				if ( rData->type !=  RADIO_TYPE_XLITE )
+				{
+					b->addItem( "EXT1" ) ;
+					b->addItem( "EXT2" ) ;
+				}
 			break ;
 		}
 	}
@@ -1183,7 +1307,7 @@ void GeneralEdit::on_StickScrollEnableChkB_stateChanged(int )
 
 void GeneralEdit::on_SoftwareVolumeChkB_stateChanged(int )
 {
-		if ( rData->bitType & RADIO_BITTYPE_QX7)
+		if ( rData->bitType & (RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
 		}

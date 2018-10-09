@@ -99,6 +99,16 @@
      <string>v=val</string>
     </property>
    </item>
+   <item>
+    <property name="text">
+     <string>v &amp; val</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>|d|&gt;val</string>
+    </property>
+   </item>
   </widget>
   <widget class="QLabel" name="label_2">
    <property name="geometry">

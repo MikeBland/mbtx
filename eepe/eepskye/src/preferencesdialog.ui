@@ -130,6 +130,11 @@
        <string>X-Lite</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Jumper T12</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item row="9" column="1">
