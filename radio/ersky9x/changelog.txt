@@ -56,6 +56,11 @@ Bluetooth Tx signal held low for external power switch
 Handle unknown SPort IDs
 Add trims as Mix sources
 FrSky XJT Rx numbers default to model slot
+Add "double click" on menu button - toggle GVAR
+Fix bug in logging of Lat and Long
+Scalers support second source
+Rx detection at power off revised
+Fix bug in Crossfire telemetry sending from scripts
 
 ******************************************
 CHANGELOG: 28-Feb-2018  MPB (r221)

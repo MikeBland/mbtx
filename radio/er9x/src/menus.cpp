@@ -12997,8 +12997,8 @@ Str_Protocol
 					if (sub==subN)
 					{
 						Columns = 1 ;
-						g_model.r9mPower = checkIndexed( y, ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000"), g_model.r9mPower, (subSub == 1) ) ;
 					}
+					g_model.r9mPower = checkIndexed( y, ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000"), g_model.r9mPower, (sub==subN) && (subSub == 1) ) ;
 	      }
 #endif
 				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) && (subSub == 0) ) ;

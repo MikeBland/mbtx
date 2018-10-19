@@ -127,7 +127,7 @@ struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
-union t_telemetryTx TelemetryTx ;
+struct t_telemetryTx TelemetryTx ;
 
 struct t_serial_tx *Current_Com1 ;
 struct t_serial_tx *Current_Com2 ;
@@ -1582,7 +1582,7 @@ extern "C" void USART0_IRQHandler()
 		{
 			pUsart->US_RTOR = 0 ;		// Off
 			pUsart->US_IDR = US_IDR_TIMEOUT ;
-			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
+			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
 		}
 		
 //	  pUsart->US_CR = US_CR_STTTO ;		// Clears timeout bit
@@ -1592,7 +1592,7 @@ extern "C" void USART0_IRQHandler()
 	{
 	 	if ( pUsart->US_CSR & US_CSR_ENDTX )
 		{
-			TelemetryTx.SportTx.count = 0 ;
+			TelemetryTx.sportCount = 0 ;
 			pUsart->US_IER = US_IER_TXEMPTY ;
 			pUsart->US_IDR = US_IDR_ENDTX ;
 		}
@@ -1631,7 +1631,7 @@ extern "C" void USART0_IRQHandler()
 // 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
 // 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
 		
-		if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
+		if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
 		{
 			pUsart->US_RTOR = 60 ;		// Bits @ 57600 ~= 1050uS
 			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
@@ -3020,14 +3020,14 @@ void x9dHubTxStart( uint8_t *buffer, uint32_t count )
 	{	
 		SendingSportPacket.buffer = buffer ;
 		SendingSportPacket.count = count ;
-		TelemetryTx.SportTx.busy = 1 ;
+		TelemetryTx.sportBusy = 1 ;
 		USART2->CR1 |= USART_CR1_TXEIE ;
 	}
 }
 
 uint32_t hubTxPending()
 {
-	return TelemetryTx.SportTx.busy ;
+	return TelemetryTx.sportBusy ;
 }
 
 #ifndef PCB9XT
@@ -3124,8 +3124,8 @@ extern "C" void USART2_IRQHandler()
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
  #endif
 #endif
-			TelemetryTx.SportTx.count = 0 ;
-			TelemetryTx.SportTx.busy = 0 ;
+			TelemetryTx.sportCount = 0 ;
+			TelemetryTx.sportBusy = 0 ;
 			USART2->CR1 |= USART_CR1_RE ;
 		}
 	}
@@ -3141,9 +3141,9 @@ extern "C" void USART2_IRQHandler()
 			put_fifo128( &Com1_fifo, data ) ;
 			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 			{
-				if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
+				if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
 				{
-					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
+					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
       		TelemetryTx.SportTx.index = 0x7E ;
 				}
 				LastReceivedSportByte = data ;
@@ -4589,10 +4589,10 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 
 	if ( pdata == 0 )	// Test for buffer available
 	{
-		return TelemetryTx.SportTx.count ? 0 : 1 ;
+		return TelemetryTx.sportCount ? 0 : 1 ;
 	}
 
-	if ( TelemetryTx.SportTx.count )
+	if ( TelemetryTx.sportCount )
 	{
 		return 0 ;	// Can't send, packet already queued
 	}
@@ -4617,7 +4617,7 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 	}
 	TelemetryTx.SportTx.ptr = TelemetryTx.SportTx.data ;
 	TelemetryTx.SportTx.index = index ;
-	TelemetryTx.SportTx.count = j ;
+	TelemetryTx.sportCount = j ;
 	return 1 ;
 }
 

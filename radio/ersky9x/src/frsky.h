@@ -565,6 +565,8 @@ extern uint16_t logAxScale( uint8_t channel, uint8_t *dps ) ;
 extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 
 // Crossfire telemetry
+#define XFIRE_BAUD_RATE 400000
+
 // Device address
 #define BROADCAST_ADDRESS              0x00
 #define RADIO_ADDRESS                  0xEA

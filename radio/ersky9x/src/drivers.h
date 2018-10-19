@@ -69,8 +69,6 @@ struct t_softSerial
 struct t_SportTx
 {
 	uint8_t *ptr ;
-	uint16_t count ;
-	uint8_t busy ;
 	uint8_t index ;
 	uint8_t data[16] ;
 } ;
@@ -82,10 +80,15 @@ struct t_XfireTx
 	uint8_t data[64] ;
 } ;
 
-union t_telemetryTx
+struct t_telemetryTx
 {
-	struct t_SportTx SportTx ;
-	struct t_XfireTx XfireTx ;
+	uint16_t sportCount ;
+	uint8_t sportBusy ;
+	union
+	{
+		struct t_SportTx SportTx ;
+		struct t_XfireTx XfireTx ;
+	} ;
 } ;
 
 extern struct t_softSerial SoftSerial1 ;

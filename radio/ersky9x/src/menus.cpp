@@ -848,6 +848,7 @@ int16_t c_to_f( int16_t degrees )
 int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals)
 {
 	int32_t value ;
+	int32_t exValue ;
 	uint8_t lnest ;
 	ScaleData *pscaler ;
 	ExtScaleData *epscaler ;
@@ -887,6 +888,41 @@ int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals)
 	{
 		value %= epscaler->mod+1 ;
 	}
+	if ( epscaler->exSource )
+	{
+		exValue = getValue( epscaler->exSource - 1 ) ;
+		if ( ( epscaler->exSource == NUM_SKYXCHNRAW+1 ) || ( epscaler->exSource == NUM_SKYXCHNRAW+2 ) )
+		{
+			exValue = scale_telem_value( exValue, epscaler->exSource - NUM_SKYXCHNRAW-1, NULL ) ;
+		}
+		if ( pscaler->exFunction )
+		{
+			switch ( pscaler->exFunction )
+			{
+				case 1 :	// Add
+					value += exValue ;
+				break ;
+				case 2 :	// Subtract
+					value -= exValue ;
+				break ;
+				case 3 :	// Multiply
+					value *= exValue ;
+				break ;
+				case 4 :	// Divide
+					if ( exValue )
+					{
+						value /= exValue ;
+					}
+				break ;
+				case 5 :	// Mod
+					if ( exValue )
+					{
+						value %= exValue ;
+					}
+				break ;
+			}
+		}
+	}
 	if ( pscaler->offsetLast )
 	{
 		value += pscaler->offset ;
@@ -894,6 +930,15 @@ int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals)
 	if ( pscaler->neg )
 	{
 		value = -value ;
+	}
+	// Limit to an int16_t
+	if ( value > 32767 )
+	{
+		value = 32767 ;
+	}
+	if ( value < -32768 )
+	{
+		value = -32768 ;
 	}
 	if ( unit )
 	{
@@ -1851,6 +1896,11 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
     		killEvents(EVT_KEY_FIRST(BTN_RE)) ;
 				toggle = 1 ;
 			}
+			if ( getEventDbl(EVT_KEY_FIRST(KEY_MENU)) > 1 )
+			{
+    		killEvents(EVT_KEY_FIRST(KEY_MENU)) ;
+				toggle = 1 ;
+			}
 			if ( toggle )
 			{
   	  	value = ((value >= 101) ? g_model.gvars[(uint8_t)value-101].gvar : 101);
@@ -1884,6 +1934,11 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
     		killEvents(EVT_KEY_FIRST(BTN_RE)) ;
 				toggle = 1 ;
 			}
+			if ( getEventDbl(EVT_KEY_FIRST(KEY_MENU)) > 1 )
+			{
+    		killEvents(EVT_KEY_FIRST(KEY_MENU)) ;
+				toggle = 1 ;
+			}
 			if ( toggle )
 			{
 				s_editMode = 0 ;
@@ -1914,6 +1969,11 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
 		if ( getEventDbl(EVT_KEY_FIRST(BTN_RE)) > 1 )
 		{
    		killEvents(EVT_KEY_FIRST(BTN_RE)) ;
+			toggle = 1 ;
+		}
+		if ( getEventDbl(EVT_KEY_FIRST(KEY_MENU)) > 1 )
+		{
+   		killEvents(EVT_KEY_FIRST(KEY_MENU)) ;
 			toggle = 1 ;
 		}
 		if ( toggle )
@@ -5667,10 +5727,12 @@ uint16_t scalerDecimal( uint8_t y, uint16_t val, uint8_t attr )
 	return val ;
 }
 
+static uint8_t s_scalerSource ;
+
 void menuScaleOne(uint8_t event)
 {
 	static MState2 mstate2 ;
-	mstate2.check_columns(event, 11-1 ) ;
+	mstate2.check_columns(event, 13-1 ) ;
   lcd_puts_Pleft( 0, XPSTR("SC  =") ) ;
 	uint8_t index = s_currIdx ;
   lcd_putc( 2*FW, 0, index+'1' ) ;
@@ -5693,7 +5755,14 @@ void menuScaleOne(uint8_t event)
 		// Returned from editing
 		if ( TextResult )
 		{
-			pscaler->source = unmapPots( TextIndex ) ;
+			if ( s_scalerSource )
+			{
+				epscaler->exSource = unmapPots( TextIndex ) ;
+			}
+			else
+			{
+				pscaler->source = unmapPots( TextIndex ) ;
+			}
 	    eeDirty(EE_MODEL) ;
 		}
 	}
@@ -5707,22 +5776,45 @@ void menuScaleOne(uint8_t event)
 		switch(i)
 		{
       case 0 :	// Source
-				lcd_puts_Pleft( y, XPSTR("Source") ) ;
-				putsChnRaw( 11*FW, y, pscaler->source, attr ) ;
+			case 7 :	// exSource
+			{	
+				uint8_t x ;
+				
+				if ( i == 0 )
+				{				
+					lcd_puts_Pleft( y, XPSTR("Source") ) ;
+					x = pscaler->source ;
+					s_scalerSource = 0 ;
+				}
+				else
+				{
+					lcd_puts_Pleft( y, XPSTR("ex Source") ) ;
+					x = epscaler->exSource ;
+					s_scalerSource = 1 ;
+				}
+				putsChnRaw( 11*FW, y, x, attr ) ;
 				if( attr )
 				{
-					uint8_t x = mapPots( pscaler->source ) ;
+					x = mapPots( x ) ;
 					CHECK_INCDEC_H_MODELVAR( x, 0, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
-					pscaler->source = unmapPots( x ) ;
+					if ( i == 0 )
+					{
+						pscaler->source = unmapPots( x ) ;
+					}
+					else
+					{
+						epscaler->exSource = unmapPots( x ) ;
+					}
 					if ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
 					{
 						// Long MENU pressed
-						TextIndex = mapPots( pscaler->source ) ;
+						TextIndex = mapPots( x ) ;
   				  TextType = 1 ;
   				  killEvents(event) ;
 						pushMenu(menuTextHelp) ;
 					}
 				}
+			}
 			break ;
 			case 1 :	// name
 				alphaEditName( 11*FW-2, y, (uint8_t *)pscaler->name, sizeof(pscaler->name), attr, (uint8_t *)XPSTR( "Scaler Name") ) ;
@@ -5751,31 +5843,35 @@ void menuScaleOne(uint8_t event)
 				pscaler->div = t ;
 				pscaler->divx = t >> 8 ;
 			break ;
-      case 5 :	// unit
-				lcd_puts_Pleft( y, XPSTR("Unit") ) ;
-				lcd_putsAttIdx( 11*FW, y, XPSTR(UnitsString), pscaler->unit, attr ) ;
-  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->unit, 9 ) ;
+      case 5 :	// mod
+				lcd_puts_Pleft( y, XPSTR("Mod Value") ) ;
+				epscaler->mod = scalerDecimal( y, epscaler->mod, attr ) ;
 			break ;
-      case 6 :	// sign
-				lcd_puts_Pleft( y, XPSTR("Sign") ) ;
-  			lcd_putcAtt( 11*FW, y, pscaler->neg ? '-' : '+', attr ) ;
-  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->neg, 1 ) ;
-			break ;
-      case 7 :	// precision
-				lcd_puts_Pleft( y, XPSTR("Decimals") ) ;
-				lcd_outdezAtt( 13*FW, y, pscaler->precision, attr) ;
-  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->precision, 2 ) ;
-			break ;
-      case 8 :	// offsetLast
+      case 6 :	// offsetLast
 				lcd_puts_Pleft( y, XPSTR("Offset At") ) ;
 				lcd_putsAttIdx( 11*FW, y, XPSTR("\005FirstLast "), pscaler->offsetLast, attr ) ;
   			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->offsetLast, 1 ) ;
 			break ;
-      case 9 :	// mod
-				lcd_puts_Pleft( y, XPSTR("Mod Value") ) ;
-				epscaler->mod = scalerDecimal( y, epscaler->mod, attr ) ;
+			case 8 :
+				lcd_puts_Pleft( y, XPSTR("Function") ) ;
+				pscaler->exFunction = checkIndexed( y, XPSTR(FWx13"\005""\010--------Add     SubtractMultiplyDivide  Mod     "), pscaler->exFunction, attr ) ;
 			break ;
-      case 10 :	// Dest
+			case 9 :	// unit
+				lcd_puts_Pleft( y, XPSTR("Unit") ) ;
+				lcd_putsAttIdx( 11*FW, y, XPSTR(UnitsString), pscaler->unit, attr ) ;
+  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->unit, 9 ) ;
+			break ;
+      case 10 :	// sign
+				lcd_puts_Pleft( y, XPSTR("Sign") ) ;
+  			lcd_putcAtt( 11*FW, y, pscaler->neg ? '-' : '+', attr ) ;
+  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->neg, 1 ) ;
+			break ;
+      case 11 :	// precision
+				lcd_puts_Pleft( y, XPSTR("Decimals") ) ;
+				lcd_outdezAtt( 13*FW, y, pscaler->precision, attr) ;
+  			if( attr ) CHECK_INCDEC_H_MODELVAR_0( pscaler->precision, 2 ) ;
+			break ;
+      case 12 :	// Dest
 				lcd_puts_Pleft( y, XPSTR("Dest") ) ;
 #define NUM_SCALE_DESTS		13
 				if( attr )
@@ -9879,7 +9975,7 @@ void editOneProtocol( uint8_t event )
 		newvalue = onoffMenuItem( value, y, XPSTR("Enable"), sub==subN ) ;
 		if ( newvalue != value )
 		{
-#if defined(PCBX12D) || defined (PCBXLITE)
+#if defined(PCBX12D) || defined (PCBXLITE) || defined (PCBX9D)
 			if ( module == 0 )
 			{
 				value = newvalue ? 1 : PROTO_OFF ;

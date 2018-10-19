@@ -28,13 +28,28 @@ uint8_t LoadingNeeded ;
 
 #else
 #include "basic.h"
-/* lcd outdez flags */
-#define LEADING0      0x10
-#define PREC1         0x20
-#define PREC2         0x30 /* 4 modes in 2bits! */
-#define LEFT          0x40 /* align left */
+#include "mainwindow.h"
+#include "lcd.h"
 
 uint8_t ScriptFlags ;
+extern uint32_t g_tmr10ms ;
+
+
+uint16_t isqrt32(uint32_t n)
+{
+  uint16_t c = 0x8000;
+  uint16_t g = 0x8000;
+
+  for(;;)
+	{
+    if((uint32_t)g*g > n)
+      g ^= c;
+    c >>= 1;
+    if(c == 0)
+      return g;
+    g |= c;
+  }
+}
 
 #endif
 
@@ -230,6 +245,24 @@ uint8_t ScriptFlags ;
 #define MAX_CALL_STACK	20
 #define MAX_PARAM_STACK	20
 
+#ifdef QT
+const char *ErrorText[] = {
+ "Duplicate Label",
+ "Bad Line Number",
+ "Syntax",
+ "Too Many Variables",
+ "Missing Bracket",
+ "Divide by 0",
+ "Missing 'then'",
+ "Missing 'gosub'",
+ "Missing Function",
+ "Too Large",
+ "Dimension",
+ "Too Many Nested Calls"
+} ;	
+#endif
+
+
 //#define MAX_EXP_STACK	10
 
 // Compiled coding:
@@ -319,7 +352,7 @@ struct t_basicRunTime
 		uint8_t byteArray[8] ;
 		int32_t intArray[2] ;
 	} Vars ;
-} ;
+} __attribute__((__may_alias__)) ;
 
 struct t_control
 {
@@ -407,6 +440,7 @@ const struct commands Table[] =
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
 //  { "function", FUNC},
+	{ "//", REM},
   { "", 0 } /* mark end of table */
 } ;
 
@@ -514,10 +548,10 @@ const struct commands Constants[] =
   { "PREC1", PREC1 },
   { "PREC2", PREC2 },
   { "LEAD0", LEADING0 },
-#ifndef	QT
   { "DBLSIZE", DBLSIZE },
   { "INVERS", INVERS },
   { "BLINK", BLINK },
+	{ "CONDENSED", CONDENSED },
 //  { "FULLSCALE", RESX },
   { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
   { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
@@ -541,6 +575,7 @@ const struct commands Constants[] =
 //  { "ROUND", ROUND },
   { "LCD_W", LCD_W },
   { "LCD_H", LCD_H },
+#ifndef	QT
 #endif  
 	{ "", 0 } /* mark end of table */
 } ;
@@ -562,12 +597,12 @@ uint8_t CodeBuffer[200] ;
 #endif
 
 #ifdef	QT
-#define PROGRAM_SIZE	2000
+#define PROGRAM_SIZE	22000
 #else
 #ifdef SMALL
 #define PROGRAM_SIZE	8000
 #else
-#define PROGRAM_SIZE	12000
+#define PROGRAM_SIZE	22000
 #endif
 #endif
 
@@ -601,7 +636,8 @@ FILE *File ;
 char InputLine[LINE_LENGTH] ;
 
 #ifdef	QT
-uint8_t Data[8192] ;
+#define DATA_SIZE	60000
+uint8_t Data[DATA_SIZE] ;
 #endif
 
 #ifndef	QT
@@ -1035,6 +1071,24 @@ uint32_t scanForKeyword( char *dest )
 		{
 			c = BITXOR ;
 		}
+		if ( c == '/' )
+		{
+			if ( *(ProgPtr+1) == '/' )
+			{
+				// Rem
+				ProgPtr += 2 ;
+    		*temp++ = 'r' ;
+    		*temp++ = 'e' ;
+    		*temp++ = 'm' ;
+    		*temp = '\0' ;
+				Tok = look_up(Token, Table) ;
+				if ( Tok )
+				{
+					Token_type = COMMAND ; /* is a command */
+				  return Token_type ;
+				}
+			}
+		}
     *temp = c ;
     ProgPtr += 1 ; /* advance to next position */
 		if ( ( c == '<' ) || ( c == '>') )
@@ -1045,7 +1099,8 @@ uint32_t scanForKeyword( char *dest )
 				*temp = ( c == '<' ) ? LESSEQUAL : GREATEQUAL ;				
 			}
 		}
-		
+
+
     temp += 1 ;
     *temp = 0 ; 
 //    //printf( "DELIM\n" );
@@ -1223,24 +1278,32 @@ uint8_t *appendSymbols( uint8_t *p )
 			break ;
 		}
 		r = q ;
+		if ( p > &Data[DATA_SIZE-200] )
+		{
+			break ;
+		}
 	}
 	r = &Program.Bytes[StartOfSymbols] ;
 	uint32_t i ;
 	uint32_t j ;
 	j = 0 ;
-	for ( i = 0 ; i < 192 ; i += 1 )
+	if ( p < &Data[DATA_SIZE-1000] )
 	{
-    sprintf( Tbuf, "%02x ", *r++ ) ;
-    p = cpystr( p, (uint8_t *)Tbuf ) ;
-		if ( ++j > 15 )
+		for ( i = 0 ; i < 192 ; i += 1 )
 		{
-			j = 0 ;
-			*p++ = '\n' ;
+  	  sprintf( Tbuf, "%02x ", *r++ ) ;
+  	  p = cpystr( p, (uint8_t *)Tbuf ) ;
+			if ( ++j > 15 )
+			{
+				j = 0 ;
+				*p++ = '\n' ;
+			}
 		}
 	}
   p = cpystr( p, (uint8_t *)"\nCode:\n" ) ;
 	r = &Program.Bytes[0] ;
 	j = 0 ;
+	if ( p < &Data[DATA_SIZE-9000] )
 	for ( i = 0 ; i < 1024 ; i += 1 )
 	{
 		if ( j == 0 )
@@ -1324,37 +1387,75 @@ void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimensi
 uint32_t loadBasic( char *fileName, uint32_t type ) ;
 uint32_t basicTask( uint8_t event, uint8_t flags ) ;
 
-void parse()
+// Bitfields in ScriptFlags
+#define	SCRIPT_LCD_OK					1
+#define	SCRIPT_STANDALONE			2
+#define	SCRIPT_TELEMETRY			4
+#define	SCRIPT_RESUME					8
+
+uint32_t parse( char *filename )
 {
 	uint32_t i ;
-  uint32_t j ;
-  uint8_t *p ;
-	loadBasic( (char *)"C:/Data/C/Interpreter/test.bas", BASIC_LOAD_ALONE ) ;
+	uint32_t retValue ;
+	loadBasic( filename, BASIC_LOAD_ALONE ) ;
 	for ( i = 0 ; i < 300 ; i += 1 )
 	{
-		if ( basicTask( 0, 0 ) == 2 )
+		retValue = basicTask( 0, SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
+		if ( ( retValue == 3 ) || ( retValue == 4 ) )
 		{
 			break ;
 		}
 	}
-	p = RunTimeData ;
+	return retValue ;
+}	
+	
+uint32_t run( uint32_t event )
+{	
+	uint32_t i ;
+	uint32_t retValue ;
+	for ( i = 0 ; i < 300 ; i += 1 )
+	{
+		retValue = basicTask( event,  SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
+		if ( ( retValue == 2 ) || ( retValue == 3 ) )
+		{
+			break ;
+		}
+	}
+	return retValue ;
+}
+
+void report()
+{
+	uint32_t i ;
+  uint32_t j ;
+  uint8_t *p ;
+  p = RunTimeData ;
 	if ( p )
 	{
 		uint8_t *r ;
-  	r = (uint8_t *) RunTime->Vars.Variables ;
-		j = 0 ;
-		for ( i = 0 ; i < 96 ; i += 1 )
+		if (RunTime)
 		{
-  	  sprintf( Tbuf, "%02x ", *r++ ) ;
-  	  p = cpystr( p, (uint8_t *)Tbuf ) ;
-			if ( ++j > 15 )
+			p = cpystr( p, (uint8_t *)"Debug Data\n" ) ;
+
+	  	r = (uint8_t *) &(RunTime->Vars.Variables) ;
+			j = 0 ;
+			for ( i = 0 ; i < 96 ; i += 1 )
 			{
-				j = 0 ;
-				*p++ = '\n' ;
+  		  sprintf( Tbuf, "%02x ", *r++ ) ;
+  		  p = cpystr( p, (uint8_t *)Tbuf ) ;
+				if ( ++j > 15 )
+				{
+					j = 0 ;
+					*p++ = '\n' ;
+				}
+				if ( p > &Data[DATA_SIZE-200] )
+				{
+					break ;
+				}
 			}
+			*p++ = '\n' ;
+  		*p = '\0' ;
 		}
-		*p++ = '\n' ;
-  	*p = '\0' ;
 	}
 //  r = (uint8_t *) &RunTime->Vars ;
 //	for ( i = 0 ; i < 48 ; i += 1 )
@@ -1604,7 +1705,10 @@ uint32_t partLoadBasic()
 		if ( q )
 		{
 #ifdef QT
-			p = cpystr( p, q ) ; 
+			if ( p < &Data[DATA_SIZE-500] )
+			{
+				p = cpystr( p, q ) ; 
+			}
 #endif
       ProgPtr = (char *) q ;
 			do
@@ -1626,9 +1730,9 @@ uint32_t partLoadBasic()
 					
 					if ( Tok == REM )
 					{
-#ifdef QT
-            p = cpystr( p, (uint8_t *)"Rem" ) ;
-#endif
+//#ifdef QT
+//            p = cpystr( p, (uint8_t *)"Rem" ) ;
+//#endif
 						if ( lineNumberPosition == cPosition - 2 )
 						{
 							cPosition -= 2 ; // Remove line number if whole line is a REM
@@ -1637,17 +1741,17 @@ uint32_t partLoadBasic()
 					}
 					else if ( Tok == LET )
 					{
-#ifdef QT
-            p = cpystr( p, (uint8_t *)"Let" ) ;
-#endif
+//#ifdef QT
+//            p = cpystr( p, (uint8_t *)"Let" ) ;
+//#endif
 						continue ;
 					}
 					else if ( Tok == DEFARRAY )
 					{
 						uint32_t type = SYM_VAR_ARRAY_INT ;
-#ifdef QT
-            p = cpystr( p, (uint8_t *)"Array " ) ;
-#endif
+//#ifdef QT
+//            p = cpystr( p, (uint8_t *)"Array " ) ;
+//#endif
 						cPosition -= 2 ; // Remove line number
 						// What is array type
 						j = scanForKeyword( Token ) ;
@@ -1870,16 +1974,16 @@ uint32_t partLoadBasic()
 					}
 					if ( ( Tok != EOL ) && ( Tok != FINISHED ) )
 					{
-#ifdef QT
-						*p++ = '[' ;
-						sprintf( Tbuf, "%d,%d", j, Tok ) ;
-            q = (uint8_t *)Tbuf ;
-						while ( *q )
-						{
-							*p++ = *q++ ;
-						}
-						*p++ = ']' ;
-#endif
+//#ifdef QT
+//						*p++ = '[' ;
+//						sprintf( Tbuf, "%d,%d", j, Tok ) ;
+//            q = (uint8_t *)Tbuf ;
+//						while ( *q )
+//						{
+//							*p++ = *q++ ;
+//						}
+//						*p++ = ']' ;
+//#endif
 						if ( Tok )
 						{
 							Program.Bytes[cPosition++] = Tok ;
@@ -1928,15 +2032,15 @@ uint32_t partLoadBasic()
 				}
 				else
 				{
-#ifdef QT
-					*p++ = '{' ;
-					sprintf( Tbuf, "%d,", j ) ;
-          q = (uint8_t *)Tbuf ;
-					while ( *q )
-					{
-						*p++ = *q++ ;
-					}
-#endif
+//#ifdef QT
+//					*p++ = '{' ;
+//					sprintf( Tbuf, "%d,", j ) ;
+//          q = (uint8_t *)Tbuf ;
+//					while ( *q )
+//					{
+//						*p++ = *q++ ;
+//					}
+//#endif
 					if ( PreviousToken == THEN )
 					{
 //						if ( Tok != GOTO && Tok != GOSUB )
@@ -1957,10 +2061,10 @@ uint32_t partLoadBasic()
 							uint32_t index ;
 							if ( ( PreviousToken == GOTO ) || ( PreviousToken == GOSUB ) )
 							{
-#ifdef QT
-	              p = cpystr( p, (uint8_t *)"Label " ) ;
-                p = cpystr( p, (uint8_t *)Token ) ;
-#endif
+//#ifdef QT
+//	              p = cpystr( p, (uint8_t *)"Label " ) ;
+//                p = cpystr( p, (uint8_t *)Token ) ;
+//#endif
 								loc = findSymbol( SYM_LABEL ) ;
                 if ( loc == -1 )
 								{
@@ -1995,10 +2099,10 @@ uint32_t partLoadBasic()
 								int32_t index ;
 								uint8_t code ;
 								uint8_t constant = 0 ;
-#ifdef QT
-	              p = cpystr( p, (uint8_t *)"Var " ) ;
-								*p++ = Token[0] ;
-#endif
+//#ifdef QT
+//	              p = cpystr( p, (uint8_t *)"Var " ) ;
+//								*p++ = Token[0] ;
+//#endif
 								index = findSymbol( SYM_ARRAY ) ;	// Is it an array with no subscript?
 								if ( index != -1 )
 								{
@@ -2117,11 +2221,11 @@ uint32_t partLoadBasic()
 							uint32_t bytes = 0 ;
 							value = Token[0] ;
 							value |= Token[1] << 8 ;
-#ifdef QT
-              p = cpystr( p, (uint8_t *)"Const " ) ;
-							sprintf( Tbuf, "%d,", value ) ;
-              p = cpystr( p, (uint8_t *) Tbuf ) ;
-#endif
+//#ifdef QT
+//              p = cpystr( p, (uint8_t *)"Const " ) ;
+//							sprintf( Tbuf, "%d,", value ) ;
+//              p = cpystr( p, (uint8_t *) Tbuf ) ;
+//#endif
 							bytes = codeNumeric( value ) ;
 							code = bytes ;
 							bytes >>= 8 ;
@@ -2159,10 +2263,10 @@ uint32_t partLoadBasic()
 							uint8_t code ;
 							uint32_t bytes ;
 							value = asctoi( Token ) ;
-#ifdef QT
-              p = cpystr( p, (uint8_t *)"Num " ) ;
-              p = cpystr( p, (uint8_t *)Token ) ;
-#endif
+//#ifdef QT
+//              p = cpystr( p, (uint8_t *)"Num " ) ;
+//              p = cpystr( p, (uint8_t *)Token ) ;
+//#endif
 							bytes = codeNumeric( value ) ;
 							code = bytes ;
 							bytes >>= 8 ;
@@ -2176,23 +2280,23 @@ uint32_t partLoadBasic()
 						break ;
 						case DELIMITER :
 						{	
-#ifdef QT
-              p = cpystr( p, (uint8_t *)"Delim " ) ;
-							if ( Token[0] == LESSEQUAL )
-							{
-								*p++ = '<' ;
-								*p++ = '=' ;
-							}
-							else if ( Token[0] == GREATEQUAL )
-							{
-								*p++ = '>' ;
-								*p++ = '=' ;
-							}
-							else
-							{
-								*p++ = Token[0] ;
-							}
-#endif
+//#ifdef QT
+//              p = cpystr( p, (uint8_t *)"Delim " ) ;
+//							if ( Token[0] == LESSEQUAL )
+//							{
+//								*p++ = '<' ;
+//								*p++ = '=' ;
+//							}
+//							else if ( Token[0] == GREATEQUAL )
+//							{
+//								*p++ = '>' ;
+//								*p++ = '=' ;
+//							}
+//							else
+//							{
+//								*p++ = Token[0] ;
+//							}
+//#endif
 							Program.Bytes[cPosition++] = Token[0] ;
 						}
 						break ;
@@ -2201,11 +2305,11 @@ uint32_t partLoadBasic()
 							int32_t loc ;
 //							uint32_t index ;
 							uint32_t type ;
-#ifdef QT
-              p = cpystr( p, (uint8_t *)"Label " ) ;
-              p = cpystr( p, (uint8_t *)Token ) ;
-							// Define a label
-#endif
+//#ifdef QT
+//              p = cpystr( p, (uint8_t *)"Label " ) ;
+//              p = cpystr( p, (uint8_t *)Token ) ;
+//							// Define a label
+//#endif
 							loc = findSymbol( SYM_LABEL ) ;
 							if ( loc == -1 )
 							{
@@ -2283,24 +2387,26 @@ uint32_t partLoadBasic()
 						}			 
 						break ;
 					}
-#ifdef QT
-					*p++ = '}' ;
-#endif
+//#ifdef QT
+//					*p++ = '}' ;
+//#endif
           PreviousToken = -1 ;
         }
 				if ( ParseError )
 				{
 #ifdef QT
-					sprintf( InputLine, "Error %d at line %d", ParseError, ParseErrorLine ) ;
+					sprintf( InputLine, "Error %d at line %d\n", ParseError, ParseErrorLine ) ;
+					p = cpystr( p, (uint8_t *)InputLine ) ;
+          p = cpystr( p, (uint8_t *)ErrorText[ParseError-1] ) ;
 #else
 					setErrorText( ParseError, ParseErrorLine ) ;
 #endif
 					break ;
 				}
 			} while( Tok != FINISHED ) ;
-#ifdef QT
-			*p++ = '\n' ;
-#endif
+//#ifdef QT
+//			*p++ = '\n' ;
+//#endif
 		}
 		else
 		{
@@ -2458,11 +2564,13 @@ void basicLoadModelScripts()
 {
 	LoadingIndex = 0 ;
 	BasicState = BASIC_IDLE ;	// Terminate existing script(s)
+#ifndef QT
 	if ( !sd_card_ready() )
 	{
 		LoadingNeeded = 1 ;
 		return ;
 	}
+#endif
 	loadNextScript() ;
 }
 #endif
@@ -2532,6 +2640,7 @@ void basicLoadModelScripts()
 // 1 After begin or Still running or RunError
 // 2 Found Stop
 // 3 Script finished (unloaded) or Loading needed
+// 4 (For QT) Loading complete
 
 uint32_t basicTask( uint8_t event, uint8_t flags )
 {
@@ -2574,6 +2683,8 @@ uint32_t basicTask( uint8_t event, uint8_t flags )
 					loadNextScript() ;
 				}
 			}
+#else
+			return 4 ;
 #endif
 
 //#ifndef QT
@@ -2688,11 +2799,13 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 	}
 	else if ( BasicState == BASIC_IDLE )
 	{
+#ifndef QT
 		if ( LoadingNeeded )
 		{
 			LoadingNeeded = 0 ;
 			return 3 ;
 		}
+#endif
 	}
   return 0 ;
 }
@@ -2831,6 +2944,8 @@ uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
   uint32_t value ;
 	uint16_t val16 ;
 	
+	// Note that ipointer and bpointer occupy the same space so
+	// this clears bpointer as well
 	ptr->ipointer = 0 ;
 
 	opcode = *RunTime->ExecProgPtr++ ;
@@ -3429,7 +3544,7 @@ void exec_drawnumber()
 			}
 		}
 #ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawNumber()\n" ) ;
+		lcd_outdezNAtt( x, y, value, attr, width ) ;
 #else
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 		{
@@ -3455,9 +3570,6 @@ int32_t exec_power()
 	{
 		value = params[0].var ;
 	 	power = params[1].var ;
-#ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"Power()\n" ) ;
-#else
 		if ( power > 20 )
 		{
 			power = 20 ;
@@ -3467,7 +3579,6 @@ int32_t exec_power()
 			answer *= value ;
 			power -= 1 ;
 		}
-#endif
 		eatCloseBracket() ;
 	}
 	return answer ;
@@ -3488,14 +3599,10 @@ int32_t exec_bitField()
 		value = params[0].var ;
 		offset = params[1].var ;
 		size = params[2].var ;
-#ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"BitField()\n" ) ;
-#else
 		value >>= offset ;
 		// now pick out size 
 		uint32_t mask = ( 1 << (size) ) - 1 ;
 		value &= mask ;
-#endif
 		eatCloseBracket() ;
 	}
 	return value ;
@@ -3524,7 +3631,7 @@ void exec_drawtimer()
 			attr = params[0].var ;
 		}
 #ifdef QT
-      RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawTimer()\n" ) ;
+			putsTime( x, y, value, attr, attr ) ;
 #else
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 		{
@@ -3549,7 +3656,7 @@ void exec_drawpoint()
 		x1 = params[0].var ;
 		y1 = params[1].var ;
 #ifdef QT
-		RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawPoint()\n" ) ;
+	  lcd_plot(x1, y1 ) ;
 #else
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 		{
@@ -3587,10 +3694,9 @@ void exec_drawline()
 				paintType = params[0].var ;
 			}
 		}
-#ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawLine()\n" ) ;
-#else
+#ifndef QT
 		if ( ScriptFlags & SCRIPT_LCD_OK )
+#endif
 		{
 extern uint8_t plotType ;
 			uint8_t oldPlotType = plotType ;
@@ -3612,7 +3718,6 @@ extern uint8_t plotType ;
 			}
 			plotType = oldPlotType ;
 		}
-#endif
 		eatCloseBracket() ;
 	}
 }
@@ -3649,14 +3754,12 @@ void exec_drawrect()
 				percent = 0 ;
 			}
 		}
-#ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawRect()\n" ) ;
-#else
+#ifndef QT
 		if ( ScriptFlags & SCRIPT_LCD_OK )
+#endif
 		{
 		  lcd_hbar( x, y, w, h, percent ) ;
 		}
-#endif
 		eatCloseBracket() ;
 	}
 }
@@ -3696,17 +3799,14 @@ void exec_drawtext()
 					}
 				}
 #ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawText(" ) ;
-				for ( uint32_t i = 0 ; i < 20 ; i += 1 )
+				if ( length )
 				{
-					if ( *p == 0 )
-					{
-						break ;
-					}
-					*RunTimeData++ = *p++ ;
+					lcd_putsnAtt( x, y, (char *)p, length, attr ) ;
 				}
-//        RunTimeData = cpystr( RunTimeData, p ) ;
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)")\n" ) ;
+				else
+				{
+			  	lcd_putsAtt( x, y, (char *)p, attr ) ;
+				}
 #else
 				if ( ScriptFlags & SCRIPT_LCD_OK )
 				{
@@ -3751,14 +3851,12 @@ void exec_drawbitmap()
 			{
 				p = param.cpointer ;
 				w = *p++ ;
-#ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawBitmap(" ) ;
-#else
+#ifndef QT
 				if ( ScriptFlags & SCRIPT_LCD_OK )
+#endif
 				{
 					lcd_bitmap( x, y, p, w, 1, 0 ) ;
 				}
-#endif
 				eatCloseBracket() ;
 			}
 		}
@@ -3770,7 +3868,8 @@ void exec_drawclear()
 {
 	// call clear lcd
 #ifdef QT
-  RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawClear()\n" ) ;
+//  RunTimeData = cpystr( RunTimeData, (uint8_t *)"DrawClear()\n" ) ;
+	lcd_clear() ;
 #else
 	if ( ScriptFlags & SCRIPT_LCD_OK )
 	{
@@ -3799,7 +3898,7 @@ void exec_playnumber()
 		unit = params[1].var ;
 		att = params[2].var ;
 #ifdef QT
-    RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
+//    RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
 #else
 		if ( unit > 0 && unit < 10 )
 		{
@@ -3868,7 +3967,7 @@ int32_t exec_settelitem()
 			{
 				value = param.var ;
 #ifdef QT			
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"setTelItem()\n" ) ;
+//        RunTimeData = cpystr( RunTimeData, (uint8_t *)"setTelItem()\n" ) ;
 #else
 				number -= 44 ;
 				if ( ( number >= 0 ) && ( number < NUM_TELEM_ITEMS ) )
@@ -3972,7 +4071,7 @@ int32_t exec_getvalue(uint32_t type)
 	if ( result )
 	{
 #ifdef QT			
-		RunTimeData = cpystr( RunTimeData, (uint8_t *)"GetValue()\n" ) ;
+//		RunTimeData = cpystr( RunTimeData, (uint8_t *)"GetValue()\n" ) ;
 #else
 		if ( number >= 0 )
 		{
@@ -4060,8 +4159,8 @@ static int32_t exec_gettime()
 		return 0 ;
 	}
 	eatCloseBracket() ;
-#ifdef QT			
-  return 100 ;
+#ifdef QT
+	return g_tmr10ms ;
 #else
 extern volatile uint32_t get_ltmr10ms() ;
 	return get_ltmr10ms() ;
@@ -4081,11 +4180,7 @@ static int32_t exec_getlastpos()
 static int32_t exec_sysflags()
 {
 	eatCloseBracket() ;
-#ifdef QT			
-  return 128 ;
-#else
 	return ScriptFlags ;
-#endif
 }
 
 static int32_t exec_not()
@@ -4141,7 +4236,7 @@ int32_t exec_sportsend()
 		if ( x == 0xFF )
 		{
 #ifdef QT
-      RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
+//      RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
       result = 0 ;
 #else
 extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
@@ -4170,7 +4265,7 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 						sportPacket[5] = result >> 16 ;
 						sportPacket[6] = result >> 24 ;
 #ifdef QT
-            RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
+//            RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
             result = 0 ;
 #else
             result = sportPacketSend( sportPacket, sportPacket[7] ) ;
@@ -4207,7 +4302,7 @@ int32_t exec_sportreceive()
 				{
 					type[3] = result ;
 #ifdef QT
-        	RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportReceive()\n" ) ;
+//        	RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportReceive()\n" ) ;
           result = 1 ;
 #else
 					if ( fifo128Space( &Lua_fifo ) <= ( 127 - 8 ) )
@@ -4361,7 +4456,7 @@ int32_t exec_crossfiresend()
 		if ( command == 0xFF )
 		{
 #ifdef QT
-      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
+//      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
       result = 0 ;
 #else
 			result = xfirePacketSend( 0, 0, 0 ) ;
@@ -4373,11 +4468,11 @@ int32_t exec_crossfiresend()
 			if ( result == 1 )
 			{
 				length = param.var ;
-				result = getParamVarAddress( &address, 0 ) ;
+				result = getParamVarAddress( &address, length ) ;
 				if ( result == 1 )	// Byte array
 				{
 #ifdef QT
-      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
+//      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
       result = 0 ;
 #else
 					result = xfirePacketSend( length, command, address.bpointer ) ;
@@ -4433,10 +4528,10 @@ int32_t exec_popup()
 			if ( result == 1 )
 			{
         width = param.var ;
-#ifdef QT
-        RunTimeData = cpystr( RunTimeData, (uint8_t *)"popup()" ) ;
-				result = 0 ;
-#else
+//#ifdef QT
+//        RunTimeData = cpystr( RunTimeData, (uint8_t *)"popup()" ) ;
+//				result = 0 ;
+//#else
 				if ( ScriptPopupActive == 0 )
 				{
 					ScriptPopupActive = 1 ;
@@ -4457,7 +4552,7 @@ int32_t exec_popup()
 					RunTime->Vars.Variables[0] = 0 ;
 					ScriptPopupActive = 0 ;
 				}
-#endif
+//#endif
 				return result ;
 			}
 		}

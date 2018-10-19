@@ -702,7 +702,7 @@ extern void setBtBaudrate( uint32_t index ) ;
 						sendHbt( (uint8_t *)"AT+PASS?" ) ;
 						txmit( rxchar ) ;
 					break ;
-					case 'v' :
+					case 'P' :
 						sendHbt( (uint8_t *)"AT+VERS?" ) ;
 						txmit( rxchar ) ;
 					break ;

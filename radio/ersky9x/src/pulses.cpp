@@ -521,7 +521,7 @@ uint8_t crc8(const uint8_t * ptr, uint32_t len)
 
 extern uint8_t Bit_pulses[] ;
 extern uint16_t XfireLength ;
-extern union t_telemetryTx TelemetryTx ;
+extern struct t_telemetryTx TelemetryTx ;
 
 // Range for pulses (channels output) is [-1024:+1024]
 uint8_t setupPulsesXfire()

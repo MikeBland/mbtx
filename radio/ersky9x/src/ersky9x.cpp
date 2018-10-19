@@ -3288,17 +3288,32 @@ void prepareForShutdown()
 	
 }
 
+#ifdef POWER_BUTTON
+	static uint8_t powerIsOn = 1 ;
+#endif
+
+#define RSSI_POWER_OFF	1
+#define RSSI_STAY_ON		0
+
 #ifdef CHECKRSSI
-void checkRssi()
+#ifdef REVX
+uint32_t checkRssi(uint32_t rssi)
+#else
+uint32_t checkRssi()
+#endif
 {
 #ifdef PCBSKY
 	uint32_t i ;
 #endif
-  if(g_eeGeneral.disableRxCheck) return;
+  if(g_eeGeneral.disableRxCheck) return RSSI_POWER_OFF ;
 
+#ifdef REVX
+	if ( ( FrskyHubData[FR_RXRSI_COPY] == 0 ) && ( rssi == 0 ) )
+#else
 	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+#endif
 	{
-		return ;
+		return RSSI_POWER_OFF ;
 	}
 
   // first - display warning
@@ -3333,27 +3348,57 @@ void checkRssi()
 		check_backlight() ;
 
 #ifdef PCBSKY
+		if ( FrskyHubData[FR_RXRSI_COPY]  )
+		{
+			i = 0 ;
+		}
 		if ( ++i > 300 )
 		{
-			return ;
+			return RSSI_POWER_OFF ;
 		}
 #else
 		if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
 		{
-			return ;
+			return RSSI_POWER_OFF ;
 		}
 #endif
     if( keyDown() )
     {
 			clearKeyEvents() ;
-      return;
+			return RSSI_POWER_OFF ;
     }
     wdt_reset();
 		CoTickDelay(5) ;					// 10mS for now
 		getADC_osmp() ;
 		perOutPhase(g_chans512, 0);
 		check_frsky( 0 ) ;
-  }
+//#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+		if ( ( check_soft_power() != POWER_OFF ) )		// power back on?
+		{
+			return RSSI_STAY_ON ;
+    }
+//#endif	
+#ifdef POWER_BUTTON
+ #if defined(PCBXLITE)
+		if ( GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET )
+ #else
+		if ( GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET )
+ #endif
+		{
+			if ( powerIsOn > 3 )
+			{
+				if ( ++powerIsOn > 9 )
+				{
+					return RSSI_STAY_ON ;
+				}
+			}
+		}
+		else
+		{
+			powerIsOn = 4 ;
+		}
+#endif
+	}
 }
 #endif
 
@@ -3361,6 +3406,9 @@ void checkRssi()
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
+#ifdef REVX
+	uint32_t rssi ;
+#endif
 #ifdef PCBX9D
  #ifdef REV9E
 	NumExtraPots = NUM_EXTRA_POTS - 2 ;
@@ -3541,10 +3589,6 @@ extern uint8_t ModelImageValid ;
 #endif	
 	Activated = 1 ;
 
-#ifdef POWER_BUTTON
-	static uint8_t powerIsOn = 1 ;
-#endif
-
 
 #ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
@@ -3586,9 +3630,12 @@ extern uint8_t ModelImageValid ;
 		}
 	}
 
+#ifdef REVX
+	rssi = 0 ;
+#endif
+
 	while (1)
 	{
-
 		
 #if (not defined(REVA)) || defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 		
@@ -3639,9 +3686,22 @@ extern uint8_t ModelImageValid ;
 		{
 			powerIsOn = 1 ;
 		}
-		if ( powerIsOn == 3 )
+		if ( powerIsOn >= 3 )
 #else
 #ifdef PCBSKY
+#ifdef REVX
+	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+	{
+		rssi = 250 ;
+	}
+	else
+	{
+		if ( rssi )
+		{
+			rssi -= 1 ;
+		}
+	}
+#endif
  		static uint16_t tgtime = 0 ;
 		uint32_t powerState ;
 		powerState = check_soft_power() ;
@@ -3667,7 +3727,17 @@ extern uint8_t ModelImageValid ;
 #endif
 		{
 #ifdef CHECKRSSI
-			checkRssi() ;
+#ifdef REVX
+			if ( checkRssi(rssi) == RSSI_STAY_ON )
+#else
+			if ( checkRssi() == RSSI_STAY_ON )
+#endif
+			{
+#ifdef POWER_BUTTON
+				powerIsOn = 1 ;
+#endif
+				continue ;
+			}
 #endif
 			// Time to switch off
 			putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;

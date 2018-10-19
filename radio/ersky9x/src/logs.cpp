@@ -316,7 +316,7 @@ extern uint32_t sdMounted( void ) ;
 	{
 		f_puts(",Lat", &g_oLogFile);
 	}
-	if ( isLogEnabled( LOG_LAT ) )
+	if ( isLogEnabled( LOG_LONG ) )
 	{
 		f_puts(",Long", &g_oLogFile);
 	}
@@ -614,7 +614,7 @@ void writeLogs()
 					value += FrskyHubData[FR_GPS_LONGd] ;
 					value *= 10 ;
 					value /= 6 ;
-					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LAT_N_S] ) ;
+					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LONG_E_W] ) ;
 				}
 				else
 				{

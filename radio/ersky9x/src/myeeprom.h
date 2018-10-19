@@ -608,7 +608,7 @@ PACK(typedef struct t_scale
 	uint8_t neg:1 ;
 	uint8_t precision:2 ;
 	uint8_t offsetLast:1 ;
-	uint8_t spare:4 ;
+	uint8_t exFunction:4 ;
 	uint8_t name[4] ;
 }) ScaleData ;
 
@@ -616,7 +616,8 @@ PACK(typedef struct t_extScale
 {
 	uint8_t mod ;
 	uint8_t dest ;
-	uint8_t spare[4] ;
+	uint8_t exSource ;
+	uint8_t spare[3] ;
 } ) ExtScaleData ;
 
 // DSM link monitoring
