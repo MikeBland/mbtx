@@ -82,12 +82,6 @@ struct t_XfireTx
 	uint8_t data[64] ;
 } ;
 
-union t_telemetryTx
-{
-	struct t_SportTx SportTx ;
-	struct t_XfireTx XfireTx ;
-} ;
-
 extern struct t_softSerial SoftSerial1 ;
 
 //extern void put_fifo32( struct t_fifo32 *pfifo, uint8_t byte ) ;

@@ -127,7 +127,8 @@ struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
-union t_telemetryTx TelemetryTx ;
+struct t_SportTx SportTelemetryTx ;
+struct t_XfireTx XFireTelemetryTx ;
 
 struct t_serial_tx *Current_Com1 ;
 struct t_serial_tx *Current_Com2 ;
@@ -1582,7 +1583,7 @@ extern "C" void USART0_IRQHandler()
 		{
 			pUsart->US_RTOR = 0 ;		// Off
 			pUsart->US_IDR = US_IDR_TIMEOUT ;
-			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
+			txPdcUsart( SportTelemetryTx.ptr, SportTelemetryTx.count, 0 ) ;
 		}
 		
 //	  pUsart->US_CR = US_CR_STTTO ;		// Clears timeout bit
@@ -1592,7 +1593,7 @@ extern "C" void USART0_IRQHandler()
 	{
 	 	if ( pUsart->US_CSR & US_CSR_ENDTX )
 		{
-			TelemetryTx.SportTx.count = 0 ;
+			SportTelemetryTx.count = 0 ;
 			pUsart->US_IER = US_IER_TXEMPTY ;
 			pUsart->US_IDR = US_IDR_ENDTX ;
 		}
@@ -1631,12 +1632,12 @@ extern "C" void USART0_IRQHandler()
 // 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
 // 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
 		
-		if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
+		if ( LastReceivedSportByte == 0x7E && SportTelemetryTx.count > 0 && data == SportTelemetryTx.index )
 		{
 			pUsart->US_RTOR = 60 ;		// Bits @ 57600 ~= 1050uS
 			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
 			pUsart->US_IER = US_IER_TIMEOUT ;
-			TelemetryTx.SportTx.index = 0x7E ;
+			SportTelemetryTx.index = 0x7E ;
 #ifdef REVX
 			if ( g_model.Module[1].protocol == PROTO_MULTI )
 			{
@@ -3020,14 +3021,14 @@ void x9dHubTxStart( uint8_t *buffer, uint32_t count )
 	{	
 		SendingSportPacket.buffer = buffer ;
 		SendingSportPacket.count = count ;
-		TelemetryTx.SportTx.busy = 1 ;
+		SportTelemetryTx.busy = 1 ;
 		USART2->CR1 |= USART_CR1_TXEIE ;
 	}
 }
 
 uint32_t hubTxPending()
 {
-	return TelemetryTx.SportTx.busy ;
+	return SportTelemetryTx.busy ;
 }
 
 #ifndef PCB9XT
@@ -3124,8 +3125,8 @@ extern "C" void USART2_IRQHandler()
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
  #endif
 #endif
-			TelemetryTx.SportTx.count = 0 ;
-			TelemetryTx.SportTx.busy = 0 ;
+			SportTelemetryTx.count = 0 ;
+			SportTelemetryTx.busy = 0 ;
 			USART2->CR1 |= USART_CR1_RE ;
 		}
 	}
@@ -3141,10 +3142,10 @@ extern "C" void USART2_IRQHandler()
 			put_fifo128( &Com1_fifo, data ) ;
 			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 			{
-				if ( LastReceivedSportByte == 0x7E && TelemetryTx.SportTx.count > 0 && data == TelemetryTx.SportTx.index )
+				if ( LastReceivedSportByte == 0x7E && SportTelemetryTx.count > 0 && data == SportTelemetryTx.index )
 				{
-					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.SportTx.count, 0 ) ;
-      		TelemetryTx.SportTx.index = 0x7E ;
+					x9dSPortTxStart( SportTelemetryTx.ptr, SportTelemetryTx.count, 0 ) ;
+      		SportTelemetryTx.index = 0x7E ;
 				}
 				LastReceivedSportByte = data ;
 			}
@@ -4589,10 +4590,10 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 
 	if ( pdata == 0 )	// Test for buffer available
 	{
-		return TelemetryTx.SportTx.count ? 0 : 1 ;
+		return SportTelemetryTx.count ? 0 : 1 ;
 	}
 
-	if ( TelemetryTx.SportTx.count )
+	if ( SportTelemetryTx.count )
 	{
 		return 0 ;	// Can't send, packet already queued
 	}
@@ -4610,14 +4611,14 @@ uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 		crc &= 0x00FF ;
 		if ( ( byte == 0x7E ) || ( byte == 0x7D ) )
 		{
-			TelemetryTx.SportTx.data[j++] = 0x7D ;
+			SportTelemetryTx.data[j++] = 0x7D ;
 			byte &= ~0x20 ;
 		}
-		TelemetryTx.SportTx.data[j++] = byte ;
+		SportTelemetryTx.data[j++] = byte ;
 	}
-	TelemetryTx.SportTx.ptr = TelemetryTx.SportTx.data ;
-	TelemetryTx.SportTx.index = index ;
-	TelemetryTx.SportTx.count = j ;
+	SportTelemetryTx.ptr = SportTelemetryTx.data ;
+	SportTelemetryTx.index = index ;
+	SportTelemetryTx.count = j ;
 	return 1 ;
 }
 
@@ -4627,25 +4628,24 @@ uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data )
 
 	if ( length == 0 )	// Test for buffer available
 	{
-		return TelemetryTx.XfireTx.count ? 0 : 1 ;
+		return XFireTelemetryTx.count ? 0 : 1 ;
 	}
 
-	if ( TelemetryTx.XfireTx.count )
+	if ( XFireTelemetryTx.count )
 	{
 		return 0 ;	// Can't send, packet already queued
 	}
-	TelemetryTx.XfireTx.command = command ;
-//	j = TelemetryTx.XfireTx.count ;
+
 	if ( length > 64 )
 	{
 		return 0 ;	// Can't send, packet too long
 	}
+
+	XFireTelemetryTx.command = command ;
 	for ( i = 0 ; i < length ; i += 1 )
 	{
-		TelemetryTx.XfireTx.data[i] = *data++ ;
+		XFireTelemetryTx.data[i] = data[i] ;
 	}
-	TelemetryTx.XfireTx.count = length ;
+	XFireTelemetryTx.count = length ;
 	return 1 ;
 }
-
-

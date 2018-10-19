@@ -521,7 +521,8 @@ uint8_t crc8(const uint8_t * ptr, uint32_t len)
 
 extern uint8_t Bit_pulses[] ;
 extern uint16_t XfireLength ;
-extern union t_telemetryTx TelemetryTx ;
+extern struct t_SportTx SportTelemetryTx ;
+extern struct t_XfireTx XFireTelemetryTx ;
 
 // Range for pulses (channels output) is [-1024:+1024]
 uint8_t setupPulsesXfire()
@@ -530,15 +531,15 @@ uint8_t setupPulsesXfire()
  	uint8_t *buf = Bit_pulses ;
  	*buf++ = MODULE_ADDRESS ;
 
-	if ( TelemetryTx.XfireTx.count )
+	if ( XFireTelemetryTx.count )
 	{
 		uint32_t i ;
- 		*buf++ = TelemetryTx.XfireTx.count + 2 ;
-  	uint8_t *crc_start = buf ;
-  	*buf++ = TelemetryTx.XfireTx.command ;
-  	for ( i = 0 ; i < TelemetryTx.XfireTx.count ; i += 1 )
+ 		*buf++ = XFireTelemetryTx.count + 2 ;
+		uint8_t *crc_start = buf ;
+		*buf++ = XFireTelemetryTx.command ;
+		for ( i = 0 ; i < XFireTelemetryTx.count ; i += 1 )
 		{
-			*buf++ = TelemetryTx.XfireTx.data[i] ;
+			*buf++ = XFireTelemetryTx.data[i] ;
 			if ( i > 62 )
 			{
 				break ;
@@ -546,7 +547,7 @@ uint8_t setupPulsesXfire()
 		}
 		i = buf - crc_start ;
 		*buf++ = crc8( crc_start, i ) ;
-		TelemetryTx.XfireTx.count = 0 ;
+		XFireTelemetryTx.count = 0 ;
 	}
 	else
 	{
