@@ -2828,9 +2828,11 @@ uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
 {
 	uint8_t opcode ;
 	uint32_t result = 0 ;
-  uint32_t value ;
+	uint32_t value ;
 	uint16_t val16 ;
-	
+
+	// Note that ipointer and bpointer occupy the same space so
+	// this clears bpointer as well.
 	ptr->ipointer = 0 ;
 
 	opcode = *RunTime->ExecProgPtr++ ;
@@ -2866,7 +2868,7 @@ uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
 			}
 			else
 			{
-        ptr->ipointer = &RunTime->IntArrayStart[val16] ;
+				ptr->ipointer = &RunTime->IntArrayStart[val16] ;
 				result = 2 ;
 			}
 		}
