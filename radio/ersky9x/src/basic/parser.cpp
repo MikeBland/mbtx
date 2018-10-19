@@ -4375,7 +4375,7 @@ int32_t exec_crossfiresend()
 			if ( result == 1 )
 			{
 				length = param.var ;
-				result = getParamVarAddress( &address, 0 ) ;
+				result = getParamVarAddress( &address, length ) ;
 				if ( result == 1 )	// Byte array
 				{
 #ifdef QT
