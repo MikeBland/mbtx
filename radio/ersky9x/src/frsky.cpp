@@ -2758,7 +2758,7 @@ void FRSKY_Init( uint8_t brate )
  #ifdef PCB9XT
 		if ( g_model.Module[1].protocol == PROTO_XFIRE )
 		{
-			baudrate = 400000 ;
+			baudrate = XFIRE_BAUD_RATE ;
 		}
  #endif
 #endif
@@ -2788,7 +2788,7 @@ void FRSKY_Init( uint8_t brate )
 	else if ( brate == FRSKY_TEL_XFIRE )
 	{
 		FrskyComPort = g_model.frskyComPort = 0 ;
-		com1_Configure( 400000, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+		com1_Configure( XFIRE_BAUD_RATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 	}
 // #endif
 #endif

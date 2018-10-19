@@ -777,7 +777,7 @@ static void disable_ext_pxx()
 #ifdef XFIRE
 static void init_pa7_xfire()
 {
-	com1_Configure( 400000, 0, 0 ) ;
+	com1_Configure( XFIRE_BAUD_RATE, 0, 0 ) ;
   EXTERNAL_RF_ON();
 	setupPulsesXfire() ;
   
@@ -1300,7 +1300,7 @@ static void init_ext_multi( void )
 #ifdef XFIRE
 static void init_ext_xfire( void )
 {
-	com1_Configure( 400000, 0, 0 ) ;
+	com1_Configure( XFIRE_BAUD_RATE, 0, 0 ) ;
   EXTERNAL_RF_ON();
 	setupPulsesXfire() ;
   
