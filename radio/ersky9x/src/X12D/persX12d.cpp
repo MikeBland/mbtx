@@ -311,7 +311,7 @@ void ee32_update_name( uint32_t id, uint8_t *source )
 	{
 		*p++ = *source++ ;
 	}
-	*p = '\0' ;
+//	*p = '\0' ;
 }
 
 

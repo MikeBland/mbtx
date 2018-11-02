@@ -203,8 +203,8 @@ v.xx.01-german
 #define ISTR_FRHUB_WSHHI    "\006FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRawFrMav Mavlk Hitec "
 #define ISTR_MET_IMP        "\003MetImp" // Metrisches System / Imperiales System
 #define ISTR_A_CHANNEL      "A  Kanal"
-#define ISTR_ALRM           "alrm"
-#define ISTR_TELEMETRY2     "TELEMETRIE2"
+//#define ISTR_ALRM           "alrm"
+//#define ISTR_TELEMETRY2     "TELEMETRIE2"
 #define ISTR_TX_RSSIALRM    "SnRSSIalrm" // Sender
 #define ISTR_NUM_BLADES     "Num Bl\301tter"
 #define ISTR_ALT_ALARM      "H\303heAlarm"

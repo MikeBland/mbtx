@@ -18,6 +18,7 @@
 #include "audio.h"
 #include "menus.h"
 #include "frsky.h"
+#include "maintenance.h"
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
@@ -26,10 +27,24 @@ extern uint32_t isqrt32( uint32_t x ) ;
 uint8_t LoadingIndex ;
 uint8_t LoadingNeeded ;
 
+#define FILE_SUPPORT	1
+#define DIR_LENGTH		40
+struct fileControl BasicFileControl ;
+void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext ) ;
+uint8_t DirectoryName[DIR_LENGTH] ;
+extern union t_sharedMemory SharedMemory ;
+extern uint32_t FileSize[] ;
+extern uint8_t ScriptDirNeeded ;
+
+extern uint8_t Com2TxBuffer[] ;
+extern struct t_serial_tx Com2_tx ;
+
+
 #else
 #include "basic.h"
 #include "mainwindow.h"
 #include "lcd.h"
+
 
 uint8_t ScriptFlags ;
 extern uint32_t g_tmr10ms ;
@@ -53,7 +68,11 @@ uint16_t isqrt32(uint32_t n)
 
 #endif
 
+
 #define IsDigit(c)	(((c)>='0')&&((c)<='9'))
+
+int32_t btSend( uint32_t length, uint8_t *data ) ;
+
 
 /*
  * token types
@@ -173,7 +192,15 @@ uint16_t isqrt32(uint32_t n)
 #define SYSTOARRAY		30
 #define SQRT					31
 #define DRAWBITMAP		32
-
+#define BTRECEIVE			33
+#define BTSEND				34
+#define DIRECTORY			35
+#define FILESELECT		36
+#define FOPEN					37
+#define FREAD					38
+#define FCLOSE				39
+#define FWRITE				40
+#define BYTEMOVE			41
 
 // Assignment options:
 #define SETEQUALS			0
@@ -245,6 +272,10 @@ uint16_t isqrt32(uint32_t n)
 #define MAX_CALL_STACK	20
 #define MAX_PARAM_STACK	20
 
+#define PARAM_TYPE_NUMBER		0
+#define PARAM_TYPE_STRING		1
+
+
 #ifdef QT
 const char *ErrorText[] = {
  "Duplicate Label",
@@ -314,13 +345,22 @@ union t_parameter
 {
 	int32_t var ;
 	uint8_t *cpointer ;
-} ;
-
-union t_varAddress
-{
 	uint8_t *bpointer ;
 	int32_t *ipointer ;
 } ;
+
+struct byteAddress
+{
+	uint16_t varOffset ;
+	uint16_t varIndex ;
+	uint32_t dimension ;
+} ;
+
+//union t_varAddress
+//{
+//	uint8_t *bpointer ;
+//	int32_t *ipointer ;
+//} ;
 
 
 uint32_t LineNumber ;
@@ -478,6 +518,17 @@ const struct commands InternalFunctions[] =
 	{ "sysstrtoarray", SYSTOARRAY },
   { "sqrt", SQRT },
 	{ "drawbitmap", DRAWBITMAP },
+	{ "serialreceive", BTRECEIVE },
+	{ "serialsend", BTSEND },
+#ifdef FILE_SUPPORT
+	{ "directory", DIRECTORY },
+	{ "fileselect", FILESELECT },
+	{ "fopen", FOPEN },
+	{ "fread", FREAD },
+	{ "fwrite", FWRITE },
+	{ "fclose", FCLOSE },
+#endif
+	{ "bytemove", BYTEMOVE },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -1148,6 +1199,37 @@ uint32_t scanForKeyword( char *dest )
 //    //printf( "QUOTE\n" );
     return( Token_type = QUOTE ) ;
   }
+
+	if(*ProgPtr == '\'' )
+	{
+		// char constant
+		uint8_t chr ;
+		uint8_t ch1 ;
+    ProgPtr += 1 ;
+		chr = *ProgPtr++ ;
+		if ( chr == '\\' )
+		{
+			chr = read_special() ;
+		}
+		if ( *ProgPtr++ != '\'' )
+		{
+			serror(SE_SYNTAX) ;
+		}
+		ch1 = chr ;
+		if ( chr > 99 )
+		{
+			*temp++ = chr / 100 + '0' ;
+			chr %= 100 ;
+		}
+		if ( ( chr > 9 ) || (ch1 > 99) )
+		{
+			*temp++ = chr / 10 + '0' ;
+			chr %= 10 ;
+		}
+		*temp++ = chr + '0' ;
+    *temp = '\0';
+    return(Token_type = NUMBER);
+	}
   
   if(IsDigit(*ProgPtr))
 	{ /* number */
@@ -2937,7 +3019,7 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 // 2 int
 
 // size is for byte array with that much space
-uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
+uint32_t getParamVarAddress( union t_parameter *ptr, uint32_t size )
 {
 	uint8_t opcode ;
 	uint32_t result = 0 ;
@@ -2969,7 +3051,7 @@ uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
 				return 0 ;
 			}
 			val16 += value ;
-			if ( value + size >= dimension )
+			if ( value + size > dimension )
 			{
 				runError( SE_DIMENSION ) ;
 				return 0 ;
@@ -3003,8 +3085,39 @@ uint32_t getParamVarAddress( union t_varAddress *ptr, uint32_t size )
 	return result ;
 }
 
+//struct byteAddress
+//{
+//	uint16_t varOffset ;
+//	uint16_t varIndex ;
+//	uint32_t dimension ;
+//} ;
 
-
+// Assumes opcode is 0x66, a byte array
+uint32_t getParamByteArrayAddress( struct byteAddress *ptr, uint32_t size )
+{
+	uint8_t opcode ;
+		
+	ptr->varOffset = getVarIndex( 0x66 ) ;
+	ptr->dimension = *RunTime->ExecProgPtr++ ;
+	ptr->varIndex = expression() ;
+	opcode = *RunTime->ExecProgPtr++ ;
+	if ( opcode != ']' )
+	{
+		runError( SE_SYNTAX ) ;
+		return 0 ;
+	}
+	if ( ( ptr->varIndex >= ptr->dimension ) || 
+			( ptr->varIndex + size >= ptr->dimension ) )
+	{
+		runError( SE_DIMENSION ) ;
+		return 0 ; ;
+	}
+	if ( *RunTime->ExecProgPtr == ',' )
+	{
+		RunTime->ExecProgPtr += 1 ;
+	}
+	return 1 ;
+}
 
 /* Perform the specified arithmetic. */
 void arith( uint8_t op, int32_t *r, int32_t *h )
@@ -3432,24 +3545,30 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 		}
 		else if( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 		{
-			uint32_t dimension ;
-			uint16_t val16 ;
-			uint32_t value ;
-			val16 = getVarIndex( opcode ) ;
-			dimension = *RunTime->ExecProgPtr++ ;
-			value = expression() ;
-			opcode = *RunTime->ExecProgPtr++ ;
-			if ( opcode != ']' )
+			struct byteAddress baddr ;
+			if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
 			{
-				runError( SE_SYNTAX ) ;
 				return 0 ;
 			}
-			if ( value >= dimension )
-			{
-				runError( SE_DIMENSION ) ;
-				return 0 ; ;
-			}
-			param->cpointer = &RunTime->ByteArrayStart[val16 + value] ;
+			
+//			uint32_t dimension ;
+//			uint16_t val16 ;
+//			uint32_t value ;
+//			val16 = getVarIndex( opcode ) ;
+//			dimension = *RunTime->ExecProgPtr++ ;
+//			value = expression() ;
+//			opcode = *RunTime->ExecProgPtr++ ;
+//			if ( opcode != ']' )
+//			{
+//				runError( SE_SYNTAX ) ;
+//				return 0 ;
+//			}
+//			if ( value >= dimension )
+//			{
+//				runError( SE_DIMENSION ) ;
+//				return 0 ; ;
+//			}
+			param->cpointer = &RunTime->ByteArrayStart[baddr.varOffset + baddr.varIndex] ;
 			if ( *RunTime->ExecProgPtr == ',' )
 			{
 				RunTime->ExecProgPtr += 1 ;
@@ -3483,7 +3602,7 @@ uint32_t get_numeric_parameters( union t_parameter *param, uint32_t count )
 	uint32_t result ;
 	while ( count )
 	{
-		result = get_parameter( param, 0 ) ;
+		result = get_parameter( param, PARAM_TYPE_NUMBER ) ;
 		if ( result != 1 )
 		{
 			return 0 ;
@@ -3500,7 +3619,7 @@ uint32_t get_optional_numeric_parameter( union t_parameter *param )
 	result = 0 ;
 	if ( *RunTime->ExecProgPtr != ')' )
 	{
-		result = get_parameter( param, 0 ) ;
+		result = get_parameter( param, PARAM_TYPE_NUMBER ) ;
 	}
 	return result ;
 }
@@ -3774,17 +3893,17 @@ void exec_drawtext()
 	union t_parameter param ;
 	uint32_t length = 0 ;
 
-	// get 3 (or 4) parameters
+	// get 3 (or 4 or 5) parameters
 	attr = 0 ;
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
 	{
 		x = param.var ;
-		result = get_parameter( &param, 0 ) ;
+		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 		if ( result == 1 )
 		{
 			y = param.var ;
-			result = get_parameter( &param, 1 ) ;
+			result = get_parameter( &param, PARAM_TYPE_STRING ) ;
       if ( result == 2 )
 			{
 				p = param.cpointer ;
@@ -4282,7 +4401,7 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 int32_t exec_sportreceive()
 {
 	// This needs the address of 4 variables for the data
-	union t_varAddress param[4] ;
+	union t_parameter param[4] ;
 	uint8_t type[4] ;
 	uint32_t result ;
 	result = getParamVarAddress( &param[0], 0 ) ;
@@ -4365,7 +4484,7 @@ int32_t exec_sportreceive()
 
 int32_t exec_crossfirereceive()
 {
-	union t_varAddress param[3] ;
+	union t_parameter param[3] ;
 	uint8_t type[4] ;
   uint8_t length ;
 	int32_t value ;
@@ -4445,7 +4564,7 @@ int32_t exec_crossfiresend()
 //	send MODULE_ADDRESS, count+2, command, byte_array, crc
 	uint32_t result = 0 ;
 	union t_parameter param ;
-	union t_varAddress address ;
+//	union t_parameter address ;
 	int32_t command ;
 	uint32_t length ;
 
@@ -4468,14 +4587,14 @@ int32_t exec_crossfiresend()
 			if ( result == 1 )
 			{
 				length = param.var ;
-				result = getParamVarAddress( &address, length ) ;
+				result = getParamVarAddress( &param, length ) ;
 				if ( result == 1 )	// Byte array
 				{
 #ifdef QT
 //      RunTimeData = cpystr( RunTimeData, (uint8_t *)"XfireSend()\n" ) ;
       result = 0 ;
 #else
-					result = xfirePacketSend( length, command, address.bpointer ) ;
+					result = xfirePacketSend( length, command, param.bpointer ) ;
 #endif
 				}
 				else
@@ -4496,6 +4615,387 @@ int32_t exec_crossfiresend()
 	}
 	return result ;
 }
+
+// length, buffer = byte array
+// BT or COM2
+int32_t  exec_btreceive()
+{
+	uint32_t result = 0 ;
+#ifdef BLUETOOTH
+	union t_parameter param ;
+  uint32_t length ;
+  uint32_t i ;
+	int32_t x ;
+
+	result = get_parameter( &param, 0 ) ;
+	if ( result )
+	{
+		length = param.var ;
+		result = getParamVarAddress( &param, length ) ;
+		if ( result )
+		{
+#ifdef QT
+			result = 0 ;
+#else
+			struct t_fifo128 *pfifo = 0 ;
+			if ( g_model.BTfunction == BT_SCRIPT )
+			{
+				pfifo = &BtRx_fifo ;
+			}
+			else
+			{
+				if ( g_model.com2Function == COM2_FUNC_SCRIPT )
+				{
+					pfifo = &Com2_fifo ;
+				}
+			}
+			if ( pfifo )
+			{
+				for ( i = 0 ; i < length ; i += 1 )
+				{
+					x = get_fifo128( pfifo ) ;
+					if ( x != -1 )
+					{
+						*param.bpointer++ = x ;
+					}
+					else
+					{
+						break ;
+					}
+				}
+				result = i ;
+			}
+			else
+			{
+				result = 0 ;
+			}
+#endif
+		}
+	}
+#endif
+	return result ;
+}
+
+// length, buffer = byte array
+int32_t exec_btsend()
+{
+	uint32_t result = 0 ;
+#ifdef BLUETOOTH
+	union t_parameter param ;
+	uint32_t length ;
+
+	result = get_parameter( &param, 0 ) ;
+	if ( result == 1 )
+	{
+		length = param.var ;
+		if ( length == 0 )
+		{
+#ifdef QT
+      result = 0 ;
+#else
+			result = btSend( 0, 0 ) ;
+#endif
+		}
+		else
+		{
+			result = getParamVarAddress( &param, length ) ;
+			if ( result == 1 )	// Byte array
+			{
+				if ( length <= 64 )
+				{
+		      result = 0 ;
+#ifdef QT
+#else
+					if ( g_model.BTfunction == BT_SCRIPT )
+					{
+						result = btSend( length, param.bpointer ) ;
+					}
+	#ifndef PCB9XT 
+	#ifndef PCBX7
+					else if ( g_model.com2Function == COM2_FUNC_SCRIPT )
+					{
+						if ( Com2_tx.ready == 0 )	// Buffer available
+						{
+							uint32_t x ;
+							if ( length )
+							{
+								if ( length > 64 )
+								{
+									result = 0 ;
+								}
+								else
+								{
+									x = 0 ;
+									while ( x < length )
+									{
+										Com2TxBuffer[x++] = *param.bpointer++ ;
+									}
+									Com2_tx.size = length ;
+									Com2_tx.buffer = Com2TxBuffer ;
+									txPdcCom2( &Com2_tx ) ;
+								}
+								result = 1 ;
+							}
+						}
+					}
+	#endif
+	#endif
+#endif
+				}
+				else
+				{
+					return 0 ;
+				}
+			}
+		}
+	}
+#endif
+	return result ;
+}
+
+#ifdef FILE_SUPPORT
+void exec_directory()
+{
+	uint32_t result ;
+	union t_parameter param ;
+	struct fileControl *fc ;
+	uint8_t *dir ;
+	uint8_t *ext ;
+
+	result = get_parameter( &param, PARAM_TYPE_STRING ) ;
+	if ( result == 2 )
+	{
+		dir = param.cpointer ;
+		uint32_t i ;
+		for ( i = 0 ; i < DIR_LENGTH-1 ; i += 1 )
+		{
+			if ( (DirectoryName[i] = *dir++) == '\0' )
+			{
+				break ;
+			}
+		}
+		DirectoryName[i] = '\0' ;
+		dir = param.cpointer ;
+		result = get_parameter( &param, PARAM_TYPE_STRING ) ;
+		if ( result == 2 )
+	  {
+			ext = param.cpointer ;
+			if ( ScriptFlags & SCRIPT_STANDALONE )
+			{
+				fc = &BasicFileControl ;
+				setupFileNames( (TCHAR *)dir, fc, (char *) ext ) ;
+			}
+			eatCloseBracket() ;
+		}
+	}
+	killEvents(RunTime->Vars.Variables[0]) ;
+	RunTime->Vars.Variables[0] = 0 ;
+}
+
+// Returns
+// -1 error
+// 0 still runing
+// 1 Select (Long Menu)
+// 2 Exit
+// 3 Tagged (Short Menu)
+
+int32_t exec_filelist()
+{
+	struct fileControl *fc = &BasicFileControl ;
+	uint32_t i ;
+	uint16_t val16 ;
+	uint16_t value ;
+	uint32_t dimension ;
+	uint8_t *p ;
+	uint8_t *q ;
+	uint8_t opcode ;
+	union t_parameter param ;
+
+	opcode = *RunTime->ExecProgPtr++ ;
+	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+	{
+		val16 = getVarIndex( opcode ) ;
+		dimension = *RunTime->ExecProgPtr++ ;
+		value = expression() ;
+		opcode = *RunTime->ExecProgPtr++ ;
+		if ( opcode != ']' )
+		{
+			runError( SE_SYNTAX ) ;
+			return -1 ; ;
+		}
+		if ( *RunTime->ExecProgPtr != ',' )
+		{
+			runError( SE_SYNTAX ) ;
+			return -1 ;
+		}
+		RunTime->ExecProgPtr += 1 ;
+		i = getParamVarAddress( &param, 0 ) ;
+		if ( i != 2 )		// An int pointer
+		{
+			runError( SE_SYNTAX ) ;
+		}
+		eatCloseBracket() ;
+	}
+	else
+	{
+		runError( SE_SYNTAX ) ;
+		return 1 ;
+	}
+	if ( ScriptFlags & SCRIPT_STANDALONE )
+	{
+		lcd_clear() ;
+		lcd_putsAtt( 0, 0, "Select File", 0 ) ;
+		
+		ScriptDirNeeded = 1 ;
+		i = fileList( RunTime->Vars.Variables[0], fc ) ;
+		if ( i )
+		{
+			if ( i == 1 )	// Select
+			{
+				uint32_t j ;
+				q = (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ;
+				j = strlen( (char *)q ) ;
+				j += strlen( (char *)DirectoryName ) ;
+				// val16 = start of byte array
+				// value index into byte array
+				// dimension = size of byte array
+				p = &RunTime->ByteArrayStart[val16 + value] ;
+				if ( ( value + j < dimension - 2 ) && *q)	// allow for '\'
+				{
+					p = cpystr( p, DirectoryName ) ;
+					*p++ = '\\' ;
+					p = cpystr( p, q ) ;
+					*param.ipointer = FileSize[fc->vpos] ;
+				}
+				else
+				{
+					*p = '\0' ;
+				}
+			}
+			killEvents(RunTime->Vars.Variables[0]) ;
+			RunTime->Vars.Variables[0] = 0 ;
+		}
+		return i ;
+	}
+	return 0 ;
+}
+
+// fopen( name, r/w )
+int32_t exec_fopen()
+{
+	uint32_t result ;
+	FRESULT fresult ;
+	union t_parameter params[2] ;
+	int32_t retValue = 0 ;
+
+	result = get_parameter( &params[0], PARAM_TYPE_STRING ) ;
+	if ( result == 2 )
+	{
+		result = get_parameter( &params[1], PARAM_TYPE_NUMBER ) ;
+		if ( result == 1 )
+	  {
+			if ( ScriptFlags & SCRIPT_STANDALONE )
+			{
+				fresult = f_open( &MultiBasicFile, (TCHAR *)params[0].cpointer,
+											(params[1].var == 0) ? FA_READ : FA_WRITE | FA_CREATE_ALWAYS ) ;
+  			if (fresult == FR_OK)
+				{
+					retValue = 1 ;
+				}
+			}
+		}
+	}
+	eatCloseBracket() ;
+	return retValue ;
+}
+
+// fread( size, dest, numread )
+int32_t exec_fread()
+{
+	uint32_t result ;
+	FRESULT fresult ;
+	union t_parameter param[2] ;
+	uint32_t length ;
+	UINT nread ;
+	int32_t retValue = 0 ;
+
+	result = get_parameter( &param[0], PARAM_TYPE_NUMBER ) ;
+	if ( result == 1 )
+	{
+		length = param[0].var ;
+		result = getParamVarAddress( &param[0], length ) ;
+		if ( result == 1 )	// Byte array
+	  {
+			result = getParamVarAddress( &param[1], 0 ) ;
+			if ( result == 2 )	// int address
+			{
+				if ( ScriptFlags & SCRIPT_STANDALONE )
+				{
+					fresult = f_read( &MultiBasicFile, param[0].bpointer, length, &nread ) ;
+					*param[1].ipointer = 0 ;
+  				if (fresult == FR_OK)
+					{
+						*param[1].ipointer = nread ;
+						retValue = 1 ;
+					}
+				}
+			}
+		}
+	}
+	eatCloseBracket() ;
+	return retValue ;
+}
+
+// fwrite( size, source, numwritten )
+int32_t exec_fwrite()
+{
+	uint32_t result ;
+	FRESULT fresult ;
+	union t_parameter param[2] ;
+	uint32_t length ;
+	UINT nwritten ;
+	int32_t retValue = 0 ;
+
+	result = get_parameter( &param[0], PARAM_TYPE_NUMBER ) ;
+	if ( result == 1 )
+	{
+		length = param[0].var ;
+		result = getParamVarAddress( &param[0], 0 ) ;
+		if ( result == 1 )	// Byte array
+	  {
+			result = getParamVarAddress( &param[1], 0 ) ;
+			if ( result == 2 )	// int address
+			{
+				if ( ScriptFlags & SCRIPT_STANDALONE )
+				{
+					fresult = f_write( &MultiBasicFile, param[0].bpointer, length, &nwritten ) ;
+					*param[1].ipointer = 0 ;
+  				if (fresult == FR_OK)
+					{
+						*param[1].ipointer = nwritten ;
+						retValue = 1 ;
+					}
+				}
+			}
+		}
+	}
+	eatCloseBracket() ;
+	return retValue ;
+}
+
+
+// fclose()
+static void exec_fclose()
+{
+	if ( ScriptFlags & SCRIPT_STANDALONE )
+	{
+		f_close( &MultiBasicFile ) ;
+	}
+	eatCloseBracket() ;
+	return ;
+}
+
+#endif	// FILE_SUPPORT
 
 extern uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event ) ;
 extern struct t_popupData PopupData ;
@@ -4560,37 +5060,48 @@ int32_t exec_popup()
 	return 0 ;
 }
 
-void exec_strToArray()
+int32_t exec_strToArray()
 {
 	uint8_t opcode ;
 	uint16_t val16 ;
 	opcode = *RunTime->ExecProgPtr++ ;
 	uint32_t value ;
+	uint32_t sent = 0 ;
+	uint32_t dimension ;
 
 	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 	{
-		uint32_t dimension ;
-		val16 = getVarIndex( opcode ) ;
-		dimension = *RunTime->ExecProgPtr++ ;
-		value = expression() ;
-		opcode = *RunTime->ExecProgPtr++ ;
-		if ( opcode != ']' )
+		struct byteAddress baddr ;
+		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
 		{
-			runError( SE_SYNTAX ) ;
-			return ;
+			return 0 ;
 		}
-		if ( value >= dimension )
-		{
-			runError( SE_DIMENSION ) ;
-			return ;
-		}
+		val16 = baddr.varOffset ;
+		value = baddr.varIndex ;
+		dimension = baddr.dimension ;
+
+//		uint32_t dimension ;
+//		val16 = getVarIndex( opcode ) ;
+//		dimension = *RunTime->ExecProgPtr++ ;
+//		value = expression() ;
+//		opcode = *RunTime->ExecProgPtr++ ;
+//		if ( opcode != ']' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return 0 ;
+//		}
+//		if ( value >= dimension )
+//		{
+//			runError( SE_DIMENSION ) ;
+//			return 0 ;
+//		}
 		// Now we need the string
-		if ( *RunTime->ExecProgPtr != ',' )
-		{
-			runError( SE_SYNTAX ) ;
-			return ;
-		}
-		RunTime->ExecProgPtr += 1 ;
+//		if ( *RunTime->ExecProgPtr != ',' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return 0 ;
+//		}
+//		RunTime->ExecProgPtr += 1 ;
 		opcode = *RunTime->ExecProgPtr++ ;
 		if ( opcode == 0x70 )	// Quoted string
 		{
@@ -4600,30 +5111,212 @@ void exec_strToArray()
 			{
 				uint8_t c ;
 				c = *RunTime->ExecProgPtr++ ;
-				if ( value < dimension )
+				if ( value < baddr.dimension )
 				{
 					RunTime->ByteArrayStart[val16 + value] = c ;
 					value += 1 ;
+					sent += 1 ;
 				}
 				else
 				{
-					RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
+					RunTime->ByteArrayStart[val16 + baddr.dimension - 1] = '\0' ;
+					break ;
 				}
 			}
-			if ( *RunTime->ExecProgPtr != ')' )
-			{
-				runError( SE_SYNTAX ) ;
-				return ;
-			}
+			eatCloseBracket() ;
 		}
 		else
 		{
-			runError( SE_SYNTAX ) ;
-			return ;
+			if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+			{
+				uint8_t c ;
+				struct byteAddress baddr ;
+				uint32_t dim1 ;
+				uint16_t val16a ;
+				uint32_t valuea ;
+				if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+				{
+					return 0 ;
+				}
+				val16a = baddr.varOffset ;
+				valuea = baddr.varIndex ;
+				dim1 = baddr.dimension ;
+				
+//				uint32_t dim1 ;
+//				uint16_t val16a = getVarIndex( opcode ) ;
+//				dim1 = *RunTime->ExecProgPtr++ ;
+//				uint32_t valuea = expression() ;
+//				opcode = *RunTime->ExecProgPtr++ ;
+//				if ( opcode != ']' )
+//				{
+//					runError( SE_SYNTAX ) ;
+//					return 0 ;
+//				}
+//				if ( value >= dim1 )
+//				{
+//					runError( SE_DIMENSION ) ;
+//					return 0 ;
+//				}
+				do
+				{
+					if ( valuea < dim1 )
+					{
+						c = RunTime->ByteArrayStart[val16a + valuea] ;
+					}
+					else
+					{
+						c = 0 ;
+					}
+					if ( value < dimension )
+					{
+						RunTime->ByteArrayStart[val16 + value] = c ;
+						value += 1 ;
+						valuea += 1 ;
+						sent += 1 ;
+					}
+					else
+					{
+						RunTime->ByteArrayStart[val16 + dimension - 1] = '\0' ;
+						break ;
+					}
+				} while (c) ;
+			}
+			else
+			{			
+				runError( SE_SYNTAX ) ;
+				return 0 ;
+			}
 		}
 	}
+	else
+	{
+		runError( SE_SYNTAX ) ;
+		return 0 ;
+	}
+	return sent ;
 }
 
+// bytemove( destByteArray, srcByteArray, length )
+int32_t exec_bytemove()
+{
+	uint8_t opcode ;
+	uint16_t val16 ;
+	opcode = *RunTime->ExecProgPtr++ ;
+	uint32_t value ;
+	uint32_t dimension ;
+	union t_parameter param ;
+	uint32_t length = 0 ;
+	uint32_t sent = 0 ;
+
+	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+	{
+		struct byteAddress baddr ;
+		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+		{
+			return 0 ;
+		}
+		val16 = baddr.varOffset ;
+		value = baddr.varIndex ;
+		dimension = baddr.dimension ;
+
+//		uint32_t dimension ;
+//		val16 = getVarIndex( opcode ) ;
+//		dimension = *RunTime->ExecProgPtr++ ;
+//		value = expression() ;
+//		opcode = *RunTime->ExecProgPtr++ ;
+//		if ( opcode != ']' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return 0 ;
+//		}
+//		if ( value >= dimension )
+//		{
+//			runError( SE_DIMENSION ) ;
+//			return 0 ;
+//		}
+		// Now we need the string
+//		if ( *RunTime->ExecProgPtr != ',' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return 0 ;
+//		}
+//		RunTime->ExecProgPtr += 1 ;
+		opcode = *RunTime->ExecProgPtr++ ;
+		if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
+		{
+			uint8_t c ;
+			struct byteAddress baddr ;
+			uint32_t dim1 ;
+			uint16_t val16a ;
+			uint32_t valuea ;
+			uint32_t result ;
+			if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+			{
+				return 0 ;
+			}
+			val16a = baddr.varOffset ;
+			valuea = baddr.varIndex ;
+			dim1 = baddr.dimension ;
+				
+//				uint32_t dim1 ;
+//				uint16_t val16a = getVarIndex( opcode ) ;
+//				dim1 = *RunTime->ExecProgPtr++ ;
+//				uint32_t valuea = expression() ;
+//				opcode = *RunTime->ExecProgPtr++ ;
+//				if ( opcode != ']' )
+//				{
+//					runError( SE_SYNTAX ) ;
+//					return 0 ;
+//				}
+//				if ( value >= dim1 )
+//				{
+//					runError( SE_DIMENSION ) ;
+//					return 0 ;
+//				}
+
+			result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+			if ( result == 1 )
+			{
+				length = param.var ;
+
+				while ( length-- )
+				{
+					if ( valuea < dim1 )
+					{
+						c = RunTime->ByteArrayStart[val16a + valuea] ;
+						if ( value < dimension )
+						{
+							RunTime->ByteArrayStart[val16 + value] = c ;
+							value += 1 ;
+							valuea += 1 ;
+							sent += 1 ;
+						}
+						else
+						{
+							break ;
+						}
+					}
+					else
+					{
+						break ;
+					}
+				}
+				eatCloseBracket() ;
+			}
+		}
+		else
+		{			
+			runError( SE_SYNTAX ) ;
+			return 0 ;
+		}
+	}
+	else
+	{
+		runError( SE_SYNTAX ) ;
+		return 0 ;
+	}
+	return sent ;
+}
 
 void exec_systemStrToArray()
 {
@@ -4637,20 +5330,29 @@ void exec_systemStrToArray()
 	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 	{
 		uint32_t dimension ;
-		val16 = getVarIndex( opcode ) ;
-		dimension = *RunTime->ExecProgPtr++ ;
-		value = expression() ;
-		opcode = *RunTime->ExecProgPtr++ ;
-		if ( opcode != ']' )
+		struct byteAddress baddr ;
+		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
 		{
-			runError( SE_SYNTAX ) ;
 			return ;
 		}
-		if ( value >= dimension )
-		{
-			runError( SE_DIMENSION ) ;
-			return ;
-		}
+		val16 = baddr.varOffset ;
+		value = baddr.varIndex ;
+		dimension = baddr.dimension ;
+		
+//		val16 = getVarIndex( opcode ) ;
+//		dimension = *RunTime->ExecProgPtr++ ;
+//		value = expression() ;
+//		opcode = *RunTime->ExecProgPtr++ ;
+//		if ( opcode != ']' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return ;
+//		}
+//		if ( value >= dimension )
+//		{
+//			runError( SE_DIMENSION ) ;
+//			return ;
+//		}
 		// Now we need the index
 		if ( *RunTime->ExecProgPtr != ',' )
 		{
@@ -4994,7 +5696,11 @@ int32_t execInFunction()
 		break ;
 
 		case STRTOARRAY :
-			exec_strToArray() ;
+			result = exec_strToArray() ;
+		break ;
+
+		case BYTEMOVE :
+			result = exec_bytemove() ;
 		break ;
 
 		case GETSWITCH :
@@ -5029,6 +5735,40 @@ int32_t execInFunction()
 			result = exec_crossfiresend() ;
 		break ;
 
+		case BTRECEIVE :
+			result = exec_btreceive() ;
+		break ;
+
+		case BTSEND :
+			result = exec_btsend() ;
+		break ;
+
+#ifdef FILE_SUPPORT
+		case DIRECTORY :
+			exec_directory() ;
+		break ;
+			
+		case FILESELECT :
+			result = exec_filelist() ;
+		break ;
+		
+		case FOPEN :
+			result = exec_fopen() ;
+		break ;
+
+		case FREAD :
+			result = exec_fread() ;
+		break ;
+
+		case FWRITE :
+			result = exec_fwrite() ;
+		break ;
+
+		case FCLOSE :
+			exec_fclose() ;
+		break ;
+#endif
+		
 		case POPUP :
 			result = exec_popup() ;
 		break ;

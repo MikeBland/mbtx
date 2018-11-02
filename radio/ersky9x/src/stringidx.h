@@ -84,8 +84,8 @@
 #define STR_FRHUB_WSHHI     64
 #define STR_MET_IMP         65
 #define STR_A_CHANNEL       66
-#define STR_ALRM            67
-#define STR_TELEMETRY2      68
+#define XSTR_ALRM            67
+#define XSTR_TELEMETRY2      68
 #define STR_TX_RSSIALRM     69
 #define STR_NUM_BLADES      70
 #define STR_ALT_ALARM       71

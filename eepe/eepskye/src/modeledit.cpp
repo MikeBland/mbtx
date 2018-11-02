@@ -6215,6 +6215,24 @@ void ModelEdit::tabGvar()
 		psrccb[6] = ui->Sc7SrcCB ;
 		psrccb[7] = ui->Sc8SrcCB ;
 
+		psrcexcb[0] = ui->Sc1exSrcCB ;
+		psrcexcb[1] = ui->Sc2exSrcCB ;
+		psrcexcb[2] = ui->Sc3exSrcCB ;
+		psrcexcb[3] = ui->Sc4exSrcCB ;
+		psrcexcb[4] = ui->Sc5exSrcCB ;
+		psrcexcb[5] = ui->Sc6exSrcCB ;
+		psrcexcb[6] = ui->Sc7exSrcCB ;
+		psrcexcb[7] = ui->Sc8exSrcCB ;
+
+		psrcFncb[0] = ui->Sc1FuncCB ;
+		psrcFncb[1] = ui->Sc2FuncCB ;
+		psrcFncb[2] = ui->Sc3FuncCB ;
+		psrcFncb[3] = ui->Sc4FuncCB ;
+		psrcFncb[4] = ui->Sc5FuncCB ;
+		psrcFncb[5] = ui->Sc6FuncCB ;
+		psrcFncb[6] = ui->Sc7FuncCB ;
+		psrcFncb[7] = ui->Sc8FuncCB ;
+
 		psname[0] = ui->SC1Name ;
 		psname[1] = ui->SC2Name ;
 		psname[2] = ui->SC3Name ;
@@ -6253,6 +6271,8 @@ void ModelEdit::tabGvar()
       psgncb[i]->setCurrentIndex(g_model.Scalers[i].neg ) ;
 			poffcb[i]->setCurrentIndex(g_model.Scalers[i].offsetLast ) ;
       populateSourceCB(psrccb[i],g_eeGeneral.stickMode,1,g_model.Scalers[i].source,g_model.modelVersion, rData->type, rData->extraPots ) ;
+      populateSourceCB(psrcexcb[i],g_eeGeneral.stickMode,1,g_model.eScalers[i].exSource,g_model.modelVersion, rData->type, rData->extraPots ) ;
+			psrcFncb[i]->setCurrentIndex(g_model.Scalers[i].exFunction ) ;
       QString n = (char *)g_model.Scalers[i].name ;
 			while ( n.endsWith(" ") )
 			{
@@ -6270,6 +6290,8 @@ void ModelEdit::tabGvar()
     	connect(psgncb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     	connect(poffcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     	connect(psrccb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    	connect(psrcexcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    	connect(psrcFncb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 			connect(psname[i], SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
     	connect(pmodsb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
     	connect(pdestcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
@@ -6519,6 +6541,8 @@ void ModelEdit::GvarEdited()
 			g_model.Scalers[i].neg = psgncb[i]->currentIndex() ;
 			g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
       g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
+      g_model.eScalers[i].exSource = decodePots( psrcexcb[i]->currentIndex(), rData->type, rData->extraPots ) ;
+			g_model.Scalers[i].exFunction = psrcFncb[i]->currentIndex() ;
       textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
 			g_model.eScalers[i].mod = pmodsb[i]->value()-1 ;
 			g_model.eScalers[i].dest = pdestcb[i]->currentIndex() ;

@@ -129,6 +129,8 @@ private:
 		QComboBox *psgncb[NUM_SCALERS] ;
 		QComboBox *poffcb[NUM_SCALERS] ;
 		QComboBox *psrccb[NUM_SCALERS] ;
+		QComboBox *psrcexcb[NUM_SCALERS] ;
+		QComboBox *psrcFncb[NUM_SCALERS] ;
 		QLineEdit *psname[NUM_SCALERS] ;
 		QSpinBox *pmodsb[NUM_SCALERS] ;
 		QComboBox *pdestcb[NUM_SCALERS] ;

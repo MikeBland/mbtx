@@ -196,6 +196,8 @@ void modelDefault(uint8_t id)
 	g_model.modelVoice = -1 ;
 	g_model.Module[0].pxxRxNum = id-1 ;
 	g_model.Module[1].pxxRxNum = id-1 ;
+	g_model.rxVratio = 132 ;
+
 	eeDirty(EE_MODEL) ;
 }
 

@@ -230,7 +230,7 @@ const uint8_t DestString[] = "\005-----BaseMAmps mAh  VoltsFuel RBSV Cus1 Cus2 C
 const uint8_t GvaString[] = "Global Voice Alerts" ;
 
 uint16_t Multiprotocols[NUM_MULTI_PROTOCOLS] ;
-#define MULTI_TEXT_SIZE	860
+#define MULTI_TEXT_SIZE	890
 uint8_t MultiText[MULTI_TEXT_SIZE] ;
 uint8_t MultiMapping[64] ;
 uint8_t AlphaEdited ;
@@ -283,7 +283,10 @@ const uint8_t MfileData[] =
 "36,H8_3D,H8_3D,H20H,H20Mini,H30Mini\n"
 "37,CORONA,COR_V1,COR_V2,FD_V3\n"
 "38,CFlie\n"
-"39,Hitec,Opt_FW,Opt_Hub,Minima\n" ;
+"39,Hitec,Opt_FW,Opt_Hub,Minima\n"
+"40,WFLY\n"
+"41,BUGS"
+"42,BUGSMINI" ;
 
 #ifndef PCBX12D
 const uint8_t IconLogging[] =
@@ -356,7 +359,7 @@ static void displayGPSformat( uint16_t x, uint16_t y, uint8_t attr )
 	lcd_putsAttIdx(  x, y, XPSTR("\012DD mm.mmmmDD.dddddd "), g_eeGeneral.gpsFormat, attr ) ;
 }
 
-void displayGPSdata( uint16_t x, uint16_t y, uint16_t whole, uint16_t frac, uint8_t attr )
+void displayGPSdata( uint16_t x, uint16_t y, uint16_t whole, uint16_t frac, uint16_t attr )
 {
 	div_t qr ;
 	qr = div( whole, 100 ) ;
@@ -492,6 +495,8 @@ union t_sharedMemory SharedMemory ;
 //uint8_t HelpTextPage ;
 //uint8_t TextFileOpen ;
 
+//This is used at startup to read "Multi.txt", then used to load
+// Basic scripts, and also used by a standalone script for file access
 FIL MultiBasicFile ;
 
 void parseMultiData()
@@ -4875,6 +4880,37 @@ void menuCustomTelemetry(uint8_t event)
 #endif
 
 
+// 0 Telemetry
+// 1 SbusTrain
+// 2 Sbus57600
+// 3 BTdirect 
+// 4 CppmTrain
+// 5 LCDdump  
+// 6 Tel+BTdir
+// 7 Script
+
+
+#ifdef PCBSKY
+ #define MAX_COM2_OPTIONS		7
+ const uint8_t Com2Options[] = {0,1,2,3,5,6,7} ;
+#endif
+
+#ifdef PCBX9D
+ #define MAX_COM2_OPTIONS		6
+ const uint8_t Com2Options[] = {0,1,2,3,4,7} ;
+#endif
+
+#ifdef PCBX12D
+ #define MAX_COM2_OPTIONS		5
+ const uint8_t Com2Options[] = {0,1,2,3,4} ;
+#endif
+
+#ifdef PCB9XT
+ #define MAX_COM2_OPTIONS		3
+ const uint8_t Com2Options[] = {0,1,2,7} ;
+#endif
+
+
 void menuProcTelemetry(uint8_t event)
 {
 	uint32_t page2SizeExtra = 0 ;
@@ -5370,33 +5406,39 @@ uint8_t y = 2*FH;
 		if ( (sub == subN) )
 		{
 			attr = blink ;
-#ifdef PCBSKY
-	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 6 ) ;
-#endif
-#ifdef PCBX9D
-	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;
-#endif
-#ifdef PCBX12D
-	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;	// No LCD DUmp
-#endif
-#ifdef PCB9XT
-	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 2 ) ;
-#endif
+			b = checkOutOfOrder( b, (uint8_t *)Com2Options, MAX_COM2_OPTIONS ) ;
 		}
+//		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect CppmTrainLCDdump  Tel+BTdirScript   "), g_model.com2Function, attr ) ;
+
+//#ifdef PCBSKY
+//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 6 ) ;
+//#endif
+//#ifdef PCBX9D
+//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;
+//#endif
+//#ifdef PCBX12D
+//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 4 ) ;	// No LCD DUmp
+//#endif
+//#ifdef PCB9XT
+//	  	CHECK_INCDEC_H_MODELVAR_0( g_model.com2Function, 2 ) ;
+//#endif
+//		}
 #ifdef PCBSKY
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect Unused   LCDdump  Tel+BTdir"), g_model.com2Function, attr ) ;
+		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect Unused   LCDdump  Tel+BTdirScript   "), g_model.com2Function, attr ) ;
 #endif
 #ifdef PCBX9D
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600CppmTrainLCDdump  "), g_model.com2Function, attr ) ;
+		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600CppmTrainLCDdump  Unused   Unused   Script   "), g_model.com2Function, attr ) ;
 #endif
 #ifdef PCBX12D
 		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600BTdirect CppmTrain"), g_model.com2Function, attr ) ;
 #endif
 #ifdef PCB9XT
-		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600"), g_model.com2Function, attr ) ;
+		lcd_putsAttIdx(12*FW, y, XPSTR("\011TelemetrySbusTrainSbus57600Unused   Unused   Unused   Unused   Script   "), g_model.com2Function, attr ) ;
 #endif
 		if ( g_model.com2Function != b )
 		{
+			g_model.com2Function = b ;
+			
 //#if defined(PCBX9D) || defined(PCBX12D)
 #if defined(PCBX9D)
 			if ( b == 3 )
@@ -14664,6 +14706,8 @@ extern unsigned char *EndOfHeap ;
 #define availableMemory() ((unsigned int)(EndOfHeap - heap))
 #endif
 
+uint8_t ScriptDirNeeded ;
+
 void menuScript(uint8_t event)
 {
 	struct fileControl *fc = &FileControl ;
@@ -14704,35 +14748,54 @@ extern int32_t Rotary_diff ;
 	lcd_outdezAtt( 15*FW-FWNUM*4, 0, j, 0 ) ;
 #endif
 
-	switch(event)
+	if ( ( event == EVT_ENTRY ) || ScriptDirNeeded )
 	{
-    case EVT_ENTRY:
-			WatchdogTimeout = 200 ;		// 2 seconds
+		ScriptDirNeeded = 0 ;
+		WatchdogTimeout = 200 ;		// 2 seconds
 #ifdef LUA
-			setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"LUA" ) ;
+		setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"LUA" ) ;
 #else
-			setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"BAS" ) ;
+		setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"BAS" ) ;
 #endif
-    break ;
-//		case EVT_KEY_LONG(KEY_EXIT):
-//	    killEvents(event) ;
-//			popMenu(false) ;
-//    break ;
-//#if defined(PCBX7) || defined(REV9E)
-//		case EVT_KEY_BREAK(BTN_RE):
-//			event = 0 ;
-//    break ;
-//#endif
-		case EVT_KEY_BREAK(BTN_RE) :
-		case EVT_KEY_BREAK(KEY_MENU) :
-			if ( savedRotaryState == ROTARY_MENU_LR )
-			{
-				event = 0 ;
-			}
-			
-    break ;
-			
 	}
+	
+	if ( ( event == EVT_KEY_BREAK(BTN_RE) ) || (event == EVT_KEY_BREAK(KEY_MENU)) )
+	{
+		if ( savedRotaryState == ROTARY_MENU_LR )
+		{
+			event = 0 ;
+		}
+	}
+	
+//	switch(event)
+//	{
+//    case EVT_ENTRY:
+//			WatchdogTimeout = 200 ;		// 2 seconds
+//#ifdef LUA
+//			setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"LUA" ) ;
+//#else
+//			setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"BAS" ) ;
+//#endif
+//    break ;
+////		case EVT_KEY_LONG(KEY_EXIT):
+////	    killEvents(event) ;
+////			popMenu(false) ;
+////    break ;
+////#if defined(PCBX7) || defined(REV9E)
+////		case EVT_KEY_BREAK(BTN_RE):
+////			event = 0 ;
+////    break ;
+////#endif
+//		case EVT_KEY_BREAK(BTN_RE) :
+//		case EVT_KEY_BREAK(KEY_MENU) :
+//			if ( savedRotaryState == ROTARY_MENU_LR )
+//			{
+//				event = 0 ;
+//			}
+			
+//    break ;
+			
+//	}
 
 	i = fileList( event, &FileControl ) ;
 	if ( i == 1 )	// Select
@@ -16010,27 +16073,27 @@ void menuProcDate(uint8_t event)
 
 		for (uint8_t subN=1; subN<8; subN++)
 		{
-	  	uint8_t attr = ((sub==subN) ? InverseBlink : 0);
+	  	uint16_t attr = ((sub==subN) ? InverseBlink : 0) | LEADING0 ;
 			switch ( subN )
 			{
 				case 1 :
 			  	lcd_puts_Pleft( 2*FH, PSTR(STR_SEC) );
-					lcd_outdezNAtt( 7*FW, 2*FH, EntryTime.second, LEADING0|attr, 2 ) ;
+					lcd_outdezNAtt( 7*FW, 2*FH, EntryTime.second, attr, 2 ) ;
 			  	if(sub==subN)  EntryTime.second = checkIncDec( EntryTime.second, 0, 59, 0 ) ;
 				break ;
 				case 2 :
 			  	lcd_puts_Pleft( 3*FH, PSTR(STR_MIN_SET) );
-					lcd_outdezNAtt( 7*FW, 3*FH, EntryTime.minute, LEADING0|attr, 2 ) ;
+					lcd_outdezNAtt( 7*FW, 3*FH, EntryTime.minute, attr, 2 ) ;
 			  	if(sub==subN)  EntryTime.minute = checkIncDec( EntryTime.minute, 0, 59, 0 ) ;
 				break ;
 				case 3 :
 			  	lcd_puts_Pleft( 4*FH, PSTR(STR_HOUR_MENU_LONG) );
-					lcd_outdezNAtt( 7*FW, 4*FH, EntryTime.hour, LEADING0|attr, 2 ) ;
+					lcd_outdezNAtt( 7*FW, 4*FH, EntryTime.hour, attr, 2 ) ;
 			  	if(sub==subN)  EntryTime.hour = checkIncDec( EntryTime.hour, 0, 23, 0 ) ;
 				break ;
 				case 4 :
 			  	lcd_puts_Pleft( 5*FH, PSTR(STR_DATE) );
-					lcd_outdezNAtt( 7*FW, 5*FH, EntryTime.date, LEADING0|attr, 2 ) ;
+					lcd_outdezNAtt( 7*FW, 5*FH, EntryTime.date, attr, 2 ) ;
 			  	if(sub==subN)  EntryTime.date = checkIncDec( EntryTime.date, 1, 31, 0 ) ;
 				break ;
 				case 5 :
@@ -16051,14 +16114,14 @@ void menuProcDate(uint8_t event)
 //#else			  	
 					lcd_puts_Pleft( 7*FH, PSTR(STR_YEAR) );
 //#endif
-					lcd_outdezNAtt( 9*FW-2, 7*FH, EntryTime.year, LEADING0|attr, 4 ) ;
+					lcd_outdezNAtt( 9*FW-2, 7*FH, EntryTime.year, attr, 4 ) ;
 			  	if(sub==subN)  EntryTime.year = checkIncDec16( EntryTime.year, 0, 2999, 0 ) ;
 				break ;
 #ifdef REVX
 				case 7 :
 					uint8_t previous = g_eeGeneral.rtcCal ;
 			  	lcd_puts_P( 12*FW, 5*FH, PSTR(STR_CAL) );
-					lcd_outdezAtt( 20*FW, 5*FH, g_eeGeneral.rtcCal, attr ) ;
+					lcd_outdezAtt( 20*FW, 5*FH, g_eeGeneral.rtcCal, attr & ~LEADING0 ) ;
 			  	if(sub==subN) CHECK_INCDEC_H_GENVAR( g_eeGeneral.rtcCal, -127, 127 ) ;
 					if ( g_eeGeneral.rtcCal != previous )
 					{
@@ -16075,7 +16138,7 @@ void menuProcDate(uint8_t event)
 				case 7 :
 					int8_t previous = g_eeGeneral.rtcCal ;
 			  	lcd_puts_P( 12*FW, 5*FH, PSTR(STR_CAL) );
-					lcd_outdezAtt( 20*FW, 5*FH, g_eeGeneral.rtcCal, attr ) ;
+					lcd_outdezAtt( 20*FW, 5*FH, g_eeGeneral.rtcCal, attr & ~LEADING0 ) ;
 			  	if(sub==subN) CHECK_INCDEC_H_GENVAR( g_eeGeneral.rtcCal, -31, 31 ) ;
 					if ( g_eeGeneral.rtcCal != previous )
 					{
@@ -19153,7 +19216,7 @@ void editExtraPot( uint8_t y, uint32_t index, uint32_t active )
 }
 #endif	// PCB9XT
 
-const uint8_t BtFunctionMap[] = { 0,4,1,2,3 } ;
+const uint8_t BtFunctionMap[] = { 0,4,1,2,3,5 } ;
 
 void menuProcIndex(uint8_t event)
 {
@@ -21008,10 +21071,10 @@ STR_DiagAna
 			lcd_puts_Pleft( y, XPSTR("BT Function") );
 			{
 				uint8_t attr = (sub == subN) ? InverseBlink : 0 ;
-				lcd_putsAttIdx( 13*FW, y, XPSTR("\007    OFF  TrnRxTrnTxRxLcdDumpTelem  "), g_model.BTfunction, attr ) ;
+				lcd_putsAttIdx( 13*FW, y, XPSTR("\007    OFF  TrnRxTrnTxRxLcdDumpTelem  Script "), g_model.BTfunction, attr ) ;
 				if (attr)
 				{
-					g_model.BTfunction = checkOutOfOrder( g_model.BTfunction, (uint8_t *)BtFunctionMap, 5 ) ;
+					g_model.BTfunction = checkOutOfOrder( g_model.BTfunction, (uint8_t *)BtFunctionMap, 6 ) ;
 				}
 			}
 //			g_model.BTfunction = checkIndexed( y, XPSTR(FWx13"\003""\007    OFF  TrnRxTrnTxRxLcdDumpTelem  "), g_model.BTfunction, (sub==subN) ) ;
@@ -22667,6 +22730,7 @@ extern uint32_t stackSpace( uint32_t stack ) ;
 	lcd_outhex4( 0, 4*FH, stackSpace(0) ) ;
 	lcd_outhex4( 30, 4*FH, stackSpace(1) ) ;
 	lcd_outhex4( 60, 4*FH, stackSpace(2) ) ;
+	lcd_outhex4( 90, 4*FH, stackSpace(3) ) ;
 #endif
 
 }

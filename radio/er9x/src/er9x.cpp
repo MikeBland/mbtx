@@ -1714,7 +1714,20 @@ void checkSwitches()
     //first row - IDL, THR, RUD, ELE, AIL, GEA, PB1, PB2, TRN
     uint16_t x = i ^ warningStates ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+				lcd_clear();
+    		lcd_img( 1, 0, HandImage,0 ) ;
+	  		lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
+	  		lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
+				lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+				if ( voice )
+				{
+					audioVoiceDefevent(AU_ERROR, V_ALERT);
+					putVoiceQueue( V_SW_WARN ) ;
+				}
+#else
     almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#endif
     voice = 0 ;
 
     uint16_t m = 3;

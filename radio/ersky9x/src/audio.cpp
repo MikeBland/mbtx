@@ -1793,6 +1793,7 @@ void voice_task(void* pdata)
 
 					processed = 1 ;
 					buildFilename( v_index, name ) ;
+					x = v_index ;	// For inactivity alarm
 					fr = f_open( &Vfile, VoiceFilename, FA_READ ) ;
 					if ( fr != FR_OK )
 					{
@@ -1968,6 +1969,17 @@ void voice_task(void* pdata)
 					{
 						SDlastError = fr ;
 						SdMounted = mounted = 0 ;
+					}
+					else
+					{
+						if ( (x & VLOC_MASK) == VLOC_SYSTEM )
+						{
+							if ( v_index == V_INACTIVE )
+							{
+								setVolume( g_eeGeneral.inactivityVolume + ( NUM_VOL_LEVELS-3 ) ) ;
+    						audioDefevent( AU_INACTIVITY ) ;
+							}
+						}
 					}
 					Voice.VoiceLock = 0 ;
 				}

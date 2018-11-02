@@ -2792,7 +2792,9 @@ QString getTimerMode(int tm)
 QString getTimerMode(int tm, int eepromType )
 #endif
 {
-	(void) eepromType ;
+#ifndef SKY
+  (void) eepromType ;
+#endif
 //#ifdef SKY    
     QString str = CURV_STR;
     QString stt = "OFFON THsTH%";

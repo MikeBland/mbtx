@@ -26,6 +26,9 @@
  #ifndef PCBDUE
  #include "AT91SAM3S4.h"
  #endif
+
+//#define RESET_DISPLAY	1
+
 #endif
 #include "ersky9x.h"
 #include "myeeprom.h"
@@ -1355,7 +1358,7 @@ void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background )
   lcd_outdezAtt(x,y,val,0, background );
 }
 
-void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint8_t mode, uint16_t background )
+void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background )
 {
   lcd_outdezNAtt( x,y,val,mode,5, background );
 }
@@ -1365,19 +1368,19 @@ void lcd_outdez( uint8_t x, uint8_t y, int16_t val )
   lcd_outdezAtt(x,y,val,0);
 }
 
-void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint8_t mode )
+void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint16_t mode )
 {
   lcd_outdezNAtt( x,y,val,mode,5);
 }
 #endif
 
 #ifdef PCBX12D
-void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint8_t attr, uint16_t background )
+void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t background )
 {
 	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2, background ) ;
 }
 #else
-void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
+void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint16_t attr )
 {
 	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2 ) ;
 }
@@ -1386,9 +1389,9 @@ void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr )
 #define PREC(n) ((n&0x20) ? ((n&0x10) ? 2 : 1) : 0)
 
 #ifdef PCBX12D
-uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint8_t mode, int8_t len, uint16_t background )
+uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t background )
 #else
-uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t len )
+uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t len )
 #endif
 {
   uint8_t fw = FWNUM;
@@ -1432,19 +1435,35 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
     Lcd_lastPos = FW;
   }
 
-  if (mode & LEFT) {
+  if (mode & LEFT)
+	{
     if(val<0)
     {
       x += fw;
     }
-    if (tmp >= 10000)
-      x += fw;
     if (tmp >= 1000)
-      x += fw;
-    if (tmp >= 100)
-      x += fw;
-    if (tmp >= 10)
-      x += fw;
+		{
+	    if (tmp >= 100000)
+  	    x += fw;
+	    if (tmp >= 10000)
+  	    x += fw;
+			x += 3 * fw ;	
+		}
+		else
+		{
+	    if (tmp >= 100)
+  	    x += fw;
+    	if (tmp >= 10)
+      	x += fw;
+		}
+//    if (tmp >= 10000)
+//      x += fw;
+//    if (tmp >= 1000)
+//      x += fw;
+//    if (tmp >= 100)
+//      x += fw;
+//    if (tmp >= 10)
+//      x += fw;
     if ( prec )
     {
       if ( prec == 2 )
@@ -1466,10 +1485,10 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t 
   }
   Lcd_lastPos += x ;
 
-  if ( prec == 2 )
-  {
-    mode -= LEADING0;  // Can't have PREC2 and LEADING0
-  }
+//  if ( prec == 2 )
+//  {
+//    mode -= LEADING0;  // Can't have PREC2 and LEADING0
+//  }
 
   for ( i=1; i<=len; i++)
 	{
@@ -2505,7 +2524,24 @@ void refreshDisplay()
 	register uint32_t z ;
 	register uint32_t ebit ;
 	uint16_t delayCount ;
+#ifdef PCBSKY
+#ifdef REVX
+#ifdef RESET_DISPLAY
+
+
+#endif
+#endif
+#endif
 	delayCount = HwDelayScale*HW_COUNT_PER_US/4 ;		// Value depends on MCK/8
+#ifdef PCBSKY
+#ifdef REVX
+#ifdef RESET_DISPLAY
+
+	delayCount = HwDelayScale*HW_COUNT_PER_US/2 ;		// Value depends on MCK/8
+
+#endif
+#endif
+#endif
 
 #ifdef PCBSKY
 	if ( ( g_model.com2Function == COM2_FUNC_LCD ) || ( g_model.BTfunction == BT_LCDDUMP ) )
@@ -2521,6 +2557,22 @@ void refreshDisplay()
 		}
 	}
 #endif	// PCBSKY
+
+#ifdef PCBSKY
+#ifdef REVX
+#ifdef RESET_DISPLAY
+
+  uint8_t t=keyState((EnumKeys)(SW_BASE_DIAG+0));
+	if ( t )
+	{
+		lcdInit() ;
+		lcdSetRefVolt(g_eeGeneral.contrast);
+	}
+
+#endif
+#endif
+#endif
+
 
 #ifdef REVA
   register uint8_t *lookup ;

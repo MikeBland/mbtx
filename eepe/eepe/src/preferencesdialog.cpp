@@ -83,7 +83,22 @@ void preferencesDialog::initSettings()
     ui->showSplash->setChecked(settings.value("show_splash", true).toBool());
 
     currentER9Xrev = settings.value("currentER9Xrev", 1).toInt();
+#ifdef SKY
     ui->DefaultVersionCB->setCurrentIndex(settings.value("default_EE_version", 0).toInt());
+#else
+ #ifdef V2
+ 		ui->DefaultVersionCB->addItem( "5" ) ;
+		int32_t temp ;
+		temp = settings.value("default_EE_version", 0).toInt() ;
+		if ( temp < 4 )
+		{
+			temp = 4 ;
+		}
+    ui->DefaultVersionCB->setCurrentIndex(temp) ;
+ #else
+    ui->DefaultVersionCB->setCurrentIndex(settings.value("default_EE_version", 0).toInt());
+ #endif    
+#endif    
 
     ui->er9x_ver_label->setText(QString("r%1").arg(currentER9Xrev));
 #ifdef Q_OS_WIN32

@@ -847,6 +847,12 @@ const uint8_t stickScramble[] =
 void simulatorDialog::getValues()
 {
 		int8_t trims[4] ;
+#ifdef V2
+    V2EEGeneral *p_eeGeneral ;
+#else
+    EEGeneral *p_eeGeneral ;
+#endif
+	p_eeGeneral = &g_eeGeneral ;
 
   StickValues[0] = 1024*nodeLeft->getX(); //RUD
   StickValues[1] = -1024*nodeLeft->getY(); //ELE
@@ -2188,6 +2194,12 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 {
     int16_t trimA[4];
     uint8_t  anaCenter = 0;
+#ifdef V2
+    V2EEGeneral *p_eeGeneral ;
+#else
+    EEGeneral *p_eeGeneral ;
+#endif
+	p_eeGeneral = &g_eeGeneral ;
 //    uint16_t d = 0;
 
 //		CurrentPhase = getFlightPhase() ;

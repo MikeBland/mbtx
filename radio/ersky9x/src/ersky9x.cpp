@@ -189,7 +189,7 @@ extern void ee32_process( void ) ;
 #ifdef BASIC
 //#define MAIN_STACK_SIZE		2000
 //#define MAIN_STACK_SIZE		1400
-#define MAIN_STACK_SIZE		700
+#define MAIN_STACK_SIZE		660
 #else
 #define MAIN_STACK_SIZE		500
 #endif
@@ -1752,6 +1752,15 @@ uint32_t stackSpace( uint32_t stack )
 			for ( i = 0 ; i < VOICE_STACK_SIZE ; i += 1 )
 			{
 				if ( voice_stk[i] != 0x55555555 )
+				{
+					break ;
+				}
+			}
+		return i ;
+		case 3 :
+			for ( i = 0 ; i < BT_STACK_SIZE ; i += 1 )
+			{
+				if ( Bt_stk[i] != 0x55555555 )
 				{
 					break ;
 				}
@@ -3690,9 +3699,9 @@ extern uint8_t ModelImageValid ;
 #else
 #ifdef PCBSKY
 #ifdef REVX
-	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+	if ( FrskyHubData[FR_RXRSI_COPY] )
 	{
-		rssi = 250 ;
+		rssi = 350 ;
 	}
 	else
 	{
@@ -7470,6 +7479,7 @@ extern int32_t Rotary_diff ;
 			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
 			{
+				ScriptActive = 0 ;
 				uint16_t t1 = getTmr2MHz() ;
   		  refreshDisplay() ;
 	#if defined(PCBX12D)
@@ -7637,7 +7647,7 @@ void checkRotaryEncoder()
 }
 #endif	// PCB9XT
 
-uint32_t TempTimer ;
+// uint32_t TempTimer ;
 
 #ifdef PCBSKY
 #if !defined(SIMU)

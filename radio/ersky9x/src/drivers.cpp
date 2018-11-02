@@ -1394,7 +1394,7 @@ void UART3_Configure( uint32_t baudrate, uint32_t masterClock)
   /* Enable receiver and transmitter */
   pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
   pUart->UART_IER = UART_IER_RXRDY ;
-	NVIC_SetPriority( UART1_IRQn, 5 ) ; // Lower priority interrupt
+	NVIC_SetPriority( UART1_IRQn, 3 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(UART1_IRQn) ;
 
 }
@@ -1863,7 +1863,7 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 		pUart->UART_TCR = data->size ;
 		pUart->UART_PTCR = US_PTCR_TXTEN ;
 		pUart->UART_IER = UART_IER_TXBUFE ;
-		NVIC_SetPriority( USART1_IRQn, 5 ) ; // Lower priority interrupt
+		NVIC_SetPriority( USART1_IRQn, 3 ) ; // Lower priority interrupt
 		NVIC_EnableIRQ(UART1_IRQn) ;
 		return 1 ;			// Sent OK
 	}

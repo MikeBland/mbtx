@@ -74,7 +74,7 @@ uint8_t Spi_rx_buf[8] ;
 
 struct t_file_entry File_system[MAX_MODELS+1] ;
 
-unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
+unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for general
 
 uint16_t General_timer ;
 uint16_t Model_timer ;
@@ -118,6 +118,8 @@ void ee32_read_model_names( void ) ;
 void ee32LoadModelName(uint8_t id, unsigned char*buf,uint8_t len) ;
 void ee32_update_name( uint32_t id, uint8_t *source ) ;
 void convertModel( SKYModelData *dest, ModelData *source ) ;
+
+extern union t_sharedMemory SharedMemory ;
 
 
 
@@ -244,7 +246,7 @@ void ee32_update_name( uint32_t id, uint8_t *source )
 	{
 		*p++ = *source++ ;
 	}
-	*p = '\0' ;
+//	*p = '\0' ;
 }
 
 bool ee32CopyModel(uint8_t dst, uint8_t src)
@@ -877,25 +879,25 @@ void init_eeprom()
 }
 
 
-// For virtual USB diskio
-uint32_t ee32_read_512( uint32_t sector, uint8_t *buffer )
-{
-	// Wait for EEPROM to be idle
-	if ( General_timer )
-	{
-		General_timer = 1 ;		// Make these happen soon
-	}
-	if ( Model_timer )
-	{
-		Model_timer = 1 ;
-	}
-	while( ee32_check_finished() == 0 )
-	{
-		// null body
-	}
-	read32_eeprom_data( sector * 512, buffer, 512, 0 ) ;
-	return 1 ;		// OK
-}
+//// For virtual USB diskio
+//uint32_t ee32_read_512( uint32_t sector, uint8_t *buffer )
+//{
+//	// Wait for EEPROM to be idle
+//	if ( General_timer )
+//	{
+//		General_timer = 1 ;		// Make these happen soon
+//	}
+//	if ( Model_timer )
+//	{
+//		Model_timer = 1 ;
+//	}
+//	while( ee32_check_finished() == 0 )
+//	{
+//		// null body
+//	}
+//	read32_eeprom_data( sector * 512, buffer, 512, 0 ) ;
+//	return 1 ;		// OK
+//}
 
 
 uint32_t ee32_check_finished()
@@ -1634,7 +1636,7 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 #define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
 
 uint16_t AmountEeBackedUp ;
-FIL g_eebackupFile = {0};
+//FIL g_eebackupFile = {0};
 
 const char *openRestoreEeprom( char *filename )
 {
@@ -1652,7 +1654,7 @@ extern uint32_t sdMounted( void ) ;
     return "NO SD CARD" ;
 
 	CoTickDelay(1) ;					// 2mS
-  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
+  result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
 	CoTickDelay(1) ;					// 2mS
   if (result != FR_OK)
 	{
@@ -1695,7 +1697,7 @@ extern uint32_t sdMounted( void ) ;
   strcpy_P(&filename[14+11], ".bin" ) ;
 
 	CoTickDelay(1) ;					// 2mS
-  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+  result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
 	CoTickDelay(1) ;					// 2mS
   if (result != FR_OK)
 	{
@@ -1714,7 +1716,7 @@ const char *processBackupEeprom( uint16_t blockNo )
 		return "Sync Error" ;
 	}
   read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;
-	result = f_write( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &written ) ;
+	result = f_write( &SharedMemory.g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &written ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{
@@ -1733,7 +1735,7 @@ const char *processRestoreEeprom( uint16_t blockNo )
 	{
 		return "Sync Error" ;
 	}
-	result = f_read( &g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &nread ) ;
+	result = f_read( &SharedMemory.g_eebackupFile, ( BYTE *)&Eeprom_buffer.data.buffer2K, 2048, &nread ) ;
 	CoTickDelay(1) ;					// 2mS
 // Write eeprom here
 	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
@@ -1749,7 +1751,7 @@ const char *processRestoreEeprom( uint16_t blockNo )
 
 void closeBackupEeprom()
 {
-	f_close( &g_eebackupFile ) ;
+	f_close( &SharedMemory.g_eebackupFile ) ;
 }
 
 #if defined(IMAGE_128)

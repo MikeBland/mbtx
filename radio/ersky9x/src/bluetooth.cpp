@@ -158,7 +158,7 @@
 
 uint8_t BtType ;
 struct t_fifo128 Bt_fifo ;
-uint8_t BtTxBuffer[32] ;
+uint8_t BtTxBuffer[64] ;
 struct t_bt_control BtControl ;
 struct btRemote_t BtRemote[3] ;
 uint8_t BtBinAddr[6] ;
@@ -170,13 +170,15 @@ OS_FlagID Bt_flag ;
 struct t_serial_tx Bt_tx ;
 struct t_serial_tx Com2_tx ;
 struct t_serial_tx Com1_tx ;
-uint8_t Com2TxBuffer[32] ;
+uint8_t Com2TxBuffer[64] ;
 uint8_t Com1TxBuffer[32] ;
 uint8_t BtSbusFrame[28] ;
 uint16_t BtLastSbusSendTime ;
 uint8_t BtTempBuffer[100] ;
 uint16_t BtRxTimer ;
 uint8_t BtPreviousLinkIndex = 0xFF ;
+
+void bt_send_buffer( void ) ;
 
 
 extern uint8_t Activated ;
@@ -323,6 +325,31 @@ uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 )
 			return 0 ;
 		}
 	}
+	return 1 ;
+}
+
+int32_t btSend( uint32_t length, uint8_t *data )
+{
+	uint8_t *end ;
+
+	if ( length == 0 )
+	{
+		return Bt_tx.size ? 0 : 1 ;
+	}
+	if ( Bt_tx.size )
+	{
+		return 0 ;
+	}
+	if ( length > 64 )
+	{
+		return 0 ;
+	}
+	end = BtTxBuffer ;
+	do
+	{
+		*end++ = *data++ ;
+	} while ( --length ) ;
+	Bt_tx.size = end - BtTxBuffer ;
 	return 1 ;
 }
 
@@ -1125,6 +1152,247 @@ void processBtRx( int32_t data, uint32_t rxTimeout )
 
 #endif
 
+
+void btConfigCheck()
+{
+	struct t_bt_control *pBtControl ;
+	uint32_t x ;
+	pBtControl = &BtControl ;
+	
+	if ( pBtControl->BtBaudrateChanged )
+	{
+		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		{
+			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+		}
+		CoTickDelay(10) ;					// 20mS for now
+		changeBtBaudrate( g_eeGeneral.bt_baudrate ) ;
+		CoTickDelay(10) ;					// 20mS for now
+		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		{
+			HC05_ENABLE_LOW ;							// Set bit B12 LOW
+		}
+		pBtControl->BtBaudrateChanged = 0 ;
+	}
+	
+	if ( pBtControl->BtRoleChange & 0x80 )
+	{
+		HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+		uint8_t newRole = pBtControl->BtRoleChange & 0x01 ;
+		pBtControl->BtRoleChange = 0x40 ;
+		if ( newRole+1 != pBtControl->BtMasterSlave )
+		{
+			setBtRole( newRole ) ;
+			getBtRole() ;
+		}
+		pBtControl->BtRoleChange = 0 ;
+		HC05_ENABLE_LOW ;							// Set bit B12 LOW
+	}
+	if ( pBtControl->BtNameChange & 0x80 )
+	{
+		uint8_t *pname = g_eeGeneral.btName ;
+		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+		{
+			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			pname = BtName ;
+		}
+		pBtControl->BtNameChange = 0x40 ;
+		setBtName( pname ) ;
+		pBtControl->BtNameChange = 0 ;
+		HC05_ENABLE_LOW ;							// Set bit B12 LOW
+	}
+	if ( pBtControl->BtConfigure & 0x80 )
+	{
+		btConfigure() ;
+	}
+	if ( pBtControl->BtScan )
+	{
+		pBtControl->BtScan = 0 ;
+		if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
+		{
+			uint32_t i ;
+			uint32_t j ;
+			uint16_t rxchar ;
+
+			for ( i = 0 ; i < 100 ; i += 1 )
+			{
+				BtTempBuffer[0] = 0 ;
+			}
+			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			CoTickDelay(5) ;					// 10mS
+			flushBtFifo() ;
+			if ( pBtControl->BtScanInit == 0)
+			{
+				pBtControl->BtScanInit = 1 ;
+				setBtRole( 1 ) ;
+//						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+//						{
+					pBtControl->BtScanState = 1 ;
+					CoTickDelay(20) ;					// 40mS
+					btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
+					CoTickDelay(10) ;					// 20mS
+					i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+//						}
+			}
+			btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
+			CoTickDelay(20) ;					// 40mS
+			getBtOK(1, BT_POLL_TIMEOUT ) ;
+			pBtControl->BtScanState = 2 ;
+			CoTickDelay(100) ;					// 200mS
+			flushBtFifo() ;
+			btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
+			pBtControl->BtScanState = 3 ;
+			j = 0 ;
+			x = 0 ;
+			for ( i = 0 ; i < 3800 ; i += 1 )
+			{
+				while ( ( rxchar = rxBtuart() ) != 0xFFFF )
+				{
+					if ( rxchar == '+' )
+					{
+						x = 1 ;
+					}
+					if ( x && ( j < 99 ) )
+					{
+						BtTempBuffer[j++] = rxchar ;
+					}
+					if ( rxchar == '\r' )
+					{
+						x = 0 ;
+					}
+				}
+				CoTickDelay(1) ;					// 2mS
+			}
+			BtTempBuffer[j] = 0 ;
+			i = 0 ;
+			x = 0 ;
+			uint32_t y ;
+			// Looking for: +INQ:2:72:D2224,3E0104,FFBC
+			// Or +INQ:1 0x00158300E442
+			pBtControl->NumberBtremotes = 0 ;
+			if ( j >= 4 )
+			{
+				while ( i < j-3 )
+				{
+					if ( BtTempBuffer[i] == '+' )
+					{
+						if ( BtTempBuffer[i+1] == 'I' )
+						{
+							if ( BtTempBuffer[i+2] == 'N' )
+							{
+								if ( BtTempBuffer[i+3] == 'Q' )
+								{
+									y = 0 ;
+									if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+									{											
+										i += 5 ;		// Skip ':'
+										while ( BtTempBuffer[i] != ',' )
+										{
+											if ( i >= j )
+											{
+												break ;
+											}
+											BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
+											if ( y > 14 )
+											{
+												y = 14 ;
+											}
+										}
+									}
+									else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+									{
+										if ( BtTempBuffer[i+4] == 'S' )
+										{
+											i += 5 ;
+											continue ;
+										}
+										if ( BtTempBuffer[i+4] == 'E' )
+										{
+											break ;
+										}
+										i += 9 ;		// Skip ':'
+										while ( BtTempBuffer[i] != 13 )
+										{
+											BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
+											if ( y > 12 )
+											{
+												y = 12 ;
+											}
+											if ( i >= j )
+											{
+												break ;
+											}
+										}
+									}
+									BtTempBuffer[x++] = '\r' ;
+									BtTempBuffer[x++] = '\n' ;
+									if ( y > 2 )
+									{
+										BtRemote[pBtControl->NumberBtremotes].address[y] = '\0' ;
+										pBtControl->NumberBtremotes += 1 ;
+									}
+								}
+							}
+						}
+					}
+					i += 1 ;
+				}
+			}
+			BtTempBuffer[x] = '\0' ;
+			pBtControl->BtScanState = 4 ;
+			// Next we want the remote name
+			if ( pBtControl->NumberBtremotes )
+			{
+				btAddrHex2Bin() ;
+			}
+
+			if ( pBtControl->NumberBtremotes )
+			{
+				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+				{
+					// Got a response from the +INQ
+					// Send AT+RNAME?xxxx,xx,xxxxxx\r\n
+					uint8_t *end ;
+					x = 0 ;
+					end = cpystr( BtRname, (uint8_t *)"AT+RNAME?" ) ;
+					end = copyBtAddress( end, 0 ) ;
+
+					*end++ = '\r' ;
+					*end++ = '\n' ;
+					*end = '\0' ;
+							
+
+					if ( btTransaction( BtRname, BtRemote[0].name, 14 ) )
+					{
+					}
+					else
+					{
+						for ( i = 0 ; i < 7 ; i += 1 )
+						{
+							if ( btTransaction( 0, BtRemote[0].name, 14 ) )
+							{
+								break ;
+							}
+						}
+					}
+					btTransaction( (uint8_t *)"AT+STATE?\r\n", 0, 0 ) ;
+					CoTickDelay(10) ;					// 40mS
+					i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+					btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
+					CoTickDelay(10) ;					// 40mS
+					i = getBtOK(0, BT_POLL_TIMEOUT ) ;
+						
+					CoTickDelay(10) ;					// 40mS
+				}
+			}
+			HC05_ENABLE_LOW ;							// Set bit B12 LOW
+		}
+	}
+}
+
+
+
+
 /*
 Commands to BT module
 AT+VERSION 	Returns the software version of the module
@@ -1292,6 +1560,11 @@ void bt_task(void* pdata)
 				break ;
 			}
 			
+			if ( Bt_tx.size == 0 )
+			{
+				btConfigCheck() ;
+			}
+			
 			if ( ( g_eeGeneral.BtType == BT_TYPE_HC06 )
 					 || ( ( g_eeGeneral.BtType >= BT_TYPE_HC05 ) && ( pBtControl->BtMasterSlave == 1 ) ) )
 			{
@@ -1318,7 +1591,7 @@ void bt_task(void* pdata)
 					while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
 					{
 						BtTxBuffer[Bt_tx.size++] = y ;
-						if ( Bt_tx.size > 31 )
+						if ( Bt_tx.size > 63 )
 						{
 							break ;
 						}	
@@ -1336,7 +1609,7 @@ void bt_task(void* pdata)
 					while( ( x = rxBtuart() ) != (uint32_t)-1 )
 					{
 						Com2TxBuffer[Com2_tx.size++] = x ;
-						if ( Com2_tx.size > 31 )
+						if ( Com2_tx.size > 63 )
 						{
 							break ;
 						}	
@@ -1363,7 +1636,14 @@ void bt_task(void* pdata)
 					ExternalSet = 50 ;
 				}
 				CoTickDelay(5) ;					// 10mS for now
-
+			}
+			else if ( g_model.BTfunction == BT_SCRIPT )
+			{
+				if ( Bt_tx.size )
+				{
+					bt_send_buffer() ;
+				}
+				BtRxTimer = 100 ;		// keep running
 			}
 			else
 			{
@@ -1378,7 +1658,7 @@ void bt_task(void* pdata)
 					while ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
 					{
 						BtTxBuffer[Bt_tx.size++] = y ;
-						if ( Bt_tx.size > 31 )
+						if ( Bt_tx.size > 63 )
 						{
 							bt_send_buffer() ;
 						}
@@ -1387,234 +1667,6 @@ void bt_task(void* pdata)
 				else if ( Bt_tx.size )
 				{
 					bt_send_buffer() ;
-				}
-				else if ( pBtControl->BtBaudrateChanged )
-				{
-					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-					{
-						HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					}
-					CoTickDelay(10) ;					// 20mS for now
-					changeBtBaudrate( g_eeGeneral.bt_baudrate ) ;
-					CoTickDelay(10) ;					// 20mS for now
-					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-					{
-						HC05_ENABLE_LOW ;							// Set bit B12 LOW
-					}
-					pBtControl->BtBaudrateChanged = 0 ;
-				}
-				else if ( pBtControl->BtRoleChange & 0x80 )
-				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-					uint8_t newRole = pBtControl->BtRoleChange & 0x01 ;
-					pBtControl->BtRoleChange = 0x40 ;
-					if ( newRole+1 != pBtControl->BtMasterSlave )
-					{
-						setBtRole( newRole ) ;
-						getBtRole() ;
-					}
-					pBtControl->BtRoleChange = 0 ;
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-				}
-				else if ( pBtControl->BtNameChange & 0x80 )
-				{
-					uint8_t *pname = g_eeGeneral.btName ;
-					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-					{
-						HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-						pname = BtName ;
-					}
-					pBtControl->BtNameChange = 0x40 ;
-					setBtName( pname ) ;
-					pBtControl->BtNameChange = 0 ;
-					HC05_ENABLE_LOW ;							// Set bit B12 LOW
-				}
-				else if ( pBtControl->BtConfigure & 0x80 )
-				{
-					btConfigure() ;
-				}
-				else if ( pBtControl->BtScan )
-				{
-					pBtControl->BtScan = 0 ;
-					if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
-					{
-						uint32_t i ;
-						uint32_t j ;
-						uint16_t rxchar ;
-
-						for ( i = 0 ; i < 100 ; i += 1 )
-						{
-							BtTempBuffer[0] = 0 ;
-						}
-						HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
-						CoTickDelay(5) ;					// 10mS
-						flushBtFifo() ;
-						if ( pBtControl->BtScanInit == 0)
-						{
-							pBtControl->BtScanInit = 1 ;
-							setBtRole( 1 ) ;
-	//						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-	//						{
-								pBtControl->BtScanState = 1 ;
-								CoTickDelay(20) ;					// 40mS
-								btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
-								CoTickDelay(10) ;					// 20mS
-								i = getBtOK(1, BT_POLL_TIMEOUT ) ;
-	//						}
-						}
-						btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
-						CoTickDelay(20) ;					// 40mS
-						getBtOK(1, BT_POLL_TIMEOUT ) ;
-						pBtControl->BtScanState = 2 ;
-						CoTickDelay(100) ;					// 200mS
-						flushBtFifo() ;
-						btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
-						pBtControl->BtScanState = 3 ;
-						j = 0 ;
-						x = 0 ;
-						for ( i = 0 ; i < 3800 ; i += 1 )
-						{
-							while ( ( rxchar = rxBtuart() ) != 0xFFFF )
-							{
-								if ( rxchar == '+' )
-								{
-									x = 1 ;
-								}
-								if ( x && ( j < 99 ) )
-								{
-									BtTempBuffer[j++] = rxchar ;
-								}
-								if ( rxchar == '\r' )
-								{
-									x = 0 ;
-								}
-							}
-							CoTickDelay(1) ;					// 2mS
-						}
-						BtTempBuffer[j] = 0 ;
-						i = 0 ;
-						x = 0 ;
-						uint32_t y ;
-						// Looking for: +INQ:2:72:D2224,3E0104,FFBC
-						// Or +INQ:1 0x00158300E442
-						pBtControl->NumberBtremotes = 0 ;
-						if ( j >= 4 )
-						{
-							while ( i < j-3 )
-							{
-								if ( BtTempBuffer[i] == '+' )
-								{
-									if ( BtTempBuffer[i+1] == 'I' )
-									{
-										if ( BtTempBuffer[i+2] == 'N' )
-										{
-											if ( BtTempBuffer[i+3] == 'Q' )
-											{
-												y = 0 ;
-												if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-												{											
-													i += 5 ;		// Skip ':'
-													while ( BtTempBuffer[i] != ',' )
-													{
-														if ( i >= j )
-														{
-															break ;
-														}
-														BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
-														if ( y > 14 )
-														{
-															y = 14 ;
-														}
-													}
-												}
-												else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
-												{
-													if ( BtTempBuffer[i+4] == 'S' )
-													{
-														i += 5 ;
-														continue ;
-													}
-													if ( BtTempBuffer[i+4] == 'E' )
-													{
-														break ;
-													}
-													i += 9 ;		// Skip ':'
-													while ( BtTempBuffer[i] != 13 )
-													{
-														BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
-														if ( y > 12 )
-														{
-															y = 12 ;
-														}
-														if ( i >= j )
-														{
-															break ;
-														}
-													}
-												}
-												BtTempBuffer[x++] = '\r' ;
-												BtTempBuffer[x++] = '\n' ;
-												if ( y > 2 )
-												{
-													BtRemote[pBtControl->NumberBtremotes].address[y] = '\0' ;
-													pBtControl->NumberBtremotes += 1 ;
-												}
-											}
-										}
-									}
-								}
-								i += 1 ;
-							}
-						}
-						BtTempBuffer[x] = '\0' ;
-						pBtControl->BtScanState = 4 ;
-						// Next we want the remote name
-						if ( pBtControl->NumberBtremotes )
-						{
-							btAddrHex2Bin() ;
-						}
-
-						if ( pBtControl->NumberBtremotes )
-						{
-							if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
-							{
-								// Got a response from the +INQ
-								// Send AT+RNAME?xxxx,xx,xxxxxx\r\n
-								uint8_t *end ;
-								x = 0 ;
-								end = cpystr( BtRname, (uint8_t *)"AT+RNAME?" ) ;
-								end = copyBtAddress( end, 0 ) ;
-
-								*end++ = '\r' ;
-								*end++ = '\n' ;
-								*end = '\0' ;
-							
-
-								if ( btTransaction( BtRname, BtRemote[0].name, 14 ) )
-								{
-								}
-								else
-								{
-									for ( i = 0 ; i < 7 ; i += 1 )
-									{
-										if ( btTransaction( 0, BtRemote[0].name, 14 ) )
-										{
-											break ;
-										}
-									}
-								}
-								btTransaction( (uint8_t *)"AT+STATE?\r\n", 0, 0 ) ;
-								CoTickDelay(10) ;					// 40mS
-								i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-								btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
-								CoTickDelay(10) ;					// 40mS
-								i = getBtOK(0, BT_POLL_TIMEOUT ) ;
-						
-								CoTickDelay(10) ;					// 40mS
-							}
-						}
-						HC05_ENABLE_LOW ;							// Set bit B12 LOW
-					}
 				}
 				else if ( pBtControl->BtLinkRequest )
 				{
@@ -1754,7 +1806,7 @@ void bt_task(void* pdata)
 								while( ( x = rxBtuart() ) != (uint32_t)-1 )
 								{
 									Com2TxBuffer[Com2_tx.size++] = x ;
-									if ( Com2_tx.size > 31 )
+									if ( Com2_tx.size > 63 )
 									{
 										break ;
 									}	

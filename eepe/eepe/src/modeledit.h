@@ -90,7 +90,7 @@ private:
 #else
     EEGeneral *p_eeGeneral ;
 #endif
-    EEGeneral g_eeGeneral;
+//    EEGeneral g_eeGeneral;
     ModelData g_model;
     int       id_model;
 

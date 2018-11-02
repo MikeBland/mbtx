@@ -65,10 +65,11 @@
 void eeCheck(bool immediately) ;
 void ee32_read_model_names( void ) ;
 
-unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
+unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for general
 
 SKYModelData TempModelStore ;
 extern union t_xmem Xmem ;
+extern union t_sharedMemory SharedMemory ;
 
 extern void generalDefault() ;
 extern void modelDefault(uint8_t id)  ;
@@ -1229,7 +1230,7 @@ void ee32_update_name( uint32_t id, uint8_t *source )
 	{
 		*p++ = *source++ ;
 	}
-	*p = '\0' ;
+//	*p = '\0' ;
 }
 
 
@@ -1675,7 +1676,7 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 #define EEPROM_PATH           "/EEPROM"   // no trailing slash = important
 
 uint16_t AmountEeBackedUp ;
-FIL g_eebackupFile = {0};
+//FIL g_eebackupFile = {0};
 
 const char *openRestoreEeprom( char *filename )
 {
@@ -1688,7 +1689,7 @@ extern uint32_t sdMounted( void ) ;
     return "NO SD CARD" ;
 
 	CoTickDelay(1) ;					// 2mS
-  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
+  result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_READ) ;
 	CoTickDelay(1) ;					// 2mS
   if (result != FR_OK)
 	{
@@ -1726,7 +1727,7 @@ extern uint32_t sdMounted( void ) ;
   strcpy_P(&filename[14+11], ".bin" ) ;
 
 	CoTickDelay(1) ;					// 2mS
-  result = f_open(&g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
+  result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
 	CoTickDelay(1) ;					// 2mS
   if (result != FR_OK)
 	{
@@ -1745,7 +1746,7 @@ const char *processBackupEeprom( uint16_t blockNo )
 		return "Sync Error" ;
 	}
 	I2C_EE_BufferRead( Xmem.file_buffer, (blockNo << 9), 512 ) ;
-	result = f_write( &g_eebackupFile, ( BYTE *)&Xmem.file_buffer, 512, &written ) ;
+	result = f_write( &SharedMemory.g_eebackupFile, ( BYTE *)&Xmem.file_buffer, 512, &written ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{
@@ -1764,7 +1765,7 @@ const char *processRestoreEeprom( uint16_t blockNo )
 	{
 		return "Sync Error" ;
 	}
-	result = f_read( &g_eebackupFile, Xmem.file_buffer, 512, &nread ) ;
+	result = f_read( &SharedMemory.g_eebackupFile, Xmem.file_buffer, 512, &nread ) ;
 	CoTickDelay(1) ;					// 2mS
 // Write eeprom here
 	I2C_EE_BufferWrite( Xmem.file_buffer, (blockNo << 9), 512 ) ;
@@ -1782,7 +1783,7 @@ const char *processRestoreEeprom( uint16_t blockNo )
 
 void closeBackupEeprom()
 {
-	f_close( &g_eebackupFile ) ;
+	f_close( &SharedMemory.g_eebackupFile ) ;
 }
 
 

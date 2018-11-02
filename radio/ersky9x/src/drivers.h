@@ -1,3 +1,21 @@
+/*
+ * Author - Mike Blandford
+ *
+ * Based on er9x by Erez Raviv <erezraviv@gmail.com>
+ *
+ * Based on th9x -> http://code.google.com/p/th9x/
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License version 2 as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
+
 #ifndef drivers_h
 #define drivers_h
 
@@ -82,8 +100,8 @@ struct t_XfireTx
 
 struct t_telemetryTx
 {
-	uint16_t sportCount ;
-	uint8_t sportBusy ;
+	volatile uint16_t sportCount ;
+	volatile uint8_t sportBusy ;
 	union
 	{
 		struct t_SportTx SportTx ;
@@ -111,6 +129,10 @@ extern struct t_fifo64 Sbus_fifo ;
 //extern struct t_fifo64 CaptureRx_fifo ;
 extern struct t_fifo128 Com1_fifo ;
 extern struct t_fifo128 Com2_fifo ;
+
+#ifdef BLUETOOTH
+extern struct t_fifo128 BtRx_fifo ;
+#endif
 
 #if defined(LUA) || defined(BASIC)
 extern struct t_fifo128 Lua_fifo ;

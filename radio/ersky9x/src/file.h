@@ -59,7 +59,7 @@ struct t_file_entry
 } ;
 
 extern struct t_file_entry File_system[] ;
-extern unsigned char ModelNames[][sizeof(g_model.name)+1] ;		// Allow for general
+extern unsigned char ModelNames[][sizeof(g_model.name)] ;		// Allow for general
 
 extern EEGeneral  g_eeGeneral;
 //extern ModelData  g_model;

@@ -4141,6 +4141,7 @@ void simulatorDialog::on_FixRightY_clicked(bool checked)
 int16_t simulatorDialog::calc_scaler( uint8_t index )
 {
 	int32_t value ;
+	int32_t exValue ;
 	uint8_t lnest ;
 	ScaleData *pscaler ;
 	ExtScaleData *epscaler ;
@@ -4175,6 +4176,37 @@ int16_t simulatorDialog::calc_scaler( uint8_t index )
 	if ( epscaler->mod )
 	{
 		value %= epscaler->mod+1 ;
+	}
+	if ( epscaler->exSource )
+	{
+		exValue = getValue( epscaler->exSource - 1 ) ;
+		if ( pscaler->exFunction )
+		{
+			switch ( pscaler->exFunction )
+			{
+				case 1 :	// Add
+					value += exValue ;
+				break ;
+				case 2 :	// Subtract
+					value -= exValue ;
+				break ;
+				case 3 :	// Multiply
+					value *= exValue ;
+				break ;
+				case 4 :	// Divide
+					if ( exValue )
+					{
+						value /= exValue ;
+					}
+				break ;
+				case 5 :	// Mod
+					if ( exValue )
+					{
+						value %= exValue ;
+					}
+				break ;
+			}
+		}
 	}
 	if ( pscaler->offsetLast )
 	{

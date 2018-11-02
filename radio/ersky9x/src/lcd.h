@@ -79,9 +79,9 @@ extern uint8_t ExtDisplaySend ;
 #define TSSI_TEXT			0x20
 
 /* lcd outdez flags */
-#define LEADING0      0x10
+#define LEADING0      0x0400
 #define PREC1         0x20
-#define PREC2         0x30 /* 4 modes in 2bits! */
+#define PREC2         0x30 /* 4 modes in 2bits!, now removed */
 #define LEFT          0x40 /* align left */
 
 /* time & telemetry flags */
@@ -153,18 +153,18 @@ extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
 #ifdef PCBX12D
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE) ;
-extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint8_t attr, uint16_t background = LCD_WHITE ) ;
+extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t background = LCD_WHITE ) ;
 extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LCD_WHITE  ) ;
-extern void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint8_t mode, uint16_t background = LCD_WHITE  ) ;
-extern uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint8_t mode, int8_t len, uint16_t background = LCD_WHITE ) ;
+extern void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background = LCD_WHITE  ) ;
+extern uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t background = LCD_WHITE ) ;
 extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode, uint16_t background = LCD_WHITE ) ;
 #else
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;
-extern void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint8_t attr ) ;
+extern void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint16_t attr ) ;
 extern void lcd_outdez( uint8_t x, uint8_t y, int16_t val ) ;
-extern void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint8_t mode ) ;
-extern uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint8_t mode, int8_t len ) ;
+extern void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint16_t mode ) ;
+extern uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t len ) ;
 #endif
 
 extern void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;

@@ -43,11 +43,11 @@ const uint8_t modn12x3[4][4]= {
 //convert from mode 1 to mode g_eeGeneral.stickMode
 //NOTICE!  =>  1..4 -> 1..4
 //#define CONVERT_MODE(x) (((x)<=4) ? modn12x3[g_eeGeneral.stickMode][((x)-1)] : (x))
-#define CHANNEL_ORDER(x) (chout_ar[g_eeGeneral.templateSetup*4 + (x)-1])
-#define THR_STICK       (2-(g_eeGeneral.stickMode&1))
-#define ELE_STICK       (1+(g_eeGeneral.stickMode&1))
-#define AIL_STICK       ((g_eeGeneral.stickMode&2) ? 0 : 3)
-#define RUD_STICK       ((g_eeGeneral.stickMode&2) ? 3 : 0)
+#define CHANNEL_ORDER(x) (chout_ar[p_eeGeneral->templateSetup*4 + (x)-1])
+#define THR_STICK       (2-(p_eeGeneral->stickMode&1))
+#define ELE_STICK       (1+(p_eeGeneral->stickMode&1))
+#define AIL_STICK       ((p_eeGeneral->stickMode&2) ? 0 : 3)
+#define RUD_STICK       ((p_eeGeneral->stickMode&2) ? 3 : 0)
 
 
 #define STK_RUD  1

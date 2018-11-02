@@ -1342,6 +1342,9 @@ extern uint8_t AlertType ;
 #define COM2_FUNC_CPPMTRAIN		4
 #define COM2_FUNC_LCD					5
 #endif
+
+#define COM2_FUNC_SCRIPT			7
+
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
 
@@ -1463,6 +1466,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define BT_TRAIN_TXRX		2
 #define BT_LCDDUMP			3
 #define BT_TELEM				4
+#define BT_SCRIPT		   	5
 
 // Physical radio types
 #define PHYSICAL_UNKNOWN			0
@@ -1545,6 +1549,7 @@ union t_sharedMemory
 		struct t_filelist FileList ;
 		struct t_maintenance Mdata ;
 	} ;
+	FIL g_eebackupFile ;
 } ;
 
 

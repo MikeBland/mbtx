@@ -27,7 +27,7 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="15" column="0">
+   <item row="17" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="minimumSize">
       <size>
@@ -45,7 +45,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>9</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -17787,7 +17787,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_209">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>320</y>
          <width>47</width>
          <height>21</height>
@@ -17815,9 +17815,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc1SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>320</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -17825,7 +17825,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_210">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>290</y>
          <width>47</width>
          <height>21</height>
@@ -17856,9 +17856,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_211">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>290</y>
-         <width>121</width>
+         <width>71</width>
          <height>21</height>
         </rect>
        </property>
@@ -17887,7 +17887,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_212">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>290</y>
          <width>61</width>
          <height>21</height>
@@ -17918,7 +17918,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_213">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>290</y>
          <width>61</width>
          <height>21</height>
@@ -17949,7 +17949,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_214">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>290</y>
          <width>61</width>
          <height>21</height>
@@ -17980,7 +17980,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_215">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>290</y>
          <width>61</width>
          <height>21</height>
@@ -18011,9 +18011,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_216">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>290</y>
-         <width>61</width>
+         <width>31</width>
          <height>21</height>
         </rect>
        </property>
@@ -18042,9 +18042,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_217">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>290</y>
-         <width>61</width>
+         <width>51</width>
          <height>21</height>
         </rect>
        </property>
@@ -18073,7 +18073,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_218">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>673</x>
          <y>290</y>
          <width>61</width>
          <height>21</height>
@@ -18120,7 +18120,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc1OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>320</y>
          <width>58</width>
          <height>20</height>
@@ -18142,7 +18142,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc1MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>320</y>
          <width>58</width>
          <height>20</height>
@@ -18164,7 +18164,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc1DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>320</y>
          <width>58</width>
          <height>20</height>
@@ -18186,7 +18186,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc1UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>320</y>
          <width>61</width>
          <height>20</height>
@@ -18236,9 +18236,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc1SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>320</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -18256,9 +18256,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc1OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>320</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18276,9 +18276,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc1DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>320</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18342,9 +18342,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc2SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>350</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18352,7 +18352,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_220">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>350</y>
          <width>47</width>
          <height>21</height>
@@ -18380,7 +18380,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_221">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>380</y>
          <width>47</width>
          <height>21</height>
@@ -18408,7 +18408,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_222">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>410</y>
          <width>47</width>
          <height>21</height>
@@ -18436,7 +18436,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_223">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>440</y>
          <width>47</width>
          <height>21</height>
@@ -18464,7 +18464,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_224">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>470</y>
          <width>47</width>
          <height>21</height>
@@ -18492,7 +18492,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_225">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>500</y>
          <width>47</width>
          <height>21</height>
@@ -18520,7 +18520,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QLabel" name="label_226">
        <property name="geometry">
         <rect>
-         <x>40</x>
+         <x>10</x>
          <y>530</y>
          <width>47</width>
          <height>21</height>
@@ -18548,9 +18548,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc3SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>380</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18558,9 +18558,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc4SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>410</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18568,9 +18568,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc5SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>440</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18578,9 +18578,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc6SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>470</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18588,9 +18588,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc7SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>500</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18598,9 +18598,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc8SrcCB">
        <property name="geometry">
         <rect>
-         <x>120</x>
+         <x>70</x>
          <y>530</y>
-         <width>121</width>
+         <width>71</width>
          <height>20</height>
         </rect>
        </property>
@@ -18608,7 +18608,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc2MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>350</y>
          <width>58</width>
          <height>20</height>
@@ -18630,7 +18630,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc2OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>350</y>
          <width>58</width>
          <height>20</height>
@@ -18665,9 +18665,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc2SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>350</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -18685,9 +18685,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc2OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>350</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18705,9 +18705,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc2DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>350</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18727,7 +18727,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc2UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>350</y>
          <width>61</width>
          <height>20</height>
@@ -18777,7 +18777,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc2DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>350</y>
          <width>58</width>
          <height>20</height>
@@ -18812,7 +18812,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc3DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>380</y>
          <width>58</width>
          <height>20</height>
@@ -18834,9 +18834,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc3SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>380</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -18854,7 +18854,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc3MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>380</y>
          <width>58</width>
          <height>20</height>
@@ -18876,9 +18876,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc3DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>380</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18898,9 +18898,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc3OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>380</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -18918,7 +18918,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc3OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>380</y>
          <width>58</width>
          <height>20</height>
@@ -18940,7 +18940,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc3UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>380</y>
          <width>61</width>
          <height>20</height>
@@ -19003,7 +19003,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc4DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>410</y>
          <width>58</width>
          <height>20</height>
@@ -19025,7 +19025,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc4UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>410</y>
          <width>61</width>
          <height>20</height>
@@ -19075,9 +19075,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc4DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>410</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19097,7 +19097,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc4MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>410</y>
          <width>58</width>
          <height>20</height>
@@ -19119,9 +19119,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc4SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>410</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -19139,9 +19139,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc4OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>410</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19159,7 +19159,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc4OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>410</y>
          <width>58</width>
          <height>20</height>
@@ -19194,9 +19194,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc5SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>440</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -19214,7 +19214,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc5DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>440</y>
          <width>58</width>
          <height>20</height>
@@ -19236,7 +19236,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc5MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>440</y>
          <width>58</width>
          <height>20</height>
@@ -19258,7 +19258,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc5UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>440</y>
          <width>61</width>
          <height>20</height>
@@ -19308,7 +19308,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc5OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>440</y>
          <width>58</width>
          <height>20</height>
@@ -19330,9 +19330,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc5DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>440</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19352,9 +19352,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc5OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>440</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19385,9 +19385,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc6SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>470</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -19405,7 +19405,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc6MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>470</y>
          <width>58</width>
          <height>20</height>
@@ -19427,7 +19427,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc6UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>470</y>
          <width>61</width>
          <height>20</height>
@@ -19477,7 +19477,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc6OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>470</y>
          <width>58</width>
          <height>20</height>
@@ -19499,7 +19499,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc6DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>470</y>
          <width>58</width>
          <height>20</height>
@@ -19521,9 +19521,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc6OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>470</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19541,9 +19541,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc6DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>470</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19576,7 +19576,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc7OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>500</y>
          <width>58</width>
          <height>20</height>
@@ -19598,9 +19598,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc7OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>500</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19618,9 +19618,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc7SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>500</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -19638,7 +19638,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc7MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>500</y>
          <width>58</width>
          <height>20</height>
@@ -19660,7 +19660,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc7DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>500</y>
          <width>58</width>
          <height>20</height>
@@ -19682,7 +19682,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc7UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>500</y>
          <width>61</width>
          <height>20</height>
@@ -19732,9 +19732,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc7DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>500</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19767,9 +19767,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc8DecimalsSB">
        <property name="geometry">
         <rect>
-         <x>600</x>
+         <x>620</x>
          <y>530</y>
-         <width>58</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19789,9 +19789,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc8OffAtCB">
        <property name="geometry">
         <rect>
-         <x>670</x>
+         <x>683</x>
          <y>530</y>
-         <width>61</width>
+         <width>51</width>
          <height>20</height>
         </rect>
        </property>
@@ -19809,7 +19809,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc8MultSB">
        <property name="geometry">
         <rect>
-         <x>320</x>
+         <x>220</x>
          <y>530</y>
          <width>58</width>
          <height>20</height>
@@ -19831,7 +19831,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc8DivSB">
        <property name="geometry">
         <rect>
-         <x>390</x>
+         <x>290</x>
          <y>530</y>
          <width>58</width>
          <height>20</height>
@@ -19853,7 +19853,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QSpinBox" name="Sc8OffsetSB">
        <property name="geometry">
         <rect>
-         <x>250</x>
+         <x>150</x>
          <y>530</y>
          <width>58</width>
          <height>20</height>
@@ -19875,9 +19875,9 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc8SignCB">
        <property name="geometry">
         <rect>
-         <x>530</x>
+         <x>580</x>
          <y>530</y>
-         <width>61</width>
+         <width>31</width>
          <height>20</height>
         </rect>
        </property>
@@ -19895,7 +19895,7 @@ p, li { white-space: pre-wrap; }
       <widget class="QComboBox" name="Sc8UnitsCB">
        <property name="geometry">
         <rect>
-         <x>460</x>
+         <x>510</x>
          <y>530</y>
          <width>61</width>
          <height>20</height>
@@ -20962,6 +20962,468 @@ p, li { white-space: pre-wrap; }
         </property>
        </item>
       </widget>
+      <widget class="QLabel" name="label_232">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>290</y>
+         <width>61</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>Stick/pot value, trainer input, channel output or telemetry value.</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Panel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string>ex Source</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="margin">
+        <number>3</number>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc1exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>320</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc2exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>350</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc3exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>380</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc4exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>410</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc5exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>440</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc6exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>470</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc7exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>500</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc8exSrcCB">
+       <property name="geometry">
+        <rect>
+         <x>360</x>
+         <y>530</y>
+         <width>61</width>
+         <height>20</height>
+        </rect>
+       </property>
+      </widget>
+      <widget class="QLabel" name="label_233">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>290</y>
+         <width>71</width>
+         <height>21</height>
+        </rect>
+       </property>
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Select the sign of the result. “+” or “-”&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+       <property name="frameShape">
+        <enum>QFrame::Panel</enum>
+       </property>
+       <property name="frameShadow">
+        <enum>QFrame::Raised</enum>
+       </property>
+       <property name="midLineWidth">
+        <number>0</number>
+       </property>
+       <property name="text">
+        <string>Function</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+       <property name="margin">
+        <number>1</number>
+       </property>
+      </widget>
+      <widget class="QComboBox" name="Sc1FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>320</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc2FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>350</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc3FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>380</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc4FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>410</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc5FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>440</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc6FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>470</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc7FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>500</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
+      <widget class="QComboBox" name="Sc8FuncCB">
+       <property name="geometry">
+        <rect>
+         <x>430</x>
+         <y>530</y>
+         <width>71</width>
+         <height>20</height>
+        </rect>
+       </property>
+       <item>
+        <property name="text">
+         <string>---</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Add</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Subtract</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Multiply</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Divide</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>Mod</string>
+        </property>
+       </item>
+      </widget>
      </widget>
      <widget class="QWidget" name="tabVoiceAlarms">
       <attribute name="title">
@@ -21000,7 +21462,7 @@ p, li { white-space: pre-wrap; }
      </widget>
     </widget>
    </item>
-   <item row="16" column="0">
+   <item row="18" column="0">
     <widget class="QPushButton" name="pushButton">
      <property name="toolTip">
       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the eepskye Simulator and simulate the model being edited..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>

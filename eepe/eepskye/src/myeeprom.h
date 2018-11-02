@@ -59,6 +59,7 @@
 #define NUM_SKY_VOICE_ALARMS	24
 #define NUM_EXTRA_VOICE_ALARMS	12
 #define NUM_GLOBAL_VOICE_ALARMS 8
+#define NUMBER_EXTRA_IDS				4
 
 #define NUM_GVAR_ADJUST_SKY		8
 #define EXTRA_GVAR_ADJUST	12
@@ -678,7 +679,7 @@ PACK(typedef struct t_scale
 	uint8_t neg:1 ;
 	uint8_t precision:2 ;
 	uint8_t offsetLast:1 ;
-	uint8_t spare:4 ;
+	uint8_t exFunction:4 ;
 	uint8_t name[4] ;
 }) ScaleData ;
 
@@ -686,7 +687,8 @@ PACK(typedef struct t_extScale
 {
 	uint8_t mod ;
 	uint8_t dest ;
-	uint8_t spare[4] ;
+	uint8_t exSource ;
+	uint8_t spare[3] ;
 } ) ExtScaleData ;
 
 // DSM link monitoring
@@ -785,6 +787,13 @@ struct t_module
 	int8_t failsafe[16] ;
 	uint8_t sparex[3] ;
 } ;
+
+PACK(typedef struct t_extraId
+{
+	uint16_t id ;
+	uint8_t dest ;
+	uint8_t spare ;
+} ) ExtraId ;
 
 
 PACK(typedef struct te_ModelData {
@@ -950,6 +959,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
 	int8_t cellScalers[12] ;
+	uint8_t	customTelemetryNames[24] ;
+	uint8_t extraSensors ;
+	ExtraId extraId[NUMBER_EXTRA_IDS] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

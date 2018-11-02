@@ -3980,7 +3980,7 @@ void ModelEdit::tabTrims()
             ui->Label_S2->setText("ELE");
             ui->Label_S3->setText("THR");
             ui->Label_S4->setText("AIL");
-						if ( throttleReversed( &g_eeGeneral, &g_model ) )
+            if ( throttleReversed( p_eeGeneral, &g_model ) )
                 ui->slider_S3->setInvertedAppearance(true);
             break;
         case (1):
@@ -3988,7 +3988,7 @@ void ModelEdit::tabTrims()
             ui->Label_S2->setText("THR");
             ui->Label_S3->setText("ELE");
             ui->Label_S4->setText("AIL");
-						if ( throttleReversed( &g_eeGeneral, &g_model ) )
+            if ( throttleReversed( p_eeGeneral, &g_model ) )
                 ui->slider_S2->setInvertedAppearance(true);
             break;
         case (2):
@@ -3996,7 +3996,7 @@ void ModelEdit::tabTrims()
             ui->Label_S2->setText("ELE");
             ui->Label_S3->setText("THR");
             ui->Label_S4->setText("RUD");
-						if ( throttleReversed( &g_eeGeneral, &g_model ) )
+            if ( throttleReversed( p_eeGeneral, &g_model ) )
                 ui->slider_S3->setInvertedAppearance(true);
             break;
         case (3):
@@ -4004,7 +4004,7 @@ void ModelEdit::tabTrims()
             ui->Label_S2->setText("THR");
             ui->Label_S3->setText("ELE");
             ui->Label_S4->setText("RUD");
-						if ( throttleReversed( &g_eeGeneral, &g_model ) )
+            if ( throttleReversed( p_eeGeneral, &g_model ) )
                 ui->slider_S2->setInvertedAppearance(true);
             break;
     }
