@@ -77,8 +77,8 @@ uint16_t *TrainerPulsePtr ;
 uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 //uint8_t Current_protocol ;
-uint8_t PxxFlag[2] = { 0, 0 } ;
-uint8_t PxxExtra[2] = { 0, 0 } ;
+uint8_t BindRangeFlag[2] = { 0, 0 } ;
+//uint8_t PxxExtra[2] = { 0, 0 } ;
 
 volatile uint8_t Dsm_Type[2] = { 0, 0 } ;
 uint8_t DsmInitCounter[2] = { 0, 0 } ;
@@ -748,11 +748,14 @@ uint16_t hwTimerValue()
 {
 	return TIM13->CNT ;
 }
-#endif
+#endif // 9XT
 
 // Trainer PPM output PC9, Timer 3 channel 4, (Alternate Function 2)
 // Horus:
 // Trainer PPM output PC7, Timer 3 channel 2, (Alternate Function 2)
+// Use channel 3 not 1 for main timing
+// X3:
+// Trainer PPM output PD12, Timer 4 channel 1
 // Use channel 3 not 1 for main timing
 void setupTrainerPulses()
 {
@@ -776,11 +779,19 @@ void setupTrainerPulses()
 	{
 		TIM3->CCER = TIM_CCER_CC2E ;
 #else
+ #ifdef PCBX3
+		TIM4->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
+	}
+	else
+	{
+		TIM4->CCER = TIM_CCER_CC1E ;
+ #else
 		TIM3->CCER = TIM_CCER_CC4E | TIM_CCER_CC4P ;
 	}
 	else
 	{
 		TIM3->CCER = TIM_CCER_CC4E ;
+ #endif
 #endif
 	}
   ptr = TrainerPpmStream ;
@@ -802,8 +813,13 @@ void setupTrainerPulses()
 	TIM3->CCR3 = total - 1000 ;		// Update time
 	TIM3->CCR2 = (g_model.ppmDelay*50+300)*2 ;
 #else
+ #ifdef PCBX3
+	TIM4->CCR3 = total - 1000 ;		// Update time
+	TIM4->CCR1 = (g_model.ppmDelay*50+300)*2 ;
+ #else
 	TIM3->CCR1 = total - 1000 ;		// Update time
 	TIM3->CCR4 = (g_model.ppmDelay*50+300)*2 ;
+ #endif
 #endif  
 }
 
@@ -812,11 +828,46 @@ void setupTrainerPulses()
 // Horus:
 // Trainer PPM output PC7, Timer 3 channel 2, (Alternate Function 2)
 // Use channel 3 not 1 for main timing
+// X3:
+// Trainer PPM output PD12, Timer 4 channel 1
+
 void init_trainer_ppm()
 {
 	setupTrainerPulses() ;
 	TrainerPulsePtr = TrainerPpmStream ;
 	
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portC clock
+	configure_pins( PIN_TR_PPM_OUT, PIN_PERIPHERAL | PIN_PORTD| PIN_PER_2 | PIN_OS25 | PIN_PUSHPULL ) ;
+	configure_pins( PIN_TRNDET, PIN_INPUT | PIN_PULLUP | PIN_PORTD) ;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;            // Enable clock
+	
+  TIM4->ARR = *TrainerPulsePtr++ ;
+  TIM4->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;               // 0.5uS
+  
+  if(g_model.trainPulsePol)
+	{
+		TIM4->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
+	}
+	else
+	{
+		TIM4->CCER = TIM_CCER_CC1E ;
+	}
+	
+  TIM4->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1PE ;		// PWM mode 1
+	TIM4->CCR1 = 600 ;		// 300 uS pulse
+	TIM4->BDTR = TIM_BDTR_MOE ;
+ 	TIM4->EGR = 1 ;
+
+	TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;				// Clear flag
+	TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC3IF ;				// Clear flag
+	TIM4->DIER |= TIM_DIER_CC1IE ;
+	TIM4->DIER |= TIM_DIER_UIE ;
+
+	TIM4->CR1 = TIM_CR1_CEN ;
+  NVIC_SetPriority(TIM4_IRQn, 7);
+	NVIC_EnableIRQ(TIM4_IRQn) ;
+#else // X3
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( PIN_TR_PPM_OUT, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 | PIN_OS25 | PIN_PUSHPULL ) ;
 	configure_pins( PIN_TRNDET, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
@@ -864,15 +915,23 @@ void init_trainer_ppm()
 	TIM3->CR1 = TIM_CR1_CEN ;
   NVIC_SetPriority(TIM3_IRQn, 7);
 	NVIC_EnableIRQ(TIM3_IRQn) ;
+#endif // X3
 }
 
 // TODO - testing
 void stop_trainer_ppm()
 {
+#ifdef PCBX3
+	configure_pins( PIN_TR_PPM_OUT, PIN_INPUT | PIN_PORTD ) ;
+	TIM4->DIER = 0 ;
+	TIM4->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
+	NVIC_DisableIRQ(TIM4_IRQn) ;				// Stop Interrupt
+#else // X3
 	configure_pins( PIN_TR_PPM_OUT, PIN_INPUT | PIN_PORTC ) ;
 	TIM3->DIER = 0 ;
 	TIM3->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
 	NVIC_DisableIRQ(TIM3_IRQn) ;				// Stop Interrupt
+#endif // X3
 }
 
 // Trainer capture, PC8, Timer 3 channel 3
@@ -880,6 +939,10 @@ void stop_trainer_ppm()
 // Horus:
 // Trainer capture, PC6, Timer 3 channel 3
 // Soft Serial capture, PC6, Timer 3 channel 1, (Alternate Function 2)
+// X3
+// Trainer capture, PD13, Timer 4 channel 2
+// Soft Serial capture, PD13, Timer 4 channel 2
+
 void init_trainer_capture(uint32_t mode)
 {
 	struct t_softSerial *pss = &SoftSerial1 ;
@@ -890,13 +953,26 @@ void init_trainer_capture(uint32_t mode)
 	}
 	
 	stop_trainer_ppm() ;
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	configure_pins( PIN_TR_PPM_IN, PIN_PERIPHERAL | PIN_PORTD | PIN_PER_2 | PIN_PULLUP ) ;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;		// Enable clock
+	 
+	TIM4->ARR = 0xFFFF ;
+	TIM4->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+	TIM4->CR2 = 0 ;
+
+#else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( PIN_TR_PPM_IN, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 | PIN_PULLUP ) ;
 	RCC->APB1ENR |= RCC_APB1ENR_TIM3EN ;		// Enable clock
-	
+	 
 	TIM3->ARR = 0xFFFF ;
 	TIM3->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
 	TIM3->CR2 = 0 ;
+
+#endif
+
 #ifndef PCBX12D
 	if ( mode == CAP_SERIAL )
 	{
@@ -906,12 +982,24 @@ void init_trainer_capture(uint32_t mode)
 		pss->softSerInvert = TrainerPolarity ;
 #ifdef PCBX12D
 #else
+ #ifdef PCBX3
+		TIM4->CCMR1 = TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 | TIM_CCMR1_CC2S_1 | TIM_CCMR1_IC1F_0 | TIM_CCMR1_IC1F_1 | TIM_CCMR1_CC1S_0 ;
+		TIM4->CCER = TIM_CCER_CC2E | TIM_CCER_CC1E | TIM_CCER_CC1P ;
+		TIM4->SR = TIMER2_5SR_MASK & ~(TIM_SR_CC1IF | TIM_SR_CC2IF) ;				// Clear flags
+		TIM4->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE ;
+ #else
 		TIM3->CCMR2 = TIM_CCMR2_IC4F_0 | TIM_CCMR2_IC4F_1 | TIM_CCMR2_CC4S_1 | TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
 		TIM3->CCER = TIM_CCER_CC3E | TIM_CCER_CC4E | TIM_CCER_CC4P ;
 		TIM3->SR = TIMER2_5SR_MASK & ~(TIM_SR_CC4IF | TIM_SR_CC3IF) ;				// Clear flags
 		TIM3->DIER |= TIM_DIER_CC4IE | TIM_DIER_CC3IE ;
+ #endif
 #endif
-  	NVIC_SetPriority(TIM3_IRQn, 0 ) ;
+  	
+ #ifdef PCBX3
+		NVIC_SetPriority(TIM4_IRQn, 0 ) ;
+ #else
+		NVIC_SetPriority(TIM3_IRQn, 0 ) ;
+ #endif
 		start_timer11() ;
 	}
 	else
@@ -923,23 +1011,45 @@ void init_trainer_capture(uint32_t mode)
 		TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
 		TIM3->DIER |= TIM_DIER_CC1IE ;
 #else
+ #ifdef PCBX3
+		TIM4->CCMR1 = TIM_CCMR1_IC2F_0 | TIM_CCMR1_IC2F_1 | TIM_CCMR1_CC2S_0 ;
+		TIM4->CCER = TIM_CCER_CC2E ;	 
+		TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC2IF ;				// Clear flag
+		TIM4->DIER |= TIM_DIER_CC2IE ;
+ #else
 		TIM3->CCMR2 = TIM_CCMR2_IC3F_0 | TIM_CCMR2_IC3F_1 | TIM_CCMR2_CC3S_0 ;
 		TIM3->CCER = TIM_CCER_CC3E ;	 
 		TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC3IF ;				// Clear flag
 		TIM3->DIER |= TIM_DIER_CC3IE ;
+ #endif
 #endif
-  	NVIC_SetPriority(TIM3_IRQn, 7);
+#ifdef PCBX3
+		NVIC_SetPriority(TIM4_IRQn, 7 ) ;
+#else
+		NVIC_SetPriority(TIM3_IRQn, 7 ) ;
+#endif
 	}
 	
+#ifdef PCBX3
+	TIM4->CR1 = TIM_CR1_CEN ;
+	NVIC_EnableIRQ(TIM4_IRQn) ;
+#else
 	TIM3->CR1 = TIM_CR1_CEN ;
 	NVIC_EnableIRQ(TIM3_IRQn) ;
+#endif
 }
 
 void stop_trainer_capture()
 {
+#ifdef PCBX3
+	TIM4->DIER = 0 ;
+	TIM4->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
+	NVIC_DisableIRQ(TIM4_IRQn) ;				// Stop Interrupt
+#else // X3
 	TIM3->DIER = 0 ;
 	TIM3->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
 	NVIC_DisableIRQ(TIM3_IRQn) ;				// Stop Interrupt
+#endif // X3
 	if ( CaptureMode == CAP_SERIAL )
 	{
 		stop_timer11() ;
@@ -1076,7 +1186,11 @@ void stop_cppm_on_heartbeat_capture()
 //uint16_t TIM3Captures ;
 
 // Capture interrupt for trainer input
+#ifdef PCBX3
+extern "C" void TIM4_IRQHandler()
+#else // X3
 extern "C" void TIM3_IRQHandler()
+#endif // X3
 {
   
 	uint16_t capture = 0 ;
@@ -1091,12 +1205,20 @@ extern "C" void TIM3_IRQHandler()
 		// So for inverted serial CC3 is HtoL, CC4 is LtoH
 		if ( LastTransition == 0 )	// LtoH
 		{
+#ifdef PCBX3
+			capture = TIM4->CCR2 ;
+#else // X3
 			capture = TIM3->CCR4 ;
+#endif // X3
 			LastTransition = 1 ;
 		}
 		else
 		{
-			capture = TIM3->CCR3 ;
+#ifdef PCBX3
+			capture = TIM4->CCR2 ;
+#else // X3
+			capture = TIM3->CCR4 ;
+#endif // X3
 			LastTransition = 0 ;
 		}
 
@@ -1160,21 +1282,40 @@ extern "C" void TIM3_IRQHandler()
 			doCapture = 1 ;
 		}
 #else
-  	if ( (TIM3->DIER & TIM_DIER_CC3IE ) && ( TIM3->SR & TIM_SR_CC3IF ) )
+  	
+ #ifdef PCBX3
+		if ( (TIM4->DIER & TIM_DIER_CC2IE ) && ( TIM4->SR & TIM_SR_CC2IF ) )
+  	  // capture mode
+		{	
+			capture = TIM4->CCR2 ;
+			doCapture = 1 ;
+		}
+ #else // X3
+		if ( (TIM3->DIER & TIM_DIER_CC3IE ) && ( TIM3->SR & TIM_SR_CC3IF ) )
   	  // capture mode
 		{	
 			capture = TIM3->CCR3 ;
 			doCapture = 1 ;
 		}
+ #endif // X3
 #endif
 
 #ifndef PCBX12D
+ #ifdef PCBX3
+  	if ( (TIM4->DIER & TIM_DIER_CC1IE ) && ( TIM3->SR & TIM_SR_CC1IF ) )
+  	  // capture mode
+		{	
+			capture = TIM4->CCR1 ;
+			doCapture = 1 ;
+		}
+ #else
   	if ( (TIM3->DIER & TIM_DIER_CC2IE ) && ( TIM3->SR & TIM_SR_CC2IF ) )
   	  // capture mode
 		{	
 			capture = TIM3->CCR2 ;
 			doCapture = 1 ;
 		}
+ #endif // X3
 #endif
 
 		if ( doCapture )
@@ -1205,6 +1346,35 @@ extern "C" void TIM3_IRQHandler()
   		}
 		}
 
+#ifdef PCBX3
+  	// PPM out compare interrupt
+  	if ( ( TIM4->DIER & TIM_DIER_CC1IE ) && ( TIM4->SR & TIM_SR_CC1IF ) )
+		{
+  	  // compare interrupt
+  	  TIM4->DIER &= ~TIM_DIER_CC1IE ;         // stop this interrupt
+  	  TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;                             // Clear flag
+
+  	  setupTrainerPulses() ;
+
+			TrainerPulsePtr = TrainerPpmStream ;
+  	  TIM4->DIER |= TIM_DIER_UDE ;
+  	  TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
+  	  TIM4->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt
+  	}
+
+  	// PPM out update interrupt
+  	if ( (TIM4->DIER & TIM_DIER_UIE) && ( TIM4->SR & TIM_SR_UIF ) )
+		{
+  	  TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
+  	  TIM4->ARR = *TrainerPulsePtr++ ;
+  	  if ( *TrainerPulsePtr == 0 )
+			{
+  	    TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;                     // Clear this flag
+  	    TIM4->DIER |= TIM_DIER_CC1IE ;  // Enable this interrupt
+  	  }
+  	}
+	}
+#else
   	// PPM out compare interrupt
   	if ( ( TIM3->DIER & TIM_DIER_CC1IE ) && ( TIM3->SR & TIM_SR_CC1IF ) )
 		{
@@ -1232,6 +1402,7 @@ extern "C" void TIM3_IRQHandler()
   	  }
   	}
 	}
+#endif
 }
 
 //void dsmBindResponse( uint8_t mode, int8_t channels )
@@ -1565,13 +1736,13 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 		{
   		sendByteDsm2( Pass[module], module ) ;		// Actually is a 0
 			// Do init packet
-			if ( (PxxFlag[module] & PXX_BIND) || (dsmDat[module][0]&BindBit) )
+			if ( (BindRangeFlag[module] & PXX_BIND) || (dsmDat[module][0]&BindBit) )
 			{
 				flags |= ORTX_BIND_FLAG ;
 			}
 			// Need to choose dsmx/dsm2 as well
   		sendByteDsm2( flags, module ) ;
-  		sendByteDsm2( (PxxFlag[module] & PXX_RANGE_CHECK) ? 4: 7, module ) ;		// 
+  		sendByteDsm2( (BindRangeFlag[module] & PXX_RANGE_CHECK) ? 4: 7, module ) ;		// 
   		sendByteDsm2( channels, module ) ;			// Max channels
 			sendByteDsm2( g_model.Module[module].pxxRxNum, module ) ;	// Model number
 	  	putDsm2Flush(module);
@@ -1660,14 +1831,14 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 //	#else
 //  		if((dsmDat[module][0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[module][0]&=~BindBit;		//clear bind bit if trainer not pulled
 //	#endif
-// 			if ((!(dsmDat[module][0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[module][0]|=RangeCheckBit;   //range check function
+// 			if ((!(dsmDat[module][0]&BindBit))&& (BindRangeFlag[module] & PXX_RANGE_CHECK)) dsmDat[module][0]|=RangeCheckBit;   //range check function
 // 			else dsmDat[module][0]&=~RangeCheckBit;
 		}
 //		else // Multi
 //		{
 //			dsmDat[module][0] = sub_protocol+1;
-//			if (PxxFlag[module] & PXX_BIND)	dsmDat[module][0] |=BindBit;		//set bind bit if bind menu is pressed
-//			if (PxxFlag[module] & PXX_RANGE_CHECK)	dsmDat[module][0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
+//			if (BindRangeFlag[module] & PXX_BIND)	dsmDat[module][0] |=BindBit;		//set bind bit if bind menu is pressed
+//			if (BindRangeFlag[module] & PXX_RANGE_CHECK)	dsmDat[module][0] |=RangeCheckBit;		//set bind bit if bind menu is pressed
 //		}
  		
 		if ( protocol == PROTO_MULTI )
@@ -1767,7 +1938,7 @@ uint16_t PxxValue ;
 uint16_t *PtrPxx_x ;
 uint16_t PxxValue_x ;
 
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 uint8_t PxxSerial[50] ;
 uint8_t *PtrSerialPxx ;
 #endif
@@ -1819,7 +1990,7 @@ void putPcmBit( uint8_t bit )
 void putPcmByte( uint8_t byte )
 {
     crc( byte ) ;
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
   if ( byte == 0x7E )
 	{
 		*PtrSerialPxx++ = 0x7D ;
@@ -1845,7 +2016,7 @@ void putPcmByte( uint8_t byte )
 void putPcmHead()
 {
     // send 7E, do not CRC
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 	*PtrSerialPxx++ = 0x7E ;
 #else
     // 01111110
@@ -1973,7 +2144,7 @@ void setupPulsesPXX(uint8_t module)
 	{
 		lpass = Pass[module] ;
 
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 		PtrSerialPxx = PxxSerial ;
 #else
 		PtrPxx = &pxxStream[module][0] ;
@@ -1990,23 +2161,25 @@ void setupPulsesPXX(uint8_t module)
 		PcmCrc = 0 ;
 #ifndef PCBX12D
  #ifndef PCBXLITE
+  #ifndef PCBX3
   	PcmOnesCount = 0 ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
   	putPcmPart( 0 ) ;
+  #endif
  #endif
 #endif
   	putPcmHead(  ) ;  // sync byte
   	putPcmByte( g_model.Module[module].pxxRxNum ) ;     // putPcmByte( g_model.rxnum ) ;  //
  		uint8_t flag1;
- 		if (PxxFlag[module] & PXX_BIND)
+ 		if (BindRangeFlag[module] & PXX_BIND)
 		{
- 		  flag1 = (g_model.Module[module].sub_protocol<< 6) | (g_model.Module[module].country << 1) | PxxFlag[module] ;
+ 		  flag1 = (g_model.Module[module].sub_protocol<< 6) | (g_model.Module[module].country << 1) | BindRangeFlag[module] ;
  		}
  		else
 		{
- 		  flag1 = (g_model.Module[module].sub_protocol << 6) | PxxFlag[module] ;
+ 		  flag1 = (g_model.Module[module].sub_protocol << 6) | BindRangeFlag[module] ;
 		}	
 		
 		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
@@ -2125,17 +2298,23 @@ void setupPulsesPXX(uint8_t module)
 //    if (IS_TELEMETRY_INTERNAL_MODULE || !g_model.moduleData[port].pxx.sport_out)
 //      extra_flags |=  (1<< 5);
 //  }
-		if ( PxxExtra[module] & 1 )
+		if ( g_model.Module[module].highChannels )
+//		if ( PxxExtra[module] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
 		}
-		if ( PxxExtra[module] & 2 )
+		if ( g_model.Module[module].disableTelemetry )
+//		if ( PxxExtra[module] & 2 )
 		{
 			extra_flags |= (1 << 1 ) ;
 		}
 		if ( g_model.Module[module].sub_protocol == 3 )	// R9M
 		{
 			extra_flags |= g_model.Module[module].r9mPower << 3 ;
+			if ( g_model.Module[module].r9MflexMode == 2 )
+			{
+				extra_flags |= 1 << 6 ;
+			}
 		}
 		putPcmByte( extra_flags ) ;
   	chan = PcmCrc ;		        // get the crc
@@ -2144,10 +2323,12 @@ void setupPulsesPXX(uint8_t module)
   	putPcmHead(  ) ;      // sync byte
 #ifndef PCBX12D
  #ifndef PCBXLITE
+  #ifndef PCBX3
   	putPcmFlush() ;
+  #endif
  #endif
 #endif
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 		pulseStreamCount[module] = PtrSerialPxx - PxxSerial ;
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
@@ -2169,13 +2350,13 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		Pass[module] = lpass ;
 
-		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (BindRangeFlag[module] & PXX_BIND) == 0 ) )
 //		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
 			{		
-#if defined(PCBX12D) || defined(PCBXLITE)
- #if defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
+ #if defined(PCBXLITE) || defined(PCBX3)
 				INTMODULE_TIMER->CCR2 = 14999 ;
  #else
 				INTMODULE_TIMER->CCR2 = 8000 ;
@@ -2186,8 +2367,8 @@ extern volatile uint8_t PxxTxCount ;
 			}
 			else
 			{
-#if defined(PCBX12D) || defined(PCBXLITE)
- #if defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
+ #if defined(PCBXLITE) || defined(PCBX3)
 				INTMODULE_TIMER->CCR2 = 17499 ;
  #else
 				INTMODULE_TIMER->CCR2 = 17000 ;
@@ -2199,13 +2380,13 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		else
 		{
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 			INTMODULE_TIMER->CCR2 = 17000 ;
 #else
   		TIM1->CCR2 = 17000 ;            // Update time
 #endif
 		}
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 #endif
 	}  
@@ -2231,13 +2412,13 @@ extern volatile uint8_t PxxTxCount ;
   	putPcmHead_x(  ) ;  // sync byte
   	putPcmByte_x( g_model.Module[module].pxxRxNum ) ;     // putPcmByte( g_model.rxnum ) ;  //
  		uint8_t flag1;
- 		if (PxxFlag[module] & PXX_BIND)
+ 		if (BindRangeFlag[module] & PXX_BIND)
 		{
- 		  flag1 = (g_model.Module[module].sub_protocol<< 6) | (g_model.Module[module].country << 1) | PxxFlag[module] ;
+ 		  flag1 = (g_model.Module[module].sub_protocol<< 6) | (g_model.Module[module].country << 1) | BindRangeFlag[module] ;
  		}
  		else
 		{
- 		  flag1 = (g_model.Module[module].sub_protocol << 6) | PxxFlag[module] ;
+ 		  flag1 = (g_model.Module[module].sub_protocol << 6) | BindRangeFlag[module] ;
 		}	
 
 		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
@@ -2345,17 +2526,23 @@ extern volatile uint8_t PxxTxCount ;
 // Bits 7:6 unused
 
 
-		if ( PxxExtra[module] & 1 )
+		if ( g_model.Module[module].highChannels )
+//		if ( PxxExtra[module] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
 		}
-		if ( PxxExtra[module] & 2 )
+		if ( g_model.Module[module].disableTelemetry )
+//		if ( PxxExtra[module] & 2 )
 		{
 			extra_flags |= (1 << 1 ) ;
 		}
 		if ( g_model.Module[module].sub_protocol == 3 )	// R9M
 		{
 			extra_flags |= g_model.Module[module].r9mPower << 3 ;
+			if ( g_model.Module[module].r9MflexMode == 2 )
+			{
+				extra_flags |= 1 << 6 ;
+			}
 		}
 #ifdef ALLOW_EXTERNAL_ANTENNA
 		if ( module == 0 )
@@ -2373,7 +2560,7 @@ extern volatile uint8_t PxxTxCount ;
   	putPcmByte_x( chan ) ; 			// Checksum lo
   	putPcmHead_x(  ) ;      // sync byte
   	putPcmFlush_x() ;
-#if defined(PCBX12D) || defined(PCBXLITE)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
 		pulseStreamCount[module] = PtrPxx_x - pxxStream[module] ;
 #endif
 		if (g_model.Module[module].sub_protocol == 1 )		// D8
@@ -2390,8 +2577,8 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		Pass[module] = lpass ;
 		
-#if defined(PCBX12D) || defined(PCBXLITE)
-		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX3)
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (BindRangeFlag[module] & PXX_BIND) == 0 ) )
 //		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)
@@ -2409,7 +2596,7 @@ extern volatile uint8_t PxxTxCount ;
 		}
 			
 #else
-		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (PxxFlag[module] & PXX_BIND) == 0 ) )
+		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (BindRangeFlag[module] & PXX_BIND) == 0 ) )
 //		if ( g_model.Module[module].pxxDoubleRate )
 		{
 			if (lpass & 1)

@@ -79,7 +79,7 @@ uint32_t check_soft_power()
   return POWER_ON;
 #else
 #ifdef POWER_BUTTON
-#if defined(PCBXLITE)
+#if defined(PCBXLITE) || defined(PCBX3)
 	switchValue = GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET ;
 #else
 	switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
@@ -207,39 +207,56 @@ void init_soft_power()
 	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTA ) ;
 
 #else	
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	
+	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
+	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
+	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
+
+	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+	configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+	configure_pins( PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+	configure_pins( PIN_SPORT_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTE ) ;
+
+	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTA ) ;
+
+#else // X3
 //  GPIO_InitTypeDef GPIO_InitStructure;
   /* GPIOC GPIOD clock enable */
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
-#ifdef REVPLUS
+ #if defined(REVPLUS) || defined(REV9E)
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-#endif
-#ifdef PCBX7
+ #endif
+ #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-#endif
-#ifdef PCB9XT
+ #endif
+ #ifdef PCB9XT
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-#endif
+ #endif
 	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
 	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
 //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOPWR, ENABLE);
 
   /* GPIO  Configuration*/
-#ifdef REVPLUS
-	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
-	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
-#else
- #ifdef PCBX7
+ #if defined(REVPLUS) || defined(REV9E)
 	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
 	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
  #else
-  #ifdef PCB9XT
+  #ifdef PCBX7
+	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
+	configure_pins( PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+  #else
+   #ifdef PCB9XT
 		configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
 		configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
-  #else
+   #else
 		configure_pins( PIN_INT_RF_PWR | PIN_EXT_RF_PWR | PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+   #endif
   #endif
  #endif
-#endif
 //	configure_pins( PIN_INT_RF_PWR | PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
 
 //  GPIO_InitStructure.GPIO_Pin = PIN_MCU_PWR;
@@ -278,7 +295,8 @@ void init_soft_power()
   
   // Soft power ON
   
-#endif
+#endif // XLITE
+#endif // X3
 	
 // Not yet!!!!*********	
 #ifndef PCB9XT

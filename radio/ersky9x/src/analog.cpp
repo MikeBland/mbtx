@@ -18,12 +18,13 @@
 #include <ctype.h>
 #include <string.h>
 
+//#define XLITE_PROTO	1
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE) || defined(PCBX3)
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
@@ -54,21 +55,30 @@
 #define BATTERY		10
 #define SLIDE_L		15
 #define SLIDE_R		9
+#define V_BATT		18
 
 #else // PCBX7
 
 #ifndef PCB9XT
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
+#ifdef PCBX3
+#define STICK_LV	1
+#define STICK_LH  0
+#define STICK_RV  2
+#define STICK_RH  3
+#else
 #define STICK_LV	0
 #define STICK_LH  1
 #define STICK_RV  3
 #define STICK_RH  2
+#endif
 
 #define POT_L			11
 #define POT_R			12
 #define BATTERY		10
+#define V_BATT		18
 
 #else // PCBXLITE
 
@@ -82,6 +92,7 @@
 #define SLIDE_R		15
 #define BATTERY		10
 #define POT_3			9
+#define V_BATT		18
 #endif // PCBXLITE
 #else
 #define STICK_LV	10
@@ -92,6 +103,7 @@
 #define DIG1			6
 #define DIG2			9
 #define DIG3			14
+#define V_BATT		18
 #endif // nPCB9XT
 #endif // PCBX7
 
@@ -107,12 +119,24 @@
 void init_adc3( void ) ;
 #endif	// REV9E
 
+static void enableRtcBattery()
+{
+	ADC->CCR |= ADC_CCR_VBATE ;
+}
+
+void disableRtcBattery()
+{
+	ADC->CCR &= ~ADC_CCR_VBATE ;
+}
+
+
 // Sample time should exceed 1uS
 #define SAMPTIME	2		// sample time = 28 cycles
 
 volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
+uint16_t VbattRtc ;
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
 extern void delay_ms( uint32_t ms ) ;
 
@@ -231,7 +255,7 @@ extern "C" void TIM5_IRQHandler(void)
 	}
 }
 
-#endif // PCBXLITE
+#endif // PCBXLITE/X3
 
 void init_adc()
 {
@@ -239,25 +263,31 @@ void init_adc()
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 	initSticksPwm() ;
   delay_ms(20) ;
+#ifndef XLITE_PROTO
   if (PwmInterruptCount < 8 )
+#endif
 	{
     SticksPwmDisabled = true ;
 		disableSticksPwm() ;
   }
-#endif // PCBXLITE
+#endif // PCBXLITE/X3
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
+#ifdef PCBX3
+	configure_pins( PIN_FLP_J1 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+#else
 	configure_pins( PIN_FLP_J1 | PIN_FLP_J2 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+#endif
   if ( SticksPwmDisabled )
 	{
 		configure_pins( ADC_GPIO_PIN_STICK_LH | ADC_GPIO_PIN_STICK_LV | ADC_GPIO_PIN_STICK_RV | ADC_GPIO_PIN_STICK_RH, PIN_ANALOG | PIN_PORTA ) ;
 	}
 
-#else // PCBXLITE
+#else // PCBXLITE/X3
 
 #ifdef PCBX7
 	configure_pins( PIN_STK_J1 | PIN_STK_J2 | PIN_STK_J3 | PIN_STK_J4 |
@@ -278,7 +308,7 @@ void init_adc()
 #ifdef REV9E
 	configure_pins( PIN_FLP_J2 | PIN_FLAP6, PIN_ANALOG | PIN_PORTB ) ;
 #else	 
- #ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	configure_pins( PIN_FLP_J2 | PIN_FLP_J3, PIN_ANALOG | PIN_PORTB ) ;
  #else	 
 	configure_pins( PIN_FLP_J2, PIN_ANALOG | PIN_PORTB ) ;
@@ -292,51 +322,63 @@ void init_adc()
 	configure_pins( PIN_SW1, PIN_ANALOG | PIN_PORTA ) ;
 #endif // PCB9XT
 #endif // PCBX7
-#endif // PCBXLITE
+#endif // PCBXLITE/X3
 				
 
 	ADC1->CR1 = ADC_CR1_SCAN ;
 	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
   if ( SticksPwmDisabled )
 	{
 		ADC1->SQR1 = (NUMBER_ANALOG-1+4) << 20 ;		// NUMBER_ANALOG Channels
 		
-		ADC1->SQR2 = BATTERY ;
+#ifdef PCBX3
+		ADC1->SQR2 = (V_BATT) ;
+		ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<< 20) + (BATTERY <<25) ;
+#else // X3
+		ADC1->SQR2 = BATTERY + (V_BATT<<5) ;
 		ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<< 20) + (POT_R<<25) ;
+#endif // X3
 	}
 	else
 	{
+#ifdef PCBX3
 		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
-		ADC1->SQR3 = POT_L + (POT_R<<5) + (BATTERY<<10) ;
+		ADC1->SQR3 = POT_L + (BATTERY<<5) + (V_BATT<<10) ;
+#else // X3
+		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
+		ADC1->SQR3 = POT_L + (POT_R<<5) + (BATTERY<<10) + (V_BATT<<15) ;
+#endif // X3
 	}
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
-#else // PCBXLITE
+	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
+#else // PCBXLITE/X3
 
 #ifdef PCBX7
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 
-	ADC1->SQR2 = BATTERY + (SLIDE_L<<5) + (SLIDE_R<<10) ;
+	ADC1->SQR2 = BATTERY + (SLIDE_L<<5) + (SLIDE_R<<10) + (V_BATT<<15) ;
 	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<<20) + (POT_R<<25) ;
 
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
-//	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
-//								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
+	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
 	#else // PCBX7
 #ifndef PCB9XT
 	ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
  #ifdef REV9E
-	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) + (FLAP_6<<15) ;
+	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) + (FLAP_6<<15) + (V_BATT<<20) ;
  #else	 
-	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) + (POT_3<<15) ;
+	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) + (POT_3<<15) + (V_BATT<<20) ;
  #endif	// REV9E
 #else
-	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) ;
+	ADC1->SQR2 = SLIDE_L + (SLIDE_R<<5) + (BATTERY<<10) + (V_BATT<<15) ;
 #endif
 	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<<20) + (POT_R<<25) ;
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
@@ -347,14 +389,16 @@ void init_adc()
 #else	 
 // ADD PCB9XT here
 	ADC1->SQR1 = (NUMBER_ANALOG-1-NUM_REMOTE_ANALOG) << 20 ;		// NUMBER_ANALOG Channels
-	ADC1->SQR2 = DIG2 + (DIG3<<5) ;
+	ADC1->SQR2 = DIG2 + (DIG3<<5) + (V_BATT<<10) ;
 	ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (BATTERY<<20) + (DIG1<<25) ;
 	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
+	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
 
 #endif // PCB9XT
 #endif // PCBX7
-#endif // PCBXLITE
+#endif // PCBXLITE/X3
 
 
 	 
@@ -368,6 +412,7 @@ void init_adc()
 	init_adc3() ;
 #endif	// REV9E
 
+	enableRtcBattery() ;
 }
 
 uint32_t read_adc()
@@ -378,7 +423,20 @@ uint32_t read_adc()
 	ADC1->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
 	DMA2->HIFCR = DMA_HIFCR_CTCIF4 | DMA_HIFCR_CHTIF4 |DMA_HIFCR_CTEIF4 | DMA_HIFCR_CDMEIF4 | DMA_HIFCR_CFEIF4 ; // Write ones to clear bits
 	DMA2_Stream4->M0AR = (uint32_t) Analog_values ;
+
+#if defined(PCBXLITE) || defined(PCBX3)
+
+  if ( SticksPwmDisabled )
+	{
+		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG + 4 ;
+	}
+	else
+	{
+		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
+	}
+#else
 	DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
+#endif
 	DMA2_Stream4->CR |= DMA_SxCR_EN ;		// Enable DMA
 #ifdef REV9E
 	DMA2_Stream1->CR &= ~DMA_SxCR_EN ;		// Disable DMA
@@ -399,11 +457,8 @@ uint32_t read_adc()
 	}
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
-	AnalogData[4] = Analog_values[0] ;
-	AnalogData[5] = Analog_values[1] ;
-	AnalogData[12] = Analog_values[2] ;
 
   if ( SticksPwmDisabled )
 	{
@@ -411,12 +466,42 @@ uint32_t read_adc()
 		AnalogData[1] = Analog_values[1] ;
 		AnalogData[2] = 4096 - Analog_values[2] ;
 		AnalogData[3] = Analog_values[3] ;
+		AnalogData[4] = Analog_values[4] ;
+#ifdef PCBX3
+		AnalogData[12] = Analog_values[5] ;
+		if (ADC->CCR & ADC_CCR_VBATE )
+		{
+			VbattRtc = Analog_values[6] ;
+		}
+#else		 
+		AnalogData[5] = Analog_values[5] ;
+		AnalogData[12] = Analog_values[6] ;
+		if (ADC->CCR & ADC_CCR_VBATE )
+		{
+			VbattRtc = Analog_values[7] ;
+		}
+#endif
 	}
 	else
 	{
 		struct t_PWMcontrol *p ;
 		p = &PWMcontrol[0] ;
 
+		AnalogData[4] = Analog_values[0] ;
+#ifdef PCBX3
+		AnalogData[12] = Analog_values[1] ;
+		if (ADC->CCR & ADC_CCR_VBATE )
+		{
+			VbattRtc = Analog_values[2] ;
+		}
+#else		 
+		AnalogData[5] = Analog_values[1] ;
+		AnalogData[12] = Analog_values[2] ;
+		if (ADC->CCR & ADC_CCR_VBATE )
+		{
+			VbattRtc = Analog_values[3] ;
+		}
+#endif
 		uint16_t value ;
 		value = 0x0800 ;
 		if ( p->timer_capture_period )
@@ -472,6 +557,10 @@ uint32_t read_adc()
 	AnalogData[6] = 4096 - ( (g_eeGeneral.extraPotsSource[0]) ? Analog_values[6+g_eeGeneral.extraPotsSource[0]] : 0 ) ; 
 	AnalogData[7] = 4096 - ( (g_eeGeneral.extraPotsSource[1]) ? Analog_values[6+g_eeGeneral.extraPotsSource[1]] : 0 ) ; 
 	AnalogData[12] = Analog_values[6] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = Analog_values[9] ;
+	}
 #else // PCBX7
 	AnalogData[0] = Analog_values[0] ;
 #ifdef PCBX9D
@@ -512,25 +601,42 @@ uint32_t read_adc()
 	AnalogData[10] = M64Analog[3] * 2 ;
 
 	AnalogData[12] = Analog_values[4] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = Analog_values[8] ;
+	}
 #else
 	AnalogData[12] = Analog_values[8] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = Analog_values[9] ;
+	}
 #endif
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	AnalogData[8] = Analog_values[9] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = Analog_values[10] ;
+	}
+
 #endif
 #endif // nREV9E
 #endif // PCBX7
 
 #ifdef REV9E
-	AnalogData[4] = 4096 - Analog_values[10] ;
+	AnalogData[4] = 4096 - Analog_values[11] ;
 	AnalogData[5] = 4096 - Analog_values[5] ;
 	AnalogData[6] = Analog_values[4] ;
 	AnalogData[7] = 4096 - Analog_values[9] ;
-	AnalogData[8] = 4096 - Analog_values[12] ;
-	AnalogData[9] = 4096 - Analog_values[11] ;
+	AnalogData[8] = 4096 - Analog_values[13] ;
+	AnalogData[9] = 4096 - Analog_values[12] ;
 	AnalogData[10] = Analog_values[6] ;
 	AnalogData[11] = Analog_values[7] ;
 	AnalogData[12] = Analog_values[8] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = Analog_values[10] ;
+	}
 #endif	// REV9E
 
 #endif // PCBXLITE

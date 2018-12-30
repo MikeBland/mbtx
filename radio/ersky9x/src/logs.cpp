@@ -60,8 +60,9 @@ const char *g_logError = NULL ;
 uint8_t logDelay;
 uint8_t RawLogging ;
 
-uint8_t RawBuffer0[256] ;
-uint8_t RawBuffer1[256] ;
+#define RAW_BUFFER_SIZE		128
+uint8_t RawBuffer0[RAW_BUFFER_SIZE] ;
+uint8_t RawBuffer1[RAW_BUFFER_SIZE] ;
 uint16_t RawIndex ;
 uint8_t RawActiveBuffer ;
 uint8_t RawWriteBuffer ;
@@ -78,7 +79,7 @@ void rawLogByte( uint8_t byte )
 	uint8_t *p ;
 	p = RawActiveBuffer ? RawBuffer1 : RawBuffer0 ;
 	p[RawIndex++] = byte ;
-	if ( RawIndex >= 256 )
+	if ( RawIndex >= RAW_BUFFER_SIZE )
 	{
 		RawIndex = 0 ;
 		RawWriteBuffer = 0x80 | RawActiveBuffer ;
@@ -132,12 +133,67 @@ void setFilenameDateTime( char *filename, uint32_t includeTime )
 
 uint32_t isLogEnabled( uint32_t index )
 {
+#ifdef BITBAND_SRAM_REF
+	uint32_t *p ;
+	p = (uint32_t *) (BITBAND_SRAM_BASE + ((uint32_t)&g_model.LogDisable - BITBAND_SRAM_REF) * 32) ;
+	return p[index] ^ 1 ;
+#else
 	uint32_t bit ;
 	uint32_t offset ;
 	offset = index >> 5 ;
 	bit = 1 << (index & 0x0000001F) ;
 	return (g_model.LogDisable[offset] & bit) == 0 ;
+#endif
 }
+
+//uint32_t isLogEnabledBitBand( uint32_t index )
+//{
+//	uint32_t *p ;
+//	p = (uint32_t *) (BITBAND_SRAM_BASE + ((uint32_t)&g_model.LogDisable - BITBAND_SRAM_REF) * 32) ;
+//	return p[index] == 0 ;
+//}
+
+void singleHeading( uint32_t enable, const char*heading )
+{
+	if ( isLogEnabled( enable ) )
+	{
+ 		f_puts( heading, &g_oLogFile);
+	}
+}
+
+void logSingleNumber( uint32_t enable, int32_t value )
+{
+	if ( isLogEnabled( enable ) )
+	{
+		f_printf(&g_oLogFile, ",%d", value ) ;
+	}
+}
+
+void logSingleDiv100( uint32_t enable, int32_t value )
+{
+	div_t qr ;
+	if ( isLogEnabled( enable ) )
+	{
+		qr = div( value, 100 ) ;
+		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+	}
+}
+
+uint32_t alternateText( uint8_t *text, uint8_t *name )
+{
+	text[1] = *name++ ;
+	if ( text[1] && (text[1] != ' ') )
+	{
+		text[0] = ',' ;
+		text[2] = *name++ ;
+		text[3] = *name++ ;
+		text[4] = *name ;
+		text[5] = 0 ;
+		return 1 ;
+	}
+	return 0 ;
+}
+
 
 const char *openLogs()
 {
@@ -236,112 +292,146 @@ extern uint32_t sdMounted( void ) ;
 	}
 
   f_puts("Time,Elapsed,Valid", &g_oLogFile) ;
-	if ( isLogEnabled( LOG_RSSI ) )
-	{
-  	f_puts(",RxRSSI", &g_oLogFile) ;
-	}
-	if ( isLogEnabled( LOG_TSSI ) )
-	{
-  	f_puts( FrskyTelemetryType == FRSKY_TEL_SPORT ? ",Swr" : ",TxRSSI", &g_oLogFile ) ;
-	}
+	
+	singleHeading( LOG_RSSI, ",RxRSSI" ) ;
+	
+//	if ( isLogEnabled( LOG_RSSI ) )
+//	{
+//  	f_puts(",RxRSSI", &g_oLogFile) ;
+//	}
+	singleHeading( LOG_TSSI, FrskyTelemetryType == FRSKY_TEL_SPORT ? ",Swr" : ",TxRSSI" ) ;
+//	if ( isLogEnabled( LOG_TSSI ) )
+//	{
+//  	f_puts( FrskyTelemetryType == FRSKY_TEL_SPORT ? ",Swr" : ",TxRSSI", &g_oLogFile ) ;
+//	}
   if ( g_model.DsmTelemetry )
 	{
 		f_puts(",Fades,Holds", &g_oLogFile) ;
 	}
 	uint32_t j ;
-	for ( j = 0 ; j < 2 ; j += 1 )
-	{
-		if ( isLogEnabled( LOG_A1 + j ) )
-		{
-  		f_puts(&",A1\0,A2"[j*4], &g_oLogFile);
-		}
-	}
-	for ( j = 0 ; j < 2 ; j += 1 )
-	{
-		if ( isLogEnabled( LOG_ALT + j ) )
-		{
-  		f_puts(&",AltB\0,AltG"[j*6], &g_oLogFile);
-		}
-	}
-	for ( j = 0 ; j < 2 ; j += 1 )
-	{
-		if ( isLogEnabled( LOG_TEMP1 + j ) )
-		{
-  		f_puts(&",Temp1\0,Temp2"[j*7], &g_oLogFile);
-		}
-	}
+	singleHeading( LOG_A1, ",A1" ) ;
+	singleHeading( LOG_A2, ",A2" ) ;
+//	for ( j = 0 ; j < 2 ; j += 1 )
+//	{
+//		if ( isLogEnabled( LOG_A1 + j ) )
+//		{
+//  		f_puts(&",A1\0,A2"[j*4], &g_oLogFile);
+//		}
+//	}
+
+	singleHeading( LOG_ALT, ",Altb" ) ;
+	singleHeading( LOG_GALT, ",Altg" ) ;
+//	for ( j = 0 ; j < 2 ; j += 1 )
+//	{
+//		if ( isLogEnabled( LOG_ALT + j ) )
+//		{
+//  		f_puts(&",AltB\0,AltG"[j*6], &g_oLogFile);
+//		}
+//	}
+	singleHeading( LOG_TEMP1, ",Temp1" ) ;
+	singleHeading( LOG_TEMP2, ",Temp2" ) ;
+//	for ( j = 0 ; j < 2 ; j += 1 )
+//	{
+//		if ( isLogEnabled( LOG_TEMP1 + j ) )
+//		{
+//  		f_puts(&",Temp1\0,Temp2"[j*7], &g_oLogFile);
+//		}
+//	}
 	
-	if ( isLogEnabled( LOG_RPM ) )
-	{
- 		f_puts(",RPM", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_AMPS ) )
-	{
- 		f_puts(",Amps", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_FASV ) )
-	{
- 		f_puts(",Volts", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_MAH ) )
-	{
- 		f_puts(",mAH", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_BATT ) )
-	{
- 		f_puts(",TxBat", &g_oLogFile);
-	}
-	
-	if ( isLogEnabled( LOG_VSPD ) )
-	{
-		f_puts(",Vspd", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_RXV ) )
-	{
-		f_puts(",RxV", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_A3 ) )
-	{
-		f_puts(",A3", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_A4 ) )
-	{
-		f_puts(",A4", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_HDG ) )
-	{
-		f_puts(",Hdg", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_LAT ) )
-	{
-		f_puts(",Lat", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_LONG ) )
-	{
-		f_puts(",Long", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_FUEL ) )
-	{
-		f_puts(",Fuel", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_GSPD ) )
-	{
-		f_puts(",Gspd", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_CVLT ) )
-	{
-		f_puts(",Cvlt", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_CTOT ) )
-	{
-		f_puts(",Ctot", &g_oLogFile);
-	}
+	singleHeading( LOG_RPM, ",RPM" ) ;
+//	if ( isLogEnabled( LOG_RPM ) )
+//	{
+// 		f_puts(",RPM", &g_oLogFile);
+//	}
+	singleHeading( LOG_AMPS, ",Amps" ) ;
+//	if ( isLogEnabled( LOG_AMPS ) )
+//	{
+// 		f_puts(",Amps", &g_oLogFile);
+//	}
+	singleHeading( LOG_FASV, ",Volts" ) ;
+//	if ( isLogEnabled( LOG_FASV ) )
+//	{
+// 		f_puts(",Volts", &g_oLogFile);
+//	}
+	singleHeading( LOG_MAH, ",mAH" ) ;
+//	if ( isLogEnabled( LOG_MAH ) )
+//	{
+// 		f_puts(",mAH", &g_oLogFile);
+//	}
+	singleHeading( LOG_BATT, ",TxBat" ) ;
+//	if ( isLogEnabled( LOG_BATT ) )
+//	{
+// 		f_puts(",TxBat", &g_oLogFile);
+//	}
+	singleHeading( LOG_VSPD, ",Vspd" ) ;
+//	if ( isLogEnabled( LOG_VSPD ) )
+//	{
+//		f_puts(",Vspd", &g_oLogFile);
+//	}
+	singleHeading( LOG_RXV, ",RxV" ) ;
+//	if ( isLogEnabled( LOG_RXV ) )
+//	{
+//		f_puts(",RxV", &g_oLogFile);
+//	}
+	singleHeading( LOG_A3, ",A3" ) ;
+//	if ( isLogEnabled( LOG_A3 ) )
+//	{
+//		f_puts(",A3", &g_oLogFile);
+//	}
+	singleHeading( LOG_A4, ",A4" ) ;
+//	if ( isLogEnabled( LOG_A4 ) )
+//	{
+//		f_puts(",A4", &g_oLogFile);
+//	}
+	singleHeading( LOG_HDG, ",Hdg" ) ;
+//	if ( isLogEnabled( LOG_HDG ) )
+//	{
+//		f_puts(",Hdg", &g_oLogFile);
+//	}
+	singleHeading( LOG_LAT, ",Lat" ) ;
+//	if ( isLogEnabled( LOG_LAT ) )
+//	{
+//		f_puts(",Lat", &g_oLogFile);
+//	}
+	singleHeading( LOG_LONG, ",Long" ) ;
+//	if ( isLogEnabled( LOG_LONG ) )
+//	{
+//		f_puts(",Long", &g_oLogFile);
+//	}
+	singleHeading( LOG_FUEL, ",Fuel" ) ;
+//	if ( isLogEnabled( LOG_FUEL ) )
+//	{
+//		f_puts(",Fuel", &g_oLogFile);
+//	}
+	singleHeading( LOG_GSPD, ",Gspd" ) ;
+//	if ( isLogEnabled( LOG_GSPD ) )
+//	{
+//		f_puts(",Gspd", &g_oLogFile);
+//	}
+	singleHeading( LOG_CVLT, ",Cvlt" ) ;
+//	if ( isLogEnabled( LOG_CVLT ) )
+//	{
+//		f_puts(",Cvlt", &g_oLogFile);
+//	}
+	singleHeading( LOG_CTOT, ",Ctot" ) ;
+//	if ( isLogEnabled( LOG_CTOT ) )
+//	{
+//		f_puts(",Ctot", &g_oLogFile);
+//	}
 	
 	for ( j = 0 ; j < NUM_SCALERS ; j += 1 )
 	{
 		if ( isLogEnabled( LOG_SC1 + j ) )
 		{
-  		f_puts(&",SC1\0,SC2\0,SC3\0,SC4\0,SC5\0,SC6\0,SC7\0,SC8"[j*5], &g_oLogFile);
+			uint8_t text[6] ;
+			if ( alternateText( text, &g_model.Scalers[j].name[0] ) )
+			{
+	  		f_puts((const char *)text, &g_oLogFile);
+			}
+			else
+			{			
+  			f_puts(&",SC1\0,SC2\0,SC3\0,SC4\0,SC5\0,SC6\0,SC7\0,SC8"[j*5], &g_oLogFile);
+			}
 		}
 	}
 	for ( j = 0 ; j < 7 ; j += 1 )
@@ -353,48 +443,58 @@ extern uint32_t sdMounted( void ) ;
 	}
 
 #ifdef BLUETOOTH
-	if ( isLogEnabled( LOG_BTRX ) )
-	{
-  	f_puts(",BtRx", &g_oLogFile);
-	}
+	singleHeading( LOG_BTRX, ",BtRx" ) ;
+//	if ( isLogEnabled( LOG_BTRX ) )
+//	{
+//  	f_puts(",BtRx", &g_oLogFile);
+//	}
 #endif
-	if ( isLogEnabled( LOG_ASPD ) )
-	{
-  	f_puts(",Aspd", &g_oLogFile);
-  }
+	singleHeading( LOG_ASPD, ",Aspd" ) ;
+//	if ( isLogEnabled( LOG_ASPD ) )
+//	{
+//  	f_puts(",Aspd", &g_oLogFile);
+//  }
 	
-	if ( isLogEnabled( LOG_RBV1 ) )
-	{
-		f_puts(",RBv1", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBA1 ) )
-	{
-		f_puts(",RBa1", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBV2 ) )
-	{
-		f_puts(",RBv2", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBA2 ) )
-	{
-		f_puts(",RBa2", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBM1 ) )
-	{
-		f_puts(",RBm1", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBM2 ) )
-	{
-		f_puts(",RBm2", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBSV ) )
-	{
-		f_puts(",RBsV", &g_oLogFile);
-  }
-	if ( isLogEnabled( LOG_RBST ) )
-	{
-		f_puts(",RBST", &g_oLogFile);
-  }
+	singleHeading( LOG_RBV1, ",RBv1" ) ;
+//	if ( isLogEnabled( LOG_RBV1 ) )
+//	{
+//		f_puts(",RBv1", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBA1, ",RBa1" ) ;
+//	if ( isLogEnabled( LOG_RBA1 ) )
+//	{
+//		f_puts(",RBa1", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBV2, ",RBv2" ) ;
+//	if ( isLogEnabled( LOG_RBV2 ) )
+//	{
+//		f_puts(",RBv2", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBA1, ",RBa2" ) ;
+//	if ( isLogEnabled( LOG_RBA2 ) )
+//	{
+//		f_puts(",RBa2", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBM1, ",RBm1" ) ;
+//	if ( isLogEnabled( LOG_RBM1 ) )
+//	{
+//		f_puts(",RBm1", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBM2, ",RBm2" ) ;
+//	if ( isLogEnabled( LOG_RBM2 ) )
+//	{
+//		f_puts(",RBm2", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBSV, ",RBsV" ) ;
+//	if ( isLogEnabled( LOG_RBSV ) )
+//	{
+//		f_puts(",RBsV", &g_oLogFile);
+//  }
+	singleHeading( LOG_RBST, ",RBST" ) ;
+//	if ( isLogEnabled( LOG_RBST ) )
+//	{
+//		f_puts(",RBST", &g_oLogFile);
+//  }
 
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
@@ -408,26 +508,38 @@ extern uint32_t sdMounted( void ) ;
 	{
 		if ( isLogEnabled( j + LOG_CUST1 ) )
 		{
-  		f_puts(&",Cus1 \0,Cus2 \0,Cus3 \0,Cus4 \0,Cus5 \0,Cus6 "[j*7], &g_oLogFile);
+			uint8_t text[6] ;
+			if ( alternateText( text, &g_model.customTelemetryNames[j*4] ) )
+			{
+	  		f_puts((const char *)text, &g_oLogFile);
+			}
+			else
+			{			
+	  		f_puts(&",Cus1 \0,Cus2 \0,Cus3 \0,Cus4 \0,Cus5 \0,Cus6 "[j*7], &g_oLogFile);
+			}
 		}
 	}
   
-	if ( isLogEnabled( LOG_STK_THR ) )
-	{
-		f_puts(",Stk_THR", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_STK_AIL ) )
-	{
-		f_puts(",Stk_AIL", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_STK_ELE ) )
-	{
-		f_puts(",Stk_ELE", &g_oLogFile);
-	}
-	if ( isLogEnabled( LOG_STK_RUD ) )
-	{
-		f_puts(",Stk_RUD", &g_oLogFile);
-	}
+	singleHeading( LOG_STK_THR, ",Stk_THR" ) ;
+//	if ( isLogEnabled( LOG_STK_THR ) )
+//	{
+//		f_puts(",Stk_THR", &g_oLogFile);
+//	}
+	singleHeading( LOG_STK_AIL, ",Stk_AIL" ) ;
+//	if ( isLogEnabled( LOG_STK_AIL ) )
+//	{
+//		f_puts(",Stk_AIL", &g_oLogFile);
+//	}
+	singleHeading( LOG_STK_ELE, ",Stk_ELE" ) ;
+//	if ( isLogEnabled( LOG_STK_ELE ) )
+//	{
+//		f_puts(",Stk_ELE", &g_oLogFile);
+//	}
+	singleHeading( LOG_STK_RUD, ",Stk_RUD" ) ;
+//	if ( isLogEnabled( LOG_STK_RUD ) )
+//	{
+//		f_puts(",Stk_RUD", &g_oLogFile);
+//	}
 	f_puts("\n", &g_oLogFile);
 
   return NULL ;
@@ -465,7 +577,7 @@ void writeLogs()
 			uint8_t *p ;
 			RawWriteBuffer &= 1 ;
 			p = RawWriteBuffer ? RawBuffer1 : RawBuffer0 ;
-  		f_write( &g_oLogFile, (BYTE *)p, 256, &written ) ;
+  		f_write( &g_oLogFile, (BYTE *)p, RAW_BUFFER_SIZE, &written ) ;
 		}
 		return ;
 	}
@@ -480,14 +592,18 @@ void writeLogs()
       	f_printf(&g_oLogFile,  ".5" ) ;	// Elapsed log time
 			}
       f_printf(&g_oLogFile, ",%d", frskyUsrStreaming * 100 + frskyStreaming ) ;
-			if ( isLogEnabled( LOG_RSSI ) )
-      {
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RXRSI_COPY] ) ;
-      }
-			if ( isLogEnabled( LOG_TSSI ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TXRSI_COPY]) ;
-			}
+			
+			
+			logSingleNumber( LOG_RSSI, FrskyHubData[FR_RXRSI_COPY] ) ;
+//			if ( isLogEnabled( LOG_RSSI ) )
+//      {
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RXRSI_COPY] ) ;
+//      }
+			logSingleNumber( LOG_TSSI, FrskyHubData[FR_TXRSI_COPY] ) ;
+//			if ( isLogEnabled( LOG_TSSI ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TXRSI_COPY]) ;
+//			}
 			if ( g_model.DsmTelemetry )
 			{
 				f_printf(&g_oLogFile, ",%d,%d", DsmABLRFH[4],DsmABLRFH[5] ) ;
@@ -521,22 +637,26 @@ void writeLogs()
 				value /= 10 ;									
 				f_printf(&g_oLogFile, ",%d", value ) ;
 			}
-			if ( isLogEnabled( LOG_GALT ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[TELEM_GPS_ALT]) ;
-			}	
-			if ( isLogEnabled( LOG_TEMP1 ) )
-			{
-	      f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP1] ) ;
-      }
-			if ( isLogEnabled( LOG_TEMP2 ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP2] ) ;
-			}
-			if ( isLogEnabled( LOG_RPM ) )
-			{
-    	  f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RPM] ) ;
-			}
+			logSingleNumber( LOG_GALT, FrskyHubData[TELEM_GPS_ALT] ) ;
+//			if ( isLogEnabled( LOG_GALT ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[TELEM_GPS_ALT]) ;
+//			}	
+			logSingleNumber( LOG_TEMP1, FrskyHubData[FR_TEMP1] ) ;
+//			if ( isLogEnabled( LOG_TEMP1 ) )
+//			{
+//	      f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP1] ) ;
+//      }
+			logSingleNumber( LOG_TEMP2, FrskyHubData[FR_TEMP2] ) ;
+//			if ( isLogEnabled( LOG_TEMP2 ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP2] ) ;
+//			}
+			logSingleNumber( LOG_RPM, FrskyHubData[FR_RPM] ) ;
+//			if ( isLogEnabled( LOG_RPM ) )
+//			{
+//    	  f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RPM] ) ;
+//			}
 			if ( isLogEnabled( LOG_AMPS ) )
 			{
 				qr = div( FrskyHubData[FR_CURRENT], 10);
@@ -551,10 +671,11 @@ void writeLogs()
 				qr = div( FrskyHubData[FR_VOLTS], 10);
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
-			if ( isLogEnabled( LOG_MAH ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AMP_MAH] ) ;
-			}
+			logSingleNumber( LOG_MAH, FrskyHubData[FR_AMP_MAH] ) ;
+//			if ( isLogEnabled( LOG_MAH ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AMP_MAH] ) ;
+//			}
 			if ( isLogEnabled( LOG_BATT ) )
 			{
 				qr = div( g_vbat100mV, 10);
@@ -562,26 +683,44 @@ void writeLogs()
 			}
 			if ( isLogEnabled( LOG_VSPD ) )
 			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_VSPD] ) ;
+				char c = ' ' ;
+				qr = div( FrskyHubData[FR_VSPD]/10, 10);
+				if ( qr.rem < 0 )
+				{
+					qr.rem = - qr.rem ;
+					if ( qr.quot == 0 )
+					{
+						c = '-' ;
+					}
+				}
+				f_printf(&g_oLogFile, ",%c%d.%d", c, qr.quot, qr.rem ) ;
 			}
+//			logSingleNumber( LOG_VSPD, FrskyHubData[FR_VSPD] ) ;
+//			if ( isLogEnabled( LOG_VSPD ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_VSPD] ) ;
+//			}
 			if ( isLogEnabled( LOG_RXV ) )
 			{
 				value = convertRxv( FrskyHubData[FR_RXV] ) ;
 				qr = div( value, 10);
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
-			if ( isLogEnabled( LOG_A3 ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A3] ) ;
-			}
-			if ( isLogEnabled( LOG_A4 ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A4] ) ;
-			}
-			if ( isLogEnabled( LOG_HDG ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
-			}
+			logSingleNumber( LOG_A3, FrskyHubData[FR_A3] ) ;
+//			if ( isLogEnabled( LOG_A3 ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A3] ) ;
+//			}
+			logSingleNumber( LOG_A4, FrskyHubData[FR_A4] ) ;
+//			if ( isLogEnabled( LOG_A4 ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A4] ) ;
+//			}
+			logSingleNumber( LOG_HDG, FrskyHubData[FR_HOME_DIR] ) ;
+//			if ( isLogEnabled( LOG_HDG ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
+//			}
 			
 			if ( isLogEnabled( LOG_LAT ) )
 			{
@@ -622,19 +761,23 @@ void writeLogs()
 				}
 			}
 			
-			if ( isLogEnabled( LOG_FUEL ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_FUEL] ) ;
-			}
-			if ( isLogEnabled( LOG_GSPD ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_GPS_SPEED] ) ;
-			}
-			if ( isLogEnabled( LOG_CVLT ) )
-			{
-				qr = div( FrskyHubData[FR_CELL_MIN], 100 ) ;
-				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
-			}
+			logSingleNumber( LOG_FUEL, FrskyHubData[FR_FUEL] ) ;
+//			if ( isLogEnabled( LOG_FUEL ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_FUEL] ) ;
+//			}
+			logSingleNumber( LOG_GSPD, FrskyHubData[FR_GPS_SPEED] ) ;
+//			if ( isLogEnabled( LOG_GSPD ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_GPS_SPEED] ) ;
+//			}
+			
+			logSingleDiv100( LOG_CVLT, FrskyHubData[FR_CELL_MIN] ) ;
+//			if ( isLogEnabled( LOG_CVLT ) )
+//			{
+//				qr = div( FrskyHubData[FR_CELL_MIN], 100 ) ;
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
 			if ( isLogEnabled( LOG_CTOT ) )
 			{
 				qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
@@ -674,10 +817,11 @@ void writeLogs()
 			}
 			for ( i = 0 ; i < 7 ; i += 1 )
 			{
-				if ( isLogEnabled( LOG_GVAR1 + i ) )
-				{
-					f_printf(&g_oLogFile, ",%d", g_model.gvars[i].gvar ) ;
-				}
+				logSingleNumber( LOG_GVAR1 + i, g_model.gvars[i].gvar ) ;
+//				if ( isLogEnabled( LOG_GVAR1 + i ) )
+//				{
+//					f_printf(&g_oLogFile, ",%d", g_model.gvars[i].gvar ) ;
+//				}
 			}
 #endif
 
@@ -708,84 +852,100 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 #endif
 
 #ifdef BLUETOOTH
-				if ( isLogEnabled( LOG_BTRX ) )
-				{
-//extern uint8_t BtRxOccured ;
-					f_printf(&g_oLogFile, ",%d", BtControl.BtRxOccured ) ;
-				}
+			logSingleNumber( LOG_BTRX, BtControl.BtRxOccured ) ;
+//				if ( isLogEnabled( LOG_BTRX ) )
+//				{
+////extern uint8_t BtRxOccured ;
+//					f_printf(&g_oLogFile, ",%d", BtControl.BtRxOccured ) ;
+//				}
 #endif
-			if ( isLogEnabled( LOG_ASPD ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AIRSPEED] ) ;
-			}
-			if ( isLogEnabled( LOG_RBV1 ) )
-			{
-				qr = div( FrskyHubData[FR_RBOX_B1_V], 100 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_RBA1 ) )
-			{
-				qr = div( FrskyHubData[FR_RBOX_B1_A], 100 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_RBV2 ) )
-			{
-				qr = div( FrskyHubData[FR_RBOX_B2_V], 100 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_RBA2 ) )
-			{
-				qr = div( FrskyHubData[FR_RBOX_B2_A], 100 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_RBM1 ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B1_CAP] ) ;
-			}
-			if ( isLogEnabled( LOG_RBM2 ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B2_CAP] ) ;
-			}
-			if ( isLogEnabled( LOG_RBSV ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_SERVO] ) ;
-			}
-			if ( isLogEnabled( LOG_RBST ) )
-			{
-				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_STATE] ) ;
-			}
+			logSingleNumber( LOG_ASPD, FrskyHubData[FR_AIRSPEED] ) ;
+//			if ( isLogEnabled( LOG_ASPD ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AIRSPEED] ) ;
+//			}
+			logSingleDiv100( LOG_RBV1, FrskyHubData[FR_RBOX_B1_V] ) ;
+//			if ( isLogEnabled( LOG_RBV1 ) )
+//			{
+//				qr = div( FrskyHubData[FR_RBOX_B1_V], 100 ) ;
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
+			logSingleDiv100( LOG_RBA1, FrskyHubData[FR_RBOX_B1_A] ) ;
+//			if ( isLogEnabled( LOG_RBA1 ) )
+//			{
+//				qr = div( FrskyHubData[FR_RBOX_B1_A], 100 ) ;
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
+			logSingleDiv100( LOG_RBV2, FrskyHubData[FR_RBOX_B2_V] ) ;
+//			if ( isLogEnabled( LOG_RBV2 ) )
+//			{
+//				qr = div( FrskyHubData[FR_RBOX_B2_V], 100 ) ;
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
+			logSingleDiv100( LOG_RBA2, FrskyHubData[FR_RBOX_B2_A] ) ;
+//			if ( isLogEnabled( LOG_RBA2 ) )
+//			{
+//				qr = div( FrskyHubData[FR_RBOX_B2_A], 100 ) ;
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
+			logSingleNumber( LOG_RBM1, FrskyHubData[FR_RBOX_B1_CAP] ) ;
+//			if ( isLogEnabled( LOG_RBM1 ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B1_CAP] ) ;
+//			}
+			logSingleNumber( LOG_RBM2, FrskyHubData[FR_RBOX_B2_CAP] ) ;
+//			if ( isLogEnabled( LOG_RBM2 ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B2_CAP] ) ;
+//			}
+			logSingleNumber( LOG_RBSV, FrskyHubData[FR_RBOX_SERVO] ) ;
+//			if ( isLogEnabled( LOG_RBSV ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_SERVO] ) ;
+//			}
+			logSingleNumber( LOG_RBST, FrskyHubData[FR_RBOX_STATE] ) ;
+//			if ( isLogEnabled( LOG_RBST ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_STATE] ) ;
+//			}
 			for ( i = 0 ; i < 12 ; i += 1 )
 			{
-				if ( isLogEnabled( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1)) )
-				{
-					qr = div( FrskyHubData[FR_CELL1 + i], 100 ) ;
-					f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
-				}
+				logSingleDiv100( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1), FrskyHubData[FR_CELL1 + i] ) ;
+//				if ( isLogEnabled( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1)) )
+//				{
+//					qr = div( FrskyHubData[FR_CELL1 + i], 100 ) ;
+//					f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//				}
 			}
 			for ( i = 0 ; i < 6 ; i += 1 )
 			{
-				if ( isLogEnabled( i + LOG_CUST1 ) )
-				{
-					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
-				}
+				logSingleNumber( i + LOG_CUST1, FrskyHubData[FR_CUST1 + i] ) ;
+//				if ( isLogEnabled( i + LOG_CUST1 ) )
+//				{
+//					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
+//				}
 			}
 
-			if ( isLogEnabled( LOG_STK_THR ) )
-			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[2]*100/1024 ) ;
-			}
-			if ( isLogEnabled( LOG_STK_AIL ) )
-			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[3]*100/1024 ) ;
-			}
-			if ( isLogEnabled( LOG_STK_ELE ) )
-			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[1]*100/1024 ) ;
-			}
-			if ( isLogEnabled( LOG_STK_RUD ) )
-			{
-				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[0]*100/1024 ) ;
-			}
+			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;
+//			if ( isLogEnabled( LOG_STK_THR ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[2]*100/1024 ) ;
+//			}
+			logSingleNumber( LOG_STK_AIL, (int32_t)calibratedStick[3]*100/1024 ) ;
+//			if ( isLogEnabled( LOG_STK_AIL ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[3]*100/1024 ) ;
+//			}
+			logSingleNumber( LOG_STK_ELE, (int32_t)calibratedStick[1]*100/1024 ) ;
+//			if ( isLogEnabled( LOG_STK_ELE ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[1]*100/1024 ) ;
+//			}
+			logSingleNumber( LOG_STK_RUD, (int32_t)calibratedStick[0]*100/1024 ) ;
+//			if ( isLogEnabled( LOG_STK_RUD ) )
+//			{
+//				f_printf(&g_oLogFile, ",%d", (int32_t)calibratedStick[0]*100/1024 ) ;
+//			}
 
 			f_printf(&g_oLogFile, "\n" ) ;
 

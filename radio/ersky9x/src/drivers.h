@@ -19,7 +19,11 @@
 #ifndef drivers_h
 #define drivers_h
 
+#define RX_UART_BUFFER_SIZE	128
 
+#ifdef PCBSKY
+#define BT_PDC	1
+#endif
 
 //struct t_fifo32
 //{
@@ -58,6 +62,11 @@ struct t_fifo128
 	uint32_t out ;
 } ;
 
+struct t_rxUartBuffer
+{
+	uint8_t fifo[RX_UART_BUFFER_SIZE] ;
+	uint8_t *outPtr ;
+} ;
 
 // Options in CaptureMode
 #define CAP_PPM				0
@@ -131,11 +140,12 @@ extern struct t_fifo128 Com1_fifo ;
 extern struct t_fifo128 Com2_fifo ;
 
 #ifdef BLUETOOTH
+extern struct t_rxUartBuffer BtPdcFifo ;
 extern struct t_fifo128 BtRx_fifo ;
 #endif
 
 #if defined(LUA) || defined(BASIC)
-extern struct t_fifo128 Lua_fifo ;
+extern struct t_fifo128 Script_fifo ;
 #endif
 
 extern uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
@@ -388,6 +398,9 @@ extern Key keys[NUM_KEYS] ;
 
 #define SERIAL_NO_PARITY		0
 #define SERIAL_EVEN_PARITY	1
+
+#define SERIAL_ONE_STOP			0
+#define SERIAL_TWO_STOP			2
 
 
 #endif

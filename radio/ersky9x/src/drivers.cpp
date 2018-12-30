@@ -93,24 +93,22 @@ uint16_t Max_temperature ;		// Max raw temp reading
 uint16_t WatchdogTimeout ;
 extern uint8_t PulsesPaused ;
 
-#define RX_UART_BUFFER_SIZE	128
-
-struct t_rxUartBuffer
-{
-	uint8_t fifo[RX_UART_BUFFER_SIZE] ;
-	uint8_t *outPtr ;
-} ;
-
 uint8_t JetiTxBuffer[16] ;
 
 struct t_fifo128 Com1_fifo ;
 struct t_fifo128 Com2_fifo ;
 #ifdef BLUETOOTH
+ #ifdef BT_PDC
+struct t_rxUartBuffer BtPdcFifo ;
+void startPdcBtReceive() ;
+static int32_t rxPdcBt() ;
+ #else
 struct t_fifo128 BtRx_fifo ;
+ #endif
 #endif
 
 #if defined(LUA) || defined(BASIC)
-struct t_fifo128 Lua_fifo ;
+struct t_fifo128 Script_fifo ;
 #endif
 //struct t_fifo64 CaptureRx_fifo ;
 
@@ -374,6 +372,7 @@ extern uint8_t StickScrollTimer ;
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 #ifndef PCBX7
 #ifndef PCBXLITE
+#ifndef PCBX3
 struct t_serial_tx LcdDumpBuf ;
 
 void doLcdDump()
@@ -414,6 +413,7 @@ extern uint8_t ExtDisplaySend ;
 #endif
 	}	 
 }
+#endif // PCBX3
 #endif // PCBXLITE
 #endif // PCBX7
 
@@ -574,28 +574,34 @@ extern uint8_t EncoderI2cData[] ;
 #endif
 
 #ifdef PCBX9D
-#if !defined(SIMU)
-#ifdef PCBX7
- #ifdef PCBT12
+ #if !defined(SIMU)
+  #ifdef PCBX7
+   #ifdef PCBT12
 	uint8_t value = 0 ;
- #else
+   #else
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
- #endif
-#else // PCBX7
-#ifdef REV9E
+   #endif
+  #endif // PCBX7
+  #ifdef REV9E
 	uint8_t value = ~GPIOF->IDR & PIN_BUTTON_ENCODER ;
-#else // REV9E
+  #endif // REV9E
+  #ifdef PCBX3
+	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
+//	uint8_t value = 0 ;
+  #endif // X3
+  #if defined(REVPLUS) || defined(REVNORM)
+  #ifndef REV9E
 extern uint8_t AnaEncSw ;
 	uint8_t value = AnaEncSw ;
-#endif // REV9E
-#endif // PCBX7
+  #endif // nREV9E
+  #endif // norm/plus
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	if ( value )
 	{
 		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
 	}
-#endif
-#endif
+ #endif // SIMU
+#endif // X9D
 
 #ifdef PCBX12D
 	uint8_t value = (~GPIOC->IDR & 0x0002) ? 1 : 0 ;
@@ -669,8 +675,7 @@ extern uint8_t AnaEncSw ;
  #endif
 #endif
 #ifdef PCBX9D
-#ifndef PCBX7
-#ifndef PCBXLITE
+#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
 		doLcdDump() ;
@@ -683,8 +688,7 @@ extern uint8_t ExternalSet ;
 			ExternalSet = 50 ;
 		}
 	}
-#endif // PCBXLITE
-#endif // PCBX7
+#endif // norm/plus
 #endif
 }
 
@@ -786,7 +790,11 @@ uint16_t rxCom2()
 #ifdef BLUETOOTH
 int32_t rxBtuart()
 {
+#ifdef BT_PDC
+	return rxPdcBt() ;
+#else	
 	return get_fifo128( &BtRx_fifo ) ;
+#endif
 }
 #endif
 
@@ -1393,11 +1401,79 @@ void UART3_Configure( uint32_t baudrate, uint32_t masterClock)
 
   /* Enable receiver and transmitter */
   pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
+#ifdef BT_PDC
+	startPdcBtReceive() ;
+	NVIC_SetPriority( UART1_IRQn, 5 ) ; // Lower priority interrupt
+#else
   pUart->UART_IER = UART_IER_RXRDY ;
 	NVIC_SetPriority( UART1_IRQn, 3 ) ; // Lower priority interrupt
+#endif
 	NVIC_EnableIRQ(UART1_IRQn) ;
 
 }
+
+
+#ifdef BT_PDC
+void startPdcBtReceive()
+{
+  register Uart *pUart = BT_USART;
+	BtPdcFifo.outPtr = BtPdcFifo.fifo ;
+#ifndef SIMU
+	pUart->UART_RPR = (uint32_t)BtPdcFifo.fifo ;
+	pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
+#endif
+	pUart->UART_RCR = RX_UART_BUFFER_SIZE ;
+	pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
+	pUart->UART_PTCR = US_PTCR_RXTEN ;
+}
+
+void endPdcUsartReceive()
+{
+  register Uart *pUart = BT_USART;
+
+	pUart->UART_PTCR = UART_PTCR_RXTDIS ;
+}
+
+static int32_t rxPdcBt()
+{
+#if !defined(SIMU)
+  register Uart *pUart = BT_USART;
+	uint8_t *ptr ;
+	uint8_t *endPtr ;
+  int32_t chr ;
+
+ //Find out where the DMA has got to
+	endPtr = (uint8_t *)pUart->UART_RPR ;
+	// Check for DMA passed end of buffer
+	if ( endPtr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )
+	{
+		endPtr = BtPdcFifo.fifo ;
+	}
+
+	ptr = BtPdcFifo.outPtr ;
+	if ( ptr != endPtr )
+	{
+		chr = *ptr++ ;
+		if ( ptr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )		// last byte
+		{
+			ptr = BtPdcFifo.fifo ;
+		}
+	 	BtPdcFifo.outPtr = ptr ;
+
+	 	if ( pUart->UART_RNCR == 0 )
+	 	{
+	 		pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
+	 		pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
+	 	}
+	}
+	else
+	{
+		return -1 ;
+	}
+#endif
+	return chr ;
+}
+#endif
 
 //void Bt_UART_Stop()
 //{
@@ -1731,6 +1807,12 @@ extern "C" void USART0_IRQHandler()
 //#endif
 //}
 
+
+
+
+
+
+
 #ifdef REVX
 void jetiSendWord( uint16_t word )
 {
@@ -1887,10 +1969,12 @@ extern "C" void UART1_IRQHandler()
 		pUart->UART_PTCR = US_PTCR_TXTDIS ;
 		Current_bt->ready = 0 ;	
 	}
+#ifndef BT_PDC
 	if ( pUart->UART_SR & UART_SR_RXRDY )
 	{
 		put_fifo128( &BtRx_fifo, pUart->UART_RHR ) ;	
 	}
+#endif
 }
 
 
@@ -3057,9 +3141,11 @@ void com2Parity( uint32_t even )
 }
 #endif
 
+uint16_t SportStartDebug ;
+
 void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 {
-	
+SportStartDebug	+= 1 ;
 	USART2->CR1 &= ~USART_CR1_TE ;
 	
 	SendingSportPacket.buffer = buffer ;
@@ -3212,6 +3298,7 @@ void txmit( uint8_t c )
 }
 
 #ifndef PCBX7
+#ifndef PCBX3
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -3284,6 +3371,7 @@ extern "C" void USART3_IRQHandler()
 }
 #endif
 #endif
+#endif
 
 //#ifndef PCBX12D
 void start_timer11()
@@ -3314,6 +3402,7 @@ void stop_timer11()
 #ifndef PCBX12D
  #ifdef PCBX9D
   #ifndef PCBXLITE
+   #ifndef PCBX3
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3336,6 +3425,7 @@ void stop_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 0 ;
 }
 
+   #endif // n PCBX3
   #endif // n PCBXLITE
  #endif // PCBX9D
 #endif // n PCBX12D
@@ -3376,10 +3466,12 @@ extern "C" void EXTI15_10_IRQHandler()
 
 #endif // PCBX12D
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE)
 #define XJT_HEARTBEAT_BIT	0x8000		// PD15
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+
 
 void init_xjt_heartbeat()
 {
@@ -3411,6 +3503,42 @@ extern "C" void EXTI15_10_IRQHandler()
 }
 
 #endif // PCBXLITE
+
+#if defined(PCBX3)
+#define XJT_HEARTBEAT_BIT	0x0200		// PC9
+
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_xjt_heartbeat()
+{
+	SYSCFG->EXTICR[2] |= 0x0020 ;		// PC9
+	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
+	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
+	configure_pins( HEARTBEAT_GPIO_PIN, PIN_INPUT | PIN_PORTC ) ;
+	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
+	XjtHeartbeatCapture.valid = 1 ;
+}
+
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
+
+//extern "C" void EXTI15_10_IRQHandler()
+//{
+//  register uint32_t capture ;
+
+//	capture =  TIM7->CNT ;	// Capture time
+//	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+//	{
+//		XjtHeartbeatCapture.value = capture ;
+//		EXTI->PR = XJT_HEARTBEAT_BIT ;
+//	}
+//}
+
+#endif
 
 
 // Handle software serial on COM1 input (for non-inverted input)
@@ -4012,6 +4140,10 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 
 //#ifndef PCBX12D
 
+uint16_t HbCapDebug ;
+uint16_t HbCapDebug1 ;
+uint16_t HbCapDebug2 ;
+
 #ifdef PCB9XT
 extern "C" void EXTI3_IRQHandler()
 #else
@@ -4022,11 +4154,14 @@ extern "C" void EXTI9_5_IRQHandler()
   register uint32_t dummy ;
 	struct t_softSerial *pss = &SoftSerial1 ;
 
+	HbCapDebug2 += 2 ;
 	capture =  TIM7->CNT ;	// Capture time
 	
 #ifdef PCBX9D
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
 	{
+		HbCapDebug += 1 ;
+		HbCapDebug1 = capture - XjtHeartbeatCapture.value ;
 		XjtHeartbeatCapture.value = capture ;
 		EXTI->PR = XJT_HEARTBEAT_BIT ;
 	}

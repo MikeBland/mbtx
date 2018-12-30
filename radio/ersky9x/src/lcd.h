@@ -22,7 +22,7 @@
 #define lcd_h
 
 #ifdef PCBX9D
-#ifdef PCBX7
+#if defined(PCBX7) || defined(PCBX3)
 #define DISPLAY_W 128
 #define DISPLAY_H  64
 extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
@@ -210,6 +210,10 @@ extern void lcdSetOrientation( void ) ;
 extern void lcdOff( void ) ;
 #endif // PCBX7
 
+#ifdef PCBX3
+extern void lcdOff( void ) ;
+#endif // PCBX3
+
 #ifdef PCBX12D
 extern void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t background = LCD_WHITE ) ;
 #else
@@ -219,7 +223,7 @@ extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
 extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
 
 #ifdef PCBX9D
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 extern void backlight_set( uint16_t brightness, uint16_t w_or_b ) ;
 #else
 extern void backlight_set( uint16_t brightness ) ;

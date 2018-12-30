@@ -41,6 +41,7 @@
 
 //Anolog spi
 #ifndef REVPLUS
+#ifndef REV9E
 void AspiCmd(uint8_t Command_Byte)
 {
     int i=8; 
@@ -88,9 +89,10 @@ void AspiData(uint8_t Para_data)
     LCD_NCS_HIGH();
     LCD_A0_HIGH();  
 }
-#endif
+#endif // X9E
+#endif // REVPLUS
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 void AspiCmd(uint8_t Command_Byte)
 {
   LCD_A0_LOW() ;

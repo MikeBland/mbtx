@@ -182,6 +182,10 @@ extern void ee32_process( void ) ;
  #endif
 #endif // PCBX7
 
+#ifdef PCBX3
+ #define PAGE_NAVIGATION 1
+#endif // PCBX3
+
 #ifndef SIMU
 #ifdef LUA
 #define MAIN_STACK_SIZE		1400
@@ -234,6 +238,10 @@ uint8_t Host10ms ;
 
 #endif
 
+#endif
+
+#ifdef PCBX3
+void ledBlue( void ) ;
 #endif
 
 #ifdef USB_JOYSTICK
@@ -520,6 +528,10 @@ static void	processAdjusters( void ) ;
 #ifdef PCBX12D
   void init_rotary_encoder( void ) ;
 #endif // PCBX12D
+
+#ifdef PCBX3
+  static void init_rotary_encoder( void ) ;
+#endif // PCBX3
 
 /*=========================================================================*/
 /*  DEFINE: Definition of all local Data                                   */
@@ -903,12 +915,15 @@ static void checkWarnings()
 
 inline uint8_t keyDown()
 {
-#if defined(REV9E) || defined(PCBX7) || defined(PCBX12D)
+#if defined(REV9E) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX3)
 #ifdef PCBX7
  #ifndef PCBT12
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
  #endif
 #endif // PCBX7
+#ifdef PCBX3
+	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
+#endif // PCBX3
 #ifdef REV9E
 	uint8_t value = (~GPIOF->IDR & PIN_BUTTON_ENCODER) ? 0x80 : 0 ;
 #endif // REV9E
@@ -1217,6 +1232,8 @@ void diag_mode(void* pdata)
 
 extern void maintenanceBackground( void ) ;
 
+uint8_t SetByEncoder ;
+
 void update_mode(void* pdata)
 {
 	uint32_t displayTimer = 0 ;
@@ -1227,7 +1244,14 @@ void update_mode(void* pdata)
 #ifdef PCB9XT
 	BlSetAllColours( 0, 30, 60 ) ;
 #endif
-
+	{
+		uint8_t evt=getEvent() ;
+		killEvents( evt ) ;
+		putEvent(0) ;
+	}
+#ifdef PCBX3
+	ledBlue() ;
+#endif
   while (1)
 	{
 		if ( (g_menuStackPtr==0) && (g_menuStack[0] == menuUpdate) )
@@ -1260,6 +1284,10 @@ extern void checkRotaryEncoder() ;
   	checkRotaryEncoder() ;
 #endif
 		if(!tick10ms) continue ; //make sure the rest happen only every 10ms.
+#ifdef PCBX3
+extern void checkRotaryEncoder() ;
+//		checkRotaryEncoder() ;
+#endif // PCBX3
 	  uint8_t evt=getEvent();
 //#if defined(REV9E) || defined(PCBX7)
 #ifdef PCBX12D
@@ -1291,16 +1319,19 @@ extern void checkRotaryEncoder() ;
 			LastRotaryValue = x ;
 		}
 #endif
+		SetByEncoder = 0 ;
 		if ( evt == 0 )
 		{
 	extern int32_t Rotary_diff ;
 			if ( Rotary_diff > 0 )
 			{
 				evt = EVT_KEY_FIRST(KEY_DOWN) ;
+				SetByEncoder = 1 ;
 			}
 			else if ( Rotary_diff < 0 )
 			{
 				evt = EVT_KEY_FIRST(KEY_UP) ;
+				SetByEncoder = 1 ;
 			}
 			Rotary_diff = 0 ;
 		}
@@ -1655,6 +1686,33 @@ static void delay_setbl( uint8_t r, uint8_t g, uint8_t b )
 //}	
 //#endif
 
+#if defined(PCBX3)
+void ledOff()
+{
+  GPIO_ResetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
+  GPIO_ResetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+  GPIO_ResetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
+}
+
+void ledRed()
+{
+  ledOff();
+  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
+}
+void ledGreen()
+{
+  ledOff();
+  GPIO_SetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
+}
+
+void ledBlue()
+{
+  ledOff();
+  GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+}
+
+#endif // X3
+
 #if defined(PCBX7)
 void ledOff()
 {
@@ -1937,9 +1995,14 @@ int main( void )
 	init_soft_power() ;
 #endif // PCBX7
 
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	configure_pins( LED_GREEN_GPIO_PIN | LED_RED_GPIO_PIN | LED_BLUE_GPIO_PIN, PIN_PORTE | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#endif // PCBX3
+
 #ifdef PCBXLITE
 
-	configure_pins( LED_GREEN_GPIO_PIN, PIN_PORTE| PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+	configure_pins( LED_GREEN_GPIO_PIN, PIN_PORTE | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
 
 	init_soft_power() ;
 #endif // PCBXLITE
@@ -2111,7 +2174,9 @@ extern unsigned char *EndOfHeap ;
 #ifdef PCBX9D
  #ifndef PCBX7
   #ifndef PCBXLITE
+   #ifndef PCBX3
 	ConsoleInit() ;
+   #endif // PCBX3
   #endif // PCBXLITE
  #endif // PCBX7
 #endif
@@ -2175,8 +2240,10 @@ extern unsigned char *EndOfHeap ;
 #ifndef PCBX7
 #ifndef REV9E
 #ifndef PCBXLITE
+#ifndef PCBX3
 	disk_initialize( 0 ) ;
 	sdInit() ;
+#endif
 #endif
 #endif
 #endif
@@ -2187,8 +2254,11 @@ extern unsigned char *EndOfHeap ;
 	SD_Init() ;	// low level
 	sdInit() ;	// mount
 
-void enableBackupRam(void) ;
-	enableBackupRam() ;
+//void enableBackupRam(void) ;
+//	enableBackupRam() ;
+
+void disableBackupRam(void) ;
+	disableBackupRam() ;
 
 #endif
 
@@ -2243,7 +2313,7 @@ void enableBackupRam(void) ;
 	ledRed() ;
 #endif
 
-#if defined(PCBX7) || defined (PCBXLITE) || defined (REV9E)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (REV9E) || defined (PCBX3)
 //	ledOff() ;
 //	ledBlue() ;
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
@@ -2309,7 +2379,11 @@ void enableBackupRam(void) ;
 		}
 	}
 #ifndef REV9E
+#ifdef PCBX3
+	ledRed() ;
+#else
 	ledGreen() ;
+#endif
 #endif
 #ifdef PCBT12
 	ledBlue() ;	// Green Led!
@@ -2401,7 +2475,7 @@ void enableBackupRam(void) ;
 	disk_initialize( 0 ) ;
 	sdInit() ;
 #endif
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 	disk_initialize( 0 ) ;
 	sdInit() ;
 #endif
@@ -2629,7 +2703,7 @@ uint32_t updateSlave() ;
 	WatchdogTimeout = 200 ;			
 #endif
 	eeReadAll() ;
-#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBT12)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBT12) || defined (PCBX3)
 	g_eeGeneral.softwareVolume = 1 ;
 #endif // PCBX7
 	protocolsToModules() ;
@@ -2653,7 +2727,7 @@ uint32_t updateSlave() ;
 #endif
 
 #ifdef PCBX9D
- #if REVPLUS
+ #if defined(REVPLUS) || defined(REV9E)
   #ifdef REV9E
 		g_eeGeneral.physicalRadioType = PHYSICAL_TARANIS_X9E ;
   #else
@@ -2670,7 +2744,11 @@ uint32_t updateSlave() ;
    #ifdef PCBXLITE
 		g_eeGeneral.physicalRadioType = PHYSICAL_XLITE ;
    #else
+    #ifdef PCBX3
+		g_eeGeneral.physicalRadioType = PHYSICAL_X3 ;
+    #else
 		g_eeGeneral.physicalRadioType = PHYSICAL_TARANIS ;
+    #endif
    #endif
   #endif
  #endif
@@ -2726,6 +2804,9 @@ uint32_t updateSlave() ;
 	init_rotary_encoder() ;
  #endif
 #endif // PCBX7
+#ifdef PCBX3
+	init_rotary_encoder() ;
+#endif // PCBX3
 #ifdef REV9E
 	init_rotary_encoder() ;
 #endif // REV9E
@@ -2871,6 +2952,12 @@ uint32_t updateSlave() ;
 		if ( ( i & 6 ) == 6 )
 		{
 			SystemOptions |= SYS_OPT_MUTE ;
+  		while ( keyDown() )
+			{
+				wdt_reset() ;
+				lcd_puts_Pleft( FH, XPSTR("Mute Activated") ) ;
+				refreshDisplay() ;
+			}
 		}
 	}
 #endif
@@ -2885,7 +2972,7 @@ uint32_t updateSlave() ;
 
 #endif
 #ifdef PCBX9D
-#if REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	backlight_set( g_eeGeneral.bright, 0 ) ;
 	backlight_set( g_eeGeneral.bright_white, 1 ) ;
 #else
@@ -2922,12 +3009,16 @@ uint32_t updateSlave() ;
 		if ( g_model.anaVolume < 4 )
 #endif
 #ifdef PCBX9D
+#if defined(PCBX3)
+		if ( g_model.anaVolume < 2 )
+#else // X3
 #if defined(PCBX7) || defined (PCBXLITE)
 		if ( g_model.anaVolume < 3 )
 #else // PCBX7
 		if ( g_model.anaVolume < 5 )
 #endif // PCBX7
 #endif
+#endif // X3
 #ifdef PCBX12D
 		if ( g_model.anaVolume < 5 )
 #endif
@@ -3146,7 +3237,7 @@ void log_task(void* pdata)
 
 #endif	// SIMU
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
 #ifdef BLUETOOTH
 void telem_byte_to_bt( uint8_t data )
 {
@@ -3256,7 +3347,7 @@ uint32_t countExtraPots()
 #endif // ARUNI
 #endif
 
-#if defined(REV9E) || defined(PCBX7)
+#if defined(REV9E) || defined(PCBX7) || defined(PCBX3)
 uint32_t countExtraPots()
 {
 	uint32_t count = 0 ;
@@ -3474,6 +3565,12 @@ void main_loop(void* pdata)
 		parseMultiData() ;
 		evt = getEvent() ;
 		killEvents( evt ) ;
+#ifdef stm32f205
+		disableRtcBattery() ;
+#endif
+#ifdef PCBX12D
+		disableRtcBattery() ;
+#endif
 
 #ifdef LUA
 		luaLoadModelScripts() ;
@@ -3505,7 +3602,7 @@ void main_loop(void* pdata)
         g_vbat100mV = ab + 3 + 3 ;// Also add on 0.3V for voltage drop across input diode
 #endif
 #ifdef PCBX9D
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
         ab /= 64593  ;
 #else
         ab /= 57165  ;
@@ -3589,11 +3686,13 @@ void main_loop(void* pdata)
 
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D)
 #ifndef PCBX7
+#ifndef PCBX3
 extern uint8_t ModelImageValid ;
 	if ( !ModelImageValid )
 	{
 		loadModelImage() ;
 	}
+#endif	
 #endif	
 #endif	
 	Activated = 1 ;
@@ -3677,7 +3776,7 @@ extern uint8_t ModelImageValid ;
 #else
 						dtimer = ( 150 - dtimer ) * 100 / 150 ;
 #endif
-						lcd_hbar( 13, 49, 102, 6, dtimer ) ;
+						lcd_hbar( 13 + X12OFFSET, 49, 102, 6, dtimer ) ;
 						refreshDisplay() ;
 					}
 #ifdef PCBX12D
@@ -3780,7 +3879,9 @@ extern uint8_t ModelImageValid ;
  #endif
 #endif
 			prepareForShutdown() ;
-
+#ifdef stm32f205
+			disableRtcBattery() ;
+#endif
   		uint16_t tgtime = get_tmr10ms() ;
   		uint16_t long_tgtime = tgtime ;
 #ifdef PCBX12D
@@ -3791,7 +3892,7 @@ extern uint8_t ModelImageValid ;
   		{
 				if ( (uint16_t)(get_tmr10ms() - tgtime ) > 270 )
 #else
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 170 ) // 50 - Half second
   		{
 				if ( (uint16_t)(get_tmr10ms() - tgtime ) > 160 )
@@ -3856,6 +3957,9 @@ extern uint8_t	Eeprom32_process_state ;
 extern uint8_t Ee32_general_write_pending ;
 extern uint8_t Ee32_model_write_pending ;
 extern uint8_t Ee32_model_delete_pending ;
+  
+	lcd_outhex4( 0, 6*FH, GPIOC->IDR ) ;
+  lcd_outhex4( 25, 6*FH, check_soft_power() ) ;
 
 	lcd_outdez( 3*FW, 7*FH, General_timer ) ;
 	lcd_outdez( 7*FW, 7*FH, Model_timer ) ;
@@ -3876,7 +3980,7 @@ extern uint8_t Ee32_model_delete_pending ;
 				{
   				tgtime = get_tmr10ms() ;
 				}
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 				CoTickDelay(1) ;	// Make sure QX7 starts playing now
 #endif
 
@@ -3907,14 +4011,14 @@ extern uint8_t Ee32_model_delete_pending ;
 
 				lcd_clear() ;
 				lcd_putsn_P( 6*FW, 3*FH, "POWER OFF", 9 ) ;
-#if defined(REV9E) || defined(PCBX12D) || defined(PCBX7)
+#if defined(REV9E) || defined(PCBX12D) || defined(PCBX7) || defined (PCBX3)
 //#if defined(REV9E)
 extern uint8_t PowerState ;
 	lcd_outhex4( 20, 0, PowerState ) ;
 #endif
 				refreshDisplay() ;
 				
-#if defined(REV9E) || defined(PCBX12D) || defined(PCBX7)
+#if defined(REV9E) || defined(PCBX12D) || defined(PCBX7) || defined (PCBX3)
 //#if defined(REV9E)
 extern uint8_t PowerState ;
 				while ( PowerState < 4 )
@@ -3930,6 +4034,9 @@ extern uint8_t PowerState ;
 #ifdef PCBX7
 					lcdOff() ;
 #endif // PCBX7
+#ifdef PCBX3
+					lcdOff() ;
+#endif // PCBX3
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 				for(;;)
 				{
@@ -4012,6 +4119,12 @@ static void almess( const char * s, uint8_t type )
 	{
     lcd_puts_P(64-6*FW + X12OFFSET,7*FH,"press any Key");
 		h = PSTR(STR_ALERT) ;
+//#ifdef PCBX12D
+//  lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
+//#else
+//  lcd_img( 1, 0, HandImage,0,0 ) ;
+//#endif
+
 	}
 	else
 	{
@@ -4440,7 +4553,7 @@ static void processVoiceAlarms()
 				{
 					// Nothing!
 				}
-				else if ( pvad->fnameType == 1 )	// Name
+				else if ( ( pvad->fnameType == 1 ) || ( pvad->fnameType == 4 ) )	// Name
 				{
 					char name[10] ;
 					char *p ;
@@ -4455,7 +4568,14 @@ static void processVoiceAlarms()
 							}
 							*(p-1) += ( play - 1 ) ;
 						}
-						putUserVoice( name, 0 ) ;
+						if ( pvad->fnameType == 4 )
+						{
+							putNamedVoiceQueue( name, VLOC_SYSTEM ) ;
+						}
+						else
+						{
+							putUserVoice( name, 0 ) ;
+						}
 					}
 				}
 				else if ( pvad->fnameType == 2 )	// Number
@@ -6847,7 +6967,7 @@ void perMain( uint32_t no_menu )
 //	usbMassStorage() ;
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBX3)
 #ifdef BLUETOOTH	
 	if ( BtRxTimer )
 	{
@@ -7040,11 +7160,15 @@ void perMain( uint32_t no_menu )
 			if ( g_model.anaVolume < 4 )
 #endif
 #ifdef PCBX9D
+#ifdef PCBX3
+		if ( g_model.anaVolume < 2 )
+#else
 #if defined(PCBX7) || defined (PCBXLITE)
 		if ( g_model.anaVolume < 3 )
 #else // PCBX7
 		if ( g_model.anaVolume < 5 )
 #endif // PCBX7
+#endif // PCBX3
 #endif
 #ifdef PCBX12D
 			if ( g_model.anaVolume < 5 )
@@ -7394,7 +7518,10 @@ extern int32_t Rotary_diff ;
 		if ( refreshNeeded == 3 )
 		{
 			refreshNeeded = 0 ;
-			evt = 0 ;
+			if ( sd_card_ready() )
+			{
+				evt = 0 ;
+			}
 			// standalone finished so:
 			basicLoadModelScripts() ;
 		}
@@ -7521,7 +7648,7 @@ extern int32_t Rotary_diff ;
 								// Also add on 0.3V for voltage drop across input diode
 #endif
 #ifdef PCBX9D
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
         ab /= 64593  ;
 #else
         ab /= 57165  ;
@@ -7567,14 +7694,82 @@ extern int32_t Rotary_diff ;
 
 }
 
-#ifdef PCBX7
+#if defined(PCBX7) || defined(PCBX3)
  #ifndef PCBT12
 static void init_rotary_encoder()
 {
+#ifdef PCBX3
+	configure_pins( 0x1400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	g_eeGeneral.rotaryDivisor = 3 ;
+
+	SYSCFG->EXTICR[2] |= 0x0400 ;		// PE10
+	SYSCFG->EXTICR[3] |= 0x0004 ;		// PE12
+	EXTI->RTSR |= 0x1400 ;	// Rising Edge
+	EXTI->FTSR |= 0x1400 ;	// Falling Edge
+	EXTI->IMR |= 0x1400 ;
+	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
+#else
 	configure_pins( 0x0A00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	g_eeGeneral.rotaryDivisor = 2 ;
+#endif
 }
 
+  #ifdef PCBX3
+
+//volatile int32_t IRotary_position ;
+//volatile int32_t IRotary_count ;
+
+extern "C" void EXTI15_10_IRQHandler()
+{
+  register int32_t capture ;
+
+	capture = GPIOENCODER->IDR & 0x1400 ;
+	EXTI->PR = 0x1400 ;
+	capture >>= 10 ;
+	capture = (capture & 1) | ( ( capture >> 1 ) & 2 ) ;	// pick out the two bits
+	if ( capture != ( Rotary_position & 0x03 ) )
+	{
+		if ( ( capture & 0x01 ) ^ ( ( capture & 0x02) >> 1 ) )
+		{
+			if ( (Rotary_position & 0x03) == 3 )
+			{
+				Rotary_count -= 1 ;
+			}
+			else
+			{
+				Rotary_count += 1 ;
+			}
+		}
+		Rotary_position &= ~0x03 ;
+		Rotary_position |= capture ;
+	}
+}
+
+
+//void checkRotaryEncoder()
+//{
+//  register uint32_t dummy ;
+	
+//	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE11, PE9 )
+//	dummy >>= 10 ;
+//	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
+//	if ( dummy != ( Rotary_position & 0x03 ) )
+//	{
+//		if ( ( dummy & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+//		{
+//			if ( (Rotary_position & 0x03) == 3 )
+//			{
+//				Rotary_count -= 1 ;
+//			}
+//			else
+//			{
+//				Rotary_count += 1 ;
+//			}
+//		}
+//	}
+//}
+  #else
 void checkRotaryEncoder()
 {
   register uint32_t dummy ;
@@ -7596,9 +7791,17 @@ void checkRotaryEncoder()
 		Rotary_position |= dummy ;
 	}
 }
+  #endif // X3
  #endif
 
-#endif // PCBX7
+#endif // PCBX7/X3
+
+
+
+
+
+
+
 
 #ifdef REV9E
 static void init_rotary_encoder()
@@ -7702,10 +7905,12 @@ void interrupt5ms()
 
 	sound_5ms() ;
 
-#ifdef PCBX7
+#if defined(PCBX7) || defined(PCBX3)
  #ifndef PCBT12
+  #ifndef PCBX3
 extern void checkRotaryEncoder() ;
 		checkRotaryEncoder() ;
+  #endif // X3
  #endif
 #endif // PCBX7
 #ifdef REV9E
@@ -8616,6 +8821,7 @@ void createSwitchMapping()
 #endif
 	*p++ = HSW_SC2 ;
 	 
+#ifndef PCBX3
 	*p++ = HSW_SD0 ;
 #ifdef PCBXLITE
 	if (g_eeGeneral.rudsource)
@@ -8626,7 +8832,9 @@ void createSwitchMapping()
 	}
 #endif
 	*p++ = HSW_SD2 ;
+#endif // nX3
 	 
+#ifndef PCBX3
 #ifndef PCBX7
 #ifndef PCBXLITE
 	*p++ = HSW_SE0 ;
@@ -8634,11 +8842,13 @@ void createSwitchMapping()
 	*p++ = HSW_SE2 ;
 #endif
 #endif
+#endif // nX3
 
 #ifndef PCBXLITE
 	*p++ = HSW_SF2 ;
 #endif
 
+#ifndef PCBX3
 #ifndef PCBX7
 #ifndef PCBXLITE
 	*p++ = HSW_SG0 ;
@@ -8646,6 +8856,7 @@ void createSwitchMapping()
 	*p++ = HSW_SG2 ;
 #endif
 #endif
+#endif // nX3
 	 
 #ifndef PCBXLITE
 	*p++ = HSW_SH2 ;
@@ -9520,7 +9731,7 @@ int8_t getMovedSwitch()
     }
   }
 #else // REV9E
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 #ifdef PCBT12
   for (uint8_t i=0 ; i<8 ; i += 1 )
 #else
@@ -9680,6 +9891,12 @@ void checkQuickSelect()
 	if ( ( i & 6 ) == 6 )
 	{
 		SystemOptions |= SYS_OPT_MUTE ;
+ 		while ( keyDown() )
+		{
+			wdt_reset() ;
+			lcd_puts_Pleft( FH, XPSTR("Mute Activated") ) ;
+			refreshDisplay() ;
+		}
 		return ;
 	}
 	
@@ -10264,7 +10481,11 @@ void checkSwitches()
 #ifdef PCBXLITE
 			if ( ( ss & 0x00FF ) == (warningStates & 0x00FF ) )
 #else
+#ifdef PCBX3
+			if ( ( ss & 0x0C3F ) == warningStates )	// Miss D, E and G
+#else // X3
 			if ( ( ss & 0x3FFF ) == warningStates )
+#endif // X3
 #endif
 #endif
 			{
@@ -10298,6 +10519,12 @@ void checkSwitches()
 #endif
 			{
 				continue ;	// Skip E and G
+			}
+#endif
+#ifdef PCBX3
+			if ( ( i == 3 ) || ( i == 4 ) || ( i == 6 ) )
+			{
+				continue ;	// Skip D, E and G
 			}
 #endif
 #ifdef PCBXLITE

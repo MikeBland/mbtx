@@ -44,7 +44,9 @@
 #ifdef PCBX9D	
  #ifndef PCBX7
   #ifndef PCBXLITE
+   #ifndef PCBX3
    #define WIDE_SCREEN	1
+   #endif
   #endif
  #endif
 #endif
@@ -103,6 +105,22 @@ extern void wdt_reset(void) ;
 #define VERSION9XT	"9xt-0.30"
 #endif
 
+#ifdef at91sam3s4
+#define BITBAND_SRAM_REF 0x20000000
+#define BITBAND_SRAM_BASE 0x22000000
+#endif
+
+#ifdef at91sam3s8
+#define BITBAND_SRAM_REF 0x20000000
+#define BITBAND_SRAM_BASE 0x22000000
+#endif
+
+#ifdef stm32f205
+#define BITBAND_SRAM_REF 0x20000000
+#define BITBAND_SRAM_BASE 0x22000000
+#endif
+
+
 //#define GVARS		1
 
 extern const char Stamps[] ;
@@ -132,22 +150,26 @@ extern const char * const Spanish[] ;
 #define pgm_read_byte(p)	(*(p))
 
 
-#ifdef PCBXLITE
+#ifdef PCBX3
 #define NUMBER_ANALOG		3
+#else
+
+#ifdef PCBXLITE
+#define NUMBER_ANALOG		4
 
 #else // PCBXLITE
 #ifdef PCBX7
-#define NUMBER_ANALOG		9
+#define NUMBER_ANALOG		10
 #else // PCBX7
 #ifdef PCBX9D
- #ifdef REVPLUS
+ #if defined(REVPLUS) || defined(REV9E)
 	#ifdef REV9E
-  #define NUMBER_ANALOG		10
+  #define NUMBER_ANALOG		11
   #else
-  #define NUMBER_ANALOG		10
+  #define NUMBER_ANALOG		11
 	#endif	// REV9E
  #else
-  #define NUMBER_ANALOG		9
+  #define NUMBER_ANALOG		10
  #endif
 #else // not PCBX9D
 #ifdef REVX
@@ -169,6 +191,7 @@ extern const char * const Spanish[] ;
 #endif
 #endif // PCBX7
 #endif // PCBXLITE
+#endif // PCBX3
 
 #ifdef REV9E
 #define NUM_EXTRA_ANALOG		3
@@ -201,7 +224,10 @@ extern uint8_t SystemOptions ;
 #endif	// REV9E
 #ifdef PCBX7
 #define KEY_PAGE	KEY_LEFT
-#endif	// REV9E
+#endif	// X7
+#ifdef PCBX3
+#define KEY_PAGE	KEY_LEFT
+#endif	// X3
 
 enum EnumKeys {
     KEY_MENU ,
@@ -664,6 +690,9 @@ extern uint32_t countExtraPots( void ) ;
 #ifdef PCBX7
 extern uint32_t countExtraPots( void ) ;
 #endif
+#ifdef PCBX3
+extern uint32_t countExtraPots( void ) ;
+#endif
 
 #if defined(PCBX9D) || defined(PCBX12D)
 #define MIX_MAX   8 
@@ -692,7 +721,11 @@ extern uint32_t countExtraPots( void ) ;
 		#if defined (PCBXLITE)
   	 #define	NUM_EXTRA_POTS 0
 		#else
+     #ifdef PCBX7
+  	 #define	NUM_EXTRA_POTS 0
+		 #else
   	 #define	NUM_EXTRA_POTS 1
+		 #endif
 		#endif
 	 #endif
   #endif	// PCBX7
@@ -797,7 +830,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define NUM_MULTI_PROTOCOLS 62
+#define NUM_MULTI_PROTOCOLS 63
 
 #define M_Flysky           0
 #define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -868,8 +901,8 @@ extern uint8_t Ee_lock ;
 #define POWER_X9E_STOP	3
 
 
-extern uint8_t PxxFlag[2] ;
-extern uint8_t PxxExtra[] ;
+extern uint8_t BindRangeFlag[2] ;
+//extern uint8_t PxxExtra[] ;
 extern uint8_t InactivityMonitor ;
 extern uint16_t InacCounter ;
 
@@ -962,7 +995,7 @@ extern uint8_t convert_mode_helper(uint8_t x) ;
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 extern void backlight_on( void ) ;
 extern void backlight_off( void ) ;
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 extern void backlight_w_on( void ) ;
 extern void backlight_w_off( void ) ;
 #define BACKLIGHT_ON        backlight_on();backlight_w_on()
@@ -982,7 +1015,7 @@ extern int16_t *const CalibSpanPos[] ;
 extern int16_t *const CalibSpanNeg[] ;
 
 #ifdef PCBX9D
- #if REVPLUS
+ #if defined(REVPLUS) || defined(REV9E)
   #ifdef REV9E
 	 #define NUM_ANALOG_CALS	12
 	#else
@@ -1481,6 +1514,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_HORUS				9
 #define PHYSICAL_XLITE				10
 #define PHYSICAL_T12					11
+#define PHYSICAL_X3						12
 
 // Power control type
 #ifdef REV9E
@@ -1489,6 +1523,9 @@ extern uint16_t FailsafeCounter[2] ;
 #ifdef PCBX7
 #define POWER_BUTTON	1
 #endif // PCBX7
+#ifdef PCBX3
+#define POWER_BUTTON	1
+#endif // PCBX3
 #ifdef PCBX12D
 #define POWER_BUTTON	1
 #endif // PCBX12D

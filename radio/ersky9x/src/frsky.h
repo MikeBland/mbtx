@@ -499,12 +499,18 @@ void FRSKY_setModelAlarms(void) ;
 
 enum AlarmLevel FRSKY_alarmRaised(uint8_t idx, uint8_t alarm=2) ;
 void FRSKY_alarmPlay(uint8_t idx, uint8_t alarm) ;
-void resetTelemetry();
+void resetTelemetry( uint32_t item );
 extern void frskyTransmitBuffer( uint32_t size ) ;
 extern uint8_t FrskyTelemetryType ;
 extern uint8_t JetiTxReady ;
 extern uint16_t JetiTxChar ;
 extern uint8_t SportStreamingStarted ;
+
+#define TEL_ITEM_RESET_ALT		0
+#define TEL_ITEM_RESET_A1OFF	1
+#define TEL_ITEM_RESET_A2OFF	2
+#define TEL_ITEM_RESET_GPS		3
+#define TEL_ITEM_RESET_ALL		4
 
 struct t_hub_max_min
 {
@@ -541,6 +547,7 @@ extern uint8_t TelemetryType ;
 #define TELEMETRY_FRMAV				9
 #define TELEMETRY_MAVLINK			10
 #define TELEMETRY_HITEC				11
+#define TELEMETRY_AFHDS2A			12
 
 // Values in FrskyTelemetryType
 #define FRSKY_TEL_HUB		0

@@ -1627,8 +1627,7 @@ void bt_task(void* pdata)
 	#endif	// nPCB9XT
 			if ( ( g_model.BTfunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
 			{
-	extern struct t_fifo128 BtRx_fifo ;
-				while ( ( y = get_fifo128( &BtRx_fifo ) ) != -1 )
+				while ( ( y = rxBtuart() ) != -1 )
 				{
 	extern uint8_t ExternalKeys ;
 	extern uint8_t ExternalSet ;
@@ -1644,6 +1643,7 @@ void bt_task(void* pdata)
 					bt_send_buffer() ;
 				}
 				BtRxTimer = 100 ;		// keep running
+				CoTickDelay(2) ;		// 4mS, request will only be avery 10mS
 			}
 			else
 			{

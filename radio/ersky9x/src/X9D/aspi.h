@@ -13,7 +13,7 @@
 
 #include "stm32f2xx.h"
 
-#if defined(PCBX7) || defined(PCBXLITE)
+#if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX3)
 
 #define LCD_NCS_HIGH()        LCD_NCS_GPIO->BSRRL = LCD_NCS_GPIO_PIN
 #define LCD_NCS_LOW()         LCD_NCS_GPIO->BSRRH = LCD_NCS_GPIO_PIN
@@ -25,7 +25,7 @@
 #define LCD_RST_LOW()         LCD_RST_GPIO->BSRRH = LCD_RST_GPIO_PIN
 
 #else // PCBX7
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 #define	LCD_NCS_HIGH()		    (GPIO_LCD_NCS->BSRRL = PIN_LCD_NCS)
 #define	LCD_NCS_LOW()		    	(GPIO_LCD_NCS->BSRRH = PIN_LCD_NCS)
 #else // REVPLUS
@@ -36,7 +36,7 @@
 #define LCD_A0_HIGH()         (GPIO_LCD->BSRRL = PIN_LCD_A0)
 #define LCD_A0_LOW()          (GPIO_LCD->BSRRH = PIN_LCD_A0)
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 #define LCD_RST_HIGH()		    (GPIO_LCD_RST->BSRRL = PIN_LCD_RST)
 #define LCD_RST_LOW()		    	(GPIO_LCD_RST->BSRRH = PIN_LCD_RST)
 #else // REVPLUS

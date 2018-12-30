@@ -61,8 +61,8 @@
 #include "pulses.h"
 //#include "debug.h"
 
-extern uint8_t PxxFlag[] ;
-extern uint8_t PxxExtra[] ;
+extern uint8_t BindRangeFlag[] ;
+//extern uint8_t PxxExtra[] ;
 
 void dsmBindResponse( uint8_t mode, int8_t channels )
 {
@@ -117,7 +117,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
 	subProtocol = pmodule->sub_protocol+1 ;
-#if PCBT12
+#ifdef PCBT12
 	if ( subProtocol == M_FRSKYX+1 )
 	{
 		subProtocol = ( subProtocol & 0xC0 ) | 63 ;
@@ -143,8 +143,8 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	}
 	*data++ = packetType ;
 	protoByte = subProtocol & 0x5F;		// load sub_protocol and clear Bind & Range flags
-	if (PxxFlag[module] & PXX_BIND)	protoByte |=BindBit ;		//set bind bit if bind menu is pressed
-	if (PxxFlag[module] & PXX_RANGE_CHECK) protoByte |=RangeCheckBit ;		//set bind bit if bind menu is pressed
+	if (BindRangeFlag[module] & PXX_BIND)	protoByte |=BindBit ;		//set bind bit if bind menu is pressed
+	if (BindRangeFlag[module] & PXX_RANGE_CHECK) protoByte |=RangeCheckBit ;		//set bind bit if bind menu is pressed
 	*data++ = protoByte ;
 	
 	protoByte = pmodule->channels ;
@@ -233,7 +233,7 @@ void setDsmHeader( uint8_t *dsmDat, uint32_t module )
 #else
 	if((dsmDat[0]&BindBit)&&(!keyState(SW_SH2)))  dsmDat[0]&=~BindBit;		//clear bind bit if trainer not pulled
 #endif
-  if ((!(dsmDat[0]&BindBit))&& (PxxFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
+  if ((!(dsmDat[0]&BindBit))&& (BindRangeFlag[module] & PXX_RANGE_CHECK)) dsmDat[0]|=RangeCheckBit;   //range check function
   else dsmDat[0]&=~RangeCheckBit;
 }
 

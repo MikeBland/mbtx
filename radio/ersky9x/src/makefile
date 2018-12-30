@@ -65,11 +65,17 @@ ifeq ($(PCB), X9D)
      BASIC = 1
      CPPDEFS += -DBASIC 
     else
-     OBJDIR = x9dobj
-     BASIC = 1
-     CPPDEFS += -DBASIC 
-#     LUA = 1
-#     CPPDEFS += -DLUA
+     ifeq ($(PCBX3), 1)
+      OBJDIR = x3dobj
+      BASIC = 1
+      CPPDEFS += -DBASIC 
+     else
+      OBJDIR = x9dobj
+      BASIC = 1
+      CPPDEFS += -DBASIC 
+#      LUA = 1
+#      CPPDEFS += -DLUA
+	  endif
 	 endif
 	endif
   endif
@@ -171,7 +177,11 @@ ifeq ($(PCB), X9D)
     ifeq ($(PCBXLITE), 1)
      PROJECT        = xlite
     else
-     PROJECT        = x9d
+     ifeq ($(PCBX3), 1)
+      PROJECT        = x3
+     else
+      PROJECT        = x9d
+     endif
     endif
    endif
   endif
@@ -217,6 +227,7 @@ ifeq ($(RUN_FROM_FLASH), 0)
 #     MCU  = cortex-m3
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
+     UDEFS = -Dstm32f205
    else
     ifeq ($(PCB), X12D)
      LDSCRIPT = X12D/stm32f4_flash.ld
@@ -242,6 +253,7 @@ else
    CPPDEFS += -DPCB9XT 
    CPPDEFS += -DPCBSP
    CPPDEFS += -DUSB_JOYSTICK
+   UDEFS = -Dstm32f205
   else
    ifeq ($(PCB), X9D)
 #     ARCH = ARM
@@ -251,11 +263,15 @@ else
      CPPDEFS += -DHSE_VALUE=12000000
 	  CPPDEFS += -DPCBX9D 
      CPPDEFS += -DUSB_JOYSTICK
+     UDEFS = -Dstm32f205
      ifeq ($(PCBX7), 1)
       CPPDEFS += -DPCBX7
      endif
      ifeq ($(PCBXLITE), 1)
       CPPDEFS += -DPCBXLITE
+     endif
+     ifeq ($(PCBX3), 1)
+      CPPDEFS += -DPCBX3
      endif
    else
     ifeq ($(PCB), X12D)
@@ -302,9 +318,9 @@ endif
 
 # List all user C define here, like -D_DEBUG=1
 
-ifeq ($(PCB), X9D)
-UDEFS = 
-endif
+#ifeq ($(PCB), X9D)
+#UDEFS = 
+#endif
 
 ifeq ($(SAM3S2), 1)
 UDEFS = -Dat91sam3s2
@@ -903,7 +919,7 @@ ifeq ($(PCB), X9D)
  else
 # If Taranis X9E
   ifeq ($(REV9E), 1)
-   CPPDEFS += -DREVPLUS
+#   CPPDEFS += -DREVPLUS
    CPPDEFS += -DREV9E
    EXT_MOD=X9E
   else
@@ -917,7 +933,12 @@ ifeq ($(PCB), X9D)
       EXT_MOD=QX7
 	  endif
 	 else
+     ifeq ($(PCBX3), 1)
+      EXT_MOD=X3
+	  else
+     CPPDEFS += -DREVNORM
      EXT_MOD=X9D
+     endif
     endif
    endif
   endif
@@ -1020,6 +1041,7 @@ clean:
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
 	-rm -f xliteobj/*.*
+	-rm -f x3obj/*.*
 	-rm -f t12obj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map

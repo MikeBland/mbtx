@@ -96,10 +96,10 @@ __attribute__ ((section(".bootrodata"), used))
 
 const uint8_t BootCode[] = {
 #ifdef PCBX12D
-//	#include "bootloader/bootflashH.lbm"
+ #include "bootloader/bootflashX12D.lbm"
 #else
 #ifdef PCBTARANIS
-  #ifdef REVPLUS
+  #if defined(REVPLUS) || defined(REV9E)
    #include "bootloader/bootflashTp.lbm"
 	#else
    #include "bootloader/bootflashT.lbm"
@@ -109,7 +109,7 @@ const uint8_t BootCode[] = {
  #include "bootloader/bootflash9xt.lbm"
 #else
   #ifdef PCBX9D
-   #ifdef REVPLUS
+   #if defined(REVPLUS) || defined(REV9E)
 	  #ifdef REV9E
      #include "bootloader/bootflashx9e.lbm"
 		#else
@@ -126,7 +126,11 @@ const uint8_t BootCode[] = {
      #ifdef PCBXLITE
       #include "bootloader/bootflashL.lbm"
      #else
-      #include "bootloader/bootflashX.lbm"
+      #ifdef PCBX3
+       #include "bootloader/bootflashX3.lbm"
+      #else
+       #include "bootloader/bootflashX.lbm"
+	    #endif
 		 #endif
 		#endif
    #endif
@@ -161,7 +165,7 @@ void _bootStart()
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
 		GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
-		GPIOJ->MODER = (GPIOD->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+		GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
 	}
 
 	GPIOC->PUPDR = 0x00000001 ;
@@ -188,6 +192,15 @@ void _bootStart()
 	{
 		if ( (GPIOC->IDR & 0x00000001 ) == 0 )
 		{
+			// Soft power on
+			GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
+			GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+				 
+			// Red LED on
+			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN ;
+			GPIOI->BSRRL = 0x0020 ;
+			GPIOI->MODER = (GPIOJ->MODER & 0xFFFFF3FF) | 0x0400 ; // General purpose output mode
+			
 			// Bootloader needed
 			const uint8_t *src ;
 			uint8_t *dest ;
@@ -208,7 +221,7 @@ void _bootStart()
 			
 			uint32_t address = *(uint32_t *)0x20000004 ;
 	
-//			((void (*)(void)) (address))() ;		// Go execute the loaded application
+			((void (*)(void)) (address))() ;		// Go execute the loaded application
 	
 		}
 	}
@@ -223,40 +236,49 @@ void _bootStart()
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
 	__ASM volatile ("nop") ;
 	GPIOC->PUPDR = 0x0020 ;	// PIN_MCU_PWR
-#else
+#else // PCB9XT
  #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOGEN ; // Enable portD clock
- #else
+ #else // REV9E
   #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
-  #else
+  #else // PCBX7
    #ifdef PCBXLITE
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portA,C,E clock
-   #else
+   #else // PCBXLITE
+    #ifdef PCBX3
+    RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN ; // Enable portA,C,E clock
+    #else // PCBX3
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
-   #endif
-  #endif
- #endif
+    #endif // PCBX3
+   #endif // PCBXLITE
+  #endif // PCBX7
+ #endif // REV9E
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
 	__ASM volatile ("nop") ;
 
 //  if (GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET)
 // PD.01
 
- #if defined(REV9E) || defined(PCBX7) || defined(PCBXLITE)
+ #if defined(REV9E) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX3)
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 //	if ( (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) || (GPIOA->IDR & 0x00000100 ) )	// Trainer input is high
 	{
-#ifdef PCBXLITE
+  #ifdef PCBXLITE
 		GPIOE->BSRRL = GPIO_Pin_9 ; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOE->MODER = (GPIOE->MODER & 0xFFF3FFFF) | 0x00040000 ; // General purpose output mode
-#else
+  #else // PCBXLITE
+   #ifdef PCBX3
+		GPIOA->BSRRL = GPIO_Pin_6 ; // set PWR_GPIO_PIN_ON pin to 1
+		GPIOA->MODER = (GPIOE->MODER & 0xFFFFCFFF) | 0x00001000 ; // General purpose output mode
+   #else // PCBX3
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
-#endif
+   #endif // PCBX3
+  #endif // PCBXLITE
 	}
- #endif
-#endif
+ #endif // multiple ifdef
+#endif // PCB9XT
 
 #ifdef PCBXLITE
 	GPIOE->BSRRH = 0x0020 ; // set Green LED on
@@ -264,25 +286,34 @@ void _bootStart()
 
 	GPIOC->PUPDR = 0x00000500 ;		// PortC clock enabled above
 
-#else
+#else // PCBXLITE
 #ifdef PCBX7
 	GPIOC->BSRRL = 0x0010 ; // set Green LED on
 	GPIOC->MODER = (GPIOC->MODER & 0xFFFFFCFF) | 0x00000100 ; // General purpose output mode
+#else // PCBX7
+ #ifdef PCBX3
+	GPIOE->BSRRL = 0x0020 ; // set Red LED on
+	GPIOE->MODER = (GPIOE->MODER & 0xFFFFF3FF) | 0x00000400 ; // General purpose output mode
+ 
+	GPIOC->PUPDR = 0x00000500 ;		// PortC clock enabled above
+	GPIOD->PUPDR = 0x00050000 ;		// PortD clock enabled above
+ 
+ #endif // PCBX3
 #endif // PCBX7
 
 #ifdef PCB9XT
 	GPIOA->PUPDR = 0x14000000 ;
 	GPIOC->PUPDR = 0x04004000 ;		// PortC clock enabled above
-#else
+#else // PCB9XT
 	
 	GPIOC->PUPDR = 0x00000004 ;
  #ifdef REV9E
 	GPIOG->PUPDR = 0x00000001 ;
- #else
+ #else // REV9E
 	GPIOE->PUPDR = 0x00000040 ;
- #endif
-#endif
-#endif
+ #endif // REV9E
+#endif // PCB9XT
+#endif // PCBXLITE
 
 //#ifdef PCBX9D
 //	uint32_t j ;
@@ -329,7 +360,7 @@ void _bootStart()
 			bwdt_reset();
 		}
 	}
-#endif
+#endif // REV9E
 
 #ifdef PCBX7
 #define PWR_GPIO_PIN_SWITCH	0x0002
@@ -341,9 +372,9 @@ void _bootStart()
 			bwdt_reset();
 		}
 	}
-#endif
+#endif // PCBX7
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 #define PWR_GPIO_PIN_SWITCH	0x0080
 	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
@@ -353,7 +384,7 @@ void _bootStart()
 			bwdt_reset();
 		}
 	}
-#endif
+#endif // PCBXLITE/X3
 
 //#ifndef PCB9XT
 #ifdef PCBXLITE
@@ -361,7 +392,13 @@ void _bootStart()
 	{
 		if ( (GPIOC->IDR & 0x00000020 ) == 0 )
 		{
-#else
+#else // PCBXLITE
+ #ifdef PCBX3
+	if ( (GPIOC->IDR & 0x00000010 ) == 0 )
+	{
+		if ( (GPIOD->IDR & 0x00000200 ) == 0 )
+		{
+ #else // PCBX3
 #ifdef PCB9XT
 //	if ( 1 )
 //	{
@@ -371,17 +408,19 @@ void _bootStart()
 	{
 		if ( (GPIOC->IDR & 0x00002000 ) == 0 )
 		{
-#else
+#else // PCB9XT
  #ifdef REV9E
 	if ( (GPIOG->IDR & 0x00000001 ) == 0 )
- #else
+ #else // REV9E
 	if ( (GPIOE->IDR & 0x00000008 ) == 0 )
- #endif
+ #endif // REV9E
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{
-#endif
-#endif
+ #endif // PCBX3
+#endif // PCB9XT
+#endif // PCBXLITE
+			
 			// Bootloader needed
 			const uint8_t *src ;
 			uint8_t *dest ;
@@ -399,14 +438,13 @@ void _bootStart()
 			// Could check for a valid copy to RAM here
 			// Go execute bootloader
 			bwdt_reset() ;
-			
 			uint32_t address = *(uint32_t *)0x20000004 ;
 	
 			((void (*)(void)) (address))() ;		// Go execute the loaded application
 	
 		}
 	}
-#endif
+#endif // nPCBX12D
 
 //	run_application() ;	
 	asm(" mov.w	r1, #134217728");	// 0x8000000
@@ -425,7 +463,12 @@ void _bootStart()
   asm("mov.w	r1, #1");
   asm("orr		r0, r1");					// Set lsbit
   asm("bx r0");									// Execute application
-}
+
+#ifdef PCBX12D
+	asm(".word 0x544F4F42") ;
 #endif
 
+}
+
+#endif
 

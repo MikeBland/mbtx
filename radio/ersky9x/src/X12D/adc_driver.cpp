@@ -69,7 +69,20 @@ extern void hw_delay( uint16_t time ) ;
 
 #define SAMPTIME	2		// sample time = 28 cycles
 
-uint16_t AdcBuffer[BUFFERSIZE+2] ;		// 2 for the on chip ADC
+#define V_BATT		18
+
+static void enableRtcBattery()
+{
+	ADC->CCR |= ADC_CCR_VBATE ;
+}
+
+void disableRtcBattery()
+{
+	ADC->CCR &= ~ADC_CCR_VBATE ;
+}
+
+uint16_t AdcBuffer[BUFFERSIZE+3] ;		// 2 for the on chip ADC + 1 for V_BATT
+uint16_t VbattRtc ;
 
 static u16 SPIx_ReadWriteByte(uint16_t value)
 {
@@ -152,6 +165,7 @@ void init_adc()
   ADS7952_Init() ;
 
 	RCC->APB2ENR |= RCC_APB2ENR_ADC3EN ;			// Enable clock
+	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN ;			// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
   configure_pins( PIN_STICK_J5 | PIN_STICK_J6, PIN_ANALOG | PIN_PORTF ) ;
@@ -166,11 +180,23 @@ void init_adc()
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
 	ADC->CCR = 0 ; //ADC_CCR_ADCPRE_0 ;		// Clock div 2
 	
+	ADC1->CR1 = ADC_CR1_SCAN ;
+	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
+	ADC1->SQR1 = 0 << 20 ;		// NUMBER_ANALOG Channels
+	ADC1->SQR3 = V_BATT ;
+	ADC1->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
+	ADC1->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
+								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) + (SAMPTIME<<27) ;
+	ADC->CCR = 0 ; //ADC_CCR_ADCPRE_0 ;		// Clock div 2
+
   // Enable the DMA channel here, DMA2 stream 1, channel 2
 	DMA2_Stream1->CR = DMA_SxCR_PL | DMA_SxCR_CHSEL_1 | DMA_SxCR_MSIZE_0 | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC ;
 	DMA2_Stream1->PAR = (uint32_t) &ADC3->DR ;
 	DMA2_Stream1->M0AR = (uint32_t) &AdcBuffer[BUFFERSIZE] ;
 	DMA2_Stream1->FCR = DMA_SxFCR_DMDIS | DMA_SxFCR_FTH_0 ;
+	
+	enableRtcBattery() ;
 }
 
 const uint16_t adcCommands[14] =
@@ -203,11 +229,13 @@ void read_adc()
 	// Start on chip ADC read
 	DMA2_Stream1->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	ADC3->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
+	ADC1->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
 	DMA2->LIFCR = DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1 |DMA_LIFCR_CTEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CFEIF1 ; // Write ones to clear bits
 	DMA2_Stream1->M0AR = (uint32_t) &AdcBuffer[BUFFERSIZE] ;
 	DMA2_Stream1->NDTR = 2 ;
 	DMA2_Stream1->CR |= DMA_SxCR_EN ;		// Enable DMA
 	ADC3->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
+	ADC1->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
 	 
   ADC_CS_LOW() ;
 	delay_01us(1) ;
@@ -249,7 +277,7 @@ void read_adc()
 		}
 		else
 		{
-			AnalogData[1] = AdcBuffer[1] ;
+			AnalogData[1] = 4095 - AdcBuffer[1] ;
 		}
 		AnalogData[2] = AdcBuffer[2] ;
 		AnalogData[3] = 4095 - AdcBuffer[3] ;
@@ -355,6 +383,10 @@ void read_adc()
 	}
 	AnalogData[11] = AdcBuffer[12] ;
 	AnalogData[13] = AdcBuffer[13] ;
+	if (ADC->CCR & ADC_CCR_VBATE )
+	{
+		VbattRtc = ADC1->DR ;
+	}
 }
 
 // For linking

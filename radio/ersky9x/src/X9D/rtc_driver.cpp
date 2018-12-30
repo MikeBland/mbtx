@@ -85,7 +85,7 @@ void rtcInit()
 	i = 0 ;
   while(RCC_GetFlagStatus(RCC_FLAG_LSERDY) == RESET)
 	{
-		if ( ++i > 1000000 )
+		if ( ++i > 2000000 )
 		{
 			return ;
 		}

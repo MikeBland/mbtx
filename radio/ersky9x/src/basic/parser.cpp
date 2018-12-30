@@ -20,6 +20,14 @@
 #include "frsky.h"
 #include "maintenance.h"
 
+#ifdef PCBSKY
+#include "AT91SAM3S4.h"                   
+#endif
+
+#if defined(PCBX9D) || defined(PCB9XT)
+#include "X9D/stm32f2xx.h"
+#endif
+
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 extern uint32_t isqrt32( uint32_t x ) ;
@@ -94,28 +102,25 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define IF   				1
 #define THEN 				2
 #define GOTO 				3
-#define EOL  				4
 #define FINISHED  	5
 #define GOSUB 			6
 #define RETURN  		7
 #define STOP 				8
 #define END					9
 #define LET						10
-#define REM	        	11
 #define LESSEQUAL   	12
 #define GREATEQUAL  	13
 #define IN_FUNCTION		14
 #define USER_FUNCTION	15
 #define FINISH				16
-#define DEFARRAY			17
-#define DEFINT				18
-#define DEFBYTE				19
 #define NGOTO					20
 #define WHILE					21
 #define ELSE					22
 #define ELSEIF				23
-#define DEFCONST			24
 #define FUNC					25
+
+// Missed out, 4, 11, 17, 18, 19, 24
+// Re-allocated to >63 as not put in code
 
 //#define FOR  					25
 //#define NEXT 					22
@@ -126,7 +131,6 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 //#define UNTIL					28
 
 //#define CONTINUE 31
-//#define BREAK	30
 //#define WAIT	18
 //#define TRACE	19
 
@@ -157,6 +161,15 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 //#define BITOR				63
 #define QMARK				63
 // UNARY_NOT ??
+
+// Special opcodes, not placed in code
+#define	BREAK				64
+#define REM	        65
+#define DEFARRAY		66
+#define DEFINT			67
+#define DEFBYTE			68
+#define DEFCONST		69
+#define EOL  				70
 
 				 
 // Internal Functions
@@ -201,6 +214,9 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define FCLOSE				39
 #define FWRITE				40
 #define BYTEMOVE			41
+#define ALERT					42
+#define RETURNVALUE		43
+#define RESETTELEMETRY 44
 
 // Assignment options:
 #define SETEQUALS			0
@@ -266,6 +282,8 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define SE_TOO_LARGE			10
 #define SE_DIMENSION			11
 #define SE_TOO_MANY_CALLS	12
+#define SE_NO_WHILE				13
+#define SE_STRING_LONG		14
 
 #define MAX_VARIABLES	2
 
@@ -274,6 +292,7 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 
 #define PARAM_TYPE_NUMBER		0
 #define PARAM_TYPE_STRING		1
+#define PARAM_TYPE_EITHER		2
 
 
 #ifdef QT
@@ -289,7 +308,9 @@ const char *ErrorText[] = {
  "Missing Function",
  "Too Large",
  "Dimension",
- "Too Many Nested Calls"
+ "Too Many Nested Calls",
+ "Missing while",
+ "String too long"
 } ;	
 #endif
 
@@ -322,7 +343,7 @@ const char *ErrorText[] = {
 // 0x40 Number in 16 bits
 
 // unused 0x41 - 0x47
-// unused 0x61, 0x62, 0x63, 0x69, 0x6A, 0x6B
+// unused 0x62, 0x63, 0x69, 0x6A, 0x6B
 
 // Possible Enhancement
 // 0x71-0x7F Could be for indirection
@@ -475,7 +496,7 @@ const struct commands Table[] =
 //  { "wait", WAIT},
 //  { "trace", TRACE},
 //  { "wend", WEND},
-//  { "break", BREAK},
+  { "break", BREAK},
 //  { "continue", CONTINUE},
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
@@ -529,6 +550,9 @@ const struct commands InternalFunctions[] =
 	{ "fclose", FCLOSE },
 #endif
 	{ "bytemove", BYTEMOVE },
+	{ "alert", ALERT },
+	{ "returnvalue", RETURNVALUE },
+	{ "resettelemetry", RESETTELEMETRY },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
   { "", 0 } /* mark end of table */
@@ -651,7 +675,7 @@ uint8_t CodeBuffer[200] ;
 #define PROGRAM_SIZE	22000
 #else
 #ifdef SMALL
-#define PROGRAM_SIZE	8000
+#define PROGRAM_SIZE	10300
 #else
 #define PROGRAM_SIZE	22000
 #endif
@@ -689,6 +713,7 @@ char InputLine[LINE_LENGTH] ;
 #ifdef	QT
 #define DATA_SIZE	60000
 uint8_t Data[DATA_SIZE] ;
+uint8_t ErrorReport[100] ;
 #endif
 
 #ifndef	QT
@@ -1195,6 +1220,10 @@ uint32_t scanForKeyword( char *dest )
 		}
     ProgPtr += 1 ;
 		*temp = 0 ;
+		if ( temp-Token > 254 )
+		{
+    	serror(SE_STRING_LONG) ;
+		}
 		Token[0] = temp - Token ;
 //    //printf( "QUOTE\n" );
     return( Token_type = QUOTE ) ;
@@ -1386,7 +1415,7 @@ uint8_t *appendSymbols( uint8_t *p )
 	r = &Program.Bytes[0] ;
 	j = 0 ;
 	if ( p < &Data[DATA_SIZE-9000] )
-	for ( i = 0 ; i < 1024 ; i += 1 )
+  for ( i = 0 ; i < 1280 ; i += 1 )
 	{
 		if ( j == 0 )
 		{
@@ -1479,6 +1508,7 @@ uint32_t parse( char *filename )
 {
 	uint32_t i ;
 	uint32_t retValue ;
+	ErrorReport[0] = '\0' ;
 	loadBasic( filename, BASIC_LOAD_ALONE ) ;
 	for ( i = 0 ; i < 300 ; i += 1 )
 	{
@@ -1641,6 +1671,10 @@ uint32_t loadBasic( char *fileName, uint32_t type )
 	{
     cpystr( (uint8_t *)Token, (uint8_t *)"Event" ) ;
     addSymbol( SYM_VARIABLE, SYM_VAR_INT, CurrentVariableIndex++, 0 ) ;
+		
+    cpystr( (uint8_t *)Token, (uint8_t *)"Size" ) ;
+    addSymbol( SYM_VARIABLE, SYM_VAR_INT, CurrentVariableIndex++, 0 ) ;
+		
 		BasicState = BASIC_LOADING ;
 #ifdef QT	
 		Data[0] = 0 ;
@@ -1748,6 +1782,7 @@ uint32_t partLoadBasic()
 	uint32_t lineNumberPosition ;
 
 	cPosition = CurrentPosition ;
+	lineNumberPosition = cPosition ;
 #ifdef QT	
 	p = QtPtr ;
 #endif
@@ -1779,6 +1814,10 @@ uint32_t partLoadBasic()
     q = (uint8_t *)f_gets( InputLine, LINE_LENGTH, &MultiBasicFile ) ;
 #endif
 		LineNumber += 1 ;
+		if ( lineNumberPosition == cPosition - 2 )
+		{
+			cPosition -= 2 ; // Remove line number if whole line is a REM
+		}
 		lineNumberPosition = cPosition ;
 		Program.Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
 		Program.Bytes[cPosition++] = LineNumber >> 7 ;
@@ -2029,7 +2068,7 @@ uint32_t partLoadBasic()
 								Program.Bytes[cPosition++] = GOTO ;
 								Program.Bytes[cPosition++] = CodeControl[ControlIndex].first ;
                 Program.Bytes[cPosition++] = CodeControl[ControlIndex].first >> 8 ;
-								setJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
+								setLinkedJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
 							}
 							else if ( CodeControl[ControlIndex].type == TYPE_IF )
 							{
@@ -2044,16 +2083,39 @@ uint32_t partLoadBasic()
 							{
 								cPosition -= 2 ;		// Remove line number
 								setLinkedJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
-//								setJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
 							}
 							Tok = 0 ;
 						}
-//						else
-//						{
-//							serror( SE_SYNTAX ) ;
-//						}
 						continue ;
 					}
+					else if ( Tok == BREAK )
+					{
+						uint8_t copyIndex ;
+						copyIndex = ControlIndex ;
+						while ( ControlIndex )
+						{
+							ControlIndex -= 1 ;
+							if ( CodeControl[ControlIndex].type == TYPE_WHILE )
+							{
+								uint32_t index ;
+								Program.Bytes[cPosition++] = GOTO ;
+            	  index = CodeControl[ControlIndex].middle ;
+								CodeControl[ControlIndex].middle = cPosition ;
+								Program.Bytes[cPosition++] = index ;
+            	  Program.Bytes[cPosition++] = index >> 8 ;
+							}
+							else
+							{
+								if( ControlIndex == 0 )
+								{
+									serror(SE_NO_WHILE) ;
+								}
+							}
+						}
+						ControlIndex = copyIndex ;
+						Tok = 0 ;
+					}
+
 					if ( ( Tok != EOL ) && ( Tok != FINISHED ) )
 					{
 //#ifdef QT
@@ -2429,6 +2491,11 @@ uint32_t partLoadBasic()
 								Program.Bytes[cPosition++] = c ;
 							} while ( --count ) ;
 						}	
+						if ( *ProgPtr == '[' )
+						{
+							Program.Bytes[cPosition++] = '[' ;
+							ProgPtr += 1 ;
+						}
 						break ;
 						case FUNCTION :
 						{
@@ -2480,6 +2547,7 @@ uint32_t partLoadBasic()
 					sprintf( InputLine, "Error %d at line %d\n", ParseError, ParseErrorLine ) ;
 					p = cpystr( p, (uint8_t *)InputLine ) ;
           p = cpystr( p, (uint8_t *)ErrorText[ParseError-1] ) ;
+					cpystr( ErrorReport, (uint8_t *)InputLine ) ;
 #else
 					setErrorText( ParseError, ParseErrorLine ) ;
 #endif
@@ -2647,6 +2715,7 @@ void basicLoadModelScripts()
 	LoadingIndex = 0 ;
 	BasicState = BASIC_IDLE ;	// Terminate existing script(s)
 #ifndef QT
+//	if ( !SdMounted )
 	if ( !sd_card_ready() )
 	{
 		LoadingNeeded = 1 ;
@@ -2934,6 +3003,8 @@ int32_t getInteger( uint8_t opcode )
 		value |= *execPtr++ << 16 ;	// Index to dest variable
 		value |= *execPtr++ << 24 ;	// Index to dest variable
 	}
+
+
 	RunTime->ExecProgPtr = execPtr ;
 	return value ;
 }
@@ -3290,7 +3361,6 @@ void level5( int32_t *result )
   uint8_t op ;
 	uint8_t opcode ;
 
-  //printf( "in L5: token is '%c'...\n", *token );
   op = 0 ;
 	opcode = *RunTime->ExecProgPtr ;
 
@@ -3300,7 +3370,6 @@ void level5( int32_t *result )
     RunTime->ExecProgPtr += 1 ;
   }
   level6( result ) ; 
-  //printf( "L5: checking for unary op\n" );
   if(op == '-' )
 	{
 		*result = - (*result) ;
@@ -3313,17 +3382,12 @@ void level4( int32_t *result )
   uint8_t opcode ;
   int32_t hold ;
 
-  //printf( "in L4...\n" );
   level5( result ) ;
-  //printf( "L4: checking for */%\n" );
 	
 	opcode = *RunTime->ExecProgPtr++ ;
 
   while( opcode == '*' || opcode == '/' || opcode == '%')
 	{
-    //printf( "L4: token='%c'\n", op );
-//    get_token(); 
-    //printf( "L4: calling L5...\n" );
     level5( &hold ); 
     arith( opcode, result, &hold ) ;
 		opcode = *RunTime->ExecProgPtr++ ;
@@ -3521,6 +3585,34 @@ void exec_return()
 	}
 }
 
+uint32_t stringSubscript( uint32_t len )
+{
+	uint32_t t = 0 ;
+	if ( *RunTime->ExecProgPtr == '[' )
+	{
+    RunTime->ExecProgPtr += 1 ;
+		t = expression() ;
+		if ( t >= len )
+		{
+			runError( SE_DIMENSION ) ;
+			return 0 ;
+		}
+		if ( *RunTime->ExecProgPtr != ']' )
+		{
+			runError( SE_SYNTAX ) ;
+			return 0 ;
+		}
+    RunTime->ExecProgPtr += 1 ;
+	}
+	return t ;
+}
+
+
+// Input type:
+// 0 - number
+// 1 - string/byte array address
+// 2 - string/bytearray/number
+
 // Return values
 // 0 error
 // 1 number
@@ -3529,14 +3621,19 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 {
 	uint8_t opcode ;
 
-	if ( type )
+	if ( type != PARAM_TYPE_NUMBER )
 	{
 		// string
-		opcode = *RunTime->ExecProgPtr++ ;
+		opcode = *RunTime->ExecProgPtr ;
 		if ( opcode == 0x70 )	// Quoted string
 		{
-			param->cpointer = RunTime->ExecProgPtr + 1 ;
-      RunTime->ExecProgPtr += *RunTime->ExecProgPtr + 1 ;	// Skip the string
+			uint32_t len ;
+			RunTime->ExecProgPtr += 1 ;
+			len = *RunTime->ExecProgPtr++ ;
+			param->cpointer = RunTime->ExecProgPtr ;
+      RunTime->ExecProgPtr += len ;	// Skip the string
+			uint32_t t = stringSubscript( len ) ;
+			param->cpointer += t ;
 			if ( *RunTime->ExecProgPtr == ',' )
 			{
 				RunTime->ExecProgPtr += 1 ;
@@ -3546,6 +3643,7 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 		else if( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 		{
 			struct byteAddress baddr ;
+			RunTime->ExecProgPtr += 1 ;
 			if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
 			{
 				return 0 ;
@@ -3577,11 +3675,18 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 		}
 		else
 		{
-			runError( SE_SYNTAX ) ;
-			return 0 ;
+			if ( type == PARAM_TYPE_EITHER )
+			{
+				type = PARAM_TYPE_NUMBER ;
+			}
+			else
+			{
+				runError( SE_SYNTAX ) ;
+				return 0 ;
+			}
 		}
 	}
-	else
+	if ( type == PARAM_TYPE_NUMBER )
 	{
 		param->var = expression() ;
 		if ( RunTime->RunError )
@@ -3624,13 +3729,13 @@ uint32_t get_optional_numeric_parameter( union t_parameter *param )
 	return result ;
 }
 
-void eatCloseBracket()
-{
-	if ( *RunTime->ExecProgPtr++ != ')' )
-	{
-		runError( SE_NO_BRACKET ) ;
-	}
-}
+//void eatCloseBracket()
+//{
+//	if ( *RunTime->ExecProgPtr++ != ')' )
+//	{
+//		runError( SE_NO_BRACKET ) ;
+//	}
+//}
 					 
 void exec_drawnumber()
 {
@@ -3638,7 +3743,7 @@ void exec_drawnumber()
 	int32_t y ;
 	int32_t value ;
 	uint32_t result ;
-	uint8_t attr ;
+	uint16_t attr ;
 	uint8_t width ;
 	union t_parameter params[3] ;
 
@@ -3671,7 +3776,7 @@ void exec_drawnumber()
 //				lcd_outdezAtt(x, y, value, attr ) ;
 		}
 #endif
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -3698,7 +3803,7 @@ int32_t exec_power()
 			answer *= value ;
 			power -= 1 ;
 		}
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 	return answer ;
 }
@@ -3722,7 +3827,7 @@ int32_t exec_bitField()
 		// now pick out size 
 		uint32_t mask = ( 1 << (size) ) - 1 ;
 		value &= mask ;
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 	return value ;
 }
@@ -3757,7 +3862,7 @@ void exec_drawtimer()
 			putsTime( x, y, value, attr, attr ) ;
 		}
 #endif
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -3782,7 +3887,7 @@ void exec_drawpoint()
 		  lcd_plot(x1, y1 ) ;
 		}
 #endif
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -3837,7 +3942,7 @@ extern uint8_t plotType ;
 			}
 			plotType = oldPlotType ;
 		}
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -3879,7 +3984,7 @@ void exec_drawrect()
 		{
 		  lcd_hbar( x, y, w, h, percent ) ;
 		}
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -3890,31 +3995,37 @@ void exec_drawtext()
 	uint8_t *p ;
 	uint32_t result ;
 	uint8_t attr ;
-	union t_parameter param ;
+	union t_parameter params[2] ;
 	uint32_t length = 0 ;
 
 	// get 3 (or 4 or 5) parameters
 	attr = 0 ;
-	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+//	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+	result = get_numeric_parameters( params, 2 ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
-		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
-		if ( result == 1 )
-		{
-			y = param.var ;
-			result = get_parameter( &param, PARAM_TYPE_STRING ) ;
+		x = params[0].var ;
+		y = params[1].var ;
+
+//	if ( result == 1 )
+//	{
+//		x = param.var ;
+//		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+//		if ( result == 1 )
+//		{
+//			y = param.var ;
+			result = get_parameter( &params[0], PARAM_TYPE_STRING ) ;
       if ( result == 2 )
 			{
-				p = param.cpointer ;
-				result = get_optional_numeric_parameter( &param ) ;
+				p = params[0].cpointer ;
+				result = get_optional_numeric_parameter( &params[0] ) ;
 				if ( result == 1 )
 				{
-					attr = param.var ;
-					result = get_optional_numeric_parameter( &param ) ;
+					attr = params[0].var ;
+					result = get_optional_numeric_parameter( &params[0] ) ;
 					if ( result == 1 )
 					{
-						length = param.var ;
+						length = params[0].var ;
 					}
 				}
 #ifdef QT
@@ -3939,9 +4050,9 @@ void exec_drawtext()
 					}
 				}
 #endif
-				eatCloseBracket() ;
+//				eatCloseBracket() ;
 			}
-		}
+//		}
 	}
 }
 
@@ -3953,22 +4064,20 @@ void exec_drawbitmap()
 	int32_t y ;
 	uint8_t *p ;
 	uint32_t result ;
-	union t_parameter param ;
+	union t_parameter params[2] ;
 	uint32_t w ;
 
 	// get 3 (or 4) parameters
-	result = get_parameter( &param, 0 ) ;
+	result = get_numeric_parameters( params, 2 ) ;
+//	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
-		result = get_parameter( &param, 0 ) ;
-		if ( result == 1 )
-		{
-			y = param.var ;
-			result = get_parameter( &param, 1 ) ;
+		x = params[0].var ;
+		y = params[1].var ;
+			result = get_parameter( &params[0], PARAM_TYPE_STRING ) ;
       if ( result == 2 )
 			{
-				p = param.cpointer ;
+				p = params[0].cpointer ;
 				w = *p++ ;
 #ifndef QT
 				if ( ScriptFlags & SCRIPT_LCD_OK )
@@ -3976,9 +4085,9 @@ void exec_drawbitmap()
 				{
 					lcd_bitmap( x, y, p, w, 1, 0 ) ;
 				}
-				eatCloseBracket() ;
+//				eatCloseBracket() ;
 			}
-		}
+//		}
 	}
 }
 
@@ -3995,7 +4104,7 @@ void exec_drawclear()
 		lcd_clear() ;
 	}
 #endif
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 }
 
 
@@ -4005,7 +4114,7 @@ void exec_playnumber()
 {
 	int32_t number ;
 	int32_t unit ;
-	uint8_t att ;
+	uint8_t decimals ;
 	uint32_t result ;
 	union t_parameter params[3] ;
 
@@ -4015,7 +4124,7 @@ void exec_playnumber()
 	{
 		number = params[0].var ;
 		unit = params[1].var ;
-		att = params[2].var ;
+		decimals = params[2].var ;
 #ifdef QT
 //    RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
 #else
@@ -4027,9 +4136,9 @@ void exec_playnumber()
 		{
 			unit = 0 ;
 		}
-		voice_numeric( number, att, unit ) ;
+		voice_numeric( number, decimals, unit ) ;
 #endif
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 }
 
@@ -4072,7 +4181,7 @@ int32_t exec_settelitem()
 	number = 0 ;
 	if ( *RunTime->ExecProgPtr == 0x70 )
 	{
-		result = get_parameter( &param, 1 ) ;
+		result = get_parameter( &param, PARAM_TYPE_STRING ) ;
 		if ( result == 2 )
 		{
 			p = param.cpointer ;
@@ -4081,7 +4190,7 @@ int32_t exec_settelitem()
 #else
 			number = basicFindValueIndexByName( (char *)p ) ;
 #endif
-			result = get_parameter( &param, 0 ) ;
+			result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 			if ( result == 1 )
 			{
 				value = param.var ;
@@ -4168,7 +4277,7 @@ int32_t exec_getvalue(uint32_t type)
 	number = 0 ;
 	if ( *RunTime->ExecProgPtr == 0x70 )
 	{
-		result = get_parameter( &param, 1 ) ;
+		result = get_parameter( &param, PARAM_TYPE_STRING ) ;
 		if ( result == 2 )
 		{
 			p = param.cpointer ;
@@ -4181,7 +4290,7 @@ int32_t exec_getvalue(uint32_t type)
 	} 
 	else
 	{
-		result = get_parameter( &param, 0 ) ;
+		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 		if ( result == 1 )
 		{
 			number = param.var ;
@@ -4194,18 +4303,78 @@ int32_t exec_getvalue(uint32_t type)
 #else
 		if ( number >= 0 )
 		{
-			result = number ;
-		  number = getValue(result) ; // ignored for GPS, DATETIME, and CELLS
-  		if ( (result == CHOUT_BASE+NUM_SKYCHNOUT) || (result == CHOUT_BASE+NUM_SKYCHNOUT+1) ) // A1 or A2
+#ifndef SMALL
+			if ( number >= 1000 )
 			{
-				number = scale_telem_value( number, result - (CHOUT_BASE+NUM_SKYCHNOUT), 0 ) ;
-			}
-			if ( type == 0 )
-			{
-  		  if ( (result < CHOUT_BASE+NUM_SKYCHNOUT) || ( ( result >= EXTRA_POTS_START ) && (result < EXTRA_POTS_START + 8) ) )
+				number -= 1000 ;
+				result = 0 ;
+#if defined(at91sam3s4) || defined(at91sam3s8)
+extern uint32_t IdlePercent ;
+extern uint32_t MixerRate ;
+				switch ( number )
 				{
-					number *= 100 ;
-					number /= RESX ;
+					case 0 :
+						result = PIOA->PIO_PDSR ;
+					break ;
+					case 1 :
+						result = PIOB->PIO_PDSR ;
+					break ;
+					case 2 :
+						result = PIOC->PIO_PDSR ;
+					break ;
+					case 20 :
+						result = MixerRate ;
+					break ;
+					case 21 :
+						result = IdlePercent ;
+					break ;
+				}
+#endif
+#if defined(stm32f205) || defined(STM32F429_439xx)
+extern uint32_t IdlePercent ;
+extern uint32_t MixerRate ;
+				switch ( number )
+				{
+					case 0 :
+						result = GPIOA->IDR ;
+					break ;
+					case 1 :
+						result = GPIOB->IDR ;
+					break ;
+					case 2 :
+						result = GPIOC->IDR ;
+					break ;
+					case 3 :
+						result = GPIOD->IDR ;
+					break ;
+					case 4 :
+						result = GPIOE->IDR ;
+					break ;
+					case 20 :
+						result = MixerRate ;
+					break ;
+					case 21 :
+						result = IdlePercent ;
+					break ;
+				}
+#endif
+			}
+			else
+#endif //SMALL
+			{
+				result = number ;
+		  	number = getValue(result) ; // ignored for GPS, DATETIME, and CELLS
+  			if ( (result == CHOUT_BASE+NUM_SKYCHNOUT) || (result == CHOUT_BASE+NUM_SKYCHNOUT+1) ) // A1 or A2
+				{
+					number = scale_telem_value( number, result - (CHOUT_BASE+NUM_SKYCHNOUT), 0 ) ;
+				}
+				if ( type == 0 )
+				{
+  			  if ( (result < CHOUT_BASE+NUM_SKYCHNOUT) || ( ( result >= EXTRA_POTS_START ) && (result < EXTRA_POTS_START + 8) ) )
+					{
+						number *= 100 ;
+						number /= RESX ;
+					}
 				}
 			}
 		}
@@ -4219,13 +4388,13 @@ int32_t exec_getvalue(uint32_t type)
 		}
 #endif
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return number ;
 }
 
 static int32_t exec_idletime()
 {
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 #ifdef QT			
 	return 50 ;
 #else
@@ -4239,12 +4408,12 @@ int32_t getSingleNumericParameter()
 	uint32_t result ;
 	union t_parameter param ;
 
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result != 1 )
 	{
 		runError( SE_SYNTAX ) ;
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return param.var ;
 }
 
@@ -4277,7 +4446,7 @@ static int32_t exec_gettime()
 		}
 		return 0 ;
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 #ifdef QT
 	return g_tmr10ms ;
 #else
@@ -4288,7 +4457,7 @@ extern volatile uint32_t get_ltmr10ms() ;
 
 static int32_t exec_getlastpos()
 {
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 #ifdef QT			
   return 20 ;
 #else
@@ -4298,7 +4467,7 @@ static int32_t exec_getlastpos()
 
 static int32_t exec_sysflags()
 {
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return ScriptFlags ;
 }
 
@@ -4345,13 +4514,14 @@ int32_t exec_sportsend()
 {
 	static uint8_t sportPacket[8] ;
 	uint32_t result = 0 ;
-	union t_parameter param ;
+	union t_parameter params[3] ;
+//	union t_parameter param ;
 	int32_t x ;
 
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &params[0], PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
 	{
-		x = param.var ;
+		x = params[0].var ;
 		if ( x == 0xFF )
 		{
 #ifdef QT
@@ -4365,34 +4535,56 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 		else
 		{
 			sportPacket[7] = SportIds[x] ;
-			result = get_parameter( &param, 0 ) ;
+			result = get_numeric_parameters( params, 2 ) ;
+	    sportPacket[0] = params[0].var ;
+			x = params[1].var ;
+			sportPacket[1] = x ;
+			sportPacket[2] = x >> 8 ;
+			result = get_parameter( &params[0], PARAM_TYPE_EITHER ) ;
 			if ( result == 1 )
 			{
-		    sportPacket[0] = param.var ;
-				result = get_parameter( &param, 0 ) ;
-	      if ( result == 1 )
-				{
-					x = param.var ;
-					sportPacket[1] = x ;
-					sportPacket[2] = x >> 8 ;
-					result = get_parameter( &param, 0 ) ;
-		      if ( result == 1 )
-					{
-						result = param.var ;
-						sportPacket[3] = result ;
-						sportPacket[4] = result >> 8 ;
-						sportPacket[5] = result >> 16 ;
-						sportPacket[6] = result >> 24 ;
+				result = params[0].var ;
+				sportPacket[3] = result ;
+				sportPacket[4] = result >> 8 ;
+				sportPacket[5] = result >> 16 ;
+				sportPacket[6] = result >> 24 ;
+			}
+			else if ( result == 2 )
+			{
+				sportPacket[3] = params[0].cpointer[0] ;
+				sportPacket[4] = params[0].cpointer[1] ;
+				sportPacket[5] = params[0].cpointer[2] ;
+				sportPacket[6] = params[0].cpointer[3] ;
+			}
+
+//			result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+//			if ( result == 1 )
+//			{
+//		    sportPacket[0] = param.var ;
+//				result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+//	      if ( result == 1 )
+//				{
+//					x = param.var ;
+//					sportPacket[1] = x ;
+//					sportPacket[2] = x >> 8 ;
+//					result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
+//		      if ( result == 1 )
+//					{
+//						result = param.var ;
+//						sportPacket[3] = result ;
+//						sportPacket[4] = result >> 8 ;
+//						sportPacket[5] = result >> 16 ;
+//						sportPacket[6] = result >> 24 ;
 #ifdef QT
 //            RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
             result = 0 ;
 #else
             result = sportPacketSend( sportPacket, sportPacket[7] ) ;
 #endif	
-						eatCloseBracket() ;
-          }
-        }
-      }
+//						eatCloseBracket() ;
+//          }
+//        }
+//      }
     }
   }
 	return result ;
@@ -4424,10 +4616,10 @@ int32_t exec_sportreceive()
 //        	RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportReceive()\n" ) ;
           result = 1 ;
 #else
-					if ( fifo128Space( &Lua_fifo ) <= ( 127 - 8 ) )
+					if ( fifo128Space( &Script_fifo ) <= ( 127 - 8 ) )
 					{
 						uint32_t value ;
-						value = get_fifo128( &Lua_fifo ) & 0x1F ;
+						value = get_fifo128( &Script_fifo ) & 0x1F ;
 						if ( type[0] == 1 )
 						{
 							*param[0].bpointer = value ;
@@ -4436,7 +4628,7 @@ int32_t exec_sportreceive()
 						{
 							*param[0].ipointer = value ;
 						}
-						value = get_fifo128( &Lua_fifo ) ;
+						value = get_fifo128( &Script_fifo ) ;
 						if ( type[1] == 1 )
 						{
 							*param[1].bpointer = value ;
@@ -4445,8 +4637,8 @@ int32_t exec_sportreceive()
 						{
 							*param[1].ipointer = value ;
 						}
-						value = get_fifo128( &Lua_fifo ) ;
-						value |= get_fifo128( &Lua_fifo ) << 8 ;
+						value = get_fifo128( &Script_fifo ) ;
+						value |= get_fifo128( &Script_fifo ) << 8 ;
 						if ( type[2] == 1 )
 						{
 							*param[2].bpointer = value ;
@@ -4455,10 +4647,10 @@ int32_t exec_sportreceive()
 						{
 							*param[2].ipointer = value ;
 						}
-						value = get_fifo128( &Lua_fifo ) ;
-						value |= get_fifo128( &Lua_fifo ) << 8 ;
-						value |= get_fifo128( &Lua_fifo ) << 16 ;
-						value |= get_fifo128( &Lua_fifo ) << 24 ;
+						value = get_fifo128( &Script_fifo ) ;
+						value |= get_fifo128( &Script_fifo ) << 8 ;
+						value |= get_fifo128( &Script_fifo ) << 16 ;
+						value |= get_fifo128( &Script_fifo ) << 24 ;
 						if ( type[3] == 1 )
 						{
 							*param[3].bpointer = value ;
@@ -4473,7 +4665,7 @@ int32_t exec_sportreceive()
 					{
           	result = 0 ;
 					}
-					eatCloseBracket() ;
+//					eatCloseBracket() ;
 #endif	
 				}
 			}
@@ -4504,13 +4696,13 @@ int32_t exec_crossfirereceive()
 #ifdef QT
         value = 0 ;
 #else
-				value = peek_fifo128( &Lua_fifo ) ;
+				value = peek_fifo128( &Script_fifo ) ;
 #endif
 				if ( value != -1 )
 				{
 					length = value ;	// Includes length byte
 #ifndef QT
-					if ( fifo128Space( &Lua_fifo ) <= (uint32_t)(127 - length ) )
+					if ( fifo128Space( &Script_fifo ) <= (uint32_t)(127 - length ) )
 					{
 						// OK to read packet
 						// values to return : length, command = byte after length, data into array if possible
@@ -4519,7 +4711,7 @@ int32_t exec_crossfirereceive()
 						tidy = 0 ;
 						if ( result )
 						{
-							value = get_fifo128( &Lua_fifo ) ;
+							value = get_fifo128( &Script_fifo ) ;
 							if ( type[0] == 1 )
 							{
 								*param[0].bpointer = length ;
@@ -4528,7 +4720,7 @@ int32_t exec_crossfirereceive()
 							{
 								*param[0].ipointer = length ;
 							}
-							value = get_fifo128( &Lua_fifo ) ;
+							value = get_fifo128( &Script_fifo ) ;
 							if ( type[1] == 1 )
 							{
 								*param[1].bpointer = value ;
@@ -4539,7 +4731,7 @@ int32_t exec_crossfirereceive()
 							}
 							for ( ; length ; length -= 1 )
 							{
-								*param[2].bpointer++ = get_fifo128( &Lua_fifo ) ;
+								*param[2].bpointer++ = get_fifo128( &Script_fifo ) ;
 							}
 							result = 1 ;
 						}
@@ -4551,7 +4743,7 @@ int32_t exec_crossfirereceive()
 					result = 0 ;
 					getParamVarAddress( &param[2], 0 ) ;
 				}
-				eatCloseBracket() ;
+//				eatCloseBracket() ;
 			}
 		}
 	}
@@ -4568,7 +4760,7 @@ int32_t exec_crossfiresend()
 	int32_t command ;
 	uint32_t length ;
 
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
 	{
 		command = param.var ;
@@ -4583,7 +4775,7 @@ int32_t exec_crossfiresend()
 		}
 		else
 		{
-			result = get_parameter( &param, 0 ) ;
+			result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 			if ( result == 1 )
 			{
 				length = param.var ;
@@ -4606,7 +4798,7 @@ int32_t exec_crossfiresend()
 			{
 				runError( SE_SYNTAX ) ;
 			}
-			eatCloseBracket() ;
+//			eatCloseBracket() ;
 		}
 	}
 	else
@@ -4621,13 +4813,12 @@ int32_t exec_crossfiresend()
 int32_t  exec_btreceive()
 {
 	uint32_t result = 0 ;
-#ifdef BLUETOOTH
 	union t_parameter param ;
   uint32_t length ;
   uint32_t i ;
 	int32_t x ;
 
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result )
 	{
 		length = param.var ;
@@ -4637,23 +4828,19 @@ int32_t  exec_btreceive()
 #ifdef QT
 			result = 0 ;
 #else
-			struct t_fifo128 *pfifo = 0 ;
-			if ( g_model.BTfunction == BT_SCRIPT )
-			{
-				pfifo = &BtRx_fifo ;
-			}
-			else
-			{
-				if ( g_model.com2Function == COM2_FUNC_SCRIPT )
-				{
-					pfifo = &Com2_fifo ;
-				}
-			}
-			if ( pfifo )
+#ifdef BLUETOOTH
+			if ( ( g_model.BTfunction == BT_SCRIPT ) || ( g_model.com2Function == COM2_FUNC_SCRIPT ) )
 			{
 				for ( i = 0 ; i < length ; i += 1 )
 				{
-					x = get_fifo128( pfifo ) ;
+					if ( g_model.BTfunction == BT_SCRIPT )
+					{
+						x = rxBtuart() ;
+					}
+					else
+					{
+						x = get_fifo128( &Com2_fifo ) ;
+					}
 					if ( x != -1 )
 					{
 						*param.bpointer++ = x ;
@@ -4665,6 +4852,24 @@ int32_t  exec_btreceive()
 				}
 				result = i ;
 			}
+#else
+			if ( g_model.com2Function == COM2_FUNC_SCRIPT )
+			{
+				for ( i = 0 ; i < length ; i += 1 )
+				{
+					x = get_fifo128( &Com2_fifo ) ;
+					if ( x != -1 )
+					{
+						*param.bpointer++ = x ;
+					}
+					else
+					{
+						break ;
+					}
+				}
+				result = i ;
+			}
+#endif
 			else
 			{
 				result = 0 ;
@@ -4672,7 +4877,6 @@ int32_t  exec_btreceive()
 #endif
 		}
 	}
-#endif
 	return result ;
 }
 
@@ -4684,7 +4888,7 @@ int32_t exec_btsend()
 	union t_parameter param ;
 	uint32_t length ;
 
-	result = get_parameter( &param, 0 ) ;
+	result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
 	{
 		length = param.var ;
@@ -4785,7 +4989,7 @@ void exec_directory()
 				fc = &BasicFileControl ;
 				setupFileNames( (TCHAR *)dir, fc, (char *) ext ) ;
 			}
-			eatCloseBracket() ;
+//			eatCloseBracket() ;
 		}
 	}
 	killEvents(RunTime->Vars.Variables[0]) ;
@@ -4834,7 +5038,7 @@ int32_t exec_filelist()
 		{
 			runError( SE_SYNTAX ) ;
 		}
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 	else
 	{
@@ -4905,7 +5109,7 @@ int32_t exec_fopen()
 			}
 		}
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return retValue ;
 }
 
@@ -4942,7 +5146,7 @@ int32_t exec_fread()
 			}
 		}
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return retValue ;
 }
 
@@ -4979,7 +5183,7 @@ int32_t exec_fwrite()
 			}
 		}
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return retValue ;
 }
 
@@ -4991,11 +5195,25 @@ static void exec_fclose()
 	{
 		f_close( &MultiBasicFile ) ;
 	}
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 	return ;
 }
 
 #endif	// FILE_SUPPORT
+
+int32_t exec_returnvalue()
+{
+	return RunTime->FunctionReturnValue ; ;
+}
+
+void exec_resettelemetry()
+{
+	int32_t value ;
+	value = getSingleNumericParameter() ;
+#ifndef QT
+  resetTelemetry( value ) ;
+#endif
+}
 
 extern uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event ) ;
 extern struct t_popupData PopupData ;
@@ -5016,15 +5234,15 @@ int32_t exec_popup()
 	uint8_t width ;
 	union t_parameter param ;
 			
-	result = get_parameter( &param, 1 ) ;
+	result = get_parameter( &param, PARAM_TYPE_STRING ) ;
   if ( result == 2 )
 	{
     list = (char *)param.cpointer ;
-		result = get_parameter( &param, 0 ) ;
+		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 		if ( result == 1 )
 		{
 			mask = param.var ;
-			result = get_parameter( &param, 0 ) ;
+			result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 			if ( result == 1 )
 			{
         width = param.var ;
@@ -5038,7 +5256,7 @@ int32_t exec_popup()
 					PopupData.PopupIdx = 0 ;
 				}
 				result = doPopup( list, mask, width, RunTime->Vars.Variables[0] ) ;
-				eatCloseBracket() ;
+//				eatCloseBracket() ;
 				if ( result )
 				{
 					if ( result == POPUP_SELECT )
@@ -5106,11 +5324,17 @@ int32_t exec_strToArray()
 		if ( opcode == 0x70 )	// Quoted string
 		{
 			// Now copy the string
+			uint8_t *ptr ;
 			uint32_t length = *RunTime->ExecProgPtr++ ;
+			ptr = RunTime->ExecProgPtr ;			// Point to string
+      RunTime->ExecProgPtr += length ;	// Skip the string
+			uint32_t t = stringSubscript( length ) ;
+			ptr += t ;
+			length -= t ;
 			while ( length-- )
 			{
 				uint8_t c ;
-				c = *RunTime->ExecProgPtr++ ;
+				c = *ptr++ ;
 				if ( value < baddr.dimension )
 				{
 					RunTime->ByteArrayStart[val16 + value] = c ;
@@ -5123,7 +5347,7 @@ int32_t exec_strToArray()
 					break ;
 				}
 			}
-			eatCloseBracket() ;
+//			eatCloseBracket() ;
 		}
 		else
 		{
@@ -5301,7 +5525,7 @@ int32_t exec_bytemove()
 						break ;
 					}
 				}
-				eatCloseBracket() ;
+//				eatCloseBracket() ;
 			}
 		}
 		else
@@ -5317,6 +5541,34 @@ int32_t exec_bytemove()
 	}
 	return sent ;
 }
+
+void exec_alert()
+{
+	uint32_t result ;
+	union t_parameter param[2] ;
+#ifndef QT
+  uint32_t type = ALERT_TYPE ;
+#endif
+  result = get_parameter( &param[0], PARAM_TYPE_STRING ) ;
+	if ( result == 2 )
+	{
+		result = get_optional_numeric_parameter( &param[1] ) ;
+		if ( result == 1 )
+		{
+#ifndef QT
+      if ( param[1].var )
+			{
+				type = MESS_TYPE ;
+			}
+#endif
+    }
+#ifndef QT
+    AlertType = type ;
+		AlertMessage = (char *)param[0].cpointer ;
+#endif
+	}
+}
+
 
 void exec_systemStrToArray()
 {
@@ -5354,20 +5606,21 @@ void exec_systemStrToArray()
 //			return ;
 //		}
 		// Now we need the index
-		if ( *RunTime->ExecProgPtr != ',' )
-		{
-			runError( SE_SYNTAX ) ;
-			return ;
-		}
-		RunTime->ExecProgPtr += 1 ;
+		
+//		if ( *RunTime->ExecProgPtr != ',' )
+//		{
+//			runError( SE_SYNTAX ) ;
+//			return ;
+//		}
+//		RunTime->ExecProgPtr += 1 ;
 
-		result = get_parameter( &param, 0 ) ;
+		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 		if ( result == 1 )
 		{
 			uint8_t *p = 0 ;
 			uint32_t length = 0 ;
 
-			eatCloseBracket() ;
+//			eatCloseBracket() ;
 			// Find the string
 			switch ( param.var )
 			{
@@ -5455,7 +5708,7 @@ int32_t exec_getSwitch()
 	uint8_t *p ;
 
 	number = -1 ;
-	result = get_parameter( &param, 1 ) ;
+	result = get_parameter( &param, PARAM_TYPE_STRING ) ;
 	if ( result == 2 )
 	{
 		p = param.cpointer ;
@@ -5473,7 +5726,7 @@ int32_t exec_getSwitch()
 			number = -1 ;
 		}
 #endif
-		eatCloseBracket() ;
+//		eatCloseBracket() ;
 	}
 	return number ;
 }
@@ -5487,11 +5740,11 @@ void exec_setSwitch()
 	union t_parameter param ;
 	uint8_t *p ;
 
-	result = get_parameter( &param, 1 ) ;
+	result = get_parameter( &param, PARAM_TYPE_STRING ) ;
 	if ( result == 2 )
 	{
 		p = param.cpointer ;
-		result = get_parameter( &param, 0 ) ;
+		result = get_parameter( &param, PARAM_TYPE_NUMBER ) ;
 		if ( result == 1 )
 		{
 #ifdef QT			
@@ -5529,7 +5782,7 @@ void exec_playFile()
   char name[10] ;
 #endif
 
-	result = get_parameter( &param, 1 ) ;
+	result = get_parameter( &param, PARAM_TYPE_STRING ) ;
 	p = param.cpointer ;
 	if ( result == 2 )
 	{
@@ -5555,7 +5808,7 @@ void exec_playFile()
 		}
 #endif
   }
-	eatCloseBracket() ;
+//	eatCloseBracket() ;
 }
 
 
@@ -5702,6 +5955,10 @@ int32_t execInFunction()
 		case BYTEMOVE :
 			result = exec_bytemove() ;
 		break ;
+		
+		case ALERT :
+ 			exec_alert() ;
+		break ;
 
 		case GETSWITCH :
 			result = exec_getSwitch() ;
@@ -5768,6 +6025,14 @@ int32_t execInFunction()
 			exec_fclose() ;
 		break ;
 #endif
+
+		case RETURNVALUE :
+			result = exec_returnvalue() ;
+		break ;
+
+		case RESETTELEMETRY :
+			exec_resettelemetry() ;
+		break ;
 		
 		case POPUP :
 			result = exec_popup() ;
@@ -5784,6 +6049,10 @@ int32_t execInFunction()
 		default :
 			runError( SE_NO_FUNCTION ) ;
 		break ;
+	}
+	if ( *RunTime->ExecProgPtr++ != ')' )
+	{
+		runError( SE_NO_BRACKET ) ;
 	}
 	return result ;
 }
@@ -6048,6 +6317,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		{
 			RunTime->Vars.Variables[i] = 0 ;
 		}
+		RunTime->Vars.Variables[1] = LoadedScripts[index].size ;
 		ScriptPopupActive = 0 ;
 		return 1 ;
 	}
@@ -6154,6 +6424,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 	{
 #ifdef QT			
     sprintf( InputLine, "Error %d at line %d", RunTime->RunError, RunTime->RunErrorLine ) ;
+		cpystr( ErrorReport, (uint8_t *)InputLine ) ;
 #else
 		setErrorText( RunTime->RunError+100, RunTime->RunErrorLine ) ;
 #endif

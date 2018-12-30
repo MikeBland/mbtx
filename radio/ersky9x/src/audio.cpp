@@ -176,7 +176,7 @@ void audioQueue::heartbeat()
   if ( buzzTimeLeft )
 	{
 		buzzTimeLeft -= 1 ; // time gets counted down
-#ifdef REVPLUS		
+#if defined(REVPLUS) || defined(REV9E)
  		hapticOn(((g_eeGeneral.hapticStrength+5)) * 10); 
 #else			
  		hapticOn((g_eeGeneral.hapticStrength *  2 ) * 10); 

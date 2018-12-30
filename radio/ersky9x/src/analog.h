@@ -19,6 +19,7 @@ extern void init_adc( void ) ;
 extern void init_adc2() ;
 extern uint32_t read_adc( void ) ;
 extern void stop_adc( void ) ;
+void disableRtcBattery( void ) ;
 
 #ifdef PCB9XT
 

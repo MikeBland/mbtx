@@ -154,6 +154,18 @@ static void inactivityCheck()
   }
 }
 
+//#ifdef PCBX9D
+//extern uint16_t MixerRunAtTime ;
+//void checkMixerNeeded()
+//{
+//	uint16_t t1 = getTmr2MHz() ;
+//	if ( (uint16_t)( t1 - MixerRunAtTime ) > 4095 )
+//	{
+//		MixerRunAtTime = t1 ;
+//		perOutPhase( g_chans512, 0) ;
+//	}
+//}
+//#endif
 
 void perOutPhase( int16_t *chanOut, uint8_t att ) 
 {
@@ -303,7 +315,7 @@ int16_t scaleAnalog( int16_t v, uint8_t channel )
 			}
 		}
 	}
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	else if ( ( channel < 6 ) || ( channel == 8 ) )
 	{
 		uint8_t chan = channel - 3 ;
@@ -821,6 +833,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 									{
 										uint32_t t = k - MIX_TRIMS_START ;
 										v = trimA[t] ;
+										TrimInUse[t] |= 1 ;
 									}
 								}
 							}

@@ -24,4 +24,8 @@ extern int16_t anas [] ;
 extern void perOutPhase( int16_t *chanOut, uint8_t att ) ;
 extern void perOut( int16_t *chanOut, uint8_t att ) ;
 
+#ifdef PCBX9D
+void checkMixerNeeded( void ) ;
+#endif
+
 #endif

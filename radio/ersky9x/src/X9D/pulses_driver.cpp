@@ -85,7 +85,7 @@ static void init_ext_pxx( void ) ;
 static void disable_ext_pxx( void ) ;
 static void disable_int_pxx( void ) ;
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
 static void init_ext_dsm2( void ) ;
 static void disable_ext_dsm2( void ) ;
@@ -187,7 +187,7 @@ void disable_dsm2(uint32_t port)
 }
 
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
 
 #ifdef XFIRE
@@ -982,7 +982,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 
 #endif
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 
 static void init_int_none()
 {
@@ -1073,6 +1073,7 @@ static void init_int_pxx( void )
 	RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
 
 	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 450000 ;
+//	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
 
 	NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt

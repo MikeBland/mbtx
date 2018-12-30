@@ -39,6 +39,7 @@
 #include "pulses.h"
 #include "mixer.h"
 #include "frsky.h"
+#include <ctype.h>
 #ifndef SIMU
 #include "CoOS.h"
 #endif
@@ -56,7 +57,7 @@
 #include "X12D/hal.h"
 
 void eeLoadModel(uint8_t id) ;
-void writeModelToBackupRam( uint8_t index ) ;
+//void writeModelToBackupRam( uint8_t index ) ;
 
 #endif
 
@@ -100,13 +101,14 @@ uint8_t s_moveMode;
   #define PAGE_NAVIGATION 1
  #endif
 #endif // PCBX7
+#ifdef PCBX3
+ #define PAGE_NAVIGATION 1
+#endif // PCBX3
+
+
 //#ifdef PCBX12D
 // #define PAGE_NAVIGATION 1
 //#endif // PCBX7
-//#ifdef MAVLINK
-//#include <math.h>
-//#define PI 3.14159265
-//#endif
 
 //#ifdef REVX
 //#define USE_EXT_RTC		1
@@ -174,6 +176,7 @@ static uint8_t StatusTimer ;
 #define VOICE_FILE_TYPE_NAME	0
 #define VOICE_FILE_TYPE_USER	1
 #define VOICE_FILE_TYPE_MUSIC	2
+#define VOICE_FILE_TYPE_SYSTEM	3
 uint8_t VoiceFileType ;
 uint8_t FileSelectResult ;
 char SelectedVoiceFileName[16] ;
@@ -229,10 +232,13 @@ const uint8_t DestString[] = "\005-----BaseMAmps mAh  VoltsFuel RBSV Cus1 Cus2 C
 
 const uint8_t GvaString[] = "Global Voice Alerts" ;
 
-uint16_t Multiprotocols[NUM_MULTI_PROTOCOLS] ;
-#define MULTI_TEXT_SIZE	890
+const char HyphenString[] = "----" ;
+
+
+uint16_t Multiprotocols[NUM_MULTI_PROTOCOLS+2] ;
+#define MULTI_TEXT_SIZE	250
 uint8_t MultiText[MULTI_TEXT_SIZE] ;
-uint8_t MultiMapping[64] ;
+//uint8_t MultiMapping[64] ;
 uint8_t AlphaEdited ;
 
 
@@ -244,49 +250,104 @@ uint8_t AlphaEdited ;
 //;
 
 
-const uint8_t MfileData[] = 
-"1,Flysky,Flysky,V9x9,V6x6,V912,CX20\n"
-"2,Hubsan,H107,H301,H501\n"
-"3,FrskyD\n"
-"4,Hisky,Hisky,HK310\n"
-"5,V2x2,V2x2,JXD506\n"
-"6,DSM,DSM2-22,DSM2-11,DSMX-22,DSMX-11,AUTO\n"
-"7,Devo\n"
-"8,YD717,YD717,SKYWLKR,SYMAX4,XINXUN,NIHUI\n"
-"9,KN,WLTOYS,FEILUN\n"
-"10,SymaX,SYMAX,SYMAX5C\n"
-"11,SLT,SLT,VISTA\n"
-"12,CX10,GREEN,BLUE,DM007,---,J3015_1,J3015_2,MK33041\n"
-"13,CG023,CG023,YD829\n"
-"14,Bayang,Bayang,H8S3D,X16_AH,IRDRONE\n"
-"15,FrskyX,CH_16,CH_8,EU_16,EU_8\n"
-"16,ESky\n"
-"17,MT99xx,MT,H7,YZ,LS,FY805\n"
-"18,MJXq,WLH08,X600,X800,H26D,E010,H26WH\n"
-"19,Shenqi\n"
-"20,FY326,FY326,FY319\n"
-"21,SFHSS\n"
-"22,J6PRO\n"
-"23,FQ777\n"
-"24,ASSAN\n"
-"25,FrskyV\n"
-"26,HONTAI,HONTAI,JJRCX1,X5C1,FQ777_951\n"
-"27,OpnLrs\n"
-"28,AFHD2SA,PWM_IBUS,PPM_IBUS,PWM_SBUS,PPM_SBUS\n"
-"29,Q2X2,Q222,Q242,Q282\n"
-"30,WK2x01,WK2801,WK2401,W6_5_1,W6_6_1,W6_HEL,W6_HEL_I\n"
-"31,Q303,Q303,CX35,CX10D,CX10WD\n"
-"32,GW008\n"
-"33,DM002\n"
-"34,CABELL,CAB_V3,C_TELEM,-,-,-,-,F_SAFE,UNBIND\n"
-"35,ESKY150\n"
-"36,H8_3D,H8_3D,H20H,H20Mini,H30Mini\n"
-"37,CORONA,COR_V1,COR_V2,FD_V3\n"
-"38,CFlie\n"
-"39,Hitec,Opt_FW,Opt_Hub,Minima\n"
-"40,WFLY\n"
-"41,BUGS"
-"42,BUGSMINI" ;
+const uint8_t MultiData[] = 
+"\001\005Flysky\0Flysky\0V9x9\0V6x6\0V912\0CX20\0"
+"\002\003Hubsan\0H107\0H301\0H501\0"
+"\003\0FrskyD\0"
+"\004\002Hisky\0Hisky\0HK310\0"
+"\005\002V2x2\0V2x2\0JXD506\0"
+"\006\005DSM\0DSM2-22\0DSM2-11\0DSMX-22\0DSMX-11\0AUTO\0"
+"\007\0Devo\0"
+"\010\005YD717\0YD717\0SKYWLKR\0SYMAX4\0XINXUN\0NIHUI\0"
+"\011\002KN\0WLTOYS\0FEILUN\0"
+"\012\002SymaX\0SYMAX\0SYMAX5C\0"
+"\013\005SLT\0SLT_V1\0SLT_V2\0Q100\0Q200\0MR100\0"
+"\014\007CX10\0GREEN\0BLUE\0DM007\0---\0J3015_1\0J3015_2\0MK33041\0"
+"\015\002CG023\0CG023\0YD829\0"
+"\016\004Bayang\0Bayang\0H8S3D\0X16_AH\0IRDRONE\0"
+"\017\004FrskyX\0CH_16\0CH_8\0EU_16\0EU_8\0"
+"\020\0ESky\0"
+"\021\005MT99xx\0MT\0H7\0YZ\0LS\0FY805\0"
+"\022\006MJXq\0WLH08\0X600\0X800\0H26D\0E010\0H26WH\0"
+"\023\0Shenqi\0"
+"\024\002FY326\0FY326\0FY319\0"
+"\025\0SFHSS\0"
+"\026\0J6PRO\0"
+"\027\0FQ777\0"
+"\030\0ASSAN\0"
+"\031\0FrskyV\0"
+"\032\004HONTAI\0HONTAI\0JJRCX1\0X5C1\0FQ777_951\0"
+"\033\0OpnLrs\0"
+"\034\004AFHDS2A\0PWM_IBUS\0PPM_IBUS\0PWM_SBUS\0PPM_SBUS\0"
+"\035\003Q2X2\0Q222\0Q242\0Q282\0"
+"\036\006WK2x01\0WK2801\0WK2401\0W6_5_1\0W6_6_1\0W6_HEL\0W6_HEL_I\0"
+"\037\004Q303\0Q303\0CX35\0CX10D\0CX10WD\0"
+"\040\0GW008\0"
+"\041\0DM002\0"
+"\042\010CABELL\0CAB_V3\0C_TELEM\0-\0-\0-\0-\0F_SAFE\0UNBIND\0"
+"\043\0ESKY150\0"
+"\044\004H8_3D\0H8_3D\0H20H\0H20Mini\0H30Mini\0"
+"\045\003CORONA\0COR_V1\0COR_V2\0FD_V3\0"
+"\046\0CFlie\0"
+"\047\003Hitec\0OPT_FW\0OPT_HUB\0Minima\0"
+"\050\0WFLY\0"
+"\051\0BUGS\0"
+"\052\0BUGSMINI\0"
+"\053\0Traxxas\0"
+"\054\0NCC1701\0"
+"\055\002E01X\0E012\0E015\0"
+"\056\0V911S\0"
+"\057\0GD00X\0"
+"\0" ;
+
+//const uint8_t MfileData[] = 
+//"1,Flysky,Flysky,V9x9,V6x6,V912,CX20\n"
+//"2,Hubsan,H107,H301,H501\n"
+//"3,FrskyD\n"
+//"4,Hisky,Hisky,HK310\n"
+//"5,V2x2,V2x2,JXD506\n"
+//"6,DSM,DSM2-22,DSM2-11,DSMX-22,DSMX-11,AUTO\n"
+//"7,Devo\n"
+//"8,YD717,YD717,SKYWLKR,SYMAX4,XINXUN,NIHUI\n"
+//"9,KN,WLTOYS,FEILUN\n"
+//"10,SymaX,SYMAX,SYMAX5C\n"
+//"11,SLT,SLT,VISTA\n"
+//"12,CX10,GREEN,BLUE,DM007,---,J3015_1,J3015_2,MK33041\n"
+//"13,CG023,CG023,YD829\n"
+//"14,Bayang,Bayang,H8S3D,X16_AH,IRDRONE\n"
+//"15,FrskyX,CH_16,CH_8,EU_16,EU_8\n"
+//"16,ESky\n"
+//"17,MT99xx,MT,H7,YZ,LS,FY805\n"
+//"18,MJXq,WLH08,X600,X800,H26D,E010,H26WH\n"
+//"19,Shenqi\n"
+//"20,FY326,FY326,FY319\n"
+//"21,SFHSS\n"
+//"22,J6PRO\n"
+//"23,FQ777\n"
+//"24,ASSAN\n"
+//"25,FrskyV\n"
+//"26,HONTAI,HONTAI,JJRCX1,X5C1,FQ777_951\n"
+//"27,OpnLrs\n"
+//"28,AFHD2SA,PWM_IBUS,PPM_IBUS,PWM_SBUS,PPM_SBUS\n"
+//"29,Q2X2,Q222,Q242,Q282\n"
+//"30,WK2x01,WK2801,WK2401,W6_5_1,W6_6_1,W6_HEL,W6_HEL_I\n"
+//"31,Q303,Q303,CX35,CX10D,CX10WD\n"
+//"32,GW008\n"
+//"33,DM002\n"
+//"34,CABELL,CAB_V3,C_TELEM,-,-,-,-,F_SAFE,UNBIND\n"
+//"35,ESKY150\n"
+//"36,H8_3D,H8_3D,H20H,H20Mini,H30Mini\n"
+//"37,CORONA,COR_V1,COR_V2,FD_V3\n"
+//"38,CFlie\n"
+//"39,Hitec,Opt_FW,Opt_Hub,Minima\n"
+//"40,WFLY\n"
+//"41,BUGS\n"
+//"42,BUGSMINI\n"
+//"43,Traxxas\n"
+//"44,NCC1701\n"
+//"45,E01X,E012,E015\n"
+//"46,V911S\n"
+//"47,GD00X\n\0" ;
 
 #ifndef PCBX12D
 const uint8_t IconLogging[] =
@@ -499,9 +560,49 @@ union t_sharedMemory SharedMemory ;
 // Basic scripts, and also used by a standalone script for file access
 FIL MultiBasicFile ;
 
-void parseMultiData()
+static int32_t memCaseCmp( uint8_t *p, uint8_t *q, uint32_t length )
+{
+	int32_t a ;
+	int32_t b ;
+	while ( length-- )
+	{
+		a = toupper(*p++) ;
+		b = toupper(*q++) ;
+		a -= b ;
+		if ( a )
+		{
+			break ;
+		}
+	}
+	return a ;
+}
+
+static void parsexMultiData()
 {
 	uint8_t *src ;
+	uint32_t index ;
+	uint32_t count ;
+	src = (uint8_t *)MultiData ;
+
+	while(1)
+	{
+		index = *src++ ;
+		if ( index == 0 )
+		{
+			break ;
+		}
+		count = *src++ ;
+
+		Multiprotocols[index] = ( src - (uint8_t *)MultiData ) + (count << 11) ;
+		for ( index = 0 ; index <= count ; index += 1 )
+		{
+			while ( *src++ != '\0' ) ;
+		}
+	}
+}
+
+void parseMultiData()
+{
 	uint8_t *text ;
 	uint32_t index ;
 	uint32_t offset ;
@@ -509,30 +610,8 @@ void parseMultiData()
 	uint32_t state ;
 	uint8_t byte ;
 	FRESULT result ;
-//	uint16_t nextEntry ;
-  
-// Preset from Rom data
-//	index = 0 ;
-//	text = MultiRomData ;
 
-//	while ( *text )
-//	{
-//		Multiprotocols[index] = 0x4000 | ( MultiRomData - text ) ;
-//		while ( *text++ )
-//		{
-//			// move past first '\0'
-//		}
-//		while ( *text )
-//		{
-//			Multiprotocols[index] += 0x0400 ;
-//			while ( *text++ )
-//			{
-//				// move past first '\0'
-//			}
-//		}
-//		index += 1 ;
-//	}
-
+  parsexMultiData() ;
  	WatchdogTimeout = 200 ;
 	index = 0 ;
 	while ( !sd_card_ready() )
@@ -547,114 +626,125 @@ void parseMultiData()
 
 	result = f_open( &MultiBasicFile, "/Multi.txt", FA_READ ) ;
 
-	src = (uint8_t *)MfileData ;
 	text = MultiText ;
 	state = GET_INDEX ;
 	index = 0 ;
 	count = 0 ;
 	offset = 0 ;
+//	mfoffset = 
 
-	for(;;)
+	if ( result == FR_OK )
 	{
-		uint32_t next = 0 ;
-		if ( result == FR_OK )
+		for(;;)
 		{
+			uint32_t next = 0 ;
 			byte = 0 ;
 			f_read( &MultiBasicFile, &byte, 1, 0 ) ;
-		}
-		else
-		{
-			byte = *src++ ;
-		}
-		if ( byte == '\r' )
-		{
-			continue ;
-		}
-		if ( byte == '\n' )
-		{
-			byte = ',' ;
-			next = 1 ;
-		}
-		if ( byte == 0 )
-		{
-			next = 2 ;
-			byte = ',' ;
-		}
-		switch ( state )
-		{
-			case GET_INDEX :
-				if ( byte == '#' )
-				{
-					state = SKIP_LINE ;
-					index = 0 ;					
-				}
-				else if ( byte == ',' )
-				{
-					state = GET_NAME ;
-					offset = text - MultiText ;
-				}
-				else
-				{
-					index *= 10 ;
-					index += byte - '0' ;
-				}
-			break ;
-
-			case GET_NAME :
-				if ( byte == ',' )
-			 	{
-					*text++ = '\0' ;
-					if ( index < NUM_MULTI_PROTOCOLS )
-					{
-//						nextEntry = 0x8000 | offset ;
-						Multiprotocols[index] = 0x8000 | offset ;
-						state = GET_SUB_NAME ;
-					}
-				}
-				else
-				{
-					if ( text - MultiText < MULTI_TEXT_SIZE - 2 )
-					{
-						*text++ = byte ;
-					}
-				}
-			break ;
-
-			case GET_SUB_NAME :
-				if ( byte == ',' )
-			 	{
-					*text++ = '\0' ;
-					count += 1 ;
-				}
-				else
-				{
-					if ( text - MultiText < MULTI_TEXT_SIZE - 2 )
-					{
-						*text++ = byte ;
-					}
-				}
-			break ;
-			case SKIP_LINE :
-				
-			break ;
-		}
-		if ( next )
-		{
-			state = GET_INDEX ;
-			if ( index < NUM_MULTI_PROTOCOLS )
+			if ( byte == '\r' )
 			{
-				if ( count > 8 )
-				{
-					count = 8 ;
-				}
-//				nextEntry |= count << 10 ;
-				Multiprotocols[index] |= count << 10 ;
+				continue ;
 			}
-			index = 0 ;
-			count = 0 ;
-			if ( next == 2 )
+			if ( byte == '\n' )
 			{
+				byte = ',' ;
+				next = 1 ;
+			}
+			if ( byte == 0 )
+			{
+				next = 2 ;
+				byte = ',' ;
+			}
+			switch ( state )
+			{
+				case GET_INDEX :
+					if ( byte == '#' )
+					{
+						state = SKIP_LINE ;
+						index = 0 ;					
+					}
+					else if ( byte == ',' )
+					{
+						state = GET_NAME ;
+						offset = text - MultiText ;
+					}
+					else
+					{
+						index *= 10 ;
+						index += byte - '0' ;
+					}
 				break ;
+
+				case GET_NAME :
+					if ( byte == ',' )
+				 	{
+						*text++ = '\0' ;
+						if ( index < NUM_MULTI_PROTOCOLS )
+						{
+	//						nextEntry = 0x8000 | offset ;
+							state = GET_SUB_NAME ;
+						}
+					}
+					else
+					{
+						if ( text - MultiText < MULTI_TEXT_SIZE - 2 )
+						{
+							*text++ = byte ;
+						}
+					}
+				break ;
+
+				case GET_SUB_NAME :
+					if ( byte == ',' )
+				 	{
+						*text++ = '\0' ;
+						count += 1 ;
+					}
+					else
+					{
+						if ( text - MultiText < MULTI_TEXT_SIZE - 2 )
+						{
+							*text++ = byte ;
+						}
+					}
+				break ;
+				case SKIP_LINE :
+				
+				break ;
+			}
+			if ( next )
+			{
+				state = GET_INDEX ;
+				// check to see if data matches flash data
+				if ( index <= NUM_MULTI_PROTOCOLS )
+				{
+					if ( count > 8 )
+					{
+						count = 8 ;
+					}
+					if ( Multiprotocols[index] )
+					{
+						uint32_t xcount ;
+						xcount = ( Multiprotocols[index] >> 11 ) & 0x000F ;
+						if ( ( memCaseCmp( (uint8_t *)&MultiData[Multiprotocols[index] & 0x07FF], &MultiText[offset], text - &MultiText[offset] ) != 0 ) || ( count != xcount ) )
+						{
+							Multiprotocols[index] = 0x8000 | offset | count << 11 ;
+						}
+						else
+						{
+							text = &MultiText[offset] ;
+						}
+					}
+					else
+					{
+						Multiprotocols[index] = 0x8000 | offset | count << 11 ;
+					}
+				}
+				index = 0 ;
+				count = 0 ;
+				if ( next == 2 )
+				{
+					break ;
+				}
 			}
 		}
 	}
@@ -663,32 +753,33 @@ void parseMultiData()
 	{
 		f_close( &MultiBasicFile ) ;
 	}
-	offset = 0 ;
-	for ( index = 1 ; index < NUM_MULTI_PROTOCOLS ; index += 1 )
-	{
-		if ( Multiprotocols[index] & 0xC000 )
-		{
-			MultiMapping[offset++] = index - 1 ;
-		}
-	}
-	for ( index = 1 ; index < 64 ; index += 1 )
-	{
-		if ( index < NUM_MULTI_PROTOCOLS )
-		{
-			if ( ( Multiprotocols[index] & 0xC000 ) == 0 )
-			{
-				MultiMapping[offset++] = index - 1 ;
-			}
-		}
-		else
-		{
-			MultiMapping[offset++] = index - 1 ;
-		}
-	}
+//	offset = 0 ;
+//	for ( index = 1 ; index < NUM_MULTI_PROTOCOLS ; index += 1 )
+//	{
+//		if ( Multiprotocols[index] & 0x8000 )
+//		{
+//			MultiMapping[offset++] = index - 1 ;
+//		}
+//	}
+//	for ( index = 1 ; index < 64 ; index += 1 )
+//	{
+//		if ( index < NUM_MULTI_PROTOCOLS )
+//		{
+//			if ( ( Multiprotocols[index] & 0x8000 ) == 0 )
+//			{
+//				MultiMapping[offset++] = index - 1 ;
+//			}
+//		}
+//		else
+//		{
+//			MultiMapping[offset++] = index - 1 ;
+//		}
+//	}
 }
 
 void displayMultiProtocol( uint32_t index, uint32_t y, uint8_t attr )
 {
+	char *p ;
 	if ( PrivateData[1] )
 	{
 		if ( ( PrivateData[0] & 0x04 ) == 0 )
@@ -697,13 +788,14 @@ void displayMultiProtocol( uint32_t index, uint32_t y, uint8_t attr )
 		}
 	}
 	index += 1 ;
-	if ( index < NUM_MULTI_PROTOCOLS )
+	if ( index <= NUM_MULTI_PROTOCOLS+1 )
 	{
 		uint16_t value = Multiprotocols[index] ;
-		if ( value & 0x8000 )
+		if ( value )
 		{
-			value &= 0x03FF ;
-			lcd_putsAtt( FW*10, y, (char *)&MultiText[value], attr ) ;
+			p = ( value & 0x8000 ) ? (char *)MultiText : (char *)MultiData ;
+			value &= 0x07FF ;
+			lcd_putsAtt( FW*10, y, &p[value], attr ) ;
 			return ;
 		}
 	}
@@ -712,17 +804,19 @@ void displayMultiProtocol( uint32_t index, uint32_t y, uint8_t attr )
 
 uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y, uint8_t attr )
 {
+	char *p ;
 	index += 1 ;
-	if ( index < NUM_MULTI_PROTOCOLS )
+	if ( index <= NUM_MULTI_PROTOCOLS )
 	{
 		uint16_t value = Multiprotocols[index] ;
-		if ( value & 0x8000 )
+		if ( value )
 		{
-			uint32_t limit = (value >> 10) & 0x0F ;
+			uint32_t limit = (value >> 11) & 0x0F ;
 			if ( subIndex < limit )
 			{
-				value &= 0x03FF ;
-				uint8_t *list = &MultiText[value] ;
+				p = ( value & 0x8000 ) ? (char *)MultiText : (char *)MultiData ;
+				value &= 0x07FF ;
+				uint8_t *list = (uint8_t *)&p[value] ;
 				value = subIndex ;
 				do
 				{
@@ -754,22 +848,22 @@ uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y,
 	return subIndex ;
 }
 
-uint8_t editMultiProtocol( uint8_t index, uint8_t edit )
-{
-	for ( uint32_t c = 0 ; c < 63 ; c += 1 )
-	{
-		if ( MultiMapping[c] == index )
-		{
-			index = c ;
-			break ;
-		}
-	}
-	if ( edit )
-	{
- 		CHECK_INCDEC_H_MODELVAR_0( index, 62 ) ;
-	}
-	return MultiMapping[index] ;
-}
+//uint8_t editMultiProtocol( uint8_t index, uint8_t edit )
+//{
+//	for ( uint32_t c = 0 ; c < 63 ; c += 1 )
+//	{
+//		if ( MultiMapping[c] == index )
+//		{
+//			index = c ;
+//			break ;
+//		}
+//	}
+//	if ( edit )
+//	{
+// 		CHECK_INCDEC_H_MODELVAR_0( index, 62 ) ;
+//	}
+//	return MultiMapping[index] ;
+//}
 
 SKYMixData *mixAddress( uint32_t index )
 {
@@ -1499,6 +1593,15 @@ char *arduFlightMode( uint16_t mode )
 //16 PosHold
 //17 Brake
 
+// To add:
+// 18: Throw
+// 19: Avoid ADSB
+// 20: Guided No GPS
+// 21: Smart RTL
+// 22: Flow Hold
+// 23: Follow
+
+
 #define STR_MAV_FM_STAB  "STAB"
 #define STR_MAV_FM_ACRO  "ACRO"
 #define STR_MAV_FM_2     "A-Hold"
@@ -1582,14 +1685,32 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 	{
 		uint8_t displayed = 0 ;
 		int8_t index = TelemIndex[mappedChannel] ;
+		uint8_t special = 0 ;
 
 		if ( (index >= V_SC1) && (index < V_SC1 + NUM_SCALERS) )
 		{
-			uint8_t text[6] ;
-			index -= V_SC1 ;
-			uint8_t *p = &g_model.Scalers[index].name[0] ;
-			text[0] = *p++ ;
+			special = 1 ;
+		}
+		if ( (index >= FR_CUST1) && (index <= FR_CUST6) )
+		{
+			special = 2 ;
+		}
 
+		if ( special )
+		{
+			uint8_t *p ;
+			uint8_t text[6] ;
+			if ( special & 1 )
+			{
+				index -= V_SC1 ;
+				p = &g_model.Scalers[index].name[0] ;
+			}
+			else
+			{
+				index -= FR_CUST1 ;
+				p = &g_model.customTelemetryNames[index*4] ;
+			}
+			text[0] = *p++ ;
 			if ( text[0] && (text[0] != ' ') )
 			{
 				text[1] = *p++ ;
@@ -2039,6 +2160,12 @@ static uint8_t mapPots( uint8_t value )
 		value -= 1 ;
 	}
 #endif // PCBX7
+#ifdef PCBX3
+	if ( value > 6 )
+	{
+		value -= 3 ;
+	}
+#endif // PCBX3
 	return value ;
 }
 
@@ -2050,6 +2177,12 @@ uint8_t unmapPots( uint8_t value )
 		value += 1 ;
 	}
 #endif // PCBX7
+#ifdef PCBX3
+	if ( value > 5 )
+	{
+		value += 3 ;
+	}
+#endif // PCBX3
 	
 	if ( value >= EXTRA_POTS_POSITION )
 	{
@@ -2163,7 +2296,7 @@ void menuProcModelIndex(uint8_t event) ;
 void menuCellScaling(uint8_t event) ;
 void menuEditNotes(uint8_t event) ;
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
 #ifdef BLUETOOTH
 void menuProcBt(uint8_t event) ;
 void menuProcBtScan(uint8_t event) ;
@@ -2250,7 +2383,7 @@ enum EnumTabStat
 #endif
 	e_debug,
   e_Setup3,
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
 #ifdef IMAGE_128
 	e_image,
 #endif
@@ -2283,7 +2416,7 @@ MenuFuncP menuTabStat[] =
 #endif
 	menuDebug,
 	menuProcSDstat,
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
 #ifdef IMAGE_128
 	menuImage,
 #endif
@@ -2312,11 +2445,7 @@ uint8_t Re_state ;
 
 void displayNext()
 {
-//#ifdef TRIMS_SCALED
-//	lcd_putsAtt( 19*FW, 7*FH, XPSTR("->"), BLINK ) ;
-//#else
 	lcd_putsAtt( 17*FW, 7*FH, XPSTR("[->]"), BLINK ) ;
-//#endif
 }
 
 uint8_t locateMappedItem( uint8_t value, uint8_t *options, uint32_t count )
@@ -3078,6 +3207,14 @@ void doMainScreenGrphics()
           V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
         }
 #else // PCBXLITE
+#ifdef PCBX3
+				x = 1 ;
+				y = 4 ;
+        uint8_t z = y ;
+        len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+        V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
+#else // PCBX3
+#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)
         for( x = -8, y = 4 ; y < 8 ; x += 5, y += 1 )
         {
         	uint8_t z = y - 1 ;
@@ -3092,6 +3229,8 @@ void doMainScreenGrphics()
           len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
           V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
         }
+#endif // norm/plus/x9e
+#endif // PCBX3
 #endif // PCBXLITE
 #endif // PCBX7
 #endif // PCBX9D
@@ -3716,9 +3855,11 @@ void menuLogging(uint8_t event)
 		else
 		{
 			uint32_t index = LogLookup[k-4]-1 ;
+#ifndef BITBAND_SRAM_REF
 			uint32_t bit ;
 			uint32_t offset ;
 			uint32_t value ;
+#endif
 			if ( k == 4+sizeof(LogLookup) )
 			{
 				index = LOG_LAT ;
@@ -3787,6 +3928,11 @@ void menuLogging(uint8_t event)
 				}
 			}
 
+#ifdef BITBAND_SRAM_REF
+			uint32_t *p ;
+			p = (uint32_t *) (BITBAND_SRAM_BASE + ((uint32_t)&g_model.LogDisable - BITBAND_SRAM_REF) * 32) ;
+			p[index] = offonItem( p[index], y, attr ) ;
+#else
 			offset = index >> 5 ;
 			bit = 1 << (index & 0x0000001F) ;
 			value = 0 ;
@@ -3803,6 +3949,7 @@ void menuLogging(uint8_t event)
 			{
 				g_model.LogDisable[offset]	&= ~bit ;
 			}
+#endif
 		}
 	}
 }
@@ -3883,16 +4030,23 @@ void menuBlocking(uint8_t event)
 #define NUM_MIX_SWITCHES	(7+NUM_SKYCSW)
 #endif
 #ifdef PCBX9D
-#ifdef REV9E
+ #ifdef REV9E
 #define NUM_MIX_SWITCHES	(19+NUM_SKYCSW)
-#else
-#ifdef PCBX7
+ #else // X9E
+  #ifdef PCBX7
 #define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
-#else // PCBX7
+  #else // PCBX7
+   #ifdef PCBX3
+#define NUM_MIX_SWITCHES	(5+NUM_SKYCSW)
+   #else // PCBX3
+    #if defined(REVPLUS) || defined(REVNORM)
 #define NUM_MIX_SWITCHES	(8+NUM_SKYCSW)
-#endif // PCBX7
-#endif	// REV9E
-#endif
+    #endif // norm/plus
+   #endif // PCBX3
+  #endif // PCBX7
+ #endif	// REV9E
+#endif // X9D
+
 #ifdef PCBX12D
 #define NUM_MIX_SWITCHES	(9+NUM_SKYCSW)
 #endif
@@ -3947,6 +4101,16 @@ static uint8_t mapMixSource( uint8_t index, uint8_t switchSource )
 	{
 		index += switchSource ;
 #ifdef PCBX7
+			if ( switchSource > 4 )
+			{
+				index -= 1 ;
+			}
+			if ( switchSource > 6 )
+			{
+				index -= 1 ;
+			}
+#endif // PCBX7
+#ifdef PCBX3
 			if ( switchSource > 4 )
 			{
 				index -= 1 ;
@@ -4075,6 +4239,16 @@ uint8_t unmapMixSource( uint8_t index, uint8_t *switchSource )
 				index += 1 ;
 			}
 #endif // PCBX7
+#ifdef PCBX3
+			if ( index > 3 )
+			{
+				index += 1 ;
+			}
+			if ( index > 5 )
+			{
+				index += 1 ;
+			}
+#endif // PCBX3
 #ifdef PCBX9D
 			if ( ( g_eeGeneral.analogMapping & MASK_6POS ) == 0 )
 			{
@@ -4135,7 +4309,11 @@ void menuTextHelp(uint8_t event)
 #ifdef PCBX7
 		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - 1 + 4 ;
 #else // PCBX7
+#ifdef PCBX3
+		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - 2 + 4 ;
+#else // PCBX3
 		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS + 4 ;
+#endif // PCBX3
 #endif // PCBX7
 		if ( TextOption )
 		{
@@ -4626,7 +4804,7 @@ void menuCustomTelemetry(uint8_t event)
 				}
 				else
 				{
-  	  		lcd_putsAtt(  x, y, XPSTR("----"), attr ) ;
+  	  		lcd_putsAtt(  x, y, HyphenString, attr ) ;
 				}
   			if ((sub==subN && subSub==k))
 				{ 
@@ -4686,7 +4864,7 @@ void menuCustomTelemetry(uint8_t event)
 		}
 		else
 		{
-  		lcd_putsAtt(  x, y, XPSTR("----"), attr ) ;
+  		lcd_putsAtt(  x, y, HyphenString, attr ) ;
 		}
 		uint8_t val = *p ;
 		if ( val >= TELEM_GAP_START + 8 )
@@ -4836,7 +5014,7 @@ void menuCustomTelemetry(uint8_t event)
 			}
 			else
 			{
-  	  	lcd_putsAtt(  x, y, XPSTR("----"), attr ) ;
+  	  	lcd_putsAtt(  x, y, HyphenString, attr ) ;
 			}
   		if(sub==subN)
 			{
@@ -4862,21 +5040,21 @@ void menuCustomTelemetry(uint8_t event)
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifdef REVX
-  #define MAX_TEL_OPTIONS		10
-  const uint8_t TelOptions[] = {1,2,3,4,5,6,7,8,10,11} ;
+  #define MAX_TEL_OPTIONS		11
+  const uint8_t TelOptions[] = {1,2,3,4,5,6,7,8,10,11,12} ;
  #else
-  #define MAX_TEL_OPTIONS			9
-  const uint8_t TelOptions[] = {1,2,3,5,6,7,8,10,11} ;
+  #define MAX_TEL_OPTIONS			10
+  const uint8_t TelOptions[] = {1,2,3,5,6,7,8,10,11,12} ;
  #endif
 #endif
 
 #ifdef PCBX9D
- #define MAX_TEL_OPTIONS		7
- const uint8_t TelOptions[] = {1,2,3,5,6,7,11} ;
+ #define MAX_TEL_OPTIONS		8
+ const uint8_t TelOptions[] = {1,2,3,5,6,7,11,12} ;
 #endif
 #ifdef PCBX12D
- #define MAX_TEL_OPTIONS		7
- const uint8_t TelOptions[] = {1,2,3,5,6,7,11} ;
+ #define MAX_TEL_OPTIONS		8
+ const uint8_t TelOptions[] = {1,2,3,5,6,7,11,12} ;
 #endif
 
 
@@ -6382,13 +6560,21 @@ void menuProcTemplates(uint8_t event)  //Issue 73
 }
 #endif
 
+#ifdef PCBX3
+#define NO_VOICE_SWITCHES 1
+#endif
+
 void menuProcSafetySwitches(uint8_t event)
 {
 	
 	TITLE(PSTR(STR_SAFETY_SW));
 	EditType = EE_MODEL ;
 	static MState2 mstate2;
+#ifdef NO_VOICE_SWITCHES
+	event = mstate2.check_columns(event, NUM_SKYCHNOUT+1+1+NUM_VOICE-1 - 1 - 1 ) ;
+#else
 	event = mstate2.check_columns(event, NUM_SKYCHNOUT+1+1+NUM_VOICE-1 - 1 ) ;
+#endif
 
 	uint8_t y = 0;
 	uint8_t k = 0;
@@ -6407,6 +6593,7 @@ void menuProcSafetySwitches(uint8_t event)
 	{
     y=(i+1)*FH;
     k=i+t_pgOfs;
+#ifndef NO_VOICE_SWITCHES
 		if ( k == 0 )
 		{
 			uint8_t attr = 0 ;
@@ -6423,20 +6610,37 @@ void menuProcSafetySwitches(uint8_t event)
 			lcd_xlabel_decimal( 18*FW, y, g_model.numVoice+NUM_VOICE, attr, PSTR(STR_NUM_VOICE_SW) ) ;
 		}
   	else // if(k<NUM_SKYCHNOUT+1+NUM_VOICE)
+#endif
 		{
+#ifdef NO_VOICE_SWITCHES
+			uint8_t numSafety = NUM_SKYCHNOUT + EXTRA_SKYCHANNELS ; 
+    	SKYSafetySwData *sd = &g_model.safetySw[k];
+#else
 			uint8_t numSafety = NUM_SKYCHNOUT - g_model.numVoice ;
     	SKYSafetySwData *sd = &g_model.safetySw[k-1];
+#endif
 			if ( sub==k )
 			{
 				Columns = 2 ;
 			}
+#ifdef NO_VOICE_SWITCHES
+    	if ( k >= NUM_SKYCHNOUT )
+			{
+				sd = (SKYSafetySwData*)&g_model.voiceSwitches[k-NUM_SKYCHNOUT];
+			}
+#else
     	if ( k-1 >= NUM_SKYCHNOUT )
 			{
 				sd = (SKYSafetySwData*)&g_model.voiceSwitches[k-1-NUM_SKYCHNOUT];
 			}
+#endif
     	uint8_t attr = (getSwitch00(sd->opt.ss.swtch) ) ? INVERS : 0 ;
 
+#ifdef NO_VOICE_SWITCHES
+    	putsChn(0,y,k+1,attr);
+#else
     	putsChn(0,y,k,attr);
+#endif
 			if ( k <= numSafety )
 			{
   	  	for(uint8_t j=0; j<5;j++)
@@ -6450,13 +6654,26 @@ void menuProcSafetySwitches(uint8_t event)
 						{
 							uint8_t b = sd->opt.ss.mode ;
 	  	        CHECK_INCDEC_H_MODELVAR_0( sd->opt.ss.mode, 3 ) ;
+#ifdef PCBX3
+							if ( ( k < numSafety ) & ( b == 0 ) )
+#else
 							if ( ( k < 8 ) & ( b == 0 ) )
+#endif
 							{
 								if ( sd->opt.ss.mode != 0 )
 								{
 									sd->opt.ss.mode = 3 ;
 								}
 							}
+#ifdef PCBX3
+							if ( ( k < numSafety ) & ( b == 3 ) )
+							{
+								if ( sd->opt.ss.mode != 3 )
+								{
+									sd->opt.ss.mode = 0 ;
+								}
+							}
+#endif
   	  	    }
 					}
 	    	  else if (j == 1)
@@ -6466,11 +6683,11 @@ void menuProcSafetySwitches(uint8_t event)
 						{
 							max = MaxSwitchIndex+3 ;
 						}	 
-						if ( ( sd->opt.ss.swtch > MAX_SKYDRSWITCH ) && ( sd->opt.ss.swtch <= MAX_SKYDRSWITCH + 3 ) )
-						{
-							lcd_putsAttIdx( 6*FW, y, PSTR(STR_V_OPT1), sd->opt.ss.swtch-MAX_SKYDRSWITCH-1, attr ) ;
-						}
-						else
+//						if ( ( sd->opt.ss.swtch > MAX_SKYDRSWITCH ) && ( sd->opt.ss.swtch <= MAX_SKYDRSWITCH + 3 ) )
+//						{
+//							lcd_putsAttIdx( 6*FW, y, PSTR(STR_V_OPT1), sd->opt.ss.swtch-MAX_SKYDRSWITCH-1, attr ) ;
+//						}
+//						else
 						{
          	  	putsDrSwitches(6*FW, y, sd->opt.ss.swtch, attr);
 						}
@@ -7681,11 +7898,11 @@ void menuProcVoiceOne(uint8_t event)
 				case V1P1+3 :	 // fnameType:3 ;
 				{	
   	  		lcd_puts_Pleft( y, XPSTR("FileType") ) ;
-					lcd_putsAttIdx( 14*FW, y, XPSTR("\006------  NameGV/SC Effect"),pvad->fnameType,attr ) ;
+					lcd_putsAttIdx( 14*FW, y, XPSTR("\007-------   NameGV/SC/# EffectSysName"),pvad->fnameType,attr ) ;
 					uint8_t previous = pvad->fnameType ;
 	    		if(attr)
 					{
-      	    CHECK_INCDEC_H_MODELVAR_0( pvad->fnameType, 3 ) ;
+      	    CHECK_INCDEC_H_MODELVAR_0( pvad->fnameType, 4 ) ;
 					}
 					if ( pvad->fnameType != previous )
 					{
@@ -7706,7 +7923,7 @@ void menuProcVoiceOne(uint8_t event)
 //				if ( pvad->fnameType )
 //				{	
   	  		lcd_puts_Pleft( y, pvad->fnameType == 3 ? XPSTR("Sound effect") : XPSTR("Voice File") ) ;
-					if ( pvad->fnameType == 1 )	// Name
+					if ( ( pvad->fnameType == 1 ) || ( pvad->fnameType == 4 ) )	// Name
 					{
 						if ( pvad->file.name[0] == 0 )
 						{
@@ -7719,7 +7936,7 @@ void menuProcVoiceOne(uint8_t event)
 						{
 							if ( checkForMenuEncoderLong( event ) )
 							{
-								VoiceFileType = VOICE_FILE_TYPE_USER ;
+								VoiceFileType = ( pvad->fnameType == 4 ) ? VOICE_FILE_TYPE_SYSTEM : VOICE_FILE_TYPE_USER ;
       				 	pushMenu( menuProcSelectVoiceFile ) ;
 							}
 						} 
@@ -8020,6 +8237,9 @@ void menuVoice(uint8_t event, uint8_t mode)
 				case 3 :
 					lcd_putc( 19*FW, y, 'A' ) ;
 				break ;
+				case 4 :
+					lcd_putc( 19*FW, y, 'S' ) ;
+				break ;
 			}
 		
 			if (pvad->haptic)
@@ -8204,7 +8424,7 @@ void menuProcMixOne(uint8_t event)
 					if ( attr )
 					{
 						uint8_t x = mapMixSource( value, md2->switchSource ) ;
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 						CHECK_INCDEC_H_MODELVAR( x, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS-1+4 ) ;
 #else // PCBX7
 						CHECK_INCDEC_H_MODELVAR( x, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS+4 ) ;
@@ -9463,7 +9683,16 @@ void menuRangeBind(uint8_t event)
 	static uint8_t binding = 0 ;
 	uint8_t *ptrFlag ;
 
-	ptrFlag = &PxxFlag[s_currIdx] ;
+//extern uint8_t SerialData[2][28] ;
+//	lcd_outhex4( 0, 0, (SerialData[0][0] << 8 ) | (SerialData[0][1] ) ) ;
+//	lcd_outhex4( 40, 0, (SerialData[1][0] << 8 ) | (SerialData[1][1] ) ) ;
+
+//extern uint8_t SerialExternalData[] ;
+//extern uint8_t Multi2Data[] ;
+//	lcd_outhex4( 0, 0, ( SerialExternalData[0] << 8 ) | (SerialExternalData[1] ) ) ;
+//	lcd_outhex4( 40, 0, ( Multi2Data[0] << 8 ) | ( Multi2Data[1] ) ) ;
+
+	ptrFlag = &BindRangeFlag[s_currIdx] ;
 	uint8_t flag = *ptrFlag & PXX_BIND ;
   if ( event == EVT_ENTRY )
 	{
@@ -9527,7 +9756,7 @@ void menuRangeBind(uint8_t event)
 		if ( MultiResponseFlag )
 		{
 			uint32_t module = s_currIdx ;
-//			if ( ptrFlag == &PxxFlag[1] )
+//			if ( ptrFlag == &BindRangeFlag[1] )
 //			{
 //				module = 1 ;
 //			}
@@ -9587,21 +9816,22 @@ void menuRangeBind(uint8_t event)
 
 void menuBindOptions(uint8_t event)
 {
-	uint8_t b ;
+//	uint8_t b ;
+	struct t_module *pModule = &g_model.Module[s_currIdx] ;
 	TITLE(XPSTR("Bind Options"));
 	static MState2 mstate2;
 	event = mstate2.check_columns( event, 2 ) ;
   switch(event)
   {
-		case EVT_ENTRY:
-			PxxExtra[s_currIdx] = 0 ;
-		break ;
+//		case EVT_ENTRY:
+//			PxxExtra[s_currIdx] = 0 ;
+//		break ;
 	
     case EVT_KEY_BREAK(BTN_RE):
     case EVT_KEY_FIRST(KEY_MENU):
 			if ( mstate2.m_posVert == 0 )
 		  {
-	  		PxxFlag[s_currIdx] = PXX_BIND ;		    	//send bind code
+	  		BindRangeFlag[s_currIdx] = PXX_BIND ;		    	//send bind code
 				chainMenu( menuRangeBind ) ;
 			}
 		break ;
@@ -9613,12 +9843,12 @@ void menuBindOptions(uint8_t event)
 	{
 		lcd_char_inverse( 0, 1*FH, 4*FW, 0 ) ;
 	}
-	b = PxxExtra[s_currIdx] & 1 ;
-	b = checkIndexed( 2*FH, XPSTR("\0""\001""\012Chans 1-8 Chans 9-16"), b, (sub==1) ) ;
-	PxxExtra[s_currIdx] =	( PxxExtra[s_currIdx] & ~1 ) | b ;
-	b = (PxxExtra[s_currIdx] & 2) ? 1 : 0 ;
-	b = checkIndexed( 3*FH, XPSTR("\0""\001""\014Telemetry   No Telemetry"), b, (sub==2) ) ;
-	PxxExtra[s_currIdx] =	( PxxExtra[s_currIdx] & ~2 ) | ( b ? 2 : 0 ) ;
+//	b = PxxExtra[s_currIdx] & 1 ;
+	pModule->highChannels = checkIndexed( 2*FH, XPSTR("\0""\001""\012Chans 1-8 Chans 9-16"), pModule->highChannels, (sub==1) ) ;
+//	PxxExtra[s_currIdx] =	( PxxExtra[s_currIdx] & ~1 ) | b ;
+//	b = (PxxExtra[s_currIdx] & 2) ? 1 : 0 ;
+	pModule->disableTelemetry = checkIndexed( 3*FH, XPSTR("\0""\001""\014Telemetry   No Telemetry"), pModule->disableTelemetry, (sub==2) ) ;
+//	PxxExtra[s_currIdx] =	( PxxExtra[s_currIdx] & ~2 ) | ( b ? 2 : 0 ) ;
 }
 
 static void editTimer( uint8_t sub, uint8_t event )
@@ -9902,6 +10132,9 @@ void displayModuleName( uint16_t x, uint16_t y, uint8_t index, uint8_t attr )
 }
 
 uint8_t EditingModule ;
+#ifdef PCBX3
+const uint8_t PxxProtocolMap[] = { 0, 2, 3 } ;
+#endif
 
 void editOneProtocol( uint8_t event )
 {
@@ -9926,7 +10159,7 @@ void editOneProtocol( uint8_t event )
 		need_bind_range |= 5 ;
 		if ( pModule->sub_protocol == 3 )	// R9M
 		{
-			dataItems += 1 ;
+			dataItems += 2 ;
 		}
 		if ( pModule->sub_protocol == 0 )	// D16
 		{
@@ -10017,7 +10250,7 @@ void editOneProtocol( uint8_t event )
 		newvalue = onoffMenuItem( value, y, XPSTR("Enable"), sub==subN ) ;
 		if ( newvalue != value )
 		{
-#if defined(PCBX12D) || defined (PCBXLITE) || defined (PCBX9D)
+#if defined(PCBX12D) || defined (PCBXLITE) || defined (PCBX9D) || defined (PCBX3)
 			if ( module == 0 )
 			{
 				value = newvalue ? 1 : PROTO_OFF ;
@@ -10149,11 +10382,12 @@ void editOneProtocol( uint8_t event )
 				uint8_t oldValue = pModule->sub_protocol ;
 				uint8_t svalue = oldValue & 0x3F ;
 				
-				svalue = editMultiProtocol( svalue, ( sub == subN ) ) ;
+//				svalue = editMultiProtocol( svalue, ( sub == subN ) ) ;
 
 				if ( sub == subN )
 				{
 					attr = blink ;
+			 		CHECK_INCDEC_H_MODELVAR_0( svalue, 62 ) ;
 				}
 
 				displayMultiProtocol( svalue, y, attr ) ;
@@ -10316,7 +10550,22 @@ void editOneProtocol( uint8_t event )
 			if(t_pgOfs<=subN)
 			{
 				lcd_puts_Pleft( y, PSTR(STR_TYPE) ) ;
+#ifdef PCBX3
+				{
+					uint8_t attr = 0 ;
+					if (sub==subN)
+					{
+						attr = InverseBlink ;
+					}
+					lcd_putsAttIdx( 10*FW, y, XPSTR("\006D16(X)D8(D) LRP   R9M   "), pModule->sub_protocol, attr ) ;
+					if ( attr )
+					{
+						pModule->sub_protocol = checkOutOfOrder( pModule->sub_protocol, (uint8_t *)PxxProtocolMap, 3 ) ;
+					}
+				}
+#else
 				pModule->sub_protocol = checkIndexed( y, XPSTR(FWx10"\003""\006D16(X)D8(D) LRP   R9M   "), pModule->sub_protocol, (sub==subN) ) ;
+#endif
 			  if((y+=FH)>7*FH) return ;
 			}subN++;
 			if(t_pgOfs<=subN)
@@ -10329,8 +10578,43 @@ void editOneProtocol( uint8_t event )
 			{
 				if(t_pgOfs<=subN)
 				{
+					uint32_t temp ;
+			  	lcd_puts_Pleft( y, XPSTR("Flex mode") );
+					temp = checkIndexed( y, XPSTR(FWx10"\002\006""   OFF915MHz868MHz"), pModule->r9MflexMode, (sub==subN) ) ;
+					if ( temp )
+					{
+						if ( temp != pModule->r9MflexMode )
+						{
+							AlertType = ALERT_TYPE ;
+							AlertMessage = "\001Requires R9M non-\037\001certified firmware\037\001Check Frequency for\037\006your region" ;
+						}
+					}
+//					if ( pModule->country == 2 )
+//					{
+//						if ( temp == 1 )
+//						{
+//							if ( pModule->r9MflexMode == 2 )
+//							{
+//								temp = 0 ;
+//							}
+//							else
+//							{
+//								temp = 2 ;
+//							}
+//						}
+//					}
+					pModule->r9MflexMode = temp ;
+					if((y+=FH)>7*FH) return ;
+				}subN++;
+					
+				if(t_pgOfs<=subN)
+				{
 					char *s ; 
-					s = ( pModule->country == 2 ) ? XPSTR(FWx10"\003""\011  25(8ch) 25(16ch)200(16ch)500(16ch)") : XPSTR(FWx10"\003""\004  10 100 5001000") ;
+					s = XPSTR(FWx10"\003""\004  10 100 5001000") ;
+					if ( ( pModule->country == 2 ) && (pModule->r9MflexMode == 0) )
+					{
+						s = XPSTR(FWx10"\003""\011  25(8ch) 25(16ch)200(16ch)500(16ch)") ;
+					}
 				  lcd_puts_Pleft( y, XPSTR("Power (mW)") );
 					pModule->r9mPower = checkIndexed( y, s, pModule->r9mPower, (sub==subN) ) ;
 				  if((y+=FH)>7*FH) return ;
@@ -10457,7 +10741,7 @@ extern uint16_t XjtVersion ;
 						}
 						else
 						{
-	  					PxxFlag[module] = PXX_BIND ;		    	//send bind code
+	  					BindRangeFlag[module] = PXX_BIND ;		    	//send bind code
 							pushMenu( menuRangeBind ) ;
 						}
 					}
@@ -10487,7 +10771,7 @@ extern uint16_t XjtVersion ;
 					lcd_char_inverse( 0, y, 11*FW, 0 ) ;
 					if ( checkForMenuEncoderLong( event ) )
 					{
-  		  	  PxxFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+  		  	  BindRangeFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 						s_currIdx = module ;
 						pushMenu(menuRangeBind) ;
 					}
@@ -11089,7 +11373,7 @@ void menuProcProtocol(uint8_t event)
 //						lcd_char_inverse( 0, y, 4*FW, 0 ) ;
 //						if ( checkForMenuEncoderLong( event ) )
 //						{
-//  		  		  PxxFlag[module] = PXX_BIND ;		    	//send bind code or range check code
+//  		  		  BindRangeFlag[module] = PXX_BIND ;		    	//send bind code or range check code
 //							s_currIdx = module ;
 //							pushMenu(menuRangeBind) ;
 //						}
@@ -11120,7 +11404,7 @@ void menuProcProtocol(uint8_t event)
 					{
 						module = 1 ;
 					}
-  		  	PxxFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+  		  	BindRangeFlag[module] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 					s_currIdx = module ;
 					pushMenu(menuRangeBind) ;
 				}
@@ -11141,7 +11425,7 @@ void menuProcProtocol(uint8_t event)
 //					lcd_char_inverse( 0, y, 11*FW, 0 ) ;
 //					if ( checkForMenuEncoderLong( event ) )
 //					{
-//  		  	  PxxFlag[0] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+//  		  	  BindRangeFlag[0] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //						s_currIdx = 0 ;
 //						pushMenu(menuRangeBind) ;
 //					}
@@ -11160,7 +11444,7 @@ void menuProcProtocol(uint8_t event)
 //					lcd_char_inverse( 0, y, 11*FW, 0 ) ;
 //					if ( checkForMenuEncoderLong( event ) )
 //					{
-//  		  	  PxxFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+//  		  	  BindRangeFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //						s_currIdx = 1 ;
 //						pushMenu(menuRangeBind) ;
 //					}
@@ -11712,7 +11996,7 @@ void menuProcTrainProtocol(uint8_t event)
 //					lcd_char_inverse( FW, y, 4*FW, 0 ) ;
 //					if ( event==EVT_KEY_LONG(KEY_MENU))
 //					{
-//   		    	PxxFlag[1] = PXX_BIND ;		    	//send bind code or range check code
+//   		    	BindRangeFlag[1] = PXX_BIND ;		    	//send bind code or range check code
 //						s_currIdx = 1 ;
 //						pushMenu(menuRangeBind) ;
 //					}
@@ -11732,7 +12016,7 @@ void menuProcTrainProtocol(uint8_t event)
 //					lcd_char_inverse( FW, y, 11*FW, 0 ) ;
 //					if ( event==EVT_KEY_LONG(KEY_MENU))
 //					{
-//    	    	PxxFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+//    	    	BindRangeFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //						s_currIdx = 1 ;
 //						pushMenu(menuRangeBind) ;
 //					}
@@ -12178,7 +12462,7 @@ void menuProcTrainProtocol(uint8_t event)
 //						lcd_char_inverse( FW, y, 4*FW, 0 ) ;
 //						if ( event==EVT_KEY_LONG(KEY_MENU))
 //						{
-//    		    	PxxFlag[0] = PXX_BIND ;		    	//send bind code or range check code
+//    		    	BindRangeFlag[0] = PXX_BIND ;		    	//send bind code or range check code
 //							s_currIdx = 0 ;
 //							pushMenu(menuRangeBind) ;
 //						}
@@ -12196,7 +12480,7 @@ void menuProcTrainProtocol(uint8_t event)
 //					lcd_char_inverse( FW, y, 11*FW, 0 ) ;
 //					if ( event==EVT_KEY_LONG(KEY_MENU))
 //					{
-//    	    	PxxFlag[0] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+//    	    	BindRangeFlag[0] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //						s_currIdx = 0 ;
 //						pushMenu(menuRangeBind) ;
 //					}
@@ -12531,7 +12815,7 @@ void menuProcTrainProtocol(uint8_t event)
 //				lcd_char_inverse( FW, y, 4*FW, 0 ) ;
 //				if ( event==EVT_KEY_LONG(KEY_MENU))
 //				{
-// 		    	PxxFlag[1] = PXX_BIND ;		    	//send bind code or range check code
+// 		    	BindRangeFlag[1] = PXX_BIND ;		    	//send bind code or range check code
 //					s_currIdx = 1 ;
 //					pushMenu(menuRangeBind) ;
 //				}
@@ -12550,7 +12834,7 @@ void menuProcTrainProtocol(uint8_t event)
 //				lcd_char_inverse( FW, y, 11*FW, 0 ) ;
 //				if ( event==EVT_KEY_LONG(KEY_MENU))
 //				{
-//    	    PxxFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
+//    	    BindRangeFlag[1] = PXX_RANGE_CHECK ;		    	//send bind code or range check code
 //					s_currIdx = 1 ;
 //					pushMenu(menuRangeBind) ;
 //				}
@@ -12797,7 +13081,7 @@ extern void eeSaveAll() ;
 #endif
 #ifdef PCBX12D
 				eeLoadModel( g_eeGeneral.currModel ) ;
-				writeModelToBackupRam( g_eeGeneral.currModel+1 ) ;
+//				writeModelToBackupRam( g_eeGeneral.currModel+1 ) ;
 extern uint8_t PictureDrawn ;
 				loadModelImage() ;
 				PictureDrawn = 0 ;
@@ -13219,7 +13503,7 @@ void menuProcDiagCalib(uint8_t event)
 //	}
 //#endif
 #ifdef PCBX9D
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	if ( ( g_eeGeneral.analogMapping & MASK_6POS ) == USE_P3_6POS )
 	{
 		uint8_t len ;
@@ -13288,16 +13572,24 @@ void menuProcDiagAna(uint8_t event)
 #if defined(PCBX7) || defined (PCBXLITE)
 		lcd_putsAttIdx( 4*FW-3, y, XPSTR("\002LHLVRVRHA5A6  BT"), i, 0 ) ;
 #else // PCBX7 || PCBXLITE
+#ifdef PCBX3
+		lcd_putsAttIdx( 4*FW-3, y, XPSTR("\002LHLVRVRHA5    BT"), i, 0 ) ;
+#else // PCBX3
   #ifdef ARUNI
 		lcd_putsAttIdx( 4*FW-3, y, XPSTR("\002LHLVRVRHP1P2P3BT"), i, 0 ) ;
   #else
 		lcd_putsAttIdx( 4*FW-3, y, XPSTR("\002LHLVRVRHA5A6A7BT"), i, 0 ) ;
   #endif
+#endif // PCBX3
 #endif // PCBX7
 #if defined(PCBX7) || defined (PCBXLITE)
     if(i<6) lcd_outhex4( 6*FW, y,anaIn(i));
 #else // PCBX7 || XLITE
+#ifdef PCBX3
+    if(i<5) lcd_outhex4( 6*FW, y,anaIn(i));
+#else // PCBX3
     lcd_outhex4( 6*FW, y,anaIn(i));
+#endif // PCBX3
 #endif // PCBX7
 		uint8_t index = i ;
 		if ( i < 4 )
@@ -13307,7 +13599,11 @@ void menuProcDiagAna(uint8_t event)
 #if defined(PCBX7) || defined (PCBXLITE)
     if(i<6)  lcd_outdezAtt(15*FW, y, (int32_t)calibratedStick[index]*1000/1024, PREC1);
 #else // PCBX7 || XLITE
+#ifdef PCBX3
+    if(i<5)  lcd_outdezAtt(15*FW, y, (int32_t)calibratedStick[index]*1000/1024, PREC1);
+#else // PCBX3
     if(i<7)  lcd_outdezAtt(15*FW, y, (int32_t)calibratedStick[index]*1000/1024, PREC1);
+#endif // PCBX3
 #endif // PCBX7
     if(i==7)
 		{
@@ -13350,7 +13646,7 @@ void menuProcDiagAna(uint8_t event)
 #endif
 #endif  // ARUNI
 
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 	if ( g_eeGeneral.extraPotsSource[0] )
 	{
 		lcd_puts_P( 4*FW-3, 6*FH, XPSTR("SR") ) ;
@@ -13406,7 +13702,7 @@ void menuProcDiagAna(uint8_t event)
 #endif
 
 #ifdef PCBX9D
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
   lcd_putc( 18*FW, 2*FH, 'A' ) ;
   lcd_putc( 19*FW, 2*FH, '9' ) ;
   lcd_outhex4( 17*FW, 3*FH,anaIn(7));
@@ -13419,10 +13715,12 @@ void menuProcDiagAna(uint8_t event)
 #else
 #ifndef PCBX7
 #ifndef PCBXLITE
+#ifndef PCBX3
   lcd_putc( 18*FW, 5*FH, 'A' ) ;
   lcd_putc( 19*FW, 5*FH, '9' ) ;
   lcd_outhex4( 17*FW, 6*FH,anaIn(7));
   lcd_outdezAtt(20*FW, 7*FH, (int32_t)calibratedStick[7]*1000/1024, PREC1);
+#endif // PCBX3
 #endif // PCBXLITE
 #endif // PCBX7
 #endif
@@ -13500,6 +13798,9 @@ void menuProcDiagKeys(uint8_t event)
 #ifdef PCBXLITE
 		if ( i < 4 )
 #endif // PCBXLITE
+#ifdef PCBX3
+		if ( ( i != 3) && ( i != 4) && ( i != 6 ) )
+#endif // PCBX3
 		{
 			putHwSwitchName( x, y, i, 0 ) ;
 			uint32_t pos = switchPosition( i ) ;
@@ -13612,13 +13913,16 @@ void menuProcDiagKeys(uint8_t event)
   x=0;
   for(uint8_t i=0; i<6; i++)
   {
+   	uint8_t y=(5-i)*FH+2*FH;
 #ifdef PCBX7
  #ifndef PCBT12
 		if ( ( i < 2 ) || ( i == 5 ) )
  #endif // PCBT12
 #endif // PCBX7
+#ifdef PCBX3
+		if ( ( i < 2 ) || ( i == 5 ) )
+#endif // PCBX3
 		{
-    	uint8_t y=(5-i)*FH+2*FH;
     	bool t=keyState((EnumKeys)(KEY_MENU+i));
    		lcd_putsAttIdx(  x, y, PSTR(STR_KEYNAMES),i,0);
 #ifdef PCBX7
@@ -13629,8 +13933,28 @@ void menuProcDiagKeys(uint8_t event)
 			}
  #endif // PCBT12
 #endif // PCBX7
+#ifdef PCBX3
+			if ( i == 5 )
+			{
+			  lcd_puts_Pleft( y,XPSTR(" Page") ) ;
+			}
+#endif // PCBX3
     	lcd_putcAtt(x+FW*5+2,  y,t+'0',t);
 		}		 
+#ifdef PCBX3
+		if ( i == 3 )
+		{
+			lcd_puts_Pleft( y,XPSTR(" EncA") ) ;
+			bool t = (GPIOE->IDR & 0x0400) ? 0 : 1 ;
+    	lcd_putcAtt(x+FW*5+2,  y,t+'0',t);
+		}
+		if ( i == 4 )
+		{
+			lcd_puts_Pleft( y,XPSTR(" EncB") ) ;
+			bool t = (GPIOE->IDR & 0x1000) ? 0 : 1 ;
+    	lcd_putcAtt(x+FW*5+2,  y,t+'0',t);
+		}
+#endif // PCBX3
   }
 #ifdef PCBXLITE
   lcd_puts_Pleft(1*FH,XPSTR("Shift") ) ;
@@ -13746,7 +14070,7 @@ void menuProcDiagVers(uint8_t event)
 #endif
 #endif
 #ifdef PCBX9D
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 #define NUM_SETUP1_ITEMS	7
 #define NUM_SETUP1_PG1		6
 #else
@@ -14868,8 +15192,14 @@ void menuDebug(uint8_t event)
 //	lcd_outhex4( 30, 3*FH, PWMcontrol[2].timer_capture_period ) ;
 //	lcd_outhex4( 0, 4*FH, PWMcontrol[3].timer_capture_value ) ;
 //	lcd_outhex4( 30, 4*FH, PWMcontrol[3].timer_capture_period ) ;
-	 
+#endif
 
+#ifdef PCBX3
+  lcd_outhex4( 0,  4*FH, GPIOA->IDR ) ;
+  lcd_outhex4( 25, 4*FH, GPIOB->IDR ) ;
+  lcd_outhex4( 50, 4*FH, GPIOC->IDR ) ;
+  lcd_outhex4( 75, 4*FH, GPIOD->IDR ) ;
+  lcd_outhex4( 0,  5*FH, GPIOE->IDR ) ;
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -14885,6 +15215,7 @@ void menuDebug(uint8_t event)
   lcd_outhex4( 60, 2*FH, FrskyHubData[FR_MSG     ] ) ;
   lcd_outhex4( 90, 2*FH, FrskyHubData[FR_HOME_DIR] ) ;
 
+#ifndef PCB9XT
   lcd_outhex4( 0,  3*FH, FrskyHubData[FR_HOME_DIST] ) ;
   lcd_outhex4( 30, 3*FH, FrskyHubData[FR_CPU_LOAD ] ) ;
   lcd_outhex4( 60, 3*FH, FrskyHubData[FR_GPS_HDOP ] ) ;
@@ -14894,13 +15225,38 @@ void menuDebug(uint8_t event)
   lcd_outhex4( 30, 4*FH, FrskyHubData[FR_VOLTS     ] ) ;
   lcd_outhex4( 60, 4*FH, FrskyHubData[FR_TEMP2     ] ) ;
   lcd_outhex4( 90, 4*FH, FrskyHubData[FR_FUEL      ] ) ;
+#endif
 
-  lcd_outhex4( 0,  5*FH, FrskyHubData[FR_TEMP1     ] ) ;
+#ifdef PCB9XT
+  lcd_outhex4( 0,  4*FH, GPIOA->IDR ) ;
+  lcd_outhex4( 25, 4*FH, GPIOB->IDR ) ;
+  lcd_outhex4( 50, 4*FH, GPIOC->IDR ) ;
+  lcd_outhex4( 75, 4*FH, check_soft_power() ) ;
+
+#endif
+
+#ifdef REVX
+  lcd_outhex4( 0,  5*FH, PIOA->PIO_PDSR >> 16 ) ;
+  lcd_outhex4( 20,  5*FH, PIOA->PIO_PDSR ) ;
+  lcd_outhex4( 43,  5*FH, PIOB->PIO_PDSR >> 16 ) ;
+  lcd_outhex4( 63,  5*FH, PIOB->PIO_PDSR ) ;
+  lcd_outhex4( 86,  5*FH, PIOC->PIO_PDSR >> 16 ) ;
+  lcd_outhex4( 106,  5*FH, PIOC->PIO_PDSR ) ;
+#else
+  
+#ifndef PCB9XT
+	lcd_outhex4( 0,  5*FH, FrskyHubData[FR_TEMP1     ] ) ;
   lcd_outhex4( 30, 5*FH, FrskyHubData[FR_A1_COPY   ] ) ;
-
 extern uint8_t MultiId[] ;
   lcd_outhex4( 60,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
   lcd_outhex4( 90,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
+#else
+extern uint8_t MultiId[] ;
+  lcd_outhex4( 0,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
+  lcd_outhex4( 30,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
+#endif
+
+#endif	// REVX
 #endif	// nSMALL
 #endif	// PCBSKY
 
@@ -14931,15 +15287,46 @@ extern uint8_t MultiId[] ;
 
 //#endif	// PCBX7
 
+//#ifdef PCBX3
+//extern uint8_t PxxSerial[] ;
+//  lcd_outhex4( 0,  2*FH, PxxSerial[0] ) ;
+//  lcd_outhex4( 30, 2*FH, PxxSerial[1] ) ;
+//  lcd_outhex4( 60, 2*FH, PxxSerial[2] ) ;
+//  lcd_outhex4( 90, 2*FH, PxxSerial[3] ) ;
+//  lcd_outhex4( 0,  3*FH, PxxSerial[4] ) ;
+//  lcd_outhex4( 30, 3*FH, PxxSerial[5] ) ;
+//  lcd_outhex4( 60, 3*FH, PxxSerial[6] ) ;
+//  lcd_outhex4( 90, 3*FH, PxxSerial[7] ) ;
+//  lcd_outhex4( 0,  4*FH, PxxSerial[8] ) ;
+//  lcd_outhex4( 30, 4*FH, PxxSerial[9] ) ;
+//  lcd_outhex4( 60, 4*FH, PxxSerial[10] ) ;
+//  lcd_outhex4( 90, 4*FH, PxxSerial[11] ) ;
+//extern uint16_t PxxDebug0 ;
+//extern uint16_t PxxDebug1 ;
+//  lcd_outhex4( 0,  5*FH, PxxDebug0 ) ;
+//  lcd_outhex4( 30, 5*FH, PxxDebug1 ) ;
+//#endif	// PCBX3
+
 #ifdef PCBX12D
 extern uint16_t HbeatCounter ;
   lcd_outhex4( 0, 3*FH, HbeatCounter ) ;
 #endif
 //#if defined(PCBX9D) || defined(PCBX12D)
 #if defined(PCBX9D)
-//extern uint16_t XjtHbeatOffset ;
-//  lcd_outhex4( 0,  6*FH, XjtHbeatOffset ) ;
-//  lcd_outhex4( 25,  6*FH, XjtHeartbeatCapture.valid ) ;
+extern uint16_t XjtHbeatOffset ;
+  lcd_outhex4( 0,  3*FH, XjtHbeatOffset ) ;
+  lcd_outhex4( 25,  3*FH, XjtHeartbeatCapture.valid ) ;
+extern uint16_t HbCapDebug ;
+extern uint16_t HbCapDebug1 ;
+extern uint16_t HbCapDebug2 ;
+  lcd_outhex4( 50,  3*FH, HbCapDebug ) ;
+  lcd_outhex4( 75,  3*FH, HbCapDebug1 ) ;
+  lcd_outhex4( 100,  3*FH, HbCapDebug2 ) ;
+  lcd_outhex4( 0,  2*FH, GPIOC->MODER >> 16 ) ;
+  lcd_outhex4( 25,  2*FH, GPIOC->MODER ) ;
+  lcd_outhex4( 50,  2*FH, SYSCFG->EXTICR[2] ) ;
+  lcd_outhex4( 75,  2*FH, EXTI->IMR ) ;
+  lcd_outhex4( 100,  2*FH, EXTI->PR ) ;
 
 //	uint8_t *pt = (uint8_t *)&g_model.Module[1] ;
 
@@ -15079,54 +15466,76 @@ void menuSensors(uint8_t event)
 {
 	TITLE(XPSTR("Sensors"));
 	static MState2 mstate2 ;
-	mstate2.check_columns( event, NUMBER_EXTRA_IDS ) ;
+	mstate2.check_columns( event, NUMBER_EXTRA_IDS + 6 ) ;
 	uint8_t sub = mstate2.m_posVert ;
 	uint8_t blink = InverseBlink ;
 	uint8_t subN = 0 ;
 
- 	for( CPU_UINT j=0 ; j < NUMBER_EXTRA_IDS+1 ; j += 1 )
+	if ( sub < 6 )
 	{
-		uint8_t attr = (sub==subN) ? blink : 0 ;
-		uint8_t y = (1+j)*FH ;
-
-		if ( j < g_model.extraSensors )
+		displayNext() ;
+    for( uint32_t i = 0 ; i < 6 ; i += 1 )
 		{
-			lcd_outhex4( 0, y, g_model.extraId[j].id ) ;
-			lcd_putsAttIdx( 11*FW, y, XPSTR(DestString), g_model.extraId[j].dest, attr ) ;
- 		  if(attr)
-			{
-				CHECK_INCDEC_H_MODELVAR_0( g_model.extraId[j].dest, NUM_SCALE_DESTS ) ;
- 		  }
+			uint8_t y = (1+i) * FH ;
+      lcd_putsAttIdx( FW*5, y, PSTR(STR_TELEM_ITEMS), i + 69, 0 ) ;
+//			if ( sub == subN )
+//			{
+//				SubMenuCall = 0x80 + i + 5 ;
+//			}
+			alphaEditName( 11*FW, y, &g_model.customTelemetryNames[i*4], 4, sub==subN, (uint8_t *)XPSTR( "Custom Name") ) ;
+//																				  (uint8_t *)&PSTR(STR_TELEM_ITEMS)[(i+68)*5+1] ) ;
+	 		y += FH ;
+			subN += 1 ;
 		}
-		else
+	}
+	else
+	{
+		subN = 6 ;
+
+ 		for( CPU_UINT j=0 ; j < NUMBER_EXTRA_IDS+1 ; j += 1 )
 		{
-			if ( j < NUMBER_EXTRA_IDS )
+			uint8_t attr = (sub==subN) ? blink : 0 ;
+			uint8_t y = (1+j)*FH ;
+
+			if ( j < g_model.extraSensors )
 			{
-				lcd_puts_Pleft( y, XPSTR("----") ) ;
- 		  	if(attr)
-				{				
-					lcd_char_inverse( 0, y, 4*FW, 0 ) ;
-				}
+				lcd_outhex4( 0, y, g_model.extraId[j].id ) ;
+				lcd_putsAttIdx( 11*FW, y, XPSTR(DestString), g_model.extraId[j].dest, attr ) ;
+ 			  if(attr)
+				{
+					CHECK_INCDEC_H_MODELVAR_0( g_model.extraId[j].dest, NUM_SCALE_DESTS ) ;
+ 			  }
 			}
 			else
 			{
-				lcd_puts_Pleft( y, XPSTR("Clear All") ) ;
- 		  	if(attr)
-				{				
-					lcd_char_inverse( 0, y, 9*FW, 0 ) ;
-					if ( checkForMenuEncoderLong( event ) )
-					{
-						uint32_t i ;
-						for ( i = 0 ; i < NUMBER_EXTRA_IDS ; i += 1 )
+				if ( j < NUMBER_EXTRA_IDS )
+				{
+					lcd_puts_Pleft( y, HyphenString ) ;
+ 			  	if(attr)
+					{				
+						lcd_char_inverse( 0, y, 4*FW, 0 ) ;
+					}
+				}
+				else
+				{
+					lcd_puts_Pleft( y, XPSTR("Clear All") ) ;
+ 			  	if(attr)
+					{				
+						lcd_char_inverse( 0, y, 9*FW, 0 ) ;
+						if ( checkForMenuEncoderLong( event ) )
 						{
-							g_model.extraId[i].dest = 0 ;
+							uint32_t i ;
+							for ( i = 0 ; i < NUMBER_EXTRA_IDS ; i += 1 )
+							{
+								g_model.extraId[i].dest = 0 ;
+							}
+							g_model.extraSensors = 0 ;
 						}
-						g_model.extraSensors = 0 ;
 					}
 				}
 			}
+			subN += 1 ;
 		}
-		subN += 1 ;
 	}
 }
 
@@ -15224,7 +15633,7 @@ void menuProcAlpha(uint8_t event)
 	lcd_puts_Pleft( 0, Palpha->PalphaHeading ? (char *)Palpha->PalphaHeading : PSTR( STR_NAME ) ) ;
 	static MState2 mstate2 ;
 
-#if defined(REV9E) || defined(PCBX7)
+#if defined(REV9E) || defined(PCBX7) || defined(PCBX3)
 	uint8_t cursorMove = 0 ;
 	if ( event == EVT_KEY_FIRST(KEY_LEFT) )
 	{
@@ -15388,7 +15797,7 @@ void menuProcAlpha(uint8_t event)
 			mstate2.m_posVert = 1 ;
 		}
 	}
-#if defined(REV9E) || defined(PCBX7)
+#if defined(REV9E) || defined(PCBX7) || defined(PCBX3)
 	if ( cursorMove )
 	{
 		if ( cursorMove == 1 )
@@ -15561,7 +15970,6 @@ void menuProcS6R(uint8_t event)
 #endif
 
 	MENU(XPSTR("S6R Config."), menuTabStat, e_s6r, 28, {0} ) ;
-	
 	int8_t sub = mstate2.m_posVert ;
 
 	if ( StatusTimer )
@@ -16154,6 +16562,21 @@ void menuProcDate(uint8_t event)
 				break ;
 #endif
 			}
+#ifdef PCB9XT
+extern uint16_t VbattRtc ;
+		  	lcd_puts_P( 11*FW, 7*FH, XPSTR("RTC V") );
+				lcd_outdezAtt( 20*FW, 7*FH, VbattRtc*330/2048, PREC2 ) ;
+#endif
+#ifdef PCBX9D
+extern uint16_t VbattRtc ;
+		  	lcd_puts_P( 11*FW, 7*FH, XPSTR("RTC V") );
+				lcd_outdezAtt( 20*FW, 7*FH, VbattRtc*300/2048, PREC2 ) ;
+#endif
+#ifdef PCBX12D
+extern uint16_t VbattRtc ;
+		  	lcd_puts_P( 11*FW, 7*FH, XPSTR("RTC V") );
+				lcd_outdezAtt( 20*FW, 7*FH, VbattRtc*600/2048, PREC2 ) ;
+#endif
 		}
 #endif
 }
@@ -16247,6 +16670,10 @@ void menuProcSelectVoiceFile(uint8_t event)
 			if ( VoiceFileType == VOICE_FILE_TYPE_NAME )
 			{
 				directory = (TCHAR *)"\\voice\\modelNames" ;
+			}
+			else if ( VoiceFileType == VOICE_FILE_TYPE_SYSTEM )
+			{
+				directory = (TCHAR *)"\\voice\\system" ;
 			}
 			else if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
 			{
@@ -16573,6 +17000,12 @@ void switchDisplay( uint8_t j, uint8_t a )
 		a -= 2 ;
 	}
 #endif	
+#ifdef PCBX3
+	if ( a >= 24 )
+	{
+		a -= 1 ;
+	}
+#endif	
 	uint8_t b = a + 3 ;
 	uint8_t y = 4*FH ;
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -16675,17 +17108,29 @@ void switchDisplay( uint8_t j, uint8_t a )
 			p += 4 ;
 		}
 #endif // PCBXLITE
+#ifdef PCBX3
+		uint32_t p ;
+		p = i ;
+		if ( p > 2 )
+		{
+			p += 2 ;
+		}
+		if ( p > 5 )
+		{
+			p += 1 ;
+		}
+#endif // PCBX3
 #ifdef REV9E
 		if ( i < 18 )
 #else
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX3)
 		if ( p < 8 )
 #else // PCBX7
 		if ( i < 8 )
 #endif // PCBX7
 #endif	// REV9E
 		{
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX3)
 			putHwSwitchName((2+j*15)*FW-2, y, p, 0 ) ;
 			uint32_t pos = switchPosition( p ) ;
 #else // PCBX7
@@ -16713,7 +17158,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 #ifdef REV9E
 				if ( i == 18 )
 #else
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX3)
 				if ( p == 8 )
 #else // PCBX7
 				if ( i == 8 )
@@ -16734,7 +17179,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 #ifdef REV9E
 			putSwitchName((2+j*15)*FW-2, y, i-10+1-m, getSwitch00(i-10+2-m) ? INVERS : 0 ) ;
 #else
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX3)
 			putSwitchName((2+j*15)*FW-2, y, p+1-m, getSwitch00(p+2-m) ? INVERS : 0 ) ;
 #else // PCBX7
 #ifdef PCBX12D
@@ -17018,28 +17463,25 @@ void actionMainPopup( uint8_t event )
 		}
 		else if( popidx == 6 )	// Zero Alt.
 		{
-      AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+			resetTelemetry( TEL_ITEM_RESET_ALT ) ;
 		}
 		else if( popidx == 7 )	// A1 Offset
 		{
       if ( g_model.frsky.channels[0].units == 3 )		// Current (A)
 			{
-				frskyTelemetry[0].setoffset() ;
+				resetTelemetry( TEL_ITEM_RESET_A1OFF ) ;
 			}
 		}
 		else if( popidx == 8 )	// A2 Offset
 		{
       if ( g_model.frsky.channels[1].units == 3 )		// Current (A)
 			{
-				frskyTelemetry[1].setoffset() ;
+				resetTelemetry( TEL_ITEM_RESET_A2OFF ) ;
 			}
 		}
 		else if( popidx == 9 )	// GPS reset
 		{
-			struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
-
-			maxMinPtr->hubMax[FR_GPS_SPEED] = 0 ;
-			maxMinPtr->hubMax[TELEM_GPS_ALT] = 0 ;
+				resetTelemetry( TEL_ITEM_RESET_GPS ) ;
 		}
 		else if( popidx == 10 )	// Help
 		{
@@ -17053,11 +17495,12 @@ void actionMainPopup( uint8_t event )
 		else if( popidx == 12 )	// Run Script
 		{
 //				SharedMemory.TextControl.TextHelp = 1 ;
+			RotaryState = ROTARY_MENU_UD ;
 	  	pushMenu(menuScript) ;
 		}
 		else if( popidx == 13 )	// Reset Telemetry
 		{
-      resetTelemetry() ;
+      resetTelemetry( TEL_ITEM_RESET_ALL ) ;
 		}
 	}
 }
@@ -19339,7 +19782,7 @@ STR_DiagAna
 			
       TITLE( PSTR(STR_Display) ) ;
 #if defined(PCBX9D) || defined(PCBX12D)
- #ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 			IlinesCount = 7 ;
  #else            
 			IlinesCount = 6 ;
@@ -19372,7 +19815,7 @@ STR_DiagAna
       if( attr )
 			{
 				uint8_t oldValue = g_eeGeneral.contrast ;
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, 0, 60);
 #else
 				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, 10, 45);
@@ -19393,7 +19836,7 @@ STR_DiagAna
   		
 			lcd_puts_Pleft( y, PSTR(STR_BRIGHTNESS)) ;
 #if defined(PCBX9D) || defined(PCBX12D)
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 		  lcd_puts_P(11*FW, y, XPSTR( "COLOUR"));
 #endif
 #endif
@@ -19432,7 +19875,7 @@ STR_DiagAna
 				PWM->PWM_CH_NUM[0].PWM_CDTYUPD = g_eeGeneral.bright ;
 #endif
 #if defined(PCBX9D) || defined(PCBX12D)
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 				backlight_set( g_eeGeneral.bright, 0 ) ;
 #else
 				backlight_set( g_eeGeneral.bright ) ;
@@ -19455,7 +19898,7 @@ STR_DiagAna
 			y += FH ;
 			subN += 1 ;
 
-#if defined(REVPLUS) || defined(PCB9XT)
+#if defined(REVPLUS) || defined(PCB9XT) || defined(REV9E)
 #ifndef PCB9XT
  			lcd_puts_Pleft(    y, PSTR(STR_BRIGHTNESS));
 #endif
@@ -20134,7 +20577,7 @@ STR_DiagAna
 			IlinesCount = 4 + 4 + 1 + 7 + 5 + 1 ;
  #else
   #ifdef REV9E
-			IlinesCount = 5 + 4 + 1 + 3 + 3 ;
+			IlinesCount = 4 + 5 + 1 + 3 + 3 ;
   #else
    #ifdef PCBX7
     #ifdef PCBT12
@@ -20214,8 +20657,13 @@ STR_DiagAna
 	 #endif
 	#else
    #ifndef PCBXLITE
+    #ifdef REV9E
+			uint32_t page2 = 9 ;
+			uint32_t page3 = 10 ;
+	  #else
 			uint32_t page2 = 10 ;
 			uint32_t page3 = 11 ;
+    #endif
    #endif
 	#endif
 #ifndef PCBXLITE
@@ -20242,7 +20690,7 @@ STR_DiagAna
 #endif
 #if defined(PCBX9D) || defined(PCBX12D)
 #ifdef REV9E
-			if ( sub < 5 )
+			if ( sub < 4 )
 #else
 #ifdef PCBX12D
 			if ( sub < 2 )
@@ -20302,7 +20750,7 @@ STR_DiagAna
 
 #if defined(PCBX9D) || defined(PCBX12D)
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 #define NUM_MAP_POTS	3
 #else
 #define NUM_MAP_POTS	2
@@ -20458,9 +20906,9 @@ STR_DiagAna
 
 #if defined(PCBX9D) || defined(PCBX12D)
  #ifdef REV9E
-			else if ( sub < 10 )
+			else if ( sub < 9 )
 			{
-				subN = 5 ;
+				subN = 4 ;
  #else
   #ifdef PCBX12D
 			else if ( sub < page2 )
@@ -20831,7 +21279,7 @@ STR_DiagAna
 				subN = page3+7 ;
 #else
 #ifdef REV9E
-				subN = page3+7 ;
+				subN = page3 ;
 #else
 #ifdef PCBX12D
 				subN = 13 ;
@@ -21598,7 +22046,11 @@ STR_Protocol
 #endif
 
 #if defined(PCBX9D) || defined(PCBX12D)
+ #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12)
+			IlinesCount = 20 ;//+ 1 ;
+ #else
 			IlinesCount = 21 ;//+ 1 ;
+ #endif
 #else // PCBX9D
  #ifdef IMAGE_128
 			IlinesCount = 21 ;//+ 1 ;
@@ -21989,6 +22441,9 @@ STR_Protocol
 #ifdef PCBXLITE
 					if ( i < 4 )
 #endif // PCBXLITE
+#ifdef PCBX3
+					if ( ( i != 3) && ( i != 4) && ( i != 6 ) )
+#endif // PCBX3
 					{
 						uint8_t attr = 0 ;
 						if ( (enables & (1<<i)) )
@@ -22013,12 +22468,16 @@ STR_Protocol
 								attr = BLINK ;	
 							}
 #else // PCBXLITE
+#ifdef PCBX3
+							if ( ( ( i < 3 ) && ( subSub==i ) ) || ( (i == 5) && (subSub == 3) ) )
+#else // PCBX3
 							if ( subSub==i )
+#endif // PCBX7
 							{
 								attr = BLINK ;	
 							}
+#endif // PCBX3
 #endif // PCBXLITE
-#endif // PCBX7
 						}
 #ifdef PCBT12
 						lcd_putsnAtt((13+i)*FW, y, XPSTR("ABCDEGH")+i,1, attr );
@@ -22036,11 +22495,11 @@ STR_Protocol
 					Columns = 4 ;
 #endif
 #else // PCBX7
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 					Columns = 3 ;
-#else // PCBXLITE
+#else // PCBXLITE/X3
 					Columns = 6 ;
-#endif // PCBXLITE
+#endif // PCBXLITE/X3
 #endif // PCBX7
         	if((event==EVT_KEY_FIRST(KEY_MENU)) || (event == EVT_KEY_BREAK(BTN_RE)) || P1values.p1valdiff)
 					{
@@ -22342,7 +22801,11 @@ void menuProcBt(uint8_t event)
   MENU(XPSTR("BT"), menuTabStat, e_bluetooth, 7, {0/*, 0*/});
 
 #ifdef PCBSKY
+ #ifdef BT_PDC
+	uint16_t *p = (uint16_t *)&BtPdcFifo ;
+ #else
 	uint16_t *p = (uint16_t *)&BtRx_fifo ;
+ #endif
 #endif
 #ifdef PCB9XT
 	uint16_t *p = (uint16_t *)&BtRx_fifo ;

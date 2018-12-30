@@ -28,7 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(PCBX7) || defined(PCBXLITE)
+//#define XLITE_PROTO	1
+
+#if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX3)
 
 #ifndef PCBXLITE
 #define GPIO_PinSource_HAPTIC           GPIO_PinSource8
@@ -156,6 +158,7 @@ void refreshDisplay()
 	
 #ifndef PCBXLITE
  #ifndef PCBT12
+  #ifndef PCBX3
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		uint16_t time = get_tmr10ms() ;
@@ -168,6 +171,7 @@ void refreshDisplay()
 			ExtDisplaySend = 1 ;
 		}
 	}
+  #endif // X3
  #endif
 #endif
 
@@ -243,6 +247,17 @@ static void backlightInit()
 #ifdef PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;    // Enable clock
+ #ifdef XLITE_PROTO	
+	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+  TIM1->ARR = 100;
+  TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
+  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM
+  TIM1->CCER = TIM_CCER_CC3E;
+  TIM1->CCR1 = 100;
+	TIM1->BDTR |= TIM_BDTR_MOE ;
+  TIM1->EGR = 0;
+  TIM1->CR1 = TIM_CR1_CEN; // Counter enable
+ #else
 	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
   TIM1->ARR = 100;
   TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
@@ -252,8 +267,21 @@ static void backlightInit()
 	TIM1->BDTR |= TIM_BDTR_MOE ;
   TIM1->EGR = 0;
   TIM1->CR1 = TIM_CR1_CEN; // Counter enable
-
+ #endif
 #else	
+ #ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
+  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;    // Enable clock
+	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+  TIM1->ARR = 100;
+  TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
+  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2; // PWM
+  TIM1->CCER = TIM_CCER_CC3E;
+  TIM1->CCR1 = 100;
+	TIM1->BDTR |= TIM_BDTR_MOE ;
+  TIM1->EGR = 0;
+  TIM1->CR1 = TIM_CR1_CEN; // Counter enable
+ #else // X3
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
   RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;    // Enable clock
   
@@ -266,6 +294,7 @@ static void backlightInit()
   TIM4->CCR2 = 100;
   TIM4->EGR = 0;
   TIM4->CR1 = TIM_CR1_CEN; // Counter enable
+ #endif // X3
 #endif
 }
 
@@ -337,6 +366,48 @@ void lcdSetRefVolt(uint8_t val)
 }
 
 #ifndef PCBXLITE
+
+#ifdef PCBX3
+void initHaptic()
+{
+  RCC_AHB1PeriphClockCmd(HAPTIC_RCC_AHB1Periph, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin = HAPTIC_GPIO_PIN ;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init( HAPTIC_GPIO, &GPIO_InitStructure);
+
+  GPIO_PinAFConfig( HAPTIC_GPIO, HAPTIC_GPIO_PinSource, HAPTIC_GPIO_AF);
+
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;		// Enable clock
+	HAPTIC_TIMER->ARR = 100 ;
+	HAPTIC_TIMER->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;		// 100uS from 30MHz
+	HAPTIC_TIMER->CCMR1 = TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 ;	// PWM
+	HAPTIC_TIMER->CCER = TIM_CCER_CC2E ;
+	
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = 0 ;
+	HAPTIC_TIMER->EGR = 0 ;
+	HAPTIC_TIMER->CR1 = TIM_CR1_CEN ;				// Counter enable
+}
+
+void hapticOff()
+{
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = 0 ;
+}
+
+// pwmPercent 0-100
+void hapticOn( uint32_t pwmPercent )
+{
+	if ( pwmPercent > 100 )
+	{
+		pwmPercent = 100 ;		
+	}
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = pwmPercent ;
+}
+
+#else // X3
 void initHaptic()
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOHAPTIC, ENABLE);
@@ -375,8 +446,8 @@ void hapticOn( uint32_t pwmPercent )
 	}
 	TIM10->CCR1 = pwmPercent ;
 }
-
-#else
+#endif // X3
+#else // XLITE
 
 void initHaptic()
 {
@@ -397,20 +468,51 @@ uint16_t BacklightBrightness ;
 #ifdef PCBXLITE
 void backlight_on()
 {
+#ifdef XLITE_PROTO	
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+#else	
 	TIM1->CCR1 = 100 - BacklightBrightness ;
+#endif
 }
 
 void backlight_off()
 {
+#ifdef XLITE_PROTO	
+	TIM1->CCR3 = 0 ;
+#else	
 	TIM1->CCR1 = 0 ;
+#endif
 }
 
 void backlight_set( uint16_t brightness )
 {
 	BacklightBrightness = brightness ;
+#ifdef XLITE_PROTO	
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+#else	
 	TIM1->CCR1 = 100 - BacklightBrightness ;
+#endif
 }
 #else // PCBXLITE
+ #ifdef PCBX3
+void backlight_on()
+{
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+}
+
+void backlight_off()
+{
+	TIM1->CCR3 = 0 ;
+}
+
+void backlight_set( uint16_t brightness )
+{
+	BacklightBrightness = brightness ;
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+}
+
+ #else // X3
+
 void backlight_on()
 {
 	TIM4->CCR2 = 100 - BacklightBrightness ;
@@ -426,6 +528,7 @@ void backlight_set( uint16_t brightness )
 	BacklightBrightness = brightness ;
 	TIM4->CCR2 = 100 - BacklightBrightness ;
 }
+ #endif // PCBX3
 #endif // PCBXLITE
 
 
@@ -434,7 +537,7 @@ void backlight_set( uint16_t brightness )
 
 //#define	WriteData(x)	 AspiData(x)
 //#define	WriteCommand(x)	 AspiCmd(x)
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 #define CONTRAST_OFS 150
 #else
 #define CONTRAST_OFS 12
@@ -474,7 +577,7 @@ void Set_Address(uint8_t x, uint8_t y)
 
 uint8_t GreyDisplayBuf[DISPLAY_W*DISPLAY_H/8*4] ;
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 
 OS_FlagID LcdFlag ;
 volatile uint8_t DmaDone = 0 ;
@@ -598,7 +701,7 @@ extern uint8_t ModelImageValid ;
 }
 #endif
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 void refreshDisplay()
 {
 extern uint8_t ImageDisplay ;
@@ -729,6 +832,7 @@ extern uint16_t MixerRunAtTime ;
 #endif
 
 #ifndef REVPLUS
+#ifndef REV9E
 
 void convertDisplay()
 {
@@ -942,11 +1046,12 @@ extern uint8_t CurrentVolume ;
     AspiData(0);
   }
 }
-#endif
+#endif // nX9E
+#endif // nREVPLUS
 
 uint16_t BacklightBrightness ;
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 uint16_t BacklightBrightness_white ;
 
 void backlight_w_on()
@@ -1164,7 +1269,7 @@ static void LCD_BL_Config()
 static void LCD_Hardware_Init()
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_LCD, ENABLE);
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_LCD_RST, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_LCD_NCS, ENABLE);
 #endif  
@@ -1179,7 +1284,7 @@ static void LCD_Hardware_Init()
   GPIO_Init(GPIO_LCD, &GPIO_InitStructure);
   
   /*!< Configure lcd NCS pin in output pushpull mode ,PULLUP *************/
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	GPIO_InitStructure.GPIO_Pin = PIN_LCD_NCS ;
   GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -1202,7 +1307,7 @@ static void LCD_Hardware_Init()
 #endif  
 }
 
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 static void LCD_Init()
 {
 //  LCD_BL_Config() ;
@@ -1331,7 +1436,7 @@ void lcdInit()
 
   LCD_BL_Config();
   LCD_Hardware_Init();
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	initLcdSpi() ;
 #endif
   

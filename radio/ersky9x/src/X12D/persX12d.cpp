@@ -150,11 +150,15 @@ void generalDefault()
   g_eeGeneral.contrast = 18 ;
 #endif
 #endif
+#ifdef PCBX12D
+  g_eeGeneral.vBatWarn = 88 ;
+#else
   g_eeGeneral.vBatWarn = 65;
+#endif
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
 #ifdef PCBX12D
-	g_eeGeneral.bright = 50 ;
+	g_eeGeneral.bright = 100 ;
 #else
 	g_eeGeneral.bright = 50 ;
 #endif
@@ -203,6 +207,9 @@ void modelDefault(uint8_t id)
 	g_model.Module[0].protocol = PROTO_OFF ;
 	g_model.Module[1].protocol = PROTO_OFF ;
 	g_model.modelVoice = -1 ;
+	g_model.Module[0].pxxRxNum = id-1 ;
+	g_model.Module[1].pxxRxNum = id-1 ;
+	g_model.rxVratio = 132 ;
 	eeDirty(EE_MODEL) ;
 }
 
@@ -231,8 +238,8 @@ bool eeDuplicateModel(uint8_t id)
 	return true ;
 }
 
-uint32_t readGeneralFromBackupRam(void) ;
-uint32_t readModelFromBackupRam( uint8_t index) ;
+//uint32_t readGeneralFromBackupRam(void) ;
+//uint32_t readModelFromBackupRam( uint8_t index) ;
 
 void eeReadAll()
 {
@@ -248,7 +255,7 @@ void eeReadAll()
       result = f_mkdir(filename) ;
   }
 	
-	if ( !readGeneralFromBackupRam() )
+//	if ( !readGeneralFromBackupRam() )
 	{
 		if ( readGeneral() )
 		{
@@ -256,7 +263,7 @@ void eeReadAll()
 		}
 	}
   
-	if ( !readModelFromBackupRam(g_eeGeneral.currModel + 1) )
+//	if ( !readModelFromBackupRam(g_eeGeneral.currModel + 1) )
 	{
 		eeLoadModel(g_eeGeneral.currModel) ;
 	}
@@ -355,8 +362,8 @@ void eeDirty(uint8_t msk)
 
 }
 
-void writeGeneralToBackupRam(void) ;
-void writeModelToBackupRam( uint8_t index ) ;
+//void writeGeneralToBackupRam(void) ;
+//void writeModelToBackupRam( uint8_t index ) ;
 
 void ee32_process()
 {
@@ -365,7 +372,7 @@ void ee32_process()
 		if ( --General_timer == 0 )
 		{
 			// Time to write g_eeGeneral
-			writeGeneralToBackupRam() ;
+//			writeGeneralToBackupRam() ;
 		}
 	}
 	if ( Model_timer )
@@ -373,7 +380,7 @@ void ee32_process()
 		if ( --Model_timer == 0 )
 		{
 			// Time to write model
-			writeModelToBackupRam(Model_dirty) ;
+//			writeModelToBackupRam(Model_dirty) ;
 		}
 	}
 }

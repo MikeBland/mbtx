@@ -465,29 +465,60 @@ uint32_t hwKeyState( uint8_t key )
 	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
 	{
 		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		key -= HSW_Etrmdn ;		// 0 - 7
+		if (key >= 2 && key <= 5)       // swap back LH/RH trims
+		{
+			if ( g_eeGeneral.stickMode & 2 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		else
+		{
+			if ( g_eeGeneral.stickMode & 1 )
+			{
+				key ^= 0x06 ;
+			}
+		}
 		if ( ct )
 		{
-			key -= HSW_Etrmdn ;		// 0 - 7
 			key ^= 0x06 ;
 	 		if ( ct == 2 ) // Vintage style crosstrim
- 			{
+			{
 	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
 				{
 					key ^= 0x06 ;
 				}
- 			}
-			key += HSW_Etrmdn ;		// 0 - 7
+			}
 		}
+		key += HSW_Etrmdn ;		// 0 - 7
 	}
+//	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+//	{
+//		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+//		if ( ct )
+//		{
+//			key -= HSW_Etrmdn ;		// 0 - 7
+//			key ^= 0x06 ;
+//	 		if ( ct == 2 ) // Vintage style crosstrim
+// 			{
+//	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+//				{
+//					key ^= 0x06 ;
+//				}
+// 			}
+//			key += HSW_Etrmdn ;		// 0 - 7
+//		}
+//	}
 
-	switch(key)
+  switch ( key )
 	{
 		case HSW_Ttrmup :
-			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
 		
 		case HSW_Rtrmup :
@@ -507,11 +538,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		
 		case HSW_Etrmup :
-			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Etrmdn :
-			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
 		
 //		case HSW_Ttrmup :
@@ -1225,30 +1256,60 @@ uint32_t hwKeyState( uint8_t key )
 	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
 	{
 		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		key -= HSW_Etrmdn ;		// 0 - 7
+		if (key >= 2 && key <= 5)       // swap back LH/RH trims
+		{
+			if ( g_eeGeneral.stickMode & 2 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		else
+		{
+			if ( g_eeGeneral.stickMode & 1 )
+			{
+				key ^= 0x06 ;
+			}
+		}
 		if ( ct )
 		{
-			key -= HSW_Etrmdn ;		// 0 - 7
 			key ^= 0x06 ;
 	 		if ( ct == 2 ) // Vintage style crosstrim
- 			{
+			{
 	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
 				{
 					key ^= 0x06 ;
 				}
- 			}
-			key += HSW_Etrmdn ;		// 0 - 7
+			}
 		}
+		key += HSW_Etrmdn ;		// 0 - 7
 	}
-	
-	switch(key)
+//	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+//	{
+//		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+//		if ( ct )
+//		{
+//			key -= HSW_Etrmdn ;		// 0 - 7
+//			key ^= 0x06 ;
+//	 		if ( ct == 2 ) // Vintage style crosstrim
+// 			{
+//	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+//				{
+//					key ^= 0x06 ;
+//				}
+// 			}
+//			key += HSW_Etrmdn ;		// 0 - 7
+//		}
+//	}
+
+  switch ( key )
 	{
-		
 		case HSW_Ttrmup :
-			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
 		
 		case HSW_Rtrmup :
@@ -1268,11 +1329,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		
 		case HSW_Etrmup :
-			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Etrmdn :
-			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
 		
 		
@@ -1857,41 +1918,57 @@ uint32_t keyState(EnumKeys enuk)
 #ifdef PCBX9D
 void init_keys()
 {
-#ifdef PCBX7
+#ifdef PCBX3
+
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( PIN_BUTTON_MENU | PIN_BUTTON_EXIT | PIN_BUTTON_PAGE | PIN_BUTTON_ENCODER, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+#else // X3
+ #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
- #ifdef PCBT12
+  #ifdef PCBT12
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0E00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
- #else
+  #else
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
- #endif
-#else // PCBX7
-#ifdef REV9E
+  #endif
+ #else // PCBX7
+  #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN ; 		// Enable portF clock
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0001, PIN_INPUT | PIN_PULLUP | PIN_PORTF ) ;
-#else
-#ifdef PCBXLITE
+  #else
+   #ifdef PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x7D80, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-#else // PCBXLITE
+   #else // PCBXLITE
 // Buttons PE10, 11, 12, PD2, 3, 7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x1C00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 // Extra inputs
 	configure_pins( 0x6000, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
-#endif // PCBXLITE
-#endif // REV9E
-#endif // PCBX7
+   #endif // PCBXLITE
+  #endif // REV9E
+ #endif // PCBX7
+#endif // PCBX3
 }
 
 void init_trims()
 {
 // Trims 
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( PIN_TRIMLV_DN | PIN_TRIMLV_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( PIN_TRIMLH_UP | PIN_TRIMLH_DN, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( PIN_TRIMRH_DN | PIN_TRIMRH_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( PIN_TRIMRV_DN | PIN_TRIMRV_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+#else
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -1918,6 +1995,7 @@ void init_trims()
 	configure_pins( 0x200E, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 #endif // PCBXLITE
 #endif // PCBX7
+#endif // PCBX3
 }
 
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
@@ -2028,6 +2106,26 @@ uint32_t read_keys()
 	y |= 0x02 << KEY_DOWN ;		// DOWN
 
 #else
+#ifdef PCBX3
+	x = GPIOE->IDR ; // 10 RIGHT(+), 11 LEFT(-), 12 ENT(DOWN)
+	y = 0 ;
+	
+	if ( x & PIN_BUTTON_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & PIN_BUTTON_PAGE )
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	if ( x & PIN_BUTTON_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	y |= 0x02 << KEY_UP ;			// up
+	y |= 0x02 << KEY_DOWN ;		// DOWN
+#else // PCBX3
 	
 	y = 0 ;
 	if ( x & PIN_BUTTON_MENU )
@@ -2061,6 +2159,7 @@ uint32_t read_keys()
 		y |= 0x02 << KEY_EXIT ;			// EXIT
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 	}
+#endif // PCBX3
 #endif // REV9E
 #endif // PCBX7
 #endif // PCBXLITE
@@ -2078,7 +2177,63 @@ uint32_t read_trims()
 
 	trims = 0 ;
 
+#ifdef PCBX3
+	trima = GPIOC->IDR ;
+// TRIM_LH_DOWN
+	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
+	{
+		trims |= 1 ;
+	}
+    
+// TRIM_LH_UP
+	if ( ( trima & PIN_TRIMLH_UP ) == 0 )
+	{
+		trims |= 2 ;
+	}
 
+	trima = GPIOE->IDR ;
+
+// TRIM_RV_UP
+	if ( ( trima & PIN_TRIMRV_UP ) == 0 )
+	{
+		trims |= 0x20 ;
+	}
+
+// TRIM_RH_DOWN
+	if ( ( trima & PIN_TRIMRV_DN ) == 0 )
+	{
+		trims |= 0x10 ;
+	}
+
+	trima = GPIOB->IDR ;
+
+// TRIM_LV_DOWN
+	if ( ( trima & PIN_TRIMLV_DN ) == 0 )
+	{
+		trims |= 4 ;
+	}
+
+// TRIM_LV_UP
+	if ( ( trima & PIN_TRIMLV_UP ) == 0 )
+	{
+		trims |= 8 ;
+	}
+
+	trima = GPIOD->IDR ;
+
+// TRIM_RH_UP
+	if ( ( trima & PIN_TRIMRH_UP ) == 0 )
+	{
+		trims |= 0x80 ;
+	}
+
+// TRIM_RH_DOWN
+	if ( ( trima & PIN_TRIMRH_DN ) == 0 )
+	{
+		trims |= 0x40 ;
+	}
+
+#else // X3
 #ifdef REV9E
 
 	trima = GPIOG->IDR ;
@@ -2273,6 +2428,7 @@ uint32_t read_trims()
 #endif // XLITE
 #endif // PCBX7
 #endif
+#endif // X3
 
 	return trims ;
 }
@@ -2282,6 +2438,16 @@ uint32_t read_trims()
 // 
 void setup_switches()
 {
+#ifdef PCBX3
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( PIN_SW_H, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( PIN_SW_B_L | PIN_SW_B_H, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( PIN_SW_F, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( PIN_SW_A_L | PIN_SW_A_H | PIN_SW_C_L | PIN_SW_C_H, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+#else
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -2304,7 +2470,7 @@ void setup_switches()
 #else // PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 #endif
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
@@ -2326,6 +2492,7 @@ void setup_switches()
  #endif
 #endif // PCBXLITE
 #endif
+#endif // X3
 
 
 #ifdef REV9E
@@ -2370,6 +2537,122 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 
 uint32_t hwKeyState( uint8_t key )
 {
+#ifdef PCBX3
+  uint32_t xxx = 0 ;
+  uint32_t e = GPIOE->IDR ;
+  uint32_t b = GPIOB->IDR ;
+  uint32_t c = GPIOC->IDR ;
+  uint32_t a = GPIOA->IDR ;
+
+	if( key > HSW_MAX )  return 0 ;
+
+	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+	{
+		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		key -= HSW_Etrmdn ;		// 0 - 7
+		if (key >= 2 && key <= 5)       // swap back LH/RH trims
+		{
+			if ( g_eeGeneral.stickMode & 2 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		else
+		{
+			if ( g_eeGeneral.stickMode & 1 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		if ( ct )
+		{
+			key ^= 0x06 ;
+	 		if ( ct == 2 ) // Vintage style crosstrim
+			{
+	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+				{
+					key ^= 0x06 ;
+				}
+			}
+		}
+		key += HSW_Etrmdn ;		// 0 - 7
+	}
+
+  switch ( key )
+	{
+    case HSW_SA0:
+      xxx = ~e & PIN_SW_A_L ;
+    break ;
+    case HSW_SA1:
+      xxx = ((e & PIN_SW_A_L) | (e & PIN_SW_A_H)) == (PIN_SW_A_L | PIN_SW_A_H) ;
+    break ;
+    case HSW_SA2:
+      xxx = ~e & PIN_SW_A_H ;
+    break ;
+
+    case HSW_SB0:
+      xxx = ~b & PIN_SW_B_L ;
+    break ;
+    case HSW_SB1:
+      xxx = ((b & PIN_SW_B_L) | (b & PIN_SW_B_H)) == (PIN_SW_B_L | PIN_SW_B_H) ;
+    break;
+    case HSW_SB2:
+      xxx = ~b & PIN_SW_B_H ;
+    break ;
+
+    case HSW_SC0:
+      xxx = ~e & PIN_SW_C_L ;
+    break;
+    case HSW_SC1:
+      xxx = ((e & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+    break;
+    case HSW_SC2:
+      xxx = ~e & PIN_SW_C_H ;
+    break;
+		
+		case HSW_SF2:
+      xxx = ~c & PIN_SW_F ;
+    break ;
+
+    case HSW_SH2:
+      xxx = ~a & PIN_SW_H ;
+    break ;
+	
+		case HSW_Ttrmup :
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
+    break ;
+		
+		case HSW_Ttrmdn :
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
+    break ;
+		
+		case HSW_Rtrmup :
+			xxx = keyState( (EnumKeys) TRM_LH_DWN ) ;
+    break ;
+		
+		case HSW_Rtrmdn :
+			xxx = keyState( (EnumKeys) TRM_LH_UP ) ;
+    break ;
+		
+		case HSW_Atrmup :
+			xxx = keyState( (EnumKeys) TRM_RH_DWN ) ;
+    break ;
+		
+		case HSW_Atrmdn :
+			xxx = keyState( (EnumKeys) TRM_RH_UP ) ;
+    break ;
+		
+		case HSW_Etrmup :
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
+    break ;
+		
+		case HSW_Etrmdn :
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+    break ;
+
+	}
+
+#else // PCBX3
 #ifdef PCBXLITE
   uint32_t xxx = 0 ;
   uint32_t e = GPIOE->IDR ;
@@ -2440,9 +2723,7 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 
 	}
-#else
-
-
+#else // PCBXLITE
 	
 #ifdef PCBX7
   register uint32_t a = GPIOA->IDR;
@@ -2482,29 +2763,60 @@ uint32_t hwKeyState( uint8_t key )
 	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
 	{
 		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		key -= HSW_Etrmdn ;		// 0 - 7
+		if (key >= 2 && key <= 5)       // swap back LH/RH trims
+		{
+			if ( g_eeGeneral.stickMode & 2 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		else
+		{
+			if ( g_eeGeneral.stickMode & 1 )
+			{
+				key ^= 0x06 ;
+			}
+		}
 		if ( ct )
 		{
-			key -= HSW_Etrmdn ;		// 0 - 7
 			key ^= 0x06 ;
 	 		if ( ct == 2 ) // Vintage style crosstrim
- 			{
+			{
 	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
 				{
 					key ^= 0x06 ;
 				}
- 			}
-			key += HSW_Etrmdn ;		// 0 - 7
+			}
 		}
+		key += HSW_Etrmdn ;		// 0 - 7
 	}
+//	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+//	{
+//		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+//		if ( ct )
+//		{
+//			key -= HSW_Etrmdn ;		// 0 - 7
+//			key ^= 0x06 ;
+//	 		if ( ct == 2 ) // Vintage style crosstrim
+// 			{
+//	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+//				{
+//					key ^= 0x06 ;
+//				}
+// 			}
+//			key += HSW_Etrmdn ;		// 0 - 7
+//		}
+//	}
 
   switch ( key )
 	{
 		case HSW_Ttrmup :
-			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
 		
 		case HSW_Rtrmup :
@@ -2524,86 +2836,13 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		
 		case HSW_Etrmup :
-			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Etrmdn :
-			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
 		
-//		case HSW_Ttrmup :
-//			xxx = THR_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx)) ;
-////			xxx = TrimBits & 1 ;
-//    break ;
-		
-//		case HSW_Ttrmdn :
-//			xxx = THR_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx+1)) ;
-////			xxx = TrimBits & 2 ;
-//    break ;
-//		case HSW_Rtrmup :
-//			xxx = RUD_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx)) ;
-////			xxx = TrimBits & 4 ;
-//    break ;
-//		case HSW_Rtrmdn :
-//			xxx = RUD_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx+1)) ;
-////			xxx = TrimBits & 8 ;
-//    break ;
-//		case HSW_Atrmup :
-//			xxx = AIL_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx)) ;
-////			xxx = TrimBits & 0x10 ;
-//    break ;
-//		case HSW_Atrmdn :
-//			xxx = AIL_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx+1)) ;
-////			xxx = TrimBits & 0x20 ;
-//    break ;
-//		case HSW_Etrmup :
-//			xxx = ELE_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx)) ;
-////			xxx = TrimBits & 0x40 ;
-//    break ;
-//		case HSW_Etrmdn :
-//			xxx = ELE_STICK ;
-//			if ( g_eeGeneral.crosstrim )
-//			{
-//				xxx = 3 - xxx ;
-//			}
-//			xxx = TrimBits & (1 << (2*xxx+1)) ;
-////			xxx = TrimBits & 0x80 ;
-//    break ;
 
 #ifdef PCBX7
     case HSW_SA0:
@@ -2707,15 +2946,22 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~e & PIN_SW_C_H ;
       break;
 
+#ifdef PCBX3
     case HSW_SD0:
-#ifdef REVPLUS
+    case HSW_SE0:
+    case HSW_SG0:
+      xxx = 1 ;
+    break ;
+#else
+    case HSW_SD0:
+#if defined(REVPLUS) || defined(REV9E)
       xxx = ~e & PIN_SW_D_L ;
 #else
       xxx = ~b & PIN_SW_D_L ;
 #endif
 			break;
     case HSW_SD1:
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
       xxx = ((e & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
 #else
       xxx = ((b & PIN_SW_D_L) | (e & PIN_SW_D_H)) == (PIN_SW_D_L | PIN_SW_D_H) ;
@@ -2724,7 +2970,9 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SD2:
       xxx = ~e & PIN_SW_D_H ;
       break;
+#endif
 
+#ifndef PCBX3
     case HSW_SE0:
       xxx = ~b & PIN_SW_E_L ;
       break;
@@ -2734,6 +2982,7 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SE2:
       xxx = ~b & PIN_SW_E_H ;
       break;
+#endif
 
 //    case HSW_SF0:
 //      xxx = e & PIN_SW_F ;
@@ -2742,6 +2991,7 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~e & PIN_SW_F ;
       break;
 
+#ifndef PCBX3
     case HSW_SG0:
       xxx = ~e & PIN_SW_G_L ;
       break;
@@ -2751,6 +3001,7 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SG2:
       xxx = ~e & PIN_SW_G_H ;
       break;
+#endif
 
 //    case HSW_SH0:
 //#ifdef REVPLUS
@@ -2760,7 +3011,7 @@ uint32_t hwKeyState( uint8_t key )
 //#endif
 //      break;
     case HSW_SH2:
-#ifdef REVPLUS
+#if defined(REVPLUS) || defined(REV9E)
       xxx = ~GPIOD->IDR & PIN_SW_H;
 #else
       xxx = ~e & PIN_SW_H;
@@ -2996,6 +3247,7 @@ uint32_t hwKeyState( uint8_t key )
   }
 
 #endif // XLITE
+#endif // PCBX3
 
   if ( xxx )
   {
@@ -3154,12 +3406,12 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
 	}
-	if ( ( x & KEYS_GPIO_PIN_RIGHT ) && (AnalogData[11] < 0xA80 ) )
+	if ( ( x & KEYS_GPIO_PIN_RIGHT ) && (AnalogData[13] < 0xA80 ) )
 	{
 		y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	}
 	x = GPIOI->IDR ;
-	if ( ( x & KEYS_GPIO_PIN_LEFT ) && (AnalogData[11] > 0x580 ) )
+	if ( ( x & KEYS_GPIO_PIN_LEFT ) && (AnalogData[13] > 0x580 ) )
 	{
 		y |= 0x02 << KEY_LEFT ;		// LEFT
 	}
@@ -3167,12 +3419,12 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_EXIT ;			// EXIT
 	}
-	if ( ( x & KEYS_GPIO_PIN_DOWN ) && (AnalogData[13] > 0x580 ) )
+	if ( ( x & KEYS_GPIO_PIN_DOWN ) && (AnalogData[11] > 0x580 ) )
 	{
 		y |= 0x02 << KEY_DOWN ;		// DOWN
 	}
 	x = GPIOG->IDR ;
-	if ( ( x & KEYS_GPIO_PIN_UP ) && (AnalogData[13] < 0xA80 ) )
+	if ( ( x & KEYS_GPIO_PIN_UP ) && (AnalogData[11] < 0xA80 ) )
 	{
 		y |= 0x02 << KEY_UP ;			// up
 	}
@@ -3274,29 +3526,60 @@ uint32_t hwKeyState( uint8_t key )
 	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
 	{
 		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+		key -= HSW_Etrmdn ;		// 0 - 7
+		if (key >= 2 && key <= 5)       // swap back LH/RH trims
+		{
+			if ( g_eeGeneral.stickMode & 2 )
+			{
+				key ^= 0x06 ;
+			}
+		}
+		else
+		{
+			if ( g_eeGeneral.stickMode & 1 )
+			{
+				key ^= 0x06 ;
+			}
+		}
 		if ( ct )
 		{
-			key -= HSW_Etrmdn ;		// 0 - 7
 			key ^= 0x06 ;
 	 		if ( ct == 2 ) // Vintage style crosstrim
- 			{
+			{
 	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
 				{
 					key ^= 0x06 ;
 				}
- 			}
-			key += HSW_Etrmdn ;		// 0 - 7
+			}
 		}
+		key += HSW_Etrmdn ;		// 0 - 7
 	}
+//	if ( ( key >= HSW_Etrmdn ) && ( key <= HSW_Ttrmup ) )
+//	{
+//		uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
+//		if ( ct )
+//		{
+//			key -= HSW_Etrmdn ;		// 0 - 7
+//			key ^= 0x06 ;
+//	 		if ( ct == 2 ) // Vintage style crosstrim
+// 			{
+//	 			if (key >= 2 && key <= 5)       // swap back LH/RH trims
+//				{
+//					key ^= 0x06 ;
+//				}
+// 			}
+//			key += HSW_Etrmdn ;		// 0 - 7
+//		}
+//	}
 
   switch ( key )
 	{
 		case HSW_Ttrmup :
-			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
     break ;
 		
 		case HSW_Ttrmdn :
-			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
     break ;
 		
 		case HSW_Rtrmup :
@@ -3316,11 +3599,11 @@ uint32_t hwKeyState( uint8_t key )
     break ;
 		
 		case HSW_Etrmup :
-			xxx = keyState( (EnumKeys) TRM_RV_DWN ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_DWN ) ;
     break ;
 		
 		case HSW_Etrmdn :
-			xxx = keyState( (EnumKeys) TRM_RV_UP ) ;
+			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
 		
 //		case HSW_Ttrmup :

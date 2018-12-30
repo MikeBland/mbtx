@@ -1,5 +1,6 @@
 /*
  * Copyright (C) OpenTX
+ * Copyright (C) Ersky9x
  *
  * Based on code named
  *   th9x - http://code.google.com/p/th9x 

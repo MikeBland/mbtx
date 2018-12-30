@@ -30,7 +30,7 @@
   */
 static void I2C_GPIO_Configuration(void)
 {
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX3)
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
   

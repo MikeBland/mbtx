@@ -683,6 +683,7 @@ void setVolume( register uint8_t volume )
 }
 
 #ifndef REVPLUS
+#ifndef REV9E
 #ifdef PCB9XT
 void initHaptic()
 {
@@ -702,9 +703,10 @@ void hapticOn( uint32_t pwmPercent )
 	M64SetHaptic = 1 ;
 }
 
-#else
+#else // 9XT
 #ifndef PCBX7
 #ifndef PCBXLITE
+ #ifndef PCBX3
 void initHaptic()
 {
 	configure_pins( GPIO_Pin_HAPTIC, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
@@ -721,10 +723,12 @@ void hapticOn( uint32_t pwmPercent )
 {
 	GPIOHAPTIC->BSRRL = GPIO_Pin_HAPTIC ;
 }
+ #endif // PCBX3
 #endif // PCBXLITE
 #endif // PCBX7
-#endif
-#endif
+#endif // 9XT
+#endif // X9E
+#endif // REVPLUS
 
 
 

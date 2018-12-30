@@ -106,10 +106,10 @@ extern uint32_t CurrentFrameBuffer ;
 //#define LCD_H	272
 #endif
 
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX3)
 #define X9D_OFFSET		0
 #define DISPLAY_START (DisplayBuf + 0)
-#else // PCBX7
+#else // PCBX7/LITE/X3
 #ifdef PCBX9D
 #define X9D_OFFSET		11
 #define DISPLAY_START (DisplayBuf + X9D_OFFSET)
@@ -2096,6 +2096,8 @@ uint8_t lcd_buf[DISPLAY_W*DISPLAY_H/8];
 
 
 #if PCBX9D
+#ifdef WIDE_SCREEN
+#ifndef REV9E
 const uint8_t arrows[] = {
 10,64,80,
 0xFF,0xF7,0xF3,0xF9,0x00,0x00,0xF9,0xF3,0xF7,0xFF,
@@ -2117,6 +2119,8 @@ const uint8_t arrows[] = {
 0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF
 
 } ;
+#endif
+#endif
 #endif
 
 #if PCBX9D
@@ -2148,14 +2152,12 @@ void lcd_clear()
 {
   memset( DisplayBuf, 0, sizeof( DisplayBuf) ) ;
 #if PCBX9D
-#ifndef REV9E
- #ifndef PCBX7
-  #ifndef PCBXLITE
+#if defined(REVPLUS) || defined(REVNORM)
+ #ifndef REV9E
 	lcd_img( 212-X9D_OFFSET, 0, arrows, 0, 0 ) ;
 	lcd_img( 212-X9D_OFFSET-10, 0, arrows, 1, 0 ) ;
-  #endif // PCBXLITE
- #endif // PCBX7
-#endif	// nREV9E
+ #endif // nREV9E
+#endif	// normal/plus
 
 
 #endif // PCBX9D

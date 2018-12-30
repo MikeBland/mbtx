@@ -75,7 +75,7 @@ uint8_t TxLqi ;
 
 #define PRIVATE					'M'
 
-#define PRIVATE_BUFFER_SIZE	40
+#define PRIVATE_BUFFER_SIZE	24
 
 // SPORT defines
 #define DATA_FRAME         0x10
@@ -225,6 +225,7 @@ static uint8_t A1Received = 0 ;
 uint8_t Private_count ;
 uint8_t Private_position ;
 uint8_t PrivateData[6] ;
+uint8_t ExtraPrivateData[16] ;
 uint8_t InputPrivateData[PRIVATE_BUFFER_SIZE] ;
 
 #ifndef SMALL
@@ -1207,7 +1208,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				if ( *packet == DSM_VARIO )
 				{
 					ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
-					storeTelemetryData( FR_VSPD, ivalue ) ;
+					storeTelemetryData( FR_VSPD, ivalue*10 ) ;
 				}
 			break ;
 		
@@ -1479,14 +1480,14 @@ static bool checkSportPacket()
 uint8_t ARDUPtype ;
 
 #if defined(LUA) || defined(BASIC)
-static void postSportToLua( uint8_t *packet )
+static void postSportToScript( uint8_t *packet )
 {
-	if ( fifo128Space( &Lua_fifo ) >= 8 )
+	if ( fifo128Space( &Script_fifo ) >= 8 )
 	{
 		uint32_t i ;
 		for ( i = 0 ; i < 8 ; i += 1 )
 		{
-			put_fifo128( &Lua_fifo, *packet++ ) ;
+			put_fifo128( &Script_fifo, *packet++ ) ;
 		}
 	}
 }
@@ -1511,9 +1512,9 @@ void processSportPacket()
 	}
 
 #if defined(LUA) || defined(BASIC)
-	if ( ( prim == 0x32 ) || ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
+	if ( ( prim == 0x32 ) || ( (packet[3] & 0xF0) == 0x50 ) ) // || ( (packet[3] & 0xF0) == 0x10 ) )
 	{
-		postSportToLua( packet ) ;
+		postSportToScript( packet ) ;
 	}
 #endif
   
@@ -1566,7 +1567,7 @@ void processSportPacket()
 				break ;
     		  
 				case 5 : // SWR
-#if defined(PCBX9D) && defined(REVPLUS)
+#if defined(PCBX9D) && (defined(REVPLUS) || defined(REV9E))
 					if ( !( XjtVersion != 0 && XjtVersion != 0xff ) )
 					{
 						if ( g_model.xprotocol != PROTO_PXX )
@@ -1579,7 +1580,7 @@ void processSportPacket()
 				break ;
 				case 6 : // XJT VERSION
 					XjtVersion = (*((uint16_t *)(packet+4))) ;
-#if defined(PCBX9D) && defined(REVPLUS)
+#if defined(PCBX9D) && (defined(REVPLUS) || defined(REV9E))
 					if ( !( XjtVersion != 0 && XjtVersion != 0xff) )
 					{
 						if ( g_model.xprotocol != PROTO_PXX )
@@ -1865,7 +1866,7 @@ void processSportPacket()
 				break ;
 				 
 				case ARDUP_ID_8 :
-					if ( ( (packet[3] & 0xF0) == 0x50 ) || ( (packet[3] & 0xF0) == 0x10 ) )
+					if ( ( (packet[3] & 0xF0) == 0x50 ) ) //|| ( (packet[3] & 0xF0) == 0x10 ) )
 					{
 						uint32_t t ;
 						t = packet[2] & 0x0F ;
@@ -2086,12 +2087,12 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 		case PRIVATE_VALUE :
 		{
 			InputPrivateData[Private_position++] = byte ;
-			if ( byte & 0xC0 )
+			if ( byte & 0x80 )
 			{
         dataState = frskyDataIdle ;
 				return 0 ;
 			}
-			else if ( ( Private_position == Private_count ) || ( Private_position >= 12 ) )
+			else if ( ( Private_position == Private_count ) || ( Private_position >= PRIVATE_BUFFER_SIZE ) )
 			{
         dataState = frskyDataIdle;
 				// process private data here
@@ -2107,6 +2108,20 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 					{
 						len -= 1 ;
 						PrivateData[len] = InputPrivateData[len] ;
+					}
+					if ( Private_count > 5 )
+					{
+						uint32_t index = 6 ;
+						len = InputPrivateData[5] ;
+						if ( len > 16 )
+						{
+							len = 16 ;
+						}
+						while ( len )
+						{
+							len -= 1 ;
+							ExtraPrivateData[index-6] = InputPrivateData[index] ;
+						}
 					}
 				}
 			}
@@ -2124,7 +2139,7 @@ void rawLogByte( uint8_t byte ) ;
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
 #ifdef BLUETOOTH	
 	if ( g_model.bt_telemetry )
 	{
@@ -2268,7 +2283,7 @@ void frsky_receive_byte( uint8_t data )
         }
         if (data == START_STOP) // end of frame detected
         {
-#ifdef DISABLE_PXX_SPORT
+#ifndef DISABLE_PXX_SPORT
 //#ifdef REVX
 //	          processFrskyPacket(frskyRxBuffer); // FrskyRxBufferReady = 1;
 //  	        dataState = frskyDataIdle;
@@ -2603,7 +2618,7 @@ void telemetry_init( uint8_t telemetryType )
 			NVIC_SetPriority( USART0_IRQn, 3 ) ;
 			NVIC_EnableIRQ(USART0_IRQn) ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
-		  resetTelemetry();
+		  resetTelemetry(TEL_ITEM_RESET_ALL) ;
 //			startPdcUsartReceive() ;
 		break ;
 #endif
@@ -2611,7 +2626,7 @@ void telemetry_init( uint8_t telemetryType )
 #ifdef REVX
 		case TEL_MAVLINK :
 	  	memset(frskyAlarms, 0, sizeof(frskyAlarms));
-	  	resetTelemetry();
+	  	resetTelemetry(TEL_ITEM_RESET_ALL);
 			FrskyComPort = g_model.frskyComPort ;
 			if ( g_model.frskyComPort == 1 )
 			{
@@ -2645,7 +2660,7 @@ void telemetry_init( uint8_t telemetryType )
 //			g_model.telemetryRxInvert = 1 ;
 //			setMFP() ;
 		  memset(frskyAlarms, 0, sizeof(frskyAlarms));
-		  resetTelemetry();
+		  resetTelemetry(TEL_ITEM_RESET_ALL);
 //			startPdcUsartReceive() ;
 		break ;
 #endif
@@ -2993,7 +3008,7 @@ void FRSKY_Init( uint8_t brate )
 //#endif // PCBX9D
 
   memset(frskyAlarms, 0, sizeof(frskyAlarms));
-  resetTelemetry();
+  resetTelemetry(TEL_ITEM_RESET_ALL);
 #ifdef PCBSKY
 //	startPdcUsartReceive() ;
 #endif
@@ -3060,16 +3075,46 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 	}
 }
 
-void resetTelemetry()
+
+
+
+void resetTelemetry( uint32_t item )
 {
-	FrskyHubData[FR_A1_MAH] = 0 ;
-	FrskyHubData[FR_A2_MAH] = 0 ;
-	FrskyHubData[FR_CELL_MIN] = 450 ;			// 0 volts
-	Frsky_Amp_hour_prescale = 0 ;
-	FrskyHubData[FR_AMP_MAH] = 0 ;
-  memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
-	FrskyHubMaxMin.hubMax[FR_ALT_BARO] = -5000 ;
-	PixHawkCapacity = 0 ;
+	switch ( item )
+	{
+		case TEL_ITEM_RESET_ALT :
+      AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+		break ;
+
+		case TEL_ITEM_RESET_A1OFF :
+			frskyTelemetry[0].setoffset() ;
+		break ;
+
+		case TEL_ITEM_RESET_A2OFF :
+			frskyTelemetry[1].setoffset() ;
+		break ;
+
+		case TEL_ITEM_RESET_GPS :
+		{	
+			struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
+
+			maxMinPtr->hubMax[FR_GPS_SPEED] = 0 ;
+			maxMinPtr->hubMax[TELEM_GPS_ALT] = 0 ;
+		}
+		break ;
+
+		case TEL_ITEM_RESET_ALL :
+			FrskyHubData[FR_A1_MAH] = 0 ;
+			FrskyHubData[FR_A2_MAH] = 0 ;
+			FrskyHubData[FR_CELL_MIN] = 450 ;			// 0 volts
+			Frsky_Amp_hour_prescale = 0 ;
+			FrskyHubData[FR_AMP_MAH] = 0 ;
+  		memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
+			FrskyHubMaxMin.hubMax[FR_ALT_BARO] = -5000 ;
+			PixHawkCapacity = 0 ;
+		break ;
+	}
+
 }
 
 uint8_t decodeMultiTelemetry()
@@ -3171,7 +3216,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX7)
 	if ( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
 	{
 		type = TEL_DSM ;
@@ -3962,12 +4007,12 @@ void processCrossfireTelemetryFrame()
 			uint8_t *packet = &frskyRxBuffer[1] ;
 			uint8_t len = *packet ;	// # bytes to copy, add length, drop crc
 
-			if ( fifo128Space( &Lua_fifo ) >= len )
+			if ( fifo128Space( &Script_fifo ) >= len )
 			{
 				uint32_t i ;
 				for ( i = 0 ; i < len ; i += 1 )
 				{
-					put_fifo128( &Lua_fifo, *packet++ ) ;
+					put_fifo128( &Script_fifo, *packet++ ) ;
 				}
 			}
 		}

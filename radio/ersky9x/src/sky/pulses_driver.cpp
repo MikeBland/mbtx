@@ -71,8 +71,8 @@ uint8_t Serial_byte_count ;
 uint8_t CurrentProtocol[2] ;
 //uint8_t Current_protocol ;
 //uint8_t Current_xprotocol ;
-uint8_t PxxFlag[2] = { 0, 0 } ;
-uint8_t PxxExtra[2] = { 0, 0 } ;
+uint8_t BindRangeFlag[2] = { 0, 0 } ;
+//uint8_t PxxExtra[2] = { 0, 0 } ;
 uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 uint8_t CurrentTrainerSource ;
@@ -449,7 +449,7 @@ extern "C" void PWM_IRQHandler (void)
 				if ( period == 2000 )	// 1.0 mS
 				{
 					XjtHbeatOffset = TC1->TC_CHANNEL[0].TC_CV - XjtHeartbeatCapture.value ;
-					if ( ( g_model.Module[1].pxxDoubleRate ) && ( (PxxFlag[1] & PXX_BIND) == 0 ) )
+					if ( ( g_model.Module[1].pxxDoubleRate ) && ( (BindRangeFlag[1] & PXX_BIND) == 0 ) )
 					{
 						period = 3500*2 ;	// Use 4.5mS period total
 						if ( (Pass & 1) == 0 )
@@ -702,13 +702,13 @@ void setupPulsesDsm2(uint8_t chns)
 		{
   		sendByteDsm2( Pass ) ;		// Actually is a 0
 			// Do init packet
-			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
+			if ( (BindRangeFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				flags |= ORTX_BIND_FLAG ;
 			}
 			// Need to choose dsmx/dsm2 as well
   		sendByteDsm2( flags ) ;
-  		sendByteDsm2( (PxxFlag[1] & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
+  		sendByteDsm2( (BindRangeFlag[1] & PXX_RANGE_CHECK) ? 4: 7 ) ;		// 
   		sendByteDsm2( channels ) ;			// Max channels
 //  		sendByteDsm2( g_model.Module[1].pxxRxNum ) ;		// Rx Num
 #ifdef ENABLE_DSM_MATCH  		
@@ -765,7 +765,7 @@ void setupPulsesDsm2(uint8_t chns)
 				DsmInitCounter = 0 ;
 				Pass = 0 ;
 			}
-			if ( (PxxFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
+			if ( (BindRangeFlag[1] & PXX_BIND) || (dsmDat[0]&BindBit) )
 			{
 				Pass = 0 ;		// Stay here
 			}
@@ -1484,13 +1484,13 @@ void setupPulsesPXX()
     putPcmByte( g_model.Module[1].pxxRxNum ) ;
     
   	uint8_t flag1;
-  	if (PxxFlag[1] & PXX_BIND)
+  	if (BindRangeFlag[1] & PXX_BIND)
 		{
-  	  flag1 = (g_model.Module[1].sub_protocol<< 6) | (g_model.Module[1].country << 1) | PxxFlag[1] ;
+  	  flag1 = (g_model.Module[1].sub_protocol<< 6) | (g_model.Module[1].country << 1) | BindRangeFlag[1] ;
   	}
   	else
 		{
-  	  flag1 = (g_model.Module[1].sub_protocol << 6) | PxxFlag[1] ;
+  	  flag1 = (g_model.Module[1].sub_protocol << 6) | BindRangeFlag[1] ;
 		}	
 
 		if ( ( flag1 & (PXX_BIND | PXX_RANGE_CHECK )) == 0 )
@@ -1606,17 +1606,23 @@ void setupPulsesPXX()
 // Bits 7:6 unused
 
 		 
-		if ( PxxExtra[1] & 1 )
+		if ( g_model.Module[1].highChannels )
+//		if ( PxxExtra[1] & 1 )
 		{
 			extra_flags = (1 << 2 ) ;
 		}
-		if ( PxxExtra[1] & 2 )
+		if ( g_model.Module[1].disableTelemetry )
+//		if ( PxxExtra[1] & 2 )
 		{
 			extra_flags |= (1 << 1 ) ;
 		}
 		if ( g_model.Module[1].sub_protocol == 3 )	// R9M
 		{
 			extra_flags |= g_model.Module[1].r9mPower << 3 ;
+			if ( g_model.Module[1].r9MflexMode == 2 )
+			{
+				extra_flags |= 1 << 6 ;
+			}
 		}
 		putPcmByte( extra_flags ) ;
 

@@ -717,7 +717,10 @@ struct t_module
 	uint8_t pxxHeartbeatPB14:1 ;
 	int8_t failsafe[16] ;
 	uint8_t externalAntenna:1 ;
-	uint8_t spare:7 ;
+	uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
+	uint8_t highChannels:1 ;
+	uint8_t disableTelemetry:1 ;
+	uint8_t spare:3 ;
 	uint8_t sparex[2] ;
 } ;
 
@@ -892,7 +895,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t telemetryTimeout ;
 	uint8_t throttleIdleScale ;
 	uint8_t switchDelay[NUM_SKYCSW] ;
-	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
+	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc. (unused)
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
 	int8_t cellScalers[12] ;
