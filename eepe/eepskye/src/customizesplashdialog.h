@@ -22,6 +22,7 @@ private slots:
     void on_loadFromImageButton_clicked();
 
     void on_saveToHexButton_clicked();
+    void on_saveToLbmButton_clicked();
 
     void on_invertColorButton_clicked();
 

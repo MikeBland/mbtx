@@ -43,6 +43,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_QX7				9
 #define RADIO_TYPE_XLITE		 10
 #define RADIO_TYPE_T12			 11
+#define RADIO_TYPE_XXX			 12
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -54,6 +55,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_QX7					128
 #define RADIO_BITTYPE_XLITE				256
 #define RADIO_BITTYPE_T12					512
+#define RADIO_BITTYPE_XXX					65536
 
 #define RADIO_BITTYPE_ER9XM64V1		1024
 #define RADIO_BITTYPE_ER9XM64V2		2048
@@ -61,6 +63,20 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_ER9XM128V2	8192
 #define RADIO_BITTYPE_ER9XM2561V1	16384
 #define RADIO_BITTYPE_ER9XM2561V2	32768
+
+#define TELEMETRY_UNDEFINED		0		// To detect not yet configured
+#define TELEMETRY_FRSKY				1
+#define TELEMETRY_WSHHI				2
+#define TELEMETRY_DSM					3
+#define TELEMETRY_JETI				4
+#define TELEMETRY_ARDUPLANE		5
+#define TELEMETRY_ARDUCOPTER	6
+#define TELEMETRY_FRHUB				7
+#define TELEMETRY_HUBRAW			8
+#define TELEMETRY_FRMAV				9
+#define TELEMETRY_MAVLINK			10
+#define TELEMETRY_HITEC				11
+#define TELEMETRY_AFHDS2A			12
 
 //convert from mode 1 to mode g_eeGeneral.stickMode
 //NOTICE!  =>  1..4 -> 1..4
@@ -87,6 +103,8 @@ const uint8_t modn12x3[4][4]= {
 #define TRIM_OFF 1
 
 #define TRIM_EXTENDED_MAX	500
+
+#define NUM_TELEM_ITEMS	79
 
 const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
@@ -179,6 +197,14 @@ enum EnumKeys {
 //#define HSW_Ele6pos4	54
 //#define HSW_Ele6pos5	55
 //#define HSW_MAX				55
+
+#define HSW_FM0					100
+#define HSW_FM1					101
+#define HSW_FM2					102
+#define HSW_FM3					103
+#define HSW_FM4					104
+#define HSW_FM5					105
+#define HSW_FM6					106
 
 #define HSW_Ttrmup			44
 #define HSW_Ttrmdn			43
@@ -472,6 +498,16 @@ enum EnumKeys {
 #define M_ESKY150        34
 #define M_H8_3D          35
 #define M_CORONA         36
+#define M_HITEC					 37
+#define M_WFLY           38
+#define M_BUGS           39
+#define M_BUGSMINI       40
+#define M_TRAXXAS        41
+#define M_NCC1701        42
+#define M_E01X           43
+#define M_V911S          44
+#define M_GD00X          45
+
 
 
 #define GETADC_SING = 0
@@ -527,8 +563,12 @@ bool eeLoadGeneral();
 #define PHYSICAL_TARANIS_X9E	6
 #define PHYSICAL_9XTREME			7
 #define PHYSICAL_QX7					8
-#define PHYSICAL_XLITE				9
-#define PHYSICAL_T12					10
+#define PHYSICAL_HORUS				9
+#define PHYSICAL_XLITE				10
+#define PHYSICAL_T12					11
+#define PHYSICAL_XXX						12
+
+#define LAST_PHYSICAL					12
 
 #include "myeeprom.h"
 

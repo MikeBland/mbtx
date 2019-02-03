@@ -285,8 +285,8 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 			ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		}
 
-		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -250, 250, md->extWeight ) ;
-    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -250, 250, md->extOffset ) ;
+		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -350, 350, md->extWeight ) ;
+    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -350, 350, md->extOffset ) ;
     
 		ui->trimChkB->setChecked(md->carryTrim==0);
 //    ui->FMtrimChkB->setChecked(!md->disableExpoDr);
@@ -412,7 +412,7 @@ void MixerDialog::updateChannels()
   {
     lowBound = 24 ;
   }
-	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) )
+	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_XXX ) )
   {
     lowBound = 20 ;
   }
@@ -501,7 +501,7 @@ void MixerDialog::valuesChanged()
 //		}
 //    md->srcRaw       = x ;
 		
-		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) )
+		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_XXX ) )
 		{
       if ( value >= 7 )
 			{
@@ -512,7 +512,7 @@ void MixerDialog::valuesChanged()
 		md->srcRaw       = value ;
 //		ui->spinBox->setValue(md->srcRaw);
 
-		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )
+		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) || ( leeType == RADIO_TYPE_XXX ) )
 		{
 			uint32_t index = ui->sourceSwitchCB->currentIndex() ;
 			if ( index > 3 )
@@ -548,11 +548,21 @@ void MixerDialog::valuesChanged()
 				{
 					extValue = 1 ;
 					value -= 125 ;
+					if ( value > 125 )
+					{
+						extValue = 2 ;
+						value -= 125 ;
+					}
 				}
 				else if ( value < -125 )
 				{
 					extValue = 3 ;
 					value += 125 ;
+					if ( value < -125 )
+					{
+						extValue = 2 ;
+						value += 125 ;
+					}
 				}
 			}
 			md->weight = value ;
@@ -574,11 +584,21 @@ void MixerDialog::valuesChanged()
 				{
 					extValue = 1 ;
 					value -= 125 ;
+					if ( value > 125 )
+					{
+						extValue = 2 ;
+						value -= 125 ;
+					}
 				}
 				else if ( value < -125 )
 				{
 					extValue = 3 ;
 					value += 125 ;
+					if ( value < -125 )
+					{
+						extValue = 2 ;
+						value += 125 ;
+					}
 				}
 			}
 

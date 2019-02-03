@@ -96,7 +96,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 //		}
     id_model = id;
 
-		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
+		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
     setupMixerListWidget();
 
     QSettings settings("er9x-eePskye", "eePskye");
@@ -269,7 +269,7 @@ void ModelEdit::tabModelEditSetup()
 		}
     ui->modelImageLE->setText( n ) ;
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) )
 		{
 			ui->modelImageLE->hide() ;
 			ui->label_ModelImage->hide() ;
@@ -358,7 +358,7 @@ void ModelEdit::tabModelEditSetup()
     ui->bcP2ChkB->setChecked(g_model.beepANACenter & BC_BIT_P2);
     ui->bcP3ChkB->setChecked(g_model.beepANACenter & BC_BIT_P3);
     
-    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) ) )
+    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) ) )
     {
 	    ui->bcP4ChkB->show() ;
 			ui->bcP4ChkB->setChecked(g_model.beepANACenter & BC_BIT_P4);
@@ -423,7 +423,7 @@ void ModelEdit::tabModelEditSetup()
       ui->TrainerPolarityCB->setCurrentIndex(g_model.trainPulsePol) ;
 			ui->TrainerStartChannelSB->setValue(g_model.startChannel+1) ;
 
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_XXX) )
 			{
 				ui->protocolCB->addItem("XJT");
 			}	
@@ -470,7 +470,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -482,10 +482,18 @@ void ModelEdit::tabModelEditSetup()
 			ui->switchDefPos_8->hide() ;
 			ui->widgetDefSA->show() ;
 			ui->widgetDefSB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 			{
 				ui->widgetDefSC->show() ;
-				ui->widgetDefSD->show() ;
+	    	if ( (rData->bitType & RADIO_BITTYPE_XXX) == 0 )
+				{
+					ui->widgetDefSD->show() ;
+				}
+				else
+				{
+					ui->widgetDefSD->hide() ;
+					ui->EnD->hide() ;
+				}
 			}
 			else
 			{
@@ -532,10 +540,13 @@ void ModelEdit::tabModelEditSetup()
 			ui->EnGea->hide() ;
 			ui->EnA->show() ;
 			ui->EnB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 			{
 				ui->EnC->show() ;
-				ui->EnD->show() ;
+        if ( (rData->bitType & RADIO_BITTYPE_XXX) == 0 )
+				{
+					ui->EnD->show() ;
+				}
     		if ( rData->bitType & RADIO_BITTYPE_XLITE )
 				{
 					ui->SwitchDefSC->setMaximum( g_eeGeneral.ailsource ? 2 : 1 ) ;
@@ -1630,7 +1641,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -2248,14 +2259,14 @@ void ModelEdit::tabExpo()
 {
 	int x ;
 	int y ;
-    populateSwitchCB(ui->RUD_edrSw1,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
-    populateSwitchCB(ui->RUD_edrSw2,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
-    populateSwitchCB(ui->ELE_edrSw1,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
-    populateSwitchCB(ui->ELE_edrSw2,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
-    populateSwitchCB(ui->THR_edrSw1,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
-    populateSwitchCB(ui->THR_edrSw2,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
-    populateSwitchCB(ui->AIL_edrSw1,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
-    populateSwitchCB(ui->AIL_edrSw2,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
+    populateDrSwitchCB(ui->RUD_edrSw1,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
+    populateDrSwitchCB(ui->RUD_edrSw2,g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
+    populateDrSwitchCB(ui->ELE_edrSw1,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
+    populateDrSwitchCB(ui->ELE_edrSw2,g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
+    populateDrSwitchCB(ui->THR_edrSw1,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
+    populateDrSwitchCB(ui->THR_edrSw2,g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
+    populateDrSwitchCB(ui->AIL_edrSw1,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1, rData->type);
+    populateDrSwitchCB(ui->AIL_edrSw2,g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2, rData->type);
 
 
 //#define DR_HIGH   0
@@ -2435,14 +2446,14 @@ void ModelEdit::expoEdited()
 //#endif
 
   int8_t *pval ;
-    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->RUD_edrSw1, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->RUD_edrSw2, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->ELE_edrSw1, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->ELE_edrSw2, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->THR_edrSw1, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->THR_edrSw2, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getSwitchCbValue( ui->AIL_edrSw1, rData->type ) ;
-    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getSwitchCbValue( ui->AIL_edrSw2, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getDrSwitchCbValue( ui->RUD_edrSw1, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getDrSwitchCbValue( ui->RUD_edrSw2, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getDrSwitchCbValue( ui->ELE_edrSw1, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getDrSwitchCbValue( ui->ELE_edrSw2, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getDrSwitchCbValue( ui->THR_edrSw1, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getDrSwitchCbValue( ui->THR_edrSw2, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw1 = getDrSwitchCbValue( ui->AIL_edrSw1, rData->type ) ;
+    g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].drSw2 = getDrSwitchCbValue( ui->AIL_edrSw2, rData->type ) ;
 
 		for ( i = 0 ; i < 3 ; i += 1 )
 		{ // 0=High, 1=Mid, 2=Low
@@ -2543,7 +2554,7 @@ void ModelEdit::voiceAlarmsList()
 		QString srcstr ;
     uint32_t limit = 45 ;
 		uint32_t value = vad->source ;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
 			limit = 46 ;
     	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
@@ -2979,6 +2990,17 @@ void ModelEdit::tabMixes()
 					{
 						j -= 125 ; 
 					}
+					else if ( md->extWeight == 2 )
+					{
+						if ( j < 0 )
+						{
+							j -= 250 ;
+						}
+						else
+						{
+							j += 250 ;
+						}
+					}
 					
         	str += j<0 ? QString(" %1\%").arg(j).rightJustified(6,' ') :
                               QString(" +%1\%").arg(j).rightJustified(6, ' ');
@@ -3081,7 +3103,7 @@ void ModelEdit::tabMixes()
 							type = RADIO_TYPE_X9E ;
 						}
 					}
-					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
+					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_XXX ) )
 					{
 						if ( value > 6 )
 						{
@@ -3094,7 +3116,7 @@ void ModelEdit::tabMixes()
         str += srcstr ;
 				if ( srcstr == "s" )
 				{
-    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 					{
 						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
 					}
@@ -3127,6 +3149,17 @@ void ModelEdit::tabMixes()
 						else if ( md->extOffset == 3 )
 						{
 							j -= 125 ; 
+						}
+						else if ( md->extOffset == 2 )
+						{
+							if ( j < 0 )
+							{
+								j -= 250 ;
+							}
+							else
+							{
+								j += 250 ;
+							}
 						}
         		str += tr(" Offset(%1\%)").arg(j);
 					}
@@ -3672,32 +3705,52 @@ void ModelEdit::heliEdited()
     updateSettings();
 }
 
+double roundValueDiv( int8_t value )
+{
+	double adjust = 0.049 ;
+	if ( value < 0 )
+	{
+		adjust = -0.049 ;
+	}
+	return (double)value/10 + adjust ;
+}
+
 void ModelEdit::tabLimits()
 {
-    ui->offsetDSB_1->setValue((double)g_model.limitData[0].offset/10 + 0.049);   connect(ui->offsetDSB_1,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_2->setValue((double)g_model.limitData[1].offset/10 + 0.049);   connect(ui->offsetDSB_2,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_3->setValue((double)g_model.limitData[2].offset/10 + 0.049);   connect(ui->offsetDSB_3,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_4->setValue((double)g_model.limitData[3].offset/10 + 0.049);   connect(ui->offsetDSB_4,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_5->setValue((double)g_model.limitData[4].offset/10 + 0.049);   connect(ui->offsetDSB_5,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_6->setValue((double)g_model.limitData[5].offset/10 + 0.049);   connect(ui->offsetDSB_6,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_7->setValue((double)g_model.limitData[6].offset/10 + 0.049);   connect(ui->offsetDSB_7,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_8->setValue((double)g_model.limitData[7].offset/10 + 0.049);   connect(ui->offsetDSB_8,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_9->setValue((double)g_model.limitData[8].offset/10 + 0.049);   connect(ui->offsetDSB_9,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_10->setValue((double)g_model.limitData[9].offset/10 + 0.049);  connect(ui->offsetDSB_10,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_11->setValue((double)g_model.limitData[10].offset/10 + 0.049); connect(ui->offsetDSB_11,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_12->setValue((double)g_model.limitData[11].offset/10 + 0.049); connect(ui->offsetDSB_12,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_13->setValue((double)g_model.limitData[12].offset/10 + 0.049); connect(ui->offsetDSB_13,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_14->setValue((double)g_model.limitData[13].offset/10 + 0.049); connect(ui->offsetDSB_14,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_15->setValue((double)g_model.limitData[14].offset/10 + 0.049); connect(ui->offsetDSB_15,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_16->setValue((double)g_model.limitData[15].offset/10 + 0.049); connect(ui->offsetDSB_16,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_17->setValue((double)g_model.limitData[16].offset/10 + 0.049); connect(ui->offsetDSB_17,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_18->setValue((double)g_model.limitData[17].offset/10 + 0.049); connect(ui->offsetDSB_18,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_19->setValue((double)g_model.limitData[18].offset/10 + 0.049); connect(ui->offsetDSB_19,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_20->setValue((double)g_model.limitData[19].offset/10 + 0.049); connect(ui->offsetDSB_20,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_21->setValue((double)g_model.limitData[20].offset/10 + 0.049); connect(ui->offsetDSB_21,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_22->setValue((double)g_model.limitData[21].offset/10 + 0.049); connect(ui->offsetDSB_22,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_23->setValue((double)g_model.limitData[22].offset/10 + 0.049); connect(ui->offsetDSB_23,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
-    ui->offsetDSB_24->setValue((double)g_model.limitData[23].offset/10 + 0.049); connect(ui->offsetDSB_24,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_1->setValue(roundValueDiv(g_model.limitData[0].offset));   connect(ui->offsetDSB_1,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_2->setValue(roundValueDiv(g_model.limitData[1].offset));   connect(ui->offsetDSB_2,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_3->setValue(roundValueDiv(g_model.limitData[2].offset));   connect(ui->offsetDSB_3,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_4->setValue(roundValueDiv(g_model.limitData[3].offset));   connect(ui->offsetDSB_4,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_5->setValue(roundValueDiv(g_model.limitData[4].offset));   connect(ui->offsetDSB_5,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_6->setValue(roundValueDiv(g_model.limitData[5].offset));   connect(ui->offsetDSB_6,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_7->setValue(roundValueDiv(g_model.limitData[6].offset));   connect(ui->offsetDSB_7,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_8->setValue(roundValueDiv(g_model.limitData[7].offset));   connect(ui->offsetDSB_8,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_9->setValue(roundValueDiv(g_model.limitData[8].offset));   connect(ui->offsetDSB_9,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_10->setValue(roundValueDiv(g_model.limitData[9].offset));  connect(ui->offsetDSB_10,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_11->setValue(roundValueDiv(g_model.limitData[10].offset)); connect(ui->offsetDSB_11,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_12->setValue(roundValueDiv(g_model.limitData[11].offset)); connect(ui->offsetDSB_12,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_13->setValue(roundValueDiv(g_model.limitData[12].offset)); connect(ui->offsetDSB_13,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_14->setValue(roundValueDiv(g_model.limitData[13].offset)); connect(ui->offsetDSB_14,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_15->setValue(roundValueDiv(g_model.limitData[14].offset)); connect(ui->offsetDSB_15,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_16->setValue(roundValueDiv(g_model.limitData[15].offset)); connect(ui->offsetDSB_16,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_17->setValue(roundValueDiv(g_model.limitData[16].offset)); connect(ui->offsetDSB_17,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_18->setValue(roundValueDiv(g_model.limitData[17].offset)); connect(ui->offsetDSB_18,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_19->setValue(roundValueDiv(g_model.limitData[18].offset)); connect(ui->offsetDSB_19,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_20->setValue(roundValueDiv(g_model.limitData[19].offset)); connect(ui->offsetDSB_20,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_21->setValue(roundValueDiv(g_model.limitData[20].offset)); connect(ui->offsetDSB_21,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_22->setValue(roundValueDiv(g_model.limitData[21].offset)); connect(ui->offsetDSB_22,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_23->setValue(roundValueDiv(g_model.limitData[22].offset)); connect(ui->offsetDSB_23,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_24->setValue(roundValueDiv(g_model.limitData[23].offset)); connect(ui->offsetDSB_24,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_25->setValue(roundValueDiv(g_model.elimitData[0].offset)); connect(ui->offsetDSB_25,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_26->setValue(roundValueDiv(g_model.elimitData[1].offset)); connect(ui->offsetDSB_26,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_27->setValue(roundValueDiv(g_model.elimitData[2].offset)); connect(ui->offsetDSB_27,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_28->setValue(roundValueDiv(g_model.elimitData[3].offset)); connect(ui->offsetDSB_28,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_29->setValue(roundValueDiv(g_model.elimitData[4].offset)); connect(ui->offsetDSB_29,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_30->setValue(roundValueDiv(g_model.elimitData[5].offset)); connect(ui->offsetDSB_30,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_31->setValue(roundValueDiv(g_model.elimitData[6].offset)); connect(ui->offsetDSB_31,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+    ui->offsetDSB_32->setValue(roundValueDiv(g_model.elimitData[7].offset)); connect(ui->offsetDSB_32,SIGNAL(valueChanged(double)),this,SLOT(limitEdited()));
+
+
 
     ui->minSB_1->setValue(g_model.limitData[0].min-100);   connect(ui->minSB_1,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->minSB_2->setValue(g_model.limitData[1].min-100);   connect(ui->minSB_2,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
@@ -3723,6 +3776,15 @@ void ModelEdit::tabLimits()
     ui->minSB_22->setValue(g_model.limitData[21].min-100); connect(ui->minSB_22,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->minSB_23->setValue(g_model.limitData[22].min-100); connect(ui->minSB_23,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->minSB_24->setValue(g_model.limitData[23].min-100); connect(ui->minSB_24,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_25->setValue(g_model.elimitData[0].min-100); connect(ui->minSB_25,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_26->setValue(g_model.elimitData[1].min-100); connect(ui->minSB_26,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_27->setValue(g_model.elimitData[2].min-100); connect(ui->minSB_27,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_28->setValue(g_model.elimitData[3].min-100); connect(ui->minSB_28,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_29->setValue(g_model.elimitData[4].min-100); connect(ui->minSB_29,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_30->setValue(g_model.elimitData[5].min-100); connect(ui->minSB_30,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_31->setValue(g_model.elimitData[6].min-100); connect(ui->minSB_31,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->minSB_32->setValue(g_model.elimitData[7].min-100); connect(ui->minSB_32,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+
 
     ui->maxSB_1->setValue(g_model.limitData[0].max+100);   connect(ui->maxSB_1,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->maxSB_2->setValue(g_model.limitData[1].max+100);   connect(ui->maxSB_2,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
@@ -3748,6 +3810,15 @@ void ModelEdit::tabLimits()
     ui->maxSB_22->setValue(g_model.limitData[21].max+100); connect(ui->maxSB_22,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->maxSB_23->setValue(g_model.limitData[22].max+100); connect(ui->maxSB_23,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
     ui->maxSB_24->setValue(g_model.limitData[23].max+100); connect(ui->maxSB_24,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_25->setValue(g_model.elimitData[0].max+100); connect(ui->maxSB_25,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_26->setValue(g_model.elimitData[1].max+100); connect(ui->maxSB_26,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_27->setValue(g_model.elimitData[2].max+100); connect(ui->maxSB_27,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_28->setValue(g_model.elimitData[3].max+100); connect(ui->maxSB_28,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_29->setValue(g_model.elimitData[4].max+100); connect(ui->maxSB_29,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_30->setValue(g_model.elimitData[5].max+100); connect(ui->maxSB_30,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_31->setValue(g_model.elimitData[6].max+100); connect(ui->maxSB_31,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+    ui->maxSB_32->setValue(g_model.elimitData[7].max+100); connect(ui->maxSB_32,SIGNAL(valueChanged(int)),this,SLOT(limitEdited()));
+
 
     ui->chInvCB_1->setCurrentIndex((g_model.limitData[0].revert) ? 1 : 0);   connect(ui->chInvCB_1,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
     ui->chInvCB_2->setCurrentIndex((g_model.limitData[1].revert) ? 1 : 0);   connect(ui->chInvCB_2,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
@@ -3773,6 +3844,15 @@ void ModelEdit::tabLimits()
     ui->chInvCB_22->setCurrentIndex((g_model.limitData[21].revert) ? 1 : 0); connect(ui->chInvCB_22,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
     ui->chInvCB_23->setCurrentIndex((g_model.limitData[22].revert) ? 1 : 0); connect(ui->chInvCB_23,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
     ui->chInvCB_24->setCurrentIndex((g_model.limitData[23].revert) ? 1 : 0); connect(ui->chInvCB_24,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+
+    ui->chInvCB_25->setCurrentIndex((g_model.elimitData[0].revert) ? 1 : 0); connect(ui->chInvCB_25,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_26->setCurrentIndex((g_model.elimitData[1].revert) ? 1 : 0); connect(ui->chInvCB_26,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_27->setCurrentIndex((g_model.elimitData[2].revert) ? 1 : 0); connect(ui->chInvCB_27,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_28->setCurrentIndex((g_model.elimitData[3].revert) ? 1 : 0); connect(ui->chInvCB_28,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_29->setCurrentIndex((g_model.elimitData[4].revert) ? 1 : 0); connect(ui->chInvCB_29,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_30->setCurrentIndex((g_model.elimitData[5].revert) ? 1 : 0); connect(ui->chInvCB_30,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_31->setCurrentIndex((g_model.elimitData[6].revert) ? 1 : 0); connect(ui->chInvCB_31,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
+    ui->chInvCB_32->setCurrentIndex((g_model.elimitData[7].revert) ? 1 : 0); connect(ui->chInvCB_32,SIGNAL(currentIndexChanged(int)),this,SLOT(limitEdited()));
 
 		limitAuto() ;
 
@@ -4305,8 +4385,8 @@ void ModelEdit::limitAuto()
 { // Set the values on the amin and Amax labels
 	int value ;
 	int i ;
-	QLabel *Amin[24] ;
-	QLabel *Amax[24] ;
+	QLabel *Amin[32] ;
+	QLabel *Amax[32] ;
 	Amin[0] = ui->CH1Amin ;
 	Amin[1] = ui->CH2Amin ;
 	Amin[2] = ui->CH3Amin ;
@@ -4331,6 +4411,14 @@ void ModelEdit::limitAuto()
 	Amin[21] = ui->CH22Amin ;
 	Amin[22] = ui->CH23Amin ;
 	Amin[23] = ui->CH24Amin ;
+	Amin[24] = ui->CH25Amin ;
+	Amin[25] = ui->CH26Amin ;
+	Amin[26] = ui->CH27Amin ;
+	Amin[27] = ui->CH28Amin ;
+	Amin[28] = ui->CH29Amin ;
+	Amin[29] = ui->CH30Amin ;
+	Amin[30] = ui->CH31Amin ;
+	Amin[31] = ui->CH32Amin ;
 	Amax[0] = ui->CH1Amax ;
 	Amax[1] = ui->CH2Amax ;
 	Amax[2] = ui->CH3Amax ;
@@ -4355,12 +4443,23 @@ void ModelEdit::limitAuto()
 	Amax[21] = ui->CH22Amax ;
 	Amax[22] = ui->CH23Amax ;
 	Amax[23] = ui->CH24Amax ;
+	Amax[24] = ui->CH25Amax ;
+	Amax[25] = ui->CH26Amax ;
+	Amax[26] = ui->CH27Amax ;
+	Amax[27] = ui->CH28Amax ;
+	Amax[28] = ui->CH29Amax ;
+	Amax[29] = ui->CH30Amax ;
+	Amax[30] = ui->CH31Amax ;
+	Amax[31] = ui->CH32Amax ;
 
-	for ( i = 0 ; i < 24 ; i += 1 )
+	for ( i = 0 ; i < 32 ; i += 1 )
 	{
 		if (g_model.sub_trim_limit)
 		{
-			if ( ( value = g_model.limitData[i].offset ) )
+			LimitData *p ;
+      p = (i < 24) ? &g_model.limitData[i] : &g_model.elimitData[i-24] ;
+			
+			if ( ( value = p->offset ) )
 			{
 				if ( value > g_model.sub_trim_limit )
 				{
@@ -4370,8 +4469,8 @@ void ModelEdit::limitAuto()
 				{
 					value = -g_model.sub_trim_limit ;				
 				}
-				Amin[i]->setText(tr("%1").arg( g_model.limitData[i].min-100+value/10 )) ;
-				Amax[i]->setText(tr("%1").arg( g_model.limitData[i].max+100+value/10 )) ;
+				Amin[i]->setText(tr("%1").arg( p->min-100+value/10 )) ;
+				Amax[i]->setText(tr("%1").arg( p->max+100+value/10 )) ;
   	    Amin[i]->setVisible(true) ;
   	    Amax[i]->setVisible(true) ;
 			}
@@ -4389,34 +4488,51 @@ void ModelEdit::limitAuto()
 	}
 }
 
+int8_t roundValueMul( double value )
+{
+	double adjust = 0.049 ;
+	if ( value < 0 )
+	{
+		adjust = -0.049 ;
+	}
+	return value*10 + adjust ;
+}
 
 
 void ModelEdit::limitEdited()
 {
-    g_model.limitData[0].offset = ui->offsetDSB_1->value()*10 + 0.49;
-    g_model.limitData[1].offset = ui->offsetDSB_2->value()*10 + 0.49;
-    g_model.limitData[2].offset = ui->offsetDSB_3->value()*10 + 0.49;
-    g_model.limitData[3].offset = ui->offsetDSB_4->value()*10 + 0.49;
-    g_model.limitData[4].offset = ui->offsetDSB_5->value()*10 + 0.49;
-    g_model.limitData[5].offset = ui->offsetDSB_6->value()*10 + 0.49;
-    g_model.limitData[6].offset = ui->offsetDSB_7->value()*10 + 0.49;
-    g_model.limitData[7].offset = ui->offsetDSB_8->value()*10 + 0.49;
-    g_model.limitData[8].offset = ui->offsetDSB_9->value()*10 + 0.49;
-    g_model.limitData[9].offset = ui->offsetDSB_10->value()*10 + 0.49;
-    g_model.limitData[10].offset = ui->offsetDSB_11->value()*10 + 0.49;
-    g_model.limitData[11].offset = ui->offsetDSB_12->value()*10 + 0.49;
-    g_model.limitData[12].offset = ui->offsetDSB_13->value()*10 + 0.49;
-    g_model.limitData[13].offset = ui->offsetDSB_14->value()*10 + 0.49;
-    g_model.limitData[14].offset = ui->offsetDSB_15->value()*10 + 0.49;
-    g_model.limitData[15].offset = ui->offsetDSB_16->value()*10 + 0.49;
-    g_model.limitData[16].offset = ui->offsetDSB_17->value()*10 + 0.49;
-    g_model.limitData[17].offset = ui->offsetDSB_18->value()*10 + 0.49;
-    g_model.limitData[18].offset = ui->offsetDSB_19->value()*10 + 0.49;
-    g_model.limitData[19].offset = ui->offsetDSB_20->value()*10 + 0.49;
-    g_model.limitData[20].offset = ui->offsetDSB_21->value()*10 + 0.49;
-    g_model.limitData[21].offset = ui->offsetDSB_22->value()*10 + 0.49;
-    g_model.limitData[22].offset = ui->offsetDSB_23->value()*10 + 0.49;
-    g_model.limitData[23].offset = ui->offsetDSB_24->value()*10 + 0.49;
+    g_model.limitData[0].offset = roundValueMul(ui->offsetDSB_1->value()) ;
+    g_model.limitData[1].offset = roundValueMul(ui->offsetDSB_2->value()) ;
+    g_model.limitData[2].offset = roundValueMul(ui->offsetDSB_3->value()) ;
+    g_model.limitData[3].offset = roundValueMul(ui->offsetDSB_4->value()) ;
+    g_model.limitData[4].offset = roundValueMul(ui->offsetDSB_5->value()) ;
+    g_model.limitData[5].offset = roundValueMul(ui->offsetDSB_6->value()) ;
+    g_model.limitData[6].offset = roundValueMul(ui->offsetDSB_7->value()) ;
+    g_model.limitData[7].offset = roundValueMul(ui->offsetDSB_8->value()) ;
+    g_model.limitData[8].offset = roundValueMul(ui->offsetDSB_9->value()) ;
+    g_model.limitData[9].offset = roundValueMul(ui->offsetDSB_10->value()) ;
+    g_model.limitData[10].offset = roundValueMul(ui->offsetDSB_11->value()) ;
+    g_model.limitData[11].offset = roundValueMul(ui->offsetDSB_12->value()) ;
+    g_model.limitData[12].offset = roundValueMul(ui->offsetDSB_13->value()) ;
+    g_model.limitData[13].offset = roundValueMul(ui->offsetDSB_14->value()) ;
+    g_model.limitData[14].offset = roundValueMul(ui->offsetDSB_15->value()) ;
+    g_model.limitData[15].offset = roundValueMul(ui->offsetDSB_16->value()) ;
+    g_model.limitData[16].offset = roundValueMul(ui->offsetDSB_17->value()) ;
+    g_model.limitData[17].offset = roundValueMul(ui->offsetDSB_18->value()) ;
+    g_model.limitData[18].offset = roundValueMul(ui->offsetDSB_19->value()) ;
+    g_model.limitData[19].offset = roundValueMul(ui->offsetDSB_20->value()) ;
+    g_model.limitData[20].offset = roundValueMul(ui->offsetDSB_21->value()) ;
+    g_model.limitData[21].offset = roundValueMul(ui->offsetDSB_22->value()) ;
+    g_model.limitData[22].offset = roundValueMul(ui->offsetDSB_23->value()) ;
+    g_model.limitData[23].offset = roundValueMul(ui->offsetDSB_24->value()) ;
+    g_model.elimitData[0].offset = roundValueMul(ui->offsetDSB_25->value()) ;
+    g_model.elimitData[1].offset = roundValueMul(ui->offsetDSB_26->value()) ;
+    g_model.elimitData[2].offset = roundValueMul(ui->offsetDSB_27->value()) ;
+    g_model.elimitData[3].offset = roundValueMul(ui->offsetDSB_28->value()) ;
+    g_model.elimitData[4].offset = roundValueMul(ui->offsetDSB_29->value()) ;
+    g_model.elimitData[5].offset = roundValueMul(ui->offsetDSB_30->value()) ;
+    g_model.elimitData[6].offset = roundValueMul(ui->offsetDSB_31->value()) ;
+    g_model.elimitData[7].offset = roundValueMul(ui->offsetDSB_32->value()) ;
 
     g_model.limitData[0].min = ui->minSB_1->value()+100;
     g_model.limitData[1].min = ui->minSB_2->value()+100;
@@ -4442,6 +4558,14 @@ void ModelEdit::limitEdited()
     g_model.limitData[21].min = ui->minSB_22->value()+100;
     g_model.limitData[22].min = ui->minSB_23->value()+100;
     g_model.limitData[23].min = ui->minSB_24->value()+100;
+    g_model.elimitData[0].min = ui->minSB_25->value()+100;
+    g_model.elimitData[1].min = ui->minSB_26->value()+100;
+    g_model.elimitData[2].min = ui->minSB_27->value()+100;
+    g_model.elimitData[3].min = ui->minSB_28->value()+100;
+    g_model.elimitData[4].min = ui->minSB_29->value()+100;
+    g_model.elimitData[5].min = ui->minSB_30->value()+100;
+    g_model.elimitData[6].min = ui->minSB_31->value()+100;
+    g_model.elimitData[7].min = ui->minSB_32->value()+100;
 
     g_model.limitData[0].max = ui->maxSB_1->value()-100;
     g_model.limitData[1].max = ui->maxSB_2->value()-100;
@@ -4467,6 +4591,14 @@ void ModelEdit::limitEdited()
     g_model.limitData[21].max = ui->maxSB_22->value()-100;
     g_model.limitData[22].max = ui->maxSB_23->value()-100;
     g_model.limitData[23].max = ui->maxSB_24->value()-100;
+    g_model.elimitData[0].max = ui->maxSB_25->value()-100;
+    g_model.elimitData[1].max = ui->maxSB_26->value()-100;
+    g_model.elimitData[2].max = ui->maxSB_27->value()-100;
+    g_model.elimitData[3].max = ui->maxSB_28->value()-100;
+    g_model.elimitData[4].max = ui->maxSB_29->value()-100;
+    g_model.elimitData[5].max = ui->maxSB_30->value()-100;
+    g_model.elimitData[6].max = ui->maxSB_31->value()-100;
+    g_model.elimitData[7].max = ui->maxSB_32->value()-100;
 
     g_model.limitData[0].revert = ui->chInvCB_1->currentIndex();
     g_model.limitData[1].revert = ui->chInvCB_2->currentIndex();
@@ -4492,6 +4624,14 @@ void ModelEdit::limitEdited()
     g_model.limitData[21].revert = ui->chInvCB_22->currentIndex();
     g_model.limitData[22].revert = ui->chInvCB_23->currentIndex();
     g_model.limitData[23].revert = ui->chInvCB_24->currentIndex();
+    g_model.elimitData[0].revert = ui->chInvCB_25->currentIndex();
+    g_model.elimitData[1].revert = ui->chInvCB_26->currentIndex();
+    g_model.elimitData[2].revert = ui->chInvCB_27->currentIndex();
+    g_model.elimitData[3].revert = ui->chInvCB_28->currentIndex();
+    g_model.elimitData[4].revert = ui->chInvCB_29->currentIndex();
+    g_model.elimitData[5].revert = ui->chInvCB_30->currentIndex();
+    g_model.elimitData[6].revert = ui->chInvCB_31->currentIndex();
+    g_model.elimitData[7].revert = ui->chInvCB_32->currentIndex();
 
 		limitAuto() ;
 
@@ -5093,7 +5233,7 @@ uint32_t encodePots( uint32_t value, int type, uint32_t extraPots )
 			}
 		}
 	}
-	if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
+	if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_XXX ) )
 	{
 		if ( value > 6 )
 		{
@@ -5202,7 +5342,7 @@ void ModelEdit::updateSwitchesList( int lOrR )
 		{
 			uint32_t x ;
 			x = g_model.customSw[i].andsw ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 			{
 //  				x = switchUnMap(x, 1 ) ;
 			}
@@ -5303,7 +5443,7 @@ void ModelEdit::tabSwitches()
         cswitchDelay[i]->setDecimals(1);
 				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 			}
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 			{
         x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 			}
@@ -5951,7 +6091,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -6597,8 +6737,20 @@ void ModelEdit::GvarEdited()
 
 void ModelEdit::tabFrsky()
 {
+	if ( g_model.telemetryProtocol == TELEMETRY_UNDEFINED )
+	{
+		g_model.telemetryProtocol = TELEMETRY_FRSKY ;	// default
+		if ( g_model.FrSkyUsrProto )
+		{
+			g_model.telemetryProtocol = TELEMETRY_WSHHI ;
+		}
+		if ( g_model.DsmTelemetry )
+		{
+			g_model.telemetryProtocol = TELEMETRY_DSM ;
+		}
+	}
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) )
 		{
 			ui->Ct7->hide() ;
 			ui->Ct8->hide() ;
@@ -6666,7 +6818,7 @@ void ModelEdit::tabFrsky()
 
     ui->GpsAltMain->setChecked(g_model.FrSkyGpsAlt);
     ui->InvertCom1CB->setChecked(g_model.telemetryRxInvert);
-    ui->HubComboBox->setCurrentIndex(g_model.FrSkyUsrProto);
+    ui->HubComboBox->setCurrentIndex(g_model.telemetryProtocol-1);
     ui->UnitsComboBox->setCurrentIndex(g_model.FrSkyImperial);
     ui->BladesSpinBox->setValue(g_model.numBlades ) ;
     ui->COMportCB->setCurrentIndex(g_model.frskyComPort ) ;
@@ -6818,8 +6970,26 @@ void ModelEdit::FrSkyEdited()
 
     g_model.FrSkyGpsAlt = ui->GpsAltMain->isChecked();
     g_model.telemetryRxInvert = ui->InvertCom1CB->isChecked() ;
-		g_model.FrSkyUsrProto = ui->HubComboBox->currentIndex();
-    g_model.FrSkyImperial = ui->UnitsComboBox->currentIndex();
+		g_model.telemetryProtocol = ui->HubComboBox->currentIndex() + 1 ;
+		switch ( g_model.telemetryProtocol )
+		{
+			case 2 :
+				g_model.FrSkyUsrProto = 1 ;
+				g_model.DsmTelemetry = 0 ;
+			break ;
+
+			case 3 :
+				g_model.FrSkyUsrProto = 0 ;
+				g_model.DsmTelemetry = 1 ;
+			break ;
+
+			case 1 :
+			default :
+				g_model.FrSkyUsrProto = 0 ;
+				g_model.DsmTelemetry = 0 ;
+			break ;
+		}
+		g_model.FrSkyImperial = ui->UnitsComboBox->currentIndex();
     g_model.numBlades = ui->BladesSpinBox->value() ;
 		g_model.telemetryTimeout = ui->TelemetryTimeoutSB->value() ;
 		g_model.throttleIdleScale = 100 - ui->ThrIdleScaleSB->value() ;
@@ -7095,7 +7265,7 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE ) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_XXX ) )
 			{
 				p = &ProtocolOptionsX9de[0][1] ;
 			}
@@ -7148,7 +7318,7 @@ void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 			{
 				p = &ProtocolOptionsX9de[1][1] ;
 			}
@@ -7837,7 +8007,7 @@ void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
 	    x <<= 3 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0018 ) | x ;
@@ -7865,7 +8035,7 @@ void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -7902,7 +8072,7 @@ void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -7939,7 +8109,7 @@ void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 void ModelEdit::on_SwitchDefSE_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
 	    x <<= 9 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0600 ) | x ;

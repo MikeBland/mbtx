@@ -27,7 +27,21 @@
    <bool>true</bool>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="17" column="0">
+   <item row="18" column="0">
+    <widget class="QPushButton" name="pushButton">
+     <property name="toolTip">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the eepskye Simulator and simulate the model being edited..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="text">
+      <string>Simulate</string>
+     </property>
+     <property name="icon">
+      <iconset resource="eepskye.qrc">
+       <normaloff>:/images/simulate.png</normaloff>:/images/simulate.png</iconset>
+     </property>
+    </widget>
+   </item>
+   <item row="19" column="0">
     <widget class="QTabWidget" name="tabWidget">
      <property name="minimumSize">
       <size>
@@ -45,7 +59,7 @@
       <string/>
      </property>
      <property name="currentIndex">
-      <number>9</number>
+      <number>6</number>
      </property>
      <widget class="QWidget" name="tabModelSetup">
       <attribute name="title">
@@ -5700,7 +5714,7 @@ p, li { white-space: pre-wrap; }
       <attribute name="title">
        <string>Limits</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+      <layout class="QGridLayout" name="gridLayout_6" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
        <item row="1" column="0">
         <widget class="QLabel" name="label_14">
          <property name="text">
@@ -6828,19 +6842,6 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="25" column="3">
-        <spacer name="verticalSpacer_7">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="0" column="8">
         <widget class="QLabel" name="label_196">
          <property name="frameShape">
@@ -7038,89 +7039,6 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="12" column="8">
-        <widget class="QLabel" name="label_189">
-         <property name="text">
-          <string notr="true">CH24</string>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_24">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="10">
-        <widget class="QSpinBox" name="minSB_24">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="11">
-        <widget class="QLabel" name="CH24Amin">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="12">
-        <widget class="QSpinBox" name="maxSB_24">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="13">
-        <widget class="QLabel" name="CH24Amax">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="12" column="14">
-        <widget class="QComboBox" name="chInvCB_24">
-         <item>
-          <property name="text">
-           <string>NOR</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>INV</string>
-          </property>
-         </item>
-        </widget>
-       </item>
        <item row="12" column="1">
         <widget class="QDoubleSpinBox" name="offsetDSB_12">
          <property name="alignment">
@@ -7197,136 +7115,14 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="1" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_13">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="8">
-        <widget class="QLabel" name="label_26">
-         <property name="text">
-          <string notr="true">CH13</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="10">
-        <widget class="QSpinBox" name="minSB_13">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="11">
-        <widget class="QLabel" name="CH13Amin">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="12">
-        <widget class="QSpinBox" name="maxSB_13">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="13">
-        <widget class="QLabel" name="CH13Amax">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="14">
-        <widget class="QComboBox" name="chInvCB_13">
-         <item>
-          <property name="text">
-           <string>NOR</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>INV</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="11" column="8">
-        <widget class="QLabel" name="label_188">
-         <property name="text">
-          <string notr="true">CH23</string>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_23">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="10">
-        <widget class="QSpinBox" name="minSB_23">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="11" column="11">
+       <item row="7" column="11">
         <widget class="QLabel" name="CH23Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="11" column="12">
+       <item row="7" column="12">
         <widget class="QSpinBox" name="maxSB_23">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7342,14 +7138,14 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="11" column="13">
+       <item row="7" column="13">
         <widget class="QLabel" name="CH23Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="11" column="14">
+       <item row="7" column="14">
         <widget class="QComboBox" name="chInvCB_23">
          <item>
           <property name="text">
@@ -7363,53 +7159,14 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="10" column="8">
-        <widget class="QLabel" name="label_187">
-         <property name="text">
-          <string notr="true">CH22</string>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_22">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="10">
-        <widget class="QSpinBox" name="minSB_22">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="10" column="11">
+       <item row="6" column="11">
         <widget class="QLabel" name="CH22Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="10" column="12">
+       <item row="6" column="12">
         <widget class="QSpinBox" name="maxSB_22">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7425,14 +7182,14 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="10" column="13">
+       <item row="6" column="13">
         <widget class="QLabel" name="CH22Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="10" column="14">
+       <item row="6" column="14">
         <widget class="QComboBox" name="chInvCB_22">
          <item>
           <property name="text">
@@ -7446,177 +7203,21 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="9" column="8">
-        <widget class="QLabel" name="label_186">
-         <property name="text">
-          <string notr="true">CH21</string>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="8">
-        <widget class="QLabel" name="label_185">
-         <property name="text">
-          <string notr="true">CH20</string>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="8">
-        <widget class="QLabel" name="label_184">
-         <property name="text">
-          <string notr="true">CH19</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="8">
-        <widget class="QLabel" name="label_183">
-         <property name="text">
-          <string notr="true">CH18</string>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_21">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_20">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_19">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_18">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="10">
-        <widget class="QSpinBox" name="minSB_21">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="8" column="10">
-        <widget class="QSpinBox" name="minSB_20">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="7" column="10">
-        <widget class="QSpinBox" name="minSB_19">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="10">
-        <widget class="QSpinBox" name="minSB_18">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="9" column="11">
+       <item row="5" column="11">
         <widget class="QLabel" name="CH21Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="8" column="11">
+       <item row="4" column="11">
         <widget class="QLabel" name="CH20Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="9" column="12">
+       <item row="5" column="12">
         <widget class="QSpinBox" name="maxSB_21">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7632,7 +7233,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="8" column="12">
+       <item row="4" column="12">
         <widget class="QSpinBox" name="maxSB_20">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7648,21 +7249,21 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="7" column="11">
+       <item row="6" column="11">
         <widget class="QLabel" name="CH19Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="6" column="11">
+       <item row="5" column="11">
         <widget class="QLabel" name="CH18Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="7" column="12">
+       <item row="3" column="12">
         <widget class="QSpinBox" name="maxSB_19">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7678,7 +7279,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="6" column="12">
+       <item row="2" column="12">
         <widget class="QSpinBox" name="maxSB_18">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7694,35 +7295,35 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="9" column="13">
+       <item row="5" column="13">
         <widget class="QLabel" name="CH21Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="8" column="13">
+       <item row="4" column="13">
         <widget class="QLabel" name="CH20Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="7" column="13">
+       <item row="3" column="13">
         <widget class="QLabel" name="CH19Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="6" column="13">
+       <item row="2" column="13">
         <widget class="QLabel" name="CH18Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="9" column="14">
+       <item row="5" column="14">
         <widget class="QComboBox" name="chInvCB_21">
          <item>
           <property name="text">
@@ -7736,7 +7337,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="8" column="14">
+       <item row="4" column="14">
         <widget class="QComboBox" name="chInvCB_20">
          <item>
           <property name="text">
@@ -7750,7 +7351,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="7" column="14">
+       <item row="3" column="14">
         <widget class="QComboBox" name="chInvCB_19">
          <item>
           <property name="text">
@@ -7764,7 +7365,7 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="6" column="14">
+       <item row="2" column="14">
         <widget class="QComboBox" name="chInvCB_18">
          <item>
           <property name="text">
@@ -7778,60 +7379,21 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="5" column="8">
-        <widget class="QLabel" name="label_182">
-         <property name="text">
-          <string notr="true">CH17</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_17">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="11">
+       <item row="1" column="11">
         <widget class="QLabel" name="CH17Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="5" column="13">
+       <item row="1" column="13">
         <widget class="QLabel" name="CH17Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="5" column="10">
-        <widget class="QSpinBox" name="minSB_17">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="12">
+       <item row="1" column="12">
         <widget class="QSpinBox" name="maxSB_17">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7847,7 +7409,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="5" column="14">
+       <item row="1" column="14">
         <widget class="QComboBox" name="chInvCB_17">
          <item>
           <property name="text">
@@ -7861,22 +7423,31 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="4" column="8">
-        <widget class="QLabel" name="label_29">
+       <item row="13" column="0">
+        <widget class="QLabel" name="label_26">
          <property name="text">
-          <string notr="true">CH16</string>
+          <string notr="true">CH13</string>
          </property>
         </widget>
        </item>
-       <item row="4" column="11">
-        <widget class="QLabel" name="CH16Amin">
-         <property name="text">
-          <string/>
+       <item row="13" column="1">
+        <widget class="QDoubleSpinBox" name="offsetDSB_13">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
          </property>
         </widget>
        </item>
-       <item row="4" column="12">
-        <widget class="QSpinBox" name="maxSB_16">
+       <item row="13" column="2">
+        <widget class="QSpinBox" name="minSB_13">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
          </property>
@@ -7891,15 +7462,38 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="4" column="13">
-        <widget class="QLabel" name="CH16Amax">
+       <item row="13" column="3">
+        <widget class="QLabel" name="CH13Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="4" column="14">
-        <widget class="QComboBox" name="chInvCB_16">
+       <item row="13" column="4">
+        <widget class="QSpinBox" name="maxSB_13">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="5">
+        <widget class="QLabel" name="CH13Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="6">
+        <widget class="QComboBox" name="chInvCB_13">
          <item>
           <property name="text">
            <string>NOR</string>
@@ -7912,69 +7506,14 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="4" column="10">
-        <widget class="QSpinBox" name="minSB_16">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_16">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="8">
-        <widget class="QLabel" name="label_28">
-         <property name="text">
-          <string notr="true">CH15</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="8">
+       <item row="14" column="0">
         <widget class="QLabel" name="label_27">
          <property name="text">
           <string notr="true">CH14</string>
          </property>
         </widget>
        </item>
-       <item row="3" column="9">
-        <widget class="QDoubleSpinBox" name="offsetDSB_15">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="decimals">
-          <number>1</number>
-         </property>
-         <property name="minimum">
-          <double>-100.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="9">
+       <item row="14" column="1">
         <widget class="QDoubleSpinBox" name="offsetDSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -7990,23 +7529,7 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="3" column="10">
-        <widget class="QSpinBox" name="minSB_15">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="10">
+       <item row="14" column="2">
         <widget class="QSpinBox" name="minSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -8022,37 +7545,14 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="3" column="11">
-        <widget class="QLabel" name="CH15Amin">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="11">
+       <item row="14" column="3">
         <widget class="QLabel" name="CH14Amin">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="3" column="12">
-        <widget class="QSpinBox" name="maxSB_15">
-         <property name="alignment">
-          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-         </property>
-         <property name="accelerated">
-          <bool>true</bool>
-         </property>
-         <property name="minimum">
-          <number>-100</number>
-         </property>
-         <property name="maximum">
-          <number>100</number>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="12">
+       <item row="14" column="4">
         <widget class="QSpinBox" name="maxSB_14">
          <property name="alignment">
           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -8068,35 +7568,14 @@ p, li { white-space: pre-wrap; }
          </property>
         </widget>
        </item>
-       <item row="3" column="13">
-        <widget class="QLabel" name="CH15Amax">
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="13">
+       <item row="14" column="5">
         <widget class="QLabel" name="CH14Amax">
          <property name="text">
           <string/>
          </property>
         </widget>
        </item>
-       <item row="3" column="14">
-        <widget class="QComboBox" name="chInvCB_15">
-         <item>
-          <property name="text">
-           <string>NOR</string>
-          </property>
-         </item>
-         <item>
-          <property name="text">
-           <string>INV</string>
-          </property>
-         </item>
-        </widget>
-       </item>
-       <item row="2" column="14">
+       <item row="14" column="6">
         <widget class="QComboBox" name="chInvCB_14">
          <item>
           <property name="text">
@@ -8110,13 +7589,1218 @@ p, li { white-space: pre-wrap; }
          </item>
         </widget>
        </item>
-       <item row="0" column="7" rowspan="16">
+       <item row="15" column="0">
+        <widget class="QLabel" name="label_28">
+         <property name="text">
+          <string notr="true">CH15</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="1">
+        <widget class="QDoubleSpinBox" name="offsetDSB_15">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="1">
+        <widget class="QDoubleSpinBox" name="offsetDSB_16">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="2">
+        <widget class="QSpinBox" name="minSB_15">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="2">
+        <widget class="QSpinBox" name="minSB_16">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="3">
+        <widget class="QLabel" name="CH15Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="3">
+        <widget class="QLabel" name="CH16Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="4">
+        <widget class="QSpinBox" name="maxSB_15">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="4">
+        <widget class="QSpinBox" name="maxSB_16">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="5">
+        <widget class="QLabel" name="CH15Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="5">
+        <widget class="QLabel" name="CH16Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="6">
+        <widget class="QComboBox" name="chInvCB_15">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="16" column="6">
+        <widget class="QComboBox" name="chInvCB_16">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="1" column="8">
+        <widget class="QLabel" name="label_182">
+         <property name="text">
+          <string notr="true">CH17</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="8">
+        <widget class="QLabel" name="label_183">
+         <property name="text">
+          <string notr="true">CH18</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="8">
+        <widget class="QLabel" name="label_184">
+         <property name="text">
+          <string notr="true">CH19</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="8">
+        <widget class="QLabel" name="label_185">
+         <property name="text">
+          <string notr="true">CH20</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="8">
+        <widget class="QLabel" name="label_186">
+         <property name="text">
+          <string notr="true">CH21</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="8">
+        <widget class="QLabel" name="label_187">
+         <property name="text">
+          <string notr="true">CH22</string>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="8">
+        <widget class="QLabel" name="label_188">
+         <property name="text">
+          <string notr="true">CH23</string>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="8">
+        <widget class="QLabel" name="label_189">
+         <property name="text">
+          <string notr="true">CH24</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_17">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_18">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_19">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_20">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_21">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_22">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_23">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_24">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_25">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_26">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_27">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_28">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_29">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_30">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_31">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="9">
+        <widget class="QDoubleSpinBox" name="offsetDSB_32">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="decimals">
+          <number>1</number>
+         </property>
+         <property name="minimum">
+          <double>-100.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="8">
+        <widget class="QLabel" name="label_243">
+         <property name="text">
+          <string notr="true">CH25</string>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="8">
+        <widget class="QLabel" name="label_251">
+         <property name="text">
+          <string notr="true">CH26</string>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="8">
+        <widget class="QLabel" name="label_252">
+         <property name="text">
+          <string notr="true">CH27</string>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="8">
+        <widget class="QLabel" name="label_253">
+         <property name="text">
+          <string notr="true">CH28</string>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="8">
+        <widget class="QLabel" name="label_254">
+         <property name="text">
+          <string notr="true">CH29</string>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="8">
+        <widget class="QLabel" name="label_255">
+         <property name="text">
+          <string notr="true">CH30</string>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="8">
+        <widget class="QLabel" name="label_256">
+         <property name="text">
+          <string notr="true">CH31</string>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="8">
+        <widget class="QLabel" name="label_257">
+         <property name="text">
+          <string notr="true">CH32</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="10">
+        <widget class="QSpinBox" name="minSB_17">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="10">
+        <widget class="QSpinBox" name="minSB_18">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="10">
+        <widget class="QSpinBox" name="minSB_19">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="10">
+        <widget class="QSpinBox" name="minSB_20">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="10">
+        <widget class="QSpinBox" name="minSB_21">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="10">
+        <widget class="QSpinBox" name="minSB_22">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="7" column="10">
+        <widget class="QSpinBox" name="minSB_23">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="10">
+        <widget class="QSpinBox" name="minSB_24">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="11">
+        <widget class="QLabel" name="CH24Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="12">
+        <widget class="QSpinBox" name="maxSB_24">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="13">
+        <widget class="QLabel" name="CH24Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="8" column="14">
+        <widget class="QComboBox" name="chInvCB_24">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="9" column="10">
+        <widget class="QSpinBox" name="minSB_25">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="10">
+        <widget class="QSpinBox" name="minSB_26">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="10">
+        <widget class="QSpinBox" name="minSB_27">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="10">
+        <widget class="QSpinBox" name="minSB_28">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="10">
+        <widget class="QSpinBox" name="minSB_29">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="10">
+        <widget class="QSpinBox" name="minSB_30">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="10">
+        <widget class="QSpinBox" name="minSB_31">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="10">
+        <widget class="QSpinBox" name="minSB_32">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="12">
+        <widget class="QSpinBox" name="maxSB_25">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="12">
+        <widget class="QSpinBox" name="maxSB_26">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="12">
+        <widget class="QSpinBox" name="maxSB_27">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="12">
+        <widget class="QSpinBox" name="maxSB_28">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="12">
+        <widget class="QSpinBox" name="maxSB_29">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="12">
+        <widget class="QSpinBox" name="maxSB_30">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="12">
+        <widget class="QSpinBox" name="maxSB_31">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="12">
+        <widget class="QSpinBox" name="maxSB_32">
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+         <property name="accelerated">
+          <bool>true</bool>
+         </property>
+         <property name="minimum">
+          <number>-100</number>
+         </property>
+         <property name="maximum">
+          <number>100</number>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="14">
+        <widget class="QComboBox" name="chInvCB_25">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="10" column="14">
+        <widget class="QComboBox" name="chInvCB_26">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="11" column="14">
+        <widget class="QComboBox" name="chInvCB_27">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="12" column="14">
+        <widget class="QComboBox" name="chInvCB_28">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="13" column="14">
+        <widget class="QComboBox" name="chInvCB_29">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="14" column="14">
+        <widget class="QComboBox" name="chInvCB_30">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="15" column="14">
+        <widget class="QComboBox" name="chInvCB_31">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="16" column="14">
+        <widget class="QComboBox" name="chInvCB_32">
+         <item>
+          <property name="text">
+           <string>NOR</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>INV</string>
+          </property>
+         </item>
+        </widget>
+       </item>
+       <item row="9" column="11">
+        <widget class="QLabel" name="CH25Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="11">
+        <widget class="QLabel" name="CH26Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="11">
+        <widget class="QLabel" name="CH27Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="11">
+        <widget class="QLabel" name="CH28Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="11">
+        <widget class="QLabel" name="CH29Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="11">
+        <widget class="QLabel" name="CH30Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="11">
+        <widget class="QLabel" name="CH31Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="11">
+        <widget class="QLabel" name="CH32Amin">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="9" column="13">
+        <widget class="QLabel" name="CH25Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="10" column="13">
+        <widget class="QLabel" name="CH26Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="11" column="13">
+        <widget class="QLabel" name="CH27Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="12" column="13">
+        <widget class="QLabel" name="CH28Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="13" column="13">
+        <widget class="QLabel" name="CH29Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="14" column="13">
+        <widget class="QLabel" name="CH30Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="15" column="13">
+        <widget class="QLabel" name="CH31Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="16" column="13">
+        <widget class="QLabel" name="CH32Amax">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="7" rowspan="18">
         <widget class="Line" name="line_6">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="lineWidth">
           <number>2</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="21" column="3">
+        <spacer name="verticalSpacer_7">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="16" column="0">
+        <widget class="QLabel" name="label_105">
+         <property name="text">
+          <string notr="true">CH16</string>
          </property>
         </widget>
        </item>
@@ -16033,6 +16717,16 @@ p, li { white-space: pre-wrap; }
              <string>MavLink</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>Hitec</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>AFHDS2</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="1" column="0">
@@ -21460,20 +22154,6 @@ p, li { white-space: pre-wrap; }
        <layout class="QGridLayout" name="voiceLayout"/>
       </widget>
      </widget>
-    </widget>
-   </item>
-   <item row="18" column="0">
-    <widget class="QPushButton" name="pushButton">
-     <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Start the eepskye Simulator and simulate the model being edited..&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-     </property>
-     <property name="text">
-      <string>Simulate</string>
-     </property>
-     <property name="icon">
-      <iconset resource="eepskye.qrc">
-       <normaloff>:/images/simulate.png</normaloff>:/images/simulate.png</iconset>
-     </property>
     </widget>
    </item>
   </layout>

@@ -740,7 +740,7 @@ PACK(typedef struct t_music
 
 
 #if EXTRA_SKYMIXERS
-#define EXTRA_MIXERS SKYMixData exmixData[EXTRA_SKYMIXERS]
+#define EXTRA_MIXERS SKYMixData exmixData[EXTRA_SKYMIXERS+SPARE_SKYMIXERS]
 #else
 #define EXTRA_MIXERS
 #endif
@@ -783,9 +783,15 @@ struct t_module
 	uint8_t failsafeMode:3 ;
 	uint8_t notfailsafeRepeat:1 ;
 	uint8_t r9mPower:2 ;
-	uint8_t failsafeSpare:2 ;
+	uint8_t pxxDoubleRate:1 ;
+	uint8_t pxxHeartbeatPB14:1 ;
 	int8_t failsafe[16] ;
-	uint8_t sparex[3] ;
+	uint8_t externalAntenna:1 ;
+	uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
+	uint8_t highChannels:1 ;
+	uint8_t disableTelemetry:1 ;
+	uint8_t spare:3 ;
+	uint8_t sparex[2] ;
 } ;
 
 PACK(typedef struct t_extraId

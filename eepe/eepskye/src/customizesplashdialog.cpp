@@ -207,6 +207,66 @@ void customizeSplashDialog::on_saveToHexButton_clicked()
 
 }
 
+void customizeSplashDialog::on_saveToLbmButton_clicked()
+{
+    QString fileName;
+    QSettings settings("er9x-eePe", "eePe");
+//    quint8 temp[BIN_FILE_SIZE] = {0};
+//    long filesize ;
+    long result ;
+
+    fileName = QFileDialog::getSaveFileName(this,tr("Write to file"),settings.value("lastDir").toString(),tr("LBM files (*.lbm);;"),0,QFileDialog::DontConfirmOverwrite);
+    if(fileName.isEmpty())
+    {
+        return;
+    }
+
+    QFile file(fileName);
+
+    settings.setValue("lastDir",QFileInfo(fileName).dir().absolutePath());
+
+    QImage image = ui->imageLabel->pixmap()->toImage().scaled(SPLASH_WIDTH, SPLASH_HEIGHT).convertToFormat(QImage::Format_MonoLSB);
+    uchar b[SPLASH_SIZE] = {0};
+    quint8 * p = image.bits();
+
+    for(int y=0; y<SPLASH_HEIGHT; y++)
+        for(int x=0; x<SPLASH_WIDTH; x++)
+            b[SPLASH_WIDTH*(y/8) + x] |= ((p[(y*SPLASH_WIDTH + x)/8] & (1<<(x%8))) ? 1 : 0)<<(y % 8);
+
+
+    //open file
+    if (!file.open(QIODevice::WriteOnly)) {
+        QMessageBox::warning( this, QObject::tr("Error"),
+                             QObject::tr("Cannot write file %1:\n%2.")
+                             .arg(fileName)
+                             .arg(file.errorString()));
+        return ;
+    }
+
+    result = file.write((char*)b, SPLASH_SIZE ) ;
+    file.close();
+
+    if( result == SPLASH_SIZE)
+    {
+        QMessageBox::information(this, tr("Save To File"),
+                                 tr("Saved %1").arg(fileName));
+    }
+    else
+    {
+        QMessageBox::critical(this, tr("Error"),
+                              tr("Error writing file %1").arg(fileName));
+    }
+
+    //    memcpy((uchar *)&temp[pos + SPLASH_OFFSET], &b, SPLASH_SIZE);
+
+    if(saveiHEX(this, fileName, (quint8*)&b, SPLASH_SIZE, "", 0))
+    {
+        QMessageBox::information(this, tr("Save To File"),
+                              tr("Successfully updated %1").arg(fileName));
+    }
+}
+
+
 void customizeSplashDialog::on_invertColorButton_clicked()
 {
     QImage image = ui->imageLabel->pixmap()->toImage();

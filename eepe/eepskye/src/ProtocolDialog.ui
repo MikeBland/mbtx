@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>611</width>
-    <height>508</height>
+    <height>525</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -35,7 +35,7 @@
      <x>19</x>
      <y>10</y>
      <width>361</width>
-     <height>490</height>
+     <height>516</height>
     </rect>
    </property>
    <layout class="QGridLayout" name="gridLayout">
@@ -74,7 +74,7 @@
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="3" column="1">
      <widget class="QComboBox" name="ppmFrameLengthCB">
       <item>
        <property name="text">
@@ -283,14 +283,14 @@
       </item>
      </widget>
     </item>
-    <item row="4" column="0">
+    <item row="3" column="0">
      <widget class="QLabel" name="ppmFrameLabel">
       <property name="text">
        <string>PPM Frame Length</string>
       </property>
      </widget>
     </item>
-    <item row="5" column="1">
+    <item row="4" column="1">
      <widget class="QComboBox" name="ppmDelayCB">
       <item>
        <property name="text">
@@ -369,14 +369,14 @@
       </item>
      </widget>
     </item>
-    <item row="5" column="0">
+    <item row="4" column="0">
      <widget class="QLabel" name="ppmDelayLabel">
       <property name="text">
        <string>PPM Delay</string>
       </property>
      </widget>
     </item>
-    <item row="6" column="1">
+    <item row="5" column="1">
      <widget class="QComboBox" name="ppmPolarityCB">
       <item>
        <property name="text">
@@ -390,14 +390,14 @@
       </item>
      </widget>
     </item>
-    <item row="6" column="0">
+    <item row="5" column="0">
      <widget class="QLabel" name="ppmPolarityLabel">
       <property name="text">
        <string>Polarity</string>
       </property>
      </widget>
     </item>
-    <item row="7" column="1">
+    <item row="6" column="1">
      <widget class="QSpinBox" name="channelsSB">
       <property name="minimum">
        <number>4</number>
@@ -410,14 +410,14 @@
       </property>
      </widget>
     </item>
-    <item row="7" column="0">
+    <item row="6" column="0">
      <widget class="QLabel" name="channelsLabel">
       <property name="text">
        <string># Channels</string>
       </property>
      </widget>
     </item>
-    <item row="8" column="1">
+    <item row="7" column="1">
      <widget class="QSpinBox" name="rxNumberSB">
       <property name="minimum">
        <number>0</number>
@@ -430,14 +430,14 @@
       </property>
      </widget>
     </item>
-    <item row="8" column="0">
+    <item row="7" column="0">
      <widget class="QLabel" name="rxNumberLabel">
       <property name="text">
        <string>Rx Number</string>
       </property>
      </widget>
     </item>
-    <item row="9" column="1">
+    <item row="8" column="1">
      <widget class="QComboBox" name="xjtChannelsCB">
       <item>
        <property name="text">
@@ -451,7 +451,7 @@
       </item>
      </widget>
     </item>
-    <item row="9" column="0">
+    <item row="8" column="0">
      <widget class="QLabel" name="xjtChannelsLabel">
       <property name="text">
        <string># channels</string>
@@ -607,99 +607,99 @@
         <string>AFHD2SA</string>
        </property>
       </item>
-      <item>
+		<item>
        <property name="text">
-        <string>28</string>
+        <string>Q2X2</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>WK2x01</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>Q303</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>GW008</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>DM002</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>CABELL</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>ESKY150</string>
+       </property>
+      </item>
+		<item>
+       <property name="text">
+        <string>H8_3D</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>29</string>
+        <string>CORONA</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>30</string>
+        <string>CFlie</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>31</string>
+        <string>Hitec</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>32</string>
+        <string>WFLY</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>33</string>
+        <string>BUGS</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>34</string>
+        <string>BUGSMINI</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>35</string>
+        <string>Traxxas</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>36</string>
+        <string>NCC1701</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>37</string>
+        <string>E01X</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>38</string>
+        <string>V911S</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>39</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>40</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>41</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>42</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>43</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>44</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>45</string>
-       </property>
-      </item>
-      <item>
-       <property name="text">
-        <string>46</string>
+        <string>GD00X</string>
        </property>
       </item>
       <item>
@@ -784,14 +784,14 @@
       </item>
      </widget>
     </item>
-    <item row="10" column="0">
+    <item row="9" column="0">
      <widget class="QLabel" name="xjtTypeLabel">
       <property name="text">
        <string>Type</string>
       </property>
      </widget>
     </item>
-    <item row="10" column="1">
+    <item row="9" column="1">
      <widget class="QComboBox" name="xjtTypeCB">
       <item>
        <property name="text">
@@ -815,14 +815,14 @@
       </item>
      </widget>
     </item>
-    <item row="11" column="0">
+    <item row="10" column="0">
      <widget class="QLabel" name="dsmTypeLabel">
       <property name="text">
        <string>Type</string>
       </property>
      </widget>
     </item>
-    <item row="11" column="1">
+    <item row="10" column="1">
      <widget class="QComboBox" name="dsmTypeCB">
       <item>
        <property name="text">
@@ -846,14 +846,14 @@
       </item>
      </widget>
     </item>
-    <item row="12" column="0">
+    <item row="11" column="0">
      <widget class="QLabel" name="xjtCountryLabel">
       <property name="text">
        <string>Country</string>
       </property>
      </widget>
     </item>
-    <item row="12" column="1">
+    <item row="11" column="1">
      <widget class="QComboBox" name="xjtCountryCB">
       <item>
        <property name="text">
@@ -872,14 +872,14 @@
       </item>
      </widget>
     </item>
-    <item row="13" column="0">
+    <item row="12" column="0">
      <widget class="QLabel" name="optionLabel">
       <property name="text">
        <string>Option</string>
       </property>
      </widget>
     </item>
-    <item row="13" column="1">
+    <item row="12" column="1">
      <widget class="QSpinBox" name="optionSB">
       <property name="minimum">
        <number>-128</number>
@@ -892,14 +892,14 @@
       </property>
      </widget>
     </item>
-    <item row="14" column="0">
+    <item row="13" column="0">
      <widget class="QLabel" name="autobindLabel">
       <property name="text">
        <string>Autobind</string>
       </property>
      </widget>
     </item>
-    <item row="14" column="1">
+    <item row="13" column="1">
      <widget class="QComboBox" name="autobindCB">
       <item>
        <property name="text">
@@ -913,14 +913,14 @@
       </item>
      </widget>
     </item>
-    <item row="15" column="0">
+    <item row="14" column="0">
      <widget class="QLabel" name="powerLabel">
       <property name="text">
        <string>Power</string>
       </property>
      </widget>
     </item>
-    <item row="15" column="1">
+    <item row="14" column="1">
      <widget class="QComboBox" name="powerCB">
       <item>
        <property name="text">
@@ -1048,14 +1048,14 @@
       </property>
      </widget>
     </item>
-    <item row="16" column="0">
+    <item row="15" column="0">
      <widget class="QLabel" name="R9MpowerLabel">
       <property name="text">
        <string>R9M Power</string>
       </property>
      </widget>
     </item>
-    <item row="16" column="1">
+    <item row="15" column="1">
      <widget class="QComboBox" name="R9MpowerCB">
       <item>
        <property name="text">
@@ -1081,6 +1081,32 @@
        </size>
       </property>
      </spacer>
+    </item>
+    <item row="16" column="0">
+     <widget class="QLabel" name="R9MflexLabel">
+      <property name="text">
+       <string>R9M Flex Option</string>
+      </property>
+     </widget>
+    </item>
+    <item row="16" column="1">
+     <widget class="QComboBox" name="FlexCB">
+      <item>
+       <property name="text">
+        <string>Off</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>915MHz</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>868MHz</string>
+       </property>
+      </item>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -1130,6 +1156,22 @@
      <string>No Pulses</string>
     </property>
    </item>
+  </widget>
+  <widget class="QLabel" name="R9MflexWarnLabel">
+   <property name="geometry">
+    <rect>
+     <x>400</x>
+     <y>40</y>
+     <width>115</width>
+     <height>71</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Uses non-certified module firmware. Check the Frequency for your Region.</string>
+   </property>
+   <property name="wordWrap">
+    <bool>true</bool>
+   </property>
   </widget>
  </widget>
  <resources/>

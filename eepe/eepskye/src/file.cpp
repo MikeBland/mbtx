@@ -863,7 +863,7 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 	uint32_t i ;
 
 	memset( eeprom, 0xFF, EEFULLSIZE ) ;
-	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) || ( radioData->type == RADIO_TYPE_QX7 ) || ( radioData->type == RADIO_TYPE_T12 ) )
+	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) || ( radioData->type == RADIO_TYPE_QX7 ) || ( radioData->type == RADIO_TYPE_T12 ) || ( radioData->type == RADIO_TYPE_XXX ) )
 	{
 		// Taranis type
 		EeFsFormat( eeprom ) ;

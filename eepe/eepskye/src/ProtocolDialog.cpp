@@ -88,7 +88,7 @@ void ProtocolDialog::setBoxes()
   ui->ProtocolCB->addItem("PPM");
 	if ( lModule == 0 )
 	{
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) )
 		{
       ui->ProtocolCB->addItem("XJT");
 		}	
@@ -120,7 +120,7 @@ void ProtocolDialog::setBoxes()
 	{
     uint8_t *options ;
 		options = &ProtocolOptionsSKY[lModule][0] ;
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) )
 		{
 			options = &ProtocolOptionsX9de[lModule][0] ;
 		}
@@ -180,7 +180,9 @@ void ProtocolDialog::setBoxes()
 	ui->followLabel->hide() ;
 	ui->R9MpowerLabel->hide() ;
   ui->R9MpowerCB->hide() ;
-
+	ui->R9MflexLabel->hide() ;
+	ui->R9MflexWarnLabel->hide() ;
+  ui->FlexCB->hide() ;
 
   if ( ( lModule == 0 ) && ( lVersion < 4 ) && ( rData->bitType & (RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X ) ) )
 	{
@@ -224,7 +226,7 @@ void ProtocolDialog::setBoxes()
 		ui->channelsLabel->hide() ;
     ui->channelsSB->hide() ;
 		ui->xjtChannelsCB->setCurrentIndex(ppd->channels) ;
-		ui->rxNumberSB->setMaximum(124) ;
+		ui->rxNumberSB->setMaximum(63) ;
 		ui->rxNumberSB->setValue(ppd->pxxRxNum) ;
 		ui->xjtTypeCB->setCurrentIndex(ppd->sub_protocol) ;
 		ui->xjtCountryCB->setCurrentIndex(ppd->country) ;
@@ -238,10 +240,20 @@ void ProtocolDialog::setBoxes()
 		ui->xjtCountryCB->show() ;
 		if ( ppd->sub_protocol == 3 )	// R9M
 		{
-	    ui->R9MpowerCB->clear();
-			if ( ppd->country == 2 )
+	    
+      ui->FlexCB->setCurrentIndex(ppd->r9MflexMode) ;
+			ui->R9MflexLabel->show() ;
+			ui->FlexCB->show() ;
+			if ( ppd->r9MflexMode )
 			{
-				ui->R9MpowerCB->addItem("25 mW") ;
+				ui->R9MflexWarnLabel->show() ;
+			}
+			ui->R9MpowerCB->clear();
+			if ( ( ppd->country == 2 ) && ( ppd->r9MflexMode == 0 ) )
+			{
+				ui->R9MpowerCB->addItem("25 mW(8ch)") ;
+				ui->R9MpowerCB->addItem("25 mW(16ch)") ;
+				ui->R9MpowerCB->addItem("200 mW") ;
 				ui->R9MpowerCB->addItem("500 mW") ;
 			}
 			else
@@ -371,7 +383,7 @@ void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 	}
 	else
 	{
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) )
 		{
 			p = &ProtocolOptionsX9de[lModule][1] ;
 		}
@@ -544,5 +556,13 @@ void ProtocolDialog::on_FailsafeCB_currentIndexChanged(int index)
 void ProtocolDialog::on_R9MpowerCB_currentIndexChanged(int index)
 {
 	if ( protocolEditLock ) return ;
-  ppd->r9mPower = index ;
+	  ppd->r9mPower = index ;
 }
+
+void ProtocolDialog::on_FlexCB_currentIndexChanged(int index)
+{
+	if ( protocolEditLock ) return ;
+	  ppd->r9MflexMode = index ;
+  setBoxes() ;
+}
+

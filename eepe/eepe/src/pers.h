@@ -66,6 +66,8 @@ const uint8_t modn12x3[4][4]= {
 
 #define TRIM_EXTENDED_MAX	500
 
+#define NUM_TELEM_ITEMS	42
+
 const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
 2,1,3,4 , 2,1,4,3 , 2,3,1,4 , 2,3,4,1 , 2,4,1,3 , 2,4,3,1,

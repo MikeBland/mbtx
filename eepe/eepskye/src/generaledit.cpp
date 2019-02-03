@@ -99,16 +99,46 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->CrossTrimChkB->setChecked(g_eeGeneral.crosstrim);
 //    ui->BandGapEnableChkB->setChecked(!g_eeGeneral.disableBG);//Default is zero=checked
     ui->beeperCB->setCurrentIndex(g_eeGeneral.beeperVal);
-    
+
+    ui->RotateScreenChkB->setChecked(g_eeGeneral.rotateScreen);
+    ui->ReverseScreenChkB->setChecked(g_eeGeneral.reverseScreen);
+    ui->OptrexDisplayChkB->setChecked(g_eeGeneral.optrexDisplay);
+    if ( (rData->bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO )) == RADIO_BITTYPE_SKY )
+		{
+			ui->OptrexDisplayChkB->show() ;
+		}
+		else
+		{
+			ui->OptrexDisplayChkB->hide() ;
+		}
+    if ( rData->bitType & ( RADIO_BITTYPE_9XRPRO | RADIO_TYPE_9XTREME ) )
+		{
+			ui->ReverseScreenChkB->show() ;
+		}
+		else
+		{
+			ui->ReverseScreenChkB->hide() ;
+		}
+    if ( rData->bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO ) )
+		{
+			ui->RotateScreenChkB->show() ;
+		}
+		else
+		{
+			ui->RotateScreenChkB->hide() ;
+		}
+
     ui->WelcomeCB->setCurrentIndex(g_eeGeneral.welcomeType);
     ui->welcomeFileNameLE->setText((char *)g_eeGeneral.welcomeFileName) ;
 		
 		ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
-		if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
+    	ui->SoftwareVolumeChkB->hide() ;
+
 		}
     ui->SoftwareVolumeChkB->setChecked(g_eeGeneral.softwareVolume ) ;
     ui->Ar9xChkB->setChecked(g_eeGeneral.ar9xBoard ) ;
@@ -137,6 +167,36 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		switch ( rData->type )
 		{
+			case RADIO_TYPE_XXX :
+				ui->BtDev1Address->hide() ;
+				ui->BtDev2Address->hide() ;
+				ui->BtDev3Address->hide() ;
+				ui->BtDev4Address->hide() ;
+				ui->BtDev1Name->hide() ;
+				ui->BtDev2Name->hide() ;
+				ui->BtDev3Name->hide() ;
+				ui->BtDev4Name->hide() ;
+				ui->label_BT_name->hide() ;
+				ui->label_BTadd1->hide() ;
+				ui->label_BTadd2->hide() ;
+				ui->label_BTadd3->hide() ;
+				ui->label_BTadd4->hide() ;
+        ui->BtNameText->hide() ;
+				ui->label_ExtRtc->hide() ;
+				ui->label_Rotary_div->hide() ;
+				ui->RotaryDivisorCB->hide() ;
+				ui->stickgainLHCB->hide() ;
+				ui->stickgainLVCB->hide() ;
+				ui->stickgainRHCB->hide() ;
+				ui->stickgainRVCB->hide() ;
+				ui->label_StickGain->hide() ;
+				ui->label_stickgainLH->hide() ;
+				ui->label_stickgainLV->hide() ;
+				ui->label_stickgainRH->hide() ;
+				ui->label_stickgainRV->hide() ;
+				ui->label_Encoder->hide() ;
+				ui->EncoderCB->hide() ;
+				ui->Pot2DetCB->hide() ;
 			case RADIO_TYPE_TARANIS :
 			case RADIO_TYPE_QX7 :
 				ui->Ar9xChkB->hide() ;
@@ -232,6 +292,10 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->stickgainLVCB->hide() ;
 				ui->stickgainRHCB->hide() ;
 				ui->stickgainRVCB->hide() ;
+				ui->label_stickgainLH->hide() ;
+				ui->label_stickgainLV->hide() ;
+				ui->label_stickgainRH->hide() ;
+				ui->label_stickgainRV->hide() ;
 				ui->label_Encoder->hide() ;
 				ui->label_6Pos->hide() ;
 				ui->EncoderCB->hide() ;
@@ -259,6 +323,13 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		ui->BtBaudrateCB->setCurrentIndex(g_eeGeneral.bt_baudrate) ;
 		ui->RotaryDivisorCB->setCurrentIndex(g_eeGeneral.rotaryDivisor) ;
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+		{
+			ui->MaHalarmSB->hide() ;
+			ui->mAhLabel->hide() ;
+			ui->CurrentCalibSB->hide() ;
+			ui->CurrentCalibLabel->hide() ;
+		}
 		ui->CurrentCalibSB->setValue(g_eeGeneral.current_calib ) ;
 		ui->MaHalarmSB->setValue(g_eeGeneral.mAh_alarm*50 ) ;
     ui->BluetoothTypeCB->setCurrentIndex(g_eeGeneral.BtType);
@@ -298,6 +369,26 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->ana6Pos->setValue(g_eeGeneral.calibSpanPos[5]);
     ui->ana7Pos->setValue(g_eeGeneral.calibSpanPos[6]);
     ui->ana8Pos->setValue(g_eeGeneral.x9dcalibSpanPos);
+
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+		{
+      if ( rData->bitType & RADIO_BITTYPE_XXX )
+			{
+				ui->ana6Neg->hide() ;
+				ui->ana6Mid->hide() ;
+				ui->ana6Pos->hide() ;
+				ui->Ana6Label->hide() ;
+			}
+			ui->ana7Neg->hide() ;
+			ui->ana8Neg->hide() ;
+			ui->ana7Mid->hide() ;
+			ui->ana8Mid->hide() ;	 
+			ui->ana7Pos->hide() ;
+			ui->ana8Pos->hide() ;
+			ui->Ana7Label->hide() ;
+			ui->Ana8Label->hide() ;
+		}
+
 
 //    setSwitchDefPos();
     
@@ -465,12 +556,19 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->label_RudSw->hide() ;
       	ui->AilCB->hide() ;
      		ui->RudCB->hide() ;
-				if ( rData->type != RADIO_TYPE_T12 )
+				if ( ( rData->type != RADIO_TYPE_T12 ) && ( rData->type != RADIO_TYPE_XXX ) )
 				{
 					ui->label_Encoder->show() ;
 					ui->EncoderCB->show() ;
 				}
-			}	
+			}
+			if ( rData->type == RADIO_TYPE_XXX )
+			{
+				ui->SixPosCB->clear() ;
+				ui->SixPosCB->addItem("--") ;
+				ui->SixPosCB->addItem("P1") ;
+			}
+
 			ui->label_ThrSw->hide() ;
 			ui->label_EleSw->hide() ;
 			ui->label_GeaSw->hide() ;
@@ -1307,7 +1405,7 @@ void GeneralEdit::on_StickScrollEnableChkB_stateChanged(int )
 
 void GeneralEdit::on_SoftwareVolumeChkB_stateChanged(int )
 {
-		if ( rData->bitType & (RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12) )
+		if ( rData->bitType & (RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
 		}
@@ -1363,6 +1461,18 @@ void GeneralEdit::on_MenuEditChkB_stateChanged(int )
 void GeneralEdit::on_CrossTrimChkB_stateChanged(int )
 {
     g_eeGeneral.crosstrim = ui->CrossTrimChkB->isChecked() ? 1 : 0 ;
+    updateSettings();
+}
+
+void GeneralEdit::on_RotateScreenChkB_stateChanged(int )
+{
+    g_eeGeneral.rotateScreen = ui->RotateScreenChkB->isChecked() ? 1 : 0 ;
+    updateSettings();
+}
+
+void GeneralEdit::on_ReverseScreenChkB_stateChanged(int )
+{
+    g_eeGeneral.reverseScreen = ui->ReverseScreenChkB->isChecked() ? 1 : 0 ;
     updateSettings();
 }
 

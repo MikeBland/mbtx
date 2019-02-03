@@ -103,6 +103,7 @@
 #define DNLD_VER_ERSKY9XQX7			 7
 #define DNLD_VER_ERSKY9XXLITE		 8
 #define DNLD_VER_ERSKY9XT12			 9
+#define DNLD_VER_ERSKY9XXXX			 10
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -143,6 +144,7 @@
 #define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
 #define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
 #define ERSKY9XT12_URL "http://www.er9x.com/t12_rom.bin"
+#define ERSKY9XXXX_URL "http://www.er9x.com/xxx_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -290,6 +292,9 @@ void MainWindow::title()
 		case 9 :
 			type = "T12" ;
     break ;
+		case 10 :
+			type = "XXX" ;
+    break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -433,6 +438,9 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
           case 9 :
 						currentRev = currentERSKY9XT12rev ;
 					break ;
+          case 10 :
+						currentRev = currentERSKY9XXXXrev ;
+					break ;
 
 				}
 
@@ -468,13 +476,13 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
                 break;
 
 						case (DNLD_VER_ERSKY9XA):
-                dnldURL = ERSKY9XQX7_URL;
-                baseFileName = "x7_rom.bin";
+                dnldURL = ERSKY9XRA_URL;
+                baseFileName = "ersky9x_rom.bin";
                 break;
 
 						case (DNLD_VER_ERSKY9XQX7):
-                dnldURL = ERSKY9X_URL;
-                baseFileName = "ersky9x_rom.bin";
+                dnldURL = ERSKY9XQX7_URL;
+                baseFileName = "x7_rom.bin";
                 break;
 								
 						case (DNLD_VER_ERSKY9XXLITE):
@@ -485,6 +493,11 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 						case (DNLD_VER_ERSKY9XT12):
                 dnldURL = ERSKY9XT12_URL;
                 baseFileName = "t12_rom.bin";
+                break;
+								
+						case (DNLD_VER_ERSKY9XXXX):
+                dnldURL = ERSKY9X_URL;
+                baseFileName = "xxx_rom.bin";
                 break;
 								
             default:
@@ -558,6 +571,10 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 											case 9 :
                     		settings.setValue("currentERSKY9XT12rev", rev);
 											break ;
+
+											case 10 :
+												settings.setValue("currentERSKY9XXXXrev", rev);
+											break ;
 										}
                 }
             }
@@ -614,8 +631,8 @@ void MainWindow::downloadLatester9x()
       break;
 
 			case (DNLD_VER_ERSKY9XQX7):
-           dnldURL = ERSKY9X_URL;
-           baseFileName = "ersky9x_rom.bin";
+           dnldURL = ERSKY9XQX7_URL;
+           baseFileName = "x7_rom.bin";
       break;
 								
 			case (DNLD_VER_ERSKY9XXLITE):
@@ -631,6 +648,11 @@ void MainWindow::downloadLatester9x()
       case (DNLD_VER_ERSKY9XA) :
           dnldURL = ERSKY9X_URL;
           baseFileName = "ersky9x_rom.bin";
+      break;
+			
+			case (DNLD_VER_ERSKY9XXXX):
+        dnldURL = ERSKY9XXXX_URL;
+        baseFileName = "xxx_rom.bin";
       break;
     }
 
@@ -670,6 +692,9 @@ void MainWindow::downloadLatester9x()
 			break ;
 			case 9 :
 				currentERSKY9Xrev_temp = currentERSKY9XT12rev ;
+			break ;
+      case 10 :
+				currentERSKY9Xrev_temp = currentERSKY9XXXXrev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -782,6 +807,10 @@ void MainWindow::reply1Accepted()
 
 			case 9 :
     		settings.setValue("currentERSKY9XXrev", currentERSKY9XT12rev);
+			break ;
+
+			case 10 :
+    		settings.setValue("currentERSKY9XXrev", currentERSKY9XXXXrev);
 			break ;
 
 		}	

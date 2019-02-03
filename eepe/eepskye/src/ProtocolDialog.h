@@ -43,6 +43,7 @@ private slots:
   void on_FailsafeCB_currentIndexChanged(int index) ;
 //	void on_RepeatSendCB_toggled(bool checked) ;
 	void on_R9MpowerCB_currentIndexChanged(int index) ;
+	void on_FlexCB_currentIndexChanged(int index) ;
 
 //    void valuesChanged();
 //		void updateChannels() ;

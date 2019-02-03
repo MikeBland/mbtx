@@ -26,7 +26,7 @@ QString ExTelemItems[] = {
 	"Stk-RUD"
 } ;
 
-#define NUM_TEL_ITEMS	74
+#define NUM_TEL_ITEMS	79
 
 loggingDialog::loggingDialog(QWidget *parent, struct t_loggingData *inData, struct t_radioData *rData ) :
     QDialog(parent),

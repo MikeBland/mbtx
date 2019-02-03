@@ -132,6 +132,7 @@ private:
 		bool hwKeyState(int key) ;
     qint16 getValue(qint8 i);
     bool getSwitch(int swtch, bool nc, qint8 level=0);
+    bool getSwitchDr(int swtch);
     void beepWarn();
     void beepWarn1();
     void beepWarn2();

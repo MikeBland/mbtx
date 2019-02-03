@@ -36,9 +36,9 @@ uint8_t simulatorDialog::IS_THROTTLE( uint8_t x)
 	return (((2-(g_eeGeneral.stickMode&1)) == x) && (x<4)) ;
 }
 
-#define GET_DR_STATE(x) (!getSwitch(g_model.expoData[x].drSw1,0) ?   \
+#define GET_DR_STATE(x) (!getSwitchDr(g_model.expoData[x].drSw1) ?   \
     DR_HIGH :                                  \
-    !getSwitch(g_model.expoData[x].drSw2,0)?   \
+    !getSwitchDr(g_model.expoData[x].drSw2)?   \
     DR_MID : DR_LOW);
 
 extern int GlobalModified ;
@@ -1001,12 +1001,12 @@ void simulatorDialog::centerSticks()
 
 void simulatorDialog::configSwitches()
 {
-		if ((txType==1) || (txType == 2) || (txType == 9) )
+		if ((txType==1) || (txType == 2) || (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
 		{
 			ui->SAslider->setMaximum( 2 ) ;
 			ui->SAwidget->show() ;
 			ui->SBwidget->show() ;
-			if (txType == 9)
+			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
 			{
 				ui->SEwidget->hide() ;
 			}
@@ -1017,8 +1017,16 @@ void simulatorDialog::configSwitches()
 			ui->SFwidget->show() ;
 			ui->SFslider->setMaximum(1) ;
 			ui->SCwidget->show() ;
-			ui->SDwidget->show() ;
-			if (txType == 9)
+			if ( txType == 12 )
+			{
+				ui->SDwidget->hide() ;
+				ui->dialP_2->hide() ;
+			}
+			else
+			{
+				ui->SDwidget->show() ;
+			}
+			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
 			{
 				ui->SGwidget->hide() ;
 			}
@@ -1027,7 +1035,7 @@ void simulatorDialog::configSwitches()
 				ui->SGwidget->show() ;
 			}	 
 			ui->SHwidget->show() ;
-			if (txType == 9)
+			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
 			{
 				ui->SliderL->hide() ;
 				ui->SliderR->hide() ;
@@ -2285,6 +2293,21 @@ int32_t simulatorDialog::isAgvar(uint8_t value)
 #define SW_STACK_SIZE	6
 int8_t SwitchStack[SW_STACK_SIZE] ;
 
+bool simulatorDialog::getSwitchDr( int swtch )
+{
+	uint8_t aswitch = abs(swtch) ;
+	if ( ( aswitch <= HSW_FM6 ) && ( aswitch >= HSW_FM0 ) )
+	{
+		aswitch -= HSW_FM0 ;
+		aswitch = getFlightPhase() == aswitch ;
+		return (swtch < 0) ? !aswitch : aswitch ;
+	}
+	else
+	{
+		return getSwitch( swtch, 0, 0 ) ;
+	}
+}
+
 bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 {
   bool ret_value ;
@@ -3482,10 +3505,65 @@ void simulatorDialog::perOut(bool init, uint8_t att)
     for(uint8_t i=0;i<MAX_SKYMIXERS;i++){
         SKYMixData &md = g_model.mixData[i];
 #if GVARS
-        int8_t mixweight = REG100_100( md.weight) ;
+				int16_t lweight = md.weight ;
+				if ( (lweight <= -126) || (lweight >= 126) )
+				{
+					lweight = REG100_100( lweight ) ;
+				}
+				else
+				{
+					if ( md.extWeight == 1 )
+					{
+						lweight += 125 ; 
+					}
+					else if ( md.extWeight == 3 )
+					{
+						lweight -= 125 ; 
+					}
+					else if ( md.extWeight == 2 )
+					{
+						if ( lweight < 0 )
+						{
+							lweight -= 250 ;
+						}
+						else
+						{
+							lweight += 250 ;
+						}
+					}
+				}
+				int16_t mixweight = lweight ;
 #endif
-
-        if((md.destCh==0) || (md.destCh>NUM_SKYCHNOUT)) break;
+				int16_t loffset = md.sOffset ;
+				if ( (loffset <= -126) || (loffset >= 126) )
+				{
+					loffset = REG100_100( loffset ) ;
+				}
+				else
+				{
+					if ( md.extOffset == 1 )
+					{
+						loffset += 125 ; 
+					}
+					else if ( md.extOffset == 3 )
+					{
+						loffset -= 125 ; 
+					}
+					else if ( md.extOffset == 2 )
+					{
+						if ( lweight < 0 )
+						{
+							loffset -= 250 ;
+						}
+						else
+						{
+							loffset += 250 ;
+						}
+					}
+				}
+				int16_t mixoffset = loffset ;
+        
+				if((md.destCh==0) || (md.destCh>NUM_SKYCHNOUT)) break;
 
         //Notice 0 = NC switch means not used -> always on line
         int16_t v  = 0;
@@ -3683,7 +3761,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if ( md.lateOffset == 0 )
         {
 #if GVARS
-            if(md.sOffset) v += calc100toRESX( REG( md.sOffset, -125, 125 )	) ;
+            if(mixoffset) v += calc100toRESX( mixoffset	) ;
+//            if(md.sOffset) v += calc100toRESX( REG( md.sOffset, -125, 125 )	) ;
 #else
             if(md.sOffset) v += calc100toRESX(md.sOffset);
 #endif
@@ -3872,7 +3951,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if ( md.lateOffset )
         {
 #if GVARS
-            if(md.sOffset) dv += calc100toRESX( REG( md.sOffset, -125, 125 )	) * 100  ;
+            if(mixoffset) v += calc100toRESX( mixoffset	) ;
+//            if(md.sOffset) dv += calc100toRESX( REG( md.sOffset, -125, 125 )	) * 100  ;
 #else
             if(md.sOffset) dv += calc100toRESX(md.sOffset) * 100 ;
 #endif

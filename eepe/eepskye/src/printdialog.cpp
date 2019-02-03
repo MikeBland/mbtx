@@ -516,7 +516,7 @@ void printDialog::printSwitches()
 
 void printDialog::printVoice()
 {
-	uint32_t j ;
+//	uint32_t j ;
 	QString str = tr("<h2>Voice Alerts</h2><br>");
 	
 	for(int i = 0 ; i < NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i++)
@@ -537,7 +537,7 @@ void printDialog::printVoice()
 		QString srcstr ;
 		uint32_t value = vad->source ;
     uint32_t limit = 45 ;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
 		{
 			limit = 46 ;
     	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )

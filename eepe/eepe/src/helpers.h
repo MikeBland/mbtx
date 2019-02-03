@@ -50,6 +50,7 @@ void populateNumericGVarCB( QComboBox *b, int value, int min, int max) ;
 int numericGvarValue( QComboBox *b, int min, int max ) ;
 #ifdef SKY
 void populateSwitchCB(QComboBox *b, int value, int eepromType);
+void populateDrSwitchCB(QComboBox *b, int value, int eepromBitType) ;
 #else
 void populateSwitchCB(QComboBox *b, int value, int eepromType) ;
 #endif
@@ -184,6 +185,7 @@ void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type ) ;
 int8_t switchUnMap( int8_t x, int type ) ;
 int8_t switchMap( int8_t x ) ;
 int getSwitchCbValue( QComboBox *b, int eepromType ) ;
+int getDrSwitchCbValue( QComboBox *b, int eepromType ) ;
 int getSwitchCbValueShort( QComboBox *b, int eepromType ) ;
 int getTimerSwitchCbValue( QComboBox *b, int eepromType ) ;
 uint8_t getSw3PosList( int index ) ;

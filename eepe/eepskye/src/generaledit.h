@@ -131,13 +131,15 @@ private slots:
 		void on_Pot5DetCB_stateChanged(int ) ;
 		void on_MenuEditChkB_stateChanged(int ) ;
 		void on_CrossTrimChkB_stateChanged(int ) ;
+		void on_RotateScreenChkB_stateChanged(int ) ;
+		void on_ReverseScreenChkB_stateChanged(int ) ;
+		void on_OptrexDisplayChkB_stateChanged(int ) ;
 		void on_hapticMinRunSB_editingFinished() ;
 //    void on_BandGapEnableChkB_stateChanged(int );
     void on_splashScreenNameChkB_stateChanged(int );
     void on_backlightStickMove_editingFinished();
 //		void on_enablePpmsimChkB_stateChanged(int );
 		void on_internalFrskyAlarmChkB_stateChanged(int );
-		void on_OptrexDisplayChkB_stateChanged(int ) ;
 //		void on_backlightinvertChkB_stateChanged(int );
 		void on_RotaryDivisorCB_currentIndexChanged(int ) ;
 		void on_BtBaudrateCB_currentIndexChanged(int ) ;

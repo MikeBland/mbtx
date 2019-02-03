@@ -150,6 +150,7 @@ private:
 		int currentERSKY9XT12rev ;
     int currentERSKY9Xrev_temp;
     int currentEEPSKYErev;
+		int currentERSKY9XXXXrev ;
     int currentEEPSKYErelease ;
     bool checkERSKY9X;
     bool checkEEPSKYE;
