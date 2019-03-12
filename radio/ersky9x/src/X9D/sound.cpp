@@ -250,11 +250,15 @@ void init_dac()
 
 	DAC->DHR12R1 = 2048 ;
 	DAC->SR = DAC_SR_DMAUDR1 ;		// Write 1 to clear flag
-	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 ;			// Enable DAC
+	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 | DAC_CR_BOFF1 ;			// Enable DAC
 	NVIC_SetPriority( DMA1_Stream5_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_SetPriority( TIM6_DAC_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(TIM6_DAC_IRQn) ;
 	NVIC_EnableIRQ(DMA1_Stream5_IRQn) ;
+//#ifdef PCBX12D
+//	configure_pins( AUDIO_SD_GPIO_PIN, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTI ) ;
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 }
 
 #ifndef SIMU
@@ -706,7 +710,7 @@ void hapticOn( uint32_t pwmPercent )
 #else // 9XT
 #ifndef PCBX7
 #ifndef PCBXLITE
- #ifndef PCBX3
+ #ifndef PCBX9LITE
 void initHaptic()
 {
 	configure_pins( GPIO_Pin_HAPTIC, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
@@ -723,7 +727,7 @@ void hapticOn( uint32_t pwmPercent )
 {
 	GPIOHAPTIC->BSRRL = GPIO_Pin_HAPTIC ;
 }
- #endif // PCBX3
+ #endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7
 #endif // 9XT

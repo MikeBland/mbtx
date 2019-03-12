@@ -193,7 +193,11 @@ void generalDefault()
   g_eeGeneral.vBatWarn = 65;
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
+#ifdef PCBX12D
+	g_eeGeneral.bright = 100 ;
+#else
 	g_eeGeneral.bright = 50 ;
+#endif
 	g_eeGeneral.volume = 2 ;
 	g_eeGeneral.lightSw = MAX_SKYDRSWITCH ;	// ON
 	g_eeGeneral.filterInput = 1 ;
@@ -1603,7 +1607,7 @@ const char *ee32BackupModel( uint8_t modelIndex )
 	{
     if (result == FR_NO_PATH)
 		{
-			WatchdogTimeout = 200 ;		// 2 seconds
+			WatchdogTimeout = 300 ;		// 3 seconds
       result = f_mkdir("/MODELS") ;
     	if (result != FR_OK)
 			{

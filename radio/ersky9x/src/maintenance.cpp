@@ -17,6 +17,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+
+#ifdef PCBX12D
+//#define	WHERE_TRACK		1
+//void notePosition( uint8_t byte ) ;
+#endif
+
 #if defined(PCBTARANIS)
 #include "opentx.h"
 #include "stm32f2xx_flash.h"
@@ -116,7 +122,7 @@ extern uint8_t SetByEncoder ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
- #if defined(PCBXLITE) || defined(PCBX3)
+ #if defined(PCBXLITE) || defined(PCBX9LITE)
 #define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #endif
@@ -133,7 +139,7 @@ extern uint8_t SetByEncoder ;
 #define UPDATE_TYPE_XMEGA					6
 #define UPDATE_TYPE_MULTI					7
 
- #if defined(PCBXLITE) || defined(PCBX3)
+ #if defined(PCBXLITE) || defined(PCBX9LITE)
 #define SPORT_MODULE		0
 #define SPORT_EXT				1
 uint8_t SportModuleExt ;
@@ -572,8 +578,8 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 	uint32_t i ;
 
 #ifdef PCBX12D
-extern void initLongWatchdog() ;
-	initLongWatchdog() ;
+extern void initLongWatchdog(uint32_t time) ;
+	initLongWatchdog(4) ;
 	if ( (uint32_t) address >= 0x08020000 )
 #else
 	if ( (uint32_t) address >= 0x08008000 )
@@ -789,19 +795,25 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	FRESULT fr ;
 	SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[0] ;
 	SharedMemory.FileList.Finfo.lfsize = 48 ;
-  WatchdogTimeout = 200 ;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	DIR *pDj = &SharedMemory.FileList.Dj ;	
 	if ( VoiceFileType == VOICE_FILE_TYPE_MUSIC )
 	{
+#ifdef WHERE_TRACK
+	notePosition('m') ;
+#endif
 		pDj = &Djp ;
 	}
 	fr = f_readdir ( pDj, 0 ) ;					// rewind
 	fr = f_readdir ( pDj, &SharedMemory.FileList.Finfo ) ;		// Skip .
 	fr = f_readdir ( pDj, &SharedMemory.FileList.Finfo ) ;		// Skip ..
 	i = 0 ;
+#ifdef WHERE_TRACK
+	notePosition('n') ;
+#endif
 	while ( i <= index )
 	{
-  	WatchdogTimeout = 200 ;
+		WatchdogTimeout = 300 ;		// 3 seconds
 		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
 		FileSize[0] = SharedMemory.FileList.Finfo.fsize ;
 		i += 1 ;
@@ -810,9 +822,15 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 			return 0 ;
 		}
 	}
+#ifdef WHERE_TRACK
+	notePosition('o') ;
+#endif
 	for ( i = 1 ; i < 7 ; i += 1 )
 	{
- 		WatchdogTimeout = 200 ;
+		WatchdogTimeout = 300 ;		// 3 seconds
+#ifdef WHERE_TRACK
+	notePosition('p') ;
+#endif
 		SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[i] ;
 		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
 		FileSize[i] = SharedMemory.FileList.Finfo.fsize ;
@@ -821,6 +839,9 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 			break ;
 		}
 	}
+#ifdef WHERE_TRACK
+	notePosition('q') ;
+#endif
 	return i ;
 }
 
@@ -833,7 +854,7 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 	FRESULT fr ;
 	SharedMemory.FileList.Finfo.lfsize = 19 ;
 	char filename[20] ;
-  WatchdogTimeout = 200 ;
+	WatchdogTimeout = 300 ;		// 3 seconds
 
 	fr = f_chdir( dir ) ;
 	if ( fr == FR_OK )
@@ -853,7 +874,7 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 			fr = f_readdir ( &Djp, &SharedMemory.FileList.Finfo ) ;		// Skip ..
 			for ( i = 0 ; i < PLAYLIST_COUNT ; i += 1 )
 			{
- 				WatchdogTimeout = 200 ;
+				WatchdogTimeout = 300 ;		// 3 seconds
 				SharedMemory.FileList.Finfo.lfname = filename ;
 				fr = readBinDir( &Djp, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
 				if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
@@ -871,6 +892,8 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 }
 
 #define DISPLAY_CHAR_WIDTH	21
+
+uint16_t LastFileMoveTime ;
 
 uint32_t fileList(uint8_t event, struct fileControl *fc )
 {
@@ -910,6 +933,9 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		{
 			x = 0 ;
 		}
+#ifdef WHERE_TRACK
+	notePosition('i') ;
+#endif
 		lcd_putsn_P( 0, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
 	}
 
@@ -931,31 +957,53 @@ extern int32_t Rotary_diff ;
 
 	if ( ( event == EVT_KEY_REPT(KEY_DOWN) ) || event == EVT_KEY_FIRST(KEY_DOWN) )
 	{
-		if ( fc->vpos < limit-1 )
+		uint16_t now ;
+		now = get_tmr10ms() ;
+	  if((uint16_t)( now-LastFileMoveTime) > 4) // 50mS
 		{
-			fc->vpos += 1 ;
-		}
-		else
-		{
-			if ( fc->nameCount > limit )
+			LastFileMoveTime = now ;
+			if ( fc->vpos < limit-1 )
 			{
-				fc->index += 1 ;
-				fc->nameCount = fillNames( fc->index, fc ) ;
+				fc->vpos += 1 ;
+			}
+			else
+			{
+				if ( fc->nameCount > limit )
+				{
+					fc->index += 1 ;
+//		CoSchedLock() ;
+#ifdef WHERE_TRACK
+	notePosition('j') ;
+#endif
+					fc->nameCount = fillNames( fc->index, fc ) ;
+//  	CoSchedUnlock() ;
+				}
 			}
 		}
 	}
 	if ( ( event == EVT_KEY_REPT(KEY_UP)) || ( event == EVT_KEY_FIRST(KEY_UP) ) )
 	{
-		if ( fc->vpos > 0 )
+		uint16_t now ;
+		now = get_tmr10ms() ;
+	  if((uint16_t)( now-LastFileMoveTime) > 4) // 50mS
 		{
-			fc->vpos -= 1 ;
-		}
-		else
-		{
-			if ( fc->index )
+			LastFileMoveTime = now ;
+			if ( fc->vpos > 0 )
 			{
-				fc->index -= 1 ;
-				fc->nameCount = fillNames( fc->index, fc ) ;
+				fc->vpos -= 1 ;
+			}
+			else
+			{
+				if ( fc->index )
+				{
+					fc->index -= 1 ;
+//		CoSchedLock() ;
+#ifdef WHERE_TRACK
+	notePosition('k') ;
+#endif
+					fc->nameCount = fillNames( fc->index, fc ) ;
+//  	CoSchedUnlock() ;
+				}
 			}
 		}
 	}
@@ -987,6 +1035,9 @@ extern int32_t Rotary_diff ;
 	lcd_filled_rect( 0, 2*FH+FH*fc->vpos, DISPLAY_CHAR_WIDTH*FW, 8, 0xFF, 0 ) ;
 #else
 	lcd_char_inverse( 0, 2*FH+FH*fc->vpos, DISPLAY_CHAR_WIDTH*FW, 0 ) ;
+#endif
+#ifdef WHERE_TRACK
+	notePosition('l') ;
 #endif
 	return result ;
 }
@@ -1074,7 +1125,7 @@ void menuChangeId(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_ON() ;
 #endif
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 			SPORT_RF_ON() ;
 #endif
     break ;
@@ -1085,7 +1136,7 @@ void menuChangeId(uint8_t event)
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_OFF() ;
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 			SPORT_RF_OFF() ;
 #endif
 #endif
@@ -1239,12 +1290,24 @@ void menuChangeId(uint8_t event)
 				txPdcUsart( TxPhyPacket, 10, NO_RECEIVE ) ;
 #endif
 				state = CHANGE_FINISHED ;
+				SendCount = 150 ;
+
 			}
 		break ;
 		
 		case CHANGE_FINISHED :
 			lcd_puts_Pleft( 3*FH, "Id Changed" ) ;
 			PhyId = NewPhyId ;
+			if ( --SendCount == 0)
+			{
+				state = CHANGE_SCANNING ;
+				IdFound = 0 ;
+				RxPacket[1] = 0 ;			
+				RxCount = 0 ;
+				RxLastCount = 0 ;
+				SendCount = 2 ;
+				IdIndex = 0x1B ;
+			}
 		break ;
 	}
 
@@ -1392,7 +1455,7 @@ void menuUp1(uint8_t event)
 		}
 		else
 		{
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX9LITE)
   		TITLE( (SportModuleExt == SPORT_MODULE) ? "UPDATE Ext. Module" : "UPDATE Ext. SPort" ) ;
 #else
   		TITLE( "UPDATE Ext. SPort" ) ;
@@ -1441,7 +1504,7 @@ void menuUp1(uint8_t event)
 			if ( mounted == 0 )
 			{
 #if defined(PCBTARANIS)
-  			fr = f_mount(0, &g_FATFS_Obj) ;
+  			fr = f_mount(0, &g_FATFS) ;
 #else				
   			fr = f_mount(0, &g_FATFS) ;
 #endif
@@ -1546,7 +1609,7 @@ void menuUp1(uint8_t event)
 				}
 				else
 				{
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 					lcd_puts_Pleft( 2*FH, (SportModuleExt == SPORT_MODULE) ? "Flash Ext.mod from" : "Flash Ext.SP from" ) ;
 #else
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -2047,7 +2110,7 @@ void menuUp1(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 				SPORT_RF_OFF() ;
 #endif
 #endif
@@ -2085,17 +2148,17 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
-#ifndef PCBXLITE
-	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
-	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 7*FH, "  Update Multi" );
-#else
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. Module" );
 	lcd_puts_Pleft( 5*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 6*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+#else
+	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
 #endif
@@ -2191,33 +2254,7 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
- #ifndef PCBXLITE
-			if ( position == 3*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
-	      chainMenu(menuUp1) ;
-			}
-			if ( position == 4*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
-	      chainMenu(menuUp1) ;
-			}
-			if ( position == 5*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
-	      chainMenu(menuChangeId) ;
-			}
-			if ( position == 6*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
-	      chainMenu(menuUp1) ;
-			}
-			if ( position == 7*FH )
-			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
-	      pushMenu(menuUpMulti) ;
-			}
- #else
+ #if defined(PCBXLITE) || defined(PCBX9LITE)
 			if ( position == 3*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
@@ -2239,6 +2276,32 @@ void menuUpdate(uint8_t event)
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 7*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
+	      pushMenu(menuUpMulti) ;
+			}
+ #else
+			if ( position == 3*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 4*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_EXT ;
+	      chainMenu(menuUp1) ;
+			}
+			if ( position == 5*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+	      chainMenu(menuChangeId) ;
+			}
+			if ( position == 6*FH )
+			{
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_XMEGA ;
+	      chainMenu(menuUp1) ;
 			}
 			if ( position == 7*FH )
 			{
@@ -2348,7 +2411,7 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
     case EVT_KEY_FIRST(KEY_DOWN):
- #ifdef PCBXLITE
+ #if defined(PCBXLITE) || defined(PCBX9LITE)
 			if ( position < 7*FH )
 #else
 			if ( position < 7*FH )
@@ -3396,7 +3459,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 				if (SportModuleExt == SPORT_MODULE)
 				{
 					EXTERNAL_RF_ON();

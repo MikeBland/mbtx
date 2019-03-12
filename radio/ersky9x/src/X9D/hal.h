@@ -49,7 +49,7 @@
    #define	PIN_BUTTON_RIGHT          GPIO_Pin_13	// PE.13
    #define	PIN_BUTTON_SHIFT          GPIO_Pin_08	// PE.08
   #else
-   #ifdef PCBX3
+   #ifdef PCBX9LITE
     #define PIN_BUTTON_MENU		        GPIO_Pin_7	// PE.07
     #define	PIN_BUTTON_EXIT           GPIO_Pin_9	// PE.09
     #define PIN_BUTTON_PAGE           GPIO_Pin_8  // PE.08
@@ -75,14 +75,14 @@
 #define LED_BLUE_GPIO_PIN               GPIO_Pin_1  // PB.01
 #endif // PCBX7
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define LED_GREEN_GPIO                  GPIOE
-#define LED_GREEN_GPIO_PIN              GPIO_Pin_5  // PE.05
+#define LED_GREEN_GPIO_PIN              GPIO_Pin_4  // PE.04
 #define LED_RED_GPIO                    GPIOE
-#define LED_RED_GPIO_PIN                GPIO_Pin_4  // PE.04
+#define LED_RED_GPIO_PIN                GPIO_Pin_5  // PE.05
 #define LED_BLUE_GPIO                   GPIOE
 #define LED_BLUE_GPIO_PIN               GPIO_Pin_6  // PE.06
-#endif // PCBX3
+#endif // PCBX9LITE
 
 #ifdef PCBX7
 #define GPIOENCODER             GPIOE
@@ -97,7 +97,7 @@
 
 #endif // REV9E
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define GPIOENCODER             GPIOE
 #define PIN_ENC1				        GPIO_Pin_10     //  PE.10
 #define PIN_ENC2				        GPIO_Pin_12     //  PE.12
@@ -130,7 +130,7 @@
    #define PIN_TRIMLV_UP           GPIO_Pin_0  //PB.00
    #define PIN_TRIMLV_DN           GPIO_Pin_1  //PB.01
   #else
-   #ifdef PCBX3
+   #ifdef PCBX9LITE
     #define PIN_TRIMLV_DN		        GPIO_Pin_1	//PB.01
     #define PIN_TRIMLV_UP           GPIO_Pin_0  //PB.00
     #define PIN_TRIMRV_DN		        GPIO_Pin_14	//PE.14
@@ -176,7 +176,7 @@
   #define	PIN_SW_D_L		        GPIO_Pin_4	//PB.04
   #define	PIN_SW_D_H		        GPIO_Pin_5	//PB.05
  #else // PCBXLITE
-  #ifdef PCBX3
+  #ifdef PCBX9LITE
    #define	PIN_SW_A_H		        GPIO_Pin_1	//PE.01
    #define	PIN_SW_A_L		        GPIO_Pin_0	//PE.00
    #define	PIN_SW_B_H		        GPIO_Pin_5	//PB.05
@@ -281,7 +281,7 @@
 
 // ADC
 #ifndef PCBXLITE
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	#define RCC_AHB1Periph_GPIOADC        RCC_AHB1Periph_GPIOC
 	
 	#define ADC_RCC_AHB1Periph            (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_DMA2)
@@ -362,7 +362,7 @@
 #define PIN_FLAP6                      GPIO_Pin_1  //PB.01
 #endif
 #endif // nPCB9XT
-#endif // PCBX3
+#endif // PCBX9LITE
 #endif // PCBX7
 #endif // nPCBXLITE
 
@@ -374,13 +374,13 @@
 // Power_OFF Delay and LED
 #ifndef PCBXLITE
 #ifndef PCB9XT
-#ifndef PCBX3
+#ifndef PCBX9LITE
 #define PIN_PWR_LED                     GPIO_Pin_6  //PC.06
 #define PIN_PWR_STATUS                  GPIO_Pin_1  //PD.01
 #define PIN_MCU_PWR                     GPIO_Pin_0  //PD.00
 #endif
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	#define GPIOPWRINT                      GPIOA
 	#define PIN_INT_RF_PWR                  GPIO_Pin_15	// PA.15
 	#define GPIOPWREXT                      GPIOA
@@ -432,7 +432,7 @@
 
 // Trainer Port
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 
 #define GPIO_TR_INOUT                   GPIOD
 #define PIN_TR_PPM_IN                   GPIO_Pin_13  //PD.13
@@ -450,7 +450,7 @@
 
 
 // Cppm
-#ifdef PCBX3
+#ifdef PCBX9LITE
 //#define RCC_AHB1Periph_GPIOCPPM         RCC_AHB1Periph_GPIOA
 #define RCC_AHB1Periph_GPIO_INTPPM      RCC_AHB1Periph_GPIOB
 #define PORT_INTPPM                     PIN_PORTB
@@ -481,7 +481,7 @@
 #endif // X3
 
 // Heart Beat
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define PIN_HEART_BEAT                  GPIO_Pin_15  //PD.15
 #else // X3
 #define PIN_HEART_BEAT                  GPIO_Pin_7  //PC.07
@@ -550,7 +550,7 @@
 
 // Haptic
 #ifndef PCBX7
-#ifndef PCBX3
+#ifndef PCBX9LITE
 #define RCC_AHB1Periph_GPIOHAPTIC       RCC_AHB1Periph_GPIOC
 #define GPIO_Pin_HAPTIC                 GPIO_Pin_12  //PC.12
 #define GPIOHAPTIC                      GPIOC
@@ -617,7 +617,7 @@
   #define LCD_GPIO_AF                   GPIO_AF_SPI3
 #endif
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	#define LCD_RCC_AHB1Periph            (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_DMA1)
   #define LCD_RCC_APB1Periph            RCC_APB1Periph_SPI3
   #define LCD_SPI_GPIO                  GPIOC
@@ -688,7 +688,7 @@
 #define I2C_EE_SDA                      GPIO_Pin_9  //PB9
 #define I2C_EE_WP                       GPIO_Pin_7  //PD9
 #else
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define I2C_EE_GPIO                     GPIOB
 #define I2C_EE_WP_GPIO                  GPIOB
 #define I2C_EE_GPIO_CLK                 RCC_AHB1Periph_GPIOB
@@ -727,7 +727,7 @@
 #define GPIO_Mode_CP                    GPIO_Mode_IN //
 #define GPIO_Pin_WP                     GPIO_Pin_8  //PD.08
 #ifndef PCB9XT
- #if defined(PCBXLITE) || defined(PCBX3)
+ #if defined(PCBXLITE) || defined(PCBX9LITE)
  #define GPIO_Pin_CP                     GPIO_Pin_10  //PD.10
  #else
  #define GPIO_Pin_CP                     GPIO_Pin_9  //PD.09
@@ -934,7 +934,12 @@
   #define EXTMODULE_PWR_GPIO_PIN        GPIO_Pin_11 // PD.11
   #define EXTMODULE_TX_GPIO             GPIOC
   #define EXTMODULE_TX_GPIO_PIN         GPIO_Pin_6  // PC.06
+  #define EXTMODULE_RX_GPIO             GPIOC
+  #define EXTMODULE_RX_GPIO_PIN         GPIO_Pin_7  // PC.07
   #define EXTMODULE_TX_GPIO_PinSource   GPIO_PinSource6
+  #define EXTMODULE_RX_GPIO_PinSource   GPIO_PinSource7
+  #define EXTMODULE_USART               USART6
+  #define EXTMODULE_USART_IRQn          USART6_IRQn
   #define EXTMODULE_TIMER               TIM8
   #define EXTMODULE_TX_GPIO_AF          GPIO_AF_TIM8 // TIM8_CH1
   #define EXTMODULE_TIMER_CC_IRQn       TIM8_CC_IRQn
@@ -944,8 +949,10 @@
   #define EXTMODULE_DMA_IRQn            DMA2_Stream1_IRQn
   #define EXTMODULE_DMA_IRQHandler      DMA2_Stream1_IRQHandler
   #define EXTMODULE_DMA_FLAG_TC         DMA_IT_TCIF1
-  #define EXTMODULE_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
+//  #define EXTMODULE_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
+  #define EXTMODULE_TIMER_FREQ          (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2)
 	#define EXTMODULE_TIMER_SR_MASK				0x1FFF
+	#define EXTMODULE_USART_IRQHandler		USART6_IRQHandler
 
 	#define PIN_EXTPPM_OUT                  GPIO_Pin_6  //PC.06
 	#define PORT_EXTPPM                     PIN_PORTC
@@ -1061,7 +1068,7 @@
 
 #endif // XLITE
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
   #define HAPTIC_PWM
   #define HAPTIC_RCC_AHB1Periph         RCC_AHB1Periph_GPIOB
   #define HAPTIC_RCC_APB1Periph         RCC_APB1Periph_TIM2
@@ -1130,18 +1137,25 @@
   #define EXTMODULE_PWR_GPIO_PIN        GPIO_Pin_11 // PD.11
   #define EXTMODULE_TX_GPIO             GPIOC
   #define EXTMODULE_TX_GPIO_PIN         GPIO_Pin_6  // PC.06
+  #define EXTMODULE_RX_GPIO             GPIOC
+  #define EXTMODULE_RX_GPIO_PIN         GPIO_Pin_7  // PC.07
   #define EXTMODULE_TX_GPIO_PinSource   GPIO_PinSource6
-  #define EXTMODULE_TIMER               TIM8
-  #define EXTMODULE_TX_GPIO_AF          GPIO_AF_TIM8 // TIM8_CH1
-  #define EXTMODULE_TIMER_CC_IRQn       TIM8_CC_IRQn
-  #define EXTMODULE_TIMER_CC_IRQHandler TIM8_CC_IRQHandler
-  #define EXTMODULE_DMA_CHANNEL         DMA_Channel_7
+  #define EXTMODULE_RX_GPIO_PinSource   GPIO_PinSource7
+  #define EXTMODULE_USART               USART6
+  #define EXTMODULE_TX_GPIO_USART_AF    GPIO_AF_USART6
+  #define EXTMODULE_USART_IRQn          USART6_IRQn
   #define EXTMODULE_DMA_STREAM          DMA2_Stream1
   #define EXTMODULE_DMA_IRQn            DMA2_Stream1_IRQn
   #define EXTMODULE_DMA_IRQHandler      DMA2_Stream1_IRQHandler
   #define EXTMODULE_DMA_FLAG_TC         DMA_IT_TCIF1
-  #define EXTMODULE_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
+	#define EXTMODULE_DMA_CHANNEL         DMA_Channel_7
+	#define EXTMODULE_TIMER               TIM8
+  #define EXTMODULE_TX_GPIO_AF          GPIO_AF_TIM8 // TIM8_CH1
+  #define EXTMODULE_TIMER_CC_IRQn       TIM8_CC_IRQn
+  #define EXTMODULE_TIMER_CC_IRQHandler TIM8_CC_IRQHandler
+  #define EXTMODULE_TIMER_FREQ          (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2)
 	#define EXTMODULE_TIMER_SR_MASK				0x1FFF
+	#define EXTMODULE_USART_IRQHandler		USART6_IRQHandler
 
 
 #endif // X3

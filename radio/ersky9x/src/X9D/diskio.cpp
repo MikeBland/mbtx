@@ -978,7 +978,7 @@ void sdPoll10mS()
         }
 }
 
-FATFS g_FATFS_Obj;
+extern FATFS g_FATFS ;
 
 void sdInit()
 {
@@ -987,7 +987,7 @@ void sdInit()
 	{
 		return ;
 	}
-  if (( fr = f_mount(0, &g_FATFS_Obj)) == FR_OK)
+  if (( fr = f_mount(0, &g_FATFS)) == FR_OK)
 	{
 		
 //    refreshSystemAudioFiles() ;

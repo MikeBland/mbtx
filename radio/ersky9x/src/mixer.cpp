@@ -648,6 +648,17 @@ void perOut(int16_t *chanOut, uint8_t att )
 					{
 						lweight -= 125 ; 
 					}
+					else if ( md->extWeight == 2 )
+					{
+						if ( lweight < 0 )
+						{
+							lweight -= 250 ;
+						}
+						else
+						{
+							lweight += 250 ;
+						}
+					}
 				}
 				int16_t mixweight = lweight ;
 				int16_t loffset = md->sOffset ;
@@ -664,6 +675,17 @@ void perOut(int16_t *chanOut, uint8_t att )
 					else if ( md->extOffset == 3 )
 					{
 						loffset -= 125 ; 
+					}
+					else if ( md->extOffset == 2 )
+					{
+						if ( lweight < 0 )
+						{
+							loffset -= 250 ;
+						}
+						else
+						{
+							loffset += 250 ;
+						}
 					}
 				}
 				int16_t mixoffset = loffset ;

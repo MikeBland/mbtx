@@ -240,6 +240,27 @@
 #define AUDIO_TIMER_DAC_IRQn            TIM6_DAC_IRQn
 #define AUDIO_DMA_STREAM                DMA1_Stream5
 #define AUDIO_DMA_IRQn                  DMA1_Stream5_IRQn
+#define AUDIO_SD_GPIO_PIN								GPIO_Pin_9  // PI.09
+#define AUDIO_SD_GPIO_REG								GPIOI->IDR
+#define AUDIO_SHUTDOWN_GPIO           	GPIOI
+#define AUDIO_SHUTDOWN_GPIO_PIN       	GPIO_Pin_9  // PI.09
+// MP3 chip
+#define AUDIO_SPI                     	SPI2
+#define AUDIO_SPI_SCK_GPIO          	  GPIOI
+#define AUDIO_SPI_SCK_GPIO_PIN        	GPIO_Pin_1  // PI.01
+#define AUDIO_SPI_SCK_GPIO_PinSource	  GPIO_PinSource1
+#define AUDIO_SPI_MISO_GPIO           	GPIOI
+#define AUDIO_SPI_MISO_GPIO_PIN     	  GPIO_Pin_2  // PI.02
+#define AUDIO_SPI_MISO_GPIO_PinSource 	GPIO_PinSource2
+#define AUDIO_SPI_MOSI_GPIO     	      GPIOI
+#define AUDIO_SPI_MOSI_GPIO_PIN   	    GPIO_Pin_3  // PI.03
+#define AUDIO_SPI_MOSI_GPIO_PinSource 	GPIO_PinSource3
+#define AUDIO_CS_GPIO                 	GPIOH
+#define AUDIO_CS_GPIO_PIN             	GPIO_Pin_13 // PH.13
+#define AUDIO_XDCS_GPIO       	        GPIOI
+#define AUDIO_XDCS_GPIO_PIN     	      GPIO_Pin_0  // PI.00
+#define AUDIO_DREQ_GPIO           	    GPIOH
+#define AUDIO_DREQ_GPIO_PIN         	  GPIO_Pin_14 // PH.14
 
 // I2C Bus: TPL0401A-10DCK digital pot for volume control
 #define I2C_RCC_AHB1Periph              RCC_AHB1Periph_GPIOB

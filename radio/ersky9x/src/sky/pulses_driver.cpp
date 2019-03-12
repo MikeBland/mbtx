@@ -358,6 +358,13 @@ void disable_main_ppm()
 
 extern "C" void SW7_IRQHandler( void )
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0xA2 ;
+#else
+	RTC->BKP1R = 0xA2 ;
+#endif
+#endif
 	setupPulses() ;
 }
 
@@ -1463,12 +1470,32 @@ void putPcmHead()
 //uint16_t TempChannels[8] ;
 
 //void setUpPulsesPCM()
+
+//#define PXX_DELAYS	1
+
+#ifdef PXX_DELAYS
+uint16_t PxxTime[2] ;
+uint16_t LastPxxTime ;
+#endif
+
 void setupPulsesPXX()
 {
     uint8_t i ;
     uint16_t chan ;
     uint16_t chan_1 ;
 		uint8_t lpass = Pass ;
+
+#ifdef PXX_DELAYS
+	uint16_t ptime ;
+	uint16_t temp ;
+	ptime = TC1->TC_CHANNEL[0].TC_CV ;
+	temp = ptime ;
+	ptime -= LastPxxTime ;
+	ptime >>= 1 ;
+	LastPxxTime = temp ;
+	PxxTime[lpass & 1] = ptime ;
+#endif
+
 
 		Serial_byte = 0 ;
 		Serial_bit_count = 0 ;

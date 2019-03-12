@@ -47,6 +47,10 @@ extern uint8_t ScriptDirNeeded ;
 extern uint8_t Com2TxBuffer[] ;
 extern struct t_serial_tx Com2_tx ;
 
+extern uint8_t BtCurrentFunction ;
+void scriptRequestBt() ;
+void scriptReleasetBt() ;
+
 
 #else
 #include "basic.h"
@@ -1182,6 +1186,13 @@ uint32_t scanForKeyword( char *dest )
 //    //printf( "DELIM\n" );
     return ( Token_type = DELIMITER ) ;
   }
+	if ( ( *ProgPtr == '=' ) && ( *(ProgPtr+1) == '=' ) )
+	{
+		*temp++ = '=' ;
+    *temp = 0 ; 
+		ProgPtr += 2 ;
+    return ( Token_type = DELIMITER ) ;
+	}
 	if ( ( *ProgPtr == '!' ) && ( *(ProgPtr+1) == '=' ) )
 	{
 		*temp++ = HASHCHAR ;
@@ -1515,26 +1526,27 @@ uint32_t parse( char *filename )
 		retValue = basicTask( 0, SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
 		if ( ( retValue == 3 ) || ( retValue == 4 ) )
 		{
+			scriptReleasetBt() ;			
 			break ;
 		}
 	}
 	return retValue ;
 }	
 	
-uint32_t run( uint32_t event )
-{	
-	uint32_t i ;
-	uint32_t retValue ;
-	for ( i = 0 ; i < 300 ; i += 1 )
-	{
-		retValue = basicTask( event,  SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
-		if ( ( retValue == 2 ) || ( retValue == 3 ) )
-		{
-			break ;
-		}
-	}
-	return retValue ;
-}
+//uint32_t run( uint32_t event )
+//{	
+//	uint32_t i ;
+//	uint32_t retValue ;
+//	for ( i = 0 ; i < 300 ; i += 1 )
+//	{
+//		retValue = basicTask( event,  SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
+//		if ( ( retValue == 2 ) || ( retValue == 3 ) )
+//		{
+//			break ;
+//		}
+//	}
+//	return retValue ;
+//}
 
 void report()
 {
@@ -4829,11 +4841,23 @@ int32_t  exec_btreceive()
 			result = 0 ;
 #else
 #ifdef BLUETOOTH
-			if ( ( g_model.BTfunction == BT_SCRIPT ) || ( g_model.com2Function == COM2_FUNC_SCRIPT ) )
+
+			if ( ScriptFlags & SCRIPT_STANDALONE )
+			{
+				if ( g_model.com2Function != COM2_FUNC_SCRIPT )
+				{
+					if ( BtCurrentFunction != BT_SCRIPT )
+					{
+						scriptRequestBt() ;
+					}
+				}
+			}
+
+			if ( ( BtCurrentFunction == BT_SCRIPT ) || ( g_model.com2Function == COM2_FUNC_SCRIPT ) )
 			{
 				for ( i = 0 ; i < length ; i += 1 )
 				{
-					if ( g_model.BTfunction == BT_SCRIPT )
+					if ( BtCurrentFunction == BT_SCRIPT )
 					{
 						x = rxBtuart() ;
 					}
@@ -4910,7 +4934,7 @@ int32_t exec_btsend()
 		      result = 0 ;
 #ifdef QT
 #else
-					if ( g_model.BTfunction == BT_SCRIPT )
+					if ( BtCurrentFunction == BT_SCRIPT )
 					{
 						result = btSend( length, param.bpointer ) ;
 					}

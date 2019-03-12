@@ -24,7 +24,7 @@
 #include "AT91SAM3S4.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE) || defined(PCBX9LITE)
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
@@ -61,9 +61,9 @@
 
 #ifndef PCB9XT
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define STICK_LV	1
 #define STICK_LH  0
 #define STICK_RV  2
@@ -136,7 +136,7 @@ void disableRtcBattery()
 volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
 uint16_t VbattRtc ;
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
 extern void delay_ms( uint32_t ms ) ;
 
@@ -263,7 +263,7 @@ void init_adc()
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 	initSticksPwm() ;
   delay_ms(20) ;
 #ifndef XLITE_PROTO
@@ -275,9 +275,9 @@ void init_adc()
   }
 #endif // PCBXLITE/X3
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	configure_pins( PIN_FLP_J1 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
 #else
 	configure_pins( PIN_FLP_J1 | PIN_FLP_J2 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
@@ -328,13 +328,13 @@ void init_adc()
 	ADC1->CR1 = ADC_CR1_SCAN ;
 	ADC1->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
   if ( SticksPwmDisabled )
 	{
 		ADC1->SQR1 = (NUMBER_ANALOG-1+4) << 20 ;		// NUMBER_ANALOG Channels
 		
-#ifdef PCBX3
+#ifdef PCBX9LITE
 		ADC1->SQR2 = (V_BATT) ;
 		ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<< 20) + (BATTERY <<25) ;
 #else // X3
@@ -344,7 +344,7 @@ void init_adc()
 	}
 	else
 	{
-#ifdef PCBX3
+#ifdef PCBX9LITE
 		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 		ADC1->SQR3 = POT_L + (BATTERY<<5) + (V_BATT<<10) ;
 #else // X3
@@ -424,7 +424,7 @@ uint32_t read_adc()
 	DMA2->HIFCR = DMA_HIFCR_CTCIF4 | DMA_HIFCR_CHTIF4 |DMA_HIFCR_CTEIF4 | DMA_HIFCR_CDMEIF4 | DMA_HIFCR_CFEIF4 ; // Write ones to clear bits
 	DMA2_Stream4->M0AR = (uint32_t) Analog_values ;
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
   if ( SticksPwmDisabled )
 	{
@@ -457,7 +457,7 @@ uint32_t read_adc()
 	}
 	DMA2_Stream4->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 
 
   if ( SticksPwmDisabled )
@@ -467,7 +467,7 @@ uint32_t read_adc()
 		AnalogData[2] = 4096 - Analog_values[2] ;
 		AnalogData[3] = Analog_values[3] ;
 		AnalogData[4] = Analog_values[4] ;
-#ifdef PCBX3
+#ifdef PCBX9LITE
 		AnalogData[12] = Analog_values[5] ;
 		if (ADC->CCR & ADC_CCR_VBATE )
 		{
@@ -488,7 +488,7 @@ uint32_t read_adc()
 		p = &PWMcontrol[0] ;
 
 		AnalogData[4] = Analog_values[0] ;
-#ifdef PCBX3
+#ifdef PCBX9LITE
 		AnalogData[12] = Analog_values[1] ;
 		if (ADC->CCR & ADC_CCR_VBATE )
 		{

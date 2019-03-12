@@ -65,8 +65,8 @@ ifeq ($(PCB), X9D)
      BASIC = 1
      CPPDEFS += -DBASIC 
     else
-     ifeq ($(PCBX3), 1)
-      OBJDIR = x3dobj
+     ifeq ($(PCBX9LITE), 1)
+      OBJDIR = x9lobj
       BASIC = 1
       CPPDEFS += -DBASIC 
      else
@@ -177,8 +177,8 @@ ifeq ($(PCB), X9D)
     ifeq ($(PCBXLITE), 1)
      PROJECT        = xlite
     else
-     ifeq ($(PCBX3), 1)
-      PROJECT        = x3
+     ifeq ($(PCBX9LITE), 1)
+      PROJECT        = x9Lite
      else
       PROJECT        = x9d
      endif
@@ -270,8 +270,8 @@ else
      ifeq ($(PCBXLITE), 1)
       CPPDEFS += -DPCBXLITE
      endif
-     ifeq ($(PCBX3), 1)
-      CPPDEFS += -DPCBX3
+     ifeq ($(PCBX9LITE), 1)
+      CPPDEFS += -DPCBX9LITE
      endif
    else
     ifeq ($(PCB), X12D)
@@ -395,6 +395,7 @@ CPPSRC = ersky9x.cpp \
          X12D/rtc_driver.cpp \
          X12D/persX12d.cpp \
 		 	X12D/pulses_driver.cpp \
+         X9D/serial.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
@@ -499,6 +500,7 @@ CPPSRC = ersky9x.cpp \
        	X9D/i2c_ee.cpp \
          X9D/rtc_driver.cpp \
          X9D/eeprom_rlc.cpp \
+         X9D/serial.cpp \
 			stamp.cpp \
          templates.cpp \
          pulses.cpp \
@@ -532,10 +534,8 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 
-ifeq ($(PCBX7), 1)
- ifneq ($(PCBT12), 1)
-     CPPSRC += bluetooth.cpp
- endif
+ifeq ($(BT), 1)
+  CPPSRC += bluetooth.cpp
 endif
 
 
@@ -627,6 +627,7 @@ CPPSRC = ersky9x.cpp \
          X9D/watchdog.cpp \
          X9D/rtc_driver.cpp \
          X9D/i2c_9xt.cpp \
+         X9D/serial.cpp \
 			stamp.cpp \
          templates.cpp \
          drivers.cpp \
@@ -717,6 +718,7 @@ CPPSRC = stamp.cpp \
          sky/sound.cpp \
          sky/diskio.cpp \
          sky/power.cpp \
+         sky/serial.cpp \
          lcd.cpp \
          file.cpp \
          templates.cpp \
@@ -933,8 +935,8 @@ ifeq ($(PCB), X9D)
       EXT_MOD=QX7
 	  endif
 	 else
-     ifeq ($(PCBX3), 1)
-      EXT_MOD=X3
+     ifeq ($(PCBX9LITE), 1)
+      EXT_MOD=X9Lite
 	  else
      CPPDEFS += -DREVNORM
      EXT_MOD=X9D
@@ -1041,7 +1043,7 @@ clean:
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
 	-rm -f xliteobj/*.*
-	-rm -f x3obj/*.*
+	-rm -f x9lobj/*.*
 	-rm -f t12obj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map

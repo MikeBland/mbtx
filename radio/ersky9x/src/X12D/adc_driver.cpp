@@ -381,8 +381,8 @@ void read_adc()
 	{
 		SixPosTimer = get_tmr10ms() ;
 	}
-	AnalogData[11] = AdcBuffer[12] ;
-	AnalogData[13] = AdcBuffer[13] ;
+	AnalogData[11] = AdcBuffer[13] ;
+	AnalogData[13] = AdcBuffer[12] ;
 	if (ADC->CCR & ADC_CCR_VBATE )
 	{
 		VbattRtc = ADC1->DR ;

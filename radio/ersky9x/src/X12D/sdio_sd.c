@@ -26,6 +26,8 @@
 #include "sdio_sd.h"
 #include "misc.h"
 
+#include "../diag.h"
+
 //#include "../../debug.h"
 
 /** @addtogroup Utilities
@@ -240,16 +242,20 @@ void SD_LowLevel_Init(void)
   RCC_APB2PeriphClockCmd(RCC_APB2Periph_SDIO, ENABLE);
 
   // SDIO Interrupt ENABLE
-  NVIC_InitTypeDef NVIC_InitStructure;
-  NVIC_InitStructure.NVIC_IRQChannel = SDIO_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
-  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-  NVIC_Init(&NVIC_InitStructure);
-  // DMA2 STREAMx Interrupt ENABLE
-  NVIC_InitStructure.NVIC_IRQChannel = SD_SDIO_DMA_IRQn;
-  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
-  NVIC_Init(&NVIC_InitStructure);
+//  NVIC_InitTypeDef NVIC_InitStructure;
+//  NVIC_InitStructure.NVIC_IRQChannel = SDIO_IRQn;
+//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 6;
+//  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 0;
+//  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+//  NVIC_Init(&NVIC_InitStructure);
+  NVIC_SetPriority(SDIO_IRQn, 6 ) ;
+  NVIC_EnableIRQ(SDIO_IRQn) ;
+  
+	// DMA2 STREAMx Interrupt ENABLE
+//  NVIC_InitStructure.NVIC_IRQChannel = SD_SDIO_DMA_IRQn;
+//  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 7;
+//  NVIC_Init(&NVIC_InitStructure);
+  NVIC_SetPriority(SD_SDIO_DMA_IRQn, 7 ) ;
 }
 
 /**
@@ -1242,12 +1248,18 @@ OPTIMIZE("O0") SD_Error SD_ReadBlock(uint8_t *readbuff, uint32_t ReadAddr, uint1
     return(errorstatus);
   }
   count = SD_DATATIMEOUT;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0200 ;
+#endif
   while ((SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET) && (count > 0))
   {
     *tempbuff = SDIO_ReadData();
     tempbuff++;
     count--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0201 ;
+#endif
 
   /*!< Clear all the static flags */
   SDIO_ClearFlag(SDIO_STATIC_FLAGS);
@@ -1349,10 +1361,16 @@ OPTIMIZE("O0") SD_Error SD_WaitReadOperation(void)
 
   timeout = SD_DATATIMEOUT;
 
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0202 ;
+#endif
   while ((DMAEndOfTransfer == 0x00) && (TransferEnd == 0) && (TransferError == SD_OK) && (timeout > 0))
   {
     timeout--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0203 ;
+#endif
 
   DMAEndOfTransfer = 0x00;
 
@@ -1362,6 +1380,9 @@ OPTIMIZE("O0") SD_Error SD_WaitReadOperation(void)
   {
     timeout--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0204 ;
+#endif
 
   if (StopCondition == 1)
   {
@@ -1645,10 +1666,16 @@ OPTIMIZE("O0") SD_Error SD_WaitWriteOperation(void)
 
   timeout = SD_DATATIMEOUT;
 
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0205 ;
+#endif
   while ((DMAEndOfTransfer == 0x00) && (TransferEnd == 0) && (TransferError == SD_OK) && (timeout > 0))
   {
     timeout--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0206 ;
+#endif
 
   DMAEndOfTransfer = 0x00;
 
@@ -1658,6 +1685,9 @@ OPTIMIZE("O0") SD_Error SD_WaitWriteOperation(void)
   {
     timeout--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0207 ;
+#endif
 
   if (StopCondition == 1)
   {
@@ -1812,11 +1842,17 @@ OPTIMIZE("O0") SD_Error SD_Erase(uint32_t startaddr, uint32_t endaddr)
   /*!< Wait till the card is in programming state */
   errorstatus = IsCardProgramming(&cardstate);
   delay = SD_DATATIMEOUT;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0208 ;
+#endif
   while ((delay > 0) && (errorstatus == SD_OK) && ((SD_CARD_PROGRAMMING == cardstate) || (SD_CARD_RECEIVING == cardstate)))
   {
     errorstatus = IsCardProgramming(&cardstate);
     delay--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x0209 ;
+#endif
 
   return(errorstatus);
 }
@@ -1962,12 +1998,18 @@ OPTIMIZE("O0") SD_Error SD_SendSDStatus(uint32_t *psdstatus)
   }
 
   count = SD_DATATIMEOUT;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x020A ;
+#endif
   while ((SDIO_GetFlagStatus(SDIO_FLAG_RXDAVL) != RESET) && (count > 0))
   {
     *psdstatus = SDIO_ReadData();
     psdstatus++;
     count--;
   }
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x020B ;
+#endif
   /*!< Clear all the static status flags*/
   SDIO_ClearFlag(SDIO_STATIC_FLAGS);
 
@@ -2016,7 +2058,15 @@ OPTIMIZE("O0") SD_Error SD_ProcessIRQ(void)
   SDIO_ITConfig(SDIO_IT_DCRCFAIL | SDIO_IT_DTIMEOUT | SDIO_IT_DATAEND |
                 SDIO_IT_TXFIFOHE | SDIO_IT_RXFIFOHF | SDIO_IT_TXUNDERR |
                 SDIO_IT_RXOVERR | SDIO_IT_STBITERR, DISABLE);
-  return(TransferError);
+  
+#ifdef WDOG_REPORT
+	if ( TransferError != SD_OK )
+	{
+		RTC->BKP1R |= 0x8000 ;
+	}
+#endif
+	
+	return(TransferError);
 }
 
 /**
@@ -2781,11 +2831,20 @@ OPTIMIZE("O0") uint8_t convert_from_bytes_to_power_of_two(uint16_t NumberOfBytes
 
 void SDIO_IRQHandler(void)
 {
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0xB8 ;
+#endif
   SD_ProcessIRQ();
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0xBA ;
+#endif
 }
 
 void SD_SDIO_DMA_IRQHANDLER(void)
 {
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0xB9 ;
+#endif
   SD_ProcessDMAIRQ();
 }
 

@@ -10,7 +10,7 @@ description here
 ====================================================================================
 
 ******************************************
-CHANGELOG: 28-Aug-2018  MPB (r222)
+CHANGELOG: 16-Dec-2018  MPB (r222)
 Fix SPort telemetry passing to script bug
 Add uS value at top of MIXER display
 Fix bug in telemetry buffer size testing
@@ -43,7 +43,7 @@ Fix problem using encoder on Script selection
 Fix FrSky Hub Altitude bug
 Fix Voice alert BOTH with short filenames
 Enhancements to script language
-Add crossfiresend()
+Add crossfiresend() to scripts
 Fix voice overrun problem on Atmel radios (SKY/AR9X/9XR-PRO)
 Add |d|<val to voice alert functions
 Support inverted SPort polling on COM 1 for Multi Module
@@ -61,6 +61,26 @@ Fix bug in logging of Lat and Long
 Scalers support second source
 Rx detection at power off revised
 Fix bug in Crossfire telemetry sending from scripts
+Add use bluetooth/COM2 from scripts
+Fix bug on trim switches not working as push buttons
+Support FrSky R9M module and flex mode firmware
+Add bootloader for Horus X12
+Add RTC battery voltage monitoring
+Add custom names for custom telemetry values
+Fix Vspd logging
+Fix Vspd scaling from DSM telemetry
+Voice alerts may use system voice files
+Allow FM0-FM6 as switches for DR/EXPO
+Limit FrSky RxNum to 63, max actually allowed.
+Encoder double-click switches between CAPS when text editing.
+Add Cls1 and Cls2 for total cells of two FLVSS/MLVSS
+Fix Scaler ex_source editing bug
+Scaler and Custom telemetry names used
+Raw logging has a Hex option
+Fix Crossfire telemetry bug
+Handle FrSky vario from XxR when using 'D' protocol
+Horus X12 add bootloader
+X9E Fix hardware editing bug
 
 ******************************************
 CHANGELOG: 28-Feb-2018  MPB (r221)

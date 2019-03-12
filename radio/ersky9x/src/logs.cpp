@@ -78,7 +78,26 @@ void rawLogByte( uint8_t byte )
 {
 	uint8_t *p ;
 	p = RawActiveBuffer ? RawBuffer1 : RawBuffer0 ;
-	p[RawIndex++] = byte ;
+	
+	if ( RawLogging == 2 )
+	{
+    char c = byte >> 4 ;
+    c += c>9 ? 'A'-10 : '0';
+		p[RawIndex++] = c ;
+    c = byte & 0x0F ;
+    c += c>9 ? 'A'-10 : '0';
+		p[RawIndex++] = c ;
+		if ( RawIndex >= RAW_BUFFER_SIZE-2 )
+		{
+			p[RAW_BUFFER_SIZE-2] = '\r' ;
+			p[RAW_BUFFER_SIZE-1] = '\n' ;
+			RawIndex = RAW_BUFFER_SIZE ;
+		}
+	}
+	else
+	{
+		p[RawIndex++] = byte ;
+	}
 	if ( RawIndex >= RAW_BUFFER_SIZE )
 	{
 		RawIndex = 0 ;
@@ -519,6 +538,8 @@ extern uint32_t sdMounted( void ) ;
 			}
 		}
 	}
+	singleHeading( LOG_CTOTAL1, ",Ctot1" ) ;
+	singleHeading( LOG_CTOTAL2, ",Ctot2" ) ;
   
 	singleHeading( LOG_STK_THR, ",Stk_THR" ) ;
 //	if ( isLogEnabled( LOG_STK_THR ) )
@@ -924,6 +945,17 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //				{
 //					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
 //				}
+			}
+
+			if ( isLogEnabled( LOG_CTOTAL1 ) )
+			{
+				qr = div( FrskyHubData[FR_CELLS_TOTAL1], 10 ) ;
+				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+			}
+			if ( isLogEnabled( LOG_CTOTAL2 ) )
+			{
+				qr = div( FrskyHubData[FR_CELLS_TOTAL2], 10 ) ;
+				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
 
 			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;

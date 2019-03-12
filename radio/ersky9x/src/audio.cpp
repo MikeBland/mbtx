@@ -428,6 +428,9 @@ void audioQueue::event(uint8_t e, uint8_t f, uint8_t hapticOff) {
 	      case AU_HAPTIC3:
 	        playASAP(0,15,20,2,1);
 	        break;
+	      case AU_HAPTIC4:
+	        playASAP(0,20,0,0,1);
+	        break;
 		    case AU_ERROR:
 		      playNow(BEEP_DEFAULT_FREQ, 40, 1, 0, hapticOff);
 		      break;
@@ -1176,6 +1179,9 @@ void doTone()
 		{
 			// finish
 			waitVoiceAllSent( v_index ) ;
+//#ifdef PCBX12D
+//	GPIOI->BSRRH = AUDIO_SD_GPIO_PIN ;	// Set low
+//#endif
 			break ;
 		}
 	}
@@ -1207,6 +1213,9 @@ void waitAudioAllSentWithTone( uint32_t x, uint32_t v_index)
 		}
 	}
 	waitVoiceAllSent( v_index ) ;
+//#ifdef PCBX12D
+//	GPIOI->BSRRH = AUDIO_SD_GPIO_PIN ;	// Set low
+//#endif
 }
 
 
@@ -1629,11 +1638,19 @@ void voice_task(void* pdata)
 			{
 				if (ToneQueueRidx != ToneQueueWidx)
 				{
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 					doTone() ;
 				}
 			}
 		}
+extern uint32_t sdMounted( void ) ;
+#ifdef PCBSKY
 		if ( mounted == 0 )
+#else
+		if ( sdMounted() == 0 )
+#endif
 		{
   		fr = f_mount(0, &g_FATFS) ;
 		}
@@ -1683,16 +1700,25 @@ void voice_task(void* pdata)
 				{
 					if ( MusicPlaying == MUSIC_PLAYING )
 					{
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 						beginMusic( 0, BgSizeLeft, BgFrequency ) ;
 					}
 				}
 			}
 			if ( MusicPlaying == MUSIC_STARTING )
 			{
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 				bgStart() ;
 			}
 			else if ( MusicPlaying == MUSIC_RESUMING )
 			{
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 				beginMusic( 0, BgSizeLeft, BgFrequency ) ;
 			}
 			else if ( MusicPlaying == MUSIC_STOPPING )
@@ -1700,6 +1726,9 @@ void voice_task(void* pdata)
 				waitVoiceAllSent( Bgindex ) ;
 				f_close( &BgFile ) ;
 				MusicPlaying = MUSIC_STOPPED ;
+//#ifdef PCBX12D
+//	GPIOI->BSRRH = AUDIO_SD_GPIO_PIN ;	// Set low
+//#endif
 			}
 			else if (MusicPlaying == MUSIC_PAUSING )
 			{
@@ -1755,6 +1784,9 @@ void voice_task(void* pdata)
 		 	
 //			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
 		 	
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 			name = Voice.NamedVoiceQueue[Voice.VoiceQueueOutIndex] ;
 			v_index = Voice.VoiceQueue[Voice.VoiceQueueOutIndex] ;
 			if ( ( SystemOptions & SYS_OPT_MUTE ) || MuteTimer )
@@ -1797,6 +1829,7 @@ void voice_task(void* pdata)
 					fr = f_open( &Vfile, VoiceFilename, FA_READ ) ;
 					if ( fr != FR_OK )
 					{
+						CoTickDelay(1) ;					// 2mS for now
 						if ( (v_index & VLOC_MASK) == VLOC_SYSTEM )
 						{
 							v_index &= ~VLOC_MASK ;
@@ -1817,6 +1850,7 @@ void voice_task(void* pdata)
 							}
 						}
 					}
+					CoTickDelay(1) ;					// 2mS for now
 					if ( fr == FR_OK )
 					{
 						uint32_t offset ;
@@ -1879,6 +1913,7 @@ void voice_task(void* pdata)
 									VoiceBuffer[x].count = VOICE_BUFFER_SIZE ;
 								}
 								startVoice( NUM_VOICE_BUFFERS ) ;
+								CoTickDelay(1) ;					// 2mS for now
 								for(x = 0;;)
 								{
 									if ( size < amount )
@@ -1963,6 +1998,9 @@ void voice_task(void* pdata)
 							{
 								waitVoiceAllSent( v_index ) ;
 							}
+//#ifdef PCBX12D
+//	GPIOI->BSRRH = AUDIO_SD_GPIO_PIN ;	// Set low
+//#endif
 						}
 					}
 					else if (fr != FR_NO_FILE)			// There is no file to open
@@ -2003,6 +2041,9 @@ void voice_task(void* pdata)
 		 	// Play a tone
 			if (ToneQueueRidx != ToneQueueWidx)
 			{
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 				doTone() ;
 			}
 			else
@@ -2018,6 +2059,9 @@ void voice_task(void* pdata)
 			if (ToneQueueRidx != ToneQueueWidx)
 			{
 				AudioActive = 1 ;
+//#ifdef PCBX12D
+//	GPIOI->BSRRL = AUDIO_SD_GPIO_PIN ;	// Set high
+//#endif
 				doTone() ;
 			}
 

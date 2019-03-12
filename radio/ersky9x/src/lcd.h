@@ -22,7 +22,7 @@
 #define lcd_h
 
 #ifdef PCBX9D
-#if defined(PCBX7) || defined(PCBX3)
+#if defined(PCBX7) || defined(PCBX9LITE)
 #define DISPLAY_W 128
 #define DISPLAY_H  64
 extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
@@ -50,6 +50,16 @@ extern uint8_t ExtDisplaySend ;
 #define LCD_BLACK		0
 #define LCD_GREY		0x8410
 #define LCD_STATUS_GREY	0x3BEF
+#define LCD_LIGHT_GREY	0xC618
+#define LCD_CYAN		0x07FF
+#define LCD_MAGENTA	0xF81F
+#define LCD_YELLOW	0xFFE0
+
+//#define	LCD_BACKGROUND	LCD_LIGHT_GREY
+#define	LCD_BACKGROUND	0xFFFF
+
+extern uint16_t LcdBackground ;
+extern uint16_t LcdForeground ;
 
 #endif
 
@@ -64,6 +74,7 @@ extern uint8_t ExtDisplaySend ;
 #define FW          6
 #define FWNUM       5
 #define FH          8
+#define FHDC        12
 
 /* lcd common flags */
 #define INVERS        0x01
@@ -121,6 +132,16 @@ extern const uint8_t *ExtraBigFont ;
 
 #ifdef PCBX12D
 
+#ifdef INVERT_DISPLAY
+extern uint8_t *font_fr_h_extra ;
+extern uint8_t *font_fr_h_big_extra ;
+extern uint8_t *font_de_h_extra ;
+extern uint8_t *font_de_h_big_extra ;
+extern uint8_t *font_se_h_extra ;
+extern uint8_t *font_se_h_big_extra ;
+extern uint8_t *font_it_h_extra ;
+extern uint8_t *font_pl_h_extra ;
+#else
 extern const uint8_t font_fr_h_extra[] ;
 extern const uint8_t font_fr_h_big_extra[] ;
 extern const uint8_t font_de_h_extra[] ;
@@ -129,6 +150,7 @@ extern const uint8_t font_se_h_extra[] ;
 extern const uint8_t font_se_h_big_extra[] ;
 extern const uint8_t font_it_h_extra[] ;
 extern const uint8_t font_pl_h_extra[] ;
+#endif
 
 extern const uint8_t *ExtraHorusFont ;
 extern const uint8_t *ExtraHorusBigFont ;
@@ -138,26 +160,34 @@ extern const uint8_t *ExtraHorusBigFont ;
 #define PLOT_BLACK	1
 #define PLOT_WHITE	2
 #define PLOT_BITS		3
+#define PLOT_COLOUR	4
 
 extern uint8_t plotType ;
+
+void pushPlotType( uint8_t type ) ;
+void popPlotType( void ) ;
 
 extern uint8_t lcd_putc(uint8_t x,uint8_t y,const char c ) ;
 extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
 extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
+#ifdef PCBX12D
+extern void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val) ;
+#else
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
+#endif
 extern void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode ) ;
 extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
 extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
 #ifdef PCBX12D
-extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
-extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE) ;
-extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t background = LCD_WHITE ) ;
-extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LCD_WHITE  ) ;
-extern void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background = LCD_WHITE  ) ;
-extern uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t background = LCD_WHITE ) ;
-extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode, uint16_t background = LCD_WHITE ) ;
+extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
+extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground) ;
+extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
+extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LcdBackground  ) ;
+extern void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background = LcdBackground  ) ;
+extern uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
+extern uint16_t lcd_putcAtt( uint16_t x, uint16_t y, const char c, uint8_t mode, uint16_t background = LcdBackground ) ;
 #else
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;
@@ -174,20 +204,20 @@ extern void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_
 extern "C" void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void waitDma2Ddone(void) ;
-extern void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background ) ;
+extern void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void lcd_clearBackground( void ) ;
 extern void lcd_blank( void ) ;
 extern void waitLcdClearDdone( void ) ;
-extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
-extern void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len, uint8_t mode, uint16_t colour = LCD_BLACK ) ;
-extern uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
-extern void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LCD_WHITE ) ;
+extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
+extern void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len, uint8_t mode, uint16_t colour = LcdForeground ) ;
+extern uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
+extern void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat ) ;
 extern void lcd_hline( uint16_t x, uint16_t y, int8_t w ) ;
 extern void lcd_vline( uint16_t x, uint16_t y, int8_t h ) ;
 extern void lcd_plot( uint16_t x, uint16_t y ) ;
-extern void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink ) ;
-extern uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour) ;
+extern void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_t h = 8 ) ;
+extern uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground ) ;
 extern void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att ) ;
 #else
 extern uint8_t lcd_putcAtt( uint8_t x, uint8_t y, const char c, uint8_t mode ) ;
@@ -210,12 +240,12 @@ extern void lcdSetOrientation( void ) ;
 extern void lcdOff( void ) ;
 #endif // PCBX7
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 extern void lcdOff( void ) ;
-#endif // PCBX3
+#endif // PCBX9LITE
 
 #ifdef PCBX12D
-extern void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t background = LCD_WHITE ) ;
+extern void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 #else
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 #endif

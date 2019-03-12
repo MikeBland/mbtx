@@ -59,6 +59,11 @@
 #define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
 #endif // PCB9XT
 
+#if defined(PCBX9D) && defined(REVNORM)
+#define HC05_ENABLE_HIGH					// Nothing
+#define HC05_ENABLE_LOW						// Nothing
+#endif
+
 #define BT_ROLE_SLAVE		0
 #define BT_ROLE_MASTER	1
 

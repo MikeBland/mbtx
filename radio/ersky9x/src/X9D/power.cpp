@@ -79,7 +79,7 @@ uint32_t check_soft_power()
   return POWER_ON;
 #else
 #ifdef POWER_BUTTON
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 	switchValue = GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET ;
 #else
 	switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
@@ -207,7 +207,7 @@ void init_soft_power()
 	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTA ) ;
 
 #else	
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock

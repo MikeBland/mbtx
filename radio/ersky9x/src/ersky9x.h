@@ -23,6 +23,8 @@
 
 #include <stdint.h>
 
+#include "diag.h"
+
 #define prog_char char
 //#define FIX_MODE		1
 
@@ -44,7 +46,7 @@
 #ifdef PCBX9D	
  #ifndef PCBX7
   #ifndef PCBXLITE
-   #ifndef PCBX3
+   #ifndef PCBX9LITE
    #define WIDE_SCREEN	1
    #endif
   #endif
@@ -65,6 +67,10 @@
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
+#define BLUETOOTH	1
+#endif
+
+#if defined(PCBX9D) && defined(REVNORM)
 #define BLUETOOTH	1
 #endif
 
@@ -150,7 +156,7 @@ extern const char * const Spanish[] ;
 #define pgm_read_byte(p)	(*(p))
 
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define NUMBER_ANALOG		3
 #else
 
@@ -191,7 +197,7 @@ extern const char * const Spanish[] ;
 #endif
 #endif // PCBX7
 #endif // PCBXLITE
-#endif // PCBX3
+#endif // PCBX9LITE
 
 #ifdef REV9E
 #define NUM_EXTRA_ANALOG		3
@@ -225,7 +231,7 @@ extern uint8_t SystemOptions ;
 #ifdef PCBX7
 #define KEY_PAGE	KEY_LEFT
 #endif	// X7
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define KEY_PAGE	KEY_LEFT
 #endif	// X3
 
@@ -272,6 +278,15 @@ enum EnumKeys {
   SW_SH2
 #endif
 };
+
+#define HSW_FM0					100
+#define HSW_FM1					101
+#define HSW_FM2					102
+#define HSW_FM3					103
+#define HSW_FM4					104
+#define HSW_FM5					105
+#define HSW_FM6					106
+
 
 #define HSW_Ttrmup			44
 #define HSW_Ttrmdn			43
@@ -690,7 +705,7 @@ extern uint32_t countExtraPots( void ) ;
 #ifdef PCBX7
 extern uint32_t countExtraPots( void ) ;
 #endif
-#ifdef PCBX3
+#ifdef PCBX9LITE
 extern uint32_t countExtraPots( void ) ;
 #endif
 
@@ -935,7 +950,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 77
+#define NUM_TELEM_ITEMS 79
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1124,6 +1139,7 @@ int8_t checkIncDec_hm0( int8_t i_val, int8_t i_max);
   var = checkIncDecSwitch(var,min,max,EE_GENERAL|INCDEC_SWITCH)
 
 extern void setLastIdx( char *s, uint8_t idx ) ;
+extern void setLastTelemIdx( uint8_t idx ) ;
 
 extern uint8_t heartbeat ;
 extern int16_t g_chans512[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
@@ -1153,6 +1169,7 @@ extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
 extern void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
 extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ; //, bool nc) ;
 extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
+extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
 #ifdef PCBX12D
@@ -1369,6 +1386,8 @@ extern uint8_t AlertType ;
 #ifdef PCBX9D
 #define COM2_FUNC_CPPMTRAIN		3
 #define COM2_FUNC_LCD					4
+#define COM2_FUNC_BTDIRECT		5
+#define COM2_FUNC_TEL_BT2WAY	6
 #endif
 #ifdef PCBX12D
 #define COM2_FUNC_BTDIRECT		3
@@ -1377,6 +1396,7 @@ extern uint8_t AlertType ;
 #endif
 
 #define COM2_FUNC_SCRIPT			7
+#define COM2_FUNC_BT_ENC			8
 
 /** Console baudrate 9600. */
 #define CONSOLE_BAUDRATE    115200
@@ -1388,6 +1408,10 @@ extern uint8_t AlertType ;
 #define TRAINER_CPPM		2
 
 #ifdef PCBX7
+#define TRAINER_BT			5
+#endif
+
+#ifdef PCBX9D
 #define TRAINER_BT			5
 #endif
 
@@ -1422,7 +1446,7 @@ extern uint8_t HwDelayScale ;
 #define HW_COUNT_PER_US		8
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D)
 extern struct btRemote_t BtRemote[] ;
 //extern uint8_t NumberBtremotes ;
 #endif
@@ -1514,7 +1538,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_HORUS				9
 #define PHYSICAL_XLITE				10
 #define PHYSICAL_T12					11
-#define PHYSICAL_X3						12
+#define PHYSICAL_X9LITE				12
 
 // Power control type
 #ifdef REV9E
@@ -1523,9 +1547,9 @@ extern uint16_t FailsafeCounter[2] ;
 #ifdef PCBX7
 #define POWER_BUTTON	1
 #endif // PCBX7
-#ifdef PCBX3
+#ifdef PCBX9LITE
 #define POWER_BUTTON	1
-#endif // PCBX3
+#endif // PCBX9LITE
 #ifdef PCBX12D
 #define POWER_BUTTON	1
 #endif // PCBX12D
@@ -1602,8 +1626,6 @@ union t_sharedMemory
 #define ALLOW_EXTERNAL_ANTENNA		1
 #endif
 
-
-
-
+//#define X3_PROTO	1
 
 #endif

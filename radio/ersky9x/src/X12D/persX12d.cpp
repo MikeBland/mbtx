@@ -24,6 +24,7 @@
 #include "../myeeprom.h"
 #include "../stringidx.h"
 #include "../ff.h"
+#include "../lcd.h"
 
 uint16_t General_timer ;
 uint16_t Model_timer ;
@@ -158,7 +159,7 @@ void generalDefault()
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
 #ifdef PCBX12D
-	g_eeGeneral.bright = 100 ;
+	g_eeGeneral.bright = 0 ;
 #else
 	g_eeGeneral.bright = 50 ;
 #endif
@@ -262,7 +263,20 @@ void eeReadAll()
 			generalDefault() ;
 		}
 	}
-  
+
+	uint32_t red ;
+	uint32_t green ;
+	uint32_t blue ;
+	
+	red = g_eeGeneral.backgroundColour >> 11 ;
+	green = ( g_eeGeneral.backgroundColour >> 6 ) & 0x1F ;
+	blue = g_eeGeneral.backgroundColour & 0x1F ;
+
+	if ( (red < 6) && (green < 6) && (blue < 6) )
+	{
+		g_eeGeneral.backgroundColour = LCD_BACKGROUND ;
+	}
+  LcdBackground = g_eeGeneral.backgroundColour ;
 //	if ( !readModelFromBackupRam(g_eeGeneral.currModel + 1) )
 	{
 		eeLoadModel(g_eeGeneral.currModel) ;

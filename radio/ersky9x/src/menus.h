@@ -83,6 +83,9 @@ struct MState2
 };
 
 uint8_t evalOffset(int8_t sub) ;
+#ifdef PCBX12D
+uint8_t evalOffsetLarge(int8_t sub) ;
+#endif
 
 //typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
 typedef const void (*MenuFunc)(uint8_t event) ;

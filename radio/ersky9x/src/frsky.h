@@ -107,16 +107,16 @@
 #define FR_CUST4			          78
 #define FR_CUST5			          79
 #define FR_CUST6			          80
-//#define FR_CUST7			          81
-//#define FR_CUST8			          82
+#define FR_CELLS_TOTAL1			    81
+#define FR_CELLS_TOTAL2			    82
 
-#define FR_TRASH			81  // Used for invalid id
+#define FR_TRASH			83  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  82
+#define HUBDATALENGTH  84
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -669,8 +669,8 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_CUST4	  71
 #define LOG_CUST5	  72
 #define LOG_CUST6	  73
-//#define LOG_CUST7	  74
-//#define LOG_CUST8	  75
+#define LOG_CTOTAL1 74
+#define LOG_CTOTAL2 75
 
 #define LOG_STK_THR 100
 #define LOG_STK_AIL 101

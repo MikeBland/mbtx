@@ -91,7 +91,7 @@
 // ISTR_YELORGRED indexed 3 char each
 #define ISTR_YELORGRED	     "\003---\315\311\305PomCze"
 #define ISTR_A_EQ		       "A ="
-#define ISTR_SOUNDS	       "\006Uwaga1""Uwaga2""Cheap ""Dzwon ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Syrena""AlmClk""Ratata""Tick  ""Wibr 1""Wibr 2""Wibr 3"
+#define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3" "Haptc4"
 #define ISTR_SWITCH_WARN	   "SPRAWD\317 PRZE\306\301CZNIKI"
 //#define ISTR_SWITCH				   "PRZELACZNIKI"
 #define ISTR_WARNING			    "SPRAWDZ"
@@ -178,7 +178,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModT"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModTCls1Cls2"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"

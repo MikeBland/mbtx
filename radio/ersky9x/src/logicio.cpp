@@ -1918,7 +1918,7 @@ uint32_t keyState(EnumKeys enuk)
 #ifdef PCBX9D
 void init_keys()
 {
-#ifdef PCBX3
+#ifdef PCBX9LITE
 
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( PIN_BUTTON_MENU | PIN_BUTTON_EXIT | PIN_BUTTON_PAGE | PIN_BUTTON_ENCODER, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
@@ -1953,13 +1953,13 @@ void init_keys()
    #endif // PCBXLITE
   #endif // REV9E
  #endif // PCBX7
-#endif // PCBX3
+#endif // PCBX9LITE
 }
 
 void init_trims()
 {
 // Trims 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -1995,7 +1995,7 @@ void init_trims()
 	configure_pins( 0x200E, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 #endif // PCBXLITE
 #endif // PCBX7
-#endif // PCBX3
+#endif // PCBX9LITE
 }
 
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
@@ -2106,7 +2106,7 @@ uint32_t read_keys()
 	y |= 0x02 << KEY_DOWN ;		// DOWN
 
 #else
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	x = GPIOE->IDR ; // 10 RIGHT(+), 11 LEFT(-), 12 ENT(DOWN)
 	y = 0 ;
 	
@@ -2125,7 +2125,7 @@ uint32_t read_keys()
 	y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	y |= 0x02 << KEY_UP ;			// up
 	y |= 0x02 << KEY_DOWN ;		// DOWN
-#else // PCBX3
+#else // PCBX9LITE
 	
 	y = 0 ;
 	if ( x & PIN_BUTTON_MENU )
@@ -2159,7 +2159,7 @@ uint32_t read_keys()
 		y |= 0x02 << KEY_EXIT ;			// EXIT
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 	}
-#endif // PCBX3
+#endif // PCBX9LITE
 #endif // REV9E
 #endif // PCBX7
 #endif // PCBXLITE
@@ -2177,7 +2177,7 @@ uint32_t read_trims()
 
 	trims = 0 ;
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	trima = GPIOC->IDR ;
 // TRIM_LH_DOWN
 	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
@@ -2438,7 +2438,7 @@ uint32_t read_trims()
 // 
 void setup_switches()
 {
-#ifdef PCBX3
+#ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
@@ -2537,7 +2537,7 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 
 uint32_t hwKeyState( uint8_t key )
 {
-#ifdef PCBX3
+#ifdef PCBX9LITE
   uint32_t xxx = 0 ;
   uint32_t e = GPIOE->IDR ;
   uint32_t b = GPIOB->IDR ;
@@ -2652,7 +2652,7 @@ uint32_t hwKeyState( uint8_t key )
 
 	}
 
-#else // PCBX3
+#else // PCBX9LITE
 #ifdef PCBXLITE
   uint32_t xxx = 0 ;
   uint32_t e = GPIOE->IDR ;
@@ -2946,7 +2946,7 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~e & PIN_SW_C_H ;
       break;
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
     case HSW_SD0:
     case HSW_SE0:
     case HSW_SG0:
@@ -2972,7 +2972,7 @@ uint32_t hwKeyState( uint8_t key )
       break;
 #endif
 
-#ifndef PCBX3
+#ifndef PCBX9LITE
     case HSW_SE0:
       xxx = ~b & PIN_SW_E_L ;
       break;
@@ -2991,7 +2991,7 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~e & PIN_SW_F ;
       break;
 
-#ifndef PCBX3
+#ifndef PCBX9LITE
     case HSW_SG0:
       xxx = ~e & PIN_SW_G_L ;
       break;
@@ -3247,7 +3247,7 @@ uint32_t hwKeyState( uint8_t key )
   }
 
 #endif // XLITE
-#endif // PCBX3
+#endif // PCBX9LITE
 
   if ( xxx )
   {
@@ -3724,8 +3724,15 @@ uint32_t hwKeyState( uint8_t key )
       break;
 
     case HSW_SF2:
-      xxx = ~h & SWITCHES_GPIO_PIN_F ;
-      break;
+			if ( isProdVersion() )
+			{
+	      xxx = h & SWITCHES_GPIO_PIN_F ;
+			}
+			else
+			{
+	      xxx = ~h & SWITCHES_GPIO_PIN_F ;
+			}
+		break;
 
     case HSW_SG0:
       xxx = ~g & SWITCHES_GPIO_PIN_G_L ;

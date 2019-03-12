@@ -403,4 +403,8 @@ extern Key keys[NUM_KEYS] ;
 #define SERIAL_TWO_STOP			2
 
 
+#if defined(PCBX9LITE)
+#define XJT_HEARTBEAT_BIT	0x0200		// PC9
+#endif
+
 #endif

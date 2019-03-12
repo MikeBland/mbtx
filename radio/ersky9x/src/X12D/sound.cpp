@@ -264,7 +264,7 @@ void init_dac()
 
 	DAC->DHR12R1 = 2048 ;
 	DAC->SR = DAC_SR_DMAUDR1 ;		// Write 1 to clear flag
-	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 ;			// Enable DAC
+	DAC->CR = DAC_CR_TEN1 | DAC_CR_EN1 | DAC_CR_BOFF1 ;			// Enable DAC
 	NVIC_SetPriority( DMA1_Stream5_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_SetPriority( TIM6_DAC_IRQn, 4 ) ; // Lower priority interrupt
 	NVIC_EnableIRQ(TIM6_DAC_IRQn) ;
@@ -381,7 +381,7 @@ void sound_5ms()
 				DMA1_Stream5->NDTR =  VoiceBuffer[0].count ;
 				DMA1_Stream5->CR |= DMA_SxCR_EN | DMA_SxCR_TCIE ;		// Enable DMA channel and interrupt
 				DAC->SR = DAC_SR_DMAUDR1 ;			// Write 1 to clear flag
-				DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 ;			// Enable DAC
+				DAC->CR |= DAC_CR_EN1 | DAC_CR_DMAEN1 | DAC_CR_BOFF1 ;			// Enable DAC
 #endif
 			}
 			return ;
@@ -672,7 +672,7 @@ void setVolume( register uint8_t volume )
 	g_eeGeneral.softwareVolume = 1 ;
 	if ( isProdVersion() == 0 )
 	{
-		volume = 127 ;
+		volume = 15 ;
 		I2C_set_volume( 127 - volume ) ;
 	}
 
@@ -718,6 +718,11 @@ void hapticOn( uint32_t pwmPercent )
 }
 #endif // PCBX7
 
-
+void initMp3Spi()
+{
+	// This is SPI2 on Port I SCK bit 1, MISO bit 2, MOSI bit 3
+	// CS on Port H bit 13, DCS on Port I bit 0, DREQ on Port H bit 14
+		 
+}
 
 

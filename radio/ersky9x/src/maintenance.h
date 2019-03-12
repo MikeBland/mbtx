@@ -21,10 +21,10 @@
 
 struct fileControl
 {
-	uint8_t index ;
 	uint32_t nameCount ;
 	uint32_t vpos ;
 	uint32_t hpos ;
+	uint16_t index ;
 	uint8_t ext[4] ;
 } ;
 

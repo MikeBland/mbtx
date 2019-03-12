@@ -80,7 +80,7 @@
 // ISTR_YELORGRED indexed 3 char each
 #define ISTR_YELORGRED	     	"\003---JauOraRou"
 #define ISTR_A_EQ		"A ="
-#define ISTR_SOUNDS	       	"\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3"
+#define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3" "Haptc4"
 #define ISTR_SWITCH_WARN	"Alerte Inter"
 //#define ISTR_SWITCH				"Inter"
 #define ISTR_WARNING			"Alerte"
@@ -167,7 +167,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModT"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSITim1Tim2Alt GaltGspdT1= T2= RPM FUELMah1Mah2CvltBattAmpsMah CtotFasVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7FwatRxV Hdg A3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModTCls1Cls2"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "GV"
 #define ISTR_OFF_ON         "OFFON "
@@ -218,7 +218,7 @@
 #endif
 #define ISTR_TEMPLATES      "EXEMPLES"
 #define ISTR_CHAN_ORDER     "Ordre voies RX"
-#define ISTR_SP_RETA        "DPGA"
+#define ISTR_SP_RETA        " DPGA"
 #define ISTR_CLEAR_MIXES    "EFFACER MIX. [MENU]"
 #define ISTR_SAFETY_SW      "INT.SECURITE"
 #define ISTR_NUM_VOICE_SW   "Nb. Inters Voix"

@@ -30,7 +30,7 @@
 
 //#define XLITE_PROTO	1
 
-#if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE)
 
 #ifndef PCBXLITE
 #define GPIO_PinSource_HAPTIC           GPIO_PinSource8
@@ -158,7 +158,7 @@ void refreshDisplay()
 	
 #ifndef PCBXLITE
  #ifndef PCBT12
-  #ifndef PCBX3
+  #ifndef PCBX9LITE
 	if ( g_model.BTfunction == BT_LCDDUMP )
 	{
 		uint16_t time = get_tmr10ms() ;
@@ -269,7 +269,7 @@ static void backlightInit()
   TIM1->CR1 = TIM_CR1_CEN; // Counter enable
  #endif
 #else	
- #ifdef PCBX3
+ #ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;    // Enable clock
 	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
@@ -367,7 +367,7 @@ void lcdSetRefVolt(uint8_t val)
 
 #ifndef PCBXLITE
 
-#ifdef PCBX3
+#ifdef PCBX9LITE
 void initHaptic()
 {
   RCC_AHB1PeriphClockCmd(HAPTIC_RCC_AHB1Periph, ENABLE);
@@ -494,7 +494,7 @@ void backlight_set( uint16_t brightness )
 #endif
 }
 #else // PCBXLITE
- #ifdef PCBX3
+ #ifdef PCBX9LITE
 void backlight_on()
 {
 	TIM1->CCR3 = 100 - BacklightBrightness ;
@@ -528,7 +528,7 @@ void backlight_set( uint16_t brightness )
 	BacklightBrightness = brightness ;
 	TIM4->CCR2 = 100 - BacklightBrightness ;
 }
- #endif // PCBX3
+ #endif // PCBX9LITE
 #endif // PCBXLITE
 
 

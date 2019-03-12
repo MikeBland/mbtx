@@ -126,8 +126,8 @@ const uint8_t BootCode[] = {
      #ifdef PCBXLITE
       #include "bootloader/bootflashL.lbm"
      #else
-      #ifdef PCBX3
-       #include "bootloader/bootflashX3.lbm"
+      #ifdef PCBX9LITE
+       #include "bootloader/bootflashX9l.lbm"
       #else
        #include "bootloader/bootflashX.lbm"
 	    #endif
@@ -170,6 +170,11 @@ void _bootStart()
 
 	GPIOC->PUPDR = 0x00000001 ;
 	GPIOD->PUPDR = 0x00004000 ;
+
+//// Turn on backlight here
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable port A clock
+//	GPIOA->MODER = (GPIOA->MODER & 0xFFFFF33F) | 0x440 ; // General purpose output mode
+//	GPIOA->BSRRL = 0x28 ;
 
 	uint32_t i ;
 	for ( i = 0 ; i < 50000 ; i += 1 )
@@ -246,11 +251,11 @@ void _bootStart()
    #ifdef PCBXLITE
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portA,C,E clock
    #else // PCBXLITE
-    #ifdef PCBX3
+    #ifdef PCBX9LITE
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOEEN ; // Enable portA,C,E clock
-    #else // PCBX3
+    #else // PCBX9LITE
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOEEN ; // Enable portD clock
-    #endif // PCBX3
+    #endif // PCBX9LITE
    #endif // PCBXLITE
   #endif // PCBX7
  #endif // REV9E
@@ -260,7 +265,7 @@ void _bootStart()
 //  if (GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET)
 // PD.01
 
- #if defined(REV9E) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX3)
+ #if defined(REV9E) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE)
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 //	if ( (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE()) || (GPIOA->IDR & 0x00000100 ) )	// Trainer input is high
 	{
@@ -268,13 +273,13 @@ void _bootStart()
 		GPIOE->BSRRL = GPIO_Pin_9 ; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOE->MODER = (GPIOE->MODER & 0xFFF3FFFF) | 0x00040000 ; // General purpose output mode
   #else // PCBXLITE
-   #ifdef PCBX3
+   #ifdef PCBX9LITE
 		GPIOA->BSRRL = GPIO_Pin_6 ; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOA->MODER = (GPIOE->MODER & 0xFFFFCFFF) | 0x00001000 ; // General purpose output mode
-   #else // PCBX3
+   #else // PCBX9LITE
 		GPIOD->BSRRL = 1; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOD->MODER = (GPIOD->MODER & 0xFFFFFFFC) | 1; // General purpose output mode
-   #endif // PCBX3
+   #endif // PCBX9LITE
   #endif // PCBXLITE
 	}
  #endif // multiple ifdef
@@ -291,14 +296,14 @@ void _bootStart()
 	GPIOC->BSRRL = 0x0010 ; // set Green LED on
 	GPIOC->MODER = (GPIOC->MODER & 0xFFFFFCFF) | 0x00000100 ; // General purpose output mode
 #else // PCBX7
- #ifdef PCBX3
+ #ifdef PCBX9LITE
 	GPIOE->BSRRL = 0x0020 ; // set Red LED on
 	GPIOE->MODER = (GPIOE->MODER & 0xFFFFF3FF) | 0x00000400 ; // General purpose output mode
  
 	GPIOC->PUPDR = 0x00000500 ;		// PortC clock enabled above
 	GPIOD->PUPDR = 0x00050000 ;		// PortD clock enabled above
  
- #endif // PCBX3
+ #endif // PCBX9LITE
 #endif // PCBX7
 
 #ifdef PCB9XT
@@ -374,7 +379,7 @@ void _bootStart()
 	}
 #endif // PCBX7
 
-#if defined(PCBXLITE) || defined(PCBX3)
+#if defined(PCBXLITE) || defined(PCBX9LITE)
 #define PWR_GPIO_PIN_SWITCH	0x0080
 	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
@@ -393,12 +398,12 @@ void _bootStart()
 		if ( (GPIOC->IDR & 0x00000020 ) == 0 )
 		{
 #else // PCBXLITE
- #ifdef PCBX3
+ #ifdef PCBX9LITE
 	if ( (GPIOC->IDR & 0x00000010 ) == 0 )
 	{
 		if ( (GPIOD->IDR & 0x00000200 ) == 0 )
 		{
- #else // PCBX3
+ #else // PCBX9LITE
 #ifdef PCB9XT
 //	if ( 1 )
 //	{
@@ -417,7 +422,7 @@ void _bootStart()
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{
- #endif // PCBX3
+ #endif // PCBX9LITE
 #endif // PCB9XT
 #endif // PCBXLITE
 			

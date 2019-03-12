@@ -20,8 +20,9 @@
 #include "i2c_ee.h"
 #include "../timers.h"
 
+uint16_t AckDebug ;
 
-#define	I2C_delay()   hw_delay( 25 )
+#define	I2C_delay()   hw_delay( 100 )
 
 /**
   * @brief  Configure the used I/O ports pin
@@ -132,6 +133,9 @@ short I2C_WAIT_ACK()
   SCL_L;
   I2C_delay();
 
+	AckDebug <<= 2 ;
+	AckDebug |= (i & 3 ) ;
+
   return i;
 } 
 
@@ -183,8 +187,12 @@ void I2C_EE_Init()
   I2C_GPIO_Configuration();
 }
 
+uint16_t VolDebug ;
+
 void I2C_set_volume( register uint8_t volume )
 {
+	VolDebug += 1 ;
+	AckDebug = 0 ;
   I2C_START();
   I2C_SEND_DATA(I2C_CAT5137_ADDRESS|EE_CMD_WRITE);
   I2C_WAIT_ACK();

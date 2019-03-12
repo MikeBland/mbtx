@@ -68,7 +68,7 @@ extern void wdt_reset() ;
 
 #define SERIAL_TRAINER	1
 
-#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
+//#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
 // Timer usage
 // TIMER3 for input capture
@@ -79,7 +79,7 @@ extern void wdt_reset() ;
 // Timer5 is currently UNUSED
 
 uint8_t Scc_baudrate ;				// 0 for 125000, 1 for 115200
-uint8_t LastReceivedSportByte ;
+//uint8_t LastReceivedSportByte ;
 
 #ifdef PCBSKY
 #ifdef REVX
@@ -93,19 +93,19 @@ uint16_t Max_temperature ;		// Max raw temp reading
 uint16_t WatchdogTimeout ;
 extern uint8_t PulsesPaused ;
 
-uint8_t JetiTxBuffer[16] ;
+//uint8_t JetiTxBuffer[16] ;
 
 struct t_fifo128 Com1_fifo ;
 struct t_fifo128 Com2_fifo ;
-#ifdef BLUETOOTH
- #ifdef BT_PDC
-struct t_rxUartBuffer BtPdcFifo ;
-void startPdcBtReceive() ;
-static int32_t rxPdcBt() ;
- #else
-struct t_fifo128 BtRx_fifo ;
- #endif
-#endif
+//#ifdef BLUETOOTH
+// #ifdef BT_PDC
+//struct t_rxUartBuffer BtPdcFifo ;
+//void startPdcBtReceive() ;
+//static int32_t rxPdcBt() ;
+// #else
+//struct t_fifo128 BtRx_fifo ;
+// #endif
+//#endif
 
 #if defined(LUA) || defined(BASIC)
 struct t_fifo128 Script_fifo ;
@@ -121,7 +121,7 @@ struct t_fifo128 Com3_fifo ;
 struct t_fifo128 Com3_fifo ;
 #endif
 
-struct t_16bit_fifo32 Jeti_fifo ;
+//struct t_16bit_fifo32 Jeti_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
@@ -372,7 +372,7 @@ extern uint8_t StickScrollTimer ;
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 #ifndef PCBX7
 #ifndef PCBXLITE
-#ifndef PCBX3
+#ifndef PCBX9LITE
 struct t_serial_tx LcdDumpBuf ;
 
 void doLcdDump()
@@ -413,7 +413,7 @@ extern uint8_t ExtDisplaySend ;
 #endif
 	}	 
 }
-#endif // PCBX3
+#endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7
 
@@ -460,9 +460,9 @@ void per10ms()
 	g_ltmr10ms += 1 ;
   if (WatchdogTimeout)
 	{
-  	if (WatchdogTimeout>200)
+  	if (WatchdogTimeout>300)
 		{
-  		WatchdogTimeout = 200 ;			
+  		WatchdogTimeout = 300 ;			
 		}
     WatchdogTimeout -= 1;
     wdt_reset();  // Retrigger hardware watchdog
@@ -585,7 +585,7 @@ extern uint8_t EncoderI2cData[] ;
   #ifdef REV9E
 	uint8_t value = ~GPIOF->IDR & PIN_BUTTON_ENCODER ;
   #endif // REV9E
-  #ifdef PCBX3
+  #ifdef PCBX9LITE
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
 //	uint8_t value = 0 ;
   #endif // X3
@@ -595,6 +595,9 @@ extern uint8_t AnaEncSw ;
 	uint8_t value = AnaEncSw ;
   #endif // nREV9E
   #endif // norm/plus
+	#ifdef PCBXLITE
+	uint8_t value = 0 ;
+	#endif
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	if ( value )
 	{
@@ -787,16 +790,16 @@ uint16_t rxCom2()
 	return get_fifo128( &Com2_fifo ) ;
 }
 
-#ifdef BLUETOOTH
-int32_t rxBtuart()
-{
-#ifdef BT_PDC
-	return rxPdcBt() ;
-#else	
-	return get_fifo128( &BtRx_fifo ) ;
-#endif
-}
-#endif
+//#ifdef BLUETOOTH
+//int32_t rxBtuart()
+//{
+//#ifdef BT_PDC
+//	return rxPdcBt() ;
+//#else	
+//	return get_fifo128( &BtRx_fifo ) ;
+//#endif
+//}
+//#endif
 
 
 #ifdef SERIAL_TRAINER
@@ -837,16 +840,16 @@ uint8_t CaptureMode ;
 //uint8_t Tc5Count ;
 //uint8_t SoftSerialEvenParity ;
 
-uint16_t USART_ERRORS ;
-uint16_t USART_ORE ;
-uint16_t USART_NE ;
-uint16_t USART_FE ;
-uint16_t USART_PE ;
+//uint16_t USART_ERRORS ;
+//uint16_t USART_ORE ;
+//uint16_t USART_NE ;
+//uint16_t USART_FE ;
+extern uint16_t USART_PE ;
 
-#ifdef PCB9XT
-uint16_t USART1_ORE ;
-uint16_t USART2_ORE ;
-#endif 
+//#ifdef PCB9XT
+//uint16_t USART1_ORE ;
+//uint16_t USART2_ORE ;
+//#endif 
 
 // time in units of 0.5uS, value is 1 or 0
 void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value )
@@ -986,6 +989,13 @@ void init_spi()
 
 extern "C" void SPI_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x8A ;
+#else
+	RTC->BKP1R = 0x8A ;
+#endif
+#endif
 	register Spi *spiptr ;
 
 	spiptr = SPI ;
@@ -1175,305 +1185,312 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
  * masterClock  Frequency of the system master clock (in Hz).
  * uses PA9 and PA10, RXD2 and TXD2
  */
-void UART_Configure( uint32_t baudrate, uint32_t masterClock)
-{
-//    const Pin pPins[] = CONSOLE_PINS;
-  register Uart *pUart = CONSOLE_USART;
-//	register Pio *pioptr ;
+//void UART_Configure( uint32_t baudrate, uint32_t masterClock)
+//{
+////    const Pin pPins[] = CONSOLE_PINS;
+//  register Uart *pUart = CONSOLE_USART;
+////	register Pio *pioptr ;
 
-  /* Configure PIO */
-	configure_pins( (PIO_PA9 | PIO_PA10), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
-//	pioptr = PIOA ;
-//  pioptr->PIO_ABCDSR[0] &= ~(PIO_PA9 | PIO_PA10) ;	// Peripheral A
-//  pioptr->PIO_ABCDSR[1] &= ~(PIO_PA9 | PIO_PA10) ;	// Peripheral A
-//  pioptr->PIO_PDR = (PIO_PA9 | PIO_PA10) ;					// Assign to peripheral
+//  /* Configure PIO */
+//	configure_pins( (PIO_PA9 | PIO_PA10), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
+////	pioptr = PIOA ;
+////  pioptr->PIO_ABCDSR[0] &= ~(PIO_PA9 | PIO_PA10) ;	// Peripheral A
+////  pioptr->PIO_ABCDSR[1] &= ~(PIO_PA9 | PIO_PA10) ;	// Peripheral A
+////  pioptr->PIO_PDR = (PIO_PA9 | PIO_PA10) ;					// Assign to peripheral
 
-	if ( baudrate < 10 )
-	{
-		switch ( baudrate )
-		{
-			case 0 :
-			default :
-				baudrate = 9600 ;
-			break ;
-			case 1 :
-				baudrate = 19200 ;
-			break ;
-			case 2 :
-				baudrate = 38400 ;
-			break ;
-			case 3 :
-				baudrate = 57600 ;
-			break ;
-			case 4 :
-				baudrate = 115200 ;
-			break ;
-		}
-	}
+//	if ( baudrate < 10 )
+//	{
+//		switch ( baudrate )
+//		{
+//			case 0 :
+//			default :
+//				baudrate = 9600 ;
+//			break ;
+//			case 1 :
+//				baudrate = 19200 ;
+//			break ;
+//			case 2 :
+//				baudrate = 38400 ;
+//			break ;
+//			case 3 :
+//				baudrate = 57600 ;
+//			break ;
+//			case 4 :
+//				baudrate = 115200 ;
+//			break ;
+//		}
+//	}
 
-  /* Configure PMC */
-  PMC->PMC_PCER0 = 1 << CONSOLE_ID;
+//  /* Configure PMC */
+//  PMC->PMC_PCER0 = 1 << CONSOLE_ID;
 
-  /* Reset and disable receiver & transmitter */
-  pUart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX
-                 | UART_CR_RXDIS | UART_CR_TXDIS;
+//  /* Reset and disable receiver & transmitter */
+//  pUart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX
+//                 | UART_CR_RXDIS | UART_CR_TXDIS;
 
-  /* Configure mode */
-  pUart->UART_MR =  0x800 ;  // NORMAL, No Parity
+//  /* Configure mode */
+//  pUart->UART_MR =  0x800 ;  // NORMAL, No Parity
 
-  /* Configure baudrate */
-  /* Asynchronous, no oversampling */
-  pUart->UART_BRGR = (masterClock / baudrate) / 16;
+//  /* Configure baudrate */
+//  /* Asynchronous, no oversampling */
+//  pUart->UART_BRGR = (masterClock / baudrate) / 16;
 
-  /* Disable PDC channel */
-  pUart->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
+//  /* Disable PDC channel */
+//  pUart->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
 
-	pUart->UART_TCR = 0 ;
-	pUart->UART_IDR = UART_IDR_TXBUFE ;
+//	pUart->UART_TCR = 0 ;
+//	pUart->UART_IDR = UART_IDR_TXBUFE ;
   
-	/* Enable receiver and transmitter */
-  pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
-  pUart->UART_IER = UART_IER_RXRDY ;
+//	/* Enable receiver and transmitter */
+//  pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
+//  pUart->UART_IER = UART_IER_RXRDY ;
 
-	NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
-	NVIC_EnableIRQ(UART0_IRQn) ;
+//	NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
+//	NVIC_EnableIRQ(UART0_IRQn) ;
 
-}
+//}
 
-void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
-{
-	if ( invert )
-	{
-		CONSOLE_USART->UART_IDR = UART_IDR_RXRDY ;
-		init_software_com2( baudrate, SERIAL_INVERT, parity ) ;
-	}
-	else
-	{
-		UART_Configure( baudrate, Master_frequency) ;
-  	register Uart *pUart = CONSOLE_USART ;
-		if ( parity )
-		{
-  		pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
-		}
-		else
-		{
-			pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
-		}
-	}
-}
+//void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
+//{
+//	if ( invert )
+//	{
+//		CONSOLE_USART->UART_IDR = UART_IDR_RXRDY ;
+//		init_software_com2( baudrate, SERIAL_INVERT, parity ) ;
+//	}
+//	else
+//	{
+//		UART_Configure( baudrate, Master_frequency) ;
+//  	register Uart *pUart = CONSOLE_USART ;
+//		if ( parity )
+//		{
+//  		pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
+//		}
+//		else
+//		{
+//			pUart->UART_MR = 0x800 ;  // NORMAL, No Parity
+//		}
+//	}
+//}
 
 // Set up COM2 for SBUS (8E2), can't set 2 stop bits!
-void UART_Sbus_configure( uint32_t masterClock )
-{
-  register Uart *pUart = CONSOLE_USART;
+//void UART_Sbus_configure( uint32_t masterClock )
+//{
+//  register Uart *pUart = CONSOLE_USART;
 	
-	UART_Configure( 100000, masterClock ) ;
-  pUart->UART_MR =  0 ;  // NORMAL, Even Parity
-}
+//	UART_Configure( 100000, masterClock ) ;
+//  pUart->UART_MR =  0 ;  // NORMAL, Even Parity
+//}
 
-void UART_Sbus57600_configure( uint32_t masterClock )
-{
-  register Uart *pUart = CONSOLE_USART;
+//void UART_Sbus57600_configure( uint32_t masterClock )
+//{
+//  register Uart *pUart = CONSOLE_USART;
 	
-	UART_Configure( 57600, masterClock ) ;
-  pUart->UART_MR =  0 ;  // NORMAL, Even Parity
-}
+//	UART_Configure( 57600, masterClock ) ;
+//  pUart->UART_MR =  0 ;  // NORMAL, Even Parity
+//}
 
-void UART_9dataOdd1stop()
-{
+//void UART_9dataOdd1stop()
+//{
 	
-}
+//}
 
-uint32_t txPdcCom2( struct t_serial_tx *data )
-{
-	Uart *pUart=CONSOLE_USART ;
+//uint32_t txPdcCom2( struct t_serial_tx *data )
+//{
+//	Uart *pUart=CONSOLE_USART ;
 		
-	if ( pUart->UART_TCR == 0 )
-	{
-		Current_Com2 = data ;
-		data->ready = 1 ;
-#ifndef SIMU
-	  pUart->UART_TPR = (uint32_t)data->buffer ;
-#endif
-		pUart->UART_TCR = data->size ;
-		pUart->UART_PTCR = UART_PTCR_TXTEN ;
-		pUart->UART_IER = UART_IER_TXBUFE ;
-		NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
-		NVIC_EnableIRQ(UART0_IRQn) ;
-		return 1 ;			// Sent OK
-	}
-	return 0 ;				// Busy
+//	if ( pUart->UART_TCR == 0 )
+//	{
+//		Current_Com2 = data ;
+//		data->ready = 1 ;
+//#ifndef SIMU
+//	  pUart->UART_TPR = (uint32_t)data->buffer ;
+//#endif
+//		pUart->UART_TCR = data->size ;
+//		pUart->UART_PTCR = UART_PTCR_TXTEN ;
+//		pUart->UART_IER = UART_IER_TXBUFE ;
+//		NVIC_SetPriority( UART0_IRQn, 2 ) ; // Lower priority interrupt
+//		NVIC_EnableIRQ(UART0_IRQn) ;
+//		return 1 ;			// Sent OK
+//	}
+//	return 0 ;				// Busy
 	
-}
+//}
 
-uint32_t txPdcCom1( struct t_serial_tx *data )
-{
-  register Usart *pUsart = SECOND_USART;
+//uint32_t txPdcCom1( struct t_serial_tx *data )
+//{
+//  register Usart *pUsart = SECOND_USART;
 
-	if ( pUsart->US_TCR == 0 )
-	{
-		Current_Com1 = data ;
-		data->ready = 1 ;
-#ifndef SIMU
-	  pUsart->US_TPR = (uint32_t)data->buffer ;
-#endif
-		pUsart->US_TCR = data->size ;
-		pUsart->US_PTCR = US_PTCR_TXTEN ;
-		pUsart->US_IER = US_IER_TXBUFE ;
-		NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
-		NVIC_EnableIRQ(USART0_IRQn) ;
-		return 1 ;
-	}
-	return 0 ;
-}
+//	if ( pUsart->US_TCR == 0 )
+//	{
+//		Current_Com1 = data ;
+//		data->ready = 1 ;
+//#ifndef SIMU
+//	  pUsart->US_TPR = (uint32_t)data->buffer ;
+//#endif
+//		pUsart->US_TCR = data->size ;
+//		pUsart->US_PTCR = US_PTCR_TXTEN ;
+//		pUsart->US_IER = US_IER_TXBUFE ;
+//		NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
+//		NVIC_EnableIRQ(USART0_IRQn) ;
+//		return 1 ;
+//	}
+//	return 0 ;
+//}
 
-extern "C" void UART0_IRQHandler()
-{
-	Uart *pUart=CONSOLE_USART ;
-	if ( pUart->UART_IMR & UART_IMR_TXBUFE )
-	{
-		if ( pUart->UART_SR & UART_SR_TXBUFE )
-		{
-			pUart->UART_IDR = UART_IDR_TXBUFE ;
-			pUart->UART_PTCR = UART_PTCR_TXTDIS ;
-			Current_Com2->ready = 0 ;	
-		}
-	}
-	if ( pUart->UART_SR & UART_SR_RXRDY )
-	{
-		uint8_t chr = CONSOLE_USART->UART_RHR ;
-		if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
-		{
-			put_fifo64( &Sbus_fifo, chr ) ;	
-		}
-#ifdef BLUETOOTH
-		else if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
-		{
-			telem_byte_to_bt( chr ) ;
-		}
-#endif
-		else
-		{
-			put_fifo128( &Com2_fifo, chr ) ;	
-#ifdef BLUETOOTH
-			if ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY )	// BT <-> COM2
-			{
-				telem_byte_to_bt( chr ) ;
-			}
-#endif
-		}	 
-	}
-}
+//extern "C" void UART0_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x8B ;
+//#else
+//	RTC->BKP1R = 0x8B ;
+//#endif
+//#endif
+//	Uart *pUart=CONSOLE_USART ;
+//	if ( pUart->UART_IMR & UART_IMR_TXBUFE )
+//	{
+//		if ( pUart->UART_SR & UART_SR_TXBUFE )
+//		{
+//			pUart->UART_IDR = UART_IDR_TXBUFE ;
+//			pUart->UART_PTCR = UART_PTCR_TXTDIS ;
+//			Current_Com2->ready = 0 ;	
+//		}
+//	}
+//	if ( pUart->UART_SR & UART_SR_RXRDY )
+//	{
+//		uint8_t chr = CONSOLE_USART->UART_RHR ;
+//		if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+//		{
+//			put_fifo64( &Sbus_fifo, chr ) ;	
+//		}
+//#ifdef BLUETOOTH
+//		else if ( g_model.com2Function == COM2_FUNC_BTDIRECT )	// BT <-> COM2
+//		{
+//			telem_byte_to_bt( chr ) ;
+//		}
+//#endif
+//		else
+//		{
+//			put_fifo128( &Com2_fifo, chr ) ;	
+//#ifdef BLUETOOTH
+//			if ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY )	// BT <-> COM2
+//			{
+//				telem_byte_to_bt( chr ) ;
+//			}
+//#endif
+//		}	 
+//	}
+//}
 
-void UART3_Configure( uint32_t baudrate, uint32_t masterClock)
-{
-//    const Pin pPins[] = CONSOLE_PINS;
-  register Uart *pUart = BT_USART;
-//	register Pio *pioptr ;
+//void UART3_Configure( uint32_t baudrate, uint32_t masterClock)
+//{
+////    const Pin pPins[] = CONSOLE_PINS;
+//  register Uart *pUart = BT_USART;
+////	register Pio *pioptr ;
 
-  /* Configure PIO */
-	configure_pins( (PIO_PB2 | PIO_PB3), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTB | PIN_NO_PULLUP ) ;
-//	pioptr = PIOB ;
-//  pioptr->PIO_ABCDSR[0] &= ~(PIO_PB2 | PIO_PB3) ;	// Peripheral A
-//  pioptr->PIO_ABCDSR[1] &= ~(PIO_PB2 | PIO_PB3) ;	// Peripheral A
-//  pioptr->PIO_PDR = (PIO_PB2 | PIO_PB3) ;					// Assign to peripheral
+//  /* Configure PIO */
+//	configure_pins( (PIO_PB2 | PIO_PB3), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTB | PIN_NO_PULLUP ) ;
+////	pioptr = PIOB ;
+////  pioptr->PIO_ABCDSR[0] &= ~(PIO_PB2 | PIO_PB3) ;	// Peripheral A
+////  pioptr->PIO_ABCDSR[1] &= ~(PIO_PB2 | PIO_PB3) ;	// Peripheral A
+////  pioptr->PIO_PDR = (PIO_PB2 | PIO_PB3) ;					// Assign to peripheral
 
-  /* Configure PMC */
-  PMC->PMC_PCER0 = 1 << BT_ID;
+//  /* Configure PMC */
+//  PMC->PMC_PCER0 = 1 << BT_ID;
 
-  /* Reset and disable receiver & transmitter */
-  pUart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX
-                 | UART_CR_RXDIS | UART_CR_TXDIS;
+//  /* Reset and disable receiver & transmitter */
+//  pUart->UART_CR = UART_CR_RSTRX | UART_CR_RSTTX
+//                 | UART_CR_RXDIS | UART_CR_TXDIS;
 
-  /* Configure mode */
-  pUart->UART_MR =  0x800 ;  // NORMAL, No Parity
+//  /* Configure mode */
+//  pUart->UART_MR =  0x800 ;  // NORMAL, No Parity
 
-  /* Configure baudrate */
-  /* Asynchronous, no oversampling */
-  pUart->UART_BRGR = ( (masterClock / baudrate) + 8 ) / 16;
+//  /* Configure baudrate */
+//  /* Asynchronous, no oversampling */
+//  pUart->UART_BRGR = ( (masterClock / baudrate) + 8 ) / 16;
   
-// Following only available for USARTS
-//	baudrate = (masterClock * 8 / baudrate) / 16 ;
-//  pUart->UART_BRGR = ( baudrate / 8 ) | ( ( baudrate & 7 ) << 16 ) ;	// Fractional part to allow 115200 baud
+//// Following only available for USARTS
+////	baudrate = (masterClock * 8 / baudrate) / 16 ;
+////  pUart->UART_BRGR = ( baudrate / 8 ) | ( ( baudrate & 7 ) << 16 ) ;	// Fractional part to allow 115200 baud
 
-  /* Disable PDC channel */
-  pUart->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
+//  /* Disable PDC channel */
+//  pUart->UART_PTCR = UART_PTCR_RXTDIS | UART_PTCR_TXTDIS;
 
-  /* Enable receiver and transmitter */
-  pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
-#ifdef BT_PDC
-	startPdcBtReceive() ;
-	NVIC_SetPriority( UART1_IRQn, 5 ) ; // Lower priority interrupt
-#else
-  pUart->UART_IER = UART_IER_RXRDY ;
-	NVIC_SetPriority( UART1_IRQn, 3 ) ; // Lower priority interrupt
-#endif
-	NVIC_EnableIRQ(UART1_IRQn) ;
+//  /* Enable receiver and transmitter */
+//  pUart->UART_CR = UART_CR_RXEN | UART_CR_TXEN;
+//#ifdef BT_PDC
+//	startPdcBtReceive() ;
+//	NVIC_SetPriority( UART1_IRQn, 5 ) ; // Lower priority interrupt
+//#else
+//  pUart->UART_IER = UART_IER_RXRDY ;
+//	NVIC_SetPriority( UART1_IRQn, 3 ) ; // Lower priority interrupt
+//#endif
+//	NVIC_EnableIRQ(UART1_IRQn) ;
 
-}
+//}
 
 
-#ifdef BT_PDC
-void startPdcBtReceive()
-{
-  register Uart *pUart = BT_USART;
-	BtPdcFifo.outPtr = BtPdcFifo.fifo ;
-#ifndef SIMU
-	pUart->UART_RPR = (uint32_t)BtPdcFifo.fifo ;
-	pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
-#endif
-	pUart->UART_RCR = RX_UART_BUFFER_SIZE ;
-	pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
-	pUart->UART_PTCR = US_PTCR_RXTEN ;
-}
+//#ifdef BT_PDC
+//void startPdcBtReceive()
+//{
+//  register Uart *pUart = BT_USART;
+//	BtPdcFifo.outPtr = BtPdcFifo.fifo ;
+//#ifndef SIMU
+//	pUart->UART_RPR = (uint32_t)BtPdcFifo.fifo ;
+//	pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
+//#endif
+//	pUart->UART_RCR = RX_UART_BUFFER_SIZE ;
+//	pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
+//	pUart->UART_PTCR = US_PTCR_RXTEN ;
+//}
 
-void endPdcUsartReceive()
-{
-  register Uart *pUart = BT_USART;
+//void endPdcUsartReceive()
+//{
+//  register Uart *pUart = BT_USART;
 
-	pUart->UART_PTCR = UART_PTCR_RXTDIS ;
-}
+//	pUart->UART_PTCR = UART_PTCR_RXTDIS ;
+//}
 
-static int32_t rxPdcBt()
-{
-#if !defined(SIMU)
-  register Uart *pUart = BT_USART;
-	uint8_t *ptr ;
-	uint8_t *endPtr ;
-  int32_t chr ;
+//static int32_t rxPdcBt()
+//{
+//#if !defined(SIMU)
+//  register Uart *pUart = BT_USART;
+//	uint8_t *ptr ;
+//	uint8_t *endPtr ;
+//  int32_t chr ;
 
- //Find out where the DMA has got to
-	endPtr = (uint8_t *)pUart->UART_RPR ;
-	// Check for DMA passed end of buffer
-	if ( endPtr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )
-	{
-		endPtr = BtPdcFifo.fifo ;
-	}
+// //Find out where the DMA has got to
+//	endPtr = (uint8_t *)pUart->UART_RPR ;
+//	// Check for DMA passed end of buffer
+//	if ( endPtr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )
+//	{
+//		endPtr = BtPdcFifo.fifo ;
+//	}
 
-	ptr = BtPdcFifo.outPtr ;
-	if ( ptr != endPtr )
-	{
-		chr = *ptr++ ;
-		if ( ptr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )		// last byte
-		{
-			ptr = BtPdcFifo.fifo ;
-		}
-	 	BtPdcFifo.outPtr = ptr ;
+//	ptr = BtPdcFifo.outPtr ;
+//	if ( ptr != endPtr )
+//	{
+//		chr = *ptr++ ;
+//		if ( ptr > &BtPdcFifo.fifo[RX_UART_BUFFER_SIZE-1] )		// last byte
+//		{
+//			ptr = BtPdcFifo.fifo ;
+//		}
+//	 	BtPdcFifo.outPtr = ptr ;
 
-	 	if ( pUart->UART_RNCR == 0 )
-	 	{
-	 		pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
-	 		pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
-	 	}
-	}
-	else
-	{
-		return -1 ;
-	}
-#endif
-	return chr ;
-}
-#endif
+//	 	if ( pUart->UART_RNCR == 0 )
+//	 	{
+//	 		pUart->UART_RNPR = (uint32_t)BtPdcFifo.fifo ;
+//	 		pUart->UART_RNCR = RX_UART_BUFFER_SIZE ;
+//	 	}
+//	}
+//	else
+//	{
+//		return -1 ;
+//	}
+//#endif
+//	return chr ;
+//}
+//#endif
 
 //void Bt_UART_Stop()
 //{
@@ -1485,244 +1502,251 @@ static int32_t rxPdcBt()
 // USART0 configuration, we will use this for FrSky etc
 // Work in Progress, UNTESTED
 // Uses PA5 and PA6 (RXD and TXD)
-static void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
-{
-////    const Pin pPins[] = CONSOLE_PINS;
-  register Usart *pUsart = SECOND_USART;
-//	register Pio *pioptr ;
+//static void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
+//{
+//////    const Pin pPins[] = CONSOLE_PINS;
+//  register Usart *pUsart = SECOND_USART;
+////	register Pio *pioptr ;
 
-  /* Configure PIO */
-	disable_software_com1() ;
-	configure_pins( (PIO_PA5 | PIO_PA6), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
+//  /* Configure PIO */
+//	disable_software_com1() ;
+//	configure_pins( (PIO_PA5 | PIO_PA6), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
 	
-#ifdef REVX
-	configure_pins( PIO_PA25, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
-#endif
+//#ifdef REVX
+//	configure_pins( PIO_PA25, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
+//#endif
 
-//	pioptr = PIOA ;
-//  pioptr->PIO_ABCDSR[0] &= ~(PIO_PA5 | PIO_PA6) ;	// Peripheral A
-//  pioptr->PIO_ABCDSR[1] &= ~(PIO_PA5 | PIO_PA6) ;	// Peripheral A
-//  pioptr->PIO_PDR = (PIO_PA5 | PIO_PA6) ;					// Assign to peripheral
+////	pioptr = PIOA ;
+////  pioptr->PIO_ABCDSR[0] &= ~(PIO_PA5 | PIO_PA6) ;	// Peripheral A
+////  pioptr->PIO_ABCDSR[1] &= ~(PIO_PA5 | PIO_PA6) ;	// Peripheral A
+////  pioptr->PIO_PDR = (PIO_PA5 | PIO_PA6) ;					// Assign to peripheral
 
-	if ( baudrate < 10 )
-	{
-		switch ( baudrate )
-		{
-			case 0 :
-			default :
-				baudrate = 9600 ;
-			break ;
-			case 1 :
-				baudrate = 19200 ;
-			break ;
-			case 2 :
-				baudrate = 38400 ;
-			break ;
-			case 3 :
-				baudrate = 57600 ;
-			break ;
-			case 4 :
-				baudrate = 115200 ;
-			break ;
-		}
-	}
+//	if ( baudrate < 10 )
+//	{
+//		switch ( baudrate )
+//		{
+//			case 0 :
+//			default :
+//				baudrate = 9600 ;
+//			break ;
+//			case 1 :
+//				baudrate = 19200 ;
+//			break ;
+//			case 2 :
+//				baudrate = 38400 ;
+//			break ;
+//			case 3 :
+//				baudrate = 57600 ;
+//			break ;
+//			case 4 :
+//				baudrate = 115200 ;
+//			break ;
+//		}
+//	}
 
 //  /* Configure PMC */
-  PMC->PMC_PCER0 = 1 << SECOND_ID;
+//  PMC->PMC_PCER0 = 1 << SECOND_ID;
 
-//  /* Reset and disable receiver & transmitter */
-  pUsart->US_CR = US_CR_RSTRX | US_CR_RSTTX
-	                 | US_CR_RXDIS | US_CR_TXDIS;
+////  /* Reset and disable receiver & transmitter */
+//  pUsart->US_CR = US_CR_RSTRX | US_CR_RSTTX
+//	                 | US_CR_RXDIS | US_CR_TXDIS;
 
-//  /* Configure mode */
-  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
+////  /* Configure mode */
+//  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
 
-//  /* Configure baudrate */
-//  /* Asynchronous, no oversampling */
-  pUsart->US_BRGR = (masterClock / baudrate) / 16;
+////  /* Configure baudrate */
+////  /* Asynchronous, no oversampling */
+//  pUsart->US_BRGR = (masterClock / baudrate) / 16;
 
-//  /* Disable PDC channel */
-  pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
+////  /* Disable PDC channel */
+//  pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
 
-//  /* Enable receiver and transmitter */
-  pUsart->US_CR = US_CR_RXEN | US_CR_TXEN;
-	pUsart->US_IER = US_IER_RXRDY ;
+////  /* Enable receiver and transmitter */
+//  pUsart->US_CR = US_CR_RXEN | US_CR_TXEN;
+//	pUsart->US_IER = US_IER_RXRDY ;
 
-	NVIC_SetPriority( USART0_IRQn, 2 ) ; // Quite high priority interrupt
-	NVIC_EnableIRQ(USART0_IRQn) ;
+//	NVIC_SetPriority( USART0_IRQn, 2 ) ; // Quite high priority interrupt
+//	NVIC_EnableIRQ(USART0_IRQn) ;
 	
-}
+//}
 
-void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
-{
-	if ( invert )
-	{
-		SECOND_USART->US_IDR = US_IDR_RXRDY ;
-		init_software_com1( baudrate, SERIAL_INVERT, parity ) ;
-	}
-	else
-	{
-		UART2_Configure( baudrate, Master_frequency ) ;	
-  	register Usart *pUsart = SECOND_USART;
-		if ( parity )
-		{
-  		pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
-		}
-		else
-		{
-		  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
-		}
-//		com1Parity( parity ) ;
-//		com1_timeout_disable() ;
-	}
-}
+//void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
+//{
+//	if ( invert )
+//	{
+//		SECOND_USART->US_IDR = US_IDR_RXRDY ;
+//		init_software_com1( baudrate, SERIAL_INVERT, parity ) ;
+//	}
+//	else
+//	{
+//		UART2_Configure( baudrate, Master_frequency ) ;	
+//  	register Usart *pUsart = SECOND_USART;
+//		if ( parity )
+//		{
+//  		pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
+//		}
+//		else
+//		{
+//		  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
+//		}
+////		com1Parity( parity ) ;
+////		com1_timeout_disable() ;
+//	}
+//}
 
-void UART2_9dataOdd1stop()
-{
+//void UART2_9dataOdd1stop()
+//{
 	
-}
+//}
 
 // This is for Com 1
-extern "C" void USART0_IRQHandler()
-{
-  register Usart *pUsart = SECOND_USART;
-	uint32_t status ;
+//extern "C" void USART0_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x8C ;
+//#else
+//	RTC->BKP1R = 0x8C ;
+//#endif
+//#endif
+//  register Usart *pUsart = SECOND_USART;
+//	uint32_t status ;
 
-#ifdef REVX
-	if ( g_model.bt_telemetry > 1 )
-	{
-		if ( pUsart->US_IMR & US_IMR_TXBUFE )
-		{
-			if ( pUsart->US_CSR & US_CSR_TXBUFE )
-			{
-				pUsart->US_IDR = US_IDR_TXBUFE ;
-				pUsart->US_PTCR = US_PTCR_TXTDIS ;
-				Current_Com1->ready = 0 ;	
-			}
-		}
-	}
-
-	if ( (pUsart->US_MR & 0x0000000F) == 0x0000000E )
-	{
-//		if ( pUsart->US_IMR & US_IMR_TXRDY )
+//#ifdef REVX
+//	if ( g_model.bt_telemetry > 1 )
+//	{
+//		if ( pUsart->US_IMR & US_IMR_TXBUFE )
 //		{
-//			if ( pUsart->US_CSR & US_CSR_TXRDY )
+//			if ( pUsart->US_CSR & US_CSR_TXBUFE )
 //			{
-//				Sstat1 = pUsart->US_CSR ;
-//				Sstat2 = pUsart->US_IMR ;
-//  			pUsart->US_IDR = US_IDR_TXRDY ;
-//  			pUsart->US_IER = US_IER_TXEMPTY ;
-//				pUsart->US_THR = SPI2ndByte ;
-//				Scount1 += 1 ;
+//				pUsart->US_IDR = US_IDR_TXBUFE ;
+//				pUsart->US_PTCR = US_PTCR_TXTDIS ;
+//				Current_Com1->ready = 0 ;	
 //			}
 //		}
-		if ( pUsart->US_IMR & US_IMR_TXEMPTY )
-		{
-			if ( pUsart->US_CSR & US_CSR_TXEMPTY )
-			{
-  			pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
-				// SPI mode for JETI, must be finished
-  			pUsart->US_CR = US_CR_RSTRX | US_CR_RSTTX | US_CR_RXDIS | US_CR_TXDIS ;
-		//#ifdef REVX
-				PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
-		//#endif
-//			  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
-	  		pUsart->US_MR =  0x000202C0 ;  // NORMAL, Odd Parity, 9 bit
-  			pUsart->US_BRGR = (Master_frequency / 9600) / 16;
-	  		pUsart->US_IDR = 0xFFFFFFFF ;
-				(void) pUsart->US_RHR ;
-  			pUsart->US_CR = US_CR_RXEN ;
-	  		pUsart->US_IER = US_IER_RXRDY ;
-				NVIC_EnableIRQ(USART0_IRQn) ;
-//				pUsart->US_PTCR = US_PTCR_RXTEN ;
-			}
-		}
-		return ;
-	}
+//	}
 
-	if ( pUsart->US_MR & 0x00020000 ) // 9-bit => Jeti
-	{
-		if ( pUsart->US_CSR & US_CSR_RXRDY )
-		{
-			uint16_t x ;
-			x = pUsart->US_RHR ;
-			put_16bit_fifo32( &Jeti_fifo, x ) ; // pUsart->US_RHR ) ;	
-		}
-		return ;
-	}
-#endif
+//	if ( (pUsart->US_MR & 0x0000000F) == 0x0000000E )
+//	{
+////		if ( pUsart->US_IMR & US_IMR_TXRDY )
+////		{
+////			if ( pUsart->US_CSR & US_CSR_TXRDY )
+////			{
+////				Sstat1 = pUsart->US_CSR ;
+////				Sstat2 = pUsart->US_IMR ;
+////  			pUsart->US_IDR = US_IDR_TXRDY ;
+////  			pUsart->US_IER = US_IER_TXEMPTY ;
+////				pUsart->US_THR = SPI2ndByte ;
+////				Scount1 += 1 ;
+////			}
+////		}
+//		if ( pUsart->US_IMR & US_IMR_TXEMPTY )
+//		{
+//			if ( pUsart->US_CSR & US_CSR_TXEMPTY )
+//			{
+//  			pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
+//				// SPI mode for JETI, must be finished
+//  			pUsart->US_CR = US_CR_RSTRX | US_CR_RSTTX | US_CR_RXDIS | US_CR_TXDIS ;
+//		//#ifdef REVX
+//				PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
+//		//#endif
+////			  pUsart->US_MR =  0x000008C0 ;  // NORMAL, No Parity, 8 bit
+//	  		pUsart->US_MR =  0x000202C0 ;  // NORMAL, Odd Parity, 9 bit
+//  			pUsart->US_BRGR = (Master_frequency / 9600) / 16;
+//	  		pUsart->US_IDR = 0xFFFFFFFF ;
+//				(void) pUsart->US_RHR ;
+//  			pUsart->US_CR = US_CR_RXEN ;
+//	  		pUsart->US_IER = US_IER_RXRDY ;
+//				NVIC_EnableIRQ(USART0_IRQn) ;
+////				pUsart->US_PTCR = US_PTCR_RXTEN ;
+//			}
+//		}
+//		return ;
+//	}
 
-  if ( pUsart->US_IMR & US_IMR_TIMEOUT )
-	{
-		if ( pUsart->US_CSR & US_CSR_TIMEOUT )
-		{
-			pUsart->US_RTOR = 0 ;		// Off
-			pUsart->US_IDR = US_IDR_TIMEOUT ;
-			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
-		}
+//	if ( pUsart->US_MR & 0x00020000 ) // 9-bit => Jeti
+//	{
+//		if ( pUsart->US_CSR & US_CSR_RXRDY )
+//		{
+//			uint16_t x ;
+//			x = pUsart->US_RHR ;
+//			put_16bit_fifo32( &Jeti_fifo, x ) ; // pUsart->US_RHR ) ;	
+//		}
+//		return ;
+//	}
+//#endif
+
+//  if ( pUsart->US_IMR & US_IMR_TIMEOUT )
+//	{
+//		if ( pUsart->US_CSR & US_CSR_TIMEOUT )
+//		{
+//			pUsart->US_RTOR = 0 ;		// Off
+//			pUsart->US_IDR = US_IDR_TIMEOUT ;
+//			txPdcUsart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
+//		}
 		
-//	  pUsart->US_CR = US_CR_STTTO ;		// Clears timeout bit
-//		DsmRxTimeout = 1 ;
-	}
-  if ( pUsart->US_IMR & US_IMR_ENDTX )
-	{
-	 	if ( pUsart->US_CSR & US_CSR_ENDTX )
-		{
-			TelemetryTx.sportCount = 0 ;
-			pUsart->US_IER = US_IER_TXEMPTY ;
-			pUsart->US_IDR = US_IDR_ENDTX ;
-		}
-	}
-// Disable Tx output
-  if ( pUsart->US_IMR & US_IMR_TXEMPTY )
-	{
- 		if ( pUsart->US_CSR & US_CSR_TXEMPTY )
-		{
-#ifdef REVX
-			PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
-#endif
-			pUsart->US_IDR = US_IDR_TXEMPTY ;
-			(void) pUsart->US_RHR ;	// Flush receiver
-			pUsart->US_CR = US_CR_RXEN ;
-		}
-	}
+////	  pUsart->US_CR = US_CR_STTTO ;		// Clears timeout bit
+////		DsmRxTimeout = 1 ;
+//	}
+//  if ( pUsart->US_IMR & US_IMR_ENDTX )
+//	{
+//	 	if ( pUsart->US_CSR & US_CSR_ENDTX )
+//		{
+//			TelemetryTx.sportCount = 0 ;
+//			pUsart->US_IER = US_IER_TXEMPTY ;
+//			pUsart->US_IDR = US_IDR_ENDTX ;
+//		}
+//	}
+//// Disable Tx output
+//  if ( pUsart->US_IMR & US_IMR_TXEMPTY )
+//	{
+// 		if ( pUsart->US_CSR & US_CSR_TXEMPTY )
+//		{
+//#ifdef REVX
+//			PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
+//#endif
+//			pUsart->US_IDR = US_IDR_TXEMPTY ;
+//			(void) pUsart->US_RHR ;	// Flush receiver
+//			pUsart->US_CR = US_CR_RXEN ;
+//		}
+//	}
 
-	status = pUsart->US_CSR ;
-	if ( status & US_CSR_RXRDY )
-	{
-    uint8_t data = pUsart->US_RHR ;
-		if ( status & US_CSR_RXBRK )
-		{
-			if ( data )
-			{
-				put_fifo128( &Com1_fifo, data ) ;
-			}
-			pUsart->US_CR = US_CR_RSTSTA ;
-		}
-		else
-		{
-			put_fifo128( &Com1_fifo, data ) ;
-		}
+//	status = pUsart->US_CSR ;
+//	if ( status & US_CSR_RXRDY )
+//	{
+//    uint8_t data = pUsart->US_RHR ;
+//		if ( status & US_CSR_RXBRK )
+//		{
+//			if ( data )
+//			{
+//				put_fifo128( &Com1_fifo, data ) ;
+//			}
+//			pUsart->US_CR = US_CR_RSTSTA ;
+//		}
+//		else
+//		{
+//			put_fifo128( &Com1_fifo, data ) ;
+//		}
 
-// 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
-// 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
+//// 0x00, 0xA1, 0x22, 0x83, 0xE4, 0x45, 0xC6, 0x67, 0x48, 0xE9, 0x6A, 0xCB, 0xAC, 0x0D,
+//// 0x8E, 0x2F, 0xD0, 0x71, 0xF2, 0x53, 0x34, 0x95, 0x16, 0xB7, 0x98, 0x39, 0xBA, 0x1B
 		
-		if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
-		{
-			pUsart->US_RTOR = 60 ;		// Bits @ 57600 ~= 1050uS
-			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
-			pUsart->US_IER = US_IER_TIMEOUT ;
-			TelemetryTx.SportTx.index = 0x7E ;
-#ifdef REVX
-			if ( g_model.Module[1].protocol == PROTO_MULTI )
-			{
-				PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
-			}
-#endif
-    }
-    LastReceivedSportByte = data ;
-	}
-}
+//		if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
+//		{
+//			pUsart->US_RTOR = 60 ;		// Bits @ 57600 ~= 1050uS
+//			pUsart->US_CR = US_CR_RETTO | US_CR_STTTO ;
+//			pUsart->US_IER = US_IER_TIMEOUT ;
+//			TelemetryTx.SportTx.index = 0x7E ;
+//#ifdef REVX
+//			if ( g_model.Module[1].protocol == PROTO_MULTI )
+//			{
+//				PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
+//			}
+//#endif
+//    }
+//    LastReceivedSportByte = data ;
+//	}
+//}
 
 // set outPtr start of buffer
 // give 1st buffer to Uart as RPR/RCR
@@ -1813,145 +1837,145 @@ extern "C" void USART0_IRQHandler()
 
 
 
-#ifdef REVX
-void jetiSendWord( uint16_t word )
-{
-  register Usart *pUsart = SECOND_USART;
-	uint32_t i ;
-	uint16_t parity = 0 ;
+//#ifdef REVX
+//void jetiSendWord( uint16_t word )
+//{
+//  register Usart *pUsart = SECOND_USART;
+//	uint32_t i ;
+//	uint16_t parity = 0 ;
 
-	JetiTxBuffer[0] = 0 ;	// Sends a 1
-	JetiTxBuffer[1] = 0 ;	// Sends a 1
-	JetiTxBuffer[2] = 0xFF ;	// Sends a 0 ( start )
+//	JetiTxBuffer[0] = 0 ;	// Sends a 1
+//	JetiTxBuffer[1] = 0 ;	// Sends a 1
+//	JetiTxBuffer[2] = 0xFF ;	// Sends a 0 ( start )
 	
-	for ( i = 3 ; i < 12 ; i += 1 )
-	{
-		parity += word ;
-		JetiTxBuffer[i] = ( word & 1 ) ? 0 : 0xFF ;
-		word >>= 1 ;
-	}
-	JetiTxBuffer[12] = ( parity & 1 ) ? 0xFF : 0 ;
-	JetiTxBuffer[13] = 0 ;	// Stop bit
-	JetiTxBuffer[14] = 0 ;	// Stop bit
-	JetiTxBuffer[15] = 0 ;	// Stop bit
+//	for ( i = 3 ; i < 12 ; i += 1 )
+//	{
+//		parity += word ;
+//		JetiTxBuffer[i] = ( word & 1 ) ? 0 : 0xFF ;
+//		word >>= 1 ;
+//	}
+//	JetiTxBuffer[12] = ( parity & 1 ) ? 0xFF : 0 ;
+//	JetiTxBuffer[13] = 0 ;	// Stop bit
+//	JetiTxBuffer[14] = 0 ;	// Stop bit
+//	JetiTxBuffer[15] = 0 ;	// Stop bit
 
 	 
-	NVIC_DisableIRQ(USART0_IRQn) ;
-//  /* Disable PDC channel */
-  pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
-//#ifdef REVX
-//	PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
+//	NVIC_DisableIRQ(USART0_IRQn) ;
+////  /* Disable PDC channel */
+//  pUsart->US_PTCR = US_PTCR_RXTDIS | US_PTCR_TXTDIS;
+////#ifdef REVX
+////	PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
+////#endif
+//  pUsart->US_CR = US_CR_RSTTX | US_CR_RXDIS | US_CR_TXDIS ;
+
+////  /* Configure mode */
+//  pUsart->US_MR = 0x0000080E ;  // SPI mode, 5 bits
+
+////  /* Configure baudrate */
+//  pUsart->US_BRGR = ( Master_frequency / 9600 / 8 ) ;
+
+//  pUsart->US_IDR = 0xFFFFFFFF ;
+////  /* Enable transmitter */
+//  pUsart->US_CR = US_CR_TXEN ;
+
+//	(void) pUsart->US_RHR ;
+//	txPdcUsart( JetiTxBuffer, 16, 0 ) ;
+////	pUsart->US_THR = ( word >> 7 ) | 0xFE ;
+//  pUsart->US_IER = US_IER_TXEMPTY ;
+//	NVIC_EnableIRQ(USART0_IRQn) ;
+//}
+
+//int32_t getJetiWord()
+//{
+//	return get_16bit_fifo32( &Jeti_fifo ) ;
+//}
+
 //#endif
-  pUsart->US_CR = US_CR_RSTTX | US_CR_RXDIS | US_CR_TXDIS ;
 
-//  /* Configure mode */
-  pUsart->US_MR = 0x0000080E ;  // SPI mode, 5 bits
+//uint32_t txPdcUsart( uint8_t *buffer, uint32_t size, uint32_t receive )
+//{
+//  register Usart *pUsart = SECOND_USART;
 
-//  /* Configure baudrate */
-  pUsart->US_BRGR = ( Master_frequency / 9600 / 8 ) ;
+//	if ( pUsart->US_TNCR == 0 )
+//	{
+//#ifdef REVX
+//		PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
+//#endif
 
-  pUsart->US_IDR = 0xFFFFFFFF ;
-//  /* Enable transmitter */
-  pUsart->US_CR = US_CR_TXEN ;
+//		if ( receive == 0 )
+//		{
+//			pUsart->US_CR = US_CR_RXDIS ;
+//		}
+//#ifndef SIMU
+//	  pUsart->US_TNPR = (uint32_t)buffer ;
+//#endif
+//		pUsart->US_TNCR = size ;
+//		pUsart->US_PTCR = US_PTCR_TXTEN ;
+//		pUsart->US_IER = US_IER_ENDTX ;
+//		NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
+//		NVIC_EnableIRQ(USART0_IRQn) ;
+//		return 1 ;
+//	}
+//	return 0 ;
+//}
 
-	(void) pUsart->US_RHR ;
-	txPdcUsart( JetiTxBuffer, 16, 0 ) ;
-//	pUsart->US_THR = ( word >> 7 ) | 0xFE ;
-  pUsart->US_IER = US_IER_TXEMPTY ;
-	NVIC_EnableIRQ(USART0_IRQn) ;
-}
+//uint32_t txCom2Uart( uint8_t *buffer, uint32_t size )
+//{
+//	Uart *pUart=CONSOLE_USART ;
 
-int32_t getJetiWord()
-{
-	return get_16bit_fifo32( &Jeti_fifo ) ;
-}
-
-#endif
-
-uint32_t txPdcUsart( uint8_t *buffer, uint32_t size, uint32_t receive )
-{
-  register Usart *pUsart = SECOND_USART;
-
-	if ( pUsart->US_TNCR == 0 )
-	{
-#ifdef REVX
-		PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
-#endif
-
-		if ( receive == 0 )
-		{
-			pUsart->US_CR = US_CR_RXDIS ;
-		}
-#ifndef SIMU
-	  pUsart->US_TNPR = (uint32_t)buffer ;
-#endif
-		pUsart->US_TNCR = size ;
-		pUsart->US_PTCR = US_PTCR_TXTEN ;
-		pUsart->US_IER = US_IER_ENDTX ;
-		NVIC_SetPriority( USART0_IRQn, 3 ) ; // Quite high priority interrupt
-		NVIC_EnableIRQ(USART0_IRQn) ;
-		return 1 ;
-	}
-	return 0 ;
-}
-
-uint32_t txCom2Uart( uint8_t *buffer, uint32_t size )
-{
-	Uart *pUart=CONSOLE_USART ;
-
-	if ( pUart->UART_TNCR == 0 )
-	{
-#ifndef SIMU
-	  pUart->UART_TNPR = (uint32_t)buffer ;
-#endif
-		pUart->UART_TNCR = size ;
-		pUart->UART_PTCR = US_PTCR_TXTEN ;
-		return 1 ;
-	}
-	return 0 ;
-}
+//	if ( pUart->UART_TNCR == 0 )
+//	{
+//#ifndef SIMU
+//	  pUart->UART_TNPR = (uint32_t)buffer ;
+//#endif
+//		pUart->UART_TNCR = size ;
+//		pUart->UART_PTCR = US_PTCR_TXTEN ;
+//		return 1 ;
+//	}
+//	return 0 ;
+//}
 
 
-uint32_t txPdcPending()
-{
-  register Usart *pUsart = SECOND_USART;
-	uint32_t x ;
+//uint32_t txPdcPending()
+//{
+//  register Usart *pUsart = SECOND_USART;
+//	uint32_t x ;
 
-	__disable_irq() ;
-	pUsart->US_PTCR = US_PTCR_TXTDIS ;		// Freeze DMA
-	x = pUsart->US_TNCR ;				// Total
-	x += pUsart->US_TCR ;				// Still to send
-	pUsart->US_PTCR = US_PTCR_TXTEN ;			// DMA active again
-	__enable_irq() ;
+//	__disable_irq() ;
+//	pUsart->US_PTCR = US_PTCR_TXTDIS ;		// Freeze DMA
+//	x = pUsart->US_TNCR ;				// Total
+//	x += pUsart->US_TCR ;				// Still to send
+//	pUsart->US_PTCR = US_PTCR_TXTEN ;			// DMA active again
+//	__enable_irq() ;
 
-	return x ;
-}
+//	return x ;
+//}
 
 
-#ifdef BLUETOOTH
-struct t_serial_tx *Current_bt ;
+//#ifdef BLUETOOTH
+//struct t_serial_tx *Current_bt ;
 
-uint32_t txPdcBt( struct t_serial_tx *data )
-{
-  Uart *pUart=BT_USART ;
+//uint32_t txPdcBt( struct t_serial_tx *data )
+//{
+//  Uart *pUart=BT_USART ;
 		
-	if ( pUart->UART_TNCR == 0 )
-	{
-		Current_bt = data ;
-		data->ready = 1 ;
-#ifndef SIMU
-	  pUart->UART_TPR = (uint32_t)data->buffer ;
-#endif
-		pUart->UART_TCR = data->size ;
-		pUart->UART_PTCR = US_PTCR_TXTEN ;
-		pUart->UART_IER = UART_IER_TXBUFE ;
-		NVIC_SetPriority( USART1_IRQn, 3 ) ; // Lower priority interrupt
-		NVIC_EnableIRQ(UART1_IRQn) ;
-		return 1 ;			// Sent OK
-	}
-	return 0 ;				// Busy
-}
-#endif
+//	if ( pUart->UART_TNCR == 0 )
+//	{
+//		Current_bt = data ;
+//		data->ready = 1 ;
+//#ifndef SIMU
+//	  pUart->UART_TPR = (uint32_t)data->buffer ;
+//#endif
+//		pUart->UART_TCR = data->size ;
+//		pUart->UART_PTCR = US_PTCR_TXTEN ;
+//		pUart->UART_IER = UART_IER_TXBUFE ;
+//		NVIC_SetPriority( USART1_IRQn, 3 ) ; // Lower priority interrupt
+//		NVIC_EnableIRQ(UART1_IRQn) ;
+//		return 1 ;			// Sent OK
+//	}
+//	return 0 ;				// Busy
+//}
+//#endif
 
 //void end_bt_tx_interrupt()
 //{
@@ -1960,22 +1984,29 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 //	NVIC_DisableIRQ(UART1_IRQn) ;
 //}
 
-extern "C" void UART1_IRQHandler()
-{
-  Uart *pUart=BT_USART ;
-	if ( pUart->UART_SR & UART_SR_TXBUFE )
-	{
-		pUart->UART_IDR = UART_IDR_TXBUFE ;
-		pUart->UART_PTCR = US_PTCR_TXTDIS ;
-		Current_bt->ready = 0 ;	
-	}
-#ifndef BT_PDC
-	if ( pUart->UART_SR & UART_SR_RXRDY )
-	{
-		put_fifo128( &BtRx_fifo, pUart->UART_RHR ) ;	
-	}
-#endif
-}
+//extern "C" void UART1_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x8D ;
+//#else
+//	RTC->BKP1R = 0x8D ;
+//#endif
+//#endif
+//  Uart *pUart=BT_USART ;
+//	if ( pUart->UART_SR & UART_SR_TXBUFE )
+//	{
+//		pUart->UART_IDR = UART_IDR_TXBUFE ;
+//		pUart->UART_PTCR = US_PTCR_TXTDIS ;
+//		Current_bt->ready = 0 ;	
+//	}
+//#ifndef BT_PDC
+//	if ( pUart->UART_SR & UART_SR_RXRDY )
+//	{
+//		put_fifo128( &BtRx_fifo, pUart->UART_RHR ) ;	
+//	}
+//#endif
+//}
 
 
 /**
@@ -1984,40 +2015,40 @@ extern "C" void UART1_IRQHandler()
  * This function is synchronous (i.e. uses polling).
  * c  Character to send.
  */
-void txmit( uint8_t c )
-{
-  Uart *pUart=CONSOLE_USART ;
+//void txmit( uint8_t c )
+//{
+//  Uart *pUart=CONSOLE_USART ;
 
-	/* Wait for the transmitter to be ready */
-  while ( (pUart->UART_SR & UART_SR_TXEMPTY) == 0 ) ;
+//	/* Wait for the transmitter to be ready */
+//  while ( (pUart->UART_SR & UART_SR_TXEMPTY) == 0 ) ;
 
-  /* Send character */
-  pUart->UART_THR=c ;
-}
+//  /* Send character */
+//  pUart->UART_THR=c ;
+//}
 
 // Outputs a string to the UART
 
-void txmit2nd( uint8_t c )
-{
-  register Usart *pUsart = SECOND_USART;
+//void txmit2nd( uint8_t c )
+//{
+//  register Usart *pUsart = SECOND_USART;
 
-	/* Wait for the transmitter to be ready */
-  while ( (pUsart->US_CSR & US_CSR_TXEMPTY) == 0 ) ;
+//	/* Wait for the transmitter to be ready */
+//  while ( (pUsart->US_CSR & US_CSR_TXEMPTY) == 0 ) ;
 
-  /* Send character */
-  pUsart->US_THR=c ;
-}
+//  /* Send character */
+//  pUsart->US_THR=c ;
+//}
 
-uint16_t rx2nduart()
-{
-  register Usart *pUsart = SECOND_USART;
+//uint16_t rx2nduart()
+//{
+//  register Usart *pUsart = SECOND_USART;
 
-  if (pUsart->US_CSR & US_CSR_RXRDY)
-	{
-		return pUsart->US_RHR ;
-	}
-	return 0xFFFF ;
-}
+//  if (pUsart->US_CSR & US_CSR_RXRDY)
+//	{
+//		return pUsart->US_RHR ;
+//	}
+//	return 0xFFFF ;
+//}
 
 //void txmitBt( uint8_t c )
 //{
@@ -2426,136 +2457,143 @@ void setCaptureMode(uint32_t mode)
 	}
 }
 
-void start_timer5()
-{
-#ifndef SIMU
-  register Tc *ptc ;
-//	register Pio *pioptr ;
+//void start_timer5()
+//{
+//#ifndef SIMU
+//  register Tc *ptc ;
+////	register Pio *pioptr ;
 
-	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
-  PMC->PMC_PCER0 |= 0x10000000L ;		// Enable peripheral clock to TC5
+//	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
+//  PMC->PMC_PCER0 |= 0x10000000L ;		// Enable peripheral clock to TC5
 
-  ptc = TC1 ;		// Tc block 1 (TC3-5)
-	ptc->TC_BCR = 0 ;			// No sync
-	ptc->TC_BMR = 0x32 ;
-	ptc->TC_CHANNEL[2].TC_CMR = 0x00000000 ;	// Capture mode
-	ptc->TC_CHANNEL[2].TC_CMR = 0x00090007 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC2, A rise, B fall
-	ptc->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
-	NVIC_SetPriority( TC5_IRQn, 14 ) ; // Low priority interrupt
-	NVIC_EnableIRQ(TC5_IRQn) ;
-#endif
-}
+//  ptc = TC1 ;		// Tc block 1 (TC3-5)
+//	ptc->TC_BCR = 0 ;			// No sync
+//	ptc->TC_BMR = 0x32 ;
+//	ptc->TC_CHANNEL[2].TC_CMR = 0x00000000 ;	// Capture mode
+//	ptc->TC_CHANNEL[2].TC_CMR = 0x00090007 ;	// 0000 0000 0000 1001 0000 0000 0000 0101, XC2, A rise, B fall
+//	ptc->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
+//	NVIC_SetPriority( TC5_IRQn, 14 ) ; // Low priority interrupt
+//	NVIC_EnableIRQ(TC5_IRQn) ;
+//#endif
+//}
 
-void stop_timer5()
-{
-	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
-	NVIC_DisableIRQ(TC5_IRQn) ;
-}
+//void stop_timer5()
+//{
+//	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
+//	NVIC_DisableIRQ(TC5_IRQn) ;
+//}
 
-void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint32_t port )
-{
-	struct t_softSerial *pss = &SoftSerial1 ;
-	if ( port == 0 )
-	{
-		pss->softwareComBit = PIO_PA5 ;
-		pss->pfifo = &Com1_fifo ;
-	}
-	else
-	{
-		pss->softwareComBit = PIO_PA9 ;
-		pss->pfifo = &Com2_fifo ;
-	}
-	pss->bitTime = 2000000 / baudrate ;
+//void init_software_com(uint32_t baudrate, uint32_t invert, uint32_t parity, uint32_t port )
+//{
+//	struct t_softSerial *pss = &SoftSerial1 ;
+//	if ( port == 0 )
+//	{
+//		pss->softwareComBit = PIO_PA5 ;
+//		pss->pfifo = &Com1_fifo ;
+//	}
+//	else
+//	{
+//		pss->softwareComBit = PIO_PA9 ;
+//		pss->pfifo = &Com2_fifo ;
+//	}
+//	pss->bitTime = 2000000 / baudrate ;
 
-	pss->softSerInvert = invert ? 0 : pss->softwareComBit ;
-	pss->softSerialEvenParity = parity ? 1 : 0 ;
+//	pss->softSerInvert = invert ? 0 : pss->softwareComBit ;
+//	pss->softSerialEvenParity = parity ? 1 : 0 ;
 
-	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
-	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
-	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
-	pss->lineState = LINE_IDLE ;
-	CaptureMode = CAP_COM1 ;
-	configure_pins( pss->softwareComBit, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
-	PIOA->PIO_IER = pss->softwareComBit ;
-	NVIC_SetPriority( PIOA_IRQn, 0 ) ; // Highest priority interrupt
-	NVIC_EnableIRQ(PIOA_IRQn) ;
-	start_timer5() ;
-}
+//	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRAS ;		// No int on rising edge
+//	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_LDRBS ;		// No int on falling edge
+//	TC1->TC_CHANNEL[0].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
+//	pss->lineState = LINE_IDLE ;
+//	CaptureMode = CAP_COM1 ;
+//	configure_pins( pss->softwareComBit, PIN_ENABLE | PIN_INPUT | PIN_PORTA ) ;
+//	PIOA->PIO_IER = pss->softwareComBit ;
+//	NVIC_SetPriority( PIOA_IRQn, 0 ) ; // Highest priority interrupt
+//	NVIC_EnableIRQ(PIOA_IRQn) ;
+//	start_timer5() ;
+//}
 
-// Handle software serial on COM1 input (for non-inverted input)
-void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
-{
-	init_software_com(baudrate, invert, parity, 0 ) ;
-}
+//// Handle software serial on COM1 input (for non-inverted input)
+//void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity)
+//{
+//	init_software_com(baudrate, invert, parity, 0 ) ;
+//}
 
-static void disable_software_com( uint32_t bit)
-{
-	stop_timer5() ;
-	CaptureMode = CAP_PPM ;
-	PIOA->PIO_IDR = bit ;
-	NVIC_DisableIRQ(PIOA_IRQn) ;
-}
+//static void disable_software_com( uint32_t bit)
+//{
+//	stop_timer5() ;
+//	CaptureMode = CAP_PPM ;
+//	PIOA->PIO_IDR = bit ;
+//	NVIC_DisableIRQ(PIOA_IRQn) ;
+//}
 
-void disable_software_com1()
-{
-	disable_software_com( PIO_PA5 ) ;
-}
+//void disable_software_com1()
+//{
+//	disable_software_com( PIO_PA5 ) ;
+//}
 
-void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity)
-{
-	init_software_com(baudrate, invert, parity, 1 ) ;
-}
+//void init_software_com2(uint32_t baudrate, uint32_t invert, uint32_t parity)
+//{
+//	init_software_com(baudrate, invert, parity, 1 ) ;
+//}
 
-void disable_software_com2()
-{
-	disable_software_com( PIO_PA9 ) ;
-}
+//void disable_software_com2()
+//{
+//	disable_software_com( PIO_PA9 ) ;
+//}
 
-extern "C" void PIOA_IRQHandler()
-{
-  register uint32_t capture ;
-  register uint32_t dummy ;
+//extern "C" void PIOA_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x8E ;
+//#else
+//	RTC->BKP1R = 0x8E ;
+//#endif
+//#endif
+//  register uint32_t capture ;
+//  register uint32_t dummy ;
 	
-	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
-	struct t_softSerial *pss = &SoftSerial1 ;
-	dummy = PIOA->PIO_ISR ;			// Read and clear status register
-	(void) dummy ;		// Discard value - prevents compiler warning
+//	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
+//	struct t_softSerial *pss = &SoftSerial1 ;
+//	dummy = PIOA->PIO_ISR ;			// Read and clear status register
+//	(void) dummy ;		// Discard value - prevents compiler warning
 
-	dummy = PIOA->PIO_PDSR ;
-	if ( ( dummy & pss->softwareComBit ) == pss->softSerInvert )
-	{
-		// L to H transition
-		pss->LtoHtime = capture ;
-		TC1->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
-		TC1->TC_CHANNEL[2].TC_RC = pss->bitTime * 10 ;
-		uint32_t time ;
-		capture -= pss->HtoLtime ;
-		time = capture ;
-		putCaptureTime( pss, time, 0 ) ;
-		TC1->TC_CHANNEL[2].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
-		(void) TC1->TC_CHANNEL[2].TC_SR ;
-	}
-	else
-	{
-		// H to L transition
-		pss->HtoLtime = capture ;
-		if ( pss->lineState == LINE_IDLE )
-		{
-			pss->lineState = LINE_ACTIVE ;
-//			putCaptureTime( pss, 0, 3 ) ;
-			TC1->TC_CHANNEL[2].TC_RC = capture + (pss->bitTime * 20) ;
-			(void) TC1->TC_CHANNEL[2].TC_SR ;
-		}
-		else
-		{
-			uint32_t time ;
-			capture -= pss->LtoHtime ;
-			time = capture ;
-			putCaptureTime( pss, time, 1 ) ;
-		}
-		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
-	}
-}
+//	dummy = PIOA->PIO_PDSR ;
+//	if ( ( dummy & pss->softwareComBit ) == pss->softSerInvert )
+//	{
+//		// L to H transition
+//		pss->LtoHtime = capture ;
+//		TC1->TC_CHANNEL[2].TC_CCR = 5 ;		// Enable clock and trigger it (may only need trigger)
+//		TC1->TC_CHANNEL[2].TC_RC = pss->bitTime * 10 ;
+//		uint32_t time ;
+//		capture -= pss->HtoLtime ;
+//		time = capture ;
+//		putCaptureTime( pss, time, 0 ) ;
+//		TC1->TC_CHANNEL[2].TC_IER = TC_IER0_CPCS ;		// Compare interrupt
+//		(void) TC1->TC_CHANNEL[2].TC_SR ;
+//	}
+//	else
+//	{
+//		// H to L transition
+//		pss->HtoLtime = capture ;
+//		if ( pss->lineState == LINE_IDLE )
+//		{
+//			pss->lineState = LINE_ACTIVE ;
+////			putCaptureTime( pss, 0, 3 ) ;
+//			TC1->TC_CHANNEL[2].TC_RC = capture + (pss->bitTime * 20) ;
+//			(void) TC1->TC_CHANNEL[2].TC_SR ;
+//		}
+//		else
+//		{
+//			uint32_t time ;
+//			capture -= pss->LtoHtime ;
+//			time = capture ;
+//			putCaptureTime( pss, time, 1 ) ;
+//		}
+//		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
+//	}
+//}
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
@@ -2588,6 +2626,13 @@ void stop_pb14_heartbeat()
 
 extern "C" void PIOB_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x8F ;
+#else
+	RTC->BKP1R = 0x8F ;
+#endif
+#endif
   uint32_t capture ;
   uint32_t dummy ;
 	
@@ -2598,21 +2643,28 @@ extern "C" void PIOB_IRQHandler()
 }
 
 
-extern "C" void TC5_IRQHandler()
-{
-	uint32_t status ;
-	struct t_softSerial *pss = &SoftSerial1 ;
+//extern "C" void TC5_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x91 ;
+//#else
+//	RTC->BKP1R = 0x91 ;
+//#endif
+//#endif
+//	uint32_t status ;
+//	struct t_softSerial *pss = &SoftSerial1 ;
 
-	status = TC1->TC_CHANNEL[2].TC_SR ;
-	if ( status & TC_SR0_CPCS )
-	{		
-		uint32_t time ;
-		time = TC1->TC_CHANNEL[0].TC_CV - pss->LtoHtime ;
-		putCaptureTime( pss, time, 2 ) ;
-		pss->lineState = LINE_IDLE ;
-		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
-	}
-}
+//	status = TC1->TC_CHANNEL[2].TC_SR ;
+//	if ( status & TC_SR0_CPCS )
+//	{		
+//		uint32_t time ;
+//		time = TC1->TC_CHANNEL[0].TC_CV - pss->LtoHtime ;
+//		putCaptureTime( pss, time, 2 ) ;
+//		pss->lineState = LINE_IDLE ;
+//		TC1->TC_CHANNEL[2].TC_IDR = TC_IDR0_CPCS ;		// No compare interrupt
+//	}
+//}
 
 #endif
 
@@ -2626,6 +2678,13 @@ extern "C" void TC5_IRQHandler()
 
 extern "C" void TC3_IRQHandler() //capture ppm in at 2MHz
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x92 ;
+#else
+	RTC->BKP1R = 0x92 ;
+#endif
+#endif
   uint16_t capture ;
   static uint16_t lastCapt ;
   uint16_t val ;
@@ -2816,6 +2875,13 @@ void disable_ssc()
 
 extern "C" void SSC_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x93 ;
+#else
+	RTC->BKP1R = 0x93 ;
+#endif
+#endif
 	if ( SSC->SSC_IMR & SSC_IMR_TXBUFE )
 	{
 		SSC->SSC_IDR = SSC_IDR_TXBUFE ;	// Stop interrupt
@@ -2840,432 +2906,507 @@ extern "C" void SSC_IRQHandler()
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 
-#ifndef PCBX12D
-void USART6_Sbus_configure()
-{
- #ifdef PCBX9D
-	stop_xjt_heartbeat() ;
- #endif
-	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
-	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
-	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 100000 ;
-	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	USART6->CR2 = 0 ;
-	USART6->CR3 = 0 ;
-	(void) USART6->DR ;
-	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
-  NVIC_EnableIRQ(USART6_IRQn) ;
-}
-
-void stop_USART6_Sbus()
-{
-	configure_pins( 0x0080, PIN_INPUT | PIN_PORTC ) ;
-  NVIC_DisableIRQ(USART6_IRQn) ;
- #ifdef PCBX9D
-	init_xjt_heartbeat() ;
- #endif
-}
-
-extern "C" void USART6_IRQHandler()
-{
-	put_fifo64( &Sbus_fifo, USART6->DR ) ;	
-}
-#endif // #ifndef PCBX12D
-
-
-#ifdef PCBX12D
-void USART6_configure()
-{
-	if ( isProdVersion() == 0 )
-	{
-		RCC->AHB1ENR |= PROT_BT_RCC_AHB1Periph ;
-		configure_pins( PROT_BT_EN_GPIO_PIN, PIN_OUTPUT | PIN_PORTA ) ;
-		GPIOA->BSRRH = PROT_BT_EN_GPIO_PIN ;
-	}
-	else
-	{
-		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
-		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
-		GPIOI->BSRRH = BT_EN_GPIO_PIN ;
-	}
-	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
-	configure_pins( BT_TX_GPIO_PIN|BT_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
-	configure_pins( BT_BRTS_GPIO_PIN, PIN_OUTPUT | PIN_PORTG ) ;
-	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
-	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;
-	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE ;
-	USART6->CR2 = 0 ;
-	USART6->CR3 = 0 ;
-	(void) USART6->DR ;
-	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
-  NVIC_EnableIRQ(USART6_IRQn) ;
-	
-}
-
-void USART6SetBaudrate( uint32_t baudrate )
-{
-	USART6->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
-}
+//uint8_t LastReceivedSportByte ;
 
 #ifdef BLUETOOTH
-uint32_t txPdcBt( struct t_serial_tx *data )
+// #ifdef BT_PDC
+//struct t_rxUartBuffer BtPdcFifo ;
+//void startPdcBtReceive() ;
+//static int32_t rxPdcBt() ;
+// #else
+struct t_fifo128 BtRx_fifo ;
+// #endif
+
+int32_t rxBtuart()
 {
-	data->ready = 1 ;
-	Current_Com6 = data ;
-	USART6->CR1 |= USART_CR1_TXEIE ;
-	return 1 ;			// Sent OK
+	return get_fifo128( &BtRx_fifo ) ;
 }
+
+
 #endif
 
-uint16_t Last6Rx ;
-uint16_t Last6Status ;
-uint16_t Last6Count ;
 
-extern "C" void USART6_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
-	USART_TypeDef *puart = USART6 ;
 
-  status = puart->SR ;
-	Last6Status = status ;
-	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
-	{
-		if ( Current_Com6 )
-		{
-			if ( Current_Com6->size )
-			{
-				puart->DR = *Current_Com6->buffer++ ;
-				if ( --Current_Com6->size == 0 )
-				{
-					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-				}
-			}
-			else
-			{
-				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-			}
-		}
-	}
+//#ifdef PCBX9LITE
+//#define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+//#define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+//#endif // X3
 
-	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
-	{
-		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		Current_Com6->ready = 0 ;
-	}
+//#ifndef PCBX12D
+//void USART6_Sbus_configure()
+//{
+// #ifdef PCBX9D
+//  #ifndef PCBX9LITE
+//	stop_xjt_heartbeat() ;
+//  #endif // X3
+// #endif
+//#ifdef PCBX9LITE
+//	if ( g_model.Module[EXTERNAL_MODULE].protocol == PROTO_PXX )
+//	{
+//		return ;	// USART6 in use
+//	}
+//#endif // X3
+//	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+//	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
+//	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 100000 ;
+//	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	USART6->CR2 = 0 ;
+//	USART6->CR3 = 0 ;
+//	(void) USART6->DR ;
+//	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
+//  NVIC_EnableIRQ(USART6_IRQn) ;
+
+//#ifdef PCBX9LITE
+//	EXTERNAL_RF_ON() ;
+//#endif // X3
+//}
+
+//void stop_USART6_Sbus()
+//{
+//#ifdef PCBX9LITE
+//	if ( g_model.Module[EXTERNAL_MODULE].protocol == PROTO_PXX )
+//	{
+//		return ;	// USART6 in use
+//	}
+//	EXTERNAL_RF_OFF() ;
+//#endif // X3
 	
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR ;
-		Last6Rx = ( Last6Rx << 8 ) | data ;
-		Last6Count += 1 ;
+//	configure_pins( 0x0080, PIN_INPUT | PIN_PORTC ) ;
+//  NVIC_DisableIRQ(USART6_IRQn) ;
+// #ifdef PCBX9D
+//  #ifndef PCBX9LITE
+//	init_xjt_heartbeat() ;
+//  #endif // X3
+// #endif
+//}
 
-    if (!(status & USART_FLAG_ERRORS))
-		{
-#ifdef BLUETOOTH
-			put_fifo128( &BtRx_fifo, data ) ;	
-#else
-			(void) data ;	
-#endif
-		}
-		else
-		{
-			USART_ERRORS += 1 ;
-			if ( status & USART_FLAG_ORE )
-			{
-				USART_ORE += 1 ;
-			}
-		}
-    status = puart->SR ;
-	}
-}
-
-
-#endif // #ifdef PCBX12D
+//#ifndef PCBX9LITE
+// #ifndef PCBXLITE
+//extern "C" void USART6_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x94 ;
+//#else
+//	RTC->BKP1R = 0x94 ;
+//#endif
+//#endif
+//	put_fifo64( &Sbus_fifo, USART6->DR ) ;	
+//}
+// #endif // Xlite
+//#endif // X3
 
 
-
-#ifndef PCB9XT
-void UART_Sbus_configure( uint32_t masterClock )
-{
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
-	USART3->CR1 |= USART_CR1_M | USART_CR1_PCE ;
-}
-
-void UART_Sbus57600_configure( uint32_t masterClock )
-{
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;
-	USART3->CR1 |= USART_CR1_M | USART_CR1_PCE ;
-}
+//#endif // #ifndef PCBX12D
 
 
-void ConsoleInit()
-{
-	// Serial configure  
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-	GPIOB->MODER = (GPIOB->MODER & 0xFF0FFFFF ) | 0x00A00000 ;	// Alternate func.
-	GPIOB->AFR[1] = (GPIOB->AFR[1] & 0xFFFF00FF ) | 0x00007700 ;	// Alternate func.
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / CONSOLE_BAUDRATE ;		// 97.625 divider => 19200 baud
-	USART3->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	USART3->CR2 = 0 ;
-	USART3->CR3 = 0 ;
-	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
-  NVIC_EnableIRQ(USART3_IRQn) ;
-}
-
-void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
-{
-	ConsoleInit() ;
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-	com2Parity( parity ) ;
-}
-
-#endif // #ifndef PCB9XT
-
-void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
-{
-	// Serial configure  
-	if ( invert )
-	{
-	  NVIC_DisableIRQ(USART2_IRQn) ;
-		init_software_com1( baudRate, invert, parity ) ;
-		return ;
-	}
-	disable_software_com1() ;
-
-	RCC->APB1ENR |= RCC_APB1ENR_USART2EN ;		// Enable clock
-#ifdef PCB9XT
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-	GPIOB->BSRRH = 0x0004 ;		// output disable
-#else
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
-#ifdef PCBXLITE
-	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
-#else
-	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
-#endif
-#endif
-#ifdef PCB9XT
-// PB2 as SPort enable
-	configure_pins( 0x00000004, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
-	configure_pins( 0x00000008, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTA ) ;
-	configure_pins( 0x00000004, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTA ) ;
-#else
-	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
-	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
-	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
-#endif
-	if ( baudRate > 10 )
-	{
-		USART2->BRR = PeripheralSpeeds.Peri1_frequency / baudRate ;
-	}
-	else if ( baudRate == 0 )
-	{
-		USART2->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;		// 16.25 divider => 57600 baud
-	}
-	else
-	{
-		USART2->BRR = PeripheralSpeeds.Peri1_frequency / 9600 ;		// 97.625 divider => 9600 baud
-	}
-	USART2->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	USART2->CR2 = 0 ;
-	USART2->CR3 = 0 ;
-	if ( parity )
-	{
-		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;	// Need 9th bit for parity
-		USART2->CR2 |= 0x2000 ;	// 2 stop bits
-	}
-	if ( baudRate == 115200 )		// ASSAN DSM
-	{
-#ifdef PCB9XT
-		GPIOB->BSRRL = 0x0004 ;		// output disable
-#else
-		GPIOD->BSRRL = 0x0010 ;		// output enable
-#endif
-	}
-	NVIC_SetPriority( USART2_IRQn, 2 ) ; // Quite high priority interrupt
-  NVIC_EnableIRQ(USART2_IRQn);
-}
-
-struct t_sendingSport
-{
-	uint8_t *buffer ;
-	uint32_t count ;
-} SendingSportPacket ;
-
-
-void x9dHubTxStart( uint8_t *buffer, uint32_t count )
-{
-	if ( FrskyTelemetryType == FRSKY_TEL_HUB )		// Hub
-	{	
-		SendingSportPacket.buffer = buffer ;
-		SendingSportPacket.count = count ;
-		TelemetryTx.sportBusy = 1 ;
-		USART2->CR1 |= USART_CR1_TXEIE ;
-	}
-}
-
-uint32_t hubTxPending()
-{
-	return TelemetryTx.sportBusy ;
-}
-
-#ifndef PCB9XT
-void com1Parity( uint32_t even )
-{
-	if ( even )
-	{
-		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-
-
-void com2Parity( uint32_t even )
-{
-	if ( even )
-	{
-		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-#endif
-
-uint16_t SportStartDebug ;
-
-void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
-{
-SportStartDebug	+= 1 ;
-	USART2->CR1 &= ~USART_CR1_TE ;
+//#ifdef PCBX12D
+//void USART6_configure()
+//{
+//	if ( isProdVersion() == 0 )
+//	{
+//		RCC->AHB1ENR |= PROT_BT_RCC_AHB1Periph ;
+//		configure_pins( PROT_BT_EN_GPIO_PIN, PIN_OUTPUT | PIN_PORTA ) ;
+//		GPIOA->BSRRH = PROT_BT_EN_GPIO_PIN ;
+//	}
+//	else
+//	{
+//		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
+//		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
+//		GPIOI->BSRRH = BT_EN_GPIO_PIN ;
+//	}
+//	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
+//	configure_pins( BT_TX_GPIO_PIN|BT_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+//	configure_pins( BT_BRTS_GPIO_PIN, PIN_OUTPUT | PIN_PORTG ) ;
+//	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
+//	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;
+//	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE ;
+//	USART6->CR2 = 0 ;
+//	USART6->CR3 = 0 ;
+//	(void) USART6->DR ;
+//	NVIC_SetPriority( USART6_IRQn, 5 ) ; // Lower priority interrupt
+//  NVIC_EnableIRQ(USART6_IRQn) ;
 	
-	SendingSportPacket.buffer = buffer ;
-	SendingSportPacket.count = count ;
-#ifdef PCB9XT
-	GPIOB->BSRRL = 0x0004 ;		// output enable
-#else
- #ifdef PCBXLITE
-	GPIOD->BSRRH = 0x0010 ;		// output enable
- #else
-	GPIOD->BSRRL = 0x0010 ;		// output enable
- #endif
-#endif
-	if ( receive == 0 )
-	{
-		USART2->CR1 &= ~USART_CR1_RE ;
-	}
-	USART2->CR1 |= USART_CR1_TXEIE | USART_CR1_TE ;	// Force an idle frame
-}
+//}
+
+//void USART6SetBaudrate( uint32_t baudrate )
+//{
+//	USART6->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+//}
+
+//#ifdef BLUETOOTH
+//uint32_t txPdcBt( struct t_serial_tx *data )
+//{
+//	data->ready = 1 ;
+//	Current_Com6 = data ;
+//	USART6->CR1 |= USART_CR1_TXEIE ;
+//	return 1 ;			// Sent OK
+//}
+//#endif
+
+//uint16_t Last6Rx ;
+//uint16_t Last6Status ;
+//uint16_t Last6Count ;
+
+//extern "C" void USART6_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x95 ;
+//#else
+//	RTC->BKP1R = 0x95 ;
+//#endif
+//#endif
+//  uint32_t status;
+//  uint8_t data;
+//	USART_TypeDef *puart = USART6 ;
+
+//  status = puart->SR ;
+//	Last6Status = status ;
+//	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+//	{
+//		if ( Current_Com6 )
+//		{
+//			if ( Current_Com6->size )
+//			{
+//				puart->DR = *Current_Com6->buffer++ ;
+//				if ( --Current_Com6->size == 0 )
+//				{
+//					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//				}
+//			}
+//			else
+//			{
+//				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//			}
+//		}
+//	}
+
+//	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+//	{
+//		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		Current_Com6->ready = 0 ;
+//	}
+	
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
+//    data = puart->DR ;
+//		Last6Rx = ( Last6Rx << 8 ) | data ;
+//		Last6Count += 1 ;
+
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//#ifdef BLUETOOTH
+//			put_fifo128( &BtRx_fifo, data ) ;	
+//#else
+//			(void) data ;	
+//#endif
+//		}
+//		else
+//		{
+//			USART_ERRORS += 1 ;
+//			if ( status & USART_FLAG_ORE )
+//			{
+//				USART_ORE += 1 ;
+//			}
+//		}
+//    status = puart->SR ;
+//	}
+//}
+
+
+//#endif // #ifdef PCBX12D
+
+
+
+//#ifndef PCB9XT
+//void UART_Sbus_configure( uint32_t masterClock )
+//{
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
+//	USART3->CR1 |= USART_CR1_M | USART_CR1_PCE ;
+//}
+
+//void UART_Sbus57600_configure( uint32_t masterClock )
+//{
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;
+//	USART3->CR1 |= USART_CR1_M | USART_CR1_PCE ;
+//}
+
+
+//void ConsoleInit()
+//{
+//	// Serial configure  
+//	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	GPIOB->MODER = (GPIOB->MODER & 0xFF0FFFFF ) | 0x00A00000 ;	// Alternate func.
+//	GPIOB->AFR[1] = (GPIOB->AFR[1] & 0xFFFF00FF ) | 0x00007700 ;	// Alternate func.
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / CONSOLE_BAUDRATE ;		// 97.625 divider => 19200 baud
+//	USART3->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	USART3->CR2 = 0 ;
+//	USART3->CR3 = 0 ;
+//	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
+//  NVIC_EnableIRQ(USART3_IRQn) ;
+//}
+
+//void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
+//{
+//	ConsoleInit() ;
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//	com2Parity( parity ) ;
+//}
+
+//#endif // #ifndef PCB9XT
+
+//void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
+//{
+//	// Serial configure  
+//	if ( invert )
+//	{
+//	  NVIC_DisableIRQ(USART2_IRQn) ;
+//		init_software_com1( baudRate, invert, parity ) ;
+//		return ;
+//	}
+//	disable_software_com1() ;
+
+//	RCC->APB1ENR |= RCC_APB1ENR_USART2EN ;		// Enable clock
+//#ifdef PCB9XT
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	GPIOB->BSRRH = 0x0004 ;		// output disable
+//#else
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+//#ifdef PCBXLITE
+//	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+//#else
+//	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+//#endif
+//#endif
+//#ifdef PCB9XT
+//// PB2 as SPort enable
+//	configure_pins( 0x00000004, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+//	configure_pins( 0x00000008, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTA ) ;
+//	configure_pins( 0x00000004, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTA ) ;
+//#else
+//	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+//	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
+//	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
+//#endif
+//	if ( baudRate > 10 )
+//	{
+//		USART2->BRR = PeripheralSpeeds.Peri1_frequency / baudRate ;
+//	}
+//	else if ( baudRate == 0 )
+//	{
+//		USART2->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;		// 16.25 divider => 57600 baud
+//	}
+//	else
+//	{
+//		USART2->BRR = PeripheralSpeeds.Peri1_frequency / 9600 ;		// 97.625 divider => 9600 baud
+//	}
+//	USART2->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	USART2->CR2 = 0 ;
+//	USART2->CR3 = 0 ;
+//	if ( parity )
+//	{
+//		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;	// Need 9th bit for parity
+//		USART2->CR2 |= 0x2000 ;	// 2 stop bits
+//	}
+//	if ( baudRate == 115200 )		// ASSAN DSM
+//	{
+//#ifdef PCB9XT
+//		GPIOB->BSRRL = 0x0004 ;		// output disable
+//#else
+//		GPIOD->BSRRL = 0x0010 ;		// output enable
+//#endif
+//	}
+//	NVIC_SetPriority( USART2_IRQn, 2 ) ; // Quite high priority interrupt
+//  NVIC_EnableIRQ(USART2_IRQn);
+//}
+
+//struct t_sendingSport
+//{
+//	uint8_t *buffer ;
+//	uint32_t count ;
+//} SendingSportPacket ;
+
+
+//void x9dHubTxStart( uint8_t *buffer, uint32_t count )
+//{
+//	if ( FrskyTelemetryType == FRSKY_TEL_HUB )		// Hub
+//	{	
+//		SendingSportPacket.buffer = buffer ;
+//		SendingSportPacket.count = count ;
+//		TelemetryTx.sportBusy = 1 ;
+//		USART2->CR1 |= USART_CR1_TXEIE ;
+//	}
+//}
+
+//uint32_t hubTxPending()
+//{
+//	return TelemetryTx.sportBusy ;
+//}
+
+//#ifndef PCB9XT
+//void com1Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
+
+
+//void com2Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
+//#endif
+
+//uint16_t SportStartDebug ;
+
+//void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
+//{
+//SportStartDebug	+= 1 ;
+//	USART2->CR1 &= ~USART_CR1_TE ;
+	
+//	SendingSportPacket.buffer = buffer ;
+//	SendingSportPacket.count = count ;
+//#ifdef PCB9XT
+//	GPIOB->BSRRL = 0x0004 ;		// output enable
+//#else
+// #ifdef PCBXLITE
+//	GPIOD->BSRRH = 0x0010 ;		// output enable
+// #else
+//	GPIOD->BSRRL = 0x0010 ;		// output enable
+// #endif
+//#endif
+//	if ( receive == 0 )
+//	{
+//		USART2->CR1 &= ~USART_CR1_RE ;
+//	}
+//	USART2->CR1 |= USART_CR1_TXEIE | USART_CR1_TE ;	// Force an idle frame
+//}
 
 #if !defined(SIMU)
 
 
-uint16_t RxIntCount ;
+//uint16_t RxIntCount ;
 
-extern "C" void USART2_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
+//extern "C" void USART2_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x96 ;
+//#else
+//	RTC->BKP1R = 0x96 ;
+//#endif
+//#endif
+//  uint32_t status;
+//  uint8_t data;
 	
-	RxIntCount += 0x1000 ;
+//	RxIntCount += 0x1000 ;
 
-  status = USART2->SR ;
+//  status = USART2->SR ;
 
-	if ( status & USART_SR_TXE )
-	{
-		if ( SendingSportPacket.count )
-		{
-			USART2->DR = *SendingSportPacket.buffer++ ;
-			if ( --SendingSportPacket.count == 0 )
-			{
-				USART2->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-				USART2->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-			}
-		}
-		else
-		{
-			USART2->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-		}
-	}
+//	if ( status & USART_SR_TXE )
+//	{
+//		if ( SendingSportPacket.count )
+//		{
+//			USART2->DR = *SendingSportPacket.buffer++ ;
+//			if ( --SendingSportPacket.count == 0 )
+//			{
+//				USART2->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//				USART2->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//			}
+//		}
+//		else
+//		{
+//			USART2->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//		}
+//	}
 
-	if ( ( status & USART_SR_TC ) && (USART2->CR1 & USART_CR1_TCIE ) )
-	{
-		USART2->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		{
-#ifdef PCB9XT
-			GPIOB->BSRRH = 0x0004 ;		// output disable
-#else
- #ifdef PCBXLITE
-			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
- #else
-			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
- #endif
-#endif
-			TelemetryTx.sportCount = 0 ;
-			TelemetryTx.sportBusy = 0 ;
-			USART2->CR1 |= USART_CR1_RE ;
-		}
-	}
+//	if ( ( status & USART_SR_TC ) && (USART2->CR1 & USART_CR1_TCIE ) )
+//	{
+//		USART2->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		{
+//#ifdef PCB9XT
+//			GPIOB->BSRRH = 0x0004 ;		// output disable
+//#else
+// #ifdef PCBXLITE
+//			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+// #else
+//			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+// #endif
+//#endif
+//			TelemetryTx.sportCount = 0 ;
+//			TelemetryTx.sportBusy = 0 ;
+//			USART2->CR1 |= USART_CR1_RE ;
+//		}
+//	}
 
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
 		
-    data = USART2->DR;
+//    data = USART2->DR;
 
-    if (!(status & USART_FLAG_ERRORS))
-		{
-			RxIntCount += 1 ;
-			put_fifo128( &Com1_fifo, data ) ;
-			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
-			{
-				if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
-				{
-					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
-      		TelemetryTx.SportTx.index = 0x7E ;
-				}
-				LastReceivedSportByte = data ;
-			}
-		}
-		else
-		{
-			if ( status & USART_FLAG_FE )
-			{
-				USART_FE += 1 ;
-				if ( data )
-				{ // A 0 byte is a line break
-					put_fifo128( &Com1_fifo, data ) ;
-				}
-			}
-			else
-			{
-				put_fifo128( &Com1_fifo, data ) ;
-			}
-			USART_ERRORS += 1 ;
-			if ( status & USART_FLAG_ORE )
-			{
-				USART_ORE += 1 ;
-			}
-			if ( status & USART_FLAG_NE )
-			{
-				USART_NE += 1 ;
-			}
-			if ( status & USART_FLAG_PE )
-			{
-				USART_PE += 1 ;
-			}
-		}
-    status = USART2->SR ;
-  }
-}
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//			RxIntCount += 1 ;
+//			put_fifo128( &Com1_fifo, data ) ;
+//			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
+//			{
+//				if ( LastReceivedSportByte == 0x7E && TelemetryTx.sportCount > 0 && data == TelemetryTx.SportTx.index )
+//				{
+//					x9dSPortTxStart( TelemetryTx.SportTx.ptr, TelemetryTx.sportCount, 0 ) ;
+//      		TelemetryTx.SportTx.index = 0x7E ;
+//				}
+//				LastReceivedSportByte = data ;
+//			}
+//		}
+//		else
+//		{
+//			if ( status & USART_FLAG_FE )
+//			{
+//				USART_FE += 1 ;
+//				if ( data )
+//				{ // A 0 byte is a line break
+//					put_fifo128( &Com1_fifo, data ) ;
+//				}
+//			}
+//			else
+//			{
+//				put_fifo128( &Com1_fifo, data ) ;
+//			}
+//			USART_ERRORS += 1 ;
+//			if ( status & USART_FLAG_ORE )
+//			{
+//				USART_ORE += 1 ;
+//			}
+//			if ( status & USART_FLAG_NE )
+//			{
+//				USART_NE += 1 ;
+//			}
+//			if ( status & USART_FLAG_PE )
+//			{
+//				USART_PE += 1 ;
+//			}
+//		}
+//    status = USART2->SR ;
+//  }
+//}
 
 // Start TIMER7 at 2000000Hz
 void start_2Mhz_timer()
@@ -3282,127 +3423,134 @@ void start_2Mhz_timer()
 
 #endif	// SIMU
 
-uint16_t rxTelemetry()
-{
-	return get_fifo128( &Com1_fifo ) ;
-}
+//uint16_t rxTelemetry()
+//{
+//	return get_fifo128( &Com1_fifo ) ;
+//}
 
-#ifndef PCB9XT
-void txmit( uint8_t c )
-{
-	/* Wait for the transmitter to be ready */
-  while ( (USART3->SR & USART_SR_TXE) == 0 ) ;
+//#ifndef PCB9XT
+//void txmit( uint8_t c )
+//{
+//	/* Wait for the transmitter to be ready */
+//  while ( (USART3->SR & USART_SR_TXE) == 0 ) ;
 
-  /* Send character */
-	USART3->DR = c ;
-}
+//  /* Send character */
+//	USART3->DR = c ;
+//}
 
-#ifndef PCBX7
-#ifndef PCBX3
-uint32_t txPdcCom2( struct t_serial_tx *data )
-{
-	data->ready = 1 ;
-	Current_Com2 = data ;
-	USART3->CR1 |= USART_CR1_TXEIE ;
-	return 1 ;			// Sent OK
-}
+//#ifndef PCBX7
+//#ifndef PCBX9LITE
+//uint32_t txPdcCom2( struct t_serial_tx *data )
+//{
+//	data->ready = 1 ;
+//	Current_Com2 = data ;
+//	USART3->CR1 |= USART_CR1_TXEIE ;
+//	return 1 ;			// Sent OK
+//}
 
-extern "C" void USART3_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
-	USART_TypeDef *puart = USART3 ;
+//extern "C" void USART3_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x97 ;
+//#else
+//	RTC->BKP1R = 0x97 ;
+//#endif
+//#endif
+//  uint32_t status;
+//  uint8_t data;
+//	USART_TypeDef *puart = USART3 ;
 	
-  status = puart->SR ;
+//  status = puart->SR ;
 
-	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
-	{
-		if ( Current_Com2 )
-		{
-			if ( Current_Com2->size )
-			{
-				puart->DR = *Current_Com2->buffer++ ;
-				if ( --Current_Com2->size == 0 )
-				{
-					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-				}
-			}
-			else
-			{
-				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-			}
-		}
-	}
+//	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+//	{
+//		if ( Current_Com2 )
+//		{
+//			if ( Current_Com2->size )
+//			{
+//				puart->DR = *Current_Com2->buffer++ ;
+//				if ( --Current_Com2->size == 0 )
+//				{
+//					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//				}
+//			}
+//			else
+//			{
+//				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//			}
+//		}
+//	}
 	
-	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
-	{
-		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		Current_Com2->ready = 0 ;
-	}
+//	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+//	{
+//		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		Current_Com2->ready = 0 ;
+//	}
 
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR ;
-    if (!(status & USART_FLAG_ERRORS))
-		{
-			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
-			{
-				put_fifo64( &Sbus_fifo, data ) ;	
-			}
-			else
-			{
-				put_fifo128( &Com2_fifo, data ) ;	
-			}	 
-		}
-		else
-		{
-			if ( status & USART_FLAG_ORE )
-			{
-#ifdef PCB9XT
-				USART2_ORE += 1 ;
-#else
-				USART_ORE += 1 ;
-#endif
-			}
-		}
-    status = puart->SR ;
-	}
-}
-#endif
-#endif
-#endif
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
+//    data = puart->DR ;
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+//			{
+//				put_fifo64( &Sbus_fifo, data ) ;	
+//			}
+//			else
+//			{
+//				put_fifo128( &Com2_fifo, data ) ;	
+//			}	 
+//		}
+//		else
+//		{
+//			if ( status & USART_FLAG_ORE )
+//			{
+//#ifdef PCB9XT
+//				USART2_ORE += 1 ;
+//#else
+//				USART_ORE += 1 ;
+//#endif
+//			}
+//		}
+//    status = puart->SR ;
+//	}
+//}
+//#endif
+//#endif
+//#endif
 
 //#ifndef PCBX12D
-void start_timer11()
-{
-#ifndef SIMU
+//void start_timer11()
+//{
+//#ifndef SIMU
 
-	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN ;		// Enable clock
-	TIM11->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
-	TIM11->CCER = 0 ;
-	TIM11->DIER = 0 ;
-	TIM11->CCMR1 = 0 ;
+//	RCC->APB2ENR |= RCC_APB2ENR_TIM11EN ;		// Enable clock
+//	TIM11->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
+//	TIM11->CCER = 0 ;
+//	TIM11->DIER = 0 ;
+//	TIM11->CCMR1 = 0 ;
 	 
-	TIM11->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 ;
+//	TIM11->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_1 ;
 
-	TIM11->CR1 = TIM_CR1_CEN ;
+//	TIM11->CR1 = TIM_CR1_CEN ;
 
-	NVIC_SetPriority( TIM1_TRG_COM_TIM11_IRQn, 14 ) ; // Low priority interrupt
-	NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
-#endif
-}
+//	NVIC_SetPriority( TIM1_TRG_COM_TIM11_IRQn, 14 ) ; // Low priority interrupt
+//	NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
+//#endif
+//}
 
-void stop_timer11()
-{
-	TIM11->CR1 = 0 ;
-	NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
-}
+//void stop_timer11()
+//{
+//	TIM11->CR1 = 0 ;
+//	NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
+//}
 
 #ifndef PCBX12D
  #ifdef PCBX9D
   #ifndef PCBXLITE
-   #ifndef PCBX3
+   #ifndef PCBX9LITE
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3410,6 +3558,7 @@ struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
 void init_xjt_heartbeat()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	SYSCFG->EXTICR[1] |= 0x2000 ;		// PC7
 	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
 	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
@@ -3425,7 +3574,7 @@ void stop_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 0 ;
 }
 
-   #endif // n PCBX3
+   #endif // n PCBX9LITE
   #endif // n PCBXLITE
  #endif // PCBX9D
 #endif // n PCBX12D
@@ -3437,6 +3586,7 @@ struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
 void init_xjt_heartbeat()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	SYSCFG->EXTICR[3] |= 0x0003 ;		// PD12
 	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
 	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
@@ -3452,15 +3602,36 @@ void stop_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 0 ;
 }
 
+uint16_t ExtiErrors ;
+uint16_t ExtiMask ;
+uint16_t ExtiPr ;
+uint16_t ExtiOK ;
+
 extern "C" void EXTI15_10_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x98 ;
+#else
+	RTC->BKP1R = 0x98 ;
+#endif
+#endif
   register uint32_t capture ;
 
 	capture =  TIM7->CNT ;	// Capture time
+	ExtiPr = EXTI->PR ;
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
 	{
 		XjtHeartbeatCapture.value = capture ;
 		EXTI->PR = XJT_HEARTBEAT_BIT ;
+		ExtiOK += 1 ;
+	}
+	else
+	{
+		ExtiErrors += 1 ;
+		ExtiMask = EXTI->PR ;
+		EXTI->PR = 0xFC00 & ~XJT_HEARTBEAT_BIT ;
+		EXTI->IMR &= ~(0xFC00 & ~XJT_HEARTBEAT_BIT) ;
 	}
 }
 
@@ -3475,6 +3646,7 @@ struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
 void init_xjt_heartbeat()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	SYSCFG->EXTICR[3] |= 0x3000 ;		// PD15
 	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
 	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
@@ -3492,6 +3664,13 @@ void stop_xjt_heartbeat()
 
 extern "C" void EXTI15_10_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x99 ;
+#else
+	RTC->BKP1R = 0x99 ;
+#endif
+#endif
   register uint32_t capture ;
 
 	capture =  TIM7->CNT ;	// Capture time
@@ -3504,13 +3683,13 @@ extern "C" void EXTI15_10_IRQHandler()
 
 #endif // PCBXLITE
 
-#if defined(PCBX3)
-#define XJT_HEARTBEAT_BIT	0x0200		// PC9
+#if defined(PCBX9LITE)
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
 void init_xjt_heartbeat()
 {
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	SYSCFG->EXTICR[2] |= 0x0020 ;		// PC9
 	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
 	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
@@ -3541,590 +3720,611 @@ void stop_xjt_heartbeat()
 #endif
 
 
-// Handle software serial on COM1 input (for non-inverted input)
-void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
-{
-	struct t_softSerial *pss = &SoftSerial1 ;
-	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+//// Handle software serial on COM1 input (for non-inverted input)
+//void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )
+//{
+//	struct t_softSerial *pss = &SoftSerial1 ;
+//	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
 	
-	pss->bitTime = 2000000 / baudrate ;
-	pss->softSerialEvenParity = parity ? 1 : 0 ;
+//	pss->bitTime = 2000000 / baudrate ;
+//	pss->softSerialEvenParity = parity ? 1 : 0 ;
 
-#ifdef PCB9XT
-	pss->softSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
-#else
-	pss->softSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
-#endif
-	pss->pfifo = &Com1_fifo ;
-
-	pss->lineState = LINE_IDLE ;
-	CaptureMode = CAP_COM1 ;
-
-#ifdef PCB9XT
-#define EXT_BIT_MASK	0x00000008
-	SYSCFG->EXTICR[0] = 0 ;
-#else
-#define EXT_BIT_MASK	0x00000040
-	SYSCFG->EXTICR[1] |= 0x0300 ;
-#endif
-	EXTI->IMR |= EXT_BIT_MASK ;
-	EXTI->RTSR |= EXT_BIT_MASK ;
-	EXTI->FTSR |= EXT_BIT_MASK ;
-
-#ifdef PCB9XT
-	configure_pins( GPIO_Pin_3, PIN_INPUT | PIN_PORTA ) ;
-	NVIC_SetPriority( EXTI3_IRQn, 0 ) ; // Highest priority interrupt
-	NVIC_EnableIRQ( EXTI3_IRQn) ;
-#else
-	configure_pins( GPIO_Pin_6, PIN_INPUT | PIN_PORTD ) ;
-	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
-	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
-#endif
-	
-	start_timer11() ;
-}
-
-void disable_software_com1()
-{
-	CaptureMode = CAP_PPM ;
-	stop_timer11() ;
-	EXTI->IMR &= ~EXT_BIT_MASK ;
-#ifdef PCB9XT
-	NVIC_DisableIRQ( EXTI3_IRQn ) ;
+//#ifdef PCB9XT
+//	pss->softSerInvert = invert ? 0 : GPIO_Pin_3 ;	// Port A3
 //#else
-//	NVIC_DisableIRQ( EXTI9_5_IRQn ) ;
-#endif
-}
+//	pss->softSerInvert = invert ? 0 : GPIO_Pin_6 ;	// Port D6
+//#endif
+//	pss->pfifo = &Com1_fifo ;
+
+//	pss->lineState = LINE_IDLE ;
+//	CaptureMode = CAP_COM1 ;
+
+//#ifdef PCB9XT
+//#define EXT_BIT_MASK	0x00000008
+//	SYSCFG->EXTICR[0] = 0 ;
+//#else
+//#define EXT_BIT_MASK	0x00000040
+//	SYSCFG->EXTICR[1] |= 0x0300 ;
+//#endif
+//	EXTI->IMR |= EXT_BIT_MASK ;
+//	EXTI->RTSR |= EXT_BIT_MASK ;
+//	EXTI->FTSR |= EXT_BIT_MASK ;
+
+//#ifdef PCB9XT
+//	configure_pins( GPIO_Pin_3, PIN_INPUT | PIN_PORTA ) ;
+//	NVIC_SetPriority( EXTI3_IRQn, 0 ) ; // Highest priority interrupt
+//	NVIC_EnableIRQ( EXTI3_IRQn) ;
+//#else
+//	configure_pins( GPIO_Pin_6, PIN_INPUT | PIN_PORTD ) ;
+//	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
+//	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
+//#endif
+	
+//	start_timer11() ;
+//}
+
+//void disable_software_com1()
+//{
+//	CaptureMode = CAP_PPM ;
+//	stop_timer11() ;
+//	EXTI->IMR &= ~EXT_BIT_MASK ;
+//#ifdef PCB9XT
+//	NVIC_DisableIRQ( EXTI3_IRQn ) ;
+////#else
+////	NVIC_DisableIRQ( EXTI9_5_IRQn ) ;
+//#endif
+//}
 
 //#endif
 
-#ifdef PCB9XT
+//#ifdef PCB9XT
 
-void consoleInit()
-{
-	// Serial configure  
-	RCC->APB1ENR |= RCC_APB1ENR_UART4EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
-	configure_pins( 0x00000001, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA | PIN_PER_8 ) ;
-	configure_pins( 0x00000002, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_8 | PIN_PULLUP ) ;
-	GPIOA->MODER = (GPIOA->MODER & 0xFFFFFFF0 ) | 0x0000000A ;	// Alternate func.
-	GPIOA->AFR[0] = (GPIOA->AFR[0] & 0xFFFFFF00 ) | 0x00000088 ;	// Alternate func.
-	UART4->BRR = PeripheralSpeeds.Peri1_frequency / CONSOLE_BAUDRATE ;		// 97.625 divider => 19200 baud
-	UART4->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	UART4->CR2 = 0 ;
-	UART4->CR3 = 0 ;
-	NVIC_SetPriority( UART4_IRQn, 2 ) ; // Changed to 3 for telemetry receive
-  NVIC_EnableIRQ(UART4_IRQn) ;
-}
+//void consoleInit()
+//{
+//	// Serial configure  
+//	RCC->APB1ENR |= RCC_APB1ENR_UART4EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+//	configure_pins( 0x00000001, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA | PIN_PER_8 ) ;
+//	configure_pins( 0x00000002, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_8 | PIN_PULLUP ) ;
+//	GPIOA->MODER = (GPIOA->MODER & 0xFFFFFFF0 ) | 0x0000000A ;	// Alternate func.
+//	GPIOA->AFR[0] = (GPIOA->AFR[0] & 0xFFFFFF00 ) | 0x00000088 ;	// Alternate func.
+//	UART4->BRR = PeripheralSpeeds.Peri1_frequency / CONSOLE_BAUDRATE ;		// 97.625 divider => 19200 baud
+//	UART4->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	UART4->CR2 = 0 ;
+//	UART4->CR3 = 0 ;
+//	NVIC_SetPriority( UART4_IRQn, 2 ) ; // Changed to 3 for telemetry receive
+//  NVIC_EnableIRQ(UART4_IRQn) ;
+//}
 
-void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
-{
-	consoleInit() ;
-	UART4SetBaudrate( baudrate ) ;
-	com2Parity( parity ) ;
-}
+//void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
+//{
+//	consoleInit() ;
+//	UART4SetBaudrate( baudrate ) ;
+//	com2Parity( parity ) ;
+//}
 
-void com3Init( uint32_t baudrate )
-{
-	USART_TypeDef *puart = USART3 ;
-	// Serial configure  
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
-	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
-	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	puart->CR2 = 0 ;
-	puart->CR3 = 0 ;
-	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
-  NVIC_EnableIRQ(USART3_IRQn) ;
-}
+//void com3Init( uint32_t baudrate )
+//{
+//	USART_TypeDef *puart = USART3 ;
+//	// Serial configure  
+//	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+//	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+//	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	puart->CR2 = 0 ;
+//	puart->CR3 = 0 ;
+//	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
+//  NVIC_EnableIRQ(USART3_IRQn) ;
+//}
 
-void com3Stop()
-{
-	USART3->CR1 = 0 ;
-	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
-  NVIC_DisableIRQ(USART3_IRQn) ;
-}
+//void com3Stop()
+//{
+//	USART3->CR1 = 0 ;
+//	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
+//  NVIC_DisableIRQ(USART3_IRQn) ;
+//}
 
-void Com3SetBaudrate ( uint32_t baudrate )
-{
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-}
+//void Com3SetBaudrate ( uint32_t baudrate )
+//{
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//}
 
-void com1Parity( uint32_t even )
-{
-	if ( even )
-	{
-		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-
-
-void com2Parity( uint32_t even )
-{
-	if ( even )
-	{
-		UART4->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		UART4->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-
-void com3Parity( uint32_t even )
-{
-	if ( even )
-	{
-		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-
-void UART4SetBaudrate ( uint32_t baudrate )
-{
-	UART4->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-}
-
-extern "C" void USART3_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
-	USART_TypeDef *puart = USART3 ;
-
-  status = puart->SR ;
-	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
-	{
-		if ( Current_Com3 )
-		{
-			if ( Current_Com3->size )
-			{
-				puart->DR = *Current_Com3->buffer++ ;
-				if ( --Current_Com3->size == 0 )
-				{
-					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-				}
-			}
-			else
-			{
-				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-			}
-		}
-	}
-	
-	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
-	{
-		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		Current_Com3->ready = 0 ;
-	}
-	
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR ;
-
-    if (!(status & USART_FLAG_ERRORS))
-		{
-			if ( g_eeGeneral.btComPort == 2 )
-			{
-				put_fifo128( &BtRx_fifo, data ) ;	
-			}
-			else
-			{
-				put_fifo128( &Com3_fifo, data ) ;	
-			}
-		}
-		else
-		{
-			if ( status & USART_FLAG_ORE )
-			{
-#ifdef PCB9XT
-				USART2_ORE += 1 ;
-#else
-				USART_ORE += 1 ;
-#endif
-			}
-		}
-    status = puart->SR ;
-	}
-}
+//void com1Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		USART2->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		USART2->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
 
 
-uint32_t txPdcBt( struct t_serial_tx *data )
-{
-	data->ready = 1 ;
-	if ( g_eeGeneral.btComPort == 1 )
-	{
-		Current_Com2 = data ;
-		UART4->CR1 |= USART_CR1_TXEIE ;
-	}
-	else if ( g_eeGeneral.btComPort == 2 )
-	{
-		Current_Com3 = data ;
-		USART3->CR1 |= USART_CR1_TXEIE ;
-	}
-	return 1 ;			// Sent OK
-}
+//void com2Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		UART4->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		UART4->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
 
-extern "C" void UART4_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
-	USART_TypeDef *puart = UART4 ;
+//void com3Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
 
-  status = puart->SR ;
-	
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR;
+//void UART4SetBaudrate ( uint32_t baudrate )
+//{
+//	UART4->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//}
 
-    if (!(status & USART_FLAG_ERRORS))
-		{
-			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
-			{
-				put_fifo64( &Sbus_fifo, data ) ;
-			}
-			else
-			{
-				if ( g_eeGeneral.btComPort == 1 )
-				{
-					put_fifo128( &BtRx_fifo, data ) ;
+//extern "C" void USART3_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x9A ;
+//#else
+//	RTC->BKP1R = 0x9A ;
 //#endif
-				}
-				else
-				{
-					put_fifo128( &Com2_fifo, data ) ;
-				}
-			}
-		}
-		else
-		{
-			if ( status & USART_FLAG_ORE )
-			{
-#ifdef PCB9XT
-				USART1_ORE += 1 ;
-#else
-				USART_ORE += 1 ;
-#endif
-			}
-			if ( status & USART_FLAG_NE )
-			{
-				USART_NE += 1 ;
-			}
-			if ( status & USART_FLAG_FE )
-			{
-				USART_FE += 1 ;
-			}
-			if ( status & USART_FLAG_PE )
-			{
-				USART_PE += 1 ;
-			}
-		}
-    status = puart->SR ;
-	}
+//#endif
+//  uint32_t status;
+//  uint8_t data;
+//	USART_TypeDef *puart = USART3 ;
+
+//  status = puart->SR ;
+//	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+//	{
+//		if ( Current_Com3 )
+//		{
+//			if ( Current_Com3->size )
+//			{
+//				puart->DR = *Current_Com3->buffer++ ;
+//				if ( --Current_Com3->size == 0 )
+//				{
+//					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//				}
+//			}
+//			else
+//			{
+//				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//			}
+//		}
+//	}
 	
-	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
-	{
-		if ( Current_Com2 )
-		{
-			if ( Current_Com2->size )
-			{
-				puart->DR = *Current_Com2->buffer++ ;
-				if ( --Current_Com2->size == 0 )
-				{
-					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-				}
-			}
-			else
-			{
-				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-			}
-		}
-	}
+//	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+//	{
+//		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		Current_Com3->ready = 0 ;
+//	}
 	
-	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
-	{
-		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		Current_Com2->ready = 0 ;
-	}
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
+//    data = puart->DR ;
+
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//			if ( g_eeGeneral.btComPort == 2 )
+//			{
+//				put_fifo128( &BtRx_fifo, data ) ;	
+//			}
+//			else
+//			{
+//				put_fifo128( &Com3_fifo, data ) ;	
+//			}
+//		}
+//		else
+//		{
+//			if ( status & USART_FLAG_ORE )
+//			{
+//#ifdef PCB9XT
+//				USART2_ORE += 1 ;
+//#else
+//				USART_ORE += 1 ;
+//#endif
+//			}
+//		}
+//    status = puart->SR ;
+//	}
+//}
+
+
+//uint32_t txPdcBt( struct t_serial_tx *data )
+//{
+//	data->ready = 1 ;
+//	if ( g_eeGeneral.btComPort == 1 )
+//	{
+//		Current_Com2 = data ;
+//		UART4->CR1 |= USART_CR1_TXEIE ;
+//	}
+//	else if ( g_eeGeneral.btComPort == 2 )
+//	{
+//		Current_Com3 = data ;
+//		USART3->CR1 |= USART_CR1_TXEIE ;
+//	}
+//	return 1 ;			// Sent OK
+//}
+
+//extern "C" void UART4_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x9B ;
+//#else
+//	RTC->BKP1R = 0x9B ;
+//#endif
+//#endif
+//  uint32_t status;
+//  uint8_t data;
+//	USART_TypeDef *puart = UART4 ;
+
+//  status = puart->SR ;
 	
-}
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
+//    data = puart->DR;
 
-void txmit( uint8_t c )
-{
-	/* Wait for the transmitter to be ready */
-  while ( (UART4->SR & USART_SR_TXE) == 0 ) ;
-
-  /* Send character */
-	UART4->DR = c ;
-}
-
-void UART_Sbus_configure( uint32_t masterClock )
-{
-	UART4->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
-	UART4->CR1 |= USART_CR1_M | USART_CR1_PCE ;
-}
-
-void UART_Sbus57600_configure( uint32_t masterClock )
-{
-	UART4->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;
-	UART4->CR1 |= USART_CR1_M | USART_CR1_PCE ;
-}
-
-
-uint16_t RemBitTime ;
-uint8_t RemLineState ;
-uint16_t RemHtoLtime ;
-uint16_t RemLtoHtime ;
-uint8_t RemBitState ;
-uint8_t RemBitCount ;
-uint8_t RemByte ;
-uint32_t RemIntCount ;
-uint16_t RemLatency ;
-uint16_t RemBitMeasure ;
-
-// Handle software serial from M64
-void init_software_remote()
-{
-	RemBitTime = 2000000 / 9600 ;
-	RemLineState = LINE_IDLE ;
-
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 	// Enable portB clock
-	configure_pins( 0x0100, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_3 | PIN_PULLUP ) ;
-	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
-	TIM10->ARR = 0xFFFF ;
-	TIM10->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
-	TIM10->CCMR1 = TIM_CCMR1_CC1S_0 ;
-	TIM10->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP ;
-	TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
-	TIM10->DIER |= TIM_DIER_CC1IE ;
-	TIM10->CR1 = TIM_CR1_CEN ;
-	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 3 ) ; // Lower priority interrupt
-	NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn) ;
-}
-
-extern "C" void timer10_interrupt()
-{
-	if ( TIM10->SR & TIM_SR_CC1IF)
-	{
-  	uint16_t capture ;
-		uint32_t level = GPIOB->IDR & 0x0100 ? 1 : 0 ;
-		capture = TIM10->CCR1 ;	// Capture time
-		TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
-		RemIntCount += 1 ;
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//			if ( ( g_model.com2Function == COM2_FUNC_SBUSTRAIN ) || ( g_model.com2Function == COM2_FUNC_SBUS57600 ) )
+//			{
+//				put_fifo64( &Sbus_fifo, data ) ;
+//			}
+//			else
+//			{
+//				if ( g_eeGeneral.btComPort == 1 )
+//				{
+//					put_fifo128( &BtRx_fifo, data ) ;
+////#endif
+//				}
+//				else
+//				{
+//					put_fifo128( &Com2_fifo, data ) ;
+//				}
+//			}
+//		}
+//		else
+//		{
+//			if ( status & USART_FLAG_ORE )
+//			{
+//#ifdef PCB9XT
+//				USART1_ORE += 1 ;
+//#else
+//				USART_ORE += 1 ;
+//#endif
+//			}
+//			if ( status & USART_FLAG_NE )
+//			{
+//				USART_NE += 1 ;
+//			}
+//			if ( status & USART_FLAG_FE )
+//			{
+//				USART_FE += 1 ;
+//			}
+//			if ( status & USART_FLAG_PE )
+//			{
+//				USART_PE += 1 ;
+//			}
+//		}
+//    status = puart->SR ;
+//	}
 	
-		{
-			uint16_t ltime ;
-			ltime = TIM10->CNT ;
-			ltime -= capture ;
-			if ( ltime > RemLatency )
-			{
-				RemLatency = ltime ;
-			}
-		}
-
-		if ( level )
-		{
-			// L to H transisition
-			RemLtoHtime = capture ;
-			uint32_t time ;
-			capture -= RemHtoLtime ;
-			if ( capture < 250 )
-			{
-				RemBitMeasure = capture ;
-			}
-			time = capture ;
-			time += RemBitTime/2 ;
-			time /= RemBitTime ;		// Now number of bits
-			if ( RemBitState == BIT_IDLE )
-			{ // Starting, value should be 0
-				RemBitState = BIT_ACTIVE ;
-				RemBitCount = 0 ;
-				if ( time > 1 )
-				{
-					RemByte >>= time-1 ;
-					RemBitCount = time-1 ;
-					if ( RemBitCount >= 8 )
-					{
-						put_fifo64( &RemoteRx_fifo, RemByte ) ;
-						RemBitState = BIT_IDLE ;
-						RemLineState = LINE_IDLE ;
-					}
-				}
-			}
-			else
-			{
-				RemByte >>= time ;
-				RemBitCount += time ;
-			}
-		}
-		else
-		{
-			// H to L transisition
-			RemHtoLtime = capture ;
-			if ( RemLineState == LINE_IDLE )
-			{
-				RemLineState = LINE_ACTIVE ;
-			}
-			else
-			{
-				uint32_t time ;
-				capture -= RemLtoHtime ;
-				if ( capture < 250 )
-				{
-					RemBitMeasure = capture ;
-				}
-
-				time = capture ;
-				time += RemBitTime/2 ;
-				time /= RemBitTime ;		// Now number of bits
-
-				while ( time )
-				{
-					if ( RemBitCount >= 8 )
-					{ // Got a byte
-						put_fifo64( &RemoteRx_fifo, RemByte ) ;
-						RemBitState = BIT_IDLE ;
-						break ;
-					}
-					else
-					{
-						RemByte >>= 1 ;
-						RemByte |= 0x80 ;
-						time -= 1 ;
-						RemBitCount += 1 ;
-					}
-				}
-			}
-		} 
-	}
-}
-
-
-#endif
-
-#ifdef PCBX7
-void com3Init( uint32_t baudrate )
-{
-	USART_TypeDef *puart = USART3 ;
-	// Serial configure  
-	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
-	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
-	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
-	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
-	puart->CR2 = 0 ;
-	puart->CR3 = 0 ;
-	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
-  NVIC_EnableIRQ(USART3_IRQn) ;
-}
-
-void com3Stop()
-{
-	USART3->CR1 = 0 ;
-	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
-  NVIC_DisableIRQ(USART3_IRQn) ;
-}
-
-void Com3SetBaudrate ( uint32_t baudrate )
-{
-	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
-}
-
-void com3Parity( uint32_t even )
-{
-	if ( even )
-	{
-		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
-	}
-	else
-	{
-		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
-	}
-}
-
-extern "C" void USART3_IRQHandler()
-{
-  uint32_t status;
-  uint8_t data;
-	USART_TypeDef *puart = USART3 ;
-
-  status = puart->SR ;
-	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
-	{
-		if ( Current_Com3 )
-		{
-			if ( Current_Com3->size )
-			{
-				puart->DR = *Current_Com3->buffer++ ;
-				if ( --Current_Com3->size == 0 )
-				{
-					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
-				}
-			}
-			else
-			{
-				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
-			}
-		}
-	}
+//	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+//	{
+//		if ( Current_Com2 )
+//		{
+//			if ( Current_Com2->size )
+//			{
+//				puart->DR = *Current_Com2->buffer++ ;
+//				if ( --Current_Com2->size == 0 )
+//				{
+//					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//				}
+//			}
+//			else
+//			{
+//				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//			}
+//		}
+//	}
 	
-	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
-	{
-		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
-		Current_Com3->ready = 0 ;
-	}
+//	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+//	{
+//		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		Current_Com2->ready = 0 ;
+//	}
 	
-  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
-	{
-    data = puart->DR ;
+//}
 
-    if (!(status & USART_FLAG_ERRORS))
-		{
-#ifdef BLUETOOTH
-			put_fifo128( &BtRx_fifo, data ) ;
-#else
-			(void) data ;	
-#endif
-		}
-		else
-		{
-			if ( status & USART_FLAG_ORE )
-			{
-#ifdef PCB9XT
-				USART2_ORE += 1 ;
-#else
-				USART_ORE += 1 ;
-#endif
-			}
-		}
-    status = puart->SR ;
-	}
-}
+//void txmit( uint8_t c )
+//{
+//	/* Wait for the transmitter to be ready */
+//  while ( (UART4->SR & USART_SR_TXE) == 0 ) ;
+
+//  /* Send character */
+//	UART4->DR = c ;
+//}
+
+//void UART_Sbus_configure( uint32_t masterClock )
+//{
+//	UART4->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
+//	UART4->CR1 |= USART_CR1_M | USART_CR1_PCE ;
+//}
+
+//void UART_Sbus57600_configure( uint32_t masterClock )
+//{
+//	UART4->BRR = PeripheralSpeeds.Peri1_frequency / 57600 ;
+//	UART4->CR1 |= USART_CR1_M | USART_CR1_PCE ;
+//}
 
 
-#ifdef BLUETOOTH
-uint32_t txPdcBt( struct t_serial_tx *data )
-{
-	data->ready = 1 ;
-	Current_Com3 = data ;
-	USART3->CR1 |= USART_CR1_TXEIE ;
-	return 1 ;			// Sent OK
-}
-#endif
+//uint16_t RemBitTime ;
+//uint8_t RemLineState ;
+//uint16_t RemHtoLtime ;
+//uint16_t RemLtoHtime ;
+//uint8_t RemBitState ;
+//uint8_t RemBitCount ;
+//uint8_t RemByte ;
+//uint32_t RemIntCount ;
+//uint16_t RemLatency ;
+//uint16_t RemBitMeasure ;
 
-#endif
+//// Handle software serial from M64
+//void init_software_remote()
+//{
+//	RemBitTime = 2000000 / 9600 ;
+//	RemLineState = LINE_IDLE ;
+
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 	// Enable portB clock
+//	configure_pins( 0x0100, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_3 | PIN_PULLUP ) ;
+//	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
+//	TIM10->ARR = 0xFFFF ;
+//	TIM10->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;		// 0.5uS
+//	TIM10->CCMR1 = TIM_CCMR1_CC1S_0 ;
+//	TIM10->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P | TIM_CCER_CC1NP ;
+//	TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
+//	TIM10->DIER |= TIM_DIER_CC1IE ;
+//	TIM10->CR1 = TIM_CR1_CEN ;
+//	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 3 ) ; // Lower priority interrupt
+//	NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn) ;
+//}
+
+//extern "C" void timer10_interrupt()
+//{
+//	if ( TIM10->SR & TIM_SR_CC1IF)
+//	{
+//  	uint16_t capture ;
+//		uint32_t level = GPIOB->IDR & 0x0100 ? 1 : 0 ;
+//		capture = TIM10->CCR1 ;	// Capture time
+//		TIM10->SR = TIMER9_14SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
+//		RemIntCount += 1 ;
+	
+//		{
+//			uint16_t ltime ;
+//			ltime = TIM10->CNT ;
+//			ltime -= capture ;
+//			if ( ltime > RemLatency )
+//			{
+//				RemLatency = ltime ;
+//			}
+//		}
+
+//		if ( level )
+//		{
+//			// L to H transisition
+//			RemLtoHtime = capture ;
+//			uint32_t time ;
+//			capture -= RemHtoLtime ;
+//			if ( capture < 250 )
+//			{
+//				RemBitMeasure = capture ;
+//			}
+//			time = capture ;
+//			time += RemBitTime/2 ;
+//			time /= RemBitTime ;		// Now number of bits
+//			if ( RemBitState == BIT_IDLE )
+//			{ // Starting, value should be 0
+//				RemBitState = BIT_ACTIVE ;
+//				RemBitCount = 0 ;
+//				if ( time > 1 )
+//				{
+//					RemByte >>= time-1 ;
+//					RemBitCount = time-1 ;
+//					if ( RemBitCount >= 8 )
+//					{
+//						put_fifo64( &RemoteRx_fifo, RemByte ) ;
+//						RemBitState = BIT_IDLE ;
+//						RemLineState = LINE_IDLE ;
+//					}
+//				}
+//			}
+//			else
+//			{
+//				RemByte >>= time ;
+//				RemBitCount += time ;
+//			}
+//		}
+//		else
+//		{
+//			// H to L transisition
+//			RemHtoLtime = capture ;
+//			if ( RemLineState == LINE_IDLE )
+//			{
+//				RemLineState = LINE_ACTIVE ;
+//			}
+//			else
+//			{
+//				uint32_t time ;
+//				capture -= RemLtoHtime ;
+//				if ( capture < 250 )
+//				{
+//					RemBitMeasure = capture ;
+//				}
+
+//				time = capture ;
+//				time += RemBitTime/2 ;
+//				time /= RemBitTime ;		// Now number of bits
+
+//				while ( time )
+//				{
+//					if ( RemBitCount >= 8 )
+//					{ // Got a byte
+//						put_fifo64( &RemoteRx_fifo, RemByte ) ;
+//						RemBitState = BIT_IDLE ;
+//						break ;
+//					}
+//					else
+//					{
+//						RemByte >>= 1 ;
+//						RemByte |= 0x80 ;
+//						time -= 1 ;
+//						RemBitCount += 1 ;
+//					}
+//				}
+//			}
+//		} 
+//	}
+//}
+
+
+//#endif
+
+//#ifdef PCBX7
+//void com3Init( uint32_t baudrate )
+//{
+//	USART_TypeDef *puart = USART3 ;
+//	// Serial configure  
+//	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+//	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+//	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	puart->CR2 = 0 ;
+//	puart->CR3 = 0 ;
+//	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
+//  NVIC_EnableIRQ(USART3_IRQn) ;
+//}
+
+//void com3Stop()
+//{
+//	USART3->CR1 = 0 ;
+//	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
+//  NVIC_DisableIRQ(USART3_IRQn) ;
+//}
+
+//void Com3SetBaudrate ( uint32_t baudrate )
+//{
+//	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//}
+
+//void com3Parity( uint32_t even )
+//{
+//	if ( even )
+//	{
+//		USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;
+//	}
+//	else
+//	{
+//		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
+//	}
+//}
+
+//extern "C" void USART3_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x9C ;
+//#else
+//	RTC->BKP1R = 0x9C ;
+//#endif
+//#endif
+//  uint32_t status;
+//  uint8_t data;
+//	USART_TypeDef *puart = USART3 ;
+
+//  status = puart->SR ;
+//	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+//	{
+//		if ( Current_Com3 )
+//		{
+//			if ( Current_Com3->size )
+//			{
+//				puart->DR = *Current_Com3->buffer++ ;
+//				if ( --Current_Com3->size == 0 )
+//				{
+//					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+//				}
+//			}
+//			else
+//			{
+//				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+//			}
+//		}
+//	}
+	
+//	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+//	{
+//		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+//		Current_Com3->ready = 0 ;
+//	}
+	
+//  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+//	{
+//    data = puart->DR ;
+
+//    if (!(status & USART_FLAG_ERRORS))
+//		{
+//#ifdef BLUETOOTH
+//			put_fifo128( &BtRx_fifo, data ) ;
+//#else
+//			(void) data ;	
+//#endif
+//		}
+//		else
+//		{
+//			if ( status & USART_FLAG_ORE )
+//			{
+//#ifdef PCB9XT
+//				USART2_ORE += 1 ;
+//#else
+//				USART_ORE += 1 ;
+//#endif
+//			}
+//		}
+//    status = puart->SR ;
+//	}
+//}
+
+
+//#ifdef BLUETOOTH
+//uint32_t txPdcBt( struct t_serial_tx *data )
+//{
+//	data->ready = 1 ;
+//	Current_Com3 = data ;
+//	USART3->CR1 |= USART_CR1_TXEIE ;
+//	return 1 ;			// Sent OK
+//}
+//#endif
+
+//#endif
 
 
 
@@ -4140,98 +4340,105 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 
 //#ifndef PCBX12D
 
-uint16_t HbCapDebug ;
-uint16_t HbCapDebug1 ;
-uint16_t HbCapDebug2 ;
+//#ifdef PCB9XT
+//extern "C" void EXTI3_IRQHandler()
+//#else
+//extern "C" void EXTI9_5_IRQHandler()
+//#endif
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x9D ;
+//#else
+//	RTC->BKP1R = 0x9D ;
+//#endif
+//#endif
+//  register uint32_t capture ;
+//  register uint32_t dummy ;
+//	struct t_softSerial *pss = &SoftSerial1 ;
 
-#ifdef PCB9XT
-extern "C" void EXTI3_IRQHandler()
-#else
-extern "C" void EXTI9_5_IRQHandler()
-#endif
-{
-  register uint32_t capture ;
-  register uint32_t dummy ;
-	struct t_softSerial *pss = &SoftSerial1 ;
-
-	HbCapDebug2 += 2 ;
-	capture =  TIM7->CNT ;	// Capture time
+//	capture =  TIM7->CNT ;	// Capture time
 	
-#ifdef PCBX9D
-	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
-	{
-		HbCapDebug += 1 ;
-		HbCapDebug1 = capture - XjtHeartbeatCapture.value ;
-		XjtHeartbeatCapture.value = capture ;
-		EXTI->PR = XJT_HEARTBEAT_BIT ;
-	}
-	if ( ( EXTI->PR & EXT_BIT_MASK ) == 0 )
-	{
-		return ;
-	}
-#endif	
-	EXTI->PR = EXT_BIT_MASK ;
+//#ifdef PCBX9D
+//	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+//	{
+//		XjtHeartbeatCapture.value = capture ;
+//		EXTI->PR = XJT_HEARTBEAT_BIT ;
+//	}
+//	if ( ( EXTI->PR & EXT_BIT_MASK ) == 0 )
+//	{
+//		return ;
+//	}
+//#endif	
+//	EXTI->PR = EXT_BIT_MASK ;
 	
-#ifdef PCB9XT
-	dummy = GPIOA->IDR ;
-	if ( ( dummy & GPIO_Pin_3 ) == pss->softSerInvert )
-#else
-	dummy = GPIOD->IDR ;
-	if ( ( dummy & GPIO_Pin_6 ) == pss->softSerInvert )
-#endif
-	{
-		// L to H transition
-		pss->LtoHtime = capture ;
-		TIM11->CNT = 0 ;
-		TIM11->CCR1 = pss->bitTime * 12 ;
-		uint32_t time ;
-		capture -= pss->HtoLtime ;
-		time = capture ;
-		putCaptureTime( pss, time, 0 ) ;
-		TIM11->DIER = TIM_DIER_CC1IE ;
-	}
-	else
-	{
-		// H to L transition
-		pss->HtoLtime = capture ;
-		if ( pss->lineState == LINE_IDLE )
-		{
-			pss->lineState = LINE_ACTIVE ;
-			putCaptureTime( pss, 0, 3 ) ;
-		}
-		else
-		{
-			uint32_t time ;
-			capture -= pss->LtoHtime ;
-			time = capture ;
-			putCaptureTime( pss, time, 1 ) ;
-		}
-		TIM11->DIER = 0 ;
-		TIM11->CCR1 = pss->bitTime * 20 ;
-		TIM11->CNT = 0 ;
-		TIM11->SR = 0 ;
-	}
-}
+//#ifdef PCB9XT
+//	dummy = GPIOA->IDR ;
+//	if ( ( dummy & GPIO_Pin_3 ) == pss->softSerInvert )
+//#else
+//	dummy = GPIOD->IDR ;
+//	if ( ( dummy & GPIO_Pin_6 ) == pss->softSerInvert )
+//#endif
+//	{
+//		// L to H transition
+//		pss->LtoHtime = capture ;
+//		TIM11->CNT = 0 ;
+//		TIM11->CCR1 = pss->bitTime * 12 ;
+//		uint32_t time ;
+//		capture -= pss->HtoLtime ;
+//		time = capture ;
+//		putCaptureTime( pss, time, 0 ) ;
+//		TIM11->DIER = TIM_DIER_CC1IE ;
+//	}
+//	else
+//	{
+//		// H to L transition
+//		pss->HtoLtime = capture ;
+//		if ( pss->lineState == LINE_IDLE )
+//		{
+//			pss->lineState = LINE_ACTIVE ;
+//			putCaptureTime( pss, 0, 3 ) ;
+//		}
+//		else
+//		{
+//			uint32_t time ;
+//			capture -= pss->LtoHtime ;
+//			time = capture ;
+//			putCaptureTime( pss, time, 1 ) ;
+//		}
+//		TIM11->DIER = 0 ;
+//		TIM11->CCR1 = pss->bitTime * 20 ;
+//		TIM11->CNT = 0 ;
+//		TIM11->SR = 0 ;
+//	}
+//}
 
-extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
-{
-	uint32_t status ;
-	struct t_softSerial *pss = &SoftSerial1 ;
+//extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
+//{
+//#ifdef WDOG_REPORT
+//#ifdef PCBSKY	
+//	GPBR->SYS_GPBR1 = 0x9E ;
+//#else
+//	RTC->BKP1R = 0x9E ;
+//#endif
+//#endif
+//	uint32_t status ;
+//	struct t_softSerial *pss = &SoftSerial1 ;
 
-	status = TIM11->SR ;
-	if ( status & TIM_SR_CC1IF )
-	{		
-		uint32_t time ;
-		time = TIM7->CNT - pss->LtoHtime ;
-		putCaptureTime( pss, time, 2 ) ;
-		pss->lineState = LINE_IDLE ;
-		TIM11->DIER = 0 ;
-		TIM11->SR = 0 ;
-	}
+//	status = TIM11->SR ;
+//	if ( status & TIM_SR_CC1IF )
+//	{		
+//		uint32_t time ;
+//		time = TIM7->CNT - pss->LtoHtime ;
+//		putCaptureTime( pss, time, 2 ) ;
+//		pss->lineState = LINE_IDLE ;
+//		TIM11->DIER = 0 ;
+//		TIM11->SR = 0 ;
+//	}
 	
-}
+//}
 
-//#endif // nX12D
+////#endif // nX12D
 
 
 #endif // X9D || SP
@@ -4445,6 +4652,13 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 
 extern "C" void DMA2_Stream0_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x9F ;
+#else
+	RTC->BKP1R = 0x9F ;
+#endif
+#endif
 	DMA2_Stream3->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	DMA2_Stream0->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	DMA2_Stream0->CR &= ~DMA_SxCR_TCIE ;		// Stop interrupt
@@ -4458,6 +4672,13 @@ uint16_t SpiBsyTime ;
 
 extern "C" void DMA2_Stream3_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0xA0 ;
+#else
+	RTC->BKP1R = 0xA0 ;
+#endif
+#endif
 #ifdef PCB9XT
 	if ( DMA2_Stream3->NDTR )
 	{
@@ -4696,6 +4917,13 @@ void backlightSend()
 
 extern "C" void DMA1_Stream0_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0xA1 ;
+#else
+	RTC->BKP1R = 0xA1 ;
+#endif
+#endif
 	if ( --BlCount )
 	{
 		backlightSend() ;

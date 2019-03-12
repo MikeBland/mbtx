@@ -157,6 +157,8 @@
 
 
 uint8_t BtType ;
+uint8_t BtCurrentFunction ;
+uint8_t BtEepromFunction ;
 struct t_fifo128 Bt_fifo ;
 uint8_t BtTxBuffer[64] ;
 struct t_bt_control BtControl ;
@@ -178,14 +180,88 @@ uint8_t BtTempBuffer[100] ;
 uint16_t BtRxTimer ;
 uint8_t BtPreviousLinkIndex = 0xFF ;
 
+// Data for BT and encoder over serial
+struct t_bt_ser_pkt
+{
+	uint8_t bytes[3+32] ;
+	uint8_t bt_count ;
+} BtSerPkt ;
+
+#define BT_ENABLE_HIGH	{ HC05_ENABLE_HIGH; BtSerPkt.bytes[0] |= 1 ; }
+#define BT_ENABLE_LOW		{ HC05_ENABLE_LOW; BtSerPkt.bytes[0] &= ~1 ; }
+
+
+#if defined(PCBX9D) && defined(REVNORM)
+uint32_t txPdcBt( struct t_serial_tx *data )
+{
+	uint32_t count ;
+	uint8_t *p ;
+	uint8_t *s ;
+
+	p = &BtSerPkt.bytes[3] ;
+	s = data->buffer ;
+	count = data->size ;
+	while ( count-- )
+	{
+		*p++ = *s++ ;
+	}
+	data->ready = 0 ;
+	BtSerPkt.bt_count = data->size ;
+	return 1 ;
+}
+
+void btEncTx()
+{
+	BtSerPkt.bytes[1] = ~BtSerPkt.bytes[0] ;
+	BtSerPkt.bytes[2] = 0 ;
+						
+	Com2_tx.buffer = 	BtSerPkt.bytes ;
+	Com2_tx.size = BtSerPkt.bt_count + 3 ;
+	txPdcCom2( &Com2_tx ) ;
+}
+
+
+
+
+
+#endif
+
+
 void bt_send_buffer( void ) ;
 
 
 extern uint8_t Activated ;
 
 
+
+void checkFunction()
+{
+	if ( BtEepromFunction != g_model.BTfunction )
+	{
+		BtCurrentFunction = BtEepromFunction = g_model.BTfunction ;
+	}
+}
+
+void scriptRequestBt()
+{
+	BtCurrentFunction = BT_SCRIPT ;
+}
+
+void scriptReleasetBt()
+{
+	BtCurrentFunction = BtEepromFunction ;
+}
+
 static void btPowerOn()
 {
+#ifdef PCBX9D
+	if ( g_model.com2Function == COM2_FUNC_BT_ENC )
+	{
+		BtSerPkt.bytes[0] |= 2 ;
+		return ;
+	}
+#endif
+
 #ifdef PCBSKY
 	configure_pins( PIO_PB3, PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTB | PIN_NO_PULLUP ) ;
 #endif	
@@ -209,6 +285,14 @@ static void btPowerOn()
 
 static void btPowerOff()
 {
+#ifdef PCBX9D
+	if ( g_model.com2Function == COM2_FUNC_BT_ENC )
+	{
+		BtSerPkt.bytes[0] &= ~2 ;
+		return ;
+	}
+#endif
+
 #ifdef PCBSKY
 	configure_pins( PIO_PB3, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTB| PIN_NO_PULLUP ) ;
 #endif	
@@ -298,7 +382,16 @@ void setBtBaudrate( uint32_t index )
 #ifdef PCBX7
 	Com3SetBaudrate ( brate ) ;
 #else
+#if defined(PCBX9D) && defined(REVNORM)
+	if ( index > 4 )
+	{
+		index = 0 ;
+	}
+	BtSerPkt.bytes[0] = ( BtSerPkt.bytes[0] & 0xE3 ) | index ;
+	(void) brate ;
+#else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
+#endif
 #endif
 #endif
 }
@@ -977,7 +1070,7 @@ void btConfigure()
 {
 	uint32_t j ;
 	
-	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+	BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 	BtControl.BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
@@ -999,7 +1092,7 @@ void btConfigure()
 	}
 	BtControl.BtConfigure = 0 ;
 	CoTickDelay(10) ;					// 20mS
-	HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+	BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
 }
 
@@ -1077,12 +1170,12 @@ uint32_t btLink( uint32_t index )
 	return 0 ;
 }
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D)
 void processBtRx( int32_t data, uint32_t rxTimeout )
 {
 	uint16_t rxchar ;
 
-	if ( g_model.BTfunction == BT_TRAIN_TXRX )
+	if ( BtCurrentFunction == BT_TRAIN_TXRX )
 	{
 		if ( data == 2 )
 		{
@@ -1163,21 +1256,21 @@ void btConfigCheck()
 	{
 		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 		{
-			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 		}
 		CoTickDelay(10) ;					// 20mS for now
 		changeBtBaudrate( g_eeGeneral.bt_baudrate ) ;
 		CoTickDelay(10) ;					// 20mS for now
 		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 		{
-			HC05_ENABLE_LOW ;							// Set bit B12 LOW
+			BT_ENABLE_LOW ;							// Set bit B12 LOW
 		}
 		pBtControl->BtBaudrateChanged = 0 ;
 	}
 	
 	if ( pBtControl->BtRoleChange & 0x80 )
 	{
-		HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+		BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 		uint8_t newRole = pBtControl->BtRoleChange & 0x01 ;
 		pBtControl->BtRoleChange = 0x40 ;
 		if ( newRole+1 != pBtControl->BtMasterSlave )
@@ -1186,20 +1279,20 @@ void btConfigCheck()
 			getBtRole() ;
 		}
 		pBtControl->BtRoleChange = 0 ;
-		HC05_ENABLE_LOW ;							// Set bit B12 LOW
+		BT_ENABLE_LOW ;							// Set bit B12 LOW
 	}
 	if ( pBtControl->BtNameChange & 0x80 )
 	{
 		uint8_t *pname = g_eeGeneral.btName ;
 		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 		{
-			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 			pname = BtName ;
 		}
 		pBtControl->BtNameChange = 0x40 ;
 		setBtName( pname ) ;
 		pBtControl->BtNameChange = 0 ;
-		HC05_ENABLE_LOW ;							// Set bit B12 LOW
+		BT_ENABLE_LOW ;							// Set bit B12 LOW
 	}
 	if ( pBtControl->BtConfigure & 0x80 )
 	{
@@ -1218,7 +1311,7 @@ void btConfigCheck()
 			{
 				BtTempBuffer[0] = 0 ;
 			}
-			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 			CoTickDelay(5) ;					// 10mS
 			flushBtFifo() ;
 			if ( pBtControl->BtScanInit == 0)
@@ -1385,7 +1478,7 @@ void btConfigCheck()
 					CoTickDelay(10) ;					// 40mS
 				}
 			}
-			HC05_ENABLE_LOW ;							// Set bit B12 LOW
+			BT_ENABLE_LOW ;							// Set bit B12 LOW
 		}
 	}
 }
@@ -1461,13 +1554,15 @@ void bt_task(void* pdata)
 // Already initialised to g_eeGeneral.bt_baudrate
 // 0 : 115200, 1 : 9600, 2 : 19200, 3 : 57600, 4 : 38400
 
+	BtCurrentFunction = BtEepromFunction = g_model.BTfunction ;
 
 	for(;;)
 	{
 		btPowerOff() ;
-		while ( g_model.BTfunction == BT_OFF )
+		while ( BtCurrentFunction == BT_OFF )
 		{
 			CoTickDelay(50) ;					// 100mS
+			checkFunction() ;
 		}
 		btPowerOn() ;
 		
@@ -1475,7 +1570,7 @@ void bt_task(void* pdata)
 
 		if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
 		{
-			HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+			BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 			CoTickDelay(5) ;					// 10mS
 		}
 
@@ -1516,13 +1611,14 @@ void bt_task(void* pdata)
 					found = 1 ;
 				}
 			}
-			if ( g_model.BTfunction == BT_OFF )
+			checkFunction() ;
+			if ( BtCurrentFunction == BT_OFF )
 			{
 				break ;
 			}
 		} while (found == 0 ) ;
 		
-		if ( g_model.BTfunction == BT_OFF )
+		if ( BtCurrentFunction == BT_OFF )
 		{
 			continue ;
 		}
@@ -1547,7 +1643,7 @@ void bt_task(void* pdata)
 			CoTickDelay(10) ;					// 20mS
 			getBtOK(0, BT_POLL_TIMEOUT ) ;
 			CoTickDelay(10) ;					// 20mS
-			HC05_ENABLE_LOW ;							// Set bit B12 LOW
+			BT_ENABLE_LOW ;							// Set bit B12 LOW
 		}
 
 		pBtControl->BtCurrentLinkIndex = g_model.btDefaultAddress ;
@@ -1555,7 +1651,8 @@ void bt_task(void* pdata)
 		pBtControl->BtReady = 1 ; 
 		while(1)
 		{
-			if ( g_model.BTfunction == BT_OFF )
+			checkFunction() ;
+			if ( BtCurrentFunction == BT_OFF )
 			{
 				break ;
 			}
@@ -1582,7 +1679,7 @@ void bt_task(void* pdata)
 			{
 				if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 				{
-					HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+					BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 				}
 				// Send data to COM2
 				if ( Bt_tx.ready == 0 )	// Buffer available
@@ -1625,7 +1722,7 @@ void bt_task(void* pdata)
 			else
 	#endif	// nPCBX7
 	#endif	// nPCB9XT
-			if ( ( g_model.BTfunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
+			if ( ( BtCurrentFunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
 			{
 				while ( ( y = rxBtuart() ) != -1 )
 				{
@@ -1636,7 +1733,7 @@ void bt_task(void* pdata)
 				}
 				CoTickDelay(5) ;					// 10mS for now
 			}
-			else if ( g_model.BTfunction == BT_SCRIPT )
+			else if ( BtCurrentFunction == BT_SCRIPT )
 			{
 				if ( Bt_tx.size )
 				{
@@ -1648,7 +1745,7 @@ void bt_task(void* pdata)
 			else
 			{
 				x = CoWaitForSingleFlag( Bt_flag, 1 ) ;		// Wait for data in Fifo
-				if ( g_model.BTfunction == BT_OFF )
+				if ( BtCurrentFunction == BT_OFF )
 				{
 					continue ;
 				}
@@ -1672,7 +1769,7 @@ void bt_task(void* pdata)
 				{
 					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 					{
-						HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+						BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 						CoTickDelay(10) ;					// 40mS
 						btLink( pBtControl->BtLinkRequest & 3 ) ;
 						pBtControl->BtCurrentLinkIndex = pBtControl->BtLinkRequest & 3 ;
@@ -1680,7 +1777,7 @@ void bt_task(void* pdata)
 						BtRxTimer = 1000 ;
 						pBtControl->BtRxOccured = 0 ;
 						CoTickDelay(10) ;					// 40mS
-						HC05_ENABLE_LOW ;							// Set bit B12 LOW
+						BT_ENABLE_LOW ;							// Set bit B12 LOW
 						pBtControl->BtLinkRequest = 0 ;
 					}
 					else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
@@ -1700,7 +1797,7 @@ void bt_task(void* pdata)
 					pBtControl->BtLinked = 1 ;
 				}
 
-				if ( ( ( pBtControl->BtMasterSlave == 2 ) && ( g_model.BTfunction == BT_TRAIN_TXRX ) && pBtControl->BtLinked )
+				if ( ( ( pBtControl->BtMasterSlave == 2 ) && ( BtCurrentFunction == BT_TRAIN_TXRX ) && pBtControl->BtLinked )
 						 || ( btBits & BT_SLAVE_SEND_SBUS ) )
 				{
 					uint32_t i ;
@@ -1772,7 +1869,7 @@ void bt_task(void* pdata)
 					bt_send_buffer() ;
 				}
 
-				if ( g_model.BTfunction == BT_TRAIN_TXRX )
+				if ( BtCurrentFunction == BT_TRAIN_TXRX )
 				{
 					while( ( x = rxBtuart() ) != (uint32_t)-1 )
 					{
@@ -1879,7 +1976,7 @@ void bt_task(void* pdata)
 
 					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 					{
-						HC05_ENABLE_HIGH ;						// Set bit B12 HIGH
+						BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 						CoTickDelay(10) ;					// 40mS
 					}
 					btLink(pBtControl->BtCurrentLinkIndex) ;
@@ -1888,7 +1985,7 @@ void bt_task(void* pdata)
 					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 					{
 						CoTickDelay(10) ;					// 40mS
-						HC05_ENABLE_LOW ;							// Set bit B12 LOW
+						BT_ENABLE_LOW ;							// Set bit B12 LOW
 					}
 				}
 			}

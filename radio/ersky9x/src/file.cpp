@@ -1548,7 +1548,7 @@ const char *ee32BackupModel( uint8_t modelIndex )
 	{
     if (result == FR_NO_PATH)
 		{
-			WatchdogTimeout = 200 ;		// 2 seconds
+			WatchdogTimeout = 300 ;		// 3 seconds
       result = f_mkdir("/MODELS") ;
     	if (result != FR_OK)
 			{

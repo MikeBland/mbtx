@@ -406,7 +406,7 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 		cell = scaling / 1000 ;
 		FrskyHubData[index] = cell ;
 		TelemetryDataValid[index] = 40 + g_model.telemetryTimeout ;
-		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
+//		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELL_MIN] = 40 + g_model.telemetryTimeout ;
 		if ( battnumber == 0 )
 		{
@@ -469,9 +469,17 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			WholeAltitude = value ;
 			index = FR_TRASH ;
 		}
+		else
+		{
+			storeAltitude( value ) ;
+		}
 	}
 	if ( index == FR_ALT_BAROd )
 	{
+		if ( AltitudeDecimals == 0 )
+		{
+			AltitudeZeroed = 0 ;
+		}
 		AltitudeDecimals |= 1 ;
 		if ( ( value > 9 ) || ( value < -9 ) )
 		{
@@ -1001,12 +1009,25 @@ void processFrskyPacket(uint8_t *packet)
 
 #define DSM_VARIO		64
 
-//0[00] 18(0x12)
+//0[00] 64(0x40)
 //1[01] 00
 //2[02] Altitude MSB (Hex)
 //3[03] Altitude LSB (Hex) 16bit signed integer, in 0.1m
 //4[04] Vertical speed MSB (Hex)
 //5[05] Vertical speed LSB (Hex) 16bit signed integer, in 0.1m
+
+
+//UINT8 identifier; // Source device = 0x40
+//UINT8 sID; // Secondary ID
+//INT16 altitude; // .1m increments
+//INT16 delta_0250ms, // delta last 250ms, 0.1m/s increments
+//delta_0500ms, // delta last 500ms, 0.1m/s increments
+//delta_1000ms, // delta last 1.0 seconds
+//delta_1500ms, // delta last 1.5 seconds
+//delta_2000ms, // delta last 2.0 seconds
+//delta_3000ms; // delta last 3.0 seconds
+
+
 
 //===============================================================
 
@@ -1207,7 +1228,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				}
 				if ( *packet == DSM_VARIO )
 				{
-					ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
+					ivalue = g_model.dsmVario * 2 + 4 ;
+					ivalue = (int16_t) ( (packet[ivalue] << 8 ) | packet[ivalue+1] ) ;
 					storeTelemetryData( FR_VSPD, ivalue*10 ) ;
 				}
 			break ;
@@ -1647,8 +1669,9 @@ void processSportPacket()
 					else
 					{
 	  				FrskyBattCells[1] = cells ;
-						battnumber += FrskyBattCells[0] ;
-						cells += FrskyBattCells[0] ;
+						battnumber += 6 ;		
+//						battnumber += FrskyBattCells[0] ;
+						cells += 6 ;
 					}
 					uint16_t cell ;
 
@@ -2135,11 +2158,17 @@ extern uint8_t RawLogging ;
 void rawLogByte( uint8_t byte ) ;
 
 
+//uint16_t XFDebug1 ;
+//uint16_t XFDebug2 ;
+//uint16_t XFDebug3 ;
+//uint16_t XFDebug4 ;
+//uint16_t XFDebug5 ;
+
 
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX3)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE)
 #ifdef BLUETOOTH	
 	if ( g_model.bt_telemetry )
 	{
@@ -2158,6 +2187,7 @@ void frsky_receive_byte( uint8_t data )
 		return ;
 	}
 //#endif
+//	XFDebug5 += 1 ;
 
 #ifdef XFIRE
 // #ifdef REVX
@@ -3861,16 +3891,19 @@ uint32_t crossfireGpsConvert( uint32_t value )
 
 void processCrossfireTelemetryFrame()
 {
+//	XFDebug1 += 1 ;
   if (!checkCrossfireTelemetryFrameCRC())
 	{
     return ;
   }
+//	XFDebug2 += 1 ;
 
   uint8_t id = frskyRxBuffer[2] ;
   uint32_t value ;
   switch(id)
 	{
     case CRSF_GPS_ID:
+      frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
       if (getCrossfireTelemetryValue<4>(3, value))
 			{
 				uint8_t code = 'N' ;
@@ -3924,6 +3957,7 @@ void processCrossfireTelemetryFrame()
     break;
 
     case CRSF_LINK_ID :
+//			XFDebug3 += 1 ;
       frskyStreaming = FRSKY_TIMEOUT10ms ;
       for ( uint32_t i=0 ; i<=TX_SNR_INDEX; i += 1 )
 			{
@@ -3974,6 +4008,7 @@ void processCrossfireTelemetryFrame()
     break ;
 
     case CRSF_ATTITUDE_ID:
+      frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
       if (getCrossfireTelemetryValue<2>(3, value))
 			{
 //        processCrossfireTelemetryValue(ATTITUDE_PITCH_INDEX, value/10);
@@ -4033,6 +4068,7 @@ void processCrossfireTelemetryFrame()
 
 void processCrossfireTelemetryData(uint8_t data)
 {
+//	XFDebug4 += 1 ;
 	
 	if ( g_model.telemetryProtocol == TELEMETRY_MAVLINK )
 	{
@@ -4059,7 +4095,7 @@ void processCrossfireTelemetryData(uint8_t data)
   }
   else
 	{
-    numPktBytes = 0 ;
+    numbytes = 0 ;
   }
   
 	if ( numbytes > 4)
