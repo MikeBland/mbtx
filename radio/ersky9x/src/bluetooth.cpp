@@ -187,11 +187,19 @@ struct t_bt_ser_pkt
 	uint8_t bt_count ;
 } BtSerPkt ;
 
+struct t_bt_ser_rxpkt
+{
+	uint8_t bytes[4+32] ;
+	uint8_t bt_count ;
+} BtSerRxPkt ;
+
+
 #define BT_ENABLE_HIGH	{ HC05_ENABLE_HIGH; BtSerPkt.bytes[0] |= 1 ; }
 #define BT_ENABLE_LOW		{ HC05_ENABLE_LOW; BtSerPkt.bytes[0] &= ~1 ; }
 
 
-#if defined(PCBX9D) && defined(REVNORM)
+#ifdef BT_WITH_ENCODER
+
 uint32_t txPdcBt( struct t_serial_tx *data )
 {
 	uint32_t count ;
@@ -212,17 +220,37 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 
 void btEncTx()
 {
+	int32_t y ;
+	uint32_t x ;
 	BtSerPkt.bytes[1] = ~BtSerPkt.bytes[0] ;
 	BtSerPkt.bytes[2] = 0 ;
 						
 	Com2_tx.buffer = 	BtSerPkt.bytes ;
 	Com2_tx.size = BtSerPkt.bt_count + 3 ;
 	txPdcCom2( &Com2_tx ) ;
+	// Read in any data received
+
+	x = 0 ;
+	while ( ( y = get_fifo128( &Com2_fifo ) ) != -1 )
+	{
+		if ( x < 4 )
+		{
+			BtSerRxPkt.bytes[x++] = y ;
+		}
+		else
+		{
+			x += 1 ;
+      put_fifo128( &Bt_fifo, y ) ;
+      CoSetFlag( Bt_flag ) ;                  // Tell the Bt task something to do
+		}
+	}
+// First byte = Encoder position (uint8)
+// Second byte = Encoder switch bit 0 = 0/1, bits 5,6 and 7 = 000, protocol revision other bits = 0 (spare)
+	if ( x > 4 )
+	{
+		// Update encoder
+	}
 }
-
-
-
-
 
 #endif
 
@@ -382,7 +410,7 @@ void setBtBaudrate( uint32_t index )
 #ifdef PCBX7
 	Com3SetBaudrate ( brate ) ;
 #else
-#if defined(PCBX9D) && defined(REVNORM)
+#ifdef BT_WITH_ENCODER
 	if ( index > 4 )
 	{
 		index = 0 ;

@@ -529,18 +529,21 @@ void perOut(int16_t *chanOut, uint8_t att )
         for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
         for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = g_model.gvars[i].gvar * 1024 / 100 ;
 
+				int16_t heliEle = anas[ele_stick] ;
+				int16_t heliAil = anas[ail_stick] ;
+
         //===========Swash Ring================
         if(g_model.swashRingValue)
         {
-          uint32_t v = ((int32_t)anas[ele_stick]*anas[ele_stick] + (int32_t)anas[ail_stick]*anas[ail_stick]);
+          uint32_t v = ((int32_t)heliEle*heliEle + (int32_t)heliAil*heliAil);
 		      int16_t tmp = calc100toRESX(g_model.swashRingValue) ;
           uint32_t q ;
           q = (int32_t)tmp * tmp ;
           if(v>q)
           {
             uint16_t d = isqrt32(v);
-            anas[ele_stick] = (int32_t)anas[ele_stick]*tmp/((int32_t)d) ;
-            anas[ail_stick] = (int32_t)anas[ail_stick]*tmp/((int32_t)d) ;
+            heliEle = (int32_t)heliEle*tmp/((int32_t)d) ;
+            heliAil = (int32_t)heliAil*tmp/((int32_t)d) ;
           }
         }
 
@@ -554,8 +557,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 
             if( !(att & NO_INPUT) )  //zero input for setStickCenter()
 						{
-	            vp = anas[ele_stick]+trimA[ele_stick];
-  	          vr = anas[ail_stick]+trimA[ail_stick];
+	            vp = heliEle+trimA[ele_stick];
+  	          vr = heliAil+trimA[ail_stick];
 							TrimInUse[ele_stick] |= 1 ;
 							TrimInUse[ail_stick] |= 1 ;
 						}

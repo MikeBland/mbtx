@@ -39,6 +39,8 @@
 
 #include <inttypes.h>
 
+#define EETYPE_RLC
+
 #define FILE_TYPE_MODEL		0
 #define FILE_TYPE_TEXT		1
 

@@ -109,14 +109,16 @@
 #define FR_CUST6			          80
 #define FR_CELLS_TOTAL1			    81
 #define FR_CELLS_TOTAL2			    82
+#define FR_SBEC_VOLT				    83
+#define FR_SBEC_CURRENT			    84
 
-#define FR_TRASH			83  // Used for invalid id
+#define FR_TRASH			85  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  84
+#define HUBDATALENGTH  86
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -341,6 +343,10 @@ DataID Meaning       Unit   Range   Note
 
 #define SP2UART_A_ID              0xfd00
 #define SP2UART_B_ID              0xfd01
+
+#define SBEC_POWER_FIRST_ID       0x0e50
+#define SBEC_POWER_LAST_ID        0x0e5f
+#define SBEC_POWER_ID_8     			0xe5
 
 // Craft and Theory
 #define	ARDUP_ID_8				0x00

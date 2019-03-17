@@ -36,6 +36,10 @@
 #ifndef bluetooth_h
 #define bluetooth_h
 
+#if defined(PCBX9D) && defined(REVNORM)
+#define BT_WITH_ENCODER		1
+#endif
+
 #define BT_115200		0
 #define BT_9600			1
 #define BT_19200		2
@@ -59,7 +63,7 @@
 #define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
 #endif // PCB9XT
 
-#if defined(PCBX9D) && defined(REVNORM)
+#ifdef BT_WITH_ENCODER
 #define HC05_ENABLE_HIGH					// Nothing
 #define HC05_ENABLE_LOW						// Nothing
 #endif
@@ -117,6 +121,13 @@ extern uint16_t BtRxTimer ;
 void bt_task(void* pdata) ;
 void setBtBaudrate( uint32_t index ) ;
 void initBluetooth() ;
+
+
+#ifdef BT_WITH_ENCODER
+void btEncTx( void ) ;
+#endif
+
+
 
 #endif // bluetooth_h
 

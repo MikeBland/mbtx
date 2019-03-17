@@ -1887,6 +1887,11 @@ void processSportPacket()
 				// Bit:0-7 0.1Celsius/0~255
 					storeTelemetryData( FR_TEMP2, value & 0x000000FF ) ;
 				break ;
+
+				case SBEC_POWER_ID_8 :
+					storeTelemetryData( FR_SBEC_VOLT, (value & 0xffff) / 10 ) ;
+					storeTelemetryData( FR_SBEC_CURRENT, (value >> 16) / 10 ) ;
+				break ;
 				 
 				case ARDUP_ID_8 :
 					if ( ( (packet[3] & 0xF0) == 0x50 ) ) //|| ( (packet[3] & 0xF0) == 0x10 ) )

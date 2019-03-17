@@ -388,7 +388,7 @@ const int8_t TelemIndex[] = { FR_A1_COPY, FR_A2_COPY,	FR_RXRSI_COPY, FR_TXRSI_CO
 															FR_RBOX_B2_V,FR_RBOX_B2_A, FR_RBOX_B1_CAP, FR_RBOX_B2_CAP,FR_RBOX_SERVO,FR_RBOX_STATE,	// 56-61
 															FR_CELL7, FR_CELL8, FR_CELL9, FR_CELL10, FR_CELL11, FR_CELL12,                          // 62-67
 															FR_CUST1,FR_CUST2,FR_CUST3,FR_CUST4,FR_CUST5,FR_CUST6,FMODE,RUNTIME,MODELTIME,					// 68-76
-															FR_CELLS_TOTAL1, FR_CELLS_TOTAL2 } ;					// 77-78
+															FR_CELLS_TOTAL1, FR_CELLS_TOTAL2, FR_SBEC_VOLT, FR_SBEC_CURRENT } ;					// 77-80
 
 
 // TXRSSI is always considered valid as it is forced to zero on loss of telemetry
@@ -399,7 +399,7 @@ const uint8_t TelemValid[] = {
 1, 1, 1, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 0, 0, 2, 0, 2, 0, 2, 
 2, 2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 2, 2, 3, 3, 3, 
 3, 3, 3, 3, 3, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2, 2  } ;
+2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 0, 0, 2, 2, 2, 2 } ;
 
 uint8_t MaskRotaryLong ;
 
@@ -1240,6 +1240,7 @@ void voice_telem_item( int8_t index )
 		case FR_CELL12:
 		case FR_RBOX_B1_V :
 		case FR_RBOX_B2_V :
+		case FR_SBEC_VOLT :
 			unit = SV_VOLTS ;			
 			num_decimals = 2 ;
 		break ;
@@ -1357,6 +1358,7 @@ void voice_telem_item( int8_t index )
 
 		case FR_RBOX_B1_A :
 		case FR_RBOX_B2_A :
+		case FR_SBEC_CURRENT :
 			num_decimals = 2 ;
       unit = SV_AMPS ;
 		break ;
@@ -1496,6 +1498,7 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
 		case FR_CELL11:
 		case FR_CELL12:
 		case FR_CELL_MIN:
+		case FR_SBEC_VOLT :
       result *= 2;
 		break ;
 		case FR_CELLS_TOT :
@@ -1510,6 +1513,7 @@ int16_t convertTelemConstant( int8_t channel, int8_t value)
 		break ;
 		case FR_RBOX_B1_A :
 		case FR_RBOX_B2_A :
+		case FR_SBEC_CURRENT :
       result *= 20;
 		break ;
     case FR_WATT:
@@ -1950,11 +1954,13 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		case FR_CELL12:
 		case FR_RBOX_B1_V :
 		case FR_RBOX_B2_V :
+		case FR_SBEC_VOLT :
 			att |= PREC2 ;
       unit = 'v' ;
 		break ;
 		case FR_RBOX_B1_A :
 		case FR_RBOX_B2_A :
+		case FR_SBEC_CURRENT :
 			att |= PREC2 ;
       unit = 'A' ;
 		break ;
@@ -2011,7 +2017,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		}
 		else
 		{
-			Lcd_lastPos = x ;	// Put the unit in the correct place
+			Lcd_lastPos = x+1 ;	// Put the unit in the correct place
 		}
 	}
 	if ( style & ( TELEM_UNIT | TELEM_UNIT_LEFT ) )
@@ -2023,7 +2029,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		}
 		else
 		{
-			x = Lcd_lastPos+1 ;
+			x = Lcd_lastPos ;
 		}
   	lcd_putcAtt( x, y, unit, att & ~CONDENSED );
 	}
@@ -2220,7 +2226,7 @@ static uint8_t mapPots( uint8_t value )
 #ifdef PCBX9LITE
 	if ( value > 6 )
 	{
-		value -= 3 ;
+		value -= 2 ;
 	}
 #endif // PCBX9LITE
 	return value ;
@@ -2237,7 +2243,7 @@ uint8_t unmapPots( uint8_t value )
 #ifdef PCBX9LITE
 	if ( value > 5 )
 	{
-		value += 3 ;
+		value += 2 ;
 	}
 #endif // PCBX9LITE
 	
@@ -3928,7 +3934,8 @@ const uint8_t LogLookup[] =
 39,40,41,42,43,44,45,48,49,50,
 51,52,53,54,55,56,57,58,59,60,
 61,62,63,64,65,66,67,68,69,70,
-71,72,73,74,75,76,77,78,79
+71,72,73,74,75,76,77,78,79,80,
+81
 } ;
 
 const uint8_t LogRateMap[] = { 2, 0, 1 } ;
@@ -4441,7 +4448,15 @@ void menuTextHelp(uint8_t event)
 	uint32_t num_mix_switches = NUM_MIX_SWITCHES ;
 	if ( type == 1 )
 	{
+#ifdef PCBX7
+		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 1 ;
+#else
+ #ifdef PCBX9LITE
+		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 2 ;
+ #else // PCBX9LITE
 		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ;
+ #endif // PCBX9LITE
+#endif // PCBX7
 	}
 	else if ( type == 2 )
 	{
@@ -4457,11 +4472,11 @@ void menuTextHelp(uint8_t event)
 #ifdef PCBX7
 		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - 1 + 4 ;
 #else // PCBX7
-#ifdef PCBX9LITE
+ #ifdef PCBX9LITE
 		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - 2 + 4 ;
-#else // PCBX9LITE
+ #else // PCBX9LITE
 		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS + 4 ;
-#endif // PCBX9LITE
+ #endif // PCBX9LITE
 #endif // PCBX7
 		if ( TextOption )
 		{
@@ -15451,13 +15466,13 @@ void menuDebug(uint8_t event)
 //	lcd_outhex4( 30, 4*FH, PWMcontrol[3].timer_capture_period ) ;
 #endif
 
-#ifdef PCBX9LITE
-  lcd_outhex4( 0,  4*FH, GPIOA->IDR ) ;
-  lcd_outhex4( 25, 4*FH, GPIOB->IDR ) ;
-  lcd_outhex4( 50, 4*FH, GPIOC->IDR ) ;
-  lcd_outhex4( 75, 4*FH, GPIOD->IDR ) ;
-  lcd_outhex4( 0,  5*FH, GPIOE->IDR ) ;
-#endif
+//#ifdef PCBX9LITE
+//  lcd_outhex4( 0,  4*FH, GPIOA->IDR ) ;
+//  lcd_outhex4( 25, 4*FH, GPIOB->IDR ) ;
+//  lcd_outhex4( 50, 4*FH, GPIOC->IDR ) ;
+//  lcd_outhex4( 75, 4*FH, GPIOD->IDR ) ;
+//  lcd_outhex4( 0,  5*FH, GPIOE->IDR ) ;
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 
@@ -22739,7 +22754,7 @@ STR_Protocol
 #endif
 
 #if defined(PCBX9D) || defined(PCBX12D)
- #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12)
+ #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12) || defined(PCBX9LITE)
 			IlinesCount = 20 ;//+ 1 ;
  #else
 			IlinesCount = 21 ;//+ 1 ;
@@ -23254,8 +23269,8 @@ STR_Protocol
 					states &= 0x0FFF ;
 					states |= 0x2000 ;
 				}
-				lcd_outhex4(0,0,g_model.modelswitchWarningStates) ;
-				lcd_outhex4(30,0,states) ;
+//				lcd_outhex4(0,0,g_model.modelswitchWarningStates) ;
+//				lcd_outhex4(30,0,states) ;
 #endif
 #ifdef REV9E
 				states |= (uint32_t)g_model.xmodelswitchWarningStates << 14 ;
@@ -23474,6 +23489,7 @@ extern uint32_t switches_states ;
 //#ifdef PCBX9D
 #ifndef PCBX7
 #ifndef PCBXLITE
+#ifndef PCBX9LITE
 				y += FH ;
 				subN += 1 ;
     		
@@ -23495,6 +23511,7 @@ extern uint32_t switches_states ;
 					alphaEditName( 11*FW-2, y, (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName), type | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FIlename") ) ;
 					validateName( (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName) ) ;
 				}
+#endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7
 #endif

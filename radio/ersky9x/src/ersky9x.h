@@ -736,7 +736,7 @@ extern uint32_t countExtraPots( void ) ;
 		#if defined (PCBXLITE)
   	 #define	NUM_EXTRA_POTS 0
 		#else
-     #ifdef PCBX7
+     #ifdef PCBX9LITE
   	 #define	NUM_EXTRA_POTS 0
 		 #else
   	 #define	NUM_EXTRA_POTS 1
@@ -950,7 +950,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 79
+#define NUM_TELEM_ITEMS 81
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3

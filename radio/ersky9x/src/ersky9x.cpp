@@ -3853,7 +3853,7 @@ void main_loop(void* pdata)
 #endif
 #ifdef PCBX9D
 #if defined(PCBXLITE) || defined(PCBX9LITE)
-        ab /= 64593  ;
+        ab /= 71089  ;
 #else
         ab /= 57165  ;
 #endif
@@ -4141,6 +4141,10 @@ extern uint8_t ModelImageValid ;
 #ifdef PCBX12D
 			uint32_t saved = 0 ;
 #endif
+#ifdef EETYPE_RLC
+			uint32_t saved = 0 ;
+#endif
+
 #ifdef PCBX12D
 	  	while( (uint16_t)(get_tmr10ms() - tgtime ) < 300 ) // 3 seconds
   		{
@@ -4171,7 +4175,6 @@ extern uint8_t ModelImageValid ;
 #endif // nREV9E
 				}
 				wdt_reset() ;
-
 				if ( AudioActive )
 				{
 					if ( (uint16_t)(get_tmr10ms() - long_tgtime ) < 600 )		// 6 seconds
@@ -4198,10 +4201,24 @@ extern void eeSaveAll() ;
 				{
 					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "EEPROM BUSY", 11 ) ;
 #else
+
+ #ifdef EETYPE_RLC
+				if ( ! saved )
+				{
+					saved = 1 ;
+					lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
+					refreshDisplay() ;
+					ee32_check_finished() ;
+					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
+ 					tgtime = get_tmr10ms() ;
+				}
+ #else
+
 				if ( ee32_check_finished() == 0 )
 				{
 					lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
 					tgtime = get_tmr10ms() ;
+ #endif
 #endif
 
 #ifdef PCB9XT
@@ -4224,11 +4241,13 @@ extern uint8_t Ee32_model_delete_pending ;
 
 
 #endif
+#ifndef EETYPE_RLC
 				}
 				else
 				{
 					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
 				}
+#endif
 #ifdef POWER_BUTTON
 				if ( check_soft_power() == POWER_X9E_STOP )	// button still pressed
 				{
@@ -7600,6 +7619,10 @@ void perMain( uint32_t no_menu )
 
 // Here, if waiting for EEPROM response, don't action menus
 
+#ifdef BT_WITH_ENCODER
+	btEncTx() ;
+#endif
+
 	if ( no_menu == 0 )
 	{
 		static uint8_t alertKey ;
@@ -7968,7 +7991,7 @@ extern int32_t Rotary_diff ;
 #endif
 #ifdef PCBX9D
 #if defined(PCBXLITE) || defined(PCBX9LITE)
-        ab /= 64593  ;
+        ab /= 71089  ;
 #else
         ab /= 57165  ;
 #endif
@@ -9178,14 +9201,14 @@ void createSwitchMapping()
 	 
 #ifndef PCBX9LITE
 	*p++ = HSW_SD0 ;
-#ifdef PCBXLITE
+ #ifdef PCBXLITE
 	if (g_eeGeneral.rudsource)
 	{
-#endif
+ #endif
 	*p++ = HSW_SD1 ;
-#ifdef PCBXLITE
+ #ifdef PCBXLITE
 	}
-#endif
+ #endif
 	*p++ = HSW_SD2 ;
 #endif // nX3
 	 
@@ -10108,7 +10131,11 @@ int8_t getMovedSwitch()
 #ifdef PCBXLITE
       if (i<2)
 #else
+ #if defined (PCBX9LITE)
+      if (i<3)
+ #else
       if (i<4)
+ #endif			
 #endif			
 			{
         result = 1+(3*i)+next;
@@ -10148,13 +10175,23 @@ int8_t getMovedSwitch()
 			{
         result = 0 ;
 #else
+ #if defined (PCBX9LITE)
+			else if (i==3)
+			{
+				result = 0 ;
+			}
+#endif
 			else if (i==4)
 			{
 				result = 0 ;
 			}
       else if (i==5)
 			{
+ #if defined (PCBX9LITE)
+        result = -(1+(3*3)) ;
+#else
         result = -(1+(3*4)) ;
+#endif
 				if (next!=0) result = -result ;
 			}
       else if (i==6)
@@ -10168,7 +10205,11 @@ int8_t getMovedSwitch()
 #endif
       else
 			{
+ #if defined (PCBX9LITE)
+        result = -(1+(3*3)+1) ;
+#else
         result = -(1+(3*4)+1) ;
+#endif
 				if (next!=0) result = -result ;
 #endif
 			}
@@ -10869,25 +10910,25 @@ void checkSwitches()
 			}
 
 #ifdef PCBX7
-#ifdef PCBT12
+ #ifdef PCBT12
 			if ( ( ss & 0x3CFF ) == warningStates )	// Miss E and G, inc H
-#else
+ #else
 			if ( ( ss & 0x0CFF ) == warningStates )	// Miss E and G
-#endif
+ #endif
 #else
-#ifdef PCBXLITE
+ #ifdef PCBXLITE
 			if ( ( ss & 0x00FF ) == (warningStates & 0x00FF ) )
-#else
-#ifdef PCBX9LITE
-			if ( ( ss & 0x0C3F ) == warningStates )	// Miss D, E and G
-#else // X3
-#ifdef PCBX12D
+ #else
+  #ifdef PCBX9LITE
+			if ( ( ss & 0x0C3F ) == (warningStates & 0x0C3F) )	// Miss D, E and G
+  #else // X3
+   #ifdef PCBX12D
 			if ( ( ss & 0x0001FFFF ) == warningStates )
-#else
+   #else
 			if ( ( ss & 0x3FFF ) == warningStates )
-#endif
-#endif // X3
-#endif
+   #endif
+  #endif // X3
+ #endif
 #endif
 			{
 				return ;
