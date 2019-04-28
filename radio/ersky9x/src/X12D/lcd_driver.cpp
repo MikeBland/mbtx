@@ -137,11 +137,14 @@ void lcdColorsInit()
 }
 
 
-
-
-
-
-
+#if defined(PCBX10)
+void delay_ms(uint32_t ms)
+{
+  while (ms--) {
+		hw_delay( 10000 ) ; // units of 0.1uS
+  }
+}
+#endif
 
 static void LCD_AF_GPIOConfig(void)
 {
@@ -418,7 +421,9 @@ void backlightInit()
 {
 //  if (IS_HORUS_PROD())
 //  if (0)
+#if defined(PCBX12D)
 	if ( isProdVersion() )
+#endif
 //  if (GPIOI->IDR & 0x0800)
 	{
   	// PIN init
@@ -432,6 +437,7 @@ void backlightInit()
   	GPIO_Init(BL_GPIO, &GPIO_InitStructure);
   	GPIO_PinAFConfig(BL_GPIO, BL_GPIO_PinSource, BL_GPIO_AF);
 	}
+#if defined(PCBX12D)
 	else
 	{
   	// PIN init
@@ -444,7 +450,7 @@ void backlightInit()
   	GPIO_Init(BL_GPIO, &GPIO_InitStructure);
   	GPIO_PinAFConfig(BL_GPIO, BLP_GPIO_PinSource, BLP_GPIO_AF);
   }
-
+#endif
   // TIMER init
 #if defined(PCBX12D)
 	if ( isProdVersion() )
@@ -642,6 +648,10 @@ volatile uint8_t LcdClearing ;
 
 void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour)
 {
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-1) - x - (w - 1) ;
+	y = (LCD_H-1) - y - (h - 1) ;
+#endif
 	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x) ;
   DMA2D_DeInit() ;
 
@@ -739,6 +749,10 @@ void pollDma2Ddone()
 
 void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
+//#ifdef INVERT_DISPLAY
+//	x = (LCD_W-1) - x - (w - 1) ;
+//	y = (LCD_H-1) - y - (h - 1) ;
+//#endif
   if (DMA2D->CR & (uint32_t)DMA2D_CR_START)
 	{
 #ifdef WHERE_TRACK
@@ -903,6 +917,26 @@ uint8_t *font_it_h_extra ;
 uint8_t *font_pl_h_extra ;
 
 
+void invertFont( uint8_t *dest, uint8_t *source, uint32_t bytesPerChar, uint32_t size )
+{
+	uint32_t count ;
+	uint32_t chars = size / bytesPerChar ;
+	uint8_t byte ;
+
+	while ( chars-- )
+	{
+		count = bytesPerChar ;
+		source += bytesPerChar ;
+		while ( count-- )
+		{
+			byte = *--source ;
+			byte = ( byte << 4 ) | ( byte >> 4 ) ;
+			*dest++ = byte ;
+		}
+		source += bytesPerChar ;
+	}
+}
+
 void copyFonts()
 {
 	uint32_t i ;
@@ -910,62 +944,74 @@ void copyFonts()
 
 	Font_12x8h = dest ;
 	i = (sizeof(RomFont_12x8h) + 3) & ~3  ;
-	memmove( dest, RomFont_12x8h, i ) ;
+	invertFont( dest, (uint8_t *)RomFont_12x8h, 16*32/2, i ) ;
+//	memmove( dest, RomFont_12x8h, i ) ;
 	dest += i ;
 
 	Font_dblsizeh = dest ;
 	i = (sizeof(RomFont_dblsizeh) + 3) & ~3  ;
-	memmove( dest, RomFont_dblsizeh , i ) ;
+	invertFont( dest, (uint8_t *)RomFont_dblsizeh, 24*32/2, i ) ;
+//	memmove( dest, RomFont_dblsizeh , i ) ;
 	dest += i ;
 
 	Font5x7h = dest ;
 	i = (sizeof(RomFont5x7h) + 3) & ~3  ;
-	memmove( dest, RomFont5x7h , i ) ;
+	invertFont( dest, (uint8_t *)RomFont5x7h, 12*16/2, i ) ;
+//	memmove( dest, RomFont5x7h , i ) ;
 	dest += i ;
 
 	Font5x7hBold = dest ;
 	i = (sizeof(RomFont5x7hBold) + 3) & ~3  ;
-	memmove( dest, RomFont5x7hBold , i ) ;
+	invertFont( dest, (uint8_t *)RomFont5x7hBold, 12*16/2, i ) ;
+//	memmove( dest, RomFont5x7hBold , i ) ;
 	dest += i ;
 
 	font_fr_h_extra = dest ;
 	i = (sizeof(Romfont_fr_h_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_fr_h_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_fr_h_extra, 12*16/2, i ) ;
+//	memmove( dest, Romfont_fr_h_extra, i ) ;
 	dest += i ;
 
 	font_fr_h_big_extra = dest ;
 	i = (sizeof(Romfont_fr_h_big_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_fr_h_big_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_fr_h_big_extra, 24*32/2, i ) ;
+//	memmove( dest, Romfont_fr_h_big_extra, i ) ;
 	dest += i ;
 
 	font_de_h_extra = dest ;
 	i = (sizeof(Romfont_de_h_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_de_h_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_de_h_extra, 12*16/2, i ) ;
+//	memmove( dest, Romfont_de_h_extra, i ) ;
 	dest += i ;
 
 	font_de_h_big_extra = dest ;
 	i = (sizeof(Romfont_de_h_big_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_de_h_big_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_de_h_big_extra, 24*32/2, i ) ;
+//	memmove( dest, Romfont_de_h_big_extra, i ) ;
 	dest += i ;
 
 	font_se_h_extra = dest ;
 	i = (sizeof(Romfont_se_h_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_se_h_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_se_h_extra, 12*16/2, i ) ;
+//	memmove( dest, Romfont_se_h_extra, i ) ;
 	dest += i ;
 
 	font_se_h_big_extra = dest ;
 	i = (sizeof(Romfont_se_h_big_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_se_h_big_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_se_h_big_extra, 24*32/2, i ) ;
+//	memmove( dest, Romfont_se_h_big_extra, i ) ;
 	dest += i ;
 
 	font_it_h_extra = dest ;
 	i = (sizeof(Romfont_it_h_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_it_h_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_it_h_extra, 12*16/2, i ) ;
+//	memmove( dest, Romfont_it_h_extra, i ) ;
 	dest += i ;
 
 	font_pl_h_extra = dest ;
 	i = (sizeof(Romfont_pl_h_extra) + 3) & ~3  ;
-	memmove( dest, Romfont_pl_h_extra, i ) ;
+	invertFont( dest, (uint8_t *)Romfont_pl_h_extra, 12*16/2, i ) ;
+//	memmove( dest, Romfont_pl_h_extra, i ) ;
 	dest += i ;
 
 }
@@ -1048,10 +1094,17 @@ const uint8_t font_pl_h_extra[] =
 //#define LCD_GREY		0x8410
 //#define LCD_STATUS_GREY	0x3BEF
 
+// Coordinates are full 480 x 272
 void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
 {
 	uint32_t backColour ;
 	uint32_t frontColour ;
+	uint32_t condensed = mode & CONDENSED ;
+
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
+	y = (LCD_H-1) - y - 31 ;
+#endif
 
 	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
 	backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
@@ -1061,7 +1114,6 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
 	
   uint8_t *q ;
-	uint32_t condensed = mode & CONDENSED ;
 	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
 	uint32_t w = condensed ? 16 : 24 ;
 //	w = 12 ;
@@ -1127,6 +1179,14 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 
 void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
 {
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-1) - x - 11 ;
+	y = (LCD_H-1) - y - 15 ;
+	if ( y >= LCD_H )
+	{
+		y = 0 ;
+	}
+#endif
 	uint32_t backColour ;
 //	switch ( background )
 //	{
@@ -1162,8 +1222,16 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 
   uint8_t *q ;
 	uint32_t condensed = mode & CONDENSED ;
+#ifdef INVERT_DISPLAY
+	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+#else
 	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 + (condensed ? 4 : 0) ;
+#endif
+#ifdef INVERT_DISPLAY
+	uint32_t w = condensed ? 8 : 12 ;
+#else
 	uint32_t w = condensed ? 2 : 12 ;
+#endif
 //	w = 12 ;
 //	q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
 	if ( condensed )
@@ -1221,7 +1289,11 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
   
   DMA2D->FGPFCCR = CM_L4 ;
   DMA2D->FGMAR   = (uint32_t) q ;
+#ifdef INVERT_DISPLAY
+  DMA2D->FGOR    = condensed ? 4 : 0 ;
+#else
   DMA2D->FGOR    = condensed ? 10 : 0 ;
+#endif
 //  DMA2D->FGOR    = 0 ;
 	
   DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
@@ -1229,11 +1301,19 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 	pollDma2Ddone() ;
 	if ( condensed )
 	{
+#ifdef INVERT_DISPLAY
+  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (2 << 16) ) ;
+	  DMA2D->OMAR = addr + 16 ;
+		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 2) ;
+  	DMA2D->FGMAR   = ( (uint32_t) q ) + 5 ;
+	  DMA2D->FGOR    = 10 ;
+#else
   	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
 	  DMA2D->OMAR = addr + 4 ;
 		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
   	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
 	  DMA2D->FGOR    = 4 ;
+#endif
 		DMA2D->IFCR = DMA2D_FLAG_TC ;
   	DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
 	  DMA2D_StartTransfer() ;
@@ -1422,6 +1502,48 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
   /* Wait for CTC Flag activation */
 	pollDma2Ddone() ;
 }
+
+void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t *image )
+{
+  DMA2D_DeInit();
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-1) - x - (w - 1) ;
+	y = (LCD_H-1) - y - (h - 1) ;
+#endif
+  uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
+
+  DMA2D_InitTypeDef DMA2D_InitStruct;
+  DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M;
+  DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
+  DMA2D_InitStruct.DMA2D_OutputMemoryAdd = addr ;
+  DMA2D_InitStruct.DMA2D_OutputGreen = 0;
+  DMA2D_InitStruct.DMA2D_OutputBlue = 0;
+  DMA2D_InitStruct.DMA2D_OutputRed = 0;
+  DMA2D_InitStruct.DMA2D_OutputAlpha = 0;
+  DMA2D_InitStruct.DMA2D_OutputOffset = (LCD_W - w);
+  DMA2D_InitStruct.DMA2D_NumberOfLine = h;
+  DMA2D_InitStruct.DMA2D_PixelPerLine = w;
+  DMA2D_Init(&DMA2D_InitStruct);
+
+  DMA2D_FG_InitTypeDef DMA2D_FG_InitStruct;
+  DMA2D_FG_StructInit(&DMA2D_FG_InitStruct);
+  DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(image);
+  DMA2D_FG_InitStruct.DMA2D_FGO = 0;
+  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565;
+  DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE;
+  DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_VALUE = 0;
+  DMA2D_FGConfig(&DMA2D_FG_InitStruct);
+
+  /* Start Transfer */
+	DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
+	DMA2D_StartTransfer();
+
+  /* Wait for CTC Flag activation */
+	pollDma2Ddone() ;
+}
+
+
+
 
 void DMAcopy(void * src, void * dest, int len)
 {

@@ -12,7 +12,12 @@
 void init_rotary_encoder()
 {
 	configure_pins( 0x0C00, PIN_INPUT | PIN_PULLUP | PIN_PORTH ) ;
+#if defined(PCBX12D)
 	configure_pins( 0x0002, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+#endif
+#if defined(PCBX10)
+	configure_pins( KEYS_GPIO_PIN_ENTER, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+#endif
 //	RotaryDivisor = 2 ;
 //	g_eeGeneral.rotaryDivisor = 2 ;
 }
@@ -30,6 +35,37 @@ void checkRotaryEncoder()
 	dummy >>= 10 ;
 //	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
 	dummy &= 0x03 ;
+	
+#if defined(PCBX10)
+// For T16!
+	if ( dummy != ( Rotary_position & 0x03 ) )
+	{
+		if ( ( dummy & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+		{
+			if ( (Rotary_position & 0x03) == 3 )
+			{
+				Rotary_count += 1 ;
+			}
+			else
+			{
+				Rotary_count -= 1 ;
+			}
+		}
+		else
+		{
+			if ( (Rotary_position & 0x03) == 3 )
+			{
+				Rotary_count -= 1 ;
+			}
+			if ( (Rotary_position & 0x03) == 0 )
+			{
+				Rotary_count += 1 ;
+			}
+		}
+		Rotary_position &= ~0x03 ;
+		Rotary_position |= dummy ;
+	}
+#else	
 	if ( dummy != ( Rotary_position & 0x03 ) )
 	{
 		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
@@ -43,5 +79,6 @@ void checkRotaryEncoder()
 		Rotary_position &= ~0x03 ;
 		Rotary_position |= dummy ;
 	}
+#endif
 }
 

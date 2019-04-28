@@ -117,7 +117,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
 	subProtocol = pmodule->sub_protocol+1 ;
-#ifdef PCBT12
+#if defined(PCBT12) || defined(PCBT16)
 	if ( subProtocol == M_FRSKYX+1 )
 	{
 		subProtocol = ( subProtocol & 0xC0 ) | 63 ;

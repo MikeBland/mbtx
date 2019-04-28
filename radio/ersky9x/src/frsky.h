@@ -500,6 +500,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType ) ;
 
 void dsmTelemetryStartReceive( void ) ;
 uint16_t convertRxv( uint16_t value ) ;
+void processSportData( uint8_t *packet, uint32_t receiver ) ;
 
 void FRSKY_setModelAlarms(void) ;
 

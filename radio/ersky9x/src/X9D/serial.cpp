@@ -26,7 +26,7 @@
 //#include "timers.h"
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_usart.h"
 //#include "X12D/stm32f4xx_gpio.h"
@@ -67,13 +67,15 @@ uint16_t USART2_ORE ;
  #ifdef PCBX9D
   #ifndef PCBXLITE
    #ifndef PCBX9LITE
+    #ifndef PCBX10
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
+    #endif 
    #endif 
   #endif 
  #endif 
 #endif 
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define XJT_HEARTBEAT_BIT	0x1000		// PD12
 #endif 
 
@@ -96,13 +98,14 @@ uint8_t LastReceivedSportByte ;
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #endif // X3
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern struct t_serial_tx *Current_Com6 ;
 #endif
 
 extern struct t_serial_tx *Current_Com2 ;
 
 #ifndef PCBX12D
+#ifndef PCBX10
 void USART6_Sbus_configure()
 {
  #ifdef PCBX9D
@@ -168,10 +171,12 @@ extern "C" void USART6_IRQHandler()
 #endif // X3
 
 
+#endif // #ifndef PCBX10
 #endif // #ifndef PCBX12D
 
 
-#ifdef PCBX12D
+//#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D)
 void USART6_configure()
 {
 	if ( isProdVersion() == 0 )
@@ -357,7 +362,12 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	configure_pins( 0x00000008, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PER_7 | PIN_PORTA ) ;
 	configure_pins( 0x00000004, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTA ) ;
 #else
-	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+
+#ifdef PCBXLITE
+	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
+#else	
+	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW | PIN_PORTD ) ;
+#endif
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
 	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
 #endif
@@ -443,11 +453,11 @@ void com2Parity( uint32_t even )
 }
 #endif
 
-uint16_t SportStartDebug ;
+//uint16_t SportStartDebug ;
 
 void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 {
-SportStartDebug	+= 1 ;
+//SportStartDebug	+= 1 ;
 	USART2->CR1 &= ~USART_CR1_TE ;
 	
 	SendingSportPacket.buffer = buffer ;

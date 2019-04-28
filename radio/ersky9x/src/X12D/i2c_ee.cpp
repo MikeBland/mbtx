@@ -187,11 +187,11 @@ void I2C_EE_Init()
   I2C_GPIO_Configuration();
 }
 
-uint16_t VolDebug ;
+//uint16_t VolDebug ;
 
 void I2C_set_volume( register uint8_t volume )
 {
-	VolDebug += 1 ;
+//	VolDebug += 1 ;
 	AckDebug = 0 ;
   I2C_START();
   I2C_SEND_DATA(I2C_CAT5137_ADDRESS|EE_CMD_WRITE);

@@ -737,7 +737,7 @@ void writeLogs()
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A4] ) ;
 //			}
-			logSingleNumber( LOG_HDG, FrskyHubData[FR_HOME_DIR] ) ;
+			logSingleNumber( LOG_HDG, FrskyHubData[FR_COURSE] ) ;
 //			if ( isLogEnabled( LOG_HDG ) )
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;

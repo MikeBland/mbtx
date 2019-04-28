@@ -18,7 +18,7 @@
 #include <string.h>
 
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 //#define	WHERE_TRACK		1
 //void notePosition( uint8_t byte ) ;
 #endif
@@ -64,7 +64,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 #include "X9D/hal.h"
 #include "pdi.h"
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_flash.h"
 #include "X12D/hal.h"
@@ -373,6 +373,9 @@ void stopMultiMode()
 #endif
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+//#if /*defined(PCBXLITE) || */ defined(PCBX9LITE)
+//	GPIO_ResetBits( GPIOBOOTCMD, PIN_BOOTCMD ) ;
+//#endif
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
@@ -528,7 +531,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 //After reset, write is not allowed in the Flash control register (FLASH_CR) to protect the
 //Flash memory against possible unwanted operations due, for example, to electric
 //disturbances. The following sequence is used to unlock this register:
@@ -577,7 +580,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 {
 	uint32_t i ;
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void initLongWatchdog(uint32_t time) ;
 	initLongWatchdog(4) ;
 	if ( (uint32_t) address >= 0x08020000 )
@@ -595,7 +598,7 @@ extern void initLongWatchdog(uint32_t time) ;
 	{
 		eraseSector( 1 ) ;
 	}
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	if ( (uint32_t) address == 0x08008000 )
 	{
 		eraseSector( 2 ) ;
@@ -685,7 +688,7 @@ uint32_t validateFile( uint32_t *block )
 	}
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	if ( ( block[0] & 0xFFFC0000 ) != 0x20000000 )
 	{
 		return 0 ;
@@ -1508,7 +1511,7 @@ void menuUp1(uint8_t event)
 #else				
   			fr = f_mount(0, &g_FATFS) ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 				unlockFlash() ;
 #endif
 			}
@@ -1680,7 +1683,7 @@ void menuUp1(uint8_t event)
 					lcd_puts_Pleft( 2*FH, "Flash AVR from" ) ;
 				}
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 		 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -1736,7 +1739,7 @@ void menuUp1(uint8_t event)
 			{
 				if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 				{
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 					firmwareAddress = 0x08000000 ;
 #endif
 #ifdef PCBSKY
@@ -1833,7 +1836,7 @@ void menuUp1(uint8_t event)
 			lcd_puts_Pleft( 3*FH, "Flashing" ) ;
 			if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 			{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 				width = ByteEnd >> 11 ;
 #else
 				width = ByteEnd >> 9 ;
@@ -1858,7 +1861,7 @@ void menuUp1(uint8_t event)
 				}
 				else
 				{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 					if ( ByteEnd >= 32768 * 4 )
 #else
 					if ( ByteEnd >= 32768 )
@@ -2170,7 +2173,7 @@ void menuUpdate(uint8_t event)
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
@@ -2338,7 +2341,7 @@ void menuUpdate(uint8_t event)
 	      pushMenu(menuUpMulti) ;
 			}
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 //			if ( position == 2*FH )
 //			{
 //				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
@@ -2444,7 +2447,7 @@ void menuUpdate(uint8_t event)
 			}
 		break ;
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
 			if ( position < 5*FH )
@@ -2759,11 +2762,19 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
     }
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9LITE)
+extern volatile uint8_t *PxxTxPtr ;
+extern volatile uint8_t PxxTxCount ;
+	PxxTxPtr = TxPhyPacket ;
+	PxxTxCount = i ;
+	INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
+#else
+ #if defined(PCBX9D) || defined(PCB9XT)
 	x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
-#endif
-#ifdef PCBSKY
+ #endif
+ #ifdef PCBSKY
 	txPdcUsart( TxPhyPacket, i, NO_RECEIVE ) ;
+ #endif
 #endif
 }
 
@@ -3437,13 +3448,25 @@ uint32_t sportUpdate( uint32_t external )
 		
 		case SPORT_START :
 #if !defined(PCBTARANIS)
-			FrskyTelemetryType = FRSKY_TEL_SPORT ;
+			 FrskyTelemetryType = FRSKY_TEL_SPORT ;
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
+#if defined(PCBX9LITE)
+  		RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
+			RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
+			configure_pins( INTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+			configure_pins( INTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+			INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 57600 ;
+			INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
+			INTMODULE_USART->CR1 |= USART_CR1_RE | USART_CR1_RXNEIE ;
+			NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
+  		NVIC_EnableIRQ( INTMODULE_USART_IRQn);
+#else
 			com1_Configure( 57600, SERIAL_NORM, 0 ) ;
+#endif
 #endif
 #endif
 #ifdef PCBSKY
@@ -3474,6 +3497,10 @@ uint32_t sportUpdate( uint32_t external )
 			}
 			else
 			{
+//#if /*defined(PCBXLITE) || */ defined(PCBX9LITE)
+//				configure_pins( PIN_BOOTCMD, PIN_OUTPUT | PIN_OS25 | PORT_BOOTCMD | PIN_HIGH ) ;
+//				GPIO_SetBits( GPIOBOOTCMD, PIN_BOOTCMD ) ;
+//#endif
   			INTERNAL_RF_ON();
 			}
 #endif
@@ -3514,7 +3541,7 @@ uint32_t sportUpdate( uint32_t external )
 		break ;
 
 		case SPORT_DATA :
-#if defined(PCB9XT)
+#if defined(PCB9XT) || defined(ACCESS)
 			if ( SportTimer == 0 )
 			{
 				SportTimer = 5 ;		// 50 mS
@@ -3555,10 +3582,23 @@ void maintenanceBackground()
 #if !defined(PCBTARANIS)
 	// First, deal with any received bytes
 #if defined(PCBX9D) || defined(PCB9XT)
-	uint16_t rxchar ;
-	while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+#ifdef ACCESS
+	if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
-		frsky_receive_byte( rxchar ) ;
+		int32_t rxbyte ;
+		while ( ( rxbyte = get_16bit_fifo64( &Access_int_fifo ) ) != -1 )
+		{
+		 	frsky_receive_byte( rxbyte ) ;
+		}
+	}
+	else
+#endif
+	{	
+		uint16_t rxchar ;
+		while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+		{
+			frsky_receive_byte( rxchar ) ;
+		}
 	}
 #endif
 		

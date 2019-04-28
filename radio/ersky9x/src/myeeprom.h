@@ -21,7 +21,7 @@
 
 //eeprom data
 //#define EE_VERSION 2
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 #define MAX_MODELS  60
 #else
 #define MAX_MODELS  32
@@ -726,6 +726,13 @@ struct t_module
 	uint8_t sparex[2] ;
 } ;
 
+struct t_access
+{
+	uint8_t numChannels ;
+	uint8_t modelRegistrationID[8] ;
+	uint8_t receiverName[3][8] ; // PXX2_LEN_RX_NAME
+} ;
+
 PACK(typedef struct t_extraId
 {
 	uint16_t id ;
@@ -800,7 +807,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t 	FASoffset ;			// 0.0 to 1.5
 	VarioData varioData ;
 	uint8_t		anaVolume ;	// analog volume control
-	int8_t pxxFailsafe[16] ;
+	int8_t accessFailsafe[2][8] ;
 	int8_t logSwitch ;
 	uint8_t logRate:4 ;
 	uint8_t logNew:1 ;
@@ -904,6 +911,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t	customTelemetryNames[24] ;
 	uint8_t extraSensors ;
 	ExtraId extraId[NUMBER_EXTRA_IDS] ;
+	struct t_access Access[2] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData;
 

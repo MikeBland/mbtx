@@ -193,7 +193,7 @@ void generalDefault()
   g_eeGeneral.vBatWarn = 65;
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 100 ;
 #else
 	g_eeGeneral.bright = 50 ;

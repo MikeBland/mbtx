@@ -35,6 +35,9 @@ extern uint32_t isqrt32( uint32_t x ) ;
 uint8_t LoadingIndex ;
 uint8_t LoadingNeeded ;
 
+uint32_t TotalExecTime ;
+uint32_t TotalTimes ;
+
 #define FILE_SUPPORT	1
 #define DIR_LENGTH		40
 struct fileControl BasicFileControl ;
@@ -58,7 +61,7 @@ void scriptReleasetBt() ;
 #include "lcd.h"
 
 
-uint8_t ScriptFlags ;
+uint16_t ScriptFlags ;
 extern uint32_t g_tmr10ms ;
 
 
@@ -288,6 +291,7 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define SE_TOO_MANY_CALLS	12
 #define SE_NO_WHILE				13
 #define SE_STRING_LONG		14
+#define SE_NO_FLOAT				15
 
 #define MAX_VARIABLES	2
 
@@ -314,7 +318,8 @@ const char *ErrorText[] = {
  "Dimension",
  "Too Many Nested Calls",
  "Missing while",
- "String too long"
+ "String too long".
+ "No Floating point"
 } ;	
 #endif
 
@@ -463,6 +468,9 @@ uint32_t execOneLine(void) ;
 // Label: EntryLen, SYM_LABEL, StrLen, String/0, SYM_LAB_DEF/REF, Poslow, Poshi
 // Variable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_INT/UNS/FLOAT, Poslow, Poshi
 // ArrayVariable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_ARRAY_INT/UNS/FLOAT, Poslow, Poshi, dimension
+// Change to:
+// ArrayVariable: EntryLen, SYM_VARIABLE, StrLen, String/0, SYM_VAR_ARRAY_INT/UNS/FLOAT, Poslow, Poshi, dimensionlow, dimensionhi
+
 // Const: EntryLen, SYM_CONST, StrLen, String/0, Val0, Val1, Val2, Val3
 // Function: EntryLen, SYM_FUNCTION, StrLen, String/0, SYM_LAB_DEF/REF, [ParamCount, LocalCount,] Poslow, Poshi
 
@@ -678,11 +686,15 @@ uint8_t CodeBuffer[200] ;
 #ifdef	QT
 #define PROGRAM_SIZE	22000
 #else
-#ifdef SMALL
+ #ifdef SMALL
 #define PROGRAM_SIZE	10300
-#else
+ #else
+  #if defined(PCBX12D) || defined(PCBX10)
+#define PROGRAM_SIZE	32000
+  #else
 #define PROGRAM_SIZE	22000
-#endif
+  #endif
+ #endif
 #endif
 
 union t_program
@@ -764,6 +776,13 @@ uint32_t strMatch( const char *a, const char *b, uint32_t length )
 }
 #endif
 
+uint32_t serror( uint32_t x )
+{
+	ParseError = x ;
+	ParseErrorLine = LineNumber ;
+	return 0 ;
+}
+
 
 // Get a number in a number base for a maximum # of digits
 // (digits = 0 means no limit)
@@ -790,6 +809,10 @@ unsigned int get_number( int base, int digits )
 		}
 		else							/* not a valid "digit" */
 		{
+			if ( c == '.' )
+			{
+				serror(SE_NO_FLOAT) ;
+			}
 			break ;
 		}
 		if( c >= (char) base )					/* outside of base */
@@ -1075,13 +1098,6 @@ uint32_t iswhite(char c)
 {
   if(c==' ' || c=='\t') return 1;
   else return 0;
-}
-
-uint32_t serror( uint32_t x )
-{
-	ParseError = x ;
-	ParseErrorLine = LineNumber ;
-	return 0 ;
 }
 
 uint32_t runError( uint32_t x )
@@ -1492,6 +1508,7 @@ void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimensi
 		if ( sub_type & SYM_VAR_ARRAY_TYPE )
 		{
 			Program.Bytes[end++] = dimension ;
+//			Program.Bytes[end++] = dimension >> 8 ;
 		}
 	}
 	else
@@ -1514,6 +1531,14 @@ uint32_t basicTask( uint8_t event, uint8_t flags ) ;
 #define	SCRIPT_STANDALONE			2
 #define	SCRIPT_TELEMETRY			4
 #define	SCRIPT_RESUME					8
+#define	SCRIPT_BACKGROUND			16
+#define	SCRIPT_FRSKY					32
+
+void scriptReleasetBt(void)
+{
+
+}
+
 
 uint32_t parse( char *filename )
 {
@@ -1533,20 +1558,20 @@ uint32_t parse( char *filename )
 	return retValue ;
 }	
 	
-//uint32_t run( uint32_t event )
-//{	
-//	uint32_t i ;
-//	uint32_t retValue ;
-//	for ( i = 0 ; i < 300 ; i += 1 )
-//	{
-//		retValue = basicTask( event,  SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
-//		if ( ( retValue == 2 ) || ( retValue == 3 ) )
-//		{
-//			break ;
-//		}
-//	}
-//	return retValue ;
-//}
+uint32_t run( uint32_t event )
+{	
+	uint32_t i ;
+	uint32_t retValue ;
+	for ( i = 0 ; i < 300 ; i += 1 )
+	{
+		retValue = basicTask( event,  SCRIPT_STANDALONE | SCRIPT_LCD_OK ) ;
+		if ( ( retValue == 2 ) || ( retValue == 3 ) )
+		{
+			break ;
+		}
+	}
+	return retValue ;
+}
 
 void report()
 {
@@ -1755,6 +1780,13 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	type = Program.Bytes[index-1] ;
 	dimension = Program.Bytes[index+2] ;
 	index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+	
+//	index += Program.Bytes[index] - 4 ; // Index of index
+//	type = Program.Bytes[index-1] ;
+//	dimension = Program.Bytes[index+2] ;
+//	dimension |= Program.Bytes[index+3] << 8 ;
+//	index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+	
 	code = 0x64 ;
 	if ( type == SYM_VAR_ARRAY_BYTE )
 	{
@@ -1764,6 +1796,12 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	{
 		code |= 0x08 ;
 	}
+
+//	if ( dimension > 255 )
+//	{
+//		code |= 0x01 ;
+//	}
+	
 	Program.Bytes[cPosition++] = code ;
 	Program.Bytes[cPosition++] = index ;
 	if ( code &= 0x08 )
@@ -1771,6 +1809,10 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 		Program.Bytes[cPosition++] = index >> 8 ;
 	}
 	Program.Bytes[cPosition++] = dimension ;
+//	if ( code & 1 )
+//	{
+//		Program.Bytes[cPosition++] = dimension >> 8 ;
+//	}
 	return cPosition ;
 }
 
@@ -2810,6 +2852,20 @@ uint32_t basicTask( uint8_t event, uint8_t flags )
 	uint32_t result ;
 	ScriptFlags = flags ;
 
+	if ( flags & SCRIPT_BACKGROUND )
+	{
+		if ( BasicState == BASIC_RUNNING )
+		{
+			if ( BasicLoadedType != BASIC_LOAD_ALONE )
+			{
+				if ( LoadedScripts[0].loaded )
+				{
+					return basicExecute( 0, 0, 0 ) ;
+				}
+			}
+		}
+	}
+
 	if ( BasicState == BASIC_LOADING )
 	{
 		result = partLoadBasic() ;
@@ -2899,14 +2955,10 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 			uint32_t running = 0 ;
 			uint32_t retvalue ;
 			retvalue = 0 ;
-			if ( LoadedScripts[0].loaded )
-			{
-				retvalue = basicExecute( 0, 0, 0 ) ;
-//				if ( retvalue != 3 )
-//				{
-//					running = 1 ;
-//				}
-			}
+//			if ( LoadedScripts[0].loaded )
+//			{
+//				retvalue = basicExecute( 0, 0, 0 ) ;
+//			}
 			if ( LoadedScripts[1].loaded )
 			{
 				if ( lcd & 1 )
@@ -2952,7 +3004,7 @@ extern void navigateCustomTelemetry(uint8_t event, uint32_t mode ) ;
 			{
 //				if ( LoadedScripts[0].loaded )
 //				{
-					return basicExecute( 0, event, 0 ) ;
+				return basicExecute( 0, event, 0 ) ;
 //				}
 			}
 		}
@@ -3048,10 +3100,16 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 				uint32_t dimension ;
 				if ( opcode & 0x02 )
 				{
-					destType |= 1 ;
+					destType |= 1 ;		// Byte array
 				}
 				val16 = getVarIndex( opcode ) ;
 				dimension = *RunTime->ExecProgPtr++ ;
+				
+//				if ( opcode & 0x01 )	// 16-bit dimension
+//				{
+//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+//				}
+
 				value = expression() ;
 				opcode = *RunTime->ExecProgPtr++ ;
 				if ( opcode != ']' )
@@ -3126,6 +3184,12 @@ uint32_t getParamVarAddress( union t_parameter *ptr, uint32_t size )
 			}
 			val16 = getVarIndex( opcode ) ;
 			dimension = *RunTime->ExecProgPtr++ ;
+
+//				if ( opcode & 0x01 )	// 16-bit dimension
+//				{
+//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+//				}
+
 			value = expression() ;
 			opcode = *RunTime->ExecProgPtr++ ;
 			if ( opcode != ']' )
@@ -3176,6 +3240,7 @@ uint32_t getParamVarAddress( union t_parameter *ptr, uint32_t size )
 //} ;
 
 // Assumes opcode is 0x66, a byte array
+// Needs opcode to handle 16-bit dimensions
 uint32_t getParamByteArrayAddress( struct byteAddress *ptr, uint32_t size )
 {
 	uint8_t opcode ;
@@ -3878,11 +3943,49 @@ void exec_drawtimer()
 	}
 }
 
+uint32_t getTypeColour()
+{
+	uint32_t result ;
+	uint32_t paintType ;
+	union t_parameter param ;
+	paintType = 0 ;
+	result = get_optional_numeric_parameter( &param ) ;
+	if ( result == 1 )
+	{
+		if ( param.var < 5 )
+		{
+			paintType = param.var ;
+		}
+	}
+	result = get_optional_numeric_parameter( &param ) ;
+	if ( result == 1 )
+	{
+#if defined(PCBX12D) || defined(PCBX10)
+		LcdCustomColour = param.var ;
+#else
+		if ( paintType == PLOT_CUSTOM )
+		{
+			paintType = PLOT_BLACK ;
+		}
+#endif
+	}
+	else
+	{
+		if ( paintType == PLOT_CUSTOM )
+		{
+			paintType = PLOT_BLACK ;
+		}
+	}
+	return paintType ;
+}
+
+
 void exec_drawpoint()
 {
 	int32_t x1 ;
 	int32_t y1 ;
 	uint32_t result ;
+	uint32_t paintType ;
 	union t_parameter params[2] ;
 
 	// get 2 parameters
@@ -3891,12 +3994,15 @@ void exec_drawpoint()
 	{
 		x1 = params[0].var ;
 		y1 = params[1].var ;
+		paintType = getTypeColour() ;
 #ifdef QT
 	  lcd_plot(x1, y1 ) ;
 #else
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 		{
+			pushPlotType( paintType ) ;
 		  lcd_plot(x1, y1 ) ;
+			popPlotType() ;
 		}
 #endif
 //		eatCloseBracket() ;
@@ -3921,25 +4027,12 @@ void exec_drawline()
 		y1 = params[1].var ;
 		x2 = params[2].var ;
 		y2 = params[3].var ;
-		paintType = 0 ;
-		result = get_optional_numeric_parameter( params ) ;
-		if ( result == 1 )
-		{
-			if ( params[0].var < 3 )
-			{
-				paintType = params[0].var ;
-			}
-		}
+		paintType = getTypeColour() ;
 #ifndef QT
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 #endif
 		{
-extern uint8_t plotType ;
-			uint8_t oldPlotType = plotType ;
-			if ( paintType )
-			{
-				plotType = PLOT_BLACK ;
-			}
+			pushPlotType( paintType ) ;
 			if (x1 == x2)
 			{
     		lcd_vline(x1, y2 >= y1 ? y1 : y1+1, y2 >= y1 ? y2-y1+1 : y2-y1-1 ) ;
@@ -3952,7 +4045,7 @@ extern uint8_t plotType ;
 			{
 				lcd_line(x1, y1, x2, y2, 0xFF, 0) ;
 			}
-			plotType = oldPlotType ;
+			popPlotType() ;
 		}
 //		eatCloseBracket() ;
 	}
@@ -4294,7 +4387,8 @@ int32_t exec_getvalue(uint32_t type)
 		{
 			p = param.cpointer ;
 #ifdef QT			
-			number = 0 ;
+extern int GetValue ;
+			number = GetValue ;
 #else
 			number = basicFindValueIndexByName( (char *)p ) ;
 #endif
@@ -4480,7 +4574,12 @@ static int32_t exec_getlastpos()
 static int32_t exec_sysflags()
 {
 //	eatCloseBracket() ;
+	
+#if defined(PCBX9D7) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX12D) || defined(PCBX10)
+	return ScriptFlags | SCRIPT_FRSKY ;
+#else
 	return ScriptFlags ;
+#endif
 }
 
 static int32_t exec_not()
@@ -5044,6 +5143,12 @@ int32_t exec_filelist()
 	{
 		val16 = getVarIndex( opcode ) ;
 		dimension = *RunTime->ExecProgPtr++ ;
+
+//				if ( opcode & 0x01 )	// 16-bit dimension
+//				{
+//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+//				}
+
 		value = expression() ;
 		opcode = *RunTime->ExecProgPtr++ ;
 		if ( opcode != ']' )
@@ -6137,6 +6242,12 @@ uint32_t execOneLine()
 				}
 				val16 = getVarIndex( opcode ) ;
 				dimension = *RunTime->ExecProgPtr++ ;
+
+//				if ( opcode & 0x01 )	// 16-bit dimension
+//				{
+//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+//				}
+
 				value = expression() ;
 				opcode = *RunTime->ExecProgPtr++ ;
 				if ( opcode != ']' )
@@ -6394,7 +6505,10 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 //#endif
 	 
 	execLinesProcessed = 0 ;
-	while ( execLinesProcessed < 150 )
+#ifndef QT
+	uint16_t t1 = getTmr2MHz() ;
+#endif
+	while ( execLinesProcessed < 250 )
 	{
 		finished = execOneLine() ;
 //#ifndef QT
@@ -6442,6 +6556,12 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 			break ;
 		}
 		execLinesProcessed += 1 ;
+#ifndef QT
+		if ( (uint16_t)( getTmr2MHz() - t1 ) > 2000 )
+		{
+			break ;
+		}
+#endif
 
 	}
 	if ( RunTime->RunError )

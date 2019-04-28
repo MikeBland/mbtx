@@ -39,6 +39,8 @@
 //#define TRIMS_SCALED
 //#define BLOCKING
 
+#define NEW_VARIO		1
+
 #define TELEMETRY_LOST	1
 
 //#define ENABLE_DSM_MATCH	1
@@ -52,13 +54,13 @@
   #endif
  #endif
 #endif
-#ifdef PCBX12D	
+#if defined(PCBX12D) || defined(PCBX10)
   #define WIDE_SCREEN	1
 //  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
 	#define __SDRAM __attribute__((section(".sdram"), aligned(32)))
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define X12OFFSET	56
 #define X12SMALL_OFFSET	42
 #else
@@ -80,9 +82,31 @@
 #endif
 #endif
 
-#ifdef PCBT12
-#define DISABLE_PXX_SPORT	1
+#if defined(PCBT12) || defined(PCBT16)
+#define DISABLE_PXX		1
+#define DISABLE_SPORT	1
 #endif
+
+#ifdef PCBX9D	
+ #ifndef PCBT12
+  #ifndef PCBXLITE
+   #ifndef PCBX9LITE
+//   #define ACCESS_SPORT		1
+//   #define ACCESS					1
+   #endif
+  #endif
+ #endif
+#endif
+
+#ifdef PCBX9LITE
+ #define ACCESS					1
+#endif
+
+#ifdef PCBXLITE
+ #define ACCESS					1
+#endif
+
+#define ACCESS_SPORT_BAUD_RATE		450000
 
 #define HAPTIC		1
 
@@ -94,12 +118,12 @@
 #ifdef PCBSKY
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 extern void wdt_reset(void) ;
 #endif
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 //#define IS_HORUS_PROD() (GPIOI->IDR & 0x0800)
 #endif
 
@@ -219,7 +243,7 @@ extern uint8_t SystemOptions ;
 #ifdef PCBX9D
 #define CSW_INDEX	9	// Index of first custom switch
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define CSW_INDEX	9	// Index of first custom switch
 #endif
 
@@ -266,7 +290,7 @@ enum EnumKeys {
     SW_Trainer
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
   SW_SF2,
   SW_nu1,
   SW_nu2,
@@ -460,7 +484,7 @@ extern uint16_t SixPositionTable[5] ;
 
 #endif // PCBX9D
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 
 #define HSW_SF2				1
 
@@ -564,7 +588,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MAX_SKYDRSWITCH (1+SW_Trainer-SW_ThrCt+1+NUM_SKYCSW)
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 #define SW_BASE      SW_SF2
 #define SW_BASE_DIAG SW_SF2
 #define MAX_PSWITCH   (SW_SH2-SW_SF2+1)  // 9 physical switches
@@ -699,7 +723,7 @@ extern uint32_t countExtraPots( void ) ;
 #ifdef REV9E
 extern uint32_t countExtraPots( void ) ;
 #endif
-#ifdef PCBX12D	
+#if defined(PCBX12D) || defined(PCBX10)
 extern uint32_t countExtraPots( void ) ;
 #endif
 #ifdef PCBX7
@@ -709,7 +733,7 @@ extern uint32_t countExtraPots( void ) ;
 extern uint32_t countExtraPots( void ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 #define MIX_MAX   8 
 #define MIX_FULL  9 
 #define MIX_CYC1  10
@@ -730,8 +754,12 @@ extern uint32_t countExtraPots( void ) ;
   #ifdef PCBX7
    #define	NUM_EXTRA_POTS 0
   #else
-	 #ifdef PCBX12D	 
+   #if defined(PCBX12D) || defined(PCBX10)
+    #if defined(PCBX12D)
 		#define	NUM_EXTRA_POTS 3
+		#else
+		#define	NUM_EXTRA_POTS 1
+		#endif
 	 #else
 		#if defined (PCBXLITE)
   	 #define	NUM_EXTRA_POTS 0
@@ -828,6 +856,7 @@ extern uint8_t Ee_lock ;
 #define PROTO_DSM2       2
 #define PROTO_MULTI      3
 #define PROTO_XFIRE	     4
+#define PROTO_ACCESS     5
 
 #define PROTO_SBUS	     5
 
@@ -950,7 +979,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 81
+#define NUM_TELEM_ITEMS 85
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1007,7 +1036,7 @@ extern uint8_t convert_mode_helper(uint8_t x) ;
 #define BACKLIGHT_OFF   (PWM->PWM_CH_NUM[0].PWM_CDTY = 100)
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 extern void backlight_on( void ) ;
 extern void backlight_off( void ) ;
 #if defined(REVPLUS) || defined(REV9E)
@@ -1044,7 +1073,7 @@ extern int16_t *const CalibSpanNeg[] ;
   #endif
  #endif
 #else
-#ifdef PCBX12D	
+#if defined(PCBX12D) || defined(PCBX10)
  #define NUM_ANALOG_CALS	10
 #else
  #define NUM_ANALOG_CALS	7
@@ -1172,7 +1201,7 @@ extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void putsDblSizeName( uint16_t x, uint16_t y ) ;
 #else
 void putsDblSizeName( uint8_t y ) ;
@@ -1322,7 +1351,7 @@ extern struct t_p1 P1values ;
 #ifdef PCBSKY
 extern uint16_t ResetReason ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 extern uint32_t ResetReason ;
 #endif
 extern uint8_t unexpectedShutdown ;
@@ -1345,7 +1374,7 @@ void rtcInit( void ) ;
 void rtcSetCal( uint32_t RTC_CalibSign, uint32_t Value ) ;
 #endif
 
-#if defined(PCBX12D)
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/rtc.h"
 #include "X12D/stm32f4xx_rtc.h"
@@ -1389,7 +1418,7 @@ extern uint8_t AlertType ;
 #define COM2_FUNC_BTDIRECT		5
 #define COM2_FUNC_TEL_BT2WAY	6
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define COM2_FUNC_BTDIRECT		3
 #define COM2_FUNC_CPPMTRAIN		4
 #define COM2_FUNC_LCD					5
@@ -1454,7 +1483,7 @@ extern struct btRemote_t BtRemote[] ;
 extern uint8_t HardwareMenuEnabled ;
 
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 struct t_PeripheralSpeeds
 {
 	uint32_t Peri1_frequency ;
@@ -1489,6 +1518,8 @@ extern uint8_t ScriptFlags ;
 #define	SCRIPT_STANDALONE			2
 #define	SCRIPT_TELEMETRY			4
 #define	SCRIPT_RESUME					8
+#define	SCRIPT_BACKGROUND			16
+#define	SCRIPT_FRSKY					32
 
 #endif
 
@@ -1539,6 +1570,8 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_XLITE				10
 #define PHYSICAL_T12					11
 #define PHYSICAL_X9LITE				12
+#define PHYSICAL_X10					13
+#define PHYSICAL_T16					14
 
 // Power control type
 #ifdef REV9E
@@ -1550,7 +1583,7 @@ extern uint16_t FailsafeCounter[2] ;
 #ifdef PCBX9LITE
 #define POWER_BUTTON	1
 #endif // PCBX9LITE
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define POWER_BUTTON	1
 #endif // PCBX12D
 #ifdef PCBXLITE
@@ -1614,7 +1647,7 @@ union t_sharedMemory
 } ;
 
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 #define TIMER1_8SR_MASK	0x1FFF
 #define TIMER2_5SR_MASK	0x1E5F
 #define TIMER6_7SR_MASK	0x0001
@@ -1627,5 +1660,23 @@ union t_sharedMemory
 #endif
 
 //#define X3_PROTO	1
+
+#ifdef NEW_VARIO
+struct t_newvario
+{
+	uint16_t varioSource ;
+	int16_t varioCenterMin ;
+	int16_t varioCenterMax ;
+	int16_t varioMax ;
+	int16_t varioMin ;
+	int16_t varioPitch ;
+	uint16_t defaulted ;
+  int8_t  swtch ;
+} ;
+#endif
+
+#ifdef ACCESS
+#include "pxx2.h"
+#endif
 
 #endif

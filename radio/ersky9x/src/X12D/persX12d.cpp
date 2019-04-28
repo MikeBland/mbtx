@@ -49,7 +49,7 @@ int16_t *const CalibMid[] =
 	&g_eeGeneral.calibMid[4],
 	&g_eeGeneral.calibMid[5],
 	&g_eeGeneral.calibMid[6],
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.x9dcalibMid,
 #if REVPLUS
 #ifdef REV9E
@@ -59,7 +59,7 @@ int16_t *const CalibMid[] =
 #endif
 	&g_eeGeneral.x9dPcalibMid
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.xcalibMid[0],
 	&g_eeGeneral.xcalibMid[1],
 	&g_eeGeneral.xcalibMid[2],
@@ -77,7 +77,7 @@ int16_t *const CalibSpanPos[] =
 	&g_eeGeneral.calibSpanPos[4],
 	&g_eeGeneral.calibSpanPos[5],
 	&g_eeGeneral.calibSpanPos[6],
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.x9dcalibSpanPos,
 #if REVPLUS
 #ifdef REV9E
@@ -87,7 +87,7 @@ int16_t *const CalibSpanPos[] =
 #endif
 	&g_eeGeneral.x9dPcalibSpanPos
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.xcalibSpanPos[0],
 	&g_eeGeneral.xcalibSpanPos[1],
 	&g_eeGeneral.xcalibSpanPos[2],
@@ -105,7 +105,7 @@ int16_t *const CalibSpanNeg[] =
 	&g_eeGeneral.calibSpanNeg[4],
 	&g_eeGeneral.calibSpanNeg[5],
 	&g_eeGeneral.calibSpanNeg[6],
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.x9dcalibSpanNeg,
 #if REVPLUS
 #ifdef REV9E
@@ -115,7 +115,7 @@ int16_t *const CalibSpanNeg[] =
 #endif
 	&g_eeGeneral.x9dPcalibSpanNeg
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	&g_eeGeneral.xcalibSpanNeg[0],
 	&g_eeGeneral.xcalibSpanNeg[1],
 	&g_eeGeneral.xcalibSpanNeg[2],
@@ -145,20 +145,20 @@ void generalDefault()
 #ifdef PCB9XT
   g_eeGeneral.contrast = 25 ;
 #else
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
   g_eeGeneral.contrast = 10;
 #else
   g_eeGeneral.contrast = 18 ;
 #endif
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
   g_eeGeneral.vBatWarn = 88 ;
 #else
   g_eeGeneral.vBatWarn = 65;
 #endif
   g_eeGeneral.stickMode=  1;
 	g_eeGeneral.disablePotScroll=  1;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 0 ;
 #else
 	g_eeGeneral.bright = 50 ;
@@ -168,7 +168,7 @@ void generalDefault()
 	g_eeGeneral.filterInput = 1 ;
 	g_eeGeneral.beeperVal = 3 ;
 	g_eeGeneral.gpsFormat = 1 ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.rotaryDivisor = 2 ;
 #endif
 
@@ -193,7 +193,7 @@ void modelDefault(uint8_t id)
 	g_model.trimInc = 2 ;
   
 	applyTemplate(0); //default 4 channel template
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
   memcpy(ModelNames[id+1], g_model.name, sizeof(g_model.name));
 #endif
 

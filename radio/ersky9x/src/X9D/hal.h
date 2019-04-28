@@ -439,6 +439,10 @@
 #define PIN_TR_PPM_OUT                  GPIO_Pin_12  //PD.12
 #define GPIOTRNDET                      GPIOD
 #define PIN_TRNDET                      GPIO_Pin_11
+#define GPIOBOOTCMD											GPIOC
+#define PORT_BOOTCMD										PIN_PORTC
+#define PIN_BOOTCMD                     GPIO_Pin_8	// PC.08
+
 
 #else // X3
 #define GPIO_TR_INOUT                   GPIOC

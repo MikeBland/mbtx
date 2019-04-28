@@ -22,7 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 //#define	WHERE_TRACK		1
 //void notePosition( uint8_t byte ) ;
 #endif
@@ -45,6 +45,7 @@
 #endif
 
 #ifndef PCBX12D
+#ifndef PCBX10
 #include "font.lbm"
 #define font_5x8_x20_x7f (font)
 
@@ -71,6 +72,7 @@ const uint8_t font_it_extra[] = {
 const uint8_t font_pl_extra[] = {
 #include "font_pl_05x07.lbm"
 } ;
+#endif
 #endif
 
 #ifndef SMALL
@@ -117,6 +119,7 @@ void popPlotType()
 
 
 #ifndef PCBX12D
+#ifndef PCBX10
 #ifdef GREY_SCALE
 uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8*4] ;
 #else
@@ -124,8 +127,9 @@ uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
 #endif
 #define DISPLAY_END (DisplayBuf+sizeof(DisplayBuf))
 #endif
+#endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern uint32_t CurrentFrameBuffer ;
 
 #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
@@ -133,9 +137,10 @@ extern uint32_t CurrentFrameBuffer ;
 //#define LCD_H	272
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 uint16_t LcdBackground = LCD_BACKGROUND ;
 uint16_t LcdForeground = LCD_BLACK ;
+uint16_t LcdCustomColour = LCD_BLACK ;
 #endif
 
 #if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE)
@@ -183,7 +188,7 @@ const uint8_t Lcd_lookup[] =
 #endif 
 #endif // DUE
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t colour, uint16_t background)
 #else
 void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
@@ -202,7 +207,7 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	}
 	if ( tme<0 )
 	{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 		lcd_putcAttColour( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att, colour, background ) ;
 #else
 		lcd_putcAtt( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
@@ -210,7 +215,7 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 		tme = -tme;
 	}
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	lcd_putcAttColour( x, y, ':',att&att2, colour, background ) ;
 #else
 	lcd_putcAtt( x, y, ':',att&att2);
@@ -223,7 +228,7 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 			x += 2 ;
 		}
 	}
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att, colour, background ) ;
 #else
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
@@ -243,7 +248,7 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	{
 		x += FW*3-4 ;
 	}
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2, colour, background ) ;
 #else
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
@@ -267,28 +272,30 @@ void putsVBat(uint8_t x,uint8_t y,uint8_t att)
 	putsVolts(x, y, g_vbat100mV, att);
 }
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 
 extern uint16_t Mimage[] ;
 extern uint16_t *SdramImage ;
 void lcd_picture( uint16_t i_x, uint16_t i_y )
 {
-	uint16_t *p ;
-	uint32_t rows ;
-	uint32_t cols ;
+//	uint16_t *p ;
+//	uint32_t rows ;
 	uint16_t *src = SdramImage ;
 
-	for ( rows = 0 ; rows < 64 ; rows += 1 )
-	{
-		p = ( uint16_t *) CurrentFrameBuffer ;
-		p += i_x ;
-		p += i_y * LCD_W ;
-		for ( cols = 0 ; cols < 128 ; cols += 1 )
-		{
-			*p++ = *src++ ;
-		}
-		i_y += 1 ;	 
-	} 
+extern uint16_t Image_width ;
+extern uint16_t Image_height ;
+
+	DMAcopyImage( i_x, i_y, Image_width, Image_height, src ) ;
+
+//	for ( rows = 0 ; rows < Image_height ; rows += 1 )
+//	{
+//		p = ( uint16_t *) CurrentFrameBuffer ;
+//		p += i_x ;
+//		p += i_y * LCD_W ;
+//    memmove( p, src, Image_width*2 ) ;
+//		src += Image_width ;
+//		i_y += 1 ;	 
+//	} 
 }
 
 void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
@@ -299,7 +306,14 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 	uint8_t mask ;
   uint32_t hb   = (h + 7) / 8 ;
   uint32_t hlast ;
-	
+
+#ifdef INVERT_DISPLAY
+	i_x = (LCD_W/2-1) - i_x ; // - (w - 1) ;
+	i_y = (LCD_H/2-1) - i_y ; // - (h - 1) ;
+//	i_x = (LCD_W/2-1) - i_x ;
+//	i_y = (LCD_H/2-1) - i_y ;
+#endif
+	 
   register bool inv = false ;
 	if (mode & INVERS) inv = true ;
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
@@ -312,7 +326,11 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 		p = ( uint16_t *) CurrentFrameBuffer ;
 		p += i_x*2 ;
 		p += i_y * LCD_W * 2 ;
+#ifdef INVERT_DISPLAY
+		p -= yb * LCD_W * 2 * 8 ;
+#else
 		p += yb * LCD_W * 2 * 8 ;
+#endif
     for(x=0; x < w; x++)
 		{
       register uint8_t b = *bitmap++ ;
@@ -330,13 +348,21 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 				*(q+1) = value ;
 				*(q+LCD_W) = value ;
 				*(q+LCD_W+1) = value ;
+#ifdef INVERT_DISPLAY
+				q -= LCD_W * 2 ;
+#else
 				q += LCD_W * 2 ;
+#endif
 				if ( --hlast == 0 )
 				{
 					break ;
 				}
 			}
+#ifdef INVERT_DISPLAY
+			p -= 2 ;
+#else
 			p += 2 ;
+#endif
     }
 		h -= 8 ;
   }
@@ -412,7 +438,7 @@ uint8_t lcd_putc(uint8_t x,uint8_t y,const char c )
   return lcd_putcAtt(x,y,c,0);
 }
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
 {
 	if ( c < 31 )
@@ -708,7 +734,10 @@ uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, u
 
 uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
 {
-
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		mode ^= INVERS ;
+	}
 	if ( mode & DBLSIZE )
 	{
 		return lcd_putcAttDblColour( x, y, c, mode, colour ) ;
@@ -1309,17 +1338,19 @@ uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode )
     if(!c) break ;
 		if ( c == 31 )
 		{
-#ifndef PCBX12D			
-			if ( (y += FH) >= DISPLAY_H )	// Screen height
-			{
-				break ;
-			}	
-#else
+
+#if defined(PCBX12D) || defined(PCBX10)
 			if ( (y += FH) >= 64 )	// Screen height
 			{
 				break ;
 			}	
+#else
+			if ( (y += FH) >= DISPLAY_H )	// Screen height
+			{
+				break ;
+			}	
 #endif
+			
 			x = 0 ;
 		}
 		else
@@ -1356,7 +1387,7 @@ void lcd_puts_P( uint8_t x, uint8_t y, const char *s )
 }
 
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val)
 #else
 void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val)
@@ -1377,7 +1408,7 @@ void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val)
 void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
 {
   register int i ;
-  x+=FWNUM*4;
+  x+=FWNUM*2;
   for(i=0; i<2; i++)
   {
     x-=FWNUM;
@@ -1388,7 +1419,7 @@ void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
   }
 }
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background )
 {
   lcd_outdezAtt(x,y,val,0, background );
@@ -1410,7 +1441,7 @@ void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint16_t mode )
 }
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour, uint16_t background )
 {
 	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2, colour, background ) ;
@@ -1424,7 +1455,7 @@ void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint16_t attr )
 
 #define PREC(n) ((n&0x20) ? ((n&0x10) ? 2 : 1) : 0)
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t colour, uint16_t background )
 #else
 uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t len )
@@ -1445,10 +1476,12 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 		len = -len ;		
 	}
 #ifndef PCBX12D
+#ifndef PCBX10
 	if (mode & BOLD)
 	{
 		fw = FW ;
 	}
+#endif
 #endif
   if (mode & DBLSIZE)
   {
@@ -1529,7 +1562,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
   for ( i=1; i<=len; i++)
 	{
     c = (tmp % 10) + '0';
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 		lcd_putcAttColour( x, y, c, mode, colour, background ) ;
 #else
 		lcd_putcAtt(x, y, c, mode);
@@ -1564,7 +1597,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
       else
 			{
         x -= 2;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 				uint8_t oldPlotType = plotType ;
 				plotType = PLOT_COLOUR ;
         if (mode & INVERS)
@@ -1617,17 +1650,17 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
   }
   if (xn)
 	{
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 		uint8_t oldPlotType = plotType ;
 		plotType = PLOT_COLOUR ;
 #endif
     lcd_hline(xn, y+2*FH-4, ln);
     lcd_hline(xn, y+2*FH-3, ln);
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 		plotType = oldPlotType ;
 #endif
   }
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
   if(val<0) lcd_putcAttColour(x-fw,y,'-',mode, colour, background ) ;
 #else
   if(val<0) lcd_putcAtt(x-fw,y,'-',mode);
@@ -1637,6 +1670,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 
 
 #ifndef PCBX12D
+#ifndef PCBX10
 void lcd_write_bits( uint8_t *p, uint8_t mask )
 {
   if(p<DISPLAY_END)
@@ -1654,40 +1688,50 @@ void lcd_write_bits( uint8_t *p, uint8_t mask )
 	}
 }
 #endif
+#endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcd_plot( uint16_t x, uint16_t y )
 {
+#ifdef INVERT_DISPLAY
+	x = (LCD_W/2-1) - x ;
+	y = (LCD_H/2-1) - y ;
+#endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
 	p += y * LCD_W * 2 ;
-	if ( plotType == PLOT_BLACK )
-	{
-		*p = 0 ;
-		*(p+1) = 0 ;
-		*(p+LCD_W) = 0 ;
-		*(p+LCD_W+1) = 0 ;
-	}
-	else if ( plotType == PLOT_BLACK )
-	{
-		*p = 0xFFFF ;
-		*(p+1) = 0xFFFF ;
-		*(p+LCD_W) = 0xFFFF ;
-		*(p+LCD_W+1) = 0xFFFF ;
-	}
-	else if ( plotType == PLOT_COLOUR )
-	{
-		*p = LcdForeground ;
-		*(p+1) = LcdForeground ;
-		*(p+LCD_W) = LcdForeground ;
-		*(p+LCD_W+1) = LcdForeground ;
-	}
-	else
+
+#ifdef INVERT_DISPLAY
+//	p += 1 ;
+//	p += LCD_W ;
+#endif
+	 
+	if ( plotType == PLOT_XOR )
 	{
 		*p ^= 0xFFFF ;
 		*(p+1) ^= 0xFFFF ;
 		*(p+LCD_W) ^= 0xFFFF ;
 		*(p+LCD_W+1) ^= 0xFFFF ;
+	}
+	else
+	{
+		uint16_t colour = 0 ;
+		if ( plotType == PLOT_WHITE )
+		{
+			colour = 0xFFFF ;
+		}
+		else if ( plotType == PLOT_COLOUR )
+		{
+			colour = LcdForeground ;
+		}
+		else if ( plotType == PLOT_CUSTOM )
+		{
+			colour = LcdCustomColour ;
+		}
+		*p = colour ;
+		*(p+1) = colour ;
+		*(p+LCD_W) = colour ;
+		*(p+LCD_W+1) = colour ;
 	}
 }
 
@@ -1695,9 +1739,18 @@ void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat )
 {
   if(w<0) {x+=w; w=-w;}
 
+#ifdef INVERT_DISPLAY
+	x = (LCD_W/2-1) - x ;
+	y = (LCD_H/2-1) - y ;
+#endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
 	p += y * LCD_W * 2 ;
+
+#ifdef INVERT_DISPLAY
+//	p += 1 ;
+//	p += LCD_W ;
+#endif
 
 	while(w)
 	{
@@ -1707,33 +1760,32 @@ void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat )
 //    }
     if(pat&1)
 		{
-			if ( plotType == PLOT_BLACK )
-			{
-				*p = 0 ;
-				*(p+1) = 0 ;
-				*(p+LCD_W) = 0 ;
-				*(p+LCD_W+1) = 0 ;
-			}
-			else if ( plotType == PLOT_WHITE )
-			{
-				*p = 0xFFFF ;
-				*(p+1) = 0xFFFF ;
-				*(p+LCD_W) = 0xFFFF ;
-				*(p+LCD_W+1) = 0xFFFF ;
-			}
-			else if ( plotType == PLOT_COLOUR )
-			{
-				*p = LcdForeground ;
-				*(p+1) = LcdForeground ;
-				*(p+LCD_W) = LcdForeground ;
-				*(p+LCD_W+1) = LcdForeground ;
-			}
-			else
+			if ( plotType == PLOT_XOR )
 			{
 				*p ^= 0xFFFF ;
 				*(p+1) ^= 0xFFFF ;
 				*(p+LCD_W) ^= 0xFFFF ;
 				*(p+LCD_W+1) ^= 0xFFFF ;
+			}
+			else
+			{
+				uint16_t colour = 0 ;
+				if ( plotType == PLOT_WHITE )
+				{
+					colour = 0xFFFF ;
+				}
+				else if ( plotType == PLOT_COLOUR )
+				{
+					colour = LcdForeground ;
+				}
+				else if ( plotType == PLOT_CUSTOM )
+				{
+					colour = LcdCustomColour ;
+				}
+				*p = colour ;
+				*(p+1) = colour ;
+				*(p+LCD_W) = colour ;
+				*(p+LCD_W+1) = colour ;
 			}
       pat = (pat >> 1) | 0x80;
     }
@@ -1742,7 +1794,11 @@ void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat )
       pat = pat >> 1;
     }
     w -= 1 ;
+#ifdef INVERT_DISPLAY
+    p -= 2 ;
+#else
     p += 2 ;
+#endif
   }
 }
 
@@ -1774,42 +1830,54 @@ void lcd_vline( uint16_t x, uint16_t y, int8_t h )
 		return ;
 	}
 
+#ifdef INVERT_DISPLAY
+	x = (LCD_W/2-1) - x ;
+	y1 = (LCD_H/2-1) - y1 ;
+#endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
 	p += y1 * LCD_W * 2 ;
+
+#ifdef INVERT_DISPLAY
+//	p += 1 ;
+//	p += LCD_W ;
+#endif
   
   while( h )
 	{
 		h -= 1 ;
-		if ( plotType == PLOT_BLACK )
-		{
-			*p = 0 ;
-			*(p+1) = 0 ;
-			*(p+LCD_W) = 0 ;
-			*(p+LCD_W+1) = 0 ;
-		}
-		else if ( plotType == PLOT_WHITE )
-		{
-			*p = 0xFFFF ;
-			*(p+1) = 0xFFFF ;
-			*(p+LCD_W) = 0xFFFF ;
-			*(p+LCD_W+1) = 0xFFFF ;
-		}
-		else if ( plotType == PLOT_COLOUR )
-		{
-			*p = LcdForeground ;
-			*(p+1) = LcdForeground ;
-			*(p+LCD_W) = LcdForeground ;
-			*(p+LCD_W+1) = LcdForeground ;
-		}
-		else
+		if ( plotType == PLOT_XOR )
 		{
 			*p ^= 0xFFFF ;
 			*(p+1) ^= 0xFFFF ;
 			*(p+LCD_W) ^= 0xFFFF ;
 			*(p+LCD_W+1) ^= 0xFFFF ;
 		}
+		else
+		{
+			uint16_t colour = 0 ;
+			if ( plotType == PLOT_WHITE )
+			{
+				colour = 0xFFFF ;
+			}
+			else if ( plotType == PLOT_COLOUR )
+			{
+				colour = LcdForeground ;
+			}
+			else if ( plotType == PLOT_CUSTOM )
+			{
+				colour = LcdCustomColour ;
+			}
+			*p = colour ;
+			*(p+1) = colour ;
+			*(p+LCD_W) = colour ;
+			*(p+LCD_W+1) = colour ;
+		}
+#ifdef INVERT_DISPLAY
+		p -= LCD_W * 2 ;
+#else
 		p += LCD_W * 2 ;
+#endif
   }
 }
 
@@ -1862,7 +1930,7 @@ void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat )
 }
 #endif // X12D
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att )
 {
 	uint8_t oldPlotType = plotType ;
@@ -1923,18 +1991,27 @@ void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
 	}
 }
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_t h )
 {
 	if ( blink && BLINK_ON_PHASE )
 	{
 		return ;
 	}
+#ifdef INVERT_DISPLAY
+	x = (LCD_W/2-1) - x ;
+	y = (LCD_H/2-1) - y - 7 ;
+#endif
 	x *= 2 ;
 	w *= 2 ;
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x ;
 	p += y * LCD_W * 2 ;
+	
+#ifdef INVERT_DISPLAY
+	p -= w - 2 ;
+//	p -= LCD_W*16 ;
+#endif
 	uint16_t end = x + w ;
 
 	h *= 2 ;
@@ -2015,7 +2092,7 @@ void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 	{
 		plotType = PLOT_BLACK ;
 	}
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	uint16_t colour = (plotType == PLOT_BLACK) ? LCD_BLACK : LcdBackground ;
 #ifdef WHERE_TRACK
 notePosition('0') ;
@@ -2042,6 +2119,7 @@ void lcd_hline( uint8_t x, uint8_t y, int8_t w )
 }
 
 #ifndef PCBX12D
+#ifndef PCBX10
 void lcd_vline( uint8_t x, uint8_t y, int8_t h )
 {
   if (h<0) { y+=h; h=-h; }
@@ -2092,6 +2170,7 @@ void lcd_vline( uint8_t x, uint8_t y, int8_t h )
 	}
 #endif
 }
+#endif
 #endif
 
 void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, uint8_t att )
@@ -2190,7 +2269,7 @@ uint8_t ImageX ;
 uint8_t ImageY ;
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 uint8_t ImageDisplay = 0 ;
 uint8_t ImageX ;
 uint8_t ImageY ;

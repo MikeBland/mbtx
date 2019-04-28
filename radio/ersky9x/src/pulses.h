@@ -81,6 +81,9 @@ extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
 extern void checkTrainerSource( void ) ;
 extern void pausePulses( void ) ;
 extern void resumePulses( void ) ;
+#ifdef ACCESS
+extern void setupPulsesAccess( uint32_t module ) ;
+#endif
 
 extern void setMultiSerialArray( uint8_t *data, uint32_t module ) ;
 extern uint16_t CRCTable(uint8_t val) ;

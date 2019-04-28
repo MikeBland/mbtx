@@ -39,7 +39,7 @@ extern uint8_t ExtDisplaySend ;
 #define DISPLAY_H  64
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define DISPLAY_W	480
 #define DISPLAY_H	272
 
@@ -60,6 +60,11 @@ extern uint8_t ExtDisplaySend ;
 
 extern uint16_t LcdBackground ;
 extern uint16_t LcdForeground ;
+extern uint16_t LcdCustomColour ;
+
+#if defined(PCBX10)
+#define INVERT_DISPLAY		1
+#endif
 
 #endif
 
@@ -130,7 +135,7 @@ extern const uint8_t font_de_big_extra[] ;
 extern const uint8_t *ExtraFont ;
 extern const uint8_t *ExtraBigFont ;
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 
 #ifdef INVERT_DISPLAY
 extern uint8_t *font_fr_h_extra ;
@@ -159,9 +164,9 @@ extern const uint8_t *ExtraHorusBigFont ;
 #define PLOT_XOR		0
 #define PLOT_BLACK	1
 #define PLOT_WHITE	2
-#define PLOT_BITS		3
-#define PLOT_COLOUR	4
-
+//#define PLOT_BITS		3
+#define PLOT_COLOUR	3
+#define PLOT_CUSTOM	4
 extern uint8_t plotType ;
 
 void pushPlotType( uint8_t type ) ;
@@ -171,7 +176,7 @@ extern uint8_t lcd_putc(uint8_t x,uint8_t y,const char c ) ;
 extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
 extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val) ;
 #else
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
@@ -180,7 +185,7 @@ extern void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode ) ;
 extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
 extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground) ;
 extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
@@ -200,7 +205,7 @@ extern uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode,
 extern void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent ) ;
 extern void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h ) ;
 extern void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, uint8_t att ) ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern "C" void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color) ;
 extern "C" void waitDma2Ddone(void) ;
@@ -219,6 +224,7 @@ extern void lcd_plot( uint16_t x, uint16_t y ) ;
 extern void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_t h = 8 ) ;
 extern uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground ) ;
 extern void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att ) ;
+extern void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t *image ) ;
 #else
 extern uint8_t lcd_putcAtt( uint8_t x, uint8_t y, const char c, uint8_t mode ) ;
 extern void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat ) ;
@@ -244,7 +250,7 @@ extern void lcdOff( void ) ;
 extern void lcdOff( void ) ;
 #endif // PCBX9LITE
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 #else
 extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
@@ -259,7 +265,7 @@ extern void backlight_set( uint16_t brightness, uint16_t w_or_b ) ;
 extern void backlight_set( uint16_t brightness ) ;
 #endif
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void backlight_set( uint16_t brightness ) ;
 #endif
 

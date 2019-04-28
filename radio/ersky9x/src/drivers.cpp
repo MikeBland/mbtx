@@ -52,7 +52,7 @@
 #include "timers.h"
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_usart.h"
 //#include "X12D/stm32f4xx_gpio.h"
@@ -125,6 +125,11 @@ struct t_fifo128 Com3_fifo ;
 
 struct t_fifo64 Sbus_fifo ;
 
+#ifdef ACCESS
+struct t_16bit_fifo64 Access_int_fifo ;
+struct t_16bit_fifo64 Access_ext_fifo ;
+#endif
+
 struct t_telemetryTx TelemetryTx ;
 
 struct t_serial_tx *Current_Com1 ;
@@ -136,7 +141,7 @@ struct t_serial_tx *Current_Com3 ;
 struct t_serial_tx *Current_Com3 ;
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 struct t_serial_tx *Current_Com6 ;
 #endif
 
@@ -606,8 +611,13 @@ extern uint8_t AnaEncSw ;
  #endif // SIMU
 #endif // X9D
 
-#ifdef PCBX12D
+#if defined(PCBX12D)
 	uint8_t value = (~GPIOC->IDR & 0x0002) ? 1 : 0 ;
+#endif // X12D
+#if defined(PCBX10)
+	uint8_t value = (~GPIOI->IDR & 0x0100) ? 1 : 0 ;
+#endif // X10
+#if defined(PCBX12D) || defined(PCBX10)
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
 	if ( value )
 	{
@@ -760,6 +770,29 @@ int32_t peek_fifo128( struct t_fifo128 *pfifo )
 	return -1 ;
 }
 
+#ifdef ACCESS
+void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word )
+{
+  uint32_t next = (pfifo->in + 1) & 0x3f;
+	if ( next != pfifo->out )
+	{
+		pfifo->fifo[pfifo->in] = word ;
+		pfifo->in = next ;
+	}
+}
+
+int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo )
+{
+	int32_t rxbyte ;
+	if ( pfifo->in != pfifo->out )				// Look for char available
+	{
+		rxbyte = pfifo->fifo[pfifo->out] ;
+		pfifo->out = ( pfifo->out + 1 ) & 0x3F ;
+		return rxbyte ;
+	}
+	return -1 ;
+}
+#endif
 
 #ifdef REVX
 void put_16bit_fifo32( struct t_16bit_fifo32 *pfifo, uint16_t word )
@@ -2904,7 +2937,7 @@ extern "C" void SSC_IRQHandler()
 //-------------------------------------------------------------------------
 
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 
 //uint8_t LastReceivedSportByte ;
 
@@ -3551,6 +3584,7 @@ void start_2Mhz_timer()
  #ifdef PCBX9D
   #ifndef PCBXLITE
    #ifndef PCBX9LITE
+    #ifndef PCBX10
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3573,13 +3607,13 @@ void stop_xjt_heartbeat()
 	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
 	XjtHeartbeatCapture.valid = 0 ;
 }
-
+		#endif
    #endif // n PCBX9LITE
   #endif // n PCBXLITE
  #endif // PCBX9D
 #endif // n PCBX12D
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #define XJT_HEARTBEAT_BIT	0x1000		// PD12
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;

@@ -33,6 +33,16 @@
 //	volatile uint32_t count ;
 //} ;
 
+#ifdef ACCESS
+struct t_16bit_fifo64
+{
+	uint16_t fifo[64] ;
+	uint32_t in ;
+	uint32_t out ;
+	volatile uint32_t count ;
+} ;
+#endif
+
 struct t_16bit_fifo32
 {
 	uint16_t fifo[32] ;
@@ -135,6 +145,12 @@ extern uint32_t txPdcCom1( struct t_serial_tx *data ) ;
 extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
+#ifdef ACCESS
+extern struct t_16bit_fifo64 Access_int_fifo ;
+extern struct t_16bit_fifo64 Access_ext_fifo ;
+void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word ) ;
+int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo ) ;
+#endif
 //extern struct t_fifo64 CaptureRx_fifo ;
 extern struct t_fifo128 Com1_fifo ;
 extern struct t_fifo128 Com2_fifo ;
@@ -178,7 +194,7 @@ extern void com1Parity( uint32_t even ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern void ConsoleInit( void ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
@@ -187,7 +203,7 @@ extern void com2Parity( uint32_t even ) ;
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;
 
-#if defined(PCBX9D) || defined(PCBSKY) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBSKY) || defined(PCBX12D) || defined(PCBX10)
 struct t_XjtHeartbeatCapture
 {
 	uint16_t value ;
@@ -214,7 +230,7 @@ extern void jetiSendWord( uint16_t word ) ;
 void init_xjt_heartbeat( void ) ;
 void stop_xjt_heartbeat( void ) ;
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void init_xjt_heartbeat( void ) ;
 void stop_xjt_heartbeat( void ) ;
 #endif
@@ -320,7 +336,7 @@ void com3Stop( void ) ;
 void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 void USART6_configure( void ) ;
 void USART6SetBaudrate( uint32_t baudrate ) ;
 #endif

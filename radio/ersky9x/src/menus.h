@@ -83,9 +83,9 @@ struct MState2
 };
 
 uint8_t evalOffset(int8_t sub) ;
-#ifdef PCBX12D
-uint8_t evalOffsetLarge(int8_t sub) ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//uint8_t evalOffsetLarge(int8_t sub) ;
+//#endif
 
 //typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
 typedef const void (*MenuFunc)(uint8_t event) ;
@@ -173,8 +173,8 @@ extern void menuUp1(uint8_t event) ;
 extern void menuUpdate(uint8_t event) ;
 //extern void inactivityCheck( void ) ;
 extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
-#ifdef PCBX12D
-void displayStatusLine( void ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+void displayStatusLine( uint32_t scriptPercent ) ;
 #endif
 
 extern void parseMultiData( void ) ;

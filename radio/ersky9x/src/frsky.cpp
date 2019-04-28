@@ -28,7 +28,7 @@
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
 #endif
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #ifndef SIMU
 #include "X12D/stm32f4xx.h"
 #include "X12D/core_cm4.h"
@@ -309,7 +309,7 @@ void dsmTelemetryStartReceive()
  #endif // nREVX
 #endif // PCBSKY
 	
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	if ( g_model.frskyComPort == 0 )
 	{
 		if ( CaptureMode == CAP_COM1 )
@@ -803,13 +803,24 @@ uint16_t UserErrorCount ;
 uint8_t UserLastSequence ;
 uint8_t UserLastCount ;
 
+#if defined(PCBT12) || defined(PCBT16)
+uint8_t MultiFrskyTelemetry ;
+#endif	 
+
 void processFrskyPacket(uint8_t *packet)
 {
 	if ( numPktBytes != 9 )
 	{
 		return ;
 	}
-	
+
+#if defined(PCBT12) || defined(PCBT16)
+	if ( MultiFrskyTelemetry )
+	{
+		return ;
+	}
+#endif	 
+	 
   // What type of packet?
   switch (packet[0])
   {
@@ -1349,7 +1360,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 	else if ( type == 0x80 )
 	{
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
@@ -1480,7 +1491,7 @@ void processHitecPacket( uint8_t *packet )
 
 
 
-#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_SPORT
 //#ifndef REVX
 static bool checkSportPacket()
 {
@@ -1515,31 +1526,16 @@ static void postSportToScript( uint8_t *packet )
 }
 #endif
 
-// Physical ID in packet[0] ;
-void processSportPacket()
+void processSportData( uint8_t *packet, uint32_t receiver )
 {
-	uint8_t *packet = frskyRxBuffer ;
   uint8_t  prim   = packet[1];
-//  uint16_t appId  = *((uint16_t *)(packet+2)) ;
-
-	if ( MaintenanceRunning )
-	{
-		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
-		return ;
-	}
-	 
-  if ( !checkSportPacket() )
-	{
-    return;
-	}
-
 #if defined(LUA) || defined(BASIC)
 	if ( ( prim == 0x32 ) || ( (packet[3] & 0xF0) == 0x50 ) ) // || ( (packet[3] & 0xF0) == 0x10 ) )
 	{
 		postSportToScript( packet ) ;
 	}
 #endif
-  
+
 	if ( ( prim == DATA_FRAME ) || ( prim == 0x32 ) )
 	{
 		prim = packet[0] & 0x1F ;		// Sensor ID
@@ -1567,7 +1563,7 @@ void processSportPacket()
 			switch ( packet[2] )
 			{
 				case 1 :
-  	    	frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+	    		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
 					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
 //					RssiSetTimer = 30 ;
 				break ;
@@ -2029,6 +2025,26 @@ void processSportPacket()
 		}
 	}
 }
+
+// Physical ID in packet[0] ;
+void processSportPacket()
+{
+	uint8_t *packet = frskyRxBuffer ;
+//  uint16_t appId  = *((uint16_t *)(packet+2)) ;
+
+	if ( MaintenanceRunning )
+	{
+		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
+		return ;
+	}
+	 
+  if ( !checkSportPacket() )
+	{
+    return;
+	}
+	processSportData( packet, 0 ) ;
+}
+
 #endif
 
 
@@ -2181,10 +2197,12 @@ void frsky_receive_byte( uint8_t data )
 	}
 #endif
 #endif
+#ifndef ACCESS
 	if ( RawLogging )
 	{
 		rawLogByte( data ) ;		
 	}
+#endif
 //#ifdef REVX
 	if ( TelemetryType == TEL_MAVLINK )
 	{
@@ -2289,7 +2307,7 @@ void frsky_receive_byte( uint8_t data )
       case frskyDataStart:
         if (data == START_STOP)
 				{
-#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_SPORT
 //#ifndef REVX
 					if ( FrskyTelemetryType )		// SPORT
 					{
@@ -2318,7 +2336,7 @@ void frsky_receive_byte( uint8_t data )
         }
         if (data == START_STOP) // end of frame detected
         {
-#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_SPORT
 //#ifdef REVX
 //	          processFrskyPacket(frskyRxBuffer); // FrskyRxBufferReady = 1;
 //  	        dataState = frskyDataIdle;
@@ -2379,7 +2397,7 @@ void frsky_receive_byte( uint8_t data )
 	    
     } // switch
   }
-#ifndef DISABLE_PXX_SPORT
+#ifndef DISABLE_SPORT
 //#ifndef REVX
 	if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 	{
@@ -2741,6 +2759,9 @@ void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 
 void FRSKY_Init( uint8_t brate )
 {
+#if defined(PCBT12) || defined(PCBT16)
+	MultiFrskyTelemetry = 0 ;
+#endif	 
 	
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
@@ -2766,12 +2787,12 @@ void FRSKY_Init( uint8_t brate )
 	}
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	if ( brate == FRSKY_TEL_HUB )
 	{
 		uint32_t baudrate = 9600 ;
 		uint32_t parity = SERIAL_NO_PARITY ;
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
@@ -2779,23 +2800,29 @@ void FRSKY_Init( uint8_t brate )
 		{
 			baudrate = 100000 ;
 			parity = SERIAL_EVEN_PARITY ;
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FRSKYX ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX ) )
 #endif
 			{
+#if defined(PCBT12) || defined(PCBT16)
+				MultiFrskyTelemetry = 1 ;
+#endif	 
 				FrskyTelemetryType = FRSKY_TEL_SPORT ;
 			}
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FrskyD ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD ) )
 #endif
 			{
+#if defined(PCBT12) || defined(PCBT16)
+				MultiFrskyTelemetry = 1 ;
+#endif	 
 				FrskyTelemetryType = FRSKY_TEL_HUB ;
 			}
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_AFHD2SA ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_AFHD2SA ) )
@@ -2863,13 +2890,13 @@ void FRSKY_Init( uint8_t brate )
 	else	// brate == 2, DSM telemetry or TEL_TYPE_HITEC
 	{
 		FrskyComPort = g_model.frskyComPort ;
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
 		if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
 #endif
 		{
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM )
 #else
 			if ( ( ( g_model.Module[0].sub_protocol & 0x1F ) == M_DSM ) || ( ( g_model.Module[1].sub_protocol & 0x1F ) == M_DSM ) )
@@ -3139,8 +3166,8 @@ void resetTelemetry( uint32_t item )
 		break ;
 
 		case TEL_ITEM_RESET_ALL :
-			FrskyHubData[FR_A1_MAH] = 0 ;
-			FrskyHubData[FR_A2_MAH] = 0 ;
+//			FrskyHubData[FR_A1_MAH] = 0 ;
+//			FrskyHubData[FR_A2_MAH] = 0 ;
 			FrskyHubData[FR_CELL_MIN] = 450 ;			// 0 volts
 			Frsky_Amp_hour_prescale = 0 ;
 			FrskyHubData[FR_AMP_MAH] = 0 ;
@@ -3219,7 +3246,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	type = g_model.Module[0].protocol == PROTO_PXX ;
 	if ( g_model.Module[0].protocol == PROTO_OFF )
 	{
@@ -3238,6 +3265,23 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 			}
 		}
 	}
+ #ifdef ACCESS	
+	if ( g_model.Module[0].protocol == PROTO_ACCESS )
+	{
+		type = TEL_FRSKY_SPORT ;
+	}
+	else
+	{
+		if ( g_model.Module[0].protocol == PROTO_OFF )
+		{
+			if ( g_model.Module[1].protocol == PROTO_ACCESS )
+			{
+				type = TEL_FRSKY_SPORT ;
+			}
+		}
+	}
+ #endif
+
 #endif
 
 #ifdef PCBSKY
@@ -3251,7 +3295,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX7)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX12D) || defined(PCBX7) || defined(PCBX10)
 	if ( (g_model.Module[1].protocol == PROTO_DSM2) && ( g_model.Module[1].sub_protocol == DSM_9XR ) )
 	{
 		type = TEL_DSM ;
@@ -3327,7 +3371,7 @@ void check_frsky( uint32_t fivems )
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
@@ -3439,9 +3483,26 @@ void check_frsky( uint32_t fivems )
 //	}
 //#endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	{
 		uint16_t rxchar ;
+#ifdef ACCESS
+extern uint8_t s_current_protocol[] ;
+		if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_ACCESS ) ||
+				 (s_current_protocol[INTERNAL_MODULE] == PROTO_ACCESS ) )
+		{
+			int32_t rxbyte ;
+			while ( ( rxbyte = get_16bit_fifo64( &Access_int_fifo ) ) != -1 )
+			{
+				accessRecieveByte( rxbyte, 0 ) ;
+			}
+			while ( ( rxbyte = get_16bit_fifo64( &Access_ext_fifo ) ) != -1 )
+			{
+				accessRecieveByte( rxbyte, 1 ) ;
+			}
+		}
+//		else
+#endif
 		if ( g_model.frskyComPort == 0 )
 		{
 //			if ( CaptureMode == CAP_COM1 )
@@ -3461,6 +3522,7 @@ void check_frsky( uint32_t fivems )
 //			}
 		}
 #ifndef PCBX12D
+#ifndef PCBX10
 		else
 		{
 			while ( ( rxchar = rxCom2() ) != 0xFFFF )
@@ -3468,6 +3530,7 @@ void check_frsky( uint32_t fivems )
 				frsky_receive_byte( rxchar ) ;
 			}
 		}
+#endif
 #endif
 	}
 #endif
@@ -3574,8 +3637,9 @@ void check_frsky( uint32_t fivems )
 			ah_temp -= 3600 ;
 			int16_t *ptr_hub = &FrskyHubData[FR_AMP_MAH] ;
 			*ptr_hub += 1 ;
-			FrskyHubData[FR_A1_MAH] += 1 ;
-			FrskyHubData[FR_A2_MAH] += 1 ;
+			TelemetryDataValid[FR_AMP_MAH] = 25 + g_model.telemetryTimeout ;
+//			FrskyHubData[FR_A1_MAH] += 1 ;
+//			FrskyHubData[FR_A2_MAH] += 1 ;
 		}
 		Frsky_Amp_hour_prescale = ah_temp ;
 	}

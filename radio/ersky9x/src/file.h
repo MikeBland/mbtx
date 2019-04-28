@@ -59,7 +59,7 @@ struct t_file_entry
 } ;
 
 extern struct t_file_entry File_system[] ;
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 extern unsigned char ModelNames[][sizeof(g_model.name)+1] ;		// Allow for general
 #else
 extern unsigned char ModelNames[][sizeof(g_model.name)] ;		// Allow for general

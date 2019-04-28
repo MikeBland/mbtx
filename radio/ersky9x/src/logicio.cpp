@@ -29,13 +29,13 @@
 #include "X9D/hal.h"
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_gpio.h"
 #include "X12D/hal.h"
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #ifndef SIMU
 #include "X12D/core_cm4.h"
 #endif
@@ -148,7 +148,7 @@ void configure_pins( uint32_t pins, uint16_t config )
 #endif
 
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 void configure_pins( uint32_t pins, uint16_t config )
 {
 	uint32_t address ;
@@ -189,6 +189,14 @@ void configure_pins( uint32_t pins, uint16_t config )
 
 			pgpio->AFR[pos >> 3] &= ~(0x000F << ((pos & 7)*4)) ;
 			pgpio->AFR[pos >> 3] |=	((config & PIN_PERI_MASK) >> 4) << ((pos & 7)*4) ;
+			if ( config & PIN_HIGH )
+			{
+				pgpio->BSRRL = thispin ;		
+			}
+			else
+			{
+				pgpio->BSRRH = thispin ;		
+			}
     }
   }
 }
@@ -3366,7 +3374,7 @@ uint32_t switchPosition( uint32_t swtch )
 #endif
 
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 
 void setup_switches()
 {
@@ -3388,10 +3396,15 @@ void setup_switches()
 
 void init_keys()
 {
+#ifdef PCBX10
+	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_UP | KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_PGDN | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+#endif
+#ifdef PCBX12D
 	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_RIGHT, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 	configure_pins( KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_LEFT | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
 	configure_pins( KEYS_GPIO_PIN_UP, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
 	AnalogData[11] = AnalogData[13] = 0x0800 ;
+#endif
 }
 
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
@@ -3400,8 +3413,9 @@ uint32_t read_keys()
 	register uint32_t x ;
 	register uint32_t y ;
 
-	x = GPIOC->IDR ;
 	y = 0 ;
+#ifdef PCBX12D
+	x = GPIOC->IDR ;
 	if ( x & KEYS_GPIO_PIN_MENU )
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
@@ -3428,6 +3442,31 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_UP ;			// up
 	}
+#endif	
+#ifdef PCBX10
+	x = GPIOI->IDR ;
+	if ( x & KEYS_GPIO_PIN_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & KEYS_GPIO_PIN_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	if ( x & KEYS_GPIO_PIN_DOWN )
+	{
+		y |= 0x02 << KEY_DOWN ;		// DOWN
+	}
+	if ( x & KEYS_GPIO_PIN_UP )
+	{
+		y |= 0x02 << KEY_UP ;			// up
+	}
+	if ( x & KEYS_GPIO_PIN_PGDN )
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	y |= 0x02 << KEY_RIGHT ;	// RIGHT
+#endif
 	return y ;
 }
 
@@ -3435,6 +3474,7 @@ uint32_t read_keys()
 void init_trims()
 {
 // Trims 
+#ifdef PCBX12D
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
@@ -3452,6 +3492,18 @@ void init_trims()
 	configure_pins( GPIO_Pin_8, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
 	configure_pins( GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( GPIO_Pin_13 | GPIO_Pin_14, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+#endif
+#ifdef PCBX10
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
+
+	configure_pins( TRIMS_GPIO_PIN_LHL | TRIMS_GPIO_PIN_LHR | GPIO_Pin_14 | GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( TRIMS_GPIO_PIN_LVD, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+	configure_pins( TRIMS_GPIO_PIN_LVU | TRIMS_GPIO_PIN_RVD | TRIMS_GPIO_PIN_RVU | GPIO_Pin_8, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
+	configure_pins( TRIMS_GPIO_PIN_RHL | TRIMS_GPIO_PIN_RHR | GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+#endif
 
 }
 
@@ -3462,6 +3514,7 @@ uint32_t read_trims()
 
 	trims = 0 ;
 
+#ifdef PCBX12D
 	trima = GPIOC->IDR ;
 	if ( ( trima & TRIMS_GPIO_PIN_RHL ) == 0 )
 	{
@@ -3503,6 +3556,45 @@ uint32_t read_trims()
 	{
 		trims |= 0x20 ;
 	}
+#endif
+#ifdef PCBX10
+	trima = GPIOB->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LHL ) == 0 )
+	{
+		trims |= 1 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_LHR ) == 0 )
+	{
+		trims |= 2 ;
+	}
+	trima = GPIOG->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LVD ) == 0 )
+	{
+		trims |= 4 ;
+	}
+	trima = GPIOJ->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LVU ) == 0 )
+	{
+		trims |= 8 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_RVD ) == 0 )
+	{
+		trims |= 0x10 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_RVU ) == 0 )
+	{
+		trims |= 0x20 ;
+	}
+	trima = GPIOD->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_RHL ) == 0 )
+	{
+		trims |= 0x40 ;
+	}
+	if ( ( trima & TRIMS_GPIO_PIN_RHR ) == 0 )
+	{
+		trims |= 0x80 ;
+	}
+#endif
 
 	return trims ;
 }
@@ -3682,6 +3774,18 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~h & SWITCHES_GPIO_PIN_A_H ;
       break;
 
+#if defined(PCBX10)
+    case HSW_SB0:
+      xxx = ~h & SWITCHES_GPIO_PIN_B_H ;
+      break;
+    case HSW_SB1:
+      xxx = ( ( b & SWITCHES_GPIO_PIN_B_L ) == SWITCHES_GPIO_PIN_B_L )
+						&& ( ( h & SWITCHES_GPIO_PIN_B_H ) == SWITCHES_GPIO_PIN_B_H ) ;
+      break;
+    case HSW_SB2:
+      xxx = ~b & SWITCHES_GPIO_PIN_B_L ;
+      break;
+#else
     case HSW_SB0:
       xxx = ~b & SWITCHES_GPIO_PIN_B_L ;
       break;
@@ -3692,6 +3796,7 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SB2:
       xxx = ~h & SWITCHES_GPIO_PIN_B_H ;
       break;
+#endif
 
     case HSW_SC0:
       xxx = ~b & SWITCHES_GPIO_PIN_C_L ;
@@ -3703,6 +3808,27 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~GPIOD->IDR & SWITCHES_GPIO_PIN_C_H ;
       break;
 
+#if defined(PCBX10)
+    case HSW_SD0:
+      xxx = ~GPIOJ->IDR & SWITCHES_GPIO_PIN_D_H ;
+			break;
+    case HSW_SD1:
+      xxx = ((g & SWITCHES_GPIO_PIN_D_L) | (GPIOJ->IDR & SWITCHES_GPIO_PIN_D_H)) == (SWITCHES_GPIO_PIN_D_L | SWITCHES_GPIO_PIN_D_H) ;
+      break;
+    case HSW_SD2:
+      xxx = ~g & SWITCHES_GPIO_PIN_D_L ;
+      break;
+
+    case HSW_SE0:
+      xxx = ~h & SWITCHES_GPIO_PIN_E_H ;
+      break;
+    case HSW_SE1:
+      xxx = ((h & SWITCHES_GPIO_PIN_E_H) | (GPIOE->IDR & SWITCHES_GPIO_PIN_E_L)) == (SWITCHES_GPIO_PIN_E_H | SWITCHES_GPIO_PIN_E_L) ;
+      break;
+    case HSW_SE2:
+      xxx = ~GPIOE->IDR & SWITCHES_GPIO_PIN_E_L ;
+      break;
+#else
     case HSW_SD0:
       xxx = ~g & SWITCHES_GPIO_PIN_D_L ;
 			break;
@@ -3722,8 +3848,11 @@ uint32_t hwKeyState( uint8_t key )
     case HSW_SE2:
       xxx = ~h & SWITCHES_GPIO_PIN_E_H ;
       break;
-
+#endif
     case HSW_SF2:
+#if defined(PCBX10)
+      xxx = ~h & SWITCHES_GPIO_PIN_F ;
+#else
 			if ( isProdVersion() )
 			{
 	      xxx = h & SWITCHES_GPIO_PIN_F ;
@@ -3732,6 +3861,7 @@ uint32_t hwKeyState( uint8_t key )
 			{
 	      xxx = ~h & SWITCHES_GPIO_PIN_F ;
 			}
+#endif
 		break;
 
     case HSW_SG0:
@@ -3748,6 +3878,7 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~g & SWITCHES_GPIO_PIN_H;
       break;
 
+#ifdef PCBX12D
 		case HSW_Pb1 :
 			xxx = ~GPIOB->IDR & GPIO_Pin_13 ;
     break ;
@@ -3763,6 +3894,24 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Pb4 :
 			xxx = ~GPIOJ->IDR & GPIO_Pin_8 ;
     break ;
+#endif
+#ifdef PCBX10
+		case HSW_Pb1 :
+			xxx = ~GPIOD->IDR & GPIO_Pin_13 ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = ~GPIOJ->IDR & GPIO_Pin_8 ;
+    break ;
+
+		case HSW_Pb3 :
+			xxx = ~GPIOB->IDR & GPIO_Pin_14 ;
+    break ;
+			 
+		case HSW_Pb4 :
+			xxx = ~GPIOB->IDR & GPIO_Pin_13 ;
+    break ;
+#endif
 
 		case HSW_Ele6pos0 :
 			

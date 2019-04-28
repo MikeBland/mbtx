@@ -48,8 +48,10 @@
 
 #ifdef REV9
 
+#ifndef PCBX10
 #define ADC_CS_HIGH()						(ADC_SPI_GPIO->BSRRL = ADC_SPI_PIN_CS)
 #define ADC_CS_LOW()						(ADC_SPI_GPIO->BSRRH = ADC_SPI_PIN_CS)
+#endif
 
 extern void hw_delay( uint16_t time ) ;
 #define delay_01us(x) hw_delay( x )
@@ -71,6 +73,125 @@ extern void hw_delay( uint16_t time ) ;
 
 #define V_BATT		18
 
+
+#ifdef PCBX10
+//extern void delay_ms( uint32_t ms ) ;
+//volatile uint16_t PwmInterruptCount ;
+uint8_t SticksPwmDisabled = 0 ;
+
+struct t_PWMcontrol
+{
+volatile uint32_t timer_capture_rising_time ;
+volatile uint32_t timer_capture_value ;
+volatile uint32_t timer_capture_period ;
+} PWMcontrol[4] ;
+
+//static void initSticksPwm()
+//{
+//	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN ;		// Enable clock
+	
+//  configure_pins( (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3), PIN_PERIPHERAL | PIN_PORTA | PIN_PER_2 | PIN_NO_PULLUP ) ;
+
+//  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+//  TIM5->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+//  TIM5->ARR = 0xffffffff ;
+//  TIM5->CCMR1 = TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0 ;
+//  TIM5->CCMR2 = TIM_CCMR2_CC3S_0 | TIM_CCMR2_CC4S_0 ;
+//  TIM5->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E ;
+//  TIM5->DIER |= TIM_DIER_CC1IE|TIM_DIER_CC2IE|TIM_DIER_CC3IE|TIM_DIER_CC4IE ;
+//  TIM5->EGR = 1; // Restart
+//  TIM5->CR1 = TIM_CR1_CEN ; // Start timer
+
+//  NVIC_SetPriority(TIM5_IRQn, 1 ) ;
+//  NVIC_EnableIRQ(TIM5_IRQn) ;
+//}
+
+//static void disableSticksPwm()
+//{
+//  NVIC_DisableIRQ(TIM5_IRQn) ;
+//  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+//}
+
+//extern "C" void TIM5_IRQHandler(void)
+//{
+//  uint32_t capture ;
+//	uint32_t value ;
+//	struct t_PWMcontrol *p ;
+
+//	PwmInterruptCount += 1 ; // overflow may happen but we only use this to detect PWM / ADC on radio startup
+
+//  if ( PWM_TIMER->SR & TIM_DIER_CC1IE )
+//	{
+//		capture = TIM5->CCR1 ;
+//		p = &PWMcontrol[0] ;
+//    if (TIM5->CCER & TIM_CCER_CC1P)
+//		{
+//	    value = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_value = value ;
+//  		TIM5->CCER &= ~TIM_CCER_CC1P ; // Rising
+//		}
+//		else
+//		{
+//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_rising_time = capture ;
+//  		TIM5->CCER |= TIM_CCER_CC1P ; // Falling
+//		}
+//	}
+//  if ( PWM_TIMER->SR & TIM_DIER_CC2IE )
+//	{
+//		capture = TIM5->CCR2 ;
+//		p = &PWMcontrol[1] ;
+//    if (TIM5->CCER & TIM_CCER_CC2P)
+//		{
+//	    value = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_value = value ;
+//  		TIM5->CCER &= ~TIM_CCER_CC2P ; // Rising
+//		}
+//		else
+//		{
+//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_rising_time = capture ;
+//  		TIM5->CCER |= TIM_CCER_CC2P ; // Falling
+//		}
+//	}
+//  if ( PWM_TIMER->SR & TIM_DIER_CC3IE )
+//	{
+//		capture = TIM5->CCR3 ;
+//		p = &PWMcontrol[2] ;
+//    if (TIM5->CCER & TIM_CCER_CC3P)
+//		{
+//	    value = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_value = value ;
+//  		TIM5->CCER &= ~TIM_CCER_CC3P ; // Rising
+//		}
+//		else
+//		{
+//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_rising_time = capture ;
+//  		TIM5->CCER |= TIM_CCER_CC3P ; // Falling
+//		}
+//	}
+//  if ( PWM_TIMER->SR & TIM_DIER_CC4IE )
+//	{
+//		capture = TIM5->CCR4 ;
+//		p = &PWMcontrol[3] ;
+//    if (TIM5->CCER & TIM_CCER_CC4P)
+//		{
+//	    value = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_value = value ;
+//  		TIM5->CCER &= ~TIM_CCER_CC4P ; // Rising
+//		}
+//		else
+//		{
+//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+//			p->timer_capture_rising_time = capture ;
+//  		TIM5->CCER |= TIM_CCER_CC4P ; // Falling
+//		}
+//	}
+//}
+#endif
+
+
 static void enableRtcBattery()
 {
 	ADC->CCR |= ADC_CCR_VBATE ;
@@ -84,6 +205,7 @@ void disableRtcBattery()
 uint16_t AdcBuffer[BUFFERSIZE+3] ;		// 2 for the on chip ADC + 1 for V_BATT
 uint16_t VbattRtc ;
 
+#ifndef PCBX10
 static u16 SPIx_ReadWriteByte(uint16_t value)
 {
     while(SPI_I2S_GetFlagStatus(ADC_SPI,SPI_I2S_FLAG_TXE) == RESET);
@@ -159,21 +281,65 @@ static void ADS7952_Init()
 //    ADC_CS_HIGH();
 //	asm("nop");
 }
+#endif
 
 void init_adc()
 {
+#ifndef PCBX10
   ADS7952_Init() ;
+#endif
 
 	RCC->APB2ENR |= RCC_APB2ENR_ADC3EN ;			// Enable clock
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN ;			// Enable clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
+
+#ifdef PCBX10
+//	initSticksPwm() ;
+//  delay_ms(20) ;
+//  if (PwmInterruptCount < 8 )
+//	{
+    SticksPwmDisabled = true ;
+//		disableSticksPwm() ;
+//  }
+#endif
+
+#ifdef PCBX12D
   configure_pins( PIN_STICK_J5 | PIN_STICK_J6, PIN_ANALOG | PIN_PORTF ) ;
-	
+#endif
+
+#ifdef PCBX10
+  if ( SticksPwmDisabled )
+	{
+	  configure_pins( (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3), PIN_ANALOG | PIN_PORTA ) ;
+	}
+  configure_pins( ADC_GPIOC_PINS, PIN_ANALOG | PIN_PORTC ) ;
+  configure_pins( ADC_GPIOF_PINS | ADC_GPIOF_EXTRA_PINS , PIN_ANALOG | PIN_PORTF ) ;
+#endif
+	 
 	ADC3->CR1 = ADC_CR1_SCAN ;
 	ADC3->CR2 = ADC_CR2_ADON | ADC_CR2_DMA | ADC_CR2_DDS ;
+#ifdef PCBX12D
 	ADC3->SQR1 = (2-1) << 20 ;		// NUMBER_ANALOG Channels
 	ADC3->SQR3 = STICK_J5 + (STICK_J6<<5) ;
+#endif
+	 
+#ifdef PCBX10
+  if ( SticksPwmDisabled )
+	{
+		ADC3->SQR1 = (12-1) << 20 ;		// NUMBER_ANALOG Channels
+		ADC3->SQR2 = SLIDER_L + (SLIDER_R<<5) + (FLAP2<<10) + (BATTERY_V<<15) + (EXT1<<20) + (EXT2<<25) ;
+		ADC3->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (FLAP1<<20) + (FLAP3<<25) ;
+	}
+	else
+	{
+		ADC3->SQR1 = (10-1-4) << 20 ;		// NUMBER_ANALOG Channels
+		ADC3->SQR3 = FLAP1 + (FLAP3<<5) + (SLIDER_L<<10) + (SLIDER_R<<15) + (FLAP2<<20) + (BATTERY_V<<25) ;
+	}
+#endif	
+	
 	ADC3->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
 								+ (SAMPTIME<<15) + (SAMPTIME<<18) + (SAMPTIME<<21) + (SAMPTIME<<24) ;
 	ADC3->SMPR2 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12) 
@@ -199,6 +365,7 @@ void init_adc()
 	enableRtcBattery() ;
 }
 
+#ifndef PCBX10
 const uint16_t adcCommands[14] =
 {
 	MANUAL_MODE | ( STICK_J1	<< 7 ),
@@ -216,27 +383,48 @@ const uint16_t adcCommands[14] =
 	MANUAL_MODE | ( 0 << 7 ),
 	MANUAL_MODE | ( 0 << 7 )
 } ;
-
+#endif
 
 void read_adc()
 {
 	static uint16_t SixPosTimer ;
+#ifdef PCBX12D
 	uint32_t adcIndex = 0;
+#endif
 //	uint16_t command = MANUAL_MODE ;	// Channel 0
 	uint32_t i ;
+#ifdef PCBX12D
 	uint16_t *pCommands = (uint16_t *)adcCommands ;
+#endif
 
 	// Start on chip ADC read
 	DMA2_Stream1->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	ADC3->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
 	ADC1->SR &= ~(uint32_t) ( ADC_SR_EOC | ADC_SR_STRT | ADC_SR_OVR ) ;
 	DMA2->LIFCR = DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1 |DMA_LIFCR_CTEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CFEIF1 ; // Write ones to clear bits
+#ifdef PCBX10
+	DMA2_Stream1->M0AR = (uint32_t) &AdcBuffer[0] ;
+#else
 	DMA2_Stream1->M0AR = (uint32_t) &AdcBuffer[BUFFERSIZE] ;
+#endif
+#ifdef PCBX12D
 	DMA2_Stream1->NDTR = 2 ;
+#endif
+#ifdef PCBX10
+	if ( SticksPwmDisabled )
+	{
+		DMA2_Stream1->NDTR = 12 ;
+	}
+	else
+	{
+		DMA2_Stream1->NDTR = 6 ;
+	}
+#endif
 	DMA2_Stream1->CR |= DMA_SxCR_EN ;		// Enable DMA
 	ADC3->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
 	ADC1->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
 	 
+#ifdef PCBX12D
   ADC_CS_LOW() ;
 	delay_01us(1) ;
   i = 0x0fff & SPIx_ReadWriteByte(*pCommands++) ;	// Discard
@@ -257,8 +445,13 @@ void read_adc()
 	  ADC_CS_HIGH();
 		delay_01us(1) ;
 	}
+#endif
 
+#ifdef PCBX10
+	for ( i = 0 ; i < 22000 ; i += 1 )
+#else
 	for ( i = 0 ; i < 20000 ; i += 1 )
+#endif
 	{
 		if ( DMA2->LISR & DMA_LISR_TCIF1 )
 		{
@@ -270,6 +463,21 @@ void read_adc()
 	if ( 1 )
 //  if (GPIOI->IDR & 0x0800)
 	{
+#ifdef PCBX10
+	 if ( SticksPwmDisabled )
+	 {
+		AnalogData[1] = 4095 - AdcBuffer[0] ;
+		if ( isProdVersion() )
+		{
+			AnalogData[0] = AdcBuffer[1] ;
+		}
+		else
+		{
+			AnalogData[0] = AdcBuffer[1] ;
+		}
+		AnalogData[3] = 4095 - AdcBuffer[2] ;
+		AnalogData[2] = AdcBuffer[3] ;
+#else
 		AnalogData[0] = AdcBuffer[0] ;
 		if ( isProdVersion() )
 		{
@@ -281,78 +489,142 @@ void read_adc()
 		}
 		AnalogData[2] = AdcBuffer[2] ;
 		AnalogData[3] = 4095 - AdcBuffer[3] ;
-	}
-	else
-	{
-		uint32_t t ;
-		AnalogData[0] = AdcBuffer[0] ;
-		AnalogData[1] = AdcBuffer[1] ;
-		t = AdcBuffer[12] ;
-		if ( t > 0x0800 )
+#endif
+
+#ifdef PCBX10
+	 }
+	 else
+	 {
+		struct t_PWMcontrol *p ;
+		p = &PWMcontrol[0] ;
+
+		uint16_t value ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
 		{
-			if ( t < 0x0C00 )
-			{
-				t = 0x0800 ;
-			}
-			else
-			{
-				t -= 0x0C00 ;
-				t *= 2 ;
-				t += 0x0800 ;
-			}
-		}	
-		else
-		{
-			if ( t > 0x0400 )
-			{
-				t = 0x0800 ;
-			}
-			else
-			{
-//				t += 0x0200 ;
-				t *= 2 ;
-//				t -= 0x0400 ;
-			}
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
 		}
-		AnalogData[3] = t ;
-		t = AdcBuffer[13] ;
-		if ( t > 0x0800 )
+		if ( value < 4096 )
 		{
-			if ( t < 0x0C00 )
-			{
-				t = 0x0800 ;
-			}
-			else
-			{
-				t -= 0x0C00 ;
-				t *= 2 ;
-				t += 0x0800 ;
-			}
-		}	
-		else
-		{
-			if ( t > 0x0400 )
-			{
-				t = 0x0800 ;
-			}
-			else
-			{
-//				t += 0x0200 ;
-				t *= 2 ;
-//				t -= 0x0400 ;
-			}
+			AnalogData[0] = value ;
 		}
-		AnalogData[2] = t ;
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[1] = 4095 - value ;
+		}
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[3] = value ;
+		}
+		p += 1 ;
+		value = 0x0800 ;
+		if ( p->timer_capture_period )
+		{
+			value = p->timer_capture_value * 4095 / p->timer_capture_period ;
+		}
+		if ( value < 4096 )
+		{
+			AnalogData[2] = 4095 - value ;
+		}
+	 	
+	 }
+#endif		
 	}
+//	else
+//	{
+//		uint32_t t ;
+//		AnalogData[0] = AdcBuffer[0] ;
+//		AnalogData[1] = AdcBuffer[1] ;
+//		t = AdcBuffer[12] ;
+//		if ( t > 0x0800 )
+//		{
+//			if ( t < 0x0C00 )
+//			{
+//				t = 0x0800 ;
+//			}
+//			else
+//			{
+//				t -= 0x0C00 ;
+//				t *= 2 ;
+//				t += 0x0800 ;
+//			}
+//		}	
+//		else
+//		{
+//			if ( t > 0x0400 )
+//			{
+//				t = 0x0800 ;
+//			}
+//			else
+//			{
+////				t += 0x0200 ;
+//				t *= 2 ;
+////				t -= 0x0400 ;
+//			}
+//		}
+//		AnalogData[3] = t ;
+//		t = AdcBuffer[13] ;
+//		if ( t > 0x0800 )
+//		{
+//			if ( t < 0x0C00 )
+//			{
+//				t = 0x0800 ;
+//			}
+//			else
+//			{
+//				t -= 0x0C00 ;
+//				t *= 2 ;
+//				t += 0x0800 ;
+//			}
+//		}	
+//		else
+//		{
+//			if ( t > 0x0400 )
+//			{
+//				t = 0x0800 ;
+//			}
+//			else
+//			{
+////				t += 0x0200 ;
+//				t *= 2 ;
+////				t -= 0x0400 ;
+//			}
+//		}
+//		AnalogData[2] = t ;
+//	}
+#ifdef PCBX10
+ if ( SticksPwmDisabled )
+ {
+#endif		
+#ifdef PCBX10
+	AnalogData[4] = AdcBuffer[4] ;
+	AnalogData[5] = AdcBuffer[5] ;
+	AnalogData[6] = 4095 - AdcBuffer[6] ;
+	AnalogData[7] = 4095 - AdcBuffer[7] ;
+	uint16_t temp1 = AdcBuffer[8] ;
+#else
 	AnalogData[4] = 4095 - AdcBuffer[4] ;
 	AnalogData[5] = 4095 - AdcBuffer[5] ;
 	AnalogData[6] = AdcBuffer[6] ;
 	AnalogData[7] = AdcBuffer[7] ;
+	uint16_t temp1 = AdcBuffer[11] ;
+#endif
 	AnalogData[8] = 4095 - AdcBuffer[8] ;
 	AnalogData[12] = AdcBuffer[9] ;
 	AnalogData[9] = 4095 - AdcBuffer[10] ;
 	uint16_t temp = AnalogData[10] ;
-	uint16_t temp1 = AdcBuffer[11] ;
 	uint16_t temp2 ;
 	if ( temp1 > temp )
 	{
@@ -383,6 +655,52 @@ void read_adc()
 	}
 	AnalogData[11] = AdcBuffer[13] ;
 	AnalogData[13] = AdcBuffer[12] ;
+#ifdef PCBX10
+ }
+ else
+ {
+	AnalogData[4] = 4095 - AdcBuffer[0] ;
+	AnalogData[5] = 4095 - AdcBuffer[1] ;
+	AnalogData[6] = AdcBuffer[2] ;
+	AnalogData[7] = AdcBuffer[3] ;
+	AnalogData[8] = 4095 - AdcBuffer[4] ;
+	AnalogData[12] = AdcBuffer[5] ;
+	AnalogData[9] = 4095 - AdcBuffer[6] ;
+	uint16_t temp = AnalogData[10] ;
+	uint16_t temp1 = AdcBuffer[7] ;
+	uint16_t temp2 ;
+	if ( temp1 > temp )
+	{
+		temp2 = temp1 - temp ;
+	}
+	else
+	{
+		temp2 = temp - temp1 ;
+	}
+	if ( temp2 > 20 )   // changed by more than 20?
+	{
+		uint16_t time = 10 ;
+		if ( temp > 0x0380 )
+		{
+			if ( temp1 < 0x0100 )
+			{
+				time = 30 ;
+			}
+		}
+		if ((uint16_t)(get_tmr10ms() - SixPosTimer) > time )
+		{
+			AnalogData[10] = temp1 ;
+		}
+	}
+	else
+	{
+		SixPosTimer = get_tmr10ms() ;
+	}
+//	AnalogData[11] = AdcBuffer[13] ;
+//	AnalogData[13] = AdcBuffer[12] ;
+ 	
+ }
+#endif
 	if (ADC->CCR & ADC_CCR_VBATE )
 	{
 		VbattRtc = ADC1->DR ;

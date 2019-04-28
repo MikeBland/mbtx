@@ -26,7 +26,7 @@
 #include "X9D/hal.h"
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #include "X12D/stm32f4xx_gpio.h"
 #include "X12D/hal.h"
@@ -949,7 +949,7 @@ void unlockVoice()
 	Voice.VoiceLock = 0 ;
 }
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 static const uint8_t SwVolume_scale[NUM_VOL_LEVELS] = 
 {
 	 0,  3,  5,   8,   12,  17,  24,  33,  45,  57,  70,  85,
