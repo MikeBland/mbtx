@@ -979,7 +979,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 85
+#define NUM_TELEM_ITEMS 81
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1630,6 +1630,15 @@ uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
 #endif
 } ;
 
+#define SPECTRUM_NUM_BARS 240
+struct t_spectrumAnalyser
+{
+	uint32_t span ;
+	uint32_t freq ;
+	uint32_t step ;
+  uint8_t bars[SPECTRUM_NUM_BARS] ;
+} ;
+
 union t_sharedMemory
 {
 	struct
@@ -1644,6 +1653,7 @@ union t_sharedMemory
 		struct t_maintenance Mdata ;
 	} ;
 	FIL g_eebackupFile ;
+	struct t_spectrumAnalyser SpectrumAnalyser ;
 } ;
 
 

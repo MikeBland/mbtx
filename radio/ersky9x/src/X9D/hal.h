@@ -181,8 +181,8 @@
    #define	PIN_SW_A_L		        GPIO_Pin_0	//PE.00
    #define	PIN_SW_B_H		        GPIO_Pin_5	//PB.05
    #define	PIN_SW_B_L		        GPIO_Pin_4  //PB.04
-   #define	PIN_SW_C_H		        GPIO_Pin_2	//PE.02
-   #define	PIN_SW_C_L		        GPIO_Pin_3  //PE.03
+   #define	PIN_SW_C_H		        GPIO_Pin_3	//PE.03
+   #define	PIN_SW_C_L		        GPIO_Pin_2  //PE.02
    #define	PIN_SW_F			        GPIO_Pin_13	//PC.13
    #define	PIN_SW_H			        GPIO_Pin_5	//PA.05
   #else // X3

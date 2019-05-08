@@ -11,6 +11,8 @@
 
 void init_rotary_encoder()
 {
+  register uint32_t dummy ;
+	
 	configure_pins( 0x0C00, PIN_INPUT | PIN_PULLUP | PIN_PORTH ) ;
 #if defined(PCBX12D)
 	configure_pins( 0x0002, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
@@ -20,6 +22,12 @@ void init_rotary_encoder()
 #endif
 //	RotaryDivisor = 2 ;
 //	g_eeGeneral.rotaryDivisor = 2 ;
+	
+	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE11, PE9 )
+	dummy >>= 10 ;
+	dummy &= 0x03 ;
+	Rotary_position &= ~0x03 ;
+	Rotary_position |= dummy ;
 }
 
 extern volatile int32_t Rotary_position ;

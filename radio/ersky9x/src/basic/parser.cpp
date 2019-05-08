@@ -4628,6 +4628,9 @@ int32_t exec_sportsend()
 	union t_parameter params[3] ;
 //	union t_parameter param ;
 	int32_t x ;
+#ifdef ACCESS
+	int32_t access = 0 ;
+#endif
 
 	result = get_parameter( &params[0], PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
@@ -4645,7 +4648,10 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 		}
 		else
 		{
-			sportPacket[7] = SportIds[x] ;
+#ifdef ACCESS
+			access = x ;
+#endif
+			sportPacket[7] = SportIds[x & 0xFF] ;
 			result = get_numeric_parameters( params, 2 ) ;
 	    sportPacket[0] = params[0].var ;
 			x = params[1].var ;
@@ -4690,7 +4696,18 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 //            RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
             result = 0 ;
 #else
+#ifdef ACCESS
+						if ( access & 0x4000 )
+						{
+            	result = accessSportPacketSend( sportPacket, access ) ;
+						}
+						else
+						{
+            	result = sportPacketSend( sportPacket, sportPacket[7] ) ;
+						}
+#else
             result = sportPacketSend( sportPacket, sportPacket[7] ) ;
+#endif	
 #endif	
 //						eatCloseBracket() ;
 //          }

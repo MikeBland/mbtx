@@ -160,6 +160,12 @@ bool audioQueue::freeslots()
 	return temp >= AUDIO_QUEUE_FREESLOTS ;
 }
 
+#ifdef PCBX9LITE
+static const uint8_t HapticTable[] = {
+	0, 40, 55, 70, 85, 100
+} ;
+#endif 
+
 
 // heartbeat is responsibile for issueing the audio tones and general square waves
 // it is essentially the life of the class.
@@ -179,7 +185,15 @@ void audioQueue::heartbeat()
 #if defined(REVPLUS) || defined(REV9E)
  		hapticOn(((g_eeGeneral.hapticStrength+5)) * 10); 
 #else			
+ #ifdef PCBX9LITE
+ 		if ( g_eeGeneral.hapticStrength > 5 )
+		{
+			g_eeGeneral.hapticStrength = 5 ;
+		}
+ 		hapticOn( HapticTable[g_eeGeneral.hapticStrength] ) ; 
+ #else			
  		hapticOn((g_eeGeneral.hapticStrength *  2 ) * 10); 
+ #endif 
 #endif 
 // 		hapticMinRun = HAPTIC_SPINUP;
 	}

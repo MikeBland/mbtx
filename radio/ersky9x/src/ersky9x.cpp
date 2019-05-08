@@ -1165,8 +1165,12 @@ void menuDiag(uint8_t event)
 #endif
 		break ;
 			
-    case EVT_KEY_LONG(KEY_EXIT):
 		case EVT_KEY_LONG(BTN_RE) :
+			if ( g_eeGeneral.disableBtnLong == 0 )
+			{
+				break ;
+			}		
+    case EVT_KEY_LONG(KEY_EXIT):
 			reboot = 1 ;
 		break ;
 	}
@@ -3826,6 +3830,14 @@ void main_loop(void* pdata)
 		uint8_t evt ;
 		doSplash() ;
 
+#ifndef SMALL
+		if ( g_eeGeneral.calibMid[0] == 0x0400
+				 && g_eeGeneral.calibSpanPos[0] == 0x0300
+				 && g_eeGeneral.calibSpanNeg[0] == 0x0300 )
+		{
+			startupCalibration() ;
+		}
+#endif
 		getADC_single();
   	checkTHR();
 		checkCustom() ;
@@ -6564,7 +6576,6 @@ static uint32_t hasStickMoved( uint16_t value )
 void doSplash()
 {
 	uint32_t j ;
-
 	if( !g_eeGeneral.disableSplashScreen )
   {
    	check_backlight() ;
@@ -6575,6 +6586,12 @@ void doSplash()
 
 #if defined(PCBX10)
 		for ( uint32_t i = 0 ; i < 25 ; i += 1 )
+		{
+			getADC_filt();
+		}
+#endif
+#if defined(PCBX9LITE)
+		for ( uint32_t i = 0 ; i < 10 ; i += 1 )
 		{
 			getADC_filt();
 		}
@@ -8090,6 +8107,8 @@ extern uint32_t TotalExecTime ;
 static void init_rotary_encoder()
 {
 #ifdef PCBX9LITE
+  register uint32_t capture ;
+	
 	configure_pins( 0x1400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	g_eeGeneral.rotaryDivisor = 2 ;
 
@@ -8099,6 +8118,13 @@ static void init_rotary_encoder()
 	EXTI->RTSR |= 0x1400 ;	// Rising Edge
 	EXTI->FTSR |= 0x1400 ;	// Falling Edge
 	EXTI->IMR |= 0x1400 ;
+
+	capture = GPIOENCODER->IDR & 0x1400 ;
+	capture >>= 10 ;
+	capture = (capture & 1) | ( ( capture >> 1 ) & 2 ) ;	// pick out the two bits
+	Rotary_position &= ~0x03 ;
+	Rotary_position |= capture ;
+
 	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
 	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
 #else
@@ -8197,8 +8223,16 @@ void checkRotaryEncoder()
 #ifdef REV9E
 static void init_rotary_encoder()
 {
+  register uint32_t dummy ;
+	
 	configure_pins( 0x3000, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	g_eeGeneral.rotaryDivisor = 2 ;
+	
+	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE6, PE5 )
+	dummy >>= 12 ;
+	dummy &= 0x03 ;			// pick out the two bits
+	Rotary_position &= ~0x03 ;
+	Rotary_position |= dummy ;
 }
 
 void checkRotaryEncoder()

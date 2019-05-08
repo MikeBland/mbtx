@@ -126,8 +126,8 @@ struct t_fifo128 Com3_fifo ;
 struct t_fifo64 Sbus_fifo ;
 
 #ifdef ACCESS
-struct t_16bit_fifo64 Access_int_fifo ;
-struct t_16bit_fifo64 Access_ext_fifo ;
+struct t_fifo128 Access_int_fifo ;
+struct t_fifo128 Access_ext_fifo ;
 #endif
 
 struct t_telemetryTx TelemetryTx ;
@@ -450,6 +450,26 @@ extern uint8_t ExtDisplaySend ;
 }
 #endif // PCBX7
 
+#ifdef PCBX9LITE
+struct t_serial_tx LcdDumpBuf ;
+
+void doLcdDump()
+{
+extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
+extern uint8_t ExtDisplaySend ;
+	if ( ExtDisplaySend )
+	{
+		ExtDisplaySend = 0 ;
+		LcdDumpBuf.buffer = ExtDisplayBuf ;
+		LcdDumpBuf.size = sizeof(ExtDisplayBuf) ; 
+		if ( g_model.com2Function == COM2_FUNC_LCD )
+		{
+			txPdcCom2( &LcdDumpBuf ) ;
+		}
+	}	 
+}
+#endif // PCBX9LITE
+
 
 //static uint8_t LcdDumpState ;
 //#define LCD_DUMP_UNSYNC 	0
@@ -687,6 +707,14 @@ extern uint8_t AnaEncSw ;
 	}
  #endif
 #endif
+
+#ifdef PCBX9LITE
+	if ( g_model.com2Function == COM2_FUNC_LCD )
+	{
+		doLcdDump() ;
+	}
+#endif
+
 #ifdef PCBX9D
 #if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)
 	if ( g_model.com2Function == COM2_FUNC_LCD )
@@ -770,29 +798,29 @@ int32_t peek_fifo128( struct t_fifo128 *pfifo )
 	return -1 ;
 }
 
-#ifdef ACCESS
-void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word )
-{
-  uint32_t next = (pfifo->in + 1) & 0x3f;
-	if ( next != pfifo->out )
-	{
-		pfifo->fifo[pfifo->in] = word ;
-		pfifo->in = next ;
-	}
-}
+//#ifdef ACCESS
+//void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word )
+//{
+//  uint32_t next = (pfifo->in + 1) & 0x3f;
+//	if ( next != pfifo->out )
+//	{
+//		pfifo->fifo[pfifo->in] = word ;
+//		pfifo->in = next ;
+//	}
+//}
 
-int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo )
-{
-	int32_t rxbyte ;
-	if ( pfifo->in != pfifo->out )				// Look for char available
-	{
-		rxbyte = pfifo->fifo[pfifo->out] ;
-		pfifo->out = ( pfifo->out + 1 ) & 0x3F ;
-		return rxbyte ;
-	}
-	return -1 ;
-}
-#endif
+//int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo )
+//{
+//	int32_t rxbyte ;
+//	if ( pfifo->in != pfifo->out )				// Look for char available
+//	{
+//		rxbyte = pfifo->fifo[pfifo->out] ;
+//		pfifo->out = ( pfifo->out + 1 ) & 0x3F ;
+//		return rxbyte ;
+//	}
+//	return -1 ;
+//}
+//#endif
 
 #ifdef REVX
 void put_16bit_fifo32( struct t_16bit_fifo32 *pfifo, uint16_t word )
@@ -4976,6 +5004,31 @@ extern "C" void DMA1_Stream0_IRQHandler()
 
 
 #endif // PCB9XT
+
+#ifdef ACCESS
+// index is 0x4000 | module << 10 | destination << 8 | physicalId
+uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index )
+{
+	if ( pdata == 0 )	// Test for buffer available
+	{
+		return TelemetryTx.sportCount ? 0 : 1 ;
+	}
+
+	uint32_t i ;
+	
+	TelemetryTx.AccessSportTx.module_destination = index >> 8 ;
+	TelemetryTx.AccessSportTx.data[0] = index ;
+	for ( i = 1 ; i < 8 ; i += 1 )
+	{
+		TelemetryTx.AccessSportTx.data[i] = *pdata++ ;
+	}
+	TelemetryTx.AccessSportTx.module_destination = index ;
+	TelemetryTx.AccessSportTx.ptr = TelemetryTx.AccessSportTx.data ;
+	TelemetryTx.AccessSportTx.index = 0xFF ;	// Prevent SPort taking data
+	TelemetryTx.sportCount = 8 ;
+	return 1 ;
+}
+#endif
 
 uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
 {

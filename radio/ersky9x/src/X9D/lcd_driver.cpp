@@ -175,6 +175,21 @@ void refreshDisplay()
  #endif
 #endif
 
+#ifdef PCBX9LITE
+	if ( g_model.com2Function == COM2_FUNC_LCD )
+	{
+		uint16_t time = get_tmr10ms() ;
+  	if((uint16_t)( time-ExtDisplayTime) >= 20) //200mS
+		{
+			ExtDisplayTime = time ;
+  		memcpy(&ExtDisplayBuf[1], DisplayBuf, sizeof(DisplayBuf));
+			ExtDisplayBuf[0] = 0xAA ;
+			ExtDisplayBuf[sizeof(ExtDisplayBuf)-1] = 0x55 ;
+			ExtDisplaySend = 1 ;
+		}
+	}
+#endif
+
   uint8_t * p = DisplayBuf;
   for (uint8_t y=0; y < 8; y++, p+=LCD_W) {
     lcdWriteCommand(0x10); // Column addr 0

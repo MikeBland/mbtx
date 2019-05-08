@@ -448,6 +448,9 @@ void storeRSSI( uint8_t value )
 //	}
 }
 
+uint8_t SbecCount ;
+uint16_t SbecAverage ;
+
 void storeTelemetryData( uint8_t index, uint16_t value )
 {
 #ifdef BLOCKING
@@ -658,6 +661,17 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		{
 			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
 			TelemetryDataValid[FR_VOLTS] = 25 + g_model.telemetryTimeout ;
+		}
+		if ( index == FR_SBEC_CURRENT )
+		{
+			SbecAverage += value ;
+			if ( ++SbecCount >= 4 )
+			{
+				SbecCount = 0 ;
+				value = ( SbecAverage + 3 ) >> 2 ;
+				storeTelemetryData( index, value ) ;
+				SbecAverage = 0 ;
+			}
 		}
 	}	
 }
@@ -3492,11 +3506,11 @@ extern uint8_t s_current_protocol[] ;
 				 (s_current_protocol[INTERNAL_MODULE] == PROTO_ACCESS ) )
 		{
 			int32_t rxbyte ;
-			while ( ( rxbyte = get_16bit_fifo64( &Access_int_fifo ) ) != -1 )
+			while ( ( rxbyte = get_fifo128( &Access_int_fifo ) ) != -1 )
 			{
 				accessRecieveByte( rxbyte, 0 ) ;
 			}
-			while ( ( rxbyte = get_16bit_fifo64( &Access_ext_fifo ) ) != -1 )
+			while ( ( rxbyte = get_fifo128( &Access_ext_fifo ) ) != -1 )
 			{
 				accessRecieveByte( rxbyte, 1 ) ;
 			}

@@ -33,15 +33,15 @@
 //	volatile uint32_t count ;
 //} ;
 
-#ifdef ACCESS
-struct t_16bit_fifo64
-{
-	uint16_t fifo[64] ;
-	uint32_t in ;
-	uint32_t out ;
-	volatile uint32_t count ;
-} ;
-#endif
+//#ifdef ACCESS
+//struct t_16bit_fifo64
+//{
+//	uint16_t fifo[64] ;
+//	uint32_t in ;
+//	uint32_t out ;
+//	volatile uint32_t count ;
+//} ;
+//#endif
 
 struct t_16bit_fifo32
 {
@@ -110,6 +110,14 @@ struct t_SportTx
 	uint8_t data[16] ;
 } ;
 
+struct t_accessSportTx
+{
+	uint8_t *ptr ;
+	uint8_t index ;
+	uint16_t module_destination ;
+	uint8_t data[16] ;
+} ;
+
 struct t_XfireTx
 {
 	uint16_t count ;
@@ -125,6 +133,7 @@ struct t_telemetryTx
 	{
 		struct t_SportTx SportTx ;
 		struct t_XfireTx XfireTx ;
+		struct t_accessSportTx AccessSportTx ;
 	} ;
 } ;
 
@@ -146,8 +155,8 @@ extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
 #ifdef ACCESS
-extern struct t_16bit_fifo64 Access_int_fifo ;
-extern struct t_16bit_fifo64 Access_ext_fifo ;
+extern struct t_fifo128 Access_int_fifo ;
+extern struct t_fifo128 Access_ext_fifo ;
 void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word ) ;
 int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo ) ;
 #endif
@@ -248,6 +257,9 @@ extern uint16_t rx2nduart( void ) ;
 extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
+#ifdef ACCESS
+uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index ) ;
+#endif
 extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 extern uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data ) ;
 

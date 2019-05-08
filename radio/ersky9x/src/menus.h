@@ -168,6 +168,7 @@ extern void menuProcGlobals(uint8_t event) ;
 extern int16_t expo(int16_t x, int16_t k) ;
 extern int16_t calcExpo( uint8_t channel, int16_t value ) ;
 extern void timer(int16_t throttle_val) ;
+extern void startupCalibration( void ) ;
 
 extern void menuUp1(uint8_t event) ;
 extern void menuUpdate(uint8_t event) ;

@@ -353,7 +353,11 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 #ifdef PCBXLITE
 	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
 #else
+ #ifdef PCBX9LITE
+	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+ #else
 	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+ #endif
 #endif
 #endif
 #ifdef PCB9XT
@@ -366,7 +370,11 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 #ifdef PCBXLITE
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
 #else	
+ #ifdef PCBX9LITE
+	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
+ #else	
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW | PIN_PORTD ) ;
+ #endif
 #endif
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
 	GPIOD->AFR[0] = (GPIOD->AFR[0] & 0xF00FFFFF ) | 0x07700000 ;	// Alternate func.
@@ -468,7 +476,11 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
  #ifdef PCBXLITE
 	GPIOD->BSRRH = 0x0010 ;		// output enable
  #else
+  #ifdef PCBX9LITE
+	GPIOD->BSRRH = 0x0010 ;		// output enable
+  #else
 	GPIOD->BSRRL = 0x0010 ;		// output enable
+  #endif
  #endif
 #endif
 	if ( receive == 0 )
@@ -526,7 +538,11 @@ extern "C" void USART2_IRQHandler()
  #ifdef PCBXLITE
 			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
+  #ifdef PCBX9LITE
+			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+  #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+ #endif
  #endif
 #endif
 			TelemetryTx.sportCount = 0 ;
@@ -612,7 +628,7 @@ void txmit( uint8_t c )
 }
 
 #ifndef PCBX7
-#ifndef PCBX9LITE
+//#ifndef PCBX9LITE
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -691,7 +707,7 @@ extern "C" void USART3_IRQHandler()
 	}
 }
 #endif
-#endif
+//#endif
 #endif
 
 void start_timer11()

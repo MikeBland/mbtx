@@ -148,6 +148,7 @@ uint8_t SportModuleExt ;
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
 uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edit ) ;
+uint32_t checkForExitEncoderLong( uint8_t event ) ;
 
 extern void copyFileName( char *dest, char *source, uint32_t size ) ;
 #ifdef PCBSKY
@@ -1024,7 +1025,7 @@ extern int32_t Rotary_diff ;
 		killEvents(event);
 		result = 1 ;
 	}
-	if ( ( event == EVT_KEY_FIRST(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
+	if ( checkForExitEncoderLong( event ) )
 	{
 		// Select file to flash
 		result = 2 ;
@@ -1133,8 +1134,12 @@ void menuChangeId(uint8_t event)
 #endif
     break ;
     
-		case EVT_KEY_FIRST(KEY_EXIT):
 		case EVT_KEY_LONG(BTN_RE) :
+			if ( g_eeGeneral.disableBtnLong )
+			{
+				break ;
+			}		
+		case EVT_KEY_FIRST(KEY_EXIT):
      	chainMenu(menuUpdate) ;
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -1570,8 +1575,12 @@ void menuUp1(uint8_t event)
 			}
     break ;
     
-		case EVT_KEY_FIRST(KEY_EXIT):
 		case EVT_KEY_LONG(BTN_RE) :
+			if ( g_eeGeneral.disableBtnLong )
+			{
+				break ;
+			}		
+		case EVT_KEY_FIRST(KEY_EXIT):
 			if ( state < UPDATE_ACTION )
 			{
       	chainMenu(menuUpdate) ;
@@ -1718,6 +1727,10 @@ void menuUp1(uint8_t event)
     		break ;
 
 				case EVT_KEY_LONG(BTN_RE):
+					if ( g_eeGeneral.disableBtnLong )
+					{
+						break ;
+ 					}		
     		case EVT_KEY_LONG(KEY_EXIT):
 					state = UPDATE_FILE_LIST ;		// Canceled
     		break;
@@ -1825,7 +1838,7 @@ void menuUp1(uint8_t event)
 		case UPDATE_INVALID :
 			lcd_puts_Pleft( 2*FH, "Invalid File" ) ;
 			lcd_puts_Pleft( 4*FH, "Press EXIT" ) ;
-			if ( ( event == EVT_KEY_FIRST(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
+			if ( checkForExitEncoderLong( event ) )
 			{
 				state = UPDATE_FILE_LIST ;		// Canceled
     		killEvents(event) ;
@@ -2021,7 +2034,7 @@ void menuUp1(uint8_t event)
 					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
 				}
 
-				if ( ( event == EVT_KEY_LONG(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
+				if ( checkForExitEncoderLong( event ) )
 				{
 					state = UPDATE_COMPLETE ;
 					mdata->SportVerValid = 0x00FF ; // Abort with failed
@@ -2108,7 +2121,7 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
 #endif
 
-			if ( ( event == EVT_KEY_FIRST(KEY_EXIT) ) || ( event == EVT_KEY_LONG(BTN_RE) ) )
+			if ( checkForExitEncoderLong( event ) )
 			{
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
@@ -2368,8 +2381,12 @@ void menuUpdate(uint8_t event)
 			reboot = 0 ;
     break ;
 
+#if defined(PCBX7) || defined(PCBX9LITE)
+    case EVT_KEY_LONG(KEY_EXIT):
+#else
     case EVT_KEY_LONG(KEY_EXIT):
 		case EVT_KEY_LONG(BTN_RE) :
+#endif
 			reboot = 1 ;
 		break ;
 
@@ -2763,11 +2780,18 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
 #if defined(PCBX9LITE)
+	if ( SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
+	{
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
-	PxxTxPtr = TxPhyPacket ;
-	PxxTxCount = i ;
-	INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
+		PxxTxPtr = TxPhyPacket ;
+		PxxTxCount = i ;
+		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
+	}
+	else
+	{
+		x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
+	}
 #else
  #if defined(PCBX9D) || defined(PCB9XT)
 	x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
@@ -2792,7 +2816,6 @@ void blankTxPacket()
 void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 {
 	uint32_t addr ;
-	
 	if( ( packet[0] == 0x5E) && ( packet[1]==0x50))
 	{
 		SportTimer = 0 ;		// stop timer
@@ -3455,15 +3478,22 @@ uint32_t sportUpdate( uint32_t external )
 			sportInit() ;
 #else
 #if defined(PCBX9LITE)
-  		RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
-			RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
-			configure_pins( INTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
-			configure_pins( INTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
-			INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 57600 ;
-			INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-			INTMODULE_USART->CR1 |= USART_CR1_RE | USART_CR1_RXNEIE ;
-			NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
-  		NVIC_EnableIRQ( INTMODULE_USART_IRQn);
+			if ( external )
+			{
+				com1_Configure( 57600, SERIAL_NORM, 0 ) ;
+			}
+			else
+			{
+  			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
+				RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
+				configure_pins( INTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+				configure_pins( INTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+				INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 57600 ;
+				INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
+				INTMODULE_USART->CR1 |= USART_CR1_RE | USART_CR1_RXNEIE ;
+				NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
+  			NVIC_EnableIRQ( INTMODULE_USART_IRQn);
+			}
 #else
 			com1_Configure( 57600, SERIAL_NORM, 0 ) ;
 #endif
@@ -3586,7 +3616,7 @@ void maintenanceBackground()
 	if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
 		int32_t rxbyte ;
-		while ( ( rxbyte = get_16bit_fifo64( &Access_int_fifo ) ) != -1 )
+		while ( ( rxbyte = get_fifo128( &Access_int_fifo ) ) != -1 )
 		{
 		 	frsky_receive_byte( rxbyte ) ;
 		}

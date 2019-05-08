@@ -155,7 +155,7 @@ uint16_t LcdCustomColour = LCD_BLACK ;
 #endif 
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
 uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
 uint16_t ExtDisplayTime ;
 uint8_t ExtDisplaySend ;

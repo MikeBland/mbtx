@@ -307,7 +307,10 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t SavedBatteryVoltage ;
 	uint16_t backgroundColour ;		// For Horus
 	uint16_t textColour ;		// For Horus
+	uint8_t disableBtnLong:1 ;
+	uint8_t spare7:7 ;
 //	GvarData	gvars[MAX_GVARS] ;
+	uint8_t radioRegistrationID[8] ;
 	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -729,7 +732,7 @@ struct t_module
 struct t_access
 {
 	uint8_t numChannels ;
-	uint8_t modelRegistrationID[8] ;
+	uint8_t unused[8] ;
 	uint8_t receiverName[3][8] ; // PXX2_LEN_RX_NAME
 } ;
 
