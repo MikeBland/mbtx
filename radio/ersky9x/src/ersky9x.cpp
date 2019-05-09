@@ -488,7 +488,7 @@ const uint8_t splashdata[] = { 'S','P','S',0,
 #ifdef PCBX9LITE
 #include "FrSplash.lbm"
 #else
-#include "s9xsplash.lbm"
+#include "sTxsplash.lbm"
 #endif	
 	'S','P','E',0};
 
@@ -2446,7 +2446,11 @@ extern unsigned char *EndOfHeap ;
 #endif
 
 	init_hw_timer() ;
-	
+
+#if defined(PCBX9LITE)
+	x9lCheckSportEnable() ;
+#endif
+	 
 //#ifdef PCB9XT
 //	// Test PPM output signal
 //	// On port A pin 7
@@ -6589,8 +6593,7 @@ void doSplash()
 		{
 			getADC_filt();
 		}
-#endif
-#if defined(PCBX9LITE)
+#else
 		for ( uint32_t i = 0 ; i < 10 ; i += 1 )
 		{
 			getADC_filt();

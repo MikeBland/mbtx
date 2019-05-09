@@ -433,6 +433,14 @@ extern Key keys[NUM_KEYS] ;
 
 #if defined(PCBX9LITE)
 #define XJT_HEARTBEAT_BIT	0x0200		// PC9
+
+extern uint32_t X9lSportOn ;
+extern uint32_t X9lSportOff ;
+void x9lCheckSportEnable(void) ;
+
+#define x9LiteSportOn() *(uint32_t *)(&GPIOD->BSRRL) = X9lSportOn
+#define x9LiteSportOff() *(uint32_t *)(&GPIOD->BSRRL) = X9lSportOff
+
 #endif
 
 #endif

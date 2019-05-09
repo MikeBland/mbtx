@@ -39,6 +39,7 @@
 #include "drivers.h"
 #include "logicio.h"
 #include "frsky.h"
+#include "timers.h"
 
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
@@ -354,7 +355,8 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
 #else
  #ifdef PCBX9LITE
-	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+	x9LiteSportOff() ;
+//	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
 	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
  #endif
@@ -371,9 +373,9 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
 #else	
  #ifdef PCBX9LITE
-	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
- #else	
+ #else	            
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW | PIN_PORTD ) ;
+	x9LiteSportOff() ;
  #endif
 #endif
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.
@@ -477,7 +479,8 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 	GPIOD->BSRRH = 0x0010 ;		// output enable
  #else
   #ifdef PCBX9LITE
-	GPIOD->BSRRH = 0x0010 ;		// output enable
+	x9LiteSportOn() ;
+//	GPIOD->BSRRH = 0x0010 ;		// output enable
   #else
 	GPIOD->BSRRL = 0x0010 ;		// output enable
   #endif
@@ -539,7 +542,8 @@ extern "C" void USART2_IRQHandler()
 			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
   #ifdef PCBX9LITE
-			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+			x9LiteSportOff() ;
+//			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
   #else
 			GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
  #endif
@@ -1442,6 +1446,39 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 //#endif // nX12D
 
 
+#if defined(PCBX9LITE)
 
+uint32_t X9lSportOn ;
+uint32_t X9lSportOff ;
+
+void x9lCheckSportEnable()
+{
+	uint32_t readHigh ;
+	uint32_t readLow ;
+
+	configure_pins( PIN_SPORT_ON | PIN_SPORT_TX, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_SPORT_RX, PIN_INPUT | PIN_PORTD ) ;
+
+	GPIOD->BSRRH = PIN_SPORT_ON ;		// output enable
+	GPIOD->BSRRH = PIN_SPORT_TX ;	// Clear Tx bit
+	hw_delay( 40 ) ;	// 4uS
+	readLow = GPIOD->IDR & PIN_SPORT_RX ? 1 : 0 ;
+	GPIOD->BSRRL = PIN_SPORT_TX ;	// Set Tx bit
+	hw_delay( 40 ) ;	// 4uS
+	readHigh = GPIOD->IDR & PIN_SPORT_RX ? 1 : 0 ;
+
+	if ( readHigh && !readLow )
+	{
+		X9lSportOn = PIN_SPORT_ON << 16 ;
+		X9lSportOff = PIN_SPORT_ON ;
+	}
+	else
+	{
+		X9lSportOn = PIN_SPORT_ON ;
+		X9lSportOff = PIN_SPORT_ON << 16 ;
+	}
+	x9LiteSportOff() ;
+}
+#endif
 
 

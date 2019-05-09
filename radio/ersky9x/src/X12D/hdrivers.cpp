@@ -8,6 +8,7 @@
 #include "..\ersky9x.h"
 #include "..\logicio.h"
 
+extern volatile int32_t Rotary_position ;
 
 void init_rotary_encoder()
 {
@@ -30,7 +31,6 @@ void init_rotary_encoder()
 	Rotary_position |= dummy ;
 }
 
-extern volatile int32_t Rotary_position ;
 extern volatile int32_t Rotary_count ;
 extern int32_t LastRotaryValue ;
 extern int32_t Rotary_diff ;
