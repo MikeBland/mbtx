@@ -964,6 +964,7 @@ template<class t> inline t limit(t mi, t x, t ma){ return min(max(mi,x),ma); }
 #define get_ltmr10ms() g_ltmr10ms
 
 #define sysFLAG_OLD_EEPROM (0x01)
+#define sysFLAG_FORMAT_EEPROM (0x02)
 extern uint8_t sysFlags;
 extern uint8_t StickScrollAllowed ;
 extern uint8_t StepSize ;

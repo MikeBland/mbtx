@@ -212,6 +212,7 @@ void generalDefault()
   strncpy_P(g_eeGeneral.ownerName,PSTR(STR_ME), 10);
   g_eeGeneral.chkSum = evalChkSum() ;
 	eeDirty(EE_GENERAL) ;
+	sysFlags |= sysFLAG_FORMAT_EEPROM ;
 }
 
 void modelDefault(uint8_t id)

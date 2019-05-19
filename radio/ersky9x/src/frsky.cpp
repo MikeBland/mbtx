@@ -647,7 +647,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		{
 			uint32_t x ;
 
-			x = FrskyHubData[FR_RPM] ;
+			x = value ;
 			x *= 60 ;
 			if ( g_model.numBlades == 0 )
 			{
@@ -669,7 +669,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			{
 				SbecCount = 0 ;
 				value = ( SbecAverage + 3 ) >> 2 ;
-				storeTelemetryData( index, value ) ;
+				FrskyHubData[index] = value ;
 				SbecAverage = 0 ;
 			}
 		}
@@ -1885,12 +1885,9 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 
 				case ESC_RPM_ID_8 :
 				// Bit:0~15 RPM/1~65535RP
-					storeTelemetryData( FR_RPM, value & 0x0000FFFF ) ;
-					if ( g_model.numBlades == 0 )
-					{
-						g_model.numBlades = 1 ;
-					}
-					storeTelemetryData( FR_AMP_MAH, (uint32_t)(value >> 16) * 100 / g_model.numBlades ) ;
+//					uint16_t ERpm = Electrical Rpm /100 so 100 are 10000 Erpm
+					storeTelemetryData( FR_RPM, (value & 0x0000FFFF) * 100 / 60 ) ;
+					storeTelemetryData( FR_AMP_MAH, (uint32_t)(value >> 16) ) ;
 				break ;
 
 				case ESC_TEMPERATURE_ID_8 :

@@ -461,6 +461,8 @@ extern uint32_t sdMounted( void ) ;
 		}
 	}
 
+	singleHeading( LOG_FWAT, ",Watts" ) ;
+
 #ifdef BLUETOOTH
 	singleHeading( LOG_BTRX, ",BtRx" ) ;
 //	if ( isLogEnabled( LOG_BTRX ) )
@@ -540,6 +542,9 @@ extern uint32_t sdMounted( void ) ;
 	}
 	singleHeading( LOG_CTOTAL1, ",Ctot1" ) ;
 	singleHeading( LOG_CTOTAL2, ",Ctot2" ) ;
+	
+	singleHeading( LOG_SBECV, ",SBEC_V" ) ;
+	singleHeading( LOG_SBECA, ",SBEC_A" ) ;
   
 	singleHeading( LOG_STK_THR, ",Stk_THR" ) ;
 //	if ( isLogEnabled( LOG_STK_THR ) )
@@ -872,6 +877,8 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 				}
 #endif
 
+			logSingleNumber( LOG_FWAT, FrskyHubData[FR_WATT] ) ;
+
 #ifdef BLUETOOTH
 			logSingleNumber( LOG_BTRX, BtControl.BtRxOccured ) ;
 //				if ( isLogEnabled( LOG_BTRX ) )
@@ -957,6 +964,18 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 				qr = div( FrskyHubData[FR_CELLS_TOTAL2], 10 ) ;
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
+
+			if ( isLogEnabled( LOG_SBECV ) )
+			{
+				qr = div( FrskyHubData[FR_SBEC_VOLT], 10);
+				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+			}
+			if ( isLogEnabled( LOG_SBECA ) )
+			{
+				qr = div( FrskyHubData[FR_SBEC_CURRENT], 10);
+				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+			}
+
 
 			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;
 //			if ( isLogEnabled( LOG_STK_THR ) )

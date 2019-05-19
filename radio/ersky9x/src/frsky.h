@@ -678,6 +678,8 @@ extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #define LOG_CUST6	  73
 #define LOG_CTOTAL1 74
 #define LOG_CTOTAL2 75
+#define LOG_SBECV		76
+#define LOG_SBECA		77
 
 #define LOG_STK_THR 100
 #define LOG_STK_AIL 101

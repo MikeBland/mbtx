@@ -486,7 +486,7 @@ const char * const *Language = English ;
 
 const uint8_t splashdata[] = { 'S','P','S',0,
 #ifdef PCBX9LITE
-#include "FrSplash.lbm"
+#include "sTxsplashFr.lbm"
 #else
 #include "sTxsplash.lbm"
 #endif	
@@ -3824,6 +3824,7 @@ void main_loop(void* pdata)
 	backlight_on() ;
 #endif
 
+
 #ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
 #endif
@@ -3833,15 +3834,15 @@ void main_loop(void* pdata)
 	{
 		uint8_t evt ;
 		doSplash() ;
-
+	
 #ifndef SMALL
-		if ( g_eeGeneral.calibMid[0] == 0x0400
-				 && g_eeGeneral.calibSpanPos[0] == 0x0300
-				 && g_eeGeneral.calibSpanNeg[0] == 0x0300 )
+		if(sysFlags & sysFLAG_FORMAT_EEPROM)
 		{
+			sysFlags &= ~(sysFLAG_FORMAT_EEPROM) ; //clear flag
 			startupCalibration() ;
 		}
 #endif
+
 		getADC_single();
   	checkTHR();
 		checkCustom() ;

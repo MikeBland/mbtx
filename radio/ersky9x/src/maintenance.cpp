@@ -129,6 +129,13 @@ extern uint8_t SetByEncoder ;
 #endif
 #endif
 
+#if defined(PCBX12D) || defined(PCBX10)
+#define INTERNAL_RF_ON()      GPIO_SetBits(GPIOPWRINT, PIN_INT_RF_PWR)
+#define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
+#define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+#define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+#endif
+
 // Update Types
 #define UPDATE_TYPE_BOOTLOADER		0
 //#define UPDATE_TYPE_COPROCESSOR		1
@@ -260,8 +267,10 @@ uint8_t MultiState ;
 #define CLEAR_TX_BIT_INT() GPIOA->BSRRH = 0x0400
 #define SET_TX_BIT_INT() GPIOA->BSRRL = 0x0400
 #else
+#ifndef PCBX10
 #define CLEAR_TX_BIT() GPIOA->BSRRL = 0x0080
 #define SET_TX_BIT() GPIOA->BSRRH = 0x0080
+#endif
 #endif
 #endif
 
@@ -327,6 +336,11 @@ void initMultiMode()
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
+#ifdef PCBX10
+	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	EXTERNAL_RF_ON() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+#endif
 }
 
 void stopMultiMode()
@@ -380,6 +394,11 @@ void stopMultiMode()
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
 #endif
+#ifdef PCBX10
+	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	EXTERNAL_RF_OFF() ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+#endif
 }
 
 uint16_t getMultiFifo()
@@ -430,6 +449,29 @@ void sendMultiByte( uint8_t byte )
 	}
 #define CLEAR_TX_BIT() GPIOA->BSRRH = bit
 #define SET_TX_BIT() GPIOA->BSRRL = bit
+#endif
+
+#ifdef PCBX12D
+	uint32_t bit ;
+
+	bit = isProdVersion() ? PIN_EXTPPM_OUT : PROT_PIN_EXTPPM_OUT ;
+
+#define CLEAR_TX_BIT() GPIOA->BSRRL = bit
+#define SET_TX_BIT() GPIOA->BSRRH = bit
+#endif
+
+#ifdef PCBX10
+	uint32_t bit ;
+	if ( MultiModule )
+	{
+		bit = 0x0400 ;
+	}
+	else
+	{
+		bit = 0x0400 ;
+	}
+#define CLEAR_TX_BIT() GPIOA->BSRRL = bit
+#define SET_TX_BIT() GPIOA->BSRRH = bit
 #endif
 
 	__disable_irq() ;
@@ -2190,7 +2232,7 @@ void menuUpdate(uint8_t event)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. XJT" );
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 5*FH, "  Update Multi" );
+	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
 #endif
 
   switch(event)

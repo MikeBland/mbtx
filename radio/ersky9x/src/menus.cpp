@@ -3989,7 +3989,7 @@ const uint8_t LogLookup[] =
 {
  1, 2, 3, 4, 7, 8, 9,10,11,12,
 13,16,17,18,19,20,21,25,26,27,
-28,29,30,31,32,34,35,36,37,38,
+28,29,30,31,32,33,34,35,36,37,38,
 39,40,41,42,43,44,45,48,49,50,
 51,52,53,54,55,56,57,58,59,60,
 61,62,63,64,65,66,67,68,69,70,
@@ -10585,6 +10585,7 @@ void editAccessRegister( uint8_t module, uint8_t event )
 	uint8_t subN = 0 ;
   
 	uint8_t attr = sub==subN ? InverseBlink : 0 ;
+	lcd_puts_Pleft( 2*FH, XPSTR( "Radio ID") ) ;
 	EditType = EE_GENERAL ;
 	alphaEditName( 11*FW, FH, g_eeGeneral.radioRegistrationID, 8, attr | ALPHA_NO_NAME, (uint8_t *)XPSTR( "Radio ID") ) ;
 	EditType = EE_MODEL ;
@@ -14956,7 +14957,7 @@ extern void getADC_osmp( void ) ;
   	refreshDisplay() ;
 		wdt_reset() ;
 		CoTickDelay(5) ;					// 10mS for now
-		if ( checkForExitEncoderLong( event ) )
+		if ( event == EVT_KEY_FIRST(KEY_EXIT) )
 		{
 			return ;
 		}
@@ -19807,16 +19808,19 @@ void menuProc0(uint8_t event)
 	{
 #if defined(PCBX12D) || defined(PCBX10)
 		if ( io_subview > 1 )
+		{
+			io_subview = 1 ;
+		}
 #else
  #if EXTRA_SKYCHANNELS
 		if ( io_subview > 3 )
  #else
 		if ( io_subview > 2 )
  #endif
-#endif
 		{
 			io_subview = 0 ;
 		}
+#endif
 #if defined(PCBX12D) || defined(PCBX10)
 #define INDICATOR_OFFSET	(45 + X12SMALL_OFFSET)
 #define VALUE_SPACING			34

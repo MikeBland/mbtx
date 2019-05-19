@@ -373,9 +373,9 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
 #else	
  #ifdef PCBX9LITE
+	x9LiteSportOff() ;
  #else	            
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW | PIN_PORTD ) ;
-	x9LiteSportOff() ;
  #endif
 #endif
 	GPIOD->MODER = (GPIOD->MODER & 0xFFFFC0FF ) | 0x00002900 ;	// Alternate func.

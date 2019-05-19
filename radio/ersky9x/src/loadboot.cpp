@@ -61,11 +61,11 @@
  #endif
 #endif
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
  #include "X12D/stm32f4xx.h"
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 __attribute__ ((section(".bootrodata"), used))
 static void bwdt_reset()
 {
@@ -73,7 +73,7 @@ static void bwdt_reset()
 }
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 
 __attribute__ ((section(".bootrodata"), used))
 void _bootStart( void ) ;
@@ -86,7 +86,7 @@ const uint32_t BootVectors[] = {
 } ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 __attribute__ ((section(".bootrodata.*"), used))
 #endif
 
@@ -98,6 +98,15 @@ const uint8_t BootCode[] = {
 #ifdef PCBX12D
  #include "bootloader/bootflashX12D.lbm"
 #else
+
+#ifdef PCBX10
+ #ifdef PCBT16
+  #include "bootloader/bootflashT16.lbm"
+ #else 
+  #include "bootloader/bootflashX10.lbm"
+ #endif
+#else
+
 #ifdef PCBTARANIS
   #if defined(REVPLUS) || defined(REV9E)
    #include "bootloader/bootflashTp.lbm"
@@ -144,10 +153,11 @@ const uint8_t BootCode[] = {
  #endif
 #endif
 #endif
+#endif
 } ;
 
 
-#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D)
+#if defined(PCBX9D) || defined(PCBTARANIS) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 
 #define WAS_RESET_BY_WATCHDOG_OR_SOFTWARE() (RCC->CSR & (RCC_CSR_WDGRSTF | RCC_CSR_WWDGRSTF | RCC_CSR_SFTRSTF))
 
@@ -204,7 +214,86 @@ void _bootStart()
 			// Red LED on
 			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOIEN ;
 			GPIOI->BSRRL = 0x0020 ;
-			GPIOI->MODER = (GPIOJ->MODER & 0xFFFFF3FF) | 0x0400 ; // General purpose output mode
+			GPIOI->MODER = (GPIOI->MODER & 0xFFFFF3FF) | 0x0400 ; // General purpose output mode
+			
+			// Bootloader needed
+			const uint8_t *src ;
+			uint8_t *dest ;
+			uint32_t size ;
+
+			bwdt_reset() ;
+			size = sizeof(BootCode) ;
+			src = BootCode ;
+			dest = (uint8_t *)0x20000000 ;
+
+			for ( ; size ; size -= 1 )
+			{
+				*dest++ = *src++ ;		
+			}	
+			// Could check for a valid copy to RAM here
+			// Go execute bootloader
+			bwdt_reset() ;
+			
+			uint32_t address = *(uint32_t *)0x20000004 ;
+	
+			((void (*)(void)) (address))() ;		// Go execute the loaded application
+	
+		}
+	}
+
+
+#endif
+
+#ifdef PCBX10
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIODEN | RCC_AHB1ENR_GPIOJEN ; 		// Enable ports C, D and J clocks
+	__ASM volatile ("nop") ;	// Needed for the STM32F4
+	__ASM volatile ("nop") ;
+	
+	GPIOJ->PUPDR = 0x0008 ;	// PWR_GPIO_PIN_ON, pull down
+
+	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+	{
+		GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
+		GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+	}
+
+	GPIOD->PUPDR = 0x00000040 ; // RHL D3
+	GPIOB->PUPDR = 0x00040000 ;	// LHR B9
+
+//// Turn on backlight here
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable port A clock
+//	GPIOA->MODER = (GPIOA->MODER & 0xFFFFF33F) | 0x440 ; // General purpose output mode
+//	GPIOA->BSRRL = 0x28 ;
+
+	uint32_t i ;
+	for ( i = 0 ; i < 50000 ; i += 1 )
+	{
+		bwdt_reset() ;
+	}
+
+//#define PWR_GPIO_PIN_SWITCH	0x0001
+//	if (!WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
+//	{
+//		// wait here until the power key is pressed
+//		while (GPIO1->IDR & PWR_GPIO_PIN_SWITCH)
+//		{
+//			bwdt_reset();
+//		}
+//	}
+
+
+	if ( (GPIOB->IDR & 0x00000200 ) == 0 )
+	{
+		if ( (GPIOD->IDR & 0x00000008 ) == 0 )
+		{
+			// Soft power on
+			GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
+			GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+
+			// Red LED on
+			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ;
+			GPIOE->BSRRL = 0x0004 ;
+			GPIOE->MODER = (GPIOE->MODER & 0xFFFFF3FF) | 0x0010 ; // General purpose output mode
 			
 			// Bootloader needed
 			const uint8_t *src ;
@@ -235,6 +324,7 @@ void _bootStart()
 #endif
 
 #ifndef PCBX12D
+ #ifndef PCBX10
 	// turn soft power on now
 #ifdef PCB9XT
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN ; 		// Enable portC and A clock
@@ -449,11 +539,12 @@ void _bootStart()
 	
 		}
 	}
+ #endif // nPCBX10
 #endif // nPCBX12D
 
 //	run_application() ;	
 	asm(" mov.w	r1, #134217728");	// 0x8000000
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	asm(" add.w	r1, #131072");		// 0x20000
 #else  
 	asm(" add.w	r1, #32768");			// 0x8000
@@ -469,7 +560,7 @@ void _bootStart()
   asm("orr		r0, r1");					// Set lsbit
   asm("bx r0");									// Execute application
 
-#ifdef PCBX12D
+#if defined(PCBX12D) || defined(PCBX10)
 	asm(".word 0x544F4F42") ;
 #endif
 
