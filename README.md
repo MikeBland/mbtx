@@ -43,7 +43,7 @@ I have spent a lot of time (and will continue to) to make this software as good 
  
 
 ## Help! Where do I start?
-<ul><li><a href="http://OpenRcforums.com/wiki/index.php/Er9x_user_guide" >ER9x User guide - WIKI</a> - This is the best place to start. </li><li><a href="http://OpenRcforums.com/wiki/index.php/Flashing_your_9x" >Flashing your transmitter with er9x</a> </li><li><a href="http://OpenRcforums.com/wiki/index.php/Er9x_firmware_information" >What FW do I choose?</a> </li><li><a href="http://www.OpenRcforums.com" >OpenRcforums.com</a> - BEST PLACE TO ASK QUESTIONS! </li></ul>
+<ul><li><a href="https://openrcforums.com/forum/viewtopic.php?f=5&t=6473#p90349" >ER9x User guide - WIKI</a> - This is the best place to start. </li><li><a href="http://OpenRcforums.com/wiki/index.php/Flashing_your_9x" >Flashing your transmitter with er9x</a> </li><li><a href="http://OpenRcforums.com/wiki/index.php/Er9x_firmware_information" >What FW do I choose?</a> </li><li><a href="http://www.OpenRcforums.com" >OpenRcforums.com</a> - BEST PLACE TO ASK QUESTIONS! </li></ul>
 
 
 ## Latest Binaries
@@ -54,7 +54,7 @@ I have spent a lot of time (and will continue to) to make this software as good 
 
 
 ## ER9x Manual
-<a href="http://OpenRcforums.com/wiki/index.php/Er9x_user_guide" >NEW-WIKI fully updated</a>
+<a href="https://openrcforums.com/forum/viewtopic.php?f=5&t=6473#p90349" >NEW-WIKI fully updated</a>
 
 <p><i>old versions of the manual - for reference</i><br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x%20Users%20Guide.pdf" >ER9x Manual - English</a><br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x%20Users%20Manual%20Francais.pdf" >ER9x Manual - French</a> <br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x%20Manual%20Aeromodelitis.pdf" >ER9x Manual - Spanish</a> (by Luis Llaberia  <a href="http://www.aeromodelitis.com/" >www.aeromodelitis.com/</a>) <br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x%20Users%20Manual_ptbr.pdf" >ER9x Manual - Portuguese</a> (by Alexandre Magalhaes  <a href="http://www.e-voo.com/" >http://www.e-voo.com/</a>) <br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x%20RUS%20Manual.pdf" >ER9x Manual - Russian</a> (by Dmitry Bugaevsky) <br> <a href="http://er9x.googlecode.com/svn/trunk/doc/ER9x_Users_Manual_Hu_v1.pdf" >ER9x Manual - Hungarian</a> (by Hegyi István) <br> <a href="http://er9x.googlecode.com/svn/trunk/doc/Er9x%20user%20guide%20-%20tc.pdf" >ER9x Manual - Traditional Chinese</a> (by Henry Liao) <br><br>   </p>
 
