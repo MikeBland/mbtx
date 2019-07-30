@@ -145,6 +145,7 @@ extern uint8_t SetByEncoder ;
 #define UPDATE_TYPE_AVR						5
 #define UPDATE_TYPE_XMEGA					6
 #define UPDATE_TYPE_MULTI					7
+#define UPDATE_TYPE_PCHIP					8
 
  #if defined(PCBXLITE) || defined(PCBX9LITE)
 #define SPORT_MODULE		0
@@ -208,7 +209,7 @@ uint8_t MaintenanceRunning = 0 ;
 //uint8_t BlockInUse ;
 //uint8_t SportVerValid ;
 uint8_t MultiResult ;
-uint8_t MultiType ;
+uint8_t FileType ;
 uint8_t MultiPort ;
 uint8_t MultiModule ;
 uint8_t MultiInvert ;
@@ -261,17 +262,24 @@ uint8_t MultiState ;
 #define CLEAR_TX_BIT_INT() PIOC->PIO_CODR = PIO_PC15
 #define SET_TX_BIT_INT() PIOC->PIO_SODR = PIO_PC15
 #else
-#ifdef PCB9XT
+ #ifdef PCB9XT
 #define CLEAR_TX_BIT_EXT() GPIOA->BSRRH = 0x0080
 #define SET_TX_BIT_EXT() GPIOA->BSRRL = 0x0080
 #define CLEAR_TX_BIT_INT() GPIOA->BSRRH = 0x0400
 #define SET_TX_BIT_INT() GPIOA->BSRRL = 0x0400
+ #else
+#if defined(PCBXLITE) || defined(PCBX9LITE)
+#define CLEAR_TX_BIT() GPIOC->BSRRL = 0x0040
+#define SET_TX_BIT() GPIOC->BSRRH = 0x0040
 #else
-#ifndef PCBX10
+  #ifndef PCBX10
+   #ifndef PCBX12D
 #define CLEAR_TX_BIT() GPIOA->BSRRL = 0x0080
 #define SET_TX_BIT() GPIOA->BSRRH = 0x0080
+   #endif
+  #endif
 #endif
-#endif
+ #endif
 #endif
 
 #ifndef NO_MULTI
@@ -334,7 +342,7 @@ void initMultiMode()
 #ifdef PCBX9D
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
-	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PORT_EXTPPM | PIN_LOW ) ;
 #endif
 #ifdef PCBX10
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
@@ -392,7 +400,7 @@ void stopMultiMode()
 //	GPIO_ResetBits( GPIOBOOTCMD, PIN_BOOTCMD ) ;
 //#endif
 	EXTERNAL_RF_OFF() ;
-	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PORT_EXTPPM | PIN_LOW ) ;
 #endif
 #ifdef PCBX10
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
@@ -520,7 +528,11 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 	uint32_t i ;
 	uint32_t size ;
 	
+#ifdef SMALL
+	if ( (uint32_t) address >= 0x00407000 )
+#else
 	if ( (uint32_t) address >= 0x00408000 )
+#endif
 	{
 		return 1 ;
 	}
@@ -1114,6 +1126,7 @@ void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
 #define UPDATE_INVALID		4
 #define UPDATE_ACTION			5
 #define UPDATE_COMPLETE		6
+#define UPDATE_PCHIP_ACTION			7
 
 #define CHANGE_SCANNING		0
 #define CHANGE_ENTER_ID		1
@@ -1432,7 +1445,7 @@ void menuUpMulti(uint8_t event)
 	y += FH ;
 	subN += 1 ;
 	lcd_puts_Pleft( y, XPSTR("File Type") ) ;
-	MultiType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), MultiType, (sub==subN) ) ;
+	FileType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), FileType, (sub==subN) ) ;
 	y += FH ;
 	subN += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -1449,6 +1462,409 @@ void menuUpMulti(uint8_t event)
 #endif
 }
 #endif
+
+#if defined(PCBX9LITE)
+// Code to update PMU chip
+
+uint16_t UpdateCrc ;
+
+void drawProgressScreen( const char *title, const char *message, uint32_t percent)
+{
+  lcd_clear() ;
+  if (title)
+	{
+    lcd_puts_Pleft( 2*FH, title ) ;
+  }
+  if (message)
+	{
+    lcd_puts_Pleft( 5*FH, message ) ;
+  }
+	
+	lcd_hbar( 4, 6*FH+4, 101, 7, percent ) ;
+  
+	refreshDisplay() ;
+}
+
+void telemetryPortSetDirectionOutput()
+{
+#ifdef PCB9XT
+	GPIOB->BSRRL = 0x0004 ;		// output enable
+#else
+ #ifdef PCBXLITE
+	GPIOD->BSRRH = 0x0010 ;		// output enable
+ #else
+  #ifdef PCBX9LITE
+	x9LiteSportOn() ;
+//	GPIOD->BSRRH = 0x0010 ;		// output enable
+  #else
+	GPIOD->BSRRL = 0x0010 ;		// output enable
+  #endif
+ #endif
+#endif
+	USART2->CR1 &= ~USART_CR1_RE ;  // turn off receiver
+}
+
+static void sportWaitTransmissionComplete()
+{
+  while (!(USART2->SR & USART_SR_TC))
+	{
+		// wait
+	} ;
+}
+
+void telemetryPortSetDirectionInput()
+{
+  sportWaitTransmissionComplete();
+#ifdef PCB9XT
+	GPIOB->BSRRH = 0x0004 ;		// output disable
+#else
+ #ifdef PCBXLITE
+	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
+ #else
+  #ifdef PCBX9LITE
+	x9LiteSportOff() ;
+  #else
+	GPIOD->BSRRH = PIN_SPORT_ON ;		// output disable
+ #endif
+ #endif
+#endif
+	USART2->CR1 |= USART_CR1_RE ;
+}
+
+
+void sportSendByte(uint8_t byte)
+{
+  while (!(USART2->SR & USART_SR_TXE))
+	{
+		// wait
+	} ;
+	USART2->DR = byte ;
+}
+
+void sendByte(uint8_t byte )
+{
+  sportSendByte(byte) ;
+	UpdateCrc ^= byte ;
+}
+
+// returns ststus byte of 0xFFFF if no answer
+uint32_t waitAnswer()
+{
+	uint32_t i ;
+	uint16_t byte ;
+
+  telemetryPortSetDirectionInput() ;
+
+  uint8_t buffer[12] ;
+
+  for ( i = 0 ; i < sizeof(buffer) ; i += 1 )
+	{
+    uint32_t retry = 0 ;
+    while(1)
+		{
+			byte = get_fifo128( &Com1_fifo ) ;
+			if ( byte != 0xFFFF )
+			{
+				buffer[i] = byte ;
+//      if (telemetryGetByte(&buffer[i]))
+        if ((i == 0 && buffer[0] != 0x7F) ||
+            (i == 1 && buffer[1] != 0xFE) ||
+            (i == 10 && buffer[10] != 0x0D) ||
+            (i == 11 && buffer[11] != 0x0A))
+				{
+          i = 0 ;
+          continue ;
+        }
+        break ;
+      }
+      if (++retry == 20000)
+			{
+        return 0xFFFF ;
+      }
+			CoTickDelay(1) ;
+		 	wdt_reset() ;
+    }
+  }
+  return buffer[8] ;
+}
+
+
+const char *sendUpgradeCommand(char command, uint32_t packetsCount)
+{
+	uint32_t i ;
+  uint16_t status ;
+  
+	telemetryPortSetDirectionOutput() ;
+
+  // Head
+  sendByte(0x7F) ;
+  sendByte(0xFE) ;
+
+  UpdateCrc = 0 ;
+  // Addr
+  sendByte(0xFA) ;
+
+  // Cmd
+  sendByte(command) ;
+
+  // Packets count
+  sendByte(packetsCount >> 8) ;
+  sendByte(packetsCount) ;
+
+  // Len
+  sendByte('E' == command ? 0x00 : 0x0C) ;
+  sendByte(0x40) ;
+
+  // Data
+  for ( i = 0 ; i < 0x40 ; i += 1 )
+	{
+    sendByte('E' == command ? 0xF7 : 0x7F) ;
+	}
+
+  // Checksum
+  sendByte(UpdateCrc) ;
+
+  // Tail
+  sendByte(0x0D) ;
+  sendByte(0x0A) ;
+  
+	status = waitAnswer() ;
+
+  if (status == 0xFFFF)
+	{
+		return "No answer" ;
+	}
+
+  return status == 0x00 ? 0 : "Upgrade failed" ;
+}
+
+const char *sendUpgradeData(uint32_t index, uint8_t *data )
+{
+	uint16_t status ;
+  uint32_t i ;
+
+	telemetryPortSetDirectionOutput() ;
+
+  // Head
+  sendByte(0x7F) ;
+  sendByte(0xFE) ;
+
+  UpdateCrc = 0 ;
+  
+	// Addr
+  sendByte(0xFA) ;
+
+  // Cmd
+  sendByte('W') ;
+
+  // Packets count
+  sendByte(index >> 8) ;
+  sendByte(index) ;
+
+  // Len
+  sendByte(0x00) ;
+  sendByte(0x40) ;
+
+  // Data
+  for ( i = 0 ; i < 0x40 ; i += 1 )
+	{
+    sendByte(*data++) ;
+	}
+
+  // Checksum
+  sendByte(UpdateCrc) ;
+
+  // Tail
+  sendByte(0x0D) ;
+  sendByte(0x0A) ;
+
+
+  status = waitAnswer() ;
+
+  if (status == 0xFFFF)
+	{
+		return "No answer" ;
+	}
+
+  return status == 0x00 ? 0 : "Upgrade failed";
+}
+
+const char *startBootloader()
+{
+  uint16_t status ;
+	uint32_t i ;
+
+  telemetryPortSetDirectionOutput() ;
+
+  sportSendByte(0x01) ;
+
+  for (  i = 0 ; i < 30 ; i+=1 )
+	{
+    sportSendByte(0x7E) ;
+	}
+
+  for ( i = 0 ; i < 100 ; i+=1 )
+	{
+		CoTickDelay(10) ;
+	 	wdt_reset() ;
+    sportSendByte(0x7F) ;
+  }
+
+  sportSendByte(0xFA) ;
+
+	drawProgressScreen( "Waiting", "", 0 ) ;
+  status = waitAnswer() ;
+
+  if (status == 0xFFFF)
+	{
+		return "No answer" ;
+	}
+
+  return status == 0x08 ? 0 : "Bootloader failed";
+}
+
+PACK(struct FrSkyFirmwareInformation
+{
+  uint32_t fourcc;
+  uint8_t headerVersion;
+  uint8_t firmwareVersionMajor;
+  uint8_t firmwareVersionMinor;
+  uint8_t firmwareVersionRevision;
+  uint32_t size;
+  uint8_t productFamily;
+  uint8_t productId;
+  uint16_t crc;
+});
+
+const char *ResultText ;
+
+const char *flashPMUchip()
+{
+  const char *result ;
+  uint8_t buffer[64] ;
+  UINT count ;
+	uint32_t packetsCount ;
+	uint32_t index ;
+	struct t_maintenance *mdata = &SharedMemory.Mdata ;
+
+	drawProgressScreen( "Starting", "", 0 ) ;
+	com1_Configure( 57600, SERIAL_NORM, 0 ) ;
+	ResultText = 0 ;
+
+	for ( index = 0 ; index < 100 ; index += 1 )
+	{
+		CoTickDelay(5) ;
+	 	wdt_reset() ;
+	}
+
+  result = startBootloader() ;
+  if (result)
+	{
+    return result ;
+	}
+
+	if ( f_open( &mdata->FlashFile, mdata->FlashFilename, FA_READ ) != FR_OK)
+	{
+    return "Error opening file";
+  }
+
+  FrSkyFirmwareInformation *information = (FrSkyFirmwareInformation *)buffer ;
+  if (f_read(&mdata->FlashFile, buffer, sizeof(FrSkyFirmwareInformation), &count) != FR_OK || count != sizeof(FrSkyFirmwareInformation))
+	{
+    f_close(&mdata->FlashFile);
+    return "Format error";
+  }
+
+  packetsCount = (information->size + sizeof(buffer) - 1) / sizeof(buffer) ;
+	drawProgressScreen( "Flashing", "File", 0 ) ;
+
+  result = sendUpgradeCommand('A', packetsCount) ;
+  if (result)
+	{
+    return result ;
+	}
+
+  index = 0 ;
+
+  while (1)
+	{
+	 	wdt_reset() ;
+		drawProgressScreen( "Flashing", "File", index * 100 / packetsCount ) ;
+    if (f_read(&mdata->FlashFile, buffer, sizeof(buffer), &count) != FR_OK)
+		{
+      f_close(&mdata->FlashFile);
+      return "Error reading file";
+    }
+    result = sendUpgradeData(index + 1, buffer) ;
+    if (result)
+		{
+      return result ;
+		}
+    if (++index == packetsCount)
+		{
+      break ;
+		}
+  }
+
+  f_close(&mdata->FlashFile) ;
+
+  return sendUpgradeCommand('E', packetsCount) ;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif
+
+//#if defined(PCBX9LITE)
+//void menuUpPchip(uint8_t event)
+//{
+//	TITLE( "Options" ) ;
+//	static MState2 mstate2 ;
+//	mstate2.check_columns(event, 1 ) ;
+//	uint32_t sub = mstate2.m_posVert ;
+//	uint32_t subN = 0 ;
+//	uint32_t y = FH ;
+//  lcd_putsAtt(0, y, XPSTR("Update"), (sub==subN) ? INVERS : 0 ) ;
+//  if(sub==subN)
+//	{
+//		if ( ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
+//		{
+//			popMenu() ;
+//			chainMenu(menuUp1) ;
+//		}
+//	}
+//	y += FH ;
+//	subN += 1 ;
+//	lcd_puts_Pleft( y, XPSTR("File Type") ) ;
+//	FileType = checkIndexed( y, XPSTR("\110\001\004 BINFSRK"), FileType, (sub==subN) ) ;
+//}
+//#endif
 
 void menuUp1(uint8_t event)
 {
@@ -1486,7 +1902,7 @@ void menuUp1(uint8_t event)
 		}
 		else if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
-  		TITLE( "UPDATE Int. XJT" ) ;
+  		TITLE( "UPDATE Int. Module" ) ;
 		}
 		else
 		{
@@ -1497,7 +1913,7 @@ void menuUp1(uint8_t event)
 #ifdef PCBX9D
 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
 		{
-  		TITLE( "UPDATE Int. XJT" ) ;
+  		TITLE( "UPDATE Int. Module" ) ;
 		}
  		else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 		{
@@ -1506,7 +1922,16 @@ void menuUp1(uint8_t event)
 		else
 		{
 #if defined(PCBXLITE) || defined(PCBX9LITE)
-  		TITLE( (SportModuleExt == SPORT_MODULE) ? "UPDATE Ext. Module" : "UPDATE Ext. SPort" ) ;
+#if defined(PCBX9LITE)
+	 		if (mdata->UpdateItem == UPDATE_TYPE_PCHIP )
+			{
+  			TITLE( "UPDATE POWER CHIP" ) ;
+			}
+			else
+#endif
+			{
+  			TITLE( (SportModuleExt == SPORT_MODULE) ? "UPDATE Ext. Module" : "UPDATE Ext. SPort" ) ;
+			}
 #else
   		TITLE( "UPDATE Ext. SPort" ) ;
 #endif
@@ -1544,7 +1969,6 @@ void menuUp1(uint8_t event)
   		TITLE( "UPDATE XMEGA" ) ;
 		}
 #endif
-
 	}
 	switch(event)
 	{
@@ -1580,6 +2004,7 @@ void menuUp1(uint8_t event)
 					fr = f_opendir( &SharedMemory.FileList.Dj, (TCHAR *) "." ) ;
 					if ( fr == FR_OK )
 					{
+						fc->ext[3] = 0 ;
  						if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) || (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT ) )
 						{
 							fc->ext[0] = 'F' ;
@@ -1589,7 +2014,7 @@ void menuUp1(uint8_t event)
 						else
 						{
 #ifndef NO_MULTI
-							if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) && MultiType )
+							if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) && FileType )
 							{
 								fc->ext[0] = 'H' ;
 								fc->ext[1] = 'E' ;
@@ -1598,12 +2023,23 @@ void menuUp1(uint8_t event)
 							else
 #endif
 							{
-								fc->ext[0] = 'B' ;
-								fc->ext[1] = 'I' ;
-								fc->ext[2] = 'N' ;
+#if defined(PCBX9LITE)
+								if ( (mdata->UpdateItem == UPDATE_TYPE_PCHIP ) )//&& FileType )
+								{
+									fc->ext[0] = 'F' ;
+									fc->ext[1] = 'R' ;
+									fc->ext[2] = 'S' ;
+									fc->ext[3] = 'K' ;
+								}
+								else
+#endif
+								{
+									fc->ext[0] = 'B' ;
+									fc->ext[1] = 'I' ;
+									fc->ext[2] = 'N' ;
+								}
 							}
 						}
-						fc->ext[3] = 0 ;
 						fc->index = 0 ;
 						fc->nameCount = fillNames( 0, fc ) ;
 						fc->hpos = 0 ;
@@ -1651,7 +2087,7 @@ void menuUp1(uint8_t event)
 #ifdef PCBX9D
  				if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
+					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
 				}
  				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
@@ -1661,6 +2097,12 @@ void menuUp1(uint8_t event)
 				{
 					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
 				}
+#if defined(PCBX9LITE)
+				else if ( (mdata->UpdateItem == UPDATE_TYPE_PCHIP ) )
+				{
+					lcd_puts_Pleft( 2*FH, "Flash Power Chip from" ) ;
+				}
+#endif
 				else
 				{
 #if defined(PCBXLITE) || defined(PCBX9LITE)
@@ -1717,7 +2159,7 @@ void menuUp1(uint8_t event)
 				}
  				else if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Int. XJT from" ) ;
+					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
 					mdata->SportVerValid = 0 ;
 				}
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
@@ -1876,7 +2318,24 @@ void menuUp1(uint8_t event)
 				ByteEnd = 1024 ;
 				state = UPDATE_ACTION ;
 			}
+#if defined(PCBX9LITE)
+			if (mdata->UpdateItem == UPDATE_TYPE_PCHIP )
+			{
+				state = UPDATE_PCHIP_ACTION ;
+			}
+#endif
     break ;
+#if defined(PCBX9LITE)
+		case UPDATE_PCHIP_ACTION :
+	 		{
+				ResultText = flashPMUchip() ;
+				getEvent() ;
+			}
+			MultiResult = ResultText ? 1 : 0 ;
+			state = UPDATE_COMPLETE ;
+		break ;
+#endif
+
 		case UPDATE_INVALID :
 			lcd_puts_Pleft( 2*FH, "Invalid File" ) ;
 			lcd_puts_Pleft( 4*FH, "Press EXIT" ) ;
@@ -1919,7 +2378,11 @@ void menuUp1(uint8_t event)
 #if defined(PCBX12D) || defined(PCBX10)
 					if ( ByteEnd >= 32768 * 4 )
 #else
+#ifdef SMALL
+					if ( ByteEnd >= 32768-4096 )
+#else
 					if ( ByteEnd >= 32768 )
+#endif
 #endif
 					{
 						state = UPDATE_COMPLETE ;
@@ -2120,6 +2583,21 @@ void menuUp1(uint8_t event)
 				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 				}
 #endif
+ 
+#if defined(PCBX9LITE)
+				if (mdata->UpdateItem == UPDATE_TYPE_PCHIP )
+				{
+					if ( MultiResult )
+					{
+						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+						if ( ResultText )
+						{
+							lcd_puts_Pleft( 6*FH, ResultText ) ;
+						}
+					}
+				}
+#endif
+ 
  #ifndef SMALL
 				if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
@@ -2207,13 +2685,17 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCBX9D
 #if defined(PCBXLITE) || defined(PCBX9LITE)
-	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. Module" );
 	lcd_puts_Pleft( 5*FH, "  Update Ext. SPort" );
+#if defined(PCBX9LITE)
+	lcd_puts_Pleft( 6*FH, "  Update Power Chip" );
+#else
 	lcd_puts_Pleft( 6*FH, "  Change SPort Id" );
+#endif
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #else
-	lcd_puts_Pleft( 3*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
@@ -2222,14 +2704,14 @@ void menuUpdate(uint8_t event)
 #endif
 #ifdef PCB9XT
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Update Int. XJT" );
+	lcd_puts_Pleft( 4*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
 //	lcd_puts_Pleft( 5*FH, "  Update Avr CPU" );
 	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
 	lcd_puts_Pleft( 7*FH, "  Update Multi" );
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
-//	lcd_puts_Pleft( 2*FH, "  Update Int. XJT" );
+//	lcd_puts_Pleft( 2*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
 	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
@@ -2332,8 +2814,14 @@ void menuUpdate(uint8_t event)
 			}
 			if ( position == 6*FH )
 			{
+#if defined(PCBX9LITE)
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_PCHIP ;
+	      chainMenu(menuUp1) ;
+//	      pushMenu(menuUpPchip) ;
+#else
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 	      chainMenu(menuChangeId) ;
+#endif
 			}
 			if ( position == 7*FH )
 			{
@@ -3181,7 +3669,7 @@ uint32_t multiUpdate()
 			MultiStm = 0 ;
 			BytesFlashed = 0 ;
 		  AllSubState = 0 ;
-			if ( MultiType )	// Hex file
+			if ( FileType )	// Hex file
 			{
 				hexFileStart() ;
 				hexFileRead1024( 0, &SharedMemory.Mdata.BlockCount ) ;
@@ -3346,7 +3834,7 @@ uint32_t multiUpdate()
 			BlockOffset += MultiPageSize ;
 			if ( BytesFlashed >= ByteEnd )
 			{
-				if ( MultiType )	// Hex file
+				if ( FileType )	// Hex file
 				{
 					hexFileRead1024( BytesFlashed, &SharedMemory.Mdata.BlockCount ) ;
 				}
@@ -3358,7 +3846,7 @@ uint32_t multiUpdate()
 				ByteEnd += SharedMemory.Mdata.BlockCount ;
 		 		wdt_reset() ;
 			}
-			if ( MultiType )
+			if ( FileType )
 			{
 				if ( SharedMemory.Mdata.BlockCount == 0 )
 				{
@@ -3391,7 +3879,7 @@ uint32_t multiUpdate()
 		break ;
 	
 	}
-	return MultiType ? SharedMemory.Mdata.HexFileRead : BytesFlashed ;
+	return FileType ? SharedMemory.Mdata.HexFileRead : BytesFlashed ;
 }
 #endif
 

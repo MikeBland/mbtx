@@ -260,7 +260,7 @@ extern int32_t rxBtuart( void ) ;
 #ifdef ACCESS
 uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index ) ;
 #endif
-extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
+extern uint32_t sportPacketSend( uint8_t *pdata, uint16_t index ) ;
 extern uint32_t xfirePacketSend( uint8_t length, uint8_t command, uint8_t *data ) ;
 
 extern void poll2ndUsart10mS( void ) ;

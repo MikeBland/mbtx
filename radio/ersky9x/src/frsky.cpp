@@ -1,5 +1,7 @@
 /*
- * Authors - Bertrand Songis <bsongis@gmail.com>, Bryan J.Rentoul (Gruvin) <gruvin@gmail.com> and Philip Moss
+ * Current Author - Mike Blandford
+ *
+ * Previous Authors - Bertrand Songis <bsongis@gmail.com>, Bryan J.Rentoul (Gruvin) <gruvin@gmail.com> and Philip Moss
  *
  * Adapted from jeti.cpp code by Karl Szmutny <shadow@privy.de>
  *
@@ -369,10 +371,17 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 const uint8_t DestIndex[] = { FR_BASEMODE, FR_CURRENT, FR_AMP_MAH, FR_VOLTS, FR_FUEL, FR_RBOX_STATE, FR_CUST1, 
 FR_CUST2, FR_CUST3, FR_CUST4, FR_CUST5, FR_CUST6, FR_AIRSPEED	 } ;
 
-void store_telemetry_scaler( uint8_t index, uint16_t value )
+void store_telemetry_scaler( uint8_t index, int16_t value )
 {
 	if ( index )
 	{
+		if ( index == 5 )	// FUEL
+		{
+			if ( value < 0 )
+			{
+				value = 0 ;
+			}
+		}
 		if ( index <= sizeof(DestIndex) )
 		{
 			storeTelemetryData( DestIndex[index-1], value ) ;
@@ -3918,7 +3927,7 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
 //	    if ( ltype == 3/*A*/)
 			{
 //					unit = 'A' ;
-       	if(!(att&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
+       	if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
 			}
     }
 		return unit ;

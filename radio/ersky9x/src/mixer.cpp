@@ -400,7 +400,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 #ifdef PCBX7
         for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
 #else
+#if defined(PCBX9LITE)
+        for( uint8_t i = 0 ; i < 5+NumExtraPots ; i += 1 ) // calc Sticks
+#else
         for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
+#endif
 #endif
 				{
             //Normalization  [0..2048] ->   [-1024..1024]
@@ -884,7 +888,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 #ifdef PCBX7
 								v = calibratedStick[k-EXTRA_POTS_START+7] ;
 #else
+ #ifdef PCBX9LITE
+								v = calibratedStick[k-EXTRA_POTS_START+6] ;
+ #else
 								v = calibratedStick[k-EXTRA_POTS_START+8] ;
+ #endif
 #endif
 							}
 						}
@@ -1077,28 +1085,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         if((md->carryTrim==0) && (md->srcRaw>0) && (md->srcRaw<=4))
 				{
 					int32_t trim = trimA[md->srcRaw-1] ;
-//#ifdef TRIMS_SCALED
-//					if ( ( md->srcRaw-1 != 2 ) || ( !g_model.thrTrim ) )
-//					{
-//          	if ( g_model.trimsScaled )
-//						{
-//							int32_t scale = 1024 ;
-//              if ( ( trim > 0 ) && ( v > 0 ) )
-//							{
-//								scale -= trim ;
-//							}
-//              else if ( ( trim < 0 ) && ( v < 0 ) )
-//							{
-//								scale += trim ;
-//							}
-//							scale *= v ;
-//							v = scale / 1024 ;
-//						}
-//					}
-// 					v += trim ;  //  0 = Trim ON  =  Default
-//#else
 					v += trim ;  //  0 = Trim ON  =  Default
-//#endif
 					TrimInUse[md->srcRaw-1] |= 1 ;
 				}
         //========== MULTIPLEX ===============

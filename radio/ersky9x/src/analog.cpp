@@ -131,7 +131,7 @@ void disableRtcBattery()
 
 
 // Sample time should exceed 1uS
-#define SAMPTIME	2		// sample time = 28 cycles
+#define SAMPTIME	3		// sample time = 56 cycles
 
 volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
 uint16_t VbattRtc ;
@@ -257,6 +257,11 @@ extern "C" void TIM5_IRQHandler(void)
 
 #endif // PCBXLITE/X3
 
+#ifdef PCBX9LITE
+#define EXTRA_POSSIBLE_ANALOG		2
+#else
+#define EXTRA_POSSIBLE_ANALOG		0
+#endif
 void init_adc()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_ADC1EN ;			// Enable clock
@@ -279,6 +284,21 @@ void init_adc()
 
 #ifdef PCBX9LITE
 	configure_pins( PIN_FLP_J1 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
+
+	if ( g_eeGeneral.extraPotsSource[0] )
+	{
+		uint32_t pin ;
+		pin = ( g_eeGeneral.extraPotsSource[0] == 1 ) ? 4 : 8 ;
+		configure_pins( pin, PIN_ANALOG | PIN_PORTC ) ;
+	}
+
+	if ( g_eeGeneral.extraPotsSource[1] )
+	{
+		uint32_t pin ;
+		pin = ( g_eeGeneral.extraPotsSource[1] == 1 ) ? 4 : 8 ;
+		configure_pins( pin, PIN_ANALOG | PIN_PORTC ) ;
+	}
+
 #else
 	configure_pins( PIN_FLP_J1 | PIN_FLP_J2 | PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
 #endif
@@ -286,6 +306,9 @@ void init_adc()
 	{
 		configure_pins( ADC_GPIO_PIN_STICK_LH | ADC_GPIO_PIN_STICK_LV | ADC_GPIO_PIN_STICK_RV | ADC_GPIO_PIN_STICK_RH, PIN_ANALOG | PIN_PORTA ) ;
 	}
+
+
+
 
 #else // PCBXLITE/X3
 
@@ -332,10 +355,10 @@ void init_adc()
 
   if ( SticksPwmDisabled )
 	{
-		ADC1->SQR1 = (NUMBER_ANALOG-1+4) << 20 ;		// NUMBER_ANALOG Channels
-		
+		ADC1->SQR1 = (NUMBER_ANALOG-1+4+EXTRA_POSSIBLE_ANALOG) << 20 ;		// NUMBER_ANALOG Channels
+		 
 #ifdef PCBX9LITE
-		ADC1->SQR2 = (V_BATT) ;
+		ADC1->SQR2 = (V_BATT) + (12 << 5) + ( 13 << 10 ) ;
 		ADC1->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (POT_L<< 20) + (BATTERY <<25) ;
 #else // X3
 		ADC1->SQR2 = BATTERY + (V_BATT<<5) ;
@@ -345,8 +368,8 @@ void init_adc()
 	else
 	{
 #ifdef PCBX9LITE
-		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
-		ADC1->SQR3 = POT_L + (BATTERY<<5) + (V_BATT<<10) ;
+		ADC1->SQR1 = (NUMBER_ANALOG-1+EXTRA_POSSIBLE_ANALOG) << 20 ;		// NUMBER_ANALOG Channels
+		ADC1->SQR3 = POT_L + (BATTERY<<5) + (V_BATT<<10) + (12 << 15) + ( 13 << 20 ) ;
 #else // X3
 		ADC1->SQR1 = (NUMBER_ANALOG-1) << 20 ;		// NUMBER_ANALOG Channels
 		ADC1->SQR3 = POT_L + (POT_R<<5) + (BATTERY<<10) + (V_BATT<<15) ;
@@ -428,11 +451,11 @@ uint32_t read_adc()
 
   if ( SticksPwmDisabled )
 	{
-		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG + 4 ;
+		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG + 4 + EXTRA_POSSIBLE_ANALOG ;
 	}
 	else
 	{
-		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
+		DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG + EXTRA_POSSIBLE_ANALOG ;
 	}
 #else
 	DMA2_Stream4->NDTR = NUMBER_ANALOG-NUM_REMOTE_ANALOG ;
@@ -473,6 +496,9 @@ uint32_t read_adc()
 		{
 			VbattRtc = Analog_values[6] ;
 		}
+		AnalogData[5] = 4096 - ( (g_eeGeneral.extraPotsSource[0]) ? Analog_values[6+g_eeGeneral.extraPotsSource[0]] : 0 ) ; 
+		AnalogData[6] = 4096 - ( (g_eeGeneral.extraPotsSource[1]) ? Analog_values[6+g_eeGeneral.extraPotsSource[1]] : 0 ) ; 
+
 #else		 
 		AnalogData[5] = Analog_values[5] ;
 		AnalogData[12] = Analog_values[6] ;
@@ -640,8 +666,6 @@ uint32_t read_adc()
 #endif	// REV9E
 
 #endif // PCBXLITE
-
-
 
 	return ( i < 20000 ) ? 1 : 0 ;
 }

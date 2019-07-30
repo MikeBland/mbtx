@@ -68,6 +68,7 @@ v.xx.01-german
 
 #define FWx4		"\030"
 #define FWx5		"\036"
+#define FWx9		"\066"
 #define FWx10		"\074"
 #define FWx11		"\102"
 #define FWx12		"\110"
@@ -293,9 +294,9 @@ v.xx.01-german
 #define ISTR_T_TRIM         "Thr-Trim"
 #define ISTR_T_EXPO         "T-Expo-Dr"
 // ISTR_TRIM_OPTIONS indexed 6 chars each
-#define ISTR_TRIM_OPTIONS   FWx14"\004""\006Expon ExFeinFein  MittelGrob  "
+#define ISTR_TRIM_OPTIONS   FWx9"\004""\006Expon ExFeinFein  MittelGrob  "
 #define ISTR_TRIM_SWITCH    "Insta-Trim Sch"
-#define ISTR_TRIM_INC       "Trim Ink" "\037" ISTR_TRIM_SWITCH
+#define ISTR_TRIM_INC       "Trim Ink"
 #define ISTR_BEEP_CENTRE    "Piep Frq" //TonhÃ¶he Frequenz
 #define ISTR_RETA123        "SHGQ1234"
 #define ISTR_PROTO          "Proto" // Protokoll
@@ -407,7 +408,7 @@ v.xx.01-german
 #ifdef PCBT12
 #define ISWITCHES_STR "\003SG       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SF\200SF-SF\2016P06P16P26P36P46P5PB1PB2"
 #else
-#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2"
+#define ISWITCHES_STR "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2PB3"
 #endif
 #endif	// REV9E
 

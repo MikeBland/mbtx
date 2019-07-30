@@ -271,7 +271,7 @@
   #define ADC_CHANNEL_EXT1              ADC_Channel_6   // ADC3_IN6
   #define ADC_CHANNEL_EXT2              ADC_Channel_7   // ADC3_IN7
   #define ADC_MAIN                      ADC3
-  #define ADC_SAMPTIME                  3
+  #define ADC_SAMPTIME                  4
   #define ADC_DMA                       DMA2
   #define ADC_DMA_SxCR_CHSEL            DMA_SxCR_CHSEL_1
   #define ADC_DMA_Stream                DMA2_Stream0
@@ -474,8 +474,11 @@
 #define HAPTIC_GPIO_PIN                 GPIO_Pin_2
 #define GPIO_Pin_HAPTIC									GPIO_Pin_2
 #define HAPTIC_GPIO_TIMER		            TIM9
+#define HAPTIC_PORT											PIN_PORTA
 //#define HAPTIC_GPIO_AF      	          GPIO_AF_TIM9
 //#define HAPTIC_GPIO_PinSource 	        GPIO_PinSource2
+#define HAPTIC_TIMER_MODE		            TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2
+#define HAPTIC_TIMER_OUTPUT_ENABLE    	TIM_CCER_CC1E
 #endif
 #if defined(PCBX10)
   #define HAPTIC_RCC_AHB1Periph         RCC_AHB1Periph_GPIOE
@@ -490,6 +493,7 @@
   #define HAPTIC_TIMER_OUTPUT_ENABLE    TIM_CCER_CC2E
   #define HAPTIC_TIMER_MODE             TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2
   #define HAPTIC_TIMER_COMPARE_VALUE    HAPTIC_GPIO_TIMER->CCR2
+	#define HAPTIC_PORT										PIN_PORTE
 #endif
 
 

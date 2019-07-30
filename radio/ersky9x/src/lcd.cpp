@@ -1607,7 +1607,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 				plotType = oldPlotType ;
 #else
 				uint8_t oldPlotType = plotType ;
-				plotType = PLOT_COLOUR ;
+				plotType = PLOT_BLACK ;
         if (mode & INVERS)
 				{
           lcd_vline(x+1, y, 8);

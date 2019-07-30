@@ -2216,7 +2216,17 @@ int main( void )
 #endif
 
 #ifdef PCB9XT
-	enableBackupRam() ;
+//	enableBackupRam() ;
+//void disableBackupRam()
+	{
+		PWR->CR |= PWR_CR_DBP ;
+		PWR->CSR &= ~PWR_CSR_BRE ;
+//		while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
+//		{
+//			wdt_reset() ;
+//		}
+		RCC->AHB1ENR &= ~RCC_AHB1ENR_BKPSRAMEN ;
+	}
 #endif
 #ifdef STARTUP_DEBUG	 
 	startupDebugInit() ;
@@ -2577,6 +2587,7 @@ notePosition('3') ;
 #if defined(PCBX7) || defined (PCBXLITE) || defined (REV9E) || defined (PCBX9LITE)
 //	ledOff() ;
 //	ledBlue() ;
+	init_trims() ;
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
 	{
 		uint8_t dtimer = 0 ;
@@ -2636,6 +2647,24 @@ notePosition('3') ;
 			{
 				dbounceTimer = 0 ;
 			}
+#endif
+#ifdef PCBXLITE
+			if ( ( ( read_trims() & 0x01 ) == 0x01 ) && ( (GPIOE->IDR & 0x0100) == 0 ) )
+			{
+				break ;
+			}
+#else	
+			if ( ( read_trims() & 0x80 )== 0x80 )
+			{
+//				if ( ( read_trims() & 0x81 )== 0x81 )
+//				{				
+//					break ; // To maintenance mode
+//				}
+//				if ( get_tmr10ms() > 80 )
+//				{
+				break ;
+//				}
+			}	
 #endif
 		}
 	}
@@ -3044,6 +3073,11 @@ uint32_t updateSlave() ;
 	init_adc2() ;
 #endif // nPCBXLITE
 #endif // nREV9E
+#endif
+
+#ifdef PCBX9LITE
+	setup_switches() ;	// Again to configure extra switch inputs
+	init_adc() ;	// Again to configure extra analog inputs
 #endif
 
 	createSwitchMapping() ;
@@ -3805,7 +3839,11 @@ void main_loop(void* pdata)
   #ifdef PCBX7
 	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
 	#else
+   #if defined(PCBX9LITE)
+	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
+   #else
 	NumExtraPots = NUM_EXTRA_POTS ;
+   #endif
   #endif
  #endif
 #else // X9D
@@ -4620,6 +4658,16 @@ static void processVoiceAlarms()
 						x = 0 ;
 					}
 				}
+				break ;
+				case 9 :
+					if ( y )
+					{
+						x = (x % y) == 0 ;
+					}
+					else
+					{
+						x = 0 ;
+					}
 				break ;
 			}
 			functionTrue = x ;
@@ -6781,6 +6829,20 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 	#endif
     	  newval = swtch ;
     	}
+			else
+			{
+				// look for trim switches
+				uint32_t i ;
+
+				for( i = HSW_Etrmdn ; i < HSW_Etrmdn + 8 ; i += 1 )
+				{
+					if ( hwKeyState( i ) )
+					{
+						newval = switchUnMap( i ) ;
+						break ;
+					}
+				}
+			}
 		}
   }
 
@@ -6796,13 +6858,19 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   if(newval>i_max)
   {
     newval = i_max;
-    killEvents(event);
+		if ( event != EVT_KEY_REPT(KEY_MENU) )
+		{
+    	killEvents(event) ;
+		}
     audioDefevent(AU_KEYPAD_UP);
   }
   else if(newval < i_min)
   {
     newval = i_min;
-    killEvents(event);
+		if ( event != EVT_KEY_REPT(KEY_MENU) )
+		{
+    	killEvents(event) ;
+		}
     audioDefevent(AU_KEYPAD_DOWN);
   }
   if(newval != val)
@@ -7288,6 +7356,9 @@ extern char lua_warning_info[] ;
 
 uint8_t ScriptActive ;
 
+//#ifdef BASIC
+//uint8_t BasicRunWithoutRefresh ;
+//#endif
 
 #ifdef PCBX9D
 uint16_t MixerRunAtTime ;
@@ -7926,6 +7997,16 @@ extern uint32_t TotalExecTime ;
 //					evt = 0 ;
 //				}
 	  	}
+			else
+			{
+//				if ( refreshNeeded == 1 )
+//				{
+//					if ( ++BasicRunWithoutRefresh > 9 )
+//					{
+//						refreshNeeded = 2 ;
+//					}
+//				}
+			}
 		}
 
 //		refreshNeeded = basicTask( evt, RUN_STNDAL_SCRIPT, true ) ;
@@ -7992,7 +8073,7 @@ extern uint32_t TotalExecTime ;
 
 
 	#if defined(PCBX9D) || defined(PCBSKY) || defined(PCB9XT)
-			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) && ( ( lastTMR & 3 ) == 0 ) ) )
+			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) ) ) // && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
 #if defined(PCBX12D) || defined(PCBX10)
 			if ( refreshNeeded != 1 )
@@ -8004,6 +8085,9 @@ extern uint32_t TotalExecTime ;
 	#endif
 				uint16_t t1 = getTmr2MHz() ;
   		  refreshDisplay() ;
+//#ifdef BASIC
+//				BasicRunWithoutRefresh = 0 ;
+//#endif
 #if defined(PCBX12D) || defined(PCBX10)
 				lcd_clearBackground() ;	// Start clearing other frame
 	#endif
@@ -8761,6 +8845,7 @@ uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx )
 	{
     if (phase == 0) return 0;
     int16_t trim = getRawTrimValue( phase, idx ) ;
+//    if ( ( trim <= TRIM_EXTENDED_MAX ) || ( trim > TRIM_EXTENDED_MAX + MAX_MODES + 1 ) )
     if ( trim <= TRIM_EXTENDED_MAX )
 		{
 			return phase ;
@@ -8772,13 +8857,21 @@ uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx )
 		}
     phase = result;
   }
-  return 0;
+  return 0 ;
 }
 
 
 int16_t getTrimValue( uint8_t phase, uint8_t idx )
 {
   return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
+//	int16_t value ;
+//	value = getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
+//  if ( value > TRIM_EXTENDED_MAX + MAX_MODES + 1 )
+//	{
+//		value -= 2000 ;
+//		value += g_model.trim[idx] ;
+//	}
+//	return value ;
 }
 
 void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
@@ -8794,7 +8887,14 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 		{
 			trim = ( trim > 0 ) ? 125 : -125 ;
 //			trim = ( trim > 0 ) ? 500 : -500 ; For later addition
-		}	
+		}
+		
+//		int16_t value ;
+//		value = g_model.phaseData[phase-1].trim[idx] ;
+//  	if ( value > TRIM_EXTENDED_MAX + MAX_MODES + 1 )
+//		{
+//			trim += 2000 ;
+//		}
   	g_model.phaseData[phase-1].trim[idx] = trim ;
 	}
 	else
@@ -9378,6 +9478,14 @@ void createSwitchMapping()
 	{
 		*p++ = HSW_Pb2 ;
 	}
+#ifndef PCBX12D
+ #ifndef PCBX10
+	if ( g_eeGeneral.switchMapping & USE_PB3 )
+	{
+		*p++ = HSW_Pb3 ;
+	}
+ #endif
+#endif
 
 #ifndef PCBX12D
  #ifndef PCBX10

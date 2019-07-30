@@ -181,7 +181,7 @@ extern const char * const Spanish[] ;
 
 
 #ifdef PCBX9LITE
-#define NUMBER_ANALOG		3
+#define NUMBER_ANALOG		5
 #else
 
 #ifdef PCBXLITE
@@ -432,6 +432,8 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_Ele6pos5	65
 #define HSW_Pb1				66
 #define HSW_Pb2				67
+#define HSW_Pb3				68
+#define HSW_Pb4				69
 #ifdef REV9E
 #define HSW_SI0				66
 #define HSW_SI1				67
@@ -465,7 +467,7 @@ int8_t switchMap( int8_t x ) ;
 #define HSW_SR2				95
 #define HSW_MAX				95
 #else
-#define HSW_MAX				67
+#define HSW_MAX				69
 #endif	// REV9E
 
 //Bitfield for hardware analog mapping
@@ -476,6 +478,8 @@ int8_t switchMap( int8_t x ) ;
 
 #define	USE_PB1				0x80
 #define	USE_PB2				0x100
+#define	USE_PB3				0x200
+#define	USE_PB4				0x400
 
 #define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
 

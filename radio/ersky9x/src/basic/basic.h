@@ -19,6 +19,21 @@
 #define BASIC_LOAD_TEL1			3
 #define BASIC_LOAD_BG				4
 
+// States
+#define BASIC_IDLE				0
+#define BASIC_LOAD_START	1
+#define BASIC_LOADING			2
+#define BASIC_RUNNING			3
+
+struct t_loadedScripts
+{
+//	struct t_basicRunTime *runtime ;
+	uint32_t offsetOfStart ;
+	uint16_t size ;
+	uint8_t loaded ;
+	uint8_t type ;
+} ;
+
 uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index ) ;
 int32_t expression( void ) ;
 uint32_t loadBasic( char *fileName, uint32_t type ) ;

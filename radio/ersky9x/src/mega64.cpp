@@ -84,6 +84,8 @@ uint8_t M64EncoderPosition ;
 uint8_t M64Revision ;
 uint8_t M64Received ;
 
+//uint8_t ContrastCounter ;
+
 uint8_t M64SetHaptic ;
 uint8_t M64HapticOnOff ;
 uint8_t M64HapticStrength ;
@@ -632,6 +634,11 @@ void checkM64()
 			if ( DisplaySequence > 0x8F)
 			{
 				DisplaySequence = 0 ;
+//				if ( ++ContrastCounter > 9 )
+//				{
+//					ContrastCounter = 0 ;
+//					M64SetContrast = 1 ;
+//				}
 				if ( ResendDisplay )
 				{
 					memcpy( M64Display, M64ReDisplay, sizeof(M64Display) ) ;

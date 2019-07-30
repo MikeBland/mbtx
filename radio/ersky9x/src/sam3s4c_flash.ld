@@ -78,7 +78,9 @@ SECTIONS
       *(.bootrodata)
       *(.bootrodata.*)
       
-      . = ALIGN(32768);       /* Align the start of the exidx part */
+/*      . = ALIGN(32768); */      /* Align the start of the exidx part */
+/*      . = 28672 ; */      /* Align the start of the exidx part */
+      . = 32768 ;       /* Align the start of the exidx part */
 		_stext = .;          /* Provide the name for the start of this section */
       KEEP(*(.vectors))
       

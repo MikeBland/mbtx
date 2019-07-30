@@ -2043,6 +2043,24 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 //				}
 //			}
 
+#if defined(PCBX12D) || defined(PCBX10)
+			if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
+			{
+				uint8_t x ;
+				x = SerialData[module][1] & 0x1F ;
+				if ( ( SerialData[module][0] & 1 ) == 0 )
+				{
+					x += 32 ;
+				}
+				if ( ( x == 3 ) || ( x == 15 ) )
+				{
+					SerialData[module][0] |= 1 ;
+					SerialData[module][1] |= 0x1E ;
+					SerialData[module][1] &= ~1 ;
+				}
+			}
+#endif
+			
 			for ( i = 0 ; i < 26 ; i += 1 )
 			{
 				sendByteDsm2( SerialData[module][i], module) ;
@@ -2767,6 +2785,12 @@ extern volatile uint8_t PxxTxCount ;
 #endif
 		putPcmByte_x( extra_flags ) ;
 		chan = PcmCrc_x ;		        // get the crc
+#if defined(PCBX12D) || defined(PCBX10)
+		if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
+		{
+			chan += 1 ;
+		}
+#endif
   	putPcmByte_x( chan >> 8 ) ; // Checksum hi
   	putPcmByte_x( chan ) ; 			// Checksum lo
   	putPcmHead_x(  ) ;      // sync byte

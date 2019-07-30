@@ -69,7 +69,7 @@ extern void hw_delay( uint16_t time ) ;
 
 #define BUFFERSIZE						12
 
-#define SAMPTIME	2		// sample time = 28 cycles
+#define SAMPTIME	4		// sample time = 28 cycles
 
 #define V_BATT		18
 
@@ -733,7 +733,7 @@ uint16_t getAnalogValue(uint32_t value)
 #define BATTERY     14
 
 // Sample time should exceed 1uS
-#define SAMPTIME    2   // sample time = 28 cycles
+#define SAMPTIME    4   // sample time = 28 cycles
 
 uint16_t Analog_values[NUMBER_ANALOG] __DMA;
 

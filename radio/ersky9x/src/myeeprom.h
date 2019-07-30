@@ -732,7 +732,9 @@ struct t_module
 struct t_access
 {
 	uint8_t numChannels ;
-	uint8_t unused[8] ;
+	uint8_t type:1 ;
+	uint8_t unusedType:7 ;
+	uint8_t unused[7] ;
 	uint8_t receiverName[3][8] ; // PXX2_LEN_RX_NAME
 } ;
 
@@ -866,11 +868,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	uint8_t disableThrottleCheck:1 ;
-//#ifdef TRIMS_SCALED
-//	uint8_t trimsScaled:1 ;
-//#else
 	uint8_t thrSpare:1 ;
-//#endif
+	uint8_t instaTrimToTrims:1 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E

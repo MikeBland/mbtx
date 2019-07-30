@@ -576,7 +576,7 @@ extern struct t_hub_max_min FrskyHubMaxMin ;
 
 extern uint16_t A1A2toScaledValue( uint8_t channel, uint8_t *dplaces ) ;
 extern uint16_t logAxScale( uint8_t channel, uint8_t *dps ) ;
-extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
+extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 
 // Crossfire telemetry
 #define XFIRE_BAUD_RATE 400000

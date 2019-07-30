@@ -292,6 +292,7 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define SE_NO_WHILE				13
 #define SE_STRING_LONG		14
 #define SE_NO_FLOAT				15
+#define SE_MISSING_END		16
 
 #define MAX_VARIABLES	2
 
@@ -318,8 +319,9 @@ const char *ErrorText[] = {
  "Dimension",
  "Too Many Nested Calls",
  "Missing while",
- "String too long".
- "No Floating point"
+ "String too long",
+ "No Floating point",
+ "Missing end"
 } ;	
 #endif
 
@@ -430,16 +432,6 @@ struct t_control
 	uint16_t first ;
 	uint16_t middle ;
 } ;
-
-struct t_loadedScripts
-{
-//	struct t_basicRunTime *runtime ;
-	uint32_t offsetOfStart ;
-	uint16_t size ;
-	uint8_t loaded ;
-	uint8_t type ;
-} ;
-
 
 #define MAX_CONTROL_INDEX		20
 struct t_control CodeControl[MAX_CONTROL_INDEX] ;		// Max Nesting of control structures
@@ -1354,6 +1346,14 @@ uint32_t scanForKeyword( char *dest )
          	Token_type = FUNCTION ;
 					ProgPtr += 1 ;
 				}
+				if ( ( *ProgPtr == ' ' ) || (*ProgPtr == 9 ) )
+				{
+					if ( *(ProgPtr+1) == '(' )
+					{
+        	 	Token_type = FUNCTION ;
+						ProgPtr += 2 ;
+					}
+				}
 				if ( Cur_token == InputLine )
 				{
 				  if ( ( *ProgPtr == '\r') || ( *ProgPtr == '\n') || ( *ProgPtr == '\0') )
@@ -1385,6 +1385,7 @@ uint8_t *appendSymbols( uint8_t *p )
 	uint8_t *r ;
 	uint32_t value ;
 	r = &Program.Bytes[StartOfSymbols] ;
+  p = cpystr( p, (uint8_t *)"\nSymbols\n" ) ;
 	while ( r < &Program.Bytes[EndOfSymbols] )
 	{
     uint8_t *q = r ;
@@ -1442,7 +1443,7 @@ uint8_t *appendSymbols( uint8_t *p )
 	r = &Program.Bytes[0] ;
 	j = 0 ;
 	if ( p < &Data[DATA_SIZE-9000] )
-  for ( i = 0 ; i < 1280 ; i += 1 )
+  for ( i = 0 ; i < 1280+512 ; i += 1 )
 	{
 		if ( j == 0 )
 		{
@@ -1569,6 +1570,11 @@ uint32_t run( uint32_t event )
 		{
 			break ;
 		}
+		if ( retValue == 1 )
+		{
+			event = 0 ;
+		}
+
 	}
 	return retValue ;
 }
@@ -1619,12 +1625,6 @@ void report()
 //	}
 }
 #endif
-
-// States
-#define BASIC_IDLE				0
-#define BASIC_LOAD_START	1
-#define BASIC_LOADING			2
-#define BASIC_RUNNING			3
 
 uint8_t BasicState ;
 #ifdef QT	
@@ -1882,7 +1882,21 @@ uint32_t partLoadBasic()
 #ifdef QT
 			if ( p < &Data[DATA_SIZE-500] )
 			{
-				p = cpystr( p, q ) ; 
+    		sprintf( Tbuf, "%04d: ", LineNumber ) ;
+        p = cpystr( p, (uint8_t *)Tbuf ) ;
+				uint8_t *r ;
+				uint8_t c ;
+				r = q ;
+				do
+				{
+					c = *r++ ;
+					if ( c == 9 )
+					{
+						c = ' ' ;
+					}
+					*p++ = c ;
+				} while (c) ;
+				p -= 1 ;
 			}
 #endif
       ProgPtr = (char *) q ;
@@ -2157,6 +2171,7 @@ uint32_t partLoadBasic()
 								CodeControl[ControlIndex].middle = cPosition ;
 								Program.Bytes[cPosition++] = index ;
             	  Program.Bytes[cPosition++] = index >> 8 ;
+                break ;
 							}
 							else
 							{
@@ -2598,9 +2613,9 @@ uint32_t partLoadBasic()
 				if ( ParseError )
 				{
 #ifdef QT
-					sprintf( InputLine, "Error %d at line %d\n", ParseError, ParseErrorLine ) ;
+					sprintf( InputLine, "Error %d at line %d %s", ParseError, ParseErrorLine, ErrorText[ParseError-1] ) ;
+					*p++ = '\n' ;
 					p = cpystr( p, (uint8_t *)InputLine ) ;
-          p = cpystr( p, (uint8_t *)ErrorText[ParseError-1] ) ;
 					cpystr( ErrorReport, (uint8_t *)InputLine ) ;
 #else
 					setErrorText( ParseError, ParseErrorLine ) ;
@@ -2635,6 +2650,21 @@ uint32_t partLoadBasic()
 		return 1 ;
 	}
 
+	if ( ControlIndex )
+	{
+		serror( SE_MISSING_END ) ;
+#ifdef QT
+		sprintf( InputLine, "Error %d at line %d %s", ParseError, ParseErrorLine, ErrorText[ParseError-1] ) ;
+		*p++ = '\n' ;
+		p = cpystr( p, (uint8_t *)InputLine ) ;
+		cpystr( ErrorReport, (uint8_t *)InputLine ) ;
+#else
+		setErrorText( ParseError, ParseErrorLine ) ;
+#endif
+		closeFile() ;
+		return 0 ;
+	}
+#define SE_MISSING_END		16
 	Program.Bytes[CurrentPosition++] = STOP ;
 	closeFile() ;
 	 
@@ -4057,7 +4087,7 @@ void exec_drawrect()
 	int32_t y ;
 	int32_t w ;
   int32_t h ;
-  uint32_t percent ;
+  int32_t percent ;
 	uint32_t result ;
 	union t_parameter params[4] ;
 
@@ -4232,6 +4262,9 @@ void exec_playnumber()
 		decimals = params[2].var ;
 #ifdef QT
 //    RunTimeData = cpystr( RunTimeData, (uint8_t *)"PlayNumber()\n" ) ;
+        (void) number ;
+        (void) unit ;
+        (void) decimals ;
 #else
 		if ( unit > 0 && unit < 10 )
 		{
@@ -4301,6 +4334,9 @@ int32_t exec_settelitem()
 				value = param.var ;
 #ifdef QT			
 //        RunTimeData = cpystr( RunTimeData, (uint8_t *)"setTelItem()\n" ) ;
+                (void) number ;
+                (void) value ;
+                (void) p ;
 #else
 				number -= 44 ;
 				if ( ( number >= 0 ) && ( number < NUM_TELEM_ITEMS ) )
@@ -4406,6 +4442,8 @@ extern int GetValue ;
 	{
 #ifdef QT			
 //		RunTimeData = cpystr( RunTimeData, (uint8_t *)"GetValue()\n" ) ;
+        (void) p ;
+        (void) type ;
 #else
 		if ( number >= 0 )
 		{
@@ -4611,6 +4649,8 @@ static void exec_killEvents()
 	value = getSingleNumericParameter() ;
 #ifndef QT
   killEvents(value) ;
+#else
+  (void) value ;
 #endif
 }
 
@@ -4628,9 +4668,7 @@ int32_t exec_sportsend()
 	union t_parameter params[3] ;
 //	union t_parameter param ;
 	int32_t x ;
-#ifdef ACCESS
 	int32_t access = 0 ;
-#endif
 
 	result = get_parameter( &params[0], PARAM_TYPE_NUMBER ) ;
 	if ( result == 1 )
@@ -4641,17 +4679,17 @@ int32_t exec_sportsend()
 #ifdef QT
 //      RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
       result = 0 ;
+      (void) sportPacket ;
+      (void) access ;
 #else
-extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
+//extern uint32_t sportPacketSend( uint8_t *pdata, uint16_t index ) ;
 			result = sportPacketSend( 0, 0 ) ;
 #endif
 		}
 		else
 		{
-#ifdef ACCESS
-			access = x ;
-#endif
-			sportPacket[7] = SportIds[x & 0xFF] ;
+//			sportPacket[7] = SportIds[x & 0xFF] ;
+			access = (x & 0xFF00) | SportIds[x & 0xFF] ;
 			result = get_numeric_parameters( params, 2 ) ;
 	    sportPacket[0] = params[0].var ;
 			x = params[1].var ;
@@ -4696,18 +4734,19 @@ extern uint32_t sportPacketSend( uint8_t *pdata, uint8_t index ) ;
 //            RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportSend()\n" ) ;
             result = 0 ;
 #else
-#ifdef ACCESS
-						if ( access & 0x4000 )
-						{
-            	result = accessSportPacketSend( sportPacket, access ) ;
-						}
-						else
-						{
-            	result = sportPacketSend( sportPacket, sportPacket[7] ) ;
-						}
-#else
-            result = sportPacketSend( sportPacket, sportPacket[7] ) ;
-#endif	
+//#ifdef ACCESS
+//						if ( ( access & 0x4000 ) || ( ( access & 0x0300 ) == 0 ) )
+////						if ( ( ( access & 0x0300 ) == 0 ) || (access & 0x4000 ) )	// Module 0
+//						{
+//            	result = accessSportPacketSend( sportPacket, access ) ;
+//						}
+//						else
+//						{
+            	result = sportPacketSend( sportPacket, access ) ;
+//						}
+//#else
+//            result = sportPacketSend( sportPacket, sportPacket[7] ) ;
+//#endif	
 #endif	
 //						eatCloseBracket() ;
 //          }
@@ -4743,6 +4782,7 @@ int32_t exec_sportreceive()
 #ifdef QT
 //        	RunTimeData = cpystr( RunTimeData, (uint8_t *)"SportReceive()\n" ) ;
           result = 1 ;
+          (void) type ;
 #else
 					if ( fifo128Space( &Script_fifo ) <= ( 127 - 8 ) )
 					{
@@ -4823,6 +4863,8 @@ int32_t exec_crossfirereceive()
 			{
 #ifdef QT
         value = 0 ;
+        (void) type ;
+        (void) length ;
 #else
 				value = peek_fifo128( &Script_fifo ) ;
 #endif
@@ -4955,6 +4997,8 @@ int32_t  exec_btreceive()
 		{
 #ifdef QT
 			result = 0 ;
+            (void) i ;
+            (void) x ;
 #else
 #ifdef BLUETOOTH
 
@@ -5358,6 +5402,8 @@ void exec_resettelemetry()
 	value = getSingleNumericParameter() ;
 #ifndef QT
   resetTelemetry( value ) ;
+#else
+    (void) value ;
 #endif
 }
 
@@ -5860,6 +5906,7 @@ int32_t exec_getSwitch()
 		p = param.cpointer ;
 #ifdef QT
 		number = 0 ;
+        (void) p ;
 #else
 		number = basicFindSwitchIndexByName( (char *)p ) ;
 		if ( ( number >= 0 ) && (number < (int32_t)sizeof(SwTranslate)) )
@@ -5895,6 +5942,8 @@ void exec_setSwitch()
 		{
 #ifdef QT			
 			number = 0 ;
+            (void) number ;
+            (void) p ;
 #else
 			number = basicFindSwitchIndexByName( (char *)p ) ;
 			if (number < HSW_MAX)
@@ -5952,6 +6001,8 @@ void exec_playFile()
 				putUserVoice( name, 0 ) ;
 			}
 		}
+#else
+        (void) p ;
 #endif
   }
 //	eatCloseBracket() ;
@@ -6223,10 +6274,7 @@ uint32_t execOneLine()
 	{
 		return runError( SE_EXEC_BADLINE ) ;
 	}
-//  RunTime->RunLastLineNumber = RunTime->RunLineNumber ;
   RunTime->RunLineNumber = (opcode & 0x7F) | (*RunTime->ExecProgPtr++ << 7 ) ;
-//	sprintf( InputLine, "%d\n", RunTime->RunLineNumber ) ;
-//  RunTimeData = cpystr( RunTimeData, (uint8_t *) InputLine ) ;
 	do
 	{
 		opcode = *RunTime->ExecProgPtr++ ;
@@ -6442,7 +6490,9 @@ uint32_t execOneLine()
 // 2 Found Stop
 // 3 Script finished (unloaded)
 
-uint8_t LastBasicEvent[3] ;
+// events need queueing
+uint8_t BasicEventQueue0[3] ;
+uint8_t BasicEventQueue1[3] ;
 
 uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 {
@@ -6498,29 +6548,40 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 #endif
 		if ( event )
 		{
-			LastBasicEvent[index] = event ;
-			RunTime->Vars.Variables[0] = event ;
-		}
+			if ( BasicEventQueue0[index] )
+			{ 
+				BasicEventQueue1[index] = event ;
+			}
+			else
+			{
+				BasicEventQueue0[index] = event ;
+				BasicEventQueue1[index] = 0 ;
+			}
+		}	
 	}
 	else
 	{
-		if ( LastBasicEvent[index] )
+		// Starting at top
+		uint8_t tempEvent ;
+		if ( BasicEventQueue0[index] )
 		{
-			LastBasicEvent[index] = 0 ;
+			tempEvent = BasicEventQueue0[index] ;
+			if ( BasicEventQueue1[index] )
+			{
+				BasicEventQueue0[index] = BasicEventQueue1[index] ;
+				BasicEventQueue1[index] = event ;
+			}
+			else
+			{
+				BasicEventQueue0[index] = event ;
+			}
+			event = tempEvent ;
 		}
-		else
-		{
-			RunTime->Vars.Variables[0] = event ;
-		}
+		RunTime->Vars.Variables[0] = event ;
 		// Clear call stack?
 		RunTime->CallIndex = 0 ;
 	}
 
-//#ifndef QT
-//uputs( (char *)"------" ) ;
-//crlf() ;
-//#endif
-	 
 	execLinesProcessed = 0 ;
 #ifndef QT
 	uint16_t t1 = getTmr2MHz() ;
@@ -6528,12 +6589,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 	while ( execLinesProcessed < 250 )
 	{
 		finished = execOneLine() ;
-//#ifndef QT
-//p4hex( RunTime->RunLineNumber ) ;
-//uputs( (char *)" " ) ;
-//p4hex( RunTime->CallIndex ) ;
-//crlf() ;
-//#endif
 
 #ifdef QT
 		uint32_t i ;
@@ -6546,8 +6601,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		{
 			finished = 3 ;
 #ifndef QT
-//			BasicState = BASIC_IDLE ;
-//			BasicLoadedType = BASIC_LOAD_NONE ;
       killEvents( event ) ;
 			LoadedScripts[index].loaded = 0 ;
 #endif
@@ -6567,8 +6620,6 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 			{
 				BasicLoadedType = BASIC_LOAD_NONE ;
 			}
-//			BasicState = BASIC_IDLE ;
-//			BasicLoadedType = BASIC_LOAD_NONE ;
 #endif
 			break ;
 		}
@@ -6584,7 +6635,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 	if ( RunTime->RunError )
 	{
 #ifdef QT			
-    sprintf( InputLine, "Error %d at line %d", RunTime->RunError, RunTime->RunErrorLine ) ;
+    sprintf( InputLine, "Error %d at line %d", RunTime->RunError+100, RunTime->RunErrorLine ) ;
 		cpystr( ErrorReport, (uint8_t *)InputLine ) ;
 #else
 		setErrorText( RunTime->RunError+100, RunTime->RunErrorLine ) ;

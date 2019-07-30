@@ -163,18 +163,32 @@ void setupChannelsAccess( uint32_t module )
 	flag0 = pxx2AddFlag0( module ) ;
 
   // flag1
-	pxx2AddByte( 0, module ) ;
+  
+	uint8_t flag1 = g_model.Access[module].type << 4;
+
+	pxx2AddByte( flag1, module ) ;
 
 	addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel ) ;
-	if ( g_model.Access[module].numChannels > 0 )
-	{
-		addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel+8 ) ;
-	}
-	if ( g_model.Access[module].numChannels > 1 )
-	{
-		addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel+16 ) ;
-	}
+	
 
+	if ( g_model.Access[module].type )
+	{
+		if ( g_model.Module[module].channels == 0 )
+		{
+			addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel+8 ) ;
+		}
+	}
+	else
+	{
+		if ( g_model.Access[module].numChannels > 0 )
+		{
+			addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel+8 ) ;
+		}
+		if ( g_model.Access[module].numChannels > 1 )
+		{
+			addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel+16 ) ;
+		}
+	}
 //	if (size > 0)
 //	{
 		// update the frame LEN = frame length minus the 2 first bytes
@@ -263,6 +277,19 @@ void setupShareFrame(uint8_t module)
 	pxx2AddByte( ModuleControl[module].bindReceiverIndex, module ) ;
 }
 
+
+void setupAccstBindFrame(uint8_t module)
+{
+	pxx2AddByte( PXX2_TYPE_C_MODULE, module ) ;
+	pxx2AddByte( PXX2_TYPE_ID_BIND, module ) ;
+	pxx2AddByte(0x01, module) ;
+  for (uint8_t i=0; i<PXX2_LEN_RX_NAME; i++)
+	{
+    pxx2AddByte(0x00, module) ;
+  }
+	pxx2AddByte((g_model.Module[module].highChannels << 7) + (g_model.Module[module].disableTelemetry << 6), module) ;
+  pxx2AddByte(g_model.Module[module].pxxRxNum, module) ;
+}
 
 void setupBindFrame(uint8_t module)
 {
@@ -357,13 +384,12 @@ void setupGetPowerFrame(uint8_t module)
   pxx2AddByte( power, module) ;
   ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
 }
-
 void setupTelemetryFrame(uint8_t module)
 {
 	uint32_t i ;
 	pxx2AddByte( PXX2_TYPE_C_MODULE, module ) ;
 	pxx2AddByte( PXX2_TYPE_ID_TELEMETRY, module ) ;
-	pxx2AddByte( ( TelemetryTx.AccessSportTx.module_destination >> 8) & 0x0F , module) ;
+	pxx2AddByte( ( TelemetryTx.AccessSportTx.module_destination >> 8) & 0x03 , module) ;
 //	pxx2AddByte( TelemetryTx.AccessSportTx.index, module) ;
 	for ( i = 0 ; i < 8 ; i += 1 )
 	{
@@ -445,7 +471,14 @@ void setupPulsesAccess( uint32_t module )
 	//			}
   	  break;
   	  case MODULE_MODE_BIND:
-  	    setupBindFrame(module);
+				if ( g_model.Access[module].type)
+				{
+					setupAccstBindFrame( module ) ;
+				}
+				else
+				{
+  	    	setupBindFrame(module);
+				}
 	//			if ( RawLogging )
 	//			{
 	//				rawLogByte( 0x5E ) ;

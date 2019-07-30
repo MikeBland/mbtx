@@ -159,7 +159,7 @@
 #define STR_T_EXPO          139
 #define STR_TRIM_INC        140
 #define STR_TRIM_OPTIONS    141
-#define X_STR_TRIM_SWITCH     142
+#define STR_TRIM_SWITCH     142
 #define STR_BEEP_CENTRE     143
 #define STR_RETA123         144
 #define STR_PROTO           145

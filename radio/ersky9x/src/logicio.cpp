@@ -2455,6 +2455,21 @@ void setup_switches()
 	configure_pins( PIN_SW_B_L | PIN_SW_B_H, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
 	configure_pins( PIN_SW_F, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 	configure_pins( PIN_SW_A_L | PIN_SW_A_H | PIN_SW_C_L | PIN_SW_C_H, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+
+	// Look to see if PD14 is in use
+	if ( ( g_eeGeneral.pb1source == 3 ) || ( g_eeGeneral.pb2source == 3 ) || ( g_eeGeneral.pb3source == 3 ) )
+	{
+		RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+		configure_pins( 0x4000, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	}
+	if ( ( g_eeGeneral.pb1source == 4 ) || ( g_eeGeneral.pb2source == 4 ) || ( g_eeGeneral.pb3source == 4 ) )
+	{
+		configure_pins( 0x0004, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	}
+	if ( ( g_eeGeneral.pb1source == 5 ) || ( g_eeGeneral.pb2source == 5 ) || ( g_eeGeneral.pb3source == 5 ) )
+	{
+		configure_pins( 0x0008, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	}
 #else
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
@@ -2534,6 +2549,23 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 		else
 		{
 			return ~GPIOD->IDR & PIN_SW_EXT2 ;
+		}
+	}
+#endif
+#ifdef PCBX9LITE
+	if ( index > 2 )	// Extra inputs
+	{
+		if ( index == 3 )
+		{
+			return ~GPIOD->IDR & 0x4000 ;
+		}
+		if ( index == 4 )
+		{
+			return ~GPIOC->IDR & 0x0004 ;
+		}
+		if ( index == 5 )
+		{
+			return ~GPIOC->IDR & 0x0008 ;
 		}
 	}
 #endif
@@ -2656,6 +2688,18 @@ uint32_t hwKeyState( uint8_t key )
 		
 		case HSW_Etrmdn :
 			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
+    break ;
+		
+		case HSW_Pb1 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb1source ) ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
+    break ;
+		
+		case HSW_Pb3 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb3source ) ;
     break ;
 
 	}
@@ -3248,6 +3292,11 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Pb2 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
     break ;
+#ifdef PCBX9LITE
+		case HSW_Pb3 :
+			xxx = readKeyUpgradeBit( g_eeGeneral.pb3source ) ;
+    break ;
+#endif
 #endif
 
     default:

@@ -188,6 +188,16 @@ void logSingleNumber( uint32_t enable, int32_t value )
 	}
 }
 
+void logSingleDiv10( uint32_t enable, int32_t value )
+{
+	div_t qr ;
+	if ( isLogEnabled( enable ) )
+	{
+		qr = div( value, 10 ) ;
+		f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+	}
+}
+
 void logSingleDiv100( uint32_t enable, int32_t value )
 {
 	div_t qr ;
@@ -196,6 +206,22 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 		qr = div( value, 100 ) ;
 		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 	}
+}
+
+void logSingleDivX( int32_t value, uint8_t dps )
+{
+	div_t qr ;
+	qr = div( value, dps ) ;
+	if ( qr.rem < 0 )
+	{
+		qr.rem = - qr.rem ;
+	}
+	const char *ps = ",%d.%d" ;
+	if ( dps == 100 )
+	{
+		ps = ",%d.%02d" ;
+	}
+	f_printf(&g_oLogFile, ps, qr.quot, qr.rem ) ;
 }
 
 uint32_t alternateText( uint8_t *text, uint8_t *name )
@@ -640,14 +666,16 @@ void writeLogs()
 			if ( isLogEnabled( LOG_A1 ) )
 			{
 				value = logAxScale( 0, &dps ) ;
-				qr = div( value, dps ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+				logSingleDivX( value, dps ) ;
+//				qr = div( value, dps ) ;
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
 			if ( isLogEnabled( LOG_A2 ) )
 			{
 				value = logAxScale( 1, &dps ) ;
-				qr = div( value, dps ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+				logSingleDivX( value, dps ) ;
+//				qr = div( value, dps ) ;
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
       
 			if ( isLogEnabled( LOG_ALT ) )
@@ -663,7 +691,22 @@ void writeLogs()
 				value /= 10 ;									
 				f_printf(&g_oLogFile, ",%d", value ) ;
 			}
-			logSingleNumber( LOG_GALT, FrskyHubData[TELEM_GPS_ALT] ) ;
+			
+			if ( isLogEnabled( LOG_GALT ) )
+			{
+				char c = ' ' ;
+				qr = div( FrskyHubData[TELEM_GPS_ALT], 10 ) ;
+				if ( qr.rem < 0 )
+				{
+					qr.rem = - qr.rem ;
+					if ( qr.quot == 0 )
+					{
+						c = '-' ;
+					}
+				}
+				f_printf(&g_oLogFile, ",%c%d.%d", c, qr.quot, qr.rem ) ;
+			}
+//			logSingleNumber( LOG_GALT, FrskyHubData[TELEM_GPS_ALT] ) ;
 //			if ( isLogEnabled( LOG_GALT ) )
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[TELEM_GPS_ALT]) ;
@@ -692,21 +735,24 @@ void writeLogs()
 				}
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
-			if ( isLogEnabled( LOG_FASV ) )
-			{
-				qr = div( FrskyHubData[FR_VOLTS], 10);
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			
+			logSingleDiv10( LOG_FASV, FrskyHubData[FR_VOLTS] ) ;
+//			if ( isLogEnabled( LOG_FASV ) )
+//			{
+//				qr = div( FrskyHubData[FR_VOLTS], 10);
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 			logSingleNumber( LOG_MAH, FrskyHubData[FR_AMP_MAH] ) ;
 //			if ( isLogEnabled( LOG_MAH ) )
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AMP_MAH] ) ;
 //			}
-			if ( isLogEnabled( LOG_BATT ) )
-			{
-				qr = div( g_vbat100mV, 10);
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			logSingleDiv10( LOG_BATT, g_vbat100mV ) ;
+//			if ( isLogEnabled( LOG_BATT ) )
+//			{
+//				qr = div( g_vbat100mV, 10);
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 			if ( isLogEnabled( LOG_VSPD ) )
 			{
 				char c = ' ' ;
@@ -726,12 +772,14 @@ void writeLogs()
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_VSPD] ) ;
 //			}
-			if ( isLogEnabled( LOG_RXV ) )
-			{
-				value = convertRxv( FrskyHubData[FR_RXV] ) ;
-				qr = div( value, 10);
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			
+			logSingleDiv10( LOG_RXV, convertRxv( FrskyHubData[FR_RXV]) ) ;
+//			if ( isLogEnabled( LOG_RXV ) )
+//			{
+//				value = convertRxv( FrskyHubData[FR_RXV] ) ;
+//				qr = div( value, 10);
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 			logSingleNumber( LOG_A3, FrskyHubData[FR_A3] ) ;
 //			if ( isLogEnabled( LOG_A3 ) )
 //			{
@@ -804,11 +852,12 @@ void writeLogs()
 //				qr = div( FrskyHubData[FR_CELL_MIN], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			if ( isLogEnabled( LOG_CTOT ) )
-			{
-				qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			logSingleDiv10( LOG_CTOT, FrskyHubData[FR_CELLS_TOT] ) ;
+//			if ( isLogEnabled( LOG_CTOT ) )
+//			{
+//				qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 #ifndef DEBUG_9XT
 			//SC1-8
 			uint32_t i ;
@@ -817,7 +866,7 @@ void writeLogs()
 				if ( isLogEnabled( LOG_SC1 + i ) )
 				{
 					uint16_t unit = 0 ;
-					const char *ps = ",%d.%d" ;
+//					const char *ps = ",%d.%d" ;
 					uint8_t num_decimals = 0 ;
 					value = calc_scaler( i, &unit, &num_decimals ) ;
 					if ( num_decimals == 0 )
@@ -831,14 +880,15 @@ void writeLogs()
 					else
 					{
 						num_decimals = 100 ;
-						ps = ",%d.%02d" ;
+//						ps = ",%d.%02d" ;
 					}
-					qr = div( value, num_decimals ) ;
-					if ( qr.rem < 0 )
-					{
-						qr.rem = - qr.rem ;
-					}
-					f_printf(&g_oLogFile, ps, qr.quot, qr.rem ) ;
+					logSingleDivX( value, num_decimals ) ;
+//					qr = div( value, num_decimals ) ;
+//					if ( qr.rem < 0 )
+//					{
+//						qr.rem = - qr.rem ;
+//					}
+//					f_printf(&g_oLogFile, ps, qr.quot, qr.rem ) ;
 				}
 			}
 			for ( i = 0 ; i < 7 ; i += 1 )
@@ -877,7 +927,7 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 				}
 #endif
 
-			logSingleNumber( LOG_FWAT, FrskyHubData[FR_WATT] ) ;
+			logSingleNumber( LOG_FWAT, (uint32_t)FrskyHubData[FR_VOLTS] * (uint32_t)FrskyHubData[FR_CURRENT] / (uint32_t)100 ) ;
 
 #ifdef BLUETOOTH
 			logSingleNumber( LOG_BTRX, BtControl.BtRxOccured ) ;
@@ -954,27 +1004,32 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //				}
 			}
 
-			if ( isLogEnabled( LOG_CTOTAL1 ) )
-			{
-				qr = div( FrskyHubData[FR_CELLS_TOTAL1], 10 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_CTOTAL2 ) )
-			{
-				qr = div( FrskyHubData[FR_CELLS_TOTAL2], 10 ) ;
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			logSingleDiv10( LOG_CTOTAL1, FrskyHubData[FR_CELLS_TOTAL1] ) ;
+//			if ( isLogEnabled( LOG_CTOTAL1 ) )
+//			{
+//				qr = div( FrskyHubData[FR_CELLS_TOTAL1], 10 ) ;
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
+			logSingleDiv10( LOG_CTOTAL2, FrskyHubData[FR_CELLS_TOTAL2] ) ;
+//			if ( isLogEnabled( LOG_CTOTAL2 ) )
+//			{
+//				qr = div( FrskyHubData[FR_CELLS_TOTAL2], 10 ) ;
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 
-			if ( isLogEnabled( LOG_SBECV ) )
-			{
-				qr = div( FrskyHubData[FR_SBEC_VOLT], 10);
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
-			if ( isLogEnabled( LOG_SBECA ) )
-			{
-				qr = div( FrskyHubData[FR_SBEC_CURRENT], 10);
-				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
-			}
+			logSingleDiv100( LOG_SBECV, FrskyHubData[FR_SBEC_VOLT] ) ;
+//			if ( isLogEnabled( LOG_SBECV ) )
+//			{
+//				qr = div( FrskyHubData[FR_SBEC_VOLT], 100);
+//				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+//			}
+			
+			logSingleDiv10( LOG_SBECA, FrskyHubData[FR_SBEC_CURRENT] ) ;
+//			if ( isLogEnabled( LOG_SBECA ) )
+//			{
+//				qr = div( FrskyHubData[FR_SBEC_CURRENT], 10);
+//				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
+//			}
 
 
 			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;

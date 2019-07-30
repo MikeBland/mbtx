@@ -462,7 +462,7 @@ void init_pa10_serial( uint32_t type )
 		else
 #endif
 		{
-			TIM1->ARR = 17999 ;                     // 9mS
+			TIM1->ARR = 17989 ;                     // 9mS - 5uS
   		TIM1->CCR2 = 16000 ;            // Update time
 		}	
 	}
@@ -756,7 +756,7 @@ void init_ext_serial( uint32_t type )
 
 	if ( type == EXT_TYPE_PXX )
 	{
-		TIM8->ARR = 17999 ;                     // 9mS
+		TIM8->ARR = 17989 ;                     // 9mS - 5uS
   	TIM8->CCR2 = 16000 ;            // Update time
 	}
 	else if ( type == EXT_TYPE_DSM )
@@ -1134,7 +1134,7 @@ static void init_int_none()
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  INTMODULE_TIMER->ARR = 17999 ;            // 9 mS
+  INTMODULE_TIMER->ARR = 17989 ;            // 9 mS - 5uS
   INTMODULE_TIMER->CCR2 = 16999 ;           // Update time
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
@@ -1207,7 +1207,7 @@ static void init_int_pxx( void )
 	RCC->APB1ENR |= RCC_APB1ENR_TIM12EN ;     // Enable clock
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  INTMODULE_TIMER->ARR = 17999 ;             // 9 mS
+  INTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
   INTMODULE_TIMER->CCR2 = 17499 ;            // Update time
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
@@ -1263,7 +1263,7 @@ static void init_ext_pxx( void )
 	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;     // Enable clock
 
   EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  EXTMODULE_TIMER->ARR = 17999 ;             // 9 mS
+  EXTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
   EXTMODULE_TIMER->CCR2 = 17499 ;            // Update time
   EXTMODULE_TIMER->PSC = EXTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 

@@ -684,17 +684,21 @@ void initHaptic()
 {
 	// Use TIM9 CH1, output on PA.02 AF3
 	// Could use TIM2 CH3 AF1, or TIM5 CH3 AF2
-	configure_pins( GPIO_Pin_HAPTIC, PIN_PERIPHERAL | PIN_PER_3 | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+	configure_pins( GPIO_Pin_HAPTIC, PIN_PERIPHERAL | PIN_PER_3 | PIN_PUSHPULL | PIN_OS25 | HAPTIC_PORT ) ;
 //	GPIOHAPTIC->BSRRH = GPIO_Pin_HAPTIC ;
   RCC->APB2ENR |= RCC_APB2ENR_TIM9EN ;            // Enable clock
 
 
   HAPTIC_GPIO_TIMER->ARR = 100 ;
   HAPTIC_GPIO_TIMER->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;
-  HAPTIC_GPIO_TIMER->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 ; // PWM
-  HAPTIC_GPIO_TIMER->CCER = TIM_CCER_CC1E ;
+  HAPTIC_GPIO_TIMER->CCMR1 = HAPTIC_TIMER_MODE ; // PWM
+  HAPTIC_GPIO_TIMER->CCER = HAPTIC_TIMER_OUTPUT_ENABLE ;
 
+#if defined(PCBX10)
+  HAPTIC_GPIO_TIMER->CCR2 = 0 ;
+#else
   HAPTIC_GPIO_TIMER->CCR1 = 0 ;
+#endif
   HAPTIC_GPIO_TIMER->EGR = 0 ;
   HAPTIC_GPIO_TIMER->CR1 = TIM_CR1_CEN ; // counter enable
 
@@ -703,7 +707,11 @@ void initHaptic()
 void hapticOff()
 {
 //	GPIOHAPTIC->BSRRH = GPIO_Pin_HAPTIC ;
+#if defined(PCBX10)
+  HAPTIC_GPIO_TIMER->CCR2 = 0;
+#else
   HAPTIC_GPIO_TIMER->CCR1 = 0;
+#endif
 }
 
 // pwmPercent 0-100
@@ -714,7 +722,11 @@ void hapticOn( uint32_t pwmPercent )
 	{
     pwmPercent = 100 ;
   }
+#if defined(PCBX10)
+  HAPTIC_GPIO_TIMER->CCR2 = pwmPercent;
+#else
   HAPTIC_GPIO_TIMER->CCR1 = pwmPercent;
+#endif
 }
 #endif // PCBX7
 

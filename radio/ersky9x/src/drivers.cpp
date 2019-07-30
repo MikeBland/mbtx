@@ -5016,7 +5016,7 @@ uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index )
 
 	uint32_t i ;
 	
-	TelemetryTx.AccessSportTx.module_destination = index >> 8 ;
+//	TelemetryTx.AccessSportTx.module_destination = index >> 8 ;
 	TelemetryTx.AccessSportTx.data[0] = index ;
 	for ( i = 1 ; i < 8 ; i += 1 )
 	{
@@ -5030,12 +5030,26 @@ uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index )
 }
 #endif
 
-uint32_t sportPacketSend( uint8_t *pdata, uint8_t index )
+
+// Auto choose between SPort and Access:
+
+uint32_t sportPacketSend( uint8_t *pdata, uint16_t index )
 {
 	uint32_t i ;
 	uint32_t j ;
 	uint32_t crc ;
 	uint32_t byte ;
+
+#ifdef ACCESS
+// Look for active Access module	
+	if ( g_model.Module[0].protocol == PROTO_ACCESS )
+	{
+		if ( ( index & 0x4000 ) || ( ( index & 0x0300 ) == 0 ) )
+		{
+			return accessSportPacketSend( pdata, index ) ;
+		}
+	}
+#endif
 
 	if ( pdata == 0 )	// Test for buffer available
 	{

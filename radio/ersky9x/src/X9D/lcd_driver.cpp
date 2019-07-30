@@ -1630,11 +1630,17 @@ void initTimerTopLcd()
 void initTopLcd()
 {
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_TOPLCD, ENABLE);
-	GPIO_TOPLCD->BSRRL = PIN_TOPLCD_CS1 | PIN_TOPLCD_CS2 ;
+	GPIO_TOPLCD->BSRRL = PIN_TOPLCD_CS1 | PIN_TOPLCD_CS2 | PIN_TOPLCD_WR ;
 	configure_pins( PIN_TOPLCD_LED | PIN_TOPLCD_CS1 | PIN_TOPLCD_CS2 | PIN_TOPLCD_WR | PIN_TOPLCD_DATA,
 									 PIN_OUTPUT | PIN_PORTG| PIN_PUSHPULL | PIN_OS25 | PIN_NO_PULLUP ) ;
 
-  sendToplcdCommand(0x03, 0) ;
+	delay1_7us() ;
+	GPIO_TOPLCD->BSRRH = PIN_TOPLCD_CS1 | PIN_TOPLCD_CS2 ;
+	delay1_7us() ;
+	GPIO_TOPLCD->BSRRL = PIN_TOPLCD_CS1 | PIN_TOPLCD_CS2 ;
+	delay1_7us() ;
+
+	sendToplcdCommand(0x03, 0) ;
   sendToplcdCommand(0x01, 0) ;
   sendToplcdCommand(0x29, 0) ;
   sendToplcdCommand(0x03, 1) ;
