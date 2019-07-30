@@ -39,6 +39,8 @@ const uint8_t
 #include "..\..\common\hand.lbm"
 #endif
 
+#define MENU_STACK_SIZE	5
+
 /*
 mode1 rud ele thr ail
 mode2 rud thr ele ail
@@ -105,8 +107,8 @@ uint8_t Vs_state[EXTRA_VOICE_SW] ;
 uint8_t Vs_state[NUM_CHNOUT+EXTRA_VOICE_SW] ;
 #endif
 #endif
-uint8_t Nvs_state[NUM_VOICE_ALARMS] ;
-int16_t Nvs_timer[NUM_VOICE_ALARMS] ;
+uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS] ;
+int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS] ;
 uint8_t CurrentVolume ;
 
 uint8_t ppmInAvailable = 0 ;
@@ -174,6 +176,11 @@ uint8_t Arduino = 0 ;
 
 const prog_char APM Str_Hyphens[] = "----" ;
 
+#if defined(CPUM128) || defined(CPUM2561)
+uint8_t VrefType ;
+uint16_t VrefTest ;
+#endif
+
 uint8_t modeFixValue( uint8_t value )
 {
 	return pgm_read_byte(stickScramble+g_eeGeneral.stickMode*4+value)+1 ;
@@ -201,6 +208,25 @@ const prog_uint8_t APM csTypeTable[] =
 } ;
 #endif
 #endif // V2
+
+//#define WHERE_DEBUG	1
+
+#ifdef WHERE_DEBUG
+void where( uint8_t chr )
+{
+	uint32_t i ;
+	lcd_putcAtt( 0, 0, chr, DBLSIZE ) ;
+//	lcd_outhex4( 0, 16, ~read_keys() ) ;
+	refreshDiplay() ;
+  wdt_reset();
+	for ( i = 0 ; i < 500000 ; i += 1 )
+	{
+  	wdt_reset() ;
+	}
+}
+#endif
+
+
 
 uint16_t get_tmr10ms()
 {
@@ -299,6 +325,10 @@ void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att)
 uint8_t switchMapTable[41] ;
 uint8_t switchUnMapTable[HSW_MAX+1] ;
 uint8_t MaxSwitchIndex ;		// For ON and OFF
+uint8_t Sw3posMask ;
+
+const prog_uint8_t APM Sw2posIndex[] = {HSW_ID0,HSW_ThrCt,HSW_RuddDR,HSW_ElevDR,HSW_AileDR,HSW_Gear,HSW_Trainer} ;
+const prog_uint8_t APM Sw3posIndex[] = {HSW_ID0,HSW_ThrCt,HSW_Rud3pos0,HSW_Ele3pos0,HSW_Ail3pos0,HSW_Gear3pos0,HSW_Trainer} ;
 
 //uint8_t numSwitchpositions( uint8_t swtch )
 //{
@@ -320,6 +350,7 @@ void createSwitchMapping()
 	uint8_t *p = switchMapTable ;
 	FORCE_INDIRECT(p) ;
 	uint8_t map = g_eeGeneral.switchMapping ;
+	uint8_t mask = IDX_3POS_BIT ;
 	*p++ = 0 ;
 	
 #ifdef XSW_MOD
@@ -341,6 +372,7 @@ void createSwitchMapping()
 		*p++ = HSW_Rud3pos0 ;
 		*p++ = HSW_Rud3pos1 ;
 		*p++ = HSW_Rud3pos2 ;
+		mask |= RUD_3POS_BIT ;
 	}
 	else
 	{
@@ -351,6 +383,7 @@ void createSwitchMapping()
 		*p++ = HSW_Ele3pos0 ;
 		*p++ = HSW_Ele3pos1 ;
 		*p++ = HSW_Ele3pos2 ;
+		mask |= ELE_3POS_BIT ;
 	}
 	else
 	{
@@ -364,6 +397,7 @@ void createSwitchMapping()
 		*p++ = HSW_Ail3pos0 ;
 		*p++ = HSW_Ail3pos1 ;
 		*p++ = HSW_Ail3pos2 ;
+		mask |= AIL_3POS_BIT ;
 	}
 	else
 	{
@@ -374,6 +408,7 @@ void createSwitchMapping()
 		*p++ = HSW_Gear3pos0 ;
 		*p++ = HSW_Gear3pos1 ;
 		*p++ = HSW_Gear3pos2 ;
+		mask |= GEA_3POS_BIT ;
 	}
 	else
 	{
@@ -434,6 +469,7 @@ void createSwitchMapping()
     DDRB &= ~(1<<OUT_B_LIGHT) ;
 		PORTB |= (1<<OUT_B_LIGHT) ; // pullups
 	}
+	Sw3posMask = mask ;
 }
 
 int8_t switchUnMap( int8_t x )
@@ -1125,6 +1161,10 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 					{
 						x += 1 ;
 					}
+					if ( ( x > 8 ) && ( x <= 9+NUM_CSW+EXTRA_CSW ) )
+					{
+						x += 1 ;
+					}
 					if ( ( x < -8 ) && ( x >= -(9+NUM_CSW+EXTRA_CSW) ) )
 					{
 						x -= 1 ;
@@ -1355,10 +1395,10 @@ void check_backlight_voice()
 uint16_t stickMoveValue()
 {
 #define INAC_DEVISOR 256   // Issue 206 - bypass splash screen with stick movement
-    uint16_t sum = 0;
+    uint16_t sum = 128 ;
     for(uint8_t i=0; i<4; i++)
         sum += anaIn(i) ;
-	sum += 128 ;
+//	sum += 128 ;
 	return sum / INAC_DEVISOR ;
 }
 
@@ -1419,7 +1459,14 @@ extern uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
 
         refreshDiplay();
 
+#ifdef WHERE_DEBUG
+lcd_outhex4( 14, 0, keyDown() ) ;
+where( 'Z' ) ;
+#endif
         clearKeyEvents();
+#ifdef WHERE_DEBUG
+where( 'Y' ) ;
+#endif
 
 //#ifndef SIMU
 //        for(uint8_t i=0; i<32; i++)
@@ -1433,6 +1480,9 @@ extern uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
         uint16_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;  
         do
 				{
+#ifdef WHERE_DEBUG
+where( 'X' ) ;
+#endif
         	refreshDiplay();
           check_backlight_voice() ;
 #ifdef SIMU
@@ -1508,11 +1558,11 @@ void message(const prog_char * s)
 
 void alert(const prog_char * s)
 {
-	alertx( s, false ) ;
-}
-
-void alertx(const prog_char * s, bool defaults)
-{
+//	alertx( s, false ) ;
+//}
+//
+//void alertx(const prog_char * s, bool defaults)
+//{
 	if ( Main_running )
 	{
 		AlertMessage = s ;
@@ -1521,7 +1571,8 @@ void alertx(const prog_char * s, bool defaults)
 	almess( s, ALERT_TYPE | ALERT_VOICE ) ;
 	refreshDiplay() ;
   
-	lcdSetRefVolt(defaults ? LCD_NOMCONTRAST : g_eeGeneral.contrast);
+//	lcdSetRefVolt(defaults ? LCD_NOMCONTRAST : g_eeGeneral.contrast);
+	lcdSetRefVolt( LCD_NOMCONTRAST ) ;
 //  audioVoiceDefevent(AU_ERROR, V_ALERT);
 
     clearKeyEvents();
@@ -1542,10 +1593,10 @@ void alertx(const prog_char * s, bool defaults)
             heartbeat = 0;
         }
 
-        if(defaults)
+//        if(defaults)
         	BACKLIGHT_ON ;
-		    else
-    	    BACKLIGHT_OFF ;
+//		    else
+//    	    BACKLIGHT_OFF ;
         check_backlight_voice() ;
     }
 
@@ -1563,7 +1614,7 @@ void alertx(const prog_char * s, bool defaults)
 uint8_t checkThrottlePosition()
 {
   uint8_t thrchn=(2-(g_eeGeneral.stickMode&1));//stickMode=0123 -> thr=2121
-	int16_t v = scaleAnalog( anaIn(thrchn), thrchn ) ;
+	int16_t v = scaleAnalog( thrchn ) ;
 	
 //	if ( g_model.throttleIdle == 2 )
 //	{
@@ -1834,10 +1885,11 @@ int8_t getMovedSwitch()
 
 #else	// !XSW_MOD
 
-uint8_t getCurrentSwitchStates()
+uint16_t getCurrentSwitchStates()
 {
   uint8_t i = 0 ;
-  for( uint8_t j=0; j<8; j++ )
+  uint8_t j ;
+  for( j=0; j<8; j++ )
   {
     bool t=keyState( (EnumKeys)(SW_BASE_DIAG+7-j) ) ;
 		i <<= 1 ;
@@ -1852,6 +1904,13 @@ uint8_t getCurrentSwitchStates()
 			k = HSW_ID0 ;
 			i |= switchPosition(k) << 4 ;
 		}
+
+	j = switchPosition(HSW_Ail3pos0) ;
+	j |= switchPosition(HSW_Gear3pos0) << 2 ;
+	j |= switchPosition(HSW_Rud3pos0) << 4 ;
+
+
+
 //		if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
 //		{
 //			i &= 0xC3 ;
@@ -1860,36 +1919,100 @@ uint8_t getCurrentSwitchStates()
 //			k = HSW_ID0 ;
 //			i |= switchPosition(k) << 4 ;
 //		}
+	return (j << 8) | i ;
 #endif
 	return i ;
 }
 
+
+#ifdef SWITCH_MAPPING
+
+uint8_t getExpectedSwitchState( uint8_t i )
+{
+	uint8_t state ;
+	state = (uint8_t)g_model.switchWarningStates ;
+	if ( XBITMASK( i ) & Sw3posMask )
+	{
+		if ( ( i == 0 ) && ( (g_eeGeneral.switchMapping & USE_ELE_3POS) == 0 ) )
+		{
+			if ( state & 0x20 )
+			{
+				state = 2 ;
+			}
+			else
+			{
+				state >>= 4 ;
+				state &= 1 ;
+			}
+		}
+		else
+		{
+			// 0  >> 4
+			// 2  >> 12
+			// 3  >> 2
+			// 4  >> 8
+			// 5  >> 10
+			if ( i == 0 )
+			{
+				state >>= 4 ;
+			}
+			else if ( i == 3 )
+			{
+				state >>= 2 ;
+			}
+			else
+			{
+				state = g_model.exSwitchWarningStates ;
+				if ( i == 2 )
+				{
+					state >>= 4 ;
+				}
+				else if ( i == 5 )
+				{
+					state >>= 2 ;
+				}
+			}
+			state &= 3 ;
+		}
+	}
+	else
+	{
+		state >>= (i-1) ;
+		if ( i > 2 )
+		{
+			state /= 8 ;//					state >>= 3 ;
+		}
+		state &= 1 ;
+		if ( state )
+		{
+			state = 2 ;
+		}
+	}
+ 	return state ;
+}
+
+
 void checkSwitches()
 {
+#if 0	
 	uint8_t warningStates ;
-#ifdef SWITCH_MAPPING
 	uint8_t exWarningStates	;
-#endif
 
 	if(g_eeGeneral.disableSwitchWarning) return; // if warning is on
 
 	warningStates = g_model.switchWarningStates ;
-#ifdef SWITCH_MAPPING
 	exWarningStates = g_model.exSwitchWarningStates ;
 	
 	if ( ( g_eeGeneral.switchMapping & USE_ELE_3POS ) == 0 )
 	{
-#endif
     uint8_t x = warningStates & SWP_IL5;
     if(!(x==SWP_LEG1 || x==SWP_LEG2 || x==SWP_LEG3)) //legal states for ID0/1/2
     {
-        warningStates &= ~SWP_IL5; // turn all off, make sure only one is on
-        warningStates |=  SWP_ID0B;
-				g_model.switchWarningStates = warningStates ;
+      warningStates &= ~SWP_IL5; // turn all off, make sure only one is on
+      warningStates |=  SWP_ID0B;
+			g_model.switchWarningStates = warningStates ;
     }
-#ifdef SWITCH_MAPPING
 	}
-#endif
 
 	uint8_t first = 1 ;
 	uint8_t voice = 0 ;
@@ -1898,17 +2021,13 @@ void checkSwitches()
     while (1)
     {
         uint8_t i = getCurrentSwitchStates() ;
-#ifdef SWITCH_MAPPING
         uint8_t j = switchPosition(HSW_Ail3pos0) ;
-#endif
 
         //show the difference between i and switch?
         //show just the offending switches.
         //first row - THR, GEA, AIL, ELE, ID0/1/2
         uint8_t x = i ^ warningStates ;
-#ifdef SWITCH_MAPPING
         uint8_t y = j ^ exWarningStates ;
-#endif
 
 #if defined(CPUM128) || defined(CPUM2561)
 				lcd_clear();
@@ -1931,7 +2050,6 @@ void checkSwitches()
         if(x & SWP_RUDB)
             putWarnSwitch(2 + 3*FW + FW/2, 1 );
         
-#ifdef SWITCH_MAPPING
 			if ( g_eeGeneral.switchMapping & USE_ELE_3POS )
 			{
 				if ( x & 0x0C )
@@ -1958,22 +2076,7 @@ void checkSwitches()
                 putWarnSwitch(2 + 10*FW + FW/2, 5 );
         }
 			}	
-#else
-				if(x & SWP_ELEB)
-            putWarnSwitch(2 + 7*FW, 2 );
 
-        if(x & SWP_IL5)
-        {
-            if(i & SWP_ID0B)
-                putWarnSwitch(2 + 10*FW + FW/2, 3 );
-            else if(i & SWP_ID1B)
-                putWarnSwitch(2 + 10*FW + FW/2, 4 );
-            else if(i & SWP_ID2B)
-                putWarnSwitch(2 + 10*FW + FW/2, 5 );
-        }
-#endif
-
-#ifdef SWITCH_MAPPING
 			if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
 			{
 				if ( y & 0x03 )
@@ -1987,48 +2090,10 @@ void checkSwitches()
         if(x & SWP_AILB)
             putWarnSwitch(2 + 14*FW, 6 );
 			}
-#else
-        if(x & SWP_AILB)
-            putWarnSwitch(2 + 14*FW, 6 );
-#endif
         if(x & SWP_GEAB)
             putWarnSwitch(2 + 17*FW + FW/2, 7 );
 
 
-//#if SERIALVOICE
-//				k += 1 ;
-//				if ( k > 2500 )
-//				{
-//					k = 0 ;
-//					if ( p == 0 )
-//					{
-//						p = 1 ;
-//			  	  UDR1 = 'A' ;						
-//					}
-//					else
-//					{
-//						p = 0 ;
-//			  	  UDR1 = 'B' ;
-//					}
-//					UCSR1A = ( 1 << TXC1 ) ;		// CLEAR flag
-//					while ( ( UCSR1A & ( 1 << TXC1 ) ) == 0 )
-//					{
-//						// wait
-//					}
-//#undef BAUD
-//#define BAUD 19200
-//				  UBRR1L = UBRRL_VALUE;
-//				}
-//				if (UCSR1A & (1 << RXC1))
-//				{
-//					q = UDR1 ;
-//#undef BAUD
-//#define BAUD 38400
-//				  UBRR1L = UBRRL_VALUE;
-//				}
-//				lcd_putc( 0, 8, q ) ;
-
-//#endif
         refreshDiplay();
 
 				if ( first )
@@ -2038,26 +2103,198 @@ void checkSwitches()
 					first = 0 ;
 				}
 
-#ifdef SWITCH_MAPPING
         if( ( (i==warningStates) && (j == exWarningStates) ) || (keyDown())) // check state against settings
-#else
-        if( (i==warningStates) || (keyDown())) // check state against settings
-#endif
         {
-//#if SERIALVOICE
-//  UCSR1B &= ~(1 << TXEN1) ; // disable TX pin
-//  UCSR1B &= ~(1 << RXEN1) ; // disable RX
-//#endif
             return;  //wait for key release
         }
 
         check_backlight_voice() ;
         wdt_reset() ;
+    }
+}
 
+#else
+	uint8_t state ;
+	if(g_eeGeneral.disableSwitchWarning) return; // if warning is on
+
+	state = g_model.switchWarningStates ;
+	
+	if ( ( g_eeGeneral.switchMapping & USE_ELE_3POS ) == 0 )
+	{
+    uint8_t x = state & SWP_IL5;
+    if(!(x==SWP_LEG1 || x==SWP_LEG2 || x==SWP_LEG3)) //legal states for ID0/1/2
+    {
+      state &= ~SWP_IL5; // turn all off, make sure only one is on
+      state |=  SWP_ID0B;
+			g_model.switchWarningStates = state ;
+    }
+	}
+
+	uint8_t first = 1 ;
+	uint8_t voice = 0 ;
+
+  while (1)
+  {
+		
+#if defined(CPUM128) || defined(CPUM2561)
+		lcd_clear();
+    lcd_img( 1, 0, HandImage,0 ) ;
+	  lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
+	  lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
+		lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+		if ( voice )
+		{
+			audioVoiceDefevent(AU_ERROR, V_ALERT);
+			putVoiceQueue( V_SW_WARN ) ;
+		}
+#else
+		almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#endif
+		voice = 0 ;
+		uint8_t incorrect = 0 ;
+		for ( uint8_t i = 0 ; i < 6 ; i += 1 )
+		{
+		// Get expected state
+			state = getExpectedSwitchState( i ) ;
+			//state contains 0-2 for 3-pos and 0 or 2 for 2-pos switches
+		
+			// now get actual state
+			uint8_t now ;
+extern uint8_t currentSwitchPosition012( uint8_t i ) ;
+			now = currentSwitchPosition012( i ) ;
+//			uint8_t index ;
+//			if ( XBITMASK( i ) & Sw3posMask )
+//			{
+//				index = pgm_read_byte( &Sw3posIndex[i] ) ;
+//				now = switchPosition(index) ;
+//			}
+//			else
+//			{
+//extern uint8_t indexSwitch( uint8_t index ) ;
+//				index = indexSwitch( i ) + 1 ;
+//				now = switchPosition(index) ? 0 : 2 ;
+//			}
+			if ( now != state )
+			{
+				incorrect = 1 ;
+	#if defined(CPUM128) || defined(CPUM2561)
+  			displayOneSwitch( 2+(7*FW/2)*i, 5*FH, i ) ;
+	#else
+  			displayOneSwitch( 2+(7*FW/2)*i, 2*FH, i ) ;
+	#endif
+			}
+		}
+    refreshDiplay();
+
+		if( (incorrect == 0) || keyDown() ) // check state against settings
+  	{
+  	    return;  //wait for key release
+  	}
+		
+		if ( first )
+		{
+			voice = ALERT_VOICE ;
+    	clearKeyEvents();
+			first = 0 ;
+		}
+  	
+
+  	check_backlight_voice() ;
+  	wdt_reset() ;
+	}
+}
+
+#endif
+
+#else // SWITCH_MAPPING
+void checkSwitches()
+{
+	uint8_t warningStates ;
+
+	if(g_eeGeneral.disableSwitchWarning) return; // if warning is on
+
+	warningStates = g_model.switchWarningStates ;
+    uint8_t x = warningStates & SWP_IL5;
+    if(!(x==SWP_LEG1 || x==SWP_LEG2 || x==SWP_LEG3)) //legal states for ID0/1/2
+    {
+        warningStates &= ~SWP_IL5; // turn all off, make sure only one is on
+        warningStates |=  SWP_ID0B;
+				g_model.switchWarningStates = warningStates ;
     }
 
+	uint8_t first = 1 ;
+	uint8_t voice = 0 ;
 
+    //loop until all switches are reset
+    while (1)
+    {
+        uint8_t i = getCurrentSwitchStates() ;
+
+        //show the difference between i and switch?
+        //show just the offending switches.
+        //first row - THR, GEA, AIL, ELE, ID0/1/2
+        uint8_t x = i ^ warningStates ;
+
+#if defined(CPUM128) || defined(CPUM2561)
+				lcd_clear();
+    		lcd_img( 1, 0, HandImage,0 ) ;
+	  		lcd_putsAtt(32,0*FH,PSTR("Switch"),DBLSIZE);
+	  		lcd_putsAtt(32,2*FH,PSTR("Warning"),DBLSIZE);
+				lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+				if ( voice )
+				{
+					audioVoiceDefevent(AU_ERROR, V_ALERT);
+					putVoiceQueue( V_SW_WARN ) ;
+				}
+#else
+		    almess( PSTR(STR_SWITCH_WARN"\037"STR_RESET_SWITCHES), ALERT_SKIP | voice ) ;
+#endif
+				voice = 0 ;
+
+        if(x & SWP_THRB)
+            putWarnSwitch(2 + 0*FW, 0 );
+        if(x & SWP_RUDB)
+            putWarnSwitch(2 + 3*FW + FW/2, 1 );
+        
+				if(x & SWP_ELEB)
+            putWarnSwitch(2 + 7*FW, 2 );
+
+        if(x & SWP_IL5)
+        {
+            if(i & SWP_ID0B)
+                putWarnSwitch(2 + 10*FW + FW/2, 3 );
+            else if(i & SWP_ID1B)
+                putWarnSwitch(2 + 10*FW + FW/2, 4 );
+            else if(i & SWP_ID2B)
+                putWarnSwitch(2 + 10*FW + FW/2, 5 );
+        }
+
+        if(x & SWP_AILB)
+            putWarnSwitch(2 + 14*FW, 6 );
+        
+				if(x & SWP_GEAB)
+            putWarnSwitch(2 + 17*FW + FW/2, 7 );
+
+        refreshDiplay();
+
+				if ( first )
+				{
+					voice = ALERT_VOICE ;
+    			clearKeyEvents();
+					first = 0 ;
+				}
+
+        if( (i==warningStates) || (keyDown())) // check state against settings
+        {
+            return;  //wait for key release
+        }
+
+        check_backlight_voice() ;
+        wdt_reset() ;
+    }
 }
+#endif
+
 
 #if defined(CPUM128) || defined(CPUM2561)
 
@@ -2275,9 +2512,11 @@ static void checkQuickSelect()
 uint8_t StickScrollAllowed ;
 uint8_t StickScrollTimer ;
 
-MenuFuncP g_menuStack[5];
+MenuFuncP g_menuStack[MENU_STACK_SIZE];
+uint8_t MenuVertStack[MENU_STACK_SIZE] ;
 
-uint8_t  g_menuStackPtr = 0;
+uint8_t  g_menuStackPtr = 0 ;
+uint8_t  g_menuVertPtr = 0 ;
 uint8_t  EnterMenu = 0 ;
 
 
@@ -3726,14 +3965,35 @@ static void perMain()
 				uint8_t key = keyDown() ;
 				if ( alertKey )
 				{
-					if( key == 0 )
+					if ( alertKey == 1 )
 					{
-						AlertMessage = 0 ;
+						if( key == 0 )
+						{
+							alertKey = 2 ;
+						}
+					}
+					else if ( alertKey == 2 )
+					{
+						if( key )
+						{
+							alertKey = 3 ;
+						}
+					}
+					else
+					{
+						if( key == 0 )
+						{
+							AlertMessage = 0 ;
+						}
 					}
 				}
 				else if ( key )
 				{
 					alertKey = 1 ;
+				}
+				else
+				{
+					alertKey = 2 ;
 				}
 			}
 			else
@@ -3749,6 +4009,7 @@ static void perMain()
 				StepSize = 20 ;
 				Tevent = evt ;
 
+				g_menuVertPtr = g_menuStackPtr ;
 				g_menuStack[g_menuStackPtr](evt);
 //				lcd_outhex4( 95, 0, RebootReason ) ;
 			}
@@ -3900,7 +4161,11 @@ void getADC_osmp()
     for (uint8_t adc_input=0;adc_input<8;adc_input++){
 //        temp_ana = 0 ;
 //        for (uint8_t i=0; i<2;i++) {  // Going from 10bits to 11 bits.  Addition = n.  Loop 2 times
-            ADMUX=adc_input|ADC_VREF_TYPE;
+#if defined(CPUM128) || defined(CPUM2561)
+					  ADMUX=adc_input | VrefType ;
+#else
+					  ADMUX=adc_input|ADC_VREF_TYPE;
+#endif
             // Start the AD conversion
 #if defined(CPUM128) || defined(CPUM2561)
 			asm(" rjmp 1f") ;
@@ -3968,7 +4233,11 @@ void getADC_osmp()
 
 static void getADC_bandgap()
 {
+#if defined(CPUM128) || defined(CPUM2561)
+    ADMUX=0x1E | VrefType ;
+#else
     ADMUX=0x1E|ADC_VREF_TYPE;
+#endif
     // Start the AD conversion
     //  ADCSRA|=0x40;
     // Wait for the AD conversion to complete
@@ -4308,7 +4577,12 @@ extern uint8_t serialDat0 ;
 #endif
 
 
-    ADMUX=ADC_VREF_TYPE;
+#if defined(CPUM128) || defined(CPUM2561)
+	  ADMUX=0x1E ; // Select bandgap and AREF
+		VrefType = 0 ;	// External VREF
+#else    
+		ADMUX=ADC_VREF_TYPE;
+#endif
     ADCSRA=0x85 ;
 
     // TCNT0         10ms = 16MHz/160000  periodic timer
@@ -4359,6 +4633,25 @@ extern uint8_t serialDat0 ;
         }
     }
 #endif
+		
+#if defined(CPUM128) || defined(CPUM2561)
+  getADC_bandgap() ;
+  getADC_bandgap() ;	// Twice to get a good value
+	VrefTest = BandGap ;
+	// If bandgap is 1023, then no external VREF is present
+	// If bandgap is between 340 and 456 then external VREF of 3.3V is present
+#ifdef CPUM128
+	if ( ( VrefTest < 340 ) || ( VrefTest > 456 ) )
+#else // is 2561
+	if ( ( VrefTest < 295 ) || ( VrefTest > 392 ) )
+#endif
+	{
+		VrefType = ADC_VREF_TYPE ;
+	}
+  getADC_bandgap() ;
+  getADC_bandgap() ;	// Twice to get a good value
+#endif
+		
 		sei(); //damit alert in eeReadGeneral() nicht haengt
 
     g_menuStack[0] =  menuProc0;
@@ -4511,11 +4804,23 @@ extern uint8_t serialDat0 ;
       }
   	  doSplash();
     }
+#ifdef WHERE_DEBUG
+where( 'A' ) ;
+#endif
     checkMem();
+#ifdef WHERE_DEBUG
+where( 'B' ) ;
+#endif
     getADC_osmp();
     g_vbat100mV = anaIn(7) / 14 ;
     checkTHR();
+#ifdef WHERE_DEBUG
+where( 'C' ) ;
+#endif
     checkSwitches();
+#ifdef WHERE_DEBUG
+where( 'D' ) ;
+#endif
 #ifndef MINIMISE_CODE
     checkAlarm();
 #endif
@@ -4873,6 +5178,14 @@ NOINLINE void processVoiceAlarms()
 		procOneVoiceAlarm( pvad, i ) ;
 		pvad += 1 ;		
 	}
+#ifdef CPUM2561
+	pvad = &g_eeGeneral.extraGeneral.vad[0] ;
+	for ( i = NUM_VOICE_ALARMS ; i < NUM_VOICE_ALARMS + NUM_GLOBAL_VOICE_ALARMS ; i += 1 )
+	{
+		procOneVoiceAlarm( pvad, i ) ;
+		pvad += 1 ;		
+	}
+#endif
 }
 
 void mainSequence()
@@ -4893,7 +5206,11 @@ void mainSequence()
 //    {
 //        getADC_single() ;
 //    }
+#if defined(CPUM128) || defined(CPUM2561)
+  ADMUX=0x1E | VrefType ;     // Select bandgap
+#else
   ADMUX=0x1E|ADC_VREF_TYPE;   // Select bandgap
+#endif
 	pollRotary() ;
   perMain();      // Give bandgap plenty of time to settle
   getADC_bandgap() ;
@@ -5055,7 +5372,9 @@ void mainSequence()
 #else
 //#if defined(CPUM128) || defined(CPUM2561)
 #ifndef NOVOICE_SW
+ #ifndef SAFETY_ONLY
 		uint16_t ltimer = timer ;
+ #endif
 #ifndef V2
 		uint8_t numSafety = 16 - g_model.numVoice ;
 #endif // nV2
@@ -5077,7 +5396,11 @@ void mainSequence()
 
 			mode = sd->opt.vs.vmode ;
 			value = sd->opt.vs.vval ;
+#ifdef SAFETY_ONLY
+			if ( mode <= 2 )
+#else
 			if ( mode <= 5 )
+#endif
 			{
 				if ( value > 250 )
 				{
@@ -5110,13 +5433,29 @@ void mainSequence()
 							putVoiceQueue( value ) ;
 						}
 					}
+#ifdef SAFETY_ONLY
+					if ( mode > 2 )
+#else
 					if ( mode > 5 )
+#endif
 					{
 						if ( ( Vs_state[i] == 0 ) && curent_state )
 						{
+#ifdef SAFETY_ONLY
+							if ( (int8_t)sd->opt.vs.vval < 0 )
+							{
+								audioDefevent( ((g_eeGeneral.speakerMode & 1) == 0) ? 1 : -(int8_t)sd->opt.vs.vval-1 ) ;
+							}
+							else
+							{
+								voice_telem_item( sd->opt.vs.vval ) ;
+							}
+#else
 							voice_telem_item( sd->opt.vs.vval ) ;
+#endif
 						}					
 					}
+#ifndef SAFETY_ONLY
 					else if ( mode > 2 )
 					{ // 15, 30 or 60 secs
 						if ( curent_state )
@@ -5131,6 +5470,7 @@ void mainSequence()
 							}
 						}
 					}
+#endif
 				}
 				Vs_state[i] = curent_state ;
 			}
@@ -5546,7 +5886,9 @@ void mainSequence()
   {
 #ifndef V2
 #ifndef NOSAFETY_A_OR_V					
+#ifndef SAFETY_ONLY
 		uint8_t i ;
+#endif
 #endif
 #endif // nV2
 //      AlarmControl.AlarmCheckFlag = 0 ;
@@ -5657,6 +5999,7 @@ void mainSequence()
 
 #ifndef V2
 #ifndef NOSAFETY_A_OR_V					
+#ifndef SAFETY_ONLY
 			// Now for the Safety/alarm switch alarms
 			// Carried out evey 100 mS
 			{
@@ -5721,6 +6064,7 @@ void mainSequence()
 					}
 				}
 			}
+#endif // SAFETY_ONLY
 #endif // NOSAFETY_A_OR_V					
 #endif // nV2
 	// New switch voices

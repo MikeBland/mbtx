@@ -76,6 +76,12 @@
 #define NUM_VOICE_ALARMS	8
 #endif
 
+#ifdef CPUM2561
+#define NUM_GLOBAL_VOICE_ALARMS		8
+#else
+#define NUM_GLOBAL_VOICE_ALARMS		0
+#endif
+
 PACK(typedef struct t_TrainerMix {
     uint8_t srcChn:3; //0-7 = ch1-8
     int8_t  swtch:5;
@@ -101,6 +107,30 @@ PACK(typedef struct t_V2TrainerData {
     V2TrainerMix     mix[4];
 }) V2TrainerData ;
 #endif
+
+PACK(typedef struct t_voiceAlarm
+{
+  uint8_t source ;
+	uint8_t func;
+  int8_t  swtch ;
+	uint8_t rate ;
+	uint8_t fnameType:3 ;
+	uint8_t haptic:2 ;
+	uint8_t vsource:2 ;
+	uint8_t mute:1 ;
+//	uint8_t res1 ;			// Spare for expansion
+  int16_t  offset ;		//offset
+//	union
+//	{
+		int16_t vfile ;
+//		uint8_t name[8] ;
+//	} file ;
+}) VoiceAlarmData ;
+
+PACK(typedef struct t_EEXtraGeneral
+{
+	VoiceAlarmData vad[NUM_GLOBAL_VOICE_ALARMS] ;
+}) EEXtraGeneral ;
 
 PACK(typedef struct t_EEGeneral {
     uint8_t   myVers;
@@ -184,7 +214,12 @@ PACK(typedef struct t_EEGeneral {
     uint8_t  spare5:5 ;
 #endif
 		uint16_t stickDeadband ;
+		uint8_t offset2561Extra ;
+#ifdef CPUM2561
+		EEXtraGeneral extraGeneral ;
+#endif
 }) EEGeneral;
+
 
 
 #ifdef V2
@@ -332,7 +367,7 @@ PACK(typedef struct t_CxSwData { // Extra Custom Switches data
     int8_t andsw ;
 }) CxSwData ;
 
-PACK(typedef struct t_SafetySwData { // Custom Switches data
+PACK(typedef struct t_OldSafetySwData { // Custom Switches data
 	union opt
 	{
 		struct ss
@@ -345,6 +380,34 @@ PACK(typedef struct t_SafetySwData { // Custom Switches data
 		{
   		uint8_t vswtch:5 ;
 			uint8_t vmode:3 ; // ON, OFF, BOTH, 15Secs, 30Secs, 60Secs, Varibl
+    	uint8_t vval;
+		} vs ;
+	} opt ;
+}) OldSafetySwData;
+
+PACK(typedef struct t_SafetySwData { // Custom Switches data
+	union opt
+	{
+		struct ss
+		{	
+#ifdef SAFETY_ONLY
+			int8_t  swtch:7 ;
+			uint8_t mode:1 ;	// 'S', 'X'
+#else
+	    int8_t  swtch:6;
+			uint8_t mode:2;
+#endif
+    	int8_t  val;
+		} ss ;
+		struct vs
+		{
+#ifdef SAFETY_ONLY
+  		uint8_t vswtch:6 ;
+			uint8_t vmode:2 ; // ON, OFF, BOTH, Varibl
+#else
+  		uint8_t vswtch:5 ;
+			uint8_t vmode:3 ; // ON, OFF, BOTH, 15Secs, 30Secs, 60Secs, Varibl
+#endif
     	uint8_t vval;
 		} vs ;
 	} opt ;
@@ -495,25 +558,6 @@ PACK(typedef struct t_extScale
 	uint8_t mod ;
 	uint8_t dest ;
 } ) ExtScaleData ;
-
-PACK(typedef struct t_voiceAlarm
-{
-  uint8_t source ;
-	uint8_t func;
-  int8_t  swtch ;
-	uint8_t rate ;
-	uint8_t fnameType:3 ;
-	uint8_t haptic:2 ;
-	uint8_t vsource:2 ;
-	uint8_t mute:1 ;
-//	uint8_t res1 ;			// Spare for expansion
-  int16_t  offset ;		//offset
-//	union
-//	{
-		int16_t vfile ;
-//		uint8_t name[8] ;
-//	} file ;
-}) VoiceAlarmData ;
 
 typedef struct t_gvarAdjust
 {
@@ -667,9 +711,9 @@ PACK(typedef struct t_ModelData {
 		uint8_t telemetryProtocol ;
 		int8_t Failsafe[8];		// Currently unused
 		uint8_t failsafeMode:3 ;
-		uint8_t failsafeRepeat:1 ;
+		uint8_t notfailsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
-		uint8_t failsafeSpare:2 ;
+		uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 		int8_t NotFailsafe[3];		// Currently unused
 		uint8_t		rxVratio ;
 #else
@@ -677,9 +721,9 @@ PACK(typedef struct t_ModelData {
 		uint8_t telemetryProtocol ;
 		int8_t Failsafe[8];		// Currently unused
 		uint8_t failsafeMode:3 ;
-		uint8_t failsafeRepeat:1 ;
+		uint8_t notfailsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
-		uint8_t failsafeSpare:2 ;
+		uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 		int8_t NotFailsafe[3];		// Currently unused
 		uint8_t		rxVratio ;
 #endif // MULTI_PROTOCOL
@@ -788,9 +832,9 @@ PACK(typedef struct t_V2ModelData
   int8_t    curvexy[18] ;
 	ExtScaleData eScalers[NUM_SCALERS] ;
 	uint8_t failsafeMode:3 ;
-	uint8_t failsafeRepeat:1 ;
+	uint8_t notfailsafeRepeat:1 ;
 	uint8_t r9mPower:2 ;
-	uint8_t failsafeSpare:2 ;
+	uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 	int8_t Failsafe[16] ;	// Currently unused
 	uint8_t		rxVratio ;
 }) V2ModelData ;

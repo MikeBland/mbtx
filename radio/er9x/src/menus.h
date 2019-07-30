@@ -62,17 +62,18 @@ extern bool warble;*/
 extern uint8_t g_posHorz ;
 
 // Menus related stuff ...
-struct MState2
-{
-  uint8_t m_posVert;
-//  uint8_t m_posHorz;
-//  void init(){m_posVert=0;};
-//  void check(uint8_t event, const prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
-	void check_columns( uint8_t event, uint8_t maxrow) ;
+//struct MState2
+//{
+////  uint8_t m_posVert;
+////  uint8_t m_posHorz;
+////  void init(){m_posVert=0;};
+////  void check(uint8_t event, const prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
 
-//  void check_simple(uint8_t event, uint8_t curr, const MenuFuncP *menuTab, uint8_t menuTabSize, uint8_t maxrow);
-//  void check_submenu_simple( uint8_t event, const prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
-};
+////  void check_simple(uint8_t event, uint8_t curr, const MenuFuncP *menuTab, uint8_t menuTabSize, uint8_t maxrow);
+////  void check_submenu_simple( uint8_t event, const prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
+//};
+
+uint8_t check_columns( uint8_t event, uint8_t maxrow) ;
 
 uint8_t evalOffset(int8_t sub) ;
 
@@ -130,7 +131,7 @@ extern struct t_popupData PopupData ;
 
 extern uint8_t CalcScaleNest ;
 extern int16_t calc_scaler( uint8_t index, uint8_t *unit, uint8_t *num_decimals) ;
-extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
+extern int16_t scaleAnalog( uint8_t channel ) ;
 
 //const prog_char *get_curve_string() ;
 extern const prog_char APM Curve_Str[] ;

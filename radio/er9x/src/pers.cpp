@@ -87,8 +87,7 @@ static bool eeLoadGeneral()
   theFile.openRd(FILE_GENERAL);
   memset(&g_eeGeneral, 0, sizeof(g_eeGeneral));
 //  uint8_t sz = theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(EEGeneral));
-  theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(g_eeGeneral));
-
+  theFile.readRlc((uint8_t*)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
 	validateName( g_eeGeneral.ownerName, sizeof(g_eeGeneral.ownerName) ) ;
 
 //  for(uint8_t i=0; i<sizeof(g_eeGeneral.ownerName);i++) // makes sure name is valid
@@ -96,7 +95,42 @@ static bool eeLoadGeneral()
 //      uint8_t idx = char2idx(g_eeGeneral.ownerName[i]);
 //      g_eeGeneral.ownerName[i] = idx2char(idx);
 //  }
+#ifdef CPUM2561
+	uint8_t offset = g_eeGeneral.offset2561Extra ;
+	if ( offset )
+	{
+		uint8_t xoffset = (uint8_t*)&g_eeGeneral.extraGeneral - (uint8_t*)&g_eeGeneral.offset2561Extra ;
+		if ( xoffset != offset )
+		{
+			uint8_t *src ;
+			uint8_t *dest ;
 
+			if ( xoffset > offset )
+			{
+				dest = (uint8_t*)&g_eeGeneral.extraGeneral + sizeof(g_eeGeneral.extraGeneral) - 1 ;
+				src = dest - xoffset + offset ;
+				for ( uint8_t i = 0 ; i < sizeof(g_eeGeneral.extraGeneral) ; i += 1 )
+				{
+					*dest-- = *src-- ;
+				}
+				while ( xoffset != offset )
+				{
+					*dest-- = 0 ;
+					xoffset -= 1 ;
+				}
+			}
+			else
+			{
+				dest = (uint8_t*)&g_eeGeneral.extraGeneral ;
+				src = (uint8_t*)&g_eeGeneral.offset2561Extra + offset ;
+				for ( uint8_t i = 0 ; i < sizeof(g_eeGeneral.extraGeneral) ; i += 1 )
+				{
+					*dest++ = *src++ ;
+				}
+			}
+		}
+	}
+#endif
   if(g_eeGeneral.myVers<MDVERS)
 	{
     sysFlags = sysFLAG_OLD_EEPROM ; // if old EEPROM - Raise flag
@@ -115,7 +149,13 @@ uint8_t modelSave( uint8_t id )
 
 void modelDefaultWrite(uint8_t id)
 {
-  memset(&g_model, 0, sizeof(ModelData));
+//  memset(&g_model, 0, sizeof(ModelData));
+	uint16_t i ;
+  uint8_t *p = (uint8_t *) &g_model ;
+	for ( i = sizeof(ModelData) ; i ; i -= 1 )
+	{
+		*p++ = 0 ;
+	}
 	setNameP(g_model.name,PSTR(STR_MODEL));
 //  strncpy_P(g_model.name,PSTR(STR_MODEL), 10);
 	div_t qr ;
@@ -411,6 +451,49 @@ void eeLoadModel(uint8_t id)
 	ptConfig->tmrModeB = g_model.tmr2ModeB ;
 	ptConfig->tmrVal = g_model.tmr2Val ;
 	ptConfig->tmrDir = g_model.tmr2Dir ;
+
+
+#ifdef SAFETY_ONLY
+	if ( g_model.modelVersion < 5 )
+	{
+		uint8_t numSafety = 16 - g_model.numVoice ;
+   	for(uint8_t i=0;i<numSafety;i++)
+		{
+			uint8_t mode ;
+    	SafetySwData *sd = &g_model.safetySw[i];
+
+			mode = ((OldSafetySwData *)sd)->opt.ss.mode ;
+			if ( mode )
+			{
+				if ( mode == 3 )
+				{
+					sd->opt.ss.mode = 1 ;
+					sd->opt.ss.swtch = ((OldSafetySwData *)sd)->opt.ss.swtch ;
+				}
+				else
+				{
+					sd->opt.ss.mode = 0 ;
+					sd->opt.ss.swtch = 0 ;
+				}
+			}
+		}
+		
+		for (uint8_t i = numSafety ; i < NUM_CHNOUT+EXTRA_VOICE_SW ; i += 1 )
+		{
+			uint8_t mode ;
+    	SafetySwData *sd = ( i >= NUM_CHNOUT ) ? &g_model.xvoiceSw[i-NUM_CHNOUT] : &g_model.safetySw[i];
+		  mode = ((OldSafetySwData *)sd)->opt.vs.vmode ;
+			if ( mode > 2 )
+			{
+				mode = 3 ;
+			}
+			sd->opt.vs.vmode = mode ;
+			sd->opt.vs.vswtch = ((OldSafetySwData *)sd)->opt.vs.vswtch ;
+		}
+		g_model.modelVersion = 6 ;
+	}
+#endif
+
 #endif // nV2
 
   resetTimer1() ;
@@ -482,11 +565,16 @@ bool eeReadGeneral()
 
 void eeWriteGeneral()
 {
-  alertx(PSTR(STR_BAD_EEPROM), true);
+//  alertx(PSTR(STR_BAD_EEPROM), true);
+  alert(PSTR(STR_BAD_EEPROM));
   message(PSTR(STR_EE_FORMAT));
   EeFsFormat();
   //alert(PSTR("format ok"));
   // alert(PSTR("default ok"));
+
+#ifdef CPUM2561
+	g_eeGeneral.offset2561Extra = (uint8_t*)&g_eeGeneral.extraGeneral - (uint8_t*)&g_eeGeneral.offset2561Extra ;
+#endif
 
   uint16_t sz = theFile.writeRlc(FILE_GENERAL,FILE_TYP_GENERAL,(uint8_t*)&g_eeGeneral,sizeof(g_eeGeneral),200);
   if(sz!=sizeof(g_eeGeneral)) alert(PSTR(STR_GENWR_ERROR));
@@ -561,12 +649,18 @@ void eeCheck(bool immediately)
 		EepromActive = '2' ;
 		
   	s_eeDirtyMsk &= ~EE_GENERAL ;
+#ifdef CPUM2561
+	g_eeGeneral.offset2561Extra = (uint8_t*)&g_eeGeneral.extraGeneral - (uint8_t*)&g_eeGeneral.offset2561Extra ;
+#endif
     if(theWriteFile.writeRlc(FILE_TMP, FILE_TYP_GENERAL, (uint8_t*)&g_eeGeneral,
                         sizeof(g_eeGeneral),20) == sizeof(g_eeGeneral))
     {
       EFile::swap(FILE_GENERAL,FILE_TMP);
-    }else{
-      if(theWriteFile.write_errno()==ERR_TMO){
+    }
+		else
+		{
+      if(theWriteFile.write_errno()==ERR_TMO)
+			{
         s_eeDirtyMsk |= EE_GENERAL; //try again
         s_eeDirtyTime10ms = get_tmr10ms() - WRITE_DELAY_10MS;
     		if(heartbeat == 0x3)
@@ -575,7 +669,9 @@ void eeCheck(bool immediately)
     		    heartbeat = 0;
     		}
 
-      }else{
+      }
+			else
+			{
         alert(Str_EEPROM_Overflow);
       }
     }

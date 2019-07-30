@@ -259,11 +259,11 @@
 //#else
 //#define STR_PXX_TYPE       " Type\037 Country\037Bind\037Range"
 //#endif
+#define M_NY_STR_NZ			{1,'N','Y'}
 #ifdef MULTI_PROTOCOL
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004None"
-#define M_NY_STR			"\001NY"
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "\0121st Chan\037Proto"
@@ -346,7 +346,7 @@
 #define STR_ROTATE         "Rotate"
 #define STR_DEAFULT_SW_PAGE "Deflt Sw\037CustomStkNames\037Auto Limits\037Volume Control"
 #else // !XSW_MOD
-#define STR_DEAFULT_SW_PAGE "Default Sw\037CustomStkNames\037Auto Limits\037Volume Control"
+#define STR_DEAFULT_SW_PAGE "Deflt Sw\037CustomStkNames\037Auto Limits\037Volume Control"
 #endif  // XSW_MOD
 #define STR_DEAFULT_SW     "Default Sw"
 #define STR_MEM_WARN       "Memory Warning"
@@ -381,7 +381,7 @@
 #define CURV_STR           "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17"
 // CSWITCH_STR indexed 7 chars each
 #ifdef VERSION3
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 #define CSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    v1==v2 v1!=v2 v1>v2  v1<v2  Latch  F-Flop TimeOffv\140=val 1-Shot 1-ShotR"
 #else
 #define CSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    v1==v2 v1!=v2 v1>v2  v1<v2  Latch  F-Flop TimeOffv\140=val "

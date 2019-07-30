@@ -31,6 +31,8 @@
 #define MULTI_PROTOCOL	1
 #endif
 
+#define SAFETY_ONLY		1
+
 //#define STACK_TRACE				1
 
 // Remove features from M64-FrSky version
@@ -63,6 +65,28 @@
 #define USE_ADJUSTERS		1
 #define FAILSAFE				1
 #endif
+
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+#define R9M_SUPPORT		1
+#endif
+
+#if defined(CPUM128) || defined(CPUM2561)
+#define XYCURVE		1
+#endif
+
+#if defined(CPUM128) || defined(CPUM2561)
+#define BIND_OPTIONS	1
+#endif
+
+#if defined(CPUM128) || defined(CPUM2561)
+#define DSM_BIND_RESPONSE		1
+#endif
+
+#if defined(CPUM128) || defined(CPUM2561)
+#define EXTEND_SCALERS		1
+#endif
+
+
 //#define NOSAFETY_A_OR_V
 //#define NOSAFETY_VOICE
 
@@ -92,6 +116,7 @@
 #ifdef COOLLVSE
 #define LCD_OTHER   1
 #define LCD_EEPE    0
+#define LCD_OFFSET  0
 #else
 #define LCD_OTHER   0    /* turn on these if you know what you're doing */
 #define LCD_EEPE    0
@@ -749,75 +774,45 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 
 
 #ifdef MULTI_PROTOCOL
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec "
 #define M_Flysky          0
-#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  CX20  "
 #define M_Hubsan          1
-#define M_HUBSAN_STR "\004H107H301H501"
 #define M_Frsky           2
 #define M_Hisky           3
-#define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2            4
 #define M_DSM	            5
-#if defined(CPUM128) || defined(CPUM2561)
-#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
-#else
-#define M_DSM2_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11"
-#endif
 #define M_Devo  	      	6
 #define M_YD717	          7
-#define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
 #define M_KN	          	8
-#define M_KN_STR "\006WLTOYSFEILUN"
 #define M_SymaX	          9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		       	 10
-#define M_SLT_STR "\005SLT  VISTA"
 #define M_CX10		       11
-#define M_CX10_STR "\007GREEN  BLUE   DM007  ---    J3015_1J3015_2MK33041"
 #define M_CG023		       12
-#define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
-#define M_BAYANG_STR	"\006BayangH8S3D "
 #define M_FRSKYX	       14
-#define M_FRSKY_STR "\005CH_16CH_8 EU_16EU_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
-#define M_MT99XX_STR "\005MT   H7   YZ   LS   FY805"
 #define M_MJXQ		       17
-#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 H26WH"
 #define M_SHENQI				 18
 #define M_FY326					 19
-#define M_FY326_STR	"\005FY326FY319"
 #define M_SFHSS					 20
 #define M_J6PRO					 21
 #define M_FQ777					 22
 #define M_ASSAN					 23
 #define M_FrskyV				 24
 #define M_HONTAI				 25
-#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1FQ777_"
 #define M_OPENLRS				 26
 #define M_AFHD2SA				 27
-#define M_AFHD2SA_STR "\007PWMIBUSPPMIBUSPWMSBUSPPM_SBUS"
 #define M_Q2X2					 28
-#define M_Q2X2_STR	 "\004Q222Q242Q282"
 #define M_WK2x01			 	 29
-#define M_WK2x01_STR	"\006WK2801WK2401W6_5_1W6_6_1W6_HELW6HELI"
 #define M_Q303				 	 30
-#define M_Q303_STR "\006Q303  CX35  CX10D CX10WD"
-
 #define M_GW008					 31
 #define M_DM002          32
 #define M_CABELL         33
-#define M_CABELL_STR "\006CAB_V3C_TELEM-     -     -     -     F_SAFEUNBIND"
 #define M_ESKY150        34
 #define M_H8_3D          35
-#define M_H8_3D_STR		"\007H8_3D  H20H   H20MiniH30Mini"
 #define M_CORONA         36
-#define M_CORONA_STR	"\006COR_V1COR_V2FD_V3 "
 #define M_CFlie          37
 #define M_Hitec          38
-#define M_HITEC_STR	"\006Opt_FwOptHubMinima"
 #define M_LAST_MULTI		 38
 #endif // MULTI_PROTOCOL
 
@@ -883,8 +878,22 @@ inline bool is3PosSwitch( uint8_t dswitch ) {
 bool    keyState(EnumKeys enuk);
 #ifdef SWITCH_MAPPING
 uint8_t hwKeyState( uint8_t key ) ;
+extern uint8_t Sw3posMask ;
+#define IDX_3POS_BIT		1
+#define THR_3POS_BIT		2
+#define RUD_3POS_BIT		4
+#define ELE_3POS_BIT		8
+#define AIL_3POS_BIT		16
+#define GEA_3POS_BIT		32
+
+extern const prog_uint8_t APM Sw2posIndex[] ;
+extern const prog_uint8_t APM Sw3posIndex[] ;
+
 #endif
 #endif  // XSW_MOD
+
+extern const prog_uint8_t APM _bitmask[] ;
+#define XBITMASK(bit) pgm_read_byte( _bitmask + bit )
 
 /// Liefert das naechste Tasten-Event, auch trim-Tasten.
 /// Das Ergebnis hat die Form:
@@ -913,7 +922,7 @@ void    popMenu(bool uppermost=false);
 /// Gibt Alarm Maske auf lcd aus.
 /// Die Maske wird so lange angezeigt bis eine beliebige Taste gedrueckt wird.
 void alert(const prog_char * s);
-void alertx(const prog_char * s, bool defaults );
+//void alertx(const prog_char * s, bool defaults );
 void message(const prog_char * s);
 /// periodisches Hauptprogramm
 //static void    perMain();
@@ -1294,7 +1303,7 @@ extern const char stamp2[];
 extern const char stamp3[];
 extern const char stamp4[];
 extern const char stamp5[];
-extern const char Stamps[];
+extern const char APM Stamps[];
 #include "myeeprom.h"
 
 extern const prog_uchar APM s9xsplashMarker[] ;
@@ -1393,7 +1402,7 @@ extern int16_t m_to_ft( int16_t metres ) ;
 #ifdef XSW_MOD
 uint16_t getCurrentSwitchStates( void ) ;
 #else
-uint8_t getCurrentSwitchStates( void ) ;
+uint16_t getCurrentSwitchStates( void ) ;
 #endif
 
 // Rotary encoder movement states

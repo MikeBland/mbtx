@@ -256,7 +256,7 @@
 #define STR_MULTI_TYPE		"Codage\037Type\037Power\037Bind     Autobind\037Portee"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004N/A"
-#define M_NY_STR			"\001NO"
+#define M_NY_STR_NZ			{1,'N','O'}
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "1ere voie\037Codag"
@@ -335,7 +335,7 @@
 #define STR_SPLASH_SCREEN  "Logo Accueil"
 #define STR_SPLASH_NAME    "Nom Logo"
 #define STR_THR_WARNING    "Alerte gaz"
-#define STR_DEAFULT_SW_PAGE "Int/defaut\037Renom. manches\037Limites Auto\037Controle volume"
+#define STR_DEAFULT_SW_PAGE "Int/def\037Renom. manches\037Limites Auto\037Controle volume"
 #define STR_DEAFULT_SW     "Int/defaut"
 #define STR_MEM_WARN       "Alerte memoire"
 #define STR_ALARM_WARN     "Alerte alarmes"

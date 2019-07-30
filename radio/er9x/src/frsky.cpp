@@ -129,7 +129,7 @@ uint8_t TmOK ;
 
 uint8_t AltitudeDecimals ;
 int16_t WholeAltitude ;
-uint8_t A1Received = 0 ;
+//uint8_t A1Received = 0 ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 
@@ -181,6 +181,10 @@ int16_t Frsky_Amp_hour_prescale ;
 uint8_t FrskyTelemetryType ;
 
 uint16_t DsmABLRFH[6] ;
+
+#if defined(CPUM128) || defined(CPUM2561)
+uint8_t TelRxCount ;
+#endif
 
 #if defined(VARIO)
 struct t_vario VarioData ;
@@ -235,7 +239,7 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 	store_hub_data( index, value ) ;
 }
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(EXTEND_SCALERS)
 void store_telemetry_scaler( uint8_t index, uint16_t value )
 {
 	switch ( index )
@@ -880,13 +884,13 @@ void processSportPacket()
 				case 4 :		// Battery from X8R
 //		      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
 					store_hub_data( FR_RXV, value ) ;
-					if ( A1Received )
-					{
+//					if ( A1Received )
+//					{
 						break ;
-					}
+//					}
 				case 2 :
 		      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
-					A1Received = 1 ;
+//					A1Received = 1 ;
 				break ;
   		    
 				case 3 :
@@ -1052,7 +1056,7 @@ void processSportPacket()
 
 
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(DSM_BIND_RESPONSE)
 
 
 void dsmBindResponse( uint8_t mode, int8_t channels )
@@ -1293,6 +1297,10 @@ ISR(USART0_RX_vect)
   data = UDR0; // USART data register 0
 
 	uint8_t numbytes = numPktBytes ;
+
+#if defined(CPUM128) || defined(CPUM2561)
+	TelRxCount += 1 ;
+#endif
   
 	if (stat & ((1 << FE0) | (1 << DOR0) | (1 << UPE0)))
   { // discard buffer and start fresh on any comms error
@@ -1314,7 +1322,7 @@ ISR(USART0_RX_vect)
 //    {
 //		TezDebug0 += 1 ;		
 		
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(DSM_BIND_RESPONSE)
 		
 	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
 	 {

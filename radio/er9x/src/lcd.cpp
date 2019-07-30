@@ -35,8 +35,6 @@ uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8];
 
 const prog_uint8_t APM _bitmask[]= { 1,2,4,8,16,32,64,128 } ;
 
-#define XBITMASK(bit) pgm_read_byte( _bitmask + bit )
-
 const prog_uchar APM font[] = {
 #include "font.lbm"
 };
@@ -56,7 +54,13 @@ const prog_uchar APM font_dblsize[] = {
 
 void lcd_clear()
 {
-  memset(DisplayBuf, 0, sizeof(DisplayBuf));
+//  memset(DisplayBuf, 0, sizeof(DisplayBuf));
+	uint16_t i ;
+  uint8_t *p = (uint8_t *) DisplayBuf ;
+	for ( i = sizeof(DisplayBuf) ; i ; i -= 1 )
+	{
+		*p++ = 0 ;
+	}
 }
 
 
@@ -1073,7 +1077,11 @@ void refreshDiplay()
   LcdLock = 1 ;             // Lock LCD data lines
   uint8_t *p = DisplayBuf;
 #if SERIAL_LCD
+ #ifdef LCD_OFFSET
+  lcdSendDataBits(p, LCD_OFFSET);
+ #else
   lcdSendDataBits(p, COLUMN_START_LO);
+ #endif
 #else
   lcdSendDataBytes(p, COLUMN_START_LO);
 #endif

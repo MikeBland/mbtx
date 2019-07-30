@@ -258,7 +258,7 @@
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004None"
-#define M_NY_STR			"\001NY"
+#define M_NY_STR_NZ			{1,'N','Y'}
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "1. Kanal\037Proto"
@@ -337,7 +337,7 @@
 #define STR_SPLASH_SCREEN  "Startbildschirm"
 #define STR_SPLASH_NAME    "Start Name"
 #define STR_THR_WARNING    "Gas Warnung"
-#define STR_DEAFULT_SW_PAGE "Stdr.Schalt\037CustomStkNames\037Autogrenze\037Throttle Default"
+#define STR_DEAFULT_SW_PAGE "StdSchlt\037CustomStkNames\037Autogrenze\037Throttle Default"
 #define STR_DEAFULT_SW     "Stdr.Schalt"
 #define STR_MEM_WARN       "Speicher Warnung"
 #define STR_ALARM_WARN     "Alarm Warnung"

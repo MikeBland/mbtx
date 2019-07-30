@@ -41,6 +41,45 @@
 #include "templates.h"
 #include "language.h"
 
+void clearMixes()
+{
+	uint16_t i ;
+  uint8_t *md = (uint8_t *) &g_model.mixData[0] ;
+	for ( i = sizeof(g_model.mixData) ; i ; i -= 1 )
+	{
+		*md++ = 0 ;
+	}
+//	memset(g_model.mixData,0,sizeof(g_model.mixData)); //clear all mixes
+}
+
+#ifdef NO_TEMPLATES
+void setMix( uint8_t mix, uint8_t order )
+{
+  MixData *md = &g_model.mixData[mix];
+//  memset( md, 0, sizeof(MixData) ) ; // Not needed, all mixes already cleared
+  md->destCh = mix + 1 ;
+	md->weight = 100 ;
+#ifndef V2
+	md->lateOffset = 1 ;
+#endif
+	md->srcRaw = ( order & 3 ) + 1 ;
+}
+
+void applyTemplate()
+{
+	uint8_t bch = pgm_read_byte(bchout_ar + g_eeGeneral.templateSetup) ;
+  clearMixes();
+  setMix( 3, bch ) ;
+	bch /= 4 ;
+  setMix( 2, bch ) ;
+	bch /= 4 ;
+  setMix( 1, bch ) ;
+	bch /= 4 ;
+  setMix( 0, bch ) ;
+}
+
+#else
+
 #ifndef NO_TEMPLATES
 
 const static prog_char APM string_1[] = STR_T_S_4CHAN   ;
@@ -88,11 +127,6 @@ static MixData* setDest(uint8_t dch)
 //#ifdef NO_TEMPLATES
 //inline
 //#endif 
-void clearMixes()
-{
-    memset(g_model.mixData,0,sizeof(g_model.mixData)); //clear all mixes
-}
-
 #ifndef NO_TEMPLATES
 void clearCurves()
 {
@@ -143,6 +177,8 @@ MixData *setMix( uint8_t dch, uint8_t stick )
 	md->srcRaw=CM( stick ) ;
 	return md ;
 }
+
+
 
 
 #ifdef NO_TEMPLATES
@@ -223,8 +259,12 @@ void applyTemplate(uint8_t idx)
 			sd->val = g_model.throttleIdle ? 0 : -100 ;
 #else
     	SafetySwData *sd = &g_model.safetySw[ICC(STK_THR)-1] ;
-			sd->opt.ss.mode = 3 ;
-			sd->opt.ss.swtch = DSW_THR ;
+ #ifdef SAFETY_ONLY
+ 			sd->opt.ss.mode = 1 ;
+ #else
+ 			sd->opt.ss.mode = 3 ;
+ #endif
+ 			sd->opt.ss.swtch = DSW_THR ;
 			sd->opt.ss.val = g_model.throttleIdle ? 0 : -100 ;
 #endif // V2
     }
@@ -319,5 +359,7 @@ void applyTemplate(uint8_t idx)
 #endif
 
 }
+
+#endif
 
 

@@ -64,9 +64,10 @@
 #define FR_RXV				40
 #define FR_A3					41
 #define FR_A4					42
-#if defined(CPUM128) || defined(CPUM2561)
 /* Extra data for Mavlink via FrSky */
+#if defined(CPUM128) || defined(CPUM2561) || defined (EXTEND_SCALERS)
 #define FR_BASEMODE             43
+ #if defined(CPUM128) || defined(CPUM2561)
 #define FR_WP_DIST              44
 #define FR_HEALTH               45
 #define FR_MSG                  46
@@ -79,6 +80,9 @@
 #define FR_VCC                  53
 /* Extra data for Mavlink via FrSky */
 #define FR_TRASH			54  // Used for invalid id
+ #else
+#define FR_TRASH			44	// Used for invalid id
+ #endif
 #else
 #define FR_TRASH			43	// Used for invalid id
 #endif
@@ -91,7 +95,11 @@
 #define HUBDATALENGTH  55
 #define HUBMINMAXLEN    7			// Items with a min and max field
 #else
+ #if defined (EXTEND_SCALERS)
+#define HUBDATALENGTH 45
+ #else
 #define HUBDATALENGTH 44
+ #endif
 #define HUBMINMAXLEN	7			// Items with a min and max field
 #endif
 //#define HUBOFFSETLEN	7			// Items with an offset field
@@ -447,7 +455,7 @@ extern uint16_t DsmABLRFH[] ;
 
 extern struct t_hub_max_min FrskyHubMaxMin ;
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(EXTEND_SCALERS)
 extern void store_telemetry_scaler( uint8_t index, uint16_t value ) ;
 #endif
 

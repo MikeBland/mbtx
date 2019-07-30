@@ -172,7 +172,7 @@ void Key::input(bool val, EnumKeys enuk)
     case 4:
     case 2:
       if(m_cnt >= 48)  { //3 6 12 24 48 pulses in every 480ms
-        m_state >>= 1;
+        m_state /= 2 ;  //        m_state >>= 1;
         m_cnt     = 0;
       }
       //fallthrough
@@ -695,7 +695,8 @@ uint8_t hwKeyState( uint8_t key )
 		xxx = ~PINE & (1<<INP_E_ElevDR) ;
 		if ( yyy )
 		{
-			zzz = ExtraInputs & (1<<(g_eeGeneral.ele2source-1)) ; 
+			zzz = (g_eeGeneral.ele2source-1) ;
+			zzz = ExtraInputs & (1<<zzz) ; 
 			if ( yyy == 2 )
 			{
 				xxx = zzz ;
@@ -707,13 +708,54 @@ uint8_t hwKeyState( uint8_t key )
 			}
 		}
 	}
-	yyy -= 6 ;
+	
+	yyy -= 3 ;
+	if ( yyy <= 2 )	// 34-36
+	{
+    xxx = ~PING & (1<<INP_G_RuddDR);
+		if ( yyy )
+		{
+			zzz = (g_eeGeneral.rud2source-1) ;
+			zzz = ExtraInputs & (1<<zzz) ; 
+			if ( yyy == 2 )
+			{
+				xxx = zzz ;
+			}
+			else
+			{
+				xxx |= zzz ;
+				xxx = !xxx ;
+			}
+		}
+	}
+	
+	yyy -= 3 ;
 	if ( yyy <= 2 )	// 37-39
 	{
 		xxx = !readAilIp() ;
 		if ( yyy )
 		{
-			zzz = ExtraInputs & (1<<(g_eeGeneral.ail2source-1)) ;
+			zzz = (g_eeGeneral.ail2source-1) ;
+			zzz = ExtraInputs & (1<<zzz) ; 
+			if ( yyy == 2 )
+			{
+				xxx = zzz ;
+			}
+			else
+			{
+				xxx |= zzz ;
+				xxx = !xxx ;
+			}
+		}
+	}
+	yyy -= 3 ;
+	if ( yyy <= 2 )	// 40-42
+	{
+		xxx = ~PINE & (1<<INP_E_Gear) ;
+		if ( yyy )
+		{
+			zzz = (g_eeGeneral.gea2source-1) ;
+			zzz = ExtraInputs & (1<<zzz) ; 
 			if ( yyy == 2 )
 			{
 				xxx = zzz ;

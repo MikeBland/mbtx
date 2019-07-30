@@ -414,7 +414,7 @@ ISR(TIMER1_CAPT_vect) //2MHz pulse generation
 		y -= 1 ;
 	}
 	ICR1 = y ;
-	x >>= 4 ;
+	x /= 16 ; // same as x >>= 4 but less code
 	if ( x == 0 )
 	{
 	  Serial_pulsePtr += 1 ;
@@ -501,7 +501,7 @@ ISR(TIMER1_COMPB_vect) // PXX main interrupt
     {
         OCR1B += 16 ;
     }
-    if ( (x >>= 1) == 0 )
+    if ( (x /= 2) == 0 )	//    if ( (x >>= 1) == 0 )
     {
         if ( *(++pulses2MHzptr) == 0 )
         {
@@ -825,10 +825,10 @@ static void setupPulsesPXX()
 			}
 	    if ( FailsafeCounter == 0 )
 			{
-				if ( g_model.failsafeRepeat == 0 )
-				{
+//				if ( g_model.failsafeRepeat == 0 )
+//				{
 					FailsafeCounter = 1000 ;
-				}
+//				}
 			}
 		}
 	}
@@ -910,8 +910,7 @@ static void setupPulsesPXX()
       putPcmByte( chan_1 >> 4 ) ;  // High byte of channel
     }
 #endif
-#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(BIND_OPTIONS)
 		flag1 = 0 ;
 		if ( PxxExtra & 1 )
 		{
@@ -924,9 +923,16 @@ static void setupPulsesPXX()
 #else
 		flag1 = 0 ;
 #endif		
+#if defined(R9M_SUPPORT)
 		if ( g_model.sub_protocol == 3 )	// R9M
 		{
 			flag1 |= g_model.r9mPower << 3 ;
+#if defined(CPUM128) || defined(CPUM2561)
+			if ( g_model.r9MflexMode == 2 )
+			{
+				flag1 |= 1 << 6 ;
+			}
+#endif		
 		}
 		putPcmByte( flag1 ) ;	// Extra flags
 #else
@@ -1249,10 +1255,10 @@ void setupPulsesSerial(void)
 				}
 			  if ( FailsafeCounter == 0 )
 				{
-					if ( g_model.failsafeRepeat == 0 )
-					{
+//					if ( g_model.failsafeRepeat == 0 )
+//					{
 						FailsafeCounter = 1000 ;
-					}
+//					}
 				}
 			}
 #endif			

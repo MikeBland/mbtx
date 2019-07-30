@@ -256,7 +256,7 @@
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004None"
-#define M_NY_STR			"\001NY"
+#define M_NY_STR_NZ			{1,'N','Y'}
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO "1st Kanal\037Proto"
@@ -335,7 +335,7 @@
 #define STR_SPLASH_SCREEN  "Oppstart skjerm"
 #define STR_SPLASH_NAME    "Oppstart navn"
 #define STR_THR_WARNING    "Gasspak advarsel"
-#define STR_DEAFULT_SW_PAGE "Standard Br\037CustomStkNames\037Auto Limits\037Throttle Default"
+#define STR_DEAFULT_SW_PAGE "Std Br\037CustomStkNames\037Auto Limits\037Throttle Default"
 #define STR_DEAFULT_SW     "Standard Br"
 #define STR_MEM_WARN       "Minne advarsel"
 #define STR_ALARM_WARN     "Alarm advarsel"

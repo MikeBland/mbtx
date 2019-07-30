@@ -255,7 +255,7 @@
 #define STR_MULTI_TYPE		"Protocol\037Type\037Power\037Bind     Autobind\037Range"
 #define STR_MULTI_OPTION	"\013Option"
 #define M_NONE_STR			"\004None"
-#define M_NY_STR			"\001NY"
+#define M_NY_STR_NZ			{1,'N','Y'}
 #define M_LH_STR			"\004HighLow "
 #endif // MULTI_PROTOCOL
 #define STR_1ST_CHAN_PROTO 	"Kanal 1\037Proto"
@@ -335,8 +335,8 @@
 #define STR_SPLASH_SCREEN   "Startbild"
 #define STR_SPLASH_NAME     "Startnamn"
 #define STR_THR_WARNING     "Gasvarning"
-#define STR_DEAFULT_SW_PAGE "Default Bw\037CustomStkNames\037AutoGranser\037Throttle Default"
-#define STR_DEAFULT_SW      "Default Br"
+#define STR_DEAFULT_SW_PAGE "Deflt Bw\037CustomStkNames\037AutoGranser\037Throttle Default"
+#define STR_DEAFULT_SW      "Deflt Br"
 #define STR_MEM_WARN        "MinnesVarning"
 #define STR_ALARM_WARN      "AlarmVarning"
 #define STR_POTSCROLL       "PotBladdring"
