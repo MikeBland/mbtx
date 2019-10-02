@@ -361,6 +361,7 @@ private slots:
     void on_xpulsePolCB_currentIndexChanged(int index);
     void on_trimSWCB_currentIndexChanged(int index);
     void on_trimIncCB_currentIndexChanged(int index);
+    void on_instaTrimTypeCB_currentIndexChanged(int index) ;
     void on_volumeControlCB_currentIndexChanged(int index) ;
     void on_timerDirCB_currentIndexChanged(int index);
     void on_timerModeCB_currentIndexChanged(int index);

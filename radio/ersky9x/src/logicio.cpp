@@ -1926,42 +1926,48 @@ uint32_t keyState(EnumKeys enuk)
 #ifdef PCBX9D
 void init_keys()
 {
-#ifdef PCBX9LITE
-
+#ifdef REV19
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	configure_pins( PIN_BUTTON_ENCODER, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	configure_pins( PIN_BUTTON_MENU | PIN_BUTTON_EXIT | PIN_BUTTON_PAGE, PIN_INPUT | PIN_PULLUP | PIN_PORTD) ;
+#else
+ #ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( PIN_BUTTON_MENU | PIN_BUTTON_EXIT | PIN_BUTTON_PAGE | PIN_BUTTON_ENCODER, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-#else // X3
- #ifdef PCBX7
+ #else // X3
+  #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
-  #ifdef PCBT12
+   #ifdef PCBT12
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0E00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-  #else
+   #else
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0400, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-  #endif
- #else // PCBX7
-  #ifdef REV9E
+   #endif
+  #else // PCBX7
+   #ifdef REV9E
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOFEN ; 		// Enable portF clock
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0x0001, PIN_INPUT | PIN_PULLUP | PIN_PORTF ) ;
-  #else
-   #ifdef PCBXLITE
+   #else
+    #ifdef PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x7D80, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-   #else // PCBXLITE
+    #else // PCBXLITE
 // Buttons PE10, 11, 12, PD2, 3, 7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x1C00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	configure_pins( 0x008C, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 // Extra inputs
 	configure_pins( 0x6000, PIN_INPUT | PIN_PORTA | PIN_PULLUP ) ;
-   #endif // PCBXLITE
-  #endif // REV9E
- #endif // PCBX7
-#endif // PCBX9LITE
+    #endif // PCBXLITE
+   #endif // REV9E
+  #endif // PCBX7
+ #endif // PCBX9LITE
+#endif // REV19
 }
 
 void init_trims()
@@ -2134,6 +2140,26 @@ uint32_t read_keys()
 	y |= 0x02 << KEY_UP ;			// up
 	y |= 0x02 << KEY_DOWN ;		// DOWN
 #else // PCBX9LITE
+#ifdef REV19
+	x = GPIOD->IDR ; // 10 RIGHT(+), 11 LEFT(-), 12 ENT(DOWN)
+	y = 0 ;
+	
+	if ( x & PIN_BUTTON_MENU )
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & PIN_BUTTON_PAGE )
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	if ( x & PIN_BUTTON_EXIT )
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	y |= 0x02 << KEY_UP ;			// up
+	y |= 0x02 << KEY_DOWN ;		// DOWN
+#else
 	
 	y = 0 ;
 	if ( x & PIN_BUTTON_MENU )
@@ -2167,6 +2193,7 @@ uint32_t read_keys()
 		y |= 0x02 << KEY_EXIT ;			// EXIT
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 	}
+#endif // REV19
 #endif // PCBX9LITE
 #endif // REV9E
 #endif // PCBX7
@@ -2446,6 +2473,22 @@ uint32_t read_trims()
 // 
 void setup_switches()
 {
+// For REV19:
+// PE2, PE7, PE8, PE9, PE13, PE14, PE15, PE0, PE1 | SWB_L, D_H, G_L, G_H, D_L, F, C_H, A_L, B_H
+// PD14 | H
+// PB3, PB4, PB5 | E_H, E_L, A_H
+// PA5  SWC_L
+#ifdef REV19
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portDclock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	configure_pins( PIN_SW_C_L, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( PIN_SW_E_H | PIN_SW_E_L | PIN_SW_A_H, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( PIN_SW_H, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( PIN_SW_B_L | PIN_SW_D_H | PIN_SW_G_L | PIN_SW_G_H | PIN_SW_D_L | PIN_SW_F | PIN_SW_C_H | PIN_SW_A_L | PIN_SW_B_H, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+#endif
+	
 #ifdef PCBX9LITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock

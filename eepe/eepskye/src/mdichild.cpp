@@ -864,10 +864,10 @@ void MdiChild::OpenEditWindow()
 				{
     			type = " (Jumper T12)" ;
 				}
-				else if ( radioData.type == RADIO_TYPE_XXX )
+				else if ( radioData.type == RADIO_TYPE_X9L )
 				{
-//    			type = " (XXX)" ;
-    			type = " (XXX)" ;
+//    			type = " (X9L)" ;
+    			type = " (X9Lite)" ;
 				}
         t->setWindowTitle(tr("Editing model %1: ").arg(i) + mname + type ) ;
 
@@ -947,9 +947,9 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_T12 ;
 				radioData.bitType = RADIO_BITTYPE_T12 ;
 			break ;
-			case PHYSICAL_XXX :
-				radioData.type = RADIO_TYPE_XXX ;
-				radioData.bitType = RADIO_BITTYPE_XXX ;
+			case PHYSICAL_X9L :
+				radioData.type = RADIO_TYPE_X9L ;
+				radioData.bitType = RADIO_BITTYPE_X9L ;
 			break ;
 
 		}
@@ -993,9 +993,9 @@ void MdiChild::getPhysicalType()
 		{
 			radioData.type = RADIO_TYPE_T12 ;
 		}
-		if ( x == 10 )	// XXX
+		if ( x == 10 )	// X9L
 		{
-			radioData.type = RADIO_TYPE_XXX ;
+			radioData.type = RADIO_TYPE_X9L ;
 		}
 	}
 }
@@ -1057,12 +1057,12 @@ void MdiChild::newFile()
 			radioData.type = RADIO_TYPE_T12 ;
     	type = " (Jumper T12)" ;
 		}
-		if ( x == 10 )	// XXX
+		if ( x == 10 )	// X9L
 		{
-			radioData.type = RADIO_TYPE_XXX ;
-//    	type = " (XXX)" ;
-    	type = " (XXX)" ;
-			radioData.bitType = RADIO_BITTYPE_XXX ;
+			radioData.type = RADIO_TYPE_X9L ;
+//    	type = " (X9L)" ;
+    	type = " (X9Lite)" ;
+			radioData.bitType = RADIO_BITTYPE_X9L ;
 
 		}
     isUntitled = true;
@@ -1519,7 +1519,7 @@ bool MdiChild::saveFile(const QString &fileName, bool setCurrent)
         
         rawsaveFile( &radioData, temp);
 				int fileSize = EEFULLSIZE ;
-        if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+        if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 				{
 					fileSize = 32768 ;
 				}
@@ -1624,10 +1624,10 @@ void MdiChild::setCurrentFile(const QString &fileName)
 		{
     	type = " (Jumper T12)" ;
 		}
-		else if ( x == RADIO_TYPE_XXX )
+		else if ( x == RADIO_TYPE_X9L )
 		{
-//    	type = " (XXX)" ;
-    	type = " (XXX)" ;
+//    	type = " (X9L)" ;
+    	type = " (X9Lite)" ;
 		}
 //		if ( x == 5 )
 //		{
@@ -1767,7 +1767,7 @@ void MdiChild::burnTo()  // write to Tx
       			qint32 fsize ;
 //						fsize = (MAX_IMODELS+1)*8192 ;
 						fsize = 64*8192 ;
-            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE  | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE  | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}
@@ -1931,7 +1931,12 @@ void MdiChild::generalDefault()
     radioData.generalSettings.calibSpanPos[i] = 0x300;
   }
   int16_t sum=0;
-  for(int i=0; i<12;i++) sum+=radioData.generalSettings.calibMid[i];
+  for(int i=0; i<12;i++)
+  {
+      uint16_t *p ;
+      p = (uint16_t *)radioData.generalSettings.calibMid ;
+      for(uint8_t i=0; i<12;i++) sum+=*p++;
+  }
   radioData.generalSettings.chkSum = sum;
 	
 	// Now update the trainer values if necessary.
@@ -2005,7 +2010,7 @@ void MdiChild::modelDefault(uint8_t id)
 	}
 	else
 	{
-//	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) )
+//	if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L ) )
 //	{
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;

@@ -4613,7 +4613,7 @@ static int32_t exec_sysflags()
 {
 //	eatCloseBracket() ;
 	
-#if defined(PCBX9D) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX12D) || defined(PCBX10) || defined(REV19)
 	return ScriptFlags | SCRIPT_FRSKY ;
 #else
 	return ScriptFlags ;

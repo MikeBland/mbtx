@@ -27,6 +27,7 @@ public:
     void waitForFinish();
 //    void addReadFuses();
     int doFileCopy( QString destFile, QString sourceFile, quint32 size, quint32 offset ) ;
+    int doSdRead( QString destFile, QString sourceFile, quint32 offset ) ;
 
 protected slots:
     void doAddTextStdOut();

@@ -93,6 +93,11 @@ ifeq ($(PCB), X9D)
   endif
  endif
 else
+ifeq ($(PCBLEM1), 1)
+ CPPDEFS += -DBASIC 
+ BASIC = 1
+ OBJDIR = lem1obj
+else
  ifeq ($(PCB), DUE)
   OBJDIR = skyDobj
  else
@@ -129,6 +134,7 @@ else
    endif
   endif
  endif
+endif
 endif
 endif
 endif
@@ -207,6 +213,9 @@ ifeq ($(PCB), X9D)
   endif
  endif
 else
+ifeq ($(PCBLEM1), 1)
+ PROJECT = lemon1
+else
  ifeq ($(PCB), 9XT)
    PROJECT      = ersky9x9XT
  else
@@ -228,6 +237,7 @@ else
    endif
   endif
  endif
+endif
 endif
 endif
 endif
@@ -263,6 +273,14 @@ ifeq ($(RUN_FROM_FLASH), 0)
 	endif
  endif
  FULL_PRJ = $(PROJECT)_ram
+else
+ifeq ($(PCBLEM1), 1)
+ LDSCRIPT = STM32F103VETx_FLASH.ld
+ CPPDEFS += -DHSE_VALUE=8000000
+ CPPDEFS += -DPCBLEM1 
+ FULL_PRJ = $(PROJECT)_rom
+ UDEFS = -Dstm32f103
+ UDEFS = -DSTM32F10X_HD
 else
  ifeq ($(SAM3S2), 1)
  CPPDEFS += -DPCBSKY 
@@ -343,6 +361,7 @@ else
   endif
  endif
  FULL_PRJ = $(PROJECT)_rom
+endif
 endif
 
 # List all user C define here, like -D_DEBUG=1
@@ -817,6 +836,60 @@ endif
 ASRC = X9D/startup_stm32f2xx.s
 
 else
+ifeq ($(PCBLEM1), 1)
+
+
+# List C source files here
+SRC  = core_cm3.c \
+       port.c \
+       stm103/system_stm32f1xx.c \
+       stm103/stm32f10x_sdio.c \
+       stm103/stm32f10x_rcc.c \
+       stm103/stm32f10x_gpio.c \
+       stm103/stm32f10x_dma.c \
+       stm103/sdio_sd.c \
+       coos.c
+
+CPPSRC = ersky9x.cpp \
+         stm103/t.cpp \
+			stm103/lcd_driver.cpp \
+			stm103/sound.cpp \
+       	stm103/diskio.cpp \
+			stm103/power.cpp \
+         stm103/watchdog.cpp \
+         stm103/pulsesDriver.cpp \
+			stamp.cpp \
+         templates.cpp \
+			frsky.cpp \
+			menus.cpp \
+			mixer.cpp \
+			drivers.cpp \
+         timers.cpp \
+			stm103/logicio103.cpp \
+			stm103/analog103.cpp \
+         ff.cpp \
+			logs.cpp \
+         audio.cpp \
+			en.cpp \
+			de.cpp \
+			fr.cpp \
+			sbus.cpp \
+			pers.cpp \
+			lcd.cpp
+
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
+
+#			menus.cpp
+
+
+#			stm103/stf3210x_sdio.cpp
+
+# List ASM source files here
+ASRC = stm103/startup_stm32f103xe.s
+
+else
 
 # List C source files here
 SRC  = core_cm3.c \
@@ -949,6 +1022,8 @@ endif
 
 endif
 
+endif
+
 # List all user directories here
 UINCDIR = ./sky/joy/inc
 # \
@@ -1058,6 +1133,10 @@ ifeq ($(PCB), X10)
  endif
 endif
 
+ifeq ($(PCBLEM1), 1)
+ EXT_MOD=Lemon
+endif
+
 ifeq ($(PCB), X9D)
  CPPDEFS += -DXFIRE
 # If Taranis+
@@ -1111,7 +1190,7 @@ CPPFLAGS += -MD -MP -MF $(OBJDIR)/$(@F).d
 # makefile rules
 #
 
-all: size_before stamp $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).hex $(FULL_PRJ).bin $(FULL_PRJ).lss size
+all: size_before stamp $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss size
 
 size_before:
 #	arm-none-eabi-size $(FULL_PRJ).elf
@@ -1171,8 +1250,8 @@ $(AOBJS) : $(OBJDIR)/%.o : %.s
 %.lss: %.elf
 	$(CLSS) -h -S $< > $@
 
-%hex: %elf
-	$(BIN) $< $@
+#%hex: %elf
+#	$(BIN) $< $@
 
 %bin: %elf
 	$(BINX) $< $@

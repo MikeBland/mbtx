@@ -28,8 +28,10 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 //		ui->spinBox->setValue(md->srcRaw);
 
+//    ui->sourceCB->setFont(QFont("Ariel",16));
+
     populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, type, lextraPots ) ;
-    
+
 		ui->sourceCB->addItem("SWCH");
 		
 //		ui->sourceCB->addItem("sIDx");
@@ -412,7 +414,7 @@ void MixerDialog::updateChannels()
   {
     lowBound = 24 ;
   }
-	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_XXX ) )
+	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
   {
     lowBound = 20 ;
   }
@@ -501,7 +503,7 @@ void MixerDialog::valuesChanged()
 //		}
 //    md->srcRaw       = x ;
 		
-		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_XXX ) )
+		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
 		{
       if ( value >= 7 )
 			{
@@ -512,7 +514,7 @@ void MixerDialog::valuesChanged()
 		md->srcRaw       = value ;
 //		ui->spinBox->setValue(md->srcRaw);
 
-		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) || ( leeType == RADIO_TYPE_XXX ) )
+		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) || ( leeType == RADIO_TYPE_X9L ) )
 		{
 			uint32_t index = ui->sourceSwitchCB->currentIndex() ;
 			if ( index > 3 )

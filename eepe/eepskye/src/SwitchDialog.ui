@@ -22,6 +22,12 @@
      <height>32</height>
     </rect>
    </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
    <property name="orientation">
     <enum>Qt::Horizontal</enum>
    </property>
@@ -80,7 +86,14 @@
      </widget>
     </item>
     <item row="7" column="1">
-     <widget class="QComboBox" name="andSwCB"/>
+     <widget class="QComboBox" name="andSwCB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="7" column="0">
      <widget class="QLabel" name="andSwLabel">
@@ -97,7 +110,14 @@
      </widget>
     </item>
     <item row="1" column="1">
-     <widget class="QComboBox" name="functionCB"/>
+     <widget class="QComboBox" name="functionCB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="10" column="0">
      <widget class="QLabel" name="delayLabel">
@@ -127,7 +147,14 @@
      </widget>
     </item>
     <item row="2" column="1">
-     <widget class="QComboBox" name="v1CB"/>
+     <widget class="QComboBox" name="v1CB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="0" column="1">
      <widget class="QLabel" name="switchNameLabel">
@@ -156,10 +183,23 @@
      </widget>
     </item>
     <item row="3" column="1">
-     <widget class="QComboBox" name="v2CB"/>
+     <widget class="QComboBox" name="v2CB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="4" column="1">
      <widget class="QSpinBox" name="valSB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimum">
        <number>-125</number>
       </property>
@@ -172,13 +212,33 @@
      </widget>
     </item>
     <item row="5" column="1">
-     <widget class="QComboBox" name="sw1CB"/>
+     <widget class="QComboBox" name="sw1CB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="6" column="1">
-     <widget class="QComboBox" name="sw2CB"/>
+     <widget class="QComboBox" name="sw2CB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
     </item>
     <item row="10" column="1">
      <widget class="QDoubleSpinBox" name="delaySB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="decimals">
        <number>1</number>
       </property>
@@ -192,6 +252,12 @@
     </item>
     <item row="8" column="1">
      <widget class="QDoubleSpinBox" name="timeOnSB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="decimals">
        <number>1</number>
       </property>
@@ -208,6 +274,12 @@
     </item>
     <item row="9" column="1">
      <widget class="QDoubleSpinBox" name="timeOffSB">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="decimals">
        <number>1</number>
       </property>
@@ -238,6 +310,12 @@
     </item>
     <item row="8" column="2">
      <widget class="QSpinBox" name="spinBox">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="minimum">
        <number>-50</number>
       </property>

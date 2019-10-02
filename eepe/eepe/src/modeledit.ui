@@ -850,6 +850,11 @@
              <string>LR12</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>R9M</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="0" column="3">
@@ -866,6 +871,40 @@
           <widget class="QLabel" name="label_37">
            <property name="text">
             <string>Type(PXX)</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="6">
+          <widget class="QComboBox" name="R9MpowerCB">
+           <item>
+            <property name="text">
+             <string>D16</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>D8</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>LR12</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>R9M</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="0" column="5">
+          <widget class="QLabel" name="label_R9Mpower">
+           <property name="text">
+            <string>Power</string>
            </property>
            <property name="alignment">
             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -1137,187 +1176,187 @@
            </item>
            <item>
             <property name="text">
-             <string>18</string>
+             <string>Shenqi</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>19</string>
+             <string>FY326</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>20</string>
+             <string>SFHSS</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>21</string>
+             <string>J6PRO</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>22</string>
+             <string>FQ777</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>23</string>
+             <string>ASSAN</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>24</string>
+             <string>FrskyV</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>25</string>
+             <string>HONTAI</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>26</string>
+             <string>OpnLrs</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>27</string>
+             <string>AFHDS2A</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>28</string>
+             <string>Q2X2</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>29</string>
+             <string>WK2x01</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>30</string>
+             <string>Q303</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>31</string>
+             <string>GW008</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>32</string>
+             <string>DM002</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>33</string>
+             <string>CABELL</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>34</string>
+             <string>ESKY150</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>35</string>
+             <string>H8_3D</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>36</string>
+             <string>CORONA</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>37</string>
+             <string>CFlie</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>38</string>
+             <string>Hitec</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>39</string>
+             <string>WFLY</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>40</string>
+             <string>BUGS</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>41</string>
+             <string>BUGSMINI</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>42</string>
+             <string>Traxxas</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>43</string>
+             <string>NCC1701</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>44</string>
+             <string>E01X</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>45</string>
+             <string>V911S</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>46</string>
+             <string>GD00X</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>47</string>
+             <string>V761</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>48</string>
+             <string>KF606</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>49</string>
+             <string>Redpine</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>50</string>
+             <string>Potensic</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>51</string>
+             <string>ZSX</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>52</string>
+             <string>Flyzone</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>53</string>
+             <string>Scanner</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>54</string>
+             <string>FrskyX_RX</string>
             </property>
            </item>
            <item>

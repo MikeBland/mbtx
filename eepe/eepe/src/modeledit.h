@@ -341,6 +341,7 @@ private slots:
 		void on_autoLimitsSB_editingFinished() ;
 		void on_countryCB_currentIndexChanged(int index) ;
 		void on_typeCB_currentIndexChanged(int index) ;
+		void on_R9MpowerCB_currentIndexChanged(int index) ;
 
     void on_throttleReversedChkB_stateChanged( int ) ;
 		void on_throttleOffCB_currentIndexChanged(int index) ;

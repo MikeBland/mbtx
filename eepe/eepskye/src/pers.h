@@ -43,7 +43,9 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_QX7				9
 #define RADIO_TYPE_XLITE		 10
 #define RADIO_TYPE_T12			 11
-#define RADIO_TYPE_XXX			 12
+#define RADIO_TYPE_X9L			 12
+#define RADIO_TYPE_X12			 13
+#define RADIO_TYPE_X10			 14
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -55,7 +57,9 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_QX7					128
 #define RADIO_BITTYPE_XLITE				256
 #define RADIO_BITTYPE_T12					512
-#define RADIO_BITTYPE_XXX					65536
+#define RADIO_BITTYPE_X9L					65536
+#define RADIO_BITTYPE_X12					65536*2
+#define RADIO_BITTYPE_X10					65536*4
 
 #define RADIO_BITTYPE_ER9XM64V1		1024
 #define RADIO_BITTYPE_ER9XM64V2		2048
@@ -104,7 +108,7 @@ const uint8_t modn12x3[4][4]= {
 
 #define TRIM_EXTENDED_MAX	500
 
-#define NUM_TELEM_ITEMS	79
+#define NUM_TELEM_ITEMS	81
 
 const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
@@ -449,6 +453,7 @@ enum EnumKeys {
 #define PROTO_DSM2       2
 #define PROTO_MULTI			 3
 #define PROTO_ASSAN			 4
+#define PROTO_ACCESS     5
 #define PROTO_OFF		     15		// For X9D/9Xtreme
 #define PROT_MAX         2
 #define PROT_STR "PPM   XJT   DSM2  "
@@ -498,15 +503,25 @@ enum EnumKeys {
 #define M_ESKY150        34
 #define M_H8_3D          35
 #define M_CORONA         36
-#define M_HITEC					 37
-#define M_WFLY           38
-#define M_BUGS           39
-#define M_BUGSMINI       40
-#define M_TRAXXAS        41
-#define M_NCC1701        42
-#define M_E01X           43
-#define M_V911S          44
-#define M_GD00X          45
+#define CFLIE						 37
+#define M_HITEC					 38
+#define M_WFLY           39
+#define M_BUGS           40
+#define M_BUGSMINI       41
+#define M_TRAXXAS        42
+#define M_NCC1701        43
+#define M_E01X           44
+#define M_V911S          45
+#define M_GD00X          46
+#define M_V761           47
+#define M_KF606          48
+#define M_Redpine        49
+#define M_Potensic       50
+#define M_ZSX            51
+#define M_Flyzone        52
+#define M_Scanner        53
+#define M_FrskyX_RX      54
+#define M_LAST_MULTI		 54
 
 
 
@@ -566,7 +581,7 @@ bool eeLoadGeneral();
 #define PHYSICAL_HORUS				9
 #define PHYSICAL_XLITE				10
 #define PHYSICAL_T12					11
-#define PHYSICAL_XXX						12
+#define PHYSICAL_X9L						12
 
 #define LAST_PHYSICAL					12
 

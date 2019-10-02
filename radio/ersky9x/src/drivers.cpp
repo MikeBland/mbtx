@@ -33,7 +33,9 @@
 #include "ersky9x.h"
 #include "myeeprom.h"
 #include "drivers.h"
+#ifndef PCBLEM1
 #include "logicio.h"
+#endif
 #include "pulses.h"
 #include "lcd.h"
 #include "debug.h"
@@ -62,11 +64,21 @@ extern void wdt_reset() ;
 #define wdt_reset()
 #endif
 
+
+#if defined(PCBLEM1)
+#include <stm32f10x.h>
+#include "stm103/logicio103.h"
+#include "stm103/hal.h"
+#endif
+
+
 #ifdef BLUETOOTH
 #include "bluetooth.h"
 #endif
 
+#ifndef PCBLEM1
 #define SERIAL_TRAINER	1
+#endif
 
 //#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
 
@@ -598,6 +610,11 @@ extern uint8_t EncoderI2cData[] ;
 	}
 #endif
 
+#if defined(PCBLEM1)
+	uint8_t value = (~ENC_SW_GPIO->IDR & ENC_SW_PIN) ? 1 : 0 ;
+	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
+#endif
+
 #ifdef PCBX9D
  #if !defined(SIMU)
   #ifdef PCBX7
@@ -614,7 +631,11 @@ extern uint8_t EncoderI2cData[] ;
 	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
 //	uint8_t value = 0 ;
   #endif // X3
-  #if defined(REVPLUS) || defined(REVNORM)
+  #ifdef REV19
+	uint8_t value = (~GPIOE->IDR & PIN_BUTTON_ENCODER) ? 1 : 0 ;
+//	uint8_t value = 0 ;
+  #endif // REV19
+  	#if defined(REVPLUS) || defined(REVNORM)
   #ifndef REV9E
 extern uint8_t AnaEncSw ;
 	uint8_t value = AnaEncSw ;
@@ -798,30 +819,6 @@ int32_t peek_fifo128( struct t_fifo128 *pfifo )
 	return -1 ;
 }
 
-//#ifdef ACCESS
-//void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word )
-//{
-//  uint32_t next = (pfifo->in + 1) & 0x3f;
-//	if ( next != pfifo->out )
-//	{
-//		pfifo->fifo[pfifo->in] = word ;
-//		pfifo->in = next ;
-//	}
-//}
-
-//int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo )
-//{
-//	int32_t rxbyte ;
-//	if ( pfifo->in != pfifo->out )				// Look for char available
-//	{
-//		rxbyte = pfifo->fifo[pfifo->out] ;
-//		pfifo->out = ( pfifo->out + 1 ) & 0x3F ;
-//		return rxbyte ;
-//	}
-//	return -1 ;
-//}
-//#endif
-
 #ifdef REVX
 void put_16bit_fifo32( struct t_16bit_fifo32 *pfifo, uint16_t word )
 {
@@ -850,18 +847,6 @@ uint16_t rxCom2()
 {
 	return get_fifo128( &Com2_fifo ) ;
 }
-
-//#ifdef BLUETOOTH
-//int32_t rxBtuart()
-//{
-//#ifdef BT_PDC
-//	return rxPdcBt() ;
-//#else	
-//	return get_fifo128( &BtRx_fifo ) ;
-//#endif
-//}
-//#endif
-
 
 #ifdef SERIAL_TRAINER
 // 9600 baud, bit time 104.16uS
@@ -3608,11 +3593,10 @@ void start_2Mhz_timer()
 //	NVIC_DisableIRQ(TIM1_TRG_COM_TIM11_IRQn) ;
 //}
 
-#ifndef PCBX12D
- #ifdef PCBX9D
-  #ifndef PCBXLITE
-   #ifndef PCBX9LITE
-    #ifndef PCBX10
+
+
+#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E) || defined(PCBX7)
+
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
 
 
@@ -3635,11 +3619,7 @@ void stop_xjt_heartbeat()
 	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
 	XjtHeartbeatCapture.valid = 0 ;
 }
-		#endif
-   #endif // n PCBX9LITE
-  #endif // n PCBXLITE
- #endif // PCBX9D
-#endif // n PCBX12D
+#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
 #define XJT_HEARTBEAT_BIT	0x1000		// PD12
@@ -3703,8 +3683,6 @@ extern "C" void EXTI15_10_IRQHandler()
 #define XJT_HEARTBEAT_BIT	0x8000		// PD15
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
-
-
 
 void init_xjt_heartbeat()
 {
@@ -3781,6 +3759,51 @@ void stop_xjt_heartbeat()
 
 #endif
 
+#if defined(REV19)
+
+#define XJT_HEARTBEAT_BIT	0x0002		// PB1
+
+struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+void init_xjt_heartbeat()
+{
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+	SYSCFG->EXTICR[0] |= 0x0010 ;		// PB1
+	EXTI->RTSR |= XJT_HEARTBEAT_BIT ;	// Falling Edge
+	EXTI->IMR |= XJT_HEARTBEAT_BIT ;
+	configure_pins( HEARTBEAT_GPIO_PIN, PIN_INPUT | PIN_PORTB) ;
+	NVIC_SetPriority( EXTI1_IRQn, 0 ) ; // Highest priority interrupt
+	NVIC_EnableIRQ( EXTI1_IRQn) ;
+	XjtHeartbeatCapture.valid = 1 ;
+}
+
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
+
+extern "C" void EXTI1_IRQHandler()
+{
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x99 ;
+#else
+	RTC->BKP1R = 0x99 ;
+#endif
+#endif
+  register uint32_t capture ;
+
+	capture =  TIM7->CNT ;	// Capture time
+	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
+	{
+		XjtHeartbeatCapture.value = capture ;
+		EXTI->PR = XJT_HEARTBEAT_BIT ;
+	}
+}
+
+
+#endif
 
 //// Handle software serial on COM1 input (for non-inverted input)
 //void init_software_com1(uint32_t baudrate, uint32_t invert, uint32_t parity )

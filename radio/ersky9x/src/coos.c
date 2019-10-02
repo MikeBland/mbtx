@@ -31,6 +31,10 @@
 #if defined(PCBX12D) || defined(PCBX10)
 #include "X12D/stm32f4xx.h"
 #endif
+#if defined(PCBLEM1)
+#include <stm32f10x.h>
+#endif
+
 
 
 /*---------------------------- Variable Define -------------------------------*/
@@ -1416,7 +1420,7 @@ void CoIdleTask(void* pdata)
 #ifdef PCBSKY
 		i = TC1->TC_CHANNEL[0].TC_CV ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 		i = TIM7->CNT ;
 #endif
       /* Add your codes here */

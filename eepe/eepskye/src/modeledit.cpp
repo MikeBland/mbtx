@@ -48,11 +48,12 @@ int GeneralDataValid = 0 ;
 SKYModelData Sim_m ;
 int ModelDataValid = 0 ;
 
-extern uint8_t ProtocolOptionsX9de[][6] ;
-extern uint8_t ProtocolOptionsSKY[][6] ;
-extern uint8_t ProtocolOptions9XT[][6] ;
-extern uint8_t ProtocolOptionsT12[][6] ;
-QString ProtocolNames[] = {"PPM", "XJT", "DSM", "MULTI", "XFIRE" } ;
+extern uint8_t ProtocolOptionsX9de[][7] ;
+extern uint8_t ProtocolOptionsSKY[][7] ;
+extern uint8_t ProtocolOptions9XT[][7] ;
+extern uint8_t ProtocolOptionsT12[][7] ;
+extern uint8_t ProtocolOptionsX9L[][7] ;
+QString ProtocolNames[] = {"PPM", "XJT", "DSM", "MULTI", "XFIRE", "ACCESS" } ;
 QString Polarity[] = {"POS", "NEG" } ;
 QString PxxTypes[] = {"D16", "D8", "LRP", "R9M" } ;
 QString PxxCountry[] = {"America", "Japan", "Europe" } ;
@@ -96,7 +97,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 //		}
     id_model = id;
 
-		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
+		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_X9L ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
     setupMixerListWidget();
 
     QSettings settings("er9x-eePskye", "eePskye");
@@ -269,7 +270,7 @@ void ModelEdit::tabModelEditSetup()
 		}
     ui->modelImageLE->setText( n ) ;
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_X9L ) )
 		{
 			ui->modelImageLE->hide() ;
 			ui->label_ModelImage->hide() ;
@@ -333,7 +334,8 @@ void ModelEdit::tabModelEditSetup()
     //trim inc, thro trim, thro expo, instatrim
     ui->trimIncCB->setCurrentIndex(g_model.trimInc);
     populateSwitchCB(ui->trimSWCB,g_model.trimSw, rData->type);
-    ui->thrExpoChkB->setChecked(g_model.thrExpo);
+    ui->instaTrimTypeCB->setCurrentIndex(g_model.instaTrimToTrims) ;
+		ui->thrExpoChkB->setChecked(g_model.thrExpo);
     ui->thrTrimChkB->setChecked(g_model.thrTrim);
 //    ui->trimScaledChkB->setChecked(g_model.trimsScaled);
     ui->timerDirCB->setCurrentIndex(g_model.timer[0].tmrDir);
@@ -358,7 +360,7 @@ void ModelEdit::tabModelEditSetup()
     ui->bcP2ChkB->setChecked(g_model.beepANACenter & BC_BIT_P2);
     ui->bcP3ChkB->setChecked(g_model.beepANACenter & BC_BIT_P3);
     
-    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XXX ) ) )
+    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L ) ) )
     {
 	    ui->bcP4ChkB->show() ;
 			ui->bcP4ChkB->setChecked(g_model.beepANACenter & BC_BIT_P4);
@@ -423,7 +425,7 @@ void ModelEdit::tabModelEditSetup()
       ui->TrainerPolarityCB->setCurrentIndex(g_model.trainPulsePol) ;
 			ui->TrainerStartChannelSB->setValue(g_model.startChannel+1) ;
 
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_XXX) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L) )
 			{
 				ui->protocolCB->addItem("XJT");
 			}	
@@ -470,7 +472,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -482,10 +484,10 @@ void ModelEdit::tabModelEditSetup()
 			ui->switchDefPos_8->hide() ;
 			ui->widgetDefSA->show() ;
 			ui->widgetDefSB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 			{
 				ui->widgetDefSC->show() ;
-	    	if ( (rData->bitType & RADIO_BITTYPE_XXX) == 0 )
+	    	if ( (rData->bitType & RADIO_BITTYPE_X9L) == 0 )
 				{
 					ui->widgetDefSD->show() ;
 				}
@@ -540,10 +542,10 @@ void ModelEdit::tabModelEditSetup()
 			ui->EnGea->hide() ;
 			ui->EnA->show() ;
 			ui->EnB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 			{
 				ui->EnC->show() ;
-        if ( (rData->bitType & RADIO_BITTYPE_XXX) == 0 )
+        if ( (rData->bitType & RADIO_BITTYPE_X9L) == 0 )
 				{
 					ui->EnD->show() ;
 				}
@@ -1641,7 +1643,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -1755,7 +1757,7 @@ void ModelEdit::setProtocolBoxes()
 			}
 			else
 			{
-				if ( g_model.Module[module].protocol > 4 )
+				if ( g_model.Module[module].protocol > 5 )
 				{
 					g_model.Module[module].protocol = 0 ;
 				}
@@ -1819,6 +1821,12 @@ void ModelEdit::setProtocolBoxes()
 					pdisplayList->addItem(tr("First Channel: %1").arg(g_model.Module[module].startChannel+1)) ;
 				}
 				break ;
+
+		    case PROTO_ACCESS :
+					pdisplayList->addItem(tr("Rx Number: %1").arg(g_model.Module[module].pxxRxNum)) ;
+					pdisplayList->addItem(tr("First Channel: %1").arg(g_model.Module[module].startChannel+1)) ;
+					pdisplayList->addItem(tr("Channels: %1").arg((g_model.Access[module].numChannels+1)*8 )) ;
+  	    break ;
 
 				default :
 				break ;
@@ -2307,13 +2315,13 @@ void ModelEdit::tabExpo()
 						break ;
 					}
 					sb = expoDrSpin[1][i][j][k] = new QSpinBox(this) ;
-					sb->setFixedSize( 64, 20 ) ;
+					sb->setMinimumSize( 64, 20 ) ;
 					cb = expoDrVal[1][i][j][k] = new QComboBox(this) ;
-					cb->setFixedSize( 64, 20 ) ;
-    			ui->gridLayout_Ail->addWidget( sb,i*2+1,xpos);
-    			ui->gridLayout_Ail->addWidget( cb,i*2+1,xpos);
+					cb->setMinimumSize( 64, 20 ) ;
+    			ui->gridLayout_Ail->addWidget( sb,i*2+2,xpos);
+    			ui->gridLayout_Ail->addWidget( cb,i*2+2,xpos);
 					chkb = expoDrGvar[1][i][j][k] = new QCheckBox(this) ;
-    			ui->gridLayout_Ail->addWidget( chkb,i*2+2,xpos);
+    			ui->gridLayout_Ail->addWidget( chkb,i*2+3,xpos);
 					chkb->setText( "Gvar" ) ;
 
           x = g_model.expoData[CONVERT_MODE(AIL,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
@@ -2330,13 +2338,13 @@ void ModelEdit::tabExpo()
 			    connect( chkb,SIGNAL(stateChanged(int)),this,SLOT(expoEdited()));
 
 					sb = expoDrSpin[0][i][j][k] = new QSpinBox(this) ;
-					sb->setFixedSize( 64, 20 ) ;
+					sb->setMinimumSize( 64, 20 ) ;
 					cb = expoDrVal[0][i][j][k] = new QComboBox(this) ;
-					cb->setFixedSize( 64, 20 ) ;
-    			ui->gridLayout_Rud->addWidget( sb,i*2+1,xpos);
-    			ui->gridLayout_Rud->addWidget( cb,i*2+1,xpos);
+					cb->setMinimumSize( 64, 20 ) ;
+    			ui->gridLayout_Rud->addWidget( sb,i*2+2,xpos);
+    			ui->gridLayout_Rud->addWidget( cb,i*2+2,xpos);
 					chkb = expoDrGvar[0][i][j][k] = new QCheckBox(this) ;
-    			ui->gridLayout_Rud->addWidget( chkb,i*2+2,xpos);
+    			ui->gridLayout_Rud->addWidget( chkb,i*2+3,xpos);
 					chkb->setText( "Gvar" ) ;
 
           x = g_model.expoData[CONVERT_MODE(RUD,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
@@ -2353,13 +2361,13 @@ void ModelEdit::tabExpo()
 			    connect( chkb,SIGNAL(stateChanged(int)),this,SLOT(expoEdited()));
 
 					sb = expoDrSpin[2][i][j][k] = new QSpinBox(this) ;
-					sb->setFixedSize( 64, 20 ) ;
+					sb->setMinimumSize( 64, 20 ) ;
 					cb = expoDrVal[2][i][j][k] = new QComboBox(this) ;
-					cb->setFixedSize( 64, 20 ) ;
-    			ui->gridLayout_Thr->addWidget( sb,i*2+1,xpos);
-    			ui->gridLayout_Thr->addWidget( cb,i*2+1,xpos);
+					cb->setMinimumSize( 64, 20 ) ;
+    			ui->gridLayout_Thr->addWidget( sb,i*2+2,xpos);
+    			ui->gridLayout_Thr->addWidget( cb,i*2+2,xpos);
 					chkb = expoDrGvar[2][i][j][k] = new QCheckBox(this) ;
-    			ui->gridLayout_Thr->addWidget( chkb,i*2+2,xpos);
+    			ui->gridLayout_Thr->addWidget( chkb,i*2+3,xpos);
 					chkb->setText( "Gvar" ) ;
 
           x = g_model.expoData[CONVERT_MODE(THR,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
@@ -2385,13 +2393,13 @@ void ModelEdit::tabExpo()
 					}
 
 					sb = expoDrSpin[3][i][j][k] = new QSpinBox(this) ;
-					sb->setFixedSize( 64, 20 ) ;
+					sb->setMinimumSize( 64, 20 ) ;
 					cb = expoDrVal[3][i][j][k] = new QComboBox(this) ;
-					cb->setFixedSize( 64, 20 ) ;
-    			ui->gridLayout_Ele->addWidget( sb,i*2+1,xpos);
-    			ui->gridLayout_Ele->addWidget( cb,i*2+1,xpos);
+					cb->setMinimumSize( 64, 20 ) ;
+    			ui->gridLayout_Ele->addWidget( sb,i*2+2,xpos);
+    			ui->gridLayout_Ele->addWidget( cb,i*2+2,xpos);
 					chkb = expoDrGvar[3][i][j][k] = new QCheckBox(this) ;
-    			ui->gridLayout_Ele->addWidget( chkb,i*2+2,xpos);
+    			ui->gridLayout_Ele->addWidget( chkb,i*2+3,xpos);
 					chkb->setText( "Gvar" ) ;
 
           x = g_model.expoData[CONVERT_MODE(ELE,g_model.modelVersion,g_eeGeneral.stickMode)-1].expo[i][j][k] ;
@@ -2554,7 +2562,7 @@ void ModelEdit::voiceAlarmsList()
 		QString srcstr ;
     uint32_t limit = 45 ;
 		uint32_t value = vad->source ;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 			limit = 46 ;
     	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
@@ -2600,7 +2608,7 @@ void ModelEdit::voiceAlarmsList()
 		{
       str += tr("(%1) ").arg(getTelemString(value-limit+1 )) ;
 		}
-    srcstr = "-------v>val  v<val  |v|>val|v|<valv~=val v=val  v & val|d|>val" ;
+    srcstr = "-------v>val  v<val  |v|>val|v|<valv~=val v=val  v & val|d|>valv%val=0" ;
 		str += tr("%1 ").arg(srcstr.mid( vad->func * 7, 7 )) ;
   	if ( vad->source > 44 )
 		{
@@ -3103,7 +3111,7 @@ void ModelEdit::tabMixes()
 							type = RADIO_TYPE_X9E ;
 						}
 					}
-					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_XXX ) )
+					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_X9L ) )
 					{
 						if ( value > 6 )
 						{
@@ -3116,7 +3124,7 @@ void ModelEdit::tabMixes()
         str += srcstr ;
 				if ( srcstr == "s" )
 				{
-    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 					{
 						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
 					}
@@ -5233,7 +5241,7 @@ uint32_t encodePots( uint32_t value, int type, uint32_t extraPots )
 			}
 		}
 	}
-	if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_XXX ) )
+	if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_X9L ) )
 	{
 		if ( value > 6 )
 		{
@@ -5342,7 +5350,7 @@ void ModelEdit::updateSwitchesList( int lOrR )
 		{
 			uint32_t x ;
 			x = g_model.customSw[i].andsw ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 			{
 //  				x = switchUnMap(x, 1 ) ;
 			}
@@ -5443,7 +5451,7 @@ void ModelEdit::tabSwitches()
         cswitchDelay[i]->setDecimals(1);
 				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 			}
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 			{
         x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 			}
@@ -5696,120 +5704,120 @@ void ModelEdit::tabSafetySwitches()
 				j = i - 16 ;
 				k = 7 ;
 			}
-        safetySwitchType[i] = new QComboBox(this);
-        safetySwitchSwtch[i] = new QComboBox(this);
-				safetySwitchAlarm[i] = new QComboBox(this);
-        safetySwitchValue[i] = new QDoubleSpinBox(this);
-				safetySwitchGvar[i] = new QCheckBox(this) ;
-				safetySwitchGindex[i] = new QComboBox(this) ;
-				safetySwitchSource[i] = new QComboBox(this) ;
+      safetySwitchType[i] = new QComboBox(this);
+      safetySwitchSwtch[i] = new QComboBox(this);
+			safetySwitchAlarm[i] = new QComboBox(this);
+      safetySwitchValue[i] = new QDoubleSpinBox(this);
+			safetySwitchGvar[i] = new QCheckBox(this) ;
+			safetySwitchGindex[i] = new QComboBox(this) ;
+			safetySwitchSource[i] = new QComboBox(this) ;
 
-  			if ( g_eeGeneral.extraPotsSource[0] )
-				{
-					safetySwitchSource[i]->addItem("!P4") ;
-				}
-				safetySwitchSource[i]->addItem("!P3") ;
-				safetySwitchSource[i]->addItem("!P2") ;
-				safetySwitchSource[i]->addItem("!P1") ;
-				safetySwitchSource[i]->addItem("THR") ;
-				safetySwitchSource[i]->addItem("P1") ;
-				safetySwitchSource[i]->addItem("P2") ;
-				safetySwitchSource[i]->addItem("P3") ;
-  			if ( g_eeGeneral.extraPotsSource[0] )
-				{	
-					safetySwitchSource[i]->addItem("P4") ;
-				}
+      if ( g_eeGeneral.extraPotsSource[0] )
+      {
+        safetySwitchSource[i]->addItem("!P4") ;
+      }
+      safetySwitchSource[i]->addItem("!P3") ;
+      safetySwitchSource[i]->addItem("!P2") ;
+      safetySwitchSource[i]->addItem("!P1") ;
+      safetySwitchSource[i]->addItem("THR") ;
+      safetySwitchSource[i]->addItem("P1") ;
+      safetySwitchSource[i]->addItem("P2") ;
+      safetySwitchSource[i]->addItem("P3") ;
+      if ( g_eeGeneral.extraPotsSource[0] )
+      {
+				safetySwitchSource[i]->addItem("P4") ;
+      }
 								 
-  			safetySwitchGindex[i]->clear() ;
-  			for (int j=3; j<=7; j++)
-				{
-  			  safetySwitchGindex[i]->addItem(QObject::tr("GV%1").arg(j));
-  			}
+      safetySwitchGindex[i]->clear() ;
+      for (int m=3; m<=7; m++)
+      {
+        safetySwitchGindex[i]->addItem(QObject::tr("GV%1").arg(m));
+      }
 
-        safetySwitchValue[i]->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
-        safetySwitchValue[i]->setAccelerated(true);
+      safetySwitchValue[i]->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+      safetySwitchValue[i]->setAccelerated(true);
 				
-				safetySwitchGvar[i]->setText( "Gvar" ) ;
+      safetySwitchGvar[i]->setText( "Gvar" ) ;
 				 
-				if ( g_model.numVoice < NUM_SKYCHNOUT-i )	// Normal switch
-				{
-    			SKYSafetySwData *sd = &g_model.safetySw[i];
-        	populateSafetyVoiceTypeCB(safetySwitchType[i], 0, sd->opt.ss.mode);
-        	populateSafetySwitchCB(safetySwitchSwtch[i],sd->opt.ss.mode,sd->opt.ss.swtch, rData->type);
-					populateAlarmCB(safetySwitchAlarm[i],sd->opt.ss.val);
+      if ( g_model.numVoice < NUM_SKYCHNOUT-i )	// Normal switch
+      {
+        SKYSafetySwData *sd = &g_model.safetySw[i];
+        populateSafetyVoiceTypeCB(safetySwitchType[i], 0, sd->opt.ss.mode);
+        populateSafetySwitchCB(safetySwitchSwtch[i],sd->opt.ss.mode,sd->opt.ss.swtch, rData->type);
+        populateAlarmCB(safetySwitchAlarm[i],sd->opt.ss.val);
 
-          safetySwitchSource[i]->setCurrentIndex( sd->opt.ss.source + ( ( g_eeGeneral.extraPotsSource[0] ) ? 4 : 3 ) ) ;
-          if ( sd->opt.ss.mode == 2 )		// 'V'
-					{
-						int limit = MAX_DRSWITCH ;
-    				if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
-						{
-							limit = MAX_XDRSWITCH ;
-						}
-						if ( sd->opt.ss.swtch > limit )
-						{
-							populateTelItemsCB( safetySwitchAlarm[i], 1,sd->opt.ss.val ) ;
-						}
-						safetySwitchValue[i]->setMaximum(239);
-       			safetySwitchValue[i]->setMinimum(0);
-       			safetySwitchValue[i]->setSingleStep(1);
-						safetySwitchValue[i]->setDecimals(0) ;
-       			safetySwitchValue[i]->setValue(sd->opt.ss.val+128);
-					}
-					else
-					{
-						safetySwitchValue[i]->setMaximum(125);
-        		safetySwitchValue[i]->setMinimum(-125);
-       			safetySwitchValue[i]->setSingleStep(1);
-						safetySwitchValue[i]->setDecimals(1) ;
-						int x ;
-						x = sd->opt.ss.val * 10 ;
-						x += (x >= 0) ? sd->opt.ss.tune : -sd->opt.ss.tune ;
-        		safetySwitchValue[i]->setValue((double)x / 10.0 );
-					}
-				}	 
-				else // voice switch
-				{
-    			SKYSafetySwData *sd = &g_model.safetySw[i];
-					if ( i >= NUM_SKYCHNOUT )
-					{
-						sd = (SKYSafetySwData*)&g_model.voiceSwitches[i-NUM_SKYCHNOUT];
-					}
-        	populateSafetyVoiceTypeCB(safetySwitchType[i], 1, sd->opt.vs.vmode);
-          populateSafetySwitchCB(safetySwitchSwtch[i],VOICE_SWITCH,sd->opt.vs.vswtch, rData->type);
-					safetySwitchValue[i]->setMaximum(250);
-     			safetySwitchValue[i]->setMinimum(0);
-     			safetySwitchValue[i]->setSingleStep(1);
-					safetySwitchValue[i]->setDecimals(0) ;
-       		safetySwitchValue[i]->setValue(sd->opt.vs.vval);
-					populateTelItemsCB( safetySwitchAlarm[i], 1,sd->opt.vs.vval ) ;
-					if ( g_model.safetySw[i].opt.vs.vval > 250 )
-					{
-            safetySwitchGindex[i]->setCurrentIndex( sd->opt.vs.vval - 251 ) ;
-						safetySwitchGvar[i]->setChecked(true) ;
-					}
-					else
-					{
-						safetySwitchGvar[i]->setChecked(false) ;
-					}
-				}
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchType[i],j+2,k);
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchSwtch[i],j+2,k+1);
+        safetySwitchSource[i]->setCurrentIndex( sd->opt.ss.source + ( ( g_eeGeneral.extraPotsSource[0] ) ? 4 : 3 ) ) ;
+        if ( sd->opt.ss.mode == 2 )		// 'V'
+        {
+          int limit = MAX_DRSWITCH ;
+          if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+          {
+            limit = MAX_XDRSWITCH ;
+          }
+          if ( sd->opt.ss.swtch > limit )
+          {
+            populateTelItemsCB( safetySwitchAlarm[i], 1,sd->opt.ss.val ) ;
+          }
+          safetySwitchValue[i]->setMaximum(239);
+          safetySwitchValue[i]->setMinimum(0);
+          safetySwitchValue[i]->setSingleStep(1);
+          safetySwitchValue[i]->setDecimals(0) ;
+          safetySwitchValue[i]->setValue(sd->opt.ss.val+128);
+        }
+        else
+        {
+          safetySwitchValue[i]->setMaximum(125);
+          safetySwitchValue[i]->setMinimum(-125);
+          safetySwitchValue[i]->setSingleStep(1);
+          safetySwitchValue[i]->setDecimals(1) ;
+          int x ;
+          x = sd->opt.ss.val * 10 ;
+          x += (x >= 0) ? sd->opt.ss.tune : -sd->opt.ss.tune ;
+          safetySwitchValue[i]->setValue((double)x / 10.0 );
+        }
+      }
+      else // voice switch
+      {
+        SKYSafetySwData *sd = &g_model.safetySw[i];
+        if ( i >= NUM_SKYCHNOUT )
+        {
+          sd = (SKYSafetySwData*)&g_model.voiceSwitches[i-NUM_SKYCHNOUT];
+        }
+        populateSafetyVoiceTypeCB(safetySwitchType[i], 1, sd->opt.vs.vmode);
+        populateSafetySwitchCB(safetySwitchSwtch[i],VOICE_SWITCH,sd->opt.vs.vswtch, rData->type);
+        safetySwitchValue[i]->setMaximum(250);
+        safetySwitchValue[i]->setMinimum(0);
+        safetySwitchValue[i]->setSingleStep(1);
+        safetySwitchValue[i]->setDecimals(0) ;
+        safetySwitchValue[i]->setValue(sd->opt.vs.vval);
+        populateTelItemsCB( safetySwitchAlarm[i], 1,sd->opt.vs.vval ) ;
+        if ( sd->opt.vs.vval > 250 )
+        {
+          safetySwitchGindex[i]->setCurrentIndex( sd->opt.vs.vval - 251 ) ;
+          safetySwitchGvar[i]->setChecked(true) ;
+        }
+        else
+        {
+          safetySwitchGvar[i]->setChecked(false) ;
+        }
+      }
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchType[i],j+2,k);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchSwtch[i],j+2,k+1);
 
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchAlarm[i],j+2,k+2);
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchValue[i],j+2,k+2);
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchGindex[i],j+2,k+2);
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchGvar[i],j+2,k+3);
-        ui->grid_tabSafetySwitches->addWidget(safetySwitchSource[i],j+2,k+3);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchAlarm[i],j+2,k+2);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchValue[i],j+2,k+2);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchGindex[i],j+2,k+2);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchGvar[i],j+2,k+3);
+      ui->grid_tabSafetySwitches->addWidget(safetySwitchSource[i],j+2,k+3);
 
-				setSafetyWidgetVisibility(i);
-        connect(safetySwitchType[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
-        connect(safetySwitchSwtch[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
-        connect(safetySwitchAlarm[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
-        connect(safetySwitchValue[i],SIGNAL(editingFinished()),this,SLOT(safetySwitchesEdited()));
-        connect(safetySwitchGindex[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
-			  connect( safetySwitchGvar[i],SIGNAL(stateChanged(int)),this,SLOT(safetySwitchesEdited()));
-			  connect( safetySwitchSource[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
+      setSafetyWidgetVisibility(i);
+      connect(safetySwitchType[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
+      connect(safetySwitchSwtch[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
+      connect(safetySwitchAlarm[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
+      connect(safetySwitchValue[i],SIGNAL(editingFinished()),this,SLOT(safetySwitchesEdited()));
+      connect(safetySwitchGindex[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
+		  connect( safetySwitchGvar[i],SIGNAL(stateChanged(int)),this,SLOT(safetySwitchesEdited()));
+		  connect( safetySwitchSource[i],SIGNAL(currentIndexChanged(int)),this,SLOT(safetySwitchesEdited()));
     }
     connect(ui->NumVoiceSwSB,SIGNAL(valueChanged(int)),this,SLOT(safetySwitchesEdited()));
 }
@@ -6091,7 +6099,7 @@ void ModelEdit::switchesEdited()
 		for(int i=0; i<NUM_SKYCSW; i++)
     {
 			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 			{
 //        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
         g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -6750,7 +6758,7 @@ void ModelEdit::tabFrsky()
 		}
 	}
 
-		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_XXX ) )
+		if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_X9L ) )
 		{
 			ui->Ct7->hide() ;
 			ui->Ct8->hide() ;
@@ -7176,6 +7184,12 @@ void ModelEdit::on_trimSWCB_currentIndexChanged(int index)
     updateSettings();
 }
 
+void ModelEdit::on_instaTrimTypeCB_currentIndexChanged(int index)
+{
+    g_model.instaTrimToTrims = index ;
+    updateSettings();
+}
+
 void ModelEdit::on_countryCB_currentIndexChanged(int index)
 {
   if(protocolEditLock) return;
@@ -7265,9 +7279,13 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_XXX ) )
+			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
 			{
-				p = &ProtocolOptionsX9de[0][1] ;
+        p = &ProtocolOptionsX9de[0][1] ;
+			}
+			if ( rData->bitType & ( RADIO_BITTYPE_X9L ) )
+			{
+        p = &ProtocolOptionsX9L[0][1] ;
 			}
 			else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 			{
@@ -7318,9 +7336,13 @@ void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
 			{
-				p = &ProtocolOptionsX9de[1][1] ;
+        p = &ProtocolOptionsX9de[1][1] ;
+			}
+			if ( rData->bitType & ( RADIO_BITTYPE_X9L ) )
+			{
+        p = &ProtocolOptionsX9L[1][1] ;
 			}
 			else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 			{
@@ -7436,7 +7458,7 @@ void ModelEdit::on_startChannels2SB_valueChanged( int x )
 {
     if(protocolEditLock) return;
 
-    g_model.startPPM2channel = ui->startChannels2SB->value() ;
+    g_model.startPPM2channel = x ; // ui->startChannels2SB->value() ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
     updateSettings();
 }
@@ -8007,7 +8029,7 @@ void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 	    x <<= 3 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0018 ) | x ;
@@ -8035,7 +8057,7 @@ void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -8072,7 +8094,7 @@ void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -8109,7 +8131,7 @@ void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 void ModelEdit::on_SwitchDefSE_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 	    x <<= 9 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0600 ) | x ;
@@ -8806,15 +8828,16 @@ void ModelEdit::mixerlistWidget_doubleClicked(QModelIndex index)
 
 void ModelEdit::on_internalModuleDisplayList_doubleClicked()
 {
-	struct t_module module ;
+	struct t_moduleData module ;
 
 	if ( g_model.modelVersion < 4 )
 	{
-		memcpy(&module, &oldModules[0], sizeof(struct t_module));
+		memcpy(&module.module, &oldModules[0], sizeof(struct t_module));
 	}	
   else
 	{
-		memcpy(&module, &g_model.Module[0], sizeof(struct t_module));
+		memcpy(&module.module, &g_model.Module[0], sizeof(struct t_module));
+		memcpy(&module.access, &g_model.Access[0], sizeof(struct t_access));
 	}
 
   ProtocolDialog *g = new ProtocolDialog(this, 0, rData, &module, g_model.modelVersion ) ;
@@ -8827,7 +8850,8 @@ void ModelEdit::on_internalModuleDisplayList_doubleClicked()
 		}
 		else
 		{
-			memcpy(&g_model.Module[0], &module, sizeof(g_model.Module[0]));
+			memcpy(&g_model.Module[0], &module.module, sizeof(g_model.Module[0]));
+			memcpy(&g_model.Access[0], &module.access, sizeof(g_model.Access[0]));
 		}
     updateSettings();
 		setProtocolBoxes() ;
@@ -8885,7 +8909,7 @@ void ModelEdit::on_SwListR_doubleClicked( QModelIndex index )
 
 void ModelEdit::on_externalModuleDisplayList_doubleClicked()
 {
-  struct t_module module ;
+  struct t_moduleData module ;
 
 	if ( g_model.modelVersion < 4 )
 	{
@@ -8894,6 +8918,7 @@ void ModelEdit::on_externalModuleDisplayList_doubleClicked()
   else
 	{
   	memcpy(&module, &g_model.Module[1], sizeof(struct t_module));
+		memcpy(&module.access, &g_model.Access[1], sizeof(struct t_access));
 	}
 
   ProtocolDialog *g = new ProtocolDialog(this, 1, rData, &module, g_model.modelVersion ) ;
@@ -8907,6 +8932,7 @@ void ModelEdit::on_externalModuleDisplayList_doubleClicked()
 		else
 		{
     	memcpy(&g_model.Module[1], &module, sizeof(g_model.Module[1]));
+			memcpy(&g_model.Access[1], &module.access, sizeof(g_model.Access[0]));
 		}
     updateSettings();
 		setProtocolBoxes() ;

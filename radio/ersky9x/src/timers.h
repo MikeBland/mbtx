@@ -25,7 +25,7 @@ extern void init_hw_timer( void ) ;
 extern void init_pwm( void ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern void init_hw_timer( void ) ;
 extern void hw_delay( uint16_t time ) ;
 #endif
@@ -70,6 +70,11 @@ extern void init_cppm_on_heartbeat_capture( void ) ;
 extern void stop_cppm_on_heartbeat_capture( void ) ;
 extern void init_serial_trainer_capture( void ) ;
 extern void stop_serial_trainer_capture( void ) ;
+
+#endif
+
+#if defined(PCBLEM1)
+extern void init_trainer_capture( uint32_t mode ) ;
 
 #endif
 

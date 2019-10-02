@@ -263,12 +263,14 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
 #else
 	populateHardwareSwitch(ui->EleSwitchSource, p_eeGeneral->ele2source ) ;
 	populateHardwareSwitch(ui->AilSwitchSource, p_eeGeneral->ail2source ) ;
+	populateHardwareSwitch(ui->RudSwitchSource, p_eeGeneral->rud2source ) ;
+	populateHardwareSwitch(ui->GeaSwitchSource, p_eeGeneral->gea2source ) ;
 	ui->ThrSwitchSource->hide() ;
-  ui->GeaSwitchSource->hide() ;
-	ui->RudSwitchSource->hide() ;
+//  ui->GeaSwitchSource->hide() ;
+//	ui->RudSwitchSource->hide() ;
 	ui->label_ThrSw->hide() ;
-  ui->label_GeaSw->hide() ;
-	ui->label_RudSw->hide() ;
+//  ui->label_GeaSw->hide() ;
+//	ui->label_RudSw->hide() ;
 	populateHardwareSwitch(ui->Pb1SwitchSource, p_eeGeneral->pb1source ) ;
 	populateHardwareSwitch(ui->Pb2SwitchSource, p_eeGeneral->pb2source ) ;
 	ui->L_wrInputCB->setChecked( p_eeGeneral->lcd_wrInput ) ;

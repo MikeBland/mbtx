@@ -305,6 +305,8 @@ void MixerDialog::valuesChanged()
     md->carryTrim    = ui->trimChkB->checkState() ? 0 : 1;
 #ifdef V2
     md->swtch        = rData->getSwitchCbValue( ui->switchesCB, mType, 0 ) ;
+		ui->SWSB->setValue(md->swtch) ;
+		ui->SWSB->show() ;
 #else
     md->swtch        = getSwitchCbValue( ui->switchesCB, mType ) ;
 #endif

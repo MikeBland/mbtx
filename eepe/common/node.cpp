@@ -214,7 +214,8 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
 	             QObject* tabcurve = qxsb->parent();
   	           QObject* stackedwidget = tabcurve->parent();
     	         QObject* tabwidget = stackedwidget->parent();
-							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+                 QObject* scrollArea = tabwidget->parent();
+                             ModelEdit* modeledit = qobject_cast<ModelEdit*>(scrollArea->parent()->parent()->parent()) ;
                 minX = modeledit->getNodeMin( qxsb ) ;
                 maxX = modeledit->getNodeMax( qxsb ) ;
 						 }	 
@@ -233,7 +234,12 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
 	             QObject* tabcurve = qsb->parent();
   	           QObject* stackedwidget = tabcurve->parent();
     	         QObject* tabwidget = stackedwidget->parent();
-							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+#ifdef SKY
+                 QObject* scrollArea = tabwidget->parent();
+                             ModelEdit* modeledit = qobject_cast<ModelEdit*>(scrollArea->parent()->parent()->parent()) ;
+#else
+                 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+#endif
                  modeledit->redrawCurve = false;
                  qsb->setValue(100+(rect.top()-y())*200/rect.height());
                  modeledit->redrawCurve = true;
@@ -244,8 +250,13 @@ QVariant Node::itemChange(GraphicsItemChange change, const QVariant &value)
 	             QObject* tabcurve = qxsb->parent();
   	           QObject* stackedwidget = tabcurve->parent();
     	         QObject* tabwidget = stackedwidget->parent();
-							 ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
-                 modeledit->redrawCurve = false;
+#ifdef SKY
+                 QObject* scrollArea = tabwidget->parent();
+                             ModelEdit* modeledit = qobject_cast<ModelEdit*>(scrollArea->parent()->parent()->parent()) ;
+#else
+                             ModelEdit* modeledit = qobject_cast<ModelEdit*>(tabwidget->parent()) ;
+#endif
+                             modeledit->redrawCurve = false;
 								 value1 = -(100+(rect.left()-x())*200/rect.width()) ;
                  qxsb->setValue( value1);
 								 modeledit->redrawCurve = true;

@@ -134,7 +134,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		ui->channelorderCB->setCurrentIndex(g_eeGeneral.templateSetup);
     ui->languageCB->setCurrentIndex(g_eeGeneral.language);
     ui->stickmodeCB->setCurrentIndex(g_eeGeneral.stickMode);
-    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
     	ui->SoftwareVolumeChkB->hide() ;
@@ -167,7 +167,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		switch ( rData->type )
 		{
-			case RADIO_TYPE_XXX :
+			case RADIO_TYPE_X9L :
 				ui->BtDev1Address->hide() ;
 				ui->BtDev2Address->hide() ;
 				ui->BtDev3Address->hide() ;
@@ -323,7 +323,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 
 		ui->BtBaudrateCB->setCurrentIndex(g_eeGeneral.bt_baudrate) ;
 		ui->RotaryDivisorCB->setCurrentIndex(g_eeGeneral.rotaryDivisor) ;
-    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
 			ui->MaHalarmSB->hide() ;
 			ui->mAhLabel->hide() ;
@@ -370,9 +370,9 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
     ui->ana7Pos->setValue(g_eeGeneral.calibSpanPos[6]);
     ui->ana8Pos->setValue(g_eeGeneral.x9dcalibSpanPos);
 
-    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 		{
-      if ( rData->bitType & RADIO_BITTYPE_XXX )
+      if ( rData->bitType & RADIO_BITTYPE_X9L )
 			{
 				ui->ana6Neg->hide() ;
 				ui->ana6Mid->hide() ;
@@ -556,13 +556,13 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->label_RudSw->hide() ;
       	ui->AilCB->hide() ;
      		ui->RudCB->hide() ;
-				if ( ( rData->type != RADIO_TYPE_T12 ) && ( rData->type != RADIO_TYPE_XXX ) )
+				if ( ( rData->type != RADIO_TYPE_T12 ) && ( rData->type != RADIO_TYPE_X9L ) )
 				{
 					ui->label_Encoder->show() ;
 					ui->EncoderCB->show() ;
 				}
 			}
-			if ( rData->type == RADIO_TYPE_XXX )
+			if ( rData->type == RADIO_TYPE_X9L )
 			{
 				ui->SixPosCB->clear() ;
 				ui->SixPosCB->addItem("--") ;
@@ -747,7 +747,7 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 				b->addItem( "NONE" ) ;
 				b->addItem( "JTMS" ) ;
 				b->addItem( "JTCK" ) ;
-				if ( rData->type !=  RADIO_TYPE_XLITE )
+				if ( ( rData->type !=  RADIO_TYPE_XLITE ) && ( rData->type !=  RADIO_TYPE_X9L ) )
 				{
 					b->addItem( "EXT1" ) ;
 					b->addItem( "EXT2" ) ;
@@ -819,7 +819,12 @@ void GeneralEdit::setHardwareSwitchCB( QComboBox *b, int switchList, int type )
 void GeneralEdit::updateSettings()
 {
     int16_t sum=0;
-    for(int i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+    for(int i=0; i<12;i++)
+    {
+        uint16_t *p ;
+        p = (uint16_t *)g_eeGeneral.calibMid ;
+        for(uint8_t i=0; i<12;i++) sum+=*p++;
+    }
     g_eeGeneral.chkSum = sum;
 //    eeFile->putGeneralSettings(&g_eeGeneral);
     memcpy( &rData->generalSettings, &g_eeGeneral, sizeof( g_eeGeneral) ) ;
@@ -935,6 +940,7 @@ void GeneralEdit::on_TrainerProfileSB_valueChanged( int x )
 	trainerTabLock = 0 ;
   updateTrainerTab() ;
   updateSettings() ;
+  (void) x ;
 }
 
 void GeneralEdit::updateTrainerTab()
@@ -1405,7 +1411,7 @@ void GeneralEdit::on_StickScrollEnableChkB_stateChanged(int )
 
 void GeneralEdit::on_SoftwareVolumeChkB_stateChanged(int )
 {
-		if ( rData->bitType & (RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+		if ( rData->bitType & (RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 		{
 			g_eeGeneral.softwareVolume = 1 ;
 		}

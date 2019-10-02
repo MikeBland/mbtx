@@ -103,7 +103,7 @@
 #define DNLD_VER_ERSKY9XQX7			 7
 #define DNLD_VER_ERSKY9XXLITE		 8
 #define DNLD_VER_ERSKY9XT12			 9
-#define DNLD_VER_ERSKY9XXXX			 10
+#define DNLD_VER_ERSKY9XX9L			 10
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -144,7 +144,7 @@
 #define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
 #define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
 #define ERSKY9XT12_URL "http://www.er9x.com/t12_rom.bin"
-#define ERSKY9XXXX_URL "http://www.er9x.com/xxx_rom.bin"
+#define ERSKY9XX9L_URL "http://www.er9x.com/x9Lite_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -293,7 +293,7 @@ void MainWindow::title()
 			type = "T12" ;
     break ;
 		case 10 :
-			type = "XXX" ;
+			type = "X9Lite" ;
     break ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
@@ -404,7 +404,7 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 
         if(!cres)
         {
-            QMessageBox::warning(this, "ersky9x", tr("Unable to check for updates."));
+            QMessageBox::warning(this, "erskyTx", tr("Unable to check for updates."));
             return;
         }
         
@@ -439,7 +439,13 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 						currentRev = currentERSKY9XT12rev ;
 					break ;
           case 10 :
-						currentRev = currentERSKY9XXXXrev ;
+						currentRev = currentERSKY9XX9Lrev ;
+					break ;
+          case 11 :
+						currentRev = currentERSKY9XX12rev ;
+					break ;
+          case 12 :
+						currentRev = currentERSKY9XX10rev ;
 					break ;
 
 				}
@@ -495,9 +501,9 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
                 baseFileName = "t12_rom.bin";
                 break;
 								
-						case (DNLD_VER_ERSKY9XXXX):
+						case (DNLD_VER_ERSKY9XX9L):
                 dnldURL = ERSKY9X_URL;
-                baseFileName = "xxx_rom.bin";
+                baseFileName = "x9Lite_rom.bin";
                 break;
 								
             default:
@@ -507,7 +513,7 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
             }
 
             showcheckForUpdatesResult = false; // update is available - do not show dialog
-            int ret = QMessageBox::question(this, "eePskye",tr("A new version of ERSKY9x (%2) is available (r%1)<br>"
+            int ret = QMessageBox::question(this, "eePskye",tr("A new version of ERSKYTx (%2) is available (r%1)<br>"
                                                                 "Would you like to download it?").arg(rev).arg(baseFileName) ,
                                             QMessageBox::Yes | QMessageBox::No);
 
@@ -573,7 +579,7 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 											break ;
 
 											case 10 :
-												settings.setValue("currentERSKY9XXXXrev", rev);
+												settings.setValue("currentERSKY9XX9Lrev", rev);
 											break ;
 										}
                 }
@@ -650,9 +656,9 @@ void MainWindow::downloadLatester9x()
           baseFileName = "ersky9x_rom.bin";
       break;
 			
-			case (DNLD_VER_ERSKY9XXXX):
-        dnldURL = ERSKY9XXXX_URL;
-        baseFileName = "xxx_rom.bin";
+			case (DNLD_VER_ERSKY9XX9L):
+        dnldURL = ERSKY9XX9L_URL;
+        baseFileName = "x9Lite_rom.bin";
       break;
     }
 
@@ -694,7 +700,7 @@ void MainWindow::downloadLatester9x()
 				currentERSKY9Xrev_temp = currentERSKY9XT12rev ;
 			break ;
       case 10 :
-				currentERSKY9Xrev_temp = currentERSKY9XXXXrev ;
+				currentERSKY9Xrev_temp = currentERSKY9XX9Lrev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -810,7 +816,7 @@ void MainWindow::reply1Accepted()
 			break ;
 
 			case 10 :
-    		settings.setValue("currentERSKY9XXrev", currentERSKY9XXXXrev);
+    		settings.setValue("currentERSKY9XXrev", currentERSKY9XX9Lrev);
 			break ;
 
 		}	
@@ -1478,7 +1484,7 @@ void MainWindow::about()
     QString aboutStr = "<center><img src=\":/images/eepskye-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Michael Blandford &copy;2013<br>");
     aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: p%1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
-    aboutStr.append(tr("If you've found this program and/or the ersky9x firmware useful please support by"));
+    aboutStr.append(tr("If you've found this program and/or the erskyTx firmware useful please support by"));
     aboutStr.append(" <a href='" DONATE_MB_STR "'>");
 //    aboutStr.append(tr("donating") + "</a></center><br>");
     aboutStr.append(tr("donating") + "</a><br>");

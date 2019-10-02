@@ -110,7 +110,7 @@ QString printDialog::getTrimInc()
 
 void printDialog::printTitle()
 {
-    te->append(tr("<a name=1></a><h1>ERSKY9x Model: %1</h1><br>").arg(getModelName()));
+    te->append(tr("<a name=1></a><h1>ERSKYTx Model: %1</h1><br>").arg(getModelName()));
 }
 
 void printDialog::printSetup()
@@ -537,7 +537,7 @@ void printDialog::printVoice()
 		QString srcstr ;
 		uint32_t value = vad->source ;
     uint32_t limit = 45 ;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_XXX) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
 		{
 			limit = 46 ;
     	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )

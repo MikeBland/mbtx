@@ -50,6 +50,10 @@
 #include "X9D/stm32f2xx.h"
 #endif
 
+#if defined(PCBLEM1)
+#include <stm32f10x.h>
+#endif
+
 
 #ifndef PCBX12D
 #ifndef PCBX10

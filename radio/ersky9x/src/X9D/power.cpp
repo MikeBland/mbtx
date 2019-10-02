@@ -224,6 +224,23 @@ void init_soft_power()
 	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTA ) ;
 
 #else // X3
+#ifdef REV19
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
+	
+	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
+	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
+	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
+
+	configure_pins( PIN_INT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+	configure_pins( PIN_EXT_RF_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_MCU_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTD ) ;
+	configure_pins( PIN_SPORT_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+
+	configure_pins( PIN_PWR_STATUS, PIN_INPUT | PIN_PORTD ) ;
+
+#else // REV19
 //  GPIO_InitTypeDef GPIO_InitStructure;
   /* GPIOC GPIOD clock enable */
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
@@ -295,8 +312,9 @@ void init_soft_power()
   
   // Soft power ON
   
+#endif // REV19
+#endif // X9LITE
 #endif // XLITE
-#endif // X3
 	
 // Not yet!!!!*********	
 #ifndef PCB9XT

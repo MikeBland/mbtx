@@ -96,7 +96,7 @@ static void init_ext_pxx( void ) ;
 static void disable_ext_pxx( void ) ;
 static void disable_int_pxx( void ) ;
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 
 static void init_ext_dsm2( void ) ;
 static void disable_ext_dsm2( void ) ;
@@ -148,7 +148,7 @@ static void init_int_access( void ) ;
 #ifdef ACCESS
 void init_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
   if (port == INTERNAL_MODULE)
     init_int_access() ;
   else
@@ -160,7 +160,7 @@ void init_access(uint32_t port)
 
 void disable_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
   if (port == INTERNAL_MODULE)
     disable_int_pxx() ;
   else
@@ -230,7 +230,7 @@ void disable_dsm2(uint32_t port)
 }
 
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 
 
 #ifdef XFIRE
@@ -483,8 +483,8 @@ void init_pa10_serial( uint32_t type )
 		}
 		x *= 2000 ;
 		x += 7000 * 2 - 1 ;
-  	TIM8->ARR = x ;             // 11mS
-  	TIM8->CCR2 = x-4000 ;       // Update time
+  	TIM1->ARR = x ;             // 11mS
+  	TIM1->CCR2 = x-4000 ;       // Update time
 	}
   TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;               // 0.5uS from 30MHz
 
@@ -1123,7 +1123,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 
 #endif
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 
 static void init_int_none()
 {
@@ -1192,7 +1192,7 @@ extern uint16_t XjtHbeatOffset ;
 // TIM3_CH1/AF2, TIM8_CH1/AF3
 
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 static void init_int_pxx_access( uint32_t type )
 #else
 static void init_int_pxx( void )
@@ -1220,7 +1220,7 @@ static void init_int_pxx( void )
 	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 450000 ;
 //	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 #ifdef ACCESS
 	if ( type )
 	{
@@ -1245,13 +1245,13 @@ static void disable_int_pxx( void )
 // USART6 can drive this
 // TIM3 ch1 or TIM8 ch1
 	 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 static void init_ext_pxx_access( uint32_t type )
 #else
 static void init_ext_pxx( void )
 #endif
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 //#ifdef PCBX9LITE
 //#ifndef X3_PROTO
   EXTERNAL_RF_ON() ;
@@ -1273,14 +1273,14 @@ static void init_ext_pxx( void )
   // UART config
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( type ? PXX2_EXTERNAL_BAUDRATE : 420000 ) ;
 #else
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 420000 ;
 #endif
 //	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	EXTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 #ifdef ACCESS
 	if ( type )
 	{
@@ -1302,7 +1302,7 @@ static void init_ext_pxx( void )
 #endif
 }
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 static void init_ext_access( void )
 {
 	init_ext_pxx_access( 1 ) ;
@@ -1329,7 +1329,7 @@ static void init_int_pxx( void )
 	 
 static void disable_ext_pxx( void )
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 //#ifdef PCBX9LITE
 //#ifndef X3_PROTO
   NVIC_DisableIRQ(EXTMODULE_USART_IRQn);
@@ -1731,7 +1731,7 @@ extern "C" void TIM8_CC_IRQHandler()
 #ifdef WDOG_REPORT
 	RTC->BKP1R = 0x88 ;
 #endif
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 //#ifndef X3_PROTO
 //#ifdef PCBX9LITE
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX )
@@ -1788,6 +1788,7 @@ extern "C" void TIM8_CC_IRQHandler()
 
 #ifndef PCBX9LITE
  #ifndef PCBXLITE
+  #ifndef REV19
   if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
 	{
  #ifdef PCBX9D
@@ -1815,6 +1816,7 @@ extern "C" void TIM8_CC_IRQHandler()
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else
+	#endif // REV19
  #endif // XLite
 #endif // nX3
 //#ifdef X3_PROTO

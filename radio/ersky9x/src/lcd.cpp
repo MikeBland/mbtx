@@ -143,7 +143,7 @@ uint16_t LcdForeground = LCD_BLACK ;
 uint16_t LcdCustomColour = LCD_BLACK ;
 #endif
 
-#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE) || defined(REV19)
 #define X9D_OFFSET		0
 #define DISPLAY_START (DisplayBuf + 0)
 #else // PCBX7/LITE/X3
@@ -155,7 +155,7 @@ uint16_t LcdCustomColour = LCD_BLACK ;
 #endif 
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
 uint16_t ExtDisplayTime ;
 uint8_t ExtDisplaySend ;

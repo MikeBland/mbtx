@@ -810,6 +810,19 @@ This determines how mixer values are added.
     <set>Qt::AlignCenter</set>
    </property>
   </widget>
+  <widget class="QSpinBox" name="SWSB">
+   <property name="geometry">
+    <rect>
+     <x>180</x>
+     <y>189</y>
+     <width>81</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="maximum">
+    <number>100</number>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

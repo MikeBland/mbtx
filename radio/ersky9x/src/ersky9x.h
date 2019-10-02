@@ -82,7 +82,7 @@
 #endif
 #endif
 
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 #define DISABLE_PXX		1
 #define DISABLE_SPORT	1
 #endif
@@ -106,6 +106,10 @@
  #define ACCESS					1
 #endif
 
+#ifdef REV19
+ #define ACCESS					1
+#endif
+
 #define ACCESS_SPORT_BAUD_RATE		450000
 
 #define HAPTIC		1
@@ -118,7 +122,7 @@
 #ifdef PCBSKY
 #define wdt_reset()	(WDT->WDT_CR = 0xA5000001)
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern void wdt_reset(void) ;
 #endif
 #endif
@@ -246,6 +250,9 @@ extern uint8_t SystemOptions ;
 #if defined(PCBX12D) || defined(PCBX10)
 #define CSW_INDEX	9	// Index of first custom switch
 #endif
+#ifdef PCBLEM1
+#define CSW_INDEX	9	// Index of first custom switch
+#endif
 
 #define DIM(arr) (sizeof((arr))/sizeof((arr)[0]))
 
@@ -290,7 +297,7 @@ enum EnumKeys {
     SW_Trainer
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
   SW_SF2,
   SW_nu1,
   SW_nu2,
@@ -388,6 +395,46 @@ extern uint16_t SixPositionTable[5] ;
 void createSwitchMapping( void ) ;
 int8_t switchUnMap( int8_t x ) ;
 int8_t switchMap( int8_t x ) ;
+
+#if defined(PCBLEM1)
+#define HSW_SG2				1
+#define HSW_SC0				4
+#define HSW_SC1				5
+#define HSW_SC2				6
+
+#define HSW_SH2				9
+
+#define HSW_SB0				45	// Skip some values because of safety switch values
+#define HSW_SB1				46
+#define HSW_SB2				47
+#define HSW_SE0				48
+#define HSW_SE1				49
+#define HSW_SE2				50
+#define HSW_SA0				51
+#define HSW_SA1				52
+#define HSW_SA2				53
+#define HSW_SD0				54
+#define HSW_SD1				55
+#define HSW_SD2				56
+#define HSW_SG0				57
+#define HSW_SG1				58
+//#define HSW_SG2				59
+#define HSW_SF2				59
+#define HSW_Ele6pos0	60
+#define HSW_Ele6pos1	61
+#define HSW_Ele6pos2	62
+#define HSW_Ele6pos3	63
+#define HSW_Ele6pos4	64
+#define HSW_Ele6pos5	65
+#define HSW_Pb1				66
+#define HSW_Pb2				67
+#define HSW_Pb3				68
+#define HSW_Pb4				69
+#define HSW_MAX				69
+
+#define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
+
+#endif
 
 #ifdef PCBX9D
 
@@ -592,7 +639,7 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MAX_SKYDRSWITCH (1+SW_Trainer-SW_ThrCt+1+NUM_SKYCSW)
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #define SW_BASE      SW_SF2
 #define SW_BASE_DIAG SW_SF2
 #define MAX_PSWITCH   (SW_SH2-SW_SF2+1)  // 9 physical switches
@@ -737,7 +784,7 @@ extern uint32_t countExtraPots( void ) ;
 extern uint32_t countExtraPots( void ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #define MIX_MAX   8 
 #define MIX_FULL  9 
 #define MIX_CYC1  10
@@ -1041,7 +1088,7 @@ extern uint8_t convert_mode_helper(uint8_t x) ;
 #define BACKLIGHT_OFF   (PWM->PWM_CH_NUM[0].PWM_CDTY = 100)
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern void backlight_on( void ) ;
 extern void backlight_off( void ) ;
 #if defined(REVPLUS) || defined(REV9E)
@@ -1356,7 +1403,7 @@ extern struct t_p1 P1values ;
 #ifdef PCBSKY
 extern uint16_t ResetReason ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern uint32_t ResetReason ;
 #endif
 extern uint8_t unexpectedShutdown ;
@@ -1577,6 +1624,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_X9LITE				12
 #define PHYSICAL_X10					13
 #define PHYSICAL_T16					14
+#define PHYSICAL_LEM1					15
 
 // Power control type
 #ifdef REV9E
@@ -1594,6 +1642,9 @@ extern uint16_t FailsafeCounter[2] ;
 #ifdef PCBXLITE
 #define POWER_BUTTON	1
 #endif // PCBXLITE
+#ifdef PCBLEM1
+#define POWER_BUTTON	1
+#endif // PCBLEM1
 
 //#define IMAGE_128
 
@@ -1662,7 +1713,7 @@ union t_sharedMemory
 } ;
 
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #define TIMER1_8SR_MASK	0x1FFF
 #define TIMER2_5SR_MASK	0x1E5F
 #define TIMER6_7SR_MASK	0x0001

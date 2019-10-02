@@ -1066,7 +1066,7 @@ extern uint8_t CurrentVolume ;
 
 uint16_t BacklightBrightness ;
 
-#if defined(REVPLUS) || defined(REV9E)
+#if defined(REVPLUS) || defined(REV9E) || defined(REV19)
 uint16_t BacklightBrightness_white ;
 
 void backlight_w_on()
@@ -1188,6 +1188,8 @@ static void LCD_BL_Config()
 // Init the Haptic
 void initHaptic()
 {
+	
+// for REV19, Use PA10 (not PB8) and Timer 1, CH3
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOHAPTIC, ENABLE);
   GPIO_InitTypeDef GPIO_InitStructure;
   GPIO_InitStructure.GPIO_Pin =GPIO_Pin_HAPTIC;

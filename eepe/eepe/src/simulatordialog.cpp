@@ -1287,13 +1287,34 @@ bool simulatorDialog::hwKeyState(int key)
     break;
 	}
 #else
+  switch (key)
+	{
+    case (HSW2_ThrCt):   return ui->switchTHR->isChecked(); break;
+    case (HSW2_RuddDR):  return ui->switchRUD->isChecked(); break;
+    case (HSW2_ElevDR):  return ui->switchELE->isChecked(); break;
+    case (HSW2_ID0):     return ui->switchID0->isChecked(); break;
+    case (HSW2_ID1):     return ui->switchID1->isChecked(); break;
+    case (HSW2_ID2):     return ui->switchID2->isChecked(); break;
+    case (HSW2_AileDR):  return ui->switchAIL->isChecked(); break;
+    case (HSW2_Gear):    return ui->switchGEA->isChecked(); break;
+    case (HSW2_Trainer): return ui->switchTRN->isDown(); break;
+	
+    case HSW2_Ele3pos0	:	return ui->SEleSlider->value() == 0 ; break ;
+    case HSW2_Ele3pos1	:	return ui->SEleSlider->value() == 1 ; break ;
+    case HSW2_Ele3pos2	:	return ui->SEleSlider->value() == 2 ; break ;
+    case HSW2_Ail3pos0	:	return ui->SAilSlider->value() == 0 ; break ;
+    case HSW2_Ail3pos1	:	return ui->SAilSlider->value() == 1 ; break ;
+    case HSW2_Ail3pos2	:	return ui->SAilSlider->value() == 2 ; break ;
+	
+    case HSW2_Pb1	:	return ui->switchPB1->isDown() ; break ;
+    case HSW2_Pb2	:	return ui->switchPB2->isDown() ; break ;
+	}
   return 0 ;
 #endif
 }
 
 bool simulatorDialog::keyState(EnumKeys key)
 {
-#ifndef V2
     switch (key)
     {
     case (SW_ThrCt):   return ui->switchTHR->isChecked(); break;
@@ -1309,9 +1330,6 @@ bool simulatorDialog::keyState(EnumKeys key)
         return false;
         break;
     }
-#else
-  return 0 ;
-#endif
 }
 
 qint16 simulatorDialog::getValue(qint8 i)
@@ -1346,8 +1364,11 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
 {
     bool ret_value ;
     uint8_t cs_index ;
+#ifndef V2
 		int limit = ee_type ? MAX_DRSWITCH+EXTRA_CSW : MAX_DRSWITCH ;
-    
+#else
+		int limit = MAX_DRSWITCH ;
+#endif    
 		if(level>5) return false; //prevent recursive loop going too deep
 
 		if ( swtch == 0 )
@@ -1744,16 +1765,13 @@ int16_t simulatorDialog::intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 
     return erg / 25; // 100*D5/RESX;
 }
 
-#ifndef V2
 static uint8_t lastSwPos[2] ;
-#endif
+
 void simulatorDialog::timerTick()
 {
   int16_t val = 0;
-#ifndef V2
   int16_t v ;
   uint8_t tma ;
-#endif
 //    if((abs(g_model.tmrMode)>1) && (abs(g_model.tmrMode)<TMR_VAROFS)) {
 //        val = calibratedStick[CONVERT_MODE(abs(g_model.tmrMode)/2,g_model.modelVersion,g_eeGeneral.stickMode)-1];
 //        val = (g_model.tmrMode<0 ? RESX-val : val+RESX ) / (RESX/16);  // only used for %
@@ -1767,31 +1785,45 @@ void simulatorDialog::timerTick()
 //    {
 //      val = chanOut[tm-TMR_VAROFS] ;
 //    }
-#ifndef V2
     int8_t tmb ;
-#endif
  //		uint8_t switch_b ;
 		uint8_t max_drswitch ;
+#ifndef V2
 		max_drswitch = ( ee_type ) ? MAX_DRSWITCH+EXTRA_CSW : MAX_DRSWITCH ;
-
+#else
+		max_drswitch = MAX_DRSWITCH ;
+#endif
   int itimer ;
   for( itimer = 0 ; itimer < 2 ; itimer += 1 )
 	{
-#ifndef V2
     uint8_t resetting = 0 ;
     if ( itimer == 0 )
 		{
+#ifndef V2
 			tmb = g_model.timer1RstSw ;
+#else
+			tmb = g_model.timer[0].tmrRstSw ;
+#endif
 		}
 		else
 		{
+#ifndef V2
 			tmb = g_model.timer2RstSw ;
+#else
+			tmb = g_model.timer[1].tmrRstSw ;
+#endif
 		}
 		if ( tmb )
 		{
+#ifndef V2
     	if(tmb>=(HSW_MAX))	 // toggeled switch
 			{
         uint8_t swPos = getSwitch( tmb-(HSW_MAX), 0 ) ;
+#else
+    	if(tmb>=(HSW2_MAX))	 // toggeled switch
+			{
+        uint8_t swPos = getSwitch( tmb-(HSW2_MAX), 0 ) ;
+#endif
         if ( swPos != lastResetSwPos[itimer] )
 				{
           lastResetSwPos[itimer] = swPos ;
@@ -1815,7 +1847,11 @@ void simulatorDialog::timerTick()
 			{
 //				resetTimer1() 
 				s_timeCumAbs=0 ;
+#ifndef V2
         s_timerVal[0] = ( g_model.tmrDir ) ? 0 : g_model.tmrVal ;
+#else
+        s_timerVal[0] = ( g_model.timer[0].tmrDir ) ? 0 : g_model.timer[0].tmrVal ;
+#endif
   			s_timeCumThr[0]=0;
   			s_timeCumSw[0]=0;
   			s_timeCum16ThrP[0]=0;
@@ -1824,20 +1860,26 @@ void simulatorDialog::timerTick()
 			}
 			else
 			{
+#ifndef V2
         s_timerVal[1] = ( g_model.tmr2Dir ) ? 0 : g_model.tmr2Val ;
+#else
+        s_timerVal[1] = ( g_model.timer[0].tmrDir ) ? 0 : g_model.timer[0].tmrVal ;
+#endif
   			s_timeCumThr[1]=0;
   			s_timeCumSw[1]=0;
   			s_timeCum16ThrP[1]=0;
 //				resetTimer2() ;
 			}
 		}
-#endif
   }
 		
 #ifndef V2
     tma = g_model.tmrMode ;
 		tmb = g_model.tmrModeB ;
-
+#else
+    tma = g_model.timer[0].tmrModeA ;
+		tmb = g_model.timer[0].tmrModeB ;
+#endif
 
     v = 0 ;
     if(( tma > 1 ) && ( tma < TMR_VAROFS ) )
@@ -1854,10 +1896,18 @@ void simulatorDialog::timerTick()
 		}		
 		val = ( v + RESX ) / (RESX/16) ;
 
+#ifndef V2
     if(tmb > HSW_MAX)
+#else
+    if(tmb > HSW2_MAX)
+#endif
 		{ //toggeled switch//abs(g_model.tmrMode)<(10+MAX_DRSWITCH-1)
       if(!(sw_toggled[0] | s_sum | s_cnt | s_time[0] | lastSwPos[itimer])) lastSwPos[itimer] = 0 ;  // if initializing then init the lastSwPos
+#ifndef V2
       uint8_t swPos = getSwitch( tmb - HSW_MAX, 0 ) ;
+#else
+      uint8_t swPos = getSwitch( tmb - (HSW2_MAX-1), 0 ) ;
+#endif
       if(swPos && !lastSwPos[itimer])  sw_toggled[0] = !sw_toggled[0];  //if switcdh is flipped first time -> change counter state
       lastSwPos[itimer] = swPos;
     }
@@ -1877,7 +1927,6 @@ void simulatorDialog::timerTick()
 		{
 			val = 0 ;		// Stop TH%
 		}
-#endif
 
     if((uint16_t)( g_tmr10ms-s_time[0])>99)
 		{
@@ -1920,6 +1969,37 @@ void simulatorDialog::timerTick()
     	case TMR_BEEPING:
     	    if(s_timerVal[0] <= -MAX_ALERT_TIME)   s_timerState[0]=TMR_STOPPED;
     	    if(g_model.tmrVal == 0)             s_timerState[0]=TMR_RUNNING;
+    	    break;
+    	case TMR_STOPPED:
+    	    break;
+    	}
+#else
+      s_timerVal[0] = g_model.timer[0].tmrVal;
+//    	uint8_t tmrM = abs(g_model.tmrMode);
+      uint16_t subtrahend = 0 ;
+      if(tma==TMRMODE_NONE)// s_timerState[0] = TMR_OFF;
+			{
+			}	
+    	else if(tma==TMRMODE_ABS)
+			{
+				if ( tmb == 0 ) subtrahend = s_timeCumAbs ;
+    		else subtrahend = s_timeCumSw[0] ; //switch
+    	}
+			else if(tma<TMR_VAROFS-1) subtrahend = s_timeCumThr[0];// stick% : stick
+    	else subtrahend = s_timeCum16ThrP[0]/16 ; //switch
+			s_timerVal[0] -= subtrahend ;
+
+    	switch(s_timerState[0])
+    	{
+    	case TMR_OFF:
+          if(g_model.timer[0].tmrModeA != TMRMODE_NONE) s_timerState[0]=TMR_RUNNING;
+    	    break;
+    	case TMR_RUNNING:
+    	    if(s_timerVal[0]<=0 && g_model.timer[0].tmrVal) s_timerState[0]=TMR_BEEPING;
+    	    break;
+    	case TMR_BEEPING:
+    	    if(s_timerVal[0] <= -MAX_ALERT_TIME)   s_timerState[0]=TMR_STOPPED;
+    	    if(g_model.timer[0].tmrVal == 0)             s_timerState[0]=TMR_RUNNING;
     	    break;
     	case TMR_STOPPED:
     	    break;
@@ -2391,6 +2471,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         int16_t vc = 0;
         if(g_model.swashCollectiveSource)
             vc = anas[g_model.swashCollectiveSource-1];
+
 
         if(g_model.swashInvertELE) vp = -vp;
         if(g_model.swashInvertAIL) vr = -vr;

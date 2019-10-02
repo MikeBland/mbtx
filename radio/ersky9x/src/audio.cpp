@@ -1794,7 +1794,6 @@ extern uint32_t sdMounted( void ) ;
 		 if ( Voice.VoiceQueueCount )
 		 {
 		 	uint32_t processed = 0 ;
-			AudioActive = 1 ;
 		 	
 //			ToneQueueWidx = ToneQueueRidx ;		// Discard Tone queue
 		 	

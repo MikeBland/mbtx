@@ -34,7 +34,7 @@ extern uint8_t ExtDisplaySend ;
 #endif
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBLEM1)
 #define DISPLAY_W 128
 #define DISPLAY_H  64
 #endif
@@ -268,6 +268,10 @@ extern void backlight_set( uint16_t brightness ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern void backlight_set( uint16_t brightness ) ;
 #endif
+#if defined(PCBLEM1)
+extern void backlight_set( uint16_t brightness ) ;
+#endif
+
 
 #define BLINK_ON_PHASE (g_blinkTmr10ms & (1<<6))
 #define BLINK_SYNC      g_blinkTmr10ms = (3<<5)

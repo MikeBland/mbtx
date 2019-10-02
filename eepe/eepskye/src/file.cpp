@@ -763,7 +763,12 @@ bool ee32LoadGeneral(struct t_radioData *radioData)
 //  g_eeGeneral.myVers   =  MDVERS; // update myvers
 
   uint16_t sum=0;
-  if(size>(sizeof(EEGeneral)-20)) for(uint8_t i=0; i<12;i++) sum+=radioData->generalSettings.calibMid[i];
+  if(size>(sizeof(EEGeneral)-20))
+  {
+      uint16_t *p ;
+      p = (uint16_t *)radioData->generalSettings.calibMid ;
+      for(uint8_t i=0; i<12;i++) sum+=*p++;
+  }
 	else return false ;
   return radioData->generalSettings.chkSum == sum;
 }
@@ -863,7 +868,7 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 	uint32_t i ;
 
 	memset( eeprom, 0xFF, EEFULLSIZE ) ;
-	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) || ( radioData->type == RADIO_TYPE_QX7 ) || ( radioData->type == RADIO_TYPE_T12 ) || ( radioData->type == RADIO_TYPE_XXX ) )
+	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) || ( radioData->type == RADIO_TYPE_QX7 ) || ( radioData->type == RADIO_TYPE_T12 ) || ( radioData->type == RADIO_TYPE_X9L ) )
 	{
 		// Taranis type
 		EeFsFormat( eeprom ) ;

@@ -50,6 +50,12 @@
 #include "analog.h"
 #endif
 
+#if defined(PCBLEM1)
+#include "timers.h"
+void eeLoadModel(uint8_t id) ;
+#include <stm32f10x.h>
+#endif
+
 
 #if defined(PCBX12D) || defined(PCBX10)
 #include "timers.h"
@@ -115,6 +121,12 @@ uint8_t s_moveMode;
 #ifdef PCBX9LITE
  #define PAGE_NAVIGATION 1
 #endif // PCBX9LITE
+#ifdef REV19
+ #define PAGE_NAVIGATION 1
+#endif // REV19
+#ifdef PCBLEM1
+ #define PAGE_NAVIGATION 1
+#endif // PCBLEM1
 
 //#ifdef PCBX10
 // #define PAGE_NAVIGATION 1
@@ -2708,7 +2720,7 @@ int8_t edit_dr_switch( uint8_t x, uint8_t y, int8_t drswitch, uint8_t attr, uint
 				drswitch = switchMap( value ) ;
 			}
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 			int16_t value = drswitch ;
 			if ( value < -HSW_MAX )
 			{
@@ -2886,6 +2898,11 @@ void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr)
 uint8_t g_posHorz ;
 uint8_t M_longMenuTimer ;
 uint8_t M_lastVerticalPosition ;
+
+#if defined(PCBLEM1)
+uint8_t M_longBtnTimer ;
+#endif
+
 //#define MAXCOL(row) (horTab ? pgm_read_byte(horTab+min(row, horTabMax)) : (const uint8_t)0)
 
 
@@ -3093,6 +3110,30 @@ uint8_t MState2::check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t 
 		}
 		M_longMenuTimer = timer ;
 	}
+#ifdef PCBLEM1
+	{
+		uint8_t timer = M_longBtnTimer ;
+		if ( encoderPressed() )
+		{
+			if ( timer < 255 )
+			{
+				timer += 1 ;
+			}
+		}
+		else
+		{
+			timer = 0 ;
+		}
+		if ( timer > 60 )
+		{
+    	if ( ( event == 0 ) || ( event == EVT_KEY_REPT(BTN_RE) ) )
+			{
+				event = EVT_KEY_LONG(KEY_EXIT) ;
+			}			
+		}
+		M_longBtnTimer = timer ;
+	}
+#endif
 
  } 
 
@@ -3171,7 +3212,9 @@ uint8_t MState2::check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t 
             s_editMode = false;
             break;
         }
+#ifdef PCBLEM1
         popMenu();  //beeps itself
+#endif  
 //				event = EVT_EXIT ;
     break;
 
@@ -3491,6 +3534,31 @@ void doMainScreenGrphics()
           len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
           V_BAR(SCREEN_WIDTH/2+12+x + X12SMALL_OFFSET,SCREEN_HEIGHT-8+12, len ) ;
 				}
+#endif
+#ifdef PCBLEM1
+				x = 1 ;
+				y = 4 ;
+        uint8_t z = y ;
+        len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+        V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
+
+//				if (g_eeGeneral.extraPotsSource[0] )
+//				{
+//					x = -4 ;
+//					y = 5 ;
+//    	    uint8_t z = y ;
+//      	  len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//        	V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
+//				}
+
+//				if (g_eeGeneral.extraPotsSource[1] )
+//				{
+//					x = 6 ;
+//					y = 6 ;
+//    	    uint8_t z = y ;
+//      	  len = ((calibratedStick[z]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//        	V_BAR(SCREEN_WIDTH/2+x,SCREEN_HEIGHT-8, len ) ;
+//				}
 #endif
     }
 #if defined(PCBX12D) || defined(PCBX10)
@@ -4352,6 +4420,10 @@ void menuBlocking(uint8_t event)
 #define NUM_MIX_SWITCHES	(9+NUM_SKYCSW)
 #endif
 
+#if defined(PCBLEM1)
+#define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
+#endif
+
 
 void putsChnOpRaw( uint8_t x, uint8_t y, uint8_t source, uint8_t switchSource, uint8_t output, uint8_t attr )
 //void putsChnOpRaw( uint8_t x, uint8_t y, SKYMixData *md2, uint8_t attr )
@@ -4419,6 +4491,12 @@ static uint8_t mapMixSource( uint8_t index, uint8_t switchSource )
 			if ( switchSource > 6 )
 			{
 				index -= 1 ;
+			}
+#endif // PCBX7
+#ifdef PCBLEM1
+			if ( switchSource > 5 )
+			{
+				index -= 2 ;
 			}
 #endif // PCBX7
 #ifdef PCBX9D
@@ -4548,6 +4626,12 @@ uint8_t unmapMixSource( uint8_t index, uint8_t *switchSource )
 			if ( index > 5 )
 			{
 				index += 1 ;
+			}
+#endif // PCBX9LITE
+#ifdef PCBLEM1
+			if ( index > 3 )
+			{
+				index += 2 ;
 			}
 #endif // PCBX9LITE
 #ifdef PCBX9D
@@ -5369,6 +5453,10 @@ void menuCustomTelemetry(uint8_t event)
  const uint8_t TelOptions[] = {1,2,3,5,6,7,11,12} ;
 #endif
 
+#ifdef PCBLEM1
+ #define MAX_TEL_OPTIONS		8
+ const uint8_t TelOptions[] = {1,2,3,5,6,7,11,12} ;
+#endif
 
 // 0 Telemetry
 // 1 SbusTrain
@@ -5403,6 +5491,11 @@ void menuCustomTelemetry(uint8_t event)
 #ifdef PCB9XT
  #define MAX_COM2_OPTIONS		3
  const uint8_t Com2Options[] = {0,1,2,7} ;
+#endif
+
+#ifdef PCBLEM1
+ #define MAX_COM2_OPTIONS		1
+ const uint8_t Com2Options[] = {0,1} ;
 #endif
 
 
@@ -8835,8 +8928,6 @@ void menuProcMixOne(uint8_t event)
       uint8_t attr = sub==i ? InverseBlink : 0;
   		uint8_t b ;
 
-			lcd_outhex4( 0, 0, md2->srcRaw ) ;
-
       switch(i)
 			{
         case 0:
@@ -10577,6 +10668,11 @@ const uint8_t ProtocolOptions[2][5] = { {3,PROTO_PPM,PROTO_DSM2,PROTO_MULTI}, {4
 const uint8_t ProtocolOptions[2][6] = { {4,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI}, {5,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI,PROTO_XFIRE} };
 #endif
 
+#ifdef PCBLEM1
+const uint8_t ProtocolOptions[2][6] = { {1,PROTO_DSM2}, {1,PROTO_DSM2} };
+#endif
+
+
 uint32_t checkProtocolOptions( uint8_t module )
 {
 #if defined(PCBX12D) || defined(PCBX10)
@@ -11702,6 +11798,9 @@ void editOneProtocol( uint8_t event )
 	uint8_t need_bind_range = 0 ;
 	EditType = EE_MODEL ;
 	uint8_t dataItems = 6 ;
+#ifdef PCBLEM1
+	dataItems += 1 ;
+#endif
 	uint8_t module = EditingModule ;
 	if ( module )
 	{
@@ -11765,7 +11864,9 @@ void editOneProtocol( uint8_t event )
 #endif
 		{
 			need_bind_range |= 4 ;
+#ifndef PCBLEM1
 		  if ( pModule->sub_protocol == DSM_9XR )
+#endif
 			{
 				dataItems += 1 ;
 				need_bind_range |= 1 ;
@@ -11839,7 +11940,11 @@ void editOneProtocol( uint8_t event )
 #if defined (PCBXLITE) || defined (PCBX9LITE)
 				value = newvalue ? 1 : PROTO_OFF ;
 #else
+ #if defined (PCBLEM1)
+				value = newvalue ? 2 : PROTO_OFF ;
+ #else
 				value = newvalue ? 0 : PROTO_OFF ;
+ #endif
 #endif
 			}
 		}
@@ -11934,23 +12039,27 @@ void editOneProtocol( uint8_t event )
 				{
 					attr |= blink ;
 				}
+#ifndef PCBLEM1
 		  	if ( ( pModule->protocol == PROTO_DSM2) && ( pModule->sub_protocol == DSM_9XR ) )
   			{
 				  lcd_puts_Pleft( y, XPSTR("\013Chans") );
  	    		lcd_outdezAtt(  21*FW, y, pModule->channels, attr ) ;
 				}
 				else
+#endif
 				{
 				  lcd_puts_Pleft( y, PSTR(STR_13_RXNUM) );
 	 		    lcd_outdezAtt(  21*FW, y,  pModule->pxxRxNum, attr ) ;
 				}
 				if ( attr )
 				{
+#ifndef PCBLEM1
 			  	if ( ( pModule->protocol == PROTO_DSM2) && ( pModule->sub_protocol == DSM_9XR ) )
 					{
   	          CHECK_INCDEC_H_MODELVAR( pModule->channels, 6, 14) ;
 					}
 					else
+#endif
 					{
 						uint8_t max = 63 ;
 						if ( pModule->protocol == PROTO_MULTI )
@@ -11963,7 +12072,26 @@ void editOneProtocol( uint8_t event )
 			}
 			if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
 		} subN += 1 ;
-			
+
+		if(t_pgOfs<=subN)
+		{
+
+#ifdef PCBLEM1
+			uint8_t attr = 0 ;
+			if ( sub==subN )
+			{
+				attr |= blink ;
+			}
+			lcd_puts_Pleft( y, XPSTR("Chans") );
+ 	    lcd_outdezAtt(  21*FW, y, pModule->channels, attr ) ;
+			if ( attr )
+			{
+        CHECK_INCDEC_H_MODELVAR( pModule->channels, 6, 14) ;
+			}
+			if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
+		} subN += 1 ;
+#endif
+			 
 		if(t_pgOfs<=subN)
 		{
 	  	lcd_puts_Pleft( y, XPSTR("Detect Telem."));
@@ -12096,8 +12224,13 @@ void editOneProtocol( uint8_t event )
 			  lcd_puts_Pleft( y, PSTR(STR_DSM_TYPE));
   			int8_t x ;
   		  x = pModule->sub_protocol ;
+#ifdef PCBLEM1
+			  lcd_putsAttIdx( 10*FW, y, "\004DSM2DSMXDSMP", x, (sub==subN ? blink:0) ) ;
+				if(sub==subN) CHECK_INCDEC_H_MODELVAR_0( pModule->sub_protocol,2);
+#else
 			  lcd_putsAttIdx( 10*FW, y, XPSTR(DSM2_STR), x, (sub==subN ? blink:0) ) ;
-  			if(sub==subN) CHECK_INCDEC_H_MODELVAR_0( pModule->sub_protocol,3);
+				if(sub==subN) CHECK_INCDEC_H_MODELVAR_0( pModule->sub_protocol,3);
+#endif
   		  if((y+=FH)>(SCREEN_LINES-1)*FH) return;
   		}
 			subN += 1 ;
@@ -12341,6 +12474,10 @@ extern uint16_t XjtVersion ;
 						else
 						{
 	  					BindRangeFlag[module] = PXX_BIND ;		    	//send bind code
+#ifdef PCBLEM1
+void startDsmBind() ;
+							startDsmBind() ;
+#endif
 							pushMenu( menuRangeBind ) ;
 						}
 					}
@@ -12387,7 +12524,11 @@ void menuProcProtocol(uint8_t event)
 #ifdef PCBT12
 	uint8_t dataItems = 2 ;
 #else
+ #if defined(PCBLEM1)				
+	uint8_t dataItems = 2 ;
+ #else
 	uint8_t dataItems = 3 ;
+ #endif	
 #endif	
 	uint8_t need_range = 0 ;
 	uint32_t i ;
@@ -12413,6 +12554,9 @@ void menuProcProtocol(uint8_t event)
 		break ;
 	}
 
+#if defined(PCBLEM1)				
+	g_model.Module[1].protocol = PROTO_OFF ;
+#endif
 	switch ( g_model.Module[1].protocol )
 	{
 		case PROTO_PXX :
@@ -12536,7 +12680,11 @@ void menuProcProtocol(uint8_t event)
 #ifdef PCBT12
 	i = 1 ;
 #else
+ #if defined(PCBLEM1)				
+	i = 0 ;
+ #else
 	for ( i = 0 ; i < 2 ; i += 1 )
+ #endif
 #endif
 	{
 		
@@ -12557,7 +12705,11 @@ void menuProcProtocol(uint8_t event)
 #ifdef PCBT12
 	if ( sub <= 1 )
 #else
+ #if defined(PCBLEM1)				
+	if ( sub <= 1 )
+ #else
 	if ( sub <= 2 )
+ #endif
 #endif
 	{
   	switch (event)
@@ -12579,10 +12731,12 @@ void menuProcProtocol(uint8_t event)
 						pushMenu( editOneProtocol ) ;
 					break ;
 #ifndef PCBT12
+ #ifndef PCBLEM1
 					case 2 :
 						EditingModule = 1 ;
 						pushMenu( editOneProtocol ) ;
 					break ;
+ #endif
 #endif
 				}
 
@@ -14678,7 +14832,7 @@ void menuProcModelSelect(uint8_t event)
 				stopMusic() ;
 				pausePulses() ;
 	      STORE_MODELVARS ;			// To make sure we write model persistent timer
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern void eeSaveAll() ;
 				eeSaveAll() ;
 #else
@@ -14687,6 +14841,9 @@ extern void eeSaveAll() ;
 				g_eeGeneral.currModel = mstate2.m_posVert;
 #ifdef PCBX9D				
 //				init_trainer_capture(0) ;
+				eeLoadModel( g_eeGeneral.currModel ) ;
+#endif
+#if defined(PCBLEM1)				
 				eeLoadModel( g_eeGeneral.currModel ) ;
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
@@ -15194,6 +15351,10 @@ uint8_t Current_count ;
 #define NUM_ANA_ITEMS		2
 #endif
 
+#ifdef PCBLEM1
+#define NUM_ANA_ITEMS		2
+#endif
+
 void menuProcDiagAna(uint8_t event)
 {
 	register uint32_t i ;
@@ -15461,14 +15622,13 @@ void menuProcDiagKeys(uint8_t event)
 	TITLE(PSTR(STR_DIAG));
 	static MState2 mstate2;
 	mstate2.check_columns(event, 1-1) ;
-  
 	uint8_t x ;
 
 //#ifdef PCBX12D
 //	lcd_puts_Pleft( 0, XPSTR( "\016Type=" ) ) ;
 //	lcd_putc( 20*FW, 0, (GPIOI->IDR & 0x0800) ? '1' : '0' ) ;
 //#endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 
 #ifdef REV9E
 	x = 7*FW;
@@ -15487,6 +15647,9 @@ void menuProcDiagKeys(uint8_t event)
 #ifdef PCBX9LITE
 		if ( ( i != 3) && ( i != 4) && ( i != 6 ) )
 #endif // PCBX9LITE
+#ifdef PCBLEM1
+		if ( ( i != 4) && ( i != 5 ) )
+#endif // PCBX7
 		{
 			putHwSwitchName( x, y, i, 0 ) ;
 			uint32_t pos = switchPosition( i ) ;
@@ -16900,8 +17063,63 @@ void menuDebug(uint8_t event)
 			{
 				RawLogging = 0 ;
 			}
+			killEvents(event) ;
 		break ;
 	}
+
+
+#ifdef PCBLEM1
+	uint32_t i ;
+	uint16_t x ;
+extern struct t_fifo128 RfRx_fifo ;
+	uint16_t *p = (uint16_t *)&RfRx_fifo ;
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x = ( x >> 8 ) | ( x << 8 ) ;
+		lcd_outhex4( i*25, 1*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x = ( x >> 8 ) | ( x << 8 ) ;
+		lcd_outhex4( i*25, 2*FH, x ) ;
+	}
+
+	p = (uint16_t *)&Com1_fifo ;
+
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x = ( x >> 8 ) | ( x << 8 ) ;
+		lcd_outhex4( i*25, 4*FH, x ) ;
+	}
+	for ( i = 0 ; i < 5 ; i += 1 )
+	{
+		x = *p++ ;
+		x = ( x >> 8 ) | ( x << 8 ) ;
+		lcd_outhex4( i*25, 5*FH, x ) ;
+	}
+
+//	for ( i = 0 ; i < 5 ; i += 1 )
+//	{
+//		x = *p++ ;
+//		x = ( x >> 8 ) | ( x << 8 ) ;
+//		lcd_outhex4( i*25, 3*FH, x ) ;
+//	}
+
+
+
+//extern struct t_fifo128 RfTx_fifo ;
+//	p = (uint16_t *)&RfTx_fifo ;
+//	for ( i = 0 ; i < 5 ; i += 1 )
+//	{
+//		x = *p++ ;
+//		x = ( x >> 8 ) | ( x << 8 ) ;
+//		lcd_outhex4( i*25, 5*FH, x ) ;
+//	}
+
+#endif
 
 #ifdef ACCESS
 
@@ -18132,7 +18350,7 @@ extern uint16_t USART_NE ;
   lcd_outhex4( 96, 7*FH, USART_NE ) ;
 #endif
 
-#ifdef PCBSKY
+#if defined(PCBSKY) || defined(PCBLEM1)
 extern uint8_t DsmDebug[20] ;
 extern uint8_t DsmControlDebug[20] ;
 //extern uint16_t DsmControlCounter ;
@@ -18159,13 +18377,14 @@ extern uint8_t DsmControlDebug[20] ;
   
 //	lcd_outhex4( 96, 7*FH, DsmControlCounter ) ;
 
+#if defined(PCBSKY)
 extern uint16_t USART_ERRORS ;
 extern uint16_t USART_FE ;
 extern uint16_t USART_PE ;
   lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
   lcd_outhex4( 24, 7*FH, USART_FE ) ;
   lcd_outhex4( 48, 7*FH, USART_PE ) ;
-
+#endif
 extern uint16_t DsmDbgCounters[20] ;
 	lcd_outhex4( 24, 2*FH, DsmDbgCounters[6] ) ;
 
@@ -18968,6 +19187,12 @@ void switchDisplay( uint8_t j, uint8_t a )
 		a -= 1 ;
 	}
 #endif	
+#ifdef PCBLEM1
+	if ( a >= 24 )
+	{
+		a -= 2 ;
+	}
+#endif // PCBLEM1
 	uint8_t b = a + 3 ;
 	uint8_t y = 4*FH ;
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -19047,7 +19272,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 		putSwitchName(x2, y, i, getSwitch00(i+1) ? INVERS : 0) ;
 	}
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 	for(uint8_t i=a; i<b; y += FH, i += 1 )
 	{
 #ifdef PCBX7
@@ -19082,17 +19307,26 @@ void switchDisplay( uint8_t j, uint8_t a )
 			p += 1 ;
 		}
 #endif // PCBX9LITE
+#ifdef PCBLEM1
+		uint32_t p ;
+		p = i ;
+		p = i ;
+		if ( p > 3 )
+		{
+			p += 2 ;
+		}
+#endif // PCBLEM1
 #ifdef REV9E
 		if ( i < 18 )
 #else
-#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(PCBLEM1)
 		if ( p < 8 )
 #else // PCBX7
 		if ( i < 8 )
 #endif // PCBX7
 #endif	// REV9E
 		{
-#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(PCBLEM1)
 			putHwSwitchName((2+j*15)*FW-2, y, p, 0 ) ;
 			uint32_t pos = switchPosition( p ) ;
 #else // PCBX7
@@ -19122,7 +19356,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 #ifdef REV9E
 				if ( i == 18 )
 #else
-#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(PCBLEM1)
 				if ( p == 8 )
 #else // PCBX7
 				if ( i == 8 )
@@ -19143,7 +19377,7 @@ void switchDisplay( uint8_t j, uint8_t a )
 #ifdef REV9E
 			putSwitchName((2+j*15)*FW-2, y, i-10+1-m, getSwitch00(i-10+2-m) ? INVERS : 0 ) ;
 #else
-#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(PCBLEM1)
 			putSwitchName((2+j*15)*FW-2, y, p+1-m, getSwitch00(p+2-m) ? INVERS : 0 ) ;
 #else // PCBX7
 #if defined(PCBX12D) || defined(PCBX10)
@@ -19558,6 +19792,22 @@ void menuProc0(uint8_t event)
 
 	if ( ! PopupData.PopupActive )
 	{
+#ifdef PCBLEM1
+	if ( event == 0 )
+	{
+extern int32_t Rotary_diff ;
+		if ( Rotary_diff > 0 )
+		{
+			event = EVT_KEY_BREAK(KEY_DOWN) ;
+		}
+		else if ( Rotary_diff < 0 )
+		{
+			event = EVT_KEY_BREAK(KEY_UP) ;
+		}
+		Rotary_diff = 0 ;
+	}
+#endif
+		
 		switch(event)
 		{
 	    case EVT_KEY_LONG(BTN_RE) :		// Nav Popup
@@ -19690,6 +19940,27 @@ void menuProc0(uint8_t event)
 	    break ;
 #endif // PAGE_NAVIGATION
 
+#ifdef PCBLEM1
+			case EVT_KEY_BREAK(KEY_UP) :
+				view += 1 ;
+    	  if( view>=MAX_VIEWS) view = 0 ;
+    	  audioDefevent(AU_KEYPAD_UP) ;
+    	  g_model.mview = view | tview ;
+				eeModelChanged() ;
+				io_subview = 0 ;
+    	break;
+
+			case EVT_KEY_BREAK(KEY_DOWN) :
+	      if(view>0)
+  	      view = view - 1 ;
+    	  else
+      	  view = MAX_VIEWS-1 ;
+  	    audioDefevent(AU_KEYPAD_DOWN) ;
+	      g_model.mview = view | tview ;
+				eeModelChanged() ;
+				io_subview = 0 ;
+	    break ;
+#endif
 #ifndef PAGE_NAVIGATION
 			case EVT_KEY_BREAK(KEY_UP) :
 				view += 1 ;
@@ -20728,7 +20999,7 @@ extern uint8_t LogsRunning ;
 #if defined(PCBSKY) || defined(PCB9XT)
 		if ( a != 0 ) a = a * 6 + 3 ;		// 0, 9, 15
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 		if ( a != 0 ) a = a * 6 ;		// 0, 6, 12
 #endif
     uint8_t j ;
@@ -20742,7 +21013,7 @@ extern uint8_t LogsRunning ;
 				a *= 6 ;		// 6, 12, 18
 			}
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 			if ( j == 1 )
 			{
 				a += 3 ;
@@ -20936,6 +21207,7 @@ extern DWORD socket_is_empty( void ) ;
 extern uint8_t SectorsPerCluster ;
   lcd_outdezAtt( 127, 1*FH, SectorsPerCluster/2, 0 ) ;
 #ifndef SIMU
+
 
 #ifdef PCBSKY
 #ifndef SMALL
@@ -21437,14 +21709,18 @@ enum GENERAL_INDEX
   #ifndef PCBX9LITE
    #ifndef PCBX12D
     #ifndef PCBX10
+     #ifndef PCBLEM1
 	M_MODULE,
+     #endif // PCBLEM1
     #endif // X10
    #endif // X12
   #endif // X9Lite
  #endif
 #endif
 	M_EEPROM,
+#ifndef PCBLEM1
 	M_DATE,
+#endif // PCBLEM1
 	M_DIAGKEYS,
 	M_DIAGANA,
 	M_COUNT
@@ -21777,17 +22053,21 @@ void menuProcIndex(uint8_t event)
 			case M_VERSION :
         pushMenu(menuProcDiagVers) ;
 			break ;
+#ifndef PCBLEM1
 			case M_DATE :
         pushMenu(menuProcDate) ;
 			break ;
+#endif
 #ifndef PCBXLITE	
  #ifndef PCBT12
   #ifndef PCBX9LITE
    #ifndef PCBX12D
     #ifndef PCBX10
+      #ifndef PCBLEM1
 			case M_MODULE :
         pushMenu(menuProcRSSI) ;
 			break ;
+     #endif
     #endif
    #endif
   #endif // X3
@@ -21853,14 +22133,18 @@ STR_Version,
   #ifndef PCBX9LITE
    #ifndef PCBX12D
     #ifndef PCBX10
+     #ifndef PCBLEM1
 STR_ModuleRssi,
+     #endif // PCBLEM1
     #endif // X1
    #endif // X12
   #endif // X3
  #endif
 #endif
 STR_Eeprom,
+#ifndef PCBLEM1
 STR_DateTime,
+#endif // PCBLEM1
 STR_DiagSwtch,
 STR_DiagAna
 };
@@ -21928,7 +22212,11 @@ STR_DiagAna
  #if defined(PCBX7) || defined(PCBX9LITE)
 				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, 10, 42);
  #else
+  #ifdef PCBLEM1
+				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, 5, 20);
+	#else
 				CHECK_INCDEC_H_GENVAR( g_eeGeneral.contrast, 10, 45);
+  #endif
  #endif
 #endif
 				if ( g_eeGeneral.contrast != oldValue )
@@ -21985,8 +22273,8 @@ STR_DiagAna
 #ifdef PCBSKY
 				PWM->PWM_CH_NUM[0].PWM_CDTYUPD = g_eeGeneral.bright ;
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-#if defined(REVPLUS) || defined(REV9E)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(REVPLUS) || defined(REV9E) || defined(REV19)
 				backlight_set( g_eeGeneral.bright, 0 ) ;
 #else
 				backlight_set( g_eeGeneral.bright ) ;
@@ -22768,7 +23056,11 @@ void I2C_set_volume( register uint8_t volume ) ;
 			#define HW_PAGE1	6
 			#define HW_PAGE2	4
       #else
+			 #ifdef PCBLEM1
+			IlinesCount = 6 ;
+			 #else
 			IlinesCount = 6 + 4 + 1 + 1 + 4 ;
+       #endif
       #endif
      #endif
     #endif
@@ -22897,7 +23189,9 @@ void I2C_set_volume( register uint8_t volume ) ;
 			if ( sub < 4 )
 #endif
 			{
+#ifndef PCBLEM1
 				displayNext() ;
+#endif
         lcd_puts_Pleft( y,PSTR(STR_FILTER_ADC));
         lcd_putsAttIdx(PARAM_OFS, y, XPSTR("\004SINGOSMPFILT"),g_eeGeneral.filterInput,(sub==subN ? blink:0));
         if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.filterInput, 2);
@@ -22906,6 +23200,7 @@ void I2C_set_volume( register uint8_t volume ) ;
 
 #ifndef PCBX7
  #ifndef PCBX9LITE
+  #ifndef PCBLEM1
   			lcd_puts_Pleft( y, PSTR(STR_ROTARY_DIVISOR));
 	  		lcd_putsAttIdx( 15*FW, y, XPSTR("\001142"),g_eeGeneral.rotaryDivisor,(sub==subN ? blink:0));
   			if(sub==subN)
@@ -22914,6 +23209,7 @@ void I2C_set_volume( register uint8_t volume ) ;
 				}
  				y += FH ;
 				subN += 1 ;
+  #endif // nPCBLEM1
  #endif // X3
 #endif
 
@@ -23233,7 +23529,9 @@ void I2C_set_volume( register uint8_t volume ) ;
 				}
 #endif
 			
+#ifndef PCBLEM1
 			}
+#endif
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
 #ifndef PCBXLITE
  #ifndef PCBT12
@@ -23347,6 +23645,8 @@ void I2C_set_volume( register uint8_t volume ) ;
  #endif // nT12
 #endif // nXLITE
 #endif
+
+#ifndef PCBLEM1
 
 #if defined(PCBX12D) || defined(PCBX10)
 			else if ( sub < page3 )
@@ -23664,7 +23964,13 @@ void I2C_set_volume( register uint8_t volume ) ;
  				y += FH ;
 				subN += 1 ;
 #endif // PCBSKY
-        
+
+#endif // PCBLEM1        
+
+#ifdef PCBLEM1
+			{
+#endif
+
 				lcd_puts_Pleft( y,XPSTR("Stick Reverse:"));
  				y += FH ;
 				for ( uint8_t i = 0 ; i < 4 ; i += 1 )
@@ -24288,8 +24594,8 @@ STR_Protocol
     	lcd_putc( 19*FW, 0, g_model.modelVersion + '0' ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
- #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12) || defined(PCBX9LITE)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+ #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12) || defined(PCBX9LITE) || defined(PCBLEM1)
 			IlinesCount = 21 ;//+ 1 ;
  #else
 			IlinesCount = 22 ;//+ 1 ;
@@ -24339,6 +24645,7 @@ STR_Protocol
 //#else
  #define EXTRA_GENERAL	0
 //#endif
+
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( sub < 18 + EXTRA_GENERAL )
 #else
@@ -24464,6 +24771,8 @@ STR_Protocol
 //				subN += 1 ;
 
 			}
+
+
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			else if ( sub < 13 + EXTRA_GENERAL )
 #else
@@ -24547,6 +24856,8 @@ STR_Protocol
 				}
 //#endif
 			}
+
+ 
  #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			else if ( sub < 18 + EXTRA_GENERAL )
  #else
@@ -24558,7 +24869,6 @@ STR_Protocol
 #else			
 				subN = 13 + EXTRA_GENERAL ;
 #endif
-    	
   			attr = PREC1 ;
   			lcd_puts_Pleft(    y, PSTR(STR_AUTO_LIMITS));
   			if(sub==subN) { attr = InverseBlink | PREC1 ; CHECK_INCDEC_H_MODELVAR_0( g_model.sub_trim_limit, 100 ) ; }
@@ -24571,7 +24881,8 @@ STR_Protocol
 #else				
 				uint16_t states = g_model.modelswitchWarningStates ;
 #endif
-    		uint8_t b = (states & 1) ;
+
+				uint8_t b = (states & 1) ;
 				b = offonMenuItem( b, y, PSTR(STR_SWITCH_WARN), sub==subN ) ;
     		g_model.modelswitchWarningStates = (states & ~1) | b ;
 				y += FH ;
@@ -24639,12 +24950,12 @@ STR_Protocol
 				g_model.modelswitchWarningDisables = temp ;
 				subN += 1 ;
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+ #if defined(PCBX12D) || defined(PCBX10)
 				uint8_t enables = 0xFF ;
-#else
+ #else
 				uint8_t enables = 0x7F ;
-#endif
+ #endif
 				uint16_t temp = g_model.modelswitchWarningDisables ;
 
 				if ( temp & 0x0003 )
@@ -24675,32 +24986,32 @@ STR_Protocol
 				{
 					enables &= ~0x40 ;
 				}
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
 				if ( temp & 0xC000 )
 				{
 					enables &= ~0x80 ;
 				}
-#endif
+ #endif
 				uint8_t subSub = g_posHorz ;
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
     		for(uint8_t i=0;i<8;i++)
-#else
+ #else
     		for(uint8_t i=0;i<7;i++)
-#endif
+ #endif
 				{
-#ifdef PCBX7
-#ifdef PCBT12
+ #ifdef PCBX7
+  #ifdef PCBT12
 					if ( i != 4)
-#else
+  #else
 					if ( ( i != 4) && ( i != 6 ) )
-#endif
-#endif // PCBX7
-#ifdef PCBXLITE
+  #endif
+ #endif // PCBX7
+ #ifdef PCBXLITE
 					if ( i < 4 )
-#endif // PCBXLITE
-#ifdef PCBX9LITE
+ #endif // PCBXLITE
+ #ifdef PCBX9LITE
 					if ( ( i != 3) && ( i != 4) && ( i != 6 ) )
-#endif // PCBX9LITE
+ #endif // PCBX9LITE
 					{
 						uint8_t attr = 0 ;
 						if ( (enables & (1<<i)) )
@@ -24709,68 +25020,68 @@ STR_Protocol
 						}
 						if ( sub == subN )
 						{
-#ifdef PCBX7
-#ifdef PCBT12
+ #ifdef PCBX7
+  #ifdef PCBT12
 							if ( ( ( i < 4 ) && ( subSub==i ) ) || ( (i == 5) && (subSub == 4) ) || ( (i == 6) && (subSub == 5) ) )
-#else
+ #else
 							if ( ( subSub==i ) || ( (i == 5) && (subSub == 4) ) )
-#endif
+  #endif
 							{
 								attr = BLINK ;	
 							}
-#else // PCBX7
-#ifdef PCBXLITE
+ #else // PCBX7
+  #ifdef PCBXLITE
 							if ( subSub==i )
 							{
 								attr = BLINK ;	
 							}
-#else // PCBXLITE
-#ifdef PCBX9LITE
+  #else // PCBXLITE
+   #ifdef PCBX9LITE
 							if ( ( ( i < 3 ) && ( subSub==i ) ) || ( (i == 5) && (subSub == 3) ) )
-#else // PCBX9LITE
+   #else // PCBX9LITE
 							if ( subSub==i )
-#endif // PCBX7
+   #endif // PCBX7
 							{
 								attr = BLINK ;	
 							}
-#endif // PCBX9LITE
-#endif // PCBXLITE
+  #endif // PCBX9LITE
+ #endif // PCBXLITE
 						}
-#ifdef PCBT12
+ #ifdef PCBT12
 						lcd_putsnAtt((13+i)*FW, y, XPSTR("ABCDEGH")+i,1, attr );
-#else
+ #else
 						lcd_putsnAtt((13+i)*FW, y, XPSTR("ABCDEFG6")+i,1, attr );
-#endif
+ #endif
 					}
 				}
     		if(sub==subN)
 				{
-#ifdef PCBX7
- #ifdef PCBT12
+ #ifdef PCBX7
+  #ifdef PCBT12
 					Columns = 5 ;
- #else
+  #else
 				Columns = 4 ;
- #endif
-#else // PCBX7
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+  #endif
+ #else // PCBX7
+  #if defined(PCBXLITE) || defined(PCBX9LITE)
 					Columns = 3 ;
-#else // PCBXLITE/X3
-  #if defined(PCBX12D) || defined(PCBX10)
+  #else // PCBXLITE/X3
+   #if defined(PCBX12D) || defined(PCBX10)
 					Columns = 7 ;
- #else
+   #else
 					Columns = 6 ;
- #endif // PCBX12D
-#endif // PCBXLITE/X3
-#endif // PCBX7
+   #endif // PCBX12D
+  #endif // PCBXLITE/X3
+ #endif // PCBX7
         	if((event==EVT_KEY_FIRST(KEY_MENU)) || (event == EVT_KEY_BREAK(BTN_RE)) || P1values.p1valdiff)
 					{
 						uint32_t shift = subSub ;
-#ifdef PCBX7
+ #ifdef PCBX7
 						if ( shift >= 4 )
 						{
 							shift += 1 ;
 						}
-#endif // PCBX7
+ #endif // PCBX7
 //#ifdef PCBXLITE
 //						if ( ( shift == 2 ) && (g_eeGeneral.ailsource == 0) )
 //						{
@@ -24791,15 +25102,15 @@ STR_Protocol
 				if ( ( enables & 0x10 ) == 0 ) temp |= 0x0300 ;
 				if ( ( enables & 0x20 ) == 0 ) temp |= 0x0C00 ;
 				if ( ( enables & 0x40 ) == 0 ) temp |= 0x3000 ;
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
 				if ( ( enables & 0x80 ) == 0 ) temp |= 0xC000 ;
-#endif
+ #endif
 				g_model.modelswitchWarningDisables = temp ;
 				subN += 1 ;
 #endif
 		    lcd_puts_Pleft(    y, PSTR(STR_DEAFULT_SW)) ;
 		 		states = g_model.modelswitchWarningStates >> 1 ;
-#ifdef PCBT12
+ #ifdef PCBT12
 				if ( states & 0x4000 )
 				{
 					states &= 0x0FFF ;
@@ -24807,12 +25118,12 @@ STR_Protocol
 				}
 //				lcd_outhex4(0,0,g_model.modelswitchWarningStates) ;
 //				lcd_outhex4(30,0,states) ;
-#endif
-#ifdef REV9E
+ #endif
+ #ifdef REV9E
 				states |= (uint32_t)g_model.xmodelswitchWarningStates << 14 ;
-#endif
+ #endif
         
-#if defined(PCBSKY) || defined(PCB9XT)
+ #if defined(PCBSKY) || defined(PCB9XT)
 				y += FH ;
 				uint16_t index ;
 						
@@ -24847,26 +25158,26 @@ STR_Protocol
 				if(sub==subN)
 				{
 					lcd_rect( 0*FW+4-1, y-1, 18*FW+2+12, 9 ) ;
-#endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+ #endif
+ #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 				y += FH ;
     		for (uint8_t i=0 ; i<7 ; i += 1 )
 				{
-#ifdef PCBX7
-#ifdef PCBT12
+  #ifdef PCBX7
+   #ifdef PCBT12
 					if ( i != 4)
-#else
+   #else
 					if ( ( i != 4) && ( i != 6 ) )
-#endif
-#endif // PCBX7
-#ifdef PCBXLITE
+   #endif
+  #endif // PCBX7
+  #ifdef PCBXLITE
 					if ( i < 4 )
-#endif // PCBXLITE
-#ifdef PCBX9LITE
+  #endif // PCBXLITE
+  #ifdef PCBX9LITE
 					if ( ( i != 3) && ( i != 4) && ( i != 6 ) )
-#endif
+  #endif
 					{
-#ifdef PCBT12
+  #ifdef PCBT12
 						uint32_t j ;
 						j = i ;
 						if ( j > 4 )
@@ -24874,41 +25185,41 @@ STR_Protocol
 							j += 1 ;
 						}
 	    		  lcd_putc( 2*FW+i*(2*FW+3), y, 'A'+j ) ;
-#else
+  #else
 	    		  lcd_putc( 2*FW+i*(2*FW+3), y, 'A'+i ) ;
-#endif
+  #endif
 						lcd_putc( 3*FW+i*(2*FW+3), y, PSTR(HW_SWITCHARROW_STR)[states & 0x03] ) ;
 					}
     		  states >>= 2 ;
     		}
-#if defined(PCBX12D) || defined(PCBX10)
+  #if defined(PCBX12D) || defined(PCBX10)
    		  lcd_putc( 2*FW+7*(2*FW+3), y, '6' ) ;
 extern uint32_t switches_states ;
 				lcd_putc( 3*FW+7*(2*FW+3), y, ( (switches_states >> 14) & 0x07) + '0' ) ;
-#endif
+  #endif
     		if(sub==subN)
 				{
-#if defined(PCBX12D) || defined(PCBX10)
+  #if defined(PCBX12D) || defined(PCBX10)
 					lcd_rect( 2*FW-2, y-1, 17*FW+2+18+1, 9 ) ;
-#else
+  #else
 					lcd_rect( 2*FW-2, y-1, 14*FW+2+18+1, 9 ) ;
-#endif
-#endif
+  #endif
+ #endif
 		      if (event==EVT_KEY_FIRST(KEY_MENU) || event==EVT_KEY_FIRST(BTN_RE))
 					{
     		    killEvents(event);
-#if defined(PCBSKY) || defined(PCB9XT)
+ #if defined(PCBSKY) || defined(PCB9XT)
 			      g_model.modelswitchWarningStates = (getCurrentSwitchStates() << 1 ) ;// states ;
-#endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+ #endif
+ #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 			  		getMovedSwitch() ;	// loads switches_states
-#ifdef REV9E
+  #ifdef REV9E
 extern uint32_t switches_states ;
 				    g_model.modelswitchWarningStates = ((switches_states & 0x3FFF) << 1 ) ;// states ;
 				    g_model.xmodelswitchWarningStates = (switches_states >> 14 ) ;// states ;
-#else
+  #else
 extern uint32_t switches_states ;
-#ifdef PCBT12
+   #ifdef PCBT12
 						uint32_t ss = switches_states ;
 						if ( ss & 0x8000 )
 						{
@@ -24916,15 +25227,15 @@ extern uint32_t switches_states ;
 							ss |= 0x2000 ;
 						}
 				    g_model.modelswitchWarningStates = ((ss & 0x7FFF) << 1 ) ;// states ;
-#else
+   #else
 				    g_model.modelswitchWarningStates = ((switches_states & 0x3FFF) << 1 ) ;// states ;
- #if defined(PCBX12D) || defined(PCBX10)
+    #if defined(PCBX12D) || defined(PCBX10)
 				    g_model.modelswitchWarningStates = ((switches_states & 0x7FFF) << 1 ) ;// states ;
  						g_model.xmodelswitchWarningStates = switches_states >> 15 ; 
+    #endif
+   #endif
+  #endif
  #endif
-#endif
-#endif
-#endif
     		    s_editMode = false ;
 		        STORE_MODELVARS ;
 					}
@@ -24940,6 +25251,7 @@ extern uint32_t switches_states ;
 		  	attr = 0 ;
     		lcd_puts_Pleft(    y, PSTR(STR_VOLUME_CTRL));
 		    if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_model.anaVolume, 7 ) ; }
+
 #if defined(PCBSKY) || defined(PCB9XT)
 		    lcd_putsAttIdx( 17*FW, y, XPSTR("\003---P1 P2 P3 GV4GV5GV6GV7"),g_model.anaVolume, attr ) ;
 #endif
@@ -24951,16 +25263,20 @@ extern uint32_t switches_states ;
     		lcd_putsAttIdx( 17*FW, y, XPSTR("\003---S1 S2 GV3GV4GV5GV6GV7"),g_model.anaVolume, attr ) ;
 #endif
 #else // PCBX7
- #ifdef PCBX9LITE
+ #if defined(PCBX9LITE)
     		lcd_putsAttIdx( 17*FW, y, XPSTR("\003---S1 GV2GV3GV4GV5GV6GV7"),g_model.anaVolume, attr ) ;
  #else // PCBX9LITE
     		lcd_putsAttIdx( 17*FW, y, XPSTR("\003---S1 S2 SL SR GV5GV6GV7"),g_model.anaVolume, attr ) ;
  #endif // PCBX9LITE
 #endif // PCBX7
 #endif
+#if defined(PCBLEM1)
+    		lcd_putsAttIdx( 17*FW, y, XPSTR("\003---S1 GV2GV3GV4GV5GV6GV7"),g_model.anaVolume, attr ) ;
+#endif
 				y += FH ;
 				subN += 1 ;
 
+#ifndef PCBLEM1
  
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			}
@@ -24972,7 +25288,7 @@ extern uint32_t switches_states ;
 #ifdef REV9E
 				uint8_t subSub = g_posHorz ;
 #else
- #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 				uint8_t subSub = g_posHorz ;
  #else
 				subSub = g_posHorz ;
@@ -24983,8 +25299,8 @@ extern uint32_t switches_states ;
 				uint32_t width = NumExtraPots ? 7 : 6 ;
     		for(uint8_t i=0;i<=width;i++)
 #endif
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-#if defined(PCBX7) || defined (PCBXLITE)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBX7) || defined (PCBXLITE) || defined(PCBLEM1)
     		for(uint8_t i=0;i<6;i++)
 #else // PCBX7
  #ifdef PCBX9LITE
@@ -25085,6 +25401,7 @@ extern uint32_t switches_states ;
 				y += FH ;
 				subN += 1 ;
 				g_model.disableThrottleCheck = onoffMenuItem( g_model.disableThrottleCheck, y, XPSTR("Disable Thr Chk"), sub==subN) ;
+#endif // n PCBLEM1
 			}
 		}	
 		break ;
@@ -25459,13 +25776,19 @@ void menuProcBoot(uint8_t event)
 		lcd_puts_Pleft( 2*FH, PSTR(STR_6_POWER_ON) ) ;
 	}
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBLEM1)
+	if ( ResetReason & RCC_CSR_IWDGRSTF )	// Watchdog
+	{
+		lcd_puts_Pleft( 2*FH, PSTR(STR_6_WATCHDOG) ) ;
+#else
 	if ( ResetReason & RCC_CSR_WDGRSTF )	// Watchdog
 	{
 		lcd_puts_Pleft( 2*FH, PSTR(STR_6_WATCHDOG) ) ;
 #ifdef PCB9XT
 extern uint32_t WatchdogPosition ;
 	lcd_outhex4( 0, 3*FH, WatchdogPosition ) ;
+#endif
 #endif
 	}
 	else if ( unexpectedShutdown )
@@ -25479,7 +25802,7 @@ extern uint32_t WatchdogPosition ;
 	}
 #endif
   lcd_outdez( 20*FW, 6*FH, ( ResetReason >> 8 ) & 7 ) ;
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 	lcd_outhex4( 0, 6*FH, ResetReason >> 16 ) ;
 	lcd_outhex4( 25, 6*FH, ResetReason ) ;
 	lcd_outhex4( 0, 5*FH, RCC->BDCR ) ;

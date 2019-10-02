@@ -250,7 +250,7 @@ const char *openLogs()
 #ifdef PCBSKY
   if ( SdMounted == 0 )
 #endif
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBLEM1)
 extern uint32_t sdMounted( void ) ;
   if ( sdMounted() == 0 )
 #endif
@@ -633,6 +633,8 @@ void writeLogs()
 		}
 		return ;
 	}
+
+
 
       f_printf(&g_oLogFile, "%02d:%02d:%02d", Time.hour, Time.minute, Time.second ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
 			qr = div( LogTimer, 120 ) ;

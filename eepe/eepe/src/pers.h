@@ -75,6 +75,7 @@ const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second 
 4,1,2,3 , 4,1,3,2 , 4,2,1,3 , 4,2,3,1 , 4,3,1,2 , 4,3,2,1    };
 
 
+#ifndef V2
 enum EnumKeys {
   KEY_MENU ,
   KEY_EXIT ,
@@ -114,6 +115,35 @@ enum EnumKeys {
   SW_Trainer
 #endif
 };
+#else
+enum EnumKeys {
+  KEY_MENU ,
+  KEY_EXIT ,
+  KEY_DOWN ,
+  KEY_UP  ,
+  KEY_RIGHT ,
+  KEY_LEFT ,
+  TRM_LH_DWN  ,
+  TRM_LH_UP   ,
+  TRM_LV_DWN  ,
+  TRM_LV_UP   ,
+  TRM_RV_DWN  ,
+  TRM_RV_UP   ,
+  TRM_RH_DWN  ,
+  TRM_RH_UP   ,
+  //SW_NC     ,
+  //SW_ON     ,
+  SW_IDL ,            // ID0/ID1/ID2
+  SW_ThrCt  ,         // TH^/TH-/THv
+  SW_RuddDR ,         // RU^/RU-/RUv
+  SW_ElevDR ,         // EL^/EL-/ELv
+  SW_AileDR ,         // AI^/AI-/AIv
+  SW_Gear   ,         // GE^/GE-/GEv
+  SW_PB1,             // push button 1
+  SW_PB2,             // push button 2
+  SW_Trainer
+};
+#endif
 
 #ifdef XSW_MOD
 
@@ -186,6 +216,23 @@ enum EnumKeys {
 #define HSW_Gear			8
 #define HSW_Trainer		9
 
+#define HSW2_Thr3pos0	32
+#define HSW2_Thr3pos1	33
+#define HSW2_Thr3pos2	34
+#define HSW2_Rud3pos0	35
+#define HSW2_Rud3pos1	36
+#define HSW2_Rud3pos2	37
+#define HSW2_Ele3pos0	38
+#define HSW2_Ele3pos1	39
+#define HSW2_Ele3pos2	40
+#define HSW2_Ail3pos0	41
+#define HSW2_Ail3pos1	42
+#define HSW2_Ail3pos2	44
+#define HSW2_Gear3pos0	45
+#define HSW2_Gear3pos1	46
+#define HSW2_Gear3pos2	47
+#define HSW2_MAX				47
+
 #define HSW_Ele3pos0	31
 #define HSW_Ele3pos1	32
 #define HSW_Ele3pos2	33
@@ -202,6 +249,24 @@ enum EnumKeys {
 #define HSW_Pb2				44
 #define HSW_MAX				44
 
+#define HSW2_ThrCt			2
+#define HSW2_RuddDR		3
+#define HSW2_ElevDR		4
+#define HSW2_ID0				29
+#define HSW2_ID1				30
+#define HSW2_ID2				31
+#define HSW2_AileDR		5
+#define HSW2_Gear			6
+#define HSW2_Pb1			7
+#define HSW2_Pb2       8
+#define HSW2_Trainer		9
+
+#ifdef V2
+#define SW_ID0				29
+#define SW_ID1				30
+#define SW_ID2				31
+#endif
+
 #define V1TOGGLE_INDEX	HSW_MAX
 
 
@@ -212,13 +277,23 @@ enum EnumKeys {
 
 
 //#define SW_BASE      SW_NC
+#ifndef V2
 #define SW_BASE      SW_ThrCt
 #define SW_BASE_DIAG SW_ThrCt
+#else
+#define SW_BASE      SW_IDL
+#define SW_BASE_DIAG SW_IDL
+#endif
+
 //#define SWITCHES_STR "  NC  ON THR RUD ELE ID0 ID1 ID2 AILGEARTRNR"
 #ifndef V2
 #define MAX_DRSWITCH (1+SW_Trainer-SW_ThrCt+1+NUM_CSW)
 #endif
+#ifndef V2
 #define PHY_SWITCH		(1+SW_Trainer-SW_ThrCt+1)
+#else
+#define PHY_SWITCH		(1+SW_Trainer-SW_IDL+1)
+#endif
 
 #define SWP_ID0 (SW_ID0-SW_BASE)
 #define SWP_ID1 (SW_ID1-SW_BASE)
@@ -406,9 +481,30 @@ enum EnumKeys {
 #define M_ESKY150        34
 #define M_H8_3D          35
 #define M_CORONA         36
-#define M_CFlie          37
-#define M_Hitec          38
-#define M_LAST_MULTI		 38
+#define CFLIE						 37
+#define M_HITEC					 38
+#define M_WFLY           39
+#define M_BUGS           40
+#define M_BUGSMINI       41
+#define M_TRAXXAS        42
+#define M_NCC1701        43
+#define M_E01X           44
+#define M_V911S          45
+#define M_GD00X          46
+#define M_V761           47
+#define M_KF606          48
+#define M_Redpine        49
+#define M_Potensic       50
+#define M_ZSX            51
+#define M_Flyzone        52
+#define M_Scanner        53
+#define M_FrskyX_RX      54
+#define M_LAST_MULTI		 54
+
+
+
+
+
 
 
 #define GETADC_SING = 0

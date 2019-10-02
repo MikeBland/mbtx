@@ -37,7 +37,9 @@
 #endif
 #else
 #ifndef SIMU
+#ifndef PCBLEM1
 #include "core_cm3.h"
+#endif
 #endif
 #endif
 #include "lcd.h"
@@ -77,7 +79,11 @@ uint8_t TxLqi ;
 
 #define PRIVATE					'M'
 
+#ifdef SMALL
 #define PRIVATE_BUFFER_SIZE	24
+#else
+#define PRIVATE_BUFFER_SIZE	36
+#endif
 
 // SPORT defines
 #define DATA_FRAME         0x10
@@ -220,14 +226,24 @@ uint8_t numPktBytes = 0;
 #define frskyDataXOR     3
 #define PRIVATE_COUNT		 4
 #define PRIVATE_VALUE		 5
+#ifndef SMALL
+#define PRIVATE_TYPE		 6
+#define PRIVATE_XCOUNT	 7
+#endif
 
 static uint8_t dataState = frskyDataIdle ;
 static uint8_t A1Received = 0 ;
 
+extern uint8_t RawLogging ;
+void rawLogByte( uint8_t byte ) ;
+
 uint8_t Private_count ;
+#ifndef SMALL
+uint8_t Private_type ;
+#endif
 uint8_t Private_position ;
 uint8_t PrivateData[6] ;
-uint8_t ExtraPrivateData[16] ;
+//uint8_t ExtraPrivateData[16] ;
 uint8_t InputPrivateData[PRIVATE_BUFFER_SIZE] ;
 
 #ifndef SMALL
@@ -826,10 +842,11 @@ uint16_t UserErrorCount ;
 uint8_t UserLastSequence ;
 uint8_t UserLastCount ;
 
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 uint8_t MultiFrskyTelemetry ;
 #endif	 
 
+// Leading 0x7E not in packet
 void processFrskyPacket(uint8_t *packet)
 {
 	if ( numPktBytes != 9 )
@@ -837,7 +854,7 @@ void processFrskyPacket(uint8_t *packet)
 		return ;
 	}
 
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 	if ( MultiFrskyTelemetry )
 	{
 		return ;
@@ -1516,12 +1533,12 @@ void processHitecPacket( uint8_t *packet )
 
 #ifndef DISABLE_SPORT
 //#ifndef REVX
-static bool checkSportPacket()
+static bool checkSportPacket( uint8_t *packet )
 {
-#ifdef PCBT12
-	return 0 ;
-#endif
-	uint8_t *packet = frskyRxBuffer ;
+//#ifdef PCBT12
+//	return 0 ;
+//#endif
+//	uint8_t *packet = frskyRxBuffer ;
   uint16_t crc = 0 ;
   for ( uint8_t i=1; i<FRSKY_SPORT_PACKET_SIZE; i++)
 	{
@@ -1549,6 +1566,8 @@ static void postSportToScript( uint8_t *packet )
 }
 #endif
 
+
+// The leading 0x7E is not in the packet, first byte is physical ID
 void processSportData( uint8_t *packet, uint32_t receiver )
 {
   uint8_t  prim   = packet[1];
@@ -1653,6 +1672,8 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 			uint8_t id = (packet[3] << 4) | ( packet[2] >> 4 ) ;
 			uint32_t value = (*((uint32_t *)(packet+4))) ;
 
+		 if ( (packet[3] & 0xF0) != 0x50 )
+		 {
 			switch ( id )
 			{
 				case ALT_ID_8 :
@@ -2042,25 +2063,46 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
 				break ;
 			}
+		 }
+		 else
+		 {
+				handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
+		 }
 		}
 	}
 }
 
 // Physical ID in packet[0] ;
-void processSportPacket()
+void processSportPacket(uint8_t *packet)
 {
-	uint8_t *packet = frskyRxBuffer ;
+//	uint8_t *packet = frskyRxBuffer ;
 //  uint16_t appId  = *((uint16_t *)(packet+2)) ;
 
 	if ( MaintenanceRunning )
 	{
-		maintenance_receive_packet( packet, checkSportPacket() ) ;	// Uses different chksum
+		maintenance_receive_packet( packet, checkSportPacket(packet) ) ;	// Uses different chksum
 		return ;
 	}
+
+	if ( RawLogging )
+	{
+		rawLogByte( 255 ) ;
+		rawLogByte( packet[0] ) ;
+		rawLogByte( packet[1] ) ;
+		rawLogByte( packet[2] ) ;
+		rawLogByte( packet[3] ) ;
+		rawLogByte( packet[4] ) ;
+		rawLogByte( 254 ) ;
+	}
+
 	 
-  if ( !checkSportPacket() )
+  if ( !checkSportPacket(packet) )
 	{
     return;
+	}
+	if ( RawLogging )
+	{
+		rawLogByte( 'X' ) ;		
 	}
 	processSportData( packet, 0 ) ;
 }
@@ -2072,6 +2114,7 @@ void processSportPacket()
 #define FS_ID_SNR               0xfa
 #define FS_ID_NOISE             0xfb
 
+// First byte in packet is 0xAA
 void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 {
   frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
@@ -2139,19 +2182,45 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 	switch ( state )
 	{
     case PRIVATE_COUNT :
+			Private_position = 0 ;
+#ifndef SMALL
+			if ( byte == 'P' )
+			{
+				// MULTI_TELEMETRY
+        dataState = PRIVATE_TYPE ;
+				break ;
+			}
+			Private_type = 0xFF ;	// Not MULTI_TELEMETRY
+			// else fall through
+    case PRIVATE_XCOUNT :
+#endif
 			dataState = PRIVATE_VALUE ;
       Private_count = byte ;		// Count of bytes to receive
-			Private_position = 0 ;
 			if ( byte > PRIVATE_BUFFER_SIZE )
 			{
-        dataState = frskyDataIdle ;
+      	dataState = frskyDataIdle ;
 			}
     break ;
     
+#ifndef SMALL
+		case PRIVATE_TYPE :
+      Private_type = byte ;
+      dataState = PRIVATE_XCOUNT ;
+			if ( byte > 3 )
+			{
+				Private_position = 1 ;
+			}
+    break ;
+#endif
+		
 		case PRIVATE_VALUE :
 		{
 			InputPrivateData[Private_position++] = byte ;
+#ifndef SMALL
+			if ( ( Private_type == 0xFF ) && ( byte & 0x80 ) )
+#else
 			if ( byte & 0x80 )
+#endif
 			{
         dataState = frskyDataIdle ;
 				return 0 ;
@@ -2164,29 +2233,88 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 				{
 					// Correct amount received
 					uint32_t len = Private_count ;
-					if ( len > 6 )
+#ifndef SMALL
+					if ( Private_type == 0xFF )
+#endif
 					{
-						len = 6 ;
-					}
-					while ( len )
-					{
-						len -= 1 ;
-						PrivateData[len] = InputPrivateData[len] ;
-					}
-					if ( Private_count > 5 )
-					{
-						uint32_t index = 6 ;
-						len = InputPrivateData[5] ;
-						if ( len > 16 )
+						if ( len > 6 )
 						{
-							len = 16 ;
+							len = 6 ;
 						}
 						while ( len )
 						{
 							len -= 1 ;
-							ExtraPrivateData[index-6] = InputPrivateData[index] ;
+							PrivateData[len] = InputPrivateData[len] ;
+						}
+//						if ( Private_count > 5 )
+//						{
+//							uint32_t index = 6 ;
+//							len = InputPrivateData[5] ;
+//							if ( len > 16 )
+//							{
+//								len = 16 ;
+//							}
+//							while ( len )
+//							{
+//								len -= 1 ;
+//								ExtraPrivateData[index-6] = InputPrivateData[index] ;
+//							}
+//						}
+					}
+#ifndef SMALL
+					else
+					{
+						// MULTI_TELEMETRY
+						switch ( Private_type )
+						{
+							case 1 :	// Status
+								if ( len > 6 )
+								{
+									len = 6 ;
+								}
+								while ( len )
+								{
+									len -= 1 ;
+									PrivateData[len] = InputPrivateData[len] ;
+								}
+							break ;
+						
+							case 2 :	// SPort
+								if ( len >= FRSKY_SPORT_PACKET_SIZE )
+								{
+	if ( RawLogging )
+	{
+		rawLogByte( 'Z' ) ;		
+	}
+									
+#if not defined(PCBT16)
+									processSportPacket(InputPrivateData) ;
+	if ( RawLogging )
+	{
+		rawLogByte( 'Y' ) ;		
+	}
+#endif
+								}
+							break ;
+							case 3 :	// Hub
+								numPktBytes = Private_count ;
+	          		processFrskyPacket(InputPrivateData) ;
+							break ;
+							case 4 :	// DSM 
+								processDsmPacket( InputPrivateData, Private_count+1 ) ;
+							break ;
+							case 5 :	// DSM bind
+								dsmBindResponse( InputPrivateData[7], InputPrivateData[6] ) ;
+							break ;
+							case 6 :	// AFHDS2
+								processAFHDS2Packet( InputPrivateData, Private_count+1 ) ;
+							break ;
+							case 10 :	// Hitec
+								processHitecPacket( InputPrivateData ) ;
+							break ;
 						}
 					}
+#endif
 				}
 			}
 		}
@@ -2195,8 +2323,6 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 	return 1 ;
 }
 
-extern uint8_t RawLogging ;
-void rawLogByte( uint8_t byte ) ;
 
 
 //uint16_t XFDebug1 ;
@@ -2252,6 +2378,10 @@ void frsky_receive_byte( uint8_t data )
 			{
 				case PRIVATE_COUNT :
 				case PRIVATE_VALUE :
+#ifndef SMALL
+		    case PRIVATE_XCOUNT :
+				case PRIVATE_TYPE :
+#endif
 					if ( handlePrivateData( dataState, data ) )
 					{
       			break ;
@@ -2397,6 +2527,10 @@ void frsky_receive_byte( uint8_t data )
 
 			case PRIVATE_COUNT :
 			case PRIVATE_VALUE :
+#ifndef SMALL
+	    case PRIVATE_XCOUNT :
+			case PRIVATE_TYPE :
+#endif
 				if ( handlePrivateData( dataState, data ) )
 				{
      			break ;
@@ -2423,7 +2557,7 @@ void frsky_receive_byte( uint8_t data )
 	{
   	if (numbytes >= FRSKY_SPORT_PACKET_SIZE)
 		{
-			processSportPacket() ;    	
+			processSportPacket(frskyRxBuffer) ;
 		  numbytes = 0 ;
 			dataState = frskyDataIdle;
 		}
@@ -2779,7 +2913,7 @@ void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 
 void FRSKY_Init( uint8_t brate )
 {
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 	MultiFrskyTelemetry = 0 ;
 #endif	 
 	
@@ -2826,7 +2960,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FRSKYX ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX ) )
 #endif
 			{
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 				MultiFrskyTelemetry = 1 ;
 #endif	 
 				FrskyTelemetryType = FRSKY_TEL_SPORT ;
@@ -2837,7 +2971,7 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FrskyD ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD ) )
 #endif
 			{
-#if defined(PCBT12) || defined(PCBT16)
+#if defined(PCBT16)
 				MultiFrskyTelemetry = 1 ;
 #endif	 
 				FrskyTelemetryType = FRSKY_TEL_HUB ;
@@ -3192,7 +3326,7 @@ void resetTelemetry( uint32_t item )
 			Frsky_Amp_hour_prescale = 0 ;
 			FrskyHubData[FR_AMP_MAH] = 0 ;
   		memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
-			FrskyHubMaxMin.hubMax[FR_ALT_BARO] = -5000 ;
+			FrskyHubMaxMin.hubMax[FR_ALT_BARO] = 0 ;
 			PixHawkCapacity = 0 ;
 		break ;
 	}
@@ -3391,7 +3525,7 @@ void check_frsky( uint32_t fivems )
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
@@ -3503,7 +3637,7 @@ void check_frsky( uint32_t fivems )
 //	}
 //#endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 	{
 		uint16_t rxchar ;
 #ifdef ACCESS

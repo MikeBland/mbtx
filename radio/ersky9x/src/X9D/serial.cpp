@@ -351,7 +351,7 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	GPIOB->BSRRH = 0x0004 ;		// output disable
 #else
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(REV19)
 	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
 #else
  #ifdef PCBX9LITE
@@ -369,7 +369,7 @@ void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
 	configure_pins( 0x00000004, PIN_PERIPHERAL | PIN_PER_7 | PIN_PORTA ) ;
 #else
 
-#ifdef PCBXLITE
+#if defined(PCBXLITE) || defined(REV19)
 	configure_pins( PIN_SPORT_ON, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_HIGH | PIN_PORTD ) ;
 #else	
  #ifdef PCBX9LITE
@@ -475,8 +475,8 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 #ifdef PCB9XT
 	GPIOB->BSRRL = 0x0004 ;		// output enable
 #else
- #ifdef PCBXLITE
-	GPIOD->BSRRH = 0x0010 ;		// output enable
+ #if defined(PCBXLITE) || defined(REV19)
+	GPIOD->BSRRH = PIN_SPORT_ON ;		// output enable
  #else
   #ifdef PCBX9LITE
 	x9LiteSportOn() ;
@@ -538,7 +538,7 @@ extern "C" void USART2_IRQHandler()
 #ifdef PCB9XT
 			GPIOB->BSRRH = 0x0004 ;		// output disable
 #else
- #ifdef PCBXLITE
+	#if defined(PCBXLITE) || defined(REV19)
 			GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
   #ifdef PCBX9LITE

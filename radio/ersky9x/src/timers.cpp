@@ -34,7 +34,9 @@
 #ifndef PCBX12D
  #ifndef PCBX10
 #ifndef SIMU
+#ifndef PCBLEM1
 #include "core_cm3.h"
+#endif
 #endif
 #endif
 #endif
@@ -43,6 +45,11 @@
 #include "X12D/stm32f4xx.h"
 #include "X12D/hal.h"
 #endif
+
+#if defined(PCBLEM1)
+#include <stm32f10x.h>
+#endif
+
 
 #include "ersky9x.h"
 #include "timers.h"
@@ -53,11 +60,12 @@
 
 extern int16_t g_chans512[] ;
 
+#ifndef PCBLEM1
 #define INTERNAL_RF_ON()      GPIO_SetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
-
+#endif
 
 extern void init_pxx(uint32_t port) ;
 extern void disable_pxx(uint32_t port) ;
@@ -106,7 +114,7 @@ static uint8_t Pass[2] ;
 // TC4 - input capture clock
 // TC5 - Software COM1
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 uint8_t PulsesPaused ;
 
 #ifdef XFIRE
@@ -142,6 +150,8 @@ uint8_t setupPulsesXfire() ;
 
 uint16_t FailsafeCounter[2] ;
 
+#ifndef PCBLEM1
+
 void pausePulses()
 {
 	PulsesPaused = 1 ;
@@ -169,7 +179,7 @@ void startPulses()
 	Pass[0] = 0 ;		// Force a type 0 packet
 	Pass[1] = 0 ;		// Force a type 0 packet
 }
-
+#endif
 
 #endif
 // Starts TIMER at 200Hz, 5mS period
@@ -387,7 +397,63 @@ void hw_delay( uint16_t time )
 
 #endif
 
+#if defined(PCBLEM1)
 
+void init5msTimer()
+{
+	// Timer14
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;		// Enable clock
+	TIM4->ARR = 4999 ;	// 5mS
+	TIM4->PSC = 72000000 / 1000000 - 1 ;		// 1uS from 30MHz
+	TIM4->CCER = 0 ;	
+	TIM4->CCMR1 = 0 ;
+	TIM4->EGR = 0 ;
+	TIM4->CR1 = 1 ;
+  NVIC_SetPriority(TIM4_IRQn, 4 ) ;
+	NVIC_EnableIRQ(TIM4_IRQn) ;
+	TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;
+	TIM4->DIER = 1 ;
+}
+
+// Start TIMER7 at 2000000Hz
+void start_2Mhz_timer()
+{
+	// Now for timer 7
+	RCC->APB1ENR |= RCC_APB1ENR_TIM7EN ;		// Enable clock
+	
+	TIM7->ARR = 0xFFFF ;
+//	TIM7->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+	TIM7->PSC = 72000000 / 2000000 - 1 ;		// 0.5uS
+	TIM7->CR2 = 0 ;
+	TIM7->CR2 = 0x20 ;
+	TIM7->CR1 = TIM_CR1_CEN ;
+}
+
+void init_hw_timer()
+{
+	// Timer5 for now
+	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN ;		// Enable clock
+	TIM5->ARR = 65535 ;
+	TIM5->PSC = 72000000 / 10000000 - 1 ;
+	TIM5->CCER = 0 ;	
+	TIM5->CCMR1 = 0 ;
+	TIM5->EGR = 0 ;
+	TIM5->CR1 = 1 ;
+}
+
+// delay in units of 0.1 uS up to 6.5535 mS
+void hw_delay( uint16_t time )
+{
+	TIM5->CNT = 0 ;
+	TIM5->EGR = 1 ;		// Re-start counter
+	while ( TIM5->CNT < time )
+	{
+		// wait
+	}
+}
+
+
+#endif
 
 // Starts TIMER at 200Hz, 5mS period
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -754,6 +820,7 @@ uint16_t TrainerPpmStream[20] =
 //  PcmCrc =(PcmCrc<<8) ^(CRCTable[((PcmCrc>>8)^data)&0xFF]);
 //}
 
+#ifndef PCBLEM1
 
 // PPM output
 // Timer 1, channel 1 on PA8 for prototype
@@ -963,8 +1030,7 @@ void init_trainer_ppm()
 	TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;				// Clear flag
 #if defined(PCBX12D) || defined(PCBX10)
 #else
-	TIM3->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
-	TIM3->DIER |= TIM_DIER_CC1IE ;
+	TIM3->DIER |= TIM_DIER_CC1IE ;        
 #endif
 	TIM3->DIER |= TIM_DIER_UIE ;
 
@@ -2879,7 +2945,7 @@ extern volatile uint8_t PxxTxCount_x ;
 }
 
 
-
+#endif
 #endif
 
 

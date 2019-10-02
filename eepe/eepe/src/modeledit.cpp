@@ -822,107 +822,140 @@ void ModelEdit::updateToMV4()
 	 
 void ModelEdit::setSubSubProtocol( QComboBox *b, int type )
 {
-	int x = 8 ;
-	b->clear() ;
-  if ( type > 17 )
-	{
-		b->addItem("0");
-		b->addItem("1");
-		b->addItem("2");
-		b->addItem("3");
-		b->addItem("4");
-		b->addItem("5");
-		b->addItem("6");
-		b->addItem("7");
-		return ;
-	}
-	switch ( type )
-	{
-		case M_Flysky :
-			b->addItem("Flysky");
-			b->addItem("V9x9");
-			b->addItem("V6x6");
-			b->addItem("V912");
-			x = 4 ;
-		break ;
-		case M_Hisky :
-			b->addItem("Hisky");
-			b->addItem("HK310");
-			x = 2 ;
-		break ;
-		case M_DSM2 :
-			b->addItem("DSM2");
-			b->addItem("DSMX");
-			x = 2 ;
-		break ;
-		case M_YD717 :
-			b->addItem("YD717");
-			b->addItem("SKYWLKR");
-			b->addItem("SYMAX2");
-      b->addItem("XINXUN");
-			b->addItem("NIHUI");
-			x = 5 ;
-		break ;
-		case M_KN :
-			b->addItem("WLTOYS");
-			b->addItem("FEILUN");
-			x = 2 ;
-		break ;
-		case M_CX10 :
-			b->addItem("GREEN");
-			b->addItem("BLUE");
-			b->addItem("DM007");
-			b->addItem("Q282");
-			b->addItem("J3015_1");
-			b->addItem("J3015_2");
-			b->addItem("MK33041");
-			b->addItem("Q242");
-			x = 8 ;
-		break ;
-		case M_CG023 :
-			b->addItem("CG023");
-			b->addItem("YD829");
-			b->addItem("H8_3D");
-			x = 3 ;
-		break ;
-		case M_MT99XX :
-			b->addItem("MT");
-			b->addItem("H7");
-			b->addItem("YZ");
-			x = 3 ;
-		break ;
-		case M_MJXQ :
-			b->addItem("WLH08");
-			b->addItem("X600");
-			b->addItem("X800");
-			b->addItem("H26D");
-			x = 4 ;
-		break ;
-		default :
-			b->addItem("NONE");
-			x = 1 ;
-		break ;
-	}
-	switch ( x )
-	{
-		case 0 :
-			b->addItem("0");
-		case 1 :
-			b->addItem("1");
-		case 2 :
-			b->addItem("2");
-		case 3 :
-			b->addItem("3");
-		case 4 :
-			b->addItem("4");
-		case 5 :
-			b->addItem("5");
-		case 6 :
-			b->addItem("6");
-		case 7 :
-			b->addItem("7");
-		break ;
-	}
+	subSubProtocolText( type, 0, b ) ;
+//	int x = 8 ;
+//	b->clear() ;
+//  if ( type > 54 )
+//	{
+//		b->addItem("0");
+//		b->addItem("1");
+//		b->addItem("2");
+//		b->addItem("3");
+//		b->addItem("4");
+//		b->addItem("5");
+//		b->addItem("6");
+//		b->addItem("7");
+//		return ;
+//	}
+//	switch ( type )
+//	{
+//		case M_Flysky :
+//			b->addItem("Flysky");
+//			b->addItem("V9x9");
+//			b->addItem("V6x6");
+//			b->addItem("V912");
+//			x = 4 ;
+//		break ;
+//		case M_Hisky :
+//			b->addItem("Hisky");
+//			b->addItem("HK310");
+//			x = 2 ;
+//		break ;
+//		case M_DSM2 :
+//			b->addItem("DSM2");
+//			b->addItem("DSMX");
+//			x = 2 ;
+//		break ;
+//		case M_YD717 :
+//			b->addItem("YD717");
+//			b->addItem("SKYWLKR");
+//			b->addItem("SYMAX2");
+//      b->addItem("XINXUN");
+//			b->addItem("NIHUI");
+//			x = 5 ;
+//		break ;
+//		case M_KN :
+//			b->addItem("WLTOYS");
+//			b->addItem("FEILUN");
+//			x = 2 ;
+//		break ;
+//		case M_CX10 :
+//			b->addItem("GREEN");
+//			b->addItem("BLUE");
+//			b->addItem("DM007");
+//			b->addItem("Q282");
+//			b->addItem("J3015_1");
+//			b->addItem("J3015_2");
+//			b->addItem("MK33041");
+//			b->addItem("Q242");
+//			x = 8 ;
+//		break ;
+//		case M_CG023 :
+//			b->addItem("CG023");
+//			b->addItem("YD829");
+//			b->addItem("H8_3D");
+//			x = 3 ;
+//		break ;
+//		case M_MT99XX :
+//			b->addItem("MT");
+//			b->addItem("H7");
+//			b->addItem("YZ");
+//			x = 3 ;
+//		break ;
+//		case M_MJXQ :
+//			b->addItem("WLH08");
+//			b->addItem("X600");
+//			b->addItem("X800");
+//			b->addItem("H26D");
+//			x = 4 ;
+//		break ;
+
+//		case M_FY326 :
+//			b->addItem("FY326");
+//			b->addItem("FY319");
+//			x = 2 ;
+//		break ;
+
+//		case M_HONTAI :
+//			b->addItem("HONTAI");
+//			b->addItem("JJRCX1");
+//			b->addItem("X5C1");
+//			b->addItem("FQ777_951");
+//			x = 4 ;
+//		break ;
+
+//		case M_AFHDS2A :
+//			b->addItem("PWM_IBUS");
+//			b->addItem("PPM_IBUS");
+//			b->addItem("PWM_SBUS");
+//			b->addItem("PPM_SBUS");
+//			x = 4 ;
+//		break ;
+
+//		case M_Q2X2 :
+//			b->addItem("Q222");
+//			b->addItem("Q242");
+//			b->addItem("Q282");
+//			x = 3 ;
+//		break ;
+
+
+
+//		default :
+//			b->addItem("NONE");
+//			x = 1 ;
+//		break ;
+//	}
+//	switch ( x )
+//	{
+//		case 0 :
+//			b->addItem("0");
+//		case 1 :
+//			b->addItem("1");
+//		case 2 :
+//			b->addItem("2");
+//		case 3 :
+//			b->addItem("3");
+//		case 4 :
+//			b->addItem("4");
+//		case 5 :
+//			b->addItem("5");
+//		case 6 :
+//			b->addItem("6");
+//		case 7 :
+//			b->addItem("7");
+//		break ;
+//	}
 }
 
 void ModelEdit::setProtocolBoxes()
@@ -931,6 +964,8 @@ void ModelEdit::setProtocolBoxes()
     ui->protocolCB->setCurrentIndex(g_model.protocol);
 		ui->PPM1stChan->setValue( g_model.ppmStart + 1 ) ;
 
+		ui->label_R9Mpower->hide() ;
+		ui->R9MpowerCB->hide() ;
     switch (g_model.protocol)
     {
     case (PROTO_PXX):
@@ -943,6 +978,28 @@ void ModelEdit::setProtocolBoxes()
         ui->pxxRxNum->setEnabled(true);
         ui->countryCB->setEnabled(true);
         ui->typeCB->setEnabled(true);
+
+				if ( g_model.sub_protocol == 3 )	// R9M
+				{
+					ui->R9MpowerCB->clear();
+					if ( g_model.country == 2 )
+					{
+						ui->R9MpowerCB->addItem("25 mW(8ch)") ;
+						ui->R9MpowerCB->addItem("25 mW(16ch)") ;
+						ui->R9MpowerCB->addItem("200 mW") ;
+						ui->R9MpowerCB->addItem("500 mW") ;
+					}
+					else
+					{
+						ui->R9MpowerCB->addItem("10 mW") ;
+						ui->R9MpowerCB->addItem("100 mW") ;
+						ui->R9MpowerCB->addItem("500 mW") ;
+						ui->R9MpowerCB->addItem("1000 mW") ;
+					}
+					ui->R9MpowerCB->setCurrentIndex(g_model.r9mPower) ;
+					ui->label_R9Mpower->show() ;
+					ui->R9MpowerCB->show() ;
+				}
 
         ui->pxxRxNum->setValue(g_model.ppmNCH);
 
@@ -979,7 +1036,7 @@ void ModelEdit::setProtocolBoxes()
         ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
         ui->SubSubProtocolCB->show() ;
         {
-          int x = g_model.sub_protocol&0x1F ;
+          int x = g_model.sub_protocol&0x3F ;
           setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
           ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
         }
@@ -1704,7 +1761,7 @@ void ModelEdit::tabMixes()
 //				}
 
     #ifdef V2
-		    if(md->swtch) str += tr(" Switch(") + rData->getMappedSWName(md->swtch,eeFile->mee_type) + ")";
+		    if(md->swtch) str += tr(" Switch(") + rData->getMappedSWName( rData->switchUnMap(md->swtch),eeFile->mee_type) + ")";
     #else
 		    if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch,eeFile->mee_type) + ")";
     #endif
@@ -4623,15 +4680,28 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
     updateSettings();
 }
 
+void ModelEdit::on_R9MpowerCB_currentIndexChanged(int index)
+{
+  if(protocolEditLock) return;
+	g_model.r9mPower = index;
+  setProtocolBoxes();
+
+  updateSettings();
+}
+
 void ModelEdit::on_countryCB_currentIndexChanged(int index)
 {
+  if(protocolEditLock) return;
   g_model.country = index ;
+  setProtocolBoxes();
   updateSettings();
 }
 	
 void ModelEdit::on_typeCB_currentIndexChanged(int index)
 {
+  if(protocolEditLock) return;
   g_model.sub_protocol = index ;
+  setProtocolBoxes();
   updateSettings();
 }
 

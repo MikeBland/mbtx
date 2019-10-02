@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>770</width>
-    <height>577</height>
+    <width>803</width>
+    <height>599</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="maximumSize">
    <size>
     <width>16777215</width>
-    <height>600</height>
+    <height>16777215</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
    <iconset resource="eepskye.qrc">
     <normaloff>:/images/simulate.png</normaloff>:/images/simulate.png</iconset>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0">
+  <layout class="QVBoxLayout" name="verticalLayout_9" stretch="0,0,0,0,0">
    <property name="spacing">
     <number>2</number>
    </property>
@@ -63,9 +63,31 @@
       <number>2</number>
      </property>
      <layout class="QHBoxLayout" name="horizontalLayout_5">
-      <property name="margin">
+      <property name="leftMargin">
        <number>2</number>
       </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>2</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
       <item>
        <layout class="QGridLayout" name="gridLayout" columnstretch="0,0,0">
         <item row="1" column="2">
@@ -1876,6 +1898,19 @@ QPushButton:checked {
         </item>
        </layout>
       </item>
+      <item>
+       <spacer name="horizontalSpacer_6">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </widget>
    </item>
@@ -1911,7 +1946,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1954,7 +1998,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_4">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -1997,7 +2050,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_5">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2040,7 +2102,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_6">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2083,7 +2154,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_7">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2126,7 +2206,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_8">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2182,7 +2271,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_10">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2238,7 +2336,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_13">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2281,7 +2388,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_14">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2324,7 +2440,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_15">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2367,7 +2492,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_17">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2410,7 +2544,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_19">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2453,7 +2596,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_20">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2500,7 +2652,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_11">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2543,7 +2704,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_12">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2586,7 +2756,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_16">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2629,7 +2808,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_18">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2672,7 +2860,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_21">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2715,7 +2912,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_22">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2842,7 +3048,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_24">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2885,7 +3100,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_25">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2928,7 +3152,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_26">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -2965,7 +3198,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_27">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -3014,7 +3256,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_28">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -3057,7 +3308,16 @@ QPushButton:checked {
         <number>2</number>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_29">
-        <property name="margin">
+        <property name="leftMargin">
+         <number>2</number>
+        </property>
+        <property name="topMargin">
+         <number>2</number>
+        </property>
+        <property name="rightMargin">
+         <number>2</number>
+        </property>
+        <property name="bottomMargin">
          <number>2</number>
         </property>
         <item>
@@ -3084,24 +3344,10 @@ QPushButton:checked {
        </property>
       </widget>
      </item>
-     <item row="0" column="6">
-      <widget class="QLabel" name="label_12">
-       <property name="text">
-        <string>CH9</string>
-       </property>
-      </widget>
-     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="label_5">
        <property name="text">
         <string>CH2</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="6">
-      <widget class="QLabel" name="label_13">
-       <property name="text">
-        <string>CH10</string>
        </property>
       </widget>
      </item>
@@ -3119,17 +3365,17 @@ QPushButton:checked {
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_7">
+     <item row="0" column="6">
+      <widget class="QLabel" name="label_12">
        <property name="text">
-        <string>CH4</string>
+        <string>CH9</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="6">
-      <widget class="QLabel" name="label_15">
+     <item row="1" column="6">
+      <widget class="QLabel" name="label_13">
        <property name="text">
-        <string>CH12</string>
+        <string>CH10</string>
        </property>
       </widget>
      </item>
@@ -3147,10 +3393,38 @@ QPushButton:checked {
        </property>
       </widget>
      </item>
+     <item row="3" column="6">
+      <widget class="QLabel" name="label_15">
+       <property name="text">
+        <string>CH12</string>
+       </property>
+      </widget>
+     </item>
      <item row="5" column="0">
       <widget class="QLabel" name="label_9">
        <property name="text">
         <string>CH6</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>CH4</string>
+       </property>
+      </widget>
+     </item>
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_11">
+       <property name="text">
+        <string>CH8</string>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="6">
+      <widget class="QLabel" name="label_18">
+       <property name="text">
+        <string>CH15</string>
        </property>
       </widget>
      </item>
@@ -3168,17 +3442,52 @@ QPushButton:checked {
        </property>
       </widget>
      </item>
-     <item row="6" column="6">
-      <widget class="QLabel" name="label_18">
-       <property name="text">
-        <string>CH15</string>
+     <item row="1" column="1">
+      <widget class="QSlider" name="chnout_2">
+       <property name="enabled">
+        <bool>false</bool>
        </property>
-      </widget>
-     </item>
-     <item row="7" column="0">
-      <widget class="QLabel" name="label_11">
-       <property name="text">
-        <string>CH8</string>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QSlider::sub-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::add-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::handle:horizontal:disabled {
+background: #0000CC;
+border: 1px solid #aaa;
+border-radius: 4px;
+}</string>
+       </property>
+       <property name="minimum">
+        <number>-1024</number>
+       </property>
+       <property name="maximum">
+        <number>1024</number>
+       </property>
+       <property name="pageStep">
+        <number>128</number>
+       </property>
+       <property name="tracking">
+        <bool>false</bool>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
        </property>
       </widget>
      </item>
@@ -3186,6 +3495,55 @@ QPushButton:checked {
       <widget class="QLabel" name="label_19">
        <property name="text">
         <string>CH16</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSlider" name="chnout_3">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QSlider::sub-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::add-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::handle:horizontal:disabled {
+background: #0000CC;
+border: 1px solid #aaa;
+border-radius: 4px;
+}</string>
+       </property>
+       <property name="minimum">
+        <number>-1024</number>
+       </property>
+       <property name="maximum">
+        <number>1024</number>
+       </property>
+       <property name="pageStep">
+        <number>128</number>
+       </property>
+       <property name="tracking">
+        <bool>false</bool>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
        </property>
       </widget>
      </item>
@@ -3244,57 +3602,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QSlider" name="chnout_2">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::sub-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::add-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::handle:horizontal:disabled {
-background: #0000CC;
-border: 1px solid #aaa;
-border-radius: 4px;
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-1024</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-       <property name="pageStep">
-        <number>128</number>
-       </property>
-       <property name="tracking">
-        <bool>false</bool>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="invertedAppearance">
-        <bool>false</bool>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksBelow</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QSlider" name="chnout_3">
+     <item row="4" column="1">
+      <widget class="QSlider" name="chnout_5">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -3391,106 +3700,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
-      <widget class="QSlider" name="chnout_5">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::sub-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::add-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::handle:horizontal:disabled {
-background: #0000CC;
-border: 1px solid #aaa;
-border-radius: 4px;
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-1024</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-       <property name="pageStep">
-        <number>128</number>
-       </property>
-       <property name="tracking">
-        <bool>false</bool>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="invertedAppearance">
-        <bool>false</bool>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksBelow</enum>
-       </property>
-      </widget>
-     </item>
      <item row="5" column="1">
       <widget class="QSlider" name="chnout_6">
-       <property name="enabled">
-        <bool>false</bool>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>16777215</width>
-         <height>20</height>
-        </size>
-       </property>
-       <property name="styleSheet">
-        <string notr="true">QSlider::sub-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::add-page:horizontal:disabled {
-border-color: #999;
-}
-
-QSlider::handle:horizontal:disabled {
-background: #0000CC;
-border: 1px solid #aaa;
-border-radius: 4px;
-}</string>
-       </property>
-       <property name="minimum">
-        <number>-1024</number>
-       </property>
-       <property name="maximum">
-        <number>1024</number>
-       </property>
-       <property name="pageStep">
-        <number>128</number>
-       </property>
-       <property name="tracking">
-        <bool>false</bool>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="invertedAppearance">
-        <bool>false</bool>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::TicksBelow</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="6" column="1">
-      <widget class="QSlider" name="chnout_7">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -3587,8 +3798,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="0" column="5">
-      <widget class="QSlider" name="chnout_9">
+     <item row="6" column="1">
+      <widget class="QSlider" name="chnout_7">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -3638,6 +3849,55 @@ border-radius: 4px;
      </item>
      <item row="1" column="5">
       <widget class="QSlider" name="chnout_10">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>20</height>
+        </size>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QSlider::sub-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::add-page:horizontal:disabled {
+border-color: #999;
+}
+
+QSlider::handle:horizontal:disabled {
+background: #0000CC;
+border: 1px solid #aaa;
+border-radius: 4px;
+}</string>
+       </property>
+       <property name="minimum">
+        <number>-1024</number>
+       </property>
+       <property name="maximum">
+        <number>1024</number>
+       </property>
+       <property name="pageStep">
+        <number>128</number>
+       </property>
+       <property name="tracking">
+        <bool>false</bool>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="invertedAppearance">
+        <bool>false</bool>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::TicksBelow</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="5">
+      <widget class="QSlider" name="chnout_9">
        <property name="enabled">
         <bool>false</bool>
        </property>
@@ -3995,38 +4255,6 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="chnoutV_2">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>-100.1</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLabel" name="chnoutV_3">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>-100.1</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
      <item row="3" column="2">
       <widget class="QLabel" name="chnoutV_4">
        <property name="minimumSize">
@@ -4045,6 +4273,38 @@ border-radius: 4px;
      </item>
      <item row="4" column="2">
       <widget class="QLabel" name="chnoutV_5">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>-100.1</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="2">
+      <widget class="QLabel" name="chnoutV_2">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>-100.1</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="chnoutV_3">
        <property name="minimumSize">
         <size>
          <width>50</width>
@@ -4123,8 +4383,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
-      <widget class="QLabel" name="chnoutV_10">
+     <item row="4" column="4">
+      <widget class="QLabel" name="chnoutV_13">
        <property name="minimumSize">
         <size>
          <width>50</width>
@@ -4139,8 +4399,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="2" column="4">
-      <widget class="QLabel" name="chnoutV_11">
+     <item row="1" column="4">
+      <widget class="QLabel" name="chnoutV_10">
        <property name="minimumSize">
         <size>
          <width>50</width>
@@ -4171,24 +4431,8 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="4" column="4">
-      <widget class="QLabel" name="chnoutV_13">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>-100.1</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="4">
-      <widget class="QLabel" name="chnoutV_14">
+     <item row="2" column="4">
+      <widget class="QLabel" name="chnoutV_11">
        <property name="minimumSize">
         <size>
          <width>50</width>
@@ -4248,6 +4492,22 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
+     <item row="5" column="4">
+      <widget class="QLabel" name="chnoutV_14">
+       <property name="minimumSize">
+        <size>
+         <width>50</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>-100.1</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
      <item row="2" column="3">
       <widget class="QTextEdit" name="Gvar2">
        <property name="maximumSize">
@@ -4300,6 +4560,19 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
+     <item row="0" column="3">
+      <widget class="QPushButton" name="GvarButton">
+       <property name="maximumSize">
+        <size>
+         <width>45</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>GVARs</string>
+       </property>
+      </widget>
+     </item>
      <item row="6" column="3">
       <widget class="QTextEdit" name="Gvar6">
        <property name="maximumSize">
@@ -4326,20 +4599,20 @@ border-radius: 4px;
        </property>
       </widget>
      </item>
-     <item row="0" column="3">
-      <widget class="QPushButton" name="GvarButton">
-       <property name="maximumSize">
-        <size>
-         <width>45</width>
-         <height>16777215</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>GVARs</string>
-       </property>
-      </widget>
-     </item>
     </layout>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>

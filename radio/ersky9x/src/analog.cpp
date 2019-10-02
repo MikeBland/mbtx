@@ -136,7 +136,7 @@ void disableRtcBattery()
 volatile uint16_t Analog_values[NUMBER_ANALOG+NUM_POSSIBLE_EXTRA_POTS] ;
 uint16_t VbattRtc ;
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 
 extern void delay_ms( uint32_t ms ) ;
 
@@ -268,7 +268,7 @@ void init_adc()
 	RCC->AHB1ENR |= RCC_AHB1Periph_GPIOADC ;	// Enable ports A&C clocks (and B for REVPLUS)
 	RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;		// Enable DMA2 clock
 
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 	initSticksPwm() ;
   delay_ms(20) ;
 #ifndef XLITE_PROTO

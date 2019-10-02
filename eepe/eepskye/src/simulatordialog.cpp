@@ -3162,15 +3162,15 @@ void simulatorDialog::perOut(bool init, uint8_t att)
   	  ail_stick = AIL_STICK ;
 		}
     //===========Swash Ring================
-    if(g_model.swashRingValue)
-    {
-        uint32_t v = (calibratedStick[ELE_STICK]*calibratedStick[ELE_STICK] +
-                      calibratedStick[AIL_STICK]*calibratedStick[AIL_STICK]);
-        uint32_t q = RESX*g_model.swashRingValue/100;
-        q *= q;
-        if(v>q)
-            d = isqrt32(v);
-    }
+//    if(g_model.swashRingValue)
+//    {
+//        uint32_t v = (calibratedStick[ELE_STICK]*calibratedStick[ELE_STICK] +
+//                      calibratedStick[AIL_STICK]*calibratedStick[AIL_STICK]);
+//        uint32_t q = RESX*g_model.swashRingValue/100;
+//        q *= q;
+//        if(v>q)
+//            d = isqrt32(v);
+//    }
     //===========Swash Ring================
 
 
@@ -3215,8 +3215,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if(!(v/16)) anaCenter |= 1<<(CONVERT_MODE((i+1),g_model.modelVersion,g_eeGeneral.stickMode)-1);
 
         //===========Swash Ring================
-        if(d && (index==ele_stick || index==ail_stick))
-            v = (int32_t)v*g_model.swashRingValue*RESX/(d*100);
+//        if(d && (index==ele_stick || index==ail_stick))
+//            v = (int32_t)v*g_model.swashRingValue*RESX/(d*100);
         //===========Swash Ring================
 
 
@@ -3353,18 +3353,21 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+Mix_3pos] = g_model.gvars[i].gvar * 1024 / 100 ;
 #endif
 
+		int16_t heliEle = anas[ele_stick] ;
+		int16_t heliAil = anas[ail_stick] ;
+
     //===========Swash Ring================
     if(g_model.swashRingValue)
     {
-      uint32_t v = ((int32_t)anas[ele_stick]*anas[ele_stick] + (int32_t)anas[ail_stick]*anas[ail_stick]);
+      uint32_t v = ((int32_t)heliEle*heliEle + (int32_t)heliAil*heliAil);
 		  int16_t tmp = calc100toRESX(g_model.swashRingValue) ;
       uint32_t q ;
       q =(int32_t)tmp * tmp ;
       if(v>q)
       {
         uint16_t d = isqrt32(v);
-        anas[ele_stick] = (int32_t)anas[ele_stick]*tmp/((int32_t)d) ;
-        anas[ail_stick] = (int32_t)anas[ail_stick]*tmp/((int32_t)d) ;
+        heliEle = (int32_t)heliEle*tmp/((int32_t)d) ;
+        heliAil = (int32_t)heliAil*tmp/((int32_t)d) ;
       }
     }
 
@@ -3374,8 +3377,11 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
     if(g_model.swashType)
     {
-        int16_t vp = anas[ele_stick]+trimA[ele_stick];
-        int16_t vr = anas[ail_stick]+trimA[ail_stick];
+        int16_t vp = 0 ;
+        int16_t vr = 0 ;
+        
+	      vp = heliEle+trimA[ele_stick];
+  	    vr = heliAil+trimA[ail_stick];
         int16_t vc = 0;
         if(g_model.swashCollectiveSource)
 				{
@@ -3951,7 +3957,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         if ( md.lateOffset )
         {
 #if GVARS
-            if(mixoffset) v += calc100toRESX( mixoffset	) ;
+            if(mixoffset) dv += calc100toRESX( mixoffset	) * 100 ;
 //            if(md.sOffset) dv += calc100toRESX( REG( md.sOffset, -125, 125 )	) * 100  ;
 #else
             if(md.sOffset) dv += calc100toRESX(md.sOffset) * 100 ;

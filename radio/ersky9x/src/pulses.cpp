@@ -104,9 +104,13 @@ extern uint8_t MultiResponseFlag ;
 	}
 }
 
+uint16_t SetMultiArrayCount ;
 
 void setMultiSerialArray( uint8_t *data, uint32_t module )
 {
+	
+	SetMultiArrayCount += 1 ;
+	
 	uint32_t i ;
 	uint8_t packetType ;
 	uint8_t protoByte ;
@@ -117,7 +121,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
 	subProtocol = pmodule->sub_protocol+1 ;
-#if defined(PCBT12) || defined(PCBT16) || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBT12) || defined(PCBT16) // || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	if ( subProtocol == M_FRSKYX+1 )
 	{
 		subProtocol = ( subProtocol & 0xC0 ) | 62 ;

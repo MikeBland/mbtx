@@ -351,6 +351,11 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t welcomeType ;
 	uint8_t welcomeFileName[8] ;
 	uint8_t SavedBatteryVoltage ;
+	uint16_t backgroundColour ;		// For Horus
+	uint16_t textColour ;		// For Horus
+	uint8_t disableBtnLong:1 ;
+	uint8_t spare7:7 ;
+	uint8_t radioRegistrationID[8] ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -794,6 +799,13 @@ struct t_module
 	uint8_t sparex[2] ;
 } ;
 
+struct t_access
+{
+	uint8_t numChannels ;
+	uint8_t unused[8] ;
+	uint8_t receiverName[3][8] ; // PXX2_LEN_RX_NAME
+} ;
+
 PACK(typedef struct t_extraId
 {
 	uint16_t id ;
@@ -925,6 +937,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t disableThrottleCheck:1 ;
 //	uint8_t trimsScaled:1 ;
 	uint8_t thrSpare:1 ;
+	uint8_t instaTrimToTrims:1 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E
@@ -968,6 +981,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t	customTelemetryNames[24] ;
 	uint8_t extraSensors ;
 	ExtraId extraId[NUMBER_EXTRA_IDS] ;
+	struct t_access Access[2] ;
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 }) SKYModelData ;
 

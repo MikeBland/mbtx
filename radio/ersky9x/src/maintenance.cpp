@@ -122,7 +122,7 @@ extern uint8_t SetByEncoder ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
- #if defined(PCBXLITE) || defined(PCBX9LITE)
+ #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 #define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #endif
@@ -1184,7 +1184,7 @@ void menuChangeId(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_ON() ;
 #endif
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 			SPORT_RF_ON() ;
 #endif
     break ;
@@ -1199,7 +1199,7 @@ void menuChangeId(uint8_t event)
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_OFF() ;
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 			SPORT_RF_OFF() ;
 #endif
 #endif
@@ -1490,7 +1490,7 @@ void telemetryPortSetDirectionOutput()
 #ifdef PCB9XT
 	GPIOB->BSRRL = 0x0004 ;		// output enable
 #else
- #ifdef PCBXLITE
+ #if defined(PCBXLITE) || defined(REV19)
 	GPIOD->BSRRH = 0x0010 ;		// output enable
  #else
   #ifdef PCBX9LITE
@@ -1518,7 +1518,7 @@ void telemetryPortSetDirectionInput()
 #ifdef PCB9XT
 	GPIOB->BSRRH = 0x0004 ;		// output disable
 #else
- #ifdef PCBXLITE
+ #if defined(PCBXLITE) || defined(REV19)
 	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
   #ifdef PCBX9LITE
@@ -2646,7 +2646,7 @@ void menuUp1(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 				SPORT_RF_OFF() ;
 #endif
 #endif
@@ -2911,7 +2911,7 @@ void menuUpdate(uint8_t event)
 			reboot = 0 ;
     break ;
 
-#if defined(PCBX7) || defined(PCBX9LITE)
+#if defined(PCBX7) || defined(PCBX9LITE) || defined(REV19)
     case EVT_KEY_LONG(KEY_EXIT):
 #else
     case EVT_KEY_LONG(KEY_EXIT):
@@ -3309,7 +3309,7 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
     }
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
-#if defined(PCBX9LITE)
+#if defined(PCBX9LITE) || defined(REV19)
 	if ( SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
 extern volatile uint8_t *PxxTxPtr ;
@@ -4007,7 +4007,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBTARANIS)
 			sportInit() ;
 #else
-#if defined(PCBX9LITE)
+#if defined(PCBX9LITE) || defined(REV19)
 			if ( external )
 			{
 				com1_Configure( 57600, SERIAL_NORM, 0 ) ;
@@ -4042,7 +4042,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
 				if (SportModuleExt == SPORT_MODULE)
 				{
 					EXTERNAL_RF_ON();

@@ -28,7 +28,7 @@
 #include "logicio.h"
 #include "sound.h"
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #ifdef REV9E
 const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0, 
 																 HSW_SJ0, HSW_SK0, HSW_SL0, HSW_SM0, HSW_SN0, HSW_SO0, HSW_SP0, HSW_SQ0, HSW_SR0, } ;
@@ -756,7 +756,7 @@ void perOut(int16_t *chanOut, uint8_t att )
      		      	v = rawSticks[k]; //Switch is on. MAX=FULL=512 or value.
 							}
 						}
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 						if ( k == MIX_3POS-1 )
 						{
 							if ( md->switchSource > 8 )	// Sort for X9E ********

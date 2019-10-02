@@ -1813,6 +1813,7 @@ FRESULT chk_mounted (	/* FR_OK(0): successful, !=0: any error occurred */
 	const TCHAR *p = *path;
 	FATFS *fs;
 
+
 	/* Get logical drive number from the path name */
 	vol = p[0] - '0';					/* Is there a drive number? */
 	if (vol <= 9 && p[1] == ':') {		/* Found a drive number, get and strip it */
@@ -1830,6 +1831,7 @@ FRESULT chk_mounted (	/* FR_OK(0): successful, !=0: any error occurred */
 		return FR_INVALID_DRIVE;
 	*rfs = fs = FatFs[vol];				/* Return pointer to the corresponding file system object */
 	if (!fs) return FR_NOT_ENABLED;		/* Is the file system object available? */
+	
 
 	ENTER_FF(fs);						/* Lock file system */
 
@@ -1843,6 +1845,7 @@ FRESULT chk_mounted (	/* FR_OK(0): successful, !=0: any error occurred */
 			return FR_OK;				/* The file system object is valid */
 		}
 	}
+	
 
 	/* The logical drive must be mounted. */
 	/* Following code attempts to mount a volume. (analyze BPB and initialize the fs object) */
@@ -2002,7 +2005,6 @@ FRESULT f_mount (
 {
 	FATFS *rfs;
 
-
 	if (vol >= _VOLUMES)			/* Check if the drive number is valid */
 		return FR_INVALID_DRIVE;
 	rfs = FatFs[vol];				/* Get current fs object */
@@ -2076,7 +2078,6 @@ FRESULT f_open (
 	DIR dj;
 	BYTE *dir;
 	DEF_NAMEBUF;
-
 
 	fp->fs = 0;			/* Clear file object */
 
@@ -2207,7 +2208,6 @@ FRESULT f_read (
 	DWORD clst, sect, remain;
 	UINT rcnt, cc;
 	BYTE csect, *rbuff = buff;
-
 
 	*br = 0;	/* Initialize byte counter */
 

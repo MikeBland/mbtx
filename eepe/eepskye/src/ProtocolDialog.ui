@@ -607,42 +607,42 @@
         <string>AFHD2SA</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>Q2X2</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>WK2x01</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>Q303</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>GW008</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>DM002</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>CABELL</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>ESKY150</string>
        </property>
       </item>
-		<item>
+      <item>
        <property name="text">
         <string>H8_3D</string>
        </property>
@@ -1106,6 +1106,72 @@
         <string>868MHz</string>
        </property>
       </item>
+     </widget>
+    </item>
+    <item row="5" column="2">
+     <widget class="QLabel" name="labelRx1">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Receiver 1</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="6" column="2">
+     <widget class="QLabel" name="labelRx2">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Receiver 2</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+     </widget>
+    </item>
+    <item row="7" column="2">
+     <widget class="QLabel" name="labelRx3">
+      <property name="minimumSize">
+       <size>
+        <width>115</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>115</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <property name="text">
+       <string>Receiver 3</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
      </widget>
     </item>
    </layout>

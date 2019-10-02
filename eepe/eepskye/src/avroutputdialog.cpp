@@ -4,6 +4,8 @@
 #include <QScrollBar>
 #include <QMessageBox>
 #include <QScrollBar>
+#include "pers.h"
+#include "myeeprom.h"
 
 //#if !__GNUC__
 #if defined WIN32 || !defined __GNUC__
@@ -278,6 +280,36 @@ void avrOutputDialog::doProcessStarted()
     addText(tr("Started SAM-BA") + "\n");
     addText(cmdLine);
     addText("\n" HLINE_SEPARATOR "\n");
+}
+
+
+// Sourcefile is Mnames.bin
+int avrOutputDialog::doSdRead( QString destFile, QString sourceFile, quint32 offset )
+{
+// create empty 512K image
+// Read model names
+// read "radio/radio.bin" to general in image
+// For each name that starts with not '\0' or ' ', read model to image
+  int hasErrors = 0 ;
+	quint32 count ;
+
+	unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
+	QFile source(sourceFile);
+  if (!source.open(QIODevice::ReadOnly))
+	{
+    QMessageBox::warning(this, tr("Error"),tr("Cannot open source file"));
+    hasErrors = 1 ;
+  }
+	else
+	{
+    count = source.read( (char *)ModelNames, sizeof(ModelNames) ) ;
+		source.close() ;
+
+		// read modelnames, now read /RADIO/radio.bin
+
+	}
+	
+	return hasErrors ? 0 : 1 ;
 }
 
 

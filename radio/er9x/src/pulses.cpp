@@ -1358,3 +1358,130 @@ void setupPulsesSerial(void)
 }
 
 
+// SBUS code
+#define BITLEN_Serial (10*2)
+//uint8_t SerialIndex ;
+uint16_t SerialValue ;
+uint16_t *SerialPtr ;
+uint16_t SerialStream[400] ;
+
+//void _send_1(uint8_t v )
+//{
+//// 	if (SerialIndex == 0)
+//// 	if (SerialIndex == 0)
+//// 	  v -= 2;
+//// 	else
+//// 	  v += 2;
+//// 	  v -= 2;
+//// 	else
+//// 	  v += 2;
+
+//  SerialValue += v;
+//  *SerialPtr++ = SerialValue ;
+
+////  SerialIndex = (SerialIndex+1) % 2;
+//}
+
+
+static void sendByteSerial(uint8_t b) //max 10 changes 0 10 10 10 10 1
+{
+	uint8_t parity = 0x80 ;
+	uint8_t count = 8 ;
+	uint8_t bitLen ;
+	uint16_t lserialValue ;
+	uint16_t *lserialPtr ;
+
+	parity = 0 ;
+	bitLen = b ;
+	lserialPtr = SerialPtr ;
+	lserialValue = SerialValue ;
+
+	for( uint8_t i=0; i<8; i++)
+	{
+		parity += bitLen & 0x80 ;
+		bitLen <<= 1 ;
+	}
+	parity &= 0x80 ;
+	count = 9 ;
+
+  bool lev = 0;
+  uint8_t len = BITLEN_Serial; //max val: 9*16 < 256
+  for (uint8_t i=0; i<=count; i++)
+	{ //8Bits + Stop=1
+    bool nlev = b & 1; //lsb first
+    if (lev == nlev)
+		{
+      len += BITLEN_Serial;
+    }
+    else
+		{
+//      _send_1(len) ; // _send_1(nlev ? len-5 : len+3);
+  		lserialValue += len ;
+  		*lserialPtr++ = lserialValue ;
+      len = BITLEN_Serial ;
+      lev = nlev ;
+    }
+		b = (b>>1) | parity ; //shift in parity or stop bit
+		parity = 0x80 ;				// Now a stop bit
+  }
+//  _send_1(len+BITLEN_Serial) ;
+	lserialValue += (len+BITLEN_Serial) ;
+	*lserialPtr++ = lserialValue ;
+	
+	SerialPtr = lserialPtr ;
+	SerialValue = lserialValue ;
+}
+
+static void putSerialFlush()
+{
+  SerialPtr-- ; //remove last stopbits and
+  *SerialPtr++ = 45000 ; // Past the 44000 of the ARR
+}
+
+// Less than 180uS to execute
+void buildSbusFrame()
+{
+	uint8_t *p = SbusFrame ;
+	uint32_t outputbitsavailable = 0 ;
+	uint32_t outputbits = 0 ;
+	uint32_t i ;
+				 
+	*p++ = 0x0F ;
+	for ( i = 0 ; i < 16 ; i += 1 )
+	{
+		int16_t x = PulseTimes[i] ;
+		x *= 4 ;
+		x /= 5 ;
+		x += 0x3E0 ;
+		if ( x < 0 )
+		{
+			x = 0 ;
+		}
+		if ( x > 2047 )
+		{
+			x = 2047 ;
+		}
+		outputbits |= x << outputbitsavailable ;
+		outputbitsavailable += 11 ;
+		while ( outputbitsavailable >= 8 )
+		{
+      *p++ = outputbits ;
+			outputbits >>= 8 ;
+			outputbitsavailable -= 8 ;
+		}
+	}
+	*p++ = 0 ;
+	*p = 0 ;
+
+
+//  	SerialIndex = 0 ;
+	SerialPtr = SerialStream ;
+ 	SerialValue = 100 ;
+ 	*SerialPtr++ = SerialValue ;
+	for ( i = 0 ; i < 26 ; i += 1 )
+	{
+		sendByteSerial( SbusFrame[i]) ;
+	}
+  putSerialFlush() ;
+}
+

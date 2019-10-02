@@ -4,6 +4,12 @@
 #include <QDialog>
 #include "pers.h"
 
+struct t_moduleData
+{
+	struct t_module module ;
+	struct t_access access ;	
+} ;
+
 namespace Ui {
     class ProtocolDialog ;
 }
@@ -11,7 +17,7 @@ namespace Ui {
 class ProtocolDialog : public QDialog {
     Q_OBJECT
 public:
-		ProtocolDialog(QWidget *parent, uint32_t module, struct t_radioData *radioData, struct t_module *pmodule, uint32_t modelVersion ) ;
+		ProtocolDialog(QWidget *parent, uint32_t module, struct t_radioData *radioData, struct t_moduleData *pmodule, uint32_t modelVersion ) ;
     ~ProtocolDialog();
 
 //    QString getComment();
@@ -54,7 +60,7 @@ private:
 	bool protocolEditLock ;
 
     Ui::ProtocolDialog *ui;
-		struct t_module *ppd ;
+    struct t_moduleData *ppd ;
     struct t_radioData *rData ;
 //    QString * mixCommennt;
 		uint32_t lModule ;
