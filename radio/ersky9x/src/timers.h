@@ -30,7 +30,7 @@ extern void init_hw_timer( void ) ;
 extern void hw_delay( uint16_t time ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 
 // For use with Orange DSM module - 9XR PRO/ASSAN
 #define ORTX_USE_DSMX			0x01 //- dsmX flag, else dsm2 use

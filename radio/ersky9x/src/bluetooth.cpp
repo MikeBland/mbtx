@@ -65,6 +65,7 @@
 #include "sbus.h"
 #include "audio.h"
 #include "logicio.h"
+#include <string.h>
 
 // Strings for FrSky BT module (HM-10?)
 //AT\r\n
@@ -146,7 +147,7 @@
 // AT+INQ - searches
 // Replies:
 // +INQ:address,type,signal
-// Pick up address ad pass to:
+// Pick up address and pass to:
 // AT_RNAME?address
 // Replies:
 // +RNAME:name
@@ -155,6 +156,32 @@
 // AT+LINK=address
 
 
+// FrSky PARA
+// Send at 57600: AT_BAUD4<cr><lf>, then flush receive
+// switch to 115200 baud
+// AT+NAMExxxx<cr><lf>, Rx OK+Name:xxxx<cr><lf>, followed by Central:MacAddress<cr><lf>
+// AT+TXPW0<cr><lf>, Rx OK+Txpw:0<cr><lf>, followed by Central:MacAddress<cr><lf>
+// AT+ROLE1<cr><lf>, Rx OK+Role:0<cr><lf>, followed by Central:MacAddress<cr><lf>
+
+// For discover:
+// AT+DISC?<cr><lf>, Rx OK+DiscS<cr><lf>
+// OK+Disc:MacAddress<cr><lf>
+// OK+DiscE<cr><lf>
+
+// Call/connect
+// AT+CON<MAcAddress><cr><lf>, Rx OK+CONNA<cr><lf>, follwed by Connecting to:<MacAddress><cr><lf>
+
+
+
+#define BT_PARA_STATE_DATA_IDLE			0
+#define BT_PARA_STATE_DATA_START		1
+#define BT_PARA_STATE_DATA_IN_FRAME	2
+#define BT_PARA_STATE_DATA_XOR			3
+
+#define BT_PARA_BLUETOOTH_PACKET_SIZE		14
+#define BT_PARA_START_STOP							0x7E
+#define BT_PARA_BYTESTUFF								0x7D
+#define BT_PARA_STUFF_MASK							0x20
 
 uint8_t BtType ;
 uint8_t BtCurrentFunction ;
@@ -167,18 +194,35 @@ uint8_t BtBinAddr[6] ;
 uint8_t BtPswd[8] ;
 uint8_t BtName[16] ;
 uint8_t BtRname[32] ;
+uint8_t BtState[16] ;
+uint8_t BtMAC[14] ;
 
-OS_FlagID Bt_flag ;
+#define BT_STATUS_DISCONNECTED	0
+#define BT_STATUS_CONNECTED	1
+uint8_t BtStatus = BT_STATUS_DISCONNECTED ;
+
+OS_FlagID  Bt_flag ;
 struct t_serial_tx Bt_tx ;
 struct t_serial_tx Com2_tx ;
 struct t_serial_tx Com1_tx ;
 uint8_t Com2TxBuffer[64] ;
 uint8_t Com1TxBuffer[32] ;
-uint8_t BtSbusFrame[28] ;
+
+#define SBUS_FRAME_LENGTH 28
+uint8_t BtSbusFrame[SBUS_FRAME_LENGTH] ;
 uint16_t BtLastSbusSendTime ;
-uint8_t BtTempBuffer[100] ;
+
+uint16_t BtParaDebug ;
+
+#define TEMP_BUFFER_SIZE	100
+
+uint8_t BtTempBuffer[TEMP_BUFFER_SIZE] ;
 uint16_t BtRxTimer ;
 uint8_t BtPreviousLinkIndex = 0xFF ;
+
+//uint8_t BtT1Buffer[50] ;
+//uint8_t BtT2Buffer[50] ;
+//uint8_t BtT3Buffer[50] ;
 
 // Data for BT and encoder over serial
 struct t_bt_ser_pkt
@@ -309,6 +353,10 @@ static void btPowerOn()
 	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
 #endif
 
+#if defined(X9LS)
+	GPIOD->BSRRH = GPIO_Pin_14 ;		// Set low
+#endif
+
 }
 
 static void btPowerOff()
@@ -342,6 +390,9 @@ static void btPowerOff()
 	configure_pins( GPIO_Pin_10, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
 	GPIOB->BSRRH = GPIO_Pin_10 ;		// Set low
 #endif
+#if defined(X9LS)
+	GPIOD->BSRRL = GPIO_Pin_14 ;		// Set High
+#endif
 }
 
 void initBluetooth()
@@ -367,7 +418,9 @@ void initBluetooth()
 	GPIOE->BSRRH = GPIO_Pin_12 ;		// Set low
 #endif
 
-
+#if defined(X9LS)
+	configure_pins( GPIO_Pin_14, PIN_PORTD | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW ) ;
+#endif
 
 }
 
@@ -418,7 +471,11 @@ void setBtBaudrate( uint32_t index )
 	BtSerPkt.bytes[0] = ( BtSerPkt.bytes[0] & 0xE3 ) | index ;
 	(void) brate ;
 #else
+ #if defined(PCBX9LITE) && defined(X9LS)
+	Com3SetBaudrate ( brate ) ;
+ #else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
+ #endif
 #endif
 #endif
 #endif
@@ -496,6 +553,32 @@ void flushBtFifo()
 	}
 }
 
+
+#ifndef SMALL
+uint8_t *btReadLine()
+{
+	static uint8_t rlineIndex ;	
+	int32_t x ;
+	while( ( x = rxBtuart() ) != -1 )
+	{
+		BtTempBuffer[rlineIndex++] = x ;
+		if ( x == '\n' )
+		{
+			BtTempBuffer[rlineIndex] = '\0' ;
+			rlineIndex = 0 ;
+			return BtTempBuffer ;
+		}
+		if ( rlineIndex >= TEMP_BUFFER_SIZE-2 )
+		{
+			rlineIndex = TEMP_BUFFER_SIZE - 2 ;
+		}
+	}	
+	return 0 ;
+}
+#endif
+
+
+
 void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
 {
 	// pick out data between : and \r
@@ -515,6 +598,10 @@ void btParse( uint8_t *dest, uint8_t *src, uint32_t length )
 				if ( x == '\r' )
 				{
 					break ;
+				}
+				if ( x == ':' )
+				{
+					continue ;	// Skip : in MAC address
 				}
 				*dest++ = x ;
 				if ( --length == 0 )
@@ -603,11 +690,14 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 	CoTickDelay(5) ;	// 10mS
-	flushBtFifo() ;
+	if ( command )
+	{
+		flushBtFifo() ;
+	}
 
 	a = 'O' ;
 	b = 'K' ;
-	if ( bitfieldtype & BT_BITTYPE_CC41 )
+	if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 	{
 		a = '\r' ;
 		b = '\n' ;
@@ -686,10 +776,12 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 }
 
 
+uint8_t BtDebugText[20] ;
+
 
 uint32_t getBtRole()
 {
-	uint8_t buffer[20] ;
+	uint8_t buffer[32] ;
 	uint8_t btRole[4] ;
 	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
@@ -701,7 +793,9 @@ uint32_t getBtRole()
 	{
 		btTransaction( (uint8_t *)"AT+ROLE?\r\n", buffer, 19 ) ;
 	}
+//	ncpystr( &BtDebugText[1], buffer, 8 ) ;
 	btParse( btRole, buffer, 3 ) ;
+//	BtDebugText[0] = btRole[0] ;
 	if ( btRole[0] == '1' )
 	{
 		BtControl.BtMasterSlave = 2 ;
@@ -715,6 +809,14 @@ uint32_t getBtRole()
 		BtControl.BtMasterSlave = 0 ;
 	}
 	CoTickDelay(1) ;					// 2mS
+#ifndef SMALL
+	if ( bitfieldtype & ( BT_BITTYPE_PARA ) )
+	{
+		// Now read own device MAC
+		btTransaction( (uint8_t *)0, buffer, 31 ) ;
+		btParse( BtMAC, buffer, 12 ) ;
+	}
+#endif
 	return BtControl.BtMasterSlave ;
 }
 
@@ -722,7 +824,7 @@ uint32_t setBtRole( uint32_t role )
 {
 	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
-	if ( bitfieldtype & (BT_BITTYPE_CC41) )
+	if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 	{
 		cpystr( &BtTxBuffer[0], (uint8_t *)"AT+ROLE0\r\n" ) ;
 		if ( role )
@@ -751,7 +853,7 @@ uint32_t poll_bt_device()
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
 	Bt_tx.size = 2 ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
+	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41 | BT_BITTYPE_PARA) )
 	{
 		BtTxBuffer[2] = 13 ;
 		BtTxBuffer[3] = 10 ;
@@ -858,10 +960,14 @@ uint32_t changeBtBaudrate( uint32_t baudIndex )
 
 void removeAddressList()
 {
-	btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 20mS
-	getBtOK(0, 2000 ) ;
-	CoTickDelay(10) ;					// 20mS
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	if ( bitfieldtype & BT_BITTYPE_HC05 )
+	{
+		btTransaction( (uint8_t *)"AT+RMAAD\r\n", 0, 0 ) ;
+		CoTickDelay(10) ;					// 20mS
+		getBtOK(0, 2000 ) ;
+		CoTickDelay(10) ;					// 20mS
+	}
 }
 
 
@@ -869,11 +975,15 @@ void checkAddressList()
 {
 	uint8_t buffer[12] ;
 	uint8_t count[6] ;
-	btTransaction( (uint8_t *)"AT+ADCN?\r\n", buffer, 11 ) ;
-	btParse( count, buffer, 5 ) ;
-	if ( count[0] != '0' )
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	if ( bitfieldtype & BT_BITTYPE_HC05 )
 	{
-		removeAddressList() ;
+		btTransaction( (uint8_t *)"AT+ADCN?\r\n", buffer, 11 ) ;
+		btParse( count, buffer, 5 ) ;
+		if ( count[0] != '0' )
+		{
+			removeAddressList() ;
+		}
 	}
 }
 
@@ -975,9 +1085,10 @@ uint8_t b2hex( uint8_t c )
 	return c ;
 }
 
-uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
+uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source, uint32_t skipCommas )
 {
 	uint8_t c ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 	
 	c = *source++ ;
 	*dest++ = b2hex( c >> 4 ) ;
@@ -985,11 +1096,17 @@ uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source )
 	c = *source++ ;
 	*dest++ = b2hex( c >> 4 ) ;
 	*dest++ = b2hex( c ) ;
-	*dest++ = ',' ;
+	if ( ( ( bitfieldtype & ( BT_BITTYPE_PARA ) ) == 0 ) && !skipCommas )
+	{
+		*dest++ = ',' ;
+	}
 	c = *source++ ;
 	*dest++ = b2hex( c >> 4 ) ;
 	*dest++ = b2hex( c ) ;
-	*dest++ = ',' ;
+	if ( ( ( bitfieldtype & ( BT_BITTYPE_PARA ) ) == 0 ) && !skipCommas )
+	{
+		*dest++ = ',' ;
+	}
 	c = *source++ ;
 	*dest++ = b2hex( c >> 4 ) ;
 	*dest++ = b2hex( c ) ;
@@ -1063,7 +1180,7 @@ uint32_t setBtName( uint8_t *name )	// Max 14 chars
 		*end++ = '=' ;
 	}
 	end = cpystr( end, name ) ;
-	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
+	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 	{
 		end = cpystr( end, (uint8_t *)"\r\n" ) ;
 	}
@@ -1084,15 +1201,106 @@ void getBtValues()
 	{
 		checkAddressList() ;
 		btTransaction( (uint8_t *)"AT+NAME?\r\n", buffer, 19 ) ;
-		btParse( BtName, buffer, 19 ) ;
+		btParse( BtName, buffer, 15 ) ;
+		btTransaction( (uint8_t *)"AT+ADDR?\r\n", buffer, 19 ) ;
+		btParse( BtMAC, buffer, 12 ) ;
 		btTransaction( (uint8_t *)"AT+PSWD?\r\n", buffer, 19 ) ;
 	}
+#ifndef SMALL
+	else if ( bitfieldtype & (BT_BITTYPE_PARA) )
+	{
+		btTransaction( (uint8_t *)"AT+NAME?\r\n", buffer, 19 ) ;
+//		ncpystr( &BtDebugText[1], buffer, 8 ) ;
+		btParse( BtName, buffer, 15 ) ;
+		if ( g_eeGeneral.btName[0] != BtName[0] )
+		{
+			if ( BtName[0] )
+			{
+				uint8_t *dest ;
+				uint8_t *source ;
+				uint8_t count ;
+
+				dest = g_eeGeneral.btName ;
+				source = BtName ;
+				count = 15 ;
+			  while ( (*dest++ = *source++) )
+				{
+					if ( --count == 0 )
+					{
+						*dest++ = '\0' ;
+						break ;
+					}
+				}
+				if ( count )
+				{
+					dest -= 1 ;
+					while ( count )
+					{
+						*dest++ = ' ' ;
+						count -= 1 ;
+					}
+				}
+			}
+		}
+		btTransaction( (uint8_t *)"AT+CLEAR\r\n", buffer, 19 ) ;
+		return ;
+//		BtDebugText[0] = BtName[0] ;
+//		btTransaction( (uint8_t *)"AT+HELP?\r\n", buffer, 19 ) ;
+//		btTransaction( (uint8_t *)"AT+HELP\r\n", buffer, 19 ) ;
+//		btTransaction( (uint8_t *)"AT+UUID?\r\n", buffer, 19 ) ;
+//		btTransaction( (uint8_t *)"AT+PASS\r\n", buffer, 19 ) ;	// CC41
+	}
+#endif
 	else
 	{
+		btTransaction( (uint8_t *)"AT+UUID\r\n", BtDebugText, 19 ) ;	// CC41
+		if ( BtDebugText[10] == 'E' )
+		{
+			btTransaction( (uint8_t *)"AT+UUID0xFFF0\r\n", BtDebugText, 19 ) ;	// CC41
+		}
 		btTransaction( (uint8_t *)"AT+PASS\r\n", buffer, 19 ) ;	// CC41
 	}
 	btParse( BtPswd, buffer, 6 ) ;
 }
+
+void getBtState()
+{
+	uint8_t buffer[20] ;
+	uint8_t saveData[30] ;
+	uint32_t i ;
+	uint32_t count ;
+	int32_t y ;
+	BtControl.BtStateRequest = 0 ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	if ( bitfieldtype & (BT_BITTYPE_HC05) )
+	{
+		BT_ENABLE_HIGH ;						// Set bit B12 HIGH
+		CoTickDelay(10) ;					// 20mS
+		count = 0 ;
+		for ( i = 0 ; i < 30 ; i += 1 )		// Save unread data
+		{
+			if ( ( y = get_fifo128( &Bt_fifo ) ) != -1 )
+			{
+				saveData[i] = y ;
+				count += 1 ;
+			}
+			else
+			{
+				break ;	// i 
+			}
+		}
+
+		btTransaction( (uint8_t *)"AT+STATE?\r\n", buffer, 19 ) ;
+		CoTickDelay(10) ;					// 20mS
+		btParse( BtState, buffer, 15 ) ;
+		for ( i = 0 ; i < count ; i += 1 )	// Restore unread data
+		{
+      put_fifo128( &Bt_fifo, saveData[i] ) ;
+		}
+		BT_ENABLE_LOW ;							// Set bit B12 LOW
+	}
+}
+
 
 void btConfigure()
 {
@@ -1102,17 +1310,17 @@ void btConfigure()
 	CoTickDelay(10) ;					// 20mS
 	BtControl.BtConfigure = 0x40 ;
 	btTransaction( (uint8_t *)"AT+CLASS=0\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
+	CoTickDelay(10) ;					// 20mS
 	getBtOK(0, BT_POLL_TIMEOUT ) ;
 	BtControl.BtConfigure = 0x41 ;
 	btTransaction( (uint8_t *)"AT+CMODE=1\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
+	CoTickDelay(10) ;					// 20mS
 	getBtOK(0, BT_POLL_TIMEOUT ) ;
 	BtControl.BtConfigure = 0x42 ;
 	removeAddressList() ;
 	BtControl.BtConfigure = 0x44 ;
 	btTransaction( (uint8_t *)"AT+INQM=0,5,4\r\n", 0, 0 ) ;
-	CoTickDelay(10) ;					// 40mS
+	CoTickDelay(10) ;					// 20mS
 	for ( j = 0 ; j < 12 ; j += 1 )
 	{
 		getBtOK(0, 225 ) ;
@@ -1120,8 +1328,15 @@ void btConfigure()
 	}
 	BtControl.BtConfigure = 0 ;
 	CoTickDelay(10) ;					// 20mS
-	BT_ENABLE_HIGH ;						// Set bit B12 HIGH
+	BT_ENABLE_LOW ;							// Set bit B12 LOW
+//	BT_ENABLE_HIGH ;						// Set bit B12 HIGH
 	CoTickDelay(10) ;					// 20mS
+}
+
+void btClear()
+{
+	uint8_t buffer[20] ;
+	btTransaction( (uint8_t *)"AT+CLEAR\r\n", buffer, 19 ) ;
 }
 
 uint32_t btLink( uint32_t index )
@@ -1129,6 +1344,7 @@ uint32_t btLink( uint32_t index )
 	uint32_t x ;
 	uint32_t i ;
 	uint8_t *end ;
+	uint8_t bitfieldtype = BtControl.BtModuleType ;
 
 	if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 	{
@@ -1174,10 +1390,90 @@ uint32_t btLink( uint32_t index )
 		}
 		return i ;
 	}
-	else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+	else if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 	{
-		BtControl.BtLinking += 1 ;
-		cpystr( BtRname, (uint8_t *)"AT+CONN1\r\n" ) ;
+		
+//		BtControl.BtLinking += 1 ;
+#ifndef SMALL
+		if ( bitfieldtype & ( BT_BITTYPE_PARA ) )
+		{
+			// To handle "link from stored address"
+			// Do a DISC first and check the requested address is detected, then connect
+			end = cpystr( BtRname, (uint8_t *)"AT+CON" ) ;
+			end = btAddrBin2Hex( end, g_eeGeneral.btDevice[index].address ) ;
+			cpystr( end, (uint8_t *)"\r\n" ) ;
+			btTransaction( (uint8_t *)"AT+DISC?\r\n", 0, 0 ) ;
+			i = 50*15 ;	// 15 seconds
+			x = 0 ;
+			do
+			{
+				if ( btReadLine() )
+				{
+					if ( !strncmp( (char *)BtTempBuffer, "OK+DISCE", 8 ) )
+					{
+						break ;
+					}
+					if ( !strncmp( (char *)BtTempBuffer, "OK+DISC:", 8 ) )
+				  {
+						if ( !strncmp( (char *)&BtTempBuffer[8], (char *)&BtRname[6], 12 ) )
+						{
+							x = 1 ;	// Found
+						}
+					}
+				}
+				CoTickDelay(10) ;					// 20mS
+			} while (--i) ;
+			if ( x )
+			{
+				btTransaction( BtRname, BtTempBuffer, 20 ) ;		// Gets CONNA or CONNE
+//				ncpystr( BtT1Buffer, BtTempBuffer, 20 ) ;
+				if ( !strncmp( (char *)&BtTempBuffer[3], "CONNA", 5 ) )
+				{
+					btTransaction( 0, BtTempBuffer, 30 ) ;		// Gets Connecting to etc.
+//					ncpystr( BtT2Buffer, BtTempBuffer, 20 ) ;
+
+					// wait up to 15 seconds for a response
+					for ( x = 0 ; x < 1500 ; x += 1 )
+					{
+						if ( btReadLine() )
+						{
+							if ( !strncmp( (char *)BtTempBuffer, "Connected:", 10 ) )
+							{
+								BtControl.BtSbusIndex = 0 ;
+								BtStatus = BT_STATUS_CONNECTED ;
+								return 1 ;
+							}
+							if ( !strncmp( (char *)BtTempBuffer, "DisConnected", 12 ) )
+							{
+								BtStatus = BT_STATUS_DISCONNECTED ;
+							}	
+							if ( !strncmp( (char *)BtTempBuffer, "OK+CONNF", 8 ) )
+							{
+								BtControl.BtLinked = 0 ;
+								BtStatus = BT_STATUS_DISCONNECTED ;
+							}	
+						}
+						CoTickDelay(5) ;					// 10 mS
+					}
+					return 0 ;
+				}
+				else
+				{
+					if ( !strncmp( (char *)&BtTempBuffer[3], "CONNE", 5 ) )
+					{
+						// Not going to connect so clear
+						btTransaction( (uint8_t *)"AT+CLEAR\r\n", 0, 0 ) ;
+						BtControl.BtLinkRequest = 0 ;
+					}
+				}
+				return 0 ;
+			}
+		}
+		else
+#endif
+		{
+			cpystr( BtRname, (uint8_t *)"AT+CONN1\r\n" ) ;
+		}
 		btTransaction( BtRname, 0, 0 ) ;
 		CoTickDelay(10) ;					// 40mS
 		i = getBtOK(1, BT_POLL_TIMEOUT ) ;
@@ -1199,6 +1495,55 @@ uint32_t btLink( uint32_t index )
 }
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D)
+
+#ifndef SMALL
+void processParaTrainerFrame( uint8_t *frame )
+{
+	uint32_t i ;
+	uint32_t channel ;
+
+	i = 1 ;
+	for ( channel = 0 ; channel < 8 ; channel += 2)
+	{
+    g_ppmIns[channel] = frame[i] + ((frame[i+1] & 0xf0) << 4) - 1500 ;
+    g_ppmIns[channel+1] = ( (frame[i+1] & 0x0f) << 4) + ((frame[i+2] & 0xf0) >> 4) + ((frame[i+2] & 0x0f) << 8) - 1500 ;
+  	i += 3 ;
+	}
+	ppmInValid = 100 ;
+}
+
+void putTrainerByte( uint8_t byte )
+{
+	if ( BtControl.BtSbusIndex < SBUS_FRAME_LENGTH )
+	{
+		BtSbusFrame[BtControl.BtSbusIndex++] = byte ;
+		if ( byte == '\n' )
+		{
+			if ( BtControl.BtSbusIndex >= 13 )
+			{
+	      if (!strncmp((char *)&BtSbusFrame[BtControl.BtSbusIndex-14], "isConnected", 11))
+				{
+					// Connection is cleared
+					BtControl.BtSbusIndex = 0 ;
+					BtStatus = BT_STATUS_DISCONNECTED ;
+				}
+			}
+			else
+			{
+				if ( BtControl.BtSbusIndex >= 24 )
+				{
+	      	if (!strncmp((char *)&BtSbusFrame[BtControl.BtSbusIndex-23], "onnected:", 9))
+					{
+						BtControl.BtSbusIndex = 0 ;
+						BtStatus = BT_STATUS_CONNECTED ;
+					}
+				}
+			}
+		}
+	}  
+}
+#endif
+
 void processBtRx( int32_t data, uint32_t rxTimeout )
 {
 	uint16_t rxchar ;
@@ -1250,6 +1595,107 @@ void processBtRx( int32_t data, uint32_t rxTimeout )
 		}
 		return ;
 	}
+
+#ifndef SMALL
+	if ( BtCurrentFunction == BT_FR_PARA )
+	{
+#if defined(PCBSKY) || defined(PCB9XT)
+		if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+		{ // i am the slave
+    	return ;
+		}
+#endif
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+ #ifndef X9LS
+		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+		if ( tProf->channel[0].source == TRAINER_SLAVE )
+		{
+			return ;
+		}
+ #else
+ 		if ( BtControl.BtMasterSlave != 2 )
+		{
+			return ;	// Not master
+		}
+ #endif
+#endif
+		
+  	static uint8_t dataState = BT_PARA_STATE_DATA_IDLE ;
+		
+		BtControl.BtRxOccured = 1 ;
+
+  	switch (dataState)
+		{
+  	  case BT_PARA_STATE_DATA_START:
+  	    if (data == BT_PARA_START_STOP)
+				{
+  	      dataState = BT_PARA_STATE_DATA_IN_FRAME ;
+  	      BtControl.BtSbusIndex = 0;
+  	    }
+  	    else
+				{
+//					BtSbusFrame[BtControl.BtSbusIndex++] = data ;
+					putTrainerByte( data ) ;
+  	    }
+  	  break ;
+
+  	  case BT_PARA_STATE_DATA_IN_FRAME:
+  	    if (data == BT_PARA_BYTESTUFF)
+				{
+  	      dataState = BT_PARA_STATE_DATA_XOR ; // XOR next byte
+  	    }
+  	    else if (data == BT_PARA_START_STOP)
+				{
+  	      dataState = BT_PARA_STATE_DATA_IN_FRAME ;
+  	      BtControl.BtSbusIndex = 0 ;
+  	    }
+  	    else
+				{
+//					BtSbusFrame[BtControl.BtSbusIndex++] = data ;
+					putTrainerByte( data ) ;
+  	    }
+  	  break ;
+
+  	  case BT_PARA_STATE_DATA_XOR:
+//				BtSbusFrame[BtControl.BtSbusIndex++] = data ^ BT_PARA_STUFF_MASK ;
+				putTrainerByte( data ^ BT_PARA_STUFF_MASK) ;
+				dataState = BT_PARA_STATE_DATA_IN_FRAME ;
+  	  break ;
+
+  	  case BT_PARA_STATE_DATA_IDLE:
+  	    if (data == BT_PARA_START_STOP)
+				{
+  	      BtControl.BtSbusIndex = 0 ;
+  	      dataState = BT_PARA_STATE_DATA_START ;
+  	    }
+  	    else
+				{
+//					BtSbusFrame[BtControl.BtSbusIndex++] = data ;
+					putTrainerByte( data ) ;
+  	    }
+  	  break ;
+  	}
+
+  	if (BtControl.BtSbusIndex >= BT_PARA_BLUETOOTH_PACKET_SIZE)
+		{
+  	  uint8_t crc = 0x00;
+  	  for (int i=0; i<13; i++)
+			{
+  	    crc ^= BtSbusFrame[i];
+  	  }
+  	  if (crc == BtSbusFrame[13])
+			{
+  	    if (BtSbusFrame[0] == 0x80)
+				{
+  	      processParaTrainerFrame(BtSbusFrame) ;
+					BtControl.BtSbusIndex = 0 ;
+  	    }
+  	  }
+  	  dataState = BT_PARA_STATE_DATA_IDLE ;
+  	}
+		return ;
+	}
+#endif
 
 	if ( rxTimeout )
 	{
@@ -1328,7 +1774,9 @@ void btConfigCheck()
 	}
 	if ( pBtControl->BtScan )
 	{
+		uint8_t bitfieldtype = BtControl.BtModuleType ;
 		pBtControl->BtScan = 0 ;
+		pBtControl->BtLinked = 0 ;
 		if ( g_eeGeneral.BtType >= BT_TYPE_HC05 )
 		{
 			uint32_t i ;
@@ -1350,18 +1798,40 @@ void btConfigCheck()
 //						{
 					pBtControl->BtScanState = 1 ;
 					CoTickDelay(20) ;					// 40mS
-					btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
-					CoTickDelay(10) ;					// 20mS
-					i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+					if ( ( bitfieldtype & ( BT_BITTYPE_PARA ) ) == 0 )
+					{
+						btTransaction( (uint8_t *)"AT+INIT\r\n", 0, 0 ) ;
+						CoTickDelay(10) ;					// 20mS
+						i = getBtOK(1, BT_POLL_TIMEOUT ) ;
+					}
 //						}
 			}
-			btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
+
+//						if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
+//			if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+//			{
+//				btTransaction( (uint8_t *)"AT+FILT0\r\n", 0, 0 ) ;
+//				CoTickDelay(20) ;					// 20mS
+//			}
+#ifndef SMALL
+			if ( bitfieldtype & ( BT_BITTYPE_PARA ) )
+			{
+				btTransaction( (uint8_t *)"AT+DISC?\r\n", 0, 0 ) ;
+			}
+			else
+#endif
+			{
+				btTransaction( (uint8_t *)"AT+DISC\r\n", 0, 0 ) ;
+			}
 			CoTickDelay(20) ;					// 40mS
 			getBtOK(1, BT_POLL_TIMEOUT ) ;
 			pBtControl->BtScanState = 2 ;
 			CoTickDelay(100) ;					// 200mS
 			flushBtFifo() ;
-			btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
+			if ( ( bitfieldtype & ( BT_BITTYPE_PARA ) ) == 0 )
+			{
+				btTransaction( (uint8_t *)"AT+INQ\r\n", 0, 0 ) ;
+			}
 			pBtControl->BtScanState = 3 ;
 			j = 0 ;
 			x = 0 ;
@@ -1391,17 +1861,25 @@ void btConfigCheck()
 			// Looking for: +INQ:2:72:D2224,3E0104,FFBC
 			// Or +INQ:1 0x00158300E442
 			pBtControl->NumberBtremotes = 0 ;
+			uint8_t *scanReply ;
+			scanReply = (uint8_t *)"+INQ" ;
+#ifndef SMALL
+			if ( bitfieldtype & ( BT_BITTYPE_PARA ) )
+			{
+				scanReply = (uint8_t *)"DISC" ;
+			}	
+#endif
 			if ( j >= 4 )
 			{
 				while ( i < j-3 )
 				{
-					if ( BtTempBuffer[i] == '+' )
+					if ( BtTempBuffer[i] == scanReply[0] )
 					{
-						if ( BtTempBuffer[i+1] == 'I' )
+						if ( BtTempBuffer[i+1] == scanReply[1] )
 						{
-							if ( BtTempBuffer[i+2] == 'N' )
+							if ( BtTempBuffer[i+2] == scanReply[2] )
 							{
-								if ( BtTempBuffer[i+3] == 'Q' )
+								if ( BtTempBuffer[i+3] == scanReply[3] )
 								{
 									y = 0 ;
 									if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
@@ -1420,7 +1898,7 @@ void btConfigCheck()
 											}
 										}
 									}
-									else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+									else if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 									{
 										if ( BtTempBuffer[i+4] == 'S' )
 										{
@@ -1431,7 +1909,7 @@ void btConfigCheck()
 										{
 											break ;
 										}
-										i += 9 ;		// Skip ':'
+										i += ( bitfieldtype & ( BT_BITTYPE_PARA ) ) ? 5 : 9 ;		// Skip ':'
 										while ( BtTempBuffer[i] != 13 )
 										{
 											BtRemote[pBtControl->NumberBtremotes].address[y++] = BtTempBuffer[x++] = BtTempBuffer[i++] ;
@@ -1512,7 +1990,74 @@ void btConfigCheck()
 }
 
 
+#ifndef SMALL
+uint8_t addParaByte( uint8_t byte, uint8_t crc )
+{
+  crc ^= byte ;
+  if (byte == BT_PARA_START_STOP || byte == BT_PARA_BYTESTUFF)
+	{
+    BtTxBuffer[Bt_tx.size++] = BT_PARA_BYTESTUFF ;
+    byte ^= BT_PARA_STUFF_MASK ;
+  }
+  BtTxBuffer[Bt_tx.size++] = byte;
+	return crc ;
+}
+#endif
 
+void sendSbusFrame()
+{
+	// Send Sbus Frame
+	uint32_t i ;
+  uint8_t *p = BtTxBuffer ;
+	uint32_t outputbitsavailable = 0 ;
+	uint32_t outputbits = 0 ;
+	uint8_t checksum = 0x0F ;
+
+	*p++ = 2 ;		// Marker 
+	*p++ = 0x0F ;
+	for ( i = 0 ; i < 16 ; i += 1 )
+	{
+		int16_t x = g_chans512[i] ;
+		x *= 4 ;
+		x += x > 0 ? 4 : -4 ;
+		x /= 5 ;
+		x += 0x3E0 ;
+		if ( x < 0 )
+		{
+			x = 0 ;
+		}
+		if ( x > 2047 )
+		{
+			x = 2047 ;
+		}
+		outputbits |= x << outputbitsavailable ;
+		outputbitsavailable += 11 ;
+		while ( outputbitsavailable >= 8 )
+		{
+			uint8_t j = outputbits ;
+			checksum += j ;
+			if ( ( j == 2 ) || ( j == 3 ) )
+			{
+				j ^= 0x80 ;
+				*p++ = 3 ;		// "stuff"
+			}
+  	  *p++ = j ;
+			outputbits >>= 8 ;
+			outputbitsavailable -= 8 ;
+		}
+	}
+	*p++ = 0 ;
+	*p++ = 0 ;
+	checksum = -checksum ;
+	if ( ( checksum == 2 ) || ( checksum == 3 ) )
+	{
+		*p++ = 3 ;		// "stuff"
+		checksum ^= 0x80 ;
+	}
+	*p++ = checksum ;
+	Bt_tx.size = p - BtTxBuffer ;
+	bt_send_buffer() ;
+}
 
 /*
 Commands to BT module
@@ -1549,6 +2094,9 @@ void bt_task(void* pdata)
 	uint32_t btBits = 0 ;
 	struct t_bt_control *pBtControl ;
 	pBtControl = &BtControl ;
+#if defined(X9LS)
+	g_eeGeneral.BtType = BT_TYPE_PARA ;
+#endif
 	pBtControl->BtModuleType = 1 << g_eeGeneral.BtType ;
 
 	while ( Activated == 0 )
@@ -1571,7 +2119,8 @@ void bt_task(void* pdata)
 		}
 	}
 #endif
-#ifdef PCBX7
+
+#if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS))
 	com3Init( 115200 ) ;
 #endif
 
@@ -1658,6 +2207,15 @@ void bt_task(void* pdata)
 			CoTickDelay(1) ;					// 2mS
 			pBtControl->BtNameChange = 0x80 ;
 		}
+#ifndef SMALL
+		if ( g_eeGeneral.BtType == BT_TYPE_PARA )
+		{
+			CoTickDelay(1) ;					// 2mS
+			getBtValues() ;
+			CoTickDelay(1) ;					// 2mS
+//			pBtControl->BtNameChange = 0x80 ;
+		}
+#endif
 		if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 		{
 			CoTickDelay(1) ;					// 2mS
@@ -1700,6 +2258,10 @@ void bt_task(void* pdata)
 				btBits &= ~BT_IS_SLAVE ;
 			}
 
+			if ( BtControl.BtStateRequest )
+			{
+				getBtState() ;				
+			}
 	#ifndef PCB9XT 
 	#ifndef PCBX7
 			if ( ( g_model.com2Function == COM2_FUNC_BTDIRECT )
@@ -1795,6 +2357,26 @@ void bt_task(void* pdata)
 				}
 				else if ( pBtControl->BtLinkRequest )
 				{
+					uint8_t bitfieldtype = BtControl.BtModuleType ;
+
+					if ( BtControl.BtLinkRequest & 0x40 )
+					{
+						// this is a clear request for PARA
+#ifndef SMALL
+						if ( bitfieldtype & ( BT_BITTYPE_PARA ) )
+						{
+							if ( BtControl.BtMasterSlave == 2 )
+							{
+								if ( BtStatus )
+								{
+									btClear() ;
+								}
+							}
+						}
+#endif
+						BtControl.BtLinkRequest = 0 ;
+						continue ;
+					}
 					if ( g_eeGeneral.BtType == BT_TYPE_HC05 )
 					{
 						BT_ENABLE_HIGH ;						// Set bit B12 HIGH
@@ -1808,10 +2390,10 @@ void bt_task(void* pdata)
 						BT_ENABLE_LOW ;							// Set bit B12 LOW
 						pBtControl->BtLinkRequest = 0 ;
 					}
-					else if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+					else if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 					{
-						btLink( 1 ) ;
-						pBtControl->BtCurrentLinkIndex = 1 ;
+						pBtControl->BtCurrentLinkIndex = (bitfieldtype & ( BT_BITTYPE_PARA )) ? ( pBtControl->BtLinkRequest & 3 ) : 1 ;
+						btLink( pBtControl->BtCurrentLinkIndex ) ;
 						pBtControl->BtLinked = 1 ;
 						BtRxTimer = 1000 ;
 						pBtControl->BtRxOccured = 0 ;
@@ -1828,7 +2410,7 @@ void bt_task(void* pdata)
 				if ( ( ( pBtControl->BtMasterSlave == 2 ) && ( BtCurrentFunction == BT_TRAIN_TXRX ) && pBtControl->BtLinked )
 						 || ( btBits & BT_SLAVE_SEND_SBUS ) )
 				{
-					uint32_t i ;
+//					uint32_t i ;
 					if ( btBits & BT_SLAVE_SEND_SBUS )
 					{
 						btBits &= ~BT_SLAVE_SEND_SBUS ;
@@ -1845,58 +2427,106 @@ void bt_task(void* pdata)
 	//					} while ( x < 40000 ) ;
 	//					BtLastSbusSendTime += 40000 ;
 					}
-					// Send Sbus Frame
-  				uint8_t *p = BtTxBuffer ;
-					uint32_t outputbitsavailable = 0 ;
-					uint32_t outputbits = 0 ;
-					uint8_t checksum = 0x0F ;
-
-					*p++ = 2 ;		// Marker 
-					*p++ = 0x0F ;
-					for ( i = 0 ; i < 16 ; i += 1 )
-				 	{
-						int16_t x = g_chans512[i] ;
-						x *= 4 ;
-						x += x > 0 ? 4 : -4 ;
-						x /= 5 ;
-						x += 0x3E0 ;
-						if ( x < 0 )
-						{
-							x = 0 ;
-						}
-						if ( x > 2047 )
-						{
-							x = 2047 ;
-						}
-						outputbits |= x << outputbitsavailable ;
-						outputbitsavailable += 11 ;
-						while ( outputbitsavailable >= 8 )
-						{
-							uint8_t j = outputbits ;
-							checksum += j ;
-							if ( ( j == 2 ) || ( j == 3 ) )
-							{
-								j ^= 0x80 ;
-								*p++ = 3 ;		// "stuff"
-							}
-  	          *p++ = j ;
-							outputbits >>= 8 ;
-							outputbitsavailable -= 8 ;
-						}
-					}
-					*p++ = 0 ;
-					*p++ = 0 ;
-					checksum = -checksum ;
-					if ( ( checksum == 2 ) || ( checksum == 3 ) )
-					{
-						*p++ = 3 ;		// "stuff"
-						checksum ^= 0x80 ;
-					}
-					*p++ = checksum ;
-					Bt_tx.size = p - BtTxBuffer ;
-					bt_send_buffer() ;
+					sendSbusFrame() ;
 				}
 
+#ifndef SMALL
+				if ( BtCurrentFunction == BT_FR_PARA )
+				{
+	#if defined(PCBSKY) || defined(PCB9XT)
+					TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+					if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+	#endif
+	#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+   #ifndef X9LS
+					TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
+					if ( tProf->channel[0].source == TRAINER_SLAVE )
+	 #else
+ 	 				if ( BtControl.BtMasterSlave == 1 )	// Slave
+	 #endif
+	#endif
+					{
+						if ( BtStatus == BT_STATUS_CONNECTED )
+						{
+							uint16_t x ;
+							do
+							{
+								CoTickDelay(1) ;					// 2mS
+								x = getTmr2MHz() - BtLastSbusSendTime ;
+							} while ( x < 36000 ) ;
+							BtLastSbusSendTime += 36000 ;
+							Bt_tx.size = 0 ;
+							BtTxBuffer[Bt_tx.size++] = BT_PARA_START_STOP ;
+  						uint8_t crc = 0x00 ;
+							crc = addParaByte( 0x80,  crc ) ;
+
+  						for (uint32_t channel=0 ; channel<8 ; channel+=2 )
+							{
+					  	  uint16_t channelValue1 = 1500 + limit((int16_t)-1024, g_chans512[channel], (int16_t)1024) / 2;
+					  	  uint16_t channelValue2 = 1500 + limit((int16_t)-1024, g_chans512[channel+1], (int16_t)1024) / 2;
+    
+								crc = addParaByte( channelValue1 & 0x00ff,  crc ) ;
+								crc = addParaByte( ((channelValue1 & 0x0f00) >> 4) + ((channelValue2 & 0x00f0) >> 4),  crc ) ;
+								crc = addParaByte( ((channelValue2 & 0x000f) << 4) + ((channelValue2 & 0x0f00) >> 8),  crc ) ;
+		  	    	}
+					  	BtTxBuffer[Bt_tx.size++] = crc;
+					  	BtTxBuffer[Bt_tx.size++] = BT_PARA_START_STOP ; // end byte
+
+							if ( g_eeGeneral.BtType == BT_TYPE_CC41 )
+							{
+								// Pad to force a send with alignment
+							  BtTxBuffer[Bt_tx.size++] = 0 ;
+							  BtTxBuffer[Bt_tx.size++] = 0 ;
+							  BtTxBuffer[Bt_tx.size++] = 0 ;
+							  BtTxBuffer[Bt_tx.size++] = 0 ;
+							}
+							bt_send_buffer() ;
+							BtRxTimer = 100 ;		// Nothing expected, might get "Disconnected"
+						
+							int32_t y ;
+							while( ( y = rxBtuart() ) != -1 )
+							{
+								putTrainerByte( y ) ;	// To handle the "Disconnected" message
+								if ( y == '\n' )
+								{
+									BtControl.BtSbusIndex = 0 ;
+								}
+							}
+						}
+						else
+						{
+							if ( btReadLine() )
+							{
+								if ( !strncmp( (char *)BtTempBuffer, "Connected:", 10 ) )
+								{
+									BtControl.BtSbusIndex = 0 ;
+									BtStatus = BT_STATUS_CONNECTED ;
+								}
+							}
+						}
+					}
+  #ifdef X9LS
+					else if ( BtControl.BtMasterSlave == 2 )	// Master
+	#else				
+					else if ( tProf->channel[0].source == TRAINER_BT )
+	#endif				
+					{
+						BtParaDebug += 1 ;
+						int32_t x ;
+						while( ( x = rxBtuart() ) != -1 )
+						{
+							if ( BtRxTimer < 100 )
+							{
+								BtRxTimer = 100 ;
+							}
+							processBtRx( x, 0 ) ;
+							lastTimer = getTmr2MHz() ;
+							btBits &= ~BT_RX_TIMEOUT ;
+						}
+					}
+				}
+				else
+#endif
 				if ( BtCurrentFunction == BT_TRAIN_TXRX )
 				{
 					while( ( x = rxBtuart() ) != (uint32_t)-1 )
@@ -1966,7 +2596,7 @@ void bt_task(void* pdata)
 					}
 					else
 	#endif
-					{				 
+					{
 						while( ( x = rxBtuart() ) != (uint32_t)-1 )
 						{
 							if ( BtRxTimer < 100 )
@@ -1993,6 +2623,7 @@ void bt_task(void* pdata)
 			{
 				if ( pBtControl->BtLinked )
 				{
+//					BtStatus = BT_STATUS_DISCONNECTED ;
 					if ( pBtControl->BtRxOccured )
 					{
 						putSystemVoice( SV_BT_LOST, 0 ) ;

@@ -74,7 +74,10 @@ BOOT = YES
 endif
 
 ifeq ($(CPU), 2561)
-BOOT = YES
+ ifeq ($(SLAVE), YES)
+ else
+  BOOT = YES
+ endif
 endif
 
 # List C++ source files here. (C dependencies are automatically generated.)

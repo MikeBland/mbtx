@@ -2499,6 +2499,15 @@ void setup_switches()
 	configure_pins( PIN_SW_F, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 	configure_pins( PIN_SW_A_L | PIN_SW_A_H | PIN_SW_C_L | PIN_SW_C_H, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 
+ #if defined(X9LS)
+	if ( g_eeGeneral.pb3source == 3 )
+	{
+		RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+		configure_pins( 0x4000, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	}
+ 	configure_pins( 0x0004, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+ 	configure_pins( 0x0008, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+ #else
 	// Look to see if PD14 is in use
 	if ( ( g_eeGeneral.pb1source == 3 ) || ( g_eeGeneral.pb2source == 3 ) || ( g_eeGeneral.pb3source == 3 ) )
 	{
@@ -2513,6 +2522,7 @@ void setup_switches()
 	{
 		configure_pins( 0x0008, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
 	}
+ #endif
 #else
 #ifdef PCBX7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
@@ -2732,7 +2742,15 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Etrmdn :
 			xxx = keyState( (EnumKeys) TRM_LV_UP ) ;
     break ;
-		
+ #if defined(X9LS)
+		case HSW_Pb1 :
+			xxx = readKeyUpgradeBit( 4 ) ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = readKeyUpgradeBit( 5 ) ;
+    break ;
+ #else		
 		case HSW_Pb1 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb1source ) ;
     break ;
@@ -2740,7 +2758,7 @@ uint32_t hwKeyState( uint8_t key )
 		case HSW_Pb2 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb2source ) ;
     break ;
-		
+ #endif
 		case HSW_Pb3 :
 			xxx = readKeyUpgradeBit( g_eeGeneral.pb3source ) ;
     break ;

@@ -78,7 +78,11 @@ SKYMixData* setDest(uint8_t dch)
     memmove(md+1, md, (MAX_SKYMIXERS-(i+1))*sizeof(MixData) );
     memset( md, 0, sizeof(MixData) ) ;
     md->destCh = dch;
+#ifdef PCBLEM1
+		md->weight = 80 ;
+#else
 		md->weight = 100 ;
+#endif
 		md->lateOffset = 1 ;
     return &g_model.mixData[i];
 }

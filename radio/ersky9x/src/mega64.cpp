@@ -422,7 +422,35 @@ static void poll_mega64()
 			SlaveActionRequired = 0 ;
 			if ( SlaveType == 0x80 )
 			{
+				uint32_t valid = 0 ;
+				
 				if ( SlaveRxCount == 22 )	// Check in case of overrun error
+				{
+					// validate checksum
+					if (  SlaveTempReceiveBuffer[18] & 0x80 )
+					{
+						uint16_t rcsum = SlaveTempReceiveBuffer[17] | ( SlaveTempReceiveBuffer[18] << 8 ) ;
+						uint16_t csum = 0 ;
+						uint32_t count ;
+						SlaveTempReceiveBuffer[17] = 0 ;
+						SlaveTempReceiveBuffer[18] = 0 ;
+
+						for ( count = 0 ; count < 22 ; count += 1 )
+						{
+							csum += SlaveTempReceiveBuffer[count] ;
+						}
+						csum |= 0x8000 ;
+						if ( rcsum == csum )
+						{
+							valid = 1 ;
+						}
+					}
+					else
+					{
+						valid = 1 ;
+					}
+				}
+				if ( valid )
 				{
 					uint16_t switches ;
 					M64MainTimer = MAIN_TIMEOUT ;

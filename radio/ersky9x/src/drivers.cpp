@@ -153,6 +153,10 @@ struct t_serial_tx *Current_Com3 ;
 struct t_serial_tx *Current_Com3 ;
 #endif
 
+#if defined(PCBX9LITE) && defined(X9LS)
+struct t_serial_tx *Current_Com3 ;
+#endif 
+
 #if defined(PCBX12D) || defined(PCBX10)
 struct t_serial_tx *Current_Com6 ;
 #endif

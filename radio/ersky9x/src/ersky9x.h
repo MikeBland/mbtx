@@ -82,6 +82,10 @@
 #endif
 #endif
 
+ #if defined(PCBX9LITE) && defined(X9LS)
+#define BLUETOOTH	1
+#endif
+
 #if defined(PCBT16)
 #define DISABLE_PXX		1
 #define DISABLE_SPORT	1
@@ -909,6 +913,8 @@ extern uint8_t Ee_lock ;
 #define PROTO_XFIRE	     4
 #define PROTO_ACCESS     5
 
+#define PROTO_TEST	     6
+
 #define PROTO_SBUS	     5
 
 #define PROT_MAX         3
@@ -1160,6 +1166,8 @@ struct t_alpha
 	uint8_t AlphaChanged ;
 	uint8_t *PalphaText ;
 	uint8_t *PalphaHeading ;
+	uint8_t AlphaHex ;
+	uint8_t copyOfText[15] ;
 } ;
 
 union t_xmem
@@ -1520,7 +1528,7 @@ struct btRemote_t
 #define BT_BITTYPE_HC05		2
 #define BT_BITTYPE_CC41		4
 #define BT_BITTYPE_HM10		8
-#define BT_BITTYPE_HORUS 16
+#define BT_BITTYPE_PARA	 16
 
 #ifdef PCBSKY
 extern uint8_t HwDelayScale ;
@@ -1552,7 +1560,6 @@ extern struct t_PeripheralSpeeds PeripheralSpeeds ;
 #define SCC_BAUD_115200		1
 #define SCC_BAUD_100000		2
 
-uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source ) ;
 uint32_t btAddressValid( uint8_t *address ) ;
 uint32_t btAddressMatch( uint8_t *address1, uint8_t *address2 ) ;
 
@@ -1598,7 +1605,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define BT_TYPE_HC05		1
 #define BT_TYPE_CC41		2
 #define BT_TYPE_HM10		3
-#define BT_TYPE_HORUS		4
+#define BT_TYPE_PARA		4
 
 // Bluetooth function defines
 #define BT_OFF					0
@@ -1607,6 +1614,7 @@ extern uint16_t FailsafeCounter[2] ;
 #define BT_LCDDUMP			3
 #define BT_TELEM				4
 #define BT_SCRIPT		   	5
+#define BT_FR_PARA	   	6
 
 // Physical radio types
 #define PHYSICAL_UNKNOWN			0

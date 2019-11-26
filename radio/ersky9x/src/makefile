@@ -78,7 +78,12 @@ ifeq ($(PCB), X9D)
      CPPDEFS += -DBASIC 
     else
      ifeq ($(PCBX9LITE), 1)
-      OBJDIR = x9lobj
+	   ifeq ($(X9LS), 1)
+       OBJDIR = x9lsobj
+		 BT = 1
+		else
+       OBJDIR = x9lobj
+		endif
       BASIC = 1
       CPPDEFS += -DBASIC 
      else
@@ -204,7 +209,11 @@ ifeq ($(PCB), X9D)
      PROJECT        = xlite
     else
      ifeq ($(PCBX9LITE), 1)
-      PROJECT        = x9Lite
+	   ifeq ($(X9LS), 1)
+       PROJECT        = x9LiteS
+      else
+       PROJECT        = x9Lite
+		endif
      else
       PROJECT        = x9d
      endif
@@ -311,6 +320,9 @@ else
      endif
      ifeq ($(PCBX9LITE), 1)
       CPPDEFS += -DPCBX9LITE
+	   ifeq ($(X9LS), 1)
+       CPPDEFS += -DX9LS 
+      endif
      endif
    else
     ifeq ($(PCB), X10)
@@ -867,6 +879,7 @@ CPPSRC = ersky9x.cpp \
          timers.cpp \
 			stm103/logicio103.cpp \
 			stm103/analog103.cpp \
+			stm103/i2c103.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -1161,7 +1174,11 @@ ifeq ($(PCB), X9D)
 	  endif
 	 else
      ifeq ($(PCBX9LITE), 1)
-      EXT_MOD=X9Lite
+	   ifeq ($(X9LS), 1)
+       EXT_MOD=X9LiteS
+	   else
+       EXT_MOD=X9Lite
+      endif
 	  else
      CPPDEFS += -DREVNORM
      EXT_MOD=X9D
@@ -1271,6 +1288,7 @@ clean:
 	-rm -f x9lobj/*.*
 	-rm -f t12obj/*.*
 	-rm -f t16obj/*.*
+	-rm -f lem1obj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

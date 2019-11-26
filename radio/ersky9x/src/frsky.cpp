@@ -1530,6 +1530,43 @@ void processHitecPacket( uint8_t *packet )
 }
 
 
+void processTrainerPacket( uint8_t *packet )
+{
+	uint8_t numChannels ;
+	uint32_t inputbitsavailable = 0 ;
+	uint32_t i ;
+	uint32_t inputbits = 0 ;
+	uint8_t sum ;
+	int16_t *pulses = g_ppmIns ;
+	sum = 0 ;
+	packet += 4 ;
+	numChannels = *packet++ ;
+	for ( i = 0 ; i < numChannels ; i += 1 )
+	{
+		while ( inputbitsavailable < 11 )
+		{
+			uint8_t temp ;
+			temp = *packet++ ;
+			if ( i < 4 )
+			{
+				sum |= temp ;
+			}
+			inputbits |= temp << inputbitsavailable ;
+			inputbitsavailable += 8 ;
+		}
+		if ( pulses )
+		{
+			*pulses++ = ( (int32_t)( inputbits & 0x7FF ) - 0x400 ) * 5 / 8 ;
+		}
+		inputbitsavailable -= 11 ;
+		inputbits >>= 11 ;
+	}
+
+	if ( numChannels )
+	{
+		ppmInValid = 100 ;
+	}
+}
 
 #ifndef DISABLE_SPORT
 //#ifndef REVX
@@ -1929,9 +1966,19 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					storeTelemetryData( FR_SBEC_VOLT, (value & 0xffff) / 10 ) ;
 					storeTelemetryData( FR_SBEC_CURRENT, (value >> 16) / 10 ) ;
 				break ;
-				 
+				
+				default :
+					// Handle unknown ID
+					handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
+				break ;
+			}
+		 }
+		 
+		 if ( ( (packet[3] & 0xF0) == 0x50 ) ) //|| ( (packet[3] & 0xF0) == 0x10 ) )
+		 {
+			switch ( id )
+			{
 				case ARDUP_ID_8 :
-					if ( ( (packet[3] & 0xF0) == 0x50 ) ) //|| ( (packet[3] & 0xF0) == 0x10 ) )
 					{
 						uint32_t t ;
 						t = packet[2] & 0x0F ;
@@ -2311,6 +2358,9 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							break ;
 							case 10 :	// Hitec
 								processHitecPacket( InputPrivateData ) ;
+							break ;
+							case 13 :	// Trainer data
+								processTrainerPacket( InputPrivateData ) ;
 							break ;
 						}
 					}

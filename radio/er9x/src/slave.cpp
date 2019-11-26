@@ -28,7 +28,7 @@
 
 extern unsigned char DisplayBuf[] ;
 
-#define Revision	7
+#define Revision	8
 
 const static prog_char APM RevisionString[] = { 'r', Revision/100+'0', (Revision%100)/10+'0', '.', Revision%10+'0', 0,  'R', 'e', 'v', Revision }   ;
 
@@ -333,15 +333,24 @@ void sendControls()
 	analog = *ptrAna++ ;
 	controls[15] = analog ;
 	controls[16] = analog >> 8 ;
-	analog = *ptrAna ;
-	controls[17] = analog ;
-	controls[18] = analog >> 8 ;
+	
+//	analog = *ptrAna ;
+	controls[17] = 0 ;
+	controls[18] = 0 ;
 
 	struct t_rotary *protary = &Rotary ;
 	FORCE_INDIRECT(protary) ;
 	controls[19] = protary->RotEncoder & 0x20 ;	// enc_switch
 	controls[20] = protary->RotCount ;					// enc_position
 	controls[21] = Revision ;					// Firmware revision
+
+	uint16_t csum = 0 ;
+	for ( count = 0 ; count < 22 ; count += 1 )
+	{
+		csum += controls[count] ;
+	}
+	controls[17] = csum ;
+	controls[18] = (csum >> 8) | 0x80 ;
 
 	count = fillTxBuffer( controls, 0x80, 22 ) ;
 	startTx( count ) ;
@@ -514,7 +523,7 @@ bool keyState(EnumKeys enuk)
 }
 
 
-uint8_t getCurrentSwitchStates()
+uint16_t getCurrentSwitchStates()
 {
   uint8_t i = 0 ;
   for( uint8_t j=0; j<8; j++ )

@@ -63,6 +63,11 @@
 #define HC05_ENABLE_LOW			(GPIOE->BSRRH = GPIO_Pin_12)			// Set bit PE12 LOW
 #endif // PCB9XT
 
+#if defined(PCBX9LITE)
+#define HC05_ENABLE_HIGH					// Nothing
+#define HC05_ENABLE_LOW						// Nothing
+#endif
+
 #ifdef BT_WITH_ENCODER
 #define HC05_ENABLE_HIGH					// Nothing
 #define HC05_ENABLE_LOW						// Nothing
@@ -95,9 +100,10 @@ struct t_bt_control
 	uint8_t BtCurrentLinkIndex ;
 	uint8_t BtRoleChange ;
 	uint8_t BtNameChange ;
+	uint8_t BtStateRequest ;
 	uint8_t BtMasterSlave ;
 	uint8_t BtReady ;
-	uint8_t BtLinking ;
+//	uint8_t BtLinking ;
 	uint8_t BtRxState ;
 	uint8_t BtSbusIndex ;
 	uint8_t BtSbusReceived ;
@@ -121,13 +127,14 @@ extern uint16_t BtRxTimer ;
 void bt_task(void* pdata) ;
 void setBtBaudrate( uint32_t index ) ;
 void initBluetooth() ;
+void getBtState( void ) ;
 
 
 #ifdef BT_WITH_ENCODER
 void btEncTx( void ) ;
 #endif
 
-
+uint8_t *btAddrBin2Hex( uint8_t *dest, uint8_t *source , uint32_t skipCommas = 0 ) ;
 
 #endif // bluetooth_h
 

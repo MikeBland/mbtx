@@ -79,6 +79,7 @@
 #include <stm32f10x.h>
 #include "stm103/hal.h"
 #include "stm103/stm32_sdio_sd.h"
+#include "stm103/i2c103.h"
 #include "diskio.h"
 #include "file.h"
 #include "analog.h"
@@ -421,7 +422,7 @@ extern "C" void Xdefault_Handler(void)
 {
 	for(;;)
 	{
-		RTC->BKP1R = 0x0200 ;
+		RTC->BKP1R = 0x0102 ;
 	}
 }
 #endif
@@ -979,7 +980,7 @@ extern void init_pxx(uint32_t port) ;
 void init_i2s1( void ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern void initWatchdog( void ) ;
 #endif
 
@@ -1752,6 +1753,43 @@ void checkTrainerSource()
 }
 #endif
 
+#ifdef PCBLEM1
+
+void checkTrainerSource()
+{
+	uint32_t tSource = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0].source ;
+		
+	if ( CurrentTrainerSource	!= tSource )
+	{
+		switch ( CurrentTrainerSource )
+		{
+			case 0 :
+			case 1 :
+			case 2 :
+			case 4 :
+				stop_trainer_capture() ;
+			break ;
+			case TRAINER_SLAVE :
+				stop_trainer_ppm() ;
+			break ;
+		}
+		CurrentTrainerSource = tSource ;
+		switch ( tSource )
+		{
+			case 0 :
+			case 1 :
+			case 2 :
+			case 4 :
+				init_trainer_capture(CAP_PPM) ;
+			break ;
+			case TRAINER_SLAVE :	// Slave so output
+				init_trainer_ppm() ;
+			break ;
+		}
+	}	 
+}
+#endif
+
 void com2Configure()
 {
 	if ( g_model.com2Function == COM2_FUNC_SBUSTRAIN )
@@ -2276,37 +2314,47 @@ static void init_rotary_encoder()
 {
   register uint32_t dummy ;
 	
+	RCC->APB2ENR |= RCC_APB2ENR_IOPCEN ;	// Enable portC clock
+	RCC->APB2ENR |= RCC_APB2ENR_AFIOEN ;
 	configure_pins( ENC_SW_PIN | ENC_A_PIN | ENC_B_PIN, PIN_INPUT | PIN_PULLU_D | PIN_PULLUP | ENC_SW_PORT ) ;
 	g_eeGeneral.rotaryDivisor = 1 ;
 	
-	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE6, PE5 )
+	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PC14, PC13 )
 	dummy >>= 13 ;
 	dummy &= 0x03 ;			// pick out the two bits
 	Rotary_position &= ~0x03 ;
 	Rotary_position |= dummy ;
+	
+	AFIO->EXTICR[3] |= 0x0220 ;		// PC14,13
+	EXTI->RTSR |= 0x6000 ;	// Rising Edge
+	EXTI->FTSR |= 0x6000 ;	// Falling Edge
+	EXTI->IMR |= 0x6000 ;
+	
+	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
 }
 
-void checkRotaryEncoder()
-{
-  register uint32_t dummy ;
+//void checkRotaryEncoder()
+//{
+//  register uint32_t dummy ;
 	
-	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE6, PE5 )
-	dummy >>= 13 ;
-	dummy &= 0x03 ;			// pick out the two bits
-	if ( dummy != ( Rotary_position & 0x03 ) )
-	{
-		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
-		{
-			Rotary_count += 1 ;
-		}
-		else
-		{
-			Rotary_count -= 1 ;
-		}
-		Rotary_position &= ~0x03 ;
-		Rotary_position |= dummy ;
-	}
-}
+//	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE6, PE5 )
+//	dummy >>= 13 ;
+//	dummy &= 0x03 ;			// pick out the two bits
+//	if ( dummy != ( Rotary_position & 0x03 ) )
+//	{
+//		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+//		{
+//			Rotary_count += 1 ;
+//		}
+//		else
+//		{
+//			Rotary_count -= 1 ;
+//		}
+//		Rotary_position &= ~0x03 ;
+//		Rotary_position |= dummy ;
+//	}
+//}
 
 void initSwitches()
 {
@@ -2326,6 +2374,7 @@ void initSwitches()
 
 
 #endif // PCBLEM1
+
 
 
 int main( void )
@@ -2520,7 +2569,7 @@ extern unsigned char *EndOfHeap ;
 #endif
 
 //#if defined(PCBX9D) || defined(PCB9XT)
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 // #if defined(PCBX12D)
 //extern void initLongWatchdog(uint32_t time) ;
 //	initLongWatchdog(2) ;
@@ -2634,6 +2683,10 @@ extern unsigned char *EndOfHeap ;
  #endif // PCBX7
 #endif
 
+#ifdef PCBLEM1
+	init_I2C2() ;
+#endif
+
 #ifdef PCBSKY
 	init_pwm() ;
 #ifndef SIMU
@@ -2736,6 +2789,15 @@ notePosition('3') ;
 //	ledOff() ;
 //	ledBlue() ;
 	init_trims() ;
+#if defined(PCBLEM1)
+	// need to wait at least 10 mS for trims to be valid
+  uint32_t ms = 15 ;
+	while (ms--)
+	{
+		hw_delay( 10000 ) ; // units of 0.1uS
+  }
+#endif
+
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
 #endif
@@ -2751,7 +2813,7 @@ notePosition('3') ;
 		{
 			uint32_t switchValue ;
 #if defined(PCBLEM1)
-			switchValue = ( GPIOE->IDR & 0x0800 ) ;
+			switchValue = ( GPIOE->IDR & 0x0800 ) | ( DC_POWER_GPIO->IDR & DC_POWER_Pin ) ;
 #else
 			switchValue = GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET ;
 #endif
@@ -2771,6 +2833,8 @@ notePosition('3') ;
 
 			if ( !switchValue )
 			{
+#if defined(PCBLEM1)
+#endif
 #if defined(PCBT12) || defined(PCBLEM1)
 			 if (++dbounceTimer > 3 )
 			 {
@@ -2788,13 +2852,16 @@ notePosition('3') ;
  					/* Request Wait For Event */
  					__WFE();
 #ifndef REV9E
-#ifndef PCBLEM1
+ #ifndef PCBLEM1
 					switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
+ #else
+					switchValue = ( GPIOE->IDR & 0x0800 ) ;
+ #endif
+
 					if ( switchValue )
 					{
 		  			NVIC_SystemReset() ;
 					}
-#endif
 #endif
 				}
 #if defined(PCBT12) || defined(PCBLEM1)
@@ -2813,7 +2880,7 @@ notePosition('3') ;
 				break ;
 			}
 #else	
-			if ( ( read_trims() & 0x80 )== 0x80 )
+			if ( ( read_trims() & 0x80 ) == 0x80 )
 			{
 //				if ( ( read_trims() & 0x81 )== 0x81 )
 //				{				
@@ -2830,7 +2897,11 @@ notePosition('3') ;
 #ifndef REV9E
 #ifndef PCBLEM1
 #ifdef PCBX9LITE
+ #if defined(X9LS)
+	ledBlue() ;
+ #else
 	ledRed() ;
+ #endif
 #else
 	ledGreen() ;
 #endif
@@ -3326,7 +3397,7 @@ extern void sdInit( void ) ;
   uint32_t ms = 20 ;
 	while (ms--)
 	{
-		hw_delay( 10000 ) ; // units of 0.1uS
+		hw_delay( 10286 ) ; // units of 0.0972222uS
   }
  #endif
 
@@ -3739,7 +3810,7 @@ void log_task(void* pdata)
 					// Stop logging
 					closeLogs() ;
 				}
-				LogsRunning &= ~2 ;				
+				LogsRunning &= ~2 ;				 
 			}
 
 			if ( LogsRunning & 1 )
@@ -4207,6 +4278,9 @@ extern void initDsmModule( void ) ;
 	initDsmModule() ;
 extern void startDsmPulses( void ) ;
 	startDsmPulses() ;
+
+	init_trainer_capture(0) ;
+
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -4326,6 +4400,7 @@ extern uint8_t ModelImageValid ;
 	Time.minute = 11 ;
 	Time.hour = 13 ;
 	Time.date = 9 ;
+	Time.month = 9 ;
 	Time.year = 2019 ;
 	g_eeGeneral.rotaryDivisor = 1 ;
 #endif
@@ -5880,6 +5955,9 @@ void mainSequence( uint32_t no_menu )
 #ifdef PCBSKY
 	static uint32_t coProTimer = 0 ;
 #endif
+#ifdef PCBLEM1
+	static uint32_t RtcTimer = 0 ;
+#endif
 #ifdef PCB9XT
 	static uint32_t EncoderTimer = 0 ;
 #endif
@@ -5973,6 +6051,10 @@ void mainSequence( uint32_t no_menu )
 //#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
+	checkTrainerSource() ;
+#endif
+
+#if defined(PCBLEM1)
 	checkTrainerSource() ;
 #endif
 
@@ -6189,6 +6271,20 @@ extern void pollForRtcComplete() ;
 #endif
 
 #endif
+
+#ifdef PCBLEM1
+		if ( g_eeGeneral.externalRtcType == 1 )
+		{
+			if ( ++RtcTimer > 9 )
+			{
+				RtcTimer -= 10 ;
+				// Read external RTC here
+				readExtRtc() ;
+			}	
+			pollForRtcComplete() ;
+		}
+#endif
+
 
 #ifdef PCB9XT
 		if ( g_eeGeneral.enableI2C == 1 )
@@ -6936,7 +7032,7 @@ void doSplash()
     lcdSetRefVolt(g_eeGeneral.contrast);
   	clearKeyEvents();
 
-#if defined(PCBX10)
+#if defined(PCBX10) || defined(PCBLEM1)
 		for ( uint32_t i = 0 ; i < 25 ; i += 1 )
 		{
 			getADC_filt();
@@ -6996,7 +7092,6 @@ void doSplash()
 					j -= 2 ;
 					plotType = PLOT_XOR ;
 				}
-
   			refreshDisplay();
 			}
 
@@ -7688,8 +7783,10 @@ void perMain( uint32_t no_menu )
 
 	if(tick5ms)
 	{
+#ifdef PCBLEM1
 void checkDsmTelemetry5ms() ;
 		checkDsmTelemetry5ms() ;
+#endif
 		check_frsky( 1 ) ;
 		tick5ms = 0 ;
 
@@ -8442,6 +8539,10 @@ extern uint32_t TotalExecTime ;
 	checkTrainerSource() ;
 #endif
 
+#if defined(PCBLEM1)
+	checkTrainerSource() ;
+#endif
+
   switch( get_tmr10ms() & 0x1f )
 	{ //alle 10ms*32
 
@@ -8853,9 +8954,9 @@ extern void checkRotaryEncoder() ;
 extern void checkRotaryEncoder() ;
   checkRotaryEncoder() ;
 #endif
-#ifdef PCBLEM1
-	checkRotaryEncoder() ;
-#endif
+//#ifdef PCBLEM1
+//	checkRotaryEncoder() ;
+//#endif
 
 	tick5ms = 1 ;
 	
@@ -9121,19 +9222,29 @@ void getADC_single()
 #if defined(PCBSKY) || defined(PCB9XT)
 #define OSMP_SAMPLES	4
 #define OSMP_TOTAL		16384
+#define OSMP_ROUNDUP	0
 #define OSMP_SHIFT		3
 #endif
 #ifdef PCBX9D
 #define OSMP_SAMPLES	4
 #define OSMP_TOTAL		16384
+#define OSMP_ROUNDUP	0
 #define OSMP_SHIFT		3
 //#define OSMP_SAMPLES	8
 //#define OSMP_TOTAL		32768
 //#define OSMP_SHIFT		4
 #endif
-#if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBX12D) || defined(PCBX10)
 #define OSMP_SAMPLES	4
 #define OSMP_TOTAL		16384
+#define OSMP_ROUNDUP	0
+#define OSMP_SHIFT		3
+#endif
+
+#if defined(PCBLEM1)
+#define OSMP_SAMPLES	4
+#define OSMP_TOTAL		16384
+#define OSMP_ROUNDUP	4
 #define OSMP_SHIFT		3
 #endif
 
@@ -9144,7 +9255,9 @@ void getADC_osmp()
 	uint32_t numAnalog = ANALOG_DATA_SIZE ;
 
 	uint16_t temp[ANALOG_DATA_SIZE] ;
+//#ifndef PCBLEM1
 	static uint16_t next_ana[ANALOG_DATA_SIZE] ;
+//#endif
 
 #ifdef ARUNI
   uint32_t osmp_samples = OSMP_SAMPLES ;
@@ -9180,8 +9293,9 @@ void getADC_osmp()
     if (qSixPosDelayFiltering(x, y))
       continue;
 #else
-		uint16_t y = temp[x] >> OSMP_SHIFT ;
+		uint16_t y = (temp[x] + OSMP_ROUNDUP) >> OSMP_SHIFT ;
 #endif
+//#ifndef PCBLEM1
 		uint16_t z = S_anaFilt[x] ;
 		uint16_t w = next_ana[x] ;
 		
@@ -9213,6 +9327,7 @@ void getADC_osmp()
 				}
 			}
 		}
+//#endif
 		S_anaFilt[x] = y ;
 	}
 }
@@ -9925,6 +10040,10 @@ void createSwitchMapping()
 
 
 #ifndef PCBLEM1
+ #if defined(PCBX9LITE) && defined(X9LS)
+		*p++ = HSW_Pb1 ;
+		*p++ = HSW_Pb2 ;
+ #else
 	if ( g_eeGeneral.switchMapping & USE_PB1 )
 	{
 		*p++ = HSW_Pb1 ;
@@ -9933,6 +10052,7 @@ void createSwitchMapping()
 	{
 		*p++ = HSW_Pb2 ;
 	}
+ #endif
 #ifndef PCBX12D
  #ifndef PCBX10
 	if ( g_eeGeneral.switchMapping & USE_PB3 )
@@ -10487,9 +10607,12 @@ void putsDblSizeName( uint8_t y )
 #else
 		lcd_putcAtt(FW*2-4+i*(2*FW-4), y, g_model.name[i],DBLSIZE|CONDENSED);
 	}
-#ifndef PCBLEM1
-	putsTime( 105, 0, Time.hour*60+Time.minute, 0, 0 ) ;
+#ifdef PCBLEM1
+	if ( g_eeGeneral.externalRtcType )
 #endif
+	{
+		putsTime( 105, 0, Time.hour*60+Time.minute, 0, 0 ) ;
+	}
 	lcd_img( 91, 8, speaker, 0, 0 ) ;
 	lcd_hbar( 96, 9, 23, 6, (CurrentVolume*100+16)/23 ) ;
 #endif
@@ -11555,7 +11678,20 @@ void checkSwitches()
 #else
     	uint16_t ss = switches_states ;
 #endif
-#ifdef PCBT12
+#if defined(PCBT12)
+			if ( ss & 0x8000 )
+			{
+				ss &= ~0xF000 ;
+				ss |= 0x2000 ;
+			}
+#endif			
+#if defined(PCBLEM1)
+			ss &= ~0x0F00 ;
+			if ( ss & 0x2000 )
+			{
+				ss &= ~0x3C00 ;
+				ss |= 0x0800 ;
+			}
 			if ( ss & 0x8000 )
 			{
 				ss &= ~0xF000 ;
@@ -11622,6 +11758,12 @@ void checkSwitches()
 				continue ;	// Skip E and G
 			}
 #endif
+#ifdef PCBLEM1
+			if ( ( i == 4 ))// || ( i == 5 ) )
+			{
+				continue ;	// Skip E and G
+			}
+#endif
 #ifdef PCBX9LITE
 			if ( ( i == 3 ) || ( i == 4 ) || ( i == 6 ) )
 			{
@@ -11647,7 +11789,17 @@ void checkSwitches()
 				}
   		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
 #else
+ #ifdef PCBLEM1
+				uint32_t j ;
+				j = i ;
+				if ( j > 4 )
+				{
+					j += 1 ;
+				}
+  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
+ #else
   		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+i, attr ) ;
+ #endif
 #endif
 				lcd_putcAtt( 4*FW+i*(2*FW+2) + X12OFFSET, 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}

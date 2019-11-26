@@ -15,6 +15,6 @@
 #ifndef diag_h
 #define diag_h
 
-//#define WDOG_REPORT		1
+// #define WDOG_REPORT		1
 
 #endif

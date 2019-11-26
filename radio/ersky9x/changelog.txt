@@ -82,6 +82,8 @@ Handle FrSky vario from XxR when using 'D' protocol
 Horus X12 add bootloader
 X9E Fix hardware editing bug
 
+Add X9Lite, X9LiteS and XWAVE T800
+
 ******************************************
 CHANGELOG: 28-Feb-2018  MPB (r221)
 Add "welcome" voice message options

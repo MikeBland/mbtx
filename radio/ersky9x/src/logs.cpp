@@ -239,7 +239,6 @@ uint32_t alternateText( uint8_t *text, uint8_t *name )
 	return 0 ;
 }
 
-
 const char *openLogs()
 {
   // Determine and set log file filename
@@ -250,7 +249,7 @@ const char *openLogs()
 #ifdef PCBSKY
   if ( SdMounted == 0 )
 #endif
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBLEM1)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern uint32_t sdMounted( void ) ;
   if ( sdMounted() == 0 )
 #endif
@@ -329,7 +328,21 @@ extern uint32_t sdMounted( void ) ;
     }
   }
 	CoTickDelay(1) ;					// 2mS
-
+#ifdef PCBLEM1
+//	if ( RawLogging )
+//	{
+//		BYTE *p ;
+//		uint32_t i ;
+//  	UINT written ;
+//		p = (BYTE *) 0x08000000 ;
+//		for ( i = 0 ; i < 128 ; i += 1 )
+//		{
+//			f_write( &g_oLogFile, p, 512, &written ) ;
+//			p += 512 ;
+//			CoTickDelay(20) ;					// 40mS
+//		}
+//	}
+#endif
 	if ( RawLogging )
 	{
 	  f_puts("Raw Log File\n", &g_oLogFile) ;

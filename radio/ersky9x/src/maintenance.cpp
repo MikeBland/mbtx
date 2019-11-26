@@ -1144,6 +1144,9 @@ uint8_t RxLastCount ;
 uint8_t IdIndex ;
 uint8_t IdFound ;
 
+#ifdef REVX
+uint8_t RxOkPacket[10] ;
+#endif
 uint8_t RxPacket[10] ;
 uint8_t PhyId ;
 uint8_t NewPhyId ;
@@ -2539,6 +2542,14 @@ void menuUp1(uint8_t event)
 					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
 				}
 
+#ifdef REVX
+				for ( i = 0 ; i < 9 ; i += 1 )
+				{
+					lcd_outhex2(i*11, 1*FH, RxOkPacket[i] ) ;
+					lcd_outhex2(i*11, 2*FH, RxPacket[i] ) ;
+				}
+#endif
+
 				if ( checkForExitEncoderLong( event ) )
 				{
 					state = UPDATE_COMPLETE ;
@@ -3438,6 +3449,19 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 					SharedMemory.Mdata.SportState = SPORT_FAIL ;
 			break ;
 		}
+
+#ifdef REVX
+		RxOkPacket[0] = packet[0] ;
+		RxOkPacket[1] = packet[1] ;
+		RxOkPacket[2] = packet[2] ;
+		RxOkPacket[3] = packet[3] ;
+		RxOkPacket[4] = packet[4] ;
+		RxOkPacket[5] = packet[5] ;
+		RxOkPacket[6] = packet[6] ;
+		RxOkPacket[7] = packet[7] ;
+		RxOkPacket[8] = packet[8] ;
+		RxOkPacket[9] = packet[9] ;
+#endif
 	}
 	else
 	{
