@@ -180,11 +180,18 @@
   #define TRIMS_GPIO_PIN_RVU            GPIO_Pin_12 // PJ.12
   #define TRIMS_GPIO_REG_RHR            GPIOD->IDR
   #define TRIMS_GPIO_PIN_RHR            GPIO_Pin_7  // PD.07
+#if defined(PCBT16)
+  #define TRIMS_GPIO_REG_LSU            GPIOD->IDR
+  #define TRIMS_GPIO_PIN_LSU            GPIO_Pin_13 // PD.13
+	#define TRIMS_GPIO_REG_LSD            GPIOJ->IDR
+  #define TRIMS_GPIO_PIN_LSD            GPIO_Pin_8  // PJ.08
+#else
   #define TRIMS_GPIO_REG_LSU            GPIOJ->IDR
   #define TRIMS_GPIO_PIN_LSU            GPIO_Pin_8  // PJ.08
   #define TRIMS_GPIO_REG_LSD            GPIOD->IDR
   #define TRIMS_GPIO_PIN_LSD            GPIO_Pin_13 // PD.13
-  #define TRIMS_GPIO_REG_RSU            GPIOB->IDR
+#endif  
+	#define TRIMS_GPIO_REG_RSU            GPIOB->IDR
   #define TRIMS_GPIO_PIN_RSU            GPIO_Pin_14 // PB.14
   #define TRIMS_GPIO_REG_RSD            GPIOB->IDR
   #define TRIMS_GPIO_PIN_RSD            GPIO_Pin_13 // PB.13
@@ -571,6 +578,89 @@
   #define PROT_EXTMODULE_DMA_FLAG_TC    DMA_IT_TCIF7
 //#endif
 
+
+
+
+//#define EXTMODULE_PWR_GPIO                 GPIOB
+//#define EXTMODULE_PWR_GPIO_PIN             GPIO_Pin_3  // PB.03
+//#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+//  #define EXTMODULE_RCC_AHB1Periph         (RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_DMA1)
+//  #define EXTMODULE_RCC_APB1Periph         (RCC_APB1Periph_TIM2 | RCC_APB1Periph_USART3)
+//  #define EXTMODULE_RCC_APB2Periph         0
+//  #define EXTMODULE_TX_GPIO                GPIOB
+//  #define EXTMODULE_USART_GPIO             EXTMODULE_TX_GPIO
+//  #define EXTMODULE_TX_GPIO_PIN            GPIO_Pin_10 // PB.10 (TIM2_CH3)
+//  #define EXTMODULE_TX_GPIO_PinSource      GPIO_PinSource10
+//  #define EXTMODULE_RX_GPIO_PIN            GPIO_Pin_11 // PB.11
+//  #define EXTMODULE_RX_GPIO_PinSource      GPIO_PinSource11
+//  #define EXTMODULE_TIMER_TX_GPIO_AF       GPIO_AF_TIM2
+//  #define EXTMODULE_TIMER                  TIM2
+//  #define EXTMODULE_TIMER_32BITS
+//  #define EXTMODULE_TIMER_DMA_SIZE         (DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1)
+//  #define EXTMODULE_TIMER_FREQ             (PERI1_FREQUENCY * TIMER_MULT_APB1)
+//  #define EXTMODULE_TIMER_CC_IRQn          TIM2_IRQn
+//  #define EXTMODULE_TIMER_IRQHandler       TIM2_IRQHandler
+//  #define EXTMODULE_TIMER_DMA_CHANNEL      DMA_Channel_3
+//  #define EXTMODULE_TIMER_DMA_STREAM       DMA1_Stream1
+//  #define EXTMODULE_TIMER_DMA_FLAG_TC      DMA_IT_TCIF1
+//  #define EXTMODULE_TIMER_DMA_STREAM_IRQn  DMA1_Stream1_IRQn
+//  #define EXTMODULE_TIMER_DMA_IRQHandler   DMA1_Stream1_IRQHandler
+//  #define EXTMODULE_USART_GPIO_AF          GPIO_AF_USART3
+//  #define EXTMODULE_USART                  USART3
+//  #define EXTMODULE_USART_IRQn             USART3_IRQn
+//  #define EXTMODULE_USART_IRQHandler       USART3_IRQHandler
+//  #define EXTMODULE_USART_TX_DMA_CHANNEL   DMA_Channel_4
+//  #define EXTMODULE_USART_TX_DMA_STREAM    DMA1_Stream3
+//  #define EXTMODULE_USART_RX_DMA_CHANNEL   DMA_Channel_4
+//  #define EXTMODULE_USART_RX_DMA_STREAM    DMA1_Stream1
+//#elif defined(PCBX10) || PCBREV >= 13
+//  #define EXTMODULE_RCC_AHB1Periph         (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_DMA2)
+//  #define EXTMODULE_RCC_APB1Periph         0
+//  #define EXTMODULE_RCC_APB2Periph         RCC_APB2Periph_TIM1
+//  #define EXTMODULE_TX_GPIO                GPIOA
+//  #define EXTMODULE_TX_GPIO_PIN            GPIO_Pin_10 // PA.10 (TIM1_CH3)
+//  #define EXTMODULE_TX_GPIO_PinSource      GPIO_PinSource10
+//  #define EXTMODULE_TIMER_TX_GPIO_AF       GPIO_AF_TIM1
+//  #define EXTMODULE_TIMER                  TIM1
+//  #define EXTMODULE_TIMER_DMA_SIZE         (DMA_SxCR_PSIZE_0 | DMA_SxCR_MSIZE_0)
+//  #define EXTMODULE_TIMER_CC_IRQn          TIM1_CC_IRQn
+//  #define EXTMODULE_TIMER_IRQHandler       TIM1_CC_IRQHandler
+//  #define EXTMODULE_TIMER_FREQ             (PERI2_FREQUENCY * TIMER_MULT_APB2)
+//  #define EXTMODULE_TIMER_DMA_CHANNEL      DMA_Channel_6
+//  #define EXTMODULE_TIMER_DMA_STREAM       DMA2_Stream5
+//  #define EXTMODULE_TIMER_DMA_STREAM_IRQn  DMA2_Stream5_IRQn
+//  #define EXTMODULE_TIMER_DMA_IRQHandler   DMA2_Stream5_IRQHandler
+//  #define EXTMODULE_TIMER_DMA_FLAG_TC      DMA_IT_TCIF5
+//#else
+//  #define EXTMODULE_RCC_AHB1Periph         (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_DMA1)
+//  #define EXTMODULE_RCC_APB1Periph         RCC_APB1Periph_TIM2
+//  #define EXTMODULE_RCC_APB2Periph         0
+//  #define EXTMODULE_TX_GPIO                GPIOA
+//  #define EXTMODULE_TX_GPIO_PIN            GPIO_Pin_15 // PA.15 (TIM2_CH1)
+//  #define EXTMODULE_TX_GPIO_PinSource      GPIO_PinSource15
+//  #define EXTMODULE_TIMER_TX_GPIO_AF       GPIO_AF_TIM2
+//  #define EXTMODULE_TIMER                  TIM2
+//  #define EXTMODULE_TIMER_32BITS
+//  #define EXTMODULE_TIMER_DMA_SIZE         (DMA_SxCR_PSIZE_1 | DMA_SxCR_MSIZE_1)
+//  #define EXTMODULE_TIMER_CC_IRQn          TIM2_IRQn
+//  #define EXTMODULE_TIMER_IRQHandler       TIM2_IRQHandler
+//  #define EXTMODULE_TIMER_FREQ             (PERI1_FREQUENCY * TIMER_MULT_APB1)
+//  #define EXTMODULE_TIMER_DMA_CHANNEL      DMA_Channel_3
+//  #define EXTMODULE_TIMER_DMA_STREAM       DMA1_Stream7
+//  #define EXTMODULE_TIMER_DMA_STREAM_IRQn  DMA1_Stream7_IRQn
+//  #define EXTMODULE_TIMER_DMA_IRQHandler   DMA1_Stream7_IRQHandler
+//  #define EXTMODULE_TIMER_DMA_FLAG_TC      DMA_IT_TCIF7
+//#endif
+
+
+
+
+
+
+
+
+
+
 // Trainer Port
 #define TRAINER_RCC_AHB1Periph          (RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC)
 #define TRAINER_RCC_APB1Periph          RCC_APB1Periph_TIM3
@@ -669,6 +759,21 @@
   #define BT_RX_GPIO_PinSource          GPIO_PinSource9
 #endif
 
+if defined(PCBX10)
+  #define EEPROM_RCC_AHB1Periph           RCC_AHB1Periph_GPIOI
+  #define EEPROM_RCC_APB1Periph           RCC_APB1Periph_SPI2
+  #define EEPROM_SPI_CS_GPIO              GPIOI
+  #define EEPROM_SPI_CS_GPIO_PIN          GPIO_Pin_0  // PI.00
+  #define EEPROM_SPI_SCK_GPIO             GPIOI
+  #define EEPROM_SPI_SCK_GPIO_PIN         GPIO_Pin_1  // PI.01
+  #define EEPROM_SPI_SCK_GPIO_PinSource   GPIO_PinSource1
+  #define EEPROM_SPI_MISO_GPIO            GPIOI
+  #define EEPROM_SPI_MISO_GPIO_PIN        GPIO_Pin_2  // PI.02
+  #define EEPROM_SPI_MISO_GPIO_PinSource  GPIO_PinSource2
+  #define EEPROM_SPI_MOSI_GPIO            GPIOI
+  #define EEPROM_SPI_MOSI_GPIO_PIN        GPIO_Pin_3  // PI.03
+  #define EEPROM_SPI_MOSI_GPIO_PinSource  GPIO_PinSource3
+#endif
 
 
 

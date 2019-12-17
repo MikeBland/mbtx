@@ -2491,16 +2491,16 @@ FRESULT f_close (
 
 #if _FS_RPATH >= 1
 
-FRESULT f_chdrive (
-	BYTE drv		/* Drive number */
-)
-{
-	if (drv >= _VOLUMES) return FR_INVALID_DRIVE;
+//FRESULT f_chdrive (
+//	BYTE drv		/* Drive number */
+//)
+//{
+//	if (drv >= _VOLUMES) return FR_INVALID_DRIVE;
 
-	CurrVol = drv;
+//	CurrVol = drv;
 
-	return FR_OK;
-}
+//	return FR_OK;
+//}
 
 
 
@@ -2536,74 +2536,74 @@ FRESULT f_chdir (
 
 
 #if _FS_RPATH >= 2
-FRESULT f_getcwd (
-	TCHAR *path,	/* Pointer to the directory path */
-	UINT sz_path	/* Size of path */
-)
-{
-	FRESULT res;
-	DIR dj;
-	UINT i, n;
-	DWORD ccl;
-	TCHAR *tp;
-	FILINFO fno;
-	DEF_NAMEBUF;
+//FRESULT f_getcwd (
+//	TCHAR *path,	/* Pointer to the directory path */
+//	UINT sz_path	/* Size of path */
+//)
+//{
+//	FRESULT res;
+//	DIR dj;
+//	UINT i, n;
+//	DWORD ccl;
+//	TCHAR *tp;
+//	FILINFO fno;
+//	DEF_NAMEBUF;
 
 
-	*path = 0;
-	res = chk_mounted((const TCHAR**)&path, &dj.fs, 0);	/* Get current volume */
-	if (res == FR_OK) {
-		INIT_BUF(dj);
-		i = sz_path;		/* Bottom of buffer (dir stack base) */
-		dj.sclust = dj.fs->cdir;			/* Start to follow upper dir from current dir */
-		while ((ccl = dj.sclust) != 0) {	/* Repeat while current dir is a sub-dir */
-			res = dir_sdi(&dj, 1);			/* Get parent dir */
-			if (res != FR_OK) break;
-			res = dir_read(&dj);
-			if (res != FR_OK) break;
-			dj.sclust = LD_CLUST(dj.dir);	/* Goto parent dir */
-			res = dir_sdi(&dj, 0);
-			if (res != FR_OK) break;
-			do {							/* Find the entry links to the child dir */
-				res = dir_read(&dj);
-				if (res != FR_OK) break;
-				if (ccl == LD_CLUST(dj.dir)) break;	/* Found the entry */
-				res = dir_next(&dj, 0);	
-			} while (res == FR_OK);
-			if (res == FR_NO_FILE) res = FR_INT_ERR;/* It cannot be 'not found'. */
-			if (res != FR_OK) break;
-#if _USE_LFN
-			fno.lfname = path;
-			fno.lfsize = i;
-#endif
-			get_fileinfo(&dj, &fno);		/* Get the dir name and push it to the buffer */
-			tp = fno.fname;
-			if (_USE_LFN && *path) tp = path;
-			for (n = 0; tp[n]; n++) ;
-			if (i < n + 3) {
-				res = FR_NOT_ENOUGH_CORE; break;
-			}
-			while (n) path[--i] = tp[--n];
-			path[--i] = '/';
-		}
-		tp = path;
-		if (res == FR_OK) {
-			*tp++ = '0' + CurrVol;			/* Put drive number */
-			*tp++ = ':';
-			if (i == sz_path) {				/* Root-dir */
-				*tp++ = '/';
-			} else {						/* Sub-dir */
-				do		/* Add stacked path str */
-					*tp++ = path[i++];
-				while (i < sz_path);
-			}
-		}
-		*tp = 0;
-		FREE_BUF();
-	}
+//	*path = 0;
+//	res = chk_mounted((const TCHAR**)&path, &dj.fs, 0);	/* Get current volume */
+//	if (res == FR_OK) {
+//		INIT_BUF(dj);
+//		i = sz_path;		/* Bottom of buffer (dir stack base) */
+//		dj.sclust = dj.fs->cdir;			/* Start to follow upper dir from current dir */
+//		while ((ccl = dj.sclust) != 0) {	/* Repeat while current dir is a sub-dir */
+//			res = dir_sdi(&dj, 1);			/* Get parent dir */
+//			if (res != FR_OK) break;
+//			res = dir_read(&dj);
+//			if (res != FR_OK) break;
+//			dj.sclust = LD_CLUST(dj.dir);	/* Goto parent dir */
+//			res = dir_sdi(&dj, 0);
+//			if (res != FR_OK) break;
+//			do {							/* Find the entry links to the child dir */
+//				res = dir_read(&dj);
+//				if (res != FR_OK) break;
+//				if (ccl == LD_CLUST(dj.dir)) break;	/* Found the entry */
+//				res = dir_next(&dj, 0);	
+//			} while (res == FR_OK);
+//			if (res == FR_NO_FILE) res = FR_INT_ERR;/* It cannot be 'not found'. */
+//			if (res != FR_OK) break;
+//#if _USE_LFN
+//			fno.lfname = path;
+//			fno.lfsize = i;
+//#endif
+//			get_fileinfo(&dj, &fno);		/* Get the dir name and push it to the buffer */
+//			tp = fno.fname;
+//			if (_USE_LFN && *path) tp = path;
+//			for (n = 0; tp[n]; n++) ;
+//			if (i < n + 3) {
+//				res = FR_NOT_ENOUGH_CORE; break;
+//			}
+//			while (n) path[--i] = tp[--n];
+//			path[--i] = '/';
+//		}
+//		tp = path;
+//		if (res == FR_OK) {
+//			*tp++ = '0' + CurrVol;			/* Put drive number */
+//			*tp++ = ':';
+//			if (i == sz_path) {				/* Root-dir */
+//				*tp++ = '/';
+//			} else {						/* Sub-dir */
+//				do		/* Add stacked path str */
+//					*tp++ = path[i++];
+//				while (i < sz_path);
+//			}
+//		}
+//		*tp = 0;
+//		FREE_BUF();
+//	}
 
-	LEAVE_FF(dj.fs, res);
-}
+//	LEAVE_FF(dj.fs, res);
+//}
 #endif /* _FS_RPATH >= 2 */
 #endif /* _FS_RPATH >= 1 */
 
@@ -3147,40 +3147,40 @@ FRESULT f_mkdir (
 /* Change Attribute                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_chmod (
-	const TCHAR *path,	/* Pointer to the file path */
-	BYTE value,			/* Attribute bits */
-	BYTE mask			/* Attribute mask to change */
-)
-{
-	FRESULT res;
-	DIR dj;
-	BYTE *dir;
-	DEF_NAMEBUF;
+//FRESULT f_chmod (
+//	const TCHAR *path,	/* Pointer to the file path */
+//	BYTE value,			/* Attribute bits */
+//	BYTE mask			/* Attribute mask to change */
+//)
+//{
+//	FRESULT res;
+//	DIR dj;
+//	BYTE *dir;
+//	DEF_NAMEBUF;
 
 
-	res = chk_mounted(&path, &dj.fs, 1);
-	if (res == FR_OK) {
-		INIT_BUF(dj);
-		res = follow_path(&dj, path);		/* Follow the file path */
-		FREE_BUF();
-		if (_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
-			res = FR_INVALID_NAME;
-		if (res == FR_OK) {
-			dir = dj.dir;
-			if (!dir) {						/* Is it a root directory? */
-				res = FR_INVALID_NAME;
-			} else {						/* File or sub directory */
-				mask &= AM_RDO|AM_HID|AM_SYS|AM_ARC;	/* Valid attribute mask */
-				dir[DIR_Attr] = (value & mask) | (dir[DIR_Attr] & (BYTE)~mask);	/* Apply attribute change */
-				dj.fs->wflag = 1;
-				res = sync(dj.fs);
-			}
-		}
-	}
+//	res = chk_mounted(&path, &dj.fs, 1);
+//	if (res == FR_OK) {
+//		INIT_BUF(dj);
+//		res = follow_path(&dj, path);		/* Follow the file path */
+//		FREE_BUF();
+//		if (_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
+//			res = FR_INVALID_NAME;
+//		if (res == FR_OK) {
+//			dir = dj.dir;
+//			if (!dir) {						/* Is it a root directory? */
+//				res = FR_INVALID_NAME;
+//			} else {						/* File or sub directory */
+//				mask &= AM_RDO|AM_HID|AM_SYS|AM_ARC;	/* Valid attribute mask */
+//				dir[DIR_Attr] = (value & mask) | (dir[DIR_Attr] & (BYTE)~mask);	/* Apply attribute change */
+//				dj.fs->wflag = 1;
+//				res = sync(dj.fs);
+//			}
+//		}
+//	}
 
-	LEAVE_FF(dj.fs, res);
-}
+//	LEAVE_FF(dj.fs, res);
+//}
 
 
 

@@ -1357,7 +1357,7 @@ void setupPulsesSerial(void)
 	Serial_pulsePtr = pulses2MHz.pbyte ;
 }
 
-
+/*
 // SBUS code
 #define BITLEN_Serial (10*2)
 //uint8_t SerialIndex ;
@@ -1484,4 +1484,4 @@ void buildSbusFrame()
 	}
   putSerialFlush() ;
 }
-
+*/

@@ -2624,7 +2624,7 @@ uint8_t Re_state ;
 
 void displayNext()
 {
-	lcd_putsAtt( 17*FW, 7*FH, XPSTR("[->]"), BLINK ) ;
+	lcd_putsAtt( 17*FW+2, 7*FH, XPSTR("[->]"), BLINK ) ;
 }
 
 uint8_t locateMappedItem( uint8_t value, uint8_t *options, uint32_t count )
@@ -19757,7 +19757,7 @@ void menuProcText(uint8_t event)
 			{
 				SharedMemory.TextControl.HelpTextPage = 0 ;
 			}
-	 		memset( SharedMemory.TextControl.TextMenuBuffer,' ', 16*21 ) ;
+//	 		memset( SharedMemory.TextControl.TextMenuBuffer,' ', 16*21 ) ;
 			uint8_t *p = (uint8_t *) ( SharedMemory.TextControl.HelpTextPage ? HelpText1 : HelpText0 ) ;
 			setTextBuffer( p, strlen( ( char *)p ) ) ;
 		}
@@ -24506,12 +24506,14 @@ extern uint8_t BtName[] ;
 				y += FH ;				 
 #endif
 
+#if defined(X9LS)
 #ifndef SMALL
 				if ( g_eeGeneral.BtType == BT_TYPE_PARA )
 				{
 					lcd_puts_Pleft( 6*FH, BtStatus ? "Connected" : "Cleared" ) ; 
 				}
 				else
+#endif
 #endif
 				{
 extern uint8_t BtState[] ;
@@ -24988,7 +24990,7 @@ STR_Protocol
   #if defined(PCBX7) || defined (PCBXLITE)
 			IlinesCount = 18 ;//+ 1 ;
   #else
-			IlinesCount = 20 ;//+ 1 ;
+			IlinesCount = 21 ;//+ 1 ;
   #endif
  #endif
 #endif // PCBX9D
@@ -25030,7 +25032,7 @@ STR_Protocol
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 			if ( sub < 18 + EXTRA_GENERAL )
 #else
-			if ( sub < 12 + EXTRA_GENERAL )
+			if ( sub < 18 + EXTRA_GENERAL )
 #endif
 			{
 				displayNext() ;
@@ -25242,7 +25244,7 @@ STR_Protocol
  #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 			else if ( sub < 18 + EXTRA_GENERAL )
  #else
-			else
+			else if ( sub < 18 + EXTRA_GENERAL )
  #endif
 			{
  #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
@@ -25704,12 +25706,12 @@ extern uint32_t switches_states ;
 
 //#ifndef PCBLEM1
  
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+//#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 			}
 			else
 			{
 				subN = 18 ;//+ 1 ;
-#endif
+//#endif
 
 #ifdef REV9E
 				uint8_t subSub = g_posHorz ;
@@ -25717,7 +25719,8 @@ extern uint32_t switches_states ;
  #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 				uint8_t subSub = g_posHorz ;
  #else
-				subSub = g_posHorz ;
+				uint8_t subSub = g_posHorz ;
+//				subSub = g_posHorz ;
  #endif
 #endif
 		    lcd_puts_Pleft(    y, PSTR(STR_BEEP_CENTRE));
@@ -25766,12 +25769,11 @@ extern uint32_t switches_states ;
             STORE_MODELVARS;
 	        }
   		  }
-#if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D) || defined(PCBX10)
 //#ifdef PCBX9D
 #ifndef PCBX7
 #ifndef PCBXLITE
 #ifndef PCBX9LITE
-#ifndef PCBLEM1
 				y += FH ;
 				subN += 1 ;
     		
@@ -25793,7 +25795,6 @@ extern uint32_t switches_states ;
 					alphaEditName( 11*FW-2, y, (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName), type | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FIlename") ) ;
 					validateName( (uint8_t *)g_model.modelImageName, sizeof(g_model.modelImageName) ) ;
 				}
-#endif // PCBLEM1
 #endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7
@@ -25808,7 +25809,7 @@ extern uint32_t switches_states ;
 				{
 					attr |= blink ;
 				}
-				alphaEditName( 12*FW, y, g_model.backgroundScript, 6, attr, (uint8_t *)XPSTR( "Script File") ) ;
+				alphaEditName( 11*FW, y, g_model.backgroundScript, 6, attr, (uint8_t *)XPSTR( "Script File") ) ;
 				validateName( g_model.backgroundScript, 6 ) ;
 	  		if( attr & ~ALPHA_NO_NAME )
 				{

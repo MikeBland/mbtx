@@ -466,25 +466,25 @@ extern uint8_t ExtDisplaySend ;
 }
 #endif // PCBX7
 
-#ifdef PCBX9LITE
-struct t_serial_tx LcdDumpBuf ;
+//#ifdef PCBX9LITE
+//struct t_serial_tx LcdDumpBuf ;
 
-void doLcdDump()
-{
-extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
-extern uint8_t ExtDisplaySend ;
-	if ( ExtDisplaySend )
-	{
-		ExtDisplaySend = 0 ;
-		LcdDumpBuf.buffer = ExtDisplayBuf ;
-		LcdDumpBuf.size = sizeof(ExtDisplayBuf) ; 
-		if ( g_model.com2Function == COM2_FUNC_LCD )
-		{
-			txPdcCom2( &LcdDumpBuf ) ;
-		}
-	}	 
-}
-#endif // PCBX9LITE
+//void doLcdDump()
+//{
+//extern uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
+//extern uint8_t ExtDisplaySend ;
+//	if ( ExtDisplaySend )
+//	{
+//		ExtDisplaySend = 0 ;
+//		LcdDumpBuf.buffer = ExtDisplayBuf ;
+//		LcdDumpBuf.size = sizeof(ExtDisplayBuf) ; 
+//		if ( g_model.com2Function == COM2_FUNC_LCD )
+//		{
+//			txPdcCom2( &LcdDumpBuf ) ;
+//		}
+//	}	 
+//}
+//#endif // PCBX9LITE
 
 
 //static uint8_t LcdDumpState ;
@@ -733,12 +733,12 @@ extern uint8_t AnaEncSw ;
  #endif
 #endif
 
-#ifdef PCBX9LITE
-	if ( g_model.com2Function == COM2_FUNC_LCD )
-	{
-		doLcdDump() ;
-	}
-#endif
+//#ifdef PCBX9LITE
+//	if ( g_model.com2Function == COM2_FUNC_LCD )
+//	{
+//		doLcdDump() ;
+//	}
+//#endif
 
 #ifdef PCBX9D
 #if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)

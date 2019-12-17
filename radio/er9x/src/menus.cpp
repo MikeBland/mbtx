@@ -10817,39 +10817,43 @@ extern uint16_t VrefTest ;
 
 #else // !XSW_MOD
 
-#if defined(CPUM128) || defined(CPUM2561)
+ #if defined(CPUM128) || defined(CPUM2561)
 //			IlinesCount = 4 ;
 #define HW_LINES		6
-#else
-#ifdef FRSKY
+ #else
+  #ifdef FRSKY
 #define HW_LINES		2
-#else
+  #else
+   #ifndef SERIAL_VOICE_ONLY
+#define HW_LINES		2
+   #else
 #define HW_LINES		1
-#endif
-#endif
-#ifdef SERIAL_VOICE
- #ifdef SWITCH_MAPPING
-  #ifndef REMOVE_FROM_64FRSKY
+   #endif
+	#endif
+ #endif
+ #ifdef SERIAL_VOICE
+  #ifdef SWITCH_MAPPING
+   #ifndef REMOVE_FROM_64FRSKY
    #define HW_EXTRA_LINES		7
+   #endif
   #endif
  #endif
-#endif
-#ifndef HW_EXTRA_LINES
+ #ifndef HW_EXTRA_LINES
 #define HW_EXTRA_LINES		0
-#endif
+ #endif
 
-#if defined(CPUM128) || defined(CPUM2561)
+ #if defined(CPUM128) || defined(CPUM2561)
 	IlinesCount = HW_LINES + HW_EXTRA_LINES + 4 ;
-#else
+ #else
 	IlinesCount = HW_LINES + HW_EXTRA_LINES ;
-#endif
+ #endif
 
-#if HW_EXTRA_LINES
+ #if HW_EXTRA_LINES
 		if ( sub < HW_LINES )
 		{
 			uint8_t subN = 0 ;
 			displayNext() ;
-#endif
+ #endif
 
  	    uint8_t b ;
  	    b = g_eeGeneral.disableBG ;
@@ -10857,7 +10861,7 @@ extern uint16_t VrefTest ;
   		y += FH ;
 			subN += 1 ;
 			
-#ifdef FRSKY
+ #ifdef FRSKY
 			b = g_eeGeneral.TEZr90 ;
 			uint8_t c ;
 			c = onoffMenuItem( b, y, PSTR(STR_TEZ_R90), subN ) ;
@@ -10868,9 +10872,9 @@ extern uint16_t VrefTest ;
 			}
   		y += FH ;
 			subN += 1 ;
-#endif			
+ #endif			
 
-#if defined(CPUM128) || defined(CPUM2561)
+ #if defined(CPUM128) || defined(CPUM2561)
 			b = g_eeGeneral.FrskyPins ;
 			c = onoffMenuItem( b, y, PSTR(STR_FRSKY_MOD), subN ) ;
 			g_eeGeneral.FrskyPins = c ;
@@ -10889,7 +10893,6 @@ extern uint16_t VrefTest ;
 			subN += 1 ;
  #endif
 
-#if defined(CPUM128) || defined(CPUM2561)
  #ifndef SERIAL_VOICE_ONLY
   #ifndef FRSKY			
 			uint8_t c ;
@@ -10912,6 +10915,7 @@ extern uint16_t VrefTest ;
 			subN += 1 ;
  #endif
 
+ #if defined(CPUM128) || defined(CPUM2561)
   		lcd_puts_Pleft( y, PSTR("RUD switch"));
 			{
 				uint8_t sm = g_eeGeneral.switchMapping ;
@@ -10948,14 +10952,14 @@ extern uint16_t VrefTest ;
 			}
   		y += FH ;
 			subN += 1 ;
-#endif
+ #endif
 
-#if HW_EXTRA_LINES
+ #if HW_EXTRA_LINES
 		}
 		else if ( sub < HW_LINES + HW_EXTRA_LINES )
 		{
 			uint8_t subN = HW_LINES ;
-#endif
+ #endif
 
 #ifdef SERIAL_VOICE
 #ifdef SWITCH_MAPPING
