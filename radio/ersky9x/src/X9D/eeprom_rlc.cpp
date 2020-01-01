@@ -43,7 +43,7 @@
 #include "inttypes.h"
 #include "string.h"
 #include "i2c_ee.h"
-#include "Myeeprom.h"
+#include "myeeprom.h"
 //#include "language.h"
 #include "templates.h"
 #include "drivers.h"

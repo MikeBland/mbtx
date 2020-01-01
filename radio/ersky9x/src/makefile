@@ -11,7 +11,27 @@
 #
 # To rebuild project do "make clean" and "make all".
 #
-
+#
+##############################################################################################
+#
+# Build commands:
+#
+# make REVB=1 REVX=1
+# make PCB=X9D BT=1
+# make PCB=X9D REV9E=1
+# make PCB=X9D REVPLUS=1
+# make PCB=9XT
+# make REVB=1 SMALL=1
+# make PCB=X9D PCBX7=1 BT=1
+# make REVB=1
+# make PCB=X12D
+# make PCB=X9D PCBXLITE=1
+# make PCB=X9D PCBX7=1 PCBT12=1
+# make PCB=X9D PCBX9LITE=1
+# make PCB=X10 PCBT16=1
+# make PCBLEM1=1
+# make PCB=X9D PCBX9LITE=1 X9LS=1 
+#
 ##############################################################################################
 # Start of default section
 #
@@ -130,11 +150,7 @@ else
      CPPDEFS += -DBASIC 
 #     LUA = 1
 #     CPPDEFS += -DLUA
-     ifeq ($(LARGE), 1)
-      OBJDIR = skyLobj
-     else
-      OBJDIR = skyobj
-     endif
+     OBJDIR = skyobj
     endif
    endif
   endif
@@ -701,6 +717,7 @@ endif
 
 ifeq ($(BT), 1)
   CPPSRC += bluetooth.cpp
+  CPPDEFS += -DBT
 endif
 
 
@@ -1281,7 +1298,6 @@ clean:
 	-rm -f skyobj/*.*
 	-rm -f skyRobj/*.*
 	-rm -f skySobj/*.*
-	-rm -f skyLobj/*.*
 	-rm -f sky9XTobj/*.*
 	-rm -f x7obj/*.*
 	-rm -f xliteobj/*.*
@@ -1289,6 +1305,7 @@ clean:
 	-rm -f t12obj/*.*
 	-rm -f t16obj/*.*
 	-rm -f lem1obj/*.*
+	-rm -f x9lsobj/*.*
 	-rm -f $(FULL_PRJ).elf
 	-rm -f $(FULL_PRJ).map
 	-rm -f $(FULL_PRJ).hex

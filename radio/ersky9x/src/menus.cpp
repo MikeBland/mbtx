@@ -7722,15 +7722,19 @@ void menuSwitchOne(uint8_t event)
 	}
 }
 
+//#ifdef SMALL
+#define SWITCH_SUB_ONLY
+//#endif
+
 void menuProcSwitches(uint8_t event)
 {
 	TITLE(PSTR(STR_CUST_SWITCH));
 	EditType = EE_MODEL ;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 	Columns = 4 ;
 #endif
 	static MState2 mstate2;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 	event = mstate2.check_columns(event, NUM_SKYCSW+1-1-1+NUM_SKYCSW ) ;
 #else
 	event = mstate2.check_columns(event, NUM_SKYCSW+1-1-1 ) ;
@@ -7739,7 +7743,7 @@ void menuProcSwitches(uint8_t event)
 	uint8_t y = 0;
 	uint8_t k = 0;
 	int8_t  sub    = mstate2.m_posVert ;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 	uint8_t subSub = g_posHorz;
 #endif
 	uint8_t t_pgOfs ;
@@ -7750,7 +7754,7 @@ void menuProcSwitches(uint8_t event)
 	t_pgOfs = evalOffset( sub ) ;
 //#endif
 
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 	if ( event == EVT_ENTRY_UP )
 	{
 		// Returned from editing
@@ -7792,14 +7796,14 @@ void menuProcSwitches(uint8_t event)
 		//write SW names here
 		displayLogicalSwitch( 0, y, m ) ;
     
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 		attr = (sub==k ? InverseBlink  : 0);
 #else
 		attr = (sub==k ? INVERS : 0);
 #endif
 	 if ( k < NUM_SKYCSW )
 	 {
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 		lcd_putsAttIdx( 2*FW+1, y, PSTR(CSWITCH_STR),cs.func,subSub==0 ? attr : 0);
 #else
 		lcd_putsAttIdx( 2*FW+1, y, PSTR(CSWITCH_STR),cs.func, 0);
@@ -7809,7 +7813,7 @@ void menuProcSwitches(uint8_t event)
 
     if(cstate == CS_VOFS)
     {
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 			putsChnRaw(    10*FW-6, y, cs.v1u  ,subSub==1 ? attr : 0);
 #else
 			putsChnRaw(    10*FW-6, y, cs.v1u  , 0);
@@ -7817,7 +7821,7 @@ void menuProcSwitches(uint8_t event)
 	    if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
  			{
 				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, subSub==2 ? attr : 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
 #else
 				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
@@ -7825,7 +7829,7 @@ void menuProcSwitches(uint8_t event)
 			}
       else
 			{
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
         lcd_outdezAtt( 18*FW-9, y, cs.v2  ,subSub==2 ? attr : 0);
 #else
         lcd_outdezAtt( 18*FW-9, y, cs.v2  ,0);
@@ -7834,7 +7838,7 @@ void menuProcSwitches(uint8_t event)
     }
     else if(cstate == CS_VBOOL)
     {
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       putsDrSwitches(10*FW-6, y, cs.v1  ,subSub==1 ? attr : 0);
       putsDrSwitches(14*FW-7, y, cs.v2  ,subSub==2 ? attr : 0);
 #else
@@ -7844,7 +7848,7 @@ void menuProcSwitches(uint8_t event)
     }
     else if(cstate == CS_VCOMP)
     {
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       putsChnRaw(    10*FW-6, y, cs.v1u  ,subSub==1 ? attr : 0);
       putsChnRaw(    14*FW-4, y, cs.v2u  ,subSub==2 ? attr : 0);
 #else
@@ -7863,7 +7867,7 @@ void menuProcSwitches(uint8_t event)
 				att = PREC1 ;
 			}
 	    lcd_puts_Pleft( y, PSTR(STR_15_ON) ) ;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       lcd_outdezAtt( 13*FW-5, y, x+1  ,att | (subSub==1 ? attr : 0) ) ;
 #else
       lcd_outdezAtt( 13*FW-5, y, x+1  ,att ) ;
@@ -7875,7 +7879,7 @@ void menuProcSwitches(uint8_t event)
 				x = -x-1 ;
 				att = PREC1 ;
 			}
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       lcd_outdezAtt( 18*FW-3, y, x+1 , att | (subSub==2 ? attr : 0 ) ) ;
 #else
       lcd_outdezAtt( 18*FW-3, y, x+1 , att ) ;
@@ -7883,7 +7887,7 @@ void menuProcSwitches(uint8_t event)
 		}
 		else if(cstate == CS_TMONO)
 		{
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       putsDrSwitches(10*FW-6, y, cs.v1  ,subSub==1 ? attr : 0);
 #else
       putsDrSwitches(10*FW-6, y, cs.v1  , 0);
@@ -7896,7 +7900,7 @@ void menuProcSwitches(uint8_t event)
 				x = -x-1 ;
 				att = PREC1 ;
 			}
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       lcd_outdezAtt( 17*FW-2, y, x+1 , att | (subSub==2 ? attr : 0 ) ) ;
 #else
       lcd_outdezAtt( 17*FW-2, y, x+1 , att ) ;
@@ -7907,7 +7911,7 @@ void menuProcSwitches(uint8_t event)
 			uint16_t x ;
 			x = cs.v2u ;
 			x |= cs.bitAndV3 << 8 ;
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
       putsChnRaw( 10*FW-6-FW, y, cs.v1  ,subSub==1 ? attr : 0);
       lcd_outdezNAtt( 18*FW-9, y, x  ,subSub==2 ? attr : 0,5);
 #else
@@ -7917,28 +7921,30 @@ void menuProcSwitches(uint8_t event)
 		}
 //    lcd_putc( 19*FW+3, y, cs.andsw ? 'S' : '-') ;
 		
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 		putsDrSwitches( 18*FW-3, y, getAndSwitch( cs ),(subSub==3 ? attr : 0)) ;
 #else
 		putsDrSwitches( 18*FW-3, y, getAndSwitch( cs ),0 ) ;
 #endif
 
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
     if((s_editMode || P1values.p1valdiff) && attr)
 		{
 			editOneSwitchItem( event, subSub, sub ) ;
 		}
 #endif			
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 		if ( subSub == 4 )
 		{
 #endif			
 			if ( attr )
 			{
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 				lcd_char_inverse( 12, y, 127, BLINK ) ;
 #else
 				lcd_char_inverse( 12, y, 127, 0 ) ;
+				lcd_puts_P( 102, 0, XPSTR("Dy" ) ) ;
+				lcd_outdezAtt( 21*FW, 0, g_model.switchDelay[m], PREC1 ) ;
 #endif
 				if ( checkForMenuEncoderBreak( event ) )
 				{
@@ -7949,11 +7955,11 @@ void menuProcSwitches(uint8_t event)
   	  		s_editMode = false ;
 				}
 			}
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 		}
 #endif
 	 }
-#ifndef SMALL
+#ifndef SWITCH_SUB_ONLY
 	 else
 	 {
 			lcd_puts_Pleft( y, XPSTR("\004delay=" ) ) ;
@@ -15290,12 +15296,13 @@ uint32_t calibration( uint8_t event )
 
   doMainScreenGrphics() ;
 #if defined(PCBSKY) || defined(PCB9XT)
-	if ( g_eeGeneral.extraPotsSource[0] )
-	{
-		uint8_t len ;
-    len = ((calibratedStick[7]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
-    V_BAR( 26, SCREEN_HEIGHT-8, len ) ;
-	}
+// Next bar display not needed, the first extra pot is in the middle 
+//	if ( g_eeGeneral.extraPotsSource[0] )
+//	{
+//		uint8_t len ;
+//    len = ((calibratedStick[7]+RESX)/((RESX*2)/BAR_HEIGHT))+1 ;  // calculate once per loop
+//    V_BAR( 26, SCREEN_HEIGHT-8, len ) ;
+//	}
 	if ( g_eeGeneral.extraPotsSource[1] )
 	{
 		uint8_t len ;

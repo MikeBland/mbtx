@@ -78,7 +78,9 @@
 
 #ifdef PCBX7
 #ifndef PCBT12
+ #ifdef BT
 #define BLUETOOTH	1
+ #endif
 #endif
 #endif
 
@@ -698,11 +700,14 @@ uint8_t CS_STATE( uint8_t x) ;
 #define EVT_KEY_LONG(key)  ((key)|0x80)
 #define EVT_KEY_DBL(key)   ((key)|_MSK_KEY_DBL)
 //#define EVT_KEY_DBL(key)   ((key)|0x10)
-#define EVT_ENTRY               (0xff - _MSK_KEY_REPT)
-#define EVT_ENTRY_UP            (0xfe - _MSK_KEY_REPT)
-#define EVT_TOGGLE_GVAR         (0xfd - _MSK_KEY_REPT)
-//#define EVT_EXIT	              (0xfc - _MSK_KEY_REPT)
+#define EVT_ENTRY               (0xff - _MSK_KEY_REPT)	// = BF
+#define EVT_ENTRY_UP            (0xfe - _MSK_KEY_REPT)	// = BE
+#define EVT_TOGGLE_GVAR         (0xfd - _MSK_KEY_REPT)	// = BD
+//#define EVT_EXIT	              (0xfc - _MSK_KEY_REPT)	// = BC
 #define EVT_KEY_MASK             0x0f
+
+#define EVT_ROTARY_LEFT          0xdf
+#define EVT_ROTARY_RIGHT         0xde
 
 #define HEART_TIMER_PULSES 1 ;
 #define HEART_TIMER10ms 2;
@@ -1579,6 +1584,7 @@ extern uint8_t ScriptFlags ;
 #define	SCRIPT_RESUME					8
 #define	SCRIPT_BACKGROUND			16
 #define	SCRIPT_FRSKY					32
+#define	SCRIPT_ROTARY					64
 
 #endif
 

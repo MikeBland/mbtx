@@ -34,7 +34,7 @@ struct t_loadedScripts
 	uint8_t type ;
 } ;
 
-uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index ) ;
+uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index ) ;
 int32_t expression( void ) ;
 uint32_t loadBasic( char *fileName, uint32_t type ) ;
 uint32_t basicTask( uint8_t event, uint8_t flags ) ;

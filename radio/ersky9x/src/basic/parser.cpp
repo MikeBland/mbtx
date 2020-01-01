@@ -647,6 +647,7 @@ const struct commands Constants[] =
   { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
   { "EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
   { "EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { "EVT_EXIT_LONG", EVT_KEY_LONG(KEY_EXIT) },
 //  { "SOLID", SOLID },
 //  { "DOTTED", DOTTED },
 //  { "FORCE", FORCE },
@@ -1534,6 +1535,7 @@ uint32_t basicTask( uint8_t event, uint8_t flags ) ;
 #define	SCRIPT_RESUME					8
 #define	SCRIPT_BACKGROUND			16
 #define	SCRIPT_FRSKY					32
+#define	SCRIPT_ROTARY					64
 
 void scriptReleasetBt(void)
 {
@@ -1712,6 +1714,9 @@ uint32_t loadBasic( char *fileName, uint32_t type )
     cpystr( (uint8_t *)Token, (uint8_t *)"Size" ) ;
     addSymbol( SYM_VARIABLE, SYM_VAR_INT, CurrentVariableIndex++, 0 ) ;
 		
+#ifndef	QT
+		BasicErrorText[0] = 0 ;
+#endif
 		BasicState = BASIC_LOADING ;
 #ifdef QT	
 		Data[0] = 0 ;
@@ -1816,6 +1821,22 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	return cPosition ;
 }
 
+uint32_t setNgotoLocation(uint32_t cPosition )
+{
+//	Program.Bytes[cPosition++] = NGOTO ;
+//	NgotoLocation = cPosition ;
+//	Program.Bytes[cPosition++] = 0 ;
+//	Program.Bytes[cPosition++] = 0 ;
+	
+	uint32_t index ;
+	Program.Bytes[cPosition++] = NGOTO ;
+  index = NgotoLocation ;
+	NgotoLocation = cPosition ;
+	Program.Bytes[cPosition++] = index ;
+	Program.Bytes[cPosition++] = index >> 8 ;
+	return cPosition ;
+}
+
 
 // return  values:
 // 0 error
@@ -1910,10 +1931,7 @@ uint32_t partLoadBasic()
 						if ( Tok != GOTO && Tok != GOSUB )
 					  {
 							// Must be statement, put in NGOTO
-							Program.Bytes[cPosition++] = NGOTO ;
-							NgotoLocation = cPosition ;
-							Program.Bytes[cPosition++] = 0 ;
-							Program.Bytes[cPosition++] = 0 ;
+							cPosition = setNgotoLocation( cPosition ) ;
 						}
 					}
 					
@@ -2206,7 +2224,8 @@ uint32_t partLoadBasic()
 					{
 						if ( NgotoLocation )
 						{
-							setJumpAddress( NgotoLocation, cPosition ) ;
+							setLinkedJumpAddress( NgotoLocation, cPosition ) ;
+//							setJumpAddress( NgotoLocation, cPosition ) ;
 							NgotoLocation = 0 ;
 						}
 						if ( processWhile )
@@ -2259,10 +2278,7 @@ uint32_t partLoadBasic()
 //						if ( Tok != GOTO && Tok != GOSUB )
 //					  {
 							// Must be statement, put in NGOTO
-							Program.Bytes[cPosition++] = NGOTO ;
-							NgotoLocation = cPosition ;
-							Program.Bytes[cPosition++] = 0 ;
-							Program.Bytes[cPosition++] = 0 ;
+							cPosition = setNgotoLocation( cPosition ) ;
 //						}
 					}
           switch ( j )
@@ -4472,6 +4488,9 @@ extern uint32_t MixerRate ;
 					case 21 :
 						result = IdlePercent ;
 					break ;
+					case 22 :
+						result = g_eeGeneral.physicalRadioType ;
+					break ;
 				}
 #endif
 #if defined(stm32f205) || defined(STM32F429_439xx)
@@ -4499,6 +4518,9 @@ extern uint32_t MixerRate ;
 					break ;
 					case 21 :
 						result = IdlePercent ;
+					break ;
+					case 22 :
+						result = g_eeGeneral.physicalRadioType ;
 					break ;
 				}
 #endif
@@ -6491,10 +6513,10 @@ uint32_t execOneLine()
 // 3 Script finished (unloaded)
 
 // events need queueing
-uint8_t BasicEventQueue0[3] ;
-uint8_t BasicEventQueue1[3] ;
+uint16_t BasicEventQueue0[3] ;
+uint16_t BasicEventQueue1[3] ;
 
-uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
+uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 {
 	uint32_t execLinesProcessed ;
 	uint32_t finished ;
@@ -6562,7 +6584,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 	else
 	{
 		// Starting at top
-		uint8_t tempEvent ;
+		uint16_t tempEvent ;
 		if ( BasicEventQueue0[index] )
 		{
 			tempEvent = BasicEventQueue0[index] ;
@@ -6577,9 +6599,14 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 			}
 			event = tempEvent ;
 		}
-		RunTime->Vars.Variables[0] = event ;
+		RunTime->Vars.Variables[0] = event & 0x00FF ;	// Mask off rotary flag
 		// Clear call stack?
 		RunTime->CallIndex = 0 ;
+	}
+	if ( event & 0x0100 )		// A rotary movement event
+	{
+    ScriptFlags |= SCRIPT_ROTARY ;
+		event &= 0x00FF ;
 	}
 
 	execLinesProcessed = 0 ;
@@ -6601,7 +6628,7 @@ uint32_t basicExecute( uint32_t begin, uint8_t event, uint32_t index )
 		{
 			finished = 3 ;
 #ifndef QT
-      killEvents( event ) ;
+      killEvents( event & 0x00FF ) ;
 			LoadedScripts[index].loaded = 0 ;
 #endif
       break ;

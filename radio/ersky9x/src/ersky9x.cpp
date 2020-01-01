@@ -1499,8 +1499,8 @@ void update_mode(void* pdata)
 #endif
 #ifdef PCBX7
  #ifndef PCBT12
-extern void checkRotaryEncoder() ;
-		checkRotaryEncoder() ;
+//extern void checkRotaryEncoder() ;
+//		checkRotaryEncoder() ;
  #endif
 #endif // PCBX7
 #ifdef REV9E
@@ -3459,13 +3459,13 @@ extern void sdInit( void ) ;
 		refreshDisplay() ;
 
 #ifdef PCBSKY
-		if ( ( ( ResetReason & RSTC_SR_RSTTYP ) == (2 << 8) ) || unexpectedShutdown )	// Not watchdog
+		if ( ( ( ResetReason & RSTC_SR_RSTTYP ) == (2 << 8) ) || unexpectedShutdown )	// watchdog
 #endif
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
-		if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) == RCC_CSR_WDGRSTF ) || unexpectedShutdown )	// Not watchdog
+		if ( ( ( ResetReason & RCC_CSR_WDGRSTF ) == RCC_CSR_WDGRSTF ) || unexpectedShutdown )	// watchdog
 #endif
 #if defined(PCBLEM1)
-		if ( ( ( ResetReason & RCC_CSR_IWDGRSTF ) == RCC_CSR_IWDGRSTF ) || unexpectedShutdown )	// Not watchdog
+		if ( ( ( ResetReason & RCC_CSR_IWDGRSTF ) == RCC_CSR_IWDGRSTF ) || unexpectedShutdown )	// watchdog
 #endif
 		{
 			break ;
@@ -3519,10 +3519,22 @@ extern void sdInit( void ) ;
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
-  checkQuickSelect();
+#ifdef PCB9XT
+	if ( (ResetReason & RCC_CSR_WDGRSTF) == 0 )	// not Watchdog
+#else
+	if ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) )	// not Watchdog
+#endif
+	{
+  	checkQuickSelect();
+	}
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBLEM1)	
+	if ( (ResetReason & RCC_CSR_IWDGRSTF) == 0 )	// not Watchdog
+#else
+	if ( (ResetReason & RCC_CSR_WDGRSTF) == 0 )	// not Watchdog
+#endif
 	{
   	uint8_t i = keyDown(); //check for keystate
 		if ( ( i & 6 ) == 6 )
@@ -8390,7 +8402,7 @@ extern int32_t Rotary_diff ;
 #else
 extern uint32_t TotalExecTime ;
 		uint16_t execTime = getTmr2MHz() ;
-		refreshNeeded = basicTask( evt, SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
+		refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
 		execTime = (uint16_t)(getTmr2MHz() - execTime) ;
 		TotalExecTime += execTime ;
 		if ( refreshNeeded == 3 )
@@ -8646,8 +8658,24 @@ static void init_rotary_encoder()
 	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
 	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
 #else
+  register uint32_t capture ;
+	
 	configure_pins( 0x0A00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	g_eeGeneral.rotaryDivisor = 2 ;
+
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+	SYSCFG->EXTICR[2] |= 0x4000 ;		// PE11
+	EXTI->RTSR |= 0x0800 ;	// Rising Edge
+	EXTI->FTSR |= 0x0800 ;	// Falling Edge
+	EXTI->IMR |= 0x0800 ;
+
+	capture = GPIOENCODER->IDR & 0x0A00 ;
+	capture >>= 10 ;
+	capture = (capture & 1) | ( ( capture >> 1 ) & 2 ) ;	// pick out the two bits
+	Rotary_position = capture ;
+
+	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
 #endif
 }
 
@@ -8758,27 +8786,75 @@ extern "C" void EXTI15_10_IRQHandler()
 //	}
 //}
   #else
-void checkRotaryEncoder()
+
+extern "C" void EXTI15_10_IRQHandler()
 {
-  register uint32_t dummy ;
+  register uint32_t capture ;
+
+	capture = GPIOENCODER->IDR & 0x0A00 ;
+	EXTI->PR = 0x0800 ;
+	capture >>= 9 ;
+	capture = (capture & 1) | ( ( capture >> 1 ) & 2 ) ;	// pick out the two bits
 	
-	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE11, PE9 )
-	dummy >>= 9 ;
-	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
-	if ( dummy != ( Rotary_position & 0x03 ) )
+	if ( capture != ( Rotary_position & 0x03 ) )
 	{
-		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+		uint32_t old = ( Rotary_position & 0x01 ) ^ ( ( Rotary_position & 0x02) >> 1 ) ;
+		if ( ( capture & 0x01 ) ^ ( ( capture & 0x02) >> 1 ) )
 		{
-			Rotary_count -= 1 ;
+			// negative
+			Rotary_count -= old + 1 ;
+			
+//			if ( old )
+//			{
+//				Rotary_count -= 2 ;
+//			}
+//			else
+//			{
+//				Rotary_count -= 1 ;
+//			}
 		}
 		else
 		{
-			Rotary_count += 1 ;
+	 		// positive
+			Rotary_count += 2 - old ;
+			
+//			if ( old )
+//			{
+//				Rotary_count += 1 ;
+//			}
+//			else
+//			{
+//				Rotary_count += 2 ;
+//			}
 		}
 		Rotary_position &= ~0x03 ;
-		Rotary_position |= dummy ;
+		Rotary_position |= capture ;
 	}
 }
+
+
+
+//void checkRotaryEncoder()
+//{
+//  register uint32_t dummy ;
+	
+//	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE11, PE9 )
+//	dummy >>= 9 ;
+//	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
+//	if ( dummy != ( Rotary_position & 0x03 ) )
+//	{
+//		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+//		{
+//			Rotary_count -= 1 ;
+//		}
+//		else
+//		{
+//			Rotary_count += 1 ;
+//		}
+//		Rotary_position &= ~0x03 ;
+//		Rotary_position |= dummy ;
+//	}
+//}
   #endif // X3
  #endif
 
@@ -8938,8 +9014,8 @@ void interrupt5ms()
 #if defined(PCBX7) || defined(PCBX9LITE)
  #ifndef PCBT12
   #ifndef PCBX9LITE
-extern void checkRotaryEncoder() ;
-		checkRotaryEncoder() ;
+//extern void checkRotaryEncoder() ;
+//		checkRotaryEncoder() ;
   #endif // X3
  #endif
 #endif // PCBX7

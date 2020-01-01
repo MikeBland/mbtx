@@ -759,7 +759,7 @@
   #define BT_RX_GPIO_PinSource          GPIO_PinSource9
 #endif
 
-if defined(PCBX10)
+#if defined(PCBX10)
   #define EEPROM_RCC_AHB1Periph           RCC_AHB1Periph_GPIOI
   #define EEPROM_RCC_APB1Periph           RCC_APB1Periph_SPI2
   #define EEPROM_SPI_CS_GPIO              GPIOI
