@@ -3696,7 +3696,7 @@ extern uint8_t s_current_protocol[] ;
 				 (s_current_protocol[INTERNAL_MODULE] == PROTO_ACCESS ) )
 		{
 			int32_t rxbyte ;
-			while ( ( rxbyte = get_fifo128( &Access_int_fifo ) ) != -1 )
+			while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
 			{
 				accessRecieveByte( rxbyte, 0 ) ;
 			}
@@ -3706,6 +3706,18 @@ extern uint8_t s_current_protocol[] ;
 			}
 		}
 //		else
+#endif
+#ifdef PCBT16
+extern uint8_t s_current_protocol[] ;
+		if ( s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI )
+		{
+			int32_t rxbyte ;
+extern struct t_fifo128 Internal_fifo ;
+			while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
+			{
+				frsky_receive_byte( rxbyte ) ;
+			}
+		}
 #endif
 		if ( g_model.frskyComPort == 0 )
 		{

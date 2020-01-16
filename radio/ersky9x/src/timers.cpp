@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <ctype.h>
+//#include <ctype.h>
 #include <string.h>
 
 //#define LATENCY 1
@@ -102,7 +102,7 @@ extern uint16_t pulseStreamCount[NUM_MODULES] ;
 extern uint16_t ppmStream[NUM_MODULES+1][20];
 extern uint8_t s_current_protocol[NUM_MODULES] ;
 
-uint8_t SerialData[2][28] ;
+uint8_t SerialData[2][40] ;
 
 static uint8_t Pass[2] ;
 #endif
@@ -488,10 +488,6 @@ extern "C" void TIM8_TRG_COM_TIM14_IRQHandler()
 	interrupt5ms() ;
 }
 
-#ifdef REV9E
-uint16_t SuCount ;
-#endif
-
 #endif
 
 
@@ -501,12 +497,6 @@ void setupPulses(unsigned int port)
 {
 	uint32_t requiredprotocol ;
   heartbeat |= HEART_TIMER_PULSES ;
-#ifdef REV9E
-	SuCount += 1 ;
-//	progress( 0xA000 + port + ( SuCount << 4 ) ) ;
-//	return ;
-#endif
-	
 
 	if ( port == 0 )
 	{
@@ -529,6 +519,14 @@ void setupPulses(unsigned int port)
   	    case PROTO_PXX:
 					disable_pxx(INTERNAL_MODULE) ;
   	    break;
+#ifdef PCBX10
+ #ifdef PCBT16
+		    case PROTO_MULTI:
+					disable_dsm2(INTERNAL_MODULE) ;
+	      break;
+ #endif
+#endif
+
 #ifdef PCB9XT
 	      case PROTO_DSM2:
 		    case PROTO_MULTI:
@@ -579,6 +577,15 @@ void setupPulses(unsigned int port)
 					Pass[port] = 0 ;
 	      break;
 #endif
+#ifdef PCBX10
+ #ifdef PCBT16
+		    case PROTO_MULTI:
+					init_multi(INTERNAL_MODULE) ;
+					DsmInitCounter[port] = 0 ;
+					Pass[port] = 0 ;
+	      break;
+ #endif
+#endif
 #ifdef ACCESS
 #if defined(PCBXLITE) || defined(PCBX9LITE)
 	      case PROTO_ACCESS :
@@ -607,6 +614,13 @@ void setupPulses(unsigned int port)
 	    case PROTO_MULTI:
       	setupPulsesDsm2( ( g_model.Module[INTERNAL_MODULE].sub_protocol == DSM_9XR ) ? 12 : 6, INTERNAL_MODULE ) ; 
 	    break;
+#endif
+#ifdef PCBX10
+ #ifdef PCBT16
+		    case PROTO_MULTI:
+	      	setupPulsesDsm2( ( g_model.Module[INTERNAL_MODULE].sub_protocol == DSM_9XR ) ? 12 : 6, INTERNAL_MODULE ) ; 
+	      break;
+ #endif
 #endif
 	//	  case PROTO_DSM2:
 	////      sei() ;							// Interrupts allowed here
@@ -1067,7 +1081,11 @@ void stop_trainer_ppm()
 
 void init_trainer_capture(uint32_t mode)
 {
+#ifndef PCBX12D
+ #ifndef PCBX10
 	struct t_softSerial *pss = &SoftSerial1 ;
+ #endif	
+#endif	
 	
 	if ( CaptureMode != CAP_COM1 )
 	{	
@@ -2126,13 +2144,25 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 				}
 			}
 #endif
-			
-			for ( i = 0 ; i < 26 ; i += 1 )
+		
+#if defined(PCBT16)
+			if ( module == INTERNAL_MODULE )
 			{
-				sendByteDsm2( SerialData[module][i], module) ;
+extern volatile uint8_t *PxxTxPtr ;
+extern volatile uint8_t PxxTxCount ;
+				PxxTxPtr = SerialData[module] ;
+				PxxTxCount = 27 ;
 			}
+			else
+#endif
+			{
+				for ( i = 0 ; i < 26 ; i += 1 )
+				{
+					sendByteDsm2( SerialData[module][i], module) ;
+				}
 
-	  	putDsm2Flush(module);
+		  	putDsm2Flush(module);
+			}
 		}
 		else
 		{

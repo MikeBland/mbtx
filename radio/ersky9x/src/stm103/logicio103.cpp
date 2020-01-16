@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <ctype.h>
+//#include <ctype.h>
 #include <string.h>
 
 #include <stm32f10x.h>

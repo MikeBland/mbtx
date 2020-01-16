@@ -55,9 +55,11 @@
 #include "font12x8test.lbm"
 
 #ifndef SMALL
+ #ifndef PCBLEM1
 const uint8_t font_se_extra[] = {
 #include "font_se_05x07.lbm"
 } ;
+ #endif
 #endif
 const uint8_t font_fr_extra[] = {
 #include "font_fr_05x07.lbm"
@@ -66,19 +68,23 @@ const uint8_t font_de_extra[] = {
 #include "font_de_05x07.lbm"
 } ;
 #ifndef SMALL
+ #ifndef PCBLEM1
 const uint8_t font_it_extra[] = {
 #include "font_it_05x07.lbm"
 } ;
 const uint8_t font_pl_extra[] = {
 #include "font_pl_05x07.lbm"
 } ;
+ #endif
 #endif
 #endif
 
 #ifndef SMALL
+ #ifndef PCBLEM1
 const uint8_t font_se_big_extra[] = {
 #include "font_se_10x14.lbm"
 } ;
+ #endif
 #endif
 const uint8_t font_fr_big_extra[] = {
 #include "font_fr_10x14.lbm"
@@ -1367,19 +1373,19 @@ void lcd_puts_Pleft( uint8_t y, const char *s )
 }
 
 // This routine skips 'skip' strings, then displays the rest
-void lcd_puts_Pskip(uint8_t y,const char * s, uint8_t skip)
-{
-	while ( skip )
-	{
-    char c = *s++ ;
-    if(!c) return ;
-		if ( c == 31 )
-		{
-			skip -= 1 ;
-		}
-	}
-  lcd_putsAtt( 0, y, s, 0);
-}
+//void lcd_puts_Pskip(uint8_t y,const char * s, uint8_t skip)
+//{
+//	while ( skip )
+//	{
+//    char c = *s++ ;
+//    if(!c) return ;
+//		if ( c == 31 )
+//		{
+//			skip -= 1 ;
+//		}
+//	}
+//  lcd_putsAtt( 0, y, s, 0);
+//}
 
 void lcd_puts_P( uint8_t x, uint8_t y, const char *s )
 {

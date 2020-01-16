@@ -4628,118 +4628,118 @@ OS_TID CreateTask(FUNCPtr task,void *argv,U32 parameter,OS_STK *stk)
  * @details    This function is called to delete assign task.	 
  *******************************************************************************
  */
-StatusType CoDelTask(OS_TID taskID)
-{
-    P_OSTCB ptcb;
+//StatusType CoDelTask(OS_TID taskID)
+//{
+//    P_OSTCB ptcb;
 
-#if CFG_PAR_CHECKOUT_EN >0              /* Check validity of parameter        */
-    if(taskID >= CFG_MAX_USER_TASKS + SYS_TASK_NUM)
-    {
-        return E_INVALID_ID;
-    }
-#endif
-	ptcb = &TCBTbl[taskID];
-#if CFG_PAR_CHECKOUT_EN >0 
-    if(ptcb->state == TASK_DORMANT)
-    {
-        return E_INVALID_ID;
-    }
-#endif
-    if(taskID == 0)                     /* Is idle task?                      */
-    {											 
-        return E_PROTECTED_TASK;        /* Yes,error return                   */
-    }    
+//#if CFG_PAR_CHECKOUT_EN >0              /* Check validity of parameter        */
+//    if(taskID >= CFG_MAX_USER_TASKS + SYS_TASK_NUM)
+//    {
+//        return E_INVALID_ID;
+//    }
+//#endif
+//	ptcb = &TCBTbl[taskID];
+//#if CFG_PAR_CHECKOUT_EN >0 
+//    if(ptcb->state == TASK_DORMANT)
+//    {
+//        return E_INVALID_ID;
+//    }
+//#endif
+//    if(taskID == 0)                     /* Is idle task?                      */
+//    {											 
+//        return E_PROTECTED_TASK;        /* Yes,error return                   */
+//    }    
     
-    if(ptcb->state == TASK_RUNNING)     /* Is task running?                   */
-    {
-        if(OSSchedLock != 0)            /* Yes,is OS lock?                    */
-        {
-            return E_OS_IN_LOCK;        /* Yes,error return                   */
-        }	
-    }
+//    if(ptcb->state == TASK_RUNNING)     /* Is task running?                   */
+//    {
+//        if(OSSchedLock != 0)            /* Yes,is OS lock?                    */
+//        {
+//            return E_OS_IN_LOCK;        /* Yes,error return                   */
+//        }	
+//    }
 		
-#if CFG_MUTEX_EN >0                     /* Do task hold mutex?                */
-    if(ptcb->mutexID != INVALID_ID)
-	{
-        if(MutexTbl[ptcb->mutexID].taskID == ptcb->taskID)
-        {                               /* Yes,leave the mutex                */
-            CoLeaveMutexSection(ptcb->mutexID);
-        }
-    }
+//#if CFG_MUTEX_EN >0                     /* Do task hold mutex?                */
+//    if(ptcb->mutexID != INVALID_ID)
+//	{
+//        if(MutexTbl[ptcb->mutexID].taskID == ptcb->taskID)
+//        {                               /* Yes,leave the mutex                */
+//            CoLeaveMutexSection(ptcb->mutexID);
+//        }
+//    }
 	
-#endif	
+//#endif	
 
-    OsSchedLock();                      /* Lock schedule                      */
+//    OsSchedLock();                      /* Lock schedule                      */
     
-    if(ptcb->state == TASK_READY)       /* Is task in READY list?             */
-    {
-        RemoveFromTCBRdyList(ptcb);     /* Yes,remove task from the READY list*/
-    }
+//    if(ptcb->state == TASK_READY)       /* Is task in READY list?             */
+//    {
+//        RemoveFromTCBRdyList(ptcb);     /* Yes,remove task from the READY list*/
+//    }
 
-#if CFG_TASK_WAITTING_EN > 0 
-    else if(ptcb->state == TASK_WAITING)/* Is task in the WAITING list?       */
-    {
-        /* Yes,Is task in delay list? */
-        if(ptcb->delayTick != INVALID_VALUE)			         
-        {
-            RemoveDelayList(ptcb);      /* Yes,remove task from READY list    */
-        }
+//#if CFG_TASK_WAITTING_EN > 0 
+//    else if(ptcb->state == TASK_WAITING)/* Is task in the WAITING list?       */
+//    {
+//        /* Yes,Is task in delay list? */
+//        if(ptcb->delayTick != INVALID_VALUE)			         
+//        {
+//            RemoveDelayList(ptcb);      /* Yes,remove task from READY list    */
+//        }
 
-#if CFG_EVENT_EN > 0
-        if(ptcb->eventID != INVALID_ID) /* Is task in event waiting list?     */
-        {		
-            /* Yes,remove task from event waiting list                        */
-            RemoveEventWaittingList(ptcb);	
-        }
-#endif
+//#if CFG_EVENT_EN > 0
+//        if(ptcb->eventID != INVALID_ID) /* Is task in event waiting list?     */
+//        {		
+//            /* Yes,remove task from event waiting list                        */
+//            RemoveEventWaittingList(ptcb);	
+//        }
+//#endif
 
-#if CFG_FLAG_EN > 0
-        if(ptcb->pnode != NULL)         /* Is task in flag waiting list?      */
-        {
-            /* Yes,remove task from flag waiting list                         */
-            RemoveLinkNode(ptcb->pnode);	
-        }
-#endif
+//#if CFG_FLAG_EN > 0
+//        if(ptcb->pnode != NULL)         /* Is task in flag waiting list?      */
+//        {
+//            /* Yes,remove task from flag waiting list                         */
+//            RemoveLinkNode(ptcb->pnode);	
+//        }
+//#endif
 
-#if CFG_MUTEX_EN >0
-        if(ptcb->mutexID != INVALID_ID) /* Is task in mutex waiting list?     */
-        {
-            RemoveMutexList(ptcb);  /* Yes,remove task from mutex waiting list*/
-        }
-#endif
-	  }
-#endif
-    ptcb->state   = TASK_DORMANT;       /* Release TCB                        */
-	TaskSchedReq  = TRUE;	
+//#if CFG_MUTEX_EN >0
+//        if(ptcb->mutexID != INVALID_ID) /* Is task in mutex waiting list?     */
+//        {
+//            RemoveMutexList(ptcb);  /* Yes,remove task from mutex waiting list*/
+//        }
+//#endif
+//	  }
+//#endif
+//    ptcb->state   = TASK_DORMANT;       /* Release TCB                        */
+//	TaskSchedReq  = TRUE;	
 
-#if CFG_ORDER_LIST_SCHEDULE_EN ==0
-	DeleteTaskPri(ptcb->prio);	
-#endif	
+//#if CFG_ORDER_LIST_SCHEDULE_EN ==0
+//	DeleteTaskPri(ptcb->prio);	
+//#endif	
 
-#if CFG_TASK_SCHEDULE_EN >0
-    ptcb->TCBnext = FreeTCB;
-    FreeTCB       = ptcb;
-#endif
-    OsSchedUnlock();                    /* Unlock schedule                    */
-    return E_OK;                        /* return OK                          */
-}
+//#if CFG_TASK_SCHEDULE_EN >0
+//    ptcb->TCBnext = FreeTCB;
+//    FreeTCB       = ptcb;
+//#endif
+//    OsSchedUnlock();                    /* Unlock schedule                    */
+//    return E_OK;                        /* return OK                          */
+//}
 
 
-/**
- *******************************************************************************
- * @brief      Exit Task	   
- * @param[in]  None 
- * @param[out] None  
- * @retval     None			 
- *
- * @par Description
- * @details    This function is called to exit current task.	 
- *******************************************************************************
- */
-void CoExitTask(void)
-{
-    CoDelTask(TCBRunning->taskID);      /* Call task delete function          */
-}
+///**
+// *******************************************************************************
+// * @brief      Exit Task	   
+// * @param[in]  None 
+// * @param[out] None  
+// * @retval     None			 
+// *
+// * @par Description
+// * @details    This function is called to exit current task.	 
+// *******************************************************************************
+// */
+//void CoExitTask(void)
+//{
+//    CoDelTask(TCBRunning->taskID);      /* Call task delete function          */
+//}
 
 
 #if CFG_TASK_SCHEDULE_EN ==0

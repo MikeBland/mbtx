@@ -942,11 +942,13 @@ struct t_I2C_request
 
 #define MMR_ADDRESS_COUNT_MASK	0x00000300
 
-struct t_I2C_request GeneralI2cRequest ;
-struct t_I2C_request LedI2cRequest ;
 struct t_I2C_request *I2cHeadPointer ;
 struct t_I2C_request *I2cTailPointer ;
 struct t_I2C_request *I2cCurrentPointer ;
+
+#ifndef SMALL
+struct t_I2C_request GeneralI2cRequest ;
+struct t_I2C_request LedI2cRequest ;
 struct t_I2C_request ExtRtcI2cRequest ;
 struct t_I2C_request ExtRtcI2cWriteRequest ;
 
@@ -968,6 +970,7 @@ void submitI2cRequest( struct t_I2C_request *ptr )
 	i2c_check_for_request() ;
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 }
+#endif
 
 #ifndef SMALL
 uint8_t Mcp23008InitData[7] = {0, 0, 0, 0, 0, 0, 0 } ;
@@ -1457,13 +1460,13 @@ void write_coprocessor( uint8_t *ptr, uint32_t count )
 	NVIC_EnableIRQ(TWI0_IRQn) ;
 }	
 
-void appgo_coprocessor()
-{
-	CoProc_appgo_pending = 1 ;
-	NVIC_DisableIRQ(TWI0_IRQn) ;
-	i2c_check_for_request() ;
-	NVIC_EnableIRQ(TWI0_IRQn) ;
-}	
+//void appgo_coprocessor()
+//{
+//	CoProc_appgo_pending = 1 ;
+//	NVIC_DisableIRQ(TWI0_IRQn) ;
+//	i2c_check_for_request() ;
+//	NVIC_EnableIRQ(TWI0_IRQn) ;
+//}	
 #endif
 
 //

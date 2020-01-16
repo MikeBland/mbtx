@@ -155,11 +155,16 @@ extern void end_bt_tx_interrupt() ;
 
 extern struct t_fifo64 Sbus_fifo ;
 #ifdef ACCESS
-extern struct t_fifo128 Access_int_fifo ;
+extern struct t_fifo128 Internal_fifo ;
 extern struct t_fifo128 Access_ext_fifo ;
 void put_16bit_fifo64( struct t_16bit_fifo64 *pfifo, uint16_t word ) ;
 int32_t get_16bit_fifo64( struct t_16bit_fifo64 *pfifo ) ;
 #endif
+
+#ifdef PCBT16
+extern struct t_fifo128 Internal_fifo ;
+#endif
+
 //extern struct t_fifo64 CaptureRx_fifo ;
 extern struct t_fifo128 Com1_fifo ;
 extern struct t_fifo128 Com2_fifo ;

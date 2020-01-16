@@ -170,7 +170,7 @@ Enable(1) or disable(0) TimeDelay() API.
 /*!< 
 Enable(1) or disable(0) timer management.		      
 */
-#define CFG_TMR_EN              (1)		
+#define CFG_TMR_EN              (0)		
 
 /*!< 
 Specify max number timer.(must be less than 32)      
@@ -186,7 +186,7 @@ Enable(1) or disable(0) events management,
 events including semaphore,mailbox,queue.             
 */
 #if CFG_TASK_WAITTING_EN > 0
-#define  CFG_EVENT_EN           (1) 
+#define  CFG_EVENT_EN           (0) 
 #endif
 	   	
 #if CFG_EVENT_EN > 0
@@ -209,7 +209,7 @@ Enable(1) or disable(0) semaphore management.
 /*!< 
 Enable(1) or disable(0) mailbox management.	      
 */		
-#define CFG_MAILBOX_EN          (1)	
+#define CFG_MAILBOX_EN          (0)	
 
 /*!< 
 Enable(1) or disable(0) queue management.		      
@@ -252,7 +252,7 @@ Enable(1) or disable(0) mutex management.
 Max number of mutex.(must be less than 255).      
 */ 
 #if CFG_MUTEX_EN >0
-#define CFG_MAX_MUTEX           (10)			
+#define CFG_MAX_MUTEX           (4)			
 #endif
 
 /*---------------------- Utility Management Config --------------------------*/
@@ -266,11 +266,11 @@ Enable(1) or disable(0) utility management.
 /*!< 
 Enable(1) or disable(0) TickToTime() utility	
 */
-#define	CFG_TICK_TO_TIME_EN     (1)		
+#define	CFG_TICK_TO_TIME_EN     (0)		
 /*!< 
 Enable(1) or disable(0) TimeToTick() utility	
 */	
-#define	CFG_TIME_TO_TICK_EN     (1)		
+#define	CFG_TIME_TO_TICK_EN     (0)		
 #endif
 
 

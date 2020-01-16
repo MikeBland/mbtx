@@ -124,30 +124,30 @@ extern void PMC_DisablePeripheral( uint32_t dwId )
 /**
  * \brief Enable all the periph clock via PMC.
  */
-extern void PMC_EnableAllPeripherals( void )
-{
-    PMC->PMC_PCER0 = MASK_STATUS0 ;
-    while ( (PMC->PMC_PCSR0 & MASK_STATUS0) != MASK_STATUS0 ) ;
+//extern void PMC_EnableAllPeripherals( void )
+//{
+//    PMC->PMC_PCER0 = MASK_STATUS0 ;
+//    while ( (PMC->PMC_PCSR0 & MASK_STATUS0) != MASK_STATUS0 ) ;
 
-    PMC->PMC_PCER1 = MASK_STATUS1 ;
-    while ( (PMC->PMC_PCSR1 & MASK_STATUS1) != MASK_STATUS1 ) ;
+//    PMC->PMC_PCER1 = MASK_STATUS1 ;
+//    while ( (PMC->PMC_PCSR1 & MASK_STATUS1) != MASK_STATUS1 ) ;
 
-//    TRACE_DEBUG( "Enable all periph clocks\n\r" ) ;
-}
+////    TRACE_DEBUG( "Enable all periph clocks\n\r" ) ;
+//}
 
-/**
- * \brief Disable all the periph clock via PMC.
- */
-extern void PMC_DisableAllPeripherals( void )
-{
-    PMC->PMC_PCDR0 = MASK_STATUS0 ;
-    while ( (PMC->PMC_PCSR0 & MASK_STATUS0) != 0 ) ;
+///**
+// * \brief Disable all the periph clock via PMC.
+// */
+//extern void PMC_DisableAllPeripherals( void )
+//{
+//    PMC->PMC_PCDR0 = MASK_STATUS0 ;
+//    while ( (PMC->PMC_PCSR0 & MASK_STATUS0) != 0 ) ;
 
-    PMC->PMC_PCDR1 = MASK_STATUS1 ;
-    while ( (PMC->PMC_PCSR1 & MASK_STATUS1) != 0 ) ;
+//    PMC->PMC_PCDR1 = MASK_STATUS1 ;
+//    while ( (PMC->PMC_PCSR1 & MASK_STATUS1) != 0 ) ;
 
-//    TRACE_DEBUG( "Disable all periph clocks\n\r" ) ;
-}
+////    TRACE_DEBUG( "Disable all periph clocks\n\r" ) ;
+//}
 
 /**
  * \brief Get Periph Status for the given peripheral ID.

@@ -20,7 +20,7 @@
 
 /** @file Main interface layer handler for Lua API. */
 
-#include <ctype.h>
+//#include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>

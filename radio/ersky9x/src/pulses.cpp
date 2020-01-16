@@ -104,12 +104,12 @@ extern uint8_t MultiResponseFlag ;
 	}
 }
 
-uint16_t SetMultiArrayCount ;
+//uint16_t SetMultiArrayCount ;
 
 void setMultiSerialArray( uint8_t *data, uint32_t module )
 {
 	
-	SetMultiArrayCount += 1 ;
+//	SetMultiArrayCount += 1 ;
 	
 	uint32_t i ;
 	uint8_t packetType ;
@@ -217,6 +217,7 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 			outputbitsavailable -= 8 ;
 		}
 	}
+	*data++ = 0 ;
 }
 
 

@@ -206,10 +206,12 @@ void UART_Sbus57600_configure( uint32_t masterClock )
   pUart->UART_MR =  0 ;  // NORMAL, Even Parity
 }
 
+#ifndef SMALL
 void UART_9dataOdd1stop()
 {
 
 }
+#endif
 
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
@@ -233,6 +235,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	
 }
 
+#ifndef SMALL
 uint32_t txPdcCom1( struct t_serial_tx *data )
 {
   register Usart *pUsart = SECOND_USART;
@@ -253,6 +256,7 @@ uint32_t txPdcCom1( struct t_serial_tx *data )
 	}
 	return 0 ;
 }
+#endif
 
 extern "C" void UART0_IRQHandler()
 {
@@ -371,12 +375,14 @@ void startPdcBtReceive()
 	pUart->UART_PTCR = US_PTCR_RXTEN ;
 }
 
+#ifndef SMALL
 void endPdcUsartReceive()
 {
   register Uart *pUart = BT_USART;
 
 	pUart->UART_PTCR = UART_PTCR_RXTDIS ;
 }
+#endif
 
 static int32_t rxPdcBt()
 {
@@ -521,10 +527,12 @@ void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 	}
 }
 
+#ifndef SMALL
 void UART2_9dataOdd1stop()
 {
 	
 }
+#endif
 
 // This is for Com 1
 extern "C" void USART0_IRQHandler()
@@ -936,6 +944,7 @@ extern "C" void UART1_IRQHandler()
  * This function is synchronous (i.e. uses polling).
  * c  Character to send.
  */
+#ifdef DEBUG
 void txmit( uint8_t c )
 {
   Uart *pUart=CONSOLE_USART ;
@@ -946,7 +955,7 @@ void txmit( uint8_t c )
   /* Send character */
   pUart->UART_THR=c ;
 }
-
+#endif
 //// Outputs a string to the UART
 
 //uint16_t rxCom2()
@@ -954,6 +963,7 @@ void txmit( uint8_t c )
 //	return get_fifo128( &Com2_fifo ) ;
 //}
 
+#ifndef SMALL
 void txmit2nd( uint8_t c )
 {
   register Usart *pUsart = SECOND_USART;
@@ -975,6 +985,7 @@ uint16_t rx2nduart()
 	}
 	return 0xFFFF ;
 }
+#endif
 
 //void txmitBt( uint8_t c )
 //{
@@ -1000,7 +1011,7 @@ uint16_t rx2nduart()
 //}
 
 
-void start_timer5()
+static void start_timer5()
 {
 #ifndef SIMU
   register Tc *ptc ;
@@ -1020,7 +1031,7 @@ void start_timer5()
 #endif
 }
 
-void stop_timer5()
+static void stop_timer5()
 {
 	TC1->TC_CHANNEL[2].TC_CCR = 2 ;		// Disable clock
 	NVIC_DisableIRQ(TC5_IRQn) ;

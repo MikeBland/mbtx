@@ -18,7 +18,7 @@
  * GNU General Public License for more details.
  */
 
-#include <ctype.h>
+//#include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
 //#include "opentx.h"

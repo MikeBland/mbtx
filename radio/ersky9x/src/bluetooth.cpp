@@ -35,7 +35,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <ctype.h>
+//#include <ctype.h>
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"

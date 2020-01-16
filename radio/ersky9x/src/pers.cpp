@@ -204,7 +204,7 @@ void generalDefault()
 		*CalibSpanPos[i] = 0x300 ;
 		*CalibSpanNeg[i] = 0x300 ;
   }
-  strncpy_P(g_eeGeneral.ownerName,PSTR(STR_ME), 10);
+  ncpystr((uint8_t*)g_eeGeneral.ownerName,(uint8_t*)PSTR(STR_ME), 10);
   g_eeGeneral.chkSum = evalChkSum() ;
 	eeDirty(EE_GENERAL) ;
 	sysFlags |= sysFLAG_FORMAT_EEPROM ;
@@ -213,7 +213,7 @@ void generalDefault()
 void modelDefault(uint8_t id)
 {
   memset(&g_model, 0, sizeof(SKYModelData));
-  strncpy_P(g_model.name,PSTR(STR_MODEL), 10 );
+  ncpystr((uint8_t*)g_model.name,(uint8_t*)PSTR(STR_MODEL), 10 );
   g_model.name[5]='0'+(id+1)/10;
   g_model.name[6]='0'+(id+1)%10;
 	g_model.modelVersion = 4 ;

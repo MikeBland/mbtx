@@ -138,8 +138,12 @@ struct t_fifo128 Com3_fifo ;
 struct t_fifo64 Sbus_fifo ;
 
 #ifdef ACCESS
-struct t_fifo128 Access_int_fifo ;
+struct t_fifo128 Internal_fifo ;
 struct t_fifo128 Access_ext_fifo ;
+#endif
+
+#ifdef PCBT16
+struct t_fifo128 Internal_fifo ;
 #endif
 
 struct t_telemetryTx TelemetryTx ;
@@ -4545,10 +4549,10 @@ void init_spi()
   /* Enable SPI clock, SPI1: APB2, SPI2: APB1 */
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN ;    // Enable clock
 
-	// APB1 clock / 2 = 133nS per clock
+	// APB1 clock / 4 = 133nS per clock
 	SPI1->CR1 = 0 ;		// Clear any mode error
 	SPI1->CR2 = 0 ;
-	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA ;
+	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_BR_0 ;
 	SPI1->CR1 |= SPI_CR1_MSTR ;	// Make sure in case SSM/SSI needed to be set first
 	SPI1->CR1 |= SPI_CR1_SPE ;
 
@@ -4675,6 +4679,55 @@ uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
 		}
 	}
 	return spiptr->DR ;
+}
+
+uint16_t readSpiEncoder()
+{
+	uint32_t result ;
+	uint16_t x ;
+	register SPI_TypeDef *spiptr = SPI1 ;
+
+	// possibly toggle the CS line
+	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | (SPI_CR1_BR_0 | SPI_CR1_BR_1) ;	// Restore clock
+
+	(void) spiptr->DR ;		// Dump any rx data
+	spiptr->DR = 0x5A ;
+	result = 0 ; 
+	while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+	{
+		// wait for received
+		if ( ++result > 10000 )
+		{
+			break ;				
+		}
+	}
+	// delay 5uS (ish)
+	x = spiptr->DR ;
+	hw_delay(33) ;	// Give 8MHz Arduino time to load data
+	spiptr->DR = 0 ;
+	result = 0 ; 
+	while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+	{
+		// wait for received
+		if ( ++result > 10000 )
+		{
+			break ;				
+		}
+	}
+	x = spiptr->DR ;
+	hw_delay(12) ;	// Give 8MHz Arduino time to load data
+	spiptr->DR = 0 ;
+	result = 0 ; 
+	while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+	{
+		// wait for received
+		if ( ++result > 10000 )
+		{
+			break ;				
+		}
+	}
+	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | SPI_CR1_BR_0 ;	// Restore clock
+	return ( x << 8 ) | spiptr->DR ;
 }
 
 uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count )

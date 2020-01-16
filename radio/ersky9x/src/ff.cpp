@@ -3189,39 +3189,72 @@ FRESULT f_mkdir (
 /* Change Timestamp                                                      */
 /*-----------------------------------------------------------------------*/
 
-FRESULT f_utime (
-	const TCHAR *path,	/* Pointer to the file/directory name */
-	const FILINFO *fno	/* Pointer to the time stamp to be set */
-)
-{
-	FRESULT res;
-	DIR dj;
-	BYTE *dir;
-	DEF_NAMEBUF;
+//FRESULT f_utime (
+//	const TCHAR *path,	/* Pointer to the file/directory name */
+//	const FILINFO *fno	/* Pointer to the time stamp to be set */
+//)
+//{
+//	FRESULT res;
+//	DIR dj;
+//	BYTE *dir;
+//	DEF_NAMEBUF;
 
 
-	res = chk_mounted(&path, &dj.fs, 1);
-	if (res == FR_OK) {
-		INIT_BUF(dj);
-		res = follow_path(&dj, path);	/* Follow the file path */
-		FREE_BUF();
-		if (_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
-			res = FR_INVALID_NAME;
-		if (res == FR_OK) {
-			dir = dj.dir;
-			if (!dir) {					/* Root directory */
-				res = FR_INVALID_NAME;
-			} else {					/* File or sub-directory */
-				ST_WORD(dir+DIR_WrtTime, fno->ftime);
-				ST_WORD(dir+DIR_WrtDate, fno->fdate);
-				dj.fs->wflag = 1;
-				res = sync(dj.fs);
-			}
-		}
-	}
+//	res = chk_mounted(&path, &dj.fs, 1);
+//	if (res == FR_OK) {
+//		INIT_BUF(dj);
+//		res = follow_path(&dj, path);	/* Follow the file path */
+//		FREE_BUF();
+//		if (_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
+//			res = FR_INVALID_NAME;
+//		if (res == FR_OK) {
+//			dir = dj.dir;
+//			if (!dir) {					/* Root directory */
+//				res = FR_INVALID_NAME;
+//			} else {					/* File or sub-directory */
+//FRESULT f_utime (
+//	const TCHAR *path,	/* Pointer to the file/directory name */
+//	const FILINFO *fno	/* Pointer to the time stamp to be set */
+//)
+//{
+//	FRESULT res;
+//	DIR dj;
+//	BYTE *dir;
+//	DEF_NAMEBUF;
 
-	LEAVE_FF(dj.fs, res);
-}
+
+//	res = chk_mounted(&path, &dj.fs, 1);
+//	if (res == FR_OK) {
+//		INIT_BUF(dj);
+//		res = follow_path(&dj, path);	/* Follow the file path */
+//		FREE_BUF();
+//		if (_FS_RPATH && res == FR_OK && (dj.fn[NS] & NS_DOT))
+//			res = FR_INVALID_NAME;
+//		if (res == FR_OK) {
+//			dir = dj.dir;
+//			if (!dir) {					/* Root directory */
+//				res = FR_INVALID_NAME;
+//			} else {					/* File or sub-directory */
+//				ST_WORD(dir+DIR_WrtTime, fno->ftime);
+//				ST_WORD(dir+DIR_WrtDate, fno->fdate);
+//				dj.fs->wflag = 1;
+//				res = sync(dj.fs);
+//			}
+//		}
+//	}
+
+//	LEAVE_FF(dj.fs, res);
+//}
+//				ST_WORD(dir+DIR_WrtTime, fno->ftime);
+//				ST_WORD(dir+DIR_WrtDate, fno->fdate);
+//				dj.fs->wflag = 1;
+//				res = sync(dj.fs);
+//			}
+//		}
+//	}
+
+//	LEAVE_FF(dj.fs, res);
+//}
 
 
 

@@ -345,6 +345,22 @@ void initMultiMode()
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PORT_EXTPPM | PIN_LOW ) ;
 #endif
 #ifdef PCBX10
+ #if defined(PCBT16)
+	if ( MultiModule )
+	{
+		INTERNAL_RF_ON() ;
+		RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
+	  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
+		configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+		configure_pins( INTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+	
+		INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 57600 ;
+		INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE ;
+		NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
+  	NVIC_EnableIRQ( INTMODULE_USART_IRQn);
+		return ;
+	}
+ #endif
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
@@ -403,6 +419,15 @@ void stopMultiMode()
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PORT_EXTPPM | PIN_LOW ) ;
 #endif
 #ifdef PCBX10
+ #if defined(PCBT16)
+	if ( MultiModule )
+	{
+		INTERNAL_RF_OFF() ;
+  	NVIC_DisableIRQ( INTMODULE_USART_IRQn) ;
+		INTMODULE_USART->CR1 &= ~(USART_CR1_UE | USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE) ;
+		return ;
+	}
+ #endif
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_OFF() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
@@ -411,6 +436,12 @@ void stopMultiMode()
 
 uint16_t getMultiFifo()
 {
+ #if defined(PCBT16)
+	if ( MultiModule )
+	{
+		return get_fifo128( &Internal_fifo ) ;
+	}
+ #endif	
 	if ( MultiPort )
 	{
 		return get_fifo128( &Com2_fifo ) ;
@@ -469,6 +500,17 @@ void sendMultiByte( uint8_t byte )
 #endif
 
 #ifdef PCBX10
+ #if defined(PCBT16)
+	if ( MultiModule )
+	{
+		/* Wait for the transmitter to be ready */
+  	while ( (INTMODULE_USART->SR & USART_SR_TXE) == 0 ) ;
+
+	  /* Send character */
+		INTMODULE_USART->DR = byte ;
+		return ;
+	}
+ #endif
 	uint32_t bit ;
 	if ( MultiModule )
 	{
@@ -966,6 +1008,13 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 		limit = fc->nameCount ;						
 	}
 	maxhsize = 0 ;
+
+	if ( limit == 0 )
+	{
+		lcd_puts_Pleft( 4*FH, "\005No Files" ) ;
+		return 0 ;
+	}
+
 	for ( i = 0 ; i < limit ; i += 1 )
 	{
 		uint32_t x ;
@@ -1431,7 +1480,11 @@ void menuUpMulti(uint8_t event)
 #if defined(PCBSKY) || defined(PCB9XT)
 	mstate2.check_columns(event, 4 ) ;
 #else
+ #if defined(PCBT16)
+	mstate2.check_columns(event, 2 ) ;
+ #else
 	mstate2.check_columns(event, 1 ) ;
+ #endif
 #endif
 	uint32_t sub = mstate2.m_posVert ;
 	uint32_t subN = 0 ;
@@ -1463,6 +1516,10 @@ void menuUpMulti(uint8_t event)
 	lcd_puts_Pleft( y, XPSTR("Invert Com Port") ) ;
 	MultiInvert = checkIndexed( y, XPSTR("\150\001\003 NOYES"), MultiInvert, (sub==subN) ) ;
 #endif
+ #if defined(PCBT16)
+	lcd_puts_Pleft( y, XPSTR("Module") ) ;
+	MultiModule = checkIndexed( y, XPSTR("\110\001\010ExternalInternal"), MultiModule, (sub==subN) ) ;
+ #endif
 }
 #endif
 
@@ -2725,7 +2782,11 @@ void menuUpdate(uint8_t event)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+ #if defined(PCBT16)
+	lcd_puts_Pleft( 5*FH, "  Update Multi" );
+ #else
 	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
+ #endif
 #endif
 
   switch(event)
@@ -3041,6 +3102,7 @@ void menuUpdate(uint8_t event)
 
 #ifdef PCBSKY
 
+#ifdef REVX
 void init_mtwi()
 {
 	register Pio *pioptr ;
@@ -3070,7 +3132,6 @@ void init_mtwi()
 #endif
 }
 
-#ifdef REVX
 uint32_t clearMfp()
 {
 	uint32_t i ;
@@ -4170,7 +4231,7 @@ void maintenanceBackground()
 	if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
 		int32_t rxbyte ;
-		while ( ( rxbyte = get_fifo128( &Access_int_fifo ) ) != -1 )
+		while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
 		{
 		 	frsky_receive_byte( rxbyte ) ;
 		}

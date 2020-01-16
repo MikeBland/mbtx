@@ -16,149 +16,167 @@
 #
 # Build commands:
 #
-# make REVB=1 REVX=1
-# make PCB=X9D BT=1
-# make PCB=X9D REV9E=1
-# make PCB=X9D REVPLUS=1
-# make PCB=9XT
-# make REVB=1 SMALL=1
-# make PCB=X9D PCBX7=1 BT=1
-# make REVB=1
-# make PCB=X12D
-# make PCB=X9D PCBXLITE=1
-# make PCB=X9D PCBX7=1 PCBT12=1
-# make PCB=X9D PCBX9LITE=1
-# make PCB=X10 PCBT16=1
-# make PCBLEM1=1
-# make PCB=X9D PCBX9LITE=1 X9LS=1 
+# Taranis      make PCB=X9D BT=1
+# X9E          make PCB=X9D REV9E=1
+# TaranisPlus  make PCB=X9D REVPLUS=1
+# XLite        make PCB=X9D PCBXLITE=1
+# QX7          make PCB=X9D PCBX7=1 BT=1
+# Jumper T12   make PCB=X9D PCBX7=1 PCBT12=1
+# X9Lite       make PCB=X9D PCBX9LITE=1
+# X9LiteS      make PCB=X9D PCBX9LITE=1 X9LS=1 
+# 9Xtreme      make PCB=9XT
+# SKY board    make REVB=1 SMALL=1
+# 9XR_PRO      make REVB=1 REVX=1
+# AR9X board   make REVB=1
+# Horus X12S   make PCB=X12D
+# Jumper T16   make PCB=X10 PCBT16=1
+# XWAVE T-800  make PCBLEM1=1
 #
 ##############################################################################################
 # Start of default section
 #
 
-TRGT = arm-none-eabi-
-CC   = $(TRGT)gcc
-CP   = $(TRGT)objcopy
-CLSS = $(TRGT)objdump
-AS   = $(TRGT)as
+TOOLCHAIN = arm-none-eabi-
+CC   = $(TOOLCHAIN)gcc
+CP   = $(TOOLCHAIN)objcopy
+CLSS = $(TOOLCHAIN)objdump
+AS   = $(TOOLCHAIN)as
 #gcc -x assembler-with-cpp
 BIN  = $(CP) -O ihex 
 BINX = $(CP) -O binary 
 
-# Object files directory
-ifeq ($(PCB), X10)
- ifeq ($(PCBT16), 1)
-  CPPDEFS += -DPCBT16
-  OBJDIR = t16obj
- else
-  OBJDIR = x10obj
- endif
-  BASIC = 1
-  CPPDEFS += -DBASIC 
-#  LUA = 1
-#  CPPDEFS += -DLUA
-else
-ifeq ($(PCB), X12D)
-  OBJDIR = x12dobj
-  BASIC = 1
-  CPPDEFS += -DBASIC 
-#  LUA = 1
-#  CPPDEFS += -DLUA
-else
+
 ifeq ($(PCB), X9D)
+ BASIC = 1
+ CPPDEFS += -DBASIC
+ LDSCRIPT = X9D/stm32_flash.ld
+ CPPDEFS += -DHSE_VALUE=12000000
+ CPPDEFS += -DPCBX9D 
+ CPPDEFS += -DUSB_JOYSTICK
+ CPPDEFS += -DXFIRE
+ UDEFS = -Dstm32f205
  ifeq ($(REVPLUS), 1)
-  OBJDIR = x9dpobj
-  BASIC = 1
-  CPPDEFS += -DBASIC 
-#  LUA = 1
-#  CPPDEFS += -DLUA
- else
-  ifeq ($(REV9E), 1)
-   OBJDIR = x9eobj
-   BASIC = 1
-   CPPDEFS += -DBASIC 
-#   LUA = 1
-#   CPPDEFS += -DLUA
+  PROJECT = x9dp
+  EXT_MOD=X9DP
+  CPPDEFS += -DREVPLUS
+ else ifeq ($(REV9E), 1)
+  PROJECT        = x9e
+  EXT_MOD=X9E
+  CPPDEFS += -DREV9E
+ else ifeq ($(PCBX7), 1)
+  CPPDEFS += -DPCBX7
+  ifeq ($(PCBT12), 1)
+   CPPDEFS += -DPCBT12
+   PROJECT = t12
+   EXT_MOD=T12
   else
-   ifeq ($(PCBX7), 1)
-    ifeq ($(PCBT12), 1)
-     CPPDEFS += -DPCBT12
-     OBJDIR = t12obj
-	 else
-     OBJDIR = x7obj
-	 endif
-    BASIC = 1
-    CPPDEFS += -DBASIC 
-#    LUA = 1
-#    CPPDEFS += -DLUA
-   else
-    ifeq ($(PCBXLITE), 1)
-     OBJDIR = xliteobj
-     BASIC = 1
-     CPPDEFS += -DBASIC 
-    else
-     ifeq ($(PCBX9LITE), 1)
-	   ifeq ($(X9LS), 1)
-       OBJDIR = x9lsobj
-		 BT = 1
-		else
-       OBJDIR = x9lobj
-		endif
-      BASIC = 1
-      CPPDEFS += -DBASIC 
-     else
-      OBJDIR = x9dobj
-      BASIC = 1
-      CPPDEFS += -DBASIC 
-#      LUA = 1
-#      CPPDEFS += -DLUA
-	  endif
-	 endif
-	endif
+   PROJECT = x7
+   EXT_MOD=QX7
   endif
+ else ifeq ($(PCBXLITE), 1)
+  PROJECT = xlite
+  EXT_MOD=XLITE
+  CPPDEFS += -DPCBXLITE
+ else ifeq ($(PCBX9LITE), 1)
+  CPPDEFS += -DPCBX9LITE
+  ifeq ($(X9LS), 1)
+   BT = 1
+   PROJECT = x9LiteS
+   EXT_MOD=X9LiteS
+   CPPDEFS += -DX9LS 
+  else
+   PROJECT = x9Lite
+   EXT_MOD=X9Lite
+  endif
+ else
+  PROJECT = x9d
+  EXT_MOD=X9D
+  CPPDEFS += -DREVNORM
  endif
-else
-ifeq ($(PCBLEM1), 1)
+else ifeq ($(PCB), 9XT)
+ PROJECT      = ersky9x9XT
+ BASIC = 1
+ CPPDEFS += -DBASIC 
+ LDSCRIPT = X9D/stm32_flash.ld
+ CPPDEFS += -DHSE_VALUE=12000000
+ CPPDEFS += -DPCB9XT 
+ CPPDEFS += -DPCBSP
+ CPPDEFS += -DUSB_JOYSTICK
+ CPPDEFS += -DXFIRE
+ EXT_MOD=9XT
+ UDEFS = -Dstm32f205
+else ifeq ($(PCB), X12D)
+ PROJECT = x12d
+ BASIC = 1
+ CPPDEFS += -DBASIC 
+ LDSCRIPT = X12D/stm32f4_flash.ld
+ CPPDEFS += -DHSE_VALUE=12000000
+ CPPDEFS += -DPCBX12D 
+ CPPDEFS += -DUSB_JOYSTICK
+ EXT_MOD=X12D
+ UDEFS = -DSTM32F429_439xx
+else ifeq ($(PCB), X10)
+ BASIC = 1
+ CPPDEFS += -DBASIC 
+ LDSCRIPT = X12D/stm32f4_flash.ld
+ CPPDEFS += -DHSE_VALUE=12000000
+ CPPDEFS += -DPCBX10 
+ CPPDEFS += -DUSB_JOYSTICK
+ UDEFS = -DSTM32F429_439xx
+ ifeq ($(PCBT16), 1)
+  PROJECT = t16
+  CPPDEFS += -DPCBT16 
+  EXT_MOD=T16
+ else
+  PROJECT = x10
+  EXT_MOD=X10
+ endif
+else ifeq ($(PCBLEM1), 1)
+ PROJECT = lemon1
  CPPDEFS += -DBASIC 
  BASIC = 1
- OBJDIR = lem1obj
+ LDSCRIPT = STM32F103VETx_FLASH.ld
+ CPPDEFS += -DHSE_VALUE=8000000
+ CPPDEFS += -DPCBLEM1 
+ FULL_PRJ = $(PROJECT)_rom
+ EXT_MOD=Lemon
+ UDEFS = -Dstm32f103
+ UDEFS = -DSTM32F10X_HD
 else
+ USB_JOYSTICK = 1
+ BASIC = 1
+ CPPDEFS += -DBASIC 
+ CPPDEFS += -DPCBSKY 
+ CPPDEFS += -DREVB
+ UINCDIR = ./sky/joy/inc
  ifeq ($(PCB), DUE)
-  OBJDIR = skyDobj
+  PROJECT      = ersky9xd
+  LDSCRIPT = due/sam3x8_flash.ld
+  UDEFS = -Dat91sam3x8
+  UDEFS  += -D__SAM3X8E__
+  EXT_MOD=DUE
+  CPPDEFS += -DPCBDUE 
+ else ifeq ($(REVX), 1)
+  PROJECT = ersky9xr
+  LDSCRIPT = sam3s8c_flash.ld
+  UDEFS = -Dat91sam3s8
+  CPPDEFS += -DREVX
+  CPPDEFS += -DXFIRE
+  EXT_MOD=REVB-X
+ else ifeq ($(SMALL), 1)
+  PROJECT = ersky9xs
+  LDSCRIPT = sam3s4c_flash.ld
+  UDEFS = -Dat91sam3s4
+  EXT_MOD=REVB
+  CPPDEFS += -DSMALL 
  else
-  ifeq ($(PCB), 9XT)
-    OBJDIR = sky9XTobj
-    BASIC = 1
-    CPPDEFS += -DBASIC 
-#    LUA = 1
-#    CPPDEFS += -DLUA
-  else
-   USB_JOYSTICK = 1
-   ifeq ($(REVX), 1)
-    OBJDIR = skyRobj
-    BASIC = 1
-    CPPDEFS += -DBASIC 
-#    LUA = 1
-#    CPPDEFS += -DLUA
-   else
-    ifeq ($(SMALL), 1)
-     OBJDIR = skySobj
-     BASIC = 1
-     CPPDEFS += -DBASIC 
-    else
-     BASIC = 1
-     CPPDEFS += -DBASIC 
-#     LUA = 1
-#     CPPDEFS += -DLUA
-     OBJDIR = skyobj
-    endif
-   endif
-  endif
+  PROJECT = ersky9x
+  LDSCRIPT = sam3s8c_flash.ld
+  EXT_MOD=REVB
+  UDEFS = -Dat91sam3s8
  endif
 endif
-endif
-endif
-endif
+
 
 MCU  = cortex-m3
 
@@ -191,206 +209,8 @@ PROV=$(shell sh -c "cat prov.txt")
 # End of default section
 ##############################################################################################
 
-##############################################################################################
-# Start of user section
-#
-
-# 
-# Define project name and Ram/Flash mode here
-ifeq ($(PCB), X10)
- ifeq ($(PCBT16), 1)
-  PROJECT        = t16
- else
-  PROJECT        = x10
- endif
-else
-ifeq ($(PCB), X12D)
-  PROJECT        = x12d
-else
-ifeq ($(PCB), X9D)
- ifeq ($(REVPLUS), 1)
-  PROJECT        = x9dp
- else
-  ifeq ($(REV9E), 1)
-   PROJECT        = x9e
-  else
-   ifeq ($(PCBX7), 1)
-    ifeq ($(PCBT12), 1)
-	  PROJECT        = t12
-    else
-	  PROJECT        = x7
-	 endif
-   else
-    ifeq ($(PCBXLITE), 1)
-     PROJECT        = xlite
-    else
-     ifeq ($(PCBX9LITE), 1)
-	   ifeq ($(X9LS), 1)
-       PROJECT        = x9LiteS
-      else
-       PROJECT        = x9Lite
-		endif
-     else
-      PROJECT        = x9d
-     endif
-    endif
-   endif
-  endif
- endif
-else
-ifeq ($(PCBLEM1), 1)
- PROJECT = lemon1
-else
- ifeq ($(PCB), 9XT)
-   PROJECT      = ersky9x9XT
- else
-  ifeq ($(REVX), 1)
-   PROJECT      = ersky9xr
-  else
-   ifeq ($(PCB), DUE)
-    PROJECT      = ersky9xd
-   else
-    ifeq ($(SMALL), 1)
-     PROJECT      = ersky9xs
-    else
-     ifeq ($(LARGE), 1)
-      PROJECT      = ersky9xl
-     else
-      PROJECT      = ersky9x
-     endif
-    endif
-   endif
-  endif
- endif
-endif
-endif
-endif
-endif
-
-RUN_FROM_FLASH = 1
-
-#
-# Define linker script file here
-#
-ifeq ($(RUN_FROM_FLASH), 0)
- ifeq ($(SAM3S2), 1)
- LDSCRIPT = sam3s2c_ram.ld
- else
-   ifeq ($(PCB), X9D)
-#     ARCH = ARM
-     LDSCRIPT = X9D/stm32_flash.ld
-#     TRGT = arm-none-eabi-
-#     MCU  = cortex-m3
-     CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX9D 
-     UDEFS = -Dstm32f205
-   else
-    ifeq ($(PCB), X12D)
-     LDSCRIPT = X12D/stm32f4_flash.ld
-     CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX12D 
-     UDEFS = -DSTM32F429_439xx
-	 else
-     LDSCRIPT = sam3s4c_ram.ld
-	  CPPDEFS += -DPCBSKY 
-     UDEFS = -Dat91sam3s4
-	 endif
-	endif
- endif
- FULL_PRJ = $(PROJECT)_ram
-else
-ifeq ($(PCBLEM1), 1)
- LDSCRIPT = STM32F103VETx_FLASH.ld
- CPPDEFS += -DHSE_VALUE=8000000
- CPPDEFS += -DPCBLEM1 
- FULL_PRJ = $(PROJECT)_rom
- UDEFS = -Dstm32f103
- UDEFS = -DSTM32F10X_HD
-else
- ifeq ($(SAM3S2), 1)
- CPPDEFS += -DPCBSKY 
- LDSCRIPT = sam3s2c_flash.ld
- else
-  ifeq ($(PCB), 9XT)
-   LDSCRIPT = X9D/stm32_flash.ld
-   CPPDEFS += -DHSE_VALUE=12000000
-   CPPDEFS += -DPCB9XT 
-   CPPDEFS += -DPCBSP
-   CPPDEFS += -DUSB_JOYSTICK
-   UDEFS = -Dstm32f205
-  else
-   ifeq ($(PCB), X9D)
-#     ARCH = ARM
-     LDSCRIPT = X9D/stm32_flash.ld
-#     TRGT = arm-none-eabi-
-#     MCU  = cortex-m3
-     CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX9D 
-     CPPDEFS += -DUSB_JOYSTICK
-     UDEFS = -Dstm32f205
-     ifeq ($(PCBX7), 1)
-      CPPDEFS += -DPCBX7
-     endif
-     ifeq ($(PCBXLITE), 1)
-      CPPDEFS += -DPCBXLITE
-     endif
-     ifeq ($(PCBX9LITE), 1)
-      CPPDEFS += -DPCBX9LITE
-	   ifeq ($(X9LS), 1)
-       CPPDEFS += -DX9LS 
-      endif
-     endif
-   else
-    ifeq ($(PCB), X10)
-     LDSCRIPT = X12D/stm32f4_flash.ld
-     CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX10 
-     CPPDEFS += -DUSB_JOYSTICK
-     UDEFS = -DSTM32F429_439xx
-	 else
-    ifeq ($(PCB), X12D)
-     LDSCRIPT = X12D/stm32f4_flash.ld
-     CPPDEFS += -DHSE_VALUE=12000000
-	  CPPDEFS += -DPCBX12D 
-     CPPDEFS += -DUSB_JOYSTICK
-     UDEFS = -DSTM32F429_439xx
-	 else
-    CPPDEFS += -DPCBSKY 
-	 ifeq ($(SMALL), 1)
-    	CPPDEFS += -DSMALL 
-	 endif
-    ifeq ($(PCB), DUE)
-      LDSCRIPT = due/sam3x8_flash.ld
-      UDEFS = -Dat91sam3x8
-		UDEFS  += -D__SAM3X8E__
-      CPPDEFS += -DPCBDUE 
-	 else
-     ifeq ($(REVX), 1)
-      LDSCRIPT = sam3s8c_flash.ld
-      UDEFS = -Dat91sam3s8
-     else
-      ifeq ($(SMALL), 1)
-       LDSCRIPT = sam3s4c_flash.ld
-       UDEFS = -Dat91sam3s4
-      else
-       ifeq ($(LARGE), 1)
-        LDSCRIPT = sam4s8c_flash.ld
-        UDEFS = -Dat91sam3s8
-       else
-        LDSCRIPT = sam3s8c_flash.ld
-        UDEFS = -Dat91sam3s8
-       endif
-      endif
-     endif
-    endif
-	 endif
-	 endif
-	endif
-  endif
- endif
- FULL_PRJ = $(PROJECT)_rom
-endif
-endif
+FULL_PRJ = $(PROJECT)_rom
+OBJDIR = obj_$(PROJECT)
 
 # List all user C define here, like -D_DEBUG=1
 
@@ -400,14 +220,6 @@ endif
 
 ifeq ($(SAM3S2), 1)
 UDEFS = -Dat91sam3s2
-endif
-
-ifeq ($(LANG), FR)
- CPPDEFS += -DLANG_FR
-else
- ifeq ($(LANG), DE)
-  CPPDEFS += -DLANG_DE
- endif
 endif
 
 ifeq ($(USB_JOYSTICK), 1)
@@ -455,9 +267,9 @@ SRC  = X12D/system_stm32f4xx.c \
 #		 X12D/led.c
 
 ifeq ($(LUA), 1)
-SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
            syscalls.c
 endif
 
@@ -508,7 +320,7 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
 endif
 ifeq ($(DEBUG), 1)
 CPPSRC += debug.cpp
@@ -557,9 +369,9 @@ SRC  = X12D/system_stm32f4xx.c \
 #		 X12D/led.c
 
 ifeq ($(LUA), 1)
-SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
            syscalls.c
 endif
 
@@ -610,7 +422,7 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
 endif
 ifeq ($(DEBUG), 1)
 CPPSRC += debug.cpp
@@ -662,9 +474,9 @@ SRC  = X9D/system_stm32f2xx.c \
 #       X9D/usb/src/usbd_msc_core.c \
 
 ifeq ($(LUA), 1)
-SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
            syscalls.c
 endif
 
@@ -722,7 +534,7 @@ endif
 
 
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
 endif
 
 #         gtime.cpp \
@@ -794,9 +606,9 @@ SRC  = X9D/system_stm32f2xx.c \
        coos.c
 
 ifeq ($(LUA), 1)
-SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
            syscalls.c
 endif
 
@@ -849,7 +661,7 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
 endif
 
 #         X9D/lcd_driver.cpp \
@@ -930,9 +742,9 @@ SRC  = core_cm3.c \
        coos.c
 
 ifeq ($(LUA), 1)
-SRC += LUA/lapi.c LUA/lcode.c LUA/lctype.c LUA/ldebug.c LUA/ldo.c LUA/ldump.c LUA/lfunc.c LUA/lgc.c LUA/llex.c LUA/lmem.c \
-           LUA/lobject.c LUA/lopcodes.c LUA/lparser.c LUA/lstate.c LUA/lstring.c LUA/ltable.c LUA/lrotable.c LUA/ltm.c LUA/lundump.c LUA/lvm.c LUA/lzio.c \
-           LUA/lbaselib.c LUA/linit.c LUA/lmathlib.c LUA/lbitlib.c LUA/loadlib.c LUA/lauxlib.c LUA/ltablib.c LUA/lcorolib.c LUA/liolib.c \
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
            syscalls.c
 endif
 
@@ -982,7 +794,7 @@ CPPSRC = stamp.cpp \
 			logs.cpp
 
 ifeq ($(LUA), 1)
-CPPSRC += LUA/api_lcd.cpp LUA/interface.cpp LUA/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
 endif
 ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
@@ -1054,12 +866,6 @@ endif
 
 endif
 
-# List all user directories here
-UINCDIR = ./sky/joy/inc
-# \
-#          ./cmsis/core \
-#          ./cmsis/device
-
 # List the user directory to look for the libraries here
 ULIBDIR =
 
@@ -1127,86 +933,12 @@ VER = $(shell echo $$(( $(AVER) + 1 )))
 CPPDEFS += -DSTAMP
 #   endif
 
-# If REVB board
-ifeq ($(REVB), 1)
- CPPDEFS += -DREVB
- EXT_MOD=REVB
-endif
-
 # If ARUNI board
 ifeq ($(ARUNI), 1)
  CPPDEFS += -DREVB -DARUNI
  EXT_MOD=ARUNI
 endif
 
-# If REVX board
-ifeq ($(REVX), 1)
- CPPDEFS += -DREVX
- CPPDEFS += -DXFIRE
- EXT_MOD=REVB-X
-endif
-
-ifeq ($(PCB), 9XT)
- CPPDEFS += -DXFIRE
- EXT_MOD=9XT
-endif
-
-ifeq ($(PCB), X12D)
- EXT_MOD=X12D
-endif
-
-ifeq ($(PCB), X10)
- ifeq ($(PCBT16), 1)
-  EXT_MOD=T16
- else
-  EXT_MOD=X10
- endif
-endif
-
-ifeq ($(PCBLEM1), 1)
- EXT_MOD=Lemon
-endif
-
-ifeq ($(PCB), X9D)
- CPPDEFS += -DXFIRE
-# If Taranis+
- ifeq ($(REVPLUS), 1)
-  CPPDEFS += -DREVPLUS
-  EXT_MOD=X9DP
- else
-# If Taranis X9E
-  ifeq ($(REV9E), 1)
-#   CPPDEFS += -DREVPLUS
-   CPPDEFS += -DREV9E
-   EXT_MOD=X9E
-  else
-   ifeq ($(PCBXLITE), 1)
-    EXT_MOD=XLITE
-   else
-    ifeq ($(PCBX7), 1)
-     ifeq ($(PCBT12), 1)
-      EXT_MOD=T12
-     else
-      EXT_MOD=QX7
-	  endif
-	 else
-     ifeq ($(PCBX9LITE), 1)
-	   ifeq ($(X9LS), 1)
-       EXT_MOD=X9LiteS
-	   else
-       EXT_MOD=X9Lite
-      endif
-	  else
-     CPPDEFS += -DREVNORM
-     EXT_MOD=X9D
-     endif
-    endif
-   endif
-  endif
- endif
-endif
-
-#CPPDEFS += -DFRSKY
 CPPDEFS += -DCPUARM
 
 # If serial Debug required
@@ -1291,24 +1023,39 @@ $(AOBJS) : $(OBJDIR)/%.o : %.s
 	$(BINX) $< $@
 
 clean:
-	-rm -f x9dobj/*.*
-	-rm -f x9eobj/*.*
-	-rm -f x9dpobj/*.*
-	-rm -f x12dobj/*.*
-	-rm -f skyobj/*.*
-	-rm -f skyRobj/*.*
-	-rm -f skySobj/*.*
-	-rm -f sky9XTobj/*.*
-	-rm -f x7obj/*.*
-	-rm -f xliteobj/*.*
-	-rm -f x9lobj/*.*
-	-rm -f t12obj/*.*
-	-rm -f t16obj/*.*
-	-rm -f lem1obj/*.*
-	-rm -f x9lsobj/*.*
-	-rm -f $(FULL_PRJ).elf
-	-rm -f $(FULL_PRJ).map
-	-rm -f $(FULL_PRJ).hex
+#	-rm -f x9dobj/*.*
+#	-rm -f x9eobj/*.*
+#	-rm -f x9dpobj/*.*
+#	-rm -f x12dobj/*.*
+#	-rm -f skyobj/*.*
+#	-rm -f skyRobj/*.*
+#	-rm -f skySobj/*.*
+#	-rm -f sky9XTobj/*.*
+#	-rm -f x7obj/*.*
+#	-rm -f xliteobj/*.*
+#	-rm -f x9lobj/*.*
+#	-rm -f t12obj/*.*
+#	-rm -f t16obj/*.*
+#	-rm -f lem1obj/*.*
+#	-rm -f x9lsobj/*.*
+	-rm -f obj_x9d/*.*
+	-rm -f obj_x9e/*.*
+	-rm -f obj_x9dp/*.*
+	-rm -f obj_x12d/*.*
+	-rm -f obj_ersky9xs/*.*
+	-rm -f obj_ersky9xr/*.*
+	-rm -f obj_ersky9x/*.*
+	-rm -f obj_sky9XT/*.*
+	-rm -f obj_x7/*.*
+	-rm -f obj_xlite/*.*
+	-rm -f obj_x9Lite/*.*
+	-rm -f obj_t12/*.*
+	-rm -f obj_t16/*.*
+	-rm -f obj_lemon1/*.*
+	-rm -f obj_x9LiteS/*.*
+#	-rm -f $(FULL_PRJ).elf
+#	-rm -f $(FULL_PRJ).map
+#	-rm -f $(FULL_PRJ).hex
 	-rm -f $(SRC:.c=.c.bak)
 	-rm -f $(SRC:.c=.lst)
 	-rm -f $(SRC:.c=.lss)

@@ -15,7 +15,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <ctype.h>
+//#include <ctype.h>
 #include <string.h>
 
 //#define XLITE_PROTO	1

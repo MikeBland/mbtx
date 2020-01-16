@@ -2,7 +2,7 @@
 #include "stdio.h"
 #include "stdint.h"
 #include "string.h"
-#include "ctype.h"
+//#include "ctype.h"
 
 
 //#define QT		1
@@ -85,6 +85,10 @@ uint16_t isqrt32(uint32_t n)
 
 
 #define IsDigit(c)	(((c)>='0')&&((c)<='9'))
+#define isalpha(c)	( (((c)>='A')&&((c)<='Z')) || (((c)>='a')&&((c)<='z')))
+#define isspace(c)	((((c)>=9)&&((c)<=13) ) || ((c)==' ') )
+
+
 
 int32_t btSend( uint32_t length, uint8_t *data ) ;
 
@@ -468,29 +472,30 @@ uint32_t execOneLine(void) ;
 
 struct commands
 { /* keyword lookup table */
-  char command[22] ;
+//  char command[22] ;
+  char *command ;
   uint16_t tok ;
 } ;
 
 const struct commands Table[] =
 { 		/* Commands must be entered lowercase */
-  { "if", IF},
-  { "then", THEN},
-  { "goto", GOTO},
-  { "gosub", GOSUB},
-  { "return", RETURN},
-  { "let", LET},
-  { "rem", REM},
-  { "stop", STOP},
-  { "finish", FINISH },
-  { "while", WHILE},
-  { "elseif", ELSEIF},
-  { "else", ELSE},
-	{ "int", DEFINT},
-	{ "byte", DEFBYTE},
-	{ "array", DEFARRAY},
-	{ "const", DEFCONST},
-	{ "end", END},
+  { (char *)"if", IF},
+  { (char *)"then", THEN},
+  { (char *)"goto", GOTO},
+  { (char *)"gosub", GOSUB},
+  { (char *)"return", RETURN},
+  { (char *)"let", LET},
+  { (char *)"rem", REM},
+  { (char *)"stop", STOP},
+  { (char *)"finish", FINISH },
+  { (char *)"while", WHILE},
+  { (char *)"elseif", ELSEIF},
+  { (char *)"else", ELSE},
+	{ (char *)"int", DEFINT},
+	{ (char *)"byte", DEFBYTE},
+	{ (char *)"array", DEFARRAY},
+	{ (char *)"const", DEFCONST},
+	{ (char *)"end", END},
 //  { "print", PRINT},
 //  { "input", INPUT},
 //  { "for", FOR},
@@ -500,66 +505,66 @@ const struct commands Table[] =
 //  { "wait", WAIT},
 //  { "trace", TRACE},
 //  { "wend", WEND},
-  { "break", BREAK},
+  { (char *)"break", BREAK},
 //  { "continue", CONTINUE},
 //  { "repeat", REPEAT},
 //  { "until", UNTIL},
 //  { "function", FUNC},
-	{ "//", REM},
-  { "", 0 } /* mark end of table */
+	{ (char *)"//", REM},
+  { (char *)"", 0 } /* mark end of table */
 } ;
 
 const struct commands InternalFunctions[] =
 {
-  { "drawclear", DRAWCLEAR },
-  { "drawtext", DRAWTEXT },
-  { "drawnumber", DRAWNUMBER },
-  { "drawline", DRAWLINE },
-	{ "playnumber", PLAYNUMBER },
-  { "getvalue", GETVALUE },
-  { "drawpoint", DRAWPOINT },
-  { "drawrectangle", DRAWRECT },
-  { "idletime", IDLETIME },
-  { "gettime", GETTIME },
-  { "sportTelemetrySend", SPORTSEND },
-  { "sportTelemetryReceive", SPORTRECEIVE },
-  { "not", NOT },
-  { "abs", ABS },
-  { "getLastPos", GETLASTPOS },
-  { "drawtimer", DRAWTIMER },
-  { "sysflags", SYSFLAGS },
-	{ "settelitem", SETTELITEM },
-	{ "strtoarray", STRTOARRAY },
-	{ "getswitch", GETSWITCH },
-	{ "setswitch", SETSWITCH },
-	{ "playfile", PLAYFILE },
-  { "getrawvalue", GETRAWVALUE },
-	{ "killevents", KILLEVENTS },
-	{ "bitfield", BITFIELD },
-	{ "power", POWER },
-	{ "crossfirereceive", CROSSFIRERECEIVE },
-	{ "crossfiresend", CROSSFIRESEND },
-	{ "popup", POPUP },
-	{ "sysstrtoarray", SYSTOARRAY },
-  { "sqrt", SQRT },
-	{ "drawbitmap", DRAWBITMAP },
-	{ "serialreceive", BTRECEIVE },
-	{ "serialsend", BTSEND },
+  { (char *)"drawclear", DRAWCLEAR },
+  { (char *)"drawtext", DRAWTEXT },
+  { (char *)"drawnumber", DRAWNUMBER },
+  { (char *)"drawline", DRAWLINE },
+	{ (char *)"playnumber", PLAYNUMBER },
+  { (char *)"getvalue", GETVALUE },
+  { (char *)"drawpoint", DRAWPOINT },
+  { (char *)"drawrectangle", DRAWRECT },
+  { (char *)"idletime", IDLETIME },
+  { (char *)"gettime", GETTIME },
+  { (char *)"sportTelemetrySend", SPORTSEND },
+  { (char *)"sportTelemetryReceive", SPORTRECEIVE },
+  { (char *)"not", NOT },
+  { (char *)"abs", ABS },
+  { (char *)"getLastPos", GETLASTPOS },
+  { (char *)"drawtimer", DRAWTIMER },
+  { (char *)"sysflags", SYSFLAGS },
+	{ (char *)"settelitem", SETTELITEM },
+	{ (char *)"strtoarray", STRTOARRAY },
+	{ (char *)"getswitch", GETSWITCH },
+	{ (char *)"setswitch", SETSWITCH },
+	{ (char *)"playfile", PLAYFILE },
+  { (char *)"getrawvalue", GETRAWVALUE },
+	{ (char *)"killevents", KILLEVENTS },
+	{ (char *)"bitfield", BITFIELD },
+	{ (char *)"power", POWER },
+	{ (char *)"crossfirereceive", CROSSFIRERECEIVE },
+	{ (char *)"crossfiresend", CROSSFIRESEND },
+	{ (char *)"popup", POPUP },
+	{ (char *)"sysstrtoarray", SYSTOARRAY },
+  { (char *)"sqrt", SQRT },
+	{ (char *)"drawbitmap", DRAWBITMAP },
+	{ (char *)"serialreceive", BTRECEIVE },
+	{ (char *)"serialsend", BTSEND },
 #ifdef FILE_SUPPORT
-	{ "directory", DIRECTORY },
-	{ "fileselect", FILESELECT },
-	{ "fopen", FOPEN },
-	{ "fread", FREAD },
-	{ "fwrite", FWRITE },
-	{ "fclose", FCLOSE },
+	{ (char *)"directory", DIRECTORY },
+	{ (char *)"fileselect", FILESELECT },
+	{ (char *)"fopen", FOPEN },
+	{ (char *)"fread", FREAD },
+	{ (char *)"fwrite", FWRITE },
+	{ (char *)"fclose", FCLOSE },
 #endif
-	{ "bytemove", BYTEMOVE },
-	{ "alert", ALERT },
-	{ "returnvalue", RETURNVALUE },
-	{ "resettelemetry", RESETTELEMETRY },
+	{ (char *)"bytemove", BYTEMOVE },
+	{ (char *)"alert", ALERT },
+	{ (char *)"returnvalue", RETURNVALUE },
+	{ (char *)"resettelemetry", RESETTELEMETRY },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
-  { "", 0 } /* mark end of table */
+  { (char *)"", 0 } /* mark end of table */
 } ;
 
 // Items in openTx lua
@@ -623,41 +628,41 @@ const struct commands InternalFunctions[] =
 
 const struct commands Constants[] =
 {
-  { "LEFT", LEFT },
-  { "PREC1", PREC1 },
-  { "PREC2", PREC2 },
-  { "LEAD0", LEADING0 },
-  { "DBLSIZE", DBLSIZE },
-  { "INVERS", INVERS },
-  { "BLINK", BLINK },
-	{ "CONDENSED", CONDENSED },
+  { (char *)"LEFT", LEFT },
+  { (char *)"PREC1", PREC1 },
+  { (char *)"PREC2", PREC2 },
+  { (char *)"LEAD0", LEADING0 },
+  { (char *)"DBLSIZE", DBLSIZE },
+  { (char *)"INVERS", INVERS },
+  { (char *)"BLINK", BLINK },
+	{ (char *)"CONDENSED", CONDENSED },
 //  { "FULLSCALE", RESX },
-  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
-  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
-  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
-  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
-  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
-  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
-  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
-  { "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
-  { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
-  { "EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
-  { "EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
-  { "EVT_EXIT_LONG", EVT_KEY_LONG(KEY_EXIT) },
+  { (char *)"EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+  { (char *)"EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+  { (char *)"EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+  { (char *)"EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
+  { (char *)"EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+  { (char *)"EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
+  { (char *)"EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+  { (char *)"EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
+  { (char *)"EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
+  { (char *)"EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { (char *)"EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+  { (char *)"EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
+  { (char *)"EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
+  { (char *)"EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
+  { (char *)"EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { (char *)"EVT_EXIT_LONG", EVT_KEY_LONG(KEY_EXIT) },
 //  { "SOLID", SOLID },
 //  { "DOTTED", DOTTED },
 //  { "FORCE", FORCE },
 //  { "ERASE", ERASE },
 //  { "ROUND", ROUND },
-  { "LCD_W", LCD_W },
-  { "LCD_H", LCD_H },
+  { (char *)"LCD_W", LCD_W },
+  { (char *)"LCD_H", LCD_H },
 #ifndef	QT
 #endif  
-	{ "", 0 } /* mark end of table */
+	{ (char *)"", 0 } /* mark end of table */
 } ;
 
 
@@ -6688,7 +6693,8 @@ int32_t basicFindValueIndexByName( const char * name )
 		names += nameLength ;
 	}
 
-	names = PSTR(STR_STICK_NAMES) ;
+	names = PSTR(STR_STICK_NAMES) ;	// Rud, Ele, Thr, Ail
+
 	nameLength = *names++ ;
 	for ( i = 0 ; i < 4 ;  i += 1 )
 	{
@@ -6699,7 +6705,7 @@ int32_t basicFindValueIndexByName( const char * name )
 		names += nameLength ;
 	}
   
-	names = PSTR(STR_CHANS_RAW) ;
+	names = PSTR(STR_CHANS_RAW) ;	// P1, P2, P3
 	nameLength = *names++ ;
 	for ( i = 4 ; i < 7 ;  i += 1 )
 	{
@@ -6709,7 +6715,7 @@ int32_t basicFindValueIndexByName( const char * name )
 		}
 		names += nameLength ;
 	}
-	names += nameLength * 5 ;
+	names += nameLength * 5 ;		// PPM1-PPM8, CH1-CH24
 	for ( i = 12 ; i < 44 ;  i += 1 )
 	{
     if (strMatch( names, name, nameLength ))

@@ -1252,9 +1252,10 @@ extern uint32_t Master_frequency ;
 extern void alert(const char * s, bool defaults=false);
 extern void message(const char * s);
 
-void resetTimer();
-void resetTimer1( void ) ;
-void resetTimer2( void ) ;
+void resetTimers();
+void resetTimern( uint32_t timer ) ;
+
+extern uint8_t toupper(unsigned char c) ;
 
 //extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
@@ -1325,7 +1326,7 @@ extern bool getSwitch00( int8_t swtch ) ;
 extern bool getSwitch(int8_t swtch, bool nc, uint8_t level = 0 ) ;
 extern int8_t getMovedSwitch( void ) ;
 extern uint8_t g_vbat100mV ;
-extern void doSplash( void ) ;
+//extern void doSplash( void ) ;
 extern void mainSequence( uint32_t no_menu ) ;
 extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att ) ;
 extern void telem_byte_to_bt( uint8_t data ) ;

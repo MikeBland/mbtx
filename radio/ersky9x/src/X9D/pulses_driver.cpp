@@ -1678,7 +1678,7 @@ extern "C" void INTMODULE_USART_IRQHandler()
 	{
 		uint16_t value = INTMODULE_USART->DR ;
 		value |= getTmr2MHz() & 0xFF00 ;
-		put_fifo128( &Access_int_fifo, value ) ;	
+		put_fifo128( &Internal_fifo, value ) ;	
 	}
 #endif
 }

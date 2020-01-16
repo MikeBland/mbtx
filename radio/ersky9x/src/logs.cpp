@@ -255,7 +255,7 @@ extern uint32_t sdMounted( void ) ;
 #endif
     return "NO SD CARD" ;
 
-  strcpy( filename, LOGS_PATH ) ;
+  cpystr( (uint8_t *)filename, (uint8_t *)LOGS_PATH ) ;
 
   result = f_opendir( &folder, filename) ;
   if (result != FR_OK)
@@ -300,7 +300,7 @@ extern uint32_t sdMounted( void ) ;
   if (len == 0)
 	{
     uint8_t num = g_eeGeneral.currModel + 1;
-    strcpy_P(&filename[sizeof(LOGS_PATH)], "MODEL" ) ;
+    cpystr((uint8_t *)&filename[sizeof(LOGS_PATH)], (uint8_t *)"MODEL" ) ;
     filename[sizeof(LOGS_PATH) + 5] = (char)((num / 10) + '0');
     filename[sizeof(LOGS_PATH) + 5 + 1] = (char)((num % 10) + '0');
     len = sizeof(LOGS_PATH) + 5 + 2;
@@ -308,7 +308,7 @@ extern uint32_t sdMounted( void ) ;
 
 	setFilenameDateTime( &filename[len], g_model.logNew ) ;
 	
-  strcpy_P(&filename[len + (g_model.logNew ? 18 : 11) ], RawLogging ? ".raw" : ".csv" ) ;
+  cpystr((uint8_t *)&filename[len + (g_model.logNew ? 18 : 11) ], RawLogging ? (uint8_t *)".raw" : (uint8_t *)".csv" ) ;
 
 	CoTickDelay(1) ;					// 2mS
   result = f_open(&g_oLogFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;

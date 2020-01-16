@@ -39,7 +39,7 @@
 #include "pulses.h"
 #include "mixer.h"
 #include "frsky.h"
-#include <ctype.h>
+//#include <ctype.h>
 #ifndef SIMU
 #include "CoOS.h"
 #endif
@@ -2548,9 +2548,9 @@ enum EnumTabStat
 	e_dsm,
 	e_traindiag,
 #endif
-#if defined(LUA) || defined(BASIC)
-	e_Script,
-#endif
+//#if defined(LUA) || defined(BASIC)
+//	e_Script,
+//#endif
 	e_debug,
   e_Setup3,
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE) || defined(PCBX9D)
@@ -2587,9 +2587,9 @@ MenuFuncP menuTabStat[] =
 	menuProcDsmDdiag,
 	menuProcTrainDdiag,
 #endif
-#if defined(LUA) || defined(BASIC)
-	menuScript,
-#endif
+//#if defined(LUA) || defined(BASIC)
+//	menuScript,
+//#endif
 	menuDebug,
 	menuProcSDstat,
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE)
@@ -10700,7 +10700,11 @@ const uint8_t ProtocolOptions[2][7] = { {2,PROTO_PPM,PROTO_PXX}, {5,PROTO_PPM,PR
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
  #ifdef DISABLE_PXX
+  #if defined(PCBT16)
+const uint8_t ProtocolOptions[2][5] = { {2,PROTO_PPM,PROTO_MULTI}, {3,PROTO_PPM,PROTO_DSM2,PROTO_MULTI} } ;
+	#else
 const uint8_t ProtocolOptions[2][5] = { {1,PROTO_PPM}, {3,PROTO_PPM,PROTO_DSM2,PROTO_MULTI} } ;
+  #endif
  #else
 const uint8_t ProtocolOptions[2][5] = { {2,PROTO_PPM,PROTO_PXX}, {4,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI} };
  #endif
@@ -10727,7 +10731,11 @@ uint32_t checkProtocolOptions( uint8_t module )
 	if ( module == 0 )
 	{
  #ifdef DISABLE_PXX
+  #if defined(PCBT16)
+		g_model.Module[module].protocol = PROTO_MULTI ;
+	#else
 		g_model.Module[module].protocol = PROTO_PPM ;
+	#endif
  #else
 		g_model.Module[module].protocol = PROTO_PXX ;
  #endif
@@ -11979,7 +11987,11 @@ void editOneProtocol( uint8_t event )
 #if defined (PCBX9LITE)
 				value = newvalue ? PROTO_ACCESS : PROTO_OFF ;
 #else
+ #ifdef DISABLE_PXX
+				value = newvalue ? PROTO_PPM : PROTO_OFF ;
+ #else
 				value = newvalue ? 1 : PROTO_OFF ;
+ #endif
 #endif
 			}
 			else
@@ -14921,7 +14933,7 @@ extern uint8_t PictureDrawn ;
  				perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
 				SportStreamingStarted = 0 ;
 				speakModelVoice() ;
-        resetTimer();
+        resetTimers();
 				VoiceCheckFlag100mS |= 2 ;// Set switch current states
 				processSwitches() ;	// Guarantee unused switches are cleared
 				telemetry_init( decodeTelemetryType( g_model.telemetryProtocol ) ) ;
@@ -16345,11 +16357,13 @@ void timer(int16_t throttle_val)
 		{
 			if ( timer == 0 )
 			{
-				resetTimer1() ;
+				resetTimern(0) ;
+//				resetTimer1() ;
 			}
 			else
 			{
-				resetTimer2() ;
+				resetTimern(1) ;
+//				resetTimer2() ;
 			}
 		}
 		
@@ -17001,6 +17015,7 @@ extern struct t_loadedScripts LoadedScripts[3] ;
 
 void menuScript(uint8_t event)
 {
+	static MState2 mstate2 ;
 	struct fileControl *fc = &FileControl ;
 	uint32_t i ;
 #ifndef BASIC
@@ -17028,8 +17043,10 @@ extern int32_t Rotary_diff ;
 	uint8_t saveEvent = event ;
 	uint8_t savedRotaryState = RotaryState ;
 
-	MENU(XPSTR("SCRIPT"), menuTabStat, e_Script, 1, {0} ) ;
+//	MENU(XPSTR("SCRIPT"), menuTabStat, e_Script, 1, {0} ) ;
+  TITLE( "SCRIPT" ) ;
 
+	event = mstate2.check_columns( event, 0 ) ;
 	event = saveEvent ;
 #ifndef BASIC
 	i = availableMemory() ;
@@ -17241,6 +17258,10 @@ void menuDebug(uint8_t event)
 	}
 
 
+#ifdef PCBT16
+
+#endif
+
 #if defined(X9LS)
 //extern uint8_t BtDebugText[] ;
 //extern uint8_t BtSbusFrame[] ;
@@ -17378,23 +17399,23 @@ void menuDebug(uint8_t event)
 
 //	lcd_outhex4(  0, FH, ModuleSettings[0].mode ) ;
 	
-//extern struct t_16bit_fifo64 Access_int_fifo ;
-//  lcd_outhex4(  0, 2*FH, Access_int_fifo.fifo[ 0] ) ;
-//  lcd_outhex4( 25, 2*FH, Access_int_fifo.fifo[ 1] ) ;
-//  lcd_outhex4( 50, 2*FH, Access_int_fifo.fifo[ 2] ) ;
-//  lcd_outhex4( 75, 2*FH, Access_int_fifo.fifo[ 3] ) ;
-//  lcd_outhex4(  0, 3*FH, Access_int_fifo.fifo[ 4] ) ;
-//  lcd_outhex4( 25, 3*FH, Access_int_fifo.fifo[ 5] ) ;
-//  lcd_outhex4( 50, 3*FH, Access_int_fifo.fifo[ 6] ) ;
-//  lcd_outhex4( 75, 3*FH, Access_int_fifo.fifo[ 7] ) ;
-//  lcd_outhex4(  0, 4*FH, Access_int_fifo.fifo[ 8] ) ;
-//  lcd_outhex4( 25, 4*FH, Access_int_fifo.fifo[ 9] ) ;
-//  lcd_outhex4( 50, 4*FH, Access_int_fifo.fifo[10] ) ;
-//  lcd_outhex4( 75, 4*FH, Access_int_fifo.fifo[11] ) ;
-//  lcd_outhex4(  0, 5*FH, Access_int_fifo.fifo[12] ) ;
-//  lcd_outhex4( 25, 5*FH, Access_int_fifo.fifo[13] ) ;
-//  lcd_outhex4( 50, 5*FH, Access_int_fifo.fifo[14] ) ;
-//  lcd_outhex4( 75, 5*FH, Access_int_fifo.fifo[15] ) ;
+//extern struct t_16bit_fifo64 Internal_fifo ;
+//  lcd_outhex4(  0, 2*FH, Internal_fifo.fifo[ 0] ) ;
+//  lcd_outhex4( 25, 2*FH, Internal_fifo.fifo[ 1] ) ;
+//  lcd_outhex4( 50, 2*FH, Internal_fifo.fifo[ 2] ) ;
+//  lcd_outhex4( 75, 2*FH, Internal_fifo.fifo[ 3] ) ;
+//  lcd_outhex4(  0, 3*FH, Internal_fifo.fifo[ 4] ) ;
+//  lcd_outhex4( 25, 3*FH, Internal_fifo.fifo[ 5] ) ;
+//  lcd_outhex4( 50, 3*FH, Internal_fifo.fifo[ 6] ) ;
+//  lcd_outhex4( 75, 3*FH, Internal_fifo.fifo[ 7] ) ;
+//  lcd_outhex4(  0, 4*FH, Internal_fifo.fifo[ 8] ) ;
+//  lcd_outhex4( 25, 4*FH, Internal_fifo.fifo[ 9] ) ;
+//  lcd_outhex4( 50, 4*FH, Internal_fifo.fifo[10] ) ;
+//  lcd_outhex4( 75, 4*FH, Internal_fifo.fifo[11] ) ;
+//  lcd_outhex4(  0, 5*FH, Internal_fifo.fifo[12] ) ;
+//  lcd_outhex4( 25, 5*FH, Internal_fifo.fifo[13] ) ;
+//  lcd_outhex4( 50, 5*FH, Internal_fifo.fifo[14] ) ;
+//  lcd_outhex4( 75, 5*FH, Internal_fifo.fifo[15] ) ;
 
 //  lcd_outhex4(  0, 3*FH, XjtHeartbeatCapture.value ) ;
 //  lcd_outhex4( 50, 3*FH, GPIOC->IDR ) ;
@@ -17684,11 +17705,11 @@ extern uint16_t TelRxCount ;
   lcd_outhex4( 12*FW,  7*FH, TelRxCount ) ;
   lcd_outhex4( 17*FW,  7*FH, FrskyTelemetryType | (TelemetryType << 8) ) ;
 
-#ifdef PCB9XT
-extern uint16_t I2CencCounter ;
-	lcd_puts_Pleft( 5*FH, XPSTR("\014I2C=") ) ;
-  lcd_outhex4( 17*FW,  5*FH, I2CencCounter ) ;
-#endif
+//#ifdef PCB9XT
+//extern uint16_t I2CencCounter ;
+//	lcd_puts_Pleft( 5*FH, XPSTR("\014I2C=") ) ;
+//  lcd_outhex4( 17*FW,  5*FH, I2CencCounter ) ;
+//#endif
 }
 
 uint8_t TrainerPolarity ;	// Input polarity
@@ -18257,44 +18278,6 @@ void s6rRequest( uint8_t type, uint8_t index, uint8_t value )
 	sportPacketSend( sportPacket, 0x16 ) ;
 //#endif
 }
-
-//local configFields = {
-//		  {"Wing type:", COMBO, 0x80, nil, { "Normal", "Delta", "VTail" } },
-//		  {"Mounting type:", COMBO, 0x81, nil, { "Horz", "Horz rev.", "Vert", "Vert rev." } },
-//}
-
-//local settingsFields = {
-		//  {"S6R functions:", COMBO, 0x9C, nil, { "Disable", "Enable" } },
-		//  {"AIL direction:", COMBO, 0x82, nil, { "Normal", "Invers" }, { 255, 0 } },
-		//  {"ELE direction:", COMBO, 0x83, nil, { "Normal", "Invers" }, { 255, 0 } },
-		//  {"RUD direction:", COMBO, 0x84, nil, { "Normal", "Invers" }, { 255, 0 } },
-		//  {"AIL2 direction:", COMBO, 0x9A, nil, { "Normal", "Invers" }, { 255, 0 } },
-		//  {"ELE2 direction:", COMBO, 0x9B, nil, { "Normal", "Invers" }, { 255, 0 } },
-		//  {"AIL stabilize gain:", VALUE, 0x85, nil, 0, 200, "%"},
-		//  {"ELE stabilize gain:", VALUE, 0x86, nil, 0, 200, "%"},
-		//  {"RUD stabilize gain:", VALUE, 0x87, nil, 0, 200, "%"},
-		//  {"AIL auto level gain:", VALUE, 0x88, nil, 0, 200, "%"},
-		//  {"ELE auto level gain:", VALUE, 0x89, nil, 0, 200, "%"},
-		//  {"ELE upright gain:", VALUE, 0x8C, nil, 0, 200, "%"},
-		//  {"RUD upright gain:", VALUE, 0x8D, nil, 0, 200, "%"},
-		//  {"AIL crab gain:", VALUE, 0x8E, nil, 0, 200, "%"},
-		//  {"RUD crab gain:", VALUE, 0x90, nil, 0, 200, "%"},
-		//  {"AIL auto angle offset:", VALUE, 0x91, nil, -20, 20, "%", 0x6C},
-		//  {"ELE auto angle offset:", VALUE, 0x92, nil, -20, 20, "%", 0x6C},
-		//  {"ELE upright angle offset:", VALUE, 0x95, nil, -20, 20, "%", 0x6C},
-		//  {"RUD upright angle offset:", VALUE, 0x96, nil, -20, 20, "%", 0x6C},
-		//  {"AIL crab angle offset:", VALUE, 0x97, nil, -20, 20, "%", 0x6C},
-		//  {"RUD crab angle offset:", VALUE, 0x99, nil, -20, 20, "%", 0x6C},
-	  //	{"AUX1 select:", COMBO, 0xA8, nil, { "Disable", "Enable" } },
-		//  {"AUX2 select:", COMBO, 0xA9, nil, { "Disable", "Enable" } },
-		//  {"Qucik Mode:", COMBO, 0xAA, nil, { "Disable", "Enable" } },
-//}
-
-//local calibrationFields = {
-//  {"X:", VALUE, 0x9E, 0, -100, 100, "%"},
-//  {"Y:", VALUE, 0x9F, 0, -100, 100, "%"},
-//  {"Z:", VALUE, 0xA0, 0, -100, 100, "%"}
-//}
 
 void menuProcS6R(uint8_t event)
 {
@@ -19435,20 +19418,22 @@ void resetTimern( uint32_t timer )
   tptr->s_timeCumAbs = 0 ;
 }
 
-void resetTimer1()
-{
-	resetTimern( 0 ) ;
-}
+//void resetTimer1()
+//{
+//	resetTimern( 0 ) ;
+//}
 
-void resetTimer2()
-{
-	resetTimern( 1 ) ;
-}
+//void resetTimer2()
+//{
+//	resetTimern( 1 ) ;
+//}
 
-void resetTimer()
+void resetTimers()
 {
-	resetTimer1() ;
-	resetTimer2() ;
+	resetTimern(0) ;
+	resetTimern(1) ;
+//	resetTimer1() ;
+//	resetTimer2() ;
 }
 
 int16_t AltOffset = 0 ;
@@ -20295,7 +20280,7 @@ extern int32_t Rotary_diff ;
 #endif	// nPAGE_NAVIGATION
 
 	    case EVT_KEY_LONG(KEY_EXIT) :
-        resetTimer() ;
+        resetTimers() ;
 //        resetTelemetry() ;
         audioDefevent(AU_MENUS) ;
 			break ;
@@ -20515,7 +20500,7 @@ extern int32_t Rotary_diff ;
 //        }
         break;
     case EVT_KEY_LONG(KEY_EXIT):
-        resetTimer();
+        resetTimers();
 //        resetTelemetry();
         audioDefevent(AU_MENUS);
         break;

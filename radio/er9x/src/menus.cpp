@@ -8137,7 +8137,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 #else // !XSW_MOD
 #ifdef SWITCH_MAPPING
         uint8_t a = inputs_subview ;
-				if ( a != 0 ) a = a * 6 + 3 ;		// 0, 9, 15
+				if ( a != 0 ) a = a * 6 + 4 ;		// 0, 9, 15
 				switchDisplay( 2*FW-2, a ) ;
 				switchDisplay( 17*FW-2, a+3 ) ;
 #else

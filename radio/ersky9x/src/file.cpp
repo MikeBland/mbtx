@@ -78,8 +78,12 @@ unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for gen
 
 uint16_t General_timer ;
 uint16_t Model_timer ;
-uint8_t General_dirty ;
-uint8_t Model_dirty ;
+
+struct t_dirty
+{
+	uint8_t General_dirty ;
+	uint8_t Model_dirty ;
+} Dirty ;
 
 uint8_t Ee32_general_write_pending ;
 uint8_t Ee32_model_write_pending ;
@@ -195,7 +199,7 @@ static void ee32WaitFinished()
 // genaral data needs to be written to EEPROM
 void ee32StoreGeneral()
 {
-	General_dirty = 1 ;
+	Dirty.General_dirty = 1 ;
 	General_timer = 500 ;		// 5 seconds timeout before writing
 }
 
@@ -211,9 +215,9 @@ void eeModelChanged()
 // Store model to EEPROM, trim is non-zero if this is the result of a trim change
 void ee32StoreModel( uint8_t modelNumber, uint8_t trim )
 {
-	Model_dirty = modelNumber + 1 ;
+	Dirty.Model_dirty = modelNumber + 1 ;
 	Model_timer = 500 ;	
-	ee32_update_name( Model_dirty, (uint8_t *)&g_model ) ;		// In case it's changed
+	ee32_update_name( Dirty.Model_dirty, (uint8_t *)&g_model ) ;		// In case it's changed
 }
 
 void ee32_delete_model( uint8_t id )
@@ -249,10 +253,8 @@ void ee32_update_name( uint32_t id, uint8_t *source )
 //	*p = '\0' ;
 }
 
-bool ee32CopyModel(uint8_t dst, uint8_t src)
+void waitForEepromFinished()
 {
-  uint16_t size = File_system[src].size ;
-	
 	while (ee32_check_finished() == 0)
 	{	// wait
 #ifndef SIMU
@@ -267,6 +269,28 @@ bool ee32CopyModel(uint8_t dst, uint8_t src)
 		CoTickDelay(1) ;					// 2mS for now
 #endif
 	}
+}
+
+
+bool ee32CopyModel(uint8_t dst, uint8_t src)
+{
+  uint16_t size = File_system[src].size ;
+	
+	waitForEepromFinished() ;
+//	while (ee32_check_finished() == 0)
+//	{	// wait
+//#ifndef SIMU
+//		if ( General_timer )
+//		{
+//			General_timer = 1 ;		// Make these happen soon
+//		}
+//		if ( Model_timer )
+//		{
+//			Model_timer = 1 ;
+//		}
+//		CoTickDelay(1) ;					// 2mS for now
+//#endif
+//	}
 
   read32_eeprom_data( (File_system[src].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
 
@@ -952,6 +976,24 @@ void ee32_process()
 		}
 	}
 
+#ifdef PCB9XT
+	if ( ( Eeprom32_process_state == E32_IDLE ) || Spi_complete )
+	{
+		// Poll an Arduino for encoder data
+		uint16_t result ;
+extern uint16_t readSpiEncoder() ;
+		result = readSpiEncoder() ;
+		if ( ( result & 0xFE00 ) == 0xAA00 )
+		{
+extern uint8_t EncoderI2cData[] ;
+extern uint8_t SpiEncoderValid ;
+			EncoderI2cData[1] = (result & 0x0100) ? 1 : 0 ;
+			EncoderI2cData[0] = result ;
+			SpiEncoderValid = 1 ;
+		}
+	}
+#endif
+
 	if ( Eeprom32_process_state == E32_IDLE )
 	{
 		if ( Ee32_general_write_pending )
@@ -973,9 +1015,9 @@ void ee32_process()
 
 			Eeprom32_source_address = (uint8_t *)&g_model ;		// Get data from here
 			Eeprom32_data_size = sizeof(g_model) ;						// This much
-			Eeprom32_file_index = Model_dirty ;								// This file system entry
+			Eeprom32_file_index = Dirty.Model_dirty ;								// This file system entry
 			Eeprom32_process_state = E32_BLANKCHECK ;
-//			Writing_model = Model_dirty ;
+//			Writing_model = Dirty.Model_dirty ;
 		}
 		else if ( Ee32_model_delete_pending )
 		{
@@ -1083,7 +1125,6 @@ void ee32_process()
 			Eeprom32_process_state = Eeprom32_state_after_erase ;
 		}			
 	}
-
 }
 
 
@@ -1522,20 +1563,21 @@ const char *ee32BackupModel( uint8_t modelIndex )
 
   size = File_system[modelIndex].size ;
 
-	while (ee32_check_finished() == 0)
-	{	// wait
-#ifndef SIMU
-		if ( General_timer )
-		{
-			General_timer = 1 ;		// Make these happen soon
-		}
-		if ( Model_timer )
-		{
-			Model_timer = 1 ;
-		}
-		CoTickDelay(1) ;					// 2mS for now
-#endif
-	}
+	waitForEepromFinished() ;
+//	while (ee32_check_finished() == 0)
+//	{	// wait
+//#ifndef SIMU
+//		if ( General_timer )
+//		{
+//			General_timer = 1 ;		// Make these happen soon
+//		}
+//		if ( Model_timer )
+//		{
+//			Model_timer = 1 ;
+//		}
+//		CoTickDelay(1) ;					// 2mS for now
+//#endif
+//	}
 
 	memset(( uint8_t *)&Eeprom_buffer.data.sky_model_data, 0, sizeof(g_model));
   read32_eeprom_data( (File_system[modelIndex].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
@@ -1586,20 +1628,21 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 	bptr = cpystr( fname, (uint8_t *)"/MODELS/" ) ;
 	cpystr( bptr, (uint8_t *)filename ) ;
 
-	while (ee32_check_finished() == 0)
-	{	// wait
-#ifndef SIMU
-		if ( General_timer )
-		{
-			General_timer = 1 ;		// Make these happen soon
-		}
-		if ( Model_timer )
-		{
-			Model_timer = 1 ;
-		}
-		CoTickDelay(1) ;					// 2mS for now
-#endif
-	}
+	waitForEepromFinished() ;
+//	while (ee32_check_finished() == 0)
+//	{	// wait
+//#ifndef SIMU
+//		if ( General_timer )
+//		{
+//			General_timer = 1 ;		// Make these happen soon
+//		}
+//		if ( Model_timer )
+//		{
+//			Model_timer = 1 ;
+//		}
+//		CoTickDelay(1) ;					// 2mS for now
+//#endif
+//	}
   
 	result = f_open( &archiveFile, (TCHAR *)filename, FA_READ) ;
   if (result != FR_OK)
@@ -1681,7 +1724,7 @@ extern uint32_t sdMounted( void ) ;
 #endif
     return "NO SD CARD" ;
 
-  strcpy( filename, EEPROM_PATH ) ;
+  cpystr( (uint8_t *)filename, (uint8_t *)EEPROM_PATH ) ;
 
   result = f_opendir( &folder, filename) ;
   if (result != FR_OK)
@@ -1692,9 +1735,9 @@ extern uint32_t sdMounted( void ) ;
       return "SD CARD ERROR" ; // SDCARD_ERROR(result) ;
   }
 
-  strcpy( &filename[7], "/eeprom" ) ;
+  cpystr( (uint8_t *)&filename[7], (uint8_t *)"/eeprom" ) ;
 	setFilenameDateTime( &filename[14], 0 ) ;
-  strcpy_P(&filename[14+11], ".bin" ) ;
+  cpystr((uint8_t *)&filename[14+11], (uint8_t *)".bin" ) ;
 
 	CoTickDelay(1) ;					// 2mS
   result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;

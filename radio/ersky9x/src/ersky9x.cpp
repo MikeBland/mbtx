@@ -36,7 +36,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include <ctype.h>
+//#include <ctype.h>
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
@@ -455,6 +455,16 @@ uint8_t UserTimer1 ;
 
 //#define SLAVE_RESET	1
 
+uint8_t toupper(unsigned char c)
+{
+	if (((c)>='a')&&((c)<='z'))
+	{
+		c -= 0x20 ;
+	}
+	return c ;
+}
+
+
 #ifdef SLAVE_RESET
 uint8_t SlaveResetSwitch ;
 uint8_t SlavePanicSwitch ;
@@ -462,6 +472,7 @@ void panicDebugMenu() ;
 
 extern uint8_t SlaveTempReceiveBuffer[] ;
 extern uint8_t RemData[] ;
+
 
 void menuProcPanic( uint8_t event )
 {
@@ -3491,7 +3502,7 @@ extern void sdInit( void ) ;
 #endif
 
 
-  resetTimer();
+  resetTimers();
 	if ( g_eeGeneral.unexpectedShutdown )
 	{
 		unexpectedShutdown = 1 ;
@@ -5957,8 +5968,9 @@ uint32_t MixerCount ;
 
 uint8_t AlarmTimers[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 
+uint8_t SpiEncoderValid ;
 uint8_t EncoderI2cData[2] ;
-uint16_t I2CencCounter ;
+//uint16_t I2CencCounter ;
 
 void mainSequence( uint32_t no_menu )
 {
@@ -6299,6 +6311,7 @@ extern void pollForRtcComplete() ;
 
 
 #ifdef PCB9XT
+		static uint8_t lastPosition = 0 ;
 		if ( g_eeGeneral.enableI2C == 1 )
 		{
 			if ( ++EncoderTimer > 4 )
@@ -6312,8 +6325,7 @@ extern uint32_t i2c2_result() ;
 			{
 				if ( i2c2_result() == 1 )
 				{
-					I2CencCounter += 1 ;
-					static uint8_t lastPosition = 0 ;
+//					I2CencCounter += 1 ;
 					if ( lastPosition != EncoderI2cData[0] )
 					{
 						int8_t diff = EncoderI2cData[0] - lastPosition ;
@@ -6327,6 +6339,20 @@ extern uint32_t i2c2_result() ;
 				}
 			}
 		}
+extern uint8_t SpiEncoderValid ;
+		if ( SpiEncoderValid )
+		{
+			if ( lastPosition != EncoderI2cData[0] )
+			{
+				int8_t diff = EncoderI2cData[0] - lastPosition ;
+				if ( diff < 9 && diff > -9 )
+				{
+					Rotary_count += diff ;
+				}
+				lastPosition = EncoderI2cData[0] ;
+			}
+		}
+
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
@@ -7136,7 +7162,7 @@ void doSplash()
 
 
 //global helper vars
-bool    checkIncDec_Ret;
+//bool    checkIncDec_Ret;
 struct t_p1 P1values ;
 uint8_t LongMenuTimer ;
 uint8_t StepSize = 20 ;
@@ -7301,11 +7327,11 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 			}		
     }
     eeDirty(i_flags & (EE_GENERAL|EE_MODEL));
-    checkIncDec_Ret = true;
+//    checkIncDec_Ret = true;
   }
-  else {
-    checkIncDec_Ret = false;
-  }
+//  else {
+//    checkIncDec_Ret = false;
+//  }
 	StepSize = 20 ;
   return newval;
 }
@@ -11131,10 +11157,10 @@ int8_t getMovedSwitch()
 #if defined(PCBX12D) || defined(PCBX10)
 // 6-pos switch
 
-#ifndef PCBX10
+//#ifndef PCBX10
 	uint32_t pos = switchPosition( HSW_Ele6pos0 ) ;
   switches_states = (switches_states & 0xFFFE3FFF) | (pos << 14 ) ;
-#endif
+//#endif
 
 #endif
 
