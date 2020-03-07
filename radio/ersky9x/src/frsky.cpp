@@ -2131,26 +2131,26 @@ void processSportPacket(uint8_t *packet)
 		return ;
 	}
 
-	if ( RawLogging )
-	{
-		rawLogByte( 255 ) ;
-		rawLogByte( packet[0] ) ;
-		rawLogByte( packet[1] ) ;
-		rawLogByte( packet[2] ) ;
-		rawLogByte( packet[3] ) ;
-		rawLogByte( packet[4] ) ;
-		rawLogByte( 254 ) ;
-	}
+//	if ( RawLogging )
+//	{
+//		rawLogByte( 255 ) ;
+//		rawLogByte( packet[0] ) ;
+//		rawLogByte( packet[1] ) ;
+//		rawLogByte( packet[2] ) ;
+//		rawLogByte( packet[3] ) ;
+//		rawLogByte( packet[4] ) ;
+//		rawLogByte( 254 ) ;
+//	}
 
 	 
   if ( !checkSportPacket(packet) )
 	{
     return;
 	}
-	if ( RawLogging )
-	{
-		rawLogByte( 'X' ) ;		
-	}
+//	if ( RawLogging )
+//	{
+//		rawLogByte( 'X' ) ;		
+//	}
 	processSportData( packet, 0 ) ;
 }
 
@@ -2329,17 +2329,17 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							case 2 :	// SPort
 								if ( len >= FRSKY_SPORT_PACKET_SIZE )
 								{
-	if ( RawLogging )
-	{
-		rawLogByte( 'Z' ) ;		
-	}
+//	if ( RawLogging )
+//	{
+//		rawLogByte( 'Z' ) ;		
+//	}
 									
 #if not defined(PCBT16)
 									processSportPacket(InputPrivateData) ;
-	if ( RawLogging )
-	{
-		rawLogByte( 'Y' ) ;		
-	}
+//	if ( RawLogging )
+//	{
+//		rawLogByte( 'Y' ) ;		
+//	}
 #endif
 								}
 							break ;

@@ -868,7 +868,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	uint8_t disableThrottleCheck:1 ;
-	uint8_t thrSpare:1 ;
+	uint8_t basic_lua:1 ;
 	uint8_t instaTrimToTrims:1 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;

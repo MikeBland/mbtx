@@ -947,6 +947,11 @@ uint32_t ee32_check_finished()
 	return 1 ;
 }
 
+//#define SPI_PCB9XT 1
+
+//#ifdef SPI_PCB9XT
+//uint32_t DebugSpiEnc ;
+//#endif
 
 void ee32_process()
 {
@@ -980,9 +985,16 @@ void ee32_process()
 	if ( ( Eeprom32_process_state == E32_IDLE ) || Spi_complete )
 	{
 		// Poll an Arduino for encoder data
+//		uint32_t result ;
 		uint16_t result ;
+//extern uint32_t readSpiEncoder() ;
 extern uint16_t readSpiEncoder() ;
 		result = readSpiEncoder() ;
+
+//#ifdef SPI_PCB9XT
+//		DebugSpiEnc = result ;
+//#endif
+
 		if ( ( result & 0xFE00 ) == 0xAA00 )
 		{
 extern uint8_t EncoderI2cData[] ;

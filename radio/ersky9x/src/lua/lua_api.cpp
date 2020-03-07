@@ -80,32 +80,32 @@ void luaGetValueAndPush(lua_State* L, int src)
 //180-187 Extra PPM
 //200-207 Extra channels
 
-uint32_t strMatch( const char *a, const char *b, uint32_t length )
-{
-	if ( length == 0 )
-	{
-		return 1 ;
-	}
-	while ( length )
-	{
-		if ( *a == 0 || *b == 0 )
-		{
-			return 1 ;
-		}
-		if ( *a++ == *b++ )
-		{
-			if ( --length == 0 )
-			{
-				return 1 ;
-			}
-		}
-		else
-		{
-			break ;
-		}
-	}
-	return 0 ;
-}
+uint32_t strMatch( const char *a, const char *b, uint32_t length ) ;
+//{
+//	if ( length == 0 )
+//	{
+//		return 1 ;
+//	}
+//	while ( length )
+//	{
+//		if ( *a == 0 || *b == 0 )
+//		{
+//			return 1 ;
+//		}
+//		if ( *a++ == *b++ )
+//		{
+//			if ( --length == 0 )
+//			{
+//				return 1 ;
+//			}
+//		}
+//		else
+//		{
+//			break ;
+//		}
+//	}
+//	return 0 ;
+//}
 
 
 int32_t luaFindValueIndexByName( const char * name )
@@ -313,6 +313,15 @@ static int luaPlayNumber(lua_State * L)
   return 0;
 }
 
+static int luaKillEvents(lua_State * L)
+{
+  int number = luaL_checkinteger(L, 1);
+extern void killEvents(uint8_t event) ;
+	killEvents( number) ;
+  return 0;
+}
+
+
 /*luadoc
 @function sportTelemetryPush()
 
@@ -347,7 +356,7 @@ static int luaSportTelemetryPush(lua_State * L)
 	
   if (lua_gettop(L) == 0)
 	{
-    lua_pushboolean(L, sportPacketSend( 0, 0 ) ) ;
+    lua_pushboolean(L, sportPacketSend( (uint8_t *)0, (uint16_t)0 ) ) ;
   }
   else
 	{
@@ -363,7 +372,7 @@ static int luaSportTelemetryPush(lua_State * L)
 		sportPacket[4] = value >> 8 ;
 		sportPacket[5] = value >> 16 ;
 		sportPacket[6] = value >> 24 ;
-		value = sportPacketSend( sportPacket, sportPacket[7] ) ;
+		value = sportPacketSend( sportPacket, (uint16_t)sportPacket[7] ) ;
 		lua_pushboolean(L, value ? true : false ) ;
   }
   return 1 ;
@@ -398,20 +407,20 @@ static int luaSportTelemetryPop(lua_State * L)
 //    }
 //  }
 
-	if ( fifo128Space( &Lua_fifo ) <= ( 128 - 8 ) )
+	if ( fifo128Space( &Script_fifo ) <= ( 128 - 8 ) )
 	{
 		uint32_t value ;
-		value = get_fifo128( &Lua_fifo ) & 0x1F ;
+		value = get_fifo128( &Script_fifo ) & 0x1F ;
     lua_pushnumber(L, value ) ;	// physical ID
-		value = get_fifo128( &Lua_fifo ) ;
+		value = get_fifo128( &Script_fifo ) ;
     lua_pushnumber(L, value ) ;	// prim
-		value = get_fifo128( &Lua_fifo ) ;
-		value |= get_fifo128( &Lua_fifo ) << 8 ;
+		value = get_fifo128( &Script_fifo ) ;
+		value |= get_fifo128( &Script_fifo ) << 8 ;
     lua_pushnumber(L, value ) ;	// App ID
-		value = get_fifo128( &Lua_fifo ) ;
-		value |= get_fifo128( &Lua_fifo ) << 8 ;
-		value |= get_fifo128( &Lua_fifo ) << 16 ;
-		value |= get_fifo128( &Lua_fifo ) << 24 ;
+		value = get_fifo128( &Script_fifo ) ;
+		value |= get_fifo128( &Script_fifo ) << 8 ;
+		value |= get_fifo128( &Script_fifo ) << 16 ;
+		value |= get_fifo128( &Script_fifo ) << 24 ;
     lua_pushunsigned(L, value ) ;	// Data
     return 4 ;
 	}
@@ -575,7 +584,7 @@ const luaL_Reg ersky9xLib[] = {
 //  { "defaultStick", luaDefaultStick },
 //  { "defaultChannel", luaDefaultChannel },
 //  { "getRSSI", luaGetRSSI },
-//  { "killEvents", luaKillEvents },
+  { "killEvents", luaKillEvents },
   { "loadScript", luaLoadScript },
 //#if !defined(COLORLCD)
 //  { "GREY", luaGrey },
@@ -648,18 +657,34 @@ const luaR_value_entry ersky9xConstants[] = {
 //  { "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
 //  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
 //#endif
-  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
-  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
-  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
-  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
-  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
-  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
-  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
-  { "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
+
+	// Map to X9D normal buttons
+  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
+  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
+  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_MENU) },
+  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
+  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+
+//  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+//  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
+//  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+//  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
+//  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+//  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
+//  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
+//  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+//  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+  
+	{ "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
   { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
 //#if !defined(COLORLCD)
 //  { "FILL_WHITE", FILL_WHITE },

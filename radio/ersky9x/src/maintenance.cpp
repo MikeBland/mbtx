@@ -4149,6 +4149,27 @@ uint32_t sportUpdate( uint32_t external )
   			INTERNAL_RF_ON();
 			}
 #endif
+			SharedMemory.Mdata.pCrcTable = VoiceBuffer[1].dataw ;
+			{
+				// Init CRC table
+				uint32_t i ;
+				uint32_t j ;
+				uint32_t result ;
+				uint16_t *p = SharedMemory.Mdata.pCrcTable ;
+				for ( i = 0 ; i < 256 ; i += 1 )
+				{
+					result = i << 8 ;
+					for ( j = 0 ; j < 8 ; j += 1 )
+					{
+						result <<= 1 ;
+						if ( result & 0x00010000 )
+						{
+							result ^= 0x1021 ;
+						}
+					}
+					*p++ = result ;
+				}
+			}
 			SharedMemory.Mdata.SportState = SPORT_POWER_ON ;
 		break ;
 		
@@ -4270,16 +4291,16 @@ extern void processSerialData(uint8_t data) ;
 
 /* CRC16 implementation acording to CCITT standards */
 
-const uint16_t CRC16_Short[] =
-{
-	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
-	0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef
-} ;
+//const uint16_t CRC16_Short[] =
+//{
+//	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
+//	0x8108,0x9129,0xa14a,0xb16b,0xc18c,0xd1ad,0xe1ce,0xf1ef
+//} ;
 
-static uint16_t CRC16Table(uint8_t val)
-{
-	return CRC16_Short[val&0x0F] ^ (0x1231 * (val>>4));
-}
+//static uint16_t CRC16Table(uint8_t val)
+//{
+//	return CRC16_Short[val&0x0F] ^ (0x1231 * (val>>4));
+//}
 
 //static const unsigned short crc16tab[256]= {
 //	0x0000,0x1021,0x2042,0x3063,0x4084,0x50a5,0x60c6,0x70e7,
@@ -4322,8 +4343,8 @@ uint16_t crc16_ccitt( uint8_t *buf, uint32_t len )
 	uint16_t crc = 0;
 	for( counter = 0; counter < len; counter++)
 	{
-//		crc = (crc<<8) ^ crc16tab[ ((crc>>8) ^ *buf++ )	&0x00FF] ;
-		crc = (crc<<8) ^ CRC16Table( ((crc>>8) ^ *buf++ )	&0x00FF) ;
+		crc = (crc<<8) ^ SharedMemory.Mdata.pCrcTable[ ((crc>>8) ^ *buf++ )	&0x00FF] ;
+//		crc = (crc<<8) ^ CRC16Table( ((crc>>8) ^ *buf++ )) ;
 	}
 	return crc;
 }

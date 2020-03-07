@@ -4227,11 +4227,20 @@ void main_loop(void* pdata)
 #endif
 
 #ifdef LUA
-		luaLoadModelScripts() ;
+		if ( g_model.basic_lua )
+		{
+			luaLoadModelScripts() ;
+		}
+		else
+		{
+			basicLoadModelScripts() ;
+		}
 #endif
 	}
-#ifdef BASIC
+#ifndef LUA
+ #ifdef BASIC
 	basicLoadModelScripts() ;
+ #endif
 #endif
 	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 	processSwitches() ;	// Guarantee unused switches are cleared
@@ -8413,61 +8422,69 @@ extern int32_t Rotary_diff ;
 		uint32_t refreshNeeded = 0 ;
 		uint32_t telemetryScriptRunning = 0 ;
 #ifdef LUA
-		refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
-  	if ( !refreshNeeded )
+		if ( g_model.basic_lua )
 		{
-    	refreshNeeded = luaTask( evt, RUN_TELEM_FG_SCRIPT, true ) ;
-  	}
-  	if ( refreshNeeded )
-		{
-			if (evtAsRotary)
+			refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
+  		if ( !refreshNeeded )
 			{
-				Rotary_diff = 0 ;
-			}
-		}
-#else
-extern uint32_t TotalExecTime ;
-		uint16_t execTime = getTmr2MHz() ;
-		refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
-		execTime = (uint16_t)(getTmr2MHz() - execTime) ;
-		TotalExecTime += execTime ;
-		if ( refreshNeeded == 3 )
-		{
-			refreshNeeded = 0 ;
-			if ( sd_card_ready() )
+    		refreshNeeded = luaTask( evt, RUN_TELEM_FG_SCRIPT, true ) ;
+  		}
+  		if ( refreshNeeded )
 			{
-				evt = 0 ;
+				refreshNeeded = 2 ;
+//				if (evtAsRotary)
+//				{
+//					Rotary_diff = 0 ;
+//				}
 			}
-			// standalone finished so:
-			basicLoadModelScripts() ;
 		}
 		else
+#endif
 		{
-	  	if ( !refreshNeeded )
+extern uint32_t TotalExecTime ;
+			uint16_t execTime = getTmr2MHz() ;
+			refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
+			execTime = (uint16_t)(getTmr2MHz() - execTime) ;
+			TotalExecTime += execTime ;
+			if ( refreshNeeded == 3 )
 			{
-    		refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt, SCRIPT_TELEMETRY ) ;
-				if ( refreshNeeded )
+				refreshNeeded = 0 ;
+				if ( sd_card_ready() )
 				{
-					telemetryScriptRunning = 1 ;
+					evt = 0 ;
 				}
-//				if ( refreshNeeded == 3 )
-//				{
-//					refreshNeeded = 0 ;
-//					evt = 0 ;
-//				}
-	  	}
+				// standalone finished so:
+				basicLoadModelScripts() ;
+			}
 			else
 			{
-//				if ( refreshNeeded == 1 )
-//				{
-//					if ( ++BasicRunWithoutRefresh > 9 )
-//					{
-//						refreshNeeded = 2 ;
-//					}
-//				}
+	  		if ( !refreshNeeded )
+				{
+    			refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt, SCRIPT_TELEMETRY ) ;
+					if ( refreshNeeded )
+					{
+						telemetryScriptRunning = 1 ;
+					}
+	//				if ( refreshNeeded == 3 )
+	//				{
+	//					refreshNeeded = 0 ;
+	//					evt = 0 ;
+	//				}
+	  		}
+				else
+				{
+	//				if ( refreshNeeded == 1 )
+	//				{
+	//					if ( ++BasicRunWithoutRefresh > 9 )
+	//					{
+	//						refreshNeeded = 2 ;
+	//					}
+	//				}
+				}
 			}
+//#ifdef LUA
 		}
-
+//#endif
 //		refreshNeeded = basicTask( evt, RUN_STNDAL_SCRIPT, true ) ;
 //  	if ( !refreshNeeded )
 //		{
@@ -8502,7 +8519,7 @@ extern uint32_t TotalExecTime ;
 				}
 			}
 		}
-#endif
+//#endif
   	else
 #endif
 		{

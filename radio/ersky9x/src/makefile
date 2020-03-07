@@ -16,7 +16,7 @@
 #
 # Build commands:
 #
-# Taranis      make PCB=X9D BT=1
+# Taranis      make PCB=X9D
 # X9E          make PCB=X9D REV9E=1
 # TaranisPlus  make PCB=X9D REVPLUS=1
 # XLite        make PCB=X9D PCBXLITE=1
@@ -59,6 +59,8 @@ ifeq ($(PCB), X9D)
   PROJECT = x9dp
   EXT_MOD=X9DP
   CPPDEFS += -DREVPLUS
+  LUA = 1
+  CPPDEFS += -DLUA
  else ifeq ($(REV9E), 1)
   PROJECT        = x9e
   EXT_MOD=X9E

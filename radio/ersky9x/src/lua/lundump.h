@@ -20,7 +20,8 @@ LUAI_FUNC void luaU_header (lu_byte* h);
 LUAI_FUNC int luaU_dump (lua_State* L, const Proto* f, lua_Writer w, void* data, int strip);
 
 /* data to catch conversion errors */
-#define LUAC_TAIL		"\x19\x93\r\n\x1a\n"
+//#define LUAC_TAIL		"\x19\x93\r\n\x1a\n"
+#define LUAC_TAIL		"\x19\x93\r\n\x19\n"
 
 /* size in bytes of header of binary files */
 #define LUAC_HEADERSIZE		(sizeof(LUA_SIGNATURE)-sizeof(char)+2+6+sizeof(LUAC_TAIL)-sizeof(char))

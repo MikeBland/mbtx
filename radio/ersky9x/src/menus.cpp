@@ -1101,6 +1101,15 @@ int16_t calc_scaler( uint8_t index, uint16_t *unit, uint8_t *num_decimals)
 						value %= exValue ;
 					}
 				break ;
+				case 6 :	// Min
+					if ( exValue )
+					{
+						if ( exValue < value )
+						{
+							value = exValue ;
+						}
+					}
+				break ;
 			}
 		}
 	}
@@ -1785,7 +1794,6 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 	uint8_t displayed = 0 ;
 	uint8_t valid = telemItemValid( channel ) | (style & TELEM_CONSTANT ) ;
 	uint8_t mappedChannel = ( channel >= TELEM_GAP_START + 8 ) ? channel - 8 : channel ;
-	 
 	if ( style & TELEM_LABEL )
 	{
 		uint8_t displayed = 0 ;
@@ -2554,9 +2562,9 @@ enum EnumTabStat
 	e_debug,
   e_Setup3,
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE) || defined(PCBX9D)
-#ifdef IMAGE_128
-	e_image,
-#endif
+//#ifdef IMAGE_128
+//	e_image,
+//#endif
 #ifdef BLUETOOTH
 	e_bluetooth,
 #endif
@@ -2592,10 +2600,10 @@ MenuFuncP menuTabStat[] =
 //#endif
 	menuDebug,
 	menuProcSDstat,
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE)
-#ifdef IMAGE_128
-	menuImage,
-#endif
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE) || defined(PCBX9D)
+//#ifdef IMAGE_128
+//	menuImage,
+//#endif
 #ifdef BLUETOOTH
 	menuProcBt,
 #endif
@@ -5455,7 +5463,7 @@ void menuCustomTelemetry(uint8_t event)
 					val -= 8 ;
 				}
 				CHECK_INCDEC_H_MODELVAR_0( val, NUM_TELEM_ITEMS) ;
-				if ( val >= TELEM_GAP_START )
+				if ( val > TELEM_GAP_START )
 				{
 					val += 8 ;
 				}
@@ -6571,7 +6579,7 @@ void menuScaleOne(uint8_t event)
 			break ;
 			case 8 :
 				lcd_puts_Pleft( y, XPSTR("Function") ) ;
-				pscaler->exFunction = checkIndexed( y, XPSTR(FWx13"\005""\010--------Add     SubtractMultiplyDivide  Mod     "), pscaler->exFunction, attr ) ;
+				pscaler->exFunction = checkIndexed( y, XPSTR(FWx13"\006""\010--------Add     SubtractMultiplyDivide  Mod     Min     "), pscaler->exFunction, attr ) ;
 			break ;
 			case 9 :	// unit
 				lcd_puts_Pleft( y, XPSTR("Unit") ) ;
@@ -9874,13 +9882,29 @@ extern uint8_t swOn[] ;
 							uint8_t b = 1 ;
 							uint8_t z = pmd->modeControl ;
 							lcd_puts_P( 13*FW+2+x, 4*FH, XPSTR("M") ) ;
+							uint32_t modeCount = 0 ;
+							uint32_t modeIndex = 0 ;
 							for ( uint8_t p = 0 ; p<MAX_MODES+1 ; p++ )
 							{
 								if ( ( z & b ) == 0 )
 								{
     							lcd_putcAtt( (14+p)*FW+2+x, 4*FH, '0'+p, 0 ) ;
+									modeCount += 1 ;
+									modeIndex = p ;
 								}
 								b <<= 1 ;
+							}
+							if ( modeCount == 1 )
+							{
+								if ( modeIndex )
+								{
+									modeIndex -= 1 ;
+									if ( g_model.phaseData[modeIndex].name[0] )
+									{
+										lcd_puts_P( 13*FW+2+x, 6*FH, XPSTR("[      ]") ) ;
+										lcd_putsnAtt( 14*FW+2+x, 5*FH, g_model.phaseData[modeIndex].name, 6, /*BSS*/ 0 ) ;
+									}
+								}
 							}
 							lcd_puts_P( 13*FW+2+x, 6*FH, XPSTR("D    :") ) ;
 						  lcd_outdezAtt( FW*18+2+x, 6*FH, pmd->delayUp, PREC1 ) ;
@@ -17061,7 +17085,7 @@ extern int32_t Rotary_diff ;
 		ScriptDirNeeded = 0 ;
 		WatchdogTimeout = 300 ;		// 3 seconds
 #ifdef LUA
-		setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"LUA" ) ;
+		setupFileNames( (TCHAR *)"/SCRIPTS", fc, g_model.basic_lua ? (char *)"LUA" : (char *)"BAS" ) ;
 #else
 		setupFileNames( (TCHAR *)"/SCRIPTS", fc, (char *)"BAS" ) ;
 #endif
@@ -17112,7 +17136,20 @@ extern int32_t Rotary_diff ;
 		cpystr( cpystr( (uint8_t *)ScriptFilename, (uint8_t *)"/SCRIPTS/" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
 		WatchdogTimeout = 300 ;		// 3 seconds
 #ifdef LUA
-		luaExec(ScriptFilename) ;
+		if ( g_model.basic_lua )
+		{
+			luaExec(ScriptFilename) ;
+			RotaryState = ROTARY_MENU_UD ;
+		}
+		else
+		{
+			if ( loadBasic( ScriptFilename, BASIC_LOAD_ALONE ) == 0 )
+			{
+				// Didn't load
+				basicLoadModelScripts() ;
+			}
+			RotaryState = ROTARY_MENU_UD ;
+		}
 #else
 		if ( loadBasic( ScriptFilename, BASIC_LOAD_ALONE ) == 0 )
 		{
@@ -17463,6 +17500,17 @@ void menuDebug(uint8_t event)
 
 //#define PXX_DELAYS	1
 
+//#define SPI_PCB9XT 1
+
+//#ifdef SPI_PCB9XT
+//extern uint32_t DebugSpiEnc ;
+
+//  lcd_outhex4( 0,  2*FH, DebugSpiEnc >> 16 ) ;
+//  lcd_outhex4( 30,  2*FH, DebugSpiEnc ) ;
+
+//#else
+
+
 #ifdef PXX_DELAYS
 extern uint16_t PxxTime[2] ;
 static uint16_t OldPxxTime[2] ;
@@ -17508,6 +17556,8 @@ static uint16_t counter ;
   lcd_outhex4( 75, 4*FH, check_soft_power() ) ;
 
 #endif
+
+// #endif // SPI_9XT
 
 #ifdef REVX
   lcd_outhex4( 0,  5*FH, PIOA->PIO_PDSR >> 16 ) ;
@@ -24973,7 +25023,8 @@ STR_Protocol
  #if defined(PCBX7) || defined (PCBXLITE) || defined(PCBT12) || defined(PCBX9LITE) || defined(PCBLEM1)
 			IlinesCount = 21 ;//+ 1 ;
  #else
-			IlinesCount = 22 ;//+ 1 ;
+			IlinesCount = 23 ;//+ 1 ;
+      #define SCRIPT_CHOICE	1
  #endif
 #else // PCBX9D
  #ifdef IMAGE_128
@@ -25825,6 +25876,12 @@ extern uint32_t switches_states ;
 				y += FH ;
 				subN += 1 ;
 				g_model.disableThrottleCheck = onoffMenuItem( g_model.disableThrottleCheck, y, XPSTR("Disable Thr Chk"), sub==subN) ;
+#ifdef SCRIPT_CHOICE				
+				y += FH ;
+				subN += 1 ;
+				lcd_puts_Pleft( y, "Script Type");
+				g_model.basic_lua = checkIndexed( y, XPSTR(FWx16"\001""\005Basic  LUA"), g_model.basic_lua, (sub==subN) ) ;
+#endif
 //#endif // n PCBLEM1
 			}
 		}	

@@ -73,7 +73,7 @@
 #endif
 
 #if defined(PCBX9D) && defined(REVNORM)
-#define BLUETOOTH	1
+//#define BLUETOOTH	1
 #endif
 
 #ifdef PCBX7
@@ -1699,6 +1699,7 @@ struct t_maintenance
 #ifdef PCBSKY
 uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
 #endif
+	uint16_t *pCrcTable ;
 } ;
 
 #define SPECTRUM_NUM_BARS 240

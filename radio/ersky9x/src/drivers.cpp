@@ -4681,14 +4681,21 @@ uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
 	return spiptr->DR ;
 }
 
+//uint32_t readSpiEncoder()
 uint16_t readSpiEncoder()
 {
 	uint32_t result ;
+//	uint32_t x ;
 	uint16_t x ;
+//	uint32_t y ;
 	register SPI_TypeDef *spiptr = SPI1 ;
 
-	// possibly toggle the CS line
-	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | (SPI_CR1_BR_0 | SPI_CR1_BR_1) ;	// Restore clock
+	// Toggle the CS line
+	GPIOA->BSRRH = GPIO_Pin_SPI_EE_CS ;		// output enable
+	hw_delay(2) ;
+	GPIOA->BSRRL = GPIO_Pin_SPI_EE_CS ;		// output disable
+
+	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | (SPI_CR1_BR_0 | SPI_CR1_BR_1) ;	// Slow the clock
 
 	(void) spiptr->DR ;		// Dump any rx data
 	spiptr->DR = 0x5A ;
@@ -4702,6 +4709,7 @@ uint16_t readSpiEncoder()
 		}
 	}
 	// delay 5uS (ish)
+//	y = spiptr->DR ;
 	x = spiptr->DR ;
 	hw_delay(33) ;	// Give 8MHz Arduino time to load data
 	spiptr->DR = 0 ;
@@ -4727,6 +4735,7 @@ uint16_t readSpiEncoder()
 		}
 	}
 	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | SPI_CR1_BR_0 ;	// Restore clock
+//	return ( y << 16 ) | ( x << 8 ) | spiptr->DR ;
 	return ( x << 8 ) | spiptr->DR ;
 }
 

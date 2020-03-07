@@ -255,4 +255,8 @@ void luaU_header (lu_byte* h)
  *h++=cast_byte(sizeof(lua_Number));
  *h++=cast_byte(((lua_Number)0.5)==0);		/* is lua_Number integral? */
  memcpy(h,LUAC_TAIL,sizeof(LUAC_TAIL)-sizeof(char));
+ *(h+4)=0x1A ; // Fixup as assembler complaining if \x1A is in LUAC_TAIL
 }
+
+
+
