@@ -363,7 +363,7 @@ void initMultiMode()
  #endif
 	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
-	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PORTA | PIN_LOW ) ;
+	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | EXTMODULE_PORT | PIN_LOW ) ;
 #endif
 }
 
@@ -511,17 +511,22 @@ void sendMultiByte( uint8_t byte )
 		return ;
 	}
  #endif
-	uint32_t bit ;
-	if ( MultiModule )
-	{
-		bit = 0x0400 ;
-	}
-	else
-	{
-		bit = 0x0400 ;
-	}
-#define CLEAR_TX_BIT() GPIOA->BSRRL = bit
-#define SET_TX_BIT() GPIOA->BSRRH = bit
+//	uint32_t bit ;
+//	if ( MultiModule )
+//	{
+//		bit = 0x0400 ;
+//	}
+//	else
+//	{
+//		bit = 0x0400 ;
+//	}
+ #if defined(PCBT16)
+#define CLEAR_TX_BIT() EXTMODULE_TX_GPIO->BSRRL = PIN_EXTPPM_OUT
+#define SET_TX_BIT() EXTMODULE_TX_GPIO->BSRRH = PIN_EXTPPM_OUT
+ #else
+#define CLEAR_TX_BIT() EXTMODULE_TX_GPIO->BSRRL = PIN_EXTPPM_OUT
+#define SET_TX_BIT() EXTMODULE_TX_GPIO->BSRRH = PIN_EXTPPM_OUT
+ #endif
 #endif
 
 	__disable_irq() ;
@@ -925,7 +930,11 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 #ifdef WHERE_TRACK
 	notePosition('o') ;
 #endif
+#if defined(PCBX12D) || defined(PCBX10)
+	for ( i = 1 ; i < 13 ; i += 1 )
+#else
 	for ( i = 1 ; i < 7 ; i += 1 )
+#endif
 	{
 		WatchdogTimeout = 300 ;		// 3 seconds
 #ifdef WHERE_TRACK
@@ -991,7 +1000,11 @@ uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext )
 	return 0 ;
 }
 
+#if defined(PCBX12D) || defined(PCBX10)
+#define DISPLAY_CHAR_WIDTH	38
+#else
 #define DISPLAY_CHAR_WIDTH	21
+#endif
 
 uint16_t LastFileMoveTime ;
 
@@ -1002,7 +1015,11 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
   uint8_t maxhsize ;
 	uint32_t i ;
 			 
+#if defined(PCBX12D) || defined(PCBX10)
+	limit = 12 ;
+#else
 	limit = 6 ;
+#endif
 	if ( fc->nameCount < limit )
 	{
 		limit = fc->nameCount ;						
@@ -1043,7 +1060,12 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 #ifdef WHERE_TRACK
 	notePosition('i') ;
 #endif
-		lcd_putsn_P( 0, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+#define FILE_LIST_OFFSET	10
+#else
+#define FILE_LIST_OFFSET	0
+#endif
+		lcd_putsn_P( FILE_LIST_OFFSET, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
 	}
 
 #if !defined(PCBTARANIS) || defined(REV9E)
@@ -1141,7 +1163,7 @@ extern int32_t Rotary_diff ;
 #if defined(PCBTARANIS)
 	lcd_filled_rect( 0, 2*FH+FH*fc->vpos, DISPLAY_CHAR_WIDTH*FW, 8, 0xFF, 0 ) ;
 #else
-	lcd_char_inverse( 0, 2*FH+FH*fc->vpos, DISPLAY_CHAR_WIDTH*FW, 0 ) ;
+	lcd_char_inverse( FILE_LIST_OFFSET, 2*FH+FH*fc->vpos, DISPLAY_CHAR_WIDTH*FW, 0 ) ;
 #endif
 #ifdef WHERE_TRACK
 	notePosition('l') ;

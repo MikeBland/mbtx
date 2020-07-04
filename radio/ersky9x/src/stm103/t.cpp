@@ -590,7 +590,7 @@ void getADC_filt() ;
 uint16_t LastFileMoveTime ;
 
 
-uint32_t fileList(uint8_t event, struct fileControl *fc )
+uint32_t fileList(uint8_t event, struct fileControl *fc, uint32_t vsize )
 {
 	uint32_t limit ;
 	uint32_t result = 0 ;

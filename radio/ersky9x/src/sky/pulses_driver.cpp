@@ -788,9 +788,10 @@ void setupPulsesDsm2(uint8_t chns)
 
 		if(g_model.Module[1].protocol == PROTO_MULTI)
 		{
-			setMultiSerialArray( SerialExternalData, 1 ) ;
+			uint32_t length ;
+			length = setMultiSerialArray( SerialExternalData, 1 ) ;
 			uint32_t i ;
-			for ( i = 0 ; i < 26 ; i += 1 )
+			for ( i = 0 ; i < length ; i += 1 )
 			{
 				sendByteDsm2( SerialExternalData[i] ) ;
 			}

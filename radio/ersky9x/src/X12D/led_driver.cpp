@@ -36,6 +36,7 @@ void ledInit()
   GPIO_Init(LED_GPIO, &GPIO_InitStructure);
 }
 
+#if defined(PCBX12D)
 void ledOff()
 {
   RCC_AHB1PeriphClockCmd(LED_RCC_AHB1Periph, DISABLE);
@@ -52,3 +53,27 @@ void ledBlue()
   ledInit();
   GPIO_ResetBits(LED_GPIO, LED_GPIO_PIN);
 }
+#elif defined(PCBX10)
+void ledOff()
+{
+  GPIO_ResetBits(LED_GPIO, LED_GPIO_PIN);
+}
+
+void ledRed()
+{
+  ledOff();
+  GPIO_SetBits(LED_GPIO, LED_RED_GPIO_PIN);
+}
+
+void ledGreen()
+{
+  ledOff();
+  GPIO_SetBits(LED_GPIO, LED_GREEN_GPIO_PIN);
+}
+
+void ledBlue()
+{
+  ledOff();
+  GPIO_SetBits(LED_GPIO, LED_BLUE_GPIO_PIN);
+}
+#endif

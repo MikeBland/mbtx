@@ -181,9 +181,10 @@ extern "C" void USART6_IRQHandler()
 
 
 //#if defined(PCBX12D) || defined(PCBX10)
-#if defined(PCBX12D)
+#if defined(PCBX12D) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 void USART6_configure()
 {
+#if defined(PCBX12D)
 	if ( isProdVersion() == 0 )
 	{
 		RCC->AHB1ENR |= PROT_BT_RCC_AHB1Periph ;
@@ -191,6 +192,7 @@ void USART6_configure()
 		GPIOA->BSRRH = PROT_BT_EN_GPIO_PIN ;
 	}
 	else
+#endif
 	{
 		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
 		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
@@ -198,8 +200,10 @@ void USART6_configure()
 	}
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 	configure_pins( BT_TX_GPIO_PIN|BT_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+#if defined(PCBX12D)
 	configure_pins( BT_BRTS_GPIO_PIN, PIN_OUTPUT | PIN_PORTG ) ;
 	GPIOG->BSRRL = BT_BRTS_GPIO_PIN ;
+#endif
 	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;
 	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE | USART_CR1_TE ;
 	USART6->CR2 = 0 ;
@@ -1347,6 +1351,10 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 
 #endif
 
+//uint16_t HbDebug1 ;
+//uint16_t HbDebug2 ;
+//uint16_t HbDebug3 ;
+
 #ifdef PCB9XT
 extern "C" void EXTI3_IRQHandler()
 #else
@@ -1365,11 +1373,13 @@ extern "C" void EXTI9_5_IRQHandler()
 	struct t_softSerial *pss = &SoftSerial1 ;
 
 	capture =  TIM7->CNT ;	// Capture time
+//	HbDebug1 += 1 ;
 	
 #ifdef PCBX9D
  #ifndef PCBXLITE
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
 	{
+//	HbDebug2 += 1 ;
 		XjtHeartbeatCapture.value = capture ;
 		EXTI->PR = XJT_HEARTBEAT_BIT ;
 	}

@@ -22,7 +22,11 @@
 #include <string.h>
 
 #include "ersky9x.h"
+#ifdef PCBX10
+#include "X12D/hal.h"
+#else
 #include "X9D/hal.h"
+#endif
 #include "myeeprom.h"
 #include "frsky.h"
 #include "drivers.h"
@@ -276,7 +280,6 @@ void setupShareFrame(uint8_t module)
 	pxx2AddByte( PXX2_TYPE_ID_SHARE, module ) ;
 	pxx2AddByte( ModuleControl[module].bindReceiverIndex, module ) ;
 }
-
 
 void setupAccstBindFrame(uint8_t module)
 {
@@ -568,11 +571,15 @@ void setupPulsesAccess( uint32_t module )
 		
 		if ( module )
 		{
+
+#ifndef PCBX10
 extern volatile uint8_t *PxxTxPtr_x ;
 extern volatile uint8_t PxxTxCount_x ;
 			PxxTxPtr_x = PxxSerial[EXTERNAL_MODULE] ;
 			PxxTxCount_x = PxxSerial[module][1] + 4 ;
 			EXTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
+#endif
+		 
 		}
 		else
 		{

@@ -224,12 +224,34 @@ uint8_t ExternalSwitchesValid ;
 uint8_t ExternalSwitchByte1 ;
 extern uint8_t ExternalSet ;
 
-static uint8_t s_evt;
+#ifdef MULTI_EVENTS
+static uint8_t s_evt[2] ;
+static uint8_t s_evtCount ;
+#else
+static uint8_t s_evt ;
+#endif
+
+#ifdef MULTI_EVENTS
+void putEvent( register uint8_t evt)
+{
+	if (s_evtCount == 0)
+	{
+  	s_evt[0] = evt ;
+		s_evtCount = 1 ;
+	}
+	else
+	{
+  	s_evt[1] = evt ;
+		s_evtCount = 2 ;
+	}
+}
+#else
 void putEvent( register uint8_t evt)
 {
   s_evt = evt;
 	Tevent = evt ;
 }
+#endif
 
 uint8_t menuPressed()
 {
@@ -249,13 +271,28 @@ uint8_t encoderPressed()
 	return keys[BTN_RE].state() ;
 }
 
-
+#ifdef MULTI_EVENTS
+uint8_t getEvent()
+{
+  uint8_t evt = s_evt[0] ;
+	s_evt[0] = 0 ;
+	Tevent = evt ;
+	if ( s_evtCount )
+	{
+		s_evtCount -= 1 ;
+		s_evt[0] = s_evt[1] ;
+		s_evt[1] = 0 ;
+	}
+  return evt ;
+}
+#else
 uint8_t getEvent()
 {
   register uint8_t evt = s_evt;
   s_evt=0;
   return evt;
 }
+#endif
 
 Key keys[NUM_KEYS] ;
 
@@ -344,22 +381,83 @@ void Key::input(bool val, EnumKeys enuk)
   }
 }
 
+#ifdef MULTI_EVENTS
 void pauseEvents(uint8_t event)
 {
   event=event & EVT_KEY_MASK;
   if(event < (int)DIM(keys))  keys[event].pauseEvents();
-}
 
+	// Add in discarding events in the queue
+	// Possibly only repeat events
+  event = event & EVT_KEY_MASK ;
+  if(event < (int)DIM(keys))
+	{
+		keys[event].pauseEvents() ;
+		if ( s_evtCount == 2 )
+		{
+			if ( ( s_evt[1] & EVT_KEY_MASK ) == ( event | _MSK_KEY_REPT ) )
+			{
+				s_evtCount = 1 ;
+				s_evt[1] = 0 ;
+			}
+		}
+		if ( s_evtCount )
+		{
+			if ( ( s_evt[0] & EVT_KEY_MASK ) == ( event | _MSK_KEY_REPT ) )
+			{
+				s_evtCount -= 1 ;
+				s_evt[0] = s_evt[1] ;
+				s_evt[1] = 0 ;
+			}
+		}
+	}
+}
+#else
+void pauseEvents(uint8_t event)
+{
+  event = event & EVT_KEY_MASK ;
+  if(event < (int)DIM(keys))  keys[event].pauseEvents() ;
+}
+#endif
+
+#ifdef MULTI_EVENTS
 void killEvents(uint8_t event)
 {
-  event=event & EVT_KEY_MASK;
-  if(event < (int)DIM(keys))  keys[event].killEvents();
+  event = event & EVT_KEY_MASK ;
+  if(event < (int)DIM(keys))
+	{
+		keys[event].killEvents() ;
+		if ( s_evtCount == 2 )
+		{
+			if ( ( s_evt[1] & EVT_KEY_MASK ) == event )
+			{
+				s_evtCount = 1 ;
+				s_evt[1] = 0 ;
+			}
+		}
+		if ( s_evtCount )
+		{
+			if ( ( s_evt[0] & EVT_KEY_MASK ) == event )
+			{
+				s_evtCount -= 1 ;
+				s_evt[0] = s_evt[1] ;
+				s_evt[1] = 0 ;
+			}
+		}
+	}
 }
+#else
+void killEvents(uint8_t event)
+{
+  event = event & EVT_KEY_MASK ;
+  if(event < (int)DIM(keys))  keys[event].killEvents() ;
+}
+#endif
 
 uint8_t getEventDbl(uint8_t event)
 {
-  event=event & EVT_KEY_MASK;
-  if(event < (int)DIM(keys))  return keys[event].getDbl();
+  event = event & EVT_KEY_MASK ;
+  if(event < (int)DIM(keys))  return keys[event].getDbl() ;
   return 0;
 }
 
@@ -3610,6 +3708,8 @@ void start_2Mhz_timer()
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
+//extern uint16_t HbDebug3 ;
+
 void init_xjt_heartbeat()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
@@ -3620,6 +3720,9 @@ void init_xjt_heartbeat()
 	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
 	XjtHeartbeatCapture.valid = 1 ;
+
+//	HbDebug3 += 1 ;
+
 }
 
 void stop_xjt_heartbeat()

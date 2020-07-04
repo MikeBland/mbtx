@@ -30,6 +30,8 @@ uint16_t General_timer ;
 uint16_t Model_timer ;
 uint8_t Model_dirty ;
 
+extern uint16_t WatchdogTimeout ;
+
 unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
 
 extern const char *readNames(void) ;
@@ -146,18 +148,22 @@ void generalDefault()
   g_eeGeneral.contrast = 25 ;
 #else
 #if defined(PCBX12D) || defined(PCBX10)
-  g_eeGeneral.contrast = 10;
+  g_eeGeneral.contrast = 10 ;
 #else
   g_eeGeneral.contrast = 18 ;
 #endif
 #endif
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D)
   g_eeGeneral.vBatWarn = 88 ;
 #else
-  g_eeGeneral.vBatWarn = 65;
+ #if defined(PCBX10)
+  g_eeGeneral.vBatWarn = 72 ;
+ #else
+  g_eeGeneral.vBatWarn = 65 ;
+ #endif
 #endif
-  g_eeGeneral.stickMode=  1;
-	g_eeGeneral.disablePotScroll=  1;
+  g_eeGeneral.stickMode = 1 ;
+	g_eeGeneral.disablePotScroll = 1 ;
 #if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 0 ;
 #else
@@ -253,6 +259,8 @@ void eeReadAll()
 	result = f_opendir( &folder, filename ) ;
   if (result != FR_OK)
 	{
+		WatchdogTimeout = 300 ;
+    wdt_reset();  // Retrigger hardware watchdog
     if (result == FR_NO_PATH)
       result = f_mkdir(filename) ;
   }
@@ -261,6 +269,8 @@ void eeReadAll()
 	{
 		if ( readGeneral() )
 		{
+			WatchdogTimeout = 300 ;
+    	wdt_reset();  // Retrigger hardware watchdog
 			generalDefault() ;
 		}
 	}
@@ -280,6 +290,8 @@ void eeReadAll()
   LcdBackground = g_eeGeneral.backgroundColour ;
 //	if ( !readModelFromBackupRam(g_eeGeneral.currModel + 1) )
 	{
+		WatchdogTimeout = 300 ;
+    wdt_reset();  // Retrigger hardware watchdog
 		eeLoadModel(g_eeGeneral.currModel) ;
 	}
 	readNames() ;

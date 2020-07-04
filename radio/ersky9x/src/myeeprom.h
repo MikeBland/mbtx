@@ -725,7 +725,8 @@ struct t_module
 	uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 	uint8_t highChannels:1 ;
 	uint8_t disableTelemetry:1 ;
-	uint8_t spare:3 ;
+	uint8_t exsub_protocol:2 ;
+	uint8_t spare:1 ;
 	uint8_t sparex[2] ;
 } ;
 

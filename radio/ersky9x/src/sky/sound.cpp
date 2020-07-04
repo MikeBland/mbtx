@@ -368,6 +368,13 @@ void init_dac()
 #ifndef SIMU
 extern "C" void DAC_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x66 ;
+#else
+	RTC->BKP1R = 0x66 ;
+#endif
+#endif
 // Data for PDC must NOT be in flash, PDC needs a RAM source.
 	if ( Sound_g.VoiceActive == 1 )
 	{
@@ -1502,6 +1509,13 @@ void write_coprocessor( uint8_t *ptr, uint32_t count )
 #ifndef SIMU
 extern "C" void TWI0_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x65 ;
+#else
+	RTC->BKP1R = 0x65 ;
+#endif
+#endif
 	uint32_t status ;
 	status = TWI0->TWI_SR ;		// Read only once, some bits cleared on read
 	if ( TwiOperation == TWI_READ_VOL )

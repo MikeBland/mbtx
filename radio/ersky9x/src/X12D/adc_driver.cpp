@@ -75,8 +75,9 @@ extern void hw_delay( uint16_t time ) ;
 
 
 #ifdef PCBX10
-//extern void delay_ms( uint32_t ms ) ;
-//volatile uint16_t PwmInterruptCount ;
+ #ifndef PCBT16
+extern void delay_ms( uint32_t ms ) ;
+volatile uint16_t PwmInterruptCount ;
 uint8_t SticksPwmDisabled = 0 ;
 
 struct t_PWMcontrol
@@ -86,109 +87,111 @@ volatile uint32_t timer_capture_value ;
 volatile uint32_t timer_capture_period ;
 } PWMcontrol[4] ;
 
-//static void initSticksPwm()
-//{
-//	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN ;		// Enable clock
-	
-//  configure_pins( (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3), PIN_PERIPHERAL | PIN_PORTA | PIN_PER_2 | PIN_NO_PULLUP ) ;
 
-//  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
-//  TIM5->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
-//  TIM5->ARR = 0xffffffff ;
-//  TIM5->CCMR1 = TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0 ;
-//  TIM5->CCMR2 = TIM_CCMR2_CC3S_0 | TIM_CCMR2_CC4S_0 ;
-//  TIM5->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E ;
-//  TIM5->DIER |= TIM_DIER_CC1IE|TIM_DIER_CC2IE|TIM_DIER_CC3IE|TIM_DIER_CC4IE ;
-//  TIM5->EGR = 1; // Restart
-//  TIM5->CR1 = TIM_CR1_CEN ; // Start timer
+static void initSticksPwm()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_TIM5EN ;		// Enable clock
 
-//  NVIC_SetPriority(TIM5_IRQn, 1 ) ;
-//  NVIC_EnableIRQ(TIM5_IRQn) ;
-//}
+  configure_pins( (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3), PIN_PERIPHERAL | PIN_PORTA | PIN_PER_2 | PIN_NO_PULLUP ) ;
 
-//static void disableSticksPwm()
-//{
-//  NVIC_DisableIRQ(TIM5_IRQn) ;
-//  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
-//}
+  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+  TIM5->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+  TIM5->ARR = 0xffffffff ;
+  TIM5->CCMR1 = TIM_CCMR1_CC1S_0 | TIM_CCMR1_CC2S_0 ;
+  TIM5->CCMR2 = TIM_CCMR2_CC3S_0 | TIM_CCMR2_CC4S_0 ;
+  TIM5->CCER = TIM_CCER_CC1E | TIM_CCER_CC2E | TIM_CCER_CC3E | TIM_CCER_CC4E ;
+  TIM5->DIER |= TIM_DIER_CC1IE|TIM_DIER_CC2IE|TIM_DIER_CC3IE|TIM_DIER_CC4IE ;
+  TIM5->EGR = 1; // Restart
+  TIM5->CR1 = TIM_CR1_CEN ; // Start timer
 
-//extern "C" void TIM5_IRQHandler(void)
-//{
-//  uint32_t capture ;
-//	uint32_t value ;
-//	struct t_PWMcontrol *p ;
+  NVIC_SetPriority(TIM5_IRQn, 1 ) ;
+  NVIC_EnableIRQ(TIM5_IRQn) ;
+}
 
-//	PwmInterruptCount += 1 ; // overflow may happen but we only use this to detect PWM / ADC on radio startup
+static void disableSticksPwm()
+{
+  NVIC_DisableIRQ(TIM5_IRQn) ;
+  TIM5->CR1 &= ~TIM_CR1_CEN ; // Stop timer
+}
 
-//  if ( PWM_TIMER->SR & TIM_DIER_CC1IE )
-//	{
-//		capture = TIM5->CCR1 ;
-//		p = &PWMcontrol[0] ;
-//    if (TIM5->CCER & TIM_CCER_CC1P)
-//		{
-//	    value = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_value = value ;
-//  		TIM5->CCER &= ~TIM_CCER_CC1P ; // Rising
-//		}
-//		else
-//		{
-//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_rising_time = capture ;
-//  		TIM5->CCER |= TIM_CCER_CC1P ; // Falling
-//		}
-//	}
-//  if ( PWM_TIMER->SR & TIM_DIER_CC2IE )
-//	{
-//		capture = TIM5->CCR2 ;
-//		p = &PWMcontrol[1] ;
-//    if (TIM5->CCER & TIM_CCER_CC2P)
-//		{
-//	    value = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_value = value ;
-//  		TIM5->CCER &= ~TIM_CCER_CC2P ; // Rising
-//		}
-//		else
-//		{
-//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_rising_time = capture ;
-//  		TIM5->CCER |= TIM_CCER_CC2P ; // Falling
-//		}
-//	}
-//  if ( PWM_TIMER->SR & TIM_DIER_CC3IE )
-//	{
-//		capture = TIM5->CCR3 ;
-//		p = &PWMcontrol[2] ;
-//    if (TIM5->CCER & TIM_CCER_CC3P)
-//		{
-//	    value = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_value = value ;
-//  		TIM5->CCER &= ~TIM_CCER_CC3P ; // Rising
-//		}
-//		else
-//		{
-//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_rising_time = capture ;
-//  		TIM5->CCER |= TIM_CCER_CC3P ; // Falling
-//		}
-//	}
-//  if ( PWM_TIMER->SR & TIM_DIER_CC4IE )
-//	{
-//		capture = TIM5->CCR4 ;
-//		p = &PWMcontrol[3] ;
-//    if (TIM5->CCER & TIM_CCER_CC4P)
-//		{
-//	    value = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_value = value ;
-//  		TIM5->CCER &= ~TIM_CCER_CC4P ; // Rising
-//		}
-//		else
-//		{
-//			p->timer_capture_period = capture - p->timer_capture_rising_time ;
-//			p->timer_capture_rising_time = capture ;
-//  		TIM5->CCER |= TIM_CCER_CC4P ; // Falling
-//		}
-//	}
-//}
+extern "C" void TIM5_IRQHandler(void)
+{
+  uint32_t capture ;
+	uint32_t value ;
+	struct t_PWMcontrol *p ;
+
+	PwmInterruptCount += 1 ; // overflow may happen but we only use this to detect PWM / ADC on radio startup
+
+  if ( PWM_TIMER->SR & TIM_DIER_CC1IE )
+	{
+		capture = TIM5->CCR1 ;
+		p = &PWMcontrol[0] ;
+    if (TIM5->CCER & TIM_CCER_CC1P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC1P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC1P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC2IE )
+	{
+		capture = TIM5->CCR2 ;
+		p = &PWMcontrol[1] ;
+    if (TIM5->CCER & TIM_CCER_CC2P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC2P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC2P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC3IE )
+	{
+		capture = TIM5->CCR3 ;
+		p = &PWMcontrol[2] ;
+    if (TIM5->CCER & TIM_CCER_CC3P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC3P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC3P ; // Falling
+		}
+	}
+  if ( PWM_TIMER->SR & TIM_DIER_CC4IE )
+	{
+		capture = TIM5->CCR4 ;
+		p = &PWMcontrol[3] ;
+    if (TIM5->CCER & TIM_CCER_CC4P)
+		{
+	    value = capture - p->timer_capture_rising_time ;
+			p->timer_capture_value = value ;
+  		TIM5->CCER &= ~TIM_CCER_CC4P ; // Rising
+		}
+		else
+		{
+			p->timer_capture_period = capture - p->timer_capture_rising_time ;
+			p->timer_capture_rising_time = capture ;
+  		TIM5->CCER |= TIM_CCER_CC4P ; // Falling
+		}
+	}
+}
+ #endif
 #endif
 
 
@@ -297,13 +300,17 @@ void init_adc()
   RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOF, ENABLE);
 
 #ifdef PCBX10
-//	initSticksPwm() ;
-//  delay_ms(20) ;
-//  if (PwmInterruptCount < 8 )
-//	{
+ #if defined(PCBT16)
+//	SticksPwmDisabled = true ;
+ #else
+	initSticksPwm() ;
+  delay_ms(20) ;
+  if (PwmInterruptCount < 8 )
+	{
     SticksPwmDisabled = true ;
-//		disableSticksPwm() ;
-//  }
+		disableSticksPwm() ;
+  }
+ #endif
 #endif
 
 #ifdef PCBX12D
@@ -311,8 +318,10 @@ void init_adc()
 #endif
 
 #ifdef PCBX10
+ #ifndef PCBT16
   if ( SticksPwmDisabled )
-	{
+ #endif
+ 	{
 	  configure_pins( (GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3), PIN_ANALOG | PIN_PORTA ) ;
 	}
   configure_pins( ADC_GPIOC_PINS, PIN_ANALOG | PIN_PORTC ) ;
@@ -327,17 +336,21 @@ void init_adc()
 #endif
 	 
 #ifdef PCBX10
+ #ifndef PCBT16
   if ( SticksPwmDisabled )
+ #endif
 	{
 		ADC3->SQR1 = (12-1) << 20 ;		// NUMBER_ANALOG Channels
 		ADC3->SQR2 = SLIDER_L + (SLIDER_R<<5) + (FLAP2<<10) + (BATTERY_V<<15) + (EXT1<<20) + (EXT2<<25) ;
 		ADC3->SQR3 = STICK_LH + (STICK_LV<<5) + (STICK_RV<<10) + (STICK_RH<<15) + (FLAP1<<20) + (FLAP3<<25) ;
 	}
+ #ifndef PCBT16
 	else
 	{
 		ADC3->SQR1 = (10-1-4) << 20 ;		// NUMBER_ANALOG Channels
 		ADC3->SQR3 = FLAP1 + (FLAP3<<5) + (SLIDER_L<<10) + (SLIDER_R<<15) + (FLAP2<<20) + (BATTERY_V<<25) ;
 	}
+ #endif
 #endif	
 	
 	ADC3->SMPR1 = SAMPTIME + (SAMPTIME<<3) + (SAMPTIME<<6) + (SAMPTIME<<9) + (SAMPTIME<<12)
@@ -411,14 +424,18 @@ void read_adc()
 	DMA2_Stream1->NDTR = 2 ;
 #endif
 #ifdef PCBX10
+ #ifndef PCBT16
 	if ( SticksPwmDisabled )
+ #endif
 	{
 		DMA2_Stream1->NDTR = 12 ;
 	}
+ #ifndef PCBT16
 	else
 	{
 		DMA2_Stream1->NDTR = 6 ;
 	}
+ #endif
 #endif
 	DMA2_Stream1->CR |= DMA_SxCR_EN ;		// Enable DMA
 	ADC3->CR2 |= (uint32_t)ADC_CR2_SWSTART ;
@@ -464,7 +481,9 @@ void read_adc()
 //  if (GPIOI->IDR & 0x0800)
 	{
 #ifdef PCBX10
+ #ifndef PCBT16
 	 if ( SticksPwmDisabled )
+ #endif
 	 {
 		AnalogData[1] = 4095 - AdcBuffer[0] ;
 		if ( isProdVersion() )
@@ -492,6 +511,7 @@ void read_adc()
 #endif
 
 #ifdef PCBX10
+ #ifndef PCBT16
 	 }
 	 else
 	 {
@@ -526,7 +546,7 @@ void read_adc()
 		}
 		if ( value < 4096 )
 		{
-			AnalogData[3] = value ;
+			AnalogData[3] = 4095 - value ;
 		}
 		p += 1 ;
 		value = 0x0800 ;
@@ -536,8 +556,9 @@ void read_adc()
 		}
 		if ( value < 4096 )
 		{
-			AnalogData[2] = 4095 - value ;
+			AnalogData[2] = value ;
 		}
+ #endif		
 	 	
 	 }
 #endif		
@@ -605,7 +626,9 @@ void read_adc()
 //		AnalogData[2] = t ;
 //	}
 #ifdef PCBX10
+ #ifndef PCBT16
  if ( SticksPwmDisabled )
+ #endif
  {
 #endif		
 #ifdef PCBX10
@@ -656,6 +679,7 @@ void read_adc()
 	AnalogData[11] = AdcBuffer[13] ;
 	AnalogData[13] = AdcBuffer[12] ;
 #ifdef PCBX10
+ #ifndef PCBT16
  }
  else
  {
@@ -667,7 +691,7 @@ void read_adc()
 	AnalogData[12] = AdcBuffer[5] ;
 	AnalogData[9] = 4095 - AdcBuffer[6] ;
 	uint16_t temp = AnalogData[10] ;
-	uint16_t temp1 = AdcBuffer[7] ;
+	uint16_t temp1 = AdcBuffer[4] ;
 	uint16_t temp2 ;
 	if ( temp1 > temp )
 	{
@@ -698,7 +722,7 @@ void read_adc()
 	}
 //	AnalogData[11] = AdcBuffer[13] ;
 //	AnalogData[13] = AdcBuffer[12] ;
- 	
+ #endif	
  }
 #endif
 	if (ADC->CCR & ADC_CCR_VBATE )

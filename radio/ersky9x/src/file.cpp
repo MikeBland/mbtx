@@ -97,6 +97,9 @@ uint8_t *Eeprom32_buffer_address ;
 uint8_t *Eeprom32_source_address ;
 uint32_t Eeprom32_address ;
 uint32_t Eeprom32_data_size ;
+#ifdef PCB9XT
+uint8_t EeLockEncoder ;
+#endif	
 
 
 #define EE_WAIT			0
@@ -113,6 +116,7 @@ uint32_t Eeprom32_data_size ;
 #define E32_READWAITING				7
 #define E32_BLANKCHECK				8
 #define E32_WRITESTART				9
+#define E32_LOCKED						10
 
 bool eeModelExists(uint8_t id) ;
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq ) ;
@@ -576,7 +580,9 @@ uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t
 bool ee32LoadGeneral()
 {
 	uint16_t size ;
-	
+#ifdef PCB9XT
+	EeLockEncoder = 1 ;
+#endif	
 	size = File_system[0].size ;
 
   memset(&g_eeGeneral, 0, sizeof(EEGeneral));
@@ -592,8 +598,14 @@ bool ee32LoadGeneral()
 	}
 	else
 	{
+#ifdef PCB9XT
+		EeLockEncoder = 0 ;
+#endif	
 		return false ;		// No data to load
 	}
+#ifdef PCB9XT
+	EeLockEncoder = 0 ;
+#endif	
 
   if(g_eeGeneral.myVers<MDSKYVERS)
       sysFlags = sysFLAG_OLD_EEPROM; // if old EEPROM - Raise flag
@@ -648,6 +660,9 @@ void ee32LoadModel(uint8_t id)
 
   closeLogs() ;
 
+#ifdef PCB9XT
+	EeLockEncoder = 1 ;
+#endif	
     if(id<MAX_MODELS)
     {
 			size =  File_system[id+1].size ;
@@ -866,6 +881,9 @@ void ee32LoadModel(uint8_t id)
 		}
 	}
 	AltitudeZeroed = 0 ;
+#ifdef PCB9XT
+	EeLockEncoder = 0 ;
+#endif	
 }
 
 bool eeModelExists(uint8_t id)
@@ -984,24 +1002,23 @@ void ee32_process()
 #ifdef PCB9XT
 	if ( ( Eeprom32_process_state == E32_IDLE ) || Spi_complete )
 	{
-		// Poll an Arduino for encoder data
-//		uint32_t result ;
-		uint16_t result ;
-//extern uint32_t readSpiEncoder() ;
-extern uint16_t readSpiEncoder() ;
-		result = readSpiEncoder() ;
-
-//#ifdef SPI_PCB9XT
-//		DebugSpiEnc = result ;
-//#endif
-
-		if ( ( result & 0xFE00 ) == 0xAA00 )
+		if ( EeLockEncoder == 0 )
 		{
+		
+		// Poll an Arduino for encoder data
+			uint16_t result ;
+extern uint16_t readSpiEncoder() ;
+			result = readSpiEncoder() ;
+
+
+			if ( ( result & 0xFE00 ) == 0xAA00 )
+			{
 extern uint8_t EncoderI2cData[] ;
 extern uint8_t SpiEncoderValid ;
-			EncoderI2cData[1] = (result & 0x0100) ? 1 : 0 ;
-			EncoderI2cData[0] = result ;
-			SpiEncoderValid = 1 ;
+				EncoderI2cData[1] = (result & 0x0100) ? 1 : 0 ;
+				EncoderI2cData[0] = result ;
+				SpiEncoderValid = 1 ;
+			}
 		}
 	}
 #endif

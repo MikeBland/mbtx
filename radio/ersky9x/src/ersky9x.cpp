@@ -208,20 +208,23 @@ uint32_t ee32_check_finished()
 //	uint32_t count ;
 //	uint8_t data[4000] ;
 //	uint32_t stack[100] ;
-//} WhereTrack ;
+//} ;
+
+//struct t_where WhereTrack __CCM ;
+
 
 //FIL g_oPosFile = {0};
 
 //void initPosition()
 //{
-//	struct t_where *p = (struct t_where *) CCMDATARAM_BASE ;
+//	struct t_where *p = &WhereTrack ;
 //	p->index = 0 ;
 //	p->count = 0 ;
 //}
 
 //void notePosition( uint8_t byte )
 //{
-//	struct t_where *p = (struct t_where *) CCMDATARAM_BASE ;
+//	struct t_where *p = &WhereTrack ;
 //	if ( p->index > 4000 )
 //	{
 //		p->index = 0 ;
@@ -242,7 +245,7 @@ uint32_t ee32_check_finished()
 //{
 //	uint32_t i ;
 //	uint32_t *q ;
-//	struct t_where *p = (struct t_where *) CCMDATARAM_BASE ;
+//	struct t_where *p = &WhereTrack ;
 //	q = p->stack ;
 //	*q++ = (uint32_t) ptr ;
 //	for ( i = 0 ; i < 50 ; i += 1 )
@@ -259,7 +262,7 @@ uint32_t ee32_check_finished()
 //	uint32_t width ;
 //	uint32_t lcount ;
 //	uint8_t byte ;
-//	struct t_where *p = (struct t_where *) CCMDATARAM_BASE ;
+//	struct t_where *p = &WhereTrack ;
 //  result = f_open(&g_oPosFile, "/pos.txt", FA_OPEN_ALWAYS | FA_WRITE) ;
 
 //	lcount = p->count ;
@@ -297,12 +300,12 @@ uint32_t ee32_check_finished()
 //			start = 0 ;
 //		}
 //	}
-	
-//	for ( lcount = 0 ; lcount < 50 ; lcount += 1 )
-//	{
-//		f_printf(&g_oPosFile, "\n%08lX", p->stack[lcount] ) ;
-//	}
-	 
+
+////	for ( lcount = 0 ; lcount < 50 ; lcount += 1 )
+////	{
+////		f_printf(&g_oPosFile, "\n%08lX", p->stack[lcount] ) ;
+////	}
+ 
 //  f_close(&g_oPosFile) ;
 //}
 
@@ -572,8 +575,8 @@ uint8_t ExtraPotBits;
 uint16_t AnalogData[ANALOG_DATA_SIZE] ;
 
 #if defined(PCBX12D) || defined(PCBX10)
-extern uint8_t PictureDrawn ;
-extern void updatePicture( void ) ;
+//extern uint8_t PictureDrawn ;
+//extern void updatePicture( void ) ;
 #endif
 
 // Soft power operation (SKY board)
@@ -1677,7 +1680,7 @@ void checkTrainerSource()
 				init_trainer_capture(CAP_PPM) ;
 				uint32_t tPolarity = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[1].source ;
 				TrainerPolarity = tPolarity ;
-				TrainerMode = 1 ;
+				TrainerMode = CAP_SERIAL ;
 				init_trainer_capture( CAP_SERIAL ) ;
 			break ;
 		}
@@ -1686,6 +1689,12 @@ void checkTrainerSource()
 #endif
 
 #ifdef PCB9XT
+
+// 0 Jack PPM
+// 1 BT
+// 2 COM2
+// 3 Slave
+// 4 JACK SBUS
 
 void checkTrainerSource()
 {
@@ -1705,18 +1714,18 @@ void checkTrainerSource()
 	{
 		switch ( CurrentTrainerSource )
 		{
-			case 0 :
+			case TRAINER_JACK :
 				stop_trainer_capture() ;
 			break ;
-			case 1 :
+			case TRAINER_BT :
 				stop_trainer_capture() ;
 			break ;
-			case 2 :
+			case TRAINER_COM2 :
 			break ;
 			case TRAINER_SLAVE :
 				stop_trainer_ppm() ;
 			break ;
-			case 4 :
+			case TRAINER_J_SBUS :
 				stop_trainer_capture() ;
 				TrainerMode = 0 ;
 			break ;
@@ -1724,19 +1733,19 @@ void checkTrainerSource()
 		CurrentTrainerSource = tSource ;
 		switch ( tSource )
 		{
-			case 0 :
+			case TRAINER_JACK :
 				init_trainer_capture(CAP_PPM) ;
 //				EXTERNAL_RF_OFF() ;
 			break ;
-			case 1 :
+			case TRAINER_BT :
 			break ;
-			case 2 :
+			case TRAINER_COM2 :
 			break ;
 			case TRAINER_SLAVE :	// Slave so output
 				init_trainer_ppm() ;
 				EXTERNAL_RF_OFF() ;
 			break ;
-			case 4 :
+			case TRAINER_J_SBUS :
 				init_trainer_capture(CAP_PPM) ;
 				uint32_t tPolarity = g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[1].source ;
 				TrainerPolarity = tPolarity ;
@@ -2257,22 +2266,22 @@ extern "C" void cppwhere( uint8_t chr )
 
 #ifdef PCB9XT
 uint32_t WatchdogPosition ;
-static void enableBackupRam()
-{
-	PWR->CR |= PWR_CR_DBP ;
-//	PWR->CSR |= PWR_CSR_BRE ;
-//	while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
-//	{
-//		wdt_reset() ;
-//	}
-	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
-}
+//static void enableBackupRam()
+//{
+//	PWR->CR |= PWR_CR_DBP ;
+////	PWR->CSR |= PWR_CSR_BRE ;
+////	while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
+////	{
+////		wdt_reset() ;
+////	}
+//	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
+//}
 
 #endif	
 
-#ifdef PCBXLITE
-uint16_t DebugTrims ;
-#endif
+//#ifdef PCBXLITE
+//uint16_t DebugTrims ;
+//#endif
 
 
 //void WDT_IRQHandler (void)
@@ -2386,8 +2395,6 @@ void initSwitches()
 
 #endif // PCBLEM1
 
-
-
 int main( void )
 {
 #ifdef PCBLEM1	
@@ -2409,6 +2416,8 @@ int main( void )
 	WdogIntValue = GPBR->SYS_GPBR1 ;
 	GPBR->SYS_GPBR1 = 0 ;
 #else
+	RCC->APB1ENR |= RCC_APB1Periph_PWR ;
+  PWR_BackupAccessCmd(ENABLE);
 	WdogIntValue = RTC->BKP1R ;
 	RTC->BKP1R = 0 ;
 #endif
@@ -2435,9 +2444,9 @@ int main( void )
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
 	// Only configure green LED, allow others to be used as analog inputs
-	configure_pins( GPIO_Pin_5, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
-#ifdef PCBT12
 	configure_pins( GPIO_Pin_4, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#ifdef PCBT12
+	configure_pins( GPIO_Pin_5, PIN_PORTC | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
 	configure_pins( GPIO_Pin_1, PIN_PORTB | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
 #endif
 //	ledOff() ;
@@ -2685,6 +2694,9 @@ extern unsigned char *EndOfHeap ;
 //	sportTest() ;
 //#endif
 
+#if defined(PCBX12D) || defined(PCBX10)
+	__enable_irq() ;
+#endif
 	init_adc() ;
 
 #ifdef PCBX9D
@@ -2749,22 +2761,28 @@ void disableBackupRam(void) ;
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-//	uint32_t j ;
-//	j = 0 ;
-//	for( j = 0 ; j < 3 ; j += 1 )
+
+//#if defined(PCBX10)
+//	uint32_t pq ;
+//	pq = 0 ;
+//	for( pq = 0 ; pq < 3 ; pq += 1 )
 //	{
 //		uint32_t i ;
 //		ledRed() ;
 //		for ( i = 0 ; i < 2000000 ; i += 1 )
 //		{
+//			wdt_reset() ;
 //			asm("nop") ;
 //		}
 //		ledBlue() ;
 //		for ( i = 0 ; i < 2000000 ; i += 1 )
 //		{
+//			wdt_reset() ;
 //			asm("nop") ;
 //		}
 //	}
+//#endif
+	wdt_reset() ;
 	
 	lcdColorsInit() ;
 #endif
@@ -2774,6 +2792,8 @@ void disableBackupRam(void) ;
 #ifdef WHERE_TRACK
 notePosition('3') ;
 #endif
+//extern uint16_t LCDLastOp ;
+//	LCDLastOp = 'M' ;
 	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0x001F ) ;
 	refreshDisplay() ;
 
@@ -2809,7 +2829,7 @@ notePosition('3') ;
   }
 #endif
 
-#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX9D) || defined(PCB9XT)
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
 #endif
 #if defined(PCBLEM1)
@@ -2923,6 +2943,12 @@ notePosition('3') ;
 #endif
 #endif // PCBX7 | PCBXLITE
 
+//#if defined(PCBX10)
+//extern void wdDump() ;
+//	wdDump() ;
+//#endif
+
+
 //#ifdef REV9E
 //// Check for real power on
 //	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
@@ -3003,6 +3029,29 @@ notePosition('3') ;
 			}
 		}
 	}
+	else
+	{
+#define SOFTRESET_REQUEST 0xCAFEDEAD
+		RCC->APB1ENR |= RCC_APB1Periph_PWR ;
+//  PWR_BackupAccessCmd(ENABLE);
+  	RCC_RTCCLKCmd(ENABLE);
+
+#define PWR_OFFSET               (PWR_BASE - PERIPH_BASE)
+#define CR_OFFSET                (PWR_OFFSET + 0x00)
+#define DBP_BitNumber            0x08
+#define CR_DBP_BB                (PERIPH_BB_BASE + (CR_OFFSET * 32) + (DBP_BitNumber * 4))
+		*(__IO uint32_t *) CR_DBP_BB = ENABLE ;
+	
+		if ( ResetReason & RCC_CSR_SFTRSTF ) // Soft reset
+		{
+			if ( RTC->BKP0R == SOFTRESET_REQUEST )
+			{
+				ResetReason &= ~RCC_CSR_SFTRSTF ;
+			}
+		}
+		RTC->BKP0R = 0 ;
+	}
+
 #endif
 
 #ifdef REV9E
@@ -3100,6 +3149,7 @@ uint32_t updateSlave() ;
 	lcd_clear() ;
 	refreshDisplay() ;
 #endif
+
 
 //#ifdef PCB9XT
 
@@ -3242,7 +3292,7 @@ uint32_t updateSlave() ;
 #endif
 	 
 #if defined(PCBX12D) || defined(PCBX10)
-	WatchdogTimeout = 250 ;			
+	WatchdogTimeout = 300 ;
 #endif
 
 #ifdef PCBLEM1
@@ -3442,9 +3492,9 @@ extern void sdInit( void ) ;
 	
 	}
 
-#ifdef PCBXLITE
-	DebugTrims = read_trims() | (GPIOE->IDR & 0x0100) ;
-#endif
+//#ifdef PCBXLITE
+//	DebugTrims = read_trims() | (GPIOE->IDR & 0x0100) ;
+//#endif
 
 
 #ifdef PCBSKY
@@ -3582,7 +3632,6 @@ extern void sdInit( void ) ;
 #ifdef PCBLEM1
 	backlight_set( g_eeGeneral.bright ) ;
 #endif
-
 
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -4020,9 +4069,9 @@ void prepareForShutdown()
 
 #ifdef CHECKRSSI
 #ifdef REVX
-uint32_t checkRssi(uint32_t rssi)
+uint32_t checkRssi(uint32_t swappingModels, uint32_t rssi)
 #else
-uint32_t checkRssi()
+uint32_t checkRssi(uint32_t swappingModels)
 #endif
 {
 	static uint16_t timer ;
@@ -4101,35 +4150,39 @@ uint32_t checkRssi()
 		perOutPhase(g_chans512, 0);
 		check_frsky( 0 ) ;
 //#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
-		if ( ( check_soft_power() != POWER_OFF ) )		// power back on?
+		if ( swappingModels == 0 )
 		{
-			return RSSI_STAY_ON ;
-    }
+			if ( ( check_soft_power() != POWER_OFF ) )		// power back on?
+			{
+				return RSSI_STAY_ON ;
+	    }
 //#endif	
 #ifdef POWER_BUTTON
  #if defined(PCBXLITE)
-		if ( GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET )
+			if ( GPIO_ReadInputDataBit(GPIOPWRSENSE, PIN_PWR_STATUS) == Bit_RESET )
  #else
- #if defined(PCBLEM1)
-		if ( GPIOE->IDR & 0x0800 )
- #else
-		if ( GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET )
+  #if defined(PCBLEM1)
+			if ( GPIOE->IDR & 0x0800 )
+  #else
+			if ( GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET )
+  #endif
  #endif
- #endif
-		{
-			if ( powerIsOn > 3 )
 			{
-				if ( ++powerIsOn > 9 )
+				if ( powerIsOn > 3 )
 				{
-					return RSSI_STAY_ON ;
+					if ( ++powerIsOn > 9 )
+					{
+						return RSSI_STAY_ON ;
+					}
 				}
 			}
-		}
-		else
-		{
-			powerIsOn = 4 ;
-		}
+			else
+			{
+				powerIsOn = 4 ;
+			}
 #endif
+		}
+
 	}
 }
 #endif
@@ -4414,6 +4467,12 @@ extern uint8_t ModelImageValid ;
 					if ( result & 0x82 )
 					{
 						g_eeGeneral.totalElapsedTime = 0 ;
+#ifdef PCBSKY
+ #ifndef ARUNI
+						MAh_used = 0 ;
+						Current_used = 0 ;
+ #endif
+#endif
 						result = getEvent() ;
 						killEvents(result) ;
 					}
@@ -4558,10 +4617,10 @@ static uint8_t PBstate ;
  #endif // POWER_BUTTON
 			{
  #ifdef CHECKRSSI
-  #ifdef REVX
- 				if ( checkRssi(rssi) == RSSI_STAY_ON )
+   #ifdef REVX
+ 				if ( checkRssi(0, rssi) == RSSI_STAY_ON )
   #else
-				if ( checkRssi() == RSSI_STAY_ON )
+				if ( checkRssi(0) == RSSI_STAY_ON )
   #endif
 				{
   #ifdef POWER_BUTTON
@@ -5981,9 +6040,36 @@ uint8_t SpiEncoderValid ;
 uint8_t EncoderI2cData[2] ;
 //uint16_t I2CencCounter ;
 
+#if defined(PCBX10)// && defined(PCBREV_EXPRESS)
+uint8_t LcdResetSwitch ;
+#endif
+
+#if defined(PCBX10)// && defined(PCBREV_EXPRESS)
+extern "C" void SDRAM_Init() ;
+#endif
+
 void mainSequence( uint32_t no_menu )
 {
 	CalcScaleNest = 0 ;
+
+//#if defined(PCBX10)// && defined(PCBREV_EXPRESS)
+
+//	if ( getSwitch00( CSW_INDEX + NUM_SKYCSW ) )
+//	{
+//		if ( LcdResetSwitch == 0 )
+//		{
+//			LcdResetSwitch = 1 ;
+//			SDRAM_Init() ;
+//			lcdColorsInit() ;
+//			lcdInit() ;
+//			AlertMessage = "LCD Reset" ;
+//		}
+//	}
+//	else
+//	{
+//		LcdResetSwitch = 0 ;
+//	}
+//#endif
 
 #ifdef PCBSKY
 	static uint32_t coProTimer = 0 ;
@@ -5996,75 +6082,7 @@ void mainSequence( uint32_t no_menu )
 #endif
   uint16_t t0 = getTmr2MHz();
 	CPU_UINT numSafety = NUM_SKYCHNOUT - g_model.numVoice ;
-#ifdef ARUNI
-	if ( g_eeGeneral.filterInput == 0 )
-	{
-		getADC_single() ;
-	}
-	else if ( g_eeGeneral.filterInput == 3 )
-	{
-		getADC_filt() ;
-	}
-	else
-	{
-		getADC_osmp() ;   // filterInput: 1 or 2
-	}
-  if (qSixPosCalibrating() || g_eeGeneral.sixPosDelayFilter) {
-    if (SixPosDelay && --SixPosDelay == 0) {
-      uint8_t sixpos = (( g_eeGeneral.analogMapping & MASK_6POS ) >> 2) + 3;
-      S_anaFilt[sixpos] = (((uint16_t)SixPosValue) << 4); // make 7b to 11b
-    }
-  }
-#else
-	if ( g_eeGeneral.filterInput == 1 )
-	{
-		getADC_osmp() ;
-	}
-	else if ( g_eeGeneral.filterInput == 2 )
-	{
-		getADC_filt() ;
-	}
-	else
-	{
-		getADC_single() ;
-	}
-#endif
-#if (defined(PCBSKY) && !defined(ARUNI))
-	if ( ( g_eeGeneral.ar9xBoard == 0 ) && ( g_eeGeneral.extraPotsSource[0] != 2 ) && ( g_eeGeneral.extraPotsSource[1] != 2 ) )
-	{
 
-		uint16_t temp ;
-		temp = AnalogData[13] ;
-		temp = temp - Current_adjust / temp ;
-		{
-			uint16_t min_current ;
-			min_current = 21000 / g_vbat100mV + 155 ;
-			temp = temp * (127 + g_eeGeneral.current_calib) * 25 / 4096 ;
-			if ( temp < min_current )
-			{
-				temp = min_current ;
-				if ( Current_adjust > 128 )
-				{
-					Current_adjust -= 128 ;
-				}
-				else
-				{
-					Current_adjust = 0 ;
-				}
-			}
-		}
-		Current_current = ( Current_current * 3 + temp + 2 ) >> 2 ;
-
-		if ( Current_current > Current_max )
-		{
-			Current_max = Current_current ;
-		}
-	}
-#endif
-
-#ifdef PCB9XT
-	checkM64() ;
-#endif
 	perMain( no_menu ) ;		// Allow menu processing
 #ifdef WHERE_TRACK
 	notePosition('T'+heartbeat) ;
@@ -7108,9 +7126,9 @@ void doSplash()
 				uint8_t z ;
 				lcd_clear();
 #if defined(PCBX12D) || defined(PCBX10)
-  	 		lcd_img(0 + X12OFFSET, 0, &splashdata[4],0,0, 0x03E0 );
+  	 		lcd_img(0 + X12OFFSET, 32, &splashdata[4],0,0, 0x03E0 );
 				if(!g_eeGeneral.hideNameOnSplash)
-					lcd_putsnAttColour( 0*FW + X12OFFSET, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName), 0, 0x03E0 ) ;
+					lcd_putsnAttColour( 0*FW + X12OFFSET, 11*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName), 0, 0x03E0 ) ;
 #else
   	 		lcd_img(0 + X12OFFSET, 0, &splashdata[4],0,0 );
 				if(!g_eeGeneral.hideNameOnSplash)
@@ -7121,10 +7139,11 @@ void doSplash()
 				{
 #if defined(PCBX12D) || defined(PCBX10)
 					plotType = PLOT_BLACK ;
+					p = 32 ;
 #else
 					plotType = PLOT_WHITE ;
-#endif					 
 					p = 0 ;
+#endif					 
 					x = 126 ;
 					z = 64 ;
 					for ( y = 0 ; y < j ; y += 2 )
@@ -7211,7 +7230,11 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
     		newval += 1 ;
 			}
 			audioDefevent(AU_KEYPAD_UP);
+#if defined(PCBX10)
+    	kother = KEY_DOWN ;
+#else
     	kother=kmi;
+#endif
 		}
 
   }else if(event==EVT_KEY_FIRST(kmi) || event== EVT_KEY_REPT(kmi) || (s_editMode && (event==EVT_KEY_FIRST(KEY_DOWN) || event== EVT_KEY_REPT(KEY_DOWN))) )
@@ -7231,11 +7254,27 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
     		newval -= 1 ;
 			}
 			audioDefevent(AU_KEYPAD_DOWN);
+#if defined(PCBX10)
+    	kother = KEY_UP ;
+#else
     	kother=kpl;
+#endif
 		}
 
   }
-  if((kother != (uint8_t)-1) && keyState((EnumKeys)kother)){
+#if defined(PCBX10)
+	if ( s_editMode )
+	{
+	  if((kother != (uint8_t)-1) && keyState((EnumKeys)kother))
+		{
+	    newval = -val ;
+  	  killEvents(KEY_UP);
+    	killEvents(KEY_DOWN);
+		}
+	}
+#endif
+  if((kother != (uint8_t)-1) && keyState((EnumKeys)kother))
+	{
     newval=-val;
     killEvents(kmi);
     killEvents(kpl);
@@ -7458,7 +7497,7 @@ uint32_t calcStickScroll( uint32_t index )
 }
 
 #if defined(PCBX12D) || defined(PCBX10)
-extern uint8_t LastEvent ;
+//extern uint8_t LastEvent ;
 #endif
 static void	processAdjusters()
 {
@@ -7800,23 +7839,81 @@ extern char lua_warning_info[] ;
 
 uint8_t ScriptActive ;
 
-//#ifdef BASIC
-//uint8_t BasicRunWithoutRefresh ;
-//#endif
-
 #ifdef PCBX9D
 uint16_t MixerRunAtTime ;
 #endif
 
-void perMain( uint32_t no_menu )
+static void runMixer()
 {
-  static uint16_t lastTMR;
-	uint16_t t10ms ;
-	
-	t10ms = get_tmr10ms() ;
-  tick10ms = ((uint16_t)(t10ms - lastTMR)) != 0 ;
-  lastTMR = t10ms ;
+#ifdef ARUNI
+	if ( g_eeGeneral.filterInput == 0 )
+	{
+		getADC_single() ;
+	}
+	else if ( g_eeGeneral.filterInput == 3 )
+	{
+		getADC_filt() ;
+	}
+	else
+	{
+		getADC_osmp() ;   // filterInput: 1 or 2
+	}
+  if (qSixPosCalibrating() || g_eeGeneral.sixPosDelayFilter) {
+    if (SixPosDelay && --SixPosDelay == 0) {
+      uint8_t sixpos = (( g_eeGeneral.analogMapping & MASK_6POS ) >> 2) + 3;
+      S_anaFilt[sixpos] = (((uint16_t)SixPosValue) << 4); // make 7b to 11b
+    }
+  }
+#else
+	if ( g_eeGeneral.filterInput == 1 )
+	{
+		getADC_osmp() ;
+	}
+	else if ( g_eeGeneral.filterInput == 2 )
+	{
+		getADC_filt() ;
+	}
+	else
+	{
+		getADC_single() ;
+	}
+#endif
+#if (defined(PCBSKY) && !defined(ARUNI))
+	if ( ( g_eeGeneral.ar9xBoard == 0 ) && ( g_eeGeneral.extraPotsSource[0] != 2 ) && ( g_eeGeneral.extraPotsSource[1] != 2 ) )
+	{
 
+		uint16_t temp ;
+		temp = AnalogData[13] ;
+		temp = temp - Current_adjust / temp ;
+		{
+			uint16_t min_current ;
+			min_current = 21000 / g_vbat100mV + 155 ;
+			temp = temp * (127 + g_eeGeneral.current_calib) * 25 / 4096 ;
+			if ( temp < min_current )
+			{
+				temp = min_current ;
+				if ( Current_adjust > 128 )
+				{
+					Current_adjust -= 128 ;
+				}
+				else
+				{
+					Current_adjust = 0 ;
+				}
+			}
+		}
+		Current_current = ( Current_current * 3 + temp + 2 ) >> 2 ;
+
+		if ( Current_current > Current_max )
+		{
+			Current_max = Current_current ;
+		}
+	}
+#endif
+
+#ifdef PCB9XT
+	checkM64() ;
+#endif
 	{
 		MixerCount += 1 ;		
 		uint16_t t1 = getTmr2MHz() ;
@@ -7827,6 +7924,18 @@ void perMain( uint32_t no_menu )
 		t1 = getTmr2MHz() - t1 ;
 		g_timeMixer = t1 ;
 	}
+}
+
+void perMain( uint32_t no_menu )
+{
+  static uint16_t lastTMR;
+	uint16_t t10ms ;
+	
+	t10ms = get_tmr10ms() ;
+  tick10ms = ((uint16_t)(t10ms - lastTMR)) != 0 ;
+  lastTMR = t10ms ;
+
+	runMixer() ;
 
 	if(tick5ms)
 	{
@@ -7858,10 +7967,10 @@ void checkDsmTelemetry5ms() ;
 		}
 	}
 
-#ifdef PCBSKY
+//#ifdef PCBSKY
 //extern void usbMassStorage( void ) ;
 //	usbMassStorage() ;
-#endif
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBX9LITE)
 #ifdef BLUETOOTH	
@@ -7888,7 +7997,7 @@ void checkDsmTelemetry5ms() ;
 		TestNote = t1 ;
 #endif
 	
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
 	uint8_t evt = 0 ;
 	if ( ( lastTMR & 1 ) == 0 )
 	{
@@ -7909,10 +8018,10 @@ void checkDsmTelemetry5ms() ;
 	{
 		ledBlue() ;
 	}
-	if ( evt )
-	{
-		LastEvent = evt ;
-	}
+//	if ( evt )
+//	{
+//		LastEvent = evt ;
+//	}
 #endif
 
 		if ( ( evt == 0 ) || ( evt == EVT_KEY_REPT(KEY_MENU) ) )
@@ -7958,7 +8067,7 @@ void checkDsmTelemetry5ms() ;
 	ptrp1->p1valdiff = p1d ;
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
 	if ( ( lastTMR & 1 ) == 0 )
 #endif
 	{
@@ -7978,13 +8087,16 @@ void checkDsmTelemetry5ms() ;
 		Pre_Rotary_diff[0] = x - LastRotaryValue ;
 		LastRotaryValue = x ;
 	}
-#if defined(PCBX12D) || defined(PCBX10)
-	else
-	{
-		Pre_Rotary_diff[0] = 0 ;
-	}
-#endif
+//#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
+//	else
+//	{
+//		Pre_Rotary_diff[0] = 0 ;
+//	}
+//#endif
 
+#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
+	if ( ( lastTMR & 1 ) == 0 )
+#endif
 	{
 		Rotary_diff = Pre_Rotary_diff[3] ;
 		Pre_Rotary_diff[3] = Pre_Rotary_diff[2] ;
@@ -8246,7 +8358,7 @@ void checkDsmTelemetry5ms() ;
 		}
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
+//#if defined(PCBX12D) || defined(PCBX10)
 //		t1 = getTmr2MHz() - t1 ;
 //		if ( ++Xcounter > 50 )
 //		{
@@ -8254,7 +8366,7 @@ void checkDsmTelemetry5ms() ;
 //			Xcounter = 0 ;
 //		}
 //	 }
-#endif
+//#endif
 		
 		if ( AlertMessage )
 		{
@@ -8362,14 +8474,19 @@ void checkDsmTelemetry5ms() ;
 		{
 			alertKey = 0 ;
     	
-			if ( EnterMenu )
+#ifdef MULTI_EVENTS
+			if ( ( lastTMR & 1 ) == 0 )
+#endif
 			{
-				evt = EnterMenu ;
-				EnterMenu = 0 ;
-				audioDefevent(AU_MENUS);
+				if ( EnterMenu )
+				{
+					evt = EnterMenu ;
+					EnterMenu = 0 ;
+					audioDefevent(AU_MENUS);
+				}
+		 		StepSize = 20 ;
+	 			Tevent = evt ;
 			}
-	 		StepSize = 20 ;
-	 		Tevent = evt ;
 
 #ifdef PCBX9D
 			{
@@ -8393,7 +8510,7 @@ extern uint8_t ImageY ;
 #endif
 
 #ifdef WHERE_TRACK
-	notePosition('a') ;
+			notePosition('a') ;
 #endif
   
 #if defined(LUA) || defined(BASIC)
@@ -8403,151 +8520,136 @@ extern uint8_t ImageY ;
 //
   	
 //#ifdef PAGE_NAVIGATION
-	int8_t evtAsRotary = 0 ;
-	if ( evt == 0 )
-	{
+			int8_t evtAsRotary = 0 ;
+			if ( evt == 0 )
+			{
 extern int32_t Rotary_diff ;
-		if ( Rotary_diff > 0 )
-		{
-			evt = EVT_KEY_FIRST(KEY_DOWN) ;
-			evtAsRotary = 1 ;
-		}
-		else if ( Rotary_diff < 0 )
-		{
-			evt = EVT_KEY_FIRST(KEY_UP) ;
-			evtAsRotary = 1 ;
-		}
-	}
-//#endif
-		uint32_t refreshNeeded = 0 ;
-		uint32_t telemetryScriptRunning = 0 ;
-#ifdef LUA
-		if ( g_model.basic_lua )
-		{
-			refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
-  		if ( !refreshNeeded )
-			{
-    		refreshNeeded = luaTask( evt, RUN_TELEM_FG_SCRIPT, true ) ;
-  		}
-  		if ( refreshNeeded )
-			{
-				refreshNeeded = 2 ;
-//				if (evtAsRotary)
-//				{
-//					Rotary_diff = 0 ;
-//				}
+				if ( Rotary_diff > 0 )
+				{
+					evt = EVT_KEY_FIRST(KEY_DOWN) ;
+					evtAsRotary = 1 ;
+				}
+				else if ( Rotary_diff < 0 )
+				{
+					evt = EVT_KEY_FIRST(KEY_UP) ;
+					evtAsRotary = 1 ;
+				}
 			}
-		}
-		else
-#endif
-		{
-extern uint32_t TotalExecTime ;
-			uint16_t execTime = getTmr2MHz() ;
-			refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
-			execTime = (uint16_t)(getTmr2MHz() - execTime) ;
-			TotalExecTime += execTime ;
-			if ( refreshNeeded == 3 )
+//#endif
+				uint32_t refreshNeeded = 0 ;
+				uint32_t telemetryScriptRunning = 0 ;
+#ifdef LUA
+			if ( g_model.basic_lua )
 			{
-				refreshNeeded = 0 ;
-				if ( sd_card_ready() )
+				refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
+  			if ( !refreshNeeded )
+				{
+    			refreshNeeded = luaTask( evt, RUN_TELEM_FG_SCRIPT, true ) ;
+  			}
+  			if ( refreshNeeded )
+				{
+					refreshNeeded = 2 ;
+	//				if (evtAsRotary)
+	//				{
+	//					Rotary_diff = 0 ;
+	//				}
+				}
+			}
+			else
+#endif
+			{
+extern uint32_t TotalExecTime ;
+				uint16_t execTime = getTmr2MHz() ;
+				refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
+				execTime = (uint16_t)(getTmr2MHz() - execTime) ;
+				TotalExecTime += execTime ;
+				if ( refreshNeeded == 3 )
+				{
+					refreshNeeded = 0 ;
+					if ( sd_card_ready() )
+					{
+						evt = 0 ;
+					}
+					// standalone finished so:
+					basicLoadModelScripts() ;
+				}
+				else
+				{
+	  			if ( !refreshNeeded )
+					{
+    				refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt, SCRIPT_TELEMETRY ) ;
+						if ( refreshNeeded )
+						{
+							telemetryScriptRunning = 1 ;
+						}
+	  			}
+				}
+			}
+			if ( refreshNeeded )
+			{
+				ScriptActive = 1 ;
+				if (evtAsRotary)
+				{
+					Rotary_diff = 0 ;
+				}
+			
+				if ( PopupData.PopupActive )
+				{
+					actionMainPopup( evt ) ;
+				}
+				else
+				{
+					if ( telemetryScriptRunning )
+					{
+						if ( ( evt==EVT_KEY_LONG(KEY_MENU)) || ( evt==EVT_KEY_LONG(BTN_RE) ) )
+						{
+							PopupData.PopupActive = 3 ;
+							PopupData.PopupIdx = 0 ;
+    	  			killEvents(evt) ;
+							evt = 0 ;
+							Tevent = 0 ;
+						}
+					}
+				}
+			}
+	  	else
+#endif
+			{
+				ScriptActive = 0 ;
+#if defined(LUA) || defined(BASIC)
+				if (evtAsRotary)
 				{
 					evt = 0 ;
 				}
-				// standalone finished so:
-				basicLoadModelScripts() ;
-			}
-			else
-			{
-	  		if ( !refreshNeeded )
-				{
-    			refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt, SCRIPT_TELEMETRY ) ;
-					if ( refreshNeeded )
-					{
-						telemetryScriptRunning = 1 ;
-					}
-	//				if ( refreshNeeded == 3 )
-	//				{
-	//					refreshNeeded = 0 ;
-	//					evt = 0 ;
-	//				}
-	  		}
-				else
-				{
-	//				if ( refreshNeeded == 1 )
-	//				{
-	//					if ( ++BasicRunWithoutRefresh > 9 )
-	//					{
-	//						refreshNeeded = 2 ;
-	//					}
-	//				}
-				}
-			}
-//#ifdef LUA
-		}
-//#endif
-//		refreshNeeded = basicTask( evt, RUN_STNDAL_SCRIPT, true ) ;
-//  	if ( !refreshNeeded )
-//		{
-//    	refreshNeeded = basicTask( evt, RUN_TELEM_FG_SCRIPT, true ) ;
-//  	}
-		if ( refreshNeeded )
-		{
-			ScriptActive = 1 ;
-//			lcd_puts_Pleft( 5*FH, (char *)BasicErrorText ) ;
-			if (evtAsRotary)
-			{
-				Rotary_diff = 0 ;
-			}
-			
-			if ( PopupData.PopupActive )
-			{
-//				Tevent = evt ;
-				actionMainPopup( evt ) ;
-			}
-			else
-			{
-				if ( telemetryScriptRunning )
-				{
-					if ( ( evt==EVT_KEY_LONG(KEY_MENU)) || ( evt==EVT_KEY_LONG(BTN_RE) ) )
-					{
-						PopupData.PopupActive = 3 ;
-						PopupData.PopupIdx = 0 ;
-      			killEvents(evt) ;
-						evt = 0 ;
-						Tevent = 0 ;
-					}
-				}
-			}
-		}
-//#endif
-  	else
-#endif
-		{
-			ScriptActive = 0 ;
-#if defined(LUA) || defined(BASIC)
-			if (evtAsRotary)
-			{
-				evt = 0 ;
-			}
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-			t1 = getTmr2MHz();
-			updatePicture() ;
+				t1 = getTmr2MHz();
+//			updatePicture() ;
 #endif
 
-			g_menuStack[g_menuStackPtr](evt);
-			refreshNeeded = 4 ;
-#if defined(PCBX12D) || defined(PCBX10)
-			t1 = getTmr2MHz() - t1 ;
-			if ( Xcounter == 0 )
+#ifdef MULTI_EVENTS
+			if ( ( lastTMR & 1 ) == 0 )
 			{
-				MenuTime = t1 ;
+#endif
+				g_menuStack[g_menuStackPtr](evt);
+				refreshNeeded = 4 ;
+#ifdef MULTI_EVENTS
+			}
+			else
+			{
+				refreshNeeded = 0 ;
 			}
 #endif
-		}
-
-
+ #if defined(PCBX12D) || defined(PCBX10)
+				t1 = getTmr2MHz() - t1 ;
+				if ( Xcounter == 0 )
+				{
+					MenuTime = t1 ;
+				}
+ #endif
+			}
+static uint8_t displayCount ;
 	#if defined(PCBX9D) || defined(PCBSKY) || defined(PCB9XT)
 			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) ) ) // && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
@@ -8555,20 +8657,28 @@ extern uint32_t TotalExecTime ;
 			if ( refreshNeeded != 1 )
 	#endif
 			{
+				if ( displayCount == 0 )
+				{
 #if defined(PCBX12D) || defined(PCBX10)
-				displayStatusLine(ScriptActive) ;
-				ScriptActive = 0 ;
+					displayStatusLine(ScriptActive) ;
+					ScriptActive = 0 ;
 	#endif
-				uint16_t t1 = getTmr2MHz() ;
-  		  refreshDisplay() ;
+					uint16_t t1 = getTmr2MHz() ;
+  			  refreshDisplay() ;
+					displayCount = 1 ;
 //#ifdef BASIC
 //				BasicRunWithoutRefresh = 0 ;
 //#endif
 #if defined(PCBX12D) || defined(PCBX10)
-				lcd_clearBackground() ;	// Start clearing other frame
-	#endif
-				t1 = getTmr2MHz() - t1 ;
-				g_timeRfsh = t1 ;
+					lcd_clearBackground() ;	// Start clearing other frame
+#endif
+					t1 = getTmr2MHz() - t1 ;
+					g_timeRfsh = t1 ;
+				}
+				else
+				{
+					displayCount = 0 ;
+				}
 			}
 		}
 	}
@@ -8594,9 +8704,9 @@ extern uint32_t TotalExecTime ;
 	checkTrainerSource() ;
 #endif
 
-#if defined(PCBLEM1)
-	checkTrainerSource() ;
-#endif
+//#if defined(PCBLEM1)
+//	checkTrainerSource() ;
+//#endif
 
   switch( get_tmr10ms() & 0x1f )
 	{ //alle 10ms*32
@@ -8730,6 +8840,13 @@ static void init_rotary_encoder()
 extern "C" void EXTI15_10_IRQHandler()
 {
   register uint32_t capture ;
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5B ;
+#else
+	RTC->BKP1R = 0x5B ;
+#endif
+#endif
 
 	capture = GPIOENCODER->IDR & 0x1400 ;
 	EXTI->PR = 0x1400 ;
@@ -8834,6 +8951,13 @@ extern "C" void EXTI15_10_IRQHandler()
 {
   register uint32_t capture ;
 
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5A ;
+#else
+	RTC->BKP1R = 0x5A ;
+#endif
+#endif
 	capture = GPIOENCODER->IDR & 0x0A00 ;
 	EXTI->PR = 0x0800 ;
 	capture >>= 9 ;
@@ -8988,6 +9112,13 @@ static void init_rotary_encoder()
 
 extern "C" void PIOC_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x59 ;
+#else
+	RTC->BKP1R = 0x59 ;
+#endif
+#endif
   register uint32_t dummy;
 	
 	dummy = PIOC->PIO_ISR ;			// Read and clear status register
@@ -9054,6 +9185,11 @@ void interrupt5ms()
 
 	sound_5ms() ;
 
+#ifdef WDOG_REPORT
+	RTC->BKP1R |= 0x1000 ;
+#endif
+
+
 #if defined(PCBX7) || defined(PCBX9LITE)
  #ifndef PCBT12
   #ifndef PCBX9LITE
@@ -9081,6 +9217,9 @@ extern void checkRotaryEncoder() ;
 	
 	if ( ++pre_scale >= 2 )
 	{
+#ifdef WDOG_REPORT
+	RTC->BKP1R |= 0x2000 ;
+#endif
 		
 //		if ( TempTimer == 0 )
 //		{
@@ -9107,6 +9246,9 @@ extern void checkRotaryEncoder() ;
 		}
 
   	per10ms();
+#ifdef WDOG_REPORT
+	RTC->BKP1R |= 0x4000 ;
+#endif
 		if (--AlarmTimer == 0 )
 		{
 			AlarmTimer = 100 ;		// Restart timer
@@ -9154,11 +9296,21 @@ extern uint32_t SecCounter ;
 		}
 #endif
 	}
+#ifdef WDOG_REPORT
+	RTC->BKP1R |= 0x8000 ;
+#endif
 }
 
 #ifdef PCBLEM1
 extern "C" void TIM4_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x58 ;
+#else
+	RTC->BKP1R = 0x58 ;
+#endif
+#endif
 	TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_UIF ;
 	interrupt5ms() ;
 }
@@ -11173,11 +11325,14 @@ int8_t getMovedSwitch()
   }
 #if defined(PCBX12D) || defined(PCBX10)
 // 6-pos switch
+	uint32_t prev = (switches_states & 0x00070000) >> 16 ;
+	uint32_t next = switchPosition( HSW_Ele6pos0 ) ;
+	if (prev != next)
+	{
+		result = 21 + next ;
+	}
 
-//#ifndef PCBX10
-	uint32_t pos = switchPosition( HSW_Ele6pos0 ) ;
-  switches_states = (switches_states & 0xFFFE3FFF) | (pos << 14 ) ;
-//#endif
+  switches_states = (switches_states & 0xFFF8FFFF) | (next << 16 ) ;
 
 #endif
 
@@ -11408,9 +11563,9 @@ void checkTHR()
 	//loop until throttle stick is low
   while (1)
   {
-#if defined(PCBX12D) || defined(PCBX10)
-		PictureDrawn = 0 ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//		PictureDrawn = 0 ;
+//#endif
 		 
 #ifdef SIMU
       if (!main_thread_running) return;
@@ -11647,9 +11802,13 @@ uint16_t getCurrentSwitchStates()
 	if ( switches_states & 0x400 )  i |= 0x0020 ;
 	if ( switches_states & 0x1000 ) i |= 0x0040 ;
 	if ( switches_states & 0x2000 ) i |= 0x1000 ;
+#if defined(PCBX12D) || defined(PCBX10)
+	if ( switches_states & 0x10000 ) i |= 0x0080 ;
+	if ( switches_states & 0x20000 ) i |= 0x2000 ;
+#else
 	if ( switches_states & 0x4000 ) i |= 0x0080 ;
 	if ( switches_states & 0x8000 ) i |= 0x2000 ;
-
+#endif
 	return i ;
 }
 
@@ -11669,7 +11828,7 @@ void checkSwitches()
 	 
 	warningStates = g_model.modelswitchWarningStates ;
 #if defined(PCBX12D) || defined(PCBX10)
-	warningStates |= (uint32_t)(g_model.xmodelswitchWarningStates & 0x07) << 16 ;
+	warningStates |= (uint32_t)(g_model.xmodelswitchWarningStates & 0x07) << 14 ;
 #endif
   
 	if( warningStates & 1 ) return ; // if warning is on
@@ -11701,6 +11860,7 @@ void checkSwitches()
 
 #if defined(PCBX12D) || defined(PCBX10)
     uint32_t i = getCurrentSwitchStates() ;
+		i = ( i & 0x00003FFF ) | ( ( i & 0x00070000 ) >> 2 ) ;
 		i &= ~g_model.modelswitchWarningDisables ;
 		if ( g_model.modelswitchWarningDisables & 0xC000 ) // 6-pos
 		{
@@ -11794,6 +11954,7 @@ void checkSwitches()
 
 #if defined(PCBX12D) || defined(PCBX10)
     	uint32_t ss = switches_states ;
+			ss = ( ss & 0x00003FFF ) | ( ( ss & 0x00070000 ) >> 2 ) ;
 #else
     	uint16_t ss = switches_states ;
 #endif

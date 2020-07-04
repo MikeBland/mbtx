@@ -99,6 +99,10 @@ const uint8_t *ExtraFont = NULL ;
 const uint8_t *ExtraBigFont = NULL ;
 
 // Local data
+//#ifdef INVERT_DISPLAY
+//extern uint16_t LcdBits ;
+//extern uint16_t LcdErrors ;
+//#endif
 uint8_t Lcd_lastPos ;
 uint8_t plotType = PLOT_XOR ;
 
@@ -282,16 +286,27 @@ void putsVBat(uint8_t x,uint8_t y,uint8_t att)
 
 extern uint16_t Mimage[] ;
 extern uint16_t *SdramImage ;
-void lcd_picture( uint16_t i_x, uint16_t i_y )
+void lcd_picture( uint16_t i_x, uint16_t i_y, uint16_t maxHeight )
 {
 //	uint16_t *p ;
 //	uint32_t rows ;
 	uint16_t *src = SdramImage ;
+	uint16_t height ;
 
 extern uint16_t Image_width ;
 extern uint16_t Image_height ;
 
-	DMAcopyImage( i_x, i_y, Image_width, Image_height, src ) ;
+	height = Image_height ;
+	if ( height > maxHeight )
+	{
+		uint16_t t ;
+		t = (height-maxHeight) / 2 ;
+		height = maxHeight ;
+		src += Image_width * t ;
+		i_y += t ;
+	}
+
+	DMAcopyImage( i_x, i_y, Image_width, height, src ) ;
 
 //	for ( rows = 0 ; rows < Image_height ; rows += 1 )
 //	{
@@ -316,6 +331,12 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 #ifdef INVERT_DISPLAY
 	i_x = (LCD_W/2-1) - i_x ; // - (w - 1) ;
 	i_y = (LCD_H/2-1) - i_y ; // - (h - 1) ;
+	if ( i_y >= LCD_H/2 )
+	{
+//		LcdBits |= 16 ;
+//		LcdErrors += 1 ;
+		i_y = 0 ;
+	}
 //	i_x = (LCD_W/2-1) - i_x ;
 //	i_y = (LCD_H/2-1) - i_y ;
 #endif
@@ -1393,7 +1414,21 @@ void lcd_puts_P( uint8_t x, uint8_t y, const char *s )
 }
 
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
+void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val)
+{
+	uint8_t i ;
+  x += FWNUM*8 ;
+  for(i=0 ; i<8 ; i += 1)
+  {
+    x -= FWNUM ;
+    char c = val & 0x0F ;
+    c = c>9 ? c+'A'-10 : c+'0' ;
+    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0) ;
+    val >>= 4 ;
+  }
+}
+
 void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val)
 #else
 void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val)
@@ -1702,6 +1737,12 @@ void lcd_plot( uint16_t x, uint16_t y )
 #ifdef INVERT_DISPLAY
 	x = (LCD_W/2-1) - x ;
 	y = (LCD_H/2-1) - y ;
+	if ( y >= LCD_H/2 )
+	{
+//		LcdBits |= 32 ;
+//		LcdErrors += 1 ;
+		y = 0 ;
+	}
 #endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
@@ -1748,6 +1789,10 @@ void lcd_hlineStip( uint16_t x, uint16_t y, uint8_t w, uint8_t pat )
 #ifdef INVERT_DISPLAY
 	x = (LCD_W/2-1) - x ;
 	y = (LCD_H/2-1) - y ;
+	if ( y >= LCD_H/2 )
+	{
+		y = 0 ;
+	}
 #endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
@@ -1839,6 +1884,12 @@ void lcd_vline( uint16_t x, uint16_t y, int8_t h )
 #ifdef INVERT_DISPLAY
 	x = (LCD_W/2-1) - x ;
 	y1 = (LCD_H/2-1) - y1 ;
+	if ( y1 >= LCD_H/2 )
+	{
+//		LcdBits |= 64 ;
+//		LcdErrors += 1 ;
+		y1 = 0 ;
+	}
 #endif
 	uint16_t *p = ( uint16_t *) CurrentFrameBuffer ;
 	p += x*2 ;
@@ -2007,6 +2058,12 @@ void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_
 #ifdef INVERT_DISPLAY
 	x = (LCD_W/2-1) - x ;
 	y = (LCD_H/2-1) - y - 7 ;
+	if ( y >= LCD_H/2 )
+	{
+//		LcdBits |= 128 ;
+//		LcdErrors += 1 ;
+		y = 0 ;
+	}
 #endif
 	x *= 2 ;
 	w *= 2 ;
@@ -2091,6 +2148,8 @@ void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink )
 }
 #endif
 
+//extern uint16_t LCDLastOp ;
+
 void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 {
 	uint8_t oldPlotType = plotType ;
@@ -2103,9 +2162,13 @@ void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
 #ifdef WHERE_TRACK
 notePosition('0') ;
 #endif
+	//LCDLastOp = 'E' ;
 	lcdDrawSolidFilledRectDMA( x*2, y*2, 2, h*2, colour) ;
+//	LCDLastOp = 'F' ;
 	lcdDrawSolidFilledRectDMA( (x+w-1)*2, y*2, 2, h*2, colour) ;
+//	LCDLastOp = 'G' ;
 	lcdDrawSolidFilledRectDMA( (x+1)*2, (y+h-1)*2, (w-2)*2, 2, colour) ;
+//	LCDLastOp = 'H' ;
 	lcdDrawSolidFilledRectDMA( (x+1)*2, y*2, (w-2)*2, 2, colour) ;
 #else
   lcd_vline(x, y, h ) ;
@@ -2284,8 +2347,10 @@ void lcd_blank()
 #ifdef WHERE_TRACK
 notePosition('1') ;
 #endif
-	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, LcdBackground ) ;
-	lcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+//	LCDLastOp = 'I' ;
+	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64+48, LcdBackground ) ;
+//	LCDLastOp = 'J' ;
+	lcdDrawSolidFilledRectDMA( 0, 128+64+48, 480, 272-128-64-48, 0 ) ;
 }
 
 void lcd_clear()
@@ -2293,8 +2358,10 @@ void lcd_clear()
 #ifdef WHERE_TRACK
 notePosition('2') ;
 #endif
-	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, LcdBackground ) ;
-	lcdDrawSolidFilledRectDMA( 0, 128, 480, 272-128, 0 ) ;
+//	LCDLastOp = 'K' ;
+	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64+48, LcdBackground ) ;
+//	LCDLastOp = 'L' ;
+	lcdDrawSolidFilledRectDMA( 0, 128+64+48, 480, 272-128-64-48, 0 ) ;
 //	lcdDrawSolidFilledRectDMA( 0, 0, 480, 128, 0xFFFF ) ;
 //	lcdDrawSolidFilledRectDMA( 0, 128, 480-128, 272-128-22, 0 ) ;
 //	lcdDrawSolidFilledRectDMA( 480-128, 128+64, 128, 272-128-22-64, 0 ) ;

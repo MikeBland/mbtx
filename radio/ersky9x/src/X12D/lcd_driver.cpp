@@ -42,7 +42,6 @@ PACK(typedef struct {
 
 //#define	WHERE_TRACK		1
 
-
 #include "../ersky9x.h"
 #include "stddef.h"
 #include "stm32f4xx.h"
@@ -86,6 +85,14 @@ uint8_t LcdBackupFrameBuffer[DISPLAY_BUFFER_SIZE] __SDRAM ;
 uint8_t FontBuffer[65536*2] __SDRAM ;
 #endif
 
+//#ifdef INVERT_DISPLAY
+//uint16_t LcdBits ;
+//uint16_t LcdErrors ;
+//uint16_t Lcdy ;
+//uint16_t Lcdx ;
+//uint16_t Lcdc ;
+//#endif
+
 //#define LCD_FIRST_FRAME_BUFFER         SDRAM_BANK_ADDR
 //#define LCD_SECOND_FRAME_BUFFER        (SDRAM_BANK_ADDR + DISPLAY_BUFFER_SIZE)
 //#define LCD_BACKUP_FRAME_BUFFER        (SDRAM_BANK_ADDR + 2*DISPLAY_BUFFER_SIZE)
@@ -99,7 +106,7 @@ const uint8_t *ExtraHorusBigFont = NULL ;
 #define NRST_LOW()   do { LCD_GPIO_NRST->BSRRH = LCD_GPIO_PIN_NRST; } while(0)
 #define NRST_HIGH()  do { LCD_GPIO_NRST->BSRRL = LCD_GPIO_PIN_NRST; } while(0)
 
-#define CR_MASK                     ((uint32_t)0xFFFCE0FC)  /* DMA2D CR Mask */
+#define CR_MASK                     ((uint32_t)0xFFFCC0F8)  /* DMA2D CR Mask */
 
 uint8_t speaker[] = {
 4,8,0,
@@ -646,13 +653,40 @@ void lcdInit(void)
 volatile uint8_t Dma2DdoneFlag ;
 volatile uint8_t LcdClearing ;
 
+//uint16_t LastDmaRectx ;
+//uint16_t LastDmaRecty ;
+//uint16_t LastDmaRectw ;
+//uint16_t LastDmaRecth ;
+//uint32_t LastFrameBuffer ;
+//uint32_t LastAddr ;
+
+//uint16_t LCDLastOp ;
+//uint16_t LCDIntLastOp ;
+//uint16_t LCDIntLastSr ;
+//uint32_t LCDIntLastCr ;
+//uint16_t DMA2Dtimer[5] ;
+
 void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour)
 {
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - (w - 1) ;
 	y = (LCD_H-1) - y - (h - 1) ;
+	if ( y >= LCD_H )
+	{
+//		LcdBits |= 1 ;
+//		LcdErrors += 1 ;
+		y = 0 ;
+	}
+
+//	LastDmaRectx = x ;
+//	LastDmaRecty = y ;
+//	LastDmaRectw = w ;
+//	LastDmaRecth = h ;
+//	LastFrameBuffer = CurrentFrameBuffer ;
+
 #endif
 	uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x) ;
+//	LastAddr = addr ;
   DMA2D_DeInit() ;
 
 	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_R2M ;
@@ -669,8 +703,14 @@ void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t
 	
   /* Start Transfer */
 	Dma2DdoneFlag = 0 ;
-  DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-  DMA2D_StartTransfer();
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//  if ( DMA2D->ISR & DMA2D_ISR_TCIF )
+//	{
+//		LCDLastOp |= 0x20 ;
+//	}
+//	DMA2Dtimer[0] = getTmr2MHz() ;
+//	DMA2D_StartTransfer();
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
 	
 	NVIC_SetPriority( DMA2D_IRQn, 12 ) ;
   DMA2D->CR |= DMA2D_CR_TCIE ;
@@ -710,41 +750,72 @@ void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t
 //}
 
 uint16_t DMA2DerrorCount ;
+//uint16_t DMA2DabortCount ;
+//uint16_t DMA2DintxCount ;
 
-void waitDma2Ddone()
+
+void waitDma2Ddone( uint16_t timeout )
 {
 	uint16_t t1 = getTmr2MHz() ;
 	uint16_t t2 ;
+#ifdef WHERE_TRACK
+extern void notePosition( uint8_t byte ) ;
+	notePosition('>') ;
+#endif
 	while ( Dma2DdoneFlag == 0 )
 	{
 		// wait
 		t2 = getTmr2MHz() - t1 ;
-		if ( t2 > 32000 )		// 16mS
+		if ( t2 > timeout )		// 1.5mS, was 16mS
 		{
 			// Error timeout
 			DMA2DerrorCount  += 1 ;
+
   		DMA2D_DeInit() ;	// Reset DMA2D
+			
+#ifdef WHERE_TRACK
+extern void notePosition( uint8_t byte ) ;
+	notePosition('X') ;
+#endif
 			return ;
 		}
 	}
+//  if (DMA2D->CR & (uint32_t)DMA2D_CR_START)
+//	{
+//#ifdef WHERE_TRACK
+//extern void notePosition( uint8_t byte ) ;
+//	notePosition('Z') ;
+//#endif
+//	}
 }
 
-void pollDma2Ddone()
+void pollDma2Ddone( uint16_t timeout )
 {
 	uint16_t t1 = getTmr2MHz() ;
 	uint16_t t2 ;
+#ifdef WHERE_TRACK
+extern void notePosition( uint8_t byte ) ;
+	notePosition('<') ;
+#endif
  	while (DMA2D->CR & (uint32_t)DMA2D_CR_START)
 	{
 		// wait
 		t2 = getTmr2MHz() - t1 ;
-		if ( t2 > 32000 )		// 16mS
+		if ( t2 > timeout )		// 1.5mS, was 16mS
 		{
 			// Error timeout
 			DMA2DerrorCount  += 1 ;
   		DMA2D_DeInit() ;	// Reset DMA2D
+  
+#ifdef WHERE_TRACK
+extern void notePosition( uint8_t byte ) ;
+	notePosition('Y') ;
+#endif
+		  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
 			return ;
 		}
 	}
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
 }
 
 void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
@@ -759,11 +830,13 @@ void lcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, u
 extern void notePosition( uint8_t byte ) ;
 	notePosition('Q') ;
 #endif
+		DMA2D->CR |= DMA2D_CR_ABORT ;
+//		DMA2DabortCount += 1 ;
 	}
 	
 	startLcdDrawSolidFilledRectDMA( x, y, w, h, color) ;
 	
-	waitDma2Ddone() ;
+	waitDma2Ddone(( w*h > 1000 ) ? 10000 : 3000) ;
 	/* Wait for CTC Flag activation */
 //  while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
 }
@@ -775,7 +848,41 @@ extern void notePosition( uint8_t byte ) ;
 
 extern "C" void DMA2D_IRQHandler( void )
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x57 ;
+#else
+	RTC->BKP1R = 0x57 ;
+#endif
+#endif
+#ifdef WHERE_TRACK
+	notePosition('0'+Dma2DdoneFlag+((DMA2D->CR & DMA2D_CR_START)<< 1)) ;
+	notePosition('@'+(DMA2D->ISR & 0x3F)) ;
+#endif
+//	DMA2Dtimer[4] = DMA2D->ISR ;
   DMA2D->CR &= ~DMA2D_CR_TCIE ;
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+	if (DMA2D->CR & DMA2D_CR_START)
+	{
+//		DMA2Dtimer[1] = getTmr2MHz() - DMA2Dtimer[0] ;
+//		DMA2Dtimer[2] = 1 ;
+//		LCDIntLastSr = DMA2Dtimer[4] ;
+//		LCDIntLastCr = DMA2D->CR ;
+		DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+  	DMA2D->CR |= DMA2D_CR_TCIE ;
+//		DMA2DintxCount += 1 ;
+//		LCDIntLastOp = LCDLastOp ;
+		if (DMA2D->CR & DMA2D_CR_START)
+		{
+			return ;
+		}
+	  DMA2D->CR &= ~DMA2D_CR_TCIE ;
+	}
+//	if ( DMA2Dtimer[2] )
+//	{
+//		DMA2Dtimer[3] = getTmr2MHz() - DMA2Dtimer[0] ;
+//	}
+//	DMA2Dtimer[2] = 0 ;
 	Dma2DdoneFlag	= 1 ;
 	if ( LcdClearing )
 	{
@@ -801,7 +908,8 @@ extern void notePosition( uint8_t byte ) ;
 #endif
 			LcdClearing = 2 ;
 //			startLcdDrawSolidFilledRectDMA( 480-128, 128, 128, 272-128-22-64, 0 ) ;
-			startLcdDrawSolidFilledRectDMA( 0, 128+64, 480-128, 64, 0 ) ;
+//	LCDLastOp = 'B' ;
+			startLcdDrawSolidFilledRectDMA( 0, 128+64+16+16+16, 480, 64-16-16-16, 0 ) ;
 		}
 		else
 		{
@@ -814,7 +922,8 @@ extern void notePosition( uint8_t byte ) ;
 void lcd_clearBackground()
 {
 	LcdClearing = 1 ;
-	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64, LcdBackground ) ;
+//	LCDLastOp = 'C' ;
+	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64+16+16+16, LcdBackground ) ;
 //	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64, 0xF800 + 0x07E0 + 0x001F ) ;
 //	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64, 0x7800 + 0x03E0 + 0x000F ) ;
 }
@@ -1104,6 +1213,12 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
 	y = (LCD_H-1) - y - 31 ;
+	if ( y >= LCD_H )
+	{
+//		LcdBits |= 2 ;
+//		LcdErrors += 1 ;
+		y = 0 ;
+	}
 #endif
 
 	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
@@ -1160,9 +1275,10 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
   DMA2D->FGMAR   = (uint32_t) q ;
   DMA2D->FGOR    = 0 ;
 	
-  DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-  DMA2D_StartTransfer() ;
-	pollDma2Ddone() ;
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//  DMA2D_StartTransfer() ;
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+	pollDma2Ddone( 3000 ) ;
 //	if ( condensed )
 //	{
 //  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
@@ -1180,10 +1296,21 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
 {
 #ifdef INVERT_DISPLAY
+//	uint16_t ty ;
+//	uint16_t tx ;
+//	uint16_t tc ;
+//	ty = y ;
+//	tx = x ;
+//	tc = chr ;
 	x = (LCD_W-1) - x - 11 ;
 	y = (LCD_H-1) - y - 15 ;
 	if ( y >= LCD_H )
 	{
+//		LcdBits |= 4 ;
+//		LcdErrors += 1 ;
+//		Lcdx = tx ;
+//		Lcdy = ty ;
+//		Lcdc = tc ;
 		y = 0 ;
 	}
 #endif
@@ -1296,9 +1423,10 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 #endif
 //  DMA2D->FGOR    = 0 ;
 	
-  DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-  DMA2D_StartTransfer() ;
-	pollDma2Ddone() ;
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//  DMA2D_StartTransfer() ;
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+	pollDma2Ddone( 3000 ) ;
 	if ( condensed )
 	{
 #ifdef INVERT_DISPLAY
@@ -1314,10 +1442,10 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
   	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
 	  DMA2D->FGOR    = 4 ;
 #endif
-		DMA2D->IFCR = DMA2D_FLAG_TC ;
-  	DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-	  DMA2D_StartTransfer() ;
-		pollDma2Ddone() ;
+  	DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//	  DMA2D_StartTransfer() ;
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+		pollDma2Ddone( 3000 ) ;
 	}
 }
 
@@ -1496,11 +1624,12 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 //  DMA2D->FGCMAR = 0 ;
 
   /* Start Transfer */
-  DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-  DMA2D_StartTransfer();
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//  DMA2D_StartTransfer();
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
 
   /* Wait for CTC Flag activation */
-	pollDma2Ddone() ;
+	pollDma2Ddone( 3000 ) ;
 }
 
 void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t *image )
@@ -1509,6 +1638,12 @@ void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - (w - 1) ;
 	y = (LCD_H-1) - y - (h - 1) ;
+	if ( y >= LCD_H )
+	{
+//		LcdBits |= 8 ;
+//		LcdErrors += 1 ;
+		y = 0 ;
+	}
 #endif
   uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
 
@@ -1535,62 +1670,64 @@ void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t
   DMA2D_FGConfig(&DMA2D_FG_InitStruct);
 
   /* Start Transfer */
-	DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-	DMA2D_StartTransfer();
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//	DMA2D_StartTransfer();
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
 
   /* Wait for CTC Flag activation */
-	pollDma2Ddone() ;
+	pollDma2Ddone( 7000 ) ;
 }
 
 
 
 
-void DMAcopy(void * src, void * dest, int len)
-{
-  DMA2D_DeInit();
+//void DMAcopy(void * src, void * dest, int len)
+//{
+//  DMA2D_DeInit();
 
-    DMA2D_InitTypeDef DMA2D_InitStruct;
-    DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M;
-    DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
-    DMA2D_InitStruct.DMA2D_OutputMemoryAdd = CONVERT_PTR_UINT(dest);
-    DMA2D_InitStruct.DMA2D_OutputGreen = 0;
-    DMA2D_InitStruct.DMA2D_OutputBlue = 0;
-    DMA2D_InitStruct.DMA2D_OutputRed = 0;
-    DMA2D_InitStruct.DMA2D_OutputAlpha = 0;
-    DMA2D_InitStruct.DMA2D_OutputOffset = 0;
-    DMA2D_InitStruct.DMA2D_NumberOfLine = LCD_H;
-    DMA2D_InitStruct.DMA2D_PixelPerLine = LCD_W;
-    DMA2D_Init(&DMA2D_InitStruct);
+//    DMA2D_InitTypeDef DMA2D_InitStruct;
+//    DMA2D_InitStruct.DMA2D_Mode = DMA2D_M2M;
+//    DMA2D_InitStruct.DMA2D_CMode = DMA2D_RGB565;
+//    DMA2D_InitStruct.DMA2D_OutputMemoryAdd = CONVERT_PTR_UINT(dest);
+//    DMA2D_InitStruct.DMA2D_OutputGreen = 0;
+//    DMA2D_InitStruct.DMA2D_OutputBlue = 0;
+//    DMA2D_InitStruct.DMA2D_OutputRed = 0;
+//    DMA2D_InitStruct.DMA2D_OutputAlpha = 0;
+//    DMA2D_InitStruct.DMA2D_OutputOffset = 0;
+//    DMA2D_InitStruct.DMA2D_NumberOfLine = LCD_H;
+//    DMA2D_InitStruct.DMA2D_PixelPerLine = LCD_W;
+//    DMA2D_Init(&DMA2D_InitStruct);
 
-    DMA2D_FG_InitTypeDef DMA2D_FG_InitStruct;
-    DMA2D_FG_StructInit(&DMA2D_FG_InitStruct);
-    DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(src);
-    DMA2D_FG_InitStruct.DMA2D_FGO = 0;
-    DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565;
-    DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE;
-    DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_VALUE = 0;
-    DMA2D_FGConfig(&DMA2D_FG_InitStruct);
+//    DMA2D_FG_InitTypeDef DMA2D_FG_InitStruct;
+//    DMA2D_FG_StructInit(&DMA2D_FG_InitStruct);
+//    DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(src);
+//    DMA2D_FG_InitStruct.DMA2D_FGO = 0;
+//    DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565;
+//    DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = NO_MODIF_ALPHA_VALUE;
+//    DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_VALUE = 0;
+//    DMA2D_FGConfig(&DMA2D_FG_InitStruct);
 
-    /* Start Transfer */
-  	DMA2D->ISR &= ~DMA2D_ISR_TCIF ;
-    DMA2D_StartTransfer();
+//    /* Start Transfer */
+//  	DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+////    DMA2D_StartTransfer();
+//	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
 
-    /* Wait for CTC Flag activation */
-		pollDma2Ddone() ;
-}
+//    /* Wait for CTC Flag activation */
+//		pollDma2Ddone() ;
+//}
 
-void lcdStoreBackupBuffer()
-{
-  uint16_t * src = (uint16_t *)CurrentFrameBuffer, * dest = (uint16_t *)LcdBackupFrameBuffer;
-  DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
-}
+//void lcdStoreBackupBuffer()
+//{
+//  uint16_t * src = (uint16_t *)CurrentFrameBuffer, * dest = (uint16_t *)LcdBackupFrameBuffer;
+//  DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
+//}
 
-int lcdRestoreBackupBuffer()
-{
-  uint16_t * dest = (uint16_t *)CurrentFrameBuffer, * src = (uint16_t *)LcdBackupFrameBuffer;
-  DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
-  return 1;
-}
+//int lcdRestoreBackupBuffer()
+//{
+//  uint16_t * dest = (uint16_t *)CurrentFrameBuffer, * src = (uint16_t *)LcdBackupFrameBuffer;
+//  DMAcopy(src, dest, DISPLAY_BUFFER_SIZE);
+//  return 1;
+//}
 
 void lcdRefresh()
 {

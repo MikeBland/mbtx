@@ -20,6 +20,7 @@ void init_rotary_encoder()
 #endif
 #if defined(PCBX10)
 	configure_pins( KEYS_GPIO_PIN_ENTER, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+//	RotaryDivisor = 2 ;
 #endif
 //	RotaryDivisor = 2 ;
 //	g_eeGeneral.rotaryDivisor = 2 ;
@@ -44,7 +45,7 @@ void checkRotaryEncoder()
 //	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
 	dummy &= 0x03 ;
 	
-#if defined(PCBX10)
+#if defined(PCBX10) && defined(PCBT16)
 // For T16!
 	if ( dummy != ( Rotary_position & 0x03 ) )
 	{

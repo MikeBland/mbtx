@@ -28,6 +28,22 @@
 #include "X9D/stm32f2xx.h"
 #endif
 
+//EVT_VIRTUAL_NEXT_PAGE 	for PAGE navigation
+//EVT_VIRTUAL_PREVIOUS_PAGE 	for PAGE navigation
+//EVT_VIRTUAL_ENTER 	
+//EVT_VIRTUAL_ENTER_LONG 	
+//EVT_VIRTUAL_MENU 	
+//EVT_VIRTUAL_MENU_LONG 	
+//EVT_VIRTUAL_NEXT 	for FIELDS navigation
+//EVT_VIRTUAL_NEXT_REPT 	for FIELDS navigation
+//EVT_VIRTUAL_PREVIOUS 	for FIELDS navigation
+//EVT_VIRTUAL_PREV_REPT 	for FIELDS navigation
+//EVT_VIRTUAL_INC 	for VALUES navigation
+//EVT_VIRTUAL_INC_REPT 	for VALUES navigation
+//EVT_VIRTUAL_DEC 	for VALUES navigation
+//EVT_VIRTUAL_DEC_REPT 	for VALUES navigation
+
+
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 extern uint32_t isqrt32( uint32_t x ) ;
@@ -2453,7 +2469,7 @@ uint32_t partLoadBasic()
 							uint8_t code ;
 							uint16_t value ;	
 							uint32_t bytes = 0 ;
-							value = Token[0] ;
+							value = Token[0] & 0xFF ;
 							value |= Token[1] << 8 ;
 //#ifdef QT
 //              p = cpystr( p, (uint8_t *)"Const " ) ;

@@ -246,6 +246,8 @@ uint8_t PrivateData[6] ;
 //uint8_t ExtraPrivateData[16] ;
 uint8_t InputPrivateData[PRIVATE_BUFFER_SIZE] ;
 
+struct t_multiSetting MultiSetting ;
+
 #ifndef SMALL
 uint8_t DsmManCode[4] ;
 #endif
@@ -1210,6 +1212,7 @@ extern uint16_t DsmFrameRequired ;
 #endif
 uint16_t TelRxCount ;
 
+//uint8_t LemonModule = 0 ;
 
 void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 {
@@ -1228,6 +1231,19 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 		packet += 1 ;			// Skip the 0xAA
 		type = *packet++ ;
 	}
+
+	// Temp code to get telemetry from early Lemon DSM module
+//	if ( type > 0x1F )
+//	{
+//		if ( ( type != 0xFF ) || ( type != 0x80 ) )
+//		{
+//			LemonModule = 1 ;
+//		}
+//	}
+//	if ( LemonModule )
+//	{
+//		type >>= 3 ;
+//	}
 
 	if ( type && (type < 0x20) )
 	{
@@ -1367,6 +1383,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 					if ( ivalue < 1000 )
 					{
    					frskyTelemetry[2].set(ivalue, FR_RXRSI_COPY ) ;	// RSSI
+						TelemetryDataValid[FR_RXRSI_COPY] = 40 + g_model.telemetryTimeout ;
 //						RssiSetTimer = 30 ;
 					}
 				}
@@ -2161,8 +2178,17 @@ void processSportPacket(uint8_t *packet)
 #define FS_ID_SNR               0xfa
 #define FS_ID_NOISE             0xfb
 
-// First byte in packet is 0xAA
-void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
+// First byte in packet is 0xAA or 0xAC
+// 0xAC(byte) SENSOR_ID (byte) SENSOR_INDEX (byte) PAYLOAD_LENGTH (byte) PAYLOAD (n bytes) ...........
+
+//One sensor is for example the altimeter sensor:
+//T= 41 01 04 08 86 49 13 FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF FF
+//41 01 04 08 49 13 => Sensor ID: 41 -> presure sensor, Sensor #: 01, length in bytes 04, data: 08 86 49 13
+//Temperature= ( ((0x13498608)>>19) -400)/10 = 21.7°C
+
+
+
+void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 {
   frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
 	packet += 2 ;
@@ -2171,46 +2197,79 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 		uint32_t id ;
 		int32_t value ;
 		id = *packet ;
-		id |= *(packet+1) << 8 ;
-		packet += 2 ;
-		value = (packet[1] << 8)  + packet[0] ;
-		switch ( id )
+		
+		if ( type == 0xAC )
 		{
-			case 0 :	// Rx voltage
-				storeTelemetryData( FR_RXV, value/10 ) ;
-			break ;
-			case 1 :	// Temp
-				storeTelemetryData( FR_TEMP1, value ) ;
-			break ;
-			case 2 :	// RPM
-				storeTelemetryData( FR_RPM, value ) ;
-			break ;
-			case 0x0100 :	// External voltage ?
-				storeTelemetryData( FR_VOLTS, value/10 ) ;
-			break ;
-			case 3 :	// External voltage
-			case 0x0103 :	// External voltage ?
-				storeTelemetryData( FR_VOLTS, value/10 ) ;
-			break ;
-			case 0xFC :	// RSSI
-				storeRSSI( 135-value ) ;
-			break ;
-			case FS_ID_ERR_RATE :
-				storeTelemetryData( FR_CUST1, value ) ;
-			break ;
-			case FS_ID_SNR :
-				storeTelemetryData( FR_CUST2, value ) ;
-			break ;
-			case FS_ID_NOISE :
-				storeTelemetryData( FR_CUST3, value ) ;
-			break ;
+			return ;
+//    	value = (packet[6] << 24) | (packet[5] << 16) | (packet[4] << 8) | packet[3];
+//			if ( id == 0x83 )
+//			{
+//				// Baro Alt
+//			}
 		}
-		packet += 2 ;
+		else
+		{
+			id |= *(packet+1) << 8 ;
+			packet += 2 ;
+			value = (packet[1] << 8)  + packet[0] ;
+			switch ( id )
+			{
+				case 0 :	// Rx voltage
+					storeTelemetryData( FR_RXV, value/10 ) ;
+				break ;
+				case 1 :	// Temp
+					storeTelemetryData( FR_TEMP1, value ) ;
+				break ;
+				case 2 :	// RPM
+					storeTelemetryData( FR_RPM, value ) ;
+				break ;
+				case 0x0100 :	// External voltage ?
+					storeTelemetryData( FR_VOLTS, value/10 ) ;
+				break ;
+				case 3 :	// External voltage
+				case 0x0103 :	// External voltage ?
+					storeTelemetryData( FR_VOLTS, value/10 ) ;
+				break ;
+				case 0xFC :	// RSSI
+					storeRSSI( 135-value ) ;
+				break ;
+				case FS_ID_ERR_RATE :
+					storeTelemetryData( FR_CUST1, value ) ;
+				break ;
+				case FS_ID_SNR :
+					storeTelemetryData( FR_CUST2, value ) ;
+				break ;
+				case FS_ID_NOISE :
+					storeTelemetryData( FR_CUST3, value ) ;
+				break ;
+			}
+			packet += 2 ;
+		}
 	}
  	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
  	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 }
 
+
+#ifndef SMALL
+uint8_t ScannerData[250] ;
+
+void processScannerData( uint8_t *data, uint32_t byteCount )
+{
+	uint32_t channel ;
+	uint32_t i ;
+
+	(void) byteCount ;
+	channel = *data++ ;
+	if ( channel <= 245 )
+	{
+		for ( i = 0 ; i < 5 ; i += 1 )
+		{
+			ScannerData[channel++] = *data++ ;
+		}
+	}
+}
+#endif
 
 /*
    Receive serial (RS-232) characters, detecting and storing each Fr-Sky 
@@ -2223,6 +2282,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 //{
 //	numPktBytes = 0 ;
 //}
+
 
 uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 {
@@ -2272,11 +2332,11 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
         dataState = frskyDataIdle ;
 				return 0 ;
 			}
-			else if ( ( Private_position == Private_count ) || ( Private_position >= PRIVATE_BUFFER_SIZE ) )
+			else if ( ( Private_position == Private_count+1 ) || ( Private_position >= PRIVATE_BUFFER_SIZE ) )
 			{
         dataState = frskyDataIdle;
 				// process private data here
-				if ( Private_position == Private_count )
+				if ( Private_position == Private_count+1 )
 				{
 					// Correct amount received
 					uint32_t len = Private_count ;
@@ -2315,14 +2375,42 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 						switch ( Private_type )
 						{
 							case 1 :	// Status
-								if ( len > 6 )
+								if ( MultiSetting.timeout == 0 )
 								{
-									len = 6 ;
+									
+									if ( len > 4 )
+									{
+										MultiSetting.flags = InputPrivateData[0] ;
+										memmove(MultiSetting.revision, &InputPrivateData[1], 4 ) ;
+										MultiSetting.valid = 1 ;
+									}
+									if ( len > 15 )
+									{
+										memmove(MultiSetting.protocol, &InputPrivateData[8], 7 ) ;
+										MultiSetting.protocol[7] = 0 ;
+										MultiSetting.valid = 3 ;
+									}
+									if ( len > 23 )
+									{
+										memmove(MultiSetting.subProtocol, &InputPrivateData[16], 8 ) ;
+										MultiSetting.subProtocol[8] = 0 ;
+										MultiSetting.valid = 7 ;
+										MultiSetting.subData = InputPrivateData[15] ;
+									}
+						
+									if ( len > 6 )
+									{
+										len = 6 ;
+									}
+									while ( len )
+									{
+										len -= 1 ;
+										PrivateData[len] = InputPrivateData[len] ;
+									}
 								}
-								while ( len )
+								else
 								{
-									len -= 1 ;
-									PrivateData[len] = InputPrivateData[len] ;
+									MultiSetting.timeout -= 1 ;									
 								}
 							break ;
 						
@@ -2354,10 +2442,18 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 								dsmBindResponse( InputPrivateData[7], InputPrivateData[6] ) ;
 							break ;
 							case 6 :	// AFHDS2
-								processAFHDS2Packet( InputPrivateData, Private_count+1 ) ;
+								processAFHDS2Packet( InputPrivateData, Private_count+1, 0xAA ) ;
 							break ;
 							case 10 :	// Hitec
 								processHitecPacket( InputPrivateData ) ;
+							break ;
+#ifndef SMALL
+							case 11 :
+								processScannerData( InputPrivateData+1, Private_count ) ;
+							break ;
+#endif
+							case 12 :	// AFHDS2
+								processAFHDS2Packet( InputPrivateData, Private_count+1, 0xAC ) ;
 							break ;
 							case 13 :	// Trainer data
 								processTrainerPacket( InputPrivateData ) ;
@@ -2393,12 +2489,12 @@ void frsky_receive_byte( uint8_t data )
 	}
 #endif
 #endif
-#ifndef ACCESS
+//#ifndef ACCESS
 	if ( RawLogging )
 	{
 		rawLogByte( data ) ;		
 	}
-#endif
+//#endif
 //#ifdef REVX
 	if ( TelemetryType == TEL_MAVLINK )
 	{
@@ -2466,7 +2562,7 @@ void frsky_receive_byte( uint8_t data )
 						{
 							if ( numbytes >= FLYSKY_TELEMETRY_LENGTH )
 							{
-								processAFHDS2Packet( frskyRxBuffer, numbytes ) ;
+								processAFHDS2Packet( frskyRxBuffer, numbytes, 0xAA ) ;
 								numbytes = 0 ;
         				dataState = frskyDataIdle;
 							}
@@ -2496,9 +2592,36 @@ void frsky_receive_byte( uint8_t data )
 	}
 	else if ( g_model.telemetryProtocol == TELEMETRY_HUBRAW )
 	{
-  	frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
-    frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
-		frsky_proc_user_byte( data ) ;		
+		if ( g_model.Module[1].protocol == PROTO_MULTI )
+		{
+	    switch (dataState) 
+			{
+				case PRIVATE_COUNT :
+				case PRIVATE_VALUE :
+#ifndef SMALL
+	  	  case PRIVATE_XCOUNT :
+				case PRIVATE_TYPE :
+#endif
+					if ( handlePrivateData( dataState, data ) )
+					{
+    	 			break ;
+					}
+					// else fall through
+				default :
+					dataState = frskyDataStart ;
+        	if (data == PRIVATE)
+					{
+						dataState = PRIVATE_COUNT ;
+					}
+				break ;
+			}
+		}
+		else
+		{		
+  		frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
+    	frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
+			frsky_proc_user_byte( data ) ;		
+		}
 	}
 	else // Not DSM
 	{

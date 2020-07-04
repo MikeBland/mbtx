@@ -30,6 +30,8 @@
 # AR9X board   make REVB=1
 # Horus X12S   make PCB=X12D
 # Jumper T16   make PCB=X10 PCBT16=1
+# X10Express   make PCB=X10 EXPRESS=1
+# X10          make PCB=X10
 # XWAVE T-800  make PCBLEM1=1
 #
 ##############################################################################################
@@ -129,6 +131,11 @@ else ifeq ($(PCB), X10)
   PROJECT = t16
   CPPDEFS += -DPCBT16 
   EXT_MOD=T16
+ else ifeq ($(EXPRESS), 1)
+  PROJECT = x10E
+  EXT_MOD=X10E
+  CPPDEFS += -DPCBREV_EXPRESS 
+  BT = 1
  else
   PROJECT = x10
   EXT_MOD=X10
@@ -419,6 +426,11 @@ CPPSRC = ersky9x.cpp \
 			loadboot.cpp \
 			pxx2.cpp \
 			lcd.cpp
+
+ifeq ($(BT), 1)
+  CPPSRC += bluetooth.cpp
+  CPPDEFS += -DBT
+endif
 
 ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
@@ -1055,6 +1067,8 @@ clean:
 	-rm -f obj_t16/*.*
 	-rm -f obj_lemon1/*.*
 	-rm -f obj_x9LiteS/*.*
+	-rm -f obj_x10/*.*
+	-rm -f obj_x10E/*.*
 #	-rm -f $(FULL_PRJ).elf
 #	-rm -f $(FULL_PRJ).map
 #	-rm -f $(FULL_PRJ).hex

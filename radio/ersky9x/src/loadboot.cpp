@@ -249,12 +249,14 @@ void _bootStart()
 	__ASM volatile ("nop") ;	// Needed for the STM32F4
 	__ASM volatile ("nop") ;
 	
-	GPIOJ->PUPDR = 0x0008 ;	// PWR_GPIO_PIN_ON, pull down
+	GPIOJ->PUPDR = 0x0004 ;	// PWR_GPIO_PIN_ON, pull up
 
 	if (WAS_RESET_BY_WATCHDOG_OR_SOFTWARE())
 	{
-		GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
 		GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+		GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
+// Add in pullup on power switch input	
+		GPIOJ->PUPDR |= 0x0001 ;	// PWR_GPIO_PIN_SWITCH, pull up
 	}
 
 	GPIOD->PUPDR = 0x00000040 ; // RHL D3
@@ -289,6 +291,9 @@ void _bootStart()
 			// Soft power on
 			GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
 			GPIOJ->MODER = (GPIOJ->MODER & 0xFFFFFFF3) | 4 ; // General purpose output mode
+
+// Add in pullup on power switch input	
+			GPIOJ->PUPDR |= 0x0001 ;	// PWR_GPIO_PIN_SWITCH, pull up
 
 			// Red LED on
 			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ;

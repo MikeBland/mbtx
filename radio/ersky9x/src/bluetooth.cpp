@@ -61,6 +61,9 @@
 #include "ersky9x.h"
 #include "myeeprom.h"
 #include "drivers.h"
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+#include "X12D/hal.h"
+#endif
 #include "bluetooth.h"
 #include "sbus.h"
 #include "audio.h"
@@ -474,7 +477,11 @@ void setBtBaudrate( uint32_t index )
  #if defined(PCBX9LITE) && defined(X9LS)
 	Com3SetBaudrate ( brate ) ;
  #else
+  #if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	USART6_configure() ;		// Testing
+  #else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
+  #endif
  #endif
 #endif
 #endif
@@ -1494,7 +1501,7 @@ uint32_t btLink( uint32_t index )
 	return 0 ;
 }
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 
 #ifndef SMALL
 void processParaTrainerFrame( uint8_t *frame )
@@ -2094,7 +2101,7 @@ void bt_task(void* pdata)
 	uint32_t btBits = 0 ;
 	struct t_bt_control *pBtControl ;
 	pBtControl = &BtControl ;
-#if defined(X9LS)
+#if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 	g_eeGeneral.BtType = BT_TYPE_PARA ;
 #endif
 	pBtControl->BtModuleType = 1 << g_eeGeneral.BtType ;
@@ -2264,6 +2271,7 @@ void bt_task(void* pdata)
 			}
 	#ifndef PCB9XT 
 	#ifndef PCBX7
+	#ifndef PCBX10
 			if ( ( g_model.com2Function == COM2_FUNC_BTDIRECT )
 					 || ( g_model.com2Function == COM2_FUNC_TEL_BT2WAY ) )
 			{
@@ -2310,8 +2318,10 @@ void bt_task(void* pdata)
 				CoTickDelay(1) ;					// 2mS for now
 			}
 			else
+	#endif	// nPCBX10
 	#endif	// nPCBX7
 	#endif	// nPCB9XT
+	#ifndef PCBX10
 			if ( ( BtCurrentFunction == BT_LCDDUMP ) && ( pBtControl->BtMasterSlave == 1 ) )	// LcdDump and SLAVE
 			{
 				while ( ( y = rxBtuart() ) != -1 )
@@ -2323,7 +2333,9 @@ void bt_task(void* pdata)
 				}
 				CoTickDelay(5) ;					// 10mS for now
 			}
-			else if ( BtCurrentFunction == BT_SCRIPT )
+			else
+	#endif	// nPCBX10
+			if ( BtCurrentFunction == BT_SCRIPT )
 			{
 				if ( Bt_tx.size )
 				{

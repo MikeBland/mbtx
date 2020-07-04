@@ -63,6 +63,8 @@
 
 extern uint8_t BindRangeFlag[] ;
 //extern uint8_t PxxExtra[] ;
+extern struct t_telemetryTx TelemetryTx ;
+extern uint8_t DsmResponseFlag ;
 
 void dsmBindResponse( uint8_t mode, int8_t channels )
 {
@@ -83,6 +85,7 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 #endif
 				g_model.dsmMode = dsm_mode_response | 0x80 ;
 	  		STORE_MODELVARS ;
+				DsmResponseFlag = 1 ;
 			}
 		}
 		else
@@ -98,15 +101,14 @@ extern uint8_t MultiResponseData ;
 			dsm_mode_response |= 0x40 ;
 		}
 		MultiResponseData = dsm_mode_response ;
-extern uint8_t MultiResponseFlag ;
-			MultiResponseFlag = 1 ;
+			DsmResponseFlag = 1 ;
 		}
 	}
 }
 
 //uint16_t SetMultiArrayCount ;
 
-void setMultiSerialArray( uint8_t *data, uint32_t module )
+uint32_t setMultiSerialArray( uint8_t *data, uint32_t module )
 {
 	
 //	SetMultiArrayCount += 1 ;
@@ -118,22 +120,24 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 	uint8_t subProtocol ;
 	uint32_t outputbitsavailable = 0 ;
 	uint32_t outputbits = 0 ;
+	uint8_t *start = data ;
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
-	subProtocol = pmodule->sub_protocol+1 ;
+	subProtocol = ( ( pmodule->sub_protocol & 0x3F ) | (pmodule->exsub_protocol << 6 ) ) + 1 ;
 #if defined(PCBT12) || defined(PCBT16) // || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 	if ( subProtocol == M_FRSKYX+1 )
 	{
-		subProtocol = ( subProtocol & 0xC0 ) | 62 ;
+		subProtocol = 127 ;
 	}
 #endif
 #if defined(PCBT12) || defined(PCBT16)
 	if ( subProtocol == M_FrskyD+1 )
 	{
-		subProtocol = ( subProtocol & 0xC0 ) | 62 ;
+		subProtocol = 127 ;
 	}
 #endif
 	packetType = ( ( subProtocol & 0x3F) > 31 ) ? 0x54 : 0x55 ;
+
   if (pmodule->failsafeMode != FAILSAFE_NOT_SET && pmodule->failsafeMode != FAILSAFE_RX )
 	{
     if ( FailsafeCounter[module] )
@@ -151,8 +155,11 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 //			}
 		}
 	}
+
 	*data++ = packetType ;
-	protoByte = subProtocol & 0x5F;		// load sub_protocol and clear Bind & Range flags
+	protoByte = subProtocol & 0x1F ;		// load sub_protocol and clear Bind & Range flags
+	protoByte |= pmodule->sub_protocol & 0x40 ;		// load sub_protocol and clear Bind & Range flags
+
 	if (BindRangeFlag[module] & PXX_BIND)	protoByte |=BindBit ;		//set bind bit if bind menu is pressed
 	if (BindRangeFlag[module] & PXX_RANGE_CHECK) protoByte |=RangeCheckBit ;		//set bind bit if bind menu is pressed
 	*data++ = protoByte ;
@@ -217,7 +224,60 @@ void setMultiSerialArray( uint8_t *data, uint32_t module )
 			outputbitsavailable -= 8 ;
 		}
 	}
-	*data++ = 0 ;
+//  Stream[26]   = sub_protocol bits 6 & 7|RxNum bits 4 & 5|Telemetry_Invert 3|Future_Use 2|Disable_Telemetry 1|Disable_CH_Mapping 0
+//   sub_protocol is 0..255 (bits 0..5 + bits 6..7)
+//   RxNum value is 0..63 (bits 0..3 + bits 4..5)
+//   Telemetry_Invert		=> 0x08	0=normal, 1=invert
+//   Future_Use			=> 0x04	0=      , 1=
+//   Disable_Telemetry	=> 0x02	0=enable, 1=disable
+//   Disable_CH_Mapping	=> 0x01	0=enable, 1=disable
+
+	protoByte = 0 ;
+	if (BindRangeFlag[module] & PXX_BIND)
+	{
+		if ( pmodule->highChannels )
+		{
+			protoByte |= 1 ;
+		}
+		if ( pmodule->disableTelemetry )
+		{
+			protoByte |= 2 ;
+		}
+	}
+	protoByte |= pmodule->pxxRxNum & 0x30 ;
+	protoByte |= subProtocol & 0xC0 ;
+
+	if ( module )
+	{
+		protoByte |= 0x08 ;		// Invert for external modules		
+	}
+
+	*data++ = protoByte ;
+
+	if ( ( subProtocol == M_FRSKYX+1 ) || ( subProtocol == M_FRSKYX2+1 ) )
+	{
+		if ( TelemetryTx.sportCount )
+		{
+			uint32_t i ;
+			uint8_t *p = TelemetryTx.SportTx.ptr ;
+			if ( *p )	// Discard if zero PRIM
+			{
+				*data++ = TelemetryTx.SportTx.index ;
+				for ( i = 0 ; i < 7 ; i += 1 )
+				{
+					uint8_t x ;
+					x = *p++ ;
+					if ( x == 0x7D )
+					{
+						x = *p++ ^ 0x20 ;
+					}
+					*data++ = x ;
+				}
+			}
+			TelemetryTx.sportCount = 0 ;
+		}
+	}
+	return data - start ;
 }
 
 

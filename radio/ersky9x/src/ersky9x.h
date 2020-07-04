@@ -45,6 +45,11 @@
 
 //#define ENABLE_DSM_MATCH	1
 
+//#define WDOG_REPORT	1
+
+#define MULTI_EVENTS	1
+
+
 #ifdef PCBX9D	
  #ifndef PCBX7
   #ifndef PCBXLITE
@@ -58,6 +63,7 @@
   #define WIDE_SCREEN	1
 //  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
 	#define __SDRAM __attribute__((section(".sdram"), aligned(32)))
+	#define __CCM __attribute__((section(".ccm"), aligned(32)))
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -67,6 +73,11 @@
 #define X12OFFSET	0
 #define X12SMALL_OFFSET	0
 #endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define BIG_SCREEN		1
+#endif
+
 
 #if defined(PCBSKY) || defined(PCB9XT)
 #define BLUETOOTH	1
@@ -86,6 +97,12 @@
 
  #if defined(PCBX9LITE) && defined(X9LS)
 #define BLUETOOTH	1
+#endif
+
+#if defined(PCBX10)
+ #ifdef BT
+#define BLUETOOTH	1
+ #endif
 #endif
 
 #if defined(PCBT16)
@@ -115,6 +132,14 @@
 #ifdef REV19
  #define ACCESS					1
 #endif
+
+#ifdef PCBX10
+ #ifdef PCBREV_EXPRESS
+  #define ACCESS					1
+ #endif
+#endif
+
+
 
 #define ACCESS_SPORT_BAUD_RATE		450000
 
@@ -936,37 +961,37 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define NUM_MULTI_PROTOCOLS 63
+#define NUM_MULTI_PROTOCOLS 79
 
 #define M_Flysky           0
-#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
+//#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
 #define M_Hubsan           1
 #define M_FrskyD           2
 #define M_Hisky            3
-#define M_HISKY_STR "\005HiskyHK310"
+//#define M_HISKY_STR "\005HiskyHK310"
 #define M_V2x2             4
 #define M_DSM	             5
-#define M_DSM_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
+//#define M_DSM_STR "\007DSM2-22DSM2-11DSMX-22DSMX-11AUTO   "
 #define M_Devo	  	       6
 #define M_YD717	           7
-#define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
+//#define M_YD717_STR "\007YD717  SKYWLKRSYMAX4 XINXUN NIHUI  "
 #define M_KN	  	         8
-#define M_KN_STR "\006WLTOYSFEILUN"
+//#define M_KN_STR "\006WLTOYSFEILUN"
 #define M_SymaX	           9
-#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
+//#define M_SYMAX_STR "\007SYMAX  SYMAX5C"
 #define M_SLT		  		     10
 #define M_CX10		       11
-#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
+//#define M_CX10_STR "\007GREEN  BLUE   DM007  Q282   J3015_1J3015_2MK33041Q242   "
 #define M_CG023		       12
-#define M_CG023_STR "\005CG023YD829H8_3D"
+//#define M_CG023_STR "\005CG023YD829H8_3D"
 #define M_BAYANG	       13
 #define M_FRSKYX	       14
-#define M_FRSKY_STR "\005CH_16CH_8 "
+//#define M_FRSKY_STR "\005CH_16CH_8 "
 #define M_ESKY		       15
 #define M_MT99XX	       16
-#define M_MT99XX_STR "\002MTH7YZLS"
+//#define M_MT99XX_STR "\002MTH7YZLS"
 #define M_MJXQ		       17
-#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
+//#define M_MJXQ_STR "\005WLH08X600 X800 H26D E010 "
 #define M_SHENQI				 18
 #define M_FY326					 19
 #define M_NONE_STR "\004None"
@@ -978,7 +1003,7 @@ extern uint8_t Ee_lock ;
 #define M_ASSAN					 23
 #define M_FRSKYV				 24
 #define M_HONTAI				 25
-#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
+//#define M_HONTAI_STR "\006HONTAIJJRCX1  X5C1"
 #define M_OPENLRS				 26
 #define M_AFHD2SA				 27
 #define M_Q2X2					 28
@@ -993,6 +1018,10 @@ extern uint8_t Ee_lock ;
 #define M_CFlie          37
 #define M_Hitec          38
 
+#define M_SCANNER        53
+
+#define M_FRSKYX2        63
+
 #define M_LAST_MULTI		 38
 
 // PXX_SEND_RXNUM == BIND
@@ -1006,6 +1035,16 @@ extern uint8_t Ee_lock ;
 #define POWER_TRAINER	2
 #define POWER_X9E_STOP	3
 
+struct t_multiSetting
+{
+	uint8_t valid ;
+	uint8_t flags ;
+	uint8_t revision[4] ;
+	uint8_t protocol[8] ;
+	uint8_t subData ;
+	uint8_t subProtocol[9] ;
+	uint8_t timeout ;
+} ;
 
 extern uint8_t BindRangeFlag[2] ;
 //extern uint8_t PxxExtra[] ;
@@ -1174,6 +1213,8 @@ struct t_alpha
 	uint8_t AlphaHex ;
 	uint8_t copyOfText[15] ;
 } ;
+
+extern struct t_alpha Alpha ;
 
 union t_xmem
 {
@@ -1541,7 +1582,7 @@ extern uint8_t HwDelayScale ;
 #define HW_COUNT_PER_US		8
 #endif
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9D) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 extern struct btRemote_t BtRemote[] ;
 //extern uint8_t NumberBtremotes ;
 #endif
@@ -1679,7 +1720,7 @@ struct t_text
 
 struct t_filelist
 {
-	TCHAR Filenames[8][50] ;
+	TCHAR Filenames[13][50] ;
 	FILINFO Finfo ;
 	DIR Dj ;
 } ;
@@ -1715,7 +1756,6 @@ union t_sharedMemory
 {
 	struct
 	{
-		struct t_alpha Alpha ;
 		struct t_text TextControl ;	
 	} ;
 	struct t_calib Cal_data ;

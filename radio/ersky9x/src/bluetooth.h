@@ -73,6 +73,12 @@
 #define HC05_ENABLE_LOW						// Nothing
 #endif
 
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+#define HC05_ENABLE_HIGH		 (BT_EN_GPIO->BSRRL = BT_EN_GPIO_PIN)
+#define HC05_ENABLE_LOW			 (BT_EN_GPIO->BSRRH = BT_EN_GPIO_PIN)
+#endif
+
+
 #define BT_ROLE_SLAVE		0
 #define BT_ROLE_MASTER	1
 

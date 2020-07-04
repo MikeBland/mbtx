@@ -260,6 +260,7 @@ extern uint16_t rxCom2( void ) ;
 extern void txmit2nd( uint8_t c ) ;
 extern uint16_t rx2nduart( void ) ;
 extern void UART3_Configure( uint32_t baudrate, uint32_t masterClock) ;
+extern void UART6_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void txmitBt( uint8_t c ) ;
 extern int32_t rxBtuart( void ) ;
 #ifdef ACCESS

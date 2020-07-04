@@ -62,11 +62,11 @@ extern uint32_t CurrentFrameBuffer ;
 extern uint8_t MultiData ;
 extern uint16_t S_anaFilt[ANALOG_DATA_SIZE] ;				// Analog inputs after filtering
 extern uint8_t CurrentVolume ;
-extern uint8_t PictureDrawn ;
+//extern uint8_t PictureDrawn ;
 
 uint32_t TimeCounter ;
 uint32_t SecCounter ;
-uint8_t LastEvent ;
+//uint8_t LastEvent ;
 uint8_t ModelImageValid = 0 ;
 
 SKYModelData TempModelData ;
@@ -88,6 +88,16 @@ union t_fileHeader
 	} ;
   char buf[8] ;
 } ;
+
+struct t_gmSave
+{
+	uint32_t csum ;
+	EEGeneral general ;
+	SKYModelData model ;
+	unsigned char modelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
+} ;
+
+struct t_gmSave GmSave __CCM ;
 
 extern uint16_t evalChkSum() ;
 
@@ -114,16 +124,16 @@ uint32_t isProdVersion()
 	return 1 ;
 }
 
-void enableBackupRam()
-{
-	PWR->CR |= PWR_CR_DBP ;
-	PWR->CSR |= PWR_CSR_BRE ;
-	while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
-	{
-		wdt_reset() ;
-	}
-	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
-}
+//void enableBackupRam()
+//{
+//	PWR->CR |= PWR_CR_DBP ;
+//	PWR->CSR |= PWR_CSR_BRE ;
+//	while ( ( PWR->CSR & PWR_CSR_BRR) == 0 )
+//	{
+//		wdt_reset() ;
+//	}
+//	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
+//}
 
 void disableBackupRam()
 {
@@ -136,26 +146,79 @@ void disableBackupRam()
 	RCC->AHB1ENR &= ~RCC_AHB1ENR_BKPSRAMEN ;
 }
 
-uint32_t backupRamChecksum()
+//uint32_t backupRamChecksum()
+//{
+//	uint32_t i ;
+//	uint32_t csum ;
+//	uint8_t *p = (uint8_t *) BKPSRAM_BASE ;
+//	p += 4 ; // skip over checksum value
+//	csum = 0 ;
+//	for ( i = 4 ; i < 4096 ; i += 1 )
+//	{
+//		csum += *p++ ;
+//	}
+//	return csum ;
+//}
+
+//uint32_t checkBackupRam()
+//{
+//	struct t_backupRam *p = ( struct t_backupRam *) BKPSRAM_BASE ;
+//	if ( backupRamChecksum() == p->checksum )
+//	{
+//		if ( p->checksum == 0 )
+//		{
+//			return 0 ;
+//		}
+//		return 1 ;
+//	}
+//	return 0 ;
+//}
+
+//void initBackupRam()
+//{
+//	struct t_backupRam *p = ( struct t_backupRam *) BKPSRAM_BASE ;
+//	uint32_t i ;
+//	p->generalSize = 0 ;
+//	p->modelSize = 0 ;
+//	p->generalSequence = 0 ;
+//	p->modelSequence = 0 ;
+//	p->modelNumber = 0 ;
+//	for ( i = 0 ; i < 4096-18 ; i += 1 )
+//	{
+//		p->data[i] = 0 ;
+//	}
+//	p->checksum = backupRamChecksum() ;
+//}
+
+
+uint32_t ccRamChecksum()
 {
 	uint32_t i ;
 	uint32_t csum ;
-	uint8_t *p = (uint8_t *) BKPSRAM_BASE ;
-	p += 4 ; // skip over checksum value
+	uint8_t *p = (uint8_t *)&GmSave.general ;
 	csum = 0 ;
-	for ( i = 4 ; i < 4096 ; i += 1 )
+	for ( i = 0 ; i < sizeof(g_eeGeneral) ; i += 1 )
+	{
+		csum += *p++ ;
+	}
+	p = (uint8_t *)&GmSave.model ;
+	for ( i = 0 ; i < sizeof(g_model) ; i += 1 )
+	{
+		csum += *p++ ;
+	}
+	p = (uint8_t *)&GmSave.modelNames ;
+	for ( i = 0 ; i < sizeof(GmSave.modelNames) ; i += 1 )
 	{
 		csum += *p++ ;
 	}
 	return csum ;
 }
 
-uint32_t checkBackupRam()
+uint32_t checkCCRam()
 {
-	struct t_backupRam *p = ( struct t_backupRam *) BKPSRAM_BASE ;
-	if ( backupRamChecksum() == p->checksum )
+	if ( ccRamChecksum() == GmSave.csum )
 	{
-		if ( p->checksum == 0 )
+		if ( GmSave.csum == 0 )
 		{
 			return 0 ;
 		}
@@ -164,21 +227,103 @@ uint32_t checkBackupRam()
 	return 0 ;
 }
 
-void initBackupRam()
+void writeGeneralToCCRam()
 {
-	struct t_backupRam *p = ( struct t_backupRam *) BKPSRAM_BASE ;
+	uint8_t *p = (uint8_t *)&GmSave.general ;
 	uint32_t i ;
-	p->generalSize = 0 ;
-	p->modelSize = 0 ;
-	p->generalSequence = 0 ;
-	p->modelSequence = 0 ;
-	p->modelNumber = 0 ;
-	for ( i = 0 ; i < 4096-18 ; i += 1 )
+	uint8_t *q ;
+	q = (uint8_t *) &g_eeGeneral ;
+	for ( i = 0 ; i < sizeof(g_eeGeneral) ; i += 1 )
 	{
-		p->data[i] = 0 ;
+		*p++ = *q++ ;
 	}
-	p->checksum = backupRamChecksum() ;
+	GmSave.csum = ccRamChecksum() ;
 }
+
+void writeModelToCCRam( uint8_t index )
+{
+	uint8_t *p = (uint8_t *)&GmSave.model ;
+	uint32_t i ;
+	uint8_t *q ;
+	q = (uint8_t *) &g_model ;
+	for ( i = 0 ; i < sizeof(g_model) ; i += 1 )
+	{
+		*p++ = *q++ ;
+	}
+	GmSave.csum = ccRamChecksum() ;
+}
+
+void writeNamesToCCRam()
+{
+	uint8_t *p = (uint8_t *)&GmSave.modelNames ;
+	uint32_t i ;
+	uint8_t *q ;
+	q = (uint8_t *) &ModelNames ;
+	for ( i = 0 ; i < sizeof(GmSave.modelNames) ; i += 1 )
+	{
+		*p++ = *q++ ;
+	}
+	GmSave.csum = ccRamChecksum() ;
+}
+
+
+uint32_t readGeneralFromCCRam()
+{
+	uint32_t i ;
+	uint8_t *q ;
+
+	if ( !checkCCRam() )
+	{
+		return 0 ;
+	}
+
+//  memset(&g_eeGeneral, 0, sizeof(EEGeneral));
+	uint8_t *p = (uint8_t *)&GmSave.general ;
+	q = (uint8_t *) &g_eeGeneral ;
+	for ( i = 0 ; i < sizeof(g_eeGeneral) ; i += 1 )
+	{
+		*q++ = *p++ ;
+	}
+	return 1 ;	
+}
+
+uint32_t readModelFromCCRam()
+{
+	uint32_t i ;
+	uint8_t *q ;
+
+	if ( !checkCCRam() )
+	{
+		return 0 ;
+	}
+	
+//  memset(&g_model, 0, sizeof(g_model));
+	q = (uint8_t *) &g_model ;
+	uint8_t *p = (uint8_t *)&GmSave.model ;
+	for ( i = 0 ; i < sizeof(g_model) ; i += 1 )
+	{
+		*q++ = *p++ ;
+	}
+	return 1 ;	
+}
+
+uint32_t readNamesFromCCRam()
+{
+	if ( !checkCCRam() )
+	{
+		return 0 ;
+	}
+	uint8_t *p = (uint8_t *)&GmSave.modelNames ;
+	uint32_t i ;
+	uint8_t *q ;
+	q = (uint8_t *) &ModelNames ;
+	for ( i = 0 ; i < sizeof(GmSave.modelNames) ; i += 1 )
+	{
+		*q++ = *p++ ;
+	}
+	return 1 ;	
+}
+
 
 //void writeGeneralToBackupRam()
 //{
@@ -415,6 +560,7 @@ uint32_t loadModelImage()
 	TCHAR *ptr ;
 	uint32_t row ;
 	uint32_t col ;
+	uint32_t offset ;
 	uint32_t numRows ;
 	uint32_t numCols ;
 	uint8_t *p ;
@@ -458,6 +604,7 @@ uint32_t loadModelImage()
 // openTx = 192 x 114 ?
 	numCols = fourBytesToLong( &ImageRow[18] ) ;
 	numRows = fourBytesToLong( &ImageRow[22] ) ;
+	offset = fourBytesToLong( &ImageRow[10] ) ;
 	
 	XImage_width = numCols ;
 	XImage_height = numRows ;
@@ -472,6 +619,12 @@ uint32_t loadModelImage()
 		LoadImageResult = 3 ;
  	 	return 1 ;	// Error
 	} 
+	
+	if ( offset > 54 )
+	{
+		// skip to start of image
+		result = f_read(&imageFile, ImageRow, offset-54, &nread) ;
+	}
 		 
 	uint16_t xrow = 0 ;
 #ifdef INVERT_DISPLAY
@@ -516,7 +669,7 @@ uint32_t loadModelImage()
 
 	ModelImageValid = 1 ;
 	LoadImageResult = 0 ;
-	PictureDrawn = 0 ;
+//	PictureDrawn = 0 ;
 	return 0 ;
 }
 

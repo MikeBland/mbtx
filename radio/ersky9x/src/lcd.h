@@ -176,7 +176,8 @@ extern uint8_t lcd_putc(uint8_t x,uint8_t y,const char c ) ;
 extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
 extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
+extern void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val) ;
 extern void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val) ;
 #else
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;

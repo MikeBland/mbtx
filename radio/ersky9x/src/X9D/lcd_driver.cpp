@@ -218,6 +218,13 @@ void refreshDisplay()
 
 extern "C" void LCD_DMA_Stream_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5E ;
+#else
+	RTC->BKP1R = 0x5E ;
+#endif
+#endif
   LCD_DMA_Stream->CR &= ~DMA_SxCR_TCIE; // Stop interrupt
   LCD_DMA->HIFCR = LCD_DMA_FLAG_INT; // Clear interrupt flag
   LCD_SPI->CR2 &= ~SPI_CR2_TXDMAEN;
@@ -652,6 +659,13 @@ void startSpiDma()
 
 extern "C" void DMA1_Stream7_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5D ;
+#else
+	RTC->BKP1R = 0x5D ;
+#endif
+#endif
 //	DMA1_Stream7->CR &= ~DMA_SxCR_EN ;		// Disable DMA
 	DMA1_Stream7->CR &= ~DMA_SxCR_TCIE ;		// Stop interrupt
 	DMA1->HIFCR = DMA_HIFCR_CTCIF7 | DMA_HIFCR_CHTIF7 | DMA_HIFCR_CTEIF7 | DMA_HIFCR_CDMEIF7 | DMA_HIFCR_CFEIF7 ; // Write ones to clear flags
@@ -1659,6 +1673,13 @@ void initTopLcd()
 
 extern "C" void TIM8_BRK_TIM12_IRQHandler()
 {
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5C ;
+#else
+	RTC->BKP1R = 0x5C ;
+#endif
+#endif
 	struct t_top_lcd_control *pc ;
 	TIM12->SR = TIMER9_14SR_MASK & ~TIM_SR_UIF ;
 	pc = &TopLcdControl ;

@@ -85,7 +85,7 @@ extern void resumePulses( void ) ;
 extern void setupPulsesAccess( uint32_t module ) ;
 #endif
 
-extern void setMultiSerialArray( uint8_t *data, uint32_t module ) ;
+extern uint32_t setMultiSerialArray( uint8_t *data, uint32_t module ) ;
 extern uint16_t CRCTable(uint8_t val) ;
 extern uint16_t scaleForPXX( uint8_t i ) ;
 extern void dsmBindResponse( uint8_t mode, int8_t channels ) ;
