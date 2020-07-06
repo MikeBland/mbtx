@@ -58,8 +58,10 @@ void txmit( uint8_t c ) ;
 //#define TEL_TYPE_HITEC				5
 
 uint8_t MultiId[4] ;
-uint8_t RxLqi ;
+//uint8_t RxLqi ;
 uint8_t TxLqi ;
+uint8_t TxRssi ;
+uint16_t FrameLossCount ;
 
 // Enumerate FrSky packet codes
 #define LINKPKT         0xfe
@@ -836,6 +838,12 @@ static void frskyPushValue(uint8_t & i, uint8_t value);
 void setTxLqi( uint8_t value )
 {
 	TxLqi = ( ( TxLqi * 7 ) + value + 4 ) / 8 ;	// Multi only
+}
+
+
+void setTxRssi( uint8_t value )
+{
+	TxRssi = ( ( TxRssi * 7 ) + value + 4 ) / 8 ;	// Multi only
 }
 
 uint8_t LinkAveCount ;
@@ -1660,6 +1668,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 			{
 				case 1 :
 	    		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+					setTxRssi( packet[5] ) ;			// packet[5] is  TX_RSSI for MULTI
 					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
 //					RssiSetTimer = 30 ;
 				break ;
@@ -1710,6 +1719,13 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					MultiId[2] = packet[6] ;
 					MultiId[3] = packet[7] ;
 				break ;
+			}
+		}
+		else if ( packet[3] == 0xF0 )
+		{
+			if ( packet[2] == 0 )		// FrSky2 Frame loss count
+			{
+				FrameLossCount = packet[4] | (packet[5] << 8 ) ;
 			}
 		}
 		else if ( packet[3] == 0 )
@@ -2313,7 +2329,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 		case PRIVATE_TYPE :
       Private_type = byte ;
       dataState = PRIVATE_XCOUNT ;
-			if ( byte > 3 )
+			if ( byte > 1 )
 			{
 				Private_position = 1 ;
 			}
@@ -2421,9 +2437,9 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 //	{
 //		rawLogByte( 'Z' ) ;		
 //	}
-									
+								FrskyTelemetryType = FRSKY_TEL_SPORT ;
 #if not defined(PCBT16)
-									processSportPacket(InputPrivateData) ;
+									processSportPacket(InputPrivateData+1) ;
 //	if ( RawLogging )
 //	{
 //		rawLogByte( 'Y' ) ;		
@@ -2433,18 +2449,23 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							break ;
 							case 3 :	// Hub
 								numPktBytes = Private_count ;
-	          		processFrskyPacket(InputPrivateData) ;
+								FrskyTelemetryType = FRSKY_TEL_HUB ;
+	          		processFrskyPacket(InputPrivateData+1) ;
 							break ;
 							case 4 :	// DSM 
+								FrskyTelemetryType = FRSKY_TEL_DSM ;	// DSM
 								processDsmPacket( InputPrivateData, Private_count+1 ) ;
 							break ;
 							case 5 :	// DSM bind
+								FrskyTelemetryType = FRSKY_TEL_DSM ;	// DSM
 								dsmBindResponse( InputPrivateData[7], InputPrivateData[6] ) ;
 							break ;
 							case 6 :	// AFHDS2
+								FrskyTelemetryType = FRSKY_TEL_AFH ;	// AFHD2SA
 								processAFHDS2Packet( InputPrivateData, Private_count+1, 0xAA ) ;
 							break ;
 							case 10 :	// Hitec
+								FrskyTelemetryType = FRSKY_TEL_HITEC ;
 								processHitecPacket( InputPrivateData ) ;
 							break ;
 #ifndef SMALL
@@ -2453,6 +2474,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							break ;
 #endif
 							case 12 :	// AFHDS2
+								FrskyTelemetryType = FRSKY_TEL_AFH ;	// AFHD2SA
 								processAFHDS2Packet( InputPrivateData, Private_count+1, 0xAC ) ;
 							break ;
 							case 13 :	// Trainer data
@@ -3455,6 +3477,7 @@ void FrskyData::set(uint8_t value, uint8_t copy)
 			x = 0 ;
 		}
 		this->value = x ;
+
 		storeTelemetryData( copy, this->value ) ;
 		averaging_total = 0 ;
 //   if (max < value)
@@ -3529,6 +3552,7 @@ uint8_t decodeMultiTelemetry()
 			FrskyTelemetryType = FRSKY_TEL_HUB ;
 		break ;
 		case M_FRSKYX :
+		case M_FRSKYX2 :
 			type = TEL_FRSKY_SPORT ;
 			FrskyTelemetryType = FRSKY_TEL_SPORT ;
 		break ;
