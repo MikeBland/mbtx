@@ -427,7 +427,7 @@ ISR(TIMER1_CAPT_vect) //2MHz pulse generation
 	if ( y > 200 )
 	{
 #ifdef SBUS_PROTOCOL	
-		if ( g_model.protocol == PROTO_SBUS )
+		if ( ( g_model.protocol == PROTO_SBUS ) && (!g_model.pulsePol) ) 
 		{
        PORTB &= ~(1<<OUT_B_PPM) ;
 		}
@@ -1174,7 +1174,9 @@ void setupPulsesSerial(void)
 	struct t_pcm_control *ptrControl ;
 #ifdef MULTI_PROTOCOL
 	uint8_t packetType ;
-	packetType = ( ( (g_model.sub_protocol+1) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
+	uint8_t subProtocol ;
+	subProtocol = ( ( g_model.sub_protocol & 0x3F ) | (g_model.exSubProtocol << 6 ) ) + 1 ;
+	packetType = ( ( (subProtocol) & 0x3F) > 31 ) ? 0x54 : 0x55 ;
 #endif
 
 	ptrControl = &PcmControl ;
@@ -1342,6 +1344,16 @@ void setupPulsesSerial(void)
 		{
 			sendByteSerial(0);
 			sendByteSerial(0);
+		}
+#ifdef MULTI_PROTOCOL
+	  else
+#endif // MULTI_PROTOCOL
+		{
+			uint8_t exByte = 0 ;
+			exByte |= subProtocol & 0xC0 ;
+			exByte |= g_model.exRxNum << 4 ;
+			exByte |= g_eeGeneral.multiTelInvert << 3 ;
+			sendByteSerial(exByte);
 		}
 	}
 #endif // SBUS_PROTOCOL & MULTI_PROTOCOL

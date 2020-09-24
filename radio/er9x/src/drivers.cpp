@@ -22,6 +22,8 @@
 #ifndef SIMU
 #include "avr/interrupt.h"
 
+//#define GREEN_CHIP	1
+
 ///opt/cross/avr/include/avr/eeprom.h
 static inline void __attribute__ ((always_inline))
 eeprom_write_byte_cmp (uint8_t dat, uint16_t pointer_eeprom)
@@ -928,6 +930,17 @@ void per10ms()
 	static uint8_t current ;
 	uint8_t dir_keys ;
 	uint8_t lcurrent ;
+
+#ifdef GREEN_CHIP
+extern uint8_t WdogTimer ;
+	if ( WdogTimer )
+	{
+		if ( --WdogTimer )
+		{
+     	wdt_reset();
+		}
+	}
+#endif
 
 	dir_keys = in & 0x78 ;		// Mask to direction keys
 	if ( ( lcurrent = current ) )

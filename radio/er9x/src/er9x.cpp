@@ -41,6 +41,12 @@ const uint8_t
 
 #define MENU_STACK_SIZE	5
 
+//#define GREEN_CHIP	1
+
+#ifdef GREEN_CHIP
+uint8_t WdogTimer ;
+#endif
+
 /*
 mode1 rud ele thr ail
 mode2 rud thr ele ail
@@ -107,8 +113,10 @@ uint8_t Vs_state[EXTRA_VOICE_SW] ;
 uint8_t Vs_state[NUM_CHNOUT+EXTRA_VOICE_SW] ;
 #endif
 #endif
+#ifndef NO_VOICE
 uint8_t Nvs_state[NUM_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS] ;
 int16_t Nvs_timer[NUM_VOICE_ALARMS+NUM_GLOBAL_VOICE_ALARMS] ;
+#endif
 uint8_t CurrentVolume ;
 
 uint8_t ppmInAvailable = 0 ;
@@ -2516,7 +2524,7 @@ MenuFuncP g_menuStack[MENU_STACK_SIZE];
 uint8_t MenuVertStack[MENU_STACK_SIZE] ;
 
 uint8_t  g_menuStackPtr = 0 ;
-uint8_t  g_menuVertPtr = 0 ;
+//uint8_t  g_menuVertPtr = 0 ;
 uint8_t  EnterMenu = 0 ;
 
 
@@ -4009,7 +4017,13 @@ static void perMain()
 				StepSize = 20 ;
 				Tevent = evt ;
 
-				g_menuVertPtr = g_menuStackPtr ;
+//				g_menuVertPtr = g_menuStackPtr ;
+
+				if ( MultiDataRequest )
+				{
+					MultiDataRequest -=1 ;
+				}
+
 				g_menuStack[g_menuStackPtr](evt);
 //				lcd_outhex4( 95, 0, RebootReason ) ;
 			}
@@ -4832,7 +4846,11 @@ where( 'D' ) ;
 		CurrentPhase = 0 ;
     perOutPhase(g_chans512, 0 ) ;
 		startPulses() ;
+#ifdef GREEN_CHIP
+    wdt_enable(WDTO_2S);
+#else
     wdt_enable(WDTO_500MS);
+#endif
 
     g_menuStack[1] = menuProcModelSelect ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 
@@ -4902,7 +4920,7 @@ uint8_t isAgvar(uint8_t value)
 }
 
 
-
+#ifndef NO_VOICE
 void doVoiceAlarmSource( VoiceAlarmData *pvad )
 {
 	if ( pvad->source )
@@ -5187,6 +5205,7 @@ NOINLINE void processVoiceAlarms()
 	}
 #endif
 }
+#endif
 
 void mainSequence()
 {
@@ -5218,6 +5237,9 @@ void mainSequence()
 	if(heartbeat == 0x3)
   {
       wdt_reset();
+#ifdef GREEN_CHIP
+			WdogTimer = 35 ;
+#endif
       heartbeat = 0;
   }
   t0 = getTmr16KHz() - t0;
@@ -5795,7 +5817,9 @@ void mainSequence()
 		}
 #endif
 #endif // nV2
+#ifndef NO_VOICE
 		processVoiceAlarms() ;
+#endif
 		AlarmControl.VoiceCheckFlag = 0 ;
 		
 #ifdef FRSKY

@@ -436,6 +436,37 @@ void lcd_puts_P(uint8_t x,uint8_t y,const prog_char * s)
   lcd_putsAtt( x, y, s, 0);
 }
 
+#if defined(CPUM2561)
+void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
+{
+	uint8_t i ;
+  x+=FWNUM*2;
+  for(i=0; i<2; i++)
+  {
+    x-=FWNUM;
+    char c = val & 0xf;
+    c = c>9 ? c+'A'-10 : c+'0';
+    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0);
+    val>>=4;
+  }
+}
+#endif
+
+#ifdef AF_DEBUG
+void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
+{
+	uint8_t i ;
+  x+=FWNUM*2;
+  for(i=0; i<2; i++)
+  {
+    x-=FWNUM;
+    char c = val & 0xf;
+    c = c>9 ? c+'A'-10 : c+'0';
+    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0);
+    val>>=4;
+  }
+}
+#endif
 
 void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val)
 {

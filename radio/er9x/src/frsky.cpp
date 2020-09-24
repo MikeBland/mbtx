@@ -133,7 +133,9 @@ int16_t WholeAltitude ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 
-uint8_t frskyRxBuffer[20];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
+#define PRIVATE_BUFFER_SIZE	30
+
+uint8_t frskyRxBuffer[PRIVATE_BUFFER_SIZE];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
 
 struct t_frskyTx
 {
@@ -184,6 +186,13 @@ uint16_t DsmABLRFH[6] ;
 
 #if defined(CPUM128) || defined(CPUM2561)
 uint8_t TelRxCount ;
+#endif
+#ifdef AF_DEBUG
+uint16_t TelRxCount ;
+uint8_t AfDebug[20] ;
+uint16_t AfCount ;
+uint8_t AfCapture ;
+uint8_t AfBytes ;
 #endif
 
 #if defined(VARIO)
@@ -854,17 +863,25 @@ static bool checkSportPacket()
 }
 
 
+void processSportData( void ) ;
+
 void processSportPacket()
 {
-	uint8_t *packet = frskyRxBuffer ;
-	FORCE_INDIRECT(packet) ;
-  uint8_t  prim   = packet[1];
 //  uint16_t appId  = *((uint16_t *)(packet+2)) ;
-	
+
   if ( !checkSportPacket() )
 	{
     return;
 	}
+	processSportData() ;
+}
+
+// The leading 0x7E is not in the packet, first byte is physical ID
+void processSportData()
+{
+	uint8_t *packet = frskyRxBuffer ;
+	FORCE_INDIRECT(packet) ;
+	uint8_t  prim   = packet[1];
   
 	frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
 
@@ -883,7 +900,7 @@ void processSportPacket()
 
 				case 4 :		// Battery from X8R
 //		      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
-					store_hub_data( FR_RXV, value ) ;
+					store_hub_data( FR_RXV, value * 132 / 255 ) ;
 //					if ( A1Received )
 //					{
 						break ;
@@ -1054,7 +1071,88 @@ void processSportPacket()
 	asm("") ;
 }
 
+#if defined(CPUM128) || defined(CPUM2561)
+uint8_t AfhdsData[2] ;
+#endif
 
+#define FS_ID_ERR_RATE					0xfe
+#define FS_ID_SNR               0xfa
+#define FS_ID_NOISE             0xfb
+
+// First byte in packet is 0xAA
+void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
+{
+#if defined(CPUM128) || defined(CPUM2561)
+	AfhdsData[0] = *packet ;
+	AfhdsData[1] = *(packet+1) ;
+#endif
+
+#ifdef AF_DEBUG
+	AfCount += 1 ;
+#endif
+  
+	frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
+	if ( *packet == 0xAC )
+	{
+		return ;
+//    	value = (packet[6] << 24) | (packet[5] << 16) | (packet[4] << 8) | packet[3];
+//			if ( id == 0x83 )
+//			{
+//				// Baro Alt
+//			}
+	}
+	else
+	{
+		packet += 2 ;
+  	for (uint32_t sensor = 0; sensor < 7; sensor++)
+		{
+			uint16_t id ;
+			int16_t value ;
+			id = *packet ;
+			id |= *(packet+1) << 8 ;
+			packet += 2 ;
+			value = (packet[1] << 8)  + packet[0] ;
+			switch ( id )
+			{
+				case 0 :	// Rx voltage
+					store_hub_data( FR_RXV, value/10 ) ;
+				break ;
+				case 1 :	// Temp
+					store_hub_data( FR_TEMP1, value ) ;
+				break ;
+				case 2 :	// RPM
+					store_hub_data( FR_RPM, value ) ;
+				break ;
+				case 0x0100 :	// External voltage ?
+					store_hub_data( FR_VOLTS, value/10 ) ;
+				break ;
+				case 3 :	// External voltage
+				case 0x0103 :	// External voltage ?
+					store_hub_data( FR_VOLTS, value/10 ) ;
+				break ;
+				case 0xFC :	// RSSI
+	//				storeRSSI( 135-value ) ;
+					frskyTelemetry[2].set( 135-value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+				break ;
+	//			case FS_ID_ERR_RATE :
+	//				store_hub_data( FR_CUST1, value ) ;
+	//			break ;
+	//			case FS_ID_SNR :
+	//				store_hub_data( FR_CUST2, value ) ;
+	//			break ;
+	//			case FS_ID_NOISE :
+	//				store_hub_data( FR_CUST3, value ) ;
+	//			break ;
+			}
+			packet += 2 ;
+		}
+ 		frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
+ 		frskyStreaming = 255 ; // reset counter only if valid packets are being detected
+	}
+}
+
+
+//#endif
 
 #if defined(DSM_BIND_RESPONSE)
 
@@ -1078,12 +1176,23 @@ extern uint8_t MultiResponseFlag ;
 	MultiResponseFlag = 1 ;
 }
 
+#if defined(CPUM2561)
+uint8_t DsmCopyData[20] ;
+#endif
 
 void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 {
 	int16_t ivalue ;
 	uint8_t type ;
-		
+
+#if defined(CPUM2561)
+	if ( packet[2] == 0x7F )
+	{
+		memmove( DsmCopyData, packet, 18 ) ;
+		DsmCopyData[19] = byteCount ;
+	}
+#endif
+		 
 	packet += 1 ;			// Skip the 0xAA
 	type = *packet++ ;
 	
@@ -1098,7 +1207,14 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 		ivalue = (int16_t) ( (packet[2] << 8 ) | packet[3] ) ;
    	
-		frskyTelemetry[2].set(type, FR_RXRSI_COPY );	// RSSI
+		if ( g_model.dsmAasRssi )
+		{
+    	frskyTelemetry[3].set(type, FR_TXRSI_COPY );	// TSSI
+		}
+		else
+		{
+    	frskyTelemetry[2].set(type, FR_RXRSI_COPY );	// RSSI
+		}
 		
 		switch ( *packet )
 		{
@@ -1150,13 +1266,13 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 			case DSM_STAT1 :
 			case DSM_STAT2 :
-//				if ( g_model.dsmAasRssi )
-//				{
-//					if ( ivalue < 1000 )
-//					{
-//   					frskyTelemetry[2].set(ivalue, FR_RXRSI_COPY ) ;	// RSSI
-//					}
-//				}
+				if ( g_model.dsmAasRssi )
+				{
+					if ( ivalue < 1000 )
+					{
+   					frskyTelemetry[2].set(ivalue, FR_RXRSI_COPY ) ;	// RSSI
+					}
+				}
 				DsmABLRFH[0] = ivalue + 1 ;
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
 				DsmABLRFH[1] = ivalue + 1 ;
@@ -1190,14 +1306,14 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 //		DsmManCode[2] = *packet++ ;
 //		DsmManCode[3] = *packet ;
 //	}
-//	else if (type == 0 )
-//	{
-//		if ( !g_model.dsmAasRssi )
-//		{
-//   		frskyTelemetry[2].set(type, FR_RXRSI_COPY ) ;	// RSSI
-//		}
+	else if (type == 0 )
+	{
+		if ( !g_model.dsmAasRssi )
+		{
+   		frskyTelemetry[2].set(type, FR_RXRSI_COPY ) ;	// RSSI
+		}
 		
-//	}
+	}
 
 }
 #endif // 128/2561
@@ -1205,6 +1321,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 #ifndef N2F
 	#define PRIVATE_COUNT	4
 	#define PRIVATE_VALUE	5
+	#define PRIVATE_TYPE		6
+	#define PRIVATE_XCOUNT	7
 #else
 	#define frskyDataIgnore 4
 	#define PRIVATE_COUNT	5
@@ -1228,12 +1346,19 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 uint8_t Private_count ;
 uint8_t Private_position ;
 uint8_t Private_enable ;
+uint8_t Private_type ;
+
 //extern uint8_t TrotCount ;
 //extern uint8_t TezRotary ;
 
 // debug
 //uint8_t Uerror ;
-//uint8_t Uecount ;
+#ifdef AF_DEBUG
+uint16_t Uecount ;
+#endif
+#if defined(CPUM128) || defined(CPUM2561)
+uint16_t Uecount ;
+#endif
 
 //uint8_t DebugCount = 0 ;
 //uint8_t DebugState = 0 ;
@@ -1301,6 +1426,9 @@ ISR(USART0_RX_vect)
 #if defined(CPUM128) || defined(CPUM2561)
 	TelRxCount += 1 ;
 #endif
+#ifdef AF_DEBUG
+	TelRxCount += 1 ;
+#endif
   
 	if (stat & ((1 << FE0) | (1 << DOR0) | (1 << UPE0)))
   { // discard buffer and start fresh on any comms error
@@ -1308,13 +1436,18 @@ ISR(USART0_RX_vect)
     numbytes = 0;
 #if defined(CPUM128) || defined(CPUM2561)
 		
-	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
-	 {
-			dataState = frskyDataIdle ;
-	 }
+//	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+//	 {
+		dataState = frskyDataIdle ;
+//	 }
 #endif
 //		Uerror = stat & ((1 << FE0) | (1 << DOR0) | (1 << UPE0)) ;
-//		Uecount += 1 ;
+#ifdef AF_DEBUG
+		Uecount += 1 ;
+#endif
+#if defined(CPUM128) || defined(CPUM2561)
+		Uecount += 1 ;
+#endif
   } 
   else
   {
@@ -1324,34 +1457,35 @@ ISR(USART0_RX_vect)
 		
 #if defined(DSM_BIND_RESPONSE)
 		
-	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
-	 {
-    	switch (dataState) 
-			{
-    	  case frskyDataIdle:
-    	    if (data == 0xAA)
-					{
-    	     	dataState = frskyDataInFrame ;
-    	      numbytes = 0 ;
-	  	      frskyRxBuffer[numbytes++] = data ;
-					}
-				break ;
+//	 if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+//	 {
+//    	switch (dataState) 
+//			{
+//    	  case frskyDataIdle:
+//    	    if (data == 0xAA)
+//					{
+//    	     	dataState = frskyDataInFrame ;
+//    	      numbytes = 0 ;
+//	  	      frskyRxBuffer[numbytes++] = data ;
+//					}
+//				break ;
 
-    	  case frskyDataInFrame:
-    	    if (numbytes < 19)
-					{
-	  	      frskyRxBuffer[numbytes++] = data ;
-						if ( numbytes >= 18 )
-						{
-							processDsmPacket( frskyRxBuffer, numbytes ) ;
-							numbytes = 0 ;
-						}
-					}
-    	  break ;
-			}
+//    	  case frskyDataInFrame:
+//    	    if (numbytes < 19)
+//					{
+//	  	      frskyRxBuffer[numbytes++] = data ;
+//						if ( numbytes >= 18 )
+//						{
+//							processDsmPacket( frskyRxBuffer, numbytes ) ;
+//							numbytes = 0 ;
+//						}
+//					}
+//    	  break ;
+//			}
 	 	
-	 }
-	 else if ( g_model.telemetryProtocol == 7 )
+//	 }
+//	 else 
+	 if ( g_model.telemetryProtocol == 7 )
 	 {
   		frskyStreaming = FRSKY_TIMEOUT10ms; // reset counter only if valid frsky packets are being detected
 	    frskyUsrStreaming = FRSKY_USR_TIMEOUT10ms ; // reset counter only if valid frsky packets are being detected
@@ -1450,6 +1584,21 @@ ISR(USART0_RX_vect)
           break;
 
         case frskyDataInFrame:
+#if defined(DSM_BIND_RESPONSE)
+	 				if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+					{
+    	    	if (numbytes < 19)
+						{
+	  	    	  frskyRxBuffer[numbytes++] = data ;
+							if ( numbytes >= 18 )
+							{
+								processDsmPacket( frskyRxBuffer, numbytes ) ;
+								numbytes = 0 ;
+							}
+						}
+            break ;
+					}
+#endif
           if (data == BYTESTUFF)
           { 
               dataState = frskyDataXOR; // XOR next byte
@@ -1480,21 +1629,38 @@ ISR(USART0_RX_vect)
           break;
 
         case frskyDataIdle:
+	 				if ( g_model.telemetryProtocol == 2 )		// DSM telemetry
+					{
+    	    	if (data == 0xAA)
+						{
+	    	     	dataState = frskyDataInFrame ;
+  	  	      numbytes = 0 ;
+	  		      frskyRxBuffer[numbytes++] = data ;
+							break ;
+						}
+					}
           if (data == START_STOP)
           {
             numbytes = 0;
             dataState = FrskyTelemetryType ? frskyDataInFrame : frskyDataStart ;
           }
-          else if (data == PRIVATE)
+          else if ( (data == PRIVATE) || (data == MPRIVATE) )
 					{
 //						TezDebug1 += 1 ;
 						dataState = PRIVATE_COUNT ;
 					}
         break;
         case PRIVATE_COUNT :
-					dataState = PRIVATE_VALUE ;
-          Private_count = data ;		// Count of bytes to receive
 					Private_position = 0 ;
+					if ( data == 'P' )
+					{
+						// MULTI_TELEMETRY
+      		  dataState = PRIVATE_TYPE ;
+						break ;
+					}
+					dataState = PRIVATE_VALUE ;
+					Private_type = 0xFF ;	// Not MULTI_TELEMETRY
+          Private_count = data ;		// Count of bytes to receive
 
 					if ( data > 3 )
 					{
@@ -1502,43 +1668,168 @@ ISR(USART0_RX_vect)
     				FrskyAlarmSendState |= 0x80 ;		// Send ACK
 					}
         break;
+				case PRIVATE_TYPE :
+    		  Private_type = data ;
+    		  dataState = PRIVATE_XCOUNT ;
+					if ( data > 3 )
+					{
+						Private_position = 1 ;
+					}
+    		break ;
+    		case PRIVATE_XCOUNT :
+					dataState = PRIVATE_VALUE ;
+      		Private_count = data ;		// Count of bytes to receive
+					if ( data > PRIVATE_BUFFER_SIZE )
+					{
+      			dataState = frskyDataIdle ;
+					}
+    		break ;
         case PRIVATE_VALUE :
 				{
-					uint8_t lEnable ;
-					uint8_t lPosition ;
-					lPosition = Private_position ;
-					lEnable = Private_enable ;
-					if ( lEnable < 50 )
+					if ( Private_type == 0xFF )
 					{
-						lEnable += 12 ;
+						uint8_t lEnable ;
+						uint8_t lPosition ;
+						lPosition = Private_position ;
+						lEnable = Private_enable ;
+						if ( lEnable < 50 )
+						{
+							lEnable += 12 ;
+						}
+						else
+						{
+							lEnable = 100 ;
+							if ( lPosition == 0 )
+							{
+								// Process first private data byte
+								// PC6, PC7
+								if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+								{
+									DDRC |= 0xC0 ;		// Set as outputs
+									PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+								}
+							}
+							else if( lPosition==1) {
+								Rotary.TrotCount = data;
+							}
+							else if(lPosition==2) { // rotary encoder switch
+								Rotary.TezRotary = data;
+							}
+						}
+						Private_enable = lEnable ;
+						lPosition += 1 ;
+						Private_position = lPosition ;
+						if ( lPosition == Private_count )
+						{
+#ifdef AF_DEBUG
+	if ( AfCapture )
+	{
+		AfDebug[0] = Private_type ;
+		AfDebug[1] = Private_count ;
+		AfCapture = 0 ;
+	}
+#endif
+          		dataState = frskyDataIdle;
+    					FrskyAlarmSendState |= 0x80 ;		// Send ACK
+						}
 					}
 					else
 					{
-						lEnable = 100 ;
-						if ( lPosition == 0 )
+						frskyRxBuffer[Private_position++] = data ;
+						if ( ( Private_position == Private_count+1 ) || ( Private_position >= PRIVATE_BUFFER_SIZE ) )
 						{
-							// Process first private data byte
-							// PC6, PC7
-							if ( ( data & 0x3F ) == 0 )		// Check byte is valid
+			        dataState = frskyDataIdle;
+							// process private data here
+#ifdef AF_DEBUG
+	uint8_t i ;
+	if ( AfCapture )
+	{
+		AfDebug[0] = Private_type ;
+		AfDebug[1] = Private_count ;
+		for ( i = 0 ; i < 18 ; i += 1 )
+		{
+			AfDebug[i+2] = frskyRxBuffer[i] ;
+		}
+		AfCapture = 0 ;
+		AfBytes = Private_count+1 ;
+	}
+#endif
+							if ( Private_position == Private_count+1 )
 							{
-								DDRC |= 0xC0 ;		// Set as outputs
-								PORTC = ( PORTC & 0x3F ) | ( data & 0xC0 ) ;		// update outputs						
+								// Correct amount received
+								uint8_t len = Private_count ;
+						
+								switch ( Private_type )
+								{
+									case 1 :	// Status
+										if ( MultiDataRequest )
+										{
+											if ( len > 4 )
+											{
+												Xmem.MultiSetting.flags = frskyRxBuffer[0] ;
+												memmove(Xmem.MultiSetting.revision, &frskyRxBuffer[1], 4 ) ;
+												Xmem.MultiSetting.valid = 1 ;
+											}
+											if ( len > 15 )
+											{
+												memmove(Xmem.MultiSetting.protocol, &frskyRxBuffer[8], 7 ) ;
+												Xmem.MultiSetting.protocol[7] = 0 ;
+												Xmem.MultiSetting.valid = 3 ;
+											}
+											if ( len > 23 )
+											{
+												memmove(Xmem.MultiSetting.subProtocol, &frskyRxBuffer[16], 8 ) ;
+												Xmem.MultiSetting.subProtocol[8] = 0 ;
+												Xmem.MultiSetting.valid = 7 ;
+												Xmem.MultiSetting.subData = frskyRxBuffer[15] ;
+											}
+										}	
+		//								if ( len > 6 )
+		//								{
+		//									len = 6 ;
+		//								}
+		//								while ( len )
+		//								{
+		//									len -= 1 ;
+		//									PrivateData[len] = InputPrivateData[len] ;
+		//								}
+									break ;
+						
+									case 2 :	// SPort
+										if ( len >= FRSKY_SPORT_PACKET_SIZE )
+										{
+											processSportData() ;
+										}
+									break ;
+									case 3 :	// Hub
+										numPktBytes = Private_count ;
+	          				processFrskyPacket(frskyRxBuffer) ;
+									break ;
+#if defined(DSM_BIND_RESPONSE)
+									case 4 :	// DSM 
+										processDsmPacket( frskyRxBuffer, Private_count+1 ) ;
+									break ;
+									case 5 :	// DSM bind
+										dsmBindResponse( frskyRxBuffer[7], frskyRxBuffer[6] ) ;
+									break ;
+#endif
+									case 6 :	// AFHDS2
+										frskyRxBuffer[0] = 0xAA ;
+										processAFHDS2Packet( frskyRxBuffer, Private_count+1 ) ;
+									break ;
+		//							case 10 :	// Hitec
+		//								processHitecPacket( InputPrivateData ) ;
+		//							break ;
+									case 12 :	// AFHDS2
+										frskyRxBuffer[0] = 0xAC ;
+										processAFHDS2Packet( frskyRxBuffer, Private_count+1 ) ;
+									break ;
+		//							case 13 :	// Trainer data
+		//								processTrainerPacket( InputPrivateData ) ;
+		//							break ;
+								}
 							}
-						}
-						else if( lPosition==1) {
-							Rotary.TrotCount = data;
-						}
-						else if(lPosition==2) { // rotary encoder switch
-							Rotary.TezRotary = data;
-						}
-					}
-					Private_enable = lEnable ;
-					lPosition += 1 ;
-					Private_position = lPosition ;
-					if ( lPosition == Private_count )
-					{
-          	dataState = frskyDataIdle;
-    				FrskyAlarmSendState |= 0x80 ;		// Send ACK
+						}						
 					}
 				}
         break;
@@ -1860,7 +2151,8 @@ void FRSKY_Init( uint8_t brate)
   resetTelemetry();
 
   DDRE &= ~(1 << DDE0);    // set RXD0 pin as input
-  PORTE &= ~(1 << PORTE0); // disable pullup on RXD0 pin
+  PORTE |= (1 << PORTE0);		// enable pullup on RXD0 pin
+//  PORTE &= ~(1 << PORTE0); // disable pullup on RXD0 pin
 
 #undef BAUD
 #define BAUD 9600

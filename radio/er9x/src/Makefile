@@ -170,7 +170,11 @@ ifeq ($(CPU), 2561)
 endif
 
 ifeq ($(CPU), 128)
+ ifeq ($(GREEN), YES)
+	CPU_MOD = 128G
+ else
 	CPU_MOD = 128
+ endif
 endif
 
 ifeq ($(EXT), ARDUPILOT)
@@ -336,6 +340,9 @@ ifeq ($(CPU), 2561)
 else
  ifeq ($(CPU), 128)
   CPPDEFS += -DCPUM128
+  ifeq ($(GREEN), YES)
+   CPPDEFS += -DGREEN_CHIP
+  endif
  else
   CPPDEFS += -DCPUM64
  endif

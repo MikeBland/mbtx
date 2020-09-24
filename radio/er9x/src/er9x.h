@@ -22,6 +22,10 @@
 #define VERSION3  1
 #define VERSION4  1
 
+//#define NO_VOICE	1
+//#define AF_DEBUG	1
+
+
 #ifdef V2
 #define XSW_MOD		1
 #endif
@@ -66,9 +70,9 @@
 #define FAILSAFE				1
 #endif
 
-#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+//#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 #define R9M_SUPPORT		1
-#endif
+//#endif
 
 #if defined(CPUM128) || defined(CPUM2561)
 #define XYCURVE		1
@@ -813,7 +817,36 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_CORONA         36
 #define M_CFlie          37
 #define M_Hitec          38
-#define M_LAST_MULTI		 38
+#define M_WFLY					 39
+#define M_BUGS           40
+#define M_BUGSMINI       41
+#define M_Traxxas        42
+#define M_NCC1701        43
+#define M_E01X           44
+#define M_V911S          45
+#define M_GD00X          46
+#define M_V761           47
+#define M_KF606          48
+#define M_Redpine        49
+#define M_Potensic       50
+#define M_ZSX            51
+#define M_Flyzone        52
+#define M_Scanner        53
+#define M_Frsky_RX       54
+#define M_AFHDS2A_RX     55
+#define M_HoTT           56
+#define M_FX816          57
+#define M_Bayang_RX      58
+#define M_Pelikan        59
+#define M_Tiger          60
+#define M_XK             61
+#define M_XN_DUMP        62
+#define M_FrskyX2        63
+#define M_FrSkyR9        64
+#define M_PROPEL         65
+#define M_LR12           66
+#define M_Skyartec       67
+#define M_LAST_MULTI		 67
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01
@@ -1001,9 +1034,9 @@ struct t_timer
 	uint16_t s_sum ;
 	uint8_t lastSwPos ;
 	uint8_t sw_toggled ;
+	uint8_t lastResetSwPos;
 	uint16_t s_timeCumSw ;  //laufzeit in 1/16 sec
 //	uint8_t  s_timerState ;
-	uint8_t lastResetSwPos;
 	uint16_t s_timeCumThr ;  //gewichtete laufzeit in 1/16 sec
 	uint16_t s_timeCum16ThrP ; //gewichtete laufzeit in 1/16 sec
 	int16_t  s_timerVal ;
@@ -1468,6 +1501,17 @@ struct t_stickCentre
   int16_t zero_chans512_after[NUM_CHNOUT];
 } ;
 
+struct t_multiSetting
+{
+	uint8_t valid ;
+	uint8_t flags ;
+	uint8_t revision[4] ;
+	uint8_t protocol[8] ;
+	uint8_t subData ;
+	uint8_t subProtocol[9] ;
+} ;
+
+
 union t_xmem
 {
 //	struct MixTab s_mixTab[MAX_MIXERS+NUM_XCHNOUT+1] ;	
@@ -1482,6 +1526,7 @@ union t_xmem
 #ifdef V2
 	uint8_t HiResSlow ;
 #endif
+	struct t_multiSetting MultiSetting ;
 //  uint8_t file_buffer[256];
 //#else
 //  uint8_t file_buffer[128];
@@ -1489,6 +1534,8 @@ union t_xmem
 } ;
 
 extern union t_xmem Xmem ;
+
+extern uint8_t MultiDataRequest ;
 
 extern uint8_t CurrentPhase ;
 

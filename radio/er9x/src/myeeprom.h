@@ -195,7 +195,7 @@ PACK(typedef struct t_EEGeneral {
     uint8_t   SSD1306:1 ;
     uint8_t   TEZr90:1 ;
     uint8_t   MegasoundSerial:1 ;
-    uint8_t   spare1:1 ;
+    uint8_t   multiTelInvert:1 ;
 		uint8_t		stickReverse ;
 		uint8_t		customStickNames[16] ;
 #ifdef XSW_MOD
@@ -709,17 +709,22 @@ PACK(typedef struct t_ModelData {
 		int8_t sub_protocol;		// Extending sub_protocol values for MULTI protocol
 		int8_t option_protocol;		// Option byte for MULTI protocol
 		uint8_t telemetryProtocol ;
-		int8_t Failsafe[8];		// Currently unused
+		int8_t Failsafe[8];
 		uint8_t failsafeMode:3 ;
 		uint8_t notfailsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
 		uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
-		int8_t NotFailsafe[3];		// Currently unused
+		uint8_t exSubProtocol:2 ;
+		uint8_t multiTelInvert:1 ;
+		uint8_t dsmAasRssi:1 ;
+		uint8_t exRxNum:2 ;
+		uint8_t sparexxx:2 ;
+		int8_t NotFailsafe[2];		// Currently unused
 		uint8_t		rxVratio ;
 #else
 		int8_t sparepxxFailsafe[2];		// Currently unused
 		uint8_t telemetryProtocol ;
-		int8_t Failsafe[8];		// Currently unused
+		int8_t Failsafe[8];
 		uint8_t failsafeMode:3 ;
 		uint8_t notfailsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
@@ -750,7 +755,7 @@ PACK(typedef struct t_ModelData {
 #endif
   int8_t    curvexy[18] ;
 	ExtScaleData eScalers[NUM_SCALERS] ;
-	int8_t XFailsafe[8];		// Currently unused
+	int8_t XFailsafe[8];
 //	uint8_t   altSource ;		// Currently unused
 
 }) ModelData;
