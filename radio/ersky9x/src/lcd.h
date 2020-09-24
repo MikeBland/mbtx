@@ -177,7 +177,7 @@ extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_
 extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
-extern void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val) ;
+extern void lcd_outhex8(uint16_t x,uint16_t y,uint32_t val) ;
 extern void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val) ;
 #else
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
@@ -188,6 +188,8 @@ extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
 extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
+extern void lcd_HiResimg( uint16_t i_x, uint16_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
+extern void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground) ;
 extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LcdBackground  ) ;
@@ -260,7 +262,7 @@ extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
 extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
 
 #ifdef PCBX9D
-#if defined(REVPLUS) || defined(REV9E)
+#if defined(REVPLUS) || defined(REV9E) || defined(REV19)
 extern void backlight_set( uint16_t brightness, uint16_t w_or_b ) ;
 #else
 extern void backlight_set( uint16_t brightness ) ;

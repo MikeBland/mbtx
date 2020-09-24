@@ -35,9 +35,14 @@
 #include <stdint.h>
 #include "../ersky9x.h"
 #include "hal.h"
-#include "../logicio.h"
+#if defined(REV19)
+#include "../X12D/stm32f4xx_gpio.h"
+#include "../X12D/stm32f4xx_rcc.h"
+#else
 #include "stm32f2xx_gpio.h"
 #include "stm32f2xx_rcc.h"
+#endif
+#include "../logicio.h"
 
 #ifdef POWER_BUTTON
 #define POWER_STATE_OFF				0

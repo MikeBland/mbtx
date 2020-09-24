@@ -206,9 +206,11 @@ uint8_t BtStatus = BT_STATUS_DISCONNECTED ;
 
 OS_FlagID  Bt_flag ;
 struct t_serial_tx Bt_tx ;
+#if not (defined(PCBX10) && defined(PCBREV_EXPRESS))
 struct t_serial_tx Com2_tx ;
-struct t_serial_tx Com1_tx ;
 uint8_t Com2TxBuffer[64] ;
+#endif
+struct t_serial_tx Com1_tx ;
 uint8_t Com1TxBuffer[32] ;
 
 #define SBUS_FRAME_LENGTH 28
@@ -359,6 +361,9 @@ static void btPowerOn()
 #if defined(X9LS)
 	GPIOD->BSRRH = GPIO_Pin_14 ;		// Set low
 #endif
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	GPIOG->BSRRH = GPIO_Pin_10 ;		// Set low
+#endif
 
 }
 
@@ -396,6 +401,9 @@ static void btPowerOff()
 #if defined(X9LS)
 	GPIOD->BSRRL = GPIO_Pin_14 ;		// Set High
 #endif
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	GPIOG->BSRRL = GPIO_Pin_10 ;		// Set High
+#endif
 }
 
 void initBluetooth()
@@ -423,6 +431,10 @@ void initBluetooth()
 
 #if defined(X9LS)
 	configure_pins( GPIO_Pin_14, PIN_PORTD | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW ) ;
+#endif
+
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	configure_pins( GPIO_Pin_10, PIN_PORTG | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_LOW ) ;
 #endif
 
 }
@@ -1613,7 +1625,7 @@ void processBtRx( int32_t data, uint32_t rxTimeout )
 		}
 #endif
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
- #ifndef X9LS
+ #if not defined(X9LS) && (not (defined(PCBX10) && defined(PCBREV_EXPRESS)))
 		TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
 		if ( tProf->channel[0].source == TRAINER_SLAVE )
 		{
@@ -2130,6 +2142,9 @@ void bt_task(void* pdata)
 #if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS))
 	com3Init( 115200 ) ;
 #endif
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	USART6_configure() ;		// Testing
+#endif
 
 	Bt_flag = CoCreateFlag(TRUE,0) ;
 	Bt_tx.size = 0 ;
@@ -2450,7 +2465,8 @@ void bt_task(void* pdata)
 					if ( check_soft_power() == POWER_TRAINER )		// On trainer power
 	#endif
 	#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-   #ifndef X9LS
+   #if not defined(X9LS) && (not (defined(PCBX10) && defined(PCBREV_EXPRESS)))
+//	 #ifndef X9LS
 					TrainerProfile *tProf = &g_eeGeneral.trainerProfile[g_model.trainerProfile] ;
 					if ( tProf->channel[0].source == TRAINER_SLAVE )
 	 #else
@@ -2517,7 +2533,7 @@ void bt_task(void* pdata)
 							}
 						}
 					}
-  #ifdef X9LS
+  #if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 					else if ( BtControl.BtMasterSlave == 2 )	// Master
 	#else				
 					else if ( tProf->channel[0].source == TRAINER_BT )

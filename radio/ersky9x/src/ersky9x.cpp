@@ -61,7 +61,7 @@
 #include "menus.h"
 #include "mixer.h"
 #include "timers.h"
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(REV19)
 #include "X12D/stm32f4xx_gpio.h"
 #endif
 #ifdef PCBLEM1
@@ -90,19 +90,22 @@
 #include "X9D/eeprom_rlc.h"
  #ifdef REV19
 #include "X12D/stm32f4xx.h"
-#include "X12D/stm32f4xx_gpio.h"
+//#include "X12D/stm32f4xx_gpio.h"
 #include "X12D/stm32f4xx_rcc.h"
+#include "X12D/usb_dcd_int.h"
+#include "X12D/usb_bsp.h"
+#include "X12D/usbd_conf.h"
  #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
+#include "X9D/usb_dcd_int.h"
+#include "X9D/usb_bsp.h"
+#include "X9D/usbd_conf.h"
  #endif
 #include "X9D/hal.h"
 #include "X9D/i2c_ee.h"
 
-#include "X9D/usb_dcd_int.h"
-#include "X9D/usb_bsp.h"
-#include "X9D/usbd_conf.h"
 
 extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev, 
                                  uint8_t *report,
@@ -405,6 +408,10 @@ void ledBlue( void ) ;
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
+uint8_t LastShotSwitch ;
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
 extern "C" void HardFault_Handler(void)
 {
 	for(;;)
@@ -649,7 +656,9 @@ void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 #endif
 void txmit( uint8_t c ) ;
 void uputs( char *string ) ;
+#if not (defined(PCBX10))
 uint16_t rxCom2( void ) ;
+#endif
 
 #ifdef PCB_TEST_9XT
 void test_loop( void* pdata ) ;
@@ -1634,6 +1643,7 @@ void checkTrainerSource()
 			break ;
 #ifndef PCBX12D
  #ifndef PCBX10
+  #ifndef REV19
 			case 1 :
 				stop_USART6_Sbus() ;
 				EXTERNAL_RF_OFF() ;
@@ -1642,7 +1652,18 @@ void checkTrainerSource()
 				stop_cppm_on_heartbeat_capture() ;				
 				EXTERNAL_RF_OFF() ;
 			break ;
+  #endif
  #endif
+#endif
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+			case 1 :
+				stop_USART_Sbus() ;
+				EXTERNAL_RF_OFF() ;
+			break ;
+			case 2 :
+				stop_cppm_on_heartbeat_capture() ;				
+				EXTERNAL_RF_OFF() ;
+			break ;
 #endif
 			case 3 :
 				stop_trainer_ppm() ;
@@ -1662,6 +1683,7 @@ void checkTrainerSource()
 			break ;
 #ifndef PCBX12D
  #ifndef PCBX10
+  #ifndef REV19
 			case 1 :
 				USART6_Sbus_configure() ;
 				EXTERNAL_RF_ON() ;
@@ -1670,11 +1692,25 @@ void checkTrainerSource()
 				init_cppm_on_heartbeat_capture()  ;
 				EXTERNAL_RF_ON() ;
 			break ;
+  #endif
  #endif
+#endif
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+			case 1 :
+				USART_Sbus_configure() ;
+				EXTERNAL_RF_ON() ;
+			break ;
+			case 2 :
+				init_cppm_on_heartbeat_capture()  ;
+				EXTERNAL_RF_ON() ;
+			break ;
 #endif
 			case 3 :	// Slave so output
 				init_trainer_ppm() ;
 				EXTERNAL_RF_OFF() ;
+//#if defined(PCBX10)
+//	ExtRfOffPos = 6 ;
+//#endif
 			break ;
 			case 4 :
 				init_trainer_capture(CAP_PPM) ;
@@ -1810,6 +1846,7 @@ void checkTrainerSource()
 }
 #endif
 
+#if not (defined(PCBX10))
 void com2Configure()
 {
 	if ( g_model.com2Function == COM2_FUNC_SBUSTRAIN )
@@ -1866,11 +1903,12 @@ void com2Configure()
 #ifdef PCB9XT
 		consoleInit() ;
 #endif
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) // || defined(PCBX10)
 		ConsoleInit() ;
 #endif
 	}	 
 }
+#endif
 
 #ifdef PCBSKY
 static void checkAr9x()
@@ -2234,6 +2272,8 @@ void where( uint8_t chr )
 	*p = chr ;
 #else
 	uint32_t i ;
+extern uint16_t LcdForeground	;
+	LcdForeground = LCD_GREEN ;
 	lcd_putcAtt( 0, 0, chr, DBLSIZE ) ;
 //	lcd_outhex4( 0, 16, ~read_keys() ) ;
 	refreshDisplay() ;
@@ -2395,6 +2435,141 @@ void initSwitches()
 
 #endif // PCBLEM1
 
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)		
+
+//uint32_t eespi_operation( register uint8_t *tx, register uint8_t *rx, register uint32_t txcount, uint32_t rxcount )
+//{
+//	register SPI_TypeDef *spiptr = SPI2 ;
+//	register uint32_t result ;
+	
+//	GPIOI->BSRRH = 0x0001 ;		// output enable
+//	(void) spiptr->DR ;		// Dump any rx data
+//	while( txcount )
+//	{
+//		result = 0 ;
+//		while( ( spiptr->SR & SPI_SR_TXE ) == 0 )
+//		{
+//			// wait
+//			if ( ++result > 10000 )
+//			{
+//				result = 0xFFFF ;
+//				break ;				
+//			}
+//		}
+//		if ( result > 10000 )
+//		{
+//			break ;
+//		}
+//		spiptr->DR = *tx++ ;
+//		result = 0 ;
+//		while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+//		{
+//			// wait for received
+//			if ( ++result > 10000 )
+//			{
+//				result = 0x2FFFF ;
+//				break ;				
+//			}
+//		}
+//		if ( result > 10000 )
+//		{
+//			break ;
+//		}
+//		(void) spiptr->DR ;		// Dump any rx data
+//		txcount -= 1 ;
+//	}
+
+//	tx = rx ; 
+//	while( rxcount )
+//	{
+//		result = 0 ;
+//		while( ( spiptr->SR & SPI_SR_TXE ) == 0 )
+//		{
+//			// wait
+//			if ( ++result > 10000 )
+//			{
+//				result = 0xFFFF ;
+//				break ;				
+//			}
+//		}
+//		if ( result > 10000 )
+//		{
+//			break ;
+//		}
+//		spiptr->DR = *tx++ ;
+//		result = 0 ;
+//		while( ( spiptr->SR & SPI_SR_RXNE ) == 0 )
+//		{
+//			// wait for received
+//			if ( ++result > 10000 )
+//			{
+//				result = 0x2FFFF ;
+//				break ;				
+//			}
+//		}
+//		if ( result > 10000 )
+//		{
+//			break ;
+//		}
+//		*rx++ = spiptr->DR ;		// Dump any rx data
+//		rxcount -= 1 ;
+//	}
+//	if ( result <= 10000 )
+//	{
+//		result = 0 ;
+//	}
+//	result = 0 ; 
+//	GPIOI->BSRRL = 0x0001 ;		// output disable
+	
+//	return result ;
+//}
+
+//uint8_t Eedata[256] ;
+//FIL g_oEeFile = {0};
+
+//void dumpSerialFlash()
+//{
+//	uint8_t command[16] ;
+//	FRESULT fresult ;
+//	UINT nwritten ;
+//	uint32_t i ;
+//	// init SPI2
+//  /* Enable GPIO clock for Signals */
+//  RCC_AHB1PeriphClockCmd( RCC_AHB1Periph_GPIOI, ENABLE);
+//  /* Enable SPI clock, SPI1: APB2, SPI2: APB1 */
+//  RCC->APB1ENR |= RCC_APB1ENR_SPI2EN ;    // Enable clock
+
+//	// APB1 clock / 4 = 133nS per clock
+//	SPI2->CR1 = 0 ;		// Clear any mode error
+//	SPI2->CR2 = 0 ;
+//	SPI2->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_BR_0 ;
+//	SPI2->CR1 |= SPI_CR1_MSTR ;	// Make sure in case SSM/SSI needed to be set first
+//	SPI2->CR1 |= SPI_CR1_SPE ;
+
+//	configure_pins( 0x0001, PIN_PUSHPULL | PIN_OS25 | PIN_OUTPUT | PIN_PORTI ) ;
+//	GPIOI->BSRRL = 0x0001 ;		// output disable
+//	configure_pins( 0x000A, PIN_PUSHPULL | PIN_OS25 | PIN_PERIPHERAL | PIN_PORTI | PIN_PER_5 ) ;
+//	configure_pins( 0x0004, PIN_PERIPHERAL | PIN_PORTI | PIN_PULLUP | PIN_PER_5 ) ;
+
+//  f_open(&g_oEeFile, "/EE.txt", FA_OPEN_ALWAYS | FA_WRITE) ;
+
+//	command[0] = 3 ;
+//	command[1] = 0 ;
+//	command[2] = 0 ;
+//	command[3] = 0 ;
+
+//	for ( i = 0 ; i < 256 ; i += 1 )
+//	{
+//		command[2] = i ;
+//		eespi_operation( command, Eedata, 4, 256 ) ;
+//		fresult = f_write( &g_oEeFile, Eedata, 256, &nwritten ) ;
+//		wdt_reset() ;
+//	}
+//  f_close(&g_oEeFile) ;
+	 
+//}
+#endif
+
 int main( void )
 {
 #ifdef PCBLEM1	
@@ -2417,7 +2592,7 @@ int main( void )
 	GPBR->SYS_GPBR1 = 0 ;
 #else
 	RCC->APB1ENR |= RCC_APB1Periph_PWR ;
-  PWR_BackupAccessCmd(ENABLE);
+//  PWR_BackupAccessCmd(ENABLE);
 	WdogIntValue = RTC->BKP1R ;
 	RTC->BKP1R = 0 ;
 #endif
@@ -2502,8 +2677,10 @@ int main( void )
 	}
 
 #if defined(PCBX12D) || defined(PCBX10)
+ #if not defined(PCBTX16S)
 extern void CheckForPrototype(void) ;
 	CheckForPrototype() ;
+ #endif
 #endif
 
 #ifdef PCBSKY
@@ -2784,7 +2961,7 @@ void disableBackupRam(void) ;
 //#endif
 	wdt_reset() ;
 	
-	lcdColorsInit() ;
+//	lcdColorsInit() ;
 #endif
 	
 	lcdInit() ;
@@ -3002,15 +3179,32 @@ notePosition('3') ;
 	if ( ( ResetReason & ( RCC_CSR_WDGRSTF | RCC_CSR_SFTRSTF ) ) == 0 ) // Not watchdog or soft reset
 	{
 		backlight_set( 0 ) ;
+	  uint16_t tgtime = get_tmr10ms() ;		// 1 sec
+		uint8_t dtimer ;
 
-		lcd_clear() ;
-		lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
-		refreshDisplay() ;
-		while ( get_tmr10ms() < 25 )
+		dtimer = tgtime ;
+//		lcd_clear() ;
+//		lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
+//		refreshDisplay() ;
+		while ( (uint16_t)(get_tmr10ms() - tgtime ) < 100 )
+//		while ( get_tmr10ms() < 25 )
 		{
 			uint32_t switchValue ;
 			switchValue = GPIO_ReadInputDataBit(GPIOPWR, PIN_PWR_STATUS) == Bit_RESET ;
 			wdt_reset() ;
+			uint16_t now = get_tmr10ms() ;
+			if ( now != dtimer )
+			{
+				dtimer = now ;
+				if ( ( dtimer & 1) == 0 )
+				{
+					lcd_clear() ;
+					lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
+					lcd_hbar( 13 + X12OFFSET, 49, 102, 6, (dtimer - tgtime) * 100 / 100 ) ;
+					refreshDisplay() ;
+				}
+			}
+			
 			if ( !switchValue )
 			{
 				// Don't power on
@@ -3027,6 +3221,10 @@ notePosition('3') ;
  					__WFE();
 				}
 			}
+			if ( ( read_trims() & 0x80 ) == 0x80 )
+			{
+				break ;
+			}	
 		}
 	}
 	else
@@ -3231,7 +3429,6 @@ uint32_t updateSlave() ;
 //	}	
 // #endif
 //#endif
-
 
 #ifdef PCBX9D
 	init_trims() ;
@@ -3444,11 +3641,17 @@ extern void sdInit( void ) ;
 	initSwitches() ;
 	init_rotary_encoder() ;
 #endif // PCBLEM1
+#ifdef REV19
+	init_rotary_encoder() ;
+#endif // REV19
+
 
 #ifdef PCB9XT
 	delay_setbl( 100, 0, 100 ) ;
 #endif
+#if not (defined(PCBX10))
 	com2Configure() ;
+#endif
 #ifdef PCB9XT
 	delay_setbl( 100, 100, 0 ) ;
 #endif
@@ -3517,6 +3720,18 @@ extern void sdInit( void ) ;
 		lcd_clear() ;
 #endif
 		lcd_puts_Pleft( FH, XPSTR("Hardware Menu Enabled") ) ;
+
+#ifdef PCBTX16S
+  lcd_outhex4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
+  lcd_outhex4( 6*FW, 3*FH, read_trims() ) ;
+  lcd_outhex4( 12*FW, 3*FH, GPIOB->IDR ) ;
+  lcd_outhex4( 18*FW, 3*FH, GPIOC->IDR ) ;
+
+  lcd_outhex8( (uint16_t)0*FW, (uint16_t)4*FH, (uint32_t)GPIOA->MODER ) ;
+  lcd_outhex8( (uint16_t)12*FW, (uint16_t)4*FH, (uint32_t)GPIOA->PUPDR ) ;
+  lcd_outhex8( (uint16_t)24*FW, (uint16_t)4*FH, (uint32_t)GPIOA->AFR[0] ) ;
+#endif		
+		
 		refreshDisplay() ;
 
 #ifdef PCBSKY
@@ -3531,6 +3746,13 @@ extern void sdInit( void ) ;
 		{
 			break ;
 		}
+
+		// For RM TX16S testing, break on EXIT
+		if ( ( read_keys() & (0x02 << KEY_EXIT) ) == 0 )
+		{
+			break ;
+		}
+
 	}
 
 #ifdef PCBSKY
@@ -3550,7 +3772,6 @@ extern void sdInit( void ) ;
   #endif
  #endif
 #endif
-
 
   resetTimers();
 	if ( g_eeGeneral.unexpectedShutdown )
@@ -3645,7 +3866,14 @@ extern void sdInit( void ) ;
 		IWDG->KR = 0x5555 ;		// Unlock registers
 		IWDG->RLR = 500 ;			// 0.5 seconds nominal
 	}
-	backlight_set( g_eeGeneral.bright ) ;
+	if ( g_eeGeneral.bright > 30 )
+	{
+		backlight_set( 0 ) ;
+	}
+	else
+	{
+		backlight_set( g_eeGeneral.bright ) ;
+	}
 #endif
 
 #ifdef PCB9XT
@@ -3718,6 +3946,11 @@ extern void sdInit( void ) ;
 	{
 		putNamedVoiceQueue( (char *)g_eeGeneral.welcomeFileName, VLOC_USER ) ;
 	}
+
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)		
+//	dumpSerialFlash() ;
+#endif
+
 #ifndef SIMU
 
 #ifndef PCBLEM1
@@ -4191,6 +4424,9 @@ uint32_t checkRssi(uint32_t swappingModels)
 // This is the main task for the RTOS
 void main_loop(void* pdata)
 {
+#if defined(PCBX12D) || defined(PCBX10)
+	LastShotSwitch = 1 ;
+#endif
 #ifdef REVX
 	uint32_t rssi ;
 #endif
@@ -4224,7 +4460,6 @@ void main_loop(void* pdata)
 	backlight_on() ;
 #endif
 
-
 #ifdef PCBSKY
 	if ( ( ( ResetReason & RSTC_SR_RSTTYP ) != (2 << 8) ) && !unexpectedShutdown )	// Not watchdog
 #endif
@@ -4237,7 +4472,7 @@ void main_loop(void* pdata)
 	{
 		uint8_t evt ;
 		doSplash() ;
-	
+
 #ifndef SMALL
 		if(sysFlags & sysFLAG_FORMAT_EEPROM)
 		{
@@ -4248,6 +4483,7 @@ void main_loop(void* pdata)
 
 		getADC_single();
   	checkTHR();
+		
 		checkCustom() ;
 //#ifndef PCBLEM1
   	checkSwitches();
@@ -4298,7 +4534,6 @@ void main_loop(void* pdata)
 	VoiceCheckFlag100mS |= 2 ;// Set switch current states
 	processSwitches() ;	// Guarantee unused switches are cleared
 
-
 #if defined(PCBX12D)
 	// Turn BT on
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ; 		// Enable portG clock
@@ -4346,9 +4581,9 @@ void main_loop(void* pdata)
 
 #ifdef PCBSKY
 	// Must do this to start PPM2 as well
-	init_main_ppm( 3000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
-	init_ppm2( 3000, 0 ) ;
  	perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
+	init_main_ppm( 10000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
+	init_ppm2( 10000, 0 ) ;
 	startPulses() ;		// using the required protocol
 	start_ppm_capture() ;
 	checkTrainerSource() ;
@@ -4394,7 +4629,9 @@ extern void startDsmPulses( void ) ;
 	init_no_pulses( 1 ) ;
 	init_trainer_capture(0) ;
 	
+#ifndef PCBREV_EXPRESS
 	init_xjt_heartbeat() ;
+#endif
 	rtcInit() ;
 #endif
 
@@ -8653,15 +8890,31 @@ static uint8_t displayCount ;
 	#if defined(PCBX9D) || defined(PCBSKY) || defined(PCB9XT)
 			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) ) ) // && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
-#if defined(PCBX12D) || defined(PCBX10)
+  #if defined(PCBX12D) || defined(PCBX10)
 			if ( refreshNeeded != 1 )
 	#endif
 			{
 				if ( displayCount == 0 )
 				{
-#if defined(PCBX12D) || defined(PCBX10)
+  #if defined(PCBX12D) || defined(PCBX10)
 					displayStatusLine(ScriptActive) ;
 					ScriptActive = 0 ;
+					if ( g_eeGeneral.screenShotSw )
+					{
+						if ( getSwitch00( g_eeGeneral.screenShotSw ) )
+						{
+							if ( LastShotSwitch == 0 )
+							{
+extern const char *screenshot() ;
+								screenshot() ;
+							}
+							LastShotSwitch = 1 ;
+						}
+						else
+						{
+							LastShotSwitch = 0 ;
+						}
+					}
 	#endif
 					uint16_t t1 = getTmr2MHz() ;
   			  refreshDisplay() ;
@@ -8870,81 +9123,6 @@ extern "C" void EXTI15_10_IRQHandler()
 	}
 }
 
-//#if defined(REV19)
-//static void init_rotary_encoder()
-//{
-//  register uint32_t capture ;
-	
-//	configure_pins( 0x0C00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-//	g_eeGeneral.rotaryDivisor = 2 ;
-
-//	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
-//	SYSCFG->EXTICR[2] |= 0x4400 ;		// PE10 & PE11
-//	EXTI->RTSR |= 0x0C00 ;	// Rising Edge
-//	EXTI->FTSR |= 0x0C00 ;	// Falling Edge
-//	EXTI->IMR |= 0x0C00 ;
-
-//	capture = GPIOENCODER->IDR & 0x0C00 ;
-//	capture >>= 10 ;
-//	capture = (capture & 3) ;	// pick out the two bits
-//	Rotary_position &= ~0x03 ;
-//	Rotary_position |= capture ;
-
-//	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
-//	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
-//}
-
-////volatile int32_t IRotary_position ;
-////volatile int32_t IRotary_count ;
-
-//extern "C" void EXTI15_10_IRQHandler()
-//{
-//  register uint32_t capture ;
-
-//	capture = GPIOENCODER->IDR & 0x0C00 ;
-//	EXTI->PR = 0x0C00 ;
-//	capture >>= 10 ;
-//	capture = (capture & 3) ;	// pick out the two bits
-//	if ( capture != ( Rotary_position & 0x03 ) )
-//	{
-//		if ( ( Rotary_position & 0x01 ) ^ ( ( capture & 0x02) >> 1 ) )
-//		{
-////			if ( (Rotary_position & 0x03) == 3 )
-////			{
-//				Rotary_count += 1 ;
-//			}
-//			else
-//			{
-//				Rotary_count -= 1 ;
-////			}
-//		}
-//		Rotary_position &= ~0x03 ;
-//		Rotary_position |= capture ;
-//	}
-//}
-
-
-//void checkRotaryEncoder()
-//{
-//  register uint32_t dummy ;
-	
-//	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE12, PE10 )
-//	dummy >>= 10 ;
-//	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
-//	if ( dummy != ( Rotary_position & 0x03 ) )
-//	{
-//		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
-//		{
-//			Rotary_count -= 1 ;
-//		}
-//		else
-//		{
-//			Rotary_count += 1 ;
-//		}
-//		Rotary_position &= ~0x03 ;
-//		Rotary_position |= dummy ;
-//	}
-//}
   #else
 
 extern "C" void EXTI15_10_IRQHandler()
@@ -9027,6 +9205,78 @@ extern "C" void EXTI15_10_IRQHandler()
 
 #endif // PCBX7/X3
 
+#if defined(REV19)
+static void init_rotary_encoder()
+{
+  register uint32_t capture ;
+	
+	configure_pins( 0x0C00, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+	g_eeGeneral.rotaryDivisor = 2 ;
+
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+	SYSCFG->EXTICR[2] |= 0x4400 ;		// PE10 & PE11
+	EXTI->RTSR |= 0x0C00 ;	// Rising Edge
+	EXTI->FTSR |= 0x0C00 ;	// Falling Edge
+	EXTI->IMR |= 0x0C00 ;
+
+	capture = GPIOENCODER->IDR & 0x0C00 ;
+	capture >>= 10 ;
+	capture = (capture & 3) ;	// pick out the two bits
+	Rotary_position &= ~0x03 ;
+	Rotary_position |= capture ;
+
+	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
+}
+
+////volatile int32_t IRotary_position ;
+////volatile int32_t IRotary_count ;
+
+extern "C" void EXTI15_10_IRQHandler()
+{
+  register uint32_t capture ;
+
+	capture = GPIOENCODER->IDR & 0x0C00 ;
+	EXTI->PR = 0x0C00 ;
+	capture >>= 10 ;
+	capture = (capture & 3) ;	// pick out the two bits
+	if ( capture != ( Rotary_position & 0x03 ) )
+	{
+		if ( ( Rotary_position & 0x01 ) ^ ( ( capture & 0x02) >> 1 ) )
+		{
+			Rotary_count += 1 ;
+		}
+		else
+		{
+			Rotary_count -= 1 ;
+		}
+		Rotary_position &= ~0x03 ;
+		Rotary_position |= capture ;
+	}
+}
+#endif
+
+//void checkRotaryEncoder()
+//{
+//  register uint32_t dummy ;
+	
+//	dummy = GPIOENCODER->IDR ;	// Read Rotary encoder ( PE12, PE10 )
+//	dummy >>= 10 ;
+//	dummy = (dummy & 1) | ( ( dummy >> 1 ) & 2 ) ;	// pick out the two bits
+//	if ( dummy != ( Rotary_position & 0x03 ) )
+//	{
+//		if ( ( Rotary_position & 0x01 ) ^ ( ( dummy & 0x02) >> 1 ) )
+//		{
+//			Rotary_count -= 1 ;
+//		}
+//		else
+//		{
+//			Rotary_count += 1 ;
+//		}
+//		Rotary_position &= ~0x03 ;
+//		Rotary_position |= dummy ;
+//	}
+//}
 
 
 

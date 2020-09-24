@@ -108,40 +108,40 @@ const uint8_t *ExtraHorusBigFont = NULL ;
 
 #define CR_MASK                     ((uint32_t)0xFFFCC0F8)  /* DMA2D CR Mask */
 
-uint8_t speaker[] = {
-4,8,0,
-0x38,0x38,0x7C,0xFE
-} ;
+//uint8_t speaker[] = {
+//4,8,0,
+//0x38,0x38,0x7C,0xFE
+//} ;
 
 #ifdef INVERT_DISPLAY
 void copyFonts( void ) ;
 #endif
 
 // Temp from lcd.cpp
-uint16_t lcdColorTable[LCD_COLOR_COUNT];
+//uint16_t lcdColorTable[LCD_COLOR_COUNT];
 void backlightEnable(uint8_t dutyCycle) ;
 
-void lcdColorsInit()
-{
-  lcdColorTable[TEXT_COLOR_INDEX] = BLACK;
-  lcdColorTable[TEXT_BGCOLOR_INDEX] = WHITE;
-  lcdColorTable[TEXT_INVERTED_COLOR_INDEX] = WHITE;
-  lcdColorTable[TEXT_INVERTED_BGCOLOR_INDEX] = RED;
-  lcdColorTable[LINE_COLOR_INDEX] = RGB(88, 88, 90);
-  lcdColorTable[SCROLLBOX_COLOR_INDEX] = RED;
-  lcdColorTable[MENU_TITLE_BGCOLOR_INDEX] = DARKGREY;
-  lcdColorTable[MENU_TITLE_COLOR_INDEX] = WHITE;
-  lcdColorTable[MENU_TITLE_DISABLE_COLOR_INDEX] = RGB(130, 1, 5);
-  lcdColorTable[HEADER_COLOR_INDEX] = DARKGREY;
-  lcdColorTable[ALARM_COLOR_INDEX] = RED;
-  lcdColorTable[WARNING_COLOR_INDEX] = YELLOW;
-  lcdColorTable[TEXT_DISABLE_COLOR_INDEX] = RGB(0x60, 0x60, 0x60);
-  lcdColorTable[CURVE_AXIS_COLOR_INDEX] = RGB(180, 180, 180);
-  lcdColorTable[CURVE_COLOR_INDEX] = RED;
-  lcdColorTable[CURVE_CURSOR_COLOR_INDEX] = RED;
-  lcdColorTable[TITLE_BGCOLOR_INDEX] = RED;
-  lcdColorTable[HEADER_BGCOLOR_INDEX] = DARKRED;
-}
+//void lcdColorsInit()
+//{
+//  lcdColorTable[TEXT_COLOR_INDEX] = BLACK;
+//  lcdColorTable[TEXT_BGCOLOR_INDEX] = WHITE;
+//  lcdColorTable[TEXT_INVERTED_COLOR_INDEX] = WHITE;
+//  lcdColorTable[TEXT_INVERTED_BGCOLOR_INDEX] = RED;
+//  lcdColorTable[LINE_COLOR_INDEX] = RGB(88, 88, 90);
+//  lcdColorTable[SCROLLBOX_COLOR_INDEX] = RED;
+//  lcdColorTable[MENU_TITLE_BGCOLOR_INDEX] = DARKGREY;
+//  lcdColorTable[MENU_TITLE_COLOR_INDEX] = WHITE;
+//  lcdColorTable[MENU_TITLE_DISABLE_COLOR_INDEX] = RGB(130, 1, 5);
+//  lcdColorTable[HEADER_COLOR_INDEX] = DARKGREY;
+//  lcdColorTable[ALARM_COLOR_INDEX] = RED;
+//  lcdColorTable[WARNING_COLOR_INDEX] = YELLOW;
+//  lcdColorTable[TEXT_DISABLE_COLOR_INDEX] = RGB(0x60, 0x60, 0x60);
+//  lcdColorTable[CURVE_AXIS_COLOR_INDEX] = RGB(180, 180, 180);
+//  lcdColorTable[CURVE_COLOR_INDEX] = RED;
+//  lcdColorTable[CURVE_CURSOR_COLOR_INDEX] = RED;
+//  lcdColorTable[TITLE_BGCOLOR_INDEX] = RED;
+//  lcdColorTable[HEADER_BGCOLOR_INDEX] = DARKRED;
+//}
 
 
 #if defined(PCBX10)
@@ -586,6 +586,22 @@ void LCD_Init(void)
 //	CurrentFrameBuffer = LCD_FIRST_FRAME_BUFFER ;
 //	lcdDrawSolidFilledRectDMA( 0, 0, 480, 272, 0x001F ) ;
 //	CurrentFrameBuffer = save ;
+	DMA2D->FGCLUT[0] = 0 ;
+	DMA2D->FGCLUT[1] = RGB32(160,0,0) ;
+	DMA2D->FGCLUT[2] = RGB32(0,160,0) ;
+	DMA2D->FGCLUT[3] = RGB32(1600,160,0) ;
+	DMA2D->FGCLUT[4] = RGB32(0,0,160) ;
+	DMA2D->FGCLUT[5] = RGB32(160,0,160) ;
+	DMA2D->FGCLUT[6] = RGB32(0,160,160) ;
+	DMA2D->FGCLUT[7] = RGB32(192,192,192) ;
+	DMA2D->FGCLUT[8] = RGB32(128,128,128) ;
+	DMA2D->FGCLUT[9] = RGB32(255,0,0) ;
+	DMA2D->FGCLUT[10] = RGB32(0,255,0) ;
+	DMA2D->FGCLUT[11] = RGB32(255,255,0) ;
+	DMA2D->FGCLUT[12] = RGB32(0,0,255) ;
+	DMA2D->FGCLUT[13] = RGB32(255,0,255) ;
+	DMA2D->FGCLUT[14] = RGB32(0,255,255) ;
+	DMA2D->FGCLUT[15] = RGB32(255,255,255) ;
 }
 
 /**
@@ -959,7 +975,8 @@ extern void notePosition( uint8_t byte ) ;
 #ifdef INVERT_DISPLAY
 const uint8_t RomFont5x7h[] =
 {
-#include "..\font5x7h.lbm"
+//#include "..\font5x7h.lbm"
+#include "..\f7x5.lbm"
 } ;
 
 const uint8_t RomFont5x7hBold[] =
@@ -1128,7 +1145,8 @@ void copyFonts()
 #else
 const uint8_t Font5x7h[] =
 {
-#include "..\font5x7h.lbm"
+#include "..\f7x5.lbm"
+//#include "..\font5x7h.lbm"
 } ;
 
 const uint8_t Font5x7hBold[] =
@@ -1451,18 +1469,27 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 
 void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type)
 {
+	uint8_t mode ;
 //  if ((uint32_t(bitmap) & 0x03) != 0)
 //    return;
-
-	if ( type == 0 )
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-1) - x - (w - 1) ;
+	y = (LCD_H-1) - y - (h - 1) ;
+	if ( y >= LCD_H )
 	{
-		type = CM_L4 ;
+		y = 0 ;
+	}
+#endif
+
+	if ( (type & 1) == 0 )
+	{
+		mode = CM_L4 ;
 	}
 	else
 	{
-		type = CM_A4 ;
+		mode = CM_A4 ;
 	}
-  uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x);
+  uint32_t addr = CurrentFrameBuffer + 2*(LCD_W*y + x) ;
 
   DMA2D_DeInit();
 
@@ -1512,7 +1539,7 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 	DMA2D_FG_InitStruct.DMA2D_FGMA = CONVERT_PTR_UINT(bitmap);
   DMA2D_FG_InitStruct.DMA2D_FGO = 0;
 //  DMA2D_FG_InitStruct.DMA2D_FGCM = type ; //CM_RGB565;
-  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_L4 ;
+  DMA2D_FG_InitStruct.DMA2D_FGCM = mode ;
 //  DMA2D_FG_InitStruct.DMA2D_FGCM = CM_RGB565 ;
   
 //	DMA2D_FG_InitStruct.DMA2D_FGPFC_ALPHA_MODE = COMBINE_ALPHA_VALUE ;// NO_MODIF_ALPHA_VALUE ;
@@ -1532,6 +1559,24 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 	DMA2D->BGCLUT[0] = 0xFFFFFFFF ;
 	DMA2D->BGCLUT[15] = 0xFFFFFFFF ;
 
+	DMA2D->FGCLUT[0] = 0 ;
+	DMA2D->FGCLUT[15] = RGB32(255,255,255) ;
+
+	if ( type & 0xC0 )
+	{
+		uint32_t backColour ;
+		uint16_t background = LcdBackground ;
+		if ( type & 0x40 )
+		{
+			background = LCD_STATUS_GREY ;
+		}
+
+		backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
+		backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
+		backColour |= ( (background & 0x001F) << 3 ) | ( (background & 0x001C) >> 2 ) ;
+		DMA2D->FGCLUT[15] = backColour ;
+		
+	}
 
 //static int _DMA_DrawBitmapA4(void * pSrc, void * pDst,  U32 OffSrc, U32 OffDst, U32 PixelFormatDst, U32 xSize, U32 ySize) {
 //  U8 * pRD;
@@ -1630,6 +1675,15 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 
   /* Wait for CTC Flag activation */
 	pollDma2Ddone( 3000 ) ;
+}
+
+void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type )
+{
+	uint16_t w ;
+	uint16_t h ;
+	w = *bitmap++ ;
+	h = *bitmap++ ;
+	lcdDrawBitmapDMA( x, y, w, h, bitmap, type ) ;
 }
 
 void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t *image )
@@ -1854,5 +1908,13 @@ void backlight_set( uint16_t brightness )
 //  f_close(&FontFile) ;
 //}
 
-
+uint16_t lcd_getPixel(uint32_t x, uint32_t y )
+{
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-x)-1 ;
+	y = (LCD_H-y)-1 ;
+#endif	
+  uint16_t *addr = (uint16_t *)(CurrentFrameBuffer + 2*(LCD_W*y + x)) ;
+	return *addr ;
+}
 

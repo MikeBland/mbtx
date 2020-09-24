@@ -24,8 +24,13 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+ #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
+ #endif
 #include "X9D/hal.h"
 #endif
 
@@ -41,7 +46,11 @@
 #endif
 #else
 #ifndef SIMU
+ #if defined(REV19)
+#include "X12D/core_cm4.h"
+ #else
 #include "core_cm3.h"
+ #endif
 #endif
 #endif
 
@@ -3507,7 +3516,12 @@ void setup_switches()
 void init_keys()
 {
 #ifdef PCBX10
-	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_UP | KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_PGDN | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+ #if defined(PCBTX16S)
+ 	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_UP | KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_PGDN | KEYS_GPIO_PIN_DOWN | KEYS_GPIO_PIN_PGUP, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+ 	configure_pins( KEYS_GPIO_PIN_PGUP, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+ #else
+ 	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_UP | KEYS_GPIO_PIN_EXIT | KEYS_GPIO_PIN_PGDN | KEYS_GPIO_PIN_DOWN, PIN_INPUT | PIN_PULLUP | PIN_PORTI ) ;
+ #endif
 #endif
 #ifdef PCBX12D
 	configure_pins( KEYS_GPIO_PIN_MENU | KEYS_GPIO_PIN_RIGHT, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
@@ -3554,7 +3568,36 @@ uint32_t read_keys()
 	}
 #endif	
 #ifdef PCBX10
-	x = GPIOI->IDR ;
+ #if defined(PCBTX16S)
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
+ 	x = GPIOI->IDR ;
+	if ( x & KEYS_GPIO_PIN_MENU )	// SYS
+	{
+		y |= 0x02 << KEY_MENU ;			// MENU
+	}
+	if ( x & KEYS_GPIO_PIN_EXIT )	// TELE
+	{
+		y |= 0x02 << KEY_DOWN ;		// DOWN
+	}
+	if ( x & KEYS_GPIO_PIN_DOWN )	// RTN
+	{
+		y |= 0x02 << KEY_EXIT ;			// EXIT
+	}
+	if ( x & KEYS_GPIO_PIN_UP )	// MDL
+	{
+//		y |= 0x02 << KEY_UP ;			// up
+		if ( x & KEYS_GPIO_PIN_PGDN )	// PAGE>
+		{
+			y |= 0x02 << KEY_RIGHT ;	// RIGHT
+		}
+	}
+	if ( KEYS_GPIO_REG_PGUP & KEYS_GPIO_PIN_PGUP )	// PAGE<
+	{
+		y |= 0x02 << KEY_LEFT ;		// LEFT
+	}
+	y |= 0x02 << KEY_UP ;			// up
+ #else
+ 	x = GPIOI->IDR ;
 	if ( x & KEYS_GPIO_PIN_MENU )
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
@@ -3576,6 +3619,7 @@ uint32_t read_keys()
 		y |= 0x02 << KEY_LEFT ;		// LEFT
 	}
 	y |= 0x02 << KEY_RIGHT ;	// RIGHT
+ #endif
 #endif
 	return y ;
 }
@@ -3604,7 +3648,22 @@ void init_trims()
 	configure_pins( GPIO_Pin_13 | GPIO_Pin_14, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
 #endif
 #ifdef PCBX10
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
+ #if defined(PCBTX16S)
+ 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
+ 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN ;
+
+	configure_pins( TRIMS_GPIO_PIN_LHL, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+	configure_pins( TRIMS_GPIO_PIN_LHR, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+	configure_pins( GPIO_Pin_14 | GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( TRIMS_GPIO_PIN_LVD, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
+	configure_pins( TRIMS_GPIO_PIN_LVU | TRIMS_GPIO_PIN_RVD | TRIMS_GPIO_PIN_RVU | GPIO_Pin_8, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
+	configure_pins( TRIMS_GPIO_PIN_RHL | TRIMS_GPIO_PIN_RHR | GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+ #else
+ 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOGEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOJEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ;
@@ -3613,6 +3672,7 @@ void init_trims()
 	configure_pins( TRIMS_GPIO_PIN_LVD, PIN_INPUT | PIN_PULLUP | PIN_PORTG ) ;
 	configure_pins( TRIMS_GPIO_PIN_LVU | TRIMS_GPIO_PIN_RVD | TRIMS_GPIO_PIN_RVU | GPIO_Pin_8, PIN_INPUT | PIN_PULLUP | PIN_PORTJ ) ;
 	configure_pins( TRIMS_GPIO_PIN_RHL | TRIMS_GPIO_PIN_RHR | GPIO_Pin_13, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+ #endif
 #endif
 
 }
@@ -3668,7 +3728,19 @@ uint32_t read_trims()
 	}
 #endif
 #ifdef PCBX10
-	trima = GPIOB->IDR ;
+ #if defined(PCBTX16S)
+ 	trima = GPIOA->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LHL ) == 0 )
+	{
+		trims |= 1 ;
+	}
+ 	trima = GPIOC->IDR ;
+	if ( ( trima & TRIMS_GPIO_PIN_LHR ) == 0 )
+	{
+		trims |= 2 ;
+	}
+ #else
+ 	trima = GPIOB->IDR ;
 	if ( ( trima & TRIMS_GPIO_PIN_LHL ) == 0 )
 	{
 		trims |= 1 ;
@@ -3677,6 +3749,7 @@ uint32_t read_trims()
 	{
 		trims |= 2 ;
 	}
+ #endif
 	trima = GPIOG->IDR ;
 	if ( ( trima & TRIMS_GPIO_PIN_LVD ) == 0 )
 	{

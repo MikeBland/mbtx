@@ -21,8 +21,13 @@
 #include "AT91SAM3S4.h"
 #endif
 #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+ #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
+ #endif
 #include "X9D/hal.h"
 #endif
 

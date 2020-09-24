@@ -57,10 +57,10 @@
    #else
 
 #if defined(REV19)
-    #define PIN_BUTTON_MENU		        GPIO_Pin_2	//SW4 PD.02
-    #define	PIN_BUTTON_EXIT           GPIO_Pin_7	//SW5 PD.07
-    #define PIN_BUTTON_PAGE           GPIO_Pin_3  //SW6 PD.03
-	  #define PIN_BUTTON_ENCODER        GPIO_Pin_11 // PE.11
+    #define PIN_BUTTON_MENU		        GPIO_Pin_2	// PD.02
+    #define	PIN_BUTTON_EXIT           GPIO_Pin_7	// PD.07
+    #define PIN_BUTTON_PAGE           GPIO_Pin_3  // PD.03
+	  #define PIN_BUTTON_ENCODER        GPIO_Pin_12 // PE.12
 #else    
 		#define	PIN_BUTTON_PLUS		        GPIO_Pin_10	//SW3 PE.10
     #define	PIN_BUTTON_MINUS	        GPIO_Pin_11	//SW2 PE.11
@@ -121,7 +121,7 @@
 #ifdef REV19
 #define GPIOENCODER             GPIOE
 #define PIN_ENC1				        GPIO_Pin_10     //  PE.10
-#define PIN_ENC2				        GPIO_Pin_12     //  PE.12
+#define PIN_ENC2				        GPIO_Pin_11     //  PE.11
 #endif // X3
 
 
@@ -230,7 +230,7 @@
  #define	PIN_SW_H_L		        GPIO_Pin_13	//PE.13
 #endif // REV3
      
-#if defined(REVNORM) || defined(REVPLUS)
+#if (!defined(REV19)) && ((defined(REVNORM) || defined(REVPLUS)))
  #define	PIN_SW_A_L		        GPIO_Pin_0	//PE.00
  #define	PIN_SW_A_H		        GPIO_Pin_5	//PB.05
  #define	PIN_SW_B_L		        GPIO_Pin_2	//PE.02
@@ -396,7 +396,9 @@
 #define PIN_FLP_J2                      GPIO_Pin_0  //PB.00
 #define PIN_MVOLT                       GPIO_Pin_0  //PC.00  
 #if defined(REVPLUS) || defined(REV9E)
+ #ifndef REV19
 #define PIN_FLP_J3                      GPIO_Pin_1  //PB.01
+ #endif
 #define RCC_AHB1Periph_GPIOADC          RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOC
 #else
 #define RCC_AHB1Periph_GPIOADC          RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC
@@ -412,7 +414,13 @@
 #endif // PCBX7
 #endif // nPCBXLITE
 
-
+#ifdef REV19
+#define PIN_STICK_RV						        GPIO_Pin_0  // PA.00
+#define PIN_STICK_RH						        GPIO_Pin_1  // PA.01
+#define PIN_STICK_LV        						GPIO_Pin_2  // PA.02
+#define PIN_STICK_LH        						GPIO_Pin_3  // PA.03
+#define PWM_TIMER                     	TIM5
+#endif
 
 // DAC
 #define PIN_AUDIO_DAC                   GPIO_Pin_4  //PA.04
@@ -446,26 +454,30 @@
 
 #else
 #define RCC_AHB1Periph_GPIOPWR          RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD
-#if defined(REVPLUS) || defined(REV9E)
+#if (defined(REVPLUS) || defined(REV9E)) && !defined(REV19)
 #define GPIOPWRINT                      GPIOC
 #else
  #ifdef PCBX7
   #define GPIOPWRINT                      GPIOC
  #else
+  #if !defined(REV19)
   #define GPIOPWRINT                      GPIOD
+  #endif
  #endif
 #endif
 #define GPIOPWREXT                      GPIOD
 #define GPIOPWR		                      GPIOD
 #define GPIOPWRSENSE                    GPIOD
 
-#if defined(REVPLUS) || defined(REV9E)
+#if (defined(REVPLUS) || defined(REV9E)) && !defined(REV19)
 #define PIN_INT_RF_PWR                  GPIO_Pin_6	// PC6
 #else
  #ifdef PCBX7
   #define PIN_INT_RF_PWR                  GPIO_Pin_6	// PC6
  #else
+  #if !defined(REV19)
   #define PIN_INT_RF_PWR                  GPIO_Pin_15	// PD15
+  #endif
  #endif
 #endif
 #define PIN_EXT_RF_PWR                  GPIO_Pin_8  // PD.08
@@ -554,6 +566,7 @@
 #else // X3
  #ifdef REV19
   #define PIN_HEART_BEAT                  GPIO_Pin_1  //PB.01
+  #define HEARTBEAT_GPIO_PIN            	GPIO_Pin_1 // PB.01
  #else // REV19
   #define PIN_HEART_BEAT                  GPIO_Pin_7  //PC.07
  #endif // REV19
@@ -629,6 +642,11 @@
 #define GPIO_Pin_HAPTIC                 GPIO_Pin_10  //PA.10
 #define GPIOHAPTIC                      GPIOA
 #define GPIO_PinSource_HAPTIC           GPIO_PinSource10
+#define PORT_HAPTIC											PIN_PORTA
+#define PERI_AF_HAPTIC									PIN_PER_1
+
+
+
 // Will need to use Timer 1
 
 #define RCC_AHB1Periph_GPIOBL           RCC_AHB1Periph_GPIOD

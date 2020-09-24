@@ -11,7 +11,11 @@
 #ifndef _ASPI_H_
 #define _ASPI_H_
 
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#else
 #include "stm32f2xx.h"
+#endif
 
 #if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE)
 

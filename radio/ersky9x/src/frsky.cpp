@@ -38,7 +38,11 @@
 #else
 #ifndef SIMU
 #ifndef PCBLEM1
+ #if defined(REV19)
+#include "X12D/core_cm4.h"
+ #else
 #include "core_cm3.h"
+ #endif
 #endif
 #endif
 #endif
@@ -852,9 +856,9 @@ uint16_t UserErrorCount ;
 uint8_t UserLastSequence ;
 uint8_t UserLastCount ;
 
-#if defined(PCBT16)
-uint8_t MultiFrskyTelemetry ;
-#endif	 
+//#if defined(PCBT16)
+//uint8_t MultiFrskyTelemetry ;
+//#endif	 
 
 // Leading 0x7E not in packet
 void processFrskyPacket(uint8_t *packet)
@@ -864,12 +868,12 @@ void processFrskyPacket(uint8_t *packet)
 		return ;
 	}
 
-#if defined(PCBT16)
-	if ( MultiFrskyTelemetry )
-	{
-		return ;
-	}
-#endif	 
+//#if defined(PCBT16)
+//	if ( MultiFrskyTelemetry )
+//	{
+//		return ;
+//	}
+//#endif	 
 	 
   // What type of packet?
   switch (packet[0])
@@ -1561,9 +1565,7 @@ void processTrainerPacket( uint8_t *packet )
 	uint32_t inputbitsavailable = 0 ;
 	uint32_t i ;
 	uint32_t inputbits = 0 ;
-	uint8_t sum ;
 	int16_t *pulses = g_ppmIns ;
-	sum = 0 ;
 	packet += 4 ;
 	numChannels = *packet++ ;
 	for ( i = 0 ; i < numChannels ; i += 1 )
@@ -1572,10 +1574,6 @@ void processTrainerPacket( uint8_t *packet )
 		{
 			uint8_t temp ;
 			temp = *packet++ ;
-			if ( i < 4 )
-			{
-				sum |= temp ;
-			}
 			inputbits |= temp << inputbitsavailable ;
 			inputbitsavailable += 8 ;
 		}
@@ -1744,6 +1742,10 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 
 		 if ( (packet[3] & 0xF0) != 0x50 )
 		 {
+		 	if ( ( packet[2] & 0x0F ) != 0 )
+			{
+		 		id = NON_STANDARD_ID_8 ;
+			}
 			switch ( id )
 			{
 				case ALT_ID_8 :
@@ -2015,21 +2017,28 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					{
 						uint32_t t ;
 						t = packet[2] & 0x0F ;
-						if ( t == ARDUP_AP_STAT_ID )
+						if ( t == ARDUP_AP_STAT_ID )	// 5001
 						{
 							// bits 0-4 Control mode
+							// bits 5-6 SimpleSS
+							// bit 7 LandComp
 							// bit 8 Armed
+							// bit 9 BatFS
+							// bit 10 EKFFS
 							storeTelemetryData( FR_BASEMODE, value & 0x0100 ? 0x80 : 0 ) ;
 							storeTelemetryData( FR_TEMP1, ((value & 0x1F)-1) | ( ARDUPtype << 8 ) ) ;
 						}
-						else if ( t == ARDUP_GPS_STAT_ID )
+						else if ( t == ARDUP_GPS_STAT_ID )	// 5002
 						{
 							uint16_t xvalue ;
+							int32_t ivalue ;
+							uint32_t negative ;
 							// Bits 0-3 #Sats
 							// Bits 4-5 GPs Fix NO_GPS = 0, NO_FIX = 1, GPS_OK_FIX_2D = 2, GPS_OK_FIX_3D = 3
-							// Bits 6-13 HDOP  7 bits for value, 8th bit is 10^x
+							// Bits 6-13 HDOP  7 bits (7-13) for value, 8th bit (bit 6) is 10^x
 							// Bits 14-21 VDOP
 							// Bits 22-30 GPS Alt? 7 bits for data, 8 and 9th bits 10^x
+							// Bit  32 GPS Alt negative
 							xvalue = value & 0x000F ;	// #sats
 							xvalue *= 10 ;
 							xvalue += (value >>4) & 0x0003 ;	// GPS Fix mode
@@ -2042,18 +2051,26 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 							}
 							storeTelemetryData( FR_GPS_HDOP, xvalue * 10 ) ;
 //							FrskyHubData[FR_GPS_HDOP] = xvalue * 10 ;
-							xvalue = (value >> 24) & 0x7F ;
+							ivalue = (value >> 24) & 0x7F ;
+							negative = (value & 0x80000000) ? 1 : 0 ;
 							value >>= 22 ;
 							value &= 0x03 ;
 							while ( value )
 							{
-								xvalue *= 10 ;
+								ivalue *= 10 ;
 								value -= 1 ;
 							}
-							storeTelemetryData( TELEM_GPS_ALT, xvalue ) ;
+							if ( negative )
+							{
+								ivalue = - ivalue ;
+							}
+							storeTelemetryData( FR_SPORT_GALT, ivalue ) ;
 						}
-						else if ( t == ARDUP_BATT_ID )
+						else if ( t == ARDUP_BATT_ID )	// 5003
 						{
+							// Bits 0-8 UAV Bat Volt
+							// Bits 9-16 UAV Curr bit 9 10^x, 10-16 mantissa
+							// Bits 17-31 mAh
 							uint16_t xvalue ;
 	//						xvalue = value & 0x01FF ;	// #battery in 0.1V
 							if ( VfasVoltageTimer )
@@ -2077,8 +2094,11 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 								storeTelemetryData( FR_FUEL, 100 - (xvalue * 100 / PixHawkCapacity) ) ;
 							}
 						}
-						else if ( t == ARDUP_VandYAW_ID )
+						else if ( t == ARDUP_VandYAW_ID )	// 5005
 						{
+							// bits 0-8 Vspd 0 exponent, 1-7 mantissa, 8 sign
+							// bits 9-16 Hspd 9 exponent, 10-16 mantissa
+							// bits 17-27 Yaw ( * 0.2)
 							uint16_t xvalue ;
 							xvalue = (value >> 9) & 0x7F ;
 							if ( value & 0x0000100 )
@@ -2087,25 +2107,25 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 							}
 							storeTelemetryData( FR_AIRSPEED, xvalue ) ;
 						}
-						else if ( t == ARDUP_PARAM_ID )
+						else if ( t == ARDUP_PARAM_ID )	// 5007
 						{
 							uint32_t id ;
 							id = value >> 24 ;
 							value &= 0x00FFFFFF ;
 
-							if ( id == 1 )
+							if ( id == 0x10 )
 							{
 								ARDUPtype = value ;
 							}
-	//						else if ( id == 2 )
+	//						else if ( id == 0x20 )
 	//						{
 //2: FailSafe batt voltage in centivolts
 	//						}
-	//						else if ( id == 3 )
+	//						else if ( id == 0x30 )
 	//						{
 //3: Failsafe Batt capacity in mAh
 	//						}
-							else if ( id == 4 )
+							else if ( id == 0x04 )
 							{
 								if ( value )
 								{
@@ -2113,8 +2133,11 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 								}
 							}
 						}
-						else if ( t == ARDUP_HOME_ID )
+						else if ( t == ARDUP_HOME_ID ) // 5004
 						{
+							// bits 0-11 Home Dist 0-1 exponent, 2-11 mantissa
+							// bits 12-18 Home Angle, units of 3 degrees
+							// bits 19-31 HomeAlt 19-20 exponent, 21-30 mantissa, 31 sign
 //Distance to home
 //Angle from front of vehicle
 //Altitude relative to home - offset 19 bits - WRONG
@@ -2130,10 +2153,48 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 //define HOME_ALT_OFFSET 12
 //define HOME_BEARING_LIMIT 0x7F
 //define HOME_BEARING_OFFSET 25
+							
+// telemetry.homeDist = bit32.extract(VALUE,2,10) * (10^bit32.extract(VALUE,0,2))
+// telemetry.homeAlt = bit32.extract(VALUE,14,10) * (10^bit32.extract(VALUE,12,2)) * 0.1 * (bit32.extract(VALUE,24,1) == 1 and -1 or 1) --m
+// telemetry.homeAngle = bit32.extract(VALUE, 25,  7) * 3
+							
 							uint16_t xvalue ;
+							int32_t ivalue ;
+							uint32_t negative ;
+							xvalue = ( value >> 2 ) & 0x3FF ;		// 10 bits
+							ivalue = value & 3 ;
+							while ( ivalue )
+							{
+								xvalue *= 10 ;
+								ivalue -= 1 ;
+							}
+							storeTelemetryData( FR_HOME_DIST, xvalue ) ;
+							
 							xvalue = ( value >> 25 ) & 0x7F ;		// 7 bits
 							xvalue *= 3 ;
 							storeTelemetryData( FR_HOME_DIR, xvalue ) ;
+
+							// bits 12-24 HomeAlt 12-13 exponent, 14-23 mantissa, 24 sign
+							ivalue = (value >> 14) & 0x03FF ;
+							negative = (value & 0x01000000) ? 1 : 0 ;
+							value >>= 12 ;
+							value &= 0x03 ;
+							while ( value )
+							{
+								ivalue *= 10 ;
+								value -= 1 ;
+							}
+							if ( negative )
+							{
+								ivalue = - ivalue ;
+							}
+							storeAltitude( ivalue ) ;
+//							storeTelemetryData( FR_ALT_BARO, ivalue ) ;
+						}
+						else
+						{
+							// 5006 is roll and pitch
+							handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
 						}
 					}
 				break ;
@@ -3108,9 +3169,9 @@ void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 
 void FRSKY_Init( uint8_t brate )
 {
-#if defined(PCBT16)
-	MultiFrskyTelemetry = 0 ;
-#endif	 
+//#if defined(PCBT16)
+//	MultiFrskyTelemetry = 0 ;
+//#endif	 
 	
 	FrskyComPort = g_model.frskyComPort ;
 	FrskyTelemetryType = brate == 3 ? 2 : brate ;
@@ -3155,9 +3216,9 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FRSKYX ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FRSKYX ) )
 #endif
 			{
-#if defined(PCBT16)
-				MultiFrskyTelemetry = 1 ;
-#endif	 
+//#if defined(PCBT16)
+//				MultiFrskyTelemetry = 1 ;
+//#endif	 
 				FrskyTelemetryType = FRSKY_TEL_SPORT ;
 			}
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
@@ -3166,9 +3227,9 @@ void FRSKY_Init( uint8_t brate )
 			if ( ( ( g_model.Module[0].sub_protocol & 0x3F ) == M_FrskyD ) || ( ( g_model.Module[1].sub_protocol & 0x3F ) == M_FrskyD ) )
 #endif
 			{
-#if defined(PCBT16)
-				MultiFrskyTelemetry = 1 ;
-#endif	 
+//#if defined(PCBT16)
+//				MultiFrskyTelemetry = 1 ;
+//#endif	 
 				FrskyTelemetryType = FRSKY_TEL_HUB ;
 			}
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)

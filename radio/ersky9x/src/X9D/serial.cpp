@@ -18,12 +18,19 @@
 #include <stdlib.h>
 
 #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_usart.h"
+//#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
+ #else
 #include "X9D/stm32f2xx.h"
 //#include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
 #include "X9D/stm32f2xx_usart.h"
-#include "X9D/hal.h"
 //#include "timers.h"
+ #endif
+#include "X9D/hal.h"
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -111,6 +118,7 @@ extern struct t_serial_tx *Current_Com2 ;
 
 #ifndef PCBX12D
 #ifndef PCBX10
+ #ifndef REV19
 void USART6_Sbus_configure()
 {
  #ifdef PCBX9D
@@ -128,7 +136,9 @@ void USART6_Sbus_configure()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( 0x0080, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_8 ) ;
 	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 100000 ;
-	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+	USART6->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE ;
+	USART6->CR1 |= USART_CR1_PCE | USART_CR1_M ;	// Even parity
 	USART6->CR2 = 0 ;
 	USART6->CR3 = 0 ;
 	(void) USART6->DR ;
@@ -170,15 +180,52 @@ extern "C" void USART6_IRQHandler()
 	RTC->BKP1R = 0x94 ;
 #endif
 #endif
+	(void)USART6->SR ;	// Clear flags
 	put_fifo64( &Sbus_fifo, USART6->DR ) ;	
 }
  #endif // Xlite
 #endif // X3
 
+ #endif // #ifndef REV19
 
 #endif // #ifndef PCBX10
 #endif // #ifndef PCBX12D
 
+#if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+void USART_Sbus_configure()
+{
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portC clock
+	configure_pins( 0x0800, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+	USART3->BRR = PeripheralSpeeds.Peri1_frequency / 100000 ;
+	USART3->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_RE ;
+	USART3->CR1 |= USART_CR1_PCE | USART_CR1_M ;	// Even parity
+	USART3->CR2 = 0 ;
+	USART3->CR3 = 0 ;
+	(void) USART3->DR ;
+	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(USART3_IRQn) ;
+}
+
+void stop_USART_Sbus()
+{
+	configure_pins( 0x0800, PIN_INPUT | PIN_PORTB ) ;
+  NVIC_DisableIRQ(USART3_IRQn) ;
+}
+
+extern "C" void USART3_IRQHandler()
+{
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x94 ;
+#else
+	RTC->BKP1R = 0x94 ;
+#endif
+#endif
+	(void)USART3->SR ;	// Clear flags
+	put_fifo64( &Sbus_fifo, USART3->DR ) ;	
+}
+#endif
 
 //#if defined(PCBX12D) || defined(PCBX10)
 #if defined(PCBX12D) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
@@ -194,9 +241,15 @@ void USART6_configure()
 	else
 #endif
 	{
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)		
+		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
+		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG ) ;
+		GPIOG->BSRRH = BT_EN_GPIO_PIN ;
+#else
 		RCC->AHB1ENR |= BT_RCC_AHB1Periph ;
 		configure_pins( BT_EN_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTI ) ;
 		GPIOI->BSRRH = BT_EN_GPIO_PIN ;
+#endif
 	}
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 	configure_pins( BT_TX_GPIO_PIN|BT_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
@@ -317,6 +370,7 @@ void UART_Sbus57600_configure( uint32_t masterClock )
 }
 
 
+#if not (defined(PCBX10))
 void ConsoleInit()
 {
 	// Serial configure  
@@ -331,14 +385,17 @@ void ConsoleInit()
 	NVIC_SetPriority( USART3_IRQn, 5 ) ; // Lower priority interrupt
   NVIC_EnableIRQ(USART3_IRQn) ;
 }
+#endif
 
 void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 {
+#ifdef PCBX10
+	return ;
+#endif	
 	ConsoleInit() ;
 	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
 	com2Parity( parity ) ;
 }
-
 #endif // #ifndef PCB9XT
 
 void com1_Configure( uint32_t baudRate, uint32_t invert, uint32_t parity )
@@ -458,6 +515,7 @@ void com1Parity( uint32_t even )
 }
 
 
+ #if not (defined(PCBX10))
 void com2Parity( uint32_t even )
 {
 	if ( even )
@@ -469,6 +527,7 @@ void com2Parity( uint32_t even )
 		USART3->CR1 &= ~(USART_CR1_PCE | USART_CR1_M) ;
 	}
 }
+ #endif
 #endif
 
 //uint16_t SportStartDebug ;
@@ -649,6 +708,8 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 	return 1 ;			// Sent OK
 }
 
+#if not (defined(PCBX10) && defined(PCBREV_EXPRESS))
+
 extern "C" void USART3_IRQHandler()
 {
 #ifdef WDOG_REPORT
@@ -718,6 +779,7 @@ extern "C" void USART3_IRQHandler()
     status = puart->SR ;
 	}
 }
+#endif
 #endif
 #endif
 #endif

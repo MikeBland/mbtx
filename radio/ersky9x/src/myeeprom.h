@@ -208,7 +208,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   filterInput;
   uint8_t   lightAutoOff;
   uint8_t   templateSetup;  //RETA order according to chout_ar array 
-  int8_t    unused_PPM_Multiplier;
+	int8_t		unused_PPM_Multiplier ;
   uint8_t	FRSkyYellow:4;
   uint8_t	FRSkyOrange:4;
   uint8_t	FRSkyRed:4;  //mike please check these are correct
@@ -311,6 +311,7 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t spare7:7 ;
 //	GvarData	gvars[MAX_GVARS] ;
 	uint8_t radioRegistrationID[8] ;
+  int8_t  screenShotSw ;
 	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 

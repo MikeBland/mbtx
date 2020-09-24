@@ -25,7 +25,7 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
-#include "X9D/stm32f2xx.h"
+//#include "X9D/stm32f2xx.h"
 #endif
 
 //EVT_VIRTUAL_NEXT_PAGE 	for PAGE navigation
@@ -63,8 +63,10 @@ extern union t_sharedMemory SharedMemory ;
 extern uint32_t FileSize[] ;
 extern uint8_t ScriptDirNeeded ;
 
+#if not (defined(PCBX10))
 extern uint8_t Com2TxBuffer[] ;
 extern struct t_serial_tx Com2_tx ;
+#endif
 
 extern uint8_t BtCurrentFunction ;
 void scriptRequestBt() ;
@@ -5047,7 +5049,9 @@ int32_t  exec_btreceive()
 
 			if ( ScriptFlags & SCRIPT_STANDALONE )
 			{
+#if not (defined(PCBX10))
 				if ( g_model.com2Function != COM2_FUNC_SCRIPT )
+#endif
 				{
 					if ( BtCurrentFunction != BT_SCRIPT )
 					{
@@ -5056,10 +5060,15 @@ int32_t  exec_btreceive()
 				}
 			}
 
+#if not (defined(PCBX10))
 			if ( ( BtCurrentFunction == BT_SCRIPT ) || ( g_model.com2Function == COM2_FUNC_SCRIPT ) )
+#else
+			if ( BtCurrentFunction == BT_SCRIPT )
+#endif
 			{
 				for ( i = 0 ; i < length ; i += 1 )
 				{
+#if not (defined(PCBX10))
 					if ( BtCurrentFunction == BT_SCRIPT )
 					{
 						x = rxBtuart() ;
@@ -5068,6 +5077,9 @@ int32_t  exec_btreceive()
 					{
 						x = get_fifo128( &Com2_fifo ) ;
 					}
+#else
+		 			x = rxBtuart() ;
+#endif
 					if ( x != -1 )
 					{
 						*param.bpointer++ = x ;
@@ -5142,7 +5154,8 @@ int32_t exec_btsend()
 						result = btSend( length, param.bpointer ) ;
 					}
 	#ifndef PCB9XT 
-	#ifndef PCBX7
+	 #ifndef PCBX7
+    #if not (defined(PCBX10))
 					else if ( g_model.com2Function == COM2_FUNC_SCRIPT )
 					{
 						if ( Com2_tx.ready == 0 )	// Buffer available
@@ -5169,7 +5182,8 @@ int32_t exec_btsend()
 							}
 						}
 					}
-	#endif
+    #endif
+	 #endif
 	#endif
 #endif
 				}

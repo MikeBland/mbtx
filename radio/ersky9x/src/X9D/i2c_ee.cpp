@@ -12,10 +12,18 @@
 
 
 #include "../ersky9x.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#else
 #include "stm32f2xx.h"
+#endif
 //#include "stm32f2xx_gpio.h"
 #include "../logicio.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx_rcc.h"
+#else
 #include "stm32f2xx_rcc.h"
+#endif
 #include "hal.h"
 #include "i2c_ee.h"
 #include "../timers.h"
@@ -70,7 +78,9 @@ static void I2C_GPIO_Configuration(void)
   //Set Idle levels
   SDA_H;
   SCL_H;
+#ifndef REV19
 	WP_L ;
+#endif
 }
 
 short I2C_START()

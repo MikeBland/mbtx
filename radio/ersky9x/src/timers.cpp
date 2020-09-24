@@ -25,7 +25,11 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+ #else
 #include "X9D/stm32f2xx.h"
+#endif
 #include "X9D/hal.h"
 #include "debug.h"
 #endif
@@ -35,7 +39,11 @@
  #ifndef PCBX10
 #ifndef SIMU
 #ifndef PCBLEM1
+ #if defined(REV19)
+#include "X12D/core_cm4.h"
+ #else
 #include "core_cm3.h"
+ #endif
 #endif
 #endif
 #endif
@@ -1655,6 +1663,161 @@ extern "C" void TIM3_IRQHandler()
 #endif
 }
 
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+void init_cppm_on_heartbeat_capture()
+{
+//	stop_xjt_heartbeat() ;
+	
+	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portC clock
+	configure_pins( 0x0800, PIN_INPUT | PIN_PORTB ) ;
+//	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;		// Enable clock
+
+	
+	SYSCFG->EXTICR[2] |= 0x1000 ;		// PB11
+	EXTI->RTSR |= 0x0800 ;	// Falling Edge
+	EXTI->IMR |= 0x0800 ;
+	NVIC_SetPriority( EXTI15_10_IRQn, 1 ) ; // Not quite highest priority interrupt
+	NVIC_EnableIRQ( EXTI15_10_IRQn) ;
+	
+	EXTERNAL_RF_ON() ;
+
+}
+
+void stop_cppm_on_heartbeat_capture()
+{
+	EXTERNAL_RF_OFF() ;
+
+	EXTI->IMR &= ~0x0800 ;
+	NVIC_DisableIRQ( EXTI15_10_IRQn) ;
+//	init_xjt_heartbeat() ;
+}
+
+extern "C" void EXTI15_10_IRQHandler()
+{
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5F ;
+#else
+	RTC->BKP1R = 0x5F ;
+#endif
+#endif
+	uint16_t capture ;
+	capture =  TIM7->CNT ;	// Capture time
+  static uint16_t lastCapt ;
+  uint16_t val ;
+
+//	uint32_t doCapture = 0 ;
+//	struct t_softSerial *pss = &SoftSerial1 ;
+//	if ( CaptureMode == CAP_SERIAL )
+//	{
+//		TIM3Captures += 1 ;
+//		// CC3 physical rising, CC4 falling edge
+//		// So for inverted serial CC3 is HtoL, CC4 is LtoH
+//		if ( LastTransition == 0 )	// LtoH
+//		{
+//#ifdef PCBX9LITE
+//			capture = TIM4->CCR2 ;
+//#else // X3
+//			capture = TIM3->CCR4 ;
+//#endif // X3
+//			LastTransition = 1 ;
+//		}
+//		else
+//		{
+//#ifdef PCBX9LITE
+//			capture = TIM4->CCR2 ;
+//#else // X3
+//			capture = TIM3->CCR4 ;
+//#endif // X3
+//			LastTransition = 0 ;
+//		}
+
+//  	val = LastTransition ;
+//		if ( pss->softSerInvert )
+//		{
+//			val = !val ;
+//		}
+		
+//		if ( val == 0 )	// LtoH
+//		{
+//			// L to H transition
+//			pss->LtoHtime = capture ;
+//			TIM11->CNT = 0 ;
+//			TIM11->CCR1 = pss->bitTime * 12 ;
+//			uint32_t time ;
+//			capture -= pss->HtoLtime ;
+//			time = capture ;
+////			putCapValues( time, 0 ) ;
+//			putCaptureTime( pss, time, 0 ) ;
+//			TIM11->DIER = TIM_DIER_CC1IE ;
+//		}
+//		else
+//		{
+//			// H to L transition
+//			pss->HtoLtime = capture ;
+//			if ( pss->lineState == LINE_IDLE )
+//			{
+//				pss->lineState = LINE_ACTIVE ;
+////				if ( ++CapCount > 200 )
+////				{
+////					CapIndex = 0 ;
+////					CapCount = 0 ;
+////				}
+////				putCapValues( 0, 3 ) ;
+//				putCaptureTime( pss, 0, 3 ) ;
+//			}
+//			else
+//			{
+//				uint32_t time ;
+//				capture -= pss->LtoHtime ;
+//				time = capture ;
+////				putCapValues( time, 1 ) ;
+//				putCaptureTime( pss, time, 1 ) ;
+//			}
+//			TIM11->DIER = 0 ;
+//			TIM11->CCR1 = pss->bitTime * 20 ;
+//			TIM11->CNT = 0 ;
+//			TIM11->SR = 0 ;
+//		}
+//		return ;
+//	}
+//	else
+	if ( EXTI->PR & 0x0800 )
+	{
+		EXTI->PR = 0x0800 ;
+		{
+  		val = (uint16_t)(capture - lastCapt) / 2 ;
+  		lastCapt = capture;
+
+  		// We prcoess g_ppmInsright here to make servo movement as smooth as possible
+  		//    while under trainee control
+  		if ((val>4000) && (val < 19000)) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
+			{
+  		  ppmInState = 1; // triggered
+			}
+  		else
+  		{
+  			if(ppmInState && (ppmInState<=16))
+				{
+  		  	if((val>800) && (val<2200))
+					{
+						ppmInValid = 100 ;
+	//  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
+  			    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ; //+-500 != 512, but close enough.
+
+			    }else{
+  			    ppmInState=0; // not triggered
+  		  	}
+  		  }
+  		}
+		}
+	}
+}
+
+#endif
+
+
 //void dsmBindResponse( uint8_t mode, int8_t channels )
 //{
 //	// Process mode here
@@ -2194,25 +2357,25 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 //				}
 //			}
 
-#if defined(PCBX12D) || defined(PCBX10)
- #ifndef PCBREV_EXPRESS			
-			if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
-			{
-				uint8_t x ;
-				x = SerialData[module][1] & 0x1F ;
-				if ( ( SerialData[module][0] & 1 ) == 0 )
-				{
-					x += 32 ;
-				}
-				if ( ( x == 3 ) || ( x == 15 ) )
-				{
-					SerialData[module][0] |= 1 ;
-					SerialData[module][1] |= 0x1E ;
-					SerialData[module][1] &= ~1 ;
-				}
-			}
- #endif
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+// #ifndef PCBREV_EXPRESS			
+//			if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
+//			{
+//				uint8_t x ;
+//				x = SerialData[module][1] & 0x1F ;
+//				if ( ( SerialData[module][0] & 1 ) == 0 )
+//				{
+//					x += 32 ;
+//				}
+//				if ( ( x == 3 ) || ( x == 15 ) )
+//				{
+//					SerialData[module][0] |= 1 ;
+//					SerialData[module][1] |= 0x1E ;
+//					SerialData[module][1] &= ~1 ;
+//				}
+//			}
+// #endif
+//#endif
 		
 #if defined(PCBT16)
 			if ( module == INTERNAL_MODULE )
@@ -2262,7 +2425,7 @@ uint16_t PxxValue ;
 uint16_t *PtrPxx_x ;
 uint16_t PxxValue_x ;
 
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(REV19)
 uint8_t PxxSerial[2][50] ;
 uint8_t *PtrSerialPxx[2] ;
 #endif

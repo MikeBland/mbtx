@@ -33,9 +33,6 @@
 #include "ersky9x.h"
 #include "myeeprom.h"
 #include "drivers.h"
-#ifndef PCBLEM1
-#include "logicio.h"
-#endif
 #include "pulses.h"
 #include "lcd.h"
 #include "debug.h"
@@ -46,10 +43,17 @@
 
 #if defined(PCBX9D) || defined(PCB9XT)
 #include "diskio.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_usart.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
+#else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
 #include "X9D/stm32f2xx_usart.h"
+#endif
 #include "X9D/hal.h"
 #include "timers.h"
 #endif
@@ -62,6 +66,10 @@
 #include "X12D/hal.h"
 extern void wdt_reset() ;
 #define wdt_reset()
+#endif
+
+#ifndef PCBLEM1
+#include "logicio.h"
 #endif
 
 
@@ -743,8 +751,10 @@ extern uint8_t EncoderI2cData[] ;
   #endif // REV19
   	#if defined(REVPLUS) || defined(REVNORM)
   #ifndef REV9E
+   #ifndef REV19
 extern uint8_t AnaEncSw ;
 	uint8_t value = AnaEncSw ;
+   #endif // nREV19
   #endif // nREV9E
   #endif // norm/plus
 	#ifdef PCBXLITE
@@ -3703,8 +3713,8 @@ void start_2Mhz_timer()
 
 #if defined(REVPLUS) || defined(REVNORM) || defined(REV9E) || defined(PCBX7)
 
+ #if not defined(REV19)
 #define XJT_HEARTBEAT_BIT	0x0080		// PC7
-
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
@@ -3730,12 +3740,16 @@ void stop_xjt_heartbeat()
 	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
 	XjtHeartbeatCapture.valid = 0 ;
 }
+ #endif
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
 #define XJT_HEARTBEAT_BIT	0x1000		// PD12
 
+
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
+
+#ifndef PCBREV_EXPRESS
 
 void init_xjt_heartbeat()
 {
@@ -3749,16 +3763,27 @@ void init_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 1 ;
 }
 
-void stop_xjt_heartbeat()
-{
-	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
-	XjtHeartbeatCapture.valid = 0 ;
-}
+//void stop_xjt_heartbeat()
+//{
+//	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+//	XjtHeartbeatCapture.valid = 0 ;
+//}
 
 uint16_t ExtiErrors ;
 uint16_t ExtiMask ;
 uint16_t ExtiPr ;
 uint16_t ExtiOK ;
+
+// Options for PD12 input:
+// XJT heartbeat
+// CPPM
+// Soft serial SBUS
+
+#define HORUS_PD12_HEARTBEAT	0
+#define HORUS_PD12_CPPM				1
+#define HORUS_PD12_SBUS				2
+
+uint8_t HorusPD12Mode ;
 
 extern "C" void EXTI15_10_IRQHandler()
 {
@@ -3770,14 +3795,52 @@ extern "C" void EXTI15_10_IRQHandler()
 #endif
 #endif
   register uint32_t capture ;
+  static uint16_t lastCapt ;
+  uint16_t val ;
 
 	capture =  TIM7->CNT ;	// Capture time
 	ExtiPr = EXTI->PR ;
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
 	{
-		XjtHeartbeatCapture.value = capture ;
-		EXTI->PR = XJT_HEARTBEAT_BIT ;
-		ExtiOK += 1 ;
+		if ( HorusPD12Mode == HORUS_PD12_SBUS )
+		{
+			// Needs a timer (TIM11? used for SW com1)
+//			struct t_softSerial *pss = &SoftSerial1 ;
+			
+		}
+		else if ( HorusPD12Mode == HORUS_PD12_CPPM )
+		{
+  		val = (uint16_t)(capture - lastCapt) / 2 ;
+  		lastCapt = capture;
+
+  		// We prcoess g_ppmInsright here to make servo movement as smooth as possible
+  		//    while under trainee control
+  		if ((val>4000) && (val < 19000)) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
+			{
+  		  ppmInState = 1; // triggered
+			}
+  		else
+  		{
+  			if(ppmInState && (ppmInState<=16))
+				{
+  		  	if((val>800) && (val<2200))
+					{
+						ppmInValid = 100 ;
+	//  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
+  			    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ; //+-500 != 512, but close enough.
+
+			    }else{
+  			    ppmInState=0; // not triggered
+  		  	}
+  		  }
+  		}
+		}
+		else
+		{		
+			XjtHeartbeatCapture.value = capture ;
+			EXTI->PR = XJT_HEARTBEAT_BIT ;
+			ExtiOK += 1 ;
+		}
 	}
 	else
 	{
@@ -3787,6 +3850,8 @@ extern "C" void EXTI15_10_IRQHandler()
 		EXTI->IMR &= ~(0xFC00 & ~XJT_HEARTBEAT_BIT) ;
 	}
 }
+
+#endif
 
 #endif // PCBX12D
 
@@ -4652,10 +4717,10 @@ void init_spi()
   /* Enable SPI clock, SPI1: APB2, SPI2: APB1 */
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN ;    // Enable clock
 
-	// APB1 clock / 4 = 133nS per clock
+	// APB1 clock / 8 = 266nS per clock
 	SPI1->CR1 = 0 ;		// Clear any mode error
 	SPI1->CR2 = 0 ;
-	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_BR_0 ;
+	SPI1->CR1 = SPI_CR1_SSM | SPI_CR1_SSI | SPI_CR1_CPOL | SPI_CR1_CPHA | SPI_CR1_BR_1 ;
 	SPI1->CR1 |= SPI_CR1_MSTR ;	// Make sure in case SSM/SSI needed to be set first
 	SPI1->CR1 |= SPI_CR1_SPE ;
 
@@ -4837,7 +4902,7 @@ uint16_t readSpiEncoder()
 			break ;				
 		}
 	}
-	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | SPI_CR1_BR_0 ;	// Restore clock
+	spiptr->CR1 = (spiptr->CR1 & ~SPI_CR1_BR) | SPI_CR1_BR_1 ;	// Restore clock
 //	return ( y << 16 ) | ( x << 8 ) | spiptr->DR ;
 	return ( x << 8 ) | spiptr->DR ;
 }

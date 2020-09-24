@@ -348,6 +348,9 @@ DataID Meaning       Unit   Range   Note
 #define SBEC_POWER_LAST_ID        0x0e5f
 #define SBEC_POWER_ID_8     			0xe5
 
+#define NON_STANDARD_ID_8     		0x0F
+
+
 // Craft and Theory
 #define	ARDUP_ID_8				0x00
 #define	ARDUP_AP_STAT_ID	0x01

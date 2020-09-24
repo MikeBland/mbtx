@@ -25,9 +25,15 @@
 #endif
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBXLITE) || defined(PCBX9LITE)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
+ #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
+ #endif
 #include "X9D/hal.h"
 #endif
 
@@ -36,7 +42,11 @@
 #endif
 
 #ifndef SIMU
+ #if defined(REV19)
+#include "X12D/core_cm4.h"
+ #else
 #include "core_cm3.h"
+ #endif
 #endif
 
 #include "ersky9x.h"

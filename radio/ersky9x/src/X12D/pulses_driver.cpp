@@ -49,6 +49,20 @@
 #include "drivers.h"
 #include "frsky.h"
 
+//#if defined(PCBX10)
+//extern uint16_t ExtRfOffPos ;
+//extern uint16_t ExtRfOnPos ;
+//#endif
+//extern uint16_t RfOffDebug1 ;
+//extern uint16_t RfOffDebug2 ;
+//extern uint16_t RfOffDebug3 ;
+//extern uint16_t RfOffDebug4 ;
+//extern uint16_t RfOffDebug5 ;
+//extern uint16_t RfOffDebug6 ;
+//extern uint16_t RfOffDebug7 ;
+//extern uint16_t RfOffDebug8 ;
+//extern uint16_t RfOffDebug9 ;
+
 #define CONVERT_PTR(x) ((uint32_t)(uint64_t)(x))
 
 #define NUM_MODULES 2
@@ -189,6 +203,7 @@ void disable_dsm2(uint32_t port)
   if (port == EXTERNAL_MODULE)
 	{
     disable_ext_dsm2();
+//		RfOffDebug5 += 1 ;
   }
 #if defined(PCBT16)
 	else
@@ -235,7 +250,10 @@ void init_no_pulses(uint32_t port)
   if (port == INTERNAL_MODULE)
     init_int_none();
   else
+	{
     init_ext_none();
+//		RfOffDebug4 += 1 ;
+	}
 }
 
 void disable_no_pulses(uint32_t port)
@@ -275,7 +293,9 @@ static void disable_int_none()
 static void init_ext_none()
 {
   EXTERNAL_RF_OFF() ;
-
+//#if defined(PCBX10)
+//	ExtRfOffPos = 1 ;
+//#endif
   // Timer8
 
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
@@ -326,7 +346,9 @@ static void init_ext_none()
 static void disable_ext_none()
 {
   EXTERNAL_RF_OFF() ;
-
+//#if defined(PCBX10)
+//	ExtRfOffPos = 2 ;
+//#endif
   TIM1->CR1 &= ~TIM_CR1_CEN ;
   NVIC_DisableIRQ(TIM1_CC_IRQn) ;
 #ifdef PCBX12D
@@ -406,6 +428,9 @@ static void init_ext_dsm2( void )
 static void disable_ext_dsm2( void )
 {
   EXTERNAL_RF_OFF() ;
+//#if defined(PCBX10)
+//	ExtRfOffPos = 3 ;
+//#endif
 	EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
   EXTMODULE_TIMER->DIER &= ~(TIM_DIER_CC2IE) ;
  	EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN ;
@@ -467,7 +492,9 @@ static void init_ext_ppm( void )
 {
 //  EXTERNAL_RF_OFF() ;
   EXTERNAL_RF_ON() ;
-
+//#if defined(PCBX10)
+//	ExtRfOnPos = 1 ;
+//#endif
 	setupPulsesPpmAll(EXTERNAL_MODULE) ;
 
 //	if ( isProdVersion() )
@@ -478,7 +505,10 @@ static void init_ext_ppm( void )
 	  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
   	configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
 #else
+	  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
+	  RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
   	configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
+  	TIM1->CR1 |= TIM_CR1_CEN; // Start timer
 #endif
   	EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN; // Stop timer
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
@@ -1043,7 +1073,9 @@ void convertPulsesProto( uint32_t type )
 void init_ext_serial( uint32_t type )
 {
   EXTERNAL_RF_ON() ;
-
+//#if defined(PCBX10)
+//	ExtRfOnPos = 2 ;
+//#endif
 	if ( type == EXT_TYPE_PXX )
 	{
   	setupPulsesPXX(EXTERNAL_MODULE);
@@ -1054,13 +1086,21 @@ void init_ext_serial( uint32_t type )
 	}
   
 	// Configure output pin (TIM1)
-#if defined(PCBX10) && !defined(PCBT16)
+//#if defined(PCBX10) && !defined(PCBT16)
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	convertPulsesProto( EXT_TYPE_PXX ) ;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;           // Enable portB clock
   configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN ;            // Enable DMA1 clock
+#elif defined(PCBX10)
+	convertPulsesProto( EXT_TYPE_PXX ) ;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ 	configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
+  RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
+  RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN ;            // Enable DMA1 clock
 #else
+	convertPulsesProto( EXT_TYPE_PXX ) ;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
  	configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
   RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;            // Enable clock
@@ -1106,7 +1146,11 @@ void init_ext_serial( uint32_t type )
 	if ( type == EXT_TYPE_PXX )
 	{
 	  EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high
+#else
+	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
+#endif	
 	}
 	else
 	{
@@ -1183,6 +1227,9 @@ void init_ext_serial( uint32_t type )
   EXTMODULE_TIMER->CNT = 0 ;
   EXTMODULE_TIMER->CR1 |= TIM_CR1_CEN ;
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	NVIC_SetPriority( EXTMODULE_TIMER_IRQn, 3 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ( EXTMODULE_TIMER_IRQn) ;
+#elif defined(PCBX10)
 	NVIC_SetPriority( EXTMODULE_TIMER_IRQn, 3 ) ; // Lower priority interrupt
   NVIC_EnableIRQ( EXTMODULE_TIMER_IRQn) ;
 #else
@@ -1280,8 +1327,16 @@ static void disable_ext_pxx()
  	NVIC_DisableIRQ( EXTMODULE_TIMER_IRQn) ;
 	EXTMODULE_TIMER->DIER &= ~TIM_DIER_CC2IE ;
  	EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN; // Stop timer
+#elif defined(PCBX10)
+	EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
+ 	NVIC_DisableIRQ( EXTMODULE_TIMER_IRQn) ;
+	EXTMODULE_TIMER->DIER &= ~TIM_DIER_CC2IE ;
+ 	EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN; // Stop timer
 #endif  
 	EXTERNAL_RF_OFF();
+//#if defined(PCBX10)
+//	ExtRfOffPos = 4 ;
+//#endif
 }
 
 
@@ -1322,6 +1377,9 @@ extern "C" void TIM1_CC_IRQHandler()
 #ifdef WDOG_REPORT
 	RTC->BKP1R = 0x112 ;
 #endif
+
+//	RfOffDebug8 += 1 ;
+
   TIM1->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   setupPulses(EXTERNAL_MODULE) ;
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)
@@ -1357,11 +1415,17 @@ extern "C" void TIM1_CC_IRQHandler()
 		}
 		
   	EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low
+#else
+	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high, hardware inverts it
+#endif	
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
 		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
 	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
  		EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&EXTMODULE_TIMER->CCR3) ;	// or DMAR?
+	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;     // Toggle CC1 o/p
 		if ( isProdVersion() )
 		{
   		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
@@ -1435,6 +1499,9 @@ extern "C" void TIM2_IRQHandler()
 #ifdef WDOG_REPORT
 	RTC->BKP1R = 0x111 ;
 #endif
+
+//	RfOffDebug9 += 1 ;
+
 
 	uint16_t status = TIM2->SR ;
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
@@ -1515,6 +1582,21 @@ extern "C" void TIM2_IRQHandler()
 			EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
 //			NVIC_EnableIRQ(PROT_EXTMODULE_DMA_IRQn) ;
 //			PROT_EXTMODULE_TIMER->DIER |= TIM_DIER_UDE ; // Update DMA request
+			EXTMODULE_TIMER->DIER |= TIM_DIER_CC3DE ;          // Enable DMA on CC1 match
+		  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ; // Clear flag
+    	EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+#elif defined(PCBX10)
+			convertPulsesProto( EXT_TYPE_PXX ) ;
+  		EXTMODULE_TIMER->CCR3 = ProtoPulses[0];
+//		  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high
+		  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
+			EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
+	    EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&EXTMODULE_TIMER->CCR3) ;
+			EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&ProtoPulses[1]);
+			EXTMODULE_DMA_STREAM->NDTR = pulseStreamCount[EXTERNAL_MODULE] ;
+	    DMA1->LIFCR = DMA_LIFCR_CTCIF1 | DMA_LIFCR_CHTIF1 | DMA_LIFCR_CTEIF1 | DMA_LIFCR_CDMEIF1 | DMA_LIFCR_CFEIF1 ; // Write ones to clear bits
+		  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;     // Toggle CC1 o/p
+			EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ; // Enable DMA
 			EXTMODULE_TIMER->DIER |= TIM_DIER_CC3DE ;          // Enable DMA on CC1 match
 		  EXTMODULE_TIMER->SR &= ~TIM_SR_CC2IF ; // Clear flag
     	EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt

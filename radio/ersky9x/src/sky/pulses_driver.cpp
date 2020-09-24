@@ -94,8 +94,8 @@ extern void setCaptureMode(uint32_t mode) ;
 extern void start_timer3() ;
 extern uint8_t TrainerMode ;
 
-uint8_t SerialExternalData[28] ;
-uint8_t Multi2Data[28] ;
+uint8_t SerialExternalData[38] ;
+uint8_t Multi2Data[38] ;
 
 // DSM2 control bits
 //#define FranceBit 0x10
@@ -875,16 +875,16 @@ void setupPulses()
     switch(CurrentProtocol[1])
     { // Start new protocol hardware here
       case PROTO_PPM:
-				init_main_ppm( 3000, (CurrentTrainerSource == TRAINER_SLAVE) ? 0 : 1 ) ;		// Initial period 1.5 mS, output on
+				init_main_ppm( 10000, (CurrentTrainerSource == TRAINER_SLAVE) ? 0 : 1 ) ;		// Initial period 1.5 mS, output on
       break;
       case PROTO_PXX:
-				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
+				init_main_ppm( 10000, 0 ) ;		// Initial period 2.5 mS, output off
 				init_ssc(SCC_BAUD_125000) ;
 				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
 				SSC->SSC_TFMR &= ~0x00000020 ;
       break;
   	  case PROTO_OFF:
-				init_main_ppm( 3000, 0 ) ;		// Initial period 1.5 mS, output on
+				init_main_ppm( 10000, 0 ) ;		// Initial period 1.5 mS, output on
 				module_output_low() ;
       break;
     	case PROTO_MULTI:
@@ -1194,7 +1194,8 @@ void setupPulsesPPM2()
 		{
 			if ( g_model.Module[0].protocol == PROTO_MULTI )
 			{
-				setMultiSerialArray( Multi2Data, 0 ) ;
+				uint32_t length ;
+				length = setMultiSerialArray( Multi2Data, 0 ) ;
 				 
 				dataPtr = Multi2Data ;
 				uint32_t x ;
@@ -1206,7 +1207,7 @@ void setupPulsesPPM2()
 				x *= 2000 ;
 				x += 7000 * 2 ;
 				rest = x ;
-				byteCount = 26 ;
+				byteCount = length ;
 				bitTime = 10 * 2 ;
 			}
 			else

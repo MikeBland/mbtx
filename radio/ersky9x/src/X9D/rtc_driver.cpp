@@ -35,9 +35,15 @@
  */
 
 #include "ersky9x.h"
+#ifdef REV19
+#include "X12D/stm32f4xx_rtc.h"
+#include "X12D/stm32f4xx_rcc.h"
+#include "X12D/stm32f4xx_pwr.h"
+#else
 #include "X9D/stm32f2xx_rtc.h"
 #include "X9D/stm32f2xx_rcc.h"
 #include "X9D/stm32f2xx_pwr.h"
+#endif
 
 void rtcSetTime( t_time *t )
 {

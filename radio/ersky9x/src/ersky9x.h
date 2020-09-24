@@ -105,10 +105,10 @@
  #endif
 #endif
 
-#if defined(PCBT16)
-#define DISABLE_PXX		1
-#define DISABLE_SPORT	1
-#endif
+//#if defined(PCBT16)
+//#define DISABLE_PXX		1
+//#define DISABLE_SPORT	1
+//#endif
 
 #ifdef PCBX9D	
  #ifndef PCBT12
@@ -1021,6 +1021,7 @@ extern uint8_t Ee_lock ;
 #define M_SCANNER        53
 
 #define M_FRSKYX2        63
+#define M_FRSKYR9        64
 
 #define M_LAST_MULTI		 38
 
@@ -1465,10 +1466,15 @@ extern uint8_t unexpectedShutdown ;
 extern uint8_t SdMounted ;
 
 #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/rtc.h"
+#include "X12D/stm32f4xx_rtc.h"
+ #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/rtc.h"
 #include "X9D/stm32f2xx_rtc.h"
-
+ #endif
 #define MASTER_FREQUENCY 60000000
 #define PERI1_FREQUENCY 15000000
 #define PERI2_FREQUENCY 30000000

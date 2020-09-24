@@ -42,6 +42,10 @@ uint8_t SbusFrame[28] ;
 uint8_t SbusIndex = 0 ;
 uint16_t SbusTimer = 0 ;
 
+// Sbus frame 25 bytes long:
+// 0x0F, 22 bytes of 11 bit packed data, flags, 0
+// flags = bit7 = ch17, bit6 = ch18, bit5 = Frame lost, bit4 = failsafe activated (0x10)
+
 uint32_t processSBUSframe( uint8_t *sbus, int16_t *pulses, uint32_t size )
 {
 	uint32_t inputbitsavailable = 0 ;

@@ -280,7 +280,7 @@ void eeReadAll()
 	uint32_t blue ;
 	
 	red = g_eeGeneral.backgroundColour >> 11 ;
-	green = ( g_eeGeneral.backgroundColour >> 6 ) & 0x1F ;
+	green = ( g_eeGeneral.backgroundColour >> 6 ) & 0x3F ;
 	blue = g_eeGeneral.backgroundColour & 0x1F ;
 
 	if ( (red < 6) && (green < 6) && (blue < 6) )

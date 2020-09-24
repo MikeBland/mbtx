@@ -43,7 +43,11 @@
 #define CardIsConnected() ( (PIOB->PIO_PDSR & PIO_PB7) == 0 )
 #endif
 #ifdef PCBX9D
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+ #else
 #include "X9D/stm32f2xx.h"
+ #endif
 #endif
 
 #ifdef PCB9XT
@@ -59,7 +63,11 @@
 #ifndef PCBX10
 
 #if !defined(SIMU)
+ #if defined(REV19)
+#include "X12D/core_cm4.h"
+ #else
 #include "core_cm3.h"
+ #endif
 #endif
 #endif
 #endif

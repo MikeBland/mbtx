@@ -31,8 +31,9 @@
   */
 
 #include "stm32f4xx.h"
+#ifndef REV19
 void SDRAM_Init(void) ;
-
+#endif
 /**
   * @}
   */
@@ -158,11 +159,12 @@ void SystemInit(void)
   RCC->CIR = 0x00000000;
 
 //  SDRAM_Init();
+#ifndef REV19
   void FMC_SDRAMWriteProtectionConfig(uint32_t SDRAM_Bank, FunctionalState NewState);
 
   SDRAM_Init(); // calls SDRAM_GPIOConfig()
   FMC_SDRAMWriteProtectionConfig(((uint32_t)0x00000001), DISABLE);
-
+#endif
 #ifdef DATA_IN_ExtSRAM
   SystemInit_ExtMemCtl(); 
 #endif /* DATA_IN_ExtSRAM */

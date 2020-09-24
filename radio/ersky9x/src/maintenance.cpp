@@ -53,8 +53,13 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
  #endif
 #endif
 #ifdef PCBX9D
+ #if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_flash.h"
+ #else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_flash.h"
+ #endif
 #include "X9D/hal.h"
 #include "pdi.h"
 #endif
@@ -318,7 +323,7 @@ void initMultiMode()
 		SET_TX_BIT_EXT() ;
 		configure_pins( PIO_PA17, PIN_ENABLE | PIN_OUTPUT | PIN_PORTA | PIN_HIGH ) ;
 	}
-#endif
+#endif // PCBSKY
 #ifdef PCB9XT
 	if ( MultiPort )
 	{
@@ -361,7 +366,7 @@ void initMultiMode()
 		return ;
 	}
  #endif
-	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	com1_Configure( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | EXTMODULE_PORT | PIN_LOW ) ;
 #endif
@@ -524,8 +529,13 @@ void sendMultiByte( uint8_t byte )
 #define CLEAR_TX_BIT() EXTMODULE_TX_GPIO->BSRRL = PIN_EXTPPM_OUT
 #define SET_TX_BIT() EXTMODULE_TX_GPIO->BSRRH = PIN_EXTPPM_OUT
  #else
+  #if defined(PCBREV_EXPRESS)
 #define CLEAR_TX_BIT() EXTMODULE_TX_GPIO->BSRRL = PIN_EXTPPM_OUT
 #define SET_TX_BIT() EXTMODULE_TX_GPIO->BSRRH = PIN_EXTPPM_OUT
+  #else
+#define CLEAR_TX_BIT() EXTMODULE_TX_GPIO->BSRRL = PIN_EXTPPM_OUT
+#define SET_TX_BIT() EXTMODULE_TX_GPIO->BSRRH = PIN_EXTPPM_OUT
+	#endif
  #endif
 #endif
 
@@ -4149,7 +4159,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE)// || defined(REV19)
 				if (SportModuleExt == SPORT_MODULE)
 				{
 					EXTERNAL_RF_ON();

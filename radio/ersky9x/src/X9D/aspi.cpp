@@ -11,9 +11,15 @@
 */
 
 #include "../ersky9x.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
+#else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
+#endif
 #include "X9D/hal.h"
 #include "X9D/aspi.h"
 #include "logicio.h"

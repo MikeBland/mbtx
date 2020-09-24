@@ -72,6 +72,8 @@
 #define RED            RGB(229, 32, 30)
 #define DARKRED        RGB(160, 0, 6)
 
+#define RGB32(r, g, b)   (((r) << 16) + ((g) << 8) + ((b) << 0))
+
 #define LcdFlags        uint32_t
 
 enum LcdColorIndex

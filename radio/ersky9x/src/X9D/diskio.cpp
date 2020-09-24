@@ -37,9 +37,15 @@
 #include "../CoOS.h"
 #include "../diskio.h"
 #include "../ff.h"
+#if defined(REV19)
+#include "../X12D/stm32f4xx_gpio.h"
+#include "../X12D/stm32f4xx_spi.h"
+#include "../X12D/stm32f4xx_rcc.h"
+#else
 #include "stm32f2xx_gpio.h"
 #include "stm32f2xx_spi.h"
 #include "stm32f2xx_rcc.h"
+#endif
 #include "../logicio.h"
 #include "hal.h"
 

@@ -378,6 +378,9 @@ const uint8_t MultiData[] =
 "\0" ;
 
 #if defined(PCBX12D) || defined(PCBX10)
+
+extern void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type ) ;
+
 const uint8_t IconX12Logging[] =
 {
 8,8,8,
@@ -385,6 +388,116 @@ const uint8_t IconX12Logging[] =
 //,
 //0x03,0x02,0x02,0x02,0x02,0x02,0x01,0x00
 } ;
+const uint8_t Icon24log[] =
+{
+#if defined(PCBX10)
+#include "icon24loginv.lbm"
+#else
+#include "icon24log.lbm"
+#endif
+} ;
+
+const uint8_t IconMusic[] =
+{
+#if defined(PCBX10)
+#include "iconMusicinv.lbm"
+#else
+#include "iconMusic.lbm"
+#endif
+} ;
+const uint8_t IconMix[] =
+{
+#if defined(PCBX10)
+#include "iconMixinv.lbm"
+#else
+#include "iconMix.lbm"
+#endif
+} ;
+const uint8_t IconHeli[] =
+{
+#if defined(PCBX10)
+#include "iconHeliinv.lbm"
+#else
+#include "iconHeli.lbm"
+#endif
+} ;
+const uint8_t IconDrate[] =
+{
+#if defined(PCBX10)
+#include "iconDrateinv.lbm"
+#else
+#include "iconDrate.lbm"
+#endif
+} ;
+const uint8_t IconBt[] =
+{
+#if defined(PCBX10)
+#include "iconBtinv.lbm"
+#else
+#include "iconBt.lbm"
+#endif
+} ;
+const uint8_t IconProto[] =
+{
+#if defined(PCBX10)
+#include "iconProtoinv.lbm"
+#else
+#include "iconProto.lbm"
+#endif
+} ;
+const uint8_t IconLimits[] =
+{
+#if defined(PCBX10)
+#include "iconLimitsinv.lbm"
+#else
+#include "iconLimits.lbm"
+#endif
+} ;
+const uint8_t IconCurve[] =
+{
+#if defined(PCBX10)
+#include "iconCurveinv.lbm"
+#else
+#include "iconCurve.lbm"
+#endif
+} ;
+
+const uint8_t IconTelem[] =
+{
+#if defined(PCBX10)
+#include "iconTeleminv.lbm"
+#else
+#include "iconTelem.lbm"
+#endif
+} ;
+
+const uint8_t IconVoice[] =
+{
+#if defined(PCBX10)
+#include "iconVoiceinv.lbm"
+#else
+#include "iconVoice.lbm"
+#endif
+} ;
+
+const uint8_t IconLswitch[] =
+{
+#if defined(PCBX10)
+#include "iconLswitchinv.lbm"
+#else
+#include "iconLswitch.lbm"
+#endif
+} ;
+
+const uint8_t IconTimer[] =
+{
+#if defined(PCBX10)
+#include "iconTimerinv.lbm"
+#else
+#include "iconTimer.lbm"
+#endif
+} ;
+
 #else
 const uint8_t IconLogging[] =
 {
@@ -1736,6 +1849,7 @@ char *arduFlightMode( uint16_t mode )
 #define STR_MAV_FM_FBWB	 "FBWB"
 #define STR_MAV_FM_CRUISE "CRUISE"
 #define STR_MAV_FM_FLIP	 "FLIP"
+#define STR_MAV_FM_SRTL	 "SRTL"
 #define STR_MAV_FM_X		 "UNKNOWN"
 
 	uint32_t type = mode >> 8 ;
@@ -1770,6 +1884,7 @@ char *arduFlightMode( uint16_t mode )
 		case  15 : s = type ? STR_MAV_FM_GUIDED: STR_MAV_FM_ATUNE ; break	;
 		case  16 : s = type ? STR_MAV_FM_X : STR_MAV_FM_16 ; break	;
 		case  17 : s = type ? STR_MAV_FM_X : STR_MAV_FM_17 ; break	;
+		case  21 : s = STR_MAV_FM_SRTL ; break ;
 		default : s = STR_MAV_FM_X ; break ;
 	}
 	return (char *) s ;
@@ -2499,7 +2614,7 @@ void menuScanDisplay(uint8_t event) ;
 #endif
 
 #ifdef PCBLEM1
-//#define MENUTESTINCLUDE
+#define MENUTESTINCLUDE
 #endif
 
 #ifdef MENUTESTINCLUDE
@@ -2602,7 +2717,7 @@ MenuFuncP menuTabStat[] =
 //#endif
 	menuDebug,
 	menuProcSDstat,
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE) || defined(PCBX9D)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined(PCBX9LITE) || defined(PCBX9D) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 //#ifdef IMAGE_128
 //	menuImage,
 //#endif
@@ -3528,7 +3643,7 @@ void doMainScreenGrphics()
 
 
 #else // PCBX9LITE
-#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)
+#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E) || defined(REV19)
         for( x = -8, y = 4 ; y < 8 ; x += 5, y += 1 )
         {
         	uint8_t z = y - 1 ;
@@ -4460,7 +4575,7 @@ void menuBlocking(uint8_t event)
    #ifdef PCBX9LITE
 #define NUM_MIX_SWITCHES	(5+NUM_SKYCSW)
    #else // PCBX9LITE
-    #if defined(REVPLUS) || defined(REVNORM)
+    #if defined(REVPLUS) || defined(REVNORM) || defined(REV19)
 #define NUM_MIX_SWITCHES	(8+NUM_SKYCSW)
     #endif // norm/plus
 		#ifdef PCBXLITE
@@ -5558,7 +5673,7 @@ void menuCustomTelemetry(uint8_t event)
  #endif
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D)// || defined(PCBX10)
  #define MAX_COM2_OPTIONS		5
  const uint8_t Com2Options[] = {0,1,2,3,4} ;
 #endif
@@ -5586,8 +5701,11 @@ void menuProcTelemetry(uint8_t event)
 
 	EditType = EE_MODEL ;
 
+#if not (defined(PCBX10))
 #define TDATAITEMS	22
-
+#else
+#define TDATAITEMS	20
+#endif
 //#if defined(PCBSKY) || defined(PCB9XT)
 // #ifdef REVX
 //  #define TDATAITEMS	22
@@ -6072,6 +6190,7 @@ uint8_t y = 2*FH;
 	  y += FH ;
 		subN += 1 ;
 
+#if not (defined(PCBX10))
 		lcd_puts_Pleft( y, XPSTR("COM2 Func.") );
 		uint8_t b = g_model.com2Function ;
     attr = 0 ;
@@ -6134,6 +6253,7 @@ uint8_t y = 2*FH;
 		b = g_model.com2Baudrate ;
 
 		g_model.com2Baudrate = checkIndexed( y, XPSTR(BaudString), g_model.com2Baudrate, (sub==subN) ) ;
+#endif
 
 #ifdef PCBSKY
 		if ( b != g_model.com2Baudrate )
@@ -10799,7 +10919,12 @@ void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_
 		case M_AFHD2SA :
 		{
 			uint8_t xoption = option ;
-			xoption &= 0x7F ;
+			if ( xoption & 0x80 )
+			{
+				lcd_puts_Pleft( y, XPSTR("\013T-") ) ;
+				xoption &= 0x7F ;
+				option = xoption ;
+			}
 			if ( xoption <= 70 )
 			{
 				lcd_puts_Pleft( y, XPSTR("\015Rate") ) ;
@@ -10869,7 +10994,7 @@ const uint8_t ProtocolOptions[2][7] = { {2,PROTO_PPM,PROTO_PXX}, {5,PROTO_PPM,PR
 #if defined(PCBX12D) || defined(PCBX10)
  #ifdef DISABLE_PXX
   #if defined(PCBT16)
-const uint8_t ProtocolOptions[2][5] = { {2,PROTO_PPM,PROTO_MULTI}, {3,PROTO_PPM,PROTO_DSM2,PROTO_MULTI} } ;
+const uint8_t ProtocolOptions[2][5] = { {2,PROTO_PPM,PROTO_MULTI}, {4,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI} } ;
 	#else
    #ifdef ACCESS
 const uint8_t ProtocolOptions[2][7] = { {1,PROTO_ACCESS}, {6,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI,PROTO_XFIRE,PROTO_ACCESS} };
@@ -10912,7 +11037,11 @@ uint32_t checkProtocolOptions( uint8_t module )
   #ifdef ACCESS
 		g_model.Module[module].protocol = PROTO_ACCESS ;
   #else
+   #if defined(PCBT16)
+		g_model.Module[module].protocol = PROTO_MULTI ;
+	 #else
 		g_model.Module[module].protocol = PROTO_PXX ;
+  	#endif
   #endif
  #endif
 		return 1 ;
@@ -11426,6 +11555,7 @@ void editAccessTxOptions( uint8_t module, uint8_t event )
 		if(t_pgOfs<=subN)
 		{
 			ModuleControl[module].moduleExtAerial = onoffMenuItem( ModuleControl[module].moduleExtAerial, y, XPSTR("Use External Ant."), sub==subN ) ;
+//			g_model.Module[module].externalAntenna = ModuleControl[module].moduleExtAerial ;
 		  if((y+=FH)>(SCREEN_LINES-1)*FH) break ;
 		}
 		subN += 1 ;
@@ -11662,7 +11792,7 @@ void editAccessProtocol( uint8_t module, uint8_t event, uint8_t start )
 		if ( ( event == EVT_ENTRY ) || AccEntry )
 		{
 			AccState = ACC_NORMAL ;
-			mstate2.m_posVert = 1 ;
+			mstate2.m_posVert = 0 ;
 			AccEntry = 0 ;
 		}
 	 
@@ -12084,6 +12214,48 @@ void editOneProtocol( uint8_t event )
 	}
 	struct t_module *pModule = &g_model.Module[module] ;
 
+//lcd_outhex4( 25*FW, FH, g_model.Module[1].protocol ) ;
+//extern uint8_t s_current_protocol[] ;
+//lcd_outhex4( 25*FW, 2*FH, s_current_protocol[1] ) ;
+//extern uint16_t RfOffDebug1 ;
+//extern uint16_t RfOffDebug2 ;
+//extern uint16_t RfOffDebug3 ;
+//extern uint16_t RfOffDebug4 ;
+//extern uint16_t RfOffDebug5 ;
+//extern uint16_t RfOffDebug6 ;
+//extern uint16_t RfOffDebug7 ;
+//extern uint16_t RfOffDebug8 ;
+//extern uint16_t RfOffDebug9 ;
+
+//lcd_outhex4( 25*FW, 3*FH, RfOffDebug1 ) ;
+//lcd_outhex4( 25*FW, 4*FH, RfOffDebug2 ) ;
+//lcd_outhex4( 25*FW, 5*FH, RfOffDebug3 ) ;
+//lcd_outhex4( 25*FW, 6*FH, RfOffDebug4 ) ;
+//lcd_outhex4( 25*FW, 7*FH, RfOffDebug5 ) ;
+//lcd_outhex4( 25*FW, 8*FH, RfOffDebug6 ) ;
+//lcd_outhex4( 25*FW, 9*FH, RfOffDebug7 ) ;
+//lcd_outhex4( 25*FW, 10*FH, RfOffDebug8 ) ;
+//lcd_outhex4( 25*FW, 11*FH, RfOffDebug9 ) ;
+
+
+//#if defined(PCBX10)
+//extern uint16_t ExtRfOffPos ;
+//extern uint16_t ExtRfOnPos ;
+//  lcd_outhex4( 25*FW, 12*FH, ExtRfOffPos ) ;
+//  lcd_outhex4( 25*FW, 13*FH, ExtRfOnPos ) ;
+//#endif
+
+//lcd_outhex4( 31*FW, 3*FH, TIM2->ARR ) ;
+//lcd_outhex4( 31*FW, 4*FH, TIM2->CNT ) ;
+//lcd_outhex4( 31*FW, 5*FH, TIM2->CCR2 ) ;
+//lcd_outhex4( 31*FW, 6*FH, TIM2->CCER ) ;
+//lcd_outhex4( 31*FW, 7*FH, TIM2->CCMR2 ) ;
+//lcd_outhex4( 31*FW, 8*FH, TIM2->DIER ) ;
+//lcd_outhex4( 31*FW, 9*FH, TIM2->CR1 ) ;
+//lcd_outhex4( 31*FW, 10*FH, TIM1->ARR ) ;
+//lcd_outhex4( 31*FW, 11*FH, TIM1->CCR2 ) ;
+
+
 #ifdef ACCESS
 	if ( pModule->protocol == PROTO_ACCESS )
 	{
@@ -12210,13 +12382,18 @@ void editOneProtocol( uint8_t event )
 #if defined(PCBX12D) || defined (PCBXLITE) || defined (PCBX9D) || defined (PCBX9LITE) || defined(PCBX10)
 			if ( module == 0 )
 			{
-#if defined (PCBX9LITE)
+#if defined (PCBX9LITE) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
+				killEvents(event) ;
 				value = newvalue ? PROTO_ACCESS : PROTO_OFF ;
 #else
  #ifdef DISABLE_PXX
 				value = newvalue ? PROTO_PPM : PROTO_OFF ;
  #else
+  #ifdef PCBT16
+				value = newvalue ? PROTO_MULTI : PROTO_OFF ;
+  #else
 				value = newvalue ? 1 : PROTO_OFF ;
+  #endif
  #endif
 #endif
 			}
@@ -12245,6 +12422,7 @@ void editOneProtocol( uint8_t event )
 			if ( value == PROTO_ACCESS )
 			{
 				AccEntry = 1 ;
+				return ;
 			}
 #endif
 		}
@@ -16199,7 +16377,11 @@ void menuProcDiagKeys(uint8_t event)
   for(uint8_t i=0; i<4; i++)
   {
     uint8_t y=i*FH+FH*4;
+#if defined(PCBX12D) || defined(PCBX10)
+  	lcd_HiResimg( x*2, y*2, sticksHiRes, i, 0 ) ;
+#else
     lcd_img(    x,       y, sticks,i,0);
+#endif
     bool tm=keyState((EnumKeys)(TRM_BASE+2*i));
     bool tp=keyState((EnumKeys)(TRM_BASE+2*i+1));
     lcd_putcAtt(x+FW*4,  y, tm+'0',tm ? INVERS : 0);
@@ -16477,7 +16659,11 @@ void menuProcTrainer(uint8_t event)
   #if defined(PCBX9LITE) && defined(X9LS)
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 5 ) ;
   #else
+   #if defined(PCBX10) && defined(PCBREV_EXPRESS)
+		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 5 ) ;
+   #else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
+   #endif
   #endif
  #endif
 #endif
@@ -16487,7 +16673,7 @@ void menuProcTrainer(uint8_t event)
 	}
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-#if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS))
+#if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS)) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
   lcd_putsAttIdx(13*FW, 0, XPSTR("\010Jack PPMSbus    Cppm    Slave   JackSBUSBT      "), tProf->channel[0].source, attr ) ;
 #else
   lcd_putsAttIdx(13*FW, 0, XPSTR("\010Jack PPMSbus    Cppm    Slave   JackSBUS"), tProf->channel[0].source, attr ) ;
@@ -17515,7 +17701,7 @@ void menuTest(uint8_t event)
 	lcd_outdezAtt( 15*FW, 1*FH, channel, attr ) ;
 	if(attr)
 	{
-		channel = checkIncDec( channel, 2, 12, 0 ) ;
+		channel = checkIncDec( channel, 2, 120, 0 ) ;
 	}
 
 	attr = mstate2.m_posVert == 2 ? InverseBlink : 0 ;
@@ -17549,6 +17735,16 @@ void menuTest(uint8_t event)
 
 }
  #endif // MENUTESTINCLUDE
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+const uint8_t Icon24_1[] =
+{
+#include "icon24_1inv.lbm"
+} ;
+
+extern void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type) ;
+
 #endif
 
 void menuDebug(uint8_t event)
@@ -17595,273 +17791,58 @@ void menuDebug(uint8_t event)
 
 #endif
 
-//#if defined(PCBX10) && defined(PCBREV_EXPRESS)
-//extern uint8_t DsmTxPacket[3][11] ;
-//	lcd_outhex2( 0,  10*FH, DsmTxPacket[0][0] ) ;
-//	lcd_outhex2( 12, 10*FH, DsmTxPacket[0][1] ) ;
-//	lcd_outhex2( 24, 10*FH, DsmTxPacket[0][2] ) ;
-//	lcd_outhex2( 36, 10*FH, DsmTxPacket[0][3] ) ;
-//	lcd_outhex2( 48, 10*FH, DsmTxPacket[0][4] ) ;
-//	lcd_outhex2( 60, 10*FH, DsmTxPacket[0][5] ) ;
-//	lcd_outhex2( 72, 10*FH, DsmTxPacket[0][6] ) ;
-//	lcd_outhex2( 84, 10*FH, DsmTxPacket[0][7] ) ;
-//	lcd_outhex2( 96, 10*FH, DsmTxPacket[0][8] ) ;
-//	lcd_outhex2( 108,10*FH, DsmTxPacket[0][9] ) ;
-//	lcd_outhex2( 120,10*FH, DsmTxPacket[0][10] ) ;
-	
-//	lcd_outhex2( 0,  11*FH, DsmTxPacket[1][0] ) ;
-//	lcd_outhex2( 12, 11*FH, DsmTxPacket[1][1] ) ;
-//	lcd_outhex2( 24, 11*FH, DsmTxPacket[1][2] ) ;
-//	lcd_outhex2( 36, 11*FH, DsmTxPacket[1][3] ) ;
-//	lcd_outhex2( 48, 11*FH, DsmTxPacket[1][4] ) ;
-//	lcd_outhex2( 60, 11*FH, DsmTxPacket[1][5] ) ;
-//	lcd_outhex2( 72, 11*FH, DsmTxPacket[1][6] ) ;
-//	lcd_outhex2( 84, 11*FH, DsmTxPacket[1][7] ) ;
-//	lcd_outhex2( 96, 11*FH, DsmTxPacket[1][8] ) ;
-//	lcd_outhex2( 108,11*FH, DsmTxPacket[1][9] ) ;
-//	lcd_outhex2( 120,11*FH, DsmTxPacket[1][10] ) ;
+#if defined(PCBX12D) || defined(PCBX10)
 
-//	lcd_outhex2( 0,  12*FH, DsmTxPacket[2][0] ) ;
-//	lcd_outhex2( 12, 12*FH, DsmTxPacket[2][1] ) ;
-//	lcd_outhex2( 24, 12*FH, DsmTxPacket[2][2] ) ;
-//	lcd_outhex2( 36, 12*FH, DsmTxPacket[2][3] ) ;
-//	lcd_outhex2( 48, 12*FH, DsmTxPacket[2][4] ) ;
-//	lcd_outhex2( 60, 12*FH, DsmTxPacket[2][5] ) ;
-//	lcd_outhex2( 72, 12*FH, DsmTxPacket[2][6] ) ;
-//	lcd_outhex2( 84, 12*FH, DsmTxPacket[2][7] ) ;
-//	lcd_outhex2( 96, 12*FH, DsmTxPacket[2][8] ) ;
-//	lcd_outhex2( 108,12*FH, DsmTxPacket[2][9] ) ;
-//	lcd_outhex2( 120,12*FH, DsmTxPacket[2][10] ) ;
-//#endif
-
-#if defined(PCBX10)
-
-#ifdef INVERT_DISPLAY
-//extern uint16_t LcdErrors ;
-//extern uint16_t LcdBits ;
-//extern uint16_t Lcdy ;
-//extern uint16_t Lcdx ;
-//extern uint16_t Lcdc ;
-//  lcd_outhex4(  0, 1*FH, LcdErrors ) ;
-//  lcd_outhex4(  0, 2*FH, LcdBits ) ;
-//  lcd_outhex4(  0, 3*FH, Lcdy ) ;
-//  lcd_outhex4(  0, 4*FH, Lcdx ) ;
-//  lcd_outhex4(  0, 5*FH, Lcdc ) ;
-
-	
-//extern uint16_t DMA2DerrorCount ;
-//extern uint16_t DMA2DabortCount ;
-//extern uint16_t DMA2DintxCount ;
-//  lcd_outhex4(  40, 1*FH, DMA2DerrorCount ) ;
-//  lcd_outhex4(  40, 2*FH, DMA2DabortCount ) ;
-//  lcd_outhex4(  40, 3*FH, DMA2DintxCount ) ;
-	 
-//	uint32_t *q ;
-//	q = (uint32_t *) &RTC->BKP2R ;
-
-//  lcd_outhex8(  0, 8*FH, *q++ ) ;
-//  lcd_outhex8(  0, 9*FH, *q++ ) ;
-//  lcd_outhex8(  0, 10*FH, *q++ ) ;
-//  lcd_outhex8(  0, 11*FH, *q++ ) ;
-//  lcd_outhex8(  0, 12*FH, *q++ ) ;
-//  lcd_outhex8(  0, 13*FH, *q++ ) ;
-//  lcd_outhex8(  0, 14*FH, *q++ ) ;
-
-//  lcd_outhex8(  60, 8*FH, *q++ ) ;
-//  lcd_outhex8(  60, 9*FH, *q++ ) ;
-//  lcd_outhex8(  60, 10*FH, *q++ ) ;
-//  lcd_outhex8(  60, 11*FH, *q++ ) ;
-//  lcd_outhex8(  60, 12*FH, *q++ ) ;
-//  lcd_outhex8(  60, 13*FH, *q++ ) ;
-//  lcd_outhex8(  60, 14*FH, *q++ ) ;
-
-//  lcd_outhex8(  120, 8*FH, *q++ ) ;
-//  lcd_outhex8(  120, 9*FH, *q++ ) ;
-
-#endif
+	uint8_t *p = (uint8_t *)Icon24_1 ;
+	uint16_t w ;
+	uint16_t h ;
+	w = *p++ ;
+	h = *p++ ;
+	lcdDrawBitmapDMA( 300, 10, w, h, p, 0 ) ;
 
 #endif
 
 #if defined(X9LS)
-//extern uint8_t BtDebugText[] ;
-//extern uint8_t BtSbusFrame[] ;
-
-//extern uint8_t BtT1Buffer[] ;
-//extern uint8_t BtT2Buffer[] ;
-//extern uint8_t BtT3Buffer[] ;
-
-//	lcd_puts_Pleft( 1*FH, (char *)BtT1Buffer ) ;
-//	lcd_puts_Pleft( 2*FH, (char *)BtT2Buffer ) ;
-//	lcd_puts_Pleft( 3*FH, (char *)BtT3Buffer ) ;
-	
-
-//	uint32_t i ;
-//	uint8_t *p ;
-//	p = BtSbusFrame ;
-//	for ( i = 0 ; i < 8 ; i += 1 )
-//	{
-//		lcd_outhex2( i*12, 1*FH, *p++ ) ;
-//	}
-//	for ( i = 0 ; i < 8 ; i += 1 )
-//	{
-//		lcd_outhex2( i*12, 2*FH, *p++ ) ;
-//	}
-//	for ( i = 0 ; i < 8 ; i += 1 )
-//	{
-//		lcd_outhex2( i*12, 3*FH, *p++ ) ;
-//	}
-
-//extern uint8_t BtStatus ;
-//		lcd_outhex2( 0, 4*FH, BtStatus ) ;
 
 #endif
 
-
-//#ifdef PCBLEM1
-
-//uint8_t *p ;
-//p = (uint8_t *) 0xF000 ;
-
-
-
-
-////extern uint8_t Registers[] ;
-
-//	uint32_t i ;
-//	for ( i = 0 ; i < 8 ; i += 1 )
-//	{
-//		lcd_outhex2( i*12, 1*FH, *p++ ) ;
-//	}
-//	for ( i = 0 ; i < 8 ; i += 1 )
-//	{
-//		lcd_outhex2( i*12, 2*FH, *p++ ) ;
-//	}
-//////	for ( i = 0 ; i < 10 ; i += 1 )
-//////	{
-//////		lcd_outhex2( i*12, 2*FH, Registers[i+10] ) ;
-//////	}
-////	for ( i = 0 ; i < 10 ; i += 1 )
-////	{
-////		lcd_outhex2( i*12, 2*FH, Registers[i+20] ) ;
-////	}
-////	for ( i = 0 ; i < 10 ; i += 1 )
-////	{
-////		lcd_outhex2( i*12, 4*FH, Registers[i+50] ) ;
-////	}
-////	for ( i = 0 ; i < 4 ; i += 1 )
-////	{
-////		lcd_outhex2( i*12, 5*FH, Registers[i+60] ) ;
-////	}
-
-
-
-////	uint16_t x ;
-////extern struct t_fifo128 RfRx_fifo ;
-////	uint16_t *p = (uint16_t *)&RfRx_fifo ;
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 1*FH, x ) ;
-////	}
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 2*FH, x ) ;
-////	}
-
-//extern uint8_t BindDebugResult ;
-//	lcd_puts_Pleft( 3*FH, "Last Bind Value" ) ;
-//	lcd_outhex4( 100, 3*FH, BindDebugResult ) ;
-
-
-////	p = (uint16_t *)&Com1_fifo ;
-
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 4*FH, x ) ;
-////	}
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 5*FH, x ) ;
-////	}
-
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 3*FH, x ) ;
-////	}
-
-
-
-////extern struct t_fifo128 RfTx_fifo ;
-////	p = (uint16_t *)&RfTx_fifo ;
-////	for ( i = 0 ; i < 5 ; i += 1 )
-////	{
-////		x = *p++ ;
-////		x = ( x >> 8 ) | ( x << 8 ) ;
-////		lcd_outhex4( i*25, 5*FH, x ) ;
-////	}
-
-//#endif
-
 #ifdef ACCESS
-
-//extern uint16_t AccessPulsesCount ;
-//	lcd_outhex4( 6*FW, 0, AccessPulsesCount ) ;
-////extern struct t_moduleSettings ModuleSettings[] ;
-
-//	lcd_outhex4(  0, FH, ModuleSettings[0].mode ) ;
-	
-//extern struct t_16bit_fifo64 Internal_fifo ;
-//  lcd_outhex4(  0, 2*FH, Internal_fifo.fifo[ 0] ) ;
-//  lcd_outhex4( 25, 2*FH, Internal_fifo.fifo[ 1] ) ;
-//  lcd_outhex4( 50, 2*FH, Internal_fifo.fifo[ 2] ) ;
-//  lcd_outhex4( 75, 2*FH, Internal_fifo.fifo[ 3] ) ;
-//  lcd_outhex4(  0, 3*FH, Internal_fifo.fifo[ 4] ) ;
-//  lcd_outhex4( 25, 3*FH, Internal_fifo.fifo[ 5] ) ;
-//  lcd_outhex4( 50, 3*FH, Internal_fifo.fifo[ 6] ) ;
-//  lcd_outhex4( 75, 3*FH, Internal_fifo.fifo[ 7] ) ;
-//  lcd_outhex4(  0, 4*FH, Internal_fifo.fifo[ 8] ) ;
-//  lcd_outhex4( 25, 4*FH, Internal_fifo.fifo[ 9] ) ;
-//  lcd_outhex4( 50, 4*FH, Internal_fifo.fifo[10] ) ;
-//  lcd_outhex4( 75, 4*FH, Internal_fifo.fifo[11] ) ;
-//  lcd_outhex4(  0, 5*FH, Internal_fifo.fifo[12] ) ;
-//  lcd_outhex4( 25, 5*FH, Internal_fifo.fifo[13] ) ;
-//  lcd_outhex4( 50, 5*FH, Internal_fifo.fifo[14] ) ;
-//  lcd_outhex4( 75, 5*FH, Internal_fifo.fifo[15] ) ;
-
-//  lcd_outhex4(  0, 3*FH, XjtHeartbeatCapture.value ) ;
-//  lcd_outhex4( 50, 3*FH, GPIOC->IDR ) ;
-//extern uint16_t XjtHbeatOffset ;
-//  lcd_outhex4( 0,  4*FH, XjtHbeatOffset ) ;
 
 #endif
 
 #ifdef PCBXLITE
 
-//extern struct t_PWMcontrol PWMcontrol[] ;
-//	lcd_outhex4( 0, 1*FH, PWMcontrol[0].timer_capture_value ) ;
-//	lcd_outhex4( 30, 1*FH, PWMcontrol[0].timer_capture_period ) ;
-//	lcd_outhex4( 0, 2*FH, PWMcontrol[1].timer_capture_value ) ;
-//	lcd_outhex4( 30, 2*FH, PWMcontrol[1].timer_capture_period ) ;
-//	lcd_outhex4( 0, 3*FH, PWMcontrol[2].timer_capture_value ) ;
-//	lcd_outhex4( 30, 3*FH, PWMcontrol[2].timer_capture_period ) ;
-//	lcd_outhex4( 0, 4*FH, PWMcontrol[3].timer_capture_value ) ;
-//	lcd_outhex4( 30, 4*FH, PWMcontrol[3].timer_capture_period ) ;
 #endif
 
-//#ifdef PCBX10
-//  lcd_outhex4( 0,  3*FH, GPIOA->IDR & ~0x0010 ) ;
-//  lcd_outhex4( 25, 3*FH, GPIOB->IDR ) ;
+#ifdef PCBX10
+  
+	
+	lcd_outhex4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
+  lcd_outhex4( 6*FW, 3*FH, GPIOB->IDR ) ;
+  lcd_outhex4( 12*FW, 3*FH, GPIOC->IDR ) ;
+  lcd_outhex4( 18*FW, 3*FH, GPIOD->IDR ) ;
+
+  lcd_outhex8( (uint16_t)0*FW, (uint16_t)4*FH, (uint32_t)GPIOA->MODER ) ;
+  lcd_outhex8( (uint16_t)12*FW, (uint16_t)4*FH, (uint32_t)GPIOA->PUPDR ) ;
+  lcd_outhex8( (uint16_t)24*FW, (uint16_t)4*FH, (uint32_t)GPIOA->AFR[0] ) ;
+	
+	 
+//	lcd_puts_Pleft( 3*FH, XPSTR("BI=") ) ;
+//  lcd_outhex4( 3*FW, 3*FH, GPIOB->IDR & 0x0008 ) ;
+//	lcd_puts_P( 9*FW, 3*FH, XPSTR("BO=") ) ;
+//  lcd_outhex4( 12*FW, 3*FH, GPIOB->ODR & 0x0008 ) ;
+
+//	lcd_puts_P( 17*FW, 3*FH, XPSTR("DI=") ) ;
+//  lcd_outhex4( 20*FW, 3*FH, GPIOD->IDR & 0x1000 ) ;
+
+//extern uint16_t ExtRfOffPos ;
+//extern uint16_t ExtRfOnPos ;
+//  lcd_outhex4( 16*FW, 4*FH, ExtRfOffPos ) ;
+//  lcd_outhex4( 21*FW, 4*FH, ExtRfOnPos ) ;
+
+
+
 //  lcd_outhex4( 50, 3*FH, GPIOC->IDR ) ;
-//  lcd_outhex4( 75, 3*FH, GPIOD->IDR ) ;
 //  lcd_outhex4( 0,  4*FH, GPIOE->IDR ) ;
 //  lcd_outhex4( 25,  4*FH, GPIOF->IDR ) ;
 //  lcd_outhex4( 50,  4*FH, GPIOG->IDR ) ;
@@ -17872,10 +17853,7 @@ void menuDebug(uint8_t event)
 ////	lcd_outhex4( 0,  9*FH, GPIOC->MODER >> 16 ) ;
 ////	lcd_outhex4( 30,  9*FH, GPIOC->MODER ) ;
 
-
-
-
-//#endif
+#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 
@@ -18172,8 +18150,8 @@ extern uint8_t BtDebugText[] ;
 
 extern uint16_t FrameLossCount ;
 extern uint8_t TxRssi ;
-  lcd_outhex4( 0*FW, 3*FH, FrameLossCount ) ;
-  lcd_outhex4( 6*FW, 3*FH, TxRssi ) ;
+  lcd_outhex4( 0*FW, 5*FH, FrameLossCount ) ;
+  lcd_outhex4( 6*FW, 5*FH, TxRssi ) ;
 
 	lcd_puts_Pleft( 6*FH, XPSTR("Raw Logging") ) ;
 	lcd_putsAttIdx( PARAM_OFS, 6*FH, XPSTR("\003OFFBinHex"), RawLogging, 0 ) ;
@@ -19714,7 +19692,6 @@ void menuNewVario(uint8_t event)
 }
 #endif
 
-extern void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint8_t * bitmap, uint8_t type) ;
 
 void menuProcBattery(uint8_t event)
 {
@@ -22531,43 +22508,152 @@ enum GENERAL_INDEX
 
 
 #if defined(PCBX12D) || defined(PCBX10)
-static void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight )
+
+//#define LARGE_INDEX 1
+
+const uint8_t *m_icons[] = {
+IconMix,
+IconHeli,
+IconLimits,
+IconDrate,
+0,
+IconCurve,
+IconLswitch,
+IconMusic,
+0,
+0,
+IconTelem,
+IconVoice,
+IconTimer,
+0,
+IconProto
+};
+	
+const uint8_t *g_icons[] = {
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+0,
+};
+
+
+void attachIcon( uint32_t x, uint32_t y, const uint8_t *icon )
+{
+	uint32_t w ;
+	uint32_t h ;
+	w = *icon ;
+	h = *(icon+1) ;
+	x = 2*x - (w+4) ;
+	y = 2*y - (h/2-8) ;
+	lcdDrawIcon( x, y, icon, 0 ) ;
+}
+
+
+static void displayIndexIcons( const uint8_t *icons[], uint8_t extra, uint8_t lines )
 {
 	uint8_t offset = 7 ;
 	if ( extra == 8 )
 	{
 		offset = 8 ;
-		
-		lcd_puts_P( 69 + X12OFFSET, 2*FH, PSTR(strings[7]) ) ;
+		if ( icons[7] )
+		{
+			attachIcon( 89 + X12OFFSET, 10, icons[7] ) ;
+		}
 	}
 	for ( uint8_t i = 0 ; i < lines ; i += 1 )
 	{
-		lcd_puts_P( 1 + X12OFFSET, (i+3)*FH, PSTR(strings[i]) ) ;
+		if ( icons[i] )
+		{
+			attachIcon( 1 + X12OFFSET, (i+1)*(14)+10, icons[i] ) ;
+		}
 		if ( i < extra )
 		{
-			lcd_puts_P( 69 + X12OFFSET, (i+3)*FH, PSTR(strings[i+offset]) ) ;
+			if ( icons[i+offset] )
+			{
+				attachIcon( 89 + X12OFFSET, (i+1)*(14)+10, icons[i+offset] ) ;
+			}
+		}
+	} 
+}
+
+static void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight )
+{
+	uint8_t offset = 7 ;
+#ifdef LARGE_INDEX	
+//	if ( extra == 8 )
+//	{
+//		offset = 8 ;
+
+//		lcd_putsAtt( 122, 9, PSTR(strings[7]), DBLSIZE | CONDENSED ) ;
+//	}
+//	for ( uint8_t i = 0 ; i < lines ; i += 1 )
+//	{
+//		lcd_putsAtt( 32, i*13+22, PSTR(strings[i]), DBLSIZE | CONDENSED ) ;
+//		if ( i < extra )
+//		{
+//			lcd_putsAtt( 122, i*13+22, PSTR(strings[i+offset]), DBLSIZE | CONDENSED ) ;
+//		}
+//	} 
+	
+//	pushPlotType( PLOT_BLACK ) ;
+//	lcd_vline( 120, 10, 104 ) ;
+//	popPlotType() ;
+
+//	if ( highlight )
+//	{
+//		if ( highlight > 7 )
+//		{
+//			lcd_char_inverse( 122, (highlight-offset)*13+9, 80, 0, 13 ) ;
+//		}
+//		else
+//		{
+//			lcd_char_inverse( 32, (highlight)*13+9, 87, 0, 13 ) ;
+//		}
+//	}
+	
+#else
+	if ( extra == 8 )
+	{
+		offset = 8 ;
+		
+		lcd_puts_P( 89 + X12OFFSET, 10, PSTR(strings[7]) ) ;
+	}
+	for ( uint8_t i = 0 ; i < lines ; i += 1 )
+	{
+		lcd_puts_P( 1 + X12OFFSET, (i+1)*(14)+10, PSTR(strings[i]) ) ;
+		if ( i < extra )
+		{
+			lcd_puts_P( 89 + X12OFFSET, (i+1)*(14)+10, PSTR(strings[i+offset]) ) ;
 		}
 	} 
 	
-#if defined(PCBX12D) || defined(PCBX10)
 	pushPlotType( PLOT_BLACK ) ;
-#endif
-	lcd_vline( 67 + X12OFFSET, 2*FH, 63 ) ;
-#if defined(PCBX12D) || defined(PCBX10)
-		popPlotType() ;
-#endif
+	lcd_vline( 67 + X12OFFSET, 10, 104 ) ;
+	popPlotType() ;
 
 	if ( highlight )
 	{
 		if ( highlight > 7 )
 		{
-			lcd_char_inverse( 68 + X12OFFSET, (highlight-offset+2)*FH, 60, 0 ) ;
+			lcd_char_inverse( 88 + X12OFFSET, (highlight-offset)*(14)+10, 60, 0 ) ;
 		}
 		else
 		{
-			lcd_char_inverse( 0 + X12OFFSET, (highlight+2)*FH, 67, 0 ) ;
+			lcd_char_inverse( 0 + X12OFFSET, (highlight)*(14)+10, 67, 0 ) ;
 		}
 	}
+#endif
 }
 #else
 static void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight )
@@ -22826,7 +22912,8 @@ void editExtraPot( uint8_t y, uint32_t index, uint32_t active )
 }
 #endif	// PCB9XT
 
-#if defined(X9LS)
+#if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
+//#if defined(X9LS)
 const uint8_t BtFunctionMap[] = { 0,4,5,6 } ;
 #else
 const uint8_t BtFunctionMap[] = { 0,4,1,2,3,5,6 } ;
@@ -22955,6 +23042,9 @@ STR_DiagAna
 	
 
 			displayIndex( in_Strings, M_COUNT-1-7, 7, sub ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+			displayIndexIcons( g_icons, M_COUNT-1-7, 7 ) ;
+#endif
 
 //#if defined(PCBT12)
 //			displayIndex( in_Strings, 6, 7, sub ) ;
@@ -23610,13 +23700,17 @@ void I2C_set_volume( register uint8_t volume ) ;
 
 // Add 1 to these if using _eeGeneral.disableBtnLong
 #if defined(PCBSKY) || defined(PCB9XT)
-#ifdef PCBSKY
+ #ifdef PCBSKY
 			IlinesCount = 10+1 ;
-#else
+ #else
 			IlinesCount = 9+1 ;
-#endif
+ #endif
 #else
+ #if defined(PCBX12D) || defined(PCBX10)
+			IlinesCount = 8+1+1 ;
+ #else
 			IlinesCount = 8+1 ;
+ #endif
 #endif
 			TITLE( XPSTR(Str_General) ) ;
 
@@ -23729,6 +23823,13 @@ void I2C_set_volume( register uint8_t volume ) ;
       uint8_t b = g_eeGeneral.altMixMenu ;
       g_eeGeneral.altMixMenu = onoffMenuItem( b, y, XPSTR("Mix Menu Details"), sub == subN ) ;
 
+#if defined(PCBX12D) || defined(PCBX10)
+ 			y += FH ;
+			subN += 1 ;
+			lcd_puts_Pleft( y,XPSTR("ScreenShot Sw"));
+      putsDrSwitches(PARAM_OFS-FW,y,g_eeGeneral.screenShotSw,sub==subN ? blink : 0);
+      if(sub==subN) CHECK_INCDEC_GENERALSWITCH(event, g_eeGeneral.screenShotSw, -MaxSwitchIndex, MaxSwitchIndex) ;
+#endif
 
 //#if defined(PCBSKY) || defined(PCB9XT)
   	 }	
@@ -23783,7 +23884,11 @@ void I2C_set_volume( register uint8_t volume ) ;
 	    	lcd_puts_Pleft( y, PSTR(STR_MODE) );
 				for ( uint8_t i = 0 ; i < 4 ; i += 1 )
 				{
+#if defined(PCBX12D) || defined(PCBX10)
+ 					lcd_HiResimg( (6+4*i)*FW*2, y*2, sticksHiRes, i, 0 ) ;
+#else
 					lcd_img((6+4*i)*FW, y, sticks, i, 0 ) ;
+#endif
 				}
  				y += FH ;
     
@@ -24829,7 +24934,11 @@ extern int32_t LastRotaryValue ;
  				y += FH ;
 				for ( uint8_t i = 0 ; i < 4 ; i += 1 )
 				{
+#if defined(PCBX12D) || defined(PCBX10)
+  				lcd_HiResimg( (6+4*i)*FW*2, y*2, sticksHiRes, i, 0 ) ;
+#else
 					lcd_img((6+4*i)*FW, y, sticks, i, 0 ) ;
+#endif
 					if (g_eeGeneral.stickReverse & (1<<i)) lcd_char_inverse( (6+4*i)*FW, y, 3*FW, 0 ) ;
 				}
     		if(sub==subN)
@@ -24938,7 +25047,8 @@ extern uint8_t BtStatus ;
 				lcd_putsAttIdx( 13*FW, y, XPSTR("\007    OFF  TrnRxTrnTxRxLcdDumpTelem  Script FrPARA "), g_model.BTfunction, attr ) ;
 				if (attr)
 				{
-#if defined(X9LS)
+#if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
+//#if defined(X9LS)
 					g_model.BTfunction = checkOutOfOrder( g_model.BTfunction, (uint8_t *)BtFunctionMap, 4 ) ;
 #else
 					g_model.BTfunction = checkOutOfOrder( g_model.BTfunction, (uint8_t *)BtFunctionMap, 7 ) ;
@@ -25012,9 +25122,11 @@ extern uint8_t BtName[] ;
 			{
 				EditType = EE_MODEL ;
 #ifndef X9LS
+ #if not (defined(PCBX10) && defined(PCBREV_EXPRESS))
 				g_model.autoBtConnect = onoffMenuItem( g_model.autoBtConnect, y, XPSTR("Auto Connect"), sub==subN ) ;
 				subN += 1 ;
 				y += FH ;				 
+ #endif
 #endif
 				uint8_t attr = (sub == subN) ? INVERS : 0 ;
 				lcd_putsAtt( 0, y, XPSTR("Scan"), attr ) ; 
@@ -25030,6 +25142,8 @@ extern uint8_t BtName[] ;
 				EditType = EE_GENERAL ;
 				subN += 1 ;
 #ifndef X9LS
+ #if not (defined(PCBX10) && defined(PCBREV_EXPRESS))
+
 				attr = (sub == subN) ? INVERS : 0 ;
 				lcd_putsAtt( 10*FW, y, XPSTR("Configure"), attr ) ; 
 				if ( attr )
@@ -25043,9 +25157,11 @@ extern uint8_t BtName[] ;
 				}
 				subN += 1 ;
 				y += FH ;				 
+ #endif
 #endif
 
-#if defined(X9LS)
+#if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
+//#if defined(X9LS)
 #ifndef SMALL
 				if ( g_eeGeneral.BtType == BT_TYPE_PARA )
 				{
@@ -25075,7 +25191,8 @@ extern uint8_t BtPswd[] ;
 				subN += 1 ;
 				y += FH ;				 
 
-#if defined(X9LS)
+#if defined(X9LS) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
+//#if defined(X9LS)
 				if ( ( g_eeGeneral.BtType == BT_TYPE_PARA ) && BtStatus && (BtControl.BtMasterSlave == 2) )
 				{
 					attr = (sub == subN) ? INVERS : 0 ;
@@ -25260,7 +25377,9 @@ STR_Protocol
 			}
 			
 			displayIndex( in_Strings, 8, 7, sub ) ;
-			
+#if defined(PCBX12D) || defined(PCBX10)
+			displayIndexIcons( m_icons, 8, 7 ) ;
+#endif			
 			if ( PopupData.PopupActive )
 			{
 				uint32_t mask ;
@@ -26484,6 +26603,15 @@ extern uint16_t BtParaDebug ;
 	lcd_outdez( 125, 7*FH, BtControl.BtBaudChangeIndex ) ;
 #endif
 
+#if defined(PCBX10) && defined(PCBREV_EXPRESS)
+
+	lcd_outhex4( 25*FW, 1*FH, USART6->CR1 ) ;
+	lcd_outhex4( 25*FW, 2*FH, USART6->SR ) ;
+	lcd_outhex4( 25*FW, 3*FH, USART6->BRR ) ;
+	lcd_outhex4( 25*FW, 4*FH, GPIOG->IDR ) ;
+
+
+#endif
 }
 
 void menuProcBtAddressList(uint8_t event)
@@ -26866,19 +26994,30 @@ extern uint32_t stackSpace( uint32_t stack ) ;
 
 #if defined(PCBX12D) || defined(PCBX10)
 
-#define STATUS_VERTICAL		254
+#define STATUS_VERTICAL		240
 
-extern uint8_t speaker[] ;
+//extern uint8_t speaker[] ;
+//extern const uint8_t SpeakerHiRes[] ;
+const uint8_t SpeakerHiRes[] = {
+8,16,0,
+0xC0,0xC0,0xC0,0xE0,0xF0,0xF8,0xFC,0xFC,
+0x07,0x07,0x07,0x0F,0x1F,0x3F,0x7F,0x7F
+} ;
+
+
+
+
 void displayStatusLine( uint32_t scriptPercent )
 {
 //	lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL-2, 480, 18, LCD_STATUS_GREY ) ;
-	lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL-14, 480, 18+14, LCD_STATUS_GREY ) ;
-	putsTime( 224, (STATUS_VERTICAL/2), Time.hour*60+Time.minute, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+	lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL, 480, 32, LCD_STATUS_GREY ) ;
+	putsTime( 224, (STATUS_VERTICAL/2)+4, Time.hour*60+Time.minute, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
 
-	lcd_img( 180, (STATUS_VERTICAL/2), speaker, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+	lcd_HiResimg( 180*2, (STATUS_VERTICAL)-1+8, SpeakerHiRes, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+//	lcd_img( 180, (STATUS_VERTICAL/2), speaker, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
 extern uint8_t CurrentVolume ;
 	pushPlotType( PLOT_BLACK ) ;
-	lcd_hbar( 185, (STATUS_VERTICAL/2)+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
+	lcd_hbar( 185, (STATUS_VERTICAL/2)+1+4, 23, 6, (CurrentVolume*100+16)/23 ) ;
 	popPlotType() ;
 
 extern uint8_t LogsRunning ;
@@ -26886,15 +27025,16 @@ extern uint8_t LogsRunning ;
 	{
 		if ( BLINK_ON_PHASE )
 		{
-			lcd_img( 165, (STATUS_VERTICAL/2), IconX12Logging, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+			lcdDrawIcon( 330, STATUS_VERTICAL+6, Icon24log, 0x40 ) ;
+//			lcd_img( 165, (STATUS_VERTICAL/2), IconX12Logging, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
 		}
 	}
 extern uint32_t IdlePercent ;
-  lcd_outdezNAtt( 4*FW, (STATUS_VERTICAL/2), IdlePercent ,PREC2, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
+  lcd_outdezNAtt( 4*FW, (STATUS_VERTICAL/2)+4, IdlePercent ,PREC2, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
 	if ( scriptPercent )
 	{
 extern uint32_t BasicExecTime ;
-	  lcd_outdezNAtt( 8*FW, (STATUS_VERTICAL/2), BasicExecTime ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
+	  lcd_outdezNAtt( 8*FW, (STATUS_VERTICAL/2)+4, BasicExecTime ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
 	}
 }
 #endif

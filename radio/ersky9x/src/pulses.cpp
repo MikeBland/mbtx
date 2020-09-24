@@ -124,18 +124,18 @@ uint32_t setMultiSerialArray( uint8_t *data, uint32_t module )
 	struct t_module *pmodule = &g_model.Module[module] ;
 	uint8_t startChan = pmodule->startChannel ;
 	subProtocol = ( ( pmodule->sub_protocol & 0x3F ) | (pmodule->exsub_protocol << 6 ) ) + 1 ;
-#if defined(PCBT12) || defined(PCBT16) // || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-	if ( subProtocol == M_FRSKYX+1 )
-	{
-		subProtocol = 127 ;
-	}
-#endif
-#if defined(PCBT12) || defined(PCBT16)
-	if ( subProtocol == M_FrskyD+1 )
-	{
-		subProtocol = 127 ;
-	}
-#endif
+//#if defined(PCBT12) || defined(PCBT16) // || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+//	if ( subProtocol == M_FRSKYX+1 )
+//	{
+//		subProtocol = 127 ;
+//	}
+//#endif
+//#if defined(PCBT12) || defined(PCBT16)
+//	if ( subProtocol == M_FrskyD+1 )
+//	{
+//		subProtocol = 127 ;
+//	}
+//#endif
 	packetType = ( ( subProtocol & 0x3F) > 31 ) ? 0x54 : 0x55 ;
 
   if (pmodule->failsafeMode != FAILSAFE_NOT_SET && pmodule->failsafeMode != FAILSAFE_RX )
@@ -168,7 +168,7 @@ uint32_t setMultiSerialArray( uint8_t *data, uint32_t module )
 	*data++ = ( protoByte/*g_model.ppmNCH*/ & 0xF0) | ( pmodule->pxxRxNum & 0x0F ) ;
   
 	optionByte = pmodule->option_protocol ;
-	if ( ( subProtocol & 0x3F ) == M_AFHD2SA + 1 )
+	if ( ( subProtocol ) == M_AFHD2SA + 1 )
 	{
     optionByte |= 0x80 ;
 	}

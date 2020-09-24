@@ -30,6 +30,7 @@
 # AR9X board   make REVB=1
 # Horus X12S   make PCB=X12D
 # Jumper T16   make PCB=X10 PCBT16=1
+# RM TX165     make PCB=X10 PCBT16=1 PCBTX16S=1
 # X10Express   make PCB=X10 EXPRESS=1
 # X10          make PCB=X10
 # XWAVE T-800  make PCBLEM1=1
@@ -51,12 +52,17 @@ BINX = $(CP) -O binary
 ifeq ($(PCB), X9D)
  BASIC = 1
  CPPDEFS += -DBASIC
- LDSCRIPT = X9D/stm32_flash.ld
+ ifeq ($(REV19), 1)
+  LDSCRIPT = X9D/stm32F4_flash.ld
+  UDEFS = -DSTM32F40_41xxx
+ else
+  LDSCRIPT = X9D/stm32_flash.ld
+  UDEFS = -Dstm32f205
+ endif
  CPPDEFS += -DHSE_VALUE=12000000
  CPPDEFS += -DPCBX9D 
  CPPDEFS += -DUSB_JOYSTICK
  CPPDEFS += -DXFIRE
- UDEFS = -Dstm32f205
  ifeq ($(REVPLUS), 1)
   PROJECT = x9dp
   EXT_MOD=X9DP
@@ -92,6 +98,13 @@ ifeq ($(PCB), X9D)
    PROJECT = x9Lite
    EXT_MOD=X9Lite
   endif
+ else ifeq ($(REV19), 1)
+  PROJECT = x9dp19
+  EXT_MOD=X9DP19
+#  CPPDEFS += -DREVPLUS
+  CPPDEFS += -DREV19
+  LUA = 1
+  CPPDEFS += -DLUA
  else
   PROJECT = x9d
   EXT_MOD=X9D
@@ -128,9 +141,16 @@ else ifeq ($(PCB), X10)
  CPPDEFS += -DUSB_JOYSTICK
  UDEFS = -DSTM32F429_439xx
  ifeq ($(PCBT16), 1)
-  PROJECT = t16
-  CPPDEFS += -DPCBT16 
-  EXT_MOD=T16
+  ifeq ($(PCBTX16S), 1)
+   PROJECT = tx16s
+   CPPDEFS += -DPCBT16 
+   CPPDEFS += -DPCBTX16S
+   EXT_MOD=TX16S
+  else
+   PROJECT = t16
+   CPPDEFS += -DPCBT16 
+   EXT_MOD=T16
+  endif
  else ifeq ($(EXPRESS), 1)
   PROJECT = x10E
   EXT_MOD=X10E
@@ -292,6 +312,7 @@ CPPSRC = ersky9x.cpp \
          X12D/rtc_driver.cpp \
          X12D/persX12d.cpp \
 		 	X12D/pulses_driver.cpp \
+		 	X12D/screenshotH.cpp \
          X9D/serial.cpp \
 			stamp.cpp \
          templates.cpp \
@@ -394,6 +415,7 @@ CPPSRC = ersky9x.cpp \
          X12D/rtc_driver.cpp \
          X12D/persX12d.cpp \
 		 	X12D/pulses_driver.cpp \
+		 	X12D/screenshotH.cpp \
          X9D/serial.cpp \
 			stamp.cpp \
          templates.cpp \
@@ -453,6 +475,118 @@ else
 
 ifeq ($(PCB), X9D)
 
+ ifeq ($(REV19), 1)
+# List C source files here
+SRC  = X12D/system_stm32f4xx.c \
+       X12D/stm32f4xx_gpio.c \
+       X12D/stm32f4xx_spi.c \
+       X12D/stm32f4xx_rtc.c \
+       X12D/stm32f4xx_pwr.c \
+       X12D/stm32f4xx_rcc.c \
+       X12D/misc.c \
+       X12D/usbd_desc.c   \
+       X12D/usb_core.c    \
+       X12D/usb_dcd.c     \
+       X12D/usb_bsp.c     \
+       X12D/usb_dcd_int.c \
+       X12D/usbd_core.c   \
+       X12D/usbd_ioreq.c  \
+       X12D/usbd_req.c    \
+       X12D/usbd_hid_joystick.c \
+       X12D/usb_driver.c    \
+       port.c \
+       coos.c
+
+#       X9D/usb_bsp.c \
+#       X9D/usbd_desc.c \
+#       X9D/usb/src/usb_core.c \
+#       X9D/usb/src/usb_dcd.c \
+#       X9D/usb/src/usb_dcd_int.c \
+#       X9D/usb/src/usbd_core.c \
+#       X9D/usb/src/usbd_ioreq.c \
+#       X9D/usb/src/usbd_req.c \
+#       X9D/usb/src/usbd_msc_data.c \
+#       X9D/usb/src/usbd_msc_scsi.c \
+#       X9D/usb/src/usbd_msc_bot.c \
+#       X9D/usb/src/usbd_msc_core.c \
+
+ifeq ($(LUA), 1)
+SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
+           lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           syscalls.c
+endif
+
+
+CPPSRC = ersky9x.cpp \
+         ./X9D/lcd_driver.cpp \
+         X9D/aspi.cpp \
+         X9D/diskio.cpp \
+         X9D/power.cpp \
+         X9D/pulses_driver.cpp \
+         X9D/watchdog.cpp \
+       	X9D/i2c_ee.cpp \
+         X9D/rtc_driver.cpp \
+         X9D/eeprom_rlc.cpp \
+         X9D/serial.cpp \
+         X9D/sound.cpp \
+			stamp.cpp \
+         templates.cpp \
+         pulses.cpp \
+         drivers.cpp \
+         timers.cpp \
+         logicio.cpp \
+         analog.cpp \
+			frsky.cpp \
+         menus.cpp \
+         mixer.cpp \
+         ff.cpp \
+			logs.cpp \
+         audio.cpp \
+			en.cpp \
+			de.cpp \
+			no.cpp \
+			fr.cpp \
+			se.cpp \
+			it.cpp \
+			pl.cpp \
+			vi.cpp \
+			sp.cpp \
+			loadboot.cpp \
+			maintenance.cpp \
+			mavlink.cpp \
+			sbus.cpp \
+         X9D/usbd_usr.cpp \
+			pxx2.cpp \
+		   lcd.cpp
+
+ifeq ($(BASIC), 1)
+	  CPPSRC += basic/parser.cpp
+endif
+
+ifeq ($(BT), 1)
+  CPPSRC += bluetooth.cpp
+  CPPDEFS += -DBT
+endif
+
+
+ifeq ($(LUA), 1)
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+endif
+
+#         gtime.cpp \
+#         massstorage.cpp \
+#         X9D/usbd_usr.cpp \
+#         X9D/usbd_storage_msd.cpp \
+
+CPPSRC += pdi.cpp
+ifeq ($(DEBUG), 1)
+CPPSRC += debug.cpp
+endif
+
+# List ASM source files here
+ASRC = X9D/startup_stm32f40_41xxx.s
+ else
 # List C source files here
 SRC  = X9D/system_stm32f2xx.c \
        X9D/stm32f2xx_gpio.c \
@@ -563,7 +697,7 @@ endif
 
 # List ASM source files here
 ASRC = X9D/startup_stm32f2xx.s
-
+ endif
 else
 
 ifeq ($(PCB), DUE)

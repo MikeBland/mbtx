@@ -35,9 +35,14 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "stm32f2xx.h"
 #ifndef SIMU
+ #if defined(REV19)
+  #include "../X12D/stm32f4xx.h"
+	#include "../X12D/core_cm4.h"
+ #else
+  #include "stm32f2xx.h"
  	#include "core_cm3.h"
+ #endif
 #endif
 #include "../sound.h"
 #include "../ersky9x.h"
@@ -711,6 +716,7 @@ void hapticOn( uint32_t pwmPercent )
 #ifndef PCBX7
 #ifndef PCBXLITE
  #ifndef PCBX9LITE
+  #ifndef REV19
 void initHaptic()
 {
 	configure_pins( GPIO_Pin_HAPTIC, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTC ) ;
@@ -727,6 +733,7 @@ void hapticOn( uint32_t pwmPercent )
 {
 	GPIOHAPTIC->BSRRL = GPIO_Pin_HAPTIC ;
 }
+   #endif // REV19
  #endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7

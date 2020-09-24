@@ -213,6 +213,11 @@ extern void ConsoleInit( void ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
 
+#if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+void USART_Sbus_configure( void ) ;
+void stop_USART_Sbus( void ) ;
+#endif
+
 
 //extern uint16_t DsmRxTimeout ;
 extern uint16_t WatchdogTimeout ;

@@ -11,9 +11,15 @@
 
 #include "../ersky9x.h"
 
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/stm32f4xx_rcc.h"
+#else
 #include "X9D/stm32f2xx.h"
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/stm32f2xx_rcc.h"
+#endif
 #include "X9D/hal.h"
 #include "X9D/aspi.h"
 
@@ -29,6 +35,15 @@
 #include <string.h>
 
 //#define XLITE_PROTO	1
+
+#if defined(REV19)
+void delay_ms(uint32_t ms)
+{
+  while (ms--) {
+		hw_delay( 10000 ) ; // units of 0.1uS
+  }
+}
+#endif
 
 #if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE)
 
@@ -739,9 +754,11 @@ extern uint8_t ImageDisplay ;
 		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
 		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
 extern uint8_t CurrentVolume ;
-		lcd_hbar( 149, 2*FH+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
+		pushPlotType( PLOT_BLACK ) ;
 		lcd_hline( 130, 31, 61 ) ;
 		lcd_vline( 129, 0, 64 ) ;
+		lcd_hbar( 149, 2*FH+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
+		popPlotType() ;
 	}
 	
 	if ( g_model.com2Function == COM2_FUNC_LCD )
@@ -923,9 +940,11 @@ extern uint8_t ImageDisplay ;
 		putsTime( 160, 1*FH, Time.hour*60+Time.minute, 0, 0 ) ;
 		lcd_img( 144, 2*FH, speaker, 0, 0 ) ;
 extern uint8_t CurrentVolume ;
+		pushPlotType( PLOT_BLACK ) ;
 		lcd_hbar( 149, 2*FH+1, 23, 6, (CurrentVolume*100+16)/23 ) ;
 		lcd_hline( 130, 31, 61 ) ;
 		lcd_vline( 129, 0, 64 ) ;
+		popPlotType() ;
 	}
 	
 	convertDisplay() ;
@@ -1200,6 +1219,50 @@ static void LCD_BL_Config()
 }
 
 // Init the Haptic
+ #ifdef REV19
+void initHaptic()
+{
+	
+// for REV19, Use PA10 (not PB8) and Timer 1, CH3
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOHAPTIC, ENABLE);
+//  GPIO_InitTypeDef GPIO_InitStructure;
+//  GPIO_InitStructure.GPIO_Pin =GPIO_Pin_HAPTIC;
+//  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+//  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+//  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+//  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+//  GPIO_Init(GPIOHAPTIC, &GPIO_InitStructure);
+
+//  GPIO_PinAFConfig(GPIOHAPTIC, GPIO_PinSource_HAPTIC ,GPIO_AF_TIM10);
+
+	configure_pins( GPIO_Pin_HAPTIC, PIN_PERIPHERAL | PERI_AF_HAPTIC | PORT_HAPTIC | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;		// Enable clock
+	TIM1->ARR = 100 ;
+	TIM1->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;		// 100uS from 30MHz
+	TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 ;	// PWM
+	TIM1->CCER = TIM_CCER_CC3E ;
+	
+	TIM1->CCR3 = 0 ;
+	TIM1->EGR = 0 ;
+	TIM1->CR1 = TIM_CR1_CEN ;				// Counter enable
+}
+
+void hapticOff()
+{
+	TIM1->CCR3 = 0 ;
+}
+
+// pwmPercent 0-100
+void hapticOn( uint32_t pwmPercent )
+{
+	if ( pwmPercent > 100 )
+	{
+		pwmPercent = 100 ;		
+	}
+	TIM1->CCR3 = pwmPercent ;
+}
+ #else
 void initHaptic()
 {
 	
@@ -1215,7 +1278,8 @@ void initHaptic()
 
   GPIO_PinAFConfig(GPIOHAPTIC, GPIO_PinSource_HAPTIC ,GPIO_AF_TIM10);
 
-	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
+
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;		// Enable clock
 	TIM10->ARR = 100 ;
 	TIM10->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;		// 100uS from 30MHz
 	TIM10->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 ;	// PWM
@@ -1240,7 +1304,7 @@ void hapticOn( uint32_t pwmPercent )
 	}
 	TIM10->CCR1 = pwmPercent ;
 }
-
+ #endif
 #else
 
 #ifdef PCB9XT

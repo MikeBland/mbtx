@@ -165,7 +165,7 @@ uint16_t LcdCustomColour = LCD_BLACK ;
 #endif 
 #endif // PCBX7
 
-#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX7) || defined (PCBXLITE) || defined(PCBX9LITE)
 uint8_t ExtDisplayBuf[DISPLAY_W*DISPLAY_H/8 + 2] ;
 uint16_t ExtDisplayTime ;
 uint8_t ExtDisplaySend ;
@@ -318,6 +318,92 @@ extern uint16_t Image_height ;
 //		i_y += 1 ;	 
 //	} 
 }
+
+void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
+{
+	uint32_t yb ;
+	uint32_t x ;
+	uint16_t *p ;
+	uint8_t mask ;
+  uint32_t hb   = (h + 7) / 8 ;
+  uint32_t hlast ;
+
+#ifdef INVERT_DISPLAY
+	i_x = (LCD_W-1) - i_x ; // - (w - 1) ;
+	i_y = (LCD_H-1) - i_y ; // - (h - 1) ;
+	if ( i_y >= LCD_H )
+	{
+		i_y = 0 ;
+	}
+#endif
+	 
+  register bool inv = false ;
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+//	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
+  for( yb = 0; yb < hb; yb++)
+	{
+		p = ( uint16_t *) CurrentFrameBuffer ;
+		p += i_x ;
+		p += i_y * LCD_W ;
+#ifdef INVERT_DISPLAY
+		p -= yb * LCD_W * 8 ;
+#else
+		p += yb * LCD_W * 8 ;
+#endif
+    for(x=0; x < w; x++)
+		{
+      register uint8_t b = *bitmap++ ;
+			if ( inv )
+			{
+				b = ~b ;
+			}
+			uint16_t *q = p ;
+
+			hlast = ( h < 8 ) ? h : 9 ;
+			for ( mask = 1 ; mask ; mask <<= 1 )
+			{
+				uint16_t value = (b & mask) ? colour : background ;
+				*q = value ;
+#ifdef INVERT_DISPLAY
+				q -= LCD_W ;
+#else
+				q += LCD_W ;
+#endif
+				if ( --hlast == 0 )
+				{
+					break ;
+				}
+			}
+#ifdef INVERT_DISPLAY
+			p -= 1 ;
+#else
+			p += 1 ;
+#endif
+    }
+		h -= 8 ;
+  }
+	
+}
+
+void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode, uint16_t colour, uint16_t background )
+{
+  register const unsigned char *q = imgdat ;
+  register uint8_t w    = *q++ ;
+  register uint32_t hb   = *q++ ;
+  register uint8_t sze1 = *q++ ;
+//	uint32_t yb ;
+//	uint32_t x ;
+
+  q += idx * sze1 ;
+  
+	lcd_HiResbitmap( i_x, i_y, q, w, hb, mode, colour, background ) ;
+}
+
+
 
 void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
 {
@@ -2057,7 +2143,7 @@ void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_
 	}
 #ifdef INVERT_DISPLAY
 	x = (LCD_W/2-1) - x ;
-	y = (LCD_H/2-1) - y - 7 ;
+	y = (LCD_H/2-1) - y - (h-1) ;
 	if ( y >= LCD_H/2 )
 	{
 //		LcdBits |= 128 ;

@@ -36,13 +36,24 @@
 
 #include <stdlib.h>
 #include "ersky9x.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx.h"
+#else
 #include "stm32f2xx.h"
-#include "logicio.h"
+#endif
 #include "X9D/hal.h"
+#if defined(REV19)
+#include "X12D/stm32f4xx_usart.h"
+#include "X12D/stm32f4xx_rcc.h"
+#include "X12D/stm32f4xx_gpio.h"
+#include "X12D/core_cm4.h"
+#else
 #include "X9D/stm32f2xx_usart.h"
 #include "stm32f2xx_rcc.h"
 #include "stm32f2xx_gpio.h"
 #include "core_cm3.h"
+#endif
+#include "logicio.h"
 #include "timers.h"
 #include "myeeprom.h"
 #include "drivers.h"

@@ -227,7 +227,7 @@ extern void dumpStack( uint32_t *ptr ) ;
 extern "C" void SDRAM_Init() ;
 #endif
 extern void lcdInit(void) ;
-void lcdColorsInit(void) ;
+//void lcdColorsInit(void) ;
 //uint16_t T4ToCount ;
 extern "C" void TIM4_IRQHandler(void)
 {
