@@ -17,10 +17,13 @@
 //#define TMR_NUM_OPTION  (TMR_VAROFS+2*MAX_DRSWITCH-3)
 #endif
 #define SPLASH_MARKER "Splash\0"
+#define SPLASHS_MARKER "Spls\0"
 #define SPLASH_WIDTH (128)
 #define SPLASH_HEIGHT (64)
 #define SPLASH_SIZE (SPLASH_WIDTH*SPLASH_HEIGHT/8)
+#define SPLASHS_SIZE (SPLASH_WIDTH*SPLASH_HEIGHT/8/4)
 #define SPLASH_OFFSET (6+1+3) // "Splash" + zero + 3 header bytes
+#define SPLASHS_OFFSET (4+1) // "Spls" + zero
 #define HEX_FILE_SIZE (1024*256)	// Allow for M2561 processor
 #define BIN_FILE_SIZE (1024*1024)
 
@@ -163,7 +166,7 @@ bool loadModelDataXML(QDomDocument * qdoc, ModelData * tmod, int modelNum = -1);
 QDomElement getModelDataXML(QDomDocument * qdoc, ModelData * tmod, int modelNum, int mdver); //parse out data to XML format
 #endif
 
-bool getSplashHEX(QString fileName, uchar * b, QWidget *parent = 0);
+uint32_t getSplashHEX(QString fileName, uchar * b, QWidget *parent = 0);
 bool putSplashHEX(QString fileName, uchar * b, QWidget *parent = 0);
 
 bool getSplashBIN(QString fileName, uchar * b, QWidget *parent = 0);

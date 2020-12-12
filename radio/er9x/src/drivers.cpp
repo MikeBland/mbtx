@@ -769,11 +769,11 @@ uint8_t hwKeyState( uint8_t key )
 			}
 		}
 	}
-	if ( yyy == 6 )	// 43
+	if ( yyy == 3 )	// 43
 	{
 		xxx = ExtraInputs & (1<<(g_eeGeneral.pb1source-1)) ;
 	}
-	if ( yyy == 7 )	// 44
+	if ( yyy == 4 )	// 44
 	{
 		xxx = ExtraInputs & (1<<(g_eeGeneral.pb2source-1)) ;
 	}

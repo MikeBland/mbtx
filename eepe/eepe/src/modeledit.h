@@ -336,6 +336,7 @@ private slots:
     void ControlCurveSignal(bool flag);
     void on_DSM_Type_currentIndexChanged(int index);
 		void on_SubProtocolCB_currentIndexChanged(int index) ;
+		void on_SubSubProtocolCB_currentIndexChanged(int index) ;
     void on_pxxRxNum_editingFinished();
 		void on_VoiceNumberSB_editingFinished() ;
 		void on_autoLimitsSB_editingFinished() ;

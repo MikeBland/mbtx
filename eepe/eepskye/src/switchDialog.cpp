@@ -4,7 +4,7 @@
 #include "file.h"
 #include "helpers.h"
 
-SwitchDialog::SwitchDialog(QWidget *parent, int index, struct t_switchData *sdata, int modelVersion, struct t_radioData *rData ) :
+SwitchDialog::SwitchDialog(QWidget *parent, int index, struct t_switchData *sdata, int modelVersion, uint8_t id, struct t_radioData *rData ) :
     QDialog(parent),
     ui(new Ui::SwitchDialog)
 {
@@ -13,6 +13,21 @@ SwitchDialog::SwitchDialog(QWidget *parent, int index, struct t_switchData *sdat
 	sindex = index ;
 	lsdata = sdata ;
 	lrData = rData ;
+	
+	leeType = rData->type ;
+	lextraPots = rData->extraPots ;
+
+	int type = leeType ;
+	if ( type == RADIO_TYPE_TPLUS )
+	{
+		if ( rData->sub_type == 1 )
+		{
+			type = RADIO_TYPE_X9E ;
+		}
+	}
+	ltype = type ;
+	id_model = id ;
+	
 	lmodelVersion = modelVersion ;
 	text[0] = 'L' ;
 	text[1] = 'S' ;
@@ -20,7 +35,25 @@ SwitchDialog::SwitchDialog(QWidget *parent, int index, struct t_switchData *sdat
 	text[3] = '\0' ;
 	ui->switchNameLabel->setText( text ) ;
 
+	ValuesEditLock = true ;
+	OnEditLock = true ;
+	OffEditLock = true ;
 	update() ;
+	ValuesEditLock = false ;
+	OnEditLock = false ;
+	OffEditLock = false ;
+  connect(ui->functionCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->v1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->v2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->sw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->sw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->andSwFuncCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->andSwCB,SIGNAL(currentIndexChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->valSB,SIGNAL(valueChanged(int)),this,SLOT(valuesChanged()));
+  connect(ui->val2SB,SIGNAL(valueChanged(int)),this,SLOT(valuesChanged()));
+	connect(ui->timeOnSB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
+  connect(ui->timeOffSB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
+  connect(ui->delaySB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
 }
 
 SwitchDialog::~SwitchDialog()
@@ -28,28 +61,146 @@ SwitchDialog::~SwitchDialog()
     delete ui;
 }
 
-//void MixerDialog::changeEvent(QEvent *e)
-//{
-//    QDialog::changeEvent(e);
-//    switch (e->type()) {
-//    case QEvent::LanguageChange:
-//        ui->retranslateUi(this);
-//        break;
-//    default:
-//        break;
-//    }
-//}
+void SwitchDialog::valuesChanged()
+{
+	uint32_t cType ;
+	if ( ValuesEditLock )
+	{
+		return ;
+	}
+	ValuesEditLock = true ;
+	cType = CS_STATE( lsdata->swData.func, lmodelVersion ) ;
+	lsdata->swData.func = unmapSwFunc( ui->functionCB->currentIndex() ) ;
+	lsdata->swData.exfunc = ui->andSwFuncCB->currentIndex() ;
+  lsdata->switchDelay = ui->delaySB->value() * 10 ;
+	switch ( cType )
+	{
+    case CS_VOFS:
+    case CS_2VAL:
+    {
+      int16_t value ;
+      value = ui->v1CB->currentIndex() ;
+			value = decodePots( value, ltype, lextraPots ) ;
+		  lsdata->swData.v1 = value ;
+			lsdata->swData.v2 = ui->valSB->value() ;
+			if ( cType == CS_2VAL )
+			{
+				lsdata->swData.bitAndV3 = ui->val2SB->value() ;
+			}
+    }
+		break ;
+		case CS_U16:
+		{
+			int16_t val ;
+      int16_t value ;
+      val = ui->valSB->value() ;
+			value = ui->v1CB->currentIndex() ;
+			value = decodePots( value, ltype, lextraPots ) ;
+		  lsdata->swData.v1 = value ;
+			lsdata->swData.v2 = val ;
+			lsdata->swData.bitAndV3 = val >> 8 ;
+		}
+		break ;
+		case CS_VBOOL:
+			lsdata->swData.v1 = getSwitchCbValue( ui->sw1CB, lrData->type ) ;
+      lsdata->swData.v2 = getSwitchCbValue( ui->sw2CB, lrData->type ) ;
+		break ;
+    case CS_TMONO:
+			lsdata->swData.v1 = getSwitchCbValue( ui->sw1CB, lrData->type ) ;
+			int32_t x ;
+      x = ui->timeOnSB->value() * 10.0 + 0.5 ;
+			if ( x > 49 )
+			{
+				x /= 10 ;
+				x -= 1 ;
+			}
+			else
+			{
+				if ( x == 10 )
+				{
+					x = 0 ;
+				}
+				else
+				{
+					x = -x ;
+				}
+			}
+			lsdata->swData.v2 = x ;
+		break ;
+    case CS_TIMER:
+		{
+			int32_t x ;
+      x = ui->timeOnSB->value() * 10.0 + 0.5 ;
+			if ( x > 49 )
+			{
+				x /= 10 ;
+				x -= 1 ;
+			}
+			else
+			{
+				if ( x == 10 )
+				{
+					x = 0 ;
+				}
+				else
+				{
+					x = -x ;
+				}
+			}
+			lsdata->swData.v1 = x ;
+      x = ui->timeOffSB->value() * 10.0 + 0.5 ;
+			if ( x > 49 )
+			{
+				x /= 10 ;
+				x -= 1 ;
+			}
+			else
+			{
+				if ( x == 10 )
+				{
+					x = 0 ;
+				}
+				else
+				{
+					x = -x ;
+				}
+			}
+			lsdata->swData.v2 = x ;
+		}			 
+		break ;
+    case CS_VCOMP:
+    {
+      int16_t value ;
+      value = ui->v1CB->currentIndex() ;
+			value = decodePots( value, ltype, lextraPots ) ;
+		  lsdata->swData.v1 = value ;
+    }
+		break ;
+		
+	}
 
+  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+	{
+    lsdata->swData.andsw = getSwitchCbValueShort( ui->andSwCB, 1 ) ;
+	}
+	else
+	{
+    lsdata->swData.andsw = getAndSwitchCbValue( ui->andSwCB ) ;
+  }  
+  update() ;
+	ValuesEditLock = false ;
+}
 
 void SwitchDialog::update()
 {
 	uint32_t cType ;
+	char telText[20] ;
 	cType = CS_STATE( lsdata->swData.func, lmodelVersion ) ;
 	int32_t value ;
 
 	populateCSWCB( ui->functionCB, lsdata->swData.func, lmodelVersion);
 	ui->delaySB->setValue( (double) lsdata->switchDelay / 10 ) ;
-  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L) )
+  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
 	{
     x9dPopulateSwitchAndCB( ui->andSwCB, lsdata->swData.andsw ) ;
 	}
@@ -57,19 +208,31 @@ void SwitchDialog::update()
 	{
 		populateSwitchAndCB( ui->andSwCB, lsdata->swData.andsw ) ;
 	}
-
+	ui->andSwFuncCB->setCurrentIndex(lsdata->swData.exfunc) ;
 	
 	switch ( cType )
 	{
+    case CS_2VAL:
     case CS_VOFS:
 		case CS_U16:
       populateSourceCB( ui->v1CB, lrData->generalSettings.stickMode, 1, lsdata->swData.v1, lmodelVersion, lrData->type, lrData->extraPots ) ;
 			ui->v1CB->setVisible(true) ;
+			ui->v1Label->setVisible(true) ;
 			ui->sw1CB->setVisible(false) ;
 			ui->sw1Label->setVisible(false) ;
 			ui->sw2CB->setVisible(false) ;
 			ui->sw2Label->setVisible(false) ;
 			ui->valSB->setVisible(true) ;
+			ui->valLabel->setVisible(true) ;
+			ui->v2CB->setVisible(false) ;
+			ui->v2Label->setVisible(false) ;
+      ui->timeOnSB->setVisible(false);
+      ui->timeOffSB->setVisible(false);
+      ui->timeOnSB->setAccelerated(false);
+      ui->timeOffSB->setAccelerated(false);
+      ui->timeOnLabel->setVisible(false);
+      ui->timeOffLabel->setVisible(false);
+			ui->andSwFuncCB->setEnabled(true) ;
 			if ( cType == CS_U16 )
 			{
         if ( ui->valSB->maximum() != 32767 )
@@ -92,25 +255,51 @@ void SwitchDialog::update()
 				int32_t y ;
 				y = (uint8_t) lsdata->swData.v2 ;
         y |= lsdata->swData.bitAndV3 << 8 ;
-				y -= 32768 ;
+				if ( y > 32767 )
+				{
+					y -= 65536 ;
+				}
         ui->valSB->setValue( y ) ;
-//       	cswitchTlabel[i]->setVisible(false);
+       	ui->valText->setVisible(false);
+       	ui->val2Text->setVisible(false);
 			}
 			else
 			{
+       	ui->val2Text->setVisible(false);
         ui->valSB->setValue(lsdata->swData.v2);
-//				if ( ui->valSB->currentIndex() > 36 )
-//				{
-//        	cswitchTlabel[i]->setVisible(true);
-//					value = convertTelemConstant( cswitchSource1[i]->currentIndex() - 45, lsdata->swData.v2, &g_model ) ;
-//        	stringTelemetryChannel( telText, lsdata->swData].v1 - 45, value, &g_model ) ;
-//					sprintf( telText, "%d", value ) ;
-//        	cswitchTlabel[i]->setText(telText);
-//				}
-//				else
-//				{
-//        	cswitchTlabel[i]->setVisible(false);
-//				}
+				if ( lsdata->swData.v1u > 45 )
+				{
+        	ui->valText->setVisible(true) ;
+          value = convertTelemConstant( lsdata->swData.v1u - 45, lsdata->swData.v2, &lrData->models[id_model] ) ;
+          stringTelemetryChannel( telText, lsdata->swData.v1u - 45, value, &lrData->models[id_model] ) ;
+        	ui->valText->setText(telText);
+				}
+				else
+				{
+        	ui->valText->setVisible(false);
+				}
+			}
+			if ( cType == CS_2VAL )
+			{
+        ui->val2SB->setValue((int8_t)lsdata->swData.bitAndV3);
+				ui->val2SB->setVisible(true) ;
+        ui->val2Label->setVisible(true) ;
+				if ( lsdata->swData.v1u > 45 )
+				{
+        	ui->val2Text->setVisible(true) ;
+          value = convertTelemConstant( lsdata->swData.v1u - 45, lsdata->swData.bitAndV3, &lrData->models[id_model] ) ;
+          stringTelemetryChannel( telText, lsdata->swData.v1u - 45, value, &lrData->models[id_model] ) ;
+        	ui->val2Text->setText(telText);
+				}
+				else
+				{
+        	ui->val2Text->setVisible(false);
+				}
+			}
+			else
+			{
+				ui->val2SB->setVisible(false) ;
+        ui->val2Label->setVisible(false) ;
 			}
 		break ;
     
@@ -118,9 +307,23 @@ void SwitchDialog::update()
       ui->sw1CB->setVisible(true) ;
       ui->sw2CB->setVisible(true) ;
 			ui->sw1Label->setVisible(true) ;
-			ui->sw1Label->setVisible(true) ;
+			ui->sw2Label->setVisible(true) ;
+			ui->v1CB->setVisible(false) ;
+			ui->v1Label->setVisible(false) ;
       
 			ui->valSB->setVisible(false) ;
+			ui->valLabel->setVisible(false) ;
+			ui->v2CB->setVisible(false) ;
+			ui->v2Label->setVisible(false) ;
+      ui->timeOnSB->setVisible(false);
+      ui->timeOffSB->setVisible(false);
+      ui->timeOnLabel->setVisible(false);
+      ui->timeOffLabel->setVisible(false);
+			ui->val2SB->setVisible(false) ;
+      ui->val2Label->setVisible(false) ;
+     	ui->valText->setVisible(false);
+     	ui->val2Text->setVisible(false);
+			ui->andSwFuncCB->setEnabled(true) ;
       
 			populateSwitchCB( ui->sw1CB, lsdata->swData.v1, lrData->type) ;
       populateSwitchCB( ui->sw2CB, lsdata->swData.v2, lrData->type) ;
@@ -128,28 +331,35 @@ void SwitchDialog::update()
 //			cswitchText1[i]->setVisible(false) ;
 //			cswitchText2[i]->setVisible(false) ;
 		break ;
-    case CS_VCOMP:
-			ui->v1CB->setVisible(true) ;
-			ui->v2CB->setVisible(true) ;
-			ui->sw1CB->setVisible(false) ;
-			ui->sw1Label->setVisible(false) ;
-			ui->sw2CB->setVisible(false) ;
+    case CS_TMONO:
+      ui->sw1CB->setVisible(true) ;
+			ui->sw1Label->setVisible(true) ;
+      ui->sw2CB->setVisible(false) ;
 			ui->sw2Label->setVisible(false) ;
-			ui->valSB->setVisible(true) ;
-      populateSourceCB( ui->v1CB, lrData->generalSettings.stickMode, 1, lsdata->swData.v1, lmodelVersion, lrData->type, lrData->extraPots ) ;
-      populateSourceCB( ui->v2CB, lrData->generalSettings.stickMode, 1, lsdata->swData.v2, lmodelVersion, lrData->type, lrData->extraPots ) ;
-    break ;
-    case CS_TIMER:
-			ui->sw1CB->setVisible(false) ;
-			ui->sw1Label->setVisible(false) ;
-			ui->sw2CB->setVisible(false) ;
-			ui->sw2Label->setVisible(false) ;
-      ui->timeOnSB->setVisible(true);
-      ui->timeOffSB->setVisible(true);
+			ui->v1CB->setVisible(false) ;
+			ui->v1Label->setVisible(false) ;
+			ui->val2SB->setVisible(false) ;
+      ui->val2Label->setVisible(false) ;
+
+			ui->valSB->setVisible(false) ;
+			ui->valLabel->setVisible(false) ;
+//			ui->valSB->setAccelerated(true) ;
+//      ui->valSB->setValue(lsdata->swData.v1);
+      
+			ui->timeOnSB->setVisible(true);
+      ui->timeOffSB->setVisible(false);
       ui->timeOnSB->setAccelerated(true);
-      ui->timeOffSB->setAccelerated(true);
-			value = lsdata->swData.v1+1 ;
-      ui->spinBox->setValue( value ) ;
+      ui->timeOnLabel->setVisible(true);
+      ui->timeOffLabel->setVisible(false);
+     	ui->valText->setVisible(false);
+     	ui->val2Text->setVisible(false);
+			ui->andSwFuncCB->setEnabled(false) ;
+			ui->andSwFuncCB->setCurrentIndex(0) ;
+			populateSwitchCB( ui->sw1CB, lsdata->swData.v1, lrData->type) ;
+			value = lsdata->swData.v2+1 ;
+	    ui->timeOnSB->setMaximum(100);
+      ui->timeOnSB->setMinimum(0.1);
+//      ui->spinBox->setValue( value ) ;
 			if ( value <= 0 )
 			{
 				value -= 1 ;
@@ -160,6 +370,70 @@ void SwitchDialog::update()
 			{
       	ui->timeOnSB->setValue(value) ;
 			}
+		break ;
+    case CS_VCOMP:
+			ui->v1CB->setVisible(true) ;
+			ui->v1Label->setVisible(true) ;
+			ui->v2CB->setVisible(true) ;
+			ui->v2Label->setVisible(true) ;
+			ui->sw1CB->setVisible(false) ;
+			ui->sw1Label->setVisible(false) ;
+			ui->sw2CB->setVisible(false) ;
+			ui->sw2Label->setVisible(false) ;
+			ui->valSB->setVisible(false) ;
+			ui->valLabel->setVisible(false) ;
+			ui->val2SB->setVisible(false) ;
+      ui->val2Label->setVisible(false) ;
+      ui->timeOnSB->setVisible(false);
+      ui->timeOffSB->setVisible(false);
+      ui->timeOnLabel->setVisible(false);
+      ui->timeOffLabel->setVisible(false);
+     	ui->valText->setVisible(false);
+     	ui->val2Text->setVisible(false);
+			ui->andSwFuncCB->setEnabled(true) ;
+      populateSourceCB( ui->v1CB, lrData->generalSettings.stickMode, 1, lsdata->swData.v1, lmodelVersion, lrData->type, lrData->extraPots ) ;
+      populateSourceCB( ui->v2CB, lrData->generalSettings.stickMode, 1, lsdata->swData.v2, lmodelVersion, lrData->type, lrData->extraPots ) ;
+    break ;
+    case CS_TIMER:
+			ui->v1CB->setVisible(false) ;
+			ui->v1Label->setVisible(false) ;
+			ui->val2SB->setVisible(false) ;
+      ui->val2Label->setVisible(false) ;
+			ui->sw1CB->setVisible(false) ;
+			ui->sw1Label->setVisible(false) ;
+			ui->sw2CB->setVisible(false) ;
+			ui->sw2Label->setVisible(false) ;
+      ui->timeOnSB->setVisible(true);
+      ui->timeOffSB->setVisible(true);
+      ui->timeOnSB->setAccelerated(true);
+      ui->timeOffSB->setAccelerated(true);
+      ui->timeOnLabel->setVisible(true);
+      ui->timeOffLabel->setVisible(true);
+			ui->valSB->setVisible(false) ;
+			ui->valLabel->setVisible(false) ;
+			ui->v2CB->setVisible(false) ;
+			ui->v2Label->setVisible(false) ;
+	    ui->timeOnSB->setMaximum(100);
+      ui->timeOnSB->setMinimum(0.1);
+	    ui->timeOffSB->setMaximum(100);
+      ui->timeOffSB->setMinimum(0.1);
+     	ui->valText->setVisible(false);
+     	ui->val2Text->setVisible(false);
+			ui->andSwFuncCB->setEnabled(false) ;
+			ui->andSwFuncCB->setCurrentIndex(0) ;
+			value = lsdata->swData.v1+1 ;
+//      ui->spinBox->setValue( value ) ;
+			if ( value <= 0 )
+			{
+				value -= 1 ;
+				value = -value ;
+      	ui->timeOnSB->setValue((float)value/10) ;
+			}
+			else
+			{
+      	ui->timeOnSB->setValue(value) ;
+			}
+			lastOnTime = ui->timeOnSB->value() ;
 			value = lsdata->swData.v2+1 ;
 			if ( value <= 0 )
 			{
@@ -171,12 +445,21 @@ void SwitchDialog::update()
 			{
       	ui->timeOffSB->setValue(value) ;
 			}
+			lastOffTime = ui->timeOffSB->value() ;
     break ;
 	}
+	ui->delaySB->setValue((float)lsdata->switchDelay/10.0) ;
+
 }
 
 void SwitchDialog::on_timeOnSB_valueChanged( double x )
 {
+	if ( OnEditLock )
+	{
+		return ;
+	}
+	OnEditLock = true ;
+	
 	if ( x > 4.9 )
 	{
 		ui->timeOnSB->setSingleStep( 1.0 ) ;
@@ -185,290 +468,36 @@ void SwitchDialog::on_timeOnSB_valueChanged( double x )
 	{
 		ui->timeOnSB->setSingleStep( 0.1 ) ;
 	}
-	ui->spinBox->setValue( x * 10 ) ;
+	if ( ( x == 4.0 ) && ( lastOnTime == 5.0 ) )
+	{
+		x = 4.9 ;
+    ui->timeOnSB->setValue(x) ;
+	}
+	lastOnTime = x ;
+	OnEditLock = false ;
 }
 
-
-//void MixerDialog::updateChannels()
-//{
-//  uint32_t lowBound = lType ? 21 : 21 ;
-//  if ( lType == RADIO_TYPE_TPLUS )
-//	{
-//		lowBound = 23 ;
-//	}
-//  if ( lType == RADIO_TYPE_9XTREME )
-//	{
-//		lowBound = 21 ;
-//	}
-//  if ( lType == RADIO_TYPE_X9E )
-//  {
-//    lowBound = 24 ;
-//  }
-//  if ( lType == RADIO_TYPE_QX7 )
-//  {
-//    lowBound = 20 ;
-//  }
-//#ifdef EXTRA_SKYCHANNELS
-//  if ( ( md->srcRaw >= 21 && md->srcRaw <= 21+23 ) ||
-//			 ( md->srcRaw >= 70 && md->srcRaw <= 70+7 ) )
-//#else
-//  if ( md->srcRaw >= 21 && md->srcRaw <= 21+23 )
-//#endif
-//	{
-//		ui->label_expo_output->setText( "Use Output" ) ;
-//		ui->label_expo_comment->setText( "(or Expo/Dr enable)" ) ;
-//	  ui->FMtrimChkB->setChecked(md->disableExpoDr) ;
-//		if ( md->disableExpoDr )
-//		{
-//			uint32_t i ;
-//			uint32_t j ;
-
-//#ifdef EXTRA_SKYCHANNELS
-//			j = 25 ;
-//      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
-//			{
-//				ui->sourceCB->setItemText( i, QString("OP%1").arg(j) ) ;
-//				j += 1 ;
-//			}
-//#endif
-//      for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
-//			{
-//				ui->sourceCB->setItemText( i, QString("OP%1").arg(i-(lowBound-2)) ) ;
-//			}
-//		}
-//		else
-//		{
-//			uint32_t i ;
-//			uint32_t j ;
-//#ifdef EXTRA_SKYCHANNELS
-//			j = 25 ;
-//      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
-//			{
-//				ui->sourceCB->setItemText( i, QString("CH%1").arg(j) ) ;
-//				j += 1 ;
-//			}
-//#endif
-//      for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
-//			{
-//				ui->sourceCB->setItemText( i, QString("CH%1").arg(i-(lowBound-2)) ) ;
-//			}
-//		}
-//	}
-//	else
-//	{
-//		ui->label_expo_output->setText( "Enable Expo/Dr" ) ;
-//		ui->label_expo_comment->setText( "(or Select output)" ) ;
-//	  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
-//	}
-////  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
-//}
-
-//void MixerDialog::valuesChanged()
-//{
-//	int oldcurvemode ;
-//	int oldSrcRaw ;
-    
-//	if ( ValuesEditLock )
-//	{
-//		return ;
-//	}
-//	ValuesEditLock = true ;
-		
-//		oldSrcRaw = md->srcRaw ;
-//    uint32_t value ;
-//		value = ui->sourceCB->currentIndex()+1 ;
-  	
-////		int x = ui->sourceCB->currentIndex()+1 ;
-////		if ( x >= MIX_3POS )
-////		{
-////			if ( x >= MIX_3POS+7 )
-////			{
-////				x -= 6 ;
-////			}
-////			else
-////			{
-////		    md->sw23pos = x - (MIX_3POS) ;
-////				x = MIX_3POS ;
-////			}
-////		}
-////    md->srcRaw       = x ;
-		
-//		if ( lType == RADIO_TYPE_QX7 )
-//		{
-//      if ( value >= 7 )
-//			{
-//				value += 1 ;
-//			}
-//		}
-//    value = decodePots( value, lType, lextraPots ) ;
-//		md->srcRaw       = value ;
-////		ui->spinBox->setValue(md->srcRaw);
-
-//		if ( leeType == RADIO_TYPE_QX7 ) 
-//		{
-//			uint32_t index = ui->sourceSwitchCB->currentIndex() ;
-//			if ( index > 3 )
-//			{
-//				index += 1 ;
-//			}
-//			if ( index > 5 )
-//			{
-//				index += 1 ;
-//			}
-//		 	md->switchSource = index ;
-//		}
-//		else
-//		{
-//			md->switchSource = ui->sourceSwitchCB->currentIndex() ;
-//		}
-//		ui->sourceSwitchCB->setVisible( md->srcRaw == MIX_3POS ) ;
-//    md->weight       = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100 ) ;
-//    md->sOffset      = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0 ) ;
-//    md->carryTrim    = ui->trimChkB->checkState() ? 0 : 1;
-//		int limit = MAX_DRSWITCH ;
-//		if ( leeType )
-//		{
-//			limit = MAX_XDRSWITCH ;
-//		}
-//    md->swtch        = getSwitchCbValue( ui->switchesCB, leeType ) ;
-//    md->mixWarn      = ui->warningCB->currentIndex();
-//    md->mltpx        = ui->mltpxCB->currentIndex();
-//    md->delayDown    = ui->delayDownSB->value()*10+0.4;
-//    md->delayUp      = ui->delayUpSB->value()*10+0.4;
-//    md->speedDown    = ui->slowDownSB->value()*10+0.4;
-//    md->speedUp      = ui->slowUpSB->value()*10+0.4;
-//    md->lateOffset   = ui->lateOffsetChkB->checkState() ? 1 : 0;
-
-//		int lowBound = leeType ? 21 : 21 ;
-//#ifdef EXTRA_SKYCHANNELS
-//	  if ( ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 ) ||
-//				 ( md->srcRaw >= lowBound-21+70 && md->srcRaw <= lowBound-21+70+7 ) )
-//		{
-//		  if ( ( oldSrcRaw >= lowBound && oldSrcRaw <= lowBound+23 ) ||
-//					 ( oldSrcRaw >= lowBound-21+70 && oldSrcRaw <= lowBound-21+70+7 ) )
-//#else
-//    if ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 )
-//		{
-//			if ( oldSrcRaw >= lowBound && oldSrcRaw <= lowBound+23 )
-//#endif
-//			{
-//	    	md->disableExpoDr = ui->FMtrimChkB->checkState() ? 1 : 0 ;
-//				updateChannels() ;
-//			}
-//			else
-//			{
-//				updateChannels() ;
-////	    	md->disableExpoDr = ui->FMtrimChkB->checkState() ? 0 : 1 ;
-//			}
-//		}
-//		else
-//		{
-//#ifdef EXTRA_SKYCHANNELS
-//			if ( ( oldSrcRaw >= 21 && oldSrcRaw <= 44 ) ||
-//			 ( oldSrcRaw >= 70 && oldSrcRaw <= 70+7 ) )
-//#else
-//			if ( oldSrcRaw >= 21 && oldSrcRaw <= 44 )
-//#endif
-//			{
-//				updateChannels() ;
-//			}
-//			else
-//			{
-//	    	md->disableExpoDr = ui->FMtrimChkB->checkState() ? 0 : 1 ;
-//				updateChannels() ;
-//			}
-//		}
-
-//		oldcurvemode = md->differential ;
-//		if ( oldcurvemode == 0 )
-//		{
-//			if ( md->curve <= -28 )
-//			{
-//				oldcurvemode = 2 ;
-//			}
-//		}
-		
-//		int newcurvemode = ui->diffcurveCB->currentIndex() ;
-//		md->differential = ( newcurvemode == 1 ) ? 1 : 0 ;
-		
-//		if ( newcurvemode != oldcurvemode )
-//		{
-//			if (md->differential)
-//			{
-//				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, -100, 100 ) ;
-//				ui->curveGvChkB->setVisible( true ) ;
-//			}
-//			else
-//			{
-//				if ( newcurvemode == 2 )
-//				{
-//					ui->curvesCB->setVisible( false ) ;
-//					ui->curvesSB->setVisible( true ) ;
-//					ui->curvesSB->setValue( 0 ) ;
-//          ui->curvesSB->setMinimum( 0 ) ;
-//          ui->curvesSB->setMaximum( 100 ) ;
-//				}
-//				else
-//				{
-//		      ui->curveGvChkB->setChecked( false ) ;
-//					populateCurvesCB(ui->curvesCB, 0 ) ;
-//					ui->curvesSB->setVisible( false ) ;
-//					ui->curvesCB->setVisible( true ) ;
-//				}
-//				ui->curveGvChkB->setVisible( false ) ;
-//			}
-//			if ( newcurvemode == 2 )
-//			{
-//	    	md->curve = -128 ;
-//			}
-//			else
-//			{
-//	    	md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, 0 ) ;
-//			}
-//		}
-//		else
-//		{
-//			if (md->differential)
-//			{
-//	   		md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, 0 ) ;
-//			}
-//			else
-//			{
-//				if ( ui->diffcurveCB->currentIndex() == 2 )
-//				{
-//          md->curve = ui->curvesSB->value() - 128 ;
-//				}
-//				else
-//				{
-//#ifdef SKY    
-//	    		md->curve = ui->curvesCB->currentIndex()-19;
-//#else
-//	    		md->curve = ui->curvesCB->currentIndex()-16;
-//#endif
-//				}	 
-//			}
-//		}
-
-//		int j = 127 ;
-//		j &= ~( ui->Fm0CB->checkState() ? 1 : 0 ) ;
-//		j &= ~( ui->Fm1CB->checkState() ? 2 : 0 ) ;
-//		j &= ~( ui->Fm2CB->checkState() ? 4 : 0 ) ;
-//		j &= ~( ui->Fm3CB->checkState() ? 8 : 0 ) ;
-//		j &= ~( ui->Fm4CB->checkState() ? 16 : 0 ) ;
-//		j &= ~( ui->Fm5CB->checkState() ? 32 : 0 ) ;
-//		j &= ~( ui->Fm6CB->checkState() ? 64 : 0 ) ;
-//		md->modeControl = j ;
-
-////    if(ui->FMtrimChkB->checkState())
-////        ui->offset_label->setText("FmTrimVal");
-////    else
-////        ui->offset_label->setText("Offset");
-
-//    mixCommennt->clear();
-//    mixCommennt->append(ui->mixerComment->toPlainText());
-		
-//		ValuesEditLock = false ;
-//}
-
-
+void SwitchDialog::on_timeOffSB_valueChanged( double x )
+{
+	if ( OffEditLock )
+	{
+		return ;
+	}
+	OffEditLock = true ;
+	if ( x > 4.9 )
+	{
+		ui->timeOffSB->setSingleStep( 1.0 ) ;
+	}
+	else if ( x < 5.1 )
+	{
+		ui->timeOffSB->setSingleStep( 0.1 ) ;
+	}
+	if ( ( x == 4.0 ) && ( lastOffTime == 5.0 ) )
+	{
+		x = 4.9 ;
+    ui->timeOffSB->setValue(x) ;
+	}
+	lastOffTime = x ;
+	OffEditLock = false ;
+}
 

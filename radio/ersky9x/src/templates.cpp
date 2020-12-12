@@ -54,7 +54,7 @@
 //static const char string_8[] = "Servo Test";
 //static const char string_9[] = "Range Test";
 
-uint16_t n_Templates[NUM_TEMPLATES] = {
+extern const uint16_t n_Templates[NUM_TEMPLATES] = {
   STR_T_S_4CHAN   ,
   STR_T_TCUT      ,
   STR_T_STICK_TCUT,

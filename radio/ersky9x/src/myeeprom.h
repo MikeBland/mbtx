@@ -308,7 +308,8 @@ PACK(typedef struct t_EEGeneral {
 	uint16_t backgroundColour ;		// For Horus
 	uint16_t textColour ;		// For Horus
 	uint8_t disableBtnLong:1 ;
-	uint8_t spare7:7 ;
+	uint8_t enableEncMain:1 ;
+	uint8_t spare7:6 ;
 //	GvarData	gvars[MAX_GVARS] ;
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
@@ -529,7 +530,9 @@ PACK(typedef struct te_CSwData
   	int8_t  v2 ; 		//offset
 		uint8_t v2u ;
 	} ;
-	uint8_t func;
+//	uint8_t func ;
+	uint8_t func:5 ;
+	uint8_t exfunc:3 ;
 	int8_t andsw;
 	uint8_t bitAndV3 ;
 }) SKYCSwData;

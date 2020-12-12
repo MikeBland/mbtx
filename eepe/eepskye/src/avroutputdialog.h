@@ -27,7 +27,7 @@ public:
     void waitForFinish();
 //    void addReadFuses();
     int doFileCopy( QString destFile, QString sourceFile, quint32 size, quint32 offset ) ;
-    int doSdRead( QString destFile, QString sourceFile, quint32 offset ) ;
+//    int doSdRead( QString destFile, QString sourceFile, quint32 offset ) ;
 
 protected slots:
     void doAddTextStdOut();
@@ -40,6 +40,7 @@ protected slots:
 private:
     Ui::avrOutputDialog *ui;
 
+		void delayForDsiplayUpdate( uint32_t milliseconds ) ;
     QProcess *process;
     QTimer *kill_timer;
     QString cmdLine;

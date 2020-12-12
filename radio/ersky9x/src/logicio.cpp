@@ -2363,11 +2363,19 @@ uint32_t read_trims()
 
 	trima = GPIOC->IDR ;
 
+ #ifdef PCBX7ACCESS
+// TRIM_LH_UP
+	if ( ( GPIOD->IDR & PIN_TRIMLH_UP ) == 0 )
+	{
+		trims |= 2 ;
+	}
+ #else
 // TRIM_LH_UP
 	if ( ( trima & PIN_TRIMLH_UP ) == 0 )
 	{
 		trims |= 2 ;
 	}
+ #endif // ACCESS
 
 // TRIM_RV_UP
 	if ( ( trima & PIN_TRIMRV_UP ) == 0 )
@@ -2382,12 +2390,20 @@ uint32_t read_trims()
 		trims |= 0x10 ;
 	}
 
+ #ifdef PCBX7ACCESS
+// TRIM_LH_DOWN
+	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
+	{
+		trims |= 1 ;
+	}
+ #else
 	trima = GPIOD->IDR ;
 // TRIM_LH_DOWN
 	if ( ( trima & PIN_TRIMLH_DN ) == 0 )
 	{
 		trims |= 1 ;
 	}
+ #endif // ACCESS
  
 #else
 #ifdef PCBXLITE
@@ -2538,13 +2554,20 @@ void setup_switches()
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x0020, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
+ #ifdef PCBX7ACCESS
+	configure_pins( PIN_SW_H | PIN_SW_C_L | PIN_SW_C_H, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+	configure_pins( 0xE086, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+ #else
 	configure_pins( PIN_SW_H | PIN_SW_C_L, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
 	configure_pins( 0xE087, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+ #endif // ACCESS
 
 	// Extra switch inputs
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( PIN_SW_EXT1, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;
+ #ifndef PCBX7ACCESS
 	configure_pins( PIN_SW_EXT2, PIN_INPUT | PIN_PULLUP | PIN_PORTD ) ;
+ #endif // nACCESS
 	 
 #else // PCBX7
 #ifdef PCBXLITE
@@ -2608,10 +2631,12 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 		{
 			return ~GPIOC->IDR & PIN_SW_EXT1 ;
 		}
+ #ifndef PCBX7ACCESS
 		else
 		{
 			return ~GPIOD->IDR & PIN_SW_EXT2 ;
 		}
+ #endif // nACCESS
 	}
 #endif
 #ifdef PCBX9LITE
@@ -2994,8 +3019,12 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ((d & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
       break;
     case HSW_SC2:
-      xxx = ~e & PIN_SW_C_H ;
-      break;
+ #ifdef PCBX7ACCESS
+       xxx = ~d & PIN_SW_C_H ;
+ #else
+       xxx = ~e & PIN_SW_C_H ;
+ #endif // ACCESS
+     break;
 
     case HSW_SD0:
       xxx = ~e & PIN_SW_D_L ;

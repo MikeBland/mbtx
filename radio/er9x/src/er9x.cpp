@@ -182,6 +182,8 @@ const prog_uint8_t APM stickScramble[]= {
 uint8_t Arduino = 0 ;
 #endif
 
+volatile uint8_t tick10ms = 0;
+
 const prog_char APM Str_Hyphens[] = "----" ;
 
 #if defined(CPUM128) || defined(CPUM2561)
@@ -2954,7 +2956,6 @@ void pushMenu(MenuFuncP newMenu)
 }
 
 uint8_t  g_vbat100mV ;
-volatile uint8_t tick10ms = 0;
 uint16_t g_LightOffCounter;
 uint8_t  stickMoved = 0;
 
@@ -3697,7 +3698,7 @@ static void perMain()
 			ppmInAvailable -= 1 ;
 		}
 
-    eeCheck();
+//    eeCheck();
 
 		// Every 10mS update backlight output to external latch
 		// Note: LcdLock not needed here as at tasking level
@@ -4879,10 +4880,15 @@ where( 'D' ) ;
 //#endif
 //	    PULSEGEN_ON; // Pulse generator enable immediately before mainloop
 //		}
-		Main_running = 1 ;
-    while(1){
-        mainSequence() ;
-    }
+	Main_running = 1 ;
+  while(1)
+	{
+    mainSequence() ;
+    if( tick10ms )
+		{
+    	eeCheck();
+		}
+  }
 }
 
 #ifdef FRSKY

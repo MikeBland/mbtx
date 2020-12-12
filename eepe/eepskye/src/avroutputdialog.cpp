@@ -21,6 +21,11 @@
 
 extern QString AvrdudeOutput ;
 
+unsigned char AModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
+
+extern void fixHeader( uint8_t *header ) ;
+extern uint32_t unfixHeader( uint8_t *header ) ;
+
 avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg, QString wTitle, int closeBehaviour) :
     QDialog(parent, Qt::WindowTitleHint | Qt::WindowSystemMenuHint),
     ui(new Ui::avrOutputDialog),
@@ -39,10 +44,13 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 		quint32 size ;
 		quint32 offset ;
 		quint32 numBlocks ;
+		quint32 mode ;
+    QString fname ;
     destFile = arg.at(0) ;
     sourceFile = arg.at(1) ;
     size = arg.at(2).toInt() ;
     offset = arg.at(3).toInt() ;
+    mode = arg.at(4).toInt() ;
 		numBlocks = size / 4096 ;
 
 		ui->progressBar->show() ;
@@ -52,15 +60,224 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 
 		show() ;
 		repaint() ;
-		if ( doFileCopy( destFile, sourceFile, size, offset ) == 0 )
+		if ( mode == 1 )
 		{
-      QMessageBox::critical(this, "eePskye", tr("Operation Failed"));
-      reject();
+		  quint8 temp[8192] ;
+				
+			QFile file ;
+			file.setFileName(destFile) ;
+			fname = sourceFile ;
+			fname.append( "radio.bin" ) ;
+
+			QFile rfile ;
+			rfile.setFileName(fname) ;
+    	if (!rfile.open(QIODevice::ReadOnly ))
+			{  //reading file
+        QMessageBox::critical( this, "eePskye",
+                      tr("Error opening file %1:\n%2.")
+                      .arg(fname)
+                      .arg(file.errorString())) ;
+ 	  		reject() ;
+				return ;
+			}
+	    ui->progressBar->setValue(1) ;
+	    addText("Read Radio file\n");
+			repaint() ;
+
+		  memset(temp,0,8192) ;
+			long s = rfile.size() ;
+			if ( s > 8192 )
+			{
+				s = 8192 ;
+			}
+		  long result = rfile.read( (char*)&temp, s ) ;
+		  rfile.close() ;
+    	if (!file.open(QIODevice::WriteOnly ))
+			{
+        QMessageBox::critical( this, "eePskye",
+                              tr("Error opening file %1:\n%2.")
+                      .arg("tempfile")
+                      .arg(file.errorString())) ;
+ 	  		reject() ;
+				return ;
+			}
+			fixHeader( &temp[0] ) ;
+			fixHeader( &temp[4096] ) ;
+
+			file.write((char*)&temp, 8192 ) ;
+			
+	    ui->progressBar->setValue(2) ;
+			repaint() ;
+			
+			
+			fname = sourceFile ;
+			fname.append( "Mnames.bin" ) ;
+			rfile.setFileName(fname) ;
+    	if (!rfile.open(QIODevice::ReadOnly ))
+			{  //reading file
+        QMessageBox::critical( this, "eePskye",
+                      tr("Error opening file %1:\n%2.")
+                      .arg(fname)
+                      .arg(file.errorString())) ;
+				file.close() ;
+    	  reject() ;
+				return ;
+			}
+      result = rfile.read( (char*)&AModelNames, sizeof(AModelNames) ) ;
+		  rfile.close() ;
+	    addText("Read Model Names\nReading Models\n");
+			uint32_t i ;
+			for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
+			{
+		    memset(temp,0,8192) ;
+				if ( AModelNames[i][0] && (AModelNames[i][0] != ' ') )
+				{
+					fname = sourceFile ;
+					fname.append( "model" ) ;
+					fname.append( '0'+(i)/10 ) ;
+					fname.append( '0'+(i)%10 ) ;
+					fname.append( "A.bin" ) ;
+					rfile.setFileName(fname) ;
+    			if (!rfile.open(QIODevice::ReadOnly ))
+					{  //reading file
+        		QMessageBox::critical( this, "eePskye",
+        		              tr("Error opening file %1:\n%2.")
+        		              .arg(fname)
+        		              .arg(file.errorString())) ;
+						file.close() ;
+    	  		reject() ;
+						return ;
+					}
+					long s = rfile.size() ;
+					if ( s > 8192 )
+					{
+						s = 8192 ;
+					}
+		    	long result = rfile.read( (char*)&temp, s ) ;
+		    	rfile.close() ;
+					fixHeader( &temp[0] ) ;
+					fixHeader( &temp[4096] ) ;
+				}
+				file.write((char*)&temp, 8192 ) ;
+		    ui->progressBar->setValue(i+1) ;
+				delayForDsiplayUpdate( 25 ) ;
+				repaint() ;
+			}
+		  memset(temp,0,8192) ;
+			file.write((char*)&temp, 8192 ) ;
+			file.write((char*)&temp, 8192 ) ;
+			file.write((char*)&temp, 8192 ) ;
+	    ui->progressBar->setValue(numBlocks) ;
+			repaint() ;
+
+//				QMessageBox::critical(this, "eePskye", tr("X10 Not Supported" ) ) ;
+			file.close() ;
+   		accept() ;
+//			res = 1 ;
+		}
+		else if ( mode == 2 )
+		{
+			quint8 temp[8192] ;
+			QFile file ;
+			QFile wfile ;
+      file.setFileName(sourceFile) ;
+			fname = destFile ;
+			fname.append( "radio.bin" ) ;
+    	if (!file.open(QIODevice::ReadOnly ))
+			{  //reading file
+        QMessageBox::critical( this, "eePskye",
+        			        tr("Error opening file %1:\n%2.")
+                      .arg(sourceFile)
+        			        .arg(file.errorString())) ;
+ 	  		reject() ;
+				return ;
+			}
+		  long result = file.read( (char*)&temp, 8192 ) ;
+			unfixHeader( temp ) ;
+			wfile.setFileName( fname ) ;
+			if (!wfile.open(QIODevice::WriteOnly ))
+			{
+        QMessageBox::critical( this, "eePskye",
+                 tr("Error opening file %1:\n%2.")
+                .arg(fname)
+                .arg(file.errorString())) ;
+				file.close() ;
+ 	  		reject() ;
+				return ;
+			}
+	    ui->progressBar->setValue(1) ;
+	    addText("Written Radio file\nWriting Models\n");
+			repaint() ;
+			
+			wfile.write((char*)&temp, 8192 ) ;
+			wfile.close() ;
+  		memset( AModelNames, ' ', sizeof(AModelNames) ) ;
+			uint32_t i ;
+			for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
+			{
+		    result = file.read( (char*)&temp, 8192 ) ;
+				uint32_t j ;
+				j = unfixHeader( temp ) ;
+				if ( j )
+				{
+          fname = destFile ;
+					fname.append( "model" ) ;
+					fname.append( '0'+(i)/10 ) ;
+					fname.append( '0'+(i)%10 ) ;
+					fname.append( "A.bin" ) ;
+					wfile.setFileName(fname) ;
+					if (!wfile.open(QIODevice::WriteOnly ))
+					{
+        		QMessageBox::critical( this, "eePskye",
+                 tr("Error opening file %1:\n%2.")
+                .arg(fname)
+                .arg(file.errorString())) ;
+						file.close() ;
+		 	  		reject() ;
+						return ;
+					}
+					wfile.write((char*)&temp, 8192 ) ;
+					wfile.close() ;
+					memcpy(AModelNames[i], &temp[8], 10 ) ;
+					delayForDsiplayUpdate( 25 ) ;
+				}
+		    ui->progressBar->setValue(i+1) ;
+				repaint() ;
+			}
+			fname = destFile ;
+			fname.append( "Mnames.bin" ) ;
+			wfile.setFileName(fname) ;
+			if (!wfile.open(QIODevice::WriteOnly ))
+			{
+     		QMessageBox::critical( this, "eePskye",
+               tr("Error opening file %1:\n%2.")
+              .arg(fname)
+              .arg(file.errorString())) ;
+				file.close() ;
+ 	  		reject() ;
+				return ;
+			}
+	    ui->progressBar->setValue(numBlocks) ;
+	    addText("Written Model Names\n");
+			repaint() ;
+      wfile.write((char *)&AModelNames, sizeof(AModelNames) ) ;
+			wfile.close() ;
+			file.close() ;
+   		accept() ;
+			return ;
 		}
 		else
 		{
-      QMessageBox::information(this, "eePskye", tr("Operation Successful"));
-    	accept();
+			if ( doFileCopy( destFile, sourceFile, size, offset ) == 0 )
+			{
+    	  QMessageBox::critical(this, "eePskye", tr("Operation Failed"));
+    	  reject();
+			}
+			else
+			{
+    	  QMessageBox::information(this, "eePskye", tr("Operation Successful"));
+    		accept();
+			}
 		}
 		AvrdudeOutput = ui->plainTextEdit->toPlainText() ;
 	}
@@ -152,6 +369,14 @@ void avrOutputDialog::killTimerElapsed()
 #endif
 }
 
+void avrOutputDialog::delayForDsiplayUpdate( uint32_t milliseconds )
+{
+	QTime dieTime = QTime::currentTime().addMSecs( milliseconds ) ;
+ 	while( QTime::currentTime() < dieTime )
+ 	{
+		QCoreApplication::processEvents( QEventLoop::AllEvents, 100 ) ;
+ 	}
+}
 
 avrOutputDialog::~avrOutputDialog()
 {
@@ -284,33 +509,33 @@ void avrOutputDialog::doProcessStarted()
 
 
 // Sourcefile is Mnames.bin
-int avrOutputDialog::doSdRead( QString destFile, QString sourceFile, quint32 offset )
-{
-// create empty 512K image
-// Read model names
-// read "radio/radio.bin" to general in image
-// For each name that starts with not '\0' or ' ', read model to image
-  int hasErrors = 0 ;
-	quint32 count ;
+//int avrOutputDialog::doSdRead( QString destFile, QString sourceFile, quint32 offset )
+//{
+//// create empty 512K image
+//// Read model names
+//// read "radio/radio.bin" to general in image
+//// For each name that starts with not '\0' or ' ', read model to image
+//  int hasErrors = 0 ;
+//	quint32 count ;
 
-	unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
-	QFile source(sourceFile);
-  if (!source.open(QIODevice::ReadOnly))
-	{
-    QMessageBox::warning(this, tr("Error"),tr("Cannot open source file"));
-    hasErrors = 1 ;
-  }
-	else
-	{
-    count = source.read( (char *)ModelNames, sizeof(ModelNames) ) ;
-		source.close() ;
+//	unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
+//	QFile source(sourceFile);
+//  if (!source.open(QIODevice::ReadOnly))
+//	{
+//    QMessageBox::warning(this, tr("Error"),tr("Cannot open source file"));
+//    hasErrors = 1 ;
+//  }
+//	else
+//	{
+//    count = source.read( (char *)ModelNames, sizeof(ModelNames) ) ;
+//		source.close() ;
 
-		// read modelnames, now read /RADIO/radio.bin
+//		// read modelnames, now read /RADIO/radio.bin
 
-	}
+//	}
 	
-	return hasErrors ? 0 : 1 ;
-}
+//	return hasErrors ? 0 : 1 ;
+//}
 
 
 int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 size, quint32 offset )
@@ -373,11 +598,7 @@ int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 s
 
 					if ( totalSize > 40000 )
 					{
-    				QTime dieTime = QTime::currentTime().addMSecs( 25 );
-    				while( QTime::currentTime() < dieTime )
-    				{
-    				    QCoreApplication::processEvents( QEventLoop::AllEvents, 100 );
-    				}
+						delayForDsiplayUpdate( 25 ) ;
 					}
 				}
 			} while ( count && ( bytesCopied < size ) ) ;

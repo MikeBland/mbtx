@@ -1040,6 +1040,32 @@
           </widget>
          </item>
          <item>
+          <widget class="QLabel" name="label_202">
+           <property name="text">
+            <string>Option Value</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QSpinBox" name="MultiOptionSB">
+           <property name="suffix">
+            <string/>
+           </property>
+           <property name="minimum">
+            <number>-128</number>
+           </property>
+           <property name="maximum">
+            <number>127</number>
+           </property>
+           <property name="singleStep">
+            <number>1</number>
+           </property>
+           <property name="value">
+            <number>1</number>
+           </property>
+          </widget>
+         </item>
+         <item>
           <spacer name="horizontalSpacer_11">
            <property name="orientation">
             <enum>Qt::Horizontal</enum>

@@ -1115,7 +1115,7 @@ void setLanguage()
 
 const uint8_t csTypeTable[] =
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS, CS_2VAL
 } ;
 
 uint8_t CS_STATE( uint8_t x)
@@ -1168,7 +1168,12 @@ inline uint8_t keyDown()
 	return ~read_keys() & 0x7E ;
  #endif
 #else		
+ #ifdef PCBSKY
+	uint8_t value = (~PIOB->PIO_PDSR & 0x40) ? 0x80 : 0 ;
+	return (~read_keys() & 0x7E ) | value ; 
+ #else	
 	return ~read_keys() & 0x7E ;
+ #endif
 #endif
 }
 
@@ -4553,7 +4558,7 @@ void main_loop(void* pdata)
         g_vbat100mV = ab + 3 + 3 ;// Also add on 0.3V for voltage drop across input diode
 #endif
 #ifdef PCBX9D
- #if defined(PCBX9LITE)
+ #if defined(PCBX9LITE) || defined(PCBX7ACCESS)
         ab /= 71089  ;
  #else
   #if defined(PCBXLITE)
@@ -5977,7 +5982,7 @@ void processSwitches()
   		int16_t y = 0 ;
   		uint8_t s = CS_STATE( cs.func ) ;
 
-  		if(s == CS_VOFS)
+  		if ( (s == CS_VOFS) || (s == CS_2VAL) )
   		{
   		  x = getValue(cs.v1u-1);
     		if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
@@ -5985,7 +5990,9 @@ void processSwitches()
   		    y = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
 				}
   		  else
+				{
   		  	y = calc100toRESX(cs.v2);
+				}
   		}
   		else if(s == CS_VCOMP)
   		{
@@ -6072,7 +6079,7 @@ void processSwitches()
 					int8_t x = getAndSwitch( cs ) ;
 					if ( x )
 					{
-					  if (getSwitch( x, 0, 0 ) )
+					  if (getSwitch00( x ) )
 						{
 							if ( ( Last_switch[cs_index] & 2 ) == 0 )
 							{ // Triggering
@@ -6208,19 +6215,53 @@ void processSwitches()
   			  ret_value = ( x & y ) != 0 ;
 				}
   			break ;
+				case CS_RANGE :
+				{
+					int16_t z ;
+    			if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
+					{
+  		  	  z = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, (int8_t)cs.bitAndV3 ) ;
+					}
+  		  	else
+					{
+  		  		z = calc100toRESX((int8_t)cs.bitAndV3) ;
+					}
+  		    ret_value = (x >= y) && (x <= z) ;
+				}			 
+  			break ;
   			default:
   		    ret_value = false;
  		    break;
   		}
 
-			if ( ret_value )
+			
+			
+			int8_t z = getAndSwitch( cs ) ;
+			if ( z )
 			{
-				int8_t x = getAndSwitch( cs ) ;
-				if ( x )
+				switch ( cs.exfunc )
 				{
-  		    ret_value = getSwitch( x, 0, 0 ) ;
+					case 0 :
+  		    	ret_value &= getSwitch( z, 0, 0 ) ;
+					break ;
+					case 1 :
+  		    	ret_value |= getSwitch( z, 0, 0 ) ;
+					break ;
+					case 2 :
+  		    	ret_value ^= getSwitch( z, 0, 0 ) ;
+					break ;
 				}
 			}
+			
+//			if ( ret_value )
+//			{
+//				int8_t x = getAndSwitch( cs ) ;
+//				if ( x )
+//				{
+//  		    ret_value = getSwitch( x, 0, 0 ) ;
+//				}
+//			}
+			
 			if ( ( cs.func < CS_LATCH ) || ( cs.func > CS_RMONO ) )
 			{
 				Last_switch[cs_index] = ret_value ;
@@ -7748,7 +7789,15 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 		int8_t sw0 = pgvaradj->swtch ;
 		int8_t sw1 = 0 ;
 		uint32_t switchedON = 0 ;
-		int32_t value = g_model.gvars[idx].gvar ;
+		int32_t value ;
+		if ( pgvaradj->gvarIndex > 6 )
+		{
+			value = getTrimValue( CurrentPhase, idx - 7  ) ;
+		}
+		else
+		{
+			value = g_model.gvars[idx].gvar ;
+		}
 		if ( sw0 )
 		{
 			sw0 = getSwitch00(sw0) ;
@@ -7866,7 +7915,14 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 		{
 			value = -125 ;
 		}	
-		g_model.gvars[idx].gvar = value ;
+		if ( pgvaradj->gvarIndex > 6 )
+		{
+			setTrimValue( CurrentPhase, idx - 7, value ) ;
+		}
+		else
+		{
+			g_model.gvars[idx].gvar = value ;
+		}
 	}
 }
 
@@ -8375,7 +8431,7 @@ void checkDsmTelemetry5ms() ;
 
 	uint8_t option = g_menuStack[g_menuStackPtr] == menuProc0 ;
 #ifndef PCBLEM1
-	if ( option && ( PopupData.PopupActive == 0 ) )
+	if ( option && ( PopupData.PopupActive == 0 ) && ( g_eeGeneral.enableEncMain == 0 ) )
 	{
 		if ( Rotary_diff )
 		{
@@ -8983,7 +9039,7 @@ extern const char *screenshot() ;
 								// Also add on 0.3V for voltage drop across input diode
 #endif
 #ifdef PCBX9D
- #if defined(PCBX9LITE)
+ #if defined(PCBX9LITE) || defined(PCBX7ACCESS)
         ab /= 71089  ;
  #else
   #if defined(PCBXLITE)

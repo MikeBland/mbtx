@@ -13,6 +13,7 @@ customizeSplashDialog::customizeSplashDialog(QWidget *parent) :
     ui(new Ui::customizeSplashDialog)
 {
     ui->setupUi(this);
+		SplashType = 1 ;
 }
 
 customizeSplashDialog::~customizeSplashDialog()
@@ -24,6 +25,7 @@ void customizeSplashDialog::on_loadFromHexButton_clicked()
 {
     QString fileName;
     QSettings settings("er9x-eePe", "eePe");
+		uint32_t type ;
 //    quint8 temp[HEX_FILE_SIZE] = {0};
 
     fileName = QFileDialog::getOpenFileName(this,tr("Open"),settings.value("lastDir").toString(),tr("HEX files (*.hex);;"));
@@ -35,7 +37,8 @@ void customizeSplashDialog::on_loadFromHexButton_clicked()
     settings.setValue("lastDir",QFileInfo(fileName).dir().absolutePath());
     QImage image(128, 64, QImage::Format_Mono);
     uchar b[SPLASH_SIZE] = {0};
-    if(!getSplashHEX(fileName, (uchar *)&b, this))
+    type = getSplashHEX(fileName, (uchar *)&b, this) ;
+    if(!type)
     {
         QMessageBox::critical(this, tr("Error"),
                               tr("Error reading file %1").arg(fileName));
@@ -71,35 +74,65 @@ void customizeSplashDialog::on_loadFromHexButton_clicked()
     uchar b[SPLASH_SIZE] = {0};
     memcpy(&b, (const uchar *)&temp[pos + SPLASH_OFFSET], SPLASH_SIZE);
     */
-
-    for(int y=0; y<SPLASH_HEIGHT; y++)
+		if ( type == 2 )
+		{
+  	  for(int y=0; y<SPLASH_HEIGHT ; y++)
+        for(int x=0; x<SPLASH_WIDTH ; x++)
+          image.setPixel(x, y, 0 );
+			
+  	  for(int y=0; y<SPLASH_HEIGHT/2; y++)
+        for(int x=0; x<SPLASH_WIDTH/2; x++)
+          image.setPixel(x,y,((b[SPLASH_WIDTH/2*(y/8) + x]) & (1<<(y % 8))) ? 0 : 1  );
+			
+		}
+		else
+		{
+	    for(int y=0; y<SPLASH_HEIGHT; y++)
         for(int x=0; x<SPLASH_WIDTH; x++)
-            image.setPixel(x,y,((b[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : 1  );
-
+          image.setPixel(x,y,((b[SPLASH_WIDTH*(y/8) + x]) & (1<<(y % 8))) ? 0 : 1  );
+		}
     ui->imageLabel->setPixmap(QPixmap::fromImage(image));
+		SplashType = type ;
 }
 
 void customizeSplashDialog::on_loadFromImageButton_clicked()
 {
-    QString supportedImageFormats;
-     for (int formatIndex = 0; formatIndex < QImageReader::supportedImageFormats().count(); formatIndex++) {
-         supportedImageFormats += QLatin1String(" *.") + QImageReader::supportedImageFormats()[formatIndex];
-     }
+  QString supportedImageFormats;
+   for (int formatIndex = 0; formatIndex < QImageReader::supportedImageFormats().count(); formatIndex++) {
+       supportedImageFormats += QLatin1String(" *.") + QImageReader::supportedImageFormats()[formatIndex];
+   }
 
-    QSettings settings("er9x-eePe", "eePe");
-    QString fileName = QFileDialog::getOpenFileName(this,
-                                    tr("Open Image to load"), settings.value("lastDir").toString(), tr("Images (%1)").arg(supportedImageFormats));
+  QSettings settings("er9x-eePe", "eePe");
+  QString fileName = QFileDialog::getOpenFileName(this,
+                                  tr("Open Image to load"), settings.value("lastDir").toString(), tr("Images (%1)").arg(supportedImageFormats));
 
-    if (!fileName.isEmpty()) {
-        QImage image(fileName);
-        if (image.isNull()) {
-            QMessageBox::critical(this, tr("Error"),
-                                     tr("Cannot load %1.").arg(fileName));
-            return;
-        }
-
-        ui->imageLabel->setPixmap(QPixmap::fromImage(image.scaled(SPLASH_WIDTH, SPLASH_HEIGHT).convertToFormat(QImage::Format_Mono)));
+  if (!fileName.isEmpty())
+	{
+    QImage image(fileName);
+    if (image.isNull())
+		{
+      QMessageBox::critical(this, tr("Error"), tr("Cannot load %1.").arg(fileName));
+      return;
     }
+    if ( ( image.height() == 32 ) && ( image.width() == 64 ) )
+		{
+			SplashType = 2 ;
+	    ui->imageLabel->setPixmap(QPixmap::fromImage(image.copy(0,0,128,64).scaled(SPLASH_WIDTH, SPLASH_HEIGHT).convertToFormat(QImage::Format_Mono)));
+		}
+		else
+		{
+      if ( ( image.height() == 64 ) && ( image.width() == 128 ) )
+			{
+				SplashType = 1 ;
+		    ui->imageLabel->setPixmap(QPixmap::fromImage(image.scaled(SPLASH_WIDTH, SPLASH_HEIGHT).convertToFormat(QImage::Format_Mono)));
+			}
+			else
+			{
+        QMessageBox::critical(this, tr("Error"), tr("Image wrong size %1.").arg(fileName));
+        return ;
+			}
+		}
+  }
 }
 
 void customizeSplashDialog::on_saveToHexButton_clicked()
@@ -140,9 +173,20 @@ void customizeSplashDialog::on_saveToHexButton_clicked()
     uchar b[SPLASH_SIZE] = {0};
     quint8 * p = image.bits();
 
-    for(int y=0; y<SPLASH_HEIGHT; y++)
+		if ( SplashType == 2 )
+		{
+    	for(int y=0; y<SPLASH_HEIGHT/2; y++)
+        for(int x=0; x<SPLASH_WIDTH/2; x++)
+          b[SPLASH_WIDTH/2*(y/8) + x] |= ((p[(y*SPLASH_WIDTH + x)/8] & (1<<(x%8))) ? 1 : 0)<<(y % 8);
+		
+		
+		}
+		else
+		{
+    	for(int y=0; y<SPLASH_HEIGHT; y++)
         for(int x=0; x<SPLASH_WIDTH; x++)
-            b[SPLASH_WIDTH*(y/8) + x] |= ((p[(y*SPLASH_WIDTH + x)/8] & (1<<(x%8))) ? 1 : 0)<<(y % 8);
+          b[SPLASH_WIDTH*(y/8) + x] |= ((p[(y*SPLASH_WIDTH + x)/8] & (1<<(x%8))) ? 1 : 0)<<(y % 8);
+		}
 
     if(putSplashHEX(fileName, (uchar *)b, this))
     {

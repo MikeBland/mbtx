@@ -516,6 +516,9 @@ extern "C" void PWM_IRQHandler (void)
 
       case PROTO_MULTI:
       case PROTO_DSM2:
+#ifdef SBUS_PROTOCOL	
+      case PROTO_SBUS:
+#endif
 #ifdef XFIRE
       case PROTO_XFIRE:
 #endif
@@ -543,6 +546,12 @@ extern "C" void PWM_IRQHandler (void)
 					{
 						period = 1500*2 ;		// Total 4 mS
 					}
+#ifdef SBUS_PROTOCOL	
+					else if ( CurrentProtocol[1] == PROTO_SBUS )
+					{
+						period = 6500*2 ;		// Total 9 mS
+					}
+#endif
 					else
 					{
 						period = 8500*2 ;		// Total 11 mS
@@ -652,7 +661,11 @@ void setupPulsesDsm2(uint8_t chns)
 		Dsm_Type = 1 ;
 		// Consider inverting COM1 here
 	}
+#ifdef SBUS_PROTOCOL	
+	else if( (g_model.Module[1].protocol == PROTO_MULTI) || (g_model.Module[1].protocol == PROTO_SBUS) )
+#else
 	else if(g_model.Module[1].protocol == PROTO_MULTI)
+#endif // SBUS_PROTOCOL
 	{
 		required_baudrate = SCC_BAUD_100000 ;
 		Dsm_Type = 0 ;
@@ -796,12 +809,52 @@ void setupPulsesDsm2(uint8_t chns)
 				sendByteDsm2( SerialExternalData[i] ) ;
 			}
 
-			if ( g_model.Module[1].protocol == PROTO_SBUS )
-			{
-				sendByteDsm2(0);
-				sendByteDsm2(0);
-			}
 		}
+#ifdef SBUS_PROTOCOL	
+		else if( g_model.Module[1].protocol == PROTO_SBUS)
+		{
+			uint32_t i ;
+			uint32_t outputbitsavailable = 0 ;
+			uint32_t outputbits = 0 ;
+			uint32_t startChan = g_model.Module[1].startChannel ;
+			sendByteDsm2(0x0F) ;
+			for ( i = 0 ; i < 16 ; i += 1 )
+			{
+				int16_t x = g_chans512[startChan] ;
+				x *= 4 ;
+				x += x > 0 ? 4 : -4 ;
+				x /= 5 ;
+				x += 0x3E0 ;
+				startChan += 1 ;
+				if ( x < 0 )
+				{
+					x = 0 ;
+				}
+				if ( x > 2047 )
+				{
+					x = 2047 ;
+				}
+				outputbits |= x << outputbitsavailable ;
+				outputbitsavailable += 11 ;
+				while ( outputbitsavailable >= 8 )
+				{
+					uint8_t j = outputbits ;
+					sendByteDsm2(j) ;
+					outputbits >>= 8 ;
+					outputbitsavailable -= 8 ;
+				}
+			}
+			sendByteDsm2(0);
+			sendByteDsm2(0);
+
+//			i = Pulses2MHzptr - Bit_pulses ;
+//  		Pulses2MHzptr = Bit_pulses ;
+//			while ( i-- )
+//			{
+//				*Pulses2MHzptr++ ^= 0xFF ;
+//			}
+		}
+#endif
 		else// not MULTI
 		{
   		dsmDat[1]=g_model.Module[1].pxxRxNum ;  //DSM2 Header second byte for model match
@@ -861,6 +914,9 @@ void setupPulses()
 				}
 				disable_ssc() ;
       break;
+#ifdef SBUS_PROTOCOL	
+			case PROTO_SBUS:
+#endif // SBUS_PROTOCOL
       case PROTO_DSM2:
 	    case PROTO_MULTI:
 				disable_ssc() ;
@@ -887,6 +943,17 @@ void setupPulses()
 				init_main_ppm( 10000, 0 ) ;		// Initial period 1.5 mS, output on
 				module_output_low() ;
       break;
+#ifdef SBUS_PROTOCOL	
+			case PROTO_SBUS:
+				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
+				init_ssc(SCC_BAUD_100000) ;
+				SSC->SSC_TFMR |= 0x00000020 ;
+				SSC->SSC_THR = 0xFF ;		// Make the output High
+				PIOA->PIO_MDDR = PIO_PA17 ;						// Push Pull O/p in A17
+//				SSC->SSC_TFMR &= ~0x00000020 ;
+				DsmInitCounter = 0 ;
+      break;
+#endif // SBUS_PROTOCOL
     	case PROTO_MULTI:
       case PROTO_DSM2:
 				init_main_ppm( 5000, 0 ) ;		// Initial period 2.5 mS, output off
@@ -937,6 +1004,9 @@ void setupPulses()
     break;
 	  case PROTO_DSM2:
     case PROTO_MULTI:
+#ifdef SBUS_PROTOCOL	
+		case PROTO_SBUS:
+#endif // SBUS_PROTOCOL
 //      sei() ;							// Interrupts allowed here
       setupPulsesDsm2( ( g_model.Module[1].sub_protocol == DSM_9XR ) ? 12 : 6 ) ; 
     break;

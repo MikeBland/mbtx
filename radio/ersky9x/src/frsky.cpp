@@ -85,11 +85,9 @@ uint16_t FrameLossCount ;
 
 #define PRIVATE					'M'
 
-#ifdef SMALL
-#define PRIVATE_BUFFER_SIZE	24
-#else
 #define PRIVATE_BUFFER_SIZE	36
-#endif
+
+extern const uint32_t IndexedBaudrates[] ;
 
 // SPORT defines
 #define DATA_FRAME         0x10
@@ -213,6 +211,7 @@ uint8_t FrskyBattCells[2] = {0,0} ;
 uint16_t Frsky_Amp_hour_prescale ;
 
 uint8_t TelemetryType ;
+uint8_t TelemetryBaudIndex ;
 uint8_t SportStreamingStarted ;
 
 #ifdef REVX
@@ -421,19 +420,19 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 //		FrskyVolts[battnumber] = cell ;
 //		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
 		uint32_t index ;
-#ifdef BLOCKING
-		uint32_t bit ;
-		uint32_t offset ;
-#endif
+//#ifdef BLOCKING
+//		uint32_t bit ;
+//		uint32_t offset ;
+//#endif
 	  index = FR_CELL1+battnumber ;
-#ifdef BLOCKING
-		offset = index >> 5 ;
-		bit = 1 << (index & 0x0000001F) ;
-		if ( g_model.LogNotExpected[offset] & bit )
-		{
-			return ;
-		}
-#endif
+//#ifdef BLOCKING
+//		offset = index >> 5 ;
+//		bit = 1 << (index & 0x0000001F) ;
+//		if ( g_model.LogNotExpected[offset] & bit )
+//		{
+//			return ;
+//		}
+//#endif
 		uint32_t scaling = 1000 + g_model.cellScalers[battnumber] ;
 		scaling *= cell ;
 		cell = scaling / 1000 ;
@@ -486,17 +485,17 @@ uint16_t SbecAverage ;
 
 void storeTelemetryData( uint8_t index, uint16_t value )
 {
-#ifdef BLOCKING
-	uint32_t bit ;
-	uint32_t offset ;
+//#ifdef BLOCKING
+//	uint32_t bit ;
+//	uint32_t offset ;
 	
-	offset = index >> 5 ;
-	bit = 1 << (index & 0x0000001F) ;
-	if ( g_model.LogNotExpected[offset] & bit )
-	{
-		return ;
-	}
-#endif
+//	offset = index >> 5 ;
+//	bit = 1 << (index & 0x0000001F) ;
+//	if ( g_model.LogNotExpected[offset] & bit )
+//	{
+//		return ;
+//	}
+//#endif
 	if ( index == FR_ALT_BARO )
 	{
 		value *= 10 ;
@@ -2310,13 +2309,13 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 				case 0xFC :	// RSSI
 					storeRSSI( 135-value ) ;
 				break ;
-				case FS_ID_ERR_RATE :
+				case FS_ID_ERR_RATE :	// FE
 					storeTelemetryData( FR_CUST1, value ) ;
 				break ;
-				case FS_ID_SNR :
+				case FS_ID_SNR :			// FA
 					storeTelemetryData( FR_CUST2, value ) ;
 				break ;
-				case FS_ID_NOISE :
+				case FS_ID_NOISE :		// FB
 					storeTelemetryData( FR_CUST3, value ) ;
 				break ;
 			}
@@ -3097,7 +3096,7 @@ void telemetry_init( uint8_t telemetryType )
 			}
 			else
 			{
-				com1_Configure( g_model.telemetryBaudrate-1, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+				com1_Configure( IndexedBaudrates[g_model.telemetryBaudrate], SERIAL_NORM, SERIAL_NO_PARITY ) ;
 //				UART2_Configure( g_model.telemetryBaudrate-1, Master_frequency ) ;
 //				com1_timeout_disable() ;
 //				UART2_timeout_disable() ;
@@ -3149,6 +3148,10 @@ void telemetry_init( uint8_t telemetryType )
 
 void initComPort( uint32_t baudRate, uint32_t invert, uint32_t parity )
 {
+	if ( baudRate < 10 )
+	{
+		baudRate = IndexedBaudrates[baudRate] ;
+	}
 	if ( g_model.frskyComPort == 0 )
 	{
 		com1_Configure( baudRate, invert & 1, parity ) ;
@@ -3266,9 +3269,14 @@ void FRSKY_Init( uint8_t brate )
 	}
 	else if ( brate == FRSKY_TEL_SPORT )
 	{
+		uint32_t baudrate = 57600 ;
 		numPktBytes = 0 ;
 		dataState = frskyDataIdle ;
-		initComPort( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+		if ( g_model.Module[1].protocol == PROTO_SBUS )
+		{
+			baudrate = IndexedBaudrates[g_model.telemetryBaudrate] ;
+		}
+		initComPort( baudrate, SERIAL_NORM, SERIAL_NO_PARITY ) ;
 	}
 #ifdef XFIRE
 // #ifdef REVX
@@ -3328,6 +3336,10 @@ void FRSKY_Init( uint8_t brate )
 //				UART2_Configure( 100000, Master_frequency ) ;
 //				com1Parity( SERIAL_EVEN_PARITY ) ;
 //			}
+		}
+		else if ( g_model.Module[1].protocol == PROTO_SBUS )
+		{
+			initComPort( IndexedBaudrates[g_model.telemetryBaudrate], SERIAL_NORM, SERIAL_NO_PARITY ) ;
 		}
 		else
 		{
@@ -3644,7 +3656,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	uint8_t type = TEL_FRSKY_HUB ;
 
 #ifdef PCBSKY
-	if ( g_model.Module[1].protocol == PROTO_PXX )
+	if ( ( g_model.Module[1].protocol == PROTO_PXX ) || ( g_model.Module[1].protocol == PROTO_SBUS ) )
 	{
 		type = TEL_FRSKY_SPORT ;
 	}
@@ -3781,13 +3793,15 @@ void check_frsky( uint32_t fivems )
 	type = decodeTelemetryType( telemetryType ) ;
 #ifdef PCBSKY
 	if ( ( type != TelemetryType )
-			 || ( FrskyComPort != g_model.frskyComPort ) )
+			 || ( FrskyComPort != g_model.frskyComPort )
+			 || ( TelemetryBaudIndex != g_model.telemetryBaudrate ) )
 #endif
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 	if ( ( type != TelemetryType )
 			 || ( FrskyComPort != g_model.frskyComPort ) )
 #endif
 	{
+		TelemetryBaudIndex = g_model.telemetryBaudrate ;
 		telemetry_init( type ) ;
 	}
 	if ( type == TEL_MULTI )

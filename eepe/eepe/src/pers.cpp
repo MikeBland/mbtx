@@ -56,8 +56,9 @@ bool EEPFILE::loadFile(void* buf)
 			return false ;
 		}
 
-    int16_t sum=0;
-    for(int i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+    uint16_t sum=0;
+    for(int i=0; i<7;i++) sum+=(uint16_t)g_eeGeneral.calibMid[i];
+    for(int i=0; i<5;i++) sum+=(uint16_t)g_eeGeneral.calibSpanNeg[i];
 
     return g_eeGeneral.chkSum == sum;
 }
@@ -92,7 +93,8 @@ void EEPFILE::generalDefault()
     g_eeGeneral.calibSpanPos[i] = 0x180;
   }
   int16_t sum=0;
-  for(int i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+  for(int i=0; i<7;i++) sum+=(uint16_t)g_eeGeneral.calibMid[i];
+  for(int i=0; i<5;i++) sum+=(uint16_t)g_eeGeneral.calibSpanNeg[i];
   g_eeGeneral.chkSum = sum;
 
   QSettings settings("er9x-eePe", "eePe");
@@ -114,7 +116,8 @@ bool EEPFILE::eeLoadGeneral()
   if (ret<(int)(sizeof(EEGeneral)-20)) return false;
 
   uint16_t sum=0;
-  for(int i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+  for(int i=0; i<7;i++) sum+=(uint16_t)g_eeGeneral.calibMid[i];
+  for(int i=0; i<5;i++) sum+=(uint16_t)g_eeGeneral.calibSpanNeg[i];
   putGeneralSettings(&g_eeGeneral);
   return g_eeGeneral.chkSum == sum;
 }

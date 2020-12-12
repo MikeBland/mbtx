@@ -101,6 +101,7 @@ private slots:
     void about();
     void print();
     void preferences();
+		void viewLogfile() ;
 		void reviewOut() ;
     void donators();
     void showEr9xManual();
@@ -153,7 +154,12 @@ private:
 		int currentERSKY9XX9Lrev ;
 		int currentERSKY9XX12rev ;
 		int currentERSKY9XX10rev ;
-    int currentEEPSKYErelease ;
+		int currentERSKY9XT16rev ;
+		int currentERSKY9XLem1rev ;
+		int currentERSKY9XTX16Srev ;
+		int currentERSKY9XX10erev ;
+		
+		int currentEEPSKYErelease ;
     bool checkERSKY9X;
     bool checkEEPSKYE;
     bool showcheckForUpdatesResult;
@@ -181,6 +187,7 @@ private:
     QAction *saveAsAct;
     QAction *exitAct;
     QAction *preferencesAct;
+		QAction *viewLogfileAct;
     QAction *reviewBurnOutput ;
     QAction *checkForUpdatesAct;
     QAction *cutAct;

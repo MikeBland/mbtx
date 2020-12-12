@@ -140,6 +140,36 @@
        <string>X9Lite</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>Horus X10</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>T16</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Lemon1</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>TX16S</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Horus X12</string>
+      </property>
+     </item>
+     <item>
+      <property name="text">
+       <string>Horus X10 express</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item row="9" column="1">

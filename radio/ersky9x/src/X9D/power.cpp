@@ -261,6 +261,11 @@ void init_soft_power()
 	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
 	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
 //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOPWR, ENABLE);
+ 
+ #if defined(PCBX7ACCESS)
+	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
+	configure_pins( PIN_SPORT_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+ #endif // ACCESS
 
   /* GPIO  Configuration*/
  #if defined(REVPLUS) || defined(REV9E)

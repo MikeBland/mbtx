@@ -325,8 +325,6 @@ void ModelEdit::tabModelEditSetup()
     setProtocolBoxes();
 
 		populateAnaVolumeCB( ui->volumeControlCB, g_model.anaVolume ) ;
-	  ui->countryCB->setCurrentIndex(g_model.country) ;
-	  ui->typeCB->setCurrentIndex(g_model.sub_protocol) ;
 		ui->label_version->setText( tr("%1").arg( g_model.modelVersion ) ) ;
 #ifdef V2
 		ui->updateButton->setVisible( false ) ;
@@ -969,6 +967,7 @@ void ModelEdit::setProtocolBoxes()
     switch (g_model.protocol)
     {
     case (PROTO_PXX):
+        ui->MultiOptionSB->setEnabled(false);
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
@@ -1009,6 +1008,7 @@ void ModelEdit::setProtocolBoxes()
         ui->ppmFrameLengthDSB->setValue(22.5);
         break;
     case (PROTO_DSM2):
+        ui->MultiOptionSB->setEnabled(false);
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(false);
         ui->ppmFrameLengthDSB->setEnabled(false);
@@ -1028,6 +1028,7 @@ void ModelEdit::setProtocolBoxes()
         break;
 			
 			case (PROTO_MULTI):
+        ui->MultiOptionSB->setEnabled(true);
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(true);
         ui->ppmFrameLengthDSB->setEnabled(false);
@@ -1040,14 +1041,17 @@ void ModelEdit::setProtocolBoxes()
           setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
           ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
         }
-        ui->pxxRxNum->setEnabled(false);
+        ui->pxxRxNum->setEnabled(true);
+        ui->pxxRxNum->setValue(g_model.ppmNCH & 0x0F);
         ui->typeCB->setEnabled(false);
         ui->countryCB->setEnabled(false);
 //				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
+				ui->MultiOptionSB->setValue(g_model.option_protocol) ;
       break ;
 
     default:
+        ui->MultiOptionSB->setEnabled(false);
         ui->ppmDelaySB->setEnabled(true);
         ui->numChannelsSB->setEnabled(true);
         ui->ppmFrameLengthDSB->setEnabled(true);
@@ -1066,6 +1070,8 @@ void ModelEdit::setProtocolBoxes()
         ui->typeCB->setEnabled(false);
         break;
     }
+	  ui->countryCB->setCurrentIndex(g_model.country) ;
+	  ui->typeCB->setCurrentIndex(g_model.sub_protocol) ;
     protocolEditLock = false;
 }
 
@@ -4747,6 +4753,15 @@ void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
     if(protocolEditLock) return;
 
     g_model.sub_protocol = index;
+    setProtocolBoxes();
+    updateSettings();
+}
+
+void ModelEdit::on_SubSubProtocolCB_currentIndexChanged(int index)
+{
+    if(protocolEditLock) return;
+
+    g_model.ppmNCH = ( (index << 4) & 0x70) + (g_model.ppmNCH & 0x8F);
     setProtocolBoxes();
     updateSettings();
 }

@@ -21,6 +21,7 @@
 # TaranisPlus  make PCB=X9D REVPLUS=1
 # XLite        make PCB=X9D PCBXLITE=1
 # QX7          make PCB=X9D PCBX7=1 BT=1
+# QX7 ACCESS   make PCB=X9D PCBX7=1 PCBACCESS=1
 # Jumper T12   make PCB=X9D PCBX7=1 PCBT12=1
 # X9Lite       make PCB=X9D PCBX9LITE=1
 # X9LiteS      make PCB=X9D PCBX9LITE=1 X9LS=1 
@@ -79,6 +80,10 @@ ifeq ($(PCB), X9D)
    CPPDEFS += -DPCBT12
    PROJECT = t12
    EXT_MOD=T12
+  else ifeq ($(PCBACCESS), 1)
+   CPPDEFS += -DPCBX7ACCESS
+   PROJECT = x7Acc
+   EXT_MOD=QX7ACCESS
   else
    PROJECT = x7
    EXT_MOD=QX7
@@ -1195,6 +1200,7 @@ clean:
 	-rm -f obj_ersky9x/*.*
 	-rm -f obj_sky9XT/*.*
 	-rm -f obj_x7/*.*
+	-rm -f obj_x7Acc/*.*
 	-rm -f obj_xlite/*.*
 	-rm -f obj_x9Lite/*.*
 	-rm -f obj_t12/*.*

@@ -99,15 +99,15 @@ private:
     bool curveEditLock ;
     
     int oldAdjFunction[NUM_GVAR_ADJUST_SKY] ;
-    QSpinBox  * cswitchOffset[NUM_SKYCSW];
-    QSpinBox  * cswitchOffset0[NUM_SKYCSW];
-    QComboBox * cswitchSource1[NUM_SKYCSW];
-    QComboBox * cswitchSource2[NUM_SKYCSW];
-    QComboBox * cswitchAndSwitch[NUM_SKYCSW];
-    QLabel		* cswitchTlabel[NUM_SKYCSW];
-		QTextBrowser * cswitchText1[NUM_SKYCSW];
-		QTextBrowser * cswitchText2[NUM_SKYCSW];
-    QDoubleSpinBox  *cswitchDelay[NUM_SKYCSW];
+//    QSpinBox  * cswitchOffset[NUM_SKYCSW];
+//    QSpinBox  * cswitchOffset0[NUM_SKYCSW];
+//    QComboBox * cswitchSource1[NUM_SKYCSW];
+//    QComboBox * cswitchSource2[NUM_SKYCSW];
+//    QComboBox * cswitchAndSwitch[NUM_SKYCSW];
+//    QLabel		* cswitchTlabel[NUM_SKYCSW];
+//		QTextBrowser * cswitchText1[NUM_SKYCSW];
+//		QTextBrowser * cswitchText2[NUM_SKYCSW];
+//    QDoubleSpinBox  *cswitchDelay[NUM_SKYCSW];
 
     QDoubleSpinBox  * safetySwitchValue[NUM_SKYCHNOUT+NUM_VOICE];
     QComboBox * safetySwitchSwtch[NUM_SKYCHNOUT+NUM_VOICE];
@@ -154,7 +154,7 @@ private:
 		void tabVoiceAlarms() ;
 		void voiceAlarmsList() ;
     void updateCurvesTab();
-    void setSwitchWidgetVisibility(int i);
+//    void setSwitchWidgetVisibility(int i);
 		void setSafetyWidgetVisibility(int i);
 //		void oneGvarVisibility(int index, QComboBox *b, QSpinBox *sb ) ;
 //		void gvarVisibility() ;
@@ -201,7 +201,8 @@ private:
     void setSwitch(uint8_t idx, uint8_t func, int8_t v1, int8_t v2);
 
 		struct t_templateValues templateValues ;
-	void voiceAlarmsBlank( int i ) ;
+		void voiceAlarmsBlank( int i ) ;
+    void combinedSourceString(QString *srcstr, uint32_t value) ;
 
 
 

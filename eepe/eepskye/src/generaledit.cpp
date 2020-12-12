@@ -638,7 +638,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		{
 			numberOfPots = 3 ;
 		}
-		if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+		if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
 		{
 			numberOfPots = 4 ;
 		}

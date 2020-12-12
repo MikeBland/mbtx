@@ -107,7 +107,7 @@ static void init_ext_pxx( void ) ;
 static void disable_ext_pxx( void ) ;
 static void disable_int_pxx( void ) ;
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 
 static void init_ext_dsm2( void ) ;
 static void disable_ext_dsm2( void ) ;
@@ -159,7 +159,7 @@ static void init_int_access( void ) ;
 #ifdef ACCESS
 void init_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
   if (port == INTERNAL_MODULE)
     init_int_access() ;
   else
@@ -171,7 +171,7 @@ void init_access(uint32_t port)
 
 void disable_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
   if (port == INTERNAL_MODULE)
     disable_int_pxx() ;
   else
@@ -241,7 +241,7 @@ void disable_dsm2(uint32_t port)
 }
 
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 
 
 #ifdef XFIRE
@@ -758,11 +758,15 @@ void init_ext_serial( uint32_t type )
   	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
 	}
   
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ #if defined(PCBX7ACCESS)
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;           // Enable portC clock
+ #else
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ #endif // X7ACCESS
 #if defined(REV3)
   configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
 #else
-  configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_3 | PIN_OS25 | PIN_PUSHPULL ) ;
+  configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PORT_EXTPPM | PIN_PER_3 | PIN_OS25 | PIN_PUSHPULL ) ;
 #endif
   RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA2EN ;            // Enable DMA2 clock
@@ -993,7 +997,11 @@ static void init_ext_ppm()
 //  setupPulsesPpmx() ;
   ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
 
+ #if defined(PCBX7ACCESS)
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;           // Enable portC clock
+ #else
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ #endif // X7ACCESS
 #if defined(REV3)
   configure_pins( 0x0100, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
 #else
@@ -1138,7 +1146,7 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 
 #endif
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 
 static void init_int_none()
 {
@@ -1207,7 +1215,7 @@ extern uint16_t XjtHbeatOffset ;
 // TIM3_CH1/AF2, TIM8_CH1/AF3
 
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 static void init_int_pxx_access( uint32_t type )
 #else
 static void init_int_pxx( void )
@@ -1235,7 +1243,7 @@ static void init_int_pxx( void )
 	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 450000 ;
 //	INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 #ifdef ACCESS
 	if ( type )
 	{
@@ -1260,13 +1268,13 @@ static void disable_int_pxx( void )
 // USART6 can drive this
 // TIM3 ch1 or TIM8 ch1
 	 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 static void init_ext_pxx_access( uint32_t type )
 #else
 static void init_ext_pxx( void )
 #endif
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 //#ifdef PCBX9LITE
 //#ifndef X3_PROTO
   EXTERNAL_RF_ON() ;
@@ -1288,14 +1296,14 @@ static void init_ext_pxx( void )
   // UART config
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( type ? PXX2_EXTERNAL_BAUDRATE : 420000 ) ;
 #else
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 420000 ;
 #endif
 //	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	EXTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 #ifdef ACCESS
 	if ( type )
 	{
@@ -1317,7 +1325,7 @@ static void init_ext_pxx( void )
 #endif
 }
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 static void init_ext_access( void )
 {
 	init_ext_pxx_access( 1 ) ;
@@ -1344,7 +1352,7 @@ static void init_int_pxx( void )
 	 
 static void disable_ext_pxx( void )
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 //#ifdef PCBX9LITE
 //#ifndef X3_PROTO
   NVIC_DisableIRQ(EXTMODULE_USART_IRQn);
@@ -1449,7 +1457,11 @@ void init_ext_serial( uint32_t type )
   	setupPulsesDsm2(6, EXTERNAL_MODULE) ;
 	}
   
-	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ #if defined(PCBX7ACCESS)
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;           // Enable portC clock
+ #else
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
+ #endif // X7ACCESS
 #if defined(REV3)
   configure_pins( PIN_INTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
 #else
@@ -1466,8 +1478,8 @@ void init_ext_serial( uint32_t type )
 //#ifdef X3_PROTO
 //	  TIM8->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2500000 - 1 ;               // 0.5uS from 30MHz
 //#endif
-		TIM8->ARR = 22499 ;                     // 9mS
-  	TIM8->CCR2 = 20000 ;            // Update time
+		TIM8->ARR = 17999 ;                     // 9mS
+  	TIM8->CCR2 = 16000 ;            // Update time
 	}
 	else if ( type == EXT_TYPE_DSM )
 	{
@@ -1804,6 +1816,7 @@ extern "C" void TIM8_CC_IRQHandler()
 #ifndef PCBX9LITE
  #ifndef PCBXLITE
   #ifndef REV19
+//   #ifndef PCBX7ACCESS
   if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
 	{
  #ifdef PCBX9D
@@ -1831,6 +1844,7 @@ extern "C" void TIM8_CC_IRQHandler()
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else
+//	 #endif // X7ACCESS
 	#endif // REV19
  #endif // XLite
 #endif // nX3
@@ -1858,8 +1872,10 @@ extern "C" void TIM8_CC_IRQHandler()
     TIM8->CCR1 = dsm2Stream[1][0];
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
-  else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM) {
+  else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)
+	{
     ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
+  	TIM8->CCR1 = (g_model.Module[1].ppmDelay*50+300)*2 ;
     TIM8->DIER |= TIM_DIER_UDE ;
     TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
     TIM8->DIER |= TIM_DIER_UIE ;                            // Enable this interrupt

@@ -92,7 +92,7 @@ void ProtocolDialog::setBoxes()
 		{
       ui->ProtocolCB->addItem("ACCESS");
 		}
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
 		{
       ui->ProtocolCB->addItem("XJT");
 		}	
@@ -121,6 +121,10 @@ void ProtocolDialog::setBoxes()
 		{
       ui->ProtocolCB->addItem("ACCESS");
 		}
+    if ( rData->bitType & (RADIO_BITTYPE_9XRPRO) )
+		{
+      ui->ProtocolCB->addItem("SBUS");
+		}
 	}
   ui->ProtocolCB->addItem("OFF");
   uint32_t i = ppd->module.protocol ;
@@ -134,7 +138,7 @@ void ProtocolDialog::setBoxes()
 	{
     uint8_t *options ;
 		options = &ProtocolOptionsSKY[lModule][0] ;
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
 		{
 			options = &ProtocolOptionsX9de[lModule][0] ;
 		}
@@ -426,7 +430,7 @@ void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 	}
 	else
 	{
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
 		{
       p = &ProtocolOptionsX9de[lModule][1] ;
 		}

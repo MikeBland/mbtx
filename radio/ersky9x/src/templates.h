@@ -69,7 +69,7 @@
 #define CURVE5(x) ((x)-1)
 #define CURVE9(x) (MAX_CURVE5+(x)-1)
 
-extern uint16_t n_Templates[] ;
+extern const uint16_t n_Templates[] ;
 
 
 

@@ -1686,7 +1686,7 @@ ISR(USART0_RX_vect)
     		break ;
         case PRIVATE_VALUE :
 				{
-					if ( Private_type == 0xFF )
+					if ( ( Private_type == 0xFF ) && (g_model.protocol != PROTO_MULTI) )
 					{
 						uint8_t lEnable ;
 						uint8_t lPosition ;

@@ -36,7 +36,9 @@ HEADERS += mainwindow.h \
     ProtocolDialog.h \
     SwitchDialog.h \
     loggingDialog.h \
-    cellDialog.h
+    cellDialog.h \
+    qcustomplot.h \
+    logsdialog.h
 SOURCES += main.cpp \
     mainwindow.cpp \
     file.cpp \
@@ -68,7 +70,9 @@ SOURCES += main.cpp \
     ProtocolDialog.cpp \
     switchDialog.cpp \
     loggingDialog.cpp \
-    cellDialog.cpp
+    cellDialog.cpp \
+    qcustomplot.cpp \
+    logsdialog.cpp
 unix {
 SOURCES += mountlist.cpp
 }
@@ -92,23 +96,24 @@ FORMS += modeledit.ui \
     ProtocolDialog.ui \
     SwitchDialog.ui \
     loggingDialog.ui \
-    cellDialog.ui
-TRANSLATIONS = eepe_.ts    \
-               eepe_he.ts  \
-               eepe_pt.ts  \
-               eepe_ru.ts  \
-               eepe_de.ts  \
-               eepe_es.ts  \
-               eepe_fr.ts
+    cellDialog.ui \
+    logsdialog.ui
+TRANSLATIONS = eepskye_.ts    \
+               eepskye_he.ts  \
+               eepskye_pt.ts  \
+               eepskye_ru.ts  \
+               eepskye_de.ts  \
+               eepskye_es.ts  \
+               eepskye_fr.ts
 RESOURCES += eepskye.qrc \
     eepskye.qrc
 TARGET = eepskye
 
 unix {
-LANGS.path = /usr/bin/eepefiles
+LANGS.path = /usr/bin/eepskyefiles
 LANGS.files = lang/*.qm
 
-ICON.path = /usr/bin/eepefiles
+ICON.path = /usr/bin/eepskyefiles
 ICON.files += icone.svg
 
 SHORTCUT.path = /usr/share/applications/

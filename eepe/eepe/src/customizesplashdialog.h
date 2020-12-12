@@ -28,6 +28,7 @@ private slots:
 
 private:
     Ui::customizeSplashDialog *ui;
+		uint32_t SplashType ;
 };
 
 #endif // CUSTOMIZESPLASHDIALOG_H

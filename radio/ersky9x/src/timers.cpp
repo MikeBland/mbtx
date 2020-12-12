@@ -2425,7 +2425,7 @@ uint16_t PxxValue ;
 uint16_t *PtrPxx_x ;
 uint16_t PxxValue_x ;
 
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(REV19)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(REV19) || defined(PCBX7ACCESS)
 uint8_t PxxSerial[2][50] ;
 uint8_t *PtrSerialPxx[2] ;
 #endif

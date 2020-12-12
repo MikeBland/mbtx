@@ -74,6 +74,7 @@
 #include "helpers.h"
 #include "../../common/telemetry.h"
 #include "simulatordialog.h"
+#include "logsdialog.h"
 
 #if defined WIN32 || !defined __GNUC__
 #include <windows.h>
@@ -104,6 +105,12 @@
 #define DNLD_VER_ERSKY9XXLITE		 8
 #define DNLD_VER_ERSKY9XT12			 9
 #define DNLD_VER_ERSKY9XX9L			 10
+#define DNLD_VER_ERSKY9XX10			 11
+#define DNLD_VER_ERSKY9XT16			 12
+#define DNLD_VER_ERSKY9XLEM1		 13
+#define DNLD_VER_ERSKY9XTX16S		 14
+#define DNLD_VER_ERSKY9XX12			 15
+#define DNLD_VER_ERSKY9XX10E		 16
 
 //#define DNLD_VER_ER9X_FRSKY      2
 //#define DNLD_VER_ER9X_ARDUPILOT  3
@@ -144,7 +151,13 @@
 #define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
 #define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
 #define ERSKY9XT12_URL "http://www.er9x.com/t12_rom.bin"
-#define ERSKY9XX9L_URL "http://www.er9x.com/x9Lite_rom.bin"
+#define ERSKY9XX9L_URL "http://www.er9x.com/x10_rom.bin"
+#define ERSKY9XX10_URL "http://www.er9x.com/t16_rom.bin"
+#define ERSKY9XT16_URL "http://www.er9x.com/x9Lite_rom.bin"
+#define ERSKY9XLEM1_URL "http://www.er9x.com/Lemon1_rom.bin"
+#define ERSKY9XTX16S_URL "http://www.er9x.com/tx16s_rom.bin"
+#define ERSKY9XX12_URL "http://www.er9x.com/x12d_rom.bin"
+#define ERSKY9XX10E_URL "http://www.er9x.com/x10e_rom.bin"
 
 #define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
 
@@ -295,6 +308,25 @@ void MainWindow::title()
 		case 10 :
 			type = "X9Lite" ;
     break ;
+		case 11 :
+			type = "X10" ;
+    break ;
+		case 12 :
+			type = "T16" ;
+    break ;
+		case 13 :
+			type = "Lemon1" ;
+    break ;
+		case 14 :
+			type = "TX16S" ;
+    break ;
+		case 15 :
+			type = "X12" ;
+    break ;
+		case 16 :
+			type = "X10e" ;
+    break ;
+
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -442,70 +474,111 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 						currentRev = currentERSKY9XX9Lrev ;
 					break ;
           case 11 :
-						currentRev = currentERSKY9XX12rev ;
+						currentRev = currentERSKY9XX10rev ;
 					break ;
           case 12 :
-						currentRev = currentERSKY9XX10rev ;
+						currentRev = currentERSKY9XT16rev ;
+					break ;
+          case 13 :
+						currentRev = currentERSKY9XLem1rev ;
+					break ;
+          case 14 :
+						currentRev = currentERSKY9XTX16Srev ;
+					break ;
+          case 15 :
+						currentRev = currentERSKY9XX12rev ;
+					break ;
+          case 16 :
+						currentRev = currentERSKY9XX10erev ;
 					break ;
 
 				}
 
         if(rev>currentRev)
         {
-
             QString dnldURL, baseFileName;
             switch (settings.value("download-version", 0).toInt())
             {
-            case (DNLD_VER_ERSKY9XR):
+	            case (DNLD_VER_ERSKY9XR):
                 dnldURL = ERSKY9XR_URL;
                 baseFileName = "ersky9xr_rom.bin";
-                break;
+              break;
 
-            case (DNLD_VER_ERSKYX9D):
+  	          case (DNLD_VER_ERSKYX9D):
                 dnldURL = ERSKYX9D_URL;
                 baseFileName = "x9d_rom.bin";
-                break;
+              break;
 
-            case (DNLD_VER_ERSKYX9DP):
+    	        case (DNLD_VER_ERSKYX9DP):
                 dnldURL = ERSKYX9DP_URL;
                 baseFileName = "x9dp_rom.bin";
-                break;
+              break;
 
-            case (DNLD_VER_ERSKYX9XT):
+      	      case (DNLD_VER_ERSKYX9XT):
                 dnldURL = ERSKYX9XT_URL;
                 baseFileName = "ersky9x9XT_rom.bin";
-                break;
+              break;
             
-            case (DNLD_VER_ERSKYX9E):
+        	    case (DNLD_VER_ERSKYX9E):
                 dnldURL = ERSKYX9E_URL;
                 baseFileName = "x9e_rom.bin";
-                break;
+              break;
 
-						case (DNLD_VER_ERSKY9XA):
+							case (DNLD_VER_ERSKY9XA):
                 dnldURL = ERSKY9XRA_URL;
                 baseFileName = "ersky9x_rom.bin";
-                break;
+              break;
 
-						case (DNLD_VER_ERSKY9XQX7):
+							case (DNLD_VER_ERSKY9XQX7):
                 dnldURL = ERSKY9XQX7_URL;
                 baseFileName = "x7_rom.bin";
-                break;
+              break;
 								
-						case (DNLD_VER_ERSKY9XXLITE):
+							case (DNLD_VER_ERSKY9XXLITE):
                 dnldURL = ERSKY9XXLITE_URL;
                 baseFileName = "xlite_rom.bin";
-                break;
+              break;
 								
-						case (DNLD_VER_ERSKY9XT12):
+							case (DNLD_VER_ERSKY9XT12):
                 dnldURL = ERSKY9XT12_URL;
                 baseFileName = "t12_rom.bin";
-                break;
+              break;
 								
-						case (DNLD_VER_ERSKY9XX9L):
+							case (DNLD_VER_ERSKY9XX9L):
                 dnldURL = ERSKY9X_URL;
                 baseFileName = "x9Lite_rom.bin";
-                break;
-								
+              break;
+
+							case (DNLD_VER_ERSKY9XX10):
+                dnldURL = ERSKY9XX10_URL;
+                baseFileName = "x10_rom.bin";
+              break;
+							
+							case (DNLD_VER_ERSKY9XT16):
+                dnldURL = ERSKY9XT16_URL;
+                baseFileName = "t16_rom.bin";
+              break;
+							
+							case (DNLD_VER_ERSKY9XLEM1):
+                dnldURL = ERSKY9XLEM1_URL;
+                baseFileName = "Lemon1_rom.bin";
+              break;
+							
+							case (DNLD_VER_ERSKY9XTX16S):
+                dnldURL = ERSKY9XTX16S_URL;
+                baseFileName = "tx16s_rom.bin";
+              break;
+
+							case (DNLD_VER_ERSKY9XX12):
+                dnldURL = ERSKY9XX12_URL;
+                baseFileName = "x12d_rom.bin";
+              break;
+							
+							case (DNLD_VER_ERSKY9XX10E):
+                dnldURL = ERSKY9XX10E_URL;
+                baseFileName = "x10e_rom.bin";
+              break;
+								 
             default:
                 dnldURL = ERSKY9X_URL;
                 baseFileName = "ersky9x_rom.bin";
@@ -580,6 +653,30 @@ void MainWindow::reply1Finished(QNetworkReply * reply)
 
 											case 10 :
 												settings.setValue("currentERSKY9XX9Lrev", rev);
+											break ;
+											
+											case 11 :
+												settings.setValue("currentERSKY9XX10rev", rev);
+											break ;
+											
+											case 12 :
+												settings.setValue("currentERSKY9XT16rev", rev);
+											break ;
+											
+											case 13 :
+												settings.setValue("currentERSKY9XLEM1rev", rev);
+											break ;
+											
+											case 14 :
+												settings.setValue("currentERSKY9XTX16Srev", rev);
+											break ;
+											
+											case 15 :
+												settings.setValue("currentERSKY9XX12rev", rev);
+											break ;
+											
+											case 16 :
+												settings.setValue("currentERSKY9XX10erev", rev);
 											break ;
 										}
                 }
@@ -660,7 +757,37 @@ void MainWindow::downloadLatester9x()
         dnldURL = ERSKY9XX9L_URL;
         baseFileName = "x9Lite_rom.bin";
       break;
-    }
+    
+			case (DNLD_VER_ERSKY9XX10):
+        dnldURL = ERSKY9XX10_URL;
+        baseFileName = "x10_rom.bin";
+      break;
+							
+			case (DNLD_VER_ERSKY9XT16):
+        dnldURL = ERSKY9XT16_URL;
+        baseFileName = "t16_rom.bin";
+      break;
+							
+			case (DNLD_VER_ERSKY9XLEM1):
+        dnldURL = ERSKY9XLEM1_URL;
+        baseFileName = "Lemon1_rom.bin";
+      break;
+							
+			case (DNLD_VER_ERSKY9XTX16S):
+        dnldURL = ERSKY9XTX16S_URL;
+        baseFileName = "tx16s_rom.bin";
+      break;
+
+			case (DNLD_VER_ERSKY9XX12):
+        dnldURL = ERSKY9XX12_URL;
+        baseFileName = "x12d_rom.bin";
+      break;
+							
+			case (DNLD_VER_ERSKY9XX10E):
+        dnldURL = ERSKY9XX10E_URL;
+        baseFileName = "x10e_rom.bin";
+      break;
+		}
 
     QString fileName = QFileDialog::getSaveFileName(this, tr("Save As"),settings.value("lastDir").toString() + "/" + baseFileName,tr(HEX_FILES_FILTER));
     if (fileName.isEmpty()) return;
@@ -701,6 +828,24 @@ void MainWindow::downloadLatester9x()
 			break ;
       case 10 :
 				currentERSKY9Xrev_temp = currentERSKY9XX9Lrev ;
+			break ;
+      case 11 :
+				currentERSKY9Xrev_temp = currentERSKY9XX10rev ;
+			break ;
+      case 12 :
+				currentERSKY9Xrev_temp = currentERSKY9XT16rev ;
+			break ;
+      case 13 :
+				currentERSKY9Xrev_temp = currentERSKY9XLem1rev ;
+			break ;
+      case 14 :
+				currentERSKY9Xrev_temp = currentERSKY9XTX16Srev ;
+			break ;
+      case 15 :
+				currentERSKY9Xrev_temp = currentERSKY9XX12rev ;
+			break ;
+      case 16 :
+				currentERSKY9Xrev_temp = currentERSKY9XX10erev ;
 			break ;
 		}
     connect(dd,SIGNAL(accepted()),this,SLOT(reply1Accepted()));
@@ -819,6 +964,29 @@ void MainWindow::reply1Accepted()
     		settings.setValue("currentERSKY9XXrev", currentERSKY9XX9Lrev);
 			break ;
 
+			case 11 :
+    		settings.setValue("currentERSKY9XX10rev", currentERSKY9XX10rev);
+			break ;
+
+			case 12 :
+    		settings.setValue("currentERSKY9XT16rev", currentERSKY9XT16rev);
+			break ;
+
+			case 13 :
+    		settings.setValue("currentERSKY9XLem1rev", currentERSKY9XLem1rev);
+			break ;
+
+			case 14 :
+    		settings.setValue("currentERSKY9XTX16Srev", currentERSKY9XTX16Srev);
+			break ;
+
+			case 15 :
+    		settings.setValue("currentERSKY9XX12rev", currentERSKY9XX12rev);
+			break ;
+
+			case 16 :
+    		settings.setValue("currentERSKY9XX10erev", currentERSKY9XX10erev);
+			break ;
 		}	
 }
 
@@ -895,6 +1063,14 @@ void MainWindow::preferences()
     preferencesDialog *pd = new preferencesDialog(this);
     pd->exec();
 		title() ;
+}
+
+void MainWindow::viewLogfile()
+{
+  LogsDialog *ld = new LogsDialog(this);
+  ld->setWindowFlags(Qt::Window);   //to show minimize an maximize buttons
+  ld->setAttribute(Qt::WA_DeleteOnClose, true);
+  ld->show();
 }
 
 void MainWindow::reviewOut()
@@ -986,6 +1162,212 @@ QStringList MainWindow::GetSambaArguments(const QString &tcl)
 extern QString AvrdudeOutput ;
 extern QString VolNames[] ;
 
+QString FindHorusPath()
+{
+  int pathcount=0;
+  QString path;
+  QStringList drives;
+  QString eepromfile;
+  QString fsname;
+
+#if defined WIN32 || !defined __GNUC__
+  foreach( QFileInfo drive, QDir::drives() )
+	{
+    WCHAR szVolumeName[256] ;
+    WCHAR szFileSystemName[256];
+    DWORD dwSerialNumber = 0;
+    DWORD dwMaxFileNameLength=256;
+    DWORD dwFileSystemFlags=0;
+
+    bool ret = GetVolumeInformationW( (WCHAR *) drive.absolutePath().utf16(),szVolumeName,256,&dwSerialNumber,&dwMaxFileNameLength,&dwFileSystemFlags,szFileSystemName,256);
+    if(ret)
+		{
+      eepromfile=drive.absolutePath() ;
+			if ( eepromfile.right(1) == "/" )
+			{
+				eepromfile = eepromfile.left( eepromfile.size() - 1 ) ;
+			}
+			fsname = eepromfile ;
+      eepromfile.append( "/RADIO/radio.bin" ) ;
+      if (QFile::exists(eepromfile))
+			{
+        pathcount++ ;
+				fsname.append( "/RADIO/" ) ;
+        path = fsname ;
+      }
+		}	
+	}
+#else
+//    struct mount_entry *entry;
+//    entry = read_file_system_list(true);
+//    while (entry != NULL)
+//		{
+//      if (!drives.contains(entry->me_devname))
+//			{
+//    		QString saveeepromfile ;
+//        drives.append(entry->me_devname);
+//        eepromfile=entry->me_mountdir;
+//				saveeepromfile = eepromfile ;
+//        eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
+////  #if !defined __APPLE__ && !defined WIN32
+////        QString fstype=entry->me_type;
+////        qDebug() << fstype;
+////        if (QFile::exists(eepromfile) && fstype.contains("fat") ) {
+////  #else
+//        if (QFile::exists(eepromfile))
+//				{
+////  #endif
+//          pathcount++;
+//          path=eepromfile;
+//        }
+//				else
+//				{
+//					eepromfile = saveeepromfile ;
+//        	eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
+//	        if (QFile::exists(eepromfile))
+//					{
+//	          pathcount++;
+//  	        path=eepromfile;
+//    	    }
+//				}
+//      }
+//      entry = entry->me_next; ;
+//    }
+#endif
+  if (pathcount==1)
+	{
+    return path;
+  }
+	else
+	{
+    return "";
+  }
+}
+
+
+
+unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
+
+//	struct
+//	{
+//		uint32_t sequence ;
+//		uint8_t ver ;
+//		uint8_t type ;
+//		uint16_t size ;
+//	} ;
+
+//struct t_eeprom_header
+//{
+//	uint32_t sequence_no ;		// sequence # to decide which block is most recent
+//	uint16_t data_size ;			// # bytes in data area
+//	uint8_t flags ;
+//	uint8_t hcsum ;
+//} ;
+
+//		    quint8 temp[8192] ;
+				
+//				QFile file ;
+//				file.setFileName(tempFile) ;
+//				fname = path ;
+//				fname.append( "radio.bin" ) ;
+
+//				QFile rfile ;
+//				rfile.setFileName(fname) ;
+//    		if (!rfile.open(QIODevice::ReadOnly ))
+//				{  //reading file
+//          QMessageBox::critical( this, "eePskye",
+//                        tr("Error opening file %1:\n%2.")
+//                        .arg(fname)
+//                        .arg(file.errorString())) ;
+//					return ;
+//				}
+//		    memset(temp,0,8192) ;
+//				long s = rfile.size() ;
+//				if ( s > 8192 )
+//				{
+//					s = 8192 ;
+//				}
+//		    long result = rfile.read( (char*)&temp, s ) ;
+//		    rfile.close() ;
+//    		if (!file.open(QIODevice::WriteOnly ))
+//				{
+//          QMessageBox::critical( this, "eePskye",
+//                                tr("Error opening file %1:\n%2.")
+//                        .arg("tempfile")
+//                        .arg(file.errorString())) ;
+//					return ;
+//				}
+//				fixHeader( &temp[0] ) ;
+//				fixHeader( &temp[4096] ) ;
+
+//				file.write((char*)&temp, 8192 ) ;
+//				fname = path ;
+//				fname.append( "Mnames.bin" ) ;
+//				rfile.setFileName(fname) ;
+//    		if (!rfile.open(QIODevice::ReadOnly ))
+//				{  //reading file
+//          QMessageBox::critical( this, "eePskye",
+//                        tr("Error opening file %1:\n%2.")
+//                        .arg(fname)
+//                        .arg(file.errorString())) ;
+//					file.close() ;
+//					return ;
+//				}
+//        result = rfile.read( (char*)&ModelNames, sizeof(ModelNames) ) ;
+//		    rfile.close() ;
+//				uint32_t i ;
+//				for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
+//				{
+//		    	memset(temp,0,8192) ;
+//					if ( ModelNames[i][0] && (ModelNames[i][0] != ' ') )
+//					{
+//						fname = path ;
+//						fname.append( "model" ) ;
+//						fname.append( '0'+(i)/10 ) ;
+//						fname.append( '0'+(i)%10 ) ;
+//						fname.append( "A.bin" ) ;
+//						rfile.setFileName(fname) ;
+//    				if (!rfile.open(QIODevice::ReadOnly ))
+//						{  //reading file
+//        		  QMessageBox::critical( this, "eePskye",
+//        		                tr("Error opening file %1:\n%2.")
+//        		                .arg(fname)
+//        		                .arg(file.errorString())) ;
+//							file.close() ;
+//							return ;
+//						}
+//						long s = rfile.size() ;
+//						if ( s > 8192 )
+//						{
+//							s = 8192 ;
+//						}
+//		    		long result = rfile.read( (char*)&temp, s ) ;
+//		    		rfile.close() ;
+//						fixHeader( &temp[0] ) ;
+//						fixHeader( &temp[4096] ) ;
+//					}
+//					file.write((char*)&temp, 8192 ) ;
+//				}
+//		    memset(temp,0,8192) ;
+//				file.write((char*)&temp, 8192 ) ;
+//				file.write((char*)&temp, 8192 ) ;
+//				file.write((char*)&temp, 8192 ) ;
+
+// //				QMessageBox::critical(this, "eePskye", tr("X10 Not Supported" ) ) ;
+//				file.close() ;
+//				res = 1 ;
+//			}
+// //			return ;
+
+
+void fixHeader( uint8_t *header )
+{
+	header[4] = header[6] ;
+	header[5] = header[7] ;
+	header[6] = 0 ;
+	header[7] = header[0] + header[1] + header[2] + header[3] + header[4] + header[5] + header[6] ;
+}
+
 // Read the EEPROM from the Radio
 void MainWindow::burnFrom()
 {
@@ -998,7 +1380,7 @@ void MainWindow::burnFrom()
 //    QString mcu        = bcd.getMCU();
 //    QStringList args   = bcd.getAVRArgs();
 //    if(!bcd.getPort().isEmpty()) args << "-P" << bcd.getPort();
-
+    QString fname ;
     QString tempFile = tempDir + "/temp.bin";
 //    QString str = "eeprom:r:" + tempFile + ":i"; // writing eeprom -> MEM:OPR:FILE:FTYPE"
 
@@ -1010,17 +1392,22 @@ void MainWindow::burnFrom()
 	if ( arguments.isEmpty() )
 	{
 		// Not using SAM-BA
+//    QSettings settings("er9x-eePskye", "eePskye");
+//		int x ;
+//		x = settings.value("download-version", 0).toInt() ;
+//		if ( ( x == 11 ) || ( x == 12 ) || ( x == 14 ) || ( x == 15 ) || ( x == 16 )	// X10, T16, TX16S, X12, X10e
+//		{
+//			QString path ;
+//		}
+//		else
+		
+//		{
 		QString path ;
 		path = FindErskyPath( 0 ) ;	// EEPROM
-	  if ( path.isEmpty() )
+	  if ( !path.isEmpty() )
 		{
-      QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
 //			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
-      return;
-		}
-		else
-		{
-      qint32 fsize ;
+    	qint32 fsize ;
 //			fsize = (MAX_IMODELS+1)*8192 ;
 			fsize = 64*8192 ;
 			if ( QFileInfo(path).size() == 32768 )
@@ -1034,12 +1421,32 @@ void MainWindow::burnFrom()
 				file.remove() ;
 			}
 			avrdudeLoc = "" ;
-      arguments << tempFile << path << tr("%1").arg(fsize) << "0" ;
+    	arguments << tempFile << path << tr("%1").arg(fsize) << "0" << "0" ;
 //   	  QMessageBox::critical(this, "eePskye", tr("Read File Size = %1\n%2" ).arg(fsize).arg(tempFile) ) ;
-	    avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
+	  	avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
 			res = ad->result() ;
 			delete ad ;
 		}
+		else
+		{
+			path = FindHorusPath() ;
+		  if ( path.isEmpty() )
+			{			
+      	QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
+			}
+			else
+			{
+				avrdudeLoc = "" ;
+    		arguments << tempFile << path << tr("%1").arg(64*8192) << "0" << "1" ;
+	  		avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
+				res = ad->result() ;
+				delete ad ;
+				
+      }
+		}
+
+//		}
+	
 	} 
   else
 	{
@@ -1109,7 +1516,7 @@ void MainWindow::burnExtenalToEEPROM()
 						{
 							fsize = 32768 ;			// Taranis EEPROM
 						}
-    			  arguments << path << fileName << tr("%1").arg(fsize) << "0" ;
+    			  arguments << path << fileName << tr("%1").arg(fsize) << "0" << "0" ;
 	  			  avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Write EEPROM to Tx")); //, AVR_DIALOG_KEEP_OPEN);
 //						res = ad->result() ;
 						delete ad ;
@@ -1206,7 +1613,7 @@ void MainWindow::burnToFlash(QString fileToFlash)
 					else
 					{
 						avrdudeLoc = "" ;
-    		    arguments << path << fileName << tr("%1").arg(QFileInfo(fileName).size()) << "0" ;
+    		    arguments << path << fileName << tr("%1").arg(QFileInfo(fileName).size()) << "0" << "0" ;
 	  			  avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
 		//				res = ad->result() ;
 						delete ad ;
@@ -1273,7 +1680,7 @@ void MainWindow::burnExtenalFromEEPROM()
 							file.remove() ;
 						}
 						avrdudeLoc = "" ;
-  			    arguments << fileName << path << tr("%1").arg(fsize) << "0" ;
+  			    arguments << fileName << path << tr("%1").arg(fsize) << "0" << "0" ;
 				    avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
 						res = ad->result() ;
 						delete ad ;
@@ -1349,7 +1756,7 @@ void MainWindow::burnFromFlash()
 			else
 			{
 				avrdudeLoc = "" ;
-        arguments << fileName << path << tr("%1").arg(QFileInfo(path).size()) << "0" ;
+        arguments << fileName << path << tr("%1").arg(QFileInfo(path).size()) << "0" << "0" ;
 	  	  avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
 //				res = ad->result() ;
 				delete ad ;
@@ -1594,6 +2001,10 @@ void MainWindow::createActions()
     preferencesAct->setStatusTip(tr("Edit general preferences"));
     connect(preferencesAct, SIGNAL(triggered()), this, SLOT(preferences()));
 
+    viewLogfileAct = new QAction(tr("View &Logfile"), this);
+    viewLogfileAct->setStatusTip(tr("View Log File on a graph"));
+    connect(viewLogfileAct, SIGNAL(triggered()), this, SLOT(viewLogfile()));
+
     checkForUpdatesAct = new QAction(QIcon(":/images/update.png"), tr("&Check for updates..."), this);
     checkForUpdatesAct->setStatusTip(tr("Check for new version of eePe/er9x"));
     connect(checkForUpdatesAct, SIGNAL(triggered()), this, SLOT(checkForUpdates()));
@@ -1773,6 +2184,7 @@ void MainWindow::createMenus()
     fileMenu->addAction(simulateAct);
     fileMenu->addAction(printAct);
     fileMenu->addSeparator();
+    fileMenu->addAction(viewLogfileAct);
     fileMenu->addAction(preferencesAct);
     fileMenu->addAction(switchLayoutDirectionAct);
     fileMenu->addAction(exitAct);

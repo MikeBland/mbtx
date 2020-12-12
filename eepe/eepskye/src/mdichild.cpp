@@ -245,7 +245,7 @@ void MdiChild::refreshList()
         str.prepend(" - ");
     addItem(tr("General Settings") + str);
 		uint32_t max_models = MAX_MODELS ;
-    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME ) )
+    if ( radioData.bitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_9XRPRO | RADIO_BITTYPE_AR9X | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_X10 | RADIO_BITTYPE_X12 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
 		{
 			max_models = MAX_IMODELS ;
 		}
@@ -951,7 +951,14 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_X9L ;
 				radioData.bitType = RADIO_BITTYPE_X9L ;
 			break ;
-
+			case PHYSICAL_X10 :
+				radioData.type = RADIO_TYPE_X10 ;
+				radioData.bitType = RADIO_BITTYPE_X10 ;
+			break ;
+//			case PHYSICAL_T16 :
+//				radioData.type = RADIO_TYPE_X10 ;
+//				radioData.bitType = RADIO_BITTYPE_X10 ;
+//			break ;
 		}
 	}
 	else
@@ -984,18 +991,27 @@ void MdiChild::getPhysicalType()
 		if ( x == 7 )	// Qx7
 		{
 			radioData.type = RADIO_TYPE_QX7 ;
+			radioData.bitType = RADIO_BITTYPE_QX7 ;
 		}
     if ( x == 8 )	// XLITE
 		{
 			radioData.type = RADIO_TYPE_XLITE ;
+			radioData.bitType = RADIO_BITTYPE_XLITE ;
 		}
     if ( x == 9 )	// T12
 		{
 			radioData.type = RADIO_TYPE_T12 ;
+			radioData.bitType = RADIO_BITTYPE_T12 ;
 		}
 		if ( x == 10 )	// X9L
 		{
 			radioData.type = RADIO_TYPE_X9L ;
+			radioData.bitType = RADIO_BITTYPE_X9L ;
+		}
+		if ( x == 11 )	// X10
+		{
+			radioData.type = RADIO_TYPE_X10 ;
+			radioData.bitType = RADIO_BITTYPE_X10 ;
 		}
 	}
 }
@@ -1064,6 +1080,12 @@ void MdiChild::newFile()
     	type = " (X9Lite)" ;
 			radioData.bitType = RADIO_BITTYPE_X9L ;
 
+		}
+		if ( x == 11 )	// X10
+		{
+			radioData.type = RADIO_TYPE_X10 ;
+    	type = " (X10)" ;
+			radioData.bitType = RADIO_BITTYPE_X10 ;
 		}
     isUntitled = true;
     curFile = tr("document%1.bin").arg(sequenceNumber++);
@@ -1629,6 +1651,10 @@ void MdiChild::setCurrentFile(const QString &fileName)
 //    	type = " (X9L)" ;
     	type = " (X9Lite)" ;
 		}
+		else if ( x == RADIO_TYPE_X10 )
+		{
+    	type = " (X10)" ;
+		}
 //		if ( x == 5 )
 //		{
 //    	type = " (Sky AR9X)" ;
@@ -1722,6 +1748,30 @@ QStringList MdiChild::GetSambaArguments(const QString &tcl)
 
 }
 
+uint32_t unfixHeader( uint8_t *header )
+{
+	header[6] = header[4] ;
+	header[7] = header[5] ;
+	header[5] = 'M' ;
+	header[4] = 0 ;
+	header[4096] = 0 ;
+	header[4097] = 0 ;
+	header[4098] = 0 ;
+	header[4099] = 0 ;
+	header[4100] = 0 ;
+	header[4101] = 0 ;
+	header[4102] = 0 ;
+	header[4103] = 0 ;
+	if ( ( header[6] == 0xFF ) && ( header[7] == 0xFF ) )
+	{
+		return 0 ;
+	}
+	return 1 ;
+}
+
+extern unsigned char ModelNames[MAX_IMODELS+1][MODEL_NAME_LEN+1] ;		// Allow for general
+extern QString FindHorusPath( void ) ;
+
 void MdiChild::burnTo()  // write to Tx
 {
 
@@ -1755,27 +1805,122 @@ void MdiChild::burnTo()  // write to Tx
 				if ( arguments.isEmpty() )
 				{
 					// Not using SAM-BA
-					QString path ;
-					path = FindErskyPath( 0 ) ;	// EEPROM
-	  			if ( path.isEmpty() )
+					getPhysicalType() ;
+          if ( radioData.bitType & (RADIO_BITTYPE_X10 | RADIO_BITTYPE_X12 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E ) )
 					{
-    			  QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
-    			  return;
+						QString path ;
+    				QString fname ;
+						path = FindHorusPath() ;
+		  			if ( path.isEmpty() )
+						{			
+      				QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
+						}
+						else
+						{
+							avrdudeLoc = "" ;
+  	  			  arguments << path << tempFile << tr("%1").arg(64*8192) << "0" << "2" ;
+	  		  		avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Read EEPROM From Tx")); //, AVR_DIALOG_KEEP_OPEN);
+//							res = ad->result() ;
+							delete ad ;
+//							quint8 temp[8192] ;
+//							QFile file ;
+//							QFile wfile ;
+//							file.setFileName(tempFile) ;
+//							fname = path ;
+//							fname.append( "radio.bin" ) ;
+//    					if (!file.open(QIODevice::ReadOnly ))
+//							{  //reading file
+//        			  QMessageBox::critical( this, "eePskye",
+//        			                tr("Error opening file %1:\n%2.")
+//        			                .arg(tempFile)
+//        			                .arg(file.errorString())) ;
+//								return ;
+//							}
+//		    			long result = file.read( (char*)&temp, 8192 ) ;
+//						  unfixHeader( temp ) ;
+//							wfile.setFileName( fname ) ;
+//			    		if (!wfile.open(QIODevice::WriteOnly ))
+//						  {
+//          			QMessageBox::critical( this, "eePskye",
+//                         tr("Error opening file %1:\n%2.")
+//                        .arg(fname)
+//                        .arg(file.errorString())) ;
+//							  file.close() ;
+//								return ;
+//							}
+//							wfile.write((char*)&temp, 8192 ) ;
+//						  wfile.close() ;
+//  						memset( ModelNames, ' ', sizeof(ModelNames) ) ;
+//							uint32_t i ;
+//							for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
+//							{
+//		    				result = file.read( (char*)&temp, 8192 ) ;
+//								uint32_t j ;
+//								j = unfixHeader( temp ) ;
+//								if ( j )
+//								{
+//									fname = path ;
+//									fname.append( "model" ) ;
+//									fname.append( '0'+(i)/10 ) ;
+//									fname.append( '0'+(i)%10 ) ;
+//									fname.append( "A.bin" ) ;
+//									wfile.setFileName(fname) ;
+//					    		if (!wfile.open(QIODevice::WriteOnly ))
+//								  {
+//        		  			QMessageBox::critical( this, "eePskye",
+//                         tr("Error opening file %1:\n%2.")
+//                        .arg(fname)
+//                        .arg(file.errorString())) ;
+//									  file.close() ;
+//										return ;
+//									}
+//									wfile.write((char*)&temp, 8192 ) ;
+//								  wfile.close() ;
+//									memcpy(ModelNames[i], &temp[8], 10 ) ;
+//								}
+//								fname = path ;
+//								fname.append( "Mnames.bin" ) ;
+//								wfile.setFileName(fname) ;
+//				    		if (!wfile.open(QIODevice::WriteOnly ))
+//							  {
+//       		  			QMessageBox::critical( this, "eePskye",
+//                        tr("Error opening file %1:\n%2.")
+//                       .arg(fname)
+//                       .arg(file.errorString())) ;
+//								  file.close() ;
+//									return ;
+//								}
+//								wfile.write((char *)&ModelNames, sizeof(ModelNames) ) ;
+//							  wfile.close() ;
+//							}
+//						  file.close() ;
+//							return ;
+						}
 					}
 					else
 					{
-      			qint32 fsize ;
-//						fsize = (MAX_IMODELS+1)*8192 ;
-						fsize = 64*8192 ;
-            if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE  | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
+						QString path ;
+						path = FindErskyPath( 0 ) ;	// EEPROM
+	  				if ( path.isEmpty() )
 						{
-							fsize = 32768 ;			// Taranis EEPROM
+    				  QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
+    				  return;
 						}
-						avrdudeLoc = "" ;
-    			  arguments << path << tempFile << tr("%1").arg(fsize) << "0" ;
-	  			  avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Write EEPROM To Tx")); //, AVR_DIALOG_KEEP_OPEN);
-//						res = ad->result() ;
-						delete ad ;
+						else
+						{
+      				qint32 fsize ;
+	//						fsize = (MAX_IMODELS+1)*8192 ;
+							fsize = 64*8192 ;
+          	  if ( radioData.bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE  | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L) )
+							{
+								fsize = 32768 ;			// Taranis EEPROM
+							}
+							avrdudeLoc = "" ;
+    				  arguments << path << tempFile << tr("%1").arg(fsize) << "0" << "0" ;
+	  				  avrOutputDialog *ad = new avrOutputDialog(this, avrdudeLoc, arguments,tr("Write EEPROM To Tx")); //, AVR_DIALOG_KEEP_OPEN);
+	//						res = ad->result() ;
+							delete ad ;
+						}
 					}
 				}
   			else
@@ -2041,8 +2186,9 @@ void MdiChild::convertFromEr9x( SKYModelData *dest, uint8_t type )
 {
 	uint32_t i ;
 	
-  er9x::V1ModelData *source ;
-	source = &er9x::EmodelData ;
+//  er9x::V1ModelData *source ;
+//	source = &er9x::EmodelData ;
+  (void) type ;
 
 	memset( dest, 0, sizeof(*dest) ) ;
   memcpy( dest->name, er9x::EmodelData.name, MODEL_NAME_LEN) ;
@@ -2315,16 +2461,5 @@ void MdiChild::wizardEdit()
     }
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 

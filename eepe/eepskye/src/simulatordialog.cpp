@@ -311,7 +311,7 @@ void simulatorDialog::processSwitches()
   		int16_t y = 0 ;
   		uint8_t s = CS_STATE( cs.func, g_model.modelVersion ) ;
 
-  		if(s == CS_VOFS)
+  		if ( (s == CS_VOFS) || (s == CS_2VAL) )
   		{
   		  x = getValue(cs.v1u-1);
     		if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
@@ -319,7 +319,9 @@ void simulatorDialog::processSwitches()
   		    y = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2, &g_model ) ;
 				}
   		  else
-  		  y = calc100toRESX(cs.v2);
+				{
+  		  	y = calc100toRESX(cs.v2);
+				}
   		}
   		else if(s == CS_VCOMP)
   		{
@@ -542,19 +544,49 @@ void simulatorDialog::processSwitches()
   			  ret_value = ( x & y ) != 0 ;
 				}
   			break ;
+				case CS_RANGE :
+				{
+					int16_t z ;
+    			if ( ( ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || (cs.v1u >= EXTRA_POTS_START + 8) )
+					{
+            z = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, (int8_t)cs.bitAndV3, &g_model ) ;
+					}
+  		  	else
+					{
+  		  		z = calc100toRESX((int8_t)cs.bitAndV3) ;
+					}
+  		    ret_value = (x >= y) && (x <= z) ;
+				}			 
   			default:
   		    ret_value = false;
  		    break;
   		}
 
-			if ( ret_value )
+			int8_t z = getAndSwitch( cs, txType ) ;
+			if ( z )
 			{
-				int8_t x = getAndSwitch( cs, txType ) ;
-				if ( x )
+				switch ( cs.exfunc )
 				{
-  		    ret_value = getSwitch( x, 0, 0 ) ;
+					case 0 :
+  		    	ret_value &= getSwitch( z, 0, 0 ) ;
+					break ;
+					case 1 :
+  		    	ret_value |= getSwitch( z, 0, 0 ) ;
+					break ;
+					case 2 :
+  		    	ret_value ^= getSwitch( z, 0, 0 ) ;
+					break ;
 				}
 			}
+			
+//			if ( ret_value )
+//			{
+//				int8_t x = getAndSwitch( cs ) ;
+//				if ( x )
+//				{
+//  		    ret_value = getSwitch( x, 0, 0 ) ;
+//				}
+//			}
 			if ( ( cs.func < CS_LATCH ) || ( cs.func > CS_RMONO ) )
 			{
 				Last_switch[cs_index] = ret_value ;
@@ -1001,7 +1033,7 @@ void simulatorDialog::centerSticks()
 
 void simulatorDialog::configSwitches()
 {
-		if ((txType==1) || (txType == 2) || (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
+		if ((txType==1) || (txType == 2) || (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) || (txType == RADIO_TYPE_X10) )
 		{
 			ui->SAslider->setMaximum( 2 ) ;
 			ui->SAwidget->show() ;
@@ -1701,7 +1733,7 @@ void simulatorDialog::getValues()
     
     calibratedStick[4] = ui->dialP_1->value();
     calibratedStick[5] = ui->dialP_2->value();
-		if ( ((txType==1) || (txType == 2)) )
+		if ( ((txType==1) || (txType == 2) || (txType == RADIO_TYPE_X10)) )
 		{
 	    calibratedStick[6] = ui->SliderL->value();
     	calibratedStick[7] = ui->SliderR->value(); // For X9D

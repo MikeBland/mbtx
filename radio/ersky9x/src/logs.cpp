@@ -52,6 +52,8 @@
 
 //#define NULL 0
 
+#define OPENTX_FORMAT	1
+
 extern int16_t AltOffset ;
 extern uint16_t LogTimer ;
 
@@ -115,10 +117,15 @@ void rawStartLogging()
 
 #define LOGS_PATH           "/LOGS"   // no trailing slash = important
 
+#ifdef OPENTX_FORMAT
+uint8_t LogDate[12] ;
+#endif
+
+
 void setFilenameDateTime( char *filename, uint32_t includeTime )
 {
   filename[0] = '-';
-  
+
 	div_t qr = div( Time.year, 10);
   filename[4] = '0' + qr.rem;
   qr = div(qr.quot, 10);
@@ -134,6 +141,11 @@ void setFilenameDateTime( char *filename, uint32_t includeTime )
   qr = div( Time.date, 10);
   filename[10] = '0' + qr.rem;
   filename[9] = '0' + qr.quot;
+#ifdef OPENTX_FORMAT
+	ncpystr( (uint8_t *)LogDate, (uint8_t *)&filename[1], 10 ) ;
+	LogDate[10] = ',' ;
+	LogDate[11] = 0 ;
+#endif
 	if ( includeTime )
 	{
   	filename[11] = '-';
@@ -349,6 +361,9 @@ extern uint32_t sdMounted( void ) ;
   	return NULL ;
 	}
 
+#ifdef OPENTX_FORMAT
+  f_puts("Date,", &g_oLogFile) ;
+#endif
   f_puts("Time,Elapsed,Valid", &g_oLogFile) ;
 	
 	singleHeading( LOG_RSSI, ",RxRSSI" ) ;
@@ -647,19 +662,17 @@ void writeLogs()
 		return ;
 	}
 
-
-
+#ifdef OPENTX_FORMAT
+		  f_puts((TCHAR *)LogDate, &g_oLogFile) ;
+      f_printf(&g_oLogFile, "%02d:%02d:%02d.%03d", Time.hour, Time.minute, Time.second, ( LogTimer & 1  ) ? 5 : 0 ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
+#else
       f_printf(&g_oLogFile, "%02d:%02d:%02d", Time.hour, Time.minute, Time.second ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
+#endif
 			qr = div( LogTimer, 120 ) ;
 			uint16_t secs = qr.rem/2 ;
 			qr = div( qr.quot, 60 ) ;
-      f_printf(&g_oLogFile, ",'%d:%02d:%02d", qr.quot, qr.rem, secs ) ;	// Elapsed log time
-			if ( LogTimer & 1  )
-			{
-      	f_printf(&g_oLogFile,  ".5" ) ;	// Elapsed log time
-			}
+      f_printf(&g_oLogFile, ",'%d:%02d:%02d.%d", qr.quot, qr.rem, secs, ( LogTimer & 1 ) ? 5 : 0) ;	// Elapsed log time
       f_printf(&g_oLogFile, ",%d", frskyUsrStreaming * 100 + frskyStreaming ) ;
-			
 			
 			logSingleNumber( LOG_RSSI, FrskyHubData[FR_RXRSI_COPY] ) ;
 //			if ( isLogEnabled( LOG_RSSI ) )
@@ -813,6 +826,10 @@ void writeLogs()
 			
 			if ( isLogEnabled( LOG_LAT ) )
 			{
+				if ( FrskyHubData[FR_LAT_N_S] == 0 )
+				{
+					FrskyHubData[FR_LAT_N_S] = 'N' ;
+				}
 				if ( g_eeGeneral.gpsFormat )
 				{
 					div_t qr ;
@@ -832,6 +849,10 @@ void writeLogs()
 			}
 			if ( isLogEnabled( LOG_LONG ) )
 			{
+				if ( FrskyHubData[FR_LONG_E_W] == 0 )
+				{
+					FrskyHubData[FR_LONG_E_W] = 'E' ;
+				}
 				if ( g_eeGeneral.gpsFormat )
 				{
 					div_t qr ;

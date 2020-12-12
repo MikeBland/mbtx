@@ -32,6 +32,8 @@
 //#define	SERIAL_HOST		1
 #endif
 
+//#define	NO_SD_CARD		1
+
 //#ifndef SMALL
 #define MOVE_VOICE		1
 //#endif
@@ -139,6 +141,9 @@
  #endif
 #endif
 
+#ifdef PCBX7ACCESS
+ #define ACCESS					1
+#endif
 
 
 #define ACCESS_SPORT_BAUD_RATE		450000
@@ -238,6 +243,7 @@ extern const char * const Spanish[] ;
  #endif
 #else // not PCBX9D
 #ifdef REVX
+#define SBUS_PROTOCOL		1
 #define NUMBER_ANALOG		10
 #define CURRENT_ANALOG	8
 #else
@@ -650,7 +656,8 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_BIT_AND   19
 #define CS_VXEQUAL   20	// V1~=V2
 #define CS_VEQUAL    21  //v == offset
-#define CS_MAXF      21  //max function
+#define CS_RANGE		 22  //a<=v<=b
+#define CS_MAXF      22  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -658,6 +665,7 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_TIMER			3
 #define CS_TMONO      4
 #define CS_U16	      5
+#define CS_2VAL	      6
 
 uint8_t CS_STATE( uint8_t x) ;
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)==CS_LATCH) || ((x)==CS_FLIP)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
@@ -943,9 +951,7 @@ extern uint8_t Ee_lock ;
 #define PROTO_XFIRE	     4
 #define PROTO_ACCESS     5
 
-#define PROTO_TEST	     6
-
-#define PROTO_SBUS	     5
+#define PROTO_SBUS	     6
 
 #define PROT_MAX         3
 #define PROTO_PPM16			 3		// No longer needed

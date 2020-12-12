@@ -713,6 +713,8 @@ uint8_t CodeBuffer[200] ;
  #endif
 #endif
 
+#define TOKEN_SIZE	100
+
 union t_program
 {
 	uint8_t Bytes[PROGRAM_SIZE] ;
@@ -727,7 +729,7 @@ uint32_t CurrentArrayIndex ;
 
 char *ProgPtr ;
 char *Cur_token;
-char Token[40] ;
+char Token[TOKEN_SIZE] ;
 char Numeric[10] ;
 uint16_t Token_type ;
 uint16_t Tok ;
@@ -1263,7 +1265,7 @@ uint32_t scanForKeyword( char *dest )
 		}
     ProgPtr += 1 ;
 		*temp = 0 ;
-		if ( temp-Token > 254 )
+		if ( temp-Token > TOKEN_SIZE - 4 )
 		{
     	serror(SE_STRING_LONG) ;
 		}

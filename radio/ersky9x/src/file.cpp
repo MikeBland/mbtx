@@ -32,6 +32,7 @@
 #include "file.h"
 #include "ff.h"
 #include "frsky.h"
+#include "menus.h"
 #ifndef SIMU
 #include "CoOS.h"
 #endif
@@ -880,6 +881,9 @@ void ee32LoadModel(uint8_t id)
 			g_model.xprotocol = 0 ;
 		}
 	}
+	validateProtocolOptions( 0 ) ;
+	validateProtocolOptions( 1 ) ;
+
 	AltitudeZeroed = 0 ;
 #ifdef PCB9XT
 	EeLockEncoder = 0 ;

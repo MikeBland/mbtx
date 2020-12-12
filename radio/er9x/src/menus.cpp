@@ -3159,9 +3159,13 @@ static void menuProcSafetySwitches(uint8_t sub)
 				{
     			putsChn(0,y,k,0);
 #ifdef NOSAFETY_A_OR_V					
+ #ifdef SAFETY_ONLY
+					sd->opt.ss.mode = checkIndexed( y, Str_SafetySticky, sd->opt.ss.mode, active ) ;
+ #else
 					uint8_t value = sd->opt.ss.mode == 3 ? 1 : 0 ;
 					value = checkIndexed( y, Str_SafetySticky, value, active ) ;
 					sd->opt.ss.mode = value ? 3 : 0 ;
+ #endif
 #else
  #ifdef SAFETY_ONLY
   #if defined(CPUM128) || defined(CPUM2561)

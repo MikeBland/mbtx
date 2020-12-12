@@ -46,6 +46,9 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_X9L			 12
 #define RADIO_TYPE_X12			 13
 #define RADIO_TYPE_X10			 14
+#define RADIO_TYPE_T16			 15
+#define RADIO_TYPE_TX16S		 16
+#define RADIO_TYPE_X10E		 	17
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -60,6 +63,10 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_X9L					65536
 #define RADIO_BITTYPE_X12					65536*2
 #define RADIO_BITTYPE_X10					65536*4
+#define RADIO_BITTYPE_T16					65536*8
+#define RADIO_BITTYPE_LEM1				65536*16
+#define RADIO_BITTYPE_TX16S				65536*32
+#define RADIO_BITTYPE_X10E				65536*64
 
 #define RADIO_BITTYPE_ER9XM64V1		1024
 #define RADIO_BITTYPE_ER9XM64V2		2048
@@ -323,8 +330,8 @@ enum EnumKeys {
 
 #define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 #define CURVE_BASE 7
-#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 v=val  "
-#define CSW_NUM_FUNC 22
+#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 v=val  Range  "
+#define CSW_NUM_FUNC 23
 #define CSW_LEN_FUNC 7
 
 #define CS_OFF       0
@@ -351,7 +358,8 @@ enum EnumKeys {
 #define CS_BIT_AND   19
 #define CS_VXEQUAL   20	// V1~=V2
 #define CS_VEQUAL	   21
-#define CS_MAXF      21  //max function
+#define CS_RANGE		 22  //a<=v<=b
+#define CS_MAXF      22  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -359,6 +367,7 @@ enum EnumKeys {
 #define CS_TIMER			3
 #define CS_TMONO			4
 #define CS_U16	      5
+#define CS_2VAL	      6
 //#define CS_STATE(x)   ((x)<CS_AND ? CS_VOFS : ((((x)<CS_EQUAL) || ((x)>=CS_LATCH)) ? CS_VBOOL : ((x)<CS_TIME ? CS_VCOMP : CS_TIMER)))
 
 #define CHAR_FOR_NAMES " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-."
@@ -454,6 +463,7 @@ enum EnumKeys {
 #define PROTO_MULTI			 3
 #define PROTO_ASSAN			 4
 #define PROTO_ACCESS     5
+#define PROTO_SBUS	     6
 #define PROTO_OFF		     15		// For X9D/9Xtreme
 #define PROT_MAX         2
 #define PROT_STR "PPM   XJT   DSM2  "
@@ -581,9 +591,14 @@ bool eeLoadGeneral();
 #define PHYSICAL_HORUS				9
 #define PHYSICAL_XLITE				10
 #define PHYSICAL_T12					11
-#define PHYSICAL_X9L						12
+#define PHYSICAL_X9L					12
+#define PHYSICAL_X10					13
+#define PHYSICAL_T16					14
+#define PHYSICAL_LEM1					15
+#define PHYSICAL_TX16S				16
+#define PHYSICAL_X10E					17
 
-#define LAST_PHYSICAL					12
+#define LAST_PHYSICAL					17
 
 #include "myeeprom.h"
 

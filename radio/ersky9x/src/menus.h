@@ -178,6 +178,8 @@ extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
 void displayStatusLine( uint32_t scriptPercent ) ;
 #endif
 
+void validateProtocolOptions( uint32_t module ) ;
+
 extern void parseMultiData( void ) ;
 
 const char *get_curve_string() ;

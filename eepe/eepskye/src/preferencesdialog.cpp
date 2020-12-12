@@ -211,6 +211,11 @@ void preferencesDialog::on_downloadVerCB_currentIndexChanged(int index)
     currentER9Xrev = settings.value("currentERSKY9XX9Lrev", 1).toInt();
 		ui->label_CurrentVersion->setText( "Current Version - erskyX9Lite" ) ;
 	}
+	else if ( index == 11 )
+	{
+    currentER9Xrev = settings.value("currentERSKY9XX10rev", 1).toInt();
+		ui->label_CurrentVersion->setText( "Current Version - erskyX10" ) ;
+	}
 	else
 	{
     currentER9Xrev = settings.value("currentERSKY9XRrev", 1).toInt();

@@ -309,8 +309,9 @@ void GeneralEdit::setSwitchDefPos()
 
 void GeneralEdit::updateSettings()
 {
-    int16_t sum=0;
-    for(int i=0; i<12;i++) sum+=p_eeGeneral->calibMid[i];
+    uint16_t sum=0;
+    for(int i=0; i<7;i++) sum+=(uint16_t)p_eeGeneral->calibMid[i];
+    for(int i=0; i<5;i++) sum+=(uint16_t)p_eeGeneral->calibSpanNeg[i];
     p_eeGeneral->chkSum = sum;
     eeFile->putGeneralSettings(p_eeGeneral);
 

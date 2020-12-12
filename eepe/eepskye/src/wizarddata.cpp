@@ -46,7 +46,7 @@ WizMix::WizMix(const EEGeneral & settings, const unsigned int modelId):
   settings(settings),
   vehicle(NOVEHICLE)
 {
-  strcpy(name, "            ");
+  strcpy(name, "          ");
 	stickMode = settings.stickMode ;
 
 }

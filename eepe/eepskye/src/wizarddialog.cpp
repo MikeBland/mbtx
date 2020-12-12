@@ -32,13 +32,9 @@ WizardDialog::WizardDialog(const EEGeneral & settings, unsigned int modelId, QWi
   settings(settings)
 {
  // setWindowIcon(CompanionIcon("wizard.png"));
-	printf("Test 1\n");
   setWindowTitle(tr("Model Wizard"));
-	printf("Test 2\n");
   setPage(Page_Models, new ModelSelectionPage(this, "models", tr("Model Type"), tr("Enter model name and model type.")));
-	printf("Test 3\n");
   setPage(Page_Throttle, new ThrottlePage(this, "throttle", tr("Throttle"), tr("Has your model got a motor or an engine?"), Page_Wingtypes));
-	printf("Test 4\n");
   setPage(Page_Wingtypes, new WingtypeSelectionPage(this, "wingtype", tr("Wing Type"), tr("Is your model a flying wing/deltawing or has it a standard wing configuration?")));
   setPage(Page_Ailerons, new AileronsPage(this, "ailerons", tr("Ailerons"), tr("Has your model got ailerons?"), Page_Flaps));
   setPage(Page_Flaps, new FlapsPage(this, "flaps", tr("Flaps"), tr("Has your model got flaps?"), Page_Airbrakes));

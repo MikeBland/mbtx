@@ -1,6 +1,7 @@
 QT += network \
       xml
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets printsupport
+greaterThan(QT_MAJOR_VERSION, 4): QMAKE_CXXFLAGS += -mno-ms-bitfields
 include(../../common/qextserialport.pri)
 HEADERS += mainwindow.h \
     file.h \

@@ -135,7 +135,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 #ifdef SKY    
 		int value ;
 		value = md->srcRaw ;
-		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) )
+		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_X10 ) )
 		{
 			if ( value >= EXTRA_POTS_POSITION )
 			{
@@ -210,7 +210,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 		ui->sourceSwitchCB->clear();
 
-    if ( (leeType == RADIO_TYPE_TARANIS ) || ( leeType == RADIO_TYPE_TPLUS ) || ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )	// Taranis
+    if ( (leeType == RADIO_TYPE_TARANIS ) || ( leeType == RADIO_TYPE_TPLUS ) || ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) || ( leeType == RADIO_TYPE_X10 ) )	// Taranis
 		{
     	ui->sourceSwitchCB->addItem("SA");
     	ui->sourceSwitchCB->addItem("SB");

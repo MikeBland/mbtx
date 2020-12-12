@@ -1881,7 +1881,9 @@ void simulatorDialog::timerTick()
 		tmb = g_model.timer[0].tmrModeB ;
 #endif
 
-    v = 0 ;
+		itimer = 0 ;
+    
+		v = 0 ;
     if(( tma > 1 ) && ( tma < TMR_VAROFS ) )
 		{
  			v = calibratedStick[3-1] ;
@@ -2422,7 +2424,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 //		anas[MIX_3POS-1] = keyState(SW_ID0) ? -1024 : (keyState(SW_ID1) ? 0 : 1024) ;
 
 
-    for(uint8_t i=0;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i];// - g_eeGeneral.ppmInCalib[i]; //add ppm channels
+//    for(uint8_t i=0;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i];// - g_eeGeneral.ppmInCalib[i]; //add ppm channels
 //    for(uint8_t i=0;i<NUM_CHNOUT;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
 //#if GVARS
 //        for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = g_model.gvars[i].gvar * 8 ;
@@ -2470,7 +2472,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         int16_t vr = anas[ail_stick]+trimA[ail_stick];
         int16_t vc = 0;
         if(g_model.swashCollectiveSource)
-            vc = anas[g_model.swashCollectiveSource-1];
+            vc = ex_chans[g_model.swashCollectiveSource-1-CHOUT_BASE];
 
 
         if(g_model.swashInvertELE) vp = -vp;
@@ -2925,6 +2927,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             thisChan += dv; //Mixer output add up to the line (dv + (dv>0 ? 100/2 : -100/2))/(100);
             break;
         }
+//        chans[chanIndex] = thisChan ;
     }
 
         // chans[i] holds data from mixer.   chans[i] = v*weight => 1024*100

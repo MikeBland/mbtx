@@ -86,7 +86,7 @@
           <string/>
          </property>
          <property name="currentIndex">
-          <number>13</number>
+          <number>8</number>
          </property>
          <widget class="QWidget" name="tabModelSetup">
           <attribute name="title">
@@ -15143,123 +15143,7 @@ p, li { white-space: pre-wrap; }
           <attribute name="title">
            <string>Switches</string>
           </attribute>
-          <layout class="QGridLayout" name="gridLayout_8" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
-           <item row="1" column="0">
-            <widget class="QLabel" name="label_30">
-             <property name="minimumSize">
-              <size>
-               <width>58</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 1&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="0">
-            <widget class="QLabel" name="label_31">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 2&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="1">
-            <widget class="QComboBox" name="cswitchFunc_2"/>
-           </item>
-           <item row="3" column="0">
-            <widget class="QLabel" name="label_32">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 3&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="1">
-            <widget class="QComboBox" name="cswitchFunc_3"/>
-           </item>
-           <item row="4" column="0">
-            <widget class="QLabel" name="label_33">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 4&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="1">
-            <widget class="QComboBox" name="cswitchFunc_4"/>
-           </item>
-           <item row="5" column="0">
-            <widget class="QLabel" name="label_34">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 5&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="1">
-            <widget class="QComboBox" name="cswitchFunc_5"/>
-           </item>
-           <item row="6" column="1">
-            <widget class="QComboBox" name="cswitchFunc_6"/>
-           </item>
+          <layout class="QGridLayout" name="gridLayout_8" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" columnstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0">
            <item row="0" column="1">
             <widget class="QLabel" name="cswFuncLabel">
              <property name="minimumSize">
@@ -15285,37 +15169,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="text">
               <string>Function</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QLabel" name="cswCol1">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>50</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>V1</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -15353,13 +15206,22 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="6" column="0">
-            <widget class="QLabel" name="label_35">
+           <item row="0" column="2">
+            <widget class="QLabel" name="cswCol1">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="maximumSize">
               <size>
-               <width>60</width>
+               <width>50</width>
                <height>16777215</height>
               </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
              </property>
              <property name="frameShape">
               <enum>QFrame::Panel</enum>
@@ -15368,141 +15230,25 @@ p, li { white-space: pre-wrap; }
               <enum>QFrame::Raised</enum>
              </property>
              <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 6&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+              <string>V1</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
              </property>
             </widget>
            </item>
-           <item row="7" column="0">
-            <widget class="QLabel" name="label_81">
-             <property name="maximumSize">
+           <item row="15" column="1">
+            <spacer name="verticalSpacer_5">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
               <size>
-               <width>60</width>
-               <height>16777215</height>
+               <width>20</width>
+               <height>40</height>
               </size>
              </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 7&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="0">
-            <widget class="QLabel" name="label_82">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 8&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="9" column="0">
-            <widget class="QLabel" name="label_99">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch 9&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="10" column="0">
-            <widget class="QLabel" name="label_100">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch A&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="11" column="0">
-            <widget class="QLabel" name="label_101">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch B&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="12" column="0">
-            <widget class="QLabel" name="label_102">
-             <property name="maximumSize">
-              <size>
-               <width>60</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch C&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="1">
-            <widget class="QComboBox" name="cswitchFunc_7"/>
-           </item>
-           <item row="8" column="1">
-            <widget class="QComboBox" name="cswitchFunc_8"/>
-           </item>
-           <item row="9" column="1">
-            <widget class="QComboBox" name="cswitchFunc_9"/>
-           </item>
-           <item row="10" column="1">
-            <widget class="QComboBox" name="cswitchFunc_10"/>
-           </item>
-           <item row="11" column="1">
-            <widget class="QComboBox" name="cswitchFunc_11"/>
-           </item>
-           <item row="12" column="1">
-            <widget class="QComboBox" name="cswitchFunc_12"/>
+            </spacer>
            </item>
            <item row="0" column="5">
             <widget class="QLabel" name="label_85">
@@ -15563,35 +15309,6 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="25" column="1">
-            <spacer name="verticalSpacer_5">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="12" column="7">
-            <widget class="QLabel" name="label_121">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch O&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="12" column="8">
-            <widget class="QComboBox" name="cswitchFunc_24"/>
-           </item>
            <item row="0" column="8">
             <widget class="QLabel" name="cswFuncLabel_2">
              <property name="minimumSize">
@@ -15617,37 +15334,6 @@ p, li { white-space: pre-wrap; }
              </property>
              <property name="text">
               <string>Function</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="9">
-            <widget class="QLabel" name="cswCol1_2">
-             <property name="minimumSize">
-              <size>
-               <width>48</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>50</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>V1</string>
              </property>
              <property name="alignment">
               <set>Qt::AlignCenter</set>
@@ -15713,6 +15399,37 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
+           <item row="0" column="9">
+            <widget class="QLabel" name="cswCol1_2">
+             <property name="minimumSize">
+              <size>
+               <width>48</width>
+               <height>0</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The use of these two columns varies according to the type of operation or condition involved. For arithmetic functions, &amp;quot;V1&amp;quot; specifies the source of the variable and &amp;quot;V2&amp;quot; gives the value (val) to which it is to be related. For logical conditions, the columns specify the switches involved. For evaluations the two variables (sources) to be compared are identified here. For timing, they specify duration ON and OFF.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Panel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string>V1</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
            <item row="0" column="12">
             <widget class="QLabel" name="label_203">
              <property name="minimumSize">
@@ -15744,202 +15461,7 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="0" column="14">
-            <spacer name="horizontalSpacer_9">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-           <item row="11" column="7">
-            <widget class="QLabel" name="label_126">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch N&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="11" column="8">
-            <widget class="QComboBox" name="cswitchFunc_23"/>
-           </item>
-           <item row="10" column="7">
-            <widget class="QLabel" name="label_127">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch M&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="10" column="8">
-            <widget class="QComboBox" name="cswitchFunc_22"/>
-           </item>
-           <item row="9" column="7">
-            <widget class="QLabel" name="label_128">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch L&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="8" column="7">
-            <widget class="QLabel" name="label_129">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch K&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="9" column="8">
-            <widget class="QComboBox" name="cswitchFunc_21"/>
-           </item>
-           <item row="8" column="8">
-            <widget class="QComboBox" name="cswitchFunc_20"/>
-           </item>
-           <item row="7" column="7">
-            <widget class="QLabel" name="label_130">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch J&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="7" column="8">
-            <widget class="QComboBox" name="cswitchFunc_19"/>
-           </item>
-           <item row="6" column="7">
-            <widget class="QLabel" name="label_131">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch I&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="6" column="8">
-            <widget class="QComboBox" name="cswitchFunc_18"/>
-           </item>
-           <item row="5" column="7">
-            <widget class="QLabel" name="label_132">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch H&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="5" column="8">
-            <widget class="QComboBox" name="cswitchFunc_17"/>
-           </item>
-           <item row="4" column="7">
-            <widget class="QLabel" name="label_133">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch G&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="4" column="8">
-            <widget class="QComboBox" name="cswitchFunc_16"/>
-           </item>
-           <item row="3" column="7">
-            <widget class="QLabel" name="label_134">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch F&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="3" column="8">
-            <widget class="QComboBox" name="cswitchFunc_15"/>
-           </item>
-           <item row="2" column="7">
-            <widget class="QLabel" name="label_135">
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch E&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="2" column="8">
-            <widget class="QComboBox" name="cswitchFunc_14"/>
-           </item>
-           <item row="1" column="7">
-            <widget class="QLabel" name="label_136">
-             <property name="minimumSize">
-              <size>
-               <width>58</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;L.Switch D&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="8">
-            <widget class="QComboBox" name="cswitchFunc_13"/>
-           </item>
-           <item row="28" column="0" colspan="13">
+           <item row="17" column="0" colspan="13">
             <layout class="QHBoxLayout" name="horizontalLayout_8">
              <item>
               <widget class="QLabel" name="label_m1">
@@ -16107,7 +15629,7 @@ p, li { white-space: pre-wrap; }
              </item>
             </layout>
            </item>
-           <item row="29" column="0">
+           <item row="18" column="0">
             <spacer name="verticalSpacer_10">
              <property name="orientation">
               <enum>Qt::Vertical</enum>
@@ -16119,37 +15641,6 @@ p, li { white-space: pre-wrap; }
               </size>
              </property>
             </spacer>
-           </item>
-           <item row="0" column="13">
-            <widget class="QLabel" name="label_247">
-             <property name="minimumSize">
-              <size>
-               <width>40</width>
-               <height>0</height>
-              </size>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>90</width>
-               <height>16777215</height>
-              </size>
-             </property>
-             <property name="toolTip">
-              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If a switch is identified in this column, it acts as a further condition that must be met for the logical switch to turn ON. In other words, this switch functions as an “AND” condition in addition to the main condition of the logical switch. So, the Logical Switch will only turn ON when its main condition is true, and the &amp;quot;AND&amp;quot; switch is ON. If any of these conditions is false, the Logical Switch is OFF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-             </property>
-             <property name="frameShape">
-              <enum>QFrame::Panel</enum>
-             </property>
-             <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
-             </property>
-             <property name="text">
-              <string>Delay</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
            </item>
            <item row="0" column="6">
             <widget class="QLabel" name="label_248">
@@ -16182,22 +15673,46 @@ p, li { white-space: pre-wrap; }
              </property>
             </widget>
            </item>
-           <item row="26" column="0" colspan="14">
-            <layout class="QHBoxLayout" name="horizontalLayout_9">
-             <item>
-              <widget class="QListWidget" name="SwListL"/>
-             </item>
-             <item>
-              <widget class="QListWidget" name="SwListR"/>
-             </item>
-            </layout>
-           </item>
-           <item row="1" column="1">
-            <widget class="QComboBox" name="cswitchFunc_1">
+           <item row="0" column="13">
+            <widget class="QLabel" name="label_247">
+             <property name="minimumSize">
+              <size>
+               <width>40</width>
+               <height>0</height>
+              </size>
+             </property>
              <property name="maximumSize">
               <size>
-               <width>16777215</width>
-               <height>19</height>
+               <width>90</width>
+               <height>16777215</height>
+              </size>
+             </property>
+             <property name="toolTip">
+              <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;If a switch is identified in this column, it acts as a further condition that must be met for the logical switch to turn ON. In other words, this switch functions as an “AND” condition in addition to the main condition of the logical switch. So, the Logical Switch will only turn ON when its main condition is true, and the &amp;quot;AND&amp;quot; switch is ON. If any of these conditions is false, the Logical Switch is OFF&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+             </property>
+             <property name="frameShape">
+              <enum>QFrame::Panel</enum>
+             </property>
+             <property name="frameShadow">
+              <enum>QFrame::Raised</enum>
+             </property>
+             <property name="text">
+              <string>Delay</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignCenter</set>
+             </property>
+            </widget>
+           </item>
+           <item row="2" column="7" colspan="7">
+            <widget class="QListWidget" name="SwListR"/>
+           </item>
+           <item row="2" column="0" colspan="7">
+            <widget class="QListWidget" name="SwListL">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>350</height>
               </size>
              </property>
             </widget>
@@ -21959,12 +21474,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>curveEdit_7</tabstop>
   <tabstop>curveEdit_8</tabstop>
   <tabstop>curveEdit_9</tabstop>
-  <tabstop>cswitchFunc_1</tabstop>
-  <tabstop>cswitchFunc_2</tabstop>
-  <tabstop>cswitchFunc_3</tabstop>
-  <tabstop>cswitchFunc_4</tabstop>
-  <tabstop>cswitchFunc_5</tabstop>
-  <tabstop>cswitchFunc_6</tabstop>
   <tabstop>slider_S2</tabstop>
   <tabstop>spinBox_S2</tabstop>
   <tabstop>spinBox_S1</tabstop>

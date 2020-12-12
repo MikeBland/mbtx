@@ -47,9 +47,9 @@ void delay_ms(uint32_t ms)
 
 #if defined(PCBX7) || defined(PCBXLITE) || defined(PCBX9LITE)
 
-#ifndef PCBXLITE
-#define GPIO_PinSource_HAPTIC           GPIO_PinSource8
-#endif
+//#ifndef PCBXLITE
+//#define GPIO_PinSource_HAPTIC           GPIO_PinSource8
+//#endif
 
 #define LCD_CONTRAST_OFFSET            20
 #define RESET_WAIT_DELAY_MS            300 // Wait time after LCD reset before first command
@@ -456,6 +456,20 @@ void initHaptic()
   GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
   GPIO_Init(GPIOHAPTIC, &GPIO_InitStructure);
 
+ #ifdef PCBX7ACCESS
+  GPIO_PinAFConfig(GPIOHAPTIC, GPIO_PinSource_HAPTIC ,GPIO_AF_TIM1);
+	
+	RCC->APB2ENR |= RCC_APB2ENR_TIM1EN ;		// Enable clock
+	TIM1->ARR = 100 ;
+  TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
+	TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 ;	// PWM
+	TIM1->CCER = TIM_CCER_CC3E ;
+	TIM1->BDTR = TIM_BDTR_MOE ;
+	
+	TIM1->CCR3 = 0 ;
+	TIM1->EGR = 1 ;
+	TIM1->CR1 = TIM_CR1_CEN ;				// Counter enable
+ #else
   GPIO_PinAFConfig(GPIOHAPTIC, GPIO_PinSource_HAPTIC ,GPIO_AF_TIM10);
 
 	RCC->APB2ENR |= RCC_APB2ENR_TIM10EN ;		// Enable clock
@@ -467,8 +481,26 @@ void initHaptic()
 	TIM10->CCR1 = 0 ;
 	TIM10->EGR = 0 ;
 	TIM10->CR1 = TIM_CR1_CEN ;				// Counter enable
+ #endif // ACCESS
 }
 
+ #ifdef PCBX7ACCESS
+void hapticOff()
+{
+	TIM1->CCR3 = 0 ;
+}
+
+// pwmPercent 0-100
+void hapticOn( uint32_t pwmPercent )
+{
+	if ( pwmPercent > 100 )
+	{
+		pwmPercent = 100 ;		
+	}
+	TIM1->CCR3 = pwmPercent ;
+}
+
+ #else
 void hapticOff()
 {
 	TIM10->CCR1 = 0 ;
@@ -483,6 +515,7 @@ void hapticOn( uint32_t pwmPercent )
 	}
 	TIM10->CCR1 = pwmPercent ;
 }
+ #endif // ACCESS
 #endif // X3
 #else // XLITE
 

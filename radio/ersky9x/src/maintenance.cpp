@@ -127,7 +127,7 @@ extern uint8_t SetByEncoder ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
- #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+ #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 #define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #endif
@@ -1268,7 +1268,7 @@ void menuChangeId(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_ON() ;
 #endif
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 			SPORT_RF_ON() ;
 #endif
     break ;
@@ -1283,7 +1283,7 @@ void menuChangeId(uint8_t event)
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_OFF() ;
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 			SPORT_RF_OFF() ;
 #endif
 #endif
@@ -1610,7 +1610,7 @@ void telemetryPortSetDirectionInput()
 #ifdef PCB9XT
 	GPIOB->BSRRH = 0x0004 ;		// output disable
 #else
- #if defined(PCBXLITE) || defined(REV19)
+ #if defined(PCBXLITE) || defined(REV19) || defined(PCBX7ACCESS)
 	GPIOD->BSRRL = PIN_SPORT_ON ;		// output disable
  #else
   #ifdef PCBX9LITE

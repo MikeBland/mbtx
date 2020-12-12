@@ -192,8 +192,8 @@ PACK(typedef struct t_TrainerChannel
 {
   int16_t calib ;
   uint8_t srcChn:3 ; //0-7 = ch1-8
-  uint8_t source:2 ;	// Only used on index 0
-	uint8_t spare:1 ;
+  uint8_t source:3 ;	// Only used on index 0, invert option on channel 1
+//	uint8_t spare:1 ;
   uint8_t mode:2;   //off,add-mode,subst-mode
   int8_t  swtch ;
   int8_t  studWeight ;
@@ -584,7 +584,9 @@ PACK(typedef struct te_CSwData
   	int8_t  v2 ; 		//offset
 		uint8_t v2u ;
 	} ;
-	uint8_t func;
+//	uint8_t func ;
+	uint8_t func:5 ;
+	uint8_t exfunc:3 ;
 	int8_t andsw;
 	uint8_t bitAndV3 ;
 }) SKYCSwData;
@@ -795,14 +797,17 @@ struct t_module
 	uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 	uint8_t highChannels:1 ;
 	uint8_t disableTelemetry:1 ;
-	uint8_t spare:3 ;
+	uint8_t exsub_protocol:2 ;
+	uint8_t spare:1 ;
 	uint8_t sparex[2] ;
 } ;
 
 struct t_access
 {
 	uint8_t numChannels ;
-	uint8_t unused[8] ;
+	uint8_t type:1 ;
+	uint8_t unusedType:7 ;
+	uint8_t unused[7] ;
 	uint8_t receiverName[3][8] ; // PXX2_LEN_RX_NAME
 } ;
 
@@ -880,6 +885,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t 	FASoffset ;			// 0.0 to 1.5
 	VarioData varioData ;
 	uint8_t		anaVolume ;	// analog volume control
+//	int8_t accessFailsafe[2][8] ;
 	int8_t pxxFailsafe[16] ;
 	int8_t logSwitch ;
 	uint8_t logRate:4 ;
@@ -895,7 +901,7 @@ PACK(typedef struct te_ModelData {
   uint8_t   trainPulsePol:1 ;
 	uint8_t		dsmAasRssi:1 ;
 	uint8_t	telemetry2RxInvert:1 ;
-  uint8_t   polSpare:3 ;
+  uint8_t   dsmVario:3 ;
   uint8_t   ForceTelemetryType:1 ;
   int8_t    xppmFrameLength;  //0=22.5  (10msec-30msec) 0.5msec increments
 	uint8_t		xstartChannel ;		// for output 0 = ch1
@@ -935,8 +941,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t throttleIdle:1 ;
   uint8_t throttleReversed:1;
 	uint8_t disableThrottleCheck:1 ;
-//	uint8_t trimsScaled:1 ;
-	uint8_t thrSpare:1 ;
+	uint8_t basic_lua:1 ;
 	uint8_t instaTrimToTrims:1 ;
 	uint8_t BTfunction ;
 	uint32_t totalTime ;
@@ -949,12 +954,12 @@ PACK(typedef struct te_ModelData {
 	uint8_t ymodelswitchWarningDisables ;
 	char modelImageName[VOICE_NAME_SIZE+2] ;
 	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;
-	uint8_t option_protocol ;
+	int8_t option_protocol ;
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
 	CustomCheckData customCheck ;
 	uint8_t btDefaultAddress ;
-	uint8_t xoption_protocol ;
+	int8_t xoption_protocol ;
 	uint8_t trainerProfile ;
   int8_t  curve2xy[18] ;
   int8_t	curve6[6] ;
