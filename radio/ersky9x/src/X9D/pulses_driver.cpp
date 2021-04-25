@@ -802,11 +802,15 @@ void init_ext_serial( uint32_t type )
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
 #else
-#ifdef PCB9XT
+ #ifdef PCB9XT
   TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
-#else
+ #else
+  #if defined(PCBX7ACCESS)
+  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+	 #else
   TIM8->CCER = TIM_CCER_CC1NE ;
-#endif
+  #endif
+ #endif
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
@@ -824,7 +828,6 @@ void init_ext_serial( uint32_t type )
   
 	TIM8->DIER |= TIM_DIER_CC1DE ;          // Enable DMA on CC1 match
   TIM8->DCR = 13 ;                                                                // DMA to CC1
-
 
   // Enable the DMA channel here, DMA2 stream 2, channel 7
   DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
@@ -1055,6 +1058,7 @@ static void disable_ext_ppm()
   EXTERNAL_RF_OFF();
 }
 
+
 extern "C" void TIM8_CC_IRQHandler()
 {
 #ifdef WDOG_REPORT
@@ -1065,7 +1069,7 @@ extern "C" void TIM8_CC_IRQHandler()
 
   setupPulses(EXTERNAL_MODULE) ;
 
-  if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
+	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
 	{
 #ifdef PCBX9D
 	  if (s_current_protocol[INTERNAL_MODULE] != PROTO_PXX)
@@ -1231,7 +1235,7 @@ static void init_int_pxx( void )
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
   INTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
-  INTMODULE_TIMER->CCR2 = 17499 ;            // Update time
+  INTMODULE_TIMER->CCR2 = 16999 ;            // Update time
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
   INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
@@ -1251,7 +1255,7 @@ static void init_int_pxx( void )
 	}
 #endif
 #endif
-	NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
+	NVIC_SetPriority( INTMODULE_USART_IRQn, 1 ) ; // Very high priority interrupt
   NVIC_EnableIRQ( INTMODULE_USART_IRQn);
 
   NVIC_SetPriority(INTMODULE_TIMER_IRQn, 3 ) ;
@@ -1274,6 +1278,13 @@ static void init_ext_pxx_access( uint32_t type )
 static void init_ext_pxx( void )
 #endif
 {
+#if defined(PCBX7ACCESS)
+	if ( type == PROTO_PXX )
+	{
+		init_ext_serial( EXT_TYPE_PXX ) ;
+		return ;
+	}
+#endif	
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 //#ifdef PCBX9LITE
 //#ifndef X3_PROTO
@@ -1447,7 +1458,7 @@ static void disable_ext_ppm( void )
 
 void init_ext_serial( uint32_t type )
 {
-  EXTERNAL_RF_ON() ;
+	EXTERNAL_RF_ON() ;
 	if ( type == EXT_TYPE_PXX )
 	{
   	setupPulsesPXX(EXTERNAL_MODULE);
@@ -1504,11 +1515,16 @@ void init_ext_serial( uint32_t type )
 #if defined(REV3)
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
 #else
-#ifdef PCB9XT
+ #ifdef PCB9XT
   TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
-#else
+ #else
+  #if defined(PCBX7ACCESS)
+  TIM8->CCER = TIM_CCER_CC1NE ;
+//  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+  #else
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
-#endif
+  #endif
+ #endif
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
@@ -1703,9 +1719,10 @@ extern "C" void INTMODULE_USART_IRQHandler()
 #ifdef ACCESS
   if (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
 	{
-		uint16_t value = INTMODULE_USART->DR ;
-		value |= getTmr2MHz() & 0xFF00 ;
-		put_fifo128( &Internal_fifo, value ) ;	
+//		uint16_t value = INTMODULE_USART->DR ;
+//		value |= getTmr2MHz() & 0xFF00 ;
+//		put_fifo128( &Internal_fifo, value ) ;	
+		put_fifo128( &Internal_fifo, INTMODULE_USART->DR ) ;	
 	}
 #endif
 }
@@ -1752,6 +1769,14 @@ extern "C" void EXTMODULE_USART_IRQHandler()
 	}
 }
 
+
+#if defined(PCBX7ACCESS)
+uint16_t ExtXjtCount1 ;
+uint16_t ExtXjtData[4] ;
+uint16_t ExtXjtCount2 ;
+uint16_t ExtXjtCount3 ;
+uint16_t ExtXjtCount4 ;
+#endif
 
 extern "C" void TIM8_CC_IRQHandler()
 {
@@ -1813,12 +1838,24 @@ extern "C" void TIM8_CC_IRQHandler()
 
   setupPulses(EXTERNAL_MODULE) ;
 
+#if defined(PCBX7ACCESS)
+	ExtXjtCount2 = s_current_protocol[EXTERNAL_MODULE] ;
+	ExtXjtCount3 = GPIOC->IDR & 0x0040 ;	// PC.06
+#endif
+
 #ifndef PCBX9LITE
  #ifndef PCBXLITE
   #ifndef REV19
 //   #ifndef PCBX7ACCESS
   if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX)
 	{
+#if defined(PCBX7ACCESS)
+		ExtXjtCount1 += 1 ;
+		ExtXjtData[0] = pxxStream[EXTERNAL_MODULE][0] ;
+		ExtXjtData[1] = pxxStream[EXTERNAL_MODULE][1] ;
+		ExtXjtData[2] = pxxStream[EXTERNAL_MODULE][2] ;
+		ExtXjtData[3] = pxxStream[EXTERNAL_MODULE][3] ;
+#endif
  #ifdef PCBX9D
 	  if (s_current_protocol[INTERNAL_MODULE] != PROTO_PXX)
 		{
@@ -1836,10 +1873,16 @@ extern "C" void TIM8_CC_IRQHandler()
 			}
 		}
  #endif
+#if defined(PCBX7ACCESS)
+ 		ExtXjtCount4 = DMA2_Stream2->NDTR ;
+#endif
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
     DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
+#if defined(PCBX7ACCESS)
+    DMA2_Stream2->NDTR = 500 ;		// Make sure it sends data
+#endif
     TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0];
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
@@ -1919,3 +1962,14 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 
 #endif
 
+
+//00 00 00 00 00 00 00 00 00 00
+//7E 10 01 03 00 00 C7 D3 40 02
+//xxxx 4645 001D 4267 [17989, 29, 16999]
+//xxxx 0042 [66]
+
+//On re-power, it DID NOT reboot, and the BOOT REASON is the normal POWER ON. 
+//You probably don't need that value on the right since it didn't watchdog, 
+//but it's 9062. Also, for what it's worth, when I select ACCESS in external, 
+//it does a quick reboot, and this time the reason IS WATCHDOG, 
+//with a value of 0094 on the right of line 6.

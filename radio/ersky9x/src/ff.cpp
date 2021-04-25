@@ -99,7 +99,9 @@
 /                   Added relative path feature.
 /                   Added f_chdir() and f_chdrive().
 /                   Added proper case conversion to extended char.
-/ Nov 03,'09 R0.07e Separated out configuration options from ff.h to ffconf.h.
+/ Nov 03,'09 R0.0
+
+7E Separated out configuration options from ff.h to ffconf.h.
 /                   Fixed f_unlink() fails to remove a sub-dir on _FS_RPATH.
 /                   Fixed name matching error on the 13 char boundary.
 /                   Added a configuration option, _LFN_UNICODE.

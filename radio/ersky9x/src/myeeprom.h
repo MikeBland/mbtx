@@ -730,7 +730,7 @@ struct t_module
 	uint8_t highChannels:1 ;
 	uint8_t disableTelemetry:1 ;
 	uint8_t exsub_protocol:2 ;
-	uint8_t spare:1 ;
+	uint8_t multiDisableTelemetry:1 ;
 	uint8_t sparex[2] ;
 } ;
 
@@ -749,6 +749,24 @@ PACK(typedef struct t_extraId
 	uint8_t dest ;
 	uint8_t spare ;
 } ) ExtraId ;
+
+struct t_hiResBox
+{
+	uint8_t item ;
+	uint8_t type ;
+	uint16_t colour ;
+	uint16_t bgColour ;
+} ;
+
+#define HIRES_OPT_TRIMS		0x01
+#define HIRES_OPT_BORDERS	0x02
+
+struct t_hiResDisplay
+{
+	uint8_t layout ;
+	uint8_t options ;
+	struct t_hiResBox boxes[6] ;
+} ;
 
 
 PACK(typedef struct te_ModelData {
@@ -826,7 +844,8 @@ PACK(typedef struct te_ModelData {
   // X9D ext module
 	uint8_t   xprotocol:4 ;
   uint8_t   xcountry:2 ;
-  uint8_t   not_xsub_protocol:2 ;
+  uint8_t   t1AutoReset:1 ;
+  uint8_t   t2AutoReset:1 ;
   int8_t    xppmNCH ;
   int8_t    xppmDelay ;
   uint8_t   xpulsePol:1 ;
@@ -919,7 +938,15 @@ PACK(typedef struct te_ModelData {
 	uint8_t extraSensors ;
 	ExtraId extraId[NUMBER_EXTRA_IDS] ;
 	struct t_access Access[2] ;
+#if defined(PCBX10)	|| defined(PCBX12D)
+// Use for colour screen setup
+#endif	 
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
+
+#if defined(PCBX12D) || defined(PCBX10)
+	struct t_hiResDisplay hiresDisplay[2] ;
+#endif
+
 }) SKYModelData;
 
 

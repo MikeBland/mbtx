@@ -100,10 +100,14 @@ const uint8_t BootCode[] = {
 #else
 
 #ifdef PCBX10
- #ifdef PCBT16
+ #if defined(PCBT16)
   #include "bootloader/bootflashT16.lbm"
  #else 
-  #include "bootloader/bootflashX10.lbm"
+ 	#if defined(PCBTx16S)
+   #include "bootloader/bootflashtx16s.lbm"
+  #else 
+   #include "bootloader/bootflashX10.lbm"
+  #endif
  #endif
 #else
 
@@ -129,7 +133,11 @@ const uint8_t BootCode[] = {
      #ifdef PCBT12
       #include "bootloader/bootflashT12.lbm"
 		 #else
-      #include "bootloader/bootflashX7.lbm"
+      #if defined(PCBX7ACCESS)
+       #include "bootloader/bootflashX7a.lbm"
+      #else
+       #include "bootloader/bootflashX7.lbm"
+		 #endif
 		 #endif
     #else
      #ifdef PCBXLITE
@@ -260,8 +268,11 @@ void _bootStart()
 	}
 
 	GPIOD->PUPDR = 0x00000040 ; // RHL D3
+ #if defined(PCBTX16S) && !defined(PCBT18)
+	GPIOC->PUPDR = 0x00000200 ;	// LHR C4
+ #else
 	GPIOB->PUPDR = 0x00040000 ;	// LHR B9
-
+ #endif
 //// Turn on backlight here
 //	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable port A clock
 //	GPIOA->MODER = (GPIOA->MODER & 0xFFFFF33F) | 0x440 ; // General purpose output mode
@@ -284,9 +295,13 @@ void _bootStart()
 //	}
 
 
+ #if defined(PCBTX16S) && !defined(PCBT18)
+ 	if ( (GPIOC->IDR & 0x00000010 ) == 0 )
+ #else
 	if ( (GPIOB->IDR & 0x00000200 ) == 0 )
+ #endif
 	{
-		if ( (GPIOD->IDR & 0x00000008 ) == 0 )
+ 		if ( (GPIOD->IDR & 0x00000008 ) == 0 )
 		{
 			// Soft power on
 			GPIOJ->BSRRL = 2 ; // set PWR_GPIO_PIN_ON pin to 1
@@ -405,13 +420,18 @@ void _bootStart()
 	GPIOA->PUPDR = 0x14000000 ;
 	GPIOC->PUPDR = 0x04004000 ;		// PortC clock enabled above
 #else // PCB9XT
-	
+ 
+ #ifdef PCBX7ACCESS
+	GPIOD->PUPDR = 0x40000000 ;
+	GPIOE->PUPDR = 0x00000100 ;
+ #else
 	GPIOC->PUPDR = 0x00000004 ;
- #ifdef REV9E
+  #ifdef REV9E
 	GPIOG->PUPDR = 0x00000001 ;
- #else // REV9E
+  #else // REV9E
 	GPIOE->PUPDR = 0x00000040 ;
- #endif // REV9E
+  #endif // REV9E
+ #endif // X7 ACCESS
 #endif // PCB9XT
 #endif // PCBXLITE
 
@@ -509,14 +529,21 @@ void _bootStart()
 		if ( (GPIOC->IDR & 0x00002000 ) == 0 )
 		{
 #else // PCB9XT
- #ifdef REV9E
+ #ifdef PCBX7ACCESS
+	if ( (GPIOD->IDR & 0x00008000 ) == 0 )
+	{
+		if ( (GPIOE->IDR & 0x00000010 ) == 0 )
+		{
+ #else
+  #ifdef REV9E
 	if ( (GPIOG->IDR & 0x00000001 ) == 0 )
- #else // REV9E
+  #else // REV9E
 	if ( (GPIOE->IDR & 0x00000008 ) == 0 )
- #endif // REV9E
+  #endif // REV9E
 	{
 		if ( (GPIOC->IDR & 0x00000002 ) == 0 )
 		{
+ #endif // X7 ACCESS
  #endif // PCBX9LITE
 #endif // PCB9XT
 #endif // PCBXLITE

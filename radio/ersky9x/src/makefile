@@ -31,10 +31,12 @@
 # AR9X board   make REVB=1
 # Horus X12S   make PCB=X12D
 # Jumper T16   make PCB=X10 PCBT16=1
-# RM TX165     make PCB=X10 PCBT16=1 PCBTX16S=1
+# RM TX16S     make PCB=X10 PCBT16=1 PCBTX16S=1
+# RK TX18S     make PCB=X10 PCBT16=1 PCBTX16S=1 PCBT18=1
 # X10Express   make PCB=X10 EXPRESS=1
 # X10          make PCB=X10
 # XWAVE T-800  make PCBLEM1=1
+# ARUNI        make REVB=1 ARUNI=1
 #
 ##############################################################################################
 # Start of default section
@@ -147,10 +149,18 @@ else ifeq ($(PCB), X10)
  UDEFS = -DSTM32F429_439xx
  ifeq ($(PCBT16), 1)
   ifeq ($(PCBTX16S), 1)
-   PROJECT = tx16s
-   CPPDEFS += -DPCBT16 
-   CPPDEFS += -DPCBTX16S
-   EXT_MOD=TX16S
+   ifeq ($(PCBT18), 1)
+    PROJECT = tx18s
+    CPPDEFS += -DPCBT18 
+    CPPDEFS += -DPCBT16 
+    CPPDEFS += -DPCBTX16S
+    EXT_MOD=TX18S
+   else
+    PROJECT = tx16s
+    CPPDEFS += -DPCBT16 
+    CPPDEFS += -DPCBTX16S
+    EXT_MOD=TX16S
+   endif
   else
    PROJECT = t16
    CPPDEFS += -DPCBT16 
@@ -203,6 +213,11 @@ else
   UDEFS = -Dat91sam3s4
   EXT_MOD=REVB
   CPPDEFS += -DSMALL 
+ else ifeq ($(ARUNI), 1)
+  PROJECT = aruni
+  LDSCRIPT = sam3s8c_flash.ld
+  EXT_MOD=ARUNI
+  UDEFS = -Dat91sam3s8
  else
   PROJECT = ersky9x
   LDSCRIPT = sam3s8c_flash.ld
@@ -328,6 +343,7 @@ CPPSRC = ersky9x.cpp \
          X12D/adc_driver.cpp \
 			frsky.cpp \
          menus.cpp \
+         menushres.cpp \
          mixer.cpp \
          ff.cpp \
 			logs.cpp \
@@ -431,6 +447,7 @@ CPPSRC = ersky9x.cpp \
          X12D/adc_driver.cpp \
 			frsky.cpp \
          menus.cpp \
+         menushres.cpp \
          mixer.cpp \
          ff.cpp \
 			logs.cpp \
@@ -1209,6 +1226,9 @@ clean:
 	-rm -f obj_x9LiteS/*.*
 	-rm -f obj_x10/*.*
 	-rm -f obj_x10E/*.*
+	-rm -f obj_tx16s/*.*
+	-rm -f obj_tx18s/*.*
+	-rm -f obj_aruni/*.*
 #	-rm -f $(FULL_PRJ).elf
 #	-rm -f $(FULL_PRJ).map
 #	-rm -f $(FULL_PRJ).hex

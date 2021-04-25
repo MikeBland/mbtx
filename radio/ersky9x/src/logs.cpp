@@ -108,6 +108,21 @@ void rawLogByte( uint8_t byte )
 	}
 }
 
+void rawLogChar( uint8_t byte )
+{
+	if ( RawLogging == 2 )
+	{
+		RawLogging = 1 ;
+		rawLogByte( byte ) ;
+		RawLogging = 2 ;
+	}
+	else
+	{
+		rawLogByte( byte ) ;
+	}
+}
+
+
 void rawStartLogging()
 {
 	RawIndex = 0 ;
@@ -205,7 +220,7 @@ void logSingleDiv10( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
-		qr = div( value, 10 ) ;
+		qr = div( (int)value, (int)10 ) ;
 		f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 	}
 }
@@ -215,7 +230,7 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
-		qr = div( value, 100 ) ;
+		qr = div( (int)value, (int)100 ) ;
 		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 	}
 }
@@ -223,7 +238,7 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 void logSingleDivX( int32_t value, uint8_t dps )
 {
 	div_t qr ;
-	qr = div( value, dps ) ;
+	qr = div( (int)value, (int)dps ) ;
 	if ( qr.rem < 0 )
 	{
 		qr.rem = - qr.rem ;

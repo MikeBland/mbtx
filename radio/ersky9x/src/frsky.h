@@ -599,6 +599,7 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define CRSF_PING_DEVICES_ID                0x28
 #define CRSF_DEVICE_INFO_ID                 0x29
 #define CRSF_REQUEST_SETTINGS_ID            0x2A
+#define RADIO_ID			                      0x3A
 
 
 // LogEnable index

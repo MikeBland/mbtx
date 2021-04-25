@@ -810,6 +810,13 @@ uint8_t CS_STATE( uint8_t x) ;
 
 #define EXTRA_POTS_POSITION	8
 
+#if defined(ARUNI)
+void putSwitchName(uint8_t x, uint8_t y, uint8_t z, uint8_t att) ;
+#endif
+
+#if defined(ARUNI)
+uint32_t countExtraPots(uint8_t *extraPotBits) ;
+#else
 #ifndef PCBX9D
 extern uint32_t countExtraPots( void ) ;
 #endif
@@ -824,6 +831,7 @@ extern uint32_t countExtraPots( void ) ;
 #endif
 #ifdef PCBX9LITE
 extern uint32_t countExtraPots( void ) ;
+#endif
 #endif
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
@@ -873,6 +881,7 @@ extern uint32_t countExtraPots( void ) ;
 
 #define EXTRA_POTS_START	120
 extern int8_t NumExtraPots ;
+extern uint8_t ExtraPotBits;
 
 // For scalers:
 #define EXTRA_PPM_START	180
@@ -967,7 +976,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define NUM_MULTI_PROTOCOLS 79
+#define NUM_MULTI_PROTOCOLS 90
 
 #define M_Flysky           0
 //#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -1050,7 +1059,7 @@ struct t_multiSetting
 	uint8_t protocol[8] ;
 	uint8_t subData ;
 	uint8_t subProtocol[9] ;
-	uint8_t timeout ;
+//	uint8_t timeout ;
 } ;
 
 extern uint8_t BindRangeFlag[2] ;
@@ -1308,7 +1317,13 @@ extern uint8_t toupper(unsigned char c) ;
 //extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
 extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
 extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
+#if defined(PCBX12D) || defined(PCBX10)
+extern uint16_t LcdForeground ;
+extern uint16_t LcdBackground ;
+extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground) ;
+#else
 extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
+#endif
 extern void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
 extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ; //, bool nc) ;
 extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
@@ -1376,7 +1391,11 @@ extern int8_t getMovedSwitch( void ) ;
 extern uint8_t g_vbat100mV ;
 //extern void doSplash( void ) ;
 extern void mainSequence( uint32_t no_menu ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour = LcdForeground ) ;
+#else
 extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att ) ;
+#endif
 extern void telem_byte_to_bt( uint8_t data ) ;
 extern int16_t scale_telem_value( int16_t val, uint8_t channel, uint8_t *dplaces ) ;
 uint8_t telemItemValid( uint8_t index ) ;
@@ -1693,6 +1712,10 @@ extern uint16_t FailsafeCounter[2] ;
 #define PHYSICAL_X10					13
 #define PHYSICAL_T16					14
 #define PHYSICAL_LEM1					15
+#define PHYSICAL_TX16S				16
+#define PHYSICAL_X10E					17
+#define PHYSICAL_TX18S				18
+
 
 // Power control type
 #ifdef REV9E
@@ -1811,6 +1834,10 @@ struct t_newvario
 
 #ifdef ACCESS
 #include "pxx2.h"
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define MIXER_TASK	1
 #endif
 
 #endif

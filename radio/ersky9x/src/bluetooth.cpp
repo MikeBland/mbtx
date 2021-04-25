@@ -491,6 +491,7 @@ void setBtBaudrate( uint32_t index )
  #else
   #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	USART6_configure() ;		// Testing
+	(void)brate ;
   #else
 	UART3_Configure( brate, Master_frequency ) ;		// Testing
   #endif

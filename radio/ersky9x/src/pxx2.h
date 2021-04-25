@@ -51,6 +51,10 @@
 #define PXX2_RX_SETTINGS_FLAG1_TELEMETRY_DISABLED  (1 << 7)
 #define PXX2_RX_SETTINGS_FLAG1_READONLY            (1 << 6)
 #define PXX2_RX_SETTINGS_FLAG1_FASTPWM             (1 << 4)
+#define PXX2_RX_SETTINGS_FLAG1_FPORT               (1 << 3)
+#define PXX2_RX_SETTINGS_FLAG1_TELEMETRY_25MW      (1 << 2)
+#define PXX2_RX_SETTINGS_FLAG1_ENABLE_PWM_CH5_CH6  (1 << 1)
+#define PXX2_RX_SETTINGS_FLAG1_FPORT2              (1 << 0)
 
 
 
@@ -110,6 +114,10 @@ struct t_moduleControl
 	uint8_t rxtxSetupState ;
 	uint8_t receiverSetupTelemetryDisabled:1 ;
 	uint8_t receiverSetupPwmRate:1 ;
+	uint8_t receiverSetupTelePower:1 ;
+	uint8_t receiverSetupFPort:1 ;
+	uint8_t receiverSetupFPort2:1 ;
+	uint8_t receiverSetupCH56pwm:1 ;
 	uint8_t channelMapping[8] ;
 	uint8_t registerRxName[PXX2_LEN_RX_NAME] ;
 	uint8_t bindReceiversNames[3][PXX2_LEN_RX_NAME] ;
@@ -119,6 +127,7 @@ struct t_moduleControl
 	uint16_t rxHwVersion ; 
 	uint16_t rxSwVersion ;
 	uint8_t variant ;
+	uint8_t rxVariant ;
 	uint8_t rxModuleId ;
 	uint8_t moduleId ;
 	int8_t power ;
@@ -326,7 +335,13 @@ static const char * const PXX2receiversModels[] = {
   "R9-SLIM+",
   "R9-MINI",
   "R9-MM",
-  "R9-STAB",
+  "R9-STAB", // R9-STAB has OTA
+  "R9-MINI-OTA", // this one has OTA (different bootloader)
+  "R9-MM-OTA", // this one has OTA (different bootloader)
+  "R9-SLIM+-OTA", // this one has OTA (different bootloader)
+  "Archer-X", // this one has OTA (internal module)
+  "R9MX", // this one has OTA
+  "R9SX", // this one has OTA
 };
 
 #endif

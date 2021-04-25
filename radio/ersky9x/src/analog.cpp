@@ -329,8 +329,10 @@ void init_adc()
 	configure_pins( PIN_MVOLT, PIN_ANALOG | PIN_PORTC ) ;
 
 #ifndef PCBT12
+ #ifndef PCBX7ACCESS
 	configure_pins( LED_BLUE_GPIO_PIN, PIN_ANALOG | PIN_PORTB ) ;
 	configure_pins( LED_RED_GPIO_PIN, PIN_ANALOG | PIN_PORTC ) ;
+ #endif
 #endif
 
 #else // PCBX7

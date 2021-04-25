@@ -116,10 +116,14 @@ uint16_t isqrt32(uint32_t n)
   for(;;)
 	{
     if((uint32_t)g*g > n)
+		{
       g ^= c;
+		}
     c >>= 1;
     if(c == 0)
+		{
       return g;
+		}
     g |= c;
   }
 }
@@ -159,7 +163,7 @@ static void inactivityCheck()
 //void checkMixerNeeded()
 //{
 //	uint16_t t1 = getTmr2MHz() ;
-//	if ( (uint16_t)( t1 - MixerRunAtTime ) > 4095 )
+//	if ( (uint16_t)( t1 - MixerRunAtTime ) > 4000 )
 //	{
 //		MixerRunAtTime = t1 ;
 //		perOutPhase( g_chans512, 0) ;
@@ -634,11 +638,11 @@ void perOut(int16_t *chanOut, uint8_t att )
     uint8_t mixWarning = 0;
     //========== MIXER LOOP ===============
 
-#if EXTRA_SKYMIXERS
+//#if EXTRA_SKYMIXERS
     for(uint8_t i=0;i<MAX_SKYMIXERS+EXTRA_SKYMIXERS;i++)
-#else
-    for(uint8_t i=0;i<MAX_SKYMIXERS;i++)
-#endif
+//#else
+//    for(uint8_t i=0;i<MAX_SKYMIXERS;i++)
+//#endif
 		{
         SKYMixData *md = mixAddress( i ) ;
 

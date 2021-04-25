@@ -258,6 +258,9 @@ void init_soft_power()
  #ifdef PCB9XT
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
  #endif
+ #if defined(PCBX7ACCESS)
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+ #endif
 	GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR );
 	GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR);
 //  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOPWR, ENABLE);
@@ -265,7 +268,14 @@ void init_soft_power()
  #if defined(PCBX7ACCESS)
 	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
 	configure_pins( PIN_SPORT_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+ #else
+  #ifdef PCBX7
+	GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR);
+	configure_pins( PIN_SPORT_PWR, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB ) ;
+  #endif // PCBX7
  #endif // ACCESS
+
+
 
   /* GPIO  Configuration*/
  #if defined(REVPLUS) || defined(REV9E)

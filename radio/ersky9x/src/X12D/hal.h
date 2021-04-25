@@ -181,7 +181,7 @@
 #endif
 
 #if defined(PCBX10)
- #if defined(PCBTX16S)
+ #if defined(PCBTX16S) && !defined(PCBT18)
   #define TRIMS_GPIO_REG_LHL            GPIOA->IDR
   #define TRIMS_GPIO_PIN_LHL            GPIO_Pin_6  // PA.06
   #define TRIMS_GPIO_REG_LHR            GPIOC->IDR
@@ -908,6 +908,27 @@
   #define EEPROM_SPI_MOSI_GPIO_PinSource  GPIO_PinSource3
 #endif
 
+// Touch
+#if defined(HARDWARE_TOUCH)
+  #define TOUCH_INT_RCC_AHB1Periph        RCC_AHB1Periph_GPIOH
+  #define TOUCH_INT_GPIO                  GPIOH
+  #define TOUCH_INT_GPIO_PIN              GPIO_Pin_2    // PH.02
+
+  #define TOUCH_RST_RCC_AHB1Periph        RCC_AHB1Periph_GPIOF
+  #define TOUCH_RST_GPIO                  GPIOF
+  #define TOUCH_RST_GPIO_PIN              GPIO_Pin_10   // PF.10
+
+  #define TOUCH_INT_EXTI_LINE1            EXTI_Line2
+  #define TOUCH_INT_EXTI_IRQn1            EXTI2_IRQn
+  #define TOUCH_INT_EXTI_IRQHandler1      EXTI2_IRQHandler
+  #define TOUCH_INT_EXTI_PortSource       EXTI_PortSourceGPIOH
+  #define TOUCH_INT_EXTI_PinSource1       EXTI_PinSource2
+
+  #define TOUCH_INT_STATUS()              (GPIO_ReadInputDataBit(TOUCH_INT_GPIO, TOUCH_INT_GPIO_PIN))
+#else
+  #define TOUCH_INT_RCC_AHB1Periph        0
+  #define TOUCH_RST_RCC_AHB1Periph        0
+#endif
 
 
 #endif // _HAL_H_

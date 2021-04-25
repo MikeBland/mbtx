@@ -73,7 +73,7 @@ void scriptRequestBt() ;
 void scriptReleasetBt() ;
 
 
-#else
+#else	// now for QT
 #include "basic.h"
 #include "mainwindow.h"
 #include "lcd.h"
@@ -91,10 +91,14 @@ uint16_t isqrt32(uint32_t n)
   for(;;)
 	{
     if((uint32_t)g*g > n)
+		{
       g ^= c;
+		}
     c >>= 1;
     if(c == 0)
+		{
       return g;
+		}
     g |= c;
   }
 }
@@ -700,15 +704,15 @@ uint8_t CodeBuffer[200] ;
 #endif
 
 #ifdef	QT
-#define PROGRAM_SIZE	22000
+#define MIN_PROGRAM_SIZE	22000
 #else
  #ifdef SMALL
-#define PROGRAM_SIZE	10300
+#define MIN_PROGRAM_SIZE	11300
  #else
   #if defined(PCBX12D) || defined(PCBX10)
-#define PROGRAM_SIZE	32000
+#define MIN_PROGRAM_SIZE	32000
   #else
-#define PROGRAM_SIZE	22000
+#define MIN_PROGRAM_SIZE	22000
   #endif
  #endif
 #endif
@@ -717,9 +721,26 @@ uint8_t CodeBuffer[200] ;
 
 union t_program
 {
-	uint8_t Bytes[PROGRAM_SIZE] ;
-	uint32_t Words[PROGRAM_SIZE/4] ;
-} Program ;
+	uint8_t Bytes[MIN_PROGRAM_SIZE] ;
+	uint32_t Words[MIN_PROGRAM_SIZE/4] ;
+} ;
+
+#ifdef	QT
+union t_program Program ;
+#define PROGRAM_SIZE	MIN_PROGRAM_SIZE
+#else
+//extern uint32_t _ebss ;
+//extern uint8_t *_heap_end ;
+union t_program Program ;
+//union t_program& Program = (union t_program &)_ebss ;
+#define PROGRAM_SIZE	MIN_PROGRAM_SIZE
+//#define PROGRAM_SIZE	(_heap_end-_ebss)
+#endif
+
+uint32_t programStart()
+{
+	return (uint32_t) &Program.Bytes[0] ;
+}
 
 uint32_t StartOfSymbols ;
 uint32_t EndOfSymbols ;

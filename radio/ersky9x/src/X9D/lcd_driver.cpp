@@ -845,8 +845,8 @@ extern uint16_t g_timeMixer ;
 			MixerCount += 1 ;		
 			uint16_t t1 = getTmr2MHz() ;
 #ifdef PCBX9D
-extern uint16_t MixerRunAtTime ;
-			MixerRunAtTime = t1 ;
+//extern uint16_t MixerRunAtTime ;
+//			MixerRunAtTime = t1 ;
 #endif
 			perOutPhase(g_chans512, 0);
 			t1 = getTmr2MHz() - t1 ;

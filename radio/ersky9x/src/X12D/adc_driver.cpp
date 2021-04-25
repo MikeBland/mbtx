@@ -48,10 +48,10 @@
 
 #ifdef REV9
 
-#ifndef PCBX10
+ #ifndef PCBX10
 #define ADC_CS_HIGH()						(ADC_SPI_GPIO->BSRRL = ADC_SPI_PIN_CS)
 #define ADC_CS_LOW()						(ADC_SPI_GPIO->BSRRH = ADC_SPI_PIN_CS)
-#endif
+ #endif
 
 extern void hw_delay( uint16_t time ) ;
 #define delay_01us(x) hw_delay( x )
@@ -74,8 +74,8 @@ extern void hw_delay( uint16_t time ) ;
 #define V_BATT		18
 
 
-#ifdef PCBX10
- #ifndef PCBT16
+ #ifdef PCBX10
+  #ifndef PCBT16
 extern void delay_ms( uint32_t ms ) ;
 volatile uint16_t PwmInterruptCount ;
 uint8_t SticksPwmDisabled = 0 ;
@@ -191,8 +191,8 @@ extern "C" void TIM5_IRQHandler(void)
 		}
 	}
 }
+  #endif
  #endif
-#endif
 
 
 static void enableRtcBattery()
@@ -208,7 +208,7 @@ void disableRtcBattery()
 uint16_t AdcBuffer[BUFFERSIZE+3] ;		// 2 for the on chip ADC + 1 for V_BATT
 uint16_t VbattRtc ;
 
-#ifndef PCBX10
+ #ifndef PCBX10
 static u16 SPIx_ReadWriteByte(uint16_t value)
 {
     while(SPI_I2S_GetFlagStatus(ADC_SPI,SPI_I2S_FLAG_TXE) == RESET);
@@ -284,7 +284,7 @@ static void ADS7952_Init()
 //    ADC_CS_HIGH();
 //	asm("nop");
 }
-#endif
+ #endif
 
 void init_adc()
 {
@@ -635,8 +635,12 @@ void read_adc()
 	AnalogData[4] = AdcBuffer[4] ;
 	AnalogData[5] = AdcBuffer[5] ;
 	AnalogData[6] = 4095 - AdcBuffer[6] ;
+ #ifndef PCBT16
 	AnalogData[7] = 4095 - AdcBuffer[7] ;
-	uint16_t temp1 = AdcBuffer[8] ;
+ #else
+ 	AnalogData[7] = AdcBuffer[7] ;
+ #endif
+ 	uint16_t temp1 = AdcBuffer[8] ;
 #else
 	AnalogData[4] = 4095 - AdcBuffer[4] ;
 	AnalogData[5] = 4095 - AdcBuffer[5] ;
@@ -685,7 +689,7 @@ void read_adc()
  {
 	AnalogData[4] = 4095 - AdcBuffer[0] ;
 	AnalogData[5] = 4095 - AdcBuffer[1] ;
-	AnalogData[6] = AdcBuffer[2] ;
+	AnalogData[6] = 4095 - AdcBuffer[2] ;
 	AnalogData[7] = AdcBuffer[3] ;
 	AnalogData[8] = 4095 - AdcBuffer[4] ;
 	AnalogData[12] = AdcBuffer[5] ;

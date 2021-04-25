@@ -136,7 +136,7 @@ static void init_int_access( void ) ;
 #ifdef ACCESS
 void init_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX10) || defined(PCBX7ACCESS)
   if (port == INTERNAL_MODULE)
     init_int_access() ;
   else
@@ -148,7 +148,7 @@ void init_access(uint32_t port)
 
 void disable_access(uint32_t port)
 {
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX10) || defined(PCBX7ACCESS)
   if (port == INTERNAL_MODULE)
     disable_int_pxx() ;
   else

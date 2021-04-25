@@ -3016,7 +3016,11 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ~d & PIN_SW_C_L ;
       break;
     case HSW_SC1:
+ #ifdef PCBX7ACCESS
+      xxx = ((d & PIN_SW_C_L) | (d & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+ #else
       xxx = ((d & PIN_SW_C_L) | (e & PIN_SW_C_H)) == (PIN_SW_C_L | PIN_SW_C_H) ;
+ #endif // ACCESS
       break;
     case HSW_SC2:
  #ifdef PCBX7ACCESS
@@ -3614,17 +3618,18 @@ uint32_t read_keys()
 	}
 	if ( x & KEYS_GPIO_PIN_UP )	// MDL
 	{
-//		y |= 0x02 << KEY_UP ;			// up
-		if ( x & KEYS_GPIO_PIN_PGDN )	// PAGE>
-		{
-			y |= 0x02 << KEY_RIGHT ;	// RIGHT
-		}
+		y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	}
+
+	if ( x & KEYS_GPIO_PIN_PGDN )	// PAGE>
+	{
+		y |= 0x02 << KEY_UP ;			// up
 	}
 	if ( KEYS_GPIO_REG_PGUP & KEYS_GPIO_PIN_PGUP )	// PAGE<
 	{
 		y |= 0x02 << KEY_LEFT ;		// LEFT
 	}
-	y |= 0x02 << KEY_UP ;			// up
+//	y |= 0x02 << KEY_UP ;			// up
  #else
  	x = GPIOI->IDR ;
 	if ( x & KEYS_GPIO_PIN_MENU )
@@ -3677,7 +3682,7 @@ void init_trims()
 	configure_pins( GPIO_Pin_13 | GPIO_Pin_14, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
 #endif
 #ifdef PCBX10
- #if defined(PCBTX16S)
+ #if defined(PCBTX16S) && not defined(PCBT18)
  	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;
  	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ;
@@ -3757,7 +3762,7 @@ uint32_t read_trims()
 	}
 #endif
 #ifdef PCBX10
- #if defined(PCBTX16S)
+ #if defined(PCBTX16S) && not defined(PCBT18)
  	trima = GPIOA->IDR ;
 	if ( ( trima & TRIMS_GPIO_PIN_LHL ) == 0 )
 	{

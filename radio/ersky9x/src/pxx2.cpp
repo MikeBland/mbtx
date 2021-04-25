@@ -34,6 +34,42 @@
 
 #ifdef ACCESS
 
+
+//enum PXX2ModuleModelID {
+//  PXX2_MODULE_NONE,
+//  PXX2_MODULE_XJT,
+//  PXX2_MODULE_ISRM,
+//  PXX2_MODULE_ISRM_PRO,
+//  PXX2_MODULE_ISRM_S,
+//  PXX2_MODULE_R9M,
+//  PXX2_MODULE_R9M_LITE,
+//  PXX2_MODULE_R9M_LITE_PRO,
+//  PXX2_MODULE_ISRM_N,
+//  PXX2_MODULE_ISRM_S_X9,
+//  PXX2_MODULE_ISRM_S_X10E,
+//  PXX2_MODULE_XJT_LITE,
+//  PXX2_MODULE_ISRM_S_X10S,
+//  PXX2_MODULE_ISRM_X9LITES,
+//};
+
+static const char * const PXX2ModulesNames[] = {
+  "---",
+  "XJT",
+  "ISRM",
+  "ISRM-PRO",
+  "ISRM-S",
+  "R9M",
+  "R9MLite",
+  "R9MLite-PRO",
+  "ISRM-N",
+  "ISRM-S-X9",
+  "ISRM-S-X10E",
+  "XJT Lite",
+  "ISRM-S-X10S",
+  "ISRM-X9LiteS"
+};
+
+
 extern uint8_t PxxSerial[2][50] ;
 extern uint8_t *PtrSerialPxx[2] ;
 extern struct t_telemetryTx TelemetryTx ;
@@ -46,6 +82,15 @@ extern union t_sharedMemory SharedMemory ;
 
 struct t_moduleSettings ModuleSettings[] ;
 struct t_moduleControl ModuleControl[] ;
+
+const char *moduleName( uint32_t index )
+{
+	if ( index > 13 )
+	{
+		index = 0 ;
+	}
+	return PXX2ModulesNames[index] ;
+}
 
 void pxx2AddByte( uint8_t byte, uint32_t module )
 {
@@ -202,7 +247,7 @@ void setupChannelsAccess( uint32_t module )
 
 void setupHardwareInfoFrame( uint32_t module )
 {
-  if ( ModuleControl[module].step >= -1 && ModuleControl[module].step < 2 ) //  PXX2_MAX_RECEIVERS_PER_MODULE)
+  if ( ModuleControl[module].step >= -1 && ModuleControl[module].step < 3 ) //  PXX2_MAX_RECEIVERS_PER_MODULE)
 	{
     if (ModuleControl[module].timeout == 0)
 		{
@@ -237,6 +282,8 @@ void pxx2AddRegId( uint32_t module )
 	}
 }
 
+uint8_t CopyRegRxFrame[20] ;
+void byteCopy( uint8_t *dest, uint8_t *src, uint32_t length ) ;
 
 void setupRegisterFrame(uint8_t module)
 {
@@ -264,6 +311,7 @@ void setupRegisterFrame(uint8_t module)
 	{
     pxx2AddByte(0, module) ;
   }
+  byteCopy( CopyRegRxFrame, PxxSerial[module], 14 ) ;
 }
 
 void setupResetFrame(uint8_t module)
@@ -333,6 +381,9 @@ void setupBindFrame(uint8_t module)
   }
 }
 
+uint8_t SendingRxSettings ;
+
+
 void setupReceiverSettingsFrame(uint8_t module)
 {
   if ( ( (uint16_t) (get_tmr10ms() - ModuleControl[module].receiverSetupTimeout)) > 200 ) /*next try in 2s*/
@@ -340,6 +391,7 @@ void setupReceiverSettingsFrame(uint8_t module)
 		pxx2AddByte( PXX2_TYPE_C_MODULE, module ) ;
 		pxx2AddByte( PXX2_TYPE_ID_RX_SETTINGS, module ) ;
     uint8_t flag0 = ModuleControl[module].receiverSetupReceiverId ;
+//    uint8_t flag0 = 0 ;
     if ( ModuleControl[module].rxtxSetupState == RECEIVER_SETTINGS_WRITE)
 		{
       flag0 |= PXX2_RX_SETTINGS_FLAG0_WRITE ;
@@ -350,6 +402,14 @@ void setupReceiverSettingsFrame(uint8_t module)
       flag1 |= PXX2_RX_SETTINGS_FLAG1_TELEMETRY_DISABLED ;
     if (ModuleControl[module].receiverSetupPwmRate)
       flag1 |= PXX2_RX_SETTINGS_FLAG1_FASTPWM ;
+    if (ModuleControl[module].receiverSetupFPort)
+      flag1 |= PXX2_RX_SETTINGS_FLAG1_FPORT ;
+    if (ModuleControl[module].receiverSetupTelePower)
+      flag1 |= PXX2_RX_SETTINGS_FLAG1_TELEMETRY_25MW ;
+    if (ModuleControl[module].receiverSetupFPort2)
+      flag1 |= PXX2_RX_SETTINGS_FLAG1_FPORT2 ;
+    if (ModuleControl[module].receiverSetupCH56pwm)
+      flag1 |= PXX2_RX_SETTINGS_FLAG1_ENABLE_PWM_CH5_CH6 ;
     pxx2AddByte(flag1, module);
 
 //    uint8_t channelsCount = sentModuleChannels(module);
@@ -359,6 +419,11 @@ void setupReceiverSettingsFrame(uint8_t module)
       pxx2AddByte( ModuleControl[module].channelMapping[i], module) ;
     }
     ModuleControl[module].receiverSetupTimeout = get_tmr10ms() ;
+		
+		
+		SendingRxSettings = 1 ;
+
+
   }
   else
 	{
@@ -435,6 +500,10 @@ void setupPulsesAccess( uint32_t module )
 	*PtrSerialPxx[module]++ = 0x7E ;
 	*PtrSerialPxx[module]++ = 0 ;		// Place for length
 
+
+	SendingRxSettings = 0 ;
+
+
 //extern uint8_t RawLogging ;
 //void rawLogByte( uint8_t byte ) ;
 
@@ -457,12 +526,15 @@ void setupPulsesAccess( uint32_t module )
   	  break;
   	  case MODULE_MODE_RECEIVER_SETTINGS:
   	    setupReceiverSettingsFrame(module);
-	//			if ( RawLogging )
-	//			{
-	//				rawLogByte( 0x5E ) ;
-	//				rawLogByte( 0x02 ) ;
-	//				DebugLog = 1 ;
-	//			}
+//extern uint8_t RawLogging ;
+//void rawLogByte( uint8_t byte ) ;
+//void rawLogChar( uint8_t byte ) ;
+//				if ( RawLogging )
+//				{
+//					rawLogChar( '-' ) ;
+//					rawLogByte( 0x02 ) ;
+//					DebugLog = 1 ;
+//				}
   	  break;
   	  case MODULE_MODE_REGISTER:
   	    setupRegisterFrame(module) ;
@@ -566,6 +638,39 @@ void setupPulsesAccess( uint32_t module )
 //		}
 //	}
 
+	if ( SendingRxSettings )
+	{
+//extern uint8_t RawLogging ;
+//void rawLogByte( uint8_t byte ) ;
+//void rawLogChar( uint8_t byte ) ;
+//	if ( RawLogging )
+//	{
+//		uint8_t *packet ;
+//		packet = PxxSerial[module] ;
+//		rawLogChar( '(' ) ;
+//		rawLogByte( packet[0] ) ;
+//		rawLogByte( packet[1] ) ;
+//		rawLogByte( packet[2] ) ;
+//		rawLogByte( packet[3] ) ;
+//		rawLogByte( packet[4] ) ;
+//		rawLogByte( packet[5] ) ;
+//		rawLogByte( packet[6] ) ;
+//		rawLogByte( packet[7] ) ;
+//		rawLogByte( packet[8] ) ;
+//		rawLogByte( packet[9] ) ;
+//		rawLogByte( packet[10] ) ;
+//		rawLogByte( packet[11] ) ;
+//		rawLogByte( packet[12] ) ;
+//		rawLogByte( packet[13] ) ;
+//		rawLogByte( packet[14] ) ;
+//		rawLogByte( packet[15] ) ;
+//		rawLogByte( packet[16] ) ;
+//		rawLogByte( packet[17] ) ;
+//		rawLogChar( ')' ) ;
+//	}
+		
+	}
+
 	if ( PxxSerial[module][1] )
 	{
 		
@@ -636,8 +741,11 @@ uint32_t byteMatch( uint8_t *dest, uint8_t *src, uint32_t length )
 
 
 
+
 void processRegisterFrame(uint8_t module, uint8_t *frame)
 {
+
+	
   if ( ModuleSettings[module].mode != MODULE_MODE_REGISTER)
 	{
     return ;
@@ -761,7 +869,16 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 //	if ( RawLogging )
 //	{
 //		rawLogByte( 0x5F ) ;
+//		rawLogByte( packet[1] ) ;
 //		rawLogByte( packet[2] ) ;
+//		rawLogByte( packet[3] ) ;
+//		rawLogByte( packet[4] ) ;
+//		rawLogByte( packet[5] ) ;
+//		rawLogByte( packet[6] ) ;
+//		rawLogByte( packet[7] ) ;
+//		rawLogByte( packet[8] ) ;
+//		rawLogByte( packet[9] ) ;
+//		rawLogByte( packet[10] ) ;
 //	}
 	if ( packet[1] == PXX2_TYPE_C_MODULE )
 	{
@@ -787,7 +904,7 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 					{
 						ModuleControl[module].rxHwVersion = ( packet[5] << 8 ) | packet[6] ;
 						ModuleControl[module].rxSwVersion = ( packet[7] << 8 ) | packet[8] ;
-						ModuleControl[module].variant = packet[9] ;
+						ModuleControl[module].rxVariant = packet[9] ;
 						ModuleControl[module].rxModuleId = packet[4] ;
 					}
 				}
@@ -806,11 +923,15 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 			break ;
 
 			case PXX2_TYPE_ID_RX_SETTINGS :
-				ModuleControl[module].receiverSetupTelemetryDisabled = packet[4] & 0x80 ? 1 : 0 ; 
-				ModuleControl[module].receiverSetupPwmRate = packet[4] & 0x10 ? 1 : 0 ;
+				ModuleControl[module].receiverSetupTelemetryDisabled = packet[4] & PXX2_RX_SETTINGS_FLAG1_TELEMETRY_DISABLED ? 1 : 0 ; 
+				ModuleControl[module].receiverSetupPwmRate = packet[4] & PXX2_RX_SETTINGS_FLAG1_FASTPWM ? 1 : 0 ;
+				ModuleControl[module].receiverSetupTelePower = packet[4] & PXX2_RX_SETTINGS_FLAG1_TELEMETRY_25MW ? 1 : 0 ;
+				ModuleControl[module].receiverSetupFPort = packet[4] & PXX2_RX_SETTINGS_FLAG1_FPORT ? 1 : 0 ;
+				ModuleControl[module].receiverSetupFPort2 = packet[4] & PXX2_RX_SETTINGS_FLAG1_FPORT2 ? 1 : 0 ;
+				ModuleControl[module].receiverSetupCH56pwm = packet[4] & PXX2_RX_SETTINGS_FLAG1_ENABLE_PWM_CH5_CH6 ? 1 : 0 ;
 				for ( uint32_t i = 0 ; i < 8 ; i += 1 )
 				{
-					ModuleControl[module].channelMapping[i] = packet[5+i] ;
+					ModuleControl[module].channelMapping[i] = ( packet[0] > 4 + i ) ? packet[5+i] : 0xFF ;
 				}
 				ModuleControl[module].rxtxSetupState = RECEIVER_SETTINGS_OK ;
 			break ;
@@ -862,13 +983,13 @@ void rawLogByte( uint8_t byte ) ;
 
 	at = &AccessTelemetry[module] ;
 
-	if ( ( byte == START_STOP ) ) // && ( ( uint16_t)( data - at->startTime ) > 3000 ) )
-	{
-		at->dataState = ACCESS_START ;
-		at->dataCount = 0 ;
-		at->startTime = data ;
-	}
-	else
+//	if ( ( byte == START_STOP ) ) // && ( ( uint16_t)( data - at->startTime ) > 3000 ) )
+//	{
+//		at->dataState = ACCESS_START ;
+//		at->dataCount = 0 ;
+//		at->startTime = data ;
+//	}
+//	else
 	{
  		switch (at->dataState) 
 		{

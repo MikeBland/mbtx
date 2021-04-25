@@ -119,6 +119,7 @@ extern struct t_serial_tx *Current_Com2 ;
 #ifndef PCBX12D
 #ifndef PCBX10
  #ifndef REV19
+  #ifndef PCBX7ACCESS
 void USART6_Sbus_configure()
 {
  #ifdef PCBX9D
@@ -186,6 +187,7 @@ extern "C" void USART6_IRQHandler()
  #endif // Xlite
 #endif // X3
 
+  #endif // #ifndef X7ACCESS
  #endif // #ifndef REV19
 
 #endif // #ifndef PCBX10
@@ -1462,14 +1464,17 @@ extern "C" void EXTI9_5_IRQHandler()
 #endif
 	{
 		// L to H transition
-		pss->LtoHtime = capture ;
-		TIM11->CNT = 0 ;
-		TIM11->CCR1 = pss->bitTime * 12 ;
-		uint32_t time ;
-		capture -= pss->HtoLtime ;
-		time = capture ;
-		putCaptureTime( pss, time, 0 ) ;
-		TIM11->DIER = TIM_DIER_CC1IE ;
+		if ( pss->lineState == LINE_ACTIVE )
+		{
+			pss->LtoHtime = capture ;
+			TIM11->CNT = 0 ;
+			TIM11->CCR1 = pss->bitTime * 12 ;
+			uint32_t time ;
+			capture -= pss->HtoLtime ;
+			time = capture ;
+			putCaptureTime( pss, time, 0 ) ;
+			TIM11->DIER = TIM_DIER_CC1IE ;
+		}
 	}
 	else
 	{

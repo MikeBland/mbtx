@@ -63,6 +63,9 @@ void ledRed()
 {
   ledOff();
   GPIO_SetBits(LED_GPIO, LED_RED_GPIO_PIN);
+#if defined(PCBTX16S)
+  GPIO_SetBits(LED_GPIO, LED_GREEN_GPIO_PIN);
+#endif
 }
 
 void ledGreen()
@@ -75,5 +78,8 @@ void ledBlue()
 {
   ledOff();
   GPIO_SetBits(LED_GPIO, LED_BLUE_GPIO_PIN);
+#if defined(PCBTX16S)
+  GPIO_SetBits(LED_GPIO, LED_GREEN_GPIO_PIN);
+#endif
 }
 #endif

@@ -843,14 +843,14 @@ void ee32LoadModel(uint8_t id)
 			g_model.not_sub_protocol = 0 ;
 		}
 	}
-	if ( g_model.xsub_protocol == 0 )
-	{
-		if ( g_model.not_xsub_protocol != 0 )
-		{
-			g_model.xsub_protocol = g_model.not_xsub_protocol ;
-			g_model.not_xsub_protocol = 0 ;
-		}
-	}
+//	if ( g_model.xsub_protocol == 0 )
+//	{
+//		if ( g_model.not_xsub_protocol != 0 )
+//		{
+//			g_model.xsub_protocol = g_model.not_xsub_protocol ;
+//			g_model.not_xsub_protocol = 0 ;
+//		}
+//	}
 #ifdef XFIRE
  #ifdef REVX
 	if ( g_model.protocol > PROT_MAX + 1 )

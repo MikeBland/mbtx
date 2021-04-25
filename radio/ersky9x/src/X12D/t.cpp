@@ -1466,13 +1466,25 @@ const char *readGeneral()
   memset(&g_eeGeneral, 0, sizeof(EEGeneral));
 	result = xloadFile( RADIO_PATH "/radio.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
   
-#if defined(PCBX10)
-  g_eeGeneral.x9dcalibMid = 0x0400 ;
-  g_eeGeneral.x9dcalibSpanNeg = 0x180 ;
-  g_eeGeneral.x9dcalibSpanPos = 0x180 ;
-#endif	
+//#if defined(PCBX10)
+//  g_eeGeneral.x9dcalibMid = 0x0400 ;
+//  g_eeGeneral.x9dcalibSpanNeg = 0x180 ;
+//  g_eeGeneral.x9dcalibSpanPos = 0x180 ;
+//#endif	
 	
-	return result ? 0 : "ERROR" ;
+	if ( result == 0 )
+	{
+		return "ERROR" ;
+	}
+  uint16_t sum=0;
+  sum = evalChkSum() ;
+  if ( g_eeGeneral.chkSum == sum )
+	{
+		return 0 ;
+	}
+	// Possibly openTx file!!
+	f_rename ( (TCHAR *)RADIO_PATH "/radio.bin", (TCHAR *)RADIO_PATH "/radioopn.bin" ) ;
+	return "ERROR" ;
 }
 
 const char * readModel(uint32_t id)
@@ -1488,6 +1500,7 @@ const char * readModel(uint32_t id)
 		g_model.modelVersion = 4 ;
 	}
 	ModelImageValid = 0 ;
+	checkXyCurve() ;
   return result ? 0 : "ERROR" ;
 }
 

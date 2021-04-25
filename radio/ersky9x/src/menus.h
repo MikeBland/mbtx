@@ -144,6 +144,46 @@ event = mstate2.check(event,menu,tab,DIM(tab),mstate_tab,DIM(mstate_tab)-1,lines
 
 uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 
+#define POPUP_NONE			0
+#define POPUP_SELECT		1
+#define POPUP_EXIT			2
+
+#define EDIT_DR_SWITCH_EDIT		0x01
+#define EDIT_DR_SWITCH_MOMENT	0x02
+#define EDIT_DR_SWITCH_FMODE	0x04
+
+#define VOICE_FILE_TYPE_NAME	0
+#define VOICE_FILE_TYPE_USER	1
+#define VOICE_FILE_TYPE_MUSIC	2
+#define VOICE_FILE_TYPE_SYSTEM	3
+
+// Styles
+#define TELEM_LABEL				0x01
+#define TELEM_UNIT    		0x02
+#define TELEM_UNIT_LEFT		0x04
+#define TELEM_VALUE_RIGHT	0x08
+#define TELEM_NOTIME_UNIT	0x10
+#define TELEM_ARDUX_NAME	0x20
+#define TELEM_CONSTANT		0x80
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define TELEM_HIRES				0x40
+#endif
+
+#if defined(PCBSKY) || defined(PCB9XT)
+#define NUM_ANA_ITEMS		3
+#endif
+#ifdef PCBX9D
+#define NUM_ANA_ITEMS		2
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+#define NUM_ANA_ITEMS		2
+#endif
+
+#ifdef PCBLEM1
+#define NUM_ANA_ITEMS		2
+#endif
+
 struct t_popupData
 {
 	uint8_t PopupActive ;
@@ -156,8 +196,12 @@ extern struct t_popupData PopupData ;
 
 extern int16_t calibratedStick[] ;
 //extern int16_t g_chans512[NUM_SKYCHNOUT];
-
+																 
+#if defined(PCBX12D) || defined(PCBX10)
+extern void doMainScreenGrphics( uint16_t colour = 0 ) ;
+#else
 extern void doMainScreenGrphics( void ) ;
+#endif
 extern void menuProcStatistic2(uint8_t event) ;
 extern void menuProcStatistic(uint8_t event) ;
 extern void menuProcBattery(uint8_t event) ;
@@ -194,6 +238,8 @@ extern uint8_t CalcScaleNest ;
 extern uint8_t s_traceBuf[] ;
 extern uint8_t s_traceWr;
 extern uint16_t s_traceCnt;
+
+#define BaudString FWx13"\006""\006  AUTO  9600 19200 38400 57600115200100000"
 
 #define MODELTIME	-24
 #define RUNTIME		-23

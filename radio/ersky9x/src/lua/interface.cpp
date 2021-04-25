@@ -721,7 +721,7 @@ void displayLuaError(const char * title)
 ////  DRAW_MESSAGE_BOX(title);
 //	alert( title, 0 ) ;
 //#endif
-  if (lua_warning_info[0])
+//  if (lua_warning_info[0])
 //	{
 //    char * split = strstr(lua_warning_info, ": ");
 //    if (split)

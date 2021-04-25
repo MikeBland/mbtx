@@ -47,6 +47,18 @@
  * "The MEMORY command describes the location and size of 
  * blocks of memory in the target."
  */
+
+/* Highest address of the user mode stack */
+_estack = 0x2000C000;    /* end of 48K SRAM */
+
+/* Generate a link error if heap and stack don't fit into RAM */
+_Min_Heap_Size = 0;      /* required amount of heap  */
+_Min_Stack_Size = 4 ; /* required amount of stack */
+
+/* Main stack end */
+_main_stack_start = _estack - _Min_Stack_Size;
+_heap_end = _main_stack_start;
+
 MEMORY
 {
    FLASH (rx)  : ORIGIN = 0x00400000, LENGTH = 256K
@@ -81,6 +93,7 @@ SECTIONS
 /*      . = ALIGN(32768); */      /* Align the start of the exidx part */
 /*      . = 28672 ; */      /* Align the start of the exidx part */
       . = 32768 ;       /* Align the start of the exidx part */
+/*      . = 28672 ; */      /* Align the start of the exidx part */
 		_stext = .;          /* Provide the name for the start of this section */
       KEEP(*(.vectors))
       
@@ -138,6 +151,12 @@ SECTIONS
       . = ALIGN(4);        /* Align the end of the section */
    } > RAM
    _ebss = .;              /* Provide the name for the end of this section */
+
+/* 	.pad :             */
+/*    {                  */
+/*       . = ALIGN(256); */      /* Align the end of the section */
+/*    } > RAM            */
+/*    _epad = .;         */      /* Provide the name for the end of this section */
    
    
    /* 

@@ -166,6 +166,7 @@ void generalDefault()
 	g_eeGeneral.disablePotScroll = 1 ;
 #if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 0 ;
+	g_eeGeneral.bright_white = 0 ;
 #else
 	g_eeGeneral.bright = 50 ;
 #endif
@@ -288,6 +289,8 @@ void eeReadAll()
 		g_eeGeneral.backgroundColour = LCD_BACKGROUND ;
 	}
   LcdBackground = g_eeGeneral.backgroundColour ;
+	LcdForeground = g_eeGeneral.textColour ;
+
 //	if ( !readModelFromBackupRam(g_eeGeneral.currModel + 1) )
 	{
 		WatchdogTimeout = 300 ;

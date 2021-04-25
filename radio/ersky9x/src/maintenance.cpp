@@ -127,7 +127,7 @@ extern uint8_t SetByEncoder ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
- #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+ #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7)
 #define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
 #endif
@@ -152,7 +152,7 @@ extern uint8_t SetByEncoder ;
 #define UPDATE_TYPE_MULTI					7
 #define UPDATE_TYPE_PCHIP					8
 
- #if defined(PCBXLITE) || defined(PCBX9LITE)
+ #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 #define SPORT_MODULE		0
 #define SPORT_EXT				1
 uint8_t SportModuleExt ;
@@ -1268,7 +1268,7 @@ void menuChangeId(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_ON() ;
 #endif
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7)
 			SPORT_RF_ON() ;
 #endif
     break ;
@@ -1283,7 +1283,7 @@ void menuChangeId(uint8_t event)
    		killEvents(event) ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			EXTERNAL_RF_OFF() ;
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7)
 			SPORT_RF_OFF() ;
 #endif
 #endif
@@ -2013,7 +2013,7 @@ void menuUp1(uint8_t event)
 		}
 		else
 		{
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 #if defined(PCBX9LITE)
 	 		if (mdata->UpdateItem == UPDATE_TYPE_PCHIP )
 			{
@@ -2197,7 +2197,7 @@ void menuUp1(uint8_t event)
 #endif
 				else
 				{
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 					lcd_puts_Pleft( 2*FH, (SportModuleExt == SPORT_MODULE) ? "Flash Ext.mod from" : "Flash Ext.SP from" ) ;
 #else
 					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
@@ -2746,7 +2746,7 @@ void menuUp1(uint8_t event)
 #if defined(PCBX9D) || defined(PCB9XT)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7)
 				SPORT_RF_OFF() ;
 #endif
 #endif
@@ -2784,7 +2784,7 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
 	lcd_puts_Pleft( 4*FH, "  Update Ext. Module" );
 	lcd_puts_Pleft( 5*FH, "  Update Ext. SPort" );
@@ -2898,7 +2898,7 @@ void menuUpdate(uint8_t event)
  #endif
 #endif
 #ifdef PCBX9D
- #if defined(PCBXLITE) || defined(PCBX9LITE)
+ #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 			if ( position == 3*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
@@ -4159,7 +4159,7 @@ uint32_t sportUpdate( uint32_t external )
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( external )
 			{
-#if defined(PCBXLITE) || defined(PCBX9LITE)// || defined(REV19)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)// || defined(REV19)
 				if (SportModuleExt == SPORT_MODULE)
 				{
 					EXTERNAL_RF_ON();
@@ -4349,7 +4349,7 @@ extern void processSerialData(uint8_t data) ;
 //	0xdbfd,0xcbdc,0xfbbf,0xeb9e,0x9b79,0x8b58,0xbb3b,0xab1a,
 //	0x6ca6,0x7c87,0x4ce4,0x5cc5,0x2c22,0x3c03,0x0c60,0x1c41,
 //	0xedae,0xfd8f,0xcdec,0xddcd,0xad2a,0xbd0b,0x8d68,0x9d49,
-//	0x7e97,0x6eb6,0x5ed5,0x4ef4,0x3e13,0x2e32,0x1e51,0x0e70,
+//	0x7E97,0x6eb6,0x5ed5,0x4ef4,0x3e13,0x2e32,0x1e51,0x0e70,
 //	0xff9f,0xefbe,0xdfdd,0xcffc,0xbf1b,0xaf3a,0x9f59,0x8f78,
 //	0x9188,0x81a9,0xb1ca,0xa1eb,0xd10c,0xc12d,0xf14e,0xe16f,
 //	0x1080,0x00a1,0x30c2,0x20e3,0x5004,0x4025,0x7046,0x6067,
@@ -4357,7 +4357,7 @@ extern void processSerialData(uint8_t data) ;
 //	0x02b1,0x1290,0x22f3,0x32d2,0x4235,0x5214,0x6277,0x7256,
 //	0xb5ea,0xa5cb,0x95a8,0x8589,0xf56e,0xe54f,0xd52c,0xc50d,
 //	0x34e2,0x24c3,0x14a0,0x0481,0x7466,0x6447,0x5424,0x4405,
-//	0xa7db,0xb7fa,0x8799,0x97b8,0xe75f,0xf77e,0xc71d,0xd73c,
+//	0xa7db,0xb7fa,0x8799,0x97b8,0xe75f,0xf77E,0xc71d,0xd73c,
 //	0x26d3,0x36f2,0x0691,0x16b0,0x6657,0x7676,0x4615,0x5634,
 //	0xd94c,0xc96d,0xf90e,0xe92f,0x99c8,0x89e9,0xb98a,0xa9ab,
 //	0x5844,0x4865,0x7806,0x6827,0x18c0,0x08e1,0x3882,0x28a3,
@@ -4366,7 +4366,7 @@ extern void processSerialData(uint8_t data) ;
 //	0xfd2e,0xed0f,0xdd6c,0xcd4d,0xbdaa,0xad8b,0x9de8,0x8dc9,
 //	0x7c26,0x6c07,0x5c64,0x4c45,0x3ca2,0x2c83,0x1ce0,0x0cc1,
 //	0xef1f,0xff3e,0xcf5d,0xdf7c,0xaf9b,0xbfba,0x8fd9,0x9ff8,
-//	0x6e17,0x7e36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
+//	0x6e17,0x7E36,0x4e55,0x5e74,0x2e93,0x3eb2,0x0ed1,0x1ef0
 //};
 
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len )

@@ -428,7 +428,7 @@
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-#define ISWITCHES_STR				 "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5PB1PB2PB3PB4"
+#define ISWITCHES_STR				 "\003SF       SC\200SC-SC\201      SH L1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO onfSB\200SB-SB\201SE\200SE-SE\201SA\200SA-SA\201SD\200SD-SD\201SG\200SG-SG\2016P06P16P26P36P46P5T5UT5DT6UT6D"
 #define IHW_SWITCHES_STR     "\002SASBSCSDSESFSGSH6PL1L2L3L4L5L6L7L8L9LALBLCLDLELFLGLHLILJLKLLLMLNLO"
 #define IHW_SWITCHARROW_STR  "\200-\201"
 #endif
@@ -581,7 +581,7 @@
 #define ISTR_Safety			"Int.S\300cur."
 #define ISTR_Eeprom			"EEPROM" 
 
-#define ISTR_MAIN_POPUP			"Choix Mod\301le\0Config.Mod\301le\0Dernier Menu\0Conf.Radio\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0RAZ GPS\0Aide\0Main Display\0Run Script\0Reset Telemetry"
+#define ISTR_MAIN_POPUP			"Choix Mod\301le\0Config.Mod\301le\0Dernier Menu\0Conf.Radio\0Statistics\0Notes\0Zero Alt.\0Zero A1 Offs\0Zero A2 Offs\0RAZ GPS\0Aide\0Main Display\0Run Script\0Reset Telemetry\0Reset Timer1\0Reset Timer2"
 #define ISTR_ROTATE_SCREEN		"Rotation Ecran"
 #define ISTR_REVERSE_SCREEN		"Inverser Ecran"
 #define ISTR_MENU_ONLY_EDIT		"MENU Modifie"
@@ -594,7 +594,7 @@
 #define ISTR_THROTTLE_OPEN		"Gaz Ouvert"
 #define ISTR_THR_DEFAULT		"D/300faut Gaz"
 #define ISTR_TOTAL_TIME			"Temps Total"
-#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario\0Sensors"
+#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

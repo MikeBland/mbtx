@@ -76,12 +76,19 @@
 #endif // PCBX7
 
 #ifdef PCBX7
+ #ifdef PCBX7ACCESS
+#define LED_RED_GPIO                    GPIOC
+#define LED_RED_GPIO_PIN                GPIO_Pin_4  // PC.04
+#define LED_BLUE_GPIO                   GPIOB
+#define LED_BLUE_GPIO_PIN               GPIO_Pin_1  // PB.01
+ #else
 #define LED_GREEN_GPIO                  GPIOC
 #define LED_GREEN_GPIO_PIN              GPIO_Pin_4  // PC.04
 #define LED_RED_GPIO                    GPIOC
 #define LED_RED_GPIO_PIN                GPIO_Pin_5  // PC.05
 #define LED_BLUE_GPIO                   GPIOB
 #define LED_BLUE_GPIO_PIN               GPIO_Pin_1  // PB.01
+ #endif // PCBX7ACCESS
 #endif // PCBX7
 
 #ifdef PCBX9LITE
@@ -508,10 +515,15 @@
  #define PIN_SPORT_PWR                   GPIO_Pin_14   // PA.14
 #endif // REV19
 
- #if defined(PCBX7ACCESS)
+#if defined(PCBX7ACCESS)
  #define GPIOPWRSPORT                    GPIOB
  #define PIN_SPORT_PWR                   GPIO_Pin_3   // PB.03
- #endif // ACCESS
+#else
+ #ifdef PCBX7
+ #define GPIOPWRSPORT                    GPIOB
+ #define PIN_SPORT_PWR                   GPIO_Pin_2   // PB.02
+ #endif // PCBX7
+#endif // ACCESS
 
 
 #ifdef REV19
@@ -865,7 +877,7 @@
  
   #if defined(PCBX7ACCESS)
    #define I2C_EE_WP_GPIO                  GPIOB
-   #define I2C_EE_WP                       GPIO_Pin_9  //PB9
+   #define I2C_EE_WP                       GPIO_Pin_5  //PB5
   #endif
  
  
@@ -1349,6 +1361,7 @@
   #define INTMODULE_USART               USART1
   #define INTMODULE_USART_IRQn          USART1_IRQn
 	#define INTMODULE_TIMER_SR_MASK				0x0203
+	#define INTMODULE_USART_IRQHandler		USART1_IRQHandler
 
   #define EXTMODULE_TX_GPIO_PIN         GPIO_Pin_6  // PC.06
   #define EXTMODULE_RX_GPIO_PIN         GPIO_Pin_7  // PC.07
@@ -1425,7 +1438,7 @@
   #define BT_RCC_APB1Periph             RCC_APB1Periph_USART3
 //  #define BT_RCC_APB2Periph             0
   #define BT_EN_GPIO                    GPIOB
-  #define BT_EN_GPIO_PIN	              GPIO_Pin_02 // PB.02 (BOOT1)
+  #define BT_EN_GPIO_PIN	              GPIO_Pin_2	// PB.02 (BOOT1)
   #define BT_GPIO_TXRX                  GPIOB
   #define BT_TX_GPIO_PIN                GPIO_Pin_10 // PB.10
   #define BT_RX_GPIO_PIN                GPIO_Pin_11 // PB.11

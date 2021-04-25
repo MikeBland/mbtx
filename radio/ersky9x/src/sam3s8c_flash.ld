@@ -51,7 +51,7 @@
 
 
 /* Highest address of the user mode stack */
-_estack = 0x20010000;    /* end of 128K SRAM */
+_estack = 0x20010000;    /* end of 64K SRAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */

@@ -569,7 +569,7 @@ void setupPulses(unsigned int port)
 	//				disable_main_ppm() ;
 	//      break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 	      case PROTO_ACCESS :
 					disable_access(INTERNAL_MODULE) ;
 	      break ;
@@ -616,7 +616,7 @@ void setupPulses(unsigned int port)
  #endif
 #endif
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 	      case PROTO_ACCESS :
 					init_access(INTERNAL_MODULE) ;
 	      break ;
@@ -660,7 +660,7 @@ void setupPulses(unsigned int port)
 	////      // PPM16 pulses are set up automatically within the interrupts
 	////    break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
       case PROTO_ACCESS :
 //				setupPulsesAccess(INTERNAL_MODULE) ;
 				setupPulsesAccess(INTERNAL_MODULE) ;
@@ -696,7 +696,7 @@ void setupPulses(unsigned int port)
 	      break;
 #endif
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
 	      case PROTO_ACCESS :
 					disable_access(EXTERNAL_MODULE) ;
 	      break ;
@@ -740,7 +740,7 @@ void setupPulses(unsigned int port)
 	//				init_main_ppm( 3000, 1 ) ;		// Initial period 1.5 mS, output on
 	//      break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
 	      case PROTO_ACCESS :
 					init_access(EXTERNAL_MODULE) ;
 	      break ;
@@ -775,7 +775,7 @@ void setupPulses(unsigned int port)
 	////      // PPM16 pulses are set up automatically within the interrupts
 	////    break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
       case PROTO_ACCESS :
 //				setupPulsesAccess(EXTERNAL_MODULE) ;
 				setupPulsesAccess(EXTERNAL_MODULE) ;
@@ -823,7 +823,7 @@ uint16_t TrainerPpmStream[20] =
 //const uint16_t CRCTable[]=
 //{
 //    0x0000,0x1189,0x2312,0x329b,0x4624,0x57ad,0x6536,0x74bf,
-//    0x8c48,0x9dc1,0xaf5a,0xbed3,0xca6c,0xdbe5,0xe97e,0xf8f7,
+//    0x8c48,0x9dc1,0xaf5a,0xbed3,0xca6c,0xdbe5,0xe97E,0xf8f7,
 //    0x1081,0x0108,0x3393,0x221a,0x56a5,0x472c,0x75b7,0x643e,
 //    0x9cc9,0x8d40,0xbfdb,0xae52,0xdaed,0xcb64,0xf9ff,0xe876,
 //    0x2102,0x308b,0x0210,0x1399,0x6726,0x76af,0x4434,0x55bd,
@@ -841,9 +841,9 @@ uint16_t TrainerPpmStream[20] =
 //    0x8408,0x9581,0xa71a,0xb693,0xc22c,0xd3a5,0xe13e,0xf0b7,
 //    0x0840,0x19c9,0x2b52,0x3adb,0x4e64,0x5fed,0x6d76,0x7cff,
 //    0x9489,0x8500,0xb79b,0xa612,0xd2ad,0xc324,0xf1bf,0xe036,
-//    0x18c1,0x0948,0x3bd3,0x2a5a,0x5ee5,0x4f6c,0x7df7,0x6c7e,
+//    0x18c1,0x0948,0x3bd3,0x2a5a,0x5ee5,0x4f6c,0x7df7,0x6c7E,
 //    0xa50a,0xb483,0x8618,0x9791,0xe32e,0xf2a7,0xc03c,0xd1b5,
-//    0x2942,0x38cb,0x0a50,0x1bd9,0x6f66,0x7eef,0x4c74,0x5dfd,
+//    0x2942,0x38cb,0x0a50,0x1bd9,0x6f66,0x7Eef,0x4c74,0x5dfd,
 //    0xb58b,0xa402,0x9699,0x8710,0xf3af,0xe226,0xd0bd,0xc134,
 //    0x39c3,0x284a,0x1ad1,0x0b58,0x7fe7,0x6e6e,0x5cf5,0x4d7c,
 //    0xc60c,0xd785,0xe51e,0xf497,0x8028,0x91a1,0xa33a,0xb2b3,
@@ -1559,7 +1559,7 @@ extern "C" void TIM3_IRQHandler()
 #ifndef PCBX12D
 #ifndef PCBX10
  #ifdef PCBX9LITE
-  	if ( (TIM4->DIER & TIM_DIER_CC1IE ) && ( TIM3->SR & TIM_SR_CC1IF ) )
+  	if ( (TIM4->DIER & TIM_DIER_CC1IE ) && ( TIM4->SR & TIM_SR_CC1IF ) )
   	  // capture mode
 		{	
 			capture = TIM4->CCR1 ;
@@ -1662,6 +1662,89 @@ extern "C" void TIM3_IRQHandler()
 	}
 #endif
 }
+
+#ifdef PCBX12D
+
+void init_cppm_on_heartbeat_capture()
+{
+	stop_xjt_heartbeat() ;
+	// PD12	
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIODEN ; 		// Enable portD clock
+	configure_pins( 0x1000, PIN_PERIPHERAL | PIN_PORTD | PIN_PER_2 | PIN_PULLUP ) ;
+	RCC->APB1ENR |= RCC_APB1ENR_TIM4EN ;		// Enable clock
+	 
+	TIM4->ARR = 0xFFFF ;
+	TIM4->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 2000000 - 1 ;		// 0.5uS
+	TIM4->CR2 = 0 ;
+	// TIM4 channel 1
+	TIM4->CCMR1 = TIM_CCMR1_IC1F_0 | TIM_CCMR1_IC1F_1 | TIM_CCMR1_CC1S_0 ;
+	TIM4->CCER = TIM_CCER_CC1E ;	 
+	TIM4->SR = TIMER2_5SR_MASK & ~TIM_SR_CC1IF ;				// Clear flag
+	TIM4->DIER |= TIM_DIER_CC1IE ;
+	TIM4->CR1 = TIM_CR1_CEN ;
+	NVIC_SetPriority(TIM4_IRQn, 2 ) ;
+	NVIC_EnableIRQ(TIM4_IRQn) ;
+}
+
+void stop_cppm_on_heartbeat_capture()
+{
+//	EXTERNAL_RF_OFF() ;		// Not if using Multi
+	
+	TIM4->DIER = 0 ;
+	TIM4->CR1 &= ~TIM_CR1_CEN ;				// Stop counter
+	NVIC_DisableIRQ(TIM4_IRQn) ;				// Stop Interrupt
+	init_xjt_heartbeat() ;
+}
+
+extern "C" void TIM4_IRQHandler()
+{
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x5F ;
+#else
+	RTC->BKP1R = 0x5F ;
+#endif
+#endif
+	uint16_t capture = 0 ;
+  static uint16_t lastCapt ;
+  uint16_t val ;
+	uint32_t doCapture = 0 ;
+
+  if ( (TIM4->DIER & TIM_DIER_CC1IE ) && ( TIM4->SR & TIM_SR_CC1IF ) )
+	{
+		capture = TIM4->CCR1 ;
+		doCapture = 1 ;
+	}
+	if ( doCapture )
+	{
+  	val = (uint16_t)(capture - lastCapt) / 2 ;
+  	lastCapt = capture;
+
+  	// We prcoess g_ppmInsright here to make servo movement as smooth as possible
+  	//    while under trainee control
+  	if ((val>4000) && (val < 19000)) // G: Prioritize reset pulse. (Needed when less than 8 incoming pulses)
+		{
+  		ppmInState = 1; // triggered
+		}
+  	else
+  	{
+  		if(ppmInState && (ppmInState<=16))
+			{
+  		  if((val>800) && (val<2200))
+				{
+					ppmInValid = 100 ;
+//  		    g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500)*(g_eeGeneral.PPM_Multiplier+10)/10; //+-500 != 512, but close enough.
+  			  g_ppmIns[ppmInState++ - 1] = (int16_t)(val - 1500) ; //+-500 != 512, but close enough.
+
+			  }else{
+  			  ppmInState=0; // not triggered
+  		  }
+  		}
+  	}
+	}
+}
+
+#endif
 
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 void init_cppm_on_heartbeat_capture()
@@ -2536,13 +2619,25 @@ void crc_x( uint8_t data )
   PcmCrc_x =(PcmCrc_x<<8) ^ CRCTable((PcmCrc_x>>8)^data) ;
 }
 
+#ifdef PCBX7
+ #ifdef PCBX7ACCESS
+#define EX_SKEW_HI	16
+#define EX_SKEW_LO	16
+ #else
+#define EX_SKEW_HI	14
+#define EX_SKEW_LO	18
+ #endif
+#else
+#define EX_SKEW_HI	14
+#define EX_SKEW_LO	18
+#endif
 
 inline __attribute__ ((always_inline)) void putPcmPart_x( uint8_t value )
 {
-	uint16_t lpxxValue = PxxValue_x += 18 ;
+	uint16_t lpxxValue = PxxValue_x += EX_SKEW_HI ;
 	
 	*PtrPxx_x++ = lpxxValue ;
-	lpxxValue += 14 ;
+	lpxxValue += EX_SKEW_LO ;
 	if ( value )
 	{
 		lpxxValue += 16 ;
@@ -2866,7 +2961,7 @@ void setupPulsesPXX(uint8_t module)
   #endif
  #endif
 #endif
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 		pulseStreamCount[module] = PtrSerialPxx[INTERNAL_MODULE] - PxxSerial[INTERNAL_MODULE] ;
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
@@ -2893,7 +2988,7 @@ extern volatile uint8_t PxxTxCount ;
 		{
 			if (lpass & 1)
 			{		
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
  #if defined(PCBXLITE) || defined(PCBX9LITE)
 				INTMODULE_TIMER->CCR2 = 14999 ;
  #else
@@ -2905,7 +3000,7 @@ extern volatile uint8_t PxxTxCount ;
 			}
 			else
 			{
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
  #if defined(PCBXLITE) || defined(PCBX9LITE)
 				INTMODULE_TIMER->CCR2 = 17499 ;
  #else
@@ -2918,13 +3013,13 @@ extern volatile uint8_t PxxTxCount ;
 		}
 		else
 		{
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 			INTMODULE_TIMER->CCR2 = 17000 ;
 #else
   		TIM1->CCR2 = 17000 ;            // Update time
 #endif
 		}
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 #endif
 	}  
@@ -3126,12 +3221,12 @@ extern volatile uint8_t PxxTxCount ;
 #endif
 		putPcmByte_x( extra_flags ) ;
 		chan = PcmCrc_x ;		        // get the crc
-#if defined(PCBX12D) || defined(PCBX10)
-		if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
-		{
-			chan += 1 ;
-		}
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//		if ( g_eeGeneral.SixPositionCalibration[5] < 0x0A00 )
+//		{
+//			chan += 1 ;
+//		}
+//#endif
   	putPcmByte_x( chan >> 8 ) ; // Checksum hi
   	putPcmByte_x( chan ) ; 			// Checksum lo
   	putPcmHead_x(  ) ;      // sync byte
@@ -3174,7 +3269,7 @@ extern volatile uint8_t PxxTxCount_x ;
 		}
 		Pass[module] = lpass ;
 		
-#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 		if ( ( g_model.Module[module].pxxDoubleRate ) && ( (BindRangeFlag[module] & PXX_BIND) == 0 ) && ( g_model.Module[module].sub_protocol != 2 ) )
 //		if ( g_model.Module[module].pxxDoubleRate )
 		{
@@ -3210,7 +3305,7 @@ extern volatile uint8_t PxxTxCount_x ;
   		TIM8->CCR2 = 17000 ;            // Update time
 		}
 #endif
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 //#if defined(PCBX9LITE)
 	  EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 #endif

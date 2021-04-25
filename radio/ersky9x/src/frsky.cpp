@@ -79,7 +79,7 @@ uint16_t FrameLossCount ;
 #define RSSITXPKT       0xf6
 #define RSSI_REQUEST		0xf1
 
-#define START_STOP      0x7e
+#define START_STOP      0x7E
 #define BYTESTUFF       0x7d
 #define STUFF_MASK      0x20
 
@@ -231,10 +231,10 @@ uint8_t numPktBytes = 0;
 #define frskyDataXOR     3
 #define PRIVATE_COUNT		 4
 #define PRIVATE_VALUE		 5
-#ifndef SMALL
+//#ifndef SMALL
 #define PRIVATE_TYPE		 6
 #define PRIVATE_XCOUNT	 7
-#endif
+//#endif
 
 static uint8_t dataState = frskyDataIdle ;
 static uint8_t A1Received = 0 ;
@@ -243,9 +243,9 @@ extern uint8_t RawLogging ;
 void rawLogByte( uint8_t byte ) ;
 
 uint8_t Private_count ;
-#ifndef SMALL
+//#ifndef SMALL
 uint8_t Private_type ;
-#endif
+//#endif
 uint8_t Private_position ;
 uint8_t PrivateData[6] ;
 //uint8_t ExtraPrivateData[16] ;
@@ -289,6 +289,9 @@ enum CrossfireSensorIndexes {
   FLIGHT_MODE_INDEX,
   UNKNOWN_INDEX,
 };
+
+uint32_t UpdateRate ;
+uint32_t UpdateOffset ;
 
 #endif
 
@@ -1720,7 +1723,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 		}
 		else if ( packet[3] == 0xF0 )
 		{
-			if ( packet[2] == 0 )		// FrSky2 Frame loss count
+			if ( packet[2] == 0x10 )		// FrSky2 Frame loss count
 			{
 				FrameLossCount = packet[4] | (packet[5] << 8 ) ;
 			}
@@ -2349,7 +2352,7 @@ void processScannerData( uint8_t *data, uint32_t byteCount )
 
 /*
    Receive serial (RS-232) characters, detecting and storing each Fr-Sky 
-   0x7e-framed packet as it arrives.  When a complete packet has been 
+   0x7E-framed packet as it arrives.  When a complete packet has been 
    received, process its data into storage variables. Characters are
    received using dma, and sent here every 10 mS.
 */
@@ -2366,7 +2369,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 	{
     case PRIVATE_COUNT :
 			Private_position = 0 ;
-#ifndef SMALL
+//#ifndef SMALL
 			if ( byte == 'P' )
 			{
 				// MULTI_TELEMETRY
@@ -2376,7 +2379,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 			Private_type = 0xFF ;	// Not MULTI_TELEMETRY
 			// else fall through
     case PRIVATE_XCOUNT :
-#endif
+//#endif
 			dataState = PRIVATE_VALUE ;
       Private_count = byte ;		// Count of bytes to receive
 			if ( byte > PRIVATE_BUFFER_SIZE )
@@ -2385,25 +2388,25 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 			}
     break ;
     
-#ifndef SMALL
+//#ifndef SMALL
 		case PRIVATE_TYPE :
       Private_type = byte ;
       dataState = PRIVATE_XCOUNT ;
-			if ( byte > 1 )
-			{
+//			if ( byte > 1 )
+//			{
 				Private_position = 1 ;
-			}
+//			}
     break ;
-#endif
+//#endif
 		
 		case PRIVATE_VALUE :
 		{
 			InputPrivateData[Private_position++] = byte ;
-#ifndef SMALL
+//#ifndef SMALL
 			if ( ( Private_type == 0xFF ) && ( byte & 0x80 ) )
-#else
-			if ( byte & 0x80 )
-#endif
+//#else
+//			if ( byte & 0x80 )
+//#endif
 			{
         dataState = frskyDataIdle ;
 				return 0 ;
@@ -2416,9 +2419,9 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 				{
 					// Correct amount received
 					uint32_t len = Private_count ;
-#ifndef SMALL
+//#ifndef SMALL
 					if ( Private_type == 0xFF )
-#endif
+//#endif
 					{
 						if ( len > 6 )
 						{
@@ -2444,34 +2447,34 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 //							}
 //						}
 					}
-#ifndef SMALL
+//#ifndef SMALL
 					else
 					{
 						// MULTI_TELEMETRY
 						switch ( Private_type )
 						{
 							case 1 :	// Status
-								if ( MultiSetting.timeout == 0 )
+//								if ( MultiSetting.timeout == 0 )
 								{
 									
 									if ( len > 4 )
 									{
-										MultiSetting.flags = InputPrivateData[0] ;
-										memmove(MultiSetting.revision, &InputPrivateData[1], 4 ) ;
+										MultiSetting.flags = InputPrivateData[1] ;
+										memmove(MultiSetting.revision, &InputPrivateData[2], 4 ) ;
 										MultiSetting.valid = 1 ;
 									}
 									if ( len > 15 )
 									{
-										memmove(MultiSetting.protocol, &InputPrivateData[8], 7 ) ;
+										memmove(MultiSetting.protocol, &InputPrivateData[9], 7 ) ;
 										MultiSetting.protocol[7] = 0 ;
 										MultiSetting.valid = 3 ;
 									}
 									if ( len > 23 )
 									{
-										memmove(MultiSetting.subProtocol, &InputPrivateData[16], 8 ) ;
+										memmove(MultiSetting.subProtocol, &InputPrivateData[17], 8 ) ;
 										MultiSetting.subProtocol[8] = 0 ;
 										MultiSetting.valid = 7 ;
-										MultiSetting.subData = InputPrivateData[15] ;
+										MultiSetting.subData = InputPrivateData[16] ;
 									}
 						
 									if ( len > 6 )
@@ -2481,13 +2484,13 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 									while ( len )
 									{
 										len -= 1 ;
-										PrivateData[len] = InputPrivateData[len] ;
+										PrivateData[len] = InputPrivateData[len+1] ;
 									}
 								}
-								else
-								{
-									MultiSetting.timeout -= 1 ;									
-								}
+//								else
+//								{
+//									MultiSetting.timeout -= 1 ;									
+//								}
 							break ;
 						
 							case 2 :	// SPort
@@ -2542,7 +2545,7 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							break ;
 						}
 					}
-#endif
+//#endif
 				}
 			}
 		}
@@ -2606,10 +2609,10 @@ void frsky_receive_byte( uint8_t data )
 			{
 				case PRIVATE_COUNT :
 				case PRIVATE_VALUE :
-#ifndef SMALL
+//#ifndef SMALL
 		    case PRIVATE_XCOUNT :
 				case PRIVATE_TYPE :
-#endif
+//#endif
 					if ( handlePrivateData( dataState, data ) )
 					{
       			break ;
@@ -2680,10 +2683,10 @@ void frsky_receive_byte( uint8_t data )
 			{
 				case PRIVATE_COUNT :
 				case PRIVATE_VALUE :
-#ifndef SMALL
+//#ifndef SMALL
 	  	  case PRIVATE_XCOUNT :
 				case PRIVATE_TYPE :
-#endif
+//#endif
 					if ( handlePrivateData( dataState, data ) )
 					{
     	 			break ;
@@ -2721,7 +2724,7 @@ void frsky_receive_byte( uint8_t data )
 					}
 //#endif
 #endif
-					break ; // Remain in userDataStart if possible 0x7e,0x7e doublet found.
+					break ; // Remain in userDataStart if possible 0x7E,0x7E doublet found.
 				}
         else if (data == PRIVATE)
 				{
@@ -2782,10 +2785,10 @@ void frsky_receive_byte( uint8_t data )
 
 			case PRIVATE_COUNT :
 			case PRIVATE_VALUE :
-#ifndef SMALL
+//#ifndef SMALL
 	    case PRIVATE_XCOUNT :
 			case PRIVATE_TYPE :
-#endif
+//#endif
 				if ( handlePrivateData( dataState, data ) )
 				{
      			break ;
@@ -3626,6 +3629,7 @@ uint8_t decodeMultiTelemetry()
 		break ;
 		case M_FRSKYX :
 		case M_FRSKYX2 :
+		case M_FRSKYR9 :
 			type = TEL_FRSKY_SPORT ;
 			FrskyTelemetryType = FRSKY_TEL_SPORT ;
 		break ;
@@ -3782,6 +3786,8 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	return type ;
 }
 
+uint16_t U1Fcount ;
+
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
 {
@@ -3920,6 +3926,9 @@ extern uint8_t s_current_protocol[] ;
 			int32_t rxbyte ;
 			while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
 			{
+#if defined(PCBX7ACCESS)
+	U1Fcount += 1 ;
+#endif
 				accessRecieveByte( rxbyte, 0 ) ;
 			}
 			while ( ( rxbyte = get_fifo128( &Access_ext_fifo ) ) != -1 )
@@ -4285,7 +4294,11 @@ uint16_t logAxScale( uint8_t channel, uint8_t *dps )
 //}
 
 
+#if defined(PCBX12D) || defined(PCBX10)
+uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour )
+#else
 uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att )
+#endif
 {
     int32_t value ;
     //  uint8_t ratio ;
@@ -4334,13 +4347,21 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
     if ( Unit == 'v' ) //ltype == 0/*v*/) || (ltype == 2/*v*/) )
 //    if ( ( ltype == 0/*v*/) || ( ltype == 2/*v*/) )
     {
+#if defined(PCBX12D) || defined(PCBX10)
+      lcd_outdezNAtt(x, y, value, att, 5, colour) ;
+#else
       lcd_outdezNAtt(x, y, value, att, 5) ;
+#endif
 //			unit = 'v' ;
       if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
     }
     else
     {
+#if defined(PCBX12D) || defined(PCBX10)
+      lcd_outdezNAtt(x, y, value, att, 5, colour) ;
+#else
       lcd_outdezAtt(x, y, value, att);
+#endif
 	    if ( Unit == 'A')
 //	    if ( ltype == 3/*A*/)
 			{
@@ -4542,6 +4563,27 @@ void processCrossfireTelemetryFrame()
 //      }
 //      break;
 //    }
+
+		case RADIO_ID :
+		{
+			if ( frskyRxBuffer[3] == RADIO_ADDRESS )
+			{
+				if ( frskyRxBuffer[53] == 0x10 )	// Timing Correction
+				{
+					uint32_t offset ;
+      		if (getCrossfireTelemetryValue<4>( 3, value) )	// Update interval
+					{
+      			if (getCrossfireTelemetryValue<4>( 7, offset) )	// Update interval
+						{
+							// Report these
+							UpdateRate = value / 10 ;			// Was 10ths of uS
+							UpdateOffset = offset / 10 ;	// Was 10ths of uS
+						}
+					}
+				}
+			}
+		}
+		break ;
 
 #if defined(LUA) || defined(BASIC)
     default:

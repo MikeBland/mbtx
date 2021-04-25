@@ -3763,11 +3763,11 @@ void init_xjt_heartbeat()
 	XjtHeartbeatCapture.valid = 1 ;
 }
 
-//void stop_xjt_heartbeat()
-//{
-//	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
-//	XjtHeartbeatCapture.valid = 0 ;
-//}
+void stop_xjt_heartbeat()
+{
+	EXTI->IMR &= ~XJT_HEARTBEAT_BIT ;
+	XjtHeartbeatCapture.valid = 0 ;
+}
 
 uint16_t ExtiErrors ;
 uint16_t ExtiMask ;
