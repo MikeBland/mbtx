@@ -499,7 +499,37 @@ enum EnumKeys {
 #define M_Flyzone        52
 #define M_Scanner        53
 #define M_FrskyX_RX      54
-#define M_LAST_MULTI		 54
+#define M_AFHDS2A_RX     55
+#define M_HoTT           56
+#define M_FX816          57
+#define M_Bayang_RX      58
+#define M_Pelikan        59
+#define M_Tiger          60
+#define M_XK             61
+#define M_XN_DUMP        62
+#define M_FrskyX2        63
+#define M_FrSkyR9        64
+#define M_PROPEL         65
+#define M_LR12           66
+#define M_Skyartec       67
+#define M_ESky150V2			 68
+#define M_DSM_RX				 69
+#define M_JJRC345				 70
+#define M_Q90C					 71
+#define M_Kyosho				 72
+#define M_RadioLink			 73
+#define M_ND						 74
+#define M_Realacc				 75
+#define M_OMP						 76
+#define M_M_Link				 77
+#define M_WFLY2					 78
+#define M_E016H					 79
+#define M_E010r5				 80
+#define M_LOLI					 81
+#define M_E129					 82
+#define M_JOYSWAY				 83
+
+#define M_LAST_MULTI		 83
 
 
 

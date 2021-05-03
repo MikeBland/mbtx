@@ -365,6 +365,10 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t  spare5:5 ;
 #endif
 		uint16_t 	stickDeadband ;
+		uint8_t offset2561Extra ;
+#ifdef CPUM2561
+		EEXtraGeneral extraGeneral ;
+#endif
 }) V2EEGeneral;
 
 
@@ -744,8 +748,14 @@ typedef struct t_ModelData {
 		uint8_t failsafeMode:3 ;
 		uint8_t failsafeRepeat:1 ;
 		uint8_t r9mPower:2 ;
-		uint8_t failsafeSpare:2 ;
-		int8_t NotFailsafe[4];		// Currently unused
+		uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
+		uint8_t exSubProtocol:2 ;
+		uint8_t multiTelInvert:1 ;
+		uint8_t dsmAasRssi:1 ;
+		uint8_t exRxNum:2 ;
+		uint8_t sparexxx:2 ;
+		int8_t NotFailsafe[2];		// Currently unused
+		uint8_t		rxVratio ;
 #else
 	int8_t sparepxxFailsafe[2];		// Currently unused
 	uint8_t telemetryProtocol ;
@@ -796,7 +806,7 @@ PACK(typedef struct t_V2ModelData
   uint8_t   unused_FrSkyAltAlarm:2;
   uint8_t   protocol:4 ;
   uint8_t   country:2 ;
-  uint8_t   unused_xsub_protocol:2 ;	// sub_protocol is the extended version
+	uint8_t		exSubProtocol:2 ;
   uint8_t   sub_protocol ;						// sub_protocol
 	int8_t		option_protocol;		// Option byte for MULTI protocol
   int8_t    ppmNCH;						// Also RxNum
@@ -804,8 +814,8 @@ PACK(typedef struct t_V2ModelData
   int8_t    ppmDelay;
   
 	uint8_t   thrTrim:1;            // Enable Throttle Trim
-	uint8_t   unused_xnumBlades:2;					// RPM scaling
-	uint8_t   unused_mixTime:1 ;		// Scaling for slow/delay
+	uint8_t		exRxNum:2 ;
+	uint8_t		dsmAasRssi:1 ;
   uint8_t   thrExpo:1;            // Enable Throttle Expo
 	uint8_t   ppmStart:3 ;					// Start channel for PPM
   uint8_t   pulsePol:1;
@@ -861,6 +871,7 @@ PACK(typedef struct t_V2ModelData
 	uint8_t r9mPower:2 ;
 	uint8_t failsafeSpare:2 ;
 	int8_t Failsafe[16] ;	// Currently unused
+	uint8_t		rxVratio ;
 }) V2ModelData ;
 
 

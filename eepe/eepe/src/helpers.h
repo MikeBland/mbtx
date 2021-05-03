@@ -186,7 +186,7 @@ void modelConvert1to2( EEGeneral *g_eeGeneral, SKYModelData *g_model ) ;
 #ifdef SKY
 void createSwitchMapping( EEGeneral *pgeneral, uint8_t max_switch, int type ) ;
 int8_t switchUnMap( int8_t x, int type ) ;
-int8_t switchMap( int8_t x ) ;
+int8_t switchMap( int8_t x, int type ) ;
 int getSwitchCbValue( QComboBox *b, int eepromType ) ;
 int getDrSwitchCbValue( QComboBox *b, int eepromType ) ;
 int getSwitchCbValueShort( QComboBox *b, int eepromType ) ;
@@ -209,5 +209,9 @@ uint8_t throttleReversed( EEGeneral *g_eeGeneral, ModelData *g_model ) ;
 #endif
 
 extern uint8_t CS_STATE( uint8_t x, uint8_t modelVersion ) ;
+
+#ifdef SKY
+extern QString RadioNames[] ;
+#endif
 
 #endif // HELPERS_H

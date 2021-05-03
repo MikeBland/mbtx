@@ -964,6 +964,7 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
                     V2ModelData t2mod;
                     V1ModelData tmod;
 										uint8_t tbytes[sizeof(V1ModelData)] ;
+										uint8_t t2bytes[sizeof(V2ModelData)] ;
 									} tModel ;
                   memset(&tModel,0,sizeof(tModel));
                   if(loadModelDataXML(&doc, &tModel.t2mod, i))
@@ -1224,15 +1225,15 @@ void MdiChild::v1ModelTov2( int i )
 	v2m->unused_FrSkyAltAlarm = 0 ;
 	v2m->protocol               = v1m->protocol      ;
 	v2m->country                = v1m->country       ;
-	v2m->unused_xsub_protocol = 0 ;
+//	v2m->unused_xsub_protocol = 0 ;
 	v2m->sub_protocol = v1m->sub_protocol ;
 	v2m->option_protocol  = v1m->option_protocol        ;
 	v2m->ppmNCH                 = v1m->ppmNCH        ;
 	v2m->ppmFrameLength         = v1m->ppmFrameLength ;
 	v2m->ppmDelay               = v1m->ppmDelay      ;
 	v2m->thrTrim                = v1m->thrTrim       ;
-	v2m->unused_xnumBlades = 0 ;
-	v2m->unused_mixTime = 0 ;
+//	v2m->unused_xnumBlades = 0 ;
+//	v2m->unused_mixTime = 0 ;
 	v2m->thrExpo                = v1m->thrExpo       ;
 	v2m->ppmStart               = v1m->ppmStart      ;
 	v2m->pulsePol               = v1m->pulsePol      ;
@@ -1846,7 +1847,11 @@ void MdiChild::optimizeEEPROM()
 #else
     EEGeneral tgen;
 #endif
+#ifdef V2
+    V2ModelData mgen[MAX_MODELS];
+#else
     ModelData mgen[MAX_MODELS];
+#endif
 
     memset(&tgen, 0, sizeof(tgen));
     memset(&mgen, 0, sizeof(mgen));

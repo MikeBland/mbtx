@@ -38,6 +38,9 @@
 
 extern class simulatorDialog *SimPointer ;
 
+extern QString MultiProtocols[] ;
+extern uint32_t MultiProtocolCount ;
+
 #ifdef V2
 V2EEGeneral Sim_g ;
 V2ModelData Sim_m ;
@@ -322,7 +325,23 @@ void ModelEdit::tabModelEditSetup()
     ui->autoLimitsSB->setValue( (double)g_model.sub_trim_limit/10 + 0.049 ) ;
 
     //protocol channels ppm delay (disable if needed)
-    setProtocolBoxes();
+    
+    protocolEditLock = true ;
+		ui->SubProtocolCB->clear() ;
+  	for(int i=0 ; i<128 ; i += 1)
+		{
+			if ( i < MultiProtocolCount )
+			{
+				ui->SubProtocolCB->addItem(MultiProtocols[i]) ;
+			}
+			else
+			{
+				ui->SubProtocolCB->addItem(QObject::tr("%1").arg(i)) ;
+			}
+		}
+    protocolEditLock = false ;
+		
+		setProtocolBoxes();
 
 		populateAnaVolumeCB( ui->volumeControlCB, g_model.anaVolume ) ;
 		ui->label_version->setText( tr("%1").arg( g_model.modelVersion ) ) ;
@@ -1028,17 +1047,19 @@ void ModelEdit::setProtocolBoxes()
         break;
 			
 			case (PROTO_MULTI):
+			{	
+        int y = g_model.sub_protocol & 0x3F ;
+				y |= g_model.exSubProtocol << 6 ;
         ui->MultiOptionSB->setEnabled(true);
         ui->ppmDelaySB->setEnabled(false);
         ui->numChannelsSB->setEnabled(true);
         ui->ppmFrameLengthDSB->setEnabled(false);
         ui->DSM_Type->hide() ;
         ui->SubProtocolCB->show() ;
-        ui->SubProtocolCB->setCurrentIndex(g_model.sub_protocol )	;
+        ui->SubProtocolCB->setCurrentIndex( y )	;
         ui->SubSubProtocolCB->show() ;
         {
-          int x = g_model.sub_protocol&0x3F ;
-          setSubSubProtocol( ui->SubSubProtocolCB, x ) ;
+          setSubSubProtocol( ui->SubSubProtocolCB, y ) ;
           ui->SubSubProtocolCB->setCurrentIndex((g_model.ppmNCH & 0x70)>>4)	;
         }
         ui->pxxRxNum->setEnabled(true);
@@ -1048,6 +1069,7 @@ void ModelEdit::setProtocolBoxes()
 //				ui->startChannelsSB->setEnabled(true);
 				ui->pulsePolCB->setEnabled(false);
 				ui->MultiOptionSB->setValue(g_model.option_protocol) ;
+			}
       break ;
 
     default:
@@ -4752,7 +4774,8 @@ void ModelEdit::on_SubProtocolCB_currentIndexChanged(int index)
 {
     if(protocolEditLock) return;
 
-    g_model.sub_protocol = index;
+		g_model.sub_protocol = (g_model.sub_protocol&0x40) + (index & 0x3F) ;
+    g_model.exSubProtocol = index >> 6 ;
     setProtocolBoxes();
     updateSettings();
 }

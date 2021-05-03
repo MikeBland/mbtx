@@ -13,6 +13,7 @@ uint8_t ProtocolOptionsSKY[2][7] = { {3,0,2,3}, {6,0,1,2,3,4,6} };
 uint8_t ProtocolOptions9XT[2][7] = { {4,0,1,2,3}, {5,0,1,2,3,4} };
 uint8_t ProtocolOptionsT12[2][7] = { {0}, {4,0,2,3,4} };
 uint8_t ProtocolOptionsX9L[2][7] = { {2,5,1}, {6,0,1,2,3,4,5} };
+uint8_t ProtocolOptionsT16[2][7] = { {1,3}, {5,0,1,2,3,4} };
 
 QString MultiProtocols[] = {
 "Flysky",
@@ -35,7 +36,7 @@ QString MultiProtocols[] = {
 "MJXq",
 "Shenqi",
 "FY326",
-"SFHSS",
+"Futaba",
 "J6PRO",
 "FQ777",
 "ASSAN",
@@ -61,10 +62,47 @@ QString MultiProtocols[] = {
 "NCC1701",
 "E01X",
 "V911S",
-"GD00X"
+"GD00X",
+"V761",
+"KF606",
+"Redpine",
+"Potensic",
+"ZSX",
+"Height",
+"Scanner",
+"Frsky_RX",
+"AFHDS2A_RX",
+"HoTT",
+"FX816",
+"Bayang_RX",
+"Pelikan",
+"Tiger",
+"XK",
+"XN_DUMP",
+"FrskyX2",
+"FrskyR9",
+"PROPEL",
+"LR12",
+"Skyartec",
+"ESKYv2",
+"DSM_RX",
+"JJRC345",
+"Q90C",
+"Kyosho",
+"RadioLink",
+"---",
+"Realacc",
+"OMP",
+"M-Link",
+"WFLY",
+"E016H",
+"E010r5",
+"LOLI",
+"E129",
+"JOYSWAY"
 } ;
 
-uint32_t MultiProtocolCount = sizeof( MultiProtocols ) ;
+uint32_t MultiProtocolCount = sizeof( MultiProtocols )/4 ;
 
 QString AudioAlarms[] = {
   "Warn1",
@@ -309,6 +347,31 @@ QString AnaVolumeItems[] = {
 	"GV7"
 } ;
 
+#ifdef SKY
+QString RadioNames[] = {
+ "Sky",
+ "9XR-PRO",
+ "Taranis",
+ "Taranis Plus",
+ "9Xtreme",
+ "X9E",
+ "AR9X",
+ "QX7",
+ "XLITE",
+ "T12",
+ "X9Lite",
+ "X10",
+ "T16",
+ "Lemon1",
+ "RM TX16S",
+ "X12",
+ "X10e",
+ "RK TX18S"
+} ;
+#endif
+
+
+
 const uint8_t csTypeTable[] =
 #ifdef SKY
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
@@ -346,6 +409,10 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[1] = "H301" ;
 			names[2] = "H501" ;
 		break ;
+		case M_Frsky :
+			names[0] = "D8" ;
+			names[1] = "Cloned" ;
+		break ;
 		case M_Hisky :
 			names[0] = "Hisky" ;
 			names[1] = "HK310" ;
@@ -353,13 +420,22 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 		case M_V2x2 :
 			names[0] = "V2x2" ;
 			names[1] = "JXD506" ;
+			names[2] = "MR101" ;
 		break ;
 		case M_DSM2 :
-			names[0] = "DSM2-22" ;
-			names[1] = "DSM2-11" ;
-			names[2] = "DSMX-22" ;
-			names[3] = "DSMX-11" ;
+			names[0] = "DSM2_1F" ;
+			names[1] = "DSM2_2F" ;
+			names[2] = "DSMX_1F" ;
+			names[3] = "DSMX_2F" ;
 			names[4] = "AUTO" ;
+			names[5] = "DSMR_1F" ;
+		break ;
+		case M_Devo :
+			names[0] = "8CH" ;
+			names[1] = "10CH" ;
+			names[2] = "12CH" ;
+			names[3] = "6CH" ;
+			names[4] = "7CH" ;
 		break ;
 		case M_YD717 :
 			names[0] = "YD717" ;
@@ -401,12 +477,20 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[1] = "H8S3D" ;
 			names[2] = "X16_AH" ;
 			names[3] = "IRDRONE" ;
+			names[4] = "DHD_D4" ;
+			names[5] = "QX100" ;
 		break ;
 		case M_FRSKYX :
 			names[0] = "CH-16" ;
 			names[1] = "CH-8" ;
 			names[2] = "EU-16" ;
 			names[3] = "EU-8" ;
+			names[4] = "Cloned" ;
+			names[5] = "Clon_8" ;
+		break ;
+		case M_ESKY :
+			names[0] = "Std" ;
+			names[1] = "ET4" ;
 		break ;
 		case M_MT99XX :
 			names[0] = "MT" ;
@@ -414,6 +498,8 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[2] = "YZ" ;
 			names[3] = "LS" ;
 			names[4] = "FY805" ;
+			names[5] = "A180" ;
+			names[6] = "Dragon" ;
 		break ;
 		case M_MJXQ :
 			names[0] = "WLH08" ;
@@ -422,10 +508,14 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[3] = "H26D" ;
 			names[4] = "E010" ;
 			names[5] = "H26WH" ;
+			names[6] = "PHOENIX" ;
 		break ;
 		case M_FY326 :
 			names[0] = "FY326" ;
 			names[1] = "FY319" ;
+		break ;
+		case M_SFHSS :
+			names[0] = "SFHSS" ;
 		break ;
 		case M_HONTAI :
 			names[0] = "HONTAI" ;
@@ -438,6 +528,8 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[1] = "PPM_IBUS" ;
 			names[2] = "PWM_SBUS" ;
 			names[3] = "PPM_SBUS" ;
+			names[4] = "PWM_IB16" ;
+			names[5] = "PPM_IB16" ;
 		break ;
 		case M_Q2X2 :
 			names[0] = "Q222" ;
@@ -464,7 +556,11 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[6] = "F_SAFE" ;
 			names[7] = "UNBIND" ;
 		break ;
-    case M_H8_3D :
+    case M_ESKY150 :
+			names[0] = "4CH" ;
+			names[1] = "7CH" ;
+		break ;
+		case M_H8_3D :
 			names[0] = "H8_3D" ;
 			names[1] = "H20H" ;
 			names[2] = "H20Mini" ;
@@ -480,46 +576,135 @@ QString subSubProtocolText( int type, int index, QComboBox *b )
 			names[1] = "OPT_HUB" ;
 			names[2] = "MINIMA" ;
 		break ;
-    case M_E01X :
-			names[0] = "E012" ;
-			names[1] = "E015" ;
+		case M_WFLY :
+			names[0] = "WFR0x" ;
 		break ;
-
     case M_BUGSMINI :
 			names[0] = "BUGSMINI" ;
 			names[1] = "BUGS3H" ;
 		break ;
-
     case M_TRAXXAS :
 			names[0] = "RX6519" ;
 		break ;
-
+    case M_E01X :
+			names[0] = "E012" ;
+			names[1] = "E015" ;
+		break ;
+		case M_V911S :
+			names[0] = "V911S" ;
+			names[1] = "E119" ;
+		break ;
     case M_GD00X :
 			names[0] = "GD_V1" ;
 			names[1] = "GD_V2" ;
 		break ;
-
+		case M_V761 :
+			names[0] = "3CH" ;
+			names[1] = "4CH" ;
+		break ;
     case M_Redpine :
 			names[0] = "Fast" ;
 			names[1] = "Slow" ;
 		break ;
-
     case M_Potensic :
 			names[0] = "A20" ;
 		break ;
-
     case M_ZSX :
 			names[0] = "280" ;
 		break ;
-
     case M_Flyzone :
-			names[0] = "FZ-410" ;
+			names[0] = "5ch" ;
+			names[1] = "8ch" ;
+		break ;
+    case M_FrskyX_RX :
+			names[0] = "Multi" ;
+			names[1] = "CloneTX" ;
+			names[2] = "EraseTX" ;
+			names[3] = "CPPM" ;
+		break ;
+    case M_AFHDS2A_RX :
+			names[0] = "Multi" ;
+			names[1] = "CPPM" ;
+		break ;
+    case M_HoTT :
+			names[0] = "Sync" ;
+			names[1] = "No_Sync" ;
+		break ;
+    case M_FX816 :
+			names[0] = "P38" ;
+		break ;
+    case M_Bayang_RX :
+			names[0] = "Multi" ;
+			names[1] = "CPPM" ;
+		break ;
+    case M_Pelikan :
+			names[0] = "Pro" ;
+			names[1] = "Lite" ;
+			names[2] = "SCX24" ;
+		break ;
+    case M_XK :
+			names[0] = "X450" ;
+			names[1] = "X420" ;
+		break ;
+    case M_XN_DUMP :
+			names[0] = "250K" ;
+			names[1] = "1M" ;
+			names[2] = "2M" ;
+			names[3] = "AUTO" ;
+		break ;
+    case M_FrskyX2 :
+			names[0] = "CH_16" ;
+			names[1] = "CH_8" ;
+			names[2] = "EU_16" ;
+			names[3] = "EU_8" ;
+			names[4] = "Cloned" ;
+		break ;
+    case M_FrSkyR9 :
+			names[0] = "915MHz" ;
+			names[1] = "868MHz" ;
+			names[2] = "915_8ch" ;
+			names[3] = "868_8ch" ;
+			names[4] = "FCC--" ;
+			names[5] = "FCC_8ch" ;
+			names[6] = "--_8ch" ;
+		break ;
+    case M_PROPEL :
+			names[0] = "74-Z" ;
+		break ;
+    case M_LR12 :
+			names[0] = "LR12" ;
+			names[1] = "LR12_6ch" ;
+		break ;
+    case M_ESky150V2 :
+			names[0] = "150V2" ;
+		break ;
+    case M_DSM_RX :
+			names[0] = "Multi" ;
+			names[1] = "CPPM" ;
+		break ;
+    case M_JJRC345 :
+			names[0] = "JJRC345" ;
+			names[1] = "SkyTmblr" ;
+		break ;
+    case M_Kyosho :
+			names[0] = "FHSS" ;
+			names[1] = "Hype" ;
+		break ;
+    case M_RadioLink :
+			names[0] = "Surface" ;
+			names[1] = "Air" ;
+			names[2] = "DumboRC" ;
+		break ;
+    case M_Realacc :
+			names[0] = "R11" ;
+		break ;
+    case M_WFLY2 :
+			names[0] = "RF20x" ;
+		break ;
+    case M_E016H :
+			names[0] = "E016Hv2" ;
 		break ;
 
-    case M_FrskyX_RX :
-			names[0] = "FCC" ;
-			names[1] = "EU_LBT" ;
-		break ;
 
 		default :
 			names[0] = "NONE" ;
@@ -3990,7 +4175,7 @@ uint8_t throttleReversed( EEGeneral *g_eeGeneral, ModelData *g_model )
 
 int Found9Xtreme ;
 
-//QString VolNames[8] ;
+QString VolNames[8] ;
 
 // type = 0 for EEPROM, 1 for flash
 QString FindErskyPath( int type )
@@ -4000,18 +4185,18 @@ QString FindErskyPath( int type )
     QStringList drives;
     QString eepromfile;
     QString fsname;
-//#if defined WIN32 || !defined __GNUC__
-//    int x = 0 ;
-//#endif
+#if defined WIN32 || !defined __GNUC__
+    int x = 0 ;
+#endif
 
-//		VolNames[0] = "" ;
-//		VolNames[1] = "" ;
-//		VolNames[2] = "" ;
-//		VolNames[3] = "" ;
-//		VolNames[4] = "" ;
-//		VolNames[5] = "" ;
-//		VolNames[6] = "" ;
-//		VolNames[7] = "" ;
+		VolNames[0] = "" ;
+		VolNames[1] = "" ;
+		VolNames[2] = "" ;
+		VolNames[3] = "" ;
+		VolNames[4] = "" ;
+		VolNames[5] = "" ;
+		VolNames[6] = "" ;
+		VolNames[7] = "" ;
 
 #if defined WIN32 || !defined __GNUC__
     foreach( QFileInfo drive, QDir::drives() )
@@ -4027,11 +4212,11 @@ QString FindErskyPath( int type )
 			{
 				Found9Xtreme = 0 ;
         QString vName=QString::fromUtf16 ( (const ushort *) szVolumeName) ;
-//				VolNames[x++] = vName ;
-//				if ( x > 7 )
-//				{
-//					x = 7 ;
-//				}
+				VolNames[x++] = vName ;
+				if ( x > 7 )
+				{
+					x = 7 ;
+				}
 				if ( (vName.contains("ERSKY_9X")) || (vName.contains("9XTREME")) || (vName.contains("ERSKY_TX")) )
 				{
 					if ( vName.contains("9XTREME") )
@@ -4050,7 +4235,7 @@ QString FindErskyPath( int type )
             path=eepromfile;
           }
         }
-				else if ( (vName.contains("TARANIS")) || (vName.contains("Taranis")) || (vName.contains("HORUS")) || (vName.contains("Horus")) || (vName.contains("T16")) || (vName.contains("TX16S")) )
+        else if ( (vName.contains("TARANIS")) || (vName.contains("Taranis")) || (vName.contains("HORUS")) || (vName.contains("Horus")) || (vName.contains("T16")) || (vName.contains("TX16S",Qt::CaseInsensitive)) || (vName.contains("TX18S")) )
 				{
           eepromfile=drive.absolutePath();
 					if ( eepromfile.right(1) == "/" )

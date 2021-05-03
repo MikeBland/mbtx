@@ -831,6 +831,11 @@
              <string>MULTI</string>
             </property>
            </item>
+           <item>
+            <property name="text">
+             <string>SBUS</string>
+            </property>
+           </item>
           </widget>
          </item>
          <item row="0" column="2">
@@ -1428,6 +1433,91 @@
            <item>
             <property name="text">
              <string>63</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>64</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>65</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>66</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>67</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>68</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>69</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>70</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>71</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>72</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>73</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>74</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>75</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>76</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>77</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>78</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>79</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>80</string>
             </property>
            </item>
           </widget>
