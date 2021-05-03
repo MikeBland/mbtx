@@ -479,6 +479,12 @@ void createSwitchMapping()
     DDRB &= ~(1<<OUT_B_LIGHT) ;
 		PORTB |= (1<<OUT_B_LIGHT) ; // pullups
 	}
+	if ( g_eeGeneral.lcd_wrInput )
+	{
+    DDRC &= ~0x10 ;
+		PORTC |= 0x10 ; // pullups
+	}
+	
 	Sw3posMask = mask ;
 }
 

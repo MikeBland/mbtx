@@ -2218,8 +2218,8 @@ extern uint8_t frskyRSSItype[2] ;
 
 #if defined(CPUM128) || defined(CPUM2561)
 
-#define MAX_TEL_OPTIONS		5
-const prog_uint8_t APM TelOptions[] = {0,1,2,5,7} ;
+#define MAX_TEL_OPTIONS		6
+const prog_uint8_t APM TelOptions[] = {0,1,2,5,6,7} ;
 
 //#if defined(PCBSKY) || defined(PCB9XT)
 // #ifdef REVX
@@ -11965,8 +11965,8 @@ void menuSetFailsafe(uint8_t event)
 
 
 #ifdef MULTI_PROTOCOL
-#define NUM_MULTI_PROTOCOLS	68
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec WFLY  BUGS  BUGMINTraxasNC1701E01X  V911S GD00X V761  KF606 RedpinPotensZSX   FlyzonScanerFrskyRAFHDSRHoTT  FX816 BayanRPelkanTiger XK    XN_DMPFrskX2FrSkR9PROPELLR12  Skyart"
+#define NUM_MULTI_PROTOCOLS	84
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec WFLY  BUGS  BUGMINTraxasNC1701E01X  V911S GD00X V761  KF606 RedpinPotensZSX   FlyzonScanerFrskyRAFHDSRHoTT  FX816 BayanRPelkanTiger XK    XN_DMPFrskX2FrSkR9PROPELLR12  SkyartESKYV2DSM_RXJRC345Q90C  KyoshoRaLink------RealacOMP   M-LinkWFLY  E016H E010r5LOLI  E129  JOYSWYE016H "
 #if (defined(CPUM128) || defined(CPUM2561)) || not defined(FRSKY)
 const prog_char APM M_FLYSKY_STR[] = { 4, 6, 'F','l','y','s','k','y','V','9','x','9',' ',' ','V','6','x','6',' ',' ','V','9','1','2',' ',' ','C','X','2','0',' ',' ' } ;
 const prog_char APM M_HUBSAN_STR[] = { 2, 4, 'H','1','0','7','H','3','0','1','H','5','0','1' } ;
@@ -11996,7 +11996,7 @@ const prog_char APM M_CABELL_STR[] = { 7, 6, 'C','A','B','_','V','3','C','_','T'
 const prog_char APM M_H8_3D_STR[] = { 3, 7, 'H','8','_','3','D',' ',' ','H','2','0','H',' ',' ',' ','H','2','0','M','i','n','i','H','3','0','M','i','n','i' } ;
 const prog_char APM M_CORONA_STR[] = { 2, 6, 'C','O','R','_','V','1','C','O','R','_','V','2','F','D','_','V','3',' ' } ;
 const prog_char APM M_HITEC_STR[] = {	2, 6, 'O','p','t','_','F','w','O','p','t','H','u','b','M','i','n','i','m','a' } ;
-
+const prog_char APM M_WFLY1_STR[] = {	0, 5, 'W','F','R','0','x' } ;
 const prog_char APM M_BUGSMINI_STR[] = { 1, 8, 'B','u','g','s','m','i','n','i','B','u','g','s','3','H',' ',' ' } ;
 const prog_char APM M_E01X_STR[] = { 2, 5, 'E','0','1','2',' ','E','0','1','5',' ','E','0','1','6','H' } ;
 const prog_char APM M_V911S_STR[] = { 1, 5, 'V','9','1','1','S','E','1','1','9',' ' } ;
@@ -12005,7 +12005,8 @@ const prog_char APM M_REDPINE_STR[] = { 1, 4, 'F','a','s','t','S','l','o','w' } 
 const prog_char APM M_POTENSIC_STR[] = { 0, 3, 'A','2','0' } ;
 const prog_char APM M_ZSX_STR[] = { 0, 3, '2','8','0' } ;
 const prog_char APM M_FLYZONE_STR[] = { 0, 6, 'F','Z','_','4','1','0' } ;
-const prog_char APM M_FRSKYRX_STR[] = { 1, 7, 'R','X',' ',' ',' ',' ',' ','C','l','o','n','e','T','X' } ;
+const prog_char APM M_FRSKYRX_STR[] = { 3, 7, 'M','u','l','t','i',' ',' ','C','l','o','n','e','T','X','E','r','a','s','e','T','X','C','P','P','M',' ',' ',' ' } ;
+const prog_char APM M_AFHDS2A_RX_STR[] = { 3, 5, 'M','u','l','t','i','C','P','P','M',' ' } ;
 const prog_char APM M_FX816_STR[] = { 0, 3, 'P','3','8' } ;
 const prog_char APM M_XK_STR[] = { 1, 4, 'X','4','5','0','X','4','2','0' } ;
 const prog_char APM M_XN_DUMP_STR[] = { 3, 4, '2','5','0','K','1','M',' ',' ','2','M',' ',' ','A','U','T','O' } ;
@@ -12013,6 +12014,18 @@ const prog_char APM M_FRSKYX2_STR[] = { 4, 6, 'C','H','_','1','6',' ','C','H','_
 const prog_char APM M_FRSKYR9_STR[] = { 3, 6, '9','1','5','M','H','z','8','6','8','M','H','z','9','1','5','_','8','c','8','6','8','_','8','c' } ;
 const prog_char APM M_PROPEL_STR[] = { 0, 4, '7','4','_','Z' } ;
 const prog_char APM M_LR12_STR[] = { 1, 8, 'L','R','1','2',' ',' ',' ',' ','L','R','1','2','_','6','c','h' } ;
+const prog_char APM	M_STD_STR[] = { 0, 3, 'S','t','d' } ;
+const prog_char APM	M_ESKYV2_STR[] = { 0, 6, '1','5','0','V','2','S' } ;
+const prog_char APM	M_DSM_RX_STR[] = { 1, 5, 'M','u','l','t','i','C','P','P','M' } ;
+const prog_char APM	M_JJRC345_STR[] = { 1, 8, 'J','J','R','C','3','4','5',' ','S','k','y','T','m','b','l','r' } ;
+const prog_char APM	M_KYOSHO_STR[] = { 1, 4, 'F','H','S','S','H','y','p','e' } ;
+const prog_char APM	M_RADIOLINK_STR[] = { 2, 7, 'S','u','r','f','a','c','e','A','i','r',' ',' ',' ',' ','D','u','m','b','o','R','C' } ;
+const prog_char APM	M_REALACC_STR[] = { 0, 3, 'R','1','1' } ;
+const prog_char APM	M_WFLY_STR[] = { 0, 5, 'R','F','2','0','x' } ;
+const prog_char APM	M_E016H_STR[] = { 0, 7, 'E','0','1','6','H','v','2' } ;
+
+
+
 #endif
 #endif // MULTI_PROTOCOL
 
@@ -13517,6 +13530,10 @@ static uint8_t multiUpdateTimer ;
 				{
 					s = M_CORONA_STR ;
 				}
+				else if ( x == M_WFLY )
+				{
+					s = M_WFLY1_STR ;
+				}
 				else if ( x == M_Hitec )
 				{
 					s = M_HITEC_STR ;
@@ -13557,6 +13574,10 @@ static uint8_t multiUpdateTimer ;
 				{
 					s = M_FRSKYRX_STR ;
 				}
+				else if ( x == M_AFHDS2A_RX )
+				{
+					s = M_AFHDS2A_RX_STR ;
+				}
 				else if ( x == M_FX816    )
 				{
 					s = M_FX816_STR ;
@@ -13585,6 +13606,43 @@ static uint8_t multiUpdateTimer ;
 				{
 					s = M_LR12_STR ;
 				}
+				else if ( x == M_Skyartec     )
+				{
+					s = M_STD_STR ;
+				}
+				else if ( x == M_ESky150V2     )
+				{
+					s = M_ESKYV2_STR ;
+				}
+				else if ( x == M_DSM_RX     )
+				{
+					s = M_DSM_RX_STR ;
+				}
+				else if ( x == M_JJRC345     )
+				{
+					s = M_JJRC345_STR ;
+				}
+				else if ( x == M_Kyosho     )
+				{
+					s = M_KYOSHO_STR ;
+				}
+				else if ( x == M_RadioLink     )
+				{
+					s = M_RADIOLINK_STR ;
+				}
+				else if ( x == M_Realacc     )
+				{
+					s = M_REALACC_STR ;
+				}
+				else if ( x == M_WFLY2     )
+				{
+					s = M_WFLY_STR ;
+				}
+				else if ( x == M_E016H     )
+				{
+					s = M_E016H_STR ;
+				}
+
 				else
 				{
 					s=PSTR("\000"M_NONE_STR);
@@ -13833,18 +13891,18 @@ static uint8_t multiUpdateTimer ;
 					{
 						Columns = 1 ;
 					}
-#if defined(V2)
-					g_model.r9mPower = checkIndexed( y, ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000"), g_model.r9mPower, (sub==subN) && (subSub == 1) ) ;
-#else
+//#if defined(V2)
+//					g_model.r9mPower = checkIndexed( y, ( g_model.country == 2 ) ? PSTR(FWx15"\003""\006  25-8 25-16200-16500-16") : PSTR(FWx17"\003""\004  10 100 5001000"), g_model.r9mPower, (sub==subN) && (subSub == 1) ) ;
+//#else
 					g_model.r9mPower = checkIndexed( y, ( ( g_model.country == 2 ) && ( g_model.r9MflexMode == 0) ) ? StrR9mPowerEU : StrR9mPowerFCC, g_model.r9mPower, (sub==subN) && (subSub == 1) ) ;
-#endif
+//#endif
 	      }
 #endif
 				g_model.sub_protocol = checkIndexed( y, StrNZ_xjtType, g_model.sub_protocol, (sub==subN) && (subSub == 0) ) ;
 				y += FH ;
 				subN++;
 
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 //#if defined(R9M_SUPPORT)
  				if ( g_model.sub_protocol == 3 )	// R9M
 				{

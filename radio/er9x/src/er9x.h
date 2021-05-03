@@ -846,7 +846,24 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x ) ;
 #define M_PROPEL         65
 #define M_LR12           66
 #define M_Skyartec       67
-#define M_LAST_MULTI		 67
+#define M_ESky150V2			 68
+#define M_DSM_RX				 69
+#define M_JJRC345				 70
+#define M_Q90C					 71
+#define M_Kyosho				 72
+#define M_RadioLink			 73
+#define M_ND						 74
+#define M_Realacc				 75
+#define M_OMP						 76
+#define M_M_Link				 77
+#define M_WFLY2					 78
+#define M_E016H					 79
+#define M_E010r5				 80
+#define M_LOLI					 81
+#define M_E129					 82
+#define M_JOYSWAY				 83
+
+#define M_LAST_MULTI		 83
 #endif // MULTI_PROTOCOL
 
 #define PXX_BIND					 0x01

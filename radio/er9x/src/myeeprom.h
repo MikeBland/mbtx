@@ -283,7 +283,7 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t   SSD1306:1 ;
     uint8_t   TEZr90:1 ;
     uint8_t   MegasoundSerial:1 ;
-    uint8_t   spare1:1 ;
+    uint8_t   multiTelInvert:1 ;
 		uint8_t		stickReverse ;
 		uint8_t		customStickNames[16] ;// 113 bytes
 #ifdef XSW_MOD
@@ -302,6 +302,10 @@ PACK(typedef struct t_V2EEGeneral {
     uint8_t  spare5:5 ;
 #endif
 		uint16_t stickDeadband ; // 119 bytes
+		uint8_t offset2561Extra ;
+#ifdef CPUM2561
+		EEXtraGeneral extraGeneral ;
+#endif
 }) V2EEGeneral;
 
 #endif
@@ -776,7 +780,7 @@ PACK(typedef struct t_V2ModelData
   uint8_t   unused_FrSkyAltAlarm:2;
   uint8_t   protocol:4 ;
   uint8_t   country:2 ;
-  uint8_t   unused_xsub_protocol:2 ;	// sub_protocol is the extended version
+	uint8_t		exSubProtocol:2 ;
   uint8_t   sub_protocol ;						// sub_protocol
 	int8_t		option_protocol;		// Option byte for MULTI protocol
   int8_t    ppmNCH;						// Also RxNum
@@ -784,8 +788,8 @@ PACK(typedef struct t_V2ModelData
   int8_t    ppmDelay;
   
 	uint8_t   thrTrim:1;            // Enable Throttle Trim
-	uint8_t   unused_xnumBlades:2;					// RPM scaling
-	uint8_t   unused_mixTime:1 ;		// Scaling for slow/delay
+	uint8_t		exRxNum:2 ;
+	uint8_t		dsmAasRssi:1 ;
   uint8_t   thrExpo:1;            // Enable Throttle Expo
 	uint8_t   ppmStart:3 ;					// Start channel for PPM
   uint8_t   pulsePol:1;

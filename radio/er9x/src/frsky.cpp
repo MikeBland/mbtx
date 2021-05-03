@@ -2357,6 +2357,13 @@ void check_frsky()
 	}
 
 	uint8_t telemetryType = (g_model.protocol == PROTO_PXX )||((g_model.protocol == PROTO_MULTI) && ((g_model.sub_protocol&0x1F)==M_FRSKYX));
+	if (g_model.protocol == PROTO_SBUS )
+	{
+		if ( g_model.FrSkyUsrProto == 0 )
+		{
+			telemetryType = 1 ;
+		}
+	}
 	if ( telemetryType != FrskyTelemetryType )
 	{
 		FRSKY_Init( telemetryType ) ;	

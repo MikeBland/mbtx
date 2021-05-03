@@ -927,7 +927,7 @@ static void setupPulsesPXX()
 		if ( g_model.sub_protocol == 3 )	// R9M
 		{
 			flag1 |= g_model.r9mPower << 3 ;
-#if defined(CPUM128) || defined(CPUM2561)
+#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 			if ( g_model.r9MflexMode == 2 )
 			{
 				flag1 |= 1 << 6 ;
