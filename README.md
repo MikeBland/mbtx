@@ -82,8 +82,8 @@ I have spent a lot of time (and will continue to) to make this software as good 
 <a href="https://github.com/MikeBland/er9x/tree/master/doc/Flashing%20the%209x.pdf" rel="nofollow">Flashing the 9x</a> by Jon Lowe.
 
 **Required libraries**
-avr-gcc, avr-libc, gcc, avrdude, libusb, bulid-essentials
-Ubuntu/Debian commandline: sudo apt-get install avr-gcc avr-libc gcc avrdude libusb bulid-essential ruby
+gcc-avr avr-libc gcc avrdude libusb-dev build-essential
+Ubuntu/Debian commandline: sudo apt-get install gcc-avr avr-libc gcc avrdude libusb-dev build-essential
 
 **Building from Source**
 First checkout using svn: svn checkout http://er9x.googlecode.com/svn/trunk/ er9x
