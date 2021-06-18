@@ -8045,8 +8045,8 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 //		 line 2 - "GPS fix" converted from TEMP2
 								uint8_t gps_fix ;
 								uint8_t gps_sat ;
-								gps_fix = FrskyHubData[FR_TEMP2] / 10 ;
- 				        gps_sat = FrskyHubData[FR_TEMP2] - gps_fix * 10 ;
+								gps_sat = FrskyHubData[FR_TEMP2] / 10 ;
+ 				        gps_fix = FrskyHubData[FR_TEMP2] - gps_fix * 10 ;
 								switch ( gps_fix )
 								{
 									case 1: 	lcd_putsAtt( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_NO_FIX), BLINK); break;
@@ -11966,16 +11966,19 @@ void menuSetFailsafe(uint8_t event)
 
 #ifdef MULTI_PROTOCOL
 #define NUM_MULTI_PROTOCOLS	84
-#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 SFHSS J6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec WFLY  BUGS  BUGMINTraxasNC1701E01X  V911S GD00X V761  KF606 RedpinPotensZSX   FlyzonScanerFrskyRAFHDSRHoTT  FX816 BayanRPelkanTiger XK    XN_DMPFrskX2FrSkR9PROPELLR12  SkyartESKYV2DSM_RXJRC345Q90C  KyoshoRaLink------RealacOMP   M-LinkWFLY  E016H E010r5LOLI  E129  JOYSWYE016H "
+#define MULTI_STR "\006FlyskyHubsanFrskyDHisky V2x2  DSM   Devo  YD717 KN    SymaX SLT   CX10  CG023 BayangFrskyXESky  MT99xxMJXq  ShenqiFY326 FutabaJ6PRO FQ777 ASSAN FrskyVHONTAIOpnLrsAFHD2SQ2X2  WK2x01Q303  GW008 DM002 CABELLESK150H8_3D CORONACFlie Hitec WFLY  BUGS  BUGMINTraxasNC1701E01X  V911S GD00X V761  KF606 RedpinPotensZSX   FlyzonScanerFrskyRAFHDSRHoTT  FX816 BayanRPelkanTiger XK    XN_DMPFrskX2FrSkR9PROPELLR12  SkyartESKYV2DSM_RXJRC345Q90C  KyoshoRaLink------RealacOMP   M-LinkWFLY  E016H E010r5LOLI  E129  JOYSWYE016H "
 #if (defined(CPUM128) || defined(CPUM2561)) || not defined(FRSKY)
 const prog_char APM M_FLYSKY_STR[] = { 4, 6, 'F','l','y','s','k','y','V','9','x','9',' ',' ','V','6','x','6',' ',' ','V','9','1','2',' ',' ','C','X','2','0',' ',' ' } ;
 const prog_char APM M_HUBSAN_STR[] = { 2, 4, 'H','1','0','7','H','3','0','1','H','5','0','1' } ;
+const prog_char APM M_FRSKYD_STR[] = { 1, 6, 'D','8',' ',' ',' ',' ','C','l','o','n','e','d' } ;
 const prog_char APM M_HISKY_STR[] = { 1, 5, 'H','i','s','k','y','H','K','3','1','0'} ;
+const prog_char APM M_V2X2_STR[] = { 2, 6, 'V','2','x','2',' ',' ','J','X','D','5','0','6','M','R','1','0','1',' ' } ;
 #if defined(CPUM128) || defined(CPUM2561)
 const prog_char APM M_DSM2_STR[] = { 4, 7, 'D','S','M','2','-','2','2','D','S','M','2','-','1','1','D','S','M','X','-','2','2','D','S','M','X','-','1','1','A','U','T','O',' ',' ',' ' } ;
 #else
 const prog_char APM M_DSM2_STR[] = { 3, 7, 'D','S','M','2','-','2','2','D','S','M','2','-','1','1','D','S','M','X','-','2','2','D','S','M','X','-','1','1' } ;
 #endif
+const prog_char APM M_DEVO_STR[] = { 4, 4, '8','c','h',' ','1','0','c','h','1','2','c','h','6','c','h',' ','7','c','h',' ' } ;
 const prog_char APM M_YD717_STR[] = { 4, 7, 'Y','D','7','1','7',' ',' ','S','K','Y','W','L','K','R','S','Y','M','A','X','4',' ','X','I','N','X','U','N',' ','N','I','H','U','I',' ',' ' } ;
 const prog_char APM M_KN_STR[] = { 1, 6, 'W','L','T','O','Y','S','F','E','I','L','U','N' } ;
 const prog_char APM M_SYMAX_STR[] = { 1, 7, 'S','Y','M','A','X',' ',' ','S','Y','M','A','X','5','C' } ;
@@ -11984,30 +11987,52 @@ const prog_char APM M_CX10_STR[] = { 6, 7, 'G','R','E','E','N',' ',' ','B','L','
 const prog_char APM M_CG023_STR[] = { 2, 5, 'C','G','0','2','3','Y','D','8','2','9','H','8','_','3','D' } ;
 const prog_char APM M_BAYANG_STR[] = { 1, 6, 'B','a','y','a','n','g','H','8','S','3','D',' ' } ;
 const prog_char APM M_FRSKY_STR[] = { 3, 5, 'C','H','_','1','6','C','H','_','8',' ','E','U','_','1','6','E','U','_','8',' ' } ;
+const prog_char APM M_ESKY_STR[] = { 1, 3, 'S','t','d','E','T','4' } ;
 const prog_char APM M_MT99XX_STR[] = { 4, 5, 'M','T',' ',' ',' ','H','7',' ',' ',' ','Y','Z',' ',' ',' ','L','S',' ',' ',' ','F','Y','8','0','5' } ;
 const prog_char APM M_MJXQ_STR[] = { 5, 5, 'W','L','H','0','8','X','6','0','0',' ','X','8','0','0',' ','H','2','6','D',' ','E','0','1','0',' ','H','2','6','W','H' } ;
+// None
 const prog_char APM M_FY326_STR[] = { 1, 5, 'F','Y','3','2','6','F','Y','3','1','9' } ;
+const prog_char APM M_FUTABA_STR[] = { 0, 5, 'S','F','H','S','S','F','Y','3','1','9' } ;
+// None
+// None
+// None
+// None
 const prog_char APM M_HONTAI_STR[] = { 2, 6, 'H','O','N','T','A','I','J','J','R','C','X','1',' ',' ','X','5','C','1','F','Q','7','7','7','_' } ;
+// None
 const prog_char APM M_AFHD2SA_STR[] = { 3, 7, 'P','W','M','I','B','U','S','P','P','M','I','B','U','S','P','W','M','S','B','U','S','P','P','M','S','B','U','S' } ;
 const prog_char APM M_Q2X2_STR[] = { 2, 4, 'Q','2','2','2','Q','2','4','2','Q','2','8','2' } ;
 const prog_char APM M_WK2x01_STR[] = { 5, 6, 'W','K','2','8','0','1','W','K','2','4','0','1','W','6','_','5','_','1','W','6','_','6','_','1','W','6','_','H','E','L','W','6','H','E','L','I' } ;
 const prog_char APM M_Q303_STR[] = { 3, 6, 'Q','3','0','3',' ',' ','C','X','3','5',' ',' ','C','X','1','0','D',' ','C','X','1','0','W','D' } ;
+// None
+// None
 const prog_char APM M_CABELL_STR[] = { 7, 6, 'C','A','B','_','V','3','C','_','T','E','L','E','M','-',' ',' ',' ',' ',' ','-',' ',' ',' ',' ',' ','-',' ',' ',' ',' ',' ','-',' ',' ',' ',' ',' ','F','_','S','A','F','E','U','N','B','I','N','D' } ;
+const prog_char APM M_ESKY150_STR[] = { 1, 3, '4','C','H','7','C','H' } ;
 const prog_char APM M_H8_3D_STR[] = { 3, 7, 'H','8','_','3','D',' ',' ','H','2','0','H',' ',' ',' ','H','2','0','M','i','n','i','H','3','0','M','i','n','i' } ;
 const prog_char APM M_CORONA_STR[] = { 2, 6, 'C','O','R','_','V','1','C','O','R','_','V','2','F','D','_','V','3',' ' } ;
+// None
 const prog_char APM M_HITEC_STR[] = {	2, 6, 'O','p','t','_','F','w','O','p','t','H','u','b','M','i','n','i','m','a' } ;
 const prog_char APM M_WFLY1_STR[] = {	0, 5, 'W','F','R','0','x' } ;
+// None
 const prog_char APM M_BUGSMINI_STR[] = { 1, 8, 'B','u','g','s','m','i','n','i','B','u','g','s','3','H',' ',' ' } ;
+// None
+// None
 const prog_char APM M_E01X_STR[] = { 2, 5, 'E','0','1','2',' ','E','0','1','5',' ','E','0','1','6','H' } ;
 const prog_char APM M_V911S_STR[] = { 1, 5, 'V','9','1','1','S','E','1','1','9',' ' } ;
 const prog_char APM M_GD00X_STR[] = { 1, 5, 'G','D','_','V','1','G','D','_','V','2' } ;
+const prog_char APM M_V761_STR[] = { 1, 3, '3','C','H','4','C','H' } ;
+// None
 const prog_char APM M_REDPINE_STR[] = { 1, 4, 'F','a','s','t','S','l','o','w' } ;
 const prog_char APM M_POTENSIC_STR[] = { 0, 3, 'A','2','0' } ;
 const prog_char APM M_ZSX_STR[] = { 0, 3, '2','8','0' } ;
 const prog_char APM M_FLYZONE_STR[] = { 0, 6, 'F','Z','_','4','1','0' } ;
+// None
 const prog_char APM M_FRSKYRX_STR[] = { 3, 7, 'M','u','l','t','i',' ',' ','C','l','o','n','e','T','X','E','r','a','s','e','T','X','C','P','P','M',' ',' ',' ' } ;
-const prog_char APM M_AFHDS2A_RX_STR[] = { 3, 5, 'M','u','l','t','i','C','P','P','M',' ' } ;
+const prog_char APM M_2RX_STR[] = { 1, 5, 'M','u','l','t','i','C','P','P','M',' ' } ;
+// None
 const prog_char APM M_FX816_STR[] = { 0, 3, 'P','3','8' } ;
+// 2RX_STR
+// None
+// None
 const prog_char APM M_XK_STR[] = { 1, 4, 'X','4','5','0','X','4','2','0' } ;
 const prog_char APM M_XN_DUMP_STR[] = { 3, 4, '2','5','0','K','1','M',' ',' ','2','M',' ',' ','A','U','T','O' } ;
 const prog_char APM M_FRSKYX2_STR[] = { 4, 6, 'C','H','_','1','6',' ','C','H','_','8',' ',' ','E','U','_','1','6',' ','E','U','_','8',' ',' ','C','l','o','n','e','d' } ;
@@ -12016,14 +12041,111 @@ const prog_char APM M_PROPEL_STR[] = { 0, 4, '7','4','_','Z' } ;
 const prog_char APM M_LR12_STR[] = { 1, 8, 'L','R','1','2',' ',' ',' ',' ','L','R','1','2','_','6','c','h' } ;
 const prog_char APM	M_STD_STR[] = { 0, 3, 'S','t','d' } ;
 const prog_char APM	M_ESKYV2_STR[] = { 0, 6, '1','5','0','V','2','S' } ;
-const prog_char APM	M_DSM_RX_STR[] = { 1, 5, 'M','u','l','t','i','C','P','P','M' } ;
+// 2RX_STR
 const prog_char APM	M_JJRC345_STR[] = { 1, 8, 'J','J','R','C','3','4','5',' ','S','k','y','T','m','b','l','r' } ;
+// None
 const prog_char APM	M_KYOSHO_STR[] = { 1, 4, 'F','H','S','S','H','y','p','e' } ;
 const prog_char APM	M_RADIOLINK_STR[] = { 2, 7, 'S','u','r','f','a','c','e','A','i','r',' ',' ',' ',' ','D','u','m','b','o','R','C' } ;
+// None
 const prog_char APM	M_REALACC_STR[] = { 0, 3, 'R','1','1' } ;
+// None
+// None
 const prog_char APM	M_WFLY_STR[] = { 0, 5, 'R','F','2','0','x' } ;
 const prog_char APM	M_E016H_STR[] = { 0, 7, 'E','0','1','6','H','v','2' } ;
+// None
+// None
+// None
+// None
+// None
+const prog_char APM	NONE_STR[] = "\000"M_NONE_STR ;
 
+const prog_char *const pSubNames[] PROGMEM = {
+M_FLYSKY_STR,
+M_HUBSAN_STR,	
+M_FRSKYD_STR,
+M_HISKY_STR ,	
+M_V2X2_STR,
+M_DSM2_STR  ,
+M_DEVO_STR,
+M_YD717_STR ,	
+M_KN_STR	  ,
+M_SYMAX_STR ,	
+M_SLT_STR 	,
+M_CX10_STR	,
+M_CG023_STR ,	
+M_BAYANG_STR,	
+M_FRSKY_STR ,	
+NONE_STR,
+M_MT99XX_STR,	
+M_MJXQ_STR	,
+NONE_STR,
+M_FY326_STR ,	
+M_FUTABA_STR,
+NONE_STR,
+NONE_STR,
+NONE_STR,
+NONE_STR,
+M_HONTAI_STR,
+NONE_STR,
+M_AFHD2SA_STR,
+M_Q2X2_STR   ,
+M_WK2x01_STR ,
+M_Q303_STR   ,
+NONE_STR,
+NONE_STR,
+M_CABELL_STR ,
+NONE_STR,
+M_H8_3D_STR  ,
+M_CORONA_STR ,
+NONE_STR,
+M_HITEC_STR  ,
+M_WFLY1_STR  ,
+NONE_STR,
+M_BUGSMINI_STR,
+NONE_STR,
+NONE_STR,
+M_E01X_STR    ,
+M_V911S_STR   ,
+M_GD00X_STR   ,
+M_V761_STR,
+NONE_STR,
+M_REDPINE_STR ,
+M_POTENSIC_STR,
+M_ZSX_STR     ,
+M_FLYZONE_STR ,
+NONE_STR,
+M_FRSKYRX_STR ,
+M_2RX_STR,
+NONE_STR,
+M_FX816_STR   ,
+M_2RX_STR,
+NONE_STR,
+NONE_STR,
+M_XK_STR      ,
+M_XN_DUMP_STR ,
+M_FRSKYX2_STR ,
+M_FRSKYR9_STR ,
+M_PROPEL_STR  ,
+M_LR12_STR    ,
+M_STD_STR,
+M_ESKYV2_STR  ,
+M_2RX_STR  ,
+M_JJRC345_STR ,
+NONE_STR,
+M_KYOSHO_STR  ,
+M_RADIOLINK_STR,
+NONE_STR,
+M_REALACC_STR ,
+NONE_STR,
+NONE_STR,
+M_WFLY_STR    ,
+M_E016H_STR ,
+//NONE_STR,
+//NONE_STR,
+//NONE_STR,
+//NONE_STR,
+//NONE_STR,
+};
 
 
 #endif
@@ -13438,215 +13560,225 @@ static uint8_t multiUpdateTimer ;
 				const prog_char * s;
 				uint8_t x = g_model.sub_protocol & 0x3F ;
 				x |= g_model.exSubProtocol << 6 ;
-				if ( x == M_Flysky)
-				{
-					s = M_FLYSKY_STR ;
-				}
-				else if ( x == M_Hisky )
-				{
-					s = M_HISKY_STR ;
-				}
-				else if ( x == M_Hubsan )
-				{
-					s = M_HUBSAN_STR ;
-				}
-				else if ( x == M_DSM )
-				{
-					s = M_DSM2_STR ;
-				}
-				else if ( x == M_YD717 )
-				{
-					s = M_YD717_STR ;
-				}
-				else if ( x == M_KN )
-				{
-					s = M_KN_STR ;
-				}
-				else if ( x == M_SymaX )
-				{
-					s = M_SYMAX_STR ;
-				}
-				else if ( x == M_SLT )
-				{
-					s = M_SLT_STR ;
-				}
-				else if ( x == M_CX10 )
-				{
-					s = M_CX10_STR ;
-				}
-				else if ( x == M_CG023 )
-				{
-					s = M_CG023_STR ;
-				}
-				else if ( x == M_BAYANG )
-				{
-					s = M_BAYANG_STR ;
-				}
-				else if ( x == M_FRSKYX )
-				{
-					s = M_FRSKY_STR ;
-				}
-				else if ( x == M_MT99XX )
-				{
-					s = M_MT99XX_STR ;
-				}
-				else if ( x == M_MJXQ )
-				{
-					s = M_MJXQ_STR ;
-				}
-				else if ( x == M_FY326 )
-				{
-					s = M_FY326_STR ;
-				}
-				else if ( x == M_HONTAI )
-				{
-					s = M_HONTAI_STR ;
-				}
-				else if ( x == M_AFHD2SA )
-				{
-					s = M_AFHD2SA_STR ;
-				}
-				else if ( x == M_Q2X2 )
-				{
-					s = M_Q2X2_STR ;
-				}
-				else if ( x == M_WK2x01 )
-				{
-					s = M_WK2x01_STR ;
-				}
-				else if ( x == M_Q303 )
-				{
-					s = M_Q303_STR ;
-				}
-				else if ( x == M_CABELL )
-				{
-					s = M_CABELL_STR ;
-				}
-				else if ( x == M_H8_3D )
-				{
-					s = M_H8_3D_STR ;
-				}
-				else if ( x == M_CORONA )
-				{
-					s = M_CORONA_STR ;
-				}
-				else if ( x == M_WFLY )
-				{
-					s = M_WFLY1_STR ;
-				}
-				else if ( x == M_Hitec )
-				{
-					s = M_HITEC_STR ;
-				}
-				else if ( x == M_BUGSMINI )
-				{
-					s = M_BUGSMINI_STR ;
-				}
-				else if ( x == M_E01X     )
-				{
-					s = M_E01X_STR ;
-				}
-				else if ( x == M_V911S    )
-				{
-					s = M_V911S_STR ;
-				}
-				else if ( x == M_GD00X    )
-				{
-					s = M_GD00X_STR ;
-				}
-				else if ( x == M_Redpine  )
-				{
-					s = M_REDPINE_STR ;
-				}
-				else if ( x == M_Potensic )
-				{
-					s = M_POTENSIC_STR ;
-				}
-				else if ( x == M_ZSX      )
-				{
-					s = M_ZSX_STR ;
-				}
-				else if ( x == M_Flyzone  )
-				{
-					s = M_FLYZONE_STR ;
-				}
-				else if ( x == M_Frsky_RX )
-				{
-					s = M_FRSKYRX_STR ;
-				}
-				else if ( x == M_AFHDS2A_RX )
-				{
-					s = M_AFHDS2A_RX_STR ;
-				}
-				else if ( x == M_FX816    )
-				{
-					s = M_FX816_STR ;
-				}
-				else if ( x == M_XK       )
-				{
-					s = M_XK_STR ;
-				}
-				else if ( x == M_XN_DUMP  )
-				{
-					s = M_XN_DUMP_STR ;
-				}
-				else if ( x == M_FrskyX2  )
-				{
-					s = M_FRSKYX2_STR ;
-				}
-				else if ( x == M_FrSkyR9  )
-				{
-					s = M_FRSKYR9_STR ;
-				}
-				else if ( x == M_PROPEL   )
-				{
-					s = M_PROPEL_STR ;
-				}
-				else if ( x == M_LR12     )
-				{
-					s = M_LR12_STR ;
-				}
-				else if ( x == M_Skyartec     )
-				{
-					s = M_STD_STR ;
-				}
-				else if ( x == M_ESky150V2     )
-				{
-					s = M_ESKYV2_STR ;
-				}
-				else if ( x == M_DSM_RX     )
-				{
-					s = M_DSM_RX_STR ;
-				}
-				else if ( x == M_JJRC345     )
-				{
-					s = M_JJRC345_STR ;
-				}
-				else if ( x == M_Kyosho     )
-				{
-					s = M_KYOSHO_STR ;
-				}
-				else if ( x == M_RadioLink     )
-				{
-					s = M_RADIOLINK_STR ;
-				}
-				else if ( x == M_Realacc     )
-				{
-					s = M_REALACC_STR ;
-				}
-				else if ( x == M_WFLY2     )
-				{
-					s = M_WFLY_STR ;
-				}
-				else if ( x == M_E016H     )
-				{
-					s = M_E016H_STR ;
-				}
 
+				if ( x < sizeof(pSubNames)/2 )
+				{
+					s = (const prog_char*)pgm_read_word(&pSubNames[x]) ;
+				}
 				else
 				{
-					s=PSTR("\000"M_NONE_STR);
+					s = NONE_STR ;
 				}
+
+//				if ( x == M_Flysky)
+//				{
+//					s = M_FLYSKY_STR ;
+//				}
+//				else if ( x == M_Hisky )
+//				{
+//					s = M_HISKY_STR ;
+//				}
+//				else if ( x == M_Hubsan )
+//				{
+//					s = M_HUBSAN_STR ;
+//				}
+//				else if ( x == M_DSM )
+//				{
+//					s = M_DSM2_STR ;
+//				}
+//				else if ( x == M_YD717 )
+//				{
+//					s = M_YD717_STR ;
+//				}
+//				else if ( x == M_KN )
+//				{
+//					s = M_KN_STR ;
+//				}
+//				else if ( x == M_SymaX )
+//				{
+//					s = M_SYMAX_STR ;
+//				}
+//				else if ( x == M_SLT )
+//				{
+//					s = M_SLT_STR ;
+//				}
+//				else if ( x == M_CX10 )
+//				{
+//					s = M_CX10_STR ;
+//				}
+//				else if ( x == M_CG023 )
+//				{
+//					s = M_CG023_STR ;
+//				}
+//				else if ( x == M_BAYANG )
+//				{
+//					s = M_BAYANG_STR ;
+//				}
+//				else if ( x == M_FRSKYX )
+//				{
+//					s = M_FRSKY_STR ;
+//				}
+//				else if ( x == M_MT99XX )
+//				{
+//					s = M_MT99XX_STR ;
+//				}
+//				else if ( x == M_MJXQ )
+//				{
+//					s = M_MJXQ_STR ;
+//				}
+//				else if ( x == M_FY326 )
+//				{
+//					s = M_FY326_STR ;
+//				}
+//				else if ( x == M_HONTAI )
+//				{
+//					s = M_HONTAI_STR ;
+//				}
+//				else if ( x == M_AFHD2SA )
+//				{
+//					s = M_AFHD2SA_STR ;
+//				}
+//				else if ( x == M_Q2X2 )
+//				{
+//					s = M_Q2X2_STR ;
+//				}
+//				else if ( x == M_WK2x01 )
+//				{
+//					s = M_WK2x01_STR ;
+//				}
+//				else if ( x == M_Q303 )
+//				{
+//					s = M_Q303_STR ;
+//				}
+//				else if ( x == M_CABELL )
+//				{
+//					s = M_CABELL_STR ;
+//				}
+//				else if ( x == M_H8_3D )
+//				{
+//					s = M_H8_3D_STR ;
+//				}
+//				else if ( x == M_CORONA )
+//				{
+//					s = M_CORONA_STR ;
+//				}
+//				else if ( x == M_WFLY )
+//				{
+//					s = M_WFLY1_STR ;
+//				}
+//				else if ( x == M_Hitec )
+//				{
+//					s = M_HITEC_STR ;
+//				}
+//				else if ( x == M_BUGSMINI )
+//				{
+//					s = M_BUGSMINI_STR ;
+//				}
+//				else if ( x == M_E01X     )
+//				{
+//					s = M_E01X_STR ;
+//				}
+//				else if ( x == M_V911S    )
+//				{
+//					s = M_V911S_STR ;
+//				}
+//				else if ( x == M_GD00X    )
+//				{
+//					s = M_GD00X_STR ;
+//				}
+//				else if ( x == M_Redpine  )
+//				{
+//					s = M_REDPINE_STR ;
+//				}
+//				else if ( x == M_Potensic )
+//				{
+//					s = M_POTENSIC_STR ;
+//				}
+//				else if ( x == M_ZSX      )
+//				{
+//					s = M_ZSX_STR ;
+//				}
+//				else if ( x == M_Flyzone  )
+//				{
+//					s = M_FLYZONE_STR ;
+//				}
+//				else if ( x == M_Frsky_RX )
+//				{
+//					s = M_FRSKYRX_STR ;
+//				}
+//				else if ( x == M_AFHDS2A_RX )
+//				{
+//					s = M_AFHDS2A_RX_STR ;
+//				}
+//				else if ( x == M_FX816    )
+//				{
+//					s = M_FX816_STR ;
+//				}
+//				else if ( x == M_XK       )
+//				{
+//					s = M_XK_STR ;
+//				}
+//				else if ( x == M_XN_DUMP  )
+//				{
+//					s = M_XN_DUMP_STR ;
+//				}
+//				else if ( x == M_FrskyX2  )
+//				{
+//					s = M_FRSKYX2_STR ;
+//				}
+//				else if ( x == M_FrSkyR9  )
+//				{
+//					s = M_FRSKYR9_STR ;
+//				}
+//				else if ( x == M_PROPEL   )
+//				{
+//					s = M_PROPEL_STR ;
+//				}
+//				else if ( x == M_LR12     )
+//				{
+//					s = M_LR12_STR ;
+//				}
+//				else if ( x == M_Skyartec     )
+//				{
+//					s = M_STD_STR ;
+//				}
+//				else if ( x == M_ESky150V2     )
+//				{
+//					s = M_ESKYV2_STR ;
+//				}
+//				else if ( x == M_DSM_RX     )
+//				{
+//					s = M_DSM_RX_STR ;
+//				}
+//				else if ( x == M_JJRC345     )
+//				{
+//					s = M_JJRC345_STR ;
+//				}
+//				else if ( x == M_Kyosho     )
+//				{
+//					s = M_KYOSHO_STR ;
+//				}
+//				else if ( x == M_RadioLink     )
+//				{
+//					s = M_RADIOLINK_STR ;
+//				}
+//				else if ( x == M_Realacc     )
+//				{
+//					s = M_REALACC_STR ;
+//				}
+//				else if ( x == M_WFLY2     )
+//				{
+//					s = M_WFLY_STR ;
+//				}
+//				else if ( x == M_E016H     )
+//				{
+//					s = M_E016H_STR ;
+//				}
+
+//				else
+//				{
+//					s=PSTR("\000"M_NONE_STR);
+//				}
 				uint8_t value = attr ;
 				attr = 0 ;
  #if (defined(CPUM128) || defined(CPUM2561))
