@@ -39,7 +39,6 @@
 //#endif
 
 //#define TRIMS_SCALED
-//#define BLOCKING
 
 #define NEW_VARIO		1
 
@@ -97,7 +96,11 @@
 #endif
 #endif
 
- #if defined(PCBX9LITE) && defined(X9LS)
+#if defined(PCBX9LITE) && defined(X9LS)
+#define BLUETOOTH	1
+#endif
+
+#if defined(PCBXLITES)
 #define BLUETOOTH	1
 #endif
 
@@ -1097,7 +1100,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 81
+#define NUM_TELEM_ITEMS 86
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1836,8 +1839,23 @@ struct t_newvario
 #include "pxx2.h"
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCBX9D)
 #define MIXER_TASK	1
 #endif
+
+struct t_updateTiming
+{
+	uint32_t UpdateRate ;
+	int32_t UpdateOffset ;
+	uint16_t UpdateTimer ;
+	uint16_t UpdateInterval ;
+	uint16_t UpdateDelay ;
+	uint16_t MinUpdateRate ;
+	int16_t BaseUpdateOffset ;
+	uint16_t CurrentRate ;
+	int16_t CurrentLag ;
+} ;
+
+#define UPDATE_TIMEOUT	120
 
 #endif

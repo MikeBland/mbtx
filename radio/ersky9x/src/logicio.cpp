@@ -1965,6 +1965,11 @@ void init_keys()
     #ifdef PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
 	configure_pins( 0x7D80, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
+     #ifdef PCBXLITES
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	configure_pins( 0x0020, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;	// SW_E
+	configure_pins( 0x0008, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;	// SW_F
+     #endif // PCBXLITES
     #else // PCBXLITE
 // Buttons PE10, 11, 12, PD2, 3, 7
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOEEN ; 		// Enable portE clock
@@ -2575,6 +2580,11 @@ void setup_switches()
 	configure_pins( 0x000F, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
 	configure_pins( 0x0060, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
 	configure_pins( 0x0030, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+ #ifdef PCBXLITES
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
+	configure_pins( 0x0020, PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;	// SW_E
+	configure_pins( 0x0008, PIN_INPUT | PIN_PULLUP | PIN_PORTC ) ;	// SW_F
+ #endif // PCBXLITES
 #else // PCBXLITE
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ; 		// Enable portA clock
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
@@ -2869,6 +2879,15 @@ uint32_t hwKeyState( uint8_t key )
       xxx = GPIOB->IDR & PIN_SW_D_L ;
     break ;
 
+ #ifdef PCBXLITES
+		case HSW_Pb1 :
+			xxx = ~GPIOE->IDR & GPIO_Pin_5 ;
+    break ;
+			 
+		case HSW_Pb2 :
+			xxx = ~GPIOC->IDR & GPIO_Pin_3 ;
+    break ;
+ #endif
 	}
 #else // PCBXLITE
 	

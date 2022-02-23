@@ -64,6 +64,9 @@
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 #include "X12D/hal.h"
 #endif
+#if defined(PCBXLITE)
+#include "X9D/hal.h"
+#endif
 #include "bluetooth.h"
 #include "sbus.h"
 #include "audio.h"
@@ -486,7 +489,7 @@ void setBtBaudrate( uint32_t index )
 	BtSerPkt.bytes[0] = ( BtSerPkt.bytes[0] & 0xE3 ) | index ;
 	(void) brate ;
 #else
- #if defined(PCBX9LITE) && defined(X9LS)
+ #if (defined(PCBX9LITE) && defined(X9LS)) || defined(PCBXLITES)
 	Com3SetBaudrate ( brate ) ;
  #else
   #if defined(PCBX10) && defined(PCBREV_EXPRESS)
@@ -2140,7 +2143,7 @@ void bt_task(void* pdata)
 	}
 #endif
 
-#if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS))
+#if defined(PCBX7) || (defined(PCBX9LITE) && defined(X9LS)) || defined(PCBXLITES)
 	com3Init( 115200 ) ;
 #endif
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)

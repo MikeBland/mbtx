@@ -203,7 +203,11 @@ uint8_t ExtraFileData[1024] ;
 #else
 uint8_t *ExtraFileData = (uint8_t *) &VoiceBuffer[0] ;	// Share with voice task
 #endif
+#if defined(PCBX12D) || defined(PCBX10)
+uint32_t FileSize[14] ;
+#else
 uint32_t FileSize[8] ;
+#endif
 
 uint32_t BytesFlashed ;
 uint32_t ByteEnd ;
@@ -345,7 +349,7 @@ void initMultiMode()
 	}
 #endif
 #ifdef PCBX9D
-	com1_Configure( 57600, SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
+	com1_Configure( 57600, MultiInvert ? SERIAL_NORM : SERIAL_INVERT, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 	EXTERNAL_RF_ON() ;
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PORT_EXTPPM | PIN_LOW ) ;
 #endif
@@ -840,6 +844,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 {
 	FRESULT fr ;
 	uint32_t loop ;
+	uint32_t frsk ;
 
 	do
 	{
@@ -856,6 +861,7 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 		}
 		if ( fc->ext[0] )
 		{
+			frsk = 0 ;
 			int32_t len = strlen(fno->lfname) - 4 ;
 			if ( fc->ext[3] )
 			{
@@ -867,7 +873,14 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 			}
 			if ( fno->lfname[len] != '.' )
 			{
-				loop = 1 ;
+				if ( fno->lfname[len-1] != '.' )
+				{
+					frsk = 1 ;
+				}
+				else
+				{
+					loop = 1 ;
+				}
 			}
 			if ( ( fno->lfname[len+1] & ~0x20 ) != fc->ext[0] )
 			{
@@ -879,11 +892,28 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 			}
 			if ( ( fno->lfname[len+3] & ~0x20 ) != fc->ext[2] )
 			{
-				loop = 1 ;
+				if ( frsk && ( fc->ext[2] == 'K') )
+				{
+					if ( ( fno->lfname[len+3] & ~0x20 ) != 'S' )
+					{
+						loop = 1 ;
+					}
+				}
+				else
+				{
+					loop = 1 ;
+				}
 			}
-			if ( fc->ext[3] )
+			if ( fc->ext[3] || frsk )
 			{
-				if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
+				if ( frsk )
+				{
+					if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[2] )
+					{
+						loop = 1 ;
+					}
+				}
+				else if ( ( fno->lfname[len+4] & ~0x20 ) != fc->ext[3] )
 				{
 					loop = 1 ;
 				}
@@ -3507,7 +3537,7 @@ void maintenance_receive_packet( uint8_t *packet, uint32_t check )
 						ptr += addr ;
 						uint32_t *dptr = (uint32_t *)(&TxPacket[2]) ;
         		*dptr = *ptr ;
-						SportTimer = 5 ;		// 50 mS
+						SportTimer = 10 ;		// 100 mS
 						writePacket( TxPacket, 0xFF ) ;
 					}
 					if ( SharedMemory.Mdata.BlockInUse )
@@ -4242,7 +4272,7 @@ uint32_t sportUpdate( uint32_t external )
 //#if defined(PCB9XT) || defined(ACCESS) || defined(REVX)
 			if ( SportTimer == 0 )
 			{
-				SportTimer = 5 ;		// 50 mS
+				SportTimer = 7 ;		// 50 mS
 				writePacket( TxPacket, 0xFF ) ;
 			}
 //#endif

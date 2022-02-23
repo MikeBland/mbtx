@@ -66,7 +66,9 @@ static const char * const PXX2ModulesNames[] = {
   "ISRM-S-X10E",
   "XJT Lite",
   "ISRM-S-X10S",
-  "ISRM-X9LiteS"
+  "ISRM-X9LiteS",
+	"TD-ISRM",
+	"BG-ISRM"
 };
 
 
@@ -106,6 +108,7 @@ void pxx2AddWord( uint32_t word, uint32_t module )
   pxx2AddByte(word >> 24, module ) ;
 }
 
+// type 0 for ACCESS, 1 for XJTLite
 uint32_t  pxx2AddFlag0( uint32_t module )
 {
 	uint8_t byte ;
@@ -198,8 +201,8 @@ void addChannels( uint8_t module, uint8_t sendFailsafe, uint8_t firstChannel )
 }
 
 
-
-void setupChannelsAccess( uint32_t module )
+// type 0 for ACCESS, 1 for XJTLite
+void setupChannelsAccess( uint32_t module, uint32_t type )
 {
 	uint32_t flag0 ;
 
@@ -213,14 +216,22 @@ void setupChannelsAccess( uint32_t module )
 
   // flag1
   
-	uint8_t flag1 = g_model.Access[module].type << 4;
-
+	uint8_t flag1 ;
+	if ( type )
+	{
+		flag1 = ((g_model.Module[module].sub_protocol + 1) & 3) << 4 ;
+	}
+	else
+	{	
+		flag1 = g_model.Access[module].type << 4;
+	}
+	
 	pxx2AddByte( flag1, module ) ;
 
 	addChannels( module, flag0 & PXX2_CHANNELS_FLAG0_FAILSAFE, g_model.Module[module].startChannel ) ;
 	
 
-	if ( g_model.Access[module].type )
+	if ( g_model.Access[module].type || type )
 	{
 		if ( g_model.Module[module].channels == 0 )
 		{
@@ -261,13 +272,13 @@ void setupHardwareInfoFrame( uint32_t module )
     else
 		{
       ModuleControl[module].timeout -= 1 ;
-      setupChannelsAccess(module) ;
+      setupChannelsAccess(module,0) ;
     }
   }
   else
 	{
     ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
-    setupChannelsAccess(module);
+    setupChannelsAccess(module,0);
   }
 }
 
@@ -290,7 +301,7 @@ void setupRegisterFrame(uint8_t module)
 //  if ( ModuleControl[module].registerStep == REGISTER_RX_NAME_RECEIVED )
 //	{
 //    ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
-//    setupChannelsAccess(module);
+//    setupChannelsAccess(module,0);
 //		return ;
 //	}
 	
@@ -357,7 +368,7 @@ void setupBindFrame(uint8_t module)
   
 	if ( ModuleControl[module].bindStep == BIND_OK)
 	{
-    setupChannelsAccess(module) ;
+    setupChannelsAccess(module,0) ;
 		return ;
 	}
 
@@ -427,7 +438,7 @@ void setupReceiverSettingsFrame(uint8_t module)
   }
   else
 	{
-    setupChannelsAccess(module) ;
+    setupChannelsAccess(module,0) ;
   }
 }
 
@@ -491,6 +502,52 @@ void setupSpectrumAnalyser( uint8_t module )
   pxx2AddWord(SharedMemory.SpectrumAnalyser.span, module ) ;
   pxx2AddWord(SharedMemory.SpectrumAnalyser.step, module ) ;
 }
+
+#ifndef PCBX10
+void setupPulsesXjtLite( uint32_t module )
+{
+	PtrSerialPxx[module] = PxxSerial[module] ;
+	AccessCrc[module] = 0xFFFF ;
+	*PtrSerialPxx[module]++ = 0x7E ;
+	*PtrSerialPxx[module]++ = 0 ;		// Place for length
+
+
+ 	if (BindRangeFlag[module] & PXX_BIND)
+	{
+		setupAccstBindFrame( module ) ;
+	}
+	else
+	{
+		if ( TelemetryTx.sportCount )
+		{
+			setupTelemetryFrame( module ) ;
+		}
+		else
+		{
+			setupChannelsAccess( module, 1 ) ;
+		}
+	}
+ 	PxxSerial[module][1] = PtrSerialPxx[module] - PxxSerial[module] - 2;
+
+	*PtrSerialPxx[module]++ = AccessCrc[module] >> 8 ;
+	*PtrSerialPxx[module] = AccessCrc[module] ;
+
+	if ( module )
+	{
+extern volatile uint8_t *PxxTxPtr_x ;
+extern volatile uint8_t PxxTxCount_x ;
+		PxxTxPtr_x = PxxSerial[EXTERNAL_MODULE] ;
+		PxxTxCount_x = PxxSerial[module][1] + 4 ;
+	}
+	else
+	{
+extern volatile uint8_t *PxxTxPtr ;
+extern volatile uint8_t PxxTxCount ;
+		PxxTxPtr = PxxSerial[0] ;
+		PxxTxCount = PxxSerial[module][1] + 4 ;
+	}
+}
+#endif
 
 void setupPulsesAccess( uint32_t module )
 {
@@ -561,7 +618,7 @@ void setupPulsesAccess( uint32_t module )
 	//				DebugLog = 1 ;
 	//			}
   	  break;
-			case MODULE_MODE_GETSET_TX :
+			case  MODULE_MODE_GETSET_TX :
 				setupGetPowerFrame(module) ;
 	//			if ( RawLogging )
 	//			{
@@ -605,7 +662,7 @@ void setupPulsesAccess( uint32_t module )
 				}
 				else
 				{
-					setupChannelsAccess( module ) ;
+					setupChannelsAccess( module,0 ) ;
 				}
   	  break;
   	}

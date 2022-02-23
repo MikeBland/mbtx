@@ -295,6 +295,17 @@ static void backlightInit()
   TIM1->EGR = 0;
   TIM1->CR1 = TIM_CR1_CEN; // Counter enable
  #else
+  #ifdef PCBXLITES
+	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
+  TIM1->ARR = 100;
+  TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
+  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 ; // Channel 3, PWM
+  TIM1->CCER = TIM_CCER_CC3E;
+  TIM1->CCR3 = 100;
+	TIM1->BDTR |= TIM_BDTR_MOE ;
+  TIM1->EGR = 0;
+  TIM1->CR1 = TIM_CR1_CEN; // Counter enable
+	#else
 	configure_pins( BACKLIGHT_GPIO_PIN, PIN_PERIPHERAL | PIN_PER_1 | PIN_PORTA | PIN_PUSHPULL | PIN_OS2 | PIN_NO_PULLUP ) ;
   TIM1->ARR = 100;
   TIM1->PSC = (PeripheralSpeeds.Peri1_frequency*PeripheralSpeeds.Timer_mult1) / 10000 - 1 ;
@@ -304,6 +315,7 @@ static void backlightInit()
 	TIM1->BDTR |= TIM_BDTR_MOE ;
   TIM1->EGR = 0;
   TIM1->CR1 = TIM_CR1_CEN; // Counter enable
+  #endif // XLITES
  #endif
 #else	
  #ifdef PCBX9LITE
@@ -519,15 +531,43 @@ void hapticOn( uint32_t pwmPercent )
 #endif // X3
 #else // XLITE
 
+// These are for XLite/XliteS_PRO
+
 void initHaptic()
 {
+  RCC_AHB1PeriphClockCmd(HAPTIC_RCC_AHB1Periph, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin = HAPTIC_GPIO_PIN ;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_PuPd  = GPIO_PuPd_NOPULL;
+  GPIO_Init( HAPTIC_GPIO, &GPIO_InitStructure);
+
+  GPIO_PinAFConfig( HAPTIC_GPIO, HAPTIC_GPIO_PinSource, HAPTIC_GPIO_AF);
+
+	RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;		// Enable clock
+	HAPTIC_TIMER->ARR = 100 ;
+	HAPTIC_TIMER->PSC = (PeripheralSpeeds.Peri2_frequency*PeripheralSpeeds.Timer_mult2) / 10000 - 1 ;		// 100uS from 30MHz
+	HAPTIC_TIMER->CCMR1 = TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2 ;	// PWM
+	HAPTIC_TIMER->CCER = TIM_CCER_CC2E ;
+	
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = 0 ;
+	HAPTIC_TIMER->EGR = 0 ;
+	HAPTIC_TIMER->CR1 = TIM_CR1_CEN ;				// Counter enable
 }
 void hapticOff()
 {
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = 0 ;
 }
 
 void hapticOn( uint32_t pwmPercent )
 {
+	if ( pwmPercent > 100 )
+	{
+		pwmPercent = 100 ;		
+	}
+	HAPTIC_TIMER->HAPTIC_COUNTER_REGISTER = pwmPercent ;
 }
 #endif // PCBXLITE
 
@@ -541,7 +581,11 @@ void backlight_on()
 #ifdef XLITE_PROTO	
 	TIM1->CCR3 = 100 - BacklightBrightness ;
 #else	
+ #ifdef PCBXLITES
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+ #else	
 	TIM1->CCR1 = 100 - BacklightBrightness ;
+ #endif
 #endif
 }
 
@@ -550,7 +594,11 @@ void backlight_off()
 #ifdef XLITE_PROTO	
 	TIM1->CCR3 = 0 ;
 #else	
+ #ifdef PCBXLITES
+	TIM1->CCR3 = 0 ;
+ #else	
 	TIM1->CCR1 = 0 ;
+ #endif
 #endif
 }
 
@@ -560,7 +608,11 @@ void backlight_set( uint16_t brightness )
 #ifdef XLITE_PROTO	
 	TIM1->CCR3 = 100 - BacklightBrightness ;
 #else	
+ #ifdef PCBXLITES
+	TIM1->CCR3 = 100 - BacklightBrightness ;
+ #else	
 	TIM1->CCR1 = 100 - BacklightBrightness ;
+ #endif
 #endif
 }
 #else // PCBXLITE
@@ -840,6 +892,7 @@ extern uint8_t CurrentVolume ;
 			{
 				break ;
 			}
+#ifndef MIXER_TASK
 extern uint32_t MixerCount ;
 extern uint16_t g_timeMixer ;
 			MixerCount += 1 ;		
@@ -851,6 +904,7 @@ extern uint16_t g_timeMixer ;
 			perOutPhase(g_chans512, 0);
 			t1 = getTmr2MHz() - t1 ;
 			g_timeMixer = t1 ;
+#endif		
 		}
 //		DmaDebugDone = 0x80 ;
 	}

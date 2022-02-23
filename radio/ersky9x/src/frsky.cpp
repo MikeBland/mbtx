@@ -65,7 +65,6 @@ uint8_t MultiId[4] ;
 //uint8_t RxLqi ;
 uint8_t TxLqi ;
 uint8_t TxRssi ;
-uint16_t FrameLossCount ;
 
 // Enumerate FrSky packet codes
 #define LINKPKT         0xfe
@@ -263,6 +262,42 @@ uint16_t LastDsmFH[2] ;
 #ifdef XFIRE
 void processCrossfireTelemetryData( uint8_t data ) ;
 
+
+//enum CrossfireSensorIndexes {
+//  RX_RSSI1_INDEX,
+//  RX_RSSI2_INDEX,
+//  RX_QUALITY_INDEX,
+//  RX_SNR_INDEX,
+//  RX_ANTENNA_INDEX,
+//  RF_MODE_INDEX,
+//  TX_POWER_INDEX,
+//  TX_RSSI_INDEX,
+//  TX_QUALITY_INDEX,
+//  TX_SNR_INDEX,
+//  RX_RSSI_PERC_INDEX,
+//  RX_RF_POWER_INDEX,
+//  TX_RSSI_PERC_INDEX,
+//  TX_RF_POWER_INDEX,
+//  TX_FPS_INDEX,
+//  BATT_VOLTAGE_INDEX,
+//  BATT_CURRENT_INDEX,
+//  BATT_CAPACITY_INDEX,
+//  BATT_REMAINING_INDEX,
+//  GPS_LATITUDE_INDEX,
+//  GPS_LONGITUDE_INDEX,
+//  GPS_GROUND_SPEED_INDEX,
+//  GPS_HEADING_INDEX,
+//  GPS_ALTITUDE_INDEX,
+//  GPS_SATELLITES_INDEX,
+//  ATTITUDE_PITCH_INDEX,
+//  ATTITUDE_ROLL_INDEX,
+//  ATTITUDE_YAW_INDEX,
+//  FLIGHT_MODE_INDEX,
+//  VERTICAL_SPEED_INDEX,
+//  UNKNOWN_INDEX,
+//};
+
+
 enum CrossfireSensorIndexes {
   RX_RSSI1_INDEX,
   RX_RSSI2_INDEX,
@@ -290,10 +325,9 @@ enum CrossfireSensorIndexes {
   UNKNOWN_INDEX,
 };
 
-uint32_t UpdateRate ;
-uint32_t UpdateOffset ;
-
 #endif
+
+struct t_updateTiming UpdateTiming ;
 
 #if defined(VARIO)
 stuct t_vario VarioData ;
@@ -395,7 +429,7 @@ void store_indexed_hub_data( uint8_t index, uint16_t value )
 
 
 const uint8_t DestIndex[] = { FR_BASEMODE, FR_CURRENT, FR_AMP_MAH, FR_VOLTS, FR_FUEL, FR_RBOX_STATE, FR_CUST1, 
-FR_CUST2, FR_CUST3, FR_CUST4, FR_CUST5, FR_CUST6, FR_AIRSPEED	 } ;
+FR_CUST2, FR_CUST3, FR_CUST4, FR_CUST5, FR_CUST6, FR_AIRSPEED, FR_CUST7, FR_CUST8, FR_CUST9, FR_CUST10	 } ;
 
 void store_telemetry_scaler( uint8_t index, int16_t value )
 {
@@ -423,19 +457,7 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 //		FrskyVolts[battnumber] = cell ;
 //		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
 		uint32_t index ;
-//#ifdef BLOCKING
-//		uint32_t bit ;
-//		uint32_t offset ;
-//#endif
 	  index = FR_CELL1+battnumber ;
-//#ifdef BLOCKING
-//		offset = index >> 5 ;
-//		bit = 1 << (index & 0x0000001F) ;
-//		if ( g_model.LogNotExpected[offset] & bit )
-//		{
-//			return ;
-//		}
-//#endif
 		uint32_t scaling = 1000 + g_model.cellScalers[battnumber] ;
 		scaling *= cell ;
 		cell = scaling / 1000 ;
@@ -488,17 +510,6 @@ uint16_t SbecAverage ;
 
 void storeTelemetryData( uint8_t index, uint16_t value )
 {
-//#ifdef BLOCKING
-//	uint32_t bit ;
-//	uint32_t offset ;
-	
-//	offset = index >> 5 ;
-//	bit = 1 << (index & 0x0000001F) ;
-//	if ( g_model.LogNotExpected[offset] & bit )
-//	{
-//		return ;
-//	}
-//#endif
 	if ( index == FR_ALT_BARO )
 	{
 		value *= 10 ;
@@ -1628,6 +1639,8 @@ static void postSportToScript( uint8_t *packet )
 }
 #endif
 
+//uint16_t LastRxRssiTime ;
+//uint16_t AverageRssiTime ;
 
 // The leading 0x7E is not in the packet, first byte is physical ID
 void processSportData( uint8_t *packet, uint32_t receiver )
@@ -1667,6 +1680,12 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 			switch ( packet[2] )
 			{
 				case 1 :
+//				{
+//					uint16_t now = get_tmr10ms() ;
+//					uint16_t time = now - LastRxRssiTime ;
+//					LastRxRssiTime = now ;
+//					AverageRssiTime = ( (AverageRssiTime * 7 ) + time ) / 8 ;
+//				}		
 	    		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
 					setTxRssi( packet[5] ) ;			// packet[5] is  TX_RSSI for MULTI
 					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
@@ -1721,12 +1740,9 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 				break ;
 			}
 		}
-		else if ( packet[3] == 0xF0 )
+		else if ( ( packet[3] == 0xF0 ) && ( packet[2] == 0x10 ) )		// FrSky2 Frame loss count
 		{
-			if ( packet[2] == 0x10 )		// FrSky2 Frame loss count
-			{
-				FrameLossCount = packet[4] | (packet[5] << 8 ) ;
-			}
+			storeTelemetryData( FR_VFR, 100 - (packet[4] | (packet[5] << 8 )) ) ;
 		}
 		else if ( packet[3] == 0 )
 		{ // old sensors
@@ -1822,7 +1838,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					{
 						ratio = 330 ;
 					}
-					value = value * ratio / 330 ;					
+					value = value * ratio / 33000 ;
 					storeTelemetryData( FR_A3, value ) ;
 				}
 				break ;
@@ -1834,7 +1850,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					{
 						ratio = 330 ;
 					}
-					value = value * ratio / 330 ;					
+					value = value * ratio / 33000 ;					
 					storeTelemetryData( FR_A4, value ) ;
 				}
 				break ;
@@ -2265,6 +2281,137 @@ void processSportPacket(uint8_t *packet)
 //41 01 04 08 49 13 => Sensor ID: 41 -> presure sensor, Sensor #: 01, length in bytes 04, data: 08 86 49 13
 //Temperature= ( ((0x13498608)>>19) -400)/10 = 21.7°C
 
+#define ALT_PRECISION				15
+#define R_DIV_G_MUL_10_Q15	(uint64_t)9591506
+#define INV_LOG2_E_Q1DOT31	(uint64_t)0x58b90bfc // Inverse log base 2 of e
+#define PRESSURE_MASK				0x7FFFF
+#define AFHDS2A_ID_END			0xFF
+#define AFHDS2A_ID_PRES			0x41	// Pressure
+
+int32_t log2fix(uint32_t x)
+{
+  int32_t b = 1U << (ALT_PRECISION - 1) ;
+  int32_t y = 0 ;
+  while (x < 1U << ALT_PRECISION)
+	{
+    x <<= 1 ;
+    y -= 1U << ALT_PRECISION ;
+  }
+
+  while (x >= 2U << ALT_PRECISION)
+	{
+    x >>= 1 ;
+    y += 1U << ALT_PRECISION ;
+  }
+
+  uint64_t z = x ;
+  for (size_t i = 0 ; i < ALT_PRECISION ; i += 1 )
+	{
+    z = (z * z) >> ALT_PRECISION ;
+    if (z >= 2U << ALT_PRECISION)
+		{
+      z >>= 1 ;
+      y += b ;
+    }
+    b >>= 1 ;
+  }
+  return y ;
+}
+
+int32_t getAlt( uint32_t value )
+{
+  static uint32_t initPressure = 0 ;
+  static uint16_t initTemperature = 0 ;
+  uint32_t pressurePa = value & PRESSURE_MASK ;
+  if (pressurePa == 0)
+	{
+		return 0 ;
+	}
+  uint16_t temperatureK = (uint16_t)((value >> 19) - 400) + 2731 ;
+  if (initPressure <= 0) // use current pressure for ground altitude -> 0
+  {
+    initPressure = pressurePa ;
+    initTemperature = temperatureK ;
+  }
+  int temperature = (initTemperature + temperatureK) >> 1 ; //div 2
+  uint32_t tempNegative = temperature < 0 ;
+  if ( tempNegative )
+	{
+		temperature = -temperature ;
+	}
+  uint64_t helper = R_DIV_G_MUL_10_Q15 ;
+  helper = helper * (uint64_t) temperature ;
+  helper = helper >> ALT_PRECISION ;
+  uint32_t po_to_p = (uint32_t)(initPressure << (ALT_PRECISION - 1)) ;
+  po_to_p = po_to_p / pressurePa ;
+  //shift missing bit
+  po_to_p = po_to_p << 1 ;
+  if (po_to_p == 0)
+	{
+		return 0 ;
+	}
+  uint64_t t = log2fix(po_to_p) * INV_LOG2_E_Q1DOT31 ;
+  int32_t ln = t >> 31 ;
+
+  bool neg = ln < 0 ;
+  if (neg)
+	{
+		ln = ln * -1 ;
+	}
+  helper = helper * (uint64_t) ln ;
+  helper = helper >> ALT_PRECISION ;
+  int result = (int) helper ;
+
+  if (neg ^ tempNegative)
+	{
+		result = -result ;
+	}
+  return result ;
+}
+
+//static uint16_t ibusTempToK(int16_t tempertureIbus)
+//{
+//  return (uint16_t) (tempertureIbus - 400) + 2731;
+//}
+
+//int32_t getALT(uint32_t value)
+//{
+//  uint32_t pressurePa = value & PRESSURE_MASK;
+//  if (pressurePa == 0) return 0;
+//  uint16_t temperatureK = ibusTempToK((uint16_t) (value >> 19));
+//  static uint32_t initPressure = 0;
+//  static uint16_t initTemperature = 0;
+//  if (initPressure <= 0) // use current pressure for ground altitude -> 0
+//  {
+//    initPressure = pressurePa;
+//    initTemperature = temperatureK;
+//  }
+//  int temperature = (initTemperature + temperatureK) >> 1; //div 2
+//  bool tempNegative = temperature < 0;
+//  if (tempNegative) temperature = temperature * -1;
+//  uint64_t helper = R_DIV_G_MUL_10_Q15;
+//  helper = helper * (uint64_t) temperature;
+//  helper = helper >> ALT_PRECISION;
+
+//  uint32_t po_to_p = (uint32_t)(initPressure << (ALT_PRECISION - 1));
+//  po_to_p = po_to_p / pressurePa;
+//  //shift missing bit
+//  po_to_p = po_to_p << 1;
+//  if (po_to_p == 0) return 0;
+//  uint64_t t = log2fix(po_to_p) * INV_LOG2_E_Q1DOT31;
+//  int32_t ln = t >> 31;
+
+//  bool neg = ln < 0;
+//  if (neg) ln = ln * -1;
+//  helper = helper * (uint64_t) ln;
+//  helper = helper >> ALT_PRECISION;
+//  int result = (int) helper;
+
+//  if (neg ^ tempNegative) result = result * -1;
+//  return result;
+//}
+
+
 
 
 void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
@@ -2279,7 +2426,48 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 		
 		if ( type == 0xAC )
 		{
-			return ;
+//4D 50 0C 1D   F7 41 01 04 D5 74 A1 14 FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
+//4D500C1DF7410104D374A114FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF		
+//4D500C1DF5410104C9749114FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF	
+		  // F7 is RSSI, Id = 41 01
+			// 04 is count, data is D5 74 A1 14
+
+			if ( id == 0xFF )
+			{
+				return ;
+			}
+			uint32_t saveSize ;
+			uint32_t size ;
+			uint32_t index ;
+//			instance = packet[1] ;
+			saveSize = size = packet[2] ;
+			index = size - 1 ;
+			packet += 3 ;
+			value = 0 ;
+			while ( size )
+			{
+				size -= 1 ;
+				value <<= 8 ;
+				value |= packet[index] ;
+				index -= 1 ;
+			}
+			packet += saveSize ;
+			switch ( id )
+			{
+				case AFHDS2A_ID_PRES :
+				{
+					int32_t xvalue = (value >> 19) - 400 ;	// tenths deg C
+					storeTelemetryData( FR_TEMP1, xvalue / 10 ) ;
+					xvalue = getAlt(value) ;
+//					storeAltitude( xvalue ) ;
+					storeTelemetryData( FR_SPORT_ALT, xvalue / 10 ) ;
+    
+		// Extract alt to a new sensor
+//    setTelemetryValue(PROTOCOL_TELEMETRY_FLYSKY_IBUS, AFHDS2A_ID_ALT, 0, instance, getALT(value), UNIT_METERS, 2);
+
+				}
+				break ;
+			}
 //    	value = (packet[6] << 24) | (packet[5] << 16) | (packet[4] << 8) | packet[3];
 //			if ( id == 0x83 )
 //			{
@@ -2288,6 +2476,7 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 		}
 		else
 		{
+//4D 50 06 1D   F7   00 00  08 02   FE 00  00 00   FC 00  3C 00   FB 00  67 00   FA 00  2B 00 FFFFFFFFFFFFFFFF
 			id |= *(packet+1) << 8 ;
 			packet += 2 ;
 			value = (packet[1] << 8)  + packet[0] ;
@@ -2501,13 +2690,13 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 //		rawLogByte( 'Z' ) ;		
 //	}
 								FrskyTelemetryType = FRSKY_TEL_SPORT ;
-#if not defined(PCBT16)
+//#if not defined(PCBT16)
 									processSportPacket(InputPrivateData+1) ;
 //	if ( RawLogging )
 //	{
 //		rawLogByte( 'Y' ) ;		
 //	}
-#endif
+//#endif
 								}
 							break ;
 							case 3 :	// Hub
@@ -2526,6 +2715,25 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							case 6 :	// AFHDS2
 								FrskyTelemetryType = FRSKY_TEL_AFH ;	// AFHD2SA
 								processAFHDS2Packet( InputPrivateData, Private_count+1, 0xAA ) ;
+							break ;
+							case 8 :	// Sync.
+							{
+								uint16_t minRate ;
+								UpdateTiming.UpdateRate = (InputPrivateData[1] << 8 ) | InputPrivateData[2] ;
+								UpdateTiming.UpdateOffset = (int16_t)((InputPrivateData[3] << 8 ) | InputPrivateData[4]) ;
+								UpdateTiming.UpdateTimer = UPDATE_TIMEOUT ;
+								UpdateTiming.UpdateInterval = InputPrivateData[5] ;
+								UpdateTiming.UpdateDelay = InputPrivateData[6] ;
+								minRate = UpdateTiming.UpdateRate ;
+								if ( minRate )
+								{
+									while( minRate < 6900 )
+									{
+										minRate += UpdateTiming.UpdateRate ;
+									}
+								}
+								UpdateTiming.MinUpdateRate = minRate ;
+							}
 							break ;
 							case 10 :	// Hitec
 								FrskyTelemetryType = FRSKY_TEL_HITEC ;
@@ -3764,7 +3972,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 		break ;
 	}
 #ifdef XFIRE
- #ifdef REVX
+ #ifdef PCBSKY
 	if ( g_model.Module[1].protocol == PROTO_XFIRE )
 	{
 		type = TEL_XFIRE ;
@@ -3938,6 +4146,19 @@ extern uint8_t s_current_protocol[] ;
 		}
 //		else
 #endif
+
+#if defined(PCBX9LITE)
+		if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX )
+		{
+			int32_t rxbyte ;
+			while ( ( rxbyte = get_fifo128( &Access_ext_fifo ) ) != -1 )
+			{
+				accessRecieveByte( rxbyte, 1 ) ;
+			}
+		}
+#endif
+
+
 #ifdef PCBT16
 extern uint8_t s_current_protocol[] ;
 		if ( s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI )
@@ -4511,6 +4732,18 @@ void processCrossfireTelemetryFrame()
 					{
 						storeTelemetryData( FR_CUST1 + i, value ) ;
 					}
+					else
+					{
+						if ( i < 10 )
+						{
+	          	if (i == TX_POWER_INDEX)
+							{
+    	      	  static const uint32_t power_values[] = { 0, 10, 25, 100, 500, 1000, 2000, 250, 50 } ;
+      	    	  value = (value < DIM(power_values) ? power_values[value] : 0) ;
+							}
+							storeTelemetryData( FR_CUST7 + i - 6, value ) ;
+						}
+					}
         }
       }
     break ;
@@ -4568,16 +4801,17 @@ void processCrossfireTelemetryFrame()
 		{
 			if ( frskyRxBuffer[3] == RADIO_ADDRESS )
 			{
-				if ( frskyRxBuffer[53] == 0x10 )	// Timing Correction
+				if ( frskyRxBuffer[5] == 0x10 )	// Timing Correction
 				{
 					uint32_t offset ;
-      		if (getCrossfireTelemetryValue<4>( 3, value) )	// Update interval
+      		if (getCrossfireTelemetryValue<4>( 6, value) )	// Update interval
 					{
-      			if (getCrossfireTelemetryValue<4>( 7, offset) )	// Update interval
+      			if (getCrossfireTelemetryValue<4>( 10, offset) )	// Update interval
 						{
 							// Report these
-							UpdateRate = value / 10 ;			// Was 10ths of uS
-							UpdateOffset = offset / 10 ;	// Was 10ths of uS
+							UpdateTiming.UpdateRate = value / 10 ;			// Was 10ths of uS
+							UpdateTiming.UpdateOffset = (int32_t)offset / 10 ;	// Was 10ths of uS
+							UpdateTiming.UpdateTimer = UPDATE_TIMEOUT ;
 						}
 					}
 				}

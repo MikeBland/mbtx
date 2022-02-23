@@ -35,7 +35,7 @@
   #define __DMA __ALIGNED
 #endif
 
-#if defined(PCBHORUS) && !defined(SIMU)
+#if (defined(PCBX12D) || defined(PCBX10)) && !defined(SIMU)
   #define __SDRAM __attribute__((section(".sdram"), aligned(32)))
 #else
   #define __SDRAM __DMA

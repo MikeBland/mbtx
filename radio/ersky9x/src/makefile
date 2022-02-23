@@ -20,6 +20,7 @@
 # X9E          make PCB=X9D REV9E=1
 # TaranisPlus  make PCB=X9D REVPLUS=1
 # XLite        make PCB=X9D PCBXLITE=1
+# XLiteS       make PCB=X9D PCBXLITE=1 PCBXLITES=1
 # QX7          make PCB=X9D PCBX7=1 BT=1
 # QX7 ACCESS   make PCB=X9D PCBX7=1 PCBACCESS=1
 # Jumper T12   make PCB=X9D PCBX7=1 PCBT12=1
@@ -89,11 +90,20 @@ ifeq ($(PCB), X9D)
   else
    PROJECT = x7
    EXT_MOD=QX7
+   LUA = 1
+   CPPDEFS += -DLUA
   endif
  else ifeq ($(PCBXLITE), 1)
-  PROJECT = xlite
-  EXT_MOD=XLITE
   CPPDEFS += -DPCBXLITE
+  ifeq ($(PCBXLITES), 1)
+   BT = 1
+   PROJECT = xliteS
+   EXT_MOD=XLiteS
+   CPPDEFS += -DPCBXLITES
+  else 
+   PROJECT = xlite
+   EXT_MOD=XLITE
+  endif 
  else ifeq ($(PCBX9LITE), 1)
   CPPDEFS += -DPCBX9LITE
   ifeq ($(X9LS), 1)
@@ -101,6 +111,8 @@ ifeq ($(PCB), X9D)
    PROJECT = x9LiteS
    EXT_MOD=X9LiteS
    CPPDEFS += -DX9LS 
+   LUA = 1
+   CPPDEFS += -DLUA
   else
    PROJECT = x9Lite
    EXT_MOD=X9Lite
@@ -116,6 +128,8 @@ ifeq ($(PCB), X9D)
   PROJECT = x9d
   EXT_MOD=X9D
   CPPDEFS += -DREVNORM
+  LUA = 1
+  CPPDEFS += -DLUA
  endif
 else ifeq ($(PCB), 9XT)
  PROJECT      = ersky9x9XT
@@ -139,6 +153,8 @@ else ifeq ($(PCB), X12D)
  CPPDEFS += -DUSB_JOYSTICK
  EXT_MOD=X12D
  UDEFS = -DSTM32F429_439xx
+ LUA = 1
+ CPPDEFS += -DLUA
 else ifeq ($(PCB), X10)
  BASIC = 1
  CPPDEFS += -DBASIC 
@@ -159,17 +175,23 @@ else ifeq ($(PCB), X10)
     PROJECT = tx16s
     CPPDEFS += -DPCBT16 
     CPPDEFS += -DPCBTX16S
+    LUA = 1
+    CPPDEFS += -DLUA
     EXT_MOD=TX16S
    endif
   else
    PROJECT = t16
    CPPDEFS += -DPCBT16 
    EXT_MOD=T16
+   LUA = 1
+   CPPDEFS += -DLUA
   endif
  else ifeq ($(EXPRESS), 1)
   PROJECT = x10E
   EXT_MOD=X10E
   CPPDEFS += -DPCBREV_EXPRESS 
+  LUA = 1
+  CPPDEFS += -DLUA
   BT = 1
  else
   PROJECT = x10
@@ -220,6 +242,7 @@ else
   UDEFS = -Dat91sam3s8
  else
   PROJECT = ersky9x
+  CPPDEFS += -DXFIRE
   LDSCRIPT = sam3s8c_flash.ld
   EXT_MOD=REVB
   UDEFS = -Dat91sam3s8
@@ -1219,6 +1242,7 @@ clean:
 	-rm -f obj_x7/*.*
 	-rm -f obj_x7Acc/*.*
 	-rm -f obj_xlite/*.*
+	-rm -f obj_xlites/*.*
 	-rm -f obj_x9Lite/*.*
 	-rm -f obj_t12/*.*
 	-rm -f obj_t16/*.*

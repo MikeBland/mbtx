@@ -1,4 +1,4 @@
-/****************************************************************************
+	/****************************************************************************
 *  Copyright (c) 2013 by Michael Blandford. All rights reserved.
 *
 *  Redistribution and use in source and binary forms, with or without
@@ -69,10 +69,7 @@ uint8_t Serial_byte ;
 uint8_t Serial_bit_count;
 uint8_t Serial_byte_count ;
 uint8_t CurrentProtocol[2] ;
-//uint8_t Current_protocol ;
-//uint8_t Current_xprotocol ;
 uint8_t BindRangeFlag[2] = { 0, 0 } ;
-//uint8_t PxxExtra[2] = { 0, 0 } ;
 uint16_t PcmCrc ;
 uint8_t PcmOnesCount ;
 uint8_t CurrentTrainerSource ;
@@ -82,9 +79,6 @@ uint16_t FailsafeCounter[2] ;
 
 volatile uint8_t Dsm_Type = 0 ;
 uint8_t DsmInitCounter = 0 ;
-//uint8_t Dsm_Type_channels = 12 ;
-//uint8_t Dsm_Type_10bit = 0 ;				// 0 for 11 bit, 1 for 10 bit
-//uint8_t Dsm_mode_response = 0 ;
 
 uint16_t Pulses[18] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
 uint16_t Pulses2[266] ;//= {	2000, 2200, 2400, 2600, 2800, 3000, 3200, 3400, 9000, 0, 0, 0,0,0,0,0,0, 0 } ;
@@ -544,7 +538,58 @@ extern "C" void PWM_IRQHandler (void)
 					}
 					else if ( CurrentProtocol[1] == PROTO_XFIRE )
 					{
-						period = 1500*2 ;		// Total 4 mS
+extern struct t_updateTiming UpdateTiming ;
+						struct t_updateTiming *timing = &UpdateTiming ;
+						int32_t rate = 8000 ;
+						if ( timing->UpdateRate )
+						{
+							if ( timing->UpdateTimer )
+							{
+								timing->UpdateTimer -= 1 ;
+							}
+							if ( timing->UpdateTimer == 0 )
+							{
+								timing->UpdateRate = 0 ;
+							}
+						}	
+
+// The sync offset value is the time when the RF packet has 
+// just been sent minus the time the last RC data packet was 
+// received, minus a constant 400 us (i.e. 4000) to ensure 
+// "that opentx always has some headroom".
+						if ( timing->UpdateRate )
+						{
+							rate = timing->UpdateRate * 2 ;
+							if ( ( rate < 3999 ) || ( rate >= 50000 ) )
+							{
+								rate = (rate == 80000 ) ? 40000 : 8000 ;
+							}
+							if ( timing->UpdateTimer == UPDATE_TIMEOUT - 1 )
+							{
+								uint32_t fastAdjust = 60 ;
+								if ( rate > 10000 )
+								{
+									fastAdjust = ( timing->UpdateOffset > 500 ) ? 400 : 180 ;
+								}
+								if ( timing->UpdateOffset > 0 )
+								{
+									rate += ( timing->UpdateOffset > 100 ) ? fastAdjust : 20 ;
+								}
+								else
+								{
+									rate -= ( timing->UpdateOffset < -100 ) ? fastAdjust : 20 ;
+								}
+							}
+							period = rate - 5000 ;
+							if ( period == 5000 )
+							{
+								period += (timing->UpdateTimer & 1) ? 1 : -1 ;
+							}
+						}
+						else
+						{						
+							period = 1500*2 ;		// Total 4 mS
+						}
 					}
 #ifdef SBUS_PROTOCOL	
 					else if ( CurrentProtocol[1] == PROTO_SBUS )
@@ -969,6 +1014,7 @@ void setupPulses()
       break;
 #ifdef XFIRE
       case PROTO_XFIRE :
+				init_main_ppm( 4998, 0 ) ;		// Initial period 2.5 mS, output off
 				module_output_low() ;
       break;
 #endif
@@ -1248,7 +1294,6 @@ void setupPulsesPPM2()
 			}
   		for(uint8_t i=p; i < q ; i++)
   		{
-//				uint16_t pulse = limit(0, ((g_chans512[/*q+*/i]*13)>>5)+512,1023);
 				uint16_t pulse = limit(0, ((g_chans512[i]*13)>>5)+512,1023);
  			  dsmDat[2+2*i] = (i<<2) | ((pulse>>8)&0x03);
   		 	dsmDat[3+2*i] = pulse & 0xff;
@@ -1529,19 +1574,6 @@ void putPcmHead()
     putPcmPart( 1 ) ;
     putPcmPart( 0 ) ;
 }
-
-//uint16_t scaleForPXX( uint8_t i )
-//{
-//	int16_t value ;
-
-//	value = ( i < 24 ) ? g_chans512[i] *3 / 4 + 1024 : 0 ;
-//	return limit( (int16_t)1, value, (int16_t)2046 ) ;
-//}
-
-
-//uint16_t TempChannels[8] ;
-
-//void setUpPulsesPCM()
 
 //#define PXX_DELAYS	1
 

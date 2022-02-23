@@ -575,6 +575,11 @@ void setupPulses(unsigned int port)
 	      break ;
 #endif
 #endif
+#ifdef XFIRE
+	      case PROTO_XFIRE :
+					disable_xfire(INTERNAL_MODULE) ;
+	      break;
+#endif
   	  }
 		
   	  s_current_protocol[INTERNAL_MODULE] = requiredprotocol ;
@@ -622,6 +627,11 @@ void setupPulses(unsigned int port)
 	      break ;
 #endif
 #endif
+#ifdef XFIRE
+	      case PROTO_XFIRE :
+					init_xfire(INTERNAL_MODULE) ;
+	      break;
+#endif
   	  }
   	}
 
@@ -666,6 +676,11 @@ void setupPulses(unsigned int port)
 				setupPulsesAccess(INTERNAL_MODULE) ;
       break ;
 #endif
+#endif
+#ifdef XFIRE
+	    case PROTO_XFIRE :
+				setupPulsesXfire() ;
+	    break;
 #endif
   	}
 	}
@@ -1036,7 +1051,7 @@ void init_trainer_ppm()
 #else // X3
 	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOCEN ; 		// Enable portC clock
 	configure_pins( PIN_TR_PPM_OUT, PIN_PERIPHERAL | PIN_PORTC | PIN_PER_2 | PIN_OS25 | PIN_PUSHPULL ) ;
-	configure_pins( PIN_TRNDET, PIN_INPUT | PIN_PULLUP | PIN_PORTB ) ;
+	configure_pins( PIN_TRNDET, PIN_INPUT | PIN_PULLUP | PIN_PORTA ) ;
   RCC->APB1ENR |= RCC_APB1ENR_TIM3EN ;            // Enable clock
 	
   TIM3->ARR = *TrainerPulsePtr++ ;
@@ -3028,6 +3043,11 @@ extern volatile uint8_t PxxTxCount ;
 		lpass = Pass[module] ;
 //#ifndef PCBX9LITE
 #if defined(PCBXLITE) || defined(PCBX9LITE)
+extern void setupPulsesXjtLite( uint32_t module ) ;
+		setupPulsesXjtLite( EXTERNAL_MODULE ) ;
+		EXTMODULE_USART->CR1 |= USART_CR1_TXEIE ;	 // Enable this interrupt
+	  EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+		return ;
 //#if defined(PCBX9LITE)
 		PtrSerialPxx[EXTERNAL_MODULE] = PxxSerial[EXTERNAL_MODULE] ;
 #else
@@ -3246,6 +3266,7 @@ extern volatile uint8_t *PxxTxPtr_x ;
 extern volatile uint8_t PxxTxCount_x ;
 		PxxTxPtr_x = PxxSerial[EXTERNAL_MODULE] ;
 		PxxTxCount_x = pulseStreamCount[EXTERNAL_MODULE] ;
+		TIM8->CCR2 = 8000 ;	            // Update time
 		EXTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
 // #endif // X3_PROTO
 #endif

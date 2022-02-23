@@ -56,6 +56,7 @@ uint8_t	CurrentPhase = 0 ;
 int16_t rawSticks[4] ;
 uint8_t TrimInUse[4] = { 1, 1, 1, 1 } ;
 uint8_t ThrottleStickyOn = 0 ;
+uint8_t MixTick10ms ;
 
 struct t_fade
 {
@@ -174,6 +175,7 @@ static void inactivityCheck()
 void perOutPhase( int16_t *chanOut, uint8_t att ) 
 {
 	static uint8_t lastPhase ;
+  static uint16_t lastTMR ;
 	uint8_t thisPhase ;
 	struct t_fade *pFade ;
 	pFade = &Fade ;
@@ -183,6 +185,12 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 //	GPIOA->ODR |= 0x4000 ;
 // #endif	
 //#endif
+
+	uint16_t t10ms ;
+	
+	t10ms = get_tmr10ms() ;
+  MixTick10ms = ((uint16_t)(t10ms - lastTMR)) != 0 ;
+  lastTMR = t10ms ;
 
 	thisPhase = getFlightPhase() ;
 	if ( thisPhase != lastPhase )
@@ -237,7 +245,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	CurrentPhase = thisPhase ;
 	perOut( chanOut, att | FADE_LAST ) ;
 	
-	if ( pFade->fadePhases && tick10ms )
+	if ( pFade->fadePhases && MixTick10ms )
 	{
 		uint8_t fadeMask = 1 ;
     for (uint8_t p=0; p<MAX_MODES+1; p+=1)
@@ -246,7 +254,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			
 			if ( pFade->fadePhases & fadeMask )
 			{
-				uint16_t x = pFade->fadeRate * tick10ms ;
+				uint16_t x = pFade->fadeRate * MixTick10ms ;
 				if ( p != thisPhase )
 				{
           if ( l_fadeScale > x )
@@ -626,7 +634,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 	        }
   		  }
 
-    		if(tick10ms)
+    		if(MixTick10ms)
 				{
 					inactivityCheck() ;
 					trace(); //trace thr 0..32  (/32)
@@ -953,7 +961,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 
             if(my_delay > 0)
 						{ // perform delay
-              if(tick10ms)
+              if(MixTick10ms)
               {
                 my_delay -= 1 ;
 							}
@@ -978,7 +986,7 @@ void perOut(int16_t *chanOut, uint8_t att )
                 //rate = steps/sec => 32*1024/100*md->speedUp/Down
                 //act[i] += diff>0 ? (32768)/((int16_t)100*md->speedUp) : -(32768)/((int16_t)100*md->speedDown);
                 //-100..100 => 32768 ->  100*83886/256 = 32768,   For MAX we divide by 2 since it's asymmetrical
-                if(tick10ms) {
+                if(MixTick10ms) {
                     int32_t rate = (int32_t)DEL_MULT*2048*100;
                     if(mixweight) rate /= abs(mixweight);
 										int16_t speed ;

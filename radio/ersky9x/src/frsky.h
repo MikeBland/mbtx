@@ -111,14 +111,19 @@
 #define FR_CELLS_TOTAL2			    82
 #define FR_SBEC_VOLT				    83
 #define FR_SBEC_CURRENT			    84
+#define FR_VFR							    85
+#define FR_CUST7			          86
+#define FR_CUST8			          87
+#define FR_CUST9			          88
+#define FR_CUST10			          89
 
-#define FR_TRASH			85  // Used for invalid id
+#define FR_TRASH			90  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
 #define FR_SPORT_GALT	0xFE
 
-#define HUBDATALENGTH  86
+#define HUBDATALENGTH  (FR_TRASH+1)
 //#define HUBDATALENGTH 44
 #define HUBMINMAXLEN	9
 #define HUBOFFSETLEN	7			// Items with an offset field
@@ -222,6 +227,7 @@ DataID Meaning       Unit   Range   Note
 #define BATT_ID            0xf104
 #define SWR_ID             0xf105
 #define XJT_VERSION_ID     0xf106
+#define VFR_ID				     0xf010
 
 // Special
 #define UART_FIRST_ID      0xFD00
@@ -590,6 +596,26 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define MODULE_ADDRESS                 0xEE
 
 // Frame id
+//#define GPS_ID                         0x02
+//#define CF_VARIO_ID                    0x07
+//#define BATTERY_ID                     0x08
+//#define LINK_ID                        0x14
+//#define CHANNELS_ID                    0x16
+//#define LINK_RX_ID                     0x1C
+//#define LINK_TX_ID                     0x1D
+//#define ATTITUDE_ID                    0x1E
+//#define FLIGHT_MODE_ID                 0x21
+//#define PING_DEVICES_ID                0x28
+//#define DEVICE_INFO_ID                 0x29
+//#define REQUEST_SETTINGS_ID            0x2A
+//#define COMMAND_ID                     0x32
+//#define RADIO_ID                       0x3A
+
+//#define UART_SYNC                      0xC8
+//#define SUBCOMMAND_CRSF                0x10
+//#define COMMAND_MODEL_SELECT_ID        0x05
+
+// Frame id
 #define CRSF_GPS_ID                         0x02
 #define CRSF_BATTERY_ID                     0x08
 #define CRSF_LINK_ID                        0x14
@@ -680,10 +706,20 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define LOG_CUST4	  71
 #define LOG_CUST5	  72
 #define LOG_CUST6	  73
-#define LOG_CTOTAL1 74
-#define LOG_CTOTAL2 75
-#define LOG_SBECV		76
-#define LOG_SBECA		77
+
+#define LOG_FMD			74
+#define LOG_RUNT		75
+#define LOG_MODT    76
+
+#define LOG_CTOTAL1 77
+#define LOG_CTOTAL2 78
+#define LOG_SBECV		79
+#define LOG_SBECA		80
+#define LOG_VFR			81
+#define LOG_CUST7	  82
+#define LOG_CUST8	  83
+#define LOG_CUST9	  84
+#define LOG_CUST10  85
 
 #define LOG_STK_THR 100
 #define LOG_STK_AIL 101

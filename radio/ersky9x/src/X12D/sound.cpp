@@ -163,6 +163,11 @@ void start_sound()
 		GPIOI->BSRRL = 0x0200 ; // set PWR_GPIO_PIN_ON pin to 1
 //	}
 
+#if defined(PCBT18)
+		// Un Mute
+		configure_pins( GPIO_Pin_7, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS2 | PIN_PORTA | PIN_LOW ) ;
+#endif
+
 	// TODO - for volume, shared with EEPROM?
 	//init_twi() ;
 }

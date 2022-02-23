@@ -207,7 +207,7 @@ extern void lcd_puts_P( uint8_t x, uint8_t y, const char *s ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_HiResimg( uint16_t i_x, uint16_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
-extern void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
+extern void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, uint8_t *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground) ;
 extern void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour = LCD_BLACK, uint16_t background = LcdBackground ) ;
 extern void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background = LcdBackground  ) ;
@@ -240,7 +240,8 @@ extern void waitLcdClearDdone( void ) ;
 extern uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len, uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
-extern void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
+extern void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background ) ;
+extern void lcdDrawCharBitmapMediumDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void lcd_hlineStip( uint16_t x, uint16_t y, int16_t w, uint8_t pat ) ;
 extern void lcd_hline( uint16_t x, uint16_t y, int16_t w ) ;
 extern void lcd_vline( uint16_t x, uint16_t y, int8_t h ) ;

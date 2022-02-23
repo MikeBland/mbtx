@@ -165,6 +165,10 @@ struct t_serial_tx *Current_Com3 ;
 struct t_serial_tx *Current_Com3 ;
 #endif
 
+#ifdef PCBXLITES
+struct t_serial_tx *Current_Com3 ;
+#endif
+
 #if defined(PCBX9LITE) && defined(X9LS)
 struct t_serial_tx *Current_Com3 ;
 #endif 
@@ -5287,6 +5291,30 @@ uint32_t accessSportPacketSend( uint8_t *pdata, uint16_t index )
 }
 #endif
 
+#if defined(PCBX9LITE)
+uint32_t xjtLiteSportPacketSend( uint8_t *pdata, uint16_t index )
+{
+	if ( pdata == 0 )	// Test for buffer available
+	{
+		return TelemetryTx.sportCount ? 0 : 1 ;
+	}
+
+	uint32_t i ;
+	
+//	TelemetryTx.AccessSportTx.module_destination = index >> 8 ;
+	TelemetryTx.AccessSportTx.data[0] = index ;
+	for ( i = 1 ; i < 8 ; i += 1 )
+	{
+		TelemetryTx.AccessSportTx.data[i] = *pdata++ ;
+	}
+	TelemetryTx.AccessSportTx.module_destination = 0 ;
+	TelemetryTx.AccessSportTx.ptr = TelemetryTx.AccessSportTx.data ;
+	TelemetryTx.AccessSportTx.index = 0xFF ;	// Prevent SPort taking data
+	TelemetryTx.sportCount = 8 ;
+	return 1 ;
+}
+#endif
+
 
 // Auto choose between SPort and Access:
 
@@ -5305,6 +5333,12 @@ uint32_t sportPacketSend( uint8_t *pdata, uint16_t index )
 		{
 			return accessSportPacketSend( pdata, index ) ;
 		}
+	}
+#endif
+#if defined(PCBX9LITE)
+	if ( g_model.Module[1].protocol == PROTO_PXX )
+	{
+		return xjtLiteSportPacketSend( pdata, index ) ;
 	}
 #endif
 

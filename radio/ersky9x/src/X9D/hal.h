@@ -218,6 +218,12 @@
  #define	PIN_SW_C_H		        GPIO_Pin_3	//PE.03
  #define	PIN_SW_D_L		        GPIO_Pin_4	//PB.04
  #define	PIN_SW_D_H		        GPIO_Pin_5	//PB.05
+
+ #if defined(PCBXLITES)
+ #define	PIN_SW_E			        GPIO_Pin_5	//PE.05
+ #define	PIN_SW_F			        GPIO_Pin_3	//PC.03
+ #endif
+
 #endif  // PCBXLITE
   
 #ifdef PCBX9LITE
@@ -1081,8 +1087,10 @@
 #define PWR_PRESS_BUTTON	// power on a button, not a switch
 
   #define STATUS_LEDS
+ #ifndef PCBXLITES
   #define LED_GREEN_GPIO                GPIOE
   #define LED_GREEN_GPIO_PIN            GPIO_Pin_5  // PE.05
+ #endif
   #define LED_RED_GPIO                  GPIOE
   #define LED_RED_GPIO_PIN              GPIO_Pin_4  // PE.04
   #define LED_BLUE_GPIO                 GPIOE
@@ -1092,8 +1100,13 @@
   #define INTMODULE_RCC_AHB1Periph      (RCC_AHB1Periph_GPIOB | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_DMA2)
   #define INTMODULE_RCC_APB1Periph      RCC_APB1Periph_TIM12
   #define INTMODULE_RCC_APB2Periph      RCC_APB2Periph_USART1
+ #ifdef PCBXLITES
+  #define INTMODULE_PWR_GPIO            GPIOA
+  #define INTMODULE_PWR_GPIO_PIN        GPIO_Pin_15  // PA.15
+ #else
   #define INTMODULE_PWR_GPIO            GPIOD
   #define INTMODULE_PWR_GPIO_PIN        GPIO_Pin_9  // PD.09
+ #endif
   #define INTMODULE_TX_GPIO             GPIOB
   #define INTMODULE_TX_GPIO_PIN         GPIO_Pin_6  // PB.06
   #define INTMODULE_RX_GPIO             GPIOB
@@ -1159,18 +1172,34 @@
   #define HEARTBEAT_GPIO                GPIOD
   #define HEARTBEAT_GPIO_PIN            GPIO_Pin_15 // PD.15
 
+ #ifdef PCBXLITES
   #define BACKLIGHT_RCC_AHB1Periph      RCC_AHB1Periph_GPIOA
   #define BACKLIGHT_RCC_APB1Periph      0
   #define BACKLIGHT_RCC_APB2Periph      RCC_APB2Periph_TIM1
   #define BACKLIGHT_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
   #define BACKLIGHT_TIMER               TIM1
   #define BACKLIGHT_GPIO                GPIOA
-  #define BACKLIGHT_GPIO_PIN            GPIO_Pin_8 // PA.8
+  #define BACKLIGHT_GPIO_PIN            GPIO_Pin_10 // PA.10
   #define BACKLIGHT_GPIO_PinSource      GPIO_PinSource10
   #define BACKLIGHT_GPIO_AF             GPIO_AF_TIM1
   #define BACKLIGHT_CCMR2               TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_2 // Channel 3, PWM
   #define BACKLIGHT_CCER                TIM_CCER_CC3E
   #define BACKLIGHT_COUNTER_REGISTER    BACKLIGHT_TIMER->CCR3
+
+ #else
+  #define BACKLIGHT_RCC_AHB1Periph      RCC_AHB1Periph_GPIOA
+  #define BACKLIGHT_RCC_APB1Periph      0
+  #define BACKLIGHT_RCC_APB2Periph      RCC_APB2Periph_TIM1
+  #define BACKLIGHT_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
+  #define BACKLIGHT_TIMER               TIM1
+  #define BACKLIGHT_GPIO                GPIOA
+	#define BACKLIGHT_GPIO_PIN            GPIO_Pin_8 // PA.8
+  #define BACKLIGHT_GPIO_PinSource      GPIO_PinSource8
+  #define BACKLIGHT_GPIO_AF             GPIO_AF_TIM1
+  #define BACKLIGHT_CCMR1               TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_2 // Channel 1, PWM
+  #define BACKLIGHT_CCER                TIM_CCER_CC1E
+  #define BACKLIGHT_COUNTER_REGISTER    BACKLIGHT_TIMER->CCR1
+ #endif
 
 // LCD
   #define LCD_RCC_AHB1Periph            (RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_DMA1)
@@ -1215,7 +1244,7 @@
   #define HAPTIC_GPIO_AF                GPIO_AF_TIM2
   #define HAPTIC_TIMER                  TIM2
   #define HAPTIC_TIMER_FREQ             (PERI1_FREQUENCY * TIMER_MULT_APB1)
-  #define HAPTIC_COUNTER_REGISTER       HAPTIC_TIMER->CCR2
+  #define HAPTIC_COUNTER_REGISTER       CCR2
   #define HAPTIC_CCMR1                  TIM_CCMR1_OC2M_1 | TIM_CCMR1_OC2M_2
   #define HAPTIC_CCER                   TIM_CCER_CC2E
   #define BACKLIGHT_BDTR                TIM_BDTR_MOE
@@ -1249,8 +1278,14 @@
 	#define GPIOPWRSENSE                  GPIOA
 	#define PIN_PWR_STATUS                GPIO_Pin_7  // PA.07
 
-	#define GPIOPWRINT                      GPIOD
+ #ifdef PCBXLITES
+ 	#define GPIOPWRINT                      GPIOA
+	#define PIN_INT_RF_PWR                  GPIO_Pin_15	// PA15
+ #else
+ 	#define GPIOPWRINT                      GPIOD
 	#define PIN_INT_RF_PWR                  GPIO_Pin_9	// PD9
+ #endif	
+	
 	#define GPIOPWREXT                      GPIOD
 	#define PIN_EXT_RF_PWR                  GPIO_Pin_11  // PD.11
 	#define GPIOPWRSPORT                    GPIOD
@@ -1452,6 +1487,24 @@
 //  #define BT_DMA_Channel_RX             DMA_Channel_4
 
 #endif // REV19
+
+// Second I2C Bus: IMU
+#if defined(PCBXLITES)
+  #define GYRO_RCC_AHB1Periph           (RCC_AHB1Periph_GPIOA | RCC_AHB1Periph_GPIOC)
+  #define GYRO_RCC_APB1Periph           RCC_APB1Periph_I2C3
+  #define I2CX                          I2C3
+  #define I2CX_SCL_GPIO                 GPIOA
+  #define I2CX_SCL_GPIO_PIN             GPIO_Pin_8  // PA.08
+  #define I2CX_SDA_GPIO                 GPIOC
+  #define I2CX_SDA_GPIO_PIN             GPIO_Pin_9  // PC.09
+  #define I2CX_GPIO_AF                  GPIO_AF_I2C3
+  #define I2CX_SCL_GPIO_PinSource       GPIO_PinSource8
+  #define I2CX_SDA_GPIO_PinSource       GPIO_PinSource9
+  #define I2CX_SPEED                    400000
+#else
+  #define GYRO_RCC_AHB1Periph           0
+  #define GYRO_RCC_APB1Periph           0
+#endif
 
 
 #endif // HAL

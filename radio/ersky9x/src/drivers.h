@@ -366,6 +366,13 @@ void com3Stop( void ) ;
 void Com3SetBaudrate ( uint32_t baudrate ) ;
 #endif
 
+#if defined(PCBXLITES)
+void com3Init( uint32_t baudrate ) ;
+void com3Parity( uint32_t even ) ;
+void com3Stop( void ) ;
+void Com3SetBaudrate ( uint32_t baudrate ) ;
+#endif
+
 
 #if defined(PCBX12D) || defined(PCBX10)
 void USART6_configure( void ) ;

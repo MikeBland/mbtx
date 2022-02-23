@@ -1341,6 +1341,7 @@ const char *writeGeneral()
 {
 	uint32_t result	;
 	result = xwriteFile( RADIO_PATH "/radio.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
+	result = xwriteFile( RADIO_PATH "/radiosky.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
   return result ? 0 : "ERROR" ;
 }
 
@@ -1484,6 +1485,18 @@ const char *readGeneral()
 	}
 	// Possibly openTx file!!
 	f_rename ( (TCHAR *)RADIO_PATH "/radio.bin", (TCHAR *)RADIO_PATH "/radioopn.bin" ) ;
+  memset(&g_eeGeneral, 0, sizeof(EEGeneral));
+	result = xloadFile( RADIO_PATH "/radiosky.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
+	
+	if ( result == 0 )
+	{
+		return "ERROR" ;
+	}
+  sum = evalChkSum() ;
+  if ( g_eeGeneral.chkSum == sum )
+	{
+		return 0 ;
+	}
 	return "ERROR" ;
 }
 

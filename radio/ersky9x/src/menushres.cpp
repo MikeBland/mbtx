@@ -1095,7 +1095,7 @@ void hiresBars( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour,
 			lcdDrawSolidFilledRectDMA( x, y+1, width, 20, colour ) ; // LCD_RGB565(0,20,20) ) ;	// Use colour?
 			lcdHiresPutsTransparent( xpos + 5, y+4, (char *)"CH", lineColour ) ;
 
-			if ( i > 8 )
+			if ( start > 8 )
 			{
 				lcdDrawCharBitmapTransparent( xpos + 5 + 24, y+4, (start+1)/10+'0', 0, lineColour ) ;
 				lcdDrawCharBitmapTransparent( xpos + 5 + 24+12, y+4, (start+1)%10+'0', 0, lineColour ) ;

@@ -392,7 +392,10 @@ extern uint32_t sdMounted( void ) ;
 //	{
 //  	f_puts( FrskyTelemetryType == FRSKY_TEL_SPORT ? ",Swr" : ",TxRSSI", &g_oLogFile ) ;
 //	}
-  if ( g_model.DsmTelemetry )
+  
+	singleHeading( LOG_VFR, ",VFR" ) ;
+	
+	if ( g_model.DsmTelemetry )
 	{
 		f_puts(",Fades,Holds", &g_oLogFile) ;
 	}
@@ -652,18 +655,18 @@ void writeLogs()
 	div_t qr ;
   UINT written ;
 
-      if (!g_oLogFile.fs)
+  if (!g_oLogFile.fs)
+	{
+    const char * result = openLogs();
+    if (result != NULL)
+		{
+      if (result != error_displayed)
 			{
-        const char * result = openLogs();
-        if (result != NULL)
-				{
-          if (result != error_displayed)
-					{
-            error_displayed = result ;
-          }
-          return ;
-        }
+        error_displayed = result ;
       }
+      return ;
+    }
+  }
 
 	if ( RawLogging )
 	{
@@ -679,7 +682,7 @@ void writeLogs()
 
 #ifdef OPENTX_FORMAT
 		  f_puts((TCHAR *)LogDate, &g_oLogFile) ;
-      f_printf(&g_oLogFile, "%02d:%02d:%02d.%03d", Time.hour, Time.minute, Time.second, ( LogTimer & 1  ) ? 5 : 0 ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
+      f_printf(&g_oLogFile, "%02d:%02d:%02d.%03d", Time.hour, Time.minute, Time.second, ( LogTimer & 1  ) ? 500 : 0 ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
 #else
       f_printf(&g_oLogFile, "%02d:%02d:%02d", Time.hour, Time.minute, Time.second ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
 #endif
@@ -695,6 +698,8 @@ void writeLogs()
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RXRSI_COPY] ) ;
 //      }
 			logSingleNumber( LOG_TSSI, FrskyHubData[FR_TXRSI_COPY] ) ;
+
+			logSingleNumber( LOG_VFR, FrskyHubData[FR_VFR] ) ;
 //			if ( isLogEnabled( LOG_TSSI ) )
 //			{
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TXRSI_COPY]) ;

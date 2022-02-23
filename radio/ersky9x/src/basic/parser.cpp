@@ -43,6 +43,7 @@
 //EVT_VIRTUAL_DEC 	for VALUES navigation
 //EVT_VIRTUAL_DEC_REPT 	for VALUES navigation
 
+//#define LARGE_DIMENSION		1
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
@@ -727,11 +728,13 @@ union t_program
 
 #ifdef	QT
 union t_program Program ;
+union t_program *Pprogram = &Program ;
 #define PROGRAM_SIZE	MIN_PROGRAM_SIZE
 #else
 //extern uint32_t _ebss ;
 //extern uint8_t *_heap_end ;
 union t_program Program ;
+union t_program *Pprogram = &Program ;
 //union t_program& Program = (union t_program &)_ebss ;
 #define PROGRAM_SIZE	MIN_PROGRAM_SIZE
 //#define PROGRAM_SIZE	(_heap_end-_ebss)
@@ -739,7 +742,7 @@ union t_program Program ;
 
 uint32_t programStart()
 {
-	return (uint32_t) &Program.Bytes[0] ;
+	return (uint32_t) &Pprogram->Bytes[0] ;
 }
 
 uint32_t StartOfSymbols ;
@@ -1431,9 +1434,9 @@ uint8_t *appendSymbols( uint8_t *p )
 {
 	uint8_t *r ;
 	uint32_t value ;
-	r = &Program.Bytes[StartOfSymbols] ;
+	r = &Pprogram->Bytes[StartOfSymbols] ;
   p = cpystr( p, (uint8_t *)"\nSymbols\n" ) ;
-	while ( r < &Program.Bytes[EndOfSymbols] )
+	while ( r < &Pprogram->Bytes[EndOfSymbols] )
 	{
     uint8_t *q = r ;
     q += *r++ ;
@@ -1469,7 +1472,7 @@ uint8_t *appendSymbols( uint8_t *p )
 			break ;
 		}
 	}
-	r = &Program.Bytes[StartOfSymbols] ;
+	r = &Pprogram->Bytes[StartOfSymbols] ;
 	uint32_t i ;
 	uint32_t j ;
 	j = 0 ;
@@ -1487,7 +1490,7 @@ uint8_t *appendSymbols( uint8_t *p )
 		}
 	}
   p = cpystr( p, (uint8_t *)"\nCode:\n" ) ;
-	r = &Program.Bytes[0] ;
+	r = &Pprogram->Bytes[0] ;
 	j = 0 ;
 	if ( p < &Data[DATA_SIZE-9000] )
   for ( i = 0 ; i < 1280+512 ; i += 1 )
@@ -1515,14 +1518,14 @@ int32_t findSymbol( uint8_t type )
 //	uint32_t tindex ;
 //	uint32_t i ;
 
-	tstart = &Program.Bytes[StartOfSymbols] ;
-	while ( tstart < &Program.Bytes[EndOfSymbols] )
+	tstart = &Pprogram->Bytes[StartOfSymbols] ;
+	while ( tstart < &Pprogram->Bytes[EndOfSymbols] )
 	{
     if ( !strcmp( Token, (char *)(tstart+3) ) )
 		{
 			if ( *(tstart+1) == type )
 			{
-      	return tstart - Program.Bytes ; // [StartOfSymbols] ;
+      	return tstart - Pprogram->Bytes ; // [StartOfSymbols] ;
 			}
 		}
 		tstart += *tstart ;
@@ -1539,34 +1542,36 @@ void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimensi
 	
 	end = EndOfSymbols ;
 	tstart = end++ ;
-	Program.Bytes[end++] = type ;
+	Pprogram->Bytes[end++] = type ;
 	tindex = end++ ;
 	i = 0 ;
 	while ( Token[i] )
 	{
-		Program.Bytes[end++] = Token[i++] ;
+		Pprogram->Bytes[end++] = Token[i++] ;
 	}
-	Program.Bytes[tindex] = end - tindex ;
-	Program.Bytes[end++] = '\0' ;
+	Pprogram->Bytes[tindex] = end - tindex ;
+	Pprogram->Bytes[end++] = '\0' ;
 	if ( type != SYM_CONST )
 	{
-		Program.Bytes[end++] = sub_type ;
-		Program.Bytes[end++] = value ;
-		Program.Bytes[end++] = value >> 8 ;
+		Pprogram->Bytes[end++] = sub_type ;
+		Pprogram->Bytes[end++] = value ;
+		Pprogram->Bytes[end++] = value >> 8 ;
 		if ( sub_type & SYM_VAR_ARRAY_TYPE )
 		{
-			Program.Bytes[end++] = dimension ;
-//			Program.Bytes[end++] = dimension >> 8 ;
+			Pprogram->Bytes[end++] = dimension ;
+#ifdef LARGE_DIMENSION
+			Pprogram->Bytes[end++] = dimension >> 8 ;
+#endif
 		}
 	}
 	else
 	{
-		Program.Bytes[end++] = value ;
-		Program.Bytes[end++] = value >> 8 ;
-		Program.Bytes[end++] = dimension  ;
-		Program.Bytes[end++] = dimension  >> 8 ;
+		Pprogram->Bytes[end++] = value ;
+		Pprogram->Bytes[end++] = value >> 8 ;
+		Pprogram->Bytes[end++] = dimension  ;
+		Pprogram->Bytes[end++] = dimension  >> 8 ;
 	}
-	Program.Bytes[tstart] = end - tstart ;
+	Pprogram->Bytes[tstart] = end - tstart ;
 	EndOfSymbols = end ;
 }
 
@@ -1785,8 +1790,8 @@ uint32_t loadBasic( char *fileName, uint32_t type )
 
 void setJumpAddress( uint32_t offset, uint32_t value )
 {
-	Program.Bytes[offset] = value ;
-	Program.Bytes[offset+1] = value >> 8 ;
+	Pprogram->Bytes[offset] = value ;
+	Pprogram->Bytes[offset+1] = value >> 8 ;
 }
 
 
@@ -1795,10 +1800,10 @@ void setLinkedJumpAddress( uint32_t offset, uint32_t value )
 	uint32_t index ;
   do
 	{
-		index = Program.Bytes[offset] ;
-		index += Program.Bytes[offset+1] << 8 ;
-		Program.Bytes[offset++] = value ;
-		Program.Bytes[offset] = value >> 8 ;
+		index = Pprogram->Bytes[offset] ;
+		index += Pprogram->Bytes[offset+1] << 8 ;
+		Pprogram->Bytes[offset++] = value ;
+		Pprogram->Bytes[offset] = value >> 8 ;
 		offset = index ;
 	} while ( index ) ;
 }
@@ -1827,16 +1832,16 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	uint32_t type ;
 	uint8_t code ;
 	// Found
-	index += Program.Bytes[index] - 3 ; // Index of index
-	type = Program.Bytes[index-1] ;
-	dimension = Program.Bytes[index+2] ;
-	index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+	index += Pprogram->Bytes[index] - 3 ; // Index of index
+	type = Pprogram->Bytes[index-1] ;
+	dimension = Pprogram->Bytes[index+2] ;
+	index = Pprogram->Bytes[index] | (Pprogram->Bytes[index+1] << 8) ;
 	
-//	index += Program.Bytes[index] - 4 ; // Index of index
-//	type = Program.Bytes[index-1] ;
-//	dimension = Program.Bytes[index+2] ;
-//	dimension |= Program.Bytes[index+3] << 8 ;
-//	index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+//	index += Pprogram->Bytes[index] - 4 ; // Index of index
+//	type = Pprogram->Bytes[index-1] ;
+//	dimension = Pprogram->Bytes[index+2] ;
+//	dimension |= Pprogram->Bytes[index+3] << 8 ;
+//	index = Pprogram->Bytes[index] | (Pprogram->Bytes[index+1] << 8) ;
 	
 	code = 0x64 ;
 	if ( type == SYM_VAR_ARRAY_BYTE )
@@ -1848,38 +1853,42 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 		code |= 0x08 ;
 	}
 
-//	if ( dimension > 255 )
-//	{
-//		code |= 0x01 ;
-//	}
-	
-	Program.Bytes[cPosition++] = code ;
-	Program.Bytes[cPosition++] = index ;
+#ifdef LARGE_DIMENSION
+	if ( dimension > 255 )
+	{
+		code |= 0x01 ;
+	}
+#endif
+	 
+	Pprogram->Bytes[cPosition++] = code ;
+	Pprogram->Bytes[cPosition++] = index ;
 	if ( code &= 0x08 )
 	{
-		Program.Bytes[cPosition++] = index >> 8 ;
+		Pprogram->Bytes[cPosition++] = index >> 8 ;
 	}
-	Program.Bytes[cPosition++] = dimension ;
-//	if ( code & 1 )
-//	{
-//		Program.Bytes[cPosition++] = dimension >> 8 ;
-//	}
+	Pprogram->Bytes[cPosition++] = dimension ;
+#ifdef LARGE_DIMENSION
+	if ( code & 1 )
+	{
+		Pprogram->Bytes[cPosition++] = dimension >> 8 ;
+	}
+#endif
 	return cPosition ;
 }
 
 uint32_t setNgotoLocation(uint32_t cPosition )
 {
-//	Program.Bytes[cPosition++] = NGOTO ;
+//	Pprogram->Bytes[cPosition++] = NGOTO ;
 //	NgotoLocation = cPosition ;
-//	Program.Bytes[cPosition++] = 0 ;
-//	Program.Bytes[cPosition++] = 0 ;
+//	Pprogram->Bytes[cPosition++] = 0 ;
+//	Pprogram->Bytes[cPosition++] = 0 ;
 	
 	uint32_t index ;
-	Program.Bytes[cPosition++] = NGOTO ;
+	Pprogram->Bytes[cPosition++] = NGOTO ;
   index = NgotoLocation ;
 	NgotoLocation = cPosition ;
-	Program.Bytes[cPosition++] = index ;
-	Program.Bytes[cPosition++] = index >> 8 ;
+	Pprogram->Bytes[cPosition++] = index ;
+	Pprogram->Bytes[cPosition++] = index >> 8 ;
 	return cPosition ;
 }
 
@@ -1915,14 +1924,14 @@ uint32_t partLoadBasic()
 		if ( j < 200 )
 		{
 			j = 300 - j ;
-      uint8_t *ps = &Program.Bytes[EndOfSymbols] ;
+      uint8_t *ps = &Pprogram->Bytes[EndOfSymbols] ;
 			uint8_t *pd = ps + j ;
-			if ( pd >= &Program.Bytes[PROGRAM_SIZE] )
+			if ( pd >= &Pprogram->Bytes[PROGRAM_SIZE] )
 			{
 				serror( SE_TOO_LARGE ) ;
 				break ;
 			}
-			while ( ps >= &Program.Bytes[StartOfSymbols] )
+			while ( ps >= &Pprogram->Bytes[StartOfSymbols] )
 			{
 				*pd-- = *ps-- ;
 			}
@@ -1940,8 +1949,8 @@ uint32_t partLoadBasic()
 			cPosition -= 2 ; // Remove line number if whole line is a REM
 		}
 		lineNumberPosition = cPosition ;
-		Program.Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
-		Program.Bytes[cPosition++] = LineNumber >> 7 ;
+		Pprogram->Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
+		Pprogram->Bytes[cPosition++] = LineNumber >> 7 ;
 		processWhile = 0 ;
 		processIf = 0 ;
 		if ( q )
@@ -2117,18 +2126,18 @@ uint32_t partLoadBasic()
 							{
 								uint32_t index ;
 								processIf = 2 ;
-								Program.Bytes[cPosition++] = GOTO ;
+								Pprogram->Bytes[cPosition++] = GOTO ;
 	//              CodeControl[ControlIndex].type = TYPE_ELSE ;
             	  index = CodeControl[ControlIndex].middle ;
 								CodeControl[ControlIndex].middle = cPosition ;
-								Program.Bytes[cPosition++] = index ;
-            	  Program.Bytes[cPosition++] = index >> 8 ;
-	//							Program.Bytes[cPosition++] = 0 ;
-	//              Program.Bytes[cPosition++] = 0 ;
+								Pprogram->Bytes[cPosition++] = index ;
+            	  Pprogram->Bytes[cPosition++] = index >> 8 ;
+	//							Pprogram->Bytes[cPosition++] = 0 ;
+	//              Pprogram->Bytes[cPosition++] = 0 ;
 								setJumpAddress( CodeControl[ControlIndex].first, cPosition ) ;
             	  ControlIndex += 1 ;
-								Program.Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
-								Program.Bytes[cPosition++] = LineNumber >> 7 ;
+								Pprogram->Bytes[cPosition++] = ( LineNumber & 0x7F ) | 0x80 ;
+								Pprogram->Bytes[cPosition++] = LineNumber >> 7 ;
 							}
 							else
 							{
@@ -2152,14 +2161,14 @@ uint32_t partLoadBasic()
 							if ( CodeControl[ControlIndex].type == TYPE_IF )
 							{
 								uint32_t index ;
-								Program.Bytes[cPosition++] = GOTO ;
+								Pprogram->Bytes[cPosition++] = GOTO ;
             	  CodeControl[ControlIndex].type = TYPE_ELSE ;
             	  index = CodeControl[ControlIndex].middle ;
 								CodeControl[ControlIndex].middle = cPosition ;
-								Program.Bytes[cPosition++] = index ;
-            	  Program.Bytes[cPosition++] = index >> 8 ;
-	//							Program.Bytes[cPosition++] = 0 ;
-	//              Program.Bytes[cPosition++] = 0 ;
+								Pprogram->Bytes[cPosition++] = index ;
+            	  Pprogram->Bytes[cPosition++] = index >> 8 ;
+	//							Pprogram->Bytes[cPosition++] = 0 ;
+	//              Pprogram->Bytes[cPosition++] = 0 ;
 								setJumpAddress( CodeControl[ControlIndex].first, cPosition ) ;
 								ControlIndex += 1 ;
 								Tok = 0 ;
@@ -2197,9 +2206,9 @@ uint32_t partLoadBasic()
 							ControlIndex -= 1 ;
 							if ( CodeControl[ControlIndex].type == TYPE_WHILE )
 							{
-								Program.Bytes[cPosition++] = GOTO ;
-								Program.Bytes[cPosition++] = CodeControl[ControlIndex].first ;
-                Program.Bytes[cPosition++] = CodeControl[ControlIndex].first >> 8 ;
+								Pprogram->Bytes[cPosition++] = GOTO ;
+								Pprogram->Bytes[cPosition++] = CodeControl[ControlIndex].first ;
+                Pprogram->Bytes[cPosition++] = CodeControl[ControlIndex].first >> 8 ;
 								setLinkedJumpAddress( CodeControl[ControlIndex].middle, cPosition ) ;
 							}
 							else if ( CodeControl[ControlIndex].type == TYPE_IF )
@@ -2230,11 +2239,11 @@ uint32_t partLoadBasic()
 							if ( CodeControl[ControlIndex].type == TYPE_WHILE )
 							{
 								uint32_t index ;
-								Program.Bytes[cPosition++] = GOTO ;
+								Pprogram->Bytes[cPosition++] = GOTO ;
             	  index = CodeControl[ControlIndex].middle ;
 								CodeControl[ControlIndex].middle = cPosition ;
-								Program.Bytes[cPosition++] = index ;
-            	  Program.Bytes[cPosition++] = index >> 8 ;
+								Pprogram->Bytes[cPosition++] = index ;
+            	  Pprogram->Bytes[cPosition++] = index >> 8 ;
                 break ;
 							}
 							else
@@ -2263,7 +2272,7 @@ uint32_t partLoadBasic()
 //#endif
 						if ( Tok )
 						{
-							Program.Bytes[cPosition++] = Tok ;
+							Pprogram->Bytes[cPosition++] = Tok ;
 						}
 					}
 					else
@@ -2276,10 +2285,10 @@ uint32_t partLoadBasic()
 						}
 						if ( processWhile )
 						{
-							Program.Bytes[cPosition++] = NGOTO ;
+							Pprogram->Bytes[cPosition++] = NGOTO ;
 							CodeControl[ControlIndex].middle = cPosition ;
-							Program.Bytes[cPosition++] = 0 ;
-							Program.Bytes[cPosition++] = 0 ;
+							Pprogram->Bytes[cPosition++] = 0 ;
+							Pprogram->Bytes[cPosition++] = 0 ;
 							ControlIndex += 1 ;
 							processWhile = 0 ;
 						}
@@ -2290,11 +2299,11 @@ uint32_t partLoadBasic()
 							{
               	ControlIndex -= 1 ;
 							}
-							Program.Bytes[cPosition++] = THEN ;
-							Program.Bytes[cPosition++] = NGOTO ;
+							Pprogram->Bytes[cPosition++] = THEN ;
+							Pprogram->Bytes[cPosition++] = NGOTO ;
 							CodeControl[ControlIndex].first = cPosition ;
-							Program.Bytes[cPosition++] = 0 ;
-							Program.Bytes[cPosition++] = 0 ;
+							Pprogram->Bytes[cPosition++] = 0 ;
+							Pprogram->Bytes[cPosition++] = 0 ;
               ControlIndex += 1 ;
 							processIf = 0 ;
 						}
@@ -2302,7 +2311,7 @@ uint32_t partLoadBasic()
 						uint32_t i ;
 						for ( i = 0 ; i < 200 ; i += 1 )
 						{
-              CodeBuffer[i] = Program.Bytes[i] ;
+              CodeBuffer[i] = Pprogram->Bytes[i] ;
 						}
 #endif
 					}
@@ -2344,28 +2353,28 @@ uint32_t partLoadBasic()
                 if ( loc == -1 )
 								{
                 	addSymbol( SYM_LABEL, SYM_LAB_REF, cPosition, 0 ) ;
-									Program.Bytes[cPosition++] = 0 ;
-									Program.Bytes[cPosition++] = 0 ;
+									Pprogram->Bytes[cPosition++] = 0 ;
+									Pprogram->Bytes[cPosition++] = 0 ;
 								}
 								else
 								{
-									loc += Program.Bytes[loc] - 3 ; // Index of type
-									type = Program.Bytes[loc] ;
+									loc += Pprogram->Bytes[loc] - 3 ; // Index of type
+									type = Pprogram->Bytes[loc] ;
 									loc += 1 ;
 									if ( type == SYM_LAB_REF )
 									{
-										index = Program.Bytes[loc] ;
-										index += Program.Bytes[loc+1] << 8 ;
+										index = Pprogram->Bytes[loc] ;
+										index += Pprogram->Bytes[loc+1] << 8 ;
 
-										Program.Bytes[loc++] = cPosition ;
-										Program.Bytes[loc] = cPosition >> 8 ;
-										Program.Bytes[cPosition++] = index ;
-										Program.Bytes[cPosition++] = index >> 8 ;
+										Pprogram->Bytes[loc++] = cPosition ;
+										Pprogram->Bytes[loc] = cPosition >> 8 ;
+										Pprogram->Bytes[cPosition++] = index ;
+										Pprogram->Bytes[cPosition++] = index >> 8 ;
 									}
 									else
 									{
-										Program.Bytes[cPosition++] = Program.Bytes[loc++] ;
-										Program.Bytes[cPosition++] = Program.Bytes[loc] ;
+										Pprogram->Bytes[cPosition++] = Pprogram->Bytes[loc++] ;
+										Pprogram->Bytes[cPosition++] = Pprogram->Bytes[loc] ;
 									}
 								}
 							}
@@ -2383,8 +2392,8 @@ uint32_t partLoadBasic()
 								{
 									// Found
 									cPosition = setArray( index, cPosition ) ;
-									Program.Bytes[cPosition++] = 0x48 ;	// number 0
-									Program.Bytes[cPosition++] = ']' ;
+									Pprogram->Bytes[cPosition++] = 0x48 ;	// number 0
+									Pprogram->Bytes[cPosition++] = ']' ;
 									break ;
 								}
 								index = findSymbol( SYM_VARIABLE ) ;
@@ -2405,11 +2414,11 @@ uint32_t partLoadBasic()
 										// Found a constant
 										int32_t value ;
                     uint32_t bytes ;
-                    index += Program.Bytes[index] - 4 ; // Index of value
-										value = Program.Bytes[index++] ;
-										value |= Program.Bytes[index++] << 8 ;
-										value |= Program.Bytes[index++] << 16 ;
-										value |= Program.Bytes[index++] << 24 ;
+                    index += Pprogram->Bytes[index] - 4 ; // Index of value
+										value = Pprogram->Bytes[index++] ;
+										value |= Pprogram->Bytes[index++] << 8 ;
+										value |= Pprogram->Bytes[index++] << 16 ;
+										value |= Pprogram->Bytes[index++] << 24 ;
 							
 										bytes = codeNumeric( value ) ;
 										code = bytes ;
@@ -2442,10 +2451,10 @@ uint32_t partLoadBasic()
 //												bytes = 4 ;
 //											}
 //										}
-										Program.Bytes[cPosition++] = code ;
+										Pprogram->Bytes[cPosition++] = code ;
 										while ( bytes-- )
 										{
-											Program.Bytes[cPosition++] = value ;
+											Pprogram->Bytes[cPosition++] = value ;
 											value >>= 8 ;
 										}
 										constant = 1 ;
@@ -2453,8 +2462,8 @@ uint32_t partLoadBasic()
 								}
 								else
 								{
-									index += Program.Bytes[index] - 2 ; // Index of index
-									index = Program.Bytes[index] | (Program.Bytes[index+1] << 8) ;
+									index += Pprogram->Bytes[index] - 2 ; // Index of index
+									index = Pprogram->Bytes[index] | (Pprogram->Bytes[index+1] << 8) ;
 								}
 								if ( constant == 0 )
 								{
@@ -2463,11 +2472,11 @@ uint32_t partLoadBasic()
 									{
 										code = 0x68 ;
 									}
-									Program.Bytes[cPosition++] = code ;
-									Program.Bytes[cPosition++] = index ;
+									Pprogram->Bytes[cPosition++] = code ;
+									Pprogram->Bytes[cPosition++] = index ;
 									if ( code == 0x68 )
 									{
-										Program.Bytes[cPosition++] = index >> 8 ;
+										Pprogram->Bytes[cPosition++] = index >> 8 ;
 									}
 								}	
 							}
@@ -2523,10 +2532,10 @@ uint32_t partLoadBasic()
 //								code = 0x50 ;
 //								bytes = 4 ;
 //							}
-							Program.Bytes[cPosition++] = code ;
+							Pprogram->Bytes[cPosition++] = code ;
 							while ( bytes-- )
 							{
-								Program.Bytes[cPosition++] = value ;
+								Pprogram->Bytes[cPosition++] = value ;
 								value >>= 8 ;
 							}
 						}	
@@ -2545,10 +2554,10 @@ uint32_t partLoadBasic()
 							bytes = codeNumeric( value ) ;
 							code = bytes ;
 							bytes >>= 8 ;
-							Program.Bytes[cPosition++] = code ;
+							Pprogram->Bytes[cPosition++] = code ;
 							while ( bytes-- )
 							{
-								Program.Bytes[cPosition++] = value ;
+								Pprogram->Bytes[cPosition++] = value ;
 								value >>= 8 ;
 							}
 						}
@@ -2572,7 +2581,7 @@ uint32_t partLoadBasic()
 //								*p++ = Token[0] ;
 //							}
 //#endif
-							Program.Bytes[cPosition++] = Token[0] ;
+							Pprogram->Bytes[cPosition++] = Token[0] ;
 						}
 						break ;
 						case LABEL :
@@ -2592,8 +2601,8 @@ uint32_t partLoadBasic()
 							}
 							else
 							{
-								loc += Program.Bytes[loc] - 3 ; // Index of type
-								type = Program.Bytes[loc] ;
+								loc += Pprogram->Bytes[loc] - 3 ; // Index of type
+								type = Pprogram->Bytes[loc] ;
 								if ( type == SYM_LAB_DEF )
 								{
 									serror( SE_DUP_LABEL ) ; // Duplicate label
@@ -2601,7 +2610,7 @@ uint32_t partLoadBasic()
 								else
 								{
 									// A ref, these need updating
-									Program.Bytes[loc] = SYM_LAB_DEF ;
+									Pprogram->Bytes[loc] = SYM_LAB_DEF ;
                   loc += 1 ;
 									setLinkedJumpAddress( loc, cPosition ) ;
 								}
@@ -2614,17 +2623,17 @@ uint32_t partLoadBasic()
               uint8_t c ;
 							uint32_t count ;
               temp = (uint8_t *)Token ;
-							Program.Bytes[cPosition++] = 0x70 ;
+							Pprogram->Bytes[cPosition++] = 0x70 ;
 							count = *temp + 1 ;
 							do
 							{
 								c = *temp++ ;
-								Program.Bytes[cPosition++] = c ;
+								Pprogram->Bytes[cPosition++] = c ;
 							} while ( --count ) ;
 						}	
 						if ( *ProgPtr == '[' )
 						{
-							Program.Bytes[cPosition++] = '[' ;
+							Pprogram->Bytes[cPosition++] = '[' ;
 							ProgPtr += 1 ;
 						}
 						break ;
@@ -2634,8 +2643,8 @@ uint32_t partLoadBasic()
 							inFunction = look_up( Token, InternalFunctions ) ;
 							if ( inFunction )
 							{
-								Program.Bytes[cPosition++] = IN_FUNCTION ;
-								Program.Bytes[cPosition++] = inFunction ;
+								Pprogram->Bytes[cPosition++] = IN_FUNCTION ;
+								Pprogram->Bytes[cPosition++] = inFunction ;
 							}
 							else
 							{
@@ -2645,14 +2654,14 @@ uint32_t partLoadBasic()
 								loc = findSymbol( SYM_FUNCTION ) ;
                 if ( loc != -1 )
 								{
-									loc += Program.Bytes[loc] - 3 ; // Index of type
-									type = Program.Bytes[loc] ;
+									loc += Pprogram->Bytes[loc] - 3 ; // Index of type
+									type = Pprogram->Bytes[loc] ;
 									loc += 1 ;
 									if ( type == SYM_LAB_DEF )
 									{
-										Program.Bytes[cPosition++] = USER_FUNCTION ;
-										Program.Bytes[cPosition++] = Program.Bytes[loc++] ;
-										Program.Bytes[cPosition++] = Program.Bytes[loc] ;
+										Pprogram->Bytes[cPosition++] = USER_FUNCTION ;
+										Pprogram->Bytes[cPosition++] = Pprogram->Bytes[loc++] ;
+										Pprogram->Bytes[cPosition++] = Pprogram->Bytes[loc] ;
 									}
 									else
 									{								
@@ -2727,18 +2736,18 @@ uint32_t partLoadBasic()
 		return 0 ;
 	}
 #define SE_MISSING_END		16
-	Program.Bytes[CurrentPosition++] = STOP ;
+	Pprogram->Bytes[CurrentPosition++] = STOP ;
 	closeFile() ;
 	 
 	CurrentPosition += 3 ;
 	CurrentPosition /= 4 ;	// Rounded word offset
 	i = LoadedScripts[LoadIndex].offsetOfStart / 4 ;
-	Program.Words[i] = CurrentPosition ;
+	Pprogram->Words[i] = CurrentPosition ;
 	j = CurrentPosition*4 + sizeof(struct t_basicRunTime) - (MAX_VARIABLES*4) + (CurrentVariableIndex*4) + CurrentArrayIndex * 4 ;
-	Program.Words[i+1] = j ;
+	Pprogram->Words[i+1] = j ;
 	LoadedScripts[LoadIndex].size = j ;
 
-	RunTime = (struct t_basicRunTime *) &Program.Words[CurrentPosition] ;
+	RunTime = (struct t_basicRunTime *) &Pprogram->Words[CurrentPosition] ;
 	RunTime->IntArrayStart = &RunTime->Vars.Variables[CurrentVariableIndex] ;
 	RunTime->ByteArrayStart = &RunTime->Vars.byteArray[CurrentVariableIndex*4] ;
 
@@ -3197,11 +3206,12 @@ int32_t getPrimitive( uint8_t opcode )	// From variable or number
 				val16 = getVarIndex( opcode ) ;
 				dimension = *RunTime->ExecProgPtr++ ;
 				
-//				if ( opcode & 0x01 )	// 16-bit dimension
-//				{
-//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
-//				}
-
+#ifdef LARGE_DIMENSION
+				if ( opcode & 0x01 )	// 16-bit dimension
+				{
+					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+				}
+#endif
 				value = expression() ;
 				opcode = *RunTime->ExecProgPtr++ ;
 				if ( opcode != ']' )
@@ -3277,10 +3287,12 @@ uint32_t getParamVarAddress( union t_parameter *ptr, uint32_t size )
 			val16 = getVarIndex( opcode ) ;
 			dimension = *RunTime->ExecProgPtr++ ;
 
-//				if ( opcode & 0x01 )	// 16-bit dimension
-//				{
-//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
-//				}
+#ifdef LARGE_DIMENSION
+				if ( opcode & 0x01 )	// 16-bit dimension
+				{
+					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+				}
+#endif
 
 			value = expression() ;
 			opcode = *RunTime->ExecProgPtr++ ;
@@ -3333,11 +3345,11 @@ uint32_t getParamVarAddress( union t_parameter *ptr, uint32_t size )
 
 // Assumes opcode is 0x66, a byte array
 // Needs opcode to handle 16-bit dimensions
-uint32_t getParamByteArrayAddress( struct byteAddress *ptr, uint32_t size )
+uint32_t getParamByteArrayAddress( uint8_t opcode, struct byteAddress *ptr, uint32_t size )
 {
-	uint8_t opcode ;
+//	uint8_t opcode ;
 		
-	ptr->varOffset = getVarIndex( 0x66 ) ;
+	ptr->varOffset = getVarIndex( opcode ) ;
 	ptr->dimension = *RunTime->ExecProgPtr++ ;
 	ptr->varIndex = expression() ;
 	opcode = *RunTime->ExecProgPtr++ ;
@@ -3649,7 +3661,7 @@ void exec_while()
   destination |= *RunTime->ExecProgPtr++ << 8 ;
 	if ( test == 0 )
 	{
-		RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+		RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 	}
 }
 
@@ -3676,7 +3688,7 @@ void exec_if()
 		{
 			if ( !test )
 			{
-				RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+				RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 			}
 		}
 		else
@@ -3696,7 +3708,7 @@ void exec_if()
 					}
 					RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
 				}
-				RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+				RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 			}
 		}
 	}
@@ -3716,7 +3728,7 @@ void exec_goto()
 	{
 		runError( SE_SYNTAX ) ;
 	}
-	RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+	RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 }
 
 void exec_gosub()
@@ -3734,7 +3746,7 @@ void exec_gosub()
 		runError( SE_TOO_MANY_CALLS ) ;
 	}
 	RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
-	RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+	RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 }
 
 void exec_return()
@@ -3813,7 +3825,7 @@ uint32_t get_parameter( union t_parameter *param, uint32_t type )
 		{
 			struct byteAddress baddr ;
 			RunTime->ExecProgPtr += 1 ;
-			if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+			if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 			{
 				return 0 ;
 			}
@@ -5285,10 +5297,12 @@ int32_t exec_filelist()
 		val16 = getVarIndex( opcode ) ;
 		dimension = *RunTime->ExecProgPtr++ ;
 
-//				if ( opcode & 0x01 )	// 16-bit dimension
-//				{
-//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
-//				}
+#ifdef LARGE_DIMENSION
+				if ( opcode & 0x01 )	// 16-bit dimension
+				{
+					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+				}
+#endif
 
 		value = expression() ;
 		opcode = *RunTime->ExecProgPtr++ ;
@@ -5562,7 +5576,7 @@ int32_t exec_strToArray()
 	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 	{
 		struct byteAddress baddr ;
-		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+		if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 		{
 			return 0 ;
 		}
@@ -5630,7 +5644,7 @@ int32_t exec_strToArray()
 				uint32_t dim1 ;
 				uint16_t val16a ;
 				uint32_t valuea ;
-				if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+				if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 				{
 					return 0 ;
 				}
@@ -5707,7 +5721,7 @@ int32_t exec_bytemove()
 	if ( ( opcode & 0xF6 ) == 0x66 )	// A byte array
 	{
 		struct byteAddress baddr ;
-		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+		if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 		{
 			return 0 ;
 		}
@@ -5746,7 +5760,7 @@ int32_t exec_bytemove()
 			uint16_t val16a ;
 			uint32_t valuea ;
 			uint32_t result ;
-			if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+			if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 			{
 				return 0 ;
 			}
@@ -5855,7 +5869,7 @@ void exec_systemStrToArray()
 	{
 		uint32_t dimension ;
 		struct byteAddress baddr ;
-		if ( getParamByteArrayAddress( &baddr, 0 ) == 0 )
+		if ( getParamByteArrayAddress( opcode, &baddr, 0 ) == 0 )
 		{
 			return ;
 		}
@@ -6126,7 +6140,7 @@ void exec_playFile()
 // 	}
 //	callLevel = RunTime->CallIndex ;
 // 	RunTime->CallStack[RunTime->CallIndex++] = RunTime->ExecProgPtr ;
-// 	RunTime->ExecProgPtr = &Program.Bytes[destination] ;
+// 	RunTime->ExecProgPtr = &Pprogram->Bytes[destination] ;
 
 //	execLinesProcessed = 0 ;
 //	while ( execLinesProcessed < 150 )
@@ -6388,10 +6402,12 @@ uint32_t execOneLine()
 				val16 = getVarIndex( opcode ) ;
 				dimension = *RunTime->ExecProgPtr++ ;
 
-//				if ( opcode & 0x01 )	// 16-bit dimension
-//				{
-//					dimension |= *RunTime->ExecProgPtr++ << 8 ;
-//				}
+#ifdef LARGE_DIMENSION
+				if ( opcode & 0x01 )	// 16-bit dimension
+				{
+					dimension |= *RunTime->ExecProgPtr++ << 8 ;
+				}
+#endif
 
 				value = expression() ;
 				opcode = *RunTime->ExecProgPtr++ ;
@@ -6441,7 +6457,7 @@ uint32_t execOneLine()
 					default :
 //						{
 ////							uint8_t *p = RunTime->ExecProgPtr - 8 ;
-//							uint8_t *p = &Program.Bytes[4+16] ;
+//							uint8_t *p = &Pprogram->Bytes[4+16] ;
 //							uint32_t i ;
 //							for ( i = 0 ; i < 32 ; i += 1 )
 //							{
@@ -6582,18 +6598,18 @@ uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 	uint32_t j ;
 	j = LoadedScripts[index].offsetOfStart ;
 	i = j / 4 ;
-	RunTime = (struct t_basicRunTime *) &Program.Words[Program.Words[i]] ;
+	RunTime = (struct t_basicRunTime *) &Pprogram->Words[Pprogram->Words[i]] ;
 
 	if ( begin )
 	{
-		RunTime->ExecProgPtr = &Program.Bytes[j+8] ;
+		RunTime->ExecProgPtr = &Pprogram->Bytes[j+8] ;
     RunTime->RunError = 0 ;
 		RunTime->CallIndex = 0 ;
     RunTime->ParamFrameIndex = 0 ;
     RunTime->ParamStackIndex = 0 ;
 
-    j = (uint32_t *)&RunTime->Vars.Variables[0] - &Program.Words[i] ;
-		j = Program.Words[i+1] / 4 - j ;
+    j = (uint32_t *)&RunTime->Vars.Variables[0] - &Pprogram->Words[i] ;
+		j = Pprogram->Words[i+1] / 4 - j ;
 
 		for ( i = 0 ; i < j ; i += 1 )
 		{
@@ -6620,7 +6636,7 @@ uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 		}
 	}
 #endif
-	if ( RunTime->ExecProgPtr != &Program.Bytes[j+8] )
+	if ( RunTime->ExecProgPtr != &Pprogram->Bytes[j+8] )
 	{
 		// Resuming, not at start
 #ifndef QT
@@ -6679,7 +6695,7 @@ uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 		uint32_t i ;
 		for ( i = 0 ; i < 100 ; i += 1 )
 		{
-			RunTimeBuffer[i] = Program.Bytes[i] ;			
+			RunTimeBuffer[i] = Pprogram->Bytes[i] ;			
 		}
 #endif
 		if ( finished == 1 )	// Found Finish
@@ -6693,7 +6709,7 @@ uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 		}
 		if ( finished == 2 )
 		{
-			RunTime->ExecProgPtr = &Program.Bytes[j+8] ;
+			RunTime->ExecProgPtr = &Pprogram->Bytes[j+8] ;
 			break ;
 		}
 		finished = 1 ;

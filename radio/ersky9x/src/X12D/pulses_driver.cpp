@@ -1070,6 +1070,13 @@ void convertPulsesProto( uint32_t type )
 //	}
 //}
 
+void setExtMultiRate( uint32_t rate )		// in uS
+{
+	rate *= 2 ;
+  EXTMODULE_TIMER->ARR = rate ;             // 11mS
+  EXTMODULE_TIMER->CCR2 = rate-4000 ;       // Update time
+}
+
 void init_ext_serial( uint32_t type )
 {
   EXTERNAL_RF_ON() ;
@@ -1239,6 +1246,14 @@ void init_ext_serial( uint32_t type )
 }
 
 #if defined(PCBT16)
+
+void setIntMultiRate( uint32_t rate )		// in uS
+{
+	rate *= 2 ;
+  INTMODULE_TIMER->ARR = rate ;             // 11mS
+  INTMODULE_TIMER->CCR2 = rate-4000 ;       // Update time
+}
+
 static void init_int_multi()
 {
   INTERNAL_RF_ON() ;
@@ -1686,6 +1701,37 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 		if (s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI )
 		{
 			INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
+extern struct t_updateTiming UpdateTiming ;
+			if ( UpdateTiming.UpdateRate )
+			{
+				if ( UpdateTiming.UpdateTimer )
+				{
+					UpdateTiming.UpdateTimer -= 1 ;
+				}
+				if ( UpdateTiming.UpdateTimer == 0 )
+				{
+					UpdateTiming.UpdateRate = 0 ;
+				}
+				uint32_t rate = 2 ;
+				uint32_t error = ( UpdateTiming.UpdateOffset > 0 ) ? UpdateTiming.UpdateOffset : -UpdateTiming.UpdateOffset ;
+				if ( error > 300 )
+				{
+					rate = 15 ;
+				}
+				if ( UpdateTiming.UpdateOffset > 50 )
+				{
+					rate += UpdateTiming.UpdateRate ;
+				}
+				else
+				{
+					rate = UpdateTiming.UpdateRate - rate ;
+				}
+				while ( rate < 6900 )
+				{
+					rate += UpdateTiming.UpdateRate ;
+				}
+				setIntMultiRate( rate ) ;		// in uS
+			}
 		}
 #endif
 	}

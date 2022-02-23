@@ -118,6 +118,10 @@ static void init_ext_multi( void ) ;
 #ifdef XFIRE
 static void init_ext_xfire( void ) ;
 static void disable_ext_xfire( void ) ;
+ #if defined(PCBXLITE)
+static void init_int_xfire( void ) ;
+static void disable_int_xfire( void ) ;
+ #endif
 #endif
 static void init_int_none( void ) ;
 static void disable_int_none( void ) ;
@@ -142,6 +146,8 @@ static void init_pa10_multi( void ) ;
 #ifdef XFIRE
 static void init_pa7_xfire( void ) ;
 static void disable_pa7_xfire( void ) ;
+static void init_int_xfire( void ) ;
+static void disable_int_xfire( void ) ;
 #endif
 static void init_pa10_none( void ) ;
 static void disable_pa10_none( void ) ;
@@ -251,6 +257,12 @@ void init_xfire(uint32_t port)
 	{
     init_ext_xfire() ;
   }
+ #if defined(PCBXLITE)
+	else
+	{
+    init_int_xfire() ;
+	}
+ #endif
 }
 
 void disable_xfire(uint32_t port)
@@ -259,6 +271,12 @@ void disable_xfire(uint32_t port)
 	{
     disable_ext_xfire() ;
   }
+ #if defined(PCBXLITE)
+	else
+	{
+    disable_int_xfire() ;
+	}
+ #endif
 }
 #endif
 
@@ -302,6 +320,10 @@ void init_xfire(uint32_t port)
 	{
     init_pa7_xfire() ;
   }
+	else
+	{
+    init_int_xfire() ;
+	}
 }
 
 void disable_xfire(uint32_t port)
@@ -310,6 +332,10 @@ void disable_xfire(uint32_t port)
 	{
     disable_pa7_xfire() ;
   }
+	else
+	{
+    disable_int_xfire() ;
+	}
 }
 #endif
 
@@ -729,12 +755,21 @@ extern "C" void TIM1_UP_TIM10_IRQHandler()
 #endif
  		TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                               // Clear flag
 
- 		TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
- 		if ( *ppmStreamPtr[INTERNAL_MODULE] == 0 )
- 		{
- 		  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                     // Clear this flag
- 		  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
- 		}
+#ifdef XFIRE
+		if (s_current_protocol[INTERNAL_MODULE] == PROTO_XFIRE )
+		{
+			x9dSPortTxStart( (uint8_t *)Bit_pulses, XfireLength, 0 ) ;
+		}
+		else
+#endif
+		{
+	 		TIM1->ARR = *ppmStreamPtr[INTERNAL_MODULE]++ ;
+ 			if ( *ppmStreamPtr[INTERNAL_MODULE] == 0 )
+ 			{
+ 		  	TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                     // Clear this flag
+	 		  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+ 			}
+		}
 #ifdef PCB9XT
 	}
 	else
@@ -806,7 +841,8 @@ void init_ext_serial( uint32_t type )
   TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
  #else
   #if defined(PCBX7ACCESS)
-  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+  TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
+//  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
 	 #else
   TIM8->CCER = TIM_CCER_CC1NE ;
   #endif
@@ -969,6 +1005,50 @@ static void disable_pa7_xfire()
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
 }
+static void init_int_xfire()
+{
+	com1_Configure( XFIRE_BAUD_RATE, 0, 0 ) ;
+  INTERNAL_RF_ON();
+	setupPulsesXfire() ;
+  
+	configure_pins( PIN_EXTPPM_OUT, PIN_INPUT | PIN_PORTA ) ;
+		
+//	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+//  GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
+  
+	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
+
+  TIM1->CR1 &= ~TIM_CR1_CEN ;
+  TIM1->ARR = 7999 ;    // 4mS
+  TIM1->CCR2 = 5000 ;   // Update time
+//  TIM8->CCR1 = 10000 ;   // Tx back on time
+//  TIM8->CCR3 = 1936*2 ;   // Tx hold on until time
+  TIM1->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;  // 0.5uS from 30MHz
+#if defined(REV3)
+  TIM1->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
+#else
+  TIM1->CCER = TIM_CCER_CC1NE ;
+#endif
+  TIM1->EGR = 0 ;                                                         // Restart
+  TIM1->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
+//  TIM1->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
+  TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+  TIM1->DIER |= TIM_DIER_UIE ;
+  TIM1->CR1 |= TIM_CR1_CEN ;
+	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_SetPriority( TIM1_UP_TIM10_IRQn, 3 ) ; // Lower priority interrupt
+  NVIC_EnableIRQ(TIM1_CC_IRQn) ;
+  NVIC_EnableIRQ(TIM1_UP_TIM10_IRQn) ;
+}
+
+static void disable_int_xfire()
+{
+  NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn) ;
+  NVIC_DisableIRQ(TIM1_CC_IRQn) ;
+  TIM1->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
+  TIM1->CR1 &= ~TIM_CR1_CEN ;
+  INTERNAL_RF_OFF() ;
+}
 #endif
 
 static void init_ext_dsm2()
@@ -1058,6 +1138,100 @@ static void disable_ext_ppm()
   EXTERNAL_RF_OFF();
 }
 
+//struct t_updateTiming
+//{
+//	uint32_t UpdateRate ;
+//	int32_t UpdateOffset ;
+//	uint16_t UpdateTimer ;
+//	uint16_t UpdateInterval ;
+//	uint16_t UpdateDelay ;
+//	uint16_t MinUpdateRate ;
+//	int16_t BaseUpdateOffset ;
+//	uint16_t CurrentRate ;
+//	int16_t CurrentLag ;
+//} ;
+
+#define MIN_RATE		6900
+#define MAX_RATE		15000
+
+uint32_t calcMultiRate( struct t_updateTiming *timing )
+{
+	int32_t rate = 0 ;
+	int32_t offset ;
+	if ( timing->UpdateRate )
+	{
+		if ( timing->UpdateTimer )
+		{
+			timing->UpdateTimer -= 1 ;
+		}
+		if ( timing->UpdateTimer == 0 )
+		{
+			timing->UpdateRate = 0 ;
+		}
+	}	
+	if ( timing->UpdateRate )
+	{
+		if ( timing->UpdateTimer == UPDATE_TIMEOUT - 1 )
+		{
+			offset = timing->UpdateOffset ;
+			offset += timing->UpdateDelay * 10 ;
+
+//			if ( timing->UpdateRate < 20 * timing->UpdateDelay )
+//			{
+//				// offset needs to be biased more negative
+//				offset -= timing->UpdateRate / 4 ;				
+//			}
+
+			if ( offset < 0 )
+			{
+				if ( timing->BaseUpdateOffset > -25 )
+				{
+					timing->BaseUpdateOffset -= 1 ;
+				}
+			}
+			else
+			{
+				if ( timing->BaseUpdateOffset < 25 )
+				{
+					timing->BaseUpdateOffset += 1 ;
+				}
+			}
+			timing->CurrentLag = offset ;
+			timing->CurrentRate = timing->UpdateRate ;
+		}	
+
+	  if ( timing->CurrentLag == 0 )
+		{
+			rate = timing->MinUpdateRate + timing->BaseUpdateOffset ;
+		}
+		else
+		{
+			timing->CurrentRate = timing->MinUpdateRate + timing->CurrentLag + timing->BaseUpdateOffset ;
+			if ( timing->CurrentRate < MIN_RATE )
+			{
+				timing->CurrentRate = MIN_RATE ;				
+			}
+			else
+			{
+				if ( timing->CurrentRate > MAX_RATE )
+				{
+					timing->CurrentRate = MAX_RATE ;				
+				}
+			}
+  		timing->CurrentLag -= timing->CurrentRate - timing->MinUpdateRate - timing->BaseUpdateOffset ;
+			rate = timing->CurrentRate ;
+		}
+	}
+	return rate ;
+}
+
+
+void setExtMultiRate( uint32_t rate )		// in uS
+{
+	rate *= 2 ;
+  TIM8->ARR = rate ;             // 11mS
+  TIM8->CCR2 = rate-4000 ;       // Update time
+}
 
 extern "C" void TIM8_CC_IRQHandler()
 {
@@ -1104,7 +1278,18 @@ extern "C" void TIM8_CC_IRQHandler()
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
     TIM8->CCR1 = dsm2Stream[1][0];
-    TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+    
+		if ( s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI )
+		{
+			uint32_t rate ;
+extern struct t_updateTiming UpdateTiming ;
+			rate = calcMultiRate( &UpdateTiming ) ;
+			if ( rate )
+			{
+				setExtMultiRate( rate ) ;		// in uS
+			}
+		}
+		TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM) {
     ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
@@ -1128,6 +1313,53 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 	if (s_current_protocol[EXTERNAL_MODULE] == PROTO_XFIRE )
 	{
 		x9dSPortTxStart( (uint8_t *)Bit_pulses, XfireLength, 0 ) ;
+extern struct t_updateTiming UpdateTiming ;
+		struct t_updateTiming *timing = &UpdateTiming ;
+		int32_t rate = 7999 ;
+		if ( timing->UpdateRate )
+		{
+			if ( timing->UpdateTimer )
+			{
+				timing->UpdateTimer -= 1 ;
+			}
+			if ( timing->UpdateTimer == 0 )
+			{
+				timing->UpdateRate = 0 ;
+			}
+		}	
+		
+// The sync offset value is the time when the RF packet has 
+// just been sent minus the time the last RC data packet was 
+// received, minus a constant 400 us (i.e. 4000) to ensure 
+// "that opentx always has some headroom".
+		if ( timing->UpdateRate )
+		{
+			rate = timing->UpdateRate * 2 - 1 ;
+			if ( ( rate < 3999 ) || ( rate >= 50000 ) )
+			{
+				rate = (rate == 80000 ) ? 39999 : 7999 ;
+			}
+		}
+		if ( timing->UpdateTimer == UPDATE_TIMEOUT - 1 )
+		{
+			int16_t change ;
+			int32_t fastAdjust = 60 ;
+			if ( rate > 10000 )
+			{
+				fastAdjust = ( timing->UpdateOffset > 500 ) ? 400 : 180 ;
+			}
+			if ( timing->UpdateOffset > 0 )
+			{
+				change = ( timing->UpdateOffset > 100 ) ? fastAdjust : 20 ;
+			}
+			else
+			{
+				change = ( timing->UpdateOffset < -100 ) ? -fastAdjust : -20 ;
+			}
+			rate += change ;
+		}
+	  TIM8->ARR = rate ;
+ 		TIM8->CCR2 = (rate < 4200) ? rate - 2500 : rate-3000 ;       // Update time
 	}
 	else
 #endif
@@ -1307,20 +1539,24 @@ static void init_ext_pxx( void )
   // UART config
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
-	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( type ? PXX2_EXTERNAL_BAUDRATE : 420000 ) ;
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
+	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( type ? PXX2_EXTERNAL_BAUDRATE : 450000 ) ;
 #else
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 420000 ;
 #endif
 //	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 115200 ;	// Prototype only
 	EXTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
-#ifdef ACCESS
+#if defined(PCBX9LITE)
+	EXTMODULE_USART->CR1 |= USART_CR1_RE | USART_CR1_RXNEIE ;
+#else
+ #if defined(PCBXLITE) || defined(REV19) || defined(PCBX7ACCESS)
+  #ifdef ACCESS
 	if ( type )
 	{
 		EXTMODULE_USART->CR1 |= USART_CR1_RE ;
 	}
-#endif
+  #endif
+ #endif
 #endif
 
 	NVIC_SetPriority( EXTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
@@ -1518,12 +1754,12 @@ void init_ext_serial( uint32_t type )
  #ifdef PCB9XT
   TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
  #else
-  #if defined(PCBX7ACCESS)
-  TIM8->CCER = TIM_CCER_CC1NE ;
-//  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
-  #else
+//  #if defined(PCBX7ACCESS)
+//  TIM8->CCER = TIM_CCER_CC1NE ;
+////  TIM8->CCER = TIM_CCER_CC1NE | TIM_CCER_CC1NP ;
+//  #else
   TIM8->CCER = TIM_CCER_CC1E | TIM_CCER_CC1P ;
-  #endif
+//  #endif
  #endif
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
@@ -1624,6 +1860,7 @@ static void init_ext_xfire( void )
   NVIC_EnableIRQ(TIM8_UP_TIM13_IRQn) ;
 }
 
+
 static void disable_ext_xfire( void )
 {
   NVIC_DisableIRQ(TIM8_UP_TIM13_IRQn) ;
@@ -1632,6 +1869,54 @@ static void disable_ext_xfire( void )
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
 }
+
+ #ifndef PCBX7ACCESS
+  #ifndef PCBX9LITE
+
+static void init_int_xfire()
+{
+	com1_Configure( XFIRE_BAUD_RATE, 0, 0 ) ;
+  INTERNAL_RF_ON();
+	setupPulsesXfire() ;
+  
+	configure_pins( PIN_EXTPPM_OUT, PIN_INPUT | PIN_PORTA ) ;
+		
+//	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PIN_PORTA ) ;
+//  GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
+  
+	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;            // Enable clock
+
+  INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN ;
+  INTMODULE_TIMER->ARR = 7999 ;    // 4mS
+  INTMODULE_TIMER->CCR2 = 5000 ;   // Update time
+//  TIM8->CCR1 = 10000 ;   // Tx back on time
+//  TIM8->CCR3 = 1936*2 ;   // Tx hold on until time
+  INTMODULE_TIMER->PSC = (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2) / 2000000 - 1 ;  // 0.5uS from 30MHz
+  INTMODULE_TIMER->CCER = TIM_CCER_CC1NE ;
+  INTMODULE_TIMER->EGR = 0 ;                                                         // Restart
+  INTMODULE_TIMER->SR = TIMER1_8SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
+//  TIM1->DIER |= TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE ;  // Enable these interrupts
+  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
+  INTMODULE_TIMER->DIER |= TIM_DIER_UIE ;
+  NVIC_SetPriority(INTMODULE_TIMER_IRQn, 3 ) ;
+  INTMODULE_TIMER->CR1 |= TIM_CR1_CEN ;
+	NVIC_SetPriority( TIM1_CC_IRQn, 3 ) ; // Lower priority interrupt
+	NVIC_EnableIRQ(INTMODULE_TIMER_IRQn) ;
+  NVIC_EnableIRQ(TIM1_CC_IRQn) ;
+}
+
+static void disable_int_xfire()
+{
+  NVIC_DisableIRQ(TIM1_UP_TIM10_IRQn) ;
+  NVIC_DisableIRQ(TIM1_CC_IRQn) ;
+  INTMODULE_TIMER->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
+  INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN ;
+  INTERNAL_RF_OFF() ;
+}
+  #endif
+ #endif
+
+
 #endif
 
 	 
@@ -1693,6 +1978,12 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 			INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		}
 	}
+#ifdef XFIRE
+	if (s_current_protocol[INTERNAL_MODULE] == PROTO_XFIRE )
+	{
+		x9dSPortTxStart( (uint8_t *)Bit_pulses, XfireLength, 0 ) ;
+	}
+#endif
 }
 
 #define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
@@ -1752,19 +2043,36 @@ extern "C" void EXTMODULE_USART_IRQHandler()
 
   if (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
 	{
-#ifdef ACCESS
-		if (s_current_protocol[EXTERNAL_MODULE] == PROTO_ACCESS )
+#if defined(PCBX9LITE)
+ #ifdef ACCESS
+		if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_ACCESS ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_PXX ) )
 		{
 			uint16_t value = puart->DR ;
-			value |= getTmr2MHz() & 0xFF00 ;
+//			value |= getTmr2MHz() & 0xFF00 ;
 			put_fifo128( &Access_ext_fifo, value ) ;	
 		}
 		else
 		{
 			put_fifo64( &Sbus_fifo, puart->DR ) ;	
 		}
-#else
+ #else
 		put_fifo64( &Sbus_fifo, puart->DR ) ;	
+ #endif
+#else
+ #ifdef ACCESS
+		if (s_current_protocol[EXTERNAL_MODULE] == PROTO_ACCESS )
+		{
+			uint16_t value = puart->DR ;
+//			value |= getTmr2MHz() & 0xFF00 ;
+			put_fifo128( &Access_ext_fifo, value ) ;	
+		}
+		else
+		{
+			put_fifo64( &Sbus_fifo, puart->DR ) ;	
+		}
+ #else
+		put_fifo64( &Sbus_fifo, puart->DR ) ;	
+ #endif
 #endif
 	}
 }
@@ -1913,6 +2221,7 @@ extern "C" void TIM8_CC_IRQHandler()
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
     TIM8->CCR1 = dsm2Stream[1][0];
+
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)

@@ -698,6 +698,10 @@ void startLcdDrawSolidFilledRectDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t
 {
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - (w - 1) ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - (h - 1) ;
 	if ( y >= LCD_H )
 	{
@@ -1280,6 +1284,10 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - 31 ;
 	if ( y >= LCD_H )
 	{
@@ -1371,6 +1379,10 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 //	tx = x ;
 //	tc = chr ;
 	x = (LCD_W-1) - x - 11 ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - 15 ;
 	if ( y >= LCD_H )
 	{
@@ -1527,6 +1539,10 @@ void lcdDrawCharBitmapTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t
   uint8_t *q ;
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - 11 ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - 15 ;
 	if ( y >= LCD_H )
 	{
@@ -1593,6 +1609,10 @@ void lcdDrawCharxxlTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mo
   uint8_t *q ;
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - 31 ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - 47 ;
 	if ( y >= LCD_H )
 	{
@@ -1663,6 +1683,10 @@ void lcdDrawCharDoubleTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t
 
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - 31 ;
 	if ( y >= LCD_H )
 	{
@@ -1747,6 +1771,10 @@ void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint
 //    return;
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - (w - 1) ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - (h - 1) ;
 	if ( y >= LCD_H )
 	{
@@ -1968,6 +1996,10 @@ void DMAcopyImage(uint16_t x, uint16_t y, uint16_t w, uint16_t h, const uint16_t
 	}
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - (w - 1) ;
+	if ( x >= LCD_W )
+	{
+		x += LCD_W ;
+	}
 	y = (LCD_H-1) - y - (h - 1) ;
 	if ( y >= LCD_H )
 	{

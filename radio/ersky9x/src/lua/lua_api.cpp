@@ -22,6 +22,8 @@ extern "C" {
 #include "stringidx.h"
 #include <string.h>
 
+#include "frsky.h"
+
 void luaLoadModelScripts()
 {
 	luaState |= INTERPRETER_RELOAD_PERMANENT_SCRIPTS ;
@@ -441,6 +443,105 @@ static int luaSportTelemetryPop(lua_State * L)
   return 0;
 }
 
+//#if defined(XFIRE)
+///*luadoc
+//@function crossfireTelemetryPop()
+
+//Pops a received Crossfire Telemetry packet from the queue.
+
+//@retval nil queue does not contain any (or enough) bytes to form a whole packet
+
+//@retval multiple returns 2 values:
+// * command (number)
+// * packet (table) data bytes
+
+//@status current Introduced in 2.2.0
+//*/
+//static int luaCrossfireTelemetryPop(lua_State * L)
+//{
+//  if (!luaInputTelemetryFifo) {
+//    luaInputTelemetryFifo = new Fifo<uint8_t, LUA_TELEMETRY_INPUT_FIFO_SIZE>();
+//    if (!luaInputTelemetryFifo) {
+//      return 0;
+//    }
+//  }
+
+//  uint8_t length = 0, data = 0;
+//  if (luaInputTelemetryFifo->probe(length) && luaInputTelemetryFifo->size() >= uint32_t(length)) {
+//    // length value includes the length field
+//    luaInputTelemetryFifo->pop(length);
+//    luaInputTelemetryFifo->pop(data); // command
+//    lua_pushnumber(L, data);
+//    lua_newtable(L);
+//    for (uint8_t i=1; i<length-1; i++) {
+//      luaInputTelemetryFifo->pop(data);
+//      lua_pushinteger(L, i);
+//      lua_pushinteger(L, data);
+//      lua_settable(L, -3);
+//    }
+//    return 2;
+//  }
+
+//  return 0;
+//}
+
+///*luadoc
+//@function crossfireTelemetryPush()
+
+//This functions allows for sending telemetry data toward the TBS Crossfire link.
+
+//When called without parameters, it will only return the status of the output buffer without sending anything.
+
+//@param command command
+
+//@param data table of data bytes
+
+//@retval boolean  data queued in output buffer or not.
+
+//@retval nil      incorrect telemetry protocol.
+
+//@status current Introduced in 2.2.0, retval nil added in 2.3.4
+//*/
+//static int luaCrossfireTelemetryPush(lua_State * L)
+//{
+//  if (telemetryProtocol != PROTOCOL_TELEMETRY_CROSSFIRE) {
+//    lua_pushnil(L);
+//    return 1;
+//  }
+
+//  if (lua_gettop(L) == 0) {
+//    lua_pushboolean(L, outputTelemetryBuffer.isAvailable());
+//  }
+//  else if (lua_gettop(L) > TELEMETRY_OUTPUT_BUFFER_SIZE ) {
+//    lua_pushboolean(L, false);
+//    return 1;
+//  }
+//  else if (outputTelemetryBuffer.isAvailable()) {
+//    uint8_t command = luaL_checkunsigned(L, 1);
+//    luaL_checktype(L, 2, LUA_TTABLE);
+//    uint8_t length = luaL_len(L, 2);
+//    outputTelemetryBuffer.pushByte(MODULE_ADDRESS);
+//    outputTelemetryBuffer.pushByte(2 + length); // 1(COMMAND) + data length + 1(CRC)
+//    outputTelemetryBuffer.pushByte(command); // COMMAND
+//    for (int i=0; i<length; i++) {
+//      lua_rawgeti(L, 2, i+1);
+//      outputTelemetryBuffer.pushByte(luaL_checkunsigned(L, -1));
+//    }
+//    outputTelemetryBuffer.pushByte(crc8(outputTelemetryBuffer.data+2, 1 + length));
+//    outputTelemetryBuffer.setDestination(TELEMETRY_ENDPOINT_SPORT);
+//    lua_pushboolean(L, true);
+//  }
+//  else {
+//    lua_pushboolean(L, false);
+//  }
+//  return 1;
+//}
+//#endif
+
+
+
+
+
 static int luaGetTime(lua_State *L)
 {
   lua_pushunsigned(L, get_ltmr10ms()) ;
@@ -564,11 +665,42 @@ static int luaLoadScript(lua_State *L)
 	return luaB_loadfile(L) ;
 }
 
+static int luaGetVersion(lua_State * L)
+{
+  lua_pushstring(L, "12345");
+  lua_pushstring(L, "X12");
+  lua_pushnumber(L, 2);
+  lua_pushnumber(L, 3);
+  lua_pushnumber(L, 4);
+  return 5;
+}
+
+/*luadoc
+@function getRSSI()
+Get RSSI value as well as low and critical RSSI alarm levels (in dB)
+@retval rssi RSSI value (0 if no link)
+@retval alarm_low Configured low RSSI alarm level
+@retval alarm_crit Configured critical RSSI alarm level
+@status current Introduced in 2.2.0
+*/
+static int luaGetRSSI(lua_State * L)
+{
+	int8_t offset ;
+  lua_pushunsigned(L, FrskyHubData[FR_RXRSI_COPY]);
+	offset = rssiOffsetValue( 0 ) ;
+  lua_pushunsigned(L, g_model.rssiOrange + offset);
+	offset = rssiOffsetValue( 1 ) ;
+  lua_pushunsigned(L, g_model.rssiRed + offset);
+  return 3;
+}
+
+
+
 
 const luaL_Reg ersky9xLib[] = {
   { "getTime", luaGetTime },
   { "getDateTime", luaGetDateTime },
-//  { "getVersion", luaGetVersion },
+  { "getVersion", luaGetVersion },
 //  { "getGeneralSettings", luaGetGeneralSettings },
   { "getValue", luaGetValue },
 //  { "getFieldInfo", luaGetFieldInfo },
@@ -592,18 +724,24 @@ const luaL_Reg ersky9xLib[] = {
   { "sportTelemetryPop", luaSportTelemetryPop },
   { "sportTelemetryPush", luaSportTelemetryPush },
 //  { "setTelemetryValue", luaSetTelemetryValue },
+//#if defined(XFIRE)
+//  { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
+//  { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
+//#endif
   { "idleTime", luaIdleTime },
+  { "getRSSI", luaGetRSSI },
   { NULL, NULL }  /* sentinel */
 };
 
 
 const luaR_value_entry ersky9xConstants[] = {
   { "FULLSCALE", RESX },
-//  { "XXLSIZE", XXLSIZE },
+  { "XXLSIZE", DBLSIZE },
   { "DBLSIZE", DBLSIZE },
-//  { "MIDSIZE", MIDSIZE },
-//  { "SMLSIZE", SMLSIZE },
+  { "MIDSIZE", 32768 },
+  { "SMLSIZE", 32768 },
   { "INVERS", INVERS },
+  { "RIGHT", 512 },
 //#if defined(PCBFLAMENCO)
 //  { "WHITE",        WHITE },
 //  { "BLACK",        BLACK },
@@ -658,6 +796,20 @@ const luaR_value_entry ersky9xConstants[] = {
 //  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
 //#endif
 
+#if defined(PCBX12D) || defined(PCBX10)
+  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
+  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
+  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_UP) },
+  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
+  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+#else
 	// Map to X9D normal buttons
   { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
   { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
@@ -671,6 +823,14 @@ const luaR_value_entry ersky9xConstants[] = {
   { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
   { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
   { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+#endif
+
+  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_BREAK(KEY_LEFT) },
+	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_RIGHT) },
+	{ "EVT_VIRTUAL_PREV", EVT_KEY_FIRST(KEY_UP) },
+	{ "EVT_VIRTUAL_NEXT", EVT_KEY_FIRST(KEY_DOWN) },
+
 
 //EVT_VIRTUAL_NEXT_PAGE 	for PAGE navigation
 //EVT_VIRTUAL_PREVIOUS_PAGE 	for PAGE navigation

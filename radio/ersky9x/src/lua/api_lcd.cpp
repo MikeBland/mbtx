@@ -21,6 +21,7 @@
 //#include <ctype.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 //#include "opentx.h"
 
 //#define LUA	1
@@ -182,7 +183,16 @@ static int luaLcdDrawText(lua_State *L)
   int y = luaL_checkinteger(L, 2);
   const char * s = luaL_checkstring(L, 3);
   unsigned int att = luaL_optunsigned(L, 4, 0);
-  lcd_putsAtt(x, y, s, att);
+#if defined(PCBX12D) || defined(PCBX10)
+	x /= 2 ;
+	y /= 2 ;
+#endif
+	if ( att & 512 )	// "RIGHT"
+	{
+		uint32_t t = strlen(s) ;
+		x -= t * FW ;
+	}
+	lcd_putsAtt(x, y, s, att);
   return 0;
 }
 
@@ -212,6 +222,10 @@ static int luaLcdDrawTimer(lua_State *L)
 //#if defined(COLORLCD)
 //  drawTimer(x, y, seconds, att|LEFT);
 //#else
+#if defined(PCBX12D) || defined(PCBX10)
+	x /= 2 ;
+	y /= 2 ;
+#endif
   putsTime( x, y, seconds, att, att ) ;
 //  drawTimer(x, y, seconds, att|LEFT, att);
 //#endif
@@ -242,6 +256,10 @@ static int luaLcdDrawNumber(lua_State *L)
   int y = luaL_checkinteger(L, 2);
   int val = luaL_checkinteger(L, 3);
   unsigned int att = luaL_optunsigned(L, 4, 0);
+#if defined(PCBX12D) || defined(PCBX10)
+	x /= 2 ;
+	y /= 2 ;
+#endif
   lcd_outdezAtt(x, y, val, att);
   return 0;
 }
@@ -306,6 +324,10 @@ static int luaLcdDrawSwitch(lua_State *L)
   int y = luaL_checkinteger(L, 2) ;
   int s = luaL_checkinteger(L, 3) ;
   unsigned int att = luaL_optunsigned(L, 4, 0) ;
+#if defined(PCBX12D) || defined(PCBX10)
+	x /= 2 ;
+	y /= 2 ;
+#endif
 
 	putsDrSwitches( x,  y, s, att ) ;
   return 0 ;

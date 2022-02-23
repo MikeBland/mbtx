@@ -941,6 +941,8 @@ PACK(typedef struct te_ModelData {
 #if defined(PCBX10)	|| defined(PCBX12D)
 // Use for colour screen setup
 #endif	 
+	uint8_t	customTelemetryNames2[16] ;
+
 	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
 
 #if defined(PCBX12D) || defined(PCBX10)

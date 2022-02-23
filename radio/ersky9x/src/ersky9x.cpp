@@ -372,7 +372,7 @@ uint16_t MainStart ;
 #define MIXER_STACK_SIZE		(250 + STACK_EXTRA)
 
 OS_TID MixerTask ;
-OS_STK mixer_stk[MIXER_STACK_SIZE] ;
+OS_STK Mixer_stk[MIXER_STACK_SIZE] ;
 
 #endif
 
@@ -1522,6 +1522,16 @@ void maintenance_mode(void* pdata)
 	g_menuStack[1] = menuUp1 ;	// this is so the first instance of [MENU LONG] doesn't freak out!
 #endif
 	MaintenanceRunning = 1 ;
+#if defined(PCBSKY) || defined (ARUNI)
+	init_main_ppm( 10000, 0 ) ;		// Default for now, initial period 1.5 mS, output off
+	init_ppm2( 10000, 0 ) ;
+#else	
+ #ifndef PCBLEM1
+	init_no_pulses( 0 ) ;
+	init_no_pulses( 1 ) ;
+ #endif
+#endif
+	 
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
 #ifdef ACCESS
 #ifdef PCBX9LITE
@@ -2162,7 +2172,9 @@ void ledOff()
 {
   GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
   GPIO_SetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+#ifndef PCBXLITES
   GPIO_SetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
+#endif
 }
 
 //void ledRed()
@@ -2171,11 +2183,20 @@ void ledOff()
 //  GPIO_SetBits(LED_RED_GPIO, LED_RED_GPIO_PIN);
 //}
 
+#ifndef PCBXLITES
 void ledGreen()
 {
   ledOff();
   GPIO_ResetBits(LED_GREEN_GPIO, LED_GREEN_GPIO_PIN);
 }
+#endif
+#ifdef PCBXLITES
+void ledBlue()
+{
+  ledOff();
+  GPIO_ResetBits(LED_BLUE_GPIO, LED_BLUE_GPIO_PIN);
+}
+#endif
 
 //void ledBlue()
 //{
@@ -2255,6 +2276,15 @@ uint32_t stackSpace( uint32_t stack )
   #endif
  #endif
 #endif
+		case 4 :
+			for ( i = 0 ; i < MIXER_STACK_SIZE ; i += 1 )
+			{
+				if ( Mixer_stk[i] != 0x55555555 )
+				{
+					break ;
+				}
+			}
+		return i ;
 	}
 	return 0 ;
 }
@@ -2725,7 +2755,12 @@ int main( void )
 
 #ifdef PCBXLITE
 
+#ifndef PCBXLITES
 	configure_pins( LED_GREEN_GPIO_PIN, PIN_PORTE | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#endif
+#ifdef PCBXLITES
+	configure_pins( LED_BLUE_GPIO_PIN, PIN_PORTE | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#endif
 
 	init_soft_power() ;
 #endif // PCBXLITE
@@ -3214,21 +3249,25 @@ notePosition('3') ;
 		}
 	}
 #ifndef REV9E
-#ifndef PCBLEM1
-#ifdef PCBX9LITE
- #if defined(X9LS)
+ #ifndef PCBLEM1
+  #ifdef PCBX9LITE
+   #if defined(X9LS)
 	ledBlue() ;
- #else
+   #else
 	ledRed() ;
- #endif
-#else
- #ifndef PCBX7ACCESS
-	ledGreen() ;
- #else
+   #endif
+  #else
+   #ifndef PCBX7ACCESS
+    #ifdef PCBXLITES
 	ledBlue() ;
+	  #else
+	ledGreen() ;
+	  #endif
+   #else
+	ledBlue() ;
+   #endif
+  #endif
  #endif
-#endif
-#endif
 #endif
 #ifdef PCBT12
 	ledBlue() ;	// Green Led!
@@ -3549,9 +3588,9 @@ uint32_t updateSlave() ;
 
 #ifdef PCBX9D
 	init_trims() ;
-#ifndef PCBXLITE
+//#ifndef PCBXLITE
 	initHaptic() ;
-#endif  	 
+//#endif  	 
 	start_2Mhz_timer() ;
 	setVolume( 0 ) ;
 	start_sound() ;
@@ -3861,16 +3900,16 @@ extern void sdInit( void ) ;
 #endif
 		lcd_puts_Pleft( FH, XPSTR("Hardware Menu Enabled") ) ;
 
-#ifdef PCBTX16S
-  lcd_outhex4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
-  lcd_outhex4( 6*FW, 3*FH, read_trims() ) ;
-  lcd_outhex4( 12*FW, 3*FH, GPIOB->IDR ) ;
-  lcd_outhex4( 18*FW, 3*FH, GPIOC->IDR ) ;
+//#ifdef PCBTX16S
+//  lcd_outhex4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
+//  lcd_outhex4( 6*FW, 3*FH, read_trims() ) ;
+//  lcd_outhex4( 12*FW, 3*FH, GPIOB->IDR ) ;
+//  lcd_outhex4( 18*FW, 3*FH, GPIOC->IDR ) ;
 
-  lcd_outhex8( (uint16_t)0*FW, (uint16_t)4*FH, (uint32_t)GPIOA->MODER ) ;
-  lcd_outhex8( (uint16_t)12*FW, (uint16_t)4*FH, (uint32_t)GPIOA->PUPDR ) ;
-  lcd_outhex8( (uint16_t)24*FW, (uint16_t)4*FH, (uint32_t)GPIOA->AFR[0] ) ;
-#endif		
+//  lcd_outhex8( (uint16_t)0*FW, (uint16_t)4*FH, (uint32_t)GPIOA->MODER ) ;
+//  lcd_outhex8( (uint16_t)12*FW, (uint16_t)4*FH, (uint32_t)GPIOA->PUPDR ) ;
+//  lcd_outhex8( (uint16_t)24*FW, (uint16_t)4*FH, (uint32_t)GPIOA->AFR[0] ) ;
+//#endif		
 		
 		refreshDisplay() ;
 
@@ -4105,6 +4144,12 @@ extern void sdInit( void ) ;
 #endif
 
 #ifdef STACK_PROBES
+#ifdef MIXER_TASK
+	for ( i = 0 ; i < MIXER_STACK_SIZE ; i += 1 )
+	{
+		Mixer_stk[i] = 0x55555555 ;
+	}
+#endif
 #ifdef BLUETOOTH
 	for ( i = 0 ; i < BT_STACK_SIZE ; i += 1 )
 	{
@@ -4138,7 +4183,7 @@ extern void sdInit( void ) ;
 	VoiceTask = CoCreateTaskEx( voice_task,NULL,5,&voice_stk[VOICE_STACK_SIZE-1], VOICE_STACK_SIZE, 2, FALSE );
 
 #ifdef MIXER_TASK
-	MixerTask = CoCreateTask( mixer_loop,NULL,2,&mixer_stk[MIXER_STACK_SIZE-1],MIXER_STACK_SIZE);
+	MixerTask = CoCreateTask( mixer_loop,NULL,2,&Mixer_stk[MIXER_STACK_SIZE-1],MIXER_STACK_SIZE);
 #endif
 
 #ifdef	DEBUG
@@ -4283,7 +4328,10 @@ void log_task(void* pdata)
 				}
 				if ( ( LogTimer & mask ) == 0 )
 				{
-					writeLogs() ;
+					if ( RawLogging == 0 )
+					{					
+						writeLogs() ;
+					}
 				}
 			}
 		}
@@ -4707,6 +4755,8 @@ void main_loop(void* pdata)
 #endif
 
 
+// RM TX16S 0.2453
+
 // Preload battery voltage
   int32_t ab = anaIn(12);
 
@@ -4733,7 +4783,11 @@ void main_loop(void* pdata)
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBTX16S)
+        ab /= 63802  ;
+ #else
         ab /= 68631  ;
+ #endif
         g_vbat100mV = ab ;
 #endif
 
@@ -7526,6 +7580,7 @@ static uint32_t hasStickMoved( uint16_t value )
 
 void doSplash()
 {
+	uint32_t anaCount = 0 ;
 	uint32_t j ;
 	if( !g_eeGeneral.disableSplashScreen )
   {
@@ -7611,11 +7666,18 @@ void doSplash()
 			{
 				return ;  //wait for key release
 			}
+			
 			if ( hasStickMoved( inacSum ) )
 			{
-		   return ;  //wait for key release
+				if ( ++anaCount > 5 )
+				{
+					return ;  //wait for key release
+				}
 			}
-
+			else
+			{
+				anaCount = 0 ;
+			}
 			if ( check_power_or_usb() )
 			{
 				return ;		// Usb on or power off
@@ -8413,7 +8475,11 @@ static void updateVbat()
         g_vbat100mV = ( (ab + g_vbat100mV + 1) >> 1 ) ;  // Filter it a bit => more stable display
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBTX16S)
+        ab /= 63802  ;
+ #else
         ab /= 68631  ;
+ #endif
         g_vbat100mV = ( (ab + g_vbat100mV + 1) >> 1 ) ;  // Filter it a bit => more stable display
 #endif
 
@@ -9147,6 +9213,10 @@ extern uint32_t TotalExecTime ;
 						}
 					}
 				}
+#ifdef WIDE_SCREEN	
+extern uint8_t ImageDisplay ;
+				ImageDisplay = 0 ;
+#endif
 			}
 	  	else
 #endif
@@ -10824,9 +10894,9 @@ void createSwitchMapping()
 
 
 #ifndef PCBLEM1
- #if defined(PCBX9LITE) && defined(X9LS)
-		*p++ = HSW_Pb1 ;
-		*p++ = HSW_Pb2 ;
+ #if ( defined(PCBX9LITE) && defined(X9LS) ) || defined(PCBXLITES)
+	*p++ = HSW_Pb1 ;
+	*p++ = HSW_Pb2 ;
  #else
 	if ( g_eeGeneral.switchMapping & USE_PB1 )
 	{
@@ -10837,14 +10907,14 @@ void createSwitchMapping()
 		*p++ = HSW_Pb2 ;
 	}
  #endif
-#ifndef PCBX12D
- #ifndef PCBX10
+ #ifndef PCBX12D
+  #ifndef PCBX10
 	if ( g_eeGeneral.switchMapping & USE_PB3 )
 	{
 		*p++ = HSW_Pb3 ;
 	}
+  #endif
  #endif
-#endif
 #endif
 
 #ifndef PCBX12D
@@ -11460,7 +11530,7 @@ int8_t getMovedSwitch()
 	{
 		if ( result == 0 )
 		{
-			mask = getSwitch00( HSW_Pb3 ) << 1 ;
+			mask = getSwitch00( HSW_Pb3 ) << 3 ;
 			if ( ( mask ^ trainer_state ) & 8 )
 			{
 				if ( mask )
@@ -11475,7 +11545,7 @@ int8_t getMovedSwitch()
 	{
 		if ( result == 0 )
 		{
-			mask = getSwitch00( HSW_Pb4 ) << 1 ;
+			mask = getSwitch00( HSW_Pb4 ) << 4 ;
 			if ( ( mask ^ trainer_state ) & 16 )
 			{
 				if ( mask )
@@ -11707,6 +11777,32 @@ int8_t getMovedSwitch()
 	}
 
   switches_states = (switches_states & 0xFFF8FFFF) | (next << 16 ) ;
+	// Now check PB1-PB4
+
+	if ( result == 0 )
+	{
+		if ( getSwitch00( HSW_Pb1 ) )
+		{
+			result = HSW_Pb1 ;
+		}
+		else if ( getSwitch00( HSW_Pb2 ) )
+		{
+			result = HSW_Pb2 ;
+		}
+		else if ( getSwitch00( HSW_Pb3 ) )
+		{
+			result = HSW_Pb3 ;
+		}
+		else if ( getSwitch00( HSW_Pb4 ) )
+		{
+			result = HSW_Pb4 ;
+		}
+		if ( result )
+		{
+			result = switchUnMap( result ) ;
+		}
+	}
+
 
 #endif
 

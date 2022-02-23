@@ -65,7 +65,7 @@ extern unsigned char ModelNames[][sizeof(g_model.name)+1] ;		// Allow for genera
 extern unsigned char ModelNames[][sizeof(g_model.name)] ;		// Allow for general
 #endif
 
-extern EEGeneral  g_eeGeneral;
+//extern EE_General g_eeGeneral ;
 //extern ModelData  g_model;
 
 extern uint8_t Spi_tx_buf[] ;

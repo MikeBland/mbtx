@@ -95,6 +95,10 @@ extern struct t_serial_tx *Current_Com3 ;
 extern struct t_serial_tx *Current_Com3 ;
 #endif 
 
+#if defined(PCBXLITES)
+extern struct t_serial_tx *Current_Com3 ;
+#endif 
+
 #ifdef PCB9XT
 extern struct t_serial_tx *Current_Com3 ;
 extern struct t_fifo128 Com3_fifo ;
@@ -702,6 +706,7 @@ void txmit( uint8_t c )
 
 #ifndef PCBX7
 #ifndef PCBX9LITE
+#ifndef PCBXLITES
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -781,6 +786,7 @@ extern "C" void USART3_IRQHandler()
     status = puart->SR ;
 	}
 }
+#endif
 #endif
 #endif
 #endif
@@ -1526,6 +1532,121 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
 
 //#endif // nX12D
 
+#if defined(PCBXLITES)
+ #ifdef BLUETOOTH
+extern "C" void USART3_IRQHandler()
+{
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x9C ;
+#else
+	RTC->BKP1R = 0x9C ;
+#endif
+#endif
+  uint32_t status;
+  uint8_t data;
+	USART_TypeDef *puart = USART3 ;
+
+  status = puart->SR ;
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( Current_Com3 )
+		{
+			if ( Current_Com3->size )
+			{
+				puart->DR = *Current_Com3->buffer++ ;
+				if ( --Current_Com3->size == 0 )
+				{
+					puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+					puart->CR1 |= USART_CR1_TCIE ;	// Enable complete interrupt
+				}
+			}
+			else
+			{
+				puart->CR1 &= ~USART_CR1_TXEIE ;	// Stop Tx interrupt
+			}
+		}
+	}
+	
+	if ( ( status & USART_SR_TC ) && (puart->CR1 & USART_CR1_TCIE ) )
+	{
+		puart->CR1 &= ~USART_CR1_TCIE ;	// Stop Complete interrupt
+		Current_Com3->ready = 0 ;
+	}
+	
+  while (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+    data = puart->DR ;
+
+    if (!(status & USART_FLAG_ERRORS))
+		{
+#ifdef BLUETOOTH
+			put_fifo128( &BtRx_fifo, data ) ;
+#else
+			(void) data ;	
+#endif
+		}
+		else
+		{
+			if ( status & USART_FLAG_ORE )
+			{
+#ifdef PCB9XT
+				USART2_ORE += 1 ;
+#else
+				USART_ORE += 1 ;
+#endif
+			}
+		}
+    status = puart->SR ;
+	}
+}
+
+
+
+uint32_t txPdcBt( struct t_serial_tx *data )
+{
+	data->ready = 1 ;
+	Current_Com3 = data ;
+	USART3->CR1 |= USART_CR1_TXEIE ;
+	return 1 ;			// Sent OK
+}
+ 
+void com3Init( uint32_t baudrate )
+{
+	USART_TypeDef *puart = USART3 ;
+	// Serial configure  
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+	puart->CR2 = 0 ;
+	puart->CR3 = 0 ;
+	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
+  NVIC_EnableIRQ(USART3_IRQn) ;
+}
+
+void com3Stop()
+{
+	USART3->CR1 = 0 ;
+	RCC->APB1ENR &= ~RCC_APB1ENR_USART3EN ;		// Enable clock
+  NVIC_DisableIRQ(USART3_IRQn) ;
+}
+
+
+void Com3SetBaudrate ( uint32_t baudrate )
+{
+	USART3->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+}
+ 
+uint32_t txPdcCom2( struct t_serial_tx *data )
+{
+	return 1 ;
+}
+
+ #endif
+#endif
 
 #if defined(PCBX9LITE)
 
@@ -1635,7 +1756,6 @@ uint32_t txPdcBt( struct t_serial_tx *data )
 	data->ready = 1 ;
 	Current_Com3 = data ;
 	USART3->CR1 |= USART_CR1_TXEIE ;
-	return 1 ;			// Sent OK
 	return 1 ;			// Sent OK
 }
 
