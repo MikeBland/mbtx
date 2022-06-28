@@ -2345,6 +2345,68 @@ void dispGvar( uint8_t x, uint8_t y, uint8_t gvar, uint8_t attr )
 	lcd_putcAtt( x+2*FW, y, gvar+'0', attr ) ;
 }
 
+int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint16_t attr, uint8_t event )
+{
+  uint8_t invers = attr&(INVERS|BLINK) ;
+	int16_t temp ;
+
+	if (value >= 500)
+	{
+		// A gvar
+		value -= 510 ;
+		temp = value ;
+		if ( temp < 0 )
+		{
+			temp = -temp - 1 ;
+  		lcd_putcAtt(x-4*FW, y,'-',attr) ;
+		}
+		dispGvar( x-3*FW, y, temp+1, attr ) ;
+		if (invers) value = checkIncDec16( value, -7, 6, EE_MODEL) ;
+		value += 510 ;
+	}
+	else
+	{
+ 	  lcd_outdezAtt(x, y, value, attr ) ;
+   	if (invers) CHECK_INCDEC_H_MODELVAR( value, -100, 100) ;
+	}
+	
+	if (invers)
+	{
+		uint32_t toggle = 0 ;
+		if ( event == EVT_TOGGLE_GVAR )
+		{
+			toggle = 1 ;
+		}
+		if ( getEventDbl(EVT_KEY_FIRST(BTN_RE)) > 1 )
+		{
+   		killEvents(EVT_KEY_FIRST(BTN_RE)) ;
+			toggle = 1 ;
+		}
+		if ( toggle )
+		{
+			if ( value >= 500 )
+			{
+				value -= 510 ;
+				if ( value < 0 )
+				{
+					value = -g_model.gvars[-value-1].gvar ;
+				}
+				else
+				{
+					value = g_model.gvars[(uint8_t)value].gvar ;
+				}
+			}
+			else
+			{
+				value = 510 ;
+			}
+//    	value = ( value >= 500) ? g_model.gvars[(uint8_t)value-126].gvar : 510) ;
+//	    eeDirty(EE_MODEL) ;
+		}
+	}
+	return value ;
+}
+
 int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max, uint16_t attr, uint8_t event )
 {
   uint8_t invers = attr&(INVERS|BLINK);
@@ -7437,9 +7499,11 @@ void menuProcSafetySwitches(uint8_t event)
 	TITLE(PSTR(STR_SAFETY_SW));
 	EditType = EE_MODEL ;
 	static MState2 mstate2;
-#ifdef NO_VOICE_SWITCHES
+#ifdef NO_VOICE_SWITCHES 
+ #define SAFE_VAL_OFFSET	0
 	event = mstate2.check_columns(event, NUM_SKYCHNOUT+1+1+NUM_VOICE-1 - 1 - 1 ) ;
 #else
+ #define SAFE_VAL_OFFSET	1
 	event = mstate2.check_columns(event, NUM_SKYCHNOUT+1+1+NUM_VOICE-1 - 1 ) ;
 #endif
 
@@ -7455,10 +7519,14 @@ void menuProcSafetySwitches(uint8_t event)
 	DisplayOffset = SAFE_OFF_0 ;
 #endif
 
+#ifdef NO_VOICE_SWITCHES
+	lcd_outdez( 20*FW+SAFE_OFF_0, 0, g_chans512[sub]/2 + 1500 ) ;
+#else
 	if ( sub )
 	{
-    lcd_outdez( 20*FW+SAFE_OFF_0, 0, g_chans512[sub-1]/2 + 1500 ) ;
+    lcd_outdez( 20*FW+SAFE_OFF_0, 0, g_chans512[sub-SAFE_VAL_OFFSET]/2 + 1500 ) ;
 	}
+#endif
 
 	for(uint8_t i=0; i<SCREEN_LINES-1; i++)
 	{
@@ -9546,8 +9614,11 @@ void menuProcMixOne(uint8_t event)
             break;
         
 				case 6:
-					{	
-					 	uint8_t value = md2->differential ;
+					{
+						uint32_t diffValue ;
+						diffValue = md2->differential | (md2->extDiff << 1 ) ;
+						
+					 	uint8_t value = diffValue ;
 						if ( value == 0 )
 						{
 							if ( md2->curve <= -28 )
@@ -9556,10 +9627,21 @@ void menuProcMixOne(uint8_t event)
 							}
 						}
 	          lcd_putsAtt(  1*FW, y, PSTR(STR_Curve), (value == 0) ? attr : 0 ) ;
-	          lcd_putsAtt(  1*FW, y, PSTR(STR_15DIFF), (value == 1) ? attr : 0 ) ;
+	          lcd_putsAtt(  1*FW, y, PSTR(STR_15DIFF), (value & 1) ? attr : 0 ) ;
 	          lcd_putsAtt(  1*FW, y, XPSTR("\021Expo"), (value == 2) ? attr : 0 ) ;
 					 	uint8_t value2 = value ;
+						if ( value2 == 3 )
+						{
+							value2 = 1 ;
+						}
     		    if(attr) CHECK_INCDEC_H_MODELVAR_0( value2, 2) ;
+					 	if ( value != value2 )
+						{
+							if ( ( value == 3 ) && ( value2 == 1 ) )
+							{
+								value2 = 3 ;
+							}
+						}	
 					 	if ( value != value2 )
 						{
 							if ( value2 == 2 )
@@ -9570,16 +9652,49 @@ void menuProcMixOne(uint8_t event)
 							{
 								md2->curve = 0 ;
 							}
-							md2->differential = value2 & 1 ;	// 0 and 2 turn it off
+							diffValue = value2 & 1 ;	// 0 and 2 turn it off
+							md2->differential = diffValue ;
+							md2->extDiff = diffValue >> 1 ;
 						}
 					}
         break ;
 
         case 7:
-						if ( md2->differential )		// Non zero for curve
-						{	
-		          md2->curve = gvarMenuItem( 12*FW, y, md2->curve, -100, 100, attr /*( m_posHorz==1 ? attr : 0 )*/, event ) ;
+				{	
+					if ( md2->differential )	// 1 or 3
+					{
+						int16_t value = md2->curve ;
+						if ( md2->extDiff == 0 )	// old setup
+						{
+							if (value >= 126 || value <= -126)
+							{
+								// Gvar
+								value = (uint8_t)value - 126 ; // 0 to 4
+								value += 510 ;
+							}
 						}
+						else
+						{
+							value += 510 ;
+						}
+						value = gvarDiffValue( 12*FW, y, value, attr, event ) ;
+						if ( value > 500 )
+						{
+							md2->differential = 1 ;
+							md2->extDiff = 1 ;
+							value -= 510 ;
+						}
+						else
+						{
+							md2->differential = 1 ;
+							md2->extDiff = 0 ;
+						}
+						md2->curve = value ;
+					}
+//						if ( md2->differential )		// Non zero for curve
+//						{	
+//		          md2->curve = gvarMenuItem( 12*FW, y, md2->curve, -100, 100, attr /*( m_posHorz==1 ? attr : 0 )*/, event ) ;
+//						}
 						else
 						{
 							if ( md2->curve <= -28 )
@@ -9647,6 +9762,7 @@ void menuProcMixOne(uint8_t event)
 							b <<= 1 ;
 						}
 					}
+				}
         break ;
 
         case 10:
@@ -10307,7 +10423,24 @@ extern uint8_t swOn[] ;
 										put_curve( 18*FW+2+x, 3*FH, pmd->curve, 0 ) ;
 									break ;
 									case 1 :
-				      	    gvarMenuItem( FW*21+1+x, 3*FH, pmd->curve, -100, 100, 0, 0 ) ;
+									{	
+										int16_t ivalue = pmd->curve ;
+										if ( pmd->extDiff == 0 )	// old setup
+										{
+											if (ivalue >= 126 || ivalue <= -126)
+											{
+												// Gvar
+												ivalue = (uint8_t)ivalue - 126 ; // 0 to 4
+												ivalue += 510 ;
+											}
+										}
+										else
+										{
+											ivalue += 510 ;
+										}
+										gvarDiffValue( FW*21+1+x, 3*FH, ivalue, 0, 0 ) ;
+//				      	    gvarMenuItem( FW*21+1+x, 3*FH, pmd->curve, -100, 100, 0, 0 ) ;
+									}
 									break ;
 									case 2 :
             			lcd_outdezAtt( FW*21+1+x, 3*FH, pmd->curve + 128, 0 ) ;
@@ -13188,7 +13321,27 @@ extern void setIntMultiRate( uint32_t rate ) ;		// in uS
 //					}
 //				}
 //#else
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
+				uint32_t oldSubProtocol = pModule->sub_protocol ;
+#endif
 				pModule->sub_protocol = checkIndexed( y, XPSTR(FWx10"\003""\006D16(X)D8(D) LRP   R9M   "), pModule->sub_protocol, (sub==subN) ) ;
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+				if ( pModule->sub_protocol != oldSubProtocol )
+				{
+					if ( oldSubProtocol == 3 )
+					{
+						set_ext_serial_baudrate( 450000 ) ;
+					}
+					else
+					{
+						if ( pModule->sub_protocol == 3 )
+						{
+							set_ext_serial_baudrate( 420000 ) ;
+						}
+					}
+				}
+#endif
 //#endif
 			  if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
 			}subN++;
@@ -15849,7 +16002,7 @@ void menuProcTrainer(uint8_t event)
   #else
    #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 5 ) ;
-   #else
+    #else
 		CHECK_INCDEC_H_GENVAR_0( tProf->channel[0].source, 4 ) ;
    #endif
   #endif
@@ -17694,20 +17847,38 @@ void menuProcAlpha(uint8_t event)
 
 #ifdef PAGE_NAVIGATION 
 	uint8_t cursorMove = 0 ;
-	if ( event == EVT_KEY_FIRST(KEY_LEFT) )
+ #ifdef REV9E
+	if ( g_eeGeneral.pageButton )
 	{
-		event = 0 ;
+		if ( event == EVT_KEY_FIRST(KEY_RIGHT) )
+		{
+			event = 0 ;
+			cursorMove = 1 ;
+		}
+		if ( event == EVT_KEY_FIRST(KEY_LEFT) )
+		{
+			event = 0 ;
+			cursorMove = 2 ;
+		}
 	}
-	if ( event == EVT_KEY_BREAK(KEY_LEFT) )
+	else
+ #endif
 	{
-		event = 0 ;
-		cursorMove = 1 ;
-	}
-	if ( event == EVT_KEY_LONG(KEY_LEFT) )
-	{
-		killEvents(event) ;
-		event = 0 ;
-		cursorMove = 2 ;
+		if ( event == EVT_KEY_FIRST(KEY_LEFT) )
+		{
+			event = 0 ;
+		}
+		if ( event == EVT_KEY_BREAK(KEY_LEFT) )
+		{
+			event = 0 ;
+			cursorMove = 1 ;
+		}
+		if ( event == EVT_KEY_LONG(KEY_LEFT) )
+		{
+			killEvents(event) ;
+			event = 0 ;
+			cursorMove = 2 ;
+		}
 	}
 #endif
 
@@ -19914,11 +20085,19 @@ void menuProc0(uint8_t event)
 				{
 					int8_t x ;
 					x = io_subview ;
-#ifdef REV9E
-					if ( ++x > ((view == e_inputs1) ? 6 : 2) ) x = 0 ;
+#if EXTRA_SKYCHANNELS
+ #ifdef REV9E
+					if ( ++x > ((view == e_inputs1) ? 6 : 3) ) x = 0 ;
+ #else
+					if ( ++x > ((view <= e_inputs1) ? 4 : 3) ) x = 0 ;
+ #endif	// REV9E
 #else
+ #ifdef REV9E
+					if ( ++x > ((view == e_inputs1) ? 6 : 2) ) x = 0 ;
+ #else
 					if ( ++x > ((view <= e_inputs1) ? 4 : 2) ) x = 0 ;
-#endif	// REV9E
+ #endif	// REV9E
+#endif
 					io_subview = x ;
 				}	
         if(view == e_telemetry)
@@ -23271,7 +23450,11 @@ void I2C_set_volume( register uint8_t volume ) ;
 		case M_CONTROLS :
 		{
 			uint8_t subN = 0 ;
+#ifdef REV9E
+			IlinesCount = 9 ;
+#else
 			IlinesCount = 8 ;
+#endif
 			TITLE( PSTR(STR_Controls) ) ;
 
 #ifdef BIG_SCREEN
@@ -23279,7 +23462,11 @@ void I2C_set_volume( register uint8_t volume ) ;
 #endif
 
 #ifndef BIG_SCREEN
+#ifdef REV9E
+			if ( sub < 5 )
+#else
 			if ( sub < 4 )
+#endif
 			{
 				displayNext() ;
 #endif
@@ -23313,6 +23500,13 @@ void I2C_set_volume( register uint8_t volume ) ;
 				}
  				y += FH ;
 				subN += 1 ;
+
+#ifdef REV9E
+				lcd_puts_Pleft( y,XPSTR("Page Button:"));
+				g_eeGeneral.pageButton = checkIndexed( y, XPSTR(FWx15"\001""\005 LEFTRIGHT"), g_eeGeneral.pageButton, (sub==subN) ) ;// FWx07
+ 				y += FH ;
+				subN += 1 ;
+#endif
 
 	    	lcd_puts_Pleft( y, PSTR(STR_MODE) );
 				for ( uint8_t i = 0 ; i < 4 ; i += 1 )
@@ -23350,7 +23544,11 @@ void I2C_set_volume( register uint8_t volume ) ;
 			}
 			else
 			{
+#ifdef REV9E
+				subN = 5 ;
+#else
 				subN = 4 ;
+#endif
 #endif
 				if ( sub >= IlinesCount )
 				{
@@ -25918,7 +26116,7 @@ extern uint32_t switches_states ;
 					if ( checkForMenuEncoderLong( event ) )
 					{
 						voiceCall = 2 ;
-    		   	pushMenu( menuProcSelectImageFile ) ;				
+    		   	pushMenu( menuProcSelectImageFile ) ;
 					}
 				}
 				if ( voiceCall == 0 )

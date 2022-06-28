@@ -309,7 +309,8 @@ PACK(typedef struct t_EEGeneral {
 	uint16_t textColour ;		// For Horus
 	uint8_t disableBtnLong:1 ;
 	uint8_t enableEncMain:1 ;
-	uint8_t spare7:6 ;
+	uint8_t pageButton:1 ;
+	uint8_t spare7:5 ;
 //	GvarData	gvars[MAX_GVARS] ;
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
@@ -514,7 +515,8 @@ PACK(typedef struct te_MixData {
 	uint8_t	switchSource ;
   uint8_t extWeight:2 ;
   uint8_t extOffset:2 ;
-	uint8_t	res:4 ;
+	uint8_t	extDiff:1 ;
+	uint8_t	res:3 ;
 	uint8_t	res1 ;
 }) SKYMixData;
 

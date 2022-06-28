@@ -60,7 +60,7 @@
 
 
 #define PXX2_INTERNAL_BAUDRATE		450000
-#define PXX2_EXTERNAL_BAUDRATE		450000
+#define PXX2_EXTERNAL_BAUDRATE		420000
 #define PXX2_SPORT_BAUDRATE				450000
 
 // for every 6mS frames, use 1666 to give 10 seconds

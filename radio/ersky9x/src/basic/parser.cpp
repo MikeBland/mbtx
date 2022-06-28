@@ -6815,7 +6815,7 @@ int32_t basicFindSwitchIndexByName( const char * name )
 	{
 		if ( i == sizeof(SwTranslate) - 8 )
 		{
-			names = "\003EtdEtuAtdAtuRtdRtuTtuTtd" ;
+			names = "\003EtuEtdAtuAtdRtuRtdTtuTtd" ;
 			nameLength = *names++ ;
 		}
     if (strMatch( names, name, nameLength ))

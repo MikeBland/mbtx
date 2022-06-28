@@ -771,9 +771,17 @@ void perOut(int16_t *chanOut, uint8_t att )
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 						if ( k == MIX_3POS-1 )
 						{
+#ifdef REV9E
+							if ( md->switchSource > 18 )
+#else
 							if ( md->switchSource > 8 )	// Sort for X9E ********
+#endif
 							{
+#ifdef REV9E
+								v = getSwitch( CSW_INDEX+md->switchSource-18, 0, 0 ) ;
+#else
 								v = getSwitch( CSW_INDEX+md->switchSource-8, 0, 0 ) ;
+#endif
 								v = v ? 1024 : -1024 ;
 							}
 							else
@@ -783,7 +791,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 								{ // 2-POS switch
         					v = hwKeyState(sw) ? 1024 : -1024 ;
 								}
+#ifdef REV9E
+								else if( md->switchSource == 18)
+#else
 								else if( md->switchSource == 8)
+#endif
 								{
 									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
 								}
@@ -1028,14 +1040,29 @@ void perOut(int16_t *chanOut, uint8_t att )
 					act[i] = (int32_t)v*DEL_MULT ;
 				}
         //========== CURVES ===============
-				if ( md->differential )
+				uint32_t diffValue ;
+				diffValue = md->differential | (md->extDiff << 1 ) ;
+				if ( diffValue )
 				{
       		//========== DIFFERENTIAL =========
       		int8_t curveParam = REG100_100( md->curve ) ;
+					if ( diffValue == 3 )
+					{
+						// New Gvar
+						if ( curveParam < 0 )
+						{
+							curveParam = -curveParam - 1 ;							
+							curveParam = -g_model.gvars[curveParam].gvar ;
+						}
+						else
+						{
+							curveParam = g_model.gvars[curveParam].gvar ;
+						}
+					}
       		if (curveParam > 0 && v < 0)
-      		  v = (v * (100 - curveParam)) / 100;
+      			v = (v * (100 - curveParam)) / 100 ;
       		else if (curveParam < 0 && v > 0)
-      		  v = (v * (100 + curveParam)) / 100;
+      			v = (v * (100 + curveParam)) / 100 ;
 				}
 				else
 				{

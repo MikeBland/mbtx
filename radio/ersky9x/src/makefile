@@ -54,6 +54,7 @@ BINX = $(CP) -O binary
 
 
 ifeq ($(PCB), X9D)
+ MCU  = cortex-m3
  BASIC = 1
  CPPDEFS += -DBASIC
  ifeq ($(REV19), 1)
@@ -132,6 +133,7 @@ ifeq ($(PCB), X9D)
   CPPDEFS += -DLUA
  endif
 else ifeq ($(PCB), 9XT)
+ MCU  = cortex-m3
  PROJECT      = ersky9x9XT
  BASIC = 1
  CPPDEFS += -DBASIC 
@@ -144,9 +146,11 @@ else ifeq ($(PCB), 9XT)
  EXT_MOD=9XT
  UDEFS = -Dstm32f205
 else ifeq ($(PCB), X12D)
+ MCU  = cortex-m4
  PROJECT = x12d
  BASIC = 1
  CPPDEFS += -DBASIC 
+ CDEFS += -D__FPU_USED=1
  LDSCRIPT = X12D/stm32f4_flash.ld
  CPPDEFS += -DHSE_VALUE=12000000
  CPPDEFS += -DPCBX12D 
@@ -156,8 +160,10 @@ else ifeq ($(PCB), X12D)
  LUA = 1
  CPPDEFS += -DLUA
 else ifeq ($(PCB), X10)
+ MCU  = cortex-m4
  BASIC = 1
  CPPDEFS += -DBASIC 
+ CDEFS += -D__FPU_USED=1
  LDSCRIPT = X12D/stm32f4_flash.ld
  CPPDEFS += -DHSE_VALUE=12000000
  CPPDEFS += -DPCBX10 
@@ -198,6 +204,7 @@ else ifeq ($(PCB), X10)
   EXT_MOD=X10
  endif
 else ifeq ($(PCBLEM1), 1)
+ MCU  = cortex-m3
  PROJECT = lemon1
  CPPDEFS += -DBASIC 
  BASIC = 1
@@ -209,6 +216,7 @@ else ifeq ($(PCBLEM1), 1)
  UDEFS = -Dstm32f103
  UDEFS = -DSTM32F10X_HD
 else
+ MCU  = cortex-m3
  USB_JOYSTICK = 1
  BASIC = 1
  CPPDEFS += -DBASIC 
@@ -250,7 +258,6 @@ else
 endif
 
 
-MCU  = cortex-m3
 
 # List all default C defines here, like -D_DEBUG=1
 DDEFS =

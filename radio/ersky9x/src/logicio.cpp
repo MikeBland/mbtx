@@ -2115,10 +2115,23 @@ uint32_t read_keys()
 	{
 		y |= 0x02 << KEY_MENU ;			// MENU
 	}
-	if ( x & PIN_BUTTON_PAGE )
+	if ( g_eeGeneral.pageButton )
 	{
+		if ( x & PIN_BUTTON_PAGE )
+		{
+			y |= 0x02 << KEY_RIGHT ;	// RIGHT
+		}
 		y |= 0x02 << KEY_LEFT ;		// LEFT
 	}
+	else
+	{
+		if ( x & PIN_BUTTON_PAGE )
+		{
+			y |= 0x02 << KEY_LEFT ;		// LEFT
+		}
+		y |= 0x02 << KEY_RIGHT ;	// RIGHT
+	}
+		
 	if ( x & PIN_BUTTON_EXIT )
 	{
 		y |= 0x02 << KEY_EXIT ;			// EXIT
@@ -2129,7 +2142,6 @@ uint32_t read_keys()
 //		y |= 0x02 << KEY_RIGHT ;		// RIGHT
 //	}
 
-	y |= 0x02 << KEY_RIGHT ;	// RIGHT
 	y |= 0x02 << KEY_UP ;			// up
 	y |= 0x02 << KEY_DOWN ;		// DOWN
 
@@ -3233,7 +3245,7 @@ uint32_t hwKeyState( uint8_t key )
       xxx = ((e & PIN_SW_F_L) | (e & PIN_SW_F_H)) == (PIN_SW_F_L | PIN_SW_F_H) ;
       break;
     case HSW_SD2:
-      xxx = ~d & PIN_SW_F_L ;
+      xxx = ~e & PIN_SW_F_H ;
       break;
     
     case HSW_SE0:

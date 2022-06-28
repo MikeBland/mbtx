@@ -1719,11 +1719,17 @@ void checkTrainerSource()
    #ifndef PCBX7ACCESS
 			case 1 :
 				stop_USART6_Sbus() ;
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 			break ;
 			case 2 :
 				stop_cppm_on_heartbeat_capture() ;				
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 			break ;
    #endif
   #endif
@@ -1732,11 +1738,17 @@ void checkTrainerSource()
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 			case 1 :
 				stop_USART_Sbus() ;
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 			break ;
 			case 2 :
 				stop_cppm_on_heartbeat_capture() ;				
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 			break ;
 #endif
 			case 3 :
@@ -1783,7 +1795,10 @@ void checkTrainerSource()
 #endif
 			case 3 :	// Slave so output
 				init_trainer_ppm() ;
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 //#if defined(PCBX10)
 //	ExtRfOffPos = 6 ;
 //#endif
@@ -1855,7 +1870,10 @@ void checkTrainerSource()
 			break ;
 			case TRAINER_SLAVE :	// Slave so output
 				init_trainer_ppm() ;
-				EXTERNAL_RF_OFF() ;
+				if ( g_model.Module[1].protocol == PROTO_OFF )
+				{
+					EXTERNAL_RF_OFF() ;
+				}
 			break ;
 			case TRAINER_J_SBUS :
 				init_trainer_capture(CAP_PPM) ;
@@ -3507,7 +3525,68 @@ uint32_t updateSlave() ;
 
 //#ifdef PCB9XT
 
-////#define BACKLIGHT_TEST	1
+//	uint16_t timer = 0 ;
+//  configure_pins( GPIO_Pin_9, PIN_OUTPUT | PIN_PORTB | PIN_OS25 | PIN_PUSHPULL ) ;
+
+//	for(;;)
+//	{
+//		GPIOB->BSRRL = GPIO_Pin_9 ;
+
+//		lcd_clear() ;
+//		lcd_putsAtt( 3*FW, 3*FH, "HIGH", DBLSIZE ) ;
+//		refreshDisplay() ;
+//		for ( timer = 0 ; timer < 500 ;  )
+//		{
+//			if ( Tenms )
+//			{
+//				Tenms = 0 ;
+//				timer += 1 ;
+//				wdt_reset() ;
+//			}
+//  	  if ( keyDown() )
+//			{
+//				break ;
+//			}
+//		}
+// 	  if ( keyDown() )
+//		{
+//			break ;
+//		}
+	
+//		GPIOB->BSRRH = GPIO_Pin_9 ;
+//		lcd_clear() ;
+//		lcd_putsAtt( 3*FW, 3*FH, "LOW", DBLSIZE ) ;
+//		refreshDisplay() ;
+	
+//		for ( timer = 0 ; timer < 500 ;  )
+//		{
+//			if ( Tenms )
+//			{
+//				Tenms = 0 ;
+//				timer += 1 ;
+//				wdt_reset() ;
+//			}
+//  	  if ( keyDown() )
+//			{
+//				break ;
+//			}
+//		}
+// 	  if ( keyDown() )
+//		{
+//			break ;
+//		}
+	
+	
+//	}
+//	clearKeyEvents() ;
+//	GPIOB->BSRRL = GPIO_Pin_9 ;
+//  configure_pins( GPIO_Pin_9, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_2 | PIN_OS25 | PIN_PUSHPULL ) ;
+
+//#endif
+
+//#ifdef PCB9XT
+
+//#define BACKLIGHT_TEST	1
  
 // #ifdef BACKLIGHT_TEST
 //	{
@@ -3518,17 +3597,17 @@ uint32_t updateSlave() ;
 //			uint16_t timer = 0 ;
 ////			for ( timer = 0 ; timer < 2 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
 //			BlSetColour( 100, BL_RED ) ;	
-//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
+//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;wdt_reset() ;}}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
 //			BlSetColour( 0, BL_RED ) ;	
 ////			for ( timer = 0 ; timer < 2 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
 //			BlSetColour( 100, BL_GREEN ) ;	
-//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
+//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;wdt_reset() ;}}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
 //			BlSetColour( 0, BL_GREEN ) ;	
 ////			for ( timer = 0 ; timer < 2 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
 //			BlSetColour( 100, BL_BLUE ) ;	
-//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;}}
+//			for ( timer = 0 ; timer < 200 ;  ) { if ( Tenms ){Tenms = 0 ;timer += 1 ;wdt_reset() ;}}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
 
 //			for ( timer = 100 ; timer > 0 ;  )
@@ -3538,6 +3617,7 @@ uint32_t updateSlave() ;
 //					Tenms = 0 ;
 //					timer -= 1 ;
 //					BlSetColour( timer, BL_BLUE ) ;	
+//					wdt_reset() ;
 //				}
 //			}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
@@ -3548,6 +3628,7 @@ uint32_t updateSlave() ;
 //					Tenms = 0 ;
 //					timer += 1 ;
 //					BlSetColour( timer, BL_GREEN ) ;	
+//					wdt_reset() ;
 //				}
 //			}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
@@ -3558,6 +3639,7 @@ uint32_t updateSlave() ;
 //					Tenms = 0 ;
 //					timer -= 1 ;
 //					BlSetColour( timer, BL_GREEN ) ;	
+//					wdt_reset() ;
 //				}
 //			}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
@@ -3568,6 +3650,7 @@ uint32_t updateSlave() ;
 //					Tenms = 0 ;
 //					timer += 1 ;
 //					BlSetColour( timer, BL_RED ) ;	
+//					wdt_reset() ;
 //				}
 //			}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
@@ -3578,6 +3661,7 @@ uint32_t updateSlave() ;
 //					Tenms = 0 ;
 //					timer -= 1 ;
 //					BlSetColour( timer, BL_RED ) ;	
+//					wdt_reset() ;
 //				}
 //			}
 //			if ( check_soft_power() == POWER_OFF ){soft_power_off() ;}
@@ -7590,18 +7674,22 @@ void doSplash()
     lcdSetRefVolt(g_eeGeneral.contrast);
   	clearKeyEvents();
 
-#if defined(PCBX10) || defined(PCBLEM1)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+ #ifndef MIXER_TASK
 		for ( uint32_t i = 0 ; i < 25 ; i += 1 )
 		{
-			getADC_filt();
+			getADC_osmp();
 		}
+ #endif
 #else
 		for ( uint32_t i = 0 ; i < 10 ; i += 1 )
 		{
-			getADC_filt();
+			getADC_osmp();
 		}
 #endif
-		getADC_filt();
+ #ifndef MIXER_TASK
+		getADC_osmp();
+ #endif
   	uint16_t inacSum = stickMoveValue() ;
 
   	uint16_t tgtime = get_tmr10ms() + SPLASH_TIMEOUT;  
@@ -7658,15 +7746,16 @@ void doSplash()
         if (!main_thread_running) return;
         sleep(1/*ms*/);
 #else
-        getADC_filt();
+ #ifndef MIXER_TASK
+        getADC_osmp();
+ #endif
 #endif
 
-//			uint8_t xxx ;
-			if ( ( /*xxx =*/ keyDown() ) )
+			if ( ( keyDown() ) )
 			{
 				return ;  //wait for key release
 			}
-			
+			 
 			if ( hasStickMoved( inacSum ) )
 			{
 				if ( ++anaCount > 5 )
@@ -11081,7 +11170,7 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 	if ( ( z <= HSW_Ttrmup ) && ( z >= HSW_Etrmdn ) )
 	{
 		z -= HSW_Etrmdn ;
-	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtdEtuAtdAtuRtdRtuTtuTtd"),z,att) ;
+	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtuEtdAtuAtdRtuRtdTtuTtd"),z,att) ;
 		return ;
 	}
 	if ( ( z <= HSW_FM6 ) && ( z >= HSW_FM0 ) )
@@ -12709,6 +12798,11 @@ int8_t REG(int8_t x, int8_t min, int8_t max)
     }
   }
   return result;
+}
+
+uint8_t REGisGvar( int8_t x )
+{
+  return (x >= 126 || x <= -126) ;	
 }
 
 uint8_t IS_EXPO_THROTTLE( uint8_t x )

@@ -153,6 +153,7 @@ const uint8_t Fr_indices[] =
 struct t_s6r S6Rdata ;
 
 uint8_t TmOK ;
+uint8_t RxvScalingRequired ;
 
 uint8_t AltitudeDecimals ;
 uint8_t AltitudeZeroed = 0 ;
@@ -390,8 +391,9 @@ void dsmTelemetryStartReceive()
 
 uint16_t convertRxv( uint16_t value )
 {
-	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && ( FrskyTelemetryType != FRSKY_TEL_AFH )
-			 && ( FrskyTelemetryType != FRSKY_TEL_HITEC ) )		// DSM or AFHDS2 or Hitec telemetry 
+//	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && ( FrskyTelemetryType != FRSKY_TEL_AFH )
+//			 && ( FrskyTelemetryType != FRSKY_TEL_HITEC ) )		// DSM or AFHDS2 or Hitec telemetry 
+	if ( RxvScalingRequired )
 	{
 		value *= g_model.rxVratio ;
 		value /= 255 ;
@@ -400,6 +402,13 @@ uint16_t convertRxv( uint16_t value )
 }
 
 void storeTelemetryData( uint8_t index, uint16_t value ) ;
+
+void storeRxV( uint16_t value, uint8_t scalingRequired )
+{
+	RxvScalingRequired = scalingRequired ;
+	storeTelemetryData( FR_RXV, value ) ;
+}
+
 
 void store_indexed_hub_data( uint8_t index, uint16_t value )
 {
@@ -554,13 +563,13 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		FrskyHubData[TELEM_GPS_ALT] = value ;
 		TelemetryDataValid[TELEM_GPS_ALT] = 25 + g_model.telemetryTimeout ;
 	}
-
-	if ( index == TELEM_GPS_ALT )
+	else if ( index == TELEM_GPS_ALT )
 	{
 		value *= 10 ;
 		WholeGpsAltitude = value ;
 		index = FR_TRASH ;
 	}
+	
 	if ( index == TELEM_GPS_ALTd )
 	{
 		GpsAltitudeDecimals |= 1 ;
@@ -1428,7 +1437,8 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 					uint32_t x = (uint16_t)ivalue ;
 //					x *= 128 ;
 //					x /= 717 ;		// was 1155 ;
-					storeTelemetryData( FR_RXV, x / 10 ) ;
+					storeRxV( x / 10, 0 ) ;
+//					storeTelemetryData( FR_RXV, x / 10 ) ;
 				}
 			break ;
 
@@ -1527,14 +1537,16 @@ void processHitecPacket( uint8_t *packet )
 			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 			ivalue *= 10 ;
 			ivalue /= 28 ;
-			storeTelemetryData( FR_RXV, ivalue ) ;
+			storeRxV( ivalue, 0 ) ;
+//			storeTelemetryData( FR_RXV, ivalue ) ;
 		break ;
 		
 		case 0x11 :
 			ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 			ivalue *= 10 ;
 			ivalue /= 28 ;
-			storeTelemetryData( FR_RXV, ivalue ) ;
+			storeRxV( ivalue, 0 ) ;
+//			storeTelemetryData( FR_RXV, ivalue ) ;
 		break ;
 
 		case 0x13 :
@@ -1701,7 +1713,8 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					{
 			      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
 					}
-					storeTelemetryData( FR_RXV, value ) ;
+					storeRxV( value, 1 ) ;
+//					storeTelemetryData( FR_RXV, value ) ;
 				break ;
   		    
 				case 3 :
@@ -2483,7 +2496,8 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 			switch ( id )
 			{
 				case 0 :	// Rx voltage
-					storeTelemetryData( FR_RXV, value/10 ) ;
+					storeRxV( value/10, 0 ) ;
+//					storeTelemetryData( FR_RXV, value/10 ) ;
 				break ;
 				case 1 :	// Temp
 					storeTelemetryData( FR_TEMP1, value ) ;
@@ -2534,6 +2548,121 @@ void processScannerData( uint8_t *data, uint32_t byteCount )
 		for ( i = 0 ; i < 5 ; i += 1 )
 		{
 			ScannerData[channel++] = *data++ ;
+		}
+	}
+}
+#endif
+
+#ifndef SMALL
+enum
+{
+  MLINK_VOLTAGE = 1,
+  MLINK_CURRENT = 2,
+  MLINK_VARIO = 3,
+  MLINK_SPEED = 4,
+  MLINK_RPM = 5,
+  MLINK_TEMP = 6,
+  MLINK_HEADING = 7,
+  MLINK_ALT = 8,
+  MLINK_FUEL = 9,
+  MLINK_LQI = 10,
+  MLINK_CAPACITY = 11,
+  MLINK_FLOW = 12,
+  MLINK_DISTANCE = 13,
+  MLINK_RX_VOLTAGE = 16,   // out of range ID for specific RxBt treatment
+  MLINK_LOSS = 17,         // out of range ID for handling number of loss
+  MLINK_TX_RSSI = 18,      // out of range ID for handling Telemetry RSSi reported by multi
+  MLINK_TX_LQI = 19,       // out of range ID for handling Telemetry LQI reported by multi
+} ;
+
+void processMlinkPacket( uint8_t *data )
+{
+//	TX_RSSI data[0]
+	setTxRssi( data[0] ) ;
+//	TX_LQI data[1]
+	setTxLqi( data[1] ) ;
+	data += 2 ;
+	if ( data[0] == 0x13 )  // Telemetry type RX-9
+	{
+		// 2 telemetry values per packet
+    for (uint32_t i = 1 ; i < 5 ; i += 3)
+		{
+      int32_t value = (int16_t )(data[i + 2] << 8 | data[i + 1]);
+      value = value >> 1; // remove alarm flag
+//      uint8_t adress = (data[i] & 0xF0) >> 4 ;
+      switch (data[i] & 0x0F)
+			{
+        case MLINK_VOLTAGE:
+          if ((data[i] & 0xF0) == 0x00)
+					{
+						storeRxV( value, 0 ) ;
+//						storeTelemetryData( FR_RXV, value ) ;
+          }
+          else
+					{
+						storeTelemetryData( FR_VOLTS, value ) ;
+          }
+        break;
+        case MLINK_CURRENT:
+						storeTelemetryData( FR_CURRENT, value ) ;
+				break;
+        case MLINK_VARIO:
+					storeTelemetryData( FR_VSPD, value ) ;
+        break;
+        case MLINK_SPEED:
+        break;
+        case MLINK_RPM:
+          if (value < 0)
+					{
+            value = -value * 10;
+          }
+          else
+					{
+            value = value * 100;
+          }
+						storeTelemetryData( FR_RPM, value ) ;
+        break;
+        case MLINK_TEMP:
+						storeTelemetryData( FR_TEMP1, value ) ;
+        break;
+        case MLINK_HEADING:
+					storeTelemetryData( FR_COURSE, value ) ;
+        break;
+        case MLINK_ALT:
+					storeAltitude( value ) ;
+        break;
+        case MLINK_FUEL:
+					storeTelemetryData( FR_FUEL, value ) ;
+        break;
+        case MLINK_CAPACITY:
+					storeTelemetryData( FR_AMP_MAH, value ) ;
+        break;
+        case MLINK_FLOW:
+//          setTelemetryValue(PROTOCOL_TELEMETRY_MLINK, MLINK_FLOW, 0, adress, val, UNIT_MILLILITERS, 0);
+        break;
+        case MLINK_DISTANCE:
+					storeTelemetryData( FR_HOME_DIST, value ) ;
+        break;
+        case MLINK_LQI:
+          uint8_t mlinkRssi = data[i + 1] >> 1 ;
+//          telemetryData.rssi.set(mlinkRssi);
+	    		frskyTelemetry[2].set( mlinkRssi, FR_RXRSI_COPY ) ;	//FrskyHubData[] =  frskyTelemetry[2].value ;
+          if (mlinkRssi > 0)
+					{
+            frskyStreaming = FRSKY_TIMEOUT10ms ;
+          }
+        break;
+				
+			}
+		}
+		
+	}
+  else if (data[0] == 0x03)  // Telemetry type RX-5
+	{
+    uint16_t mlinkRssi = (data[2] * 100) / 35 ;
+    if (mlinkRssi > 0)
+		{
+      frskyStreaming = FRSKY_TIMEOUT10ms ;
 		}
 	}
 }
@@ -2751,6 +2880,11 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 							case 13 :	// Trainer data
 								processTrainerPacket( InputPrivateData ) ;
 							break ;
+#ifndef SMALL
+							case 15 :	// MLINK
+								processMlinkPacket( InputPrivateData ) ;
+							break ;
+#endif
 						}
 					}
 //#endif

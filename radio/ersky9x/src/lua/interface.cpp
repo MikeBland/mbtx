@@ -48,7 +48,7 @@ extern "C" {
 //typedef struct ScriptInternalData ScriptInternalData ;
 
 #define PERMANENT_SCRIPTS_MAX_INSTRUCTIONS (10000/100)
-#define MANUAL_SCRIPTS_MAX_INSTRUCTIONS    (20000/100)
+#define MANUAL_SCRIPTS_MAX_INSTRUCTIONS    (5000/100)
 #define LUA_WARNING_INFO_LEN               100
 
 lua_State *lsScripts = NULL;

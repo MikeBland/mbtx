@@ -1464,6 +1464,7 @@ extern uint8_t Tevent ;
 
 extern int8_t REG100_100(int8_t x) ;
 extern int8_t REG(int8_t x, int8_t min, int8_t max) ;
+extern uint8_t REGisGvar( int8_t x ) ;
 
 enum PowerState
 {

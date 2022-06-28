@@ -243,9 +243,31 @@ static uint8_t s_evtCount ;
 static uint8_t s_evt ;
 #endif
 
+#ifdef REV9E
+static uint8_t lastWasFirstLeft ;
+#endif
+
 #ifdef MULTI_EVENTS
 void putEvent( register uint8_t evt)
 {
+#ifdef REV9E
+	if ( g_eeGeneral.pageButton )
+	{
+		if ( evt == EVT_KEY_LONG(KEY_RIGHT) )
+		{
+			evt = EVT_KEY_FIRST(KEY_LEFT) ;
+			lastWasFirstLeft = 1 ;
+		}
+		else if ( lastWasFirstLeft )
+		{
+			lastWasFirstLeft = 0 ;
+			if ( evt == EVT_KEY_BREAK(KEY_RIGHT) )
+			{
+				EVT_KEY_BREAK(KEY_LEFT) ;
+			}
+		}
+	}
+#endif
 	if (s_evtCount == 0)
 	{
   	s_evt[0] = evt ;
@@ -260,6 +282,16 @@ void putEvent( register uint8_t evt)
 #else
 void putEvent( register uint8_t evt)
 {
+#ifdef REV9E
+	if ( g_eeGeneral.pageButton )
+	{
+		if ( evt == EVT_KEY_LONG(KEY_RIGHT) )
+		{
+			evt = EVT_KEY_FIRST(KEY_LEFT) )
+			Tevent = evt ;
+		}
+	}
+#endif
   s_evt = evt;
 	Tevent = evt ;
 }
@@ -438,6 +470,19 @@ void killEvents(uint8_t event)
   event = event & EVT_KEY_MASK ;
   if(event < (int)DIM(keys))
 	{
+#ifdef REV9E
+		if ( g_eeGeneral.pageButton )
+		{
+			if ( event == KEY_LEFT )
+			{
+				if ( lastWasFirstLeft )
+				{
+					event = KEY_RIGHT ;
+					lastWasFirstLeft = 0 ;
+				}
+			}
+		}
+#endif
 		keys[event].killEvents() ;
 		if ( s_evtCount == 2 )
 		{

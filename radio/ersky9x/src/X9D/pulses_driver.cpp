@@ -76,6 +76,7 @@
 #define EXT_TYPE_DSM		1
 #define EXT_TYPE_MULTI	2
 
+uint16_t DebugExtRf ;
 
 uint8_t s_current_protocol[NUM_MODULES] = { 255, 255 } ;
 
@@ -412,7 +413,7 @@ static void disable_pa10_none()
 static void init_pa7_none()
 {
   EXTERNAL_RF_OFF() ;
-
+	DebugExtRf |= 1 ;
   // Timer8
 
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
@@ -908,6 +909,7 @@ static void disable_ext_pxx()
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 2 ;
 }
 
 #ifdef ACCESS
@@ -955,6 +957,7 @@ static void disable_pa7_access()
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
+	DebugExtRf |= 4 ;
 }
  #endif
 #endif
@@ -1004,6 +1007,7 @@ static void disable_pa7_xfire()
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
+	DebugExtRf |= 8 ;
 }
 static void init_int_xfire()
 {
@@ -1068,6 +1072,7 @@ static void disable_ext_dsm2()
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 16 ;
 }
 
 // PPM output
@@ -1136,6 +1141,7 @@ static void disable_ext_ppm()
   TIM8->DIER &= ~TIM_DIER_CC2IE & ~TIM_DIER_UIE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 32 ;
 }
 
 //struct t_updateTiming
@@ -1413,6 +1419,7 @@ static void disable_int_none()
 static void init_ext_none()
 {
   EXTERNAL_RF_OFF() ;
+	DebugExtRf |= 64 ;
 		
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PORT_EXTPPM ) ;
 	GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
@@ -1436,6 +1443,7 @@ static void init_ext_none()
 static void disable_ext_none()
 {
   EXTERNAL_RF_OFF() ;
+	DebugExtRf |= 128 ;
 
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   NVIC_DisableIRQ(TIM8_CC_IRQn) ;
@@ -1505,6 +1513,12 @@ static void disable_int_pxx( void )
 // TIM3 ch1 or TIM8 ch1
 	 
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
+void set_ext_serial_baudrate( uint32_t baudrate )
+{
+	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+}
+
+
 static void init_ext_pxx_access( uint32_t type )
 #else
 static void init_ext_pxx( void )
@@ -1540,7 +1554,12 @@ static void init_ext_pxx( void )
 	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
 
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19)
-	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( type ? PXX2_EXTERNAL_BAUDRATE : 450000 ) ;
+	uint32_t btype = type ;
+	if ( g_model.Module[1].sub_protocol == 3 )	// R9M
+	{
+		btype = 1 ;
+	}
+	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( btype ? PXX2_EXTERNAL_BAUDRATE : 450000 ) ;
 #else
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 420000 ;
 #endif
@@ -1617,6 +1636,7 @@ static void disable_ext_pxx( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 256 ;
 #endif
 }
 	
@@ -1632,6 +1652,7 @@ static void disable_ext_dsm2( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 512 ;
 }
 	
 static void init_ext_ppm( void )
@@ -1690,6 +1711,7 @@ static void disable_ext_ppm( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE & ~TIM_DIER_UIE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
+	DebugExtRf |= 1024 ;
 }
 
 void init_ext_serial( uint32_t type )
@@ -1868,6 +1890,7 @@ static void disable_ext_xfire( void )
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
+	DebugExtRf |= 2048 ;
 }
 
  #ifndef PCBX7ACCESS

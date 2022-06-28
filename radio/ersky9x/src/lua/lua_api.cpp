@@ -872,7 +872,11 @@ const luaR_value_entry ersky9xConstants[] = {
   { "ERASE", ERASE },
   { "ROUND", ROUND },
   { "LCD_W", LCD_W },
-  { "LCD_H", LCD_H },
+#if LCD_H == 272
+	{ "LCD_H", 240 },
+#else
+	{ "LCD_H", LCD_H },
+#endif
 //  { "PLAY_NOW", PLAY_NOW },
 //  { "PLAY_BACKGROUND", PLAY_BACKGROUND },
 //  { "TIMEHOUR", TIMEHOUR },
