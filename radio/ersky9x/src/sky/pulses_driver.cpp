@@ -508,35 +508,12 @@ extern "C" void PWM_IRQHandler (void)
 				}
 			break ;
 
-      case PROTO_MULTI:
-      case PROTO_DSM2:
-#ifdef SBUS_PROTOCOL	
-      case PROTO_SBUS:
-#endif
 #ifdef XFIRE
       case PROTO_XFIRE:
-#endif
 				// Alternate periods of 19.5mS/8.5mS and 2.5 mS
 				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
-				if ( period == 5000 )	// 2.5 mS
+				if ( period == 1700 )	// 0.85 mS
 				{
-					if ( CurrentProtocol[1] == PROTO_MULTI )
-					{
-						uint32_t x ;
-						x = g_model.Module[1].ppmFrameLength ;
-						if ( x > 4 )
-						{
-							x = 0 ;
-						}
-						x *= 2000 ;
-						x += 4500 * 2 ;
-						period = x ;
-					}
-					else if ( ( CurrentProtocol[1] == PROTO_DSM2 ) && ( g_model.Module[1].sub_protocol != DSM_9XR  ) )
-					{
-						period = 19500*2 ;		// Total 22 mS
-					}
-					else if ( CurrentProtocol[1] == PROTO_XFIRE )
 					{
 extern struct t_updateTiming UpdateTiming ;
 						struct t_updateTiming *timing = &UpdateTiming ;
@@ -557,10 +534,11 @@ extern struct t_updateTiming UpdateTiming ;
 // just been sent minus the time the last RC data packet was 
 // received, minus a constant 400 us (i.e. 4000) to ensure 
 // "that opentx always has some headroom".
+// UpdateRate is in uS
 						if ( timing->UpdateRate )
 						{
 							rate = timing->UpdateRate * 2 ;
-							if ( ( rate < 3999 ) || ( rate >= 50000 ) )
+							if ( ( rate < 3935 ) || ( rate >= 50000 ) )
 							{
 								rate = (rate == 80000 ) ? 40000 : 8000 ;
 							}
@@ -580,7 +558,7 @@ extern struct t_updateTiming UpdateTiming ;
 									rate -= ( timing->UpdateOffset < -100 ) ? fastAdjust : 20 ;
 								}
 							}
-							period = rate - 5000 ;
+							period = rate - 1700 ;
 							if ( period == 5000 )
 							{
 								period += (timing->UpdateTimer & 1) ? 1 : -1 ;
@@ -588,8 +566,52 @@ extern struct t_updateTiming UpdateTiming ;
 						}
 						else
 						{						
-							period = 1500*2 ;		// Total 4 mS
+							period = 3150*2 ;		// Total 4 mS
 						}
+					}
+				}
+				else
+				{
+					period = 1700 ;
+				}
+				pwmptr->PWM_CH_NUM[3].PWM_CPDRUPD = period ;	// Period in half uS
+				if ( period != 1700 )	// 0.85 mS
+				{
+					NVIC->STIR = SW7_IRQn ;
+//					setupPulses() ;
+				}
+				else
+				{
+					// Kick off serial output here
+					txPdcUsart( Bit_pulses, XfireLength, 0 ) ;
+				}
+			break ;
+#endif
+      
+			case PROTO_MULTI:
+      case PROTO_DSM2:
+#ifdef SBUS_PROTOCOL	
+      case PROTO_SBUS:
+#endif
+				// Alternate periods of 19.5mS/8.5mS and 2.5 mS
+				period = pwmptr->PWM_CH_NUM[3].PWM_CPDR ;
+				if ( period == 5000 )	// 2.5 mS
+				{
+					if ( CurrentProtocol[1] == PROTO_MULTI )
+					{
+						uint32_t x ;
+						x = g_model.Module[1].ppmFrameLength ;
+						if ( x > 4 )
+						{
+							x = 0 ;
+						}
+						x *= 2000 ;
+						x += 4500 * 2 ;
+						period = x ;
+					}
+					else if ( ( CurrentProtocol[1] == PROTO_DSM2 ) && ( g_model.Module[1].sub_protocol != DSM_9XR  ) )
+					{
+						period = 19500*2 ;		// Total 22 mS
 					}
 #ifdef SBUS_PROTOCOL	
 					else if ( CurrentProtocol[1] == PROTO_SBUS )
@@ -615,14 +637,6 @@ extern struct t_updateTiming UpdateTiming ;
 				else
 				{
 					// Kick off serial output here
- #ifdef XFIRE
-					if ( CurrentProtocol[1] == PROTO_XFIRE )
-					{
-						txPdcUsart( Bit_pulses, XfireLength, 0 ) ;
-					}
-					else
-					{
-#endif
 						if ( PulsesPaused == 0 )
 						{
 							PIOA->PIO_PDR = PIO_PA17 ;	// Assign A17 to Peripheral
@@ -631,9 +645,6 @@ extern struct t_updateTiming UpdateTiming ;
 						sscptr->SSC_TPR = (uint32_t) Bit_pulses ;
 						sscptr->SSC_TCR = Serial_byte_count ;
 						sscptr->SSC_PTCR = SSC_PTCR_TXTEN ;	// Start transfers
- #ifdef XFIRE
-					}
-#endif
 				}
 			break ;
 		}

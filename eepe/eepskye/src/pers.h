@@ -48,7 +48,9 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_TYPE_X10			 14
 #define RADIO_TYPE_T16			 15
 #define RADIO_TYPE_TX16S		 16
-#define RADIO_TYPE_X10E		 	17
+#define RADIO_TYPE_X10E		 	 17
+#define RADIO_TYPE_TX18S	 	 18
+#define RADIO_TYPE_LEM1		 	 19
 
 #define RADIO_BITTYPE_SKY					1
 #define RADIO_BITTYPE_9XRPRO			2
@@ -67,6 +69,7 @@ const uint8_t modn12x3[4][4]= {
 #define RADIO_BITTYPE_LEM1				65536*16
 #define RADIO_BITTYPE_TX16S				65536*32
 #define RADIO_BITTYPE_X10E				65536*64
+#define RADIO_BITTYPE_TX18S				65536*128
 
 #define RADIO_BITTYPE_ER9XM64V1		1024
 #define RADIO_BITTYPE_ER9XM64V2		2048
@@ -115,7 +118,7 @@ const uint8_t modn12x3[4][4]= {
 
 #define TRIM_EXTENDED_MAX	500
 
-#define NUM_TELEM_ITEMS	81
+#define NUM_TELEM_ITEMS	89
 
 const uint8_t chout_ar[] = { //First number is 0..23 -> template setup,  Second is relevant channel out
 1,2,3,4 , 1,2,4,3 , 1,3,2,4 , 1,3,4,2 , 1,4,2,3 , 1,4,3,2,
@@ -216,6 +219,7 @@ enum EnumKeys {
 #define HSW_FM4					104
 #define HSW_FM5					105
 #define HSW_FM6					106
+#define HSW_FM7					107
 
 #define HSW_Ttrmup			44
 #define HSW_Ttrmdn			43
@@ -393,6 +397,10 @@ enum EnumKeys {
 
 #define PPM_BASE   (MIX_CYC3)
 #define CHOUT_BASE (PPM_BASE+NUM_PPM)
+#define MIX_3POS	(NUM_SKYXCHNRAW+1)
+#define EXTRA_PPM_BASE ( MIX_3POS + MAX_GVARS + 1 + NUM_SCALERS )
+#define EXTRA_CHANS_BASE ( EXTRA_PPM_BASE + NUM_EXTRA_PPM )
+#define MIX_TRIMS_START ( EXTRA_CHANS_BASE + EXTRA_SKYCHANNELS )
 
 #define CM(x,y,z) (CONVERT_MODE(x,y,z))  //good for SRC
 #define CH(x) (CHOUT_BASE+(x))
@@ -531,7 +539,37 @@ enum EnumKeys {
 #define M_Flyzone        52
 #define M_Scanner        53
 #define M_FrskyX_RX      54
-#define M_LAST_MULTI		 54
+#define M_AFHDS2A_RX     55
+#define M_HoTT           56
+#define M_FX816          57
+#define M_Bayang_RX      58
+#define M_Pelikan        59
+#define M_Tiger          60
+#define M_XK             61
+#define M_XN_DUMP        62
+#define M_FrskyX2        63
+#define M_FrSkyR9        64
+#define M_PROPEL         65
+#define M_LR12           66
+#define M_Skyartec       67
+#define M_ESky150V2			 68
+#define M_DSM_RX				 69
+#define M_JJRC345				 70
+#define M_Q90C					 71
+#define M_Kyosho				 72
+#define M_RadioLink			 73
+#define M_ND						 74
+#define M_Realacc				 75
+#define M_OMP						 76
+#define M_M_Link				 77
+#define M_WFLY2					 78
+#define M_E016H					 79
+#define M_E010r5				 80
+#define M_LOLI					 81
+#define M_E129					 82
+#define M_JOYSWAY				 83
+
+#define M_LAST_MULTI		 83
 
 
 
@@ -597,8 +635,9 @@ bool eeLoadGeneral();
 #define PHYSICAL_LEM1					15
 #define PHYSICAL_TX16S				16
 #define PHYSICAL_X10E					17
+#define PHYSICAL_TX18S				18
 
-#define LAST_PHYSICAL					17
+#define LAST_PHYSICAL					18
 
 #include "myeeprom.h"
 
@@ -635,7 +674,6 @@ public:
 //    int size(int id) {return theFile->size(id);}
 
 };
-
 
 #endif //pers_h
 

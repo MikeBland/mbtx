@@ -715,7 +715,7 @@ PACK(typedef struct t_ModelData {
 		uint8_t telemetryProtocol ;
 		int8_t Failsafe[8];
 		uint8_t failsafeMode:3 ;
-		uint8_t notfailsafeRepeat:1 ;
+		uint8_t disableChannelMapping:1 ;
 		uint8_t r9mPower:2 ;
 		uint8_t r9MflexMode:2 ;		// 0 - OFF, 1 - 915MHz, 2 - 868MHz
 		uint8_t exSubProtocol:2 ;

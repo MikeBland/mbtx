@@ -64,6 +64,9 @@
 #define NUM_GVAR_ADJUST_SKY		8
 #define EXTRA_GVAR_ADJUST	12
 
+#define NUM_INPUTS				32
+#define NUM_INPUT_LINES		64
+
 #define MUSIC_NAME_LENGTH		14
 #define MUSIC_DIR_LENGTH		8
 #define PLAYLIST_COUNT			16
@@ -568,7 +571,8 @@ PACK(typedef struct te_MixData {
 	uint8_t	switchSource ;
   uint8_t extWeight:2 ;
   uint8_t extOffset:2 ;
-	uint8_t	res:4 ;
+	uint8_t	extDiff:1 ;
+	uint8_t	res:3 ;
 	uint8_t	res1 ;
 }) SKYMixData;
 
@@ -818,6 +822,44 @@ PACK(typedef struct t_extraId
 	uint8_t spare ;
 } ) ExtraId ;
 
+struct t_hiResBox
+{
+	uint8_t item ;
+	uint8_t type ;
+	uint16_t colour ;
+	uint16_t bgColour ;
+} ;
+
+#define HIRES_OPT_TRIMS		0x01
+#define HIRES_OPT_BORDERS	0x02
+#define HIRES_OPT_MNAME		0x04
+
+struct t_hiResDisplay
+{
+	uint8_t layout ;
+	uint8_t options ;
+	struct t_hiResBox boxes[6] ;
+} ;
+
+PACK(struct te_InputsData
+{
+  uint8_t srcRaw ;
+	int8_t  weight ;
+  int8_t  swtch ;
+  
+  uint8_t carryTrim:3 ; // On,Off,R,E,T,A
+  uint8_t mode:3 ;
+	uint8_t side:2 ;	// ---, x>0, x<0
+	
+	uint8_t chn:5 ;
+	uint8_t spare2:3;
+
+//  NOBACKUP(char name[LEN_EXPOMIX_NAME]);
+  uint8_t flightModes ;
+  int8_t offset ;
+  int8_t curve ;
+//  uint16_t scale:14;
+});
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
@@ -987,7 +1029,12 @@ PACK(typedef struct te_ModelData {
 	uint8_t extraSensors ;
 	ExtraId extraId[NUMBER_EXTRA_IDS] ;
 	struct t_access Access[2] ;
-	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
+	uint8_t	customTelemetryNames2[16] ;
+	PhaseData xphaseData ;	// 18 bytes long
+	uint8_t forExpansion[2] ;	// Allows for extra items not yet handled
+	struct t_hiResDisplay hiresDisplay[2] ;
+	struct te_InputsData inputs[NUM_INPUT_LINES] ;
+	
 }) SKYModelData ;
 
 

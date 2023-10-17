@@ -1,4 +1,5 @@
-#include "modeledit.h"
+ #include "modeledit.h"
+
 //#include "generaledit.h"
 #include "ui_modeledit.h"
 #include "pers.h"
@@ -7,6 +8,7 @@
 #include "../../common/edge.h"
 #include "../../common/node.h"
 #include "mixerdialog.h"
+#include "inputdialog.h"
 #include "loggingDialog.h"
 #include "cellDialog.h"
 #include "ProtocolDialog.h"
@@ -53,6 +55,7 @@ extern uint8_t ProtocolOptionsSKY[][7] ;
 extern uint8_t ProtocolOptions9XT[][7] ;
 extern uint8_t ProtocolOptionsT12[][7] ;
 extern uint8_t ProtocolOptionsX9L[][7] ;
+extern uint8_t ProtocolOptionsT16[][7] ;
 QString ProtocolNames[] = {"PPM", "XJT", "DSM", "MULTI", "XFIRE", "ACCESS", "SBUS" } ;
 QString Polarity[] = {"POS", "NEG" } ;
 QString PxxTypes[] = {"D16", "D8", "LRP", "R9M" } ;
@@ -98,6 +101,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
     id_model = id;
 
 		createSwitchMapping( &g_eeGeneral, ( ( rData->type == RADIO_TYPE_TARANIS ) || ( rData->type == RADIO_TYPE_TPLUS ) || ( rData->type == RADIO_TYPE_X9E ) || ( rData->type == RADIO_TYPE_QX7 ) || ( rData->type == RADIO_TYPE_T12 ) || ( rData->type == RADIO_TYPE_X9L ) || ( rData->type == RADIO_TYPE_X10 ) ) ? MAX_XDRSWITCH : MAX_DRSWITCH, rData->type ) ;
+    setupInputListWidget();
     setupMixerListWidget();
 
     QSettings settings("er9x-eePskye", "eePskye");
@@ -114,6 +118,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
     tabModelEditSetup();
     tabExpo();
     tabMixes();
+    tabInputs();
     tabLimits();
     tabCurves();
     tabSwitches();
@@ -172,6 +177,36 @@ void ModelEdit::textUpdate( QLineEdit *source, char *dest, int length )
 ModelEdit::~ModelEdit()
 {
     delete ui;
+}
+
+void ModelEdit::setupInputListWidget()
+{
+	InputlistWidget = new InputsList(this) ;
+	QPushButton * qbUp = new QPushButton(this);
+	QPushButton * qbDown = new QPushButton(this);
+	QPushButton * qbClear = new QPushButton(this);
+	
+	qbUp->setText("Move Up");
+	qbUp->setIcon(QIcon(":/images/moveup.png"));
+	qbUp->setShortcut(QKeySequence(tr("Ctrl+Up")));
+	qbDown->setText("Move Down");
+	qbDown->setIcon(QIcon(":/images/movedown.png"));
+	qbDown->setShortcut(QKeySequence(tr("Ctrl+Down")));
+	qbClear->setText("Clear Inputs");
+	qbClear->setIcon(QIcon(":/images/clear.png"));
+	
+	
+	ui->inputsLayout->addWidget(InputlistWidget,1,1,1,3);
+	ui->inputsLayout->addWidget(qbUp,2,1);
+	ui->inputsLayout->addWidget(qbClear,2,2);
+	ui->inputsLayout->addWidget(qbDown,2,3);
+
+	connect(InputlistWidget,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(inputlistWidget_customContextMenuRequested(QPoint)));
+	connect(InputlistWidget,SIGNAL(doubleClicked(QModelIndex)),this,SLOT(inputlistWidget_doubleClicked(QModelIndex)));
+
+	connect(qbUp,SIGNAL(pressed()),SLOT(moveInputUp()));
+	connect(qbDown,SIGNAL(pressed()),SLOT(moveInputDown()));
+	 
 }
 
 void ModelEdit::setupMixerListWidget()
@@ -360,7 +395,7 @@ void ModelEdit::tabModelEditSetup()
     ui->bcP2ChkB->setChecked(g_model.beepANACenter & BC_BIT_P2);
     ui->bcP3ChkB->setChecked(g_model.beepANACenter & BC_BIT_P3);
     
-    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) ) )
+    if ( ( g_eeGeneral.extraPotsSource[0] ) || ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) ) )
     {
 	    ui->bcP4ChkB->show() ;
 			ui->bcP4ChkB->setChecked(g_model.beepANACenter & BC_BIT_P4);
@@ -425,7 +460,7 @@ void ModelEdit::tabModelEditSetup()
       ui->TrainerPolarityCB->setCurrentIndex(g_model.trainPulsePol) ;
 			ui->TrainerStartChannelSB->setValue(g_model.startChannel+1) ;
 
-      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+      if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_9XTREME | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 			{
 				ui->protocolCB->addItem("XJT");
 			}	
@@ -472,7 +507,7 @@ void ModelEdit::tabModelEditSetup()
 
     setSwitchDefPos() ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
 			ui->switchDefPos_1->hide() ;
 			ui->switchDefPos_2->hide() ;
@@ -484,7 +519,7 @@ void ModelEdit::tabModelEditSetup()
 			ui->switchDefPos_8->hide() ;
 			ui->widgetDefSA->show() ;
 			ui->widgetDefSB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 			{
 				ui->widgetDefSC->show() ;
 	    	if ( (rData->bitType & RADIO_BITTYPE_X9L) == 0 )
@@ -504,7 +539,7 @@ void ModelEdit::tabModelEditSetup()
 				ui->EnC->hide() ;
 				ui->EnD->hide() ;
 			}
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 			{
 				ui->widgetDefSE->show() ;
 				ui->widgetDefSG->show() ;
@@ -542,7 +577,7 @@ void ModelEdit::tabModelEditSetup()
 			ui->EnGea->hide() ;
 			ui->EnA->show() ;
 			ui->EnB->show() ;
-    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    	if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 			{
 				ui->EnC->show() ;
         if ( (rData->bitType & RADIO_BITTYPE_X9L) == 0 )
@@ -1253,6 +1288,7 @@ void ModelEdit::buildProtocoText( struct t_module *pmodule, QListWidget *pdispla
 		{	
       uint32_t i ;
 			i = pmodule->sub_protocol & 0x3F ;
+			i |= ( pmodule->exsub_protocol << 6 ) & 0xC0 ;
 			if ( i < MultiProtocolCount )
 			{
 				pdisplayList->addItem(tr("Type: %1").arg(MultiProtocols[i])) ;
@@ -1643,7 +1679,7 @@ void ModelEdit::setProtocolBoxes()
     ui->startChannels2SB->setValue(g_model.startPPM2channel) ;
     ui->startChannels2SB->setSuffix( (g_model.startPPM2channel == 0) ? " =follow" : "" ) ;
 
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 		{
 			ui->numChannels2SB->hide() ;
 			ui->startChannels2SB->hide() ;
@@ -1804,6 +1840,7 @@ void ModelEdit::setProtocolBoxes()
 				{	
           uint32_t i ;
 					i = g_model.Module[module].sub_protocol & 0x3F ;
+					i |= ( g_model.Module[module].exsub_protocol << 6 ) & 0xC0 ;
 					if ( i < MultiProtocolCount )
 					{
 						pdisplayList->addItem(tr("Type: %1").arg(MultiProtocols[i])) ;
@@ -2543,7 +2580,7 @@ void ModelEdit::expoEdited()
 void ModelEdit::combinedSourceString(QString *srcstr, uint32_t value)
 {
 	uint32_t limit = 45 ;
-  if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+  if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 	{
 		limit = 46 ;
     if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
@@ -2621,7 +2658,7 @@ void ModelEdit::voiceAlarmsList()
     str += tr("(%1) ").arg(srcstr) ;
 		
 //		uint32_t limit = 45 ;
-//    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+//    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 //		{
 //			limit = 46 ;
 //    	if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
@@ -2992,6 +3029,194 @@ void ModelEdit::voice_KeyPress(QKeyEvent *event)
   }
 }
 
+void ModelEdit::tabInputs()
+{
+  QByteArray qba ;
+	InputlistWidget->clear() ;
+	uint32_t i ;
+	int32_t curInput = 0 ;
+
+	initRadioHw( rData->type, rData ) ;
+
+  for( i = 0 ; i < NUM_INPUT_LINES ; i += 1 )
+	{
+		struct te_InputsData *pinput = &g_model.inputs[i] ;
+		if((pinput->chn==0) || (pinput->chn>NUM_INPUTS) )
+		{
+			break ;
+		}
+		QString str = "" ;
+		while( curInput+1 < pinput->chn )
+		{
+			curInput += 1 ;
+			str = tr("I%1%2").arg((curInput)/10).arg((curInput)%10) ;
+
+//			str += tr(" curInput(%1)").arg(curInput) ;
+			
+//			str += tr(" chn(%1)").arg(pinput->chn) ;
+
+			qba.clear() ;
+			qba.append((quint8)-curInput) ;
+			QListWidgetItem *itm = new QListWidgetItem(str) ;
+			itm->setData(Qt::UserRole,qba);
+			InputlistWidget->addItem(itm);
+	  }
+		if( curInput != pinput->chn )
+		{
+			str = tr("I%1%2").arg((pinput->chn)/10).arg((pinput->chn)%10) ;
+      
+//			str += tr(" curInput(%1)").arg(curInput) ;
+			
+//			str += tr(" chn(%1)").arg(pinput->chn) ;
+
+			curInput = pinput->chn ;
+		}
+		else
+		{
+			str = "   " ;
+      
+//			str += tr(" curInput(%1)").arg(curInput) ;
+			
+//			str += tr(" chn(%1)").arg(pinput->chn) ;
+
+		}
+
+		int j ;
+		j = pinput->weight ;
+		str += j<0 ? QString(" %1\% ").arg(j).rightJustified(6,' ') :
+                              QString(" +%1\% ").arg(j).rightJustified(6, ' ') ;
+    QString srcstr ;
+//		uint32_t lowBound = rData->type ? 21 : 21 ;
+
+//#ifdef EXTRA_SKYCHANNELS
+//			  if ( ( ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 ) ||
+//						 ( md->srcRaw >= lowBound+70-21 && md->srcRaw <= lowBound+7+70-21 ) )  && ( md->disableExpoDr ) )
+//#else
+//			  if ( ( md->srcRaw >= lowBound && md->srcRaw <= lowBound+23 ) && ( md->disableExpoDr ) )
+//#endif
+//				{
+//					uint32_t j ;
+//					j = md->srcRaw ;
+//					if ( j > lowBound+23 )
+//					{
+//						j -= (70-25) ;
+//					}
+//					else
+//					{
+//						j -= (lowBound-1) ;
+//					}
+//          srcstr = QString("OP%1").arg( j ) ;
+//				}
+//				else
+		{
+			uint32_t value ;
+      value = pinput->srcRaw ;
+			if ( value == 0 )
+			{
+      	value = pinput->srcRaw = 1 ;
+			}
+			if ( value >= 128 )	// A switch
+			{
+				uint32_t i ;
+				struct t_radioHardware *prh = &rData->radioHardware ;
+				
+		    srcstr = "Sw" ;
+				if ( value >= 137 )
+				{
+					srcstr = "L1L2L3L4L5L6L7L8L9LALBLCLDLELFLGLHLILJLKLLLMLNLO" ;
+					srcstr = srcstr.mid( (value-137)*2, 2 ) ;
+				}
+				else
+				{
+					for ( i = 0 ; i < prh->numberSwitches ; i += 1 )
+					{
+						if ( prh->swIndices[i] == value )
+						{
+		    			srcstr = prh->swNames[i] ;
+							break ;
+						}
+					}
+				}
+			}
+			else	// Not a switch
+			{
+				if ( ( ( value >= 5 ) && ( value <= 7 ) ) || ( value >= EXTRA_POTS_START ) )
+				{
+					uint32_t i ;
+          struct t_radioHardware *prh = &rData->radioHardware ;
+				
+		    	srcstr = "Pot" ;
+					for ( i = 0 ; i < prh->numberPots ; i += 1 )
+					{
+            if ( prh->potIndices[i] == value )
+						{
+		    			srcstr = prh->potNames[i] ;
+							break ;
+						}
+					}
+				}
+				else
+				{
+//        	srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, rData->type, rData->extraPots );
+        	srcstr = getInputSourceStr( value ) ;
+				}
+			}
+		}
+
+    str += srcstr ;
+
+    j = pinput->offset ;
+		str += tr(" Offset(%1\%)").arg(j) ;
+
+
+
+//		if ( srcstr == "s" )
+//		{
+//    	if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
+//			{
+//				srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
+//			}
+//			else
+//			{
+//				srcstr = "IdxThrRudEleAilGeaTrnL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
+//			}
+//      str += srcstr.mid( pinput->switchSource * 3, 3 ) ;
+//		}
+
+	 
+		qba.clear();
+		qba.append((quint8)i);
+		qba.append((const char*)pinput, sizeof(*pinput));
+		QListWidgetItem *itm = new QListWidgetItem(str);
+		itm->setData(Qt::UserRole,qba);  // mix number
+		InputlistWidget->addItem(itm);//(str);
+	
+	}
+
+	while( curInput < NUM_INPUTS )
+	{
+//		struct te_InputsData *pinput = &g_model.inputs[curInput] ;
+		curInput += 1 ;
+		QString str = tr("I%1%2").arg(curInput/10).arg(curInput%10);
+
+//		str += tr(" curInput(%1)").arg(curInput) ;
+			
+//		str += tr(" chn(%1)").arg(pinput->chn) ;
+
+		qba.clear();
+		qba.append((quint8)-curInput);
+		QListWidgetItem *itm = new QListWidgetItem(str);
+		itm->setData(Qt::UserRole,qba); // add new mixer
+		InputlistWidget->addItem(itm);
+	}
+
+	if(InputlistWidget->selectedItems().isEmpty())
+	{
+//		InputlistWidget->setCurrentRow(0) ;
+		InputlistWidget->item(0)->setSelected(true) ;
+	}
+}
+
 void ModelEdit::tabMixes()
 {
     // curDest -> destination channel
@@ -3068,9 +3293,24 @@ void ModelEdit::tabMixes()
 							j += 250 ;
 						}
 					}
-					
-        	str += j<0 ? QString(" %1\%").arg(j).rightJustified(6,' ') :
-                              QString(" +%1\%").arg(j).rightJustified(6, ' ');
+					if ( j > 350 )
+					{
+						j -= 360 ;
+						if ( j < 0 )
+						{
+							j = -j - 1 ;
+	        		str += QString(" -GV%1\%").arg(j+1).rightJustified(6,' ') ;
+						}
+						else
+						{
+	        		str += QString(" GV%1\%").arg(j+1).rightJustified(6,' ') ;
+						}
+					}
+					else
+					{
+        		str += j<0 ? QString(" %1\%").arg(j).rightJustified(6,' ') :
+                              QString(" +%1\%").arg(j).rightJustified(6, ' ') ;
+					}
 				}
 
 
@@ -3109,90 +3349,90 @@ void ModelEdit::tabMixes()
 				{
 					uint32_t value ;
 					value = md->srcRaw ;
-    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
-					{
-						if ( value == EXTRA_POTS_START )
-						{
-              value = 8 ;
-						}
-						else
-						{
-    					if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
-							{
-								if ( value == EXTRA_POTS_START + 1 )
-								{
-        		      value = 9 ;
-								}
-								else
-								{
-    							if ( rData->bitType & ( RADIO_BITTYPE_X9E ) )
-									{
-                    if ( value == EXTRA_POTS_START + 2 )
-										{
-        				      value = 10 ;
-										}
-										else if ( value >= EXTRA_POTS_POSITION )
-										{
-											value += 3 ;
-										}
-									}
-									else if ( value >= EXTRA_POTS_POSITION )
-									{
-										value += 2 ;
-									}
-								}
-							}
-							else if ( value >= EXTRA_POTS_POSITION )
-							{
-								value += 1 ;
-							}
-						}
-					}
-					if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
-					{
-						if ( value >= EXTRA_POTS_START )
-						{
-              value = 7 + rData->extraPots ;
-						}
-						else
-						{
-							if ( value >= EXTRA_POTS_POSITION )
-							{
-                value += rData->extraPots ;
-							}
-						}
-					}
+//    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
+//					{
+//						if ( value == EXTRA_POTS_START )
+//						{
+//              value = 8 ;
+//						}
+//						else
+//						{
+//    					if ( rData->bitType & ( RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E ) )
+//							{
+//								if ( value == EXTRA_POTS_START + 1 )
+//								{
+//        		      value = 9 ;
+//								}
+//								else
+//								{
+//    							if ( rData->bitType & ( RADIO_BITTYPE_X9E ) )
+//									{
+//                    if ( value == EXTRA_POTS_START + 2 )
+//										{
+//        				      value = 10 ;
+//										}
+//										else if ( value >= EXTRA_POTS_POSITION )
+//										{
+//											value += 3 ;
+//										}
+//									}
+//									else if ( value >= EXTRA_POTS_POSITION )
+//									{
+//										value += 2 ;
+//									}
+//								}
+//							}
+//							else if ( value >= EXTRA_POTS_POSITION )
+//							{
+//								value += 1 ;
+//							}
+//						}
+//					}
+//					if ( ( rData->type == RADIO_TYPE_SKY ) || ( rData->type == RADIO_TYPE_9XTREME ) )
+//					{
+//						if ( value >= EXTRA_POTS_START )
+//						{
+//              value = 7 + rData->extraPots ;
+//						}
+//						else
+//						{
+//							if ( value >= EXTRA_POTS_POSITION )
+//							{
+//                value += rData->extraPots ;
+//							}
+//						}
+//					}
 					int type = rData->type ;
-					if ( type == RADIO_TYPE_TPLUS )
-					{
-						if ( rData->sub_type == 1 )
-						{
-							type = RADIO_TYPE_X9E ;
-						}
-					}
-					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_X9L ) )
-					{
-						if ( value > 6 )
-						{
-						 value += 1 ;
-						}
-					}
+//					if ( type == RADIO_TYPE_TPLUS )
+//					{
+//						if ( rData->sub_type == 1 )
+//						{
+//							type = RADIO_TYPE_X9E ;
+//						}
+//					}
+//					if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) || ( type == RADIO_TYPE_X9L ) )
+//					{
+//						if ( value > 6 )
+//						{
+//						 value += 1 ;
+//						}
+//					}
           srcstr = getSourceStr(g_eeGeneral.stickMode, value,g_model.modelVersion, type, rData->extraPots );
 				}
 
-        str += srcstr ;
-				if ( srcstr == "s" )
+				if ( srcstr == "SWCH" )
 				{
-    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    			if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 					{
-						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SHL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
+						srcstr = "_SA_SB_SC_SD_SE_SF_SG_SH_6PL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO " ;
 					}
 					else
 					{
 						srcstr = "IdxThrRudEleAilGeaTrnL1 L2 L3 L4 L5 L6 L7 L8 L9 LA LB LC LD LE LF LG LH LI LJ LK LL LM LN LO _6P" ;
 					}
-					str += srcstr.mid( md->switchSource * 3, 3 ) ;
+					srcstr = "s" + srcstr.mid( md->switchSource * 3, 3 ) ;
 				}
+        str += srcstr ;
 
         if(md->swtch) str += tr(" Switch(") + getSWName(md->swtch, rData->type) + ")";
         if(md->carryTrim) str += tr(" noTrim");
@@ -3228,8 +3468,24 @@ void ModelEdit::tabMixes()
 								j += 250 ;
 							}
 						}
-        		str += tr(" Offset(%1\%)").arg(j);
-					}
+						if ( j > 350 )
+						{
+							j -= 360 ;
+							if ( j < 0 )
+							{
+								j = -j - 1 ;
+            		str += tr(" Offset(-GV%1)").arg(j+1) ;
+							}
+							else
+							{
+        				str += tr(" Offset(%1\%)").arg(j+1);
+							}
+						}
+            else
+            {
+              str += tr(" Offset(%1\%)").arg(j);
+            }
+          }
 				}
         if(md->curve)
         {
@@ -3279,20 +3535,20 @@ void ModelEdit::tabMixes()
 
         if(md->mixWarn)  str += tr(" Warn(%1)").arg(md->mixWarn);
 
-				if ( ( md->modeControl != 0x7F ) && ( md->modeControl != 0 ) )
+				if ( ( md->modeControl != 0xFF ) && ( md->modeControl != 0 ) )
 				{
 					str += " FM(" ;
-					uint8_t b ;
+          uint16_t b ;
 					char i ;
 					b = 1 ;
 					i = '0' ;
-					while ( b < 0x80 )
+					while ( b < 0x100 )
 					{
 						if ( ( md->modeControl & b ) == 0 )
 						{
 							if ( i > '0' )
 							{
-								QString n = g_model.phaseData[i-'1'].name ;
+								QString n = (i == '7') ? g_model.xphaseData.name : g_model.phaseData[i-'1'].name ;
 								n = n.left(6) ;
 								if ( n.data()[0] != ' ' )
 								{
@@ -3345,7 +3601,7 @@ void ModelEdit::tabMixes()
 
     if(MixerlistWidget->selectedItems().isEmpty())
     {
-        MixerlistWidget->setCurrentRow(0);
+//        MixerlistWidget->setCurrentRow(0);
         MixerlistWidget->item(0)->setSelected(true);
     }
 
@@ -3404,6 +3660,7 @@ void ModelEdit::tabPhase()
 	connect(ui->FP4_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP5_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP6_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_sw,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 
 	connect(ui->FP1_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP2_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
@@ -3411,6 +3668,7 @@ void ModelEdit::tabPhase()
 	connect(ui->FP4_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP5_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP6_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_sw_2,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 
 	connect(ui->FP1_RudCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP1_EleCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
@@ -3436,6 +3694,10 @@ void ModelEdit::tabPhase()
 	connect(ui->FP6_EleCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP6_ThrCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	connect(ui->FP6_AilCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_RudCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_EleCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_ThrCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
+	connect(ui->FP7_AilCB,SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited())); 
 	
   connect(ui->FP1rudTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP1eleTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
@@ -3462,6 +3724,10 @@ void ModelEdit::tabPhase()
   connect(ui->FP6eleTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP6thrTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
   connect(ui->FP6ailTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
+  connect(ui->FP7rudTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
+  connect(ui->FP7eleTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
+  connect(ui->FP7thrTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
+  connect(ui->FP7ailTrimSB,SIGNAL(valueChanged(int)),this,SLOT(phaseEdited()));
 	
 	
 	connect(ui->FM1FadeIn,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
@@ -3476,6 +3742,8 @@ void ModelEdit::tabPhase()
 	connect(ui->FM5FadeOut,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
 	connect(ui->FM6FadeIn,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
 	connect(ui->FM6FadeOut,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
+	connect(ui->FM7FadeIn,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
+	connect(ui->FM7FadeOut,SIGNAL(valueChanged(double)),this,SLOT(phaseEdited())); 
 
   connect( ui->FM1Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
   connect( ui->FM2Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
@@ -3483,6 +3751,7 @@ void ModelEdit::tabPhase()
   connect( ui->FM4Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
   connect( ui->FM5Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
   connect( ui->FM6Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
+  connect( ui->FM7Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
 
 }
 
@@ -3522,6 +3791,7 @@ void ModelEdit::updatePhaseTab()
 	populateSwitchShortCB( ui->FP4_sw, g_model.phaseData[3].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP5_sw, g_model.phaseData[4].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP6_sw, g_model.phaseData[5].swtch, rData->type ) ;
+	populateSwitchShortCB( ui->FP7_sw, g_model.xphaseData.swtch, rData->type ) ;
 
 	populateSwitchShortCB( ui->FP1_sw_2, g_model.phaseData[0].swtch2, rData->type ) ;
 	populateSwitchShortCB( ui->FP2_sw_2, g_model.phaseData[1].swtch2, rData->type ) ;
@@ -3529,7 +3799,7 @@ void ModelEdit::updatePhaseTab()
 	populateSwitchShortCB( ui->FP4_sw_2, g_model.phaseData[3].swtch2, rData->type ) ;
 	populateSwitchShortCB( ui->FP5_sw_2, g_model.phaseData[4].swtch2, rData->type ) ;
 	populateSwitchShortCB( ui->FP6_sw_2, g_model.phaseData[5].swtch2, rData->type ) ;
-
+	populateSwitchShortCB( ui->FP7_sw_2, g_model.xphaseData.swtch2, rData->type ) ;
 	
 	ui->FP1rudTrimSB->setDisabled( populatePhasetrim( ui->FP1_RudCB, 1, g_model.phaseData[0].trim[0] ) ) ;
 	ui->FP1eleTrimSB->setDisabled( populatePhasetrim( ui->FP1_EleCB, 1, g_model.phaseData[0].trim[1] ) ) ;
@@ -3555,6 +3825,10 @@ void ModelEdit::updatePhaseTab()
 	ui->FP6eleTrimSB->setDisabled( populatePhasetrim( ui->FP6_EleCB, 6,  g_model.phaseData[5].trim[1] ) ) ;
 	ui->FP6thrTrimSB->setDisabled( populatePhasetrim( ui->FP6_ThrCB, 6,  g_model.phaseData[5].trim[2] ) ) ;
 	ui->FP6ailTrimSB->setDisabled( populatePhasetrim( ui->FP6_AilCB, 6,  g_model.phaseData[5].trim[3] ) ) ;
+	ui->FP7rudTrimSB->setDisabled( populatePhasetrim( ui->FP7_RudCB, 7,  g_model.xphaseData.trim[0] ) ) ;
+	ui->FP7eleTrimSB->setDisabled( populatePhasetrim( ui->FP7_EleCB, 7,  g_model.xphaseData.trim[1] ) ) ;
+	ui->FP7thrTrimSB->setDisabled( populatePhasetrim( ui->FP7_ThrCB, 7,  g_model.xphaseData.trim[2] ) ) ;
+	ui->FP7ailTrimSB->setDisabled( populatePhasetrim( ui->FP7_AilCB, 7,  g_model.xphaseData.trim[3] ) ) ;
 
 //	ui->FP1rudTrimSB->setValue( getTrimValue( 1, 0 ) ) ;
 //	ui->FP1eleTrimSB->setValue( getTrimValue( 1, 1 ) ) ;
@@ -3583,6 +3857,10 @@ void ModelEdit::updatePhaseTab()
 	ui->FP6eleTrimSB->setValue(g_model.phaseData[5].trim[1]) ;
 	ui->FP6thrTrimSB->setValue(g_model.phaseData[5].trim[2]) ;
 	ui->FP6ailTrimSB->setValue(g_model.phaseData[5].trim[3]) ;
+	ui->FP7rudTrimSB->setValue(g_model.xphaseData.trim[0]) ;
+	ui->FP7eleTrimSB->setValue(g_model.xphaseData.trim[1]) ;
+	ui->FP7thrTrimSB->setValue(g_model.xphaseData.trim[2]) ;
+	ui->FP7ailTrimSB->setValue(g_model.xphaseData.trim[3]) ;
 
 	ui->FM1FadeIn->setValue(g_model.phaseData[0].fadeIn/2.0) ;
 	ui->FM1FadeOut->setValue(g_model.phaseData[0].fadeOut/2.0) ;
@@ -3596,6 +3874,8 @@ void ModelEdit::updatePhaseTab()
 	ui->FM5FadeOut->setValue(g_model.phaseData[4].fadeOut/2.0) ;
 	ui->FM6FadeIn->setValue(g_model.phaseData[5].fadeIn/2.0) ;
 	ui->FM6FadeOut->setValue(g_model.phaseData[5].fadeOut/2.0) ;
+	ui->FM7FadeIn->setValue(g_model.xphaseData.fadeIn/2.0) ;
+	ui->FM7FadeOut->setValue(g_model.xphaseData.fadeOut/2.0) ;
 
 	QString n = g_model.phaseData[0].name ;
 	n = n.left(6) ;
@@ -3639,6 +3919,13 @@ void ModelEdit::updatePhaseTab()
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM6Name->setText( n ) ;
+  n = g_model.xphaseData.name ;
+	n = n.left(6) ;
+	while ( n.endsWith(" ") )
+	{
+		n = n.left(n.size()-1) ;			
+	}
+  ui->FM7Name->setText( n ) ;
 
 	phaseEdited() ;
 
@@ -3648,14 +3935,23 @@ void ModelEdit::updatePhaseTab()
 void ModelEdit::phaseSet(int phase, int trim, QComboBox *cb, QSpinBox *sb )
 {
 	int idx ;
-  if ( (idx = decodePhaseTrim( &g_model.phaseData[phase].trim[trim], cb->currentIndex() ) < 0 ) )
+	PhaseData *pPhase ;
+	if ( phase == 6 )
 	{
-		g_model.phaseData[phase].trim[trim] = sb->value() ;
+		pPhase = &g_model.xphaseData ;
+	}
+	else
+	{
+		pPhase = &g_model.phaseData[phase] ;
+	}
+  if ( (idx = decodePhaseTrim( &pPhase->trim[trim], cb->currentIndex() ) < 0 ) )
+	{
+		pPhase->trim[trim] = sb->value() ;
 		sb->setEnabled( true ) ;
 	}
 	else
 	{
-    sb->setValue( idx ? g_model.phaseData[idx].trim[trim] : g_model.trim[trim] ) ;		// Needs recursion added
+    sb->setValue( idx ? pPhase->trim[trim] : g_model.trim[trim] ) ;		// Needs recursion added
 		sb->setDisabled( true ) ;
 	}
 }
@@ -3676,6 +3972,7 @@ void ModelEdit::phaseEdited()
   g_model.phaseData[3].swtch = getSwitchCbValueShort( ui->FP4_sw, rData->type ) ;
   g_model.phaseData[4].swtch = getSwitchCbValueShort( ui->FP5_sw, rData->type ) ;
   g_model.phaseData[5].swtch = getSwitchCbValueShort( ui->FP6_sw, rData->type ) ;
+  g_model.xphaseData.swtch = getSwitchCbValueShort( ui->FP7_sw, rData->type ) ;
 
   g_model.phaseData[0].swtch2 = getSwitchCbValueShort( ui->FP1_sw_2, rData->type ) ;
   g_model.phaseData[1].swtch2 = getSwitchCbValueShort( ui->FP2_sw_2, rData->type ) ;
@@ -3683,6 +3980,7 @@ void ModelEdit::phaseEdited()
   g_model.phaseData[3].swtch2 = getSwitchCbValueShort( ui->FP4_sw_2, rData->type ) ;
   g_model.phaseData[4].swtch2 = getSwitchCbValueShort( ui->FP5_sw_2, rData->type ) ;
   g_model.phaseData[5].swtch2 = getSwitchCbValueShort( ui->FP6_sw_2, rData->type ) ;
+  g_model.xphaseData.swtch2 = getSwitchCbValueShort( ui->FP7_sw_2, rData->type ) ;
 
   textUpdate( ui->FM1Name, g_model.phaseData[0].name, 6 ) ;
   textUpdate( ui->FM2Name, g_model.phaseData[1].name, 6 ) ;
@@ -3690,6 +3988,7 @@ void ModelEdit::phaseEdited()
   textUpdate( ui->FM4Name, g_model.phaseData[3].name, 6 ) ;
   textUpdate( ui->FM5Name, g_model.phaseData[4].name, 6 ) ;
   textUpdate( ui->FM6Name, g_model.phaseData[5].name, 6 ) ;
+  textUpdate( ui->FM7Name, g_model.xphaseData.name, 6 ) ;
 
 	phaseSet(0, 0, ui->FP1_RudCB, ui->FP1rudTrimSB ) ;
 	phaseSet(0, 1, ui->FP1_EleCB, ui->FP1eleTrimSB ) ;
@@ -3715,6 +4014,10 @@ void ModelEdit::phaseEdited()
 	phaseSet(5, 1, ui->FP6_EleCB, ui->FP6eleTrimSB ) ;
 	phaseSet(5, 2, ui->FP6_ThrCB, ui->FP6thrTrimSB ) ;
 	phaseSet(5, 3, ui->FP6_AilCB, ui->FP6ailTrimSB ) ;
+	phaseSet(6, 0, ui->FP7_RudCB, ui->FP7rudTrimSB ) ;
+	phaseSet(6, 1, ui->FP7_EleCB, ui->FP7eleTrimSB ) ;
+	phaseSet(6, 2, ui->FP7_ThrCB, ui->FP7thrTrimSB ) ;
+	phaseSet(6, 3, ui->FP7_AilCB, ui->FP7ailTrimSB ) ;
 
 	g_model.phaseData[0].fadeIn = ( ui->FM1FadeIn->value() + 0.01 ) * 2 ;
 	g_model.phaseData[0].fadeOut = ( ui->FM1FadeOut->value() + 0.01 ) * 2 ;
@@ -3728,6 +4031,8 @@ void ModelEdit::phaseEdited()
 	g_model.phaseData[4].fadeOut = ( ui->FM5FadeOut->value() + 0.01 ) * 2 ;
 	g_model.phaseData[5].fadeIn = ( ui->FM6FadeIn->value() + 0.01 ) * 2 ;
 	g_model.phaseData[5].fadeOut = ( ui->FM6FadeOut->value() + 0.01 ) * 2 ;
+	g_model.xphaseData.fadeIn = ( ui->FM7FadeIn->value() + 0.01 ) * 2 ;
+	g_model.xphaseData.fadeOut = ( ui->FM7FadeOut->value() + 0.01 ) * 2 ;
 
   updateSettings();
 }
@@ -5366,7 +5671,7 @@ void ModelEdit::updateSwitchesList( int lOrR )
       	str += tr(" %1 ").arg(srcstr) ;
 //				source =  encodePots( g_model.customSw[i].v1, rData->type, rData->extraPots ) ;
 //				str += getSourceStr(g_eeGeneral.stickMode, source, g_model.modelVersion, rData->type, rData->extraPots) ;
-//      	str += tr(" %1 ").arg(g_model.customSw[i].v2) ;
+      	str += tr(" %1 ").arg(g_model.customSw[i].v2) ;
 			}
 			break ;
 			case CS_U16:
@@ -5449,13 +5754,31 @@ void ModelEdit::updateSwitchesList( int lOrR )
 		{
 			uint32_t x ;
 			x = g_model.customSw[i].andsw ;
-      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 			{
 //  				x = switchUnMap(x, 1 ) ;
 			}
 			else
 			{
+//				if ( ( x > 8 ) && ( x <= 9+NUM_SKYCSW ) )
+//				{
+//					x += 1 ;
+//				}
+//				if ( ( x < -8 ) && ( x >= -(9+NUM_SKYCSW) ) )
+//				{
+//					x -= 1 ;
+//				}
+//				if ( x == 9+NUM_SKYCSW+1 )
+//				{
+//					x = 9 ;
+//				}
+//				if ( x == -(9+NUM_SKYCSW+1) )
+//				{
+//					x = -9 ;
+//				}
 				x = andSwitchMap( x ) ;
+				x = switchMap( x, rData->type ) ;
+
 			}
 			srcstr = "ANDOR XOR" ;
 			str += tr("%1").arg(srcstr.mid( g_model.customSw[i].exfunc * 3, 3 )) ;
@@ -5552,7 +5875,7 @@ void ModelEdit::tabSwitches()
 //        cswitchDelay[i]->setDecimals(1);
 //				cswitchDelay[i]->setValue( (double) g_model.switchDelay[i] / 10 ) ;
 //			}
-//      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+//      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 //			{
 //        x9dPopulateSwitchAndCB(cswitchAndSwitch[i], g_model.customSw[i].andsw) ;//+(MAX_XDRSWITCH-1)) ;
 //			}
@@ -6200,7 +6523,7 @@ void ModelEdit::switchesEdited()
 //		for(int i=0; i<NUM_SKYCSW; i++)
 //    {
 //			cType = CS_STATE(g_model.customSw[i].func, g_model.modelVersion) ;
-//      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+//      if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 //			{
 ////        g_model.customSw[i].andsw = cswitchAndSwitch[i]->currentIndex()-(MAX_XDRSWITCH-1);
 //        g_model.customSw[i].andsw = getSwitchCbValueShort( cswitchAndSwitch[i], 1 ) ;
@@ -6512,9 +6835,13 @@ void ModelEdit::tabGvar()
 		int i ;
 		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
 		{
+			uint16_t t ;
+			
 			posb[i]->setValue(g_model.Scalers[i].offset ) ;
-			pmsb[i]->setValue(g_model.Scalers[i].mult+1 ) ;
-			pdivsb[i]->setValue(g_model.Scalers[i].div+1 ) ;
+			t = g_model.Scalers[i].mult + ( g_model.Scalers[i].multx << 8 ) ;
+			pmsb[i]->setValue(t+1 ) ;
+			t = g_model.Scalers[i].div + ( g_model.Scalers[i].divx << 8 ) ;
+			pdivsb[i]->setValue(t+1 ) ;
 			pdpsb[i]->setValue(g_model.Scalers[i].precision ) ;
       pucb[i]->setCurrentIndex(g_model.Scalers[i].unit ) ;
       psgncb[i]->setCurrentIndex(g_model.Scalers[i].neg ) ;
@@ -6782,9 +7109,16 @@ void ModelEdit::GvarEdited()
 		int i ;
 		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
 		{
+			uint16_t t ;
+			
 			g_model.Scalers[i].offset = posb[i]->value() ;
-			g_model.Scalers[i].mult = pmsb[i]->value()-1 ;
-			g_model.Scalers[i].div = pdivsb[i]->value()-1 ;
+			
+			t = pmsb[i]->value()-1 ;
+			g_model.Scalers[i].mult = t ;
+			g_model.Scalers[i].multx = t >> 8 ;
+			t = pdivsb[i]->value()-1 ;
+			g_model.Scalers[i].div = t ;
+			g_model.Scalers[i].divx = t >> 8 ;
 			g_model.Scalers[i].precision = pdpsb[i]->value() ;
       g_model.Scalers[i].unit = pucb[i]->currentIndex() ;
 			g_model.Scalers[i].neg = psgncb[i]->currentIndex() ;
@@ -7380,7 +7714,7 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 			{
         p = &ProtocolOptionsX9de[0][1] ;
 			}
@@ -7391,6 +7725,10 @@ void ModelEdit::on_protocolCB_currentIndexChanged(int index)
 			else if ( rData->bitType & RADIO_BITTYPE_9XTREME )
 			{
 				p = &ProtocolOptions9XT[0][1] ;
+			}
+			else if ( rData->bitType &  RADIO_BITTYPE_T12 )
+			{
+        p = &ProtocolOptionsT12[0][1] ;
 			}
 			else if ( rData->bitType &  RADIO_BITTYPE_T12 )
 			{
@@ -7437,7 +7775,7 @@ void ModelEdit::on_xprotocolCB_currentIndexChanged(int index)
 		}
 		else
 		{
-			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+			if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 			{
         p = &ProtocolOptionsX9de[1][1] ;
 			}
@@ -8130,7 +8468,7 @@ void ModelEdit::on_SwitchDefSA_valueChanged( int x )
 void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
 	    x <<= 3 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0018 ) | x ;
@@ -8158,7 +8496,7 @@ void ModelEdit::on_SwitchDefSB_valueChanged( int x )
 void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -8195,7 +8533,7 @@ void ModelEdit::on_SwitchDefSC_valueChanged( int x )
 void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
     	if ( rData->bitType & RADIO_BITTYPE_XLITE )
 			{
@@ -8232,7 +8570,7 @@ void ModelEdit::on_SwitchDefSD_valueChanged( int x )
 void ModelEdit::on_SwitchDefSE_valueChanged( int x )
 {
     if(switchDefPosEditLock) return;
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
 	    x <<= 9 ;
   	  g_model.modelswitchWarningStates = ( g_model.modelswitchWarningStates & ~0x0600 ) | x ;
@@ -8753,6 +9091,30 @@ SKYMixData *ModelEdit::mixAddress( uint32_t index )
 	return md2 ;
 }
 
+bool ModelEdit::gm_insertInput(int idx)
+{
+	
+	
+	if(idx<0 || idx>NUM_INPUT_LINES) return false ;
+  if( g_model.inputs[NUM_INPUT_LINES-1].chn) return false ; //if last mixer isn't empty - can't add more
+	
+	struct te_InputsData *pinput = &g_model.inputs[idx] ;
+
+  int i ;
+	i = g_model.inputs[idx].chn ? g_model.inputs[idx].chn-1 : 0 ;
+	memmove(&g_model.inputs[idx+1],&g_model.inputs[idx], (NUM_INPUT_LINES-(idx+1))*sizeof(*pinput) );
+	memset( pinput, 0, sizeof(*pinput) ) ;
+	pinput->chn = i ;
+	pinput->weight = 100 ;
+ 	pinput->srcRaw = i ;
+ 	if ( pinput->srcRaw > 4 )	// Not Stick
+	{
+		pinput->carryTrim = 1 ;	// OFF
+	}
+
+	return true ;
+}
+
 
 bool ModelEdit::gm_insertMix(int idx)
 {
@@ -8760,7 +9122,8 @@ bool ModelEdit::gm_insertMix(int idx)
     if( mixAddress(MAX_SKYMIXERS + EXTRA_SKYMIXERS-1)->destCh) return false; //if last mixer isn't empty - can't add more
 
   SKYMixData *md = mixAddress( idx ) ;
-  int i = g_model.mixData[idx].destCh;
+//  int i = g_model.mixData[idx].destCh;
+  int i = md->destCh ;
 #if EXTRA_SKYMIXERS
 	uint8_t xdx ;
 	xdx = MAX_SKYMIXERS+EXTRA_SKYMIXERS-1 ;
@@ -8788,6 +9151,15 @@ bool ModelEdit::gm_insertMix(int idx)
     return true;
 }
 
+void ModelEdit::gm_deleteInput(int index)
+{
+	memmove(&g_model.inputs[index],&g_model.inputs[index+1],
+            (NUM_INPUT_LINES-(index+1))*sizeof(struct te_InputsData));
+  
+	memset(&g_model.inputs[NUM_INPUT_LINES-1],0,sizeof(struct te_InputsData));
+
+}
+
 void ModelEdit::gm_deleteMix(int index)
 {
 #if EXTRA_SKYMIXERS
@@ -8812,16 +9184,40 @@ void ModelEdit::gm_deleteMix(int index)
   mixNotes[MAX_SKYMIXERS-1].clear();
 }
 
+void ModelEdit::gm_openInput(int index)
+{
+	if(index<0 || index > NUM_INPUT_LINES ) return ;
+
+	struct te_InputsData input ;
+	memcpy(&input, &g_model.inputs[index],sizeof(struct te_InputsData) ) ;
+
+	updateSettings() ;
+	tabInputs() ; 
+
+  InputDialog *g = new InputDialog(this,&input, &g_eeGeneral, g_model.modelVersion, rData );
+	if(g->exec())
+	{
+		memcpy(&g_model.inputs[index],&input,sizeof(struct te_InputsData));
+
+		updateSettings() ;
+		tabInputs() ;
+	}
+}
+
 void ModelEdit::gm_openMix(int index)
 {
+	int currentRow = MixerlistWidget->currentRow() ;
     if(index<0 || index>MAX_SKYMIXERS + EXTRA_SKYMIXERS) return;
 
     SKYMixData mixd;
     memcpy(&mixd,mixAddress(index),sizeof(SKYMixData));
 
     updateSettings();
-    tabMixes();
-
+    tabMixes() ;
+		if ( currentRow >= 0 )
+		{
+			MixerlistWidget->item(currentRow)->setSelected(true);
+		}										 
     QString comment = mixNotes[index];
 
     MixerDialog *g = new MixerDialog(this,&mixd, &g_eeGeneral, &comment, g_model.modelVersion, rData );
@@ -8833,6 +9229,10 @@ void ModelEdit::gm_openMix(int index)
 
         updateSettings();
         tabMixes();
+			if ( currentRow >= 0 )
+			{
+				MixerlistWidget->item(currentRow)->setSelected(true);
+			}										 
     }
 }
 
@@ -8850,6 +9250,22 @@ int ModelEdit::getMixerIndex(int dch)
     if(i==MAX_SKYMIXERS) return -1;
 #endif
     return i;
+}
+
+int ModelEdit::getInputIndex(int dch)
+{
+	int i = 0 ;
+//	struct te_InputsData *pinput = &g_model.inputs[i] ;
+  while ( ( g_model.inputs[i].chn<=dch ) && ( g_model.inputs[i].chn ) )
+	{
+		i += 1 ;
+		if ( i >= NUM_INPUT_LINES )
+		{
+			break ;
+		}
+	}
+	if ( i >= NUM_INPUT_LINES ) return -1 ;
+	return i;
 }
 
 void ModelEdit::voiceAlarmList_doubleClicked( QModelIndex index )
@@ -8925,6 +9341,22 @@ void ModelEdit::mixerlistWidget_doubleClicked(QModelIndex index)
         g_model.mixData[idx].destCh = i;
     }
     gm_openMix(idx);
+}
+
+void ModelEdit::inputlistWidget_doubleClicked(QModelIndex index)
+{
+    int idx= InputlistWidget->item(index.row())->data(Qt::UserRole).toByteArray().at(0);
+    if(idx<0)
+    {
+        int i = -idx;
+        idx = getInputIndex( i ) ; //get mixer index to insert
+        if(!gm_insertInput(idx))
+				{
+        	return; //if full - don't add any more mixes
+				}
+        g_model.inputs[idx].chn = i ;
+    }
+    gm_openInput(idx) ;
 }
 
 void ModelEdit::on_internalModuleDisplayList_doubleClicked()
@@ -9050,6 +9482,18 @@ void ModelEdit::on_externalModuleDisplayList_doubleClicked()
   }
 }
 
+void ModelEdit::inputDeleteList(QList<int> list)
+{
+    qSort(list.begin(), list.end()) ;
+
+    int iDec = 0 ;
+    foreach(int idx, list)
+    {
+        gm_deleteInput(idx-iDec) ;
+        iDec++ ;
+    }
+}
+
 void ModelEdit::mixersDeleteList(QList<int> list)
 {
     qSort(list.begin(), list.end());
@@ -9061,6 +9505,18 @@ void ModelEdit::mixersDeleteList(QList<int> list)
         iDec++;
     }
 }
+
+QList<int> ModelEdit::createInputListFromSelected()
+{
+	QList<int> list;
+	foreach(QListWidgetItem *item, InputlistWidget->selectedItems())
+	{
+		int idx= item->data(Qt::UserRole).toByteArray().at(0);
+		if(idx>=0 && idx<NUM_INPUT_LINES) list << idx;
+	}
+	return list;
+}
+
 
 QList<int> ModelEdit::createListFromSelected()
 {
@@ -9080,8 +9536,44 @@ void ModelEdit::setSelectedByList(QList<int> list)
     {
         int t = MixerlistWidget->item(i)->data(Qt::UserRole).toByteArray().at(0);
         if(list.contains(t))
+				{
             MixerlistWidget->item(i)->setSelected(true);
+				}
     }
+}
+
+void ModelEdit::setInputSelectedByList(QList<int> list)
+{
+    for(int i=0; i<InputlistWidget->count(); i++)
+    {
+        int t = InputlistWidget->item(i)->data(Qt::UserRole).toByteArray().at(0);
+        if(list.contains(t))
+				{
+            InputlistWidget->item(i)->setSelected(true);
+				}
+    }
+}
+
+void ModelEdit::inputDelete(bool ask)
+{
+	int curpos = InputlistWidget->currentRow();
+
+	QMessageBox::StandardButton ret = QMessageBox::No;
+
+	if(ask)
+		ret = QMessageBox::warning(this, "eePe",
+	             tr("Delete Selected Inputs?"),
+	             QMessageBox::Yes | QMessageBox::No);
+
+
+	if ((ret == QMessageBox::Yes) || (!ask))
+	{
+	  inputDeleteList(createInputListFromSelected()) ;
+	  updateSettings() ;
+	  tabInputs() ;
+
+	  InputlistWidget->setCurrentRow(curpos) ;
+	}
 }
 
 void ModelEdit::mixersDelete(bool ask)
@@ -9188,6 +9680,21 @@ void ModelEdit::mixersDuplicate()
     mixersPaste();
 }
 
+void ModelEdit::inputOpen()
+{
+    int idx = InputlistWidget->currentItem()->data(Qt::UserRole).toByteArray().at(0);
+    if(idx<0)
+    {
+        int i = -idx;
+        idx = getInputIndex(i); //get mixer index to insert
+        if(!gm_insertInput(idx))
+            return;
+        g_model.inputs[idx].chn = i;
+    }
+    gm_openInput(idx) ;
+}
+
+
 void ModelEdit::mixerOpen()
 {
     int idx = MixerlistWidget->currentItem()->data(Qt::UserRole).toByteArray().at(0);
@@ -9209,6 +9716,30 @@ void ModelEdit::setNote(int i, QString s)
         mixNotes[i].clear();
         mixNotes[i].append(s);
     }
+}
+
+void ModelEdit::inputAdd()
+{
+    int index = InputlistWidget->currentItem()->data(Qt::UserRole).toByteArray().at(0);
+
+    if(index<0)  // if empty then return relavent index
+    {
+        int i = -index;
+        index = getInputIndex(i); //get mixer index to insert
+        if(!gm_insertInput(index))
+            return;
+        g_model.inputs[index].chn = i;
+    }
+    else
+    {
+        index++;
+        if(!gm_insertInput(index))
+            return;
+        g_model.inputs[index].chn = g_model.inputs[index-1].chn ;
+    }
+
+    gm_openInput(index) ;
+
 }
 
 void ModelEdit::mixerAdd()
@@ -9234,6 +9765,31 @@ void ModelEdit::mixerAdd()
     gm_openMix(index);
 
 }
+
+void ModelEdit::inputlistWidget_customContextMenuRequested(QPoint pos)
+{
+	QPoint globalPos = InputlistWidget->mapToGlobal(pos);
+
+	const QClipboard *clipboard = QApplication::clipboard();
+	const QMimeData *mimeData = clipboard->mimeData();
+	bool hasData = mimeData->hasFormat("application/x-eepe-mix");
+
+	QMenu contextMenu;
+	contextMenu.addAction(QIcon(":/images/add.png"), tr("&Add"),this,SLOT(inputAdd()),tr("Ctrl+A"));
+	contextMenu.addAction(QIcon(":/images/edit.png"), tr("&Edit"),this,SLOT(inputOpen()),tr("Enter"));
+	contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/clear.png"), tr("&Delete"),this,SLOT(inputDelete()),tr("Delete"));
+//    contextMenu.addAction(QIcon(":/images/copy.png"), tr("&Copy"),this,SLOT(mixersCopy()),tr("Ctrl+C"));
+//    contextMenu.addAction(QIcon(":/images/cut.png"), tr("&Cut"),this,SLOT(mixersCut()),tr("Ctrl+X"));
+//    contextMenu.addAction(QIcon(":/images/paste.png"), tr("&Paste"),this,SLOT(mixersPaste()),tr("Ctrl+V"))->setEnabled(hasData);
+//    contextMenu.addAction(QIcon(":/images/duplicate.png"), tr("Du&plicate"),this,SLOT(mixersDuplicate()),tr("Ctrl+U"));
+//    contextMenu.addSeparator();
+	contextMenu.addAction(QIcon(":/images/moveup.png"), tr("Move Up"),this,SLOT(moveInputUp()),tr("Ctrl+Up"));
+	contextMenu.addAction(QIcon(":/images/movedown.png"), tr("Move Down"),this,SLOT(moveInputDown()),tr("Ctrl+Down"));
+
+	contextMenu.exec(globalPos);
+}
+
 
 void ModelEdit::mixerlistWidget_customContextMenuRequested(QPoint pos)
 {
@@ -9274,6 +9830,69 @@ void ModelEdit::mixerlistWidget_KeyPress(QKeyEvent *event)
     if(event->matches(QKeySequence::MoveToPreviousLine))
         MixerlistWidget->setCurrentRow(MixerlistWidget->currentRow()-1);
 }
+
+int ModelEdit::gm_moveInput(int idx, bool dir) //true=inc=down false=dec=up
+{
+    struct te_InputsData &src=g_model.inputs[idx] ;
+    if(idx==0 && !dir)
+		{
+      if (src.chn>1)
+			{
+        src.chn--;
+			}
+			return idx ;
+		}
+	
+    if(idx>NUM_INPUT_LINES || (idx==NUM_INPUT_LINES && dir)) return idx ;
+
+    int tdx = dir ? idx+1 : idx-1;
+    struct te_InputsData &tgt=g_model.inputs[tdx] ;
+
+    if((src.chn==0) || (src.chn>NUM_INPUTS) || (tgt.chn>NUM_INPUTS)) return idx ;
+
+    if(tgt.chn != src.chn)
+		{
+        if ((dir)  && (src.chn<NUM_INPUTS)) src.chn++ ;
+        if ((!dir) && (src.chn>0)) src.chn-- ;
+        return idx ;
+    }
+
+    //flip between idx and tgt
+    struct te_InputsData temp;
+    memcpy(&temp,&src,sizeof(struct te_InputsData)) ;
+    memcpy(&src,&tgt,sizeof(struct te_InputsData)) ;
+    memcpy(&tgt,&temp,sizeof(struct te_InputsData)) ;
+
+    return tdx ;
+}
+
+void ModelEdit::moveInputUp()
+{
+    QList<int> list = createInputListFromSelected();
+    QList<int> highlightList;
+    foreach(int idx, list)
+        highlightList << gm_moveInput(idx, false);
+
+    updateSettings() ;
+    tabInputs() ;
+
+    setInputSelectedByList(highlightList) ;
+}
+
+
+void ModelEdit::moveInputDown()
+{
+    QList<int> list = createInputListFromSelected();
+    QList<int> highlightList;
+    foreach(int idx, list)
+        highlightList << gm_moveInput(idx, true);
+
+    updateSettings();
+    tabInputs() ;
+
+    setInputSelectedByList(highlightList);
+}
+
 
 int ModelEdit::gm_moveMix(int idx, bool dir) //true=inc=down false=dec=up
 {
@@ -9327,7 +9946,7 @@ void ModelEdit::moveMixUp()
     updateSettings();
     tabMixes();
 
-    setSelectedByList(highlightList);
+    setSelectedByList(highlightList) ;
 }
 
 
@@ -9364,7 +9983,7 @@ void ModelEdit::launchSimulation()
 				sdptr = SimPointer ;
 			}
     }
-    sdptr->loadParams(gg,gm, rData->type);
+    sdptr->loadParams(gg,gm, rData);
     sdptr->show();
 }
 

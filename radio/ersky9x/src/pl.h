@@ -184,7 +184,7 @@
 
 // menus.cpp
 // ***********
-#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModTCls1Cls2SbcVSbcAVFR Cus7Cus8Cus9Cs10"
+#define ISTR_TELEM_ITEMS	  "\004----A1= A2= RSSITSSIStp1Stp2Wys GwysPr\304dT1= T2= RPM FUELPoj1Poj2CvltBat.Amp.Poj.CtotOdbVAccXAccYAccZVspdGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7Moc.RxV KierA3= A4= SC1 SC2 SC3 SC4 SC5 SC6 SC7 SC8 RTC TmOKAspdCel1Cel2Cel3Cel4Cel5Cel6RBv1RBa1RBv2RBa2RBm1RBm2RBSVRBSTCel7Cel8Cel9Cl10Cl11Cl12Cus1Cus2Cus3Cus4Cus5Cus6Fmd RunTModTCls1Cls2SbcVSbcAVFR Cus7Cus8Cus9Cs10Lat LongSats"
 #define ISTR_TELEM_SHORT    "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV             "ZG"
 #define ISTR_OFF_ON         "WY\306 W\306"
@@ -592,7 +592,7 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes\0Inputs"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

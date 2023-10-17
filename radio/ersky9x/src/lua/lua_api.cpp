@@ -668,7 +668,7 @@ static int luaLoadScript(lua_State *L)
 static int luaGetVersion(lua_State * L)
 {
   lua_pushstring(L, "12345");
-  lua_pushstring(L, "X12");
+  lua_pushstring(L, "X10");
   lua_pushnumber(L, 2);
   lua_pushnumber(L, 3);
   lua_pushnumber(L, 4);
@@ -737,11 +737,17 @@ const luaL_Reg ersky9xLib[] = {
 const luaR_value_entry ersky9xConstants[] = {
   { "FULLSCALE", RESX },
   { "XXLSIZE", DBLSIZE },
+#if defined(PCBX12D) || defined(PCBX10)
+  { "DBLSIZE", DBLSIZE | CONDENSED },
+  { "MIDSIZE", 0 },
+  { "SMLSIZE", LUA_SMLSIZE },
+#else
   { "DBLSIZE", DBLSIZE },
-  { "MIDSIZE", 32768 },
-  { "SMLSIZE", 32768 },
+  { "MIDSIZE", DBLSIZE | CONDENSED },
+  { "SMLSIZE", LUA_SMLSIZE },
+#endif
   { "INVERS", INVERS },
-  { "RIGHT", 512 },
+  { "RIGHT", LUA_RIGHT },
 //#if defined(PCBFLAMENCO)
 //  { "WHITE",        WHITE },
 //  { "BLACK",        BLACK },
@@ -796,10 +802,10 @@ const luaR_value_entry ersky9xConstants[] = {
 //  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
 //#endif
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX10)
   { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
   { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_RTN) },
   { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
   { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
   { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
@@ -807,11 +813,36 @@ const luaR_value_entry ersky9xConstants[] = {
   { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
   { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
   { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
-  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
+  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
+  { "TEXT_COLOR", LUA_TEXT_COLOUR },
+  { "TEXT_INVERTED_COLOR", LUA_TEXT_INVERTED_COLOR },
+  { "TEXT_INVERTED_BGCOLOR", LUA_TEXT_INVERTED_BGCOLOR },
+  { "CUSTOM_COLOR", LUA_CUSTOM_COLOUR },
+  { "RED", (double)LCD_RED },
+  { "WHITE", (double)LCD_WHITE },
+  { "BLACK", (double)LCD_BLACK },
+//  { "TEXT_COLOR", TEXT_COLOR },
+//  { "TEXT_BGCOLOR", TEXT_BGCOLOR },
+//  { "TEXT_INVERTED_COLOR", TEXT_INVERTED_COLOR },
+//  { "TEXT_INVERTED_BGCOLOR", TEXT_INVERTED_BGCOLOR },
 #else
 	// Map to X9D normal buttons
-  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
+ #if defined (PCBX9LITE)
+	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+//  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+  { "EVT_PLUS_FIRST", EVT_ROTARY_RIGHT },
+  { "EVT_MINUS_FIRST", EVT_ROTARY_LEFT },
+//  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+//  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
+  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
+  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
+ #else
+	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
   { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
   { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
   { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
@@ -823,13 +854,51 @@ const luaR_value_entry ersky9xConstants[] = {
   { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
   { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
   { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+ #endif
 #endif
 
+#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
+	{ "EVT_ROT_LEFT", EVT_ROTARY_LEFT },
+  { "EVT_ROT_RIGHT", EVT_ROTARY_RIGHT },
+#endif
+
+#if defined(PCBX9D) && ( defined(REVPLUS) || defined(REVNORM) )
+  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
+#else
   { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+#endif
+#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
+  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+#if !defined(PCBX12D)	
+	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
+	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
+#endif
+	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
+	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
+  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
+  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+ #if defined (PCBX9LITE)
+	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+ #else
+  #if defined(PCBX12D)	
+	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+  #else
+	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MDL) },
+  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MDL) },
+  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_RTN) },
+  #endif
+ #endif
+#else
 	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_BREAK(KEY_LEFT) },
 	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_RIGHT) },
 	{ "EVT_VIRTUAL_PREV", EVT_KEY_FIRST(KEY_UP) },
 	{ "EVT_VIRTUAL_NEXT", EVT_KEY_FIRST(KEY_DOWN) },
+#endif
 
 
 //EVT_VIRTUAL_NEXT_PAGE 	for PAGE navigation
@@ -871,7 +940,11 @@ const luaR_value_entry ersky9xConstants[] = {
   { "FORCE", FORCE },
   { "ERASE", ERASE },
   { "ROUND", ROUND },
+#if (LCD_W == 212)
+  { "LCD_W", LCD_W-22 },
+#else
   { "LCD_W", LCD_W },
+#endif
 #if LCD_H == 272
 	{ "LCD_H", 240 },
 #else

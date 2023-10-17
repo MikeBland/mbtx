@@ -19,48 +19,6 @@
 #ifndef menus_h
 #define menus_h
 
-//extern audioQueue  audio;
-
-/*#define IS_THROTTLE(x)  (((2-(g_eeGeneral.stickMode&1)) == x) && (x<4))
-#define GET_DR_STATE(x) (!getSwitch(g_model.expoData[x].drSw1,0) ?   \
-                          DR_HIGH :                                  \
-                          !getSwitch(g_model.expoData[x].drSw2,0)?   \
-                          DR_MID : DR_LOW);
-
-#define DO_SQUARE(xx,yy,ww)         \
-    lcd_vline(xx-ww/2,yy-ww/2,ww);  \
-    lcd_hline(xx-ww/2,yy+ww/2,ww);  \
-    lcd_vline(xx+ww/2,yy-ww/2,ww);  \
-    lcd_hline(xx-ww/2,yy-ww/2,ww);
-
-#define DO_CROSS(xx,yy,ww)          \
-    lcd_vline(xx,yy-ww/2,ww);  \
-    lcd_hline(xx-ww/2,yy,ww);  \
-
-#define V_BAR(xx,yy,ll)       \
-    lcd_vline(xx-1,yy-ll,ll); \
-    lcd_vline(xx  ,yy-ll,ll); \
-    lcd_vline(xx+1,yy-ll,ll); \
-
-#define NO_HI_LEN 25
-
-#define WCHART 32
-#define X0     (128-WCHART-2)
-#define Y0     32
-#define WCHARTl 32l
-#define X0l     (128l-WCHARTl-2)
-#define Y0l     32l
-#define RESX    1024
-#define RESXu   1024u
-#define RESXul  1024ul
-#define RESXl   1024l
-#define RESKul  100ul
-#define RESX_PLUS_TRIM (RESX+128)
-
-extern bool warble;*/
-//extern int16_t p1valdiff;
-//extern uint8_t scroll_disabled;
-
 #define prog_uint8_t const uint8_t
 #define pgm_read_adr(x) *(x)
 
@@ -78,65 +36,25 @@ struct MState2
   void init(){m_posVert=0;};
   uint8_t check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t menuTabSize, prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
 	uint8_t check_columns( uint8_t event, uint8_t maxrow) ;
-//  void check_simple(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t menuTabSize, uint8_t maxrow);
-//  void check_submenu_simple(uint8_t event, uint8_t maxrow);
 };
 
 uint8_t evalOffset(int8_t sub) ;
-//#if defined(PCBX12D) || defined(PCBX10)
-//uint8_t evalOffsetLarge(int8_t sub) ;
-//#endif
 
-//typedef PROGMEM void (*MenuFuncP_PROGMEM)(uint8_t event);
 typedef const void (*MenuFunc)(uint8_t event) ;
 
-#define TITLEP(pstr) lcd_putsAtt(0,0,pstr,INVERS)
-//#define TITLE(str)   TITLEP(PSTR(str))
+#ifdef TOUCH
+#define TITLEP(pstr) lcd_putsAtt(4*FW,0,pstr,INVERS)
+#else
+#define TITLEP(pstr) lcd_putsAtt(0*FW,0,pstr,INVERS)
+#endif
 #define TITLE(str)   TITLEP(str)
 
-
-//#define SIMPLE_MENU(title, tab, menu, lines_count)
-//TITLE(title);
-//static MState2 mstate2;
-//mstate2.check_simple(event,menu,tab,DIM(tab),lines_count-1)
 
 #define MENU(title, tab, menu, lines_count, ...) \
 TITLE(title); \
 static MState2 mstate2; \
 static const uint8_t mstate_tab[] = __VA_ARGS__; \
 event = mstate2.check(event,menu,tab,DIM(tab),mstate_tab,DIM(mstate_tab)-1,lines_count-1)
-
-//#define VARMENU(title, tab, menu, lines_count, cols )
-//TITLE(title);
-//static MState2 mstate2;
-//event = mstate2.check(event,menu,tab,DIM(tab),cols,0,lines_count-1)
-
-
-//#define SUBMENU(title, lines_count, ...)
-//TITLE(title);
-//static MState2 mstate2;
-//static const uint8_t mstate_tab[] = __VA_ARGS__;
-//mstate2.check(event,0,NULL,0,mstate_tab,DIM(mstate_tab)-1,lines_count-1)
-
-//#define SUBMENU_NOTITLE(lines_count, ...)
-//static MState2 mstate2;
-//static const uint8_t mstate_tab[] = __VA_ARGS__;
-//mstate2.check(event,0,NULL,0,mstate_tab,DIM(mstate_tab)-1,lines_count-1)
-
-
-//#define SIMPLE_SUBMENU_NOTITLE(lines_count)
-//static MState2 mstate2;
-//mstate2.check_submenu_simple(event,lines_count-1)
-
-//#define SIMPLE_SUBMENU(title, lines_count)
-//TITLE(title);
-//SIMPLE_SUBMENU_NOTITLE(lines_count-1)
-
-/*
-//#define SIMPLE_SUBMENU(title, lines_count) \
-//TITLE(title); \
-//SIMPLE_SUBMENU_NOTITLE(lines_count-1)
-	*/
 
 #define YN_NONE	0
 #define YN_YES	1
@@ -184,18 +102,77 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 #define NUM_ANA_ITEMS		2
 #endif
 
+#ifdef TOUCH
+
+#define TTOP			8
+#define THTOP			18
+#define TFH				12
+#define TRIGHT	 180
+#define TMID		 110
+#define TLINES		9
+#define TSCALE		2
+#define TVOFF			3
+#define THOFF			4
+#define TRMARGIN	3
+
+#define TSCROLLLEFT		380
+#define TSCROLLTOP		16
+#define TSCROLLWIDTH	42
+#define TSCROLLBOTTOM	(240-16)
+
+#endif
+
 struct t_popupData
 {
 	uint8_t PopupActive ;
 	uint8_t	PopupIdx ;
 	uint8_t	PopupSel ;
 	uint8_t PopupTimer ;
+#ifdef TOUCH
+	uint16_t PopupHpos ;
+	uint16_t PopupVpos ;
+	uint16_t PopupWidth ;
+#endif
 } ;
+
+
+
+#ifdef TOUCH
+
+#define TEVT_DOWN 			1
+#define TEVT_UP				 	2
+#define TEVT_SLIDE 			4
+#define TEVT_SLIDE_END	8
+
+struct t_touchControl
+{
+	uint16_t event ;
+	uint16_t count ;
+	uint16_t x ;
+	uint16_t y ;
+	uint16_t startx ;
+	uint16_t starty ;
+	int16_t deltax ;
+	int16_t deltay ;
+	uint16_t repeat ;
+	uint16_t xSelected ;
+	uint8_t itemSelected ;
+} ;
+ 
+extern t_touchControl TouchControl ;
+
+#define TICON_SIZE	50
+
+uint32_t handleSelectIcon( void ) ;
+uint32_t handlePlayIcon( void ) ;
+uint32_t handleEditIcon() ;
+uint32_t scrollBar( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t positions, uint32_t vpos ) ;
+
+#endif
 
 extern struct t_popupData PopupData ;
 
 extern int16_t calibratedStick[] ;
-//extern int16_t g_chans512[NUM_SKYCHNOUT];
 																 
 #if defined(PCBX12D) || defined(PCBX10)
 extern void doMainScreenGrphics( uint16_t colour = 0 ) ;
@@ -225,6 +202,23 @@ void displayStatusLine( uint32_t scriptPercent ) ;
 void validateProtocolOptions( uint32_t module ) ;
 
 extern void parseMultiData( void ) ;
+
+#if defined(PCBX12D) || defined(PCBX10)
+void checkTheme( themeData *t ) ;
+#endif
+#ifdef TOUCH
+uint16_t dimBackColour() ;
+void drawItem( char *s, uint16_t y, uint16_t colour ) ;
+void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint16_t colour ) ;
+void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
+uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
+uint32_t touchOffOnItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
+void putsChnColour( uint8_t x, uint8_t y, uint8_t idx1, uint8_t att ) ;
+void saveEditColours( uint32_t attr, uint16_t colour ) ;
+void restoreEditColours() ;
+int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag = 0 ) ;
+
+#endif
 
 const char *get_curve_string() ;
 
@@ -348,6 +342,12 @@ extern uint16_t s_traceCnt;
 #define TEL_ITEM_CUST7	  74
 #define TEL_ITEM_CUST8	  75
 
+// TextHelp types
+#define TEXT_TYPE_TELE_SOURCE		0
+#define TEXT_TYPE_SW_SOURCE			1
+#define TEXT_TYPE_MIX_SOURCE		2
+#define TEXT_TYPE_SW_FUNCTION		3
+#define TEXT_TYPE_CUSTOM				4
 
 // units
 #define U_FEET			0
@@ -359,5 +359,23 @@ extern uint16_t s_traceCnt;
 #define	U_METRES		6
 #define	U_WATTS			7
 #define	U_PERCENT		8
+
+extern uint8_t TextIndex ;
+extern uint8_t TextType ;
+extern uint8_t TextResult ;
+
+void menuTextHelp(uint8_t event) ;
+void sortTelemText() ;
+
+struct t_textControl
+{
+	void (*TextFunction)( uint8_t x, uint8_t y, uint8_t index, uint8_t att ) ;
+	uint8_t TextMax ;
+	uint8_t *TextMap ;
+	uint8_t TextWidth ;
+	uint8_t TextOption ;
+} ;
+
+extern struct t_textControl TextControl ;
 
 #endif

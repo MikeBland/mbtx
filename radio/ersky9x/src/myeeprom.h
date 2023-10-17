@@ -56,6 +56,14 @@
 #define NUM_GVAR_ADJUST		8
 #define EXTRA_GVAR_ADJUST	12
 
+#ifdef INPUTS
+#define NUM_INPUTS				32
+#define NUM_INPUT_LINES		64
+#else
+#define NUM_INPUTS				0
+#define NUM_INPUT_LINES		0
+#endif
+
 #define MUSIC_NAME_LENGTH		14
 #define MUSIC_DIR_LENGTH		8
 #define PLAYLIST_COUNT			16
@@ -175,6 +183,14 @@ PACK(typedef struct t_gvar {
 //	int8_t gvswitch ;
 }) GvarData ;
 
+typedef struct t_theme
+{
+	uint16_t backColour ;
+	uint16_t textColour ;
+	uint8_t brightness ;
+	uint8_t spare ;
+	uint16_t spare16 ;
+} themeData ;
 
 PACK(typedef struct t_EEGeneral {
   uint8_t   myVers;
@@ -314,6 +330,8 @@ PACK(typedef struct t_EEGeneral {
 //	GvarData	gvars[MAX_GVARS] ;
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
+	uint8_t selectedTheme ;
+	themeData theme[4] ;
 	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -494,7 +512,8 @@ PACK(typedef struct t_PhaseData {
 	uint8_t spare ;		// Future expansion
 }) PhaseData;
 
-PACK(typedef struct te_MixData {
+PACK(typedef struct te_MixData
+{
   uint8_t destCh;            //        1..NUM_CHNOUT
   uint8_t srcRaw;            //
   int8_t  weight;
@@ -733,7 +752,9 @@ struct t_module
 	uint8_t disableTelemetry:1 ;
 	uint8_t exsub_protocol:2 ;
 	uint8_t multiDisableTelemetry:1 ;
-	uint8_t sparex[2] ;
+	uint8_t extR9Mlite:1 ;
+	uint8_t sparey:7 ;
+	uint8_t sparex ;
 } ;
 
 struct t_access
@@ -762,6 +783,7 @@ struct t_hiResBox
 
 #define HIRES_OPT_TRIMS		0x01
 #define HIRES_OPT_BORDERS	0x02
+#define HIRES_OPT_MNAME		0x04
 
 struct t_hiResDisplay
 {
@@ -769,6 +791,26 @@ struct t_hiResDisplay
 	uint8_t options ;
 	struct t_hiResBox boxes[6] ;
 } ;
+
+PACK(struct te_InputsData
+{
+  uint8_t srcRaw ;
+	int8_t  weight ;
+  int8_t  swtch ;
+  
+  uint8_t carryTrim:3 ; // On,Off,R,E,T,A
+  uint8_t mode:3 ;
+	uint8_t side:2 ;	// ---, x>0, x<0
+	
+	uint8_t chn:5 ;
+	uint8_t spare2:3;
+
+//  NOBACKUP(char name[LEN_EXPOMIX_NAME]);
+  uint8_t flightModes ;
+  int8_t offset ;
+  int8_t curve ;
+//  uint16_t scale:14;
+});
 
 
 PACK(typedef struct te_ModelData {
@@ -944,15 +986,16 @@ PACK(typedef struct te_ModelData {
 // Use for colour screen setup
 #endif	 
 	uint8_t	customTelemetryNames2[16] ;
+	PhaseData xphaseData ;	// 18 bytes long
 
-	uint8_t forExpansion[20] ;	// Allows for extra items not yet handled
+	uint8_t forExpansion[2] ;	// Allows for extra items not yet handled
 
-#if defined(PCBX12D) || defined(PCBX10)
+//#if defined(PCBX12D) || defined(PCBX10)
 	struct t_hiResDisplay hiresDisplay[2] ;
-#endif
+//#endif
+	struct te_InputsData inputs[NUM_INPUT_LINES] ;
 
 }) SKYModelData;
-
 
 extern SKYModelData g_model;
 

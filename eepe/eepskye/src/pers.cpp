@@ -59,6 +59,7 @@ bool EEPFILE::Changed()
 void EEPFILE::saveFile(void* buf)
 {
 //    theFile->save(buf);
+//	(void) buf ;
 }
 
 void EEPFILE::setChanged(bool v)
@@ -85,7 +86,8 @@ void EEPFILE::generalDefault()
     g_eeGeneral.calibSpanPos[i] = 0x300;
   }
   int16_t sum=0;
-  for(int i=0; i<12;i++) sum+=g_eeGeneral.calibMid[i];
+  for(int i=0; i<7;i++) sum+=g_eeGeneral.calibMid[i];
+  for(int i=0; i<5;i++) sum+=g_eeGeneral.calibSpanNeg[i];
   g_eeGeneral.chkSum = sum;
 
   QSettings settings("er9x-eePskye", "eePskye");

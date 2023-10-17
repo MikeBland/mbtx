@@ -27,6 +27,8 @@ const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HS
 
 int32_t WelcomePlayed = 0 ;
 
+//uint16_t DebugOutputCount ;
+
 uint8_t simulatorDialog::IS_THROTTLE( uint8_t x)
 {
 	if ( g_model.modelVersion >= 2 )
@@ -101,6 +103,7 @@ simulatorDialog::simulatorDialog(QWidget *parent) :
     setupSticks();
 		ticktimer = 0 ;
 		txType = 0 ;
+		txBitType = 0 ;
 		ui->SAslider->setValue(0) ;
 		ui->SBslider->setValue(0) ;
 		ui->SEslider->setValue(0) ;
@@ -108,7 +111,7 @@ simulatorDialog::simulatorDialog(QWidget *parent) :
 		ui->SCslider->setValue(0) ;
 		ui->SDslider->setValue(0) ;
 		ui->SGslider->setValue(0) ;
-		ui->SHslider->setValue(0) ;
+//		ui->SHslider->setValue(0) ;
 		QList<QextPortInfo> ports = QextSerialEnumerator::getPorts() ;
     ui->serialPortCB->clear() ;
 	  foreach (QextPortInfo info, ports)
@@ -1033,12 +1036,29 @@ void simulatorDialog::centerSticks()
 
 void simulatorDialog::configSwitches()
 {
-		if ((txType==1) || (txType == 2) || (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) || (txType == RADIO_TYPE_X10) )
+		if ( txBitType & ( RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
+		{
+		  ui->Sixslider->setMaximum( 5 ) ;
+			ui->Sixwidget->show() ;
+		}
+		else
+		{
+			ui->Sixwidget->hide() ;
+		}
+
+		if ( txBitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
 		{
 			ui->SAslider->setMaximum( 2 ) ;
 			ui->SAwidget->show() ;
 			ui->SBwidget->show() ;
-			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
+			ui->labelSA->setText("SA") ;
+			ui->labelSB->setText("SB") ;
+			ui->labelSC->setText("SC") ;
+			ui->labelSD->setText("SD") ;
+			ui->labelSE->setText("SE") ;
+			ui->labelSF->setText("SF") ;
+
+			if ( txBitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 			{
 				ui->SEwidget->hide() ;
 			}
@@ -1049,7 +1069,7 @@ void simulatorDialog::configSwitches()
 			ui->SFwidget->show() ;
 			ui->SFslider->setMaximum(1) ;
 			ui->SCwidget->show() ;
-			if ( txType == 12 )
+			if ( txType == RADIO_TYPE_X9L )
 			{
 				ui->SDwidget->hide() ;
 				ui->dialP_2->hide() ;
@@ -1058,7 +1078,7 @@ void simulatorDialog::configSwitches()
 			{
 				ui->SDwidget->show() ;
 			}
-			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
+			if ( txBitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 			{
 				ui->SGwidget->hide() ;
 			}
@@ -1066,8 +1086,8 @@ void simulatorDialog::configSwitches()
 			{
 				ui->SGwidget->show() ;
 			}	 
-			ui->SHwidget->show() ;
-			if ( (txType == 9) || (txType == 10) || (txType == 11) || (txType == 12) )
+//			ui->SHwidget->show() ;
+			if ( txBitType & ( RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L ) )
 			{
 				ui->SliderL->hide() ;
 				ui->SliderR->hide() ;
@@ -1077,7 +1097,7 @@ void simulatorDialog::configSwitches()
 				ui->SliderL->show() ;
 				ui->SliderR->show() ;
 			}
-			if ( txType == 2 )
+			if ( txType == RADIO_TYPE_TPLUS )
 			{
 				ui->dialP_3->show() ;
 			}
@@ -1087,16 +1107,16 @@ void simulatorDialog::configSwitches()
 			}
 			ui->switchTRN->setText("SH") ;
 			ui->switchTRN->setVisible( true ) ;
-			ui->SHwidget->hide() ;
+//			ui->SHwidget->hide() ;
 			
-			ui->switchTHR->setVisible( false ) ;
-			ui->switchRUD->setVisible( false ) ;
-			ui->switchELE->setVisible( false ) ;
-			ui->switchAIL->setVisible( false ) ;
-			ui->switchGEA->setVisible( false ) ;
-			ui->switchID0->setVisible( false ) ;
-			ui->switchID1->setVisible( false ) ;
-			ui->switchID2->setVisible( false ) ;
+//			ui->switchTHR->setVisible( false ) ;
+//			ui->switchRUD->setVisible( false ) ;
+//			ui->switchELE->setVisible( false ) ;
+//			ui->switchAIL->setVisible( false ) ;
+//			ui->switchGEA->setVisible( false ) ;
+//			ui->switchID0->setVisible( false ) ;
+//			ui->switchID1->setVisible( false ) ;
+//			ui->switchID2->setVisible( false ) ;
 			if ( g_eeGeneral.switchMapping & USE_PB1 )
 			{
 				ui->switchPB1->show() ;
@@ -1125,7 +1145,7 @@ void simulatorDialog::configSwitches()
 			ui->SCwidget->hide() ;
 			ui->SDwidget->hide() ;
 			ui->SGwidget->hide() ;
-			ui->SHwidget->hide() ;
+//			ui->SHwidget->hide() ;
 			ui->switchTRN->setText("TRN") ;
 
       if ( g_eeGeneral.extraPotsSource[0] )
@@ -1149,40 +1169,51 @@ void simulatorDialog::configSwitches()
 			{
 				ui->SFwidget->show() ;
 				ui->SFslider->setMaximum(2) ;
-				ui->switchTHR->hide() ;
+//				ui->switchTHR->hide() ;
 				ui->labelSF->setText("THR") ;
 			}
 			else
 			{
-				ui->switchTHR->show() ;
+				ui->SFwidget->show() ;
+				ui->SFslider->setMaximum(1) ;
+				ui->labelSF->setText("THR") ;
+//				ui->switchTHR->show() ;
 			}
 			if ( g_eeGeneral.switchMapping & USE_RUD_3POS )
 			{
+				ui->SEslider->setMaximum( 2 ) ;
 				ui->SEwidget->show() ;
-				ui->switchRUD->hide() ;
+//				ui->switchRUD->hide() ;
 				ui->labelSE->setText("RUD") ;
 			}
 			else
 			{
-				ui->switchRUD->show() ;
+				ui->SEslider->setMaximum( 1 ) ;
+				ui->SEwidget->show() ;
+//				ui->switchRUD->show() ;
+				ui->labelSE->setText("RUD") ;
 			}
 			if ( g_eeGeneral.switchMapping & USE_ELE_3POS )
 			{
 				ui->SAslider->setMaximum( 2 ) ;
 				ui->SAwidget->show() ;
-				ui->switchELE->hide() ;
+//				ui->switchELE->hide() ;
 				ui->labelSA->setText("ELE") ;
 			}
 			else if ( g_eeGeneral.switchMapping & USE_ELE_6POS )
 			{
 				ui->SAslider->setMaximum( 5 ) ;
 				ui->SAwidget->show() ;
-				ui->switchELE->hide() ;
+//				ui->switchELE->hide() ;
 				ui->labelSA->setText("ELE") ;
 			}
 			else
 			{
-				ui->switchELE->show() ;
+				ui->SAslider->setMaximum( 1 ) ;
+				ui->SAwidget->show() ;
+//				ui->switchELE->hide() ;
+				ui->labelSA->setText("ELE") ;
+//				ui->switchELE->show() ;
 			}
 			
       if ( g_eeGeneral.analogMapping & MASK_6POS )
@@ -1194,23 +1225,32 @@ void simulatorDialog::configSwitches()
 			
 			if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
 			{
+				ui->SBslider->setMaximum( 2 ) ;
 				ui->SBwidget->show() ;
-				ui->switchAIL->hide() ;
+//				ui->switchAIL->hide() ;
 				ui->labelSB->setText("AIL") ;
 			}
 			else
 			{
-				ui->switchAIL->show() ;
+				ui->SBslider->setMaximum( 1 ) ;
+				ui->SBwidget->show() ;
+//				ui->switchAIL->hide() ;
+				ui->labelSB->setText("AIL") ;
+//				ui->switchAIL->show() ;
 			}
 			if ( g_eeGeneral.switchMapping & USE_GEA_3POS )
 			{
-				ui->SCwidget->show() ;
-				ui->switchGEA->hide() ;
-				ui->labelSC->setText("GEA") ;
+				ui->SDslider->setMaximum( 2 ) ;
+				ui->SDwidget->show() ;
+//				ui->switchGEA->hide() ;
+				ui->labelSD->setText("GEA") ;
 			}
 			else
 			{
-				ui->switchGEA->show() ;
+				ui->SDslider->setMaximum( 1 ) ;
+				ui->SDwidget->show() ;
+//				ui->switchGEA->hide() ;
+				ui->labelSD->setText("GEA") ;
 			}
 			if ( g_eeGeneral.switchMapping & USE_PB1 )
 			{
@@ -1245,15 +1285,23 @@ void simulatorDialog::configSwitches()
 				ui->switchPB4->hide() ;
 			}
 			ui->switchTRN->setVisible( true ) ;
-			ui->switchID0->setVisible( true ) ;
-			ui->switchID1->setVisible( true ) ;
-			ui->switchID2->setVisible( true ) ;
+			ui->switchTRN->setText("TRN") ;
+			
+			ui->SCslider->setMaximum( 2 ) ;
+			ui->SCwidget->show() ;
+//				ui->switchAIL->hide() ;
+			ui->labelSC->setText("IDx") ;
+			
+			
+//			ui->switchID0->setVisible( true ) ;
+//			ui->switchID1->setVisible( true ) ;
+//			ui->switchID2->setVisible( true ) ;
 		}
     createSwitchMapping( &g_eeGeneral, MAX_DRSWITCH, txType ) ;
 }
 
 
-void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int type)
+void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, struct t_radioData *radioData)
 {
 		if ( ticktimer )
 		{
@@ -1262,7 +1310,8 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int 
 	
     memcpy(&g_eeGeneral,&gg,sizeof(EEGeneral));
     memcpy(&g_model,&gm,sizeof(SKYModelData));
-		txType = type ;
+		txType = radioData->type ;
+    txBitType = radioData->bitType ;
 
     char buf[sizeof(g_model.name)+1];
     memcpy(&buf,&g_model.name,sizeof(g_model.name));
@@ -1345,9 +1394,10 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, int 
 uint32_t simulatorDialog::getFlightPhase()
 {
 	uint32_t i ;
-  for ( i = 0 ; i < MAX_PHASES ; i += 1 )
+  for ( i = 0 ; i < MAX_PHASES+1 ; i += 1 )
 	{
-    PhaseData *phase = &g_model.phaseData[i];
+    PhaseData *phase ;
+		phase = (i < MAX_MODES) ? &g_model.phaseData[i] : &g_model.xphaseData ;
     if ( phase->swtch )
 		{
     	if ( getSwitch( phase->swtch, 0, 0 ) )
@@ -1380,7 +1430,10 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 {
 	if ( phase )
 	{
-		return g_model.phaseData[phase-1].trim[idx] ;
+	  PhaseData *p ;
+		phase -= 1 ;
+		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+		return p->trim[idx] ;
 	}	
 	else
 	{
@@ -1391,7 +1444,7 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 
 uint32_t simulatorDialog::getTrimFlightPhase( uint8_t phase, uint8_t idx )
 {
-  for ( uint32_t i=0 ; i<MAX_PHASES ; i += 1 )
+  for ( uint32_t i=0 ; i<MAX_PHASES+1 ; i += 1 )
 	{
     if (phase == 0) return 0;
     int16_t trim = getRawTrimValue( phase, idx ) ;
@@ -1424,7 +1477,14 @@ void simulatorDialog::setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 	}
 	if ( phase )
 	{
-  	g_model.phaseData[phase-1].trim[idx] = trim ;
+    if(trim < -125 || trim > 125)
+		{
+			trim = ( trim > 0 ) ? 125 : -125 ;
+		}	
+	  PhaseData *p ;
+		phase -= 1 ;
+		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+  	p->trim[idx] = trim ;
 	}
 	else
 	{
@@ -2034,17 +2094,24 @@ void simulatorDialog::setValues()
 	}	
 
 	i = getFlightPhase() ;
-	if ( i && g_model.phaseData[i-1].name[0] )
+	if ( i )
 	{
-		QString n = g_model.phaseData[i-1].name ;
-		while ( n.endsWith(" ") )
+	  PhaseData *p ;
+		uint8_t phase ;
+		phase = i - 1 ;
+		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+		if ( p->name[0] )
 		{
-			n = n.left(n.size()-1) ;			
-		}
-		if ( n.length() )
-		{
-			ui->FlightMode->setText( n ) ;
-			i = -1 ;
+			QString n = p->name ;
+			while ( n.endsWith(" ") )
+			{
+				n = n.left(n.size()-1) ;			
+			}
+			if ( n.length() )
+			{
+				ui->FlightMode->setText( n ) ;
+				i = -1 ;
+			}
 		}
 	}
 	if ( i >= 0 )
@@ -2145,50 +2212,8 @@ void simulatorDialog::resizeEvent(QResizeEvent *event)
 
 bool simulatorDialog::hwKeyState(int key)
 {
-  if ( ( txType == 0 ) || ( txType == 3 ) )
-	{
-    switch (key)
-    {
-    	case (HSW_ThrCt):   return ui->switchTHR->isChecked(); break;
-    	case (HSW_RuddDR):  return ui->switchRUD->isChecked(); break;
-    	case (HSW_ElevDR):  return ui->switchELE->isChecked(); break;
-    	case (HSW_ID0):     return ui->switchID0->isChecked(); break;
-    	case (HSW_ID1):     return ui->switchID1->isChecked(); break;
-    	case (HSW_ID2):     return ui->switchID2->isChecked(); break;
-    	case (HSW_AileDR):  return ui->switchAIL->isChecked(); break;
-    	case (HSW_Gear):    return ui->switchGEA->isChecked(); break;
-    	case (HSW_Trainer): return ui->switchTRN->isDown(); break;
-			
-			case HSW_Thr3pos0	:	return ui->SFslider->value() == 0 ; break ;
-			case HSW_Thr3pos1	:	return ui->SFslider->value() == 1 ; break ;
-			case HSW_Thr3pos2	:	return ui->SFslider->value() == 2 ; break ;
-			case HSW_Rud3pos0	:	return ui->SEslider->value() == 0 ; break ;
-			case HSW_Rud3pos1	:	return ui->SEslider->value() == 1 ; break ;
-			case HSW_Rud3pos2	:	return ui->SEslider->value() == 2 ; break ;
-			case HSW_Ele3pos0	:	return ui->SAslider->value() == 0 ; break ;
-			case HSW_Ele3pos1	:	return ui->SAslider->value() == 1 ; break ;
-			case HSW_Ele3pos2	:	return ui->SAslider->value() == 2 ; break ;
-			case HSW_Ail3pos0	:	return ui->SBslider->value() == 0 ; break ;
-			case HSW_Ail3pos1	:	return ui->SBslider->value() == 1 ; break ;
-			case HSW_Ail3pos2	:	return ui->SBslider->value() == 2 ; break ;
-			case HSW_Gear3pos0 :	return ui->SCslider->value() == 0 ; break ;
-			case HSW_Gear3pos1 :	return ui->SCslider->value() == 1 ; break ;
-			case HSW_Gear3pos2 :	return ui->SCslider->value() == 2 ; break ;
-			case HSW_Ele6pos0 :	return ui->SAslider->value() == 0 ; break ;
-			case HSW_Ele6pos1 :	return ui->SAslider->value() == 1 ; break ;
-			case HSW_Ele6pos2 :	return ui->SAslider->value() == 2 ; break ;
-			case HSW_Ele6pos3 :	return ui->SAslider->value() == 3 ; break ;
-			case HSW_Ele6pos4 :	return ui->SAslider->value() == 4 ; break ;
-			case HSW_Ele6pos5 :	return ui->SAslider->value() == 5 ; break ;
-	    case HSW_Pb1	:	return ui->switchPB1->isDown() ; break ;
-  	  case HSW_Pb2	:	return ui->switchPB2->isDown() ; break ;
-    	default:
-        return keyState( (EnumKeys) key ) ;
-      break;
-		}
-	}
-	else
-	{
+	if ( txBitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
+  {
     switch (key)
     {
 			case HSW_SA0 :	return ui->SAslider->value() == 0 ; break ;
@@ -2214,7 +2239,55 @@ bool simulatorDialog::hwKeyState(int key)
 //			case HSW_SH0 : return ui->SHslider->value() == 0 ; break ;
 //			case HSW_SH2 : return ui->SHslider->value() == 1 ; break ;
 			case HSW_SH2 : return ui->switchTRN->isDown() ; break ;
+			case HSW_Ele6pos0 :	return ui->Sixslider->value() == 0 ; break ;
+			case HSW_Ele6pos1 :	return ui->Sixslider->value() == 1 ; break ;
+			case HSW_Ele6pos2 :	return ui->Sixslider->value() == 2 ; break ;
+			case HSW_Ele6pos3 :	return ui->Sixslider->value() == 3 ; break ;
+			case HSW_Ele6pos4 :	return ui->Sixslider->value() == 4 ; break ;
+			case HSW_Ele6pos5 :	return ui->Sixslider->value() == 5 ; break ;
 			default:
+        return keyState( (EnumKeys) key ) ;
+      break;
+		}
+	}
+	else
+	{
+    switch (key)
+    {
+    	case (HSW_ThrCt):   return ui->SFslider->value() == 1; break;
+    	case (HSW_RuddDR):  return ui->SEslider->value() == 1; break;
+    	case (HSW_ElevDR):  return ui->SAslider->value() == 1; break;
+    	case (HSW_ID0):     return ui->SCslider->value() == 0; break;
+    	case (HSW_ID1):     return ui->SCslider->value() == 1; break;
+    	case (HSW_ID2):     return ui->SCslider->value() == 2; break;
+    	case (HSW_AileDR):  return ui->SBslider->value() == 1; break;
+    	case (HSW_Gear):    return ui->SDslider->value() == 1; break;
+    	case (HSW_Trainer): return ui->switchTRN->isDown(); break;
+			
+			case HSW_Thr3pos0	:	return ui->SFslider->value() == 0 ; break ;
+			case HSW_Thr3pos1	:	return ui->SFslider->value() == 1 ; break ;
+			case HSW_Thr3pos2	:	return ui->SFslider->value() == 2 ; break ;
+			case HSW_Rud3pos0	:	return ui->SEslider->value() == 0 ; break ;
+			case HSW_Rud3pos1	:	return ui->SEslider->value() == 1 ; break ;
+			case HSW_Rud3pos2	:	return ui->SEslider->value() == 2 ; break ;
+			case HSW_Ele3pos0	:	return ui->SAslider->value() == 0 ; break ;
+			case HSW_Ele3pos1	:	return ui->SAslider->value() == 1 ; break ;
+			case HSW_Ele3pos2	:	return ui->SAslider->value() == 2 ; break ;
+			case HSW_Ail3pos0	:	return ui->SBslider->value() == 0 ; break ;
+			case HSW_Ail3pos1	:	return ui->SBslider->value() == 1 ; break ;
+			case HSW_Ail3pos2	:	return ui->SBslider->value() == 2 ; break ;
+			case HSW_Gear3pos0 :	return ui->SDslider->value() == 0 ; break ;
+			case HSW_Gear3pos1 :	return ui->SDslider->value() == 1 ; break ;
+			case HSW_Gear3pos2 :	return ui->SDslider->value() == 2 ; break ;
+			case HSW_Ele6pos0 :	return ui->SAslider->value() == 0 ; break ;
+			case HSW_Ele6pos1 :	return ui->SAslider->value() == 1 ; break ;
+			case HSW_Ele6pos2 :	return ui->SAslider->value() == 2 ; break ;
+			case HSW_Ele6pos3 :	return ui->SAslider->value() == 3 ; break ;
+			case HSW_Ele6pos4 :	return ui->SAslider->value() == 4 ; break ;
+			case HSW_Ele6pos5 :	return ui->SAslider->value() == 5 ; break ;
+	    case HSW_Pb1	:	return ui->switchPB1->isDown() ; break ;
+  	  case HSW_Pb2	:	return ui->switchPB2->isDown() ; break ;
+    	default:
         return keyState( (EnumKeys) key ) ;
       break;
 		}
@@ -2228,14 +2301,14 @@ bool simulatorDialog::keyState(EnumKeys key)
 	{
     switch (key)
     {
-    case (SW_ThrCt):   return ui->switchTHR->isChecked(); break;
-    case (SW_RuddDR):  return ui->switchRUD->isChecked(); break;
-    case (SW_ElevDR):  return ui->switchELE->isChecked(); break;
-    case (SW_ID0):     return ui->switchID0->isChecked(); break;
-    case (SW_ID1):     return ui->switchID1->isChecked(); break;
-    case (SW_ID2):     return ui->switchID2->isChecked(); break;
-    case (SW_AileDR):  return ui->switchAIL->isChecked(); break;
-    case (SW_Gear):    return ui->switchGEA->isChecked(); break;
+    case (SW_ThrCt):   return ui->SFslider->value() == 1; break;
+    case (SW_RuddDR):  return ui->SEslider->value() == 1; break;
+    case (SW_ElevDR):  return ui->SAslider->value() == 1; break;
+    case (SW_ID0):     return ui->SCslider->value() == 0; break;
+    case (SW_ID1):     return ui->SCslider->value() == 1; break;
+    case (SW_ID2):     return ui->SCslider->value() == 2; break;
+    case (SW_AileDR):  return ui->SBslider->value() == 1; break;
+    case (SW_Gear):    return ui->SDslider->value() == 1; break;
     case (SW_Trainer): return ui->switchTRN->isDown(); break;
     default:
         return false;
@@ -2328,7 +2401,7 @@ int8_t SwitchStack[SW_STACK_SIZE] ;
 bool simulatorDialog::getSwitchDr( int swtch )
 {
 	uint8_t aswitch = abs(swtch) ;
-	if ( ( aswitch <= HSW_FM6 ) && ( aswitch >= HSW_FM0 ) )
+	if ( ( aswitch <= HSW_FM7 ) && ( aswitch >= HSW_FM0 ) )
 	{
 		aswitch -= HSW_FM0 ;
 		aswitch = getFlightPhase() == aswitch ;
@@ -2425,7 +2498,6 @@ bool simulatorDialog::getSwitch(int swtch, bool nc, qint8 level)
     //input -> 1..4 -> sticks,  5..8 pots
     //MAX,FULL - disregard
     //ppm
-    
 	ret_value = Now_switch[cs_index] & 1 ;
 		
 //		SKYCSwData &cs = g_model.customSw[cs_index];
@@ -3073,6 +3145,16 @@ int8_t simulatorDialog::REG(int8_t x, int8_t min, int8_t max)
   return result;
 }
 
+uint8_t simulatorDialog::REGisGvar( int8_t x )
+{
+  return (x >= 126 || x <= -126) ;	
+}
+
+PhaseData *simulatorDialog::getPhaseAddress( uint32_t phase )
+{
+	return (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+}
+
 void simulatorDialog::perOutPhase( bool init, uint8_t att ) 
 {
 	static uint8_t lastPhase = 0 ;
@@ -3085,11 +3167,11 @@ void simulatorDialog::perOutPhase( bool init, uint8_t att )
 		
 		if ( lastPhase )
 		{
-      time1 = g_model.phaseData[(uint8_t)(lastPhase-1)].fadeOut ;
+      time1 = getPhaseAddress(lastPhase-1)->fadeOut ;
 		}
 		if ( thisPhase )
 		{
-      time2= g_model.phaseData[(uint8_t)(thisPhase-1)].fadeIn ;
+      time2= getPhaseAddress(thisPhase-1)->fadeIn ;
 			if ( time2 > time1 )
 			{
         time1 = time2 ;
@@ -3178,7 +3260,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 {
     int16_t trimA[4];
     uint8_t  anaCenter = 0;
-    uint16_t d = 0;
+//    uint16_t d = 0;
 
 //		CurrentPhase = getFlightPhase() ;
 
@@ -3569,6 +3651,18 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							lweight += 250 ;
 						}
 					}
+					if ( lweight > 350 )
+					{
+						lweight -= 360 ;
+						if ( lweight < 0 )
+						{
+							lweight = -g_model.gvars[-lweight-1].gvar ;
+						}
+						else
+						{
+							lweight = g_model.gvars[lweight].gvar ;
+						}
+					}
 				}
 				int16_t mixweight = lweight ;
 #endif
@@ -3596,6 +3690,18 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 						else
 						{
 							loffset += 250 ;
+						}
+					}
+					if ( loffset > 350 )
+					{
+						loffset -= 360 ;
+						if ( loffset < 0 )
+						{
+							loffset = -g_model.gvars[-loffset-1].gvar ;
+						}
+						else
+						{
+							loffset = g_model.gvars[loffset].gvar ;
 						}
 					}
 				}
@@ -3634,11 +3740,19 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             if(md.mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
             v = md.srcRaw==Mix_full ? -RESX : 0; // switch is off => FULL=-RESX
         }
-        else {
+        else
+				{
             swTog = !swon ;
             swon = true;
             k -= 1 ;
 						v = anas[k]; //Switch is on. MAX=FULL=512 or value.
+								
+//								if ( DebugOutputCount < 20 )
+//								{
+//									printf("\nk(-1) = %d", k ) ;
+//									DebugOutputCount += 1 ;
+//								}
+						
 						if ( k < 4 )
 						{
 							if ( md.disableExpoDr )
@@ -3655,11 +3769,19 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							}
 						}
 
-				  	if ( ((txType==1) || (txType == 2) || (txType == 9)) )
+						if ( txBitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
 						{
 							if ( k == MIX_3POS-1 )
 							{
                 uint32_t sw = switchIndex[md.switchSource] ;
+
+//								if ( DebugOutputCount < 20 )
+//								{
+//									printf("\nMIX_3POS-1, %d, %d", md.switchSource, sw ) ;
+//									DebugOutputCount += 1 ;
+//								}
+								
+
 //                EnumKeys sw = (EnumKeys)md.switchSource ;
 								if ( md.switchSource > 7 )	// Logical switch
 								{
@@ -3764,11 +3886,16 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 								v = calibratedStick[k-EXTRA_POTS_START+8] ;
 							}
 						}
-#define MIX_TRIMS_START 78
+//#define MIX_TRIMS_START 78
 						if ( ( k >= MIX_TRIMS_START-1) && (k <= MIX_TRIMS_START-1 + 4 ) )
 						{
               uint32_t t = k - MIX_TRIMS_START+1 ;
 							v = trimA[t] ;
+						}
+
+						if ( k >= 224-1 )
+						{
+							v = getInputSourceValue( &g_model.inputs[k-224+1] ) ;
 						}
 
             if(md.mixWarn) mixWarning |= 1<<(md.mixWarn-1); // Mix warning
@@ -3888,14 +4015,29 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 
         //========== CURVES ===============
-        if ( md.differential )
+				uint32_t diffValue ;
+        diffValue = md.differential | (md.extDiff << 1 ) ;
+				if ( diffValue )
 				{
-      		//========== DIFFERENTIAL =========
-          int16_t curveParam = REG( md.curve, -100, 100 ) ;
-      		if (curveParam > 0 && v < 0)
-      		  v = ((int32_t)v * (100 - curveParam)) / 100;
-      		else if (curveParam < 0 && v > 0)
-      		  v = ((int32_t)v * (100 + curveParam)) / 100;
+      		//========== DIFFERENTIAL or expo =========
+         	int16_t curveParam = REG( md.curve, -100, 100 ) ;
+					if ( diffValue == 3 )
+					{
+						// New Gvar
+						if ( curveParam < 0 )
+						{
+							curveParam = -curveParam - 1 ;							
+							curveParam = -g_model.gvars[curveParam].gvar ;
+						}
+						else
+						{
+							curveParam = g_model.gvars[curveParam].gvar ;
+						}
+					}
+     			if (curveParam > 0 && v < 0)
+     				v = ((int32_t)v * (100 - curveParam)) / 100;
+     			else if (curveParam < 0 && v > 0)
+     				v = ((int32_t)v * (100 + curveParam)) / 100;
 				}
 				else
 				{
@@ -3906,48 +4048,49 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 					}
 					else
 					{
-        		switch(md.curve){
+        		switch(md.curve)
+						{
         		case 0:
-        		    break;
+        			  break;
         		case 1:
-        		    if(md.srcRaw == MIX_FULL) //FUL
-        		    {
-        		        if( v<0 ) v=-RESX;   //x|x>0
-        		        else      v=-RESX+2*v;
-        		    }else{
-        		        if( v<0 ) v=0;   //x|x>0
-        		    }
-        		    break;
+        			  if(md.srcRaw == MIX_FULL) //FUL
+        			  {
+        			      if( v<0 ) v=-RESX;   //x|x>0
+        			      else      v=-RESX+2*v;
+        			  }else{
+        			      if( v<0 ) v=0;   //x|x>0
+        			  }
+        			  break;
         		case 2:
-        		    if(md.srcRaw == MIX_FULL) //FUL
-        		    {
-        		        if( v>0 ) v=RESX;   //x|x<0
-        		        else      v=RESX+2*v;
-        		    }else{
-        		        if( v>0 ) v=0;   //x|x<0
-        		    }
-        		    break;
+        			  if(md.srcRaw == MIX_FULL) //FUL
+        			  {
+        			      if( v>0 ) v=RESX;   //x|x<0
+        			      else      v=RESX+2*v;
+        			  }else{
+        			      if( v>0 ) v=0;   //x|x<0
+        			  }
+        			  break;
         		case 3:       // x|abs(x)
-        		    v = abs(v);
-        		    break;
+        			  v = abs(v);
+        			  break;
         		case 4:       //f|f>0
-        		    v = v>0 ? RESX : 0;
-        		    break;
+        			  v = v>0 ? RESX : 0;
+        			  break;
         		case 5:       //f|f<0
-        		    v = v<0 ? -RESX : 0;
-        		    break;
+        			  v = v<0 ? -RESX : 0;
+        			  break;
         		case 6:       //f|abs(f)
-        		    v = v>0 ? RESX : -RESX;
-        		    break;
+        			  v = v>0 ? RESX : -RESX;
+        			  break;
         		default: //c1..c16
 							{
-        		    int8_t idx = md.curve ;
+        			  int8_t idx = md.curve ;
 								if ( idx < 0 )
 								{
 									v = -v ;
 									idx = 6 - idx ;								
 								}
-        		   	v = intpol(v, idx - 7);
+        			  v = intpol(v, idx - 7);
 							}
         		}
 					}
@@ -4799,5 +4942,203 @@ void simulatorDialog::processVoiceAlarms()
 //		Nvs_timer[i] = ltimer ;
 //	}
 }
+
+int16_t simulatorDialog::getInputSourceValue( struct te_InputsData *pinput )
+{
+	int16_t value ;
+	uint32_t switchIdx ;
+	if ( pinput )
+	{
+		if ( (pinput->srcRaw) && ( pinput->srcRaw <= 7 ) )
+		{
+			return rawSticks[pinput->srcRaw-1] ;
+		}
+		
+		if (pinput->srcRaw >= 128)	// A Switch
+		{
+			switchIdx = pinput->srcRaw - 128 ;
+
+
+
+
+			if ( switchIdx > 8 )
+			{ // Logical switch
+				value = getSwitch( CSW_INDEX+switchIdx-8, 0, 0 ) ;
+				value = value ? 1024 : -1024 ;
+				return value ;
+			}
+			else
+			{
+				if ( txBitType & ( RADIO_BITTYPE_SKY | RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
+				{
+					uint32_t sw = switchIndex[switchIdx] ;
+					if ( ( switchIdx == 5) || ( switchIdx == 7) )
+					{ // 2-POS switch
+        		value = hwKeyState(sw) ? 1024 : -1024 ;
+					}
+					else if( switchIdx == 8)
+					{
+						value = 0 ;
+						if ( hwKeyState( HSW_Ele6pos1 ) )
+						{
+							value = 1 ;
+						}
+						else if ( hwKeyState( HSW_Ele6pos2 ) )
+						{
+							value = 2 ;
+						}
+						else if ( hwKeyState( HSW_Ele6pos3 ) )
+						{
+							value = 3 ;
+						}
+						else if ( hwKeyState( HSW_Ele6pos4 ) )
+						{
+							value = 4 ;
+						}
+						else if ( hwKeyState( HSW_Ele6pos5 ) )
+						{
+							value = 5 ;
+						}
+            value = (value * 2048 - 5120)/5 ;
+					}
+					else
+					{ // 3-POS switch
+        		value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+					}
+				}
+				else
+				{
+					if ( switchIdx > 6 )
+					{
+						if ( switchIdx == 31 )
+						{
+							value = 0 ;
+							if ( hwKeyState( HSW_Ele6pos1 ) )
+							{
+								value = 1 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos2 ) )
+							{
+								value = 2 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos3 ) )
+							{
+								value = 3 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos4 ) )
+							{
+								value = 4 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos5 ) )
+							{
+								value = 5 ;
+							}
+            	value = (value * 2048 - 5120)/5 ;
+						}
+						else
+						{
+							value = getSwitch( CSW_INDEX+switchIdx-6, 0, 0 ) ;
+							value = value ? 1024 : -1024 ;
+						}
+					}
+					else
+					{
+						uint32_t sw = getSw3PosList(switchIdx) ;
+            if ( getSw3PosCount(switchIdx) == 2 )
+						{
+      		  	value = hwKeyState(sw) ? 1024 : -1024 ;
+						}
+            else if ( getSw3PosCount(switchIdx) == 6 )
+						{
+							value = 0 ;
+							if ( hwKeyState( HSW_Ele6pos1 ) )
+							{
+								value = 1 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos2 ) )
+							{
+								value = 2 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos3 ) )
+							{
+								value = 3 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos4 ) )
+							{
+								value = 4 ;
+							}
+							else if ( hwKeyState( HSW_Ele6pos5 ) )
+							{
+								value = 5 ;
+							}
+            	value = (value * 2048 - 5120)/5 ;
+						}
+						else
+						{
+      		  	value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+						}
+					}
+				}
+				return value ;
+			}
+		}
+
+
+
+//		if (pinput->srcRaw >= EXTRA_POTS_START )
+//		{
+//#ifdef PCBX7
+//			return calibratedStick[pinput->srcRaw-EXTRA_POTS_START+6] ;
+//#else
+// #ifdef PCBX9LITE
+//			return calibratedStick[pinput->srcRaw-EXTRA_POTS_START+5] ;
+// #else
+//			return calibratedStick[pinput->srcRaw-EXTRA_POTS_START+7] ;
+// #endif
+//#endif
+//		}
+
+		if ( (pinput->srcRaw >= 21 ) && (pinput->srcRaw < 45 ) )
+		{
+			return ex_chans[pinput->srcRaw - 21] ;
+		}
+		if ( (pinput->srcRaw >= 70 ) && (pinput->srcRaw < 78 ) )
+		{
+			return ex_chans[pinput->srcRaw - 70] ;
+		}
+		
+		if ( (pinput->srcRaw >= 13 ) && (pinput->srcRaw < PPM_BASE + 21 ) )
+		{
+			return 0 ;
+//			if ( ppmInValid )
+//			{			
+//				return g_ppmIns[pinput->srcRaw - PPM_BASE-1] * 2 ;
+//			}
+		}
+		if ( (pinput->srcRaw >= 62 ) && (pinput->srcRaw < 70 ) )
+		{
+			return 0 ;
+//			if ( ppmInValid )
+//			{			
+//				return g_ppmIns[pinput->srcRaw - (EXTRA_PPM_BASE-NUM_EXTRA_PPM)-1] * 2 ;
+//			}
+		}
+		if ( (pinput->srcRaw >= 78 ) && (pinput->srcRaw < 82 ) )
+		{
+ 			return getTrimValue( CurrentPhase, pinput->srcRaw - 78 ) * 8 ;
+			
+		}
+
+
+
+
+	}
+  return 0 ;
+}
+
+
+
+
+
 
 

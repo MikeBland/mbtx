@@ -38,6 +38,8 @@ void populateAnaVolumeCB( QComboBox *b, int value ) ;
 #endif
 void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue = 0 ) ;
 int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extended = 0 ) ;
+int numericSpinGvarValue100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar ) ;
+void populateSpinGVarCB100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value ) ;
 
 #ifdef SKY
 void populateGvarCB(QComboBox *b, int value, int type, uint32_t extraPots) ;
@@ -116,6 +118,7 @@ int16_t convertTelemConstant( int8_t index, int8_t value, ModelData *model ) ;
 #endif
 QString getTelemString( int index ) ;
 #ifdef SKY    
+QString getInputSourceStr(int idx ) ;
 QString getSourceStr(int stickMode, int idx, int modelVersion, int type, uint32_t extraPots ) ;
 #else
 QString getSourceStr(int stickMode=1, int idx=0, int modelVersion=0 ) ;

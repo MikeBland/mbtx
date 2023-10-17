@@ -713,8 +713,12 @@ uint8_t CodeBuffer[200] ;
   #if defined(PCBX12D) || defined(PCBX10)
 #define MIN_PROGRAM_SIZE	32000
   #else
+   #ifdef PCBSKY
+#define MIN_PROGRAM_SIZE	18000
+   #else
 #define MIN_PROGRAM_SIZE	22000
-  #endif
+	 #endif
+	#endif
  #endif
 #endif
 
@@ -733,11 +737,31 @@ union t_program *Pprogram = &Program ;
 #else
 //extern uint32_t _ebss ;
 //extern uint8_t *_heap_end ;
-union t_program Program ;
-union t_program *Pprogram = &Program ;
+//union t_program Program ;
+//union t_program *Pprogram = &Program ;
 //union t_program& Program = (union t_program &)_ebss ;
 #define PROGRAM_SIZE	MIN_PROGRAM_SIZE
 //#define PROGRAM_SIZE	(_heap_end-_ebss)
+
+ #ifdef SMALL
+#define STATIC_BASIC	1
+ #endif
+// #ifdef REVX
+//#define STATIC_BASIC	1
+// #endif
+ #ifdef ARUNI
+#define STATIC_BASIC	1
+ #endif
+ #ifdef PCBLEM1
+#define STATIC_BASIC	1
+ #endif
+ 
+ #ifdef STATIC_BASIC
+union t_program Program ;
+union t_program *Pprogram = &Program ;
+ #else
+union t_program *Pprogram ;
+ #endif
 #endif
 
 uint32_t programStart()
@@ -1709,6 +1733,46 @@ uint32_t findStartOffset()
 	return position ;
 }
 
+#ifndef	QT
+
+ #ifdef STATIC_BASIC
+void stopBasic()
+{
+	
+}
+
+void startBasic()
+{
+}
+
+ #else
+void stopBasic()
+{
+	LoadedScripts[0].loaded = 0 ;
+	LoadedScripts[1].loaded = 0 ;
+	LoadedScripts[2].loaded = 0 ;
+	// deallocate memory	
+	if ( Pprogram )
+	{
+		free(Pprogram) ;
+		Pprogram = 0 ;
+	}
+}
+
+void startBasic()
+{
+	if ( Pprogram == 0 )
+	{
+		Pprogram = (t_program *) malloc(MIN_PROGRAM_SIZE) ;
+	}
+}
+ #endif
+//uint32_t getBasicAddress()
+//{
+//	return (uint32_t) Pprogram ;
+//}
+
+#endif
 
 uint32_t loadBasic( char *fileName, uint32_t type )
 {

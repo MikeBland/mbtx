@@ -126,7 +126,9 @@ extern uint8_t s_currIdx;
 
 static uint8_t s_currSubIdx;
 
-void putsValue(uint8_t x, uint8_t y, int8_t index, int16_t val, uint8_t att, uint8_t style, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground )
+uint8_t SuppressStatusLine ;
+
+void putsValue(uint8_t x, uint8_t y, uint16_t index, int16_t val, uint8_t att, uint8_t style, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground )
 {
 	if ( index >= EXTRA_POTS_START-1 )
 	{
@@ -214,6 +216,8 @@ void menuProcDiagAna(uint8_t event)
 }
 
 #define MUS_OFF_0			(7*FW)
+
+#ifndef TOUCH
 
 void menuModelMusic(uint8_t event)
 {
@@ -446,6 +450,7 @@ void menuModelMusic(uint8_t event)
 	}
 }
 
+#endif // nTOUCH
 // FrSky WSHhi DSMx  Jeti  ArduP ArduC FrHub HubRaw FrMav Mavlk"
 
 #define MAX_TEL_OPTIONS		8
@@ -576,7 +581,8 @@ void menuProcTelemetry(uint8_t event)
   	  	        g_model.frsky.channels[i].lratio = checkIncDec16( g_model.frsky.channels[i].lratio, 0, 1000, EE_MODEL);
   	  	      break;
 		  	      case 1:
-  	  	        CHECK_INCDEC_H_MODELVAR_0( g_model.frsky.channels[i].units, 3);
+//  	  	        CHECK_INCDEC_H_MODELVAR_0( g_model.frsky.channels[i].units, 3);
+								g_model.frsky.channels[i].units = checkOutOfOrder( g_model.frsky.channels[i].units, (uint8_t *)"\000\001\003", 3 ) ;
   	  	      break;
   	  	    }
 					}
@@ -598,7 +604,8 @@ void menuProcTelemetry(uint8_t event)
   	  	        g_model.frsky.channels[index].ratio3_4 = checkIncDec16( g_model.frsky.channels[index].ratio3_4, 0, 4800, EE_MODEL);
   	  	      break;
 		  	      case 1:
-  	  	        CHECK_INCDEC_H_MODELVAR_0( g_model.frsky.channels[index].units3_4, 3);
+//  	  	        CHECK_INCDEC_H_MODELVAR_0( g_model.frsky.channels[index].units3_4, 3);
+								g_model.frsky.channels[index].units3_4 = checkOutOfOrder( g_model.frsky.channels[index].units3_4, (uint8_t *)"\000\001\003", 3 ) ;
   	  	      break;
   	  	    }
 					}
@@ -1097,15 +1104,15 @@ void hiresBars( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour,
 
 			if ( start > 8 )
 			{
-				lcdDrawCharBitmapTransparent( xpos + 5 + 24, y+4, (start+1)/10+'0', 0, lineColour ) ;
-				lcdDrawCharBitmapTransparent( xpos + 5 + 24+12, y+4, (start+1)%10+'0', 0, lineColour ) ;
+				lcdDrawCharBitmapDma( xpos + 5 + 24, y+4, (start+1)/10+'0', 0, lineColour ) ;
+				lcdDrawCharBitmapDma( xpos + 5 + 24+12, y+4, (start+1)%10+'0', 0, lineColour ) ;
 			}
 			else
 			{
-				lcdDrawCharBitmapTransparent( xpos + 5 + 24, y+4, start+'1', 0, lineColour ) ;
+				lcdDrawCharBitmapDma( xpos + 5 + 24, y+4, start+'1', 0, lineColour ) ;
 			}
 
-			lcdDrawCharBitmapTransparent( xpos + BARS_WIDTH * 2 - 20, y+4, '%', 0, lineColour ) ;
+			lcdDrawCharBitmapDma( xpos + BARS_WIDTH * 2 - 20, y+4, '%', 0, lineColour ) ;
 			uint32_t negative = 0 ;
 			uint32_t chr ;
 			if ( value < 0 )
@@ -1116,25 +1123,25 @@ void hiresBars( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour,
 			value = value * 100 / RESX ;
 			x = xpos + BARS_WIDTH * 2 - 20 - 12 ;
 			chr = value % 10 + '0' ;
-			lcdDrawCharBitmapTransparent( x, y+4, chr, 0, lineColour ) ;
+			lcdDrawCharBitmapDma( x, y+4, chr, 0, lineColour ) ;
 			x -= 12 ;
 			value /= 10 ;
 			chr = value % 10 + '0' ;
 			if ( value )
 			{
-				lcdDrawCharBitmapTransparent( x, y+4, chr, 0, lineColour ) ;
+				lcdDrawCharBitmapDma( x, y+4, chr, 0, lineColour ) ;
 				x -= 12 ;
 			}
 			value /= 10 ;
 			chr = value % 10 + '0' ;
 			if ( value )
 			{
-				lcdDrawCharBitmapTransparent( x, y+4, chr, 0, lineColour ) ;
+				lcdDrawCharBitmapDma( x, y+4, chr, 0, lineColour ) ;
 				x -= 12 ;
 			}
 			if ( negative )
 			{
-				lcdDrawCharBitmapTransparent( x, y+4, '-', 0, lineColour ) ;
+				lcdDrawCharBitmapDma( x, y+4, '-', 0, lineColour ) ;
 			}
 			y += 21 ;
 			if ( ++start > 31 )
@@ -1143,7 +1150,7 @@ void hiresBars( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour,
 			}
 		}
 		j -= 1 ;
-		xpos += 179+4 ;
+		xpos += BARS_WIDTH*2 ;
 		vert += vert ;
 	}
 }
@@ -1151,6 +1158,8 @@ void hiresBars( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t colour,
 uint16_t HiresTime ;
 uint16_t HiresSavedTime ;
 uint32_t HiresCountTime ;
+
+void displayGPSdata( uint16_t x, uint16_t y, uint16_t whole, uint16_t frac, uint16_t attr, uint8_t direction ) ;
 
 void displayHiresScreen( uint32_t sindex )
 {
@@ -1245,7 +1254,6 @@ void displayHiresScreen( uint32_t sindex )
 		{
 			if ( display->boxes[i].item )
 			{
-	//			uint8_t style = TELEM_UNIT | TELEM_VALUE_RIGHT | TELEM_HIRES ;
 				uint8_t style = TELEM_UNIT | TELEM_HIRES ;
 				uint8_t attr = 0 ;
 				uint32_t index = display->boxes[i].item - 1 ;
@@ -1253,14 +1261,47 @@ void displayHiresScreen( uint32_t sindex )
 				{
 					attr = DBLSIZE|CONDENSED ;
 				}
-//				putsChnRaw( x+2, y+2, index+1, attr, colour, bgcolour ) ;
-//				y += (h-12)/2-4 ;
-//				x += (w-32)/2 + 16 ;
-//				putsValue( x+2, y+2, index, getValue(index), DBLSIZE|CONDENSED, style, colour, bgcolour ) ;
 				putsChnRaw( x+1, y+1, index+1, attr, colour, bgcolour ) ;
 				y += (h-12)/2 ;
 				x += (w-32)/2 + 16 ;
-				putsValue( x+1, y+1, index, getValue(index), DBLSIZE|CONDENSED, style, colour, bgcolour ) ;
+				if ( index == 138 )
+				{
+					if ( w < 116 )
+					{
+						attr &= ~(DBLSIZE|CONDENSED) ;
+					}
+					if ( telemItemValid( 86+8 ) == 0 )
+					{
+						attr |= BLINK ;
+					}
+					uint16_t oldFcolour = LcdForeground ;
+					LcdForeground = colour ;
+					displayGPSdata( x-9*FW, y, FrskyHubData[ FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], LEADING0 | attr, FrskyHubData[FR_LAT_N_S] ) ;
+					LcdForeground = oldFcolour ;
+				}
+				else if ( index == 139 )
+				{
+					if ( w < 116 )
+					{
+						attr &= ~(DBLSIZE|CONDENSED) ;
+					}
+					if ( telemItemValid( 87+8 ) == 0 )
+					{
+						attr |= BLINK ;
+					}
+					uint16_t oldFcolour = LcdForeground ;
+					LcdForeground = colour ;
+					displayGPSdata( x-9*FW, y, FrskyHubData[ FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], LEADING0 | attr, FrskyHubData[FR_LONG_E_W] ) ;
+					LcdForeground = oldFcolour ;
+				}
+				else
+				{
+					putsValue( x+1, y+1, index, getValue(index), DBLSIZE|CONDENSED, style, colour, bgcolour ) ;
+
+
+
+
+				}
 			}
 		}
 		else if ( display->boxes[i].type == HIRES_TYPE_BARS )
@@ -1369,7 +1410,17 @@ void menuHiresItem(uint8_t event)
 	struct t_hiResDisplay *display ;
 
 	display = &g_model.hiresDisplay[index] ;
-	
+
+	if ( event == EVT_ENTRY_UP )
+	{
+		// Returned from editing
+		if ( TextResult )
+		{
+			display->boxes[s_currIdx].item = unmapPots( TextIndex ) ;
+	    eeDirty(EE_MODEL) ;
+		}
+	}
+	 
 	if ( s_currIdx > 5 )
 	{
 		s_currIdx = 5 ;
@@ -1382,13 +1433,9 @@ void menuHiresItem(uint8_t event)
 
 	subN += 1 ;
 	y += FH ;
-	lcd_puts_Pleft( y, XPSTR("Item") ) ;
 	uint8_t attr = (sub==subN) ? InverseBlink : 0 ;
-	if ( display->boxes[s_currIdx].type == HIRES_TYPE_TIMER )
-	{
-		display->boxes[s_currIdx].item = checkIndexed( y, FWx9"\001""\006Timer1Timer2", display->boxes[s_currIdx].item, (sub==subN) ) ;
-	}
-	else if ( display->boxes[s_currIdx].type == HIRES_TYPE_BARS )
+	
+	if ( display->boxes[s_currIdx].type == HIRES_TYPE_BARS )
 	{
 		lcd_puts_Pleft( y, XPSTR("Start") ) ;
  		lcd_outdezAtt(PARAM_OFS+2*FW, y, display->boxes[s_currIdx].item+1,attr );
@@ -1399,21 +1446,40 @@ void menuHiresItem(uint8_t event)
 	}
 	else
 	{
-		if ( display->boxes[s_currIdx].item )
+		lcd_puts_Pleft( y, XPSTR("Item") ) ;
+		if ( display->boxes[s_currIdx].type == HIRES_TYPE_TIMER )
 		{
-			putsChnRaw( FW*9, y, display->boxes[s_currIdx].item, attr | TSSI_TEXT ) ;
+			display->boxes[s_currIdx].item = checkIndexed( y, FWx9"\001""\006Timer1Timer2", display->boxes[s_currIdx].item, (sub==subN) ) ;
 		}
 		else
 		{
-  		lcd_putsAtt(  FW*9, y, HyphenString, attr ) ;
-		}
-  	if (sub==subN)
-		{ 
-			uint8_t val = display->boxes[s_currIdx].item ;
-			val = mapPots( val ) ;
-			val = checkIncDec16( val,0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-1+1,EE_MODEL);
-//			CHECK_INCDEC_H_MODELVAR_0( val, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
-			display->boxes[s_currIdx].item = unmapPots( val ) ;
+			if ( display->boxes[s_currIdx].item )
+			{
+				putsChnRaw( FW*9, y, display->boxes[s_currIdx].item, attr | TSSI_TEXT ) ;
+			}
+			else
+			{
+  			lcd_putsAtt(  FW*9, y, HyphenString, attr ) ;
+			}
+  		if (sub==subN)
+			{ 
+				uint8_t val = display->boxes[s_currIdx].item ;
+				val = mapPots( val ) ;
+#ifdef TOUCH
+				if ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) || handleSelectIcon() )
+#else
+				if ( ( event == EVT_KEY_LONG(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
+#endif
+				{
+					TextIndex = val ;
+  				TextType = TEXT_TYPE_SW_SOURCE ;
+  				killEvents(event) ;
+					pushMenu(menuTextHelp) ;
+				}
+//				val = checkIncDec16( val,0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-1+1,EE_MODEL);
+	//			CHECK_INCDEC_H_MODELVAR_0( val, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots ) ;
+				display->boxes[s_currIdx].item = unmapPots( val ) ;
+			}
 		}
 	}
 	subN += 1 ;
@@ -1653,6 +1719,14 @@ void menuHires(uint8_t event)
 	}	
 }
 
+#ifdef TOUCH
+extern uint8_t TlExitIcon ;
+uint16_t dimBackColour() ;
+void drawItem( char *s, uint16_t y, uint16_t colour ) ;
+void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint16_t colour ) ;
+extern uint8_t TouchUpdated ;
+#endif
+
 void menuColour( uint8_t event, uint8_t mode )
 {
 	uint32_t red ;
@@ -1663,13 +1737,93 @@ void menuColour( uint8_t event, uint8_t mode )
 	if ( mode )
 	{
 		TITLE(XPSTR("Text Colour"));
-		colour = LcdForeground ;
+		colour = g_eeGeneral.textColour ;
 	}
 	else
 	{
 		TITLE(XPSTR("Background Colour"));
-		colour = LcdBackground ;
+		colour = g_eeGeneral.backgroundColour ;
 	}
+	
+#ifdef TOUCH
+	uint32_t rows = 3 ;
+
+	TlExitIcon = 1 ;
+	static MState2 mstate2 ;
+	mstate2.check_columns(event, rows-1) ;
+
+  int8_t  sub    = mstate2.m_posVert ;
+		
+	red = colour >> 11 ;
+	green = ( colour >> 6 ) & 0x1F ;
+	blue = colour & 0x1F ;
+
+//	uint8_t blink = InverseBlink ;
+	uint8_t subN = 0 ;
+	uint16_t hcolour = dimBackColour() ;
+	uint8_t attr ;
+
+	if ( TouchUpdated )
+	{
+		if ( TouchControl.event == TEVT_DOWN )
+		{
+				
+		}
+		else if ( TouchControl.event == TEVT_UP )
+		{
+			if ( ( TouchControl.x <= TRIGHT*TSCALE ) && (TouchControl.x >= TMID*TSCALE) && !s_editMode )
+			{
+				uint32_t vert = TouchControl.y ;
+				vert -= TTOP*TSCALE ;
+				vert /= TFH*TSCALE ;
+				if ( vert >= TLINES - 1 )
+				{
+					vert = TLINES - 2 ;
+				}
+//				vert += t_pgOfs ;
+				if ( vert < rows )
+				{
+//						m_posVert = vert ;
+					TouchControl.itemSelected = vert+1 ;
+					TouchUpdated = 0 ;
+					sub = mstate2.m_posVert = vert ;
+				}
+			}
+		}
+	}
+	
+	uint8_t y = TTOP ;
+	lcd_hline( 0, TTOP, TRIGHT ) ;
+	
+	attr = (sub==subN) ? INVERS : 0 ;
+	drawItem( (char *)XPSTR("Red"), y, attr ? ~hcolour : hcolour ) ;
+	drawNumber( TRIGHT-5, y, red, attr) ; //, attr ? ~hcolour : hcolour ) ;
+  if ( attr )
+	{
+		CHECK_INCDEC_H_GENVAR_0( red, 31 ) ;
+	}
+	y += TFH ;
+	subN += 1 ;
+
+	attr = (sub==subN) ? INVERS : 0 ;
+	drawItem( (char *)XPSTR("Green"), y, attr ? ~hcolour : hcolour ) ;
+	drawNumber( TRIGHT-5, y, green, attr) ; //, attr ? ~hcolour : hcolour ) ;
+  if ( attr )
+	{
+		CHECK_INCDEC_H_GENVAR_0( green, 31 ) ;
+	}
+	y += TFH ;
+	subN += 1 ;
+	attr = (sub==subN) ? INVERS : 0 ;
+	drawItem( (char *)XPSTR("Blue"), y, attr ? ~hcolour : hcolour ) ;
+	drawNumber( TRIGHT-5, y, blue, attr) ; //, attr ? ~hcolour : hcolour ) ;
+  if ( attr )
+	{
+		CHECK_INCDEC_H_GENVAR_0( blue, 31 ) ;
+	}
+	y += TFH ;
+	subN += 1 ;
+#else	
 	static MState2 mstate2 ;
 	mstate2.check_columns(event, 2 ) ;
 
@@ -1699,7 +1853,7 @@ void menuColour( uint8_t event, uint8_t mode )
   if(sub==subN) CHECK_INCDEC_H_GENVAR_0( blue, 31 ) ;
 //	y += FH ;
 //	subN += 1 ;
-
+#endif // TOUCH
 	if ( mode == 0 )
 	{
 		if ( (red < 6) && (green < 6) && (blue < 6) )
@@ -1719,6 +1873,25 @@ void menuColour( uint8_t event, uint8_t mode )
 	else
 	{
 		g_eeGeneral.backgroundColour = LcdBackground = colour ;
+#ifdef TOUCH
+		dimBackColour() ;
+#endif
+	}
+}
+
+void checkTheme( themeData *t )
+{
+	if ( t->backColour == 0 )
+	{
+		if ( t->textColour == 0 )
+		{
+			if ( t->brightness <= 1 )
+			{
+				t->backColour = g_eeGeneral.backgroundColour ;
+				t->textColour = g_eeGeneral.textColour ;
+				t->brightness = g_eeGeneral.bright ;
+			}
+		}
 	}
 }
 
@@ -1732,7 +1905,7 @@ void menuForeground( uint8_t event )
 	menuColour( event, 1 ) ;	
 }
 
-#define STATUS_VERTICAL		240
+#define STATUS_VERTICAL		242
 
 const uint8_t SpeakerHiRes[] = {
 8,16,0,
@@ -1742,32 +1915,35 @@ const uint8_t SpeakerHiRes[] = {
 
 void displayStatusLine( uint32_t scriptPercent )
 {
+	if ( SuppressStatusLine == 0 )
+	{
 //	lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL-2, 480, 18, LCD_STATUS_GREY ) ;
-	lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL, 480, 32, LCD_STATUS_GREY ) ;
-	putsTime( 224, (STATUS_VERTICAL/2)+4, Time.hour*60+Time.minute, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+		lcdDrawSolidFilledRectDMA( 0, STATUS_VERTICAL, 480, 30, LCD_STATUS_GREY ) ;
+		putsTime( 224, (STATUS_VERTICAL/2)+3, Time.hour*60+Time.minute, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
 
-	lcd_HiResimg( 180*2, (STATUS_VERTICAL)-1+8, SpeakerHiRes, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
-//	lcd_img( 180, (STATUS_VERTICAL/2), speaker, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
-	pushPlotType( PLOT_BLACK ) ;
-	lcd_hbar( 185, (STATUS_VERTICAL/2)+1+4, 23, 6, (CurrentVolume*100+16)/23 ) ;
-	popPlotType() ;
+		lcd_HiResimg( 180*2, (STATUS_VERTICAL)-1+7, SpeakerHiRes, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+	//	lcd_img( 180, (STATUS_VERTICAL/2), speaker, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+		pushPlotType( PLOT_BLACK ) ;
+		lcd_hbar( 185, (STATUS_VERTICAL/2)+1+3, 23, 6, (CurrentVolume*100+16)/23 ) ;
+		popPlotType() ;
 
-	if ( LogsRunning & 1 )
-	{
-		if ( BLINK_ON_PHASE )
+		if ( LogsRunning & 1 )
 		{
-			lcdDrawIcon( 330, STATUS_VERTICAL+6, Icon24log, 0x40 ) ;
-//			lcd_img( 165, (STATUS_VERTICAL/2), IconX12Logging, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+			if ( BLINK_ON_PHASE )
+			{
+				lcdDrawIcon( 330, STATUS_VERTICAL+3, Icon24log, 0x40 ) ;
+	//			lcd_img( 165, (STATUS_VERTICAL/2), IconX12Logging, 0, 0, LCD_BLACK, LCD_STATUS_GREY ) ;
+			}
 		}
-	}
-  lcd_outdezNAtt( 4*FW, (STATUS_VERTICAL/2)+4, IdlePercent ,PREC2, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
-  lcd_outdezNAtt( 8*FW , (STATUS_VERTICAL/2)+4, MixerRate, 0, 3, LCD_BLACK, LCD_STATUS_GREY ) ;
-	if ( scriptPercent )
-	{
-	  lcd_outdezNAtt( 12*FW, (STATUS_VERTICAL/2)+4, BasicExecTime ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
-	}
+  	lcd_outdezNAtt( 4*FW, (STATUS_VERTICAL/2)+3, IdlePercent ,PREC2, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
+  	lcd_outdezNAtt( 8*FW , (STATUS_VERTICAL/2)+3, MixerRate, 0, 3, LCD_BLACK, LCD_STATUS_GREY ) ;
+		if ( scriptPercent )
+		{
+		  lcd_outdezNAtt( 12*FW, (STATUS_VERTICAL/2)+3, BasicExecTime ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
+		}
 
-	lcd_outdezNAtt( 16*FW, (STATUS_VERTICAL/2)+4, HiresSavedTime/200 ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
-
+		lcd_outdezNAtt( 16*FW, (STATUS_VERTICAL/2)+3, HiresSavedTime/200 ,PREC1, 4, LCD_BLACK, LCD_STATUS_GREY ) ;
+	}
+	SuppressStatusLine = 0 ;
 }
 

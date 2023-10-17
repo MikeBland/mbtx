@@ -155,40 +155,6 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QPushButton" name="switchTHR">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="autoFillBackground">
-             <bool>false</bool>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>THR</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QWidget" name="SFwidget" native="true">
             <property name="minimumSize">
              <size>
@@ -344,37 +310,6 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchRUD">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>RUD</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QWidget" name="SAwidget" native="true">
             <property name="minimumSize">
              <size>
@@ -458,37 +393,6 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchELE">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>ELE</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QWidget" name="SBwidget" native="true">
             <property name="minimumSize">
              <size>
@@ -569,37 +473,6 @@ QPushButton:checked {
             </widget>
             <zorder>labelSB</zorder>
             <zorder>SBslider</zorder>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="switchAIL">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>AIL</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
            </widget>
           </item>
           <item>
@@ -1154,83 +1027,6 @@ QPushButton:checked {
         <item row="1" column="2" rowspan="2">
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
-           <widget class="QWidget" name="SHwidget" native="true">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>60</height>
-             </size>
-            </property>
-            <widget class="QSlider" name="SHslider">
-             <property name="enabled">
-              <bool>true</bool>
-             </property>
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>14</y>
-               <width>26</width>
-               <height>40</height>
-              </rect>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>40</height>
-              </size>
-             </property>
-             <property name="maximum">
-              <number>1</number>
-             </property>
-             <property name="pageStep">
-              <number>1</number>
-             </property>
-             <property name="tracking">
-              <bool>false</bool>
-             </property>
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-             <property name="invertedAppearance">
-              <bool>true</bool>
-             </property>
-             <property name="tickPosition">
-              <enum>QSlider::TicksBothSides</enum>
-             </property>
-            </widget>
-            <widget class="QLabel" name="labelSH">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>27</width>
-               <height>20</height>
-              </rect>
-             </property>
-             <property name="maximumSize">
-              <size>
-               <width>16777215</width>
-               <height>20</height>
-              </size>
-             </property>
-             <property name="text">
-              <string>SH</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignHCenter|Qt::AlignTop</set>
-             </property>
-            </widget>
-            <zorder>labelSH</zorder>
-            <zorder>SHslider</zorder>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="switchTRN">
             <property name="minimumSize">
              <size>
@@ -1419,43 +1215,6 @@ QPushButton:pressed {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchGEA">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>GEA</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>false</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>false</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QWidget" name="SCwidget" native="true">
             <property name="minimumSize">
              <size>
@@ -1539,111 +1298,6 @@ QPushButton:checked {
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="switchID0">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>ID0</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="checked">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="switchID1">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>ID1</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="switchID2">
-            <property name="minimumSize">
-             <size>
-              <width>28</width>
-              <height>0</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">QPushButton {
-     background-color: #EEEEEE;
-     border-style: outset;
-     border-width: 1px;
-     border-radius: 4px;
-     border-color: black;
-     padding: 2px;
- } 
-
-QPushButton:checked {
-     background-color: #4CC417;
-     border-style: inset;
- }</string>
-            </property>
-            <property name="text">
-             <string>ID2</string>
-            </property>
-            <property name="checkable">
-             <bool>true</bool>
-            </property>
-            <property name="autoExclusive">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
            <widget class="QPushButton" name="switchPB2">
             <property name="minimumSize">
              <size>
@@ -1697,6 +1351,81 @@ QPushButton:pressed {
             <property name="text">
              <string>PB4</string>
             </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QWidget" name="Sixwidget" native="true">
+            <property name="minimumSize">
+             <size>
+              <width>28</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>60</height>
+             </size>
+            </property>
+            <widget class="QSlider" name="Sixslider">
+             <property name="enabled">
+              <bool>true</bool>
+             </property>
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>14</y>
+               <width>26</width>
+               <height>40</height>
+              </rect>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>40</height>
+              </size>
+             </property>
+             <property name="maximum">
+              <number>2</number>
+             </property>
+             <property name="pageStep">
+              <number>1</number>
+             </property>
+             <property name="tracking">
+              <bool>false</bool>
+             </property>
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="invertedAppearance">
+              <bool>true</bool>
+             </property>
+             <property name="tickPosition">
+              <enum>QSlider::TicksBothSides</enum>
+             </property>
+            </widget>
+            <widget class="QLabel" name="labelSix">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>27</width>
+               <height>20</height>
+              </rect>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>16777215</width>
+               <height>20</height>
+              </size>
+             </property>
+             <property name="text">
+              <string>6P</string>
+             </property>
+             <property name="alignment">
+              <set>Qt::AlignHCenter|Qt::AlignTop</set>
+             </property>
+            </widget>
            </widget>
           </item>
          </layout>

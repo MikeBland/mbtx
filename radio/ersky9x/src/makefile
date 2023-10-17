@@ -78,16 +78,22 @@ ifeq ($(PCB), X9D)
   PROJECT        = x9e
   EXT_MOD=X9E
   CPPDEFS += -DREV9E
+  LUA = 1
+  CPPDEFS += -DLUA
  else ifeq ($(PCBX7), 1)
   CPPDEFS += -DPCBX7
   ifeq ($(PCBT12), 1)
    CPPDEFS += -DPCBT12
    PROJECT = t12
    EXT_MOD=T12
+   LUA = 1
+   CPPDEFS += -DLUA
   else ifeq ($(PCBACCESS), 1)
    CPPDEFS += -DPCBX7ACCESS
    PROJECT = x7Acc
    EXT_MOD=QX7ACCESS
+   LUA = 1
+   CPPDEFS += -DLUA
   else
    PROJECT = x7
    EXT_MOD=QX7
@@ -105,6 +111,8 @@ ifeq ($(PCB), X9D)
    PROJECT = xlite
    EXT_MOD=XLITE
   endif 
+  LUA = 1
+  CPPDEFS += -DLUA
  else ifeq ($(PCBX9LITE), 1)
   CPPDEFS += -DPCBX9LITE
   ifeq ($(X9LS), 1)
@@ -117,6 +125,8 @@ ifeq ($(PCB), X9D)
   else
    PROJECT = x9Lite
    EXT_MOD=X9Lite
+   LUA = 1
+   CPPDEFS += -DLUA
   endif
  else ifeq ($(REV19), 1)
   PROJECT = x9dp19
@@ -145,6 +155,8 @@ else ifeq ($(PCB), 9XT)
  CPPDEFS += -DXFIRE
  EXT_MOD=9XT
  UDEFS = -Dstm32f205
+ LUA = 1
+ CPPDEFS += -DLUA
 else ifeq ($(PCB), X12D)
  MCU  = cortex-m4
  PROJECT = x12d
@@ -177,13 +189,19 @@ else ifeq ($(PCB), X10)
     CPPDEFS += -DPCBT16 
     CPPDEFS += -DPCBTX16S
     EXT_MOD=TX18S
+    LUA = 1
+	 TOUCH = 1
+    CPPDEFS += -DLUA
+	 TOUCH = 1
    else
     PROJECT = tx16s
     CPPDEFS += -DPCBT16 
     CPPDEFS += -DPCBTX16S
     LUA = 1
+	 TOUCH = 1
     CPPDEFS += -DLUA
     EXT_MOD=TX16S
+	 TOUCH = 1
    endif
   else
    PROJECT = t16
@@ -202,6 +220,8 @@ else ifeq ($(PCB), X10)
  else
   PROJECT = x10
   EXT_MOD=X10
+  LUA = 1
+  CPPDEFS += -DLUA
  endif
 else ifeq ($(PCBLEM1), 1)
  MCU  = cortex-m3
@@ -237,6 +257,8 @@ else
   CPPDEFS += -DREVX
   CPPDEFS += -DXFIRE
   EXT_MOD=REVB-X
+  LUA = 1
+  CPPDEFS += -DLUA
  else ifeq ($(SMALL), 1)
   PROJECT = ersky9xs
   LDSCRIPT = sam3s4c_flash.ld
@@ -248,12 +270,15 @@ else
   LDSCRIPT = sam3s8c_flash.ld
   EXT_MOD=ARUNI
   UDEFS = -Dat91sam3s8
+  CPPDEFS += -DXFIRE
  else
   PROJECT = ersky9x
   CPPDEFS += -DXFIRE
   LDSCRIPT = sam3s8c_flash.ld
   EXT_MOD=REVB
   UDEFS = -Dat91sam3s8
+  LUA = 1
+  CPPDEFS += -DLUA
  endif
 endif
 
@@ -348,7 +373,7 @@ SRC  = X12D/system_stm32f4xx.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -401,7 +426,7 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp bin_allocator.cpp
 endif
 ifeq ($(DEBUG), 1)
 CPPSRC += debug.cpp
@@ -452,7 +477,7 @@ SRC  = X12D/system_stm32f4xx.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -501,16 +526,25 @@ CPPSRC = ersky9x.cpp \
 			pxx2.cpp \
 			lcd.cpp
 
+ifeq ($(TOUCH), 1)
+  CPPSRC += touchMenus.cpp
+endif
+
 ifeq ($(BT), 1)
   CPPSRC += bluetooth.cpp
   CPPDEFS += -DBT
+endif
+
+ifeq ($(TOUCH), 1)
+  CPPSRC += X12D/tp_gt911.cpp
+  CPPDEFS += -DTOUCH
 endif
 
 ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp bin_allocator.cpp
 endif
 ifeq ($(DEBUG), 1)
 CPPSRC += debug.cpp
@@ -565,7 +599,7 @@ SRC  = X12D/system_stm32f4xx.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -623,7 +657,7 @@ endif
 
 
 ifeq ($(LUA), 1)
-CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp bin_allocator.cpp
 endif
 
 #         gtime.cpp \
@@ -676,7 +710,7 @@ SRC  = X9D/system_stm32f2xx.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -734,7 +768,7 @@ endif
 
 
 ifeq ($(LUA), 1)
-CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp bin_allocator.cpp
 endif
 
 #         gtime.cpp \
@@ -808,7 +842,7 @@ SRC  = X9D/system_stm32f2xx.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -861,7 +895,7 @@ ifeq ($(BASIC), 1)
 	  CPPSRC += basic/parser.cpp
 endif
 ifeq ($(LUA), 1)
-CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp
+CPPSRC += lua/api_lcd.cpp lua/interface.cpp lua/lua_api.cpp bin_allocator.cpp
 endif
 
 #         X9D/lcd_driver.cpp \
@@ -944,7 +978,7 @@ SRC  = core_cm3.c \
 ifeq ($(LUA), 1)
 SRC += lua/lapi.c lua/lcode.c lua/lctype.c lua/ldebug.c lua/ldo.c lua/ldump.c lua/lfunc.c lua/lgc.c lua/llex.c lua/lmem.c \
            lua/lobject.c lua/lopcodes.c lua/lparser.c lua/lstate.c lua/lstring.c lua/ltable.c lua/lrotable.c lua/ltm.c lua/lundump.c lua/lvm.c lua/lzio.c \
-           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c \
+           lua/lbaselib.c lua/linit.c lua/lmathlib.c lua/lbitlib.c lua/loadlib.c lua/lauxlib.c lua/ltablib.c lua/lcorolib.c lua/liolib.c lua/lstrlib.c \
            syscalls.c
 endif
 
@@ -1116,7 +1150,13 @@ ROBJS = $(ASRC:%.s=skyRobj/%.o) $(SRC:%.c=skyRob/%.o) $(CPPSRC:%.cpp=skyRobj/%.o
 
 #ASFLAGS = $(MCFLAGS) -g -gdwarf-2 -Wa,-amhls=$(<:.s=.lst) $(ADEFS)
 CPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -Wstrict-prototypes -fverbose-asm $(DEFS)
-LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR)
+ifeq ($(SMALL), 1)
+LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR) --specs=nano.specs
+else ifeq ($(ARUNI), 1)
+LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR) --specs=nano.specs
+else
+LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR) --specs=nano.specs -u _printf_float
+endif
 CPPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fverbose-asm $(DEFS)
 
 CPPFLAGS += $(CPPDEFS)
@@ -1193,7 +1233,7 @@ $(OBJDIR):
 #	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 $(CPPOBJS) : $(OBJDIR)/%.o : %.cpp
 	@mkdir -p $(@D)
-	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
+	$(CC) -c $(CPPFLAGS) -fno-exceptions -fno-math-errno -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.c
 #	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@

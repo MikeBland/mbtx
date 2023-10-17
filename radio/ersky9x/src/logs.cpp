@@ -55,7 +55,7 @@
 #define OPENTX_FORMAT	1
 
 extern int16_t AltOffset ;
-extern uint16_t LogTimer ;
+extern uint32_t LogTimer ;
 
 FIL g_oLogFile = {0};
 const char *g_logError = NULL ;
@@ -232,6 +232,16 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 	{
 		qr = div( (int)value, (int)100 ) ;
 		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
+	}
+}
+
+void logSingleDiv1000( uint32_t enable, int32_t value )
+{
+	div_t qr ;
+	if ( isLogEnabled( enable ) )
+	{
+		qr = div( (int)value, (int)1000 ) ;
+		f_printf(&g_oLogFile, ",%d.%03d", qr.quot, qr.rem ) ;
 	}
 }
 
@@ -612,11 +622,33 @@ extern uint32_t sdMounted( void ) ;
 			}
 		}
 	}
+	for ( j = 0 ; j < 4 ; j += 1 )
+	{
+		if ( isLogEnabled( j + LOG_CUST7 ) )
+		{
+			uint8_t text[6] ;
+			if ( alternateText( text, &g_model.customTelemetryNames2[j*4] ) )
+			{
+	  		f_puts((const char *)text, &g_oLogFile);
+			}
+			else
+			{			
+	  		f_puts(&",Cus7 \0,Cus8 \0,Cus9 \0,Cus10"[j*7], &g_oLogFile);
+			}
+		}
+	}
+
 	singleHeading( LOG_CTOTAL1, ",Ctot1" ) ;
 	singleHeading( LOG_CTOTAL2, ",Ctot2" ) ;
 	
 	singleHeading( LOG_SBECV, ",SBEC_V" ) ;
 	singleHeading( LOG_SBECA, ",SBEC_A" ) ;
+
+	singleHeading( LOG_SATS, ",Sats" ) ;
+	singleHeading( LOG_ACCX, ",AccX" ) ;
+	singleHeading( LOG_ACCY, ",AccY" ) ;
+	singleHeading( LOG_ACCZ, ",AccZ" ) ;
+
   
 	singleHeading( LOG_STK_THR, ",Stk_THR" ) ;
 //	if ( isLogEnabled( LOG_STK_THR ) )
@@ -642,6 +674,9 @@ extern uint32_t sdMounted( void ) ;
 
   return NULL ;
 }
+
+uint8_t LastLogSecs ;
+uint32_t Logxtime ;
 
 void closeLogs()
 {
@@ -680,16 +715,32 @@ void writeLogs()
 		return ;
 	}
 
+	uint32_t xtime = LogTimer % 10 ;
+	if ( LastLogSecs != Time.second )
+	{
+		LastLogSecs = Time.second ;
+		Logxtime = 0 ;
+	}
+	else
+	{
+		if ( g_model.logRate > 1 )
+		Logxtime += g_model.logRate == 2 ? 500 : 200 ;
+		if ( Logxtime > 999 )
+		{
+			Logxtime = 900 ;
+		}
+	}
+
 #ifdef OPENTX_FORMAT
 		  f_puts((TCHAR *)LogDate, &g_oLogFile) ;
-      f_printf(&g_oLogFile, "%02d:%02d:%02d.%03d", Time.hour, Time.minute, Time.second, ( LogTimer & 1  ) ? 500 : 0 ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
+      f_printf(&g_oLogFile, "%02d:%02d:%02d.%03d", Time.hour, Time.minute, Time.second, Logxtime ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
 #else
       f_printf(&g_oLogFile, "%02d:%02d:%02d", Time.hour, Time.minute, Time.second ) ;// utm.tm_mday, utm.tm_hour, utm.tm_min, utm.tm_sec, g_ms100);
 #endif
-			qr = div( LogTimer, 120 ) ;
-			uint16_t secs = qr.rem/2 ;
+			qr = div( LogTimer, 600 ) ;
+			uint16_t secs = qr.rem/10 ;
 			qr = div( qr.quot, 60 ) ;
-      f_printf(&g_oLogFile, ",'%d:%02d:%02d.%d", qr.quot, qr.rem, secs, ( LogTimer & 1 ) ? 5 : 0) ;	// Elapsed log time
+      f_printf(&g_oLogFile, ",'%d:%02d:%02d.%d", qr.quot, qr.rem, secs, xtime ) ;	// Elapsed log time
       f_printf(&g_oLogFile, ",%d", frskyUsrStreaming * 100 + frskyStreaming ) ;
 			
 			logSingleNumber( LOG_RSSI, FrskyHubData[FR_RXRSI_COPY] ) ;
@@ -736,8 +787,19 @@ void writeLogs()
       	 		value = m_to_ft( value ) ;
 					}
 				}
-				value /= 10 ;									
-				f_printf(&g_oLogFile, ",%d", value ) ;
+				char c = ' ' ;
+				qr = div( value, 10);
+				if ( qr.rem < 0 )
+				{
+					qr.rem = - qr.rem ;
+					if ( qr.quot == 0 )
+					{
+						c = '-' ;
+					}
+				}
+				f_printf(&g_oLogFile, ",%c%d.%d", c, qr.quot, qr.rem ) ;
+//				value /= 10 ;									
+//				f_printf(&g_oLogFile, ",%d", value ) ;
 			}
 			
 			if ( isLogEnabled( LOG_GALT ) )
@@ -1059,6 +1121,10 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
 //				}
 			}
+			for ( i = 0 ; i < 4 ; i += 1 )
+			{
+				logSingleNumber( i + LOG_CUST7, FrskyHubData[FR_CUST7 + i] ) ;
+			}
 
 			logSingleDiv10( LOG_CTOTAL1, FrskyHubData[FR_CELLS_TOTAL1] ) ;
 //			if ( isLogEnabled( LOG_CTOTAL1 ) )
@@ -1087,6 +1153,11 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
 
+			logSingleNumber( LOG_SATS, FrskyHubData[TEL_SATS] ) ;
+
+			logSingleDiv1000( LOG_ACCX, FrskyHubData[FR_ACCX] ) ;
+			logSingleDiv1000( LOG_ACCY, FrskyHubData[FR_ACCY] ) ;
+			logSingleDiv1000( LOG_ACCZ, FrskyHubData[FR_ACCZ] ) ;
 
 			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;
 //			if ( isLogEnabled( LOG_STK_THR ) )

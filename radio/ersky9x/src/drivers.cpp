@@ -329,6 +329,12 @@ uint8_t getEvent()
 	}
   return evt ;
 }
+
+uint8_t peekEvent()
+{
+	return s_evt[0] ;
+}
+
 #else
 uint8_t getEvent()
 {
@@ -336,6 +342,12 @@ uint8_t getEvent()
   s_evt=0;
   return evt;
 }
+
+uint8_t peekEvent()
+{
+	return s_evt ;
+}
+
 #endif
 
 Key keys[NUM_KEYS] ;
@@ -1074,12 +1086,24 @@ void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value )
 
 	if ( pss->bitState == BIT_IDLE )
 	{ // Starting, value should be 0
-		pss->bitState = BIT_ACTIVE ;
-		pss->bitCount = 0 ;
-		if ( time > 1 )
+		if ( value == 0 )
 		{
-			pss->byte >>= time-1 ;
-			pss->bitCount = time-1 ;
+			pss->bitState = BIT_ACTIVE ;
+			pss->bitCount = 0 ;
+			if ( time > 1 )
+			{
+				time -= 1 ;
+				if ( ( time > 10 ) || ( value == 2 ) )
+				{
+					// Line break !
+					pss->bitState = BIT_IDLE ;
+				}
+				else
+				{
+					pss->byte >>= time ;
+					pss->bitCount = time ;
+				}
+			}
 		}
 	}
 	else

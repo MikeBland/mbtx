@@ -261,7 +261,7 @@ The columns for altitude \"GAlt\" and for speed \"GSpd\" are optional"));
   }
 
   result.append(input.at(0));
-  bool rangeSelected = ui->logTable->selectionModel()->selectedRows().length() > 0;
+//  bool rangeSelected = ui->logTable->selectionModel()->selectedRows().length() > 0;
 
 //  GpsGlitchFilter glitchFilter;
 //  GpsLatLonFilter latLonFilter;

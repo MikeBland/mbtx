@@ -5,6 +5,7 @@
 #include "../../common/node.h"
 #include <stdint.h>
 #include "pers.h"
+#include "file.h"
 #include "qextserialport.h"
 
 #define TMR_OFF     0
@@ -44,7 +45,7 @@ public:
     explicit simulatorDialog(QWidget *parent = 0);
     ~simulatorDialog();
 
-    void loadParams(const EEGeneral gg, const SKYModelData gm, int type);
+    void loadParams(const EEGeneral gg, const SKYModelData gm, struct t_radioData *radioData);
 
 private:
     Ui::simulatorDialog *ui;
@@ -102,6 +103,7 @@ private:
     quint8  sw_toggled;
 		quint8	CurrentPhase ;
 		quint8	txType ;
+		quint32	txBitType ;
 		quint8  CalcScaleNest ;
     
 		quint8  current_limits ;
@@ -127,6 +129,7 @@ private:
 		void processSwitches(void) ;
     void processSwitchTimer( uint32_t i ) ;
 		int32_t isAgvar(uint8_t value) ;
+		PhaseData *getPhaseAddress( uint32_t phase ) ;
 
     bool keyState(EnumKeys key);
 		bool hwKeyState(int key) ;
@@ -143,6 +146,7 @@ private:
     int16_t intpol(int16_t x, uint8_t idx);
 		int8_t REG100_100(int8_t x) ;
 		int8_t REG(int8_t x, int8_t min, int8_t max) ;
+		uint8_t REGisGvar( int8_t x ) ;
 
 		uint32_t getFlightPhase() ;
 		int16_t getRawTrimValue( uint8_t phase, uint8_t idx ) ;
@@ -159,6 +163,7 @@ private:
 		void resetTimer() ;
 		uint8_t Nvs_state[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 		int16_t Nvs_timer[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
+		int16_t getInputSourceValue( struct te_InputsData *pinput ) ;
 
 protected:
 		void closeEvent(QCloseEvent *event) ;

@@ -5,6 +5,7 @@
 #include <QtGui>
 #include "pers.h"
 #include "mixerslist.h"
+#include "inputslist.h"
 #include <QDoubleSpinBox>
 
 #include <QListWidget>
@@ -80,6 +81,7 @@ private:
     bool switchDefPosEditLock;
 
     MixersList *MixerlistWidget;
+    InputsList *InputlistWidget;
 		VoiceList *VoiceListWidget ;
 
     QString mixNotes[MAX_SKYMIXERS + EXTRA_SKYMIXERS];
@@ -137,9 +139,11 @@ private:
 
 
     void setupMixerListWidget();
+    void setupInputListWidget();
     void updateSettings();
     void tabModelEditSetup();
     void tabExpo();
+    void tabInputs();
     void tabMixes();
     void tabHeli();
     void tabLimits();
@@ -187,13 +191,21 @@ private:
 
     SKYMixData *mixAddress( uint32_t index ) ;
     bool gm_insertMix(int idx);
+    bool gm_insertInput(int idx);
     int getMixerIndex(int dch);
+    int getInputIndex(int dch);
     void gm_deleteMix(int index);
+    void gm_deleteInput(int index) ;
     void gm_openMix(int index);
+    void gm_openInput(int index) ;
     int gm_moveMix(int idx, bool dir);
+    int gm_moveInput(int idx, bool dir);
+    void inputDeleteList(QList<int> list);
     void mixersDeleteList(QList<int> list);
     QList<int> createListFromSelected();
-    void setSelectedByList(QList<int> list);
+    QList<int> createInputListFromSelected();
+    void setSelectedByList(QList<int> list) ;
+		void setInputSelectedByList(QList<int> list) ;
 
     void applyTemplate(uint8_t idx);
     SKYMixData* setDest(uint8_t dch);
@@ -255,6 +267,14 @@ private slots:
     void mixerlistWidget_customContextMenuRequested(QPoint pos);
     void mixerlistWidget_doubleClicked(QModelIndex index);
     void mixerlistWidget_KeyPress(QKeyEvent *event);
+
+		void inputlistWidget_customContextMenuRequested(QPoint pos) ;
+    void inputlistWidget_doubleClicked(QModelIndex index) ;
+		void inputAdd() ;
+    void inputOpen() ;
+    void inputDelete(bool ask=true);
+    void moveInputUp();
+    void moveInputDown();
 
     void voiceAlarmList_doubleClicked(QModelIndex index) ;
 		void on_AdjusterList_doubleClicked( QModelIndex index ) ;

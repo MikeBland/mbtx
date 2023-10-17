@@ -66,22 +66,33 @@ extern uint8_t BindRangeFlag[] ;
 extern struct t_telemetryTx TelemetryTx ;
 extern uint8_t DsmResponseFlag ;
 
+extern uint16_t DsmBindDebug ;
+
+
 void dsmBindResponse( uint8_t mode, int8_t channels )
 {
 	// Process mode here
+	DsmBindDebug |= 1 ;
 	uint8_t dsm_mode_response ;
 	{
 		dsm_mode_response = mode & ( ORTX_USE_DSMX | ORTX_USE_11mS | ORTX_USE_11bit | ORTX_AUTO_MODE ) ;
+#if defined(PCBTX16S) || defined(PCBT16)
+		if ( ( g_model.Module[1].protocol != PROTO_MULTI ) && ( g_model.Module[0].protocol != PROTO_MULTI ) )
+#else
 		if ( g_model.Module[1].protocol != PROTO_MULTI )
+#endif
 		{
+	DsmBindDebug |= 2 ;
 #if defined(PCBX9D) || defined(PCB9XT)
 			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
 			{
 				g_model.Module[1].channels = channels ;
+	DsmBindDebug |= 4 ;
 #else
 			if ( ( g_model.Module[1].channels != channels ) || ( g_model.dsmMode != ( dsm_mode_response | 0x80 ) ) )
 			{
 				g_model.Module[1].channels = channels ;
+	DsmBindDebug |= 8 ;
 #endif
 				g_model.dsmMode = dsm_mode_response | 0x80 ;
 	  		STORE_MODELVARS ;
@@ -91,19 +102,21 @@ void dsmBindResponse( uint8_t mode, int8_t channels )
 		else
 		{
 extern uint8_t MultiResponseData ;
-		dsm_mode_response = channels ;
-		if ( mode & 0x80 )
-		{
-			dsm_mode_response |= 0x80 ;
-		}
-		if ( mode & 0x10 )
-		{
-			dsm_mode_response |= 0x40 ;
-		}
-		MultiResponseData = dsm_mode_response ;
+	DsmBindDebug |= 16 ;
+			dsm_mode_response = channels ;
+			if ( mode & 0x80 )
+			{
+				dsm_mode_response |= 0x80 ;
+			}
+			if ( mode & 0x10 )
+			{
+				dsm_mode_response |= 0x40 ;
+			}
+			MultiResponseData = dsm_mode_response ;
 			DsmResponseFlag = 1 ;
 		}
 	}
+	DsmBindDebug |= channels << 12 ;
 }
 
 //uint16_t SetMultiArrayCount ;

@@ -6768,6 +6768,12 @@ extern uint8_t AfhdsData[2] ;
 
     putsTimeNoAtt(   13*FW, FH*0, TimeGlobals.s_timeCumTot );
 
+
+extern uint8_t TelRxCount ;
+extern uint16_t Afcount ;
+  	lcd_outhex4( 0*FW,  7*FH, TelRxCount ) ;
+ 		lcd_outhex4( 6*FW,  7*FH, Afcount ) ;
+
 // Temp stack trace display
 
 #ifndef SIMU
@@ -8046,7 +8052,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 								uint8_t gps_fix ;
 								uint8_t gps_sat ;
 								gps_sat = FrskyHubData[FR_TEMP2] / 10 ;
- 				        gps_fix = FrskyHubData[FR_TEMP2] - gps_fix * 10 ;
+ 				        gps_fix = FrskyHubData[FR_TEMP2] - gps_sat * 10 ;
 								switch ( gps_fix )
 								{
 									case 1: 	lcd_putsAtt( 0 * FW, 2*FH, PSTR(STR_MAV_GPS_NO_FIX), BLINK); break;
@@ -8064,12 +8070,12 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
 								val = FrskyHubData[FR_GPS_HDOP];
 								if (val <= 200)
 								{
-                	attr  = PREC1;
+                	attr  = PREC2;
 				   				blink = 0;
 				 				}
 								else
 								{
-                  attr = PREC1 | BLINK;
+                  attr = PREC2 | BLINK;
 				   				blink = BLINK;
 								}
 								lcd_putsAtt( 0 * FW,   4*FH, PSTR(STR_MAV_GPS_HDOP), blink ) ; 
@@ -8092,7 +8098,7 @@ const static prog_uint8_t APM xt[4] = {128*1/4+2, 4, 128-4, 128*3/4-2};
                 lcd_outdezAtt( 21 * FW+1, 2*FH, val, attr ) ;
 
 //		 line 3 right "GPS Alt"
-								lcd_puts_P( 15 * FW-1, 3*FH, PSTR(STR_MAV_GALT) ); // GAlt
+								lcd_puts_P( 15 * FW-2, 3*FH, PSTR(STR_MAV_GALT) ); // GAlt
 								lcd_outdez( 21 * FW+1, 3*FH, get_telemetry_value(TEL_ITEM_GALT) ) ;
 //		 line 4 right "Home Distance"
 								lcd_puts_P( 15 * FW-1, 4*FH, PSTR(STR_MAV_HOME) ); // home
@@ -13298,9 +13304,9 @@ extern uint8_t getExpectedSwitchState( uint8_t i ) ;
 			if (protocol == PROTO_MULTI)
 			{
 #ifdef FAILSAFE  			
-				dataItems = 8 ;
+				dataItems = 9 ;
 #else
-				dataItems = 7 ;
+				dataItems = 8 ;
 #endif
 			}
 #endif
@@ -13979,6 +13985,10 @@ static uint8_t multiUpdateTimer ;
 
 				if(sub==subN)
 					rangeBindAction( y, PXX_RANGE_CHECK ) ;
+				y += FH ;
+				subN++;
+				g_model.disableChannelMapping = onoffMenuItem( g_model.disableChannelMapping, y, PSTR("No Ch Map"), subN) ;
+
 #ifdef FAILSAFE  			
 				y += FH ;
 				subN++;

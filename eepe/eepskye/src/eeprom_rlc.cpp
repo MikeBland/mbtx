@@ -725,6 +725,7 @@ bool eeLoadGeneralRlc( struct t_radioData *radioData )
 void eeLoadModelNameRlc( struct t_radioData *radioData, uint8_t id, unsigned char*buf, uint8_t len )
 //void eeLoadModelName(uint8_t id, unsigned char *name)
 {
+  (void) len ;
   memclear( buf, sizeof(radioData->models[0].name));
   if (id < MAX_MODELS)
 	{

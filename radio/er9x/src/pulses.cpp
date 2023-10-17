@@ -1353,6 +1353,7 @@ void setupPulsesSerial(void)
 			exByte |= subProtocol & 0xC0 ;
 			exByte |= g_model.exRxNum << 4 ;
 			exByte |= g_eeGeneral.multiTelInvert << 3 ;
+			exByte |= g_model.disableChannelMapping ;
 			sendByteSerial(exByte);
 		}
 	}

@@ -445,7 +445,7 @@ static void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 	disable_software_com1() ;
 	configure_pins( (PIO_PA5 | PIO_PA6), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
 	
-#ifdef REVX
+#if defined(ARUNI) || defined(REVX)
 	configure_pins( PIO_PA25, PIN_ENABLE | PIN_LOW | PIN_OUTPUT | PIN_PORTA | PIN_NO_PULLUP ) ;
 #endif
 
@@ -637,7 +637,7 @@ extern "C" void USART0_IRQHandler()
 	{
  		if ( pUsart->US_CSR & US_CSR_TXEMPTY )
 		{
-#ifdef REVX
+#if defined(ARUNI) || defined(REVX)
 			PIOA->PIO_CODR = 0x02000000L ;	// Set bit A25 OFF
 #endif
 			pUsart->US_IDR = US_IDR_TXEMPTY ;
@@ -827,7 +827,7 @@ uint32_t txPdcUsart( uint8_t *buffer, uint32_t size, uint32_t receive )
 
 	if ( pUsart->US_TNCR == 0 )
 	{
-#ifdef REVX
+#if defined(ARUNI) || defined(REVX)
 		PIOA->PIO_SODR = 0x02000000L ;	// Set bit A25 ON, enable SPort output
 #endif
 

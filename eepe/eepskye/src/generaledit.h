@@ -36,6 +36,7 @@ private:
 		void setHwSwitchActive( void ) ;
 		void setHardwareSwitchCB( QComboBox *b, int switchlist, int type ) ;
 		void setHardwarePotCB( QComboBox *b, int type ) ;
+    void on_tabWidget_selected(QString );
 
 signals:
     void modelValuesChanged();
@@ -119,7 +120,7 @@ private slots:
     void on_speakerPitchSB_editingFinished();
     void on_hapticStengthSB_editingFinished();
 //    void on_soundModeCB_currentIndexChanged(int index);
-    void on_tabWidget_selected(QString );
+//    void on_tabWidget_selected(QString );
     void on_PotScrollEnableChkB_stateChanged(int );
 		void on_StickScrollEnableChkB_stateChanged(int ) ;
 		void on_SoftwareVolumeChkB_stateChanged(int ) ;

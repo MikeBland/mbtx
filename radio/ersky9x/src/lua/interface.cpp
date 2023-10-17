@@ -29,11 +29,46 @@
 #include "lcd.h"
 #include "drivers.h"
 //#include "opentx.h"
-//#include "bin_allocator.h"
+#ifndef PCBSKY
+#define USE_BIN_ALLOCATOR		1
+#include "bin_allocator.h"
+#endif
 
 #define WARNING_LINE_X                 16
 #define WARNING_LINE_Y                 3*FH
 
+#define LUA_COMPILER	1
+#define LEN_FILE_PATH_MAX 36
+#define SCRIPT_EXT          ".lua"
+#define SCRIPT_BIN_EXT      ".luac"
+#define LEN_FILE_EXTENSION_MAX  5  // longest used, including the dot, excluding null term.
+const char * getFileExtension(const char * filename, uint8_t size=0, uint8_t extMaxLen=0, uint8_t * fnlen=nullptr, uint8_t * extlen=nullptr);
+
+const char * getFileExtension(const char * filename, uint8_t size, uint8_t extMaxLen, uint8_t *fnlen, uint8_t *extlen)
+{
+  int len = size;
+  if (!size) {
+    len = strlen(filename);
+  }
+  if (!extMaxLen) {
+    extMaxLen = LEN_FILE_EXTENSION_MAX;
+  }
+  if (fnlen != nullptr) {
+    *fnlen = (uint8_t)len;
+  }
+  for (int i=len-1; i >= 0 && len-i <= extMaxLen; --i) {
+    if (filename[i] == '.') {
+      if (extlen) {
+        *extlen = len-i;
+      }
+      return &filename[i];
+    }
+  }
+  if (extlen != nullptr) {
+    *extlen = 0;
+  }
+  return nullptr;
+}
 
 
 //#define LUA	1
@@ -271,7 +306,7 @@ static int luaDumpWriter(lua_State * L, const void* p, size_t size, void* u)
 {
   UNUSED(L);
   UINT written;
-  FRESULT result = f_write((FIL *)u, p, size, &written);
+  FRESULT result = f_write((FIL *)u, (const BYTE*)p, size, &written);
   return (result != FR_OK && !written);
 }
 
@@ -299,7 +334,7 @@ static void luaDumpState(lua_State * L, const char * filename, const FILINFO * f
         f_utime(filename, finfo);  // set the file mod time
 //      TRACE("luaDumpState(%s): Saved bytecode to file.", filename);
     }
-  } else
+  }// else
 //    TRACE_ERROR("luaDumpState(%s): Error: Could not open output file.", filename);
 }
 #endif  // LUA_COMPILER
@@ -879,11 +914,16 @@ void luaDoOneRunStandalone(uint8_t evt)
       luaState = INTERPRETER_RELOAD_PERMANENT_SCRIPTS;
     }
 
-    if (evt == EVT_KEY_LONG(KEY_EXIT)) {
+    if (evt == EVT_KEY_LONG(KEY_EXIT))
+		{
 //      TRACE("Script force exit");
-      killEvents(evt);
-      standaloneScript.state = SCRIPT_NOFILE;
-      luaState = INTERPRETER_RELOAD_PERMANENT_SCRIPTS;
+      killEvents(evt) ;
+      standaloneScript.state = SCRIPT_NOFILE ;
+      luaState = INTERPRETER_RELOAD_PERMANENT_SCRIPTS ;
+#if defined(PCBX12D) || defined(PCBX10)
+			LcdForeground = g_eeGeneral.textColour ;
+			LcdBackground = g_eeGeneral.backgroundColour ;
+#endif
     }
 #if !defined(PCBHORUS)
   // TODO find another key and add a #define

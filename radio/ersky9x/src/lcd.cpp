@@ -95,6 +95,9 @@ const uint8_t font_de_big_extra[] = {
 #endif
 
 
+#include "font_04x06.lbm"
+//#define font_5x8_x20_x7f (font)
+
 const uint8_t *ExtraFont = NULL ;
 const uint8_t *ExtraBigFont = NULL ;
 
@@ -151,6 +154,7 @@ extern uint32_t CurrentFrameBuffer ;
 uint16_t LcdBackground = LCD_BACKGROUND ;
 uint16_t LcdForeground = LCD_BLACK ;
 uint16_t LcdCustomColour = LCD_BLACK ;
+uint16_t DimBackColour ;
 #endif
 
 #if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE) || defined(REV19)
@@ -601,7 +605,7 @@ uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, u
 		}	 
 		return x ;
 	}
-	lcdDrawCharBitmapDoubleDma( x*2, y*2, c, mode, colour, background ) ;
+	lcdDrawCharBitmapDoubleDma( x*2, y*2, c, mode, colour ) ;
 	if (mode & CONDENSED)
 	{
 		x += 8 ;
@@ -906,7 +910,7 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 		return x ;
 	}
 
-	lcdDrawCharBitmapDma( x*2, y*2, c, mode, colour, background ) ;
+	lcdDrawCharBitmapDma( x*2, y*2, c, mode, colour ) ;
 	x += FW ;
 	if (mode & CONDENSED)
 	{
@@ -1001,7 +1005,7 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 //	return x ;
 }
 
-uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t background )
+uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint16_t mode, uint16_t background )
 {
 	if ( mode & DBLSIZE )
 	{
@@ -1031,7 +1035,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t b
 		{
 			mode ^= INVERS ;
 		}
-		lcdDrawCharBitmapDma( x*2, y*2, c, mode & (INVERS | CONDENSED | BOLD), LcdForeground, background ) ;
+		lcdDrawCharBitmapDma( x*2, y*2, c, mode & (INVERS | CONDENSED | BOLD), mode & LUA_CUSTOM_COLOUR ? LcdCustomColour : LcdForeground ) ;
 		return (mode & CONDENSED) ? x + FWNUM : x + FW ;
 //	}
 
@@ -1434,6 +1438,53 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
 	return x ;
 }
 
+uint8_t lcd_putcSmall( uint8_t x, uint8_t y, uint8_t c, uint8_t mode )
+{
+	register int32_t i ;
+	register uint8_t *p = dispBufAddress( x, y ) ;
+  register bool inv = false ;
+#if PCBX9D
+	if ( x > 211-X9D_OFFSET )
+	{
+		p -= DISPLAY_W ;		
+	}
+#endif
+	x += 5 ;
+  register uint8_t *q ;
+	if( c < 0x80 )
+	{
+		q = (uint8_t *) &font_04_06[(c-0x20)*5] ;
+	}
+	else
+	{
+		q = (uint8_t *) &font_04_06[0] ;
+	}
+	if (mode & INVERS) inv = true ;
+	if ( (mode & BLINK) && BLINK_ON_PHASE )
+	{
+		inv = !inv ;
+	}
+
+	// Assume off grid
+	y &= 7 ;
+  for( i = 5 ; i != 0 ; i -= 1 )
+	{
+    uint16_t b = *q++ ;
+		if ( inv )
+		{
+			b ^= 0x3F ;
+		}
+		b <<= y ;
+   	if(p<DISPLAY_END) *p ^= b ;
+    if(&p[DISPLAY_W] < DISPLAY_END)
+		{
+	    p[DISPLAY_W] ^= b >> 8 ;
+		}
+		p += 1 ;
+	}
+	return x ;
+}
+
 #endif
 
 // Puts sub-string from string options
@@ -1446,7 +1497,7 @@ void lcd_putsAttIdxColour(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t
 	uint8_t length ;
 	length = *s++ ;
 
-  lcd_putsnAtt(x,y,s+length*idx,length,att) ;
+  lcd_putsnAttColour(x,y,s+length*idx,length,att, colour, background ) ;
 }
 #endif
 
@@ -1512,7 +1563,7 @@ uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, uint8_t mode, ui
 
 
 #endif
-uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode )
+uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint16_t mode )
 {
 
   while(1)
@@ -1549,7 +1600,18 @@ uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint8_t mode )
 				offset = DisplayOffset ;
 			}
 #endif
-    	x = lcd_putcAtt(x,y,c,mode) ;
+#if defined(PCBX12D) || defined(PCBX10)
+		x = lcd_putcAtt(x, y, c, mode);
+#else
+		if ( mode & LUA_SMLSIZE )
+		{
+			x = lcd_putcSmall( x, y, c, mode ) ;
+		}
+		else
+		{
+			x = lcd_putcAtt(x, y, c, mode);
+		}
+#endif
 #if defined(PCBX12D) || defined(PCBX10)
 			x += offset ;
 #endif
@@ -1795,7 +1857,14 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 #if defined(PCBX12D) || defined(PCBX10)
 		lcd_putcAttColour( x, y, c, mode, colour, background ) ;
 #else
-		lcd_putcAtt(x, y, c, mode);
+		if ( mode & 32768 )
+		{
+			lcd_putcSmall( x, y, c, mode ) ;
+		}
+		else
+		{
+			lcd_putcAtt(x, y, c, mode);
+		}
 #endif
     if (prec==i)
 		{
@@ -1893,7 +1962,17 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 #if defined(PCBX12D) || defined(PCBX10)
   if(val<0) lcd_putcAttColour(x-fw,y,'-',mode, colour, background ) ;
 #else
-  if(val<0) lcd_putcAtt(x-fw,y,'-',mode);
+  if(val<0)
+	{
+		if ( mode & 32768 )
+		{
+			lcd_putcSmall( x, y, '-', mode ) ;
+		}
+		else
+		{
+			lcd_putcAtt(x-fw,y,'-',mode);
+		}
+	}
 #endif
 	return 0 ;		// Stops compiler creating two sets of POPS, saves flash
 }
@@ -2222,7 +2301,12 @@ void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
 		percent = 100 ;
 	}
 	solid = (w-2) * percent / 100 ;
+#if defined(PCBX12D) || defined(PCBX10)
+	lcd_rectColour( x, y, w, h, plotType == PLOT_BLACK ? LCD_BLACK : LcdForeground ) ;
+//	lcd_rect( x, y, w, h ) ;
+#else
 	lcd_rect( x, y, w, h ) ;
+#endif
 
 	if ( solid )
 	{
@@ -2404,7 +2488,7 @@ uint16_t lcdHiresPutsTransparent( uint16_t x, uint16_t y, char *s, uint16_t colo
 		}
 		else
 		{
-			lcdDrawCharBitmapTransparent( x, y, c, 0, colour ) ;
+			lcdDrawCharBitmapDma( x, y, c, 0, colour ) ;
 			x += 12 ;
 		}
   }

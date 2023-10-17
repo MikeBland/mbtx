@@ -9,12 +9,15 @@ extern uint8_t ProtocolOptionsSKY[][7] ;
 extern uint8_t ProtocolOptions9XT[][7] ;
 extern uint8_t ProtocolOptionsT12[][7] ;
 extern uint8_t ProtocolOptionsX9L[][7] ;
+extern uint8_t ProtocolOptionsT16[][7] ;
 extern QString ProtocolNames[] ;
 extern QString Polarity[] ;
 extern QString PxxTypes[] ;
 extern QString PxxCountry[] ;
 extern QString DsmTypes[] ;
 
+extern QString MultiProtocols[] ;
+extern uint32_t MultiProtocolCount ;
 
 //**CRC**
 //uint16_t CRC_Short[]={
@@ -56,6 +59,21 @@ ProtocolDialog::ProtocolDialog(QWidget *parent, uint32_t module, struct t_radioD
 
 	// This will only be used if model version is >= 4
 
+	protocolEditLock = true ;
+	ui->multiTypeCB->clear() ;
+  for(uint32_t i=0 ; i<128 ; i += 1)
+	{
+		if ( i < MultiProtocolCount )
+		{
+			ui->multiTypeCB->addItem(MultiProtocols[i]) ;
+		}
+		else
+		{
+			ui->multiTypeCB->addItem(QObject::tr("%1").arg(i)) ;
+		}
+	}
+  protocolEditLock = false ;
+	
 	setBoxes() ;
 
 //    md = mixdata;
@@ -88,11 +106,11 @@ void ProtocolDialog::setBoxes()
 	ui->ProtocolCB->clear() ;
 	if ( lModule == 0 )
 	{
-    if ( rData->bitType & ( RADIO_BITTYPE_X9L ) )
+    if ( rData->bitType & ( RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10E ) )
 		{
       ui->ProtocolCB->addItem("ACCESS");
 		}
-    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+    if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 ) )
 		{
       ui->ProtocolCB->addItem("XJT");
 		}	
@@ -106,6 +124,10 @@ void ProtocolDialog::setBoxes()
       ui->ProtocolCB->addItem("DSM");
       ui->ProtocolCB->addItem("Multi");
 		}	
+		if ( rData->bitType &  (RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
+		{
+      ui->ProtocolCB->addItem("Multi");
+		}
 	}
 	else
 	{
@@ -138,7 +160,7 @@ void ProtocolDialog::setBoxes()
 	{
     uint8_t *options ;
 		options = &ProtocolOptionsSKY[lModule][0] ;
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
 			options = &ProtocolOptionsX9de[lModule][0] ;
 		}
@@ -154,6 +176,11 @@ void ProtocolDialog::setBoxes()
 		{
 			options = &ProtocolOptionsT12[lModule][0] ;
 		}
+		else if ( rData->bitType &  (RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
+		{
+			options = &ProtocolOptionsT16[lModule][0] ;
+		}
+
 		uint32_t count = *options++ ;
 		i = PROTO_OFF ;
 		for ( uint32_t c = 0 ; c < count ; c += 1 )
@@ -166,7 +193,6 @@ void ProtocolDialog::setBoxes()
 		}
 	}
   ui->ProtocolCB->setCurrentIndex(i);
-
 	ui->xjtChannelsLabel->hide() ;
 	ui->xjtChannelsCB->hide() ;
 	ui->rxNumberLabel->hide() ;
@@ -349,6 +375,7 @@ void ProtocolDialog::setBoxes()
     ui->powerCB->setCurrentIndex((ppd->module.channels>>7)&0x01) ;
 		ui->optionSB->setValue(ppd->module.option_protocol) ;
 		i = ppd->module.sub_protocol & 0x3F ;
+		i |= ( ppd->module.exsub_protocol << 6 ) & 0xC0 ;
     ui->multiTypeCB->setCurrentIndex( i ) ;
     subSubProtocolText( i, 0, ui->multiSubProtocolCB ) ;
 		ui->multiSubProtocolCB->setCurrentIndex( (ppd->module.channels >> 4) & 0x07 ) ;
@@ -430,7 +457,7 @@ void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 	}
 	else
 	{
-		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+		if ( rData->bitType & (RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
       p = &ProtocolOptionsX9de[lModule][1] ;
 		}
@@ -445,6 +472,10 @@ void ProtocolDialog::on_ProtocolCB_currentIndexChanged(int index)
 		else if ( rData->bitType &  RADIO_BITTYPE_T12 )
 		{
       p = &ProtocolOptionsT12[lModule][1] ;
+		}
+		else if ( rData->bitType &  (RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
+		{
+			p = &ProtocolOptionsT16[lModule][1] ;
 		}
 		index = p[index] ;
 	}
@@ -579,7 +610,8 @@ void ProtocolDialog::on_optionSB_valueChanged(int value)
 void ProtocolDialog::on_multiTypeCB_currentIndexChanged(int index)
 {
 	if ( protocolEditLock ) return ;
-	ppd->module.sub_protocol = index + (ppd->module.sub_protocol & 0xC0) ;
+	ppd->module.sub_protocol = index & 0x3F ;
+	ppd->module.exsub_protocol = (index >> 6) & 0x03 ;
   subSubProtocolText( ppd->module.sub_protocol & 0x3F, 0, ui->multiSubProtocolCB ) ;
 	ui->multiSubProtocolCB->setCurrentIndex( (ppd->module.channels >> 4) & 0x07 ) ;
   setBoxes();

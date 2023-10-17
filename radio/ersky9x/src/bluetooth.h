@@ -40,6 +40,12 @@
 #define BT_WITH_ENCODER		1
 #endif
 
+#define BT_BITTYPE_HC06		1
+#define BT_BITTYPE_HC05		2
+#define BT_BITTYPE_CC41		4
+#define BT_BITTYPE_HM10		8
+#define BT_BITTYPE_PARA	 16
+
 #define BT_115200		0
 #define BT_9600			1
 #define BT_19200		2

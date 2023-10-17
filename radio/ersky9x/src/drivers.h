@@ -286,6 +286,7 @@ extern uint32_t txCom2Uart( uint8_t *buffer, uint32_t size ) ;
 
 extern void per10ms( void ) ;
 extern uint8_t getEvent( void ) ;
+extern uint8_t peekEvent( void ) ;
 extern void pauseEvents(uint8_t event) ;
 extern void killEvents(uint8_t event) ;
 extern uint8_t getEventDbl(uint8_t event) ;

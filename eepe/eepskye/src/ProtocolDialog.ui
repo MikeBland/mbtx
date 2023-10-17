@@ -704,85 +704,240 @@
       </item>
       <item>
        <property name="text">
-        <string>47</string>
+        <string>V761</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>48</string>
+        <string>KF606</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>49</string>
+        <string>Redpine</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>50</string>
+        <string>Potensic</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>51</string>
+        <string>ZSX</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>52</string>
+        <string>Flyzone</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>53</string>
+        <string>Scanner</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>54</string>
+        <string>Frsky_RX</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>55</string>
+        <string>AFHDS2A_RX</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>56</string>
+        <string>HoTT</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>57</string>
+        <string>FX816</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>58</string>
+        <string>Bayang_RX</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>59</string>
+        <string>Pelikan</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>60</string>
+        <string>Tiger</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>61</string>
+        <string>XK</string>
        </property>
       </item>
       <item>
        <property name="text">
-        <string>62</string>
+        <string>XN_DUMP</string>
        </property>
       </item>
-     </widget>
+      <item>
+       <property name="text">
+        <string>FrskyX2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>FrskyR9</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>PROPEL</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>LR12</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Skyartec</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>ESKYv2</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>DSM_RX</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>JJRC345</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Q90C</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Kyosho</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>RadioLink</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>74</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Realacc</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>OMP</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>77</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>78</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>79</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>80</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>81</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>82</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>83</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>84</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>85</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>86</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>87</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>88</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>89</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>90</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>91</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>92</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>93</string>
+       </property>
+      </item>
+	  </widget>
     </item>
     <item row="9" column="0">
      <widget class="QLabel" name="xjtTypeLabel">

@@ -112,7 +112,7 @@ extern uint8_t s_current_protocol[NUM_MODULES] ;
 
 uint8_t SerialData[2][40] ;
 
-static uint8_t Pass[2] ;
+uint8_t Pass[2] ;
 #endif
 
 // TC0 - hardware timer
@@ -2091,7 +2091,7 @@ void setupPulsesPpmAll(uint32_t module)
 #endif
 }
 
-extern uint16_t dsm2Stream[][400] ;
+extern uint16_t TimerStream[][400] ;
 uint16_t *dsm2StreamPtr[2] ;
 uint16_t dsm2Value[2] ;
 uint8_t dsm2Index[2] = {0,0} ;
@@ -2276,7 +2276,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 
 		uint8_t startChan = g_model.Module[module].startChannel ;
 
- 		dsm2StreamPtr[module] = dsm2Stream[module] ;
+ 		dsm2StreamPtr[module] = TimerStream[module] ;
   	dsm2Index[module] = 0 ;
   	dsm2Value[module] = 100 ;
   	*dsm2StreamPtr[module]++ = dsm2Value[module] ;
@@ -2357,7 +2357,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 	else
 	{
   	dsm2Index[module] = 0 ;
- 		dsm2StreamPtr[module] = dsm2Stream[module] ;
+ 		dsm2StreamPtr[module] = TimerStream[module] ;
   	dsm2Value[module] = 100;
   	*dsm2StreamPtr[module]++ = dsm2Value[module];
 		if(protocol == PROTO_DSM2)
@@ -2512,12 +2512,12 @@ extern volatile uint8_t PxxTxCount ;
 		}
 	}
 #if defined(PCBX12D) || defined(PCBX10)
-	pulseStreamCount[module] = dsm2StreamPtr[module] - dsm2Stream[module] ;
+	pulseStreamCount[module] = dsm2StreamPtr[module] - TimerStream[module] ;
 #endif
 }
 
 
-extern uint16_t pxxStream[2][400];
+extern uint16_t TimerStream[2][400];
 uint16_t *PtrPxx ;
 uint16_t PxxValue ;
 uint16_t *PtrPxx_x ;
@@ -2788,7 +2788,7 @@ void setupPulsesPXX(uint8_t module)
 #if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10)
 		PtrSerialPxx[INTERNAL_MODULE] = PxxSerial[INTERNAL_MODULE] ;
 #else
-		PtrPxx = &pxxStream[module][0] ;
+		PtrPxx = &TimerStream[module][0] ;
 		PxxValue = 0 ;
 		if ( g_model.Module[module].pxxDoubleRate )
 		{
@@ -3051,7 +3051,7 @@ extern void setupPulsesXjtLite( uint32_t module ) ;
 //#if defined(PCBX9LITE)
 		PtrSerialPxx[EXTERNAL_MODULE] = PxxSerial[EXTERNAL_MODULE] ;
 #else
-		PtrPxx_x = &pxxStream[module][0] ;
+		PtrPxx_x = &TimerStream[module][0] ;
 		PxxValue_x = 0 ;
 		if ( g_model.Module[module].pxxDoubleRate )
 		{
@@ -3273,8 +3273,9 @@ extern volatile uint8_t PxxTxCount_x ;
 //#if defined(PCBX12D) || defined(PCBXLITE)
 //		pulseStreamCount[module] = PtrPxx_x - pxxStream[module] ;
 //#endif
+
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
-		pulseStreamCount[module] = PtrPxx_x - pxxStream[module] ;
+		pulseStreamCount[module] = PtrPxx_x - TimerStream[module] ;
 #endif
 		if (g_model.Module[module].sub_protocol == 1 )		// D8
 		{
@@ -3326,8 +3327,10 @@ extern volatile uint8_t PxxTxCount_x ;
   		TIM8->CCR2 = 17000 ;            // Update time
 		}
 #endif
+
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(PCBX7ACCESS)
 //#if defined(PCBX9LITE)
+  	EXTMODULE_TIMER->SR = EXTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;                             // Clear flag
 	  EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 #endif
 	}

@@ -4,6 +4,14 @@
 #include "file.h"
 #include "helpers.h"
 
+void MixerDialog::addSource( uint8_t index, QString str )
+{
+  ui->sourceCB->addItem( str=="" ? getSourceStr( lg_eeGeneral->stickMode, index, lModelVersion, lType, lextraPots ) : str ) ;
+  sourceMap[sourceMapSize++] = index ;
+//	printf("\nIndex %d, %s", index, getSourceStr( lg_eeGeneral->stickMode, index, lModelVersion, lType, lextraPots ).toUtf8().data() ) ;
+}
+
+
 MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData ) :
     QDialog(parent),
     ui(new Ui::MixerDialog)
@@ -12,6 +20,10 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     md = mixdata;
 		leeType = rData->type ;
 		lextraPots = rData->extraPots ;
+		lBitType = rData->bitType ;
+  lModelVersion = modelVersion ;
+	lg_eeGeneral = g_eeGeneral ;
+	uint32_t i ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
 		int type = leeType ;
@@ -26,89 +38,140 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 		ValuesEditLock = true ;
 
+	initRadioHw( lType, rData ) ;
+	struct t_radioHardware *prh = &rData->radioHardware ;
+
 //		ui->spinBox->setValue(md->srcRaw);
 
 //    ui->sourceCB->setFont(QFont("Ariel",16));
 
-    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, type, lextraPots ) ;
+	ui->sourceCB->clear() ;
+	sourceMapSize = 0 ;
 
-		ui->sourceCB->addItem("SWCH");
+//	printf("\nType = %d", leeType ) ;
+
+	for ( i = 1 ; i < 5 ; i += 1 )
+	{
+		addSource( i ) ;
+	}
+	for ( i = 0 ; i < prh->numberPots ; i += 1 )
+	{
+		addSource( prh->potIndices[i], prh->potNames[i] ) ;
+	}
+	for ( i = 8 ; i < 21 ; i += 1 ) // HALF,FULL..PPM8
+	{
+		addSource( i ) ;
+	}
+	for ( i = 62 ; i < 70 ; i += 1 ) // PPM9-16
+	{
+		addSource( i ) ;
+	}
+	for ( i = 21 ; i < 45 ; i += 1 )	// CH1-24
+	{
+		addSource( i ) ;
+	}
+	for ( i = 70 ; i < 78 ; i += 1 )	// CH25-32
+	{
+		addSource( i ) ;
+	}
+	for ( i = 46 ; i < 62 ; i += 1 )	// GV1-SC8
+	{
+		addSource( i ) ;
+	}
+	addSource( 45 ) ;
+	addSource( 78 ) ;
+	addSource( 79 ) ;
+	addSource( 80 ) ;
+	addSource( 81 ) ;
+	for ( i = 224 ; i < 256 ; i += 1 )	// Inputs
+	{
+		addSource( i ) ;
+	}
+
+
+//    populateSourceCB(ui->sourceCB, g_eeGeneral->stickMode, 0, md->srcRaw, modelVersion, type, lextraPots ) ;
+
+//		ui->sourceCB->addItem("SWCH");
 		
-//		ui->sourceCB->addItem("sIDx");
-//    ui->sourceCB->addItem("sTHR");
-//    ui->sourceCB->addItem("sRUD");
-//    ui->sourceCB->addItem("sELE");
-//    ui->sourceCB->addItem("sAIL");
-//    ui->sourceCB->addItem("sGEA");
-//    ui->sourceCB->addItem("sTRN");
-//    ui->sourceCB->addItem("L1  ");
-//    ui->sourceCB->addItem("L2  ");
-//    ui->sourceCB->addItem("L3  ");
-//    ui->sourceCB->addItem("L4  ");
-//    ui->sourceCB->addItem("L5  ");
-//    ui->sourceCB->addItem("L6  ");
-//    ui->sourceCB->addItem("L7  ");
-//    ui->sourceCB->addItem("L8  ");
-//    ui->sourceCB->addItem("L9  ");
-//		ui->sourceCB->addItem("LA  ");
-//    ui->sourceCB->addItem("LB  ");
-//    ui->sourceCB->addItem("LC  ");
-//    ui->sourceCB->addItem("LD  ");
-//    ui->sourceCB->addItem("LE  ");
-//    ui->sourceCB->addItem("LF  ");
-//    ui->sourceCB->addItem("LG  ");
-//    ui->sourceCB->addItem("LH  ");
-//    ui->sourceCB->addItem("LI  ");
-//    ui->sourceCB->addItem("LJ  ");
-//    ui->sourceCB->addItem("LK  ");
-//    ui->sourceCB->addItem("LL  ");
-//    ui->sourceCB->addItem("LM  ");
-//    ui->sourceCB->addItem("LN  ");
-//    ui->sourceCB->addItem("LO  ");
+////		ui->sourceCB->addItem("sIDx");
+////    ui->sourceCB->addItem("sTHR");
+////    ui->sourceCB->addItem("sRUD");
+////    ui->sourceCB->addItem("sELE");
+////    ui->sourceCB->addItem("sAIL");
+////    ui->sourceCB->addItem("sGEA");
+////    ui->sourceCB->addItem("sTRN");
+////    ui->sourceCB->addItem("L1  ");
+////    ui->sourceCB->addItem("L2  ");
+////    ui->sourceCB->addItem("L3  ");
+////    ui->sourceCB->addItem("L4  ");
+////    ui->sourceCB->addItem("L5  ");
+////    ui->sourceCB->addItem("L6  ");
+////    ui->sourceCB->addItem("L7  ");
+////    ui->sourceCB->addItem("L8  ");
+////    ui->sourceCB->addItem("L9  ");
+////		ui->sourceCB->addItem("LA  ");
+////    ui->sourceCB->addItem("LB  ");
+////    ui->sourceCB->addItem("LC  ");
+////    ui->sourceCB->addItem("LD  ");
+////    ui->sourceCB->addItem("LE  ");
+////    ui->sourceCB->addItem("LF  ");
+////    ui->sourceCB->addItem("LG  ");
+////    ui->sourceCB->addItem("LH  ");
+////    ui->sourceCB->addItem("LI  ");
+////    ui->sourceCB->addItem("LJ  ");
+////    ui->sourceCB->addItem("LK  ");
+////    ui->sourceCB->addItem("LL  ");
+////    ui->sourceCB->addItem("LM  ");
+////    ui->sourceCB->addItem("LN  ");
+////    ui->sourceCB->addItem("LO  ");
 
-//		if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
-//		{
-//	    ui->sourceCB->addItem("6POS");
-//    }
+////		if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
+////		{
+////	    ui->sourceCB->addItem("6POS");
+////    }
 
-		ui->sourceCB->addItem("GV1 ");
-    ui->sourceCB->addItem("GV2 ");
-    ui->sourceCB->addItem("GV3 ");
-    ui->sourceCB->addItem("GV4 ");
-    ui->sourceCB->addItem("GV5 ");
-    ui->sourceCB->addItem("GV6 ");
-    ui->sourceCB->addItem("GV7 ");
-    ui->sourceCB->addItem("THIS");
-    ui->sourceCB->addItem("SC1 ");
-    ui->sourceCB->addItem("SC2 ");
-    ui->sourceCB->addItem("SC3 ");
-    ui->sourceCB->addItem("SC4 ");
-    ui->sourceCB->addItem("SC5 ");
-    ui->sourceCB->addItem("SC6 ");
-    ui->sourceCB->addItem("SC7 ");
-    ui->sourceCB->addItem("SC8 ");
-    ui->sourceCB->addItem("PPM9");
-    ui->sourceCB->addItem("PPM10");
-    ui->sourceCB->addItem("PPM11");
-    ui->sourceCB->addItem("PPM12");
-    ui->sourceCB->addItem("PPM13");
-    ui->sourceCB->addItem("PPM14");
-    ui->sourceCB->addItem("PPM15");
-    ui->sourceCB->addItem("PPM16");
-#ifdef EXTRA_SKYCHANNELS
-    ui->sourceCB->addItem("CH25");
-    ui->sourceCB->addItem("CH26");
-    ui->sourceCB->addItem("CH27");
-    ui->sourceCB->addItem("CH28");
-    ui->sourceCB->addItem("CH29");
-    ui->sourceCB->addItem("CH30");
-    ui->sourceCB->addItem("CH31");
-    ui->sourceCB->addItem("CH32");
-#endif
-    ui->sourceCB->addItem("Rtm");
-    ui->sourceCB->addItem("Etm");
-    ui->sourceCB->addItem("Ttm");
-    ui->sourceCB->addItem("Atm");
+//		ui->sourceCB->addItem("GV1 ");
+//    ui->sourceCB->addItem("GV2 ");
+//    ui->sourceCB->addItem("GV3 ");
+//    ui->sourceCB->addItem("GV4 ");
+//    ui->sourceCB->addItem("GV5 ");
+//    ui->sourceCB->addItem("GV6 ");
+//    ui->sourceCB->addItem("GV7 ");
+//    ui->sourceCB->addItem("THIS");
+//    ui->sourceCB->addItem("SC1 ");
+//    ui->sourceCB->addItem("SC2 ");
+//    ui->sourceCB->addItem("SC3 ");
+//    ui->sourceCB->addItem("SC4 ");
+//    ui->sourceCB->addItem("SC5 ");
+//    ui->sourceCB->addItem("SC6 ");
+//    ui->sourceCB->addItem("SC7 ");
+//    ui->sourceCB->addItem("SC8 ");
+//    ui->sourceCB->addItem("PPM9");
+//    ui->sourceCB->addItem("PPM10");
+//    ui->sourceCB->addItem("PPM11");
+//    ui->sourceCB->addItem("PPM12");
+//    ui->sourceCB->addItem("PPM13");
+//    ui->sourceCB->addItem("PPM14");
+//    ui->sourceCB->addItem("PPM15");
+//    ui->sourceCB->addItem("PPM16");
+//#ifdef EXTRA_SKYCHANNELS
+//    ui->sourceCB->addItem("CH25");
+//    ui->sourceCB->addItem("CH26");
+//    ui->sourceCB->addItem("CH27");
+//    ui->sourceCB->addItem("CH28");
+//    ui->sourceCB->addItem("CH29");
+//    ui->sourceCB->addItem("CH30");
+//    ui->sourceCB->addItem("CH31");
+//    ui->sourceCB->addItem("CH32");
+//#endif
+//    ui->sourceCB->addItem("Rtm");
+//    ui->sourceCB->addItem("Etm");
+//    ui->sourceCB->addItem("Ttm");
+//    ui->sourceCB->addItem("Atm");
+
+
+
+
 //		int x = md->srcRaw ;
 //		if ( x >= MIX_3POS )
 //		{
@@ -132,46 +195,66 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 
 
 //		ui->sourceCB->setCurrentIndex(x);
-#ifdef SKY    
-		int value ;
-		value = md->srcRaw ;
-		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_X10 ) )
+//#ifdef SKY    
+//		int value ;
+//		value = md->srcRaw ;
+//		if ( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) || ( type == RADIO_TYPE_X9E ) || ( type == RADIO_TYPE_X10 ) )
+//		{
+//			if ( value >= EXTRA_POTS_POSITION )
+//			{
+//				if ( value >= EXTRA_POTS_START )
+//				{
+//					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+//				}
+//				else
+//				{
+//					value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
+//				}
+//			}
+//		}
+//    if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
+//		{
+//			if ( value >= EXTRA_POTS_POSITION )
+//			{
+//				if ( value >= EXTRA_POTS_START )
+//				{
+//					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
+//				}
+//				else
+//				{
+//					value += lextraPots ;
+//				}
+//			}
+//		}
+//		if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
+//		{
+//			if ( value > 6 )
+//			{
+//			 value -= 1 ;	
+//			}
+//		}
+//#endif
+
+	for ( i = 0 ; i < sourceMapSize ; i += 1 )
+	{
+		if ( md->srcRaw == sourceMap[i] )
 		{
-			if ( value >= EXTRA_POTS_POSITION )
-			{
-				if ( value >= EXTRA_POTS_START )
-				{
-					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
-				}
-				else
-				{
-					value += type == RADIO_TYPE_TPLUS ? 2 : type == RADIO_TYPE_X9E ? 3 : NUM_EXTRA_POTS ;
-				}
-			}
+			ui->sourceCB->setCurrentIndex(i) ;
+			break ;
 		}
-    if ( ( type == RADIO_TYPE_SKY ) || ( type == RADIO_TYPE_9XTREME ) )
-		{
-			if ( value >= EXTRA_POTS_POSITION )
-			{
-				if ( value >= EXTRA_POTS_START )
-				{
-					value -= ( EXTRA_POTS_START - EXTRA_POTS_POSITION ) ;
-				}
-				else
-				{
-					value += lextraPots ;
-				}
-			}
-		}
-		if ( ( type == RADIO_TYPE_QX7 ) || ( type == RADIO_TYPE_T12 ) )
-		{
-			if ( value > 6 )
-			{
-			 value -= 1 ;	
-			}
-		}
-#endif
-    ui->sourceCB->setCurrentIndex(value) ;
+	}
+	if ( i >= sourceMapSize )
+	{
+//		if ( id->chn == 0 )
+//		{
+//			id->chn = 1 ;
+//		}
+		ui->sourceCB->setCurrentIndex(0) ;
+	}
+
+  ui->sourceCB->setMaxVisibleItems(10) ;
+    
+//		ui->sourceCB->setCurrentIndex(value) ;
 
 //		uint32_t value ;
 //		value = md->srcRaw ;
@@ -191,7 +274,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 //		}
 //    ui->sourceCB->setCurrentIndex(value) ;
     
-		ui->sourceCB->removeItem(0);
+//		ui->sourceCB->removeItem(0);
 
 #ifdef EXTRA_SKYCHANNELS
   if ( ( md->srcRaw >= 21 && md->srcRaw <= 21+23 ) ||
@@ -226,7 +309,10 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     		ui->sourceSwitchCB->addItem("SG");
 			}
     	ui->sourceSwitchCB->addItem("SH");
-
+			if ( rData->bitType & ( RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  )
+			{
+    		ui->sourceSwitchCB->addItem("6POS");
+			}
 		}
 		else
 		{
@@ -263,11 +349,11 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->sourceSwitchCB->addItem("LM  ");
     ui->sourceSwitchCB->addItem("LN  ");
     ui->sourceSwitchCB->addItem("LO  ");
+
 		if ( g_eeGeneral->analogMapping & 0x1C /*MASK_6POS*/ )
 		{
     	ui->sourceSwitchCB->addItem("6POS");
 		}
-    
 
 		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) )
 		{
@@ -345,6 +431,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		ui->Fm4CB->setChecked( !(md->modeControl & 16) ) ;
 		ui->Fm5CB->setChecked( !(md->modeControl & 32) ) ;
 		ui->Fm6CB->setChecked( !(md->modeControl & 64) ) ;
+		ui->Fm7CB->setChecked( !(md->modeControl & 128) ) ;
 		ValuesEditLock = false ;
 
     valuesChanged();
@@ -379,6 +466,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     connect(ui->Fm4CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
     connect(ui->Fm5CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
     connect(ui->Fm6CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
+    connect(ui->Fm7CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
 }
 
 MixerDialog::~MixerDialog()
@@ -401,23 +489,23 @@ void MixerDialog::changeEvent(QEvent *e)
 
 void MixerDialog::updateChannels()
 {
-  uint32_t lowBound = lType ? 21 : 21 ;
-  if ( lType == RADIO_TYPE_TPLUS )
-	{
-		lowBound = 23 ;
-	}
-  if ( lType == RADIO_TYPE_9XTREME )
-	{
-		lowBound = 21 ;
-	}
-  if ( lType == RADIO_TYPE_X9E )
-  {
-    lowBound = 24 ;
-  }
-	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
-  {
-    lowBound = 20 ;
-  }
+//  uint32_t lowBound = lType ? 21 : 21 ;
+//  if ( lType == RADIO_TYPE_TPLUS )
+//	{
+//		lowBound = 23 ;
+//	}
+//  if ( lType == RADIO_TYPE_9XTREME )
+//	{
+//		lowBound = 21 ;
+//	}
+//  if ( lType == RADIO_TYPE_X9E )
+//  {
+//    lowBound = 24 ;
+//  }
+//	if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
+//  {
+//    lowBound = 20 ;
+//  }
 #ifdef EXTRA_SKYCHANNELS
   if ( ( md->srcRaw >= 21 && md->srcRaw <= 21+23 ) ||
 			 ( md->srcRaw >= 70 && md->srcRaw <= 70+7 ) )
@@ -433,34 +521,43 @@ void MixerDialog::updateChannels()
 			uint32_t i ;
 			uint32_t j ;
 
-#ifdef EXTRA_SKYCHANNELS
-			j = 25 ;
-      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
+			// Search for map value of 21
+
+      for ( i = 0 ; i < sourceMapSize ; i += 1 )
 			{
-				ui->sourceCB->setItemText( i, QString("OP%1").arg(j) ) ;
-				j += 1 ;
+        if ( sourceMap[i] == 21 )
+				{
+					break ;
+				}
 			}
-#endif
-      for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
+      if ( i < (uint32_t)sourceMapSize - 32 )
 			{
-				ui->sourceCB->setItemText( i, QString("OP%1").arg(i-(lowBound-2)) ) ;
+				j = i ;
+      	for ( i = 0 ; i < 32 ; i += 1 )
+				{
+					ui->sourceCB->setItemText( j+i, QString("OP%1").arg(i+1) ) ;
+				}
 			}
+
 		}
 		else
 		{
 			uint32_t i ;
 			uint32_t j ;
-#ifdef EXTRA_SKYCHANNELS
-			j = 25 ;
-      for ( i = lowBound-1+70-21 ; i < lowBound+7+70-21 ; i += 1 )
+      for ( i = 0 ; i < sourceMapSize ; i += 1 )
 			{
-				ui->sourceCB->setItemText( i, QString("CH%1").arg(j) ) ;
-				j += 1 ;
+        if ( sourceMap[i] == 21 )
+				{
+					break ;
+				}
 			}
-#endif
-      for ( i = lowBound-1 ; i < lowBound+23 ; i += 1 )
+      if ( i < (uint32_t)sourceMapSize - 32 )
 			{
-				ui->sourceCB->setItemText( i, QString("CH%1").arg(i-(lowBound-2)) ) ;
+				j = i ;
+      	for ( i = 0 ; i < 32 ; i += 1 )
+				{
+					ui->sourceCB->setItemText( j+i, QString("CH%1").arg(i+1) ) ;
+				}
 			}
 		}
 	}
@@ -471,6 +568,75 @@ void MixerDialog::updateChannels()
 	  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
 	}
 //  ui->FMtrimChkB->setChecked(!md->disableExpoDr) ;
+}
+
+
+int extendedSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extValue )
+{
+	if ( ( value < -125 ) || ( value > 125) )
+	{
+		if ( value < 0 )
+		{
+			value += 256 ;
+		}
+		value += 510 - 126 ;
+	}
+	else
+	{
+		if ( extValue == 1 )
+		{
+      value += 125 ;
+		}
+		else if ( extValue == 3 )
+		{
+			value -= 125 ; 
+		}
+		else if ( extValue == 2 )
+		{
+			if ( value < 0 )
+			{
+				value -= 250 ;
+			}
+			else
+			{
+				value += 250 ;
+			}
+		}
+		if ( value > 350 )
+		{
+			value += 510 - 360 ;
+		}
+	}
+	if ( value > 500 )
+	{
+		// Was a GVAR
+		if ( ck->checkState() )
+		{ // still is
+			value = cb->currentIndex() + 503 ;
+		}
+		else
+		{
+			value = defvar ;
+			sb->setValue( value ) ;
+			sb->setVisible( true ) ;
+			cb->setVisible( false ) ;
+		}
+	}
+	else
+	{ // Not a GVAR
+		if ( ck->checkState() )
+		{ // Now is a GVAR
+		  value = 510 ;
+			cb->setCurrentIndex( value-503 ) ;
+			cb->setVisible( true ) ;
+			sb->setVisible( false ) ;
+		}
+		else
+		{
+			value = sb->value() ;
+		}
+	}
+	return value ;
 }
 
 void MixerDialog::valuesChanged()
@@ -486,8 +652,13 @@ void MixerDialog::valuesChanged()
 		
 		oldSrcRaw = md->srcRaw ;
     uint32_t value ;
-		value = ui->sourceCB->currentIndex()+1 ;
+		value = ui->sourceCB->currentIndex() ;
+
+  md->srcRaw = (value < sourceMapSize) ? sourceMap[value] : 1 ;
   	
+		
+		
+		 
 //		int x = ui->sourceCB->currentIndex()+1 ;
 //		if ( x >= MIX_3POS )
 //		{
@@ -503,16 +674,25 @@ void MixerDialog::valuesChanged()
 //		}
 //    md->srcRaw       = x ;
 		
-		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
+//		if ( ( lType == RADIO_TYPE_QX7 ) || ( lType == RADIO_TYPE_T12 ) || ( lType == RADIO_TYPE_X9L ) )
+//		{
+//      if ( value >= 7 )
+//			{
+//        value += 0 ;
+//			}
+//		}
+//    value = decodePots( value, lType, lextraPots ) ;
+//		md->srcRaw       = value ;
+//		ui->spinBox->setValue(md->srcRaw);
+
+		uint32_t index = ui->sourceSwitchCB->currentIndex() ;
+		if ( ( lBitType & ( RADIO_BITTYPE_X12 | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S )  ) == 0 )
 		{
-      if ( value >= 7 )
+			if ( index > 7 )
 			{
-        value += 0 ;
+				index += 1 ;
 			}
 		}
-    value = decodePots( value, lType, lextraPots ) ;
-		md->srcRaw       = value ;
-//		ui->spinBox->setValue(md->srcRaw);
 
 		if ( ( leeType == RADIO_TYPE_QX7 ) || ( leeType == RADIO_TYPE_T12 ) || ( leeType == RADIO_TYPE_X9L ) )
 		{
@@ -525,24 +705,21 @@ void MixerDialog::valuesChanged()
 			{
 				index += 1 ;
 			}
-		 	md->switchSource = index ;
 		}
-		else
-		{
-			md->switchSource = ui->sourceSwitchCB->currentIndex() ;
-		}
-		ui->sourceSwitchCB->setVisible( md->srcRaw == MIX_3POS ) ;
+	 	md->switchSource = index ;
+    ui->sourceSwitchCB->setVisible( md->srcRaw == MIX_3POS ) ;
+
+//		printf("\nSrc = %d, SWCH = %d", md->srcRaw, md->switchSource ) ;
+
 		{
 			int value ;
 			int extValue = 0 ;
-	    value = numericSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, 1 ) ;
+
+	    value = extendedSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, md->extWeight ) ;
 			if ( value > 500 )
 			{
-				value -= 501 - 126 ;
-				if ( value > 128 )
-				{
-					value -= 256 ;
-				}
+				value -= 400 ;
+				extValue = 2 ;
 			}
 			else
 			{
@@ -570,15 +747,12 @@ void MixerDialog::valuesChanged()
 			md->weight = value ;
 			md->extWeight = extValue ;
   	  
-			value = numericSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, 1 ) ;
+			value = extendedSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, md->extOffset ) ;
 			extValue = 0 ;
 			if ( value > 500 )
 			{
-				value -= 501 - 126 ;
-				if ( value > 128 )
-				{
-					value -= 256 ;
-				}
+				value -= 400 ;
+				extValue = 2 ;
 			}
 			else
 			{
@@ -608,11 +782,11 @@ void MixerDialog::valuesChanged()
 			md->extOffset = extValue ;
 		}
     md->carryTrim    = ui->trimChkB->checkState() ? 0 : 1;
-		int limit = MAX_DRSWITCH ;
-		if ( leeType )
-		{
-			limit = MAX_XDRSWITCH ;
-		}
+//		int limit = MAX_DRSWITCH ;
+//		if ( leeType )
+//		{
+//			limit = MAX_XDRSWITCH ;
+//		}
     md->swtch        = getSwitchCbValue( ui->switchesCB, leeType ) ;
     md->mixWarn      = ui->warningCB->currentIndex();
     md->mltpx        = ui->mltpxCB->currentIndex();
@@ -740,6 +914,7 @@ void MixerDialog::valuesChanged()
 		j &= ~( ui->Fm4CB->checkState() ? 16 : 0 ) ;
 		j &= ~( ui->Fm5CB->checkState() ? 32 : 0 ) ;
 		j &= ~( ui->Fm6CB->checkState() ? 64 : 0 ) ;
+		j &= ~( ui->Fm7CB->checkState() ? 128 : 0 ) ;
 		md->modeControl = j ;
 
 //    if(ui->FMtrimChkB->checkState())

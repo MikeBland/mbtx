@@ -30,6 +30,11 @@
 
 #include "lua_api.h"
 
+#define TEXT_COLOR 0
+#define TEXT_INVERTED_COLOR 1
+#define TEXT_INVERTED_BGCOLOR 2
+#define CUSTOM_COLOR 3
+
 
 /*luadoc
 @function lcd.refresh()
@@ -176,6 +181,7 @@ See the Appendix for available characters in each font set.
 
 @status current Introduced in 2.0.0
 */
+
 static int luaLcdDrawText(lua_State *L)
 {
   if (!luaLcdAllowed) return 0;
@@ -186,12 +192,26 @@ static int luaLcdDrawText(lua_State *L)
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
+	y += 2 ;
 #endif
-	if ( att & 512 )	// "RIGHT"
-	{
-		uint32_t t = strlen(s) ;
-		x -= t * FW ;
-	}
+//	if ( att & LUA_RIGHT )	// "RIGHT"
+//	{
+//		uint32_t t = strlen(s) ;
+//		uint32_t width = FW ;
+//		if ( att & LUA_SMLSIZE )
+//		{
+//			width = 5 ;
+//		}
+//		if ( att & DBLSIZE )
+//		{
+//			width = FW*2 ;
+//			if ( att & CONDENSED )
+//			{
+//				width = 8 ;
+//			}
+//		}
+//		x -= t * width ;
+//	}
 	lcd_putsAtt(x, y, s, att);
   return 0;
 }
@@ -225,6 +245,7 @@ static int luaLcdDrawTimer(lua_State *L)
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
+	y += 2 ;
 #endif
   putsTime( x, y, seconds, att, att ) ;
 //  drawTimer(x, y, seconds, att|LEFT, att);
@@ -259,7 +280,12 @@ static int luaLcdDrawNumber(lua_State *L)
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
+	y += 2 ;
 #endif
+	if ( ( att & LUA_RIGHT ) == 0 )
+	{
+		att |= LEFT ;
+	}
   lcd_outdezAtt(x, y, val, att);
   return 0;
 }
@@ -327,6 +353,7 @@ static int luaLcdDrawSwitch(lua_State *L)
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
+	y += 2 ;
 #endif
 
 	putsDrSwitches( x,  y, s, att ) ;
@@ -574,6 +601,12 @@ static int luaLcdDrawRectangle(lua_State *L)
 //  unsigned int t = luaL_optunsigned(L, 6, 1);
 //  lcdDrawRect(x, y, w, h, t, 0xff, flags);
 //#else
+#if defined(PCBX12D) || defined(PCBX10)
+	x /= 2 ;
+	y /= 2 ;
+	w /= 2 ;
+	h /= 2 ;
+#endif
   lcd_rect(x, y, w, h);
 //#endif
   return 0;
@@ -602,7 +635,33 @@ static int luaLcdDrawFilledRectangle(lua_State *L)
   int w = luaL_checkinteger(L, 3);
   int h = luaL_checkinteger(L, 4);
   unsigned int flags = luaL_optunsigned(L, 5, 0);
+#if defined(PCBX12D) || defined(PCBX10)
+	uint32_t colour ;
+	uint32_t oldColour ;
+	x /= 2 ;
+	y /= 2 ;
+	w /= 2 ;
+	h /= 2 ;
+	// flags is colour index
+	colour = LcdBackground ;
+	if ( flags & LUA_TEXT_COLOUR )
+	{
+		colour = LcdForeground ;
+	}
+	else if ( flags & LUA_CUSTOM_COLOUR )
+	{
+		colour = LcdCustomColour ;
+	}
+	oldColour = LcdCustomColour ;
+	LcdCustomColour = colour ;
+	pushPlotType( PLOT_CUSTOM ) ;
+#endif
   lcdDrawFilledRect(x, y, w, h, SOLID, flags);
+#if defined(PCBX12D) || defined(PCBX10)
+	LcdCustomColour = oldColour ;
+	popPlotType() ;
+#endif
+	
   return 0;
 }
 
@@ -680,7 +739,7 @@ static int luaLcdDrawScreenTitle(lua_State *L)
 //  lcdDrawFilledRect(0, 0, LCD_W, FH, SOLID, FILL_WHITE|GREY_DEFAULT);
 //#endif
 //  TITLE(str) ;
-	lcd_putsAtt(0,0,str,INVERS) ;
+	lcd_putsAtt(0,2,str,INVERS) ;
   return 0;
 }
 #endif
@@ -759,7 +818,7 @@ Draw a combo box
 //}
 #endif
 
-#if defined(COLORLCD)
+#if defined(PCBX12D) || defined(PCBX10)
 /*luadoc
 @function lcd.setColor(area, color)
 
@@ -811,9 +870,25 @@ Set a color for specific area
 static int luaLcdSetColor(lua_State *L)
 {
   if (!luaLcdAllowed) return 0;
-  unsigned int index = luaL_checkunsigned(L, 1) >> 16;
-  unsigned int color = luaL_checkunsigned(L, 2);
-  lcdColorTable[index] = color;
+  unsigned int index = luaL_checkunsigned(L, 1) ;
+  unsigned int colour = luaL_checkunsigned(L, 2) ;
+//  lcdColorTable[index] = color;
+	switch ( index )
+	{
+		case LUA_TEXT_COLOUR :
+			LcdForeground = colour ;
+		break ;
+		case TEXT_INVERTED_COLOR :
+			LcdBackground = colour ;
+		break ;
+//		case TEXT_INVERTED_BGCOLOR :
+//			value = LcdForeground ;
+//		break ;
+		case LUA_CUSTOM_COLOUR :
+			LcdCustomColour = colour ;
+		break ;
+	}
+
   return 0;
 }
 
@@ -834,6 +909,9 @@ Returns a 5/6/5 rgb color code, that can be used with lcd.setColor
 
 @status current Introduced in 2.2.0
 */
+
+#define RGB(r, g, b)                   (uint16_t)((((r) & 0xF8) << 8) + (((g) & 0xFC) << 3) + (((b) & 0xF8) >> 3))
+
 static int luaRGB(lua_State *L)
 {
   if (!luaLcdAllowed) return 0;
@@ -843,6 +921,33 @@ static int luaRGB(lua_State *L)
   lua_pushinteger(L, RGB(r, g, b));
   return 1;
 }
+
+static int luaLcdGetColor(lua_State *L)
+{
+	uint32_t value = 255 ;
+  if (!luaLcdAllowed)
+    return 0;
+
+  unsigned int index = luaL_checkunsigned(L, 1) ;
+#if defined(PCBX12D) || defined(PCBX10)
+	switch ( index )
+	{
+		case TEXT_COLOR :
+			value = LcdForeground ;
+		break ;
+		case TEXT_INVERTED_COLOR :
+			value = LcdBackground ;
+		break ;
+		case TEXT_INVERTED_BGCOLOR :
+			value = LcdForeground ;
+		break ;
+	}
+#endif
+  lua_pushunsigned(L, value );
+//  lua_pushunsigned(L, lcdColorTable[index]);
+  return 1;
+}
+
 #endif
 
 const luaL_Reg lcdLib[] = {
@@ -859,10 +964,12 @@ const luaL_Reg lcdLib[] = {
   { "drawSwitch", luaLcdDrawSwitch },
 //  { "drawSource", luaLcdDrawSource },
 //  { "drawGauge", luaLcdDrawGauge },
-//#if defined(COLORLCD)
+#if defined(PCBX12D) || defined(PCBX10)
 //  { "drawBitmap", luaLcdDrawBitmap },
-//  { "setColor", luaLcdSetColor },
-//  { "RGB", luaRGB },
+  { "setColor", luaLcdSetColor },
+  { "getColor", luaLcdGetColor },
+  { "RGB", luaRGB },
+#endif
 //#elif LCD_DEPTH > 1
 //  { "getLastPos", luaLcdGetLastPos },
 //  { "drawPixmap", luaLcdDrawPixmap },

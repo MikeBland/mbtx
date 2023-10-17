@@ -93,6 +93,19 @@ struct t_eeprom_block
 	} data ;
 } ;
 
+struct t_radioHardware
+{
+	// Info about pots and switches
+	uint8_t numberSwitches ;
+	uint8_t numberPots ;
+	uint8_t swWays[10] ;
+	QString swNames[10] ;	
+  uint8_t swIndices[10] ;
+  uint8_t swRefs[10] ;
+	QString potNames[10] ;	
+  uint8_t potIndices[10] ;
+} ;
+
 struct t_radioData
 {
 		struct t_file_entry File_system[MAX_IMODELS+1] ;
@@ -106,8 +119,10 @@ struct t_radioData
 		uint32_t options ;
 		uint32_t T9xr_pro ;
 		uint32_t extraPots ;
-
+		struct t_radioHardware radioHardware ;
 } ;
+
+extern void initRadioHw( uint8_t type, struct t_radioData *rData ) ;
 
 uint32_t rawloadFile( t_radioData *radioData, uint8_t *eeprom ) ;
 uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom ) ;

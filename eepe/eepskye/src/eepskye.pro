@@ -38,7 +38,9 @@ HEADERS += mainwindow.h \
     loggingDialog.h \
     cellDialog.h \
     qcustomplot.h \
-    logsdialog.h
+    logsdialog.h \
+    inputdialog.h \
+    inputslist.h
 SOURCES += main.cpp \
     mainwindow.cpp \
     file.cpp \
@@ -72,7 +74,9 @@ SOURCES += main.cpp \
     loggingDialog.cpp \
     cellDialog.cpp \
     qcustomplot.cpp \
-    logsdialog.cpp
+    logsdialog.cpp \
+    inputdialog.cpp \
+    inputslist.cpp
 unix {
 SOURCES += mountlist.cpp
 }
@@ -97,7 +101,8 @@ FORMS += modeledit.ui \
     SwitchDialog.ui \
     loggingDialog.ui \
     cellDialog.ui \
-    logsdialog.ui
+    logsdialog.ui \
+    inputdialog.ui
 TRANSLATIONS = eepskye_.ts    \
                eepskye_he.ts  \
                eepskye_pt.ts  \

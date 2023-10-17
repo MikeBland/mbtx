@@ -143,6 +143,9 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 #include "basic/basic.h"
 #endif
 
+#ifdef INPUTS
+extern const uint8_t IconInput[] ;
+#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
 #include "analog.h"
@@ -154,6 +157,12 @@ extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev,
 #include "X12D/usb_dcd_int.h"
 #include "X12D/usb_bsp.h"
 #include "X12D/usbd_conf.h"
+
+#ifdef TOUCH
+#include "X12D/tp_gt911.h"
+
+#endif
+
 
 extern "C" uint8_t USBD_HID_SendReport(USB_OTG_CORE_HANDLE  *pdev, 
                                  uint8_t *report,
@@ -191,6 +200,59 @@ uint16_t MainStart ;
 
 #ifdef BLUETOOTH
 #include "bluetooth.h"
+#endif
+
+#ifdef TOUCH
+extern void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type ) ;
+
+const uint8_t IconHplus[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconHplus.lbm"
+#else
+#include "X12D/IconHplusinv.lbm"
+#endif
+} ;
+const uint8_t IconHminus[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconHminus.lbm"
+#else
+#include "X12D/IconHminusinv.lbm"
+#endif
+} ;
+const uint8_t IconH2plus[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconH2plus.lbm"
+#else
+#include "X12D/IconH2plusinv.lbm"
+#endif
+} ;
+const uint8_t IconH2minus[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconHdminus.lbm"
+#else
+#include "X12D/IconHdminusinv.lbm"
+#endif
+} ;
+const uint8_t IconHtoggle[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconHtoggle.lbm"
+#else
+#include "X12D/IconHtoggleinv.lbm"
+#endif
+} ;
+extern const uint8_t IconHedit[] =
+{
+#if defined(PCBT18)
+#include "X12D/IconHedit.lbm"
+#else
+#include "X12D/IconHeditinv.lbm"
+#endif
+} ;
 #endif
 
 //#define PCB_TEST_9XT	1
@@ -336,24 +398,7 @@ uint16_t MainStart ;
 #endif // REV19
 
 
-#if defined(PCBX12D) || defined(PCBX10)
- #define STACK_EXTRA	100
-#else
- #define STACK_EXTRA	0
-#endif
-
 #ifndef SIMU
-#ifdef LUA
-#define MAIN_STACK_SIZE		(1400 + STACK_EXTRA)
-#else
-#ifdef BASIC
-//#define MAIN_STACK_SIZE		2000
-//#define MAIN_STACK_SIZE		1400
-#define MAIN_STACK_SIZE		(660 + STACK_EXTRA)
-#else
-#define MAIN_STACK_SIZE		(500 + STACK_EXTRA)
-#endif
-#endif
 #ifdef BLUETOOTH
 #define BT_STACK_SIZE			(100 + STACK_EXTRA)
 #endif
@@ -377,7 +422,11 @@ OS_STK Mixer_stk[MIXER_STACK_SIZE] ;
 #endif
 
 OS_TID MainTask;
+#if defined(PCBX12D) || defined(PCBX10)
+extern OS_STK main_stk[MAIN_STACK_SIZE] ;
+#else
 OS_STK main_stk[MAIN_STACK_SIZE] ;
+#endif
 
 #ifdef BLUETOOTH
 OS_TID BtTask;
@@ -413,6 +462,14 @@ uint16_t PortD0 ;
 uint16_t PortD1 ;
 uint16_t PortC0 ;
 uint16_t PortC1 ;
+#endif
+
+uint16_t LastRotEvent ;
+uint16_t RotencSpeed ;
+uint16_t RotencCount ;
+
+#ifdef TOUCH
+t_touchControl TouchControl ;
 #endif
 
 #ifdef PCBX9LITE
@@ -1527,9 +1584,14 @@ void maintenance_mode(void* pdata)
 	init_ppm2( 10000, 0 ) ;
 #else	
  #ifndef PCBLEM1
-	init_no_pulses( 0 ) ;
-	init_no_pulses( 1 ) ;
+//	init_no_pulses( 0 ) ;
+//	init_no_pulses( 1 ) ;
  #endif
+#endif
+
+#if defined(PCBT16)
+	g_model.Module[0].protocol = PROTO_OFF ;
+	g_model.Module[1].protocol = PROTO_OFF ;
 #endif
 	 
 	com1_Configure( 57600, SERIAL_NORM, SERIAL_NO_PARITY ) ; // Kick off at 57600 baud
@@ -2699,9 +2761,951 @@ void initSwitches()
 //}
 #endif
 
+//uint32_t SaveHeap[4] ;
+#if defined(PCBX12D) || defined(PCBX10) || defined(REV19)
+#define MAIN_STACK_REQUIRED	550
+#else
+#define MAIN_STACK_REQUIRED	350
+#endif
 
+#ifndef SMALL
+uint32_t MainStack[MAIN_STACK_REQUIRED] ;
+#endif
+
+void xmain( void ) ;
+
+#if defined(PCBX9D) || defined(PCB9XT)
+void __set_MSP(uint32_t topOfMainStack)
+{
+  __ASM volatile ("MSR msp, %0\n\t"
+                  "BX  lr     \n\t" : : "r" (topOfMainStack) );
+}
+#endif
+
+#if defined(PCBTX16S)
+
+//int32_t Tint[5] ;
+//float Tfloat[5] ;
+//double Tdouble[5] ;
+//uint32_t Tresult[5] ;
+
+//float toFloat( int32_t x )
+//{
+//	asm( "asrs	r2, r0, #31         " ) ;
+//	asm( "eors	r0, r2              " ) ;
+//	asm( "subs	r0, r0, r2          " ) ;
+//	asm( "clz	r1, r0              	" ) ;
+//	asm( "beq.n	L0x1be              " ) ;
+//	asm( "lsls	r0, r1              " ) ;
+//	asm( "rsbs	r1, r1, #157        " ) ;
+//	asm( "lsls	r2, r2, #31         " ) ;
+//	asm( "orr.w	r1, r2, r1, lsl #23 " ) ;
+//	asm( "lsls	r2, r0, #24         " ) ;
+//	asm( "sbcs.w	r2, r2, #2147483648 " ) ;
+//	asm( "adc.w	r0, r1, r0, lsr #8  " ) ;
+//	asm( "L0x1be:                   " ) ;
+//}
+
+
+//double floattoDouble( float x )
+//{
+//	asm( "ubfx	r1, r0, #23, #8    " ) ;
+//	asm( "cbz	r1, L206c            " ) ;
+//	asm( "cmp	r1, #255			       " ) ;
+//	asm( "beq.n	L205c              " ) ;
+//	asm( "asrs	r1, r0, #3         " ) ;
+//	asm( "lsls	r0, r0, #29        " ) ;
+//	asm( "bic.w	r1, r1, #1879048192" ) ;
+//	asm( "add.w	r1, r1, #939524096 " ) ;	
+//	asm( "bx	lr                   " ) ;
+//	asm( "L205c:                   " ) ;
+//	asm( "lsls	r1, r0, #9         " ) ;
+//	asm( "ite	eq                   " ) ;
+//	asm( "orreq.w	r1, r0, #7340032 " ) ;	  
+//	asm( "mvnne.w	r1, #2147483648  " ) ;
+//	asm( "movs	r0, #0             " ) ;
+//	asm( "bx	lr                   " ) ;
+//	asm( "L206c:                   " ) ;
+//	asm( "and.w	r1, r0, #2147483648" ) ;
+//	asm( "lsls	r0, r0, #8         " ) ;
+//	asm( "beq.n	L208a              " ) ;
+//	asm( "clz	ip, r0               " ) ;
+//	asm( "lsl.w	r0, r0, ip         " ) ;
+//	asm( "add.w	r1, r1, #939524096 " ) ;	
+//	asm( "sub.w	r1, r1, ip, lsl #20" ) ;
+//	asm( "add.w	r1, r1, r0, lsr #11" ) ;
+//	asm( "lsls	r0, r0, #21        " ) ;
+//	asm( "L208a:                   " ) ;
+//}
+
+//double doubleMultiply( double x, double y )
+//{
+//	asm( "push	{r4, r5, r7, lr}        " ) ;
+//	asm( "eor.w	ip, r1, r3              " ) ;
+//	asm( "and.w	ip, ip, #2147483648     " ) ;
+//	asm( "movw	r5, #2047               " ) ;
+//	asm( "ands.w	r4, r5, r1, lsr #20   " ) ;
+//	asm( "ittte	ne                      " ) ;
+//	asm( "andsne.w	r7, r5, r3, lsr #20 " ) ;
+//	asm( "cmpne	r4, r5                  " ) ;
+//	asm( "cmpne	r7, r5                  " ) ;
+//	asm( "beq.n	L4ce6                   " ) ;
+//	asm( "adds	r4, r4, r7              " ) ;
+//	asm( "bic.w	r3, r3, r5, lsl #21     " ) ;
+//	asm( "orr.w	r3, r3, #1048576        " ) ;
+//	asm( "L4c7c:                        " ) ;
+//	asm( "lsls	r1, r1, #11             " ) ;
+//	asm( "orr.w	r1, r1, #2147483648     " ) ;
+//	asm( "orr.w	lr, r1, r0, lsr #21     " ) ;
+//	asm( "lsls	r7, r0, #11             " ) ;
+//	asm( "L4c88:                        " ) ;
+//	asm( "movs	r1, r2                  " ) ;
+//	asm( "umull	r0, r2, r7, r2          " ) ;
+//	asm( "cmp	r0, #0                    " ) ;
+//	asm( "mov.w	r0, #0                  " ) ;
+//	asm( "umlal	r2, r0, lr, r1          " ) ;
+//	asm( "mov.w	r1, #0                  " ) ;
+//	asm( "umlal	r2, r1, r3, r7          " ) ;
+//	asm( "it	ne                        " ) ;
+//	asm( "orrne.w	r2, r2, #1            " ) ;
+//	asm( "adds	r0, r0, r1              " ) ;
+//	asm( "movs	r1, #0                  " ) ;
+//	asm( "adcs	r1, r1                  " ) ;
+//	asm( "umlal	r0, r1, r3, lr          " ) ;
+//	asm( "sub.w	r4, r4, #1024           " ) ;
+//	asm( "lsls	r7, r1, #12             " ) ;
+//	asm( "bcs.n	L4cbe                   " ) ;
+//	asm( "lsls	r2, r2, #1              " ) ;
+//	asm( "adcs	r0, r0                  " ) ;
+//	asm( "adcs	r1, r1                  " ) ;
+//	asm( "L4cbe:                        " ) ;
+//	asm( "adcs.w	r4, r4, #1            " ) ;
+//	asm( "ble.n	L4d9e                   " ) ;
+//	asm( "lsrs	r7, r0, #1              " ) ;
+//	asm( "sbcs.w	r2, r2, #2147483648   " ) ;
+//	asm( "adcs.w	r0, r0, #0            " ) ;
+//	asm( "adcs.w	r1, r1, r4, lsl #20   " ) ;
+//	asm( "sub.w	r1, r1, #1048576        " ) ;
+//	asm( "itt	pl                        " ) ;
+//	asm( "orrpl.w	r1, r1, ip            " ) ;
+//	asm( "poppl	{r4, r5, r7, pc}        " ) ;
+//	asm( "orr.w	r1, ip, r5, lsl #20     " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "pop	{r4, r5, r7, pc}          " ) ;
+//	asm( "L4ce6:                        " ) ;
+//	asm( "and.w	r7, r5, r3, lsr #20     " ) ;
+//	asm( "cmp	r4, r5                    " ) ;
+//	asm( "ite	ne                        " ) ;
+//	asm( "cmpne	r7, r5                  " ) ;
+//	asm( "beq.n	L4d76                   " ) ;
+//	asm( "orrs.w	lr, r0, r1, lsl #1    " ) ;
+//	asm( "itt	ne                        " ) ;
+//	asm( "orrsne.w	lr, r2, r3, lsl #1  " ) ;
+//	asm( "bne.n	L4d04                   " ) ;
+//	asm( "L4cfe:                        " ) ;
+//	asm( "mov	r1, ip                    " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "L4d02:                        " ) ;
+//	asm( "pop	{r4, r5, r7, pc}          " ) ;
+//	asm( "L4d04:                        " ) ;
+//	asm( "tst	r4, r4                    " ) ;
+//	asm( "add	r4, r7                    " ) ;
+//	asm( "bne.n	L4d42                   " ) ;
+//	asm( "movs.w	lr, r7                " ) ;
+//	asm( "beq.n	L4cfe                   " ) ;
+//	asm( "lsls	r1, r1, #12             " ) ;
+//	asm( "ittt	eq                      " ) ;
+//	asm( "moveq	r1, r0                  " ) ;
+//	asm( "moveq	r0, #0                  " ) ;
+//	asm( "subeq.w	lr, lr, #20           " ) ;
+//	asm( "clz	r7, r1                    " ) ;
+//	asm( "sub.w	r4, lr, r7              " ) ;
+//	asm( "lsl.w	lr, r1, r7              " ) ;
+//	asm( "adds	r7, #12                 " ) ;
+//	asm( "rsb	r1, r7, #32               " ) ;
+//	asm( "lsl.w	r7, r0, r7              " ) ;
+//	asm( "lsrs	r0, r1                  " ) ;
+//	asm( "orr.w	lr, lr, r0              " ) ;
+//	asm( "bic.w	r3, r3, r5, lsl #21     " ) ;
+//	asm( "orr.w	r3, r3, #1048576        " ) ;
+//	asm( "b.n	L4c88                     " ) ;
+//	asm( "L4d42:                        " ) ;
+//	asm( "bics.w	r3, r3, #2147483648   " ) ;
+//	asm( "clz	r7, r3                    " ) ;
+//	asm( "itt	eq                        " ) ;
+//	asm( "clzeq	lr, r2                  " ) ;
+//	asm( "addeq	r7, lr                  " ) ;
+//	asm( "subs	r7, #11                 " ) ;
+//	asm( "subs	r4, r4, r7              " ) ;
+//	asm( "subs.w	lr, r7, #32           " ) ;
+//	asm( "iteee	cs                      " ) ;
+//	asm( "lslcs.w	r3, r2, lr            " ) ;
+//	asm( "lslcc	r3, r7                  " ) ;
+//	asm( "rsbcc	lr, r7, #32             " ) ;
+//	asm( "lsrcc.w	lr, r2, lr            " ) ;
+//	asm( "it	cc                        " ) ;
+//	asm( "orrcc.w	r3, r3, lr            " ) ;
+//	asm( "lsls	r2, r7                  " ) ;
+//	asm( "adds	r4, r4, #1              " ) ;
+//	asm( "b.n	L4c7c                     " ) ;
+//	asm( "L4d76:                        " ) ;
+//	asm( "orrs.w	lr, r0, r1, lsl #1    " ) ;
+//	asm( "ite	ne                        " ) ;
+//	asm( "orrsne.w	lr, r2, r3, lsl #1  " ) ;
+//	asm( "mvneq.w	r1, #0                " ) ;
+//	asm( "mov.w	r7, #2097152            " ) ;
+//	asm( "cmn.w	r7, r3, lsl #1          " ) ;
+//	asm( "itet	hi                      " ) ;
+//	asm( "movhi	r1, r3                  " ) ;
+//	asm( "cmnls.w	r7, r1, lsl #1        " ) ;
+//	asm( "bhi.n	L4d02                   " ) ;
+//	asm( "orr.w	r1, ip, r5, lsl #20     " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "pop	{r4, r5, r7, pc}          " ) ;
+//	asm( "L4d9e:                        " ) ;
+//	asm( "rsbs	r4, r4, #1              " ) ;
+//	asm( "subs.w	r7, r4, #32           " ) ;
+//	asm( "bge.n	L4dc8                   " ) ;
+//	asm( "rsb	r7, r4, #32               " ) ;
+//	asm( "lsrs	r2, r2, #1              " ) ;
+//	asm( "it	cs                        " ) ;
+//	asm( "orrcs.w	r2, r2, #1            " ) ;
+//	asm( "lsls.w	r5, r0, r7            " ) ;
+//	asm( "lsl.w	r7, r1, r7              " ) ;
+//	asm( "nopal                      " ) ;
+//	asm( "orrs	r2, r5                  " ) ;
+//	asm( "lsrs	r0, r4                  " ) ;
+//	asm( "orrs	r0, r7                  " ) ;
+//	asm( "lsrs	r1, r4                  " ) ;
+//	asm( "b.n	L4de8                     " ) ;
+//	asm( "L4dc8:                        " ) ;
+//	asm( "cmp	r4, #53                   " ) ;
+//	asm( "bgt.n	L4cfe                   " ) ;
+//	asm( "rsb	r4, r7, #32               " ) ;
+//	asm( "orrs.w	r2, r2, r0, lsl #1    " ) ;
+//	asm( "lsr.w	r2, r0, r7              " ) ;
+//	asm( "it	ne                        " ) ;
+//	asm( "orrne.w	r2, r2, #1            " ) ;
+//	asm( "lsrs.w	r0, r1, r7            " ) ;
+//	asm( "lsls	r1, r4                  " ) ;
+//	asm( "orrs	r2, r1                  " ) ;
+//	asm( "movs	r1, #0                  " ) ;
+//	asm( "L4de8:                        " ) ;
+//	asm( "sbcs.w	r2, r2, #2147483648   " ) ;
+//	asm( "adcs.w	r0, r0, #0            " ) ;
+//	asm( "adcs.w	r1, r1, ip            " ) ;
+//	asm( "pop	{r4, r5, r7, pc}          " ) ;
+//}                                     
+
+
+//double doubleDivide( double x, double y )
+//{
+//	asm( "push	{r4, r5, r6, r7, lr}    " ) ;
+//	asm( "movw	r5, #2047               " ) ;
+//	asm( "eor.w	ip, r1, r3              " ) ;
+//	asm( "and.w	ip, ip, #2147483648     " ) ;
+//	asm( "ands.w	r4, r5, r1, lsr #20   " ) ;
+//	asm( "ittte	ne                      " ) ;
+//	asm( "andsne.w	r7, r5, r3, lsr #20 " ) ;
+//	asm( "cmpne	r4, r5                  " ) ;
+//	asm( "cmpne	r7, r5                  " ) ;
+//	asm( "beq.n	L2276                   " ) ;
+//	asm( "sbcs	r4, r7                  " ) ;
+//	asm( "L20ac:                        " ) ;
+//	asm( "ubfx	r1, r1, #0, #20         " ) ;
+//	asm( "ubfx	r3, r3, #0, #20         " ) ;
+//	asm( "subs	r0, r0, r2              " ) ;
+//	asm( "sbcs	r1, r3                  " ) ;
+//	asm( "orr.w	r3, r3, #1048576        " ) ;
+//	asm( "bcs.n	L20c8                   " ) ;
+//	asm( "subs	r4, r4, #1              " ) ;
+//	asm( "lsls	r0, r0, #1              " ) ;
+//	asm( "adcs	r1, r1                  " ) ;
+//	asm( "adds	r0, r0, r2              " ) ;
+//	asm( "adcs	r1, r3                  " ) ;
+//	asm( "L20c8:                        " ) ;
+//	asm( "lsls	r1, r1, #11             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #21     " ) ;
+//	asm( "udiv	r6, r1, r3              " ) ;
+//	asm( "mls	r1, r3, r6, r1            " ) ;
+//	asm( "umull	r7, r5, r2, r6          " ) ;
+//	asm( "rsbs	r0, r7, r0, lsl #11     " ) ;
+//	asm( "sbcs	r1, r5                  " ) ;
+//	asm( "bcs.n	L20e8                   " ) ;
+//	asm( "subs	r6, r6, #1              " ) ;
+//	asm( "adds	r0, r0, r2              " ) ;
+//	asm( "adcs	r1, r3                  " ) ;
+//	asm( "L20e8:                        " ) ;
+//	asm( "lsls	r1, r1, #11             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #21     " ) ;
+//	asm( "udiv	lr, r1, r3              " ) ;
+//	asm( "mls	r1, r3, lr, r1            " ) ;
+//	asm( "umull	r7, r5, r2, lr          " ) ;
+//	asm( "rsbs	r0, r7, r0, lsl #11     " ) ;
+//	asm( "sbcs	r1, r5                  " ) ;
+//	asm( "bcs.n	L210a                   " ) ;
+//	asm( "sub.w	lr, lr, #1              " ) ;
+//	asm( "adds	r0, r0, r2              " ) ;
+//	asm( "adcs	r1, r3                  " ) ;
+//	asm( "L210a:                        " ) ;
+//	asm( "lsls	r1, r1, #10             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #22     " ) ;
+//	asm( "lsls	r6, r6, #21             " ) ;
+//	asm( "orr.w	lr, r6, lr, lsl #10     " ) ;
+//	asm( "udiv	r6, r1, r3              " ) ;
+//	asm( "mls	r1, r3, r6, r1            " ) ;
+//	asm( "umull	r7, r5, r2, r6          " ) ;
+//	asm( "rsbs	r0, r7, r0, lsl #10     " ) ;
+//	asm( "sbcs	r1, r5                  " ) ;
+//	asm( "bcs.n	L2130                   " ) ;
+//	asm( "subs	r6, r6, #1              " ) ;
+//	asm( "adds	r0, r0, r2              " ) ;
+//	asm( "adcs	r1, r3                  " ) ;
+//	asm( "L2130:                        " ) ;
+//	asm( "lsls	r1, r1, #11             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #21     " ) ;
+//	asm( "orr.w	lr, lr, r6              " ) ;
+//	asm( "udiv	r6, r1, r3              " ) ;
+//	asm( "mls	r1, r3, r6, r1            " ) ;
+//	asm( "umull	r7, r5, r2, r6          " ) ;
+//	asm( "rsbs	r0, r7, r0, lsl #11     " ) ;
+//	asm( "sbcs	r1, r5                  " ) ;
+//	asm( "bcs.n	L2154                   " ) ;
+//	asm( "subs	r6, r6, #1              " ) ;
+//	asm( "adds	r0, r0, r2              " ) ;
+//	asm( "adcs	r1, r3                  " ) ;
+//	asm( "L2154:                        " ) ;
+//	asm( "lsls	r1, r1, #11             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #21     " ) ;
+//	asm( "udiv	r7, r1, r3              " ) ;
+//	asm( "mls	r1, r3, r7, r1            " ) ;
+//	asm( "umull	r3, r5, r2, r7          " ) ;
+//	asm( "rsbs	r0, r3, r0, lsl #11     " ) ;
+//	asm( "sbcs	r1, r5                  " ) ;
+//	asm( "sbc.w	r7, r7, #0              " ) ;
+//	asm( "ite	eq                        " ) ;
+//	asm( "tsteq	r0, r0                  " ) ;
+//	asm( "orrne.w	r7, r7, #1            " ) ;
+//	asm( "bfi	r7, r6, #11, #11          " ) ;
+//	asm( "mov.w	r1, lr, lsr #12         " ) ;
+//	asm( "lsrs	r0, r7, #2              " ) ;
+//	asm( "adds.w	r4, r4, #1024         " ) ;
+//	asm( "ble.n	L21ae                   " ) ;
+//	asm( "lsls	r5, r7, #30             " ) ;
+//	asm( "sbcs.w	r2, r5, #2147483648   " ) ;
+//	asm( "adcs.w	r0, r0, lr, lsl #20   " ) ;
+//	asm( "adcs.w	r1, r1, r4, lsl #20   " ) ;
+//	asm( "cmn.w	r1, #1048576            " ) ;
+//	asm( "itt	pl                        " ) ;
+//	asm( "orrpl.w	r1, r1, ip            " ) ;
+//	asm( "poppl	{r4, r5, r6, r7, pc}    " ) ;
+//	asm( "orr.w	r1, ip, #267386880      " ) ;
+//	asm( "orr.w	r1, r1, #1879048192     " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "pop	{r4, r5, r6, r7, pc}      " ) ;
+//	asm( "L21ae:                        " ) ;
+//	asm( "lsls	r5, r7, #30             " ) ;
+//	asm( "lsrs	r5, r5, #1              " ) ;
+//	asm( "orr.w	r0, r0, lr, lsl #20     " ) ;
+//	asm( "orr.w	r1, r1, #1048576        " ) ;
+//	asm( "rsbs	r4, r4, #1              " ) ;
+//	asm( "subs.w	r6, r4, #32           " ) ;
+//	asm( "bge.n	L21da                   " ) ;
+//	asm( "rsb	r6, r4, #32               " ) ;
+//	asm( "movs	r2, r0                  " ) ;
+//	asm( "lsrs	r0, r4                  " ) ;
+//	asm( "lsl.w	r3, r1, r6              " ) ;
+//	asm( "lsrs	r1, r4                  " ) ;
+//	asm( "orrs	r0, r3                  " ) ;
+//	asm( "lsls	r2, r6                  " ) ;
+//	asm( "orrs	r5, r2                  " ) ;
+//	asm( "b.n	L21f8                     " ) ;
+//	asm( "L21da:                        " ) ;
+//	asm( "cmp	r4, #52                   " ) ;
+//	asm( "bgt.n	L2206                   " ) ;
+//	asm( "rsb	r4, r6, #32               " ) ;
+//	asm( "orr.w	r5, r5, r0, lsl #1      " ) ;
+//	asm( "lsrs	r5, r5, #1              " ) ;
+//	asm( "lsr.w	r2, r0, r6              " ) ;
+//	asm( "orrs	r5, r2                  " ) ;
+//	asm( "lsr.w	r0, r1, r6              " ) ;
+//	asm( "lsls	r1, r4                  " ) ;
+//	asm( "orrs	r5, r1                  " ) ;
+//	asm( "movs	r1, #0                  " ) ;
+//	asm( "L21f8:                        " ) ;
+//	asm( "sbcs.w	r2, r5, #2147483648   " ) ;
+//	asm( "adcs.w	r0, r0, #0            " ) ;
+//	asm( "adcs.w	r1, r1, ip            " ) ;
+//	asm( "pop	{r4, r5, r6, r7, pc}      " ) ;
+//	asm( "L2206:                        " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "movs.w	r1, ip                " ) ;
+//	asm( "pop	{r4, r5, r6, r7, pc}      " ) ;
+//	asm( "L220e:                        " ) ;
+//	asm( "cbnz	r7, L2244               " ) ;
+//	asm( "adds	r2, r2, r2              " ) ;
+//	asm( "adcs	r3, r3                  " ) ;
+//	asm( "clz	r7, r3                    " ) ;
+//	asm( "itt	eq                        " ) ;
+//	asm( "clzeq	r6, r2                  " ) ;
+//	asm( "addeq	r7, r7, r6              " ) ;
+//	asm( "subs	r7, #11                 " ) ;
+//	asm( "subs.w	r6, r7, #32           " ) ;
+//	asm( "iteee	cs                      " ) ;
+//	asm( "lslcs.w	r3, r2, r6            " ) ;
+//	asm( "lslcc	r3, r7                  " ) ;
+//	asm( "rsbcc	r6, r7, #32             " ) ;
+//	asm( "lsrcc.w	r6, r2, r6            " ) ;
+//	asm( "it	cc                        " ) ;
+//	asm( "orrcc	r3, r6                  " ) ;
+//	asm( "lsls	r2, r7                  " ) ;
+//	asm( "cbz	r4, L2246                 " ) ;
+//	asm( "adds	r4, r4, r7              " ) ;
+//	asm( "subs	r4, r4, #1              " ) ;
+//	asm( "b.n	L20ac                     " ) ;
+//	asm( "L2244:                        " ) ;
+//	asm( "negs	r7, r7                  " ) ;
+//	asm( "L2246:                        " ) ;
+//	asm( "bics.w	r1, r1, #2147483648   " ) ;
+//	asm( "clz	r4, r1                    " ) ;
+//	asm( "itt	eq                        " ) ;
+//	asm( "clzeq	r6, r0                  " ) ;
+//	asm( "addeq	r4, r4, r6              " ) ;
+//	asm( "subs	r4, #11                 " ) ;
+//	asm( "subs.w	r6, r4, #32           " ) ;
+//	asm( "iteee	cs                      " ) ;
+//	asm( "lslcs.w	r1, r0, r6            " ) ;
+//	asm( "lslcc	r1, r4                  " ) ;
+//	asm( "rsbcc	r6, r4, #32             " ) ;
+//	asm( "lsrcc.w	r6, r0, r6            " ) ;
+//	asm( "it	cc                        " ) ;
+//	asm( "orrcc	r1, r6                  " ) ;
+//	asm( "lsls	r0, r4                  " ) ;
+//	asm( "subs	r4, r7, r4              " ) ;
+//	asm( "b.n	L20ac                     " ) ;
+//	asm( "L2276:                        " ) ;
+//	asm( "cmp	r4, r5                    " ) ;
+//	asm( "itte	ne                      " ) ;
+//	asm( "andne.w	r7, r5, r3, lsr #20   " ) ;
+//	asm( "cmpne	r7, r5                  " ) ;
+//	asm( "beq.n	L22a8                   " ) ;
+//	asm( "orrs.w	r6, r0, r1, lsl #1    " ) ;
+//	asm( "itt	ne                        " ) ;
+//	asm( "orrsne.w	r6, r2, r3, lsl #1  " ) ;
+//	asm( "bne.n	L220e                   " ) ;
+//	asm( "orrs.w	r7, r0, r1, lsl #1    " ) ;
+//	asm( "mov	r0, r6                    " ) ;
+//	asm( "mov	r1, ip                    " ) ;
+//	asm( "itt	ne                        " ) ;
+//	asm( "orrne.w	r1, r1, r5, lsl #20   " ) ;
+//	asm( "popne	{r4, r5, r6, r7, pc}    " ) ;
+//	asm( "orrs.w	ip, r2, r3, lsl #1    " ) ;
+//	asm( "it	eq                        " ) ;
+//	asm( "mvneq	r1, r0                  " ) ;
+//	asm( "pop	{r4, r5, r6, r7, pc}      " ) ;
+//	asm( "L22a8:                        " ) ;
+//	asm( "movs	r0, #0                  " ) ;
+//	asm( "mov.w	r6, #2097152            " ) ;
+//	asm( "cmn.w	r6, r1, lsl #1          " ) ;
+//	asm( "it	ls                        " ) ;
+//	asm( "cmnls.w	r6, r3, lsl #1        " ) ;
+//	asm( "it	eq                        " ) ;
+//	asm( "cmneq.w	r6, r1, lsl #1        " ) ;
+//	asm( "itt	cs                        " ) ;
+//	asm( "mvncs	r1, r0                  " ) ;
+//	asm( "bcs.n	L22d0                   " ) ;
+//	asm( "cmn.w	r6, r3, lsl #1          " ) ;
+//	asm( "ite	eq                        " ) ;
+//	asm( "moveq	r1, ip                  " ) ;
+//	asm( "orrne.w	r1, ip, r5, lsl #20   " ) ;
+//	asm( "L22d0:                        " ) ;
+//	asm( "pop	{r4, r5, r6, r7, pc}      " ) ;
+//}                                     
+
+//float doubleToFloat( double x )
+//{
+//	asm( "and.w	r2, r1, #2147483648     " ) ;
+//	asm( "subs	r3, r1, r2              " ) ;
+//	asm( "sub.w	r1, r3, #939524096	    " ) ;
+//	asm( "cmp.w	r1, #1048576		        " ) ;
+//	asm( "blt.n	L22fa                   " ) ;
+//	asm( "cmp.w	r1, #267386880		      " ) ;
+//	asm( "bcs.n	L232a                   " ) ;
+//	asm( "orr.w	r2, r2, r1, lsl #3      " ) ;
+//	asm( "lsls	r1, r0, #3              " ) ;
+//	asm( "sbcs.w	r1, r1, #2147483648   " ) ;
+//	asm( "adc.w	r0, r2, r0, lsr #29     " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "                              " ) ;
+//	asm( "L22fa:                        " ) ;
+//	asm( "asrs	r3, r1, #20             " ) ;
+//	asm( "rsb	r3, r3, #9                " ) ;
+//	asm( "cmp	r3, #33			              " ) ;
+//	asm( "bcs.n	L2326                   " ) ;
+//	asm( "lsls	r1, r1, #10             " ) ;
+//	asm( "orr.w	r1, r1, r0, lsr #22     " ) ;
+//	asm( "lsls	r0, r0, #10             " ) ;
+//	asm( "cmp	r0, #1                    " ) ;
+//	asm( "adcs	r1, r1                  " ) ;
+//	asm( "orr.w	r1, r1, #2147483648     " ) ;
+//	asm( "lsr.w	r0, r1, r3              " ) ;
+//	asm( "rsb	r3, r3, #32               " ) ;
+//	asm( "lsls	r1, r3                  " ) ;
+//	asm( "sbcs.w	r1, r1, #2147483648   " ) ;
+//	asm( "adcs	r0, r2                  " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "                              " ) ;
+//	asm( "L2326:                        " ) ;
+//	asm( "movs	r0, r2                  " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "                              " ) ;
+//	asm( "L232a:                        " ) ;
+//	asm( "mvn.w	r0, #0                  " ) ;
+//	asm( "cmn.w	r3, r0, lsr #12         " ) ;
+//	asm( "itt	pl                        " ) ;
+//	asm( "lsrpl	r0, r0, #24             " ) ;
+//	asm( "orrpl.w	r0, r2, r0, lsl #23   " ) ;
+////	asm( "bx	lr
+//}
+
+//uint32_t floatToInt16( float x)
+//{
+//	asm( "ubfx	r1, r0, #23, #8     " ) ;
+//	asm( "subs	r1, #126            " ) ;
+//	asm( "ble.n	L2e2                " ) ;
+//	asm( "asrs	r2, r0, #31         " ) ;
+//	asm( "rsbs	r1, r1, #32         " ) ;
+//	asm( "ble.n	L2da                " ) ;
+//	asm( "lsls	r0, r0, #8          " ) ;
+//	asm( "orr.w	r0, r0, #2147483648 " ) ;
+//	asm( "lsrs	r0, r1              " ) ;
+//	asm( "add	r0, r2                " ) ;
+//	asm( "eors	r0, r2              " ) ;
+//	asm( "bx	lr                    " ) ;
+//	asm( "L2da:                     " ) ;
+//	asm( "mvns	r0, r2              " ) ;
+//	asm( "eor.w	r0, r0, #2147483648 " ) ;
+//	asm( "bx	lr                    " ) ;
+//	asm( "L2e2:                     " ) ;
+//	asm( "movs	r0, #0              " ) ;
+//	asm( "bx	lr                    " ) ;
+//}
+
+////pass in 2 floats:
+//uint16_t multiplyFloats( float x, float y )
+//{
+//	asm( "movs	r2, #255                " ) ;
+//	asm( "ands.w	ip, r2, r0, lsr #23   " ) ;
+//	asm( "ittte	ne                      " ) ;
+//	asm( "andsne.w	r3, r2, r1, lsr #23 " ) ;
+//	asm( "cmpne	ip, r2                  " ) ;
+//	asm( "cmpne	r3, r2                  " ) ;
+//	asm( "beq.n	L23a6                   " ) ;
+//	asm( "add	ip, r3                    " ) ;
+//	asm( "lsls	r3, r2, #31             " ) ;
+//	asm( "eor.w	r2, r0, r1              " ) ;
+//	asm( "ands	r2, r3                  " ) ;
+//	asm( "orr.w	r0, r3, r0, lsl #8      " ) ;
+//	asm( "orr.w	r1, r3, r1, lsl #8      " ) ;
+//	asm( "L2360:                        " ) ;
+//	asm( "umull	r3, r0, r1, r0          " ) ;
+//	asm( "cmn	r0, r0                    " ) ;
+//	asm( "it	cc                        " ) ;
+//	asm( "lslcc	r0, r0, #1              " ) ;
+//	asm( "sbcs.w	r1, ip, #127          " ) ;
+//	asm( "blt.n	L2388                   " ) ;
+//	asm( "cmp	r1, #254                  " ) ;
+//	asm( "bge.n	L240a                   " ) ;
+//	asm( "lsrs	r3, r3, #1              " ) ;
+//	asm( "orr.w	r1, r2, r1, lsl #23     " ) ;
+//	asm( "orrs.w	r3, r3, r0, lsl #24   " ) ;
+//	asm( "sbcs.w	ip, r3, #2147483648   " ) ;
+//	asm( "adcs.w	r0, r1, r0, lsr #8    " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "L2388:                        " ) ;
+//	asm( "rsbs	ip, r1, #8              " ) ;
+//	asm( "rsbs	r1, ip, #32             " ) ;
+//	asm( "blt.n	L23f2                   " ) ;
+//	asm( "lsrs	r3, r3, #1              " ) ;
+//	asm( "lsls.w	r1, r0, r1            " ) ;
+//	asm( "orrs	r3, r1                  " ) ;
+//	asm( "lsr.w	r0, r0, ip              " ) ;
+//	asm( "sbcs.w	r1, r3, #2147483648   " ) ;
+//	asm( "adcs	r0, r2                  " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "L23a6:                        " ) ;
+//	asm( "cmp	ip, r2                    " ) ;
+//	asm( "itt	ne                        " ) ;
+//	asm( "andne.w	r3, r2, r1, lsr #23   " ) ;
+//	asm( "cmpne	r3, r2                  " ) ;
+//	asm( "eor.w	r2, r0, r1              " ) ;
+//	asm( "and.w	r2, r2, #2147483648     " ) ;
+//	asm( "beq.n	L23f6                   " ) ;
+//	asm( "lsls	r0, r0, #1              " ) ;
+//	asm( "beq.n	L23f2                   " ) ;
+//	asm( "lsls	r1, r1, #1              " ) ;
+//	asm( "beq.n	L23f2                   " ) ;
+//	asm( "cbnz	r3, L23dc               " ) ;
+//	asm( "cmp	r3, ip                    " ) ;
+//	asm( "beq.n	L23f2                   " ) ;
+//	asm( "lsls	r1, r1, #8              " ) ;
+//	asm( "clz	r3, r1                    " ) ;
+//	asm( "lsls	r1, r3                  " ) ;
+//	asm( "subs.w	ip, ip, r3            " ) ;
+//	asm( "lsls	r0, r0, #7              " ) ;
+//	asm( "orr.w	r0, r0, #2147483648     " ) ;
+//	asm( "b.n	L2360                     " ) ;
+//	asm( "L23dc:                        " ) ;
+//	asm( "lsls	r0, r0, #8              " ) ;
+//	asm( "clz	ip, r0                    " ) ;
+//	asm( "lsls.w	r0, r0, ip            " ) ;
+//	asm( "subs.w	ip, r3, ip            " ) ;
+//	asm( "lsls	r1, r1, #7              " ) ;
+//	asm( "orr.w	r1, r1, #2147483648     " ) ;
+//	asm( "b.n	L2360                     " ) ;
+//	asm( "L23f2:                        " ) ;
+//	asm( "movs	r0, r2                  " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "L23f6:                        " ) ;
+//	asm( "lsls	r0, r0, #1              " ) ;
+//	asm( "beq.n	L2410                   " ) ;
+//	asm( "lsls	r1, r1, #1              " ) ;
+//	asm( "beq.n	L2410                   " ) ;
+//	asm( "cmn.w	r0, #16777216           " ) ;
+//	asm( "L2402:                        " ) ;
+//	asm( "ite	ls                        " ) ;
+//	asm( "cmnls.w	r1, #16777216         " ) ;
+//	asm( "bhi.n	L2410                   " ) ;
+//	asm( "L240a:                        " ) ;
+//	asm( "orr.w	r0, r2, #2139095040     " ) ;
+//	asm( "bx	lr                        " ) ;
+//	asm( "L2410:                        " ) ;
+//	asm( "mvns	r0, r2                  " ) ;
+//	asm( "bx	lr                        " ) ;
+//}
+
+//uint32_t InitArea[256] ;
+
+//void initCode( uint32_t dest, uint32_t start, uint32_t end )
+//{
+//  asm( "push	{r4, r5, r6, r7}        " ) ;
+//  asm( "mov	r5, r0                    " ) ;
+//  asm( "mov	r3, r1                    " ) ;
+//  asm( "mov	r4, r2                    " ) ;
+//// r3 start of init data
+//// r4 end of init data	 
+//	asm( "b.n	Ld26a                     " ) ;
+  
+//	asm( "Ld234:                        " ) ;
+//  asm( "ldrb.w	r7, [r3], #1          " ) ;
+//  asm( "strb.w	r7, [r5], #1          " ) ;
+//  asm( "Ld23c:                        " ) ;
+//  asm( "subs	r1, r1, #1              " ) ;
+//  asm( "bne.n	Ld234                   " ) ;
+//  asm( "cbz	r0, Ld26a                " ) ;
+//  asm( "ldrb.w	r1, [r3], #1          " ) ;
+//  asm( "ubfx	r6, r6, #2, #2          " ) ;
+//  asm( "cmp	r6, #3                    " ) ;
+//  asm( "it	eq                        " ) ;
+//  asm( "ldrbeq.w	r6, [r3], #1        " ) ;
+//  asm( "add.w	r1, r1, r6, lsl #8      " ) ;
+//  asm( "negs	r1, r1                  " ) ;
+//  asm( "adds	r0, r0, #2              " ) ;
+//  asm( "add	r1, r5                    " ) ;
+//  asm( "beq.n	Ld26a                   " ) ;
+//  asm( "Ld25e:                        " ) ;
+//  asm( "ldrb.w	r6, [r1], #1          " ) ;
+//  asm( "strb.w	r6, [r5], #1          " ) ;
+//  asm( "subs	r0, r0, #1              " ) ;
+//  asm( "bne.n	Ld25e                   " ) ;
+//  asm( "Ld26a:                        " ) ;
+//  asm( "cmp	r3, r4                    " ) ;
+//  asm( "beq.n	Ld28c                   " ) ;
+//  asm( "ldrb.w	r6, [r3], #1          " ) ;
+//  asm( "ands.w	r1, r6, #3            " ) ;
+//  asm( "itt	eq                        " ) ;
+//  asm( "ldrbeq.w	r1, [r3], #1        " ) ;
+//  asm( "addeq	r1, r1, #3              " ) ;
+//  asm( "lsrs	r0, r6, #4              " ) ;
+//  asm( "cmp	r0, #15                   " ) ;
+//  asm( "bne.n	Ld23c                   " ) ;
+//  asm( "ldrb.w	r0, [r3], #1          " ) ;
+//  asm( "adds	r0, #15                 " ) ;
+//  asm( "b.n	Ld23c                     " ) ;
+//  asm( "Ld28c:                        " ) ;
+//  asm( "pop	{r4, r5, r6, r7}          " ) ;
+//  asm( "add.w	r0, r2, #12             " ) ;
+//  asm( "bx	lr                        " ) ;
+	
+//}
+
+//uint16_t LinitData[] = 
+//{
+//0x0072,      	
+//0x1001,      	
+//0x2005,      	
+//0x5941,      	
+//0x00ed,      	
+//0x9708,      	
+//0x1204,      	
+//0x049b,      	
+//0xc112,      	
+//0x1204,      	
+//0x04c5,      	
+//0xc912,      	
+//0x1204,      	
+//0x04cd,      	
+//0xdd12,      	
+//0x1204,      	
+//0x04e1,      	
+//0x0f10,      	
+//0xee61, 
+//0x0800, 	 
+//0x5aa1,      	
+//0x0800,      	
+//0x5cd9,      	
+//0x0800,      	
+//0x5d31,      	
+//0x0800,      	
+//0x0435,      	
+//0x9322,      	
+//0x1008,      	
+//0xf002, 
+//0x0800, 	 
+//0x0457,      	
+//0x7912,      	
+//0x1204,      	
+//0x0493,      	
+//0x9712,      	
+//0x1204,      	
+//0x049b,      	
+//0x9f12,      	
+//0x1204,      	
+//0x04b9,      	
+//0xdd12,      	
+//0x1204,      	
+//0x04e1,      	
+//0x0710,      	
+//0xe691,      	
+//0x0800,      	
+//0xe763,      	
+//0x0800,      	
+//0x04a9,      	
+//0xc512,      	
+//0x1204,      	
+//0x04dd,      	
+//0x0220,      	
+//0xffff, 
+//0x0fff, 	 
+//0x2088,      	
+//0x0102,      	
+//0x0302,      	
+//0x0404,      	
+//0x0fb0,      	
+//0x0706,      	
+//0x0908,      	
+//0x0402,      	
+//0x0806,      	
+//0xa200,      	
+//0x044a,      	
+//0x0000,      	
+//0x3f80,      	
+//0x0100,      	
+//0x0df1,      	
+//0x2210,      	
+//0x0d64,      	
+//0x8032,      	
+//0x2002,      	
+//0x0001,      	
+//0x7fff,      	
+//0x2002,      	
+//0x0002,      	
+//0xa000,      	
+//0x020f,      	
+//0x2641,      	
+//0x2041,      	
+//0xff63, 
+//0x04ff, 	 
+//0x2021,      	
+//0x0461,      	
+//0x0310,      	
+//0x0190,      	
+//0x0000,      	
+//0x2028,      	
+//0x0212,      	
+//0x1204,      	
+//0xace5,      	
+//0x0310,      	
+//0xf10f, 
+//0x0800, 	 
+//0x0449,      	
+//0x5312,      	
+//0x3304,      	
+//0xf157, 
+//0x60a8, 	 
+//0xff03, 
+//0x01f4, 	 
+//0x2000,      	
+//0x1004,      	
+//0x9507,      	
+//0x00b1,      	
+//0xb308,      	
+//0x00b3,      	
+//0xb708,      	
+//0x1204,      	
+//0x04bb,      	
+//0x0310,      	
+//0xb4b1,      	
+//0x0800,      	
+//0x01aa,      	
+//0x0710,      	
+//0xe9d5, 
+//0x0800, 	 
+//0xea0b, 
+//0x0800, 	 
+//0x04a5,      	
+//0xf112, 
+//0x1204, 	 
+//0x04f5,      	
+//0x5d13,      	
+//0x0cef,      	
+//0x0411,      	
+//0xf512, 
+//0x1204, 	 
+//0x5c2d,      	
+//0x3112,      	
+//0x1304,      	
+//0xcaa9,      	
+//0x1140,      	
+//0x1204,      	
+//0x04bf,      	
+//0xcb12,      	
+//0x1204,      	
+//0x04cf,      	
+//0x3f17,      	
+//0x44cb,      	
+//0x0411,      	
+//0x9d12,      	
+//0x1204,      	
+//0x04d5,      	
+//0x4113,      	
+//0x34cc,      	
+//0x0610,      	
+//0x00f2,      	
+//0x1f08,      	
+//0x00f3,      	
+//0x2308,      	
+//0x1204,      	
+//0x0427,      	
+//0x4912,      	
+//0x1304,      	
+//0xeb1d, 
+//0x110c, 	 
+//0x1204,      	
+//0x042b,      	
+//0x2f12,      	
+//0x1204,      	
+//0x0449,      	
+//0x4d12,      	
+//0x1204,      	
+//0x0451,      	
+//0x3117,      	
+//0x90ec,      	
+//0x0411,      	
+//0x3912,      	
+//0x1604,      	
+//0xb065,      	
+//0x2065,      	
+//0x4143,      	
+//0x0cef,      	
+//0x2b13,      	
+//0x34f4,      	
+//0x0411,      	
+//0x3312,      	
+//0x1204,      	
+//0x0437,      	
+//0x3b12,      	
+//0x8304,      	
+//0xc049,      	
+//0x6128,      	
+//0x0001,      	
+//0x8003,      	
+//0x013e,      	
+//0x0101      	
+//} ;	  
+
+
+
+
+
+//void testFD()                         
+//{                                     
+//	Tint[0] = -3 ;                      
+//	Tint[1] = -1 ;                      
+//	Tint[2] = 0 ;                       
+//	Tint[3] = 13 ;                      
+//	Tint[4] = 3 ;                       
+																			
+//	Tfloat[0] = toFloat( Tint[0] ) ;    
+//	Tfloat[1] = toFloat( Tint[1] ) ;    
+//	Tfloat[2] = toFloat( Tint[2] ) ;    
+//	Tfloat[3] = toFloat( Tint[3] ) ;    
+//	Tfloat[4] = toFloat( Tint[4] ) ;    
+																			
+//	Tdouble[0] = floattoDouble( Tfloat[0] ) ;
+////	Tdouble[1] = toDouble( Tfloat[1] ) ;
+////	Tdouble[2] = toDouble( Tfloat[2] ) ;
+//	Tdouble[3] = floattoDouble( Tfloat[3] ) ;
+//	Tdouble[4] = floattoDouble( Tfloat[4] ) ;
+//	Tdouble[2] = doubleMultiply( Tdouble[3], Tdouble[4] ) ;
+//	Tdouble[1] = doubleDivide( Tdouble[3], Tdouble[4] ) ;
+//	Tint[2] = (int16_t)doubleToFloat( Tdouble[1] ) ;
+//	Tint[0] = (int32_t)floatToInt16( Tfloat[3] ) ;
+//	Tint[1] = (int32_t)floatToInt16( Tfloat[0] ) ;
+
+//	Tresult[0] = multiplyFloats( Tfloat[0], Tfloat[1] ) ; // 40400000 = 3
+//	Tresult[1] = multiplyFloats( Tfloat[3], Tfloat[4] ) ; // 421c0000 = 39
+//	Tresult[2] = multiplyFloats( Tfloat[2], Tfloat[3] ) ; // 00000000 = 0
+//	Tresult[3] = multiplyFloats( Tfloat[1], Tfloat[4] ) ; // c0400000 = -3
+
+////	initCode( (uint32_t)InitArea, (uint32_t)LinitData, (uint32_t) LinitData + sizeof(LinitData) ) ;
+//}
+
+
+#endif
+
+
+
+#ifndef SMALL
 int main( void )
 {
+	__set_MSP((uint32_t) &MainStack[MAIN_STACK_REQUIRED]) ;
+	xmain() ;
+}
+#endif
+
+#ifndef SMALL
+void xmain( void )
+#else
+int main( void )
+#endif
+{
+#ifdef PCBX9D
+ #ifdef LUA
+//void enableBackupRam()
+	RCC->APB1ENR |= RCC_APB1ENR_PWREN ;
+	PWR->CR |= PWR_CR_DBP ;
+	RCC->AHB1ENR |= RCC_AHB1ENR_BKPSRAMEN ;
+	uint32_t tempi ;
+	uint32_t *p = (uint32_t *) BKPSRAM_BASE ;
+	for ( tempi = 0 ; tempi < 1024 ; tempi += 1 )
+	{
+		*p++ = 0 ;
+	}
+ #endif	
+#endif	
+//extern unsigned char *heap ;
+//	SaveHeap[0] = (uint32_t)heap ;
 #ifdef PCBLEM1	
 	AFIO->MAPR = AFIO_MAPR_SWJ_CFG_DISABLE ;
 	NVIC->ICER[0] = 0xFFFFFFFF ;
@@ -2715,6 +3719,11 @@ int main( void )
 	ledInit() ;
 	ledGreen() ;
 #endif
+
+#if defined(PCBTX16S)
+//	testFD() ;
+#endif
+
 
 #ifdef WDOG_REPORT
 #ifdef PCBSKY	
@@ -3359,6 +4368,8 @@ notePosition('3') ;
 //		lcd_clear() ;
 //		lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
 //		refreshDisplay() ;
+
+
 		while ( (uint16_t)(get_tmr10ms() - tgtime ) < 70 )
 //		while ( get_tmr10ms() < 25 )
 		{
@@ -3371,9 +4382,10 @@ notePosition('3') ;
 				dtimer = now ;
 				if ( ( dtimer & 1) == 0 )
 				{
+					LcdBackground = LCD_GREEN ;
 					lcd_clear() ;
 					lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
-					lcd_hbar( 13 + X12OFFSET, 49, 102, 6, (dtimer - tgtime) * 1000 / (98*7) ) ;
+					lcd_hbar( 13 + X12OFFSET, 49, 102, 6, (dtimer - tgtime) * 1000 / (97*7) ) ;
 					refreshDisplay() ;
 				}
 			}
@@ -3819,7 +4831,7 @@ extern void sdInit( void ) ;
    #if defined(PCBTX16S)
 	g_eeGeneral.physicalRadioType = PHYSICAL_TX16S ;
    #else
-    #if defined(EXPRESS)
+    #if defined(PCBREV_EXPRESS)
 	g_eeGeneral.physicalRadioType = PHYSICAL_X10E ;
     #else
 	g_eeGeneral.physicalRadioType = PHYSICAL_X10 ;
@@ -3881,6 +4893,13 @@ extern void sdInit( void ) ;
 
 #ifdef PCBX9D
 	create6posTable() ;
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+	checkTheme( &g_eeGeneral.theme[g_eeGeneral.selectedTheme] ) ;
+#endif
+#ifdef TOUCH	
+	dimBackColour() ;
 #endif
 
 #ifdef PCBX7
@@ -4313,7 +5332,7 @@ void initTopLcd() ;
    * "return type of 'main' is not 'int'
    * we use an int as return :-)
    */
-  return(0);
+//  return(0);
 }
 
 #ifndef SIMU
@@ -4324,7 +5343,8 @@ extern void writeLogs( void ) ;
 extern void closeLogs( void ) ;
 
 uint8_t LogsRunning = 0 ;
-uint16_t LogTimer = 0 ;
+uint32_t LogTimer = 0 ;
+uint16_t LogCounter = 0 ;
 extern uint8_t RawLogging ;
 extern void rawStartLogging() ;
 
@@ -4348,9 +5368,10 @@ void log_task(void* pdata)
 			{
 				writeLogs() ;
 			}
-		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 50 ) ;
-  	tgtime += 50 ;
+		} while( (uint16_t)(get_tmr10ms() - tgtime ) < 10 ) ;
+  	tgtime += 10 ;
 		LogTimer += 1 ;
+		LogCounter += 1 ;
 
 		if ( g_model.logSwitch )
 		{
@@ -4360,6 +5381,7 @@ void log_task(void* pdata)
 				{	// were off
 					LogsRunning = 3 ;		// On and changed
 					LogTimer = 0 ;
+					LogCounter = 0 ;
 				}
 			}
 			else
@@ -4400,22 +5422,43 @@ void log_task(void* pdata)
 
 			if ( LogsRunning & 1 )
 			{
+				uint32_t writeNow = 0 ;
 				// log Data (depending on Rate)
-				uint8_t mask = 0x0001 ;
-				if ( g_model.logRate == 2 )		// 0.5 secs
+				if ( g_model.logRate == 3 )		// 0.1 secs
 				{
-					mask = 0 ;
+					if ( LogCounter >= 2 )
+					{
+						writeNow = 1 ;
+					}
+				}
+				else if ( g_model.logRate == 2 )		// 0.5 secs
+				{
+					if ( LogCounter >= 5 )
+					{
+						writeNow = 1 ;
+					}
 				}
 				else if ( g_model.logRate )		// 2.0 secs
 				{
-					mask = 0x0003 ;
+					if ( LogCounter >= 20 )
+					{
+						writeNow = 1 ;
+					}
 				}
-				if ( ( LogTimer & mask ) == 0 )
+				else
+				{
+					if ( LogCounter >= 10 )
+					{
+						writeNow = 1 ;
+					}
+				}
+				if ( writeNow )
 				{
 					if ( RawLogging == 0 )
 					{					
 						writeLogs() ;
 					}
+					LogCounter = 0 ;
 				}
 			}
 		}
@@ -4576,6 +5619,17 @@ void prepareForShutdown()
 	
 }
 
+#ifdef PCBSKY
+ #ifndef SMALL
+  #ifndef REVX
+	// AR9X
+uint16_t OldRssi[2] ;
+uint16_t OldRssTimer ;
+  #endif
+ #endif
+#endif
+
+
 #ifdef POWER_BUTTON
 	static uint8_t powerIsOn = 1 ;
 #endif
@@ -4602,6 +5656,14 @@ uint32_t checkRssi(uint32_t swappingModels)
 	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
 #endif
 	{
+#ifdef PCBSKY
+ #ifndef SMALL
+  #ifndef REVX
+	// AR9X
+		if ( OldRssi[0] == 0 )
+  #endif
+ #endif
+#endif
 		return RSSI_POWER_OFF ;
 	}
 
@@ -4662,9 +5724,13 @@ uint32_t checkRssi(uint32_t swappingModels)
     }
     wdt_reset();
 		CoTickDelay(5) ;					// 10mS for now
+#ifdef MIXER_TASK
+		mainSequence( NO_MENU ) ;
+#else
 		getADC_osmp() ;
 		perOutPhase(g_chans512, 0);
 		check_frsky( 0 ) ;
+#endif
 //#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D)
 		if ( swappingModels == 0 )
 		{
@@ -4797,6 +5863,7 @@ void main_loop(void* pdata)
 		processVoiceAlarms() ;
 		VoiceCheckFlag100mS = 0 ;
 		speakModelVoice() ;
+		sortTelemText() ;
 
 #ifndef PCBLEM1
 		parseMultiData() ;
@@ -4810,6 +5877,11 @@ void main_loop(void* pdata)
 		disableRtcBattery() ;
 #endif
 
+#ifdef TOUCH
+	touchPanelInit() ;
+#endif
+
+
 #ifdef LUA
 		if ( g_model.basic_lua )
 		{
@@ -4817,6 +5889,7 @@ void main_loop(void* pdata)
 		}
 		else
 		{
+			startBasic() ;
 			basicLoadModelScripts() ;
 		}
 #endif
@@ -5038,8 +6111,29 @@ extern uint8_t ModelImageValid ;
 	rssi = 0 ;
 #endif
 
+
 	while (1)
 	{
+#ifdef PCBSKY
+ #ifndef SMALL
+  #ifndef REVX
+	// AR9X
+		if ( Tenms )
+		{
+			if ( FrskyHubData[FR_RXRSI_COPY] )
+			{
+				OldRssi[1] = OldRssi[0] = FrskyHubData[FR_RXRSI_COPY] ;
+			}
+			else if ( ++OldRssTimer > 99 )
+			{
+				OldRssTimer = 0 ;
+				OldRssi[0] = OldRssi[1] ;
+				OldRssi[1] = FrskyHubData[FR_RXRSI_COPY] ;
+			}
+		}
+  #endif
+ #endif
+#endif
 		
 #if (not defined(REVA)) || defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 		
@@ -5171,6 +6265,12 @@ static uint8_t PBstate ;
 				putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 				lcd_clear() ;
 				lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
+
+#if defined(PCBT16)
+extern uint8_t InternalMultiStopUpdate ;
+				InternalMultiStopUpdate = 1 ;
+#endif
+
 //#ifdef PCBX12D
 //	lcd_outhex4( 20, FH, AudioActive ) ;
 //	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
@@ -5260,12 +6360,18 @@ extern void eeSaveAll() ;
 						eeSaveAll() ;
 						saved = 1 ;
 						tgtime = get_tmr10ms() ;
+	  				WatchdogTimeout = 300 ;
+
 					}
  #endif
  #if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 					if ( (uint16_t)(get_tmr10ms() - tgtime ) < 200 )
 					{
 						lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "EEPROM BUSY", 11 ) ;
+						wdt_reset() ;
+						
+//	lcd_outdez( 3*FW, 7*FH, WatchdogTimeout ) ;
+
  #else
 
   #ifdef EETYPE_RLC
@@ -5476,10 +6582,10 @@ extern int16_t AltOffset ;
 static void almess( const char * s, uint8_t type )
 {
 	const char *h ;
-  lcd_clear();
 #if defined(PCBX12D) || defined(PCBX10)
   lcd_puts_P( X12OFFSET, 4*FW, s ) ;
 #else
+  lcd_clear();
   lcd_puts_Pleft(4*FW,s);
 #endif
 	if ( type == ALERT_TYPE)
@@ -5498,7 +6604,10 @@ static void almess( const char * s, uint8_t type )
 		h = PSTR(STR_MESSAGE) ;
 	}
   lcd_putsAtt(64-7*FW + X12OFFSET,0*FH, h,DBLSIZE);
-  refreshDisplay();
+#if defined(PCBX12D) || defined(PCBX10)
+#else
+//  refreshDisplay();
+#endif
 }
 
 int8_t getAndSwitch( SKYCSwData &cs )
@@ -6624,6 +7733,11 @@ uint8_t LcdResetSwitch ;
 extern "C" void SDRAM_Init() ;
 #endif
 
+#ifdef TOUCH
+uint16_t TouchDebounceCount = 0 ;
+uint16_t TouchRepeat = 0 ;
+#endif
+
 void mainSequence( uint32_t no_menu )
 {
 	CalcScaleNest = 0 ;
@@ -6794,8 +7908,6 @@ extern uint8_t M64ResetCount ;
 			{
 				StickScrollTimer -= 1 ;				
 			}
-			MixerRate = MixerCount ;
-			MixerCount = 0 ;
 #ifdef REV9E
 void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
 void setTopRssi( uint32_t rssi ) ;
@@ -6844,6 +7956,91 @@ extern uint32_t TotalExecTime ;
 #ifndef SIMU
 		sdPoll10mS() ;
 #endif
+
+#ifdef TOUCH
+		if ( TouchEventOccured )
+		{
+			uint16_t count ;
+			TouchEventOccured = 0 ;
+			
+			if(g_eeGeneral.lightAutoOff*500>g_LightOffCounter) g_LightOffCounter = g_eeGeneral.lightAutoOff*500 ;
+
+			if ( (count = touchReadPoints()) )
+			{
+//				if ( TouchControl.count == 0 )
+				{
+					TouchControl.x = TouchData.points[0].x ;
+					TouchControl.y = TouchData.points[0].y ;
+
+					if ( TouchDebounceCount )
+					{
+						TouchDebounceCount = 0 ;
+					}
+					if ( TouchControl.event != TEVT_DOWN )
+					{
+						TouchRepeat = 0 ;
+						TouchControl.repeat = 0 ;
+						TouchControl.event = TEVT_DOWN ;
+						TouchControl.startx = TouchControl.x ;
+						TouchControl.starty = TouchControl.y ;
+					}
+					else
+					{
+						TouchControl.deltax = (int16_t)TouchControl.x - (int16_t)TouchControl.startx ;
+						TouchControl.deltay = (int16_t)TouchControl.y - (int16_t)TouchControl.starty ;
+					}
+					if ( ++TouchRepeat > 35 )
+					{
+						if ( TouchRepeat > 42 )
+						{
+							TouchRepeat = 36 ;
+							TouchControl.repeat = 1 ;
+						}
+					}
+				}
+//				else
+//				{
+//					if ( ++TouchRepeat > 24 )
+//					{
+//						if ( TouchRepeat > 29 )
+//						{
+//							TouchRepeat = 25 ;
+//							TouchControl.repeat = 1 ;
+//						}
+//					}
+//					// or sliding !!
+//				}
+				TouchControl.count = count ;
+				TouchUpdated = 1 ;
+			}
+			else
+			{
+				if ( TouchControl.count )
+				{
+//					TouchControl.event = TEVT_UP ;
+					TouchDebounceCount = 5 ;
+					TouchUpdated = 2 ;
+					TouchControl.count = 0 ;
+					TouchControl.repeat = 0 ;
+				}
+			}
+			TouchBacklight = 1 ;
+
+		}
+		else
+		{
+			if ( TouchDebounceCount )
+			{
+				if ( --TouchDebounceCount == 0 )
+				{
+					TouchControl.event = TEVT_UP ;
+					TouchUpdated = 1 ;
+				}
+			}
+		}
+
+#endif
+
 
  #ifdef PCBSKY
 		if ( ++coProTimer > 9 )
@@ -7329,13 +8526,21 @@ extern uint8_t SpiEncoderValid ;
 				uint16_t total_2volts = 0 ;
 				CPU_UINT audio_sounded = 0 ;
 				uint16_t low_cell = 440 ;		// 4.4V
+
+				uint32_t firstDeviceLimit = 6 ;
+
+				if ( FrskyBattCells[0] > 6 )
+				{
+				 	firstDeviceLimit = FrskyBattCells[0] ;
+				}
+
 				for (uint8_t k=0 ; k<12 ; k++)
 				{
 					uint32_t index = k < 6 ? TEL_ITEM_CELL1 : TEL_ITEM_CELL7 - 6 ;
 					index += k ;
 					if ( telemItemValid( index ) )
 					{
-						if ( k < 6 )
+						if ( k < firstDeviceLimit )
 						{
 							total_1volts += FrskyHubData[FR_CELL1+k] ;
 						}
@@ -7784,11 +8989,31 @@ struct t_p1 P1values ;
 uint8_t LongMenuTimer ;
 uint8_t StepSize = 20 ;
 
+#ifdef TOUCH
+void displayAdjustIcons()
+{
+	lcdDrawIcon( LCD_W-TICON_SIZE-2, 60, IconHplus, 0 ) ;
+	lcdDrawIcon( LCD_W-TICON_SIZE-2, 110, IconHminus, 0 ) ;
+
+	lcdDrawIcon( LCD_W-TICON_SIZE-2, 10, IconH2plus, 0 ) ;
+	lcdDrawIcon( LCD_W-TICON_SIZE-2, 160, IconH2minus, 0 ) ;
+
+}
+#endif
+
+#ifdef TOUCH
+int16_t TouchAdjustValue ;	// 
+#endif
+
 int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flags)
 {
   int16_t newval = val;
   uint8_t kpl=KEY_RIGHT, kmi=KEY_LEFT, kother = -1;
 	uint8_t editAllowed = 1 ;
+#ifdef TOUCH
+	uint32_t largeChange = 0 ;
+	TouchAdjustValue = 0 ;
+#endif
 	
 	if ( g_eeGeneral.forceMenuEdit && (s_editMode == 0) && ( i_flags & NO_MENU_ONLY_EDIT) == 0 )
 	{
@@ -7796,6 +9021,96 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 	}
 
 		uint8_t event = Tevent ;
+#ifdef TOUCH
+ 	if( !(i_min==0 && i_max==1 ) )
+	{
+		if ( s_editMode )
+		{
+			displayAdjustIcons() ;
+			if ( TouchUpdated )
+	  	{
+				TouchUpdated = 0 ;
+				if ( ( TouchControl.event == TEVT_UP ) || (TouchControl.repeat) )
+				{
+					if ( TouchControl.x > 430 )
+					{
+						if ( ( TouchControl.y >= 10 ) && ( TouchControl.y <= 110 ) )
+						{
+							if ( event == 0 )
+							{
+								event = EVT_KEY_FIRST(KEY_RIGHT) ;
+								TouchAdjustValue = 1 ;
+								if ( TouchControl.y <= 60 )
+								{
+									largeChange = 1 ;
+									TouchAdjustValue = StepSize ;
+								}
+							}
+						}
+						else if ( ( TouchControl.y >= 110 ) && ( TouchControl.y <= 210 ) )
+						{
+							if ( event == 0 )
+							{
+								event = EVT_KEY_FIRST(KEY_LEFT) ;
+								TouchAdjustValue = -1 ;
+								if ( TouchControl.y >= 160 )
+								{
+									largeChange = 1 ;
+									TouchAdjustValue = -StepSize ;
+								}
+							}
+						}
+					}
+					else
+					{
+						s_editMode = 0 ;		// Finished
+					}
+				}
+			}
+		}
+		else
+		{
+			lcdDrawIcon( LCD_W-TICON_SIZE-2, 110, IconHedit, 0 ) ;
+			if ( TouchUpdated )
+	  	{
+				TouchUpdated = 0 ;
+				if ( TouchControl.event == TEVT_UP )
+				{
+					if ( TouchControl.x > 430 )
+					{
+						if ( ( TouchControl.y >= 110 ) && ( TouchControl.y <= 160 ) )
+						{
+							s_editMode = !s_editMode;
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		// display toggle icon and handle it
+		lcdDrawIcon( LCD_W-TICON_SIZE-2, 110, IconHtoggle, 0 ) ;
+		if ( TouchUpdated )
+	  {
+			TouchUpdated = 0 ;
+			if ( TouchControl.event == TEVT_UP )
+			{
+				if ( TouchControl.x > 430 )
+				{
+					if ( ( TouchControl.y >= 110 ) && ( TouchControl.y <= 160 ) )
+					{
+						if ( event == 0 )
+						{
+							event = EVT_KEY_BREAK(BTN_RE) ;
+						}
+					}
+				}
+			}
+		}
+	}
+
+#endif
 //  if(event & _MSK_KEY_DBL){
 //    uint8_t hlp=kpl;
 //    kpl=kmi;
@@ -7806,17 +9121,26 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 	{
 		if ( editAllowed )
 		{
-#ifdef PCBXLITE
-			if ((GPIOE->IDR & 0x0100) == 0 )
-#else
-			if ( menuPressed() )
-#endif
+#ifdef TOUCH
+			if ( largeChange )
 			{
     		newval += StepSize ;
 			}		 
 			else
-			{
-    		newval += 1 ;
+#endif
+			{			
+#ifdef PCBXLITE
+				if ((GPIOE->IDR & 0x0100) == 0 )
+#else
+				if ( menuPressed() )
+#endif
+				{
+    			newval += StepSize ;
+				}		 
+				else
+				{
+  	  		newval += 1 ;
+				}
 			}
 			audioDefevent(AU_KEYPAD_UP);
 #if defined(PCBX10)
@@ -7830,17 +9154,26 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 	{
 		if ( editAllowed )
 		{
-#ifdef PCBXLITE
-			if ((GPIOE->IDR & 0x0100) == 0 )
-#else
-			if ( menuPressed() )
-#endif
+#ifdef TOUCH
+			if ( largeChange )
 			{
     		newval -= StepSize ;
 			}		 
 			else
+#endif
 			{
-    		newval -= 1 ;
+#ifdef PCBXLITE
+				if ((GPIOE->IDR & 0x0100) == 0 )
+#else
+				if ( menuPressed() )
+#endif
+				{
+    			newval -= StepSize ;
+				}		 
+				else
+				{
+    			newval -= 1 ;
+				}
 			}
 			audioDefevent(AU_KEYPAD_DOWN);
 #if defined(PCBX10)
@@ -7919,7 +9252,21 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   newval -= P1values.p1valdiff;
 	if ( RotaryState == ROTARY_VALUE )
 	{
-		newval += ( menuPressed() || encoderPressed() ) ? Rotary_diff * 20 : Rotary_diff ;
+//		newval += ( menuPressed() || encoderPressed() ) ? Rotary_diff * 20 : Rotary_diff ;
+
+		if ( Rotary_diff )
+		{
+			if ( Rotary_diff > 0 )
+			{
+				newval += RotencSpeed ;
+			}
+			else
+			{
+				newval -= RotencSpeed ;
+				
+			}
+		}
+
 //#ifdef PCBX12D
 //		Rotary_diff = 0 ;
 //#endif
@@ -8672,8 +10019,6 @@ static void checkStickScroll()
 }
 
 
-
-
 void perMain( uint32_t no_menu )
 {
   static uint16_t lastTMR;
@@ -8751,8 +10096,21 @@ void checkDsmTelemetry5ms() ;
 	uint8_t evt = 0 ;
 	if ( ( lastTMR & 1 ) == 0 )
 	{
-		evt=getEvent();
-  	evt = checkTrim(evt);
+		evt = peekEvent() ;
+  	int8_t  k = (evt & EVT_KEY_MASK) - TRM_BASE ;
+  	if ( ( k >= 0 ) && ( k < 8 ) )
+		{		
+			evt=getEvent() ;
+  		checkTrim(evt) ;
+		}
+		if ( ( lastTMR & 3 ) == 0 )
+		{
+			evt = getEvent() ;
+		}
+		else
+		{
+			evt = 0 ;
+		}
 	}
 #else
 	uint8_t evt=getEvent();
@@ -8818,7 +10176,7 @@ void checkDsmTelemetry5ms() ;
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
-	if ( ( lastTMR & 1 ) == 0 )
+	if ( ( lastTMR & 3 ) == 0 )
 #endif
 	{
 		int32_t x ;
@@ -8845,7 +10203,7 @@ void checkDsmTelemetry5ms() ;
 //#endif
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
-	if ( ( lastTMR & 1 ) == 0 )
+	if ( ( lastTMR & 3 ) == 0 )
 #endif
 	{
 		Rotary_diff = Pre_Rotary_diff[3] ;
@@ -8861,7 +10219,28 @@ void checkDsmTelemetry5ms() ;
 			Pre_Rotary_diff[1] = 0 ;
 		}
 	}
-	 
+
+	if ( Rotary_diff )
+	{
+		uint16_t now = get_tmr10ms() ;
+		uint16_t delay = now - LastRotEvent ;
+
+		if ( delay <= 8 )
+		{
+			RotencCount += 1 ;
+			if ( RotencCount > 5 )
+			{
+				RotencSpeed = (RotencCount-2) / 2 ;
+//				RotencSpeed = (delay<4) ? 10 : delay < 6 ? 4 : 2 ;
+			}
+		}
+		else
+		{
+			RotencSpeed = 1 ;
+			RotencCount = 0 ;
+		}
+		LastRotEvent = now ;
+	}
 	
 	{
 		uint16_t a = 0 ;
@@ -9061,6 +10440,10 @@ void checkDsmTelemetry5ms() ;
 		 
 		if ( AlertMessage )
 		{
+#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
+		 if ( ( lastTMR & 3 ) == 0 )
+		 {
+#endif
 			almess( AlertMessage, AlertType ) ;
 #ifdef LUA
 			if ( lua_warning_info[0] )
@@ -9084,8 +10467,12 @@ void checkDsmTelemetry5ms() ;
 					p += 1 ;
 				}
   		  refreshDisplay() ;
+#if defined(PCBX12D) || defined(PCBX10)
+				lcd_clearBackground() ;	// Start clearing other frame
+#endif
 			  wdt_reset() ;		// 
 			}
+			else
 #endif
 #ifdef BASIC
 			if ( BasicErrorText[0] )
@@ -9109,9 +10496,20 @@ void checkDsmTelemetry5ms() ;
 					p += 1 ;
 				}
   		  refreshDisplay() ;
+#if defined(PCBX12D) || defined(PCBX10)
+				lcd_clearBackground() ;	// Start clearing other frame
+#endif
 			  wdt_reset() ;		//
 			}
+			else
 #endif
+			{
+  		  refreshDisplay() ;
+#if defined(PCBX12D) || defined(PCBX10)
+				lcd_clearBackground() ;	// Start clearing other frame
+#endif
+			  wdt_reset() ;		//
+			}
 			
 			uint8_t key = keyDown() ;
 			killEvents( evt ) ;
@@ -9160,13 +10558,16 @@ void checkDsmTelemetry5ms() ;
 			{
 				alertKey = 2 ;
 			}
+#if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
+		 }
+#endif
 		}
 		else
 		{
 			alertKey = 0 ;
     	
 #ifdef MULTI_EVENTS
-			if ( ( lastTMR & 1 ) == 0 )
+			if ( ( lastTMR & 3 ) == 0 )
 #endif
 			{
 				if ( EnterMenu )
@@ -9217,12 +10618,14 @@ extern uint8_t ImageY ;
 extern int32_t Rotary_diff ;
 				if ( Rotary_diff > 0 )
 				{
-					evt = EVT_KEY_FIRST(KEY_DOWN) ;
+					evt = EVT_ROTARY_RIGHT ;
+//					evt = EVT_KEY_FIRST(KEY_DOWN) ;
 					evtAsRotary = 1 ;
 				}
 				else if ( Rotary_diff < 0 )
 				{
-					evt = EVT_KEY_FIRST(KEY_UP) ;
+					evt = EVT_ROTARY_LEFT ;
+//					evt = EVT_KEY_FIRST(KEY_UP) ;
 					evtAsRotary = 1 ;
 				}
 			}
@@ -9232,6 +10635,10 @@ extern int32_t Rotary_diff ;
 #ifdef LUA
 			if ( g_model.basic_lua )
 			{
+#ifdef MULTI_EVENTS
+			if ( ( lastTMR & 3 ) == 0 )
+			{
+#endif
 				refreshNeeded = luaTask( evt, RUN_STNDAL_SCRIPT, true ) ;
   			if ( !refreshNeeded )
 				{
@@ -9245,6 +10652,9 @@ extern int32_t Rotary_diff ;
 	//					Rotary_diff = 0 ;
 	//				}
 				}
+#ifdef MULTI_EVENTS
+			}
+#endif
 			}
 			else
 #endif
@@ -9324,9 +10734,13 @@ extern uint8_t ImageDisplay ;
 #endif
 
 #ifdef MULTI_EVENTS
-			if ( ( lastTMR & 1 ) == 0 )
+			if ( ( lastTMR & 3 ) == 0 )
 			{
 #endif
+				if ( evtAsRotary )
+				{
+					evt = 0 ;
+				}
 				g_menuStack[g_menuStackPtr](evt);
 				refreshNeeded = 4 ;
 #ifdef MULTI_EVENTS
@@ -9344,16 +10758,15 @@ extern uint8_t ImageDisplay ;
 				}
  #endif
 			}
-static uint8_t displayCount ;
 	#if defined(PCBX9D) || defined(PCBSKY) || defined(PCB9XT)
 			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) ) ) // && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
   #if defined(PCBX12D) || defined(PCBX10)
-			if ( refreshNeeded != 1 )
+		 if ( ( lastTMR & 3 ) == 0 )
+		 {
+			if ( ( refreshNeeded == 2 ) || ( ( refreshNeeded == 4 ) ) ) // && ( ( lastTMR & 3 ) == 0 ) ) )
 	#endif
 			{
-				if ( displayCount == 0 )
-				{
   #if defined(PCBX12D) || defined(PCBX10)
 					displayStatusLine(ScriptActive) ;
 					ScriptActive = 0 ;
@@ -9375,8 +10788,7 @@ extern const char *screenshot() ;
 					}
 	#endif
 					uint16_t t1 = getTmr2MHz() ;
-  			  refreshDisplay() ;
-					displayCount = 1 ;
+					refreshDisplay() ;
 //#ifdef BASIC
 //				BasicRunWithoutRefresh = 0 ;
 //#endif
@@ -9385,12 +10797,10 @@ extern const char *screenshot() ;
 #endif
 					t1 = getTmr2MHz() - t1 ;
 					g_timeRfsh = t1 ;
-				}
-				else
-				{
-					displayCount = 0 ;
-				}
 			}
+#if defined(PCBX12D) || defined(PCBX10)
+		 }
+#endif
 		}
 	}
 
@@ -9909,6 +11319,8 @@ extern void checkRotaryEncoder() ;
 		{
 			AlarmTimer = 100 ;		// Restart timer
 			AlarmCheckFlag += 1 ;	// Flag time to check alarms
+			MixerRate = MixerCount ;
+			MixerCount = 0 ;
 		}
 		if ( --CheckTimer == 0 )
 		{
@@ -10290,9 +11702,10 @@ void getADC_filt()
 uint32_t getFlightPhase()
 {
 	uint32_t i ;
-  for ( i = 0 ; i < MAX_MODES ; i += 1 )
+  for ( i = 0 ; i < MAX_MODES+1 ; i += 1 )
 	{
-    PhaseData *phase = &g_model.phaseData[i];
+  	PhaseData *phase ;
+		phase = (i < MAX_MODES) ? &g_model.phaseData[i] : &g_model.xphaseData ;
     if ( phase->swtch )
 		{
     	if ( getSwitch00( phase->swtch ) )
@@ -10325,7 +11738,10 @@ int16_t getRawTrimValue( uint8_t phase, uint8_t idx )
 {
 	if ( phase )
 	{
-		return g_model.phaseData[phase-1].trim[idx] ;
+	  PhaseData *p ;
+		phase -= 1 ;
+		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+		return p->trim[idx] ;
 	}	
 	else
 	{
@@ -10335,7 +11751,7 @@ int16_t getRawTrimValue( uint8_t phase, uint8_t idx )
 
 uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx )
 {
-  for ( uint32_t i=0 ; i<MAX_MODES ; i += 1 )
+  for ( uint32_t i=0 ; i<MAX_MODES+1 ; i += 1 )
 	{
     if (phase == 0) return 0;
     int16_t trim = getRawTrimValue( phase, idx ) ;
@@ -10389,7 +11805,10 @@ void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
 //		{
 //			trim += 2000 ;
 //		}
-  	g_model.phaseData[phase-1].trim[idx] = trim ;
+	  PhaseData *p ;
+		phase -= 1 ;
+		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+  	p->trim[idx] = trim ;
 	}
 	else
 	{
@@ -10530,6 +11949,8 @@ void setLastTelemIdx( uint8_t idx )
 	setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx ) ;
 }
 
+extern void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
+
 #if defined(PCBX12D) || defined(PCBX10)
 void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att, uint16_t colour , uint16_t bgColour )
 #else
@@ -10621,10 +12042,24 @@ void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
 		}
 		else
 		{
-			// Extra telemetry items
-			setLastTelemIdx( idx-NUM_SKYXCHNRAW-8 ) ;
+#ifdef INPUTS
+			if ( mix )
+			{
+				if ( idx >= 224 )	// Input
+				{
+					displayInputName( x, y, idx-224+1, att ) ;
+//					lcd_img( x, y, IconInput, 0, 0 ) ;
+//					lcd_outdezNAtt(x+3*FW, y, idx-224, att + LEADING0, 2) ;
+					return ;
+				}
+			}
+			else
+#endif
+			{
+				// Extra telemetry items
+				setLastTelemIdx( idx-NUM_SKYXCHNRAW-8 ) ;
 //			setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW-8 ) ;
-			
+			}
 		}
 	}
 #if defined(PCBX12D) || defined(PCBX10)
@@ -11141,20 +12576,23 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 {
 	if ( idx1 == 0 )
 	{
-    lcd_putsAtt(x+FW,y,XPSTR("---"),att);return;
+    lcd_putsAtt(x+FW,y,XPSTR("---"),att) ;
+		return ;
 	}
 	else if ( idx1 == MAX_SKYDRSWITCH )
 	{
-    lcd_putsAtt(x+FW,y,PSTR(STR_ON),att);return;
+    lcd_putsAtt(x+FW,y,PSTR(STR_ON),att) ;
+		return ;
 	}
 	else if ( idx1 == -MAX_SKYDRSWITCH )
 	{
-    lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att);return;
+    lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att) ;
+		return ;
 	}
 	else if ( idx1 == MAX_SKYDRSWITCH + 1 )
 	{
     lcd_putsAtt(x+FW,y,XPSTR("Fmd"),att) ;
-		return  ;;
+		return ;
 	}
 
 	if ( idx1 < 0 )
@@ -11173,10 +12611,10 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtuEtdAtuAtdRtuRtdTtuTtd"),z,att) ;
 		return ;
 	}
-	if ( ( z <= HSW_FM6 ) && ( z >= HSW_FM0 ) )
+	if ( ( z <= HSW_FM7 ) && ( z >= HSW_FM0 ) )
 	{
 		z -= HSW_FM0 ;
-  	lcd_putsAttIdx( x+FW, y, XPSTR("\003FM0FM1FM2FM3FM4FM5FM6"), z, att ) ;
+  	lcd_putsAttIdx( x+FW, y, XPSTR("\003FM0FM1FM2FM3FM4FM5FM6FM7"), z, att ) ;
 		return ;
 	}
 	z -= 1 ;
@@ -11199,10 +12637,28 @@ void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
 #endif
 }
 
+#ifdef TOUCH
+void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1,uint8_t att, uint16_t fcolour, uint16_t bcolour)//, bool nc)
+{
+	uint16_t oldBcolour = LcdBackground ;
+	uint16_t oldFcolour = LcdForeground ;
+	LcdBackground = bcolour ;
+	LcdForeground = fcolour ;
+	putsDrSwitches( x, y, idx1, att ) ;
+	LcdBackground = oldBcolour ;
+	LcdForeground = oldFcolour ;
+}
+#endif
+
 //Type 1-trigA, 2-trigB, 0 best for display
 void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type )
 {
   int8_t tm = g_model.timer[timer].tmrModeA ;
+	if ( ( type == 2 ) || ( ( type == 0 ) && ( tm == 1 ) ) )
+	{
+		putsMomentDrSwitches( x, y, g_model.timer[timer].tmrModeB, attr ) ;
+		return ;
+	}
 	if ( type < 2 )		// 0 or 1
 	{
 	  if(tm<TMR_VAROFS) {
@@ -11223,10 +12679,6 @@ void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type
 			}
   		lcd_putcAtt(x+3*FW,  y,'%',attr);
 		}
-	}
-	if ( ( type == 2 ) || ( ( type == 0 ) && ( tm == 1 ) ) )
-	{
-		putsMomentDrSwitches( x, y, g_model.timer[timer].tmrModeB, attr ) ;
 	}
 }
 

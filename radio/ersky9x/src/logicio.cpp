@@ -3669,7 +3669,7 @@ uint32_t read_keys()
 	}
 	if ( x & KEYS_GPIO_PIN_EXIT )
 	{
-		y |= 0x02 << KEY_EXIT ;			// EXIT
+		y |= 0x02 << KEY_EXIT ;			// EXIT 
 	}
 	if ( x & KEYS_GPIO_PIN_DOWN )
 	{
@@ -3681,7 +3681,7 @@ uint32_t read_keys()
 	}
 	if ( x & KEYS_GPIO_PIN_PGDN )
 	{
-		y |= 0x02 << KEY_LEFT ;		// LEFT
+		y |= 0x02 << KEY_LEFT ;		// LEFT (PAGE)
 	}
 	y |= 0x02 << KEY_RIGHT ;	// RIGHT
  #endif

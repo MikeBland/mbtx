@@ -79,6 +79,7 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 #include "ersky9x.h"
 #include "lcd.h"
+#include "myeeprom.h"
 #include "menus.h"
 #include "drivers.h"
 #include "logicio.h"
@@ -94,7 +95,6 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 #endif
 #include "maintenance.h"
-#include "myeeprom.h"
 
 extern union t_sharedMemory SharedMemory ;
 
@@ -357,6 +357,7 @@ void initMultiMode()
  #if defined(PCBT16)
 	if ( MultiModule )
 	{
+		INTMODULE_USART->CR1 = 0 ;
 		INTERNAL_RF_ON() ;
 		RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
 	  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
@@ -365,6 +366,7 @@ void initMultiMode()
 	
 		INTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 57600 ;
 		INTMODULE_USART->CR1 = USART_CR1_UE | USART_CR1_TE | USART_CR1_RE | USART_CR1_RXNEIE ;
+		INTMODULE_USART->CR2 = 0 ;
 		NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
   	NVIC_EnableIRQ( INTMODULE_USART_IRQn);
 		return ;
@@ -465,7 +467,7 @@ void sendMultiByte( uint8_t byte )
 {
 	uint16_t time ;
 	uint32_t i ;
-	
+
 #ifdef PCBSKY
 	Pio *pioptr ;
 	uint32_t bit ;
@@ -838,6 +840,33 @@ uint32_t validateFile( uint32_t *block )
 	return 0 ;
 }
 
+uint32_t checkForFrsk( char *name )
+{
+	int32_t len = strlen(name) ;
+	len -= 5 ;
+	if ( len > 0 )
+	{
+		name += len ;
+		if ( *name++ == '.' )
+		{
+			if ( ( *name++ & ~0x20 ) == 'F' )
+			{
+				if ( ( *name++ & ~0x20 ) == 'R' )
+				{
+					if ( ( *name++ & ~0x20 ) == 'S' )
+					{
+						if ( ( *name & ~0x20 ) == 'K' )
+						{
+							return 1 ;
+						}
+					}
+				}
+			}
+		}
+	}
+	return 0 ;
+}
+
 struct fileControl FileControl = {	0,0,0,0, {0,0,0,0} } ;
 
 FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
@@ -873,8 +902,9 @@ FRESULT readBinDir( DIR *dj, FILINFO *fno, struct fileControl *fc )
 			}
 			if ( fno->lfname[len] != '.' )
 			{
-				if ( fno->lfname[len-1] != '.' )
+				if ( fno->lfname[len-1] == '.' )
 				{
+					len -= 1 ;
 					frsk = 1 ;
 				}
 				else
@@ -1069,6 +1099,12 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 	if ( limit == 0 )
 	{
 		lcd_puts_Pleft( 4*FH, "\005No Files" ) ;
+		if ( checkForExitEncoderLong( event ) )
+		{
+		// Select file to flash
+			killEvents(event) ;
+			return 2 ;
+		}
 		return 0 ;
 	}
 
@@ -1535,8 +1571,20 @@ void displayXmegaData()
  #endif
 
 #ifndef NO_MULTI
+
+uint8_t NotFirstTime = 0 ;
+
 void menuUpMulti(uint8_t event)
 {
+	if ( NotFirstTime == 0 )
+	{
+		NotFirstTime = 1 ;
+ #ifndef PCBSKY
+		INTERNAL_RF_OFF() ;
+		EXTERNAL_RF_OFF() ;
+ #endif
+	}
+	
 	TITLE( "Multi Options" ) ;
 	static MState2 mstate2 ;
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -2060,6 +2108,13 @@ void menuUp1(uint8_t event)
 		}
 #endif
 
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT )
+		{
+  		TITLE( "UPDATE Int. Module" ) ;
+		}
+  #endif
+
 #ifdef PCBSKY
  #ifndef REVX
 // 		if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )
@@ -2254,8 +2309,17 @@ void menuUp1(uint8_t event)
 	#endif
 				else
 #endif
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+ 				if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
+					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
+				}
+				else
+ #endif
+				{
+#if !(defined(PCBX12D) || defined(PCBX10))
 					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+#endif
 				}
 //				CoProcReady = 0 ;
  #else
@@ -2344,6 +2408,10 @@ void menuUp1(uint8_t event)
     break ;
 		case UPDATE_SELECTED :
 			f_open( &mdata->FlashFile, mdata->FlashFilename, FA_READ ) ;
+			if ( checkForFrsk(mdata->FlashFilename) )
+			{
+				f_read( &mdata->FlashFile, (BYTE *)FileData, 16, &mdata->BlockCount ) ;
+			}
 			f_read( &mdata->FlashFile, (BYTE *)FileData, 1024, &mdata->BlockCount ) ;
 			i = 1 ;
 			if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
@@ -2432,6 +2500,10 @@ void menuUp1(uint8_t event)
 // SPort update
 					mdata->SportState = SPORT_START ;
 					FirmwareSize = FileSize[fc->vpos] ;
+					if ( checkForFrsk(mdata->FlashFilename) )
+					{
+						FirmwareSize -= 16 ;
+					}
 					mdata->BlockInUse = 0 ;
 					f_read( &mdata->FlashFile, (BYTE *)ExtraFileData, 1024, &mdata->XblockCount ) ;
 				}
@@ -2638,7 +2710,7 @@ void menuUp1(uint8_t event)
 #endif
 			else		// Internal/External Sport
 			{
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 				width = sportUpdate( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT) ? SPORT_INTERNAL : SPORT_EXTERNAL ) ;
 #else
 				width = sportUpdate( SPORT_EXTERNAL ) ;
@@ -2756,6 +2828,7 @@ void menuUp1(uint8_t event)
 						lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
 						lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 					}
+
 	#endif
   #ifndef REVX
 			  }
@@ -2842,12 +2915,19 @@ void menuUpdate(uint8_t event)
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. Module" );
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+//	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
+	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
+	lcd_puts_Pleft( 4*FH, "  Update Int. Module" );
+	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
+ #else
 	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
 	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
- #if defined(PCBT16)
+  #if defined(PCBT16)
 	lcd_puts_Pleft( 5*FH, "  Update Multi" );
- #else
+  #else
 	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
+  #endif
  #endif
 #endif
 
@@ -3031,10 +3111,15 @@ void menuUpdate(uint8_t event)
 			}
 			if ( position == 4*FH )
 			{
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_SPORT_INT ;
+	      chainMenu(menuUp1) ;
+ #else
+ 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
 //				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_AVR ;
 	      chainMenu(menuChangeId) ;
-			}
+ #endif
+ 			}
 			if ( position == 5*FH )
 			{
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
@@ -3443,7 +3528,7 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
     }
 	}
 	i = ptr - TxPhyPacket ;		// Length of buffer to send
-#if defined(PCBX9LITE) || defined(REV19)
+#if defined(PCBX9LITE) || defined(REV19) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 	if ( SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
 extern volatile uint8_t *PxxTxPtr ;
@@ -4150,17 +4235,20 @@ uint32_t sportUpdate( uint32_t external )
 #if !defined(PCBTARANIS)
 			 FrskyTelemetryType = FRSKY_TEL_SPORT ;
 #endif
-#if defined(PCBX9D) || defined(PCB9XT)
-#if defined(PCBTARANIS)
+ #if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
+  #if defined(PCBTARANIS)
 			sportInit() ;
-#else
-#if defined(PCBX9LITE) || defined(REV19)
+  #else
+   #if defined(PCBX9LITE) || defined(REV19) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
 			if ( external )
 			{
 				com1_Configure( 57600, SERIAL_NORM, 0 ) ;
 			}
 			else
 			{
+#if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+  			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;     // Enable portAclock
+#endif
   			RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
 				RCC->APB2ENR |= RCC_APB2ENR_USART1EN ;		// Enable clock
 				configure_pins( INTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
@@ -4171,11 +4259,11 @@ uint32_t sportUpdate( uint32_t external )
 				NVIC_SetPriority( INTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
   			NVIC_EnableIRQ( INTMODULE_USART_IRQn);
 			}
-#else
+   #else
 			com1_Configure( 57600, SERIAL_NORM, 0 ) ;
-#endif
-#endif
-#endif
+   #endif
+  #endif
+ #endif
 #ifdef PCBSKY
  #ifdef REVX
 		init_mtwi() ;
@@ -4186,7 +4274,7 @@ uint32_t sportUpdate( uint32_t external )
 //			startPdcUsartReceive() ;
 #endif
 			SportTimer = 5 ;		// 50 mS
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
 			if ( external )
 			{
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)// || defined(REV19)
@@ -4329,7 +4417,18 @@ void maintenanceBackground()
 		}
 	}
 #endif
-		
+
+#if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+	if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
+	{
+		int32_t rxbyte ;
+		while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
+		{
+		 	frsky_receive_byte( rxbyte ) ;
+		}
+	}
+#endif
+		 
 #ifdef PCBSKY
 	uint16_t rxchar ;
 	while ( ( rxchar = get_fifo128( &Com1_fifo ) ) != 0xFFFF )

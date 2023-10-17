@@ -23,10 +23,11 @@
 
 void setFilenameDateTime( char *filename, uint32_t includeTime ) ;
 uint16_t lcd_getPixel(uint32_t x, uint32_t y ) ;
+void lcd_setPixel(uint32_t x, uint32_t y, uint16_t value ) ;
 
 #define BMP_HEADERSIZE 0x76
 
-#define BMP_BITS_PER_PIXEL 32
+#define BMP_BITS_PER_PIXEL 16
 
 #define BMP_FILESIZE uint32_t(BMP_HEADERSIZE + (480 * 272) * BMP_BITS_PER_PIXEL / 8)
 
@@ -46,7 +47,7 @@ const uint8_t BMP_HEADER[] = {
   /* height */ 272 & 0xFF, 272 >> 8, 0x00, 0x00,
   /* planes */ 0x01, 0x00,
   /* depth */ BMP_BITS_PER_PIXEL, 0x00,
-  0x00, 0x00,
+  0x03, 0x00,
   0x00, 0x00, 0x02, 0x04, 0x00, 0x00, 0xbc, 0x38, 0x00, 0x00, 0xbc, 0x38, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x00, 0xee, 0xee, 0xee, 0x00, 0xdd, 0xdd,
   0xdd, 0x00, 0xcc, 0xcc, 0xcc, 0x00, 0xbb, 0xbb, 0xbb, 0x00, 0xaa, 0xaa, 0xaa, 0x00, 0x99, 0x99,
@@ -55,12 +56,32 @@ const uint8_t BMP_HEADER[] = {
   0x11, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
+uint16_t PixelBuffer[32] ;
+
 const char *screenshot()
 {
   FIL bmpFile;
   UINT written;
   char filename[42]; // /SCREENSHOTS/screen-2013-01-01-123540.bmp
+  DIR folder ;
+	uint32_t bufferIndex ;
+	FRESULT result ;
 
+	result = f_opendir(&folder, "/screenshots") ;
+  if (result != FR_OK)
+	{
+    if (result == FR_NO_PATH)
+		{
+//			WatchdogTimeout = 300 ;		// 3 seconds
+      result = f_mkdir("/screenshots") ;
+			wdt_reset() ;
+    	if (result != FR_OK)
+			{
+      	return "SDCARD ERROR" ;
+			}
+		}
+  }
+	
 //  // check and create folder here
 //  strcpy(filename, SCREENSHOTS_PATH);
 //  const char * error = sdCheckAndCreateDirectory(filename);
@@ -68,11 +89,12 @@ const char *screenshot()
 //    return error;
 //  }
 
-  char *tmp = (char *)cpystr((uint8_t *)filename, (uint8_t *)"/screen") ;
+	
+  char *tmp = (char *)cpystr((uint8_t *)filename, (uint8_t *)"/screenshots/screen") ;
 	setFilenameDateTime( tmp, 1 ) ;
-  cpystr((uint8_t *)&filename[7 + 18], (uint8_t *)".BMP") ;
+  cpystr((uint8_t *)&filename[12 + 7 + 18], (uint8_t *)".BMP") ;
 
-  FRESULT result = f_open(&bmpFile, filename, FA_CREATE_ALWAYS | FA_WRITE);
+  result = f_open(&bmpFile, filename, FA_CREATE_ALWAYS | FA_WRITE);
   if (result != FR_OK)
 	{
     return "SD Error" ; //SDCARD_ERROR(result);
@@ -85,17 +107,25 @@ const char *screenshot()
     return "SD Error" ; //SDCARD_ERROR(result);
   }
 
+	bufferIndex = 0 ;
   for (int y = 272 - 1; y >= 0; y--)
 	{
     for (uint32_t x = 0; x < 480 ; x++)
 		{
 			uint16_t pixel ;
       pixel = lcd_getPixel(x,y) ;
-      uint32_t dst = (0xFF << 24) + (GET_RED(pixel) << 16) + (GET_GREEN(pixel) << 8) + (GET_BLUE(pixel) << 0) ;
-      if (f_write(&bmpFile, (BYTE *)&dst, sizeof(dst), &written) != FR_OK || written != sizeof(dst))
+			lcd_setPixel( x, y, ~pixel ) ;
+//      uint32_t dst = (0xFF << 24) + (GET_RED(pixel) << 16) + (GET_GREEN(pixel) << 8) + (GET_BLUE(pixel) << 0) ;
+      
+			PixelBuffer[bufferIndex++] = pixel ;
+			if ( bufferIndex >= 32 )
 			{
-        f_close(&bmpFile);
-		    return "SD Error" ; //SDCARD_ERROR(result);
+				bufferIndex = 0 ;
+      	if (f_write(&bmpFile, (BYTE *)&PixelBuffer, sizeof(PixelBuffer), &written) != FR_OK || written != sizeof(PixelBuffer))
+				{
+      	  f_close(&bmpFile);
+		  	  return "SD Error" ; //SDCARD_ERROR(result);
+      	}
       }
     }
 		wdt_reset() ;

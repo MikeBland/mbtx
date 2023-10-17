@@ -78,8 +78,6 @@ extern struct t_telemetryTx TelemetryTx ;
 //uint8_t *AccessPulsePtr ;
 uint16_t AccessCrc[2] ;
 
-uint8_t DebugLog ;
-
 extern union t_sharedMemory SharedMemory ;
 
 struct t_moduleSettings ModuleSettings[] ;
@@ -87,7 +85,7 @@ struct t_moduleControl ModuleControl[] ;
 
 const char *moduleName( uint32_t index )
 {
-	if ( index > 13 )
+	if ( index > 15 )
 	{
 		index = 0 ;
 	}
@@ -219,7 +217,13 @@ void setupChannelsAccess( uint32_t module, uint32_t type )
 	uint8_t flag1 ;
 	if ( type )
 	{
-		flag1 = ((g_model.Module[module].sub_protocol + 1) & 3) << 4 ;
+//	0>1, 1>3, 2>2
+		uint32_t temp = ((g_model.Module[module].sub_protocol + 1) & 3) ;
+		if ( temp > 1 )
+		{
+			temp ^= 1 ;
+		}
+		flag1 = temp << 4 ;
 	}
 	else
 	{	
@@ -392,7 +396,7 @@ void setupBindFrame(uint8_t module)
   }
 }
 
-uint8_t SendingRxSettings ;
+//uint8_t SendingRxSettings ;
 
 
 void setupReceiverSettingsFrame(uint8_t module)
@@ -408,6 +412,8 @@ void setupReceiverSettingsFrame(uint8_t module)
       flag0 |= PXX2_RX_SETTINGS_FLAG0_WRITE ;
 		}
     pxx2AddByte(flag0, module);
+if ( ModuleControl[module].rxtxSetupState == RECEIVER_SETTINGS_WRITE)
+{
     uint8_t flag1 = 0;
     if (ModuleControl[module].receiverSetupTelemetryDisabled)
       flag1 |= PXX2_RX_SETTINGS_FLAG1_TELEMETRY_DISABLED ;
@@ -425,14 +431,15 @@ void setupReceiverSettingsFrame(uint8_t module)
 
 //    uint8_t channelsCount = sentModuleChannels(module);
 //    for (int i = 0; i < channelsCount ; i++)
-    for (int i = 0; i < 8 ; i += 1 )
+    for (int i = 0; i < ModuleControl[module].rxNumPins ; i += 1 )
 		{
       pxx2AddByte( ModuleControl[module].channelMapping[i], module) ;
     }
+}
     ModuleControl[module].receiverSetupTimeout = get_tmr10ms() ;
 		
 		
-		SendingRxSettings = 1 ;
+//		SendingRxSettings = 1 ;
 
 
   }
@@ -567,7 +574,7 @@ void setupPulsesAccess( uint32_t module )
 	*PtrSerialPxx[module]++ = 0 ;		// Place for length
 
 
-	SendingRxSettings = 0 ;
+//	SendingRxSettings = 0 ;
 
 
 //extern uint8_t RawLogging ;
@@ -704,8 +711,8 @@ void setupPulsesAccess( uint32_t module )
 //		}
 //	}
 
-	if ( SendingRxSettings )
-	{
+//	if ( SendingRxSettings )
+//	{
 //extern uint8_t RawLogging ;
 //void rawLogByte( uint8_t byte ) ;
 //void rawLogChar( uint8_t byte ) ;
@@ -713,29 +720,27 @@ void setupPulsesAccess( uint32_t module )
 //	{
 //		uint8_t *packet ;
 //		packet = PxxSerial[module] ;
+//		rawLogChar( 13 ) ;
+//		rawLogChar( 10 ) ;
 //		rawLogChar( '(' ) ;
 //		rawLogByte( packet[0] ) ;
 //		rawLogByte( packet[1] ) ;
 //		rawLogByte( packet[2] ) ;
 //		rawLogByte( packet[3] ) ;
-//		rawLogByte( packet[4] ) ;
-//		rawLogByte( packet[5] ) ;
-//		rawLogByte( packet[6] ) ;
-//		rawLogByte( packet[7] ) ;
-//		rawLogByte( packet[8] ) ;
-//		rawLogByte( packet[9] ) ;
-//		rawLogByte( packet[10] ) ;
-//		rawLogByte( packet[11] ) ;
-//		rawLogByte( packet[12] ) ;
-//		rawLogByte( packet[13] ) ;
-//		rawLogByte( packet[14] ) ;
-//		rawLogByte( packet[15] ) ;
-//		rawLogByte( packet[16] ) ;
-//		rawLogByte( packet[17] ) ;
+//		uint32_t i = packet[1] + 2 ;
+//		if ( i > 22 )
+//		{
+//			i = 22 ;
+//		}
+//		uint32_t j = 4 ;
+//		while ( j < i )
+//		{
+//			rawLogByte( packet[j++] ) ;
+//		}
 //		rawLogChar( ')' ) ;
 //	}
 		
-	}
+//	}
 
 	if ( PxxSerial[module][1] )
 	{
@@ -824,7 +829,7 @@ void processRegisterFrame(uint8_t module, uint8_t *frame)
         // RX_NAME follows, we store it for the next step
         byteCopy( ModuleControl[module].registerRxName, &frame[4], PXX2_LEN_RX_NAME ) ;
 				ModuleControl[module].registerModuleIndex = frame[12] ;
-        ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
+//        ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
         ModuleControl[module].registerStep = REGISTER_RX_NAME_RECEIVED ;
       }
     break ;
@@ -951,7 +956,7 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 		switch ( packet[2] )
 		{
 			case PXX2_TYPE_ID_TELEMETRY :
-				processSportData( &packet[4], packet[3] & 0x0F ) ;
+				processSportData( &packet[4], packet[3] & 0x1F ) ;
 			break ;
   	  case PXX2_TYPE_ID_REGISTER :
   	    processRegisterFrame( module, packet ) ;
@@ -972,6 +977,7 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 						ModuleControl[module].rxSwVersion = ( packet[7] << 8 ) | packet[8] ;
 						ModuleControl[module].rxVariant = packet[9] ;
 						ModuleControl[module].rxModuleId = packet[4] ;
+						ModuleControl[module].rxCapabilities = packet[10] ;
 					}
 				}
   	    ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
@@ -986,6 +992,11 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 				ModuleControl[module].moduleExtAerial = packet[4] & 0x08 ? 1 : 0 ;
   	    ModuleSettings[module].mode = MODULE_MODE_NORMAL ;
 				ModuleControl[module].rxtxSetupState = MODULE_SETTINGS_OK ;
+//				if ( ModuleConfStatus[module] == 0 )
+//				{
+//					ModuleConfStatus[module] = 1 ;
+//					ModuleConfCount[module] = 0 ;
+//				}
 			break ;
 
 			case PXX2_TYPE_ID_RX_SETTINGS :
@@ -995,7 +1006,8 @@ void processAccessFrame( uint8_t *packet, uint32_t module )
 				ModuleControl[module].receiverSetupFPort = packet[4] & PXX2_RX_SETTINGS_FLAG1_FPORT ? 1 : 0 ;
 				ModuleControl[module].receiverSetupFPort2 = packet[4] & PXX2_RX_SETTINGS_FLAG1_FPORT2 ? 1 : 0 ;
 				ModuleControl[module].receiverSetupCH56pwm = packet[4] & PXX2_RX_SETTINGS_FLAG1_ENABLE_PWM_CH5_CH6 ? 1 : 0 ;
-				for ( uint32_t i = 0 ; i < 8 ; i += 1 )
+				ModuleControl[module].rxNumPins = packet[0] - 4 ;
+				for ( uint32_t i = 0 ; i < 16 ; i += 1 )
 				{
 					ModuleControl[module].channelMapping[i] = ( packet[0] > 4 + i ) ? packet[5+i] : 0xFF ;
 				}

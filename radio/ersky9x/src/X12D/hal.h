@@ -368,7 +368,11 @@
   #define LED_RED_GPIO_PIN              GPIO_Pin_2
   #define LED_GREEN_GPIO_PIN            GPIO_Pin_4
   #define LED_BLUE_GPIO_PIN             GPIO_Pin_5
+ #if defined(PCBTX16S)
+  #define LED_GPIO_PIN                  (LED_RED_GPIO_PIN | LED_BLUE_GPIO_PIN)
+ #else
   #define LED_GPIO_PIN                  (LED_RED_GPIO_PIN | LED_GREEN_GPIO_PIN | LED_BLUE_GPIO_PIN)
+ #endif
 #endif
 
 // Serial Port (DEBUG)
@@ -399,6 +403,13 @@
 #define TELEMETRY_USART                 USART2
 #define TELEMETRY_USART_IRQHandler      USART2_IRQHandler
 #define TELEMETRY_USART_IRQn            USART2_IRQn
+
+// Ext SPort
+#if defined(PCBX10)
+#define GPIOPWRSPORT                  	GPIOH
+#define PIN_SPORT_PWR                 	GPIO_Pin_13   // PH.13
+#define PORT_SPORT_PWR									PIN_PORTH
+#endif
 
 // USB
 #define USB_RCC_AHB1Periph_GPIO         RCC_AHB1Periph_GPIOA
@@ -535,6 +546,7 @@
 #define PIN_INT_RF_PWR				        GPIO_Pin_8   // PA.08
 #define GPIO_INTPPM			              GPIOB
 #define PIN_INTPPM_OUT            		GPIO_Pin_6   // PB.06
+#define INTMODULE_TX_GPIO_PIN         GPIO_Pin_6  // PB.06
 #define INTMODULE_GPIO_PinSource      GPIO_PinSource6
 #define INTMODULE_RX_GPIO             GPIOB
 #define INTMODULE_RX_GPIO_PIN         GPIO_Pin_7  // PB.07

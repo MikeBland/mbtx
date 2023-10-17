@@ -55,7 +55,7 @@ _estack = 0x20020000 ;    /* end of 128K SRAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */
-_Min_Stack_Size = 0x200; /* required amount of stack */
+_Min_Stack_Size = 0; /* required amount of stack */
 
 /* Main stack end */
 _main_stack_start = _estack - _Min_Stack_Size;

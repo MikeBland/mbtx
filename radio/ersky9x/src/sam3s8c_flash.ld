@@ -99,9 +99,9 @@ SECTIONS
       *(.text)
       *(.text.*)
  
-      . = ALIGN(4);        /* Align the start of the exidx part */
-      *(.ARM.exidx)
-      *(.ARM.exidx.*)
+/*      . = ALIGN(4);    */     /* Align the start of the exidx part */
+/*      *(.ARM.exidx)    */
+/*      *(.ARM.exidx.*)  */
 
       . = ALIGN(4);        /* Align the start of the rodata part */
       *(.rodata)
@@ -111,6 +111,15 @@ SECTIONS
    } > FLASH = 0
    _etext = .;             /* Provide the name for the end of this section */
    
+   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+    .ARM : {
+    __exidx_start = .;
+      *(.ARM.exidx*)
+      __exidx_end = .;
+    } >FLASH
+
+   
+  _sidata = .;
    
    /*
     * The ".data" section is used for initialized data
@@ -118,7 +127,7 @@ SECTIONS
     * from flash to ram. This functions will later be
     * executed from ram instead of flash.
     */
-   .data : AT (_etext)
+   .data : AT (_sidata)
    {
       . = ALIGN(4);        /* Align the start of the section */
       _sdata = .;          /* Provide the name for the start of this section */
@@ -164,9 +173,9 @@ SECTIONS
   /* Remove information from the standard libraries */
   /DISCARD/ :
   {
-/*     libc.a ( * ) */
+     libc.a ( * ) 
      libm.a ( * )
-/*     libgcc.a ( * ) */
+     libgcc.a ( * )
 		*(.eh_frame) 
   }
 

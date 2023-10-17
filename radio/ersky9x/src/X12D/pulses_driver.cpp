@@ -81,8 +81,8 @@ uint8_t setupPulsesXfire() ;
 
 uint16_t *ppmStreamPtr[NUM_MODULES];
 uint16_t ppmStream[NUM_MODULES+1][20];
-uint16_t pxxStream[NUM_MODULES][400];
-uint16_t dsm2Stream[2][400];
+uint16_t TimerStream[NUM_MODULES][400];
+//uint16_t dsm2Stream[2][400];
 uint16_t pulseStreamCount[NUM_MODULES] ;
 
 extern void setupPulsesPpmAll(uint32_t module) ;
@@ -906,14 +906,14 @@ uint16_t ProtoPulses[800] ;
 void convertPulsesProto( uint32_t type )
 {
 	uint16_t *p ;
-	if ( type == EXT_TYPE_PXX )
-	{
-		p = pxxStream[EXTERNAL_MODULE] ;
-	}
-	else
-	{
-		p = dsm2Stream[EXTERNAL_MODULE] ;
-	}
+//	if ( type == EXT_TYPE_PXX )
+//	{
+		p = TimerStream[EXTERNAL_MODULE] ;
+//	}
+//	else
+//	{
+//		p = TimerStream[EXTERNAL_MODULE] ;
+//	}
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	uint32_t *pd = ProtoPulses ;
 #else
@@ -1101,7 +1101,7 @@ void init_ext_serial( uint32_t type )
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
   RCC->AHB1ENR |= RCC_AHB1ENR_DMA1EN ;            // Enable DMA1 clock
 #elif defined(PCBX10)
-	convertPulsesProto( EXT_TYPE_PXX ) ;
+//	convertPulsesProto( EXT_TYPE_PXX ) ;
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
  	configure_pins( PIN_EXTPPM_OUT, PIN_PERIPHERAL | PIN_PORTA | PIN_PER_1 | PIN_OS25 | PIN_PUSHPULL ) ;
   RCC->APB1ENR |= RCC_APB1ENR_TIM2EN ;            // Enable clock
@@ -1125,7 +1125,7 @@ void init_ext_serial( uint32_t type )
 	if ( type == EXT_TYPE_PXX )
 	{
 		EXTMODULE_TIMER->ARR = 17989 ;                     // 9mS - 5uS
-  	EXTMODULE_TIMER->CCR2 = 15000 ;            // Update time
+  	EXTMODULE_TIMER->CCR2 = 17000 ;            // Update time
 	}
 	else if ( type == EXT_TYPE_DSM )
 	{
@@ -1152,7 +1152,7 @@ void init_ext_serial( uint32_t type )
 
 	if ( type == EXT_TYPE_PXX )
 	{
-	  EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
+	  EXTMODULE_TIMER->CCR3 = TimerStream[EXTERNAL_MODULE][0];
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high
 #else
@@ -1161,7 +1161,7 @@ void init_ext_serial( uint32_t type )
 	}
 	else
 	{
-	  EXTMODULE_TIMER->CCR3 = dsm2Stream[EXTERNAL_MODULE][0] ;
+	  EXTMODULE_TIMER->CCR3 = TimerStream[EXTERNAL_MODULE][0] ;
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high
 #else
@@ -1183,14 +1183,14 @@ void init_ext_serial( uint32_t type )
 #endif
   EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&EXTMODULE_TIMER->CCR3);
 	
-	if ( type == EXT_TYPE_PXX )
-	{
-  	EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
-	}
-	else
-	{
-  	EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&dsm2Stream[EXTERNAL_MODULE][1]) ;
-	}
+//	if ( type == EXT_TYPE_PXX )
+//	{
+  	EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
+//	}
+//	else
+//	{
+//  	EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]) ;
+//	}
 	EXTMODULE_TIMER->CR2 = TIM_CR2_MMS_2 | TIM_CR2_MMS_1 | TIM_CR2_OIS3 ;			// CC3 event as trigger output
 
   EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;     // Toggle CC1 o/p
@@ -1231,7 +1231,7 @@ void init_ext_serial( uint32_t type )
 #endif
 
   EXTMODULE_DMA_STREAM->CR |= DMA_SxCR_EN ;               // Enable DMA
-  EXTMODULE_TIMER->CNT = 0 ;
+  EXTMODULE_TIMER->CNT = EXTMODULE_TIMER->ARR-2 ;
   EXTMODULE_TIMER->CR1 |= TIM_CR1_CEN ;
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	NVIC_SetPriority( EXTMODULE_TIMER_IRQn, 3 ) ; // Lower priority interrupt
@@ -1429,21 +1429,24 @@ extern "C" void TIM1_CC_IRQHandler()
 			}
 		}
 		
-  	EXTMODULE_TIMER->CCR3 = pxxStream[EXTERNAL_MODULE][0];
+  	EXTMODULE_TIMER->CCR3 = TimerStream[EXTERNAL_MODULE][0];
 #if defined(PCBX10) && defined(PCBREV_EXPRESS)
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low
 #else
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;  // Force O/P high, hardware inverts it
 #endif	
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
-	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
+		
+	  DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
+//		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
+	  
+		EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
  		EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&EXTMODULE_TIMER->CCR3) ;	// or DMAR?
 	  EXTMODULE_TIMER->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;     // Toggle CC1 o/p
 		if ( isProdVersion() )
 		{
-  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
+  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
 		}
 #ifdef PCBX12D
 		else
@@ -1461,15 +1464,18 @@ extern "C" void TIM1_CC_IRQHandler()
 	}	
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
 	{
-  	EXTMODULE_TIMER->CCR3 = dsm2Stream[1][0] ;
+  	EXTMODULE_TIMER->CCR3 = TimerStream[1][0] ;
 		EXTMODULE_DMA_STREAM->CR &= ~DMA_SxCR_EN ; // Disable DMA
-		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
-	  EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
+		
+	  DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
+//		DMA_ClearITPendingBit(EXTMODULE_DMA_STREAM, EXTMODULE_DMA_FLAG_TC) ;
+	  
+		EXTMODULE_DMA_STREAM->CR = EXTMODULE_DMA_CHANNEL | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
  		EXTMODULE_DMA_STREAM->PAR = CONVERT_PTR(&EXTMODULE_TIMER->CCR3) ;	// or DMAR?
 		if ( isProdVersion() )
 		{
-  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&dsm2Stream[1][1]) ;
+  		EXTMODULE_DMA_STREAM->M0AR = CONVERT_PTR(&TimerStream[1][1]) ;
 		}
 #ifdef PCBX12D
 		else
@@ -1507,6 +1513,82 @@ extern "C" void PROT_EXTMODULE_DMA_IRQHandler()
   PROT_EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ; // Enable this interrupt
 }
 #endif
+
+#define MIN_RATE		6900
+#define MAX_RATE		15000
+
+uint32_t calcMultiRate( struct t_updateTiming *timing )
+{
+	int32_t rate = 0 ;
+	int32_t offset ;
+	if ( timing->UpdateRate )
+	{
+		if ( timing->UpdateTimer )
+		{
+			timing->UpdateTimer -= 1 ;
+		}
+		if ( timing->UpdateTimer == 0 )
+		{
+			timing->UpdateRate = 0 ;
+		}
+	}	
+	if ( timing->UpdateRate )
+	{
+		if ( timing->UpdateTimer == UPDATE_TIMEOUT - 1 )
+		{
+			offset = timing->UpdateOffset ;
+			offset += timing->UpdateDelay * 10 ;
+
+//			if ( timing->UpdateRate < 20 * timing->UpdateDelay )
+//			{
+//				// offset needs to be biased more negative
+//				offset -= timing->UpdateRate / 4 ;				
+//			}
+
+			if ( offset < 0 )
+			{
+				if ( timing->BaseUpdateOffset > -25 )
+				{
+					timing->BaseUpdateOffset -= 1 ;
+				}
+			}
+			else
+			{
+				if ( timing->BaseUpdateOffset < 25 )
+				{
+					timing->BaseUpdateOffset += 1 ;
+				}
+			}
+			timing->CurrentLag = offset ;
+			timing->CurrentRate = timing->UpdateRate ;
+		}	
+
+	  if ( timing->CurrentLag == 0 )
+		{
+			rate = timing->MinUpdateRate + timing->BaseUpdateOffset ;
+		}
+		else
+		{
+			timing->CurrentRate = timing->MinUpdateRate + timing->CurrentLag + timing->BaseUpdateOffset ;
+			if ( timing->CurrentRate < MIN_RATE )
+			{
+				timing->CurrentRate = MIN_RATE ;				
+			}
+			else
+			{
+				if ( timing->CurrentRate > MAX_RATE )
+				{
+					timing->CurrentRate = MAX_RATE ;				
+				}
+			}
+  		timing->CurrentLag -= timing->CurrentRate - timing->MinUpdateRate - timing->BaseUpdateOffset ;
+			rate = timing->CurrentRate ;
+		}
+	}
+	return rate ;
+}
+
+
 
 
 extern "C" void TIM2_IRQHandler()
@@ -1665,6 +1747,7 @@ volatile uint8_t *PxxTxPtr ;
 volatile uint8_t PxxTxCount ;
 
 uint16_t XjtHbeatOffset ;
+uint8_t InternalMultiStopUpdate ;
 
 extern "C" void TIM8_BRK_TIM12_IRQHandler()
 {
@@ -1674,6 +1757,9 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 	uint16_t status = INTMODULE_TIMER->SR ;
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_UIE ) && ( status & TIM_SR_UIF ) )
 	{
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x1110 ;
+#endif
 	  INTMODULE_TIMER->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
 //	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 //	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
@@ -1700,37 +1786,22 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 #if defined(PCBT16)
 		if (s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI )
 		{
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x2110 ;
+#endif
 			INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
-extern struct t_updateTiming UpdateTiming ;
-			if ( UpdateTiming.UpdateRate )
+			if ( InternalMultiStopUpdate == 0 )
 			{
-				if ( UpdateTiming.UpdateTimer )
+				uint32_t rate ;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x3110 ;
+#endif
+extern struct t_updateTiming UpdateTiming ;
+				rate = calcMultiRate( &UpdateTiming ) ;
+				if ( rate )
 				{
-					UpdateTiming.UpdateTimer -= 1 ;
+					setIntMultiRate( rate ) ;		// in uS
 				}
-				if ( UpdateTiming.UpdateTimer == 0 )
-				{
-					UpdateTiming.UpdateRate = 0 ;
-				}
-				uint32_t rate = 2 ;
-				uint32_t error = ( UpdateTiming.UpdateOffset > 0 ) ? UpdateTiming.UpdateOffset : -UpdateTiming.UpdateOffset ;
-				if ( error > 300 )
-				{
-					rate = 15 ;
-				}
-				if ( UpdateTiming.UpdateOffset > 50 )
-				{
-					rate += UpdateTiming.UpdateRate ;
-				}
-				else
-				{
-					rate = UpdateTiming.UpdateRate - rate ;
-				}
-				while ( rate < 6900 )
-				{
-					rate += UpdateTiming.UpdateRate ;
-				}
-				setIntMultiRate( rate ) ;		// in uS
 			}
 		}
 #endif
@@ -1738,6 +1809,9 @@ extern struct t_updateTiming UpdateTiming ;
 
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_CC2IE ) && ( status & TIM_SR_CC2IF ) )
 	{
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x4110 ;
+#endif
   	INTMODULE_TIMER->DIER &= ~TIM_DIER_CC2IE ;         // stop this interrupt
   	setupPulses(INTERNAL_MODULE) ;
 		if (s_current_protocol[INTERNAL_MODULE] == PROTO_PXX )
@@ -1751,6 +1825,9 @@ extern struct t_updateTiming UpdateTiming ;
 #if defined(PCBT16)
 		else if (s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI )
 		{
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x5110 ;
+#endif
 		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;	     // Clear this flag
 			INTMODULE_TIMER->DIER |= TIM_DIER_UIE ;		 // Enable this interrupt
@@ -1759,6 +1836,9 @@ extern struct t_updateTiming UpdateTiming ;
 #endif
 		else
 		{
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0x6110 ;
+#endif
 		  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 			INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 		}

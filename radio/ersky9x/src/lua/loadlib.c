@@ -631,13 +631,13 @@ static int ll_seeall (lua_State *L) {
 /*
 ** return registry.LUA_NOENV as a boolean
 */
-static int noenv (lua_State *L) {
-  int b;
-  lua_getfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
-  b = lua_toboolean(L, -1);
-  lua_pop(L, 1);  /* remove value */
-  return b;
-}
+//static int noenv (lua_State *L) {
+//  int b;
+//  lua_getfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
+//  b = lua_toboolean(L, -1);
+//  lua_pop(L, 1);  /* remove value */
+//  return b;
+//}
 
 
 static void setpath (lua_State *L, const char *fieldname, const char *envname1,

@@ -306,6 +306,12 @@ extern uint8_t SystemOptions ;
 #define KEY_PAGE	KEY_LEFT
 #endif	// X3
 
+#ifdef PCBX10
+#define KEY_PAGE	KEY_LEFT
+#define KEY_MDL		KEY_UP
+#define KEY_RTN		KEY_EXIT
+#endif	// X3
+
 enum EnumKeys {
     KEY_MENU ,
     KEY_EXIT ,
@@ -357,6 +363,7 @@ enum EnumKeys {
 #define HSW_FM4					104
 #define HSW_FM5					105
 #define HSW_FM6					106
+#define HSW_FM7					107
 
 
 #define HSW_Ttrmup			44
@@ -1100,7 +1107,7 @@ extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
 extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
-#define NUM_TELEM_ITEMS 86
+#define NUM_TELEM_ITEMS 89
 #define TELEM_GAP_START	75
 
 #define NUM_XCHNRAW (CHOUT_BASE+NUM_CHNOUT) // NUMCH + P1P2P3+ AIL/RUD/ELE/THR + MAX/FULL + CYC1/CYC2/CYC3
@@ -1329,6 +1336,9 @@ extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
 #endif
 extern void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
 extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ; //, bool nc) ;
+#ifdef TOUCH
+void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1,uint8_t att, uint16_t fcolor, uint16_t bcolour) ;
+#endif
 extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
 extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type ) ;
@@ -1606,11 +1616,11 @@ struct btRemote_t
 	uint8_t name[16] ;
 } ;
 
-#define BT_BITTYPE_HC06		1
-#define BT_BITTYPE_HC05		2
-#define BT_BITTYPE_CC41		4
-#define BT_BITTYPE_HM10		8
-#define BT_BITTYPE_PARA	 16
+//#define BT_BITTYPE_HC06		1
+//#define BT_BITTYPE_HC05		2
+//#define BT_BITTYPE_CC41		4
+//#define BT_BITTYPE_HM10		8
+//#define BT_BITTYPE_PARA	 16
 
 #ifdef PCBSKY
 extern uint8_t HwDelayScale ;
@@ -1807,6 +1817,9 @@ union t_sharedMemory
 	struct t_spectrumAnalyser SpectrumAnalyser ;
 } ;
 
+#define CLIP_NONE		0
+#define CLIP_VOICE	1
+#define CLIP_SWITCH	2
 
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #define TIMER1_8SR_MASK	0x1FFF
@@ -1844,6 +1857,12 @@ struct t_newvario
 #define MIXER_TASK	1
 #endif
 
+#ifdef PCBSKY
+ #ifndef SMALL
+#define MIXER_TASK	1
+ #endif
+#endif
+
 struct t_updateTiming
 {
 	uint32_t UpdateRate ;
@@ -1858,5 +1877,44 @@ struct t_updateTiming
 } ;
 
 #define UPDATE_TIMEOUT	120
+
+#if defined(PCBX12D) || defined(PCBX10)
+ #define STACK_EXTRA	100
+#else
+ #define STACK_EXTRA	0
+#endif
+
+
+#ifndef SIMU
+ #ifdef LUA
+#define MAIN_STACK_SIZE		(1400 + STACK_EXTRA)
+ #else
+  #ifdef BASIC
+//#define MAIN_STACK_SIZE		2000
+//#define MAIN_STACK_SIZE		1400
+#define MAIN_STACK_SIZE		(660 + STACK_EXTRA)
+  #else
+#define MAIN_STACK_SIZE		(500 + STACK_EXTRA)
+  #endif
+ #endif
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT) || defined(PCBX9LITE)
+#define INPUTS 1
+#endif
+
+#if defined(PCBXLITES) || defined(PCBX9D)
+#define INPUTS 1
+#endif
+
+#ifdef PCBSKY
+ #ifdef REVX
+#define INPUTS 1
+ #endif
+ #ifndef SMALL
+#define INPUTS 1
+ #endif
+#endif
+
 
 #endif

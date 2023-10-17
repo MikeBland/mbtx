@@ -62,7 +62,7 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 		repaint() ;
 		if ( mode == 1 )
 		{
-		  quint8 temp[8192] ;
+		  quint8 temp[16384] ;
 				
 			QFile file ;
 			file.setFileName(destFile) ;
@@ -84,11 +84,11 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 	    addText("Read Radio file\n");
 			repaint() ;
 
-		  memset(temp,0,8192) ;
+		  memset(temp,0,16384) ;
 			long s = rfile.size() ;
-			if ( s > 8192 )
+			if ( s > 16384 )
 			{
-				s = 8192 ;
+				s = 16384 ;
 			}
 		  long result = rfile.read( (char*)&temp, s ) ;
 		  rfile.close() ;
@@ -103,6 +103,26 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 			}
 			fixHeader( &temp[0] ) ;
 			fixHeader( &temp[4096] ) ;
+			fixHeader( &temp[8192] ) ;
+
+			uint32_t seq[3] ;
+			uint32_t i ;
+			seq[0] = 0 ;
+			seq[1] = 0 ;
+			seq[2] = 0 ;
+			for ( i = 0 ; i < 4 ; i += 1 )
+			{
+				seq[0] <<= 8 ;
+				seq[1] <<= 8 ;
+				seq[2] <<= 8 ;
+				seq[0] |= temp[3-i] ;
+				seq[1] |= temp[4099-i] ;
+				seq[2] |= temp[8195-i] ;
+			}
+			if ( seq[2] > seq[1] )
+			{
+        memcpy( &temp[4096], &temp[8192], 4096 ) ;
+			}
 
 			file.write((char*)&temp, 8192 ) ;
 			
@@ -126,7 +146,6 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
       result = rfile.read( (char*)&AModelNames, sizeof(AModelNames) ) ;
 		  rfile.close() ;
 	    addText("Read Model Names\nReading Models\n");
-			uint32_t i ;
 			for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
 			{
 		    memset(temp,0,8192) ;

@@ -147,7 +147,8 @@ const uint8_t Fr_indices[] =
 	FR_V_AMPd,
 	FR_VOLTS,
 	FR_AIRSPEED,
-	HUBDATALENGTH-1		// 45
+	TEL_SATS,
+	HUBDATALENGTH-1		// 46
 } ;
 
 struct t_s6r S6Rdata ;
@@ -731,7 +732,6 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 	}	
 }
 
-
 void handleUnknownId( uint16_t id, uint32_t value )
 {
 	uint32_t i ;
@@ -1209,6 +1209,31 @@ void processFrskyPacket(uint8_t *packet)
 //14[0E] Receiver Volts MSB (Hex) //In 0.01V
 //15[0F] Receiver Volts LSB (Hex)
 
+//===============================================================
+
+//Data type = 0x20
+
+#define DSM_ESC	0x20
+
+//0[00] 20
+//1[01] 00
+//2[02] RPM MSB
+//3[03] RPM LSB
+//4[04] VIN MSB
+//5[05] VIN LSB
+//6[06] TFET MSB
+//7[07] TFET LSB
+//8[08] Current MSB
+//9[09] Current LSB
+//10[0A] TBEC MSB
+//11[0B] TBEC LSB
+//12[0C] BEC Current 0.1A
+//13[0D] BEC Voltage
+//14[0E] Throttle
+//15[0F] POUT
+
+
+
 //answer from TX module:
 //header: 0xAA
 //0x00 - no telemetry
@@ -1442,6 +1467,29 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				}
 			break ;
 
+//			case DSM_ESC :
+//      // RPM, 10RPM (0-655340 RPM)
+//				storeTelemetryData( FR_RPM, ivalue/10 ) ;
+      
+//      // VIN, 2dp
+//				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
+//				storeTelemetryData( FR_VOLTS, ivalue/10 ) ;
+//			// TFET 
+////				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
+//			// Current, 10mA (0-655.34A)
+//				ivalue = (int16_t) ( (packet[8] << 8 ) | packet[9] ) ;
+//				storeTelemetryData( FR_CURRENT, ivalue / 10 ) ;
+//			// TBEC
+//				ivalue = (int16_t) ( (packet[10] << 8 ) | packet[11] ) ;
+//				storeTelemetryData( FR_TEMP2, ivalue ) ;
+//			// BEC Current, 100mA (0-25.4A) one byte
+//				storeTelemetryData( FR_SBEC_CURRENT, packet[12] ) ;
+//			// BEC Voltage, 100mA (0-25.4A) one byte
+//				storeTelemetryData( FR_SBEC_VOLT, packet[13] ) ;
+//			// Throttle 0.5% (0-127%) one byte
+//			// Power 0.5% (0-127%)
+//			break ;
+			
 			default :
 #ifndef SMALL
 				DsmDbgCounters[7] += 1 ;
@@ -1452,6 +1500,9 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 	}
 	else if ( type == 0x80 )
 	{
+extern uint16_t DsmBindDebug ;
+		DsmBindDebug |= 32 ;
+		
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
@@ -1773,10 +1824,10 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 
 		 if ( (packet[3] & 0xF0) != 0x50 )
 		 {
-		 	if ( ( packet[2] & 0x0F ) != 0 )
-			{
-		 		id = NON_STANDARD_ID_8 ;
-			}
+//		 	if ( ( packet[2] & 0x0F ) != 0 )
+//			{
+//		 		id = NON_STANDARD_ID_8 ;
+//			}
 			switch ( id )
 			{
 				case ALT_ID_8 :
@@ -2074,6 +2125,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 							xvalue *= 10 ;
 							xvalue += (value >>4) & 0x0003 ;	// GPS Fix mode
 							storeTelemetryData( FR_TEMP2, xvalue ) ;
+							storeTelemetryData( TEL_SATS, xvalue ) ;
 //							FrskyHubData[FR_TEMP2] = xvalue ;
 							xvalue = (value >> 7) & 0x7F ;
 							if ( value & 0x0000040 )
@@ -2236,9 +2288,10 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 				break ;
 			}
 		 }
-		 else
+		 else if ( ( (packet[3] & 0xF0) != 0 ) ) //|| ( (packet[3] & 0xF0) == 0x10 ) )
 		 {
-				handleUnknownId( (packet[3] << 8) | ( packet[2] ), value ) ;
+				uint32_t valueh = (*((uint32_t *)(packet+4))) ;
+				handleUnknownId( (packet[3] << 8) | ( packet[2] ), valueh ) ;
 		 }
 		}
 	}
@@ -2903,7 +2956,6 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 //uint16_t XFDebug3 ;
 //uint16_t XFDebug4 ;
 //uint16_t XFDebug5 ;
-
 
 void frsky_receive_byte( uint8_t data )
 {
@@ -4834,8 +4886,9 @@ void processCrossfireTelemetryFrame()
 			}
       if (getCrossfireTelemetryValue<1>(17, value))
 			{
+//				storeTelemetryData( FR_CUST6, value ) ;
+				storeTelemetryData( TEL_SATS, value ) ;
 //        processCrossfireTelemetryValue(GPS_SATELLITES_INDEX, value);
-				
 			}
     break;
 

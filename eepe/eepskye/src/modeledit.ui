@@ -86,7 +86,7 @@
           <string/>
          </property>
          <property name="currentIndex">
-          <number>8</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="tabModelSetup">
           <attribute name="title">
@@ -4072,18 +4072,21 @@ p, li { white-space: pre-wrap; }
              </property>
             </spacer>
            </item>
+           <item row="1" column="1">
+            <spacer name="horizontalSpacer_27">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
            <item row="1" column="0">
-            <layout class="QGridLayout" name="gridLayout_41" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
-             <item row="11" column="4">
-              <widget class="QComboBox" name="FP5_RudCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
+            <layout class="QGridLayout" name="gridLayout_41" rowstretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
              <item row="9" column="2">
               <widget class="QComboBox" name="FP4_sw">
                <property name="sizePolicy">
@@ -4133,8 +4136,8 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="11" column="7">
-              <widget class="QComboBox" name="FP5_AilCB">
+             <item row="11" column="4">
+              <widget class="QComboBox" name="FP5_RudCB">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -4143,8 +4146,8 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="11" column="3">
-              <widget class="QComboBox" name="FP5_sw_2">
+             <item row="11" column="7">
+              <widget class="QComboBox" name="FP5_AilCB">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -4173,25 +4176,13 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="12" column="4">
-              <widget class="QSpinBox" name="FP5rudTrimSB">
+             <item row="11" column="3">
+              <widget class="QComboBox" name="FP5_sw_2">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
                  <verstretch>0</verstretch>
                 </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
                </property>
               </widget>
              </item>
@@ -4215,39 +4206,25 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="1" column="8">
-              <widget class="QLabel" name="label_Switch_2">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode has Fade-in/Fade-out parameters for smooth transitions between modes. The duration of the fade in/out transitions can be set in &amp;quot;Seconds&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Fade In</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="4">
-              <widget class="QLabel" name="label_M1">
-               <property name="text">
-                <string>Rudder</string>
+             <item row="12" column="4">
+              <widget class="QSpinBox" name="FP5rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
-              </widget>
-             </item>
-             <item row="1" column="2">
-              <widget class="QLabel" name="label_Switch">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode, except FM0, has a selectable activation switch (physical or logical). &lt;span style=&quot; color:#000000;&quot;&gt;FM0 is active if no other flight mode is active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               <property name="accelerated">
+                <bool>true</bool>
                </property>
-               <property name="text">
-                <string>Switch</string>
+               <property name="minimum">
+                <number>-125</number>
                </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
+               <property name="maximum">
+                <number>510</number>
                </property>
               </widget>
              </item>
@@ -4283,882 +4260,39 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="5" column="1">
-              <widget class="QLineEdit" name="FM2Name">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>80</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="maxLength">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="0">
-              <widget class="QLabel" name="label_152">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM6</string>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="5">
-              <widget class="QSpinBox" name="FP3eleTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="5">
-              <widget class="QComboBox" name="FP3_EleCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="7">
-              <widget class="QSpinBox" name="FP3ailTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="4">
-              <widget class="QComboBox" name="FP4_RudCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="7">
-              <widget class="QLabel" name="label_160">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Own Trim</string>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="7">
-              <widget class="QLabel" name="label_M4">
-               <property name="text">
-                <string>Aileron</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="4">
-              <widget class="QComboBox" name="FP2_RudCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="14" column="6">
-              <widget class="QSpinBox" name="FP6thrTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="9">
-              <widget class="QDoubleSpinBox" name="FM4FadeOut">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="1">
-              <widget class="QLineEdit" name="FM6Name">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>80</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="maxLength">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="3">
-              <widget class="QComboBox" name="FP6_sw_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="2">
-              <widget class="QComboBox" name="FP6_sw">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="8">
-              <widget class="QDoubleSpinBox" name="FM4FadeIn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="5">
-              <widget class="QLabel" name="label_M2">
-               <property name="text">
-                <string>Elevator</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="7">
-              <widget class="QComboBox" name="FP1_AilCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="9">
-              <widget class="QDoubleSpinBox" name="FM2FadeOut">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="4">
-              <widget class="QSpinBox" name="FP4rudTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="1">
-              <widget class="QLineEdit" name="FM1Name">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>80</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="maxLength">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="10" column="6">
-              <widget class="QSpinBox" name="FP4thrTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="4">
-              <widget class="QComboBox" name="FP6_RudCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="5">
-              <widget class="QComboBox" name="FP6_EleCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="0">
-              <widget class="QLabel" name="label_146">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Five flight modes (FM) are available: the default mode FM0, plus FM1 to FM04. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM1</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="3">
-              <widget class="QComboBox" name="FP2_sw_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="4">
-              <widget class="QSpinBox" name="FP3rudTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="0">
-              <widget class="QLabel" name="label_148">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM2</string>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="8">
-              <widget class="QDoubleSpinBox" name="FM6FadeIn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="0">
-              <widget class="QLabel" name="label_147">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM0</string>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="1">
-              <widget class="QLineEdit" name="FM5Name">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>80</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="maxLength">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="7">
-              <widget class="QComboBox" name="FP3_AilCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="2">
-              <widget class="QComboBox" name="FP1_sw">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="4">
-              <widget class="QSpinBox" name="FP1rudTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="6">
-              <widget class="QLabel" name="label_M3">
-               <property name="text">
-                <string>Throttle</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="3">
-              <widget class="QLabel" name="label_Switch_5">
+             <item row="1" column="2">
+              <widget class="QLabel" name="label_Switch">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode, except FM0, has a selectable activation switch (physical or logical). &lt;span style=&quot; color:#000000;&quot;&gt;FM0 is active if no other flight mode is active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Switch 2</string>
+                <string>Switch</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
               </widget>
              </item>
-             <item row="6" column="7">
-              <widget class="QSpinBox" name="FP2ailTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="5">
-              <widget class="QSpinBox" name="FP2eleTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="6">
-              <widget class="QSpinBox" name="FP2thrTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="1">
-              <widget class="QLabel" name="label_Switch_4">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You can insert a name for evey flight mode. It will be displayed on a main screen when the corresponding flight mode is active&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Name</string>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-              </widget>
-             </item>
-             <item row="4" column="7">
-              <widget class="QSpinBox" name="FP1ailTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="8">
-              <widget class="QDoubleSpinBox" name="FM5FadeIn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="11" column="9">
-              <widget class="QDoubleSpinBox" name="FM5FadeOut">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="12" column="6">
-              <widget class="QSpinBox" name="FP5thrTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="9">
-              <widget class="QLabel" name="label_Switch_3">
+             <item row="1" column="8">
+              <widget class="QLabel" name="label_Switch_2">
                <property name="toolTip">
                 <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode has Fade-in/Fade-out parameters for smooth transitions between modes. The duration of the fade in/out transitions can be set in &amp;quot;Seconds&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
                </property>
                <property name="text">
-                <string>Fade Out</string>
+                <string>Fade In</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
                </property>
               </widget>
              </item>
-             <item row="2" column="6">
-              <widget class="QLabel" name="label_159">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
+             <item row="1" column="4">
+              <widget class="QLabel" name="label_M1">
                <property name="text">
-                <string>Own Trim</string>
-               </property>
-              </widget>
-             </item>
-             <item row="2" column="5">
-              <widget class="QLabel" name="label_158">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Own Trim</string>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="7">
-              <widget class="QComboBox" name="FP2_AilCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="5" column="6">
-              <widget class="QComboBox" name="FP2_ThrCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="8" column="6">
-              <widget class="QSpinBox" name="FP3thrTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
+                <string>Rudder</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="6">
-              <widget class="QComboBox" name="FP3_ThrCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="1">
-              <widget class="QLineEdit" name="FM3Name">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="maximumSize">
-                <size>
-                 <width>80</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <property name="maxLength">
-                <number>6</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="0">
-              <widget class="QLabel" name="label_149">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM3</string>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="9">
-              <widget class="QDoubleSpinBox" name="FM6FadeOut">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
-               </property>
-              </widget>
-             </item>
-             <item row="14" column="4">
-              <widget class="QSpinBox" name="FP6rudTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="14" column="5">
-              <widget class="QSpinBox" name="FP6eleTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="3" column="3">
-              <widget class="QComboBox" name="FP1_sw_2">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="6" column="4">
-              <widget class="QSpinBox" name="FP2rudTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
                </property>
               </widget>
              </item>
@@ -5194,6 +4328,48 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
+             <item row="6" column="4">
+              <widget class="QSpinBox" name="FP2rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="3">
+              <widget class="QComboBox" name="FP1_sw_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="7">
+              <widget class="QComboBox" name="FP6_AilCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
              <item row="3" column="9">
               <widget class="QDoubleSpinBox" name="FM1FadeOut">
                <property name="sizePolicy">
@@ -5210,6 +4386,16 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="singleStep">
                 <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="0">
+              <widget class="QLabel" name="label_150">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM4</string>
                </property>
               </widget>
              </item>
@@ -5235,36 +4421,6 @@ p, li { white-space: pre-wrap; }
              </item>
              <item row="9" column="6">
               <widget class="QComboBox" name="FP4_ThrCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="7">
-              <widget class="QComboBox" name="FP6_AilCB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-              </widget>
-             </item>
-             <item row="9" column="0">
-              <widget class="QLabel" name="label_150">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>FM4</string>
-               </property>
-              </widget>
-             </item>
-             <item row="13" column="6">
-              <widget class="QComboBox" name="FP6_ThrCB">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -5336,6 +4492,16 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
+             <item row="13" column="6">
+              <widget class="QComboBox" name="FP6_ThrCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
              <item row="3" column="6">
               <widget class="QComboBox" name="FP1_ThrCB">
                <property name="sizePolicy">
@@ -5356,38 +4522,6 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
-             <item row="2" column="4">
-              <widget class="QLabel" name="label_157">
-               <property name="toolTip">
-                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-               </property>
-               <property name="text">
-                <string>Own Trim</string>
-               </property>
-              </widget>
-             </item>
-             <item row="14" column="7">
-              <widget class="QSpinBox" name="FP6ailTrimSB">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="alignment">
-                <set>Qt::AlignCenter</set>
-               </property>
-               <property name="accelerated">
-                <bool>true</bool>
-               </property>
-               <property name="minimum">
-                <number>-125</number>
-               </property>
-               <property name="maximum">
-                <number>510</number>
-               </property>
-              </widget>
-             </item>
              <item row="9" column="5">
               <widget class="QComboBox" name="FP4_EleCB">
                <property name="sizePolicy">
@@ -5400,6 +4534,35 @@ p, li { white-space: pre-wrap; }
              </item>
              <item row="3" column="8">
               <widget class="QDoubleSpinBox" name="FM1FadeIn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="4">
+              <widget class="QLabel" name="label_157">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Own Trim</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="8">
+              <widget class="QDoubleSpinBox" name="FM3FadeIn">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                  <horstretch>0</horstretch>
@@ -5436,25 +4599,6 @@ p, li { white-space: pre-wrap; }
                </property>
                <property name="maximum">
                 <number>510</number>
-               </property>
-              </widget>
-             </item>
-             <item row="7" column="8">
-              <widget class="QDoubleSpinBox" name="FM3FadeIn">
-               <property name="sizePolicy">
-                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-                 <horstretch>0</horstretch>
-                 <verstretch>0</verstretch>
-                </sizepolicy>
-               </property>
-               <property name="decimals">
-                <number>1</number>
-               </property>
-               <property name="maximum">
-                <double>7.500000000000000</double>
-               </property>
-               <property name="singleStep">
-                <double>0.500000000000000</double>
                </property>
               </widget>
              </item>
@@ -5519,20 +4663,1091 @@ p, li { white-space: pre-wrap; }
                </property>
               </widget>
              </item>
+             <item row="7" column="1">
+              <widget class="QLineEdit" name="FM3Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="0">
+              <widget class="QLabel" name="label_149">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM3</string>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="9">
+              <widget class="QDoubleSpinBox" name="FM6FadeOut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="5">
+              <widget class="QSpinBox" name="FP3eleTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="0">
+              <widget class="QLabel" name="label_152">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM6</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QLineEdit" name="FM2Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="5">
+              <widget class="QComboBox" name="FP3_EleCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="7">
+              <widget class="QSpinBox" name="FP3ailTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="4">
+              <widget class="QComboBox" name="FP4_RudCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="7">
+              <widget class="QLabel" name="label_160">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Own Trim</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="4">
+              <widget class="QComboBox" name="FP2_RudCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="7">
+              <widget class="QLabel" name="label_M4">
+               <property name="text">
+                <string>Aileron</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="9">
+              <widget class="QDoubleSpinBox" name="FM4FadeOut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="1">
+              <widget class="QLineEdit" name="FM6Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="9" column="8">
+              <widget class="QDoubleSpinBox" name="FM4FadeIn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="7">
+              <widget class="QComboBox" name="FP1_AilCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="3">
+              <widget class="QComboBox" name="FP6_sw_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="5">
+              <widget class="QLabel" name="label_M2">
+               <property name="text">
+                <string>Elevator</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="6">
+              <widget class="QSpinBox" name="FP4thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="10" column="4">
+              <widget class="QSpinBox" name="FP4rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QLineEdit" name="FM1Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="9">
+              <widget class="QDoubleSpinBox" name="FM2FadeOut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="4">
+              <widget class="QSpinBox" name="FP3rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="5">
+              <widget class="QComboBox" name="FP6_EleCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="3">
+              <widget class="QComboBox" name="FP2_sw_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="label_146">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Five flight modes (FM) are available: the default mode FM0, plus FM1 to FM04. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM1</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="label_148">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM2</string>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="1">
+              <widget class="QLineEdit" name="FM5Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QComboBox" name="FP1_sw">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="label_147">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM0</string>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="7">
+              <widget class="QComboBox" name="FP3_AilCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="8">
+              <widget class="QDoubleSpinBox" name="FM6FadeIn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="7">
+              <widget class="QSpinBox" name="FP2ailTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="4">
+              <widget class="QSpinBox" name="FP1rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="5">
+              <widget class="QSpinBox" name="FP2eleTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="6">
+              <widget class="QLabel" name="label_M3">
+               <property name="text">
+                <string>Throttle</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="3">
+              <widget class="QLabel" name="label_Switch_5">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode, except FM0, has a selectable activation switch (physical or logical). &lt;span style=&quot; color:#000000;&quot;&gt;FM0 is active if no other flight mode is active.&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Switch 2</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QLabel" name="label_Switch_4">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You can insert a name for evey flight mode. It will be displayed on a main screen when the corresponding flight mode is active&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Name</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="8">
+              <widget class="QDoubleSpinBox" name="FM5FadeIn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="11" column="9">
+              <widget class="QDoubleSpinBox" name="FM5FadeOut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="6" column="6">
+              <widget class="QSpinBox" name="FP2thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="7">
+              <widget class="QSpinBox" name="FP1ailTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="5">
+              <widget class="QLabel" name="label_158">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Own Trim</string>
+               </property>
+              </widget>
+             </item>
+             <item row="12" column="6">
+              <widget class="QSpinBox" name="FP5thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="9">
+              <widget class="QLabel" name="label_Switch_3">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Each flight mode has Fade-in/Fade-out parameters for smooth transitions between modes. The duration of the fade in/out transitions can be set in &amp;quot;Seconds&amp;quot;.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Fade Out</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="6">
+              <widget class="QLabel" name="label_159">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt; Flight Mode 0 (FM0) is the default and always has its own trim settings. FM0 is active if no other flight mode is active. Any other mode showing RETA (or some of those letters) has its own separate trim settings for those channels. Modes showing numbers share trims with another FM and thus use the same trim values as that mode. If more than one flight mode is enabled, then the lower numbered mode will be active. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>Own Trim</string>
+               </property>
+              </widget>
+             </item>
+             <item row="8" column="6">
+              <widget class="QSpinBox" name="FP3thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="7" column="6">
+              <widget class="QComboBox" name="FP3_ThrCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="6">
+              <widget class="QComboBox" name="FP2_ThrCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="7">
+              <widget class="QComboBox" name="FP2_AilCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="4">
+              <widget class="QComboBox" name="FP6_RudCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="4">
+              <widget class="QSpinBox" name="FP6rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="6">
+              <widget class="QSpinBox" name="FP6thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="5">
+              <widget class="QSpinBox" name="FP6eleTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="14" column="7">
+              <widget class="QSpinBox" name="FP6ailTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="13" column="2">
+              <widget class="QComboBox" name="FP6_sw">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="2">
+              <widget class="QComboBox" name="FP7_sw">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="16" column="4">
+              <widget class="QSpinBox" name="FP7rudTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="16" column="5">
+              <widget class="QSpinBox" name="FP7eleTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="16" column="6">
+              <widget class="QSpinBox" name="FP7thrTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="16" column="7">
+              <widget class="QSpinBox" name="FP7ailTrimSB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignCenter</set>
+               </property>
+               <property name="accelerated">
+                <bool>true</bool>
+               </property>
+               <property name="minimum">
+                <number>-125</number>
+               </property>
+               <property name="maximum">
+                <number>510</number>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="8">
+              <widget class="QDoubleSpinBox" name="FM7FadeIn">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="9">
+              <widget class="QDoubleSpinBox" name="FM7FadeOut">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="decimals">
+                <number>1</number>
+               </property>
+               <property name="maximum">
+                <double>7.500000000000000</double>
+               </property>
+               <property name="singleStep">
+                <double>0.500000000000000</double>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="7">
+              <widget class="QComboBox" name="FP7_AilCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="6">
+              <widget class="QComboBox" name="FP7_ThrCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="5">
+              <widget class="QComboBox" name="FP7_EleCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="4">
+              <widget class="QComboBox" name="FP7_RudCB">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="3">
+              <widget class="QComboBox" name="FP7_sw_2">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="1">
+              <widget class="QLineEdit" name="FM7Name">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>80</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="maxLength">
+                <number>6</number>
+               </property>
+              </widget>
+             </item>
+             <item row="15" column="0">
+              <widget class="QLabel" name="label_153">
+               <property name="toolTip">
+                <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Seven flight modes (FM) are available: the default mode FM0, plus FM1 to FM06. Each flight mode has a selectable activation switch (physical or logical), a trim selection array, and Fade-in/Fade-out parameters for smooth transitions between modes.&lt;/p&gt;&lt;p&gt;Flight Modes can also be used to determine which mixes are turned on for each mode. The Edit Mix menu allows the mode(s) in which a mix is active to be selected; by default a mix is active in all Flight Modes.&lt;/p&gt;&lt;p&gt;Perhaps the most common reason for using Flight Modes, rather than just programming the required features directly, is to allow different trim settings for specific model configurations, for example when flaps are deployed.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+               </property>
+               <property name="text">
+                <string>FM7</string>
+               </property>
+              </widget>
+             </item>
             </layout>
-           </item>
-           <item row="1" column="1">
-            <spacer name="horizontalSpacer_27">
-             <property name="orientation">
-              <enum>Qt::Horizontal</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>40</width>
-               <height>20</height>
-              </size>
-             </property>
-            </spacer>
            </item>
           </layout>
          </widget>
@@ -6358,6 +6573,22 @@ p, li { white-space: pre-wrap; }
             </spacer>
            </item>
           </layout>
+         </widget>
+         <widget class="QWidget" name="tabInput">
+          <attribute name="title">
+           <string>Inputs</string>
+          </attribute>
+          <widget class="QWidget" name="layoutWidget">
+           <property name="geometry">
+            <rect>
+             <x>10</x>
+             <y>10</y>
+             <width>1001</width>
+             <height>571</height>
+            </rect>
+           </property>
+           <layout class="QGridLayout" name="inputsLayout"/>
+          </widget>
          </widget>
          <widget class="QWidget" name="tabMix">
           <attribute name="title">

@@ -1,5 +1,5 @@
 
-//#define TELEMETRY_LOGGING	1
+#define TELEMETRY_LOGGING	1
 
 #include <stdint.h>
 #include "pers.h"
@@ -480,16 +480,65 @@ telemetryDialog::~telemetryDialog()
   delete ui;
 }
 
+static uint8_t Logging = 0 ;
+static unsigned char LogBuffer[256] ;
+static uint32_t LogCount = 0 ;
+QFile LogFile("C:/data/Telemetry");
+
+void telemetryDialog::on_startButtonLogging_clicked()
+{
+	ui->AltDdisp->setText("BB") ;
+	if ( telemetry )
+	{
+		ui->AltDisp->setText("AA") ;
+		if ( Logging )
+		{
+			Logging = 0 ;
+			ui->startButtonLogging->setText("Log") ;
+      LogFile.write((char*)LogBuffer,LogCount) ;
+      LogFile.close() ;
+		}
+		else
+		{
+			ui->startButtonLogging->setText("Stop Logging") ;
+			Logging = 1 ;
+			LogCount = 0 ;
+      LogFile.open(QFile::WriteOnly) ;
+		}
+	}
+}
+
+
 void telemetryDialog::on_ReadAlarmsButton_clicked()
 {
-	int size ;
-	if ( port )
+	ui->AltDdisp->setText("BB") ;
+	if ( telemetry )
 	{
-		size = FRSKY_setTxPacket( RSSI_REQUEST, 0, 0, 0 ) ;
-		port->write( QByteArray::fromRawData ( (char *)frskyTxBuffer, size ), size ) ;
-		size = FRSKY_setTxPacket( ALRM_REQUEST, 0, 0, 0 ) ;
-		port->write( QByteArray::fromRawData ( (char *)frskyTxBuffer, size ), size ) ;
+		ui->AltDisp->setText("AA") ;
+		if ( Logging )
+		{
+			Logging = 0 ;
+			ui->startButtonLogging->setText("Log") ;
+      LogFile.write((char*)LogBuffer,LogCount) ;
+      LogFile.close() ;
+		}
+		else
+		{
+			ui->startButtonLogging->setText("Stop Logging") ;
+			Logging = 1 ;
+			LogCount = 0 ;
+      LogFile.open(QFile::WriteOnly) ;
+		}
 	}
+	
+//	int size ;
+//	if ( port )
+//	{
+//		size = FRSKY_setTxPacket( RSSI_REQUEST, 0, 0, 0 ) ;
+//		port->write( QByteArray::fromRawData ( (char *)frskyTxBuffer, size ), size ) ;
+//		size = FRSKY_setTxPacket( ALRM_REQUEST, 0, 0, 0 ) ;
+//		port->write( QByteArray::fromRawData ( (char *)frskyTxBuffer, size ), size ) ;
+//	}
 }
 
 void telemetryDialog::on_SetAlarmsButton_clicked()
@@ -572,7 +621,11 @@ void telemetryDialog::on_startButtonModule_clicked()
 #else
 		port = new QextSerialPort(portname, QextSerialPort::Polling) ;
 #endif /*Q_OS_UNIX*/
+#ifdef TELEMETRY_LOGGING
+		port->setBaudRate(BAUD57600) ;
+#else
 		port->setBaudRate(BAUD9600) ;
+#endif
   	port->setFlowControl(FLOW_OFF) ;
 		port->setParity(PAR_NONE) ;
   	port->setDataBits(DATA_8) ;
@@ -748,34 +801,6 @@ void telemetryDialog::on_startButton_clicked()
 		ui->startButton->setText("Stop") ;
 	}
 }
-
-#ifdef TELEMETRY_LOGGING
-static uint8_t Logging = 0 ;
-static unsigned char LogBuffer[256] ;
-static uint32_t LogCount = 0 ;
-QFile LogFile("C:/data/Telemetry");
-
-void telemetryDialog::on_startButtonLogging_clicked()
-{
-	if ( telemetry )
-	{
-		if ( Logging )
-		{
-			Logging = 0 ;
-			ui->startButtonLogging->setText("Log") ;
-      LogFile.write((char*)LogBuffer,LogCount) ;
-      LogFile.close() ;
-		}
-		else
-		{
-			ui->startButtonLogging->setText("Stop Logging") ;
-			Logging = 1 ;
-			LogCount = 0 ;
-      LogFile.open(QFile::WriteOnly) ;
-		}
-	}
-}
-#endif
 
 void telemetryDialog::on_WSdial_valueChanged( int value )
 {
@@ -989,18 +1014,36 @@ void telemetryDialog::frskyPushValue(quint8 &i, quint8 value)
 
 void telemetryDialog::processTelByte( unsigned char data )
 {
-#ifdef TELEMETRY_LOGGING
 	// Log data here
 	if ( Logging )
 	{
-		LogBuffer[LogCount++] = data ;
+    if ( data == 0x7E )
+		{
+			LogBuffer[LogCount++] = '\n' ;
+			if ( LogCount >= 256 )
+			{
+    	   LogFile.write((char*)LogBuffer,256) ;
+				 LogCount = 0 ;
+			}
+		}
+		unsigned char c = data & 0xF0 ;
+		c >>= 4 ;
+    c = c>9 ? c+'A'-10 : c+'0';
+		LogBuffer[LogCount++] = c ;
+		if ( LogCount >= 256 )
+		{
+       LogFile.write((char*)LogBuffer,256) ;
+			 LogCount = 0 ;
+		}
+		c = data & 0x0F ;
+    c = c>9 ? c+'A'-10 : c+'0';
+		LogBuffer[LogCount++] = c ;
 		if ( LogCount >= 256 )
 		{
        LogFile.write((char*)LogBuffer,256) ;
 			 LogCount = 0 ;
 		}
 	}
-#endif
 	
   quint8 numbytes = numPktBytes ;
   switch (dataState) 

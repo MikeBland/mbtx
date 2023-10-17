@@ -21,11 +21,11 @@ ENTRY(Reset_Handler)
 
 /* Highest address of the user mode stack */
 _estack = 0x20030000;    /* end of 192K SRAM */
-_heap_end = 0x20028000;  /* end of 160K SRAM */
+_heap_end = 0x2002F000;  /* end of 188K SRAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */
-_Main_Stack_Size = 1024; /* required amount of stack for interrupt stack (Main stack) */
+_Main_Stack_Size = 0x200; /* required amount of stack for interrupt stack (Main stack) */
 
 /* Main stack end */
 _main_stack_start = _estack - _Main_Stack_Size;

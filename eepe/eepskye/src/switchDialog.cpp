@@ -174,12 +174,15 @@ void SwitchDialog::valuesChanged()
       value = ui->v1CB->currentIndex() ;
 			value = decodePots( value, ltype, lextraPots ) ;
 		  lsdata->swData.v1 = value ;
+      value = ui->v2CB->currentIndex() ;
+			value = decodePots( value, ltype, lextraPots ) ;
+		  lsdata->swData.v2 = value ;
     }
 		break ;
 		
 	}
 
-  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E  | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_T12 | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 	{
     lsdata->swData.andsw = getSwitchCbValueShort( ui->andSwCB, 1 ) ;
 	}
@@ -200,7 +203,7 @@ void SwitchDialog::update()
 
 	populateCSWCB( ui->functionCB, lsdata->swData.func, lmodelVersion);
 	ui->delaySB->setValue( (double) lsdata->switchDelay / 10 ) ;
-  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S) )
+  if ( lrData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_QX7 | RADIO_BITTYPE_XLITE | RADIO_BITTYPE_X9L | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S) )
 	{
     x9dPopulateSwitchAndCB( ui->andSwCB, lsdata->swData.andsw ) ;
 	}

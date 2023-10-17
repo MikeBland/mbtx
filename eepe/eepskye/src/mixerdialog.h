@@ -25,13 +25,19 @@ private slots:
 
 
 private:
+		void addSource( uint8_t index, QString str = "" ) ;
     SKYMixData *md;
     Ui::MixerDialog *ui;
     QString * mixCommennt;
 		int leeType ;
 		int lType ;
+		int lBitType ;
+		int lModelVersion ;
 		uint32_t lextraPots ;
+		EEGeneral *lg_eeGeneral ;
     bool ValuesEditLock ;
+		uint8_t sourceMap[120] ;
+		uint8_t sourceMapSize ;
 };
 
 #endif // MIXERDIALOG_H

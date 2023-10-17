@@ -963,7 +963,7 @@ void lcd_clearBackground()
 	LcdClearing = 1 ;
 //	LCDLastOp = 'C' ;
 //	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64+16+16+16, LcdBackground ) ;
-	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 240, LcdBackground ) ;
+	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 242, LcdBackground ) ;
 
 
 //	startLcdDrawSolidFilledRectDMA( 0, 0, 480, 128+64, 0xF800 + 0x07E0 + 0x001F ) ;
@@ -1006,7 +1006,14 @@ extern uint8_t MaintenanceRunning ;
 #endif
 }
 
+#include "..\font.lbm"
+
 #ifdef INVERT_DISPLAY
+//const uint8_t RomFontSmall[] =
+//{
+//#include "font.lbm"
+//} ;
+
 const uint8_t RomFont5x7h[] =
 {
 //#include "..\font5x7h.lbm"
@@ -1068,6 +1075,7 @@ const uint8_t Romfont_xxl[] =
 } ;
 
 
+//uint8_t *FontSmall ;
 uint8_t *Font_12x8h ;
 uint8_t *Font_dblsizeh ;
 uint8_t *Font5x7h ;
@@ -1186,9 +1194,18 @@ void copyFonts()
 //	memmove( dest, Romfont_pl_h_extra, i ) ;
 	dest += i ;
 
+//	FontSmall = dest ;
+//	i = (sizeof(RomFontSmall) + 3) & ~3  ;
+//	invertFont( dest, (uint8_t *)RomFontSmall, 12*16/2, i ) ;
+//	dest += i ;
+
 }
 
 #else
+//const uint8_t FontSmall[] =
+//{
+//#include "font.lbm"
+//} ;
 const uint8_t Font5x7h[] =
 {
 #include "..\f7x5.lbm"
@@ -1276,11 +1293,46 @@ const uint8_t font_xxl[] =
 //#define LCD_STATUS_GREY	0x3BEF
 
 // Coordinates are full 480 x 272
-void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
+void lcdDrawChDma( uint16_t x, uint16_t y, uint32_t w, uint32_t h, uint32_t mode, uint16_t colour, uint8_t *bitmap )
 {
-	uint32_t backColour ;
 	uint32_t frontColour ;
+
+	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
+	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
+	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) | 0xFF000000 ;
+
+#ifdef INVERT_DISPLAY
+	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+#else
+	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
+#endif
+
+	DMA2D_DeInit() ;
+	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_BLEND ;
+	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+  DMA2D->OMAR = addr ;
+	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( h | (w << 16) ) ;
+
+	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour : 0 ;
+	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? 0 : frontColour ;
+  
+  DMA2D->FGPFCCR = CM_L4 ;
+  DMA2D->FGMAR   = (uint32_t) bitmap ;
+  DMA2D->BGPFCCR = CM_RGB565 ;
+  DMA2D->BGMAR   = (uint32_t) addr ;
+	DMA2D->BGOR = (DMA2D->BGOR & ~(uint32_t)DMA2D_BGOR_LO ) | (LCD_W - w) ;
+  DMA2D->FGOR    = 0 ;
+	
+  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+	pollDma2Ddone( 3000 ) ;
+}
+
+void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
+{
 	uint32_t condensed = mode & CONDENSED ;
+  uint8_t *q ;
 
 #ifdef INVERT_DISPLAY
 	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
@@ -1291,22 +1343,10 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 	y = (LCD_H-1) - y - 31 ;
 	if ( y >= LCD_H )
 	{
-//		LcdBits |= 2 ;
-//		LcdErrors += 1 ;
 		y = 0 ;
 	}
 #endif
 
-	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
-	backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
-	backColour |= ( (background & 0x001F) << 3 ) | ( (background & 0x001C) >> 2 ) ;
-	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
-	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
-	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
-	
-  uint8_t *q ;
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
-	uint32_t w = condensed ? 16 : 24 ;
 //	w = 12 ;
 	if ( condensed )
 	{
@@ -1337,47 +1377,52 @@ void lcdDrawCharBitmapDoubleDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t m
 			}
 		}
 	}
-  DMA2D_DeInit() ;
-	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_PFC ;
-	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
-  DMA2D->OMAR = addr ;
-	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
-  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 32 | (w << 16) ) ;
-
-	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour : backColour ;
-	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour ;
   
-  DMA2D->FGPFCCR = CM_L4 ;
-  DMA2D->FGMAR   = (uint32_t) q ;
-  DMA2D->FGOR    = 0 ;
+	lcdDrawChDma( x, y, condensed ? 16 : 24, 32, mode, colour, q ) ;
 	
-  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
-//  DMA2D_StartTransfer() ;
-	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
-	pollDma2Ddone( 3000 ) ;
-//	if ( condensed )
-//	{
-//  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
-//	  DMA2D->OMAR = addr + 4 ;
-//		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
-//  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
-//	  DMA2D->FGOR    = 4 ;
-//		DMA2D->IFCR = DMA2D_FLAG_TC ;
-//	  DMA2D_StartTransfer() ;
-//  	while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
-//	}
+	
+//	DMA2D_DeInit() ;
+//	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_BLEND ;
+//	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+//  DMA2D->OMAR = addr ;
+//	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+//  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 32 | (w << 16) ) ;
+
+//	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour | 0xFF000000 : backColour ;
+//	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour | 0xFF000000 ;
+  
+//  DMA2D->FGPFCCR = CM_L4 ;
+//  DMA2D->FGMAR   = (uint32_t) q ;
+//  DMA2D->BGPFCCR = CM_RGB565 ;
+//  DMA2D->BGMAR   = (uint32_t) addr ;
+//	DMA2D->BGOR = (DMA2D->BGOR & ~(uint32_t)DMA2D_BGOR_LO ) | (LCD_W - w) ;
+  
+//	DMA2D->FGOR    = 0 ;
+	
+//  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+////  DMA2D_StartTransfer() ;
+//	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+//	pollDma2Ddone( 3000 ) ;
+////	if ( condensed )
+////	{
+////  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
+////	  DMA2D->OMAR = addr + 4 ;
+////		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
+////  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
+////	  DMA2D->FGOR    = 4 ;
+////		DMA2D->IFCR = DMA2D_FLAG_TC ;
+////	  DMA2D_StartTransfer() ;
+////  	while (DMA2D_GetFlagStatus(DMA2D_FLAG_TC) == RESET);
+////	}
 }
 
 
-void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour, uint16_t background )
+void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
 {
+	uint32_t condensed = mode & CONDENSED ;
+  uint8_t *q ;
+
 #ifdef INVERT_DISPLAY
-//	uint16_t ty ;
-//	uint16_t tx ;
-//	uint16_t tc ;
-//	ty = y ;
-//	tx = x ;
-//	tc = chr ;
 	x = (LCD_W-1) - x - 11 ;
 	if ( x >= LCD_W )
 	{
@@ -1386,62 +1431,10 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 	y = (LCD_H-1) - y - 15 ;
 	if ( y >= LCD_H )
 	{
-//		LcdBits |= 4 ;
-//		LcdErrors += 1 ;
-//		Lcdx = tx ;
-//		Lcdy = ty ;
-//		Lcdc = tc ;
 		y = 0 ;
 	}
 #endif
-	uint32_t backColour ;
-//	switch ( background )
-//	{
-//		case LCD_WHITE :
-//			backColour = 0xFFFFFFFF ;
-//		 break ;
-//		case LCD_LIGHT_GREY :
-//		default :
-//			backColour = 0xFFC0C0C0 ; //0xFFFFFFFF ;
-//		break ;
-//		case LCD_STATUS_GREY :
-//			backColour = 0xFF397D7B ;
-//		break ;
-//		case LCD_GREEN :
-//			backColour = 0xFF00FF00 ;
-//		break ;
-//		case LCD_RED :
-//			backColour = 0xFFFF0000 ;
-//		break ;
-//		case LCD_BLUE :
-//			backColour = 0xFF0000FF ;
-//		break ;
-//	}
 
-	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
-	backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
-	backColour |= ( (background & 0x001F) << 3 ) | ( (background & 0x001C) >> 2 ) ;
-
-	uint32_t frontColour ;
-	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
-	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
-	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
-
-  uint8_t *q ;
-	uint32_t condensed = mode & CONDENSED ;
-#ifdef INVERT_DISPLAY
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
-#else
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
-#endif
-//#ifdef INVERT_DISPLAY
-//	uint32_t w = condensed ? 8 : 12 ;
-//#else
-//	uint32_t w = condensed ? 2 : 12 ;
-//#endif
-	uint32_t w = 12 ;
-
-//	q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
 	if ( condensed )
 	{
 		if( chr < 0xC0 )
@@ -1489,61 +1482,208 @@ void lcdDrawCharBitmapDma( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, u
 			}
 		}
 	}
-	DMA2D_DeInit() ;
-	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_PFC ;
-	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
-  DMA2D->OMAR = addr ;
-	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
-  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (w << 16) ) ;
 
-	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour : backColour ;
-	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour ;
-  
-  DMA2D->FGPFCCR = CM_L4 ;
-  DMA2D->FGMAR   = (uint32_t) q ;
+	lcdDrawChDma( x, y, 12, 16, mode, colour, q ) ;
+
+
 //#ifdef INVERT_DISPLAY
-//  DMA2D->FGOR    = condensed ? 4 : 0 ;
-//#else
-//  DMA2D->FGOR    = condensed ? 10 : 0 ;
-//#endif
-  DMA2D->FGOR    = 0 ;
-	
-  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
-//  DMA2D_StartTransfer() ;
-	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
-	pollDma2Ddone( 3000 ) ;
-//	if ( condensed )
+////	uint16_t ty ;
+////	uint16_t tx ;
+////	uint16_t tc ;
+////	ty = y ;
+////	tx = x ;
+////	tc = chr ;
+//	x = (LCD_W-1) - x - 11 ;
+//	if ( x >= LCD_W )
 //	{
-//#ifdef INVERT_DISPLAY
-//  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (2 << 16) ) ;
-//	  DMA2D->OMAR = addr + 16 ;
-//		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 2) ;
-//  	DMA2D->FGMAR   = ( (uint32_t) q ) + 5 ;
-//	  DMA2D->FGOR    = 10 ;
-//#else
-//  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
-//	  DMA2D->OMAR = addr + 4 ;
-//		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
-//  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
-//	  DMA2D->FGOR    = 4 ;
-//#endif
-//  	DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
-////	  DMA2D_StartTransfer() ;
-//	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
-//		pollDma2Ddone( 3000 ) ;
+//		x += LCD_W ;
 //	}
+//	y = (LCD_H-1) - y - 15 ;
+//	if ( y >= LCD_H )
+//	{
+////		LcdBits |= 4 ;
+////		LcdErrors += 1 ;
+////		Lcdx = tx ;
+////		Lcdy = ty ;
+////		Lcdc = tc ;
+//		y = 0 ;
+//	}
+//#endif
+//	uint32_t backColour ;
+////	switch ( background )
+////	{
+////		case LCD_WHITE :
+////			backColour = 0xFFFFFFFF ;
+////		 break ;
+////		case LCD_LIGHT_GREY :
+////		default :
+////			backColour = 0xFFC0C0C0 ; //0xFFFFFFFF ;
+////		break ;
+////		case LCD_STATUS_GREY :
+////			backColour = 0xFF397D7B ;
+////		break ;
+////		case LCD_GREEN :
+////			backColour = 0xFF00FF00 ;
+////		break ;
+////		case LCD_RED :
+////			backColour = 0xFFFF0000 ;
+////		break ;
+////		case LCD_BLUE :
+////			backColour = 0xFF0000FF ;
+////		break ;
+////	}
+
+//	backColour = ( (background & 0xF800) << 8 ) | ( (background & 0xE000) << 3 ) ;
+//	backColour |= ( (background & 0x07E0) << 5 ) | ( (background & 0x0600) >> 1 ) ;
+//	backColour |= ( (background & 0x001F) << 3 ) | ( (background & 0x001C) >> 2 ) ;
+
+//	uint32_t frontColour ;
+//	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
+//	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
+//	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
+
+//#ifdef INVERT_DISPLAY
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+//#else
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
+//#endif
+////#ifdef INVERT_DISPLAY
+////	uint32_t w = condensed ? 8 : 12 ;
+////#else
+////	uint32_t w = condensed ? 2 : 12 ;
+////#endif
+//	uint32_t w = 12 ;
+
+////	q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+//	DMA2D_DeInit() ;
+//	DMA2D->CR = (DMA2D->CR & (uint32_t)CR_MASK) | DMA2D_M2M_BLEND ;
+//	DMA2D->OPFCCR = (DMA2D->OPFCCR & ~(uint32_t)DMA2D_OPFCCR_CM ) | DMA2D_RGB565 ;
+//  DMA2D->OMAR = addr ;
+//	DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - w) ;
+//  DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (w << 16) ) ;
+
+//	DMA2D->FGCLUT[0] = ( mode & INVERS ) ? frontColour | 0xFF000000 : backColour ;
+//	DMA2D->FGCLUT[15] = ( mode & INVERS ) ? backColour : frontColour | 0xFF000000 ;
+  
+//  DMA2D->FGPFCCR = CM_L4 ;
+//  DMA2D->FGMAR   = (uint32_t) q ;
+//  DMA2D->BGPFCCR = CM_RGB565 ;
+//  DMA2D->BGMAR   = (uint32_t) addr ;
+//	DMA2D->BGOR = (DMA2D->BGOR & ~(uint32_t)DMA2D_BGOR_LO ) | (LCD_W - w) ;
+
+////#ifdef INVERT_DISPLAY
+////  DMA2D->FGOR    = condensed ? 4 : 0 ;
+////#else
+////  DMA2D->FGOR    = condensed ? 10 : 0 ;
+////#endif
+//  DMA2D->FGOR    = 0 ;
+	
+//  DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+////  DMA2D_StartTransfer() ;
+//	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+//	pollDma2Ddone( 3000 ) ;
+////	if ( condensed )
+////	{
+////#ifdef INVERT_DISPLAY
+////  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (2 << 16) ) ;
+////	  DMA2D->OMAR = addr + 16 ;
+////		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 2) ;
+////  	DMA2D->FGMAR   = ( (uint32_t) q ) + 5 ;
+////	  DMA2D->FGOR    = 10 ;
+////#else
+////  	DMA2D->NLR = (DMA2D->NLR & ~(DMA2D_NLR_NL | DMA2D_NLR_PL) ) | ( 16 | (8 << 16) ) ;
+////	  DMA2D->OMAR = addr + 4 ;
+////		DMA2D->OOR = (DMA2D->OOR & ~(uint32_t)DMA2D_OOR_LO ) | (LCD_W - 8) ;
+////  	DMA2D->FGMAR   = ( (uint32_t) q ) + 2 ;
+////	  DMA2D->FGOR    = 4 ;
+////#endif
+////  	DMA2D->IFCR = DMA2D_IFCR_CTCIF ;
+//////	  DMA2D_StartTransfer() ;
+////	DMA2D->CR |= (uint32_t)DMA2D_CR_START ;
+////		pollDma2Ddone( 3000 ) ;
+////	}
 }
 
-void lcdDrawCharBitmapTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
+//void lcdDrawCharBitmapTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
+//{
+//  uint8_t *q ;
+//#ifdef INVERT_DISPLAY
+//	x = (LCD_W-1) - x - 11 ;
+//	if ( x >= LCD_W )
+//	{
+//		x += LCD_W ;
+//	}
+//	y = (LCD_H-1) - y - 15 ;
+//	if ( y >= LCD_H )
+//	{
+//		y = 0 ;
+//	}
+//#endif
+
+//#ifdef INVERT_DISPLAY
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+//#else
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
+//#endif
+////	uint32_t w = 12 ;
+	
+//	if( chr < 0xC0 )
+//	{
+//		q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+//	}
+//	else
+//	{
+//		if ( mode & BOLD )
+//		{
+//			q = (uint8_t *) &Font5x7hBold[0] ;
+//		}
+//		else
+//		{
+//			if ( ExtraHorusFont )
+//			{
+//				q = (uint8_t *) &ExtraHorusFont[(chr-0xC0)*96] ;
+//			}
+//			else
+//			{
+//				q = (uint8_t *) &Font5x7h[0] ;
+//			}
+//		}
+//	}
+//	uint32_t i ;
+//	uint32_t j ;
+//	uint16_t *p ;
+//	uint8_t c ;
+//	for ( i = 0 ; i < 16 ; i += 1 )
+//	{
+//		p = (uint16_t *) addr ;
+//		for ( j = 0 ; j < 6 ; j += 1 )
+//		{
+//			c = *q++ ;
+//			if ( c & 0x0F )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//			if ( c & 0xF0 )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//		}
+//		addr += LCD_W * 2 ;
+//	}
+//}
+
+void lcdDrawCharSmall( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
 {
   uint8_t *q ;
 #ifdef INVERT_DISPLAY
-	x = (LCD_W-1) - x - 11 ;
+	x = (LCD_W-1) - x - 5 ;
 	if ( x >= LCD_W )
 	{
 		x += LCD_W ;
 	}
-	y = (LCD_H-1) - y - 15 ;
+	y = (LCD_H-1) - y - 7 ;
 	if ( y >= LCD_H )
 	{
 		y = 0 ;
@@ -1551,58 +1691,68 @@ void lcdDrawCharBitmapTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t
 #endif
 
 #ifdef INVERT_DISPLAY
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 + 8 ;
 #else
 	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
 #endif
-//	uint32_t w = 12 ;
+
+////	uint32_t w = 12 ;
 	
 	if( chr < 0xC0 )
 	{
-		q = (mode & BOLD) ? (uint8_t *) &Font5x7hBold[(chr-0x20)*96] : (uint8_t *) &Font5x7h[(chr-0x20)*96] ;
+		q = (uint8_t *) &font[(chr-0x20)*5] ;
 	}
 	else
 	{
-		if ( mode & BOLD )
-		{
-			q = (uint8_t *) &Font5x7hBold[0] ;
-		}
-		else
-		{
-			if ( ExtraHorusFont )
-			{
-				q = (uint8_t *) &ExtraHorusFont[(chr-0xC0)*96] ;
-			}
-			else
-			{
-				q = (uint8_t *) &Font5x7h[0] ;
-			}
-		}
+		q = (uint8_t *) &font[0] ;
 	}
+
 	uint32_t i ;
 	uint32_t j ;
+	uint32_t mask ;
 	uint16_t *p ;
 	uint8_t c ;
-	for ( i = 0 ; i < 16 ; i += 1 )
+	for ( i = 0 ; i < 5 ; i += 1 )
 	{
+#ifdef INVERT_DISPLAY
+		mask = 0x80 ;
+#else
+		mask = 0x01 ;
+#endif
 		p = (uint16_t *) addr ;
-		for ( j = 0 ; j < 6 ; j += 1 )
+		c = *q++ ;
+		for ( j = 0 ; j < 8 ; j += 1 )
 		{
-			c = *q++ ;
-			if ( c & 0x0F )
+			if ( c & mask )
 			{
 				*p = colour ;
 			}
-			p += 1 ;
-			if ( c & 0xF0 )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
+			p += LCD_W ;
+#ifdef INVERT_DISPLAY
+			mask >>= 1 ;
+#else
+			mask <<= 1 ;
+#endif
+
 		}
-		addr += LCD_W * 2 ;
+#ifdef INVERT_DISPLAY
+		addr -= 2 ;
+#else
+		addr += 2 ;
+#endif
 	}
 }
+
+void lcd_putsSmall( uint16_t x, uint16_t y, uint8_t *p, uint16_t colour )
+{
+	uint8_t c ;
+	while ( ( c = *p++ ) != 0 )
+	{
+		lcdDrawCharSmall( x, y, c, 0, colour ) ;
+		x += 6 ;		
+	}
+}
+
 
 void lcdDrawCharxxlTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
 {
@@ -1620,11 +1770,11 @@ void lcdDrawCharxxlTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mo
 	}
 #endif
 
-#ifdef INVERT_DISPLAY
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
-#else
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
-#endif
+//#ifdef INVERT_DISPLAY
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+//#else
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ; // + (condensed ? 4 : 0) ;
+//#endif
 //	uint32_t w = 12 ;
 
 	if ( chr == '-' )
@@ -1633,133 +1783,135 @@ void lcdDrawCharxxlTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mo
 	}
 	if ( ( chr < '0' ) || ( chr > ':' + 1 ) )
 	{
-		lcdDrawCharBitmapTransparent( x, y, chr, mode, colour ) ;
+		lcdDrawCharBitmapDma( x, y, chr, mode, colour ) ;
 		return ;
 	}
 
 	q = (uint8_t *) &font_xxl[(chr-'0')*16*48] ;
-	 
-	uint32_t i ;
-	uint32_t j ;
-	uint16_t *p ;
-	uint8_t c ;
-	for ( i = 0 ; i < 48 ; i += 1 )
-	{
-		p = (uint16_t *) addr ;
-		for ( j = 0 ; j < 8 ; j += 1 )
-		{
-			c = *q++ ;
-			if ( c & 0x0F )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-			if ( c & 0xF0 )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-			c = *q++ ;
-			if ( c & 0x0F )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-			if ( c & 0xF0 )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-		}
-		addr += LCD_W * 2 ;
-	}
-}
 
-void lcdDrawCharDoubleTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
-{
-//	uint32_t backColour ;
-//	uint32_t frontColour ;
-	uint32_t condensed = mode & CONDENSED ;
-
-#ifdef INVERT_DISPLAY
-	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
-	if ( x >= LCD_W )
-	{
-		x += LCD_W ;
-	}
-	y = (LCD_H-1) - y - 31 ;
-	if ( y >= LCD_H )
-	{
-//		LcdBits |= 2 ;
-//		LcdErrors += 1 ;
-		y = 0 ;
-	}
-#endif
-
-//	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
-//	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
-//	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
+	lcdDrawChDma( x, y, 32, 48, mode, colour, q ) ;
 	
-  uint8_t *q ;
-	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
-	uint32_t w = condensed ? 16 : 24 ;
-//	w = 12 ;
-	if ( condensed )
-	{
-		if( chr < 0xC0 )
-		{
-			q = (uint8_t *) &Font_12x8h[(chr-0x20)*256] ;
-		}
-		else
-		{
-			q = (uint8_t *) &Font_12x8h[0] ;
-		}
-	}
-	else
-	{
-		if( chr < 0xC0 )
-		{
-			q = (uint8_t *) &Font_dblsizeh[(chr-0x20)*384] ;
-		}
-		else
-		{
-			if ( ExtraHorusBigFont )
-			{
-				q = (uint8_t *) &ExtraHorusBigFont[(chr-0xC0)*384] ;
-			}
-			else
-			{
-				q = (uint8_t *) &Font_dblsizeh[0] ;
-			}
-		}
-	}
-
-  // width w, height 32?
-	w /= 2 ;
-	uint32_t i ;
-	uint32_t j ;
-	uint16_t *p ;
-	uint8_t c ;
-	for ( i = 0 ; i < 32 ; i += 1 )
-	{
-		p = (uint16_t *) addr ;
-		for ( j = 0 ; j < w ; j += 1 )
-		{
-			c = *q++ ;
-			if ( c & 0x0F )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-			if ( c & 0xF0 )
-			{
-				*p = colour ;
-			}
-			p += 1 ;
-		}
-		addr += LCD_W * 2 ;
-	}
+//	uint32_t i ;
+//	uint32_t j ;
+//	uint16_t *p ;
+//	uint8_t c ;
+//	for ( i = 0 ; i < 48 ; i += 1 )
+//	{
+//		p = (uint16_t *) addr ;
+//		for ( j = 0 ; j < 8 ; j += 1 )
+//		{
+//			c = *q++ ;
+//			if ( c & 0x0F )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//			if ( c & 0xF0 )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//			c = *q++ ;
+//			if ( c & 0x0F )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//			if ( c & 0xF0 )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//		}
+//		addr += LCD_W * 2 ;
+//	}
 }
+
+//void lcdDrawCharDoubleTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
+//{
+////	uint32_t backColour ;
+////	uint32_t frontColour ;
+//	uint32_t condensed = mode & CONDENSED ;
+
+//#ifdef INVERT_DISPLAY
+//	x = (LCD_W-1) - x - ( condensed ? 15 : 23 ) ;
+//	if ( x >= LCD_W )
+//	{
+//		x += LCD_W ;
+//	}
+//	y = (LCD_H-1) - y - 31 ;
+//	if ( y >= LCD_H )
+//	{
+////		LcdBits |= 2 ;
+////		LcdErrors += 1 ;
+//		y = 0 ;
+//	}
+//#endif
+
+////	frontColour = ( (colour & 0xF800) << 8 ) | ( (colour & 0xE000) << 3 ) ;
+////	frontColour |= ( (colour & 0x07E0) << 5 ) | ( (colour & 0x0600) >> 1 ) ;
+////	frontColour |= ( (colour & 0x001F) << 3 ) | ( (colour & 0x001C) >> 2 ) ;
+	
+//  uint8_t *q ;
+//	uint32_t addr = CurrentFrameBuffer + (LCD_W*y + x)*2 ;
+//	uint32_t w = condensed ? 16 : 24 ;
+////	w = 12 ;
+//	if ( condensed )
+//	{
+//		if( chr < 0xC0 )
+//		{
+//			q = (uint8_t *) &Font_12x8h[(chr-0x20)*256] ;
+//		}
+//		else
+//		{
+//			q = (uint8_t *) &Font_12x8h[0] ;
+//		}
+//	}
+//	else
+//	{
+//		if( chr < 0xC0 )
+//		{
+//			q = (uint8_t *) &Font_dblsizeh[(chr-0x20)*384] ;
+//		}
+//		else
+//		{
+//			if ( ExtraHorusBigFont )
+//			{
+//				q = (uint8_t *) &ExtraHorusBigFont[(chr-0xC0)*384] ;
+//			}
+//			else
+//			{
+//				q = (uint8_t *) &Font_dblsizeh[0] ;
+//			}
+//		}
+//	}
+
+//  // width w, height 32?
+//	w /= 2 ;
+//	uint32_t i ;
+//	uint32_t j ;
+//	uint16_t *p ;
+//	uint8_t c ;
+//	for ( i = 0 ; i < 32 ; i += 1 )
+//	{
+//		p = (uint16_t *) addr ;
+//		for ( j = 0 ; j < w ; j += 1 )
+//		{
+//			c = *q++ ;
+//			if ( c & 0x0F )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//			if ( c & 0xF0 )
+//			{
+//				*p = colour ;
+//			}
+//			p += 1 ;
+//		}
+//		addr += LCD_W * 2 ;
+//	}
+//}
 
 
 
@@ -2236,7 +2388,32 @@ uint16_t lcd_getPixel(uint32_t x, uint32_t y )
 	x = (LCD_W-x)-1 ;
 	y = (LCD_H-y)-1 ;
 #endif	
-  uint16_t *addr = (uint16_t *)(CurrentFrameBuffer + 2*(LCD_W*y + x)) ;
+	uint32_t pbuffer = (uint32_t)LcdFirstFrameBuffer ;
+	if ( CurrentFrameBuffer == (uint32_t)LcdFirstFrameBuffer )
+	{
+		pbuffer = (uint32_t)LcdSecondFrameBuffer ;
+	}
+
+//  uint16_t *addr = (uint16_t *)(CurrentFrameBuffer + 2*(LCD_W*y + x)) ;
+  uint16_t *addr = (uint16_t *)(pbuffer + 2*(LCD_W*y + x)) ;
+//  uint16_t *addr = (uint16_t *)(CurrentFrameBuffer + 2*(LCD_W*y + x)) ;
 	return *addr ;
+}
+
+void lcd_setPixel(uint32_t x, uint32_t y, uint16_t value )
+{
+#ifdef INVERT_DISPLAY
+	x = (LCD_W-x)-1 ;
+	y = (LCD_H-y)-1 ;
+#endif	
+	uint32_t pbuffer = (uint32_t)LcdFirstFrameBuffer ;
+	if ( CurrentFrameBuffer == (uint32_t)LcdFirstFrameBuffer )
+	{
+		pbuffer = (uint32_t)LcdSecondFrameBuffer ;
+	}
+
+//  uint16_t *addr = (uint16_t *)(CurrentFrameBuffer + 2*(LCD_W*y + x)) ;
+  uint16_t *addr = (uint16_t *)(pbuffer + 2*(LCD_W*y + x)) ;
+	*addr = value ;
 }
 

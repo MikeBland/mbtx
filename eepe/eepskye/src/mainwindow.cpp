@@ -273,60 +273,13 @@ void MainWindow::title()
   QSettings settings("er9x-eePskye", "eePskye");
 	int dnloadVersion = settings.value("download-version", 0).toInt() ;
 	QString type ;
-	switch ( dnloadVersion )
+	if ( dnloadVersion <= 17)
 	{
-		default :
-			type = "Sky" ;
-    break ;
-		case 1 :
-			type = "9XR-PRO" ;
-    break ;
-		case 2 :
-			type = "Taranis" ;
-    break ;
-		case 3 :
-			type = "Taranis Plus" ;
-    break ;
-		case 4 :
-			type = "9Xtreme" ;
-    break ;
-		case 5 :
-			type = "X9E" ;
-    break ;
-		case 6 :
-			type = "AR9X" ;
-    break ;
-		case 7 :
-			type = "QX7" ;
-    break ;
-		case 8 :
-			type = "XLITE" ;
-    break ;
-		case 9 :
-			type = "T12" ;
-    break ;
-		case 10 :
-			type = "X9Lite" ;
-    break ;
-		case 11 :
-			type = "X10" ;
-    break ;
-		case 12 :
-			type = "T16" ;
-    break ;
-		case 13 :
-			type = "Lemon1" ;
-    break ;
-		case 14 :
-			type = "TX16S" ;
-    break ;
-		case 15 :
-			type = "X12" ;
-    break ;
-		case 16 :
-			type = "X10e" ;
-    break ;
-
+		type = RadioNames[dnloadVersion] ;
+	}
+	else
+	{
+		type = "Unknown" ;
 	}
   setWindowTitle(tr("eePskye - EEPROM Editor - %1").arg(type));
 }
@@ -1607,6 +1560,8 @@ void MainWindow::burnToFlash(QString fileToFlash)
 					path = FindErskyPath( 1 ) ;	// FLASH
 	  			if ( path.isEmpty() )
 					{
+			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
+						
     			  QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
     			  return;
 					}

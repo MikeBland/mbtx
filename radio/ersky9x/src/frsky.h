@@ -116,8 +116,9 @@
 #define FR_CUST8			          87
 #define FR_CUST9			          88
 #define FR_CUST10			          89
+#define TEL_SATS			          90
 
-#define FR_TRASH			90  // Used for invalid id
+#define FR_TRASH			91  // Used for invalid id
 //#define FR_TRASH			43	// Used for invalid id
 
 #define FR_SPORT_ALT	0xFF
@@ -640,17 +641,17 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define LOG_TEMP2	10
 #define LOG_RPM		11
 #define LOG_FUEL	12
-#define LOG_MAH1	13//
-#define LOG_MAH2	14//
+#define LOG_MAH1	13// not logged
+#define LOG_MAH2	14// not logged
 #define LOG_CVLT	15
 #define LOG_BATT	16
 #define LOG_AMPS	17
 #define LOG_MAH		18
 #define LOG_CTOT	19
 #define LOG_FASV	20
-#define LOG_ACCX	21//
-#define LOG_ACCY	22//
-#define LOG_ACCZ	23//
+#define LOG_ACCX	21
+#define LOG_ACCY	22
+#define LOG_ACCZ	23
 #define LOG_VSPD	24
 #define LOG_GVAR1	25
 #define LOG_GVAR2	26
@@ -673,8 +674,8 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define LOG_SC7		43
 #define LOG_SC8		44
 
-#define LOG_RTC		45//
-#define LOG_TMOK	46//
+#define LOG_RTC		45// not logged
+#define LOG_TMOK	46// not logged
 #define LOG_ASPD	47
 
 #define LOG_CEL1	48
@@ -707,19 +708,20 @@ extern void store_telemetry_scaler( uint8_t index, int16_t value ) ;
 #define LOG_CUST5	  72
 #define LOG_CUST6	  73
 
-#define LOG_FMD			74
-#define LOG_RUNT		75
-#define LOG_MODT    76
+#define LOG_FMD			74// not logged
+#define LOG_RUNT		75// not logged
+#define LOG_MODT    76// not logged
 
 #define LOG_CTOTAL1 77
 #define LOG_CTOTAL2 78
 #define LOG_SBECV		79
 #define LOG_SBECA		80
 #define LOG_VFR			81
-#define LOG_CUST7	  82
-#define LOG_CUST8	  83
-#define LOG_CUST9	  84
-#define LOG_CUST10  85
+#define LOG_CUST7	  82// not logged
+#define LOG_CUST8	  83// not logged
+#define LOG_CUST9	  84// not logged
+#define LOG_CUST10  85// not logged
+#define LOG_SATS		88
 
 #define LOG_STK_THR 100
 #define LOG_STK_AIL 101

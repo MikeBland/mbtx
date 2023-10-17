@@ -10,6 +10,33 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG:   MPB (r223)
+Add support for: T18, TX16S X10Express
+X10 hall sticks support
+RM-TX16 handle bad rotary encoder
+X10 support inverted display
+X10 support ACCESS
+Colour screens add screenshot
+Jumper T18 enable audio
+support FrSky PARA bluetooth
+Make mixer a RTOS task
+Logical switches add "Range" function
+Logical switches "AND" switch may be "OR" or "XOR"
+Support "MULTI-TELEMETRY" from multi-protocol module
+ So auto-detect telemetry type from module
+Colour screens add HiRes custom screens
+Increase custom telemetry values from 6 to 10
+Support VFR telemetry value
+Support some AFHDS2A extended telemetry data
+Support Crossfire/ELRS synchronisation
+Add icons on Colour screens
+Add main screen popup items for resetting timers
+Maintenance mode handles .FRSK files
+Update internal multiprotocol module names
+ACCESS receiver options added
+Add SBUS protocol for external module
+
+******************************************
 CHANGELOG: 16-Dec-2018  MPB (r222)
 Fix SPort telemetry passing to script bug
 Add uS value at top of MIXER display

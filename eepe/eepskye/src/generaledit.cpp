@@ -498,6 +498,21 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		}
 		else
 		{
+			ui->label_ThrSw->hide() ;
+			ui->label_EleSw->hide() ;
+			ui->label_GeaSw->hide() ;
+			ui->label_PB3Sw->hide() ;
+			ui->label_PB4Sw->hide() ;
+			ui->label_Pot4->hide() ;
+			ui->label_Pot5->hide() ;
+     	ui->GeaCB->hide() ;
+      ui->EleCB->hide() ;
+			ui->ThrCB->hide() ;
+			ui->PB3CB->hide() ;
+			ui->PB4CB->hide() ;
+			ui->Pot4CB->hide() ;
+			ui->Pot5CB->hide() ;
+			
 			if ( rData->type == RADIO_TYPE_QX7 )
 			{
 				ui->PB1CB->show() ;
@@ -508,6 +523,20 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				setHardwareSwitchCB( ui->PB2CB, 1, 3 ) ;
 				ui->PB1CB->setCurrentIndex( g_eeGeneral.pb1source ) ;
 				ui->PB2CB->setCurrentIndex( g_eeGeneral.pb2source ) ;
+				ui->Pot4CB->clear() ;
+				ui->Pot4CB->addItem("None") ;
+				ui->Pot4CB->addItem("PC5") ;
+				ui->Pot4CB->addItem("PB1") ;
+				ui->Pot4CB->setCurrentIndex( g_eeGeneral.extraPotsSource[0] ) ;
+				ui->label_Pot4->show() ;
+				ui->Pot4CB->show() ;
+				ui->Pot5CB->clear() ;
+				ui->Pot5CB->addItem("None") ;
+				ui->Pot5CB->addItem("PC5") ;
+				ui->Pot5CB->addItem("PB1") ;
+				ui->Pot5CB->setCurrentIndex( g_eeGeneral.extraPotsSource[0] ) ;
+				ui->label_Pot5->show() ;
+				ui->Pot5CB->show() ;
 			}
 			else
 			{
@@ -569,20 +598,6 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 				ui->SixPosCB->addItem("P1") ;
 			}
 
-			ui->label_ThrSw->hide() ;
-			ui->label_EleSw->hide() ;
-			ui->label_GeaSw->hide() ;
-			ui->label_PB3Sw->hide() ;
-			ui->label_PB4Sw->hide() ;
-			ui->label_Pot4->hide() ;
-			ui->label_Pot5->hide() ;
-     	ui->GeaCB->hide() ;
-      ui->EleCB->hide() ;
-			ui->ThrCB->hide() ;
-			ui->PB3CB->hide() ;
-			ui->PB4CB->hide() ;
-			ui->Pot4CB->hide() ;
-			ui->Pot5CB->hide() ;
 	//			ui->label_6Pos->show() ;
 	//			ui->SixPosCB->show() ;
 			ui->EncoderCB->setCurrentIndex(g_eeGeneral.analogMapping & 3) ;
@@ -638,7 +653,7 @@ GeneralEdit::GeneralEdit( struct t_radioData *radioData, QWidget *parent) :
 		{
 			numberOfPots = 3 ;
 		}
-		if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S ) )
+		if ( rData->bitType & ( RADIO_BITTYPE_TARANIS | RADIO_BITTYPE_TPLUS | RADIO_BITTYPE_X9E | RADIO_BITTYPE_X10 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_TX18S ) )
 		{
 			numberOfPots = 4 ;
 		}
@@ -1260,21 +1275,25 @@ void GeneralEdit::do_stick_gain()
 
 void GeneralEdit::on_stickgainLVCB_currentIndexChanged(int index)
 {
+  (void) index ;
 	do_stick_gain() ;
 }
 
 void GeneralEdit::on_stickgainLHCB_currentIndexChanged(int index)
 {
+  (void) index ;
 	do_stick_gain() ;
 }
 
 void GeneralEdit::on_stickgainRVCB_currentIndexChanged(int index)
 {
+  (void) index ;
 	do_stick_gain() ;
 }
 
 void GeneralEdit::on_stickgainRHCB_currentIndexChanged(int index)
 {
+  (void) index ;
 	do_stick_gain() ;
 }
 
@@ -1294,6 +1313,7 @@ void GeneralEdit::on_battwarningDSB_editingFinished()
 
 void GeneralEdit::on_backlightswCB_currentIndexChanged(int index)
 {
+  (void) index ;
     g_eeGeneral.lightSw =  getSwitchCbValue( ui->backlightswCB, rData->type ) ;
     updateSettings();
 }

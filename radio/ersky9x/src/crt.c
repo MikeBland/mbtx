@@ -51,6 +51,7 @@ extern unsigned long _edata;
 extern unsigned long _sbss;
 extern unsigned long _ebss;
 extern unsigned long _estack;
+extern unsigned long _sidata;
 
 /* This is the main */
 extern int main (void);
@@ -126,7 +127,8 @@ void ResetHandler (void)
   	 * Copy the initialized data of the ".data" segment
   	 * from the flash to the are in the ram.
   	 */
-  	pSrc  = &_etext;
+//  	pSrc  = &_etext;
+  	pSrc  = &_sidata ;
   	pDest = &_sdata;
   	 while(pDest < &_edata)
   	{

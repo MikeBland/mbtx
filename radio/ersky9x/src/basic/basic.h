@@ -44,6 +44,12 @@ extern uint8_t BasicErrorText[] ;
 extern uint8_t BasicLoadedType ;
 #ifndef QT	
 extern FIL MultiBasicFile ;
+
+void stopBasic() ;
+void startBasic() ;
+
+
+
 #endif
 
 

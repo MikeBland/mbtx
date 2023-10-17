@@ -40,6 +40,9 @@
 #include "CoOS.h"
 #endif
 
+OS_STK main_stk[MAIN_STACK_SIZE] ;
+
+
 void ee32_update_name( uint32_t id, uint8_t *source ) ;
 uint32_t xloadFile(const char * filename, uint8_t * data, uint16_t maxsize) ;
 uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size) ;
@@ -1282,7 +1285,18 @@ uint32_t get_current_block_number( FIL *pfile, uint16_t *p_size, uint32_t *p_seq
 				offset = 4096 ;				
 			}
   	}
-		
+		f_lseek( pfile, 8192 ) ;
+		read = 0 ;
+	  result = f_read( pfile, (uint8_t *)header.buf, 8, &read ) ;
+  	if (result == FR_OK && read == 8)
+		{
+			if ( header.sequence > sequence_no )
+			{
+				sequence_no = header.sequence ;
+				size = header.size ;
+				offset = 8192 ;				
+			}
+  	}
 	}
   
   if ( p_size )
@@ -1318,7 +1332,7 @@ uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size)
 		{
 			offset = get_current_block_number( &file, 0, &sequenceNo ) ;
 			sequenceNo += 1 ;
-			offset = offset == 0 ? 4096 : 0 ;	// Other copy
+			offset = offset == 0 ? 8192 : 0 ;	// Other copy
 		}
 		header.sequence = sequenceNo ;
 		header.ver = 0 ;

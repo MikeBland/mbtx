@@ -30,10 +30,10 @@
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #ifdef REV9E
-const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0, 
+extern const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0, 
 																 HSW_SJ0, HSW_SK0, HSW_SL0, HSW_SM0, HSW_SN0, HSW_SO0, HSW_SP0, HSW_SQ0, HSW_SR0, } ;
 #else
-const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2 } ;
+extern const uint8_t switchIndex[8] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2 } ;
 #endif	// REV9E
 #endif
 
@@ -52,6 +52,9 @@ uint16_t  bpanaCenter = 0;
 uint16_t  sDelay[MAX_SKYMIXERS+EXTRA_SKYMIXERS] = {0};
 int32_t  act   [MAX_SKYMIXERS+EXTRA_SKYMIXERS] = {0};
 uint8_t  swOn  [MAX_SKYMIXERS+EXTRA_SKYMIXERS] = {0};
+#ifdef INPUTS
+int8_t  virtualInputsTrims[NUM_INPUTS] ;
+#endif
 uint8_t	CurrentPhase = 0 ;
 int16_t rawSticks[4] ;
 uint8_t TrimInUse[4] = { 1, 1, 1, 1 } ;
@@ -63,9 +66,14 @@ struct t_fade
 uint8_t  fadePhases ;
 uint16_t fadeRate ;
 uint16_t fadeWeight ;
-uint16_t fadeScale[MAX_MODES+1] ;
+uint16_t fadeScale[MAX_MODES+2] ;
 int32_t  fade[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS];
 } Fade ;
+
+#ifdef INPUTS
+void evalAllInputs() ;
+extern int16_t InputAnas[] ;
+#endif
 
 void trace()   // called in perOut - once every 0.01sec
 {
@@ -172,6 +180,11 @@ static void inactivityCheck()
 //}
 //#endif
 
+PhaseData *getPhaseAddress( uint32_t phase )
+{
+	return (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+}
+
 void perOutPhase( int16_t *chanOut, uint8_t att ) 
 {
 	static uint8_t lastPhase ;
@@ -200,11 +213,11 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 		
 		if ( lastPhase )
 		{
-      time1 = g_model.phaseData[(uint8_t)(lastPhase-1)].fadeOut ;
+      time1 = getPhaseAddress(lastPhase-1)->fadeOut ;
 		}
 		if ( thisPhase )
 		{
-      time2= g_model.phaseData[(uint8_t)(thisPhase-1)].fadeIn ;
+      time2= getPhaseAddress(thisPhase-1)->fadeIn ;
 			if ( time2 > time1 )
 			{
         time1 = time2 ;
@@ -527,6 +540,25 @@ void perOut(int16_t *chanOut, uint8_t att )
 				}
 			if ( att & FADE_FIRST )
 			{
+#ifdef INPUTS
+				evalAllInputs() ;
+#endif
+				
+//void evalTrims()
+//{
+//  uint8_t phase = mixerCurrentFlightMode;
+//  for (uint8_t i=0; i<NUM_TRIMS; i++) {
+//    // do trim -> throttle trim if applicable
+//    int16_t trim = getTrimValue(phase, i);
+//    if (trimsCheckTimer > 0) {
+//      trim = 0;
+//    }
+
+//    trims[i] = trim*2;
+//  }
+//}
+				
+				 
 
         //===========BEEP CENTER================
         anaCenter &= g_model.beepANACenter;
@@ -547,8 +579,8 @@ void perOut(int16_t *chanOut, uint8_t att )
         for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
         for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = g_model.gvars[i].gvar * 1024 / 100 ;
 
-				int16_t heliEle = anas[ele_stick] ;
-				int16_t heliAil = anas[ail_stick] ;
+				int16_t heliEle = anas[ele_stick] ;	// May need Input
+				int16_t heliAil = anas[ail_stick] ;	// May need Input
 
         //===========Swash Ring================
         if(g_model.swashRingValue)
@@ -575,8 +607,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 
             if( !(att & NO_INPUT) )  //zero input for setStickCenter()
 						{
-	            vp = heliEle+trimA[ele_stick];
-  	          vr = heliAil+trimA[ail_stick];
+	            vp = heliEle+trimA[ele_stick] ;	// May need virtual trim
+  	          vr = heliAil+trimA[ail_stick] ;	// May need virtual trim
 							TrimInUse[ele_stick] |= 1 ;
 							TrimInUse[ail_stick] |= 1 ;
 						}
@@ -680,6 +712,18 @@ void perOut(int16_t *chanOut, uint8_t att )
 							lweight += 250 ;
 						}
 					}
+					if ( lweight > 350 )
+					{
+						lweight -= 360 ;
+						if ( lweight < 0 )
+						{
+							lweight = -g_model.gvars[-lweight-1].gvar ;
+						}
+						else
+						{
+							lweight = g_model.gvars[lweight].gvar ;
+						}
+					}
 				}
 				int16_t mixweight = lweight ;
 				int16_t loffset = md->sOffset ;
@@ -699,13 +743,25 @@ void perOut(int16_t *chanOut, uint8_t att )
 					}
 					else if ( md->extOffset == 2 )
 					{
-						if ( lweight < 0 )
+						if ( loffset < 0 )
 						{
 							loffset -= 250 ;
 						}
 						else
 						{
 							loffset += 250 ;
+						}
+					}
+					if ( loffset > 350 )
+					{
+						loffset -= 360 ;
+						if ( loffset < 0 )
+						{
+							loffset = -g_model.gvars[-loffset-1].gvar ;
+						}
+						else
+						{
+							loffset = g_model.gvars[loffset].gvar ;
 						}
 					}
 				}
@@ -753,7 +809,8 @@ void perOut(int16_t *chanOut, uint8_t att )
             if(md->mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
             v = ( k == MIX_FULL ? -RESX : 0); // switch is off and it is either MAX=0 or FULL=-512
         }
-        else {
+        else
+				{
             swTog = !swon ;
             swon = true;
             k -= 1 ;
@@ -908,16 +965,25 @@ void perOut(int16_t *chanOut, uint8_t att )
 							}
 							else if ( k >= EXTRA_POTS_START-1 )
 							{
-								// An extra pot
+								// An extra pot or an Input
+#ifdef INPUTS
+								if ( k >= 224-1 )
+								{
+									v = InputAnas[k-224+1] ;
+								}
+								else
+#endif
+								{
 #ifdef PCBX7
-								v = calibratedStick[k-EXTRA_POTS_START+7] ;
+									v = calibratedStick[k-EXTRA_POTS_START+7] ;
 #else
  #ifdef PCBX9LITE
-								v = calibratedStick[k-EXTRA_POTS_START+6] ;
+									v = calibratedStick[k-EXTRA_POTS_START+6] ;
  #else
-								v = calibratedStick[k-EXTRA_POTS_START+8] ;
+									v = calibratedStick[k-EXTRA_POTS_START+8] ;
  #endif
 #endif
+								}
 							}
 						}
 						if(md->mixWarn) mixWarning |= 1<<(md->mixWarn-1); // Mix warning
@@ -1127,6 +1193,18 @@ void perOut(int16_t *chanOut, uint8_t att )
 					v += trim ;  //  0 = Trim ON  =  Default
 					TrimInUse[md->srcRaw-1] |= 1 ;
 				}
+#ifdef INPUTS
+        else if((md->carryTrim==0) && (md->srcRaw>=224) )
+				{
+					int32_t trimSrc = virtualInputsTrims[md->srcRaw - 224] ;
+					if ( trimSrc >= 0 )
+					{
+						int32_t trim = trimA[trimSrc] ;
+						v += trim ;  //  0 = Trim ON  =  Default
+						TrimInUse[trimSrc] |= 1 ;
+					}
+				}
+#endif
         //========== MULTIPLEX ===============
         int32_t dv = (int32_t)v*mixweight ;
 				

@@ -118,7 +118,7 @@ struct t_moduleControl
 	uint8_t receiverSetupFPort:1 ;
 	uint8_t receiverSetupFPort2:1 ;
 	uint8_t receiverSetupCH56pwm:1 ;
-	uint8_t channelMapping[8] ;
+	uint8_t channelMapping[16] ;
 	uint8_t registerRxName[PXX2_LEN_RX_NAME] ;
 	uint8_t bindReceiversNames[3][PXX2_LEN_RX_NAME] ;
 	uint8_t modelRegistrationID[PXX2_LEN_REGISTRATION_ID] ;
@@ -128,12 +128,14 @@ struct t_moduleControl
 	uint16_t rxSwVersion ;
 	uint8_t variant ;
 	uint8_t rxVariant ;
+	uint8_t rxCapabilities ;
 	uint8_t rxModuleId ;
 	uint8_t moduleId ;
 	int8_t power ;
 	uint8_t moduleExtAerial ;
 	uint8_t optionsState ;
 	uint8_t moduleRequest ;
+	uint8_t rxNumPins ;
 } ;
 
 enum PXX2RegisterSteps
@@ -342,6 +344,49 @@ static const char * const PXX2receiversModels[] = {
   "Archer-X", // this one has OTA (internal module)
   "R9MX", // this one has OTA
   "R9SX", // this one has OTA
+	"TDMX",
+  "TDR18",
+  "TDR10",
+  "TDR6",
+  "TDR12",
+  "TDSR12",
+  "TDSR18",
+	"---",
+  "---",
+  "---",
+  "---",
+  "---",
+  "---",
+  "---",
+	"---",
+  "---",
+  "---",
+  "---",
+  "TWM8",
+  "TWSR12",
+  "TWR12",
+	"TWGR6",
+  "R12",
+  "TWR6",
+  "TWR8",
+  "---",
+  "---",
+  "---",
+	"---",
+  "---",
+  "---",
+  "---",
+  "---",
+  "SR10 Plus",
+  "R10 Plus",
+	"GR8 Plus",
+  "R8 Plus",
+  "SR8 Plus",
+  "GR6 Plus",
+  "R6 Plus",
+  "R6M (ESC DC)",
+  "Rs PlusRS Mini",
+	"R6FB"
 };
 
 #endif

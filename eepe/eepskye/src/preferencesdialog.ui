@@ -170,6 +170,11 @@
        <string>Horus X10 express</string>
       </property>
      </item>
+     <item>
+      <property name="text">
+       <string>RadioKing TX18S</string>
+      </property>
+     </item>
     </widget>
    </item>
    <item row="9" column="1">

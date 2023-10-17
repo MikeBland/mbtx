@@ -939,6 +939,10 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_QX7 ;
 				radioData.bitType = RADIO_BITTYPE_QX7 ;
 			break ;
+			case PHYSICAL_HORUS :
+				radioData.type = RADIO_TYPE_X12 ;
+				radioData.bitType = RADIO_BITTYPE_X12 ;
+			break ;
 			case PHYSICAL_XLITE :
 				radioData.type = RADIO_TYPE_XLITE ;
 				radioData.bitType = RADIO_BITTYPE_XLITE ;
@@ -955,10 +959,22 @@ void MdiChild::getPhysicalType()
 				radioData.type = RADIO_TYPE_X10 ;
 				radioData.bitType = RADIO_BITTYPE_X10 ;
 			break ;
-//			case PHYSICAL_T16 :
-//				radioData.type = RADIO_TYPE_X10 ;
-//				radioData.bitType = RADIO_BITTYPE_X10 ;
-//			break ;
+			case PHYSICAL_T16 :
+				radioData.type = RADIO_TYPE_T16 ;
+				radioData.bitType = RADIO_BITTYPE_T16 ;
+			break ;
+			case PHYSICAL_TX16S :
+				radioData.type = RADIO_TYPE_TX16S ;
+				radioData.bitType = RADIO_BITTYPE_TX16S ;
+			break ;
+			case PHYSICAL_X10E :
+				radioData.type = RADIO_TYPE_X10E ;
+				radioData.bitType = RADIO_BITTYPE_X10E ;
+			break ;
+			case PHYSICAL_TX18S :
+				radioData.type = RADIO_TYPE_TX18S ;
+				radioData.bitType = RADIO_BITTYPE_TX18S ;
+			break ;
 		}
 	}
 	else
@@ -979,39 +995,69 @@ void MdiChild::getPhysicalType()
 		{
 			radioData.T9xr_pro = 1 ;
 		}
-		if ( x == 5 )
+		else if ( x == 5 )
 		{
 			radioData.type = 2 ;
 			radioData.sub_type = 1 ;
 		}
-		if ( x == 6 )
+		else if ( x == 6 )
 		{
 			radioData.type = 0 ;
 		}
-		if ( x == 7 )	// Qx7
+		else if ( x == 7 )	// Qx7
 		{
 			radioData.type = RADIO_TYPE_QX7 ;
 			radioData.bitType = RADIO_BITTYPE_QX7 ;
 		}
-    if ( x == 8 )	// XLITE
+    else if ( x == 8 )	// XLITE
 		{
 			radioData.type = RADIO_TYPE_XLITE ;
 			radioData.bitType = RADIO_BITTYPE_XLITE ;
 		}
-    if ( x == 9 )	// T12
+    else if ( x == 9 )	// T12
 		{
 			radioData.type = RADIO_TYPE_T12 ;
 			radioData.bitType = RADIO_BITTYPE_T12 ;
 		}
-		if ( x == 10 )	// X9L
+		else if ( x == 10 )	// X9L
 		{
 			radioData.type = RADIO_TYPE_X9L ;
 			radioData.bitType = RADIO_BITTYPE_X9L ;
 		}
-		if ( x == 11 )	// X10
+		else if ( x == 11 )	// X10
 		{
 			radioData.type = RADIO_TYPE_X10 ;
 			radioData.bitType = RADIO_BITTYPE_X10 ;
+		}
+		else if ( x == 12 )	// T16
+		{
+			radioData.type = RADIO_TYPE_T16 ;
+			radioData.bitType = RADIO_BITTYPE_T16 ;
+		}
+		else if ( x == 13 )	// LEM1
+		{
+			radioData.type = RADIO_TYPE_LEM1 ;
+			radioData.bitType = RADIO_BITTYPE_LEM1 ;
+		}
+		else if ( x == 14 )	// TX16S
+		{
+			radioData.type = RADIO_TYPE_TX16S ;
+			radioData.bitType = RADIO_BITTYPE_TX16S ;
+		}
+		else if ( x == 15 )	// X12
+		{
+			radioData.type = RADIO_TYPE_X12 ;
+			radioData.bitType = RADIO_BITTYPE_X12 ;
+		}
+		else if ( x == 16 )	// X10E
+		{
+			radioData.type = RADIO_TYPE_X10E ;
+			radioData.bitType = RADIO_BITTYPE_X10E ;
+		}
+		else if ( x == 17 )	// TX18S
+		{
+			radioData.type = RADIO_TYPE_TX18S ;
+			radioData.bitType = RADIO_BITTYPE_TX18S ;
 		}
 	}
 }
@@ -1025,7 +1071,9 @@ void MdiChild::newFile()
 		radioData.sub_type = 0 ;
 		getPhysicalType() ;
 		int x ;
+		int y ;
 		x = settings.value("download-version", 0).toInt() ;
+		y = x ;
 		radioData.bitType = 1 << x ;
 		if ( x >= 2 )
 		{
@@ -1036,60 +1084,83 @@ void MdiChild::newFile()
 		{
 			radioData.T9xr_pro = 1 ;
 		}
-    QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
-		if ( x == 3 )
-		{
-    	type = " (Taranis Plus)" ;
-		}
-		else if ( x == 4 )
-		{
-    	type = " (9Xtreme)" ;
-		}
+    QString type ; 
 		if ( x == 5 )
 		{
 			radioData.type = RADIO_TYPE_TPLUS ;
-    	type = " (Taranis X9E)" ;
 			radioData.sub_type = 1 ;
 		}
-		if ( x == 6 )
+		else if ( x == 6 )
 		{
 			radioData.type = 0 ;
-    	type = " (Sky AR9X)" ;
 		}
 
-		if ( x == 7 )
+		else if ( x == 7 )
 		{
 			radioData.type = RADIO_TYPE_QX7 ;
-    	type = " (Taranis QX7)" ;
 		}
 
-    if ( x == 8 )	// XLITE
+    else if ( x == 8 )	// XLITE
 		{
 			radioData.type = RADIO_TYPE_XLITE ;
-    	type = " (Taranis XLITE)" ;
 		}
-    if ( x == 9 )	// T12
+    else if ( x == 9 )	// T12
 		{
 			radioData.type = RADIO_TYPE_T12 ;
-    	type = " (Jumper T12)" ;
 		}
-		if ( x == 10 )	// X9L
+		else if ( x == 10 )	// X9L
 		{
 			radioData.type = RADIO_TYPE_X9L ;
-//    	type = " (X9L)" ;
-    	type = " (X9Lite)" ;
 			radioData.bitType = RADIO_BITTYPE_X9L ;
 
 		}
-		if ( x == 11 )	// X10
+		else if ( x == 11 )	// X10
 		{
 			radioData.type = RADIO_TYPE_X10 ;
-    	type = " (X10)" ;
 			radioData.bitType = RADIO_BITTYPE_X10 ;
 		}
+		else if ( x == 12 )	// T16
+		{
+			radioData.type = RADIO_TYPE_T16 ;
+			radioData.bitType = RADIO_BITTYPE_T16 ;
+		}
+		else if ( x == 13 )	// LEM1
+		{
+			radioData.type = RADIO_TYPE_LEM1 ;
+			radioData.bitType = RADIO_BITTYPE_LEM1 ;
+		}
+		else if ( x == 14 )	// TX16S
+		{
+			radioData.type = RADIO_TYPE_TX16S ;
+			radioData.bitType = RADIO_BITTYPE_TX16S ;
+		}
+		else if ( x == 15 )	// X12
+		{
+			radioData.type = RADIO_TYPE_X12 ;
+			radioData.bitType = RADIO_BITTYPE_X12 ;
+		}
+		else if ( x == 16 )	// X10E
+		{
+			radioData.type = RADIO_TYPE_X10E ;
+			radioData.bitType = RADIO_BITTYPE_X10E ;
+		}
+		else if ( x == 17 )	// TX18S
+		{
+			radioData.type = RADIO_TYPE_TX18S ;
+			radioData.bitType = RADIO_BITTYPE_TX18S ;
+		}
     isUntitled = true;
+		if ( y <= 17)
+		{
+			type = RadioNames[y] ;
+		}
+		else
+		{
+			type = "Unknown" ;
+		}
+
     curFile = tr("document%1.bin").arg(sequenceNumber++);
-    setWindowTitle(curFile + "[*]" + type );
+    setWindowTitle(curFile + "[*] (" + type +")" );
 		refreshList() ;
 
 }
@@ -1610,51 +1681,65 @@ void MdiChild::setCurrentFile(const QString &fileName)
 {
 		int x ;
 		x = radioData.type ;
-    QString type = x ? " (Taranis)" : " (Sky)" ;
 
-		if ( x == RADIO_TYPE_SKY )
+    QString type ;//= x ? " (Taranis)" : " (Sky)" ;
+
+		if ( x && x <= 17)
 		{
-			if ( radioData.T9xr_pro )
-			{
-    		type = " (Sky 9XR-PRO)" ;
-			}
-			if ( radioData.generalSettings.ar9xBoard )
-			{
-	    	type = " (Sky AR9X)" ;
-			}
+			type = RadioNames[x-1] ;
 		}
-		if ( x == RADIO_TYPE_TPLUS )
+		else
 		{
-			if ( radioData.sub_type )
-			{
-    		type = " (Taranis X9E)" ;
-			}
-			else
-			{
-    		type = " (Taranis Plus)" ;
-			}
+			type = "Unknown" ;
 		}
-		else if ( x == RADIO_TYPE_9XTREME )
-		{
-    	type = " (9Xtreme)" ;
-		}
-		else if ( x == RADIO_TYPE_QX7 )
-		{
-    	type = " (Taranis QX7)" ;
-		}
-    else if ( ( x == RADIO_TYPE_T12 ) )
-		{
-    	type = " (Jumper T12)" ;
-		}
-		else if ( x == RADIO_TYPE_X9L )
-		{
-//    	type = " (X9L)" ;
-    	type = " (X9Lite)" ;
-		}
-		else if ( x == RADIO_TYPE_X10 )
-		{
-    	type = " (X10)" ;
-		}
+
+//    QString type = x ? " (Taranis)" : " (Sky)" ;
+
+//		if ( x == RADIO_TYPE_SKY )
+//		{
+//			if ( radioData.T9xr_pro )
+//			{
+//    		type = " (Sky 9XR-PRO)" ;
+//			}
+//			if ( radioData.generalSettings.ar9xBoard )
+//			{
+//	    	type = " (Sky AR9X)" ;
+//			}
+//		}
+//		if ( x == RADIO_TYPE_TPLUS )
+//		{
+//			if ( radioData.sub_type )
+//			{
+//    		type = " (Taranis X9E)" ;
+//			}
+//			else
+//			{
+//    		type = " (Taranis Plus)" ;
+//			}
+//		}
+//		else if ( x == RADIO_TYPE_9XTREME )
+//		{
+//    	type = " (9Xtreme)" ;
+//		}
+//		else if ( x == RADIO_TYPE_QX7 )
+//		{
+//    	type = " (Taranis QX7)" ;
+//		}
+//    else if ( ( x == RADIO_TYPE_T12 ) )
+//		{
+//    	type = " (Jumper T12)" ;
+//		}
+//		else if ( x == RADIO_TYPE_X9L )
+//		{
+////    	type = " (X9L)" ;
+//    	type = " (X9Lite)" ;
+//		}
+//		else if ( x == RADIO_TYPE_X10 )
+//		{
+//    	type = " (X10)" ;
+//		}
+
+
 //		if ( x == 5 )
 //		{
 //    	type = " (Sky AR9X)" ;
@@ -1806,7 +1891,7 @@ void MdiChild::burnTo()  // write to Tx
 				{
 					// Not using SAM-BA
 					getPhysicalType() ;
-          if ( radioData.bitType & (RADIO_BITTYPE_X10 | RADIO_BITTYPE_X12 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E ) )
+          if ( radioData.bitType & (RADIO_BITTYPE_X10 | RADIO_BITTYPE_X12 | RADIO_BITTYPE_T16 | RADIO_BITTYPE_TX16S | RADIO_BITTYPE_X10E | RADIO_BITTYPE_TX18S ) )
 					{
 						QString path ;
     				QString fname ;
@@ -2022,7 +2107,7 @@ void MdiChild::simulate()
 		simulatorDialog *sd ;
 
 		sd = SimPointer ;
-    sd->loadParams(gg,gm, radioData.type);
+    sd->loadParams(gg,gm, &radioData);
     sd->show();
 }
 

@@ -53,7 +53,7 @@ _estack = 0x2000C000;    /* end of 48K SRAM */
 
 /* Generate a link error if heap and stack don't fit into RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */
-_Min_Stack_Size = 4 ; /* required amount of stack */
+_Min_Stack_Size = 0 ; /* required amount of stack */
 
 /* Main stack end */
 _main_stack_start = _estack - _Min_Stack_Size;
@@ -92,17 +92,17 @@ SECTIONS
       
 /*      . = ALIGN(32768); */      /* Align the start of the exidx part */
 /*      . = 28672 ; */      /* Align the start of the exidx part */
-      . = 32768 ;       /* Align the start of the exidx part */
-/*      . = 28672 ; */      /* Align the start of the exidx part */
+/*      . = 32768 ; */      /* Align the start of the exidx part */
+        . = 28672 ;       /* Align the start of the exidx part */
 		_stext = .;          /* Provide the name for the start of this section */
       KEEP(*(.vectors))
       
       *(.text)
       *(.text.*)
  
-      . = ALIGN(4);        /* Align the start of the exidx part */
-      *(.ARM.exidx)
-      *(.ARM.exidx.*)
+/*      . = ALIGN(4);    */     /* Align the start of the exidx part */
+/*      *(.ARM.exidx)    */
+/*      *(.ARM.exidx.*)  */
 
       . = ALIGN(4);        /* Align the start of the rodata part */
       *(.rodata)
@@ -112,6 +112,15 @@ SECTIONS
    } > FLASH = 0
    _etext = .;             /* Provide the name for the end of this section */
    
+   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) } >FLASH
+    .ARM : {
+    __exidx_start = .;
+      *(.ARM.exidx*)
+      __exidx_end = .;
+    } >FLASH
+
+   
+  _sidata = .;
    
    /*
     * The ".data" section is used for initialized data

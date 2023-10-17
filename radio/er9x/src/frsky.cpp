@@ -186,6 +186,9 @@ uint16_t DsmABLRFH[6] ;
 
 #if defined(CPUM128) || defined(CPUM2561)
 uint8_t TelRxCount ;
+#else
+uint8_t TelRxCount ;
+uint16_t Afcount ;
 #endif
 #ifdef AF_DEBUG
 uint16_t TelRxCount ;
@@ -1089,6 +1092,9 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 
 #ifdef AF_DEBUG
 	AfCount += 1 ;
+#else
+	Afcount += 1 ;
+	TelRxCount = *packet ;
 #endif
   
 	frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI

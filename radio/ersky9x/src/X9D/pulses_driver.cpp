@@ -91,8 +91,10 @@ uint8_t setupPulsesAccess( uint32_t module ) ;
 uint16_t *ppmStreamPtr[NUM_MODULES];
 uint16_t pulseStreamCount[NUM_MODULES] ;
 uint16_t ppmStream[NUM_MODULES+1][20];
-uint16_t pxxStream[NUM_MODULES][400];
-uint16_t dsm2Stream[2][400];
+//uint16_t pxxStream[NUM_MODULES][400];
+//uint16_t dsm2Stream[2][400];
+
+uint16_t TimerStream[NUM_MODULES][400];
 
 #ifdef XFIRE
 extern uint8_t Bit_pulses[] ;
@@ -534,14 +536,13 @@ void init_pa10_serial( uint32_t type )
 
   TIM1->CR2 = TIM_CR2_OIS3 ;              // O/P idle high
   TIM1->BDTR = TIM_BDTR_MOE ;             // Enable outputs
+	TIM1->CCR3 = TimerStream[INTERNAL_MODULE][0];
 	if ( type == PA10_TYPE_PXX )
 	{
-	  TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 | TIM_CCMR2_OC3M_0 ;                     // Force O/P high
 	}
 	else
 	{
-	  TIM1->CCR3 = dsm2Stream[INTERNAL_MODULE][0] ;
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
 	}
   TIM1->EGR = 1 ;                                                         // Restart
@@ -556,14 +557,14 @@ void init_pa10_serial( uint32_t type )
   DMA2_Stream6->CR = DMA_SxCR_CHSEL_1 | DMA_SxCR_CHSEL_2 | DMA_SxCR_PL_0 | DMA_SxCR_MSIZE_0
                                                          | DMA_SxCR_PSIZE_0 | DMA_SxCR_MINC | DMA_SxCR_DIR_0 | DMA_SxCR_PFCTRL ;
   DMA2_Stream6->PAR = CONVERT_PTR(&TIM1->DMAR);
-	if ( type == PA10_TYPE_PXX )
-	{
-  	DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
-	}
-	else
-	{
-  	DMA2_Stream6->M0AR = CONVERT_PTR(&dsm2Stream[0][1]);
-	}
+//	if ( type == PA10_TYPE_PXX )
+//	{
+  	DMA2_Stream6->M0AR = CONVERT_PTR(&TimerStream[INTERNAL_MODULE][1]);
+//	}
+//	else
+//	{
+//  	DMA2_Stream6->M0AR = CONVERT_PTR(&TimerStream[0][1]);
+//	}
   DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
 
   TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
@@ -710,24 +711,24 @@ extern "C" void TIM1_CC_IRQHandler()
 #endif
     DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
-    DMA2_Stream6->M0AR = CONVERT_PTR(&pxxStream[INTERNAL_MODULE][1]);
+    DMA2_Stream6->M0AR = CONVERT_PTR(&TimerStream[INTERNAL_MODULE][1]);
     DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
     
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
 		
-		TIM1->CCR3 = pxxStream[INTERNAL_MODULE][0];
+		TIM1->CCR3 = TimerStream[INTERNAL_MODULE][0];
     TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if ( (s_current_protocol[INTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[INTERNAL_MODULE] == PROTO_MULTI ) )
 	{
     DMA2_Stream6->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->HIFCR = DMA_HIFCR_CTCIF6 | DMA_HIFCR_CHTIF6 | DMA_HIFCR_CTEIF6 | DMA_HIFCR_CDMEIF6 | DMA_HIFCR_CFEIF6 ; // Write ones to clear bits
-    DMA2_Stream6->M0AR = CONVERT_PTR(&dsm2Stream[0][1]);
+    DMA2_Stream6->M0AR = CONVERT_PTR(&TimerStream[0][1]);
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_2 ; // Force O/P low, hardware inverts it
 	  TIM1->CCMR2 = TIM_CCMR2_OC3M_1 | TIM_CCMR2_OC3M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream6->CR |= DMA_SxCR_EN ;               // Enable DMA
-    TIM1->CCR3 = dsm2Stream[0][0];
+    TIM1->CCR3 = TimerStream[0][0];
     TIM1->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if (s_current_protocol[INTERNAL_MODULE] == PROTO_PPM)
@@ -851,14 +852,13 @@ void init_ext_serial( uint32_t type )
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
+	TIM8->CCR1 = TimerStream[EXTERNAL_MODULE][0] ;
 	if ( type == EXT_TYPE_PXX )
 	{
-	  TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0] ;
   	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0 ;                     // Force O/P high
 	}
 	else
 	{
-	  TIM8->CCR1 = dsm2Stream[EXTERNAL_MODULE][0] ;
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
 	}
   TIM8->EGR = 1 ;                                                         // Restart
@@ -874,18 +874,18 @@ void init_ext_serial( uint32_t type )
   
 	DMA2_Stream2->PAR = CONVERT_PTR(&TIM8->DMAR);
   
-	if ( type == EXT_TYPE_PXX )
-	{
+//	if ( type == EXT_TYPE_PXX )
+//	{
 //#ifdef X3_PROTO
 //  	DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
 //#else
-		DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
+		DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
 //#endif
-  }
-	else
-	{
-  	DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
-	}
+//  }
+//	else
+//	{
+//  	DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[1][1]);
+//	}
   
 	DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
 
@@ -1270,20 +1270,20 @@ extern "C" void TIM8_CC_IRQHandler()
 #endif
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-    DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
+    DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
-    TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0];
+    TIM8->CCR1 = TimerStream[EXTERNAL_MODULE][0];
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else if ( (s_current_protocol[EXTERNAL_MODULE] == PROTO_DSM2 ) || (s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI ) )
 	{
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-    DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
+    DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[1][1]);
   	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
-    TIM8->CCR1 = dsm2Stream[1][0];
+    TIM8->CCR1 = TimerStream[1][0];
     
 		if ( s_current_protocol[EXTERNAL_MODULE] == PROTO_MULTI )
 		{
@@ -1341,7 +1341,7 @@ extern struct t_updateTiming UpdateTiming ;
 		if ( timing->UpdateRate )
 		{
 			rate = timing->UpdateRate * 2 - 1 ;
-			if ( ( rate < 3999 ) || ( rate >= 50000 ) )
+			if ( ( rate < 3935 ) || ( rate >= 50000 ) )
 			{
 				rate = (rate == 80000 ) ? 39999 : 7999 ;
 			}
@@ -1559,7 +1559,14 @@ static void init_ext_pxx( void )
 	{
 		btype = 1 ;
 	}
-	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( btype ? PXX2_EXTERNAL_BAUDRATE : 450000 ) ;
+	if ( g_model.Module[1].extR9Mlite )	// R9MliteAccess
+	{
+		EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 230400 ;
+	}
+	else
+	{
+		EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / ( btype ? PXX2_EXTERNAL_BAUDRATE : 450000 ) ;
+	}
 #else
 	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 420000 ;
 #endif
@@ -1786,14 +1793,13 @@ void init_ext_serial( uint32_t type )
 #endif
   TIM8->CR2 = TIM_CR2_OIS1 ;                      // O/P idle high
   TIM8->BDTR = TIM_BDTR_MOE ;             // Enable outputs
+	TIM8->CCR1 = TimerStream[EXTERNAL_MODULE][0] ;
 	if ( type == EXT_TYPE_PXX )
 	{
-	  TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0] ;
   	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 | TIM_CCMR1_OC1M_0 ;                     // Force O/P high
 	}
 	else
 	{
-	  TIM8->CCR1 = dsm2Stream[EXTERNAL_MODULE][0] ;
     TIM8->CCER &= ~TIM_CCER_CC1P;
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
 	}
@@ -1811,14 +1817,14 @@ void init_ext_serial( uint32_t type )
   
 	DMA2_Stream2->PAR = CONVERT_PTR(&TIM8->DMAR);
   
-	if ( type == EXT_TYPE_PXX )
-	{
-		DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
-  }
-	else
-	{
-  	DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
-	}
+//	if ( type == EXT_TYPE_PXX )
+//	{
+		DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
+//  }
+//	else
+//	{
+//  	DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[1][1]);
+//	}
   
 	DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
 
@@ -2182,10 +2188,10 @@ extern "C" void TIM8_CC_IRQHandler()
 	{
 #if defined(PCBX7ACCESS)
 		ExtXjtCount1 += 1 ;
-		ExtXjtData[0] = pxxStream[EXTERNAL_MODULE][0] ;
-		ExtXjtData[1] = pxxStream[EXTERNAL_MODULE][1] ;
-		ExtXjtData[2] = pxxStream[EXTERNAL_MODULE][2] ;
-		ExtXjtData[3] = pxxStream[EXTERNAL_MODULE][3] ;
+		ExtXjtData[0] = TimerStream[EXTERNAL_MODULE][0] ;
+		ExtXjtData[1] = TimerStream[EXTERNAL_MODULE][1] ;
+		ExtXjtData[2] = TimerStream[EXTERNAL_MODULE][2] ;
+		ExtXjtData[3] = TimerStream[EXTERNAL_MODULE][3] ;
 #endif
  #ifdef PCBX9D
 	  if (s_current_protocol[INTERNAL_MODULE] != PROTO_PXX)
@@ -2209,12 +2215,12 @@ extern "C" void TIM8_CC_IRQHandler()
 #endif
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-    DMA2_Stream2->M0AR = CONVERT_PTR(&pxxStream[EXTERNAL_MODULE][1]);
+    DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[EXTERNAL_MODULE][1]);
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
 #if defined(PCBX7ACCESS)
     DMA2_Stream2->NDTR = 500 ;		// Make sure it sends data
 #endif
-    TIM8->CCR1 = pxxStream[EXTERNAL_MODULE][0];
+    TIM8->CCR1 = TimerStream[EXTERNAL_MODULE][0];
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
   else
@@ -2239,11 +2245,11 @@ extern "C" void TIM8_CC_IRQHandler()
 	{
     DMA2_Stream2->CR &= ~DMA_SxCR_EN ;              // Disable DMA
     DMA2->LIFCR = DMA_LIFCR_CTCIF2 | DMA_LIFCR_CHTIF2 | DMA_LIFCR_CTEIF2 | DMA_LIFCR_CDMEIF2 | DMA_LIFCR_CFEIF2 ; // Write ones to clear bits
-    DMA2_Stream2->M0AR = CONVERT_PTR(&dsm2Stream[1][1]);
+    DMA2_Stream2->M0AR = CONVERT_PTR(&TimerStream[1][1]);
   	TIM8->CCMR1 = TIM_CCMR1_OC1M_2 ; // Force O/P low, hardware inverts it
 	  TIM8->CCMR1 = TIM_CCMR1_OC1M_1 | TIM_CCMR1_OC1M_0 ;                     // Toggle CC1 o/p
     DMA2_Stream2->CR |= DMA_SxCR_EN ;               // Enable DMA
-    TIM8->CCR1 = dsm2Stream[1][0];
+    TIM8->CCR1 = TimerStream[1][0];
 
     TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
