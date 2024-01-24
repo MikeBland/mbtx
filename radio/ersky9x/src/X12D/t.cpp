@@ -42,10 +42,13 @@
 
 OS_STK main_stk[MAIN_STACK_SIZE] ;
 
+#define EE_FILE_TYPE_GENERAL	'G'
+#define EE_FILE_TYPE_MODEL		'M'
+
 
 void ee32_update_name( uint32_t id, uint8_t *source ) ;
 uint32_t xloadFile(const char * filename, uint8_t * data, uint16_t maxsize) ;
-uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size) ;
+uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size, uint8_t type) ;
 
 #define RADIO_PATH           "/RADIO"   // no trailing slash = important
 
@@ -1081,7 +1084,7 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
   
 	setModelAFilename( (uint8_t *)fname, modelIndex-1 ) ;
 	uint32_t res	;
-	res = xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model));
+	res = xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model), EE_FILE_TYPE_MODEL ) ;
   if ( res == 0 )
 	{
 		uint8_t *p ;
@@ -1311,7 +1314,7 @@ uint32_t get_current_block_number( FIL *pfile, uint16_t *p_size, uint32_t *p_seq
 	return offset ;
 }
 
-uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size)
+uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size, uint8_t type)
 {
   FIL file ;
   UINT written ;
@@ -1336,7 +1339,7 @@ uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size)
 		}
 		header.sequence = sequenceNo ;
 		header.ver = 0 ;
-		header.type = 'M' ;
+		header.type = type ;
 		header.size = size ;
 		f_lseek( &file, offset ) ;
 	  result = f_write(&file, ( BYTE *)header.buf, 8, &written ) ;
@@ -1354,8 +1357,8 @@ uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size)
 const char *writeGeneral()
 {
 	uint32_t result	;
-	result = xwriteFile( RADIO_PATH "/radio.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
-	result = xwriteFile( RADIO_PATH "/radiosky.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral) ) ;
+	result = xwriteFile( RADIO_PATH "/radio.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral), EE_FILE_TYPE_GENERAL ) ;
+	result = xwriteFile( RADIO_PATH "/radiosky.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral), EE_FILE_TYPE_GENERAL ) ;
   return result ? 0 : "ERROR" ;
 }
 
@@ -1430,7 +1433,7 @@ const char *writeModel(uint32_t id)
 	
 	setModelAFilename( fname, id ) ;
 	uint32_t result	;
-	result = xwriteFile( (char *)fname, (uint8_t *)&g_model, sizeof(g_model));
+	result = xwriteFile( (char *)fname, (uint8_t *)&g_model, sizeof(g_model), EE_FILE_TYPE_MODEL );
   return result ? 0 : "ERROR" ;
 }
 
@@ -1561,7 +1564,7 @@ bool ee32CopyModel(uint8_t dst, uint8_t src)
 	xloadFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model) ) ;
 	setModelAFilename( fname, dst-1 ) ;
 	wdt_reset() ;
-	xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model) ) ;
+	xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model), EE_FILE_TYPE_MODEL ) ;
 		 
 	memcpy( ModelNames[dst], ModelNames[src], sizeof(g_model.name)) ;
 

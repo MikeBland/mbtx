@@ -144,30 +144,30 @@
 #define DNLD_VER_ER9X_2561       13
 #define DNLD_VER_ER9X_FRSKY_SV   14
 
-#define ER9X_URL   "http://www.er9x.com/er9x.hex"
-#define ER9X_NOHT_URL   "http://www.er9x.com/er9x-noht.hex"
+#define ER9X_URL   "https://www.er9x.com/er9x.hex"
+#define ER9X_NOHT_URL   "https://www.er9x.com/er9x-noht.hex"
 //#define ER9X_SPKR_URL   "http://er9x.googlecode.com/svn/trunk/er9x-spkr.hex"
 //#define ER9X_NOHT_SPKR_URL   "http://er9x.googlecode.com/svn/trunk/er9x-noht-spkr.hex"
-#define ER9X_JETI_URL   "http://www.er9x.com/er9x-jeti.hex"
-#define ER9X_FRSKY_URL   "http://www.er9x.com/er9x-frsky.hex"
-#define ER9X_FRSKY_SV_URL   "http://www.er9x.com/er9x-frsky-sv.hex"
-#define ER9X_FRSKY_NOHT_URL   "http://www.er9x.com/er9x-frsky.hex"
+#define ER9X_JETI_URL   "https://www.er9x.com/er9x-jeti.hex"
+#define ER9X_FRSKY_URL   "https://www.er9x.com/er9x-frsky.hex"
+#define ER9X_FRSKY_SV_URL   "https://www.er9x.com/er9x-frsky-sv.hex"
+#define ER9X_FRSKY_NOHT_URL   "https://www.er9x.com/er9x-frsky.hex"
 //#define ER9X_FRSKY_SPKR_URL   "http://er9x.googlecode.com/svn/trunk/er9x-frsky-spkr.hex"
 //#define ER9X_FRSKY_NOHT_SPKR_URL   "http://er9x.googlecode.com/svn/trunk/er9x-frsky-noht-spkr.hex"
-#define ER9X_ARDUPILOT_URL   "http://er9x.googlecode.com/svn/trunk/er9x-ardupilot.hex"
-#define ER9X_NMEA_URL   "http://www.er9x.com/er9x-nmea.hex"
-#define ER9X_128_URL   "http://www.er9x.com/er9x-128.hex"
-#define ER9X_128_S_URL   "http://www.er9x.com/er9x-128.hex"
+#define ER9X_ARDUPILOT_URL   "https://er9x.googlecode.com/svn/trunk/er9x-ardupilot.hex"
+#define ER9X_NMEA_URL   "https://www.er9x.com/er9x-nmea.hex"
+#define ER9X_128_URL   "https://www.er9x.com/er9x-128.hex"
+#define ER9X_128_S_URL   "https://www.er9x.com/er9x-128.hex"
 //#define ER9X_STAMP "http://www.er9x.com/stamp-er9x.h"
-#define EEPE_URL   "http://www.er9x.com/eePeInstall.exe"
+#define EEPE_URL   "https://www.er9x.com/eePeInstall.exe"
 //#define EEPE_STAMP "http://www.er9x.com/stamp-eepe.h"
-#define ER9X_DE_URL   "http://www.er9x.com/er9x-de.hex"
-#define ER9X_FRSKY_DE_URL   "http://www.er9x.com/er9x-frsky-de.hex"
-#define ER9X_128_DE_URL   "http://www.er9x.com/er9x-128-de.hex"
-#define ER9X_NO_URL   "http://www.er9x.com/er9x-no.hex"
-#define ER9X_2561_URL   "http://www.er9x.com/er9x-2561.hex"
+#define ER9X_DE_URL   "https://www.er9x.com/er9x-de.hex"
+#define ER9X_FRSKY_DE_URL   "https://www.er9x.com/er9x-frsky-de.hex"
+#define ER9X_128_DE_URL   "https://www.er9x.com/er9x-128-de.hex"
+#define ER9X_NO_URL   "https://www.er9x.com/er9x-no.hex"
+#define ER9X_2561_URL   "https://www.er9x.com/er9x-2561.hex"
 
-#define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
+#define GITHUB_REVS_URL	"https://www.er9x.com/Revisions.txt"
 
 class simulatorDialog *SimPointer = 0 ;
 QString AvrdudeOutput ;
@@ -306,9 +306,10 @@ void MainWindow::releaseNotes()
 	int *ptr ;
 	
 	QString rnotes =
-	"Release files will now be found at: http://er9x.com.\n"
-	"Googlecode is closing down. This project will move to Github.\n"
-	"It may be found at: https://github.com/MikeBland/mbtx in due course.\n"
+	"Release files will now be found at: https://er9x.com.\n"
+	"Versions of eepe before 424 are unable to connect there, they only look for http.\n"
+	"Googlecode has closed down. This project is now at Github.\n"
+	"It may be found at: https://github.com/MikeBland/mbtx.\n"
 	"The voice module may now have a serial connection. This allows for model\n"
 	"BACKUP to and RESTORE from the SD card on the voice module.\n"
 	"The model version is now 4. The timer triggers have been changed, but Timer 2 now\n"
@@ -1306,7 +1307,7 @@ void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepe-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Mike Blandford &copy;2012<br>");
-    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: p%1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the er9x firmware useful please support by donating<br>"));
 		aboutStr.append(" <a href='" DONATE_MB_STR "'>");
     aboutStr.append(tr("to Mike Blandford (current maintainer)") + "</a><br>");

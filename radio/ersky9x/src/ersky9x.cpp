@@ -400,7 +400,7 @@ extern const uint8_t IconHedit[] =
 
 #ifndef SIMU
 #ifdef BLUETOOTH
-#define BT_STACK_SIZE			(100 + STACK_EXTRA)
+#define BT_STACK_SIZE			(160 + STACK_EXTRA)
 #endif
 #define LOG_STACK_SIZE		(350 + STACK_EXTRA)
 #define DEBUG_STACK_SIZE	(300 + STACK_EXTRA)
@@ -640,7 +640,7 @@ uint8_t HardwareMenuEnabled = 0 ;
 #define SW_STACK_SIZE	6
 uint8_t Last_switch[NUM_SKYCSW] ;
 uint8_t Now_switch[NUM_SKYCSW] ;
-int16_t CsTimer[NUM_SKYCSW] ;
+int16_t CsTimer_lastVal[NUM_SKYCSW] ;
 int8_t SwitchStack[SW_STACK_SIZE] ;
 
 uint8_t MuteTimer ;
@@ -1208,7 +1208,7 @@ void setLanguage()
 const uint8_t csTypeTable[] =
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
  CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VBOOL, CS_VBOOL, CS_TIMER, 
- CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS, CS_2VAL
+ CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS, CS_2VAL, CS_VOFS, CS_VOFS
 } ;
 
 uint8_t CS_STATE( uint8_t x)
@@ -2073,6 +2073,7 @@ static void checkAr9x()
 	uint32_t x = ChipId ;
 	if ( ( x & 0x00000F00 )<= 0x00000900 )
 	{
+		g_eeGeneral.ar9xBoard = 0 ;
 		return ;
 	}
 	if ( x & 0x00000080 )
@@ -2304,6 +2305,16 @@ extern void lcdInit(void) ;
 void lcdColorsInit(void) ;
 #endif // PCBX12D
 
+#if defined(PCBX12D) || defined(PCBX10) || defined(REV19)
+#define MAIN_STACK_REQUIRED	550
+#else
+#define MAIN_STACK_REQUIRED	250
+#endif
+
+#ifndef SMALL
+uint32_t MainStack[MAIN_STACK_REQUIRED] ;
+#endif
+
 #ifdef STACK_PROBES
 uint32_t stackSpace( uint32_t stack )
 {
@@ -2339,10 +2350,8 @@ uint32_t stackSpace( uint32_t stack )
 				}
 			}
 		return i ;
-#ifndef PCBX12D
- #ifndef PCBX9LITE
-  #ifndef PCBX9D
-   #ifndef PCBX10
+
+#ifdef BLUETOOTH
 		case 3 :
 			for ( i = 0 ; i < BT_STACK_SIZE ; i += 1 )
 			{
@@ -2352,9 +2361,6 @@ uint32_t stackSpace( uint32_t stack )
 				}
 			}
 		return i ;
-   #endif
-  #endif
- #endif
 #endif
 		case 4 :
 			for ( i = 0 ; i < MIXER_STACK_SIZE ; i += 1 )
@@ -2365,6 +2371,17 @@ uint32_t stackSpace( uint32_t stack )
 				}
 			}
 		return i ;
+#ifndef SMALL
+		case 5 :
+			for ( i = 0 ; i < MAIN_STACK_REQUIRED ; i += 1 )
+			{
+				if ( MainStack[i] != 0x55555555 )
+				{
+					break ;
+				}
+			}
+		return i ;
+#endif
 	}
 	return 0 ;
 }
@@ -2762,24 +2779,22 @@ void initSwitches()
 #endif
 
 //uint32_t SaveHeap[4] ;
-#if defined(PCBX12D) || defined(PCBX10) || defined(REV19)
-#define MAIN_STACK_REQUIRED	550
-#else
-#define MAIN_STACK_REQUIRED	350
-#endif
-
-#ifndef SMALL
-uint32_t MainStack[MAIN_STACK_REQUIRED] ;
-#endif
 
 void xmain( void ) ;
+#ifdef STACK_PROBES
+uint32_t StackAtOsStart ;
+#endif
 
 #if defined(PCBX9D) || defined(PCB9XT)
 void __set_MSP(uint32_t topOfMainStack)
 {
-  __ASM volatile ("MSR msp, %0\n\t"
-                  "BX  lr     \n\t" : : "r" (topOfMainStack) );
+  __ASM volatile ("MSR msp, %0\n\t" : : "r" (topOfMainStack) );
 }
+
+//uint32_t __get_MSP(void)
+//{
+//	__ASM volatile ("mrs r0, msp\n") ;
+//}
 #endif
 
 #if defined(PCBTX16S)
@@ -3679,7 +3694,14 @@ void __set_MSP(uint32_t topOfMainStack)
 #ifndef SMALL
 int main( void )
 {
-	__set_MSP((uint32_t) &MainStack[MAIN_STACK_REQUIRED]) ;
+#ifdef STACK_PROBES
+	uint32_t i ;
+	for ( i = 0 ; i < MAIN_STACK_REQUIRED ; i += 1 )
+	{
+		MainStack[i] = 0x55555555 ;
+	}
+#endif
+//	__set_MSP((uint32_t) &MainStack[MAIN_STACK_REQUIRED]) ;
 	xmain() ;
 }
 #endif
@@ -4755,6 +4777,13 @@ extern void sdInit( void ) ;
 #ifdef PCBLEM1
 	CoInitOS() ;
 #endif
+#if defined(PCBSKY) || defined(PCB9XT)
+	lcd_clear() ;
+	refreshDisplay() ;
+	lcd_puts_Pleft( FH, XPSTR("EEPROM Check") ) ;
+	lcd_hbar( 4, 6*FH+4, 64, 7, 0 ) ;
+	refreshDisplay() ;
+#endif
 	eeReadAll() ;
 #if defined(PCBX7) || defined (PCBXLITE) || defined (PCBT12) || defined (PCBX9LITE)
 	g_eeGeneral.softwareVolume = 1 ;
@@ -4787,7 +4816,7 @@ extern void sdInit( void ) ;
 #endif
 #ifdef PCBSKY
  #ifndef REVX
-	g_eeGeneral.physicalRadioType =	g_eeGeneral.ar9xBoard ? PHYSICAL_SKY : PHYSICAL_AR9X ;
+	g_eeGeneral.physicalRadioType =	g_eeGeneral.ar9xBoard ? PHYSICAL_AR9X : PHYSICAL_SKY ;
  #else
 	g_eeGeneral.physicalRadioType = PHYSICAL_9XRPRO ;
  #endif
@@ -5318,6 +5347,24 @@ void initTopLcd() ;
  #endif 
 #endif 
 
+#ifdef STACK_PROBES
+	StackAtOsStart = __get_MSP() ;
+#endif
+
+#ifndef SMALL
+// swap stack
+ #if defined(PCBX9D) || defined(PCB9XT)
+	uint32_t stkp = __get_MSP() ;
+extern uint32_t _estack ;	
+	uint32_t amount = (uint32_t)&_estack - stkp ;
+	uint32_t newstkp = (uint32_t)&MainStack[MAIN_STACK_REQUIRED] - amount ;
+	for ( uint32_t i = 0 ; i < amount/4 ; i += 1 )
+	{
+		((uint32_t *)newstkp)[i] = ((uint32_t *)stkp)[i] ;
+	}
+	__set_MSP( newstkp ) ;
+ #endif
+#endif
 	CoStartOS();
 
 	while(1);
@@ -6036,11 +6083,13 @@ extern void startDsmPulses( void ) ;
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D) || defined(PCBX10)
 #ifndef PCBX7
 #ifndef PCBX9LITE
+#ifndef PCBXLITE
 extern uint8_t ModelImageValid ;
 	if ( !ModelImageValid )
 	{
 		loadModelImage() ;
 	}
+#endif	
 #endif	
 #endif	
 #endif	
@@ -6757,18 +6806,34 @@ static void processVoiceAlarms()
 					x = (x & y) != 0 ;
 				break ;
 				case 8 :
+				case 10 :
 				{	
   				int16_t z ;
+					uint8_t update = 0 ;
 					z = x - pc->nvs_last_value ;
-					z = abs(z) ;
-					if ( z > y )
+          if (pvad->func == 10 )
+					{
+            if (y >= 0)
+						{
+              x = (z >= y) ;
+              if (z < 0)
+                update = true ;
+            }
+            else
+						{
+              x = (z <= y) ;
+              if (z > 0)
+                update = true ;
+            }
+					}	
+          else
+					{
+            x = (abs(z) >= y);
+          }
+
+          if ( x || update )
 					{
 						pc->nvs_last_value = x ;
-						x = 1 ;
-					}
-					else
-					{
-						x = 0 ;
 					}
 				}
 				break ;
@@ -7268,7 +7333,7 @@ void processSwitchTimer( uint32_t i )
 //  if(cstate == CS_TIMER)
 //	{
 		int16_t y ;
-		y = CsTimer[i] ;
+		y = CsTimer_lastVal[i] ;
 		if ( y == 0 )
 		{
 			int8_t z ;
@@ -7300,7 +7365,7 @@ void processSwitchTimer( uint32_t i )
 				}
 			}
 		}
-		else  // if ( CsTimer[i] > 0 )
+		else  // if ( CsTimer_lastVal[i] > 0 )
 		{
 			y -= 1 ;
 		}
@@ -7335,7 +7400,7 @@ void processSwitchTimer( uint32_t i )
 				Last_switch[i] = 2 ;
 			}
 		}
-		CsTimer[i] = y ;
+		CsTimer_lastVal[i] = y ;
 //	}
 }
 
@@ -7476,12 +7541,12 @@ void processSwitches()
   	    break;
 	  		case (CS_NTIME):
 					processSwitchTimer( cs_index ) ;
-					ret_value = CsTimer[cs_index] >= 0 ;
+					ret_value = CsTimer_lastVal[cs_index] >= 0 ;
   			break ;
 				case (CS_TIME):
 				{	
 					processSwitchTimer( cs_index ) ;
-  			  ret_value = CsTimer[cs_index] >= 0 ;
+  			  ret_value = CsTimer_lastVal[cs_index] >= 0 ;
 					int8_t x = getAndSwitch( cs ) ;
 					if ( x )
 					{
@@ -7544,7 +7609,7 @@ void processSwitches()
 									x += 5 ;
 									x *= 10 ;
 								}
-								CsTimer[cs_index] = x ;							
+								CsTimer_lastVal[cs_index] = x ;							
 							}
 						}
 					}
@@ -7553,7 +7618,7 @@ void processSwitches()
 						Last_switch[cs_index] &= ~2 ;
 					}
 					int16_t y ;
-					y = CsTimer[cs_index] ;
+					y = CsTimer_lastVal[cs_index] ;
 					if ( Now_switch[cs_index] < 2 )	// not delayed
 					{
 						if ( y )
@@ -7569,10 +7634,10 @@ void processSwitches()
 							{
 								Last_switch[cs_index] &= ~1 ;
 							}
-							CsTimer[cs_index] = y ;
+							CsTimer_lastVal[cs_index] = y ;
 						}
 					}
- 			  	ret_value = CsTimer[cs_index] > 0 ;
+ 			  	ret_value = CsTimer_lastVal[cs_index] > 0 ;
 				}
   			break ;
   
@@ -7633,6 +7698,41 @@ void processSwitches()
   		  		z = calc100toRESX((int8_t)cs.bitAndV3) ;
 					}
   		    ret_value = (x >= y) && (x <= z) ;
+				}			 
+  			break ;
+				case CS_DELTAGE :
+				case CS_MOD_D_GE :
+				{
+					uint8_t update = 0 ;
+//          if (LS_LAST_VALUE(mixerCurrentFlightMode, idx) == CS_LAST_VALUE_INIT) {
+//            LS_LAST_VALUE(mixerCurrentFlightMode, idx) = x;
+//          }
+//          int16_t diff = x - LS_LAST_VALUE(mixerCurrentFlightMode, idx);
+          int16_t diff = x - CsTimer_lastVal[cs_index] ;
+          if (cs.func == CS_DELTAGE )
+					{
+            if (y >= 0)
+						{
+              ret_value = (diff >= y);
+              if (diff < 0)
+                update = true;
+            }
+            else
+						{
+              ret_value = (diff <= y);
+              if (diff > 0)
+                update = true;
+            }
+          }
+          else
+					{
+            ret_value = (abs(diff) >= y);
+          }
+          if (ret_value || update)
+					{
+//            LS_LAST_VALUE(mixerCurrentFlightMode, idx) = x ;
+            CsTimer_lastVal[cs_index] = x ;
+          }
 				}			 
   			break ;
   			default:

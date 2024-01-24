@@ -133,7 +133,7 @@ int16_t WholeAltitude ;
 
 #define FRSKY_SPORT_PACKET_SIZE		9
 
-#define PRIVATE_BUFFER_SIZE	30
+#define PRIVATE_BUFFER_SIZE	33
 
 uint8_t frskyRxBuffer[PRIVATE_BUFFER_SIZE];   // Receive buffer. 9 bytes (full packet), worst case 18 bytes with byte-stuffing (+1)
 
@@ -1082,39 +1082,223 @@ uint8_t AfhdsData[2] ;
 #define FS_ID_SNR               0xfa
 #define FS_ID_NOISE             0xfb
 
+#if defined(CPUM128) || defined(CPUM2561)
+#define ALT_PRECISION				15
+#define R_DIV_G_MUL_10_Q15	(uint64_t)9591506
+#define INV_LOG2_E_Q1DOT31	(uint64_t)0x58b90bfc // Inverse log base 2 of e
+#define PRESSURE_MASK				0x7FFFF
+#define AFHDS2A_ID_END			0xFF
+#define AFHDS2A_ID_PRES			0x41	// Pressure
+
+//int32_t log2fix(uint32_t x)
+//{
+//  int32_t b = 1U << (ALT_PRECISION - 1) ;
+//  int32_t y = 0 ;
+//  while (x < 1U << ALT_PRECISION)
+//	{
+//    x <<= 1 ;
+//    y -= 1U << ALT_PRECISION ;
+//  }
+
+//  while (x >= 2U << ALT_PRECISION)
+//	{
+//    x >>= 1 ;
+//    y += 1U << ALT_PRECISION ;
+//  }
+
+//  uint64_t z = x ;
+//  for (size_t i = 0 ; i < ALT_PRECISION ; i += 1 )
+//	{
+//    z = (z * z) >> ALT_PRECISION ;
+//    if (z >= 2U << ALT_PRECISION)
+//		{
+//      z >>= 1 ;
+//      y += b ;
+//    }
+//    b >>= 1 ;
+//  }
+//  return y ;
+//}
+
+//int32_t getAlt( uint32_t value )
+//{
+//  static uint32_t initPressure = 0 ;
+//  static uint16_t initTemperature = 0 ;
+//  uint32_t pressurePa = value & PRESSURE_MASK ;
+//  if (pressurePa == 0)
+//	{
+//		return 0 ;
+//	}
+//  uint16_t temperatureK = (uint16_t)((value >> 19) - 400) + 2731 ;
+//  if (initPressure <= 0) // use current pressure for ground altitude -> 0
+//  {
+//    initPressure = pressurePa ;
+//    initTemperature = temperatureK ;
+//  }
+//  int temperature = (initTemperature + temperatureK) >> 1 ; //div 2
+//  uint32_t tempNegative = temperature < 0 ;
+//  if ( tempNegative )
+//	{
+//		temperature = -temperature ;
+//	}
+//  uint64_t helper = R_DIV_G_MUL_10_Q15 ;
+//  helper = helper * (uint64_t) temperature ;
+//  helper = helper >> ALT_PRECISION ;
+//  uint32_t po_to_p = (uint32_t)(initPressure << (ALT_PRECISION - 1)) ;
+//  po_to_p = po_to_p / pressurePa ;
+//  //shift missing bit
+//  po_to_p = po_to_p << 1 ;
+//  if (po_to_p == 0)
+//	{
+//		return 0 ;
+//	}
+//  uint64_t t = log2fix(po_to_p) * INV_LOG2_E_Q1DOT31 ;
+//  int32_t ln = t >> 31 ;
+
+//  bool neg = ln < 0 ;
+//  if (neg)
+//	{
+//		ln = ln * -1 ;
+//	}
+//  helper = helper * (uint64_t) ln ;
+//  helper = helper >> ALT_PRECISION ;
+//  int result = (int) helper ;
+
+//  if (neg ^ tempNegative)
+//	{
+//		result = -result ;
+//	}
+//  return result ;
+//}
+#endif
+
+#if defined(CPUM128) || defined(CPUM2561)
+
+const prog_int16_t APM tAltitude[225]=
+{ // In half meter unit
+    20558, 20357, 20158, 19962, 19768, 19576, 19387, 19200, 19015,  18831, 18650, 18471, 18294, 18119, 17946, 17774,
+    17604, 17436, 17269, 17105, 16941, 16780, 16619, 16461, 16304,  16148, 15993, 15841, 15689, 15539, 15390, 15242,
+    15096, 14950, 14806, 14664, 14522, 14381, 14242, 14104, 13966,  13830, 13695, 13561, 13428, 13296, 13165, 13035,
+    12906, 12777, 12650, 12524, 12398, 12273, 12150, 12027, 11904,  11783, 11663, 11543, 11424, 11306, 11189, 11072,
+    10956, 10841, 10726, 10613, 10500, 10387, 10276, 10165, 10054,   9945,  9836,  9727,  9620,  9512,  9406,  9300,
+    9195,  9090,  8986,  8882,  8779,  8677,   8575,  8474,  8373,   8273,  8173,  8074,  7975,  7877,  7779,  7682,
+    7585,  7489,  7394,  7298,  7204,  7109,   7015,  6922,  6829,   6737,  6645,  6553,  6462,  6371,  6281,  6191,
+    6102,  6012,  5924,  5836,  5748,  5660,   5573,  5487,  5400,   5314,  5229,  5144,  5059,  4974,  4890,  4807,
+    4723,  4640,  4557,  4475,  4393,  4312,   4230,  4149,  4069,   3988,  3908,  3829,  3749,  3670,  3591,  3513,
+    3435,  3357,  3280,  3202,  3125,  3049,   2972,  2896,  2821,   2745,  2670,  2595,  2520,  2446,  2372,  2298,
+    2224,  2151,  2078,  2005,  1933,   1861,  1789,  1717,  1645,   1574,  1503,  1432,  1362,  1292,  1222,  1152,
+    1082,  1013,   944,   875,   806,   738,    670,   602,   534,    467,   399,   332,   265,   199,   132,    66,
+     0,     -66,  -131,  -197,  -262,  -327,   -392,  -456,  -521,   -585,  -649,  -713,  -776,  -840,  -903,  -966,
+    -1029,-1091, -1154, -1216, -1278, -1340,  -1402, -1463,  -1525, -1586, -1647, -1708, -1769, -1829, -1889, -1950,
+    -2010
+};
+
+int32_t getAlt(uint32_t Pressure)//CalculateAltitude( uint32_t Pressure, uint32_t SeaLevelPressure )
+{
+	uint8_t Index;
+	int32_t Altitude1;
+	int16_t Altitude2;
+	uint8_t Decimal;
+	uint32_t Ratio;
+	uint32_t SeaLevelPressure = 101320 ;
+	Pressure = Pressure & PRESSURE_MASK;
+	Ratio = ( ( Pressure << 13 ) + ( (SeaLevelPressure/8) / 2 ) ) / (SeaLevelPressure/8);
+	if( Ratio < ( ( (uint32_t)1 << 16 ) * 250 / 1000 ) )// 0.250 inclusive
+	{
+	    Ratio = ( (uint32_t)1 << 16 ) * 250 / 1000;
+	}
+	else if( Ratio > ( (uint32_t)1 << 16 ) * 1125 / 1000 - 1 ) // 1.125 non-inclusive
+	{
+	    Ratio = ( (uint32_t)1 << 16 ) * 1125 / 1000 - 1;
+	}
+
+	Ratio -= ( (uint32_t)1 << 16 ) * 250 / 1000; // from 0.000 (inclusive) to 0.875 (non-inclusive)
+	Index = Ratio >> 8;
+	Decimal = Ratio & ( ( 1 << 8 ) - 1 );
+	Altitude1 =	pgm_read_word(&tAltitude[Index]) ;
+	Altitude2 = Altitude1 - pgm_read_word(&tAltitude[Index+1]) ;
+	Altitude1 = Altitude1 - ( Altitude2 * Decimal + ( 1 << 7 ) ) / ( 1 << 8 ) ;
+	Altitude1 *= 100 ;
+	if( Altitude1 >= 0 )
+	{
+		return( ( Altitude1 + 1 ) / 2 );
+	}
+	else
+	{
+		return( ( Altitude1 - 1 ) / 2 );
+	}
+}
+
+#endif
+
 // First byte in packet is 0xAA
-void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
+void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount, uint8_t type)
 {
 #if defined(CPUM128) || defined(CPUM2561)
 	AfhdsData[0] = *packet ;
 	AfhdsData[1] = *(packet+1) ;
 #endif
 
-#ifdef AF_DEBUG
-	AfCount += 1 ;
-#else
-	Afcount += 1 ;
 	TelRxCount = *packet ;
-#endif
   
 	frskyTelemetry[3].set(packet[1], FR_TXRSI_COPY ) ;	// TSSI
-	if ( *packet == 0xAC )
+	packet += 2 ;
+ 	for (uint32_t sensor = 0; sensor < 7; sensor++)
 	{
+		uint16_t id ;
+		int32_t value ;
+		id = *packet ;
+		if ( type == 0xAC )
+		{
+
+#if defined(CPUM128) || defined(CPUM2561)
+			if ( id == 0xFF )
+			{
+				return ;
+			}
+			uint8_t saveSize ;
+			uint8_t size ;
+			uint8_t index ;
+//			instance = packet[1] ;
+			saveSize = size = packet[2] ;
+			index = size - 1 ;
+			packet += 3 ;
+			value = 0 ;
+			while ( size )
+			{
+				size -= 1 ;
+				value <<= 8 ;
+				value |= packet[index] ;
+				index -= 1 ;
+			}
+			packet += saveSize ;
+			switch ( id )
+			{
+				case AFHDS2A_ID_PRES :
+				{
+					int32_t xvalue = (value >> 19) - 400 ;	// tenths deg C
+					store_hub_data( FR_TEMP1, xvalue / 10 ) ;
+					
+					xvalue = getAlt(value) ;
+					store_hub_data( FR_SPORT_ALT, xvalue / 10 ) ;
+					
+		// Extract alt to a new sensor
+//    setTelemetryValue(PROTOCOL_TELEMETRY_FLYSKY_IBUS, AFHDS2A_ID_ALT, 0, instance, getALT(value), UNIT_METERS, 2);
+
+				}
+				break ;
+			}
+#else
 		return ;
+#endif
 //    	value = (packet[6] << 24) | (packet[5] << 16) | (packet[4] << 8) | packet[3];
 //			if ( id == 0x83 )
 //			{
 //				// Baro Alt
 //			}
-	}
-	else
-	{
-		packet += 2 ;
-  	for (uint32_t sensor = 0; sensor < 7; sensor++)
+		}
+		else
 		{
-			uint16_t id ;
-			int16_t value ;
-			id = *packet ;
 			id |= *(packet+1) << 8 ;
 			packet += 2 ;
 			value = (packet[1] << 8)  + packet[0] ;
@@ -1152,9 +1336,9 @@ void processAFHDS2Packet(uint8_t *packet, uint8_t byteCount)
 			}
 			packet += 2 ;
 		}
- 		frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
- 		frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 	}
+ 	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
+ 	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 }
 
 
@@ -1820,15 +2004,15 @@ ISR(USART0_RX_vect)
 									break ;
 #endif
 									case 6 :	// AFHDS2
-										frskyRxBuffer[0] = 0xAA ;
-										processAFHDS2Packet( frskyRxBuffer, Private_count+1 ) ;
+//										frskyRxBuffer[0] = 0xAA ;
+										processAFHDS2Packet( frskyRxBuffer, Private_count+1, 0xAA ) ;
 									break ;
 		//							case 10 :	// Hitec
 		//								processHitecPacket( InputPrivateData ) ;
 		//							break ;
 									case 12 :	// AFHDS2
-										frskyRxBuffer[0] = 0xAC ;
-										processAFHDS2Packet( frskyRxBuffer, Private_count+1 ) ;
+//										frskyRxBuffer[0] = 0xAC ;
+										processAFHDS2Packet( frskyRxBuffer, Private_count+1, 0xAC ) ;
 									break ;
 		//							case 13 :	// Trainer data
 		//								processTrainerPacket( InputPrivateData ) ;

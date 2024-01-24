@@ -34,6 +34,8 @@
 #include "bin_allocator.h"
 #endif
 
+//extern void wdt_reset( void ) ;
+
 #define WARNING_LINE_X                 16
 #define WARNING_LINE_Y                 3*FH
 
@@ -327,8 +329,10 @@ static void luaDumpState(lua_State * L, const char * filename, const FILINFO * f
   FIL D;
   if (f_open(&D, filename, FA_WRITE | FA_CREATE_ALWAYS) == FR_OK) {
     lua_lock(L);
+//		wdt_reset() ;
     luaU_dump(L, getproto(L->top - 1), luaDumpWriter, &D, stripDebug);
     lua_unlock(L);
+//		wdt_reset() ;
     if (f_close(&D) == FR_OK) {
       if (finfo != NULL)
         f_utime(filename, finfo);  // set the file mod time
@@ -475,6 +479,7 @@ int luaLoadScriptFileToState(lua_State * L, const char * filename, const char * 
 //  TRACE("luaLoadScriptFileToState(%s, %s): loading %s", filename, lmode, filenameFull);
 
   // we don't pass <mode> on to loadfilex() because we want lua to load whatever file we specify, regardless of content
+	WatchdogTimeout = 300 ;		// 3 seconds
   lstatus = luaL_loadfilex(L, filenameFull, NULL);
 #if defined(LUA_COMPILER)
   // Check for bytecode encoding problem, eg. compiled for x64. Unfortunately Lua doesn't provide a unique error code for this. See Lua/src/lundump.c.
@@ -488,6 +493,8 @@ int luaLoadScriptFileToState(lua_State * L, const char * filename, const char * 
   if (lstatus == LUA_OK) {
     if (scriptNeedsCompile && loadFileType == 1) {
       strcpy(filenameFull + fnamelen, SCRIPT_BIN_EXT);
+		WatchdogTimeout = 300 ;		// 3 seconds
+//			wdt_reset() ;
       luaDumpState(L, filenameFull, &fnoLuaS, (strchr(lmode, 'd') ? 0 : 1));
     }
     ret = SCRIPT_OK;

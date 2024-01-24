@@ -135,31 +135,31 @@
 //#define ER9X_ARDUPILOT_URL   "http://er9x.googlecode.com/svn/trunk/er9x-ardupilot.hex"
 //#define ER9X_NMEA_URL   "http://er9x.googlecode.com/svn/trunk/er9x-nmea.hex"
 //#define ER9X_STAMP "http://er9x.googlecode.com/svn/trunk/src/stamp-er9x.h"
-#define EEPE_URL   "http://www.er9x.com/eePeInstall.exe"
+#define EEPE_URL   "https://www.er9x.com/eePeInstall.exe"
 //#define EEPE_STAMP "http://eepe.googlecode.com/svn/trunk/src/stamp-eepe.h"
-#define EEPSKYE_URL   "http://www.er9x.com/eePeInstall.exe"
-#define EEPSKYE_STAMP "http://eepe.googlecode.com/svn/trunk/src/eepskye/src/stamp-eepskye.h"
+#define EEPSKYE_URL   "https://www.er9x.com/eePeInstall.exe"
+#define EEPSKYE_STAMP "https://eepe.googlecode.com/svn/trunk/src/eepskye/src/stamp-eepskye.h"
 
-#define ERSKY9X_STAMP "http://ersky9x.googlecode.com/svn/trunk/src/stamp-ersky9x.h"
-#define ERSKY9X_URL "http://www.er9x.com/ersky9x_rom.bin"
-#define ERSKY9XR_URL "http://www.er9x.com/ersky9xr_rom.bin"
-#define ERSKYX9D_URL "http://www.er9x.com/x9d_rom.bin"
-#define ERSKYX9DP_URL "http://www.er9x.com/x9dp_rom.bin"
-#define ERSKYX9XT_URL "http://www.er9x.com/ersky9x9XT_rom.bin"
-#define ERSKYX9E_URL "http://www.er9x.com/x9e_rom.bin"
-#define ERSKY9XRA_URL "http://www.er9x.com/ersky9x_rom.bin"
-#define ERSKY9XQX7_URL "http://www.er9x.com/x7_rom.bin"
-#define ERSKY9XXLITE_URL "http://www.er9x.com/xlite_rom.bin"
-#define ERSKY9XT12_URL "http://www.er9x.com/t12_rom.bin"
-#define ERSKY9XX9L_URL "http://www.er9x.com/x10_rom.bin"
-#define ERSKY9XX10_URL "http://www.er9x.com/t16_rom.bin"
-#define ERSKY9XT16_URL "http://www.er9x.com/x9Lite_rom.bin"
-#define ERSKY9XLEM1_URL "http://www.er9x.com/Lemon1_rom.bin"
-#define ERSKY9XTX16S_URL "http://www.er9x.com/tx16s_rom.bin"
-#define ERSKY9XX12_URL "http://www.er9x.com/x12d_rom.bin"
-#define ERSKY9XX10E_URL "http://www.er9x.com/x10e_rom.bin"
+#define ERSKY9X_STAMP "https://ersky9x.googlecode.com/svn/trunk/src/stamp-ersky9x.h"
+#define ERSKY9X_URL "https://www.er9x.com/ersky9x_rom.bin"
+#define ERSKY9XR_URL "https://www.er9x.com/ersky9xr_rom.bin"
+#define ERSKYX9D_URL "https://www.er9x.com/x9d_rom.bin"
+#define ERSKYX9DP_URL "https://www.er9x.com/x9dp_rom.bin"
+#define ERSKYX9XT_URL "https://www.er9x.com/ersky9x9XT_rom.bin"
+#define ERSKYX9E_URL "https://www.er9x.com/x9e_rom.bin"
+#define ERSKY9XRA_URL "https://www.er9x.com/ersky9x_rom.bin"
+#define ERSKY9XQX7_URL "https://www.er9x.com/x7_rom.bin"
+#define ERSKY9XXLITE_URL "https://www.er9x.com/xlite_rom.bin"
+#define ERSKY9XT12_URL "https://www.er9x.com/t12_rom.bin"
+#define ERSKY9XX9L_URL "https://www.er9x.com/x10_rom.bin"
+#define ERSKY9XX10_URL "https://www.er9x.com/t16_rom.bin"
+#define ERSKY9XT16_URL "https://www.er9x.com/x9Lite_rom.bin"
+#define ERSKY9XLEM1_URL "https://www.er9x.com/Lemon1_rom.bin"
+#define ERSKY9XTX16S_URL "https://www.er9x.com/tx16s_rom.bin"
+#define ERSKY9XX12_URL "https://www.er9x.com/x12d_rom.bin"
+#define ERSKY9XX10E_URL "https://www.er9x.com/x10e_rom.bin"
 
-#define GITHUB_REVS_URL	"http://www.er9x.com/Revisions.txt"
+#define GITHUB_REVS_URL	"https://www.er9x.com/Revisions.txt"
 
 class simulatorDialog *SimPointer = 0 ;
 QString AvrdudeOutput ;
@@ -291,7 +291,7 @@ void MainWindow::releaseNotes()
 	
 	
 	QString rnotes =
-	"Release files will now be found at: http://er9x.com.\n"
+	"Release files will now be found at: https://er9x.com.\n"
 	"Googlecode has closed down. This project has moved to Github.\n"
 	"It may be found at: https://github.com/MikeBland/mbtx \n"
 	"Googlecode has blocked downloads of .exe files\n"
@@ -851,7 +851,7 @@ void MainWindow::reply2Finished(QNetworkReply * reply)
 #else
             QMessageBox::information(this, "eePe", tr("A new version of eePskye is available (r%1)\n"
                                                       "To update please visit the eepe download page\n"
-                                                      "http://www.er9x.com").arg(rev) );
+                                                      "https://www.er9x.com").arg(rev) );
 #endif
         }
         else
@@ -1356,7 +1356,7 @@ void MainWindow::burnFrom()
 		
 //		{
 		QString path ;
-		path = FindErskyPath( 0 ) ;	// EEPROM
+		path = FindErskyPath( RADIO_TYPE_SKY ) ;	// EEPROM
 	  if ( !path.isEmpty() )
 		{
 //			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
@@ -1453,7 +1453,7 @@ void MainWindow::burnExtenalToEEPROM()
 				{
 					// Not using SAM-BA
 					QString path ;
-					path = FindErskyPath( 0 ) ;	// EEPROM
+					path = FindErskyPath( RADIO_TYPE_SKY ) ;	// EEPROM
 	  			if ( path.isEmpty() )
 					{
     			  QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
@@ -1557,7 +1557,7 @@ void MainWindow::burnToFlash(QString fileToFlash)
 				{
 					// Not using SAM-BA
 					QString path ;
-					path = FindErskyPath( 1 ) ;	// FLASH
+					path = FindErskyPath( RADIO_TYPE_TARANIS ) ;	// FLASH
 	  			if ( path.isEmpty() )
 					{
 			AvrdudeOutput = VolNames[0] + " , " + VolNames[1] + " , " + VolNames[2] + " , " + VolNames[3] + " , " + VolNames[4] + " , " + VolNames[5] + " , " + VolNames[6] + " , " + VolNames[7] ;
@@ -1613,7 +1613,7 @@ void MainWindow::burnExtenalFromEEPROM()
 				{
 					// Not using SAM-BA
 					QString path ;
-					path = FindErskyPath( 0 ) ;	// EEPROM
+					path = FindErskyPath( RADIO_TYPE_SKY ) ;	// EEPROM
 				  if ( path.isEmpty() )
 					{
   			    QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
@@ -1702,7 +1702,7 @@ void MainWindow::burnFromFlash()
 		{
 			// Not using SAM-BA
 			QString path ;
-			path = FindErskyPath( 1 ) ;	// FLASH
+			path = FindErskyPath( RADIO_TYPE_TARANIS ) ;	// FLASH
 	  	if ( path.isEmpty() )
 			{
     	  QMessageBox::critical(this, "eePskye", tr("Tx Disk Not Mounted" ) ) ;
@@ -1845,7 +1845,7 @@ void MainWindow::about()
 {
     QString aboutStr = "<center><img src=\":/images/eepskye-title.png\"><br>";
     aboutStr.append(tr("Copyright") +" Michael Blandford &copy;2013<br>");
-    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: p%1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
+    aboutStr.append(QString("<a href='https://github.com/MikeBland/mbtx'>https://github.com/MikeBland/mbtx/</a><br>Revision: %1, %2<br><br>").arg(currentEEPSKYErev).arg(__DATE__));
     aboutStr.append(tr("If you've found this program and/or the erskyTx firmware useful please support by"));
     aboutStr.append(" <a href='" DONATE_MB_STR "'>");
 //    aboutStr.append(tr("donating") + "</a></center><br>");

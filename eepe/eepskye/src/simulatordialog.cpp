@@ -82,7 +82,7 @@ simulatorDialog::simulatorDialog(QWidget *parent) :
     memset(&chans,0,sizeof(chans));
 
     memset(&swOn,0,sizeof(swOn));
-    memset(&CsTimer,0,sizeof(CsTimer));
+    memset(&CsTimer_lastVal,0,sizeof(CsTimer_lastVal));
 
 		CalcScaleNest = 0 ;
 
@@ -214,7 +214,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 //  if(cstate == CS_TIMER)
 //	{
 		int16_t y ;
-		y = CsTimer[i] ;
+		y = CsTimer_lastVal[i] ;
 		if ( y == 0 )
 		{
 			int8_t z ;
@@ -248,7 +248,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 				g_model.gvars[6].gvar = y ;
 			}
 		}
-		else  // if ( CsTimer[i] > 0 )
+		else  // if ( CsTimer_lastVal[i] > 0 )
 		{
 			y -= 1 ;
 		}
@@ -283,7 +283,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 				Last_switch[i] = 2 ;
 			}
 		}
-		CsTimer[i] = y ;
+		CsTimer_lastVal[i] = y ;
 //	}
 }
 
@@ -402,12 +402,12 @@ void simulatorDialog::processSwitches()
   	    break;
 	  		case (CS_NTIME):
 					processSwitchTimer( cs_index ) ;
-					ret_value = CsTimer[cs_index] >= 0 ;
+					ret_value = CsTimer_lastVal[cs_index] >= 0 ;
   			break ;
 				case (CS_TIME):
 				{	
 					processSwitchTimer( cs_index ) ;
-  			  ret_value = CsTimer[cs_index] >= 0 ;
+  			  ret_value = CsTimer_lastVal[cs_index] >= 0 ;
 					int8_t x = getAndSwitch( cs, txType ) ;
 					if ( x )
 					{
@@ -470,7 +470,7 @@ void simulatorDialog::processSwitches()
 									x += 5 ;
 									x *= 10 ;
 								}
-								CsTimer[cs_index] = x ;							
+								CsTimer_lastVal[cs_index] = x ;							
 							}
 						}
 					}
@@ -479,7 +479,7 @@ void simulatorDialog::processSwitches()
 						Last_switch[cs_index] &= ~2 ;
 					}
 					int16_t y ;
-					y = CsTimer[cs_index] ;
+					y = CsTimer_lastVal[cs_index] ;
 					if ( Now_switch[cs_index] < 2 )	// not delayed
 					{
 						if ( y )
@@ -495,10 +495,10 @@ void simulatorDialog::processSwitches()
 							{
 								Last_switch[cs_index] &= ~1 ;
 							}
-							CsTimer[cs_index] = y ;
+							CsTimer_lastVal[cs_index] = y ;
 						}
 					}
- 			  	ret_value = CsTimer[cs_index] > 0 ;
+ 			  	ret_value = CsTimer_lastVal[cs_index] > 0 ;
 				}
   			break ;
   
@@ -560,7 +560,43 @@ void simulatorDialog::processSwitches()
 					}
   		    ret_value = (x >= y) && (x <= z) ;
 				}			 
-  			default:
+				case CS_DELTAGE :
+				case CS_MOD_D_GE :
+				{
+					uint8_t update = 0 ;
+//          if (LS_LAST_VALUE(mixerCurrentFlightMode, idx) == CS_LAST_VALUE_INIT) {
+//            LS_LAST_VALUE(mixerCurrentFlightMode, idx) = x;
+//          }
+//          int16_t diff = x - LS_LAST_VALUE(mixerCurrentFlightMode, idx);
+          int16_t diff = x - CsTimer_lastVal[cs_index] ;
+//          if (ls->func == LS_FUNC_DIFFEGREATER)
+          if (cs.func == CS_DELTAGE )
+					{
+            if (y >= 0)
+						{
+              ret_value = (diff >= y);
+              if (diff < 0)
+                update = true;
+            }
+            else
+						{
+              ret_value = (diff <= y);
+              if (diff > 0)
+                update = true;
+            }
+          }
+          else
+					{
+            ret_value = (abs(diff) >= y);
+          }
+          if (ret_value || update)
+					{
+//            LS_LAST_VALUE(mixerCurrentFlightMode, idx) = x ;
+            CsTimer_lastVal[cs_index] = x ;
+          }
+				}			 
+  			break ;
+				default:
   		    ret_value = false;
  		    break;
   		}
@@ -3622,7 +3658,8 @@ void simulatorDialog::perOut(bool init, uint8_t att)
         *trimptr[THR_STICK] *= -1;
     }
 
-    for(uint8_t i=0;i<MAX_SKYMIXERS;i++){
+    for(uint8_t i=0;i<MAX_SKYMIXERS;i++)
+		{
         SKYMixData &md = g_model.mixData[i];
 #if GVARS
 				int16_t lweight = md.weight ;
@@ -3736,9 +3773,13 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             swTog = swon ;
             swon = false;
             if (k == Mix_3pos+MAX_GVARS+1) act[i] = chans[md.destCh-1] * DEL_MULT / 100 ;
-            if( k!=Mix_full && k!=Mix_max) continue;// if not MAX or FULL - next loop
-            if(md.mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
-            v = md.srcRaw==Mix_full ? -RESX : 0; // switch is off => FULL=-RESX
+            
+//						if( k!=Mix_full && k!=Mix_max) continue;// if not MAX or FULL - next loop
+//            if(md.mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
+            if ( ( k==Mix_full || k==Mix_max) || (md.mltpx!=MLTPX_REP) )
+						{
+            	v = md.srcRaw==Mix_full ? -RESX : 0; // switch is off => FULL=-RESX
+						}
         }
         else
 				{
@@ -3923,7 +3964,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
         //========== INPUT OFFSET ===============
 //        if ( ( md.enableFmTrim == 0 ) && ( md.lateOffset == 0 ) )
-        if ( md.lateOffset == 0 )
+        if ( swon && md.lateOffset == 0 )
         {
 #if GVARS
             if(mixoffset) v += calc100toRESX( mixoffset	) ;
@@ -3944,7 +3985,9 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 						int16_t my_delay = sDelay[i] ;
             int32_t tact = act[i] ;
             int16_t diff = v-tact/DEL_MULT;
-						
+
+					if (swon )
+					{
 						if ( ( diff > 10 ) || ( diff < -10 ) )
 						{
 							if ( my_delay == 0 )
@@ -3987,8 +4030,9 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 							}
             }
 						sDelay[i] = my_delay ;
-
-            if(diff && (md.speedUp || md.speedDown)){
+					}
+            if(diff && (md.speedUp || md.speedDown))
+						{
                 //rate = steps/sec => 32*1024/100*md.speedUp/Down
                 //act[i] += diff>0 ? (32768)/((int16_t)100*md.speedUp) : -(32768)/((int16_t)100*md.speedDown);
                 //-100..100 => 32768 ->  100*83886/256 = 32768,   For MAX we divide by 2 since it's asymmetrical
@@ -4010,10 +4054,11 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             {
               tact=(int32_t)v*DEL_MULT;
             }
-					act[i] = tact ;
+						act[i] = tact ;
         }
 
-
+			if (swon )
+			{
         //========== CURVES ===============
 				uint32_t diffValue ;
         diffValue = md.differential | (md.extDiff << 1 ) ;
@@ -4150,6 +4195,11 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             chans[md.destCh-1] += dv; //Mixer output add up to the line (dv + (dv>0 ? 100/2 : -100/2))/(100);
             break;
         }
+			}
+			else
+			{
+        chans[md.destCh-1] = (int32_t)v*mixweight ;
+			}
     }
 
 

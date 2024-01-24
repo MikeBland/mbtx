@@ -23,10 +23,6 @@
 #include "file.h"
 #include "eeprom_rlc.h"
 
-
-
-
-
 #define EEPROM_BUFFER_SIZE ((sizeof(ModelData) + sizeof( struct t_eeprom_header ) + 3)/4)
 
 uint8_t *Eeprom ;
@@ -41,9 +37,16 @@ struct t_eeprom_buffer
 	{
 		EEGeneral general_data ;
 		SKYModelData model_data ;
-		uint32_t words[ 1022 ] ;		// + 2 for header = 1024 words
+		uint32_t words[ 2046 ] ;		// + 2 for header = 2048 words
 	} data ;	
 } Eeprom_buffer ;
+
+union 
+{
+	uint8_t key[4] ;
+	uint32_t keyLong ;
+} Key ;
+uint8_t AllocTable[64] ;
 
 uint8_t byte_checksum( uint8_t *p, uint32_t size )
 {
@@ -149,12 +152,38 @@ uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t
 	return block_no ;
 }
 
+uint16_t getFileSize( uint32_t index ) // index is 0 to 59
+{
+	struct t_eeprom_header b0 ;
+	index = AllocTable[index+1] ;	
+	read32_eeprom_data( index << 13, ( uint8_t *)&b0, sizeof(b0) ) ;
+	if ( ee32_check_header( &b0) )
+	{
+		return b0.data_size ;
+	}
+	else
+	{
+		return 0 ;
+	}
+}
+
+
 void fill_file_index( struct t_radioData *radioData )
 {
 	uint32_t i ;
-	for ( i = 0 ; i < MAX_IMODELS + 1 ; i += 1 )
+	if ( radioData->File8kBlocks )
 	{
-    radioData->File_system[i].block_no = get_current_block_number( i * 2, &radioData->File_system[i].size, &radioData->File_system[i].sequence_no ) ;
+		for ( i = 0 ; i < MAX_IMODELS ; i += 1 )
+		{
+			radioData->File_system[i+1].size = getFileSize(i) ;
+		}
+	}
+	else
+	{
+		for ( i = 0 ; i < MAX_IMODELS + 1 ; i += 1 )
+		{
+  	  radioData->File_system[i].block_no = get_current_block_number( i * 2, &radioData->File_system[i].size, &radioData->File_system[i].sequence_no ) ;
+		}
 	}
 }
 
@@ -164,9 +193,20 @@ void ee32LoadModelName( struct t_radioData *radioData, uint8_t id, unsigned char
   {
 		memset(buf,' ',len);
 		buf[len] = '\0' ;
-    if ( radioData->File_system[id].size > sizeof( radioData->models[0].name) )
+		if ( radioData->File8kBlocks )
 		{
-      read32_eeprom_data( ( radioData->File_system[id].block_no << 12) + 8, ( uint8_t *)buf, sizeof( radioData->models[0].name) ) ;
+    	if ( radioData->File_system[id].size > sizeof( radioData->models[0].name) )
+			{
+				id = AllocTable[id] ;
+        read32_eeprom_data( ( id << 13 ) + 8, ( uint8_t *)buf, sizeof( radioData->models[0].name) ) ;
+			}
+		}
+		else
+		{
+    	if ( radioData->File_system[id].size > sizeof( radioData->models[0].name) )
+			{
+    	  read32_eeprom_data( ( radioData->File_system[id].block_no << 12) + 8, ( uint8_t *)buf, sizeof( radioData->models[0].name) ) ;
+			}
 		}
   }
 }
@@ -780,7 +820,7 @@ void ee32LoadModel(struct t_radioData *radioData, uint8_t id)
 
     if(id<MAX_IMODELS)
     {
-			size =  radioData->File_system[id+1].size ;
+			size = radioData->File_system[id+1].size ;
 			if ( sizeof(SKYModelData) < 720 )
 			{
 				version = 0 ;
@@ -807,15 +847,22 @@ void ee32LoadModel(struct t_radioData *radioData, uint8_t id)
       }
 			else
 			{
-				if ( size < 720 )
+				if ( radioData->File8kBlocks == 0 )
 				{
-					read32_eeprom_data( ( radioData->File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_oldmodel, size ) ;
-					convertModel( &radioData->models[id], &g_oldmodel ) ;
+					if ( size < 720 )
+					{
+						read32_eeprom_data( ( radioData->File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_oldmodel, size ) ;
+						convertModel( &radioData->models[id], &g_oldmodel ) ;
+					}
+					else
+					{
+						read32_eeprom_data( ( radioData->File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&radioData->models[id], size ) ;
+					}
 				}
 				else
 				{
-					read32_eeprom_data( ( radioData->File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&radioData->models[id], size ) ;
-				}	 
+          read32_eeprom_data( ( AllocTable[id+1] << 13) + sizeof( struct t_eeprom_header), ( uint8_t *)&radioData->models[id], size ) ;
+				}
 				
 				if ( version != 255 )
 				{
@@ -842,20 +889,71 @@ void ee32LoadModel(struct t_radioData *radioData, uint8_t id)
     }
 }
 
-
 uint32_t rawloadFile( struct t_radioData *radioData, uint8_t *eeprom )
 {
 	uint32_t i ;
 	Eeprom  = eeprom ;
-	fill_file_index(radioData) ;
-	ee32_read_model_names(radioData) ;
-	DefaultModelType = 1 ;
-	ee32LoadGeneral(radioData) ;
-	for ( i = 0 ; i < MAX_IMODELS ; i += 1 )
+	uint8_t controlBlock ;
+	uint16_t controlOffset ;
+	controlBlock = 0 ; 
+	// Look for 8K models
+//uint32_t read32_eeprom_data( uint32_t eeAddress, uint8_t *buffer, uint32_t size )
+
+	radioData->File8kBlocks = 0 ;
+	read32_eeprom_data( 126 << 12, Key.key, 4 ) ;
+	if ( Key.keyLong == 0x55AA3CC3 )
 	{
-		ee32LoadModel( radioData, i ) ;
+		read32_eeprom_data( (126 << 12) + 64, AllocTable, 64 ) ;
+		if ( AllocTable[0] != 0xFF )
+		{		
+			controlBlock = 126 ;
+		}
 	}
-	radioData->valid = 1 ;
+	if ( controlBlock == 0 )
+	{
+		read32_eeprom_data( 127 << 12, Key.key, 4 ) ;
+		if ( Key.keyLong == 0x55AA3CC3 )
+		{
+			controlBlock = 127 ;
+		}
+	}
+	if ( controlBlock )
+	{
+		radioData->File8kBlocks = 1 ;
+		controlOffset = 64 ;
+		while ( controlOffset < 4096)
+		{
+			read32_eeprom_data( (controlBlock << 12) + controlOffset , AllocTable, 64 ) ;
+			if ( AllocTable[0] == 0xFF )
+			{
+				read32_eeprom_data( (controlBlock << 12) + controlOffset - 64 , AllocTable, 64 ) ;
+				break ;
+			}
+			controlOffset += 64 ;
+		}
+		// AllocTable now set, process data
+		fill_file_index(radioData) ;
+		ee32_read_model_names(radioData) ;
+		DefaultModelType = 1 ;
+		ee32LoadGeneral(radioData) ;
+		for ( i = 0 ; i < MAX_IMODELS ; i += 1 )
+		{
+			ee32LoadModel( radioData, i ) ;
+		}
+		radioData->valid = 1 ;
+	}
+	else
+	{
+		fill_file_index(radioData) ;
+		ee32_read_model_names(radioData) ;
+		DefaultModelType = 1 ;
+		ee32LoadGeneral(radioData) ;
+		for ( i = 0 ; i < MAX_IMODELS ; i += 1 )
+		{
+			ee32LoadModel( radioData, i ) ;
+		}
+		radioData->valid = 1 ;
+	}
 
 	return 1 ;
 	
@@ -866,7 +964,6 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 {
 	uint8_t csum ;
 	uint32_t i ;
-
 	memset( eeprom, 0xFF, EEFULLSIZE ) ;
 	if ( ( radioData->type == 1 ) || ( radioData->type == 2 ) || ( radioData->type == RADIO_TYPE_QX7 ) || ( radioData->type == RADIO_TYPE_T12 ) || ( radioData->type == RADIO_TYPE_X9L ) )
 	{
@@ -906,9 +1003,27 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 			csum = byte_checksum( ( uint8_t *) &Eeprom_buffer.header, 7 ) ;
 			Eeprom_buffer.header.hcsum = csum ;
 			memcpy( &Eeprom_buffer.data.model_data, &radioData->models[i-1], sizeof(SKYModelData) ) ;
-			memcpy( eeprom + 8192*i, &Eeprom_buffer, 4096 ) ;		// Write block 2*n
+			if ( radioData->File8kBlocks )
+			{
+				memcpy( eeprom + 8192*i, &Eeprom_buffer, 8192 ) ;		// Write block 2*n
+			}
+			else
+			{
+				memcpy( eeprom + 8192*i, &Eeprom_buffer, 4096 ) ;		// Write block 2*n
+			}	 
 		}
-		
+	}
+	if ( radioData->File8kBlocks )
+	{
+		AllocTable[0] = 0 ;
+		for ( i = 1 ; i <= 62 ; i += 1 )
+		{
+			AllocTable[i] = i ;
+		}
+		AllocTable[63] = 253 ;
+		Key.keyLong = 0x55AA3CC3 ;
+		memcpy( eeprom + 4096*126, &Key.key, 4 ) ;
+		memcpy( eeprom + 4096*126+64, &AllocTable, 64 ) ;
 	}
   return 1 ;
 }

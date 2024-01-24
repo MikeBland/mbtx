@@ -31,10 +31,10 @@ const uint8_t modn12x3[4][4]= {
   {4, 3, 2, 1} };
 
 // Radio Types
-#define RADIO_TYPE_SKY			0
-#define RADIO_TYPE_TARANIS	1
-#define RADIO_TYPE_TPLUS		2
-#define RADIO_TYPE_9XTREME	3
+#define RADIO_TYPE_SKY				0
+#define RADIO_TYPE_TARANIS		1
+#define RADIO_TYPE_TPLUS			2
+#define RADIO_TYPE_9XTREME		3
 #define RADIO_TYPE_ER9XM64V1	4
 #define RADIO_TYPE_ER9XM64V2	5
 #define RADIO_TYPE_ER9XM128V1	6
@@ -334,8 +334,8 @@ enum EnumKeys {
 
 #define CURV_STR "---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 #define CURVE_BASE 7
-#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 v=val  Range  "
-#define CSW_NUM_FUNC 23
+#define CSWITCH_STR  "----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""v1>=v2 ""v1<=v2 Timer  Ntimer 1-shot 1-shotRv~=val v&val  v1~=v2 v=val  Range  |d|>vald>=val "
+#define CSW_NUM_FUNC 25
 #define CSW_LEN_FUNC 7
 
 #define CS_OFF       0
@@ -363,7 +363,9 @@ enum EnumKeys {
 #define CS_VXEQUAL   20	// V1~=V2
 #define CS_VEQUAL	   21
 #define CS_RANGE		 22  //a<=v<=b
-#define CS_MAXF      22  //max function
+#define CS_MOD_D_GE	 23  // |delta| a > offset
+#define CS_DELTAGE	 24  // delta a > offset
+#define CS_MAXF      24  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1

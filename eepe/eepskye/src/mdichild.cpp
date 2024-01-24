@@ -260,7 +260,7 @@ void MdiChild::refreshList()
 			{
 				if ( radioData.File_system[i+1].size )
 				{
-		      strncpy( &buf[4], (char *)&radioData.ModelNames[i+1][0], 15 ) ;
+		      strncpy( &buf[4], (char *)&radioData.ModelNames[i+1][0], 10 ) ;
 	    		buf[14] = '\0';
 				}
 				else
@@ -843,7 +843,15 @@ void MdiChild::OpenEditWindow()
         ModelEdit *t = new ModelEdit( &radioData,(i-1),this);
         
 				if(isNew) t->applyBaseTemplate();
-				QString type = radioData.type ? " (Taranis)" : " (Sky)" ;
+				QString type ;
+				if ( radioData.type == RADIO_TYPE_SKY )
+				{
+					type = " (Sky)" ;
+				}
+				if ( radioData.type == RADIO_TYPE_TARANIS )
+				{
+					type = " (Taranis)" ;
+				}
 				if ( radioData.type == RADIO_TYPE_TPLUS )
 				{
     		  type = radioData.sub_type ? " (Taranis X9E)" : " (Taranis Plus)" ;
@@ -1064,7 +1072,7 @@ void MdiChild::getPhysicalType()
 
 void MdiChild::newFile()
 {
-    static int sequenceNumber = 1 ;
+		static int sequenceNumber = 1 ;
     QSettings settings("er9x-eePskye", "eePskye");
 		radioData.type = 0 ;
 		radioData.bitType = 0 ;
@@ -1392,7 +1400,6 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 
             return false;
         }
-
         if(!rawloadFile( &radioData, temp) )
         {
             QMessageBox::critical(this, tr("Error"),
@@ -1405,7 +1412,6 @@ bool MdiChild::loadFile(const QString &fileName, bool resetCurrentFile)
 				defaultModelType = DefaultModelType ;
 				radioData.type = 0 ;
 				radioData.bitType = RADIO_BITTYPE_SKY ;
-
 				getPhysicalType() ;
 				
 //				int x ;
@@ -1681,10 +1687,9 @@ void MdiChild::setCurrentFile(const QString &fileName)
 {
 		int x ;
 		x = radioData.type ;
-
     QString type ;//= x ? " (Taranis)" : " (Sky)" ;
 
-		if ( x && x <= 17)
+		if ( x && x <= 18)
 		{
 			type = RadioNames[x-1] ;
 		}

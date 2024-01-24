@@ -240,7 +240,7 @@ extern uint8_t ImageDisplay ;
 #endif
 
 #ifndef PCBSKY
-union t_xmem Xmem ;
+//union t_xmem Xmem ;
 #endif
 
 extern int32_t Rotary_diff ;
@@ -249,7 +249,7 @@ extern uint8_t ExtraInputs ;
 extern uint8_t MuteTimer ;
 
 uint8_t s_currIdx;
-static uint8_t RestoreIndex ;
+uint8_t RestoreIndex ;
 static uint8_t SubMenuFromIndex = 0 ;
 uint8_t TrainerMode ;
 void setCaptureMode(uint32_t mode) ;
@@ -3529,7 +3529,7 @@ int8_t rxcos100( int16_t a )
 #define RIGHT_POSITION	127
 #endif
 
-void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr)
+void DisplayScreenIndex(uint8_t index, uint8_t count, uint16_t attr)
 {
 	uint8_t x ;
 	if ( RotaryState == ROTARY_MENU_LR )
@@ -4407,7 +4407,7 @@ void drawFunction( uint8_t xpos, uint8_t function )
   int8_t yv ;
   int8_t prev_yv = 127 ;
 	
-	pushPlotType( PLOT_BLACK ) ;
+	pushPlotType( PLOT_COLOUR ) ;
 	for ( int8_t xv = -WCHART ; xv <= WCHART ; xv++ )
 	{
 		if ( function == GRAPH_FUNCTION_CURVE )
@@ -4449,7 +4449,7 @@ void drawFunction( uint8_t xpos, uint8_t function )
 		prev_yv = yv ;
 	}
 #ifdef BIG_SCREEN
-	lcdHiresRect( (xpos-WCHART)*2-2, (Y0-WCHART)*2, WCHART*4+6, WCHART*4, LCD_BLACK ) ;
+	lcdHiresRect( (xpos-WCHART)*2-2, (Y0-WCHART)*2, WCHART*4+6, WCHART*4, LcdForeground ) ;
 #endif
 	popPlotType() ;
 }
@@ -5650,7 +5650,7 @@ uint8_t unmapMixSource( uint8_t index, uint8_t *switchSource )
 	return index ;
 }
 
-extern const uint8_t SwitchFunctionMap[] = { 0,1,2,3,4,18,21,22,19,5,6,7,8,9,10,11,20,12,13,14,15,16,17} ;
+extern const uint8_t SwitchFunctionMap[] = { 0,1,2,3,4,18,21,22,19,5,6,7,8,9,10,11,20,12,13,14,15,16,17,23} ;
 
 int8_t s_curItemIdx;
 static uint8_t s_moveItemIdx;
@@ -9868,10 +9868,10 @@ void menuProcVoiceOne(uint8_t event)
 
 				case 1 :	// func;
   	  		lcd_puts_Pleft( y, XPSTR("Function") ) ;
-					lcd_putsAttIdx( 13*FW, y, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val|d|>valv%val=0"), pvad->func, attr ) ;	// v1>v2  v1<v2  
+					lcd_putsAttIdx( 13*FW, y, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val|d|>valv%val=0d>=val "), pvad->func, attr ) ;	// v1>v2  v1<v2  
 	    		if(attr)
 					{
-      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 9 ) ;
+      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 11 ) ;
 					}	
 				break ;
 
@@ -12069,7 +12069,7 @@ extern int16_t TouchAdjustValue ;
 	lcd_puts_Pleft(7*FH,PSTR(STR_DR_SW2));
 	editExpoVals( event, sub==subN,5*FW, 7*FH, DR_DRSW2 , 0,0);
 
-	pushPlotType( PLOT_BLACK ) ;
+	pushPlotType( PLOT_COLOUR ) ;
 	
 	lcd_vline(XD - (IS_EXPO_THROTTLE(s_expoChan) ? WCHART : 0), Y0 - WCHART, WCHART * 2);
 
@@ -12845,7 +12845,7 @@ const uint8_t ProtocolOptions[2][6] = { {3,PROTO_PPM,PROTO_DSM2,PROTO_MULTI}, {5
  #endif
 #endif
 #ifdef PCB9XT
-const uint8_t ProtocolOptions[2][6] = { {4,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI}, {5,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI,PROTO_XFIRE} };
+const uint8_t ProtocolOptions[2][6] = { {5,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI,PROTO_XFIRE}, {5,PROTO_PPM,PROTO_PXX,PROTO_DSM2,PROTO_MULTI,PROTO_XFIRE} };
 #endif
 
 #ifdef PCBLEM1
@@ -14356,7 +14356,7 @@ void editOneProtocol( uint8_t event )
 	}
 
 #ifdef XFIRE
- #if defined (PCBX9D)
+ #if defined (PCBX9D) || defined(PCB9XT)
 	if ( pModule->protocol == PROTO_XFIRE )
  #else	
 	if ( module && (pModule->protocol == PROTO_XFIRE ) )
@@ -16162,6 +16162,7 @@ void menuModelPhases(uint8_t event)
 
 const char *BackResult ;
 
+#ifndef TOUCH
 void menuProcModelSelect(uint8_t event)
 {
   static MState2 mstate2;
@@ -16179,6 +16180,11 @@ void menuProcModelSelect(uint8_t event)
     lcd_puts_Pleft(  0, PSTR(STR_11_FREE));
     lcd_outdez(  18*FW, 0, EeFsGetFree());
 #endif
+
+//extern uint16_t ControlOffset ;
+//extern uint8_t ControlBlock ;
+//    lcd_outdez(  18*FW, 0, ControlBlock ) ;
+//    lcd_outdez(  18*FW, FH, ControlOffset ) ;
 
   int8_t  sub    = mstate2.m_posVert;
   static uint8_t sel_editMode;
@@ -16430,6 +16436,7 @@ extern void eeSaveAll() ;
 		}
   }
 }
+#endif // nTOUCH
 
 #ifdef ARUNI
 extern uint8_t SixPosCaptured;
@@ -18474,7 +18481,7 @@ void menuScript(uint8_t event)
 	uint32_t i ;
 //#ifndef BASIC
 #ifdef LUA
-	uint32_t j ;
+//	uint32_t j ;
 #endif
 //#endif
 	 
@@ -18507,10 +18514,21 @@ extern int32_t Rotary_diff ;
 //#ifndef BASIC
 #ifdef LUA
 	i = availableMemory() ;
-	j = i / 10000 ;
-	i %= 10000 ;
-	lcd_outdezNAtt( 15*FW, 0, i, LEADING0, 4 ) ;
-	lcd_outdezAtt( 15*FW-FWNUM*4, 0, j, 0 ) ;
+//	j = i / 10000 ;
+//	i %= 10000 ;
+	if ( i > 99999 )
+	{
+		i -= 100000 ;
+		lcd_putc( 15*FW-5*FWNUM, 0, '1' ) ;
+	}
+	lcd_outdezNAtt( 15*FW, 0, i, 0, 5 ) ;
+//	lcd_outdezNAtt( 15*FW, 0, i, LEADING0, 4 ) ;
+//	lcd_outdezAtt( 15*FW-FWNUM*4, 0, j, 0 ) ;
+
+//extern uint32_t BinsUsed( uint32_t x ) ;
+//	lcd_outdezAtt( 12*FW, FH, BinsUsed(0), 0 ) ;
+//	lcd_outdezAtt( 20*FW, FH, BinsUsed(1), 0 ) ;
+
 #endif
 //	lcd_outhex4( 0, FH, (uint32_t)heap ) ;
 //	lcd_outhex4( 40, FH, (uint32_t)EndOfHeap ) ;
@@ -18576,7 +18594,16 @@ extern int32_t Rotary_diff ;
 #ifdef LUA
 		if ( g_model.basic_lua )
 		{
+			WatchdogTimeout = 300 ;		// 3 seconds
+#if defined(PCBX12D)
+extern void initLongWatchdog(uint32_t time) ;
+			initLongWatchdog(3) ;
+#endif			
 			luaExec(ScriptFilename) ;
+#if defined(PCBX12D)
+extern void initWatchdog() ;
+			initWatchdog() ;
+#endif			
 			RotaryState = ROTARY_MENU_UD ;
 		}
 		else
@@ -18733,7 +18760,7 @@ extern void lcdDrawBitmapDMA(uint16_t x, uint16_t y, uint16_t w, uint16_t h, con
 //extern uint32_t AllIndex ;
 
 
-#ifdef PCBX9D
+#if defined(PCBX9D) || defined(PCB9XT)
 uint32_t __get_MSP(void)
 {
   uint32_t result=0;
@@ -18773,6 +18800,8 @@ void menuDebug(uint8_t event)
 		break ;
 	}
 
+//
+//	lcd_outhex4( 0, 4*FH, g_eeGeneral.physicalRadioType ) ;
 //#ifdef INPUTS
 //	lcd_outdezAtt( 20*FW, 0, NUM_SKYXCHNRAW+1+MAX_GVARS+1, 0 ) ;
 
@@ -27342,7 +27371,7 @@ extern void menuModelMusic(uint8_t event) ;
 	{
 		case M_MINDEX :
 #if defined(PCBX12D) || defined(PCBX10)
-			lcd_putsAtt( LCD_W/4-7*FW/2, 0, " Model Setup ", INVERS ) ;
+			lcd_putsAtt( LCD_W/4-13*FW/2, 0, " Model Setup ", INVERS ) ;
 #else
 			lcd_putsAtt(0 + X12OFFSET,0,"MODEL SETUP",INVERS) ;
 #endif
@@ -27709,7 +27738,7 @@ STR_Protocol
     	lcd_putc( 19*FW, 0, g_model.modelVersion + '0' ) ;
 #endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1) || defined(PCBX9LITE) 
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1) || defined(PCBX9LITE) || defined(PCB9XT)
  #if defined (PCBXLITE) || defined(PCBT12)|| defined(PCBLEM1)
 			IlinesCount = 21 ;//+ 1 ;
  #else
@@ -27758,12 +27787,18 @@ STR_Protocol
 				if ( FileSelectResult == 1 )
 				{
 #if defined(PCBX9D) || defined(IMAGE_128) || defined(PCBX12D) || defined(PCBX10)
+#ifndef PCBX7
+#ifndef PCBXLITE
+#ifndef PCBX9LITE
 					if ( voiceCall == 2 )
 					{
 						copyFileName( g_model.modelImageName, SelectedVoiceFileName, 10 ) ;
 						loadModelImage() ;
 					}
 					else
+#endif
+#endif
+#endif
 #endif
 					if ( voiceCall == 3 )
 					{
@@ -28621,7 +28656,7 @@ extern uint32_t switches_states ;
 				y += FH ;
 				subN += 1 ;
 				g_model.disableThrottleCheck = onoffMenuItem( g_model.disableThrottleCheck, y, XPSTR("Disable Thr Chk"), sub==subN) ;
-#ifdef SCRIPT_CHOICE				
+#ifdef SCRIPT_CHOICE
 				y += FH ;
 				subN += 1 ;
 				lcd_puts_Pleft( y, "Script Type");
@@ -29162,6 +29197,12 @@ extern uint32_t stackSpace( uint32_t stack ) ;
  #endif
  #ifdef MIXER_TASK
 	lcd_outhex4( 90+BOOT_OFF_0, 5*FH, stackSpace(4) ) ;
+ #endif
+ #ifndef SMALL
+	lcd_outhex4( 60+BOOT_OFF_0, 5*FH, stackSpace(5) ) ;
+extern uint32_t StackAtOsStart ;
+	lcd_outhex4( 60+BOOT_OFF_0, 7*FH, StackAtOsStart >> 16 ) ;
+	lcd_outhex4( 60+BOOT_OFF_0+4*FW, 7*FH, StackAtOsStart ) ;
  #endif
 #endif
 
@@ -30254,7 +30295,7 @@ void menuProcInputs(uint8_t event)
 #if LCD_W > 212
 	if ( s_expoChan != 255 )
 	{
-		pushPlotType( PLOT_BLACK ) ;
+		pushPlotType( PLOT_COLOUR ) ;
 		drawFunction( XD, GRAPH_FUNCTION_INPUT ) ;
 		struct te_InputsData *pinput = getActiveInput( s_expoChan ) ;
 		if ( pinput )

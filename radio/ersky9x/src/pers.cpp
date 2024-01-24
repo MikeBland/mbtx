@@ -32,6 +32,7 @@
 #include "file.h"
 #include "debug.h"
 #include "stringidx.h"
+//#include "lcd.h"
 
 #include "frsky.h"
 
@@ -301,8 +302,30 @@ void eeReadAll()
 	eeLoadModel(g_eeGeneral.currModel) ;
 	readNames() ;
 #else
+//#if defined(PCBSKY) || defined(PCB9XT)
+//extern uint32_t check8K() ;
+
+//	if ( check8K() == 0 )
+//	{
+//		uint32_t i ;
+//extern uint32_t convertTo8K() ;
+//		while ( (i = convertTo8K()) < 64 )
+//		{
+//			lcd_clear() ;
+//			lcd_puts_Pleft( 2*FH, XPSTR("Updating EEPROM") ) ;
+//			wdt_reset() ;
+//			lcd_hbar( 4, 6*FH+4, 100, 7, i * 100 / 60 ) ;
+//			refreshDisplay() ;
+//		}
+//	}
+//	init_eeprom() ;
+////extern void init8K() ;
+////	init8K() ;
+//#endif
 	if(!ee32LoadGeneral() )
   {
+//		lcd_puts_Pleft( 2*FH, PSTR(STR_BAD_EEPROM) ) ;
+//		refreshDisplay() ;
     alert((char const *)PSTR(STR_BAD_EEPROM), true);
 #ifdef PCB9XT
     g_eeGeneral.contrast = 25 ;

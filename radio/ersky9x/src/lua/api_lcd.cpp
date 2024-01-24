@@ -724,7 +724,7 @@ the right side of title bar. (i.e. idx=2, cnt=5, display `2/5`)
 @status current Introduced in 2.0.0
 */
 
-void DisplayScreenIndex(uint8_t index, uint8_t count, uint8_t attr) ;
+void DisplayScreenIndex(uint8_t index, uint8_t count, uint16_t attr) ;
 
 static int luaLcdDrawScreenTitle(lua_State *L)
 {
@@ -739,7 +739,7 @@ static int luaLcdDrawScreenTitle(lua_State *L)
 //  lcdDrawFilledRect(0, 0, LCD_W, FH, SOLID, FILL_WHITE|GREY_DEFAULT);
 //#endif
 //  TITLE(str) ;
-	lcd_putsAtt(0,2,str,INVERS) ;
+	lcd_putsAtt(0,0,str,INVERS) ;
   return 0;
 }
 #endif

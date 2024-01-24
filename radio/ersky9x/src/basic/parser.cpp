@@ -676,6 +676,24 @@ const struct commands Constants[] =
   { (char *)"EVT_LEFT_REPT", EVT_KEY_REPT(KEY_LEFT) },
   { (char *)"EVT_RIGHT_REPT", EVT_KEY_REPT(KEY_RIGHT) },
   { (char *)"EVT_EXIT_LONG", EVT_KEY_LONG(KEY_EXIT) },
+  { (char *)"EVT_ROT_LEFT", EVT_ROTARY_LEFT },
+  { (char *)"EVT_ROT_RIGHT", EVT_ROTARY_RIGHT },
+  #if defined (PCBX9LITE) || defined(PCBX10)
+  { (char *)"EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
+  { (char *)"EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
+	{ (char *)"EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
+  #else
+	 #if defined(PCBX12D)
+  { (char *)"EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { (char *)"EVT_PAGE_LONG", EVT_KEY_LONG(KEY_LEFT) },
+	{ (char *)"EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_LEFT) },
+   #else
+  { (char *)"EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+  { (char *)"EVT_PAGE_LONG", EVT_KEY_LONG(KEY_LEFT) },
+	{ (char *)"EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_LEFT) },
+	 #endif
+	#endif
+
 //  { "SOLID", SOLID },
 //  { "DOTTED", DOTTED },
 //  { "FORCE", FORCE },
@@ -708,7 +726,7 @@ uint8_t CodeBuffer[200] ;
 #define MIN_PROGRAM_SIZE	22000
 #else
  #ifdef SMALL
-#define MIN_PROGRAM_SIZE	11300
+#define MIN_PROGRAM_SIZE	10400
  #else
   #if defined(PCBX12D) || defined(PCBX10)
 #define MIN_PROGRAM_SIZE	32000
@@ -4267,7 +4285,7 @@ void exec_drawtext()
 	int32_t y ;
 	uint8_t *p ;
 	uint32_t result ;
-	uint8_t attr ;
+	uint16_t attr ;
 	union t_parameter params[2] ;
 	uint32_t length = 0 ;
 

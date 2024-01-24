@@ -42,6 +42,7 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 		QString sourceFile ;
 		QString destFile ;
 		quint32 size ;
+		quint32 i ;
 		quint32 offset ;
 		quint32 numBlocks ;
 		quint32 mode ;
@@ -102,24 +103,29 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 				return ;
 			}
 			fixHeader( &temp[0] ) ;
-			fixHeader( &temp[4096] ) ;
+			if ( s <= 8192 )
+			{
+				fixHeader( &temp[4096] ) ;
+			}
 			fixHeader( &temp[8192] ) ;
 
-			uint32_t seq[3] ;
-			uint32_t i ;
-			seq[0] = 0 ;
-			seq[1] = 0 ;
-			seq[2] = 0 ;
-			for ( i = 0 ; i < 4 ; i += 1 )
-			{
-				seq[0] <<= 8 ;
-				seq[1] <<= 8 ;
-				seq[2] <<= 8 ;
-				seq[0] |= temp[3-i] ;
-				seq[1] |= temp[4099-i] ;
-				seq[2] |= temp[8195-i] ;
-			}
-			if ( seq[2] > seq[1] )
+//			uint32_t seq[3] ;
+//			uint32_t i ;
+//			seq[0] = 0 ;
+//			seq[1] = 0 ;
+//			seq[2] = 0 ;
+//			for ( i = 0 ; i < 4 ; i += 1 )
+//			{
+//				seq[0] <<= 8 ;
+//				seq[1] <<= 8 ;
+//				seq[2] <<= 8 ;
+//				seq[0] |= temp[3-i] ;
+//				seq[1] |= temp[4099-i] ;
+//				seq[2] |= temp[8195-i] ;
+//			}
+			
+			if ( s > 8192 )
+//			if ( seq[2] > seq[1] )
 			{
         memcpy( &temp[4096], &temp[8192], 4096 ) ;
 			}
@@ -148,7 +154,7 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 	    addText("Read Model Names\nReading Models\n");
 			for ( i = 1 ; i <= MAX_IMODELS ; i += 1)
 			{
-		    memset(temp,0,8192) ;
+			  memset(temp,0,16384) ;
 				if ( AModelNames[i][0] && (AModelNames[i][0] != ' ') )
 				{
 					fname = sourceFile ;
@@ -168,14 +174,22 @@ avrOutputDialog::avrOutputDialog(QWidget *parent, QString prog, QStringList arg,
 						return ;
 					}
 					long s = rfile.size() ;
-					if ( s > 8192 )
+					if ( s > 16384 )
 					{
-						s = 8192 ;
+						s = 16384 ;
 					}
 		    	long result = rfile.read( (char*)&temp, s ) ;
 		    	rfile.close() ;
 					fixHeader( &temp[0] ) ;
-					fixHeader( &temp[4096] ) ;
+					if ( s <= 8192 )
+					{
+						fixHeader( &temp[4096] ) ;
+					}
+					fixHeader( &temp[8192] ) ;
+					if ( s > 8192 )
+					{
+      		  memcpy( &temp[4096], &temp[8192], 4096 ) ;
+					}
 				}
 				file.write((char*)&temp, 8192 ) ;
 		    ui->progressBar->setValue(i+1) ;
@@ -578,6 +592,7 @@ int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 s
 	else
 	{
     addText("Opened source file\n");
+    addText(sourceFile);
 		repaint() ;
     if (!dest.open(QIODevice::ReadWrite))
 		{
@@ -586,7 +601,8 @@ int avrOutputDialog::doFileCopy( QString destFile, QString sourceFile, quint32 s
 	  }
 		else
 		{
-    	addText("Opened destination file\n");
+    	addText("\nOpened destination file\n");
+    	addText(destFile);
 			repaint() ;
 			if ( offset )
 			{

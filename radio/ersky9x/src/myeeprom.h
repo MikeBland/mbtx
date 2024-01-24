@@ -1001,6 +1001,25 @@ extern SKYModelData g_model;
 
 //extern ProtocolData Protocols[2] ;
 
+union t_sharedMemory
+{
+	struct
+	{
+		struct t_text TextControl ;	
+	} ;
+	struct t_calib Cal_data ;
+	struct
+	{
+		struct t_filelist FileList ;
+		struct t_maintenance Mdata ;
+	} ;
+	FIL g_eebackupFile ;
+	SKYModelData TempModelStore ;
+	struct t_spectrumAnalyser SpectrumAnalyser ;
+} ;
+
+
+
 #endif
 /*eof*/
 

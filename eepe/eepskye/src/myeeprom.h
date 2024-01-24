@@ -233,6 +233,21 @@ typedef struct t_voiceAlarm
 	} file ;
 } VoiceAlarmData ;
 
+PACK(typedef struct t_gvar {
+	int8_t gvar ;
+	uint8_t gvsource ;
+//	int8_t gvswitch ;
+}) GvarData ;
+
+typedef struct t_theme
+{
+	uint16_t backColour ;
+	uint16_t textColour ;
+	uint8_t brightness ;
+	uint8_t spare ;
+	uint16_t spare16 ;
+} themeData ;
+
 
 PACK(typedef struct t_EEGeneral {
   uint8_t   myVers;
@@ -290,7 +305,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t		bt_baudrate ;
 	uint8_t		rotaryDivisor ;
 	uint8_t   crosstrim:1;
-	uint8_t   hapticMinRun:7;
+	uint8_t   hapticMinRun:6;
+	uint8_t   xcrosstrim:1 ;
 	int8_t   rtcCal ;
   int16_t   x9dcalibMid ;			// X9D
   int16_t   x9dcalibSpanNeg ;	// X9D
@@ -345,7 +361,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t musicType:1 ;
 	uint8_t altSwitchNames:1 ;    // use alternative switch names (ARUNI)
 	uint8_t sixPosDelayFilter:1 ; // 6POS switch delay filtering (ARUNI)
-	uint8_t spare:2 ;
+	uint8_t altMixMenu:1 ;
+	uint8_t disableRxCheck:1 ;
 	uint8_t musicVoiceFileName[MUSIC_NAME_LENGTH+2] ;
 	uint8_t playListIndex ;
 	uint8_t physicalRadioType ;
@@ -357,8 +374,13 @@ PACK(typedef struct t_EEGeneral {
 	uint16_t backgroundColour ;		// For Horus
 	uint16_t textColour ;		// For Horus
 	uint8_t disableBtnLong:1 ;
-	uint8_t spare7:7 ;
+	uint8_t enableEncMain:1 ;
+	uint8_t pageButton:1 ;
+	uint8_t spare7:5 ;
 	uint8_t radioRegistrationID[8] ;
+  int8_t  screenShotSw ;
+	uint8_t selectedTheme ;
+	themeData theme[4] ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -670,12 +692,6 @@ PACK(typedef struct t_Extra_Vario
   int8_t offsetFrequency  ;
   uint8_t volume ;
 }) VarioExtraData ;	
-
-PACK(typedef struct t_gvar {
-	int8_t gvar ;
-	uint8_t gvsource ;
-//	int8_t gvswitch ;
-}) GvarData ;
 
 // Scale a value
 PACK(typedef struct t_scale
@@ -1021,7 +1037,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t telemetryTimeout ;
 	uint8_t throttleIdleScale ;
 	uint8_t switchDelay[NUM_SKYCSW] ;
-	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc.
+	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc. UNUSED
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
 	int8_t cellScalers[12] ;

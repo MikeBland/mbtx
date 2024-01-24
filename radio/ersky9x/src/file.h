@@ -58,7 +58,11 @@ struct t_file_entry
 	uint8_t flags ;
 } ;
 
+#ifdef FS8K
+extern struct t_file_entry File_system ;
+#else
 extern struct t_file_entry File_system[] ;
+#endif
 #if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 extern unsigned char ModelNames[][sizeof(g_model.name)+1] ;		// Allow for general
 #else

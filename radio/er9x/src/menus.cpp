@@ -6579,7 +6579,7 @@ extern uint16_t Uecount ;
 
 void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern uint8_t AfDebug[] ;
-extern uint16_t AfCount ;
+//extern uint16_t AfCount ;
 extern uint8_t AfBytes ;
 	lcd_outhex2( 0,  2*FH, AfDebug[0] ) ;
 	lcd_outhex2( 13, 2*FH, AfDebug[1] ) ;
@@ -6603,7 +6603,7 @@ extern uint8_t AfBytes ;
 	lcd_outhex2( 104, 3*FH, AfDebug[18] ) ;
 	lcd_outhex2( 117,  4*FH, AfDebug[19] ) ;
 
- 	lcd_outhex4( 0*FW,  5*FH, AfCount ) ;
+// 	lcd_outhex4( 0*FW,  5*FH, AfCount ) ;
  	lcd_outhex4( 6*FW,  5*FH, AfBytes ) ;
  	lcd_outhex4( 12*FW,  5*FH, AfCapture ) ;
 	 
@@ -6770,9 +6770,9 @@ extern uint8_t AfhdsData[2] ;
 
 
 extern uint8_t TelRxCount ;
-extern uint16_t Afcount ;
+//extern uint16_t Afcount ;
   	lcd_outhex4( 0*FW,  7*FH, TelRxCount ) ;
- 		lcd_outhex4( 6*FW,  7*FH, Afcount ) ;
+// 		lcd_outhex4( 6*FW,  7*FH, Afcount ) ;
 
 // Temp stack trace display
 

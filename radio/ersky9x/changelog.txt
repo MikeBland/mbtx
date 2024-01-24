@@ -10,6 +10,21 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG:   MPB (r224)
+Fix right justify for small text
+Improve RAM space for LUA handling and reduce frequency of running scripts.
+Fix some LUA bugs
+LUA improvements and some menu improvements for touch screen use.
+Add LAT/Long on custom telemetry screens, Crossfire GPS (and ARDUx) Num Sats now put in a new telemetry value called "Sats".
+Fix INAV script Battery bug
+Add 8th Flight mode.
+Add INPUTS, 32 available, find them under Model Setup|Mixer. These may be used instead of the DR/EXPO options. Inputs are not implemented on the original SKY board as there isn't enough flash space.
+9Xtreme, add internal module crossfire protocol (turns internal module on and drives SPort with crossfire protocol)
+Enable LUA scripts.
+Add GPS processing to DSM telemetry	
+Touch screen support added
+
+******************************************
 CHANGELOG:   MPB (r223)
 Add support for: T18, TX16S X10Express
 X10 hall sticks support

@@ -16,6 +16,8 @@
 #ifndef file_h
 #define file_h
 
+#include <QString.h>
+
 extern uint32_t DefaultModelType ;
 
 
@@ -119,6 +121,7 @@ struct t_radioData
 		uint32_t options ;
 		uint32_t T9xr_pro ;
 		uint32_t extraPots ;
+		uint32_t File8kBlocks ;
 		struct t_radioHardware radioHardware ;
 } ;
 

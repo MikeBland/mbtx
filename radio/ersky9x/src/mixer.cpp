@@ -804,10 +804,14 @@ void perOut(int16_t *chanOut, uint8_t att )
         { // switch on?  if no switch selected => on
             swTog = swon ;
             swOn[i] = swon = false ;
-            if (k == MIX_3POS+MAX_GVARS+1) act[i] = chans[md->destCh-1] * DEL_MULT / 100 ;	// "THIS"
-            if( k !=MIX_MAX && k !=MIX_FULL) continue;// if not MAX or FULL - next loop
-            if(md->mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
-            v = ( k == MIX_FULL ? -RESX : 0); // switch is off and it is either MAX=0 or FULL=-512
+//            if (k == MIX_3POS+MAX_GVARS+1) act[i] = chans[md->destCh-1] * DEL_MULT / 100 ;	// "THIS"
+//            if( k !=MIX_MAX && k !=MIX_FULL) continue;// if not MAX or FULL - next loop
+//            if(md->mltpx==MLTPX_REP) continue; // if switch is off and REPLACE then off
+//            v = ( k == MIX_FULL ? -RESX : 0); // switch is off and it is either MAX=0 or FULL=-512
+	        if ( ( k==MIX_FULL || k==MIX_MAX) || (md->mltpx!=MLTPX_REP) )
+					{
+    	    	v = md->srcRaw==MIX_FULL ? -RESX : 0; // switch is off => FULL=-RESX
+					}
         }
         else
 				{
@@ -991,7 +995,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         swOn[i] = swon ;
 
         //========== INPUT OFFSET ===============
-        if ( md->lateOffset == 0 )
+        if ( swon && md->lateOffset == 0 )
         {
             if(mixoffset) v += calc100toRESX( mixoffset	) ;
         }
@@ -1009,6 +1013,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 #else
             int16_t diff = v-tact/DEL_MULT;
 #endif
+					if (swon )
+					{
 						if ( ( diff > 10 ) || ( diff < -10 ) )
 						{
 							if ( my_delay == 0 )
@@ -1058,8 +1064,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 							}
             }
 
-					sDelay[i] = my_delay ;
-
+						sDelay[i] = my_delay ;
+					}
             if(diff && (md->speedUp || md->speedDown)){
                 //rate = steps/sec => 32*1024/100*md->speedUp/Down
                 //act[i] += diff>0 ? (32768)/((int16_t)100*md->speedUp) : -(32768)/((int16_t)100*md->speedDown);
@@ -1105,6 +1111,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 				{
 					act[i] = (int32_t)v*DEL_MULT ;
 				}
+			 if ( swon )
+			 {
         //========== CURVES ===============
 				uint32_t diffValue ;
 				diffValue = md->differential | (md->extDiff << 1 ) ;
@@ -1230,6 +1238,11 @@ void perOut(int16_t *chanOut, uint8_t att )
             *ptr += dv; //Mixer output add up to the line (dv + (dv>0 ? 100/2 : -100/2))/(100);
             break;
         }
+			 }
+			 else
+			 {
+    	    chans[md->destCh-1] = (int32_t)v*mixweight ;
+			 }
     }
 
     //========== MIXER WARNING ===============

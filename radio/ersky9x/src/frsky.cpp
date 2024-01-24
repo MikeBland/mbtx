@@ -970,6 +970,8 @@ void processFrskyPacket(uint8_t *packet)
 }
 
 
+#define DSM_GPS_POS		22
+
 //0[00] 22(0x16)
 //1[01] 00
 //2[02] Altitude LSB (Decimal) //In 0.1m
@@ -989,6 +991,16 @@ void processFrskyPacket(uint8_t *packet)
 //Second bit for longitude: 1=E(+), 0=W(-);
 //Third bit for longitude over 99 degrees: 1=+-100 degrees
 
+#define GPS_INFO_FLAGS_IS_NORTH               0x01
+#define GPS_INFO_FLAGS_IS_EAST                0x02
+#define GPS_INFO_FLAGS_LONGITUDE_GREATER_99   0x04
+#define GPS_INFO_FLAGS_GPS_FIX_VALID          0x08
+#define GPS_INFO_FLAGS_GPS_DATA_RECEIVED      0x10
+#define GPS_INFO_FLAGS_3D_FIX                 0x20
+// #define	GPS_INFO_FLAGS_BIT6                   0x40 // ??
+#define GPS_INFO_FLAGS_NEGATIVE_ALT           0x80
+#define DSM_GPS_TIME	23
+
 //0[00] 23(0x17)
 //1[01] 00
 //2[02] Speed LSB (Decimal)
@@ -1001,6 +1013,16 @@ void processFrskyPacket(uint8_t *packet)
 //9[09] Altitude in 1000m (Decimal) Altitude = Value * 10000 + Altitude(0x16) (in 0.1m)
 //10[0A]-15[0F] Unused (But contains Data left in buffer)
 
+#define bcdToHex(a) (((a>>4)*10) + (a&0x0F))
+
+uint32_t dsmLatLong( uint8_t *p )
+{
+	uint32_t result ;
+	uint32_t frac ;
+	result = (bcdToHex(p[3]) * 100 + bcdToHex(p[2]) ) << 16 ;
+	frac = bcdToHex(p[1]) * 100 + bcdToHex(p[0]) ;
+	return result | frac ;
+}
 
 //===============================================================
 
@@ -1273,6 +1295,8 @@ uint16_t TelRxCount ;
 
 //uint8_t LemonModule = 0 ;
 
+uint16_t DsmAltHigh = 0 ;
+
 void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 {
 	int32_t ivalue ;
@@ -1489,7 +1513,46 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 //			// Throttle 0.5% (0-127%) one byte
 //			// Power 0.5% (0-127%)
 //			break ;
-			
+
+			case DSM_GPS_POS :
+// Store Lat/Long as dddmm.mmmm
+			{	
+				uint32_t value ;
+				int32_t ivalue ;
+				value = dsmLatLong( &packet[4] ) ;
+				storeTelemetryData( FR_GPS_LAT, value >> 16 ) ;
+				storeTelemetryData( FR_GPS_LATd, value & 0xFFFF ) ;
+				value = dsmLatLong( &packet[8] ) ;
+				if ( packet[15] & 4 )
+				{
+					value += 10000 << 16 ;
+				}
+				storeTelemetryData( FR_GPS_LONG, value >> 16 ) ;
+				storeTelemetryData( FR_GPS_LONGd, value & 0xFFFF ) ;
+				storeTelemetryData( FR_LAT_N_S, ( ( packet[15] & 4 ) & 1 ) ? 'S' : 'N' ) ;
+				storeTelemetryData( FR_LONG_E_W, ( ( packet[15] & 2 ) & 1 ) ? 'E' : 'W' ) ;
+
+				value = bcdToHex(packet[12]) + bcdToHex(packet[13]) * 100 ;
+				storeTelemetryData( FR_COURSE, value / 10 ) ;
+				ivalue = bcdToHex(packet[2]) + bcdToHex(packet[3]) * 100 + DsmAltHigh * 10000 ;
+				if ( packet[15] & GPS_INFO_FLAGS_NEGATIVE_ALT )
+				{
+					ivalue = -ivalue ;
+				}
+				storeTelemetryData( TELEM_GPS_ALTd, ivalue ) ;
+				storeTelemetryData( TELEM_GPS_ALT, ivalue / 100 ) ;
+			}	 
+			break ;
+			case DSM_GPS_TIME :
+			{	
+				uint32_t value ;
+				value = bcdToHex(packet[2]) + bcdToHex(packet[3]) * 100 ;
+				storeTelemetryData( FR_GPS_SPEED, value / 10 ) ;
+				storeTelemetryData( TEL_SATS, bcdToHex(packet[8]) ) ;
+				DsmAltHigh = bcdToHex(packet[9]) ;
+			}	
+			break ;
+			 
 			default :
 #ifndef SMALL
 				DsmDbgCounters[7] += 1 ;
@@ -2985,7 +3048,7 @@ void frsky_receive_byte( uint8_t data )
 
 #ifdef XFIRE
 // #ifdef REVX
-		if ( g_model.Module[1].protocol == PROTO_XFIRE )
+		if ( ( g_model.Module[1].protocol == PROTO_XFIRE ) || ( g_model.Module[0].protocol == PROTO_XFIRE ) )
 		{
 			// process Xfire data here
 			processCrossfireTelemetryData( data ) ;
@@ -3643,7 +3706,7 @@ void FRSKY_Init( uint8_t brate )
 		}
 #ifdef XFIRE
  #ifdef PCB9XT
-		if ( g_model.Module[1].protocol == PROTO_XFIRE )
+		if ( ( g_model.Module[1].protocol == PROTO_XFIRE ) || ( g_model.Module[0].protocol == PROTO_XFIRE ) )
 		{
 			baudrate = XFIRE_BAUD_RATE ;
 		}
@@ -4165,7 +4228,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	}
  #endif
  #ifdef PCB9XT
-	if ( g_model.Module[1].protocol == PROTO_XFIRE )
+	if ( ( g_model.Module[1].protocol == PROTO_XFIRE ) || ( g_model.Module[0].protocol == PROTO_XFIRE ) )
 	{
 		type = TEL_XFIRE ;
 	}

@@ -667,7 +667,9 @@ extern uint8_t MaxSwitchIndex ;		// For ON and OFF
 #define CS_VXEQUAL   20	// V1~=V2
 #define CS_VEQUAL    21  //v == offset
 #define CS_RANGE		 22  //a<=v<=b
-#define CS_MAXF      22  //max function
+#define CS_MOD_D_GE	 23  // |delta| a > offset
+#define CS_DELTAGE	 24  // delta a > offset
+#define CS_MAXF      24  //max function
 
 #define CS_VOFS       0
 #define CS_VBOOL      1
@@ -1799,22 +1801,6 @@ struct t_spectrumAnalyser
 	uint32_t freq ;
 	uint32_t step ;
   uint8_t bars[SPECTRUM_NUM_BARS] ;
-} ;
-
-union t_sharedMemory
-{
-	struct
-	{
-		struct t_text TextControl ;	
-	} ;
-	struct t_calib Cal_data ;
-	struct
-	{
-		struct t_filelist FileList ;
-		struct t_maintenance Mdata ;
-	} ;
-	FIL g_eebackupFile ;
-	struct t_spectrumAnalyser SpectrumAnalyser ;
 } ;
 
 #define CLIP_NONE		0

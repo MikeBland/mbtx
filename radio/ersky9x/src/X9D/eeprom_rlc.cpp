@@ -67,7 +67,7 @@ void ee32_read_model_names( void ) ;
 
 unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for general
 
-SKYModelData TempModelStore ;
+//SKYModelData TempModelStore ;
 extern union t_xmem Xmem ;
 extern union t_sharedMemory SharedMemory ;
 
@@ -1003,6 +1003,9 @@ bool eeLoadGeneral()
 }
 
 //#ifdef REVPLUS
+#ifndef PCBX7
+#ifndef PCBXLITE
+#ifndef PCBX9LITE
 uint8_t ModelImage[64*32*4/8] ;
 uint8_t ModelImageValid = 0 ;
 TCHAR ImageFilename[60] ;
@@ -1071,6 +1074,9 @@ uint32_t loadModelImage()
 	return 0 ;
 }
 //#endif
+#endif
+#endif
+#endif
 
 
 void eeLoadModelName(uint8_t id, unsigned char *name)
@@ -1159,7 +1165,13 @@ void eeLoadModel(uint8_t id)
 
 		checkXyCurve() ;
 //#ifdef REVPLUS
+#ifndef PCBX7
+#ifndef PCBXLITE
+#ifndef PCBX9LITE
 		loadModelImage() ;
+#endif
+#endif
+#endif
 //#endif
     resumeMixerCalculations();
     // TODO pulses should be started after mixer calculations ...
@@ -1418,7 +1430,7 @@ FRESULT writeXMLfile( FIL *archiveFile, uint8_t *data, uint32_t size, UINT *tota
 	total += written ;
   result = f_write( archiveFile, (BYTE *)"</Version>\n  <Name>", 19, &written) ;
 	total += written ;
-  result = f_write( archiveFile, (BYTE *)TempModelStore.name, sizeof(g_model.name), &written) ;
+  result = f_write( archiveFile, (BYTE *)SharedMemory.TempModelStore.name, sizeof(g_model.name), &written) ;
 	total += written ;
   result = f_write( archiveFile, (BYTE *)"</Name>\n  <Data><![CDATA[", 25, &written) ;
 	total += written ;
@@ -1598,7 +1610,7 @@ const char *ee32BackupModel( uint8_t modelIndex )
 	ee32_check_finished() ;
 
 	theFile.openRlc(modelIndex);
-  size = theFile.readRlc((uint8_t*)&TempModelStore, sizeof(g_model));
+  size = theFile.readRlc((uint8_t*)&SharedMemory.TempModelStore, sizeof(g_model));
 
 	// Build filename
 	setModelFilename( filename, modelIndex, FILE_TYPE_MODEL ) ;
@@ -1624,7 +1636,7 @@ const char *ee32BackupModel( uint8_t modelIndex )
   }
 
 //  result = f_write(&archiveFile, (uint8_t *)&Eeprom_buffer.data.sky_model_data, size, &written) ;
-	result = writeXMLfile( &archiveFile, (uint8_t *)&TempModelStore, size, &written) ;
+	result = writeXMLfile( &archiveFile, (uint8_t *)&SharedMemory.TempModelStore, size, &written) ;
   
 	f_close(&archiveFile) ;
   if (result != FR_OK ) //	|| written != size)
@@ -1655,9 +1667,9 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
    	return "OPEN ERROR" ;
   }
 
-	memset(( uint8_t *)&TempModelStore, 0, sizeof(g_model));
+	memset(( uint8_t *)&SharedMemory.TempModelStore, 0, sizeof(g_model));
 	
-	answer = readXMLfile( &archiveFile,  ( uint8_t *)&TempModelStore, sizeof(g_model), &nread ) ;
+	answer = readXMLfile( &archiveFile,  ( uint8_t *)&SharedMemory.TempModelStore, sizeof(g_model), &nread ) ;
 	
 	if ( answer == -1 )
 	{
@@ -1670,7 +1682,7 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
 	}
 	// Can we validate the data here?
 
-	theFile.writeRlc(modelIndex, FILE_TYP_MODEL, (uint8_t *)&TempModelStore, sizeof(g_model), true ) ;
+	theFile.writeRlc(modelIndex, FILE_TYP_MODEL, (uint8_t *)&SharedMemory.TempModelStore, sizeof(g_model), true ) ;
 
 	ee32_read_model_names() ;		// Update
 
@@ -1745,13 +1757,14 @@ const char *processBackupEeprom( uint16_t blockNo )
 {
   FRESULT result ;
 	UINT written ;
+	uint8_t file_buffer[512] ;
 
 	if ( blockNo != AmountEeBackedUp )
 	{
 		return "Sync Error" ;
 	}
-	I2C_EE_BufferRead( Xmem.file_buffer, (blockNo << 9), 512 ) ;
-	result = f_write( &SharedMemory.g_eebackupFile, ( BYTE *)&Xmem.file_buffer, 512, &written ) ;
+	I2C_EE_BufferRead( file_buffer, (blockNo << 9), 512 ) ;
+	result = f_write( &SharedMemory.g_eebackupFile, ( BYTE *)file_buffer, 512, &written ) ;
 	wdt_reset() ;
 	if ( result != FR_OK )
 	{
@@ -1765,15 +1778,16 @@ const char *processRestoreEeprom( uint16_t blockNo )
 {
   FRESULT result ;
 	UINT nread ;
+	uint8_t file_buffer[512] ;
 
 	if ( blockNo != AmountEeBackedUp )
 	{
 		return "Sync Error" ;
 	}
-	result = f_read( &SharedMemory.g_eebackupFile, Xmem.file_buffer, 512, &nread ) ;
+	result = f_read( &SharedMemory.g_eebackupFile, file_buffer, 512, &nread ) ;
 	CoTickDelay(1) ;					// 2mS
 // Write eeprom here
-	I2C_EE_BufferWrite( Xmem.file_buffer, (blockNo << 9), 512 ) ;
+	I2C_EE_BufferWrite( file_buffer, (blockNo << 9), 512 ) ;
 //	write32_eeprom_2K( (uint32_t)blockNo << 11, Eeprom_buffer.data.buffer2K ) ;
 	
 //  read32_eeprom_data( (blockNo << 11), ( uint8_t *)&Eeprom_buffer.data.buffer2K, 2048, 0 ) ;

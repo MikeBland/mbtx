@@ -72,7 +72,7 @@ private:
     quint16 parametersLoaded ;
     bool    swOn[MAX_SKYMIXERS];
     quint16 one_sec_precount;
-		int16_t	CsTimer[NUM_SKYCSW] ;
+		int16_t	CsTimer_lastVal[NUM_SKYCSW] ;
     uint8_t Last_switch[NUM_SKYCSW] ;
 		uint8_t Now_switch[NUM_SKYCSW] ;
     quint8  fadePhases ;

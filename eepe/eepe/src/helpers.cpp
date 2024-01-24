@@ -383,7 +383,7 @@ QString RadioNames[] = {
 const uint8_t csTypeTable[] =
 #ifdef SKY
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
- CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS, CS_2VAL
+ CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_VCOMP, CS_TIMER, CS_TIMER, CS_TMONO, CS_TMONO, CS_VOFS, CS_U16, CS_VCOMP, CS_VOFS, CS_2VAL, CS_VOFS, CS_VOFS
 } ;
 #else
 { CS_VOFS, CS_VOFS, CS_VOFS, CS_VOFS, CS_VBOOL, CS_VBOOL, CS_VBOOL,
@@ -1545,12 +1545,12 @@ void populateGvarCB(QComboBox *b, int value, int type)
 #else
     for(int i=0; i<=28; i++)
         b->addItem(GvarItems[i]);
-    int limit = ( (type == 1 ) || ( type == 2 ) ) ? 9 : 6 ;
+//    int limit = ( (type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) ) ? 9 : 6 ;
 
-    for(int i=0; i< limit; i++)
-		{
-      b->addItem(ExtraGvarItems[i]);
-		}
+//    for(int i=0; i< limit; i++)
+//		{
+//      b->addItem(ExtraGvarItems[i]);
+//		}
 #endif
     b->setCurrentIndex(value);
     b->setMaxVisibleItems(13);
@@ -2297,7 +2297,7 @@ QString getSWName(int val, int extra )
 	}
 	else
 	{
-		x = ( (eepromType == -1 ) || ( eepromType == -4 ) ) ? 0 : 1 ;
+		x = ( (eepromType == -2 ) || ( eepromType == -5 ) ) ? 0 : 1 ;
 	}
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )
@@ -3673,18 +3673,18 @@ QString getCSWFunc(int val, uint8_t modelVersion )
 	{
 		if ( val == CS_LATCH )
 		{
-			return "Latch" ;
+			return "Latch  " ;
 		}
 		if ( val == CS_FLIP )
 		{
-			return "F-Flop" ;
+			return "F-Flop " ;
 		}
 	}
   return QString(CSWITCH_STR).mid(val*CSW_LEN_FUNC,CSW_LEN_FUNC);
 }
 
 #ifdef SKY    
-const uint8_t SwitchFunctionMap[] = { 0,1,2,3,4,18,21,22,19,5,6,7,8,9,10,11,20,12,13,14,15,16,17} ;
+const uint8_t SwitchFunctionMap[] = { 0,1,2,3,4,18,21,22,19,5,6,7,8,9,10,11,20,12,13,14,15,16,17,23} ;
 
 uint8_t locateSwFunc( int value )
 {
@@ -4358,7 +4358,7 @@ QString FindErskyPath( int type )
 					{
 						eepromfile = eepromfile.left( eepromfile.size() - 1 ) ;
 					}
-          eepromfile.append( ( type == 1 ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
+          eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
           if (QFile::exists(eepromfile))
 					{
             pathcount++;
@@ -4395,7 +4395,7 @@ QString FindErskyPath( int type )
         drives.append(entry->me_devname);
         eepromfile=entry->me_mountdir;
 				saveeepromfile = eepromfile ;
-        eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
+        eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) ? "/FIRMWARE.BIN" : "/ERSKY9X.BIN");
 //  #if !defined __APPLE__ && !defined WIN32
 //        QString fstype=entry->me_type;
 //        qDebug() << fstype;
@@ -4410,7 +4410,7 @@ QString FindErskyPath( int type )
 				else
 				{
 					eepromfile = saveeepromfile ;
-        	eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == 2 ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
+        	eepromfile.append( ( type == RADIO_TYPE_TARANIS ) || ( type == RADIO_TYPE_TPLUS ) ? "/FIRMWARE.BIN" : "/EEPROM.BIN");
 	        if (QFile::exists(eepromfile))
 					{
 	          pathcount++;

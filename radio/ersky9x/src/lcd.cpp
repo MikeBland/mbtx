@@ -1565,7 +1565,24 @@ uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, uint8_t mode, ui
 #endif
 uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint16_t mode )
 {
-
+	if ( mode & LUA_RIGHT )
+	{
+		uint32_t length = strlen(s) ;
+		uint32_t width = ( mode & LUA_SMLSIZE ) ? 5 : FW ;
+  	if(mode&DBLSIZE)
+		{
+			if ( (mode & CONDENSED) )
+			{
+				width = 8 ;
+			}
+		 	else
+			{
+				width += width ;
+			}	 
+		}
+		length *= width ;
+		x -= length ;
+	}
   while(1)
 	{
     char c = *s++ ;
@@ -1989,7 +2006,7 @@ void lcd_write_bits( uint8_t *p, uint8_t mask )
 		{
 			temp |= mask ;
 		}
-		if ( plotType != PLOT_BLACK )
+		if ( ( plotType != PLOT_BLACK ) && ( plotType != PLOT_COLOUR ) )
 		{
 			temp ^= mask ;
 		}

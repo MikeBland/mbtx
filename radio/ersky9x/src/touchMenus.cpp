@@ -313,15 +313,12 @@ int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag )
 {
 	int32_t result = -1 ;
 	uint32_t left = flag ? 50 : TMID*TSCALE ;
+	uint32_t right = (flag == 2) ? TRIGHT*TSCALE/2 : TRIGHT*TSCALE ;
 	if ( TouchUpdated )
 	{
 		if ( TouchControl.event == TEVT_DOWN )
 		{
-				
-		}
-		else if ( TouchControl.event == TEVT_UP )
-		{
-			if ( ( TouchControl.x <= TRIGHT*TSCALE ) && (TouchControl.x >= left) && !s_editMode )
+			if ( ( TouchControl.x <= right ) && (TouchControl.x >= left) && !s_editMode )
 			{
 				uint32_t vert = TouchControl.y ;
 				vert -= TTOP*TSCALE ;
@@ -337,6 +334,14 @@ int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag )
 					TouchUpdated = 0 ;
 					result = vert ;
 				}
+			}
+		}
+		else if ( TouchControl.event == TEVT_UP )
+		{
+			if ( ( TouchControl.x <= right ) && (TouchControl.x >= left) && !s_editMode )
+			{
+				result = -2 ;
+				TouchUpdated = 0 ;
 			}
 		}
 	}
@@ -623,11 +628,11 @@ void menuProcLimits(uint8_t event)
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
 	if ( newSelection >= 0 )
 	{
-		if ( sub == newSelection )
-		{
-			selected = 1 ;
-		}
 		sub = mstate2.m_posVert = newSelection ;
+	}
+	else if (newSelection == -2)
+	{
+		selected = 1 ;
 	}
 	
 	if ( sub < NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
@@ -1660,11 +1665,11 @@ void menuProcVoiceOne(uint8_t event)
 				case 1 :	// func;
 					drawItem( (char *)XPSTR("Function"), y, attr ) ;
 					saveEditColours( attr, colour ) ;
-					lcd_putsAttIdx( TRIGHT-TRMARGIN-7*FW, y+TVOFF, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val|d|>valv%val=0"), pvad->func, 0 ) ;	// v1>v2  v1<v2  
+					lcd_putsAttIdx( TRIGHT-TRMARGIN-7*FW, y+TVOFF, XPSTR("\007-------v>val  v<val  |v|>val|v|<valv\140=val v=val  v & val|d|>valv%val=0d>=val "), pvad->func, 0 ) ;	// v1>v2  v1<v2  
 					restoreEditColours() ;
 	    		if(attr)
 					{
-      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 9 ) ;
+      	    CHECK_INCDEC_H_MODELVAR_0( pvad->func, 10 ) ;
 					}	
 				break ;
 
@@ -1936,6 +1941,7 @@ void menuVoice(uint8_t event, uint8_t mode)
 	int8_t sub ;
 	uint8_t t_pgOfs ;
 	uint16_t y ;
+	uint32_t selected = 0 ;
 	
 #ifdef MOVE_VOICE
 	if ( s_moveMode )
@@ -1977,17 +1983,21 @@ void menuVoice(uint8_t event, uint8_t mode)
 		int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
 		if ( newSelection >= 0 )
 		{
-			if ( sub == newSelection )
-			{
-				if ( event == 0 )
-				{
-					event = EVT_KEY_BREAK(BTN_RE) ;
-				}
-			}
+//			if ( sub == newSelection )
+//			{
+//				if ( event == 0 )
+//				{
+//					event = EVT_KEY_BREAK(BTN_RE) ;
+//				}
+//			}
 			sub = mstate2.m_posVert = newSelection ;
 		}
+		else if (newSelection == -2)
+		{
+			selected = 1 ;
+		}
 		 
-		if ( handleSelectIcon() )
+		if ( handleSelectIcon() || selected )
 		{
 			if ( event == 0 )
 			{
@@ -3752,8 +3762,12 @@ void menuProcProtocol(uint8_t event)
 	{
 		sub = mstate2.m_posVert = newSelection ;
 	}
+	else if (newSelection == -2)
+	{
+		selected = 1 ;
+	}
 
-	if ( handleSelectIcon() )
+	if ( handleSelectIcon() || selected )
 	{
 		selected = 1 ;
 		if ( event == 0 )
@@ -4681,11 +4695,15 @@ void menuProcSwitches(uint8_t event)
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
 	if ( newSelection >= 0 )
 	{
-		if ( sub == newSelection )
-		{
-			selected = 1 ;
-		}
+//		if ( sub == newSelection )
+//		{
+//			selected = 1 ;
+//		}
 		sub = mstate2.m_posVert = newSelection ;
+	}
+	else if (newSelection == -2)
+	{
+		selected = 1 ;
 	}
 
 	if ( handleSelectIcon() )
@@ -5455,11 +5473,15 @@ void menuProcAdjust(uint8_t event)
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
 	if ( newSelection >= 0 )
 	{
-		if ( sub == newSelection )
-		{
-			selected = 1 ;
-		}
+//		if ( sub == newSelection )
+//		{
+//			selected = 1 ;
+//		}
 		sub = mstate2.m_posVert = newSelection ;
+	}
+	else if (newSelection == -2)
+	{
+		selected = 1 ;
 	}
 
 	if ( handleSelectIcon() || selected || ( event == EVT_KEY_BREAK(BTN_RE) ) )
@@ -6433,7 +6455,7 @@ extern int16_t TouchAdjustValue ;
 	
 	lcd_hline( 0, TTOP+7*TFH, TMID-20 ) ;
 
-	pushPlotType( PLOT_BLACK ) ;
+	pushPlotType( PLOT_COLOUR ) ;
 	
 	lcd_vline(XD - (IS_EXPO_THROTTLE(s_expoChan) ? WCHART : 0), Y0 - WCHART, WCHART * 2);
 
@@ -7723,7 +7745,331 @@ void editOneInput(uint8_t event)
 	}
 }
 
+extern const char *BackResult ;
+extern int8_t DupSub ;
+extern uint8_t DupIfNonzero ;
+extern uint8_t RestoreIndex ;
+void menuProcModelIndex(uint8_t event) ;
+void menuDeleteDupModel(uint8_t event) ;
+void menuProcRestore(uint8_t event) ;
+void processSwitches( void ) ;
+void menuEditNotes(uint8_t event) ;
 
+void menuProcModelSelect(uint8_t event)
+{
+  static MState2 mstate2;
+  TITLE(PSTR(STR_MODELSEL));
+	TlExitIcon = 1 ;
+	uint16_t t_pgOfs ;
+	uint32_t newVpos ;
+  static uint8_t sel_editMode ;
+
+  int8_t subOld  = mstate2.m_posVert;
+	uint32_t rows = MAX_MODELS ;
+  
+	if ( event == EVT_ENTRY )
+	{
+		sel_editMode = 0 ;
+	}
+
+	if ( !PopupData.PopupActive )
+	{
+  	if ( event == EVT_KEY_FIRST(KEY_EXIT) )
+		{
+  	  if(sel_editMode)
+			{
+ 	      sel_editMode = false ;
+				killEvents( event) ;
+				Tevent = event = 0 ;
+  	  }
+		}
+		RotaryState = ROTARY_MENU_UD ;
+		event = mstate2.check_columns( event, rows-1 ) ;
+	}
+
+  int8_t sub = mstate2.m_posVert ;
+  if ( DupIfNonzero == 2 )
+  {
+		sel_editMode = false ;
+		DupIfNonzero = 0 ;
+  }
+  
+	t_pgOfs = evalHresOffset( sub ) ;
+
+	if ( !PopupData.PopupActive )
+	{
+		int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 2 ) ;
+		if ( newSelection >= 0 )
+		{
+			sub = mstate2.m_posVert = newSelection ;
+		}
+
+		if ( TouchUpdated )
+		{
+			if ( TouchControl.event == TEVT_UP )
+			{
+				if ( ( TouchControl.x <= TSCROLLLEFT ) && (TouchControl.x >= TMID*TSCALE) && !s_editMode )
+				{
+	  	    if(sel_editMode)
+					{
+ 	  	      sel_editMode = false;
+  	  	  }
+					else
+					{
+						PopupData.PopupIdx = 0 ;
+						PopupData.PopupActive = 1 ;
+					}
+					TouchUpdated = 0 ;
+				}
+			}
+		}
+	}
+
+	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
+	if ( newVpos != t_pgOfs )
+	{
+		s_pgOfs = t_pgOfs = newVpos ;
+		if ( sub < t_pgOfs )
+		{
+			mstate2.m_posVert = sub = t_pgOfs ;
+		}
+		else if ( sub > t_pgOfs + TLINES - 1 )
+		{
+			mstate2.m_posVert = sub = t_pgOfs + TLINES - 1 ;
+		}
+	}
+
+
+
+
+//	if(sub-s_pgOfs < 1)
+//	{
+//		s_pgOfs = max(0,sub-1) ;
+//	}
+//  else if(sub-s_pgOfs > (SCREEN_LINES-4) )
+//	{
+//		s_pgOfs = min(MAX_MODELS-(SCREEN_LINES-2), sub-(SCREEN_LINES-4)) ;
+//	}
+	
+	lcd_hline( 0, TTOP, TRIGHT/2 ) ;
+  
+	for(uint32_t i = 0 ; i < TLINES ; i += 1 )
+	{
+    uint16_t y=(i)*TFH +TTOP ;
+    uint8_t k=i+t_pgOfs ;
+    uint8_t attr = (sub==k) ? INVERS : 0 ;
+
+		if ( attr )
+		{
+			lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE/2, TFH*TSCALE-2, ~LcdBackground ) ;
+		}
+
+		uint16_t fcolour = attr & INVERS ? ~LcdForeground : LcdForeground ;
+    lcd_outdezNAtt(  3*FW, y+TVOFF, k+1, LEADING0,2, fcolour) ;
+    if(k==g_eeGeneral.currModel)
+		{
+			lcd_putcAttColour(1, y+TVOFF, '*', 0, fcolour ) ;
+		}
+    lcd_putsnAttColour( 4*FW, y+TVOFF, (char *)ModelNames[k+1], sizeof(g_model.name), 0, fcolour ) ;
+		
+		if ( (sub==k) && (sel_editMode ) )
+		{
+			lcd_rectColour( 0, y-1+TVOFF, FW*12, TFH-2, fcolour ) ;
+		}
+
+		lcd_hline( 0, y+TFH, TRIGHT/2 ) ;
+	}
+
+	if ( PopupData.PopupActive )
+	{
+		uint16_t mask ;
+		if ( g_eeGeneral.currModel == mstate2.m_posVert )
+		{
+			mask = 0x259 ;
+		}
+		else
+		{
+			mask = ( eeModelExists( mstate2.m_posVert ) == 0 ) ?  0x96 :  0x017E ;
+		}
+
+		uint8_t popaction = doPopup( PSTR(STR_MODEL_POPUP), mask, 10, event ) ;
+		
+  	if ( popaction == POPUP_SELECT )
+		{
+			uint8_t popidx = PopupData.PopupSel ;
+			if ( popidx == 0 )	// edit
+			{
+				RotaryState = ROTARY_MENU_LR ;
+				chainMenu(menuProcModelIndex) ;
+			}
+			else if ( ( popidx == 1 ) || ( popidx == 2 ) )	// select or SEL/EDIT
+			{
+
+uint32_t checkRssi(uint32_t swappingModels) ;
+				checkRssi(1) ;
+				
+				WatchdogTimeout = 300 ;		// 3 seconds
+				stopMusic() ;
+				pausePulses() ;
+	      STORE_MODELVARS ;			// To make sure we write model persistent timer
+extern void eeSaveAll() ;
+				eeSaveAll() ;
+				g_eeGeneral.currModel = mstate2.m_posVert;
+				eeLoadModel( g_eeGeneral.currModel ) ;
+				loadModelImage() ;
+				protocolsToModules() ;
+  			checkTHR();
+				checkCustom() ;
+				checkSwitches() ;
+				checkMultiPower() ;
+ 				perOut( g_chans512, NO_DELAY_SLOW | FADE_FIRST | FADE_LAST ) ;
+				SportStreamingStarted = 0 ;
+				speakModelVoice() ;
+				sortTelemText() ;
+        resetTimers();
+				VoiceCheckFlag100mS |= 2 ;// Set switch current states
+				processSwitches() ;	// Guarantee unused switches are cleared
+				telemetry_init( decodeTelemetryType( g_model.telemetryProtocol ) ) ;
+				resumePulses() ;
+#ifdef LUA
+				luaLoadModelScripts() ;
+#endif
+#ifdef BASIC
+				basicLoadModelScripts() ;
+#endif
+        STORE_GENERALVARS;
+				if ( ( PopupData.PopupActive == 2 ) || ( popidx == 2 ) )
+				{
+					chainMenu(menuProcModelIndex) ;
+				}
+				else
+				{
+	        popMenu(true) ;
+				}
+			}
+			else if ( popidx == 5 )		// Delete
+			{
+       	killEvents(event);
+       	DupIfNonzero = 0 ;
+				DupSub = sub + 1 ;
+       	pushMenu(menuDeleteDupModel);
+			}
+			else if( popidx == 3 )	// copy
+			{
+				{
+ 	        DupIfNonzero = 1 ;
+ 	        DupSub = sub + 1 ;
+ 	        pushMenu(menuDeleteDupModel);//menuProcExpoAll);
+				}
+			}
+			else if( popidx == 6 )	// backup
+			{
+				WatchdogTimeout = 300 ;		// 3 seconds
+				BackResult = ee32BackupModel( mstate2.m_posVert+1 ) ;
+				AlertType = MESS_TYPE ;
+				AlertMessage = BackResult ;
+			}
+			else if( popidx == 7 )	// restore
+			{
+				RestoreIndex = mstate2.m_posVert+1 ;
+       	pushMenu( menuProcRestore ) ;				
+			}
+			else if( popidx == 8 )	// replace
+			{
+				WatchdogTimeout = 300 ;		// 3 seconds
+				BackResult = ee32BackupModel( mstate2.m_posVert+1 ) ;
+				AlertType = MESS_TYPE ;
+				AlertMessage = BackResult ;
+				RestoreIndex = mstate2.m_posVert+1 ;
+       	pushMenu( menuProcRestore ) ;				
+			}
+			else if( popidx == 9 )	// Notes
+			{
+       	pushMenu( menuEditNotes ) ;
+			}
+			else // Move = 4
+			{
+ 	    	sel_editMode = true ;
+			}
+		}
+	}
+	else
+	{
+  	switch(event)
+  	{
+  	//case  EVT_KEY_FIRST(KEY_MENU):
+	  	case  EVT_KEY_FIRST(KEY_EXIT):
+  	    if(sel_editMode)
+				{
+ 	        sel_editMode = false;
+  	    }
+      break ;
+
+	  	case  EVT_KEY_FIRST(KEY_LEFT):
+  		case  EVT_KEY_FIRST(KEY_RIGHT):
+  	    if(g_eeGeneral.currModel != mstate2.m_posVert)
+  	    {
+          killEvents(event);
+					PopupData.PopupIdx = 0 ;
+					PopupData.PopupActive = 2 ;
+  	    }
+				else
+				{
+					RotaryState = ROTARY_MENU_LR ;
+		      if(event==EVT_KEY_FIRST(KEY_LEFT))  chainMenu(menuProcModelIndex);//{killEvents(event);popMenu(true);}
+
+		      if(event==EVT_KEY_FIRST(KEY_RIGHT)) chainMenu(menuProcModelIndex);
+				}
+ 	    break;
+  		
+			case  EVT_KEY_FIRST(KEY_MENU) :
+			case  EVT_KEY_BREAK(BTN_RE) :
+				if(sel_editMode)
+				{
+  	    	sel_editMode = false ;
+				}
+				else
+				{
+          killEvents(event);
+					PopupData.PopupIdx = 0 ;
+					PopupData.PopupActive = 1 ;
+				}	 
+  	    s_editMode = 0 ;
+  	  break;
+  	
+			case  EVT_KEY_LONG(BTN_RE) :
+			if ( g_eeGeneral.disableBtnLong )
+			{
+				break ;
+			}		
+			case  EVT_KEY_LONG(KEY_EXIT):  // make sure exit long exits to main
+  	    popMenu(true);
+      break;
+
+  		case EVT_ENTRY:
+  	    sel_editMode = false;
+				PopupData.PopupActive = 0 ;
+  	    mstate2.m_posVert = g_eeGeneral.currModel ;
+    	break;
+  	}
+	}
+
+  if(sel_editMode && subOld!=sub)
+	{
+		ee32SwapModels( subOld+1, sub+1 ) ;
+
+		if ( sub == g_eeGeneral.currModel )
+		{
+			g_eeGeneral.currModel = subOld ;
+  	  STORE_GENERALVARS ;     //eeWriteGeneral();
+		}
+		else if ( subOld == g_eeGeneral.currModel )
+		{
+			g_eeGeneral.currModel = sub ;
+  	  STORE_GENERALVARS ;     //eeWriteGeneral();
+		}
+  }
+}
 
 
 
