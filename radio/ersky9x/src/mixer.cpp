@@ -1213,6 +1213,17 @@ void perOut(int16_t *chanOut, uint8_t att )
 					}
 				}
 #endif
+			 } // swon
+
+			 // Need to handle half and full with switch off
+
+			 if ( ( swon == 0 ) && ( (md->srcRaw == MIX_FULL) || (md->srcRaw == MIX_MAX) ) )
+			 {
+			 	swon = 1 ;
+			 }
+
+			 if ( swon )
+			 {
         //========== MULTIPLEX ===============
         int32_t dv = (int32_t)v*mixweight ;
 				
@@ -1239,10 +1250,10 @@ void perOut(int16_t *chanOut, uint8_t att )
             break;
         }
 			 }
-			 else
-			 {
-    	    chans[md->destCh-1] = (int32_t)v*mixweight ;
-			 }
+//			 else
+//			 {
+//    	    chans[md->destCh-1] = (int32_t)v*mixweight ;
+//			 }
     }
 
     //========== MIXER WARNING ===============

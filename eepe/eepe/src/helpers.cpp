@@ -2297,7 +2297,7 @@ QString getSWName(int val, int extra )
 	}
 	else
 	{
-		x = ( (eepromType == -2 ) || ( eepromType == -5 ) ) ? 0 : 1 ;
+		x = ( (eepromType == -1-RADIO_TYPE_SKY ) || ( eepromType == -1-RADIO_TYPE_9XTREME ) ) ? 0 : 1 ;
 	}
   int limit = MaxSwitchIndex[x] ;
 //	if ( eepromType )

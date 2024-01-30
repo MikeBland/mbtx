@@ -4165,6 +4165,17 @@ void simulatorDialog::perOut(bool init, uint8_t att)
  					v += trim ;  //  0 = Trim ON  =  Default
 				}
 
+			 } // swon
+
+			 // Need to handle half and full with switch off
+
+			 if ( ( swon == 0 ) && ( (md.srcRaw == MIX_FULL) || (md.srcRaw == MIX_MAX) ) )
+			 {
+			 	swon = 1 ;
+			 }
+
+			 if ( swon )
+			 {
         //========== MULTIPLEX ===============
 #if GVARS
         int32_t dv = (int32_t)v*mixweight ;
@@ -4196,10 +4207,10 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             break;
         }
 			}
-			else
-			{
-        chans[md.destCh-1] = (int32_t)v*mixweight ;
-			}
+//			else
+//			{
+//        chans[md.destCh-1] = (int32_t)v*mixweight ;
+//			}
     }
 
 

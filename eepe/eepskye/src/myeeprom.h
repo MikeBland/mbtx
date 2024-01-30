@@ -103,12 +103,15 @@
 #define VOICE_NAME_SIZE					8
 
 #define MAX_GVARS 7
+#define EXTRA_GVARS		2
 #define NUM_SCALERS	8
 
 #define MAX_MODES		6
+#define EXTRA_MODES		1
 
 #ifdef SKY
 #define MAX_PHASES		6
+#define EXTRA_PHASES	1
 #else
 #define MAX_PHASES		4
 #endif
@@ -376,7 +379,8 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t disableBtnLong:1 ;
 	uint8_t enableEncMain:1 ;
 	uint8_t pageButton:1 ;
-	uint8_t spare7:5 ;
+	uint8_t flightModeGvars:1 ;
+	uint8_t spare7:4 ;
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
 	uint8_t selectedTheme ;
@@ -877,6 +881,16 @@ PACK(struct te_InputsData
 //  uint16_t scale:14;
 });
 
+PACK(typedef struct t_gvardata
+{
+  uint32_t min:12;
+  uint32_t max:12;
+  uint32_t popup:1;
+  uint32_t prec:1;
+  uint32_t unit:2;
+  uint32_t spare:4;
+}) GVarXData ;
+
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
   int8_t		modelVoice ;			// Index to model name voice (260+value)
@@ -1050,7 +1064,16 @@ PACK(typedef struct te_ModelData {
 	uint8_t forExpansion[2] ;	// Allows for extra items not yet handled
 	struct t_hiResDisplay hiresDisplay[2] ;
 	struct te_InputsData inputs[NUM_INPUT_LINES] ;
-	
+
+#if MULTI_GVARS
+//#define MAX_GVARS 7
+//#define MAX_MODES		6
+
+	int16_t mGvars[MAX_PHASES+EXTRA_PHASES+1][MAX_GVARS+EXTRA_GVARS] ;
+	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS] ;
+
+#endif
+	 
 }) SKYModelData ;
 
 
