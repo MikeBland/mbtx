@@ -40,7 +40,7 @@
 #include "CoOS.h"
 #endif
 
-OS_STK main_stk[MAIN_STACK_SIZE] ;
+//OS_STK main_stk[MAIN_STACK_SIZE] ;
 
 #define EE_FILE_TYPE_GENERAL	'G'
 #define EE_FILE_TYPE_MODEL		'M'
@@ -101,6 +101,7 @@ struct t_gmSave
 	EEGeneral general ;
 	SKYModelData model ;
 	unsigned char modelNames[MAX_MODELS+1][sizeof(g_model.name)+1] ;		// Allow for general
+	uint32_t padding[48+9] ;
 } ;
 
 struct t_gmSave GmSave __CCM ;

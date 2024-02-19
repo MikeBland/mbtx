@@ -732,7 +732,7 @@ uint8_t CodeBuffer[200] ;
 #define MIN_PROGRAM_SIZE	32000
   #else
    #ifdef PCBSKY
-#define MIN_PROGRAM_SIZE	18000
+#define MIN_PROGRAM_SIZE	16500
    #else
 #define MIN_PROGRAM_SIZE	22000
 	 #endif
