@@ -1217,7 +1217,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 
 			 // Need to handle half and full with switch off
 
-			 if ( ( swon == 0 ) && ( (md->srcRaw == MIX_FULL) || (md->srcRaw == MIX_MAX) ) )
+			 if ( ( swon == 0 ) && ( (md->srcRaw == MIX_FULL) || (md->srcRaw == MIX_MAX) ) && (md->mltpx!=MLTPX_REP ) )
 			 {
 			 	swon = 1 ;
 			 }
