@@ -1,6 +1,6 @@
 //Automatically generated file - do not edit
-#define DATE_STR "01.06.2020"
-#define TIME_STR "15:50:04"
+#define DATE_STR "08.02.2024"
+#define TIME_STR "13:28:04"
 #define SUB_VERS "1-"
-#define SVN_VERS "trunk-r425"
-#define SVN_VER_NUM 425
+#define SVN_VERS "trunk-r426"
+#define SVN_VER_NUM 427

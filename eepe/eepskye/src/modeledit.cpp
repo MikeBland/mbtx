@@ -4077,7 +4077,7 @@ void ModelEdit::heliEdited()
     updateSettings();
 }
 
-double roundValueDiv( int8_t value )
+double roundValueDiv( int16_t value )
 {
 	double adjust = 0.049 ;
 	if ( value < 0 )
@@ -4860,7 +4860,7 @@ void ModelEdit::limitAuto()
 	}
 }
 
-int8_t roundValueMul( double value )
+int16_t roundValueMul( double value )
 {
 	double adjust = 0.049 ;
 	if ( value < 0 )

@@ -164,6 +164,7 @@ private:
 		uint8_t Nvs_state[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 		int16_t Nvs_timer[NUM_SKY_VOICE_ALARMS+NUM_EXTRA_VOICE_ALARMS] ;
 		int16_t getInputSourceValue( struct te_InputsData *pinput ) ;
+		int16_t mixApplyCurve( SKYMixData &md, int16_t v ) ;
 
 protected:
 		void closeEvent(QCloseEvent *event) ;

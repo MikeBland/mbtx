@@ -3292,6 +3292,92 @@ void simulatorDialog::perOutPhase( bool init, uint8_t att )
 	}
 }
 
+int16_t simulatorDialog::mixApplyCurve( SKYMixData &md, int16_t v )
+{
+	//========== CURVES ===============
+	uint32_t diffValue ;
+  diffValue = md.differential | (md.extDiff << 1 ) ;
+	if ( diffValue )
+	{
+    //========== DIFFERENTIAL or expo =========
+    int16_t curveParam = REG( md.curve, -100, 100 ) ;
+		if ( diffValue == 3 )
+		{
+			// New Gvar
+			if ( curveParam < 0 )
+			{
+				curveParam = -curveParam - 1 ;							
+				curveParam = -g_model.gvars[curveParam].gvar ;
+			}
+			else
+			{
+				curveParam = g_model.gvars[curveParam].gvar ;
+			}
+		}
+    if (curveParam > 0 && v < 0)
+     	v = ((int32_t)v * (100 - curveParam)) / 100;
+    else if (curveParam < 0 && v > 0)
+     	v = ((int32_t)v * (100 + curveParam)) / 100;
+	}
+	else
+	{
+    if ( md.curve <= -28 )
+		{
+			// do expo using md->curve + 128
+      v = expo( v, md.curve + 128 ) ;
+		}
+		else
+		{
+      switch(md.curve)
+			{
+      case 0:
+        	break;
+      case 1:
+        	if(md.srcRaw == MIX_FULL) //FUL
+        	{
+        			if( v<0 ) v=-RESX;   //x|x>0
+        			else      v=-RESX+2*v;
+        	}else{
+        			if( v<0 ) v=0;   //x|x>0
+        	}
+        	break;
+      case 2:
+        	if(md.srcRaw == MIX_FULL) //FUL
+        	{
+        			if( v>0 ) v=RESX;   //x|x<0
+        			else      v=RESX+2*v;
+        	}else{
+        			if( v>0 ) v=0;   //x|x<0
+        	}
+        	break;
+      case 3:       // x|abs(x)
+        	v = abs(v);
+        	break;
+      case 4:       //f|f>0
+        	v = v>0 ? RESX : 0;
+        	break;
+      case 5:       //f|f<0
+        	v = v<0 ? -RESX : 0;
+        	break;
+      case 6:       //f|abs(f)
+        	v = v>0 ? RESX : -RESX;
+        	break;
+      default: //c1..c16
+				{
+        	int8_t idx = md.curve ;
+					if ( idx < 0 )
+					{
+						v = -v ;
+						idx = 6 - idx ;								
+					}
+        	v = intpol(v, idx - 7);
+				}
+      }
+		}
+	}
+	return v ;
+}
+
 void simulatorDialog::perOut(bool init, uint8_t att)
 {
     int16_t trimA[4];
@@ -4059,88 +4145,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 			if (swon )
 			{
-        //========== CURVES ===============
-				uint32_t diffValue ;
-        diffValue = md.differential | (md.extDiff << 1 ) ;
-				if ( diffValue )
-				{
-      		//========== DIFFERENTIAL or expo =========
-         	int16_t curveParam = REG( md.curve, -100, 100 ) ;
-					if ( diffValue == 3 )
-					{
-						// New Gvar
-						if ( curveParam < 0 )
-						{
-							curveParam = -curveParam - 1 ;							
-							curveParam = -g_model.gvars[curveParam].gvar ;
-						}
-						else
-						{
-							curveParam = g_model.gvars[curveParam].gvar ;
-						}
-					}
-     			if (curveParam > 0 && v < 0)
-     				v = ((int32_t)v * (100 - curveParam)) / 100;
-     			else if (curveParam < 0 && v > 0)
-     				v = ((int32_t)v * (100 + curveParam)) / 100;
-				}
-				else
-				{
-          if ( md.curve <= -28 )
-					{
-						// do expo using md->curve + 128
-            v = expo( v, md.curve + 128 ) ;
-					}
-					else
-					{
-        		switch(md.curve)
-						{
-        		case 0:
-        			  break;
-        		case 1:
-        			  if(md.srcRaw == MIX_FULL) //FUL
-        			  {
-        			      if( v<0 ) v=-RESX;   //x|x>0
-        			      else      v=-RESX+2*v;
-        			  }else{
-        			      if( v<0 ) v=0;   //x|x>0
-        			  }
-        			  break;
-        		case 2:
-        			  if(md.srcRaw == MIX_FULL) //FUL
-        			  {
-        			      if( v>0 ) v=RESX;   //x|x<0
-        			      else      v=RESX+2*v;
-        			  }else{
-        			      if( v>0 ) v=0;   //x|x<0
-        			  }
-        			  break;
-        		case 3:       // x|abs(x)
-        			  v = abs(v);
-        			  break;
-        		case 4:       //f|f>0
-        			  v = v>0 ? RESX : 0;
-        			  break;
-        		case 5:       //f|f<0
-        			  v = v<0 ? -RESX : 0;
-        			  break;
-        		case 6:       //f|abs(f)
-        			  v = v>0 ? RESX : -RESX;
-        			  break;
-        		default: //c1..c16
-							{
-        			  int8_t idx = md.curve ;
-								if ( idx < 0 )
-								{
-									v = -v ;
-									idx = 6 - idx ;								
-								}
-        			  v = intpol(v, idx - 7);
-							}
-        		}
-					}
-				}
-
+				v = mixApplyCurve( md, v ) ;
         //========== TRIM ===============
         if((md.carryTrim==0) && (md.srcRaw>0) && (md.srcRaw<=4))
 				{
@@ -4169,8 +4174,9 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 			 // Need to handle half and full with switch off
 
-			 if ( ( swon == 0 ) && ( (md.srcRaw == MIX_FULL) || (md.srcRaw == MIX_MAX) ) )
+       if ( ( swon == 0 ) && ( (md.srcRaw == MIX_FULL) || (md.srcRaw == MIX_MAX) ) && (md.mltpx!=MLTPX_REP ) )
 			 {
+				v = mixApplyCurve( md, v ) ;
 			 	swon = 1 ;
 			 }
 
@@ -5013,6 +5019,22 @@ int16_t simulatorDialog::getInputSourceValue( struct te_InputsData *pinput )
 		if ( (pinput->srcRaw) && ( pinput->srcRaw <= 7 ) )
 		{
 			return rawSticks[pinput->srcRaw-1] ;
+		}
+		if ( pinput->srcRaw == 8 )	// HALF
+		{
+			uint32_t active = 1 ;
+			if ( pinput->flightModes & ( 1 << CurrentPhase ) )
+			{
+				active = 0 ;
+			}
+			if ( pinput->swtch )
+			{
+				if ( getSwitch( pinput->swtch,0,0 ) == 0 )
+				{
+					active = 0 ;
+				}
+				return active ? 1024 : 0 ;
+			}
 		}
 		
 		if (pinput->srcRaw >= 128)	// A Switch
