@@ -18625,11 +18625,11 @@ extern void initWatchdog() ;
 //		basicExec(ScriptFilename) ;
 #endif
 	}
-//	else if ( i == 2 )	// EXIT
-//	{
-//    killEvents(event) ;
-////    popMenu() ;
-//	}
+	else if ( i == 2 )	// EXIT
+	{
+    killEvents(event) ;
+    popMenu() ;
+	}
 //#ifdef BASIC
 
 

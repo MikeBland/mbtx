@@ -1196,7 +1196,7 @@ CPPFLAGS += -MD -MP -MF $(OBJDIR)/$(@F).d
 # makefile rules
 #
 
-all: size_before stamp $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss size
+all: size_before stamp .WAIT $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss .WAIT size
 
 size_before:
 #	arm-none-eabi-size $(FULL_PRJ).elf
@@ -1225,6 +1225,8 @@ stamp:
  endif
 #	@cat stamp-ersky9x.h
 #endif
+
+.NOTPARALLEL: stamp-ersky9x.h
 
 $(OBJDIR):
 	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
