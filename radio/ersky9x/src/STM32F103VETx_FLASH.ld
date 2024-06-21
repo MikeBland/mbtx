@@ -38,6 +38,11 @@ _estack = 0x20010000;    /* end of RAM */
 _Min_Heap_Size = 0;      /* required amount of heap  */
 _Min_Stack_Size = 0x200; /* required amount of stack */
 
+/* Main stack end */
+_main_stack_start = _estack - _Min_Stack_Size;
+_heap_end = _main_stack_start;
+
+
 /* Specify the memory areas */
 MEMORY
 {

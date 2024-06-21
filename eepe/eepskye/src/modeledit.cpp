@@ -115,6 +115,49 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
 
 		switchesTabDone = false ;
 
+	gvcb[0] = ui->GvCb1 ;
+	gvcb[1] = ui->GvCb2 ;
+	gvcb[2] = ui->GvCb3 ;
+	gvcb[3] = ui->GvCb4 ;
+	gvcb[4] = ui->GvCb5 ;
+	gvcb[5] = ui->GvCb6 ;
+	gvcb[6] = ui->GvCb7 ;
+	gvcb[7] = ui->GvCb8 ;
+	gvcb[8] = ui->GvCb9 ;
+	gvcb[9] = ui->GvCb10 ;
+	gvcb[10] = ui->GvCb11 ;
+	gvcb[11] = ui->GvCb12 ;
+		 
+	gvsb[0] = ui->GvSb1 ;
+	gvsb[1] = ui->GvSb2 ;
+	gvsb[2] = ui->GvSb3 ;
+	gvsb[3] = ui->GvSb4 ;
+	gvsb[4] = ui->GvSb5 ;
+	gvsb[5] = ui->GvSb6 ;
+	gvsb[6] = ui->GvSb7 ;
+	gvsb[7] = ui->GvSb8 ;
+	gvsb[8] = ui->GvSb9 ;
+	gvsb[9] = ui->GvSb10 ;
+	gvsb[10] = ui->GvSb11 ;
+	gvsb[11] = ui->GvSb12 ;
+
+	gv0sb[0] = ui->Gv1SB ;
+	gv0sb[1] = ui->Gv2SB ;
+	gv0sb[2] = ui->Gv3SB ;
+	gv0sb[3] = ui->Gv4SB ;
+	gv0sb[4] = ui->Gv5SB ;
+	gv0sb[5] = ui->Gv6SB ;
+	gv0sb[6] = ui->Gv7SB ;
+	gv0sb[7] = ui->Gv8SB ;
+	gv0sb[8] = ui->Gv9SB ;
+	gv0sb[9] = ui->Gv10SB ;
+	gv0sb[10] = ui->Gv11SB ;
+	gv0sb[11] = ui->Gv12SB ;
+
+	switchEditLock = true ;
+	ui->GvFmSb->setValue(1) ;
+	switchEditLock = false ;
+
     tabModelEditSetup();
     tabExpo();
     tabMixes();
@@ -130,6 +173,7 @@ ModelEdit::ModelEdit( struct t_radioData *radioData, uint8_t id, QWidget *parent
     tabPhase();
 		tabGvar();
 		tabVoiceAlarms() ;
+    fmGvarsConfigure(g_model.flightModeGvars?1:0) ;
 
     ui->curvePreview->setMinimumWidth(260);
     ui->curvePreview->setMinimumHeight(260);
@@ -406,6 +450,10 @@ void ModelEdit::tabModelEditSetup()
 		}
 
     ui->extendedLimitsChkB->setChecked(g_model.extendedLimits);
+
+    switchEditLock = true;
+    ui->FMgvarsChkB->setChecked(g_model.flightModeGvars);
+    switchEditLock = false;
 
     ui->autoLimitsSB->setValue( (double)g_model.sub_trim_limit/10 + 0.049 ) ;
     
@@ -2373,7 +2421,7 @@ void ModelEdit::tabExpo()
     				/*if ( ( x >= -100 && x <= 100 ) )*/ x += 100 ;
 						y = 0 ;
 					}
-					populateSpinGVarCB( sb, cb, chkb, x, y, 100 ) ;
+					populateSpinGVarCB( sb, cb, chkb, x, y, 100, g_model.flightModeGvars ) ;
 			    
 					connect( sb, SIGNAL(editingFinished()),this,SLOT(expoEdited()));
 			    connect( cb, SIGNAL(currentIndexChanged(int)),this,SLOT(expoEdited()));
@@ -2396,7 +2444,7 @@ void ModelEdit::tabExpo()
     				/*if ( ( x >= -100 && x <= 100 ) )*/ x += 100 ;
 						y = 0 ;
 					}
-					populateSpinGVarCB( sb, cb, chkb, x, y, 100 ) ;
+					populateSpinGVarCB( sb, cb, chkb, x, y, 100, 0, g_model.flightModeGvars ) ;
 			    
 					connect( sb, SIGNAL(editingFinished()),this,SLOT(expoEdited()));
 			    connect( cb, SIGNAL(currentIndexChanged(int)),this,SLOT(expoEdited()));
@@ -2419,7 +2467,7 @@ void ModelEdit::tabExpo()
     				/*if ( ( x >= -100 && x <= 100 ) )*/ x += 100 ;
 						y = 0 ;
 					}
-					populateSpinGVarCB( sb, cb, chkb, x, y, 100 ) ;
+					populateSpinGVarCB( sb, cb, chkb, x, y, 100, 0, g_model.flightModeGvars ) ;
 			    
 					connect( sb, SIGNAL(editingFinished()),this,SLOT(expoEdited()));
 			    connect( cb, SIGNAL(currentIndexChanged(int)),this,SLOT(expoEdited()));
@@ -2451,7 +2499,7 @@ void ModelEdit::tabExpo()
     				/*if ( ( x >= -100 && x <= 100 ) )*/ x += 100 ;
 						y = 0 ;
 					}
-					populateSpinGVarCB( sb, cb, chkb, x, y, 100 ) ;
+					populateSpinGVarCB( sb, cb, chkb, x, y, 100, 0, g_model.flightModeGvars ) ;
 			    
 					connect( sb, SIGNAL(editingFinished()),this,SLOT(expoEdited()));
 			    connect( cb, SIGNAL(currentIndexChanged(int)),this,SLOT(expoEdited()));
@@ -3616,7 +3664,7 @@ int16_t ModelEdit::getRawTrimValue( uint8_t phase, uint8_t idx )
 {
 	if ( phase )
 	{
-		return g_model.phaseData[phase-1].trim[idx] ;
+		return g_model.phaseData[phase-1].trim[idx].value ;
 	}	
 	else
 	{
@@ -3753,6 +3801,11 @@ void ModelEdit::tabPhase()
   connect( ui->FM6Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
   connect( ui->FM7Name, SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
 
+	for ( uint32_t i = 0 ; i < 12 ; i += 1 )
+	{
+    connect(gvcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(phaseEdited()));
+    connect(gvsb[i],SIGNAL(editingFinished()),this,SLOT(phaseEdited()));
+	} 
 }
 
 void ModelEdit::updatePhaseTab()
@@ -3785,6 +3838,7 @@ void ModelEdit::updatePhaseTab()
 		ui->label_M4->setText("Aileron") ;
 	}
 	
+	phaseEditLock = true ;
 	populateSwitchShortCB( ui->FP1_sw, g_model.phaseData[0].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP2_sw, g_model.phaseData[1].swtch, rData->type ) ;
 	populateSwitchShortCB( ui->FP3_sw, g_model.phaseData[2].swtch, rData->type ) ;
@@ -3801,66 +3855,66 @@ void ModelEdit::updatePhaseTab()
 	populateSwitchShortCB( ui->FP6_sw_2, g_model.phaseData[5].swtch2, rData->type ) ;
 	populateSwitchShortCB( ui->FP7_sw_2, g_model.xphaseData.swtch2, rData->type ) ;
 	
-	ui->FP1rudTrimSB->setDisabled( populatePhasetrim( ui->FP1_RudCB, 1, g_model.phaseData[0].trim[0] ) ) ;
-	ui->FP1eleTrimSB->setDisabled( populatePhasetrim( ui->FP1_EleCB, 1, g_model.phaseData[0].trim[1] ) ) ;
-	ui->FP1thrTrimSB->setDisabled( populatePhasetrim( ui->FP1_ThrCB, 1,  g_model.phaseData[0].trim[2] ) ) ;
-	ui->FP1ailTrimSB->setDisabled( populatePhasetrim( ui->FP1_AilCB, 1,  g_model.phaseData[0].trim[3] ) ) ;
-	ui->FP2rudTrimSB->setDisabled( populatePhasetrim( ui->FP2_RudCB, 2,  g_model.phaseData[1].trim[0] ) ) ;
-	ui->FP2eleTrimSB->setDisabled( populatePhasetrim( ui->FP2_EleCB, 2,  g_model.phaseData[1].trim[1] ) ) ;
-	ui->FP2thrTrimSB->setDisabled( populatePhasetrim( ui->FP2_ThrCB, 2,  g_model.phaseData[1].trim[2] ) ) ;
-	ui->FP2ailTrimSB->setDisabled( populatePhasetrim( ui->FP2_AilCB, 2,  g_model.phaseData[1].trim[3] ) ) ;
-	ui->FP3rudTrimSB->setDisabled( populatePhasetrim( ui->FP3_RudCB, 3,  g_model.phaseData[2].trim[0] ) ) ;
-	ui->FP3eleTrimSB->setDisabled( populatePhasetrim( ui->FP3_EleCB, 3,  g_model.phaseData[2].trim[1] ) ) ;
-	ui->FP3thrTrimSB->setDisabled( populatePhasetrim( ui->FP3_ThrCB, 3,  g_model.phaseData[2].trim[2] ) ) ;
-	ui->FP3ailTrimSB->setDisabled( populatePhasetrim( ui->FP3_AilCB, 3,  g_model.phaseData[2].trim[3] ) ) ;
-	ui->FP4rudTrimSB->setDisabled( populatePhasetrim( ui->FP4_RudCB, 4,  g_model.phaseData[3].trim[0] ) ) ;
-	ui->FP4eleTrimSB->setDisabled( populatePhasetrim( ui->FP4_EleCB, 4,  g_model.phaseData[3].trim[1] ) ) ;
-	ui->FP4thrTrimSB->setDisabled( populatePhasetrim( ui->FP4_ThrCB, 4,  g_model.phaseData[3].trim[2] ) ) ;
-	ui->FP4ailTrimSB->setDisabled( populatePhasetrim( ui->FP4_AilCB, 4,  g_model.phaseData[3].trim[3] ) ) ;
-	ui->FP5rudTrimSB->setDisabled( populatePhasetrim( ui->FP5_RudCB, 5,  g_model.phaseData[4].trim[0] ) ) ;
-	ui->FP5eleTrimSB->setDisabled( populatePhasetrim( ui->FP5_EleCB, 5,  g_model.phaseData[4].trim[1] ) ) ;
-	ui->FP5thrTrimSB->setDisabled( populatePhasetrim( ui->FP5_ThrCB, 5,  g_model.phaseData[4].trim[2] ) ) ;
-	ui->FP5ailTrimSB->setDisabled( populatePhasetrim( ui->FP5_AilCB, 5,  g_model.phaseData[4].trim[3] ) ) ;
-	ui->FP6rudTrimSB->setDisabled( populatePhasetrim( ui->FP6_RudCB, 6,  g_model.phaseData[5].trim[0] ) ) ;
-	ui->FP6eleTrimSB->setDisabled( populatePhasetrim( ui->FP6_EleCB, 6,  g_model.phaseData[5].trim[1] ) ) ;
-	ui->FP6thrTrimSB->setDisabled( populatePhasetrim( ui->FP6_ThrCB, 6,  g_model.phaseData[5].trim[2] ) ) ;
-	ui->FP6ailTrimSB->setDisabled( populatePhasetrim( ui->FP6_AilCB, 6,  g_model.phaseData[5].trim[3] ) ) ;
-	ui->FP7rudTrimSB->setDisabled( populatePhasetrim( ui->FP7_RudCB, 7,  g_model.xphaseData.trim[0] ) ) ;
-	ui->FP7eleTrimSB->setDisabled( populatePhasetrim( ui->FP7_EleCB, 7,  g_model.xphaseData.trim[1] ) ) ;
-	ui->FP7thrTrimSB->setDisabled( populatePhasetrim( ui->FP7_ThrCB, 7,  g_model.xphaseData.trim[2] ) ) ;
-	ui->FP7ailTrimSB->setDisabled( populatePhasetrim( ui->FP7_AilCB, 7,  g_model.xphaseData.trim[3] ) ) ;
+	ui->FP1rudTrimSB->setDisabled( populatePhasetrim( ui->FP1_RudCB, 1, g_model.phaseData[0].trim[0].value, g_model.phaseData[0].trim[0].mode ) ) ;
+	ui->FP1eleTrimSB->setDisabled( populatePhasetrim( ui->FP1_EleCB, 1, g_model.phaseData[0].trim[1].value, g_model.phaseData[0].trim[1].mode ) ) ;
+	ui->FP1thrTrimSB->setDisabled( populatePhasetrim( ui->FP1_ThrCB, 1, g_model.phaseData[0].trim[2].value, g_model.phaseData[0].trim[2].mode ) ) ;
+	ui->FP1ailTrimSB->setDisabled( populatePhasetrim( ui->FP1_AilCB, 1, g_model.phaseData[0].trim[3].value, g_model.phaseData[0].trim[3].mode ) ) ;
+	ui->FP2rudTrimSB->setDisabled( populatePhasetrim( ui->FP2_RudCB, 2, g_model.phaseData[1].trim[0].value, g_model.phaseData[1].trim[0].mode ) ) ;
+	ui->FP2eleTrimSB->setDisabled( populatePhasetrim( ui->FP2_EleCB, 2, g_model.phaseData[1].trim[1].value, g_model.phaseData[1].trim[1].mode ) ) ;
+	ui->FP2thrTrimSB->setDisabled( populatePhasetrim( ui->FP2_ThrCB, 2, g_model.phaseData[1].trim[2].value, g_model.phaseData[1].trim[2].mode ) ) ;
+	ui->FP2ailTrimSB->setDisabled( populatePhasetrim( ui->FP2_AilCB, 2, g_model.phaseData[1].trim[3].value, g_model.phaseData[1].trim[3].mode ) ) ;
+	ui->FP3rudTrimSB->setDisabled( populatePhasetrim( ui->FP3_RudCB, 3, g_model.phaseData[2].trim[0].value, g_model.phaseData[2].trim[0].mode ) ) ;
+	ui->FP3eleTrimSB->setDisabled( populatePhasetrim( ui->FP3_EleCB, 3, g_model.phaseData[2].trim[1].value, g_model.phaseData[2].trim[1].mode ) ) ;
+	ui->FP3thrTrimSB->setDisabled( populatePhasetrim( ui->FP3_ThrCB, 3, g_model.phaseData[2].trim[2].value, g_model.phaseData[2].trim[2].mode ) ) ;
+	ui->FP3ailTrimSB->setDisabled( populatePhasetrim( ui->FP3_AilCB, 3, g_model.phaseData[2].trim[3].value, g_model.phaseData[2].trim[3].mode ) ) ;
+	ui->FP4rudTrimSB->setDisabled( populatePhasetrim( ui->FP4_RudCB, 4, g_model.phaseData[3].trim[0].value, g_model.phaseData[3].trim[0].mode ) ) ;
+	ui->FP4eleTrimSB->setDisabled( populatePhasetrim( ui->FP4_EleCB, 4, g_model.phaseData[3].trim[1].value, g_model.phaseData[3].trim[1].mode ) ) ;
+	ui->FP4thrTrimSB->setDisabled( populatePhasetrim( ui->FP4_ThrCB, 4, g_model.phaseData[3].trim[2].value, g_model.phaseData[3].trim[2].mode ) ) ;
+	ui->FP4ailTrimSB->setDisabled( populatePhasetrim( ui->FP4_AilCB, 4, g_model.phaseData[3].trim[3].value, g_model.phaseData[3].trim[3].mode ) ) ;
+	ui->FP5rudTrimSB->setDisabled( populatePhasetrim( ui->FP5_RudCB, 5, g_model.phaseData[4].trim[0].value, g_model.phaseData[4].trim[0].mode ) ) ;
+	ui->FP5eleTrimSB->setDisabled( populatePhasetrim( ui->FP5_EleCB, 5, g_model.phaseData[4].trim[1].value, g_model.phaseData[4].trim[1].mode ) ) ;
+	ui->FP5thrTrimSB->setDisabled( populatePhasetrim( ui->FP5_ThrCB, 5, g_model.phaseData[4].trim[2].value, g_model.phaseData[4].trim[2].mode ) ) ;
+	ui->FP5ailTrimSB->setDisabled( populatePhasetrim( ui->FP5_AilCB, 5, g_model.phaseData[4].trim[3].value, g_model.phaseData[4].trim[3].mode ) ) ;
+	ui->FP6rudTrimSB->setDisabled( populatePhasetrim( ui->FP6_RudCB, 6, g_model.phaseData[5].trim[0].value, g_model.phaseData[5].trim[0].mode ) ) ;
+	ui->FP6eleTrimSB->setDisabled( populatePhasetrim( ui->FP6_EleCB, 6, g_model.phaseData[5].trim[1].value, g_model.phaseData[5].trim[1].mode ) ) ;
+	ui->FP6thrTrimSB->setDisabled( populatePhasetrim( ui->FP6_ThrCB, 6, g_model.phaseData[5].trim[2].value, g_model.phaseData[5].trim[2].mode ) ) ;
+	ui->FP6ailTrimSB->setDisabled( populatePhasetrim( ui->FP6_AilCB, 6, g_model.phaseData[5].trim[3].value, g_model.phaseData[5].trim[3].mode ) ) ;
+	ui->FP7rudTrimSB->setDisabled( populatePhasetrim( ui->FP7_RudCB, 7, g_model.xphaseData.trim[0].value  , g_model.xphaseData.trim[0].mode   ) ) ;
+	ui->FP7eleTrimSB->setDisabled( populatePhasetrim( ui->FP7_EleCB, 7, g_model.xphaseData.trim[1].value  , g_model.xphaseData.trim[1].mode   ) ) ;
+	ui->FP7thrTrimSB->setDisabled( populatePhasetrim( ui->FP7_ThrCB, 7, g_model.xphaseData.trim[2].value  , g_model.xphaseData.trim[2].mode   ) ) ;
+	ui->FP7ailTrimSB->setDisabled( populatePhasetrim( ui->FP7_AilCB, 7, g_model.xphaseData.trim[3].value  , g_model.xphaseData.trim[3].mode   ) ) ;
 
 //	ui->FP1rudTrimSB->setValue( getTrimValue( 1, 0 ) ) ;
 //	ui->FP1eleTrimSB->setValue( getTrimValue( 1, 1 ) ) ;
 
-	ui->FP1rudTrimSB->setValue(g_model.phaseData[0].trim[0]) ;
-	ui->FP1eleTrimSB->setValue(g_model.phaseData[0].trim[1]) ;
-	ui->FP1thrTrimSB->setValue(g_model.phaseData[0].trim[2]) ;
-	ui->FP1ailTrimSB->setValue(g_model.phaseData[0].trim[3]) ;
-	ui->FP2rudTrimSB->setValue(g_model.phaseData[1].trim[0]) ;
-	ui->FP2eleTrimSB->setValue(g_model.phaseData[1].trim[1]) ;
-	ui->FP2thrTrimSB->setValue(g_model.phaseData[1].trim[2]) ;
-	ui->FP2ailTrimSB->setValue(g_model.phaseData[1].trim[3]) ;
-	ui->FP3rudTrimSB->setValue(g_model.phaseData[2].trim[0]) ;
-	ui->FP3eleTrimSB->setValue(g_model.phaseData[2].trim[1]) ;
-	ui->FP3thrTrimSB->setValue(g_model.phaseData[2].trim[2]) ;
-	ui->FP3ailTrimSB->setValue(g_model.phaseData[2].trim[3]) ;
-	ui->FP4rudTrimSB->setValue(g_model.phaseData[3].trim[0]) ;
-	ui->FP4eleTrimSB->setValue(g_model.phaseData[3].trim[1]) ;
-	ui->FP4thrTrimSB->setValue(g_model.phaseData[3].trim[2]) ;
-	ui->FP4ailTrimSB->setValue(g_model.phaseData[3].trim[3]) ;
-	ui->FP5rudTrimSB->setValue(g_model.phaseData[4].trim[0]) ;
-	ui->FP5eleTrimSB->setValue(g_model.phaseData[4].trim[1]) ;
-	ui->FP5thrTrimSB->setValue(g_model.phaseData[4].trim[2]) ;
-	ui->FP5ailTrimSB->setValue(g_model.phaseData[4].trim[3]) ;
-	ui->FP6rudTrimSB->setValue(g_model.phaseData[5].trim[0]) ;
-	ui->FP6eleTrimSB->setValue(g_model.phaseData[5].trim[1]) ;
-	ui->FP6thrTrimSB->setValue(g_model.phaseData[5].trim[2]) ;
-	ui->FP6ailTrimSB->setValue(g_model.phaseData[5].trim[3]) ;
-	ui->FP7rudTrimSB->setValue(g_model.xphaseData.trim[0]) ;
-	ui->FP7eleTrimSB->setValue(g_model.xphaseData.trim[1]) ;
-	ui->FP7thrTrimSB->setValue(g_model.xphaseData.trim[2]) ;
-	ui->FP7ailTrimSB->setValue(g_model.xphaseData.trim[3]) ;
+	ui->FP1rudTrimSB->setValue(g_model.phaseData[0].trim[0].value) ;
+	ui->FP1eleTrimSB->setValue(g_model.phaseData[0].trim[1].value) ;
+	ui->FP1thrTrimSB->setValue(g_model.phaseData[0].trim[2].value) ;
+	ui->FP1ailTrimSB->setValue(g_model.phaseData[0].trim[3].value) ;
+	ui->FP2rudTrimSB->setValue(g_model.phaseData[1].trim[0].value) ;
+	ui->FP2eleTrimSB->setValue(g_model.phaseData[1].trim[1].value) ;
+	ui->FP2thrTrimSB->setValue(g_model.phaseData[1].trim[2].value) ;
+	ui->FP2ailTrimSB->setValue(g_model.phaseData[1].trim[3].value) ;
+	ui->FP3rudTrimSB->setValue(g_model.phaseData[2].trim[0].value) ;
+	ui->FP3eleTrimSB->setValue(g_model.phaseData[2].trim[1].value) ;
+	ui->FP3thrTrimSB->setValue(g_model.phaseData[2].trim[2].value) ;
+	ui->FP3ailTrimSB->setValue(g_model.phaseData[2].trim[3].value) ;
+	ui->FP4rudTrimSB->setValue(g_model.phaseData[3].trim[0].value) ;
+	ui->FP4eleTrimSB->setValue(g_model.phaseData[3].trim[1].value) ;
+	ui->FP4thrTrimSB->setValue(g_model.phaseData[3].trim[2].value) ;
+	ui->FP4ailTrimSB->setValue(g_model.phaseData[3].trim[3].value) ;
+	ui->FP5rudTrimSB->setValue(g_model.phaseData[4].trim[0].value) ;
+	ui->FP5eleTrimSB->setValue(g_model.phaseData[4].trim[1].value) ;
+	ui->FP5thrTrimSB->setValue(g_model.phaseData[4].trim[2].value) ;
+	ui->FP5ailTrimSB->setValue(g_model.phaseData[4].trim[3].value) ;
+	ui->FP6rudTrimSB->setValue(g_model.phaseData[5].trim[0].value) ;
+	ui->FP6eleTrimSB->setValue(g_model.phaseData[5].trim[1].value) ;
+	ui->FP6thrTrimSB->setValue(g_model.phaseData[5].trim[2].value) ;
+	ui->FP6ailTrimSB->setValue(g_model.phaseData[5].trim[3].value) ;
+	ui->FP7rudTrimSB->setValue(g_model.xphaseData.trim[0].value) ;
+	ui->FP7eleTrimSB->setValue(g_model.xphaseData.trim[1].value) ;
+	ui->FP7thrTrimSB->setValue(g_model.xphaseData.trim[2].value) ;
+	ui->FP7ailTrimSB->setValue(g_model.xphaseData.trim[3].value) ;
 
 	ui->FM1FadeIn->setValue(g_model.phaseData[0].fadeIn/2.0) ;
 	ui->FM1FadeOut->setValue(g_model.phaseData[0].fadeOut/2.0) ;
@@ -3926,15 +3980,14 @@ void ModelEdit::updatePhaseTab()
 		n = n.left(n.size()-1) ;			
 	}
   ui->FM7Name->setText( n ) ;
-
-	phaseEdited() ;
-
+	phaseEditLock = false ;
 }
 
 
 void ModelEdit::phaseSet(int phase, int trim, QComboBox *cb, QSpinBox *sb )
 {
 	int idx ;
+  int16_t index ;
 	PhaseData *pPhase ;
 	if ( phase == 6 )
 	{
@@ -3944,20 +3997,54 @@ void ModelEdit::phaseSet(int phase, int trim, QComboBox *cb, QSpinBox *sb )
 	{
 		pPhase = &g_model.phaseData[phase] ;
 	}
-  if ( (idx = decodePhaseTrim( &pPhase->trim[trim], cb->currentIndex() ) < 0 ) )
-	{
-		pPhase->trim[trim] = sb->value() ;
+	index = pPhase->trim[trim].value ;
+  idx = decodePhaseTrim( &index, cb->currentIndex() ) ; 
+  if ( idx < 0 )
+	{ // own value
+		pPhase->trim[trim].value = sb->value() ;
+    pPhase->trim[trim].mode = (phase+1) << 1 ;
 		sb->setEnabled( true ) ;
 	}
 	else
 	{
-    sb->setValue( idx ? pPhase->trim[trim] : g_model.trim[trim] ) ;		// Needs recursion added
-		sb->setDisabled( true ) ;
+    idx -= 1 ;	// 0 to 13
+		index = idx >> 1 ;
+		if ( (index-1) == phase )
+		{
+			index += 1 ;
+		}
+		idx &= 1 ;
+		idx |= index << 1 ;
+		pPhase->trim[trim].mode = idx ;
+		if ( idx & 1 )
+		{
+			if ( pPhase->trim[trim].value > TRIM_EXTENDED_MAX )
+			{
+				pPhase->trim[trim].value = 0 ;
+				sb->setValue( 0 ) ;		// Needs recursion added
+			}
+			sb->setEnabled( true ) ;
+		}
+		else
+		{
+			pPhase->trim[trim].value = TRIM_EXTENDED_MAX + index + 1 ;
+//		sb->setValue( idx ? pPhase->trim[trim] : g_model.trim[trim] ) ;		// Needs recursion added
+			sb->setValue( 0 ) ;		// Needs recursion added
+			sb->setDisabled( true ) ;
+		}
 	}
 }
 
+#define GVAR_MAX				1024
+#define GVAR_MIN			 -1024
+
 void ModelEdit::phaseEdited()
 {
+	if ( phaseEditLock )
+	{
+		return ;
+	}
+
 //  int idx ;
 //	int limit = MAX_DRSWITCH ;
 //#ifdef SKY
@@ -4034,6 +4121,45 @@ void ModelEdit::phaseEdited()
 	g_model.xphaseData.fadeIn = ( ui->FM7FadeIn->value() + 0.01 ) * 2 ;
 	g_model.xphaseData.fadeOut = ( ui->FM7FadeOut->value() + 0.01 ) * 2 ;
 
+	int32_t fmIndex ;
+  fmIndex = ui->GvFmSb->value() ;	// 1-7
+	int16_t j ;
+
+	if ( g_model.flightModeGvars )
+	{
+		for ( uint32_t i = 0 ; i < 12 ; i += 1 )
+		{
+			int32_t value = gvcb[i]->currentIndex() ;
+			j = readMgvar( fmIndex, i ) ;
+			if ( value > 0 )
+			{
+        if (value > fmIndex )
+				{
+					value += 1 ;
+				}
+				value += GVAR_MAX ;
+				if ( value != j )
+				{
+					writeMgvar( fmIndex, i, value ) ;
+				}
+			}
+			else
+			{
+				if ( j > GVAR_MAX )
+				{
+					writeMgvar( fmIndex, i, 0 ) ;
+				}
+			}
+			int16_t k ;
+			int32_t fm ;
+			k = gvsb[i]->value() ;
+      fm = setGVarFm( i, k, fmIndex ) ;
+			if ( fm == 0 )
+			{ // Need to update globals
+				gv0sb[i]->setValue( k ) ;
+			}
+		}
+	}
   updateSettings();
 }
 
@@ -6833,6 +6959,7 @@ void ModelEdit::tabGvar()
 		pdestcb[7] = ui->Sc8DestCB ;
 		 
 		int i ;
+  	switchEditLock = true ;
 		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
 		{
 			uint16_t t ;
@@ -6872,21 +6999,59 @@ void ModelEdit::tabGvar()
     	connect(pmodsb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
     	connect(pdestcb[i],SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 		}
+		switchEditLock = false ;
 		 
-    populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar2CB, g_model.gvars[1].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar3CB, g_model.gvars[2].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar4CB, g_model.gvars[3].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar5CB, g_model.gvars[4].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar6CB, g_model.gvars[5].gvsource, rData->type, rData->extraPots ) ;
-    populateGvarCB( ui->Gvar7CB, g_model.gvars[6].gvsource, rData->type, rData->extraPots ) ;
-    ui->Gv1SB->setValue(g_model.gvars[0].gvar);
-    ui->Gv2SB->setValue(g_model.gvars[1].gvar);
-    ui->Gv3SB->setValue(g_model.gvars[2].gvar);
-    ui->Gv4SB->setValue(g_model.gvars[3].gvar);
-    ui->Gv5SB->setValue(g_model.gvars[4].gvar);
-    ui->Gv6SB->setValue(g_model.gvars[5].gvar);
-    ui->Gv7SB->setValue(g_model.gvars[6].gvar);
+//		if ( g_model.flightModeGvars )
+//		{
+//			uint8_t *psource ;
+//			psource = (uint8_t*)&g_model.gvars ;
+//	    populateGvarCB( ui->Gvar1CB, g_model.gvars[*(psource+0)].gvsource, rData->type, rData->extraPots ) ;
+//  	  populateGvarCB( ui->Gvar2CB, g_model.gvars[*(psource+1)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar3CB, g_model.gvars[*(psource+2)].gvsource, rData->type, rData->extraPots ) ;
+//	    populateGvarCB( ui->Gvar4CB, g_model.gvars[*(psource+3)].gvsource, rData->type, rData->extraPots ) ;
+//  	  populateGvarCB( ui->Gvar5CB, g_model.gvars[*(psource+4)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar6CB, g_model.gvars[*(psource+5)].gvsource, rData->type, rData->extraPots ) ;
+//	    populateGvarCB( ui->Gvar7CB, g_model.gvars[*(psource+6)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar8CB, g_model.gvars[*(psource+7)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar9CB, g_model.gvars[*(psource+8)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar10CB, g_model.gvars[*(psource+9)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar11CB, g_model.gvars[*(psource+10)].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar12CB, g_model.gvars[*(psource+11)].gvsource, rData->type, rData->extraPots ) ;
+//		}
+//		else
+//		{
+//	    populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type, rData->extraPots ) ;
+//  	  populateGvarCB( ui->Gvar2CB, g_model.gvars[1].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar3CB, g_model.gvars[2].gvsource, rData->type, rData->extraPots ) ;
+//	    populateGvarCB( ui->Gvar4CB, g_model.gvars[3].gvsource, rData->type, rData->extraPots ) ;
+//  	  populateGvarCB( ui->Gvar5CB, g_model.gvars[4].gvsource, rData->type, rData->extraPots ) ;
+//    	populateGvarCB( ui->Gvar6CB, g_model.gvars[5].gvsource, rData->type, rData->extraPots ) ;
+//	    populateGvarCB( ui->Gvar7CB, g_model.gvars[6].gvsource, rData->type, rData->extraPots ) ;
+//		}
+
+		if ( g_model.flightModeGvars )
+		{
+			uint32_t i ;
+  		switchEditLock = true ;
+	  	for ( i = 0 ; i < 12 ; i += 1 )
+			{
+				gv0sb[i]->setValue(readMgvar( 0, i ) ) ;
+			}
+			
+			fmGvarsSet() ;
+			switchEditLock = false ;
+
+		}
+		else
+		{
+    	ui->Gv1SB->setValue(g_model.gvars[0].gvar);
+    	ui->Gv2SB->setValue(g_model.gvars[1].gvar);
+    	ui->Gv3SB->setValue(g_model.gvars[2].gvar);
+    	ui->Gv4SB->setValue(g_model.gvars[3].gvar);
+    	ui->Gv5SB->setValue(g_model.gvars[4].gvar);
+    	ui->Gv6SB->setValue(g_model.gvars[5].gvar);
+    	ui->Gv7SB->setValue(g_model.gvars[6].gvar);
+		}
 
     populateSwitchCB(ui->GvSw1CB,g_model.gvswitch[0], rData->type);
     populateSwitchCB(ui->GvSw2CB,g_model.gvswitch[1], rData->type);
@@ -6903,14 +7068,27 @@ void ModelEdit::tabGvar()
     connect(ui->Gvar5CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     connect(ui->Gvar6CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     connect(ui->Gvar7CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    connect(ui->Gvar8CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    connect(ui->Gvar9CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    connect(ui->Gvar10CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    connect(ui->Gvar11CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
+    connect(ui->Gvar12CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
 
-    connect(ui->Gv1SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv2SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv3SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv4SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv5SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv6SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
-    connect(ui->Gv7SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+	  for ( i = 0 ; i < 12 ; i += 1 )
+		{
+    	connect(gv0sb[i],SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+    }
+//		connect(ui->Gv2SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv3SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv4SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv5SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv6SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv7SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv8SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv9SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv10SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv11SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
+//    connect(ui->Gv12SB,SIGNAL(editingFinished()),this,SLOT(GvarEdited()));
 
     connect(ui->GvSw1CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
     connect(ui->GvSw2CB,SIGNAL(currentIndexChanged(int)),this,SLOT(GvarEdited()));
@@ -7077,11 +7255,96 @@ void ModelEdit::tabGvar()
 //	}
 //}
 
+int16_t ModelEdit::readMgvar( uint32_t fmidx, uint32_t gvidx )
+{
+	int16_t value ;
+	uint32_t index = (gvidx >> 1) * 3 ;
+	uint8_t *p = (uint8_t *) g_model.mGvars[fmidx] ;
+	if ( gvidx & 1 )
+	{
+		value = *(p+index+2) | ( ( *(p+index+1) & 0xF0) << 4 ) ;
+	}
+	else
+	{
+		value = *(p+index) | ( ( *(p+index+1) & 0x0F) << 8 ) ;
+	}
+	value <<= 4 ;
+	value >>= 4 ;
+	return value ;
+}
+
+void ModelEdit::writeMgvar( uint32_t fmidx, uint32_t gvidx, int16_t value )
+{
+	uint8_t *p = (uint8_t *) g_model.mGvars[fmidx] ;
+	uint32_t index = (gvidx >> 1) * 3 ;
+	if ( gvidx & 1 )
+	{
+		uint8_t temp = *(p+index+1) ;
+		temp &= 0x0F ;
+		temp |= (value >> 4) & 0xF0 ;
+		*(p+index+1) = temp ;
+		*(p+index+2) = value ;
+	}
+	else
+	{
+		uint8_t temp = *(p+index+1) ;
+		temp &= 0xF0 ;
+		temp |= (value >> 8) & 0x0F ;
+		*(p+index+1) = temp ;
+		*(p+index) = value ;
+	}
+}
+
 void ModelEdit::GvarEdited()
 {
-    if(switchEditLock) return ;
-    switchEditLock = true;
-	
+  if(switchEditLock) return ;
+  switchEditLock = true;
+
+	if ( g_model.flightModeGvars )
+	{
+		uint8_t *psource ;
+		psource = (uint8_t*)&g_model.gvars ;
+		*psource++ = ui->Gvar1CB->currentIndex() ;
+		*psource++ = ui->Gvar2CB->currentIndex() ;
+		*psource++ = ui->Gvar3CB->currentIndex() ;
+		*psource++ = ui->Gvar4CB->currentIndex() ;
+		*psource++ = ui->Gvar5CB->currentIndex() ;
+		*psource++ = ui->Gvar6CB->currentIndex() ;
+		*psource++ = ui->Gvar7CB->currentIndex() ;
+		*psource++ = ui->Gvar8CB->currentIndex() ;
+		*psource++ = ui->Gvar9CB->currentIndex() ;
+		*psource++ = ui->Gvar10CB->currentIndex() ;
+		*psource++ = ui->Gvar11CB->currentIndex() ;
+		*psource = ui->Gvar12CB->currentIndex() ;
+
+		uint32_t i ;
+  	for ( i = 0 ; i < 12 ; i += 1 )
+		{
+			writeMgvar( 0, i, gv0sb[i]->value() ) ;
+		}
+//		writeMgvar( 0, 1, ui->Gv2SB->value() ) ;
+//		writeMgvar( 0, 2, ui->Gv3SB->value() ) ;
+//		writeMgvar( 0, 3, ui->Gv4SB->value() ) ;
+//		writeMgvar( 0, 4, ui->Gv5SB->value() ) ;
+//		writeMgvar( 0, 5, ui->Gv6SB->value() ) ;
+//		writeMgvar( 0, 6, ui->Gv7SB->value() ) ;
+//		writeMgvar( 0, 7, ui->Gv8SB->value() ) ;
+//		writeMgvar( 0, 8, ui->Gv9SB->value() ) ;
+//		writeMgvar( 0, 9, ui->Gv10SB->value() ) ;
+//		writeMgvar( 0, 10, ui->Gv11SB->value() ) ;
+//		writeMgvar( 0, 11, ui->Gv12SB->value() ) ;
+		
+		int32_t j ;
+		int32_t fmIndex ;
+  	fmIndex = ui->GvFmSb->value() ;	// 1-7
+  	for ( i = 0 ; i < 12 ; i += 1 )
+		{
+			j = getGvarFm( i, fmIndex ) ;
+			gvsb[i]->setValue( j > GVAR_MAX ? 0 : j ) ;
+		}
+	}
+	else
+	{
 	  g_model.gvars[0].gvsource = ui->Gvar1CB->currentIndex() ;
 	  g_model.gvars[1].gvsource = ui->Gvar2CB->currentIndex() ;
 	  g_model.gvars[2].gvsource = ui->Gvar3CB->currentIndex() ;
@@ -7105,31 +7368,31 @@ void ModelEdit::GvarEdited()
 		g_model.gvswitch[4] = getSwitchCbValue( ui->GvSw5CB, rData->type ) ;
 		g_model.gvswitch[5] = getSwitchCbValue( ui->GvSw6CB, rData->type ) ;
 		g_model.gvswitch[6] = getSwitchCbValue( ui->GvSw7CB, rData->type ) ;
-
-		int i ;
-		for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
-		{
-			uint16_t t ;
+	}
+	int i ;
+	for ( i = 0 ; i < NUM_SCALERS ; i += 1 )
+	{
+		uint16_t t ;
 			
-			g_model.Scalers[i].offset = posb[i]->value() ;
+		g_model.Scalers[i].offset = posb[i]->value() ;
 			
-			t = pmsb[i]->value()-1 ;
-			g_model.Scalers[i].mult = t ;
-			g_model.Scalers[i].multx = t >> 8 ;
-			t = pdivsb[i]->value()-1 ;
-			g_model.Scalers[i].div = t ;
-			g_model.Scalers[i].divx = t >> 8 ;
-			g_model.Scalers[i].precision = pdpsb[i]->value() ;
-      g_model.Scalers[i].unit = pucb[i]->currentIndex() ;
-			g_model.Scalers[i].neg = psgncb[i]->currentIndex() ;
-			g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
-      g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
-      g_model.eScalers[i].exSource = decodePots( psrcexcb[i]->currentIndex(), rData->type, rData->extraPots ) ;
-			g_model.Scalers[i].exFunction = psrcFncb[i]->currentIndex() ;
-      textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
-			g_model.eScalers[i].mod = pmodsb[i]->value()-1 ;
-			g_model.eScalers[i].dest = pdestcb[i]->currentIndex() ;
-		}
+		t = pmsb[i]->value()-1 ;
+		g_model.Scalers[i].mult = t ;
+		g_model.Scalers[i].multx = t >> 8 ;
+		t = pdivsb[i]->value()-1 ;
+		g_model.Scalers[i].div = t ;
+		g_model.Scalers[i].divx = t >> 8 ;
+		g_model.Scalers[i].precision = pdpsb[i]->value() ;
+    g_model.Scalers[i].unit = pucb[i]->currentIndex() ;
+		g_model.Scalers[i].neg = psgncb[i]->currentIndex() ;
+		g_model.Scalers[i].offsetLast = poffcb[i]->currentIndex() ;
+    g_model.Scalers[i].source = decodePots( psrccb[i]->currentIndex(), rData->type, rData->extraPots ) ;
+    g_model.eScalers[i].exSource = decodePots( psrcexcb[i]->currentIndex(), rData->type, rData->extraPots ) ;
+		g_model.Scalers[i].exFunction = psrcFncb[i]->currentIndex() ;
+    textUpdate( psname[i], (char *)g_model.Scalers[i].name, 4 ) ;
+		g_model.eScalers[i].mod = pmodsb[i]->value()-1 ;
+		g_model.eScalers[i].dest = pdestcb[i]->currentIndex() ;
+	}
 
 //		for ( i = 0 ; i < NUM_GVAR_ADJUST ; i += 1 )
 //		{
@@ -9220,7 +9483,7 @@ void ModelEdit::gm_openMix(int index)
 		}										 
     QString comment = mixNotes[index];
 
-    MixerDialog *g = new MixerDialog(this,&mixd, &g_eeGeneral, &comment, g_model.modelVersion, rData );
+    MixerDialog *g = new MixerDialog(this,&mixd, &g_eeGeneral, &comment, g_model.modelVersion, rData, g_model.flightModeGvars ) ;
     if(g->exec())
     {
         memcpy(mixAddress(index),&mixd,sizeof(SKYMixData));
@@ -9772,7 +10035,7 @@ void ModelEdit::inputlistWidget_customContextMenuRequested(QPoint pos)
 
 	const QClipboard *clipboard = QApplication::clipboard();
 	const QMimeData *mimeData = clipboard->mimeData();
-	bool hasData = mimeData->hasFormat("application/x-eepe-mix");
+//	bool hasData = mimeData->hasFormat("application/x-eepe-mix");
 
 	QMenu contextMenu;
 	contextMenu.addAction(QIcon(":/images/add.png"), tr("&Add"),this,SLOT(inputAdd()),tr("Ctrl+A"));
@@ -10228,6 +10491,328 @@ void ModelEdit::on_extendedLimitsChkB_toggled(bool checked)
         if (ld->min < 0) ld->min = 0;
         if (ld->max > 0) ld->max = 0;
       }
+		}
+    updateSettings();
+}
+
+void ModelEdit::fmGvarsSet()
+{
+	int32_t fmIndex ;
+ 	uint32_t i ;
+	int32_t j ;
+	char text[20] ;
+  fmIndex = ui->GvFmSb->value() ;	// 1-7
+	if ( fmIndex == 0 )
+	{
+		fmIndex = 1 ;
+	}
+
+	phaseEditLock = true ;
+  for ( i = 0 ; i < 12 ; i += 1 )
+	{
+		gvcb[i]->clear() ;
+		for ( j = 0 ; j < 9 ; j += 1 )
+		{
+			if ( j == 0 )
+			{
+				gvcb[i]->addItem( "Own Value" ) ;
+			}
+			else
+			{
+				if ( fmIndex != j-1 )
+				{
+					sprintf( text, "F.Mode %d value", j-1 ) ;
+					gvcb[i]->addItem( text ) ;
+				}
+			}
+		}
+		j = readMgvar( fmIndex, i ) ;
+    uint32_t p ;
+    if ( j > GVAR_MAX )
+		{
+      p = j - GVAR_MAX ;
+      if (p > fmIndex )
+			{
+				p -= 1 ;
+			}
+		}
+		else
+		{
+      p = 0 ;
+		}
+    gvcb[i]->setCurrentIndex(p) ;
+		// 0 on next line, get value from linked GVAR
+//		gvsb[i]->setValue( getGvarFm( i, fmIndex ) ) ;
+		j = getGvarFm( i, fmIndex ) ;
+		gvsb[i]->setValue( j > GVAR_MAX ? 0 : j ) ;
+	}
+	phaseEditLock = false ;
+
+}
+
+void ModelEdit::fmGvarsConfigure(bool enabled)
+{
+	ui->widgetGVs->setVisible( enabled ) ;
+	
+  if (enabled)
+  {
+    ui->Gvar8CB->show() ;
+    ui->Gvar9CB->show() ;
+    ui->Gvar10CB->show() ;
+    ui->Gvar11CB->show() ;
+    ui->Gvar12CB->show() ;
+    ui->label_gv8->show() ;
+    ui->label_gv9->show() ;
+    ui->label_gv10->show() ;
+    ui->label_gv11->show() ;
+    ui->label_gv12->show() ;
+    ui->label_GvSwitch->hide() ;
+    ui->GvSw1CB->hide() ;
+    ui->GvSw2CB->hide() ;
+    ui->GvSw3CB->hide() ;
+    ui->GvSw4CB->hide() ;
+    ui->GvSw5CB->hide() ;
+    ui->GvSw6CB->hide() ;
+    ui->GvSw7CB->hide() ;
+    ui->Gv8SB->show() ;
+    ui->Gv9SB->show() ;
+    ui->Gv10SB->show() ;
+    ui->Gv11SB->show() ;
+    ui->Gv12SB->show() ;
+		ui->GvMinSB1->show() ;
+		ui->GvMinSB2->show() ;
+		ui->GvMinSB3->show() ;
+		ui->GvMinSB4->show() ;
+		ui->GvMinSB5->show() ;
+		ui->GvMinSB6->show() ;
+		ui->GvMinSB7->show() ;
+		ui->GvMinSB8->show() ;
+		ui->GvMinSB9->show() ;
+		ui->GvMinSB10->show() ;
+		ui->GvMinSB11->show() ;
+		ui->GvMinSB12->show() ;
+		ui->label_GvMin->show() ;
+		ui->GvMaxSB1->show() ;
+		ui->GvMaxSB2->show() ;
+		ui->GvMaxSB3->show() ;
+		ui->GvMaxSB4->show() ;
+		ui->GvMaxSB5->show() ;
+		ui->GvMaxSB6->show() ;
+		ui->GvMaxSB7->show() ;
+		ui->GvMaxSB8->show() ;
+		ui->GvMaxSB9->show() ;
+		ui->GvMaxSB10->show() ;
+		ui->GvMaxSB11->show() ;
+		ui->GvMaxSB12->show() ;
+		ui->label_GvMax->show() ;
+
+  }
+  else
+  {
+    ui->Gvar8CB->hide() ;
+    ui->Gvar9CB->hide() ;
+    ui->Gvar10CB->hide() ;
+    ui->Gvar11CB->hide() ;
+    ui->Gvar12CB->hide() ;
+    ui->label_gv8->hide() ;
+    ui->label_gv9->hide() ;
+    ui->label_gv10->hide() ;
+    ui->label_gv11->hide() ;
+    ui->label_gv12->hide() ;
+    ui->Gv8SB->hide() ;
+    ui->Gv9SB->hide() ;
+    ui->Gv10SB->hide() ;
+    ui->Gv11SB->hide() ;
+    ui->Gv12SB->hide() ;
+		ui->GvMinSB1->hide() ;
+		ui->GvMinSB2->hide() ;
+		ui->GvMinSB3->hide() ;
+		ui->GvMinSB4->hide() ;
+		ui->GvMinSB5->hide() ;
+		ui->GvMinSB6->hide() ;
+		ui->GvMinSB7->hide() ;
+		ui->GvMinSB8->hide() ;
+		ui->GvMinSB9->hide() ;
+		ui->GvMinSB10->hide() ;
+		ui->GvMinSB11->hide() ;
+		ui->GvMinSB12->hide() ;
+		ui->label_GvMin->hide() ;
+		ui->GvMaxSB1->hide() ;
+		ui->GvMaxSB2->hide() ;
+		ui->GvMaxSB3->hide() ;
+		ui->GvMaxSB4->hide() ;
+		ui->GvMaxSB5->hide() ;
+		ui->GvMaxSB6->hide() ;
+		ui->GvMaxSB7->hide() ;
+		ui->GvMaxSB8->hide() ;
+		ui->GvMaxSB9->hide() ;
+		ui->GvMaxSB10->hide() ;
+		ui->GvMaxSB11->hide() ;
+		ui->GvMaxSB12->hide() ;
+		ui->label_GvMax->hide() ;
+  }
+	if ( enabled )
+	{
+		uint8_t *psource ;
+		psource = (uint8_t*)&g_model.gvars ;
+	  populateGvarCB( ui->Gvar1CB, *(psource+0), rData->type, rData->extraPots ) ;
+  	populateGvarCB( ui->Gvar2CB, *(psource+1), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar3CB, *(psource+2), rData->type, rData->extraPots ) ;
+	  populateGvarCB( ui->Gvar4CB, *(psource+3), rData->type, rData->extraPots ) ;
+  	populateGvarCB( ui->Gvar5CB, *(psource+4), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar6CB, *(psource+5), rData->type, rData->extraPots ) ;
+	  populateGvarCB( ui->Gvar7CB, *(psource+6), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar8CB, *(psource+7), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar9CB, *(psource+8), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar10CB, *(psource+9), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar11CB, *(psource+10), rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar12CB, *(psource+11), rData->type, rData->extraPots ) ;
+	}
+	else
+	{
+	  populateGvarCB( ui->Gvar1CB, g_model.gvars[0].gvsource, rData->type, rData->extraPots ) ;
+  	populateGvarCB( ui->Gvar2CB, g_model.gvars[1].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar3CB, g_model.gvars[2].gvsource, rData->type, rData->extraPots ) ;
+	  populateGvarCB( ui->Gvar4CB, g_model.gvars[3].gvsource, rData->type, rData->extraPots ) ;
+  	populateGvarCB( ui->Gvar5CB, g_model.gvars[4].gvsource, rData->type, rData->extraPots ) ;
+    populateGvarCB( ui->Gvar6CB, g_model.gvars[5].gvsource, rData->type, rData->extraPots ) ;
+	  populateGvarCB( ui->Gvar7CB, g_model.gvars[6].gvsource, rData->type, rData->extraPots ) ;
+	}
+}
+
+uint32_t ModelEdit::getGVarFlightMode(uint32_t fm, uint32_t gvidx) // TODO change params order to be consistent!
+{
+	
+	if ( gvidx >= 12 )
+	{
+		return 0 ;
+	}
+	
+	
+  for (uint32_t i = 0 ; i < MAX_MODES+EXTRA_MODES+1 ; i += 1 )
+  {
+    if ( fm == 0 )
+		{
+			return 0 ;
+		}
+    int16_t val = readMgvar( fm, gvidx ) ;
+    if (val <= GVAR_MAX)
+		{
+			return fm ;
+		}
+    uint32_t result = val - GVAR_MAX - 1 ;
+    if (result >= fm)
+		{
+			result += 1 ;
+		}
+    fm = result ;
+  }
+  return 0 ;
+}
+
+int32_t ModelEdit::setGVarValue(uint32_t gvidx, int16_t value, uint32_t fm)
+{
+	int32_t result = -1 ;
+	if ( g_model.flightModeGvars == 0 )
+	{
+		if ( gvidx < MAX_GVARS )
+		{
+			g_model.gvars[gvidx].gvar = value ;
+		}
+		(void) fm ;	// Not used
+	}
+	else
+	{
+		if ( gvidx >= 12 )
+		{
+			return result ;
+		}
+		
+	  fm = getGVarFlightMode(fm, gvidx) ;
+		if ( readMgvar( fm, gvidx ) != value )
+		{
+			writeMgvar( fm, gvidx, value ) ;
+			result = fm ;
+		}
+	}
+	return result ;
+}
+
+int16_t ModelEdit::getGvarFm( int32_t gv, uint32_t fm )
+{
+	int32_t mul = 1 ;
+	if ( gv < 0 )
+	{
+		gv = -1 - gv ;
+		mul = -1 ;
+	}
+
+	if ( g_model.flightModeGvars == 0 )
+	{
+		return (gv < 7) ? g_model.gvars[gv].gvar * mul : 0 ;
+	}
+	
+	if ( gv >= 12 )
+	{
+		return 0 ;
+	}
+	
+	return readMgvar( getGVarFlightMode(fm,gv), gv ) * mul ;
+}
+
+int32_t ModelEdit::setGVarFm(uint32_t gvidx, int16_t value, uint32_t fm )
+{
+	int32_t result = -1 ;
+	if ( g_model.flightModeGvars == 0 )
+	{
+		if ( gvidx < MAX_GVARS )
+		{
+			g_model.gvars[gvidx].gvar = value ;
+		}
+	}
+	else
+	{
+		if ( gvidx >= 12 )
+		{
+			return result ;
+		}
+		result = setGVarValue( gvidx, value, fm ) ;
+	}
+	return result ;
+}
+
+
+
+
+
+void ModelEdit::on_FMgvarsChkB_toggled(bool checked)
+{
+    if(switchEditLock) return ;
+	
+    g_model.flightModeGvars = checked;
+    fmGvarsConfigure(checked) ;
+		ui->widgetGVs->setVisible( checked ) ;
+		if ( checked )
+		{
+  		for ( uint32_t fmIdx = 0 ; fmIdx < MAX_MODES+EXTRA_MODES+1 ; fmIdx += 1 )
+			{
+  		  for ( uint32_t gvarIdx = 0 ; gvarIdx < 12 ; gvarIdx += 1)
+				{
+					writeMgvar( fmIdx, gvarIdx, (fmIdx == 0) ? 0 : GVAR_MAX + 1 ) ;
+  		  }
+  		}
+			uint8_t *p = (uint8_t*)&g_model.gvars ;
+  		for ( uint32_t gvarIdx = 0 ; gvarIdx < 12 ; gvarIdx += 1)
+			{
+				*p++ = 0 ;
+			}
+			for ( uint32_t i = 0 ; i < 7 ; i += 1 )
+			{
+				g_model.gvars[i].gvar = 0 ;
+				g_model.gvars[i].gvsource = 0 ;
+				g_model.gvswitch[i] = 0 ;
+			}
+			fmGvarsSet() ;
 		}
     updateSettings();
 }
@@ -10891,5 +11476,9 @@ void VoiceList::keyPressEvent(QKeyEvent *event)
   emit keyWasPressed(event);
 }
 
-
-
+void ModelEdit::on_GvFmSb_valueChanged(int value)
+{
+	if(switchEditLock) return;
+	(void) value ;
+	fmGvarsSet() ;
+}

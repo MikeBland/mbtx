@@ -12,7 +12,7 @@ void MixerDialog::addSource( uint8_t index, QString str )
 }
 
 
-MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData ) :
+MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData, int flightModeGvars ) :
     QDialog(parent),
     ui(new Ui::MixerDialog)
 {
@@ -23,6 +23,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		lBitType = rData->bitType ;
   lModelVersion = modelVersion ;
 	lg_eeGeneral = g_eeGeneral ;
+	fmGvars = flightModeGvars ;
 	uint32_t i ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
@@ -373,8 +374,8 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 			ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		}
 
-		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -350, 350, md->extWeight ) ;
-    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -350, 350, md->extOffset ) ;
+		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -350, 350, md->extWeight, fmGvars ) ;
+    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -350, 350, md->extOffset, fmGvars ) ;
     
 		ui->trimChkB->setChecked(md->carryTrim==0);
 //    ui->FMtrimChkB->setChecked(!md->disableExpoDr);
@@ -395,7 +396,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		
 		if (md->differential)
 		{
-			populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, -100, 100 ) ;
+			populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, -100, 100, 0, fmGvars ) ;
 			ui->curveGvChkB->setVisible( true ) ;
 		}
 		else
@@ -571,7 +572,7 @@ void MixerDialog::updateChannels()
 }
 
 
-int extendedSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extValue )
+int extendedSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extValue, int fmGvars )
 {
 	if ( ( value < -125 ) || ( value > 125) )
 	{
@@ -715,7 +716,7 @@ void MixerDialog::valuesChanged()
 			int value ;
 			int extValue = 0 ;
 
-	    value = extendedSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, md->extWeight ) ;
+	    value = extendedSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, md->extWeight, fmGvars ) ;
 			if ( value > 500 )
 			{
 				value -= 400 ;
@@ -747,7 +748,7 @@ void MixerDialog::valuesChanged()
 			md->weight = value ;
 			md->extWeight = extValue ;
   	  
-			value = extendedSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, md->extOffset ) ;
+			value = extendedSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, md->extOffset, fmGvars ) ;
 			extValue = 0 ;
 			if ( value > 500 )
 			{
@@ -852,7 +853,7 @@ void MixerDialog::valuesChanged()
 		{
 			if (md->differential)
 			{
-				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, -100, 100 ) ;
+				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, -100, 100, 0, fmGvars ) ;
 				ui->curveGvChkB->setVisible( true ) ;
 			}
 			else

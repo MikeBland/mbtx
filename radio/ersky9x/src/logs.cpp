@@ -220,7 +220,18 @@ void logSingleDiv10( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
+		uint32_t sign = 0 ;
+		if ( value < 0 )
+		{
+			sign = 1 ;
+			value = -value ;
+		}
 		qr = div( (int)value, (int)10 ) ;
+		if ( sign )
+		{
+			f_printf(&g_oLogFile, ",-%d.%d", qr.quot, qr.rem ) ;
+			return ;
+		}
 		f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 	}
 }
@@ -230,7 +241,18 @@ void logSingleDiv100( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
+		uint32_t sign = 0 ;
+		if ( value < 0 )
+		{
+			sign = 1 ;
+			value = -value ;
+		}
 		qr = div( (int)value, (int)100 ) ;
+		if ( sign )
+		{
+			f_printf(&g_oLogFile, ",-%d.%02d", qr.quot, qr.rem ) ;
+			return ;
+		}
 		f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 	}
 }
@@ -240,7 +262,18 @@ void logSingleDiv1000( uint32_t enable, int32_t value )
 	div_t qr ;
 	if ( isLogEnabled( enable ) )
 	{
+		uint32_t sign = 0 ;
+		if ( value < 0 )
+		{
+			sign = 1 ;
+			value = -value ;
+		}
 		qr = div( (int)value, (int)1000 ) ;
+		if ( sign )
+		{
+			f_printf(&g_oLogFile, ",-%d.%03d", qr.quot, qr.rem ) ;
+			return ;
+		}
 		f_printf(&g_oLogFile, ",%d.%03d", qr.quot, qr.rem ) ;
 	}
 }
@@ -248,15 +281,22 @@ void logSingleDiv1000( uint32_t enable, int32_t value )
 void logSingleDivX( int32_t value, uint8_t dps )
 {
 	div_t qr ;
-	qr = div( (int)value, (int)dps ) ;
-	if ( qr.rem < 0 )
-	{
-		qr.rem = - qr.rem ;
-	}
+	uint32_t sign = 0 ;
 	const char *ps = ",%d.%d" ;
+	if ( value < 0 )
+	{
+		sign = 1 ;
+		value = -value ;
+		ps = ",-%d.%d" ;
+	}
+	qr = div( (int)value, (int)dps ) ;
 	if ( dps == 100 )
 	{
 		ps = ",%d.%02d" ;
+		if ( sign )
+		{
+			ps = ",-%d.%02d" ;
+		}
 	}
 	f_printf(&g_oLogFile, ps, qr.quot, qr.rem ) ;
 }
@@ -883,7 +923,8 @@ void writeLogs()
 //				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_VSPD] ) ;
 //			}
 			
-			logSingleDiv10( LOG_RXV, convertRxv( FrskyHubData[FR_RXV]) ) ;
+//			logSingleDiv10( LOG_RXV, convertRxv( FrskyHubData[FR_RXV]) ) ;
+			logSingleDiv10( LOG_RXV, FrskyHubData[FR_RXV] ) ;
 //			if ( isLogEnabled( LOG_RXV ) )
 //			{
 //				value = convertRxv( FrskyHubData[FR_RXV] ) ;

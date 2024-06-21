@@ -2833,9 +2833,9 @@ void lock_lcd()
 #ifndef PCBDUE
 #ifdef PCBSKY
 
-#ifndef REVA
+//#ifndef REVA
 uint8_t ErcLcd = 0 ;
-#endif // REVB
+//#endif // REVB
 
 const static uint8_t Lcdinit[] =
 {
@@ -3190,11 +3190,11 @@ void refreshDisplay()
 #endif // REVA
 	ebit = LCD_E ;
 
-#ifndef REVA
+//#ifndef REVA
 	pioptr = PIOA ;
 	pioptr->PIO_PER = 0x00000080 ;		// Enable bit 7 (LCD-A0)
 	pioptr->PIO_OER = 0x00000080 ;		// Set bit 7 output
-#endif // REVB
+//#endif // REVB
 
 // read the inputs, and lock the LCD lines
 	lock_lcd() ;

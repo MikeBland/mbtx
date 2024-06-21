@@ -99,6 +99,7 @@ private:
     bool switchesTabDone ;
     bool customAlarmLock ;
     bool curveEditLock ;
+    bool phaseEditLock ;
     
     int oldAdjFunction[NUM_GVAR_ADJUST_SKY] ;
 //    QSpinBox  * cswitchOffset[NUM_SKYCSW];
@@ -137,6 +138,9 @@ private:
 		QSpinBox *pmodsb[NUM_SCALERS] ;
 		QComboBox *pdestcb[NUM_SCALERS] ;
 
+		QComboBox *gvcb[12] ;
+		QSpinBox *gvsb[12] ;
+		QSpinBox *gv0sb[12] ;
 
     void setupMixerListWidget();
     void setupInputListWidget();
@@ -215,7 +219,14 @@ private:
 		struct t_templateValues templateValues ;
 		void voiceAlarmsBlank( int i ) ;
     void combinedSourceString(QString *srcstr, uint32_t value) ;
-
+    void fmGvarsConfigure(bool enabled) ;
+		void writeMgvar( uint32_t fmidx, uint32_t gvidx, int16_t value ) ;
+    int16_t readMgvar( uint32_t fmidx, uint32_t gvidx ) ;
+		void fmGvarsSet() ;
+		int16_t getGvarFm( int32_t gv, uint32_t fm ) ;
+		int32_t setGVarFm(uint32_t gvidx, int16_t value, uint32_t fm ) ;
+		int32_t setGVarValue(uint32_t gvidx, int16_t value, uint32_t fm) ;
+		uint32_t getGVarFlightMode(uint32_t fm, uint32_t gvidx) ; // TODO change params order to be consistent!
 
 
 signals:
@@ -226,6 +237,7 @@ private slots:
     void clearCurves(bool ask=true);
 
     void on_extendedLimitsChkB_toggled(bool checked);
+    void on_FMgvarsChkB_toggled(bool checked);
     void on_resetCurve_1_clicked();
     void on_resetCurve_2_clicked();
     void on_resetCurve_3_clicked();
@@ -488,6 +500,7 @@ private slots:
 	void voice_KeyPress(QKeyEvent *event) ;
 
 
+  void on_GvFmSb_valueChanged(int value);
 };
 
 

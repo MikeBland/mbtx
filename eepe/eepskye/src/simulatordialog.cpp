@@ -710,10 +710,10 @@ void simulatorDialog::timerEvent()
 			trim[1] = g_model.trim[1] ;//(g_eeGeneral.stickMode & 1) ? 2 : 
 			trim[2] = g_model.trim[2] ;//(g_eeGeneral.stickMode & 1) ? 1 : 
 			trim[3] = g_model.trim[3] ;//(g_eeGeneral.stickMode>1)   ? 0 : 
-      ui->trimHLeft->setValue( getTrimValue( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 3 : 0 ));  // mode=(0 || 1) -> rud trim else -> ail trim
-      ui->trimVLeft->setValue( getTrimValue( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 2 : 1 ));  // mode=(0 || 2) -> thr trim else -> ele trim
-      ui->trimVRight->setValue(getTrimValue( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 1 : 2 ));  // mode=(0 || 2) -> ele trim else -> thr trim
-      ui->trimHRight->setValue(getTrimValue( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 0 : 3 ));  // mode=(0 || 1) -> ail trim else -> rud trim
+      ui->trimHLeft->setValue( getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 3 : 0 ));  // mode=(0 || 1) -> rud trim else -> ail trim
+      ui->trimVLeft->setValue( getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 2 : 1 ));  // mode=(0 || 2) -> thr trim else -> ele trim
+      ui->trimVRight->setValue(getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 1 : 2 ));  // mode=(0 || 2) -> ele trim else -> thr trim
+      ui->trimHRight->setValue(getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 0 : 3 ));  // mode=(0 || 1) -> ail trim else -> rud trim
 //    	ui->trimHLeft->setValue( g_model.trim[(g_eeGeneral.stickMode>1)   ? 3 : 0]);  // mode=(0 || 1) -> rud trim else -> ail trim
 //    	ui->trimVLeft->setValue( g_model.trim[(g_eeGeneral.stickMode & 1) ? 2 : 1]);  // mode=(0 || 2) -> thr trim else -> ele trim
 //    	ui->trimVRight->setValue(g_model.trim[(g_eeGeneral.stickMode & 1) ? 1 : 2]);  // mode=(0 || 2) -> ele trim else -> thr trim
@@ -1374,10 +1374,10 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, stru
 		trim[1] = g_model.trim[1] ;//(g_eeGeneral.stickMode & 1) ? 2 : 
 		trim[2] = g_model.trim[2] ;//(g_eeGeneral.stickMode & 1) ? 1 : 
 		trim[3] = g_model.trim[3] ;//(g_eeGeneral.stickMode>1)   ? 0 : 
-    ui->trimHLeft->setValue( getTrimValue( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 3 : 0 ));  // mode=(0 || 1) -> rud trim else -> ail trim
-    ui->trimVLeft->setValue( getTrimValue( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 2 : 1 ));  // mode=(0 || 2) -> thr trim else -> ele trim
-    ui->trimVRight->setValue(getTrimValue( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 1 : 2 ));  // mode=(0 || 2) -> ele trim else -> thr trim
-    ui->trimHRight->setValue(getTrimValue( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 0 : 3 ));  // mode=(0 || 1) -> ail trim else -> rud trim
+    ui->trimHLeft->setValue( getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 3 : 0 ));  // mode=(0 || 1) -> rud trim else -> ail trim
+    ui->trimVLeft->setValue( getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 2 : 1 ));  // mode=(0 || 2) -> thr trim else -> ele trim
+    ui->trimVRight->setValue(getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode & 1) ? 1 : 2 ));  // mode=(0 || 2) -> ele trim else -> thr trim
+    ui->trimHRight->setValue(getTrimValueAdd( CurrentPhase, (g_eeGeneral.stickMode>1)   ? 0 : 3 ));  // mode=(0 || 1) -> ail trim else -> rud trim
 
     beepVal = 0;
     beepShow = 0;
@@ -1469,7 +1469,7 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 	  PhaseData *p ;
 		phase -= 1 ;
 		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-		return p->trim[idx] ;
+    return p->trim[idx].value ;
 	}	
 	else
 	{
@@ -1480,58 +1480,215 @@ int16_t simulatorDialog::getRawTrimValue( uint8_t phase, uint8_t idx )
 
 uint32_t simulatorDialog::getTrimFlightPhase( uint8_t phase, uint8_t idx )
 {
-  for ( uint32_t i=0 ; i<MAX_PHASES+1 ; i += 1 )
-	{
-    if (phase == 0) return 0;
-    int16_t trim = getRawTrimValue( phase, idx ) ;
-    if ( trim <= TRIM_EXTENDED_MAX )
-		{
-			return phase ;
-		}
-    uint32_t result = trim-TRIM_EXTENDED_MAX-1 ;
-    if (result >= phase)
-		{
-			result += 1 ;
-		}
-    phase = result;
-  }
-  return 0;
+	return phase ;
+//  for ( uint32_t i=0 ; i<MAX_PHASES+1 ; i += 1 )
+//	{
+//    if (phase == 0) return 0;
+//    int16_t trim = getRawTrimValue( phase, idx ) ;
+//    if ( trim <= TRIM_EXTENDED_MAX )
+//		{
+//			return phase ;
+//		}
+//    uint32_t result = trim-TRIM_EXTENDED_MAX-1 ;
+//    if (result >= phase)
+//		{
+//			result += 1 ;
+//		}
+//    phase = result;
+//  }
+//  return 0;
 }
 
-
-int16_t simulatorDialog::getTrimValue( uint8_t phase, uint8_t idx )
-{
-  return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
-}
-
-
-void simulatorDialog::setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
+t_trim simulatorDialog::rawTrimFix( uint8_t phase, t_trim v )
 {
 	if ( phase )
 	{
-		phase = getTrimFlightPhase( phase, idx ) ;
+		int16_t tm ;
+//	  PhaseData *p ;
+		phase -= 1 ;
+//		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+		tm = v.mode ;
+		if ( tm < 0 )
+		{
+			tm = 0 ;
+		}
+		if ( tm == 0 )
+		{
+      if (v.value > TRIM_EXTENDED_MAX)
+			{
+				tm = v.value - (TRIM_EXTENDED_MAX+1) ;
+				if ( tm > phase )
+				{
+					tm += 1 ;
+				}
+			}
+			else
+			{
+        tm = phase + 1 ;
+			}
+			v.mode = tm << 1 ;
+		}
+	}	
+	else
+	{
+		v.mode = 0 ;
+		v.value = 0 ;
 	}
+	return v ;
+}
+
+t_trim simulatorDialog::getRawTrimComplete( uint32_t phase, uint32_t idx )
+{
+	t_trim v ;
 	if ( phase )
 	{
-    if(trim < -125 || trim > 125)
-		{
-			trim = ( trim > 0 ) ? 125 : -125 ;
-		}	
 	  PhaseData *p ;
 		phase -= 1 ;
 		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-  	p->trim[idx] = trim ;
-	}
+		v = p->trim[idx] ;
+		return rawTrimFix( phase+1, v ) ;
+	}	
 	else
 	{
-    if(trim < -125 || trim > 125)
-		{
-			trim = ( trim > 0 ) ? 125 : -125 ;
-		}	
-//   	*trimptr[idx] = trim ;
-		g_model.trim[idx] = trim ;
+		v.mode = 0 ;
+		v.value = g_model.trim[idx] ;
+		return v ;
 	}
 }
+
+int16_t simulatorDialog::getTrimValueAdd( uint32_t phase, uint32_t idx )
+{
+  int16_t result = 0 ;
+  for ( uint32_t i = 0 ; i<MAX_MODES+1 ; i += 1 )
+	{
+    t_trim v = getRawTrimComplete( phase, idx ) ;
+//    if (v.mode == TRIM_MODE_NONE)
+//		{
+//      return result;
+//    }
+//    else
+		{
+      uint32_t p = v.mode >> 1 ;
+      if ( p == phase || phase == 0 )
+			{
+				result += v.value ;
+	    	if(result < -125 || result > 125)
+				{
+					result = ( result > 0 ) ? 125 : -125 ;
+				}	
+        return result ;
+      }
+      else
+			{
+        phase = p ;
+//        if ( (v.mode & 1) == 0)
+        if (v.mode & 1)
+				{
+          result += v.value ;
+        }
+      }
+    }
+  }
+  return 0 ;
+}
+
+//int16_t simulatorDialog::getTrimValue( uint8_t phase, uint8_t idx )
+//{
+//  return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
+//}
+
+void simulatorDialog::setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim)
+{
+	PhaseData *ph = 0 ;
+	t_trim tempV ;
+	t_trim *pv ;
+
+	tempV.mode = 0 ;
+	tempV.value = 0 ;
+
+//	SetPhase = phase ;
+//	SetIdx = idx ;
+//	SetTrim = trim ;
+  for ( uint32_t i = 0 ; i < MAX_MODES+1 ; i += 1 )
+	{
+		if ( phase )
+		{
+			ph = (phase-1 < MAX_MODES) ? &g_model.phaseData[phase-1] : &g_model.xphaseData ;
+		}
+		else
+		{
+			ph = 0 ;
+		}
+		if ( ph )
+		{
+			pv = &ph->trim[idx] ;
+		}
+		else
+		{
+			tempV.value = g_model.trim[idx] ;
+			tempV.mode = 0 ;
+			pv = &tempV ;
+		}
+    
+    uint32_t p = pv->mode >> 1 ;
+    if (p == phase || phase == 0)
+		{
+      pv->value = trim ;
+      break ;
+    }
+    else if ((pv->mode & 1) == 0)
+		{
+      phase = p ;
+    }
+    else
+		{
+//			SetP = p ;
+//			SetGet = getTrimValueAdd(p, idx) ;
+//      pv->value = limit<int>(TRIM_EXTENDED_MIN, trim - getTrimValue(p, idx), TRIM_EXTENDED_MAX) ;
+			
+//      pv->value = limit<int>( -125, trim - getTrimValueAdd(p, idx), 125 ) ;
+      trim -= getTrimValueAdd(p, idx) ;
+    	if(trim < -125 || trim > 125)
+			{
+				trim = ( trim > 0 ) ? 125 : -125 ;
+			}	
+			pv->value = trim ;
+			break ;
+    }
+  }
+	if ( pv == &tempV )
+	{
+		g_model.trim[idx] = tempV.value ;
+	}
+}
+
+//void simulatorDialog::setTrimValue(uint8_t phase, uint8_t idx, int16_t trim)
+//{
+//	if ( phase )
+//	{
+//		phase = getTrimFlightPhase( phase, idx ) ;
+//	}
+//	if ( phase )
+//	{
+//    if(trim < -125 || trim > 125)
+//		{
+//			trim = ( trim > 0 ) ? 125 : -125 ;
+//		}	
+//	  PhaseData *p ;
+//		phase -= 1 ;
+//		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
+//    p->trim[idx].value = trim ;
+//	}
+//	else
+//	{
+//    if(trim < -125 || trim > 125)
+//		{
+//			trim = ( trim > 0 ) ? 125 : -125 ;
+//		}	
+////   	*trimptr[idx] = trim ;
+//		g_model.trim[idx] = trim ;
+//	}
+//}
 
 uint32_t simulatorDialog::adjustMode( uint32_t x )
 {
@@ -1728,7 +1885,7 @@ int8_t simulatorDialog::getGvarSourceValue( uint8_t src )
 		y = src - 1 ;
 
 //		y = adjustMode( y ) ;
-		value = getTrimValue( CurrentPhase, y ) ;
+		value = getTrimValueAdd( CurrentPhase, y ) ;
 				 
 	}
 	else if ( src == 5 )	// REN
@@ -1819,13 +1976,13 @@ void simulatorDialog::getValues()
 		uint32_t phase ;
 
 		phase = getTrimFlightPhase( CurrentPhase, 0 ) ;
-    setTrimValue( phase, 0, trims[0] ) ;
+    setTrimValueAdd( phase, 0, trims[0] ) ;
 		phase = getTrimFlightPhase( CurrentPhase, 1 ) ;
-    setTrimValue( phase, 1, trims[1] ) ;
+    setTrimValueAdd( phase, 1, trims[1] ) ;
 		phase = getTrimFlightPhase( CurrentPhase, 2 ) ;
-    setTrimValue( phase, 2, trims[2] ) ;
+    setTrimValueAdd( phase, 2, trims[2] ) ;
 		phase = getTrimFlightPhase( CurrentPhase, 3 ) ;
-    setTrimValue( phase, 3, trims[3] ) ;
+    setTrimValueAdd( phase, 3, trims[3] ) ;
     
     calibratedStick[4] = ui->dialP_1->value();
     calibratedStick[5] = ui->dialP_2->value();
@@ -3495,7 +3652,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 
 				  if ( g_model.modelVersion >= 2 )
 					{
-          	trimA[i] = getTrimValue( CurrentPhase, i )*2 ;
+          	trimA[i] = getTrimValueAdd( CurrentPhase, i )*2 ;
 					}	
 					else
 					{
@@ -3504,7 +3661,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
             if(IS_THROTTLE(i) && g_model.thrTrim)
 						{
 							int8_t ttrim ;
-							ttrim = getTrimValue( CurrentPhase, i ) ;
+							ttrim = getTrimValueAdd( CurrentPhase, i ) ;
 //							ttrim = *trimptr[i] ;
 							if(g_eeGeneral.throttleReversed)
 							{
@@ -3514,7 +3671,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 						}
 
             //trim
-            trimA[i] = (vv==2*RESX) ? getTrimValue( CurrentPhase, i )*2 : (int16_t)vv*2; //    if throttle trim -> trim low end
+            trimA[i] = (vv==2*RESX) ? getTrimValueAdd( CurrentPhase, i )*2 : (int16_t)vv*2; //    if throttle trim -> trim low end
 //            trimA[i] = (vv==2*RESX) ? *trimptr[i]*2 : (int16_t)vv*2; //    if throttle trim -> trim low end
 					}
 				}
@@ -3535,7 +3692,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
       if(g_model.thrTrim)
 			{
 				int8_t ttrim ;
-				ttrim = getTrimValue( CurrentPhase, 2 ) ;
+				ttrim = getTrimValueAdd( CurrentPhase, 2 ) ;
 				if(g_eeGeneral.throttleReversed)
 				{
 					ttrim = -ttrim ;
@@ -3708,7 +3865,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 //				{
 //					idx = 3 - idx ;			
 //				}
-        trims[i] = getTrimValue( CurrentPhase, idx ) ;
+        trims[i] = getTrimValueAdd( CurrentPhase, idx ) ;
 			}
 		
   		if ( g_model.modelVersion >= 2 )
@@ -5208,7 +5365,7 @@ int16_t simulatorDialog::getInputSourceValue( struct te_InputsData *pinput )
 		}
 		if ( (pinput->srcRaw >= 78 ) && (pinput->srcRaw < 82 ) )
 		{
- 			return getTrimValue( CurrentPhase, pinput->srcRaw - 78 ) * 8 ;
+ 			return getTrimValueAdd( CurrentPhase, pinput->srcRaw - 78 ) * 8 ;
 			
 		}
 

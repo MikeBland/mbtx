@@ -618,7 +618,8 @@ void menuProcTelemetry(uint8_t event)
 		uint8_t attr = (sub==subN) ? InverseBlink : 0 ;
 		lcd_xlabel_decimal( 17*FW+1+TEL_OFS_0, y, g_model.rxVratio, attr|PREC1, XPSTR( "Rx Voltage") ) ;
   	lcd_putc(Lcd_lastPos, y, 'v' ) ;
-		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, convertRxv( FrskyHubData[FR_RXV] ), PREC1 ) ;
+//		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, convertRxv( FrskyHubData[FR_RXV] ), PREC1 ) ;
+		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, FrskyHubData[FR_RXV], PREC1 ) ;
 		if( attr) { g_model.rxVratio = checkIncDec16( g_model.rxVratio, 0, 255, EE_MODEL ) ; }
 		subN++; y+=FH;
 

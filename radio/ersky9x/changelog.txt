@@ -10,6 +10,24 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG:   MPB (r228)
+Fix bug when using SLOW with HALF and FULL
+Fix bug when selecting script when no scripts files are present
+Makefile allows use of multiple cores when compiling
+
+******************************************
+CHANGELOG:   MPB (r227)
+Fix bug in the mixer when multiple replace mixes on a channel use HALF or FULL as the source.
+
+******************************************
+CHANGELOG:   MPB (r226)
+Fix BASIC scripts not running on SKY boards
+
+******************************************
+CHANGELOG:   MPB (r225)
+Fix mixer bug with HALF and FULL
+
+******************************************
 CHANGELOG:   MPB (r224)
 Fix right justify for small text
 Improve RAM space for LUA handling and reduce frequency of running scripts.

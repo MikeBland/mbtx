@@ -127,6 +127,26 @@ void EEPFILE::modelDefault(uint8_t id)
     g_model.mixData[i].weight = 100;
   }
 
+	// Set all mode trims to be copies of FM0
+//	for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
+//	{
+//		for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+//		{
+//			g_model.phaseData[i].trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+//		}
+//	}
+//	for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+//	{
+//		g_model.xphaseData.trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+//	}
+
+//	g_model.Module[0].protocol = PROTO_OFF ;
+//	g_model.Module[1].protocol = PROTO_OFF ;
+//	g_model.modelVoice = -1 ;
+//	g_model.Module[0].pxxRxNum = id-1 ;
+//	g_model.Module[1].pxxRxNum = id-1 ;
+//	g_model.rxVratio = 132 ;
+
   putModel(&g_model,id);
 }
 

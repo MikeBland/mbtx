@@ -37,6 +37,7 @@
 #include "lcd.h"
 #include "debug.h"
 #include "frsky.h"
+#include "gvars.h"
 #ifndef SIMU
 #include "CoOS.h"
 #endif
@@ -3510,11 +3511,8 @@ int32_t rxBtuart()
 //}
 //#endif
 
-//uint16_t SportStartDebug ;
-
 //void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 //{
-//SportStartDebug	+= 1 ;
 //	USART2->CR1 &= ~USART_CR1_TE ;
 	
 //	SendingSportPacket.buffer = buffer ;
@@ -3791,8 +3789,6 @@ void start_2Mhz_timer()
 
 struct t_XjtHeartbeatCapture XjtHeartbeatCapture ;
 
-//extern uint16_t HbDebug3 ;
-
 void init_xjt_heartbeat()
 {
 	RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN ;		// Enable clock
@@ -3803,9 +3799,6 @@ void init_xjt_heartbeat()
 	NVIC_SetPriority( EXTI9_5_IRQn, 0 ) ; // Highest priority interrupt
 	NVIC_EnableIRQ( EXTI9_5_IRQn) ;
 	XjtHeartbeatCapture.valid = 1 ;
-
-//	HbDebug3 += 1 ;
-
 }
 
 void stop_xjt_heartbeat()
@@ -5156,7 +5149,7 @@ void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
 	if ( rlevel > 100 )
 	{ // A GVAR
 		int32_t x ;
-		x = g_model.gvars[(uint8_t)rlevel-101].gvar ;
+		x = getGvar(rlevel-101) ;
 		if ( x < 0 )
 		{
 			x = 0 ;
@@ -5178,7 +5171,7 @@ void BlSetAllColours( uint32_t rlevel, uint32_t glevel, uint32_t blevel )
 	if ( glevel > 100 )
 	{ // A GVAR
 		int32_t x ;
-		x = g_model.gvars[(uint8_t)glevel-101].gvar ;
+		x = getGvar(glevel-101) ;
 		if ( x < 0 )
 		{
 			x = 0 ;
@@ -5210,7 +5203,7 @@ void BlSetColour( uint32_t level, uint32_t colour )
 	if ( level > 100 )
 	{ // A GVAR
 		int32_t x ;
-		x = g_model.gvars[(uint8_t)level-101].gvar ;
+		x = getGvar(level-101) ;
 		if ( x < 0 )
 		{
 			x = 0 ;

@@ -566,8 +566,14 @@ PACK(typedef struct t_ModelData {
 //extern EEGeneral g_eeGeneral;
 //extern ModelData g_model;
 
+PACK(struct t_trim
+{
+  int16_t  value:11 ;
+  int16_t mode:5 ;
+}) ;
+
 PACK(typedef struct t_PhaseData {
-  int16_t trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of phases 1|2|3|4 instead
+  t_trim trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of phases 1|2|3|4 instead
   int8_t swtch;       // swtch of phase[0] is not used
   char name[6];
   uint8_t fadeIn:4;
@@ -946,7 +952,8 @@ PACK(typedef struct te_ModelData {
 	FrSkyAlarmData frskyAlarms ;
 // Add 6 bytes for custom telemetry screen
 	uint8_t		customDisplayIndex[6] ;
-  FuncSwData   funcSw[NUM_FSW];
+	int16_t mGvars[MAX_PHASES+EXTRA_PHASES+1][MAX_GVARS+EXTRA_GVARS] ;
+	uint8_t functionSpare[16] ;
 	PhaseData phaseData[MAX_PHASES] ;
 	GvarData	gvars[MAX_GVARS] ;
 	uint8_t   numBlades ;					// RPM scaling
@@ -1061,18 +1068,18 @@ PACK(typedef struct te_ModelData {
 	struct t_access Access[2] ;
 	uint8_t	customTelemetryNames2[16] ;
 	PhaseData xphaseData ;	// 18 bytes long
-	uint8_t forExpansion[2] ;	// Allows for extra items not yet handled
+	uint8_t flightModeGvars:1 ;
+	uint8_t sparey:7 ;
+	uint8_t sparez ;
 	struct t_hiResDisplay hiresDisplay[2] ;
 	struct te_InputsData inputs[NUM_INPUT_LINES] ;
 
-#if MULTI_GVARS
 //#define MAX_GVARS 7
 //#define MAX_MODES		6
 
-	int16_t mGvars[MAX_PHASES+EXTRA_PHASES+1][MAX_GVARS+EXTRA_GVARS] ;
 	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS] ;
+	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
 
-#endif
 	 
 }) SKYModelData ;
 

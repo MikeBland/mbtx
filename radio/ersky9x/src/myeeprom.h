@@ -110,8 +110,10 @@
 #define VOICE_NAME_SIZE					8
 
 #define MAX_GVARS 7
+#define EXTRA_GVARS		2
 
 #define MAX_MODES		6
+#define EXTRA_MODES		1
 
 #ifndef PACK
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
@@ -177,7 +179,7 @@ typedef struct t_voiceAlarm
 	} file ;
 } VoiceAlarmData ;
 
-PACK(typedef struct t_gvar {
+PACK(typedef struct t_gvar{
 	int8_t gvar ;
 	uint8_t gvsource ;
 //	int8_t gvswitch ;
@@ -326,7 +328,12 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t disableBtnLong:1 ;
 	uint8_t enableEncMain:1 ;
 	uint8_t pageButton:1 ;
+#ifdef JUNGLECAM
+	uint8_t jungleMode:1 ;
+	uint8_t spare7:4 ;
+#else
 	uint8_t spare7:5 ;
+#endif
 //	GvarData	gvars[MAX_GVARS] ;
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
@@ -502,8 +509,15 @@ PACK(typedef struct t_ModelData {
 extern EEGeneral g_eeGeneral;
 extern ModelData g_oldmodel;
 
+PACK(struct t_trim
+{
+  int16_t  value:11 ;
+  int16_t mode:5 ;
+}) ;
+
+
 PACK(typedef struct t_PhaseData {
-  int16_t trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of phases 1|2|3|4 instead
+  t_trim trim[4];     // -500..500 => trim value, 501 => use trim of phase 0, 502, 503, 504 => use trim of phases 1|2|3|4 instead
   int8_t swtch;       // swtch of phase[0] is not used
   char name[6];
   uint8_t fadeIn:4;
@@ -812,11 +826,21 @@ PACK(struct te_InputsData
 //  uint16_t scale:14;
 });
 
+PACK(typedef struct t_gvardata
+{
+  uint32_t min:12;
+  uint32_t max:12;
+  uint32_t popup:1;
+  uint32_t prec:1;
+  uint32_t unit:2;
+  uint32_t spare:4;
+}) GVarXData ;
+
 
 PACK(typedef struct te_ModelData {
   char      name[MODEL_NAME_LEN];             // 10 must be first for eeLoadModelName
-  int8_t  	modelVoice ;			// Index to model name voice (260+value)
-  uint8_t   RxNum_unused ;						// was timer trigger source, now RxNum for model match UNUSED
+   int8_t  	modelVoice ;			// Index to model name voice (260+value)
+		  uint8_t   notRxNum_unused ;						// was timer trigger source, now RxNum for model match UNUSED
   uint8_t   telemetryRxInvert:1 ;	// was tmrDir, now use tmrVal>0 => count down
   uint8_t   traineron:1;  		// 0 disable trainer, 1 allow trainer
   uint8_t   autoBtConnect:1 ;
@@ -827,10 +851,10 @@ PACK(typedef struct te_ModelData {
 	uint8_t 	modelVersion ;
   uint8_t   protocol:4 ;
   uint8_t   country:2 ;
-  uint8_t   not_sub_protocol:2 ;
+		  uint8_t   not_sub_protocol:2 ;
   int8_t    ppmNCH;
   uint8_t   thrTrim:1;            // Enable Throttle Trim
-	uint8_t   xnumBlades:2;					// RPM scaling, now elsewhere as uint8_t
+			uint8_t   xnumBlades:2;					// RPM scaling, now elsewhere as uint8_t
 	uint8_t   extendedTrims:1;			// Only applies to phases
   uint8_t   thrExpo:1;            // Enable Throttle Expo
 	uint8_t   frskyComPort:1 ;
@@ -868,7 +892,12 @@ PACK(typedef struct te_ModelData {
 	FrSkyAlarmData frskyAlarms ;
 // Add 6 bytes for custom telemetry screen
 	uint8_t		customDisplayIndex[6] ;
-  FunctionData   functionData[NUM_FSW];			// Currently unused
+#if MULTI_GVARS
+	int16_t mGvars[MAX_MODES+EXTRA_MODES+1][MAX_GVARS+EXTRA_GVARS] ; // 8*9*2=144 bytes
+			uint8_t functionSpare[16] ;
+#else
+  FunctionData   functionData[NUM_FSW];			// Currently unused (16*10 = 160 bytes)
+#endif
 	PhaseData phaseData[MAX_MODES] ;
 	GvarData	gvars[MAX_GVARS] ;
 	uint8_t   numBlades ;					// RPM scaling
@@ -974,7 +1003,7 @@ PACK(typedef struct te_ModelData {
 	uint8_t telemetryTimeout ;
 	uint8_t throttleIdleScale ;
 	uint8_t switchDelay[NUM_SKYCSW] ;
-	uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc. (unused)
+			uint32_t LogNotExpected[4] ;	// Up to 128 sensors etc. (unused)
 	uint8_t backgroundScript[8] ;
 	uint8_t voiceFlushSwitch ;
 	int8_t cellScalers[12] ;
@@ -987,19 +1016,32 @@ PACK(typedef struct te_ModelData {
 #endif	 
 	uint8_t	customTelemetryNames2[16] ;
 	PhaseData xphaseData ;	// 18 bytes long
-
-	uint8_t forExpansion[2] ;	// Allows for extra items not yet handled
+#ifndef SMALL
+	uint8_t flightModeGvars:1 ;
+#else
+	uint8_t notflightModeGvars:1 ;
+#endif
+	uint8_t sparey:7 ;
+	uint8_t sparez ;
 
 //#if defined(PCBX12D) || defined(PCBX10)
 	struct t_hiResDisplay hiresDisplay[2] ;
 //#endif
 	struct te_InputsData inputs[NUM_INPUT_LINES] ;
 
+#if MULTI_GVARS
+	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS+3] ; // 9*4 =36 bytes + 3*4
+	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
+#endif
+
+
 }) SKYModelData;
 
 extern SKYModelData g_model;
 
 //extern ProtocolData Protocols[2] ;
+
+#define ALPHA_LOG_SIZE 120
 
 union t_sharedMemory
 {
@@ -1016,6 +1058,7 @@ union t_sharedMemory
 	FIL g_eebackupFile ;
 	SKYModelData TempModelStore ;
 	struct t_spectrumAnalyser SpectrumAnalyser ;
+	uint8_t AlphaLogLookup[ALPHA_LOG_SIZE] ;
 } ;
 
 

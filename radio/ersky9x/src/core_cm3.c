@@ -68,10 +68,10 @@ uint32_t __REV(uint32_t value) ;
 
 void revert_osc( void ) ;
 void sam_boot( void ) ;
-#ifdef REVB
+//#ifdef REVB
 void sam_bootx( void ) ;
 void run_application( void ) ;
-#endif
+//#endif
 
 
 /* ###################  Compiler specific Intrinsics  ########################### */

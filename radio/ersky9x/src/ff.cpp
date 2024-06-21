@@ -1370,6 +1370,7 @@ FRESULT dir_register (	/* FR_OK:Successful, FR_DENIED:No free entry or too many 
 /* Remove an object from the directory                                   */
 /*-----------------------------------------------------------------------*/
 #if !_FS_READONLY && !_FS_MINIMIZE
+#ifndef SMALL
 static
 FRESULT dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
 	DIR *dj				/* Directory object pointing the entry to be removed */
@@ -1406,6 +1407,7 @@ FRESULT dir_remove (	/* FR_OK: Successful, FR_DISK_ERR: A disk error */
 
 	return res;
 }
+#endif // nSMALL
 #endif /* !_FS_READONLY */
 
 
@@ -3008,6 +3010,7 @@ FRESULT f_truncate (
 /* Delete a File or Directory                                            */
 /*-----------------------------------------------------------------------*/
 
+#ifndef SMALL
 FRESULT f_unlink (
 	const TCHAR *path		/* Pointer to the file or directory path */
 )
@@ -3069,6 +3072,7 @@ FRESULT f_unlink (
 	LEAVE_FF(dj.fs, res);
 }
 
+#endif // nSMALL
 
 
 
@@ -3265,6 +3269,7 @@ FRESULT f_utime (
 /* Rename File/Directory                                                 */
 /*-----------------------------------------------------------------------*/
 
+#ifndef SMALL
 FRESULT f_rename (
 	const TCHAR *path_old,	/* Pointer to the old name */
 	const TCHAR *path_new	/* Pointer to the new name */
@@ -3331,6 +3336,7 @@ FRESULT f_rename (
 	}
 	LEAVE_FF(djo.fs, res);
 }
+#endif // nSMALL
 
 #endif /* !_FS_READONLY */
 #endif /* _FS_MINIMIZE == 0 */

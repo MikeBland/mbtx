@@ -331,13 +331,13 @@ void printDialog::printModes()
 		str.append( tr(" Sw1(") + getSWName(p->swtch,0) + ")" ) ;
 		str.append( tr(" Sw2(") + getSWName(p->swtch2,0) + ") " ) ;
 
-		value = p->trim[0] - (TRIM_EXTENDED_MAX+1) ;
+    value = p->trim[0].value - (TRIM_EXTENDED_MAX+1) ;
 		str.append( value < 0 ? "R" : tr("%1").arg(value) ) ;
-		value = p->trim[1] - (TRIM_EXTENDED_MAX+1) ;
+    value = p->trim[1].value - (TRIM_EXTENDED_MAX+1) ;
 		str.append( value < 0 ? "E" : tr("%1").arg(value) ) ;
-		value = p->trim[2] - (TRIM_EXTENDED_MAX+1) ;
+    value = p->trim[2].value - (TRIM_EXTENDED_MAX+1) ;
 		str.append( value < 0 ? "T" : tr("%1").arg(value) ) ;
-		value = p->trim[3] - (TRIM_EXTENDED_MAX+1) ;
+    value = p->trim[3].value - (TRIM_EXTENDED_MAX+1) ;
 		str.append( value < 0 ? "A" : tr("%1").arg(value) ) ;
 		str.append( tr(" Fade In(%1) ").arg((qreal)p->fadeIn/2.0) ) ;
 		str.append( tr(" Fade Out(%1)").arg((qreal)p->fadeOut/2.0) ) ;

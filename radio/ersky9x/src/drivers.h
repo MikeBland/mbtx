@@ -208,6 +208,10 @@ extern void com1Parity( uint32_t even ) ;
 extern void com2Parity( uint32_t even ) ;
 #endif
 
+#if defined(PCBTX16S)
+extern uint16_t rxTelemetry( void ) ;
+#endif
+
 #if defined(PCBX12D) || defined(PCBX10)
 extern void ConsoleInit( void ) ;
 extern void com2Parity( uint32_t even ) ;

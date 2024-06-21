@@ -16,6 +16,7 @@
  *
  */
 
+//#define FS8K	1
 
 #include <stdint.h>
 #ifdef PCBSKY
@@ -44,6 +45,8 @@
 #include "X9D/stm32f2xx_gpio.h"
 #include "X9D/hal.h"
 #endif
+#include "lcd.h"
+
 
 extern PROGMEM s9xsplash[] ;
 
@@ -72,8 +75,25 @@ uint8_t Spi_tx_buf[8] ;
 
 uint8_t Spi_rx_buf[8] ;
 
+#ifdef FS8K
+	union 
+	{
+		uint8_t key[4] ;
+		uint32_t keyLong ;
+	} Key ;
 
+uint16_t ControlOffset ;
+uint8_t ControlBlock ;
+uint8_t AllocTable[64] ;
+//Spare blocks in AllocTable[61] and [62]
+#endif
+
+#ifdef FS8K
+struct t_file_entry File_system ; // [MAX_MODELS+1] ;
+uint16_t FileSizes[60] ;
+#else
 struct t_file_entry File_system[MAX_MODELS+1] ;
+#endif
 
 unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for general
 
@@ -92,6 +112,9 @@ uint8_t Ee32_model_delete_pending ;
 
 uint8_t	Eeprom32_process_state ;
 uint8_t	Eeprom32_state_after_erase ;
+#ifdef FS8K
+uint8_t	Eeprom32_state_after_write ;
+#endif
 uint8_t	Eeprom32_write_pending ;
 uint8_t Eeprom32_file_index ;
 uint8_t *Eeprom32_buffer_address ;
@@ -102,6 +125,9 @@ uint32_t Eeprom32_data_size ;
 uint8_t EeLockEncoder ;
 #endif	
 
+#ifdef FS8K
+uint8_t ConversionProgress ;
+#endif
 
 #define EE_WAIT			0
 #define EE_NO_WAIT	1
@@ -118,9 +144,23 @@ uint8_t EeLockEncoder ;
 #define E32_BLANKCHECK				8
 #define E32_WRITESTART				9
 #define E32_LOCKED						10
+#ifdef FS8K
+#define E32_BLANK2CHECK				11
+#define E32_WRITEALLOC				12
+#define E32_CHECKALLOC				13
+#define E32_WRITECONTROL			14
+#define E32_BLANK3CHECK				15
+
+// Bits in flags
+#define BLOCK_8K						1
+#endif
 
 bool eeModelExists(uint8_t id) ;
+#ifdef FS8K
+uint32_t get_current_block_number( uint32_t block_no, t_file_entry *pfs ) ;
+#else
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq ) ;
+#endif
 uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 uint32_t write32_eeprom_block( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 void ee32_read_model_names( void ) ;
@@ -140,8 +180,10 @@ extern union t_sharedMemory SharedMemory ;
 // Blocks 4 and 5, model 2 etc
 // Blocks 32 and 33, model 16
 
+#ifndef FS8K
 uint8_t Current_general_block ;		// 0 or 1 is active block
 uint8_t Other_general_block_blank ;
+#endif
 
 struct t_eeprom_header
 {
@@ -279,8 +321,12 @@ void waitForEepromFinished()
 
 bool ee32CopyModel(uint8_t dst, uint8_t src)
 {
+#ifdef FS8K
+	uint16_t size = FileSizes[src-1] ;
+#else
   uint16_t size = File_system[src].size ;
-	
+#endif
+	 
 	waitForEepromFinished() ;
 //	while (ee32_check_finished() == 0)
 //	{	// wait
@@ -297,7 +343,11 @@ bool ee32CopyModel(uint8_t dst, uint8_t src)
 //#endif
 //	}
 
+#ifdef FS8K
+	read32_eeprom_data( ( AllocTable[src] << 13) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
+#else
   read32_eeprom_data( (File_system[src].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
+#endif
 
   if (size > sizeof(g_model.name))
     memcpy( ModelNames[dst], Eeprom_buffer.data.sky_model_data.name, sizeof(g_model.name)) ;
@@ -307,6 +357,9 @@ bool ee32CopyModel(uint8_t dst, uint8_t src)
   Eeprom32_source_address = (uint8_t *)&Eeprom_buffer.data.sky_model_data ;		// Get data from here
   Eeprom32_data_size = sizeof(g_model) ;																	// This much
   Eeprom32_file_index = dst ;																							// This file system entry
+#ifdef FS8K
+	Eeprom32_state_after_erase = E32_BLANK2CHECK ;
+#endif
   Eeprom32_process_state = E32_BLANKCHECK ;
   ee32WaitFinished() ;
   return true;
@@ -317,6 +370,16 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
   ee32WaitFinished();
 //  // eeCheck(true) should have been called before entering here
 
+#ifdef FS8K
+	unsigned char tname[sizeof(g_model.name)] ;
+	uint8_t temp = AllocTable[id1] ;
+	AllocTable[id1] = AllocTable[id2] ;
+	AllocTable[id2] = temp ;
+  memcpy( tname, ModelNames[id1], sizeof(g_model.name)) ;
+  memcpy( ModelNames[id1], ModelNames[id2], sizeof(g_model.name)) ;
+  memcpy( ModelNames[id2], tname, sizeof(g_model.name)) ;
+	Eeprom32_process_state = E32_WRITEALLOC ;
+#else
   uint32_t id2_block_no ;
   uint16_t id2_size = File_system[id2].size ;
   uint16_t id1_size = File_system[id1].size ;
@@ -355,6 +418,7 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
   Eeprom32_file_index = id1 ;																							// This file system entry
   Eeprom32_process_state = E32_BLANKCHECK ;
   ee32WaitFinished();
+#endif
 }
 
 uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
@@ -512,12 +576,20 @@ uint32_t ee32_check_header( struct t_eeprom_header *hptr )
 // to see which is the most recent, the block_no of the most recent
 // is returned, with the corresponding data size if required
 // and the sequence number if required
+#ifdef FS8K
+uint32_t get_current_block_number( uint32_t block_no, t_file_entry *pfs )
+#else
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq )
+#endif
 {
 	struct t_eeprom_header b0 ;
 	struct t_eeprom_header b1 ;
   uint32_t sequence_no ;
   uint16_t size ;
+#ifdef FS8K
+	uint8_t flags ;
+#endif
+	
 	read32_eeprom_data( block_no << 12, ( uint8_t *)&b0, sizeof(b0), EE_WAIT ) ;		// Sequence # 0
 	read32_eeprom_data( (block_no+1) << 12, ( uint8_t *)&b1, sizeof(b1), EE_WAIT ) ;	// Sequence # 1
 
@@ -530,6 +602,9 @@ uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t
 
 	size = b0.data_size ;
   sequence_no = b0.sequence_no ;
+#ifdef FS8K
+	flags = b0.flags ;
+#endif
 	if ( ee32_check_header( &b0 ) == 0 )
 	{
 		if ( ee32_check_header( &b1 ) != 0 )
@@ -537,26 +612,63 @@ uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t
   		size = b1.data_size ;
 		  sequence_no = b1.sequence_no ;
 			block_no += 1 ;
+#ifdef FS8K
+			flags = b1.flags ;
+#endif
 		}
 		else
 		{
 			size = 0 ;
 			sequence_no = 1 ;
+#ifdef FS8K
+			flags = 0 ;
+#endif
 		}
 	}
 	else
 	{
-		if ( ee32_check_header( &b1 ) != 0 )
+#ifdef FS8K
+		if (( b0.flags & BLOCK_8K ) == 0 )
 		{
-			if ( b1.sequence_no > b0.sequence_no )
+#endif
+			// Not marked as an 8K block
+			if ( ee32_check_header( &b1 ) != 0 )
 			{
-	  		size = b1.data_size ;
-			  sequence_no = b1.sequence_no ;
-				block_no += 1 ;
+				if ( b1.sequence_no > b0.sequence_no )
+				{
+	  			size = b1.data_size ;
+				  sequence_no = b1.sequence_no ;
+#ifdef FS8K
+					flags = b1.flags ;
+#endif
+					block_no += 1 ;
+				}
 			}
+#ifdef FS8K
 		}
+#endif
 	}
-  
+
+#ifdef FS8K
+	if ( pfs )
+	{
+		if ( size == 0xFFFF )
+		{
+			size = 0 ;
+		}
+		pfs->size = size ;
+  	if ( sequence_no == 0xFFFFFFFF )
+		{  
+			sequence_no = 0 ;
+		}
+		pfs->sequence_no = sequence_no ;
+		if ( flags == 0xFF )
+		{
+			flags = 0 ;
+		}
+		pfs->flags = flags ;
+	}
+#else
 	if ( size == 0xFFFF )
 	{
 		size = 0 ;
@@ -573,8 +685,7 @@ uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t
 	{
 		*p_seq = sequence_no ;
 	}
-//	Block_needs_erasing = erase ;		
-  
+#endif
 	return block_no ;
 }
 
@@ -584,8 +695,11 @@ bool ee32LoadGeneral()
 #ifdef PCB9XT
 	EeLockEncoder = 1 ;
 #endif	
+#ifdef FS8K
+	size = File_system.size ;
+#else
 	size = File_system[0].size ;
-
+#endif
   memset(&g_eeGeneral, 0, sizeof(EEGeneral));
 
 	if ( size > sizeof(EEGeneral) )
@@ -595,7 +709,11 @@ bool ee32LoadGeneral()
 
 	if ( size )
 	{
+#ifdef FS8K
+		read32_eeprom_data( ( File_system.block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_eeGeneral, size, 0 ) ;
+#else
 		read32_eeprom_data( ( File_system[0].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_eeGeneral, size, 0 ) ;
+#endif
 	}
 	else
 	{
@@ -666,7 +784,11 @@ void ee32LoadModel(uint8_t id)
 #endif	
     if(id<MAX_MODELS)
     {
-			size =  File_system[id+1].size ;
+#ifdef FS8K
+			size = FileSizes[id] ;
+#else
+			size = File_system[id+1].size ;
+#endif
 			if ( sizeof(g_model) < 720 )
 			{
 				version = 0 ;
@@ -695,12 +817,18 @@ void ee32LoadModel(uint8_t id)
 			{
 				if ( size < 720 )
 				{
+#ifndef FS8K
 					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.oldmodel, size, 0 ) ;
 					convertModel( &g_model, &Eeprom_buffer.data.oldmodel ) ;
+#endif
 				}
 				else
 				{
+#ifdef FS8K
+					read32_eeprom_data( ( AllocTable[id+1] << 13) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_model, size, 0 ) ;
+#else
 					read32_eeprom_data( ( File_system[id+1].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&g_model, size, 0 ) ;
+#endif
 				}	 
 				
 				if ( version != 255 )
@@ -892,29 +1020,65 @@ void ee32LoadModel(uint8_t id)
 
 bool eeModelExists(uint8_t id)
 {
+#ifdef FS8K
+	return ( FileSizes[id] > 0 ) ;
+#else
 	return ( File_system[id+1].size > 0 ) ;
+#endif
 }
 
 void ee32LoadModelName( uint8_t id, unsigned char*buf, uint8_t len )
 {
 	if(id<=MAX_MODELS)
   {
-		memset(buf,' ',len);
+		memset(buf,' ',len) ;
+#ifdef FS8K
+		if ( FileSizes[id-1] )
+		{
+			id = AllocTable[id] ;
+			read32_eeprom_data( ( id << 13 ) + 8, ( uint8_t *)buf, sizeof(g_model.name), 0 ) ;
+		}
+#else
 		if ( File_system[id].size > sizeof(g_model.name) )
 		{
 			read32_eeprom_data( ( File_system[id].block_no << 12) + 8, ( uint8_t *)buf, sizeof(g_model.name), 0 ) ;
 		}
+#endif
   }
 }
 
+#ifdef FS8K
+uint16_t getFileSize( uint32_t index ) // index is 0 to 59
+{
+	struct t_eeprom_header b0 ;
+	index = AllocTable[index+1] ;	
+	read32_eeprom_data( index << 13, ( uint8_t *)&b0, sizeof(b0), EE_WAIT ) ;
+	if ( ee32_check_header( &b0) )
+	{
+		return b0.data_size ;
+	}
+	else
+	{
+		return 0 ;
+	}
+}
+#endif
 
 void fill_file_index()
 {
 	uint32_t i ;
+#ifdef FS8K
+	File_system.block_no = get_current_block_number( 0, &File_system ) ;
+	for ( i = 0 ; i < MAX_MODELS ; i += 1 )
+	{
+		FileSizes[i] = getFileSize(i) ;
+	}
+#else
 	for ( i = 0 ; i < MAX_MODELS + 1 ; i += 1 )
 	{
 		File_system[i].block_no = get_current_block_number( i * 2, &File_system[i].size, &File_system[i].sequence_no ) ;
 	}
+#endif
 }
 
 void init_eeprom()
@@ -923,27 +1087,6 @@ void init_eeprom()
 	ee32_read_model_names() ;
 	Eeprom32_process_state = E32_IDLE ;
 }
-
-
-//// For virtual USB diskio
-//uint32_t ee32_read_512( uint32_t sector, uint8_t *buffer )
-//{
-//	// Wait for EEPROM to be idle
-//	if ( General_timer )
-//	{
-//		General_timer = 1 ;		// Make these happen soon
-//	}
-//	if ( Model_timer )
-//	{
-//		Model_timer = 1 ;
-//	}
-//	while( ee32_check_finished() == 0 )
-//	{
-//		// null body
-//	}
-//	read32_eeprom_data( sector * 512, buffer, 512, 0 ) ;
-//	return 1 ;		// OK
-//}
 
 
 uint32_t ee32_check_finished()
@@ -969,11 +1112,40 @@ uint32_t ee32_check_finished()
 	return 1 ;
 }
 
-//#define SPI_PCB9XT 1
 
-//#ifdef SPI_PCB9XT
-//uint32_t DebugSpiEnc ;
-//#endif
+#ifdef FS8K
+void waitEepromDone()
+{
+	while ( eeprom_read_status() & 1 )
+	{
+		wdt_reset() ;
+	}
+}
+
+void eraseBlock( uint32_t eeAddress )
+{
+//	uint32_t i ;
+	uint8_t *p ;
+
+	// Erase block
+	eeprom_write_enable() ;
+	p = Spi_tx_buf ;
+	*p = 0x20 ;		// Block Erase command
+	*(p+1) = eeAddress >> 16 ;
+	*(p+2) = eeAddress >> 8 ;
+	*(p+3) = eeAddress ;		// 3 bytes address
+	spi_PDC_action( p, 0, 0, 4, 0 ) ;
+	wdt_reset() ;
+	// Wait for erase to complete
+	while ( Spi_complete == 0 )
+	{
+//			CoTickDelay(1) ;					// 2mS
+		wdt_reset() ;
+	}
+	waitEepromDone() ;
+}
+#endif
+
 
 void ee32_process()
 {
@@ -1027,6 +1199,254 @@ extern uint8_t SpiEncoderValid ;
 	}
 #endif
 
+#ifdef FS8K
+	if ( Eeprom32_process_state == E32_IDLE )
+	{
+		if ( Ee32_general_write_pending )
+		{
+			Ee32_general_write_pending = 0 ;			// clear flag
+
+			// Check we can write, == block is blank
+
+			Eeprom32_source_address = (uint8_t *)&g_eeGeneral ;		// Get data fromm here
+			Eeprom32_data_size = sizeof(g_eeGeneral) ;						// This much
+			Eeprom32_file_index = 0 ;								// This file system entry
+			Eeprom32_state_after_erase = E32_WRITESTART ;
+			Eeprom32_state_after_write = E32_IDLE ;
+			Eeprom32_process_state = E32_BLANKCHECK ;
+		}
+		else if ( Ee32_model_write_pending )
+		{
+			Ee32_model_write_pending = 0 ;			// clear flag
+
+			// Check we can write, == block is blank
+			Eeprom32_source_address = (uint8_t *)&g_model ;		// Get data from here
+			Eeprom32_data_size = sizeof(g_model) ;						// This much
+			Eeprom32_file_index = Dirty.Model_dirty ;					// This file system entry
+			Eeprom32_state_after_erase = E32_BLANK2CHECK ;
+			Eeprom32_process_state = E32_BLANKCHECK ;
+//			Writing_model = Dirty.Model_dirty ;
+		}
+		else if ( Ee32_model_delete_pending )
+		{
+			Eeprom32_source_address = (uint8_t *)&g_model ;		// Get data from here
+			Eeprom32_data_size = 0 ;													// This much
+			Eeprom32_file_index = Ee32_model_delete_pending ;	// This file system entry
+			Ee32_model_delete_pending = 0 ;
+			Eeprom32_state_after_erase = E32_IDLE ;
+			Eeprom32_process_state = E32_BLANKCHECK ;
+		}
+	}
+
+	if ( Eeprom32_process_state == E32_BLANK2CHECK )
+	{
+		eeAddress = Eeprom32_address + 4096 ;
+		eeprom_write_enable() ;
+		p = Spi_tx_buf ;
+		*p = 0x20 ;		// Block Erase command
+		*(p+1) = eeAddress >> 16 ;
+		*(p+2) = eeAddress >> 8 ;
+		*(p+3) = eeAddress ;		// 3 bytes address
+		spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		Eeprom32_process_state = E32_ERASESENDING ;
+		Eeprom_buffer.header.flags = BLOCK_8K ;
+		Eeprom32_state_after_erase = E32_WRITESTART ;
+		Eeprom32_state_after_write = E32_WRITEALLOC ;
+	}
+
+	if ( Eeprom32_process_state == E32_BLANK3CHECK )
+	{
+		eeAddress = (ControlBlock == 126) ? 127 : 126 ;
+		eeAddress <<= 12 ;
+		eeprom_write_enable() ;
+		p = Spi_tx_buf ;
+		*p = 0x20 ;		// Block Erase command
+		*(p+1) = eeAddress >> 16 ;
+		*(p+2) = eeAddress >> 8 ;
+		*(p+3) = eeAddress ;		// 3 bytes address
+		spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		Eeprom32_process_state = E32_ERASESENDING ;
+	}
+
+	if ( Eeprom32_process_state == E32_WRITEALLOC )
+	{
+		write32_eeprom_block( (ControlBlock << 12) + ControlOffset, AllocTable, 64, EE_NO_WAIT ) ;
+		ControlOffset += 64 ;
+		Eeprom32_process_state = E32_WRITESENDING ;
+		Eeprom32_state_after_write = E32_CHECKALLOC ;
+	}
+
+	if ( Eeprom32_process_state == E32_CHECKALLOC )
+	{
+		if ( ControlOffset >= 4096 )
+		{
+			// Need to use other control block
+//  erase other block
+//  write the 64 bytes, 64 bytes into block
+//  write first 4 bytes with 0x55AA3CC3
+//  Update Offset to block start + 128
+//  write first 4 bytes of other block to 0x00000000
+			Eeprom32_state_after_erase = E32_WRITECONTROL ;
+			Eeprom32_process_state = E32_BLANK3CHECK ;
+		}
+		else if ( ControlOffset == 128 )
+		{
+			eeAddress = (ControlBlock == 126) ? 127 : 126 ;
+			eeAddress <<= 12 ;
+			Eeprom32_state_after_write = E32_IDLE ;
+			Key.keyLong = 0 ;
+			write32_eeprom_block( eeAddress, Key.key, 4, EE_NO_WAIT ) ;
+			Eeprom32_process_state = E32_WRITESENDING ;
+		}
+		else
+		{
+			Eeprom32_process_state = E32_IDLE ;
+		}
+	}
+	
+	if ( Eeprom32_process_state == E32_WRITECONTROL )
+	{
+		ControlBlock = (ControlBlock == 126) ? 127 : 126 ;
+		Key.keyLong = 0x55AA3CC3 ;
+		ControlOffset = 64 ;
+		Eeprom32_state_after_write = E32_WRITEALLOC ;
+		write32_eeprom_block( ControlBlock << 12, Key.key, 4, EE_NO_WAIT ) ;
+		Eeprom32_process_state = E32_WRITESENDING ;
+	}
+	if ( Eeprom32_process_state == E32_BLANKCHECK )
+	{
+		if ( Eeprom32_file_index == 0 )
+		{
+			eeAddress = File_system.block_no ^ 1 ;
+			eeAddress <<= 12 ;		// Block start address
+		}
+		else
+		{
+			eeAddress = AllocTable[61] ;	// First free buffer
+			AllocTable[61] = AllocTable[62] ; // Shunt next free buffer down
+			AllocTable[62] = AllocTable[Eeprom32_file_index] ;
+			AllocTable[Eeprom32_file_index] = eeAddress ;
+			eeAddress <<= 13 ;		// Block start address
+		}
+		Eeprom32_address = eeAddress ;						// Where to put new data
+		eeprom_write_enable() ;
+		p = Spi_tx_buf ;
+		*p = 0x20 ;		// Block Erase command
+		*(p+1) = eeAddress >> 16 ;
+		*(p+2) = eeAddress >> 8 ;
+		*(p+3) = eeAddress ;		// 3 bytes address
+		spi_PDC_action( p, 0, 0, 4, 0 ) ;
+		Eeprom32_process_state = E32_ERASESENDING ;
+		Eeprom_buffer.header.flags = 0 ;
+	}
+
+	if ( Eeprom32_process_state == E32_WRITESTART )
+	{
+		uint32_t total_size ;
+		p = Eeprom32_source_address ;
+		q = (uint8_t *)&Eeprom_buffer.data ;
+    if (p != q)
+		{
+			for ( x = 0 ; x < Eeprom32_data_size ; x += 1 )
+			{
+				*q++ = *p++ ;			// Copy the data to temp buffer
+			}
+		}
+		if (Eeprom32_file_index == 0 )
+		{
+			Eeprom_buffer.header.sequence_no = ++File_system.sequence_no ;
+			File_system.size = Eeprom_buffer.header.data_size = Eeprom32_data_size ;
+		}
+		else
+		{
+			Eeprom_buffer.header.sequence_no = 1 ;
+			FileSizes[Eeprom32_file_index-1] = Eeprom_buffer.header.data_size = Eeprom32_data_size ;
+		}
+		Eeprom_buffer.header.hcsum = byte_checksum( (uint8_t *)&Eeprom_buffer, 7 ) ;
+		total_size = Eeprom32_data_size + sizeof( struct t_eeprom_header ) ;
+		eeAddress = Eeprom32_address ;		// Block start address
+		x = total_size / 256 ;	// # sub blocks
+		x <<= 8 ;						// to offset address
+		eeAddress += x ;		// Add it in
+		p = (uint8_t *) &Eeprom_buffer ;
+		p += x ;						// Add offset
+		x = total_size % 256 ;	// Size of last bit
+		if ( x == 0 )						// Last bit empty
+		{
+			x = 256 ;
+			p -= x ;
+			eeAddress -= x ;
+		}
+		Eeprom32_buffer_address = p ;
+		Eeprom32_address = eeAddress ;
+		write32_eeprom_block( eeAddress, p, x, 1 ) ;
+		Eeprom32_process_state = E32_WRITESENDING ;
+	}
+
+	if ( Eeprom32_process_state == E32_WRITESENDING )
+	{
+		if ( Spi_complete )
+		{
+			Eeprom32_process_state = E32_WRITEWAITING ;
+		}			
+	}		
+
+	if ( Eeprom32_process_state == E32_WRITEWAITING )
+	{
+		x = eeprom_read_status() ;
+		if ( ( x & 1 ) == 0 )
+		{
+			uint32_t endMask = 0x0FFF ;
+			if ( Eeprom_buffer.header.flags & BLOCK_8K )
+			{
+				endMask = 0x1FFF ;
+			}
+			if ( ( Eeprom32_address & endMask ) != 0 )		// More to write
+			{
+				Eeprom32_address -= 256 ;
+				Eeprom32_buffer_address -= 256 ;
+				write32_eeprom_block( Eeprom32_address, Eeprom32_buffer_address, 256, 1 ) ;
+				Eeprom32_process_state = E32_WRITESENDING ;
+			}
+			else
+			{
+				if ( Eeprom32_file_index == 0 )
+				{
+					File_system.block_no ^= 1 ;		// This is now the current block
+					Eeprom32_process_state = E32_IDLE ;
+				}
+				else
+				{
+					if ( ( Eeprom32_state_after_write == E32_CHECKALLOC ) || ( Eeprom32_state_after_write == E32_WRITEALLOC ) )
+					{
+						Eeprom32_process_state = Eeprom32_state_after_write ;
+					}
+					else
+					{
+						Eeprom32_process_state = E32_IDLE ;
+					}
+				}
+			}
+		}
+	}	
+
+	if ( Eeprom32_process_state == E32_ERASESENDING )
+	{
+		if ( Spi_complete )
+		{
+			Eeprom32_process_state = E32_ERASEWAITING ;
+		}			
+	}	
+		
+	if ( Eeprom32_process_state == E32_ERASEWAITING )
+	{
+		x = eeprom_read_status() ;
+		if ( ( x & 1 ) == 0 )
+		{ // Command finished
+			Eeprom32_process_state = Eeprom32_state_after_erase ;
+		}			
+	}
+#else
 	if ( Eeprom32_process_state == E32_IDLE )
 	{
 		if ( Ee32_general_write_pending )
@@ -1045,10 +1465,9 @@ extern uint8_t SpiEncoderValid ;
 			Ee32_model_write_pending = 0 ;			// clear flag
 
 			// Check we can write, == block is blank
-
 			Eeprom32_source_address = (uint8_t *)&g_model ;		// Get data from here
 			Eeprom32_data_size = sizeof(g_model) ;						// This much
-			Eeprom32_file_index = Dirty.Model_dirty ;								// This file system entry
+			Eeprom32_file_index = Dirty.Model_dirty ;					// This file system entry
 			Eeprom32_process_state = E32_BLANKCHECK ;
 //			Writing_model = Dirty.Model_dirty ;
 		}
@@ -1158,8 +1577,8 @@ extern uint8_t SpiEncoderValid ;
 			Eeprom32_process_state = Eeprom32_state_after_erase ;
 		}			
 	}
+#endif
 }
-
 
 
 uint32_t unprotect_eeprom()
@@ -1200,7 +1619,7 @@ void convertModel( SKYModelData *dest, ModelData *source )
 	memset( dest, 0, sizeof(*dest) ) ;
   memcpy( dest->name, source->name, MODEL_NAME_LEN) ;
 	dest->modelVoice = source->modelVoice ;
-	dest->RxNum_unused = source->RxNum ;
+//	dest->RxNum_unused = source->RxNum ;
 	dest->traineron = source->traineron ;
 	dest->FrSkyUsrProto = source->FrSkyUsrProto ;
 	dest->FrSkyGpsAlt = source->FrSkyGpsAlt ;
@@ -1593,9 +2012,11 @@ const char *ee32BackupModel( uint8_t modelIndex )
 
 	// Check for SD avaliable
 
-
+#ifdef FS8K
+  size = FileSizes[modelIndex-1] ;
+#else
   size = File_system[modelIndex].size ;
-
+#endif
 	waitForEepromFinished() ;
 //	while (ee32_check_finished() == 0)
 //	{	// wait
@@ -1613,7 +2034,11 @@ const char *ee32BackupModel( uint8_t modelIndex )
 //	}
 
 	memset(( uint8_t *)&Eeprom_buffer.data.sky_model_data, 0, sizeof(g_model));
+#ifdef FS8K
+  read32_eeprom_data( (AllocTable[modelIndex] << 13) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
+#else
   read32_eeprom_data( (File_system[modelIndex].block_no << 12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, size, 0 ) ;
+#endif
 
 	// Build filename
 	setModelFilename( filename, modelIndex, FILE_TYPE_MODEL ) ;
@@ -1700,6 +2125,9 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
   Eeprom32_source_address = (uint8_t *)&Eeprom_buffer.data.sky_model_data ;		// Get data from here
   Eeprom32_data_size = sizeof(g_model) ;																	// This much
   Eeprom32_file_index = modelIndex ;																							// This file system entry
+#ifdef FS8K
+	Eeprom32_state_after_erase = E32_BLANK2CHECK ;
+#endif
   Eeprom32_process_state = E32_BLANKCHECK ;
   ee32WaitFinished() ;
 	ee32_read_model_names() ;		// Update
@@ -1739,6 +2167,7 @@ extern uint32_t sdMounted( void ) ;
   return NULL ;
 }
 
+//char Xfilename[34]; // /EEPROM/eeprom-2013-01-01.bin
 
 const char *openBackupEeprom()
 {
@@ -1771,6 +2200,8 @@ extern uint32_t sdMounted( void ) ;
   cpystr( (uint8_t *)&filename[7], (uint8_t *)"/eeprom" ) ;
 	setFilenameDateTime( &filename[14], 0 ) ;
   cpystr((uint8_t *)&filename[14+11], (uint8_t *)".bin" ) ;
+
+//  cpystr( (uint8_t *)Xfilename, (uint8_t *)filename ) ;
 
 	CoTickDelay(1) ;					// 2mS
   result = f_open(&SharedMemory.g_eebackupFile, filename, FA_OPEN_ALWAYS | FA_WRITE) ;
@@ -1932,5 +2363,317 @@ uint32_t loadModelImage()
 }
 #endif
 
+#ifdef FS8K
+
+// New, 8K file system
+//EE32 logic (4K):
+//IDLE
+// BLANKCHECK -> send erase command
+//  ERASESENDING check command sent (then WRITESTART)
+//   ERASEWAITING check finished
+//    WRITESTART
+//     WRITESENDING check command sent
+//      WRITEWAITING when done, repeat send if more data to write
+//       to IDLE
+
+//For 8K blocks
+//Top 2 4K blocks (alternating):
+//0x55AA3CC3, 60 empty bytes
+//64 bytes allocation table
+//First byte 254 = General as 2 4K blocks (as now)
+//60 bytes 8K block index 1-62
+//2 bytes spare blocks
+//253
+
+//Control:
+//60 bytes, model indices
+//2 bytes spare blocks
+//1 uint16, offset into top 2 4K blocks
+//1 byte 8K block index being written
+
+//locate spare block
+//erase first 4k
+//erase 2nd 4k
+//write data
+//update model indices and spare blocks
+//write 64 bytes to top block:
+// if (Offset & 0x0FFF == 0) // At end of block
+//  erase other block
+//  write the 64 bytes, 64 bytes into block
+//  write first 4 bytes with 0x55AA3CC3
+//  Update Offset to block start + 128
+//  write first 4 bytes of other block to 0x00000000
+// else
+//  write the 64 bytes at Offset, add 64 to Offset
+//free the data block that was in use
+
+//Startup:
+//Offset = 0
+//read 4k block at block #126
+//if first 4 bytes are 0x55AA3CC3
+// Offset = 64
+//else
+// read 4k block at block #127
+// if first 4 bytes are 0x55AA3CC3
+//  Offset = 4096+64
+//if Offset == 0
+// // 8K file system not intiialised
+// erase block #126
+// write 64 bytes at 64 into block (254, 1-62, 253)
+// write first 4 bytes with 0x55AA3CC3
+// erase block #127
+// Offset = 64
+//scan through to find last 64 byte set
+//store 60 bytes of model indices
+//set Offset past 64 byte set
+//determine spare blocks
+
+//void init8K()
+//{
+//	uint32_t i ;
+
+//	if ( ControlBlock )
+//	{
+//		i = 64 ;
+//		ControlOffset = 0 ;
+//		while ( i < 4096 )
+//		{
+//			read32_eeprom_data( (ControlBlock << 12) + i, Key.key, 4, EE_WAIT ) ;
+//			if ( Key.key[0] != 0xFF )
+//			{
+//				ControlOffset = i ;
+//				i += 64 ;
+//			}
+//			else
+//			{
+//				break ;
+//			}
+//		}
+//		if ( ControlOffset )
+//		{
+//			read32_eeprom_data( (ControlBlock << 12) + 64 , AllocTable, 64, EE_WAIT ) ;
+////			AllocTable[0] = 254 ;
+////			AllocTable[63] = 253 ;
+//			return ;
+//		}
+//	}
+//	// Need to create 8K control
+//	eraseBlock( 126 << 12 ) ;
+//	Key.keyLong = 0x55AA3CC3 ;
+//	write32_eeprom_block( 126 << 12, Key.key, 4, EE_WAIT ) ;
+//	AllocTable[0] = 254 ;
+//	for ( i = 1 ; i <= 62 ; i += 1 )
+//	{
+//		AllocTable[i] = i ;
+//	}
+//	AllocTable[63] = 253 ;
+//	write32_eeprom_block( (126 << 12) + 64, AllocTable, 64, EE_WAIT ) ;
+//	ControlOffset = 128 ;
+//	eraseBlock( 127 << 12 ) ;
+//}
+
+
+uint32_t convertTo8K()
+{
+	uint32_t i ;
+	uint32_t j ;
+	uint8_t *buffer ;
+	t_file_entry fs ;
+	if ( ConversionProgress < 60 )
+	{
+		i = 60 - ConversionProgress ;	// Model to move
+		i *= 2 ;	// Convert to 8K index
+		j = get_current_block_number( i, &fs ) ;
+		i += 4 ;	// Move up 16K
+		i <<= 12 ;
+		eraseBlock( i ) ;
+		wdt_reset() ;
+		eraseBlock( i+4096 ) ;
+		wdt_reset() ;
+		if ( fs.size )
+		{
+		  read32_eeprom_data( (j<<12) + sizeof( struct t_eeprom_header), ( uint8_t *)&Eeprom_buffer.data.sky_model_data, fs.size, 0 ) ;
+			Eeprom_buffer.header.sequence_no = 1 ;
+			Eeprom_buffer.header.flags = BLOCK_8K ;
+			Eeprom_buffer.header.data_size = fs.size ;
+			Eeprom_buffer.header.hcsum = byte_checksum( (uint8_t *)&Eeprom_buffer, 7 ) ;
+			j = fs.size + sizeof( struct t_eeprom_header ) ;
+			buffer = (uint8_t *) &Eeprom_buffer ;
+			while ( j )
+			{
+				if ( j >= 256 )
+				{
+					write32_eeprom_block( i, buffer, 256, EE_WAIT ) ;
+					waitEepromDone() ;
+					i += 256 ;
+					buffer += 256 ;
+					j -= 256 ;
+				}
+				else
+				{
+					write32_eeprom_block( i, buffer, j, EE_WAIT ) ;
+					waitEepromDone() ;
+					j = 0 ;
+				}
+				wdt_reset() ;
+			}
+		}
+		ConversionProgress += 1 ;
+	}
+	else
+	{
+		// sort Alloc table
+		eraseBlock( 126 << 12 ) ;
+		Key.keyLong = 0x55AA3CC3 ;
+		write32_eeprom_block( 126 << 12, Key.key, 4, EE_WAIT ) ;
+		AllocTable[0] = 0 ;
+		for ( i = 1 ; i <= 60 ; i += 1 )
+		{
+			AllocTable[i] = i+2 ;
+		}
+		AllocTable[61] = 1 ;
+		AllocTable[62] = 2 ;
+		AllocTable[63] = 253 ;
+		waitEepromDone() ;
+		write32_eeprom_block( (126 << 12) + 64, AllocTable, 64, EE_WAIT ) ;
+		waitEepromDone() ;
+		ControlOffset = 128 ;
+		ControlBlock = 126 ;
+		eraseBlock( 127 << 12 ) ;
+		ConversionProgress = 64 ;
+		// Temporary to test roll over
+//		while ( ControlOffset < 4096-256 )
+//		{
+//			wdt_reset() ;
+//			write32_eeprom_block( (126 << 12) + ControlOffset, AllocTable, 64, EE_WAIT ) ;
+//			waitEepromDone() ;
+//			ControlOffset += 64 ;
+//		}
+	}
+	return ConversionProgress ;
+}
+
+#else
+ #ifdef FS8K
+uint32_t convertTo8K()
+{
+	return 64 ;
+}
+ #endif
+#endif
+
+#ifdef FS8K
+void swDelay10mS()
+{
+	uint32_t j ;
+	for ( j = 0 ; j < 2000000 ; j += 1 )
+	{
+		asm("nop") ;
+	}
+}
+#endif
+
+
+#ifdef FS8K
+uint32_t check8K()
+{
+#ifdef FS8K
+	ControlBlock = 0 ; 
+	fill_file_index() ;
+	read32_eeprom_data( 126 << 12, Key.key, 4, EE_WAIT ) ;
+	if ( Key.keyLong == 0x55AA3CC3 )
+	{
+		read32_eeprom_data( (126 << 12) + 64, AllocTable, 64, EE_WAIT ) ;
+		if ( AllocTable[0] != 0xFF )
+		{		
+			ControlBlock = 126 ;
+		}
+	}
+	if ( ControlBlock == 0 )
+//	{
+//		read32_eeprom_data( 127 << 12, Key.key, 4, EE_WAIT ) ;
+//		if ( Key.keyLong == 0x55AA3CC3 )
+//		{
+//			read32_eeprom_data( (127 << 12) + 64, AllocTable, 64, EE_WAIT ) ;
+//			if ( AllocTable[0] != 0xFF )
+//			{		
+//				ControlBlock = 127 ;
+//			}
+//		}
+//	}
+	
+//	if ( Key.keyLong == 0x55AA3CC3 )
+//	{
+//		ControlBlock = 126 ;
+//	}
+//	else
+	{
+		read32_eeprom_data( 127 << 12, Key.key, 4, EE_WAIT ) ;
+		if ( Key.keyLong == 0x55AA3CC3 )
+		{
+			ControlBlock = 127 ;
+		}
+	}
+	if ( ControlBlock )
+	{
+		ControlOffset = 64 ;
+		// need to locate last 
+		while ( ControlOffset < 4096)
+		{
+			read32_eeprom_data( (ControlBlock << 12) + ControlOffset , AllocTable, 64, EE_WAIT ) ;
+			if ( AllocTable[0] == 0xFF )
+			{
+				read32_eeprom_data( (ControlBlock << 12) + ControlOffset - 64 , AllocTable, 64, EE_WAIT ) ;
+				break ;
+			}
+			wdt_reset() ;
+			ControlOffset += 64 ;
+		}
+		if ( ControlOffset >= 4096 )
+		{
+			// Run off the end
+			uint32_t otherBlock = (ControlBlock == 126) ? 127 : 126 ;
+			eraseBlock( otherBlock << 12 ) ;
+			Key.keyLong = 0x55AA3CC3 ;
+			write32_eeprom_block( otherBlock << 12, Key.key, 4, EE_WAIT ) ;
+			waitEepromDone() ;
+			write32_eeprom_block( (otherBlock << 12) + 64, AllocTable, 64, EE_WAIT ) ;
+			waitEepromDone() ;
+			Key.keyLong = 0 ;
+			write32_eeprom_block( ControlBlock << 12, Key.key, 4, EE_WAIT ) ;
+			waitEepromDone() ;
+			ControlBlock = otherBlock ;
+			ControlOffset = 128 ;
+		}
+	}
+	else
+	{
+		uint8_t *p = &g_eeGeneral.contrast ;
+		uint32_t x = p - (uint8_t *)&g_eeGeneral ;
+		x += sizeof( struct t_eeprom_header) ;
+		read32_eeprom_data( x, ( uint8_t *)&g_eeGeneral.contrast, 1, 0 ) ;
+		if ( ( g_eeGeneral.contrast > 10 ) && ( g_eeGeneral.contrast < 35 ) )
+		{
+	  	lcdSetRefVolt( g_eeGeneral.contrast ) ;
+		}
+		else
+		{
+#ifdef PCB9XT
+	  	lcdSetRefVolt( 25 ) ;
+#else
+ #ifdef SMALL
+  		lcdSetRefVolt( 24 ) ;
+ #else
+  		lcdSetRefVolt( 18 ) ;
+ #endif
+#endif
+		}
+	}	
+	return ControlBlock > 0 ;
+#else
+	return 1 ;
+#endif
+}
+#endif
 
 

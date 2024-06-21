@@ -229,10 +229,14 @@ void modelDefault(uint8_t id)
 	// Set all mode trims to be copies of FM0
 	for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
 	{
-		g_model.phaseData[i].trim[0] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[1] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
+		for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+		{
+			g_model.phaseData[i].trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+		}
+	}
+	for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+	{
+		g_model.xphaseData.trim[j].value = TRIM_EXTENDED_MAX + 1 ;
 	}
 //#ifdef PCB9XT
 //	g_model.protocol = PROTO_OFF ;

@@ -1669,17 +1669,27 @@ void populateSpinGVarCB100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int valu
 }
 
 
-void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue )
+void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue, int fmGvar )
 {
   cb->clear() ;
-  for (int i =- 7 ; i <= -1 ; i += 1)
+	if ( max == 100 )
 	{
-    cb->addItem(QObject::tr("-GV%1").arg(-i));
-  }
-  for (int i=1; i <= 7 ; i += 1 )
+  	for (int i=1; i <= 5 ; i += 1 )
+		{
+  	  cb->addItem(QObject::tr("GV%1").arg(i));
+  	}
+	}
+	else
 	{
-    cb->addItem(QObject::tr("GV%1").arg(i));
-  }
+  	for (int i =- 7 ; i <= -1 ; i += 1)
+		{
+  	  cb->addItem(QObject::tr("-GV%1").arg(-i));
+  	}
+  	for (int i=1; i <= 7 ; i += 1 )
+		{
+  	  cb->addItem(QObject::tr("GV%1").arg(i));
+  	}
+	}
 	sb->setMinimum( min ) ;
 	sb->setMaximum( max ) ;
 
@@ -2677,18 +2687,31 @@ void populateSwitchShortCB(QComboBox *b, int value, int eepromType)
 }
 #endif
 
+#ifdef SKY
+int populatePhasetrim(QComboBox *b, int which, int value, int mode)
+#else
 int populatePhasetrim(QComboBox *b, int which, int value)
+#endif
 {	// which i s0 for FP1, 1 for FP2 etc.
-	char name[4] ;
+	int index = value ;
+	char name[6] ;
 	name[0] = 'F' ;
 	name[1] = 'M' ;
-	name[3] = 0 ;
+	name[3] = ' ' ;
+	name[4] = 0 ;
 	
 	b->clear();
 #ifdef SKY
+//	if ( value > TRIM_EXTENDED_MAX )
+//	{
+//		value -= TRIM_EXTENDED_MAX ;
+//	}
+//	else
+//	{
+//		value = 0 ;
+//	}
 #else
 		value += TRIM_EXTENDED_MAX+1 ;
-#endif
 	if ( value > TRIM_EXTENDED_MAX )
 	{
 		value -= TRIM_EXTENDED_MAX ;
@@ -2697,12 +2720,61 @@ int populatePhasetrim(QComboBox *b, int which, int value)
 	{
 		value = 0 ;
 	}
+#endif
  	b->addItem( "Own trim" ) ;
 #ifdef SKY
- 	for( int i= 0 ; i < 8 ; i += 1 )
+	int w = mode ;
+ 	for( int i= 0 ; i < 16 ; i += 1 )
+	{
+		if ( (i>>1) == which )
+		{
+			continue ;			
+		}
+		name[2] = (i>>1) + '0' ;
+		name[3] = (i & 1 ) ? '+' : ' ' ;
+   	b->addItem( name ) ;
+	}
+	if ( w > 0 )
+	{
+		w >>= 1 ;
+	}
+	else if( index > TRIM_EXTENDED_MAX )
+	{
+		w =  index - TRIM_EXTENDED_MAX - 1 ;	// 0 - 7
+//		if ( w >= which )
+//		{
+//			w += 1 ;
+//		}
+	}
+	else
+	{
+		w = which ;
+	}
+	if ( w == which )
+	{
+		index = 0 ;
+	}
+	else
+	{
+		index = w *2 + 1 ;
+		if ( mode & 1 )
+		{
+			index += 1 ;
+		}
+	}
+	b->setCurrentIndex(index);
+	b->setMaxVisibleItems( 7 ) ;
+	if ( index == 0 )
+	{
+		return 0 ;
+	}
+	if ( mode & 1 )
+	{
+		return 0 ;
+	}
+	return 1 ;
 #else
  	for( int i= 0 ; i < 5 ; i += 1 )
-#endif
 	{
 		if ( i == which )
 		{
@@ -2714,6 +2786,7 @@ int populatePhasetrim(QComboBox *b, int which, int value)
 	b->setCurrentIndex(value);
 	b->setMaxVisibleItems( 7 ) ;
 	return value ;
+#endif
 }
 
 int decodePhaseTrim( int16_t *existing, int index )
@@ -2734,7 +2807,7 @@ int decodePhaseTrim( int16_t *existing, int index )
 		return -1 ;
 	}
 #ifdef SKY
-	*existing = TRIM_EXTENDED_MAX + index ;
+//	*existing = TRIM_EXTENDED_MAX + index ;
 #else
 	*existing = TRIM_EXTENDED_MAX + index - (TRIM_EXTENDED_MAX+1) ;
 #endif
@@ -3716,20 +3789,23 @@ uint8_t unmapSwFunc( int value )
 void populateCSWCB(QComboBox *b, int value, uint8_t modelVersion)
 {
 	int last = CSW_NUM_FUNC ;
+#ifndef SKY    
 	if ( modelVersion & 0x80 )
 	{
 		last += 1 ;
 		modelVersion &= 0x7F ;
 	}
-    b->clear();
-#ifdef SKY    
-    for(int i=0; i<last; i++) b->addItem(getCSWFunc( SwitchFunctionMap[i], modelVersion));
-    b->setCurrentIndex( locateSwFunc( value ) ) ;
-#else
-    for(int i=0; i<last; i++) b->addItem(getCSWFunc( i, modelVersion));
-    b->setCurrentIndex(value);
 #endif
-    b->setMaxVisibleItems(10);
+  b->clear();
+
+#ifdef SKY    
+  for(int i=0; i<last-1; i++) b->addItem(getCSWFunc( SwitchFunctionMap[i], modelVersion));
+  b->setCurrentIndex( locateSwFunc( value ) ) ;
+#else
+  for(int i=0; i<last; i++) b->addItem(getCSWFunc( i, modelVersion));
+  b->setCurrentIndex(value);
+#endif
+  b->setMaxVisibleItems(10);
 }
 
 int getValueFromLine(const QString &line, int pos, int len=2)

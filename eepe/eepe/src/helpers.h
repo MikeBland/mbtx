@@ -36,7 +36,7 @@ void populateCustomAlarmCB( QComboBox *b, int type ) ;
 #else
 void populateAnaVolumeCB( QComboBox *b, int value ) ;
 #endif
-void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue = 0 ) ;
+void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue = 0, int fmGvar = 0 ) ;
 int numericSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extended = 0 ) ;
 int numericSpinGvarValue100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar ) ;
 void populateSpinGVarCB100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value ) ;
@@ -141,7 +141,11 @@ QString getAudioAlarmName(int val) ;
 
 // Safety switch types
 #define VOICE_SWITCH		6
+#ifdef SKY
+int populatePhasetrim(QComboBox *b, int which, int value=0, int mode = 0) ;
+#else
 int populatePhasetrim(QComboBox *b, int which, int value=0) ;
+#endif
 int decodePhaseTrim( int16_t *existing, int index ) ;
 
 #ifdef SKY

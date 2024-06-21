@@ -314,7 +314,12 @@ PROV=$(shell sh -c "cat prov.txt")
 ##############################################################################################
 
 FULL_PRJ = $(PROJECT)_rom
-OBJDIR = obj_$(PROJECT)
+
+ifdef OBJROOT
+else
+OBJROOT = ./
+endif
+OBJDIR = $(OBJROOT)/obj_$(PROJECT)
 
 # List all user C define here, like -D_DEBUG=1
 
@@ -389,7 +394,6 @@ CPPSRC = ersky9x.cpp \
 		 	X12D/pulses_driver.cpp \
 		 	X12D/screenshotH.cpp \
          X9D/serial.cpp \
-			stamp.cpp \
          templates.cpp \
          drivers.cpp \
          pulses.cpp \
@@ -420,6 +424,8 @@ CPPSRC = ersky9x.cpp \
          X12D/usbd_usr.cpp \
 			loadboot.cpp \
 			pxx2.cpp \
+			gvars.cpp \
+			stamp.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -524,6 +530,7 @@ CPPSRC = ersky9x.cpp \
          X12D/usbd_usr.cpp \
 			loadboot.cpp \
 			pxx2.cpp \
+			gvars.cpp \
 			lcd.cpp
 
 ifeq ($(TOUCH), 1)
@@ -644,6 +651,7 @@ CPPSRC = ersky9x.cpp \
 			sbus.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
+			gvars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -755,6 +763,7 @@ CPPSRC = ersky9x.cpp \
 			sbus.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
+			gvars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -889,6 +898,7 @@ CPPSRC = ersky9x.cpp \
 			isp.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
+			gvars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -923,6 +933,7 @@ SRC  = core_cm3.c \
        stm103/stm32f10x_gpio.c \
        stm103/stm32f10x_dma.c \
        stm103/sdio_sd.c \
+       syscalls.c \
        coos.c
 
 CPPSRC = ersky9x.cpp \
@@ -933,7 +944,6 @@ CPPSRC = ersky9x.cpp \
 			stm103/power.cpp \
          stm103/watchdog.cpp \
          stm103/pulsesDriver.cpp \
-			stamp.cpp \
          templates.cpp \
 			frsky.cpp \
 			menus.cpp \
@@ -951,6 +961,8 @@ CPPSRC = ersky9x.cpp \
 			fr.cpp \
 			sbus.cpp \
 			pers.cpp \
+			gvars.cpp \
+			stamp.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -1025,6 +1037,7 @@ CPPSRC = stamp.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			pxx2.cpp \
+			gvars.cpp \
 			logs.cpp
 
 ifeq ($(LUA), 1)
@@ -1280,28 +1293,28 @@ clean:
 #	-rm -f t16obj/*.*
 #	-rm -f lem1obj/*.*
 #	-rm -f x9lsobj/*.*
-	-rm -f obj_x9d/*.*
-	-rm -f obj_x9e/*.*
-	-rm -f obj_x9dp/*.*
-	-rm -f obj_x12d/*.*
-	-rm -f obj_ersky9xs/*.*
-	-rm -f obj_ersky9xr/*.*
-	-rm -f obj_ersky9x/*.*
-	-rm -f obj_sky9XT/*.*
-	-rm -f obj_x7/*.*
-	-rm -f obj_x7Acc/*.*
-	-rm -f obj_xlite/*.*
-	-rm -f obj_xlites/*.*
-	-rm -f obj_x9Lite/*.*
-	-rm -f obj_t12/*.*
-	-rm -f obj_t16/*.*
-	-rm -f obj_lemon1/*.*
-	-rm -f obj_x9LiteS/*.*
-	-rm -f obj_x10/*.*
-	-rm -f obj_x10E/*.*
-	-rm -f obj_tx16s/*.*
-	-rm -f obj_tx18s/*.*
-	-rm -f obj_aruni/*.*
+	-rm -f $(OBJROOT)/obj_x9d/*.*
+	-rm -f $(OBJROOT)/obj_x9e/*.*
+	-rm -f $(OBJROOT)/obj_x9dp/*.*
+	-rm -f $(OBJROOT)/obj_x12d/*.*
+	-rm -f $(OBJROOT)/obj_ersky9xs/*.*
+	-rm -f $(OBJROOT)/obj_ersky9xr/*.*
+	-rm -f $(OBJROOT)/obj_ersky9x/*.*
+	-rm -f $(OBJROOT)/obj_ersky9x9XT/*.*
+	-rm -f $(OBJROOT)/obj_x7/*.*
+	-rm -f $(OBJROOT)/obj_x7Acc/*.*
+	-rm -f $(OBJROOT)/obj_xlite/*.*
+	-rm -f $(OBJROOT)/obj_xlites/*.*
+	-rm -f $(OBJROOT)/obj_x9Lite/*.*
+	-rm -f $(OBJROOT)/obj_t12/*.*
+	-rm -f $(OBJROOT)/obj_t16/*.*
+	-rm -f $(OBJROOT)/obj_lemon1/*.*
+	-rm -f $(OBJROOT)/obj_x9LiteS/*.*
+	-rm -f $(OBJROOT)/obj_x10/*.*
+	-rm -f $(OBJROOT)/obj_x10E/*.*
+	-rm -f $(OBJROOT)/obj_tx16s/*.*
+	-rm -f $(OBJROOT)/obj_tx18s/*.*
+	-rm -f $(OBJROOT)/obj_aruni/*.*
 #	-rm -f $(FULL_PRJ).elf
 #	-rm -f $(FULL_PRJ).map
 #	-rm -f $(FULL_PRJ).hex

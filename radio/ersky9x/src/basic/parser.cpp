@@ -19,6 +19,7 @@
 #include "menus.h"
 #include "frsky.h"
 #include "maintenance.h"
+#include "gvars.h"
 
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"                   
@@ -61,7 +62,7 @@ struct fileControl BasicFileControl ;
 void setupFileNames( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 uint8_t DirectoryName[DIR_LENGTH] ;
 extern union t_sharedMemory SharedMemory ;
-extern uint32_t FileSize[] ;
+//extern uint32_t FileSize[] ;
 extern uint8_t ScriptDirNeeded ;
 
 #if not (defined(PCBX10))
@@ -251,6 +252,11 @@ int32_t btSend( uint32_t length, uint8_t *data ) ;
 #define ALERT					42
 #define RETURNVALUE		43
 #define RESETTELEMETRY 44
+#ifdef JUNGLECAM
+#define SETRXNUM			45
+#define SETBIND				46
+#define RESETTEL			47
+#endif
 
 // Assignment options:
 #define SETEQUALS			0
@@ -587,6 +593,11 @@ const struct commands InternalFunctions[] =
 	{ (char *)"resettelemetry", RESETTELEMETRY },
 //configSwitch( "L3", "v<val", "batt", 73, "L2" )
 //configSwitch( "L3", "AND", "L4", "L5", "L2" )
+#ifdef JUNGLECAM
+	{ (char *)"setRxNum", SETRXNUM },
+	{ (char *)"setBind", SETBIND },
+	{ (char *)"resetTel", RESETTEL },
+#endif
   { (char *)"", 0 } /* mark end of table */
 } ;
 
@@ -4518,7 +4529,7 @@ int32_t exec_settelitem()
 						{
 							value = 125 ;
 						}
-						g_model.gvars[number].gvar = value ;
+						setGVar( number, value ) ;
 					}
 				}
 //				else
@@ -5435,7 +5446,7 @@ int32_t exec_filelist()
 					p = cpystr( p, DirectoryName ) ;
 					*p++ = '\\' ;
 					p = cpystr( p, q ) ;
-					*param.ipointer = FileSize[fc->vpos] ;
+					*param.ipointer = SharedMemory.Mdata.FileSize[fc->vpos] ;
 				}
 				else
 				{
@@ -6045,6 +6056,73 @@ void exec_systemStrToArray()
 }
 
 
+#ifdef JUNGLECAM
+void exec_setRxNum()
+{
+	uint32_t result ;
+	union t_parameter params[2] ;
+	result = get_numeric_parameters( params, 2 ) ;
+	if ( ( result == 1 ) && g_eeGeneral.jungleMode )
+	{
+		int32_t x ;
+		int32_t y ;
+		x = params[0].var ;
+		y = params[1].var ;
+		if ( (x == 0) || (x == 1) )
+		{
+			if ( ( y >= 1 ) && ( y <= 8 ) )
+			{
+				g_model.Module[x].pxxRxNum = y ;
+			}
+		}
+	}
+}
+
+void exec_setBind()
+{
+	uint32_t result ;
+	union t_parameter params[2] ;
+	result = get_numeric_parameters( params, 2 ) ;
+	if ( ( result == 1 ) && g_eeGeneral.jungleMode )
+	{
+		int32_t x ;
+		int32_t y ;
+		x = params[0].var ;
+		y = params[1].var ;
+		if ( (x == 0) || (x == 1) )
+		{
+			g_model.Module[x].highChannels = 0 ;
+			g_model.Module[x].disableTelemetry = 0 ;
+			BindRangeFlag[x] = y ? PXX_BIND : 0 ;
+		}
+	}
+}
+
+extern uint8_t TelemetryDataValid[] ;
+void exec_resetTel()
+{
+	if ( g_eeGeneral.jungleMode )
+	{
+		uint32_t i ;
+extern uint8_t RawLogging ;
+extern void rawLogByte( uint8_t byte ) ;
+extern void rawLogChar( uint8_t byte ) ;
+		if ( RawLogging )
+		{
+			rawLogChar( 'R' ) ;
+			rawLogChar( '0'+ g_model.Module[0].pxxRxNum ) ;
+		}
+
+		for ( i = 0 ; i < HUBDATALENGTH ; i += 1 )
+		{
+			TelemetryDataValid[i] = 0 ;
+		}
+	}
+}
+
+
+#endif
+
 
 #ifndef QT
 #if defined(PCBSKY) || defined(PCB9XT)
@@ -6418,7 +6496,18 @@ int32_t execInFunction()
 		case DRAWBITMAP  :
       exec_drawbitmap() ;
 		break ;
-			
+
+#ifdef JUNGLECAM
+		case SETRXNUM :
+      exec_setRxNum() ;
+		break ;
+		case SETBIND :
+			exec_setBind() ;
+		break ;
+		case RESETTEL :
+			exec_resetTel() ;
+		break ;
+#endif
 		default :
 			runError( SE_NO_FUNCTION ) ;
 		break ;
@@ -6839,6 +6928,10 @@ int32_t basicFindValueIndexByName( const char * name )
 	{
     if (strMatch( names, name, nameLength ))
 		{
+			if ( i >= TELEM_GAP_START )
+			{
+				i += 8 ;
+			}
 			return i + 44 - 1 ;
 		}
 		names += nameLength ;

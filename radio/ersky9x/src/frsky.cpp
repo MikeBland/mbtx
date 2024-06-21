@@ -154,7 +154,7 @@ const uint8_t Fr_indices[] =
 struct t_s6r S6Rdata ;
 
 uint8_t TmOK ;
-uint8_t RxvScalingRequired ;
+//uint8_t RxvScalingRequired ;
 
 uint8_t AltitudeDecimals ;
 uint8_t AltitudeZeroed = 0 ;
@@ -390,23 +390,27 @@ void dsmTelemetryStartReceive()
 	numPktBytes = 0 ;
 }
 
-uint16_t convertRxv( uint16_t value )
-{
-//	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && ( FrskyTelemetryType != FRSKY_TEL_AFH )
-//			 && ( FrskyTelemetryType != FRSKY_TEL_HITEC ) )		// DSM or AFHDS2 or Hitec telemetry 
-	if ( RxvScalingRequired )
-	{
-		value *= g_model.rxVratio ;
-		value /= 255 ;
-	}
- 	return value ;
-}
+//uint16_t convertRxv( uint16_t value )
+//{
+////	if ( ( FrskyTelemetryType != FRSKY_TEL_DSM ) && ( FrskyTelemetryType != FRSKY_TEL_AFH )
+////			 && ( FrskyTelemetryType != FRSKY_TEL_HITEC ) )		// DSM or AFHDS2 or Hitec telemetry 
+//	if ( RxvScalingRequired )
+//	{
+//		value *= g_model.rxVratio ;
+//		value /= 255 ;
+//	}
+// 	return value ;
+//}
 
 void storeTelemetryData( uint8_t index, uint16_t value ) ;
 
 void storeRxV( uint16_t value, uint8_t scalingRequired )
 {
-	RxvScalingRequired = scalingRequired ;
+	if ( scalingRequired )
+	{
+		value *= g_model.rxVratio ;
+		value /= 255 ;
+	}
 	storeTelemetryData( FR_RXV, value ) ;
 }
 
@@ -1285,15 +1289,9 @@ uint32_t dsmLatLong( uint8_t *p )
 //===============================================================
 
 #ifndef SMALL
-uint8_t DsmDebug[20] ;
-uint8_t DsmControlDebug[20] ;
-uint16_t DsmControlCounter ;
-uint16_t DsmDbgCounters[20] ;
 extern uint16_t DsmFrameRequired ;
 #endif
 uint16_t TelRxCount ;
-
-//uint8_t LemonModule = 0 ;
 
 uint16_t DsmAltHigh = 0 ;
 
@@ -1301,16 +1299,7 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 {
 	int32_t ivalue ;
 	uint32_t type ;
-
-#ifndef SMALL
-	DsmDbgCounters[10] = packet[0] ;
-	DsmDbgCounters[11] = packet[1] ;
-	DsmDbgCounters[12] = packet[2] ;
-	DsmDbgCounters[13] = packet[3] ;
-#endif
-
 	{
-		
 		packet += 1 ;			// Skip the 0xAA
 		type = *packet++ ;
 	}
@@ -1337,23 +1326,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
    	frskyUsrStreaming = 255 ; // reset counter only if valid packets are being detected
   	frskyStreaming = 255 ; // reset counter only if valid packets are being detected
 		
-#ifndef SMALL
-		// Debug code
-		uint16_t temp = *packet ;
-		temp |= packet[1] << 8 ;
-		if ( temp == DsmFrameRequired )
-		{
-			uint8_t *p = packet ;
-			uint8_t i ;
-			DsmDebug[0] = byteCount ;
-			for ( i = 1 ; i < 17 ; i += 1 )
-			{
-				DsmDebug[i] = *p++ ;
-			}
-		}
-		// End debug code
-#endif
-		 
 		ivalue = (int16_t) ( (packet[2] << 8 ) | packet[3] ) ;
 		// Telemetry
 		if ( g_model.dsmAasRssi )
@@ -1369,9 +1341,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			
 			case DSM_ALT :
 			case DSM_VARIO :
-#ifndef SMALL
-				DsmDbgCounters[0] += 1 ;
-#endif
 				storeAltitude( ivalue ) ;
 				if ( FrskyHubMaxMin.hubMax[FR_ALT_BARO] < ivalue )
 				{	FrskyHubMaxMin.hubMax[FR_ALT_BARO] = ivalue ;
@@ -1385,9 +1354,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 		
 			case DSM_AMPS :
-#ifndef SMALL
-				DsmDbgCounters[1] += 1 ;
-#endif
 				ivalue *= 2015 ;
 				ivalue /= 1024 ;
 				storeTelemetryData( FR_CURRENT, ivalue ) ;	// Handles FAS Offset
@@ -1395,9 +1361,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 
 			case DSM_PBOX :
-#ifndef SMALL
-				DsmDbgCounters[2] += 1 ;
-#endif
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;	// Handles FAS Offset
 //				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
@@ -1406,16 +1369,10 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 
 			case DSM_AIRSPEED :
-#ifndef SMALL
-				DsmDbgCounters[3] += 1 ;
-#endif
 				// airspeed in km/h
 			break ;
 
 			case DSM_GFORCE :
-#ifndef SMALL
-				DsmDbgCounters[4] += 1 ;
-#endif
 				// check units (0.01G)
 				storeTelemetryData( FR_ACCX, ivalue ) ;
 //				FrskyHubData[FR_ACCX] = ivalue ;
@@ -1429,9 +1386,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			
 			case DSM_VTEMP1 :
 			case DSM_VTEMP2 :
-#ifndef SMALL
-				DsmDbgCounters[5] += 1 ;
-#endif
 				// RPM
 				if ( (uint16_t)ivalue == 0xFFFF )
 				{
@@ -1457,9 +1411,6 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 
 			case DSM_STAT1 :
 			case DSM_STAT2 :
-#ifndef SMALL
-				DsmDbgCounters[6] += 1 ;
-#endif
 				 
 				if ( g_model.dsmAasRssi )
 				{
@@ -1554,18 +1505,11 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			break ;
 			 
 			default :
-#ifndef SMALL
-				DsmDbgCounters[7] += 1 ;
-				DsmDebug[17] = *packet ;
-#endif
 			break ;
 		}
 	}
 	else if ( type == 0x80 )
 	{
-extern uint16_t DsmBindDebug ;
-		DsmBindDebug |= 32 ;
-		
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 		if ( g_model.Module[1].protocol == PROTO_MULTI )
 #else
@@ -1578,34 +1522,9 @@ extern uint16_t DsmBindDebug ;
 		{
 			dsmBindResponse( *packet, *(packet+2) ) ;
 		}
-#ifndef SMALL
-		// Debug code
-		uint8_t i ;
-		DsmControlDebug[0] = byteCount ;
-		for ( i = 1 ; i < 17 ; i += 1 )
-		{
-			DsmControlDebug[i] = *packet++ ;
-		}
-		DsmControlCounter += 1 ;
-		// End debug code
-#endif
 	}
 	else if ( type == 0xFF )
 	{
-#ifndef SMALL
-		// Debug code
-		{	
-			uint8_t i ;
-			uint8_t *p = packet ;
-			DsmControlDebug[0] = byteCount ;
-			for ( i = 1 ; i < 17 ; i += 1 )
-			{
-				DsmControlDebug[i] = *p++ ;
-			}
-		}
-		DsmControlCounter += 1 ;
-		// End debug code
-#endif
 		 
 #ifndef SMALL
 		DsmManCode[0] = *packet++ ;
@@ -1732,7 +1651,7 @@ void processTrainerPacket( uint8_t *packet )
 
 #ifndef DISABLE_SPORT
 //#ifndef REVX
-static bool checkSportPacket( uint8_t *packet )
+bool checkSportPacket( uint8_t *packet )
 {
 //#ifdef PCBT12
 //	return 0 ;
@@ -1816,6 +1735,12 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					setTxRssi( packet[5] ) ;			// packet[5] is  TX_RSSI for MULTI
 					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
 //					RssiSetTimer = 30 ;
+#ifdef JUNGLECAM					
+					if (g_eeGeneral.jungleMode )
+					{
+						storeTelemetryData( FR_CUST1, value ) ;
+					}
+#endif
 				break ;
 
 				case 2 :
@@ -1833,6 +1758,12 @@ void processSportData( uint8_t *packet, uint32_t receiver )
   		    
 				case 3 :
 					frskyTelemetry[1].set(value, FR_A2_COPY ); //FrskyHubData[] =  frskyTelemetry[1].value ;
+#ifdef JUNGLECAM					
+					if (g_eeGeneral.jungleMode )
+					{
+						storeTelemetryData( FR_CUST2, value*330/255 ) ;
+					}
+#endif
 				break ;
     		  
 				case 5 : // SWR
@@ -1866,10 +1797,12 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					MultiId[3] = packet[7] ;
 				break ;
 			}
+			return ;
 		}
 		else if ( ( packet[3] == 0xF0 ) && ( packet[2] == 0x10 ) )		// FrSky2 Frame loss count
 		{
 			storeTelemetryData( FR_VFR, 100 - (packet[4] | (packet[5] << 8 )) ) ;
+			return ;
 		}
 		else if ( packet[3] == 0 )
 		{ // old sensors
@@ -1877,6 +1810,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 			frskyStreaming = FRSKY_TIMEOUT10ms * 3 ; // reset counter only if valid frsky packets are being detected
 			uint16_t value = (*((uint16_t *)(packet+4))) ;
 			store_indexed_hub_data( packet[2], value ) ;
+			return ;
 		}
 		else
 		{ // new sensors
@@ -1903,9 +1837,12 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 				break ;
 
 				case BETA_ALT_ID_8 :
-					value = (int32_t)value >> 8 ;
-					value = (int32_t)value ;
-					storeTelemetryData( FR_SPORT_ALT, value ) ;
+					if ( packet[3] == 0x80 )
+					{
+						value = (int32_t)value >> 8 ;
+						value = (int32_t)value ;
+						storeTelemetryData( FR_SPORT_ALT, value ) ;
+					}
 				break ;
 
 //				case BETA_VARIO_ID_8 :
@@ -3012,14 +2949,6 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 	return 1 ;
 }
 
-
-
-//uint16_t XFDebug1 ;
-//uint16_t XFDebug2 ;
-//uint16_t XFDebug3 ;
-//uint16_t XFDebug4 ;
-//uint16_t XFDebug5 ;
-
 void frsky_receive_byte( uint8_t data )
 {
 	TelRxCount += 1 ;
@@ -3044,7 +2973,6 @@ void frsky_receive_byte( uint8_t data )
 		return ;
 	}
 //#endif
-//	XFDebug5 += 1 ;
 
 #ifdef XFIRE
 // #ifdef REVX
@@ -4889,12 +4817,10 @@ uint32_t crossfireGpsConvert( uint32_t value )
 
 void processCrossfireTelemetryFrame()
 {
-//	XFDebug1 += 1 ;
   if (!checkCrossfireTelemetryFrameCRC())
 	{
     return ;
   }
-//	XFDebug2 += 1 ;
 
   uint8_t id = frskyRxBuffer[2] ;
   uint32_t value ;
@@ -4956,7 +4882,6 @@ void processCrossfireTelemetryFrame()
     break;
 
     case CRSF_LINK_ID :
-//			XFDebug3 += 1 ;
       frskyStreaming = FRSKY_TIMEOUT10ms ;
       for ( uint32_t i=0 ; i<=TX_SNR_INDEX; i += 1 )
 			{
@@ -5101,7 +5026,6 @@ void processCrossfireTelemetryFrame()
 
 void processCrossfireTelemetryData(uint8_t data)
 {
-//	XFDebug4 += 1 ;
 	
 	if ( g_model.telemetryProtocol == TELEMETRY_MAVLINK )
 	{

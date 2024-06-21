@@ -2250,6 +2250,25 @@ void MdiChild::modelDefault(uint8_t id)
 		radioData.models[id].protocol = PROTO_OFF ;
 		radioData.models[id].xprotocol = PROTO_OFF ;
 	}
+	// Set all mode trims to be copies of FM0
+	for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
+	{
+		for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+		{
+      radioData.models[id].phaseData[i].trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+		}
+	}
+	for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+	{
+    radioData.models[id].xphaseData.trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+	}
+
+  radioData.models[id].Module[0].protocol = PROTO_OFF ;
+  radioData.models[id].Module[1].protocol = PROTO_OFF ;
+  radioData.models[id].modelVoice = -1 ;
+  radioData.models[id].Module[0].pxxRxNum = id-1 ;
+  radioData.models[id].Module[1].pxxRxNum = id-1 ;
+  radioData.models[id].rxVratio = 132 ;
 
 	setModelFile( id ) ;
 

@@ -46,7 +46,7 @@
 
 //#define ENABLE_DSM_MATCH	1
 
-//#define WDOG_REPORT	1
+#define WDOG_REPORT	1
 
 #define MULTI_EVENTS	1
 
@@ -1122,7 +1122,7 @@ extern int16_t getValue(uint8_t i) ;
 
 inline int32_t calc100toRESX(register int8_t x)
 {
-  return ((int32_t)x*1311)>>7 ;
+  return ((int32_t)x*41943)>>12 ;
 }
 
 inline int16_t calc1000toRESX( register int32_t x)  // improve calc time by Pat MacKenzie
@@ -1431,6 +1431,9 @@ extern uint32_t getFlightPhase( void ) ;
 extern int16_t getRawTrimValue( uint8_t phase, uint8_t idx ) ;
 extern int16_t getTrimValue( uint8_t phase, uint8_t idx ) ;
 extern void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
+
+extern int16_t getTrimValueAdd( uint32_t phase, uint32_t idx ) ;
+extern void setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim) ;
 
 extern uint8_t TrimInUse[4] ;
 
@@ -1792,6 +1795,11 @@ struct t_maintenance
 uint32_t (*IAP_Function)(uint32_t, uint32_t) ;
 #endif
 	uint16_t *pCrcTable ;
+#if defined(PCBX12D) || defined(PCBX10)
+	uint32_t FileSize[14] ;
+#else
+	uint32_t FileSize[8] ;
+#endif
 } ;
 
 #define SPECTRUM_NUM_BARS 240
@@ -1893,6 +1901,10 @@ struct t_updateTiming
 #define INPUTS 1
 #endif
 
+#ifdef PCBLEM1
+#define INPUTS 1
+#endif
+
 #ifdef PCBSKY
  #ifdef REVX
 #define INPUTS 1
@@ -1903,4 +1915,16 @@ struct t_updateTiming
 #endif
 
 
+#if defined(PCBSKY) || defined(PCB9XT)
+ #ifndef SMALL
+#define MULTI_GVARS		1
+ #endif
+#else
+//#define MULTI_GVARS		0
+#define MULTI_GVARS		1
 #endif
+
+// #define JUNGLECAM			1
+
+
+#endif // ersky9x_h

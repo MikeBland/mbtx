@@ -185,6 +185,35 @@ uint32_t clearMfp() ;
 
 #endif
 
+
+//#if defined(PCBTX16S)	
+//void com3Init( uint32_t baudrate )
+//{
+//	USART_TypeDef *puart = USART3 ;
+//	// Serial configure  
+//	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+//	RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ; 		// Enable portB clock
+//	configure_pins( GPIO_Pin_10, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_7 ) ;
+//	configure_pins( GPIO_Pin_11, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 | PIN_PULLUP ) ;
+//	puart->BRR = PeripheralSpeeds.Peri1_frequency / baudrate ;
+//	puart->CR1 = USART_CR1_UE | USART_CR1_RXNEIE | USART_CR1_TE | USART_CR1_RE ;
+//	puart->CR2 = 0 ;
+//	puart->CR3 = 0 ;
+////	NVIC_SetPriority( USART3_IRQn, 2 ) ; // Priority interrupt to handle 115200 baud BT
+////  NVIC_EnableIRQ(USART3_IRQn) ;
+//}
+
+//void txmit3( uint8_t c )
+//{
+//	/* Wait for the transmitter to be ready */
+//  while ( (USART3->SR & USART_SR_TXE) == 0 ) ;
+
+//  /* Send character */
+//	USART3->DR = c ;
+//}
+//#endif
+
+
 uint32_t sportUpdate( uint32_t external ) ;
  #ifndef SMALL
 uint32_t xmegaUpdate() ;
@@ -203,11 +232,11 @@ uint8_t ExtraFileData[1024] ;
 #else
 uint8_t *ExtraFileData = (uint8_t *) &VoiceBuffer[0] ;	// Share with voice task
 #endif
-#if defined(PCBX12D) || defined(PCBX10)
-uint32_t FileSize[14] ;
-#else
-uint32_t FileSize[8] ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//uint32_t FileSize[14] ;
+//#else
+//uint32_t FileSize[8] ;
+//#endif
 
 uint32_t BytesFlashed ;
 uint32_t ByteEnd ;
@@ -990,7 +1019,7 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 	{
 		WatchdogTimeout = 300 ;		// 3 seconds
 		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
-		FileSize[0] = SharedMemory.FileList.Finfo.fsize ;
+		SharedMemory.Mdata.FileSize[0] = SharedMemory.FileList.Finfo.fsize ;
 		i += 1 ;
 		if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
 		{
@@ -1012,7 +1041,7 @@ uint32_t fillNames( uint32_t index, struct fileControl *fc )
 #endif
 		SharedMemory.FileList.Finfo.lfname = SharedMemory.FileList.Filenames[i] ;
 		fr = readBinDir( pDj, &SharedMemory.FileList.Finfo, fc ) ;		// First entry
-		FileSize[i] = SharedMemory.FileList.Finfo.fsize ;
+		SharedMemory.Mdata.FileSize[i] = SharedMemory.FileList.Finfo.fsize ;
 		if ( fr != FR_OK || SharedMemory.FileList.Finfo.fname[0] == 0 )
 		{
 			break ;
@@ -1679,6 +1708,13 @@ static void sportWaitTransmissionComplete()
   while (!(USART2->SR & USART_SR_TC))
 	{
 		// wait
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x555 ;
+#else
+	RTC->BKP1R = 0x555 ;
+#endif
+#endif
 	} ;
 }
 
@@ -1707,6 +1743,13 @@ void sportSendByte(uint8_t byte)
   while (!(USART2->SR & USART_SR_TXE))
 	{
 		// wait
+#ifdef WDOG_REPORT
+#ifdef PCBSKY	
+	GPBR->SYS_GPBR1 = 0x556 ;
+#else
+	RTC->BKP1R = 0x556 ;
+#endif
+#endif
 	} ;
 	USART2->DR = byte ;
 }
@@ -2448,7 +2491,7 @@ void menuUp1(uint8_t event)
  #ifndef SMALL
 				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
-					FirmwareSize = FileSize[fc->vpos] ;
+					FirmwareSize = SharedMemory.Mdata.FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					XmegaState = XMEGA_START ;
 #if defined(PCBX9D) || defined(PCB9XT)
@@ -2472,7 +2515,7 @@ void menuUp1(uint8_t event)
 				}
 				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
-					FirmwareSize = FileSize[fc->vpos] ;
+					FirmwareSize = SharedMemory.Mdata.FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					EXTERNAL_RF_ON() ;
 					XmegaState = XMEGA_START ;
@@ -2481,7 +2524,7 @@ void menuUp1(uint8_t event)
 #ifdef PCBX9D
 				else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 				{
-					FirmwareSize = FileSize[fc->vpos] ;
+					FirmwareSize = SharedMemory.Mdata.FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					XmegaState = XMEGA_START ;
 				}
@@ -2489,7 +2532,7 @@ void menuUp1(uint8_t event)
 #ifndef NO_MULTI
 				else if (mdata->UpdateItem == UPDATE_TYPE_MULTI )
 				{
-					FirmwareSize = FileSize[fc->vpos] ;
+					FirmwareSize = SharedMemory.Mdata.FileSize[fc->vpos] ;
 					firmwareAddress = 0x00000000 ;
 					MultiState = MULTI_START ;
 					MultiResult = 0 ;
@@ -2499,7 +2542,7 @@ void menuUp1(uint8_t event)
 				{
 // SPort update
 					mdata->SportState = SPORT_START ;
-					FirmwareSize = FileSize[fc->vpos] ;
+					FirmwareSize = SharedMemory.Mdata.FileSize[fc->vpos] ;
 					if ( checkForFrsk(mdata->FlashFilename) )
 					{
 						FirmwareSize -= 16 ;
@@ -2594,7 +2637,7 @@ void menuUp1(uint8_t event)
  #ifndef REVX
 //			else if (mdata->UpdateItem == UPDATE_TYPE_COPROCESSOR )		// CoProcessor
 //			{
-//				uint32_t size = FileSize[fc->vpos] ;
+//				uint32_t size = SharedMemory.Mdata.FileSize[fc->vpos] ;
 //				width = BytesFlashed * 64 / size ;
 //				CoProresult = 0 ;
 //				if ( CoProcReady )
@@ -2638,7 +2681,7 @@ void menuUp1(uint8_t event)
  #ifndef SMALL
 			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
-//				uint32_t size = FileSize[fc->vpos] ;
+//				uint32_t size = SharedMemory.Mdata.FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
 				if ( width > FirmwareSize )
 				{
@@ -2659,7 +2702,7 @@ void menuUp1(uint8_t event)
 			}
 			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
-//				uint32_t size = FileSize[fc->vpos] ;
+//				uint32_t size = SharedMemory.Mdata.FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
 				if ( width > FirmwareSize )
 				{
@@ -2678,7 +2721,7 @@ void menuUp1(uint8_t event)
 #ifdef PCBX9D
 			else if (mdata->UpdateItem == UPDATE_TYPE_XMEGA )
 			{
-//				uint32_t size = FileSize[fc->vpos] ;
+//				uint32_t size = SharedMemory.Mdata.FileSize[fc->vpos] ;
 				width = xmegaUpdate() ;
 				if ( width > FirmwareSize )
 				{
@@ -2751,6 +2794,10 @@ void menuUp1(uint8_t event)
 			lcd_hline( 0, 5*FH-1, 65 ) ;
 			lcd_hline( 0, 6*FH, 65 ) ;
 			lcd_vline( 64, 5*FH, 8 ) ;
+ 			if ( width > 64 )
+			{
+				width = 64 ;
+			}
 			for ( i = 0 ; i <= width ; i += 1 )
 			{
 				lcd_vline( i, 5*FH, 8 ) ;
@@ -2763,7 +2810,7 @@ void menuUp1(uint8_t event)
 			lcd_puts_Pleft( 3*FH, "Flashing Complete" ) ;
  			if ( (mdata->UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
  			{
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBTX16S)
  				if ( mdata->SportVerValid & 1 )
  				{
  					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
@@ -2846,7 +2893,7 @@ void menuUp1(uint8_t event)
 
 			if ( checkForExitEncoderLong( event ) )
 			{
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBTX16S)
 				EXTERNAL_RF_OFF();
 				INTERNAL_RF_OFF();
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7)
@@ -3542,7 +3589,7 @@ extern volatile uint8_t PxxTxCount ;
 		x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
 	}
 #else
- #if defined(PCBX9D) || defined(PCB9XT)
+ #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBTX16S)
 	x9dSPortTxStart( TxPhyPacket, i, NO_RECEIVE ) ;
  #endif
  #ifdef PCBSKY
@@ -4235,11 +4282,11 @@ uint32_t sportUpdate( uint32_t external )
 #if !defined(PCBTARANIS)
 			 FrskyTelemetryType = FRSKY_TEL_SPORT ;
 #endif
- #if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
+ #if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS))  || defined(PCBTX16S)
   #if defined(PCBTARANIS)
 			sportInit() ;
   #else
-   #if defined(PCBX9LITE) || defined(REV19) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
+   #if defined(PCBX9LITE) || defined(REV19) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) || defined(PCBTX16S)
 			if ( external )
 			{
 				com1_Configure( 57600, SERIAL_NORM, 0 ) ;
@@ -4274,7 +4321,7 @@ uint32_t sportUpdate( uint32_t external )
 //			startPdcUsartReceive() ;
 #endif
 			SportTimer = 5 ;		// 50 mS
-#if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) 
+#if defined(PCBX9D) || defined(PCB9XT) || (defined(PCBX10) && defined(PCBREV_EXPRESS)) || defined(PCBTX16S)
 			if ( external )
 			{
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)// || defined(REV19)
@@ -4397,7 +4444,7 @@ void maintenanceBackground()
 {
 #if !defined(PCBTARANIS)
 	// First, deal with any received bytes
-#if defined(PCBX9D) || defined(PCB9XT)
+#if defined(PCBX9D) || defined(PCB9XT) || defined(PCBTX16S)
 #ifdef ACCESS
 	if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{

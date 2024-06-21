@@ -149,10 +149,15 @@ private:
 		uint8_t REGisGvar( int8_t x ) ;
 
 		uint32_t getFlightPhase() ;
+		
+		t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
+		t_trim getRawTrimComplete( uint32_t phase, uint32_t idx ) ;
+		int16_t getTrimValueAdd( uint32_t phase, uint32_t idx ) ;
 		int16_t getRawTrimValue( uint8_t phase, uint8_t idx ) ;
 		uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx ) ;
-		int16_t getTrimValue( uint8_t phase, uint8_t idx ) ;
-		void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
+//		int16_t getTrimValue( uint8_t phase, uint8_t idx ) ;
+		void setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim) ;
+//		void setTrimValue(uint8_t phase, uint8_t idx, int16_t trim) ;
 		int16_t calc_scaler( uint8_t index ) ;
 		void configSwitches( void ) ;
 		uint8_t IS_THROTTLE( uint8_t x) ;

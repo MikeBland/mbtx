@@ -54,6 +54,20 @@ SwitchDialog::SwitchDialog(QWidget *parent, int index, struct t_switchData *sdat
 	connect(ui->timeOnSB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
   connect(ui->timeOffSB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
   connect(ui->delaySB,SIGNAL(valueChanged(double)),this,SLOT(valuesChanged()));
+
+	ui->v1CB->setVisible(true) ;
+	ui->v1Label->setVisible(true) ;
+	ui->sw1CB->setVisible(false) ;
+	ui->sw1Label->setVisible(false) ;
+	ui->sw2CB->setVisible(false) ;
+	ui->sw2Label->setVisible(false) ;
+	ui->valSB->setVisible(true) ;
+	ui->valLabel->setVisible(true) ;
+	ui->v2CB->setVisible(false) ;
+	ui->v2Label->setVisible(false) ;
+  ui->timeOnSB->setVisible(false);
+  ui->timeOffSB->setVisible(false);
+	ui->delaySB->setVisible(true) ;
 }
 
 SwitchDialog::~SwitchDialog()
@@ -343,6 +357,8 @@ void SwitchDialog::update()
 			ui->v1Label->setVisible(false) ;
 			ui->val2SB->setVisible(false) ;
       ui->val2Label->setVisible(false) ;
+			ui->v2CB->setVisible(false) ;
+			ui->v2Label->setVisible(false) ;
 
 			ui->valSB->setVisible(false) ;
 			ui->valLabel->setVisible(false) ;

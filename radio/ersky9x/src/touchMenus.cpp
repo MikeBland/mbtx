@@ -43,6 +43,7 @@
 #ifndef SIMU
 #include "CoOS.h"
 #endif
+#include "gvars.h"
 
 #include "timers.h"
 #include "analog.h"
@@ -224,7 +225,7 @@ uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t c
 	drawItem( (char *)s, y, condition ) ;
   if (value)
 	{
-		lcd_putcAttColour( TRIGHT-FW-5, y+3, '\202', 0, condition ? ~LcdForeground : LcdForeground, condition ? ~colour : colour ) ;
+		lcd_putcAttColour( TRIGHT-TRMARGIN-FW, y+3, '\202', 0, condition ? ~LcdForeground : LcdForeground, condition ? ~colour : colour ) ;
 	}
 	lcd_rectColour( TRIGHT-FW-6, y+TVOFF, 7, 7, condition ? ~LcdForeground : LcdForeground ) ;
 //	lcd_hbar( TRIGHT-FW-6, y+TVOFF, 7, 7, 0 ) ;
@@ -348,6 +349,43 @@ int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag )
 	return result ;
 }
 
+uint8_t LastTselection ;
+uint8_t LastTaction ;
+
+uint16_t processSelection( uint8_t vert, int32_t newSelection )
+{
+	uint16_t result = vert ;
+	if ( newSelection >= 0 )
+	{
+		if ( vert != newSelection )
+		{
+			LastTselection = newSelection ;
+			LastTaction = 0 ;
+		}
+		result = newSelection ;
+	}
+	else if (newSelection == -2)
+	{
+		if ( vert == LastTselection )
+		{
+			if ( LastTaction == 2 )
+			{
+				result |= 0x100 ;
+			}
+		}
+		LastTaction = 2 ;
+	}
+	return result ;
+}
+
+void checkTouchEnterEdit( uint16_t value )
+{
+	if ( Tevent == 0 && (value & 0x0100) )
+	{
+		Tevent = EVT_KEY_BREAK(BTN_RE) ;
+		s_editMode = 1 ;
+	}
+}
 
 void editTimer( uint8_t sub, uint8_t event )
 {
@@ -380,7 +418,7 @@ void editTimer( uint8_t sub, uint8_t event )
 
 	drawItem( XPSTR("Time"), y, (sub == subN ) ) ;
 	saveEditColours( sub == subN, colour ) ;
- 	putsTime( TRIGHT-5-2*FW, y+TVOFF, ptm->tmrVal, 0, 0 ) ;
+ 	putsTime( TRIGHT-TRMARGIN-2*FW, y+TVOFF, ptm->tmrVal, 0, 0 ) ;
 	restoreEditColours() ;
 
 	if(sub==subN)
@@ -401,7 +439,7 @@ void editTimer( uint8_t sub, uint8_t event )
 		CHECK_INCDEC_H_MODELVAR_0( ptm->tmrModeA, 1+2+24+8 ) ;
 	}
 	saveEditColours( sub == subN, colour ) ;
-  putsTmrMode(TRIGHT-5-4*FW,y+TVOFF,0, timer, 1 ) ;
+  putsTmrMode(TRIGHT-TRMARGIN-4*FW,y+TVOFF,0, timer, 1 ) ;
 	restoreEditColours() ;
 	y += TFH ;
 	subN += 1 ;
@@ -414,7 +452,7 @@ void editTimer( uint8_t sub, uint8_t event )
 	}
 	uint8_t doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
 	saveEditColours( attr, colour ) ;
-	ptm->tmrModeB = edit_dr_switch( TRIGHT-5-4*FW, y+TVOFF, ptm->tmrModeB, 0, doedit, event ) ;
+	ptm->tmrModeB = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, ptm->tmrModeB, 0, doedit, event ) ;
 	restoreEditColours() ;
 	y += TFH ;
 	subN += 1 ;
@@ -427,7 +465,7 @@ void editTimer( uint8_t sub, uint8_t event )
 	}
 	drawIdxText( y, (char *)PSTR(STR_COUNT_DOWN_UP), ptm->tmrDir, attr ) ;
 //	saveEditColours( sub == subN, colour ) ;
-//  lcd_putsAttIdx( TRIGHT-5-10*FW, y+TVOFF, PSTR(STR_COUNT_DOWN_UP), ptm->tmrDir, 0 ) ;
+//  lcd_putsAttIdx( TRIGHT-TRMARGIN-10*FW, y+TVOFF, PSTR(STR_COUNT_DOWN_UP), ptm->tmrDir, 0 ) ;
 //	restoreEditColours() ;
 	y += TFH ;
 	subN += 1 ;
@@ -452,7 +490,7 @@ void editTimer( uint8_t sub, uint8_t event )
 	int16_t sw = (timer==0) ? g_model.timer1RstSw : g_model.timer2RstSw ;
 	doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
 	saveEditColours( sub == subN, colour ) ;
-	sw = edit_dr_switch( TRIGHT-5-4*FW, y+TVOFF, sw, 0, doedit, event ) ;
+	sw = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, sw, 0, doedit, event ) ;
 	restoreEditColours() ;
 	if ( timer == 0 )
 	{
@@ -472,7 +510,7 @@ void editTimer( uint8_t sub, uint8_t event )
 		attr = INVERS ;
 	}
 	sw = (timer==0) ? g_model.timer1Haptic : g_model.timer2Haptic ;
-	lcd_putsAttIdxColour( TRIGHT-6*FW-5, y+TVOFF, XPSTR("\006  NoneMinute Cdown  Both"), sw, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+	lcd_putsAttIdxColour( TRIGHT-TRMARGIN-6*FW, y+TVOFF, XPSTR("\006  NoneMinute Cdown  Both"), sw, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
 	if( attr )
 	{
 		CHECK_INCDEC_H_GENVAR_0( sw, 3 ) ;
@@ -515,11 +553,10 @@ void menuLimitsOne(uint8_t event)
 	uint16_t colour = dimBackColour() ;
 	
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
-	 
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
+
   LimitData *ld = &g_model.limitData[index];
 #if EXTRA_SKYCHANNELS
 	if ( index >= NUM_SKYCHNOUT )
@@ -559,7 +596,7 @@ void menuLimitsOne(uint8_t event)
 		value = -125 ;						
 	}
 	drawItem( XPSTR("Min"), y, (sub == 1 ) ) ;
-	drawNumber( TRIGHT-5, y, value, attr) ; //, attr ? ~colour : colour ) ;
+	drawNumber( TRIGHT-TRMARGIN, y, value, attr) ; //, attr ? ~colour : colour ) ;
   if(attr)
 	{
     ld->min -=  100;
@@ -576,7 +613,7 @@ void menuLimitsOne(uint8_t event)
 	}
 
 	drawItem( XPSTR("Max"), y, (sub == 2 ) ) ;
-	drawNumber( TRIGHT-5, y, value, attr) ; //, attr ? ~colour : colour ) ;
+	drawNumber( TRIGHT-TRMARGIN, y, value, attr) ; //, attr ? ~colour : colour ) ;
   if(attr)
 	{
     ld->max +=  100;
@@ -587,7 +624,7 @@ void menuLimitsOne(uint8_t event)
 	attr = sub==3 ? INVERS : 0 ;
 
 	drawItem( XPSTR("Reverse"), y, (sub == 3 ) ) ;
-	lcd_putsAttIdxColour( TRIGHT-5-3*FW, y+TVOFF, PSTR( STR_HYPH_INV)+2, ld->revert, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+	lcd_putsAttIdxColour( TRIGHT-TRMARGIN-3*FW, y+TVOFF, PSTR( STR_HYPH_INV)+2, ld->revert, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
   if(attr)
 	{
 		ld->revert = checkIncDec( ld->revert, 0, 1, EditType ) ;
@@ -618,23 +655,24 @@ void menuProcLimits(uint8_t event)
 	uint16_t y = 0 ;
 	uint32_t k = 0 ;
 	uint16_t t_pgOfs ;
-	
+
+	if ( ( event == EVT_ENTRY ) || ( event == EVT_ENTRY_UP ) )
+	{
+		LastTaction = 2 ;
+		LastTselection = mstate2.m_posVert ;
+	}
+	 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
-	uint8_t  sub = mstate2.m_posVert ;
+	uint8_t sub = mstate2.m_posVert ;
 
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
-	else if (newSelection == -2)
-	{
-		selected = 1 ;
-	}
-	
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
+
 	if ( sub < NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
 	{
     lcd_outdez( 15*FW, 0, g_chans512[sub]/2 + 1500 ) ;
@@ -735,7 +773,7 @@ void menuProcLimits(uint8_t event)
 			value = 125 ;						
 		}
 		drawNumber( 24*FW, y, value, attr) ; //, attr ? ~LcdBackground : LcdBackground ) ;
-		lcd_putsAttIdxColour( TRIGHT-5-3*FW, y+TVOFF, PSTR( STR_HYPH_INV)+2, ld->revert, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~LcdBackground : LcdBackground ) ;
+		lcd_putsAttIdxColour( TRIGHT-TRMARGIN-3*FW, y+TVOFF, PSTR( STR_HYPH_INV)+2, ld->revert, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~LcdBackground : LcdBackground ) ;
 	}
 	if( k == NUM_SKYCHNOUT+EXTRA_SKYCHANNELS )
 	{
@@ -753,34 +791,75 @@ void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t t
 void menuModeOne(uint8_t event)
 {
   PhaseData *phase ;
-	phase = (s_currIdx < MAX_MODES) ? &g_model.phaseData[s_currIdx] : &g_model.xphaseData ;
+	uint16_t t_pgOfs ;
+	uint32_t newVpos ;
+	uint8_t index = s_currIdx ;
+	if ( index )
+	{
+		index -= 1 ;
+		phase = (index < MAX_MODES) ? &g_model.phaseData[index] : &g_model.xphaseData ;
+	}
+	else
+	{
+		phase = &g_model.xphaseData ;	// Keep compiler happy
+	}
 	static MState2 mstate2 ;
 	TITLE(PSTR(STR_FL_MODE)) ;
 	TlExitIcon = 1 ;
+	uint32_t rows = s_currIdx ? 9 : 0 ;
 	
-	uint32_t rows = 9 ;
+	if ( g_model.flightModeGvars )
+	{
+		rows += 24 ;
+	}
 	mstate2.check_columns(event, rows-1 ) ;
-  lcd_putc( 12*FW, 0, '1'+s_currIdx ) ;
+  lcd_putc( 12*FW, 0, '0'+s_currIdx ) ;
 
   uint8_t sub = mstate2.m_posVert ;
 	uint16_t colour = dimBackColour() ;
-	
-	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
+
+	t_pgOfs = evalHresOffset( sub ) ;
+	 
+	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
+
+	if ( rows > 9 )
 	{
-		sub = mstate2.m_posVert = newSelection ;
+		newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
+		if ( newVpos != t_pgOfs )
+		{
+			s_pgOfs = t_pgOfs = newVpos ;
+			if ( sub < t_pgOfs )
+			{
+				mstate2.m_posVert = sub = t_pgOfs ;
+			}
+			else if ( sub > t_pgOfs + TLINES - 1 )
+			{
+				mstate2.m_posVert = sub = t_pgOfs + TLINES - 1 ;
+			}
+		}
 	}
-	
+	 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	uint16_t oldBcolour = LcdBackground ;
 	uint16_t oldFcolour = LcdForeground ;
 
-	for (uint8_t i = 0 ; i < rows ; i += 1 )
+	uint32_t lines = rows > TLINES ? TLINES : rows ;
+	for (uint8_t i = 0 ; i < lines ; i += 1 )
 	{
     uint8_t y = i * TFH + TTOP ;
-    uint8_t attr = (sub==i) ? INVERS : 0 ;
+    uint32_t k = i+t_pgOfs ;
+    
+		uint8_t attr = (sub==k) ? INVERS : 0 ;
 
-		switch(i)
+    if ( s_currIdx == 0 )
+		{
+			k += 9 ;
+		}
+
+		switch(k)
 		{
       case 0 : // switch
 			{	
@@ -808,11 +887,17 @@ void menuModeOne(uint8_t event)
 				LcdForeground = oldFcolour ;
 			}
 			break ;
-      case 2 : // trim
+      
+// Trim values -500 to 500 = own Trim
+// 501 to 507 from other mode
+// 501 is mode 0, 502 is mode 1 unless his mode is 1 when it is mode 2
+			
+			case 2 : // trim
       case 3 : // trim
       case 4 : // trim
       case 5 : // trim
-				switch(i)
+			{	
+				switch(k)
 				{
       		case 2 : // trim
 						drawItem( (char *)XPSTR("Rudder Trim"), y, attr ) ;
@@ -832,33 +917,83 @@ void menuModeOne(uint8_t event)
 				{
 					LcdForeground = ~LcdForeground ;
 				}
-        putsTrimMode( TRIGHT-2*FW, y+TVOFF, s_currIdx+1, i-2, 0 ) ;
+        putsTrimMode( TRIGHT-2*FW, y+TVOFF, s_currIdx, k-2, 0 ) ;
+				t_trim v = phase->trim[k-2] ;
+				int16_t w = v.mode ;
+  			if (w > 0)
+				{
+	  			if (w & 1)
+					{
+	        	lcd_putc( TRIGHT-3*FW, y+TVOFF, '+' ) ;
+					}
+				}
 				LcdBackground = oldBcolour ;
 				LcdForeground = oldFcolour ;
         if (attr )
 				{
-          int16_t v = phase->trim[i-2] ;
-          if (v < TRIM_EXTENDED_MAX)
+extern t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
+					v = rawTrimFix( s_currIdx, v ) ;
+					w = v.mode ;
+					int16_t u = w ;
+          w = checkIncDec16( w, 0, 15, EE_MODEL ) ;
+					if (w != u)
 					{
-						v = TRIM_EXTENDED_MAX;
-					}
-					int16_t u = v ;
-          v = checkIncDec16( v, TRIM_EXTENDED_MAX, TRIM_EXTENDED_MAX+MAX_MODES+1, EE_MODEL ) ;
-            
-					if (v != u)
-					{
-            if (v == TRIM_EXTENDED_MAX) v = 0 ;
-//							if ( v == TRIM_EXTENDED_MAX+MAX_MODES+1 )
-//							{
-//								v = 2000 ;
-//							}
-  					phase->trim[i-2] = v ;
+						if ( w & 1 )
+						{
+							if ( (w>>1) == s_currIdx )
+							{
+								if ( w > u )
+								{
+									w += 1 ;
+									if ( s_currIdx == 7 )
+									{
+										if ( w > 14 )
+										{
+											w = 14 ;
+										}
+									}
+								}
+								else
+								{
+									w -= 1 ;
+								}
+							}
+						}
+						v.mode = w ;
+						// reverse xyzzy!!
+						if ( w & 1 )
+						{
+							// additive
+							v.value = 0 ;
+						}
+						else
+						{
+							w >>= 1 ;
+							if ( w == s_currIdx )
+							{
+								v.value = 0 ;
+							}
+							else
+							{
+								if ( w > s_currIdx )
+								{
+									w -= 1 ;
+								}
+								v.value = TRIM_EXTENDED_MAX + w + 1 ;
+							}
+						}
+  					phase->trim[k-2] = v ;
           }
+//			drawNumber( TRIGHT-TRMARGIN+5*FW, y, u, 0 ) ; //, attr ? ~colour : colour ) ;
+//			drawNumber( TRIGHT-TRMARGIN+5*FW, 0, s_currIdx, 0 ) ; //, attr ? ~colour : colour ) ;
         }
+//				drawNumber( TRIGHT-TRMARGIN-7*FW, y, phase->trim[k-2].value, 0 ) ; //, attr ? ~colour : colour ) ;
+//				drawNumber( TRIGHT-TRMARGIN-11*FW, y, phase->trim[k-2].mode, 0 ) ; //, attr ? ~colour : colour ) ;
+			}
 			break ;
 			case 6 : // fadeIn
 				drawItem( (char *)XPSTR("Fade In"), y, attr ) ;
-				drawNumber( TRIGHT-5, y, phase->fadeIn * 5, attr|PREC1) ; //, attr ? ~colour : colour ) ;
+				drawNumber( TRIGHT-TRMARGIN, y, phase->fadeIn * 5, attr|PREC1) ; //, attr ? ~colour : colour ) ;
   			if( attr )
 				{
 					CHECK_INCDEC_H_MODELVAR( phase->fadeIn, 0, 15 ) ;
@@ -867,7 +1002,7 @@ void menuModeOne(uint8_t event)
       
 			case 7 : // fadeOut
 				drawItem( (char *)XPSTR("Fade Out"), y, attr ) ;
-				drawNumber( TRIGHT-5, y, phase->fadeOut * 5, attr|PREC1) ; //, attr ? ~colour : colour ) ;
+				drawNumber( TRIGHT-TRMARGIN, y, phase->fadeOut * 5, attr|PREC1) ; //, attr ? ~colour : colour ) ;
   			if( attr )
 				{
 					CHECK_INCDEC_H_MODELVAR( phase->fadeOut, 0, 15 ) ;
@@ -880,6 +1015,89 @@ void menuModeOne(uint8_t event)
 				LcdBackground = attr ? ~colour : colour ;
 				alphaEditName( TRIGHT-sizeof(phase->name)*FW-FW, y+TVOFF, (uint8_t *)phase->name, sizeof(phase->name), attr|ALPHA_NO_NAME, (uint8_t *)0 ) ;
 				LcdBackground = oldBcolour ;
+			}
+			break ;
+			
+			default :
+			{
+				uint8_t text[4] ;
+				text[0] = 'G' ;
+				text[1] = 'V' ;
+				text[3] = 0 ;
+				k -= 9 ;
+				if ( ( k & 1) == 0 )
+				{
+					k /= 2 ;
+	        int16_t v ;
+					text[2] = ((k >=9)? '8' : '1') + k ;
+					drawItem( (char *)text, y, attr ) ;
+					if ( g_model.gvarNames[k*3] )
+					{
+						if ( g_model.gvarNames[k*3] != ' ' )
+						{
+							uint8_t text[6] ;
+  						ncpystr(&text[1], &g_model.gvarNames[k*3], 3 ) ;
+			  			text[0] = '(' ;
+			  			text[4] = ')' ;
+			  			text[5] = 0 ;
+							lcd_puts_P( 4*FW, y+TVOFF, (char *)text ) ;
+						}
+					}
+  	      v = readMgvar( s_currIdx, k ) ;
+	        if ( (v > GVAR_MAX) && ( s_currIdx ) )
+					{
+    	      uint32_t p = v - GVAR_MAX - 1 ;
+      	    if (p >= s_currIdx)
+						{
+							p += 1 ;
+						}
+						text[0] = 'F' ;
+						text[1] = 'M' ;
+						text[2] = '0'+p ;
+					}
+					else
+					{
+						text[0] = 'O' ;
+						text[1] = 'W' ;
+						text[2] = 'N' ;
+					}
+					drawText( TRIGHT-TRMARGIN-3*FW, y, (char *)text, attr ) ;
+
+					if ( attr && s_currIdx )
+					{
+//						int16_t oldValue = v ;
+          	if (v < GVAR_MAX)
+						{
+							v = GVAR_MAX ;
+						}
+						int16_t entryValue = v ;
+          	v = checkIncDec16( v, GVAR_MAX, GVAR_MAX+MAX_MODES+1, EE_MODEL ) ;
+          	if ( v != entryValue )
+						{
+	          	if (v == GVAR_MAX)
+							{
+								v = 0 ;
+							}
+//							if ( v != oldValue )
+							{
+								writeMgvar( s_currIdx, k, v ) ;
+							}
+						}
+					}
+				}
+				else
+				{
+					k /= 2 ;
+					drawItem( (char *)XPSTR(" Value"), y, attr ) ;
+					uint32_t fm = getGVarFlightMode( s_currIdx+1, k ) ;
+	        int16_t w = readMgvar( fm, k ) ;
+					drawNumber( TRIGHT-TRMARGIN, y, w, attr ) ; //, attr ? ~colour : colour ) ;
+					if ( attr )
+					{
+						w = checkIncDec16( w, -125, 125, EE_MODEL ) ;
+						writeMgvar( fm, k, w ) ;
+					}
+				}
 			}
 			break ;
 		}
@@ -989,7 +1207,7 @@ void menuTimers(uint8_t event)
 		secs = t % 60 ;
 		t = t / 60 ;	// minutes
 		qr = div( t, 60 ) ;
-		lcd_outdezNAtt( TRIGHT-5, y+TVOFF, secs, LEADING0, 2 ) ;
+		lcd_outdezNAtt( TRIGHT-TRMARGIN, y+TVOFF, secs, LEADING0, 2 ) ;
 		lcd_putcAtt( TRIGHT-3*FW-2, y+TVOFF, ':', 0 ) ;
 		lcd_outdezNAtt( TRIGHT-3*FW-2, y+TVOFF, (uint16_t)qr.rem, LEADING0, 2 ) ;
 		lcd_putcAtt( TRIGHT-6*FW+3-2, y+TVOFF, ':', 0 ) ;
@@ -1027,7 +1245,7 @@ void menuModelGeneral( uint8_t event )
 	uint32_t newVpos ;
 	uint16_t colour = dimBackColour() ;
 
-	rows = 21 ;
+	rows = 22 ;
 	
 	mstate2.check_columns(event, rows-1) ;
   int8_t  sub    = mstate2.m_posVert;
@@ -1057,10 +1275,9 @@ void menuModelGeneral( uint8_t event )
 	t_pgOfs = evalHresOffset( sub ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -1156,12 +1373,12 @@ void menuModelGeneral( uint8_t event )
   	if(sub==subN) { attr = INVERS ; }
 		drawItem( (char *)PSTR(STR_LIGHT_SWITCH), y, attr ) ;
 		saveEditColours( attr, colour ) ;
-		g_model.mlightSw = edit_dr_switch( TRIGHT-5-4*FW, y+TVOFF, g_model.mlightSw, 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+		g_model.mlightSw = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.mlightSw, 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 		if ( g_model.mlightSw == 0 )
 		{
-			putsDrSwitches( TRIGHT-5-9*FW, y+TVOFF, g_eeGeneral.lightSw, 0 ) ;
-  	  lcd_putcAtt( TRIGHT-5-10*FW, y+TVOFF, '(', 0 ) ;
-  	  lcd_putcAtt( TRIGHT-5-5*FW, y+TVOFF, ')', 0 ) ;
+			putsDrSwitches( TRIGHT-TRMARGIN-9*FW, y+TVOFF, g_eeGeneral.lightSw, 0 ) ;
+  	  lcd_putcAtt( TRIGHT-TRMARGIN-10*FW, y+TVOFF, '(', 0 ) ;
+  	  lcd_putcAtt( TRIGHT-TRMARGIN-5*FW, y+TVOFF, ')', 0 ) ;
 		}
 		restoreEditColours() ;
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
@@ -1196,7 +1413,7 @@ void menuModelGeneral( uint8_t event )
 		}
 		drawItem( (char *)PSTR(STR_TRIM_SWITCH), y, attr ) ;
 		saveEditColours( attr, colour ) ;
-		g_model.trimSw = edit_dr_switch( TRIGHT-5-4*FW, y+TVOFF, g_model.trimSw, 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+		g_model.trimSw = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.trimSw, 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 		restoreEditColours() ;
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 	}
@@ -1210,7 +1427,7 @@ void menuModelGeneral( uint8_t event )
 			attr = INVERS ;
 		}
 		drawItem( (char *)XPSTR(" Modify:"), y, attr ) ;
-		lcd_putsAttIdxColour( TRIGHT-5-8*FW, y+TVOFF, XPSTR("\010SubTrims   Trims"), g_model.instaTrimToTrims, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+		lcd_putsAttIdxColour( TRIGHT-TRMARGIN-8*FW, y+TVOFF, XPSTR("\010SubTrims   Trims"), g_model.instaTrimToTrims, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
 	  if(attr)
 		{
 			g_model.instaTrimToTrims = checkIncDec16( g_model.instaTrimToTrims, 0, 1, EditType ) ;
@@ -1257,7 +1474,7 @@ void menuModelGeneral( uint8_t event )
 		uint8_t oldValue = g_model.throttleIdle ;
 		drawItem( (char *)PSTR( STR_THR_DEFAULT), y, (sub == subN ) ) ;
 		saveEditColours( sub == subN, colour ) ;
-  	lcd_putsAttIdx( TRIGHT-5-6*FW, y+TVOFF, XPSTR("\006   EndCentre"), g_model.throttleIdle, 0 ) ;
+  	lcd_putsAttIdx( TRIGHT-TRMARGIN-6*FW, y+TVOFF, XPSTR("\006   EndCentre"), g_model.throttleIdle, 0 ) ;
 		restoreEditColours() ;
   	if(sub==subN)
 		{
@@ -1296,7 +1513,7 @@ void menuModelGeneral( uint8_t event )
 			CHECK_INCDEC_H_MODELVAR( g_model.sub_trim_limit, 0, 100 ) ;
 		}
 		drawItem( (char *)PSTR(STR_AUTO_LIMITS), y, attr ) ;
-		drawNumber( TRIGHT-5, y, g_model.sub_trim_limit, attr|PREC1) ; //, attr ? ~colour : colour ) ;
+		drawNumber( TRIGHT-TRMARGIN, y, g_model.sub_trim_limit, attr|PREC1) ; //, attr ? ~colour : colour ) ;
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 	}
 	subN += 1 ;
@@ -1369,7 +1586,7 @@ void menuModelGeneral( uint8_t event )
 					attr = BLINK ;	
 				}
 			}
-			lcd_putsnAtt(TRIGHT-5-8*FW+i*FW, y+TVOFF, XPSTR("ABCDEFG6")+i,1, attr ) ;
+			lcd_putsnAtt(TRIGHT-TRMARGIN-8*FW+i*FW, y+TVOFF, XPSTR("ABCDEFG6")+i,1, attr ) ;
 		}
 		if(sub==subN)
 		{
@@ -1510,8 +1727,31 @@ void menuModelGeneral( uint8_t event )
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 	}
 	subN += 1 ;
-	 
-#ifdef LUA
+
+	if(t_pgOfs<=subN)
+	{
+		uint32_t oldValue = g_model.flightModeGvars ;
+		g_model.flightModeGvars = touchOnOffItem( g_model.flightModeGvars, y, XPSTR("Multi Gvars"), sub==subN, colour) ;
+		if ( g_model.flightModeGvars != oldValue )
+		{
+			if ( g_model.flightModeGvars )
+			{
+				initFmGvars() ;
+			}
+			else
+			{
+				for ( uint32_t i = 0 ; i < 7 ; i += 1 )
+				{
+					g_model.gvars[i].gvar = 0 ;
+					g_model.gvars[i].gvsource = 0 ;
+					g_model.gvswitch[i] = 0 ;
+				}
+			}
+		}
+		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
+	}
+	subN += 1 ;
+
 	if(t_pgOfs<=subN)
 	{
 		attr = sub==subN ? INVERS : 0 ;
@@ -1525,7 +1765,6 @@ void menuModelGeneral( uint8_t event )
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 	}
 	subN += 1 ;
-#endif
 }
 
 void menuProcVoiceOne(uint8_t event)
@@ -1587,10 +1826,9 @@ void menuProcVoiceOne(uint8_t event)
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -1942,7 +2180,13 @@ void menuVoice(uint8_t event, uint8_t mode)
 	uint8_t t_pgOfs ;
 	uint16_t y ;
 	uint32_t selected = 0 ;
-	
+
+	if ( ( event == EVT_ENTRY ) || ( event == EVT_ENTRY_UP ) )
+	{
+		LastTaction = 2 ;
+		LastTselection = mstate2.m_posVert ;
+	}
+	 
 #ifdef MOVE_VOICE
 	if ( s_moveMode )
 	{
@@ -1981,21 +2225,9 @@ void menuVoice(uint8_t event, uint8_t mode)
 		t_pgOfs = evalHresOffset( sub ) ;
 
 		int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-		if ( newSelection >= 0 )
-		{
-//			if ( sub == newSelection )
-//			{
-//				if ( event == 0 )
-//				{
-//					event = EVT_KEY_BREAK(BTN_RE) ;
-//				}
-//			}
-			sub = mstate2.m_posVert = newSelection ;
-		}
-		else if (newSelection == -2)
-		{
-			selected = 1 ;
-		}
+		uint16_t newVert = processSelection( sub , newSelection ) ;
+		sub = mstate2.m_posVert = newVert & 0x00FF ;
+		selected = newVert & 0x0100 ;
 		 
 		if ( handleSelectIcon() || selected )
 		{
@@ -2220,10 +2452,9 @@ void menuProcTemplates(uint8_t event)  //Issue 73
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	int32_t newSelection = checkTouchSelect( NUM_TEMPLATES, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	if ( checkForMenuEncoderLong( event ) || handleSelectIcon() )
 	{
@@ -2260,12 +2491,13 @@ void menuModes(uint8_t event)
 {
 	uint32_t i ;
   uint8_t attr ;
+	uint32_t selected = 0 ;
 	
 	TITLE(PSTR(STR_MODES)) ;
 	static MState2 mstate2 ;
   
 	TlExitIcon = 1 ;
-	uint32_t rows = 7 ;
+	uint32_t rows = 8 ;
 	event = mstate2.check_columns( event, rows-1 ) ;
 	
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -2274,42 +2506,56 @@ void menuModes(uint8_t event)
 	uint8_t sub = mstate2.m_posVert ;
 
 	int32_t newSelection = checkTouchSelect( rows+1, 0) ;
-	if ( newSelection >= 1 )
-	{
-		sub = mstate2.m_posVert = newSelection-1 ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
 
-	if ( handleSelectIcon() || ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) || handleSelectIcon() )
+	if ( handleSelectIcon() || ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) || selected )
 	{
 		s_currIdx = sub ;
 		killEvents(event);
-		pushMenu(menuModeOne) ;
+		if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
+		{
+			if ( s_currIdx <= 7 )
+			{
+				pushMenu(menuModeOne) ;
+			}
+		}
   }
     
-  lcd_putc( THOFF, TTOP+TVOFF, 'F' ) ;
-  lcd_putc( THOFF+FW, TTOP+TVOFF, '0' ) ;
-	lcd_puts_P( TRIGHT-TRMARGIN-7*FW, TTOP+TVOFF, XPSTR("RETA") ) ;
-	lcd_hline( 0, TTOP+TFH, TRIGHT ) ;
 	uint16_t oldBcolour = LcdBackground ;
 	uint16_t oldFcolour = LcdForeground ;
 
-  for ( i=0 ; i<MAX_MODES+1 ; i += 1 )
+  for ( i=0 ; i<MAX_MODES+1+1 ; i += 1 )
 	{
-    uint16_t y = TTOP + TFH + i*TFH ;
-  	PhaseData *p ;
-		p = getPhaseAddress( i ) ;
+		uint32_t k ;
+    uint16_t y = TTOP + i*TFH ;
     attr = (i == sub) ? INVERS : 0 ;
+		if ( i == 0 )
+		{
+			
+	  	lcd_putc( THOFF, TTOP+TVOFF, 'F' ) ;
+  		lcd_putc( THOFF+FW, TTOP+TVOFF, '0' ) ;
+			lcd_putsAtt( TRIGHT-TRMARGIN-10*FW, TTOP+TVOFF, XPSTR("R E T A"), attr ) ;
+			lcd_hline( 0, TTOP+TFH, TRIGHT ) ;
+			s_editMode = 0 ;
+			continue ;
+		}
+  	k = i - 1 ;
+		
+		PhaseData *p ;
+		p = getPhaseAddress( k ) ;
 		if ( attr )
 		{
 			lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
 			LcdForeground = ~LcdForeground ;
 		}
     lcd_putcAttColour( THOFF, y+TVOFF, 'F', 0, LcdForeground, attr ? ~colour : colour ) ;
-    lcd_putcAttColour( THOFF+FW, y+TVOFF, '1'+i, 0, LcdForeground, attr ? ~colour : colour ) ;
+    lcd_putcAttColour( THOFF+FW, y+TVOFF, '1'+k, 0, LcdForeground, attr ? ~colour : colour ) ;
 		lcd_putsnAttColour( THOFF+3*FW, y+TVOFF, p->name, 6, 0, LcdForeground, attr ? ~LcdBackground : LcdBackground ) ;
 		LcdForeground = oldFcolour ;
-		putsDrSwitchesColour( THOFF+10*FW, y+TVOFF, p->swtch, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
-		putsDrSwitchesColour( THOFF+15*FW, y+TVOFF, p->swtch2, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+		putsDrSwitchesColour( THOFF+7*FW, y+TVOFF, p->swtch, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+		putsDrSwitchesColour( THOFF+12*FW, y+TVOFF, p->swtch2, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
 		LcdBackground = attr ? ~colour : colour ;
 		if ( attr )
 		{
@@ -2317,7 +2563,12 @@ void menuModes(uint8_t event)
 		}
     for ( uint8_t t = 0 ; t < NUM_STICKS ; t += 1 )
 		{
-			putsTrimMode( TRIGHT-3-7*FW+t*FW, y+TVOFF, i+1, t, 0 ) ;
+			putsTrimMode( TRIGHT-3-10*FW+t*FW*2, y+TVOFF, k+1, t, 0 ) ;
+			int16_t v = p->trim[t].mode ;
+ 			if (v && ( v & 1 ) )
+			{
+        lcd_putc( TRIGHT-3-11*FW+t*FW*2, y+TVOFF, '+' ) ;
+			}
 		}
 		LcdBackground = oldBcolour ;
 		LcdForeground = attr ? ~oldFcolour : oldFcolour ;
@@ -2565,7 +2816,7 @@ void menuProcDate(uint8_t event)
     break;
 	}		 
 
-	disp_datetime( TTOP ) ;
+	disp_datetime( TTOP+TVOFF ) ;
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	for (uint8_t subN = 0 ; subN<rows ; subN += 1)
@@ -2665,10 +2916,9 @@ void menuGeneral( uint8_t event )
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -2788,10 +3038,9 @@ void menuAlarms( uint8_t event )
 	uint8_t subN = 0 ;
 
 	int32_t newSelection = checkTouchSelect( rows, 0 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	y = TTOP ;
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -2871,10 +3120,9 @@ void menuAudio( uint8_t event )
 	t_pgOfs = evalHresOffset( sub ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1)+1, t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -3047,10 +3295,9 @@ void menuDisplay( uint8_t event )
 //	t_pgOfs = evalHresOffset( sub ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	y = TTOP ;
 	 
@@ -3196,10 +3443,9 @@ void menuHeli( uint8_t event )
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	y = TTOP ;
 	 
@@ -3289,10 +3535,9 @@ void menuScaleOne(uint8_t event)
 	t_pgOfs = evalHresOffset( sub ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -3513,14 +3758,14 @@ void menuProcScalers(uint8_t event)
 	uint8_t sub = mstate2.m_posVert ;
 	uint16_t y = TTOP ;
   uint32_t k ;
+	uint32_t selected = 0 ;
 
 	int32_t newSelection = checkTouchSelect( rows, 0 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
 
-	if ( checkForMenuEncoderBreak( event ) || handleSelectIcon() )
+	if ( checkForMenuEncoderBreak( event ) || handleSelectIcon() || selected )
 	{
 		s_currIdx = sub ;
 		killEvents(event);
@@ -3574,10 +3819,9 @@ void menuBindOptions(uint8_t event)
 	uint32_t sub = mstate2.m_posVert ;
 	
 	int32_t newSelection = checkTouchSelect( rows, 0, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	if ( sub == 0 )
 	{
@@ -3659,10 +3903,9 @@ void menuProcCurve(uint8_t event)
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	uint32_t newVpos ;
 	newVpos = scrollBar( 395, TSCROLLTOP, 27, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
@@ -3758,14 +4001,9 @@ void menuProcProtocol(uint8_t event)
 	int8_t  sub    = mstate2.m_posVert ;
 	
 	int32_t newSelection = checkTouchSelect( dataItems, 0, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
-	else if (newSelection == -2)
-	{
-		selected = 1 ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	if ( handleSelectIcon() || selected )
 	{
@@ -4288,10 +4526,9 @@ void menuProcTrainProtocol(uint8_t event)
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	y = TTOP ;
 	
@@ -4449,10 +4686,9 @@ void menuSwitchOne(uint8_t event)
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 	
 	y = TTOP ;
 
@@ -4693,18 +4929,9 @@ void menuProcSwitches(uint8_t event)
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-//		if ( sub == newSelection )
-//		{
-//			selected = 1 ;
-//		}
-		sub = mstate2.m_posVert = newSelection ;
-	}
-	else if (newSelection == -2)
-	{
-		selected = 1 ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
 
 	if ( handleSelectIcon() )
 	{
@@ -5348,10 +5575,9 @@ void menuOneAdjust(uint8_t event)
 	uint16_t colour = dimBackColour() ;
 
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
@@ -5364,9 +5590,9 @@ void menuOneAdjust(uint8_t event)
 		{
 			case 0 : // GV
 				drawItem( (char *)XPSTR("GVAR"), y, attr ) ;
-				if ( pgvaradj->gvarIndex > 6 )
+				if ( pgvaradj->gvarIndex > (g_model.flightModeGvars ? 11 : 6) )
 				{
-					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-6, attr ) ;
+					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-(g_model.flightModeGvars ? 11 : 6), attr ) ;
 				}
 				else
 				{
@@ -5374,7 +5600,7 @@ void menuOneAdjust(uint8_t event)
 				}
   			if(attr)
 				{
- 	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, 10 ) ;
+ 	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, (g_model.flightModeGvars ? 15 : 10 ) ) ;
 				}
 			break ;
 			case 1 : // Fn
@@ -5471,18 +5697,9 @@ void menuProcAdjust(uint8_t event)
 
 //	NoCheckSelect = 1 ;
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-//		if ( sub == newSelection )
-//		{
-//			selected = 1 ;
-//		}
-		sub = mstate2.m_posVert = newSelection ;
-	}
-	else if (newSelection == -2)
-	{
-		selected = 1 ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
 
 	if ( handleSelectIcon() || selected || ( event == EVT_KEY_BREAK(BTN_RE) ) )
 	{
@@ -5529,17 +5746,22 @@ void menuProcAdjust(uint8_t event)
 
 		if ( sub==k )
 		{
-			int8_t value ;
-			if ( idx > 6 )
+			int16_t value ;
+	 		lcd_putc( 20*FW+ADJ_OFF_0, 0, '=' ) ;
+			value = 7 ;
+			if ( g_model.flightModeGvars )
 			{
-				value = getTrimValue( CurrentPhase, idx - 7  ) ;
-				lcd_putsAttIdx( 17*FW, 0, PSTR(STR_GV_SOURCE), idx-6, 0 ) ;
+				value = 12 ;
+			}
+			if ( idx >= value )
+			{
+				value = getTrimValueAdd( CurrentPhase, idx - value  ) ;
+				lcd_putsAttIdx( 17*FW, 0, PSTR(STR_GV_SOURCE), idx-(value-1), 0 ) ;
 			}
 			else
 			{
-	  		lcd_puts_P( 17*FW, 0, XPSTR("GV =") ) ;
-				value = g_model.gvars[idx].gvar ;
-  			lcd_putc( 19*FW, 0, idx+'1' ) ;
+				value = getGvar(idx) ;
+				dispGvar( 17*FW, 0, idx+1, 0 ) ;
 			}
 			lcd_outdez( 25*FW, 0, value ) ;
 		} 
@@ -5559,9 +5781,9 @@ void menuProcAdjust(uint8_t event)
 //		{
 //			if ( j == 0 )
 //			{
-				if ( idx > 6 )
+				if ( idx > (g_model.flightModeGvars ? 8 : 6) )
 				{
-					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-6, 0 ) ;
+					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 8 : 6), attr ) ;
 				}
 				else
 				{
@@ -5611,23 +5833,28 @@ void menuOneGvar(uint8_t event)
 	TlExitIcon = 1 ;
 	uint32_t rows = 3 ;	
 	GvarData *pgvar ;
+	if ( g_model.flightModeGvars )
+	{
+		rows = 6 ;
+	}
 	
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
 
-  lcd_putc( 20*FW, 0, '1'+ s_currIdx ) ;
+	lcd_putc( 20*FW, 0, s_currIdx+ ((s_currIdx > 8) ? '8' : '1') ) ;
 	uint16_t colour = dimBackColour() ;
+	uint16_t oldBcolour = LcdBackground ;
 
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
-	if ( newSelection >= 0 )
-	{
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	pgvar = &g_model.gvars[s_currIdx] ;
+	GVarXData *pgxvar = &g_model.xgvars[s_currIdx] ;
 
 	for (uint8_t i = 0 ; i < rows ; i += 1 )
 	{
@@ -5637,27 +5864,93 @@ void menuOneGvar(uint8_t event)
 		switch(i)
 		{
 			case 0 : // switch
-				drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
-				saveEditColours( attr, colour ) ;
-				g_model.gvswitch[s_currIdx] = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.gvswitch[s_currIdx], 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
-				restoreEditColours() ;
+				if ( g_model.flightModeGvars )
+				{
+					uint8_t *psource ;
+					drawItem( (char *)XPSTR("Source"), y, attr ) ;
+					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
+					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), *psource, attr ) ;
+					// STR_GV_SOURCE
+ 					if(attr)
+					{ 
+						CHECK_INCDEC_H_MODELVAR( *psource, 0, 69 ) ;
+					}
+				}
+				else
+				{
+					drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
+					saveEditColours( attr, colour ) ;
+					g_model.gvswitch[s_currIdx] = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.gvswitch[s_currIdx], 0, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+					restoreEditColours() ;
+				}
 			break ;
 			case 1 :
-				drawItem( (char *)XPSTR("Source"), y, attr ) ;
-				drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvar->gvsource, attr ) ;
-				// STR_GV_SOURCE
- 				if(attr)
-				{ 
-					CHECK_INCDEC_H_MODELVAR( pgvar->gvsource, 0, 69 ) ;
+				if ( g_model.flightModeGvars )
+				{
+					drawItem( (char *)XPSTR("Unit"), y, attr ) ;
+					drawChar( TRIGHT-TRMARGIN-FW, y, pgxvar->unit ? '%' : '-', attr, attr ? ~colour : colour ) ;
+					if ( attr )
+					{
+						CHECK_INCDEC_H_MODELVAR_0( pgxvar->unit, 1 ) ;
+					}
+				}
+				else
+				{
+					drawItem( (char *)XPSTR("Source"), y, attr ) ;
+					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvar->gvsource, attr ) ;
+					// STR_GV_SOURCE
+ 					if(attr)
+					{ 
+						CHECK_INCDEC_H_MODELVAR( pgvar->gvsource, 0, 69 ) ;
+					}
 				}
 			break ;
 			case 2 :
-				drawItem( (char *)XPSTR("Value"), y, attr ) ;
-				drawNumber( TRIGHT-TRMARGIN, y, pgvar->gvar, attr ) ;
-  			if(attr)
+				if ( g_model.flightModeGvars )
 				{
-					CHECK_INCDEC_H_MODELVAR( pgvar->gvar, -125, 125 ) ;
+					drawItem( (char *)XPSTR("Precision"), y, attr ) ;
+					drawIdxText( y, (char *)XPSTR("\0030.-0.0"), pgxvar->prec, attr ) ;
+		    	if(attr)
+					{
+      		  CHECK_INCDEC_H_MODELVAR_0( pgxvar->prec, 1 ) ;
+					}	
 				}
+				else
+				{
+					drawItem( (char *)XPSTR("Value"), y, attr ) ;
+					drawNumber( TRIGHT-TRMARGIN, y, pgvar->gvar, attr ) ;
+  				if(attr)
+					{
+						CHECK_INCDEC_H_MODELVAR( pgvar->gvar, -125, 125 ) ;
+					}
+				}
+			break ;
+			case 3 :
+				drawItem( (char *)XPSTR("Minimum"), y, attr ) ;
+				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MIN+pgxvar->min, attr ) ;
+				if ( attr )
+				{
+					if ( GVAR_MIN+pgxvar->min > GVAR_MAX-pgxvar->max )
+					{
+						pgxvar->min = pgxvar->max = 0 ;
+					}
+					pgxvar->min = checkIncDec16( GVAR_MIN+pgxvar->min, GVAR_MIN, GVAR_MAX-pgxvar->max, EE_MODEL ) - GVAR_MIN ;
+				}
+			break ;
+			case 4 :
+				drawItem( (char *)XPSTR("Maximum"), y, attr ) ;
+				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MAX-pgxvar->max, attr ) ;
+	    	if(attr)
+				{
+      	  pgxvar->max = GVAR_MAX-checkIncDec16( GVAR_MAX-pgxvar->max, GVAR_MIN+pgxvar->min, GVAR_MAX, EE_MODEL ) ;
+    		}
+			break ;
+			case 5 :
+				drawItem( (char *)XPSTR("Name"), y, attr ) ;
+				LcdBackground = attr ? ~colour : colour ;
+				alphaEditName( TRIGHT-3*FW, y+TVOFF, &g_model.gvarNames[s_currIdx*3], 3, attr|ALPHA_NO_NAME, (uint8_t *)0 ) ;
+				LcdBackground = oldBcolour ;
+//				pgxvar->popup = touchOnOffItem( pgxvar->popup, y, XPSTR("Popup"), attr, DimBackColour ) ;
 			break ;
 		}
 	}
@@ -5674,10 +5967,17 @@ void menuProcGlobals(uint8_t event)
 	TITLE(PSTR(STR_GLOBAL_VARS));
 	EditType = EE_MODEL ;
 	static MState2 mstate2;
+	uint16_t t_pgOfs ;
 	uint32_t rows = MAX_GVARS ;
 	uint32_t selected = 0 ;
+	uint32_t newVpos ;
+	uint32_t k = 0 ;
 	TlExitIcon = 1 ;
 	
+	if ( g_model.flightModeGvars )
+	{
+		rows = 12 ;
+	}
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
@@ -5685,15 +5985,29 @@ void menuProcGlobals(uint8_t event)
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
+	t_pgOfs = evalHresOffset( sub ) ;
+
 //	NoCheckSelect = 1 ;
-	int32_t newSelection = checkTouchSelect( rows, 0, 1 ) ;
-	if ( newSelection >= 0 )
+	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	selected = newVert & 0x0100 ;
+
+	if ( rows > 9 )
 	{
-		if ( sub == newSelection )
+		newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
+		if ( newVpos != t_pgOfs )
 		{
-			selected = 1 ;
+			s_pgOfs = t_pgOfs = newVpos ;
+			if ( sub < t_pgOfs )
+			{
+				mstate2.m_posVert = sub = t_pgOfs ;
+			}
+			else if ( sub > t_pgOfs + TLINES - 1 )
+			{
+				mstate2.m_posVert = sub = t_pgOfs + TLINES - 1 ;
+			}
 		}
-		sub = mstate2.m_posVert = newSelection ;
 	}
 
 	if ( handleSelectIcon() || selected || ( event == EVT_KEY_BREAK(BTN_RE) ) )
@@ -5716,28 +6030,62 @@ void menuProcGlobals(uint8_t event)
 //		}
 //	}
 
-	for (uint32_t i = 0 ; i<MAX_GVARS ; i += 1 )
+	uint32_t lines = rows > TLINES ? TLINES : rows ;
+	for (uint32_t i=0; i<lines ; i++ )
 	{
     y=(i)*TFH +TTOP ;
-  	uint8_t attr = ((sub==i) ? INVERS : 0);
+    k=i+t_pgOfs ;
+  	uint8_t attr = ((sub==k) ? INVERS : 0);
 		if ( attr )
 		{
 			lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
 		}
 		saveEditColours( attr, LcdBackground ) ;
   	lcd_puts_P( THOFF, y+TVOFF, PSTR(STR_GV));
-		lcd_putc( THOFF+2*FW, y+TVOFF, i+'1') ;
+		lcd_putc( THOFF+2*FW, y+TVOFF, k+ ((k > 8) ? '8' : '1') ) ;
 		GvarData *pgvar ;
-		pgvar = &g_model.gvars[i] ;
-    putsDrSwitches( 7*FW, y+TVOFF, g_model.gvswitch[i], 0 );
-		lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), pgvar->gvsource, 0 ) ;
-		lcd_outdezAtt( 22*FW, y+TVOFF, pgvar->gvar, 0) ;
+#if MULTI_GVARS
+		if ( g_model.flightModeGvars )
+		{
+			attr = 0 ;
+			pgvar = &g_model.gvars[0] ;
+		}
+		else
+		{
+			pgvar = &g_model.gvars[k] ;
+		}
+#else
+		pgvar = &g_model.gvars[k] ;
+#endif
+#if MULTI_GVARS
+		if ( g_model.flightModeGvars == 0 )
+#endif
+		{
+	    putsDrSwitches( 7*FW, y+TVOFF, g_model.gvswitch[k], 0 );
+			uint32_t t ;
+			uint8_t *psource ;
+//			pgvar = &g_model.gvars[k] ;
+			psource = &pgvar->gvsource ;
+			t = *psource ;
+			lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), t, 0 ) ;
+			lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, pgvar->gvar, 0 ) ;
+		}
+#if MULTI_GVARS
+		else
+		{
+			uint8_t *psource ;
+			uint32_t t ;
+			psource = ( ( (uint8_t*)&g_model.gvars) + k ) ;
+			t = *psource ;
+			lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), t, 0 ) ;
+			lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, readMgvar( 0, k ), 0 ) ;
+		}
+#endif
+		
 		restoreEditColours() ;
 		lcd_hline( 0, y+TFH, TRIGHT ) ;
 	}
-	
 }
-
 
 #define NUM_MIX_SWITCHES	(9+NUM_SKYCSW)
 
@@ -5805,16 +6153,20 @@ void menuProcMixOne(uint8_t event)
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-		if ( sub == newSelection )
-		{
-//			selected = 1 ;
-			event = Tevent = EVT_KEY_BREAK(BTN_RE) ;
-			s_editMode = !s_editMode ;
-		}
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
+	
+//	if ( newSelection >= 0 )
+//	{
+//		if ( sub == newSelection )
+//		{
+////			selected = 1 ;
+//			event = Tevent = EVT_KEY_BREAK(BTN_RE) ;
+//			s_editMode = !s_editMode ;
+//		}
+//		sub = mstate2.m_posVert = newSelection ;
+//	}
 
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -6135,6 +6487,13 @@ void menuProcMixOne(uint8_t event)
 								}
 							}
 						}
+						else
+						{
+							if ( attr )
+							{
+								s_editMode = 0 ;	// Nothing to edit
+							}
+						}
 					}
 				}
 				restoreEditColours() ;
@@ -6157,6 +6516,7 @@ void menuProcMixOne(uint8_t event)
 				if ( attr )
 				{
 					Columns = 7 ;
+					s_editMode = 0 ;	// Nothing to edit by touch
 				}
   					
 				for ( uint8_t p = 0 ; p<MAX_MODES+2 ; p++ )
@@ -6719,14 +7079,9 @@ void editOneProtocol( uint8_t event )
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	int32_t newSelection = checkTouchSelect( dataItems, t_pgOfs, 1 ) ;
-	if ( newSelection >= 0 )
-	{
-//		if ( sub == newSelection )
-//		{
-//			selected = 1 ;
-//		}
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 	if ( dataItems >= TLINES )
 	{
@@ -7494,14 +7849,9 @@ void editOneInput(uint8_t event)
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	if ( newSelection >= 0 )
-	{
-//		if ( sub == newSelection )
-//		{
-//			selected = 1 ;
-//		}
-		sub = mstate2.m_posVert = newSelection ;
-	}
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	sub = mstate2.m_posVert = newVert & 0x00FF ;
+	checkTouchEnterEdit( newVert ) ;
 
 //	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 //	if ( newVpos != t_pgOfs )
@@ -7700,8 +8050,20 @@ void editOneInput(uint8_t event)
 				{
 					if ( pinput->mode == 4 )	// Expo
 					{
-            lcd_outdezAtt(TRIGHT-TRMARGIN,y+TVOFF,pinput->curve,0);
-            if(attr) CHECK_INCDEC_H_MODELVAR( pinput->curve, -100, 100 ) ;
+						int16_t value = pinput->curve ;
+						if ( value > 100 )
+						{
+							value += 400 ;
+						}	
+						drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
+						value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
+						if ( value > 500 )
+						{
+							value -= 400 ;
+						}
+						pinput->curve = value ;
+//						lcd_outdezAtt(TRIGHT-TRMARGIN,y+TVOFF,pinput->curve,0);
+//            if(attr) CHECK_INCDEC_H_MODELVAR( pinput->curve, -100, 100 ) ;
 					}
 					else
 					{
@@ -7763,6 +8125,7 @@ void menuProcModelSelect(uint8_t event)
 	uint16_t t_pgOfs ;
 	uint32_t newVpos ;
   static uint8_t sel_editMode ;
+	uint32_t selected = 0 ;
 
   int8_t subOld  = mstate2.m_posVert;
 	uint32_t rows = MAX_MODELS ;
@@ -7799,10 +8162,9 @@ void menuProcModelSelect(uint8_t event)
 	if ( !PopupData.PopupActive )
 	{
 		int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 2 ) ;
-		if ( newSelection >= 0 )
-		{
-			sub = mstate2.m_posVert = newSelection ;
-		}
+		uint16_t newVert = processSelection( sub , newSelection ) ;
+		sub = mstate2.m_posVert = newVert & 0x00FF ;
+		selected = newVert & 0x0100 ;
 
 		if ( TouchUpdated )
 		{
@@ -7995,63 +8357,71 @@ extern void eeSaveAll() ;
 	}
 	else
 	{
-  	switch(event)
-  	{
-  	//case  EVT_KEY_FIRST(KEY_MENU):
-	  	case  EVT_KEY_FIRST(KEY_EXIT):
-  	    if(sel_editMode)
-				{
- 	        sel_editMode = false;
-  	    }
-      break ;
+		if ( selected )
+		{
+			PopupData.PopupIdx = 0 ;
+			PopupData.PopupActive = 1 ;
+		}
+		else
+		{
+  		switch(event)
+  		{
+  		//case  EVT_KEY_FIRST(KEY_MENU):
+	  		case  EVT_KEY_FIRST(KEY_EXIT):
+  		    if(sel_editMode)
+					{
+ 	  	      sel_editMode = false;
+  		    }
+    	  break ;
 
-	  	case  EVT_KEY_FIRST(KEY_LEFT):
-  		case  EVT_KEY_FIRST(KEY_RIGHT):
-  	    if(g_eeGeneral.currModel != mstate2.m_posVert)
-  	    {
-          killEvents(event);
-					PopupData.PopupIdx = 0 ;
-					PopupData.PopupActive = 2 ;
-  	    }
-				else
-				{
-					RotaryState = ROTARY_MENU_LR ;
-		      if(event==EVT_KEY_FIRST(KEY_LEFT))  chainMenu(menuProcModelIndex);//{killEvents(event);popMenu(true);}
+	  		case  EVT_KEY_FIRST(KEY_LEFT):
+  			case  EVT_KEY_FIRST(KEY_RIGHT):
+  		    if(g_eeGeneral.currModel != mstate2.m_posVert)
+  		    {
+    	      killEvents(event);
+						PopupData.PopupIdx = 0 ;
+						PopupData.PopupActive = 2 ;
+  		    }
+					else
+					{
+						RotaryState = ROTARY_MENU_LR ;
+			      if(event==EVT_KEY_FIRST(KEY_LEFT))  chainMenu(menuProcModelIndex);//{killEvents(event);popMenu(true);}
 
-		      if(event==EVT_KEY_FIRST(KEY_RIGHT)) chainMenu(menuProcModelIndex);
-				}
- 	    break;
+			      if(event==EVT_KEY_FIRST(KEY_RIGHT)) chainMenu(menuProcModelIndex);
+					}
+ 	  	  break;
   		
-			case  EVT_KEY_FIRST(KEY_MENU) :
-			case  EVT_KEY_BREAK(BTN_RE) :
-				if(sel_editMode)
-				{
-  	    	sel_editMode = false ;
-				}
-				else
-				{
-          killEvents(event);
-					PopupData.PopupIdx = 0 ;
-					PopupData.PopupActive = 1 ;
-				}	 
-  	    s_editMode = 0 ;
-  	  break;
+				case  EVT_KEY_FIRST(KEY_MENU) :
+				case  EVT_KEY_BREAK(BTN_RE) :
+					if(sel_editMode)
+					{
+  		    	sel_editMode = false ;
+					}
+					else
+					{
+    	      killEvents(event);
+						PopupData.PopupIdx = 0 ;
+						PopupData.PopupActive = 1 ;
+					}	 
+  		    s_editMode = 0 ;
+  		  break;
   	
-			case  EVT_KEY_LONG(BTN_RE) :
-			if ( g_eeGeneral.disableBtnLong )
-			{
-				break ;
-			}		
-			case  EVT_KEY_LONG(KEY_EXIT):  // make sure exit long exits to main
-  	    popMenu(true);
-      break;
+				case  EVT_KEY_LONG(BTN_RE) :
+				if ( g_eeGeneral.disableBtnLong )
+				{
+					break ;
+				}		
+				case  EVT_KEY_LONG(KEY_EXIT):  // make sure exit long exits to main
+  		    popMenu(true);
+    	  break;
 
-  		case EVT_ENTRY:
-  	    sel_editMode = false;
-				PopupData.PopupActive = 0 ;
-  	    mstate2.m_posVert = g_eeGeneral.currModel ;
-    	break;
-  	}
+  			case EVT_ENTRY:
+  		    sel_editMode = false;
+					PopupData.PopupActive = 0 ;
+  		    mstate2.m_posVert = g_eeGeneral.currModel ;
+    		break;
+  		}
+		}
 	}
 
   if(sel_editMode && subOld!=sub)

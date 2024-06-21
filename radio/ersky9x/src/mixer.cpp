@@ -27,6 +27,7 @@
 #include "audio.h"
 #include "logicio.h"
 #include "sound.h"
+#include "gvars.h"
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #ifdef REV9E
@@ -43,7 +44,7 @@ extern SKYMixData *mixAddress( uint32_t index ) ;
 
 // static variables used in perOut - moved here so they don't interfere with the stack
 // It's also easier to initialize them here.
-int16_t  anas [NUM_SKYXCHNRAW+1+MAX_GVARS+1] ;		// To allow for 3POS and THIS and 8 extra PPM inputs
+int16_t  anas [NUM_SKYXCHNRAW+1+MAX_GVARS+1] ;		// To allow for 3POS and THIS
 int32_t  chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] = {0};
 uint8_t inacPrescale ;
 uint16_t inacSum = 0;
@@ -55,6 +56,7 @@ uint8_t  swOn  [MAX_SKYMIXERS+EXTRA_SKYMIXERS] = {0};
 #ifdef INPUTS
 int8_t  virtualInputsTrims[NUM_INPUTS] ;
 #endif
+uint8_t	CurrentMixerPhase = 0 ;
 uint8_t	CurrentPhase = 0 ;
 int16_t rawSticks[4] ;
 uint8_t TrimInUse[4] = { 1, 1, 1, 1 } ;
@@ -193,12 +195,6 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	struct t_fade *pFade ;
 	pFade = &Fade ;
 
-//#ifdef PCBX9D
-// #ifdef LATENCY
-//	GPIOA->ODR |= 0x4000 ;
-// #endif	
-//#endif
-
 	uint16_t t10ms ;
 	
 	t10ms = get_tmr10ms() ;
@@ -241,7 +237,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			{
 				if ( p != thisPhase )
 				{
-					CurrentPhase = p ;
+					CurrentMixerPhase = p ;
 					pFade->fadeWeight += pFade->fadeScale[p] ;
 					perOut( chanOut, att ) ;
 					att &= ~FADE_FIRST ;				
@@ -256,6 +252,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	}
 	pFade->fadeWeight += pFade->fadeScale[thisPhase] ;
 	CurrentPhase = thisPhase ;
+	CurrentMixerPhase = thisPhase ;
 	perOut( chanOut, att | FADE_LAST ) ;
 	
 	if ( pFade->fadePhases && MixTick10ms )
@@ -301,14 +298,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			fadeMask <<= 1 ;
 		}
 	}
-//#ifdef PCBX9D
-// #ifdef LATENCY
-//	GPIOA->ODR &= ~0x4000 ;
-// #endif	
-//#endif
 }
-
-
 
 int16_t scaleAnalog( int16_t v, uint8_t channel )
 {
@@ -404,15 +394,20 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 		if ( diffValue == 3 )
 		{
 			// New Gvar
-			if ( curveParam < 0 )
-			{
-				curveParam = -curveParam - 1 ;							
-				curveParam = -g_model.gvars[curveParam].gvar ;
-			}
-			else
-			{
-				curveParam = g_model.gvars[curveParam].gvar ;
-			}
+#if MULTI_GVARS
+			curveParam = getGvarFm( curveParam, CurrentMixerPhase ) ;
+#else
+			curveParam = getGvar( curveParam ) ;
+#endif
+//						if ( curveParam < 0 )
+//						{
+//							curveParam = -curveParam - 1 ;							
+//							curveParam = -g_model.gvars[curveParam].gvar ;
+//						}
+//						else
+//						{
+//							curveParam = g_model.gvars[curveParam].gvar ;
+//						}
 		}
     if (curveParam > 0 && v < 0)
       v = (v * (100 - curveParam)) / 100 ;
@@ -428,10 +423,11 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 		}
 		else
 		{
-      switch(md->curve){
-      case 0:
-        	break;
-      case 1:
+      switch(md->curve)
+			{
+	      case 0:
+       	break;
+	      case 1:
         	if(md->srcRaw == MIX_FULL) //FUL
         	{
         		  if( v<0 ) v=-RESX;   //x|x>0
@@ -439,8 +435,8 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
         	}else{
         		  if( v<0 ) v=0;   //x|x>0
         	}
-        	break;
-      case 2:
+       	break;
+	      case 2:
         	if(md->srcRaw == MIX_FULL) //FUL
         	{
         		  if( v>0 ) v=RESX;   //x|x<0
@@ -448,29 +444,30 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
         	}else{
         		  if( v>0 ) v=0;   //x|x<0
         	}
-        	break;
-      case 3:       // x|abs(x)
+       	break;
+  	    case 3:       // x|abs(x)
         	v = abs(v);
-        	break;
-      case 4:       //f|f>0
+       	break;
+    	  case 4:       //f|f>0
         	v = v>0 ? RESX : 0;
-        	break;
-      case 5:       //f|f<0
+       	break;
+      	case 5:       //f|f<0
         	v = v<0 ? -RESX : 0;
-        	break;
-      case 6:       //f|abs(f)
+        break;
+        case 6:       //f|abs(f)
         	v = v>0 ? RESX : -RESX;
-        	break;
-      default: //c1..c16
+       	break;
+	      default: //c1..c16
+				{
+					int8_t idx = md->curve ;
+					if ( idx < 0 )
 					{
-						int8_t idx = md->curve ;
-						if ( idx < 0 )
-						{
-							v = -v ;
-							idx = 6 - idx ;								
-						}
-        		v = intpol(v, idx - 7);
+						v = -v ;
+						idx = 6 - idx ;								
 					}
+       		v = intpol(v, idx - 7);
+				}
+       	break;
       }
 		}
 	}
@@ -580,7 +577,7 @@ void perOut(int16_t *chanOut, uint8_t att )
 								}
 								v = calcExpo( index, v ) ;
 
-                trimA[i] = getTrimValue( CurrentPhase, i )*2 ; //    if throttle trim -> trim low end
+                trimA[i] = getTrimValueAdd( CurrentMixerPhase, i )*2 ; //    if throttle trim -> trim low end
             }
 						if ( att & FADE_FIRST )
 						{
@@ -609,7 +606,7 @@ void perOut(int16_t *chanOut, uint8_t att )
         if(g_model.thrTrim)
 				{
 					int8_t ttrim ;
-					ttrim = getTrimValue( CurrentPhase, 2 ) ;
+					ttrim = getTrimValueAdd( CurrentMixerPhase, 2 ) ;
 					if(throttleReversed())
 					{
 						ttrim = -ttrim ;
@@ -625,6 +622,9 @@ void perOut(int16_t *chanOut, uint8_t att )
 	         	trimA[2] = ((int32_t)ttrim+125) * tmp / (RESX) ;
 					}
 				}
+//      for(uint32_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = getGvarFm( i, CurrentMixerPhase ) * 1024 / 100 ;
+//      for(uint32_t i=0;i<EXTRA_GVARS;i++) anas[i+MAX_GVARS+1+MIX_3POS] = getGvarFm( i+MAX_GVARS, CurrentMixerPhase ) * 1024 / 100 ;
+		
 			if ( att & FADE_FIRST )
 			{
 #ifdef INPUTS
@@ -663,8 +663,9 @@ void perOut(int16_t *chanOut, uint8_t att )
 #endif
         for(uint8_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
         for(uint8_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
-        for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
-        for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = g_model.gvars[i].gvar * 1024 / 100 ;
+//        for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
+//        for(uint8_t i=0;i<NUM_SKYCHNOUT;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
+//        for(uint8_t i=NUM_SKYCHNOUT;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i-NUM_SKYCHNOUT+3+MIX_3POS] = chans[i]; //other mixes previous outputs
 
 				int16_t heliEle = anas[ele_stick] ;	// May need Input
 				int16_t heliAil = anas[ail_stick] ;	// May need Input
@@ -674,7 +675,8 @@ void perOut(int16_t *chanOut, uint8_t att )
         {
           uint32_t v = ((int32_t)heliEle*heliEle + (int32_t)heliAil*heliAil);
 		      int16_t tmp = calc100toRESX(g_model.swashRingValue) ;
-          uint32_t q ;
+          
+					uint32_t q ;
           q = (int32_t)tmp * tmp ;
           if(v>q)
           {
@@ -802,14 +804,19 @@ void perOut(int16_t *chanOut, uint8_t att )
 					if ( lweight > 350 )
 					{
 						lweight -= 360 ;
-						if ( lweight < 0 )
-						{
-							lweight = -g_model.gvars[-lweight-1].gvar ;
-						}
-						else
-						{
-							lweight = g_model.gvars[lweight].gvar ;
-						}
+#if MULTI_GVARS
+						lweight = getGvarFm( lweight, CurrentMixerPhase ) ;
+#else
+						lweight = getGvar( lweight ) ;
+#endif
+//						if ( lweight < 0 )
+//						{
+//							lweight = -g_model.gvars[-lweight-1].gvar ;
+//						}
+//						else
+//						{
+//							lweight = g_model.gvars[lweight].gvar ;
+//						}
 					}
 				}
 				int16_t mixweight = lweight ;
@@ -842,14 +849,19 @@ void perOut(int16_t *chanOut, uint8_t att )
 					if ( loffset > 350 )
 					{
 						loffset -= 360 ;
-						if ( loffset < 0 )
-						{
-							loffset = -g_model.gvars[-loffset-1].gvar ;
-						}
-						else
-						{
-							loffset = g_model.gvars[loffset].gvar ;
-						}
+#if MULTI_GVARS
+						loffset = getGvarFm( loffset, CurrentMixerPhase ) ;
+#else
+						loffset = getGvar( loffset ) ;
+#endif
+//						if ( loffset < 0 )
+//						{
+//							loffset = -g_model.gvars[-loffset-1].gvar ;
+//						}
+//						else
+//						{
+//							loffset = g_model.gvars[loffset].gvar ;
+//						}
 					}
 				}
 				int16_t mixoffset = loffset ;
@@ -878,7 +890,7 @@ void perOut(int16_t *chanOut, uint8_t att )
       
         if ( t_switch )
 				{
-					if ( md->modeControl & ( 1 << CurrentPhase ) )
+					if ( md->modeControl & ( 1 << CurrentMixerPhase ) )
 					{
 						t_switch = 0 ;
 					}
@@ -1046,8 +1058,25 @@ void perOut(int16_t *chanOut, uint8_t att )
 						if (k == MIX_3POS+MAX_GVARS) v = chans[md->destCh-1] / 100 ;	// "THIS"
             if ( (k > MIX_3POS+MAX_GVARS) && ( k <= MIX_3POS+MAX_GVARS + NUM_SCALERS ) )
 						{
-							 v = calc_scaler( k - (MIX_3POS+MAX_GVARS+1), 0, 0 ) ;
+extern uint8_t CalcScaleNest ;
+							uint8_t saveNest ;
+							uint8_t savePhase ;
+							saveNest = CalcScaleNest ;
+							savePhase = CurrentPhase ;
+							CalcScaleNest = 0 ;
+							CurrentPhase = CurrentMixerPhase ;
+							v = calc_scaler( k - (MIX_3POS+MAX_GVARS+1), 0, 0 ) ;
+							CalcScaleNest = saveNest ;
+							CurrentPhase = savePhase ;
             }
+						if ( ( k >= MIX_3POS ) && ( k < MIX_3POS + MAX_GVARS ) )
+						{
+#if MULTI_GVARS
+							v = getGvarFm( k - MIX_3POS, CurrentMixerPhase ) * 1024 / 100 ;
+#else
+							v = getGvar( k - MIX_3POS ) * 1024 / 100 ;
+#endif
+						}
             if (k > MIX_3POS+MAX_GVARS + NUM_SCALERS)
 						{
 							if ( k <= MIX_3POS+MAX_GVARS + NUM_SCALERS + NUM_EXTRA_PPM )
@@ -1299,9 +1328,9 @@ void perOut(int16_t *chanOut, uint8_t att )
 					{
 						l_fade = 0 ;
 					}
-					l_fade += ( q / 100 ) * Fade.fadeScale[CurrentPhase] ;
+					l_fade += ( q / 100 ) * Fade.fadeScale[CurrentMixerPhase] ;
 					Fade.fade[i] = l_fade ;
-			
+
 					if ( ( att & FADE_LAST ) == 0 )
 					{
 						continue ;
@@ -1310,7 +1339,6 @@ void perOut(int16_t *chanOut, uint8_t att )
 					q = l_fade * 100 ;
 				}
     	  chans[i] = q / 100 ; // chans back to -1024..1024
-        
 				ex_chans[i] = chans[i]; //for getswitch
 
         LimitData *limit = &g_model.limitData[i] ;

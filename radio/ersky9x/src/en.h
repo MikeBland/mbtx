@@ -244,7 +244,7 @@
 #define ISTR_2WARNING       "\001Warning"
 #define ISTR_2MULTIPLEX     "\001Multpx"
 // ISTR_ADD_MULT_REP indexed 8 chars each
-#define ISTR_ADD_MULT_REP   "\010Add     MultiplyReplace "
+#define ISTR_ADD_MULT_REP   "\010     AddMultiply Replace"
 #define ISTR_2DELAY_DOWN    "\001Delay Down"
 #define ISTR_2DELAY_UP      "\001Delay Up"
 #define ISTR_2SLOW_DOWN     "\001Slow  Down"

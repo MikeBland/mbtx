@@ -208,11 +208,16 @@ void modelDefault(uint8_t id)
 	// Set all mode trims to be copies of FM0
 	for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
 	{
-		g_model.phaseData[i].trim[0] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[1] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[2] = TRIM_EXTENDED_MAX + 1 ;
-		g_model.phaseData[i].trim[3] = TRIM_EXTENDED_MAX + 1 ;
+		for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+		{
+			g_model.phaseData[i].trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+		}
 	}
+	for ( uint32_t j = 0 ; j < 4 ; j += 1 )
+	{
+		g_model.xphaseData.trim[j].value = TRIM_EXTENDED_MAX + 1 ;
+	}
+
 	g_model.Module[0].protocol = PROTO_OFF ;
 	g_model.Module[1].protocol = PROTO_OFF ;
 	g_model.modelVoice = -1 ;
@@ -395,6 +400,9 @@ void eeDirty(uint8_t msk)
 //void writeGeneralToBackupRam(void) ;
 //void writeModelToBackupRam( uint8_t index ) ;
 
+void writeGeneralToCCRam() ;
+void writeModelToCCRam( uint8_t index ) ;
+
 void ee32_process()
 {
 	if ( General_timer )
@@ -402,7 +410,7 @@ void ee32_process()
 		if ( --General_timer == 0 )
 		{
 			// Time to write g_eeGeneral
-//			writeGeneralToBackupRam() ;
+			writeGeneralToCCRam() ;
 		}
 	}
 	if ( Model_timer )
@@ -410,7 +418,7 @@ void ee32_process()
 		if ( --Model_timer == 0 )
 		{
 			// Time to write model
-//			writeModelToBackupRam(Model_dirty) ;
+			writeModelToCCRam(Model_dirty) ;
 		}
 	}
 }
