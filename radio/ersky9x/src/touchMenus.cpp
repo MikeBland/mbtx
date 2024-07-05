@@ -119,6 +119,8 @@ extern uint8_t s_editMode;
 extern uint8_t s_editing;
 extern uint8_t PrivateData[] ;
 
+extern const uint8_t SortedMulti[] ;
+
 extern void setStickCenter(uint32_t toSubTrims ) ; // copy state of 3 primary to subtrim
 extern struct t_multiSetting MultiSetting ;
 
@@ -153,6 +155,7 @@ void menuScanDisplay(uint8_t event) ;
 uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y, uint8_t attr ) ;
 void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_t protocol ) ;
 void menuSetFailsafe(uint8_t event) ;
+extern uint8_t checkOutOfOrder( uint8_t value, uint8_t *options, uint32_t count ) ;
 
 
 uint16_t dimBackColour()
@@ -386,6 +389,15 @@ void checkTouchEnterEdit( uint16_t value )
 		s_editMode = 1 ;
 	}
 }
+
+uint16_t handleTouchSelect( uint32_t rows, uint32_t pgOfs, uint8_t sub, uint32_t flag )
+{
+	int32_t newSelection = checkTouchSelect( rows, pgOfs, flag ) ;
+	uint16_t newVert = processSelection( sub , newSelection ) ;
+	checkTouchEnterEdit( newVert ) ;
+	return newVert & 0x00FF ;
+}
+
 
 void editTimer( uint8_t sub, uint8_t event )
 {
@@ -2746,6 +2758,42 @@ void menuControls(uint8_t event)
 	}
 }
 
+void menuRadioVars(uint8_t event)
+{
+	TITLE(XPSTR("Radio Vars"));
+	static MState2 mstate2 ;
+	TlExitIcon = 1 ;
+	uint32_t rows = NUM_RADIO_VARS ;
+	mstate2.check_columns( event, rows-1 ) ;
+	
+	uint32_t i ;
+	uint8_t sub = mstate2.m_posVert ;
+	
+//	uint16_t colour = dimBackColour() ;
+	lcd_hline( 0, TTOP, TRIGHT ) ;
+
+	sub = mstate2.m_posVert = handleTouchSelect( rows, 0, sub ) ;
+//	int32_t newSelection = checkTouchSelect( rows, 0 ) ;
+//	uint16_t newVert = processSelection( sub , newSelection ) ;
+//	sub = mstate2.m_posVert = newVert & 0x00FF ;
+//	checkTouchEnterEdit( newVert ) ;
+
+ 	for( i = 0 ; i < rows ; i += 1 )
+	{
+    uint16_t y = i * TFH + TTOP ;
+    uint8_t attr = (sub==i) ? INVERS : 0 ;
+
+		drawItem( (char *)"Radio Var", y, attr ) ;
+	  lcd_putc( 10*FW+THOFF, y+TVOFF, i+'1' ) ;
+
+		drawNumber( TRIGHT-TRMARGIN, y, g_eeGeneral.radioVar[i], attr ) ; //, attr ? ~colour : colour ) ;
+		if(attr)
+		{
+			g_eeGeneral.radioVar[i] = checkIncDec16( g_eeGeneral.radioVar[i], -1024, 1024, EE_GENERAL ) ;
+   	}
+	}
+}
+
 #define DATE_OFF_0		(8*FW)
 #define DATE_COUNT_ITEMS	8
 
@@ -2915,10 +2963,11 @@ void menuGeneral( uint8_t event )
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	t_pgOfs = evalHresOffset( sub ) ;
 
-	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
-	uint16_t newVert = processSelection( sub , newSelection ) ;
-	sub = mstate2.m_posVert = newVert & 0x00FF ;
-	checkTouchEnterEdit( newVert ) ;
+	sub = mstate2.m_posVert = handleTouchSelect( rows, t_pgOfs, sub ) ;
+//	int32_t newSelection = checkTouchSelect( rows, t_pgOfs) ;
+//	uint16_t newVert = processSelection( sub , newSelection ) ;
+//	sub = mstate2.m_posVert = newVert & 0x00FF ;
+//	checkTouchEnterEdit( newVert ) ;
 
 	newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
 	if ( newVpos != t_pgOfs )
@@ -3037,10 +3086,11 @@ void menuAlarms( uint8_t event )
 	uint8_t attr ;
 	uint8_t subN = 0 ;
 
-	int32_t newSelection = checkTouchSelect( rows, 0 ) ;
-	uint16_t newVert = processSelection( sub , newSelection ) ;
-	sub = mstate2.m_posVert = newVert & 0x00FF ;
-	checkTouchEnterEdit( newVert ) ;
+	sub = mstate2.m_posVert = handleTouchSelect( rows, 0, sub ) ;
+//	int32_t newSelection = checkTouchSelect( rows, 0 ) ;
+//	uint16_t newVert = processSelection( sub , newSelection ) ;
+//	sub = mstate2.m_posVert = newVert & 0x00FF ;
+//	checkTouchEnterEdit( newVert ) ;
 
 	y = TTOP ;
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -5873,7 +5923,7 @@ void menuOneGvar(uint8_t event)
 					// STR_GV_SOURCE
  					if(attr)
 					{ 
-						CHECK_INCDEC_H_MODELVAR( *psource, 0, 69 ) ;
+						CHECK_INCDEC_H_MODELVAR( *psource, 0, 69+NUM_RADIO_VARS ) ;
 					}
 				}
 				else
@@ -5901,7 +5951,7 @@ void menuOneGvar(uint8_t event)
 					// STR_GV_SOURCE
  					if(attr)
 					{ 
-						CHECK_INCDEC_H_MODELVAR( pgvar->gvsource, 0, 69 ) ;
+						CHECK_INCDEC_H_MODELVAR( pgvar->gvsource, 0, 69+NUM_RADIO_VARS ) ;
 					}
 				}
 			break ;
@@ -7267,7 +7317,8 @@ void editOneProtocol( uint8_t event )
 				uint8_t svalue = oldValue ;
 				if ( attr )
 				{
-			 		CHECK_INCDEC_H_MODELVAR_0( svalue, 127 ) ;	// Limited to 8 bits
+					svalue = checkOutOfOrder( svalue+1, (uint8_t *)SortedMulti, 127 ) - 1 ;
+//			 		CHECK_INCDEC_H_MODELVAR_0( svalue, 127 ) ;	// Limited to 8 bits
 				}
 				pModule->sub_protocol = ( svalue & 0x3F) + (pModule->sub_protocol & 0xC0) ;
 				pModule->exsub_protocol = svalue >> 6 ;
@@ -7277,11 +7328,17 @@ void editOneProtocol( uint8_t event )
 					TelemetryType = TEL_UNKNOWN ;
 					MultiSetting.protocol[0] = 0 ;
 					MultiSetting.subProtocol[0] = 0 ;
+//					MultiSetting.previous = 0 ;
+//					MultiSetting.next = 0 ;
 //					MultiSetting.timeout = 1 ;
 				}
 				saveEditColours( attr, DimBackColour ) ;
 				displayMultiProtocol( svalue, y, attr ) ;
 				restoreEditColours() ;
+
+//  			lcd_outdezAtt( 25*FW, 0, MultiSetting.previous, 0 ) ;
+//  			lcd_outdezAtt( 30*FW, 0, MultiSetting.next, 0 ) ;
+
 //				if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
 				if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 			}

@@ -43,7 +43,7 @@ void basicLoadModelScripts( void ) ;
 extern uint8_t BasicErrorText[] ;
 extern uint8_t BasicLoadedType ;
 #ifndef QT	
-extern FIL MultiBasicFile ;
+//extern FIL BasicFile ;
 
 void stopBasic() ;
 void startBasic() ;

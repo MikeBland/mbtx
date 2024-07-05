@@ -1400,7 +1400,7 @@ void stop_cppm_on_heartbeat_capture()
 //	}
 //}
 
-uint16_t TIM3Captures ;
+//uint16_t TIM3Captures ;
 
 // Capture interrupt for trainer input
 
@@ -1471,7 +1471,7 @@ extern "C" void TIM3_IRQHandler()
 	struct t_softSerial *pss = &SoftSerial1 ;
 	if ( CaptureMode == CAP_SERIAL )
 	{
-		TIM3Captures += 1 ;
+//		TIM3Captures += 1 ;
 		// CC3 physical rising, CC4 falling edge
 		// So for inverted serial CC3 is HtoL, CC4 is LtoH
 		if ( LastTransition == 0 )	// LtoH

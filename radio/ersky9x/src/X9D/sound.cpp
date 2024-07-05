@@ -97,7 +97,7 @@ struct t_VoiceBuffer VoiceBuffer[3] ;
 
 struct t_VoiceBuffer *PtrVoiceBuffer[3] ;
 uint8_t VoiceCount ;
-uint8_t SoundType ;
+//uint8_t SoundType ;
 uint8_t DacIdle ;
 
 	 
@@ -624,32 +624,32 @@ static const uint8_t Volume_scale[NUM_VOL_LEVELS] =
 } ;
 //#endif	// REV9E
 
-uint8_t ExternalBits ;
-//uint8_t I2CsendBuffer[2] ;
+//uint8_t ExternalBits ;
+////uint8_t I2CsendBuffer[2] ;
 
-// bit is 0 to 3 for coprocessor
-void setExternalOutput( uint8_t bit, uint8_t value )
-{
-	uint8_t oldValue = ExternalBits ;
-	if ( value )
-	{
-		ExternalBits |= 1 << bit ;
-	}
-	else
-	{
-		ExternalBits &= ~(1 << bit) ;
-	}
-	if ( ExternalBits != oldValue )
-	{
-//#ifdef PCBSKY
-// #ifndef REVX
-//		I2CsendBuffer[0] = 0x75 ;
-//		I2CsendBuffer[1] = ExternalBits ;
-//		write_coprocessor( (uint8_t *) &I2CsendBuffer, 2 ) ;
-// #endif
-//#endif
-	}
-}
+//// bit is 0 to 3 for coprocessor
+//void setExternalOutput( uint8_t bit, uint8_t value )
+//{
+//	uint8_t oldValue = ExternalBits ;
+//	if ( value )
+//	{
+//		ExternalBits |= 1 << bit ;
+//	}
+//	else
+//	{
+//		ExternalBits &= ~(1 << bit) ;
+//	}
+//	if ( ExternalBits != oldValue )
+//	{
+////#ifdef PCBSKY
+//// #ifndef REVX
+////		I2CsendBuffer[0] = 0x75 ;
+////		I2CsendBuffer[1] = ExternalBits ;
+////		write_coprocessor( (uint8_t *) &I2CsendBuffer, 2 ) ;
+//// #endif
+////#endif
+//	}
+//}
 
 
 void setVolume( register uint8_t volume )

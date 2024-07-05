@@ -876,7 +876,7 @@ void setTxRssi( uint8_t value )
 	TxRssi = ( ( TxRssi * 7 ) + value + 4 ) / 8 ;	// Multi only
 }
 
-uint8_t LinkAveCount ;
+//uint8_t LinkAveCount ;
 
 uint16_t UserErrorCount ;
 uint8_t UserLastSequence ;
@@ -2839,6 +2839,8 @@ uint32_t handlePrivateData( uint8_t state, uint8_t byte )
 										memmove(MultiSetting.protocol, &InputPrivateData[9], 7 ) ;
 										MultiSetting.protocol[7] = 0 ;
 										MultiSetting.valid = 3 ;
+//										MultiSetting.next = InputPrivateData[7] ;
+//										MultiSetting.previous = InputPrivateData[8] ;
 									}
 									if ( len > 23 )
 									{
@@ -4171,7 +4173,7 @@ uint8_t decodeTelemetryType( uint8_t telemetryType )
 	return type ;
 }
 
-uint16_t U1Fcount ;
+//uint16_t U1Fcount ;
 
 // Called every 10 mS in interrupt routine
 void check_frsky( uint32_t fivems )
@@ -4311,9 +4313,9 @@ extern uint8_t s_current_protocol[] ;
 			int32_t rxbyte ;
 			while ( ( rxbyte = get_fifo128( &Internal_fifo ) ) != -1 )
 			{
-#if defined(PCBX7ACCESS)
-	U1Fcount += 1 ;
-#endif
+//#if defined(PCBX7ACCESS)
+//	U1Fcount += 1 ;
+//#endif
 				accessRecieveByte( rxbyte, 0 ) ;
 			}
 			while ( ( rxbyte = get_fifo128( &Access_ext_fifo ) ) != -1 )

@@ -74,6 +74,11 @@ extern uint8_t BtCurrentFunction ;
 void scriptRequestBt() ;
 void scriptReleasetBt() ;
 
+ #ifdef SMALL
+FIL BasicFile ;
+ #else
+FIL *BasicFile ;
+ #endif
 
 #else	// now for QT
 #include "basic.h"
@@ -83,7 +88,6 @@ void scriptReleasetBt() ;
 
 uint16_t ScriptFlags ;
 extern uint32_t g_tmr10ms ;
-
 
 uint16_t isqrt32(uint32_t n)
 {
@@ -1122,10 +1126,20 @@ int openFile( char *filename )
 	File = fopen( filename,"r") ;
 	return File ? 1 : 0 ;
 #else
-	if ( f_open( &MultiBasicFile, filename, FA_READ) == FR_OK )
+#ifdef SMALL
+	if ( f_open( &BasicFile, filename, FA_READ) == FR_OK )
 	{
 		return 1 ;
 	}
+#else
+	if ( BasicFile )
+	{
+		if ( f_open( BasicFile, filename, FA_READ) == FR_OK )
+		{
+			return 1 ;
+		}
+	}
+#endif
 	return 0 ;
 //	File = f_open( filename,"r") ;
 #endif
@@ -1136,7 +1150,14 @@ void closeFile()
 #ifdef	QT
 	fclose( File ) ;
 #else
-	f_close( &MultiBasicFile ) ;
+ #ifdef SMALL
+	f_close( &BasicFile ) ;
+ #else
+	if ( BasicFile )
+	{
+		f_close( BasicFile ) ;
+	}
+ #endif
 #endif
 }
 
@@ -1786,6 +1807,11 @@ void stopBasic()
 		free(Pprogram) ;
 		Pprogram = 0 ;
 	}
+	if ( BasicFile )
+	{
+		free(BasicFile) ;
+		BasicFile = 0 ;
+	}
 }
 
 void startBasic()
@@ -1793,6 +1819,10 @@ void startBasic()
 	if ( Pprogram == 0 )
 	{
 		Pprogram = (t_program *) malloc(MIN_PROGRAM_SIZE) ;
+	}
+	if ( BasicFile == 0 )
+	{
+		BasicFile = (FIL *) malloc(sizeof(FIL)) ;
 	}
 }
  #endif
@@ -2034,7 +2064,15 @@ uint32_t partLoadBasic()
 #ifdef QT
     q = (uint8_t *)fgets( InputLine, LINE_LENGTH, File ) ;
 #else
-    q = (uint8_t *)f_gets( InputLine, LINE_LENGTH, &MultiBasicFile ) ;
+ #ifdef SMALL
+    q = (uint8_t *)f_gets( InputLine, LINE_LENGTH, &BasicFile ) ;
+ #else
+ 		if ( BasicFile )
+		{
+	    q = (uint8_t *)f_gets( InputLine, LINE_LENGTH, BasicFile ) ;
+		}
+ #endif
+
 #endif
 		LineNumber += 1 ;
 		if ( lineNumberPosition == cPosition - 2 )
@@ -5477,8 +5515,20 @@ int32_t exec_fopen()
 	  {
 			if ( ScriptFlags & SCRIPT_STANDALONE )
 			{
-				fresult = f_open( &MultiBasicFile, (TCHAR *)params[0].cpointer,
+#ifdef SMALL
+				fresult = f_open( &BasicFile, (TCHAR *)params[0].cpointer,
 											(params[1].var == 0) ? FA_READ : FA_WRITE | FA_CREATE_ALWAYS ) ;
+#else
+ 				if ( BasicFile )
+				{
+					fresult = f_open( BasicFile, (TCHAR *)params[0].cpointer,
+											(params[1].var == 0) ? FA_READ : FA_WRITE | FA_CREATE_ALWAYS ) ;
+				}
+				else
+				{
+					fresult = FR_NO_FILE ;
+				}
+#endif
   			if (fresult == FR_OK)
 				{
 					retValue = 1 ;
@@ -5512,7 +5562,18 @@ int32_t exec_fread()
 			{
 				if ( ScriptFlags & SCRIPT_STANDALONE )
 				{
-					fresult = f_read( &MultiBasicFile, param[0].bpointer, length, &nread ) ;
+#ifdef SMALL
+					fresult = f_read( &BasicFile, param[0].bpointer, length, &nread ) ;
+#else
+	 				if ( BasicFile )
+					{
+						fresult = f_read( BasicFile, param[0].bpointer, length, &nread ) ;
+					}
+					else
+					{
+						fresult = FR_NO_FILE ;
+					}
+#endif
 					*param[1].ipointer = 0 ;
   				if (fresult == FR_OK)
 					{
@@ -5549,7 +5610,18 @@ int32_t exec_fwrite()
 			{
 				if ( ScriptFlags & SCRIPT_STANDALONE )
 				{
-					fresult = f_write( &MultiBasicFile, param[0].bpointer, length, &nwritten ) ;
+#ifdef SMALL
+					fresult = f_write( &BasicFile, param[0].bpointer, length, &nwritten ) ;
+#else
+ 					if ( BasicFile )
+					{
+					fresult = f_write( BasicFile, param[0].bpointer, length, &nwritten ) ;
+					}
+					else
+					{
+						fresult = FR_NO_FILE ;
+					}
+#endif
 					*param[1].ipointer = 0 ;
   				if (fresult == FR_OK)
 					{
@@ -5570,7 +5642,14 @@ static void exec_fclose()
 {
 	if ( ScriptFlags & SCRIPT_STANDALONE )
 	{
-		f_close( &MultiBasicFile ) ;
+#ifdef SMALL
+		f_close( &BasicFile ) ;
+#else
+		if ( BasicFile )
+		{
+			f_close( BasicFile ) ;
+		}
+#endif
 	}
 //	eatCloseBracket() ;
 	return ;

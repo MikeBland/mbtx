@@ -531,7 +531,7 @@ uint32_t BasicExecTime ;
 uint8_t HwDelayScale = 1 ;
 #endif
 
-uint8_t UserTimer1 ;
+//uint8_t UserTimer1 ;
 
 //#define SLAVE_RESET	1
 
@@ -647,7 +647,9 @@ int8_t SwitchStack[SW_STACK_SIZE] ;
 uint8_t MuteTimer ;
 
 int8_t NumExtraPots ;
+#ifdef ARUNI
 uint8_t ExtraPotBits;
+#endif
 
 uint16_t AnalogData[ANALOG_DATA_SIZE] ;
 
@@ -898,8 +900,8 @@ uint8_t CheckTimer = 2 ;
 uint8_t DsmCheckTimer = 50 ;		// Units of 10 mS
 uint8_t DsmCheckFlag = 0 ;
 
-const char *Str_OFF = PSTR(STR_OFF) ;
-const char *Str_ON = PSTR(STR_ON) ;
+//const char *Str_OFF = PSTR(STR_OFF) ;
+//const char *Str_ON = PSTR(STR_ON) ;
 
 
 
@@ -2377,6 +2379,7 @@ uint32_t stackSpace( uint32_t stack )
 			}
 		return i ;
 #endif
+#ifdef MIXER_TASK
 		case 4 :
 			for ( i = 0 ; i < MIXER_STACK_SIZE ; i += 1 )
 			{
@@ -2386,6 +2389,7 @@ uint32_t stackSpace( uint32_t stack )
 				}
 			}
 		return i ;
+#endif
 #ifndef SMALL
 		case 5 :
 			for ( i = 0 ; i < MAIN_STACK_REQUIRED ; i += 1 )
@@ -4059,7 +4063,9 @@ void writeNamesToCCRam() ;
 #ifdef PCBX9D
 #ifndef REV9E
 #ifndef PCBXLITE
+#ifndef GPIOENCODER
 	init_adc2() ;
+#endif
 #endif // nPCBXLITE
 #endif // nREV9E
 #endif
@@ -4510,20 +4516,23 @@ void initTopLcd() ;
 #endif 
 
 #ifdef STACK_PROBES
+ #ifndef SMALL
 	StackAtOsStart = __get_MSP() ;
+ #endif
 #endif
 
 #ifndef SMALL
 // swap stack
  #if defined(PCBX9D) || defined(PCB9XT)
-	uint32_t stkp = __get_MSP() ;
-extern uint32_t _estack ;	
-	uint32_t amount = (uint32_t)&_estack - stkp ;
-	uint32_t newstkp = (uint32_t)&MainStack[MAIN_STACK_REQUIRED] - amount ;
-	for ( uint32_t i = 0 ; i < amount/4 ; i += 1 )
-	{
-		((uint32_t *)newstkp)[i] = ((uint32_t *)stkp)[i] ;
-	}
+//	uint32_t stkp = __get_MSP() ;
+//extern uint32_t _estack ;	
+//	uint32_t amount = (uint32_t)&_estack - stkp ;
+//	uint32_t newstkp = (uint32_t)&MainStack[MAIN_STACK_REQUIRED] - amount ;
+	uint32_t newstkp = (uint32_t)&MainStack[MAIN_STACK_REQUIRED] ;
+//	for ( uint32_t i = 0 ; i < amount/4 ; i += 1 )
+//	{
+//		((uint32_t *)newstkp)[i] = ((uint32_t *)stkp)[i] ;
+//	}
 	__set_MSP( newstkp ) ;
  #endif
 #endif
@@ -6994,8 +7003,10 @@ uint32_t MixerXRate ;
 
 uint8_t AlarmTimers[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
 
+#ifdef PCB9XT
 uint8_t SpiEncoderValid ;
 uint8_t EncoderI2cData[2] ;
+#endif
 //uint16_t I2CencCounter ;
 
 #if defined(PCBX10)// && defined(PCBREV_EXPRESS)
@@ -7416,7 +7427,7 @@ extern uint32_t i2c2_result() ;
 				}
 			}
 		}
-extern uint8_t SpiEncoderValid ;
+//extern uint8_t SpiEncoderValid ;
 		if ( SpiEncoderValid )
 		{
 			if ( lastPosition != EncoderI2cData[0] )
@@ -8864,7 +8875,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 #if MULTI_GVARS
 		if ( g_model.flightModeGvars )
 		{
-			if ( pgvaradj->gvarIndex > 8 )
+			if ( pgvaradj->gvarIndex > 11 )
 			{
 				if(value > 125)
 				{
@@ -8874,7 +8885,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 				{
 					value = -125 ;
 				}	
-				setTrimValueAdd( CurrentPhase, idx - 9, value ) ;
+				setTrimValueAdd( CurrentPhase, idx - 12, value ) ;
 			}
 			else
 			{
@@ -8932,11 +8943,12 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 	}
 }
 
-#ifdef PCBX9D
+#ifndef GPIOENCODER
+ #ifdef PCBX9D
 uint8_t AnaEncSw = 0 ;
-#endif
+ #endif
 
-#ifdef PCBX9D
+ #ifdef PCBX9D
 void valueprocessAnalogEncoder( uint32_t x )
 {
 	uint32_t y ;
@@ -9006,6 +9018,7 @@ void valueprocessAnalogEncoder( uint32_t x )
 		Rotary_position = ( Rotary_position & ~0x45 ) | dummy ;
 	}
 }
+ #endif
 #endif
 
 uint8_t GvarSource[4] ;
@@ -9106,6 +9119,26 @@ int8_t getGvarSourceValue( uint8_t src )
 #endif
 		x *= 100 ;
 		value = x / 1024 ;
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 68+NUM_RADIO_VARS )	// Scalers
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 69+NUM_RADIO_VARS )	// Scalers
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 69+NUM_RADIO_VARS )	// Scalers
+#endif
+	{ // Radio Vars
+#if defined(PCBSKY) || defined(PCB9XT)
+		value = g_eeGeneral.radioVar[src-69] ;
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+		value = g_eeGeneral.radioVar[src-70] ;
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+		value = g_eeGeneral.radioVar[src-70] ;
+#endif
 	}
 	else
 	{
@@ -10595,7 +10628,7 @@ extern "C" void PIOC_IRQHandler()
 #endif
 #endif
 
-extern uint8_t UserTimer1 ;
+//extern uint8_t UserTimer1 ;
 #ifdef PCBLEM1
 uint8_t ExitTimer ;
 #endif
@@ -10699,10 +10732,10 @@ extern void checkRotaryEncoder() ;
 		PowerOnTime += 1 ;
 		Tenms |= 1 ;			// 10 mS has passed
 		pre_scale = 0 ;
-		if ( UserTimer1 )
-		{
-			UserTimer1 -= 1 ;
-		}
+//		if ( UserTimer1 )
+//		{
+//			UserTimer1 -= 1 ;
+//		}
 
   	per10ms();
 #ifdef WDOG_REPORT

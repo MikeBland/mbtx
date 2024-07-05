@@ -72,7 +72,7 @@ void soft_power_off()
   GPIO_ResetBits(GPIOPWR,PIN_MCU_PWR) ;
 }
 
-uint32_t SoftPowerCalls ;
+//uint32_t SoftPowerCalls ;
 uint32_t SoftPowerOff ;
 
 uint32_t check_soft_power()
@@ -147,7 +147,7 @@ uint32_t check_soft_power()
 
  #else // POWER_BUTTON
 #ifdef PCB9XT
-	SoftPowerCalls += 1 ;
+//	SoftPowerCalls += 1 ;
 	static uint32_t c1 = 0 ;
 //	static uint32_t c2 = 0 ;
 	uint16_t value = GPIOC->IDR ;

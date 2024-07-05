@@ -36,6 +36,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include "stdlib.h"
 
 #include "ersky9x.h"
 #include "eeprom_rlc.h"
@@ -67,7 +68,7 @@ void ee32_read_model_names( void ) ;
 
 unsigned char ModelNames[MAX_MODELS+1][sizeof(g_model.name)] ;		// Allow for general
 
-//SKYModelData TempModelStore ;
+SKYModelData *TempModelStore ;
 extern union t_xmem Xmem ;
 extern union t_sharedMemory SharedMemory ;
 
@@ -1434,8 +1435,11 @@ FRESULT writeXMLfile( FIL *archiveFile, uint8_t *data, uint32_t size, UINT *tota
 	total += written ;
   result = f_write( archiveFile, (BYTE *)"</Version>\n  <Name>", 19, &written) ;
 	total += written ;
-  result = f_write( archiveFile, (BYTE *)SharedMemory.TempModelStore.name, sizeof(g_model.name), &written) ;
-	total += written ;
+	if ( TempModelStore )
+	{
+  	result = f_write( archiveFile, (BYTE *)(TempModelStore->name), sizeof(g_model.name), &written) ;
+		total += written ;
+	}
   result = f_write( archiveFile, (BYTE *)"</Name>\n  <Data><![CDATA[", 25, &written) ;
 	total += written ;
 
@@ -1613,42 +1617,58 @@ const char *ee32BackupModel( uint8_t modelIndex )
 
 	ee32_check_finished() ;
 
-	theFile.openRlc(modelIndex);
-  size = theFile.readRlc((uint8_t*)&SharedMemory.TempModelStore, sizeof(g_model));
-
-	// Build filename
-	setModelFilename( filename, modelIndex, FILE_TYPE_MODEL ) ;
-  
-	result = f_opendir(&archiveFolder, "/MODELS") ;
-  if (result != FR_OK)
+	TempModelStore =  (SKYModelData *) malloc(sizeof(g_model)) ;
+	if ( TempModelStore )
 	{
-    if (result == FR_NO_PATH)
+		theFile.openRlc(modelIndex);
+  	size = theFile.readRlc((uint8_t*)TempModelStore, sizeof(g_model));
+
+		// Build filename
+		setModelFilename( filename, modelIndex, FILE_TYPE_MODEL ) ;
+  
+		result = f_opendir(&archiveFolder, "/MODELS") ;
+  	if (result != FR_OK)
 		{
-			WatchdogTimeout = 300 ;		// 3 seconds
-      result = f_mkdir("/MODELS") ;
-    	if (result != FR_OK)
+  	  if (result == FR_NO_PATH)
 			{
-      	return "SDCARD ERROR" ;
+				WatchdogTimeout = 300 ;		// 3 seconds
+  	    result = f_mkdir("/MODELS") ;
+  	  	if (result != FR_OK)
+				{
+					free(TempModelStore) ;
+					TempModelStore = 0 ;
+  	    	return "SDCARD ERROR" ;
+				}
 			}
-		}
-  }
+  	}
 	
-  result = f_open( &archiveFile, (TCHAR *)filename, FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_WRITE) ;
-  if (result != FR_OK)
-	{
-   	return "CREATE ERROR" ;
-  }
+  	result = f_open( &archiveFile, (TCHAR *)filename, FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_WRITE) ;
+  	if (result != FR_OK)
+		{
+			free(TempModelStore) ;
+			TempModelStore = 0 ;
+  	 	return "CREATE ERROR" ;
+  	}
 
-//  result = f_write(&archiveFile, (uint8_t *)&Eeprom_buffer.data.sky_model_data, size, &written) ;
-	result = writeXMLfile( &archiveFile, (uint8_t *)&SharedMemory.TempModelStore, size, &written) ;
+	//  result = f_write(&archiveFile, (uint8_t *)&Eeprom_buffer.data.sky_model_data, size, &written) ;
+		result = writeXMLfile( &archiveFile, (uint8_t *)TempModelStore, size, &written) ;
   
-	f_close(&archiveFile) ;
-  if (result != FR_OK ) //	|| written != size)
+		f_close(&archiveFile) ;
+  	if (result != FR_OK ) //	|| written != size)
+		{
+			free(TempModelStore) ;
+			TempModelStore = 0 ;
+  	  return "WRITE ERROR" ;
+  	}
+		free(TempModelStore) ;
+		TempModelStore = 0 ;
+  	return "MODEL SAVED" ;
+		
+	}
+	else
 	{
-    return "WRITE ERROR" ;
-  }
-
-  return "MODEL SAVED" ;
+  	return "MEMORY ERROR" ;
+	}
 }
 
 const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
@@ -1671,27 +1691,40 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
    	return "OPEN ERROR" ;
   }
 
-	memset(( uint8_t *)&SharedMemory.TempModelStore, 0, sizeof(g_model));
-	
-	answer = readXMLfile( &archiveFile,  ( uint8_t *)&SharedMemory.TempModelStore, sizeof(g_model), &nread ) ;
-	
-	if ( answer == -1 )
+	TempModelStore =  (SKYModelData *) malloc(sizeof(g_model)) ;
+	if ( TempModelStore )
 	{
-		return "BAD FILE" ;
+		memset(( uint8_t *)TempModelStore, 0, sizeof(g_model));
+	
+		answer = readXMLfile( &archiveFile,  ( uint8_t *)TempModelStore, sizeof(g_model), &nread ) ;
+	
+		if ( answer == -1 )
+		{
+			free(TempModelStore) ;
+			TempModelStore = 0 ;
+			return "BAD FILE" ;
+		}
+		result = (FRESULT) answer ;
+		if (result != FR_OK)
+		{
+			free(TempModelStore) ;
+			TempModelStore = 0 ;
+			return "READ ERROR" ;
+		}
+		// Can we validate the data here?
+
+		theFile.writeRlc(modelIndex, FILE_TYP_MODEL, (uint8_t *)TempModelStore, sizeof(g_model), true ) ;
+
+		ee32_read_model_names() ;		// Update
+
+		free(TempModelStore) ;
+		TempModelStore = 0 ;
+  	return "MODEL RESTORED" ;
 	}
-	result = (FRESULT) answer ;
-	if (result != FR_OK)
+	else
 	{
-		return "READ ERROR" ;
+  	return "MEMORY ERROR" ;
 	}
-	// Can we validate the data here?
-
-	theFile.writeRlc(modelIndex, FILE_TYP_MODEL, (uint8_t *)&SharedMemory.TempModelStore, sizeof(g_model), true ) ;
-
-	ee32_read_model_names() ;		// Update
-
-  return "MODEL RESTORED" ;
-
 }
 
 #define EEPROM_PATH           "/EEPROM"   // no trailing slash = important

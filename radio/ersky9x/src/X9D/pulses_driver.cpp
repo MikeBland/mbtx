@@ -76,7 +76,7 @@
 #define EXT_TYPE_DSM		1
 #define EXT_TYPE_MULTI	2
 
-uint16_t DebugExtRf ;
+//uint16_t DebugExtRf ;
 
 uint8_t s_current_protocol[NUM_MODULES] = { 255, 255 } ;
 
@@ -415,7 +415,7 @@ static void disable_pa10_none()
 static void init_pa7_none()
 {
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 1 ;
+//	DebugExtRf |= 1 ;
   // Timer8
 
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN ;           // Enable portA clock
@@ -909,7 +909,7 @@ static void disable_ext_pxx()
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 2 ;
+//	DebugExtRf |= 2 ;
 }
 
 #ifdef ACCESS
@@ -957,7 +957,7 @@ static void disable_pa7_access()
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 4 ;
+//	DebugExtRf |= 4 ;
 }
  #endif
 #endif
@@ -1007,7 +1007,7 @@ static void disable_pa7_xfire()
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 8 ;
+//	DebugExtRf |= 8 ;
 }
 static void init_int_xfire()
 {
@@ -1072,7 +1072,7 @@ static void disable_ext_dsm2()
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 16 ;
+//	DebugExtRf |= 16 ;
 }
 
 // PPM output
@@ -1141,7 +1141,7 @@ static void disable_ext_ppm()
   TIM8->DIER &= ~TIM_DIER_CC2IE & ~TIM_DIER_UIE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 32 ;
+//	DebugExtRf |= 32 ;
 }
 
 //struct t_updateTiming
@@ -1419,7 +1419,7 @@ static void disable_int_none()
 static void init_ext_none()
 {
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 64 ;
+//	DebugExtRf |= 64 ;
 		
 	configure_pins( PIN_EXTPPM_OUT, PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 | PORT_EXTPPM ) ;
 	GPIO_SetBits(GPIOA, PIN_EXTPPM_OUT) ; // Set high
@@ -1443,7 +1443,7 @@ static void init_ext_none()
 static void disable_ext_none()
 {
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 128 ;
+//	DebugExtRf |= 128 ;
 
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   NVIC_DisableIRQ(TIM8_CC_IRQn) ;
@@ -1643,7 +1643,7 @@ static void disable_ext_pxx( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 256 ;
+//	DebugExtRf |= 256 ;
 #endif
 }
 	
@@ -1659,7 +1659,7 @@ static void disable_ext_dsm2( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 512 ;
+//	DebugExtRf |= 512 ;
 }
 	
 static void init_ext_ppm( void )
@@ -1718,7 +1718,7 @@ static void disable_ext_ppm( void )
   TIM8->DIER &= ~TIM_DIER_CC2IE & ~TIM_DIER_UIE ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF();
-	DebugExtRf |= 1024 ;
+//	DebugExtRf |= 1024 ;
 }
 
 void init_ext_serial( uint32_t type )
@@ -1896,7 +1896,7 @@ static void disable_ext_xfire( void )
   TIM8->DIER &= ~( TIM_DIER_CC2IE | TIM_DIER_CC1IE | TIM_DIER_CC3IE | TIM_DIER_UIE ) ;
   TIM8->CR1 &= ~TIM_CR1_CEN ;
   EXTERNAL_RF_OFF() ;
-	DebugExtRf |= 2048 ;
+//	DebugExtRf |= 2048 ;
 }
 
  #ifndef PCBX7ACCESS

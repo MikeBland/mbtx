@@ -217,6 +217,7 @@ void putsChnColour( uint8_t x, uint8_t y, uint8_t idx1, uint8_t att ) ;
 void saveEditColours( uint32_t attr, uint16_t colour ) ;
 void restoreEditColours() ;
 int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag = 0 ) ;
+uint16_t handleTouchSelect( uint32_t rows, uint32_t pgOfs, uint8_t sub, uint32_t flag = 0 ) ;
 
 #endif
 

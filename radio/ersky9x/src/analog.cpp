@@ -686,6 +686,7 @@ uint32_t read_adc()
 #ifndef PCB9XT
 
 #ifndef PCBXLITE
+#ifndef GPIOENCODER
 // This to read a single channel for use as a rotary encoder
 // Channel is POT_L (6) or POT_R (8) or POT_3 (9)
 void init_adc2()
@@ -732,6 +733,7 @@ void init_adc2()
 		RCC->APB1ENR &= ~RCC_APB1ENR_TIM5EN ;		// Disable clock
 	}
 }
+#endif
 #endif // nPCBXLITE
 #endif // nPCB9XT
 #endif // nREV9E
@@ -765,6 +767,7 @@ void init_adc3()
 #endif // nPCB9XT
 
 #ifndef PCB9XT
+ #ifndef GPIOENCODER
 uint16_t RotaryAnalogValue ;
 
 extern "C" void ADC_IRQHandler()
@@ -782,6 +785,7 @@ extern "C" void ADC_IRQHandler()
 		valueprocessAnalogEncoder( x >> 1 ) ;
 	}
 }
+ #endif // GPIOENCODER
 #endif // nPCB9XT
 
 // TODO

@@ -569,7 +569,7 @@ void x9dSPortTxStart( uint8_t *buffer, uint32_t count, uint32_t receive )
 #if !defined(SIMU)
 
 
-uint16_t RxIntCount ;
+//uint16_t RxIntCount ;
 
 extern "C" void USART2_IRQHandler()
 {
@@ -583,7 +583,7 @@ extern "C" void USART2_IRQHandler()
   uint32_t status;
   uint8_t data;
 	
-	RxIntCount += 0x1000 ;
+//	RxIntCount += 0x1000 ;
 
   status = USART2->SR ;
 
@@ -642,7 +642,7 @@ extern "C" void USART2_IRQHandler()
 
     if (!(status & USART_FLAG_ERRORS))
 		{
-			RxIntCount += 1 ;
+//			RxIntCount += 1 ;
 			put_fifo128( &Com1_fifo, data ) ;
 			if ( FrskyTelemetryType == FRSKY_TEL_SPORT )		// SPORT
 			{

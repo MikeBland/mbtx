@@ -387,9 +387,9 @@ extern uint16_t HiresSavedTime ;
 #endif
 
 const uint8_t MultiData[] = 
-"\001\005Flysky\0Flysky\0V9x9\0V6x6\0V912\0CX20\0"
+"\001\005FlySky\0Flysky\0V9x9\0V6x6\0V912\0CX20\0"
 "\002\003Hubsan\0H107\0H301\0H501\0"
-"\003\002FrskyD\0D8\0Cloned\0"
+"\003\002FrSky D\0D8\0Cloned\0"
 "\004\002Hisky\0Hisky\0HK310\0"
 "\005\003V2x2\0V2x2\0JXD506\0MR101\0"
 "\006\005DSM\0DSM2_1F\0DSM2_2F\0DSMX_1F\0DSMX_2F\0AUTO\0"              
@@ -401,34 +401,34 @@ const uint8_t MultiData[] =
 "\014\007CX10\0GREEN\0BLUE\0DM007\0---\0J3015_1\0J3015_2\0MK33041\0"
 "\015\002CG023\0CG023\0YD829\0"
 "\016\006Bayang\0Bayang\0H8S3D\000X16_AH\0IRDRONE\0DHD_D4\0QX100\0"
-"\017\006FrskyX\0CH_16\0CH_8\0EU_16\0EU_8\0Cloned\0Clon_8\0"
+"\017\006FrSky X\0CH_16\0CH_8\0EU_16\0EU_8\0Cloned\0Clon_8\0"
 "\020\002ESky\0Std\0ET4\0"
-"\021\007MT99xx\0MT\0H7\0YZ\0LS\0FY805\0A180\0Dragon\0"
+"\021\007MT99XX\0MT\0H7\0YZ\0LS\0FY805\0A180\0Dragon\0"
 "\022\007MJXq\0WLH08\000X600\000X800\0H26D\0E010\0H26WH\0PHOENIX\0"
 "\023\0Shenqi\0"
 "\024\002FY326\0FY326\0FY319\0"
 "\025\001Futaba\0SFHSS\0"
-"\026\0J6PRO\0"
+"\026\0J6 Pro\0"
 "\027\0FQ777\0"
-"\030\0ASSAN\0"
-"\031\0FrskyV\0"
-"\032\004HONTAI\0HONTAI\0JJRCX1\000X5C1\0FQ777_951\0"
+"\030\0Assan\0"
+"\031\0FrSky V\0"
+"\032\004Hontai\0HONTAI\0JJRCX1\000X5C1\0FQ777_951\0"
 "\033\0OpnLrs\0"
-"\034\006AFHDS2A\0PWM_IBUS\0PPM_IBUS\0PWM_SBUS\0PPM_SBUS\0PWM_IB16\0PPM_IB16\0"
+"\034\006FlSky2A\0PWM_IBUS\0PPM_IBUS\0PWM_SBUS\0PPM_SBUS\0PWM_IB16\0PPM_IB16\0"
 "\035\003Q2X2\0Q222\0Q242\0Q282\0"
 "\036\006WK2x01\0WK2801\0WK2401\0W6_5_1\0W6_6_1\0W6_HEL\0W6_HEL_I\0"
 "\037\004Q303\0Q303\0CX35\0CX10D\0CX10WD\0"
 "\040\0GW008\0"
 "\041\0DM002\0"
-"\042\010CABELL\0CAB_V3\0C_TELEM\0-\0-\0-\0-\0F_SAFE\0UNBIND\0"
-"\043\002ESKY150\0004CH\0007CH\0"
+"\042\010Cabell\0CAB_V3\0C_TELEM\0-\0-\0-\0-\0F_SAFE\0UNBIND\0"
+"\043\002Esky150\0004CH\0007CH\0"
 "\044\004H8_3D\0H8_3D\0H20H\0H20Mini\0H30Mini\0"
-"\045\003CORONA\0COR_V1\0COR_V2\0FD_V3\0"
+"\045\003Corona\0COR_V1\0COR_V2\0FD_V3\0"
 "\046\0CFlie\0"
 "\047\003Hitec\0OPT_FW\0OPT_HUB\0Minima\0"
 "\050\001WFLY\0WFR0x\0"
-"\051\0BUGS\0"
-"\052\002BUGSMINI\0BUGSMINI\0BUGS3H\0"
+"\051\0Bugs\0"
+"\052\002BugMini\0Std\0Bugs 3H\0"
 "\053\001Traxxas\0RX6519\0"
 "\054\0NCC1701\0"
 "\055\003E01X\0E012\0E015\0E016H\0"
@@ -441,26 +441,26 @@ const uint8_t MultiData[] =
 "\064\001ZSX\000280\0"
 "\065\002Height\0005ch\0008ch\0"
 "\066\0Scanner\0"
-"\067\004Frsky_RX\0Multi\0CloneTX\0EraseTx\0CPPM\0"
-"\070\002AFHDS2A_RX\0Multi\0CPPM\0"
+"\067\004FrSkyRX\0Multi\0CloneTX\0EraseTx\0CPPM\0"
+"\070\002FS2A_RX\0Multi\0CPPM\0"
 "\071\002HoTT\0Sync\0No_Sync\0"
 "\072\001FX816\0P38\0"
 "\073\002Bayang_RX\0Multi\0CPPM\0"
 "\074\002Pelikan\0Pro\0Lite\0"
-"\075\0Tiger\0"
+"\075\0EazyRC\0"
 "\076\002XK\000X450\000X420\0"
 "\077\004XN_DUMP\000250K\0001M\0002M\0AUTO\0"
-"\100\005FrskyX2\0CH_16\0CH_8\0EU_16\0EU_8\0Cloned\0"
+"\100\005FrSkyX2\0CH_16\0CH_8\0EU_16\0EU_8\0Cloned\0"
 "\101\010FrskyR9\000915MHz\000868MHz\000915_8ch\000868_8ch\0FCC\0--\0FCC_8ch\0--_8ch\0"
 "\102\001PROPEL\00074-Z\0"
-"\103\002LR12\0LR12\0LR12_6ch\0"
+"\103\002FrSky L\0LR12\0LR12_6ch\0"
 "\104\0Skyartec\0"
-"\105\001ESKYv2\000150V2\0"
+"\105\001Eskyv2\000150V2\0"
 "\106\002DSM_RX\0Multi\0CPPM\0"
 "\107\002JJRC345\0JJRC345\0SkyTmblr\0"
 "\110\0Q90C\0"
 "\111\002Kyosho\0FHSS\0Hype\0"
-"\112\003RadioLink\0Surface\0Air\0DumboRC\0"
+"\112\004RadLink\0Surface\0Air\0DumboRC\0""RC4G\0"
 "\113\0---\0"
 "\114\001Realacc\0R11\0"
 "\115\0OMP\0"
@@ -469,9 +469,155 @@ const uint8_t MultiData[] =
 "\120\001E016H\0E016Hv2\0"
 "\121\0E010r5\0"
 "\122\0LOLI\0"
-"\123\0E129\0"
+"\123\002E129\0""E129\0""C186\0"
 "\124\0JOYSWAY\0"
+"\125\0E016H\0"
+"\126\0CONFIG\0"
+"\127\0IKEA\0"
+"\130\0WILLIFM\0"
+"\131\0LOSI\0"
+"\132\002MOULDKG\0""Analog\0""Digit\0"
+"\133\0Xerall\0"
+"\134\001MT99xx\0""PA18\0"
+"\135\001Kyosho2\0""KT-17\0"
+"\136\0Scorpio\0"
+"\137\0BlueFly\0"
+"\140\0BumbleB\0"
+"\141\0SGF22\0"
+"\142\0Kyosho3\0"
+"\143\0XK2\0"
 "\0" ;
+
+extern const uint8_t SortedMulti[] = {
+86,
+24,
+14,
+59,
+95,
+96,
+41,
+42,
+34,
+38,
+13,
+37,
+12,
+7,	
+33,
+6,	
+70,
+81,
+85,
+80,
+45,
+83,
+61,
+16,
+35,
+69,
+1,	
+28,
+56,
+23,
+55,
+3,	
+67,
+25,
+15,
+64,
+65,
+21,
+58,
+20,
+47,
+32,
+36,
+53,
+4,	
+39,
+26,
+57,
+2,	
+87,
+22,
+71,
+84,
+49,
+9,	
+73,
+93,
+98,
+82,
+89,
+18,
+78,
+90,
+17,
+92,
+44,
+77,
+60,
+51,
+66,
+29,
+31,
+72,
+74,
+76,
+50,
+54,
+94,
+97,
+19,
+68,
+11,
+10,
+43,
+5,	
+48,
+46,
+30,
+40,
+79,
+91,
+62,
+99,
+63,
+8,	
+52,
+27,
+88,
+75,	// Blank
+100,
+101,
+102,
+103,
+104,
+105,
+106,
+107,
+108,
+109,
+110,
+111,
+112,
+113,
+114,
+115,
+116,
+117,
+118,
+119,
+120,
+121,
+122,
+123,
+124,
+125,
+126,
+127,
+0
+} ;
 
 #if defined(PCBX12D) || defined(PCBX10)
 
@@ -930,7 +1076,7 @@ union t_sharedMemory SharedMemory ;
 
 //This is used at startup to read "Multi.txt", then used to load
 // Basic scripts, and also used by a standalone script for file access
-FIL MultiBasicFile ;
+//FIL BasicFile ;
 
 #ifndef SMALL
 static int32_t memCaseCmp( uint8_t *p, uint8_t *q, uint32_t length )
@@ -1002,7 +1148,7 @@ void parseMultiData()
 		wdt_reset() ;
 	}
 
-	result = f_open( &MultiBasicFile, "/Multi.txt", FA_READ ) ;
+	result = f_open( &SharedMemory.g_eebackupFile, "/Multi.txt", FA_READ ) ;
 
 	text = MultiText ;
 	state = GET_INDEX ;
@@ -1017,7 +1163,7 @@ void parseMultiData()
 		{
 			uint32_t next = 0 ;
 			byte = 0 ;
-			f_read( &MultiBasicFile, &byte, 1, 0 ) ;
+			f_read( &SharedMemory.g_eebackupFile, &byte, 1, 0 ) ;
 			if ( byte == '\r' )
 			{
 				continue ;
@@ -1135,7 +1281,7 @@ void parseMultiData()
 	*text = '\0' ;
 	if ( result == FR_OK )
 	{
-		f_close( &MultiBasicFile ) ;
+		f_close( &SharedMemory.g_eebackupFile ) ;
 	}
 #endif
 //	offset = 0 ;
@@ -3121,9 +3267,9 @@ void menuNewVario(uint8_t event) ;
 void menuProcMusic(uint8_t event) ;
 void menuProcMusicList(uint8_t event) ;
 void menuProcStatistic2(uint8_t event) ;
-#ifndef SMALL
-void menuProcDsmDdiag(uint8_t event) ;
-#endif
+//#ifndef SMALL
+//void menuProcDsmDdiag(uint8_t event) ;
+//#endif
 void menuProcAlpha(uint8_t event) ;
 #ifndef SMALL
 void menuProcTrainDdiag(uint8_t event) ;
@@ -3213,7 +3359,7 @@ enum EnumTabStat
 #endif
 	e_music1,
 #ifndef SMALL
-	e_dsm,
+//	e_dsm,
 	e_traindiag,
 #endif
 //#if defined(LUA) || defined(BASIC)
@@ -3257,7 +3403,7 @@ MenuFuncP menuTabStat[] =
 #endif
 	menuProcMusicList,
 #ifndef SMALL
-	menuProcDsmDdiag,
+//	menuProcDsmDdiag,
 	menuProcTrainDdiag,
 #endif
 //#if defined(LUA) || defined(BASIC)
@@ -3296,7 +3442,7 @@ MenuFuncP menuTabStat[] =
 #define RE_ITEMLR			3
 #define RE_ITEM_EDIT	4
 
-uint8_t Re_state ;
+//uint8_t Re_state ;
 
 void displayNext()
 {
@@ -8204,13 +8350,13 @@ void editGvarSource(uint8_t *p)
 					// map pots etc.
 					if ( value >= EXTRA_POTS_START )
 					{
-						value += 69 - EXTRA_POTS_START ;
+						value += 69+NUM_RADIO_VARS - EXTRA_POTS_START ;
 					}
 //					uint32_t oldValue = value ;
-					CHECK_INCDEC_H_MODELVAR_0( value, 68 + NumExtraPots ) ;
-					if ( value > 68 )
+					CHECK_INCDEC_H_MODELVAR_0( value, 68 + NumExtraPots+NUM_RADIO_VARS ) ;
+					if ( value > 68+NUM_RADIO_VARS )
 					{
-						value += EXTRA_POTS_START - 69 ;
+						value += EXTRA_POTS_START - (69+NUM_RADIO_VARS) ;
 					}
 					*p = value ;
 #endif
@@ -8218,7 +8364,7 @@ void editGvarSource(uint8_t *p)
  #ifdef PCBT12
 					uint32_t value = *p ;
 					uint32_t oldValue = value ;
-					CHECK_INCDEC_H_MODELVAR_0( value, 69 ) ;
+					CHECK_INCDEC_H_MODELVAR_0( value, 69+NUM_RADIO_VARS ) ;
 					if ( value != oldValue )
 					{
 						if ( ( value == 12 ) || ( value == 13 ) )
@@ -8238,7 +8384,7 @@ void editGvarSource(uint8_t *p)
   #if defined(PCBX9LITE)
 					uint32_t value = *p ;
 					uint32_t oldValue = value ;
-					CHECK_INCDEC_H_MODELVAR_0( value, 69 ) ;
+					CHECK_INCDEC_H_MODELVAR_0( value, 69+NUM_RADIO_VARS ) ;
 					if ( value != oldValue )
 					{
 						if ( ( value >= 11 ) && ( value <= 13 ) )
@@ -8258,7 +8404,7 @@ void editGvarSource(uint8_t *p)
    #ifdef PCBX7
 					uint32_t value = *p ;
 					uint32_t oldValue = value ;
-					CHECK_INCDEC_H_MODELVAR_0( value, 69 ) ;
+					CHECK_INCDEC_H_MODELVAR_0( value, 69+NUM_RADIO_VARS ) ;
 					if ( value != oldValue )
 					{
 						if (NumExtraPots)
@@ -8289,7 +8435,7 @@ void editGvarSource(uint8_t *p)
 					}
 					*p = value ;
    #else
-					CHECK_INCDEC_H_MODELVAR_0( *p, 69 ) ;
+					CHECK_INCDEC_H_MODELVAR_0( *p, 69+NUM_RADIO_VARS ) ;
    #endif
   #endif
  #endif
@@ -15000,7 +15146,8 @@ void editOneProtocol( uint8_t event )
 				if ( sub == subN )
 				{
 					attr = blink ;
-			 		CHECK_INCDEC_H_MODELVAR_0( svalue, 127 ) ;	// Limited to 8 bits
+					svalue = checkOutOfOrder( svalue+1, (uint8_t *)SortedMulti, 127 ) - 1 ;
+//					CHECK_INCDEC_H_MODELVAR_0( svalue, 127 ) ;	// Limited to 8 bits
 				}
 
 
@@ -18815,7 +18962,7 @@ uint16_t g_timeMain;
 uint16_t g_timeRfsh ;
 uint16_t g_timeMixer ;
 //uint16_t g_timePXX;
-uint16_t g_timeBgRead ;
+//uint16_t g_timeBgRead ;
 
 #ifdef BIG_SCREEN
 #define STAT2_OFF_0		(8*FW)
@@ -20090,6 +20237,35 @@ void menuSensors(uint8_t event)
 	}
 }
 
+#ifdef TOUCH
+void menuRadioVars(uint8_t event) ;
+#else
+void menuRadioVars(uint8_t event)
+{
+	TITLE(XPSTR("Radio Vars"));
+	static MState2 mstate2 ;
+	mstate2.check_columns( event, NUM_RADIO_VARS-1 ) ;
+	uint8_t sub = mstate2.m_posVert ;
+	uint8_t blink = InverseBlink ;
+	uint32_t i ;
+
+ 	for( i = 0 ; i < NUM_RADIO_VARS ; i += 1 )
+	{
+		uint8_t attr = (sub==i) ? blink : 0 ;
+		uint8_t y = (1+i)*FH ;
+
+		lcd_puts_Pleft( y, XPSTR("Radio Var") ) ;
+		lcd_putc(10*FW, y, i+'1' ) ;
+
+ 		lcd_outdezAtt( 17*FW, y, g_eeGeneral.radioVar[i], attr) ;
+		if(attr)
+		{
+			g_eeGeneral.radioVar[i] = checkIncDec16( g_eeGeneral.radioVar[i], -1024, 1024, EE_GENERAL ) ;
+   	}
+	}
+}
+#endif
+
 void menuVario(uint8_t event)
 {
 	TITLE(XPSTR("Vario"));
@@ -20984,96 +21160,96 @@ void menuProcS6R(uint8_t event)
 #endif //n SMALL
 
 #ifndef SMALL
-uint16_t DsmFrameRequired ;
+//uint16_t DsmFrameRequired ;
 
-void menuProcDsmDdiag(uint8_t event)
-{
+//void menuProcDsmDdiag(uint8_t event)
+//{
 	
-	MENU(XPSTR("DSM diag"), menuTabStat, e_dsm, 2, {0} ) ;
+//	MENU(XPSTR("DSM diag"), menuTabStat, e_dsm, 2, {0} ) ;
   
-	int8_t sub = mstate2.m_posVert ;
+//	int8_t sub = mstate2.m_posVert ;
 
-  lcd_outhex4( 0, 2*FH, DsmFrameRequired ) ;
-  if(sub==1)
-  {
-		lcd_char_inverse( 0, 2*FH, 20, 0 ) ;
-		DsmFrameRequired = checkIncDec16( DsmFrameRequired, 0, 511, 0 ) ;
-  }
+//  lcd_outhex4( 0, 2*FH, DsmFrameRequired ) ;
+//  if(sub==1)
+//  {
+//		lcd_char_inverse( 0, 2*FH, 20, 0 ) ;
+//		DsmFrameRequired = checkIncDec16( DsmFrameRequired, 0, 511, 0 ) ;
+//  }
 
-  lcd_outhex4( 0, 1*FH, FrskyTelemetryType ) ;
-  lcd_outhex4( 24, 1*FH, g_model.dsmMode ) ;
+//  lcd_outhex4( 0, 1*FH, FrskyTelemetryType ) ;
+//  lcd_outhex4( 24, 1*FH, g_model.dsmMode ) ;
 
-#ifdef PCB9XT
+//#ifdef PCB9XT
 
-extern uint8_t numPktBytes ;
-extern uint8_t frskyRxBuffer[];
-  lcd_outhex4( 0, 3*FH, numPktBytes ) ;
+//extern uint8_t numPktBytes ;
+//extern uint8_t frskyRxBuffer[];
+//  lcd_outhex4( 0, 3*FH, numPktBytes ) ;
 
-	lcd_outhex4( 0 , 4*FH, (frskyRxBuffer[0]<< 8) | frskyRxBuffer[1] ) ;
-	lcd_outhex4( 24, 4*FH, (frskyRxBuffer[2]<< 8) | frskyRxBuffer[3] ) ;
-	lcd_outhex4( 48, 4*FH, (frskyRxBuffer[4]<< 8) | frskyRxBuffer[5] ) ;
-	lcd_outhex4( 72, 4*FH, (frskyRxBuffer[6]<< 8) | frskyRxBuffer[7] ) ;
+//	lcd_outhex4( 0 , 4*FH, (frskyRxBuffer[0]<< 8) | frskyRxBuffer[1] ) ;
+//	lcd_outhex4( 24, 4*FH, (frskyRxBuffer[2]<< 8) | frskyRxBuffer[3] ) ;
+//	lcd_outhex4( 48, 4*FH, (frskyRxBuffer[4]<< 8) | frskyRxBuffer[5] ) ;
+//	lcd_outhex4( 72, 4*FH, (frskyRxBuffer[6]<< 8) | frskyRxBuffer[7] ) ;
 
-	lcd_outhex4( 0 , 5*FH, (frskyRxBuffer[8]<< 8) | frskyRxBuffer[9] ) ;
-	lcd_outhex4( 24, 5*FH, (frskyRxBuffer[10]<< 8) | frskyRxBuffer[11] ) ;
-	lcd_outhex4( 48, 5*FH, (frskyRxBuffer[12]<< 8) | frskyRxBuffer[13] ) ;
-	lcd_outhex4( 72, 5*FH, (frskyRxBuffer[14]<< 8) | frskyRxBuffer[15] ) ;
+//	lcd_outhex4( 0 , 5*FH, (frskyRxBuffer[8]<< 8) | frskyRxBuffer[9] ) ;
+//	lcd_outhex4( 24, 5*FH, (frskyRxBuffer[10]<< 8) | frskyRxBuffer[11] ) ;
+//	lcd_outhex4( 48, 5*FH, (frskyRxBuffer[12]<< 8) | frskyRxBuffer[13] ) ;
+//	lcd_outhex4( 72, 5*FH, (frskyRxBuffer[14]<< 8) | frskyRxBuffer[15] ) ;
 
-//  lcd_outhex4( 0, 6*FH, USART2->CR1 ) ;
-//  lcd_outhex4( 24, 6*FH, USART2->CR2 ) ;
-//  lcd_outhex4( 48, 6*FH, USART2->BRR ) ;
-extern uint16_t RxIntCount ;
-	lcd_outhex4( 72, 6*FH, RxIntCount ) ;
+////  lcd_outhex4( 0, 6*FH, USART2->CR1 ) ;
+////  lcd_outhex4( 24, 6*FH, USART2->CR2 ) ;
+////  lcd_outhex4( 48, 6*FH, USART2->BRR ) ;
+////extern uint16_t RxIntCount ;
+////	lcd_outhex4( 72, 6*FH, RxIntCount ) ;
 
-extern uint16_t USART_ERRORS ;
-extern uint16_t USART_FE ;
-extern uint16_t USART_PE ;
-extern uint16_t USART_ORE ;
-extern uint16_t USART1_ORE ;
-extern uint16_t USART2_ORE ;
-extern uint16_t USART_NE ;
-  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
-  lcd_outhex4( 24, 7*FH, USART_FE ) ;
-  lcd_outhex4( 48, 7*FH, USART_PE ) ;
-  lcd_outhex4( 72, 7*FH, USART_ORE ) ;
-  lcd_outhex4( 96, 7*FH, USART_NE ) ;
+//extern uint16_t USART_ERRORS ;
+//extern uint16_t USART_FE ;
+//extern uint16_t USART_PE ;
+//extern uint16_t USART_ORE ;
+//extern uint16_t USART1_ORE ;
+//extern uint16_t USART2_ORE ;
+//extern uint16_t USART_NE ;
+//  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
+//  lcd_outhex4( 24, 7*FH, USART_FE ) ;
+//  lcd_outhex4( 48, 7*FH, USART_PE ) ;
+//  lcd_outhex4( 72, 7*FH, USART_ORE ) ;
+//  lcd_outhex4( 96, 7*FH, USART_NE ) ;
   
-	lcd_outhex4( 0, 6*FH, USART1_ORE ) ;
-	lcd_outhex4( 24, 6*FH, USART2_ORE ) ;
+//	lcd_outhex4( 0, 6*FH, USART1_ORE ) ;
+//	lcd_outhex4( 24, 6*FH, USART2_ORE ) ;
 
-extern uint16_t M64Overruns ;
-  lcd_outhex4( 96, 3*FH, M64Overruns ) ;
+//extern uint16_t M64Overruns ;
+//  lcd_outhex4( 96, 3*FH, M64Overruns ) ;
 
-  lcd_outhex4( 96, 2*FH, SCB->AIRCR ) ;
+//  lcd_outhex4( 96, 2*FH, SCB->AIRCR ) ;
 
-#endif
+//#endif
 
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
-extern uint16_t USART_ERRORS ;
-extern uint16_t USART_FE ;
-extern uint16_t USART_PE ;
-extern uint16_t USART_ORE ;
-extern uint16_t USART_NE ;
-  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
-  lcd_outhex4( 24, 7*FH, USART_FE ) ;
-  lcd_outhex4( 48, 7*FH, USART_PE ) ;
-  lcd_outhex4( 72, 7*FH, USART_ORE ) ;
-  lcd_outhex4( 96, 7*FH, USART_NE ) ;
-#endif
+//#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
+//extern uint16_t USART_ERRORS ;
+//extern uint16_t USART_FE ;
+//extern uint16_t USART_PE ;
+//extern uint16_t USART_ORE ;
+//extern uint16_t USART_NE ;
+//  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
+//  lcd_outhex4( 24, 7*FH, USART_FE ) ;
+//  lcd_outhex4( 48, 7*FH, USART_PE ) ;
+//  lcd_outhex4( 72, 7*FH, USART_ORE ) ;
+//  lcd_outhex4( 96, 7*FH, USART_NE ) ;
+//#endif
 
-#if defined(PCBSKY) || defined(PCBLEM1) || defined(PCBX7ACCESS)
+//#if defined(PCBSKY) || defined(PCBLEM1) || defined(PCBX7ACCESS)
 
-#if defined(PCBSKY)
-extern uint16_t USART_ERRORS ;
-extern uint16_t USART_FE ;
-extern uint16_t USART_PE ;
-  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
-  lcd_outhex4( 24, 7*FH, USART_FE ) ;
-  lcd_outhex4( 48, 7*FH, USART_PE ) ;
-#endif
+//#if defined(PCBSKY)
+//extern uint16_t USART_ERRORS ;
+//extern uint16_t USART_FE ;
+//extern uint16_t USART_PE ;
+//  lcd_outhex4( 0, 7*FH, USART_ERRORS ) ;
+//  lcd_outhex4( 24, 7*FH, USART_FE ) ;
+//  lcd_outhex4( 48, 7*FH, USART_PE ) ;
+//#endif
 
-#endif
-}
+//#endif
+//}
 #endif
 
 
@@ -28016,7 +28192,7 @@ STR_Protocol
 				uint32_t mask ;
 				if ( PopupData.PopupActive == 1 )
 				{
-					mask = 0x0007 ; ;
+					mask = 0x2007 ; ;
 				}
 				else if ( PopupData.PopupActive == 2 )
 				{
@@ -28091,6 +28267,10 @@ STR_Protocol
     	  		pushMenu(menuProcInputs) ;
 					}
 #endif
+					else if ( popidx == 13 )	// Radio Vars
+					{
+    	  		pushMenu(menuRadioVars) ;
+					}
 					SubmenuIndex = sub ;
 				}
   			if ( popaction == POPUP_EXIT )

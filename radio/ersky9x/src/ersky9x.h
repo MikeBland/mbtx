@@ -988,7 +988,7 @@ extern uint8_t Ee_lock ;
 #define DSM2_DSMX        2
 #define DSM_9XR		       3
 
-#define NUM_MULTI_PROTOCOLS 90
+#define NUM_MULTI_PROTOCOLS 99
 
 #define M_Flysky           0
 //#define M_FLYSKY_STR "\006FlyskyV9x9  V6x6  V912  "
@@ -1071,6 +1071,8 @@ struct t_multiSetting
 	uint8_t protocol[8] ;
 	uint8_t subData ;
 	uint8_t subProtocol[9] ;
+//	uint8_t next ;
+//	uint8_t previous ;
 //	uint8_t timeout ;
 } ;
 

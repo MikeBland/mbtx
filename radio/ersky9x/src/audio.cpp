@@ -1378,7 +1378,7 @@ void bgStart()
 	}
 }
 
-extern uint16_t g_timeBgRead ;
+//extern uint16_t g_timeBgRead ;
 
 void BgPlaying()
 {
@@ -1404,11 +1404,11 @@ void BgPlaying()
 
 		if ( nread == 0 )
 		{
-			uint16_t t1 = getTmr2MHz() ;
+//			uint16_t t1 = getTmr2MHz() ;
 			f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
 //			fr = f_read( &BgFile, (uint8_t *)BgFileData, amount, &nread ) ;		// Read next buffer
-			t1 = getTmr2MHz() - t1 ;
-			g_timeBgRead = t1 ;
+//			t1 = getTmr2MHz() - t1 ;
+//			g_timeBgRead = t1 ;
 			size -= nread ;
 		}
 		BgSizePlayed = size ;

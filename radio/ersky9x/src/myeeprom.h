@@ -64,9 +64,22 @@
 #define NUM_INPUT_LINES		0
 #endif
 
+#define NUM_RADIO_VARS		4
+
 #define MUSIC_NAME_LENGTH		14
 #define MUSIC_DIR_LENGTH		8
 #define PLAYLIST_COUNT			16
+
+#ifdef X9LS
+#define USE_VARS	1
+#endif
+
+#ifdef USE_VARS
+#define NUM_VARS	4
+
+#define VAR_STORAGE_SIZE	((4*4+13)*NUM_VARS)
+#define VAR_STORAGE_UINTS	(VAR_STORAGE_SIZE/4)
+#endif
 
 //OBSOLETE - USE ONLY MDVERS NOW
 //#define GENERAL_MYVER_r261 3
@@ -339,6 +352,7 @@ PACK(typedef struct t_EEGeneral {
   int8_t  screenShotSw ;
 	uint8_t selectedTheme ;
 	themeData theme[4] ;
+	int16_t radioVar[NUM_RADIO_VARS] ;
 	uint8_t	forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 
@@ -1016,7 +1030,7 @@ PACK(typedef struct te_ModelData {
 #endif	 
 	uint8_t	customTelemetryNames2[16] ;
 	PhaseData xphaseData ;	// 18 bytes long
-#ifndef SMALL
+#ifdef MULTI_GVARS
 	uint8_t flightModeGvars:1 ;
 #else
 	uint8_t notflightModeGvars:1 ;
@@ -1034,6 +1048,9 @@ PACK(typedef struct te_ModelData {
 	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
 #endif
 
+#ifdef USE_VARS
+	uint32_t varStore[VAR_STORAGE_UINTS] ;
+#endif
 
 }) SKYModelData;
 
@@ -1056,7 +1073,7 @@ union t_sharedMemory
 		struct t_maintenance Mdata ;
 	} ;
 	FIL g_eebackupFile ;
-	SKYModelData TempModelStore ;
+//	SKYModelData TempModelStore ;
 	struct t_spectrumAnalyser SpectrumAnalyser ;
 	uint8_t AlphaLogLookup[ALPHA_LOG_SIZE] ;
 } ;

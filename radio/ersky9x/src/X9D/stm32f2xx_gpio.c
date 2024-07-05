@@ -258,120 +258,120 @@ void GPIO_StructInit(GPIO_InitTypeDef* GPIO_InitStruct)
   *          This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
   * @retval None
   */
-void GPIO_PinLockConfig(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  __IO uint32_t tmp = 0x00010000;
+//void GPIO_PinLockConfig(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  __IO uint32_t tmp = 0x00010000;
 
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GPIO_PIN(GPIO_Pin));
 
-  tmp |= GPIO_Pin;
-  /* Set LCKK bit */
-  GPIOx->LCKR = tmp;
-  /* Reset LCKK bit */
-  GPIOx->LCKR =  GPIO_Pin;
-  /* Set LCKK bit */
-  GPIOx->LCKR = tmp;
-  /* Read LCKK bit*/
-  tmp = GPIOx->LCKR;
-  /* Read LCKK bit*/
-  tmp = GPIOx->LCKR;
-}
+//  tmp |= GPIO_Pin;
+//  /* Set LCKK bit */
+//  GPIOx->LCKR = tmp;
+//  /* Reset LCKK bit */
+//  GPIOx->LCKR =  GPIO_Pin;
+//  /* Set LCKK bit */
+//  GPIOx->LCKR = tmp;
+//  /* Read LCKK bit*/
+//  tmp = GPIOx->LCKR;
+//  /* Read LCKK bit*/
+//  tmp = GPIOx->LCKR;
+//}
 
-/**
-  * @}
-  */
+///**
+//  * @}
+//  */
 
-/** @defgroup GPIO_Group2 GPIO Read and Write
- *  @brief   GPIO Read and Write
- *
-@verbatim   
- ===============================================================================
-                              GPIO Read and Write
- ===============================================================================  
+///** @defgroup GPIO_Group2 GPIO Read and Write
+// *  @brief   GPIO Read and Write
+// *
+//@verbatim   
+// ===============================================================================
+//                              GPIO Read and Write
+// ===============================================================================  
 
-@endverbatim
-  * @{
-  */
+//@endverbatim
+//  * @{
+//  */
 
-/**
-  * @brief  Reads the specified input port pin.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  GPIO_Pin: specifies the port bit to read.
-  *         This parameter can be GPIO_Pin_x where x can be (0..15).
-  * @retval The input port pin value.
-  */
-uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  uint8_t bitstatus = 0x00;
+///**
+//  * @brief  Reads the specified input port pin.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  GPIO_Pin: specifies the port bit to read.
+//  *         This parameter can be GPIO_Pin_x where x can be (0..15).
+//  * @retval The input port pin value.
+//  */
+//uint8_t GPIO_ReadInputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  uint8_t bitstatus = 0x00;
 
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
 
-  if ((GPIOx->IDR & GPIO_Pin) != (uint32_t)Bit_RESET)
-  {
-    bitstatus = (uint8_t)Bit_SET;
-  }
-  else
-  {
-    bitstatus = (uint8_t)Bit_RESET;
-  }
-  return bitstatus;
-}
+//  if ((GPIOx->IDR & GPIO_Pin) != (uint32_t)Bit_RESET)
+//  {
+//    bitstatus = (uint8_t)Bit_SET;
+//  }
+//  else
+//  {
+//    bitstatus = (uint8_t)Bit_RESET;
+//  }
+//  return bitstatus;
+//}
 
-/**
-  * @brief  Reads the specified GPIO input data port.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @retval GPIO input data port value.
-  */
-uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+///**
+//  * @brief  Reads the specified GPIO input data port.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @retval GPIO input data port value.
+//  */
+//uint16_t GPIO_ReadInputData(GPIO_TypeDef* GPIOx)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
 
-  return ((uint16_t)GPIOx->IDR);
-}
+//  return ((uint16_t)GPIOx->IDR);
+//}
 
-/**
-  * @brief  Reads the specified output data port bit.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  GPIO_Pin: specifies the port bit to read.
-  *          This parameter can be GPIO_Pin_x where x can be (0..15).
-  * @retval The output port pin value.
-  */
-uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  uint8_t bitstatus = 0x00;
+///**
+//  * @brief  Reads the specified output data port bit.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  GPIO_Pin: specifies the port bit to read.
+//  *          This parameter can be GPIO_Pin_x where x can be (0..15).
+//  * @retval The output port pin value.
+//  */
+//uint8_t GPIO_ReadOutputDataBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  uint8_t bitstatus = 0x00;
 
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
 
-  if ((GPIOx->ODR & GPIO_Pin) != (uint32_t)Bit_RESET)
-  {
-    bitstatus = (uint8_t)Bit_SET;
-  }
-  else
-  {
-    bitstatus = (uint8_t)Bit_RESET;
-  }
-  return bitstatus;
-}
+//  if ((GPIOx->ODR & GPIO_Pin) != (uint32_t)Bit_RESET)
+//  {
+//    bitstatus = (uint8_t)Bit_SET;
+//  }
+//  else
+//  {
+//    bitstatus = (uint8_t)Bit_RESET;
+//  }
+//  return bitstatus;
+//}
 
-/**
-  * @brief  Reads the specified GPIO output data port.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @retval GPIO output data port value.
-  */
-uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+///**
+//  * @brief  Reads the specified GPIO output data port.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @retval GPIO output data port value.
+//  */
+//uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
 
-  return ((uint16_t)GPIOx->ODR);
-}
+//  return ((uint16_t)GPIOx->ODR);
+//}
 
 /**
   * @brief  Sets the selected data port bits.
@@ -383,89 +383,89 @@ uint16_t GPIO_ReadOutputData(GPIO_TypeDef* GPIOx)
   *          This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
   * @retval None
   */
-void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+//void GPIO_SetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GPIO_PIN(GPIO_Pin));
 
-  GPIOx->BSRRL = GPIO_Pin;
-}
+//  GPIOx->BSRRL = GPIO_Pin;
+//}
 
-/**
-  * @brief  Clears the selected data port bits.
-  * @note   This functions uses GPIOx_BSRR register to allow atomic read/modify 
-  *         accesses. In this way, there is no risk of an IRQ occurring between
-  *         the read and the modify access.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  GPIO_Pin: specifies the port bits to be written.
-  *          This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
-  * @retval None
-  */
-void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GPIO_PIN(GPIO_Pin));
+///**
+//  * @brief  Clears the selected data port bits.
+//  * @note   This functions uses GPIOx_BSRR register to allow atomic read/modify 
+//  *         accesses. In this way, there is no risk of an IRQ occurring between
+//  *         the read and the modify access.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  GPIO_Pin: specifies the port bits to be written.
+//  *          This parameter can be any combination of GPIO_Pin_x where x can be (0..15).
+//  * @retval None
+//  */
+//void GPIO_ResetBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GPIO_PIN(GPIO_Pin));
 
-  GPIOx->BSRRH = GPIO_Pin;
-}
+//  GPIOx->BSRRH = GPIO_Pin;
+//}
 
-/**
-  * @brief  Sets or clears the selected data port bit.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  GPIO_Pin: specifies the port bit to be written.
-  *          This parameter can be one of GPIO_Pin_x where x can be (0..15).
-  * @param  BitVal: specifies the value to be written to the selected bit.
-  *          This parameter can be one of the BitAction enum values:
-  *            @arg Bit_RESET: to clear the port pin
-  *            @arg Bit_SET: to set the port pin
-  * @retval None
-  */
-void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
-  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
-  assert_param(IS_GPIO_BIT_ACTION(BitVal));
+///**
+//  * @brief  Sets or clears the selected data port bit.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  GPIO_Pin: specifies the port bit to be written.
+//  *          This parameter can be one of GPIO_Pin_x where x can be (0..15).
+//  * @param  BitVal: specifies the value to be written to the selected bit.
+//  *          This parameter can be one of the BitAction enum values:
+//  *            @arg Bit_RESET: to clear the port pin
+//  *            @arg Bit_SET: to set the port pin
+//  * @retval None
+//  */
+//void GPIO_WriteBit(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin, BitAction BitVal)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+//  assert_param(IS_GET_GPIO_PIN(GPIO_Pin));
+//  assert_param(IS_GPIO_BIT_ACTION(BitVal));
 
-  if (BitVal != Bit_RESET)
-  {
-    GPIOx->BSRRL = GPIO_Pin;
-  }
-  else
-  {
-    GPIOx->BSRRH = GPIO_Pin ;
-  }
-}
+//  if (BitVal != Bit_RESET)
+//  {
+//    GPIOx->BSRRL = GPIO_Pin;
+//  }
+//  else
+//  {
+//    GPIOx->BSRRH = GPIO_Pin ;
+//  }
+//}
 
-/**
-  * @brief  Writes data to the specified GPIO data port.
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  PortVal: specifies the value to be written to the port output data register.
-  * @retval None
-  */
-void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+///**
+//  * @brief  Writes data to the specified GPIO data port.
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  PortVal: specifies the value to be written to the port output data register.
+//  * @retval None
+//  */
+//void GPIO_Write(GPIO_TypeDef* GPIOx, uint16_t PortVal)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
 
-  GPIOx->ODR = PortVal;
-}
+//  GPIOx->ODR = PortVal;
+//}
 
-/**
-  * @brief  Toggles the specified GPIO pins..
-  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
-  * @param  GPIO_Pin: Specifies the pins to be toggled.
-  * @retval None
-  */
-void GPIO_ToggleBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
-{
-  /* Check the parameters */
-  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
+///**
+//  * @brief  Toggles the specified GPIO pins..
+//  * @param  GPIOx: where x can be (A..I) to select the GPIO peripheral.
+//  * @param  GPIO_Pin: Specifies the pins to be toggled.
+//  * @retval None
+//  */
+//void GPIO_ToggleBits(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+//{
+//  /* Check the parameters */
+//  assert_param(IS_GPIO_ALL_PERIPH(GPIOx));
 
-  GPIOx->ODR ^= GPIO_Pin;
-}
+//  GPIOx->ODR ^= GPIO_Pin;
+//}
 
 /**
   * @}

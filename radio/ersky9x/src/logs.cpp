@@ -58,7 +58,7 @@ extern int16_t AltOffset ;
 extern uint32_t LogTimer ;
 
 FIL g_oLogFile = {0};
-const char *g_logError = NULL ;
+//const char *g_logError = NULL ;
 uint8_t logDelay;
 uint8_t RawLogging ;
 
