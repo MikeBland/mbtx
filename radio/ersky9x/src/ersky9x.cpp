@@ -256,6 +256,10 @@ extern const uint8_t IconHedit[] =
 } ;
 #endif
 
+#ifdef USE_VARS
+#include "vars.h"
+#endif
+
 //#define PCB_TEST_9XT	1
 //#define SERIAL_TEST_PRO	1
 
@@ -802,7 +806,7 @@ void init_soft_power( void ) ;
 #endif
 uint32_t check_soft_power( void ) ;
 void soft_power_off( void ) ;
-int8_t getGvarSourceValue( uint8_t src ) ;
+int16_t getGvarSourceValue( uint8_t src ) ;
 static void	processAdjusters( void ) ;
 
 #ifdef PCBSKY
@@ -1111,6 +1115,19 @@ void setLanguage()
 {
 	switch ( g_eeGeneral.language )
 	{
+#ifdef SMALL
+		case 1 :
+ #ifdef FRENCH
+			Language = French ;
+			ExtraFont = font_fr_extra ;
+			ExtraBigFont = font_fr_big_extra ;
+ #else // German
+			Language = German ;
+			ExtraFont = font_de_extra ;
+			ExtraBigFont = font_de_big_extra ;
+ #endif
+		break ;
+#else
 		case 1 :
 			Language = French ;
 #if defined(PCBX12D) || defined(PCBX10)
@@ -1131,6 +1148,7 @@ void setLanguage()
 			ExtraBigFont = font_de_big_extra ;
 #endif		
 		break ;
+#endif
 #ifndef SMALL
 #ifndef PCBLEM1
 		case 3 :
@@ -1278,8 +1296,10 @@ void clearKeyEvents()
     while(keyDown())
 		{
 			  // loop until all keys are up
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D)	// || defined(PCBX10)
+ #ifndef MIXER_TASK
 			getADC_single() ;	// For nav joystick on left
+ #endif
 #endif
 			wdt_reset() ;
 		}	
@@ -2084,6 +2104,7 @@ void com2Configure()
 #endif
 
 #ifdef PCBSKY
+ #ifndef SMALL
 static void checkAr9x()
 {
  #ifndef REVX
@@ -2107,6 +2128,7 @@ static void checkAr9x()
  	g_eeGeneral.ar9xBoard = 0 ;
  #endif
 }
+ #endif
 #endif
 
 
@@ -3963,7 +3985,11 @@ void writeNamesToCCRam() ;
 #endif // PCBX7
 	protocolsToModules() ;
 #ifdef PCBSKY
+ #ifndef SMALL
 	checkAr9x() ;
+ #else	
+	g_eeGeneral.ar9xBoard = 0 ;
+ #endif
 #endif
 
 //#if defined(PCBX7ACCESS)
@@ -4025,20 +4051,20 @@ void writeNamesToCCRam() ;
 
 #if defined(PCBX10)
  #if defined(PCBT16)
- 	g_eeGeneral.physicalRadioType = PHYSICAL_T16 ;
- #else
   #if defined(PCBT18)
 	g_eeGeneral.physicalRadioType = PHYSICAL_TX18S ;
   #else
    #if defined(PCBTX16S)
 	g_eeGeneral.physicalRadioType = PHYSICAL_TX16S ;
    #else
-    #if defined(PCBREV_EXPRESS)
-	g_eeGeneral.physicalRadioType = PHYSICAL_X10E ;
-    #else
-	g_eeGeneral.physicalRadioType = PHYSICAL_X10 ;
-    #endif
+	g_eeGeneral.physicalRadioType = PHYSICAL_T16 ;
    #endif
+  #endif
+ #else
+  #if defined(PCBREV_EXPRESS)
+	g_eeGeneral.physicalRadioType = PHYSICAL_X10E ;
+  #else
+	g_eeGeneral.physicalRadioType = PHYSICAL_X10 ;
   #endif
  #endif
 #endif
@@ -5116,6 +5142,11 @@ void main_loop(void* pdata)
 		}
 #endif
 	}
+
+#ifdef USE_VARS
+	initVars() ;
+#endif
+
 #ifndef LUA
  #ifdef BASIC
 	basicLoadModelScripts() ;
@@ -5798,8 +5829,8 @@ uint16_t getTmr2MHz()
 }
 
 uint32_t OneSecTimer ;
-uint8_t StickScrollAllowed ;
-uint8_t StickScrollTimer ;
+//uint8_t StickScrollAllowed ;
+//uint8_t StickScrollTimer ;
 
 extern int16_t AltOffset ;
 
@@ -7192,10 +7223,10 @@ extern uint8_t M64ResetCount ;
  #endif
 #endif
 
-			if ( StickScrollTimer )
-			{
-				StickScrollTimer -= 1 ;				
-			}
+//			if ( StickScrollTimer )
+//			{
+//				StickScrollTimer -= 1 ;				
+//			}
 #ifdef REV9E
 void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
 void setTopRssi( uint32_t rssi ) ;
@@ -8273,7 +8304,7 @@ void doSplash()
 
 //global helper vars
 //bool    checkIncDec_Ret;
-struct t_p1 P1values ;
+//struct t_p1 P1values ;
 uint8_t LongMenuTimer ;
 uint8_t StepSize = 20 ;
 
@@ -8424,6 +8455,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 #endif
 				{
     			newval += StepSize ;
+					LongMenuTimer = 254 ;
 				}		 
 				else
 				{
@@ -8457,6 +8489,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 #endif
 				{
     			newval -= StepSize ;
+					LongMenuTimer = 254 ;
 				}		 
 				else
 				{
@@ -8480,6 +8513,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 	    newval = -val ;
   	  killEvents(KEY_UP);
     	killEvents(KEY_DOWN);
+
 		}
 	}
 #endif
@@ -8537,7 +8571,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   }
 
   //change values based on P1
-  newval -= P1values.p1valdiff;
+//  newval -= P1values.p1valdiff;
 	if ( RotaryState == ROTARY_VALUE )
 	{
 //		newval += ( menuPressed() || encoderPressed() ) ? Rotary_diff * 20 : Rotary_diff ;
@@ -8546,12 +8580,35 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 		{
 			if ( Rotary_diff > 0 )
 			{
-				newval += RotencSpeed ;
+#ifdef PCBXLITE
+				if ((GPIOE->IDR & 0x0100) == 0 )
+#else
+				if ( menuPressed() )
+#endif
+				{
+					newval += StepSize ;
+					LongMenuTimer = 254 ;
+				}
+				else
+				{					
+					newval += RotencSpeed ;
+				}
 			}
 			else
 			{
-				newval -= RotencSpeed ;
-				
+#ifdef PCBXLITE
+				if ((GPIOE->IDR & 0x0100) == 0 )
+#else
+				if ( menuPressed() )
+#endif
+				{
+					newval -= StepSize ;
+					LongMenuTimer = 254 ;
+				}
+				else
+				{					
+					newval -= RotencSpeed ;
+				}
 			}
 		}
 
@@ -8579,10 +8636,10 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
   }
   if(newval != val)
 	{
-		if ( menuPressed() )
-		{
-			LongMenuTimer = 255 ;
-		}
+//		if ( menuPressed() )
+//		{
+//			LongMenuTimer = 255 ;
+//		}
     if(newval==0)
 		{
 			if ( event )
@@ -8690,35 +8747,35 @@ void usbJoystickUpdate(void)
 #endif
 
 
-const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
-uint32_t calcStickScroll( uint32_t index )
-{
-	uint32_t direction ;
-	int32_t value ;
+//const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
+//uint32_t calcStickScroll( uint32_t index )
+//{
+//	uint32_t direction ;
+//	int32_t value ;
 
-	if ( ( g_eeGeneral.stickMode & 1 ) == 0 )
-	{
-		index ^= 3 ;
-	}
+//	if ( ( g_eeGeneral.stickMode & 1 ) == 0 )
+//	{
+//		index ^= 3 ;
+//	}
 	
-	value = phyStick[index] ;
-	value /= 8 ;
-	direction = value > 0 ? 0x80 : 0 ;
-	if ( value < 0 )
-	{
-		value = -value ;			// (abs)
-	}
-	if ( value > 7 )
-	{
-		value = 7 ;			
-	}
-	value = rate[(uint8_t)value] ;
-	if ( value )
-	{
-		StickScrollTimer = STICK_SCROLL_TIMEOUT ;		// Seconds
-	}
-	return value | direction ;
-}
+//	value = phyStick[index] ;
+//	value /= 8 ;
+//	direction = value > 0 ? 0x80 : 0 ;
+//	if ( value < 0 )
+//	{
+//		value = -value ;			// (abs)
+//	}
+//	if ( value > 7 )
+//	{
+//		value = 7 ;			
+//	}
+//	value = rate[(uint8_t)value] ;
+//	if ( value )
+//	{
+//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;		// Seconds
+//	}
+//	return value | direction ;
+//}
 
 #if defined(PCBX12D) || defined(PCBX10)
 //extern uint8_t LastEvent ;
@@ -9023,8 +9080,192 @@ void valueprocessAnalogEncoder( uint32_t x )
 
 uint8_t GvarSource[4] ;
 
-int8_t getGvarSourceValue( uint8_t src )
+#ifdef USE_VARS
+// type = 0 for Var, 1 for GVAR
+int16_t getGVSourceValue( uint8_t src, uint32_t type )
 {
+	int16_t value ;
+
+	if ( src == 0 )
+	{
+		return 0 ;
+	}
+	if ( src >= EXTRA_POTS_START )
+	{
+		value = calibratedStick[src-EXTRA_POTS_START+7] ;
+		if ( type )
+		{
+			value /= 8 ;
+		}
+	}
+	else if ( src <= 4 )
+	{
+		value = getTrimValueAdd( CurrentPhase, src - 1 ) ;
+		TrimInUse[src-1] |= 1 ;
+		GvarSource[src-1] = 1 ;
+	}
+	else if ( src == 5 )	// REN
+	{
+		value = 0 ;
+	}
+	else if ( src <= 9 )	// Stick
+	{
+		value = calibratedStick[ src-5 - 1 ] ;
+		if ( type )
+		{
+			value /= 8 ;
+		}
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 12 )	// Pot
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 13 )	// Pot
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 13 )	// Pot
+#endif
+	{
+		value = calibratedStick[ ( src-6)] ;
+		if ( type )
+		{
+			value /= 8 ;
+		}
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 36 )	// Chans
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 37 )	// Pot
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 37 )	// Pot
+#endif
+	{
+#if defined(PCBSKY) || defined(PCB9XT)
+		value = ex_chans[src-13] ;
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+		value = ex_chans[src-14] ;
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+		value = ex_chans[src-14] ;
+#endif
+		if ( type )
+		{
+			value *= 100 ;
+		}
+		else
+		{
+			value *= 1000 ;
+		}
+		value /= 1024 ;
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 44 )	// Scalers
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 45 )	// Scalers
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 45 )	// Scalers
+#endif
+	{
+#if defined(PCBSKY) || defined(PCB9XT)
+		value = calc_scaler( src-37, 0, 0 ) ;
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+		value = calc_scaler( src-38, 0, 0 ) ;
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+		value = calc_scaler( src-38, 0, 0 ) ;
+#endif
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 68 )	// Scalers
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 69 )	// Scalers
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 69 )	// Scalers
+#endif
+	{ // Outputs
+		int32_t x ;
+#if defined(PCBSKY) || defined(PCB9XT)
+		x = g_chans512[src-45] ;
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+		x = g_chans512[src-46] ;
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+		x = g_chans512[src-46] ;
+#endif
+		x *= 100 ;
+		value = x / 1024 ;
+	}
+#if defined(PCBSKY) || defined(PCB9XT)
+	else if ( src <= 68+NUM_RADIO_VARS )	// Scalers
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+	else if ( src <= 69+NUM_RADIO_VARS )	// Scalers
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+	else if ( src <= 69+NUM_RADIO_VARS )	// Scalers
+#endif
+	{ // Radio Vars
+#if defined(PCBSKY) || defined(PCB9XT)
+		value = g_eeGeneral.radioVar[src-69] ;
+#endif
+#if defined(PCBX9D) || defined(PCBLEM1)
+		value = g_eeGeneral.radioVar[src-70] ;
+#endif
+#if defined(PCBX12D) || defined(PCBX10)
+		value = g_eeGeneral.radioVar[src-70] ;
+#endif
+	}
+	else
+	{
+		value = 0 ;
+	}
+	if ( type )
+	{
+		if ( value > 125 )
+		{
+			value = 125 ;
+		}
+		if ( value < -125 )
+		{
+			value = -125 ;
+		}
+	}
+	else
+	{
+		if ( value > 1000 )
+		{
+			value = 1000 ;
+		}
+		if ( value < -1000 )
+		{
+			value = -1000 ;
+		}
+	}
+ 	return value ;
+}
+
+int16_t getVarSourceValue( uint8_t src )
+{
+	return getGVSourceValue( src, 0 ) ;
+}
+
+#endif
+
+
+int16_t getGvarSourceValue( uint8_t src )
+{
+#ifdef USE_VARS
+	return getGVSourceValue( src, 1 ) ;
+#else	
 	int16_t value ;
 
 	if ( src >= EXTRA_POTS_START )
@@ -9153,6 +9394,7 @@ int8_t getGvarSourceValue( uint8_t src )
 		value = -125 ;
 	}
  	return value ;
+#endif
 }
 
 
@@ -9331,73 +9573,73 @@ static void updateVbat()
   }
 }
 
-static void checkStickScroll()
-{
-	if ( g_eeGeneral.stickScroll )
-	{
-	 	if ( StickScrollTimer )
-		{
-			static uint8_t repeater ;
-			uint32_t direction ;
-			int32_t value ;
+//static void checkStickScroll()
+//{
+//	if ( g_eeGeneral.stickScroll )
+//	{
+//	 	if ( StickScrollTimer )
+//		{
+//			static uint8_t repeater ;
+//			uint32_t direction ;
+//			int32_t value ;
 		
-			if ( repeater < 128 )
-			{
-				repeater += 1 ;
-			}
-			value = calcStickScroll( 2 ) ;
-			direction = value & 0x80 ;
-			value &= 0x7F ;
-			if ( value )
-			{
-		 		if ( StickScrollAllowed & 2 )
-				{
-					if ( repeater > value )
-					{
-						repeater = 0 ;
-						if ( direction )
-						{
-							putEvent(EVT_KEY_FIRST(KEY_UP));
-						}
-						else
-						{
-							putEvent(EVT_KEY_FIRST(KEY_DOWN));
-						}
-					}
-				}
-			}
-			else
-			{
-				value = calcStickScroll( 3 ) ;
-				direction = value & 0x80 ;
-				value &= 0x7F ;
-				if ( value )
-				{
-			 		if ( StickScrollAllowed & 1 )
-					{
-						if ( repeater > value )
-						{
-							repeater = 0 ;
-							if ( direction )
-							{
-								putEvent(EVT_KEY_FIRST(KEY_RIGHT));
-							}
-							else
-							{
-								putEvent(EVT_KEY_FIRST(KEY_LEFT));
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		StickScrollTimer = 0 ;		// Seconds
-	}	
-	StickScrollAllowed = 3 ;
-}
+//			if ( repeater < 128 )
+//			{
+//				repeater += 1 ;
+//			}
+//			value = calcStickScroll( 2 ) ;
+//			direction = value & 0x80 ;
+//			value &= 0x7F ;
+//			if ( value )
+//			{
+//		 		if ( StickScrollAllowed & 2 )
+//				{
+//					if ( repeater > value )
+//					{
+//						repeater = 0 ;
+//						if ( direction )
+//						{
+//							putEvent(EVT_KEY_FIRST(KEY_UP));
+//						}
+//						else
+//						{
+//							putEvent(EVT_KEY_FIRST(KEY_DOWN));
+//						}
+//					}
+//				}
+//			}
+//			else
+//			{
+//				value = calcStickScroll( 3 ) ;
+//				direction = value & 0x80 ;
+//				value &= 0x7F ;
+//				if ( value )
+//				{
+//			 		if ( StickScrollAllowed & 1 )
+//					{
+//						if ( repeater > value )
+//						{
+//							repeater = 0 ;
+//							if ( direction )
+//							{
+//								putEvent(EVT_KEY_FIRST(KEY_RIGHT));
+//							}
+//							else
+//							{
+//								putEvent(EVT_KEY_FIRST(KEY_LEFT));
+//							}
+//						}
+//					}
+//				}
+//			}
+//		}
+//	}
+//	else
+//	{
+//		StickScrollTimer = 0 ;		// Seconds
+//	}	
+//	StickScrollAllowed = 3 ;
+//}
 
 
 void perMain( uint32_t no_menu )
@@ -9475,9 +9717,15 @@ void checkDsmTelemetry5ms() ;
 	
 #if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
 	uint8_t evt = 0 ;
+#ifdef USE_VARS
+	uint8_t tempEvent = 0 ;
+#endif
 	if ( ( lastTMR & 1 ) == 0 )
 	{
 		evt = peekEvent() ;
+#ifndef SMALL
+		tempEvent = evt ;
+#endif
   	int8_t  k = (evt & EVT_KEY_MASK) - TRM_BASE ;
   	if ( ( k >= 0 ) && ( k < 8 ) )
 		{		
@@ -9513,10 +9761,10 @@ void checkDsmTelemetry5ms() ;
 //	}
 #endif
 
-		if ( ( evt == 0 ) || ( evt == EVT_KEY_REPT(KEY_MENU) ) )
+		if ( ( evt == 0 ) || ( evt == EVT_KEY_REPT(KEY_MENU) ) || ( evt == EVT_KEY_REPT(BTN_RE) ) )
 		{
 			uint8_t timer = LongMenuTimer ;
-			if ( menuPressed() )
+			if ( menuPressed() || encoderPressed() )
 			{
 				if ( timer < 255 )
 				{
@@ -9527,34 +9775,43 @@ void checkDsmTelemetry5ms() ;
 			{
 				timer = 0 ;
 			}
-			if ( timer == 200 )
+			if ( timer >= 150 )
 			{
-				evt = EVT_TOGGLE_GVAR ;
-				timer = 255 ;
+				if ( timer != 255 )
+				{
+					if ( ( lastTMR & 3 ) == 0 )
+					{
+						evt = EVT_TOGGLE_GVAR ;
+//						killEvents( KEY_MENU ) ;
+//						killEvents( BTN_RE ) ;
+						timer = 255 ;
+						s_editMode = 0 ;
+					}
+				}
 			}
 			LongMenuTimer = timer ;
 		}
 
-#ifdef PCBSKY
-	int16_t p1d ;
+//#ifdef PCBSKY
+//	int16_t p1d ;
 
-	struct t_p1 *ptrp1 ;
-	ptrp1 = &P1values ;
+//	struct t_p1 *ptrp1 ;
+//	ptrp1 = &P1values ;
 	
-	int16_t c6 = calibratedStick[6] ;
-  p1d = ( ptrp1->p1val-c6 )/32;
-  if(p1d)
-	{
-    p1d = (ptrp1->p1valprev-c6)/2;
-    ptrp1->p1val = c6 ;
-  }
-  ptrp1->p1valprev = c6 ;
-  if ( g_eeGeneral.disablePotScroll )
-  {
-    p1d = 0 ;
-	}
-	ptrp1->p1valdiff = p1d ;
-#endif
+//	int16_t c6 = calibratedStick[6] ;
+//  p1d = ( ptrp1->p1val-c6 )/32;
+//  if(p1d)
+//	{
+//    p1d = (ptrp1->p1valprev-c6)/2;
+//    ptrp1->p1val = c6 ;
+//  }
+//  ptrp1->p1valprev = c6 ;
+//  if ( g_eeGeneral.disablePotScroll )
+//  {
+//    p1d = 0 ;
+//	}
+//	ptrp1->p1valdiff = p1d ;
+//#endif
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(MULTI_EVENTS)
 	if ( ( lastTMR & 3 ) == 0 )
@@ -9706,9 +9963,10 @@ void checkDsmTelemetry5ms() ;
 	}
 #endif
 
-	if ( g_eeGeneral.disablePotScroll || option )
+//	if ( g_eeGeneral.disablePotScroll || option )
+	if ( 1 )
 	{			 
-		if ( g_model.anaVolume )	// Only check if on main screen
+		if ( g_model.anaVolume )	// NOT Only check if on main screen
 		{
 			static uint16_t oldVolValue ;
 			uint16_t x ;
@@ -9770,7 +10028,7 @@ void checkDsmTelemetry5ms() ;
   }
 #endif
 
-	checkStickScroll() ;
+//	checkStickScroll() ;
 
 	GvarSource[0] = 0 ;
 	GvarSource[1] = 0 ;
@@ -9831,6 +10089,19 @@ void checkDsmTelemetry5ms() ;
 		}
 	}
 	check_frsky( 0 ) ;
+
+#ifdef USE_VARS
+	if ( tempEvent != EVT_TOGGLE_GVAR )
+	{
+		uint8_t k ;
+	  k = (tempEvent & EVT_KEY_MASK) - TRM_BASE ;
+  	if ( k > 8 )
+		{
+			tempEvent = 0 ;
+		}	
+	}
+	processVars(tempEvent) ;
+#endif
 
 // Here, if waiting for EEPROM response, don't action menus
 
@@ -11525,12 +11796,18 @@ static uint8_t checkTrim(uint8_t event)
 			{
 				idx = 3 - idx ;			
 			}
-        if ( ct == 2 ) // Vintage style crosstrim
-        {
-          if (idx == 0 || idx == 3)       // swap back LH/RH trims
-            idx = 3 - idx;
-        }
+      if ( ct == 2 ) // Vintage style crosstrim
+      {
+        if (idx == 0 || idx == 3)       // swap back LH/RH trims
+				{
+					idx = 3 - idx;
+				}
+      }
+#ifdef SMALL
 			if ( TrimInUse[idx] )
+#else
+			if ( TrimInUse[idx] && ((VarUsesTrim & (1 << idx)) == 0) )
+#endif
 			{
 				uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
   	  	int16_t tm = getTrimValueAdd( phaseNo, idx ) ;
@@ -13956,6 +14233,39 @@ uint8_t IS_EXPO_THROTTLE( uint8_t x )
 	}
 	return 0 ;
 }
+
+//void checkXyCurve()
+//{
+//	uint32_t a ;
+//	uint32_t b ;
+//	a = ( g_model.curvexy[9] == 0 ) ;
+//	b = ( g_model.curve2xy[9] == 0 ) ;
+
+//	if ( a | b )
+//	{
+//		uint32_t i ;
+//		int8_t j = -100 ;
+//		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+//		{
+//			if ( a )
+//			{
+//				g_model.curvexy[i] = j ;
+//			}
+//			if ( b )
+//			{
+//				g_model.curve2xy[i] = j ;
+//			}
+//		}
+//	}
+////	if ( g_model.curve2xy[9] == 0 )
+////	{
+////		uint32_t i ;
+////		int8_t j = -100 ;
+////		for ( i = 9 ; i < 18 ; j += 25, i += 1 )
+////		{
+////		}
+////	}
+//}
 
 void checkXyCurve()
 {

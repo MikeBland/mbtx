@@ -220,19 +220,20 @@ uint8_t Com1TxBuffer[32] ;
 uint8_t BtSbusFrame[SBUS_FRAME_LENGTH] ;
 uint16_t BtLastSbusSendTime ;
 
-uint16_t BtParaDebug ;
+//uint16_t BtParaDebug ;
 
 #define TEMP_BUFFER_SIZE	100
 
 uint8_t BtTempBuffer[TEMP_BUFFER_SIZE] ;
 uint16_t BtRxTimer ;
-uint8_t BtPreviousLinkIndex = 0xFF ;
+//uint8_t BtPreviousLinkIndex = 0xFF ;
 
 //uint8_t BtT1Buffer[50] ;
 //uint8_t BtT2Buffer[50] ;
 //uint8_t BtT3Buffer[50] ;
 
 // Data for BT and encoder over serial
+#ifdef BT_WITH_ENCODER
 struct t_bt_ser_pkt
 {
 	uint8_t bytes[3+32] ;
@@ -244,11 +245,15 @@ struct t_bt_ser_rxpkt
 	uint8_t bytes[4+32] ;
 	uint8_t bt_count ;
 } BtSerRxPkt ;
+#endif
 
-
+#ifdef BT_WITH_ENCODER
 #define BT_ENABLE_HIGH	{ HC05_ENABLE_HIGH; BtSerPkt.bytes[0] |= 1 ; }
 #define BT_ENABLE_LOW		{ HC05_ENABLE_LOW; BtSerPkt.bytes[0] &= ~1 ; }
-
+#else
+#define BT_ENABLE_HIGH	{ HC05_ENABLE_HIGH; }
+#define BT_ENABLE_LOW		{ HC05_ENABLE_LOW; }
+#endif
 
 #ifdef BT_WITH_ENCODER
 
@@ -335,11 +340,13 @@ void scriptReleasetBt()
 static void btPowerOn()
 {
 #ifdef PCBX9D
+ #ifdef BT_WITH_ENCODER
 	if ( g_model.com2Function == COM2_FUNC_BT_ENC )
 	{
 		BtSerPkt.bytes[0] |= 2 ;
 		return ;
 	}
+ #endif
 #endif
 
 #ifdef PCBSKY
@@ -373,11 +380,13 @@ static void btPowerOn()
 static void btPowerOff()
 {
 #ifdef PCBX9D
+ #ifdef BT_WITH_ENCODER
 	if ( g_model.com2Function == COM2_FUNC_BT_ENC )
 	{
 		BtSerPkt.bytes[0] &= ~2 ;
 		return ;
 	}
+ #endif
 #endif
 
 #ifdef PCBSKY
@@ -1806,7 +1815,7 @@ void btConfigCheck()
 			uint32_t j ;
 			uint16_t rxchar ;
 
-			for ( i = 0 ; i < 100 ; i += 1 )
+			for ( i = 0 ; i < TEMP_BUFFER_SIZE ; i += 1 )
 			{
 				BtTempBuffer[0] = 0 ;
 			}
@@ -2543,7 +2552,7 @@ void bt_task(void* pdata)
 					else if ( tProf->channel[0].source == TRAINER_BT )
 	#endif				
 					{
-						BtParaDebug += 1 ;
+//						BtParaDebug += 1 ;
 						int32_t x ;
 						while( ( x = rxBtuart() ) != -1 )
 						{

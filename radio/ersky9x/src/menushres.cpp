@@ -117,8 +117,8 @@ const uint8_t Icon24log[] =
 
 extern uint8_t InverseBlink ;
 extern uint8_t ImageDisplay ;
-extern uint8_t scroll_disabled;
-extern uint8_t StickScrollTimer ;
+//extern uint8_t scroll_disabled;
+//extern uint8_t StickScrollTimer ;
 
 extern uint8_t EditType ;
 extern uint8_t EditColumns ;
@@ -173,8 +173,8 @@ void menuProcDiagAna(uint8_t event)
 	lcd_putsAtt( 0, 0, PSTR(STR_ANA),INVERS) ;
 	
 	static MState2 mstate2;
-	StickScrollAllowed = 0 ;
-	StickScrollTimer = 0 ;
+//	StickScrollAllowed = 0 ;
+//	StickScrollTimer = 0 ;
 	mstate2.check_columns(event, NUM_ANA_ITEMS-1) ;
 
 	ImageDisplay = 0 ;
@@ -207,7 +207,7 @@ void menuProcDiagAna(uint8_t event)
 
   if(sub==1)
   {
-    scroll_disabled = 1;
+//    scroll_disabled = 1;
 		if ( s_editMode )
 		{
 	    CHECK_INCDEC_H_GENVAR( g_eeGeneral.vBatCalib, -127, 127);
@@ -573,7 +573,7 @@ void menuProcTelemetry(uint8_t event)
   	  	if (sub==subN)
 				{
 					Columns = 1 ;
-					if ( (s_editMode || P1values.p1valdiff))
+					if ( (s_editMode /*|| P1values.p1valdiff*/))
 					{
   	  	    switch (subSub)
 						{
@@ -596,7 +596,7 @@ void menuProcTelemetry(uint8_t event)
   	  	if (sub==subN)
 				{
 					Columns = 1 ;
-					if ( (s_editMode || P1values.p1valdiff))
+					if ( (s_editMode /*|| P1values.p1valdiff*/))
 					{
   	  	    switch (subSub)
 						{

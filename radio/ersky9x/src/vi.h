@@ -568,7 +568,7 @@
 #define ISTR_THROTTLE_OPEN			"Throttle Open"
 #define ISTR_THR_DEFAULT				"Thr. Default"
 #define ISTR_TOTAL_TIME					"Total Time"
-#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes\0Inputs\0Radio Vars"
+#define ISTR_POPUP_GLOBALS			"GVARS\0GVadjusters\0Scalers\0Telemetry\0Custom\0Mixer\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes\0Inputs\0Radio Vars\0Vars"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 

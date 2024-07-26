@@ -70,14 +70,37 @@
 #define MUSIC_DIR_LENGTH		8
 #define PLAYLIST_COUNT			16
 
-#ifdef X9LS
+#ifdef PCBX9D
+#define USE_VARS	1
+#endif
+#if defined(PCBX12D)
+#define USE_VARS	1
+#endif
+#if defined(PCBX10)
 #define USE_VARS	1
 #endif
 
-#ifdef USE_VARS
-#define NUM_VARS	4
+#ifdef PCB9XT
+#define USE_VARS	1
+#endif
 
-#define VAR_STORAGE_SIZE	((4*4+13)*NUM_VARS)
+#ifdef PCBSKY
+// #ifndef SMALL
+#define USE_VARS	1
+// #endif
+#endif
+
+#ifdef USE_VARS
+ #ifdef PCB9XT
+#define NUM_VARS	12
+ #else
+  #ifdef PCBSKY
+#define NUM_VARS	12
+  #else
+#define NUM_VARS	12
+  #endif
+ #endif
+#define VAR_STORAGE_SIZE	((4*4+12)*NUM_VARS)
 #define VAR_STORAGE_UINTS	(VAR_STORAGE_SIZE/4)
 #endif
 
@@ -233,8 +256,8 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   preBeep:1;
   uint8_t   flashBeep:1;
   uint8_t   disableSplashScreen:1;
-  uint8_t   disablePotScroll:1;
-  uint8_t   stickScroll:1 ;
+  uint8_t   notdisablePotScroll:1;
+  uint8_t   notstickScroll:1 ;
   uint8_t   frskyinternalalarm:1;
   uint8_t   filterInput;
   uint8_t   lightAutoOff;
@@ -498,7 +521,7 @@ PACK(typedef struct t_ModelData {
   uint8_t   swashRingValue;
   int8_t    ppmFrameLength;   //0=22.5  (10msec-30msec) 0.5msec increments
   MixData   mixData[MAX_MIXERS];
-  LimitData limitData[NUM_CHNOUT];
+  LimitData limitData[NUM_CHNOUT];	// 5*
   ExpoData  expoData[4];
   int8_t    trim[4];
   int8_t    curves5[MAX_CURVE5][5];
@@ -563,7 +586,13 @@ PACK(typedef struct te_MixData
   uint8_t extWeight:2 ;
   uint8_t extOffset:2 ;
 	uint8_t	extDiff:1 ;
+#ifdef USE_VARS
+	uint8_t	varForWeight:1 ;
+	uint8_t	varForOffset:1 ;
+	uint8_t	varForExpo:1 ;
+#else
 	uint8_t	res:3 ;
+#endif
 	uint8_t	res1 ;
 }) SKYMixData;
 
@@ -817,7 +846,7 @@ struct t_hiResDisplay
 {
 	uint8_t layout ;
 	uint8_t options ;
-	struct t_hiResBox boxes[6] ;
+	struct t_hiResBox boxes[6] ;	// 6*6 bytes
 } ;
 
 PACK(struct te_InputsData
@@ -827,11 +856,17 @@ PACK(struct te_InputsData
   int8_t  swtch ;
   
   uint8_t carryTrim:3 ; // On,Off,R,E,T,A
-  uint8_t mode:3 ;
+  uint8_t mode:3 ;	// None Function Curve Diff Expo
 	uint8_t side:2 ;	// ---, x>0, x<0
 	
 	uint8_t chn:5 ;
+#ifdef USE_VARS
+	uint8_t varForWeight:1 ;
+	uint8_t varForOffset:1 ;
+	uint8_t varForCurve:1 ;
+#else
 	uint8_t spare2:3;
+#endif
 
 //  NOBACKUP(char name[LEN_EXPOMIX_NAME]);
   uint8_t flightModes ;
@@ -887,8 +922,8 @@ PACK(typedef struct te_ModelData {
   uint8_t   swashCollectiveSource;
   uint8_t   swashRingValue;
   int8_t    ppmFrameLength;   //0=22.5  (10msec-30msec) 0.5msec increments
-  SKYMixData   mixData[MAX_SKYMIXERS];
-  LimitData limitData[NUM_SKYCHNOUT];
+  SKYMixData   mixData[MAX_SKYMIXERS];		// 15*48 bytes
+  LimitData limitData[NUM_SKYCHNOUT];			// 5*24 bytes
   ExpoData  expoData[4];
   int8_t    trim[4];
   int8_t    curves5[MAX_CURVE5][5];
@@ -954,8 +989,8 @@ PACK(typedef struct te_ModelData {
 	uint8_t		rxVratio ;
 	uint8_t   currentSource ;
 	uint8_t   altSource ;
-	ScaleData Scalers[NUM_SCALERS] ;
-	DsmLinkData dsmLinkData ; 
+	ScaleData Scalers[NUM_SCALERS] ;	// 12*8 bytes
+	DsmLinkData dsmLinkData ; 				// 4 bytes
 	int8_t timer1RstSw ;
 	int8_t timer2RstSw ;
 	uint8_t timer1Cdown:1 ;
@@ -967,7 +1002,7 @@ PACK(typedef struct te_ModelData {
   int8_t mlightSw ;
 	uint8_t ppmOpenDrain ;
 	char modelVname[VOICE_NAME_SIZE] ;
-	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;
+	VoiceAlarmData vad[NUM_VOICE_ALARMS] ;	// 16*24 bytes
 	int8_t gvswitch[MAX_GVARS] ;
   uint8_t mview ;
 	uint8_t telemetryProtocol ;
@@ -986,16 +1021,16 @@ PACK(typedef struct te_ModelData {
   uint16_t xmodelswitchWarningStates ;	// Enough bits for Taranis X9E
   uint8_t ymodelswitchWarningStates ;		// Enough bits for Taranis X9E
 	uint8_t customDisplay2Index[6] ;
-	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;
+	GvarAdjust gvarAdjuster[NUM_GVAR_ADJUST] ;		// 3*8 bytes
 	uint16_t modelswitchWarningDisables ;
 	uint16_t xmodelswitchWarningDisables ;
 	uint8_t ymodelswitchWarningDisables ;
 	char modelImageName[VOICE_NAME_SIZE+2] ;
-	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;
+	VoiceAlarmData vadx[NUM_EXTRA_VOICE_ALARMS] ;	// 16*12 bytes
 	int8_t option_protocol ;
   uint8_t sub_protocol ;
   uint8_t xsub_protocol ;
-	CustomCheckData customCheck ;
+	CustomCheckData customCheck ;			// 3 bytes
 	uint8_t btDefaultAddress ;
 	int8_t xoption_protocol ;
 	uint8_t trainerProfile ;
@@ -1003,15 +1038,15 @@ PACK(typedef struct te_ModelData {
   int8_t	curve6[6] ;
 	uint8_t customDisplay1Extra[7] ;
 	uint8_t customDisplay2Extra[7] ;
-	MusicData musicData ;
-	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;
-	ExtScaleData eScalers[NUM_SCALERS] ;
-	uint32_t LogDisable[4] ;	// Up to 128 sensors etc.
+	MusicData musicData ;													// 4 bytes
+	GvarAdjust egvarAdjuster[EXTRA_GVAR_ADJUST] ;		// 3*12 bytes
+	ExtScaleData eScalers[NUM_SCALERS] ;		// 6*8 bytes
+	uint32_t LogDisable[4] ;	// 16 bytes, Up to 128 sensors etc.
 	uint8_t failsafeMode[2] ;
-	struct t_module Module[2] ;
+	struct t_module Module[2] ;		// 28*2 bytes
 
-	EXTRA_MIXERS ;
-	EXTRA_CHANNELS ;
+	EXTRA_MIXERS ;			// 15*32 bytes
+	EXTRA_CHANNELS ;		// 5*8 bytes
 
 	VarioExtraData varioExtraData ;
 	uint8_t telemetryTimeout ;
@@ -1023,8 +1058,8 @@ PACK(typedef struct te_ModelData {
 	int8_t cellScalers[12] ;
 	uint8_t	customTelemetryNames[24] ;
 	uint8_t extraSensors ;
-	ExtraId extraId[NUMBER_EXTRA_IDS] ;
-	struct t_access Access[2] ;
+	ExtraId extraId[NUMBER_EXTRA_IDS] ;	// 4*4 bytes
+	struct t_access Access[2] ;		// 33*2 bytes
 #if defined(PCBX10)	|| defined(PCBX12D)
 // Use for colour screen setup
 #endif	 
@@ -1035,13 +1070,18 @@ PACK(typedef struct te_ModelData {
 #else
 	uint8_t notflightModeGvars:1 ;
 #endif
+#ifdef USE_VARS
+	uint8_t vars:1 ;
+	uint8_t sparey:6 ;
+#else
 	uint8_t sparey:7 ;
+#endif
 	uint8_t sparez ;
 
 //#if defined(PCBX12D) || defined(PCBX10)
-	struct t_hiResDisplay hiresDisplay[2] ;
+	struct t_hiResDisplay hiresDisplay[2] ;	// 38*2 bytes
 //#endif
-	struct te_InputsData inputs[NUM_INPUT_LINES] ;
+	struct te_InputsData inputs[NUM_INPUT_LINES] ;	// 8*64 bytes
 
 #if MULTI_GVARS
 	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS+3] ; // 9*4 =36 bytes + 3*4

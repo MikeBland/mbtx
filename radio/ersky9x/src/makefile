@@ -27,7 +27,8 @@
 # X9Lite       make PCB=X9D PCBX9LITE=1
 # X9LiteS      make PCB=X9D PCBX9LITE=1 X9LS=1 
 # 9Xtreme      make PCB=9XT
-# SKY board    make REVB=1 SMALL=1
+# SKY board    make REVB=1 SMALL=1 LANG1=0
+# SKY board    make REVB=1 SMALL=1 LANG1=1
 # 9XR_PRO      make REVB=1 REVX=1
 # AR9X board   make REVB=1
 # Horus X12S   make PCB=X12D
@@ -260,11 +261,17 @@ else
   LUA = 1
   CPPDEFS += -DLUA
  else ifeq ($(SMALL), 1)
-  PROJECT = ersky9xs
   LDSCRIPT = sam3s4c_flash.ld
   UDEFS = -Dat91sam3s4
   EXT_MOD=REVB
   CPPDEFS += -DSMALL 
+  ifeq ($(LANG1), 0)
+   PROJECT = ersky9xsf
+   CPPDEFS += -DFRENCH
+  else
+   PROJECT = ersky9xsd
+   CPPDEFS += -DGERMAN
+  endif
  else ifeq ($(ARUNI), 1)
   PROJECT = aruni
   LDSCRIPT = sam3s8c_flash.ld
@@ -425,6 +432,7 @@ CPPSRC = ersky9x.cpp \
 			loadboot.cpp \
 			pxx2.cpp \
 			gvars.cpp \
+			vars.cpp \
 			stamp.cpp \
 			lcd.cpp
 
@@ -531,6 +539,7 @@ CPPSRC = ersky9x.cpp \
 			loadboot.cpp \
 			pxx2.cpp \
 			gvars.cpp \
+			vars.cpp \
 			lcd.cpp
 
 ifeq ($(TOUCH), 1)
@@ -652,6 +661,7 @@ CPPSRC = ersky9x.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
 			gvars.cpp \
+			vars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -764,6 +774,7 @@ CPPSRC = ersky9x.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
 			gvars.cpp \
+			vars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -899,6 +910,7 @@ CPPSRC = ersky9x.cpp \
          X9D/usbd_usr.cpp \
 			pxx2.cpp \
 			gvars.cpp \
+			vars.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -1030,13 +1042,12 @@ CPPSRC = stamp.cpp \
          bluetooth.cpp \
          sky/pulses_driver.cpp \
 			en.cpp \
-			de.cpp \
-			fr.cpp \
 			loadboot.cpp \
 			maintenance.cpp \
 			mavlink.cpp \
 			sbus.cpp \
 			pxx2.cpp \
+			vars.cpp \
 			gvars.cpp \
 			logs.cpp
 
@@ -1048,8 +1059,13 @@ ifeq ($(BASIC), 1)
 endif
 
 	 ifeq ($(SMALL), 1)
+     ifeq ($(LANG1), 0)
+	   CPPSRC += fr.cpp
+	  else
+	   CPPSRC += de.cpp
+	  endif
 	 else
-CPPSRC += no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
+CPPSRC += fr.cpp de.cpp no.cpp se.cpp it.cpp pl.cpp vi.cpp sp.cpp
 	 endif
 
 #CPPSRC += sky/gtime.cpp sky/massstorage.cpp
@@ -1298,6 +1314,8 @@ clean:
 	-rm -f $(OBJROOT)/obj_x9dp/*.*
 	-rm -f $(OBJROOT)/obj_x12d/*.*
 	-rm -f $(OBJROOT)/obj_ersky9xs/*.*
+	-rm -f $(OBJROOT)/obj_ersky9xsf/*.*
+	-rm -f $(OBJROOT)/obj_ersky9xsd/*.*
 	-rm -f $(OBJROOT)/obj_ersky9xr/*.*
 	-rm -f $(OBJROOT)/obj_ersky9x/*.*
 	-rm -f $(OBJROOT)/obj_ersky9x9XT/*.*

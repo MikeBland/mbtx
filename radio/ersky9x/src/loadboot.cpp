@@ -101,7 +101,11 @@ const uint8_t BootCode[] = {
 
 #ifdef PCBX10
  #if defined(PCBT16)
-  #include "bootloader/bootflashT16.lbm"
+  #if defined(PCBT18)
+   #include "bootloader/bootflashtx18.lbm"
+  #else
+   #include "bootloader/bootflashT16.lbm"
+	#endif
  #else 
  	#if defined(PCBTx16S)
    #include "bootloader/bootflashtx16s.lbm"

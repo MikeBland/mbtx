@@ -40,6 +40,16 @@ extern uint8_t ExtDisplaySend ;
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
+#define SCREEN_LINES		15
+
+//#define	WHERE_TRACK		1
+//void notePosition( uint8_t byte ) ;
+
+#else
+#define SCREEN_LINES		8
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
 #define DISPLAY_W	480
 #define DISPLAY_H	272
 
@@ -190,7 +200,8 @@ extern uint16_t DisplayOffset ;
 #endif
 
 extern uint8_t lcd_putc(uint8_t x,uint8_t y,const char c ) ;
-extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint8_t mode) ;
+extern uint8_t lcd_putcSmall( uint8_t x, uint8_t y, uint8_t c, uint8_t mode ) ;
+extern void lcd_putsnAtt(uint8_t x,uint8_t y,const char * s,uint8_t len,uint16_t mode) ;
 extern void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len) ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
 extern void lcd_picture( uint16_t i_x, uint16_t i_y, uint16_t maxHeight, uint16_t maxWidth = 480 ) ;
@@ -209,7 +220,7 @@ void lcdDrawCharDoubleTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t
 #else
 extern void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val) ;
 #endif
-extern void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
+extern void lcd_putsAttIdx(uint16_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att) ;
 extern void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint16_t mode ) ;
 extern void lcd_puts_Pleft( uint8_t y, const char *s ) ;
@@ -229,6 +240,7 @@ extern void lcd_putsAttIdxColour(uint8_t x,uint8_t y,const char * s,uint8_t idx,
 extern uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, uint8_t mode, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void lcdDrawCharSmall( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour ) ;
 extern void lcd_putsSmall( uint16_t x, uint16_t y, uint8_t *p, uint16_t colour ) ;
+extern void lcd_putsnSmall( uint16_t x, uint16_t y, uint8_t *p, uint8_t len, uint16_t colour ) ;
 #else
 extern void lcd_img( uint8_t i_x, uint8_t i_y, const unsigned char *imgdat, uint8_t idx, uint8_t mode ) ;
 extern void lcd_bitmap( uint8_t i_x, uint8_t i_y, const unsigned char *bitmap, uint8_t w, uint8_t h, uint8_t mode ) ;

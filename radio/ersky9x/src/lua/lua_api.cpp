@@ -891,10 +891,10 @@ const luaR_value_entry ersky9xConstants[] = {
 #if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
   { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
   { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
-#if !defined(PCBX12D)	
+ #if !defined(PCBX12D)	
 	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
 	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
-#endif
+ #endif
 	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
 	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
   { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
@@ -915,17 +915,19 @@ const luaR_value_entry ersky9xConstants[] = {
   #endif
  #endif
 #else
-	#if defined (PCBX7)
+ #if defined (PCBX7)
 	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
 	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
 	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
 	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
-  #else
+  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
+  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+ #else
 	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_BREAK(KEY_LEFT) },
 	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_RIGHT) },
 	{ "EVT_VIRTUAL_PREV", EVT_KEY_FIRST(KEY_UP) },
 	{ "EVT_VIRTUAL_NEXT", EVT_KEY_FIRST(KEY_DOWN) },
-  #endif
+ #endif
 #endif
 
 

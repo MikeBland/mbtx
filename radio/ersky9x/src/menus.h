@@ -34,7 +34,7 @@ struct MState2
   uint8_t m_posVert;
 //  uint8_t m_posHorz;
   void init(){m_posVert=0;};
-  uint8_t check(uint8_t event, uint8_t curr, MenuFuncP *menuTab, uint8_t menuTabSize, prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
+  uint8_t check(uint8_t event, uint8_t curr, const MenuFuncP *menuTab, uint8_t menuTabSize, prog_uint8_t *subTab, uint8_t subTabMax, uint8_t maxrow);
 	uint8_t check_columns( uint8_t event, uint8_t maxrow) ;
 };
 
@@ -200,6 +200,8 @@ void displayStatusLine( uint32_t scriptPercent ) ;
 #endif
 
 void validateProtocolOptions( uint32_t module ) ;
+extern int16_t calcExtendedValue( int16_t value, uint8_t extValue ) ;
+extern uint16_t packExtendedValue( int16_t value ) ;
 
 extern void parseMultiData( void ) ;
 
@@ -210,6 +212,7 @@ void checkTheme( themeData *t ) ;
 uint16_t dimBackColour() ;
 void drawItem( char *s, uint16_t y, uint16_t colour ) ;
 void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint16_t colour ) ;
+void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode ) ;
 void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
 uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 uint32_t touchOffOnItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
@@ -218,6 +221,8 @@ void saveEditColours( uint32_t attr, uint16_t colour ) ;
 void restoreEditColours() ;
 int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag = 0 ) ;
 uint16_t handleTouchSelect( uint32_t rows, uint32_t pgOfs, uint8_t sub, uint32_t flag = 0 ) ;
+#define ALPHA_NO_NAME		0x80
+void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
 
 #endif
 

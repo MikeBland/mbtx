@@ -46,7 +46,7 @@
 
 //#define ENABLE_DSM_MATCH	1
 
-#define WDOG_REPORT	1
+//#define WDOG_REPORT	1
 
 #define MULTI_EVENTS	1
 
@@ -281,18 +281,22 @@ extern uint8_t SystemOptions ;
 
 #define NUM_CSW  12 //number of custom switches
 #define NUM_SKYCSW  24 //number of custom switches
-#if defined(PCBSKY) || defined(PCB9XT)
+
+
 #define CSW_INDEX	9	// Index of first custom switch
-#endif
-#ifdef PCBX9D
-#define CSW_INDEX	9	// Index of first custom switch
-#endif
-#if defined(PCBX12D) || defined(PCBX10)
-#define CSW_INDEX	9	// Index of first custom switch
-#endif
-#ifdef PCBLEM1
-#define CSW_INDEX	9	// Index of first custom switch
-#endif
+
+//#if defined(PCBSKY) || defined(PCB9XT)
+//#define CSW_INDEX	9	// Index of first custom switch
+//#endif
+//#ifdef PCBX9D
+//#define CSW_INDEX	9	// Index of first custom switch
+//#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//#define CSW_INDEX	9	// Index of first custom switch
+//#endif
+//#ifdef PCBLEM1
+//#define CSW_INDEX	9	// Index of first custom switch
+//#endif
 
 #define DIM(arr) (sizeof((arr))/sizeof((arr)[0]))
 
@@ -443,45 +447,45 @@ void createSwitchMapping( void ) ;
 int8_t switchUnMap( int8_t x ) ;
 int8_t switchMap( int8_t x ) ;
 
-#if defined(PCBLEM1)
-#define HSW_SG2				1
-#define HSW_SC0				4
-#define HSW_SC1				5
-#define HSW_SC2				6
+//#if defined(PCBLEM1)
+//#define HSW_SG2				1
+//#define HSW_SC0				4
+//#define HSW_SC1				5
+//#define HSW_SC2				6
 
-#define HSW_SH2				9
+//#define HSW_SH2				9
 
-#define HSW_SB0				45	// Skip some values because of safety switch values
-#define HSW_SB1				46
-#define HSW_SB2				47
-#define HSW_SE0				48
-#define HSW_SE1				49
-#define HSW_SE2				50
-#define HSW_SA0				51
-#define HSW_SA1				52
-#define HSW_SA2				53
-#define HSW_SD0				54
-#define HSW_SD1				55
-#define HSW_SD2				56
-#define HSW_SG0				57
-#define HSW_SG1				58
-//#define HSW_SG2				59
-#define HSW_SF2				59
-#define HSW_Ele6pos0	60
-#define HSW_Ele6pos1	61
-#define HSW_Ele6pos2	62
-#define HSW_Ele6pos3	63
-#define HSW_Ele6pos4	64
-#define HSW_Ele6pos5	65
-#define HSW_Pb1				66
-#define HSW_Pb2				67
-#define HSW_Pb3				68
-#define HSW_Pb4				69
-#define HSW_MAX				69
+//#define HSW_SB0				45	// Skip some values because of safety switch values
+//#define HSW_SB1				46
+//#define HSW_SB2				47
+//#define HSW_SE0				48
+//#define HSW_SE1				49
+//#define HSW_SE2				50
+//#define HSW_SA0				51
+//#define HSW_SA1				52
+//#define HSW_SA2				53
+//#define HSW_SD0				54
+//#define HSW_SD1				55
+//#define HSW_SD2				56
+//#define HSW_SG0				57
+//#define HSW_SG1				58
+////#define HSW_SG2				59
+//#define HSW_SF2				59
+//#define HSW_Ele6pos0	60
+//#define HSW_Ele6pos1	61
+//#define HSW_Ele6pos2	62
+//#define HSW_Ele6pos3	63
+//#define HSW_Ele6pos4	64
+//#define HSW_Ele6pos5	65
+//#define HSW_Pb1				66
+//#define HSW_Pb2				67
+//#define HSW_Pb3				68
+//#define HSW_Pb4				69
+//#define HSW_MAX				69
 
-#define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
+//#define HSW_OFFSET ( HSW_SB0 - ( HSW_SH2 + NUM_SKYCSW + 1 ) )
 
-#endif
+//#endif
 
 #ifdef PCBX9D
 
@@ -697,17 +701,18 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MAX_SKYDRSWITCH (1+SW_SH2-SW_SF2+1+NUM_SKYCSW)
 #endif
 
-#define SWP_RUD (SW_RuddDR-SW_BASE)
-#define SWP_ELE (SW_ElevDR-SW_BASE)
-#define SWP_AIL (SW_AileDR-SW_BASE)
+#if defined(PCBSKY) || defined(PCB9XT)
+//#define SWP_RUD (SW_RuddDR-SW_BASE)
+//#define SWP_ELE (SW_ElevDR-SW_BASE)
+//#define SWP_AIL (SW_AileDR-SW_BASE)
 #define SWP_THR (SW_ThrCt-SW_BASE)
-#define SWP_GEA (SW_Gear-SW_BASE)
+//#define SWP_GEA (SW_Gear-SW_BASE)
 
-#define SWP_RUDB (1<<SWP_RUD)
-#define SWP_ELEB (1<<SWP_ELE)
-#define SWP_AILB (1<<SWP_AIL)
+//#define SWP_RUDB (1<<SWP_RUD)
+//#define SWP_ELEB (1<<SWP_ELE)
+//#define SWP_AILB (1<<SWP_AIL)
 #define SWP_THRB (1<<SWP_THR)
-#define SWP_GEAB (1<<SWP_GEA)
+//#define SWP_GEAB (1<<SWP_GEA)
 
 #define SWP_ID0 (SW_ID0-SW_BASE)
 #define SWP_ID1 (SW_ID1-SW_BASE)
@@ -716,14 +721,13 @@ uint8_t CS_STATE( uint8_t x) ;
 #define SWP_ID1B (1<<SWP_ID1)
 #define SWP_ID2B (1<<SWP_ID2)
 
-//Switch Position Illigal states
+////Switch Position Illigal states
 #define SWP_IL1 (0)
 #define SWP_IL2 (SWP_ID0B | SWP_ID1B)
 #define SWP_IL3 (SWP_ID0B | SWP_ID2B)
 #define SWP_IL4 (SWP_ID1B | SWP_ID2B)
 #define SWP_IL5 (SWP_ID0B | SWP_ID1B | SWP_ID2B)
 
-#if defined(PCBSKY) || defined(PCB9XT)
 #define THR_WARN_MASK	0x0101
 #define RUD_WARN_MASK	0x0202
 #define ELE_WARN_MASK	0x0C04
@@ -758,14 +762,14 @@ uint8_t CS_STATE( uint8_t x) ;
 #define HEART_TIMER10ms 2;
 
 
-#define INP_D_TRM_LH_UP   7
-#define INP_D_TRM_LH_DWN  6
-#define INP_D_TRM_RV_DWN  5
-#define INP_D_TRM_RV_UP   4
-#define INP_D_TRM_LV_DWN  3
-#define INP_D_TRM_LV_UP   2
-#define INP_D_TRM_RH_DWN  1
-#define INP_D_TRM_RH_UP   0
+//#define INP_D_TRM_LH_UP   7
+//#define INP_D_TRM_LH_DWN  6
+//#define INP_D_TRM_RV_DWN  5
+//#define INP_D_TRM_RV_UP   4
+//#define INP_D_TRM_LV_DWN  3
+//#define INP_D_TRM_LV_UP   2
+//#define INP_D_TRM_RH_DWN  1
+//#define INP_D_TRM_RH_UP   0
 
 #define RESX    (1<<10) // 1024
 #define RESXu   1024u
@@ -809,12 +813,12 @@ uint8_t CS_STATE( uint8_t x) ;
 #define MIX_P1    5
 #define MIX_P2    6
 #define MIX_P3    7
-#if defined(PCBSKY) || defined(PCB9XT)
-#define MIX_MAX   8
-#define MIX_FULL  9
+#define MIX_MAX   8 
+#define MIX_FULL  9 
 #define MIX_CYC1  10
 #define MIX_CYC2  11
 #define MIX_CYC3  12
+#if defined(PCBSKY) || defined(PCB9XT)
 
 #define	NUM_EXTRA_POTS 0
 
@@ -847,16 +851,11 @@ extern uint32_t countExtraPots( void ) ;
 #endif
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
-#define MIX_MAX   8 
-#define MIX_FULL  9 
-#define MIX_CYC1  10
-#define MIX_CYC2  11
-#define MIX_CYC3  12
-#define MIX_P4    200
-#define MIX_P5    201
-#define MIX_P6    202
-#define MIX_P7    203
-#define MIX_P8    204
+//#define MIX_P4    200
+//#define MIX_P5    201
+//#define MIX_P6    202
+//#define MIX_P7    203
+//#define MIX_P8    204
 
 #ifdef REV9E
 #define	NUM_EXTRA_POTS 5
@@ -1097,7 +1096,7 @@ template<class t> inline t limit(t mi, t x, t ma){ return min(max(mi,x),ma); }
 #define sysFLAG_OLD_EEPROM (0x01)
 #define sysFLAG_FORMAT_EEPROM (0x02)
 extern uint8_t sysFlags;
-extern uint8_t StickScrollAllowed ;
+//extern uint8_t StickScrollAllowed ;
 extern uint8_t StepSize ;
 
 const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
@@ -1246,17 +1245,17 @@ struct t_alpha
 
 extern struct t_alpha Alpha ;
 
-union t_xmem
-{
-#ifndef CPUARM
-	char buf[sizeof(g_model.name)+5];
-#endif
-#ifdef PCBX9D  
-	uint8_t file_buffer[512];
-#endif
-} ;
+//union t_xmem
+//{
+//#ifndef CPUARM
+//	char buf[sizeof(g_model.name)+5];
+//#endif
+//#ifdef PCBX9D  
+//	uint8_t file_buffer[512];
+//#endif
+//} ;
 
-extern union t_xmem Xmem ;
+//extern union t_xmem Xmem ;
 
 
 typedef void (*MenuFuncP)(uint8_t event);
@@ -1491,16 +1490,16 @@ enum PowerState
   e_power_off
 } ;
 
-struct t_p1
-{
-	int16_t p1val ;
-	int16_t p1valdiff ;
-  int16_t p1valprev ;
-	int16_t p2valprev ;
-	int16_t p3valprev ;
-} ;
+//struct t_p1
+//{
+//	int16_t p1val ;
+//	int16_t p1valdiff ;
+//  int16_t p1valprev ;
+//	int16_t p2valprev ;
+//	int16_t p3valprev ;
+//} ;
 
-extern struct t_p1 P1values ;
+//extern struct t_p1 P1values ;
 
 #ifdef PCBSKY
 extern uint16_t ResetReason ;
@@ -1521,11 +1520,11 @@ extern uint8_t SdMounted ;
 #include "X9D/rtc.h"
 #include "X9D/stm32f2xx_rtc.h"
  #endif
-#define MASTER_FREQUENCY 60000000
-#define PERI1_FREQUENCY 15000000
-#define PERI2_FREQUENCY 30000000
-#define TIMER_MULT1			2
-#define TIMER_MULT2			2
+//#define MASTER_FREQUENCY 60000000
+//#define PERI1_FREQUENCY 15000000
+//#define PERI2_FREQUENCY 30000000
+//#define TIMER_MULT1			2
+//#define TIMER_MULT2			2
 
 void rtcSetTime( t_time *t ) ;
 void rtc_gettime( t_time *t ) ;
@@ -1919,14 +1918,21 @@ struct t_updateTiming
 
 #if defined(PCBSKY) || defined(PCB9XT)
  #ifndef SMALL
-#define MULTI_GVARS		1
+//#define MULTI_GVARS		1
  #endif
 #else
 //#define MULTI_GVARS		0
-#define MULTI_GVARS		1
+//#define MULTI_GVARS		1
 #endif
 
+#ifdef PCBX7
 // #define JUNGLECAM			1
+#endif
 
+#if defined(PCBSKY) || defined(PCB9XT)
+ #ifndef SMALL
+#define FS8K	1
+ #endif
+#endif
 
 #endif // ersky9x_h

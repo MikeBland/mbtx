@@ -29,6 +29,10 @@
 #include "sound.h"
 #include "gvars.h"
 
+#ifdef USE_VARS
+#include "vars.h"
+#endif
+
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #ifdef REV9E
 extern const uint8_t switchIndex[18] = { HSW_SA0, HSW_SB0, HSW_SC0, HSW_SD0, HSW_SE0, HSW_SF2, HSW_SG0, HSW_SH2, HSW_SI0, 
@@ -390,24 +394,37 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 	if ( diffValue )
 	{
     //========== DIFFERENTIAL =========
-    int8_t curveParam = REG100_100( md->curve ) ;
-		if ( diffValue == 3 )
+		int8_t curveParam = md->curve ;
+#ifdef USE_VARS
+		if ( g_model.vars )
 		{
-			// New Gvar
-#if MULTI_GVARS
-			curveParam = getGvarFm( curveParam, CurrentMixerPhase ) ;
-#else
-			curveParam = getGvar( curveParam ) ;
+			if ( diffValue == 3 )
+			{
+				curveParam = getVarValWholeL100( curveParam ) ;
+			}
+    }
+		else
 #endif
-//						if ( curveParam < 0 )
-//						{
-//							curveParam = -curveParam - 1 ;							
-//							curveParam = -g_model.gvars[curveParam].gvar ;
-//						}
-//						else
-//						{
-//							curveParam = g_model.gvars[curveParam].gvar ;
-//						}
+		{
+			curveParam = REG100_100( curveParam ) ;
+			if ( diffValue == 3 )
+			{
+				// New Gvar
+	#if MULTI_GVARS
+				curveParam = getGvarFm( curveParam, CurrentMixerPhase ) ;
+	#else
+				curveParam = getGvar( curveParam ) ;
+	#endif
+	//						if ( curveParam < 0 )
+	//						{
+	//							curveParam = -curveParam - 1 ;							
+	//							curveParam = -g_model.gvars[curveParam].gvar ;
+	//						}
+	//						else
+	//						{
+	//							curveParam = g_model.gvars[curveParam].gvar ;
+	//						}
+			}
 		}
     if (curveParam > 0 && v < 0)
       v = (v * (100 - curveParam)) / 100 ;
@@ -418,8 +435,26 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 	{
 		if ( md->curve <= -28 )
 		{
+#ifdef USE_VARS
+			if ( g_model.vars )
+			{
+				int16_t t ;
+				if ( md->varForExpo )
+				{
+					t = getVarValWholeL100( md->curve + (28+50) ) ;
+				}
+				else
+				{
+					t = md->curve + 128 ;
+				}
+	      v = expo( v, t ) ;
+			}
+			else
+#endif
+			{
 			// do expo using md->curve + 128
-      v = expo( v, md->curve + 128 ) ;
+	      v = expo( v, md->curve + 128 ) ;
+			}
 		}
 		else
 		{
@@ -782,41 +817,42 @@ void perOut(int16_t *chanOut, uint8_t att )
 				}
 				else
 				{
-					if ( md->extWeight == 1 )
+#ifdef USE_VARS
+					if ( md->varForWeight )
 					{
-						lweight += 125 ; 
+						lweight = getVarValue( lweight ) / 10 ;
 					}
-					else if ( md->extWeight == 3 )
-					{
-						lweight -= 125 ; 
-					}
-					else if ( md->extWeight == 2 )
-					{
-						if ( lweight < 0 )
-						{
-							lweight -= 250 ;
-						}
-						else
-						{
-							lweight += 250 ;
-						}
-					}
-					if ( lweight > 350 )
-					{
-						lweight -= 360 ;
-#if MULTI_GVARS
-						lweight = getGvarFm( lweight, CurrentMixerPhase ) ;
-#else
-						lweight = getGvar( lweight ) ;
+					else
 #endif
-//						if ( lweight < 0 )
-//						{
-//							lweight = -g_model.gvars[-lweight-1].gvar ;
-//						}
-//						else
-//						{
-//							lweight = g_model.gvars[lweight].gvar ;
-//						}
+					{					 
+						if ( md->extWeight == 1 )
+						{
+							lweight += 125 ; 
+						}
+						else if ( md->extWeight == 3 )
+						{
+							lweight -= 125 ; 
+						}
+						else if ( md->extWeight == 2 )
+						{
+							if ( lweight < 0 )
+							{
+								lweight -= 250 ;
+							}
+							else
+							{
+								lweight += 250 ;
+							}
+						}
+						if ( lweight > 350 )
+						{
+							lweight -= 360 ;
+	#if MULTI_GVARS
+							lweight = getGvarFm( lweight, CurrentMixerPhase ) ;
+	#else
+							lweight = getGvar( lweight ) ;
+	#endif
+						}
 					}
 				}
 				int16_t mixweight = lweight ;
@@ -827,41 +863,42 @@ void perOut(int16_t *chanOut, uint8_t att )
 				}
 				else
 				{
-					if ( md->extOffset == 1 )
+#ifdef USE_VARS
+					if ( md->varForOffset )
 					{
-						loffset += 125 ; 
+						loffset = getVarValue( loffset ) / 10 ;
 					}
-					else if ( md->extOffset == 3 )
-					{
-						loffset -= 125 ; 
-					}
-					else if ( md->extOffset == 2 )
-					{
-						if ( loffset < 0 )
-						{
-							loffset -= 250 ;
-						}
-						else
-						{
-							loffset += 250 ;
-						}
-					}
-					if ( loffset > 350 )
-					{
-						loffset -= 360 ;
-#if MULTI_GVARS
-						loffset = getGvarFm( loffset, CurrentMixerPhase ) ;
-#else
-						loffset = getGvar( loffset ) ;
+					else
 #endif
-//						if ( loffset < 0 )
-//						{
-//							loffset = -g_model.gvars[-loffset-1].gvar ;
-//						}
-//						else
-//						{
-//							loffset = g_model.gvars[loffset].gvar ;
-//						}
+					{					 
+						if ( md->extOffset == 1 )
+						{
+							loffset += 125 ; 
+						}
+						else if ( md->extOffset == 3 )
+						{
+							loffset -= 125 ; 
+						}
+						else if ( md->extOffset == 2 )
+						{
+							if ( loffset < 0 )
+							{
+								loffset -= 250 ;
+							}
+							else
+							{
+								loffset += 250 ;
+							}
+						}
+						if ( loffset > 350 )
+						{
+							loffset -= 360 ;
+	#if MULTI_GVARS
+							loffset = getGvarFm( loffset, CurrentMixerPhase ) ;
+	#else
+							loffset = getGvar( loffset ) ;
+	#endif
+						}
 					}
 				}
 				int16_t mixoffset = loffset ;

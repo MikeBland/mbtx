@@ -69,6 +69,10 @@ extern uint8_t s_moveMode;
 
 #include "sticks.lbm"
 
+#ifdef USE_VARS
+#include "vars.h"
+#endif
+
 #define STATUS_VERTICAL		242
 
 #define NO_HI_LEN 25
@@ -230,7 +234,7 @@ uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t c
 	{
 		lcd_putcAttColour( TRIGHT-TRMARGIN-FW, y+3, '\202', 0, condition ? ~LcdForeground : LcdForeground, condition ? ~colour : colour ) ;
 	}
-	lcd_rectColour( TRIGHT-FW-6, y+TVOFF, 7, 7, condition ? ~LcdForeground : LcdForeground ) ;
+	lcd_rectColour( TRIGHT-FW-4, y+TVOFF, 7, 7, condition ? ~LcdForeground : LcdForeground ) ;
 //	lcd_hbar( TRIGHT-FW-6, y+TVOFF, 7, 7, 0 ) ;
 	if ( condition )
 	{
@@ -338,6 +342,10 @@ int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag )
 					TouchUpdated = 0 ;
 					result = vert ;
 				}
+				else
+				{
+					result = -3 ;	// Down outside selection areas
+				}
 			}
 		}
 		else if ( TouchControl.event == TEVT_UP )
@@ -377,6 +385,10 @@ uint16_t processSelection( uint8_t vert, int32_t newSelection )
 			}
 		}
 		LastTaction = 2 ;
+	}
+	else if (newSelection == -3)
+	{
+		LastTaction = 3 ;		
 	}
 	return result ;
 }
@@ -797,7 +809,6 @@ void menuProcLimits(uint8_t event)
 }
 
 void putsTrimMode( uint8_t x, uint8_t y, uint8_t phase, uint8_t idx, uint8_t att ) ;
-#define ALPHA_NO_NAME		0x80
 void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
 
 void menuModeOne(uint8_t event)
@@ -820,10 +831,12 @@ void menuModeOne(uint8_t event)
 	TlExitIcon = 1 ;
 	uint32_t rows = s_currIdx ? 9 : 0 ;
 	
+#if MULTI_GVARS
 	if ( g_model.flightModeGvars )
 	{
 		rows += 24 ;
 	}
+#endif
 	mstate2.check_columns(event, rows-1 ) ;
   lcd_putc( 12*FW, 0, '0'+s_currIdx ) ;
 
@@ -1030,6 +1043,7 @@ extern t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
 			}
 			break ;
 			
+#if MULTI_GVARS
 			default :
 			{
 				uint8_t text[4] ;
@@ -1112,6 +1126,7 @@ extern t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
 				}
 			}
 			break ;
+#endif
 		}
 	}
 }
@@ -1258,6 +1273,9 @@ void menuModelGeneral( uint8_t event )
 	uint16_t colour = dimBackColour() ;
 
 	rows = 22 ;
+#ifdef USE_VARS
+	rows = 23 ;
+#endif
 	
 	mstate2.check_columns(event, rows-1) ;
   int8_t  sub    = mstate2.m_posVert;
@@ -1740,6 +1758,7 @@ void menuModelGeneral( uint8_t event )
 	}
 	subN += 1 ;
 
+#if MULTI_GVARS
 	if(t_pgOfs<=subN)
 	{
 		uint32_t oldValue = g_model.flightModeGvars ;
@@ -1763,6 +1782,30 @@ void menuModelGeneral( uint8_t event )
 		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 	}
 	subN += 1 ;
+#endif
+
+#ifdef USE_VARS
+	if(t_pgOfs<=subN)
+	{
+		uint32_t old = g_model.vars ;
+		g_model.vars = touchOnOffItem( g_model.vars, y, XPSTR("Enable vars"), sub==subN, colour) ;
+		if ( old != g_model.vars )
+		{
+			if ( g_model.vars )
+			{
+				// Just enabled
+				uint32_t i ;
+				for ( i = 0 ; i < VAR_STORAGE_UINTS ;  i += 1 )
+				{
+					g_model.varStore[i] = 0 ;
+				}
+				initVars() ;
+			}
+		}
+		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
+	}
+	subN += 1 ;
+#endif
 
 	if(t_pgOfs<=subN)
 	{
@@ -2526,7 +2569,11 @@ void menuModes(uint8_t event)
 	{
 		s_currIdx = sub ;
 		killEvents(event);
+#if MULTI_GVARS
 		if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
+#else
+		if ( s_currIdx )
+#endif
 		{
 			if ( s_currIdx <= 7 )
 			{
@@ -2703,7 +2750,7 @@ void menuControls(uint8_t event)
 			CHECK_INCDEC_H_GENVAR_0( mode,3 ) ;
 			if ( mode != g_eeGeneral.stickMode )
 			{
-				g_eeGeneral.stickScroll = 0 ;
+//				g_eeGeneral.stickScroll = 0 ;
 				g_eeGeneral.stickMode = mode ;							
 			}
 		}
@@ -2947,7 +2994,7 @@ void menuGeneral( uint8_t event )
 	
 	static MState2 mstate2;
 //			IlinesCount = 8+1+1+1 ;
-	uint32_t rows = 11 ;
+	uint32_t rows = 10 ;
 	mstate2.check_columns(event, rows-1) ;
 
 //	uint16_t attr ;
@@ -3018,27 +3065,27 @@ void menuGeneral( uint8_t event )
   			g_eeGeneral.hideNameOnSplash = touchOffOnItem( b, y, PSTR(STR_SPLASH_NAME), attr, colour ) ;
 			}
 			break ;
+//			case 4 :
+//			{
+//  			uint8_t b = 1-g_eeGeneral.disablePotScroll ;
+//				b |= g_eeGeneral.stickScroll << 1 ;
+//				drawItem( (char *)PSTR(STR_SCROLLING), y, attr ) ;
+//  			lcd_putsAttIdxColour( TRIGHT-5*FW, y+TVOFF, XPSTR("\005 NONE  POTSTICK BOTH"),b, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
+//  			if(attr) CHECK_INCDEC_H_GENVAR_0( b, 3 ) ;
+//				g_eeGeneral.stickScroll = b >> 1 ;
+//				g_eeGeneral.disablePotScroll = 1 - ( b & 1 ) ;
+//			}
+//			break ;
 			case 4 :
-			{
-  			uint8_t b = 1-g_eeGeneral.disablePotScroll ;
-				b |= g_eeGeneral.stickScroll << 1 ;
-				drawItem( (char *)PSTR(STR_SCROLLING), y, attr ) ;
-  			lcd_putsAttIdxColour( TRIGHT-5*FW, y+TVOFF, XPSTR("\005 NONE  POTSTICK BOTH"),b, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
-  			if(attr) CHECK_INCDEC_H_GENVAR_0( b, 3 ) ;
-				g_eeGeneral.stickScroll = b >> 1 ;
-				g_eeGeneral.disablePotScroll = 1 - ( b & 1 ) ;
-			}
-			break ;
-			case 5 :
 			{
   			uint8_t b = g_eeGeneral.forceMenuEdit ;
   			g_eeGeneral.forceMenuEdit = touchOnOffItem( b, y, PSTR(STR_MENU_ONLY_EDIT), attr, colour ) ;
 			}
 			break ;
-			case 6 :
+			case 5 :
   			g_eeGeneral.disableBtnLong = touchOnOffItem( g_eeGeneral.disableBtnLong, y, XPSTR("No ENC. as exit"), attr, colour ) ;
 			break ;
-			case 7 :
+			case 6 :
 				drawItem( XPSTR("GPS Format"), y, attr ) ;
 				lcd_putsAttIdxColour( TRIGHT-11*FW, y+TVOFF, XPSTR("\012DD mm.mmmmDD.dddddd "), g_eeGeneral.gpsFormat,  0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
   			if(attr)
@@ -3046,10 +3093,10 @@ void menuGeneral( uint8_t event )
 					CHECK_INCDEC_H_GENVAR_0(g_eeGeneral.gpsFormat,1) ;
 				}
 			break ;
-			case 8 :
+			case 7 :
   			g_eeGeneral.altMixMenu = touchOnOffItem( g_eeGeneral.altMixMenu, y, XPSTR("Mix Menu Details"), attr, colour ) ;
 			break ;
-			case 9 :
+			case 8 :
 			{	
 				drawItem( XPSTR("ScreenShot Sw"), y, attr ) ;
 				putsDrSwitchesColour( TRIGHT-5*FW, y+TVOFF, g_eeGeneral.screenShotSw, 0, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
@@ -3065,7 +3112,7 @@ extern uint8_t LastShotSwitch ;
 				}
 			}
 			break ;
-			case 10 :
+			case 9 :
   			g_eeGeneral.enableEncMain = touchOnOffItem( g_eeGeneral.enableEncMain, y, XPSTR("ENC main screen"), attr, colour ) ;
 			break ;
 		}
@@ -5352,7 +5399,7 @@ void menuProcSafetySwitches(uint8_t event)
   	  	for(uint8_t j=0; j<5;j++)
 				{
     		  attr = ((sub==k && subSub==j) ? InverseBlink : 0);
-					uint8_t active = (attr && (s_editMode || P1values.p1valdiff)) ;
+					uint8_t active = (attr && (s_editMode /*|| P1values.p1valdiff*/)) ;
   	  	  if (j == 0)
 					{
 						lcd_putsAttIdx( 5*FW-3, y, XPSTR("\001SAVX"), sd->opt.ss.mode, attr ) ;
@@ -5514,7 +5561,7 @@ void menuProcSafetySwitches(uint8_t event)
     		for(uint8_t j=0; j<3;j++)
 				{
     	    uint8_t attr = ((sub==k && subSub==j) ? InverseBlink : 0);
-					uint8_t active = (attr && (s_editMode || P1values.p1valdiff)) ;
+					uint8_t active = (attr && (s_editMode /*|| P1values.p1valdiff*/)) ;
     		  if (j == 0)
 					{
     		    if(active)
@@ -5605,7 +5652,7 @@ void menuProcSafetySwitches(uint8_t event)
 	}
 }
 
-char StringAdjustFunctions[] = "\005-----Add  Set CSet V+/-  Inc/0Dec/0+/Lim-/Lim" ;
+const char StringAdjustFunctions[] = "\005-----Add  Set CSet V+/-  Inc/0Dec/0+/Lim-/Lim" ;
 
 void menuOneAdjust(uint8_t event)
 {
@@ -5640,9 +5687,17 @@ void menuOneAdjust(uint8_t event)
 		{
 			case 0 : // GV
 				drawItem( (char *)XPSTR("GVAR"), y, attr ) ;
+#if MULTI_GVARS
 				if ( pgvaradj->gvarIndex > (g_model.flightModeGvars ? 11 : 6) )
+#else
+				if ( pgvaradj->gvarIndex > 6 )
+#endif
 				{
+#if MULTI_GVARS
 					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-(g_model.flightModeGvars ? 11 : 6), attr ) ;
+#else
+					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-6, attr ) ;
+#endif
 				}
 				else
 				{
@@ -5650,7 +5705,11 @@ void menuOneAdjust(uint8_t event)
 				}
   			if(attr)
 				{
+#if MULTI_GVARS
  	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, (g_model.flightModeGvars ? 15 : 10 ) ) ;
+#else
+ 	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, 10 ) ;
+#endif
 				}
 			break ;
 			case 1 : // Fn
@@ -5797,12 +5856,14 @@ void menuProcAdjust(uint8_t event)
 		if ( sub==k )
 		{
 			int16_t value ;
-	 		lcd_putc( 20*FW+ADJ_OFF_0, 0, '=' ) ;
+	 		lcd_putc( 20*FW, 0, '=' ) ;
 			value = 7 ;
+#if MULTI_GVARS
 			if ( g_model.flightModeGvars )
 			{
 				value = 12 ;
 			}
+#endif
 			if ( idx >= value )
 			{
 				value = getTrimValueAdd( CurrentPhase, idx - value  ) ;
@@ -5831,9 +5892,17 @@ void menuProcAdjust(uint8_t event)
 //		{
 //			if ( j == 0 )
 //			{
+#if MULTI_GVARS
 				if ( idx > (g_model.flightModeGvars ? 8 : 6) )
+#else
+				if ( idx > 6 )
+#endif
 				{
+#if MULTI_GVARS
 					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 8 : 6), attr ) ;
+#else
+					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-6, attr ) ;
+#endif
 				}
 				else
 				{
@@ -5883,18 +5952,23 @@ void menuOneGvar(uint8_t event)
 	TlExitIcon = 1 ;
 	uint32_t rows = 3 ;	
 	GvarData *pgvar ;
+#if MULTI_GVARS
 	if ( g_model.flightModeGvars )
 	{
 		rows = 6 ;
 	}
 	
+#endif
+	 
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
 
 	lcd_putc( 20*FW, 0, s_currIdx+ ((s_currIdx > 8) ? '8' : '1') ) ;
 	uint16_t colour = dimBackColour() ;
+#if MULTI_GVARS
 	uint16_t oldBcolour = LcdBackground ;
+#endif
 
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
 	uint16_t newVert = processSelection( sub , newSelection ) ;
@@ -5904,16 +5978,17 @@ void menuOneGvar(uint8_t event)
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	pgvar = &g_model.gvars[s_currIdx] ;
-	GVarXData *pgxvar = &g_model.xgvars[s_currIdx] ;
+//	GVarXData *pgxvar = &g_model.xgvars[s_currIdx] ;
 
-	for (uint8_t i = 0 ; i < rows ; i += 1 )
+	for ( uint32_t i = 0 ; i < rows ; i += 1 )
 	{
     uint16_t y = i * TFH + TTOP ;
-    uint8_t attr = (sub==i) ? INVERS : 0 ;
+    uint16_t attr = (sub==i) ? INVERS : 0 ;
 		
 		switch(i)
 		{
 			case 0 : // switch
+#if MULTI_GVARS
 				if ( g_model.flightModeGvars )
 				{
 					uint8_t *psource ;
@@ -5927,6 +6002,7 @@ void menuOneGvar(uint8_t event)
 					}
 				}
 				else
+#endif
 				{
 					drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
 					saveEditColours( attr, colour ) ;
@@ -5935,6 +6011,7 @@ void menuOneGvar(uint8_t event)
 				}
 			break ;
 			case 1 :
+#if MULTI_GVARS
 				if ( g_model.flightModeGvars )
 				{
 					drawItem( (char *)XPSTR("Unit"), y, attr ) ;
@@ -5945,6 +6022,7 @@ void menuOneGvar(uint8_t event)
 					}
 				}
 				else
+#endif
 				{
 					drawItem( (char *)XPSTR("Source"), y, attr ) ;
 					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvar->gvsource, attr ) ;
@@ -5956,6 +6034,7 @@ void menuOneGvar(uint8_t event)
 				}
 			break ;
 			case 2 :
+#if MULTI_GVARS
 				if ( g_model.flightModeGvars )
 				{
 					drawItem( (char *)XPSTR("Precision"), y, attr ) ;
@@ -5966,6 +6045,7 @@ void menuOneGvar(uint8_t event)
 					}	
 				}
 				else
+#endif
 				{
 					drawItem( (char *)XPSTR("Value"), y, attr ) ;
 					drawNumber( TRIGHT-TRMARGIN, y, pgvar->gvar, attr ) ;
@@ -5975,6 +6055,7 @@ void menuOneGvar(uint8_t event)
 					}
 				}
 			break ;
+#if MULTI_GVARS
 			case 3 :
 				drawItem( (char *)XPSTR("Minimum"), y, attr ) ;
 				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MIN+pgxvar->min, attr ) ;
@@ -6002,6 +6083,7 @@ void menuOneGvar(uint8_t event)
 				LcdBackground = oldBcolour ;
 //				pgxvar->popup = touchOnOffItem( pgxvar->popup, y, XPSTR("Popup"), attr, DimBackColour ) ;
 			break ;
+#endif
 		}
 	}
 }
@@ -6024,10 +6106,12 @@ void menuProcGlobals(uint8_t event)
 	uint32_t k = 0 ;
 	TlExitIcon = 1 ;
 	
+#if MULTI_GVARS
 	if ( g_model.flightModeGvars )
 	{
 		rows = 12 ;
 	}
+#endif	
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
@@ -6155,7 +6239,14 @@ uint8_t offonItem( uint8_t value, uint8_t y, uint8_t condition ) ;
 
 void drawSmallGVAR( uint16_t x, uint16_t y )
 {
-	lcd_putsSmall( x, y, (uint8_t *)"GVAR", LcdForeground) ;
+	uint8_t *s = (uint8_t *)"GVAR" ;
+#ifdef USE_VARS
+	if ( g_model.vars )
+	{
+		s = (uint8_t *)"VAR" ;
+	}
+#endif
+	lcd_putsSmall( x, y, s, LcdForeground) ;
 }
 
 void menuProcMixOne(uint8_t event)
@@ -6347,25 +6438,96 @@ void menuProcMixOne(uint8_t event)
 			{	
 				drawItem( (char *)PSTR(STR_2WEIGHT)+1, y, attr ) ;
 
-//				lcd_putsAtt( TMID+1, y+1, "GVAR", LUA_SMLSIZE ) ;
-//				lcd_putsAtt( TMID+1, y+1, "GVAR", CONDENSED ) ;
 				saveEditColours( attr, DimBackColour ) ;
 				drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
-				uint16_t result = extendedValueEdit( md2->weight, md2->extWeight, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
-				md2->weight = result & 0x00FF ;
-				md2->extWeight = result >> 8 ;
+#ifdef USE_VARS
+				if ( g_model.vars )
+				{
+					int16_t value = calcExtendedValue( md2->weight, md2->extWeight ) ;
+					if ( ( value >= 510 ) && (value <= 514 ) )	// GVAR
+					{
+						uint16_t result = extendedValueEdit( md2->weight, md2->extWeight, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
+						md2->weight = result & 0x00FF ;
+						md2->extWeight = result >> 8 ;
+					}
+					else
+					{
+						if ( md2->varForWeight )
+						{
+							value += 1000 ;
+						}
+						value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -350, 350, NUM_VARS, attr, event ) ;
+						if ( value > 900 )
+						{
+							value -= 1000 ;
+							md2->varForWeight = 1 ;
+							md2->weight = value & 0x00FF ;
+							md2->extWeight = 0 ;
+						}
+						else
+						{
+							md2->varForWeight = 0 ;
+							uint16_t result = packExtendedValue( value ) ;
+							md2->weight = result & 0x00FF ;
+							md2->extWeight = result >> 8 ;
+						}
+					}
+				}
+				else
+#endif
+				{
+					uint16_t result = extendedValueEdit( md2->weight, md2->extWeight, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
+					md2->weight = result & 0x00FF ;
+					md2->extWeight = result >> 8 ;
+				}
 				restoreEditColours() ;
 			}
       break ;
       case 2:
 			{	
 				drawItem( (char *)PSTR(STR_OFFSET), y, attr ) ;
-//				lcd_putsAtt( TMID*TSCALE+1, y+1, "GVAR", 0 ) ;
 				saveEditColours( attr, DimBackColour ) ;
 				drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
-				uint16_t result = extendedValueEdit( md2->sOffset, md2->extOffset, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
-				md2->sOffset = result & 0x00FF ;
-				md2->extOffset = result >> 8 ;
+#ifdef USE_VARS
+				if ( g_model.vars )
+				{
+					int16_t value = calcExtendedValue( md2->sOffset, md2->extOffset ) ;
+					if ( ( value >= 510 ) && (value <= 514 ) )	// GVAR
+					{
+						uint16_t result = extendedValueEdit( md2->sOffset, md2->extOffset, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
+						md2->sOffset = result & 0x00FF ;
+						md2->extOffset = result >> 8 ;
+					}
+					else
+					{
+						if ( md2->varForOffset )
+						{
+							value += 1000 ;
+						}
+						value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -350, 350, NUM_VARS, attr, event ) ;
+						if ( value > 900 )
+						{
+							value -= 1000 ;
+							md2->varForOffset = 1 ;
+							md2->sOffset = value & 0x00FF ;
+							md2->extOffset = 0 ;
+						}
+						else
+						{
+							md2->varForOffset = 0 ;
+							uint16_t result = packExtendedValue( value ) ;
+							md2->sOffset = result & 0x00FF ;
+							md2->extOffset = result >> 8 ;
+						}
+					}
+				}
+				else
+#endif
+				{
+					uint16_t result = extendedValueEdit( md2->sOffset, md2->extOffset, attr, y+TVOFF, event, TRIGHT-TRMARGIN ) ;
+					md2->sOffset = result & 0x00FF ;
+					md2->extOffset = result >> 8 ;
+				}
 				restoreEditColours() ;
 			}
       break ;
@@ -6474,29 +6636,75 @@ void menuProcMixOne(uint8_t event)
 
 				if ( curveFunction == 3 )	// Diff
 				{
+					drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
 					int16_t value = curveValue ;
-					if ( diffIsGvar  )
+					
+#ifdef USE_VARS
+					if ( g_model.vars )
 					{
-						value += 510 ;
-					}	
-					value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
-					if ( value > 500 )
-					{
-						diffIsGvar = 1 ;
-						value -= 510 ;
+						if ( diffIsGvar )
+						{
+							value += 1000 ;
+						}
+						value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -350, 350, NUM_VARS, attr, event ) ;
+						if ( value > 900 )
+						{
+							value -= 1000 ;
+							diffIsGvar = 1 ;
+						}
+						else
+						{
+							diffIsGvar = 0 ;
+						}
 					}
 					else
+	#endif
 					{
-						diffIsGvar = 0 ;
-					}
+						if ( diffIsGvar )
+						{
+							value += 510 ;
+						}	
+						value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
+						if ( value > 500 )
+						{
+							diffIsGvar = 1 ;
+							value -= 510 ;
+						}
+						else
+						{
+							diffIsGvar = 0 ;
+						}
+					}					
 					curveValue = value ;
 				}
 				else
 				{
 					if ( curveFunction == 4 )	// Expo
 					{
-            lcd_outdezAtt(TRIGHT-TRMARGIN,y+TVOFF,curveValue,0);
-            if(attr) CHECK_INCDEC_H_MODELVAR( curveValue, 0, 100 ) ;
+#ifdef USE_VARS
+						if ( g_model.vars )
+						{
+							if ( md2->varForExpo )
+							{
+								curveValue += 950 ;
+							}
+							curveValue = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, curveValue, 0, 100, NUM_VARS, attr, event ) ;
+							if ( curveValue > 800 )
+							{
+								curveValue -= 950 ;
+								md2->varForExpo = 1 ;
+							}
+							else
+							{
+								md2->varForExpo = 0 ;
+							}
+						}
+						else
+#endif
+						{
+          	  lcd_outdezAtt(TRIGHT-TRMARGIN,y+TVOFF,curveValue,0);
+          	  if(attr) CHECK_INCDEC_H_MODELVAR( curveValue, 0, 100 ) ;
+						}
 					}
 					else
 					{
@@ -6624,6 +6832,10 @@ void menuProcMixOne(uint8_t event)
       break;
     }
   }
+	if ( curveFunction != 4 )
+	{
+		md2->varForExpo = 0 ;
+	}
 	switch ( curveFunction )
 	{
 		case 1 :
@@ -6651,11 +6863,11 @@ void menuProcMixOne(uint8_t event)
 	md2->extDiff = curveFunction >> 1 ;
 }
 
-#define WCHART 44
+#define WCHART 40
 #define X0     (200-WCHART-2 - 2 )	// was 170
 #define Y0     60 // 48
 
-#define XD (X0-2)
+#define XD (X0)
 
 #define GRAPH_FUNCTION_CURVE		0
 #define GRAPH_FUNCTION_EXPO			1
@@ -6720,19 +6932,19 @@ void menuProcExpoAll(uint8_t event)
 	{
 		sub += 1 ;
 	}
-	if( sub )
-	{
-		StickScrollAllowed = 0 ;
-	}
+//	if( sub )
+//	{
+//		StickScrollAllowed = 0 ;
+//	}
 
-	lcd_hline( 0, TTOP, TMID-20 ) ;
+	lcd_hline( 0, TTOP, TMID-15 ) ;
 
 	uint8_t l_expoChan = s_expoChan ;
 	subN = 0 ;
   uint8_t attr = 0 ;
 	if ( sub == subN )
 	{
-		lcdDrawSolidFilledRectDMA( 0, TTOP*TSCALE+2, (TMID-20)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( 0, TTOP*TSCALE+2, (TMID-15)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 		if ( SingleExpoChan == 0 )
 		{
 			s_expoChan = l_expoChan = checkIncDec( s_expoChan, 0, 3, 0 ) ;
@@ -6767,11 +6979,11 @@ void menuProcExpoAll(uint8_t event)
 	eptr = &g_model.expoData[s_expoChan] ;
 extern int16_t TouchAdjustValue ;
 
-	lcd_hline( 0, TTOP+TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+TFH, TMID-15 ) ;
 
 	if ( sub==subN )
 	{
-		lcdDrawSolidFilledRectDMA( 0, (TTOP+TFH)*TSCALE+2, (TMID-20)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( 0, (TTOP+TFH)*TSCALE+2, (TMID-15)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	}
 	saveEditColours( ( sub==subN ), DimBackColour ) ;
 	lcd_puts_P( THOFF,TTOP+TFH+TVOFF,PSTR(STR_2EXPO)+1);
@@ -6784,7 +6996,7 @@ extern int16_t TouchAdjustValue ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	drawSmallGVAR( 1, (TTOP+2*TFH)*TSCALE+3 ) ;
-	editExpoVals( event, attr, 6*FW, TTOP+2*TFH+TVOFF, expoDrOn, DR_EXPO, DR_LEFT ) ;
+	editExpoVals( event, attr, 17*FW/2, TTOP+2*TFH+TVOFF, expoDrOn, DR_EXPO, DR_LEFT ) ;
 	restoreEditColours() ;
 	if ( stkVal == DR_BOTH )
 	{
@@ -6796,20 +7008,20 @@ extern int16_t TouchAdjustValue ;
 	attr = (stkVal != DR_LEFT) && (sub==subN) ;
 	if ( attr )
 	{
-		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+2*TFH)*TSCALE+2, ((TMID-20)/2)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+2*TFH)*TSCALE+2, ((TMID-10)/2)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	drawSmallGVAR( (TMID-20)/2*TSCALE+1, (TTOP+2*TFH)*TSCALE+3 ) ;
-	editExpoVals( event, attr, 14*FW, TTOP+2*TFH+TVOFF, expoDrOn, DR_EXPO, DR_RIGHT ) ;
+	editExpoVals( event, attr, 16*FW, TTOP+2*TFH+TVOFF, expoDrOn, DR_EXPO, DR_RIGHT ) ;
 	restoreEditColours() ;
-	lcd_hline( 0, TTOP+2*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+2*TFH, TMID-15 ) ;
 	subN += 1 ;
 	attr = (stkVal != DR_RIGHT) && (sub==subN) ;
-	lcd_hline( 0, TTOP+3*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+3*TFH, TMID-15 ) ;
 	 
 	if ( sub==subN )
 	{
-		lcdDrawSolidFilledRectDMA( 0, (TTOP+3*TFH)*TSCALE+2, (TMID-20)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( 0, (TTOP+3*TFH)*TSCALE+2, (TMID-15)*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	}
 	saveEditColours( ( sub==subN ), DimBackColour ) ;
 	lcd_puts_P( THOFF,TTOP+3*TFH+TVOFF,PSTR(STR_2WEIGHT)+1);
@@ -6820,7 +7032,7 @@ extern int16_t TouchAdjustValue ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	drawSmallGVAR( 1, (TTOP+4*TFH)*TSCALE+3 ) ;
-	editExpoVals( event, attr, 6*FW, TTOP+4*TFH+TVOFF, expoDrOn, DR_WEIGHT, DR_LEFT ) ;
+	editExpoVals( event, attr, 17*FW/2, TTOP+4*TFH+TVOFF, expoDrOn, DR_WEIGHT, DR_LEFT ) ;
 	restoreEditColours() ;
 	if ( stkVal == DR_BOTH )
 	{
@@ -6832,20 +7044,20 @@ extern int16_t TouchAdjustValue ;
 	attr = (stkVal != DR_LEFT) && (sub==subN) ;
 	if ( attr )
 	{
-		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+4*TFH)*TSCALE+2, (TMID-20)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+4*TFH)*TSCALE+2, (TMID-10)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	drawSmallGVAR( (TMID-20)/2*TSCALE+1, (TTOP+4*TFH)*TSCALE+3 ) ;
-	editExpoVals( event, attr, 14*FW, TTOP+4*TFH+TVOFF, expoDrOn, DR_WEIGHT, DR_RIGHT ) ;
+	editExpoVals( event, attr, 16*FW, TTOP+4*TFH+TVOFF, expoDrOn, DR_WEIGHT, DR_RIGHT ) ;
 	restoreEditColours() ;
-	lcd_hline( 0, TTOP+4*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+4*TFH, TMID-15 ) ;
 	subN += 1 ;
 	lcd_puts_P( THOFF, TTOP+5*TFH+TVOFF,PSTR(STR_DR_SW1));
-	lcd_hline( 0, TTOP+5*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+5*TFH, TMID-15 ) ;
 	attr = sub==subN ;
 	if ( attr )
 	{
-		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+5*TFH)*TSCALE+2, (TMID-20)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+5*TFH)*TSCALE+2, (TMID-10)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	editExpoVals( event, attr, 10*FW, TTOP+5*TFH+TVOFF, DR_DRSW1, 0, 0 ) ;
@@ -6853,23 +7065,23 @@ extern int16_t TouchAdjustValue ;
 	subN += 1 ;
 	
 	lcd_puts_P( THOFF, TTOP+6*TFH+TVOFF,PSTR(STR_DR_SW2));
-	lcd_hline( 0, TTOP+6*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+6*TFH, TMID-15 ) ;
 	attr = sub==subN ;
 	if ( attr )
 	{
-		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+6*TFH)*TSCALE+2, (TMID-20)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
+		lcdDrawSolidFilledRectDMA( (TMID-20)/2*TSCALE, (TTOP+6*TFH)*TSCALE+2, (TMID-10)/2*TSCALE, TFH*TSCALE-2, ~DimBackColour ) ;
 	} 
 	saveEditColours( attr, DimBackColour ) ;
 	editExpoVals( event, attr, 10*FW, TTOP+6*TFH+TVOFF, DR_DRSW2, 0, 0 ) ;
 	restoreEditColours() ;
 	
-	lcd_hline( 0, TTOP+7*TFH, TMID-20 ) ;
+	lcd_hline( 0, TTOP+7*TFH, TMID-15 ) ;
 
 	pushPlotType( PLOT_COLOUR ) ;
 	
-	lcd_vline(XD - (IS_EXPO_THROTTLE(s_expoChan) ? WCHART : 0), Y0 - WCHART, WCHART * 2);
+	lcd_vline(XD+2 - (IS_EXPO_THROTTLE(s_expoChan) ? WCHART : 0), Y0 - WCHART, WCHART * 2);
 
-	drawFunction( XD, GRAPH_FUNCTION_EXPO ) ;
+	drawFunction( XD+2, GRAPH_FUNCTION_EXPO ) ;
 
 	int16_t x512  = calibratedStick[s_expoChan];
 	int16_t y512 = calcExpo( l_expoChan, x512 ) ;
@@ -6877,7 +7089,7 @@ extern int16_t TouchAdjustValue ;
 	lcd_outdezAtt( XD+7*FW, Y0+FH,x512*25/((signed) RESXu/4), 0 );
 	lcd_outdezAtt( XD+FW, TTOP,y512*25/((signed) RESXu/4), 0 );
 	
-	int16_t xv = (x512 * WCHART + RESX/2) / RESX + XD ;
+	int16_t xv = (x512 * WCHART + RESX/2) / RESX + XD+2 ;
   int16_t yv = Y0 - (y512 * WCHART + RESX/2) / RESX ;
 
 	lcd_vline( xv, yv-3, 7 ) ;
@@ -7968,7 +8180,31 @@ void editOneInput(uint8_t event)
 				drawItem( (char *)PSTR(STR_2WEIGHT)+1, y, attr ) ;
 				saveEditColours( attr, DimBackColour ) ;
 				drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
-				pinput->weight = gvarMenuItem( TRIGHT-TRMARGIN, y+TVOFF, pinput->weight, -100, 100, GVAR_100|attr, event ) ;
+#ifdef USE_VARS
+				if ( g_model.vars )
+				{
+					int16_t value = pinput->weight ;
+					if ( pinput->varForWeight )
+					{
+						value += 1000 ;
+					}
+					value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -100, 100, NUM_VARS, attr, event ) ;
+					if ( value > 900 )
+					{
+						value -= 1000 ;
+						pinput->varForWeight = 1 ;
+					}
+					else
+					{
+						pinput->varForWeight = 0 ;
+					}
+					pinput->weight = value ;
+				}
+				else
+				{
+#endif
+					pinput->weight = gvarMenuItem( TRIGHT-TRMARGIN, y+TVOFF, pinput->weight, -100, 100, GVAR_100|attr, event ) ;
+				}
 				restoreEditColours() ;
  	  		
 //				int16_t value = pinput->weight ;
@@ -8037,12 +8273,33 @@ void editOneInput(uint8_t event)
 				saveEditColours( attr, DimBackColour ) ;
 				drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
 				
+				int16_t value = pinput->offset ;
 
-
-				pinput->offset = gvarMenuItem( TRIGHT-TRMARGIN, y+TVOFF, pinput->offset, -100, 100, GVAR_100|attr, event ) ;
+#ifdef USE_VARS
+				if ( g_model.vars )
+				{
+					if ( pinput->varForOffset )
+					{
+						value += 1000 ;
+					}
+					value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -100, 100, NUM_VARS, attr, event ) ;
+					if ( value > 900 )
+					{
+						value -= 1000 ;
+						pinput->varForOffset = 1 ;
+					}
+					else
+					{
+						pinput->varForOffset = 0 ;
+					}
+				}
+				else
+#endif
+				{
+					value = gvarMenuItem( TRIGHT-TRMARGIN, y+TVOFF, value, -100, 100, GVAR_100|attr, event ) ;
+				}
+				pinput->offset = value ;
 				restoreEditColours() ;
-
-
 
 //				int16_t value = pinput->offset ;
 //				if ( value > 100 )
@@ -8091,15 +8348,37 @@ void editOneInput(uint8_t event)
 				if ( pinput->mode == 3 )	// Diff
 				{
 					int16_t value = pinput->curve ;
-					if ( value > 100 )
-					{
-						value += 400 ;
-					}	
 					drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
-					value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
-					if ( value > 500 )
+#ifdef USE_VARS
+					if ( g_model.vars )
 					{
-						value -= 400 ;
+						if ( pinput->varForCurve )
+						{
+							value += 1000 ;
+						}
+						value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -100, 100, NUM_VARS, attr, event ) ;
+						if ( value > 900 )
+						{
+							value -= 1000 ;
+							pinput->varForCurve = 1 ;
+						}
+						else
+						{
+							pinput->varForCurve = 0 ;
+						}
+					}
+					else
+#endif
+					{
+						if ( value > 100 )
+						{
+							value += 400 ;
+						}	
+						value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
+						if ( value > 500 )
+						{
+							value -= 400 ;
+						}
 					}
 					pinput->curve = value ;
 				}
@@ -8107,16 +8386,38 @@ void editOneInput(uint8_t event)
 				{
 					if ( pinput->mode == 4 )	// Expo
 					{
-						int16_t value = pinput->curve ;
-						if ( value > 100 )
-						{
-							value += 400 ;
-						}	
 						drawSmallGVAR( TMID*TSCALE+1, y*TSCALE+3 ) ;
-						value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
-						if ( value > 500 )
+						int16_t value = pinput->curve ;
+#ifdef USE_VARS
+						if ( g_model.vars )
 						{
-							value -= 400 ;
+							if ( pinput->varForCurve )
+							{
+								value += 1000 ;
+							}
+							value = editVarCapableValue( TRIGHT-TRMARGIN, y+TVOFF, value, -100, 100, NUM_VARS, attr, event ) ;
+							if ( value > 900 )
+							{
+								value -= 1000 ;
+								pinput->varForCurve = 1 ;
+							}
+							else
+							{
+								pinput->varForCurve = 0 ;
+							}
+						}
+						else
+#endif
+						{
+							if ( value > 100 )
+							{
+								value += 400 ;
+							}	
+							value = gvarDiffValue( TRIGHT-TRMARGIN, y+TVOFF, value, attr|0x80000000, event ) ;
+							if ( value > 500 )
+							{
+								value -= 400 ;
+							}
 						}
 						pinput->curve = value ;
 //						lcd_outdezAtt(TRIGHT-TRMARGIN,y+TVOFF,pinput->curve,0);

@@ -163,7 +163,7 @@ void generalDefault()
  #endif
 #endif
   g_eeGeneral.stickMode = 1 ;
-	g_eeGeneral.disablePotScroll = 1 ;
+//	g_eeGeneral.disablePotScroll = 1 ;
 #if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 0 ;
 	g_eeGeneral.bright_white = 0 ;

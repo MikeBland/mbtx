@@ -16,8 +16,6 @@
  *
  */
 
-//#define FS8K	1
-
 #include <stdint.h>
 #ifdef PCBSKY
   #include "AT91SAM3S4.h"

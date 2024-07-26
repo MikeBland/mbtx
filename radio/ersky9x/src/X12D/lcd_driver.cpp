@@ -1753,6 +1753,21 @@ void lcd_putsSmall( uint16_t x, uint16_t y, uint8_t *p, uint16_t colour )
 	}
 }
 
+void lcd_putsnSmall( uint16_t x, uint16_t y, uint8_t *p, uint8_t len, uint16_t colour )
+{
+	uint8_t c ;
+  while(len!=0)
+	{
+		c = *p++ ;
+		if ( c == 0 )
+		{
+			break ;
+		}
+		lcdDrawCharSmall( x, y, c, 0, colour ) ;
+		x += 6 ;		
+    len -= 1 ;
+	}
+}
 
 void lcdDrawCharxxlTransparent( uint16_t x, uint16_t y, uint8_t chr, uint32_t mode, uint16_t colour )
 {

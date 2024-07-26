@@ -543,7 +543,7 @@ uint16_t XImage_height ;
 uint16_t *SdramImage = Image_Buffer ;
 uint8_t ImageRow[576] ;
 TCHAR ImageFilename[60] ;
-uint8_t LoadImageResult = 0xFF ;
+//uint8_t LoadImageResult = 0xFF ;
 uint8_t TNAME[VOICE_NAME_SIZE+4] ;
 
 //uint16_t LoadImageCount ;
@@ -600,7 +600,7 @@ uint32_t loadModelImage()
 	result = f_open( &imageFile, ImageFilename, FA_READ) ;
   if (result != FR_OK)
 	{
-		LoadImageResult = 1 ;
+//		LoadImageResult = 1 ;
    	return 1 ;	// Error
   }
 
@@ -618,12 +618,12 @@ uint32_t loadModelImage()
 
 	if ( ( numCols < 128 ) || ( numCols > 192 ) )
 	{
-		LoadImageResult = 3 ;
+//		LoadImageResult = 3 ;
  	 	return 1 ;	// Error
 	} 
 	if ( ( numRows < 64 ) || ( numRows > 114 ) )
 	{
-		LoadImageResult = 3 ;
+//		LoadImageResult = 3 ;
  	 	return 1 ;	// Error
 	} 
 	
@@ -643,7 +643,7 @@ uint32_t loadModelImage()
 		result = f_read(&imageFile, ImageRow, numCols*3, &nread) ;
 		if ( nread != numCols*3 )
 		{
-			LoadImageResult = 2 ;
+//			LoadImageResult = 2 ;
   	 	return 1 ;	// Error
 		}
 #ifdef INVERT_DISPLAY
@@ -675,7 +675,7 @@ uint32_t loadModelImage()
 	Image_height = numRows ;
 
 	ModelImageValid = 1 ;
-	LoadImageResult = 0 ;
+//	LoadImageResult = 0 ;
 //	PictureDrawn = 0 ;
 	return 0 ;
 }
@@ -1085,6 +1085,7 @@ const char *ee32RestoreModel( uint8_t modelIndex, char *filename )
   
 	setModelAFilename( (uint8_t *)fname, modelIndex-1 ) ;
 	uint32_t res	;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	res = xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model), EE_FILE_TYPE_MODEL ) ;
   if ( res == 0 )
 	{
@@ -1358,7 +1359,9 @@ uint32_t xwriteFile( const char * filename, const uint8_t * data, uint16_t size,
 const char *writeGeneral()
 {
 	uint32_t result	;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	result = xwriteFile( RADIO_PATH "/radio.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral), EE_FILE_TYPE_GENERAL ) ;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	result = xwriteFile( RADIO_PATH "/radiosky.bin", (uint8_t *)&g_eeGeneral, sizeof(g_eeGeneral), EE_FILE_TYPE_GENERAL ) ;
   return result ? 0 : "ERROR" ;
 }
@@ -1434,6 +1437,7 @@ const char *writeModel(uint32_t id)
 	
 	setModelAFilename( fname, id ) ;
 	uint32_t result	;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	result = xwriteFile( (char *)fname, (uint8_t *)&g_model, sizeof(g_model), EE_FILE_TYPE_MODEL );
   return result ? 0 : "ERROR" ;
 }
@@ -1565,6 +1569,7 @@ bool ee32CopyModel(uint8_t dst, uint8_t src)
 	xloadFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model) ) ;
 	setModelAFilename( fname, dst-1 ) ;
 	wdt_reset() ;
+	WatchdogTimeout = 300 ;		// 3 seconds
 	xwriteFile( (char *)fname, (uint8_t *)&TempModelData, sizeof(g_model), EE_FILE_TYPE_MODEL ) ;
 		 
 	memcpy( ModelNames[dst], ModelNames[src], sizeof(g_model.name)) ;

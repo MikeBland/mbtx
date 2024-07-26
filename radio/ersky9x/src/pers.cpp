@@ -32,7 +32,9 @@
 #include "file.h"
 #include "debug.h"
 #include "stringidx.h"
-//#include "lcd.h"
+#ifdef FS8K
+#include "lcd.h"
+#endif
 
 #include "frsky.h"
 
@@ -178,7 +180,7 @@ void generalDefault()
   g_eeGeneral.vBatWarn = 65;
 #endif
   g_eeGeneral.stickMode=  1;
-	g_eeGeneral.disablePotScroll=  1;
+//	g_eeGeneral.disablePotScroll=  1;
 #if defined(PCBX12D) || defined(PCBX10)
 	g_eeGeneral.bright = 0 ;
 #else
@@ -307,26 +309,28 @@ void eeReadAll()
 	eeLoadModel(g_eeGeneral.currModel) ;
 	readNames() ;
 #else
-//#if defined(PCBSKY) || defined(PCB9XT)
-//extern uint32_t check8K() ;
 
-//	if ( check8K() == 0 )
-//	{
-//		uint32_t i ;
-//extern uint32_t convertTo8K() ;
-//		while ( (i = convertTo8K()) < 64 )
-//		{
-//			lcd_clear() ;
-//			lcd_puts_Pleft( 2*FH, XPSTR("Updating EEPROM") ) ;
-//			wdt_reset() ;
-//			lcd_hbar( 4, 6*FH+4, 100, 7, i * 100 / 60 ) ;
-//			refreshDisplay() ;
-//		}
-//	}
-//	init_eeprom() ;
-////extern void init8K() ;
-////	init8K() ;
-//#endif
+#ifdef FS8K
+ #if defined(PCBSKY) || defined(PCB9XT)
+extern uint32_t check8K() ;
+	if ( check8K() == 0 )
+	{
+		uint32_t i ;
+extern uint32_t convertTo8K() ;
+		while ( (i = convertTo8K()) < 64 )
+		{
+			lcd_clear() ;
+			lcd_puts_Pleft( 2*FH, XPSTR("Updating EEPROM") ) ;
+			wdt_reset() ;
+			lcd_hbar( 4, 6*FH+4, 100, 7, i * 100 / 60 ) ;
+			refreshDisplay() ;
+		}
+	}
+	init_eeprom() ;
+//extern void init8K() ;
+//	init8K() ;
+ #endif
+#endif
 	if(!ee32LoadGeneral() )
   {
 //		lcd_puts_Pleft( 2*FH, PSTR(STR_BAD_EEPROM) ) ;

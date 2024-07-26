@@ -1501,7 +1501,7 @@ void lcd_putsAttIdxColour(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t
 }
 #endif
 
-void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att)
+void lcd_putsAttIdx(uint16_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att)
 {
 	uint8_t length ;
 	length = *s++ ;
@@ -1515,8 +1515,18 @@ void lcd_putsAttIdx(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att)
 //	lcd_putsAttIdx( x, y, s, idx, att ) ;
 //}
 
-void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
+void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint16_t mode)
 {
+#ifndef TOUCH
+ #if defined(PCBX12D) || defined(PCBX10)
+	if ( mode & LUA_SMLSIZE )
+	{
+		lcd_putsnSmall( x, y, (uint8_t *)s, len, LcdForeground ) ;		
+		return ;
+	}
+ #endif
+#endif
+	 
 	register char c ;
   while(len!=0) {
     c = *s++ ;
@@ -1527,7 +1537,22 @@ void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
 		}
 #endif
 
-    x = lcd_putcAtt(x,y,c,mode);
+//#ifndef TOUCH
+//		if ( mode & LUA_SMLSIZE )
+//		{
+// #if defined(PCBX12D) || defined(PCBX10)
+////			lcdDrawCharSmall( x*2, y*2, c, mode ) ;
+////			x += 6 ;
+//			x = lcd_putcAtt(x, y, c, mode);
+// #else			
+//			x = lcd_putcSmall( x, y, c, mode ) ;
+// #endif
+//		}
+//		else
+//#endif
+		{
+			x = lcd_putcAtt(x, y, c, mode);
+		}
     len--;
   }
 }
@@ -1874,7 +1899,7 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 #if defined(PCBX12D) || defined(PCBX10)
 		lcd_putcAttColour( x, y, c, mode, colour, background ) ;
 #else
-		if ( mode & 32768 )
+		if ( mode & LUA_SMLSIZE )
 		{
 			lcd_putcSmall( x, y, c, mode ) ;
 		}

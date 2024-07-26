@@ -594,7 +594,7 @@
 #define ISTR_THROTTLE_OPEN		"Gaz Ouvert"
 #define ISTR_THR_DEFAULT		"D/300faut Gaz"
 #define ISTR_TOTAL_TIME			"Temps Total"
-#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes\0Inputs\0Radio Vars"
+#define ISTR_POPUP_GLOBALS		"GVARS\0GVadjusters\0Calibreurs\0T/300l/300m/300trie\0Perso.\0Mixage\0Templates\0Logging\0Blocking\0Vario\0Sensors\0HiRes\0Inputs\0Radio Vars\0Vars"
 
 #define ISTR_SHUT_DOWN					"Shutting Down"
 
