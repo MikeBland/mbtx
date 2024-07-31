@@ -3229,11 +3229,11 @@ uint8_t unmapPots( uint8_t value )
  #endif
 #else
 #define WCHART 29
-#define X0     (128-WCHART-2 - 2 )
+#define X0     (128-WCHART-2 + 3 )
 #define Y0     32
 #define WCHARTl 29l
-#define X0l     (128l-WCHARTl-2)
-#define Y0l     32l
+//#define X0l     (128l-WCHARTl-2)
+//#define Y0l     32l
 #endif
 #define RESX    (1<<10) // 1024
 #define RESXu   1024u
@@ -4724,6 +4724,35 @@ void drawFunction( uint8_t xpos, uint8_t function )
 	popPlotType() ;
 }
 
+int8_t getCurveValue( int8_t *crv, uint8_t idx )
+{
+#ifdef USE_VARS
+	if ( g_model.vars )
+	{
+		int8_t val = crv[idx] ;
+		if ( ( val >= -100 ) && ( val <= 100 ) )
+		{
+			return val ;
+		}
+		if ( val > 100 )
+		{
+			val -= 101 ;	// 0-24 (26)
+		}
+		else
+		{
+			val += 100 ;	// -1 - -25 (-27)
+		}
+		return getVarValWholeL100( val ) ;
+	}
+	else
+#endif
+	{
+		return limit( -100, (int)crv[idx], 100 ) ;
+	}
+}
+
+
+
 
 void drawCurve( uint8_t offset )
 {
@@ -4766,7 +4795,7 @@ void drawCurve( uint8_t offset )
 				xx = XD-1-WCHART+i*WCHART/(cv9 ? 4 : 2);
 			}
 		}
-    uint8_t yy = Y0-crv[i]*WCHART/100;
+    uint8_t yy = Y0-getCurveValue( crv, i )*WCHART/100;
 
     if( (offset==i) || (offset == i+9) )
     {
@@ -4846,23 +4875,31 @@ void menuProcCurveOne(uint8_t event)
   	  uint8_t y = i * FH + 8 ;
   	  uint8_t attr = (k==0) && (sub == j+i+9) ? blink : 0 ;
 			lcd_outdezAtt(4 * FW, y, crv[j+i+9], attr);
+			if (attr)
+			{
+				int8_t min = -100 ;
+				int8_t max = 100 ;
+//				if ( k == 0) // x value
+//				{
+					if ( sub > 9 )
+					{
+						min = crv[sub-1] ;
+					}
+					if ( sub < 17 )
+					{
+						max = crv[sub+1] ;
+					}
+//				}
+				CHECK_INCDEC_H_MODELVAR( crv[sub], min, max ) ;
+			}
   	  attr = (k==1) && (sub == j+i) ? blink : 0 ;
-    	lcd_outdezAtt(8 * FW, y, crv[j+i], attr);
+#ifdef USE_VARS
+			crv[j+i] = editVarCapable100Value( 10 * FW, y, crv[j+i], attr, event ) ;
+#else
+			lcd_outdezAtt(10 * FW, y, crv[j+i], attr);
+			CHECK_INCDEC_H_MODELVAR( crv[sub], -100, 100 ) ;
+#endif
 		}
-		int8_t min = -100 ;
-		int8_t max = 100 ;
-		if ( k == 0) // x value
-		{
-			if ( sub > 9 )
-			{
-				min = crv[sub-1] ;
-			}
-			if ( sub < 17 )
-			{
-				max = crv[sub+1] ;
-			}
-		}
-		CHECK_INCDEC_H_MODELVAR( crv[sub], min, max ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 #else
 		if ( sub > 8 )
@@ -4885,7 +4922,12 @@ void menuProcCurveOne(uint8_t event)
 		{
   	  uint8_t y = i * FH + 16;
   	  uint8_t attr = sub == i ? blink : 0;
+#ifdef USE_VARS
+			crv[i] = editVarCapable100Value( 4 * FW, y, crv[i], attr, event ) ;
+#else
   	  lcd_outdezAtt(4 * FW, y, crv[i], attr);
+			if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+#endif
 			if( cv9 )
 			{
 				if ( points == 6 )
@@ -4893,18 +4935,27 @@ void menuProcCurveOne(uint8_t event)
 					if ( i == 0 )
 					{
 			    	attr = sub == i + 5 ? blink : 0;
-	  	  		lcd_outdezAtt(8 * FW, y, crv[i + 5], attr);
+#ifdef USE_VARS
+						crv[i + 5] = editVarCapable100Value( 10 * FW, y, crv[i + 5], attr, event ) ;
+#else
+	  	  		lcd_outdezAtt(10 * FW, y, crv[i + 5], attr);
+		 				if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+#endif
 					}
 				}
 				else if ( i < 4 )
 				{
 			    attr = sub == i + 5 ? blink : 0;
-  	  		lcd_outdezAtt(8 * FW, y, crv[i + 5], attr);
+#ifdef USE_VARS
+					crv[i + 5] = editVarCapable100Value( 10 * FW, y, crv[i + 5], attr, event ) ;
+#else
+  	  		lcd_outdezAtt(10 * FW, y, crv[i + 5], attr);
+	 				if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+#endif
 				}
 			}
 		}
 		lcd_putsAtt( 2*FW, 7*FH,PSTR(STR_PRESET), (sub == preset) ? blink : 0);
-
 
 		if( sub==preset) 
 		{
@@ -4934,7 +4985,7 @@ void menuProcCurveOne(uint8_t event)
 		} 
 		else  /*if(sub>0)*/
 		{
-		 CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+//		 CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
 		}
 
 // Draw the curve
@@ -12711,34 +12762,7 @@ void editExpoVals(uint8_t event, uint8_t edit, uint8_t x, uint8_t y, uint8_t whi
 			if ( g_model.vars )
 			{
 				int16_t value = *ptr ;
-				if ( ( value > 100 ) && ( value <= 125 ) )
-				{
-					value += 899 ; // gives 1000 to 1024
-				}
-				else if ( ( value < -100 ) && ( value >= -125 ) )
-				{
-					value += 1100 ;	// gives 999 to 975
-				}
-#if NUM_VARS > 25
-#define NUM_VAR25		25
-#else
-#define NUM_VAR25		NUM_VARS
-#endif
-#ifdef TOUCH
-				x -= FW*2/3 ;
-#endif				 
-				value = editVarCapableValue( x, y, value, -100, 100, NUM_VAR25, invBlk | LUA_SMLSIZE, event ) ;
-				if ( value > 900 )
-				{
-					if ( value < 1000 )
-					{
-						value -= 1100 ;
-					}
-					else
-					{
-						value -= 899 ;
-					}
-				}
+				value = editVarCapable100Value( x, y, value, invBlk, event ) ;
 				*ptr = value ;
 			}
 			else
@@ -24915,17 +24939,17 @@ int16_t intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 0 ,25 ,50, 75, 10
     x+=RESXu;
     if(x < 0)
 		{
-      erg = (int16_t)crv[0] * (RESX/4);
+      erg = (int16_t)getCurveValue( crv, 0 ) * (RESX/4);
     }
 		else if(x >= (RESX*2))
 		{
 			if ( cv9 == 3 )
 			{
-      	erg = (int16_t)crv[5] * (RESX/4);
+      	erg = (int16_t)getCurveValue( crv, 5 ) * (RESX/4);
 			}
 			else
 			{
-      	erg = (int16_t)crv[(cv9 ? 8 : 4)] * (RESX/4);
+      	erg = (int16_t)getCurveValue( crv, (cv9 ? 8 : 4) ) * (RESX/4);
 			}
     }
 		else
@@ -24943,12 +24967,12 @@ int16_t intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 0 ,25 ,50, 75, 10
   	    c = RESX + calc100toRESX(crv[17]) ;
 				if ((uint16_t)x>c)
 				{
-					return calc100toRESX(crv[8]) ;
+					return calc100toRESX(getCurveValue( crv, 8 )) ;
 				}
   	    b = RESX + calc100toRESX(crv[9]) ;
 				if ((uint16_t)x<b)
 				{
-					return calc100toRESX(crv[0]) ;
+					return calc100toRESX(getCurveValue( crv, 0 )) ;
 				}
 
 				for ( i = 0 ; i < 8 ; i += 1 )
@@ -24979,8 +25003,8 @@ int16_t intpol(int16_t x, uint8_t idx) // -100, -75, -50, -25, 0 ,25 ,50, 75, 10
 					deltax = D5 ;
         }
   	  }
-			int32_t y1 = (int16_t)crv[qr.quot] * (RESX/4) ;
-			int32_t deltay = (int16_t)crv[qr.quot+1] * (RESX/4) - y1 ;
+			int32_t y1 = (int16_t)getCurveValue( crv, qr.quot ) * (RESX/4) ;
+			int32_t deltay = (int16_t)getCurveValue( crv, qr.quot+1) * (RESX/4) - y1 ;
 			erg = y1 + ( qr.rem ) * deltay / deltax ;
 		}
     return erg / 25; // 100*D5/RESX;
@@ -28990,7 +29014,7 @@ STR_Protocol
    #if defined(PCBX12D) || defined(PCBX10)
 			IlinesCount = 24 ;//+ 1 ;
 	 #else
-			IlinesCount = 23 ;//+ 1 ;
+			IlinesCount = 24 ;//+ 1 ;
 	 #endif
   #endif
 			#define SCRIPT_CHOICE	1
@@ -29002,7 +29026,7 @@ STR_Protocol
   #if defined(PCBX7) || defined (PCBXLITE)
 			IlinesCount = 18 ;//+ 1 ;
   #else
-			IlinesCount = 22 ;//+ 1 ;
+			IlinesCount = 23 ;//+ 1 ;
   #endif
  #endif
 

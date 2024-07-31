@@ -24,6 +24,12 @@
 #define PACK( __Declaration__ ) __Declaration__ __attribute__((__packed__))
 #endif
 
+#if NUM_VARS > 25
+#define NUM_VAR25		25
+#else
+#define NUM_VAR25		NUM_VARS
+#endif
+
 PACK(struct t_varPack // 12 bytes
 {
 	int16_t tag:2 ;
@@ -64,6 +70,7 @@ void initVars() ;
 void processVars( uint8_t event ) ;
 // Value in is 1000 + var (positive or negative if var)
 int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min, int16_t max, int16_t varLimit, uint32_t attr, uint8_t event ) ;
+int16_t editVarCapable100Value( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uint8_t event ) ;
 void menuOneAction( uint8_t event ) ;
 void menuOneValue( uint8_t event ) ;
 void menuOneVar(uint8_t event) ;

@@ -1283,11 +1283,16 @@ uint32_t get_current_block_number( FIL *pfile, uint16_t *p_size, uint32_t *p_seq
 	  result = f_read( pfile, (uint8_t *)header.buf, 8, &read ) ;
   	if (result == FR_OK && read == 8)
 		{
-			if ( header.sequence > sequence_no )
+			if ( ( header.ver <= 5 ) && ( size < (4096-8) )
+					 && ( ( header.type == EE_FILE_TYPE_MODEL ) || ( header.type == EE_FILE_TYPE_GENERAL ) ) 
+					 && (header.size <= 8192) )
 			{
-				sequence_no = header.sequence ;
-				size = header.size ;
-				offset = 4096 ;				
+				if ( header.sequence > sequence_no )
+				{
+					sequence_no = header.sequence ;
+					size = header.size ;
+					offset = 4096 ;				
+				}
 			}
   	}
 		f_lseek( pfile, 8192 ) ;

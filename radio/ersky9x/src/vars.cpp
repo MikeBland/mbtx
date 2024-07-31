@@ -1946,6 +1946,37 @@ int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min,
 	return value ;
 }
 
+int16_t editVarCapable100Value( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uint8_t event )
+{
+	if ( ( value > 100 ) && ( value <= 125 ) )
+	{
+		value += 899 ; // gives 1000 to 1024
+	}
+	else if ( ( value < -100 ) && ( value >= -125 ) )
+	{
+		value += 1100 ;	// gives 999 to 975
+	}
+#ifdef TOUCH
+	x -= FW*2/3 ;
+#endif				 
+	value = editVarCapableValue( x, y, value, -100, 100, NUM_VAR25, attr | LUA_SMLSIZE, event ) ;
+	if ( value > 900 )
+	{
+		if ( value < 1000 )
+		{
+			value -= 1100 ;
+		}
+		else
+		{
+			value -= 899 ;
+		}
+	}
+	return value ;
+	
+}
+
+
+
 int32_t getVarValWholeL100( int32_t index )
 {
 	index = getVarValue(index) / 10 ;
