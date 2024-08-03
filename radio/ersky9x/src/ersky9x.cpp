@@ -11670,7 +11670,39 @@ void setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim)
 			tempV.mode = 0 ;
 			pv = &tempV ;
 		}
-    
+
+		if ( phase )
+		{
+			int16_t tm ;
+			t_trim v ;
+		
+			v = *pv ;
+			tm = v.mode ;
+			if ( tm < 0 )
+			{
+				tm = 0 ;
+			}
+	
+			if ( tm == 0 )
+			{
+	      if (v.value > TRIM_EXTENDED_MAX)
+				{
+					tm = v.value - (TRIM_EXTENDED_MAX+1) ;
+					v.value = 0 ;
+					if ( tm > (int16_t)phase-1 )
+					{
+						tm += 1 ;
+					}
+				}
+				else
+				{
+					tm = phase ;
+				}
+				v.mode = tm << 1 ;
+				*pv = v ;
+			}
+		}	
+
     uint32_t p = pv->mode >> 1 ;
     if (p == phase || phase == 0)
 		{
@@ -11698,6 +11730,46 @@ void setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim)
 //  return true;
 	
 }
+
+
+
+
+
+    // validate mode for old setting
+//		v = *pv ;
+//		if ( phase )
+//		{
+//			v = rawTrimFix( phase, v ) ;
+//		}
+
+//    uint32_t p = v.mode >> 1 ;
+//    if (p == phase || phase == 0)
+//		{
+//      pv->value = trim ;
+//      break ;
+//    }
+//    else if ((v.mode & 1) == 0)
+//		{
+//      phase = p ;
+//    }
+//    else
+//		{
+////			SetP = p ;
+////			SetGet = getTrimValueAdd(p, idx) ;
+////      pv->value = limit<int>(TRIM_EXTENDED_MIN, trim - getTrimValue(p, idx), TRIM_EXTENDED_MAX) ;
+//      v.value = limit<int>( -125, trim - getTrimValueAdd(p, idx), 125 ) ;
+
+
+
+
+
+
+
+
+
+
+
+
 
 // NEEDS UPDATING for additive trims
 //void setTrimValueOld(uint8_t phase, uint8_t idx, int16_t trim)
