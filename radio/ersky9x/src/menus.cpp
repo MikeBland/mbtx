@@ -3229,7 +3229,7 @@ uint8_t unmapPots( uint8_t value )
  #endif
 #else
 #define WCHART 29
-#define X0     (128-WCHART-2 + 3 )
+#define X0     (128-WCHART-2 + 1 )
 #define Y0     32
 #define WCHARTl 29l
 //#define X0l     (128l-WCHARTl-2)
@@ -4894,7 +4894,17 @@ void menuProcCurveOne(uint8_t event)
 			}
   	  attr = (k==1) && (sub == j+i) ? blink : 0 ;
 #ifdef USE_VARS
+ #if defined(PCBX12D) || defined(PCBX10)
+			crv[j+i] = editVarCapable100Value( 13 * FW, y, crv[j+i], attr, event ) ;
+  #ifdef TOUCH
+			if ( attr )
+			{
+				lcd_char_inverse( 5*FW, y, 7*FW, 0 ) ;
+			}
+  #endif
+ #else
 			crv[j+i] = editVarCapable100Value( 10 * FW, y, crv[j+i], attr, event ) ;
+ #endif
 #else
 			lcd_outdezAtt(10 * FW, y, crv[j+i], attr);
 			CHECK_INCDEC_H_MODELVAR( crv[sub], -100, 100 ) ;
@@ -4918,16 +4928,36 @@ void menuProcCurveOne(uint8_t event)
 			crv = g_model.curve6 ;
 		}
 
+#if defined(PCBX12D) || defined(PCBX10)
+		for (uint8_t i = 0 ; i < points ; i++)
+		{
+  	  uint8_t y = i * FH + 16 ;
+  	  uint8_t attr = sub == i ? blink : 0;
+ #ifdef USE_VARS
+			crv[i] = editVarCapable100Value( 10 * FW, y, crv[i], attr, event ) ;
+  #ifdef TOUCH
+			if ( attr )
+			{
+				lcd_char_inverse( 2*FW, y, 7*FW, 0 ) ;
+			}
+  #endif
+ #else
+  	  lcd_outdezAtt( 8 * FW, y, crv[i], attr);
+			if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
+ #endif
+		}
+		lcd_putsAtt( 2*FW, 11*FH,PSTR(STR_PRESET), (sub == preset) ? blink : 0);
+#else
 		for (uint8_t i = 0; i < 5; i++)
 		{
-  	  uint8_t y = i * FH + 16;
+  	  uint8_t y = i * FH + 16 ;
   	  uint8_t attr = sub == i ? blink : 0;
-#ifdef USE_VARS
+ #ifdef USE_VARS
 			crv[i] = editVarCapable100Value( 4 * FW, y, crv[i], attr, event ) ;
-#else
+ #else
   	  lcd_outdezAtt(4 * FW, y, crv[i], attr);
 			if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
-#endif
+ #endif
 			if( cv9 )
 			{
 				if ( points == 6 )
@@ -4935,12 +4965,12 @@ void menuProcCurveOne(uint8_t event)
 					if ( i == 0 )
 					{
 			    	attr = sub == i + 5 ? blink : 0;
-#ifdef USE_VARS
+ #ifdef USE_VARS
 						crv[i + 5] = editVarCapable100Value( 10 * FW, y, crv[i + 5], attr, event ) ;
-#else
+ #else
 	  	  		lcd_outdezAtt(10 * FW, y, crv[i + 5], attr);
 		 				if ( attr) CHECK_INCDEC_H_MODELVAR( crv[sub], -100,100);
-#endif
+ #endif
 					}
 				}
 				else if ( i < 4 )
@@ -4956,6 +4986,7 @@ void menuProcCurveOne(uint8_t event)
 			}
 		}
 		lcd_putsAtt( 2*FW, 7*FH,PSTR(STR_PRESET), (sub == preset) ? blink : 0);
+#endif
 
 		if( sub==preset) 
 		{

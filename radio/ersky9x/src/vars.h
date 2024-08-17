@@ -13,7 +13,7 @@
  */
 
 #ifndef vars_h
-#define menus_h
+#define vars_h
 
 #define MAX_VALS		6
 #define MAX_ACTS		4

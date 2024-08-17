@@ -1926,7 +1926,7 @@ struct t_updateTiming
 #endif
 
 #ifdef PCBX7
-// #define JUNGLECAM			1
+ #define JUNGLECAM			1
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)

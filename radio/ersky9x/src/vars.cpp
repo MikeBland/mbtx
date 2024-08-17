@@ -568,7 +568,11 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 4 :
 			{
-				int32_t lvalue = pAction->value & 0x01FF ;
+				int32_t lvalue = pAction->value & 0x00FF ;
+				if ( pAction->value & 0x0100 )
+				{
+					lvalue -= 256 ;
+				}
 				uint32_t lindex = (pAction->value >> 9) & 0x03 ;
 				lcd_puts_Pleft( y, XPSTR("Value") ) ;
 				lcd_outdezAtt( 18*FW, y, lvalue, attr|PREC1) ;
@@ -1920,15 +1924,18 @@ int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min,
 	// Numeric	
 	else
 	{
-	#ifdef TOUCH
+ #ifdef TOUCH
 		lcd_outdezAtt( x-FW, y, value, 0 ) ;
-	#else
+ #else
 		lcd_outdezAtt( x, y, value, attr & ~LUA_SMLSIZE ) ;
+  #if defined(PCBX12D) || defined(PCBX10)
+  #else
 		if ( attr & LUA_SMLSIZE )
 		{
 			x += 3*FW ;
 		}
-	#endif
+  #endif
+ #endif
 		if ( invers )
 		{
 			if ( event == EVT_TOGGLE_GVAR )
