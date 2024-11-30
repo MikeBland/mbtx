@@ -53,6 +53,7 @@ AS   = $(TOOLCHAIN)as
 BIN  = $(CP) -O ihex 
 BINX = $(CP) -O binary 
 
+SHELL=cmd
 
 ifeq ($(PCB), X9D)
  MCU  = cortex-m3
@@ -411,6 +412,7 @@ CPPSRC = ersky9x.cpp \
          menus.cpp \
          menushres.cpp \
          mixer.cpp \
+         trims.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -434,6 +436,7 @@ CPPSRC = ersky9x.cpp \
 			gvars.cpp \
 			vars.cpp \
 			stamp.cpp \
+			tml.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -518,6 +521,7 @@ CPPSRC = ersky9x.cpp \
          menus.cpp \
          menushres.cpp \
          mixer.cpp \
+         trims.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -540,6 +544,7 @@ CPPSRC = ersky9x.cpp \
 			pxx2.cpp \
 			gvars.cpp \
 			vars.cpp \
+			tml.cpp \
 			lcd.cpp
 
 ifeq ($(TOUCH), 1)
@@ -642,6 +647,7 @@ CPPSRC = ersky9x.cpp \
 			frsky.cpp \
          menus.cpp \
          mixer.cpp \
+         trims.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -755,6 +761,7 @@ CPPSRC = ersky9x.cpp \
 			frsky.cpp \
          menus.cpp \
          mixer.cpp \
+         trims.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -888,6 +895,7 @@ CPPSRC = ersky9x.cpp \
          pers.cpp \
          menus.cpp \
          mixer.cpp \
+         trims.cpp \
          ff.cpp \
 			logs.cpp \
          audio.cpp \
@@ -960,6 +968,7 @@ CPPSRC = ersky9x.cpp \
 			frsky.cpp \
 			menus.cpp \
 			mixer.cpp \
+         trims.cpp \
 			drivers.cpp \
          timers.cpp \
 			stm103/logicio103.cpp \
@@ -1033,6 +1042,7 @@ CPPSRC = stamp.cpp \
          pers.cpp \
          menus.cpp \
          mixer.cpp \
+         trims.cpp \
          frsky.cpp \
          audio.cpp \
          ersky9x.cpp \
@@ -1225,57 +1235,81 @@ CPPFLAGS += -MD -MP -MF $(OBJDIR)/$(@F).d
 # makefile rules
 #
 
-all: size_before stamp .WAIT $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss .WAIT size
+all: $(OBJDIR) size_before stamp .WAIT $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).elf $(FULL_PRJ).bin $(FULL_PRJ).lss .WAIT size
 
 size_before:
 #	arm-none-eabi-size $(FULL_PRJ).elf
-	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+	@if EXIST $(FULL_PRJ).elf arm-none-eabi-size $(FULL_PRJ).elf
+#	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
 
 size:
 #	arm-none-eabi-size $(FULL_PRJ).elf
-	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+	@if EXIST $(FULL_PRJ).elf arm-none-eabi-size $(FULL_PRJ).elf
+#	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
 
 # Build stamp-file
+#stamp:
+#	@echo
+##ifeq ($(STAMP), 1)
+#	@echo "Generate Version-stamp:"
+##	-rm -f $(OBJDIR)/stamp.o
+#	@echo "//Automatically generated file - do not edit" > stamp-ersky9x.h
+#	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-ersky9x.h
+#	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
+##	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
+# ifeq ($(PCB), X9D)
+#	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+#	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+# else	
+#	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+#	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+# endif
+##	@cat stamp-ersky9x.h
+##endif
+
 stamp:
 	@echo
 #ifeq ($(STAMP), 1)
-	@echo "Generate Version-stamp:"
-#	-rm -f $(OBJDIR)/stamp.o
-	@echo "//Automatically generated file - do not edit" > stamp-ersky9x.h
-	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-ersky9x.h
-	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
-#	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
+	@echo Generate Version-stamp:
+	@echo //Automatically generated file - do not edit > stamp-ersky9x.h
+	@echo #define DATE_STR ^"%date:~0,2%.%date:~3,2%.%date:~6,4%%^">> stamp-ersky9x.h
+	@echo #define TIME_STR ^"%time:~0,8%^">> stamp-ersky9x.h
  ifeq ($(PCB), X9D)
-	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
-	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+	@echo #define SVN_VERS ^"erx9d-\>> stamp-ersky9x.h
  else	
-	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
-	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+	@echo #define SVN_VERS ^"erskyTx-\>> stamp-ersky9x.h
  endif
-#	@cat stamp-ersky9x.h
+	@type prov.txt >> stamp-ersky9x.h
+	@echo r\>> stamp-ersky9x.h
+	@type rev.txt >> stamp-ersky9x.h
+	@echo ^">> stamp-ersky9x.h
+#	@echo // >> stamp-ersky9x.h
+	@echo #define MOD_VERS "$(EXT_MOD)" >> stamp-ersky9x.h
 #endif
+
 
 .NOTPARALLEL: stamp-ersky9x.h
 
 $(OBJDIR):
-	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
+	if NOT EXIST $(OBJDIR) mkdir $(OBJDIR)
+#	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
 
 #$(OBJDIR)/%.o : %.cpp
 #	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@
 $(CPPOBJS) : $(OBJDIR)/%.o : %.cpp
-	@mkdir -p $(@D)
+#	@mkdir -p $(@D)
 	$(CC) -c $(CPPFLAGS) -fno-exceptions -fno-math-errno -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.c
 #	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 $(COBJS) : $(OBJDIR)/%.o : %.c
-	@mkdir -p $(@D)
+#	@mkdir -p $(@D)
 	$(CC) -c $(CPFLAGS) -I . $(INCDIR) $< -o $@
 
 #$(OBJDIR)/%.o : %.s
 #	$(AS) -c $(ASFLAGS) $< -o $@
 $(AOBJS) : $(OBJDIR)/%.o : %.s
-	@mkdir -p $(@D)
+#	@mkdir -p $(@D)
 	$(AS) -c $(ASFLAGS) $< -o $@
 
 #%elf: $(OBJS)
@@ -1336,12 +1370,12 @@ clean:
 #	-rm -f $(FULL_PRJ).elf
 #	-rm -f $(FULL_PRJ).map
 #	-rm -f $(FULL_PRJ).hex
-	-rm -f $(SRC:.c=.c.bak)
-	-rm -f $(SRC:.c=.lst)
-	-rm -f $(SRC:.c=.lss)
-	-rm -f $(ASRC:.s=.s.bak)
-	-rm -f $(ASRC:.s=.lst)
-	-rm -fR .dep
+#	-rm -f $(SRC:.c=.c.bak)
+#	-rm -f $(SRC:.c=.lst)
+#	-rm -f $(SRC:.c=.lss)
+#	-rm -f $(ASRC:.s=.s.bak)
+#	-rm -f $(ASRC:.s=.lst)
+#	-rm -fR .dep
 
 # 
 # Include the dependency files, should be the last of the makefile

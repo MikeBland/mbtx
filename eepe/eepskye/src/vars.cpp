@@ -132,7 +132,7 @@ void deleteValue( struct t_varPack *pvar, uint32_t position, SKYModelData *g_mod
 //	LockVars = 0 ;
 }
 
-uint32_t insertAction( struct t_varPack *pvar, uint32_t position, uint32_t numValues, SKYModelData *g_model )
+uint32_t insertVarAction( struct t_varPack *pvar, uint32_t position, uint32_t numValues, SKYModelData *g_model )
 {
 	struct t_valVarPack *pvalue ;
 	struct t_actVarPack *pact ;
@@ -175,6 +175,33 @@ void deleteAction( struct t_varPack *pvar, uint32_t position, uint32_t numValues
 	memmove( pact, pact+1, (uint8_t *) &g_model->varStore[VAR_STORAGE_UINTS-1] - (uint8_t *) (pact+1) ) ;
   buildVarOffsetTable( g_model ) ;
 //	LockVars = 0 ;
+}
+
+int16_t getVarValue( int32_t index )
+{
+	uint32_t negative = 0 ;
+	int16_t value ;
+	if ( index < 0 )
+	{
+		index = -index - 1 ;
+		negative = 1 ;
+	}
+	value = VarValues[index] ;
+	return negative ? -value : value ;
+}
+
+int32_t getVarValWholeL100( int32_t index )
+{
+	index = getVarValue(index) / 10 ;
+	if ( index > 100 )
+	{
+		index = 100 ;
+	}
+	else if ( index < -100 )
+	{
+		index = -100 ;
+	}
+	return index ;
 }
 
 

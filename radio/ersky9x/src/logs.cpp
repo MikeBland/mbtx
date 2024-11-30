@@ -783,17 +783,17 @@ void writeLogs()
       f_printf(&g_oLogFile, ",'%d:%02d:%02d.%d", qr.quot, qr.rem, secs, xtime ) ;	// Elapsed log time
       f_printf(&g_oLogFile, ",%d", frskyUsrStreaming * 100 + frskyStreaming ) ;
 			
-			logSingleNumber( LOG_RSSI, FrskyHubData[FR_RXRSI_COPY] ) ;
+			logSingleNumber( LOG_RSSI, TelemetryData[FR_RXRSI_COPY] ) ;
 //			if ( isLogEnabled( LOG_RSSI ) )
 //      {
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RXRSI_COPY] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RXRSI_COPY] ) ;
 //      }
-			logSingleNumber( LOG_TSSI, FrskyHubData[FR_TXRSI_COPY] ) ;
+			logSingleNumber( LOG_TSSI, TelemetryData[FR_TXRSI_COPY] ) ;
 
-			logSingleNumber( LOG_VFR, FrskyHubData[FR_VFR] ) ;
+			logSingleNumber( LOG_VFR, TelemetryData[FR_VFR] ) ;
 //			if ( isLogEnabled( LOG_TSSI ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TXRSI_COPY]) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_TXRSI_COPY]) ;
 //			}
 			if ( g_model.DsmTelemetry )
 			{
@@ -819,7 +819,7 @@ void writeLogs()
       
 			if ( isLogEnabled( LOG_ALT ) )
 			{
-				value =  FrskyHubData[FR_ALT_BARO] + AltOffset ;
+				value =  TelemetryData[FR_ALT_BARO] + AltOffset ;
 				if (g_model.FrSkyUsrProto == 0)  // Hub
 				{
       		if ( g_model.FrSkyImperial )
@@ -845,7 +845,7 @@ void writeLogs()
 			if ( isLogEnabled( LOG_GALT ) )
 			{
 				char c = ' ' ;
-				qr = div( FrskyHubData[TELEM_GPS_ALT], 10 ) ;
+				qr = div( TelemetryData[TELEM_GPS_ALT], 10 ) ;
 				if ( qr.rem < 0 )
 				{
 					qr.rem = - qr.rem ;
@@ -856,29 +856,29 @@ void writeLogs()
 				}
 				f_printf(&g_oLogFile, ",%c%d.%d", c, qr.quot, qr.rem ) ;
 			}
-//			logSingleNumber( LOG_GALT, FrskyHubData[TELEM_GPS_ALT] ) ;
+//			logSingleNumber( LOG_GALT, TelemetryData[TELEM_GPS_ALT] ) ;
 //			if ( isLogEnabled( LOG_GALT ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[TELEM_GPS_ALT]) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[TELEM_GPS_ALT]) ;
 //			}	
-			logSingleNumber( LOG_TEMP1, FrskyHubData[FR_TEMP1] ) ;
+			logSingleNumber( LOG_TEMP1, TelemetryData[FR_TEMP1] ) ;
 //			if ( isLogEnabled( LOG_TEMP1 ) )
 //			{
-//	      f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP1] ) ;
+//	      f_printf(&g_oLogFile, ",%d", TelemetryData[FR_TEMP1] ) ;
 //      }
-			logSingleNumber( LOG_TEMP2, FrskyHubData[FR_TEMP2] ) ;
+			logSingleNumber( LOG_TEMP2, TelemetryData[FR_TEMP2] ) ;
 //			if ( isLogEnabled( LOG_TEMP2 ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_TEMP2] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_TEMP2] ) ;
 //			}
-			logSingleNumber( LOG_RPM, FrskyHubData[FR_RPM] ) ;
+			logSingleNumber( LOG_RPM, TelemetryData[FR_RPM] ) ;
 //			if ( isLogEnabled( LOG_RPM ) )
 //			{
-//    	  f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RPM] ) ;
+//    	  f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RPM] ) ;
 //			}
 			if ( isLogEnabled( LOG_AMPS ) )
 			{
-				qr = div( FrskyHubData[FR_CURRENT], 10);
+				qr = div( TelemetryData[FR_CURRENT], 10);
 				if ( qr.rem < 0 )
 				{
 					qr.rem = - qr.rem ;
@@ -886,16 +886,16 @@ void writeLogs()
 				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 			}
 			
-			logSingleDiv10( LOG_FASV, FrskyHubData[FR_VOLTS] ) ;
+			logSingleDiv10( LOG_FASV, TelemetryData[FR_VOLTS] ) ;
 //			if ( isLogEnabled( LOG_FASV ) )
 //			{
-//				qr = div( FrskyHubData[FR_VOLTS], 10);
+//				qr = div( TelemetryData[FR_VOLTS], 10);
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
-			logSingleNumber( LOG_MAH, FrskyHubData[FR_AMP_MAH] ) ;
+			logSingleNumber( LOG_MAH, TelemetryData[FR_AMP_MAH] ) ;
 //			if ( isLogEnabled( LOG_MAH ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AMP_MAH] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_AMP_MAH] ) ;
 //			}
 			logSingleDiv10( LOG_BATT, g_vbat100mV ) ;
 //			if ( isLogEnabled( LOG_BATT ) )
@@ -906,7 +906,7 @@ void writeLogs()
 			if ( isLogEnabled( LOG_VSPD ) )
 			{
 				char c = ' ' ;
-				qr = div( FrskyHubData[FR_VSPD]/10, 10);
+				qr = div( TelemetryData[FR_VSPD]/10, 10);
 				if ( qr.rem < 0 )
 				{
 					qr.rem = - qr.rem ;
@@ -917,104 +917,104 @@ void writeLogs()
 				}
 				f_printf(&g_oLogFile, ",%c%d.%d", c, qr.quot, qr.rem ) ;
 			}
-//			logSingleNumber( LOG_VSPD, FrskyHubData[FR_VSPD] ) ;
+//			logSingleNumber( LOG_VSPD, TelemetryData[FR_VSPD] ) ;
 //			if ( isLogEnabled( LOG_VSPD ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_VSPD] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_VSPD] ) ;
 //			}
 			
-//			logSingleDiv10( LOG_RXV, convertRxv( FrskyHubData[FR_RXV]) ) ;
-			logSingleDiv10( LOG_RXV, FrskyHubData[FR_RXV] ) ;
+//			logSingleDiv10( LOG_RXV, convertRxv( TelemetryData[FR_RXV]) ) ;
+			logSingleDiv10( LOG_RXV, TelemetryData[FR_RXV] ) ;
 //			if ( isLogEnabled( LOG_RXV ) )
 //			{
-//				value = convertRxv( FrskyHubData[FR_RXV] ) ;
+//				value = convertRxv( TelemetryData[FR_RXV] ) ;
 //				qr = div( value, 10);
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
-			logSingleNumber( LOG_A3, FrskyHubData[FR_A3] ) ;
+			logSingleNumber( LOG_A3, TelemetryData[FR_A3] ) ;
 //			if ( isLogEnabled( LOG_A3 ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A3] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_A3] ) ;
 //			}
-			logSingleNumber( LOG_A4, FrskyHubData[FR_A4] ) ;
+			logSingleNumber( LOG_A4, TelemetryData[FR_A4] ) ;
 //			if ( isLogEnabled( LOG_A4 ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_A4] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_A4] ) ;
 //			}
-			logSingleNumber( LOG_HDG, FrskyHubData[FR_COURSE] ) ;
+			logSingleNumber( LOG_HDG, TelemetryData[FR_COURSE] ) ;
 //			if ( isLogEnabled( LOG_HDG ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_HOME_DIR] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_HOME_DIR] ) ;
 //			}
 			
 			if ( isLogEnabled( LOG_LAT ) )
 			{
-				if ( FrskyHubData[FR_LAT_N_S] == 0 )
+				if ( TelemetryData[FR_LAT_N_S] == 0 )
 				{
-					FrskyHubData[FR_LAT_N_S] = 'N' ;
+					TelemetryData[FR_LAT_N_S] = 'N' ;
 				}
 				if ( g_eeGeneral.gpsFormat )
 				{
 					div_t qr ;
 					int32_t value ;
-					qr = div( FrskyHubData[FR_GPS_LAT], 100 ) ;
+					qr = div( TelemetryData[FR_GPS_LAT], 100 ) ;
 					value = qr.rem ;
 					value *= 10000 ;
-					value += FrskyHubData[FR_GPS_LATd] ;
+					value += TelemetryData[FR_GPS_LATd] ;
 					value *= 10 ;
 					value /= 6 ;
-					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LAT_N_S] ) ;
+					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, TelemetryData[FR_LAT_N_S] ) ;
 				}
 				else
 				{
-					f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LAT],FrskyHubData[FR_GPS_LATd],FrskyHubData[FR_LAT_N_S] ) ;
+					f_printf(&g_oLogFile, ",%d.%04d%c", TelemetryData[FR_GPS_LAT],TelemetryData[FR_GPS_LATd],TelemetryData[FR_LAT_N_S] ) ;
 				}
 			}
 			if ( isLogEnabled( LOG_LONG ) )
 			{
-				if ( FrskyHubData[FR_LONG_E_W] == 0 )
+				if ( TelemetryData[FR_LONG_E_W] == 0 )
 				{
-					FrskyHubData[FR_LONG_E_W] = 'E' ;
+					TelemetryData[FR_LONG_E_W] = 'E' ;
 				}
 				if ( g_eeGeneral.gpsFormat )
 				{
 					div_t qr ;
 					int32_t value ;
-					qr = div( FrskyHubData[FR_GPS_LONG], 100 ) ;
+					qr = div( TelemetryData[FR_GPS_LONG], 100 ) ;
 					value = qr.rem ;
 					value *= 10000 ;
-					value += FrskyHubData[FR_GPS_LONGd] ;
+					value += TelemetryData[FR_GPS_LONGd] ;
 					value *= 10 ;
 					value /= 6 ;
-					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, FrskyHubData[FR_LONG_E_W] ) ;
+					f_printf(&g_oLogFile, ",%d.%06d%c", qr.quot, value, TelemetryData[FR_LONG_E_W] ) ;
 				}
 				else
 				{
-					f_printf(&g_oLogFile, ",%d.%04d%c", FrskyHubData[FR_GPS_LONG],FrskyHubData[FR_GPS_LONGd],FrskyHubData[FR_LONG_E_W] ) ;
+					f_printf(&g_oLogFile, ",%d.%04d%c", TelemetryData[FR_GPS_LONG],TelemetryData[FR_GPS_LONGd],TelemetryData[FR_LONG_E_W] ) ;
 				}
 			}
 			
-			logSingleNumber( LOG_FUEL, FrskyHubData[FR_FUEL] ) ;
+			logSingleNumber( LOG_FUEL, TelemetryData[FR_FUEL] ) ;
 //			if ( isLogEnabled( LOG_FUEL ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_FUEL] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_FUEL] ) ;
 //			}
-			logSingleNumber( LOG_GSPD, FrskyHubData[FR_GPS_SPEED] ) ;
+			logSingleNumber( LOG_GSPD, TelemetryData[FR_GPS_SPEED] ) ;
 //			if ( isLogEnabled( LOG_GSPD ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_GPS_SPEED] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_GPS_SPEED] ) ;
 //			}
 			
-			logSingleDiv100( LOG_CVLT, FrskyHubData[FR_CELL_MIN] ) ;
+			logSingleDiv100( LOG_CVLT, TelemetryData[FR_CELL_MIN] ) ;
 //			if ( isLogEnabled( LOG_CVLT ) )
 //			{
-//				qr = div( FrskyHubData[FR_CELL_MIN], 100 ) ;
+//				qr = div( TelemetryData[FR_CELL_MIN], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			logSingleDiv10( LOG_CTOT, FrskyHubData[FR_CELLS_TOT] ) ;
+			logSingleDiv10( LOG_CTOT, TelemetryData[FR_CELLS_TOT] ) ;
 //			if ( isLogEnabled( LOG_CTOT ) )
 //			{
-//				qr = div( FrskyHubData[FR_CELLS_TOT], 10 ) ;
+//				qr = div( TelemetryData[FR_CELLS_TOT], 10 ) ;
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
 #ifndef DEBUG_9XT
@@ -1086,7 +1086,7 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 				}
 #endif
 
-			logSingleNumber( LOG_FWAT, (uint32_t)FrskyHubData[FR_VOLTS] * (uint32_t)FrskyHubData[FR_CURRENT] / (uint32_t)100 ) ;
+			logSingleNumber( LOG_FWAT, (uint32_t)TelemetryData[FR_VOLTS] * (uint32_t)TelemetryData[FR_CURRENT] / (uint32_t)100 ) ;
 
 #ifdef BLUETOOTH
 			logSingleNumber( LOG_BTRX, BtControl.BtRxOccured ) ;
@@ -1096,109 +1096,109 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //					f_printf(&g_oLogFile, ",%d", BtControl.BtRxOccured ) ;
 //				}
 #endif
-			logSingleNumber( LOG_ASPD, FrskyHubData[FR_AIRSPEED] ) ;
+			logSingleNumber( LOG_ASPD, TelemetryData[FR_AIRSPEED] ) ;
 //			if ( isLogEnabled( LOG_ASPD ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_AIRSPEED] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_AIRSPEED] ) ;
 //			}
-			logSingleDiv100( LOG_RBV1, FrskyHubData[FR_RBOX_B1_V] ) ;
+			logSingleDiv100( LOG_RBV1, TelemetryData[FR_RBOX_B1_V] ) ;
 //			if ( isLogEnabled( LOG_RBV1 ) )
 //			{
-//				qr = div( FrskyHubData[FR_RBOX_B1_V], 100 ) ;
+//				qr = div( TelemetryData[FR_RBOX_B1_V], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			logSingleDiv100( LOG_RBA1, FrskyHubData[FR_RBOX_B1_A] ) ;
+			logSingleDiv100( LOG_RBA1, TelemetryData[FR_RBOX_B1_A] ) ;
 //			if ( isLogEnabled( LOG_RBA1 ) )
 //			{
-//				qr = div( FrskyHubData[FR_RBOX_B1_A], 100 ) ;
+//				qr = div( TelemetryData[FR_RBOX_B1_A], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			logSingleDiv100( LOG_RBV2, FrskyHubData[FR_RBOX_B2_V] ) ;
+			logSingleDiv100( LOG_RBV2, TelemetryData[FR_RBOX_B2_V] ) ;
 //			if ( isLogEnabled( LOG_RBV2 ) )
 //			{
-//				qr = div( FrskyHubData[FR_RBOX_B2_V], 100 ) ;
+//				qr = div( TelemetryData[FR_RBOX_B2_V], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			logSingleDiv100( LOG_RBA2, FrskyHubData[FR_RBOX_B2_A] ) ;
+			logSingleDiv100( LOG_RBA2, TelemetryData[FR_RBOX_B2_A] ) ;
 //			if ( isLogEnabled( LOG_RBA2 ) )
 //			{
-//				qr = div( FrskyHubData[FR_RBOX_B2_A], 100 ) ;
+//				qr = div( TelemetryData[FR_RBOX_B2_A], 100 ) ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
-			logSingleNumber( LOG_RBM1, FrskyHubData[FR_RBOX_B1_CAP] ) ;
+			logSingleNumber( LOG_RBM1, TelemetryData[FR_RBOX_B1_CAP] ) ;
 //			if ( isLogEnabled( LOG_RBM1 ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B1_CAP] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RBOX_B1_CAP] ) ;
 //			}
-			logSingleNumber( LOG_RBM2, FrskyHubData[FR_RBOX_B2_CAP] ) ;
+			logSingleNumber( LOG_RBM2, TelemetryData[FR_RBOX_B2_CAP] ) ;
 //			if ( isLogEnabled( LOG_RBM2 ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_B2_CAP] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RBOX_B2_CAP] ) ;
 //			}
-			logSingleNumber( LOG_RBSV, FrskyHubData[FR_RBOX_SERVO] ) ;
+			logSingleNumber( LOG_RBSV, TelemetryData[FR_RBOX_SERVO] ) ;
 //			if ( isLogEnabled( LOG_RBSV ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_SERVO] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RBOX_SERVO] ) ;
 //			}
-			logSingleNumber( LOG_RBST, FrskyHubData[FR_RBOX_STATE] ) ;
+			logSingleNumber( LOG_RBST, TelemetryData[FR_RBOX_STATE] ) ;
 //			if ( isLogEnabled( LOG_RBST ) )
 //			{
-//				f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_RBOX_STATE] ) ;
+//				f_printf(&g_oLogFile, ",%d", TelemetryData[FR_RBOX_STATE] ) ;
 //			}
 			for ( i = 0 ; i < 12 ; i += 1 )
 			{
-				logSingleDiv100( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1), FrskyHubData[FR_CELL1 + i] ) ;
+				logSingleDiv100( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1), TelemetryData[FR_CELL1 + i] ) ;
 //				if ( isLogEnabled( i + ((i > 5) ? LOG_CEL7-6 : LOG_CEL1)) )
 //				{
-//					qr = div( FrskyHubData[FR_CELL1 + i], 100 ) ;
+//					qr = div( TelemetryData[FR_CELL1 + i], 100 ) ;
 //					f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //				}
 			}
 			for ( i = 0 ; i < 6 ; i += 1 )
 			{
-				logSingleNumber( i + LOG_CUST1, FrskyHubData[FR_CUST1 + i] ) ;
+				logSingleNumber( i + LOG_CUST1, TelemetryData[FR_CUST1 + i] ) ;
 //				if ( isLogEnabled( i + LOG_CUST1 ) )
 //				{
-//					f_printf(&g_oLogFile, ",%d", FrskyHubData[FR_CUST1 + i] ) ;
+//					f_printf(&g_oLogFile, ",%d", TelemetryData[FR_CUST1 + i] ) ;
 //				}
 			}
 			for ( i = 0 ; i < 4 ; i += 1 )
 			{
-				logSingleNumber( i + LOG_CUST7, FrskyHubData[FR_CUST7 + i] ) ;
+				logSingleNumber( i + LOG_CUST7, TelemetryData[FR_CUST7 + i] ) ;
 			}
 
-			logSingleDiv10( LOG_CTOTAL1, FrskyHubData[FR_CELLS_TOTAL1] ) ;
+			logSingleDiv10( LOG_CTOTAL1, TelemetryData[FR_CELLS_TOTAL1] ) ;
 //			if ( isLogEnabled( LOG_CTOTAL1 ) )
 //			{
-//				qr = div( FrskyHubData[FR_CELLS_TOTAL1], 10 ) ;
+//				qr = div( TelemetryData[FR_CELLS_TOTAL1], 10 ) ;
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
-			logSingleDiv10( LOG_CTOTAL2, FrskyHubData[FR_CELLS_TOTAL2] ) ;
+			logSingleDiv10( LOG_CTOTAL2, TelemetryData[FR_CELLS_TOTAL2] ) ;
 //			if ( isLogEnabled( LOG_CTOTAL2 ) )
 //			{
-//				qr = div( FrskyHubData[FR_CELLS_TOTAL2], 10 ) ;
+//				qr = div( TelemetryData[FR_CELLS_TOTAL2], 10 ) ;
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
 
-			logSingleDiv100( LOG_SBECV, FrskyHubData[FR_SBEC_VOLT] ) ;
+			logSingleDiv100( LOG_SBECV, TelemetryData[FR_SBEC_VOLT] ) ;
 //			if ( isLogEnabled( LOG_SBECV ) )
 //			{
-//				qr = div( FrskyHubData[FR_SBEC_VOLT], 100);
+//				qr = div( TelemetryData[FR_SBEC_VOLT], 100);
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
 			
-			logSingleDiv10( LOG_SBECA, FrskyHubData[FR_SBEC_CURRENT] ) ;
+			logSingleDiv10( LOG_SBECA, TelemetryData[FR_SBEC_CURRENT] ) ;
 //			if ( isLogEnabled( LOG_SBECA ) )
 //			{
-//				qr = div( FrskyHubData[FR_SBEC_CURRENT], 10);
+//				qr = div( TelemetryData[FR_SBEC_CURRENT], 10);
 //				f_printf(&g_oLogFile, ",%d.%d", qr.quot, qr.rem ) ;
 //			}
 
-			logSingleNumber( LOG_SATS, FrskyHubData[TEL_SATS] ) ;
+			logSingleNumber( LOG_SATS, TelemetryData[TEL_SATS] ) ;
 
-			logSingleDiv1000( LOG_ACCX, FrskyHubData[FR_ACCX] ) ;
-			logSingleDiv1000( LOG_ACCY, FrskyHubData[FR_ACCY] ) ;
-			logSingleDiv1000( LOG_ACCZ, FrskyHubData[FR_ACCZ] ) ;
+			logSingleDiv1000( LOG_ACCX, TelemetryData[FR_ACCX] ) ;
+			logSingleDiv1000( LOG_ACCY, TelemetryData[FR_ACCY] ) ;
+			logSingleDiv1000( LOG_ACCZ, TelemetryData[FR_ACCZ] ) ;
 
 			logSingleNumber( LOG_STK_THR, (int32_t)calibratedStick[2]*100/1024 ) ;
 //			if ( isLogEnabled( LOG_STK_THR ) )

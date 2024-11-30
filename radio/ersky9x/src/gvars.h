@@ -17,12 +17,12 @@
 #define gvars_h
 
 
-#if MULTI_GVARS
+//#if MULTI_GVARS
 
-#define GVAR_MAX				1024
-#define GVAR_MIN			 -1024
+//#define GVAR_MAX				1024
+//#define GVAR_MIN			 -1024
 
-#endif // MULTI_GVARS
+//#endif // MULTI_GVARS
 
 
 int16_t getGvar( int32_t gv ) ;

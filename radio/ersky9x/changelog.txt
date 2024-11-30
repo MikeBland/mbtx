@@ -10,6 +10,13 @@ description here
 ====================================================================================
 
 ******************************************
+CHANGELOG:   MPB (r229)
+Add VARS
+Add Radio Vars
+Trims may be added in flight modes
+Multi Protocol in alphabetical order
+
+******************************************
 CHANGELOG:   MPB (r228)
 Fix bug when using SLOW with HALF and FULL
 Fix bug when selecting script when no scripts files are present

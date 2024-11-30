@@ -645,10 +645,10 @@ VER = $(shell echo $$(( $(AVER) + 1 )))
 
 
 # Default target.
-all: begin gccversion sizebefore build sizeafter end
+all: begin gccversion sizebefore .WAIT build .WAIT sizeafter end
 
 # Change the build target to build a HEX file or a library.
-build: stamp font_dblsize.lbm font.lbm sticks.lbm s9xsplash.lbm elf hex eep lss sym
+build: stamp .WAIT font_dblsize.lbm font.lbm sticks.lbm s9xsplash.lbm elf hex eep lss sym
 #build: lib
 
 
@@ -678,6 +678,8 @@ else
 endif
 	@echo "#define MOD_VERS \"$(EXT_MOD) $(HT_MOD) $(BEEPER_MOD) $(CPU_MOD) $(SC_MOD) \"" >> stamp-er9x.h
 #	@cat stamp-er9x.h
+
+.NOTPARALLEL: stamp-er9x.h
 
 #font.lbm: font_6x1.xbm
 #	@echo

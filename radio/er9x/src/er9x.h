@@ -1094,9 +1094,9 @@ int8_t checkIncDec_i8( int8_t i_val, int8_t i_min, int8_t i_max);
 //int8_t checkIncDec_hg0( int8_t i_val, int8_t i_max) ;
 int8_t checkIncDec_0(int8_t i_val, int8_t i_max) ;
 int16_t checkIncDec_u0(int16_t i_val, uint8_t i_max) ;
-#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+//#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_flags) ;
-#endif
+//#endif
 
 #define CHECK_INCDEC_H_GENVAR( var, min, max)     \
     var = checkIncDec_i8(var,min,max)
@@ -1110,19 +1110,19 @@ int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_fl
 #define CHECK_INCDEC_H_MODELVAR_0( var, max)     \
     var = checkIncDec_0(var,max)
 
-#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+//#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 #define CHECK_INCDEC_MODELSWITCH( var, min, max) \
   var = checkIncDecSwitch(var,min,max,EE_MODEL|INCDEC_SWITCH)
 
 #define CHECK_INCDEC_GENERALSWITCH( var, min, max) \
   var = checkIncDecSwitch(var,min,max,EE_GENERAL|INCDEC_SWITCH)
-#else
+/*#else
 #define CHECK_INCDEC_MODELSWITCH( var, min, max) \
     var = checkIncDec_i8(var,min,max)
 
 #define CHECK_INCDEC_GENERALSWITCH( var, min, max) \
     var = checkIncDec_i8(var,min,max)
-#endif
+#endif */
 #define STORE_MODELVARS_TRIM   eeDirty(EE_MODEL|EE_TRIM)
 #define STORE_MODELVARS   eeDirty(EE_MODEL)
 #define STORE_GENERALVARS eeDirty(EE_GENERAL)

@@ -2200,7 +2200,7 @@ int16_t get_telemetry_value( int8_t channel )
     return g_vbat100mV ;
 
     case FR_ALT_BARO :
-		return FrskyHubData[channel] + AltOffset ;
+		return TelemetryData[channel] + AltOffset ;
 
     case TMOK :
 		return TmOK ;
@@ -2209,17 +2209,17 @@ int16_t get_telemetry_value( int8_t channel )
 		return Time.hour * 60 + Time.minute ;
     
 		case FR_WATT :
-		return (uint32_t)FrskyHubData[FR_VOLTS] * (uint32_t)FrskyHubData[FR_CURRENT] / (uint32_t)100 ;
+		return (uint32_t)TelemetryData[FR_VOLTS] * (uint32_t)TelemetryData[FR_CURRENT] / (uint32_t)100 ;
     
 		case FMODE :
 		return getFlightPhase() ;
     
 		case FR_RXV :
-//		return convertRxv( FrskyHubData[channel] ) ;
-		return FrskyHubData[channel] ;
+//		return convertRxv( TelemetryData[channel] ) ;
+		return TelemetryData[channel] ;
 		
 		default :
-		return FrskyHubData[channel] ;
+		return TelemetryData[channel] ;
   }
 }
 
@@ -2557,7 +2557,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 			if ( ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) ) && (style & TELEM_ARDUX_NAME) )
 			{
 				char *s ;
-				s = arduFlightMode( FrskyHubData[FR_TEMP1] ) ;
+				s = arduFlightMode( TelemetryData[FR_TEMP1] ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 				lcd_putsnAttColour( x, y, s, 100, frskyUsrStreaming ? 0 : BLINK, colour, bgColour ) ;
 #else
@@ -2683,7 +2683,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		case FR_GPS_LAT :
 			if ( valid || BLINK_ON_PHASE || (style & TELEM_CONSTANT) )
 			{
-				displayGPSdata( x-5*FW, y, FrskyHubData[ FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], LEADING0 | (att & ~(DBLSIZE|CONDENSED) ), FrskyHubData[FR_LAT_N_S] ) ;
+				displayGPSdata( x-5*FW, y, TelemetryData[ FR_GPS_LAT], TelemetryData[FR_GPS_LATd], LEADING0 | (att & ~(DBLSIZE|CONDENSED) ), TelemetryData[FR_LAT_N_S] ) ;
 			}
 			displayed = 1 ;
 			style &= ~( TELEM_UNIT | TELEM_UNIT_LEFT ) ;
@@ -2692,7 +2692,7 @@ uint8_t putsTelemetryChannel(uint8_t x, uint8_t y, int8_t channel, int16_t val, 
 		case FR_GPS_LONG :
 			if ( valid || BLINK_ON_PHASE || (style & TELEM_CONSTANT) )
 			{
-				displayGPSdata( x-5*FW, y, FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], LEADING0 | (att & ~(DBLSIZE|CONDENSED) ), FrskyHubData[FR_LONG_E_W] ) ;
+				displayGPSdata( x-5*FW, y, TelemetryData[FR_GPS_LONG], TelemetryData[FR_GPS_LONGd], LEADING0 | (att & ~(DBLSIZE|CONDENSED) ), TelemetryData[FR_LONG_E_W] ) ;
 			}
 			displayed = 1 ;
 			style &= ~( TELEM_UNIT | TELEM_UNIT_LEFT ) ;
@@ -2784,15 +2784,15 @@ int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uin
 		// A gvar
 		int16_t lowLimit = -7 ;
 		int16_t highLimit = 6 ;
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars )
-		{
-			lowLimit = -12 ;
-			highLimit = 11 ;
-			value -= 513 ;
-		}
-		else
-#endif
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars )
+//		{
+//			lowLimit = -12 ;
+//			highLimit = 11 ;
+//			value -= 513 ;
+//		}
+//		else
+//#endif
 		{
 			value -= 510 ;
 		}
@@ -2804,11 +2804,11 @@ int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uin
 		}
 		dispGvar( x-3*FW, y, temp+1, attr ) ;
 		if (invers) value = checkIncDec16( value, lowLimit, highLimit, EE_MODEL) ;
-#if MULTI_GVARS
-		value += ( g_model.flightModeGvars ) ? 513 : 510 ;
-#else
+//#if MULTI_GVARS
+//		value += ( g_model.flightModeGvars ) ? 513 : 510 ;
+//#else
 		value += 510 ;
-#endif
+//#endif
 	}
 	else
 	{
@@ -2835,11 +2835,11 @@ int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uin
 #ifdef SMALL
 				value -= 510 ;
 #else
- #if MULTI_GVARS
-				value -= ( g_model.flightModeGvars ) ? 513 : 510 ;
- #else
+// #if MULTI_GVARS
+//				value -= ( g_model.flightModeGvars ) ? 513 : 510 ;
+// #else
 				value -= 510 ;
- #endif
+// #endif
 #endif
 				value = getGvar(value) ;
 			}
@@ -2848,11 +2848,11 @@ int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uin
 #ifdef SMALL
 				value = 510 ;
 #else
- #if MULTI_GVARS
-				value = ( g_model.flightModeGvars ) ? 513 : 510 ;
- #else
+// #if MULTI_GVARS
+//				value = ( g_model.flightModeGvars ) ? 513 : 510 ;
+// #else
 				value = 510 ;
- #endif
+// #endif
 #endif
 			}
 //    	value = ( value >= 500) ? g_model.gvars[(uint8_t)value-126].gvar : 510) ;
@@ -2885,12 +2885,12 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
 		if (value >= 101)
 		{
 			int16_t limit = 107 ;
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				limit = 112 ;
-			}
-#endif
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				limit = 112 ;
+//			}
+//#endif
 			dispGvar( x-3*FW, y, (uint8_t)value - 100, attr ) ;
 			if (invers) value = checkIncDec16( (uint8_t)value, 101, limit, EE_MODEL);
 		}
@@ -2934,15 +2934,15 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
 		{
 			int16_t lowLimit = -7 ;
 			int16_t highLimit = 6 ;
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				lowLimit = -12 ;
-				highLimit = 11 ;
-				value -= 513 ;
-			}
-			else
-#endif
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				lowLimit = -12 ;
+//				highLimit = 11 ;
+//				value -= 513 ;
+//			}
+//			else
+//#endif
 			{
 				value -= 510 ;
 			}
@@ -2957,11 +2957,11 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
 			{
 				value = checkIncDec16( value, lowLimit, highLimit, EE_MODEL) ;
 			}
-#if MULTI_GVARS
-			value += ( g_model.flightModeGvars ) ? 513 : 510 ;
-#else
+//#if MULTI_GVARS
+//			value += ( g_model.flightModeGvars ) ? 513 : 510 ;
+//#else
 			value += 510 ;
-#endif
+//#endif
   	}
 		else
 		{
@@ -2989,20 +2989,20 @@ int16_t gvarMenuItem(uint8_t x, uint8_t y, int16_t value, int8_t min, int8_t max
 			{
 				if ( value >= 500 )
 				{
-#if MULTI_GVARS
-					value -= ( g_model.flightModeGvars ) ? 513 : 510 ;
-#else
+//#if MULTI_GVARS
+//					value -= ( g_model.flightModeGvars ) ? 513 : 510 ;
+//#else
 					value -= 510 ;
-#endif
+//#endif
 					value = getGvar(value) ;
 				}
 				else
 				{
-#if MULTI_GVARS
-					value = ( g_model.flightModeGvars ) ? 513 : 510 ;
-#else
+//#if MULTI_GVARS
+//					value = ( g_model.flightModeGvars ) ? 513 : 510 ;
+//#else
 					value = 510 ;
-#endif
+//#endif
 				}
 				s_editMode = 0 ;
 		    eeDirty(EE_MODEL) ;
@@ -7283,7 +7283,7 @@ uint8_t y = 2*FH;
 		else
 		{
 			lcd_outdezAtt( 16*FW, y, g_model.frsky.channels[index].ratio3_4, (sub==subN && subSub==0 ? blink:0)|PREC2 ) ;
-			lcd_outdezAtt( 21*FW, y, FrskyHubData[FR_A3+index], PREC2 ) ;
+			lcd_outdezAtt( 21*FW, y, TelemetryData[FR_A3+index], PREC2 ) ;
     	unit = g_model.frsky.channels[index].units3_4 ;
     	if (sub==subN)
 			{
@@ -7351,8 +7351,8 @@ uint8_t y = 2*FH;
 //	lcd_outdezAtt( 16*FW, y, g_model.rxVratio, attr|PREC1 ) ;
 	lcd_xlabel_decimal( 16*FW, y, g_model.rxVratio, attr|PREC1, XPSTR( "Rx Voltage") ) ;
   lcd_putc(Lcd_lastPos, y, 'v' ) ;
-//	lcd_outdezAtt( 21*FW, y, convertRxv( FrskyHubData[FR_RXV] ), PREC1 ) ;
-	lcd_outdezAtt( 21*FW, y, FrskyHubData[FR_RXV], PREC1 ) ;
+//	lcd_outdezAtt( 21*FW, y, convertRxv( TelemetryData[FR_RXV] ), PREC1 ) ;
+	lcd_outdezAtt( 21*FW, y, TelemetryData[FR_RXV], PREC1 ) ;
 	if( attr) { g_model.rxVratio = checkIncDec16( g_model.rxVratio, 0, 255, EE_MODEL ) ; }
 	subN++; y+=FH;
 
@@ -7814,7 +7814,7 @@ void menuCellScaling(uint8_t event)
 		lcd_outdez(  6*FW, y, k+1 ) ;
 		index = k + FR_CELL1 ;
 		attr = TelemetryDataValid[index] ? 0 : BLINK ;
- 		lcd_outdezAtt(  19*FW-2, y, FrskyHubData[index], attr | PREC2 ) ;
+ 		lcd_outdezAtt(  19*FW-2, y, TelemetryData[index], attr | PREC2 ) ;
     attr = ((sub==k) ? InverseBlink : 0);
 		uint32_t scaling = 1000 + g_model.cellScalers[k] ;
  		lcd_outdezAtt(  12*FW, y, scaling/10, attr | PREC2 ) ;
@@ -8280,12 +8280,12 @@ void menuProcAdjust(uint8_t event)
  			lcd_putc( 16*FW+ADJ_OFF_0, 0, '=' ) ;
 //  		lcd_puts_Pleft( 0, XPSTR("\020=") ) ;
 			value = 7 ;
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				value = 12 ;
-			}
-#endif
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				value = 12 ;
+//			}
+//#endif
 			if ( idx >= value )
 			{
 				lcd_putsAttIdx( 13*FW+ADJ_OFF_0, 0, PSTR(STR_GV_SOURCE), idx-(value-1), 0 ) ;
@@ -8304,17 +8304,17 @@ void menuProcAdjust(uint8_t event)
 			uint8_t active = (attr && (s_editMode) ) ;
 			if ( j == 0 )
 			{
-#if MULTI_GVARS
-				if ( idx > (g_model.flightModeGvars ? 11 : 6) )
-#else
+//#if MULTI_GVARS
+//				if ( idx > (g_model.flightModeGvars ? 11 : 6) )
+//#else
 				if ( idx > 6 )
-#endif
+//#endif
 				{
-#if MULTI_GVARS
-					lcd_putsAttIdx( 3*FW+2+ADJ_OFF_0, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 11 : 6), attr ) ;
-#else
+//#if MULTI_GVARS
+//					lcd_putsAttIdx( 3*FW+2+ADJ_OFF_0, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 11 : 6), attr ) ;
+//#else
 					lcd_putsAttIdx( 3*FW+2+ADJ_OFF_0, y, PSTR(STR_GV_SOURCE), idx-6, attr ) ;
-#endif
+//#endif
 				}
 				else
 				{
@@ -8322,11 +8322,11 @@ void menuProcAdjust(uint8_t event)
 				}
 				if ( active )
 				{
-#if MULTI_GVARS
- 	        CHECK_INCDEC_H_MODELVAR_0( pgvaradj->gvarIndex, (g_model.flightModeGvars ? 15 : 10 ) ) ;
-#else
+//#if MULTI_GVARS
+// 	        CHECK_INCDEC_H_MODELVAR_0( pgvaradj->gvarIndex, (g_model.flightModeGvars ? 15 : 10 ) ) ;
+//#else
  	        CHECK_INCDEC_H_MODELVAR_0( pgvaradj->gvarIndex, 10 ) ;
-#endif
+//#endif
 					idx = pgvaradj->gvarIndex ;
 				}
 			}
@@ -8560,132 +8560,132 @@ void menuProcScalers(uint8_t event)
 
 
 
-#if MULTI_GVARS
-void menuOneGvar(uint8_t event)
-{
-	TITLE(PSTR(STR_GLOBAL_VARS));
-	EditType = EE_MODEL ;
-	static MState2 mstate2;
+//#if MULTI_GVARS
+//void menuOneGvar(uint8_t event)
+//{
+//	TITLE(PSTR(STR_GLOBAL_VARS));
+//	EditType = EE_MODEL ;
+//	static MState2 mstate2;
 	
-	uint32_t rows = 7 ;	
+//	uint32_t rows = 7 ;	
 
-	event = mstate2.check_columns(event, rows - 1 ) ;
-	uint8_t sub = mstate2.m_posVert ;
+//	event = mstate2.check_columns(event, rows - 1 ) ;
+//	uint8_t sub = mstate2.m_posVert ;
 	
-  lcd_putc( 20*FW, 0, '1'+ s_currIdx ) ;
-	GVarXData *pgvar = &g_model.xgvars[s_currIdx] ;
+//  lcd_putc( 20*FW, 0, '1'+ s_currIdx ) ;
+//	GVarXData *pgvar = &g_model.xgvars[s_currIdx] ;
 
-  for( uint32_t i = 0 ; i < rows ; i += 1 )
-  {
-		uint16_t y = (i+1) * FH ;
-    uint16_t attr ;
+//  for( uint32_t i = 0 ; i < rows ; i += 1 )
+//  {
+//		uint16_t y = (i+1) * FH ;
+//    uint16_t attr ;
 
-    attr = sub==i ? InverseBlink : 0 ;
+//    attr = sub==i ? InverseBlink : 0 ;
 
-    switch(i)
-		{
-			case 0 :
-			{
-				GvarData *pgvar ;
-				uint32_t t ;
-				uint8_t *psource ;
-				if ( g_model.flightModeGvars )
-				{
-					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
-				}
-				else
-				{
-					pgvar = &g_model.gvars[s_currIdx] ;
-					psource = &pgvar->gvsource ;
-				}
-				t = *psource ;
+//    switch(i)
+//		{
+//			case 0 :
+//			{
+//				GvarData *pgvar ;
+//				uint32_t t ;
+//				uint8_t *psource ;
+//				if ( g_model.flightModeGvars )
+//				{
+//					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
+//				}
+//				else
+//				{
+//					pgvar = &g_model.gvars[s_currIdx] ;
+//					psource = &pgvar->gvsource ;
+//				}
+//				t = *psource ;
 
-  	  	lcd_puts_Pleft( FH, XPSTR("Source") ) ;
-				if ( t >= EXTRA_POTS_START )
-				{
-					lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, PSTR(STR_CHANS_EXTRA), t - EXTRA_POTS_START, attr ) ;
-				}
-				else
-				{
-#ifdef PCBT12
-					if ( ( t == 10 ) || ( t == 11 ) )
-					{
-						lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, "\004AUX4AUX5", t - 10, attr ) ;
-					}
-					else
-#endif 
-					lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, PSTR(STR_GV_SOURCE), t, attr ) ;
-				}
-					// STR_GV_SOURCE
-  			if(attr)
-				{
-					editGvarSource( psource ) ;
-				}
-			}
-			break ;
+//  	  	lcd_puts_Pleft( FH, XPSTR("Source") ) ;
+//				if ( t >= EXTRA_POTS_START )
+//				{
+//					lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, PSTR(STR_CHANS_EXTRA), t - EXTRA_POTS_START, attr ) ;
+//				}
+//				else
+//				{
+//#ifdef PCBT12
+//					if ( ( t == 10 ) || ( t == 11 ) )
+//					{
+//						lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, "\004AUX4AUX5", t - 10, attr ) ;
+//					}
+//					else
+//#endif 
+//					lcd_putsAttIdx( 18*FW-4+GLO_OFF_0, y, PSTR(STR_GV_SOURCE), t, attr ) ;
+//				}
+//					// STR_GV_SOURCE
+//  			if(attr)
+//				{
+//					editGvarSource( psource ) ;
+//				}
+//			}
+//			break ;
 
-			case 1 :
-  	  	lcd_puts_Pleft( y, XPSTR("Unit") ) ;
-				lcd_putcAtt( 19*FW, y, pgvar->unit ? '%' : '-', attr ) ;
-				if ( attr )
-				{
-					CHECK_INCDEC_H_MODELVAR_0( pgvar->unit, 1 ) ;
-				}
-			break ;
+//			case 1 :
+//  	  	lcd_puts_Pleft( y, XPSTR("Unit") ) ;
+//				lcd_putcAtt( 19*FW, y, pgvar->unit ? '%' : '-', attr ) ;
+//				if ( attr )
+//				{
+//					CHECK_INCDEC_H_MODELVAR_0( pgvar->unit, 1 ) ;
+//				}
+//			break ;
 
-			case 2 :
-  	  	lcd_puts_Pleft( y, XPSTR("Precision") ) ;
-				lcd_putsAttIdx( 17*FW, y, XPSTR("\0030.-0.0"), pgvar->prec, attr ) ;	// v1>v2  v1<v2  
-	    	if(attr)
-				{
-      	  CHECK_INCDEC_H_MODELVAR_0( pgvar->prec, 1 ) ;
-				}	
-			break ;
+//			case 2 :
+//  	  	lcd_puts_Pleft( y, XPSTR("Precision") ) ;
+//				lcd_putsAttIdx( 17*FW, y, XPSTR("\0030.-0.0"), pgvar->prec, attr ) ;	// v1>v2  v1<v2  
+//	    	if(attr)
+//				{
+//      	  CHECK_INCDEC_H_MODELVAR_0( pgvar->prec, 1 ) ;
+//				}	
+//			break ;
 
-			case 3 :
-  	  	lcd_puts_Pleft( y, XPSTR("Minimum") ) ;
-				lcd_outdezAtt( FW*20, y, GVAR_MIN+pgvar->min, attr ) ;
-				if ( attr )
-				{
-					if ( GVAR_MIN+pgvar->min > GVAR_MAX-pgvar->max )
-					{
-						pgvar->min = pgvar->max = 0 ;
-					}
-					pgvar->min = checkIncDec16( GVAR_MIN+pgvar->min, GVAR_MIN, GVAR_MAX-pgvar->max, EE_MODEL ) - GVAR_MIN ;
-				}
-			break ;
+//			case 3 :
+//  	  	lcd_puts_Pleft( y, XPSTR("Minimum") ) ;
+//				lcd_outdezAtt( FW*20, y, GVAR_MIN+pgvar->min, attr ) ;
+//				if ( attr )
+//				{
+//					if ( GVAR_MIN+pgvar->min > GVAR_MAX-pgvar->max )
+//					{
+//						pgvar->min = pgvar->max = 0 ;
+//					}
+//					pgvar->min = checkIncDec16( GVAR_MIN+pgvar->min, GVAR_MIN, GVAR_MAX-pgvar->max, EE_MODEL ) - GVAR_MIN ;
+//				}
+//			break ;
 			
-			case 4 :
-  	  	lcd_puts_Pleft( y, XPSTR("Maximum") ) ;
-				lcd_outdezAtt( FW*20, y, GVAR_MAX-pgvar->max, attr ) ;
-	    	if(attr)
-				{
-      	  pgvar->max = GVAR_MAX-checkIncDec16( GVAR_MAX-pgvar->max, GVAR_MIN+pgvar->min, GVAR_MAX, EE_MODEL ) ;
-    		}
-			break ;
+//			case 4 :
+//  	  	lcd_puts_Pleft( y, XPSTR("Maximum") ) ;
+//				lcd_outdezAtt( FW*20, y, GVAR_MAX-pgvar->max, attr ) ;
+//	    	if(attr)
+//				{
+//      	  pgvar->max = GVAR_MAX-checkIncDec16( GVAR_MAX-pgvar->max, GVAR_MIN+pgvar->min, GVAR_MAX, EE_MODEL ) ;
+//    		}
+//			break ;
 
-			case 5 :
-//				pgvar->popup = onoffMenuItem( pgvar->popup, y, XPSTR("Popup"), attr ) ;
-				alphaEditName( 17*FW, y, &g_model.gvarNames[s_currIdx*3], 3, attr, (uint8_t *)XPSTR( "Name") ) ;
-			break ;
+//			case 5 :
+////				pgvar->popup = onoffMenuItem( pgvar->popup, y, XPSTR("Popup"), attr ) ;
+//				alphaEditName( 17*FW, y, &g_model.gvarNames[s_currIdx*3], 3, attr, (uint8_t *)XPSTR( "Name") ) ;
+//			break ;
 			
-			case 6 :
-			{	
-  	  	lcd_puts_Pleft( y, XPSTR("Value(      )") ) ;
-				displayFlightMode( 6*FW, y, CurrentPhase, 0 ) ;
-				int16_t v = getGvar( s_currIdx ) ;
-				lcd_outdezAtt( 20*FW, y, v, attr ) ;
-				if (attr)
-				{
-					v = checkIncDec16( v, -125, 125, EE_MODEL ) ;
-					setGVar( s_currIdx, v ) ;
-				}
-			}
-			break ;
-		}
-	}
-}
-#endif // MULTI_GVARS
+//			case 6 :
+//			{	
+//  	  	lcd_puts_Pleft( y, XPSTR("Value(      )") ) ;
+//				displayFlightMode( 6*FW, y, CurrentPhase, 0 ) ;
+//				int16_t v = getGvar( s_currIdx ) ;
+//				lcd_outdezAtt( 20*FW, y, v, attr ) ;
+//				if (attr)
+//				{
+//					v = checkIncDec16( v, -125, 125, EE_MODEL ) ;
+//					setGVar( s_currIdx, v ) ;
+//				}
+//			}
+//			break ;
+//		}
+//	}
+//}
+//#endif // MULTI_GVARS
 
 void menuProcGlobals(uint8_t event)
 {
@@ -8693,12 +8693,12 @@ void menuProcGlobals(uint8_t event)
 	EditType = EE_MODEL ;
 	static MState2 mstate2;
 	uint32_t rows = MAX_GVARS ;
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		rows = 12 ;
-	}
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		rows = 12 ;
+//	}
+//#endif
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t subN = mstate2.m_posVert ;
@@ -8713,45 +8713,45 @@ void menuProcGlobals(uint8_t event)
 			DisplayOffset = GLO_OFF_0 ;
 #endif
 
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-  	switch (event)
-		{
-  	  case EVT_KEY_FIRST(KEY_MENU) :
-  	  case EVT_KEY_BREAK(BTN_RE) :
-  	     s_currIdx = subN ;
-  	     killEvents(event);
-  	     pushMenu(menuOneGvar) ;
-			break ;
-  	}
-	}
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//  	switch (event)
+//		{
+//  	  case EVT_KEY_FIRST(KEY_MENU) :
+//  	  case EVT_KEY_BREAK(BTN_RE) :
+//  	     s_currIdx = subN ;
+//  	     killEvents(event);
+//  	     pushMenu(menuOneGvar) ;
+//			break ;
+//  	}
+//	}
+//#endif
 
 	 
 // if ( subN < MAX_GVARS )
  {
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars == 0 )
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars == 0 )
+//#endif
 	{
 		Columns = 2 ;
 	}
 	uint32_t drows = MAX_GVARS ;
 #if SCREEN_LINES > 8
- #if MULTI_GVARS
-  #ifndef SMALL
-	if ( g_model.flightModeGvars )
-	{
-		drows = 12 ;
-	}
-  #endif
- #endif
+// #if MULTI_GVARS
+//  #ifndef SMALL
+//	if ( g_model.flightModeGvars )
+//	{
+//		drows = 12 ;
+//	}
+//  #endif
+// #endif
 #else
  #ifndef SMALL
-	#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	#endif
+//	#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	#endif
 	{
 		drows = SCREEN_LINES - 1 ;
 	}
@@ -8766,20 +8766,20 @@ void menuProcGlobals(uint8_t event)
 		{
       uint8_t attr = ((subN==k && subSub==j) ? InverseBlink : 0);
 			GvarData *pgvar ;
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				attr = 0 ;
-				j = 2 ;
-				pgvar = &g_model.gvars[0] ;
-			}
-			else
-			{
-				pgvar = &g_model.gvars[k] ;
-			}
-#else
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				attr = 0 ;
+//				j = 2 ;
+//				pgvar = &g_model.gvars[0] ;
+//			}
+//			else
+//			{
+//				pgvar = &g_model.gvars[k] ;
+//			}
+//#else
 			pgvar = &g_model.gvars[k] ;
-#endif
+//#endif
 			uint8_t active = (attr && (s_editMode) ) ;
       if ( j == 0 )
 			{
@@ -8791,13 +8791,13 @@ void menuProcGlobals(uint8_t event)
 				uint32_t t ;
 				uint8_t *psource ;
 #ifndef SMALL
- #if MULTI_GVARS
-				if ( g_model.flightModeGvars )
- 				{
-					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
-				}
-				else
- #endif
+// #if MULTI_GVARS
+//				if ( g_model.flightModeGvars )
+// 				{
+//					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
+//				}
+//				else
+// #endif
 #endif
 				{
 					pgvar = &g_model.gvars[k] ;
@@ -8827,30 +8827,30 @@ void menuProcGlobals(uint8_t event)
 			}
 			else
 			{
-#if MULTI_GVARS
-				if ( g_model.flightModeGvars == 0 )
-#endif
+//#if MULTI_GVARS
+//				if ( g_model.flightModeGvars == 0 )
+//#endif
 				{
 					lcd_outdezAtt( 19*FW+GLO_OFF_0, y, pgvar->gvar, attr) ;
   				if(active) CHECK_INCDEC_H_MODELVAR(  pgvar->gvar, -125, 125 ) ;
 				}
-#if MULTI_GVARS
-				else
-				{
-					lcd_outdezAtt( 19*FW+GLO_OFF_0, y, readMgvar( 0, k ), 0 ) ;
-				}
-#endif
+//#if MULTI_GVARS
+//				else
+//				{
+//					lcd_outdezAtt( 19*FW+GLO_OFF_0, y, readMgvar( 0, k ), 0 ) ;
+//				}
+//#endif
 			}
 		}
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars )
-		{
-			if ( subN==k )
-			{
-				lcd_char_inverse( GLO_OFF_0, y, 21*FW, 0 ) ;
-			}
-		}
-#endif
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars )
+//		{
+//			if ( subN==k )
+//			{
+//				lcd_char_inverse( GLO_OFF_0, y, 21*FW, 0 ) ;
+//			}
+//		}
+//#endif
 		y += FH ;
 	}
  }
@@ -9166,12 +9166,15 @@ void menuProcSafetySwitches(uint8_t event)
     	uint8_t attr = (getSwitch00(sd->opt.ss.swtch) ) ? INVERS : 0 ;
 
 #ifdef NO_VOICE_SWITCHES
-    	putsChn(0+SAFE_OFF_0,y,k+1,attr);
+//	    putsChn(0+SAFE_OFF_0,y,k+1,attr);
+			lcd_2_digits( (k+1 > 9) ? 2*FW+2*FWNUM+SAFE_OFF_0 : 2*FW+FWNUM+SAFE_OFF_0, y, k+1, attr ) ; //, uint16_t colour, uint16_t background )
 #else
-    	putsChn(0+SAFE_OFF_0,y,k,attr);
+//	    putsChn(0+SAFE_OFF_0,y,k,attr);
+			lcd_2_digits( (k > 9) ? 2*FW+2*FWNUM+SAFE_OFF_0 : 2*FW+FWNUM+SAFE_OFF_0, y, k, attr ) ; //, uint16_t colour, uint16_t background )
 #endif
 			if ( k <= numSafety )
 			{
+		    lcd_putsnAtt(0+SAFE_OFF_0,y,PSTR(STR_CH),2,attr);
   	  	for(uint8_t j=0; j<5;j++)
 				{
     		  attr = ((sub==k && subSub==j) ? InverseBlink : 0);
@@ -10657,12 +10660,12 @@ void menuProcVoiceOne(uint8_t event)
 	  	  		if(attr)
 						{
 							uint32_t t = 515 ;
-#if MULTI_GVARS
-							if ( g_model.flightModeGvars )
-							{
-								t = 517 ;
-							}
-#endif
+//#if MULTI_GVARS
+//							if ( g_model.flightModeGvars )
+//							{
+//								t = 517 ;
+//							}
+//#endif
 	  	    		value = checkIncDec16( value, 0, t, EE_MODEL) ;
 						}
 						if ( value )
@@ -10680,12 +10683,12 @@ void menuProcVoiceOne(uint8_t event)
 						if ( pvad->file.vfile > 500)
 						{
 							int32_t t = 508 ;
-#if MULTI_GVARS
-							if ( g_model.flightModeGvars )
-							{
-								t = 510 ;
-							}
-#endif
+//#if MULTI_GVARS
+//							if ( g_model.flightModeGvars )
+//							{
+//								t = 510 ;
+//							}
+//#endif
 							if ( pvad->file.vfile >= t )
 							{
 								lcd_putsAtt( 18*FW, y, XPSTR("SC"), attr ) ;
@@ -12477,9 +12480,24 @@ extern uint8_t swOn[] ;
 #if defined(PCBX12D) || defined(PCBX10)
 							popPlotType() ;
 #endif
+#if defined(PCBX12D) || defined(PCBX10)
 							lcd_puts_P( 13*FW+2+x, FH, XPSTR("Ofst") ) ;
-							extendedValueEdit( pmd->sOffset, pmd->extOffset, 0, FH, 0, FW*21+1+x ) ;
-
+#else
+							lcd_puts_P( 13*FW+2+x, FH, XPSTR("Of") ) ;
+#endif
+							if ( pmd->varForOffset )
+							{
+								int16_t loffset = calcExtendedValue( pmd->sOffset, pmd->extOffset ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+								displayVarName( FW*18+1+x, FH, loffset, 0 ) ;
+#else
+								displayVarName( FW*33/2-1+x, FH, loffset, LUA_SMLSIZE ) ;
+#endif
+							}
+							else
+							{
+								extendedValueEdit( pmd->sOffset, pmd->extOffset, 0, FH, 0, FW*21+1+x ) ;
+							}
 							lcd_puts_P( 13*FW+2+x, 2*FH, XPSTR("Sw") ) ;
 	            putsDrSwitches( 17*FW+2+x, 2*FH , pmd->swtch, 0 ) ;
 
@@ -12781,12 +12799,12 @@ void editExpoVals(uint8_t event, uint8_t edit, uint8_t x, uint8_t y, uint8_t whi
 		invBlk = (edit) ? InverseBlink : 0 ;
 #endif
 		ptr = &eptr->expo[which][exWt][stkRL] ;
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars )
-		{
-			invBlk |= GVAR_100 ;
-		}
-#endif
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars )
+//		{
+//			invBlk |= GVAR_100 ;
+//		}
+//#endif
     if(exWt==DR_EXPO)
 		{
 #ifdef USE_VARS
@@ -12799,7 +12817,7 @@ void editExpoVals(uint8_t event, uint8_t edit, uint8_t x, uint8_t y, uint8_t whi
 			else
 #endif
 			{
-				*ptr = gvarMenuItem( x, y, *ptr, -100, 100, invBlk, event ) ;
+				*ptr = gvarMenuItem( x-FW, y, *ptr, -100, 100, invBlk, event ) ;
 			}
     }
     else
@@ -12828,7 +12846,7 @@ void editExpoVals(uint8_t event, uint8_t edit, uint8_t x, uint8_t y, uint8_t whi
 			else
 #endif
 			{
-				*ptr = gvarMenuItem( x, y, *ptr+100, 0, 100, invBlk, event ) - 100 ;
+				*ptr = gvarMenuItem( x-FW, y, *ptr+100, 0, 100, invBlk, event ) - 100 ;
 			}
 //			*ptr = gvarMenuItem( x, y, *ptr+100, 0, 100, invBlk, event ) - 100 ;
     }
@@ -12850,58 +12868,58 @@ void menuProcExpoAll(uint8_t event)
 	
 	event = mstate2.check_columns( event, count ) ;
 
-#if TOUCH
-	if ( TouchControl.itemSelected )
-	{
-		// Selected by touch, adjust
-		if ( TouchControl.itemSelected == 3 )
-		{
-			mstate2.m_posVert = 1 ;
-		}
-		else if ( TouchControl.itemSelected == 5 )
-		{
-			mstate2.m_posVert = 2 ;
-		}
-		else if ( TouchControl.itemSelected == 1 )
-		{
-			mstate2.m_posVert = 0 ;
-		}
-//		else if ( TouchControl.itemSelected != 1 )
+//#if TOUCH
+//	if ( TouchControl.itemSelected )
+//	{
+//		// Selected by touch, adjust
+//		if ( TouchControl.itemSelected == 3 )
 //		{
-//			mstate2.m_posVert = sub ;
+//			mstate2.m_posVert = 1 ;
 //		}
-	}
-	else
-	{
-		if ( TouchUpdated )
-		{
-			if ( TouchControl.event == TEVT_UP )		 
-			{
-				if ( TouchControl.x < 10*FW*2 )
-				{
-					uint32_t vert = TouchControl.y ;
-					vert -= FH*2 ;
-					vert /= FH*2 ;
-					// 6->4, 5->3, 4->2, 2->1
-					if ( vert == 6 )
-					{
-						mstate2.m_posVert = 4 ;
-					}
-					else if ( vert == 5 )
-					{
-						mstate2.m_posVert = 3 ;
-					}
-					TouchControl.itemSelected = 1 ;
-					TouchUpdated = 0 ;
-				}
-				else
-				{
+//		else if ( TouchControl.itemSelected == 5 )
+//		{
+//			mstate2.m_posVert = 2 ;
+//		}
+//		else if ( TouchControl.itemSelected == 1 )
+//		{
+//			mstate2.m_posVert = 0 ;
+//		}
+////		else if ( TouchControl.itemSelected != 1 )
+////		{
+////			mstate2.m_posVert = sub ;
+////		}
+//	}
+//	else
+//	{
+//		if ( TouchUpdated )
+//		{
+//			if ( TouchControl.event == TEVT_UP )		 
+//			{
+//				if ( TouchControl.x < 10*FW*2 )
+//				{
+//					uint32_t vert = TouchControl.y ;
+//					vert -= FH*2 ;
+//					vert /= FH*2 ;
+//					// 6->4, 5->3, 4->2, 2->1
+//					if ( vert == 6 )
+//					{
+//						mstate2.m_posVert = 4 ;
+//					}
+//					else if ( vert == 5 )
+//					{
+//						mstate2.m_posVert = 3 ;
+//					}
+//					TouchControl.itemSelected = 1 ;
+//					TouchUpdated = 0 ;
+//				}
+//				else
+//				{
 					
-				}
-			}
-		}
-	}
-#endif		
+//				}
+//			}
+//		}
+//	}
+//#endif		
 	 
 	uint8_t stkVal ;
 	sub = mstate2.m_posVert ;
@@ -12950,15 +12968,15 @@ void menuProcExpoAll(uint8_t event)
 	if(calibratedStick[l_expoChan]<-100) stkVal = DR_LEFT;
 	if(IS_EXPO_THROTTLE(l_expoChan)) stkVal = DR_RIGHT;
 
-#if TOUCH
-	ExpoData *eptr ;
-	eptr = &g_model.expoData[s_expoChan] ;
-extern int16_t TouchAdjustValue ;
-#endif
+//#if TOUCH
+//	ExpoData *eptr ;
+//	eptr = &g_model.expoData[s_expoChan] ;
+//extern int16_t TouchAdjustValue ;
+//#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
 #define EXPO_LEFT_X		(7*FW)
-#define EXPO_RIGHT_X	(13*FW)
+#define EXPO_RIGHT_X	(15*FW)
 #else
 #define EXPO_LEFT_X		(4*FW)
 #define EXPO_RIGHT_X	(9*FW)
@@ -12966,28 +12984,28 @@ extern int16_t TouchAdjustValue ;
 
 	lcd_puts_Pleft(2*FH,PSTR(STR_2EXPO));
 	editExpoVals( event, (stkVal != DR_RIGHT) && (sub==subN), EXPO_LEFT_X, 3*FH, expoDrOn, DR_EXPO, DR_LEFT ) ;
-#if TOUCH
-	if ( stkVal == DR_BOTH )
-	{
-		if ( TouchAdjustValue )
-		{
-			eptr->expo[expoDrOn][DR_EXPO][DR_RIGHT] = eptr->expo[expoDrOn][DR_EXPO][DR_LEFT] ;
-		}
-	}
-#endif
+//#if TOUCH
+//	if ( stkVal == DR_BOTH )
+//	{
+//		if ( TouchAdjustValue )
+//		{
+//			eptr->expo[expoDrOn][DR_EXPO][DR_RIGHT] = eptr->expo[expoDrOn][DR_EXPO][DR_LEFT] ;
+//		}
+//	}
+//#endif
 	editExpoVals( event, (stkVal != DR_LEFT) && (sub==subN), EXPO_RIGHT_X, 3*FH, expoDrOn, DR_EXPO, DR_RIGHT ) ;
 	subN += 1 ;
 	lcd_puts_Pleft(4*FH,PSTR(STR_2WEIGHT));
 	editExpoVals( event, (stkVal != DR_RIGHT) && (sub==subN), EXPO_LEFT_X, 5*FH, expoDrOn, DR_WEIGHT, DR_LEFT ) ;
-#if TOUCH
-	if ( stkVal == DR_BOTH )
-	{
-		if ( TouchAdjustValue )
-		{
-			eptr->expo[expoDrOn][DR_WEIGHT][DR_RIGHT] = eptr->expo[expoDrOn][DR_WEIGHT][DR_LEFT] ;
-		}
-	}
-#endif
+//#if TOUCH
+//	if ( stkVal == DR_BOTH )
+//	{
+//		if ( TouchAdjustValue )
+//		{
+//			eptr->expo[expoDrOn][DR_WEIGHT][DR_RIGHT] = eptr->expo[expoDrOn][DR_WEIGHT][DR_LEFT] ;
+//		}
+//	}
+//#endif
 	editExpoVals( event, (stkVal != DR_LEFT) && (sub==subN), EXPO_RIGHT_X, 5*FH, expoDrOn, DR_WEIGHT, DR_RIGHT ) ;
 	subN += 1 ;
 	lcd_puts_Pleft(6*FH,PSTR(STR_DR_SW1));
@@ -13290,14 +13308,14 @@ extern const uint8_t IconHexit[] ;
 
 	if ( binding == 0 )
 	{
-		lcd_outdezAtt( 12 * FW, 3*FH, FrskyHubData[FR_RXRSI_COPY], DBLSIZE);
+		lcd_outdezAtt( 12 * FW, 3*FH, TelemetryData[FR_RXRSI_COPY], DBLSIZE);
 //		{
-//			lcd_outdezAtt( 20 * FW, 4*FH, FrskyHubData[FR_TEMP2], DBLSIZE) ;
+//			lcd_outdezAtt( 20 * FW, 4*FH, TelemetryData[FR_TEMP2], DBLSIZE) ;
 //		}
 		if ( TelemetryDataValid[FR_VFR] )
 		{
 			lcd_puts_Pleft( 6*FH, "VFR:" ) ;
-			lcd_outdezAtt( 10*FW, 6*FH, FrskyHubData[FR_VFR], DBLSIZE);
+			lcd_outdezAtt( 10*FW, 6*FH, TelemetryData[FR_VFR], DBLSIZE);
 		}
 	}
 
@@ -16012,7 +16030,7 @@ void startDsmBind() ;
 				if ( (pModule->protocol == PROTO_MULTI ) && ( PrivateData[1] ) )
 				{
 //						lcd_outdezAtt(  13*FW, y, PrivateData[0], 0 ) ;
-//						lcd_outdezAtt(  17*FW, y, FrskyHubData[FR_RXRSI_COPY], 0 ) ;
+//						lcd_outdezAtt(  17*FW, y, TelemetryData[FR_RXRSI_COPY], 0 ) ;
 //						lcd_outdezAtt(  17*FW, y, RxLqi, 0 ) ;
 					uint8_t sp = pModule->sub_protocol & 0x3F ;
 					sp |= pModule->exsub_protocol << 6 ;
@@ -16975,17 +16993,17 @@ void menuModeOne(uint8_t event)
 	uint32_t rows = s_currIdx ? 6 : 0 ;
 	uint32_t displayRows = s_currIdx ? 6 : 1 ;
 	uint8_t t_pgOfs ;
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		rows += 12 ;
-#if SCREEN_LINES > 8
-		displayRows = rows > (SCREEN_LINES-1) ? (SCREEN_LINES-1) : rows ;
-#else		 
-		displayRows = 7 ;
-#endif
-	}
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		rows += 12 ;
+//#if SCREEN_LINES > 8
+//		displayRows = rows > (SCREEN_LINES-1) ? (SCREEN_LINES-1) : rows ;
+//#else		 
+//		displayRows = 7 ;
+//#endif
+//	}
+//#endif
 
 	static MState2 mstate2 ;
 	mstate2.check_columns(event,rows-1) ;
@@ -17111,78 +17129,78 @@ extern t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
 				alphaEditName( 11*FW-2, y, (uint8_t *)phase->name, sizeof(phase->name), attr, (uint8_t *)XPSTR( "Mode Name") ) ;
 			break ;
 
-#if MULTI_GVARS
-			default :
-				if ( attr )
-				{
-					Columns = 1 ;
-				}
-				k -= 6 ;
-//				lcd_puts_Pleft( y, XPSTR("GV") ) ;
-//			  lcd_putc( 2*FW, y, '1'+k ) ;
-				dispGvar( 0, y, k+1, 0 ) ;
+//#if MULTI_GVARS
+//			default :
+//				if ( attr )
+//				{
+//					Columns = 1 ;
+//				}
+//				k -= 6 ;
+////				lcd_puts_Pleft( y, XPSTR("GV") ) ;
+////			  lcd_putc( 2*FW, y, '1'+k ) ;
+//				dispGvar( 0, y, k+1, 0 ) ;
 
-				if ( g_model.gvarNames[k*3] )
-				{
-					if ( g_model.gvarNames[k*3] != ' ' )
-					{
-						uint8_t text[6] ;
-  					ncpystr(&text[1], &g_model.gvarNames[k*3], 3 ) ;
-			  		text[0] = '(' ;
-			  		text[4] = ')' ;
-			  		text[5] = 0 ;
-						lcd_puts_P( 4*FW, y, (char *)text ) ;
-					}
-				}
-        int16_t v = readMgvar( s_currIdx, k ) ;
-        if ( (v > GVAR_MAX) && ( s_currIdx ) )
-				{
-          uint32_t p = v - GVAR_MAX - 1 ;
-          if (p >= s_currIdx)
-					{
-						p += 1 ;
-					}
-					displayFlightMode( 10*FW, y, p, g_posHorz==0 ? attr : 0 ) ;
-				}
-				else
-				{
-          lcd_putsAtt( 10*FW, y, XPSTR("OWN"), g_posHorz==0 ? attr : 0) ;
-				}
-				uint32_t fm = getGVarFlightMode( s_currIdx, k ) ;
+//				if ( g_model.gvarNames[k*3] )
+//				{
+//					if ( g_model.gvarNames[k*3] != ' ' )
+//					{
+//						uint8_t text[6] ;
+//  					ncpystr(&text[1], &g_model.gvarNames[k*3], 3 ) ;
+//			  		text[0] = '(' ;
+//			  		text[4] = ')' ;
+//			  		text[5] = 0 ;
+//						lcd_puts_P( 4*FW, y, (char *)text ) ;
+//					}
+//				}
+//        int16_t v = readMgvar( s_currIdx, k ) ;
+//        if ( (v > GVAR_MAX) && ( s_currIdx ) )
+//				{
+//          uint32_t p = v - GVAR_MAX - 1 ;
+//          if (p >= s_currIdx)
+//					{
+//						p += 1 ;
+//					}
+//					displayFlightMode( 10*FW, y, p, g_posHorz==0 ? attr : 0 ) ;
+//				}
+//				else
+//				{
+//          lcd_putsAtt( 10*FW, y, XPSTR("OWN"), g_posHorz==0 ? attr : 0) ;
+//				}
+//				uint32_t fm = getGVarFlightMode( s_currIdx, k ) ;
 
-        // Needs to be targeted gvar
-        int16_t w = readMgvar( fm, k ) ;
-				lcd_outdezAtt( 19*FW+GLO_OFF_0, y, w, g_posHorz==1 ? attr : 0) ;
+//        // Needs to be targeted gvar
+//        int16_t w = readMgvar( fm, k ) ;
+//				lcd_outdezAtt( 19*FW+GLO_OFF_0, y, w, g_posHorz==1 ? attr : 0) ;
 				
-				if ( (attr && g_posHorz==0 && editMode) && s_currIdx )
-				{
-//					int16_t oldValue = v ;
-          if (v < GVAR_MAX)
-					{
-						v = GVAR_MAX ;
-					}
-					int16_t entryValue = v ;
-          v = checkIncDec16( v, GVAR_MAX, GVAR_MAX+MAX_MODES+1, EE_MODEL ) ;
-         	if ( v != entryValue )
-					{
-	          if (v == GVAR_MAX)
-						{
-							v = 0 ;
-						}
-//						if ( v != oldValue )
-						{
-							writeMgvar( s_currIdx, k, v ) ;
-						}
-					}
-				}
-				// Also edit gvar value
-				if (attr && g_posHorz==1 && editMode)
-				{
-					w = checkIncDec16( w, -125, 125, EE_MODEL ) ;
-					writeMgvar( fm, k, w ) ;
-				}
-			break ;
-#endif
+//				if ( (attr && g_posHorz==0 && editMode) && s_currIdx )
+//				{
+////					int16_t oldValue = v ;
+//          if (v < GVAR_MAX)
+//					{
+//						v = GVAR_MAX ;
+//					}
+//					int16_t entryValue = v ;
+//          v = checkIncDec16( v, GVAR_MAX, GVAR_MAX+MAX_MODES+1, EE_MODEL ) ;
+//         	if ( v != entryValue )
+//					{
+//	          if (v == GVAR_MAX)
+//						{
+//							v = 0 ;
+//						}
+////						if ( v != oldValue )
+//						{
+//							writeMgvar( s_currIdx, k, v ) ;
+//						}
+//					}
+//				}
+//				// Also edit gvar value
+//				if (attr && g_posHorz==1 && editMode)
+//				{
+//					w = checkIncDec16( w, -125, 125, EE_MODEL ) ;
+//					writeMgvar( fm, k, w ) ;
+//				}
+//			break ;
+//#endif
 	  }
 	}
 }
@@ -17226,9 +17244,9 @@ void menuModelPhases(uint8_t event)
     case EVT_KEY_BREAK(BTN_RE) :
       s_currIdx = sub ;
       killEvents(event);
-#if MULTI_GVARS
-			if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
-#endif
+//#if MULTI_GVARS
+//			if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
+//#endif
 			{
       	pushMenu(menuModeOne) ;
 			}
@@ -17362,11 +17380,15 @@ void menuProcModelSelect(uint8_t event)
 		uint16_t mask ;
 		if ( g_eeGeneral.currModel == mstate2.m_posVert )
 		{
-			mask = 0x259 ;
+			mask = 0x659 ;
 		}
 		else
 		{
+#if defined(PCBX12D) || defined(PCBX10)
+			mask = ( eeModelExists( mstate2.m_posVert ) == 0 ) ?  0x96 :  0x057E ;
+#else
 			mask = ( eeModelExists( mstate2.m_posVert ) == 0 ) ?  0x96 :  0x017E ;
+#endif
 		}
 
 		uint8_t popaction = doPopup( PSTR(STR_MODEL_POPUP), mask, 10, event ) ;
@@ -17503,6 +17525,19 @@ extern void initVars() ;
 			{
        	pushMenu( menuEditNotes ) ;
 			}
+#if defined(PCBX12D) || defined(PCBX10)
+			else if( popidx == 10 )	// Notes
+			{
+				WatchdogTimeout = 300 ;		// 3 seconds
+//extern void dumpModelAsText() ;
+//						dumpModelAsText() ;
+//				BackResult = ee32BackupModel( mstate2.m_posVert+1 ) ;
+const char *ee32DumpModel( uint8_t modelIndex ) ;
+				BackResult = ee32DumpModel( mstate2.m_posVert+1 ) ;
+				AlertType = MESS_TYPE ;
+				AlertMessage = BackResult ;
+			}
+#endif
 			else // Move = 4
 			{
  	    	sel_editMode = true ;
@@ -19959,53 +19994,61 @@ void menuDebug(uint8_t event)
 		break ;
 	}
 
-#ifdef USE_VARS
-	uint8_t *p = (uint8_t *) g_model.varStore ;
-	lcd_outhex2( 0,  FH, *p++ ) ;
-	lcd_outhex2( 15, FH, *p++ ) ;
-	lcd_outhex2( 30, FH, *p++ ) ;
-	lcd_outhex2( 45, FH, *p++ ) ;
-	lcd_outhex2( 60, FH, *p++ ) ;
-	lcd_outhex2( 75, FH, *p++ ) ;
-	lcd_outhex2( 90, FH, *p++ ) ;
-	lcd_outhex2( 105,FH, *p++ ) ;
+//#ifdef USE_VARS
+//	uint8_t *p = (uint8_t *) g_model.varStore ;
+//	lcd_outhex2( 0,  FH, *p++ ) ;
+//	lcd_outhex2( 15, FH, *p++ ) ;
+//	lcd_outhex2( 30, FH, *p++ ) ;
+//	lcd_outhex2( 45, FH, *p++ ) ;
+//	lcd_outhex2( 60, FH, *p++ ) ;
+//	lcd_outhex2( 75, FH, *p++ ) ;
+//	lcd_outhex2( 90, FH, *p++ ) ;
+//	lcd_outhex2( 105,FH, *p++ ) ;
 
-	lcd_outhex2( 0,  2*FH, *p++ ) ;
-	lcd_outhex2( 15, 2*FH, *p++ ) ;
-	lcd_outhex2( 30, 2*FH, *p++ ) ;
-	lcd_outhex2( 45, 2*FH, *p++ ) ;
-	lcd_outhex2( 60, 2*FH, *p++ ) ;
-	lcd_outhex2( 75, 2*FH, *p++ ) ;
-	lcd_outhex2( 90, 2*FH, *p++ ) ;
-	lcd_outhex2( 105,2*FH, *p++ ) ;
+//	lcd_outhex2( 0,  2*FH, *p++ ) ;
+//	lcd_outhex2( 15, 2*FH, *p++ ) ;
+//	lcd_outhex2( 30, 2*FH, *p++ ) ;
+//	lcd_outhex2( 45, 2*FH, *p++ ) ;
+//	lcd_outhex2( 60, 2*FH, *p++ ) ;
+//	lcd_outhex2( 75, 2*FH, *p++ ) ;
+//	lcd_outhex2( 90, 2*FH, *p++ ) ;
+//	lcd_outhex2( 105,2*FH, *p++ ) ;
 
-	lcd_outhex2( 0,  3*FH, *p++ ) ;
-	lcd_outhex2( 15, 3*FH, *p++ ) ;
-	lcd_outhex2( 30, 3*FH, *p++ ) ;
-	lcd_outhex2( 45, 3*FH, *p++ ) ;
-	lcd_outhex2( 60, 3*FH, *p++ ) ;
-	lcd_outhex2( 75, 3*FH, *p++ ) ;
-	lcd_outhex2( 90, 3*FH, *p++ ) ;
-	lcd_outhex2( 105,3*FH, *p++ ) ;
+//	lcd_outhex2( 0,  3*FH, *p++ ) ;
+//	lcd_outhex2( 15, 3*FH, *p++ ) ;
+//	lcd_outhex2( 30, 3*FH, *p++ ) ;
+//	lcd_outhex2( 45, 3*FH, *p++ ) ;
+//	lcd_outhex2( 60, 3*FH, *p++ ) ;
+//	lcd_outhex2( 75, 3*FH, *p++ ) ;
+//	lcd_outhex2( 90, 3*FH, *p++ ) ;
+//	lcd_outhex2( 105,3*FH, *p++ ) ;
 
-	lcd_outhex2( 0,  4*FH, *p++ ) ;
-	lcd_outhex2( 15, 4*FH, *p++ ) ;
-	lcd_outhex2( 30, 4*FH, *p++ ) ;
-	lcd_outhex2( 45, 4*FH, *p++ ) ;
-	lcd_outhex2( 60, 4*FH, *p++ ) ;
-	lcd_outhex2( 75, 4*FH, *p++ ) ;
-	lcd_outhex2( 90, 4*FH, *p++ ) ;
-	lcd_outhex2( 105,4*FH, *p++ ) ;
+//	lcd_outhex2( 0,  4*FH, *p++ ) ;
+//	lcd_outhex2( 15, 4*FH, *p++ ) ;
+//	lcd_outhex2( 30, 4*FH, *p++ ) ;
+//	lcd_outhex2( 45, 4*FH, *p++ ) ;
+//	lcd_outhex2( 60, 4*FH, *p++ ) ;
+//	lcd_outhex2( 75, 4*FH, *p++ ) ;
+//	lcd_outhex2( 90, 4*FH, *p++ ) ;
+//	lcd_outhex2( 105,4*FH, *p++ ) ;
 
-	lcd_outhex2( 0,  5*FH, *p++ ) ;
-	lcd_outhex2( 15, 5*FH, *p++ ) ;
-	lcd_outhex2( 30, 5*FH, *p++ ) ;
-	lcd_outhex2( 45, 5*FH, *p++ ) ;
-	lcd_outhex2( 60, 5*FH, *p++ ) ;
-	lcd_outhex2( 75, 5*FH, *p++ ) ;
-	lcd_outhex2( 90, 5*FH, *p++ ) ;
-	lcd_outhex2( 105,5*FH, *p++ ) ;
-#endif
+//	lcd_outhex2( 0,  5*FH, *p++ ) ;
+//	lcd_outhex2( 15, 5*FH, *p++ ) ;
+//	lcd_outhex2( 30, 5*FH, *p++ ) ;
+//	lcd_outhex2( 45, 5*FH, *p++ ) ;
+//	lcd_outhex2( 60, 5*FH, *p++ ) ;
+//	lcd_outhex2( 75, 5*FH, *p++ ) ;
+//	lcd_outhex2( 90, 5*FH, *p++ ) ;
+//	lcd_outhex2( 105,5*FH, *p++ ) ;
+//#endif
+
+
+
+
+
+
+
+
 
 //
 //	lcd_outhex4( 0, 4*FH, g_eeGeneral.physicalRadioType ) ;
@@ -20242,27 +20285,27 @@ static uint16_t counter ;
   lcd_outhex4( 30, 1*FH, OldPxxTime[1] ) ;
   
 #else	
-//	lcd_outhex4( 0,  1*FH, FrskyHubData[FR_VCC     ] ) ;
-//  lcd_outhex4( 30, 1*FH, FrskyHubData[FR_CURRENT ] ) ;
-//  lcd_outhex4( 60, 1*FH, FrskyHubData[FR_ALT_BARO] ) ;
-//  lcd_outhex4( 90, 1*FH, FrskyHubData[FR_BASEMODE] ) ;
+//	lcd_outhex4( 0,  1*FH, TelemetryData[FR_VCC     ] ) ;
+//  lcd_outhex4( 30, 1*FH, TelemetryData[FR_CURRENT ] ) ;
+//  lcd_outhex4( 60, 1*FH, TelemetryData[FR_ALT_BARO] ) ;
+//  lcd_outhex4( 90, 1*FH, TelemetryData[FR_BASEMODE] ) ;
 
-//  lcd_outhex4( 0,  2*FH, FrskyHubData[FR_WP_DIST ] ) ;
-//  lcd_outhex4( 30, 2*FH, FrskyHubData[FR_HEALTH  ] ) ;
-//  lcd_outhex4( 60, 2*FH, FrskyHubData[FR_MSG     ] ) ;
-//  lcd_outhex4( 90, 2*FH, FrskyHubData[FR_HOME_DIR] ) ;
+//  lcd_outhex4( 0,  2*FH, TelemetryData[FR_WP_DIST ] ) ;
+//  lcd_outhex4( 30, 2*FH, TelemetryData[FR_HEALTH  ] ) ;
+//  lcd_outhex4( 60, 2*FH, TelemetryData[FR_MSG     ] ) ;
+//  lcd_outhex4( 90, 2*FH, TelemetryData[FR_HOME_DIR] ) ;
 #endif
 
 #ifndef PCB9XT
-//  lcd_outhex4( 0,  3*FH, FrskyHubData[FR_HOME_DIST] ) ;
-//  lcd_outhex4( 30, 3*FH, FrskyHubData[FR_CPU_LOAD ] ) ;
-//  lcd_outhex4( 60, 3*FH, FrskyHubData[FR_GPS_HDOP ] ) ;
-//  lcd_outhex4( 90, 3*FH, FrskyHubData[FR_WP_NUM   ] ) ;
+//  lcd_outhex4( 0,  3*FH, TelemetryData[FR_HOME_DIST] ) ;
+//  lcd_outhex4( 30, 3*FH, TelemetryData[FR_CPU_LOAD ] ) ;
+//  lcd_outhex4( 60, 3*FH, TelemetryData[FR_GPS_HDOP ] ) ;
+//  lcd_outhex4( 90, 3*FH, TelemetryData[FR_WP_NUM   ] ) ;
 
-//  lcd_outhex4( 0,  4*FH, FrskyHubData[FR_WP_BEARING] ) ;
-//  lcd_outhex4( 30, 4*FH, FrskyHubData[FR_VOLTS     ] ) ;
-//  lcd_outhex4( 60, 4*FH, FrskyHubData[FR_TEMP2     ] ) ;
-//  lcd_outhex4( 90, 4*FH, FrskyHubData[FR_FUEL      ] ) ;
+//  lcd_outhex4( 0,  4*FH, TelemetryData[FR_WP_BEARING] ) ;
+//  lcd_outhex4( 30, 4*FH, TelemetryData[FR_VOLTS     ] ) ;
+//  lcd_outhex4( 60, 4*FH, TelemetryData[FR_TEMP2     ] ) ;
+//  lcd_outhex4( 90, 4*FH, TelemetryData[FR_FUEL      ] ) ;
 #endif
 
 #ifdef PCB9XT
@@ -20338,8 +20381,8 @@ static uint16_t counter ;
 #else
   
 #ifndef PCB9XT
-//	lcd_outhex4( 0,  5*FH, FrskyHubData[FR_TEMP1     ] ) ;
-//  lcd_outhex4( 30, 5*FH, FrskyHubData[FR_A1_COPY   ] ) ;
+//	lcd_outhex4( 0,  5*FH, TelemetryData[FR_TEMP1     ] ) ;
+//  lcd_outhex4( 30, 5*FH, TelemetryData[FR_A1_COPY   ] ) ;
 //extern uint8_t MultiId[] ;
 //  lcd_outhex4( 60,  5*FH, MultiId[1] | (MultiId[0] << 8 ) ) ;
 //  lcd_outhex4( 90,  5*FH, MultiId[3] | (MultiId[2] << 8 ) ) ;
@@ -22634,12 +22677,12 @@ void displayTemp( uint8_t sensor, uint8_t x, uint8_t y, uint8_t size )
 {
 	if ( ( ( g_model.telemetryProtocol == TELEMETRY_ARDUCOPTER ) || ( g_model.telemetryProtocol == TELEMETRY_ARDUPLANE ) || ( g_model.telemetryProtocol == TELEMETRY_MAVLINK ) ) && ( sensor == 1 ) )
 	{
-		putsTelemetryChannel( x, y, (int8_t)sensor+TEL_ITEM_T1-1, FrskyHubData[FR_TEMP1+sensor-1], size | LEFT, TELEM_ARDUX_NAME ) ;
+		putsTelemetryChannel( x, y, (int8_t)sensor+TEL_ITEM_T1-1, TelemetryData[FR_TEMP1+sensor-1], size | LEFT, TELEM_ARDUX_NAME ) ;
 		
 	}
 	else
 	{
-		putsTelemetryChannel( x, y, (int8_t)sensor+TEL_ITEM_T1-1, FrskyHubData[FR_TEMP1+sensor-1], size | LEFT, 
+		putsTelemetryChannel( x, y, (int8_t)sensor+TEL_ITEM_T1-1, TelemetryData[FR_TEMP1+sensor-1], size | LEFT, 
 																( size & DBLSIZE ) ? (TELEM_LABEL | TELEM_UNIT_LEFT) : (TELEM_LABEL | TELEM_UNIT) ) ;
 	}
 }
@@ -23737,7 +23780,7 @@ void menuProc0(uint8_t event)
     case  EVT_KEY_LONG(KEY_MENU):// go to last menu
         if( (view == e_telemetry) && ((tview & 0x70) == 0x30 ) )
         {
-          AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+          AltOffset = -TelemetryData[FR_ALT_BARO] ;
         }
         else if( (view == e_telemetry) && ( ( (tview & 0x70) == 0 ) !! ((tview & 0x70) == 0x10 )) )
         {
@@ -23758,14 +23801,14 @@ void menuProc0(uint8_t event)
 						// Might check for a Scaler as well to see if ALT is its source
 						if ( j == TEL_ITEM_BALT )
 						{
-            	AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+            	AltOffset = -TelemetryData[FR_ALT_BARO] ;
 						}
 						if ( ( j >= TEL_ITEM_SC1 ) && (j <= TEL_ITEM_SC8 ) )
 						{
 							j = g_model.Scalers[j-TEL_ITEM_SC1].source - 1 ;
 							if ( j == TEL_ITEM_BALT )
 							{
-    	        	AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+    	        	AltOffset = -TelemetryData[FR_ALT_BARO] ;
 							}
 						}
 						if ( j == TEL_ITEM_A1 )
@@ -24326,7 +24369,7 @@ extern uint8_t LogsRunning ;
 #endif
                     if ( g_model.frsky.channels[i].units == 3 )		// Current (A)
 										{
-                      lcd_outdezAtt(x0+FW, 4*FH,  FrskyHubData[FR_A1_MAH+i], 0);
+                      lcd_outdezAtt(x0+FW, 4*FH,  TelemetryData[FR_A1_MAH+i], 0);
 										}
 										else
 										{
@@ -24341,31 +24384,31 @@ extern uint8_t LogsRunning ;
 //                if (frskyUsrStreaming)
 								{
                 	lcd_puts_Pleft( 1*FH, PSTR(STR_FUEL)) ;
-									x0 = FrskyHubData[FR_FUEL] ;		// Fuel gauge value
+									x0 = TelemetryData[FR_FUEL] ;		// Fuel gauge value
 									lcd_hbar( 25, 9, 102, 6, x0 ) ;
 								}
                 lcd_puts_Pleft( 6*FH, PSTR(STR_RXEQ));
 #if defined(PCBX12D) || defined(PCBX10)
-               	lcd_outdezAtt(3 * FW, 5*FH, FrskyHubData[FR_RXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
+               	lcd_outdezAtt(3 * FW, 5*FH, TelemetryData[FR_RXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
 #else								 
-               	lcd_outdezAtt(3 * FW - 2, 5*FH, FrskyHubData[FR_RXRSI_COPY], DBLSIZE|LEFT);
+               	lcd_outdezAtt(3 * FW - 2, 5*FH, TelemetryData[FR_RXRSI_COPY], DBLSIZE|LEFT);
 #endif                
 #ifdef ACCESS
 								if (TelemetryDataValid[3] )
 								{
 									putTxSwr( 11 * FW - 2, 6*FH, 0 ) ;
  #if defined(PCBX12D) || defined(PCBX10)
-                	lcd_outdezAtt(14 * FW, 5*FH, FrskyHubData[FR_TXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
+                	lcd_outdezAtt(14 * FW, 5*FH, TelemetryData[FR_TXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
  #else								 
-                	lcd_outdezAtt(14 * FW - 4, 5*FH, FrskyHubData[FR_TXRSI_COPY], DBLSIZE|LEFT);
+                	lcd_outdezAtt(14 * FW - 4, 5*FH, TelemetryData[FR_TXRSI_COPY], DBLSIZE|LEFT);
  #endif                
 								}
 #else								 
 								putTxSwr( 11 * FW - 2, 6*FH, 0 ) ;
  #if defined(PCBX12D) || defined(PCBX10)
-                lcd_outdezAtt(14 * FW, 5*FH, FrskyHubData[FR_TXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
+                lcd_outdezAtt(14 * FW, 5*FH, TelemetryData[FR_TXRSI_COPY], DBLSIZE|CONDENSED|LEFT);
  #else								 
-                lcd_outdezAtt(14 * FW - 4, 5*FH, FrskyHubData[FR_TXRSI_COPY], DBLSIZE|LEFT);
+                lcd_outdezAtt(14 * FW - 4, 5*FH, TelemetryData[FR_TXRSI_COPY], DBLSIZE|LEFT);
  #endif                
 #endif                
 								struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
@@ -24388,12 +24431,12 @@ extern uint8_t LogsRunning ;
 
                   lcd_puts_Pleft( 2*FH, PSTR(STR_12_RPM));
  #if defined(PCBX12D) || defined(PCBX10)
-                  lcd_outdezNAtt(13*FW, 1*FH, (uint16_t)FrskyHubData[FR_RPM], DBLSIZE|CONDENSED|LEFT, 5);
+                  lcd_outdezNAtt(13*FW, 1*FH, (uint16_t)TelemetryData[FR_RPM], DBLSIZE|CONDENSED|LEFT, 5);
 #else								 
-                  lcd_outdezNAtt(13*FW, 1*FH, (uint16_t)FrskyHubData[FR_RPM], DBLSIZE|LEFT, 5);
+                  lcd_outdezNAtt(13*FW, 1*FH, (uint16_t)TelemetryData[FR_RPM], DBLSIZE|LEFT, 5);
 #endif                
 
-                  value = FrskyHubData[FR_ALT_BARO] + AltOffset ;
+                  value = TelemetryData[FR_ALT_BARO] + AltOffset ;
 									putsTelemetryChannel( 0, 4*FH, TEL_ITEM_BALT, value, DBLSIZE | LEFT | CONDENSED, (TELEM_LABEL | TELEM_UNIT_LEFT)) ;
 
 									lcd_puts_P(10*FW-2, 4*FH, XPSTR("Amax"));
@@ -24421,16 +24464,16 @@ extern uint8_t LogsRunning ;
 #endif                
                 }
                 lcd_puts_Pleft( 7*FH, PSTR(STR_RXEQ) );
-                lcd_outdezAtt(3 * FW, 7*FH, FrskyHubData[FR_RXRSI_COPY], LEFT);
+                lcd_outdezAtt(3 * FW, 7*FH, TelemetryData[FR_RXRSI_COPY], LEFT);
 #ifdef ACCESS
 								if (TelemetryDataValid[3] )
 								{
 									putTxSwr( 8 * FW , 7*FH, 0 ) ;
-  	              lcd_outdezAtt(11 * FW, 7*FH, FrskyHubData[FR_TXRSI_COPY], LEFT);
+  	              lcd_outdezAtt(11 * FW, 7*FH, TelemetryData[FR_TXRSI_COPY], LEFT);
 								}
 #else								 
 								putTxSwr( 8 * FW , 7*FH, 0 ) ;
-                lcd_outdezAtt(11 * FW, 7*FH, FrskyHubData[FR_TXRSI_COPY], LEFT);
+                lcd_outdezAtt(11 * FW, 7*FH, TelemetryData[FR_TXRSI_COPY], LEFT);
 #endif
             }
             else if ( tview == 0x40 )
@@ -24444,10 +24487,10 @@ extern uint8_t LogsRunning ;
 							}
 //  							displayGPSformat( 4*FW, 1*FH, 0 ) ;
                 lcd_puts_Pleft( 2*FH, PSTR(STR_LAT_EQ)) ;
-								displayGPSdata( 3*FW, 2*FH, FrskyHubData[FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], LEADING0 | blink, FrskyHubData[FR_LAT_N_S] ) ;
-								displayGPSdata( 3*FW, 3*FH, FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], LEADING0 | blink, FrskyHubData[FR_LONG_E_W] ) ;
+								displayGPSdata( 3*FW, 2*FH, TelemetryData[FR_GPS_LAT], TelemetryData[FR_GPS_LATd], LEADING0 | blink, TelemetryData[FR_LAT_N_S] ) ;
+								displayGPSdata( 3*FW, 3*FH, TelemetryData[FR_GPS_LONG], TelemetryData[FR_GPS_LONGd], LEADING0 | blink, TelemetryData[FR_LONG_E_W] ) ;
 //								div_t qr ;
-//								qr = div( FrskyHubData[FR_GPS_LAT], 100 ) ;
+//								qr = div( TelemetryData[FR_GPS_LAT], 100 ) ;
 //								if ( g_eeGeneral.gpsFormat )
 //								{
 //									int32_t value ;
@@ -24455,16 +24498,16 @@ extern uint8_t LogsRunning ;
 //  	              lcd_putc(6*FW+2, 2*FH, '.') ;
 //									value = qr.rem ;
 //									value *= 10000 ;
-//									value += FrskyHubData[FR_GPS_LATd] ;
+//									value += TelemetryData[FR_GPS_LATd] ;
 //									value *= 10 ;
 //									value /= 6 ;
 //                	lcd_outdezNAtt(12*FW, 2*FH, value, LEADING0 | blink, -6);
-//									qr = div( FrskyHubData[FR_GPS_LONG], 100 ) ;
+//									qr = div( TelemetryData[FR_GPS_LONG], 100 ) ;
 //									lcd_outdezNAtt(6*FW+2, 3*FH, qr.quot, LEADING0 | blink, -3);
 //      	          lcd_putc(6*FW+2, 3*FH, '.') ;
 //									value = qr.rem ;
 //									value *= 10000 ;
-//									value += FrskyHubData[FR_GPS_LONGd] ;
+//									value += TelemetryData[FR_GPS_LONGd] ;
 //									value *= 10 ;
 //									value /= 6 ;
 //                	lcd_outdezNAtt(12*FW, 3*FH, value, LEADING0 | blink, -6);
@@ -24474,12 +24517,12 @@ extern uint8_t LogsRunning ;
 //                	lcd_outdezNAtt(6*FW, 2*FH, qr.quot, LEADING0 | blink, -3);
 //                	lcd_outdezNAtt(9*FW, 2*FH, qr.rem, LEADING0 | blink, -2);
 //                	lcd_putc(9*FW, 2*FH, '.') ;
-//                	lcd_outdezNAtt(13*FW, 2*FH, FrskyHubData[FR_GPS_LATd], LEADING0 | blink, -4);
-//									qr = div( FrskyHubData[FR_GPS_LONG], 100 ) ;
+//                	lcd_outdezNAtt(13*FW, 2*FH, TelemetryData[FR_GPS_LATd], LEADING0 | blink, -4);
+//									qr = div( TelemetryData[FR_GPS_LONG], 100 ) ;
 //                	lcd_outdezNAtt(6*FW, 3*FH, qr.quot, LEADING0 | blink, -3);
 //                	lcd_outdezNAtt(9*FW, 3*FH, qr.rem, LEADING0 | blink, -2);
 //                	lcd_putc(9*FW, 3*FH, '.') ;
-//                	lcd_outdezNAtt(13*FW, 3*FH, FrskyHubData[FR_GPS_LONGd], LEADING0 | blink, -4);
+//                	lcd_outdezNAtt(13*FW, 3*FH, TelemetryData[FR_GPS_LONGd], LEADING0 | blink, -4);
 //								}
 								uint16_t alt ;
 								alt = FrskyHubMaxMin.hubMax[TELEM_GPS_ALT] ;
@@ -24488,7 +24531,7 @@ extern uint8_t LogsRunning ;
 									alt = m_to_ft( alt ) ;
 								}
                 lcd_outdezAtt(20*FW, 4*FH, alt, PREC1);
-                lcd_outdez(20*FW, 3*FH, FrskyHubData[FR_COURSE] );
+                lcd_outdez(20*FW, 3*FH, TelemetryData[FR_COURSE] );
                 
 								mspeed = FrskyHubMaxMin.hubMax[FR_GPS_SPEED] ;
                 if ( g_model.FrSkyImperial )
@@ -24501,8 +24544,8 @@ extern uint8_t LogsRunning ;
               if (frskyUsrStreaming)
 							{
 								uint16_t alt ;
-								alt = FrskyHubData[TELEM_GPS_ALT] ;
-								mspeed = FrskyHubData[FR_GPS_SPEED] ;
+								alt = TelemetryData[TELEM_GPS_ALT] ;
+								mspeed = TelemetryData[FR_GPS_SPEED] ;
                 if ( g_model.FrSkyImperial )
 								{
 									mspeed = ( mspeed * 589 ) >> 9 ;
@@ -24528,11 +24571,11 @@ extern uint8_t LogsRunning ;
 											x = 6*FW ;
 											y = 7*FH ;
 										}
-										if ((FrskyHubData[FR_CELL1+k + vdisp] < g_model.frSkyVoltThreshold * 2))
+										if ((TelemetryData[FR_CELL1+k + vdisp] < g_model.frSkyVoltThreshold * 2))
 										{
 										  blink = BLINK ;
 										}
-  									lcd_outdezNAtt( x, y, FrskyHubData[FR_CELL1+k + vdisp], blink | PREC2, 4 ) ;
+  									lcd_outdezNAtt( x, y, TelemetryData[FR_CELL1+k + vdisp], blink | PREC2, 4 ) ;
 										x += 7*FW ;
 										if ( k == 5 )		// Max 6 cels displayable
 										{
@@ -24621,16 +24664,16 @@ extern uint8_t LogsRunning ;
 #else
 								lcd_puts_Pleft( y0, PSTR(STR_RXEQ) ) ;
 #endif
-								lcd_hbar( 20 + X12SMALL_OFFSET, 57, 43, 6, FrskyHubData[FR_RXRSI_COPY] ) ;
+								lcd_hbar( 20 + X12SMALL_OFFSET, 57, 43, 6, TelemetryData[FR_RXRSI_COPY] ) ;
 #ifdef ACCESS
 								if (TelemetryDataValid[3] )
 								{
 									putTxSwr( 110 + X12SMALL_OFFSET, y0, 0 ) ;
-									lcd_hbar( 65 + X12SMALL_OFFSET, 57, 43, 6, FrskyHubData[FR_TXRSI_COPY] ) ;
+									lcd_hbar( 65 + X12SMALL_OFFSET, 57, 43, 6, TelemetryData[FR_TXRSI_COPY] ) ;
 								}
 #else								 
 								putTxSwr( 110 + X12SMALL_OFFSET, y0, 0 ) ;
-								lcd_hbar( 65 + X12SMALL_OFFSET, 57, 43, 6, FrskyHubData[FR_TXRSI_COPY] ) ;
+								lcd_hbar( 65 + X12SMALL_OFFSET, 57, 43, 6, TelemetryData[FR_TXRSI_COPY] ) ;
 #endif
 						 }
             }
@@ -24642,7 +24685,7 @@ extern uint8_t LogsRunning ;
 								uint8_t attr = 0 ;
 								lcd_putsAtt(  0 * FW, 0 * FH, XPSTR("          "), 0 ); // clear inversed model name from screen
 								// line 0, left - Battary remaining
-								uint8_t batt =  FrskyHubData[FR_FUEL] ;
+								uint8_t batt =  TelemetryData[FR_FUEL] ;
 								if ( batt < 20 ) { attr = BLINK ; } else {attr = 0 ;}
 								lcd_hbar( 01, 1, 10, 5, batt ) ;
 								lcd_rect( 11, 2, 2, 3 ) ;
@@ -24651,7 +24694,7 @@ extern uint8_t LogsRunning ;
 								lcd_putcAtt	  ( 4*FW+1, 0*FH, '%',  attr ) ;
 								// line 0, V, volt bat
  				        attr = PREC1 ;
- 				        lcd_outdezAtt( 9 * FW+2, 0, FrskyHubData[FR_VOLTS], attr ) ;
+ 				        lcd_outdezAtt( 9 * FW+2, 0, TelemetryData[FR_VOLTS], attr ) ;
 								lcd_putc   ( 9 * FW+3, 0, 'v'); //"v"
 								// line 0, V, volt cpu
 								// line 1 - Flight mode
@@ -24663,7 +24706,7 @@ extern uint8_t LogsRunning ;
 #define STR_MAV_NODATA 		 "NODATA"
 								if (frskyUsrStreaming)
 								{
-									if ( FrskyHubData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED )
+									if ( TelemetryData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED )
 									{
 										lcd_putsAtt(  1 * FW, 1 * FH, XPSTR(STR_MAV_ARMED), blink) ;
 									}
@@ -24677,17 +24720,17 @@ extern uint8_t LogsRunning ;
 									lcd_putsAtt(  0 * FW, 1 * FH, XPSTR(STR_MAV_NODATA), BLINK) ; // NO DRV
 								}
 
-//							  lcd_outdez( 15 * FW, 3 * FH, FrskyHubData[FR_BASEMODE] ) ;
+//							  lcd_outdez( 15 * FW, 3 * FH, TelemetryData[FR_BASEMODE] ) ;
 
 								const char *s ;
-								s = arduFlightMode( FrskyHubData[FR_TEMP1] ) ;
+								s = arduFlightMode( TelemetryData[FR_TEMP1] ) ;
 								lcd_putsAtt( 15*FW-1, 1*FH, s, blink ) ;
 
 //		 line 2 - "GPS fix" converted from TEMP2
 								uint8_t gps_fix ;
 								uint8_t gps_sat ;
-								gps_sat = FrskyHubData[FR_TEMP2] / 10 ;
- 				        gps_fix = FrskyHubData[FR_TEMP2] - gps_sat * 10 ;
+								gps_sat = TelemetryData[FR_TEMP2] / 10 ;
+ 				        gps_fix = TelemetryData[FR_TEMP2] - gps_sat * 10 ;
 #define STR_MAV_GPS_NO_GPS   "No GPS"
 #define STR_MAV_GPS_NO_FIX	 "No Fix" // 1
 #define STR_MAV_GPS_2DFIX	 "2D Fix" // 2
@@ -24707,7 +24750,7 @@ extern uint8_t LogsRunning ;
 
 //		 line 4 left "HDOP"
                 int16_t val;
-								val = FrskyHubData[FR_GPS_HDOP];
+								val = TelemetryData[FR_GPS_HDOP];
 								if (val <= 200)
 								{
                 	attr  = PREC2;
@@ -24757,31 +24800,31 @@ extern uint8_t LogsRunning ;
 //		 line 4 right "Home Distance"
 #define STR_MAV_HOME         "dth"
 								lcd_puts_P( 15 * FW-2, 4*FH, XPSTR(STR_MAV_HOME) ); // home
-								lcd_outdez( 21 * FW+1, 4*FH, FrskyHubData[FR_HOME_DIST] ) ;
+								lcd_outdez( 21 * FW+1, 4*FH, TelemetryData[FR_HOME_DIST] ) ;
 //		 line 5 right "Current, Milliampers"
 #define STR_MAV_CURRENT          "Cur"
 								lcd_puts_P( 15 * FW-2, 5*FH, XPSTR(STR_MAV_CURRENT) ); // "Cur"
 		        		lcd_putcAtt( 20 * FW+3, 5*FH, 'A', CONDENSED );
-                lcd_outdezAtt( 20 * FW+3, 5*FH, FrskyHubData[FR_CURRENT], PREC1 ) ;
+                lcd_outdezAtt( 20 * FW+3, 5*FH, TelemetryData[FR_CURRENT], PREC1 ) ;
 //		 line 6 left "Rssi"
 								lcd_puts_P( 0 * FW, 6*FH, XPSTR("Rssi") ); // "Rssi"
-								uint8_t rx = FrskyHubData[FR_RXRSI_COPY];
+								uint8_t rx = TelemetryData[FR_RXRSI_COPY];
 								if (rx > 100) rx = 100;
                 lcd_outdezAtt( 7 * FW-3, 6*FH, rx, blink);
 //         line 6 right  "Rcq"
                 lcd_puts_P( 15*FW-2, 6*FH, XPSTR( ( FrskyTelemetryType == FRSKY_TEL_SPORT ) ? "Swr" : "Rcq") ); // "Rcq"
-								uint8_t tx = FrskyHubData[FR_TXRSI_COPY];
+								uint8_t tx = TelemetryData[FR_TXRSI_COPY];
 								if (tx > 100) tx = 100;
                 lcd_outdezAtt( 21*FW+1, 6*FH, tx, blink);
 
 //		 line 7 
                 lcd_puts_P( 0 * FW, 7*FH, XPSTR("Rx") );
-								lcd_hbar( 14, 57, 49, 6, FrskyHubData[FR_RXRSI_COPY] ) ;
+								lcd_hbar( 14, 57, 49, 6, TelemetryData[FR_RXRSI_COPY] ) ;
                 lcd_puts_P( 19 * FW+1, 7*FH, XPSTR("Tx") );
-								lcd_hbar( 65, 57, 49, 6, FrskyHubData[FR_TXRSI_COPY] ) ;
+								lcd_hbar( 65, 57, 49, 6, TelemetryData[FR_TXRSI_COPY] ) ;
 
 //				 THROTTLE bar, %
-//								lcd_vbar( 0, 1 * FH, 4, 6 * FH - 1, FrskyHubData[FR_RPM] ) ;
+//								lcd_vbar( 0, 1 * FH, 4, 6 * FH - 1, TelemetryData[FR_RPM] ) ;
 
 								
 // Mavlink - home direction and distance on graphic?								
@@ -24791,17 +24834,17 @@ extern uint8_t LogsRunning ;
 								uint8_t x ;
 								uint8_t y ;
 								DO_SQUARE( x0, y0, r * 2 + 1 ) ;
-								int16_t hdg = FrskyHubData[FR_COURSE] ;
-								if  ( FrskyHubData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED ) // armed
+								int16_t hdg = TelemetryData[FR_COURSE] ;
+								if  ( TelemetryData[FR_BASEMODE] & MAV_MODE_FLAG_SAFETY_ARMED ) // armed
 								{   // we save head position before arming
 									if ( hdg_home == 0 ) hdg_home = hdg;
 								} else {
 									hdg_home = 0 ;
 								}
 								hdg = hdg - hdg_home + 270 ; // use SIMPLE mode 
-								if ( FrskyHubData[FR_HOME_DIR] )
+								if ( TelemetryData[FR_HOME_DIR] )
 								{
-									hdg = FrskyHubData[FR_HOME_DIR] ;
+									hdg = TelemetryData[FR_HOME_DIR] ;
 								}
 								for (int32_t i = -3 ; i < r ; i += 1 )
 								{
@@ -24821,13 +24864,13 @@ extern uint8_t LogsRunning ;
 							
 							lcd_vline( 63, 8, 32 ) ;
 
-              lcd_outdezAtt( 17*FW-1, 0*FH, FrskyHubData[FR_RXRSI_COPY], 0 ) ;
-              lcd_outdezAtt( 61, 1*FH, FrskyHubData[FR_VOLTS], PREC1|DBLSIZE ) ;
-//							lcd_outdezAtt( 125, 1*FH, convertRxv( FrskyHubData[FR_RXV] ), PREC1|DBLSIZE ) ;
-							lcd_outdezAtt( 125, 1*FH, FrskyHubData[FR_RXV], PREC1|DBLSIZE ) ;
-							lcd_outdezAtt( 61, 3*FH, FrskyHubData[FR_CURRENT], PREC1|DBLSIZE ) ;
-              lcd_outdezAtt( 125, 3*FH, FrskyHubData[FR_TEMP1], DBLSIZE ) ;
-              lcd_outdezAtt( 14*FW, 5*FH, FrskyHubData[FR_RPM], DBLSIZE ) ;
+              lcd_outdezAtt( 17*FW-1, 0*FH, TelemetryData[FR_RXRSI_COPY], 0 ) ;
+              lcd_outdezAtt( 61, 1*FH, TelemetryData[FR_VOLTS], PREC1|DBLSIZE ) ;
+//							lcd_outdezAtt( 125, 1*FH, convertRxv( TelemetryData[FR_RXV] ), PREC1|DBLSIZE ) ;
+							lcd_outdezAtt( 125, 1*FH, TelemetryData[FR_RXV], PREC1|DBLSIZE ) ;
+							lcd_outdezAtt( 61, 3*FH, TelemetryData[FR_CURRENT], PREC1|DBLSIZE ) ;
+              lcd_outdezAtt( 125, 3*FH, TelemetryData[FR_TEMP1], DBLSIZE ) ;
+              lcd_outdezAtt( 14*FW, 5*FH, TelemetryData[FR_RPM], DBLSIZE ) ;
 
 							if ( ( g_model.Module[0].protocol == PROTO_MULTI ) || ( g_model.Module[1].protocol == PROTO_MULTI ) )
 							{
@@ -25101,29 +25144,29 @@ int16_t calcExpo( uint8_t channel, int16_t value )
 		temp = 0 ;
 	}
 #else
- #if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		temp += 100 ;
-		if ( temp > 100 )
-		{
-  	 	temp = getGvar(temp-101) ;
-			if ( temp > 100 )
-			{
-				temp = 100 ;
-			}
-			if ( temp < -100 )
-			{
-				temp = 0 ;
-			}
-		}
-	}
-	else
- #else
+// #if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		temp += 100 ;
+//		if ( temp > 100 )
+//		{
+//  	 	temp = getGvar(temp-101) ;
+//			if ( temp > 100 )
+//			{
+//				temp = 100 ;
+//			}
+//			if ( temp < -100 )
+//			{
+//				temp = 0 ;
+//			}
+//		}
+//	}
+//	else
+// #else
 	{
 		temp = REG( temp+100, 0, 100 );
 	}
- #endif
+// #endif
 #endif
 
   value = (int32_t)value * temp / 100 ;
@@ -29958,28 +30001,28 @@ extern uint32_t switches_states ;
 				subN += 1 ;
 				g_model.disableThrottleCheck = onoffMenuItem( g_model.disableThrottleCheck, y, XPSTR("Disable Thr Chk"), sub==subN) ;
 
-#if MULTI_GVARS
-				y += FH ;
-				subN += 1 ;
-				uint32_t oldValue = g_model.flightModeGvars ;
-				g_model.flightModeGvars = onoffMenuItem( g_model.flightModeGvars, y, XPSTR("Multi Gvars"), sub==subN) ;
-				if ( g_model.flightModeGvars != oldValue )
-				{
-					if ( g_model.flightModeGvars )
-					{
-						initFmGvars() ;
-					}
-					else
-					{
-						for ( uint32_t i = 0 ; i < 7 ; i += 1 )
-						{
-							g_model.gvars[i].gvar = 0 ;
-							g_model.gvars[i].gvsource = 0 ;
-							g_model.gvswitch[i] = 0 ;
-						}
-					}
-				}
-#endif
+//#if MULTI_GVARS
+//				y += FH ;
+//				subN += 1 ;
+//				uint32_t oldValue = g_model.flightModeGvars ;
+//				g_model.flightModeGvars = onoffMenuItem( g_model.flightModeGvars, y, XPSTR("Multi Gvars"), sub==subN) ;
+//				if ( g_model.flightModeGvars != oldValue )
+//				{
+//					if ( g_model.flightModeGvars )
+//					{
+//						initFmGvars() ;
+//					}
+//					else
+//					{
+//						for ( uint32_t i = 0 ; i < 7 ; i += 1 )
+//						{
+//							g_model.gvars[i].gvar = 0 ;
+//							g_model.gvars[i].gvsource = 0 ;
+//							g_model.gvswitch[i] = 0 ;
+//						}
+//					}
+//				}
+//#endif
 #ifdef USE_VARS
 				y += FH ;
 				subN += 1 ;
@@ -31693,13 +31736,13 @@ void menuProcInputs(uint8_t event)
 							if (temp > 100)
 							{
 								// A gvar
-#if MULTI_GVARS
-								if ( g_model.flightModeGvars )
-								{
-									temp -= 113 ;
-								}
-								else
-#endif
+//#if MULTI_GVARS
+//								if ( g_model.flightModeGvars )
+//								{
+//									temp -= 113 ;
+//								}
+//								else
+//#endif
 								{
 									temp -= 110 ;
 								}
@@ -31835,11 +31878,11 @@ int32_t getGvarValue100( int32_t value )
 {
 	if ( value > 100 )
 	{ // GVAR
-#if MULTI_GVARS
-		int32_t gvindex = value - (( g_model.flightModeGvars ) ? 113 : 110 ) ;
-#else
+//#if MULTI_GVARS
+//		int32_t gvindex = value - (( g_model.flightModeGvars ) ? 113 : 110 ) ;
+//#else
 		int32_t gvindex = value - 110 ;
-#endif
+//#endif
 		value = getGvar(gvindex) ;
 		if ( value < -100 )
 		{

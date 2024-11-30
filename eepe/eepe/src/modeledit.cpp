@@ -330,7 +330,7 @@ void ModelEdit::tabModelEditSetup()
 		ui->SubProtocolCB->clear() ;
   	for(int i=0 ; i<128 ; i += 1)
 		{
-			if ( i < MultiProtocolCount )
+			if ( (uint32_t)i < MultiProtocolCount )
 			{
 				ui->SubProtocolCB->addItem(MultiProtocols[i]) ;
 			}
@@ -375,7 +375,7 @@ uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 {
 	uint8_t index = 0 ;
 	(void) states ;
-//	uint8_t sm = g_eeGeneral.switchMapping ;
+	uint8_t sm = rData->generalSettings.switchMapping ;
 
 	switch ( swtch )
 	{
@@ -403,52 +403,62 @@ uint16_t ModelEdit::oneSwitchPos( uint8_t swtch, uint16_t states )
 //			}
 //		break ;
 	
-//		case HSW_ElevDR :
-//			if ( sm & USE_ELE_3POS )
-//			{
+		case HSW_ElevDR :
+			if ( sm & USE_ELE_3POS )
+			{
+				index = (g_model.switchWarningStates & 0x0C ) >> 2 ;
 //				if ( states & 0x0004 ) index += 1 ;
 //				if ( states & 0x0400 ) index += 2 ;
-//			}
+			}
 //			else
 //			{
 //				if (states & 0x0C04) index = 1 ;
 //			}
-//		break ;
+		break ;
 
-//		case HSW_ID0 :
-//			if ( states & 0x10 )
-//			{
-//				index += 1 ;
-//			}
-//			if ( states & 0x20 )
-//			{
-//				index += 2 ;
-//			}
-//		break ;
+		case HSW_ID0 :
+			if ( sm & USE_ELE_3POS )
+			{
+				index = (g_model.switchWarningStates & 0x30 ) >> 4 ;
+			}
+			else
+			{
+				if ( states & 0x10 )
+				{
+					index += 1 ;
+				}
+				if ( states & 0x20 )
+				{
+					index += 2 ;
+				}
+			}
+		break ;
 
-//		case HSW_AileDR :
-//			if ( sm & USE_AIL_3POS )
-//			{
+		case HSW_AileDR :
+			if ( sm & USE_AIL_3POS )
+			{
+				index = g_model.exSwitchWarningStates & 3 ;
 //				if ( states & 0x0040 ) index += 1 ;
 //				if ( states & 0x1000 ) index += 2 ;
-//			}
+			}
 //			else
 //			{
 //				if (states & 0x1040) index = 1 ;
 //			}
-//		break ;
+		break ;
 	 
-//		case HSW_Gear :
-//			if ( sm & USE_GEA_3POS )
-//			{
+		case HSW_Gear :
+			if ( sm & USE_GEA_3POS )
+			{
+				index = (g_model.exSwitchWarningStates & 0x0C ) >> 2 ;
 //				if ( states & 0x0080 ) index += 1 ;
 //				if ( states & 0x2000 ) index += 2 ;
-//			}
+			}
 //			else
 //			{
 //				if (states & 0x2080) index = 1 ;
 //			}
-//		break ;
+		break ;
 
 	}
 	return index ;
@@ -561,7 +571,11 @@ void ModelEdit::setSwitchDefPos()
 //		g_model.modelswitchWarningStates = ( x << 1 ) | (g_model.switchWarningStates & 1 ) ;
 
     switchDefPosEditLock = true;
-//		if ( g_eeGeneral.switchMapping & USE_THR_3POS )
+
+
+
+
+//		if ( rdata->generalSettings.switchMapping & USE_THR_3POS )
 //		{
 //    	ui->SwitchDefSA->setValue( oneSwitchPos( HSW_ThrCt, x ) ) ;
 //		}
@@ -570,14 +584,16 @@ void ModelEdit::setSwitchDefPos()
     	ui->switchDefPos_1->setChecked(x & 0x01);
 //		}
 		
-//		if ( g_eeGeneral.switchMapping & USE_RUD_3POS )
-//		{
-//    	ui->SwitchDefSB->setValue( oneSwitchPos( HSW_RuddDR, x ) ) ;
-//		}
-//		else
-//		{
+		if ( rData->generalSettings.switchMapping & USE_RUD_3POS )
+		{
+    	ui->SwitchDefSB->setValue( oneSwitchPos( HSW_RuddDR, x ) ) ;
+			ui->widgetDefSB->show() ;
+			ui->switchDefPos_8->hide() ;
+		}
+		else
+		{
 	    ui->switchDefPos_2->setChecked(x & 0x02);
-//		}
+		}
 
 #ifdef V2
 		if ( getSwitchSource(3) )
@@ -588,31 +604,49 @@ void ModelEdit::setSwitchDefPos()
 		else
 		{
 #endif
-    	ui->switchDefPos_3->setChecked(x & 0x04);
+			if ( rData->generalSettings.switchMapping & USE_ELE_3POS )
+			{
+        ui->SwitchDefSC->setValue( oneSwitchPos( HSW_ElevDR, x ) ) ;
+				ui->widgetDefSC->show() ;
+				ui->switchDefPos_3->hide() ;
+    		ui->SwitchDefSG->setValue( oneSwitchPos( HSW_ID0, x ) ) ;
+				ui->widgetDefSG->show() ;
+				ui->switchDefPos_4->hide() ;
+				ui->switchDefPos_5->hide() ;
+				ui->switchDefPos_6->hide() ;
+			}
+			else
+			{
+    		ui->switchDefPos_3->setChecked(x & 0x04);
+		    ui->switchDefPos_4->setChecked(x & 0x08);
+  		  ui->switchDefPos_5->setChecked(x & 0x10);
+    		ui->switchDefPos_6->setChecked(x & 0x20);
+			}
 #ifdef V2
 		}
 #endif
-    ui->switchDefPos_4->setChecked(x & 0x08);
-    ui->switchDefPos_5->setChecked(x & 0x10);
-    ui->switchDefPos_6->setChecked(x & 0x20);
     
-//		if ( g_eeGeneral.switchMapping & USE_AIL_3POS )
-//		{
-//    	ui->SwitchDefSD->setValue( oneSwitchPos( HSW_AileDR, x ) ) ;
-//		}
-//		else
-//		{
+		if ( rData->generalSettings.switchMapping & USE_AIL_3POS )
+		{
+    	ui->SwitchDefSD->setValue( oneSwitchPos( HSW_AileDR, x ) ) ;
+			ui->widgetDefSD->show() ;
+			ui->switchDefPos_7->hide() ;
+		}
+		else
+		{
 			ui->switchDefPos_7->setChecked(x & 0x40);
-//		}
+		}
 		
-//		if ( g_eeGeneral.switchMapping & USE_GEA_3POS )
-//		{
-//      ui->SwitchDefSE->setValue( oneSwitchPos( HSW_Gear, x ) ) ;
-//		}
-//		else
-//		{
+    if ( rData->generalSettings.switchMapping & USE_GEA_3POS )
+		{
+    	ui->SwitchDefSE->setValue( oneSwitchPos( HSW_Gear, x ) ) ;
+			ui->widgetDefSE->show() ;
+			ui->switchDefPos_8->hide() ;
+		}
+		else
+		{
     	ui->switchDefPos_8->setChecked(x & 0x80);
-//		}
+		}
 
 		switchDefPosEditLock = false;
 	}
@@ -5000,50 +5034,85 @@ void ModelEdit::on_SwitchDefSA_valueChanged ( int value )
 void ModelEdit::on_SwitchDefSB_valueChanged ( int value )
 {
 	if(switchDefPosEditLock) return ;
+#ifdef V2
 	uint16_t warningStates = g_model.switchWarningStates ;
 	warningStates &= ~(3 << 4);
 	warningStates |= (value & 3 ) << 4 ;
 	g_model.switchWarningStates = warningStates ;
+#else
+  uint8_t warningStates = g_model.exSwitchWarningStates ;
+	warningStates &= ~0x30 ;
+	warningStates |= value << 4 ;
+	g_model.exSwitchWarningStates = warningStates ;
+#endif
 	updateSettings();
 }
 
 void ModelEdit::on_SwitchDefSC_valueChanged ( int value )
 {
 	if(switchDefPosEditLock) return ;
+#ifdef V2
 	uint16_t warningStates = g_model.switchWarningStates ;
 	warningStates &= ~(3 << 6);
 	warningStates |= (value & 3 ) << 6 ;
 	g_model.switchWarningStates = warningStates ;
+#else
+  uint8_t warningStates = g_model.switchWarningStates ;
+	warningStates &= ~0x0C ;
+	warningStates |= value << 2 ;
+	g_model.switchWarningStates = warningStates ;
+#endif
 	updateSettings();
 }
 
 void ModelEdit::on_SwitchDefSD_valueChanged ( int value )
 {
 	if(switchDefPosEditLock) return ;
+#ifdef V2
 	uint16_t warningStates = g_model.switchWarningStates ;
 	warningStates &= ~(3 << 8);
 	warningStates |= (value & 3 ) << 8 ;
 	g_model.switchWarningStates = warningStates ;
+#else
+  uint8_t warningStates = g_model.exSwitchWarningStates ;
+	warningStates &= ~3 ;
+	warningStates |= value ;
+	g_model.exSwitchWarningStates = warningStates ;
+#endif	
 	updateSettings();
 }
 
 void ModelEdit::on_SwitchDefSE_valueChanged ( int value )
 {
 	if(switchDefPosEditLock) return ;
+#ifdef V2
 	uint16_t warningStates = g_model.switchWarningStates ;
 	warningStates &= ~(3 << 10);
 	warningStates |= (value & 3 ) << 10 ;
 	g_model.switchWarningStates = warningStates ;
+#else
+  uint8_t warningStates = g_model.exSwitchWarningStates ;
+	warningStates &= ~0x0C ;
+	warningStates |= value << 2 ;
+	g_model.exSwitchWarningStates = warningStates ;
+#endif	
 	updateSettings();
 }
 
 void ModelEdit::on_SwitchDefSG_valueChanged ( int value )
 {
 	if(switchDefPosEditLock) return ;
+#ifdef V2
 	uint16_t warningStates = g_model.switchWarningStates ;
 	warningStates &= ~3 ;
 	warningStates |= (value & 3 ) ;
 	g_model.switchWarningStates = warningStates ;
+#else
+	uint8_t warningStates = g_model.switchWarningStates ;
+	warningStates &= ~0x30 ;
+	warningStates |= value << 4 ;
+	g_model.switchWarningStates = warningStates ;
+#endif
 	updateSettings();
 }
 

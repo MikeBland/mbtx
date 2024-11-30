@@ -1438,29 +1438,29 @@ static void doSplash()
 
         lcd_clear();
 #ifdef REMOVE_FROM_64FRSKY
-//        lcd_img(32, 16, s9xsplash, 0 ) ;
-				{
-				  const prog_uchar  *q ;
+        lcd_img(32, 16, s9xsplash, 0 ) ;
+//				{
+//				  const prog_uchar  *q ;
 
-  				for(uint8_t yb = 0 ; yb < 8 ; yb += 1 )
-					{
-extern uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
+//  				for(uint8_t yb = 0 ; yb < 8 ; yb += 1 )
+//					{
+//extern uint8_t DisplayBuf[DISPLAY_W*DISPLAY_H/8] ;
   				  
-						uint8_t   *p = &DisplayBuf[ (yb) * DISPLAY_W ] ;
-						q = &s9xsplash[(yb/2) * (DISPLAY_W/2)] ;
-  				  for(uint8_t x=0 ; x < DISPLAY_W/2 ; x++ )
-						{
-  				    uint8_t b = pgm_read_byte(q++);
-							if ( yb & 1 )
-							{
-								b >>= 4 ;
-							}
-							b = pgm_read_byte(&DoubleBits[b & 0x0F] ) ;
-  				    *p++ = b ;
-  				    *p++ = b ;
-  				  }
-  				}
-				}
+//						uint8_t   *p = &DisplayBuf[ (yb) * DISPLAY_W ] ;
+//						q = &s9xsplash[(yb/2) * (DISPLAY_W/2)] ;
+//  				  for(uint8_t x=0 ; x < DISPLAY_W/2 ; x++ )
+//						{
+//  				    uint8_t b = pgm_read_byte(q++);
+//							if ( yb & 1 )
+//							{
+//								b >>= 4 ;
+//							}
+//							b = pgm_read_byte(&DoubleBits[b & 0x0F] ) ;
+//  				    *p++ = b ;
+//  				    *p++ = b ;
+//  				  }
+//  				}
+//				}
 #else
         lcd_img(0, 0, s9xsplash,0);
 #endif
@@ -2920,7 +2920,7 @@ int16_t checkIncDec_u0( int16_t i_val, uint8_t i_max)
   return checkIncDec16( i_val,0,i_max,EditType) ;
 }
 
-#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
+//#if defined(CPUM128) || defined(CPUM2561) || defined(V2)
 int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_flags)
 {
 #if defined(SWITCH_MAPPING) || defined(XSW_MOD)
@@ -2930,7 +2930,7 @@ int8_t checkIncDecSwitch( int8_t i_val, int8_t i_min, int8_t i_max, uint8_t i_fl
   return checkIncDec16(i_val,i_min,i_max,i_flags) ;
 #endif
 }
-#endif
+//#endif
 
 void popMenu(bool uppermost)
 {

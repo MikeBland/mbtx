@@ -51,6 +51,7 @@
 
 #include "ersky9x.h"
 #include "myeeprom.h"
+#include "trims.h"
 #include "audio.h"
 #include "sound.h"
 #include "lcd.h"
@@ -791,8 +792,6 @@ void check_backlight( void ) ;
 #if defined(PCBSKY) || defined(PCB9XT)
 void checkQuickSelect( void ) ;
 #endif
-
-static uint8_t checkTrim(uint8_t event) ;
 
 //void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
 void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
@@ -4895,9 +4894,9 @@ uint32_t checkRssi(uint32_t swappingModels)
   if(g_eeGeneral.disableRxCheck) return RSSI_POWER_OFF ;
 
 #ifdef REVX
-	if ( ( FrskyHubData[FR_RXRSI_COPY] == 0 ) && ( rssi == 0 ) )
+	if ( ( TelemetryData[FR_RXRSI_COPY] == 0 ) && ( rssi == 0 ) )
 #else
-	if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+	if ( TelemetryData[FR_RXRSI_COPY] == 0 )
 #endif
 	{
 #ifdef PCBSKY
@@ -4947,7 +4946,7 @@ uint32_t checkRssi(uint32_t swappingModels)
 		check_backlight() ;
 
 #ifdef PCBSKY
-		if ( FrskyHubData[FR_RXRSI_COPY]  )
+		if ( TelemetryData[FR_RXRSI_COPY]  )
 		{
 			i = 0 ;
 		}
@@ -4956,7 +4955,7 @@ uint32_t checkRssi(uint32_t swappingModels)
 			return RSSI_POWER_OFF ;
 		}
 #else
-		if ( FrskyHubData[FR_RXRSI_COPY] == 0 )
+		if ( TelemetryData[FR_RXRSI_COPY] == 0 )
 		{
 			return RSSI_POWER_OFF ;
 		}
@@ -5375,15 +5374,15 @@ extern uint8_t ModelImageValid ;
 	// AR9X
 		if ( Tenms )
 		{
-			if ( FrskyHubData[FR_RXRSI_COPY] )
+			if ( TelemetryData[FR_RXRSI_COPY] )
 			{
-				OldRssi[1] = OldRssi[0] = FrskyHubData[FR_RXRSI_COPY] ;
+				OldRssi[1] = OldRssi[0] = TelemetryData[FR_RXRSI_COPY] ;
 			}
 			else if ( ++OldRssTimer > 99 )
 			{
 				OldRssTimer = 0 ;
 				OldRssi[0] = OldRssi[1] ;
-				OldRssi[1] = FrskyHubData[FR_RXRSI_COPY] ;
+				OldRssi[1] = TelemetryData[FR_RXRSI_COPY] ;
 			}
 		}
   #endif
@@ -5467,7 +5466,7 @@ static uint8_t PBstate ;
  #else // POWER_BUTTON
   #ifdef PCBSKY
    #ifdef REVX
-			if ( FrskyHubData[FR_RXRSI_COPY] )
+			if ( TelemetryData[FR_RXRSI_COPY] )
 			{
 				rssi = 350 ;
 			}
@@ -5609,6 +5608,8 @@ extern uint8_t InternalMultiStopUpdate ;
 					lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 //	lcd_outhex4( 20, FH, AudioActive ) ;
 //	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
+//extern void dumpModelAsText() ;
+//						dumpModelAsText() ;
 extern void eeSaveAll() ;
 					if ( ! saved )
 					{
@@ -6339,12 +6340,12 @@ static void processVoiceAlarms()
 				{
 					uint16_t value = pvad->file.vfile ;
 					uint32_t t = 508 ;
-#if MULTI_GVARS
-					if ( g_model.flightModeGvars )
-					{
-						t = 510 ;
-					}
-#endif
+//#if MULTI_GVARS
+//					if ( g_model.flightModeGvars )
+//					{
+//						t = 510 ;
+//					}
+//#endif
 					if ( value >= t )
 					{
 						value = calc_scaler( value-t, 0, 0 ) ;
@@ -7234,7 +7235,7 @@ void setTopVoltage( uint32_t volts ) ;
 void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
 
 static uint8_t RssiTestCount ;
-			setTopRssi( FrskyHubData[FR_RXRSI_COPY] ) ;
+			setTopRssi( TelemetryData[FR_RXRSI_COPY] ) ;
 			setTopVoltage( g_vbat100mV ) ;
 			setTopOpTime( Time.hour, Time.minute, Time.second ) ;
 			if ( ++RssiTestCount > 149 )
@@ -7503,7 +7504,7 @@ extern uint32_t i2c2_result() ;
         {
           limit = 122 ;	//m
         }
-				altitude = FrskyHubData[FR_ALT_BARO] + AltOffset ;
+				altitude = TelemetryData[FR_ALT_BARO] + AltOffset ;
 				altitude /= 10 ;									
 				if (g_model.FrSkyUsrProto == 0)  // Hub
 				{
@@ -7550,15 +7551,15 @@ extern uint32_t i2c2_result() ;
 			{
 				if ( g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
 				{
-					if ( ( FrskyHubData[FR_AMP_MAH] >> 6 ) >= g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
+					if ( ( TelemetryData[FR_AMP_MAH] >> 6 ) >= g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
 					{
 						putSystemVoice( SV_CAP_WARN, V_CAPACITY ) ;
 					}
 					uint32_t value ;
 					value = g_model.frskyAlarms.alarmData[0].frskyAlarmLimit ;
 					value <<= 6 ;
-					value = 100 - ( FrskyHubData[FR_AMP_MAH] * 100 / value ) ;
-					FrskyHubData[FR_FUEL] = value ;
+					value = 100 - ( TelemetryData[FR_AMP_MAH] * 100 / value ) ;
+					TelemetryData[FR_FUEL] = value ;
 				}
 			}
     }
@@ -7681,7 +7682,7 @@ extern uint32_t i2c2_result() ;
 			uint8_t redAlert = 0 ;
 			static uint8_t redCounter ;
 			static uint8_t orangeCounter ;
-			uint8_t rssiValue = FrskyHubData[FR_RXRSI_COPY] ;
+			uint8_t rssiValue = TelemetryData[FR_RXRSI_COPY] ;
 
 			if ( frskyStreaming )
 			{
@@ -7861,21 +7862,21 @@ extern uint32_t i2c2_result() ;
 					{
 						if ( k < firstDeviceLimit )
 						{
-							total_1volts += FrskyHubData[FR_CELL1+k] ;
+							total_1volts += TelemetryData[FR_CELL1+k] ;
 						}
 						else
 						{
-							total_2volts += FrskyHubData[FR_CELL1+k] ;
+							total_2volts += TelemetryData[FR_CELL1+k] ;
 						}
-						if ( FrskyHubData[FR_CELL1+k] < low_cell )
+						if ( TelemetryData[FR_CELL1+k] < low_cell )
 						{
-							low_cell = FrskyHubData[FR_CELL1+k] ;
+							low_cell = TelemetryData[FR_CELL1+k] ;
 						}
 						if ( AlarmCheckFlag > 1 )
 						{
 							if ( audio_sounded == 0 )
 							{
-		  	  		  if ( FrskyHubData[FR_CELL1+k] < g_model.frSkyVoltThreshold * 2 )
+		  	  		  if ( TelemetryData[FR_CELL1+k] < g_model.frSkyVoltThreshold * 2 )
 								{
 		  	  		    audioDefevent(AU_WARNING3);
 									audio_sounded = 1 ;
@@ -7886,22 +7887,22 @@ extern uint32_t i2c2_result() ;
 					// Now we have total volts available
 					if ( total_1volts + total_2volts )
 					{
-						FrskyHubData[FR_CELLS_TOT] = (total_1volts + total_2volts + 4 ) / 10 ; 	// Some rounding up
+						TelemetryData[FR_CELLS_TOT] = (total_1volts + total_2volts + 4 ) / 10 ; 	// Some rounding up
 						TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
 						
 						if ( total_1volts )
 						{
-							FrskyHubData[FR_CELLS_TOTAL1] = (total_1volts + 4)  / 10 ;
+							TelemetryData[FR_CELLS_TOTAL1] = (total_1volts + 4)  / 10 ;
 							TelemetryDataValid[FR_CELLS_TOTAL1] = 40 + g_model.telemetryTimeout ;
 					  }
 						if ( total_2volts )
 						{
-							FrskyHubData[FR_CELLS_TOTAL2] = (total_2volts + 4)  / 10 ;
+							TelemetryData[FR_CELLS_TOTAL2] = (total_2volts + 4)  / 10 ;
 							TelemetryDataValid[FR_CELLS_TOTAL2] = 40 + g_model.telemetryTimeout ;
 						}
 						if ( low_cell < 440 )
 						{
-							FrskyHubData[FR_CELL_MIN] = low_cell ;
+							TelemetryData[FR_CELL_MIN] = low_cell ;
 						}
 					}
 				}
@@ -7936,7 +7937,7 @@ extern uint32_t i2c2_result() ;
 					int16_t vspd ;
 					if ( g_model.varioData.varioSource == 1 )
 					{
-						vspd = FrskyHubData[FR_VSPD] ;
+						vspd = TelemetryData[FR_VSPD] ;
 
 						if ( g_model.varioData.param > 1 )
 						{
@@ -7945,7 +7946,7 @@ extern uint32_t i2c2_result() ;
 					}
 					else if ( g_model.varioData.varioSource == 2 )
 					{
-						vspd = FrskyHubData[FR_A2_COPY] - 128 ;
+						vspd = TelemetryData[FR_A2_COPY] - 128 ;
 						if ( ( vspd < 3 ) && ( vspd > -3 ) )
 						{
 							vspd = 0 ;							
@@ -8797,21 +8798,21 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 		int8_t sw1 = 0 ;
 		uint32_t switchedON = 0 ;
 		int32_t value ;
-#if MULTI_GVARS
-		value = 7 ;
-		if ( g_model.flightModeGvars )
-		{
-			value = 12 ;
-		}
-		if ( pgvaradj->gvarIndex >= value )
-		{
-			value = getTrimValueAdd( CurrentPhase, idx - value  ) ;
-		}
-		else
-		{
-			value = getGvarFm(idx, CurrentPhase ) ;
-		}
-#else			
+//#if MULTI_GVARS
+//		value = 7 ;
+//		if ( g_model.flightModeGvars )
+//		{
+//			value = 12 ;
+//		}
+//		if ( pgvaradj->gvarIndex >= value )
+//		{
+//			value = getTrimValueAdd( CurrentPhase, idx - value  ) ;
+//		}
+//		else
+//		{
+//			value = getGvarFm(idx, CurrentPhase ) ;
+//		}
+//#else			
 		if ( pgvaradj->gvarIndex > 6 )
 		{
 			value = getTrimValueAdd( CurrentPhase, idx - 7  ) ;
@@ -8820,7 +8821,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 		{
 			value = getGvar(idx) ;
 		}
-#endif
+//#endif
 		if ( sw0 )
 		{
 			sw0 = getSwitch00(sw0) ;
@@ -8929,57 +8930,57 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 				}
 			break ;
 		}
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars )
-		{
-			if ( pgvaradj->gvarIndex > 11 )
-			{
-				if(value > 125)
-				{
-					value = 125 ;
-				}	
-  			if(value < -125 )
-				{
-					value = -125 ;
-				}	
-				setTrimValueAdd( CurrentPhase, idx - 12, value ) ;
-			}
-			else
-			{
-				int32_t minmax ;
-				minmax = GVAR_MAX-g_model.xgvars[idx].max ;
-				if(value > minmax)
-				{
-					value = minmax ;
-				}	
-				minmax = GVAR_MIN+g_model.xgvars[idx].min ;
-  			if(value < minmax )
-				{
-					value = minmax ;
-				}	
-				setGVarFm( idx, value, CurrentPhase ) ;
-			}
-		}
-		else
-		{
-			if(value > 125)
-			{
-				value = 125 ;
-			}	
-  		if(value < -125 )
-			{
-				value = -125 ;
-			}	
-			if ( pgvaradj->gvarIndex > 6 )
-			{
-				setTrimValueAdd( CurrentPhase, idx - 7, value ) ;
-			}
-			else
-			{
-				setGVar( idx, value ) ;
-			}
-		}
-#else			 
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars )
+//		{
+//			if ( pgvaradj->gvarIndex > 11 )
+//			{
+//				if(value > 125)
+//				{
+//					value = 125 ;
+//				}	
+//  			if(value < -125 )
+//				{
+//					value = -125 ;
+//				}	
+//				setTrimValueAdd( CurrentPhase, idx - 12, value ) ;
+//			}
+//			else
+//			{
+//				int32_t minmax ;
+//				minmax = GVAR_MAX-g_model.xgvars[idx].max ;
+//				if(value > minmax)
+//				{
+//					value = minmax ;
+//				}	
+//				minmax = GVAR_MIN+g_model.xgvars[idx].min ;
+//  			if(value < minmax )
+//				{
+//					value = minmax ;
+//				}	
+//				setGVarFm( idx, value, CurrentPhase ) ;
+//			}
+//		}
+//		else
+//		{
+//			if(value > 125)
+//			{
+//				value = 125 ;
+//			}	
+//  		if(value < -125 )
+//			{
+//				value = -125 ;
+//			}	
+//			if ( pgvaradj->gvarIndex > 6 )
+//			{
+//				setTrimValueAdd( CurrentPhase, idx - 7, value ) ;
+//			}
+//			else
+//			{
+//				setGVar( idx, value ) ;
+//			}
+//		}
+//#else			 
 		if(value > 125)
 		{
 			value = 125 ;
@@ -8996,7 +8997,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST + EXTRA_GVAR_ADJUST][2] ;
 		{
 			setGVar( idx, value ) ;
 		}
-#endif	
+//#endif	
 	}
 }
 
@@ -9928,23 +9929,23 @@ void checkDsmTelemetry5ms() ;
 			}
 
 			// GVARS adjust
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				for( uint8_t i = 0 ; i < 12 ; i += 1 )
-				{
-					uint8_t *psource ;
-					psource = ( ( (uint8_t*)&g_model.gvars) + i ) ;
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				for( uint8_t i = 0 ; i < 12 ; i += 1 )
+//				{
+//					uint8_t *psource ;
+//					psource = ( ( (uint8_t*)&g_model.gvars) + i ) ;
 					
-					if ( *psource == 5 )	// REN
-					{
-						int16_t value = getGvar(i) + Rotary_diff ;
-						setGVar( i, limit( (int16_t)-125, value, (int16_t)125 ) ) ;
-				  }
-				}
-			}
-			else
-#endif
+//					if ( *psource == 5 )	// REN
+//					{
+//						int16_t value = getGvar(i) + Rotary_diff ;
+//						setGVar( i, limit( (int16_t)-125, value, (int16_t)125 ) ) ;
+//				  }
+//				}
+//			}
+//			else
+//#endif
 			{
 				for( uint8_t i = 0 ; i < MAX_GVARS ; i += 1 )
 				{
@@ -10035,31 +10036,31 @@ void checkDsmTelemetry5ms() ;
 	GvarSource[2] = 0 ;
 	GvarSource[3] = 0 ;
 	
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		for( uint32_t i = 0 ; i < 12 ; i += 1 )
-		{
-			uint8_t *psource ;
-			psource = ( ( (uint8_t*)&g_model.gvars) + i ) ;
-			uint8_t src = *psource ;
-			if ( src )
-			{
-				int16_t value ;
-				if ( src == 5 )	// REN
-				{
-					value = getGvar(i) ;	// Adjusted elsewhere
-				}
-				else
-				{
-					value = getGvarSourceValue( src ) ;
-				}
-				setGVar( i, limit( (int16_t)-125, value, (int16_t)125 ) ) ;
-			}
-		}
-	}
-	else
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		for( uint32_t i = 0 ; i < 12 ; i += 1 )
+//		{
+//			uint8_t *psource ;
+//			psource = ( ( (uint8_t*)&g_model.gvars) + i ) ;
+//			uint8_t src = *psource ;
+//			if ( src )
+//			{
+//				int16_t value ;
+//				if ( src == 5 )	// REN
+//				{
+//					value = getGvar(i) ;	// Adjusted elsewhere
+//				}
+//				else
+//				{
+//					value = getGvarSourceValue( src ) ;
+//				}
+//				setGVar( i, limit( (int16_t)-125, value, (int16_t)125 ) ) ;
+//			}
+//		}
+//	}
+//	else
+//#endif
 	{
 		for( uint32_t i = 0 ; i < MAX_GVARS ; i += 1 )
 		{
@@ -11398,535 +11399,6 @@ void getADC_filt()
 		t_ana[1][x] = ( t_ana[1][x] + t_ana[0][x] ) >> 1 ;
 		t_ana[0][x] = ( t_ana[0][x] + y ) >> 1 ;
 	}	 
-}
-
-uint32_t getFlightPhase()
-{
-	uint32_t i ;
-  for ( i = 0 ; i < MAX_MODES+1 ; i += 1 )
-	{
-  	PhaseData *phase ;
-		phase = (i < MAX_MODES) ? &g_model.phaseData[i] : &g_model.xphaseData ;
-    if ( phase->swtch )
-		{
-    	if ( getSwitch00( phase->swtch ) )
-			{
-    		if ( phase->swtch2 )
-				{
-					if ( getSwitch00( phase->swtch2 ) )
-					{
-						return i + 1 ;
-					}
-				}
-				else
-				{
-					return i + 1 ;
-				}
-    	}
-		}
-		else
-		{
-    	if ( phase->swtch2 && getSwitch00( phase->swtch2 ) )
-			{
-    	  return i + 1 ;
-    	}
-		}
-  }
-  return 0 ;
-}
-
-int16_t getRawTrimValue( uint8_t phase, uint8_t idx )
-{
-	if ( phase )
-	{
-	  PhaseData *p ;
-		phase -= 1 ;
-		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-		return p->trim[idx].value ;
-	}	
-	else
-	{
-		return g_model.trim[idx] ;
-	}
-}
-
-
-
-t_trim rawTrimFix( uint8_t phase, t_trim v )
-{
-	if ( phase )
-	{
-		int16_t tm ;
-//	  PhaseData *p ;
-		phase -= 1 ;
-//		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-		tm = v.mode ;
-		if ( tm < 0 )
-		{
-			tm = 0 ;
-		}
-		if ( tm == 0 )
-		{
-      if (v.value > TRIM_EXTENDED_MAX)
-			{
-				tm = v.value - (TRIM_EXTENDED_MAX+1) ;
-				if ( tm > phase )
-				{
-					tm += 1 ;
-				}
-			}
-			else
-			{
-				tm = phase+1 ;
-			}
-			v.mode = tm << 1 ;
-		}
-	}	
-	else
-	{
-		v.mode = 0 ;
-		v.value = 0 ;
-	}
-	return v ;
-}
-
-t_trim getRawTrimComplete( uint32_t phase, uint32_t idx )
-{
-	t_trim v ;
-	if ( phase )
-	{
-	  PhaseData *p ;
-		phase -= 1 ;
-		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-		v = p->trim[idx] ;
-		return rawTrimFix( phase+1, v ) ;
-	}	
-	else
-	{
-		v.mode = 0 ;
-		v.value = g_model.trim[idx] ;
-		return v ;
-	}
-}
-
-#define getTrimFlightPhase( phase, idx ) phase
-
-
-//uint32_t getTrimFlightPhase( uint8_t phase, uint8_t idx )
-//{
-//	return phase ;
-	
-//  for ( uint32_t i=0 ; i<MAX_MODES+1 ; i += 1 )
-//	{
-//    if (phase == 0) return 0;
-//		t_trim v = getRawTrimComplete( phase, idx ) ;
-//    if ( (v.mode >> 1) == phase )
-//		{
-//			return phase ;
-//		}
-//    phase = v.mode >> 1 ;
-//	}
-//	return 0 ;
-//}
-
-//uint32_t getTrimFlightPhaseOld( uint8_t phase, uint8_t idx )
-//{
-//  for ( uint32_t i=0 ; i<MAX_MODES+1 ; i += 1 )
-//	{
-//    if (phase == 0) return 0;
-//    int16_t trim = getRawTrimValue( phase, idx ) ;
-//    if ( trim <= TRIM_EXTENDED_MAX )
-//		{
-//			return phase ;
-//		}
-//    uint32_t result = trim-TRIM_EXTENDED_MAX-1 ;
-//    if (result >= phase)
-//		{
-//			result += 1 ;
-//		}
-//    phase = result;
-//  }
-//  return 0 ;
-//}
-
-
-int16_t getTrimValueAdd( uint32_t phase, uint32_t idx )
-{
-  int16_t result = 0 ;
-  for ( uint32_t i = 0 ; i<MAX_MODES+1 ; i += 1 )
-	{
-    t_trim v = getRawTrimComplete( phase, idx ) ;
-//    if (v.mode == TRIM_MODE_NONE)
-//		{
-//      return result;
-//    }
-//    else
-		{
-      uint32_t p = v.mode >> 1 ;
-      if ( p == phase || phase == 0 )
-			{
-				result += v.value ;
-        return limit( (int16_t)-125, result, (int16_t)125 ) ;
-      }
-      else
-			{
-        phase = p ;
-//        if ( (v.mode & 1) == 0)
-        if (v.mode & 1)
-				{
-          result += v.value ;
-        }
-      }
-    }
-  }
-  return 0 ;
-}
-
-//int16_t getTrimValueOld( uint8_t phase, uint8_t idx )
-//{
-//  return getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
-////	int16_t value ;
-////	value = getRawTrimValue( getTrimFlightPhase( phase, idx ), idx ) ;
-////  if ( value > TRIM_EXTENDED_MAX + MAX_MODES + 1 )
-////	{
-////		value -= 2000 ;
-////		value += g_model.trim[idx] ;
-////	}
-////	return value ;
-
-////	int32_t result = 0 ;
-////  for ( uint32_t i = 0 ; i < MAX_MODES ; i += 1 )
-////	{
-////    t_trim v = getRawTrimComplete( phase, idx ) ;
-////    uint32_t p = v.mode ;
-////    uint32_t q = p ;
-////		if ( p == 0 )
-////		{
-////			q = v.value ;
-////    	if ( q > TRIM_EXTENDED_MAX )
-////			{
-////    		q -= TRIM_EXTENDED_MAX ;
-////			}
-////			else
-////			{
-////				q = 0 ;
-////			}
-////		}
-////		// q = 0 for use this phase, 1-7 for other phase
-////    if ( q == 0 )
-////		{
-////      return result + v.value ;
-////		}
-////		else
-////		{
-////			q -= 1 ;
-////			if ( q == phase )
-////			{
-////				q += 1 ;	// 0-7
-////			}
-////			phase = q ;
-////			if ( p )
-////			{
-////				result += v.value ;
-////			}
-////		}
-////	}
-////	return 0 ;
-//}
-
-//uint16_t SetPhase ;
-//uint16_t SetIdx ;
-//int16_t SetTrim ;
-//uint16_t SetP ;
-//int16_t SetGet ;
-
-
-void setTrimValueAdd(uint32_t phase, uint32_t idx, int16_t trim)
-{
-	PhaseData *ph = 0 ;
-	t_trim tempV ;
-	t_trim *pv ;
-
-//	SetPhase = phase ;
-//	SetIdx = idx ;
-//	SetTrim = trim ;
-  for ( uint32_t i = 0 ; i < MAX_MODES+1 ; i += 1 )
-	{
-		if ( phase )
-		{
-			ph = (phase-1 < MAX_MODES) ? &g_model.phaseData[phase-1] : &g_model.xphaseData ;
-		}
-		else
-		{
-			ph = 0 ;
-		}
-		if ( ph )
-		{
-			pv = &ph->trim[idx] ;
-		}
-		else
-		{
-			tempV.value = g_model.trim[idx] ;
-			tempV.mode = 0 ;
-			pv = &tempV ;
-		}
-
-		if ( phase )
-		{
-			int16_t tm ;
-			t_trim v ;
-		
-			v = *pv ;
-			tm = v.mode ;
-			if ( tm < 0 )
-			{
-				tm = 0 ;
-			}
-	
-			if ( tm == 0 )
-			{
-	      if (v.value > TRIM_EXTENDED_MAX)
-				{
-					tm = v.value - (TRIM_EXTENDED_MAX+1) ;
-					v.value = 0 ;
-					if ( tm > (int16_t)phase-1 )
-					{
-						tm += 1 ;
-					}
-				}
-				else
-				{
-					tm = phase ;
-				}
-				v.mode = tm << 1 ;
-				*pv = v ;
-			}
-		}	
-
-    uint32_t p = pv->mode >> 1 ;
-    if (p == phase || phase == 0)
-		{
-      pv->value = trim ;
-      break ;
-    }
-    else if ((pv->mode & 1) == 0)
-		{
-      phase = p ;
-    }
-    else
-		{
-//			SetP = p ;
-//			SetGet = getTrimValueAdd(p, idx) ;
-//      pv->value = limit<int>(TRIM_EXTENDED_MIN, trim - getTrimValue(p, idx), TRIM_EXTENDED_MAX) ;
-      pv->value = limit<int>( -125, trim - getTrimValueAdd(p, idx), 125 ) ;
-      break ;
-    }
-  }
-	if ( pv == &tempV )
-	{
-		g_model.trim[idx] = tempV.value ;
-	}
-	STORE_MODELVARS_TRIM ;
-//  return true;
-	
-}
-
-
-
-
-
-    // validate mode for old setting
-//		v = *pv ;
-//		if ( phase )
-//		{
-//			v = rawTrimFix( phase, v ) ;
-//		}
-
-//    uint32_t p = v.mode >> 1 ;
-//    if (p == phase || phase == 0)
-//		{
-//      pv->value = trim ;
-//      break ;
-//    }
-//    else if ((v.mode & 1) == 0)
-//		{
-//      phase = p ;
-//    }
-//    else
-//		{
-////			SetP = p ;
-////			SetGet = getTrimValueAdd(p, idx) ;
-////      pv->value = limit<int>(TRIM_EXTENDED_MIN, trim - getTrimValue(p, idx), TRIM_EXTENDED_MAX) ;
-//      v.value = limit<int>( -125, trim - getTrimValueAdd(p, idx), 125 ) ;
-
-
-
-
-
-
-
-
-
-
-
-
-
-// NEEDS UPDATING for additive trims
-//void setTrimValueOld(uint8_t phase, uint8_t idx, int16_t trim)
-//{
-//	if ( phase )
-//	{
-//		phase = getTrimFlightPhase( phase, idx ) ;
-//	}
-//	if ( phase )
-//	{
-//    if(trim < -125 || trim > 125)
-////    if(trim < -500 || trim > 500)
-//		{
-//			trim = ( trim > 0 ) ? 125 : -125 ;
-////			trim = ( trim > 0 ) ? 500 : -500 ; For later addition
-//		}
-		
-////		int16_t value ;
-////		value = g_model.phaseData[phase-1].trim[idx] ;
-////  	if ( value > TRIM_EXTENDED_MAX + MAX_MODES + 1 )
-////		{
-////			trim += 2000 ;
-////		}
-//	  PhaseData *p ;
-//		phase -= 1 ;
-//		p = (phase < MAX_MODES) ? &g_model.phaseData[phase] : &g_model.xphaseData ;
-//  	p->trim[idx].value = trim ;
-//	}
-//	else
-//	{
-//    if(trim < -125 || trim > 125)
-//		{
-//			trim = ( trim > 0 ) ? 125 : -125 ;
-//		}	
-//		g_model.trim[idx] = trim ;
-//	}
-//  STORE_MODELVARS_TRIM ;
-//	return ;
-
-//  for ( uint32_t i = 0 ; i < MAX_MODES+1 ; i += 1 )
-//	{
-//    t_trim v = getRawTrimComplete( phase, idx ) ;
-//    uint32_t p = v.mode ;
-//    uint32_t q = p ;
-//		if ( p == 0 )
-//		{
-//			q = v.value ;
-//    	if ( q > TRIM_EXTENDED_MAX )
-//			{
-//    		q -= TRIM_EXTENDED_MAX ;
-//			}
-//			else
-//			{
-//				q = 0 ;
-//			}
-//		}
-
-
-//	}
-
-
-//}
-
-//uint8_t TrimBits ;
-
-static uint8_t checkTrim(uint8_t event)
-{
-  int8_t  k = (event & EVT_KEY_MASK) - TRM_BASE;
-  int8_t  s = g_model.trimInc;
-  
-		if ( s == 4 )
-		{
-			s = 8 ;			  // 1=>1  2=>2  3=>4  4=>8
-		}
-		else
-		{
-			if ( s == 3 )
-			{
-				s = 4 ;			  // 1=>1  2=>2  3=>4  4=>8
-			}
-		}
-
-  if( (k>=0) && (k<8) )
-	{
-		if ( !IS_KEY_BREAK(event)) // && (event & _MSK_KEY_REPT))
-  	{
-//			TrimBits |= (1 << k ) ;
-			
-  	  //LH_DWN LH_UP LV_DWN LV_UP RV_DWN RV_UP RH_DWN RH_UP
-  	  uint8_t idx = k/2;
-		
-	// SORT idx for stickmode if FIX_MODE on
-			idx = stickScramble[g_eeGeneral.stickMode*4+idx] ;
-			uint8_t ct = g_eeGeneral.crosstrim + ( g_eeGeneral.xcrosstrim << 1 ) ;
-			if ( ct )
-			{
-				idx = 3 - idx ;			
-			}
-      if ( ct == 2 ) // Vintage style crosstrim
-      {
-        if (idx == 0 || idx == 3)       // swap back LH/RH trims
-				{
-					idx = 3 - idx;
-				}
-      }
-#ifdef SMALL
-			if ( TrimInUse[idx] )
-#else
-			if ( TrimInUse[idx] && ((VarUsesTrim & (1 << idx)) == 0) )
-#endif
-			{
-				uint32_t phaseNo = getTrimFlightPhase( CurrentPhase, idx ) ;
-  	  	int16_t tm = getTrimValueAdd( phaseNo, idx ) ;
-  	  	int8_t  v = (s==0) ? (abs(tm)/4)+1 : s;
-  	  	bool thrChan = (2 == idx) ;
-				bool thro = (thrChan && (g_model.thrTrim));
-  	  	if(thro) v = 2; // if throttle trim and trim trottle then step=2
-
-				if ( GvarSource[idx] )
-				{
-					v = 1 ;
-				}
-
-  	  	if(thrChan && throttleReversed()) v = -v;  // throttle reversed = trim reversed
-  	  	int16_t x = (k&1) ? tm + v : tm - v;   // positive = k&1
-
-  	  	if(((x==0)  ||  ((x>=0) != (tm>=0))) && (!thro) && (tm!=0))
-				{
-					setTrimValueAdd( phaseNo, idx, 0 ) ;
-  	  	  killEvents(event);
-  	  	  audioDefevent(AU_TRIM_MIDDLE);
-  	  	}
-				else if(x>-125 && x<125)
-				{
-					setTrimValueAdd( phaseNo, idx, x ) ;
-					if(x <= 125 && x >= -125)
-					{
-						audio.event(AU_TRIM_MOVE,(abs(x)/4)+60);
-					}	
-  	  	}
-  	  	else
-  	  	{
-					setTrimValueAdd( phaseNo, idx, (x>0) ? 125 : -125 ) ;
-					if(x <= 125 && x >= -125)
-					{
-						audio.event(AU_TRIM_MOVE,(-abs(x)/4)+60);
-					}	
-  	  	}
-			}
-  	  return 0;
-  	}
-//		else
-//		{
-//			TrimBits &= ~(1 << k ) ;
-//		}
-	}
-  return event;
 }
 
 char LastItem[8] ;
@@ -14251,25 +13723,25 @@ uint8_t *cpystr( uint8_t *dest, uint8_t *source )
 
 int8_t REG100_100(int8_t x)
 {
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-  	int8_t result = x;
-		if ( x > 100 )
-		{
-    	result = getGvar(x-113) ;
-			if ( result > 100 )
-			{
-				result = 100 ;
-			}
-			if ( result < -100 )
-			{
-				result = -100 ;
-			}
-		}
-		return result ;
-	}
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//  	int8_t result = x;
+//		if ( x > 100 )
+//		{
+//    	result = getGvar(x-113) ;
+//			if ( result > 100 )
+//			{
+//				result = 100 ;
+//			}
+//			if ( result < -100 )
+//			{
+//				result = -100 ;
+//			}
+//		}
+//		return result ;
+//	}
+//#endif
 	return REG( x, -100, 100 ) ;
 }
 

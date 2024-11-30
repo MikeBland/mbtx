@@ -28,7 +28,7 @@
 These will be relevant for all models in the same EEPROM.</string>
      </property>
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabSetup">
       <attribute name="title">
@@ -136,71 +136,7 @@ p, li { white-space: pre-wrap; }
           </widget>
          </item>
          <item row="10" column="0" colspan="2">
-          <layout class="QGridLayout" name="gridLayout_7" columnminimumwidth="0,0,0,0,0,0">
-           <item row="0" column="1">
-            <widget class="QCheckBox" name="switchDefPos_1">
-             <property name="text">
-              <string>THR</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="2">
-            <widget class="QCheckBox" name="switchDefPos_2">
-             <property name="text">
-              <string>RUD</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
-            <widget class="QCheckBox" name="switchDefPos_3">
-             <property name="text">
-              <string>ELE</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="4" colspan="2">
-            <widget class="QCheckBox" name="switchDefPos_7">
-             <property name="text">
-              <string>AIL</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QCheckBox" name="switchDefPos_4">
-             <property name="text">
-              <string>ID0</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="2">
-            <widget class="QCheckBox" name="switchDefPos_5">
-             <property name="text">
-              <string>ID1</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="3">
-            <widget class="QCheckBox" name="switchDefPos_6">
-             <property name="text">
-              <string>ID2</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="4" colspan="2">
-            <widget class="QCheckBox" name="switchDefPos_8">
-             <property name="text">
-              <string>GEA</string>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="0">
-            <widget class="QLabel" name="labelDefSwitch">
-             <property name="text">
-              <string>Default Switches</string>
-             </property>
-            </widget>
-           </item>
-          </layout>
+          <layout class="QGridLayout" name="gridLayout_7"/>
          </item>
          <item row="6" column="1">
           <widget class="QCheckBox" name="alarmwarnChkB">

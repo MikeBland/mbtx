@@ -5256,7 +5256,7 @@ void setTopVoltage( uint32_t volts ) ;
 void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
 
 static uint8_t RssiTestCount ;
-			setTopRssi( FrskyHubData[FR_RXRSI_COPY] ) ;
+			setTopRssi( TelemetryData[FR_RXRSI_COPY] ) ;
 			setTopVoltage( g_vbat100mV ) ;
 			setTopOpTime( Time.hour, Time.minute, Time.second ) ;
 			if ( ++RssiTestCount > 149 )
@@ -5393,7 +5393,7 @@ extern uint32_t i2c2_result() ;
         {
           limit = 122 ;	//m
         }
-				altitude = FrskyHubData[FR_ALT_BARO] + AltOffset ;
+				altitude = TelemetryData[FR_ALT_BARO] + AltOffset ;
 				altitude /= 10 ;									
 				if (g_model.FrSkyUsrProto == 0)  // Hub
 				{
@@ -5440,15 +5440,15 @@ extern uint32_t i2c2_result() ;
 			{
 				if ( g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
 				{
-					if ( ( FrskyHubData[FR_AMP_MAH] >> 6 ) >= g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
+					if ( ( TelemetryData[FR_AMP_MAH] >> 6 ) >= g_model.frskyAlarms.alarmData[0].frskyAlarmLimit )
 					{
 						putSystemVoice( SV_CAP_WARN, V_CAPACITY ) ;
 					}
 					uint32_t value ;
 					value = g_model.frskyAlarms.alarmData[0].frskyAlarmLimit ;
 					value <<= 6 ;
-					value = 100 - ( FrskyHubData[FR_AMP_MAH] * 100 / value ) ;
-					FrskyHubData[FR_FUEL] = value ;
+					value = 100 - ( TelemetryData[FR_AMP_MAH] * 100 / value ) ;
+					TelemetryData[FR_FUEL] = value ;
 				}
 			}
     }
@@ -5571,7 +5571,7 @@ extern uint32_t i2c2_result() ;
 			uint8_t redAlert = 0 ;
 			static uint8_t redCounter ;
 			static uint8_t orangeCounter ;
-			uint8_t rssiValue = FrskyHubData[FR_RXRSI_COPY] ;
+			uint8_t rssiValue = TelemetryData[FR_RXRSI_COPY] ;
 
 			if ( frskyStreaming )
 			{
@@ -5739,16 +5739,16 @@ extern uint32_t i2c2_result() ;
 					index += k ;
 					if ( telemItemValid( index ) )
 					{
-						total_volts += FrskyHubData[FR_CELL1+k] ;
-						if ( FrskyHubData[FR_CELL1+k] < low_cell )
+						total_volts += TelemetryData[FR_CELL1+k] ;
+						if ( TelemetryData[FR_CELL1+k] < low_cell )
 						{
-							low_cell = FrskyHubData[FR_CELL1+k] ;
+							low_cell = TelemetryData[FR_CELL1+k] ;
 						}
 						if ( AlarmCheckFlag > 1 )
 						{
 							if ( audio_sounded == 0 )
 							{
-		  	  		  if ( FrskyHubData[FR_CELL1+k] < g_model.frSkyVoltThreshold * 2 )
+		  	  		  if ( TelemetryData[FR_CELL1+k] < g_model.frSkyVoltThreshold * 2 )
 								{
 		  	  		    audioDefevent(AU_WARNING3);
 									audio_sounded = 1 ;
@@ -5757,10 +5757,10 @@ extern uint32_t i2c2_result() ;
 						}
 	  			}
 					// Now we have total volts available
-					FrskyHubData[FR_CELLS_TOT] = total_volts / 10 ;
+					TelemetryData[FR_CELLS_TOT] = total_volts / 10 ;
 					if ( low_cell < 440 )
 					{
-						FrskyHubData[FR_CELL_MIN] = low_cell ;
+						TelemetryData[FR_CELL_MIN] = low_cell ;
 					}
 				}
 			}
@@ -5794,7 +5794,7 @@ extern uint32_t i2c2_result() ;
 					int16_t vspd ;
 					if ( g_model.varioData.varioSource == 1 )
 					{
-						vspd = FrskyHubData[FR_VSPD] ;
+						vspd = TelemetryData[FR_VSPD] ;
 
 						if ( g_model.varioData.param > 1 )
 						{
@@ -5803,7 +5803,7 @@ extern uint32_t i2c2_result() ;
 					}
 					else if ( g_model.varioData.varioSource == 2 )
 					{
-						vspd = FrskyHubData[FR_A2_COPY] - 128 ;
+						vspd = TelemetryData[FR_A2_COPY] - 128 ;
 						if ( ( vspd < 3 ) && ( vspd > -3 ) )
 						{
 							vspd = 0 ;							

@@ -11,7 +11,7 @@ namespace Ui {
 class MixerDialog : public QDialog {
     Q_OBJECT
 public:
-		MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData, int flightModeGvars = 0 ) ;
+		MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData );
     ~MixerDialog();
 
 //    QString getComment();
@@ -26,6 +26,7 @@ private slots:
 
 private:
 		void addSource( uint8_t index, QString str = "" ) ;
+		void setCurveData() ;
     SKYMixData *md;
     Ui::MixerDialog *ui;
     QString * mixCommennt;
@@ -38,7 +39,10 @@ private:
     bool ValuesEditLock ;
 		uint8_t sourceMap[120] ;
 		uint8_t sourceMapSize ;
-		int fmGvars ;
+		uint8_t varsInUse ;
+		uint32_t curveFunction ;
+		int32_t curveValue ;
+		uint32_t diffIsGvar ;
 };
 
 #endif // MIXERDIALOG_H

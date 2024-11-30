@@ -1551,7 +1551,16 @@ void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint16_t mode)
 //		else
 //#endif
 		{
-			x = lcd_putcAtt(x, y, c, mode);
+#ifndef TOUCH
+			if ( mode & LUA_SMLSIZE )
+			{
+				x = lcd_putcSmall( x, y, c, mode ) ;
+			}
+			else
+#endif
+			{
+				x = lcd_putcAtt(x, y, c, mode);
+			}
 		}
     len--;
   }

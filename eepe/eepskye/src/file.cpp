@@ -998,11 +998,19 @@ uint32_t rawsaveFile( t_radioData *radioData, uint8_t *eeprom )
 		{
     	memset( &Eeprom_buffer, 0xFF, sizeof( Eeprom_buffer ) ) ;
 	 		Eeprom_buffer.header.sequence_no = 1 ;
-			Eeprom_buffer.header.data_size = sizeof(SKYModelData) ;
+			uint32_t copySize = sizeof(SKYModelData) ;
+			if ( copySize > 4088 )
+			{
+				if ( radioData->File8kBlocks == 0 )
+				{
+					copySize = 4088 ;
+				}				
+			}
+			Eeprom_buffer.header.data_size = copySize ;
 			Eeprom_buffer.header.flags = 0 ;
 			csum = byte_checksum( ( uint8_t *) &Eeprom_buffer.header, 7 ) ;
 			Eeprom_buffer.header.hcsum = csum ;
-			memcpy( &Eeprom_buffer.data.model_data, &radioData->models[i-1], sizeof(SKYModelData) ) ;
+			memcpy( &Eeprom_buffer.data.model_data, &radioData->models[i-1], copySize ) ;
 			if ( radioData->File8kBlocks )
 			{
 				memcpy( eeprom + 8192*i, &Eeprom_buffer, 8192 ) ;		// Write block 2*n

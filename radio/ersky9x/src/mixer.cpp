@@ -228,6 +228,10 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 			pFade->fadeRate = (25600 / 50) / time1 ;
 			pFade->fadePhases |= ( 1 << lastPhase ) | ( 1 << thisPhase ) ;
 		}
+		else
+		{
+			pFade->fadeScale[lastPhase] = 0 ;
+		}
 		lastPhase = thisPhase ;
 	}
 	att |= FADE_FIRST ;
@@ -410,11 +414,11 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 			if ( diffValue == 3 )
 			{
 				// New Gvar
-	#if MULTI_GVARS
-				curveParam = getGvarFm( curveParam, CurrentMixerPhase ) ;
-	#else
+//	#if MULTI_GVARS
+//				curveParam = getGvarFm( curveParam, CurrentMixerPhase ) ;
+//	#else
 				curveParam = getGvar( curveParam ) ;
-	#endif
+//	#endif
 	//						if ( curveParam < 0 )
 	//						{
 	//							curveParam = -curveParam - 1 ;							
@@ -513,157 +517,157 @@ int16_t mixApplyCurve( SKYMixData *md, int16_t v )
 
 void perOut(int16_t *chanOut, uint8_t att )
 {
-    int16_t  trimA[4];
-    uint16_t  anaCenter = 0;
+  int16_t  trimA[4];
+  uint16_t  anaCenter = 0;
 //    uint16_t d = 0;
-		int16_t trainerThrottleValue = 0 ;
-		uint8_t trainerThrottleValid = 0 ;
-		if ( check_soft_power() == POWER_TRAINER )		// On trainer power
-		{
-			TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0] ;
+	int16_t trainerThrottleValue = 0 ;
+	uint8_t trainerThrottleValid = 0 ;
+	if ( check_soft_power() == POWER_TRAINER )		// On trainer power
+	{
+		TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[0] ;
 			
 #ifdef PCBX9D
 #ifdef PCBX7
-			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) && ( tChan->source != TRAINER_BT ) )
+		if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) && ( tChan->source != TRAINER_BT ) )
 #else
-			if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) )
+		if ( ( tChan->source != TRAINER_SBUS ) && ( tChan->source != TRAINER_CPPM ) )
 #endif			
 #else
-			if ( ( tChan->source != TRAINER_BT ) && ( tChan->source != TRAINER_COM2 ) )
+		if ( ( tChan->source != TRAINER_BT ) && ( tChan->source != TRAINER_COM2 ) )
 #endif
-			{
-				att |= NO_TRAINER ;
-			}
+		{
+			att |= NO_TRAINER ;
 		}
-    {
-        uint8_t ele_stick, ail_stick ;
-        ele_stick = 1 ; //ELE_STICK ;
-        ail_stick = 3 ; //AIL_STICK ;
+	}
+  {
+    uint8_t ele_stick, ail_stick ;
+    ele_stick = 1 ; //ELE_STICK ;
+    ail_stick = 3 ; //AIL_STICK ;
 
-				uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
+		uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
 #ifdef PCBX7
-        for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
 #else
 #if defined(PCBX9LITE)
-        for( uint8_t i = 0 ; i < 5+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint8_t i = 0 ; i < 5+NumExtraPots ; i += 1 ) // calc Sticks
 #else
-        for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
 #endif
 #endif
-				{
+		{
             //Normalization  [0..2048] ->   [-1024..1024]
-					int16_t v = anaIn( i ) ;
-					v = scaleAnalog( v, i ) ;
+			int16_t v = anaIn( i ) ;
+			v = scaleAnalog( v, i ) ;
 
-						uint8_t index = i ;
-						if ( i < 4 )
-						{
-            	phyStick[i] = v >> 4 ;
-							index = stickScramble[stickIndex+i] ;
-						}
-            calibratedStick[index] = v; //for show in expo
+			uint8_t index = i ;
+			if ( i < 4 )
+			{
+        phyStick[i] = v >> 4 ;
+				index = stickScramble[stickIndex+i] ;
+			}
+      calibratedStick[index] = v; //for show in expo
 
-						// Filter beep centre
-						{
-							int8_t t = v/16 ;
-							uint16_t mask = 1 << index ;
-							if ( t < 0 )
-							{
-								t = -t ;		//abs(t)
-							}
-							if ( t <= 1 )
-							{
-            		anaCenter |= ( t == 0 ) ? mask : bpanaCenter & mask ;
-							}
-						}
-
-            if(i<4) { //only do this for sticks
-                //===========Trainer mode================
-                if (!(att&NO_TRAINER) && g_model.traineron)
-								{
-									TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[index] ;
-                  if (tChan->mode && getSwitch00(tChan->swtch))
-									{
-										if ( ppmInValid )
-										{
-                      uint8_t chStud = tChan->srcChn ;
-                      int32_t vStud  = (g_ppmIns[chStud] - tChan->calib) /* *2 */ ;
-                      vStud *= tChan->studWeight ;
-                      vStud /= 50 ;
-                      switch ((uint8_t)tChan->mode)
-											{
-                        case 1: v += vStud;   break; // add-mode
-                        case 2: v  = vStud;   break; // subst-mode
-                      }
-											if ( index == 2 )
-											{
-												trainerThrottleValue = vStud ;
-												trainerThrottleValid = 1 ;
-											}												 
-										}
-									}
-									
-                }
-
-
-								if ( att & FADE_FIRST )
-								{
-    		        	rawSticks[index] = v; //set values for mixer
-								}
-								v = calcExpo( index, v ) ;
-
-                trimA[i] = getTrimValueAdd( CurrentMixerPhase, i )*2 ; //    if throttle trim -> trim low end
-            }
-						if ( att & FADE_FIRST )
-						{
-							if ( i < 7 )
-							{
-        	    	anas[index] = v ; //set values for mixer
-							}
-						}
-			    	if(att&NO_INPUT)
-						{ //zero input for setStickCenter()
-		      	  if ( i < 4 )
-							{
-    	    	    if(!IS_THROTTLE(index))
-								{
-									if ( ( v > (RESX/100 ) ) || ( v < -(RESX/100) ) )
-									{
-				            anas[index] = 0; //set values for mixer
-									}
-          	      trimA[index] = 0;
-      	  	    }
-        				anas[i+PPM_BASE] = 0;
-        			}
-    				}
-        }
-				//    if throttle trim -> trim low end
-        if(g_model.thrTrim)
+					// Filter beep centre
+			{
+				int8_t t = v/16 ;
+				uint16_t mask = 1 << index ;
+				if ( t < 0 )
 				{
-					int8_t ttrim ;
-					ttrim = getTrimValueAdd( CurrentMixerPhase, 2 ) ;
-					if(throttleReversed())
-					{
-						ttrim = -ttrim ;
-					}
-		      int16_t tmp = calc100toRESX( 100 - g_model.throttleIdleScale ) * 2 ;	// 0 to 2 * RESX
-					if ( ( anas[2] + RESX) > tmp )
-					{
-						trimA[2] = 0 ;
-					}
-					else
-					{
-						tmp = ( tmp - ( anas[2] + RESX ) ) * RESX / tmp ;
-	         	trimA[2] = ((int32_t)ttrim+125) * tmp / (RESX) ;
-					}
+					t = -t ;		//abs(t)
 				}
-//      for(uint32_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = getGvarFm( i, CurrentMixerPhase ) * 1024 / 100 ;
-//      for(uint32_t i=0;i<EXTRA_GVARS;i++) anas[i+MAX_GVARS+1+MIX_3POS] = getGvarFm( i+MAX_GVARS, CurrentMixerPhase ) * 1024 / 100 ;
-		
+				if ( t <= 1 )
+				{
+         	anaCenter |= ( t == 0 ) ? mask : bpanaCenter & mask ;
+				}
+			}
+
+      if(i<4)
+			{ //only do this for sticks
+        //===========Trainer mode================
+        if (!(att&NO_TRAINER) && g_model.traineron)
+				{
+					TrainerChannel *tChan = &g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[index] ;
+          if (tChan->mode && getSwitch00(tChan->swtch))
+					{
+						if ( ppmInValid )
+						{
+              uint8_t chStud = tChan->srcChn ;
+              int32_t vStud  = (g_ppmIns[chStud] - tChan->calib) /* *2 */ ;
+              vStud *= tChan->studWeight ;
+              vStud /= 50 ;
+              switch ((uint8_t)tChan->mode)
+							{
+                case 1: v += vStud;   break; // add-mode
+                case 2: v  = vStud;   break; // subst-mode
+              }
+							if ( index == 2 )
+							{
+								trainerThrottleValue = vStud ;
+								trainerThrottleValid = 1 ;
+							}												 
+						}
+					}
+        }
+
+
+				if ( att & FADE_FIRST )
+				{
+	        rawSticks[index] = v; //set values for mixer
+				}
+				v = calcExpo( index, v ) ;
+          
+				trimA[i] = getTrimValueAdd( CurrentMixerPhase, i )*2 ; //    if throttle trim -> trim low end
+      }
 			if ( att & FADE_FIRST )
 			{
+				if ( i < 7 )
+				{
+        	anas[index] = v ; //set values for mixer
+				}
+			}
+			if(att&NO_INPUT)
+			{ //zero input for setStickCenter()
+		    if ( i < 4 )
+				{
+    	    if(!IS_THROTTLE(index))
+					{
+						if ( ( v > (RESX/100 ) ) || ( v < -(RESX/100) ) )
+						{
+				      anas[index] = 0; //set values for mixer
+						}
+          	trimA[index] = 0;
+      	  }
+        	anas[i+PPM_BASE] = 0;
+        }
+    	}
+    }
+				//    if throttle trim -> trim low end
+    if(g_model.thrTrim)
+		{
+			int8_t ttrim ;
+			ttrim = getTrimValueAdd( CurrentMixerPhase, 2 ) ;
+			if(throttleReversed())
+			{
+				ttrim = -ttrim ;
+			}
+		  int16_t tmp = calc100toRESX( 100 - g_model.throttleIdleScale ) * 2 ;	// 0 to 2 * RESX
+			if ( ( anas[2] + RESX) > tmp )
+			{
+				trimA[2] = 0 ;
+			}
+			else
+			{
+				tmp = ( tmp - ( anas[2] + RESX ) ) * RESX / tmp ;
+	      trimA[2] = ((int32_t)ttrim+125) * tmp / (RESX) ;
+			}
+		}
+//  for(uint32_t i=0;i<MAX_GVARS;i++) anas[i+MIX_3POS] = getGvarFm( i, CurrentMixerPhase ) * 1024 / 100 ;
+//  for(uint32_t i=0;i<EXTRA_GVARS;i++) anas[i+MAX_GVARS+1+MIX_3POS] = getGvarFm( i+MAX_GVARS, CurrentMixerPhase ) * 1024 / 100 ;
+		
+		if ( att & FADE_FIRST )
+		{
 #ifdef INPUTS
-				evalAllInputs() ;
+			evalAllInputs() ;
 #endif
 				
 //void evalTrims()
@@ -682,121 +686,121 @@ void perOut(int16_t *chanOut, uint8_t att )
 				
 				 
 
-        //===========BEEP CENTER================
-        anaCenter &= g_model.beepANACenter;
-        if(((bpanaCenter ^ anaCenter) & anaCenter)) audioDefevent(AU_POT_STICK_MIDDLE);
-        bpanaCenter = anaCenter;
+      //===========BEEP CENTER================
+      anaCenter &= g_model.beepANACenter;
+      if(((bpanaCenter ^ anaCenter) & anaCenter)) audioDefevent(AU_POT_STICK_MIDDLE);
+      bpanaCenter = anaCenter;
 
-				// Set up anas[] array
-        anas[MIX_MAX-1]  = RESX;     // MAX
-        anas[MIX_FULL-1] = RESX;     // FULL
+			// Set up anas[] array
+      anas[MIX_MAX-1]  = RESX;     // MAX
+      anas[MIX_FULL-1] = RESX;     // FULL
 #if defined(PCBSKY) || defined(PCB9XT)
-        anas[MIX_3POS-1] = keyState(SW_ID0) ? -1024 : (keyState(SW_ID1) ? 0 : 1024) ;
+      anas[MIX_3POS-1] = keyState(SW_ID0) ? -1024 : (keyState(SW_ID1) ? 0 : 1024) ;
 #endif
 #ifdef PCBX9D
-        anas[MIX_3POS-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
+      anas[MIX_3POS-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
 #endif
-        for(uint8_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
-        for(uint8_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
+      for(uint8_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
+      for(uint8_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
 //        for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
 //        for(uint8_t i=0;i<NUM_SKYCHNOUT;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
 //        for(uint8_t i=NUM_SKYCHNOUT;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i-NUM_SKYCHNOUT+3+MIX_3POS] = chans[i]; //other mixes previous outputs
 
-				int16_t heliEle = anas[ele_stick] ;	// May need Input
-				int16_t heliAil = anas[ail_stick] ;	// May need Input
+			int16_t heliEle = anas[ele_stick] ;	// May need Input
+			int16_t heliAil = anas[ail_stick] ;	// May need Input
 
-        //===========Swash Ring================
-        if(g_model.swashRingValue)
-        {
-          uint32_t v = ((int32_t)heliEle*heliEle + (int32_t)heliAil*heliAil);
-		      int16_t tmp = calc100toRESX(g_model.swashRingValue) ;
+      //===========Swash Ring================
+      if(g_model.swashRingValue)
+      {
+        uint32_t v = ((int32_t)heliEle*heliEle + (int32_t)heliAil*heliAil);
+		    int16_t tmp = calc100toRESX(g_model.swashRingValue) ;
           
-					uint32_t q ;
-          q = (int32_t)tmp * tmp ;
-          if(v>q)
-          {
-            uint16_t d = isqrt32(v);
-            heliEle = (int32_t)heliEle*tmp/((int32_t)d) ;
-            heliAil = (int32_t)heliAil*tmp/((int32_t)d) ;
-          }
+				uint32_t q ;
+        q = (int32_t)tmp * tmp ;
+        if(v>q)
+        {
+          uint16_t d = isqrt32(v);
+          heliEle = (int32_t)heliEle*tmp/((int32_t)d) ;
+          heliAil = (int32_t)heliAil*tmp/((int32_t)d) ;
         }
+      }
 
 #define REZ_SWASH_X(x)  ((x) - (x)/8 - (x)/128 - (x)/512)   //  1024*sin(60) ~= 886
 #define REZ_SWASH_Y(x)  ((x))   //  1024 => 1024
 
-        if(g_model.swashType)
-        {
-            int16_t vp = 0 ;
-            int16_t vr = 0 ;
+      if(g_model.swashType)
+      {
+        int16_t vp = 0 ;
+        int16_t vr = 0 ;
 
-            if( !(att & NO_INPUT) )  //zero input for setStickCenter()
-						{
-	            vp = heliEle+trimA[ele_stick] ;	// May need virtual trim
-  	          vr = heliAil+trimA[ail_stick] ;	// May need virtual trim
-							TrimInUse[ele_stick] |= 1 ;
-							TrimInUse[ail_stick] |= 1 ;
-						}
-
-            int16_t vc = 0;
-            if(g_model.swashCollectiveSource)
-						{
-							if ( g_model.swashCollectiveSource >= EXTRA_POTS_START )
-							{
-								vc = calibratedStick[g_model.swashCollectiveSource-EXTRA_POTS_START+7] ;
-							}
-							else
-							{
-              	vc = anas[g_model.swashCollectiveSource-1];
-							}
-						}
-
-            if(g_model.swashInvertELE) vp = -vp;
-            if(g_model.swashInvertAIL) vr = -vr;
-            if(g_model.swashInvertCOL) vc = -vc;
-
-            switch (( uint8_t)g_model.swashType)
-            {
-            case (SWASH_TYPE_120):
-                vp = REZ_SWASH_Y(vp);
-                vr = REZ_SWASH_X(vr);
-                anas[MIX_CYC1-1] = vc - vp;
-                anas[MIX_CYC2-1] = vc + vp/2 + vr;
-                anas[MIX_CYC3-1] = vc + vp/2 - vr;
-                break;
-            case (SWASH_TYPE_120X):
-                vp = REZ_SWASH_X(vp);
-                vr = REZ_SWASH_Y(vr);
-                anas[MIX_CYC1-1] = vc - vr;
-                anas[MIX_CYC2-1] = vc + vr/2 + vp;
-                anas[MIX_CYC3-1] = vc + vr/2 - vp;
-                break;
-            case (SWASH_TYPE_140):
-                vp = REZ_SWASH_Y(vp);
-                vr = REZ_SWASH_Y(vr);
-                anas[MIX_CYC1-1] = vc - vp;
-                anas[MIX_CYC2-1] = vc + vp + vr;
-                anas[MIX_CYC3-1] = vc + vp - vr;
-                break;
-            case (SWASH_TYPE_90):
-                vp = REZ_SWASH_Y(vp);
-                vr = REZ_SWASH_Y(vr);
-                anas[MIX_CYC1-1] = vc - vp;
-                anas[MIX_CYC2-1] = vc + vr;
-                anas[MIX_CYC3-1] = vc - vr;
-                break;
-            default:
-                break;
-            }
-	        }
-  		  }
-
-    		if(MixTick10ms)
+        if( !(att & NO_INPUT) )  //zero input for setStickCenter()
 				{
-					inactivityCheck() ;
-					trace(); //trace thr 0..32  (/32)
+	        vp = heliEle+trimA[ele_stick] ;	// May need virtual trim
+  	      vr = heliAil+trimA[ail_stick] ;	// May need virtual trim
+					TrimInUse[ele_stick] |= 1 ;
+					TrimInUse[ail_stick] |= 1 ;
 				}
-			}
-    memset(chans,0,sizeof(chans));        // All outputs to 0
+
+        int16_t vc = 0;
+        if(g_model.swashCollectiveSource)
+				{
+					if ( g_model.swashCollectiveSource >= EXTRA_POTS_START )
+					{
+						vc = calibratedStick[g_model.swashCollectiveSource-EXTRA_POTS_START+7] ;
+					}
+					else
+					{
+            vc = anas[g_model.swashCollectiveSource-1];
+					}
+				}
+
+        if(g_model.swashInvertELE) vp = -vp;
+        if(g_model.swashInvertAIL) vr = -vr;
+        if(g_model.swashInvertCOL) vc = -vc;
+
+        switch (( uint8_t)g_model.swashType)
+        {
+        case (SWASH_TYPE_120):
+            vp = REZ_SWASH_Y(vp);
+            vr = REZ_SWASH_X(vr);
+            anas[MIX_CYC1-1] = vc - vp;
+            anas[MIX_CYC2-1] = vc + vp/2 + vr;
+            anas[MIX_CYC3-1] = vc + vp/2 - vr;
+            break;
+        case (SWASH_TYPE_120X):
+            vp = REZ_SWASH_X(vp);
+            vr = REZ_SWASH_Y(vr);
+            anas[MIX_CYC1-1] = vc - vr;
+            anas[MIX_CYC2-1] = vc + vr/2 + vp;
+            anas[MIX_CYC3-1] = vc + vr/2 - vp;
+            break;
+        case (SWASH_TYPE_140):
+            vp = REZ_SWASH_Y(vp);
+            vr = REZ_SWASH_Y(vr);
+            anas[MIX_CYC1-1] = vc - vp;
+            anas[MIX_CYC2-1] = vc + vp + vr;
+            anas[MIX_CYC3-1] = vc + vp - vr;
+            break;
+        case (SWASH_TYPE_90):
+            vp = REZ_SWASH_Y(vp);
+            vr = REZ_SWASH_Y(vr);
+            anas[MIX_CYC1-1] = vc - vp;
+            anas[MIX_CYC2-1] = vc + vr;
+            anas[MIX_CYC3-1] = vc - vr;
+            break;
+        default:
+            break;
+        }
+	    }
+  	}
+
+   	if(MixTick10ms)
+		{
+			inactivityCheck() ;
+			trace(); //trace thr 0..32  (/32)
+		}
+	}
+  memset(chans,0,sizeof(chans));        // All outputs to 0
 
 
     uint8_t mixWarning = 0;
@@ -847,11 +851,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 						if ( lweight > 350 )
 						{
 							lweight -= 360 ;
-	#if MULTI_GVARS
-							lweight = getGvarFm( lweight, CurrentMixerPhase ) ;
-	#else
+//	#if MULTI_GVARS
+//							lweight = getGvarFm( lweight, CurrentMixerPhase ) ;
+//	#else
 							lweight = getGvar( lweight ) ;
-	#endif
+//	#endif
 						}
 					}
 				}
@@ -893,11 +897,11 @@ void perOut(int16_t *chanOut, uint8_t att )
 						if ( loffset > 350 )
 						{
 							loffset -= 360 ;
-	#if MULTI_GVARS
-							loffset = getGvarFm( loffset, CurrentMixerPhase ) ;
-	#else
+//	#if MULTI_GVARS
+//							loffset = getGvarFm( loffset, CurrentMixerPhase ) ;
+//	#else
 							loffset = getGvar( loffset ) ;
-	#endif
+//	#endif
 						}
 					}
 				}
@@ -1108,11 +1112,11 @@ extern uint8_t CalcScaleNest ;
             }
 						if ( ( k >= MIX_3POS ) && ( k < MIX_3POS + MAX_GVARS ) )
 						{
-#if MULTI_GVARS
-							v = getGvarFm( k - MIX_3POS, CurrentMixerPhase ) * 1024 / 100 ;
-#else
+//#if MULTI_GVARS
+//							v = getGvarFm( k - MIX_3POS, CurrentMixerPhase ) * 1024 / 100 ;
+//#else
 							v = getGvar( k - MIX_3POS ) * 1024 / 100 ;
-#endif
+//#endif
 						}
             if (k > MIX_3POS+MAX_GVARS + NUM_SCALERS)
 						{

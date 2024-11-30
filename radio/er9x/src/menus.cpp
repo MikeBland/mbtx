@@ -6571,11 +6571,13 @@ extern uint8_t AfCapture ;
 		break ;
   }
   TITLE("DEBUG") ;
-extern uint16_t TelRxCount ;
 extern uint16_t Uecount ;
+ #if defined(CPUM128) || defined(CPUM2561)
+extern uint16_t TelRxCount ;
 	lcd_puts_Pleft( 7*FH, PSTR("TelRxCount") ) ;
  	lcd_outhex4( 12*FW,  7*FH, TelRxCount ) ;
- 	lcd_outhex4( 17*FW,  7*FH, Uecount ) ;
+#endif 	
+	lcd_outhex4( 17*FW,  7*FH, Uecount ) ;
 
 void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
 extern uint8_t AfDebug[] ;
@@ -6719,6 +6721,11 @@ extern uint8_t AfhdsData[2] ;
   	lcd_outhex4( 30, 2*FH, AfhdsData[1] ) ;
 #endif
 
+#if defined(CPUM2561)
+  	lcd_outhex4( 0,  2*FH, g_model.switchWarningStates ) ;
+  	lcd_outhex4( 40, 2*FH, g_model.exSwitchWarningStates ) ;
+#endif
+
 //#if defined(CPUM2561)
 //extern uint8_t DsmCopyData[] ;
 //void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val) ;
@@ -6769,9 +6776,11 @@ extern uint8_t AfhdsData[2] ;
     putsTimeNoAtt(   13*FW, FH*0, TimeGlobals.s_timeCumTot );
 
 
-extern uint8_t TelRxCount ;
+// #if defined(CPUM128) || defined(CPUM2561)
+//extern uint8_t TelRxCount ;
 //extern uint16_t Afcount ;
-  	lcd_outhex4( 0*FW,  7*FH, TelRxCount ) ;
+//  	lcd_outhex4( 0*FW,  7*FH, TelRxCount ) ;
+//#endif
 // 		lcd_outhex4( 6*FW,  7*FH, Afcount ) ;
 
 // Temp stack trace display
@@ -12446,6 +12455,7 @@ extern uint8_t getExpectedSwitchState( uint8_t i ) ;
       	    STORE_MODELVARS ;
 					}
 				}
+//				lcd_outhex4( 0, 7*FH, (g_model.exSwitchWarningStates << 8) | (uint8_t)g_model.switchWarningStates ) ;
   			y += FH ;
 				subN += 1 ;
 		

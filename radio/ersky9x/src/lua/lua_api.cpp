@@ -686,7 +686,7 @@ Get RSSI value as well as low and critical RSSI alarm levels (in dB)
 static int luaGetRSSI(lua_State * L)
 {
 	int8_t offset ;
-  lua_pushunsigned(L, FrskyHubData[FR_RXRSI_COPY]);
+  lua_pushunsigned(L, TelemetryData[FR_RXRSI_COPY]);
 	offset = rssiOffsetValue( 0 ) ;
   lua_pushunsigned(L, g_model.rssiOrange + offset);
 	offset = rssiOffsetValue( 1 ) ;

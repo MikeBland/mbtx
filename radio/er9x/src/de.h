@@ -79,7 +79,8 @@
 #define STR_THR_NOT_IDLE   "Gas nicht im Ruhezstd"
 #define STR_RST_THROTTLE   "setze auf Standgas"
 #define STR_PRESS_KEY_SKIP "bel. Taste druecken"
-#define STR_ALARMS_DISABLE "Alarm ist deaktiviert"
+//#define STR_ALARMS_DISABLE "Alarm ist deaktiviert"
+#define STR_ALARMS_DISABLE "Alarm deaktiviert"
 #define STR_OLD_VER_EEPROM " EEPROM ist veraltet   TESTE EINSTELL/KALIB"
 #define STR_RESET_SWITCHES "Schalter ausschalten"
 #define STR_LOADING        "LAEDT"
@@ -206,7 +207,7 @@
 // CHR_d d for differential
 #define CHR_d              'd'
 #define STR_EXPO_DR        "Expo/Dr"
-#define STR_4DR_HIMIDLO		 "\008\004DR Hoch\004DR Mitt\004DR Tief"
+#define STR_4DR_HIMIDLO		 "\004HochMittTief"
 #define STR_4DR_MID        "\004DR Mittel"
 #define STR_4DR_LOW        "\004DR Tief"
 #define STR_4DR_HI         "\004DR Hoch"

@@ -114,14 +114,14 @@ private slots:
 		void on_enablePpmsimChkB_stateChanged(int );
 		void on_internalFrskyAlarmChkB_stateChanged(int );
 		void on_backlightinvertChkB_stateChanged(int );
-    void on_switchDefPos_1_stateChanged(int );
-    void on_switchDefPos_2_stateChanged(int );
-    void on_switchDefPos_3_stateChanged(int );
-    void on_switchDefPos_4_stateChanged(int );
-    void on_switchDefPos_5_stateChanged(int );
-    void on_switchDefPos_6_stateChanged(int );
-    void on_switchDefPos_7_stateChanged(int );
-    void on_switchDefPos_8_stateChanged(int );
+//    void on_switchDefPos_1_stateChanged(int );
+//    void on_switchDefPos_2_stateChanged(int );
+//    void on_switchDefPos_3_stateChanged(int );
+//    void on_switchDefPos_4_stateChanged(int );
+//    void on_switchDefPos_5_stateChanged(int );
+//    void on_switchDefPos_6_stateChanged(int );
+//    void on_switchDefPos_7_stateChanged(int );
+//    void on_switchDefPos_8_stateChanged(int );
 		
 		void on_StickRevLH_stateChanged(int ) ;
 		void on_StickRevLV_stateChanged(int ) ;

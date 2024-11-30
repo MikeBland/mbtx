@@ -4735,11 +4735,11 @@ extern uint32_t MixerRate ;
 		}
 		else if ( number == -2 )	// Latitude
 		{
-			return convertGpsValue( FrskyHubData[FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], FrskyHubData[FR_LAT_N_S] == 'S' ) ;
+			return convertGpsValue( TelemetryData[FR_GPS_LAT], TelemetryData[FR_GPS_LATd], TelemetryData[FR_LAT_N_S] == 'S' ) ;
 		}
 		else if ( number == -3 )	// Longitude
 		{
-			return convertGpsValue( FrskyHubData[FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], FrskyHubData[FR_LONG_E_W] == 'W' ) ;
+			return convertGpsValue( TelemetryData[FR_GPS_LONG], TelemetryData[FR_GPS_LONGd], TelemetryData[FR_LONG_E_W] == 'W' ) ;
 		}
 #endif
 	}

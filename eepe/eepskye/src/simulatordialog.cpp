@@ -8,6 +8,7 @@
 #include "qextserialenumerator.h"
 #include "qextserialport.h"
 #include <QMessageBox>
+#include "vars.h"
 //#include <QSound>
 
 
@@ -228,7 +229,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 			{
 				y = z * 5 ;
 			}
-			g_model.gvars[5].gvar = y ;
+//			g_model.gvars[5].gvar = y ;
 		}
 		else if ( y < 0 )
 		{
@@ -245,7 +246,7 @@ void simulatorDialog::processSwitchTimer( uint32_t i )
 				{
 					y = -(z*5)-1 ;
 				}
-				g_model.gvars[6].gvar = y ;
+//				g_model.gvars[6].gvar = y ;
 			}
 		}
 		else  // if ( CsTimer_lastVal[i] > 0 )
@@ -1418,6 +1419,8 @@ void simulatorDialog::loadParams(const EEGeneral gg, const SKYModelData gm, stru
 
 		configSwitches() ;
     setupTimer();
+    initVars() ;
+
 		if ( WelcomePlayed == 0 )
 		{
 			voiceDisplay( "WELCOME" ) ;
@@ -1744,11 +1747,11 @@ const uint8_t stickScramble[] =
 
 void simulatorDialog::processAdjusters()
 {
-static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST_SKY][2] ;
-  for ( uint32_t i = 0 ; i < NUM_GVAR_ADJUST_SKY ; i += 1 )
+static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST_SKY + EXTRA_GVAR_ADJUST][2] ;
+  for ( uint32_t i = 0 ; i < + + EXTRA_GVAR_ADJUST ; i += 1 )
 	{
 		GvarAdjust *pgvaradj ;
-		pgvaradj = &g_model.gvarAdjuster[i] ;
+    pgvaradj = ( i >= NUM_GVAR_ADJUST_SKY ) ? &g_model.egvarAdjuster[i - NUM_GVAR_ADJUST_SKY] : &g_model.gvarAdjuster[i] ;
 		uint32_t idx = pgvaradj->gvarIndex ;
 	
 		int8_t sw0 = pgvaradj->swtch ;
@@ -1764,7 +1767,7 @@ static uint8_t GvAdjLastSw[NUM_GVAR_ADJUST_SKY][2] ;
 			}
 			GvAdjLastSw[i][0] = sw0 ;
 		}
-		if ( pgvaradj->function > 3 )
+		if ( ( pgvaradj->function > 3 ) && ( pgvaradj->function < 7 ) )
 		{
 			sw1 = pgvaradj->switch_value ;
 			if ( sw1 )
@@ -1913,12 +1916,16 @@ int8_t simulatorDialog::getGvarSourceValue( uint8_t src )
 	{
     value = calc_scaler( src - ( ((txType==1) || (txType == 2)) ? 38 : 37 ) ) ;
 	}
-  else// if ( src <= ( ((txType==1) || (txType == 2)) ? 45+24 : 44+24 ) )	// Scalers
+  else if ( src <= ( ((txType==1) || (txType == 2)) ? 45+24 : 44+24 ) )	// Scalers
 	{ // Outputs
 		int32_t x ;
     x = chanOut[src-( ((txType==1) || (txType == 2)) ? 46 : 45 )] ;
 		x *= 100 ;
 		value = x / 1024 ;
+	}
+	else if ( src <= ( ((txType==1) || (txType == 2)) ? 45+24+4 : 44+24+4 ) )	// Scalers
+	{
+		value = g_eeGeneral.radioVar[src-( ((txType==1) || (txType == 2)) ? 46+24 : 45+24 )] ;
 	}
 	if ( value < -125 )
 	{
@@ -3742,9 +3749,9 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 		
 		for(uint8_t i=0;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i];// - g_eeGeneral.ppmInCalib[i]; //add ppm channels
     for(uint8_t i=0;i<NUM_SKYCHNOUT;i++) anas[i+Chout_base] = chans[i]; //other mixes previous outputs
-#if GVARS
-        for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+Mix_3pos] = g_model.gvars[i].gvar * 1024 / 100 ;
-#endif
+//#if GVARS
+//        for(uint8_t i=0;i<MAX_GVARS;i++) anas[i+Mix_3pos] = g_model.gvars[i].gvar * 1024 / 100 ;
+//#endif
 
 		int16_t heliEle = anas[ele_stick] ;
 		int16_t heliAil = anas[ail_stick] ;
@@ -3987,7 +3994,7 @@ void simulatorDialog::perOut(bool init, uint8_t att)
 				}
 				int16_t mixoffset = loffset ;
         
-				if((md.destCh==0) || (md.destCh>NUM_SKYCHNOUT)) break;
+				if((md.destCh==0) || (md.destCh>NUM_SKYCHNOUT+EXTRA_SKYCHANNELS)) break;
 
         //Notice 0 = NC switch means not used -> always on line
         int16_t v  = 0;
@@ -5376,6 +5383,34 @@ int16_t simulatorDialog::getInputSourceValue( struct te_InputsData *pinput )
   return 0 ;
 }
 
+void simulatorDialog::initVars()
+{
+	buildVarOffsetTable(&g_model) ;
+	// Also need to note Action switch positions
+	uint32_t i ;
+	uint32_t j ;
+	struct t_varPack *pvar ;
+	struct t_valVarPack *pvalue ;
+	struct t_actVarPack	*pAction ;
+	for ( i = 0 ; i < NUM_VARS ; i += 1 )
+	{
+    pvar = getVarAddress( i, &g_model ) ;
+		if ( pvar->numAct )
+		{
+			pvalue = (struct t_valVarPack *) (pvar+1) ;	// First value
+			pAction = (struct t_actVarPack *)	(pvalue + pvar->numOpt) ;
+			for ( j = 0 ; j < pvar->numAct ; j += 1 )
+			{
+				if ( pAction->category == 1 )		// A switch
+				{
+					pAction->swPosition = getSwitch( pAction->item,0,0 ) ;
+				}
+				pAction->timer = 0 ;
+				pAction->tFlag = 0 ;
+			}
+		}
+	}
+}
 
 
 

@@ -1152,6 +1152,62 @@ const char *ee32BackupModel( uint8_t modelIndex )
   return "MODEL SAVED" ;
 }
 
+const char *ee32DumpModel( uint8_t modelIndex )
+{
+	FRESULT result ;
+  DIR archiveFolder ;
+	extern FIL g_dumpFile ;
+//  FIL archiveFile ;
+//  UINT written ;
+	uint8_t filename[50] ;
+	uint32_t res ;
+
+	setModelAFilename( filename, modelIndex-1 ) ;
+
+	memset(( uint8_t *)&TempModelData, 0, sizeof(g_model));
+	res = xloadFile( (char *)filename, (uint8_t *)&TempModelData, sizeof(g_model)) ;
+	if ( res == 0 )
+	{
+		return "FAILED" ;
+	}
+	// Build filename
+	setModelFilename( filename, modelIndex, FILE_TYPE_TEXT ) ;
+
+  result = f_opendir(&archiveFolder, "/MODELS") ;
+  if (result != FR_OK)
+	{
+    if (result == FR_NO_PATH)
+		{
+			WatchdogTimeout = 300 ;		// 3 seconds
+      result = f_mkdir("/MODELS") ;
+    	if (result != FR_OK)
+			{
+      	return "SDCARD ERROR" ;
+			}
+		}
+  }
+	
+  result = f_open( &g_dumpFile, (TCHAR *)filename, FA_OPEN_ALWAYS | FA_CREATE_ALWAYS | FA_WRITE) ;
+  if (result != FR_OK)
+	{
+   	return "CREATE ERROR" ;
+  }
+
+	extern SKYModelData *Pmodel ;
+	Pmodel = &TempModelData ;
+extern void dumpModel( uint8_t physicalRadioType ) ;
+	dumpModel( g_eeGeneral.physicalRadioType ) ;
+  
+	f_close(&g_dumpFile) ;
+  if (result != FR_OK ) //	|| written != size)
+	{
+    return "WRITE ERROR" ;
+  }
+
+  return "MODEL Dumped" ;
+}
+
+
 const char *openBackupEeprom()
 {
   return "NOT DONE" ;

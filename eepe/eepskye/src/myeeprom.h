@@ -71,6 +71,10 @@
 #define MUSIC_DIR_LENGTH		8
 #define PLAYLIST_COUNT			16
 
+#define NUM_VARS	24
+#define VAR_STORAGE_SIZE	((4*4+12)*NUM_VARS)
+#define VAR_STORAGE_UINTS	(VAR_STORAGE_SIZE/4)
+
 //OBSOLETE - USE ONLY MDVERS NOW
 //#define GENERAL_MYVER_r261 3
 //#define GENERAL_MYVER_r365 4
@@ -379,12 +383,17 @@ PACK(typedef struct t_EEGeneral {
 	uint8_t disableBtnLong:1 ;
 	uint8_t enableEncMain:1 ;
 	uint8_t pageButton:1 ;
-	uint8_t flightModeGvars:1 ;
+#ifdef JUNGLECAM
+	uint8_t jungleMode:1 ;
 	uint8_t spare7:4 ;
+#else
+	uint8_t spare7:5 ;
+#endif
 	uint8_t radioRegistrationID[8] ;
   int8_t  screenShotSw ;
 	uint8_t selectedTheme ;
 	themeData theme[4] ;
+	int16_t radioVar[4] ;
 	uint8_t		forExpansion[20] ;	// Allows for extra items not yet handled
 }) EEGeneral;
 #endif
@@ -604,7 +613,9 @@ PACK(typedef struct te_MixData {
   uint8_t extWeight:2 ;
   uint8_t extOffset:2 ;
 	uint8_t	extDiff:1 ;
-	uint8_t	res:3 ;
+	uint8_t	varForWeight:1 ;
+	uint8_t	varForOffset:1 ;
+	uint8_t	varForExpo:1 ;
 	uint8_t	res1 ;
 }) SKYMixData;
 
@@ -685,7 +696,7 @@ PACK(typedef struct t_FuncSwData { // Function Switches data
   char param[6];
   uint8_t delay;
   uint8_t spare;
-}) FuncSwData;
+}) FunctionData;
 
 PACK(typedef struct t_Vario
 {
@@ -878,7 +889,9 @@ PACK(struct te_InputsData
 	uint8_t side:2 ;	// ---, x>0, x<0
 	
 	uint8_t chn:5 ;
-	uint8_t spare2:3;
+	uint8_t varForWeight:1 ;
+	uint8_t varForOffset:1 ;
+	uint8_t varForCurve:1 ;
 
 //  NOBACKUP(char name[LEN_EXPOMIX_NAME]);
   uint8_t flightModes ;
@@ -952,8 +965,9 @@ PACK(typedef struct te_ModelData {
 	FrSkyAlarmData frskyAlarms ;
 // Add 6 bytes for custom telemetry screen
 	uint8_t		customDisplayIndex[6] ;
-	int16_t mGvars[MAX_PHASES+EXTRA_PHASES+1][MAX_GVARS+EXTRA_GVARS] ;
-	uint8_t functionSpare[16] ;
+//	int16_t mGvars[MAX_PHASES+EXTRA_PHASES+1][MAX_GVARS+EXTRA_GVARS] ;
+//	uint8_t functionSpare[16] ;
+  FunctionData   functionData[NUM_FSW];			// Currently unused (16*10 = 160 bytes)
 	PhaseData phaseData[MAX_PHASES] ;
 	GvarData	gvars[MAX_GVARS] ;
 	uint8_t   numBlades ;					// RPM scaling
@@ -1068,8 +1082,9 @@ PACK(typedef struct te_ModelData {
 	struct t_access Access[2] ;
 	uint8_t	customTelemetryNames2[16] ;
 	PhaseData xphaseData ;	// 18 bytes long
-	uint8_t flightModeGvars:1 ;
-	uint8_t sparey:7 ;
+	uint8_t notflightModeGvars:1 ;
+	uint8_t vars:1 ;
+	uint8_t sparey:6 ;
 	uint8_t sparez ;
 	struct t_hiResDisplay hiresDisplay[2] ;
 	struct te_InputsData inputs[NUM_INPUT_LINES] ;
@@ -1077,8 +1092,10 @@ PACK(typedef struct te_ModelData {
 //#define MAX_GVARS 7
 //#define MAX_MODES		6
 
-	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS] ;
-	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
+//	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS] ;
+//	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
+
+	uint32_t varStore[VAR_STORAGE_UINTS] ;
 
 	 
 }) SKYModelData ;

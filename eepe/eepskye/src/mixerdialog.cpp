@@ -4,6 +4,9 @@
 #include "file.h"
 #include "helpers.h"
 
+extern void populateSpinVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue ) ;
+extern int numericSpinVarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar ) ;
+
 void MixerDialog::addSource( uint8_t index, QString str )
 {
   ui->sourceCB->addItem( str=="" ? getSourceStr( lg_eeGeneral->stickMode, index, lModelVersion, lType, lextraPots ) : str ) ;
@@ -11,8 +14,146 @@ void MixerDialog::addSource( uint8_t index, QString str )
 //	printf("\nIndex %d, %s", index, getSourceStr( lg_eeGeneral->stickMode, index, lModelVersion, lType, lextraPots ).toUtf8().data() ) ;
 }
 
+void MixerDialog::setCurveData()
+{
+	uint32_t i ;
+	uint32_t j ;
+	diffIsGvar = 0 ;
+  QString str = CURV_STR ;
+	curveFunction = md->differential | (md->extDiff << 1 ) ;
+	curveValue = md->curve ;
 
-MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData, int flightModeGvars ) :
+//	printf("\n%d %d %d", md->differential, md->extDiff, md->curve ) ;
+
+	if ( curveFunction == 0 )
+	{
+    if ( md->curve <= -28 )
+		{
+			curveFunction = 4 ;
+// value expo is -128 to -28 as 0 - 100
+			curveValue += 128 ;
+		}
+		else
+		{
+			if ( ( curveValue > 0 ) && ( curveValue <= 6 ) )
+			{
+				curveFunction = 1 ;
+			}
+			else
+			{
+				if ( curveValue )
+				{
+					curveFunction = 2 ;
+				}
+				else
+				{
+					curveFunction = 0 ;
+				}
+			}
+		}
+	}
+	else
+	{
+		if ( curveFunction == 3 )
+		{
+			diffIsGvar = 1 ;
+		}
+		else
+		{
+			if ( curveFunction == 1 )
+			{
+				diffIsGvar = 0 ;
+				curveFunction = 3 ;
+			}
+		}
+	}
+	ui->diffcurveCB->setCurrentIndex(curveFunction) ;
+
+//	printf("\nFun = %d", curveFunction ) ;
+
+	switch ( curveFunction )
+	{
+		case 0 :	// None
+			ui->curvesCB->setVisible( false ) ;
+			ui->curvesSB->setVisible( false ) ;
+			ui->curveGvChkB->setVisible( false ) ;
+      ui->curveGvChkB->setChecked( false ) ;
+		break ;
+		case 1 :	// Function
+//	printf("\n1" ) ;
+			ui->curvesCB->clear() ;
+    	for( i = 1 ; i <= 6 ; i+= 1 )
+			{
+				ui->curvesCB->addItem(str.mid(i*3,3)) ;
+			}
+			ui->curvesCB->setCurrentIndex(curveValue-1) ;
+			ui->curvesCB->setVisible( true ) ;
+			ui->curvesSB->setVisible( false ) ;
+			ui->curveGvChkB->setVisible( false ) ;
+      ui->curveGvChkB->setChecked( false ) ;
+		break ;
+		case 2 :	// Curve
+    {
+	    int32_t index ;
+//	printf("\n2" ) ;
+			ui->curvesCB->clear() ;
+			j = 6 + 19 ;
+    	for( i = j ; i >= 7 ; i -= 1 )
+			{
+        ui->curvesCB->addItem(str.mid(i*3,3).replace("c","!Curve "));
+			}
+      for(int i = 7 ; i <= j ; i++)  ui->curvesCB->addItem(str.mid(i*3,3).replace("c","Curve "));
+			if ( curveValue < 0 )
+			{
+				index = curveValue + 19 ;
+			}
+			else
+			{
+				index = curveValue + 19 - 7 ;
+			}
+      ui->curvesCB->setCurrentIndex(index) ;
+			ui->curvesCB->setVisible( true ) ;
+			ui->curvesSB->setVisible( false ) ;
+			ui->curveGvChkB->setVisible( false ) ;
+      ui->curveGvChkB->setChecked( false ) ;
+		}
+		break ;
+		case 3 :	// Diff
+			if (varsInUse)
+			{
+				populateSpinVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, -100, 100, 0 ) ;
+			}
+			else
+			{
+				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, -100, 100 ) ;
+			}
+			ui->curveGvChkB->setVisible( true ) ;
+		break ;
+		case 4 :	// Expo
+			// Fill in ui->curvesCB with vars
+			if (varsInUse)
+			{
+				int val = curveValue ;
+					
+				if (md->varForExpo)
+				{
+					val += 950 ;
+				}
+				populateSpinVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, val, 0, 100, 0 ) ;
+				ui->curveGvChkB->setVisible( true ) ;
+			}
+			else
+			{
+				ui->curvesCB->setVisible( false ) ;
+				ui->curvesSB->setVisible( true ) ;
+				ui->curvesSB->setValue( curveValue ) ;
+			}
+		break ;
+	}
+}
+
+
+MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGeneral, QString * comment, int modelVersion, struct t_radioData *rData ) :
     QDialog(parent),
     ui(new Ui::MixerDialog)
 {
@@ -23,7 +164,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		lBitType = rData->bitType ;
   lModelVersion = modelVersion ;
 	lg_eeGeneral = g_eeGeneral ;
-	fmGvars = flightModeGvars ;
+	varsInUse = rData->models[g_eeGeneral->currModel].vars ;
 	uint32_t i ;
 
     this->setWindowTitle(tr("DEST -> CH%1%2").arg(md->destCh/10).arg(md->destCh%10));
@@ -373,10 +514,34 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
 		{
 			ui->sourceSwitchCB->setCurrentIndex(md->switchSource) ;
 		}
+		
+		if (varsInUse)
+		{
+			int val = md->weight ;
+			ui->weightGvChkB->setText( "Var" ) ;
+			ui->offsetGvChkB->setText( "Var" ) ;
+			ui->curveGvChkB->setText( "Var" ) ;
+			if (md->varForWeight)
+			{
+				val += 1000 ;
+			}
+			populateSpinVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, val, -350, 350, md->extWeight ) ;
+			val = md->sOffset ;
+			if (md->varForOffset)
+			{
+				val += 1000 ;
+			}
+			populateSpinVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, val, -350, 350, md->extOffset ) ;
+		}
+		else
+		{
+			ui->weightGvChkB->setText( "Gvar" ) ;
+			ui->offsetGvChkB->setText( "Gvar" ) ;
+			ui->curveGvChkB->setText( "Gvar" ) ;
+			populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -350, 350, md->extWeight ) ;
+  	  populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -350, 350, md->extOffset ) ;
+		}
 
-		populateSpinGVarCB( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, -350, 350, md->extWeight, fmGvars ) ;
-    populateSpinGVarCB( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, -350, 350, md->extOffset, fmGvars ) ;
-    
 		ui->trimChkB->setChecked(md->carryTrim==0);
 //    ui->FMtrimChkB->setChecked(!md->disableExpoDr);
     ui->lateOffsetChkB->setChecked(md->lateOffset);
@@ -384,38 +549,9 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     ui->warningCB->setCurrentIndex(md->mixWarn);
     ui->mltpxCB->setCurrentIndex(md->mltpx);
 
-		int index = md->differential ;
-		if ( index == 0 )
-		{
-			if ( md->curve <= -28 )
-			{
-				index = 2 ;
-			}
-		}
-		ui->diffcurveCB->setCurrentIndex(index) ;
-		
-		if (md->differential)
-		{
-			populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, -100, 100, 0, fmGvars ) ;
-			ui->curveGvChkB->setVisible( true ) ;
-		}
-		else
-		{
-			if ( md->curve <= -28 )
-			{
-				ui->curvesCB->setVisible( false ) ;
-				ui->curvesSB->setVisible( true ) ;
-				ui->curvesSB->setValue( md->curve + 128 ) ;
-			}
-			else
-			{
-				populateCurvesCB(ui->curvesCB, md->curve ) ;
-				ui->curvesCB->setVisible( true ) ;
-				ui->curvesSB->setVisible( false ) ;
-				ui->curveGvChkB->setVisible( false ) ;
-      	ui->curveGvChkB->setChecked( false ) ;
-			}
-		}
+// Now the Curve/Diff/Expo
+		setCurveData() ;
+
 
     ui->delayDownSB->setValue((double)md->delayDown/10);
     ui->delayUpSB->setValue((double)md->delayUp/10);
@@ -468,6 +604,7 @@ MixerDialog::MixerDialog(QWidget *parent, SKYMixData *mixdata, EEGeneral *g_eeGe
     connect(ui->Fm5CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
     connect(ui->Fm6CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
     connect(ui->Fm7CB,SIGNAL(stateChanged(int)),this,SLOT(valuesChanged()));
+
 }
 
 MixerDialog::~MixerDialog()
@@ -572,8 +709,43 @@ void MixerDialog::updateChannels()
 }
 
 
-int extendedSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extValue, int fmGvars )
+int extendedSpinGvarValue( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int defvar, int extValue, uint8_t varsInUse )
 {
+	if (varsInUse)
+	{
+		if ( value > 900 )
+		{
+			// was a VAR
+			if ( ck->checkState() )
+			{ // still is
+				value = cb->currentIndex() + 1000 - NUM_VARS ;
+			}
+			else
+			{
+				value = defvar ;
+				sb->setValue( value ) ;
+				sb->setVisible( true ) ;
+				cb->setVisible( false ) ;
+			}
+		}
+		else
+		{
+			// was not a VAR
+			if ( ck->checkState() )
+			{ // Now is a VAR
+			  value = 1000 ;
+				cb->setCurrentIndex( NUM_VARS ) ;
+				cb->setVisible( true ) ;
+				sb->setVisible( false ) ;
+			}
+			else
+			{
+				value = sb->value() ;
+			}
+		}
+		return value ;
+	}
+
 	if ( ( value < -125 ) || ( value > 125) )
 	{
 		if ( value < 0 )
@@ -716,69 +888,150 @@ void MixerDialog::valuesChanged()
 			int value ;
 			int extValue = 0 ;
 
-	    value = extendedSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, md->weight, 100, md->extWeight, fmGvars ) ;
-			if ( value > 500 )
+			value = md->weight ;
+			if ( md->varForWeight )
 			{
-				value -= 400 ;
-				extValue = 2 ;
+				value += 1000 ;
+			}
+	    value = extendedSpinGvarValue( ui->weightSB, ui->weightCB, ui->weightGvChkB, value, 100, md->extWeight, varsInUse ) ;
+			if (varsInUse)
+			{
+				if ( value > 900 )
+				{
+					value -= 1000 ;
+					extValue = 0 ;
+					md->varForWeight = 1 ;
+				}
+				else
+				{
+					md->varForWeight = 0 ;
+					if ( value > 125 )
+					{
+						extValue = 1 ;
+						value -= 125 ;
+						if ( value > 125 )
+						{
+							extValue = 2 ;
+							value -= 125 ;
+						}
+					}
+					else if ( value < -125 )
+					{
+						extValue = 3 ;
+						value += 125 ;
+						if ( value < -125 )
+						{
+							extValue = 2 ;
+							value += 125 ;
+						}
+					}
+				}
 			}
 			else
 			{
-				if ( value > 125 )
+				if ( value > 500 )
 				{
-					extValue = 1 ;
-					value -= 125 ;
+					value -= 400 ;
+					extValue = 2 ;
+				}
+				else
+				{
 					if ( value > 125 )
 					{
-						extValue = 2 ;
+						extValue = 1 ;
 						value -= 125 ;
+						if ( value > 125 )
+						{
+							extValue = 2 ;
+							value -= 125 ;
+						}
 					}
-				}
-				else if ( value < -125 )
-				{
-					extValue = 3 ;
-					value += 125 ;
-					if ( value < -125 )
+					else if ( value < -125 )
 					{
-						extValue = 2 ;
+						extValue = 3 ;
 						value += 125 ;
+						if ( value < -125 )
+						{
+							extValue = 2 ;
+							value += 125 ;
+						}
 					}
 				}
 			}
 			md->weight = value ;
 			md->extWeight = extValue ;
   	  
-			value = extendedSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, md->sOffset, 0, md->extOffset, fmGvars ) ;
-			extValue = 0 ;
-			if ( value > 500 )
+			value = md->sOffset ;
+			if ( md->varForOffset )
 			{
-				value -= 400 ;
-				extValue = 2 ;
+				value += 1000 ;
+			}
+			value = extendedSpinGvarValue( ui->offsetSB, ui->offsetCB, ui->offsetGvChkB, value, 0, md->extOffset, varsInUse ) ;
+			extValue = 0 ;
+			if (varsInUse)
+			{
+				if ( value > 900 )
+				{
+					value -= 1000 ;
+					extValue = 0 ;
+					md->varForOffset = 1 ;
+				}
+				else
+				{
+					md->varForOffset = 0 ;
+					if ( value > 125 )
+					{
+						extValue = 1 ;
+						value -= 125 ;
+						if ( value > 125 )
+						{
+							extValue = 2 ;
+							value -= 125 ;
+						}
+					}
+					else if ( value < -125 )
+					{
+						extValue = 3 ;
+						value += 125 ;
+						if ( value < -125 )
+						{
+							extValue = 2 ;
+							value += 125 ;
+						}
+					}
+				}
 			}
 			else
 			{
-				if ( value > 125 )
+				if ( value > 500 )
 				{
-					extValue = 1 ;
-					value -= 125 ;
+					value -= 400 ;
+					extValue = 2 ;
+				}
+				else
+				{
 					if ( value > 125 )
 					{
-						extValue = 2 ;
+						extValue = 1 ;
 						value -= 125 ;
+						if ( value > 125 )
+						{
+							extValue = 2 ;
+							value -= 125 ;
+						}
 					}
-				}
-				else if ( value < -125 )
-				{
-					extValue = 3 ;
-					value += 125 ;
-					if ( value < -125 )
+					else if ( value < -125 )
 					{
-						extValue = 2 ;
+						extValue = 3 ;
 						value += 125 ;
+						if ( value < -125 )
+						{
+							extValue = 2 ;
+							value += 125 ;
+						}
 					}
 				}
 			}
-
   	  md->sOffset = value ;
 			md->extOffset = extValue ;
 		}
@@ -837,75 +1090,183 @@ void MixerDialog::valuesChanged()
 			}
 		}
 
-		oldcurvemode = md->differential ;
-		if ( oldcurvemode == 0 )
-		{
-			if ( md->curve <= -28 )
-			{
-				oldcurvemode = 2 ;
-			}
-		}
+//		oldcurvemode = md->differential ;
+//		if ( oldcurvemode == 0 )
+//		{
+//			if ( md->curve <= -28 )
+//			{
+//				oldcurvemode = 2 ;
+//			}
+//		}
 		
-		int newcurvemode = ui->diffcurveCB->currentIndex() ;
-		md->differential = ( newcurvemode == 1 ) ? 1 : 0 ;
-		
-		if ( newcurvemode != oldcurvemode )
+		uint32_t newcurvemode = ui->diffcurveCB->currentIndex() ;
+		if ( curveFunction != newcurvemode )
 		{
-			if (md->differential)
+			switch ( newcurvemode )
 			{
-				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, -100, 100, 0, fmGvars ) ;
-				ui->curveGvChkB->setVisible( true ) ;
+				case 0 :
+					md->curve = 0 ;
+					md->differential = 0 ;
+					md->extDiff = 0 ;
+				break ;
+				case 1 :
+					md->curve = 1 ;
+					md->differential = 0 ;
+					md->extDiff = 0 ;
+				break ;
+				case 2 :
+					md->curve = 7 ;
+					md->differential = 0 ;
+					md->extDiff = 0 ;
+				break ;
+				case 3 :
+					md->curve = 0 ;
+					md->differential = 1 ;
+					md->extDiff = 0 ;
+				break ;
+				case 4 :
+					md->curve = -128 ;
+					md->differential = 0 ;
+					md->extDiff = 0 ;
+				break ;
 			}
-			else
-			{
-				if ( newcurvemode == 2 )
-				{
-					ui->curvesCB->setVisible( false ) ;
-					ui->curvesSB->setVisible( true ) ;
-					ui->curvesSB->setValue( 0 ) ;
-          ui->curvesSB->setMinimum( 0 ) ;
-          ui->curvesSB->setMaximum( 100 ) ;
-				}
-				else
-				{
-		      ui->curveGvChkB->setChecked( false ) ;
-					populateCurvesCB(ui->curvesCB, 0 ) ;
-					ui->curvesSB->setVisible( false ) ;
-					ui->curvesCB->setVisible( true ) ;
-				}
-				ui->curveGvChkB->setVisible( false ) ;
-			}
-			if ( newcurvemode == 2 )
-			{
-	    	md->curve = -128 ;
-			}
-			else
-			{
-	    	md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, 0 ) ;
-			}
+			setCurveData() ;
 		}
 		else
 		{
-			if (md->differential)
+			switch ( curveFunction )
 			{
-	   		md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, 0 ) ;
-			}
-			else
-			{
-				if ( ui->diffcurveCB->currentIndex() == 2 )
+				case 0 :
+					md->curve = 0 ;
+				break ;
+				case 1 :
+					md->curve = ui->curvesCB->currentIndex() + 1 ;
+				break ;
+				case 2 :
 				{
-          md->curve = ui->curvesSB->value() - 128 ;
+					int32_t index = ui->curvesCB->currentIndex() - 19 ;
+					if ( index >= 0 )
+					{
+						index += 7 ;
+					}
+					md->curve = index ;
+				}
+				break ;
+				case 3 :
+				if (varsInUse)
+				{
+					md->curve = numericSpinVarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, 0 ) ;
 				}
 				else
 				{
-#ifdef SKY    
-	    		md->curve = ui->curvesCB->currentIndex()-19;
-#else
-	    		md->curve = ui->curvesCB->currentIndex()-16;
-#endif
-				}	 
+		   		md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, 0 ) ;
+				}
+				break ;
+				case 4 :
+				if (varsInUse)
+				{
+					int32_t value ;
+          value = md->curve + 128 ;
+					if ( md->varForExpo )
+					{
+						value -= 50 ;
+						if ( value >= 0 )
+						{
+							value += 101 ;
+						}
+						else
+						{
+							value -= 100 ;
+						}
+					}
+					value = numericSpinVarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, value, 0 ) ;
+					if ( ( value > 100 ) || ( value < -100 ) )
+					{ // a VAR
+						if ( value > 100 )
+						{
+							value -= 101 ;
+						}
+						else
+						{
+							value += 100 ;
+						}
+						value -= (128-50) ;
+          	md->curve = value ;
+						md->varForExpo = 1 ;
+					}
+					else
+					{
+          	md->curve = value - 128 ;
+						md->varForExpo = 0 ;
+					}
+				}
+				else
+				{
+          md->curve = ui->curvesSB->value() - 128 ;
+				}
+				break ;
 			}
 		}
+		
+//		md->differential = ( newcurvemode == 1 ) ? 1 : 0 ;
+		
+//		if ( newcurvemode != oldcurvemode )
+//		{
+//			if (md->differential)
+//			{
+//				populateSpinGVarCB( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, -100, 100 ) ;
+//				ui->curveGvChkB->setVisible( true ) ;
+//			}
+//			else
+//			{
+//				if ( newcurvemode == 2 )
+//				{
+//					ui->curvesCB->setVisible( false ) ;
+//					ui->curvesSB->setVisible( true ) ;
+//					ui->curvesSB->setValue( 0 ) ;
+//          ui->curvesSB->setMinimum( 0 ) ;
+//          ui->curvesSB->setMaximum( 100 ) ;
+//				}
+//				else
+//				{
+//		      ui->curveGvChkB->setChecked( false ) ;
+//					populateCurvesCB(ui->curvesCB, 0 ) ;
+//					ui->curvesSB->setVisible( false ) ;
+//					ui->curvesCB->setVisible( true ) ;
+//				}
+//				ui->curveGvChkB->setVisible( false ) ;
+//			}
+//			if ( newcurvemode == 2 )
+//			{
+//	    	md->curve = -128 ;
+//			}
+//			else
+//			{
+//	    	md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, 0, 0 ) ;
+//			}
+//		}
+//		else
+//		{
+//			if (md->differential)
+//			{
+//	   		md->curve = numericSpinGvarValue( ui->curvesSB, ui->curvesCB, ui->curveGvChkB, md->curve, 0 ) ;
+//			}
+//			else
+//			{
+//				if ( ui->diffcurveCB->currentIndex() == 2 )
+//				{
+//          md->curve = ui->curvesSB->value() - 128 ;
+//				}
+//				else
+//				{
+//#ifdef SKY    
+//	    		md->curve = ui->curvesCB->currentIndex()-19;
+//#else
+//	    		md->curve = ui->curvesCB->currentIndex()-16;
+//#endif
+//				}	 
+//			}
+//		}
 
 		int j = 127 ;
 		j &= ~( ui->Fm0CB->checkState() ? 1 : 0 ) ;

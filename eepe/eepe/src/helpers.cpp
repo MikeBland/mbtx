@@ -290,10 +290,10 @@ QString GvarItems[] = {
 	"O22",
 	"O23",
 	"O24",
-	"Rts",
-	"Ets",
-	"Tts",
-	"Ats"
+	"Rv1",
+	"RV2",
+	"Rv3",
+	"Rv4"
 } ;
 
 QString ExtraGvarItems[] = {
@@ -1668,28 +1668,23 @@ void populateSpinGVarCB100( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int valu
 	}
 }
 
+#ifdef SKY
+extern void fillVarCb( QComboBox *cb, int number, int type ) ;
+#endif
 
-void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue, int fmGvar )
+void populateSpinGVarCB( QSpinBox *sb, QComboBox *cb, QCheckBox *ck, int value, int min, int max, int xvalue )
 {
   cb->clear() ;
+#ifdef SKY
 	if ( max == 100 )
 	{
-  	for (int i=1; i <= 5 ; i += 1 )
-		{
-  	  cb->addItem(QObject::tr("GV%1").arg(i));
-  	}
+		fillVarCb( cb, 5, 0 ) ;
 	}
 	else
 	{
-  	for (int i =- 7 ; i <= -1 ; i += 1)
-		{
-  	  cb->addItem(QObject::tr("-GV%1").arg(-i));
-  	}
-  	for (int i=1; i <= 7 ; i += 1 )
-		{
-  	  cb->addItem(QObject::tr("GV%1").arg(i));
-  	}
+		fillVarCb( cb, 7, 0 ) ;
 	}
+#endif
 	sb->setMinimum( min ) ;
 	sb->setMaximum( max ) ;
 

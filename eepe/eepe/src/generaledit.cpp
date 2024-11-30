@@ -132,14 +132,14 @@ GeneralEdit::GeneralEdit(EEPFILE *eFile, QWidget *parent) :
 		ui->battcalibDSB->hide() ;
 		ui->labelBatCal->hide() ;
 		ui->labelDefSwitch->hide() ;
-		ui->switchDefPos_1->hide() ;
-		ui->switchDefPos_2->hide() ;
-		ui->switchDefPos_3->hide() ;
-		ui->switchDefPos_4->hide() ;
-		ui->switchDefPos_5->hide() ;
-		ui->switchDefPos_6->hide() ;
-		ui->switchDefPos_7->hide() ;
-		ui->switchDefPos_8->hide() ;
+//		ui->switchDefPos_1->hide() ;
+//		ui->switchDefPos_2->hide() ;
+//		ui->switchDefPos_3->hide() ;
+//		ui->switchDefPos_4->hide() ;
+//		ui->switchDefPos_5->hide() ;
+//		ui->switchDefPos_6->hide() ;
+//		ui->switchDefPos_7->hide() ;
+//		ui->switchDefPos_8->hide() ;
 		ui->Pb7InputCB->hide() ;
 		ui->Pg2InputCB->hide() ;
 		ui->L_wrInputCB->hide() ;
@@ -294,16 +294,16 @@ void GeneralEdit::setSwitchDefPos()
         p_eeGeneral->switchWarningStates |=  SWP_ID0B;
     }
 
-    switchDefPosEditLock = true;
-    ui->switchDefPos_1->setChecked(p_eeGeneral->switchWarningStates & 0x01);
-    ui->switchDefPos_2->setChecked(p_eeGeneral->switchWarningStates & 0x02);
-    ui->switchDefPos_3->setChecked(p_eeGeneral->switchWarningStates & 0x04);
-    ui->switchDefPos_4->setChecked(p_eeGeneral->switchWarningStates & 0x08);
-    ui->switchDefPos_5->setChecked(p_eeGeneral->switchWarningStates & 0x10);
-    ui->switchDefPos_6->setChecked(p_eeGeneral->switchWarningStates & 0x20);
-    ui->switchDefPos_7->setChecked(p_eeGeneral->switchWarningStates & 0x40);
-    ui->switchDefPos_8->setChecked(p_eeGeneral->switchWarningStates & 0x80);
-    switchDefPosEditLock = false;
+//    switchDefPosEditLock = true;
+//    ui->switchDefPos_1->setChecked(p_eeGeneral->switchWarningStates & 0x01);
+//    ui->switchDefPos_2->setChecked(p_eeGeneral->switchWarningStates & 0x02);
+//    ui->switchDefPos_3->setChecked(p_eeGeneral->switchWarningStates & 0x04);
+//    ui->switchDefPos_4->setChecked(p_eeGeneral->switchWarningStates & 0x08);
+//    ui->switchDefPos_5->setChecked(p_eeGeneral->switchWarningStates & 0x10);
+//    ui->switchDefPos_6->setChecked(p_eeGeneral->switchWarningStates & 0x20);
+//    ui->switchDefPos_7->setChecked(p_eeGeneral->switchWarningStates & 0x40);
+//    ui->switchDefPos_8->setChecked(p_eeGeneral->switchWarningStates & 0x80);
+//    switchDefPosEditLock = false;
 #endif
 }
 
@@ -980,95 +980,95 @@ void GeneralEdit::getGeneralSwitchDefPos(int i, bool val)
 #endif
 }
 
-void GeneralEdit::on_switchDefPos_1_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
-    getGeneralSwitchDefPos(1,ui->switchDefPos_1->isChecked());
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_2_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
-    getGeneralSwitchDefPos(2,ui->switchDefPos_2->isChecked());
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_3_stateChanged(int )
-{
-    getGeneralSwitchDefPos(3,ui->switchDefPos_3->isChecked());
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_4_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
+//void GeneralEdit::on_switchDefPos_1_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
+//    getGeneralSwitchDefPos(1,ui->switchDefPos_1->isChecked());
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_2_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
+//    getGeneralSwitchDefPos(2,ui->switchDefPos_2->isChecked());
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_3_stateChanged(int )
+//{
+//    getGeneralSwitchDefPos(3,ui->switchDefPos_3->isChecked());
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_4_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
 
-    if(ui->switchDefPos_4->isChecked())
-    {
-        switchDefPosEditLock = true;
-        ui->switchDefPos_5->setChecked(false);
-        ui->switchDefPos_6->setChecked(false);
-        switchDefPosEditLock = false;
-    }
-    else
-        return;
+//    if(ui->switchDefPos_4->isChecked())
+//    {
+//        switchDefPosEditLock = true;
+//        ui->switchDefPos_5->setChecked(false);
+//        ui->switchDefPos_6->setChecked(false);
+//        switchDefPosEditLock = false;
+//    }
+//    else
+//        return;
 
-#ifndef V2
-    p_eeGeneral->switchWarningStates &= ~0x30; //turn off ID1/2
-    getGeneralSwitchDefPos(4,ui->switchDefPos_4->isChecked());
-#endif
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_5_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
+//#ifndef V2
+//    p_eeGeneral->switchWarningStates &= ~0x30; //turn off ID1/2
+//    getGeneralSwitchDefPos(4,ui->switchDefPos_4->isChecked());
+//#endif
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_5_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
 
-    if(ui->switchDefPos_5->isChecked())
-    {
-        switchDefPosEditLock = true;
-        ui->switchDefPos_4->setChecked(false);
-        ui->switchDefPos_6->setChecked(false);
-        switchDefPosEditLock = false;
-    }
-    else
-        return;
+//    if(ui->switchDefPos_5->isChecked())
+//    {
+//        switchDefPosEditLock = true;
+//        ui->switchDefPos_4->setChecked(false);
+//        ui->switchDefPos_6->setChecked(false);
+//        switchDefPosEditLock = false;
+//    }
+//    else
+//        return;
 
-#ifndef V2
-    p_eeGeneral->switchWarningStates &= ~0x28; //turn off ID0/2
-    getGeneralSwitchDefPos(5,ui->switchDefPos_5->isChecked());
-#endif
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_6_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
+//#ifndef V2
+//    p_eeGeneral->switchWarningStates &= ~0x28; //turn off ID0/2
+//    getGeneralSwitchDefPos(5,ui->switchDefPos_5->isChecked());
+//#endif
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_6_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
 
-#ifndef V2
-    if(ui->switchDefPos_6->isChecked())
-    {
-        switchDefPosEditLock = true;
-        ui->switchDefPos_4->setChecked(false);
-        ui->switchDefPos_5->setChecked(false);
-        switchDefPosEditLock = false;
-    }
-    else
-        return;
+//#ifndef V2
+//    if(ui->switchDefPos_6->isChecked())
+//    {
+//        switchDefPosEditLock = true;
+//        ui->switchDefPos_4->setChecked(false);
+//        ui->switchDefPos_5->setChecked(false);
+//        switchDefPosEditLock = false;
+//    }
+//    else
+//        return;
 
-    p_eeGeneral->switchWarningStates &= ~0x18; //turn off ID1/2
-    getGeneralSwitchDefPos(6,ui->switchDefPos_6->isChecked());
-    updateSettings();
-#endif
-}
-void GeneralEdit::on_switchDefPos_7_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
-    getGeneralSwitchDefPos(7,ui->switchDefPos_7->isChecked());
-    updateSettings();
-}
-void GeneralEdit::on_switchDefPos_8_stateChanged(int )
-{
-    if(switchDefPosEditLock) return;
-    getGeneralSwitchDefPos(8,ui->switchDefPos_8->isChecked());
-    updateSettings();
-}
+//    p_eeGeneral->switchWarningStates &= ~0x18; //turn off ID1/2
+//    getGeneralSwitchDefPos(6,ui->switchDefPos_6->isChecked());
+//    updateSettings();
+//#endif
+//}
+//void GeneralEdit::on_switchDefPos_7_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
+//    getGeneralSwitchDefPos(7,ui->switchDefPos_7->isChecked());
+//    updateSettings();
+//}
+//void GeneralEdit::on_switchDefPos_8_stateChanged(int )
+//{
+//    if(switchDefPosEditLock) return;
+//    getGeneralSwitchDefPos(8,ui->switchDefPos_8->isChecked());
+//    updateSettings();
+//}
 
 void GeneralEdit::on_StickRevLH_stateChanged(int )
 {

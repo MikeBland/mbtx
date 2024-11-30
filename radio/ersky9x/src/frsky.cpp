@@ -202,7 +202,7 @@ uint8_t Frsky_user_lobyte ;
 uint8_t Frsky_user_hibyte ;
 uint8_t Frsky_user_ready ;
 
-int16_t FrskyHubData[HUBDATALENGTH] ;  // All 38 words
+int16_t TelemetryData[HUBDATALENGTH] ;  // All 38 words
 uint8_t TelemetryDataValid[HUBDATALENGTH] ;  // All 38 words
 uint16_t XjtVersion ;
 struct t_hub_max_min FrskyHubMaxMin ;
@@ -469,25 +469,25 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 	{
 		cell = ( cell & 0x0FFF ) / 5 ;
 //		FrskyVolts[battnumber] = cell ;
-//		FrskyHubData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
+//		TelemetryData[FR_CELL1+battnumber] = FrskyVolts[battnumber] ;
 		uint32_t index ;
 	  index = FR_CELL1+battnumber ;
 		uint32_t scaling = 1000 + g_model.cellScalers[battnumber] ;
 		scaling *= cell ;
 		cell = scaling / 1000 ;
-		FrskyHubData[index] = cell ;
+		TelemetryData[index] = cell ;
 		TelemetryDataValid[index] = 40 + g_model.telemetryTimeout ;
 //		TelemetryDataValid[FR_CELLS_TOT] = 40 + g_model.telemetryTimeout ;
 		TelemetryDataValid[FR_CELL_MIN] = 40 + g_model.telemetryTimeout ;
 		if ( battnumber == 0 )
 		{
-			if ( FrskyHubData[FR_CELL_MIN] == 0 )
+			if ( TelemetryData[FR_CELL_MIN] == 0 )
 			{
-				FrskyHubData[FR_CELL_MIN] = 450 ;
+				TelemetryData[FR_CELL_MIN] = 450 ;
 			}
-			if ( cell < FrskyHubData[FR_CELL_MIN] )
+			if ( cell < TelemetryData[FR_CELL_MIN] )
 			{
-				FrskyHubData[FR_CELL_MIN] = cell ;
+				TelemetryData[FR_CELL_MIN] = cell ;
 			}
 		}
 	}
@@ -495,11 +495,11 @@ void store_cell_data( uint8_t battnumber, uint16_t cell )
 
 void storeAltitude( int16_t value )
 {
-	FrskyHubData[FR_ALT_BARO] = value ;
+	TelemetryData[FR_ALT_BARO] = value ;
 	TelemetryDataValid[FR_ALT_BARO] = 25 + g_model.telemetryTimeout ;
 	if ( !AltitudeZeroed )
 	{
-		AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+		AltOffset = -TelemetryData[FR_ALT_BARO] ;
 		if ( AltOffset )
 		{
 			AltitudeZeroed = 1 ;
@@ -515,7 +515,7 @@ void storeRSSI( uint8_t value )
 //	}
 //	else
 //	{
-		frskyTelemetry[2].set( value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+		frskyTelemetry[2].set( value, FR_RXRSI_COPY );	//TelemetryData[] =  frskyTelemetry[2].value ;
 //	}
 }
 
@@ -565,7 +565,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 	if ( index == FR_SPORT_GALT )
 	{
 		index = TELEM_GPS_ALT ;         // For max and min
-		FrskyHubData[TELEM_GPS_ALT] = value ;
+		TelemetryData[TELEM_GPS_ALT] = value ;
 		TelemetryDataValid[TELEM_GPS_ALT] = 25 + g_model.telemetryTimeout ;
 	}
 	else if ( index == TELEM_GPS_ALT )
@@ -596,7 +596,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
     {
       if ( index != FR_ALT_BARO )
 			{
-				FrskyHubData[index] = value ;
+				TelemetryData[index] = value ;
 				TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
 			}
     }                     
@@ -604,11 +604,11 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		{
       if ( index != FR_ALT_BARO )
 			{
-			  FrskyHubData[index] = value ;           /* ReSt */
+			  TelemetryData[index] = value ;           /* ReSt */
 			}
       if ( index == TELEM_GPS_ALT )
       {
-         storeAltitude( FrskyHubData[TELEM_GPS_ALT] ) ;      // Copy Gps Alt instead
+         storeAltitude( TelemetryData[TELEM_GPS_ALT] ) ;      // Copy Gps Alt instead
          index = FR_ALT_BARO ;         // For max and min
       }
 			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
@@ -631,7 +631,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			{
 				value = 0 ;
 			}
-			FrskyHubData[index] = value ;
+			TelemetryData[index] = value ;
 			TelemetryDataValid[index] = 25 + g_model.telemetryTimeout ;
 		}
 
@@ -639,7 +639,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		{
 			struct t_hub_max_min *maxMinPtr = &FrskyHubMaxMin ;
 			
-			int16_t value = FrskyHubData[index] ;
+			int16_t value = TelemetryData[index] ;
 			
 			if ( maxMinPtr->hubMax[index] < value )
 			{	maxMinPtr->hubMax[index] = value ;
@@ -652,7 +652,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 		if ( index == FR_CELL_V )			// Cell Voltage
 		{
 			// It appears the cell voltage bytes are in the wrong order
-//  							uint8_t battnumber = ( FrskyHubData[6] >> 12 ) & 0x000F ;
+//  							uint8_t battnumber = ( TelemetryData[6] >> 12 ) & 0x000F ;
   		uint8_t battnumber = ((uint8_t)value >> 4 ) & 0x000F ;
   		if (FrskyBattCells[0] < battnumber+1)
 			{
@@ -713,13 +713,13 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			{
 				g_model.numBlades = 1 ;
 			}
-			FrskyHubData[FR_RPM] = x / g_model.numBlades ;
+			TelemetryData[FR_RPM] = x / g_model.numBlades ;
 //			TelemetryDataValid[FR_RPM] = 25 + g_model.telemetryTimeout ;
-//			FrskyHubData[FR_RPM] = x / ( g_model.Mavlink == 0 ? g_model.numBladesb : g_model.numBlades * 30) ;
+//			TelemetryData[FR_RPM] = x / ( g_model.Mavlink == 0 ? g_model.numBladesb : g_model.numBlades * 30) ;
 		}
 		if ( index == FR_V_AMPd )
 		{
-			FrskyHubData[FR_VOLTS] = (FrskyHubData[FR_V_AMP] * 10 + value) * 21 / 11 ;
+			TelemetryData[FR_VOLTS] = (TelemetryData[FR_V_AMP] * 10 + value) * 21 / 11 ;
 			TelemetryDataValid[FR_VOLTS] = 25 + g_model.telemetryTimeout ;
 		}
 		if ( index == FR_SBEC_CURRENT )
@@ -729,7 +729,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 			{
 				SbecCount = 0 ;
 				value = ( SbecAverage + 3 ) >> 2 ;
-				FrskyHubData[index] = value ;
+				TelemetryData[index] = value ;
 				SbecAverage = 0 ;
 			}
 		}
@@ -919,11 +919,11 @@ void processFrskyPacket(uint8_t *packet)
       break;
     case LINKPKT: // A1/A2/RSSI values
 //			LinkAveCount += 1 ;
-      frskyTelemetry[0].set(packet[1], FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
-      frskyTelemetry[1].set(packet[2], FR_A2_COPY ); //FrskyHubData[] =  frskyTelemetry[1].value ;
-      frskyTelemetry[2].set(packet[3], FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+      frskyTelemetry[0].set(packet[1], FR_A1_COPY ); //TelemetryData[] =  frskyTelemetry[0].value ;
+      frskyTelemetry[1].set(packet[2], FR_A2_COPY ); //TelemetryData[] =  frskyTelemetry[1].value ;
+      frskyTelemetry[2].set(packet[3], FR_RXRSI_COPY );	//TelemetryData[] =  frskyTelemetry[2].value ;
 //			RssiSetTimer = 30 ;
-      frskyTelemetry[3].set(packet[4] / 2, FR_TXRSI_COPY ); //FrskyHubData[] =  frskyTelemetry[3].value ;
+      frskyTelemetry[3].set(packet[4] / 2, FR_TXRSI_COPY ); //TelemetryData[] =  frskyTelemetry[3].value ;
 //			RxLqi = ( ( RxLqi * 7 ) + packet[5] + 4 ) / 8 ;	// Multi only
 			setTxLqi( packet[6] ) ;
 //			if ( LinkAveCount > 15 )
@@ -1357,15 +1357,15 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 				ivalue *= 2015 ;
 				ivalue /= 1024 ;
 				storeTelemetryData( FR_CURRENT, ivalue ) ;	// Handles FAS Offset
-//				FrskyHubData[FR_CURRENT] = ivalue ;
+//				TelemetryData[FR_CURRENT] = ivalue ;
 			break ;
 
 			case DSM_PBOX :
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;	// Handles FAS Offset
-//				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+//				TelemetryData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 				storeTelemetryData( FR_AMP_MAH, ivalue ) ;
-// 				FrskyHubData[FR_AMP_MAH] = ivalue ;
+// 				TelemetryData[FR_AMP_MAH] = ivalue ;
 			break ;
 
 			case DSM_AIRSPEED :
@@ -1375,13 +1375,13 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 			case DSM_GFORCE :
 				// check units (0.01G)
 				storeTelemetryData( FR_ACCX, ivalue ) ;
-//				FrskyHubData[FR_ACCX] = ivalue ;
+//				TelemetryData[FR_ACCX] = ivalue ;
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
 				storeTelemetryData( FR_ACCY, ivalue ) ;
-//				FrskyHubData[FR_ACCY] = ivalue ;
+//				TelemetryData[FR_ACCY] = ivalue ;
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 				storeTelemetryData( FR_ACCZ, ivalue ) ;
-//				FrskyHubData[FR_ACCZ] = ivalue ;
+//				TelemetryData[FR_ACCZ] = ivalue ;
 			break ;
 			
 			case DSM_VTEMP1 :
@@ -1396,16 +1396,16 @@ void processDsmPacket(uint8_t *packet, uint8_t byteCount)
 					ivalue = 120000000L / g_model.numBlades / (uint16_t)ivalue ;
 				}
 				storeTelemetryData( FR_RPM, ivalue ) ;
-//				FrskyHubData[FR_RPM] = ivalue ;
+//				TelemetryData[FR_RPM] = ivalue ;
 				// volts
 				ivalue = (int16_t) ( (packet[4] << 8 ) | packet[5] ) ;
-//				FrskyHubData[FR_A2_COPY] = ivalue ;
+//				TelemetryData[FR_A2_COPY] = ivalue ;
 				storeTelemetryData( FR_VOLTS, (uint16_t)ivalue / 10 ) ;
-//				FrskyHubData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
+//				TelemetryData[FR_VOLTS] = (uint16_t)ivalue / 10 ;
 				// temp
 				ivalue = (int16_t) ( (packet[6] << 8 ) | packet[7] ) ;
 				storeTelemetryData( FR_TEMP1, (ivalue-32)*5/9 ) ;
-//				FrskyHubData[FR_TEMP1] = (ivalue-32)*5/9 ;
+//				TelemetryData[FR_TEMP1] = (ivalue-32)*5/9 ;
 
 			break ;
 
@@ -1731,7 +1731,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 //					LastRxRssiTime = now ;
 //					AverageRssiTime = ( (AverageRssiTime * 7 ) + time ) / 8 ;
 //				}		
-	    		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//FrskyHubData[] =  frskyTelemetry[2].value ;
+	    		frskyTelemetry[2].set(value, FR_RXRSI_COPY );	//TelemetryData[] =  frskyTelemetry[2].value ;
 					setTxRssi( packet[5] ) ;			// packet[5] is  TX_RSSI for MULTI
 					setTxLqi( packet[7] ) ;			// packet[7] is  TX_LQI for MULTI
 //					RssiSetTimer = 30 ;
@@ -1744,20 +1744,20 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 				break ;
 
 				case 2 :
-			    frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
+			    frskyTelemetry[0].set(value, FR_A1_COPY ); //TelemetryData[] =  frskyTelemetry[0].value ;
 					A1Received = 1 ;
 				break ;
 				case 4 :		// Battery from X8R
 					if ( A1Received == 0 )
 					{
-			      frskyTelemetry[0].set(value, FR_A1_COPY ); //FrskyHubData[] =  frskyTelemetry[0].value ;
+			      frskyTelemetry[0].set(value, FR_A1_COPY ); //TelemetryData[] =  frskyTelemetry[0].value ;
 					}
 					storeRxV( value, 1 ) ;
 //					storeTelemetryData( FR_RXV, value ) ;
 				break ;
   		    
 				case 3 :
-					frskyTelemetry[1].set(value, FR_A2_COPY ); //FrskyHubData[] =  frskyTelemetry[1].value ;
+					frskyTelemetry[1].set(value, FR_A2_COPY ); //TelemetryData[] =  frskyTelemetry[1].value ;
 #ifdef JUNGLECAM					
 					if (g_eeGeneral.jungleMode )
 					{
@@ -1776,7 +1776,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 						}
 					}
 #endif
-					frskyTelemetry[3].set(value, FR_TXRSI_COPY ); //FrskyHubData[] =  frskyTelemetry[3].value ;
+					frskyTelemetry[3].set(value, FR_TXRSI_COPY ); //TelemetryData[] =  frskyTelemetry[3].value ;
 				break ;
 				case 6 : // XJT VERSION
 					XjtVersion = (*((uint16_t *)(packet+4))) ;
@@ -1785,7 +1785,7 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 					{
 						if ( g_model.xprotocol != PROTO_PXX )
 						{						
-							frskyTelemetry[3].set( 5, FR_TXRSI_COPY ); //FrskyHubData[] =  frskyTelemetry[3].value ;
+							frskyTelemetry[3].set( 5, FR_TXRSI_COPY ); //TelemetryData[] =  frskyTelemetry[3].value ;
 						}
 					}
 #endif
@@ -1883,7 +1883,34 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 				break ;
 
 				case CURR_ID_8 :
+				
+#ifdef JUNGLECAM					
+					switch ( prim )
+					{
+						case 2 :
+							storeTelemetryData( FR_CURRENT, value ) ;
+							storeTelemetryData( FR_CUST3, value ) ;
+						break ;
+						case 11 :
+							storeTelemetryData( FR_CUST4, value ) ;
+						break ;
+						case 12 :
+							storeTelemetryData( FR_CUST5, value ) ;
+						break ;
+						case 13 :
+							storeTelemetryData( FR_CUST6, value ) ;
+						break ;
+						case 14 :
+							storeTelemetryData( FR_CUST7, value ) ;
+						break ;
+						case 15 :
+							storeTelemetryData( FR_CUST8, value ) ;
+						break ;
+					}
+#else
 					storeTelemetryData( FR_CURRENT, value ) ;
+#endif				 
+				
 				break ;
 
 				case VFAS_ID_8 :
@@ -2126,14 +2153,14 @@ void processSportData( uint8_t *packet, uint32_t receiver )
 							xvalue += (value >>4) & 0x0003 ;	// GPS Fix mode
 							storeTelemetryData( FR_TEMP2, xvalue ) ;
 							storeTelemetryData( TEL_SATS, xvalue ) ;
-//							FrskyHubData[FR_TEMP2] = xvalue ;
+//							TelemetryData[FR_TEMP2] = xvalue ;
 							xvalue = (value >> 7) & 0x7F ;
 							if ( value & 0x0000040 )
 							{
 								xvalue *= 10 ;
 							}
 							storeTelemetryData( FR_GPS_HDOP, xvalue * 10 ) ;
-//							FrskyHubData[FR_GPS_HDOP] = xvalue * 10 ;
+//							TelemetryData[FR_GPS_HDOP] = xvalue * 10 ;
 							ivalue = (value >> 24) & 0x7F ;
 							negative = (value & 0x80000000) ? 1 : 0 ;
 							value >>= 22 ;
@@ -2699,7 +2726,7 @@ void processMlinkPacket( uint8_t *data )
         case MLINK_LQI:
           uint8_t mlinkRssi = data[i + 1] >> 1 ;
 //          telemetryData.rssi.set(mlinkRssi);
-	    		frskyTelemetry[2].set( mlinkRssi, FR_RXRSI_COPY ) ;	//FrskyHubData[] =  frskyTelemetry[2].value ;
+	    		frskyTelemetry[2].set( mlinkRssi, FR_RXRSI_COPY ) ;	//TelemetryData[] =  frskyTelemetry[2].value ;
           if (mlinkRssi > 0)
 					{
             frskyStreaming = FRSKY_TIMEOUT10ms ;
@@ -3958,7 +3985,7 @@ void resetTelemetry( uint32_t item )
 	switch ( item )
 	{
 		case TEL_ITEM_RESET_ALT :
-      AltOffset = -FrskyHubData[FR_ALT_BARO] ;
+      AltOffset = -TelemetryData[FR_ALT_BARO] ;
 		break ;
 
 		case TEL_ITEM_RESET_A1OFF :
@@ -3979,11 +4006,11 @@ void resetTelemetry( uint32_t item )
 		break ;
 
 		case TEL_ITEM_RESET_ALL :
-//			FrskyHubData[FR_A1_MAH] = 0 ;
-//			FrskyHubData[FR_A2_MAH] = 0 ;
-			FrskyHubData[FR_CELL_MIN] = 450 ;			// 0 volts
+//			TelemetryData[FR_A1_MAH] = 0 ;
+//			TelemetryData[FR_A2_MAH] = 0 ;
+			TelemetryData[FR_CELL_MIN] = 450 ;			// 0 volts
 			Frsky_Amp_hour_prescale = 0 ;
-			FrskyHubData[FR_AMP_MAH] = 0 ;
+			TelemetryData[FR_AMP_MAH] = 0 ;
   		memset( &FrskyHubMaxMin, 0, sizeof(FrskyHubMaxMin));
 			FrskyHubMaxMin.hubMax[FR_ALT_BARO] = 0 ;
 			PixHawkCapacity = 0 ;
@@ -4394,14 +4421,14 @@ extern struct t_fifo128 Internal_fifo ;
 		{
 			if ( FrskyTelemetryType != FRSKY_TEL_SPORT )
 			{ // Don't zero SWR
- 				FrskyHubData[FR_TXRSI_COPY] = 0 ;
+ 				TelemetryData[FR_TXRSI_COPY] = 0 ;
 			}
- 			FrskyHubData[FR_RXRSI_COPY] = 0 ;
+ 			TelemetryData[FR_RXRSI_COPY] = 0 ;
 			A1Received = 0 ;
 			if ( telemetryType == 2)		// DSM telemetry
 			{
    			frskyTelemetry[2].set( 0, FR_RXRSI_COPY );	// RSSI
- 				FrskyHubData[FR_RXRSI_COPY] = 0 ;
+ 				TelemetryData[FR_RXRSI_COPY] = 0 ;
 			}
 			putSystemVoice( SV_NO_TELEM, V_NOTELEM ) ;
 //			putVoiceQueue( V_NOTELEM ) ;
@@ -4438,7 +4465,7 @@ extern struct t_fifo128 Internal_fifo ;
 			if ( frskyStreaming )
 			{
 				uint8_t index = FR_A1_COPY+g_model.currentSource-1 ;
-				current = FrskyHubData[index] ;
+				current = TelemetryData[index] ;
 				current *= g_model.frsky.channels[index].lratio ; ;
 				current /= 100 ;
 			}
@@ -4447,7 +4474,7 @@ extern struct t_fifo128 Internal_fifo ;
 		{
   		if (frskyUsrStreaming)
 		  {
-				current = FrskyHubData[FR_CURRENT] ;
+				current = TelemetryData[FR_CURRENT] ;
 			}
 		}
 		else	// Scaler
@@ -4482,11 +4509,11 @@ extern struct t_fifo128 Internal_fifo ;
 		if ( ah_temp > 3600 )
 		{
 			ah_temp -= 3600 ;
-			int16_t *ptr_hub = &FrskyHubData[FR_AMP_MAH] ;
+			int16_t *ptr_hub = &TelemetryData[FR_AMP_MAH] ;
 			*ptr_hub += 1 ;
 			TelemetryDataValid[FR_AMP_MAH] = 25 + g_model.telemetryTimeout ;
-//			FrskyHubData[FR_A1_MAH] += 1 ;
-//			FrskyHubData[FR_A2_MAH] += 1 ;
+//			TelemetryData[FR_A1_MAH] += 1 ;
+//			TelemetryData[FR_A2_MAH] += 1 ;
 		}
 		Frsky_Amp_hour_prescale = ah_temp ;
 	}
@@ -4497,7 +4524,7 @@ extern struct t_fifo128 Internal_fifo ;
 //  if (frskyUsrStreaming)
 //	{
 //		int16_t ah_temp ;
-//		ah_temp = FrskyHubData[FR_CURRENT] ;
+//		ah_temp = TelemetryData[FR_CURRENT] ;
 //		if ( ah_temp < 0 )
 //		{
 //			ah_temp = 0 ;			
@@ -4506,15 +4533,15 @@ extern struct t_fifo128 Internal_fifo ;
 //		if ( ah_temp > 3600 )
 //		{
 //			ah_temp -= 3600 ;
-//			int16_t *ptr_hub = &FrskyHubData[FR_AMP_MAH] ;
+//			int16_t *ptr_hub = &TelemetryData[FR_AMP_MAH] ;
 ////			FORCE_INDIRECT(ptr_hub) ;
 //			*ptr_hub += 1 ;
 //		}
 //		Frsky_Amp_hour_prescale = ah_temp ;
-////		if ( ( Frsky_Amp_hour_prescale += FrskyHubData[FR_CURRENT] ) > 3600 )
+////		if ( ( Frsky_Amp_hour_prescale += TelemetryData[FR_CURRENT] ) > 3600 )
 ////		{
 ////			Frsky_Amp_hour_prescale -= 3600 ;
-////			FrskyHubData[FR_AMP_MAH] += 1 ;
+////			TelemetryData[FR_AMP_MAH] += 1 ;
 ////		}
 //	}
 
@@ -4600,7 +4627,7 @@ void FRSKY_setModelAlarms(void)
 
 //void testgps()
 //{
-//  GpsPosLat = (((uint32_t)(uint16_t)FrskyHubData[FR_GPS_LAT] / 100) * 1000000) + (((uint32_t)((uint16_t)FrskyHubData[FR_GPS_LAT] % 100) * 10000 + (uint16_t)FrskyHubData[FR_GPS_LATd]) * 5) / 3;
+//  GpsPosLat = (((uint32_t)(uint16_t)TelemetryData[FR_GPS_LAT] / 100) * 1000000) + (((uint32_t)((uint16_t)TelemetryData[FR_GPS_LAT] % 100) * 10000 + (uint16_t)TelemetryData[FR_GPS_LATd]) * 5) / 3;
 //}
 
 uint8_t Unit ;
@@ -4650,7 +4677,7 @@ int16_t scale_telem_value( int16_t val, uint8_t channel, uint8_t *dplaces )
 // Scales A1 and/or A2 and sets dplaces to 1 or 2
 uint16_t A1A2toScaledValue( uint8_t channel, uint8_t *dplaces )
 {
-	uint8_t val = FrskyHubData[channel ? FR_A2_COPY : FR_A1_COPY] ;
+	uint8_t val = TelemetryData[channel ? FR_A2_COPY : FR_A1_COPY] ;
 	return scale_telem_value( val, channel, dplaces ) ;
 }
 

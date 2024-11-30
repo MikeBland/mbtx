@@ -138,9 +138,6 @@ private:
 		QSpinBox *pmodsb[NUM_SCALERS] ;
 		QComboBox *pdestcb[NUM_SCALERS] ;
 
-		QComboBox *gvcb[12] ;
-		QSpinBox *gvsb[12] ;
-		QSpinBox *gv0sb[12] ;
 
     void setupMixerListWidget();
     void setupInputListWidget();
@@ -185,6 +182,7 @@ private:
     void resizeEvent(QResizeEvent *event  = 0);
 
     void setProtocolBoxes();
+		void fillVarList() ;
 //		void setSubSubProtocol( QComboBox *b, int type ) ;
 
     void drawCurve();
@@ -219,14 +217,7 @@ private:
 		struct t_templateValues templateValues ;
 		void voiceAlarmsBlank( int i ) ;
     void combinedSourceString(QString *srcstr, uint32_t value) ;
-    void fmGvarsConfigure(bool enabled) ;
-		void writeMgvar( uint32_t fmidx, uint32_t gvidx, int16_t value ) ;
-    int16_t readMgvar( uint32_t fmidx, uint32_t gvidx ) ;
-		void fmGvarsSet() ;
-		int16_t getGvarFm( int32_t gv, uint32_t fm ) ;
-		int32_t setGVarFm(uint32_t gvidx, int16_t value, uint32_t fm ) ;
-		int32_t setGVarValue(uint32_t gvidx, int16_t value, uint32_t fm) ;
-		uint32_t getGVarFlightMode(uint32_t fm, uint32_t gvidx) ; // TODO change params order to be consistent!
+
 
 
 signals:
@@ -237,7 +228,6 @@ private slots:
     void clearCurves(bool ask=true);
 
     void on_extendedLimitsChkB_toggled(bool checked);
-    void on_FMgvarsChkB_toggled(bool checked);
     void on_resetCurve_1_clicked();
     void on_resetCurve_2_clicked();
     void on_resetCurve_3_clicked();
@@ -290,6 +280,7 @@ private slots:
 
     void voiceAlarmList_doubleClicked(QModelIndex index) ;
 		void on_AdjusterList_doubleClicked( QModelIndex index ) ;
+		void on_VarList_doubleClicked( QModelIndex index ) ;
 
     void on_curveEdit_1_clicked();
     void on_curveEdit_2_clicked();
@@ -332,6 +323,19 @@ private slots:
 		void on_plotCB_19_toggled(bool checked);
 
     void curvePointEdited();
+		void curvePointVarToggled( uint32_t index, bool checked ) ;
+		
+    void on_CurvePt1Ckb_toggled(bool checked) ;
+    void on_CurvePt2Ckb_toggled(bool checked) ;
+    void on_CurvePt3Ckb_toggled(bool checked) ;
+    void on_CurvePt4Ckb_toggled(bool checked) ;
+    void on_CurvePt5Ckb_toggled(bool checked) ;
+    void on_CurvePt6Ckb_toggled(bool checked) ;
+    void on_CurvePt7Ckb_toggled(bool checked) ;
+    void on_CurvePt8Ckb_toggled(bool checked) ;
+    void on_CurvePt9Ckb_toggled(bool checked) ;
+		
+		
     void curveXPointEdited();
     void limitEdited();
     void limitAuto();
@@ -489,6 +493,8 @@ private slots:
 		void on_MusicPrevCB_currentIndexChanged(int) ;
 		void on_MusicNextCB_currentIndexChanged(int) ;
 
+		void on_VarsChkB_toggled(bool checked) ;
+		
 		void voiceAdd() ;
 		void voiceRemove() ;
 	void voiceBlank() ;
@@ -500,7 +506,6 @@ private slots:
 	void voice_KeyPress(QKeyEvent *event) ;
 
 
-  void on_GvFmSb_valueChanged(int value);
 };
 
 

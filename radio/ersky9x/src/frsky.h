@@ -491,7 +491,7 @@ extern uint8_t frskyUsrStreaming; // >0 (true) == user data is streaming in. 0 =
 extern uint8_t FrskyAlarmSendState;
 extern FrskyData frskyTelemetry[4];
 //extern FrskyData frskyRSSI[2];
-extern int16_t FrskyHubData[] ;
+extern int16_t TelemetryData[] ;
 extern uint8_t TelemetryDataValid[] ;
 //extern int16_t FrskyHubMin[] ;
 //extern int16_t FrskyHubMax[] ;

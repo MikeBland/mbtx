@@ -1096,6 +1096,16 @@ If blank then the mix is considered to be &quot;ON&quot; all the time.</string>
       </property>
       <item>
        <property name="text">
+        <string>None</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
+        <string>Function</string>
+       </property>
+      </item>
+      <item>
+       <property name="text">
         <string>Curve</string>
        </property>
       </item>

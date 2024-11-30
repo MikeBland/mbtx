@@ -97,7 +97,7 @@
   #ifdef PCBSKY
 #define NUM_VARS	12
   #else
-#define NUM_VARS	12
+#define NUM_VARS	24
   #endif
  #endif
 #define VAR_STORAGE_SIZE	((4*4+12)*NUM_VARS)
@@ -471,6 +471,17 @@ PACK(typedef struct t_FrSkyalarms
 PACK(typedef struct t_FrSkyAlarmData {
 		FrSkyAlData alarmData[8] ;
 }) FrSkyAlarmData;
+
+PACK(typedef struct t_FrSkyCapacityAlarm {
+	struct
+	{
+		uint8_t frskyAlarmLimit ;
+		uint8_t frskyAlarmSound ;
+	} alarmData ;
+}) FrSkyCapacityAlarm ;
+
+
+
 
 PACK(typedef struct t_TimerMode
 {
@@ -941,12 +952,12 @@ PACK(typedef struct te_ModelData {
 	FrSkyAlarmData frskyAlarms ;
 // Add 6 bytes for custom telemetry screen
 	uint8_t		customDisplayIndex[6] ;
-#if MULTI_GVARS
-	int16_t mGvars[MAX_MODES+EXTRA_MODES+1][MAX_GVARS+EXTRA_GVARS] ; // 8*9*2=144 bytes
-			uint8_t functionSpare[16] ;
-#else
+//#if MULTI_GVARS
+//	int16_t mGvars[MAX_MODES+EXTRA_MODES+1][MAX_GVARS+EXTRA_GVARS] ; // 8*9*2=144 bytes
+//			uint8_t functionSpare[16] ;
+//#else
   FunctionData   functionData[NUM_FSW];			// Currently unused (16*10 = 160 bytes)
-#endif
+//#endif
 	PhaseData phaseData[MAX_MODES] ;
 	GvarData	gvars[MAX_GVARS] ;
 	uint8_t   numBlades ;					// RPM scaling
@@ -1065,11 +1076,11 @@ PACK(typedef struct te_ModelData {
 #endif	 
 	uint8_t	customTelemetryNames2[16] ;
 	PhaseData xphaseData ;	// 18 bytes long
-#ifdef MULTI_GVARS
-	uint8_t flightModeGvars:1 ;
-#else
+//#ifdef MULTI_GVARS
+//	uint8_t flightModeGvars:1 ;
+//#else
 	uint8_t notflightModeGvars:1 ;
-#endif
+//#endif
 #ifdef USE_VARS
 	uint8_t vars:1 ;
 	uint8_t sparey:6 ;
@@ -1083,10 +1094,10 @@ PACK(typedef struct te_ModelData {
 //#endif
 	struct te_InputsData inputs[NUM_INPUT_LINES] ;	// 8*64 bytes
 
-#if MULTI_GVARS
-	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS+3] ; // 9*4 =36 bytes + 3*4
-	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
-#endif
+//#if MULTI_GVARS
+//	GVarXData xgvars[MAX_GVARS+EXTRA_GVARS+3] ; // 9*4 =36 bytes + 3*4
+//	uint8_t gvarNames[36] ;	// Enough for 12 gvars, 3 chars each
+//#endif
 
 #ifdef USE_VARS
 	uint32_t varStore[VAR_STORAGE_UINTS] ;

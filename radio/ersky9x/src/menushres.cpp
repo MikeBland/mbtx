@@ -591,7 +591,7 @@ void menuProcTelemetry(uint8_t event)
 			else
 			{
 				lcd_outdezAtt( 18*FW+TEL_OFS_0, y, g_model.frsky.channels[index].ratio3_4, (sub==subN && subSub==0 ? blink:0)|PREC2 ) ;
-				lcd_outdezAtt( 23*FW+TEL_OFS_0, y, FrskyHubData[FR_A3+index], PREC2 ) ;
+				lcd_outdezAtt( 23*FW+TEL_OFS_0, y, TelemetryData[FR_A3+index], PREC2 ) ;
   	  	unit = g_model.frsky.channels[index].units3_4 ;
   	  	if (sub==subN)
 				{
@@ -618,8 +618,8 @@ void menuProcTelemetry(uint8_t event)
 		uint8_t attr = (sub==subN) ? InverseBlink : 0 ;
 		lcd_xlabel_decimal( 17*FW+1+TEL_OFS_0, y, g_model.rxVratio, attr|PREC1, XPSTR( "Rx Voltage") ) ;
   	lcd_putc(Lcd_lastPos, y, 'v' ) ;
-//		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, convertRxv( FrskyHubData[FR_RXV] ), PREC1 ) ;
-		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, FrskyHubData[FR_RXV], PREC1 ) ;
+//		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, convertRxv( TelemetryData[FR_RXV] ), PREC1 ) ;
+		lcd_outdezAtt( 22*FW+1+TEL_OFS_0, y, TelemetryData[FR_RXV], PREC1 ) ;
 		if( attr) { g_model.rxVratio = checkIncDec16( g_model.rxVratio, 0, 255, EE_MODEL ) ; }
 		subN++; y+=FH;
 
@@ -1277,7 +1277,7 @@ void displayHiresScreen( uint32_t sindex )
 					}
 					uint16_t oldFcolour = LcdForeground ;
 					LcdForeground = colour ;
-					displayGPSdata( x-9*FW, y, FrskyHubData[ FR_GPS_LAT], FrskyHubData[FR_GPS_LATd], LEADING0 | attr, FrskyHubData[FR_LAT_N_S] ) ;
+					displayGPSdata( x-9*FW, y, TelemetryData[ FR_GPS_LAT], TelemetryData[FR_GPS_LATd], LEADING0 | attr, TelemetryData[FR_LAT_N_S] ) ;
 					LcdForeground = oldFcolour ;
 				}
 				else if ( index == 139 )
@@ -1292,7 +1292,7 @@ void displayHiresScreen( uint32_t sindex )
 					}
 					uint16_t oldFcolour = LcdForeground ;
 					LcdForeground = colour ;
-					displayGPSdata( x-9*FW, y, FrskyHubData[ FR_GPS_LONG], FrskyHubData[FR_GPS_LONGd], LEADING0 | attr, FrskyHubData[FR_LONG_E_W] ) ;
+					displayGPSdata( x-9*FW, y, TelemetryData[ FR_GPS_LONG], TelemetryData[FR_GPS_LONGd], LEADING0 | attr, TelemetryData[FR_LONG_E_W] ) ;
 					LcdForeground = oldFcolour ;
 				}
 				else

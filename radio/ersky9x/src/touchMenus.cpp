@@ -831,12 +831,12 @@ void menuModeOne(uint8_t event)
 	TlExitIcon = 1 ;
 	uint32_t rows = s_currIdx ? 9 : 0 ;
 	
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		rows += 24 ;
-	}
-#endif
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		rows += 24 ;
+//	}
+//#endif
 	mstate2.check_columns(event, rows-1 ) ;
   lcd_putc( 12*FW, 0, '0'+s_currIdx ) ;
 
@@ -1043,90 +1043,90 @@ extern t_trim rawTrimFix( uint8_t phase, t_trim v ) ;
 			}
 			break ;
 			
-#if MULTI_GVARS
-			default :
-			{
-				uint8_t text[4] ;
-				text[0] = 'G' ;
-				text[1] = 'V' ;
-				text[3] = 0 ;
-				k -= 9 ;
-				if ( ( k & 1) == 0 )
-				{
-					k /= 2 ;
-	        int16_t v ;
-					text[2] = ((k >=9)? '8' : '1') + k ;
-					drawItem( (char *)text, y, attr ) ;
-					if ( g_model.gvarNames[k*3] )
-					{
-						if ( g_model.gvarNames[k*3] != ' ' )
-						{
-							uint8_t text[6] ;
-  						ncpystr(&text[1], &g_model.gvarNames[k*3], 3 ) ;
-			  			text[0] = '(' ;
-			  			text[4] = ')' ;
-			  			text[5] = 0 ;
-							lcd_puts_P( 4*FW, y+TVOFF, (char *)text ) ;
-						}
-					}
-  	      v = readMgvar( s_currIdx, k ) ;
-	        if ( (v > GVAR_MAX) && ( s_currIdx ) )
-					{
-    	      uint32_t p = v - GVAR_MAX - 1 ;
-      	    if (p >= s_currIdx)
-						{
-							p += 1 ;
-						}
-						text[0] = 'F' ;
-						text[1] = 'M' ;
-						text[2] = '0'+p ;
-					}
-					else
-					{
-						text[0] = 'O' ;
-						text[1] = 'W' ;
-						text[2] = 'N' ;
-					}
-					drawText( TRIGHT-TRMARGIN-3*FW, y, (char *)text, attr ) ;
+//#if MULTI_GVARS
+//			default :
+//			{
+//				uint8_t text[4] ;
+//				text[0] = 'G' ;
+//				text[1] = 'V' ;
+//				text[3] = 0 ;
+//				k -= 9 ;
+//				if ( ( k & 1) == 0 )
+//				{
+//					k /= 2 ;
+//	        int16_t v ;
+//					text[2] = ((k >=9)? '8' : '1') + k ;
+//					drawItem( (char *)text, y, attr ) ;
+//					if ( g_model.gvarNames[k*3] )
+//					{
+//						if ( g_model.gvarNames[k*3] != ' ' )
+//						{
+//							uint8_t text[6] ;
+//  						ncpystr(&text[1], &g_model.gvarNames[k*3], 3 ) ;
+//			  			text[0] = '(' ;
+//			  			text[4] = ')' ;
+//			  			text[5] = 0 ;
+//							lcd_puts_P( 4*FW, y+TVOFF, (char *)text ) ;
+//						}
+//					}
+//  	      v = readMgvar( s_currIdx, k ) ;
+//	        if ( (v > GVAR_MAX) && ( s_currIdx ) )
+//					{
+//    	      uint32_t p = v - GVAR_MAX - 1 ;
+//      	    if (p >= s_currIdx)
+//						{
+//							p += 1 ;
+//						}
+//						text[0] = 'F' ;
+//						text[1] = 'M' ;
+//						text[2] = '0'+p ;
+//					}
+//					else
+//					{
+//						text[0] = 'O' ;
+//						text[1] = 'W' ;
+//						text[2] = 'N' ;
+//					}
+//					drawText( TRIGHT-TRMARGIN-3*FW, y, (char *)text, attr ) ;
 
-					if ( attr && s_currIdx )
-					{
-//						int16_t oldValue = v ;
-          	if (v < GVAR_MAX)
-						{
-							v = GVAR_MAX ;
-						}
-						int16_t entryValue = v ;
-          	v = checkIncDec16( v, GVAR_MAX, GVAR_MAX+MAX_MODES+1, EE_MODEL ) ;
-          	if ( v != entryValue )
-						{
-	          	if (v == GVAR_MAX)
-							{
-								v = 0 ;
-							}
-//							if ( v != oldValue )
-							{
-								writeMgvar( s_currIdx, k, v ) ;
-							}
-						}
-					}
-				}
-				else
-				{
-					k /= 2 ;
-					drawItem( (char *)XPSTR(" Value"), y, attr ) ;
-					uint32_t fm = getGVarFlightMode( s_currIdx+1, k ) ;
-	        int16_t w = readMgvar( fm, k ) ;
-					drawNumber( TRIGHT-TRMARGIN, y, w, attr ) ; //, attr ? ~colour : colour ) ;
-					if ( attr )
-					{
-						w = checkIncDec16( w, -125, 125, EE_MODEL ) ;
-						writeMgvar( fm, k, w ) ;
-					}
-				}
-			}
-			break ;
-#endif
+//					if ( attr && s_currIdx )
+//					{
+////						int16_t oldValue = v ;
+//          	if (v < GVAR_MAX)
+//						{
+//							v = GVAR_MAX ;
+//						}
+//						int16_t entryValue = v ;
+//          	v = checkIncDec16( v, GVAR_MAX, GVAR_MAX+MAX_MODES+1, EE_MODEL ) ;
+//          	if ( v != entryValue )
+//						{
+//	          	if (v == GVAR_MAX)
+//							{
+//								v = 0 ;
+//							}
+////							if ( v != oldValue )
+//							{
+//								writeMgvar( s_currIdx, k, v ) ;
+//							}
+//						}
+//					}
+//				}
+//				else
+//				{
+//					k /= 2 ;
+//					drawItem( (char *)XPSTR(" Value"), y, attr ) ;
+//					uint32_t fm = getGVarFlightMode( s_currIdx+1, k ) ;
+//	        int16_t w = readMgvar( fm, k ) ;
+//					drawNumber( TRIGHT-TRMARGIN, y, w, attr ) ; //, attr ? ~colour : colour ) ;
+//					if ( attr )
+//					{
+//						w = checkIncDec16( w, -125, 125, EE_MODEL ) ;
+//						writeMgvar( fm, k, w ) ;
+//					}
+//				}
+//			}
+//			break ;
+//#endif
 		}
 	}
 }
@@ -1758,31 +1758,31 @@ void menuModelGeneral( uint8_t event )
 	}
 	subN += 1 ;
 
-#if MULTI_GVARS
-	if(t_pgOfs<=subN)
-	{
-		uint32_t oldValue = g_model.flightModeGvars ;
-		g_model.flightModeGvars = touchOnOffItem( g_model.flightModeGvars, y, XPSTR("Multi Gvars"), sub==subN, colour) ;
-		if ( g_model.flightModeGvars != oldValue )
-		{
-			if ( g_model.flightModeGvars )
-			{
-				initFmGvars() ;
-			}
-			else
-			{
-				for ( uint32_t i = 0 ; i < 7 ; i += 1 )
-				{
-					g_model.gvars[i].gvar = 0 ;
-					g_model.gvars[i].gvsource = 0 ;
-					g_model.gvswitch[i] = 0 ;
-				}
-			}
-		}
-		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
-	}
-	subN += 1 ;
-#endif
+//#if MULTI_GVARS
+//	if(t_pgOfs<=subN)
+//	{
+//		uint32_t oldValue = g_model.flightModeGvars ;
+//		g_model.flightModeGvars = touchOnOffItem( g_model.flightModeGvars, y, XPSTR("Multi Gvars"), sub==subN, colour) ;
+//		if ( g_model.flightModeGvars != oldValue )
+//		{
+//			if ( g_model.flightModeGvars )
+//			{
+//				initFmGvars() ;
+//			}
+//			else
+//			{
+//				for ( uint32_t i = 0 ; i < 7 ; i += 1 )
+//				{
+//					g_model.gvars[i].gvar = 0 ;
+//					g_model.gvars[i].gvsource = 0 ;
+//					g_model.gvswitch[i] = 0 ;
+//				}
+//			}
+//		}
+//		if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
+//	}
+//	subN += 1 ;
+//#endif
 
 #ifdef USE_VARS
 	if(t_pgOfs<=subN)
@@ -2569,11 +2569,11 @@ void menuModes(uint8_t event)
 	{
 		s_currIdx = sub ;
 		killEvents(event);
-#if MULTI_GVARS
-		if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
-#else
+//#if MULTI_GVARS
+//		if ( ( g_model.flightModeGvars ) || ( ( g_model.flightModeGvars == 0 ) && s_currIdx ) )
+//#else
 		if ( s_currIdx )
-#endif
+//#endif
 		{
 			if ( s_currIdx <= 7 )
 			{
@@ -5687,17 +5687,17 @@ void menuOneAdjust(uint8_t event)
 		{
 			case 0 : // GV
 				drawItem( (char *)XPSTR("GVAR"), y, attr ) ;
-#if MULTI_GVARS
-				if ( pgvaradj->gvarIndex > (g_model.flightModeGvars ? 11 : 6) )
-#else
+//#if MULTI_GVARS
+//				if ( pgvaradj->gvarIndex > (g_model.flightModeGvars ? 11 : 6) )
+//#else
 				if ( pgvaradj->gvarIndex > 6 )
-#endif
+//#endif
 				{
-#if MULTI_GVARS
-					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-(g_model.flightModeGvars ? 11 : 6), attr ) ;
-#else
+//#if MULTI_GVARS
+//					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-(g_model.flightModeGvars ? 11 : 6), attr ) ;
+//#else
 					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvaradj->gvarIndex-6, attr ) ;
-#endif
+//#endif
 				}
 				else
 				{
@@ -5705,11 +5705,11 @@ void menuOneAdjust(uint8_t event)
 				}
   			if(attr)
 				{
-#if MULTI_GVARS
- 	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, (g_model.flightModeGvars ? 15 : 10 ) ) ;
-#else
+//#if MULTI_GVARS
+// 	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, (g_model.flightModeGvars ? 15 : 10 ) ) ;
+//#else
  	        CHECK_INCDEC_H_MODELVAR( pgvaradj->gvarIndex, 0, 10 ) ;
-#endif
+//#endif
 				}
 			break ;
 			case 1 : // Fn
@@ -5858,12 +5858,12 @@ void menuProcAdjust(uint8_t event)
 			int16_t value ;
 	 		lcd_putc( 20*FW, 0, '=' ) ;
 			value = 7 ;
-#if MULTI_GVARS
-			if ( g_model.flightModeGvars )
-			{
-				value = 12 ;
-			}
-#endif
+//#if MULTI_GVARS
+//			if ( g_model.flightModeGvars )
+//			{
+//				value = 12 ;
+//			}
+//#endif
 			if ( idx >= value )
 			{
 				value = getTrimValueAdd( CurrentPhase, idx - value  ) ;
@@ -5892,17 +5892,17 @@ void menuProcAdjust(uint8_t event)
 //		{
 //			if ( j == 0 )
 //			{
-#if MULTI_GVARS
-				if ( idx > (g_model.flightModeGvars ? 8 : 6) )
-#else
+//#if MULTI_GVARS
+//				if ( idx > (g_model.flightModeGvars ? 8 : 6) )
+//#else
 				if ( idx > 6 )
-#endif
+//#endif
 				{
-#if MULTI_GVARS
-					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 8 : 6), attr ) ;
-#else
+//#if MULTI_GVARS
+//					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-(g_model.flightModeGvars ? 8 : 6), attr ) ;
+//#else
 					lcd_putsAttIdx( 3*FW+2, y, PSTR(STR_GV_SOURCE), idx-6, attr ) ;
-#endif
+//#endif
 				}
 				else
 				{
@@ -5952,13 +5952,13 @@ void menuOneGvar(uint8_t event)
 	TlExitIcon = 1 ;
 	uint32_t rows = 3 ;	
 	GvarData *pgvar ;
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		rows = 6 ;
-	}
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		rows = 6 ;
+//	}
 	
-#endif
+//#endif
 	 
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
@@ -5966,9 +5966,9 @@ void menuOneGvar(uint8_t event)
 
 	lcd_putc( 20*FW, 0, s_currIdx+ ((s_currIdx > 8) ? '8' : '1') ) ;
 	uint16_t colour = dimBackColour() ;
-#if MULTI_GVARS
-	uint16_t oldBcolour = LcdBackground ;
-#endif
+//#if MULTI_GVARS
+//	uint16_t oldBcolour = LcdBackground ;
+//#endif
 
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
 	uint16_t newVert = processSelection( sub , newSelection ) ;
@@ -5988,21 +5988,21 @@ void menuOneGvar(uint8_t event)
 		switch(i)
 		{
 			case 0 : // switch
-#if MULTI_GVARS
-				if ( g_model.flightModeGvars )
-				{
-					uint8_t *psource ;
-					drawItem( (char *)XPSTR("Source"), y, attr ) ;
-					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
-					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), *psource, attr ) ;
-					// STR_GV_SOURCE
- 					if(attr)
-					{ 
-						CHECK_INCDEC_H_MODELVAR( *psource, 0, 69+NUM_RADIO_VARS ) ;
-					}
-				}
-				else
-#endif
+//#if MULTI_GVARS
+//				if ( g_model.flightModeGvars )
+//				{
+//					uint8_t *psource ;
+//					drawItem( (char *)XPSTR("Source"), y, attr ) ;
+//					psource = ( ( (uint8_t*)&g_model.gvars) + s_currIdx ) ;
+//					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), *psource, attr ) ;
+//					// STR_GV_SOURCE
+// 					if(attr)
+//					{ 
+//						CHECK_INCDEC_H_MODELVAR( *psource, 0, 69+NUM_RADIO_VARS ) ;
+//					}
+//				}
+//				else
+//#endif
 				{
 					drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
 					saveEditColours( attr, colour ) ;
@@ -6011,18 +6011,18 @@ void menuOneGvar(uint8_t event)
 				}
 			break ;
 			case 1 :
-#if MULTI_GVARS
-				if ( g_model.flightModeGvars )
-				{
-					drawItem( (char *)XPSTR("Unit"), y, attr ) ;
-					drawChar( TRIGHT-TRMARGIN-FW, y, pgxvar->unit ? '%' : '-', attr, attr ? ~colour : colour ) ;
-					if ( attr )
-					{
-						CHECK_INCDEC_H_MODELVAR_0( pgxvar->unit, 1 ) ;
-					}
-				}
-				else
-#endif
+//#if MULTI_GVARS
+//				if ( g_model.flightModeGvars )
+//				{
+//					drawItem( (char *)XPSTR("Unit"), y, attr ) ;
+//					drawChar( TRIGHT-TRMARGIN-FW, y, pgxvar->unit ? '%' : '-', attr, attr ? ~colour : colour ) ;
+//					if ( attr )
+//					{
+//						CHECK_INCDEC_H_MODELVAR_0( pgxvar->unit, 1 ) ;
+//					}
+//				}
+//				else
+//#endif
 				{
 					drawItem( (char *)XPSTR("Source"), y, attr ) ;
 					drawIdxText( y, (char *)PSTR(STR_GV_SOURCE), pgvar->gvsource, attr ) ;
@@ -6034,18 +6034,18 @@ void menuOneGvar(uint8_t event)
 				}
 			break ;
 			case 2 :
-#if MULTI_GVARS
-				if ( g_model.flightModeGvars )
-				{
-					drawItem( (char *)XPSTR("Precision"), y, attr ) ;
-					drawIdxText( y, (char *)XPSTR("\0030.-0.0"), pgxvar->prec, attr ) ;
-		    	if(attr)
-					{
-      		  CHECK_INCDEC_H_MODELVAR_0( pgxvar->prec, 1 ) ;
-					}	
-				}
-				else
-#endif
+//#if MULTI_GVARS
+//				if ( g_model.flightModeGvars )
+//				{
+//					drawItem( (char *)XPSTR("Precision"), y, attr ) ;
+//					drawIdxText( y, (char *)XPSTR("\0030.-0.0"), pgxvar->prec, attr ) ;
+//		    	if(attr)
+//					{
+//      		  CHECK_INCDEC_H_MODELVAR_0( pgxvar->prec, 1 ) ;
+//					}	
+//				}
+//				else
+//#endif
 				{
 					drawItem( (char *)XPSTR("Value"), y, attr ) ;
 					drawNumber( TRIGHT-TRMARGIN, y, pgvar->gvar, attr ) ;
@@ -6055,35 +6055,35 @@ void menuOneGvar(uint8_t event)
 					}
 				}
 			break ;
-#if MULTI_GVARS
-			case 3 :
-				drawItem( (char *)XPSTR("Minimum"), y, attr ) ;
-				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MIN+pgxvar->min, attr ) ;
-				if ( attr )
-				{
-					if ( GVAR_MIN+pgxvar->min > GVAR_MAX-pgxvar->max )
-					{
-						pgxvar->min = pgxvar->max = 0 ;
-					}
-					pgxvar->min = checkIncDec16( GVAR_MIN+pgxvar->min, GVAR_MIN, GVAR_MAX-pgxvar->max, EE_MODEL ) - GVAR_MIN ;
-				}
-			break ;
-			case 4 :
-				drawItem( (char *)XPSTR("Maximum"), y, attr ) ;
-				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MAX-pgxvar->max, attr ) ;
-	    	if(attr)
-				{
-      	  pgxvar->max = GVAR_MAX-checkIncDec16( GVAR_MAX-pgxvar->max, GVAR_MIN+pgxvar->min, GVAR_MAX, EE_MODEL ) ;
-    		}
-			break ;
-			case 5 :
-				drawItem( (char *)XPSTR("Name"), y, attr ) ;
-				LcdBackground = attr ? ~colour : colour ;
-				alphaEditName( TRIGHT-3*FW, y+TVOFF, &g_model.gvarNames[s_currIdx*3], 3, attr|ALPHA_NO_NAME, (uint8_t *)0 ) ;
-				LcdBackground = oldBcolour ;
-//				pgxvar->popup = touchOnOffItem( pgxvar->popup, y, XPSTR("Popup"), attr, DimBackColour ) ;
-			break ;
-#endif
+//#if MULTI_GVARS
+//			case 3 :
+//				drawItem( (char *)XPSTR("Minimum"), y, attr ) ;
+//				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MIN+pgxvar->min, attr ) ;
+//				if ( attr )
+//				{
+//					if ( GVAR_MIN+pgxvar->min > GVAR_MAX-pgxvar->max )
+//					{
+//						pgxvar->min = pgxvar->max = 0 ;
+//					}
+//					pgxvar->min = checkIncDec16( GVAR_MIN+pgxvar->min, GVAR_MIN, GVAR_MAX-pgxvar->max, EE_MODEL ) - GVAR_MIN ;
+//				}
+//			break ;
+//			case 4 :
+//				drawItem( (char *)XPSTR("Maximum"), y, attr ) ;
+//				drawNumber( TRIGHT-TRMARGIN, y, GVAR_MAX-pgxvar->max, attr ) ;
+//	    	if(attr)
+//				{
+//      	  pgxvar->max = GVAR_MAX-checkIncDec16( GVAR_MAX-pgxvar->max, GVAR_MIN+pgxvar->min, GVAR_MAX, EE_MODEL ) ;
+//    		}
+//			break ;
+//			case 5 :
+//				drawItem( (char *)XPSTR("Name"), y, attr ) ;
+//				LcdBackground = attr ? ~colour : colour ;
+//				alphaEditName( TRIGHT-3*FW, y+TVOFF, &g_model.gvarNames[s_currIdx*3], 3, attr|ALPHA_NO_NAME, (uint8_t *)0 ) ;
+//				LcdBackground = oldBcolour ;
+////				pgxvar->popup = touchOnOffItem( pgxvar->popup, y, XPSTR("Popup"), attr, DimBackColour ) ;
+//			break ;
+//#endif
 		}
 	}
 }
@@ -6106,12 +6106,12 @@ void menuProcGlobals(uint8_t event)
 	uint32_t k = 0 ;
 	TlExitIcon = 1 ;
 	
-#if MULTI_GVARS
-	if ( g_model.flightModeGvars )
-	{
-		rows = 12 ;
-	}
-#endif	
+//#if MULTI_GVARS
+//	if ( g_model.flightModeGvars )
+//	{
+//		rows = 12 ;
+//	}
+//#endif	
 	event = mstate2.check_columns(event, rows - 1 ) ;
 
 	uint8_t sub = mstate2.m_posVert ;
@@ -6178,22 +6178,22 @@ void menuProcGlobals(uint8_t event)
   	lcd_puts_P( THOFF, y+TVOFF, PSTR(STR_GV));
 		lcd_putc( THOFF+2*FW, y+TVOFF, k+ ((k > 8) ? '8' : '1') ) ;
 		GvarData *pgvar ;
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars )
-		{
-			attr = 0 ;
-			pgvar = &g_model.gvars[0] ;
-		}
-		else
-		{
-			pgvar = &g_model.gvars[k] ;
-		}
-#else
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars )
+//		{
+//			attr = 0 ;
+//			pgvar = &g_model.gvars[0] ;
+//		}
+//		else
+//		{
+//			pgvar = &g_model.gvars[k] ;
+//		}
+//#else
 		pgvar = &g_model.gvars[k] ;
-#endif
-#if MULTI_GVARS
-		if ( g_model.flightModeGvars == 0 )
-#endif
+//#endif
+//#if MULTI_GVARS
+//		if ( g_model.flightModeGvars == 0 )
+//#endif
 		{
 	    putsDrSwitches( 7*FW, y+TVOFF, g_model.gvswitch[k], 0 );
 			uint32_t t ;
@@ -6204,17 +6204,17 @@ void menuProcGlobals(uint8_t event)
 			lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), t, 0 ) ;
 			lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, pgvar->gvar, 0 ) ;
 		}
-#if MULTI_GVARS
-		else
-		{
-			uint8_t *psource ;
-			uint32_t t ;
-			psource = ( ( (uint8_t*)&g_model.gvars) + k ) ;
-			t = *psource ;
-			lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), t, 0 ) ;
-			lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, readMgvar( 0, k ), 0 ) ;
-		}
-#endif
+//#if MULTI_GVARS
+//		else
+//		{
+//			uint8_t *psource ;
+//			uint32_t t ;
+//			psource = ( ( (uint8_t*)&g_model.gvars) + k ) ;
+//			t = *psource ;
+//			lcd_putsAttIdx( 14*FW-4, y+TVOFF, PSTR(STR_GV_SOURCE), t, 0 ) ;
+//			lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, readMgvar( 0, k ), 0 ) ;
+//		}
+//#endif
 		
 		restoreEditColours() ;
 		lcd_hline( 0, y+TFH, TRIGHT ) ;
