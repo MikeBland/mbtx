@@ -21,11 +21,11 @@
 #ifndef _LCD_H_
 #define _LCD_H_
 
-#define LCD_W           480
-#define LCD_H           272
+//#define LCD_W           480
+//#define LCD_H           272
 
 #define BOX_WIDTH       81
-#define coord_t         int
+//#define coord_t         int
 #define scoord_t        int
 #define CENTER
 #define CENTER_OFS      0
@@ -36,22 +36,22 @@
 
 #define LCD_COLS        30
 
-#define FIXEDWIDTH      0x00
+//#define FIXEDWIDTH      0x00
 
 /* lcd puts flags */
-#define ZCHAR           0x04
+//#define ZCHAR           0x04
 
 ///* rect, square flags */
 //#define ROUND           0x02
 
-#define FONTSIZE(x)     ((x) & 0x0700)
-#define TINSIZE         0x0100
-#define SMLSIZE         0x0200
-#define MIDSIZE         0x0300
-//#define DBLSIZE         0x0400
-#define XXLSIZE         0x0500
-#define ERASEBG         0x8000
-#define VERTICAL        0x0800
+//#define FONTSIZE(x)     ((x) & 0x0700)
+//#define TINSIZE         0x0100
+//#define SMLSIZE         0x0200
+//#define MIDSIZE         0x0300
+////#define DBLSIZE         0x0400
+//#define XXLSIZE         0x0500
+//#define ERASEBG         0x8000
+//#define VERTICAL        0x0800
 
 #define TIMEBLINK       0x1000
 #define TIMEHOUR        0x2000
@@ -73,8 +73,6 @@
 #define DARKRED        RGB(160, 0, 6)
 
 #define RGB32(r, g, b)   (((r) << 16) + ((g) << 8) + ((b) << 0))
-
-#define LcdFlags        uint32_t
 
 enum LcdColorIndex
 {

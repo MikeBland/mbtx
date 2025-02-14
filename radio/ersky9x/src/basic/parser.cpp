@@ -44,7 +44,7 @@
 //EVT_VIRTUAL_DEC 	for VALUES navigation
 //EVT_VIRTUAL_DEC_REPT 	for VALUES navigation
 
-//#define LARGE_DIMENSION		1
+#define LARGE_DIMENSION		1
 
 extern SKYMixData *mixAddress( uint32_t index ) ;
 extern int32_t chans[NUM_SKYCHNOUT+EXTRA_SKYCHANNELS] ;
@@ -1034,6 +1034,17 @@ uint8_t *utoasc( uint8_t *p, uint32_t value )
 	return q ;
 }
 
+uint8_t *utohex( uint8_t *p, uint8_t value )
+{
+  uint8_t c = value >> 4 ;
+  c = c>9 ? c+'A'-10 : c+'0';
+	*p++ = c ;
+  c = value & 0x0F ;
+  c = c>9 ? c+'A'-10 : c+'0';
+	*p++ = c ;
+	return p ;
+}
+
 void setErrorText( uint32_t error, uint32_t line )
 {
 	uint8_t *p ;
@@ -1042,6 +1053,22 @@ void setErrorText( uint32_t error, uint32_t line )
 	p = utoasc( p, error ) ;
 	p = cpystr( p, (uint8_t *)" at line " ) ;
 	p = utoasc( p, line ) ;
+	*p++ = '=' ;
+	uint8_t *q = RunTime->ExecProgPtr-11 ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+	p = utohex( p, *q++ ) ;
+
+
 //	p = cpystr( p, (uint8_t *)"\037" ) ;
 //	utoasc( p, RunTime->RunLastLineNumber ) ;
 	AlertType = ALERT_TYPE ;
@@ -1633,9 +1660,7 @@ void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimensi
 		if ( sub_type & SYM_VAR_ARRAY_TYPE )
 		{
 			Pprogram->Bytes[end++] = dimension ;
-#ifdef LARGE_DIMENSION
 			Pprogram->Bytes[end++] = dimension >> 8 ;
-#endif
 		}
 	}
 	else
@@ -1955,9 +1980,17 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	uint32_t type ;
 	uint8_t code ;
 	// Found
+#ifdef LARGE_DIMENSION
+	index += Pprogram->Bytes[index] - 4 ; // Index of index
+#else
 	index += Pprogram->Bytes[index] - 3 ; // Index of index
+#endif
 	type = Pprogram->Bytes[index-1] ;
 	dimension = Pprogram->Bytes[index+2] ;
+#ifdef LARGE_DIMENSION
+	dimension |= Pprogram->Bytes[index+3] << 8 ;
+#endif
+	
 	index = Pprogram->Bytes[index] | (Pprogram->Bytes[index+1] << 8) ;
 	
 //	index += Pprogram->Bytes[index] - 4 ; // Index of index
@@ -1985,7 +2018,7 @@ uint32_t setArray( uint32_t index, uint32_t cPosition )
 	 
 	Pprogram->Bytes[cPosition++] = code ;
 	Pprogram->Bytes[cPosition++] = index ;
-	if ( code &= 0x08 )
+	if ( code & 0x08 )
 	{
 		Pprogram->Bytes[cPosition++] = index >> 8 ;
 	}
@@ -2178,11 +2211,19 @@ uint32_t partLoadBasic()
 								ProgPtr += 1 ;
 								value = asctoi( Numeric ) ;
                 int32_t limit ;
+#ifdef LARGE_DIMENSION
+								limit = 200 ;
+                if ( type == SYM_VAR_ARRAY_BYTE )
+								{
+									limit = 500 ;
+								}
+#else
 								limit = 100 ;
                 if ( type == SYM_VAR_ARRAY_BYTE )
 								{
 									limit = 252 ;
 								}
+#endif
 								if ( value >= 0 && value <= limit )
 								{
 									uint32_t index ;
@@ -3482,6 +3523,12 @@ uint32_t getParamByteArrayAddress( uint8_t opcode, struct byteAddress *ptr, uint
 		
 	ptr->varOffset = getVarIndex( opcode ) ;
 	ptr->dimension = *RunTime->ExecProgPtr++ ;
+#ifdef LARGE_DIMENSION
+	if ( opcode & 1 )
+	{
+		ptr->dimension |= *RunTime->ExecProgPtr++ << 8 ;
+	}
+#endif
 	ptr->varIndex = expression() ;
 	opcode = *RunTime->ExecProgPtr++ ;
 	if ( opcode != ']' )
@@ -4061,7 +4108,7 @@ void exec_drawnumber()
 
 	// get 3 (or 4) parameters
 	attr = 0 ;
-	width = 10 ;
+	width = 0 ;
 	
 	result = get_numeric_parameters( params, 3 ) ;
 	if ( result == 1 )
@@ -4084,7 +4131,7 @@ void exec_drawnumber()
 #else
 		if ( ScriptFlags & SCRIPT_LCD_OK )
 		{
-			lcd_outdezNAtt( x, y, value, attr, width ) ;
+			PUTS_NUM_N( x, y, value, attr, width ) ;
 //				lcd_outdezAtt(x, y, value, attr ) ;
 		}
 #endif
@@ -4375,18 +4422,18 @@ void exec_drawtext()
 				}
 				else
 				{
-			  	lcd_putsAtt( x, y, (char *)p, attr ) ;
+			  	PUTS_ATT( x, y, (char *)p, attr ) ;
 				}
 #else
 				if ( ScriptFlags & SCRIPT_LCD_OK )
 				{
 					if ( length )
 					{
-						lcd_putsnAtt( x, y, (char *)p, length, attr ) ;
+						PUTS_ATT_N( x, y, (char *)p, length, attr ) ;
 					}
 					else
 					{
-				  	lcd_putsAtt( x, y, (char *)p, attr ) ;
+				  	PUTS_ATT( x, y, (char *)p, attr ) ;
 					}
 				}
 #endif
@@ -5463,7 +5510,7 @@ int32_t exec_filelist()
 	if ( ScriptFlags & SCRIPT_STANDALONE )
 	{
 		lcd_clear() ;
-		lcd_putsAtt( 0, 0, "Select File", 0 ) ;
+		PUTS_ATT( 0, 0, "Select File", 0 ) ;
 		
 		ScriptDirNeeded = 1 ;
 		i = fileList( RunTime->Vars.Variables[0], fc ) ;

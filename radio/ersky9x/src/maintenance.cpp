@@ -160,7 +160,7 @@ uint8_t SportModuleExt ;
 
 extern void frsky_receive_byte( uint8_t data ) ;
 uint16_t crc16_ccitt( uint8_t *buf, uint32_t len ) ;
-uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edit ) ;
+//uint8_t checkIndexed( uint8_t y, const prog_char * s, uint8_t value, uint8_t edit ) ;
 uint32_t checkForExitEncoderLong( uint8_t event ) ;
 
 extern void copyFileName( char *dest, char *source, uint32_t size ) ;
@@ -1127,7 +1127,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 
 	if ( limit == 0 )
 	{
-		lcd_puts_Pleft( 4*FH, "\005No Files" ) ;
+		PUTS_ATT_LEFT( 4*FH, "\005No Files" ) ;
 		if ( checkForExitEncoderLong( event ) )
 		{
 		// Select file to flash
@@ -1170,7 +1170,7 @@ uint32_t fileList(uint8_t event, struct fileControl *fc )
 #else
 #define FILE_LIST_OFFSET	0
 #endif
-		lcd_putsn_P( FILE_LIST_OFFSET, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
+		PUTS_NP( FILE_LIST_OFFSET, 16+FH*i, &SharedMemory.FileList.Filenames[i][x], len ) ;
 	}
 
 #if !defined(PCBTARANIS) || defined(REV9E)
@@ -1288,7 +1288,12 @@ void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
 		{
 			break ;			
 		}
-    x = lcd_putcAtt(x,y,c,mode);
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+    PUTC_ATT(x,y,c,mode);
+		x = LcdNextPos ;
+#else
+    x = PUTC_ATT(x,y,c,mode);
+#endif
     len--;
   }
 }
@@ -1332,7 +1337,7 @@ uint16_t AppId ;
 void setCrc()
 {
   uint16_t crc = 0 ;
-  for ( uint8_t i=2; i<9; i++)
+  for ( uint32_t i=2; i<9; i++)
 	{
   	crc += TxPhyPacket[i]; //0-1FF
   	crc += crc >> 8; //0-100
@@ -1460,7 +1465,7 @@ void menuChangeId(uint8_t event)
 	switch ( state )
 	{
 		case CHANGE_SCANNING :
-			lcd_puts_Pleft( 3*FH, "Scanning" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Scanning" ) ;
 			if ( --SendCount == 0 )
 			{
 				SendCount = 2 ;
@@ -1480,12 +1485,12 @@ void menuChangeId(uint8_t event)
 		break ;
 	
 		case CHANGE_ENTER_ID :
-			lcd_puts_Pleft( 3*FH, "New Id: " ) ;
-	    lcd_outdez( 9*FW, 3*FH, NewPhyId ) ;
+			PUTS_ATT_LEFT( 3*FH, "New Id: " ) ;
+	    PUTS_NUMX( 9*FW, 3*FH, NewPhyId ) ;
 		break ;
 
 		case CHANGE_SET_IDLE :
-			lcd_puts_Pleft( 3*FH, "Set Idle state" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Set Idle state" ) ;
 			if ( --SendCount == 0)
 			{
 				TxPhyPacket[0] = 0x7E ;
@@ -1511,7 +1516,7 @@ void menuChangeId(uint8_t event)
 		break ;
 		
 		case CHANGE_SET_VALUE :
-			lcd_puts_Pleft( 3*FH, "Set Active state" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Set Active state" ) ;
 			if ( --SendCount == 0)
 			{
 				TxPhyPacket[0] = 0x7E ;
@@ -1538,7 +1543,7 @@ void menuChangeId(uint8_t event)
 		break ;
 		
 		case CHANGE_FINISHED :
-			lcd_puts_Pleft( 3*FH, "Id Changed" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Id Changed" ) ;
 			PhyId = NewPhyId ;
 			if ( --SendCount == 0)
 			{
@@ -1553,7 +1558,7 @@ void menuChangeId(uint8_t event)
 		break ;
 	}
 
-//	lcd_outhex4( 0, 7*FH, RxCount ) ;
+//	PUT_HEX4( 0, 7*FH, RxCount ) ;
 	if ( RxPacket[1] == 0x10 )
 	{
 		if ( IdFound == 0 )
@@ -1567,22 +1572,22 @@ void menuChangeId(uint8_t event)
 			}
 		}
 		AppId = RxPacket[2] | ( RxPacket[3] << 8 ) ;
-//		lcd_outhex4( 0, 4*FH, RxPacket[0] ) ;
-//		lcd_outhex4( 25, 4*FH, RxPacket[1] ) ;
-//		lcd_outhex4( 50, 4*FH, RxPacket[2] ) ;
-//		lcd_outhex4( 75, 4*FH, RxPacket[3] ) ;
-//		lcd_outhex4( 100, 4*FH, RxPacket[4] ) ;
-//		lcd_outhex4( 0, 5*FH, RxPacket[5] ) ;
-//		lcd_outhex4( 25, 5*FH, RxPacket[6] ) ;
-//		lcd_outhex4( 50, 5*FH, RxPacket[7] ) ;
-//		lcd_outhex4( 75, 5*FH, RxPacket[8] ) ;
-//		lcd_outhex4( 100, 5*FH, RxPacket[9] ) ;
+//		PUT_HEX4( 0, 4*FH, RxPacket[0] ) ;
+//		PUT_HEX4( 25, 4*FH, RxPacket[1] ) ;
+//		PUT_HEX4( 50, 4*FH, RxPacket[2] ) ;
+//		PUT_HEX4( 75, 4*FH, RxPacket[3] ) ;
+//		PUT_HEX4( 100, 4*FH, RxPacket[4] ) ;
+//		PUT_HEX4( 0, 5*FH, RxPacket[5] ) ;
+//		PUT_HEX4( 25, 5*FH, RxPacket[6] ) ;
+//		PUT_HEX4( 50, 5*FH, RxPacket[7] ) ;
+//		PUT_HEX4( 75, 5*FH, RxPacket[8] ) ;
+//		PUT_HEX4( 100, 5*FH, RxPacket[9] ) ;
 	}
 	if ( IdFound )
 	{
-		lcd_puts_Pleft( 6*FH, "Id    AppId" ) ;
-		lcd_outdez( 5*FW, 6*FH, PhyId & 0x1F ) ;
-		lcd_outhex4( 12*FW, 6*FH, AppId ) ;
+		PUTS_ATT_LEFT( 6*FH, "Id    AppId" ) ;
+		PUTS_NUMX( 5*FW, 6*FH, PhyId & 0x1F ) ;
+		PUT_HEX4( 12*FW, 6*FH, AppId ) ;
 	}
 
 }
@@ -1591,11 +1596,11 @@ void menuChangeId(uint8_t event)
  #ifndef SMALL
 void displayXmegaData()
 {
-	lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-	lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
-	lcd_outhex4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
-	lcd_outhex4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
-	lcd_outhex4( 100, 7*FH, Fuses[7] ) ;
+	PUT_HEX4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+	PUT_HEX4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+	PUT_HEX4( 50, 7*FH, ( Fuses[1] << 8 ) | Fuses[2] ) ;
+	PUT_HEX4( 75, 7*FH, ( Fuses[4] << 8 ) | Fuses[5] ) ;
+	PUT_HEX4( 100, 7*FH, Fuses[7] ) ;
 }
  #endif
 
@@ -1628,7 +1633,7 @@ void menuUpMulti(uint8_t event)
 	uint32_t sub = mstate2.m_posVert ;
 	uint32_t subN = 0 ;
 	uint32_t y = FH ;
-  lcd_putsAtt(0, y, XPSTR("Update"), (sub==subN) ? INVERS : 0 ) ;
+  PUTS_ATT(0, y, XPSTR("Update"), (sub==subN) ? INVERS : 0 ) ;
   if(sub==subN)
 	{
 		if ( ( event == EVT_KEY_BREAK(KEY_MENU) ) || ( event == EVT_KEY_BREAK(BTN_RE) ) )
@@ -1639,24 +1644,24 @@ void menuUpMulti(uint8_t event)
 	}
 	y += FH ;
 	subN += 1 ;
-	lcd_puts_Pleft( y, XPSTR("File Type") ) ;
+	PUTS_ATT_LEFT( y, XPSTR("File Type") ) ;
 	FileType = checkIndexed( y, XPSTR("\110\001\003BINHEX"), FileType, (sub==subN) ) ;
 	y += FH ;
 	subN += 1 ;
 #if defined(PCBSKY) || defined(PCB9XT)
-	lcd_puts_Pleft( y, XPSTR("Module") ) ;
+	PUTS_ATT_LEFT( y, XPSTR("Module") ) ;
 	MultiModule = checkIndexed( y, XPSTR("\110\001\010ExternalInternal"), MultiModule, (sub==subN) ) ;
 	y += FH ;
 	subN += 1 ;
-	lcd_puts_Pleft( y, XPSTR("COM Port") ) ;
+	PUTS_ATT_LEFT( y, XPSTR("COM Port") ) ;
 	MultiPort = checkIndexed( y, XPSTR("\150\001\00112"), MultiPort, (sub==subN) ) ;
 	y += FH ;
 	subN += 1 ;
-	lcd_puts_Pleft( y, XPSTR("Invert Com Port") ) ;
+	PUTS_ATT_LEFT( y, XPSTR("Invert Com Port") ) ;
 	MultiInvert = checkIndexed( y, XPSTR("\150\001\003 NOYES"), MultiInvert, (sub==subN) ) ;
 #endif
  #if defined(PCBT16)
-	lcd_puts_Pleft( y, XPSTR("Module") ) ;
+	PUTS_ATT_LEFT( y, XPSTR("Module") ) ;
 	MultiModule = checkIndexed( y, XPSTR("\110\001\010ExternalInternal"), MultiModule, (sub==subN) ) ;
  #endif
 }
@@ -1672,11 +1677,11 @@ void drawProgressScreen( const char *title, const char *message, uint32_t percen
   lcd_clear() ;
   if (title)
 	{
-    lcd_puts_Pleft( 2*FH, title ) ;
+    PUTS_ATT_LEFT( 2*FH, title ) ;
   }
   if (message)
 	{
-    lcd_puts_Pleft( 5*FH, message ) ;
+    PUTS_ATT_LEFT( 5*FH, message ) ;
   }
 	
 	lcd_hbar( 4, 6*FH+4, 101, 7, percent ) ;
@@ -2290,8 +2295,8 @@ void menuUp1(uint8_t event)
 	switch ( state )
 	{
 		case UPDATE_NO_FILES :
-			lcd_puts_Pleft( 4*FH, "\005No Files" ) ;
-	    lcd_outdez( 21*FW, 4*FH, mounted ) ;
+			PUTS_ATT_LEFT( 4*FH, "\005No Files" ) ;
+	    PUTS_NUMX( 21*FW, 4*FH, mounted ) ;
     break ;
 		
 		case UPDATE_FILE_LIST :
@@ -2307,28 +2312,28 @@ void menuUp1(uint8_t event)
 #ifdef PCBX9D
  				if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Int. Mod from" ) ;
 				}
  				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Xmega from" ) ;
 				}
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Multi from" ) ;
 				}
 #if defined(PCBX9LITE)
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_PCHIP ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Power Chip from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Power Chip from" ) ;
 				}
 #endif
 				else
 				{
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
-					lcd_puts_Pleft( 2*FH, (SportModuleExt == SPORT_MODULE) ? "Flash Ext.mod from" : "Flash Ext.SP from" ) ;
+					PUTS_ATT_LEFT( 2*FH, (SportModuleExt == SPORT_MODULE) ? "Flash Ext.mod from" : "Flash Ext.SP from" ) ;
 #else
-					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Ext.SP from" ) ;
 #endif
 				}
 				mdata->SportVerValid = 0 ;
@@ -2342,12 +2347,12 @@ void menuUp1(uint8_t event)
  #ifndef SMALL
 				if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Xmega from" ) ;
 				}
   #ifndef NO_MULTI
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Multi from" ) ;
 				}
 	#endif
 				else
@@ -2355,60 +2360,60 @@ void menuUp1(uint8_t event)
  #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
  				if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Int. Mod from" ) ;
 				}
 				else
  #endif
 				{
 #if !(defined(PCBX12D) || defined(PCBX10))
-					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash SPort from" ) ;
 #endif
 				}
 //				CoProcReady = 0 ;
  #else
  				if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Xmega from" ) ;
 				}
 				else if ( (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Multi from" ) ;
 				}
 				else
 				{
-					lcd_puts_Pleft( 2*FH, "Flash SPort from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash SPort from" ) ;
 				}
  #endif
 #endif
 #ifdef PCB9XT
 		 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Ext.SP from" ) ;
 					mdata->SportVerValid = 0 ;
 				}
  				else if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Int. Mod from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Int. Mod from" ) ;
 					mdata->SportVerValid = 0 ;
 				}
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_XMEGA ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Xmega from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Xmega from" ) ;
 				}
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Multi from" ) ;
 				}
 				else
 				{
 					// AVR
-					lcd_puts_Pleft( 2*FH, "Flash AVR from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash AVR from" ) ;
 				}
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
 		 		if (mdata->UpdateItem == UPDATE_TYPE_SPORT_EXT )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Ext.SP from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Ext.SP from" ) ;
 					mdata->SportVerValid = 0 ;
 				}
 // 				else if ( (mdata->UpdateItem == UPDATE_TYPE_SPORT_INT ) )
@@ -2418,13 +2423,13 @@ void menuUp1(uint8_t event)
 //				}
 				else if ( (mdata->UpdateItem == UPDATE_TYPE_MULTI ) )
 				{
-					lcd_puts_Pleft( 2*FH, "Flash Multi from" ) ;
+					PUTS_ATT_LEFT( 2*FH, "Flash Multi from" ) ;
 				}
 #endif
 			}
 			else
 			{
-				lcd_puts_Pleft( 2*FH, "Flash Bootloader from" ) ;
+				PUTS_ATT_LEFT( 2*FH, "Flash Bootloader from" ) ;
 			}
 			cpystr( cpystr( (uint8_t *)mdata->FlashFilename, (uint8_t *)"\\firmware\\" ), (uint8_t *)SharedMemory.FileList.Filenames[fc->vpos] ) ;
 #if defined(PCBTARANIS)
@@ -2574,8 +2579,8 @@ void menuUp1(uint8_t event)
 #endif
 
 		case UPDATE_INVALID :
-			lcd_puts_Pleft( 2*FH, "Invalid File" ) ;
-			lcd_puts_Pleft( 4*FH, "Press EXIT" ) ;
+			PUTS_ATT_LEFT( 2*FH, "Invalid File" ) ;
+			PUTS_ATT_LEFT( 4*FH, "Press EXIT" ) ;
 			if ( checkForExitEncoderLong( event ) )
 			{
 				state = UPDATE_FILE_LIST ;		// Canceled
@@ -2584,7 +2589,7 @@ void menuUp1(uint8_t event)
     break ;
 		case UPDATE_ACTION :
 			// Do the flashing
-			lcd_puts_Pleft( 3*FH, "Flashing" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Flashing" ) ;
 			if (mdata->UpdateItem == UPDATE_TYPE_BOOTLOADER )		// Bootloader
 			{
 #if defined(PCBX12D) || defined(PCBX10)
@@ -2711,11 +2716,11 @@ void menuUp1(uint8_t event)
 				width *= 64 ;
 				width /= FirmwareSize ;
 				displayXmegaData() ;
-				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
-				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
-				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
-				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
-				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+				PUT_HEX4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				PUT_HEX4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				PUT_HEX4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				PUT_HEX4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				PUT_HEX4( 25, 1*FH, PdiErrors8 ) ;
 			}
 #endif
 #ifdef PCBX9D
@@ -2737,7 +2742,7 @@ void menuUp1(uint8_t event)
 			{
 				if ( MultiState == MULTI_WAIT1	)
 				{
-					lcd_puts_Pleft( 4*FH, "Power on Delay" ) ;
+					PUTS_ATT_LEFT( 4*FH, "Power on Delay" ) ;
 				}
 				width = multiUpdate() ;
 				if ( width > FirmwareSize )
@@ -2747,8 +2752,8 @@ void menuUp1(uint8_t event)
 				}
 				width *= 64 ;
 				width /= FirmwareSize ;
-				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				PUT_HEX4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				PUT_HEX4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 			}
 #endif
 			else		// Internal/External Sport
@@ -2767,13 +2772,13 @@ void menuUp1(uint8_t event)
 				width /= FirmwareSize ;
 				if ( mdata->SportVerValid )
 				{
-					lcd_outhex4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
-					lcd_outhex4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
+					PUT_HEX4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
+					PUT_HEX4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
 				}
 
 				if ( mdata->SportState == SPORT_POWER_ON )
 				{
-					lcd_puts_Pleft( 4*FH, "Finding Device" ) ;
+					PUTS_ATT_LEFT( 4*FH, "Finding Device" ) ;
 				}
 
 //#ifdef REVX
@@ -2802,23 +2807,23 @@ void menuUp1(uint8_t event)
 			{
 				lcd_vline( i, 5*FH, 8 ) ;
 			}
-//			lcd_outhex4( 0, 4*FH, BytesFlashed >> 16 ) ;
-//			lcd_outhex4( 30, 4*FH, BytesFlashed  ) ;
+//			PUT_HEX4( 0, 4*FH, BytesFlashed >> 16 ) ;
+//			PUT_HEX4( 30, 4*FH, BytesFlashed  ) ;
     break ;
 		
 		case UPDATE_COMPLETE :
-			lcd_puts_Pleft( 3*FH, "Flashing Complete" ) ;
+			PUTS_ATT_LEFT( 3*FH, "Flashing Complete" ) ;
  			if ( (mdata->UpdateItem != UPDATE_TYPE_BOOTLOADER ) )
  			{
 #if defined(PCBX9D) || defined(PCB9XT) || defined(PCBTX16S)
  				if ( mdata->SportVerValid & 1 )
  				{
- 					lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+ 					PUTS_ATT_LEFT( 5*FH, "FAILED" ) ;
  				}
 				if ( mdata->SportVerValid )
 				{
-					lcd_outhex4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
-					lcd_outhex4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
+					PUT_HEX4( 0, 7*FH, (SportVersion[0] << 8) | SportVersion[1] ) ;
+					PUT_HEX4( 25, 7*FH, (SportVersion[2] << 8) | SportVersion[3] ) ;
 				}
 #endif
 #ifndef NO_MULTI
@@ -2826,10 +2831,10 @@ void menuUp1(uint8_t event)
 				{
 					if ( MultiResult )
 					{
-						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+						PUTS_ATT_LEFT( 5*FH, "FAILED" ) ;
 					}
-				lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-				lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+				PUT_HEX4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+				PUT_HEX4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 				}
 #endif
  
@@ -2838,10 +2843,10 @@ void menuUp1(uint8_t event)
 				{
 					if ( MultiResult )
 					{
-						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+						PUTS_ATT_LEFT( 5*FH, "FAILED" ) ;
 						if ( ResultText )
 						{
-							lcd_puts_Pleft( 6*FH, ResultText ) ;
+							PUTS_ATT_LEFT( 6*FH, ResultText ) ;
 						}
 					}
 				}
@@ -2867,13 +2872,13 @@ void menuUp1(uint8_t event)
  #endif 			
  					if ( mdata->SportVerValid & 1 )
 	 				{
- 						lcd_puts_Pleft( 5*FH, "FAILED" ) ;
+ 						PUTS_ATT_LEFT( 5*FH, "FAILED" ) ;
  					}
   #ifndef NO_MULTI
 					if (SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_MULTI )
 					{
-						lcd_outhex4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
-						lcd_outhex4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
+						PUT_HEX4( 0, 7*FH, (XmegaSignature[0] << 8) | XmegaSignature[1] ) ;
+						PUT_HEX4( 25, 7*FH, (XmegaSignature[2] << 8) | XmegaSignature[3] ) ;
 					}
 
 	#endif
@@ -2884,11 +2889,11 @@ void menuUp1(uint8_t event)
 			}
 #ifdef PCB9XT
 				displayXmegaData() ;
-				lcd_outhex4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
-				lcd_outhex4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
-				lcd_outhex4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
-				lcd_outhex4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
-				lcd_outhex4( 25, 1*FH, PdiErrors8 ) ;
+				PUT_HEX4( 50, 7*FH, (PdiErrors0 << 8 ) | PdiErrors1 ) ;
+				PUT_HEX4( 75, 7*FH, (PdiErrors2 << 8 ) | PdiErrors3 ) ;
+				PUT_HEX4( 100, 7*FH, (PdiErrors4 << 8 ) | PdiErrors5 ) ;
+				PUT_HEX4( 0, 1*FH, (PdiErrors6 << 8 ) | PdiErrors7 ) ;
+				PUT_HEX4( 25, 1*FH, PdiErrors8 ) ;
 #endif
 
 			if ( checkForExitEncoderLong( event ) )
@@ -2912,68 +2917,68 @@ void menuUpdate(uint8_t event)
 	static uint8_t reboot = 0 ;
 	static uint32_t position = 2*FH ;
   TITLE( "MAINTENANCE" ) ;
-	lcd_puts_Pleft( 2*FH, "  Update Bootloader" );
+	PUTS_ATT_LEFT( 2*FH, "  Update Bootloader" );
 #ifdef PCBSKY
  #ifndef REVX
 //	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
-	lcd_puts_Pleft( 3*FH, "  Update SPort" );
+	PUTS_ATT_LEFT( 3*FH, "  Update SPort" );
   #ifdef SMALL
 //	lcd_puts_Pleft( 4*FH, "  Update Xmega" );
 	#else
-	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
+	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Xmega" );
 	#endif
   #ifndef NO_MULTI
-	 lcd_puts_Pleft( 6*FH, "  Update Multi" );
+	 PUTS_ATT_LEFT( 6*FH, "  Update Multi" );
 	#endif
  #else
-	lcd_puts_Pleft( 3*FH, "  Update SPort" );
-	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 5*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 6*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 3*FH, "  Update SPort" );
+	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Xmega" );
+	PUTS_ATT_LEFT( 6*FH, "  Update Multi" );
  #endif
 #endif
 #ifdef PCBX9D
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
-	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
-	lcd_puts_Pleft( 4*FH, "  Update Ext. Module" );
-	lcd_puts_Pleft( 5*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 3*FH, "  Update Int. Module" );
+	PUTS_ATT_LEFT( 4*FH, "  Update Ext. Module" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Ext. SPort" );
 #if defined(PCBX9LITE)
-	lcd_puts_Pleft( 6*FH, "  Update Power Chip" );
+	PUTS_ATT_LEFT( 6*FH, "  Update Power Chip" );
 #else
-	lcd_puts_Pleft( 6*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 6*FH, "  Change SPort Id" );
 #endif
-	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
 #else
-	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
-	lcd_puts_Pleft( 4*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
-	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 3*FH, "  Update Int. Module" );
+	PUTS_ATT_LEFT( 4*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 5*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 6*FH, "  Update Xmega" );
+	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
 #endif
 #endif
 #ifdef PCB9XT
-	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Update Int. Module" );
-	lcd_puts_Pleft( 5*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "  Update Int. Module" );
+	PUTS_ATT_LEFT( 5*FH, "  Change SPort Id" );
 //	lcd_puts_Pleft( 5*FH, "  Update Avr CPU" );
-	lcd_puts_Pleft( 6*FH, "  Update Xmega" );
-	lcd_puts_Pleft( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 6*FH, "  Update Xmega" );
+	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. Module" );
  #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
 //	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
-	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Update Int. Module" );
-	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
+	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "  Update Int. Module" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Ext. Multi" );
  #else
-	lcd_puts_Pleft( 3*FH, "  Update Ext. SPort" );
-	lcd_puts_Pleft( 4*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
   #if defined(PCBT16)
-	lcd_puts_Pleft( 5*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Multi" );
   #else
-	lcd_puts_Pleft( 5*FH, "  Update Ext. Multi" );
+	PUTS_ATT_LEFT( 5*FH, "  Update Ext. Multi" );
   #endif
  #endif
 #endif

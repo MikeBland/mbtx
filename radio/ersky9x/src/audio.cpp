@@ -156,7 +156,7 @@ bool audioQueue::busy()
 
 bool audioQueue::freeslots()
 {
-	uint8_t temp ;
+	uint32_t temp ;
 	temp = t_queueWidx ;
 	temp += AUDIO_QUEUE_LENGTH ;
 	temp -= t_queueRidx ;
@@ -626,8 +626,8 @@ void voice0to99Name( uint16_t index )
 // Announce a value using voice
 void voice_numeric( int16_t value, uint8_t num_decimals, uint16_t units_index )
 {
-	uint8_t decimals = 0 ;
-	uint8_t actualDecimals = 0 ;
+	uint32_t decimals = 0 ;
+	uint32_t actualDecimals = 0 ;
 	div_t qr ;
 	uint32_t flag = 0 ;
 

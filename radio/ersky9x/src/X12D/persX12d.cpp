@@ -149,6 +149,8 @@ void generalDefault()
 #else
 #if defined(PCBX12D) || defined(PCBX10)
   g_eeGeneral.contrast = 10 ;
+	g_eeGeneral.backgroundColour = (9<<11)+(21<<6)+(13) ;
+	g_eeGeneral.SavedBatteryVoltage = g_vbat100mV ;
 #else
   g_eeGeneral.contrast = 18 ;
 #endif

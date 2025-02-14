@@ -654,7 +654,7 @@ uint32_t getBtOK( uint32_t errorAllowed, uint32_t timeout )
 	uint16_t rxchar ;
 	uint16_t a = 0 ;
 	uint16_t b = 0 ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 
 	x = 'O' ;
 	if ( bitfieldtype & (BT_BITTYPE_HC05 | BT_BITTYPE_CC41) )
@@ -719,7 +719,7 @@ uint32_t btTransaction( uint8_t *command, uint8_t *receive, uint32_t length )
 	uint8_t *end ;
 	uint8_t a ;
 	uint8_t b ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 
 	CoTickDelay(5) ;	// 10mS
 	if ( command )
@@ -815,7 +815,7 @@ uint32_t getBtRole()
 {
 	uint8_t buffer[32] ;
 	uint8_t btRole[4] ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 
 	if ( bitfieldtype & (BT_BITTYPE_CC41) )
 	{
@@ -854,7 +854,7 @@ uint32_t getBtRole()
 
 uint32_t setBtRole( uint32_t role )
 {
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 
 	if ( bitfieldtype & ( BT_BITTYPE_CC41 | BT_BITTYPE_PARA ) )
 	{
@@ -880,7 +880,7 @@ uint32_t setBtRole( uint32_t role )
 
 uint32_t poll_bt_device()
 {
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 	
 	BtTxBuffer[0] = 'A' ;
 	BtTxBuffer[1] = 'T' ;
@@ -899,9 +899,9 @@ uint32_t poll_bt_device()
 
 uint32_t changeBtBaudrate( uint32_t baudIndex )
 {
-	uint16_t x ;
+	uint32_t x ;
 	uint8_t *p ;
-	uint8_t bitfieldtype = BtControl.BtModuleType ;
+	uint32_t bitfieldtype = BtControl.BtModuleType ;
 
 	BtControl.BtBaudChangeIndex = baudIndex ;
 

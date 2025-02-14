@@ -92,7 +92,7 @@
 
 #ifdef USE_VARS
  #ifdef PCB9XT
-#define NUM_VARS	12
+#define NUM_VARS	24
  #else
   #ifdef PCBSKY
 #define NUM_VARS	12

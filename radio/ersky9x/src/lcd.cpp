@@ -46,14 +46,16 @@
 
 #ifndef PCBX12D
 #ifndef PCBX10
+ #ifndef PROP_TEXT
 #include "font.lbm"
 #define font_5x8_x20_x7f (font)
-
 #include "font_dblsize.lbm"
 #define font_10x16_x20_x7f (font_dblsize)
 
 #include "font12x8test.lbm"
+ #endif
 
+#ifndef PROP_TEXT
 #ifndef SMALL
  #ifndef PCBLEM1
 const uint8_t font_se_extra[] = {
@@ -78,7 +80,9 @@ const uint8_t font_pl_extra[] = {
  #endif
 #endif
 #endif
+#endif
 
+ #ifndef PROP_TEXT
 #ifndef SMALL
  #ifndef PCBLEM1
 const uint8_t font_se_big_extra[] = {
@@ -93,13 +97,18 @@ const uint8_t font_de_big_extra[] = {
 #include "font_de_10x14.lbm"
 } ;
 #endif
+ #endif // PROP_TEXT
 
 
+ #ifndef PROP_TEXT
 #include "font_04x06.lbm"
+ #endif // PROP_TEXT
 //#define font_5x8_x20_x7f (font)
 
+ #ifndef PROP_TEXT
 const uint8_t *ExtraFont = NULL ;
 const uint8_t *ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 
 // Local data
 //#ifdef INVERT_DISPLAY
@@ -211,34 +220,65 @@ void putsTimexxl( uint16_t x, uint16_t y, int16_t tme, uint8_t att, uint16_t col
 {
 	div_t qr ;
 	uint32_t i ;
+//	uint32_t j ;
 	// Can't handle negative (yet)
+	char text[8] ;
+	char *p = text ;
+
 	if ( tme < 0 )
 	{
 		tme = -tme ;
-		lcdDrawCharxxlTransparent( x-10, y, ':' + 1, att, colour ) ;
+		*p++ = '-' ;
+		x -= getTextWidth( text, 1, XXLSIZE ) ;
 	}
-	lcdDrawCharxxlTransparent( x+84, y, ':', att, colour ) ;
+//	lcdDrawCharxxlTransparent( x+84, y, ':', att, colour ) ;
 
 	qr = div( tme, 60 ) ;
 	i = qr.quot / 10 ;
-	lcdDrawCharxxlTransparent( x+24, y, i + '0', att, colour ) ;
+	*p++ = '0'+ i ;
+//	lcdDrawCharxxlTransparent( x+24, y, i + '0', att, colour ) ;
 	i = qr.quot % 10 ;
-	lcdDrawCharxxlTransparent( x+60, y, i + '0', att, colour ) ;
+	*p++ = '0'+ i ;
+//	lcdDrawCharxxlTransparent( x+60, y, i + '0', att, colour ) ;
+	*p++ = ':' ;
 	i = qr.rem / 10 ;
-	lcdDrawCharxxlTransparent( x+112, y, i + '0', att, colour ) ;
+	*p++ = '0'+ i ;
+//	lcdDrawCharxxlTransparent( x+112, y, i + '0', att, colour ) ;
 	i = qr.rem % 10 ;
-	lcdDrawCharxxlTransparent( x+148, y, i + '0', att, colour ) ;
+	*p++ = '0'+ i ;
+//	lcdDrawCharxxlTransparent( x+148, y, i + '0', att, colour ) ;
+	*p = 0 ;
+	i = p - text ;
+//	i = getTextWidth( text, j, XXLSIZE ) ;
+	lcdDrawSizedText( x, y, text, i, XXLSIZE, colour ) ;
+
 }
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-void putsTime(uint16_t x,uint16_t y,int16_t tme,uint8_t att,uint8_t att2, uint16_t colour, uint16_t background)
+void putsTime(uint16_t x,uint16_t y,int16_t tme,LcdFlags att,LcdFlags att2, uint16_t colour, uint16_t background)
 #else
-void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
+void putsTime(coord_t x,coord_t y,int16_t tme,LcdFlags att,LcdFlags att2)
 #endif
 {
 	div_t qr ;
 
+#if defined(PCBX12D) || defined(PCBX10)
+	x *= HVSCALE ;
+	y *= HVSCALE ;
+	uint32_t neg = 0 ;
+	if ( tme<0 )
+	{
+		neg = 1 ;
+		tme = -tme;
+	}
+	qr = div( tme, 60 ) ;
+	lcdDrawChar( x, y, ':', att ) ;
+	lcdDrawNumber( LcdNextPos, y, qr.rem, att2|LEADING0|LEFT, 2 ) ;
+	tme = neg ? -qr.quot : qr.quot ;
+	lcdDrawNumber( x, y, tme, att|LEADING0, 2 ) ;
+
+#else
 	uint8_t z = FWNUM*6-2 ;
 	if ( att&DBLSIZE )
 	{
@@ -250,37 +290,45 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	}
 	if ( tme<0 )
 	{
-#if defined(PCBX12D) || defined(PCBX10)
-		lcd_putcAttColour( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att, colour, background ) ;
-#else
-		lcd_putcAtt( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
-#endif
+ #if defined(PCBX12D) || defined(PCBX10)
+		lcdDrawChar( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att, colour, background ) ;
+ #else
+		PUTC_ATT( x - ((att&DBLSIZE) ? z : FWNUM*3),    y, '-',att);
+ #endif
 		tme = -tme;
 	}
 
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
 	lcd_putcAttColour( x, y, ':',att&att2, colour, background ) ;
-#else
-	lcd_putcAtt( x, y, ':',att&att2);
-#endif
+ #else
+ 	PUTC_ATT( x, y, ':',att&att2);
+ #endif
 	qr = div( tme, 60 ) ;
 	if ( att&DBLSIZE )
 	{
 		if ( att&CONDENSED )
 		{
+ #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+ #else
 			x += 2 ;
+ #endif
 		}
 	}
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
 	lcd_2_digits( x, y, (uint16_t)qr.quot, att, colour, background ) ;
-#else
-	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
-#endif
+ #else
+//	lcd_2_digits( x, y, (uint16_t)qr.quot, att ) ;
+	PUTS_NUM_N( x, y, (uint16_t)qr.quot, att + LEADING0, 2 ) ;
+ #endif
 	if ( att&DBLSIZE )
 	{
 		if ( att&CONDENSED )
 		{
-			x += FWNUM*5-4 ;
+ #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+			x += FWNUM*4-3 ;
+ #else
+			x += FWNUM*4+2 ;
+ #endif
 		}
 		else
 		{
@@ -291,29 +339,59 @@ void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2)
 	{
 		x += FW*3-4 ;
 	}
-#if defined(PCBX12D) || defined(PCBX10)
+ #if defined(PCBX12D) || defined(PCBX10)
 	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 + LEADING0, colour, background ) ;
-#else
-	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
+ #else
+//	lcd_2_digits( x, y, (uint16_t)qr.rem, att2 ) ;
+	PUTS_NUM_N( x, y, (uint16_t)qr.rem, att + LEADING0, 2 ) ;
+ #endif
+
 #endif
+
 }
 
-void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att)
+#if defined(PCBX12D) || defined(PCBX10)
+void putsVolts(uint16_t x,uint16_t y, uint8_t volts, LcdFlags att)
 {
 	uint8_t option = att & NO_UNIT ;
 	att &= ~NO_UNIT ;
-	lcd_outdezAtt(x, y, volts, att|PREC1);
-	if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, 'V', 0);
+	lcdDrawNumber(x*HVSCALE, y*HVSCALE, volts, att|PREC1) ;
+	if(!(option&NO_UNIT)) lcdDrawChar(LcdLastRightPos, y*HVSCALE, 'V', 0 ) ;
 }
 
-
-void putsVBat(uint8_t x,uint8_t y,uint8_t att)
+void putsVBat(uint16_t x,uint16_t y,uint16_t att)
 {
 #ifndef MINIMISE_CODE    
   att |= g_vbat100mV < g_eeGeneral.vBatWarn ? BLINK : 0;
 #endif
 	putsVolts(x, y, g_vbat100mV, att);
 }
+
+
+#else
+void putsVolts(coord_t x,coord_t y, uint8_t volts, LcdFlags att)
+{
+	uint8_t option = att & NO_UNIT ;
+	att &= ~NO_UNIT ;
+#if defined(PROP_TEXT)
+	lcdDrawNumber(x, y, volts, att|PREC1);
+	if(!(option&NO_UNIT)) lcdDrawChar(LcdLastRightPos, y, 'V', 0);
+#else
+	PUTS_NUM(x, y, volts, att|PREC1);
+	if(!(option&NO_UNIT)) PUTC_ATT(Lcd_lastPos, y, 'V', 0);
+#endif
+}
+
+void putsVBat(coord_t x,coord_t y,LcdFlags att)
+{
+#ifndef MINIMISE_CODE    
+  att |= g_vbat100mV < g_eeGeneral.vBatWarn ? BLINK : 0;
+#endif
+	putsVolts(x, y, g_vbat100mV, att);
+}
+
+#endif
+
 
 #if defined(PCBX12D) || defined(PCBX10)
 
@@ -357,7 +435,7 @@ extern uint16_t Image_height ;
 //	} 
 }
 
-void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
+void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, LcdFlags mode, uint16_t colour, uint16_t background )
 {
 	uint32_t yb ;
 	uint32_t x ;
@@ -427,7 +505,7 @@ void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, ui
 	
 }
 
-void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode, uint16_t colour, uint16_t background )
+void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
   register const unsigned char *q = imgdat ;
   register uint8_t w    = *q++ ;
@@ -443,7 +521,7 @@ void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, uin
 
 
 
-void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode, uint16_t colour, uint16_t background )
+void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, LcdFlags mode, uint16_t colour, uint16_t background )
 {
 	uint32_t yb ;
 	uint32_t x ;
@@ -519,7 +597,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
   }
 }
 
-void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode, uint16_t colour, uint16_t background )
+void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
   register const unsigned char *q = imgdat ;
   register uint8_t w    = *q++ ;
@@ -539,7 +617,7 @@ void lcdSetRefVolt( uint8_t val )
 }
 
 #else
-void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, uint8_t mode )
+void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h, LcdFlags mode )
 {
 	uint32_t yb ;
 	uint32_t x ;
@@ -569,7 +647,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 	
 }
 
-void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mode )
+void lcd_img( coord_t i_x, coord_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode )
 {
   register const unsigned char *q = imgdat ;
   register uint8_t w    = *q++ ;
@@ -584,161 +662,164 @@ void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, uint8_t mo
 }
 #endif
 
-uint8_t lcd_putc(uint8_t x,uint8_t y,const char c )
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#else
+uint8_t lcd_putc(coord_t x,coord_t y,const char c )
 {
   return lcd_putcAtt(x,y,c,0);
 }
+#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
-{
-	if ( c < 31 )
-	{
-		x = c*FW ;
-		if ( (mode & CONDENSED) )
-		{
-			x = c*8 ;
-		}
-		else
-		{
-			x += x ;
-		}	 
-		return x ;
-	}
-	lcdDrawCharBitmapDoubleDma( x*2, y*2, c, mode, colour ) ;
-	if (mode & CONDENSED)
-	{
-		x += 8 ;
-	}
-	else
-	{
-		x += FW*2 ;
-	}
-	return x ;
-
-
-//	uint16_t *p ;
-//	uint16_t *r ;
-//  uint8_t *q ;
-//	uint8_t mask ;
-//	int32_t i ;
-
-//	r = ( uint16_t *) CurrentFrameBuffer ;
-//	r += x*2 ;
-//	r += y * LCD_W * 2 ;
-//	x += FW ;
-//	uint32_t doNormal = 1 ;
-//	unsigned char c_mapped = c ;
-//  register bool inv = false ;
-//	if (mode & INVERS) inv = true ;
-//	if ( (mode & BLINK) && BLINK_ON_PHASE )
+//uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,LcdFlags mode, uint16_t colour, uint16_t background )
+//{
+//	if ( c < 31 )
 //	{
-//		inv = !inv ;
-//	}
-////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
-	
-//	if ( (mode & CONDENSED) )
-//	{
-//		doNormal = 0 ;
-			
-//		if ( doNormal == 0 )
+//		x = c*FW ;
+//		if ( (mode & CONDENSED) )
 //		{
-//			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
-//		/* each letter consists of 8 top bytes followed by
-//	 	* five bottom by 8 bottom bytes (16 bytes per 
-//	 	* char) */
-//			if( c < 0xC0 )
-//			{
-//				c_mapped = c - 0x20 ;
-//				q = (uint8_t *) &font_12x8[c_mapped*14] ;
-//			}
-//			else
-//			{
-//				q = (uint8_t *) &font_12x8[0] ;
-//			}
-    		
-//			for( i=7 ; i>=0 ; i-- )
-//			{
-//				uint8_t b1 ;
-//				uint8_t b3 ;
-
-//  		  /*top byte*/
-//   		  b1 = *q ;
-//  		  /*bottom byte*/
-//   		  b3 = *(q+7) ;
-//   		  q++;
-//				if ( i == 0 )
-//				{
-//					b1 = 0 ;
-//					b3 = 0 ;
-//				}
-//    		if(inv)
-//				{
-//				  b1=~b1;
-//				  b3=~b3;
-//    		}
-//				p = r ;
-//				for ( mask = 1 ; mask ; mask <<= 1 )
-//				{
-//					uint16_t v = ( b1 & mask ) ? colour : background ;
-//					*p = v ;
-//					*(p+1) = v ;
-//					*(p+LCD_W) = v ;
-//					*(p+LCD_W+1) = v ;
-//					v = ( b3 & mask ) ? colour : background ;
-//					*(p+LCD_W*16) = v ;
-//					*(p+LCD_W*16+1) = v ;
-//					*(p+LCD_W*17) = v ;
-//					*(p+LCD_W*17+1) = v ;
-//					p += LCD_W * 2 ;
-//				}
-//				r += 2 ;
-//    	}
+//			x = c*8 ;
 //		}
-//	}
-
-//	if ( doNormal )
-//	{
-//		if ( (c!=0x2E)) x+=FW; //check for decimal point
-//	/* each letter consists of ten top bytes followed by
-// 	* five bottom by ten bottom bytes (20 bytes per 
-// 	* char) */
-//		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
-//	  for( i=11 ; i>=0 ; i-- )
+//		else
 //		{
-//			uint8_t b1 ;
-//			uint8_t b2 ;
-
-//		  /*top byte*/
-//	    b1 = i>1 ? *q : 0;
-//		  /*bottom byte*/
-//	    b2 = i>1 ? *(q+10) : 0;
-//			if ( inv )
-//			{
-//				b1 = ~b1 ;
-//				b2 = ~b2 ;
-//			}
-//	    q++;
-//			p = r ;
-//			for ( mask = 1 ; mask ; mask <<= 1 )
-//			{
-//				uint16_t v = ( b1 & mask ) ? colour : background ;
-//				*p = v ;
-//				*(p+1) = v ;
-//				*(p+LCD_W) = v ;
-//				*(p+LCD_W+1) = v ;
-//				v = ( b2 & mask ) ? colour : background ;
-//				*(p+LCD_W*16) = v ;
-//				*(p+LCD_W*16+1) = v ;
-//				*(p+LCD_W*17) = v ;
-//				*(p+LCD_W*17+1) = v ;
-//				p += LCD_W * 2 ;
-//			}
-//			r += 2 ;
-//		}
+//			x += x ;
+//		}	 
+//		return x ;
+//	}
+//	lcdDrawCharBitmapDoubleDma( x*2, y*2, c, mode, colour ) ;
+//	if (mode & CONDENSED)
+//	{
+//		x += 8 ;
+//	}
+//	else
+//	{
+//		x += FW*2 ;
 //	}
 //	return x ;
-}
+
+
+////	uint16_t *p ;
+////	uint16_t *r ;
+////  uint8_t *q ;
+////	uint8_t mask ;
+////	int32_t i ;
+
+////	r = ( uint16_t *) CurrentFrameBuffer ;
+////	r += x*2 ;
+////	r += y * LCD_W * 2 ;
+////	x += FW ;
+////	uint32_t doNormal = 1 ;
+////	unsigned char c_mapped = c ;
+////  register bool inv = false ;
+////	if (mode & INVERS) inv = true ;
+////	if ( (mode & BLINK) && BLINK_ON_PHASE )
+////	{
+////		inv = !inv ;
+////	}
+//////  register bool   inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false);
+	
+////	if ( (mode & CONDENSED) )
+////	{
+////		doNormal = 0 ;
+			
+////		if ( doNormal == 0 )
+////		{
+////			if ( (c!=0x2E)) x+=8-FW; //check for decimal point
+////		/* each letter consists of 8 top bytes followed by
+////	 	* five bottom by 8 bottom bytes (16 bytes per 
+////	 	* char) */
+////			if( c < 0xC0 )
+////			{
+////				c_mapped = c - 0x20 ;
+////				q = (uint8_t *) &font_12x8[c_mapped*14] ;
+////			}
+////			else
+////			{
+////				q = (uint8_t *) &font_12x8[0] ;
+////			}
+    		
+////			for( i=7 ; i>=0 ; i-- )
+////			{
+////				uint8_t b1 ;
+////				uint8_t b3 ;
+
+////  		  /*top byte*/
+////   		  b1 = *q ;
+////  		  /*bottom byte*/
+////   		  b3 = *(q+7) ;
+////   		  q++;
+////				if ( i == 0 )
+////				{
+////					b1 = 0 ;
+////					b3 = 0 ;
+////				}
+////    		if(inv)
+////				{
+////				  b1=~b1;
+////				  b3=~b3;
+////    		}
+////				p = r ;
+////				for ( mask = 1 ; mask ; mask <<= 1 )
+////				{
+////					uint16_t v = ( b1 & mask ) ? colour : background ;
+////					*p = v ;
+////					*(p+1) = v ;
+////					*(p+LCD_W) = v ;
+////					*(p+LCD_W+1) = v ;
+////					v = ( b3 & mask ) ? colour : background ;
+////					*(p+LCD_W*16) = v ;
+////					*(p+LCD_W*16+1) = v ;
+////					*(p+LCD_W*17) = v ;
+////					*(p+LCD_W*17+1) = v ;
+////					p += LCD_W * 2 ;
+////				}
+////				r += 2 ;
+////    	}
+////		}
+////	}
+
+////	if ( doNormal )
+////	{
+////		if ( (c!=0x2E)) x+=FW; //check for decimal point
+////	/* each letter consists of ten top bytes followed by
+//// 	* five bottom by ten bottom bytes (20 bytes per 
+//// 	* char) */
+////		q = (uint8_t *) &font_dblsize[(c-0x20)*20] ;
+////	  for( i=11 ; i>=0 ; i-- )
+////		{
+////			uint8_t b1 ;
+////			uint8_t b2 ;
+
+////		  /*top byte*/
+////	    b1 = i>1 ? *q : 0;
+////		  /*bottom byte*/
+////	    b2 = i>1 ? *(q+10) : 0;
+////			if ( inv )
+////			{
+////				b1 = ~b1 ;
+////				b2 = ~b2 ;
+////			}
+////	    q++;
+////			p = r ;
+////			for ( mask = 1 ; mask ; mask <<= 1 )
+////			{
+////				uint16_t v = ( b1 & mask ) ? colour : background ;
+////				*p = v ;
+////				*(p+1) = v ;
+////				*(p+LCD_W) = v ;
+////				*(p+LCD_W+1) = v ;
+////				v = ( b2 & mask ) ? colour : background ;
+////				*(p+LCD_W*16) = v ;
+////				*(p+LCD_W*16+1) = v ;
+////				*(p+LCD_W*17) = v ;
+////				*(p+LCD_W*17+1) = v ;
+////				p += LCD_W * 2 ;
+////			}
+////			r += 2 ;
+////		}
+////	}
+////	return x ;
+//}
 
 //uint16_t lcd_putcAttDbl(uint16_t x,uint16_t y,const char c,uint8_t mode)
 //{
@@ -883,7 +964,8 @@ uint16_t lcd_putcAttDblColour(uint16_t x,uint16_t y,const char c,uint8_t mode, u
 	
 //}
 
-uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour, uint16_t background )
+#ifndef COLOUR_DISPLAY
+uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,LcdFlags mode, uint16_t colour, uint16_t background )
 {
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
 	{
@@ -1004,8 +1086,10 @@ uint16_t lcd_putcAttColour(uint16_t x,uint16_t y,const char c,uint8_t mode, uint
 //	}
 //	return x ;
 }
+#endif
 
-uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint16_t mode, uint16_t background )
+#ifndef COLOUR_DISPLAY
+uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,LcdFlags mode, uint16_t background )
 {
 	if ( mode & DBLSIZE )
 	{
@@ -1134,6 +1218,8 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint16_t mode, uint16_t 
 //	}
 //	return x ;
 }
+#endif
+
 
 //uint16_t lcd_putcAttSmall(uint16_t x,uint16_t y,const char c,uint8_t mode, uint16_t colour)
 //{
@@ -1173,7 +1259,8 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,uint16_t mode, uint16_t 
 //	return x+6 ;
 //}
 
-void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,uint8_t mode, uint16_t colour, uint16_t bgColour )
+#ifndef COLOUR_DISPLAY
+void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,LcdFlags mode, uint16_t colour, uint16_t bgColour )
 {
 	register char c ;
   while(len!=0) {
@@ -1189,9 +1276,10 @@ void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,uint
     len--;
   }
 }
+#endif
 
 #else
-static uint8_t *dispBufAddress( uint8_t x, uint8_t y )
+static uint8_t *dispBufAddress( coord_t x, coord_t y )
 {
 #if (DISPLAY_W==128)
   return &DISPLAY_START[ (y & 0xF8) * 16 + x ];
@@ -1201,7 +1289,8 @@ static uint8_t *dispBufAddress( uint8_t x, uint8_t y )
 }
 
 // invers: 0 no 1=yes 2=blink
-uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
+ #ifndef PROP_TEXT
+uint8_t lcd_putcAtt(coord_t x,coord_t y,const char c,uint8_t mode)
 {
 	register int32_t i ;
 	register uint8_t *p    = dispBufAddress( x, y ) ;
@@ -1437,8 +1526,10 @@ uint8_t lcd_putcAtt(uint8_t x,uint8_t y,const char c,uint8_t mode)
   }
 	return x ;
 }
+ #endif
 
-uint8_t lcd_putcSmall( uint8_t x, uint8_t y, uint8_t c, uint8_t mode )
+#ifndef PROP_TEXT
+uint8_t lcd_putcSmall( coord_t x, coord_t y, uint8_t c, LcdFlags mode )
 {
 	register int32_t i ;
 	register uint8_t *p = dispBufAddress( x, y ) ;
@@ -1484,6 +1575,7 @@ uint8_t lcd_putcSmall( uint8_t x, uint8_t y, uint8_t c, uint8_t mode )
 	}
 	return x ;
 }
+#endif // PROP_TEXT
 
 #endif
 
@@ -1491,23 +1583,32 @@ uint8_t lcd_putcSmall( uint8_t x, uint8_t y, uint8_t c, uint8_t mode )
 // First byte of string is sub-string length
 // idx is index into string (in length units)
 // Output length characters
+//#if defined(PCBX12D) || defined(PCBX10)
+//void lcd_putsAttIdxColour(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att, uint16_t colour, uint16_t background )
+//{
+//	uint8_t length ;
+//	length = *s++ ;
+
+//  lcd_putsnAttColour(x,y,s+length*idx,length,att, colour, background ) ;
+//}
+//#endif
+
 #if defined(PCBX12D) || defined(PCBX10)
-void lcd_putsAttIdxColour(uint8_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att, uint16_t colour, uint16_t background )
+#else
+ #ifndef PROP_TEXT
+void lcd_putsAttIdx(coord_t x,coord_t y,const char * s,uint8_t idx,LcdFlags att)
 {
 	uint8_t length ;
 	length = *s++ ;
-
-  lcd_putsnAttColour(x,y,s+length*idx,length,att, colour, background ) ;
+	if ( att & LUA_RIGHT)
+	{
+		x -= length*FW ;
+		att &= ~LUA_RIGHT ;
+	}
+  PUTS_ATT_N(x,y,s+length*idx,length,att) ;
 }
+ #endif
 #endif
-
-void lcd_putsAttIdx(uint16_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att)
-{
-	uint8_t length ;
-	length = *s++ ;
-
-  lcd_putsnAtt(x,y,s+length*idx,length,att) ;
-}
 
 //void lcd_putsAttIdx_right( uint8_t y,const prog_char * s,uint8_t idx,uint8_t att)
 //{
@@ -1515,7 +1616,9 @@ void lcd_putsAttIdx(uint16_t x,uint8_t y,const char * s,uint8_t idx,uint8_t att)
 //	lcd_putsAttIdx( x, y, s, idx, att ) ;
 //}
 
-void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint16_t mode)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#else
+void lcd_putsnAtt(coord_t x,coord_t y, const char * s,uint8_t len,LcdFlags mode)
 {
 #ifndef TOUCH
  #if defined(PCBX12D) || defined(PCBX10)
@@ -1565,14 +1668,19 @@ void lcd_putsnAtt(uint8_t x,uint8_t y, const char * s,uint8_t len,uint16_t mode)
     len--;
   }
 }
+#endif
 
-void lcd_putsn_P(uint8_t x,uint8_t y,const char * s,uint8_t len)
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#else
+void lcd_putsn_P(coord_t x,coord_t y,const char * s,uint8_t len)
 {
   lcd_putsnAtt( x,y,s,len,0);
 }
+#endif
 
+#ifndef COLOUR_DISPLAY
 #if defined(PCBX12D) || defined(PCBX10)
-uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, uint8_t mode, uint16_t colour, uint16_t background )
+uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, LcdFlags mode, uint16_t colour, uint16_t background )
 {
   while(1)
 	{
@@ -1594,10 +1702,13 @@ uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, uint8_t mode, ui
   }
   return x;
 }
-
-
 #endif
-uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint16_t mode )
+#endif
+ 
+ 
+ #ifndef PROP_TEXT
+#ifndef COLOUR_DISPLAY
+uint8_t lcd_putsAtt( coord_t x, coord_t y, const char *s, LcdFlags mode )
 {
 	if ( mode & LUA_RIGHT )
 	{
@@ -1670,16 +1781,21 @@ uint8_t lcd_putsAtt( uint8_t x, uint8_t y, const char *s, uint16_t mode )
   }
   return x;
 }
+ #endif
 
-void lcd_puts_Pleft( uint8_t y, const char *s )
+#if defined(PCBX12D) || defined(PCBX10)
+#else
+ #ifndef PROP_TEXT
+void lcd_puts_Pleft( coord_t y, const char *s )
 {
 #if defined(PCBX12D) || defined(PCBX10)
-  lcd_putsAtt( DisplayOffset, y, s, 0);
+  lcd_putsAtt( 0, y, s, 0);
 #else
   lcd_putsAtt( 0, y, s, 0);
 #endif
 }
-
+ #endif
+ #endif
 // This routine skips 'skip' strings, then displays the rest
 //void lcd_puts_Pskip(uint8_t y,const char * s, uint8_t skip)
 //{
@@ -1695,114 +1811,129 @@ void lcd_puts_Pleft( uint8_t y, const char *s )
 //  lcd_putsAtt( 0, y, s, 0);
 //}
 
-void lcd_puts_P( uint8_t x, uint8_t y, const char *s )
+ #ifndef PROP_TEXT
+#ifndef COLOUR_DISPLAY
+void lcd_puts_P( coord_t x, coord_t y, const char *s )
 {
   lcd_putsAtt( x, y, s, 0);
 }
+#endif
+ #endif
+#endif
 
 #if defined(PCBX7ACCESS)
-void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val)
-{
-	uint8_t i ;
-  x += FWNUM*8 ;
-  for(i=0 ; i<8 ; i += 1)
-  {
-    x -= FWNUM ;
-    char c = val & 0x0F ;
-    c = c>9 ? c+'A'-10 : c+'0' ;
-    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0) ;
-    val >>= 4 ;
-  }
-}
+//void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val)
+//{
+//	uint8_t i ;
+//  x += FWNUM*8 ;
+//  for(i=0 ; i<8 ; i += 1)
+//  {
+//    x -= FWNUM ;
+//    char c = val & 0x0F ;
+//    c = c>9 ? c+'A'-10 : c+'0' ;
+//    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0) ;
+//    val >>= 4 ;
+//  }
+//}
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
-void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val)
-{
-	uint8_t i ;
-  x += FWNUM*8 ;
-  for(i=0 ; i<8 ; i += 1)
-  {
-    x -= FWNUM ;
-    char c = val & 0x0F ;
-    c = c>9 ? c+'A'-10 : c+'0' ;
-    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0) ;
-    val >>= 4 ;
-  }
-}
+//void lcd_outhex8(uint16_t x,uint8_t y,uint32_t val)
+//{
+//	uint8_t i ;
+//  x += FWNUM*8 ;
+//  for(i=0 ; i<8 ; i += 1)
+//  {
+//    x -= FWNUM ;
+//    char c = val & 0x0F ;
+//    c = c>9 ? c+'A'-10 : c+'0' ;
+//    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0) ;
+//    val >>= 4 ;
+//  }
+//}
+#endif
 
+#ifndef PROP_TEXT
+ #if defined(PCBX12D) || defined(PCBX10)
+ #else
+#if defined(PCBX12D) || defined(PCBX10) || defined(PCB9XT)
 void lcd_outhex4(uint16_t x,uint8_t y,uint16_t val)
 #else
-void lcd_outhex4(uint8_t x,uint8_t y,uint16_t val)
+void lcd_outhex4(coord_t x,coord_t y,uint16_t val)
 #endif
 {
-	uint8_t i ;
+	uint32_t i ;
   x+=FWNUM*4;
   for(i=0; i<4; i++)
   {
     x-=FWNUM;
     char c = val & 0xf;
     c = c>9 ? c+'A'-10 : c+'0';
-    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0);
+    PUTC_ATT(x,y,c,c>='A'?CONDENSED:0);
     val>>=4;
   }
 }
-
-void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
-{
-  register int i ;
-  x+=FWNUM*2;
-  for(i=0; i<2; i++)
-  {
-    x-=FWNUM;
-    char c = val & 0xf;
-    c = c>9 ? c+'A'-10 : c+'0';
-    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0);
-    val>>=4;
-  }
-}
+ #endif
+#endif // PROP_TEXT
+//void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
+//{
+//  register int i ;
+//  x+=FWNUM*2;
+//  for(i=0; i<2; i++)
+//  {
+//    x-=FWNUM;
+//    char c = val & 0xf;
+//    c = c>9 ? c+'A'-10 : c+'0';
+//    lcd_putcAtt(x,y,c,c>='A'?CONDENSED:0);
+//    val>>=4;
+//  }
+//}
 
 #if defined(PCBX12D) || defined(PCBX10)
-void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background )
-{
-  lcd_outdezAtt(x,y,val,0, background );
-}
+//void lcd_outdez( uint16_t x, uint16_t y, int16_t val, uint16_t background )
+//{
+//  lcd_outdezAtt(x,y,val,0, background );
+//}
 
-void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background )
-{
-  lcd_outdezNAtt( x,y,val,mode,5, LcdForeground, background );
-}
+//void lcd_outdezAtt( uint16_t x, uint16_t y, int16_t val, uint16_t mode, uint16_t background )
+//{
+//  lcd_outdezNAtt( x,y,val,mode,5, LcdForeground, background );
+//}
 #else
-void lcd_outdez( uint8_t x, uint8_t y, int16_t val )
+ #ifndef PROP_TEXT
+void lcd_outdez( coord_t x, coord_t y, int16_t val )
 {
   lcd_outdezAtt(x,y,val,0);
 }
 
-void lcd_outdezAtt( uint8_t x, uint8_t y, int16_t val, uint16_t mode )
+void lcd_outdezAtt( coord_t x, coord_t y, int16_t val, LcdFlags mode )
 {
   lcd_outdezNAtt( x,y,val,mode,5);
 }
+ #endif
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, uint16_t attr, uint16_t colour, uint16_t background )
-{
-	lcd_outdezNAtt( x, y, value, attr, 2, colour, background ) ;
-}
+//void lcd_2_digits( uint16_t x, uint16_t y, uint8_t value, LcdFlags attr, uint16_t colour, uint16_t background )
+//{
+//	PUTS_NUM_N( x, y, value, attr, 2 ) ; // , colour, background ) ;
+//}
 #else
-void lcd_2_digits( uint8_t x, uint8_t y, uint8_t value, uint16_t attr )
+ #ifndef PROP_TEXT
+void lcd_2_digits( coord_t x, coord_t y, uint8_t value, LcdFlags attr )
 {
-	lcd_outdezNAtt( x, y, value, attr + LEADING0, 2 ) ;
+	PUTS_NUM_N( x, y, value, attr + LEADING0, 2 ) ;
 }
+ #endif // PROP_TEXT
 #endif
 
 #define PREC(n) ((n&0x20) ? ((n&0x10) ? 2 : 1) : 0)
 
 #if defined(PCBX12D) || defined(PCBX10)
-uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t colour, uint16_t background )
+//uint8_t lcd_outdezNAtt( uint16_t x, uint16_t y, int32_t val, uint16_t mode, int8_t len, uint16_t colour, uint16_t background )
 #else
-uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t len )
-#endif
+ #ifndef PROP_TEXT
+uint8_t lcd_outdezNAtt( coord_t x, coord_t y, int32_t val, LcdFlags mode, int8_t len )
 {
   uint8_t fw = FWNUM;
   uint8_t prec = PREC(mode);
@@ -2027,6 +2158,8 @@ uint8_t lcd_outdezNAtt( uint8_t x, uint8_t y, int32_t val, uint16_t mode, int8_t
 #endif
 	return 0 ;		// Stops compiler creating two sets of POPS, saves flash
 }
+ #endif
+#endif
 
 
 #ifndef PCBX12D
@@ -2177,7 +2310,7 @@ void lcd_hline( uint16_t x, uint16_t y, int16_t w )
   lcd_hlineStip(x,y,w,0xff);
 }
 
-void lcd_vline( uint16_t x, uint16_t y, int8_t h )
+void lcd_vline( coord_t x, coord_t y, int8_t h )
 {
 	int16_t y1 ;
 	y1 = y ;
@@ -2260,7 +2393,7 @@ void lcd_vline( uint16_t x, uint16_t y, int8_t h )
 
 #else
 
-void lcd_plot( register uint8_t x, register uint8_t y )
+void lcd_plot( coord_t x, coord_t y )
 {
 	uint8_t *p = dispBufAddress( x, y ) ;
 //#ifdef GREY_SCALE
@@ -2275,7 +2408,7 @@ void lcd_plot( register uint8_t x, register uint8_t y )
 #endif
 }
 
-void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat )
+void lcd_hlineStip( coord_t x, coord_t y, int16_t w, uint8_t pat )
 {
   if(w<0) {x+=w; w=-w;}
 #ifdef GREY_SCALE
@@ -2307,7 +2440,7 @@ void lcd_hlineStip( unsigned char x, unsigned char y, int16_t w, uint8_t pat )
 #endif // X12D
 
 #if defined(PCBX12D) || defined(PCBX10)
-void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t pat, uint8_t att )
+void lcdDrawFilledRect( coord_t x, coord_t y, uint16_t w, uint16_t h, uint8_t pat, LcdFlags att )
 {
 	uint8_t oldPlotType = plotType ;
 	uint32_t i ;
@@ -2319,16 +2452,25 @@ void lcdDrawFilledRect( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t 
 	plotType = oldPlotType ;
 }
 #else
-void lcdDrawFilledRect( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t pat, uint8_t att )
+void lcdDrawFilledRect( coord_t x, coord_t y, uint8_t w, uint8_t h, uint8_t pat, LcdFlags att )
 {
 	uint8_t oldPlotType = plotType ;
 
 	uint32_t i ;
-	plotType = PLOT_BLACK ;
+	plotType = PLOT_XOR ;
+	if ( att & FORCE )
+	{
+		plotType = PLOT_BLACK ;
+	}
 	if ( att & ERASE )
 	{
 		plotType = PLOT_WHITE ;
 	}
+  if ( x+w > LCD_W)
+	{
+		w = LCD_W - x ;
+	}
+
   for ( i=y; i<y+h; i++ )
 	{
   	lcd_hlineStip( x, i, w, 0xff ) ;
@@ -2344,7 +2486,7 @@ void lcdDrawFilledRect( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t pat,
 #endif
 
 
-void lcd_hbar( uint8_t x, uint8_t y, uint8_t w, uint8_t h, uint8_t percent )
+void lcd_hbar( coord_t x, coord_t y, uint8_t w, uint8_t h, uint8_t percent )
 {
 	uint8_t solid ;
 	if ( percent > 100 )
@@ -2402,23 +2544,40 @@ void lcd_char_inverse( uint16_t x, uint16_t y, uint16_t w, uint8_t blink, uint8_
 	uint16_t end = x + w ;
 
 	h *= 2 ;
-	while ( x < end )
+	
+	uint32_t i ;
+	uint16_t sx = x ;
+	for ( i = 0 ; i < h ; i += 1 )
 	{
-		uint32_t i ;
-		uint16_t *q = p ;
-		for ( i = 0 ; i < h ; i += 1 )
+		uint32_t *q = (uint32_t *)p ;
+		x = sx ;
+		while ( x < end )
 		{
-			*q ^= 0xFFFF ;
-			q += LCD_W ;
+			*q ^= 0xFFFFFFFF ;
+			q += 1 ;
+			x += 2 ;
 		}
-		p += 1 ;
-		x += 1 ;
+		p += LCD_W ;
 	}
+	
+//	while ( x < end )
+//	{
+//		uint32_t i ;
+//		uint32_t *q = (uint32_t *)p ;
+////		uint16_t *q = p ;
+//		for ( i = 0 ; i < h ; i += 1 )
+//		{
+//			*q ^= 0xFFFFFFFF ;
+//			q += LCD_W/2 ;
+//		}
+//		p += 2 ;
+//		x += 2 ;
+//	}
 }
 #else
 // Reverse video 8 pixels high, w pixels wide
 // Vertically on an 8 pixel high boundary
-void lcd_char_inverse( uint8_t x, uint8_t y, uint8_t w, uint8_t blink )
+void lcd_char_inverse( coord_t x, coord_t y, uint8_t w, uint8_t blink )
 {
 	if ( blink && BLINK_ON_PHASE )
 	{
@@ -2515,36 +2674,36 @@ void lcdHiresHbar( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint8_t perce
 	}
 }
 
-uint16_t lcdHiresPutsTransparent( uint16_t x, uint16_t y, char *s, uint16_t colour )
-{
-  while(1)
-	{
-    char c = *s++ ;
-    if(!c) break ;
-		if ( c == 31 )
-		{
+//uint16_t lcdHiresPutsTransparent( uint16_t x, uint16_t y, char *s, uint16_t colour )
+//{
+//  while(1)
+//	{
+//    char c = *s++ ;
+//    if(!c) break ;
+//		if ( c == 31 )
+//		{
 
-#if defined(PCBX12D) || defined(PCBX10)
-			if ( (y += FH*2) >= 272 )	// Screen height
-			{
-				break ;
-			}	
-#else
-			if ( (y += FH) >= DISPLAY_H )	// Screen height
-			{
-				break ;
-			}	
-#endif
-			x = DisplayOffset ;
-		}
-		else
-		{
-			lcdDrawCharBitmapDma( x, y, c, 0, colour ) ;
-			x += 12 ;
-		}
-  }
-  return x ;
-}
+//#if defined(PCBX12D) || defined(PCBX10)
+//			if ( (y += FH*2) >= 272 )	// Screen height
+//			{
+//				break ;
+//			}	
+//#else
+//			if ( (y += FH) >= DISPLAY_H )	// Screen height
+//			{
+//				break ;
+//			}	
+//#endif
+//			x = DisplayOffset ;
+//		}
+//		else
+//		{
+//			lcdDrawCharBitmapDma( x, y, c, 0, colour ) ;
+//			x += 12 ;
+//		}
+//  }
+//  return x ;
+//}
 
 void lcdHiresPlot( uint16_t x, uint16_t y, uint16_t h, uint16_t colour )
 {
@@ -2572,7 +2731,7 @@ void lcdHiresPlot( uint16_t x, uint16_t y, uint16_t h, uint16_t colour )
 
 #endif
 
-void lcd_rect(uint8_t x, uint8_t y, uint8_t w, uint8_t h )
+void lcd_rect(coord_t x, coord_t y, uint8_t w, uint8_t h )
 {
 	uint8_t oldPlotType = plotType ;
 	if ( oldPlotType != PLOT_WHITE )
@@ -2604,14 +2763,14 @@ notePosition('0') ;
 	plotType = oldPlotType ;
 }
 
-void lcd_hline( uint8_t x, uint8_t y, int8_t w )
+void lcd_hline( coord_t x, coord_t y, int8_t w )
 {
   lcd_hlineStip(x,y,w,0xff);
 }
 
 #ifndef PCBX12D
 #ifndef PCBX10
-void lcd_vline( uint8_t x, uint8_t y, int8_t h )
+void lcd_vline( coord_t x, coord_t y, int8_t h )
 {
   if (h<0) { y+=h; h=-h; }
 
@@ -2664,7 +2823,7 @@ void lcd_vline( uint8_t x, uint8_t y, int8_t h )
 #endif
 #endif
 
-void lcd_line( uint16_t x1, uint16_t y1, uint16_t x2, uint16_t y2, uint8_t pat, uint8_t att )
+void lcd_line( coord_t x1, coord_t y1, uint16_t x2, uint16_t y2, uint8_t pat, LcdFlags att )
 {
   int dx = x2-x1 ;      /* the horizontal distance of the line */
   int dy = y2-y1 ;      /* the vertical distance of the line */

@@ -49,7 +49,7 @@ const luaR_table lua_rotable[] =
   {LUA_IOLIBNAME, iolib, NULL},
   {LUA_STRLIBNAME, strlib, NULL},
   {"lcd", lcdLib, NULL},
-//  {"model", modelLib, NULL},
+  {"model", modelLib, NULL},
   {"__baselib", baselib, NULL},
   {NULL, NULL, NULL}
 };

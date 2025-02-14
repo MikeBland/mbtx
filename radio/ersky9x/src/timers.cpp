@@ -2152,9 +2152,9 @@ void sendByteDsm2(uint8_t b, uint32_t module) //max 10 changes 0 10 10 10 10 1
 		protocol = g_model.Module[0].protocol ;
 	}
 #endif
-	uint8_t parity = 0x80 ;
-	uint8_t count = 8 ;
-	uint8_t bitLen ;
+	uint32_t parity = 0x80 ;
+	uint32_t count = 8 ;
+	uint32_t bitLen ;
 //#ifdef X3_PROTO
 //	if ( protocol == PROTO_MULTI )
 //#else
@@ -2163,7 +2163,7 @@ void sendByteDsm2(uint8_t b, uint32_t module) //max 10 changes 0 10 10 10 10 1
 	{ // SBUS & MULTI
 		parity = 0 ;
 		bitLen = b ;
-		for( uint8_t i=0; i<8; i++)
+		for( uint32_t i=0; i<8; i++)
 		{
 			parity += bitLen & 0x80 ;
 			bitLen <<= 1 ;
@@ -2172,8 +2172,8 @@ void sendByteDsm2(uint8_t b, uint32_t module) //max 10 changes 0 10 10 10 10 1
 		count = 9 ;
 	}
     bool lev = 0;
-    uint8_t len = BITLEN_Serial; //max val: 9*16 < 256
-    for (uint8_t i=0; i<=count; i++)
+    uint32_t len = BITLEN_Serial; //max val: 9*16 < 256
+    for (uint32_t i=0; i<=count; i++)
 		{ //8Bits + Stop=1
         bool nlev = b & 1; //lsb first
         if (lev == nlev)
@@ -2246,7 +2246,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 
 	if ( Dsm_Type[module] )
 	{
-		uint8_t channels = 12 ;
+		uint32_t channels = 12 ;
 		uint8_t flags = g_model.dsmMode ;
 		if ( flags == 0 )
 		{
@@ -2309,7 +2309,7 @@ void setupPulsesDsm2(uint8_t channels, uint32_t module )
 			}
   		sendByteDsm2( Pass[module], module );
 	
-			for(uint8_t i=0 ; i<7 ; i += 1 )
+			for(uint32_t i=0 ; i<7 ; i += 1 )
 			{
 				uint16_t pulse ;
 				int16_t value = g_chans512[startChan] ;
@@ -2497,7 +2497,7 @@ extern volatile uint8_t PxxTxCount ;
 		else
 		{
 			dsmDat[module][1] = g_model.Module[module].pxxRxNum ;  //DSM2 Header second byte for model match
-  		for( uint8_t i = 0 ; i<channels; i += 1 )
+  		for( uint32_t i = 0 ; i<channels; i += 1 )
   		{
 				uint16_t pulse = limit(0, ((g_chans512[g_model.Module[module].startChannel+i]*13)>>5)+512,1023);
  				dsmDat[module][2+2*i] = (i<<2) | ((pulse>>8)&0x03);
@@ -2595,7 +2595,7 @@ void putPcmByte( uint8_t byte )
 	}
 	*PtrSerialPxx[INTERNAL_MODULE]++ = byte ;
 #else
-    uint8_t i ;
+    uint32_t i ;
     for ( i = 0 ; i < 8 ; i += 1 )
     {
         putPcmBit( byte & 0x80 ) ;
@@ -2717,7 +2717,7 @@ void putPcmByte_x( uint8_t byte )
 	}
 	*PtrSerialPxx[EXTERNAL_MODULE]++ = byte ;
 #else
-    uint8_t i ;
+    uint32_t i ;
 
     for ( i = 0 ; i < 8 ; i += 1 )
     {
@@ -2770,10 +2770,10 @@ void putPcmHead_x()
 
 void setupPulsesPXX(uint8_t module)
 {
-  uint8_t i ;
+  uint32_t i ;
   uint16_t chan ;
   uint16_t chan_1 ;
-	uint8_t lpass ;
+	uint32_t lpass ;
 
 //#ifdef PCBX9D
 // #ifdef LATENCY

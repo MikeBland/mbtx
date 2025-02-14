@@ -38,9 +38,9 @@ uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event 
 
 extern uint8_t s_pgOfs ;
 
-#ifndef TOUCH
-extern void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
-#endif
+//#ifndef TOUCH
+//extern void alpha\EditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
+//#endif
 
 // Shared memory currently 1408 bytes
 // 32*13 = 416
@@ -145,8 +145,8 @@ void menuVarStorageLimit(uint8_t event)
 		killEvents(event) ;
 		popMenu(false) ;
 	}
-	lcd_puts_Pleft(2*FH, XPSTR("Var Storage Full") ) ;
-	lcd_puts_Pleft(4*FH, PSTR(STR_PRESS_EXIT_AB));
+	PUTS_ATT_LEFT(2*FH, XPSTR("Var Storage Full") ) ;
+	PUTS_ATT_LEFT(4*FH, PSTR(STR_PRESS_EXIT_AB));
 }
 
 
@@ -178,72 +178,83 @@ uint32_t insertValue( struct t_varPack *pvar, uint32_t position )
 void displayVarName( uint16_t x, uint16_t y, int32_t index, uint16_t attr )
 {
 	uint8_t chr ;
+	uint8_t text[10] ;
 	struct t_varPack *pvar ;
 	div_t qr ;
+	uint8_t *p = text ;
 
 	if ( index < 0 )
 	{
 		index = -index - 1 ;
-#ifdef TOUCH
-		lcd_putcAtt( x-FW, y, '-', 0 ) ;
-#else
-		lcd_putcAtt( x-FW, y, '-', attr ) ;
-#endif
+		*p++ = '-' ;
 	}
 	pvar = getVarAddress( index ) ;
 	chr = pvar->name[0] ;
 	if ( chr && (chr != ' ') )
 	{
-#ifdef TOUCH
-		lcd_putsnAttColour( x, y, (char *) pvar->name, sizeof(pvar->name), 0 ) ;
-#else
-		lcd_putsnAtt( x, y, (char *) pvar->name, sizeof(pvar->name), attr ) ;
-#endif
+		p = ncpystr( p, (uint8_t *) pvar->name, sizeof(pvar->name) ) ;
+		while ( *(p-1) == ' ' )
+		{
+			p -= 1 ;
+		}
 	}
 	else
 	{
-#ifdef TOUCH
-		lcd_putsAttColour( x, y, XPSTR("Var"), 0 ) ;
-#else
-		lcd_putsAtt( x, y, XPSTR("Var"), attr ) ;
-#endif
+		p = cpystr( p, (uint8_t *) XPSTR("Var") ) ;
 		qr = div( (int16_t)index+1, 10 ) ;
 		if ( qr.quot )
 		{
-#ifdef TOUCH
-			lcd_putcAttColour( x+3*FW, y, qr.quot+'0', 0 ) ;
-#else
-			if ( attr & LUA_SMLSIZE )
-			{
-#if defined(PCBX12D) || defined(PCBX10)
-				lcdDrawCharSmall( x+3*FW, y, qr.quot+'0', attr, LcdForeground ) ;
-#else
-				lcd_putcSmall( x+3*FW-2*FW/3, y, qr.quot+'0', attr ) ;
-#endif
-			}
-			else
-			{				
-				lcd_putcAtt( x+3*FW, y, qr.quot+'0', attr ) ;
-			}
-#endif
+			*p++ = qr.quot + '0' ;
 		}	
-#ifdef TOUCH
-		lcd_putcAttColour( x+4*FW, y, qr.rem+'0', 0 ) ;
+		*p++ = qr.rem + '0' ;
+	}
+	*p = 0 ;
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+	PUTS_ATT( x, y, (char *)text, attr & LUA_RIGHT ) ;
 #else
-		if ( attr & LUA_SMLSIZE )
-		{
-#if defined(PCBX12D) || defined(PCBX10)
-			lcdDrawCharSmall( x+3*FW, y, qr.rem+'0', attr, LcdForeground ) ;
-#else
-			lcd_putcSmall( x+3*FW, y, qr.rem+'0', attr ) ;
+ #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+	PUTS_ATT( x, y, (char *)text, attr) ;
+ #else
+//	PUTS_ATT( x-(p-text)*FW, y, (char *)text, attr ) ;
+	PUTS_ATT( x, y, (char *)text, attr ) ;
+ #endif
 #endif
-		}
-		else
-		{				
-			lcd_putcAtt( x+4*FW, y, qr.rem+'0', attr ) ;
-		}
-#endif
-	}		 
+			 
+			
+//#ifdef TOUCH
+//			lcd_putcAttColour( x+3*FW, y, qr.quot+'0', 0 ) ;
+//#else
+//			if ( attr & LUA_SMLSIZE )
+//			{
+//#if defined(PCBX12D) || defined(PCBX10)
+//				lcdDrawCharSmall( x+3*FW, y, qr.quot+'0', attr, LcdForeground ) ;
+//#else
+//				lcd_putcSmall( x+3*FW-2*FW/3, y, qr.quot+'0', attr ) ;
+//#endif
+//			}
+//			else
+//			{				
+//				lcd_putcAtt( x+3*FW, y, qr.quot+'0', attr ) ;
+//			}
+//#endif
+//		}	
+//#ifdef TOUCH
+//		lcd_putcAttColour( x+4*FW, y, qr.rem+'0', 0 ) ;
+//#else
+//		if ( attr & LUA_SMLSIZE )
+//		{
+//#if defined(PCBX12D) || defined(PCBX10)
+//			lcdDrawCharSmall( x+3*FW, y, qr.rem+'0', attr, LcdForeground ) ;
+//#else
+//			lcd_putcSmall( x+3*FW, y, qr.rem+'0', attr ) ;
+//#endif
+//		}
+//		else
+//		{				
+//			lcd_putcAtt( x+4*FW, y, qr.rem+'0', attr ) ;
+//		}
+//#endif
+//	}		 
 }
 
 void deleteValue( struct t_varPack *pvar, uint32_t position )
@@ -322,7 +333,7 @@ const char StringActionFunction[] = "\010  Assign     AddSubtractMultiply  Divid
 
 void displayActionFunction( uint16_t x, uint16_t y, uint32_t index, uint16_t attr )
 {
-	lcd_putsAttIdx( x, y, StringActionFunction, index, attr ) ;
+	PUTS_AT_IDX( x, y, StringActionFunction, index, attr ) ;
 }
 
 void displayValueItem( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint16_t attr )
@@ -330,15 +341,15 @@ void displayValueItem( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint
 	switch ( pvalue->category )
 	{
 		case 0 :
-			lcd_putsAtt( x-3*FW, y, XPSTR("---"), attr ) ;
+			PUTS_ATT( x-3*FW, y, XPSTR("---"), attr ) ;
 		break ;
 		case 1 :	// Switch
 		  putsDrSwitches( x-4*FW, y, pvalue->item ,attr );
 		break ;
 		case 2 :	// Flight Mode
-			lcd_putcAtt( x-3*FW, y, 'F', attr ) ;
-			lcd_putcAtt( x-2*FW, y, 'M', attr ) ;
-			lcd_putcAtt( x-FW, y, pvalue->item+'0', attr ) ;
+			PUTC_ATT( x-3*FW, y, 'F', attr ) ;
+			PUTC_ATT( x-2*FW, y, 'M', attr ) ;
+			PUTC_ATT( x-FW, y, pvalue->item+'0', attr ) ;
 		break ;
 	}
 }
@@ -348,7 +359,7 @@ void displayActionItem( uint16_t x, uint16_t y, struct t_actVarPack *pAction, ui
 	switch ( pAction->category )
 	{
 		case 0 :
-			lcd_putsAtt( x-3*FW, y, XPSTR("---"), attr ) ;
+			PUTS_ATT( x-3*FW, y, XPSTR("---"), attr ) ;
 		break ;
 		case 1 :	// Switch
 		  putsDrSwitches( x-4*FW, y, pAction->item ,attr );
@@ -363,7 +374,7 @@ void displayVarSource( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint
 	t = (uint8_t) pvalue->value ;
 	if ( t >= EXTRA_POTS_START )
 	{
-		lcd_putsAttIdx( x, y, PSTR(STR_CHANS_EXTRA), t - EXTRA_POTS_START, attr ) ;
+		PUTS_AT_IDX( x, y, PSTR(STR_CHANS_EXTRA), t - EXTRA_POTS_START, attr ) ;
 	}
 	else
 	{
@@ -371,11 +382,11 @@ void displayVarSource( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint
 //				if ( ( pgvar->gvsource == 10 ) || ( pgvar->gvsource == 11 ) )
 		if ( ( t == 10 ) || ( t == 11 ) )
 		{
-			lcd_putsAttIdx( x-4, y, "\004AUX4AUX5", t - 10, attr ) ;
+			PUTS_AT_IDX( x-4, y, "\004AUX4AUX5", t - 10, attr ) ;
 		}
 		else
 #endif 
-		lcd_putsAttIdx( x, y, PSTR(STR_GV_SOURCE), t, attr ) ;
+		PUTS_AT_IDX( x, y, PSTR(STR_GV_SOURCE), t, attr ) ;
 	}
 }			 
 
@@ -489,8 +500,8 @@ void menuOneAction( uint8_t event )
 			case 0 :
 			{
 				int32_t oldCategory = pAction->category ;
-				lcd_puts_Pleft( y, XPSTR("Category") ) ;
-				lcd_putsAttIdx( 12*FW, y, StringActionCategory, pAction->category, attr ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Category") ) ;
+				PUTS_AT_IDX( 12*FW, y, StringActionCategory, pAction->category, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pAction->category, 1 ) ;
@@ -504,7 +515,7 @@ void menuOneAction( uint8_t event )
 			}
 			break ;
 			case 1 :
-				lcd_puts_Pleft( y, XPSTR("Item") ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Item") ) ;
 				displayActionItem( 18*FW, y, pAction, attr ) ;
 				switch ( pvalue->category )
 				{
@@ -524,8 +535,8 @@ void menuOneAction( uint8_t event )
 				}
 			break ;
 			case 2 :
-				lcd_puts_Pleft( y, XPSTR("Function") ) ;
-				lcd_putsAttIdx( 10*FW, y, StringActionFunction, pAction->function, attr ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Function") ) ;
+				PUTS_AT_IDX( 10*FW, y, StringActionFunction, pAction->function, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pAction->function, 7 ) ;
@@ -544,13 +555,13 @@ void menuOneAction( uint8_t event )
 				uint32_t lindex = (pAction->value >> 9) & 0x03 ;
 				if ( pAction->function == 7 )
 				{
-					lcd_puts_Pleft( y, XPSTR("Trim") ) ;
-					lcd_putsAttIdx( 16*FW, y, XPSTR("\002LHLVRVRH"), lindex, attr ) ;
+					PUTS_ATT_LEFT( y, XPSTR("Trim") ) ;
+					PUTS_AT_IDX( 16*FW, y, XPSTR("\002LHLVRVRH"), lindex, attr ) ;
 				}
 				else
 				{
-					lcd_puts_Pleft( y, XPSTR("Value") ) ;
-					lcd_outdezAtt( 18*FW, y, pAction->value, attr|PREC1) ;
+					PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
+					PUTS_NUM( 18*FW, y, pAction->value, attr|PREC1) ;
 				}
 				if(attr)
 				{
@@ -574,8 +585,8 @@ void menuOneAction( uint8_t event )
 					lvalue -= 256 ;
 				}
 				uint32_t lindex = (pAction->value >> 9) & 0x03 ;
-				lcd_puts_Pleft( y, XPSTR("Value") ) ;
-				lcd_outdezAtt( 18*FW, y, lvalue, attr|PREC1) ;
+				PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
+				PUTS_NUM( 18*FW, y, lvalue, attr|PREC1) ;
 				if(attr)
 				{
 					lvalue = checkIncDec16( lvalue, -250, 250, EE_MODEL ) ;
@@ -611,8 +622,8 @@ void menuOneValue( uint8_t event )
 			case 0 :
 			{
 				int32_t oldCategory = pvalue->category ;
-				lcd_puts_Pleft( y, XPSTR("Category") ) ;
-				lcd_putsAttIdx( 12*FW, y, StringValueCategory, pvalue->category, attr ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Category") ) ;
+				PUTS_AT_IDX( 12*FW, y, StringValueCategory, pvalue->category, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pvalue->category, 2 ) ;
@@ -624,7 +635,7 @@ void menuOneValue( uint8_t event )
 			}
 			break ;
 			case 1 :
-				lcd_puts_Pleft( y, XPSTR("Item") ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Item") ) ;
 				displayValueItem( 18*FW, y, pvalue, attr ) ;
 				switch ( pvalue->category )
 				{
@@ -646,7 +657,7 @@ void menuOneValue( uint8_t event )
 			case 2 :
 			{
 				uint32_t old = pvalue->valIsSource ;
-extern uint8_t onoffMenuItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition ) ;
+//extern uint8_t onoffMenuItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition ) ;
 				pvalue->valIsSource = onoffMenuItem( pvalue->valIsSource, y, XPSTR("Use Source"), attr ) ;
 				if ( pvalue->valIsSource != old )
 				{
@@ -655,7 +666,7 @@ extern uint8_t onoffMenuItem( uint8_t value, uint8_t y, const prog_char *s, uint
 			}
 			break ;
 			case 3 :
-				lcd_puts_Pleft( y, XPSTR("Value") ) ;
+				PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
  				if ( pvalue->valIsSource )
 				{
 					displayVarSource( 17*FW, y, pvalue, attr ) ;
@@ -669,7 +680,7 @@ void editGvarSource(uint8_t *p) ;
 				}
 				else
 				{
-					lcd_outdezAtt( 17*FW, y, pvalue->value, attr|PREC1) ;
+					PUTS_NUM( 17*FW, y, pvalue->value, attr|PREC1) ;
 					if(attr)
 					{
 						pvalue->value = checkIncDec16( pvalue->value, -2000, 2000, EE_MODEL ) ;
@@ -688,28 +699,28 @@ void menuOneVar(uint8_t event)
 	{
 		uint8_t t = s_currIdx+1 ;
 #if defined(PCBX12D) || defined(PCBX10)
-		lcd_putc(7*FW, 0, t/10+'0' ) ;
+		PUTC(7*FW, 0, t/10+'0' ) ;
 #else
-		lcd_putc(3*FW, 0, t/10+'0' ) ;
+		PUTC(3*FW, 0, t/10+'0' ) ;
 #endif
 		t %= 10 ; 
 #if defined(PCBX12D) || defined(PCBX10)
-		lcd_putc(8*FW, 0, t+'0' ) ;
+		PUTC(8*FW, 0, t+'0' ) ;
 #else
-		lcd_putc(4*FW, 0, t+'0' ) ;
+		PUTC(4*FW, 0, t+'0' ) ;
 #endif
 	}
 	else
 	{
 #if defined(PCBX12D) || defined(PCBX10)
-		lcd_putc(8*FW, 0, s_currIdx+'1' ) ;
+		PUTC(8*FW, 0, s_currIdx+'1' ) ;
 #else
-		lcd_putc(4*FW, 0, s_currIdx+'1' ) ;
+		PUTC(4*FW, 0, s_currIdx+'1' ) ;
 #endif
 	}
 		
-	lcd_putc(10*FW, 0, '=' ) ;
-	lcd_outdezAtt( 16*FW, 0, VarValues[s_currIdx], PREC1) ;
+	PUTC(10*FW, 0, '=' ) ;
+	PUTS_NUM( 16*FW, 0, VarValues[s_currIdx], PREC1) ;
 
 	struct t_varPack *pvar ;
 	uint32_t options ;
@@ -738,9 +749,9 @@ void menuOneVar(uint8_t event)
 		mstate2.check_columns( event, rows-1 ) ;
 	}
 	
-	uint8_t sub = mstate2.m_posVert ;
-	uint8_t blink = InverseBlink ;
-	uint8_t t_pgOfs = evalOffset( sub ) ;
+	uint32_t sub = mstate2.m_posVert ;
+	uint32_t blink = InverseBlink ;
+	uint32_t t_pgOfs = evalOffset( sub ) ;
 	
 	if ( PopupData.PopupActive )
 	{
@@ -758,31 +769,31 @@ void menuOneVar(uint8_t event)
 	m = 0 ;
  	for( i = 0 ; i < rows ; i += 1 )
 	{
-		uint16_t y = (1+i)*FH ;
+		coord_t y = (1+i)*FH ;
     k = i + t_pgOfs ;
-		uint16_t attr = (sub==k) ? blink : 0 ;
+		uint32_t attr = (sub==k) ? blink : 0 ;
 
 		switch ( k )
 		{
 			case 0 :
-				lcd_puts_Pleft( y, XPSTR("Value") ) ;
- 				lcd_outdezAtt( 17*FW, y, pvar->value, attr|PREC1) ;
+				PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
+ 				PUTS_NUM( 17*FW, y, pvar->value, attr|PREC1) ;
 				if(attr)
 				{
 					pvar->value = checkIncDec16( pvar->value, -2000, 2000, EE_MODEL ) ;
   	 		}
 			break ;
 			case 1 :
-				lcd_puts_Pleft( y, XPSTR("Min") ) ;
-	 			lcd_outdezAtt( 17*FW, y, pvar->min, attr|PREC1) ;
+				PUTS_ATT_LEFT( y, XPSTR("Min") ) ;
+	 			PUTS_NUM( 17*FW, y, pvar->min, attr|PREC1) ;
 				if(attr)
 				{
 					pvar->min = checkIncDec16( pvar->min, -2000, 2000, EE_MODEL ) ;
   	 		}
 			break ;
 			case 2 :
-				lcd_puts_Pleft( y, XPSTR("Max") ) ;
-	 			lcd_outdezAtt( 17*FW, y, pvar->max, attr|PREC1) ;
+				PUTS_ATT_LEFT( y, XPSTR("Max") ) ;
+	 			PUTS_NUM( 17*FW, y, pvar->max, attr|PREC1) ;
 				if(attr)
 				{
 					pvar->max = checkIncDec16( pvar->max, -2000, 2000, EE_MODEL ) ;
@@ -796,11 +807,11 @@ void menuOneVar(uint8_t event)
 				if ( j < options )
 				{
 //					lcd_putsAtt( 0, y, XPSTR("Value"), attr ) ;
-//					lcd_putcAtt(6*FW, y, j+'1', attr ) ;
+//					PUTC_ATT(6*FW, y, j+'1', attr ) ;
 	
 					struct t_valVarPack *pvalue ;
 					pvalue = getValueAddress( pvar, j ) ;
-					lcd_putsAttIdx( 0, y, StringValueCategory, pvalue->category, attr ) ;
+					PUTS_AT_IDX( 0, y, StringValueCategory, pvalue->category, attr ) ;
 					displayValueItem( 12*FW, y, pvalue, attr ) ;
  					
 	 				if ( pvalue->valIsSource )
@@ -809,7 +820,7 @@ void menuOneVar(uint8_t event)
 					}
 					else
 					{
-						lcd_outdezAtt( 17*FW, y, pvalue->value, attr|PREC1) ;
+						PUTS_NUM( 17*FW, y, pvalue->value, attr|PREC1) ;
 					}
 
 					if (sub==k)
@@ -833,7 +844,7 @@ void menuOneVar(uint8_t event)
 				}
 				else if ( ( j == options) && (options < MAX_VALS) )
 				{
-					lcd_putsAtt( 9*FW, y, XPSTR("Add Value"), attr ) ;
+					PUTS_ATT( 9*FW, y, XPSTR("Add Value"), attr ) ;
 					if (sub==k)
 					{
 						if ( !PopupData.PopupActive )
@@ -858,18 +869,18 @@ void menuOneVar(uint8_t event)
 						pAction = (struct t_actVarPack *)	pvalue ;
 						pAction += m ;
 
-						lcd_putsAttIdx( 0, y, StringActionCategory, pAction->category, attr ) ;
+						PUTS_AT_IDX( 0, y, StringActionCategory, pAction->category, attr ) ;
 						displayActionItem( 11*FW, y, pAction, attr ) ;
-						lcd_putsAttIdx( 12*FW, y, XPSTR("\001=+-*/v^T"), pAction->function, attr ) ;
+						PUTS_AT_IDX( 12*FW, y, XPSTR("\001=+-*/v^T"), pAction->function, attr ) ;
 						int32_t lvalue = pAction->value ;
 						if ( (pAction->function == 7) )
 						{
 							lvalue &= 0x01FF ;
 						}
-						lcd_outdezAtt( 17*FW, y, lvalue, attr|PREC1) ;
+						PUTS_NUM( 17*FW, y, lvalue, attr|PREC1) ;
 
 //						lcd_putsAtt( 0, y, XPSTR("Action"), attr ) ;
-//						lcd_putcAtt( 7*FW, y, m+'1', attr ) ;
+//						PUTC_ATT( 7*FW, y, m+'1', attr ) ;
 						if (sub==k)
 						{
 							if ( !PopupData.PopupActive )
@@ -891,7 +902,7 @@ void menuOneVar(uint8_t event)
 					}
 					else if ( ( m == actions) && (actions < MAX_ACTS) )
 					{
-						lcd_putsAtt( 8*FW, y, XPSTR("Add Action"), attr ) ;
+						PUTS_ATT( 8*FW, y, XPSTR("Add Action"), attr ) ;
 						if (sub==k)
 						{
 							if ( !PopupData.PopupActive )
@@ -933,13 +944,13 @@ void menuVars(uint8_t event)
 		s_pgOfs = savedOffset ;
 	}
 
-	uint8_t sub = mstate2.m_posVert ;
-	uint8_t blink = InverseBlink ;
+	uint32_t sub = mstate2.m_posVert ;
+	uint32_t blink = InverseBlink ;
 	uint32_t i ;
 
-  uint8_t t_pgOfs ;
+  uint32_t t_pgOfs ;
 	t_pgOfs = evalOffset( sub ) ;
-  uint8_t k ;
+  uint32_t k ;
 
 //	s_currVar = getVarAddress( 0 ) ;
 
@@ -958,8 +969,8 @@ void menuVars(uint8_t event)
 	uint32_t lines = rows > SCREEN_LINES-1 ? SCREEN_LINES-1 : rows ;
  	for( i = 0 ; i < lines ; i += 1 )
 	{
-		uint16_t attr = 0 ;
-		uint16_t y = (1+i)*FH ;
+		uint32_t attr = 0 ;
+		coord_t y = (1+i)*FHPY ;
     k = i + t_pgOfs ;
 
 		if (sub==k)
@@ -968,12 +979,19 @@ void menuVars(uint8_t event)
 			attr = blink ;
 		}
 		
+ #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+		displayVarName( THOFF, y, k, 0 ) ;
+ #else
 		displayVarName( 0, y, k, 0 ) ;
-
+ #endif
 // 		lcd_outdezAtt( 10*FW, y, pvar->numOpt, 0) ;
 // 		lcd_outdezAtt( 12*FW, y, pvar->numAct, 0) ;
 
-		lcd_outdezAtt( 17*FW, y, VarValues[k], attr|PREC1) ;
+ #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+		PUTS_NUM( TRIGHT-TRMARGIN/2, y, VarValues[k], attr|PREC1) ;
+ #else
+		PUTS_NUM( 17*FW, y, VarValues[k], attr|PREC1) ;
+ #endif
 	}
 }
 
@@ -1255,15 +1273,16 @@ void menuOneVar(uint8_t event)
 	TITLE(XPSTR("Var")) ;
 	if ( s_currIdx > 8 )
 	{
-		lcd_2_digits( 9*FW, 0, s_currIdx+1, 0 ) ;
+//		lcd_2_digits( 9*FW, 0, s_currIdx+1, 0 ) ;
+		PUTS_NUM_N( 9*FW, 0, s_currIdx+1, 0, 2 ) ;
 	}
 	else
 	{
-		lcd_putc(8*FW, 0, s_currIdx+'1' ) ;
+		PUTC(8*FW, 0, s_currIdx+'1' ) ;
 	}
 
-	lcd_putc(10*FW, 0, '=' ) ;
-	lcd_outdezAtt( 16*FW, 0, VarValues[s_currIdx], PREC1) ;
+	PUTC(10*FW, 0, '=' ) ;
+	PUTS_NUM( 16*FW, 0, VarValues[s_currIdx], PREC1) ;
 
 	EditType = EE_MODEL ;
 	TlExitIcon = 1 ;
@@ -1275,7 +1294,7 @@ void menuOneVar(uint8_t event)
 	uint32_t j ;
 	uint32_t k ;
 	uint32_t m ;
-	uint16_t t_pgOfs ;
+	uint32_t t_pgOfs ;
 	uint32_t selected = 0 ;
 	
 	pvar = getVarAddress( s_currIdx ) ;
@@ -1345,7 +1364,7 @@ void menuOneVar(uint8_t event)
 	uint16_t colour = dimBackColour() ;
 	
 	uint32_t lines = rows > TLINES ? TLINES : rows ;
-	for (uint8_t i = 0 ; i < lines ; i += 1 )
+	for (uint32_t i = 0 ; i < lines ; i += 1 )
 	{
     uint16_t y = TTOP + i*TFH ;
     k = i + t_pgOfs ;
@@ -1404,7 +1423,7 @@ void menuOneVar(uint8_t event)
 
 					drawItem( (char *)XPSTR("Value"), y, attr ) ;
 
-					lcd_putsAttIdx( 8*FW, y+TVOFF, StringValueCategory, pvalue->category, 0 ) ;
+					PUTS_AT_IDX( 8*FW, y+TVOFF, StringValueCategory, pvalue->category, 0 ) ;
 					
 					saveEditColours( attr, colour ) ;
 					displayValueItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF, pvalue, 0 ) ;
@@ -1415,7 +1434,7 @@ void menuOneVar(uint8_t event)
 					}
 					else
 					{
-						lcd_outdezAtt( TRIGHT-TRMARGIN, y+TVOFF, pvalue->value, PREC1) ;
+						PUTS_NUM( TRIGHT-TRMARGIN, y+TVOFF, pvalue->value, PREC1) ;
 					}
 					restoreEditColours() ;
 
@@ -1441,7 +1460,7 @@ void menuOneVar(uint8_t event)
 				else if ( ( j == options) && (options < MAX_VALS) )
 				{
 					drawItem( (char *)XPSTR("Add"), y, attr ) ;
-					drawText( TRIGHT-TRMARGIN-5*FW, y, XPSTR("Value"), attr ) ;
+					drawText( TRIGHT-TRMARGIN, y, XPSTR("Value"), attr|LUA_RIGHT ) ;
 					if (sub==k)
 					{
 						if ( !PopupData.PopupActive )
@@ -1468,10 +1487,10 @@ void menuOneVar(uint8_t event)
 
 						drawItem( (char *)XPSTR("Action"), y, attr ) ;
 
-						lcd_putsAttIdx( 8*FW, y+TVOFF, StringActionCategory, pAction->category, 0 ) ;
+						PUTS_AT_IDX( 8*FW, y+TVOFF, StringActionCategory, pAction->category, 0 ) ;
 						saveEditColours( attr, colour ) ;
 						displayActionItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF, pAction, 0 ) ;
-						lcd_putsAttIdx( TRIGHT-5*FW-TRMARGIN, y+TVOFF, XPSTR("\001=+-*/v^T"), pAction->function, 0 ) ;
+						PUTS_AT_IDX( TRIGHT-5*FW-TRMARGIN, y+TVOFF, XPSTR("\001=+-*/v^T"), pAction->function, 0 ) ;
 						restoreEditColours() ;
 						int32_t lvalue = pAction->value ; 
 						if ( (pAction->function == 7) )
@@ -1481,7 +1500,7 @@ void menuOneVar(uint8_t event)
 						drawNumber( TRIGHT-TRMARGIN, y, lvalue, attr|PREC1 ) ;
 
 //						lcd_putsAtt( 0, y, XPSTR("Action"), attr ) ;
-//						lcd_putcAtt( 7*FW, y, m+'1', attr ) ;
+//						PUTC_ATT( 7*FW, y, m+'1', attr ) ;
 						if (sub==k)
 						{
 							if ( !PopupData.PopupActive )
@@ -1504,7 +1523,7 @@ void menuOneVar(uint8_t event)
 					else if ( ( m == actions) && (actions < MAX_ACTS) )
 					{
 						drawItem( (char *)XPSTR("Add"), y, attr ) ;
-						drawText( TRIGHT-TRMARGIN-6*FW, y, XPSTR("Action"), attr ) ;
+						drawText( TRIGHT-TRMARGIN, y, XPSTR("Action"), attr|LUA_RIGHT ) ;
 						if (sub==k)
 						{
 							if ( !PopupData.PopupActive )
@@ -1549,17 +1568,17 @@ void menuVars(uint8_t event)
 		s_pgOfs = savedOffset ;
 	}
 
-	uint8_t sub = mstate2.m_posVert ;
-	uint16_t y ;
+	uint32_t sub = mstate2.m_posVert ;
+	coord_t y ;
 	
 	uint32_t selected = 0 ;
 	uint32_t newVpos ;
-	uint8_t k = 0 ;
-  uint8_t t_pgOfs ;
+	uint32_t k = 0 ;
+  uint32_t t_pgOfs ;
 	t_pgOfs = evalHresOffset( sub ) ;
 
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
-	uint16_t newVert = processSelection( sub , newSelection ) ;
+	uint32_t newVert = processSelection( sub , newSelection ) ;
 	sub = mstate2.m_posVert = newVert & 0x00FF ;
 	selected = newVert & 0x0100 ;
 
@@ -1594,7 +1613,7 @@ void menuVars(uint8_t event)
 	uint32_t lines = rows > TLINES ? TLINES : rows ;
 	for( uint32_t i = 0 ; i < lines ; i += 1 )
 	{
-    y = (i)*TFH + TTOP+TVOFF ;
+    y = (i)*TFH + TTOP ;
     k = i + t_pgOfs ;
 		uint16_t attr = ( (sub==k) ? INVERS : 0 ) ;
 
@@ -1602,15 +1621,15 @@ void menuVars(uint8_t event)
 		
 		if ( attr )
 		{
-			lcdDrawSolidFilledRectDMA( 0, (y-TVOFF)*TSCALE+2, (TRIGHT)*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
+			lcdDrawSolidFilledRectDMA( 0, (y)*TSCALE+2, (TRIGHT)*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
 			LcdForeground = ~LcdForeground ;
 		}
 		 
-		displayVarName( 0, y, k, 0 ) ;
-		lcd_outdezAtt( TRIGHT-TRMARGIN, y, VarValues[k], PREC1) ;
+		displayVarName( THOFF, y+TVOFF/2, k, 0 ) ;
+		PUTS_NUM( TRIGHT-TRMARGIN, y+TVOFF/2, VarValues[k], PREC1) ;
 		
 		LcdForeground = oldFcolour ;
-		lcd_hline( 0, y+TFH-TVOFF, TRIGHT ) ;
+		lcd_hline( 0, y+TFH, TRIGHT ) ;
 	}
 }
 
@@ -1892,17 +1911,31 @@ int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min,
 {
 	int16_t lowVarLimit ;
   uint8_t invers = attr&(INVERS|BLINK) ;
+#if defined(PCBX12D) || defined(PCBX10)
+//	x *= HVSCALE ;
+//	y *= HVSCALE ;
+#endif
 	if ( value > 900 )	// Is a var
 	{
 		value -= 1000 ;
 #if defined(PCBX12D) || defined(PCBX10)
-		displayVarName( x-6*FW, y, value, attr & ~LUA_SMLSIZE ) ;
+		displayVarName( x-FW, y, value, (attr & ~SMLSIZE)|LUA_RIGHT ) ;
 #else
+ #ifdef PROP_TEXT
+		uint16_t x1 = x+FW ;
+		if ( ( attr & SMLSIZE ) == SMLSIZE )
+		{
+			x += 3*FW ;
+		}
+		displayVarName( x1, y, value, attr|LUA_RIGHT ) ;
+ #else		
+		uint16_t x1 = x+FW ;
 		if ( attr & LUA_SMLSIZE )
 		{
 			x += 3*FW ;
 		}
-		displayVarName( x-6*FW, y, value, attr ) ;
+		displayVarName( x1, y, value, attr|LUA_RIGHT ) ;
+ #endif
 #endif
 		if ( invers )
 		{
@@ -1924,13 +1957,22 @@ int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min,
 	// Numeric	
 	else
 	{
- #ifdef TOUCH
-		lcd_outdezAtt( x-FW, y, value, 0 ) ;
+ #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+//		lcd_outdezAtt( x-FW, y, value, 0 ) ;
+		PUTS_NUM( x-FW, y, value, 0 ) ;
  #else
-		lcd_outdezAtt( x, y, value, attr & ~LUA_SMLSIZE ) ;
+  #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+		PUTS_NUM( x, y, value, (attr & ~LUA_SMLSIZE) ) ;
+	#else
+		PUTS_NUM( x, y, value, attr & ~LUA_SMLSIZE ) ;
+	#endif
   #if defined(PCBX12D) || defined(PCBX10)
   #else
+   #ifdef PROP_TEXT
+		if ( ( attr & SMLSIZE ) == SMLSIZE )
+	 #else
 		if ( attr & LUA_SMLSIZE )
+	 #endif
 		{
 			x += 3*FW ;
 		}
@@ -1946,9 +1988,13 @@ int16_t editVarCapableValue( uint16_t x, uint16_t y, int16_t value, int16_t min,
 		}
 	}
 #ifndef TOUCH
+ #if defined(PCBX12D) || defined(PCBX10)
+//	PUTC(x-6*FW, y-2, 'v' ) ;
+ #else	
 	lcd_plot( x-7*FW, y ) ;
 	lcd_plot( x-7*FW+2, y ) ;
 	lcd_plot( x-7*FW+1, y+1 ) ;
+ #endif
 #endif
 	return value ;
 }
@@ -1963,7 +2009,7 @@ int16_t editVarCapable100Value( uint16_t x, uint16_t y, int16_t value, uint32_t 
 	{
 		value += 1100 ;	// gives 999 to 975
 	}
-#ifdef TOUCH
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 	x -= FW*2/3 ;
 #endif				 
 	value = editVarCapableValue( x, y, value, -100, 100, NUM_VAR25, attr | LUA_SMLSIZE, event ) ;

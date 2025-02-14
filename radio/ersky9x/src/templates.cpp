@@ -101,7 +101,7 @@ void clearCurves()
 static void setCurve(uint8_t c, int8_t ar[])
 {
 //    if(c<MAX_CURVE5) //5 pt curve
-        for(uint8_t i=0; i<5; i++) g_model.curves5[c][i] = ar[i];
+        for(uint32_t i=0; i<5; i++) g_model.curves5[c][i] = ar[i];
 //    else  //9 pt curve
 //        for(uint8_t i=0; i<9; i++) g_model.curves9[c-MAX_CURVE5][i] = ar[i];
 }

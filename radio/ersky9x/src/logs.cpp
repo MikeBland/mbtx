@@ -347,8 +347,8 @@ extern uint32_t sdMounted( void ) ;
   memcpy(&filename[sizeof(LOGS_PATH)], g_model.name, sizeof(g_model.name));
   filename[sizeof(LOGS_PATH)+sizeof(g_model.name)] = '\0';
 
-  uint8_t i = sizeof(LOGS_PATH)+sizeof(g_model.name)-1 ;
-  uint8_t len = 0 ;
+  uint32_t i = sizeof(LOGS_PATH)+sizeof(g_model.name)-1 ;
+  uint32_t len = 0 ;
   while (i>sizeof(LOGS_PATH)-1)
 	{
 		uint8_t c = filename[i] ;

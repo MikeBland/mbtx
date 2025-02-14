@@ -25,6 +25,65 @@
 
 #include "diag.h"
 
+#if defined(PCBX9D) || defined(PCB9XT) || defined(REVX)
+#define PROP_TEXT			1
+#endif
+
+#ifdef PCBSKY
+ #ifndef SMALL
+#define PROP_TEXT			1
+ #endif
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+
+typedef uint32_t coord_t ;
+typedef uint32_t LcdFlags ;
+
+#define	COLOUR_DISPLAY		1
+
+#else
+ #ifdef PROP_TEXT
+typedef uint32_t coord_t ;
+typedef uint32_t LcdFlags ;
+ #else
+typedef uint32_t coord_t ;
+typedef uint32_t LcdFlags ;
+ #endif
+#endif
+
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#define PUTS_ATT_N_COLOUR(a,b,c,d,e,f)		lcdDrawSizedText((a)*HVSCALE,(b)*HVSCALE,c,d,e,f)
+#define PUTS_AT_IDX_COLOUR(a,b,c,d,e,f)		lcdDrawTextAtIndex((a)*HVSCALE,(b)*HVSCALE,c,d,e,f)
+#define PUTS_ATT_COLOUR(a,b,c,d,e)		lcdDrawText((a)*HVSCALE,(b)*HVSCALE,c,d,e)
+#define PUTS_ATT_LEFT(a,b)			lcdDrawTextLeft((a)*HVSCALE,b)
+#define PUTS_NUM(a,b,c,d)				lcdDrawNumber((a)*HVSCALE,(b)*HVSCALE,c,d)
+#define PUTS_NUMX(a,b,c)				lcdDrawNumber((a)*HVSCALE,(b)*HVSCALE,c,0)
+#define PUTS_NUM_N(a,b,c,d,e)		lcdDrawNumber((a)*HVSCALE,(b)*HVSCALE,c,d,e)
+#define PUTS_AT_IDX(a,b,c,d,e)	lcdDrawTextAtIndex((a)*HVSCALE,(b)*HVSCALE,c,d,e)
+#define PUTS_ATT_N(a,b,c,d,e)		lcdDrawSizedText((a)*HVSCALE,(b)*HVSCALE,c,d,e)
+#define PUTS_ATT(a,b,c,d)				lcdDrawText((a)*HVSCALE,(b)*HVSCALE,c,d)
+#define PUTS_P(a,b,c)						lcdDrawText((a)*HVSCALE,(b)*HVSCALE,c,0)
+#define PUTS_NP(a,b,c,d)				lcdDrawSizedText((a)*HVSCALE,(b)*HVSCALE,c,d,0)
+#define PUTC_ATT(a,b,c,d)				lcdDrawChar((a)*HVSCALE,(b)*HVSCALE,c,d)
+#define PUTC(a,b,c)							lcdDrawChar((a)*HVSCALE,(b)*HVSCALE,c)
+#define PUT_HEX4(a,b,c)					lcdDrawHex4((a)*HVSCALE,(b)*HVSCALE,c)
+#else
+#define PUTS_ATT_LEFT(a,b)			lcd_puts_Pleft(a,b)
+#define PUTS_NUM(a,b,c,d)				lcd_outdezAtt(a,b,c,d)
+#define PUTS_NUMX(a,b,c)				lcd_outdez(a,b,c)
+#define PUTS_NUM_N(a,b,c,d,e)		lcd_outdezNAtt(a,b,c,d,e)
+#define PUTS_AT_IDX(a,b,c,d,e)	lcd_putsAttIdx(a,b,c,d,e)
+#define PUTS_ATT_N(a,b,c,d,e)		lcd_putsnAtt(a,b,c,d,e)
+#define PUTS_ATT(a,b,c,d)				lcd_putsAtt(a,b,c,d)
+#define PUTS_P(a,b,c)						lcd_puts_P(a,b,c)
+#define PUTS_NP(a,b,c,d)				lcd_putsn_P(a,b,c,d)
+#define PUTC_ATT(a,b,c,d)				lcd_putcAtt(a,b,c,d)
+#define PUTC(a,b,c)							lcd_putc(a,b,c)
+#define PUT_HEX4(a,b,c)					lcd_outhex4(a,b,c)
+#endif
+
 #define prog_char char
 //#define FIX_MODE		1
 
@@ -64,6 +123,7 @@
   #define WIDE_SCREEN	1
 //  #define SDRAM_BANK_ADDR     ((uint32_t)0xD0000000)
 	#define __SDRAM __attribute__((section(".sdram"), aligned(32)))
+	#define __SDRAM0 __attribute__((section(".sdra0m"), aligned(32)))
 	#define __CCM __attribute__((section(".ccm"), aligned(32)))
 #endif
 
@@ -213,6 +273,17 @@ extern const char * const Italian[] ;
 extern const char * const Polish[] ;
 extern const char * const Vietnamese[] ;
 extern const char * const Spanish[] ;
+
+#define L_ENGLISH				0
+#define L_FRENCH        1
+#define L_GERMAN        2
+#define L_NORWEGIAN     3
+#define L_SWEDISH       4
+#define L_ITALIAN       5
+#define L_POLISH        6
+#define L_VIETNAMESE    7
+#define L_SPANISH       8
+
 
 #define PSTR(a) Language[a]
 #define XPSTR(a)  (char *)a
@@ -1328,28 +1399,29 @@ void resetTimern( uint32_t timer ) ;
 extern uint8_t toupper(unsigned char c) ;
 
 //extern void putsTime(uint8_t x,uint8_t y,int16_t tme,uint8_t att,uint8_t att2) ;
-extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
-extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
+//extern void putsVolts(uint8_t x,uint8_t y, uint8_t volts, uint8_t att) ;
+//extern void putsVBat(uint8_t x,uint8_t y,uint8_t att) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern uint16_t LcdForeground ;
 extern uint16_t LcdBackground ;
-extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground) ;
+extern void putsChnRaw(coord_t x,coord_t y,uint8_t idx,LcdFlags att, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground) ;
 #else
-extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
+//extern void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
+extern void putsChnRaw(coord_t x,coord_t y,uint8_t idx, LcdFlags att) ;
 #endif
-extern void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
-extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ; //, bool nc) ;
-#ifdef TOUCH
-void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1,uint8_t att, uint16_t fcolor, uint16_t bcolour) ;
+extern void putsChn( coord_t x, coord_t y,uint8_t idx1, LcdFlags att) ;
+extern void putsDrSwitches(coord_t x,coord_t y,int8_t idx1, uint16_t att) ;
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolor, uint16_t bcolour) ;
 #endif
-extern void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
+extern void putsMomentDrSwitches(coord_t x,coord_t y,int8_t idx1, LcdFlags att) ;
 extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
-extern void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type ) ;
+extern void putsTmrMode(coord_t x, coord_t y, LcdFlags attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
 #if defined(PCBX12D) || defined(PCBX10)
-void putsDblSizeName( uint16_t x, uint16_t y ) ;
+void putsDblSizeName( coord_t x, coord_t y ) ;
 #else
-void putsDblSizeName( uint8_t y ) ;
+void putsDblSizeName( coord_t y ) ;
 #endif
 void clearKeyEvents( void ) ;
 void speakModelVoice( void ) ;
@@ -1408,9 +1480,9 @@ extern uint8_t g_vbat100mV ;
 //extern void doSplash( void ) ;
 extern void mainSequence( uint32_t no_menu ) ;
 #if defined(PCBX12D) || defined(PCBX10)
-extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour = LcdForeground ) ;
+extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour = LcdForeground ) ;
 #else
-extern uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att ) ;
+extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att ) ;
 #endif
 extern void telem_byte_to_bt( uint8_t data ) ;
 extern int16_t scale_telem_value( int16_t val, uint8_t channel, uint8_t *dplaces ) ;
@@ -1933,6 +2005,18 @@ struct t_updateTiming
  #ifndef SMALL
 #define FS8K	1
  #endif
+#endif
+
+#if defined(PROP_TEXT)
+//typedef uint8_t coord_t ;
+//typedef uint16_t LcdFlags ;
+extern coord_t LcdNextPos ;
+extern coord_t LcdLastRightPos ;
+extern coord_t LcdLastLeftPos ;
+#endif
+
+#if defined(PCBT16)
+#define SKIP_EEPROM_FAULT		1
 #endif
 
 #endif // ersky9x_h

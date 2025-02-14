@@ -851,7 +851,7 @@ void ee32LoadModel(uint8_t id)
 // check for updating mix sources
 	if ( g_model.modelVersion < 2 )
 	{
-   	for(uint8_t i=0;i<MAX_MIXERS;i++)
+   	for(uint32_t i=0;i<MAX_MIXERS;i++)
 		{
 			SKYMixData *md = &g_model.mixData[i] ;
       if (md->srcRaw)
@@ -862,7 +862,7 @@ void ee32LoadModel(uint8_t id)
 				}
 			}
 		}
-		for (uint8_t i = 0 ; i < NUM_SKYCSW ; i += 1 )
+		for (uint32_t i = 0 ; i < NUM_SKYCSW ; i += 1 )
 		{
     	SKYCSwData *cs = &g_model.customSw[i];
     	uint8_t cstate = CS_STATE(cs->func);
@@ -895,7 +895,7 @@ void ee32LoadModel(uint8_t id)
 		}
 		ExpoData texpoData[4] ;
     memmove( &texpoData, &g_model.expoData, sizeof(texpoData) ) ;
-		for (uint8_t i = 0 ; i < 4 ; i += 1 )
+		for (uint32_t i = 0 ; i < 4 ; i += 1 )
 		{
 			uint8_t dest = modeFixValue( i ) - 1 ;
     	memmove( &g_model.expoData[dest], &texpoData[i], sizeof(texpoData[0]) ) ;
@@ -907,7 +907,7 @@ void ee32LoadModel(uint8_t id)
 
 		if ( g_model.modelVersion < 3 )
 		{
-			for (uint8_t i = 0 ; i < NUM_SKYCSW ; i += 1 )
+			for (uint32_t i = 0 ; i < NUM_SKYCSW ; i += 1 )
 			{
 	    	SKYCSwData *cs = &g_model.customSw[i];
 				if ( cs->func == CS_LATCH )

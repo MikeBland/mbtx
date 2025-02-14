@@ -572,35 +572,35 @@ void menuProcPanic( uint8_t event )
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 1*FH, x ) ;
+		PUT_HEX4( i*25, 1*FH, x ) ;
 	}
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 2*FH, x ) ;
+		PUT_HEX4( i*25, 2*FH, x ) ;
 	}
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 3*FH, x ) ;
+		PUT_HEX4( i*25, 3*FH, x ) ;
 	}
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 4*FH, x ) ;
+		PUT_HEX4( i*25, 4*FH, x ) ;
 	}
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 5*FH, x ) ;
+		PUT_HEX4( i*25, 5*FH, x ) ;
 	}
 	p = RemData ;
 	for ( i = 0 ; i < 5 ; i += 1 )
@@ -608,14 +608,14 @@ void menuProcPanic( uint8_t event )
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 6*FH, x ) ;
+		PUT_HEX4( i*25, 6*FH, x ) ;
 	}
 	for ( i = 0 ; i < 5 ; i += 1 )
 	{
 		x = *p++ ;
 		x <<= 8 ;
 		x |= *p++ ;
-		lcd_outhex4( i*25, 7*FH, x ) ;
+		PUT_HEX4( i*25, 7*FH, x ) ;
 	}
 	
 }
@@ -794,8 +794,8 @@ void checkQuickSelect( void ) ;
 #endif
 
 //void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
-void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att) ;
-void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;//, bool nc) ;
+//void putsChn( coord_t x, coord_t y,uint8_t idx1, LcdFlags att) ;
+//void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;//, bool nc) ;
 const char *get_switches_string( void ) ;
 bool getSwitch(int8_t swtch, bool nc, uint8_t level) ;
 #if defined(PCBX12D) || defined(PCBX10)
@@ -969,33 +969,33 @@ uint32_t ChipId ;
 //  wdt_reset();
 //	g_LightOffCounter = 2000 ;
 //	lcd_clear() ;
-//	lcd_outhex4( 0, 0, x ) ;
-//	lcd_outhex4( 0, FH, ++ProgressCounter ) ;
-//	lcd_outhex4( 0, 2*FH, CurrentVolume ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 0, x ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, FH, ++ProgressCounter ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 2*FH, PowerState ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 3*FH, check_soft_power() ) ;
+//	PUT_HEX4( 0, 0, x ) ;
+//	PUT_HEX4( 0, FH, ++ProgressCounter ) ;
+//	PUT_HEX4( 0, 2*FH, CurrentVolume ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 0, x ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, FH, ++ProgressCounter ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 2*FH, PowerState ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 3*FH, check_soft_power() ) ;
 //extern uint16_t SuCount ;
-//	lcd_outhex4( 212-X9D_OFFSET, 4*FH, SuCount ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 4*FH, SuCount ) ;
 
-//	lcd_outhex4( 50, 1*FH, GPIOD->MODER ) ;
-//	lcd_outhex4( 50, 2*FH, GPIOD->IDR ) ;
-//	lcd_outhex4( 50, 3*FH, GPIOD->ODR ) ;
+//	PUT_HEX4( 50, 1*FH, GPIOD->MODER ) ;
+//	PUT_HEX4( 50, 2*FH, GPIOD->IDR ) ;
+//	PUT_HEX4( 50, 3*FH, GPIOD->ODR ) ;
 
-//	lcd_outhex4( 90, 1*FH, DAC->CR ) ;
-//	lcd_outhex4( 90, 2*FH, DMA1_Stream5->M0AR ) ;
-//	lcd_outhex4( 90, 3*FH, TIM6->CNT ) ;
-//	lcd_outhex4( 90, 4*FH, TIM6->ARR ) ;
+//	PUT_HEX4( 90, 1*FH, DAC->CR ) ;
+//	PUT_HEX4( 90, 2*FH, DMA1_Stream5->M0AR ) ;
+//	PUT_HEX4( 90, 3*FH, TIM6->CNT ) ;
+//	PUT_HEX4( 90, 4*FH, TIM6->ARR ) ;
 
-//	lcd_outhex4( 212-X9D_OFFSET, 6*FH, GPIOE->MODER ) ;
-//	lcd_outhex4( 212-X9D_OFFSET, 7*FH, GPIOE->AFR[0]>>16 ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 6*FH, GPIOE->MODER ) ;
+//	PUT_HEX4( 212-X9D_OFFSET, 7*FH, GPIOE->AFR[0]>>16 ) ;
 
 //	uint32_t i ;
 //	for ( i = 0 ; i < 200 ; i += 1 )
 //	{
 //	  wdt_reset();
-//		lcd_outhex4( 0, 7*FH, i ) ;
+//		PUT_HEX4( 0, 7*FH, i ) ;
 //		refreshDisplay() ;
 //	}
 //}
@@ -1118,33 +1118,41 @@ void setLanguage()
 		case 1 :
  #ifdef FRENCH
 			Language = French ;
+ #ifndef PROP_TEXT
 			ExtraFont = font_fr_extra ;
 			ExtraBigFont = font_fr_big_extra ;
+ #endif // PROP_TEXT
  #else // German
 			Language = German ;
+ #ifndef PROP_TEXT
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
+ #endif // PROP_TEXT
  #endif
 		break ;
 #else
 		case 1 :
 			Language = French ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_fr_h_extra ;
-			ExtraHorusBigFont = font_fr_h_big_extra ;
+//			ExtraHorusFont = font_fr_h_extra ;
+//			ExtraHorusBigFont = font_fr_h_big_extra ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_fr_extra ;
 			ExtraBigFont = font_fr_big_extra ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 2 :
 			Language = German ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_de_h_extra ;
-			ExtraHorusBigFont = font_de_h_big_extra ;
+//			ExtraHorusFont = font_de_h_extra ;
+//			ExtraHorusBigFont = font_de_h_big_extra ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_de_extra ;
 			ExtraBigFont = font_de_big_extra ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 #endif
@@ -1153,61 +1161,73 @@ void setLanguage()
 		case 3 :
 			Language = Norwegian ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_se_h_extra ;
-			ExtraHorusBigFont = font_se_h_big_extra ;
+//			ExtraHorusFont = font_se_h_extra ;
+//			ExtraHorusBigFont = font_se_h_big_extra ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 4 :
 			Language = Swedish ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_se_h_extra ;
-			ExtraHorusBigFont = font_se_h_big_extra ;
+//			ExtraHorusFont = font_se_h_extra ;
+//			ExtraHorusBigFont = font_se_h_big_extra ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_se_extra ;
 			ExtraBigFont = font_se_big_extra ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 5 :
 			Language = Italian ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_it_h_extra ;
-			ExtraHorusBigFont = NULL ;
+//			ExtraHorusFont = font_it_h_extra ;
+//			ExtraHorusBigFont = NULL ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_it_extra ;
 			ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 6 :
 			Language = Polish ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = font_pl_h_extra ;
-			ExtraHorusBigFont = NULL ;
+//			ExtraHorusFont = font_pl_h_extra ;
+//			ExtraHorusBigFont = NULL ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = font_pl_extra ;
 			ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 7 :
 			Language = Vietnamese ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
+//			ExtraHorusFont = NULL ;
+//			ExtraHorusBigFont = NULL ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 		case 8 :
 			Language = Spanish ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
+//			ExtraHorusFont = NULL ;
+//			ExtraHorusBigFont = NULL ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 #endif		
@@ -1215,11 +1235,13 @@ void setLanguage()
 		default :
 			Language = English ;
 #if defined(PCBX12D) || defined(PCBX10)
-			ExtraHorusFont = NULL ;
-			ExtraHorusBigFont = NULL ;
+//			ExtraHorusFont = NULL ;
+//			ExtraHorusBigFont = NULL ;
 #else
+ #ifndef PROP_TEXT
 			ExtraFont = NULL ;
 			ExtraBigFont = NULL ;
+ #endif // PROP_TEXT
 #endif		
 		break ;
 	}
@@ -1447,11 +1469,11 @@ void menuDiag(uint8_t event)
 	if ( state < 4 )
 	{
 		value = PIOA->PIO_PDSR ;
-		lcd_puts_Pleft( 3*FH, (value & 0x0040) ? "High" : "Low " ) ;
-		lcd_puts_Pleft( 4*FH, (value & 0x0020) ? "High" : "Low " ) ;
-		lcd_outhex4( 0, 5*FH, timer ) ;
-		lcd_outhex4( 0, 56, state ) ;
-		lcd_outhex4( 40, 56, c1 ) ;
+		PUTS_ATT_LEFT( 3*FH, (value & 0x0040) ? "High" : "Low " ) ;
+		PUTS_ATT_LEFT( 4*FH, (value & 0x0020) ? "High" : "Low " ) ;
+		PUT_HEX4( 0, 5*FH, timer ) ;
+		PUT_HEX4( 0, 56, state ) ;
+		PUT_HEX4( 40, 56, c1 ) ;
 	}
 	else
 	{
@@ -1476,17 +1498,17 @@ void menuDiag(uint8_t event)
 		}
 		if ( TbIndex < 4 )
 		{
-			lcd_outdez( 30, 2*FH, Tbrates[TbIndex] ) ;
+			PUTS_NUMX( 30, 2*FH, Tbrates[TbIndex] ) ;
 		}
 		else if ( TbIndex == 4 )
 		{
-			lcd_puts_Pleft( 2*FH, "38400" ) ;
+			PUTS_ATT_LEFT( 2*FH, "38400" ) ;
 		}
 		else
 		{
-			lcd_puts_Pleft( 2*FH, "57600" ) ;
+			PUTS_ATT_LEFT( 2*FH, "57600" ) ;
 		}
-		lcd_putc( 64, 32 , rxChar ) ;
+		PUTC( 64, 32 , rxChar ) ;
 		if ( ++counter > 99 )
 		{
 			counter = 0 ;
@@ -1508,14 +1530,14 @@ void menuDiag(uint8_t event)
 			USART0->US_THR = txChar ;
 			c1 += 1 ;
 		}
-		lcd_outhex4( 0, 56, c1 ) ;
-		lcd_putc( 60, 56 , txChar ) ;
+		PUT_HEX4( 0, 56, c1 ) ;
+		PUTC( 60, 56 , txChar ) ;
 		rx = get_fifo128( &Com2_fifo ) ;
 		if ( rx != -1 )
 		{
 			rx2Char = rx ;
 		}
-		lcd_putc( 80, 32 , rx2Char ) ;
+		PUTC( 80, 32 , rx2Char ) ;
 		if ( mode == 0 )
 		{
 			lcd_puts_Pleft( 1*FH, "Local Loop" ) ;
@@ -2432,8 +2454,8 @@ uint32_t stackSpace( uint32_t stack )
 //void where( uint8_t chr )
 //{
 //	lcd_clear() ;
-//	lcd_putc( 0, 0, chr ) ;
-//	lcd_outhex4( 0, 16, ~read_keys() ) ;
+//	PUTC( 0, 0, chr ) ;
+//	PUT_HEX4( 0, 16, ~read_keys() ) ;
 //	refreshDisplay() ;
 //}
 //#else
@@ -2521,8 +2543,8 @@ void where( uint8_t chr )
 	uint32_t i ;
 extern uint16_t LcdForeground	;
 	LcdForeground = LCD_GREEN ;
-	lcd_putcAtt( 0, 0, chr, DBLSIZE ) ;
-//	lcd_outhex4( 0, 16, ~read_keys() ) ;
+	PUTC_ATT( 0, 0, chr, DBLSIZE ) ;
+//	PUT_HEX4( 0, 16, ~read_keys() ) ;
 	refreshDisplay() ;
   wdt_reset();
   WatchdogTimeout = 100 ;
@@ -2580,29 +2602,29 @@ uint32_t WatchdogPosition ;
 //		lcd_puts_Pleft(0, "WWWW") ;
 
 ////		data = *ptr ;
-////		lcd_outhex4( 0, 0, data >> 16) ;
-////		lcd_outhex4( 30, 0, data ) ;
+////		PUT_HEX4( 0, 0, data >> 16) ;
+////		PUT_HEX4( 30, 0, data ) ;
 ////		data = ptr[1] ;
-////		lcd_outhex4( 0, 1*FH, data >> 16) ;
-////		lcd_outhex4( 30, 1*FH, data ) ;
+////		PUT_HEX4( 0, 1*FH, data >> 16) ;
+////		PUT_HEX4( 30, 1*FH, data ) ;
 ////		data = ptr[2] ;
-////		lcd_outhex4( 0, 2*FH, data >> 16) ;
-////		lcd_outhex4( 30, 2*FH, data ) ;
+////		PUT_HEX4( 0, 2*FH, data >> 16) ;
+////		PUT_HEX4( 30, 2*FH, data ) ;
 ////		data = ptr[3] ;
-////		lcd_outhex4( 0, 3*FH, data >> 16) ;
-////		lcd_outhex4( 30, 3*FH, data ) ;
+////		PUT_HEX4( 0, 3*FH, data >> 16) ;
+////		PUT_HEX4( 30, 3*FH, data ) ;
 ////		data = ptr[4] ;
-////		lcd_outhex4( 0, 4*FH, data >> 16) ;
-////		lcd_outhex4( 30, 4*FH, data ) ;
+////		PUT_HEX4( 0, 4*FH, data >> 16) ;
+////		PUT_HEX4( 30, 4*FH, data ) ;
 ////		data = ptr[5] ;
-////		lcd_outhex4( 0, 5*FH, data >> 16) ;
-////		lcd_outhex4( 30, 5*FH, data ) ;
+////		PUT_HEX4( 0, 5*FH, data >> 16) ;
+////		PUT_HEX4( 30, 5*FH, data ) ;
 ////		data = ptr[6] ;
-////		lcd_outhex4( 0, 6*FH, data >> 16) ;
-////		lcd_outhex4( 30, 6*FH, data ) ;
+////		PUT_HEX4( 0, 6*FH, data >> 16) ;
+////		PUT_HEX4( 30, 6*FH, data ) ;
 ////		data = ptr[7] ;
-////		lcd_outhex4( 0, 7*FH, data >> 16) ;
-////		lcd_outhex4( 30, 7*FH, data ) ;
+////		PUT_HEX4( 0, 7*FH, data >> 16) ;
+////		PUT_HEX4( 30, 7*FH, data ) ;
 //		refreshDisplay() ;
 //	}
 //}
@@ -3369,7 +3391,11 @@ notePosition('3') ;
 				if ( dtimer & 1 )
 				{
 					lcd_clear() ;
-					lcd_putsAtt( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+#ifdef PROP_TEXT
+					PUTS_ATT( 4*FW, 3*FH, "STARTING", DBLSIZE ) ;
+#else
+					PUTS_ATT( 3*FW, 3*FH, "STARTING", DBLSIZE ) ;
+#endif
 					lcd_hbar( 13, 49, 102, 6, dtimer * 100 / 150 ) ;
 					refreshDisplay() ;
 				}
@@ -3547,7 +3573,7 @@ notePosition('3') ;
 				{
 					LcdBackground = LCD_GREEN ;
 					lcd_clear() ;
-					lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
+					PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
 					lcd_hbar( 13 + X12OFFSET, 49, 102, 6, (dtimer - tgtime) * 1000 / (97*7) ) ;
 					refreshDisplay() ;
 				}
@@ -3921,7 +3947,7 @@ extern void sdInit( void ) ;
 #if defined(PCBSKY) || defined(PCB9XT)
 	lcd_clear() ;
 	refreshDisplay() ;
-	lcd_puts_Pleft( FH, XPSTR("EEPROM Check") ) ;
+	PUTS_ATT_LEFT( FH, XPSTR("EEPROM Check") ) ;
 	lcd_hbar( 4, 6*FH+4, 64, 7, 0 ) ;
 	refreshDisplay() ;
 #endif
@@ -4109,6 +4135,15 @@ void writeNamesToCCRam() ;
 #endif 
 
 #if defined(PCBX12D) || defined(PCBX10)
+ #ifdef SKIP_EEPROM_FAULT
+	g_eeGeneral.SixPositionCalibration[0] = 0 ;
+	g_eeGeneral.SixPositionCalibration[1] = 0x0145 ;
+	g_eeGeneral.SixPositionCalibration[2] = 0x0286 ;
+	g_eeGeneral.SixPositionCalibration[3] = 0x03ce ;
+	g_eeGeneral.SixPositionCalibration[4] = 0x0512 ;
+	g_eeGeneral.SixPositionCalibration[5] = 0x065e ;
+	g_eeGeneral.vBatCalib = 5 ;
+	 #endif
 	create6posTable() ;
 #endif 
 
@@ -4127,7 +4162,7 @@ void writeNamesToCCRam() ;
 #if defined(PCBX12D) || defined(PCBX10)
 	checkTheme( &g_eeGeneral.theme[g_eeGeneral.selectedTheme] ) ;
 #endif
-#ifdef TOUCH	
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 	dimBackColour() ;
 #endif
 
@@ -4225,13 +4260,13 @@ void writeNamesToCCRam() ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 		lcd_clear() ;
 #endif
-		lcd_puts_Pleft( FH, XPSTR("Hardware Menu Enabled") ) ;
+		PUTS_ATT_LEFT( FH, XPSTR("Hardware Menu Enabled") ) ;
 
 //#ifdef PCBTX16S
-//  lcd_outhex4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
-//  lcd_outhex4( 6*FW, 3*FH, read_trims() ) ;
-//  lcd_outhex4( 12*FW, 3*FH, GPIOB->IDR ) ;
-//  lcd_outhex4( 18*FW, 3*FH, GPIOC->IDR ) ;
+//  PUT_HEX4( 0,  3*FH, GPIOA->IDR & 0x40 ) ;
+//  PUT_HEX4( 6*FW, 3*FH, read_trims() ) ;
+//  PUT_HEX4( 12*FW, 3*FH, GPIOB->IDR ) ;
+//  PUT_HEX4( 18*FW, 3*FH, GPIOC->IDR ) ;
 
 //  lcd_outhex8( (uint16_t)0*FW, (uint16_t)4*FH, (uint32_t)GPIOA->MODER ) ;
 //  lcd_outhex8( (uint16_t)12*FW, (uint16_t)4*FH, (uint32_t)GPIOA->PUPDR ) ;
@@ -4331,7 +4366,7 @@ void writeNamesToCCRam() ;
   		while ( keyDown() )
 			{
 				wdt_reset() ;
-				lcd_puts_Pleft( FH, XPSTR("Mute Activated") ) ;
+				PUTS_ATT_LEFT( FH, XPSTR("Mute Activated") ) ;
 				refreshDisplay() ;
 			}
 		}
@@ -4918,14 +4953,14 @@ uint32_t checkRssi(uint32_t swappingModels)
 #else
   lcd_img( 1, 0, HandImage,0,0 ) ;
 #endif
-  lcd_putsAtt(36 + X12OFFSET,0*FH,XPSTR("Receiver"),DBLSIZE|CONDENSED);
-  lcd_putsAtt(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+  PUTS_ATT(36 + X12OFFSET,0*FH,XPSTR("Receiver"),DBLSIZE|CONDENSED);
+  PUTS_ATT(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
 #ifdef PCBSKY
-	lcd_puts_P(0 + X12OFFSET,5*FH,  XPSTR("Rx was still powered") ) ;
+	PUTS_P(0 + X12OFFSET,5*FH,  XPSTR("Rx was still powered") ) ;
 #else
-	lcd_puts_P(0 + X12OFFSET,5*FH,  XPSTR("Rx still powered") ) ;
+	PUTS_P(0 + X12OFFSET,5*FH,  XPSTR("Rx still powered") ) ;
 #endif
-	lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+	PUTS_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
   refreshDisplay();
   clearKeyEvents();
 	if ( (uint16_t)(get_tmr10ms() - timer ) > 49 )
@@ -5084,12 +5119,16 @@ void main_loop(void* pdata)
 		if(sysFlags & sysFLAG_FORMAT_EEPROM)
 		{
 			sysFlags &= ~(sysFLAG_FORMAT_EEPROM) ; //clear flag
+ #ifndef SKIP_EEPROM_FAULT
 			startupCalibration() ;
+ #endif
 		}
 #endif
 
 		getADC_single();
+ #ifndef SKIP_EEPROM_FAULT
   	checkTHR();
+ #endif
 		
 		checkCustom() ;
 //#ifndef PCBLEM1
@@ -5311,6 +5350,7 @@ extern uint8_t ModelImageValid ;
 	if ( ( ( ResetReason & RCC_CSR_IWDGRSTF ) != RCC_CSR_IWDGRSTF ) && !unexpectedShutdown )	// Not watchdog
 #endif
 	{
+ #ifndef SKIP_EEPROM_FAULT
 		if ( g_vbat100mV > g_eeGeneral.SavedBatteryVoltage + 4 )
 		{
 			uint8_t result ;
@@ -5319,10 +5359,10 @@ extern uint8_t ModelImageValid ;
 			{
 				lcd_clear() ;
 
-				lcd_puts_P(0 + X12OFFSET,2*FH,  XPSTR("\002Battery Charged?") ) ;
-				lcd_puts_P(0 + X12OFFSET,3*FH,  XPSTR("\004Reset Timer?") ) ;
-			  lcd_puts_Pleft( 5*FH,PSTR(STR_YES_NO));
-			  lcd_puts_Pleft( 6*FH,PSTR(STR_MENU_EXIT));
+ 				PUTS_P(0 + X12OFFSET,2*FH,  XPSTR("\002Battery Charged?") ) ;
+				PUTS_P(0 + X12OFFSET,3*FH,  XPSTR("\004Reset Timer?") ) ;
+			  PUTS_ATT_LEFT( 5*FH,PSTR(STR_YES_NO));
+			  PUTS_ATT_LEFT( 6*FH,PSTR(STR_MENU_EXIT));
 			  refreshDisplay() ;
 
 				result = keyDown() & 0x86 ;
@@ -5348,6 +5388,7 @@ extern uint8_t ModelImageValid ;
 				if ( check_power_or_usb() ) break ;		// Usb on or power off
 			}
 		}
+ #endif
 	}
 
 #ifdef PCBLEM1
@@ -5433,7 +5474,11 @@ static uint8_t PBstate ;
 						if ( ( get_tmr10ms() & 3 ) == 0 )
 						{
 							lcd_clear() ;
-							lcd_putsAtt( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+#ifdef PROP_TEXT
+							PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+#else
+							PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+#endif
 							uint8_t dtimer = get_tmr10ms() - tgtime ;
   #if defined(PCBX12D) || defined(PCBX10)
 							dtimer = ( 80 - dtimer ) * 100 / 80 ;
@@ -5518,7 +5563,7 @@ static uint8_t PBstate ;
 			// Time to switch off
 				putSystemVoice( SV_SHUTDOWN, AU_TADA ) ;
 				lcd_clear() ;
-				lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
+				PUTS_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
 
 #if defined(PCBT16)
 extern uint8_t InternalMultiStopUpdate ;
@@ -5526,8 +5571,8 @@ extern uint8_t InternalMultiStopUpdate ;
 #endif
 
 //#ifdef PCBX12D
-//	lcd_outhex4( 20, FH, AudioActive ) ;
-//	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
+//	PUT_HEX4( 20, FH, AudioActive ) ;
+//	PUT_HEX4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
 //#endif
 
  #ifdef PCBSKY
@@ -5605,9 +5650,9 @@ extern uint8_t InternalMultiStopUpdate ;
 
  #if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 					lcd_clear() ;
-					lcd_puts_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
-//	lcd_outhex4( 20, FH, AudioActive ) ;
-//	lcd_outhex4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
+					PUTS_P( 4*FW + X12OFFSET, 3*FH, PSTR(STR_SHUT_DOWN) ) ;
+//	PUT_HEX4( 20, FH, AudioActive ) ;
+//	PUT_HEX4( 100, FH, (uint16_t)(get_tmr10ms() - tgtime ) ) ;
 //extern void dumpModelAsText() ;
 //						dumpModelAsText() ;
 extern void eeSaveAll() ;
@@ -5623,7 +5668,7 @@ extern void eeSaveAll() ;
  #if defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 					if ( (uint16_t)(get_tmr10ms() - tgtime ) < 200 )
 					{
-						lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "EEPROM BUSY", 11 ) ;
+						PUTS_NP( 5*FW + X12OFFSET, 5*FH, "EEPROM BUSY", 11 ) ;
 						wdt_reset() ;
 						
 //	lcd_outdez( 3*FW, 7*FH, WatchdogTimeout ) ;
@@ -5634,17 +5679,17 @@ extern void eeSaveAll() ;
 					if ( ! saved )
 					{
 						saved = 1 ;
-						lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
+						PUTS_NP( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
 						refreshDisplay() ;
 						ee32_check_finished() ;
-						lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
+						PUTS_NP( 5*FW + X12OFFSET, 5*FH, "\223\223\223\223\223\223\223\223\223\223\223", 11 ) ;
  						tgtime = get_tmr10ms() ;
 					}
   #else
 
 					if ( ee32_check_finished() == 0 )
 					{
-						lcd_putsn_P( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
+						PUTS_NP( 5*FW, 5*FH, "EEPROM BUSY", 11 ) ;
 						tgtime = get_tmr10ms() ;
   #endif
  #endif
@@ -5657,15 +5702,15 @@ extern uint8_t Ee32_general_write_pending ;
 extern uint8_t Ee32_model_write_pending ;
 extern uint8_t Ee32_model_delete_pending ;
   
-	lcd_outhex4( 0, 6*FH, GPIOC->IDR ) ;
-  lcd_outhex4( 25, 6*FH, check_soft_power() ) ;
+	PUT_HEX4( 0, 6*FH, GPIOC->IDR ) ;
+  PUT_HEX4( 25, 6*FH, check_soft_power() ) ;
 
-	lcd_outdez( 3*FW, 7*FH, General_timer ) ;
-	lcd_outdez( 7*FW, 7*FH, Model_timer ) ;
-	lcd_outdez( 10*FW, 7*FH, Eeprom32_process_state ) ;
-	lcd_outdez( 13*FW, 7*FH, Ee32_general_write_pending ) ;
-	lcd_outdez( 16*FW, 7*FH, Ee32_model_write_pending ) ;
-	lcd_outdez( 19*FW, 7*FH, Ee32_model_delete_pending ) ;
+	PUTS_NUMX( 3*FW, 7*FH, General_timer ) ;
+	PUTS_NUMX( 7*FW, 7*FH, Model_timer ) ;
+	PUTS_NUMX( 10*FW, 7*FH, Eeprom32_process_state ) ;
+	PUTS_NUMX( 13*FW, 7*FH, Ee32_general_write_pending ) ;
+	PUTS_NUMX( 16*FW, 7*FH, Ee32_model_write_pending ) ;
+	PUTS_NUMX( 19*FW, 7*FH, Ee32_model_delete_pending ) ;
 
 
  #endif
@@ -5673,7 +5718,12 @@ extern uint8_t Ee32_model_delete_pending ;
 				}
 				else
 				{
-					lcd_putsn_P( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
+//#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#if defined(PROP_TEXT)
+					PUTS_NP( 5*FW + X12OFFSET, 5*FH, "\223\223\223\223\223\223\223\223\223\223\223", 11 ) ;
+#else
+					PUTS_NP( 5*FW + X12OFFSET, 5*FH, "           ", 11 ) ;
+#endif
 				}
  #endif
  #ifdef POWER_BUTTON
@@ -5686,10 +5736,10 @@ extern uint8_t Ee32_model_delete_pending ;
   #endif
 
  #endif
-//	lcd_outhex4( 20, 6*FH, check_soft_power() ) ;
+//	PUT_HEX4( 20, 6*FH, check_soft_power() ) ;
 //extern uint8_t PowerState ;
-//	lcd_outhex4( 20, 7*FH, PowerState ) ;
-//	lcd_outhex4( 60, 7*FH, powerIsOn ) ;
+//	PUT_HEX4( 20, 7*FH, PowerState ) ;
+//	PUT_HEX4( 60, 7*FH, powerIsOn ) ;
 				refreshDisplay() ;
   		}
 
@@ -5721,18 +5771,18 @@ extern uint8_t Ee32_model_delete_pending ;
 	if ( powerIsOn >= 3 )
 	{
 		lcd_clear() ;
-		lcd_puts_P( 4*FW, 3*FH, "POWER OFF" ) ;
+		PUTS_P( 4*FW, 3*FH, "POWER OFF" ) ;
 		refreshDisplay() ;
 		break ;
 	}
  #else
 
 				lcd_clear() ;
-				lcd_putsn_P( 6*FW, 3*FH, "POWER OFF", 9 ) ;
+				PUTS_NP( 6*FW, 3*FH, "POWER OFF", 9 ) ;
  #if defined(REV9E) || defined(PCBX12D) || defined(PCBX7) || defined (PCBX9LITE) || defined(PCBX10)
 //#if defined(REV9E)
 extern uint8_t PowerState ;
-	lcd_outhex4( 20, 0, PowerState ) ;
+	PUT_HEX4( 20, 0, PowerState ) ;
  #endif
 				refreshDisplay() ;
 				
@@ -5744,7 +5794,7 @@ extern uint8_t PowerState ;
 					wdt_reset() ;
 					lcd_clear() ;
 					check_soft_power() ;
-					lcd_putsn_P( 6*FW + X12OFFSET, 3*FH, "POWER OFF", 9 ) ;
+					PUTS_NP( 6*FW + X12OFFSET, 3*FH, "POWER OFF", 9 ) ;
 					refreshDisplay() ;
 				}
  #endif
@@ -5839,14 +5889,14 @@ static void almess( const char * s, uint8_t type )
 {
 	const char *h ;
 #if defined(PCBX12D) || defined(PCBX10)
-  lcd_puts_P( X12OFFSET, 4*FW, s ) ;
+  PUTS_P( X12OFFSET, 4*FW, s ) ;
 #else
   lcd_clear();
-  lcd_puts_Pleft(4*FW,s);
+  PUTS_ATT_LEFT(4*FW,s);
 #endif
 	if ( type == ALERT_TYPE)
 	{
-    lcd_puts_P(64-6*FW + X12OFFSET,7*FH,"press any Key");
+    PUTS_P(64-6*FW + X12OFFSET,7*FH,"press any Key");
 		h = PSTR(STR_ALERT) ;
 //#ifdef PCBX12D
 //  lcd_img( 1 + X12OFFSET, 0, HandImage,0,0, LCD_RED ) ;
@@ -5859,7 +5909,7 @@ static void almess( const char * s, uint8_t type )
 	{
 		h = PSTR(STR_MESSAGE) ;
 	}
-  lcd_putsAtt(64-7*FW + X12OFFSET,0*FH, h,DBLSIZE);
+  PUTS_ATT(64-7*FW + X12OFFSET,0*FH, h,DBLSIZE);
 #if defined(PCBX12D) || defined(PCBX10)
 #else
 //  refreshDisplay();
@@ -5946,7 +5996,7 @@ static void processVoiceAlarms()
 {
 	uint32_t i ;
 	uint32_t curent_state ;
-	uint8_t flushSwitch ;
+	uint32_t flushSwitch ;
 	VoiceAlarmData *pvad = &g_model.vad[0] ;
 	i = 0 ;
 	if ( VoiceCheckFlag100mS & 4 )
@@ -6801,7 +6851,7 @@ void processSwitches()
 						if ( ( Last_switch[cs_index] & 2 ) == 0 )
 						{
 							// Trigger monostable
-							uint8_t trigger = 1 ;
+							uint32_t trigger = 1 ;
 							if ( ( cs.func == CS_RMONO ) )
 							{
 								if ( ! andSwOn )
@@ -6917,7 +6967,7 @@ void processSwitches()
 				case CS_DELTAGE :
 				case CS_MOD_D_GE :
 				{
-					uint8_t update = 0 ;
+					uint32_t update = 0 ;
 //          if (LS_LAST_VALUE(mixerCurrentFlightMode, idx) == CS_LAST_VALUE_INIT) {
 //            LS_LAST_VALUE(mixerCurrentFlightMode, idx) = x;
 //          }
@@ -7566,7 +7616,7 @@ extern uint32_t i2c2_result() ;
 		
 		// Now for the Safety/alarm switch alarms
 		{
-			uint8_t i ;
+			uint32_t i ;
 			static uint8_t periodCounter ;
  			
 			periodCounter += 0x11 ;
@@ -7679,7 +7729,7 @@ extern uint32_t i2c2_result() ;
 				delayTimer -= 1 ;
 			}
 
-			uint8_t redAlert = 0 ;
+			uint32_t redAlert = 0 ;
 			static uint8_t redCounter ;
 			static uint8_t orangeCounter ;
 			uint8_t rssiValue = TelemetryData[FR_RXRSI_COPY] ;
@@ -7767,9 +7817,9 @@ extern uint32_t i2c2_result() ;
 		 
 		for ( i = numSafety ; i < NUM_SKYCHNOUT+NUM_VOICE ; i += 1 )
 		{
-			uint8_t curent_state ;
-			uint8_t mode ;
-			uint8_t value ;
+			uint32_t curent_state ;
+			uint32_t mode ;
+			uint32_t value ;
     	SKYSafetySwData *sd = &g_model.safetySw[i];
     	if ( i >= NUM_SKYCHNOUT )
 			{
@@ -7854,7 +7904,7 @@ extern uint32_t i2c2_result() ;
 				 	firstDeviceLimit = FrskyBattCells[0] ;
 				}
 
-				for (uint8_t k=0 ; k<12 ; k++)
+				for (uint32_t k=0 ; k<12 ; k++)
 				{
 					uint32_t index = k < 6 ? TEL_ITEM_CELL1 : TEL_ITEM_CELL7 - 6 ;
 					index += k ;
@@ -8172,7 +8222,7 @@ void check_backlight()
 uint16_t stickMoveValue()
 {
     uint16_t sum = 0 ;
-		uint8_t i ;
+		uint32_t i ;
     for( i=0; i<4; i++)
 		{
       sum += anaIn(i) ;
@@ -8226,19 +8276,19 @@ void doSplash()
 			if ( scrtime < get_tmr10ms() )
 			{
 				scrtime += 4 ;
-				uint8_t p ;
-				uint8_t x ;
-				uint8_t y ;
-				uint8_t z ;
+				uint32_t p ;
+				coord_t x ;
+				coord_t y ;
+				uint32_t z ;
 				lcd_clear();
 #if defined(PCBX12D) || defined(PCBX10)
   	 		lcd_img(0 + X12OFFSET, 32, &splashdata[4],0,0, 0x03E0 );
 				if(!g_eeGeneral.hideNameOnSplash)
-					lcd_putsnAttColour( 0*FW + X12OFFSET, 11*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName), 0, 0x03E0 ) ;
+					PUTS_ATT_N_COLOUR( 0*FW + X12OFFSET, 11*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName), 0, 0x03E0 ) ;
 #else
   	 		lcd_img(0 + X12OFFSET, 0, &splashdata[4],0,0 );
 				if(!g_eeGeneral.hideNameOnSplash)
-					lcd_putsnAtt( 0*FW + X12OFFSET, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName),0);
+					PUTS_ATT_N( 0*FW + X12OFFSET, 7*FH, g_eeGeneral.ownerName ,sizeof(g_eeGeneral.ownerName),0);
 #endif					 
 
 				if ( j )
@@ -8329,7 +8379,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 {
   int16_t newval = val;
   uint8_t kpl=KEY_RIGHT, kmi=KEY_LEFT, kother = -1;
-	uint8_t editAllowed = 1 ;
+	uint32_t editAllowed = 1 ;
 #ifdef TOUCH
 	uint32_t largeChange = 0 ;
 	TouchAdjustValue = 0 ;
@@ -9947,7 +9997,7 @@ void checkDsmTelemetry5ms() ;
 //			else
 //#endif
 			{
-				for( uint8_t i = 0 ; i < MAX_GVARS ; i += 1 )
+				for( uint32_t i = 0 ; i < MAX_GVARS ; i += 1 )
 				{
 					if ( g_model.gvars[i].gvsource == 5 )	// REN
 					{
@@ -10094,7 +10144,7 @@ void checkDsmTelemetry5ms() ;
 #ifdef USE_VARS
 	if ( tempEvent != EVT_TOGGLE_GVAR )
 	{
-		uint8_t k ;
+		uint32_t k ;
 	  k = (tempEvent & EVT_KEY_MASK) - TRM_BASE ;
   	if ( k > 8 )
 		{
@@ -10150,13 +10200,18 @@ void checkDsmTelemetry5ms() ;
 #ifdef LUA
 			if ( lua_warning_info[0] )
 			{
-				uint8_t i = 0 ;
-				uint8_t j = 4*FH ;
+				coord_t i = 0 ;
+				coord_t j = 4*FH ;
 				uint8_t c ;
 				char *p = lua_warning_info ;
 				while ( ( c = *p ) )
 				{
-					i = lcd_putc( i , j, c ) ;
+					PUTC( i, j, c ) ;
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+					i = LcdNextPos ;
+#else
+					i = Lcd_lastPos ;
+#endif
 					if ( i > 20*FW )
 					{
 						i = 0 ;
@@ -10185,7 +10240,12 @@ void checkDsmTelemetry5ms() ;
 				char *p = (char *)BasicErrorText ;
 				while ( ( c = *p ) )
 				{
-					i = lcd_putc( i , j, c ) ;
+					PUTC( i , j, c ) ;
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+					i = LcdNextPos ;
+#else
+					i = Lcd_lastPos ;
+#endif
 					if ( i > 20*FW )
 					{
 						i = 0 ;
@@ -10422,7 +10482,12 @@ extern uint8_t ImageDisplay ;
 	  	else
 #endif
 			{
-				ScriptActive = 0 ;
+#ifdef MULTI_EVENTS
+				if ( ( lastTMR & 3 ) == 0 )
+#endif
+				{
+					ScriptActive = 0 ;
+				}
 #if defined(LUA) || defined(BASIC)
 				if (evtAsRotary)
 				{
@@ -11439,143 +11504,160 @@ void setLastTelemIdx( uint8_t idx )
 	setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx ) ;
 }
 
-extern void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
 
-#if defined(PCBX12D) || defined(PCBX10)
-void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att, uint16_t colour , uint16_t bgColour )
-#else
-void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
-#endif
-{
-	uint8_t chanLimit = NUM_SKYXCHNRAW ;
-	uint8_t mix = att & MIX_SOURCE ;
-	LastItem[0] = '\0' ;
-	if ( mix )
-	{
-		chanLimit += MAX_GVARS + 1 + 1 ;
-		att &= ~MIX_SOURCE ;		
-	}
-  if(idx==0)
-		ncpystr( (uint8_t *)LastItem, (uint8_t *) XPSTR("----"), 4 ) ;
-  else if(idx<=4)
-	{
-		const char *ptr = "" ;
-		if ( g_model.useCustomStickNames )
-		{
-			ptr = ( char *)g_eeGeneral.customStickNames+4*(idx-1) ;
-		}
-		if ( *ptr && (*ptr != ' ' ) )
-		{
-			ncpystr( (uint8_t *)LastItem, (uint8_t *)ptr, 4 ) ;
-		}
-		else
-		{
-			setLastIdx( (char *) PSTR(STR_STICK_NAMES), idx-1 ) ;
-		}
-	}
-  else if(idx<=chanLimit)
-		setLastIdx( (char *) PSTR(STR_CHANS_GV), idx-5 ) ;
-	else if(idx < EXTRA_POTS_START)
-	{
-		if ( mix )
-		{
-			idx += TEL_ITEM_SC1-(chanLimit-NUM_SKYXCHNRAW) ;
-			if ( idx - NUM_SKYXCHNRAW > TEL_ITEM_SC1 + NUM_SCALERS )
-			{
-				uint8_t *ptr ;
-				idx -= TEL_ITEM_SC1 + NUM_SCALERS - 8 + NUM_SKYXCHNRAW ;
-#if EXTRA_SKYCHANNELS							
-				if ( idx > 16 )
-				{
-					if ( idx <= 16 + 8  )
-					{
-						idx += 8 ;
-						ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"CH" ) ;
-						*ptr++ = (idx / 10) + '0' ;
-						*ptr = (idx % 10) + '0' ;
-					}
-					else
-					{
-						ptr = ncpystr( (uint8_t *)LastItem, (uint8_t *)&PSTR(STR_GV_SOURCE)[1+3*(idx-24)], 3 ) ;
-					}
-				}
-				else
-#endif
-				{
-					ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"PPM1" ) ;
-					if ( idx == 9 )
-					{
-						*(ptr-1) = '9' ;
-					}
-					else
-					{
-						*ptr = '0' + idx - 10 ;
-					}
-				}
-				*(ptr+1) = '\0' ;
-#if defined(PCBX12D) || defined(PCBX10)
-				lcd_putsAttColour(x,y,LastItem,att, colour, bgColour ) ;
-#else
-				lcd_putsAtt(x,y,LastItem,att);
-#endif
-				return ;
-			}
-		}
-		setLastTelemIdx( idx-NUM_SKYXCHNRAW ) ;
-//		setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW ) ;
-	}
-	else
-	{
-		if(idx < EXTRA_POTS_START + 8)
-		{
-			setLastIdx( (char *) PSTR(STR_CHANS_EXTRA), idx-EXTRA_POTS_START ) ;
-		}
-		else
-		{
-#ifdef INPUTS
-			if ( mix )
-			{
-				if ( idx >= 224 )	// Input
-				{
-					displayInputName( x, y, idx-224+1, att ) ;
-//					lcd_img( x, y, IconInput, 0, 0 ) ;
-//					lcd_outdezNAtt(x+3*FW, y, idx-224, att + LEADING0, 2) ;
-					return ;
-				}
-			}
-			else
-#endif
-			{
-				// Extra telemetry items
-				setLastTelemIdx( idx-NUM_SKYXCHNRAW-8 ) ;
-//			setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW-8 ) ;
-			}
-		}
-	}
-#if defined(PCBX12D) || defined(PCBX10)
-	lcd_putsAttColour(x,y,LastItem,att, colour, bgColour ) ;
-#else
-	lcd_putsAtt(x,y,LastItem,att);
-#endif
-}
+//#if defined(PCBX12D) || defined(PCBX10)
+//void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att, uint16_t colour , uint16_t bgColour )
+//#else
+//void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att)
+//#endif
+//{
+//	uint8_t chanLimit = NUM_SKYXCHNRAW ;
+//	uint8_t mix = att & MIX_SOURCE ;
+//	LastItem[0] = '\0' ;
+//	if ( mix )
+//	{
+//		chanLimit += MAX_GVARS + 1 + 1 ;
+//		att &= ~MIX_SOURCE ;		
+//	}
+//  if(idx==0)
+//		ncpystr( (uint8_t *)LastItem, (uint8_t *) XPSTR("----"), 4 ) ;
+//  else if(idx<=4)
+//	{
+//		const char *ptr = "" ;
+//		if ( g_model.useCustomStickNames )
+//		{
+//			ptr = ( char *)g_eeGeneral.customStickNames+4*(idx-1) ;
+//		}
+//		if ( *ptr && (*ptr != ' ' ) )
+//		{
+//			ncpystr( (uint8_t *)LastItem, (uint8_t *)ptr, 4 ) ;
+//		}
+//		else
+//		{
+//			setLastIdx( (char *) PSTR(STR_STICK_NAMES), idx-1 ) ;
+//		}
+//	}
+//  else if(idx<=chanLimit)
+//		setLastIdx( (char *) PSTR(STR_CHANS_GV), idx-5 ) ;
+//	else if(idx < EXTRA_POTS_START)
+//	{
+//		if ( mix )
+//		{
+//			idx += TEL_ITEM_SC1-(chanLimit-NUM_SKYXCHNRAW) ;
+//			if ( idx - NUM_SKYXCHNRAW > TEL_ITEM_SC1 + NUM_SCALERS )
+//			{
+//				uint8_t *ptr ;
+//				idx -= TEL_ITEM_SC1 + NUM_SCALERS - 8 + NUM_SKYXCHNRAW ;
+//#if EXTRA_SKYCHANNELS							
+//				if ( idx > 16 )
+//				{
+//					if ( idx <= 16 + 8  )
+//					{
+//						idx += 8 ;
+//						ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"CH" ) ;
+//						*ptr++ = (idx / 10) + '0' ;
+//						*ptr = (idx % 10) + '0' ;
+//					}
+//					else
+//					{
+//						ptr = ncpystr( (uint8_t *)LastItem, (uint8_t *)&PSTR(STR_GV_SOURCE)[1+3*(idx-24)], 3 ) ;
+//					}
+//				}
+//				else
+//#endif
+//				{
+//					ptr = cpystr( (uint8_t *)LastItem, (uint8_t *)"PPM1" ) ;
+//					if ( idx == 9 )
+//					{
+//						*(ptr-1) = '9' ;
+//					}
+//					else
+//					{
+//						*ptr = '0' + idx - 10 ;
+//					}
+//				}
+//				*(ptr+1) = '\0' ;
+//#if defined(PCBX12D) || defined(PCBX10)
+//				lcd_putsAttColour(x,y,LastItem,att, colour, bgColour ) ;
+//#else
+//				lcd_putsAtt(x,y,LastItem,att);
+//#endif
+//				return ;
+//			}
+//		}
+//		setLastTelemIdx( idx-NUM_SKYXCHNRAW ) ;
+////		setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW ) ;
+//	}
+//	else
+//	{
+//		if(idx < EXTRA_POTS_START + 8)
+//		{
+//			setLastIdx( (char *) PSTR(STR_CHANS_EXTRA), idx-EXTRA_POTS_START ) ;
+//		}
+//		else
+//		{
+//#ifdef INPUTS
+//			if ( mix )
+//			{
+//				if ( idx >= 224 )	// Input
+//				{
+//					displayInputName( x, y, idx-224+1, att ) ;
+////					lcd_img( x, y, IconInput, 0, 0 ) ;
+////					lcd_outdezNAtt(x+3*FW, y, idx-224, att + LEADING0, 2) ;
+//					return ;
+//				}
+//			}
+//			else
+//#endif
+//			{
+//				// Extra telemetry items
+//				setLastTelemIdx( idx-NUM_SKYXCHNRAW-8 ) ;
+////			setLastIdx( (char *) PSTR(STR_TELEM_ITEMS), idx-NUM_SKYXCHNRAW-8 ) ;
+//			}
+//		}
+//	}
+//#if defined(PCBX12D) || defined(PCBX10)
+//	lcd_putsAttColour(x,y,LastItem,att, colour, bgColour ) ;
+//#else
+//	lcd_putsAtt(x,y,LastItem,att);
+//#endif
+//}
 
-void putsChn(uint8_t x,uint8_t y,uint8_t idx1,uint8_t att)
+void putsChn( coord_t x, coord_t y,uint8_t idx1, LcdFlags att)
 {
+#if defined(PCBX12D) || defined(PCBX10)
+	x *= 2 ;
+	y *= 2 ;
 	if ( idx1 == 0 )
 	{
-    lcd_putsnAtt(x,y,XPSTR("--- "),4,att);
+//    lcd_putsnAtt(x,y,XPSTR("--- "),4,att);
+		lcdDrawSizedText( x, y, XPSTR("--- "), 4, att ) ;
 	}
 	else
 	{
-		uint8_t x1 ;
+    lcdDrawSizedText( x, y, PSTR(STR_CH), 2, att ) ;
+		lcdDrawNumber( LcdNextPos, y, idx1, LEFT, 0 ) ;
+//  	lcd_outdezAtt(x1,y,idx1,att);
+//    lcd_putsnAtt(x,y,PSTR(STR_CH),2,att);
+	}
+
+#else
+	if ( idx1 == 0 )
+	{
+    PUTS_ATT_N(x,y,XPSTR("--- "),4,att);
+	}
+	else
+	{
+		coord_t x1 ;
 		x1 = x + 4*FW-2 ;
 		if ( idx1 < 10 )
 		{
 			x1 -= FWNUM ;			
 		}
-  	lcd_outdezAtt(x1,y,idx1,att);
-    lcd_putsnAtt(x,y,PSTR(STR_CH),2,att);
+  	PUTS_NUM(x1,y,idx1,att);
+    PUTS_ATT_N(x,y,PSTR(STR_CH),2,att);
 	}
+#endif
 }
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
@@ -11997,7 +12079,7 @@ void create6posTable()
 
 int8_t switchUnMap( int8_t x )
 {
-	uint8_t sign = 0 ;
+	uint32_t sign = 0 ;
 	if ( x < 0 )
 	{
 		sign = 1 ;
@@ -12013,7 +12095,7 @@ int8_t switchUnMap( int8_t x )
 
 int8_t switchMap( int8_t x )
 {
-	uint8_t sign = 0 ;
+	uint32_t sign = 0 ;
 	if ( x < 0 )
 	{
 		sign = 1 ;
@@ -12028,7 +12110,7 @@ int8_t switchMap( int8_t x )
 }
 
 
-void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)
+void putsMomentDrSwitches( coord_t x, coord_t y,int8_t idx1, LcdFlags att)
 {
   int16_t tm = idx1 ;
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
@@ -12044,7 +12126,12 @@ void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)
   if(abs(tm)>(HSW_MAX))	 //momentary on-off
 #endif
 	{
-  	lcd_putcAtt(x+3*FW,  y,'m',att);
+#if defined(PCBX12D) || defined(PCBX10) | defined(PROP_TEXT)
+  	PUTC_ATT(x+3*FW,  y, 'm', att ) ;
+		x -= FW ;
+#else
+  	PUTC_ATT(x+3*FW,  y, 'm', att ) ;
+#endif
 		if ( tm > 0 )
 		{
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
@@ -12055,80 +12142,84 @@ void putsMomentDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)
 #endif
 		}
 	}			 
-  putsDrSwitches( x-1*FW, y, tm, att ) ;
-}
-
-#ifndef ARUNI
-void putSwitchName(uint8_t x, uint8_t y, int8_t z, uint8_t att); // @menus.cpp
-#endif
-
-void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
-{
-	if ( idx1 == 0 )
-	{
-    lcd_putsAtt(x+FW,y,XPSTR("---"),att) ;
-		return ;
-	}
-	else if ( idx1 == MAX_SKYDRSWITCH )
-	{
-    lcd_putsAtt(x+FW,y,PSTR(STR_ON),att) ;
-		return ;
-	}
-	else if ( idx1 == -MAX_SKYDRSWITCH )
-	{
-    lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att) ;
-		return ;
-	}
-	else if ( idx1 == MAX_SKYDRSWITCH + 1 )
-	{
-    lcd_putsAtt(x+FW,y,XPSTR("Fmd"),att) ;
-		return ;
-	}
-
-	if ( idx1 < 0 )
-	{
-  	lcd_putcAtt(x,y, '!',att);
-	}
-	int8_t z ;
-	z = idx1 ;
-	if ( z < 0 )
-	{
-		z = -idx1 ;			
-	}
-	if ( ( z <= HSW_Ttrmup ) && ( z >= HSW_Etrmdn ) )
-	{
-		z -= HSW_Etrmdn ;
-	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtuEtdAtuAtdRtuRtdTtuTtd"),z,att) ;
-		return ;
-	}
-	if ( ( z <= HSW_FM7 ) && ( z >= HSW_FM0 ) )
-	{
-		z -= HSW_FM0 ;
-  	lcd_putsAttIdx( x+FW, y, XPSTR("\003FM0FM1FM2FM3FM4FM5FM6FM7"), z, att ) ;
-		return ;
-	}
-	z -= 1 ;
-#if defined(PCBSKY) || defined(PCB9XT)
-//		z *= 3 ;
-	if ( z > MAX_SKYDRSWITCH )
-	{
-		z -= HSW_OFFSET - 1 ;
-	}
-  putSwitchName(x+FW,y,z,att) ;
-#endif
-
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
-//		z *= 3 ;
-	if ( z > MAX_SKYDRSWITCH )
-	{
-		z -= HSW_OFFSET - 1 ;
-	}
-  putSwitchName(x+FW,y,z,att) ;
+#if defined(PCBX12D) || defined(PCBX10) | defined(PROP_TEXT)
+  putsDrSwitches( x+4*FW, y, tm, att|LUA_RIGHT ) ;
+#else
+  putsDrSwitches( x+3*FW, y, tm, att|LUA_RIGHT ) ;
 #endif
 }
 
-#ifdef TOUCH
-void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1,uint8_t att, uint16_t fcolour, uint16_t bcolour)//, bool nc)
+//#ifndef ARUNI
+//void putSwitchName(uint8_t x, uint8_t y, int8_t z, uint8_t att); // @menus.cpp
+//#endif
+
+//void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att)//, bool nc)
+//{
+//	if ( idx1 == 0 )
+//	{
+//    lcd_putsAtt(x+FW,y,XPSTR("---"),att) ;
+//		return ;
+//	}
+//	else if ( idx1 == MAX_SKYDRSWITCH )
+//	{
+//    lcd_putsAtt(x+FW,y,PSTR(STR_ON),att) ;
+//		return ;
+//	}
+//	else if ( idx1 == -MAX_SKYDRSWITCH )
+//	{
+//    lcd_putsAtt(x+FW,y,PSTR(STR_OFF),att) ;
+//		return ;
+//	}
+//	else if ( idx1 == MAX_SKYDRSWITCH + 1 )
+//	{
+//    lcd_putsAtt(x+FW,y,XPSTR("Fmd"),att) ;
+//		return ;
+//	}
+
+//	if ( idx1 < 0 )
+//	{
+//  	lcd_putcAtt(x,y, '!',att);
+//	}
+//	int8_t z ;
+//	z = idx1 ;
+//	if ( z < 0 )
+//	{
+//		z = -idx1 ;			
+//	}
+//	if ( ( z <= HSW_Ttrmup ) && ( z >= HSW_Etrmdn ) )
+//	{
+//		z -= HSW_Etrmdn ;
+//	  lcd_putsAttIdx(x+FW,y,XPSTR("\003EtuEtdAtuAtdRtuRtdTtuTtd"),z,att) ;
+//		return ;
+//	}
+//	if ( ( z <= HSW_FM7 ) && ( z >= HSW_FM0 ) )
+//	{
+//		z -= HSW_FM0 ;
+//  	lcd_putsAttIdx( x+FW, y, XPSTR("\003FM0FM1FM2FM3FM4FM5FM6FM7"), z, att ) ;
+//		return ;
+//	}
+//	z -= 1 ;
+//#if defined(PCBSKY) || defined(PCB9XT)
+////		z *= 3 ;
+//	if ( z > MAX_SKYDRSWITCH )
+//	{
+//		z -= HSW_OFFSET - 1 ;
+//	}
+//  putSwitchName(x+FW,y,z,att) ;
+//#endif
+
+//#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+////		z *= 3 ;
+//	if ( z > MAX_SKYDRSWITCH )
+//	{
+//		z -= HSW_OFFSET - 1 ;
+//	}
+//  putSwitchName(x+FW,y,z,att) ;
+//#endif
+//}
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolour, uint16_t bcolour)//, bool nc)
 {
 	uint16_t oldBcolour = LcdBackground ;
 	uint16_t oldFcolour = LcdForeground ;
@@ -12141,7 +12232,7 @@ void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1,uint8_t att, uint16_t 
 #endif
 
 //Type 1-trigA, 2-trigB, 0 best for display
-void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type )
+void putsTmrMode(coord_t x, coord_t y, LcdFlags attr, uint8_t timer, uint8_t type )
 {
   int8_t tm = g_model.timer[timer].tmrModeA ;
 	if ( ( type == 2 ) || ( ( type == 0 ) && ( tm == 1 ) ) )
@@ -12151,13 +12242,14 @@ void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type
 	}
 	if ( type < 2 )		// 0 or 1
 	{
-	  if(tm<TMR_VAROFS) {
-        lcd_putsnAtt(  x, y, PSTR(STR_TRIGA_OPTS)+3*abs(tm),3,attr);
+	  if(tm<TMR_VAROFS)
+		{
+        PUTS_ATT_N(  x, y, PSTR(STR_TRIGA_OPTS)+3*abs(tm),3,attr);
   	}
 		else
 		{
   		tm -= TMR_VAROFS - 7 ;
-      lcd_putsAttIdx(  x, y, get_curve_string(), tm, attr ) ;
+      PUTS_AT_IDX( x, y, get_curve_string(), tm, attr ) ;
 #if defined(PCBSKY) || defined(PCB9XT)
 			if ( tm < 9 + 7 )	// Allow for 7 offset above
 #endif
@@ -12167,7 +12259,7 @@ void putsTmrMode(uint8_t x, uint8_t y, uint8_t attr, uint8_t timer, uint8_t type
 			{
 				x -= FW ;		
 			}
-  		lcd_putcAtt(x+3*FW,  y,'%',attr);
+  		PUTC_ATT(x+3*FW,  y,'%',attr);
 		}
 	}
 }
@@ -12227,7 +12319,7 @@ bool getSwitch00( int8_t swtch )
 bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 {
   bool ret_value ;
-  uint8_t cs_index ;
+  uint32_t cs_index ;
   uint8_t aswitch ;
   
 	aswitch = abs(swtch) ;
@@ -12294,7 +12386,7 @@ bool getSwitch(int8_t swtch, bool nc, uint8_t level)
 	}
 #endif
 
-  uint8_t dir = swtch>0;
+  uint32_t dir = swtch>0;
   if(abs(swtch)<(MAX_SKYDRSWITCH-NUM_SKYCSW))
 	{
     if(!dir) return ! keyState((enum EnumKeys)(SW_BASE-swtch-1));
@@ -12320,9 +12412,9 @@ const uint8_t speaker[] = {
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-void putsDblSizeName( uint16_t x, uint16_t y )
+void putsDblSizeName( coord_t x, coord_t y )
 #else
-void putsDblSizeName( uint8_t y )
+void putsDblSizeName( coord_t y )
 #endif
 {
 #if defined(PCBX12D) || defined(PCBX10)
@@ -12335,23 +12427,29 @@ void putsDblSizeName( uint8_t y )
 			break ;
 		}
 	}
+	length += 1 ;
 	uint32_t i ;
-	i = sizeof(g_model.name) - length - 1 ;
-	i = i*2*FW-i ;
-	x += i/2 + 2 ;
-	for( i = 0 ; i <= length ; i += 1 )
-	{
-		lcd_putcAttColour( x + FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE, 0x001F, LcdBackground );
-	}
+//	uint32_t j ;
+//	i = sizeof(g_model.name) - length - 1 ;
+	i = getTextWidth(g_model.name, length, DBLSIZE ) ;
+	i /= 2 ;
+	x -= i ;
+	lcdDrawSizedText( x, y, g_model.name, length, DBLSIZE, LCD_BLUE ) ;
+
+//	for( i = 0 ; i <= length ; i += 1 )
+//	{
+//		lcd_putcAttColour( x + FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE, 0x001F, LcdBackground );
+//	}
+
 #else
 	uint32_t i ;
 	for( i = 0 ; i < sizeof(g_model.name) ; i += 1 )
 	{
 #ifdef WIDE_SCREEN
-		lcd_putcAtt(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
+		PUTC_ATT(FW*2+i*2*FW-i-2, y, g_model.name[i],DBLSIZE);
 	}
 #else
-		lcd_putcAtt(FW*2-4+i*(2*FW-4), y, g_model.name[i],DBLSIZE|CONDENSED);
+		PUTC_ATT(FW*2-4+i*(2*FW-4), y, g_model.name[i],DBLSIZE|CONDENSED);
 	}
 #ifdef PCBLEM1
 	if ( g_eeGeneral.externalRtcType )
@@ -12385,7 +12483,7 @@ uint32_t switches_states = 0 ;
 
 int8_t getMovedSwitch()
 {
-	uint8_t skipping = 0 ;
+	uint32_t skipping = 0 ;
   int8_t result = 0;
 
 	static uint16_t s_last_time = 0;
@@ -12590,7 +12688,7 @@ int8_t getMovedSwitch()
 #endif
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 #ifdef REV9E
-  for (uint8_t i=0 ; i<18 ; i += 1 )
+  for (uint32_t i=0 ; i<18 ; i += 1 )
 	{
     uint32_t mask ;
     uint8_t prev ;
@@ -12640,9 +12738,9 @@ int8_t getMovedSwitch()
 #else // REV9E
 #if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE) || defined(PCBLEM1)
 #ifdef PCBT12
-  for (uint8_t i=0 ; i<8 ; i += 1 )
+  for (uint32_t i=0 ; i<8 ; i += 1 )
 #else
-  for (uint8_t i=0 ; i<8 ; i += 1 )
+  for (uint32_t i=0 ; i<8 ; i += 1 )
 #endif
 	{
     uint16_t mask = (0x03 << (i*2)) ;
@@ -12773,7 +12871,7 @@ int8_t getMovedSwitch()
 #endif
   }
 #else // PCBX7 || PCBXLITE
-  for (uint8_t i=0 ; i<8 ; i += 1 )
+  for (uint32_t i=0 ; i<8 ; i += 1 )
 	{
     uint16_t mask = (0x03 << (i*2)) ;
     uint8_t prev = (switches_states & mask) >> (i*2) ;
@@ -12850,7 +12948,7 @@ int8_t getMovedSwitch()
 void checkQuickSelect()
 {
   uint8_t i = keyDown(); //check for keystate
-  uint8_t j;
+  uint32_t j;
   
 	if ( ( i & 6 ) == 6 )
 	{
@@ -12858,7 +12956,7 @@ void checkQuickSelect()
  		while ( keyDown() )
 		{
 			wdt_reset() ;
-			lcd_puts_Pleft( FH, XPSTR("Mute Activated") ) ;
+			PUTS_ATT_LEFT( FH, XPSTR("Mute Activated") ) ;
 			refreshDisplay() ;
 		}
 		return ;
@@ -12899,7 +12997,7 @@ void eeLoadModel(uint8_t id) ;
 	    STORE_GENERALVARS;
 		}
     lcd_clear();
-    lcd_putsAtt(64-7*FW,0*FH,PSTR(STR_LOADING),DBLSIZE);
+    PUTS_ATT(64-7*FW,0*FH,PSTR(STR_LOADING),DBLSIZE);
 
 #if defined(PCBX12D) || defined(PCBX10)
 		putsDblSizeName( 0, 3*FH ) ;
@@ -12914,10 +13012,10 @@ void eeLoadModel(uint8_t id) ;
 void alertMessages( const char * s, const char * t )
 {
   lcd_clear();
-  lcd_putsAtt(64-5*FW,0*FH,PSTR(STR_ALERT),DBLSIZE);
-  lcd_puts_P(0,4*FH,s);
-  lcd_puts_P(0,5*FH,t);
-  lcd_puts_P(0,6*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+  PUTS_ATT(64-5*FW,0*FH,PSTR(STR_ALERT),DBLSIZE);
+  PUTS_P(0,4*FH,s);
+  PUTS_P(0,5*FH,t);
+  PUTS_P(0,6*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
 }
 
 
@@ -13052,11 +13150,11 @@ void checkTHR()
 #else
   lcd_img( 1, 0, HandImage,0,0 ) ;
 #endif
-  lcd_putsAtt(36 + X12OFFSET,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
-  lcd_putsAtt(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
-	lcd_puts_P(0 + X12OFFSET,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
-	lcd_puts_P(0 + X12OFFSET,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
-	lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+  PUTS_ATT(36 + X12OFFSET,0*FH,XPSTR("THROTTLE"),DBLSIZE|CONDENSED);
+  PUTS_ATT(36 + X12OFFSET,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+	PUTS_P(0 + X12OFFSET,5*FH,  PSTR(STR_THR_NOT_IDLE) ) ;
+	PUTS_P(0 + X12OFFSET,6*FH,  PSTR(STR_RST_THROTTLE) ) ;
+	PUTS_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
   refreshDisplay();
   clearKeyEvents();
 	putSystemVoice( SV_TH_WARN, V_THR_WARN ) ;
@@ -13160,9 +13258,9 @@ void checkCustom()
 		}
 	  alertMessages( XPSTR("Custom Check"), XPSTR("Set Control") ) ;
 		putsChnRaw( 9*FW, 2*FH, unmapPots( pdata->source ), 0 ) ;
-		lcd_outdezAtt( 5*FW, 3*FH, pdata->min, 0) ;
-		lcd_outdezAtt( 11*FW, 3*FH, value, 0) ;
-		lcd_outdezAtt( 17*FW, 3*FH, pdata->max, 0) ;
+		PUTS_NUM( 5*FW, 3*FH, pdata->min, 0) ;
+		PUTS_NUM( 11*FW, 3*FH, value, 0) ;
+		PUTS_NUM( 17*FW, 3*FH, pdata->max, 0) ;
 		refreshDisplay();
 
     if( keyDown() )
@@ -13226,7 +13324,7 @@ uint16_t oneSwitchText( uint8_t swtch, uint16_t states )
 				if ( states & 0x0004 ) index += 1 ;
 				if ( states & 0x0400 ) index += 2 ;
 				if ( states & 0x0800 ) index += 4 ;
-//lcd_outhex4( 25, 3*FH, index ) ;
+//PUT_HEX4( 25, 3*FH, index ) ;
 			}
 			else
 			{
@@ -13394,9 +13492,9 @@ void checkSwitches()
 
   			lcd_clear();
 		    lcd_img( 1, 0, HandImage,0,0 ) ;
-			  lcd_putsAtt(36,0*FH,PSTR(STR_SWITCH),DBLSIZE|CONDENSED);
-  			lcd_putsAtt(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
-  			lcd_puts_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+			  PUTS_ATT(36,0*FH,PSTR(STR_SWITCH),DBLSIZE|CONDENSED);
+  			PUTS_ATT(36,2*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+  			PUTS_P(0,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
 
 #ifdef ARUNI
         if(x & THR_WARN_MASK)
@@ -13523,11 +13621,11 @@ void checkSwitches()
 #else
     lcd_img( 1, 0, HandImage,0,0 ) ;
 #endif
-	  lcd_putsAtt(32 + X12OFFSET,0*FH,XPSTR("SWITCH"),DBLSIZE);
-	  lcd_putsAtt(32 + X12OFFSET,2*FH,XPSTR("WARNING"),DBLSIZE);
-		lcd_puts_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
+	  PUTS_ATT(32 + X12OFFSET,0*FH,XPSTR("SWITCH"),DBLSIZE);
+	  PUTS_ATT(32 + X12OFFSET,2*FH,XPSTR("WARNING"),DBLSIZE);
+		PUTS_P(0 + X12OFFSET,7*FH,  PSTR(STR_PRESS_KEY_SKIP) ) ;
 
-		for ( uint8_t i = 0 ; i < 7 ; i += 1 )
+		for ( uint32_t i = 0 ; i < 7 ; i += 1 )
 		{
 #ifdef PCBX7
 #ifdef PCBT12
@@ -13568,7 +13666,7 @@ void checkSwitches()
 				{
 					j += 1 ;
 				}
-  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
+  		  PUTC_ATT( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
 #else
  #ifdef PCBLEM1
 				uint32_t j ;
@@ -13577,38 +13675,38 @@ void checkSwitches()
 				{
 					j += 1 ;
 				}
-  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
+  		  PUTC_ATT( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+j, attr ) ;
  #else
-  		  lcd_putcAtt( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+i, attr ) ;
+  		  PUTC_ATT( 3*FW+i*(2*FW+2) + X12OFFSET, 5*FH, 'A'+i, attr ) ;
  #endif
 #endif
-				lcd_putcAtt( 4*FW+i*(2*FW+2) + X12OFFSET, 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
+				PUTC_ATT( 4*FW+i*(2*FW+2) + X12OFFSET, 5*FH, PSTR(HW_SWITCHARROW_STR)[(warningStates & mask) >> (i*2)], attr ) ;
 			}
 		}
 #if defined(PCBX12D) || defined(PCBX10)
 		if ( ~g_model.modelswitchWarningDisables & 0xC000 )
 		{
-		  uint8_t attr = ((warningStates & 0x1C000) == (ss & 0x1C000)) ? 0 : INVERS ;
-  		lcd_putcAtt( 3*FW+7*(2*FW+2) + X12OFFSET, 5*FH, '6', attr ) ;
-			lcd_putcAtt( 4*FW+7*(2*FW+2) + X12OFFSET, 5*FH, ((warningStates & 0x0001C000) >> 14) + '0', attr ) ;
+		  LcdFlags attr = ((warningStates & 0x1C000) == (ss & 0x1C000)) ? 0 : INVERS ;
+  		PUTC_ATT( 3*FW+7*(2*FW+2) + X12OFFSET, 5*FH, '6', attr ) ;
+			PUTC_ATT( 4*FW+7*(2*FW+2) + X12OFFSET, 5*FH, ((warningStates & 0x0001C000) >> 14) + '0', attr ) ;
 		}
 
-//		lcd_outhex4( 190, 4*FH, ss >> 16 ) ;
-//		lcd_outhex4( 216, 4*FH, ss ) ;
-//		lcd_outhex4( 190, 5*FH, warningStates >> 16 ) ;
-//		lcd_outhex4( 216, 5*FH, warningStates ) ;
-//		lcd_outhex4( 190, 6*FH, switches_states >> 16 ) ;
-//		lcd_outhex4( 216, 6*FH, switches_states ) ;
+//		PUT_HEX4( 190, 4*FH, ss >> 16 ) ;
+//		PUT_HEX4( 216, 4*FH, ss ) ;
+//		PUT_HEX4( 190, 5*FH, warningStates >> 16 ) ;
+//		PUT_HEX4( 216, 5*FH, warningStates ) ;
+//		PUT_HEX4( 190, 6*FH, switches_states >> 16 ) ;
+//		PUT_HEX4( 216, 6*FH, switches_states ) ;
 		
-//		lcd_outhex4( 190, 7*FH, g_model.modelswitchWarningDisables ) ;
-//		lcd_outhex4( 216, 7*FH, switchPosition( HSW_Ele6pos0 ) ) ;
+//		PUT_HEX4( 190, 7*FH, g_model.modelswitchWarningDisables ) ;
+//		PUT_HEX4( 216, 7*FH, switchPosition( HSW_Ele6pos0 ) ) ;
 
-//		lcd_outhex4( 0, 0*FH, hwKeyState( HSW_Ele6pos0 ) ) ;
-//		lcd_outhex4( 0, 1*FH, hwKeyState( HSW_Ele6pos1 ) ) ;
-//		lcd_outhex4( 0, 2*FH, hwKeyState( HSW_Ele6pos2 ) ) ;
-//		lcd_outhex4( 0, 3*FH, hwKeyState( HSW_Ele6pos3 ) ) ;
-//		lcd_outhex4( 0, 4*FH, hwKeyState( HSW_Ele6pos4 ) ) ;
-//		lcd_outhex4( 0, 5*FH, hwKeyState( HSW_Ele6pos5 ) ) ;
+//		PUT_HEX4( 0, 0*FH, hwKeyState( HSW_Ele6pos0 ) ) ;
+//		PUT_HEX4( 0, 1*FH, hwKeyState( HSW_Ele6pos1 ) ) ;
+//		PUT_HEX4( 0, 2*FH, hwKeyState( HSW_Ele6pos2 ) ) ;
+//		PUT_HEX4( 0, 3*FH, hwKeyState( HSW_Ele6pos3 ) ) ;
+//		PUT_HEX4( 0, 4*FH, hwKeyState( HSW_Ele6pos4 ) ) ;
+//		PUT_HEX4( 0, 5*FH, hwKeyState( HSW_Ele6pos5 ) ) ;
 
 
 
@@ -13637,11 +13735,11 @@ void checkSwitches()
 void displayChangeWarning(const char *s)
 {
   lcd_img( 1, 0, HandImage,0,0 ) ;
-  lcd_putsAtt(36,1*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
-	lcd_puts_P(0,4*FH,  s ) ;
-	lcd_puts_P((strlen(s)+1)*FW, 4*FH, PSTR(STR_CHANGE_MAY) ) ;
-	lcd_puts_P(0,5*FH,  PSTR(STR_BRICK_RADIO) ) ;
-	lcd_puts_P(0,7*FH,  PSTR(STR_MENU_PROCEED) ) ;
+  PUTS_ATT(36,1*FH,PSTR(STR_WARNING),DBLSIZE|CONDENSED);
+	PUTS_P(0,4*FH,  s ) ;
+	PUTS_P((strlen(s)+1)*FW, 4*FH, PSTR(STR_CHANGE_MAY) ) ;
+	PUTS_P(0,5*FH,  PSTR(STR_BRICK_RADIO) ) ;
+	PUTS_P(0,7*FH,  PSTR(STR_MENU_PROCEED) ) ;
 }
 #endif
 

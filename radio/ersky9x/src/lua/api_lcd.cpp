@@ -26,6 +26,7 @@
 
 //#define LUA	1
 
+#include "ersky9x.h"
 #include "lcd.h"
 
 #include "lua_api.h"
@@ -152,9 +153,12 @@ Returns the last x position from previous output
 
 @status current Introduced in 2.0.0
 */
+
+extern coord_t LcdLastRightPos ;
+
 static int luaLcdGetLastPos(lua_State *L)
 {
-  lua_pushinteger(L, Lcd_lastPos);
+  lua_pushinteger(L, LcdLastRightPos);
   return 1;
 }
 #endif
@@ -212,7 +216,7 @@ static int luaLcdDrawText(lua_State *L)
 //		}
 //		x -= t * width ;
 //	}
-	lcd_putsAtt(x, y, s, att);
+	PUTS_ATT(x, y, s, att ) ;
   return 0;
 }
 
@@ -286,7 +290,7 @@ static int luaLcdDrawNumber(lua_State *L)
 	{
 		att |= LEFT ;
 	}
-  lcd_outdezAtt(x, y, val, att);
+  PUTS_NUM(x, y, val, att);
   return 0;
 }
 
@@ -327,7 +331,7 @@ See getValue()
 //  return 0;
 //}
 
-extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;//, bool nc) ;
+//extern void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;//, bool nc) ;
 
 /*luadoc
 @function lcd.drawSwitch(x, y, switch, flags)
@@ -685,16 +689,21 @@ Draw a simple gauge that is filled based upon fill value
 
 @status current Introduced in 2.0.0, changed in 2.2.0
 */
-//static int luaLcdDrawGauge(lua_State *L)
-//{
-//  if (!luaLcdAllowed) return 0;
-//  int x = luaL_checkinteger(L, 1);
-//  int y = luaL_checkinteger(L, 2);
-//  int w = luaL_checkinteger(L, 3);
-//  int h = luaL_checkinteger(L, 4);
-//  int num = luaL_checkinteger(L, 5);
-//  int den = luaL_checkinteger(L, 6);
-//  unsigned int flags = luaL_optunsigned(L, 7, 0);
+static int luaLcdDrawGauge(lua_State *L)
+{
+  if (!luaLcdAllowed) return 0;
+  int x = luaL_checkinteger(L, 1);
+  int y = luaL_checkinteger(L, 2);
+  int w = luaL_checkinteger(L, 3);
+  int h = luaL_checkinteger(L, 4);
+  int num = luaL_checkinteger(L, 5);
+  int den = luaL_checkinteger(L, 6);
+  unsigned int flags = luaL_optunsigned(L, 7, 0);
+	(void) flags ;
+
+	lcd_hbar( x, y, w, h, num*100/den ) ;
+
+
 //#if defined(PCBHORUS)
 //  lcdDrawRect(x, y, w, h, 1, 0xff, flags);
 //#else
@@ -702,8 +711,8 @@ Draw a simple gauge that is filled based upon fill value
 //#endif
 //  uint8_t len = limit((uint8_t)1, uint8_t(w*num/den), uint8_t(w));
 //  lcdDrawSolidFilledRect(x+1, y+1, len, h-2, flags);
-//  return 0;
-//}
+  return 0;
+}
 
 
 #if !defined(COLORLCD)
@@ -724,7 +733,7 @@ the right side of title bar. (i.e. idx=2, cnt=5, display `2/5`)
 @status current Introduced in 2.0.0
 */
 
-void DisplayScreenIndex(uint8_t index, uint8_t count, uint16_t attr) ;
+void DisplayScreenIndex(coord_t index, coord_t count, LcdFlags attr) ;
 
 static int luaLcdDrawScreenTitle(lua_State *L)
 {
@@ -739,7 +748,7 @@ static int luaLcdDrawScreenTitle(lua_State *L)
 //  lcdDrawFilledRect(0, 0, LCD_W, FH, SOLID, FILL_WHITE|GREY_DEFAULT);
 //#endif
 //  TITLE(str) ;
-	lcd_putsAtt(0,0,str,INVERS) ;
+	PUTS_ATT(0,0,str,INVERS) ;
   return 0;
 }
 #endif
@@ -963,7 +972,7 @@ const luaL_Reg lcdLib[] = {
 //  { "drawChannel", luaLcdDrawChannel },
   { "drawSwitch", luaLcdDrawSwitch },
 //  { "drawSource", luaLcdDrawSource },
-//  { "drawGauge", luaLcdDrawGauge },
+  { "drawGauge", luaLcdDrawGauge },
 #if defined(PCBX12D) || defined(PCBX10)
 //  { "drawBitmap", luaLcdDrawBitmap },
   { "setColor", luaLcdSetColor },

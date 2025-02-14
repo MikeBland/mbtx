@@ -38,14 +38,20 @@ struct MState2
 	uint8_t check_columns( uint8_t event, uint8_t maxrow) ;
 };
 
-uint8_t evalOffset(int8_t sub) ;
+uint32_t evalOffset(int8_t sub) ;
+uint8_t evalHresOffset(int8_t sub) ;
+extern uint8_t s_pgOfs ;
 
 typedef const void (*MenuFunc)(uint8_t event) ;
 
-#ifdef TOUCH
-#define TITLEP(pstr) lcd_putsAtt(4*FW,0,pstr,INVERS)
+#ifdef COLOUR_DISPLAY
+#define TITLEP(pstr) PUTS_ATT(4*FW,0,pstr,INVERS|BOLD)
 #else
-#define TITLEP(pstr) lcd_putsAtt(0*FW,0,pstr,INVERS)
+ #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#define TITLEP(pstr) PUTS_ATT(0*FW,0,pstr,INVERS|BOLD)
+ #else
+#define TITLEP(pstr) PUTS_ATT(0*FW,0,pstr,INVERS)
+ #endif
 #endif
 #define TITLE(str)   TITLEP(str)
 
@@ -55,6 +61,11 @@ TITLE(title); \
 static MState2 mstate2; \
 static const uint8_t mstate_tab[] = __VA_ARGS__; \
 event = mstate2.check(event,menu,tab,DIM(tab),mstate_tab,DIM(mstate_tab)-1,lines_count-1)
+
+#ifdef COLOUR_DISPLAY
+uint32_t checkPageMove( uint8_t event, uint8_t *pos, uint32_t max ) ;
+#endif
+
 
 #define YN_NONE	0
 #define YN_YES	1
@@ -104,14 +115,14 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 
 #ifdef TOUCH
 
-#define TTOP			8
+#define TTOP			10
 #define THTOP			18
 #define TFH				12
 #define TRIGHT	 180
 #define TMID		 110
 #define TLINES		9
 #define TSCALE		2
-#define TVOFF			3
+#define TVOFF			2
 #define THOFF			4
 #define TRMARGIN	3
 
@@ -120,7 +131,75 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 #define TSCROLLWIDTH	42
 #define TSCROLLBOTTOM	(240-16)
 
+#else
+
+#define TTOP			10
+#define THTOP			18
+#define TFH				12
+#define TRIGHT	 180
+#define TMID		 110
+#define TLINES		9
+#define TSCALE		2
+#define TVOFF			2
+#define THOFF			4
+#define TRMARGIN	3
+
 #endif
+
+#define NO_HI_LEN 25
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define FWPx4		"\060"
+#define FWPx5		"\074"
+#define FWPx9		"\152"
+#define FWPx10		"\170"
+#define FWPx11		"\204"
+#define FWPx12		"\220"
+#define FWPx13		"\234"
+#define FWPx14		"\250"
+#define FWPx15		"\264"
+#define FWPx16		"\300"
+#define FWPx17		"\314"
+#define FWPx18		"\330"
+#else
+#define FWPx4		"\030"
+#define FWPx5		"\036"
+#define FWPx9		"\066"
+#define FWPx10		"\074"
+#define FWPx11		"\102"
+#define FWPx12		"\110"
+#define FWPx13		"\116"
+#define FWPx14		"\124"
+#define FWPx15		"\132"
+#define FWPx16		"\140"
+#define FWPx17		"\146"
+#define FWPx18		"\154"
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#define FWchk			"\162"
+#else
+#define FWchk			"\162"
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define PARAM_OFSP   17*FWCOLOUR
+#else
+#define PARAM_OFSP   17*FW
+#endif
+#define PARAM_OFS   17*FW
+
+// Access protocol
+#define ACC_NORMAL		0
+#define ACC_REG				1
+#define ACC_BIND			2
+#define ACC_RXOPTIONS		3
+#define ACC_TXOPTIONS		4
+#define ACC_RX_HARDWARE	5
+#define ACC_SHARE				6
+#define ACC_SPECTRUM		7
+#define ACC_ACCST_BIND			8
+
 
 struct t_popupData
 {
@@ -133,6 +212,11 @@ struct t_popupData
 	uint16_t PopupVpos ;
 	uint16_t PopupWidth ;
 #endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//	uint16_t PopupHpos ;
+//	uint16_t PopupVpos ;
+//	uint16_t PopupWidth ;
+//#endif
 } ;
 
 
@@ -173,6 +257,8 @@ uint32_t scrollBar( uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint32_t pos
 extern struct t_popupData PopupData ;
 
 extern int16_t calibratedStick[] ;
+
+char *getIndexedText( char *p, const char * s, uint8_t idx, uint32_t maxLen ) ;
 																 
 #if defined(PCBX12D) || defined(PCBX10)
 extern void doMainScreenGrphics( uint16_t colour = 0 ) ;
@@ -199,6 +285,8 @@ extern int16_t scaleAnalog( int16_t v, uint8_t channel ) ;
 void displayStatusLine( uint32_t scriptPercent ) ;
 #endif
 
+extern void setStickCenter(uint32_t toSubTrims ) ; // copy state of 3 primary to subtrim
+
 void validateProtocolOptions( uint32_t module ) ;
 extern int16_t calcExtendedValue( int16_t value, uint8_t extValue ) ;
 extern uint16_t packExtendedValue( int16_t value ) ;
@@ -207,24 +295,35 @@ extern void parseMultiData( void ) ;
 
 #if defined(PCBX12D) || defined(PCBX10)
 void checkTheme( themeData *t ) ;
-#endif
-#ifdef TOUCH
 uint16_t dimBackColour() ;
+#endif
+#ifdef COLOUR_DISPLAY
+//uint16_t dimBackColour() ;
 void drawItem( char *s, uint16_t y, uint16_t colour ) ;
 void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint16_t colour ) ;
 void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode ) ;
 void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
+void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
 uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 uint32_t touchOffOnItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
-void putsChnColour( uint8_t x, uint8_t y, uint8_t idx1, uint8_t att ) ;
+void putsChnColour( coord_t x, coord_t y, uint8_t idx1, LcdFlags att ) ;
 void saveEditColours( uint32_t attr, uint16_t colour ) ;
 void restoreEditColours() ;
 int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag = 0 ) ;
+uint16_t processSelection( uint8_t vert, int32_t newSelection ) ;
+void checkTouchEnterEdit( uint16_t value ) ;
 uint16_t handleTouchSelect( uint32_t rows, uint32_t pgOfs, uint8_t sub, uint32_t flag = 0 ) ;
-#define ALPHA_NO_NAME		0x80
-void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
+uint32_t checkTouchposition( uint16_t x, uint16_t y, uint16_t x2, uint16_t y2 ) ;
+
+void menuLimitsOne(uint8_t event) ;
+void editTimer( uint8_t sub, uint8_t event ) ;
+
 
 #endif
+#define ALPHA_NO_NAME		0x80
+void alphaEditName( coord_t x, coord_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
+
+extern int8_t edit_dr_switch( coord_t x, coord_t y, int8_t drswitch, LcdFlags attr, LcdFlags flags, uint8_t event ) ;
 
 const char *get_curve_string() ;
 
@@ -239,7 +338,31 @@ extern uint8_t s_traceBuf[] ;
 extern uint8_t s_traceWr;
 extern uint16_t s_traceCnt;
 
-#define BaudString FWx13"\006""\006  AUTO  9600 19200 38400 57600115200100000"
+extern uint16_t Current ;
+extern uint32_t Current_sum ;
+extern uint8_t Current_count ;
+
+extern uint8_t FileSelectResult ;
+extern char SelectedVoiceFileName[] ;
+extern TCHAR PlaylistDirectory[] ;
+extern uint16_t PlaylistIndex ;
+extern uint8_t VoiceFileType ;
+extern struct fileControl PlayFileControl ;
+extern char CurrentPlayName[] ;
+extern uint16_t PlayListCount ;
+extern char PlayListNames[][MUSIC_NAME_LENGTH+2] ;
+extern uint8_t TrainerMode ;
+extern uint8_t TrainerPolarity ;	// Input polarity
+
+extern void copyFileName( char *dest, char *source, uint32_t size ) ;
+extern void menuProcSelectVoiceFile(uint8_t event) ;
+extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+#define BaudString FWx19"\006""\006  AUTO  9600 19200 38400 57600115200100000"
+#else
+#define BaudString FWx19"\006""\006  AUTO  9600 19200 38400 57600115200100000"
+#endif
 
 #define MODELTIME	-24
 #define RUNTIME		-23
@@ -366,16 +489,30 @@ extern uint16_t s_traceCnt;
 #define	U_WATTS			7
 #define	U_PERCENT		8
 
+#define ALPHA_NO_NAME		0x80
+#define ALPHA_FILENAME	0x40
+#define ALPHA_HEX				0x100
+
+#ifdef BIG_SCREEN
+#define RIGHT_POSITION	239
+#else
+#define RIGHT_POSITION	127
+#endif
+
+
 extern uint8_t TextIndex ;
 extern uint8_t TextType ;
 extern uint8_t TextResult ;
+
+extern uint8_t InverseBlink ;
+extern uint8_t EditColumns ;
 
 void menuTextHelp(uint8_t event) ;
 void sortTelemText() ;
 
 struct t_textControl
 {
-	void (*TextFunction)( uint8_t x, uint8_t y, uint8_t index, uint8_t att ) ;
+	void (*TextFunction)( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
 	uint8_t TextMax ;
 	uint8_t *TextMap ;
 	uint8_t TextWidth ;
@@ -383,5 +520,105 @@ struct t_textControl
 } ;
 
 extern struct t_textControl TextControl ;
+extern uint8_t MaskRotaryLong ;
+
+extern uint8_t EditType ;
+extern uint8_t checkIndexed( coord_t y, const char *s, uint8_t value, uint8_t edit ) ;
+extern void setCaptureMode(uint32_t mode) ;
+
+extern void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
+
+// Items now in menuscommon:
+uint8_t checkOutOfOrder( uint8_t value, uint8_t *options, uint32_t count ) ;
+const char *get_curve_string() ;
+uint8_t locateMappedItem( uint8_t value, uint8_t *options, uint32_t count ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+void menu_lcd_onoff( coord_t x, coord_t y, uint8_t value, uint16_t mode ) ;
+#else
+void menu_lcd_onoff( coord_t x,coord_t y, uint8_t value, uint8_t mode ) ;
+#endif
+uint8_t offonMenuItem( uint8_t value, coord_t y, const char *s, uint8_t condition ) ;
+uint8_t onoffMenuItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition ) ;
+uint8_t offonItem( uint8_t value, coord_t y, uint8_t condition ) ;
+uint8_t onoffItem( uint8_t value, coord_t y, uint8_t condition ) ;
+uint32_t checkForMenuEncoderLong( uint8_t event ) ;
+uint32_t checkForMenuEncoderBreak( uint8_t event ) ;
+uint32_t checkForExitEncoderLong( uint8_t event ) ;
+int16_t m_to_ft( int16_t metres ) ;
+int16_t c_to_f( int16_t degrees ) ;
+int16_t knots_to_other( int16_t knots, uint32_t type ) ;
+char *arduFlightMode( uint16_t mode ) ;
+#if defined(PCBX12D) || defined(PCBX10)
+uint8_t hyphinvMenuItem( uint8_t value, coord_t y, uint8_t condition, coord_t newX = 0 ) ;
+#else
+uint8_t hyphinvMenuItem( uint8_t value, coord_t y, uint8_t condition ) ;
+#endif
+uint16_t xnormalize( int16_t alpha ) ;
+int8_t rxsin100( int16_t a ) ;
+int8_t rxcos100( int16_t a ) ;
+char *getTelText( uint32_t index ) ;
+void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight ) ;
+void lcd_xlabel_decimal( coord_t x, coord_t y, uint16_t value, LcdFlags attr, const char *s ) ;
+void DisplayScreenIndex(uint32_t index, uint32_t count, LcdFlags attr) ;
+int16_t calcExtendedValue( int16_t value, uint8_t extValue ) ;
+uint16_t packExtendedValue( int16_t value ) ;
+
+#ifdef ARUNI
+void putSwitchName(uint8_t x, uint8_t y, uint8_t z, uint8_t att); // @menus.cpp
+#else
+void putSwitchName( coord_t x, coord_t y, uint8_t z, LcdFlags att) ;
+// #if defined(PCBX12D) || defined(PCBX10)
+//void putSwitchName( uint16_t x, uint16_t y, uint8_t z, uint16_t att) ;
+// #else
+//void putSwitchName(uint8_t x, uint8_t y, int8_t z, uint8_t att) ;
+// #endif
+#endif
+
+#if defined(PCBX12D) || defined(PCBX10)
+//void putsChnRaw(uint16_t x,uint16_t y,uint8_t idx,uint16_t att, uint16_t colour , uint16_t bgColour ) ;
+uint32_t putTxSwr( coord_t x, coord_t y, LcdFlags attr, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground ) ;
+void putsAttIdxTelemItems( coord_t x, coord_t y, uint8_t index, LcdFlags attr, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground ) ;
+#else
+//void putsChnRaw(uint8_t x,uint8_t y,uint8_t idx,uint8_t att) ;
+uint32_t putTxSwr( coord_t x, coord_t y, LcdFlags attr ) ;
+void putsAttIdxTelemItems( coord_t x, coord_t y, uint8_t index, LcdFlags attr ) ;
+#endif
+
+
+#if defined(PCBX12D) || defined(PCBX10)
+void displayIndexIcons( const uint8_t *icons[], uint8_t extra, uint8_t lines ) ;
+extern void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type ) ;
+#endif
+
+
+void put_curve( coord_t x, coord_t y, int8_t idx, LcdFlags attr ) ;
+void displayVoiceRate( coord_t x, coord_t y, uint8_t rate, LcdFlags attr ) ;
+
 
 #endif
+void menuBindOptions(uint8_t event) ;
+
+void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
+int16_t processOneInput( struct te_InputsData *pinput, int16_t value ) ;
+int16_t evalInput( uint8_t channel, int16_t value ) ;
+void evalAllInputs() ;
+int16_t getInputSourceValue( struct te_InputsData *pinput ) ;
+
+#ifdef COLOUR_DISPLAY
+void putTick( coord_t x, coord_t y, uint16_t colour = LcdForeground ) ;
+#else
+void putTick( coord_t x, coord_t y ) ;
+#endif
+
+struct t_clipboard
+{
+	uint32_t content ;
+	union
+	{
+		VoiceAlarmData clipvoice ;
+		SKYCSwData clipswitch ;
+	} ;
+} ;
+
+
+

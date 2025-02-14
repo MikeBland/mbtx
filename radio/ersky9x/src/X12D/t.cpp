@@ -431,11 +431,11 @@ uint32_t readNamesFromCCRam()
 //}
 
 
-void lcd_outhex8(uint16_t x,uint16_t y,uint32_t val)
-{
-	lcd_outhex4( x, y, val>>16 ) ;
-	lcd_outhex4( x+FW*4, y, val ) ;
-}
+//void lcd_outhex8(uint16_t x,uint16_t y,uint32_t val)
+//{
+//	PUT_HEX4( x, y, val>>16 ) ;
+//	PUT_HEX4( x+FW*4, y, val ) ;
+//}
 
 //#define IMAGE_BUFFER	(SDRAM_BANK_ADDR + 1024*1024)
 

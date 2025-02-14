@@ -320,7 +320,7 @@ extern uint32_t convertTo8K() ;
 		while ( (i = convertTo8K()) < 64 )
 		{
 			lcd_clear() ;
-			lcd_puts_Pleft( 2*FH, XPSTR("Updating EEPROM") ) ;
+			PUTS_ATT_LEFT( 2*FH, XPSTR("Updating EEPROM") ) ;
 			wdt_reset() ;
 			lcd_hbar( 4, 6*FH+4, 100, 7, i * 100 / 60 ) ;
 			refreshDisplay() ;

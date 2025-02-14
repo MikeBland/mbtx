@@ -85,7 +85,7 @@ extern "C" {
 //typedef struct ScriptInternalData ScriptInternalData ;
 
 #define PERMANENT_SCRIPTS_MAX_INSTRUCTIONS (10000/100)
-#define MANUAL_SCRIPTS_MAX_INSTRUCTIONS    (5000/100)
+#define MANUAL_SCRIPTS_MAX_INSTRUCTIONS    (20000/100)
 #define LUA_WARNING_INFO_LEN               100
 
 lua_State *lsScripts = NULL;
@@ -900,7 +900,7 @@ void luaDoOneRunStandalone(uint8_t evt)
 #else
           lcd_hline(0, 7*FH-1, Lcd_lastPos+6 ) ;
           lcd_puts_P(0, 7*FH, "GV Use: ");
-          lcd_outdezAtt(Lcd_lastPos, 7*FH, luaGetMemUsed(lsScripts), LEFT);
+          PUTS_NUM(Lcd_lastPos, 7*FH, luaGetMemUsed(lsScripts), LEFT);
           lcd_putc(Lcd_lastPos, 7*FH, 'b');
 //          lcdDrawSolidHorizontalLine(0, 7*FH-2, Lcd_lastPos+6, FORCE);
           lcd_hline(0, 7*FH-2, Lcd_lastPos+6 ) ;

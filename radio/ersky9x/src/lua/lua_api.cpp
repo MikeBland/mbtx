@@ -24,6 +24,8 @@ extern "C" {
 
 #include "frsky.h"
 
+extern struct t_telemetryTx TelemetryTx ;
+
 void luaLoadModelScripts()
 {
 	luaState |= INTERPRETER_RELOAD_PERMANENT_SCRIPTS ;
@@ -457,8 +459,8 @@ static int luaSportTelemetryPop(lua_State * L)
 
 //@status current Introduced in 2.2.0
 //*/
-//static int luaCrossfireTelemetryPop(lua_State * L)
-//{
+static int luaCrossfireTelemetryPop(lua_State * L)
+{
 //  if (!luaInputTelemetryFifo) {
 //    luaInputTelemetryFifo = new Fifo<uint8_t, LUA_TELEMETRY_INPUT_FIFO_SIZE>();
 //    if (!luaInputTelemetryFifo) {
@@ -466,9 +468,29 @@ static int luaSportTelemetryPop(lua_State * L)
 //    }
 //  }
 
-//  uint8_t length = 0, data = 0;
+  int32_t length = 0 ;
+	uint8_t data = 0 ;
+	length = peek_fifo128( &Script_fifo ) ;
+	if ( length != -1)
+	{
+		if ( fifo128Space( &Script_fifo ) <= (uint32_t)(127 - length ) )
+		{
+	    // length value includes the length field
+			length = get_fifo128( &Script_fifo ) ;
+			data = get_fifo128( &Script_fifo ) ;
+	    lua_pushnumber(L, data) ;
+	    lua_newtable(L) ;
+	    for ( uint32_t i = 1 ; i<(uint32_t)length-1 ; i += 1)
+			{
+				data = get_fifo128( &Script_fifo ) ;
+	      lua_pushinteger(L, i) ;
+	      lua_pushinteger(L, data) ;
+	      lua_settable(L, -3) ;
+			}	
+    	return 2 ;
+		}	
+
 //  if (luaInputTelemetryFifo->probe(length) && luaInputTelemetryFifo->size() >= uint32_t(length)) {
-//    // length value includes the length field
 //    luaInputTelemetryFifo->pop(length);
 //    luaInputTelemetryFifo->pop(data); // command
 //    lua_pushnumber(L, data);
@@ -480,10 +502,10 @@ static int luaSportTelemetryPop(lua_State * L)
 //      lua_settable(L, -3);
 //    }
 //    return 2;
-//  }
+  }
 
-//  return 0;
-//}
+  return 0 ;
+}
 
 ///*luadoc
 //@function crossfireTelemetryPush()
@@ -502,24 +524,37 @@ static int luaSportTelemetryPop(lua_State * L)
 
 //@status current Introduced in 2.2.0, retval nil added in 2.3.4
 //*/
-//static int luaCrossfireTelemetryPush(lua_State * L)
-//{
+static int luaCrossfireTelemetryPush(lua_State * L)
+{
 //  if (telemetryProtocol != PROTOCOL_TELEMETRY_CROSSFIRE) {
 //    lua_pushnil(L);
 //    return 1;
 //  }
 
-//  if (lua_gettop(L) == 0) {
-//    lua_pushboolean(L, outputTelemetryBuffer.isAvailable());
-//  }
-//  else if (lua_gettop(L) > TELEMETRY_OUTPUT_BUFFER_SIZE ) {
-//    lua_pushboolean(L, false);
-//    return 1;
-//  }
-//  else if (outputTelemetryBuffer.isAvailable()) {
-//    uint8_t command = luaL_checkunsigned(L, 1);
-//    luaL_checktype(L, 2, LUA_TTABLE);
-//    uint8_t length = luaL_len(L, 2);
+	if (lua_gettop(L) == 0)
+	{
+    lua_pushboolean(L, xfirePacketSend( 0, 0, 0 ) ) ;
+  }
+  else if (lua_gettop(L) > 64 )
+	{
+    lua_pushboolean(L, false);
+    return 1;
+  }
+  else if ( xfirePacketSend( 0, 0, 0 ) )
+	{
+    uint8_t command = luaL_checkunsigned(L, 1) ;
+    luaL_checktype(L, 2, LUA_TTABLE) ;
+    uint8_t length = luaL_len(L, 2);
+
+		TelemetryTx.XfireTx.command = command ;
+		for ( uint32_t i = 0 ; i < length ; i += 1 )
+		{
+      lua_rawgeti(L, 2, i+1);
+
+			TelemetryTx.XfireTx.data[i] = luaL_checkunsigned(L, -1) ;
+		}
+		TelemetryTx.XfireTx.count = length ;
+
 //    outputTelemetryBuffer.pushByte(MODULE_ADDRESS);
 //    outputTelemetryBuffer.pushByte(2 + length); // 1(COMMAND) + data length + 1(CRC)
 //    outputTelemetryBuffer.pushByte(command); // COMMAND
@@ -529,13 +564,15 @@ static int luaSportTelemetryPop(lua_State * L)
 //    }
 //    outputTelemetryBuffer.pushByte(crc8(outputTelemetryBuffer.data+2, 1 + length));
 //    outputTelemetryBuffer.setDestination(TELEMETRY_ENDPOINT_SPORT);
-//    lua_pushboolean(L, true);
-//  }
-//  else {
-//    lua_pushboolean(L, false);
-//  }
-//  return 1;
-//}
+    
+		lua_pushboolean(L, true);
+  }
+  else
+	{
+    lua_pushboolean(L, false) ;
+  }
+  return 1;
+}
 //#endif
 
 
@@ -694,6 +731,131 @@ static int luaGetRSSI(lua_State * L)
   return 3;
 }
 
+#define MESSAGEBOX_W	15
+
+void drawMessageBoxBackground(coord_t top, coord_t height)
+{
+  // white background
+	uint32_t i ;
+	for ( i = 0 ; i < 5 ; i += 1)
+	{
+		PUTS_ATT_N( 3*FW, top+i*FH, "\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223", MESSAGEBOX_W, 0 ) ;
+	}
+  // border
+  lcd_rect( 3*FW-1, top-1, MESSAGEBOX_W*FW+1, height+1 ) ;
+}
+
+void drawMessageBox(const char * title)
+{
+//  char title_buf[WARNING_LINE_LEN + 1];
+//  uint8_t title_len = 0;
+//  uint8_t title_index = 0;
+//  uint8_t line_index = 0;
+//  uint8_t space_cnt = 0;
+
+  // background + border
+  drawMessageBoxBackground( FH+3, 5*FH ) ;
+
+	lcdDrawSizedText( 4*FW, 2*FH+3, title, 14 ) ;
+
+}
+
+uint8_t WarningResult = 0 ;
+const char *WarningText = 0 ;
+const char *WarningInfoText ;
+
+void runPopupWarning( uint8_t event)
+{
+  WarningResult = false ;
+
+  drawMessageBox( WarningText ) ;
+
+//  if (warningInfoText) {
+//    lcdDrawSizedText(WARNING_LINE_X, WARNING_LINE_Y+FH, warningInfoText, warningInfoLength, warningInfoFlags);
+//  }
+
+//  switch (warningType) {
+//    case WARNING_TYPE_WAIT:
+//      return;
+
+//    case WARNING_TYPE_INFO:
+//      lcdDrawText(WARNING_LINE_X, WARNING_LINE_Y+2*FH+2, STR_OK);
+//      break;
+
+//    case WARNING_TYPE_ASTERISK:
+//      lcdDrawText(WARNING_LINE_X, WARNING_LINE_Y+2*FH+2, STR_EXIT);
+//      break;
+
+//    default:
+//      lcdDrawText(WARNING_LINE_X, WARNING_LINE_Y+2*FH+2, STR_POPUPS_ENTER_EXIT);
+	lcdDrawSizedText( 4*FW, 4*FH+3, "[EXIT]  [ENTER]", 15 ) ;
+//      break;
+//  }
+
+
+	switch (event)
+	{
+    case EVT_KEY_BREAK(KEY_MENU):
+    case EVT_KEY_BREAK(BTN_RE):
+//      if (warningType == WARNING_TYPE_ASTERISK)
+//        // key ignored, the user has to press [EXIT]
+//        break;
+
+//      if (warningType == WARNING_TYPE_CONFIRM) {
+//        warningType = WARNING_TYPE_ASTERISK;
+		      WarningText = 0 ;
+//        warningText = nullptr;
+//        if (popupMenuHandler)
+//          popupMenuHandler(STR_OK);
+//        else
+          WarningResult = true;
+//        break;
+//      }
+//      // no break
+
+    case EVT_KEY_BREAK(KEY_EXIT):
+//      if (warningType == WARNING_TYPE_CONFIRM) {
+//        if (popupMenuHandler)
+//          popupMenuHandler(STR_EXIT);
+//      }
+      WarningText = 0 ;
+//      warningType = WARNING_TYPE_ASTERISK;
+    break ;
+  }
+}
+
+
+int luaPopupConfirmation(lua_State * L)
+{
+////   warningType = WARNING_TYPE_CONFIRM ;
+  uint8_t event ;
+
+  if (lua_isnone(L, 3))
+	{
+    // only two args: deprecated mode
+    WarningText = luaL_checkstring(L, 1) ;
+    event = luaL_checkinteger(L, 2) ;
+  }
+  else
+	{
+    WarningText = luaL_checkstring(L, 1) ;
+    WarningInfoText = luaL_checkstring(L, 2) ;
+    event = luaL_optinteger(L, 3, 0) ;
+  }
+
+  runPopupWarning(event) ;
+  
+	if (!WarningText)
+	{
+    lua_pushstring(L, WarningResult ? "OK" : "CANCEL" ) ;
+  }
+  else
+	{
+    WarningText = NULL ;
+    lua_pushnil(L) ;
+  }
+  return 1 ;
+}
 
 
 
@@ -712,7 +874,7 @@ const luaL_Reg ersky9xLib[] = {
 //  { "playHaptic", luaPlayHaptic },
 //  { "popupInput", luaPopupInput },
 //  { "popupWarning", luaPopupWarning },
-//  { "popupConfirmation", luaPopupConfirmation },
+  { "popupConfirmation", luaPopupConfirmation },
 //  { "defaultStick", luaDefaultStick },
 //  { "defaultChannel", luaDefaultChannel },
 //  { "getRSSI", luaGetRSSI },
@@ -725,8 +887,8 @@ const luaL_Reg ersky9xLib[] = {
   { "sportTelemetryPush", luaSportTelemetryPush },
 //  { "setTelemetryValue", luaSetTelemetryValue },
 //#if defined(XFIRE)
-//  { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
-//  { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
+  { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
+  { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
 //#endif
   { "idleTime", luaIdleTime },
   { "getRSSI", luaGetRSSI },
@@ -736,14 +898,15 @@ const luaL_Reg ersky9xLib[] = {
 
 const luaR_value_entry ersky9xConstants[] = {
   { "FULLSCALE", RESX },
-  { "XXLSIZE", DBLSIZE },
+  { "XXLSIZE", XXLSIZE },
 #if defined(PCBX12D) || defined(PCBX10)
-  { "DBLSIZE", DBLSIZE | CONDENSED },
-  { "MIDSIZE", 0 },
+  { "DBLSIZE", DBLSIZE },
+  { "MIDSIZE", MIDSIZE },
   { "SMLSIZE", LUA_SMLSIZE },
 #else
+  { "XXLSIZE", DBLSIZE },
   { "DBLSIZE", DBLSIZE },
-  { "MIDSIZE", DBLSIZE | CONDENSED },
+  { "MIDSIZE", MIDSIZE },
   { "SMLSIZE", LUA_SMLSIZE },
 #endif
   { "INVERS", INVERS },
@@ -768,7 +931,7 @@ const luaR_value_entry ersky9xConstants[] = {
 //  { "BLACK_ON_YELLOW",      BLACK_ON_YELLOW },
 //  { "LIGHTGREY_ON_YELLOW",  LIGHTGREY_ON_YELLOW },
 //#endif
-//  { "BOLD", BOLD },
+  { "BOLD", BOLD },
   { "BLINK", BLINK },
 //  { "FIXEDWIDTH", FIXEDWIDTH },
   { "LEFT", LEFT },
@@ -885,12 +1048,19 @@ const luaR_value_entry ersky9xConstants[] = {
 
 #if defined(PCBX9D) && ( defined(REVPLUS) || defined(REVNORM) )
   { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
 #else
-  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
-#endif
-#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
+ #if defined (PCB9XT)
+  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
+  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
+ #else
   { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
   { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+ #endif
+#endif
+#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
+//  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+//  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
  #if !defined(PCBX12D)	
 	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
 	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
@@ -971,7 +1141,7 @@ const luaR_value_entry ersky9xConstants[] = {
   { "ERASE", ERASE },
   { "ROUND", ROUND },
 #if (LCD_W == 212)
-  { "LCD_W", LCD_W-22 },
+  { "LCD_W", (LCD_W-22) },
 #else
   { "LCD_W", LCD_W },
 #endif
@@ -985,6 +1155,145 @@ const luaR_value_entry ersky9xConstants[] = {
 //  { "TIMEHOUR", TIMEHOUR },
   { NULL, 0 }  /* sentinel */
 };
+
+
+/*luadoc
+@function model.getModule(index)
+
+Get RF module parameters
+
+`Type` values:
+  * 0 NONE
+  * 1 PPM
+  * 2 XJT_PXX1
+  * 3 ISRM_PXX2
+  * 4 DSM2
+  * 5 CROSSFIRE
+  * 6 MULTIMODULE
+  * 7 R9M_PXX1
+  * 8 R9M_PXX2
+  * 9 R9M_LITE_PXX1
+  * 10 R9M_LITE_PXX2
+  * 11 R9M_LITE_PRO_PXX1
+  * 12 R9M_LITE_PRO_PXX2
+  * 13 SBUS
+  * 14 XJT_LITE_PXX2
+
+`subType` values for XJT_PXX1:
+ * -1 OFF
+ * 0 D16
+ * 1 D8
+ * 2 LR12
+
+@param index (number) module index (0 for internal, 1 for external)
+
+@retval nil requested module does not exist
+
+@retval table module parameters:
+ * `subType` (number) protocol index
+ * `modelId` (number) receiver number
+ * `firstChannel` (number) start channel (0 is CH1)
+ * `channelsCount` (number) number of channels sent to module
+ * `Type` (number) module type
+ * if the module type is Multi additional information are available
+ * `protocol` (number) protocol number (Multi only)
+ * `subProtocol` (number) sub-protocol number (Multi only)
+ * `channelsOrder` (number) first 4 channels expected order (Multi only)
+
+@status current Introduced in 2.2.0
+*/
+
+const uint8_t ProtTable[] = { 1,2,4,6,5,3,13,0,0,0,0,0,0,0,0,0 } ;
+
+static int luaModelGetModule(lua_State *L)
+{
+  unsigned int idx = luaL_checkunsigned(L, 1);
+  if (idx < 2)
+	{
+    struct t_module & module = g_model.Module[idx];
+    lua_newtable(L);
+    lua_pushtableinteger(L, "subType", module.sub_protocol);
+    lua_pushtableinteger(L, "modelId", module.pxxRxNum);
+    lua_pushtableinteger(L, "firstChannel", module.startChannel);
+    lua_pushtableinteger(L, "channelsCount", module.channels);
+    lua_pushtableinteger(L, "Type", ProtTable[module.protocol]);
+//#if defined(MULTIMODULE)
+    if (module.protocol == PROTO_MULTI)
+		{
+//      int protocol = g_model.moduleData[idx].getMultiProtocol() + 1 ;
+//      int subprotocol = g_model.moduleData[idx].subType;
+//      convertOtxProtocolToMulti(&protocol, &subprotocol); // Special treatment for the FrSky entry...
+//      lua_pushtableinteger(L, "protocol", protocol);
+//      lua_pushtableinteger(L, "subProtocol", subprotocol);
+      lua_pushtableinteger(L, "protocol", module.protocol);
+      lua_pushtableinteger(L, "subProtocol", module.sub_protocol);
+//      if (getMultiModuleStatus(idx).isValid())
+//			{
+//        if (getMultiModuleStatus(idx).ch_order == 0xFF)
+//				{
+//          lua_pushtableinteger(L, "channelsOrder", -1);
+//				}
+//        else
+//				{
+//          lua_pushtableinteger(L, "channelsOrder", getMultiModuleStatus(idx).ch_order);
+//				}
+//      }
+//      else
+//			{
+        lua_pushtableinteger(L, "channelsOrder", -1);
+//      }
+    }
+//#endif
+  }
+  else
+	{
+    lua_pushnil(L);
+  }
+  return 1;
+}
+
+
+
+
+const luaL_Reg modelLib[] = {
+//  { "getInfo", luaModelGetInfo },
+//  { "setInfo", luaModelSetInfo },
+  { "getModule", luaModelGetModule },
+//  { "setModule", luaModelSetModule },
+//  { "getTimer", luaModelGetTimer },
+//  { "setTimer", luaModelSetTimer },
+//  { "resetTimer", luaModelResetTimer },
+//  { "deleteFlightModes", luaModelDeleteFlightModes },
+//  { "getFlightMode", luaModelGetFlightMode },
+//  { "setFlightMode", luaModelSetFlightMode },
+//  { "getInputsCount", luaModelGetInputsCount },
+//  { "getInput", luaModelGetInput },
+//  { "insertInput", luaModelInsertInput },
+//  { "deleteInput", luaModelDeleteInput },
+//  { "deleteInputs", luaModelDeleteInputs },
+//  { "defaultInputs", luaModelDefaultInputs },
+//  { "getMixesCount", luaModelGetMixesCount },
+//  { "getMix", luaModelGetMix },
+//  { "insertMix", luaModelInsertMix },
+//  { "deleteMix", luaModelDeleteMix },
+//  { "deleteMixes", luaModelDeleteMixes },
+//  { "getLogicalSwitch", luaModelGetLogicalSwitch },
+//  { "setLogicalSwitch", luaModelSetLogicalSwitch },
+//  { "getCustomFunction", luaModelGetCustomFunction },
+//  { "setCustomFunction", luaModelSetCustomFunction },
+//  { "getCurve", luaModelGetCurve },
+//  { "setCurve", luaModelSetCurve },
+//  { "getOutput", luaModelGetOutput },
+//  { "setOutput", luaModelSetOutput },
+//  { "getGlobalVariable", luaModelGetGlobalVariable },
+//  { "setGlobalVariable", luaModelSetGlobalVariable },
+//  { "getSensor", luaModelGetSensor },
+//  { "resetSensor", luaModelResetSensor },
+//  { "getSwashRing", luaModelGetSwashRing },
+//  { "setSwashRing", luaModelSetSwashRing },
+  { NULL, 0 }  /* sentinel */
+};
+
 
 
 

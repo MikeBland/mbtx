@@ -173,7 +173,7 @@
 #define ISTR_TELEM_SHORT     "\004----TIM1TIM2BATTGvr1Gvr2Gvr3Gvr4Gvr5Gvr6Gvr7"
 #define ISTR_GV              "GV"
 #define ISTR_OFF_ON          "AV P\304 "
-#define ISTR_HYPH_INV        FWx18 "\001" "\003---INV"
+#define ISTR_HYPH_INV        "\166" "\001" "\003---INV"
 #define ISTR_VERSION         "VERSION"
 #define ISTR_Music	        "Music"
 #define ISTR_SLAVE           "\007Slav" 
@@ -281,7 +281,7 @@
 #define ISTR_T_TRIM          "GasTrim"
 #define ISTR_T_EXPO          "GasExpo-Dr"
 // ISTR_TRIM_OPTIONS indexed 6 chars each
-#define ISTR_TRIM_OPTIONS    FWx9 "\004" "\006Exp   xFin  Fin   MediumGrov  "
+#define ISTR_TRIM_OPTIONS    FWx15 "\004" "\006Exp   xFin  Fin   MediumGrov  "
 #define ISTR_TRIM_SWITCH     "Insta-TrimBr."
 #define ISTR_TRIM_INC        "GasOkning"
 #define ISTR_BEEP_CENTRE     "Centerpip"
@@ -422,7 +422,7 @@
 // CSWITCH_STR indexed 7 chars each
 #define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  v1\140=v2 v=val  Range  |d|>vald>=val "
 
-#define ISWASH_TYPE_STR      FWx17"\004""\004----""120 ""120X""140 ""90  "
+#define ISWASH_TYPE_STR     "\170" "\004" "\004----"" 120""120X"" 140""  90"
 
 #define ISTR_STICK_NAMES     "\0054Rod \0Hjd \0Gas \0Ske "
 

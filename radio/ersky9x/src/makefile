@@ -327,7 +327,7 @@ ifdef OBJROOT
 else
 OBJROOT = ./
 endif
-OBJDIR = $(OBJROOT)/obj_$(PROJECT)
+OBJDIR = $(OBJROOT)\obj_$(PROJECT)
 
 # List all user C define here, like -D_DEBUG=1
 
@@ -437,6 +437,11 @@ CPPSRC = ersky9x.cpp \
 			vars.cpp \
 			stamp.cpp \
 			tml.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
+		   lcd_1bit.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -545,11 +550,16 @@ CPPSRC = ersky9x.cpp \
 			gvars.cpp \
 			vars.cpp \
 			tml.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
+		   lcd_1bit.cpp \
 			lcd.cpp
 
-ifeq ($(TOUCH), 1)
-  CPPSRC += touchMenus.cpp
-endif
+#ifeq ($(TOUCH), 1)
+#  CPPSRC += touchMenus.cpp
+#endif
 
 ifeq ($(BT), 1)
   CPPSRC += bluetooth.cpp
@@ -668,6 +678,10 @@ CPPSRC = ersky9x.cpp \
 			pxx2.cpp \
 			gvars.cpp \
 			vars.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -782,6 +796,11 @@ CPPSRC = ersky9x.cpp \
 			pxx2.cpp \
 			gvars.cpp \
 			vars.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
+		   lcd_1bit.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -919,6 +938,11 @@ CPPSRC = ersky9x.cpp \
 			pxx2.cpp \
 			gvars.cpp \
 			vars.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
+		   lcd_1bit.cpp \
 		   lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -984,6 +1008,10 @@ CPPSRC = ersky9x.cpp \
 			pers.cpp \
 			gvars.cpp \
 			stamp.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
 			lcd.cpp
 
 ifeq ($(BASIC), 1)
@@ -1059,6 +1087,11 @@ CPPSRC = stamp.cpp \
 			pxx2.cpp \
 			vars.cpp \
 			gvars.cpp \
+			menusStats.cpp \
+			menusgeneral.cpp \
+			menuscommon.cpp \
+			menusmodel.cpp \
+		   lcd_1bit.cpp \
 			logs.cpp
 
 ifeq ($(LUA), 1)

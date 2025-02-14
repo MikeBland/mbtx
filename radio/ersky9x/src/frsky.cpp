@@ -26,6 +26,7 @@
 #include "drivers.h"
 #include "pulses.h"
 #include "audio.h"
+#include "lcd.h"
 #include "menus.h"
 #ifdef PCBSKY
 #include "AT91SAM3S4.h"
@@ -46,7 +47,6 @@
 #endif
 #endif
 #endif
-#include "lcd.h"
 #include "ff.h"
 #include "maintenance.h"
 #include "sound.h"
@@ -674,7 +674,7 @@ void storeTelemetryData( uint8_t index, uint16_t value )
 				store_cell_data( battnumber, ( ( value & 0x0F ) << 8 ) + (value >> 8) ) ;
 			}
 
-			uint8_t totalCells ;
+			uint32_t totalCells ;
 			for ( totalCells = 0 ; totalCells < 12 ; )
 			{
 				if ( TelemetryDataValid[FR_CELL1+totalCells] )
@@ -1658,7 +1658,7 @@ bool checkSportPacket( uint8_t *packet )
 //#endif
 //	uint8_t *packet = frskyRxBuffer ;
   uint16_t crc = 0 ;
-  for ( uint8_t i=1; i<FRSKY_SPORT_PACKET_SIZE; i++)
+  for ( uint32_t i=1; i<FRSKY_SPORT_PACKET_SIZE; i++)
 	{
     crc += packet[i]; //0-1FF
     crc += crc >> 8; //0-100
@@ -3330,7 +3330,7 @@ void FRSKY10mspoll(void)
 #endif
 #if defined(PCBSKY) || defined(PCB9XT)
   {
-		uint8_t i ;
+		uint32_t i ;
 		uint8_t j = 1 ;
 		uint32_t size ;
 
@@ -4722,9 +4722,9 @@ uint16_t logAxScale( uint8_t channel, uint8_t *dps )
 
 
 #if defined(PCBX12D) || defined(PCBX10)
-uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour )
+uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour )
 #else
-uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8_t att )
+uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att )
 #endif
 {
     int32_t value ;
@@ -4775,25 +4775,39 @@ uint8_t putsTelemValue(uint8_t x, uint8_t y, int16_t val, uint8_t channel, uint8
 //    if ( ( ltype == 0/*v*/) || ( ltype == 2/*v*/) )
     {
 #if defined(PCBX12D) || defined(PCBX10)
-      lcd_outdezNAtt(x, y, value, att, 5, colour) ;
+      lcdDrawNumber(x*2, y*2, value, att, 5, colour) ;
 #else
-      lcd_outdezNAtt(x, y, value, att, 5) ;
+      PUTS_NUM_N(x, y, value, att, 5) ;
 #endif
 //			unit = 'v' ;
-      if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
+      if(!(option&NO_UNIT))
+			{
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+				PUTC_ATT(LcdNextPos, y, unit, att);
+#else
+				PUTC_ATT(Lcd_lastPos, y, unit, att);
+#endif
+			}
     }
     else
     {
 #if defined(PCBX12D) || defined(PCBX10)
-      lcd_outdezNAtt(x, y, value, att, 5, colour) ;
+      PUTS_NUM_N(x, y, value, att, 5) ; //, colour) ;
 #else
-      lcd_outdezAtt(x, y, value, att);
+      PUTS_NUM(x, y, value, att);
 #endif
 	    if ( Unit == 'A')
 //	    if ( ltype == 3/*A*/)
 			{
 //					unit = 'A' ;
-       	if(!(option&NO_UNIT)) lcd_putcAtt(Lcd_lastPos, y, unit, att);
+       	if(!(option&NO_UNIT))
+				{
+#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+					PUTC_ATT(LcdNextPos, y, unit, att);
+#else
+					PUTC_ATT(Lcd_lastPos, y, unit, att);
+#endif
+				}
 			}
     }
 		return unit ;
