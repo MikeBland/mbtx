@@ -651,7 +651,7 @@ int8_t SwitchStack[SW_STACK_SIZE] ;
 
 uint8_t MuteTimer ;
 
-int8_t NumExtraPots ;
+uint8_t NumExtraPots ;
 #ifdef ARUNI
 uint8_t ExtraPotBits;
 #endif
@@ -4135,15 +4135,6 @@ void writeNamesToCCRam() ;
 #endif 
 
 #if defined(PCBX12D) || defined(PCBX10)
- #ifdef SKIP_EEPROM_FAULT
-	g_eeGeneral.SixPositionCalibration[0] = 0 ;
-	g_eeGeneral.SixPositionCalibration[1] = 0x0145 ;
-	g_eeGeneral.SixPositionCalibration[2] = 0x0286 ;
-	g_eeGeneral.SixPositionCalibration[3] = 0x03ce ;
-	g_eeGeneral.SixPositionCalibration[4] = 0x0512 ;
-	g_eeGeneral.SixPositionCalibration[5] = 0x065e ;
-	g_eeGeneral.vBatCalib = 5 ;
-	 #endif
 	create6posTable() ;
 #endif 
 
@@ -5119,16 +5110,10 @@ void main_loop(void* pdata)
 		if(sysFlags & sysFLAG_FORMAT_EEPROM)
 		{
 			sysFlags &= ~(sysFLAG_FORMAT_EEPROM) ; //clear flag
- #ifndef SKIP_EEPROM_FAULT
-			startupCalibration() ;
- #endif
 		}
 #endif
 
 		getADC_single();
- #ifndef SKIP_EEPROM_FAULT
-  	checkTHR();
- #endif
 		
 		checkCustom() ;
 //#ifndef PCBLEM1
@@ -5350,7 +5335,6 @@ extern uint8_t ModelImageValid ;
 	if ( ( ( ResetReason & RCC_CSR_IWDGRSTF ) != RCC_CSR_IWDGRSTF ) && !unexpectedShutdown )	// Not watchdog
 #endif
 	{
- #ifndef SKIP_EEPROM_FAULT
 		if ( g_vbat100mV > g_eeGeneral.SavedBatteryVoltage + 4 )
 		{
 			uint8_t result ;
@@ -5388,7 +5372,6 @@ extern uint8_t ModelImageValid ;
 				if ( check_power_or_usb() ) break ;		// Usb on or power off
 			}
 		}
- #endif
 	}
 
 #ifdef PCBLEM1
@@ -5880,8 +5863,8 @@ uint16_t getTmr2MHz()
 }
 
 uint32_t OneSecTimer ;
-//uint8_t StickScrollAllowed ;
-//uint8_t StickScrollTimer ;
+uint8_t StickScrollAllowed ;
+uint8_t StickScrollTimer ;
 
 extern int16_t AltOffset ;
 
@@ -7274,10 +7257,10 @@ extern uint8_t M64ResetCount ;
  #endif
 #endif
 
-//			if ( StickScrollTimer )
-//			{
-//				StickScrollTimer -= 1 ;				
-//			}
+			if ( StickScrollTimer )
+			{
+				StickScrollTimer -= 1 ;				
+			}
 #ifdef REV9E
 void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
 void setTopRssi( uint32_t rssi ) ;
@@ -8642,7 +8625,7 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 				}
 				else
 				{					
-					newval += RotencSpeed ;
+					newval += RotencSpeed * Rotary_diff ;
 				}
 			}
 			else
@@ -8658,7 +8641,8 @@ int16_t checkIncDec16( int16_t val, int16_t i_min, int16_t i_max, uint8_t i_flag
 				}
 				else
 				{					
-					newval -= RotencSpeed ;
+					newval += RotencSpeed * Rotary_diff ;
+//					newval -= RotencSpeed ;
 				}
 			}
 		}
@@ -8798,35 +8782,35 @@ void usbJoystickUpdate(void)
 #endif
 
 
-//const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
-//uint32_t calcStickScroll( uint32_t index )
-//{
-//	uint32_t direction ;
-//	int32_t value ;
+const static uint8_t rate[8] = { 0, 0, 100, 40, 16, 7, 3, 1 } ;
+uint32_t calcStickScroll( uint32_t index )
+{
+	uint32_t direction ;
+	int32_t value ;
 
-//	if ( ( g_eeGeneral.stickMode & 1 ) == 0 )
-//	{
-//		index ^= 3 ;
-//	}
+	if ( ( g_eeGeneral.stickMode & 1 ) == 0 )
+	{
+		index ^= 3 ;
+	}
 	
-//	value = phyStick[index] ;
-//	value /= 8 ;
-//	direction = value > 0 ? 0x80 : 0 ;
-//	if ( value < 0 )
-//	{
-//		value = -value ;			// (abs)
-//	}
-//	if ( value > 7 )
-//	{
-//		value = 7 ;			
-//	}
-//	value = rate[(uint8_t)value] ;
-//	if ( value )
-//	{
-//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;		// Seconds
-//	}
-//	return value | direction ;
-//}
+	value = phyStick[index] ;
+	value /= 8 ;
+	direction = value > 0 ? 0x80 : 0 ;
+	if ( value < 0 )
+	{
+		value = -value ;			// (abs)
+	}
+	if ( value > 7 )
+	{
+		value = 7 ;			
+	}
+	value = rate[(uint8_t)value] ;
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;		// Seconds
+	}
+	return value | direction ;
+}
 
 #if defined(PCBX12D) || defined(PCBX10)
 //extern uint8_t LastEvent ;
@@ -9624,73 +9608,73 @@ static void updateVbat()
   }
 }
 
-//static void checkStickScroll()
-//{
-//	if ( g_eeGeneral.stickScroll )
-//	{
-//	 	if ( StickScrollTimer )
-//		{
-//			static uint8_t repeater ;
-//			uint32_t direction ;
-//			int32_t value ;
+static void checkStickScroll()
+{
+	if ( g_eeGeneral.stickScroll )
+	{
+	 	if ( StickScrollTimer )
+		{
+			static uint8_t repeater ;
+			uint32_t direction ;
+			int32_t value ;
 		
-//			if ( repeater < 128 )
-//			{
-//				repeater += 1 ;
-//			}
-//			value = calcStickScroll( 2 ) ;
-//			direction = value & 0x80 ;
-//			value &= 0x7F ;
-//			if ( value )
-//			{
-//		 		if ( StickScrollAllowed & 2 )
-//				{
-//					if ( repeater > value )
-//					{
-//						repeater = 0 ;
-//						if ( direction )
-//						{
-//							putEvent(EVT_KEY_FIRST(KEY_UP));
-//						}
-//						else
-//						{
-//							putEvent(EVT_KEY_FIRST(KEY_DOWN));
-//						}
-//					}
-//				}
-//			}
-//			else
-//			{
-//				value = calcStickScroll( 3 ) ;
-//				direction = value & 0x80 ;
-//				value &= 0x7F ;
-//				if ( value )
-//				{
-//			 		if ( StickScrollAllowed & 1 )
-//					{
-//						if ( repeater > value )
-//						{
-//							repeater = 0 ;
-//							if ( direction )
-//							{
-//								putEvent(EVT_KEY_FIRST(KEY_RIGHT));
-//							}
-//							else
-//							{
-//								putEvent(EVT_KEY_FIRST(KEY_LEFT));
-//							}
-//						}
-//					}
-//				}
-//			}
-//		}
-//	}
-//	else
-//	{
-//		StickScrollTimer = 0 ;		// Seconds
-//	}	
-//	StickScrollAllowed = 3 ;
-//}
+			if ( repeater < 128 )
+			{
+				repeater += 1 ;
+			}
+			value = calcStickScroll( 2 ) ;
+			direction = value & 0x80 ;
+			value &= 0x7F ;
+			if ( value )
+			{
+		 		if ( StickScrollAllowed & 2 )
+				{
+					if ( repeater > value )
+					{
+						repeater = 0 ;
+						if ( direction )
+						{
+							putEvent(EVT_KEY_FIRST(KEY_UP));
+						}
+						else
+						{
+							putEvent(EVT_KEY_FIRST(KEY_DOWN));
+						}
+					}
+				}
+			}
+			else
+			{
+				value = calcStickScroll( 3 ) ;
+				direction = value & 0x80 ;
+				value &= 0x7F ;
+				if ( value )
+				{
+			 		if ( StickScrollAllowed & 1 )
+					{
+						if ( repeater > value )
+						{
+							repeater = 0 ;
+							if ( direction )
+							{
+								putEvent(EVT_KEY_FIRST(KEY_RIGHT));
+							}
+							else
+							{
+								putEvent(EVT_KEY_FIRST(KEY_LEFT));
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		StickScrollTimer = 0 ;		// Seconds
+	}	
+	StickScrollAllowed = 3 ;
+}
 
 
 void perMain( uint32_t no_menu )
@@ -9916,7 +9900,10 @@ void checkDsmTelemetry5ms() ;
 
 		if ( delay <= 8 )
 		{
-			RotencCount += 1 ;
+			if ( ++RotencCount > 12 )
+			{
+				RotencCount = 12 ;
+			}
 			if ( RotencCount > 5 )
 			{
 				RotencSpeed = (RotencCount-2) / 2 ;
@@ -10079,7 +10066,7 @@ void checkDsmTelemetry5ms() ;
   }
 #endif
 
-//	checkStickScroll() ;
+	checkStickScroll() ;
 
 	GvarSource[0] = 0 ;
 	GvarSource[1] = 0 ;
@@ -12289,6 +12276,13 @@ int16_t getValue(uint8_t i)
 				return ex_chans[i+NUM_SKYCHNOUT-EXTRA_CHANNELS_START] ;
 			}
 		}
+
+#ifdef PCBX7
+		return calibratedStick[i-EXTRA_POTS_START+7] ;
+#endif
+#ifdef PCBX9LITE
+		return calibratedStick[i-EXTRA_POTS_START+6] ;
+#endif
 		return calibratedStick[i-EXTRA_POTS_START+8] ;
 	}
   if(i<PPM_BASE) return 0 ;
@@ -12499,7 +12493,7 @@ int8_t getMovedSwitch()
   uint16_t mask = 0xC000 ;
 	uint16_t map = g_eeGeneral.switchMapping ;
 	
-	for ( uint8_t i=8 ; i>0 ; i-- )
+	for ( uint32_t i=8 ; i>0 ; i-- )
 	{
     uint8_t prev = (switches_states & mask) >> (i*2-2) ;
 		uint8_t next = 0 ;	// Avoid compiler warning

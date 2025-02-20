@@ -150,7 +150,7 @@ void generalDefault()
 #if defined(PCBX12D) || defined(PCBX10)
   g_eeGeneral.contrast = 10 ;
 	g_eeGeneral.backgroundColour = (9<<11)+(21<<6)+(13) ;
-	g_eeGeneral.SavedBatteryVoltage = g_vbat100mV ;
+//	g_eeGeneral.SavedBatteryVoltage = g_vbat100mV ;
 #else
   g_eeGeneral.contrast = 18 ;
 #endif
@@ -226,6 +226,7 @@ void modelDefault(uint8_t id)
 	g_model.Module[0].pxxRxNum = id-1 ;
 	g_model.Module[1].pxxRxNum = id-1 ;
 	g_model.rxVratio = 132 ;
+	checkXyCurve() ;
 	eeDirty(EE_MODEL) ;
 }
 

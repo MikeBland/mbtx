@@ -461,6 +461,10 @@ void lcdDrawChar(coord_t x, coord_t y, const unsigned char c, LcdFlags flags)
 
   LcdNextPos = x - 1 ;
 
+	if ( c < 0x20 )
+	{
+		return ;
+	}
 ////#if !defined(BOOT)
   uint32_t fontsize = FONTSIZE(flags) ;
   unsigned char c_remapped = 0 ;

@@ -147,7 +147,10 @@ static void inactivityCheck()
 {
   if(s_noHi) s_noHi--;
   uint16_t tsum = 0;
-  for(uint8_t i=0;i<4;i++) tsum += anas[i];
+  for(uint32_t i=0;i<4;i++)
+	{
+		tsum += anas[i];
+	}
   if(abs(int16_t(tsum-inacSum))>INACTIVITY_THRESHOLD)
 	{
 		inacSum = tsum;
@@ -239,7 +242,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	{
 		pFade->fadeWeight = 0 ;
 		uint8_t fadeMask = 1 ;
-    for (uint8_t p=0; p<MAX_MODES+1; p++)
+    for (uint32_t p=0; p<MAX_MODES+1; p++)
 		{
 			if ( pFade->fadePhases & fadeMask )
 			{
@@ -266,7 +269,7 @@ void perOutPhase( int16_t *chanOut, uint8_t att )
 	if ( pFade->fadePhases && MixTick10ms )
 	{
 		uint8_t fadeMask = 1 ;
-    for (uint8_t p=0; p<MAX_MODES+1; p+=1)
+    for (uint32_t p=0; p<MAX_MODES+1; p+=1)
 		{
 			uint16_t l_fadeScale = pFade->fadeScale[p] ;
 			
@@ -546,12 +549,12 @@ void perOut(int16_t *chanOut, uint8_t att )
 
 		uint8_t stickIndex = g_eeGeneral.stickMode*4 ;
 #ifdef PCBX7
-    for( uint8_t i = 0 ; i < 6+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint32_t i = 0 ; i < 6+(uint32_t)NumExtraPots ; i += 1 ) // calc Sticks
 #else
 #if defined(PCBX9LITE)
-    for( uint8_t i = 0 ; i < 5+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint32_t i = 0 ; i < 5+(uint32_t)NumExtraPots ; i += 1 ) // calc Sticks
 #else
-    for( uint8_t i = 0 ; i < 7+NumExtraPots ; i += 1 ) // calc Sticks
+    for( uint32_t i = 0 ; i < 7+(uint32_t)NumExtraPots ; i += 1 ) // calc Sticks
 #endif
 #endif
 		{
@@ -700,8 +703,8 @@ void perOut(int16_t *chanOut, uint8_t att )
 #ifdef PCBX9D
       anas[MIX_3POS-1] = keyState(SW_SC0) ? -1024 : (keyState(SW_SC1) ? 0 : 1024) ;
 #endif
-      for(uint8_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
-      for(uint8_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
+      for(uint32_t i=0;i<4;i++) anas[i+PPM_BASE] = (g_ppmIns[i] - g_eeGeneral.trainerProfile[g_model.trainerProfile].channel[i].calib)*2; //add ppm channels
+      for(uint32_t i=4;i<NUM_PPM;i++)    anas[i+PPM_BASE]   = g_ppmIns[i]*2; //add ppm channels
 //        for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
 //        for(uint8_t i=0;i<NUM_SKYCHNOUT;i++) anas[i+CHOUT_BASE] = chans[i]; //other mixes previous outputs
 //        for(uint8_t i=NUM_SKYCHNOUT;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++) anas[i-NUM_SKYCHNOUT+3+MIX_3POS] = chans[i]; //other mixes previous outputs
@@ -807,7 +810,7 @@ void perOut(int16_t *chanOut, uint8_t att )
     //========== MIXER LOOP ===============
 
 //#if EXTRA_SKYMIXERS
-    for(uint8_t i=0;i<MAX_SKYMIXERS+EXTRA_SKYMIXERS;i++)
+    for(uint32_t i=0;i<MAX_SKYMIXERS+EXTRA_SKYMIXERS;i++)
 //#else
 //    for(uint8_t i=0;i<MAX_SKYMIXERS;i++)
 //#endif
@@ -1352,7 +1355,7 @@ extern uint8_t CalcScaleNest ;
 
 		ThrottleStickyOn = 0 ;
     //========== LIMITS ===============
-    for(uint8_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++)
+    for(uint32_t i=0;i<NUM_SKYCHNOUT+EXTRA_SKYCHANNELS;i++)
 		{
         // chans[i] holds data from mixer.   chans[i] = v*weight => 1024*100
         // later we multiply by the limit (up to 100) and then we need to normalize

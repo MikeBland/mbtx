@@ -359,7 +359,7 @@ void putsVolts(uint16_t x,uint16_t y, uint8_t volts, LcdFlags att)
 	if(!(option&NO_UNIT)) lcdDrawChar(LcdLastRightPos, y*HVSCALE, 'V', 0 ) ;
 }
 
-void putsVBat(uint16_t x,uint16_t y,uint16_t att)
+void putsVBat(uint16_t x,uint16_t y,LcdFlags att)
 {
 #ifndef MINIMISE_CODE    
   att |= g_vbat100mV < g_eeGeneral.vBatWarn ? BLINK : 0;

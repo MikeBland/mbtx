@@ -535,7 +535,7 @@ volatile uint8_t  g_blinkTmr10ms;
 
 volatile uint16_t g_tmr10ms ;
 volatile uint32_t g_ltmr10ms ;
-//extern uint8_t StickScrollTimer ;
+extern uint8_t StickScrollTimer ;
 
 //#ifdef PCBSKY
 //struct t_serial_tx FmsTx ;
@@ -736,12 +736,12 @@ void per10ms()
   for( i=1; i<7; i++)
   {
 		uint8_t value = in & (1<<i) ;
-//#if !defined(SIMU)
-//		if ( value )
-//		{
-//			StickScrollTimer = STICK_SCROLL_TIMEOUT ;
-//		}
-//#endif
+#if !defined(SIMU)
+		if ( value )
+		{
+			StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+		}
+#endif
     //INP_B_KEY_MEN 1  .. INP_B_KEY_LFT 6
     keys[enuk].input(value,(EnumKeys)enuk);
     ++enuk;
@@ -763,10 +763,10 @@ void per10ms()
 //extern uint8_t AnaEncSw ;
 //	value |= AnaEncSw ;
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
-//	if ( value )
-//	{
-//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
-//	}
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+	}
 #endif
 
 #endif
@@ -780,10 +780,10 @@ extern uint8_t EncoderI2cData[] ;
 		value = EncoderI2cData[1] ? 1 : 0 ;
 	}
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
-//	if ( value )
-//	{
-//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
-//	}
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+	}
 #endif
 
 #if defined(PCBLEM1)
@@ -823,10 +823,10 @@ extern uint8_t AnaEncSw ;
 	uint8_t value = 0 ;
 	#endif
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
-//	if ( value )
-//	{
-//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
-//	}
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+	}
  #endif // SIMU
 #endif // X9D
 
@@ -838,10 +838,10 @@ extern uint8_t AnaEncSw ;
 #endif // X10
 #if defined(PCBX12D) || defined(PCBX10)
 	keys[enuk].input( value,(EnumKeys)enuk); // Rotary Enc. Switch
-//	if ( value )
-//	{
-//		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
-//	}
+	if ( value )
+	{
+		StickScrollTimer = STICK_SCROLL_TIMEOUT ;
+	}
 #endif // X12D
 
 #if defined(PCBX9D) || defined(PCB9XT)

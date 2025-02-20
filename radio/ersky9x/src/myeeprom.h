@@ -257,7 +257,7 @@ PACK(typedef struct t_EEGeneral {
   uint8_t   flashBeep:1;
   uint8_t   disableSplashScreen:1;
   uint8_t   notdisablePotScroll:1;
-  uint8_t   notstickScroll:1 ;
+  uint8_t   stickScroll:1 ;
   uint8_t   frskyinternalalarm:1;
   uint8_t   filterInput;
   uint8_t   lightAutoOff;

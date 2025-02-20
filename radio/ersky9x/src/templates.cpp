@@ -68,7 +68,7 @@ extern const uint16_t n_Templates[NUM_TEMPLATES] = {
 
 SKYMixData* setDest(uint8_t dch)
 {
-    uint8_t i = 0;
+    uint32_t i = 0;
     SKYMixData *md = &g_model.mixData[0];
 
     while ((md->destCh<=dch) && (md->destCh) && (i<MAX_SKYMIXERS)) i++, md++;

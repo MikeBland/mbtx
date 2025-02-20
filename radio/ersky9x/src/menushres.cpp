@@ -77,7 +77,7 @@ uint8_t unmapPots( uint8_t value ) ;
 uint8_t putsTelemetryChannel(coord_t x, coord_t y, int8_t channel, int16_t val, LcdFlags att, uint8_t style, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground ) ;
 void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type ) ;
 void putsTimexxl( uint16_t x, uint16_t y, int16_t tme, uint8_t att, uint16_t colour ) ;
-void dispGvar( uint8_t x, uint8_t y, uint8_t gvar, uint8_t attr ) ;
+void dispGvar( coord_t x, coord_t y, uint8_t gvar, LcdFlags attr ) ;
 void putsChnOpRaw( coord_t x, coord_t y, uint8_t source, uint8_t switchSource, uint8_t output, LcdFlags attr ) ;
 void drawSmallGVAR( uint16_t x, uint16_t y ) ;
 int16_t gvarDiffValue( uint16_t x, uint16_t y, int16_t value, uint32_t attr, uint8_t event ) ;
@@ -89,8 +89,8 @@ void voicepopup( uint8_t event ) ;
 void menuRangeBind(uint8_t event) ;
 void menuSetFailsafe(uint8_t event) ;
 void menuScanDisplay(uint8_t event) ;
-void displayMultiProtocol( uint32_t index, uint32_t y, uint8_t attr ) ;
-uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, uint32_t y, uint8_t attr ) ;
+void displayMultiProtocol( uint32_t index, coord_t y, LcdFlags attr ) ;
+uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, coord_t y, LcdFlags attr ) ;
 void multiOption( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_t protocol ) ;
 uint32_t checkProtocolOptions( uint8_t module ) ;
 void multiOptionTouch( uint32_t x, uint32_t y, int32_t option, uint32_t attr, uint32_t protocol ) ;
@@ -98,10 +98,10 @@ void menuBindOptions(uint8_t event) ;
 void displayModuleName( uint16_t x, uint16_t y, uint8_t index, uint8_t attr ) ;
 void menuOneGvar(uint8_t event) ;
 SKYMixData *mixAddress( uint32_t index ) ;
-uint16_t extendedValueEdit( int16_t value, uint8_t extValue, uint8_t attr, uint8_t y, uint8_t event, uint16_t x ) ;
+uint16_t extendedValueEdit( int16_t value, uint8_t extValue, LcdFlags attr, coord_t y, uint8_t event, coord_t x ) ;
 uint8_t mapMixSource( uint8_t index, uint8_t switchSource ) ;
 uint8_t unmapMixSource( uint8_t index, uint8_t *switchSource ) ;
-uint8_t editSlowDelay( uint8_t y, uint8_t attr, uint8_t value) ;
+uint8_t editSlowDelay( coord_t y, LcdFlags attr, uint8_t value) ;
 void menuProcCurveOne(uint8_t event) ;
 void menuCustomCheck(uint8_t event) ;
 void menuProcSelectImageFile(uint8_t event) ;
@@ -187,8 +187,8 @@ extern uint8_t TouchUpdated ;
 
 extern uint8_t InverseBlink ;
 extern uint8_t ImageDisplay ;
-//extern uint8_t scroll_disabled;
-//extern uint8_t StickScrollTimer ;
+extern uint8_t scroll_disabled;
+extern uint8_t StickScrollTimer ;
 
 extern uint8_t EditType ;
 extern uint8_t EditColumns ;
@@ -198,7 +198,7 @@ static uint8_t s_currSubIdx;
 
 uint8_t SuppressStatusLine ;
 
-void putsValue(uint8_t x, uint8_t y, uint16_t index, int16_t val, uint8_t att, uint8_t style, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground )
+void putsValue( coord_t x, coord_t y, uint16_t index, int16_t val, LcdFlags att, uint8_t style, uint16_t colour = LcdForeground, uint16_t bgColour = LcdBackground )
 {
 	if ( index >= EXTRA_POTS_START-1 )
 	{
@@ -219,7 +219,7 @@ void putsValue(uint8_t x, uint8_t y, uint16_t index, int16_t val, uint8_t att, u
 	PUTS_NUM_N( (style & TELEM_VALUE_RIGHT) ? x+62 : x, y, val, att, 5 ) ; // , colour, bgColour ) ;
 }
 
-uint8_t hronoffMenuItem( uint8_t x, uint8_t value, uint8_t y, const prog_char *s, uint8_t edit )
+uint8_t hronoffMenuItem( coord_t x, uint8_t value, coord_t y, const prog_char *s, LcdFlags edit )
 {
 	PUTS_ATT_LEFT(y, s) ;
 	menu_lcd_onoff( x, y, value, edit ) ;
@@ -243,8 +243,8 @@ void menuProcDiagAna(uint8_t event)
 	PUTS_ATT( 0, 0, PSTR(STR_ANA),INVERS) ;
 	
 	static MState2 mstate2;
-//	StickScrollAllowed = 0 ;
-//	StickScrollTimer = 0 ;
+	StickScrollAllowed = 0 ;
+	StickScrollTimer = 0 ;
 	mstate2.check_columns(event, NUM_ANA_ITEMS-1) ;
 
 	ImageDisplay = 0 ;
@@ -252,7 +252,7 @@ void menuProcDiagAna(uint8_t event)
   int8_t  sub    = mstate2.m_posVert ;
   for(i=0; i<10; i++)
   {
-    uint8_t y=(i+2)*FHPY ;
+    coord_t y=(i+2)*FHPY ;
 		PUTS_AT_IDX( 9*FW-3, y, XPSTR("\002LHLVRVRHA5A6A7A8BT6P"), i, 0 ) ;
 		uint8_t index = i ;
 		if ( i < 4 )
@@ -277,7 +277,7 @@ void menuProcDiagAna(uint8_t event)
 
   if(sub==1)
   {
-//    scroll_disabled = 1;
+    scroll_disabled = 1;
 		if ( s_editMode )
 		{
 	    CHECK_INCDEC_H_GENVAR( g_eeGeneral.vBatCalib, -127, 127);
@@ -872,7 +872,7 @@ void menuHiresItem(uint8_t event)
 	event = mstate2.check_columns( event, 7 ) ;
 	uint8_t sub = mstate2.m_posVert ;
 	uint8_t subN = 0 ;
-	uint8_t y = 2*FHPY ;
+	coord_t y = 2*FHPY ;
 	uint32_t index = s_currSubIdx ;
 	struct t_hiResDisplay *display ;
 
@@ -1254,7 +1254,7 @@ void menuColour( uint8_t event, uint8_t mode )
 	}
 #endif
 	 
-	uint8_t y = TTOP ;
+	coord_t y = TTOP ;
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	
 	attr = (sub==subN) ? INVERS : 0 ;
@@ -1498,7 +1498,7 @@ void drawIdxTextAtX( coord_t x, uint16_t y, char *s, uint32_t index, uint16_t mo
 //  lcd_putsnAttColour( TRIGHT-length*FW-TRMARGIN, y+TVOFF, s+length*index, length, 0, fcolour ) ;
 }		  
 
-uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour )
+uint32_t touchOnOffItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour )
 {
 	drawItem( (char *)s, y, condition ) ;
   if (value)
@@ -1516,7 +1516,7 @@ uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t c
 	return value ;
 }
 
-uint32_t touchOffOnItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour )
+uint32_t touchOffOnItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour )
 {
 	return 1- touchOnOffItem( 1- value, y, s, condition, colour ) ;
 }
@@ -2433,7 +2433,7 @@ void menuLimitsOne(uint8_t event)
 
 
 
-void putsTrimMode( uint8_t x, uint8_t y, uint8_t phase, uint8_t idx, uint8_t att ) ;
+void putsTrimMode( coord_t x, coord_t y, uint8_t phase, uint8_t idx, uint8_t att ) ;
 //void alphaEditName( uint8_t x, uint8_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
 
 void menuModeOne(uint8_t event)
@@ -4197,7 +4197,7 @@ void menuProcSafetySwitches(uint8_t event)
 				attr &= ~BOLD ;
 
 
-  	  	for(uint8_t j=0; j<5;j++)
+  	  	for(uint32_t j=0; j<5;j++)
 				{
   	  	  if (j == 0)
 					{
@@ -4329,7 +4329,7 @@ void menuProcSafetySwitches(uint8_t event)
 					x1 -= FWNUM ;			
 				}
   			PUTS_NUM(x1,y,k,attr);
-    		for(uint8_t j=0; j<3;j++)
+    		for(uint32_t j=0; j<3;j++)
 				{
     	    uint8_t attr = ((sub==k && subSub==j) ? InverseBlink : 0);
 					uint8_t active = (attr && (s_editMode /*|| P1values.p1valdiff*/)) ;
@@ -4400,7 +4400,7 @@ void menuProcTemplates(uint8_t event)  //Issue 73
 	event = mstate2.check_columns( event, NUM_TEMPLATES-1 ) ;
 	EditType = EE_MODEL ;
 
-  uint8_t y = TTOP ;
+  coord_t y = TTOP ;
   uint8_t k = 0 ;
   int8_t sub = mstate2.m_posVert ;
 	
@@ -4453,21 +4453,24 @@ void menuProcTemplates(uint8_t event)  //Issue 73
 
 void drawSmallGVAR( uint16_t x, uint16_t y )
 {
-	char *s = (char *)"GVAR" ;
 #ifdef USE_VARS
 	if ( g_model.vars )
 	{
-		s = (char *)"VAR" ;
+		y -= 2 ;
+		lcdDrawChar( x, y, 'V', SMLSIZE ) ;
+		lcdDrawChar( LcdNextPos-1, y, 'A', SMLSIZE ) ;
+		lcdDrawChar( LcdNextPos-1, y, 'R', SMLSIZE ) ;
+		return ;
 	}
 #endif
 //	lcd_putsSmall( x, y, s, LcdForeground) ;
-	lcdDrawSizedText( x, y-2, s, 255, SMLSIZE ) ;
+	lcdDrawSizedText( x, y-2, "GVAR", 255, SMLSIZE ) ;
 }
 
 
 extern void createInputMap() ;
 extern void displayInputSource( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
-extern int16_t gvarMenuItem(coord_t x, coord_t y, int16_t value, int8_t min, int8_t max, uint16_t attr, uint8_t event ) ;
+extern int16_t gvarMenuItem(coord_t x, coord_t y, int16_t value, int8_t min, int8_t max,  LcdFlags attr, uint8_t event ) ;
 extern uint8_t InputMap[] ;
 extern uint8_t InputMapSize ;
 
@@ -5226,7 +5229,7 @@ extern void eeSaveAll() ;
 #define GRAPH_FUNCTION_EXPO			1
 
 uint8_t get_dr_state(uint8_t x) ;
-void editExpoVals(uint8_t event, uint8_t edit, uint8_t x, uint8_t y, uint8_t which, uint8_t exWt, uint8_t stkRL) ;
+void editExpoVals(uint8_t event, uint8_t edit, coord_t x, coord_t y, uint8_t which, uint8_t exWt, uint8_t stkRL) ;
 void drawFunction( uint8_t xpos, uint8_t function ) ;
 
 
@@ -6510,7 +6513,7 @@ void menuProcProtocol(uint8_t event)
 	}
 #endif
 	 
-	uint8_t y = TTOP ;
+	coord_t y = TTOP ;
 	uint8_t subN = 0 ;
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -7346,7 +7349,7 @@ void menuOneAdjust(uint8_t event)
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
-	for (uint8_t i = 0 ; i < rows ; i += 1 )
+	for (uint32_t i = 0 ; i < rows ; i += 1 )
 	{
     uint16_t y = i * TFH + TTOP ;
     uint8_t attr = (sub==i) ? INVERS : 0 ;
@@ -8167,7 +8170,7 @@ void menuProcMixOne(uint8_t event)
 					s_editMode = 0 ;	// Nothing to edit by touch
 				}
   					
-				for ( uint8_t p = 0 ; p<MAX_MODES+2 ; p++ )
+				for ( uint32_t p = 0 ; p<MAX_MODES+2 ; p++ )
 				{
 					uint8_t z = md2->modeControl ;
 // 					lcd_putcAtt( (9+p)*(FW+1), y, '0'+p, ( z & b ) ? 0 : INVERS ) ;
@@ -8296,7 +8299,7 @@ void menuRadioVars(uint8_t event)
 #define DATE_OFF_0		(0)
 #define DATE_COUNT_ITEMS	8
 
-void dispMonth( uint8_t x, uint8_t y, uint32_t month, uint8_t attr) ;
+void dispMonth( coord_t x, coord_t y, uint32_t month, LcdFlags attr) ;
 void disp_datetime( coord_t y ) ;
 
 t_time EntryTime ;
@@ -8314,7 +8317,7 @@ void menuProcDate(uint8_t event)
 	mstate2.check_columns(event, DATE_COUNT_ITEMS-1) ;
 //?	event = mstate2.check(event,0,NULL,0,mstate_tab,DIM(mstate_tab)-1, rows-1) ;
 
-  int8_t  sub = mstate2.m_posVert ;
+  uint32_t  sub = mstate2.m_posVert ;
 
 #ifdef TOUCH	
 	int32_t newSelection = checkTouchSelect( rows+1, 0 ) ;
@@ -8370,7 +8373,7 @@ void menuProcDate(uint8_t event)
 	disp_datetime( TTOP+TVOFF ) ;
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
-	for (uint8_t subN = 0 ; subN<rows ; subN += 1)
+	for (uint32_t subN = 0 ; subN<rows ; subN += 1)
 	{
 		uint16_t y = TTOP+subN*TFH+TFH ;
 	  uint16_t attr = ((sub==subN) ? INVERS : 0) ;
@@ -9159,7 +9162,7 @@ void menuControls(uint8_t event)
 	drawItem( (char *)PSTR(STR_CHAN_ORDER), y, (sub == subN ) ) ;
 	uint8_t bch = bchout_ar[g_eeGeneral.templateSetup] ;
 	saveEditColours( attr, colour ) ;
-  for ( uint8_t i = 4 ; i > 0 ; i -= 1 )
+  for ( uint32_t i = 4 ; i > 0 ; i -= 1 )
 	{
 		uint8_t letter ;
 		letter = *(PSTR(STR_SP_RETA) +(bch & 3) + 1 ) ;
@@ -9352,7 +9355,7 @@ void menuModes(uint8_t event)
 		{
 			LcdForeground = ~LcdForeground ;
 		}
-    for ( uint8_t t = 0 ; t < NUM_STICKS ; t += 1 )
+    for ( uint32_t t = 0 ; t < NUM_STICKS ; t += 1 )
 		{
 			putsTrimMode( TRIGHT-3-10*FW+t*FW*2, y+TVOFF/HVSCALE, k+1, t, 0 ) ;
 			int16_t v = p->trim[t].mode ;
@@ -9382,7 +9385,7 @@ void menuGeneral( uint8_t event )
 	
 	static MState2 mstate2;
 //			IlinesCount = 8+1+1+1 ;
-	uint32_t rows = 10 ;
+	uint32_t rows = 11 ;
 	mstate2.check_columns(event, rows-1) ;
 
 //	uint16_t attr ;
@@ -9459,8 +9462,10 @@ void menuGeneral( uint8_t event )
   			g_eeGeneral.hideNameOnSplash = touchOffOnItem( b, y, PSTR(STR_SPLASH_NAME), attr, colour ) ;
 			}
 			break ;
-//			case 4 :
-//			{
+			case 4 :
+			{
+  			uint8_t b = g_eeGeneral.stickScroll ;
+  			g_eeGeneral.stickScroll = touchOnOffItem( b, y, PSTR(STR_STICKSCROLL), attr, colour ) ;
 //  			uint8_t b = 1-g_eeGeneral.disablePotScroll ;
 //				b |= g_eeGeneral.stickScroll << 1 ;
 //				drawItem( (char *)PSTR(STR_SCROLLING), y, attr ) ;
@@ -9468,18 +9473,18 @@ void menuGeneral( uint8_t event )
 //  			if(attr) CHECK_INCDEC_H_GENVAR_0( b, 3 ) ;
 //				g_eeGeneral.stickScroll = b >> 1 ;
 //				g_eeGeneral.disablePotScroll = 1 - ( b & 1 ) ;
-//			}
-//			break ;
-			case 4 :
+			}
+			break ;
+			case 5 :
 			{
   			uint8_t b = g_eeGeneral.forceMenuEdit ;
   			g_eeGeneral.forceMenuEdit = touchOnOffItem( b, y, PSTR(STR_MENU_ONLY_EDIT), attr, colour ) ;
 			}
 			break ;
-			case 5 :
+			case 6 :
   			g_eeGeneral.disableBtnLong = touchOnOffItem( g_eeGeneral.disableBtnLong, y, XPSTR("No ENC. as exit"), attr, colour ) ;
 			break ;
-			case 6 :
+			case 7 :
 				drawItem( XPSTR("GPS Format"), y, attr ) ;
 				drawIdxText( y*2+TVOFF, XPSTR("\012DD mm.mmmm DD.dddddd"), g_eeGeneral.gpsFormat, attr|LUA_RIGHT ) ; //, attr ? ~LcdForeground : LcdForeground ) ; //, attr ? ~colour : colour ) ;
   			if(attr)
@@ -9487,10 +9492,10 @@ void menuGeneral( uint8_t event )
 					CHECK_INCDEC_H_GENVAR_0(g_eeGeneral.gpsFormat,1) ;
 				}
 			break ;
-			case 7 :
+			case 8 :
   			g_eeGeneral.altMixMenu = touchOnOffItem( g_eeGeneral.altMixMenu, y, XPSTR("Mix Menu Details"), attr, colour ) ;
 			break ;
-			case 8 :
+			case 9 :
 			{	
 				drawItem( XPSTR("ScreenShot Sw"), y, attr ) ;
 				putsDrSwitchesColour( TRIGHT-TRMARGIN, y+TVOFF, g_eeGeneral.screenShotSw, LUA_RIGHT, attr ? ~LcdForeground : LcdForeground, attr ? ~colour : colour ) ;
@@ -9506,7 +9511,7 @@ extern uint8_t LastShotSwitch ;
 				}
 			}
 			break ;
-			case 9 :
+			case 10 :
   			g_eeGeneral.enableEncMain = touchOnOffItem( g_eeGeneral.enableEncMain, y, XPSTR("ENC main screen"), attr, colour ) ;
 			break ;
 		}
@@ -9951,7 +9956,7 @@ void menuDisplay( uint8_t event )
 }
 
 
-uint16_t scalerDecimal( uint8_t y, uint16_t val, uint8_t attr )
+uint16_t scalerDecimal( coord_t y, uint16_t val, LcdFlags attr )
 {
   PUTS_NUM( TRIGHT-TRMARGIN, y+TVOFF, val+1, 0 ) ;
 	if (attr) val = checkIncDec16( val, 0, 2047, EE_MODEL);

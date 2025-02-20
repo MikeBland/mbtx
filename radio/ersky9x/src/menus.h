@@ -48,7 +48,7 @@ typedef const void (*MenuFunc)(uint8_t event) ;
 #define TITLEP(pstr) PUTS_ATT(4*FW,0,pstr,INVERS|BOLD)
 #else
  #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
-#define TITLEP(pstr) PUTS_ATT(0*FW,0,pstr,INVERS|BOLD)
+#define TITLEP(pstr) PUTS_ATT(0*FW,0,pstr,INVERS)
  #else
 #define TITLEP(pstr) PUTS_ATT(0*FW,0,pstr,INVERS)
  #endif
@@ -304,8 +304,8 @@ void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint1
 void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode ) ;
 void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
 void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
-uint32_t touchOnOffItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
-uint32_t touchOffOnItem( uint8_t value, uint8_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
+uint32_t touchOnOffItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
+uint32_t touchOffOnItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 void putsChnColour( coord_t x, coord_t y, uint8_t idx1, LcdFlags att ) ;
 void saveEditColours( uint32_t attr, uint16_t colour ) ;
 void restoreEditColours() ;
@@ -318,8 +318,9 @@ uint32_t checkTouchposition( uint16_t x, uint16_t y, uint16_t x2, uint16_t y2 ) 
 void menuLimitsOne(uint8_t event) ;
 void editTimer( uint8_t sub, uint8_t event ) ;
 
-
 #endif
+
+
 #define ALPHA_NO_NAME		0x80
 void alphaEditName( coord_t x, coord_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
 
@@ -526,7 +527,7 @@ extern uint8_t EditType ;
 extern uint8_t checkIndexed( coord_t y, const char *s, uint8_t value, uint8_t edit ) ;
 extern void setCaptureMode(uint32_t mode) ;
 
-extern void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
+extern void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, LcdFlags attr ) ;
 
 // Items now in menuscommon:
 uint8_t checkOutOfOrder( uint8_t value, uint8_t *options, uint32_t count ) ;
@@ -563,8 +564,39 @@ void DisplayScreenIndex(uint32_t index, uint32_t count, LcdFlags attr) ;
 int16_t calcExtendedValue( int16_t value, uint8_t extValue ) ;
 uint16_t packExtendedValue( int16_t value ) ;
 
+uint8_t indexProcess( uint8_t event, MState2 *pmstate, uint8_t extra ) ;
+void menuProcDiagAna(uint8_t event) ;
+void menuProcDiagKeys(uint8_t event) ;
+void menuProcDiagCalib(uint8_t event) ;
+void menuProcTrainer(uint8_t event) ;
+void menuProcDiagVers(uint8_t event) ;
+void menuBackupEeprom( uint8_t event ) ;
+void menuRestoreEeprom( uint8_t event ) ;
+void menuProcDate(uint8_t event) ;
+void menuProcRSSI(uint8_t event) ;
+void displayNext() ;
+void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight ) ;
+uint32_t checkForMenuEncoderBreak( uint8_t event ) ;
+uint32_t checkForMenuEncoderLong( uint8_t event ) ;
+void menuProcGlobalVoiceAlarm(uint8_t event) ;
+void displayGPSformat( uint16_t x, uint16_t y, uint8_t attr ) ;
+uint8_t edit3posSwitchSource( coord_t y, uint8_t value, uint16_t mask, uint8_t condition, uint8_t allowAna ) ;
+
+#ifdef PCB9XT
+void editExtraPot( coord_t y, uint32_t index, uint32_t active ) ;
+int16_t gvarMenuItem(coord_t x, coord_t y, int16_t value, int8_t min, int8_t max, LcdFlags attr, uint8_t event ) ;
+#endif
+
+
+#ifdef COLOUR_DISPLAY
+void menuBackground( uint8_t event ) ;
+void menuForeground( uint8_t event ) ;
+void displayIndexIcons( const uint8_t *icons[], uint8_t extra, uint8_t lines ) ;
+#endif
+
+
 #ifdef ARUNI
-void putSwitchName(uint8_t x, uint8_t y, uint8_t z, uint8_t att); // @menus.cpp
+void putSwitchName( coord_t x, coord_t y, uint8_t z, LcdFlags att); // @menus.cpp
 #else
 void putSwitchName( coord_t x, coord_t y, uint8_t z, LcdFlags att) ;
 // #if defined(PCBX12D) || defined(PCBX10)
@@ -585,6 +617,7 @@ void putsAttIdxTelemItems( coord_t x, coord_t y, uint8_t index, LcdFlags attr ) 
 #endif
 
 
+
 #if defined(PCBX12D) || defined(PCBX10)
 void displayIndexIcons( const uint8_t *icons[], uint8_t extra, uint8_t lines ) ;
 extern void lcdDrawIcon( uint16_t x, uint16_t y, const uint8_t * bitmap, uint8_t type ) ;
@@ -598,7 +631,7 @@ void displayVoiceRate( coord_t x, coord_t y, uint8_t rate, LcdFlags attr ) ;
 #endif
 void menuBindOptions(uint8_t event) ;
 
-void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
+//void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, uint16_t attr ) ;
 int16_t processOneInput( struct te_InputsData *pinput, int16_t value ) ;
 int16_t evalInput( uint8_t channel, int16_t value ) ;
 void evalAllInputs() ;

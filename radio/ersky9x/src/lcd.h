@@ -361,7 +361,7 @@ extern void lcdOff( void ) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern void putsTime(uint16_t x,uint16_t y,int16_t tme,LcdFlags att,LcdFlags att2, uint16_t colour = LcdForeground, uint16_t background = LcdBackground ) ;
 extern void putsVolts(uint16_t x,uint16_t y, uint8_t volts, LcdFlags att) ;
-extern void putsVBat(uint16_t x,uint16_t y,uint16_t att) ;
+extern void putsVBat(uint16_t x,uint16_t y,LcdFlags att) ;
 #else
 extern void putsTime(coord_t x,coord_t y,int16_t tme,LcdFlags att,LcdFlags att2) ;
 extern void putsVolts(coord_t x,coord_t y, uint8_t volts, LcdFlags att) ;

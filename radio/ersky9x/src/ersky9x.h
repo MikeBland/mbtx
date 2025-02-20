@@ -897,9 +897,9 @@ uint8_t CS_STATE( uint8_t x) ;
 
 #define EXTRA_POTS_POSITION	8
 
-#if defined(ARUNI)
-void putSwitchName(uint8_t x, uint8_t y, uint8_t z, uint8_t att) ;
-#endif
+//#if defined(ARUNI)
+//void putSwitchName( coord_t x, coord_t y, uint8_t z, LcdFlags att) ;
+//#endif
 
 #if defined(ARUNI)
 uint32_t countExtraPots(uint8_t *extraPotBits) ;
@@ -962,7 +962,7 @@ extern uint32_t countExtraPots( void ) ;
 #define	NUM_POSSIBLE_EXTRA_POTS 5
 
 #define EXTRA_POTS_START	120
-extern int8_t NumExtraPots ;
+extern uint8_t NumExtraPots ;
 extern uint8_t ExtraPotBits;
 
 // For scalers:
@@ -1167,7 +1167,7 @@ template<class t> inline t limit(t mi, t x, t ma){ return min(max(mi,x),ma); }
 #define sysFLAG_OLD_EEPROM (0x01)
 #define sysFLAG_FORMAT_EEPROM (0x02)
 extern uint8_t sysFlags;
-//extern uint8_t StickScrollAllowed ;
+extern uint8_t StickScrollAllowed ;
 extern uint8_t StepSize ;
 
 const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
@@ -1410,12 +1410,12 @@ extern void putsChnRaw(coord_t x,coord_t y,uint8_t idx,LcdFlags att, uint16_t co
 extern void putsChnRaw(coord_t x,coord_t y,uint8_t idx, LcdFlags att) ;
 #endif
 extern void putsChn( coord_t x, coord_t y,uint8_t idx1, LcdFlags att) ;
-extern void putsDrSwitches(coord_t x,coord_t y,int8_t idx1, uint16_t att) ;
+extern void putsDrSwitches(coord_t x,coord_t y,int8_t idx1, LcdFlags att) ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolor, uint16_t bcolour) ;
 #endif
 extern void putsMomentDrSwitches(coord_t x,coord_t y,int8_t idx1, LcdFlags att) ;
-extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;
+extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,LcdFlags att) ;
 extern void putsTmrMode(coord_t x, coord_t y, LcdFlags attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
 #if defined(PCBX12D) || defined(PCBX10)
@@ -1480,9 +1480,9 @@ extern uint8_t g_vbat100mV ;
 //extern void doSplash( void ) ;
 extern void mainSequence( uint32_t no_menu ) ;
 #if defined(PCBX12D) || defined(PCBX10)
-extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour = LcdForeground ) ;
+extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, LcdFlags att, uint16_t colour = LcdForeground ) ;
 #else
-extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att ) ;
+extern uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, LcdFlags att ) ;
 #endif
 extern void telem_byte_to_bt( uint8_t data ) ;
 extern int16_t scale_telem_value( int16_t val, uint8_t channel, uint8_t *dplaces ) ;
@@ -2013,10 +2013,6 @@ struct t_updateTiming
 extern coord_t LcdNextPos ;
 extern coord_t LcdLastRightPos ;
 extern coord_t LcdLastLeftPos ;
-#endif
-
-#if defined(PCBT16)
-#define SKIP_EEPROM_FAULT		1
 #endif
 
 #endif // ersky9x_h

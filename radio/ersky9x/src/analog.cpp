@@ -532,6 +532,8 @@ uint32_t read_adc()
 		{
 			VbattRtc = Analog_values[2] ;
 		}
+		AnalogData[5] = 4096 - ( (g_eeGeneral.extraPotsSource[0]) ? Analog_values[6+g_eeGeneral.extraPotsSource[0]] : 0 ) ; 
+		AnalogData[6] = 4096 - ( (g_eeGeneral.extraPotsSource[1]) ? Analog_values[6+g_eeGeneral.extraPotsSource[1]] : 0 ) ; 
 #else		 
 		AnalogData[5] = Analog_values[1] ;
 		AnalogData[12] = Analog_values[2] ;

@@ -4722,9 +4722,9 @@ uint16_t logAxScale( uint8_t channel, uint8_t *dps )
 
 
 #if defined(PCBX12D) || defined(PCBX10)
-uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att, uint16_t colour )
+uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, LcdFlags att, uint16_t colour )
 #else
-uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, uint8_t att )
+uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, LcdFlags att )
 #endif
 {
     int32_t value ;

@@ -557,10 +557,6 @@ CPPSRC = ersky9x.cpp \
 		   lcd_1bit.cpp \
 			lcd.cpp
 
-#ifeq ($(TOUCH), 1)
-#  CPPSRC += touchMenus.cpp
-#endif
-
 ifeq ($(BT), 1)
   CPPSRC += bluetooth.cpp
   CPPDEFS += -DBT
