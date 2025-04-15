@@ -1087,7 +1087,11 @@ PACK(typedef struct te_ModelData {
 #else
 	uint8_t sparey:7 ;
 #endif
-	uint8_t sparez ;
+	uint8_t x9eT1bext:1 ;
+	uint8_t x9eT2bext:1 ;
+	uint8_t x9eT1Rext:1 ;
+	uint8_t x9eT2Rext:1 ;
+	uint8_t sparez:4 ;
 
 //#if defined(PCBX12D) || defined(PCBX10)
 	struct t_hiResDisplay hiresDisplay[2] ;	// 38*2 bytes

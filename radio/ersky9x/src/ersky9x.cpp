@@ -701,11 +701,19 @@ extern uint16_t g_timeMixer ;
 //uint16_t MixerRunAtTime ;
 void runMixer( void ) ;
 
-volatile int32_t Rotary_position ;
-volatile int32_t Rotary_count ;
-int32_t LastRotaryValue ;
-int8_t Pre_Rotary_diff[4] ;
-int32_t Rotary_diff ;
+//#ifdef REV9E
+volatile int32_t Rotary_position __CCM ;
+volatile int32_t Rotary_count __CCM ;
+int32_t LastRotaryValue __CCM ;
+int8_t Pre_Rotary_diff[4] __CCM ;
+int32_t Rotary_diff __CCM ;
+//#else
+//volatile int32_t Rotary_position ;
+//volatile int32_t Rotary_count ;
+//int32_t LastRotaryValue ;
+//int8_t Pre_Rotary_diff[4] ;
+//int32_t Rotary_diff ;
+//#endif
 uint8_t Vs_state[NUM_SKYCHNOUT+NUM_VOICE+EXTRA_SKYCHANNELS] ;
 
 struct t_NvsControl
@@ -797,7 +805,7 @@ void checkQuickSelect( void ) ;
 //void putsChn( coord_t x, coord_t y,uint8_t idx1, LcdFlags att) ;
 //void putsDrSwitches(uint8_t x,uint8_t y,int8_t idx1,uint8_t att) ;//, bool nc) ;
 const char *get_switches_string( void ) ;
-bool getSwitch(int8_t swtch, bool nc, uint8_t level) ;
+//bool getSwitch(int16_t swtch, bool nc, uint8_t level) ;
 #if defined(PCBX12D) || defined(PCBX10)
 extern "C" void init_soft_power( void ) ;
 #else
@@ -1837,6 +1845,7 @@ void checkTrainerSource()
  #ifndef PCBX10
   #ifndef REV19
    #ifndef PCBX7ACCESS
+    #ifndef REV9E
 			case 1 :
 				stop_USART6_Sbus() ;
 				if ( g_model.Module[1].protocol == PROTO_OFF )
@@ -1851,6 +1860,7 @@ void checkTrainerSource()
 					EXTERNAL_RF_OFF() ;
 				}
 			break ;
+    #endif
    #endif
   #endif
  #endif
@@ -1891,6 +1901,7 @@ void checkTrainerSource()
  #ifndef PCBX10
   #ifndef REV19
    #ifndef PCBX7ACCESS
+    #ifndef REV9E
 			case 1 :
 				USART6_Sbus_configure() ;
 				EXTERNAL_RF_ON() ;
@@ -1899,6 +1910,7 @@ void checkTrainerSource()
 				init_cppm_on_heartbeat_capture()  ;
 				EXTERNAL_RF_ON() ;
 			break ;
+    #endif
    #endif
   #endif
  #endif
@@ -2864,6 +2876,19 @@ int main( void )
 		MainStack[i] = 0x55555555 ;
 	}
 #endif
+
+#ifdef REV9E
+// Zero CCM
+	uint32_t j ;
+	uint32_t *p = (uint32_t *)0x10000000 ;	// CCM
+	for ( j = 0 ; j < 16384 ; j += 1 )
+	{
+		*p++ = 0 ;
+	}
+#endif
+
+
+
 //	__set_MSP((uint32_t) &MainStack[MAIN_STACK_REQUIRED]) ;
 	xmain() ;
 }
@@ -3573,7 +3598,7 @@ notePosition('3') ;
 				{
 					LcdBackground = LCD_GREEN ;
 					lcd_clear() ;
-					PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
+					PUTS_ATT( 4*FW + X12OFFSET, 3*FH, "STARTING", DBLSIZE ) ;
 					lcd_hbar( 13 + X12OFFSET, 49, 102, 6, (dtimer - tgtime) * 1000 / (97*7) ) ;
 					refreshDisplay() ;
 				}
@@ -5065,7 +5090,7 @@ void main_loop(void* pdata)
 #endif
 #ifdef PCBX9D
  #ifdef REV9E
-	NumExtraPots = NUM_EXTRA_POTS - 2 ;
+	NumExtraPots = NUM_EXTRA_POTS - 2 + countExtraPots() ; ;
  #else
   #ifdef PCBX7
 	NumExtraPots = NUM_EXTRA_POTS + countExtraPots() ;
@@ -5460,7 +5485,11 @@ static uint8_t PBstate ;
 #ifdef PROP_TEXT
 							PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
 #else
+ #if defined(PCBX12D) || defined(PCBX10)
+							PUTS_ATT( 4*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+ #else
 							PUTS_ATT( 3*FW + X12OFFSET, 3*FH, "STOPPING", DBLSIZE ) ;
+ #endif
 #endif
 							uint8_t dtimer = get_tmr10ms() - tgtime ;
   #if defined(PCBX12D) || defined(PCBX10)
@@ -7262,7 +7291,7 @@ extern uint8_t M64ResetCount ;
 				StickScrollTimer -= 1 ;				
 			}
 #ifdef REV9E
-void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
+void updateTopLCD( int16_t time, uint32_t batteryState ) ;
 void setTopRssi( uint32_t rssi ) ;
 void setTopVoltage( uint32_t volts ) ;
 void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs ) ;
@@ -11478,6 +11507,17 @@ void setLastTelemIdx( uint8_t idx )
 			return ;
 		}
 	}
+	if ( ( idx >= 83 ) && ( idx <= 86 ) ) // A Custom sensor
+	{
+		x = idx - 83 ;
+		x *= 4 ;
+		s = &g_model.customTelemetryNames2[x] ;
+		if ( *s && (*s != ' ' ) )
+		{
+			ncpystr( (uint8_t *)LastItem, s, 4 ) ;
+			return ;
+		}
+	}
 	if ( ( idx >= 38 ) && ( idx <= 45 ) )	// A Scaler
 	{
 		x = idx - 38 ;
@@ -11855,8 +11895,13 @@ void create6posTable()
 #endif
 
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#ifdef REV9E
+uint8_t switchMapTable[124] __CCM ;
+uint8_t switchUnMapTable[124] __CCM ;
+#else
 uint8_t switchMapTable[100] ;
 uint8_t switchUnMapTable[100] ;
+#endif
 
 // So, I think I map SA0/1/2 to ELE 3-pos, SC0/1/2 to ID0/1/2, SD0/1/2 to AIL 3-pos, 
 // SE0/1/2 to RUD 3-pos, SG0/1/2 to GEA 3-pos, SB0/1/2 to THR 3-pos,
@@ -11934,49 +11979,50 @@ void createSwitchMapping()
 #endif
 
 #ifdef REV9E
-	if ( g_eeGeneral.ailsource & 1 )
+//	if ( g_eeGeneral.ailsource & 1 )
 	{
 		*p++ = HSW_SI0 ;
 		*p++ = HSW_SI1 ;
 		*p++ = HSW_SI2 ;
 	}
-	if ( g_eeGeneral.ailsource & 2 )
+//	if ( g_eeGeneral.ailsource & 2 )
 	{
 		*p++ = HSW_SJ0 ;
 		*p++ = HSW_SJ1 ;
 		*p++ = HSW_SJ2 ;
 	}
-	if ( g_eeGeneral.ailsource & 4 )
+//	if ( g_eeGeneral.ailsource & 4 )
 	{
 		*p++ = HSW_SK0 ;
 		*p++ = HSW_SK1 ;
 		*p++ = HSW_SK2 ;
 	}
-//	*p++ = HSW_SL0 ;
-//	*p++ = HSW_SL1 ;
-//	*p++ = HSW_SL2 ;
-//	*p++ = HSW_SM0 ;
-//	*p++ = HSW_SM1 ;
-//	*p++ = HSW_SM2 ;
-//	*p++ = HSW_SN0 ;
-//	*p++ = HSW_SN1 ;
-//	*p++ = HSW_SN2 ;
-//	*p++ = HSW_SO0 ;
-//	*p++ = HSW_SO1 ;
-//	*p++ = HSW_SO2 ;
-//	*p++ = HSW_SP0 ;
-//	*p++ = HSW_SP1 ;
-//	*p++ = HSW_SP2 ;
-//	*p++ = HSW_SQ0 ;
-//	*p++ = HSW_SQ1 ;
-//	*p++ = HSW_SQ2 ;
-//	*p++ = HSW_SR0 ;
-//	*p++ = HSW_SR1 ;
-//	*p++ = HSW_SR2 ;
+	*p++ = HSW_SL0 ;
+	*p++ = HSW_SL1 ;
+	*p++ = HSW_SL2 ;
+	*p++ = HSW_SM0 ;
+	*p++ = HSW_SM1 ;
+	*p++ = HSW_SM2 ;
+	*p++ = HSW_SN0 ;
+	*p++ = HSW_SN1 ;
+	*p++ = HSW_SN2 ;
+	*p++ = HSW_SO0 ;
+	*p++ = HSW_SO1 ;
+	*p++ = HSW_SO2 ;
+	*p++ = HSW_SP0 ;
+	*p++ = HSW_SP1 ;
+	*p++ = HSW_SP2 ;
+	*p++ = HSW_SQ0 ;
+	*p++ = HSW_SQ1 ;
+	*p++ = HSW_SQ2 ;
+	*p++ = HSW_SR0 ;
+	*p++ = HSW_SR1 ;
+	*p++ = HSW_SR2 ;
 #endif	// REV9E
 
 
 #ifndef PCBLEM1
+ #ifndef REV9E
  #if ( defined(PCBX9LITE) && defined(X9LS) ) || defined(PCBXLITES)
 	*p++ = HSW_Pb1 ;
 	*p++ = HSW_Pb2 ;
@@ -11997,6 +12043,7 @@ void createSwitchMapping()
 		*p++ = HSW_Pb3 ;
 	}
   #endif
+ #endif
  #endif
 #endif
 
@@ -12097,14 +12144,16 @@ int8_t switchMap( int8_t x )
 }
 
 
-void putsMomentDrSwitches( coord_t x, coord_t y,int8_t idx1, LcdFlags att)
+void putsMomentDrSwitches( coord_t x, coord_t y,int16_t idx1, LcdFlags att)
 {
   int16_t tm = idx1 ;
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+ #ifndef REV9E	
 	if ( tm < -HSW_MAX )
 	{
 		tm += 256 ;
 	}
+ #endif
 #endif
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
   if(abs(tm)>(HSW_MAX))	 //momentary on-off
@@ -12205,18 +12254,18 @@ void putsMomentDrSwitches( coord_t x, coord_t y,int8_t idx1, LcdFlags att)
 //#endif
 //}
 
-#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
-void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolour, uint16_t bcolour)//, bool nc)
-{
-	uint16_t oldBcolour = LcdBackground ;
-	uint16_t oldFcolour = LcdForeground ;
-	LcdBackground = bcolour ;
-	LcdForeground = fcolour ;
-	putsDrSwitches( x, y, idx1, att ) ;
-	LcdBackground = oldBcolour ;
-	LcdForeground = oldFcolour ;
-}
-#endif
+//#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
+//void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolour, uint16_t bcolour)//, bool nc)
+//{
+////	uint16_t oldBcolour = LcdBackground ;
+//	uint16_t oldFcolour = LcdForeground ;
+////	LcdBackground = bcolour ;
+//	LcdForeground = fcolour ;
+//	putsDrSwitches( x, y, idx1, att ) ;
+////	LcdBackground = oldBcolour ;
+//	LcdForeground = oldFcolour ;
+//}
+//#endif
 
 //Type 1-trigA, 2-trigB, 0 best for display
 void putsTmrMode(coord_t x, coord_t y, LcdFlags attr, uint8_t timer, uint8_t type )
@@ -12305,12 +12354,12 @@ int16_t getValue(uint8_t i)
 }
 
 
-bool getSwitch00( int8_t swtch )
+bool getSwitch00( int16_t swtch )
 {
 	return getSwitch( swtch, 0, 0 ) ;
 }
 
-bool getSwitch(int8_t swtch, bool nc, uint8_t level)
+bool getSwitch(int16_t swtch, bool nc, uint8_t level)
 {
   bool ret_value ;
   uint32_t cs_index ;
@@ -14066,6 +14115,98 @@ void protocolsToModules()
 		STORE_MODELVARS ;
 	}
 }
+
+#ifdef DEBUG_REPORT
+char DebugText[100][40] __CCM ;
+uint32_t DebugIndex __CCM ;
+
+void debugReport( char *text )
+{
+	uint32_t i ;
+	char chr ;
+
+	if ( DebugIndex < 100 )
+	{
+		i = 0 ;
+		chr = *text ;
+		for(;;)
+		{
+			DebugText[DebugIndex][i++] = *text++ ;
+			if ( i > 37 )
+			{
+				DebugText[DebugIndex][i] = '\0' ;
+				break ;
+			}
+			if ( chr == '\0' )
+			{
+				break ;
+			}
+			chr = *text ;
+		}
+		DebugIndex += 1 ;
+	}
+}
+
+void hextostring( char *p, uint32_t value, uint32_t size )
+{
+	p += size ;
+	*p-- = 0 ;
+	while ( size )
+	{
+    char c = value & 0x0f ;
+    c = c>9 ? c+'A'-10 : c+'0' ;
+		*p-- = c ;
+		size -= 1 ;
+		value >>= 4 ;
+	}
+}
+
+void menuReport(uint8_t event)
+{
+	uint32_t rows ;
+	rows = DebugIndex ;
+	if ( rows < 13 )
+	{
+		rows = 0 ;
+	}
+	else
+	{
+		rows = DebugIndex - 1 - 12 ;
+	}
+
+	rows = 100 - 14 ;
+
+	TITLE(PSTR("REPORT")) ;
+	static MState2 mstate2 ;
+	event = mstate2.check( event, e_report, menuTabStat, DIM(menuTabStat), 0, 0, rows ) ;
+
+	uint32_t i ;
+	uint32_t j ;
+	uint32_t start ;
+
+	i = mstate2.m_posVert ;
+	start = i ;
+	j = 1 ;
+	
+	while ( j < 14 )
+	{
+		if ( start++ >= DebugIndex )
+		{
+			lcdDrawTextLeft( j*FH, "----" ) ;
+		}
+		else
+		{
+			lcdDrawTextLeft( j*FH, DebugText[i] ) ;
+		}
+		j += 1 ;
+		i += 1 ;
+	}
+}
+
+
+#endif
+
+
 
 /*** EOF ***/
  

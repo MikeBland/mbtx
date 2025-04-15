@@ -711,7 +711,7 @@ void setupPulses(unsigned int port)
 	      break;
 #endif
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS) || defined(REV9E)
 	      case PROTO_ACCESS :
 					disable_access(EXTERNAL_MODULE) ;
 	      break ;
@@ -755,7 +755,7 @@ void setupPulses(unsigned int port)
 	//				init_main_ppm( 3000, 1 ) ;		// Initial period 1.5 mS, output on
 	//      break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS) || defined(REV9E)
 	      case PROTO_ACCESS :
 					init_access(EXTERNAL_MODULE) ;
 	      break ;
@@ -790,9 +790,8 @@ void setupPulses(unsigned int port)
 	////      // PPM16 pulses are set up automatically within the interrupts
 	////    break ;
 #ifdef ACCESS
-#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS)
+#if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7ACCESS) || defined(REV9E)
       case PROTO_ACCESS :
-//				setupPulsesAccess(EXTERNAL_MODULE) ;
 				setupPulsesAccess(EXTERNAL_MODULE) ;
       break ;
 #endif
@@ -2524,6 +2523,11 @@ uint16_t *PtrPxx_x ;
 uint16_t PxxValue_x ;
 
 #if defined(PCBX12D) || defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX10) || defined(REV19) || defined(PCBX7ACCESS)
+uint8_t PxxSerial[2][50] ;
+uint8_t *PtrSerialPxx[2] ;
+#endif
+
+#if defined(REV9E) && defined(ACCESS)
 uint8_t PxxSerial[2][50] ;
 uint8_t *PtrSerialPxx[2] ;
 #endif

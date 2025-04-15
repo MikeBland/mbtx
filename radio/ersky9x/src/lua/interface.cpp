@@ -866,7 +866,7 @@ void luaDoOneRunStandalone(uint8_t evt)
   if (standaloneScript.state == SCRIPT_OK && standaloneScript.run) {
     luaSetInstructionsLimit(lsScripts, MANUAL_SCRIPTS_MAX_INSTRUCTIONS);
     lua_rawgeti(lsScripts, LUA_REGISTRYINDEX, standaloneScript.run);
-    lua_pushunsigned(lsScripts, evt);
+    lua_pushinteger(lsScripts, evt);
     if (lua_pcall(lsScripts, 1, 1, 0) == 0) {
       if (!lua_isnumber(lsScripts, -1)) {
         if (instructionsPercent > 100) {
@@ -1009,7 +1009,7 @@ extern uint32_t mainScreenDisplaying( void ) ;
 		{
 			navigateCustomTelemetry( evt, 1 ) ;
       lua_rawgeti(lsScripts, LUA_REGISTRYINDEX, sid.run);
-      lua_pushunsigned(lsScripts, evt);
+      lua_pushinteger(lsScripts, evt);
       inputsCount = 1;
     }
 //    else if ((scriptType & RUN_TELEM_BG_SCRIPT) && (sid.background))

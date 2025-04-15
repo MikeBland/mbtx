@@ -566,6 +566,7 @@ extern uint8_t StickScrollTimer ;
 #ifndef PCBX7
 #ifndef PCBXLITE
 #ifndef PCBX9LITE
+#ifndef REV9E
 struct t_serial_tx LcdDumpBuf ;
 
 void doLcdDump()
@@ -606,6 +607,7 @@ extern uint8_t ExtDisplaySend ;
 #endif
 	}	 
 }
+#endif // REV9E
 #endif // PCBX9LITE
 #endif // PCBXLITE
 #endif // PCBX7
@@ -915,7 +917,7 @@ extern uint8_t AnaEncSw ;
 //#endif
 
 #ifdef PCBX9D
-#if defined(REVPLUS) || defined(REVNORM) || defined(REV9E)
+#if defined(REVPLUS) || defined(REVNORM) // || defined(REV9E)
 	if ( g_model.com2Function == COM2_FUNC_LCD )
 	{
 		doLcdDump() ;

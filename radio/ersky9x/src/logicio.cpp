@@ -2633,10 +2633,10 @@ void setup_switches()
 	configure_pins( PIN_SW_A_L | PIN_SW_A_H | PIN_SW_D_L | PIN_SW_F_L | PIN_SW_F_H | PIN_SW_I_L
 									| PIN_SW_L_L | PIN_SW_L_H | PIN_SW_M_H | PIN_SW_O_L | PIN_SW_R_L,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTE ) ;
-	configure_pins( PIN_SW_E_L | PIN_SW_E_H | PIN_SW_G_L | PIN_SW_G_H | PIN_SW_K_L | PIN_SW_K_H 
+	configure_pins( PIN_SW_E_L | PIN_SW_E_H | PIN_SW_G_L | PIN_SW_G_H
 									| PIN_SW_O_H | PIN_SW_P_L | PIN_SW_P_H | PIN_SW_Q_L | PIN_SW_Q_H | PIN_SW_I_H | PIN_SW_H_L,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTF ) ;
-	configure_pins( PIN_SW_C_L | PIN_SW_C_H | PIN_SW_J_L | PIN_SW_J_H,
+	configure_pins( PIN_SW_C_L | PIN_SW_C_H | PIN_SW_J_L | PIN_SW_J_H | PIN_SW_K_L | PIN_SW_K_H ,
 									PIN_INPUT | PIN_PULLUP | PIN_PORTG) ;
 #endif	// REV9E
 #endif // PCBX7
@@ -3307,13 +3307,13 @@ uint32_t hwKeyState( uint8_t key )
       break;
     
 		case HSW_SK0:
-      xxx = ~f & PIN_SW_K_L ;
+      xxx = ~g & PIN_SW_K_L ;
       break;
     case HSW_SK1:
-      xxx = (f & (PIN_SW_K_H | PIN_SW_K_L)) == (PIN_SW_K_H | PIN_SW_K_L) ;
+      xxx = (g & (PIN_SW_K_H | PIN_SW_K_L)) == (PIN_SW_K_H | PIN_SW_K_L) ;
       break;
     case HSW_SK2:
-      xxx = ~f & PIN_SW_K_H ;
+      xxx = ~g & PIN_SW_K_H ;
       break;
 
     case HSW_SL0:

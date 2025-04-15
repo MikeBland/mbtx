@@ -557,10 +557,12 @@ extern volatile uint8_t PxxTxCount_x ;
 	}
 	else
 	{
+ #ifndef REV9E
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
 		PxxTxPtr = PxxSerial[0] ;
 		PxxTxCount = PxxSerial[module][1] + 4 ;
+ #endif
 	}
 }
 #endif
@@ -753,17 +755,23 @@ extern volatile uint8_t *PxxTxPtr_x ;
 extern volatile uint8_t PxxTxCount_x ;
 			PxxTxPtr_x = PxxSerial[EXTERNAL_MODULE] ;
 			PxxTxCount_x = PxxSerial[module][1] + 4 ;
+ #ifdef REV9E
+			USART6->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
+ #else			 
 			EXTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
+ #endif
 #endif
 		 
 		}
 		else
 		{
+#ifndef REV9E
 extern volatile uint8_t *PxxTxPtr ;
 extern volatile uint8_t PxxTxCount ;
 			PxxTxPtr = PxxSerial[0] ;
 			PxxTxCount = PxxSerial[module][1] + 4 ;
 			INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
+#endif
 		}
 	}
 }

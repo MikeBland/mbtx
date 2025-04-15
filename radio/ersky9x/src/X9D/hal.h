@@ -323,8 +323,8 @@
 #define	PIN_SW_I_H		        GPIO_Pin_15	//PF.15
 #define	PIN_SW_J_L		        GPIO_Pin_8	//PG.08
 #define	PIN_SW_J_H		        GPIO_Pin_7	//PG.07
-#define	PIN_SW_K_L		        GPIO_Pin_6	//PF.06
-#define	PIN_SW_K_H		        GPIO_Pin_5	//PF.05
+#define	PIN_SW_K_L		        GPIO_Pin_12	//PG.12
+#define	PIN_SW_K_H		        GPIO_Pin_13	//PG.13
 #define	PIN_SW_L_L		        GPIO_Pin_8	//PE.08
 #define	PIN_SW_L_H		        GPIO_Pin_9	//PE.09
 #define	PIN_SW_M_L		        GPIO_Pin_5	//PA.05
@@ -1505,6 +1505,40 @@
   #define GYRO_RCC_AHB1Periph           0
   #define GYRO_RCC_APB1Periph           0
 #endif
+
+#ifdef REV9E
+// ACCESS for External Module
+//  #define EXTMODULE_RCC_AHB1Periph      (RCC_AHB1Periph_GPIOC | RCC_AHB1Periph_GPIOD | RCC_AHB1Periph_DMA2)
+//  #define EXTMODULE_RCC_APB2Periph      RCC_APB2Periph_TIM8
+//  #define EXTMODULE_PWR_GPIO            GPIOD
+//  #define EXTMODULE_PWR_GPIO_PIN        GPIO_Pin_11 // PD.11
+  #define EXTMODULE_TX_GPIO             GPIOB
+  #define EXTMODULE_TX_GPIO_PIN         GPIO_Pin_10  // PB.10
+  #define EXTMODULE_RX_GPIO             GPIOB
+  #define EXTMODULE_RX_GPIO_PIN         GPIO_Pin_11 // PB.11
+  #define EXTMODULE_TX_GPIO_PinSource   GPIO_PinSource10
+  #define EXTMODULE_RX_GPIO_PinSource   GPIO_PinSource11
+  #define EXTMODULE_USART               USART3
+  #define EXTMODULE_USART_IRQn          USART3_IRQn
+  #define EXTMODULE_TIMER               TIM8
+//  #define EXTMODULE_TX_GPIO_AF          GPIO_AF_TIM8 // TIM8_CH1
+  #define EXTMODULE_TIMER_CC_IRQn       TIM8_CC_IRQn
+  #define EXTMODULE_TIMER_CC_IRQHandler TIM8_CC_IRQHandler
+//  #define EXTMODULE_DMA_CHANNEL         DMA_Channel_7
+//  #define EXTMODULE_DMA_STREAM          DMA2_Stream1
+//  #define EXTMODULE_DMA_IRQn            DMA2_Stream1_IRQn
+//  #define EXTMODULE_DMA_IRQHandler      DMA2_Stream1_IRQHandler
+//  #define EXTMODULE_DMA_FLAG_TC         DMA_IT_TCIF1
+////  #define EXTMODULE_TIMER_FREQ          (PERI2_FREQUENCY * TIMER_MULT_APB2)
+  #define EXTMODULE_TIMER_FREQ          (PeripheralSpeeds.Peri2_frequency * PeripheralSpeeds.Timer_mult2)
+//	#define EXTMODULE_TIMER_SR_MASK				0x1FFF
+//	#define EXTMODULE_USART_IRQHandler		USART6_IRQHandler
+
+//	#define PIN_EXTPPM_OUT                  GPIO_Pin_6  //PC.06
+//	#define PORT_EXTPPM                     PIN_PORTC
+
+#endif
+
 
 
 #endif // HAL

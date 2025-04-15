@@ -124,6 +124,7 @@ extern struct t_serial_tx *Current_Com2 ;
 #ifndef PCBX10
  #ifndef REV19
   #ifndef PCBX7ACCESS
+   #ifndef REV9E
 void USART6_Sbus_configure()
 {
  #ifdef PCBX9D
@@ -191,6 +192,7 @@ extern "C" void USART6_IRQHandler()
  #endif // Xlite
 #endif // X3
 
+  #endif // REV9E
   #endif // #ifndef X7ACCESS
  #endif // #ifndef REV19
 
@@ -707,6 +709,7 @@ void txmit( uint8_t c )
 #ifndef PCBX7
 #ifndef PCBX9LITE
 #ifndef PCBXLITES
+#ifndef REV9E
 uint32_t txPdcCom2( struct t_serial_tx *data )
 {
 	data->ready = 1 ;
@@ -786,6 +789,7 @@ extern "C" void USART3_IRQHandler()
     status = puart->SR ;
 	}
 }
+#endif
 #endif
 #endif
 #endif

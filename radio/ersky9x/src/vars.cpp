@@ -341,15 +341,23 @@ void displayValueItem( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint
 	switch ( pvalue->category )
 	{
 		case 0 :
-			PUTS_ATT( x-3*FW, y, XPSTR("---"), attr ) ;
+			PUTS_ATT( x, y, XPSTR("---"), attr|LUA_RIGHT ) ;
 		break ;
 		case 1 :	// Switch
-		  putsDrSwitches( x-4*FW, y, pvalue->item ,attr );
+		  putsDrSwitches( x, y, pvalue->item ,attr|LUA_RIGHT );
 		break ;
 		case 2 :	// Flight Mode
-			PUTC_ATT( x-3*FW, y, 'F', attr ) ;
-			PUTC_ATT( x-2*FW, y, 'M', attr ) ;
-			PUTC_ATT( x-FW, y, pvalue->item+'0', attr ) ;
+		{
+			char text[4] ;
+			text[0] = 'F' ;
+			text[1] = 'M' ;
+			text[2] = pvalue->item+'0' ;	 
+			text[3] = 0 ;
+			PUTS_ATT( x, y, text, attr|LUA_RIGHT ) ;
+//			PUTC_ATT( x-3*FW-1, y, 'F', attr ) ;
+//			PUTC_ATT( x-2*FW-1, y, 'M', attr ) ;
+//			PUTC_ATT( x-FW, y, pvalue->item+'0', attr ) ;
+		}
 		break ;
 	}
 }
@@ -359,10 +367,10 @@ void displayActionItem( uint16_t x, uint16_t y, struct t_actVarPack *pAction, ui
 	switch ( pAction->category )
 	{
 		case 0 :
-			PUTS_ATT( x-3*FW, y, XPSTR("---"), attr ) ;
+			PUTS_ATT( x, y, XPSTR("---"), attr|LUA_RIGHT ) ;
 		break ;
 		case 1 :	// Switch
-		  putsDrSwitches( x-4*FW, y, pAction->item ,attr );
+		  putsDrSwitches( x, y, pAction->item ,attr|LUA_RIGHT ) ;
 		break ;
 	}
 }
@@ -466,7 +474,8 @@ void varpopup( uint8_t event )
 // Actions (up to 10) - ALways ON, Switch positions, Fn Switches(6pos), Logic Switches, Trim positions, telemetry, sys event
 //    Function - Assign(=), Add, subtract, multiply, divide, percent, min, max, repurpose trim
 
-#ifndef TOUCH
+//#ifndef TOUCH
+#if not (defined(PCBX12D) || defined(PCBX10) || defined(TOUCH) )
 void menuOneAction( uint8_t event )
 {
 	TITLE(XPSTR("Action")) ;
@@ -1000,21 +1009,26 @@ void menuVars(uint8_t event)
 
 #ifdef TOUCH
 
-extern uint8_t EditType ;
 extern uint8_t TlExitIcon ;
+extern uint8_t evalHresOffset(int8_t sub) ;
+
+#endif
+
+extern uint8_t EditType ;
 extern uint8_t s_pgOfs ;
 extern uint8_t evalHresOffset(int8_t sub) ;
-extern uint16_t processSelection( uint8_t vert, int32_t newSelection ) ;
-extern void checkTouchEnterEdit( uint16_t value ) ;
 extern void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
 
+#if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 
 void menuOneAction( uint8_t event )
 {
-	TITLE(XPSTR("Action")) ;
+	TITLE(XPSTR("Action ")) ;
 	EditType = EE_MODEL ;
 	static MState2 mstate2 ;
+#ifdef TOUCH
 	TlExitIcon = 1 ;
+#endif
 	uint32_t rows = 4 ;
 	struct t_actVarPack	*pAction ;
 	struct t_valVarPack *pvalue ;
@@ -1034,10 +1048,12 @@ void menuOneAction( uint8_t event )
 	
 	uint16_t colour = dimBackColour() ;
 	
+#ifdef TOUCH
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
 	uint16_t newVert = processSelection( sub , newSelection ) ;
 	sub = mstate2.m_posVert = newVert & 0x00FF ;
 	checkTouchEnterEdit( newVert ) ;
+#endif
 //	sub = mstate2.m_posVert = handleTouchSelect( rows, 0, sub ) ;
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -1053,7 +1069,7 @@ void menuOneAction( uint8_t event )
 			{
 				int32_t oldCategory = pAction->category ;
 				drawItem( (char *)XPSTR("Category"), y, attr ) ;
-				drawIdxText( y, (char *)StringActionCategory, pAction->category, attr ) ;
+				drawIdxText( y*2+TVOFF, (char *)StringActionCategory, pAction->category, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( pAction->category, 0, 1 ) ;
@@ -1068,8 +1084,15 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 1 :
 				drawItem( (char *)XPSTR("Item"), y, attr ) ;
+				if ( attr & INVERS )
+				{
+					if ( s_editMode && BLINK_ON_PHASE )
+					{
+						attr = 0 ;
+					}
+				}
 				saveEditColours( attr, colour ) ;
-				displayActionItem( TRIGHT-TRMARGIN, y+TVOFF, pAction, 0 ) ;
+				displayActionItem( TRIGHT-TRMARGIN, y+TVOFF, pAction, attr & ~INVERS ) ;
 				restoreEditColours() ;
 				switch ( pvalue->category )
 				{
@@ -1096,7 +1119,7 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 2 :
 				drawItem( (char *)XPSTR("Function"), y, attr ) ;
-				drawIdxText( y, (char *)StringActionFunction, pAction->function, attr ) ;
+				drawIdxText( y*2+TVOFF, (char *)StringActionFunction, pAction->function, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( pAction->function, 0, 7 ) ;
@@ -1116,7 +1139,7 @@ void menuOneAction( uint8_t event )
 				if ( pAction->function == 7 )
 				{
 			 		drawItem( (char *)XPSTR("Trim"), y, attr ) ;
-					drawIdxText( y, (char *)XPSTR("\002LHLVRVRH"), lindex, attr ) ;
+					drawIdxText( y*2+TVOFF, (char *)XPSTR("\002LHLVRVRH"), lindex, attr ) ;
 				}
 				else
 				{
@@ -1156,10 +1179,12 @@ void menuOneAction( uint8_t event )
 
 void menuOneValue( uint8_t event )
 {
-	TITLE(XPSTR("Value")) ;
+	TITLE(XPSTR("Value ")) ;
 	EditType = EE_MODEL ;
 	static MState2 mstate2 ;
+#ifdef TOUCH
 	TlExitIcon = 1 ;
+#endif
 	uint32_t rows = 4 ;
 	struct t_valVarPack *pvalue ;
 	uint8_t sItem ;
@@ -1170,10 +1195,12 @@ void menuOneValue( uint8_t event )
 
 	uint16_t colour = dimBackColour() ;
 
+#ifdef TOUCH
 	int32_t newSelection = checkTouchSelect( rows, 0) ;
 	uint16_t newVert = processSelection( sub , newSelection ) ;
 	sub = mstate2.m_posVert = newVert & 0x00FF ;
 	checkTouchEnterEdit( newVert ) ;
+#endif
 //	sub = mstate2.m_posVert = handleTouchSelect( rows, 0, sub ) ;
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
@@ -1190,7 +1217,7 @@ void menuOneValue( uint8_t event )
 			case 0 :
 			{
 				drawItem( (char *)XPSTR("Category"), y, attr ) ;
-				drawIdxText( y, (char *)StringValueCategory, pvalue->category, attr ) ;
+				drawIdxText( y*2+TVOFF, (char *)StringValueCategory, pvalue->category, attr ) ;
 				int32_t oldCategory = pvalue->category ;
 				if(attr)
 				{
@@ -1204,8 +1231,15 @@ void menuOneValue( uint8_t event )
 			break ;
 			case 1 :
 				drawItem( (char *)XPSTR("Item"), y, attr ) ;
+				if ( attr & INVERS )
+				{
+					if ( s_editMode && BLINK_ON_PHASE )
+					{
+						attr = 0 ;
+					}
+				}
 				saveEditColours( attr, colour ) ;
-				displayValueItem( TRIGHT-TRMARGIN, y+TVOFF, pvalue, 0 ) ;
+				displayValueItem( TRIGHT-TRMARGIN, y+TVOFF/2, pvalue, attr & ~INVERS ) ;
 				restoreEditColours() ;
 				switch ( pvalue->category )
 				{
@@ -1244,8 +1278,15 @@ void menuOneValue( uint8_t event )
 				drawItem( (char *)XPSTR("Value"), y, attr ) ;
  				if ( pvalue->valIsSource )
 				{
+					if ( attr & INVERS )
+					{
+						if ( s_editMode && BLINK_ON_PHASE )
+						{
+							attr = 0 ;
+						}
+					}
 					saveEditColours( attr, colour ) ;
-					displayVarSource( TRIGHT-TRMARGIN-3*FW, y+TVOFF, pvalue, 0 ) ;
+					displayVarSource( TRIGHT-TRMARGIN-3*FW, y+TVOFF, pvalue, attr & ~INVERS ) ;
 					restoreEditColours() ;
 			 		if(attr)
 					{
@@ -1270,7 +1311,7 @@ void editGvarSource(uint8_t *p) ;
 
 void menuOneVar(uint8_t event)
 {
-	TITLE(XPSTR("Var")) ;
+	TITLE(XPSTR("Var ")) ;
 	if ( s_currIdx > 8 )
 	{
 //		lcd_2_digits( 9*FW, 0, s_currIdx+1, 0 ) ;
@@ -1285,7 +1326,9 @@ void menuOneVar(uint8_t event)
 	PUTS_NUM( 16*FW, 0, VarValues[s_currIdx], PREC1) ;
 
 	EditType = EE_MODEL ;
+#ifdef TOUCH
 	TlExitIcon = 1 ;
+#endif
 	static MState2 mstate2 ;
 	
 	struct t_varPack *pvar ;
@@ -1295,8 +1338,10 @@ void menuOneVar(uint8_t event)
 	uint32_t k ;
 	uint32_t m ;
 	uint32_t t_pgOfs ;
+#ifdef TOUCH
 	uint32_t selected = 0 ;
-	
+#endif
+	 
 	pvar = getVarAddress( s_currIdx ) ;
 	options = pvar->numOpt ;
 	actions = pvar->numAct ;
@@ -1325,6 +1370,7 @@ void menuOneVar(uint8_t event)
 
 	t_pgOfs = evalHresOffset( sub ) ;
 	
+#ifdef TOUCH
 	if ( !PopupData.PopupActive )
 	{
 		int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 0 ) ;
@@ -1349,6 +1395,7 @@ void menuOneVar(uint8_t event)
 			}
 		}
 	}
+#endif
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 	 
 //	pvar = (struct t_varPack *) s_currVar ;
@@ -1376,7 +1423,9 @@ void menuOneVar(uint8_t event)
 			case 0 :
 				drawItem( (char *)XPSTR("Value"), y, attr ) ;
 				drawNumber( TRIGHT-TRMARGIN, y, pvar->value, attr|PREC1 ) ;
+#ifdef TOUCH
 				checkTouchEnterEdit( selected ) ;
+#endif
 				if(attr)
 				{
 					pvar->value = checkIncDec16( pvar->value, -2000, 2000, EE_MODEL ) ;
@@ -1385,7 +1434,9 @@ void menuOneVar(uint8_t event)
 			case 1 :
 				drawItem( (char *)XPSTR("Min"), y, attr ) ;
 				drawNumber( TRIGHT-TRMARGIN, y, pvar->min, attr|PREC1 ) ;
+#ifdef TOUCH
 				checkTouchEnterEdit( selected ) ;
+#endif
 				if(attr)
 				{
 					pvar->min = checkIncDec16( pvar->min, -2000, 2000, EE_MODEL ) ;
@@ -1394,7 +1445,9 @@ void menuOneVar(uint8_t event)
 			case 2 :
 				drawItem( (char *)XPSTR("Max"), y, attr ) ;
 				drawNumber( TRIGHT-TRMARGIN, y, pvar->max, attr|PREC1 ) ;
+#ifdef TOUCH
 				checkTouchEnterEdit( selected ) ;
+#endif
 				if(attr)
 				{
 					pvar->max = checkIncDec16( pvar->max, -2000, 2000, EE_MODEL ) ;
@@ -1402,7 +1455,9 @@ void menuOneVar(uint8_t event)
 			break ;
 			case 3 :
 				drawItem( (char *)XPSTR("Name"), y, attr ) ;
+#ifdef TOUCH
 				checkTouchEnterEdit( selected ) ;
+#endif
 				saveEditColours( attr, colour ) ;
 				alphaEditName( TRIGHT-6*FW-TRMARGIN, y+TVOFF, (uint8_t *)pvar->name, sizeof(pvar->name), attr|ALPHA_NO_NAME, (uint8_t *)0 ) ;
 				restoreEditColours() ;
@@ -1410,7 +1465,11 @@ void menuOneVar(uint8_t event)
 			default :
 				if ( attr )
 				{
+#ifdef TOUCH
 					if ( handleSelectIcon() || selected || (event == EVT_KEY_BREAK(BTN_RE) ) )
+#else
+	if ( event == EVT_KEY_BREAK(BTN_RE) )
+#endif
 					{
 						process = 1 ;
 					}
@@ -1423,18 +1482,18 @@ void menuOneVar(uint8_t event)
 
 					drawItem( (char *)XPSTR("Value"), y, attr ) ;
 
-					PUTS_AT_IDX( 8*FW, y+TVOFF, StringValueCategory, pvalue->category, 0 ) ;
+					PUTS_AT_IDX( 8*FW, y+TVOFF/2, StringValueCategory, pvalue->category, 0 ) ;
 					
 					saveEditColours( attr, colour ) ;
-					displayValueItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF, pvalue, 0 ) ;
+					displayValueItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF/2, pvalue, 0 ) ;
  					
 	 				if ( pvalue->valIsSource )
 					{
-						displayVarSource( TRIGHT-4*FW-TRMARGIN, y+TVOFF, pvalue, 0 ) ;
+						displayVarSource( TRIGHT-4*FW-TRMARGIN, y+TVOFF/2, pvalue, 0 ) ;
 					}
 					else
 					{
-						PUTS_NUM( TRIGHT-TRMARGIN, y+TVOFF, pvalue->value, PREC1) ;
+						PUTS_NUM( TRIGHT-TRMARGIN, y+TVOFF/2, pvalue->value, PREC1) ;
 					}
 					restoreEditColours() ;
 
@@ -1487,10 +1546,10 @@ void menuOneVar(uint8_t event)
 
 						drawItem( (char *)XPSTR("Action"), y, attr ) ;
 
-						PUTS_AT_IDX( 8*FW, y+TVOFF, StringActionCategory, pAction->category, 0 ) ;
+						PUTS_AT_IDX( 8*FW, y+TVOFF/2, StringActionCategory, pAction->category, 0 ) ;
 						saveEditColours( attr, colour ) ;
-						displayActionItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF, pAction, 0 ) ;
-						PUTS_AT_IDX( TRIGHT-5*FW-TRMARGIN, y+TVOFF, XPSTR("\001=+-*/v^T"), pAction->function, 0 ) ;
+						displayActionItem( TRIGHT-6*FW-TRMARGIN, y+TVOFF/2, pAction, 0 ) ;
+						PUTS_AT_IDX( TRIGHT-5*FW-TRMARGIN, y+TVOFF/2, XPSTR("\001=+-*/v^T"), pAction->function, 0 ) ;
 						restoreEditColours() ;
 						int32_t lvalue = pAction->value ; 
 						if ( (pAction->function == 7) )
@@ -1555,9 +1614,11 @@ void menuOneVar(uint8_t event)
 
 void menuVars(uint8_t event)
 {
-	TITLE(XPSTR("Vars"));
+	TITLE(XPSTR("Vars "));
 	EditType = EE_MODEL ;
+#ifdef TOUCH
 	TlExitIcon = 1 ;
+#endif
 	uint32_t rows = NUM_VARS ;
 	static MState2 mstate2 ;
 	mstate2.check_columns( event, rows-1 ) ;
@@ -1571,18 +1632,26 @@ void menuVars(uint8_t event)
 	uint32_t sub = mstate2.m_posVert ;
 	coord_t y ;
 	
+#ifdef TOUCH
 	uint32_t selected = 0 ;
 	uint32_t newVpos ;
+#endif
 	uint32_t k = 0 ;
   uint32_t t_pgOfs ;
 	t_pgOfs = evalHresOffset( sub ) ;
 
+#ifdef TOUCH
 	int32_t newSelection = checkTouchSelect( rows, t_pgOfs, 1 ) ;
 	uint32_t newVert = processSelection( sub , newSelection ) ;
 	sub = mstate2.m_posVert = newVert & 0x00FF ;
 	selected = newVert & 0x0100 ;
+#endif
 
+#ifdef TOUCH
 	if ( handleSelectIcon() || selected || ( event == EVT_KEY_BREAK(BTN_RE) ) )
+#else
+	if ( event == EVT_KEY_BREAK(BTN_RE) )
+#endif
 	{
 		s_currIdx = sub ;
 		killEvents(event);
@@ -1590,6 +1659,7 @@ void menuVars(uint8_t event)
 		pushMenu(menuOneVar) ;
   }
 
+#ifdef TOUCH
 	if ( rows > TLINES )
 	{
 		newVpos = scrollBar( TSCROLLLEFT, TSCROLLTOP, TSCROLLWIDTH, TSCROLLBOTTOM, rows-(TLINES-1), t_pgOfs ) ;
@@ -1606,6 +1676,7 @@ void menuVars(uint8_t event)
 			}
 		}
 	}
+#endif
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
 	savedOffset = t_pgOfs ;

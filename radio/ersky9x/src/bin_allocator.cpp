@@ -29,16 +29,17 @@
 #include "bin_allocator.h"
 
 
-#if defined(PCBX12D) || defined(PCBX10)
+#if defined(PCBX12D) || defined(PCBX10) || defined(REV9E)
 BinAllocator_slots1 slots1 __CCM ;
 #else
 BinAllocator_slots1 slots1 ;
 #endif
-#if defined(PCBX9D)
-BinAllocator_slots2 slots2 __attribute__ ((section (".bkpsram"))) ;
-#else
- #if defined(PCBX12D) || defined(PCBX10)
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(REV9E)
 BinAllocator_slots2 slots2 __CCM ;
+#else
+ #if defined(PCBX9D)
+BinAllocator_slots2 slots2 __attribute__ ((section (".bkpsram"))) ;
  #else
 BinAllocator_slots2 slots2 ;
  #endif

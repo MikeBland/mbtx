@@ -105,7 +105,7 @@ typedef uint32_t LcdFlags ;
 
 //#define ENABLE_DSM_MATCH	1
 
-//#define WDOG_REPORT	1
+#define WDOG_REPORT	1
 
 #define MULTI_EVENTS	1
 
@@ -125,6 +125,14 @@ typedef uint32_t LcdFlags ;
 	#define __SDRAM __attribute__((section(".sdram"), aligned(32)))
 	#define __SDRAM0 __attribute__((section(".sdra0m"), aligned(32)))
 	#define __CCM __attribute__((section(".ccm"), aligned(32)))
+#endif
+
+#ifdef REV9E
+#define __CCM __attribute__((section(".ccm"), aligned(4)))
+#endif
+
+#ifndef __CCM
+#define __CCM
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -206,6 +214,12 @@ typedef uint32_t LcdFlags ;
 
 #ifdef PCBX7ACCESS
  #define ACCESS					1
+#endif
+
+#ifdef REV9E
+ #define ACCESS					1
+ // Next is for using USART3 for ACCESS Rx instead of USART6 for both Tx and Rx
+// #define X9E_USE_USART3
 #endif
 
 
@@ -1414,7 +1428,7 @@ extern void putsDrSwitches(coord_t x,coord_t y,int8_t idx1, LcdFlags att) ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 void putsDrSwitchesColour(uint8_t x,uint8_t y,int8_t idx1, LcdFlags att, uint16_t fcolor, uint16_t bcolour) ;
 #endif
-extern void putsMomentDrSwitches(coord_t x,coord_t y,int8_t idx1, LcdFlags att) ;
+extern void putsMomentDrSwitches(coord_t x,coord_t y,int16_t idx1, LcdFlags att) ;
 extern void putsModeDrSwitches(uint8_t x,uint8_t y,int8_t idx1,LcdFlags att) ;
 extern void putsTmrMode(coord_t x, coord_t y, LcdFlags attr, uint8_t timer, uint8_t type ) ;
 extern const char *get_switches_string( void ) ;
@@ -1473,8 +1487,8 @@ void    popMenu(bool uppermost=false);
 // Timeout, in seconds, stick scroll remains active
 #define STICK_SCROLL_TIMEOUT		5
 
-extern bool getSwitch00( int8_t swtch ) ;
-extern bool getSwitch(int8_t swtch, bool nc, uint8_t level = 0 ) ;
+extern bool getSwitch00( int16_t swtch ) ;
+extern bool getSwitch(int16_t swtch, bool nc, uint8_t level = 0 ) ;
 extern int8_t getMovedSwitch( void ) ;
 extern uint8_t g_vbat100mV ;
 //extern void doSplash( void ) ;
@@ -2014,5 +2028,8 @@ extern coord_t LcdNextPos ;
 extern coord_t LcdLastRightPos ;
 extern coord_t LcdLastLeftPos ;
 #endif
+
+//#define DEBUG_REPORT		1
+
 
 #endif // ersky9x_h

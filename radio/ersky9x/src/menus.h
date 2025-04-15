@@ -304,6 +304,7 @@ void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint1
 void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode ) ;
 void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
 void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
+void DrawDrSwitches( coord_t x, coord_t y, int8_t idx1, LcdFlags att) ;
 uint32_t touchOnOffItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 uint32_t touchOffOnItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 void putsChnColour( coord_t x, coord_t y, uint8_t idx1, LcdFlags att ) ;
@@ -324,7 +325,7 @@ void editTimer( uint8_t sub, uint8_t event ) ;
 #define ALPHA_NO_NAME		0x80
 void alphaEditName( coord_t x, coord_t y, uint8_t *name, uint8_t len, uint16_t type, uint8_t *heading ) ;
 
-extern int8_t edit_dr_switch( coord_t x, coord_t y, int8_t drswitch, LcdFlags attr, LcdFlags flags, uint8_t event ) ;
+extern int16_t edit_dr_switch( coord_t x, coord_t y, int16_t drswitch, LcdFlags attr, LcdFlags flags, uint8_t event ) ;
 
 const char *get_curve_string() ;
 

@@ -15,6 +15,8 @@ extern "C" {
 #include "lrotable.h"
 
 #include "lapi.h"
+
+#include "lro_defs.h"
 }
 
 #include "lua_api.h"
@@ -23,6 +25,8 @@ extern "C" {
 #include <string.h>
 
 #include "frsky.h"
+
+
 
 extern struct t_telemetryTx TelemetryTx ;
 
@@ -303,7 +307,7 @@ static int luaPlayNumber(lua_State * L)
 {
   int number = luaL_checkinteger(L, 1);
   int unit = luaL_checkinteger(L, 2);
-  unsigned int att = luaL_optunsigned(L, 3, 0);
+  unsigned int att = luaL_optinteger(L, 3, 0);
 	if ( unit > 0 && unit < 10 )
 	{
 		unit = getUnitsVoice( unit ) ;
@@ -365,13 +369,13 @@ static int luaSportTelemetryPush(lua_State * L)
   else
 	{
 		uint32_t value ;
-//    sportPacket[7] = getDataId(luaL_checkunsigned(L, 1)) ;
-		sportPacket[7] = SportIds[luaL_checkunsigned(L, 1)] ;
-    sportPacket[0] = luaL_checkunsigned(L, 2) ;
-    value = luaL_checkunsigned(L, 3) ;
+//    sportPacket[7] = getDataId(luaL_checkinteger(L, 1)) ;
+		sportPacket[7] = SportIds[luaL_checkinteger(L, 1)] ;
+    sportPacket[0] = luaL_checkinteger(L, 2) ;
+    value = luaL_checkinteger(L, 3) ;
 		sportPacket[1] = value ;
 		sportPacket[2] = value >> 8 ;
-    value = luaL_checkunsigned(L, 4) ;
+    value = luaL_checkinteger(L, 4) ;
 		sportPacket[3] = value ;
 		sportPacket[4] = value >> 8 ;
 		sportPacket[5] = value >> 16 ;
@@ -425,7 +429,7 @@ static int luaSportTelemetryPop(lua_State * L)
 		value |= get_fifo128( &Script_fifo ) << 8 ;
 		value |= get_fifo128( &Script_fifo ) << 16 ;
 		value |= get_fifo128( &Script_fifo ) << 24 ;
-    lua_pushunsigned(L, value ) ;	// Data
+    lua_pushinteger(L, value ) ;	// Data
     return 4 ;
 	}
 //  if (luaInputTelemetryFifo->size() >= sizeof(SportTelemetryPacket))
@@ -438,7 +442,7 @@ static int luaSportTelemetryPop(lua_State * L)
 //    lua_pushnumber(L, packet.physicalId);
 //    lua_pushnumber(L, packet.primId);
 //    lua_pushnumber(L, packet.dataId);
-//    lua_pushunsigned(L, packet.value);
+//    lua_pushinteger(L, packet.value);
 //    return 4;
 //  }
 
@@ -542,7 +546,7 @@ static int luaCrossfireTelemetryPush(lua_State * L)
   }
   else if ( xfirePacketSend( 0, 0, 0 ) )
 	{
-    uint8_t command = luaL_checkunsigned(L, 1) ;
+    uint8_t command = luaL_checkinteger(L, 1) ;
     luaL_checktype(L, 2, LUA_TTABLE) ;
     uint8_t length = luaL_len(L, 2);
 
@@ -551,7 +555,7 @@ static int luaCrossfireTelemetryPush(lua_State * L)
 		{
       lua_rawgeti(L, 2, i+1);
 
-			TelemetryTx.XfireTx.data[i] = luaL_checkunsigned(L, -1) ;
+			TelemetryTx.XfireTx.data[i] = luaL_checkinteger(L, -1) ;
 		}
 		TelemetryTx.XfireTx.count = length ;
 
@@ -560,7 +564,7 @@ static int luaCrossfireTelemetryPush(lua_State * L)
 //    outputTelemetryBuffer.pushByte(command); // COMMAND
 //    for (int i=0; i<length; i++) {
 //      lua_rawgeti(L, 2, i+1);
-//      outputTelemetryBuffer.pushByte(luaL_checkunsigned(L, -1));
+//      outputTelemetryBuffer.pushByte(luaL_checkinteger(L, -1));
 //    }
 //    outputTelemetryBuffer.pushByte(crc8(outputTelemetryBuffer.data+2, 1 + length));
 //    outputTelemetryBuffer.setDestination(TELEMETRY_ENDPOINT_SPORT);
@@ -581,7 +585,7 @@ static int luaCrossfireTelemetryPush(lua_State * L)
 
 static int luaGetTime(lua_State *L)
 {
-  lua_pushunsigned(L, get_ltmr10ms()) ;
+  lua_pushinteger(L, get_ltmr10ms()) ;
   return 1 ;
 }
 
@@ -699,7 +703,30 @@ extern "C" int luaB_loadfile(lua_State *L) ;
 
 static int luaLoadScript(lua_State *L)
 {
-	return luaB_loadfile(L) ;
+//	return luaB_loadfile(L) ;
+  // this function is replicated pretty much verbatim from luaB_loadfile() and load_aux() in lbaselib.c
+  const char *fname = luaL_optstring(L, 1, NULL);
+  const char *mode = luaL_optstring(L, 2, NULL);
+  int env = (!lua_isnone(L, 3) ? 3 : 0);  // 'env' index or 0 if no 'env'
+  lua_settop(L, 0);
+  if (fname != NULL && luaLoadScriptFileToState(L, fname , mode) == SCRIPT_OK) {
+    if (env != 0) {  // 'env' parameter?
+      lua_pushvalue(L, env);  // environment for loaded function
+      if (!lua_setupvalue(L, -2, 1))  // set it as 1st upvalue
+        lua_pop(L, 1);  // remove 'env' if not used by previous call
+    }
+    return 1;
+  }
+  else {
+    // error (message should be on top of the stack)
+    if (!lua_isstring(L, -1)) {
+      // probably didn't find a file or had some other error before luaL_loadfile() was run
+      lua_pushfstring(L, "loadScript(\"%s\", \"%s\") error: File not found", (fname != NULL ? fname : "nul"), (mode != NULL ? mode : "bt"));
+    }
+    lua_pushnil(L);
+    lua_insert(L, -2);  // move nil before error message
+    return 2;  // return nil plus error message
+  }
 }
 
 static int luaGetVersion(lua_State * L)
@@ -723,11 +750,11 @@ Get RSSI value as well as low and critical RSSI alarm levels (in dB)
 static int luaGetRSSI(lua_State * L)
 {
 	int8_t offset ;
-  lua_pushunsigned(L, TelemetryData[FR_RXRSI_COPY]);
+  lua_pushinteger(L, TelemetryData[FR_RXRSI_COPY]);
 	offset = rssiOffsetValue( 0 ) ;
-  lua_pushunsigned(L, g_model.rssiOrange + offset);
+  lua_pushinteger(L, g_model.rssiOrange + offset);
 	offset = rssiOffsetValue( 1 ) ;
-  lua_pushunsigned(L, g_model.rssiRed + offset);
+  lua_pushinteger(L, g_model.rssiRed + offset);
   return 3;
 }
 
@@ -859,244 +886,214 @@ int luaPopupConfirmation(lua_State * L)
 
 
 
-const luaL_Reg ersky9xLib[] = {
-  { "getTime", luaGetTime },
-  { "getDateTime", luaGetDateTime },
-  { "getVersion", luaGetVersion },
-//  { "getGeneralSettings", luaGetGeneralSettings },
-  { "getValue", luaGetValue },
-//  { "getFieldInfo", luaGetFieldInfo },
-//  { "getFlightMode", luaGetFlightMode },
-//  { "playFile", luaPlayFile },
-  { "playNumber", luaPlayNumber },
-//  { "playDuration", luaPlayDuration },
-//  { "playTone", luaPlayTone },
-//  { "playHaptic", luaPlayHaptic },
-//  { "popupInput", luaPopupInput },
-//  { "popupWarning", luaPopupWarning },
-  { "popupConfirmation", luaPopupConfirmation },
-//  { "defaultStick", luaDefaultStick },
-//  { "defaultChannel", luaDefaultChannel },
+LROT_BEGIN(ersky9xLib, NULL, 0)
+  LROT_FUNCENTRY( getTime, luaGetTime )
+  LROT_FUNCENTRY( getDateTime, luaGetDateTime )
+  LROT_FUNCENTRY( getVersion, luaGetVersion )
+  LROT_FUNCENTRY( getValue, luaGetValue )
+  LROT_FUNCENTRY( playNumber, luaPlayNumber )
+  LROT_FUNCENTRY( popupConfirmation, luaPopupConfirmation )
+  LROT_FUNCENTRY( killEvents, luaKillEvents )
+  LROT_FUNCENTRY( loadScript, luaLoadScript )
+  LROT_FUNCENTRY( sportTelemetryPop,luaSportTelemetryPop )
+  LROT_FUNCENTRY( sportTelemetryPush, luaSportTelemetryPush )
+  LROT_FUNCENTRY( crossfireTelemetryPop, luaCrossfireTelemetryPop )
+  LROT_FUNCENTRY( crossfireTelemetryPush, luaCrossfireTelemetryPush )
+  LROT_FUNCENTRY( idleTime, luaIdleTime )
+  LROT_FUNCENTRY( getRSSI, luaGetRSSI )
+LROT_END(ersky9xLib, NULL, 0)
+
+
+
+//const luaL_Reg ersky9xLib[] = {
+//  { "getTime", luaGetTime },
+//  { "getDateTime", luaGetDateTime },
+//  { "getVersion", luaGetVersion },
+////  { "getGeneralSettings", luaGetGeneralSettings },
+//  { "getValue", luaGetValue },
+////  { "getFieldInfo", luaGetFieldInfo },
+////  { "getFlightMode", luaGetFlightMode },
+////  { "playFile", luaPlayFile },
+//  { "playNumber", luaPlayNumber },
+////  { "playDuration", luaPlayDuration },
+////  { "playTone", luaPlayTone },
+////  { "playHaptic", luaPlayHaptic },
+////  { "popupInput", luaPopupInput },
+////  { "popupWarning", luaPopupWarning },
+//  { "popupConfirmation", luaPopupConfirmation },
+////  { "defaultStick", luaDefaultStick },
+////  { "defaultChannel", luaDefaultChannel },
+////  { "getRSSI", luaGetRSSI },
+//  { "killEvents", luaKillEvents },
+//  { "loadScript", luaLoadScript },
+////#if !defined(COLORLCD)
+////  { "GREY", luaGrey },
+////#endif
+//  { "sportTelemetryPop", luaSportTelemetryPop },
+//  { "sportTelemetryPush", luaSportTelemetryPush },
+////  { "setTelemetryValue", luaSetTelemetryValue },
+////#if defined(XFIRE)
+//  { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
+//  { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
+////#endif
+//  { "idleTime", luaIdleTime },
 //  { "getRSSI", luaGetRSSI },
-  { "killEvents", luaKillEvents },
-  { "loadScript", luaLoadScript },
-//#if !defined(COLORLCD)
-//  { "GREY", luaGrey },
-//#endif
-  { "sportTelemetryPop", luaSportTelemetryPop },
-  { "sportTelemetryPush", luaSportTelemetryPush },
-//  { "setTelemetryValue", luaSetTelemetryValue },
-//#if defined(XFIRE)
-  { "crossfireTelemetryPop", luaCrossfireTelemetryPop },
-  { "crossfireTelemetryPush", luaCrossfireTelemetryPush },
-//#endif
-  { "idleTime", luaIdleTime },
-  { "getRSSI", luaGetRSSI },
-  { NULL, NULL }  /* sentinel */
-};
+//  { NULL, NULL }  /* sentinel */
+//};
 
-
-const luaR_value_entry ersky9xConstants[] = {
-  { "FULLSCALE", RESX },
-  { "XXLSIZE", XXLSIZE },
+LROT_BEGIN(ersky9xConstants, NULL, 0)
+  LROT_NUMENTRY( FULLSCALE, RESX )
+  LROT_NUMENTRY( XXLSIZE, XXLSIZE )
 #if defined(PCBX12D) || defined(PCBX10)
-  { "DBLSIZE", DBLSIZE },
-  { "MIDSIZE", MIDSIZE },
-  { "SMLSIZE", LUA_SMLSIZE },
+  LROT_NUMENTRY( DBLSIZE, DBLSIZE )
+  LROT_NUMENTRY( MIDSIZE, MIDSIZE )
+  LROT_NUMENTRY( SMLSIZE, LUA_SMLSIZE )
 #else
-  { "XXLSIZE", DBLSIZE },
-  { "DBLSIZE", DBLSIZE },
-  { "MIDSIZE", MIDSIZE },
-  { "SMLSIZE", LUA_SMLSIZE },
+  LROT_NUMENTRY( XXLSIZE, DBLSIZE )
+  LROT_NUMENTRY( DBLSIZE, DBLSIZE )
+  LROT_NUMENTRY( MIDSIZE, MIDSIZE )
+  LROT_NUMENTRY( SMLSIZE, LUA_SMLSIZE )
 #endif
-  { "INVERS", INVERS },
-  { "RIGHT", LUA_RIGHT },
-//#if defined(PCBFLAMENCO)
-//  { "WHITE",        WHITE },
-//  { "BLACK",        BLACK },
-//  { "YELLOW",       YELLOW },
-//  { "BLUE",         BLUE },
-//  { "GREY_DEFAULT", GREY_DEFAULT },
-//  { "DARKGREY",     DARKGREY },
-//  { "RED",          RED },
-//  { "LIGHTGREY",    LIGHTGREY },
-//  { "WHITE_ON_BLACK",       WHITE_ON_BLACK },
-//  { "RED_ON_BLACK",         RED_ON_BLACK },
-//  { "BLUE_ON_BLACK",        BLUE_ON_BLACK },
-//  { "GREY_ON_BLACK",        GREY_ON_BLACK },
-//  { "LIGHTGREY_ON_BLACK",   LIGHTGREY_ON_BLACK },
-//  { "YELLOW_ON_BLACK",      YELLOW_ON_BLACK },
-//  { "WHITE_ON_DARKGREY",    WHITE_ON_DARKGREY },
-//  { "WHITE_ON_BLUE",        WHITE_ON_BLUE },
-//  { "BLACK_ON_YELLOW",      BLACK_ON_YELLOW },
-//  { "LIGHTGREY_ON_YELLOW",  LIGHTGREY_ON_YELLOW },
-//#endif
-  { "BOLD", BOLD },
-  { "BLINK", BLINK },
-//  { "FIXEDWIDTH", FIXEDWIDTH },
-  { "LEFT", LEFT },
-  { "PREC1", PREC1 },
-  { "PREC2", PREC2 },
-//  { "VALUE", 0 },
-//  { "SOURCE", 1 },
-//  { "REPLACE", MLTPX_REP },
-//  { "MIXSRC_FIRST_INPUT", MIXSRC_FIRST_INPUT },
-//  { "MIXSRC_Rud", MIX_RUD },
-//  { "MIXSRC_Ele", MIX_ELE },
-//  { "MIXSRC_Thr", MIX_THR },
-//  { "MIXSRC_Ail", MIX_AIL },
-//  { "MIXSRC_SA", MIXSRC_SA },
-//  { "MIXSRC_SB", MIXSRC_SB },
-//  { "MIXSRC_SC", MIXSRC_SC },
-//#if defined(PCBTARANIS)
-//  { "MIXSRC_SD", MIXSRC_SD },
-//#endif
-//  { "MIXSRC_SE", MIXSRC_SE },
-//  { "MIXSRC_SF", MIXSRC_SF },
-//#if defined(PCBTARANIS)
-//  { "MIXSRC_SG", MIXSRC_SG },
-//  { "MIXSRC_SH", MIXSRC_SH },
-//#endif
-//  { "MIXSRC_CH1", MIXSRC_CH1 },
-//  { "SWSRC_LAST", SWSRC_LAST_LOGICAL_SWITCH },
-//  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-//#if !defined(PCBHORUS)
-//  { "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
-//  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
-//#endif
-
+  LROT_NUMENTRY( INVERS, INVERS )
+  LROT_NUMENTRY( RIGHT, LUA_RIGHT )
+  LROT_NUMENTRY( BOLD, BOLD )
+  LROT_NUMENTRY( BLINK, BLINK )
+//  LROT_NUMENTRY( FIXEDWIDTH, FIXEDWIDTH )
+  LROT_NUMENTRY( LEFT, LEFT )
+  LROT_NUMENTRY( PREC1, PREC1 )
+  LROT_NUMENTRY( PREC2, PREC2 )
 #if defined(PCBX10)
-  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_RTN) },
-  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
-  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
-  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_UP) },
-  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
-  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
-  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
-  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
-  { "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
-  { "TEXT_COLOR", LUA_TEXT_COLOUR },
-  { "TEXT_INVERTED_COLOR", LUA_TEXT_INVERTED_COLOR },
-  { "TEXT_INVERTED_BGCOLOR", LUA_TEXT_INVERTED_BGCOLOR },
-  { "CUSTOM_COLOR", LUA_CUSTOM_COLOUR },
-  { "RED", (double)LCD_RED },
-  { "WHITE", (double)LCD_WHITE },
-  { "BLACK", (double)LCD_BLACK },
-//  { "TEXT_COLOR", TEXT_COLOR },
-//  { "TEXT_BGCOLOR", TEXT_BGCOLOR },
-//  { "TEXT_INVERTED_COLOR", TEXT_INVERTED_COLOR },
-//  { "TEXT_INVERTED_BGCOLOR", TEXT_INVERTED_BGCOLOR },
+  LROT_NUMENTRY( EVT_MENU_BREAK, EVT_KEY_BREAK(KEY_UP) )
+  LROT_NUMENTRY( EVT_MENU_LONG, EVT_KEY_LONG(KEY_UP) )
+  LROT_NUMENTRY( EVT_EXIT_BREAK, EVT_KEY_BREAK(KEY_RTN) )
+  LROT_NUMENTRY( EVT_PLUS_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MINUS_BREAK, EVT_KEY_BREAK(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PLUS_FIRST, EVT_KEY_FIRST(KEY_DOWN) )
+  LROT_NUMENTRY( EVT_MINUS_FIRST, EVT_KEY_FIRST(KEY_UP) )
+  LROT_NUMENTRY( EVT_PLUS_REPT, EVT_KEY_REPT(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MINUS_REPT, EVT_KEY_REPT(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PAGE_FIRST, EVT_KEY_FIRST(KEY_LEFT) )
+  LROT_NUMENTRY( EVT_ENTER_FIRST, EVT_KEY_FIRST(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_BREAK, EVT_KEY_BREAK(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_LONG, EVT_KEY_LONG(BTN_RE) )
+  LROT_NUMENTRY( TEXT_COLOR, LUA_TEXT_COLOUR )
+  LROT_NUMENTRY( TEXT_INVERTED_COLOR, LUA_TEXT_INVERTED_COLOR )
+  LROT_NUMENTRY( TEXT_INVERTED_BGCOLOR, LUA_TEXT_INVERTED_BGCOLOR )
+  LROT_NUMENTRY( CUSTOM_COLOR, LUA_CUSTOM_COLOUR )
+  LROT_NUMENTRY( RED, LCD_RED )
+  LROT_NUMENTRY( WHITE, LCD_WHITE )
+  LROT_NUMENTRY( BLACK, LCD_BLACK )
+//  LROT_NUMENTRY( TEXT_COLOR, TEXT_COLOR )
+//  LROT_NUMENTRY( TEXT_BGCOLOR, TEXT_BGCOLOR )
+//  LROT_NUMENTRY( TEXT_INVERTED_COLOR, TEXT_INVERTED_COLOR )
+//  LROT_NUMENTRY( TEXT_INVERTED_BGCOLOR, TEXT_INVERTED_BGCOLOR )
 #else
 	// Map to X9D normal buttons
  #if defined (PCBX9LITE)
-	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-//  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-//  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
-  { "EVT_PLUS_FIRST", EVT_ROTARY_RIGHT },
-  { "EVT_MINUS_FIRST", EVT_ROTARY_LEFT },
-//  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
-//  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
-  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
-  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
-	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
-  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
-  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
-	{ "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+  LROT_NUMENTRY( EVT_MENU_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MENU_LONG, EVT_KEY_LONG(KEY_MENU) )
+  LROT_NUMENTRY( EVT_EXIT_BREAK, EVT_KEY_BREAK(KEY_EXIT) )
+//  LROT_NUMENTRY( EVT_PLUS_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+//  LROT_NUMENTRY( EVT_MINUS_BREAK, EVT_KEY_BREAK(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PLUS_FIRST, EVT_ROTARY_RIGHT )
+  LROT_NUMENTRY( EVT_MINUS_FIRST, EVT_ROTARY_LEFT )
+//  LROT_NUMENTRY( EVT_PLUS_REPT, EVT_KEY_REPT(KEY_MENU) )
+//  LROT_NUMENTRY( EVT_MINUS_REPT, EVT_KEY_REPT(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PAGE_FIRST, EVT_KEY_FIRST(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_PAGE_LONG, EVT_KEY_LONG(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_PAGE_BREAK, EVT_KEY_BREAK(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_ENTER_FIRST, EVT_KEY_FIRST(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_BREAK, EVT_KEY_BREAK(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_LONG, EVT_KEY_LONG(BTN_RE) )
  #else
 	#if defined (PCBX7)
-	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-  { "EVT_PLUS_FIRST", EVT_ROTARY_RIGHT },
-  { "EVT_MINUS_FIRST", EVT_ROTARY_LEFT },
-  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
-  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
-	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
-  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
-  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
-	{ "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+  LROT_NUMENTRY( EVT_MENU_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MENU_LONG, EVT_KEY_LONG(KEY_MENU) )
+  LROT_NUMENTRY( EVT_EXIT_BREAK, EVT_KEY_BREAK(KEY_EXIT) )
+  LROT_NUMENTRY( EVT_PLUS_FIRST, EVT_ROTARY_RIGHT )
+  LROT_NUMENTRY( EVT_MINUS_FIRST, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_PAGE_FIRST, EVT_KEY_FIRST(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_PAGE_LONG, EVT_KEY_LONG(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_PAGE_BREAK, EVT_KEY_BREAK(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_ENTER_FIRST, EVT_KEY_FIRST(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_BREAK, EVT_KEY_BREAK(BTN_RE) )
+  LROT_NUMENTRY( EVT_ENTER_LONG, EVT_KEY_LONG(BTN_RE) )
   #else
-	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
-  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
-  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
-  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
-  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_MENU) },
-  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
-  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
-  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
-  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_LEFT) },
-	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_LEFT) },
-  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
-  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-	{ "EVT_ENTER_LONG", EVT_KEY_LONG(KEY_EXIT) },
+  LROT_NUMENTRY( EVT_MENU_BREAK, EVT_KEY_BREAK(KEY_UP) )
+  LROT_NUMENTRY( EVT_MENU_LONG, EVT_KEY_LONG(KEY_UP) )
+  LROT_NUMENTRY( EVT_EXIT_BREAK, EVT_KEY_BREAK(KEY_DOWN) )
+  LROT_NUMENTRY( EVT_PLUS_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MINUS_BREAK, EVT_KEY_BREAK(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PLUS_FIRST, EVT_KEY_FIRST(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MINUS_FIRST, EVT_KEY_FIRST(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PLUS_REPT, EVT_KEY_REPT(KEY_MENU) )
+  LROT_NUMENTRY( EVT_MINUS_REPT, EVT_KEY_REPT(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_PAGE_FIRST, EVT_KEY_FIRST(KEY_LEFT) )
+  LROT_NUMENTRY( EVT_PAGE_LONG, EVT_KEY_LONG(KEY_LEFT) )
+  LROT_NUMENTRY( EVT_PAGE_BREAK, EVT_KEY_BREAK(KEY_LEFT) )
+  LROT_NUMENTRY( EVT_ENTER_FIRST, EVT_KEY_FIRST(KEY_EXIT) )
+  LROT_NUMENTRY( EVT_ENTER_BREAK, EVT_KEY_BREAK(KEY_EXIT) )
+  LROT_NUMENTRY( EVT_ENTER_LONG, EVT_KEY_LONG(KEY_EXIT) )
   #endif
  #endif
 #endif
 
 #if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE) || defined (PCBX7)
-	{ "EVT_ROT_LEFT", EVT_ROTARY_LEFT },
-  { "EVT_ROT_RIGHT", EVT_ROTARY_RIGHT },
+  LROT_NUMENTRY( EVT_ROT_LEFT, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_ROT_RIGHT, EVT_ROTARY_RIGHT )
 #endif
 
 #if defined(PCBX9D) && ( defined(REVPLUS) || defined(REVNORM) )
-  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER_LONG, EVT_KEY_LONG(KEY_MENU) )
 #else
  #if defined (PCB9XT)
-  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER_LONG, EVT_KEY_LONG(KEY_MENU) )
  #else
-  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
-  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER, EVT_KEY_BREAK(BTN_RE) )
+  LROT_NUMENTRY( EVT_VIRTUAL_ENTER_LONG, EVT_KEY_LONG(BTN_RE) )
  #endif
 #endif
 #if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
-//  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
-//  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+//  LROT_NUMENTRY( EVT_VIRTUAL_ENTER, EVT_KEY_BREAK(BTN_RE) )
+//  LROT_NUMENTRY( EVT_VIRTUAL_ENTER_LONG, EVT_KEY_LONG(BTN_RE) )
  #if !defined(PCBX12D)	
-	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
-	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV_PAGE, EVT_KEY_LONG(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT_PAGE, EVT_KEY_BREAK(KEY_PAGE) )
  #endif
-	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
-	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
-  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
-  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT, EVT_ROTARY_RIGHT )
+  LROT_NUMENTRY( EVT_VIRTUAL_DEC, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_VIRTUAL_INC, EVT_ROTARY_RIGHT )
  #if defined (PCBX9LITE)
-	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU_LONG, EVT_KEY_LONG(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_EXIT, EVT_KEY_BREAK(KEY_EXIT) )
  #else
   #if defined(PCBX12D)	
-	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
-  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU, EVT_KEY_BREAK(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU_LONG, EVT_KEY_LONG(KEY_MENU) )
+  LROT_NUMENTRY( EVT_VIRTUAL_EXIT, EVT_KEY_BREAK(KEY_EXIT) )
   #else
-	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MDL) },
-  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MDL) },
-  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_RTN) },
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU, EVT_KEY_BREAK(KEY_MDL) )
+  LROT_NUMENTRY( EVT_VIRTUAL_MENU_LONG, EVT_KEY_LONG(KEY_MDL) )
+  LROT_NUMENTRY( EVT_VIRTUAL_EXIT, EVT_KEY_BREAK(KEY_RTN) )
   #endif
  #endif
 #else
  #if defined (PCBX7)
-	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
-	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
-	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
-	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
-  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
-  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV_PAGE, EVT_KEY_LONG(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT_PAGE, EVT_KEY_BREAK(KEY_PAGE) )
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT, EVT_ROTARY_RIGHT )
+  LROT_NUMENTRY( EVT_VIRTUAL_DEC, EVT_ROTARY_LEFT )
+  LROT_NUMENTRY( EVT_VIRTUAL_INC, EVT_ROTARY_RIGHT )
  #else
-	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_BREAK(KEY_LEFT) },
-	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_RIGHT) },
-	{ "EVT_VIRTUAL_PREV", EVT_KEY_FIRST(KEY_UP) },
-	{ "EVT_VIRTUAL_NEXT", EVT_KEY_FIRST(KEY_DOWN) },
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV_PAGE, EVT_KEY_BREAK(KEY_LEFT) )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT_PAGE, EVT_KEY_BREAK(KEY_RIGHT) )
+  LROT_NUMENTRY( EVT_VIRTUAL_PREV, EVT_KEY_FIRST(KEY_UP) )
+  LROT_NUMENTRY( EVT_VIRTUAL_NEXT, EVT_KEY_FIRST(KEY_DOWN) )
  #endif
 #endif
 
@@ -1117,44 +1114,305 @@ const luaR_value_entry ersky9xConstants[] = {
 //EVT_VIRTUAL_DEC_REPT 	for VALUES navigation
 
 
-//  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
-//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
-//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
-//  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
-//  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
-//  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
-//  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
-//  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
-//  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
-//  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
-//  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+//  LROT_NUMENTRY( EVT_MENU_BREAK, EVT_KEY_BREAK(KEY_MENU) )
+//  LROT_NUMENTRY( EVT_MENU_LONG, EVT_KEY_LONG(KEY_MENU) )
+//  LROT_NUMENTRY( EVT_EXIT_BREAK, EVT_KEY_BREAK(KEY_EXIT) )
+//  LROT_NUMENTRY( EVT_UP_BREAK, EVT_KEY_BREAK(KEY_UP) )
+//  LROT_NUMENTRY( EVT_DOWN_BREAK, EVT_KEY_BREAK(KEY_DOWN) )
+//  LROT_NUMENTRY( EVT_UP_FIRST, EVT_KEY_FIRST(KEY_UP) )
+//  LROT_NUMENTRY( EVT_DOWN_FIRST, EVT_KEY_FIRST(KEY_DOWN) )
+//  LROT_NUMENTRY( EVT_UP_REPT, EVT_KEY_REPT(KEY_UP) )
+//  LROT_NUMENTRY( EVT_DOWN_REPT, EVT_KEY_REPT(KEY_DOWN) )
+//  LROT_NUMENTRY( EVT_LEFT_FIRST, EVT_KEY_FIRST(KEY_LEFT) )
+//  LROT_NUMENTRY( EVT_RIGHT_FIRST, EVT_KEY_FIRST(KEY_RIGHT) )
   
-	{ "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
-  { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
+  LROT_NUMENTRY( EVT_BTN_BREAK, EVT_KEY_BREAK(BTN_RE) )
+  LROT_NUMENTRY( EVT_BTN_LONG, EVT_KEY_LONG(BTN_RE) )
 //#if !defined(COLORLCD)
-//  { "FILL_WHITE", FILL_WHITE },
-//  { "GREY_DEFAULT", GREY_DEFAULT },
+//  LROT_NUMENTRY( FILL_WHITE, FILL_WHITE )
+//  LROT_NUMENTRY( GREY_DEFAULT, GREY_DEFAULT )
 //#endif
-  { "SOLID", SOLID },
-  { "DOTTED", DOTTED },
-  { "FORCE", FORCE },
-  { "ERASE", ERASE },
-  { "ROUND", ROUND },
+  LROT_NUMENTRY( SOLID, SOLID )
+  LROT_NUMENTRY( DOTTED, DOTTED )
+  LROT_NUMENTRY( FORCE, FORCE )
+  LROT_NUMENTRY( ERASE, ERASE )
+  LROT_NUMENTRY( ROUND, ROUND )
 #if (LCD_W == 212)
-  { "LCD_W", (LCD_W-22) },
+  LROT_NUMENTRY( LCD_W, (LCD_W-22) )
 #else
-  { "LCD_W", LCD_W },
+  LROT_NUMENTRY( LCD_W, LCD_W )
 #endif
 #if LCD_H == 272
-	{ "LCD_H", 240 },
+  LROT_NUMENTRY( LCD_H, 240 )
 #else
-	{ "LCD_H", LCD_H },
+  LROT_NUMENTRY( LCD_H, LCD_H )
 #endif
-//  { "PLAY_NOW", PLAY_NOW },
-//  { "PLAY_BACKGROUND", PLAY_BACKGROUND },
-//  { "TIMEHOUR", TIMEHOUR },
-  { NULL, 0 }  /* sentinel */
-};
+//  LROT_NUMENTRY( PLAY_NOW, PLAY_NOW )
+//  LROT_NUMENTRY( PLAY_BACKGROUND, PLAY_BACKGROUND )
+//  LROT_NUMENTRY( TIMEHOUR, TIMEHOUR )
+
+LROT_END(ersky9xConstants, NULL, 0)
+
+
+//const luaR_value_entry ersky9xConstants[] = {
+//  { "FULLSCALE", RESX },
+//  { "XXLSIZE", XXLSIZE },
+//#if defined(PCBX12D) || defined(PCBX10)
+//  { "DBLSIZE", DBLSIZE },
+//  { "MIDSIZE", MIDSIZE },
+//  { "SMLSIZE", LUA_SMLSIZE },
+//#else
+//  { "XXLSIZE", DBLSIZE },
+//  { "DBLSIZE", DBLSIZE },
+//  { "MIDSIZE", MIDSIZE },
+//  { "SMLSIZE", LUA_SMLSIZE },
+//#endif
+//  { "INVERS", INVERS },
+//  { "RIGHT", LUA_RIGHT },
+////#if defined(PCBFLAMENCO)
+////  { "WHITE",        WHITE },
+////  { "BLACK",        BLACK },
+////  { "YELLOW",       YELLOW },
+////  { "BLUE",         BLUE },
+////  { "GREY_DEFAULT", GREY_DEFAULT },
+////  { "DARKGREY",     DARKGREY },
+////  { "RED",          RED },
+////  { "LIGHTGREY",    LIGHTGREY },
+////  { "WHITE_ON_BLACK",       WHITE_ON_BLACK },
+////  { "RED_ON_BLACK",         RED_ON_BLACK },
+////  { "BLUE_ON_BLACK",        BLUE_ON_BLACK },
+////  { "GREY_ON_BLACK",        GREY_ON_BLACK },
+////  { "LIGHTGREY_ON_BLACK",   LIGHTGREY_ON_BLACK },
+////  { "YELLOW_ON_BLACK",      YELLOW_ON_BLACK },
+////  { "WHITE_ON_DARKGREY",    WHITE_ON_DARKGREY },
+////  { "WHITE_ON_BLUE",        WHITE_ON_BLUE },
+////  { "BLACK_ON_YELLOW",      BLACK_ON_YELLOW },
+////  { "LIGHTGREY_ON_YELLOW",  LIGHTGREY_ON_YELLOW },
+////#endif
+//  { "BOLD", BOLD },
+//  { "BLINK", BLINK },
+////  { "FIXEDWIDTH", FIXEDWIDTH },
+//  { "LEFT", LEFT },
+//  { "PREC1", PREC1 },
+//  { "PREC2", PREC2 },
+////  { "VALUE", 0 },
+////  { "SOURCE", 1 },
+////  { "REPLACE", MLTPX_REP },
+////  { "MIXSRC_FIRST_INPUT", MIXSRC_FIRST_INPUT },
+////  { "MIXSRC_Rud", MIX_RUD },
+////  { "MIXSRC_Ele", MIX_ELE },
+////  { "MIXSRC_Thr", MIX_THR },
+////  { "MIXSRC_Ail", MIX_AIL },
+////  { "MIXSRC_SA", MIXSRC_SA },
+////  { "MIXSRC_SB", MIXSRC_SB },
+////  { "MIXSRC_SC", MIXSRC_SC },
+////#if defined(PCBTARANIS)
+////  { "MIXSRC_SD", MIXSRC_SD },
+////#endif
+////  { "MIXSRC_SE", MIXSRC_SE },
+////  { "MIXSRC_SF", MIXSRC_SF },
+////#if defined(PCBTARANIS)
+////  { "MIXSRC_SG", MIXSRC_SG },
+////  { "MIXSRC_SH", MIXSRC_SH },
+////#endif
+////  { "MIXSRC_CH1", MIXSRC_CH1 },
+////  { "SWSRC_LAST", SWSRC_LAST_LOGICAL_SWITCH },
+////  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+////#if !defined(PCBHORUS)
+////  { "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
+////  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
+////#endif
+
+//#if defined(PCBX10)
+//  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
+//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
+//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_RTN) },
+//  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+//  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+//  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_UP) },
+//  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+//  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+//  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+//  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
+//  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
+//  { "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+//  { "TEXT_COLOR", LUA_TEXT_COLOUR },
+//  { "TEXT_INVERTED_COLOR", LUA_TEXT_INVERTED_COLOR },
+//  { "TEXT_INVERTED_BGCOLOR", LUA_TEXT_INVERTED_BGCOLOR },
+//  { "CUSTOM_COLOR", LUA_CUSTOM_COLOUR },
+//  { "RED", (double)LCD_RED },
+//  { "WHITE", (double)LCD_WHITE },
+//  { "BLACK", (double)LCD_BLACK },
+////  { "TEXT_COLOR", TEXT_COLOR },
+////  { "TEXT_BGCOLOR", TEXT_BGCOLOR },
+////  { "TEXT_INVERTED_COLOR", TEXT_INVERTED_COLOR },
+////  { "TEXT_INVERTED_BGCOLOR", TEXT_INVERTED_BGCOLOR },
+//#else
+//	// Map to X9D normal buttons
+// #if defined (PCBX9LITE)
+//	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+////  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+////  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+//  { "EVT_PLUS_FIRST", EVT_ROTARY_RIGHT },
+//  { "EVT_MINUS_FIRST", EVT_ROTARY_LEFT },
+////  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+////  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+//  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
+//  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
+//	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
+//  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
+//  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
+//	{ "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+// #else
+//	#if defined (PCBX7)
+//	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+//  { "EVT_PLUS_FIRST", EVT_ROTARY_RIGHT },
+//  { "EVT_MINUS_FIRST", EVT_ROTARY_LEFT },
+//  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_PAGE) },
+//  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_PAGE) },
+//	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_PAGE) },
+//  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(BTN_RE) },
+//  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(BTN_RE) },
+//	{ "EVT_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+//  #else
+//	{ "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_UP) },
+//  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_UP) },
+//  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+//  { "EVT_PLUS_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_MINUS_BREAK", EVT_KEY_BREAK(KEY_RIGHT) },
+//  { "EVT_PLUS_FIRST", EVT_KEY_FIRST(KEY_MENU) },
+//  { "EVT_MINUS_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+//  { "EVT_PLUS_REPT", EVT_KEY_REPT(KEY_MENU) },
+//  { "EVT_MINUS_REPT", EVT_KEY_REPT(KEY_RIGHT) },
+//  { "EVT_PAGE_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+//  { "EVT_PAGE_LONG", EVT_KEY_LONG(KEY_LEFT) },
+//	{ "EVT_PAGE_BREAK", EVT_KEY_BREAK(KEY_LEFT) },
+//  { "EVT_ENTER_FIRST", EVT_KEY_FIRST(KEY_EXIT) },
+//  { "EVT_ENTER_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+//	{ "EVT_ENTER_LONG", EVT_KEY_LONG(KEY_EXIT) },
+//  #endif
+// #endif
+//#endif
+
+//#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE) || defined (PCBX7)
+//	{ "EVT_ROT_LEFT", EVT_ROTARY_LEFT },
+//  { "EVT_ROT_RIGHT", EVT_ROTARY_RIGHT },
+//#endif
+
+//#if defined(PCBX9D) && ( defined(REVPLUS) || defined(REVNORM) )
+//  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
+//#else
+// #if defined (PCB9XT)
+//  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(KEY_MENU) },
+// #else
+//  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+//  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+// #endif
+//#endif
+//#if defined(PCBX12D) || defined(PCBX10) || defined (PCBX9LITE)
+////  { "EVT_VIRTUAL_ENTER", EVT_KEY_BREAK(BTN_RE) },
+////  { "EVT_VIRTUAL_ENTER_LONG", EVT_KEY_LONG(BTN_RE) },
+// #if !defined(PCBX12D)	
+//	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
+//	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
+// #endif
+//	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
+//	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
+//  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
+//  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+// #if defined (PCBX9LITE)
+//	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+//  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+// #else
+//  #if defined(PCBX12D)	
+//	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MENU) },
+//  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+//  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_EXIT) },
+//  #else
+//	{ "EVT_VIRTUAL_MENU", EVT_KEY_BREAK(KEY_MDL) },
+//  { "EVT_VIRTUAL_MENU_LONG", EVT_KEY_LONG(KEY_MDL) },
+//  { "EVT_VIRTUAL_EXIT", EVT_KEY_BREAK(KEY_RTN) },
+//  #endif
+// #endif
+//#else
+// #if defined (PCBX7)
+//	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_LONG(KEY_PAGE) },
+//	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_PAGE) },
+//	{ "EVT_VIRTUAL_PREV", EVT_ROTARY_LEFT },
+//	{ "EVT_VIRTUAL_NEXT", EVT_ROTARY_RIGHT },
+//  { "EVT_VIRTUAL_DEC", EVT_ROTARY_LEFT },
+//  { "EVT_VIRTUAL_INC", EVT_ROTARY_RIGHT },
+// #else
+//	{ "EVT_VIRTUAL_PREV_PAGE", EVT_KEY_BREAK(KEY_LEFT) },
+//	{ "EVT_VIRTUAL_NEXT_PAGE", EVT_KEY_BREAK(KEY_RIGHT) },
+//	{ "EVT_VIRTUAL_PREV", EVT_KEY_FIRST(KEY_UP) },
+//	{ "EVT_VIRTUAL_NEXT", EVT_KEY_FIRST(KEY_DOWN) },
+// #endif
+//#endif
+
+
+////EVT_VIRTUAL_NEXT_PAGE 	for PAGE navigation
+////EVT_VIRTUAL_PREVIOUS_PAGE 	for PAGE navigation
+////EVT_VIRTUAL_ENTER 	
+////EVT_VIRTUAL_ENTER_LONG 	
+////EVT_VIRTUAL_MENU 	
+////EVT_VIRTUAL_MENU_LONG 	
+////EVT_VIRTUAL_NEXT 	for FIELDS navigation
+////EVT_VIRTUAL_NEXT_REPT 	for FIELDS navigation
+////EVT_VIRTUAL_PREVIOUS 	for FIELDS navigation
+////EVT_VIRTUAL_PREV_REPT 	for FIELDS navigation
+////EVT_VIRTUAL_INC 	for VALUES navigation
+////EVT_VIRTUAL_INC_REPT 	for VALUES navigation
+////EVT_VIRTUAL_DEC 	for VALUES navigation
+////EVT_VIRTUAL_DEC_REPT 	for VALUES navigation
+
+
+////  { "EVT_MENU_BREAK", EVT_KEY_BREAK(KEY_MENU) },
+////  { "EVT_MENU_LONG", EVT_KEY_LONG(KEY_MENU) },
+////  { "EVT_EXIT_BREAK", EVT_KEY_BREAK(KEY_EXIT) },
+////  { "EVT_UP_BREAK", EVT_KEY_BREAK(KEY_UP) },
+////  { "EVT_DOWN_BREAK", EVT_KEY_BREAK(KEY_DOWN) },
+////  { "EVT_UP_FIRST", EVT_KEY_FIRST(KEY_UP) },
+////  { "EVT_DOWN_FIRST", EVT_KEY_FIRST(KEY_DOWN) },
+////  { "EVT_UP_REPT", EVT_KEY_REPT(KEY_UP) },
+////  { "EVT_DOWN_REPT", EVT_KEY_REPT(KEY_DOWN) },
+////  { "EVT_LEFT_FIRST", EVT_KEY_FIRST(KEY_LEFT) },
+////  { "EVT_RIGHT_FIRST", EVT_KEY_FIRST(KEY_RIGHT) },
+  
+//	{ "EVT_BTN_BREAK", EVT_KEY_BREAK(BTN_RE) },
+//  { "EVT_BTN_LONG", EVT_KEY_LONG(BTN_RE) },
+////#if !defined(COLORLCD)
+////  { "FILL_WHITE", FILL_WHITE },
+////  { "GREY_DEFAULT", GREY_DEFAULT },
+////#endif
+//  { "SOLID", SOLID },
+//  { "DOTTED", DOTTED },
+//  { "FORCE", FORCE },
+//  { "ERASE", ERASE },
+//  { "ROUND", ROUND },
+//#if (LCD_W == 212)
+//  { "LCD_W", (LCD_W-22) },
+//#else
+//  { "LCD_W", LCD_W },
+//#endif
+//#if LCD_H == 272
+//	{ "LCD_H", 240 },
+//#else
+//	{ "LCD_H", LCD_H },
+//#endif
+////  { "PLAY_NOW", PLAY_NOW },
+////  { "PLAY_BACKGROUND", PLAY_BACKGROUND },
+////  { "TIMEHOUR", TIMEHOUR },
+//  { NULL, 0 }  /* sentinel */
+//};
 
 
 /*luadoc
@@ -1207,7 +1465,7 @@ const uint8_t ProtTable[] = { 1,2,4,6,5,3,13,0,0,0,0,0,0,0,0,0 } ;
 
 static int luaModelGetModule(lua_State *L)
 {
-  unsigned int idx = luaL_checkunsigned(L, 1);
+  unsigned int idx = luaL_checkinteger(L, 1);
   if (idx < 2)
 	{
     struct t_module & module = g_model.Module[idx];
@@ -1253,46 +1511,49 @@ static int luaModelGetModule(lua_State *L)
 }
 
 
+LROT_BEGIN(modellib, NULL, 0)
+  LROT_FUNCENTRY( getModule, luaModelGetModule )
+LROT_END(modellib, NULL, 0)
 
 
-const luaL_Reg modelLib[] = {
-//  { "getInfo", luaModelGetInfo },
-//  { "setInfo", luaModelSetInfo },
-  { "getModule", luaModelGetModule },
-//  { "setModule", luaModelSetModule },
-//  { "getTimer", luaModelGetTimer },
-//  { "setTimer", luaModelSetTimer },
-//  { "resetTimer", luaModelResetTimer },
-//  { "deleteFlightModes", luaModelDeleteFlightModes },
-//  { "getFlightMode", luaModelGetFlightMode },
-//  { "setFlightMode", luaModelSetFlightMode },
-//  { "getInputsCount", luaModelGetInputsCount },
-//  { "getInput", luaModelGetInput },
-//  { "insertInput", luaModelInsertInput },
-//  { "deleteInput", luaModelDeleteInput },
-//  { "deleteInputs", luaModelDeleteInputs },
-//  { "defaultInputs", luaModelDefaultInputs },
-//  { "getMixesCount", luaModelGetMixesCount },
-//  { "getMix", luaModelGetMix },
-//  { "insertMix", luaModelInsertMix },
-//  { "deleteMix", luaModelDeleteMix },
-//  { "deleteMixes", luaModelDeleteMixes },
-//  { "getLogicalSwitch", luaModelGetLogicalSwitch },
-//  { "setLogicalSwitch", luaModelSetLogicalSwitch },
-//  { "getCustomFunction", luaModelGetCustomFunction },
-//  { "setCustomFunction", luaModelSetCustomFunction },
-//  { "getCurve", luaModelGetCurve },
-//  { "setCurve", luaModelSetCurve },
-//  { "getOutput", luaModelGetOutput },
-//  { "setOutput", luaModelSetOutput },
-//  { "getGlobalVariable", luaModelGetGlobalVariable },
-//  { "setGlobalVariable", luaModelSetGlobalVariable },
-//  { "getSensor", luaModelGetSensor },
-//  { "resetSensor", luaModelResetSensor },
-//  { "getSwashRing", luaModelGetSwashRing },
-//  { "setSwashRing", luaModelSetSwashRing },
-  { NULL, 0 }  /* sentinel */
-};
+//const luaL_Reg modelLib[] = {
+////  { "getInfo", luaModelGetInfo },
+////  { "setInfo", luaModelSetInfo },
+//  { "getModule", luaModelGetModule },
+////  { "setModule", luaModelSetModule },
+////  { "getTimer", luaModelGetTimer },
+////  { "setTimer", luaModelSetTimer },
+////  { "resetTimer", luaModelResetTimer },
+////  { "deleteFlightModes", luaModelDeleteFlightModes },
+////  { "getFlightMode", luaModelGetFlightMode },
+////  { "setFlightMode", luaModelSetFlightMode },
+////  { "getInputsCount", luaModelGetInputsCount },
+////  { "getInput", luaModelGetInput },
+////  { "insertInput", luaModelInsertInput },
+////  { "deleteInput", luaModelDeleteInput },
+////  { "deleteInputs", luaModelDeleteInputs },
+////  { "defaultInputs", luaModelDefaultInputs },
+////  { "getMixesCount", luaModelGetMixesCount },
+////  { "getMix", luaModelGetMix },
+////  { "insertMix", luaModelInsertMix },
+////  { "deleteMix", luaModelDeleteMix },
+////  { "deleteMixes", luaModelDeleteMixes },
+////  { "getLogicalSwitch", luaModelGetLogicalSwitch },
+////  { "setLogicalSwitch", luaModelSetLogicalSwitch },
+////  { "getCustomFunction", luaModelGetCustomFunction },
+////  { "setCustomFunction", luaModelSetCustomFunction },
+////  { "getCurve", luaModelGetCurve },
+////  { "setCurve", luaModelSetCurve },
+////  { "getOutput", luaModelGetOutput },
+////  { "setOutput", luaModelSetOutput },
+////  { "getGlobalVariable", luaModelGetGlobalVariable },
+////  { "setGlobalVariable", luaModelSetGlobalVariable },
+////  { "getSensor", luaModelGetSensor },
+////  { "resetSensor", luaModelResetSensor },
+////  { "getSwashRing", luaModelGetSwashRing },
+////  { "setSwashRing", luaModelSetSwashRing },
+//  { NULL, 0 }  /* sentinel */
+//};
 
 
 

@@ -161,8 +161,13 @@ static void disable_pa7_none( void ) ;
 #ifdef ACCESS
 //static void init_pa7_access( uint32_t module ) ;
 //void disable_pa7_access( void ) ;
+ #ifdef REV9E
+	void init_ext_access( void ) ;
+	void disable_ext_access( void ) ;
+ #else
 static void init_ext_access( void ) ;
 static void init_int_access( void ) ;
+ #endif
 #endif
 
 #ifdef ACCESS
@@ -174,7 +179,11 @@ void init_access(uint32_t port)
   else
     init_ext_access() ;
 #else
-    init_pa7_access( port ) ;
+ #ifdef REV9E
+		init_ext_access() ;
+ #else
+		init_pa7_access( port ) ;
+ #endif
 #endif
 }
 
@@ -186,7 +195,11 @@ void disable_access(uint32_t port)
   else
     disable_ext_pxx() ;
 #else
+ #ifdef REV9E
+		disable_ext_access() ;
+ #else
     disable_pa7_access() ;
+ #endif
 #endif
 }
 #endif
@@ -1297,7 +1310,8 @@ extern struct t_updateTiming UpdateTiming ;
 		}
 		TIM8->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
   }
-  else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM) {
+  else if (s_current_protocol[EXTERNAL_MODULE] == PROTO_PPM)
+	{
     ppmStreamPtr[EXTERNAL_MODULE] = ppmStream[EXTERNAL_MODULE];
     TIM8->DIER |= TIM_DIER_UDE ;
     TIM8->SR = TIMER1_8SR_MASK & ~TIM_SR_UIF ;                                       // Clear this flag
@@ -1544,7 +1558,7 @@ static void init_ext_pxx( void )
 
   EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
   EXTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
-  EXTMODULE_TIMER->CCR2 = 17499 ;            // Update time
+  EXTMODULE_TIMER->CCR2 = 16999 ;            // Update time
   EXTMODULE_TIMER->PSC = EXTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
   EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
@@ -1559,7 +1573,7 @@ static void init_ext_pxx( void )
 	{
 		btype = 1 ;
 	}
-	if ( g_model.Module[1].extR9Mlite )	// R9MliteAccess
+	if ( ( type == 1 ) && ( g_model.Module[1].extR9Mlite ) )	// R9MliteAccess
 	{
 		EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / 230400 ;
 	}
@@ -2299,6 +2313,156 @@ extern "C" void TIM8_UP_TIM13_IRQHandler()
 
 
 #endif
+
+#if defined(REV9E) && defined(ACCESS)
+// UART3, PB10 and PB11-RX-Q3-R78 (pin 70)
+// UART6, PG14-TX (pin 129) and PG9-RX
+
+volatile uint8_t *PxxTxPtr_x ;
+volatile uint8_t PxxTxCount_x ;
+#define USART_FLAG_ERRORS (USART_FLAG_ORE | USART_FLAG_FE | USART_FLAG_PE)
+//extern struct t_fifo128 Access_ext_fifo ;
+
+
+
+void init_ext_access()
+{
+  EXTERNAL_RF_ON() ;
+  RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
+	
+//	configure_pins( EXTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_8 ) ;
+	configure_pins( EXTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+	configure_pins( GPIO_Pin_14, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+
+	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;     // Enable clock
+
+  EXTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
+  EXTMODULE_TIMER->ARR = 13989 ;             // 7 mS - 5uS
+  EXTMODULE_TIMER->CCR2 = 12999 ;            // Update time
+  EXTMODULE_TIMER->PSC = EXTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
+
+  EXTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
+  EXTMODULE_TIMER->CR1 |= TIM_CR1_CEN ;
+
+  // UART config
+	RCC->APB1ENR |= RCC_APB1ENR_USART3EN ;		// Enable clock
+	RCC->APB2ENR |= RCC_APB2ENR_USART6EN ;		// Enable clock
+
+//	uint32_t btype = type ;
+
+#ifdef X9E_USE_USART3	
+	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri1_frequency / 450000 ;
+	
+	EXTMODULE_USART->CR1 = 0 ;
+	EXTMODULE_USART->CR1 = USART_CR1_RE | USART_CR1_RXNEIE ;
+	EXTMODULE_USART->CR1 |= USART_CR1_UE ; // | USART_CR1_TE ;// | USART_CR1_RE ;
+#endif
+
+	USART6->BRR = PeripheralSpeeds.Peri2_frequency / 450000 ;
+	
+	USART6->CR1 = USART_CR1_UE | USART_CR1_TE ;// | USART_CR1_RE ;
+	 
+#ifndef X9E_USE_USART3	
+	USART6->CR1 |= USART_CR1_RE | USART_CR1_RXNEIE ;
+#endif
+	 
+#ifdef X9E_USE_USART3	
+	NVIC_SetPriority( EXTMODULE_USART_IRQn, 3 ) ; // Quite high priority interrupt
+  NVIC_EnableIRQ( EXTMODULE_USART_IRQn);
+#endif
+
+	NVIC_SetPriority( USART6_IRQn, 3 ) ; // Quite high priority interrupt
+  NVIC_EnableIRQ( USART6_IRQn);
+
+  NVIC_SetPriority(EXTMODULE_TIMER_CC_IRQn, 3 ) ;
+	NVIC_EnableIRQ(EXTMODULE_TIMER_CC_IRQn) ;
+}
+
+void disable_ext_access()
+{
+  NVIC_DisableIRQ( EXTMODULE_USART_IRQn);
+	NVIC_DisableIRQ(EXTMODULE_TIMER_CC_IRQn) ;
+}
+
+#ifdef X9E_USE_USART3	
+extern "C" void USART3_IRQHandler()
+{
+  uint32_t status;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0xCC ;
+#endif
+	USART_TypeDef *puart = USART3 ;
+	status = puart->SR ;
+	
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+//		if ( PxxTxCount_x )
+//		{
+//			EXTMODULE_USART->DR = *PxxTxPtr_x++ ;
+//			PxxTxCount_x -= 1 ;
+//		}
+//		else
+//		{
+			EXTMODULE_USART->CR1 &= ~USART_CR1_TXEIE ;	// Stop Complete interrupt
+//		}
+	}
+
+  if (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+		uint16_t value = puart->DR ;
+//			value |= getTmr2MHz() & 0xFF00 ;
+		put_fifo128( &Access_ext_fifo, value ) ;	
+	}
+}
+#endif
+
+extern "C" void USART6_IRQHandler()
+{
+  uint32_t status;
+#ifdef WDOG_REPORT
+	RTC->BKP1R = 0xCD ;
+#endif
+  
+	USART_TypeDef *puart = USART6 ;
+	status = puart->SR ;
+	
+	if ( ( status & USART_SR_TXE ) && (puart->CR1 & USART_CR1_TXEIE ) )
+	{
+		if ( PxxTxCount_x )
+		{
+			USART6->DR = *PxxTxPtr_x++ ;
+			PxxTxCount_x -= 1 ;
+		}
+		else
+		{
+			USART6->CR1 &= ~USART_CR1_TXEIE ;	// Stop Complete interrupt
+		}
+	}
+
+#ifndef X9E_USE_USART3	
+  if (status & (USART_FLAG_RXNE | USART_FLAG_ERRORS))
+	{
+		uint16_t value = puart->DR ;
+		put_fifo128( &Access_ext_fifo, value ) ;	
+	}
+#endif
+}
+
+
+void set_ext_serial_baudrate( uint32_t baudrate )
+{
+#ifdef X9E_USE_USART3	
+	EXTMODULE_USART->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+#endif
+	USART6->BRR = PeripheralSpeeds.Peri2_frequency / baudrate ;
+}
+
+
+
+
+#endif
+
+
 
 
 //00 00 00 00 00 00 00 00 00 00

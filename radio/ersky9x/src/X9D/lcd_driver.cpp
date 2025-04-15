@@ -1771,7 +1771,7 @@ void sendToplcdCommand( uint8_t command, uint8_t chip )
 //	delay1_7us() ;
 //} 
 
-void updateTopLCD( uint32_t time, uint32_t batteryState ) ;
+void updateTopLCD( int16_t time, uint32_t batteryState ) ;
 
 const uint8_t TimeLCDsegs[] = {	0xAF, 0x06, 0x6D, 0x4F, 0xC6, 0xCB, 0xEB, 0x0E, 0xEF, 0xCF } ;
 const uint8_t RssiLCDsegs[] = {	0xFA, 0x60, 0xBC, 0xF4, 0x66, 0xD6, 0xDE, 0x70, 0xFE, 0xF6 } ;
@@ -1904,10 +1904,14 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 }
 
 
-void setTopTime( uint32_t time )
+void setTopTime( int16_t time )
 {
 	div_t qr ;
 	uint32_t r ;
+	if ( time < 0 )
+	{
+		time = - time ;
+	}
 	qr = div( time, 60 ) ;
 	r = qr.rem ;
 
@@ -1992,7 +1996,7 @@ void setTopOpTime( uint32_t hours, uint32_t mins, uint32_t secs )
 	Ht1621Data1[11] = segs2 & 0xF0 ;
 }
 
-void updateTopLCD( uint32_t time, uint32_t batteryState )
+void updateTopLCD( int16_t time, uint32_t batteryState )
 {
 	uint32_t x ;
 	setTopTime( time ) ;

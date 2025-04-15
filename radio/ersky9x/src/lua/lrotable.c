@@ -1,5 +1,6 @@
 /* Read-only tables for Lua */
 
+#if 0
 #include <string.h>
 #include "lua.h"
 #include "lauxlib.h"
@@ -76,3 +77,4 @@ luaR_result luaR_findentry(void *data, const char * key, TValue * val) {
 //  TRACE_LUA_INTERNALS("luaR_findentry(%p[%s], '%s') = NOT FOUND", table, table->name, key);
   return 0;
 }
+#endif

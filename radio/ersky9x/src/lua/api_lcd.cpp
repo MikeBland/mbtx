@@ -30,6 +30,7 @@
 #include "lcd.h"
 
 #include "lua_api.h"
+#include "lro_defs.h"
 
 #define TEXT_COLOR 0
 #define TEXT_INVERTED_COLOR 1
@@ -192,7 +193,7 @@ static int luaLcdDrawText(lua_State *L)
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
   const char * s = luaL_checkstring(L, 3);
-  unsigned int att = luaL_optunsigned(L, 4, 0);
+  unsigned int att = luaL_optinteger(L, 4, 0);
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
@@ -242,7 +243,7 @@ static int luaLcdDrawTimer(lua_State *L)
   int x = luaL_checkinteger(L, 1) ;
   int y = luaL_checkinteger(L, 2) ;
   int seconds = luaL_checkinteger(L, 3) ;
-  unsigned int att = luaL_optunsigned(L, 4, 0) ;
+  unsigned int att = luaL_optinteger(L, 4, 0) ;
 //#if defined(COLORLCD)
 //  drawTimer(x, y, seconds, att|LEFT);
 //#else
@@ -280,7 +281,7 @@ static int luaLcdDrawNumber(lua_State *L)
   int x = luaL_checkinteger(L, 1);
   int y = luaL_checkinteger(L, 2);
   int val = luaL_checkinteger(L, 3);
-  unsigned int att = luaL_optunsigned(L, 4, 0);
+  unsigned int att = luaL_optinteger(L, 4, 0);
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
@@ -325,7 +326,7 @@ See getValue()
 //      channel = field.id;
 //    }
 //  }
-//  unsigned int att = luaL_optunsigned(L, 4, 0);
+//  unsigned int att = luaL_optinteger(L, 4, 0);
 //  getvalue_t value = getValue(channel);
 //  drawSensorCustomValue(x, y, (channel-MIXSRC_FIRST_TELEM)/3, value, att);
 //  return 0;
@@ -353,7 +354,7 @@ static int luaLcdDrawSwitch(lua_State *L)
   int x = luaL_checkinteger(L, 1) ;
   int y = luaL_checkinteger(L, 2) ;
   int s = luaL_checkinteger(L, 3) ;
-  unsigned int att = luaL_optunsigned(L, 4, 0) ;
+  unsigned int att = luaL_optinteger(L, 4, 0) ;
 #if defined(PCBX12D) || defined(PCBX10)
 	x /= 2 ;
 	y /= 2 ;
@@ -383,7 +384,7 @@ Displays the name of the corresponding input as defined by the source at (x,y)
 //  int x = luaL_checkinteger(L, 1);
 //  int y = luaL_checkinteger(L, 2);
 //  int s = luaL_checkinteger(L, 3);
-//  unsigned int att = luaL_optunsigned(L, 4, 0);
+//  unsigned int att = luaL_optinteger(L, 4, 0);
 //  drawSource(x, y, s, att);
 //  return 0;
 //}
@@ -534,9 +535,9 @@ static int luaLcdDrawBitmap(lua_State *L)
   const BitmapBuffer * b = checkBitmap(L, 1);
 
   if (b) {
-    unsigned int x = luaL_checkunsigned(L, 2);
-    unsigned int y = luaL_checkunsigned(L, 3);
-    unsigned int scale = luaL_optunsigned(L, 4, 0);
+    unsigned int x = luaL_checkinteger(L, 2);
+    unsigned int y = luaL_checkinteger(L, 3);
+    unsigned int scale = luaL_optinteger(L, 4, 0);
     if (scale) {
       lcd->drawBitmap(x, y, b, 0, 0, 0, 0, scale/100.0f);
     }
@@ -600,9 +601,9 @@ static int luaLcdDrawRectangle(lua_State *L)
   int y = luaL_checkinteger(L, 2);
   int w = luaL_checkinteger(L, 3);
   int h = luaL_checkinteger(L, 4);
-//  unsigned int flags = luaL_optunsigned(L, 5, 0);
+//  unsigned int flags = luaL_optinteger(L, 5, 0);
 //#if defined(PCBHORUS)
-//  unsigned int t = luaL_optunsigned(L, 6, 1);
+//  unsigned int t = luaL_optinteger(L, 6, 1);
 //  lcdDrawRect(x, y, w, h, t, 0xff, flags);
 //#else
 #if defined(PCBX12D) || defined(PCBX10)
@@ -638,7 +639,7 @@ static int luaLcdDrawFilledRectangle(lua_State *L)
   int y = luaL_checkinteger(L, 2);
   int w = luaL_checkinteger(L, 3);
   int h = luaL_checkinteger(L, 4);
-  unsigned int flags = luaL_optunsigned(L, 5, 0);
+  unsigned int flags = luaL_optinteger(L, 5, 0);
 #if defined(PCBX12D) || defined(PCBX10)
 	uint32_t colour ;
 	uint32_t oldColour ;
@@ -698,7 +699,7 @@ static int luaLcdDrawGauge(lua_State *L)
   int h = luaL_checkinteger(L, 4);
   int num = luaL_checkinteger(L, 5);
   int den = luaL_checkinteger(L, 6);
-  unsigned int flags = luaL_optunsigned(L, 7, 0);
+  unsigned int flags = luaL_optinteger(L, 7, 0);
 	(void) flags ;
 
 	lcd_hbar( x, y, w, h, num*100/den ) ;
@@ -787,7 +788,7 @@ Draw a combo box
 //  luaL_checktype(L, 4, LUA_TTABLE);
 //  int count = luaL_len(L, 4);  /* get size of table */
 //  int idx = luaL_checkinteger(L, 5);
-//  unsigned int flags = luaL_optunsigned(L, 6, 0);
+//  unsigned int flags = luaL_optinteger(L, 6, 0);
 //  if (idx >= count) {
 //    // TODO error
 //  }
@@ -879,8 +880,8 @@ Set a color for specific area
 static int luaLcdSetColor(lua_State *L)
 {
   if (!luaLcdAllowed) return 0;
-  unsigned int index = luaL_checkunsigned(L, 1) ;
-  unsigned int colour = luaL_checkunsigned(L, 2) ;
+  unsigned int index = luaL_checkinteger(L, 1) ;
+  unsigned int colour = luaL_checkinteger(L, 2) ;
 //  lcdColorTable[index] = color;
 	switch ( index )
 	{
@@ -937,7 +938,7 @@ static int luaLcdGetColor(lua_State *L)
   if (!luaLcdAllowed)
     return 0;
 
-  unsigned int index = luaL_checkunsigned(L, 1) ;
+  unsigned int index = luaL_checkinteger(L, 1) ;
 #if defined(PCBX12D) || defined(PCBX10)
 	switch ( index )
 	{
@@ -952,44 +953,79 @@ static int luaLcdGetColor(lua_State *L)
 		break ;
 	}
 #endif
-  lua_pushunsigned(L, value );
-//  lua_pushunsigned(L, lcdColorTable[index]);
+  lua_pushinteger(L, value );
+//  lua_pushinteger(L, lcdColorTable[index]);
   return 1;
 }
 
 #endif
 
-const luaL_Reg lcdLib[] = {
-  { "refresh", luaLcdRefresh },
-  { "clear", luaLcdClear },
-  { "drawPoint", luaLcdDrawPoint },
-  { "drawLine", luaLcdDrawLine },
-  { "drawRectangle", luaLcdDrawRectangle },
-  { "drawFilledRectangle", luaLcdDrawFilledRectangle },
-  { "drawText", luaLcdDrawText },
-  { "drawTimer", luaLcdDrawTimer },
-  { "drawNumber", luaLcdDrawNumber },
-//  { "drawChannel", luaLcdDrawChannel },
-  { "drawSwitch", luaLcdDrawSwitch },
-//  { "drawSource", luaLcdDrawSource },
-  { "drawGauge", luaLcdDrawGauge },
+LROT_BEGIN(lcdlib, NULL, 0)
+  LROT_FUNCENTRY( refresh, luaLcdRefresh )
+  LROT_FUNCENTRY( clear, luaLcdClear )
+  LROT_FUNCENTRY( drawPoint, luaLcdDrawPoint )
+  LROT_FUNCENTRY( drawLine, luaLcdDrawLine )
+  LROT_FUNCENTRY( drawRectangle, luaLcdDrawRectangle )
+  LROT_FUNCENTRY( drawFilledRectangle, luaLcdDrawFilledRectangle )
+  LROT_FUNCENTRY( drawText, luaLcdDrawText )
+  LROT_FUNCENTRY( drawTimer, luaLcdDrawTimer )
+  LROT_FUNCENTRY( drawNumber, luaLcdDrawNumber )
+//  { drawChannel, luaLcdDrawChannel )
+  LROT_FUNCENTRY( drawSwitch, luaLcdDrawSwitch )
+//  { drawSource, luaLcdDrawSource )
+  LROT_FUNCENTRY( drawGauge, luaLcdDrawGauge )
 #if defined(PCBX12D) || defined(PCBX10)
-//  { "drawBitmap", luaLcdDrawBitmap },
-  { "setColor", luaLcdSetColor },
-  { "getColor", luaLcdGetColor },
-  { "RGB", luaRGB },
+//  { drawBitmap, luaLcdDrawBitmap )
+  LROT_FUNCENTRY( setColor, luaLcdSetColor )
+  LROT_FUNCENTRY( getColor, luaLcdGetColor )
+  LROT_FUNCENTRY( RGB, luaRGB )
 #endif
 //#elif LCD_DEPTH > 1
-//  { "getLastPos", luaLcdGetLastPos },
-//  { "drawPixmap", luaLcdDrawPixmap },
-//  { "drawScreenTitle", luaLcdDrawScreenTitle },
-//  { "drawCombobox", luaLcdDrawCombobox },
+//  { getLastPos, luaLcdGetLastPos )
+//  { drawPixmap, luaLcdDrawPixmap )
+//  { drawScreenTitle, luaLcdDrawScreenTitle )
+//  { drawCombobox, luaLcdDrawCombobox )
 //#else
-  { "drawScreenTitle", luaLcdDrawScreenTitle },
-  { "getLastPos", luaLcdGetLastPos },
-//  { "drawCombobox", luaLcdDrawCombobox },
+  LROT_FUNCENTRY( drawScreenTitle, luaLcdDrawScreenTitle )
+  LROT_FUNCENTRY( getLastPos, luaLcdGetLastPos )
+//  { drawCombobox, luaLcdDrawCombobox )
 //#endif
-  { NULL, NULL }  /* sentinel */
-};
+LROT_END(lcdlib, NULL, 0)
+
+
+
+
+//const luaL_Reg lcdLib[] = {
+//  { "refresh", luaLcdRefresh },
+//  { "clear", luaLcdClear },
+//  { "drawPoint", luaLcdDrawPoint },
+//  { "drawLine", luaLcdDrawLine },
+//  { "drawRectangle", luaLcdDrawRectangle },
+//  { "drawFilledRectangle", luaLcdDrawFilledRectangle },
+//  { "drawText", luaLcdDrawText },
+//  { "drawTimer", luaLcdDrawTimer },
+//  { "drawNumber", luaLcdDrawNumber },
+////  { "drawChannel", luaLcdDrawChannel },
+//  { "drawSwitch", luaLcdDrawSwitch },
+////  { "drawSource", luaLcdDrawSource },
+//  { "drawGauge", luaLcdDrawGauge },
+//#if defined(PCBX12D) || defined(PCBX10)
+////  { "drawBitmap", luaLcdDrawBitmap },
+//  { "setColor", luaLcdSetColor },
+//  { "getColor", luaLcdGetColor },
+//  { "RGB", luaRGB },
+//#endif
+////#elif LCD_DEPTH > 1
+////  { "getLastPos", luaLcdGetLastPos },
+////  { "drawPixmap", luaLcdDrawPixmap },
+////  { "drawScreenTitle", luaLcdDrawScreenTitle },
+////  { "drawCombobox", luaLcdDrawCombobox },
+////#else
+//  { "drawScreenTitle", luaLcdDrawScreenTitle },
+//  { "getLastPos", luaLcdGetLastPos },
+////  { "drawCombobox", luaLcdDrawCombobox },
+////#endif
+//  { NULL, NULL }  /* sentinel */
+//};
 
 

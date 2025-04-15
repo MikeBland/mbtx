@@ -63,8 +63,13 @@ ifeq ($(PCB), X9D)
   LDSCRIPT = X9D/stm32F4_flash.ld
   UDEFS = -DSTM32F40_41xxx
  else
+  ifeq ($(REV9E), 1)
+   LDSCRIPT = X9D/stm32F4_flash.ld
+   UDEFS = -DSTM32F40_41xxx
+  else
   LDSCRIPT = X9D/stm32_flash.ld
   UDEFS = -Dstm32f205
+  endif
  endif
  CPPDEFS += -DHSE_VALUE=12000000
  CPPDEFS += -DPCBX9D 
