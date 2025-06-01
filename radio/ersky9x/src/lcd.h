@@ -254,9 +254,9 @@ extern uint8_t plotType ;
 void pushPlotType( uint8_t type ) ;
 void popPlotType( void ) ;
 
-#ifdef BIG_SCREEN
-extern uint16_t DisplayOffset ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//extern uint16_t DisplayOffset ;
+//#endif
 
 extern uint8_t lcd_putc(coord_t x,coord_t y,const char c ) ;
 extern uint8_t lcd_putcSmall( coord_t x, coord_t y, uint8_t c, LcdFlags mode ) ;
@@ -413,6 +413,7 @@ extern void lcd2Digits( coord_t x, coord_t y, int16_t value, LcdFlags attr ) ;
 extern uint16_t getTextWidth(const char * s, uint8_t len, LcdFlags flags) ;
 extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour ) ;
 extern void lcdDrawPropImage( uint16_t x, uint16_t y, uint32_t w, uint32_t h, uint32_t mode, uint16_t colour, uint8_t *bitmap ) ;
+extern char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size ) ;
 #endif
 
 
@@ -436,6 +437,7 @@ extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags) ;
 extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len) ;
 extern void putsTimeP( coord_t x, coord_t y, int16_t tme, LcdFlags att) ;
 extern void lcd2Digits( coord_t x, coord_t y, int16_t value, LcdFlags attr ) ;
+extern char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size ) ;
 
 #else	// PROP_TEXT
 

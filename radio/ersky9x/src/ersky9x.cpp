@@ -2866,6 +2866,20 @@ void __set_MSP(uint32_t topOfMainStack)
 //}
 #endif
 
+#if defined(PCBSKY)
+//void __set_MSP(uint32_t topOfMainStack)
+//{
+//  __ASM volatile ("MSR msp, %0\n\t" : : "r" (topOfMainStack) );
+//}
+
+//uint32_t __get_MSP(void)
+//{
+//	__ASM volatile ("mrs r0, msp\n") ;
+//}
+#endif
+
+
+
 #ifndef SMALL
 int main( void )
 {
@@ -3057,11 +3071,16 @@ extern void CheckForPrototype(void) ;
 	ResetReason = RSTC->RSTC_SR ;
 	ChipId = CHIPID->CHIPID_CIDR ;
 #ifndef SMALL
- #ifdef LUA
+ #if defined(LUA) // || defined(ARUNI)
 extern unsigned char *EndOfHeap ;
-	if ( ChipId & 0x0080 )
+	if ( ( ChipId & 0x000F0000 ) == 0x000C0000 )
 	{
 		EndOfHeap = (unsigned char *)0x20020000L ;
+		HwDelayScale = 2 ;
+	}
+	else if ( ( ChipId & 0x000F0000 ) == 0x00070000 )
+	{
+		EndOfHeap = (unsigned char *)0x20028000L ;
 		HwDelayScale = 2 ;
 	}
  #endif
@@ -4610,6 +4629,11 @@ void initTopLcd() ;
 //		((uint32_t *)newstkp)[i] = ((uint32_t *)stkp)[i] ;
 //	}
 	__set_MSP( newstkp ) ;
+ #else
+  #ifdef PCBSKY
+	uint32_t newstkp = (uint32_t)&MainStack[MAIN_STACK_REQUIRED] ;
+	__set_MSP( newstkp ) ;
+  #endif
  #endif
 #endif
 	CoStartOS();
@@ -10202,9 +10226,9 @@ void checkDsmTelemetry5ms() ;
 //	 }
 //#endif
 
-#if defined(PCBX12D) || defined(PCBX10)
-			DisplayOffset = 0 ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//			DisplayOffset = 0 ;
+//#endif
 		 
 		if ( AlertMessage )
 		{

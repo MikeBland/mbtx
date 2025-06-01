@@ -936,6 +936,11 @@ DSTATUS disk_status ( BYTE drv /* Physical drive number (0) */ )
 /* Read Sector(s)                                                        */
 /*-----------------------------------------------------------------------*/
 
+#include <string.h>
+#ifndef SMALL			
+uint32_t Tbuffer[128] ;
+#endif
+
 DRESULT disk_read (
                                    BYTE drv,                    /* Physical drive nmuber (0) */
                                    BYTE *buff,                  /* Pointer to the data buffer to store read data */
@@ -943,7 +948,7 @@ DRESULT disk_read (
                                    BYTE count                   /* Sector count (1..255) */
                                    )
 {
-        uint32_t result ;
+	uint32_t result ;
   if ( !count) return RES_PARERR ;
 
 	{
@@ -951,9 +956,27 @@ DRESULT disk_read (
 
 		if ( sd_card_ready() == 0 ) return RES_NOTRDY;
 
-    do {
+    do
+		{
+#ifndef SMALL			
+			uint32_t tt = (uint32_t)buff ;
+			if ( ( tt & 3 ) != 0 )
+			{
+	      result = sd_read_block( sector, ( uint32_t *)Tbuffer ) ;
+				if (result)
+				{
+	  			memcpy( buff, Tbuffer, 512 ) ;				
+				}
+			}
+			else
+			{
+	      result = sd_read_block( sector, ( uint32_t *)buff ) ;
+			}	
+#else
       result = sd_read_block( sector, ( uint32_t *)buff ) ;
-      if (result) {
+#endif
+			if (result)
+			{
         sector += 1 ;
         buff += 512 ;
         count -= 1 ;
@@ -990,14 +1013,31 @@ DRESULT disk_write (
 
     // TODO if (Stat & STA_PROTECT) return RES_WRPRT;
 
-    do {
-      result = sd_write_block( sector, ( uint32_t *)buff ) ;
-      if (result) {
+    do
+		{
+      
+#ifndef SMALL			
+			uint32_t tt = (uint32_t)buff ;
+			if ( ( tt & 3 ) != 0 )
+			{
+  			memcpy( Tbuffer, buff, 512 ) ;				
+	      result = sd_write_block( sector, ( uint32_t *)Tbuffer ) ;
+			}
+			else
+			{
+				result = sd_write_block( sector, ( uint32_t *)buff ) ;
+			}	
+#else
+			result = sd_write_block( sector, ( uint32_t *)buff ) ;
+#endif
+			if (result)
+			{
         sector += 1 ;
         buff += 512 ;
         count -= 1 ;
       }
-      else {
+      else
+			{
         count = 1 ;             // Flag error
         break ;
       }

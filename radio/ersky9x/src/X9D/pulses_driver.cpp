@@ -1488,11 +1488,19 @@ static void init_int_pxx( void )
 	RCC->APB1ENR |= RCC_APB1ENR_TIM12EN ;     // Enable clock
 
   INTMODULE_TIMER->CR1 &= ~TIM_CR1_CEN;
-  INTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
-  INTMODULE_TIMER->CCR2 = 16999 ;            // Update time
+	if ( type )
+	{
+	  INTMODULE_TIMER->ARR = 13989 ;             // 7 mS - 5uS
+  	INTMODULE_TIMER->CCR2 = 12999 ;            // Update time
+	}
+	else
+	{
+	  INTMODULE_TIMER->ARR = 17989 ;             // 9 mS - 5uS
+  	INTMODULE_TIMER->CCR2 = 16999 ;            // Update time
+	}
   INTMODULE_TIMER->PSC = INTMODULE_TIMER_FREQ / 2000000 - 1; // 0.5uS (2Mhz)
 
-  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE;  // Enable this interrupt
+  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE | TIM_DIER_UIE ;  // Enable this interrupt
   INTMODULE_TIMER->CR1 |= TIM_CR1_CEN ;
 
   // UART config
@@ -1970,6 +1978,8 @@ volatile uint8_t *PxxTxPtr_x ;
 volatile uint8_t PxxTxCount_x ;
 
 uint16_t XjtHbeatOffset ;
+//uint16_t XjtHbeatCount ;
+//uint16_t XjtHbeatAve ;
 
 extern "C" void TIM8_BRK_TIM12_IRQHandler()
 {
@@ -1979,7 +1989,10 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 	uint16_t status = INTMODULE_TIMER->SR ;
   if ( ( INTMODULE_TIMER->DIER & TIM_DIER_UIE ) && ( status & TIM_SR_UIF ) )
 	{
-	  INTMODULE_TIMER->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
+	  
+	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_UIF ;     // Clear this flag
+		
+//		INTMODULE_TIMER->DIER &= ~TIM_DIER_UIE ;		// Disable this interrupt
 //	  INTMODULE_TIMER->SR = INTMODULE_TIMER_SR_MASK & ~TIM_SR_CC2IF ;     // Clear this flag
 //	  INTMODULE_TIMER->DIER |= TIM_DIER_CC2IE ;  // Enable this interrupt
 //		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;		// Enable this interrupt
@@ -1999,6 +2012,42 @@ extern "C" void TIM8_BRK_TIM12_IRQHandler()
 					{
 						INTMODULE_TIMER->ARR = 18019 ;                     // 9mS
 					}
+				}
+			}
+		}
+		if (s_current_protocol[INTERNAL_MODULE] == PROTO_ACCESS )
+		{
+//			XjtHbeatCount += 256 ;
+			if ( XjtHeartbeatCapture.valid )
+			{
+//				XjtHbeatCount += 1 ;
+				XjtHbeatOffset = TIM7->CNT - XjtHeartbeatCapture.value ;
+				if ( XjtHeartbeatCapture.valid )
+				{
+		//			if ( XjtHbeatOffset > 0x2A00 )
+					if ( g_model.Access[0].type == 1 )	// ACCST
+					{
+						if ( XjtHbeatOffset > 17000 )
+						{
+							INTMODULE_TIMER->ARR = 17979 ;                     // 9mS
+						}
+						else
+						{
+							INTMODULE_TIMER->ARR = 18019 ;                     // 9mS
+						}
+					}
+					else
+					{
+						if ( XjtHbeatOffset > 13000 )
+						{
+							INTMODULE_TIMER->ARR = 13979 ;                     // 7mS
+						}
+						else
+						{
+							INTMODULE_TIMER->ARR = 14019 ;                     // 7mS
+						}
+					}
+//					XjtHbeatAve = (XjtHbeatAve*15 + INTMODULE_TIMER->ARR ) / 16 ;
 				}
 			}
 		}
@@ -2331,7 +2380,11 @@ void init_ext_access()
   RCC->AHB1ENR |= RCC_AHB1ENR_GPIOBEN ;     // Enable portB clock
 	
 //	configure_pins( EXTMODULE_TX_GPIO_PIN, PIN_PERIPHERAL | PIN_PUSHPULL | PIN_OS25 | PIN_PORTB | PIN_PER_8 ) ;
+#ifdef X9E_USE_USART3	
 	configure_pins( EXTMODULE_RX_GPIO_PIN, PIN_PERIPHERAL | PIN_PORTB | PIN_PER_7 ) ;
+#else
+	configure_pins( GPIO_Pin_9, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
+#endif
 	configure_pins( GPIO_Pin_14, PIN_PERIPHERAL | PIN_PORTG | PIN_PER_8 ) ;
 
 	RCC->APB2ENR |= RCC_APB2ENR_TIM8EN ;     // Enable clock

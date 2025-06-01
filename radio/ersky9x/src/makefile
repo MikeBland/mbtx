@@ -18,6 +18,7 @@
 #
 # Taranis      make PCB=X9D
 # X9E          make PCB=X9D REV9E=1
+# X9E_ACCESS   make PCB=X9D REV9E=1 ACCESS=1
 # TaranisPlus  make PCB=X9D REVPLUS=1
 # XLite        make PCB=X9D PCBXLITE=1
 # XLiteS       make PCB=X9D PCBXLITE=1 PCBXLITES=1
@@ -44,6 +45,18 @@
 # Start of default section
 #
 
+PLATFORM := $(shell uname)
+
+ifeq  ($(PLATFORM),Linux)
+$(warning Linux)
+OSLIN = 1
+else
+$(warning Windows)
+OSLIN = 0
+endif
+
+
+
 TOOLCHAIN = arm-none-eabi-
 CC   = $(TOOLCHAIN)gcc
 CP   = $(TOOLCHAIN)objcopy
@@ -53,7 +66,9 @@ AS   = $(TOOLCHAIN)as
 BIN  = $(CP) -O ihex 
 BINX = $(CP) -O binary 
 
+ifeq ($(OSLIN), 0)
 SHELL=cmd
+endif
 
 ifeq ($(PCB), X9D)
  MCU  = cortex-m3
@@ -82,11 +97,20 @@ ifeq ($(PCB), X9D)
   LUA = 1
   CPPDEFS += -DLUA
  else ifeq ($(REV9E), 1)
-  PROJECT        = x9e
-  EXT_MOD=X9E
-  CPPDEFS += -DREV9E
-  LUA = 1
-  CPPDEFS += -DLUA
+  ifeq ($(ACCESS), 1)
+   PROJECT = x9eAccess
+   EXT_MOD=X9E
+   CPPDEFS += -DREV9E
+   LUA = 1
+   CPPDEFS += -DLUA
+   CPPDEFS += -DACCESS
+  else
+   PROJECT = x9e
+   EXT_MOD=X9E
+   CPPDEFS += -DREV9E
+   LUA = 1
+   CPPDEFS += -DLUA
+  endif
  else ifeq ($(PCBX7), 1)
   CPPDEFS += -DPCBX7
   ifeq ($(PCBT12), 1)
@@ -284,6 +308,8 @@ else
   EXT_MOD=ARUNI
   UDEFS = -Dat91sam3s8
   CPPDEFS += -DXFIRE
+  LUA = 1
+  CPPDEFS += -DLUA
  else
   PROJECT = ersky9x
   CPPDEFS += -DXFIRE
@@ -330,7 +356,7 @@ FULL_PRJ = $(PROJECT)_rom
 
 ifdef OBJROOT
 else
-OBJROOT = ./
+OBJROOT = .
 endif
 OBJDIR = $(OBJROOT)\obj_$(PROJECT)
 
@@ -1273,35 +1299,23 @@ all: $(OBJDIR) size_before stamp .WAIT $(AOBJS) $(COBJS) $(CPPOBJS) $(FULL_PRJ).
 
 size_before:
 #	arm-none-eabi-size $(FULL_PRJ).elf
+ifeq ($(OSLIN), 0)
 	@if EXIST $(FULL_PRJ).elf arm-none-eabi-size $(FULL_PRJ).elf
-#	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+else
+	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+endif
 
 size:
 #	arm-none-eabi-size $(FULL_PRJ).elf
+ifeq ($(OSLIN), 0)
 	@if EXIST $(FULL_PRJ).elf arm-none-eabi-size $(FULL_PRJ).elf
-#	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+else
+	@if test -f $(FULL_PRJ).elf; then arm-none-eabi-size $(FULL_PRJ).elf; fi
+endif
 
 # Build stamp-file
-#stamp:
-#	@echo
-##ifeq ($(STAMP), 1)
-#	@echo "Generate Version-stamp:"
-##	-rm -f $(OBJDIR)/stamp.o
-#	@echo "//Automatically generated file - do not edit" > stamp-ersky9x.h
-#	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-ersky9x.h
-#	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
-##	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
-# ifeq ($(PCB), X9D)
-#	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
-#	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
-# else	
-#	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
-#	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
-# endif
-##	@cat stamp-ersky9x.h
-##endif
-
 stamp:
+ifeq ($(OSLIN), 0)
 	@echo
 #ifeq ($(STAMP), 1)
 	@echo Generate Version-stamp:
@@ -1319,14 +1333,36 @@ stamp:
 	@echo ^">> stamp-ersky9x.h
 #	@echo // >> stamp-ersky9x.h
 	@echo #define MOD_VERS "$(EXT_MOD)" >> stamp-ersky9x.h
+else
+#	@echo
+##ifeq ($(STAMP), 1)
+	@echo "Generate Version-stamp:"
+##	-rm -f $(OBJDIR)/stamp.o
+	@echo "//Automatically generated file - do not edit" > stamp-ersky9x.h
+	@echo "#define DATE_STR \"`date +%d.%m.%Y`\"" >> stamp-ersky9x.h
+	@echo "#define TIME_STR \"`date +%H:%M:%S`\"" >> stamp-ersky9x.h
+	@echo "#define SUB_VERS $(VER)-$(USER)" >> stamp-ersky9x.h
+ifeq ($(PCB), X9D)
+	@echo "#define SVN_VERS \"erx9d-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+else	
+	@echo "#define SVN_VERS \"ersky9x-$(PROV)r$(REV)\"" >> stamp-ersky9x.h
+	@echo "#define MOD_VERS \"$(EXT_MOD)\"" >> stamp-ersky9x.h
+endif
+##	@cat stamp-ersky9x.h
+##endif
+endif
 #endif
 
 
 .NOTPARALLEL: stamp-ersky9x.h
 
 $(OBJDIR):
+ifeq ($(OSLIN), 0)
 	if NOT EXIST $(OBJDIR) mkdir $(OBJDIR)
-#	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
+else
+	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
+endif
 
 #$(OBJDIR)/%.o : %.cpp
 #	$(CC) -c $(CPPFLAGS) -fno-exceptions -I . $(INCDIR) $< -o $@

@@ -420,7 +420,7 @@
 // c17-c24 added for timer mode A display
 #define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 // CSWITCH_STR indexed 7 chars each
-#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\140=val v&val  v1\140=v2 v=val  Range  |d|>vald>=val "
+#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\173=val v&val  v1\173=v2 v=val  Range  |d|>vald>=val "
 
 #define ISWASH_TYPE_STR     "\170" "\004" "\004----"" 120""120X"" 140""  90"
 
@@ -434,10 +434,11 @@
 #define ISTR_FUEL            "Tank"
 #define ISTR_12_RPM          "\012RPM"
 #define ISTR_LON_EQ          "Lon="
-#define ISTR_ALT_MAX         "Hjd=\011m   Max="
-#define ISTR_SPD_KTS_MAX     "Kmh=\011kts Max="
+#define ISTR_ALT_MAX         "Hjd=\015Max="
+#define ISTR_SPD_KTS_MAX     "Kmh=\015Max="
 #define ISTR_LAT_EQ         "Lat=" "\037" ISTR_LON_EQ "\037" ISTR_ALT_MAX "\037" ISTR_SPD_KTS_MAX
 #define ISTR_11_MPH          "\011mph"
+#define ISTR_11_KTS					"\011kts"
 
 #define ISTR_SINK_TONES      "Sjunktoner"
 

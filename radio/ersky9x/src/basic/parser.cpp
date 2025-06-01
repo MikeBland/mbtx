@@ -782,9 +782,9 @@ union t_program *Pprogram = &Program ;
 // #ifdef REVX
 //#define STATIC_BASIC	1
 // #endif
- #ifdef ARUNI
-#define STATIC_BASIC	1
- #endif
+// #ifdef ARUNI
+//#define STATIC_BASIC	1
+// #endif
  #ifdef PCBLEM1
 #define STATIC_BASIC	1
  #endif

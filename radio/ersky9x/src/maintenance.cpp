@@ -1279,20 +1279,26 @@ extern int32_t Rotary_diff ;
 //uint8_t CoProcReady ;
 
 #if !defined(PCBTARANIS)
-void lcd_putsnAtt0(uint8_t x,uint8_t y, const char * s,uint8_t len,uint8_t mode)
+void lcd_putsnAtt0(uint16_t x,uint16_t y, const char * s,uint8_t len,uint8_t mode)
 {
 	register char c ;
-  while(len!=0) {
+  while(len!=0)
+	{
     c = *s++ ;
 		if ( c == 0 )
 		{
 			break ;			
 		}
-#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
-    PUTC_ATT(x,y,c,mode);
+#if defined(PCBX12D) || defined(PCBX10)
+    lcdDrawChar(x, y*TSCALE, c, mode & ~LUA_RIGHT ) ;
 		x = LcdNextPos ;
 #else
-    x = PUTC_ATT(x,y,c,mode);
+ #if defined(PROP_TEXT)
+    lcdDrawChar(x, y, c, mode & ~LUA_RIGHT ) ;
+		x = LcdNextPos ;
+ #else
+    x = PUTC_ATT(x,y,c,mode) ;
+ #endif
 #endif
     len--;
   }

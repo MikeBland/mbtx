@@ -211,9 +211,9 @@ const uint8_t Lcd_lookup[] =
 #endif 
 #endif // DUE
 
-#if defined(PCBX12D) || defined(PCBX10)
-uint16_t DisplayOffset ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//uint16_t DisplayOffset ;
+//#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
 void putsTimexxl( uint16_t x, uint16_t y, int16_t tme, uint8_t att, uint16_t colour )
@@ -1678,32 +1678,32 @@ void lcd_putsn_P(coord_t x,coord_t y,const char * s,uint8_t len)
 }
 #endif
 
-#ifndef COLOUR_DISPLAY
-#if defined(PCBX12D) || defined(PCBX10)
-uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, LcdFlags mode, uint16_t colour, uint16_t background )
-{
-  while(1)
-	{
-    char c = *s++ ;
-    if(!c) break ;
-		if ( c == 31 )
-		{
+//#ifndef COLOUR_DISPLAY
+//#if defined(PCBX12D) || defined(PCBX10)
+//uint8_t lcd_putsAttColour( uint8_t x, uint8_t y, const char *s, LcdFlags mode, uint16_t colour, uint16_t background )
+//{
+//  while(1)
+//	{
+//    char c = *s++ ;
+//    if(!c) break ;
+//		if ( c == 31 )
+//		{
 
-			if ( (y += FH) >= 64 )	// Screen height
-			{
-				break ;
-			}	
-			x = DisplayOffset ;
-		}
-		else
-		{
-    	x = lcd_putcAttColour(x,y,c,mode, colour, background ) ;
-		}
-  }
-  return x;
-}
-#endif
-#endif
+//			if ( (y += FH) >= 64 )	// Screen height
+//			{
+//				break ;
+//			}	
+//			x = DisplayOffset ;
+//		}
+//		else
+//		{
+//    	x = lcd_putcAttColour(x,y,c,mode, colour, background ) ;
+//		}
+//  }
+//  return x;
+//}
+//#endif
+//#endif
  
  
  #ifndef PROP_TEXT
@@ -1747,21 +1747,21 @@ uint8_t lcd_putsAtt( coord_t x, coord_t y, const char *s, LcdFlags mode )
 			}	
 #endif
 			
-#if defined(PCBX12D) || defined(PCBX10)
-			x = DisplayOffset ;
-#else
+//#if defined(PCBX12D) || defined(PCBX10)
+//			x = DisplayOffset ;
+//#else
 			x = 0 ;
-#endif
+//#endif
 		}
 		else
 		{
-#if defined(PCBX12D) || defined(PCBX10)
-			uint8_t offset = 0 ;
-			if ( c < 22 )
-			{
-				offset = DisplayOffset ;
-			}
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//			uint8_t offset = 0 ;
+//			if ( c < 22 )
+//			{
+//				offset = DisplayOffset ;
+//			}
+//#endif
 #if defined(PCBX12D) || defined(PCBX10)
 		x = lcd_putcAtt(x, y, c, mode);
 #else
@@ -1774,9 +1774,9 @@ uint8_t lcd_putsAtt( coord_t x, coord_t y, const char *s, LcdFlags mode )
 			x = lcd_putcAtt(x, y, c, mode);
 		}
 #endif
-#if defined(PCBX12D) || defined(PCBX10)
-			x += offset ;
-#endif
+//#if defined(PCBX12D) || defined(PCBX10)
+//			x += offset ;
+//#endif
 		}
   }
   return x;

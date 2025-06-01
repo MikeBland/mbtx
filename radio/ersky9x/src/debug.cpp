@@ -336,6 +336,8 @@ void handle_serial(void* pdata)
 //	txmit('Z') ;
 //#endif
 
+	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+	
 	while ( Activated == 0 )
 	{
 //#ifdef PCB9XT
@@ -344,6 +346,10 @@ void handle_serial(void* pdata)
 		CoTickDelay(10) ;					// 20mS
 	}
 //	txmit(';') ;
+
+	com2_Configure( CONSOLE_BAUDRATE, SERIAL_NORM, SERIAL_NO_PARITY ) ;
+
+	uputs( (char *)"Hello\r\n" ) ;
 
 #if VOICE_TEST
 	static uint32_t SdAddress = 0 ;
@@ -363,6 +369,7 @@ void handle_serial(void* pdata)
 
 		}
 #endif
+
 #ifdef PCB9XT
 //		while ( g_eeGeneral.btComPort == 1 )
 		while ( g_eeGeneral.btComPort )

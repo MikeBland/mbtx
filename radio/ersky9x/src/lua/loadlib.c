@@ -284,13 +284,13 @@ static lua_CFunction lsys_sym (lua_State *L, void *lib, const char *sym) {
 /*
 ** return registry.LUA_NOENV as a boolean
 */
-static int noenv (lua_State *L) {
-  int b;
-  lua_getfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
-  b = lua_toboolean(L, -1);
-  lua_pop(L, 1);  /* remove value */
-  return b;
-}
+//static int noenv (lua_State *L) {
+//  int b;
+//  lua_getfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
+//  b = lua_toboolean(L, -1);
+//  lua_pop(L, 1);  /* remove value */
+//  return b;
+//}
 
 
 /*

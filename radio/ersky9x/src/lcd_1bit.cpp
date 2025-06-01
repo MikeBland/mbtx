@@ -564,6 +564,8 @@ void lcdDrawChar(coord_t x, coord_t y, const unsigned char c)
   lcdDrawChar( x, y, c, 0 ) ;
 }
 
+extern const char s_charTab[] ;
+
 char zchar2char(int8_t idx)
 {
   if (idx == 0)
@@ -814,6 +816,46 @@ void lcdDrawHex2(coord_t x, coord_t y, uint8_t val )
   }
 }
 
+//char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size )
+//{
+//  char *s = str+size-1 ;
+//  *s = '\0';
+//  int idx = 0 ;
+//  int mode = MODE(flags) ;
+//  bool neg = false ;
+
+//  if (val < 0)
+//	{
+//    val = -val ;
+//    neg = true ;
+//  }
+//	if ( len > size-2)
+//	{
+//		len = size-2 ;	// Allow for '-'
+//	}
+
+//  do
+//	{
+//    *--s = '0' + (val % 10) ;
+//    ++idx ;
+//    val /= 10 ;
+//    if (mode!=0 && idx==mode)
+//		{
+//      mode = 0 ;
+//      *--s = '.' ;
+//      if (val==0)
+//			{
+//        *--s = '0' ;
+//      }
+//    }
+//  } while (val!=0 || mode>0 || (mode==MODE(LEADING0) && idx<len)) ;
+//  if (neg)
+//	{
+//    *--s = '-' ;
+//  }
+//	return s ;
+//}
+
 void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len )
 {
   char str[16+1] ;
@@ -823,19 +865,8 @@ void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t le
   int mode = MODE(flags) ;
   bool neg = false ;
 
-//  if (val == INT_MAX) {
-//    flags &= ~(LEADING0 | PREC1 | PREC2);
-//    lcdDrawText(x, y, "INT_MAX", flags);
-//    return;
-//  }
-
   if (val < 0)
 	{
-//    if (val == INT_MIN) {
-//      flags &= ~(LEADING0 | PREC1 | PREC2);
-//      lcdDrawText(x, y, "INT_MIN", flags);
-//      return;
-//    }
     val = -val ;
     neg = true ;
   }
@@ -1568,32 +1599,23 @@ void lcdDrawHex4(coord_t x, coord_t y, uint16_t val )
   lcdDrawText(x, y, s) ;
 }
 
-
-void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour)
+char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size )
 {
-  char str[16+1] ;
-  char *s = str+16 ;
+  char *s = str+size-1 ;
   *s = '\0';
   int idx = 0 ;
   int mode = MODE(flags) ;
   bool neg = false ;
 
-//  if (val == INT_MAX) {
-//    flags &= ~(LEADING0 | PREC1 | PREC2);
-//    lcdDrawText(x, y, "INT_MAX", flags);
-//    return;
-//  }
-
   if (val < 0)
 	{
-//    if (val == INT_MIN) {
-//      flags &= ~(LEADING0 | PREC1 | PREC2);
-//      lcdDrawText(x, y, "INT_MIN", flags);
-//      return;
-//    }
     val = -val ;
     neg = true ;
   }
+	if ( len > size-2)
+	{
+		len = size-2 ;	// Allow for '-'
+	}
 
   do
 	{
@@ -1609,20 +1631,82 @@ void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t le
         *--s = '0' ;
       }
     }
-  } while (val!=0 || mode>0 || ((flags & LEADING0) && idx<len) ) ;
+  } while (val!=0 || mode>0 || ((flags & LEADING0) && idx<len)) ;
   if (neg)
 	{
     *--s = '-' ;
   }
-  flags &= ~(LEADING0 | PREC1 | PREC2) ;
+	return s ;
+}
+
+void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour)
+{
+  char str[16+1] ;
+  char *s = numberToText( val, flags, len, str, 17 ) ;
+
+	flags &= ~(LEADING0 | PREC1 | PREC2) ;
 
 	if ( (flags & LEFT) == 0 )
 	{
 		flags |= LUA_RIGHT ;
 	}
 	lcdDrawSizedText( x, y, s, 255, flags, colour ) ;
-	
 }
+
+//void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour)
+//{
+//  char str[16+1] ;
+//  char *s = str+16 ;
+//  *s = '\0';
+//  int idx = 0 ;
+//  int mode = MODE(flags) ;
+//  bool neg = false ;
+
+////  if (val == INT_MAX) {
+////    flags &= ~(LEADING0 | PREC1 | PREC2);
+////    lcdDrawText(x, y, "INT_MAX", flags);
+////    return;
+////  }
+
+//  if (val < 0)
+//	{
+////    if (val == INT_MIN) {
+////      flags &= ~(LEADING0 | PREC1 | PREC2);
+////      lcdDrawText(x, y, "INT_MIN", flags);
+////      return;
+////    }
+//    val = -val ;
+//    neg = true ;
+//  }
+
+//  do
+//	{
+//    *--s = '0' + (val % 10) ;
+//    ++idx ;
+//    val /= 10 ;
+//    if (mode!=0 && idx==mode)
+//		{
+//      mode = 0 ;
+//      *--s = '.' ;
+//      if (val==0)
+//			{
+//        *--s = '0' ;
+//      }
+//    }
+//  } while (val!=0 || mode>0 || ((flags & LEADING0) && idx<len) ) ;
+//  if (neg)
+//	{
+//    *--s = '-' ;
+//  }
+//  flags &= ~(LEADING0 | PREC1 | PREC2) ;
+
+//	if ( (flags & LEFT) == 0 )
+//	{
+//		flags |= LUA_RIGHT ;
+//	}
+//	lcdDrawSizedText( x, y, s, 255, flags, colour ) ;
+	
+//}
 
 void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len)
 {

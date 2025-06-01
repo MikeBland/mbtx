@@ -284,7 +284,7 @@
 	ISTR_LAT_EQ        ,
 	I_REMOVED					 , //	ISTR_LON_EQ        ,
 	I_REMOVED					 , //	ISTR_ALT_MAX       ,
-	I_REMOVED					 , //	ISTR_SPD_KTS_MAX   ,
+	ISTR_11_KTS				 , //	ISTR_SPD_KTS_MAX   ,
 	ISTR_11_MPH        ,
 	ISTR_SINK_TONES		 , 
 	ISTR_ST_CARD_STAT  ,

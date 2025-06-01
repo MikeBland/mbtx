@@ -256,7 +256,7 @@
 #define STR_LAT_EQ          234
 #define X_STR_LON_EQ          235
 #define X_STR_ALT_MAX         236
-#define X_STR_SPD_KTS_MAX     237
+#define STR_11_KTS			    237
 #define STR_11_MPH          238
 #define STR_SINK_TONES		  239
 #define STR_ST_CARD_STAT    240

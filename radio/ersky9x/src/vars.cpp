@@ -1069,7 +1069,7 @@ void menuOneAction( uint8_t event )
 			{
 				int32_t oldCategory = pAction->category ;
 				drawItem( (char *)XPSTR("Category"), y, attr ) ;
-				drawIdxText( y*2+TVOFF, (char *)StringActionCategory, pAction->category, attr ) ;
+				drawIdxText( y, (char *)StringActionCategory, pAction->category, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( pAction->category, 0, 1 ) ;
@@ -1217,7 +1217,7 @@ void menuOneValue( uint8_t event )
 			case 0 :
 			{
 				drawItem( (char *)XPSTR("Category"), y, attr ) ;
-				drawIdxText( y*2+TVOFF, (char *)StringValueCategory, pvalue->category, attr ) ;
+				drawIdxText( y, (char *)StringValueCategory, pvalue->category, attr ) ;
 				int32_t oldCategory = pvalue->category ;
 				if(attr)
 				{
@@ -1231,13 +1231,13 @@ void menuOneValue( uint8_t event )
 			break ;
 			case 1 :
 				drawItem( (char *)XPSTR("Item"), y, attr ) ;
-				if ( attr & INVERS )
-				{
-					if ( s_editMode && BLINK_ON_PHASE )
-					{
-						attr = 0 ;
-					}
-				}
+//				if ( attr & INVERS )
+//				{
+//					if ( s_editMode && BLINK_ON_PHASE )
+//					{
+//						attr = 0 ;
+//					}
+//				}
 				saveEditColours( attr, colour ) ;
 				displayValueItem( TRIGHT-TRMARGIN, y+TVOFF/2, pvalue, attr & ~INVERS ) ;
 				restoreEditColours() ;

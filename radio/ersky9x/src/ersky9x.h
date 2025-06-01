@@ -143,10 +143,9 @@ typedef uint32_t LcdFlags ;
 #define X12SMALL_OFFSET	0
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10)
-#define BIG_SCREEN		1
-#endif
-
+//#if defined(PCBX12D) || defined(PCBX10)
+//#define BIG_SCREEN		1
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 #define BLUETOOTH	1
@@ -216,11 +215,11 @@ typedef uint32_t LcdFlags ;
  #define ACCESS					1
 #endif
 
-#ifdef REV9E
- #define ACCESS					1
+//#ifdef REV9E
+// #define ACCESS					1
  // Next is for using USART3 for ACCESS Rx instead of USART6 for both Tx and Rx
 // #define X9E_USE_USART3
-#endif
+//#endif
 
 
 #define ACCESS_SPORT_BAUD_RATE		450000
@@ -1184,8 +1183,8 @@ extern uint8_t sysFlags;
 extern uint8_t StickScrollAllowed ;
 extern uint8_t StepSize ;
 
-const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
-#define NUMCHARS (sizeof(s_charTab)-1)
+//const char s_charTab[]=" ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
+//#define NUMCHARS (sizeof(s_charTab)-1)
 
 ///number of real input channels (1-9) plus virtual input channels X1-X4
 #define PPM_BASE    MIX_CYC3

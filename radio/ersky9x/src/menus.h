@@ -66,6 +66,7 @@ event = mstate2.check(event,menu,tab,DIM(tab),mstate_tab,DIM(mstate_tab)-1,lines
 uint32_t checkPageMove( uint8_t event, uint8_t *pos, uint32_t max ) ;
 #endif
 
+void touchMenuTitle( char *s ) ;
 
 #define YN_NONE	0
 #define YN_YES	1
@@ -116,7 +117,7 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 #ifdef TOUCH
 
 #define TTOP			10
-#define THTOP			18
+#define THTOP			14
 #define TFH				12
 #define TRIGHT	 180
 #define TMID		 110
@@ -271,7 +272,7 @@ extern void menuProcBattery(uint8_t event) ;
 extern void menuProc0(uint8_t event) ;
 extern void actionMainPopup( uint8_t event ) ;
 extern void menuProcModelSelect(uint8_t event) ;
-extern void menuProcGlobals(uint8_t event) ;
+extern void menuGlobals(uint8_t event) ;
 extern int16_t expo(int16_t x, int16_t k) ;
 extern int16_t calcExpo( uint8_t channel, int16_t value ) ;
 extern void timer(int16_t throttle_val) ;
@@ -300,9 +301,11 @@ uint16_t dimBackColour() ;
 #ifdef COLOUR_DISPLAY
 //uint16_t dimBackColour() ;
 void drawItem( char *s, uint16_t y, uint16_t colour ) ;
+void drawNumberedItem( char *s, uint16_t y, uint16_t selected, int32_t number ) ;
+void drawNumberedItemWide( char *s, uint16_t y, uint16_t selected, int32_t number ) ;
 void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode) ; //, uint16_t colour ) ;
 void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode ) ;
-void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode, uint16_t colour ) ;
+void drawChar( uint16_t x, uint16_t y, uint8_t c, uint16_t mode ) ;
 void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
 void DrawDrSwitches( coord_t x, coord_t y, int8_t idx1, LcdFlags att) ;
 uint32_t touchOnOffItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
@@ -315,10 +318,16 @@ uint16_t processSelection( uint8_t vert, int32_t newSelection ) ;
 void checkTouchEnterEdit( uint16_t value ) ;
 uint16_t handleTouchSelect( uint32_t rows, uint32_t pgOfs, uint8_t sub, uint32_t flag = 0 ) ;
 uint32_t checkTouchposition( uint16_t x, uint16_t y, uint16_t x2, uint16_t y2 ) ;
+int32_t checkTouchArea( uint32_t x, uint32_t y, uint32_t w, uint32_t h ) ;
+uint32_t touchOnOffItemMultiple( uint8_t value, coord_t y, uint8_t condition, uint16_t colour ) ;
+void dispGvar( coord_t x, coord_t y, uint8_t gvar, LcdFlags attr ) ;
 
 void menuLimitsOne(uint8_t event) ;
+#ifdef TOUCH
+uint32_t editTimer( uint8_t sub, uint8_t event ) ;
+#else
 void editTimer( uint8_t sub, uint8_t event ) ;
-
+#endif
 #endif
 
 
@@ -357,7 +366,7 @@ extern uint8_t TrainerMode ;
 extern uint8_t TrainerPolarity ;	// Input polarity
 
 extern void copyFileName( char *dest, char *source, uint32_t size ) ;
-extern void menuProcSelectVoiceFile(uint8_t event) ;
+extern void menuSelectVoiceFile(uint8_t event) ;
 extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
@@ -495,7 +504,7 @@ extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 #define ALPHA_FILENAME	0x40
 #define ALPHA_HEX				0x100
 
-#ifdef BIG_SCREEN
+#ifdef COLOUR_DISPLAY
 #define RIGHT_POSITION	239
 #else
 #define RIGHT_POSITION	127
@@ -579,13 +588,15 @@ void displayNext() ;
 void displayIndex( const uint16_t *strings, uint8_t extra, uint8_t lines, uint8_t highlight ) ;
 uint32_t checkForMenuEncoderBreak( uint8_t event ) ;
 uint32_t checkForMenuEncoderLong( uint8_t event ) ;
-void menuProcGlobalVoiceAlarm(uint8_t event) ;
+void menuGlobalVoiceAlarm(uint8_t event) ;
 void displayGPSformat( uint16_t x, uint16_t y, uint8_t attr ) ;
 uint8_t edit3posSwitchSource( coord_t y, uint8_t value, uint16_t mask, uint8_t condition, uint8_t allowAna ) ;
 
+void voiceMinutes( int16_t value ) ;
+
 #ifdef PCB9XT
 void editExtraPot( coord_t y, uint32_t index, uint32_t active ) ;
-int16_t gvarMenuItem(coord_t x, coord_t y, int16_t value, int8_t min, int8_t max, LcdFlags attr, uint8_t event ) ;
+int16_t gvarMenuItem(coord_t x, coord_t y, int16_t value, int16_t min, int16_t max, LcdFlags attr, uint8_t event ) ;
 #endif
 
 

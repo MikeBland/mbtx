@@ -85,7 +85,7 @@ extern void disp_datetime( coord_t y ) ;
 
 struct t_newvario NewVario ;
 
-#ifdef BIG_SCREEN
+#ifdef COLOUR_DISPLAY
 #define STAT2_OFF_0		0
 #define MUSIC_OFF_0		0
 #define BOOT_OFF_0  	0
@@ -119,7 +119,7 @@ enum EnumTabStat
 #ifdef NEW_VARIO
 	e_vario,
 #endif
-#ifndef BIG_SCREEN
+#ifndef COLOUR_DISPLAY
 	e_music,
 #endif
 	e_music1,
@@ -187,7 +187,7 @@ const MenuFuncP menuTabStat[] =
 #ifdef NEW_VARIO
 	menuNewVario,
 #endif
-#ifndef BIG_SCREEN
+#ifndef COLOUR_DISPLAY
 	menuProcMusic,
 #endif
 	menuProcMusicList,
@@ -668,9 +668,9 @@ void menuProcBoot(uint8_t event)
 {
   MENU(PSTR(STR_BOOT_REASON), menuTabStat, e_Boot, 1, {0/*, 0*/});
 
-#ifdef BIG_SCREEN
-	DisplayOffset = BOOT_OFF_0 ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//	DisplayOffset = BOOT_OFF_0 ;
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 	PUTS_ATT_LEFT( 7*FHPY, XPSTR("Chip") ) ;
@@ -789,9 +789,9 @@ void menuProcStatistic2(uint8_t event)
     break;
   }
 
-#ifdef BIG_SCREEN
-	DisplayOffset = STAT2_OFF_0 ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//	DisplayOffset = STAT2_OFF_0 ;
+//#endif
 
   PUTS_ATT_LEFT( 1*FHPY, XPSTR("On Time")) ;
 	div_t qr ;
@@ -868,6 +868,19 @@ extern uint32_t IdlePercent ;
 //#endif
 //}
 
+static int32_t calcTemp( int32_t temp )
+{
+ #ifdef SMALL
+	return ( ( (temp - 838 ) * 621 ) >> 11 ) - 20 ;
+#else
+	if (ChipId & 0x0080)
+	{
+		return ( ( (temp - 1787 ) * 351 ) >> 11 ) + 27 ;
+	}
+	return ( ( (temp - 838 ) * 621 ) >> 11 ) - 20 ;
+#endif
+}
+
 void menuProcBattery(uint8_t event)
 {
 	MENU(PSTR(STR_BATTERY), menuTabStat, e_battery, 1, {0} ) ;
@@ -918,8 +931,8 @@ void menuProcBattery(uint8_t event)
 	  	lcdDrawNumber( 12*FW, 4*FHPY, MAh_used + Current_used/3600 ,PREC1 ) ;
 		}
 		lcdDrawTextLeft( 6*FHPY, PSTR(STR_CPU_TEMP_MAX));
-	  lcdDrawNumber( 12*FW-2, 6*FHPY, (((((int32_t)Temperature - 838 ) * 621 ) >> 11 ) - 20) ,0 ) ;
-	  lcdDrawNumber( 20*FW-2, 6*FHPY, (((((int32_t)Max_temperature - 838 ) * 621 ) >> 11 ) - 20) ,0 ) ;
+		lcdDrawNumber( 12*FW-2, 6*FHPY, calcTemp((int32_t)Temperature), 0 ) ;
+	  lcdDrawNumber( 20*FW-2, 6*FHPY, calcTemp((int32_t)Max_temperature), 0 ) ;
 #endif // REVA
 
 		disp_datetime( 5*FHPY ) ;
@@ -1032,7 +1045,7 @@ void menuProcMusic(uint8_t event)
 		{
 			case 2 :
 				VoiceFileType = VOICE_FILE_TYPE_MUSIC ;
-      	pushMenu( menuProcSelectVoiceFile ) ;
+      	pushMenu( menuSelectVoiceFile ) ;
 			break ;
 			case 4 :
 				if ( MusicPlaying == MUSIC_STOPPED )
@@ -1077,7 +1090,7 @@ void menuProcMusic(uint8_t event)
 		}
 	}
 
-#ifdef BIG_SCREEN
+#ifdef COLOUR_DISPLAY
 	DisplayOffset = MUSIC_OFF_0 ;
 #endif
 
@@ -1675,9 +1688,9 @@ void menuProcStatistic2(uint8_t event)
     break;
   }
 
-#ifdef BIG_SCREEN
-	DisplayOffset = STAT2_OFF_0 ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//	DisplayOffset = STAT2_OFF_0 ;
+//#endif
 
   lcd_puts_Pleft( 1*FHPY, XPSTR("On Time")) ;
   lcd_putcAtt( 11*FW+3+STAT2_OFF_0, 1*FHPY, ':', 0 ) ;
@@ -1927,7 +1940,7 @@ void menuNewVario(uint8_t event)
 }
 
 
-#ifndef BIG_SCREEN
+#ifndef COLOUR_DISPLAY
 void menuProcMusic(uint8_t event)
 {
 	EditType = EE_GENERAL ;
@@ -1972,7 +1985,7 @@ void menuProcMusic(uint8_t event)
 		{
 			case 2 :
 				VoiceFileType = VOICE_FILE_TYPE_MUSIC ;
-      	pushMenu( menuProcSelectVoiceFile ) ;
+      	pushMenu( menuSelectVoiceFile ) ;
 			break ;
 			case 4 :
 				if ( MusicPlaying == MUSIC_STOPPED )
@@ -2017,9 +2030,9 @@ void menuProcMusic(uint8_t event)
 		}
 	}
 
-#ifdef BIG_SCREEN
-	DisplayOffset = MUSIC_OFF_0 ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//	DisplayOffset = MUSIC_OFF_0 ;
+//#endif
 
   lcd_puts_Pleft( 1*FHPY, XPSTR("Type")) ;
 	
@@ -2077,7 +2090,7 @@ extern uint32_t BgTotalSize ;
 		lcd_hbar( 10+MUSIC_OFF_0, 57, 101, 6, (BgTotalSize - BgSizePlayed) * 100 / BgTotalSize ) ;
 	
 }
-#endif	// BIG_SCREEN
+#endif	// COLOUR_DISPLAY
 
 void menuProcMusicList(uint8_t event)
 {
@@ -2289,9 +2302,9 @@ void menuProcBoot(uint8_t event)
 {
   MENU(PSTR(STR_BOOT_REASON), menuTabStat, e_Boot, 1, {0/*, 0*/});
 
-#ifdef BIG_SCREEN
-	DisplayOffset = BOOT_OFF_0 ;
-#endif
+//#ifdef COLOUR_DISPLAY
+//	DisplayOffset = BOOT_OFF_0 ;
+//#endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
 	lcd_puts_Pleft( 7*FHPY, XPSTR("Chip") ) ;
@@ -2814,6 +2827,15 @@ void menuDebug(uint8_t event)
 			killEvents(event) ;
 		break ;
 	}
+
+//extern uint16_t XjtHbeatOffset ;
+//extern uint16_t XjtHbeatCount ;
+//extern uint16_t XjtHbeatAve ;
+//  PUT_HEX4( 5*FW, 2*FH, XjtHbeatOffset ) ;
+//  PUT_HEX4( 5*FW, 3*FH, XjtHeartbeatCapture.value ) ;
+//  PUT_HEX4( 5*FW, 4*FH, XjtHbeatCount ) ;
+//  PUT_HEX4( 5*FW, 5*FH, TIM12->ARR ) ;
+//  PUT_HEX4( 12*FW, 5*FH, XjtHbeatAve ) ;
 
 extern uint16_t TelRxCount ;
 
