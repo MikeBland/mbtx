@@ -4582,6 +4582,10 @@ void writeNamesToCCRam() ;
 #endif
 
 #ifdef	DEBUG
+//. Make sure:
+//#define CFG_MAX_USER_TASKS      (5) 	 
+// in Osconfig.h
+// is set high enough to support this task when enabled	
 	DebugTask = CoCreateTaskEx( handle_serial,NULL,18,&debug_stk[DEBUG_STACK_SIZE-1],DEBUG_STACK_SIZE, 1, FALSE );
 #endif 
 
