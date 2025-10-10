@@ -40,8 +40,8 @@ void menuModeOne(uint8_t event) ;
 void putsTrimMode( coord_t x, coord_t y, uint8_t phase, uint8_t idx, uint8_t att ) ;
 void menuOneAdjust(uint8_t event) ;
 void editOneProtocol( uint8_t event ) ;
-void displayModuleName( uint16_t x, uint16_t y, uint8_t index, uint8_t attr ) ;
-void displayProtocol( uint16_t x, uint16_t y, uint8_t value, uint8_t attr ) ;
+void displayModuleName( uint16_t x, uint16_t y, uint8_t index, LcdFlags attr ) ;
+void displayProtocol( uint16_t x, uint16_t y, uint8_t value, LcdFlags attr ) ;
 void menuRangeBind(uint8_t event) ;
 extern PhaseData *getPhaseAddress( uint32_t phase ) ;
 uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
@@ -65,8 +65,8 @@ extern uint8_t EditingModule ;
 extern uint8_t LastTselection ;
 extern uint8_t LastTaction ;
 #endif
-extern uint8_t InputMap[] ;
-extern uint8_t InputMapSize ;
+extern uint8_t TextMap[] ;
+extern uint8_t TextMapSize ;
 void displayInputSource( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
 extern void createInputMap() ;
 void drawSmallGVAR( uint16_t x, uint16_t y ) ;
@@ -233,7 +233,7 @@ void menuScalers(uint8_t event)
   	lcdDrawChar( 9*FW, y, '+' ) ;
   	lcdDrawChar( 19*FW, y, '*' ) ;
   	lcdDrawChar( 26*FW, y, '/' ) ;
-		putsChnRaw( 4*FW+THOFF, y, g_model.Scalers[k].source, 0 ) ;
+		displaySourceRaw( 4*FW+THOFF, y, g_model.Scalers[k].source, 0 ) ;
 		lcdDrawNumber( 15*FW+THOFF, y, g_model.Scalers[k].offset, 0 ) ;
 		lcdDrawNumber( 24*FW+THOFF, y, g_model.Scalers[k].mult+1, 0 ) ;
 		lcdDrawNumber( 31*FW+THOFF, y, g_model.Scalers[k].div+1, 0 ) ;
@@ -244,7 +244,7 @@ void menuScalers(uint8_t event)
   	PUTC( 9*FW, y, '+' ) ;
   	PUTC( 19*FW, y, '*' ) ;
   	PUTC( 25*FW, y, '/' ) ;
-		putsChnRaw( (4*FW+THOFF)*2, (y)*2, g_model.Scalers[k].source, 0 ) ;
+		displaySourceRaw( (4*FW+THOFF), (y), g_model.Scalers[k].source, 0 ) ;
 		PUTS_NUM( 15*FW+THOFF, y, g_model.Scalers[k].offset, 0 ) ;
 		t = g_model.Scalers[k].mult + ( g_model.Scalers[k].multx << 8 ) ;
 		PUTS_NUM( 23*FW-1+THOFF, y, t+1, 0 ) ;
@@ -474,27 +474,33 @@ void menuModeOne(uint8_t event)
       case 0 : // switch
 			{	
 				drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
-				LcdBackground = attr ? ~colour : colour ;
-				if ( attr )
-				{
-					LcdForeground = ~LcdForeground ;
-				}
-				phase->swtch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, phase->swtch, LUA_RIGHT, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
-				LcdBackground = oldBcolour ;
-				LcdForeground = oldFcolour ;
+//				LcdBackground = attr ? ~colour : colour ;
+//				if ( attr )
+//				{
+//					LcdForeground = ~LcdForeground ;
+//				}
+				uint8_t doedit = attr ? EDIT_DR_SWITCH_EDIT : 0 ;
+				saveEditColoursBlink( attr, colour ) ;
+				phase->swtch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, phase->swtch, LUA_RIGHT, doedit, event ) ;
+				restoreEditColours() ;
+//				LcdBackground = oldBcolour ;
+//				LcdForeground = oldFcolour ;
 			}
 			break ;
       case 1 : // switch
 			{	
 				drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
-				LcdBackground = attr ? ~colour : colour ;
-				if ( attr )
-				{
-					LcdForeground = ~LcdForeground ;
-				}
-				phase->swtch2 = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, phase->swtch2, LUA_RIGHT, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
-				LcdBackground = oldBcolour ;
-				LcdForeground = oldFcolour ;
+//				LcdBackground = attr ? ~colour : colour ;
+//				if ( attr )
+//				{
+//					LcdForeground = ~LcdForeground ;
+//				}
+				uint8_t doedit = attr ? EDIT_DR_SWITCH_EDIT : 0 ;
+				saveEditColoursBlink( attr, colour ) ;
+				phase->swtch2 = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, phase->swtch2, LUA_RIGHT, doedit, event ) ;
+				restoreEditColours() ;
+//				LcdBackground = oldBcolour ;
+//				LcdForeground = oldFcolour ;
 			}
 			break ;
       
@@ -804,16 +810,7 @@ void menuModelMusic(uint8_t event)
 	}
 	drawItem( (char *)XPSTR("Start Switch"), y, ( attr ) ) ;
 	uint8_t doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-#ifndef TOUCH
-	if ( attr & INVERS )
-	{
-		if ( s_editMode && BLINK_ON_PHASE )
-		{
-			attr = 0 ;
-		}
-	}
-#endif
-	saveEditColours( attr, colour ) ;
+	saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 	temp = g_model.musicData.musicStartSwitch ;
 	if ( temp < -80 )
@@ -827,7 +824,7 @@ void menuModelMusic(uint8_t event)
 	}
 	g_model.musicData.musicStartSwitch = temp ;
 #else
-	g_model.musicData.musicStartSwitch = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.musicData.musicStartSwitch, 0, doedit, event ) ;
+	g_model.musicData.musicStartSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.musicData.musicStartSwitch, LUA_RIGHT, doedit, event ) ;
 #endif
 	restoreEditColours() ;
 	y += TFH ;
@@ -840,16 +837,7 @@ void menuModelMusic(uint8_t event)
 	}
 	drawItem( (char *)XPSTR("Pause Switch"), y, ( attr ) ) ;
 	doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-#ifndef TOUCH
-	if ( attr & INVERS )
-	{
-		if ( s_editMode && BLINK_ON_PHASE )
-		{
-			attr = 0 ;
-		}
-	}
-#endif
-	saveEditColours( attr, colour ) ;
+	saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 	temp = g_model.musicData.musicPauseSwitch ;
 	if ( temp < -80 )
@@ -863,7 +851,7 @@ void menuModelMusic(uint8_t event)
 	}
 	g_model.musicData.musicPauseSwitch = temp ;
 #else
-	g_model.musicData.musicPauseSwitch = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.musicData.musicPauseSwitch, 0, doedit, event ) ;
+	g_model.musicData.musicPauseSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.musicData.musicPauseSwitch, LUA_RIGHT, doedit, event ) ;
 #endif
 	restoreEditColours() ;
 	y += TFH ;
@@ -876,16 +864,7 @@ void menuModelMusic(uint8_t event)
 	}
 	drawItem( (char *)XPSTR("Previous Switch"), y, ( attr ) ) ;
 	doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-#ifndef TOUCH
-	if ( attr & INVERS )
-	{
-		if ( s_editMode && BLINK_ON_PHASE )
-		{
-			attr = 0 ;
-		}
-	}
-#endif
-	saveEditColours( attr, colour ) ;
+	saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 	temp = g_model.musicData.musicPrevSwitch ;
 	if ( temp < -80 )
@@ -899,7 +878,7 @@ void menuModelMusic(uint8_t event)
 	}
 	g_model.musicData.musicPrevSwitch = temp ;
 #else
-	g_model.musicData.musicPrevSwitch = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.musicData.musicPrevSwitch, 0, doedit, event ) ;
+	g_model.musicData.musicPrevSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.musicData.musicPrevSwitch, LUA_RIGHT, doedit, event ) ;
 #endif
 	restoreEditColours() ;
 	y += TFH ;
@@ -912,16 +891,7 @@ void menuModelMusic(uint8_t event)
 	}
 	drawItem( (char *)XPSTR("Next Switch"), y, ( attr ) ) ;
 	doedit = attr ? EDIT_DR_SWITCH_MOMENT | EDIT_DR_SWITCH_EDIT : EDIT_DR_SWITCH_MOMENT ;
-#ifndef TOUCH
-	if ( attr & INVERS )
-	{
-		if ( s_editMode && BLINK_ON_PHASE )
-		{
-			attr = 0 ;
-		}
-	}
-#endif
-	saveEditColours( attr, colour ) ;
+	saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 	temp = g_model.musicData.musicNextSwitch ;
 	if ( temp < -80 )
@@ -935,7 +905,7 @@ void menuModelMusic(uint8_t event)
 	}
 	g_model.musicData.musicNextSwitch = temp ;
 #else
-	g_model.musicData.musicNextSwitch = edit_dr_switch( TRIGHT-TRMARGIN-4*FW, y+TVOFF, g_model.musicData.musicNextSwitch, 0, doedit, event ) ;
+	g_model.musicData.musicNextSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.musicData.musicNextSwitch, LUA_RIGHT, doedit, event ) ;
 #endif
 	restoreEditColours() ;
 	
@@ -1243,10 +1213,13 @@ void menuVario(uint8_t event)
 			break ;
 				
 			case 1 :
+			{	
 				drawItem( (char *)PSTR(STR_2SWITCH)+1, y, attr ) ;
-				saveEditColours( attr, colour ) ;
-				g_model.varioData.swtch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.varioData.swtch, LUA_RIGHT, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+				uint8_t doedit = attr ? EDIT_DR_SWITCH_EDIT : 0 ;
+				saveEditColoursBlink( attr, colour ) ;
+				g_model.varioData.swtch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.varioData.swtch, LUA_RIGHT, doedit, event ) ;
 				restoreEditColours() ;
+			}
 			break ;
 
 			case 2 :
@@ -1278,18 +1251,27 @@ void menuVario(uint8_t event)
 
 			case 5 :
 				drawItem( (char *)XPSTR("Volume"), y, attr ) ;
+   			if(attr)
+				{
+					CHECK_INCDEC_H_MODELVAR_0( g_model.varioExtraData.volume, NUM_VOL_LEVELS-1 ) ;
+	   		}
 				if ( g_model.varioExtraData.volume )
 				{
 					drawNumber( TRIGHT-TRMARGIN, y, g_model.varioExtraData.volume, attr ) ;
 				}
 				else
 				{
+#ifndef TOUCH
+					if ( attr & INVERS )
+					{
+						if ( s_editMode && BLINK_ON_PHASE )
+						{
+							attr = 0 ;
+						}
+					}
+#endif
 					drawText( TRIGHT-TRMARGIN, y, (char *)XPSTR("Vol"), attr|LUA_RIGHT ) ;
 				}
-   			if(attr)
-				{
-					CHECK_INCDEC_H_MODELVAR_0( g_model.varioExtraData.volume, NUM_VOL_LEVELS-1 ) ;
-	   		}
 			break ;
 
 			case 6 :
@@ -1787,17 +1769,21 @@ void menuScaleOne(uint8_t event)
 			if ( s_scalerSource )
 			{
 #ifndef X20
-				epscaler->exSource = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				epscaler->exSource = unmapPots( idx ) ;
 #else
-				pscaler->exSource = TextIndex ;
+//				pscaler->exSource = TextIndex ;
+				pscaler->exSource = decodeSwSource( TextIndex ) ;
 #endif
 			}
 			else
 			{
 #ifndef X20
-				pscaler->source = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				pscaler->source = unmapPots( idx ) ;
 #else
-				pscaler->source = TextIndex ;
+//				pscaler->source = TextIndex ;
+				pscaler->source = decodeSwSource( TextIndex ) ;
 #endif
 			}
 	    eeDirty(EE_MODEL) ;
@@ -1835,23 +1821,24 @@ void menuScaleOne(uint8_t event)
 #endif
 				}
 				saveEditColours( attr, colour ) ;
-				putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (y+TVOFF)*TSCALE, x, LUA_RIGHT ) ;
+				displaySourceRaw( (TRIGHT-TRMARGIN), (y+TVOFF), x, LUA_RIGHT ) ;
+//				putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (y+TVOFF)*TSCALE, x, LUA_RIGHT ) ;
 				restoreEditColours() ;
 				if( attr )
 				{
 #ifdef X20
-					x = offsetCheckOutOfOrder( x, TelemMap, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS, NUM_SKYXCHNRAW+1, EE_MODEL ) ;
-					if ( i == 0 )
-					{
-						pscaler->source = x ;
-					}
-					else
-					{
-						pscaler->exSource = x ;
-					}
+					x = offsetCheckOutOfOrder( x, TelemMap, NUM_SKYXCHNRAW+NUM_TELEM_ITEMS, NUM_SKYXCHNRAW+1+NUM_VARS, EE_MODEL ) ;
+//					if ( i == 0 )
+//					{
+//						pscaler->source = x ;
+//					}
+//					else
+//					{
+//						pscaler->exSource = x ;
+//					}
 #else
 					x = mapPots( x ) ;
-					x = checkIncDec16( x,0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-1+1,EE_MODEL);
+					x = checkSwitchSource( x, EE_MODEL ) ;
 					if ( i == 0 )
 					{
 						pscaler->source = unmapPots( x ) ;
@@ -1883,11 +1870,13 @@ void menuScaleOne(uint8_t event)
 							s_scalerSource = 1 ;
 						}
 #ifdef X20
-						TextIndex = x ;
+//						TextIndex = x ;
+//  				  TextType = TEXT_TYPE_SW_SOURCE ;
+						setTextSwSource( x ) ;
 #else
-						TextIndex = mapPots( x ) ;
+//						x = mapPots( x ) ;
+						setTextSwSource( x ) ;
 #endif
-  				  TextType = TEXT_TYPE_SW_SOURCE ;
   				  killEvents(event) ;
 						pushMenu(menuTextHelp) ;
 					}
@@ -1923,7 +1912,7 @@ void menuScaleOne(uint8_t event)
 			break ;
       case 3 :	// mult
 				drawItem( (char *)XPSTR("Multiplier"), y, attr ) ;
-				saveEditColours( attr, colour ) ;
+				saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 				pscaler->mult = scalerDecimal( y, pscaler->mult, attr ) ;
 #else
@@ -1936,7 +1925,7 @@ void menuScaleOne(uint8_t event)
 			break ;
       case 4 :	// div
 				drawItem( (char *)XPSTR("Divisor"), y, attr ) ;
-				saveEditColours( attr, colour ) ;
+				saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 				pscaler->div = scalerDecimal( y, pscaler->div, attr ) ;
 #else
@@ -1949,7 +1938,7 @@ void menuScaleOne(uint8_t event)
 			break ;
       case 5 :	// mod
 				drawItem( (char *)XPSTR("Mod Value"), y, attr ) ;
-				saveEditColours( attr, colour ) ;
+				saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 				pscaler->mod = scalerDecimal( y, pscaler->mod, attr ) ;
 #else
@@ -2262,10 +2251,30 @@ void menuLimits(uint8_t event)
 	}
 }
 
+#ifdef X20
+int16_t convertSwitchConstant( int16_t channel, int8_t value, uint32_t *type )
+{
+	uint32_t ltype = SWC_TYPE_NUM ;
+	int32_t lvalue = value ;
+	if ( channel > 223 - NUM_VARS )
+	{
+		lvalue *= 10 ;
+		ltype = SWC_TYPE_VAR ;
+	}
+	else if ( channel > CHOUT_BASE+NUM_SKYCHNOUT )
+	{
+		lvalue = convertTelemConstant( channel-CHOUT_BASE-NUM_SKYCHNOUT-1, lvalue ) ;
+		ltype = SWC_TYPE_TEL ;
+	}
+	*type = ltype ;
+	return lvalue ;
+}
+#endif
+
 void menuSwitchOne(uint8_t event)
 {
 	static MState2 mstate2 ;
-	uint8_t attr ;
+	LcdFlags att = 0 ;
 	uint32_t index ;
 	uint32_t rows = 7 ;
 	if ( Clipboard.content == CLIP_SWITCH )
@@ -2308,17 +2317,21 @@ void menuSwitchOne(uint8_t event)
 			else if ( sub == 1 )
 			{
 #ifdef X20
-				cs.v1u =( TextIndex ) ;
+//				cs.v1u =( TextIndex ) ;
+				cs.v1u = decodeSwSource( TextIndex ) ;
 #else
-				cs.v1u = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				cs.v1u = unmapPots( idx ) ;
 #endif
 			}
 			else
 			{
 #ifdef X20
-				cs.v2u = ( TextIndex ) ;
+//				cs.v2u = ( TextIndex ) ;
+				cs.v2u = decodeSwSource( TextIndex ) ;
 #else
-				cs.v2u = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				cs.v2u = unmapPots( idx ) ;
 #endif
 			}
 	 	  eeDirty(EE_MODEL) ;
@@ -2341,13 +2354,13 @@ void menuSwitchOne(uint8_t event)
 	 
 	y = TTOP ;
 
-	attr = 0 ;
+	att = 0 ;
 	if ( sub == 0 )
 	{
-		attr = INVERS ;
+		att = INVERS ;
 	}
-	drawItem( (char *)XPSTR("Function"), y, attr ) ;
-	drawIdxText( y, (char *)PSTR(CSWITCH_STR), cs.func, attr|LUA_RIGHT ) ; // 0, attr ? ~LcdForeground : LcdForeground ) ; //, attr ? ~colour : colour ) ;
+	drawItem( (char *)XPSTR("Function"), y, att ) ;
+	drawIdxText( y, (char *)PSTR(CSWITCH_STR), cs.func, att|LUA_RIGHT ) ; // 0, attr ? ~LcdForeground : LcdForeground ) ; //, attr ? ~colour : colour ) ;
 
 	y += TFH ;
 	
@@ -2408,71 +2421,152 @@ void menuSwitchOne(uint8_t event)
 	 
   if( (cstate == CS_VOFS) || (cstate == CS_2VAL) )
   {
-		saveEditColours( (sub == 1), colour ) ;
-		putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (TTOP+TFH+TVOFF)*TSCALE, cs.v1u, LUA_RIGHT ) ;
+		att = (sub==1) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
+		displaySourceRaw( (TRIGHT-TRMARGIN), (TTOP+TFH+TVOFF), cs.v1u, LUA_RIGHT ) ;
+//		putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (TTOP+TFH+TVOFF)*TSCALE, cs.v1u, LUA_RIGHT ) ;
 		restoreEditColours() ;
 
-#ifdef X20
-    if ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) )
-#else
-    if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
-#endif
+//#ifdef X20
+//		uint32_t type ;
+//		int16_t value ;
+//		value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
+//		if ( type == SWC_TYPE_TEL )
+//		{
+//			saveEditColours( (sub == 2), colour ) ;
+//			putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+2*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
+//			restoreEditColours() ;
+//		}
+//    else
+//		{
+//			drawNumber( TRIGHT-TRMARGIN, TTOP+2*TFH, value, ( type == SWC_TYPE_VAR ) ? PREC1 : 0 ) ; //, sub == 2 ? ~colour : colour ) ;
+//		}
+//#else
+		uint32_t type ;
+		int16_t value ;
+		value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
+		att = (sub==2) ? INVERS : 0 ;
+#ifndef TOUCH
+		if ( att & INVERS )
 		{
-			int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
-			saveEditColours( (sub == 2), colour ) ;
+			if ( s_editMode && BLINK_ON_PHASE )
+			{
+				att = 0 ;
+			}
+		}
+#endif
+		if ( type == SWC_TYPE_TEL )
+		{
+			saveEditColours( att, colour ) ;
 			putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+2*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
 			restoreEditColours() ;
 		}
-    else
+		else
 		{
-			drawNumber( TRIGHT-TRMARGIN, TTOP+2*TFH, cs.v2, 0) ; //, sub == 2 ? ~colour : colour ) ;
+			drawNumber( TRIGHT-TRMARGIN, TTOP+2*TFH, value, att|(( type == SWC_TYPE_VAR ) ? PREC1 : 0) ) ; //, sub == 2 ? ~colour : colour ) ;
 		}
+//		if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
+//		{
+//			int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+//			saveEditColours( (sub == 2), colour ) ;
+//			putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+2*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
+//			restoreEditColours() ;
+//		}
+//    else
+//		{
+//			drawNumber( TRIGHT-TRMARGIN, TTOP+2*TFH, cs.v2, 0) ; //, sub == 2 ? ~colour : colour ) ;
+//		}
+//#endif
 		if ( extra )
 		{
-#ifdef X20
-    	if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) ) )
-#else
-    	if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
-#endif
+//#ifdef X20
+//    	if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) ) )
+//			{
+//				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, (int8_t)cs.bitAndV3 ) ;
+//				saveEditColours( (sub == 3), colour ) ;
+//				putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+3*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
+//				restoreEditColours() ;
+//			}
+//    	else
+//			{
+//				drawNumber( TRIGHT-TRMARGIN, TTOP+3*TFH, (int8_t)cs.bitAndV3, 0) ; //, sub == 3 ? ~colour : colour ) ;
+//			}
+//#else
+		att = (sub==3) ? INVERS : 0 ;
+#ifndef TOUCH
+		if ( att & INVERS )
+		{
+			if ( s_editMode && BLINK_ON_PHASE )
 			{
-				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, (int8_t)cs.bitAndV3 ) ;
-				saveEditColours( (sub == 3), colour ) ;
+				att = 0 ;
+			}
+		}
+#endif
+			value = convertSwitchConstant( cs.v1u, (int8_t)cs.bitAndV3, &type ) ;
+			if ( type == SWC_TYPE_TEL )
+			{
+				saveEditColours( att, colour ) ;
 				putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+3*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
 				restoreEditColours() ;
 			}
-    	else
+			else
 			{
-				drawNumber( TRIGHT-TRMARGIN, TTOP+3*TFH, (int8_t)cs.bitAndV3, 0) ; //, sub == 3 ? ~colour : colour ) ;
+				drawNumber( TRIGHT-TRMARGIN, TTOP+3*TFH, value, att|(( type == SWC_TYPE_VAR ) ? PREC1 : 0) ) ; //, sub == 2 ? ~colour : colour ) ;
 			}
+//			if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
+//			{
+//				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, (int8_t)cs.bitAndV3 ) ;
+//				saveEditColours( (sub == 3), colour ) ;
+//				putsTelemetryChannel( TRIGHT-TRMARGIN, TTOP+3*TFH+TVOFF, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
+//				restoreEditColours() ;
+//			}
+//    	else
+//			{
+//				drawNumber( TRIGHT-TRMARGIN, TTOP+3*TFH, (int8_t)cs.bitAndV3, 0) ; //, sub == 3 ? ~colour : colour ) ;
+//			}
+//#endif
 		}
   }
   else if(cstate == CS_VBOOL)
   {
-		saveEditColours( sub==1, colour ) ;
+		att = (sub==1) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
    	putsDrSwitches(TRIGHT-TRMARGIN, TTOP+TFH+TVOFF, cs.v1, LUA_RIGHT ) ;
 		restoreEditColours() ;
-		saveEditColours( sub==2, colour ) ;
+		att = (sub==2) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
    	putsDrSwitches(TRIGHT-TRMARGIN, TTOP+2*TFH+TVOFF, cs.v2, LUA_RIGHT ) ;
 		restoreEditColours() ;
   }
   else if(cstate == CS_VCOMP)
   {
-		saveEditColours( sub==1, colour ) ;
-		putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (TTOP+TFH+TVOFF)*TSCALE, cs.v1u, LUA_RIGHT ) ;
+		att = (sub==1) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
+		displaySourceRaw( (TRIGHT-TRMARGIN), (TTOP+TFH+TVOFF), cs.v1u, LUA_RIGHT ) ;
 		restoreEditColours() ;
-		saveEditColours( sub==2, colour ) ;
-		putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (TTOP+2*TFH+TVOFF)*TSCALE, cs.v2u, LUA_RIGHT ) ;
+		att = (sub==2) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
+		displaySourceRaw( (TRIGHT-TRMARGIN), (TTOP+TFH*2+TVOFF), cs.v2u, LUA_RIGHT ) ;
 		restoreEditColours() ;
   }
 	else if(cstate == CS_TIMER)
 	{
+		att = (sub==1) ? INVERS : 0 ;
+#ifndef TOUCH
+		if ( att & INVERS )
+		{
+			if ( s_editMode && BLINK_ON_PHASE )
+			{
+				att = 0 ;
+			}
+		}
+#endif
 		int8_t x ;
-		uint8_t att = 0 ;
 		x = cs.v1 ;
 		if ( x < 0 )
 		{
 			x = -x-1 ;
-			att = PREC1 ;
+			att |= PREC1 ;
 		}
 #ifdef X20
 	  lcdDrawText( THOFF,TTOP+TFH+TVOFF, XPSTR("Off") ) ;
@@ -2480,12 +2574,21 @@ void menuSwitchOne(uint8_t event)
 	  PUTS_P( THOFF,TTOP+TFH+TVOFF, XPSTR("Off") ) ;
 #endif
 		drawNumber( TRIGHT-TRMARGIN, TTOP+TFH, x+1, att) ; //, (sub == 1) ? ~colour : colour ) ;
-		att = 0 ;
+		att = (sub==2) ? INVERS : 0 ;
+#ifndef TOUCH
+		if ( att & INVERS )
+		{
+			if ( s_editMode && BLINK_ON_PHASE )
+			{
+				att = 0 ;
+			}
+		}
+#endif
 		x = cs.v2 ;
 		if ( x < 0 )
 		{
 			x = -x-1 ;
-			att = PREC1 ;
+			att |= PREC1 ;
 		}
 #ifdef X20
 	  lcdDrawText( THOFF,TTOP+2*TFH+TVOFF, XPSTR("On ") ) ;
@@ -2497,16 +2600,26 @@ void menuSwitchOne(uint8_t event)
 	}
 	else if(cstate == CS_TMONO)
 	{
-		saveEditColours( sub==1, colour ) ;
+		att = (sub==1) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
    	putsDrSwitches(TRIGHT-TRMARGIN, TTOP+TFH+TVOFF, cs.v1, LUA_RIGHT ) ;
 		restoreEditColours() ;
-		uint8_t att = 0 ;
+		att = (sub==2) ? INVERS : 0 ;
+#ifndef TOUCH
+		if ( att & INVERS )
+		{
+			if ( s_editMode && BLINK_ON_PHASE )
+			{
+				att = 0 ;
+			}
+		}
+#endif
 		int8_t x ;
 		x = cs.v2 ;
 		if ( x < 0 )
 		{
 			x = -x-1 ;
-			att = PREC1 ;
+			att |= PREC1 ;
 		}
 #ifdef X20
 		lcdDrawText( THOFF, TTOP+2*TFH+TVOFF, XPSTR("Time") ) ;
@@ -2521,13 +2634,15 @@ void menuSwitchOne(uint8_t event)
 		uint16_t x ;
 		x = (uint8_t) cs.v2 ;
 		x |= cs.bitAndV3 << 8 ;
-		saveEditColours( sub==1, colour ) ;
+		att = (sub==1) ? INVERS : 0 ;
+		saveEditColoursBlink( att, colour ) ;
 		putsChnRaw( (TRIGHT-TRMARGIN)*TSCALE, (TTOP+TFH+TVOFF)*TSCALE, cs.v1u, LUA_RIGHT ) ;
 		restoreEditColours() ;
 		drawNumber( TRIGHT-TRMARGIN, TTOP+2*TFH, x, 0) ; //, (sub == 2) ? ~colour : colour ) ;
 	}
 
-	saveEditColours( sub==3+extra, colour ) ;
+	att = (sub==3+extra) ? INVERS : 0 ;
+	saveEditColoursBlink( att, colour ) ;
 #ifdef X20
  	putsDrSwitches(TRIGHT-TRMARGIN-4*FW, TTOP+3*TFH+TVOFF+Vextra, cs.andsw, 0 ) ;
 #else
@@ -2542,9 +2657,29 @@ void menuSwitchOne(uint8_t event)
 	drawNumber( TRIGHT-TRMARGIN, TTOP+4*TFH+Vextra, cs.switchDelay, PREC1 ) ;
 #else
 	PUTS_AT_IDX( THOFF, TTOP+3*TFH+TVOFF+Vextra, XPSTR("\003ANDOR XOR"), cs.exfunc, 0 ) ;
-	PUTS_AT_IDX_COLOUR( TRIGHT-TRMARGIN, TTOP+5*TFH+TVOFF+Vextra, XPSTR("\003ANDOR XOR"), cs.exfunc, LUA_RIGHT, ( sub == 5+extra ) ? ~LcdForeground : LcdForeground ) ; //, ( sub == 5+extra ) ? ~colour : colour ) ;
+	att = (sub==5+extra) ? INVERS : 0 ;
+#ifndef TOUCH
+	if ( att & INVERS )
+	{
+		if ( s_editMode && BLINK_ON_PHASE )
+		{
+			att = 0 ;
+		}
+	}
+#endif
+	PUTS_AT_IDX_COLOUR( TRIGHT-TRMARGIN, TTOP+5*TFH+TVOFF+Vextra, XPSTR("\003ANDOR XOR"), cs.exfunc, LUA_RIGHT, att ? ~LcdForeground : LcdForeground ) ; //, ( sub == 5+extra ) ? ~colour : colour ) ;
 
-	drawNumber( TRIGHT-TRMARGIN, TTOP+4*TFH+Vextra, g_model.switchDelay[index], PREC1) ; //, (sub == 4+extra) ? ~colour : colour ) ;
+	att = (sub==4+extra) ? INVERS : 0 ;
+#ifndef TOUCH
+	if ( att & INVERS )
+	{
+		if ( s_editMode && BLINK_ON_PHASE )
+		{
+			att = 0 ;
+		}
+	}
+#endif
+	drawNumber( TRIGHT-TRMARGIN, TTOP+4*TFH+Vextra, g_model.switchDelay[index], att|PREC1) ; //, (sub == 4+extra) ? ~colour : colour ) ;
 #endif
 
 	if ( sub <= 5+extra )
@@ -2693,24 +2828,54 @@ void menuSwitches(uint8_t event)
 
 	  if( (cstate == CS_VOFS) || (cstate == CS_2VAL) )
     {
-			putsChnRaw( (10*FW-6)*TSCALE, y*TSCALE, cs.v1u  , 0);
 #ifdef X20
-	    if ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT )
-#else
-	  	if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
-#endif
- 			{
-				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+			displaySourceRaw( 10*FW-6, y, cs.v1u, 0 ) ;
+			uint32_t type ;
+			int16_t value ;
+			value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
+			if ( type == SWC_TYPE_TEL )
+			{
 				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
-			}
+	    }
     	else
 			{
-#ifdef X20
-        lcdDrawNumber( 18*FW-9, y, cs.v2  ,0);
-#else
-    	  drawNumber( 18*FW-9, y, cs.v2  ,0);
-#endif
+        lcdDrawNumber( 18*FW-9, y, value, ( type == SWC_TYPE_VAR ) ? PREC1 : 0 ) ;
 			}
+			
+//			if ( cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT )
+// 			{
+//				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+//				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+//			}
+//    	else
+//			{
+//        lcdDrawNumber( 18*FW-9, y, cs.v2  ,0);
+//			}
+#else
+			displaySourceRaw( 10*FW-6, y, cs.v1u, 0 ) ;
+			uint32_t type ;
+			int16_t value ;
+			value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
+			if ( type == SWC_TYPE_TEL )
+			{
+//				saveEditColours( (sub == 2), colour ) ;
+				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+//				restoreEditColours() ;
+			}
+			else
+			{
+    	  drawNumber( 18*FW-9, y, value, ( type == SWC_TYPE_VAR ) ? PREC1 : 0);
+			}
+//			if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
+// 			{
+//				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+//				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+//			}
+//    	else
+//			{
+//    	  drawNumber( 18*FW-9, y, cs.v2  ,0);
+//			}
+#endif
     }
     else if(cstate == CS_VBOOL)
     {
@@ -2719,8 +2884,13 @@ void menuSwitches(uint8_t event)
     }
     else if(cstate == CS_VCOMP)
     {
+#ifdef X20
     	putsChnRaw( (10*FW-6)*TSCALE, y*TSCALE, cs.v1u  , 0);
     	putsChnRaw( (14*FW-4)*TSCALE, y*TSCALE, cs.v2u  , 0);
+#else
+			displaySourceRaw( 10*FW-6, y, cs.v1u, 0 ) ;
+			displaySourceRaw( 14*FW-4, y, cs.v2u, 0 ) ;
+#endif
     }
 		else if(cstate == CS_TIMER)
 		{
@@ -3156,16 +3326,7 @@ void menuOneGvar(uint8_t event)
 				{
 					drawItem( (char *)PSTR(STR_SWITCH), y, attr ) ;
 					LcdFlags doedit = attr ;
-#ifndef TOUCH
-					if ( attr & INVERS )
-					{
-						if ( s_editMode && BLINK_ON_PHASE )
-						{
-							attr = 0 ;
-						}
-					}
-#endif
-					saveEditColours( attr, colour ) ;
+					saveEditColoursBlink( attr, colour ) ;
 #ifdef X20
 					pgvar->gvswitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, pgvar->gvswitch, LUA_RIGHT, doedit ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 #else
@@ -3680,7 +3841,7 @@ const uint8_t LogLookup[] =
 const uint8_t LogRateMap[] = { 3, 2, 0, 1 } ;
 extern const uint8_t LogLookup[] ;
 
-extern const uint8_t TelemSize  ;
+extern uint8_t TelemSize  ;
 extern uint8_t TelemMap[] ;
 #ifndef X20
 extern union t_sharedMemory SharedMemory ;
@@ -3779,16 +3940,7 @@ void menuLogging(uint8_t event)
 		{
 			drawItem( (char *)PSTR(STR_LOG_SWITCH), y, attr ) ;
 			LcdFlags doedit = attr ;
-#ifndef TOUCH
-			if ( attr & INVERS )
-			{
-				if ( s_editMode && BLINK_ON_PHASE )
-				{
-					attr = 0 ;
-				}
-			}
-#endif
-			saveEditColours( attr, colour ) ;
+			saveEditColoursBlink( attr, colour ) ;
 			g_model.logSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y+TVOFF, g_model.logSwitch, LUA_RIGHT, doedit ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 //			g_model.logSwitch = edit_dr_switch( TRIGHT-TRMARGIN, y, g_model.logSwitch, LUA_RIGHT, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 			restoreEditColours() ;
@@ -4070,7 +4222,7 @@ void editOneInput(uint8_t event)
 		if ( TextResult )
 		{
 			uint8_t value ;
-			value = InputMap[ TextIndex ] ;
+			value = TextMap[ TextIndex ] ;
 			pinput->srcRaw = value ;
 			eeDirty(EE_MODEL) ;
 		}
@@ -4140,20 +4292,15 @@ void editOneInput(uint8_t event)
 					{
 						// Long MENU pressed
 						TextIndex = x ;
-  					TextType = TEXT_TYPE_CUSTOM ;
 #ifdef X20
+  					TextType = TEXT_TYPE_CUSTOM ;
+#endif
 						TextDataControl.TextOption = 0 ;
 						TextDataControl.TextWidth = 6 ;
-						TextDataControl.TextMax = InputMapSize-1 ;
+						TextDataControl.TextLength = 5 ;
+						TextDataControl.TextMax = TextMapSize-1 ;
 						TextDataControl.TextFunction = displayInputSource ;
-						TextDataControl.TextMap = InputMap ;
-#else
-						TextControl.TextOption = 0 ;
-						TextControl.TextWidth = 6 ;
-						TextControl.TextMax = InputMapSize-1 ;
-						TextControl.TextFunction = displayInputSource ;
-						TextControl.TextMap = InputMap ;
-#endif
+						TextDataControl.TextMap = TextMap ;
   					killEvents(event) ;
 						pushMenu(menuTextHelp) ;
     				s_editMode = false ;

@@ -218,8 +218,8 @@ void menuVario(uint8_t event)
 		switch ( j )
 		{
 			case 0 :
-				PUTS_ATT_LEFT( y, PSTR(STR_VARIO_SRC) ) ;
-				PUTS_AT_IDX( 15*FW, y, PSTR(STR_VSPD_A2), g_model.varioData.varioSource, attr ) ;
+				drawItem( (char *)PSTR(STR_VARIO_SRC), y ) ;
+				drawIdxText( y, (char *)PSTR(STR_VSPD_A2), g_model.varioData.varioSource, attr ) ;
    		  if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( g_model.varioData.varioSource, 2+NUM_SCALERS ) ;
@@ -227,13 +227,13 @@ void menuVario(uint8_t event)
 			break ;
 				
 			case 1 :
-				PUTS_ATT_LEFT( y, PSTR(STR_2SWITCH) ) ;
-				g_model.varioData.swtch = edit_dr_switch( 15*FW, y, g_model.varioData.swtch, attr, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
+				drawItem( (char *)PSTR(STR_2SWITCH)+1, y ) ;
+				g_model.varioData.swtch = edit_dr_switch( PARAM_OFS, y, g_model.varioData.swtch, attr|LUA_RIGHT, attr ? EDIT_DR_SWITCH_EDIT : 0, event ) ;
 			break ;
 
 			case 2 :
-				PUTS_ATT_LEFT( y, PSTR(STR_2SENSITIVITY) ) ;
- 				PUTS_NUM( 17*FW, y, g_model.varioData.param, attr) ;
+				drawItem( (char *)PSTR(STR_2SENSITIVITY)+1, y ) ;
+	      drawNumber( PARAM_OFS, y, g_model.varioData.param, attr ) ;
    			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( g_model.varioData.param, 50 ) ;
@@ -241,8 +241,8 @@ void menuVario(uint8_t event)
 			break ;
 
 			case 3 :
-				PUTS_ATT_LEFT( y, XPSTR("Base Freq.") ) ;
- 				PUTS_NUM( 17*FW, y, g_model.varioExtraData.baseFrequency, attr) ;
+				drawItem( (char *)XPSTR("Base Freq."), y ) ;
+	      drawNumber( PARAM_OFS, y, g_model.varioExtraData.baseFrequency, attr) ;
    			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( g_model.varioExtraData.baseFrequency, -50, 50 ) ;
@@ -250,8 +250,8 @@ void menuVario(uint8_t event)
 			break ;
 
 			case 4 :
-				PUTS_ATT_LEFT( y, XPSTR("Offset Freq.") ) ;
- 				PUTS_NUM( 17*FW, y, g_model.varioExtraData.offsetFrequency, attr) ;
+				drawItem( (char *)XPSTR("Offset Freq."), y ) ;
+	      drawNumber( PARAM_OFS, y, g_model.varioExtraData.offsetFrequency, attr) ;
    			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( g_model.varioExtraData.offsetFrequency, -20, 20 ) ;
@@ -259,14 +259,14 @@ void menuVario(uint8_t event)
 			break ;
 
 			case 5 :
-				PUTS_ATT_LEFT( y, XPSTR("Volume") ) ;
+				drawItem( (char *)XPSTR("Volume"), y ) ;
 				if ( g_model.varioExtraData.volume )
 				{
- 					PUTS_NUM( 17*FW, y, g_model.varioExtraData.volume, attr) ;
+	      	drawNumber( PARAM_OFS, y, g_model.varioExtraData.volume, attr) ;
 				}
 				else
 				{
-					PUTS_ATT( FW*15, y, "Vol", attr ) ;
+					PUTS_ATT( PARAM_OFS, y, "Vol", attr|LUA_RIGHT ) ;
 				}
    			if(attr)
 				{
@@ -357,11 +357,13 @@ void menuSwitches(uint8_t event)
 			}
 			else if ( subSub == 1 )
 			{
-				cs.v1u = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				cs.v1u = unmapPots( idx ) ;
 			}
 			else
 			{
-				cs.v2u = unmapPots( TextIndex ) ;
+				uint32_t idx = decodeSwSource( TextIndex ) ;
+				cs.v2u = unmapPots( idx ) ;
 			}
 	 	  eeDirty(EE_MODEL) ;
 		}
@@ -394,7 +396,6 @@ void menuSwitches(uint8_t event)
 #ifndef SWITCH_SUB_ONLY
 		PUTS_AT_IDX( 2*FW+1, y, PSTR(CSWITCH_STR),cs.func,subSub==0 ? attr : 0);
 #else
-ERROR
 		PUTS_AT_IDX( 2*FW+1, y, PSTR(CSWITCH_STR),cs.func, 0);
 #endif
 
@@ -403,27 +404,46 @@ ERROR
 	  if( (cstate == CS_VOFS) || (cstate == CS_2VAL) )
     {
 #ifndef SWITCH_SUB_ONLY
-			putsChnRaw(    10*FW-6, y, cs.v1u  ,subSub==1 ? attr : 0);
+			displaySourceRaw( 10*FW-6, y, cs.v1u, subSub==1 ? attr : 0 ) ;
 #else
-			putsChnRaw(    10*FW-6, y, cs.v1u  , 0);
+			displaySourceRaw( 10*FW-6, y, cs.v1u, 0 ) ;
 #endif
-	    if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
- 			{
-				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
-#ifndef SWITCH_SUB_ONLY
-				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, subSub==2 ? attr : 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
-#else
-				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
-#endif
-			}
-      else
+			uint32_t type ;
+			int16_t value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
+			if ( type == SWC_TYPE_TEL )
 			{
 #ifndef SWITCH_SUB_ONLY
-        PUTS_NUM( 18*FW-9, y, cs.v2  ,subSub==2 ? attr : 0);
+				putsTelemetryChannel( 19*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, subSub==2 ? attr : 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
 #else
-        PUTS_NUM( 18*FW-9, y, cs.v2  ,0);
+				putsTelemetryChannel( 19*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+#endif
+	    }
+			else
+			{
+#ifndef SWITCH_SUB_ONLY
+        PUTS_NUM( 18*FW-9, y, value, (subSub==2 ? attr : 0) | ( ( type == SWC_TYPE_VAR ) ? PREC1 : 0 ) );
+#else
+        PUTS_NUM( 18*FW-9, y, value, ( type == SWC_TYPE_VAR ) ? PREC1 : 0 );
 #endif
 			}
+			
+//			if ( ( (cs.v1u > CHOUT_BASE+NUM_SKYCHNOUT) && ( cs.v1u < EXTRA_POTS_START ) ) || ( cs.v1u >= EXTRA_POTS_START + 8) )
+// 			{
+//				int16_t value = convertTelemConstant( cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, cs.v2 ) ;
+//#ifndef SWITCH_SUB_ONLY
+//				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, subSub==2 ? attr : 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+//#else
+//				putsTelemetryChannel( 18*FW-8, y, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, 0, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT);
+//#endif
+//			}
+//      else
+//			{
+//#ifndef SWITCH_SUB_ONLY
+//        PUTS_NUM( 18*FW-9, y, cs.v2  ,subSub==2 ? attr : 0);
+//#else
+//        PUTS_NUM( 18*FW-9, y, cs.v2  ,0);
+//#endif
+//			}
     }
     else if(cstate == CS_VBOOL)
     {
@@ -525,10 +545,10 @@ ERROR
     if((s_editMode /*|| P1values.p1valdiff*/) && attr)
 		{
 			editOneSwitchItem( event, subSub, sub ) ;
-			if ( subSub == 1 )
-			{
-  			PUT_HEX4( 18*FW, 0*FH, cs.v1u ) ;
-			}
+//			if ( subSub == 1 )
+//			{
+//  			PUT_HEX4( 18*FW, 0*FH, cs.v1u ) ;
+//			}
 		}
 #endif			
 #ifndef SWITCH_SUB_ONLY
@@ -837,6 +857,10 @@ extern uint8_t TlExitIcon ;
 								PopupData.PopupActive = 1 ;
 								event = 0 ;		// Kill this off
 							}
+							if ( PopupData.PopupActive == 0 )
+							{
+    						attr = INVERS ;
+							}
 						}
 						    	  
 						if(firstMix != mix_index) //show prefix only if not first mix
@@ -850,6 +874,7 @@ extern uint8_t TlExitIcon ;
         	 		PUTS_AT_IDX( 4*FW+2, y+TVOFF, XPSTR("\001+*R"),pmd->mltpx,0 ) ;
 							restoreEditColours() ;
 #else
+							y += FHPY ;
         	 		PUTS_AT_IDX( 4*FW-8, y, XPSTR("\001+*R"),pmd->mltpx,0 ) ;
 #endif
 						}
@@ -859,6 +884,7 @@ extern uint8_t TlExitIcon ;
 						putsChnOpRaw( (8*FW+MIX_SPACE)*2 ,(y+TVOFF)*2, pmd->srcRaw, pmd->switchSource, pmd->disableExpoDr, 0 ) ;
 						restoreEditColours() ;
 #else
+						attr &= ~BOLD ;
 						putsChnOpRaw( (8*FW+MIX_SPACE) ,y, pmd->srcRaw, pmd->switchSource, pmd->disableExpoDr, attr ) ;
 #endif
 						if ( attr )
@@ -905,6 +931,7 @@ extern uint8_t swOn[] ;
 							gvarMenuItem( 7*FW+FW/2, y, lweight, -125, 125, attr | GVAR_250, 0 ) ;
 #endif
 						}
+						attr &= ~BOLD ;
 
 #ifndef PCBX12D
  #ifndef PCBX10

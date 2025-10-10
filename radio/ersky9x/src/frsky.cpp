@@ -4775,15 +4775,26 @@ uint8_t putsTelemValue(coord_t x, coord_t y, int16_t val, uint8_t channel, LcdFl
 //    if ( ( ltype == 0/*v*/) || ( ltype == 2/*v*/) )
     {
 #if defined(PCBX12D) || defined(PCBX10)
-      lcdDrawNumber(x*2, y*2, value, att, 5, colour) ;
+      lcdDrawNumber(x*2, y*2, value, att, (int8_t)5, colour) ;
 #else
       PUTS_NUM_N(x, y, value, att, 5) ;
 #endif
 //			unit = 'v' ;
-      if(!(option&NO_UNIT))
+      if ( (!(option&NO_UNIT)) && ( unit != ' ' ) )
 			{
 #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+ #if defined(PROP_TEXT)
+				if ( att & LEFT)
+				{
+					PUTC_ATT(LcdNextPos, y, unit, att);
+				}
+				else
+				{
+					PUTC_ATT(x, y, unit, att);
+				}
+ #else
 				PUTC_ATT(LcdNextPos, y, unit, att);
+ #endif
 #else
 				PUTC_ATT(Lcd_lastPos, y, unit, att);
 #endif

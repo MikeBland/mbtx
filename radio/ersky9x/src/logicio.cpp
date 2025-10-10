@@ -78,7 +78,7 @@ extern uint8_t ExternalSwitchesValid ;
 #ifdef PCBSKY
 void configure_pins( uint32_t pins, uint16_t config )
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	
 	pioptr = PIOA + ( ( config & PIN_PORT_MASK ) >> 6) ;
 	if ( config & PIN_PULLUP )
@@ -240,7 +240,7 @@ void initExtraInput()
 // PCBSKY
 void init_keys()
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	
 	pioptr = PIOC ;
 	// Next section configures the key inputs on the LCD data
@@ -285,7 +285,7 @@ void setup_switches()
 #endif 
 	
 #ifdef REVA
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	
 	pioptr = PIOA ;
 	pioptr->PIO_PER = 0xF8008184 ;		// Enable bits
@@ -366,7 +366,7 @@ void config_free_pins()
 
 //	configure_pins( PIO_PC19 | PIO_PC21, PIN_ENABLE | PIN_INPUT | PIN_PORTC | PIN_PULLUP ) ;	// 19 and 21 are rotary encoder
 #else 
-	register Pio *pioptr ;
+	Pio *pioptr ;
 
 	pioptr = PIOA ;
 	pioptr->PIO_PER = 0x03800000L ;		// Enable bits A25,24,23
@@ -454,7 +454,7 @@ uint32_t readKeyUpgradeBit( uint8_t index )
 uint32_t hwKeyState( uint8_t key )
 {
   CPU_UINT xxx = 0 ;
-	register uint32_t a ;
+	uint32_t a ;
 	uint32_t avpot = 0xFFFF ;
   
 	a = g_eeGeneral.analogMapping & MASK_6POS ;
@@ -928,8 +928,8 @@ uint16_t ExtraInputs ;
 
 uint32_t read_keys()
 {
-	register uint32_t x ;
-	register uint32_t y ; // target y: LEFT:6 RIGHT:5 UP:4 DOWN:3 EXIT:2 MENU:1
+	uint32_t x ;
+	uint32_t y ; // target y: LEFT:6 RIGHT:5 UP:4 DOWN:3 EXIT:2 MENU:1
 
 	x = LcdLock ? LcdInputs : (PIOC->PIO_PDSR << 1) ; // 6 LEFT, 5 RIGHT, 4 DOWN, 3 UP ()
 #ifndef REVA
@@ -948,7 +948,7 @@ uint32_t read_keys()
 	}
 #ifdef ARUNI
   // target x: CS:6 PB14:5 PA25:4 KEY3:3 KEY2:2 KEY1:1 COM:0
-  register uint32_t z = ~x;
+  uint32_t z = ~x;
   x = ((z >> 1) & 0x01);  // COM
   x |= ((z >> 2) & 0x02); // KEY1
   x |= ((z >> 5) & 0x0C); // KEY3,KEY2
@@ -1215,8 +1215,8 @@ uint32_t hwKeyState( uint8_t key )
 		}
 	}
 	
-	register uint32_t a ;
-	register uint32_t c ;
+	uint32_t a ;
+	uint32_t c ;
 #ifdef ARUNI
 	uint8_t avpot = 0 ;
 	uint32_t anaIndex = 8 ;   // NONE:0,COMM:1,EXT1:2,EXT2:3,EXT3:4,PA25:5,PB14:6,PC26:7
@@ -1874,8 +1874,8 @@ uint32_t keyState(EnumKeys enuk)
 		}
 	}
 
-	register uint32_t a ;
-	register uint32_t c ;
+	uint32_t a ;
+	uint32_t c ;
 
   CPU_UINT xxx = 0 ;
   if(enuk < (int)DIM(keys))  return keys[enuk].state() ? 1 : 0 ;
@@ -2029,8 +2029,8 @@ void init_trims()
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
 uint32_t read_keys()
 {
-	register uint32_t x ;
-	register uint32_t y ;
+	uint32_t x ;
+	uint32_t y ;
 
 #ifdef PCBXLITE
 	x = GPIOE->IDR ; // 10 RIGHT(+), 11 LEFT(-), 12 ENT(DOWN)
@@ -2904,17 +2904,17 @@ uint32_t hwKeyState( uint8_t key )
 #else // PCBXLITE
 	
 #ifdef PCBX7
-  register uint32_t a = GPIOA->IDR;
-  register uint32_t d = GPIOD->IDR;
-  register uint32_t e = GPIOE->IDR;
+  uint32_t a = GPIOA->IDR;
+  uint32_t d = GPIOD->IDR;
+  uint32_t e = GPIOE->IDR;
 #else // PCBX7
-  register uint32_t a = GPIOA->IDR;
-  register uint32_t b = GPIOB->IDR;
-  register uint32_t e = GPIOE->IDR;
+  uint32_t a = GPIOA->IDR;
+  uint32_t b = GPIOB->IDR;
+  uint32_t e = GPIOE->IDR;
 #ifdef REV9E
-  register uint32_t f = GPIOF->IDR;
-  register uint32_t g = GPIOG->IDR;
-  register uint32_t d = GPIOD->IDR;
+  uint32_t f = GPIOF->IDR;
+  uint32_t g = GPIOG->IDR;
+  uint32_t d = GPIOD->IDR;
 #endif	// REV9E
 #endif // PCBX7
 
@@ -3598,8 +3598,8 @@ void init_keys()
 // Reqd. bit 6 LEFT, 5 RIGHT, 4 UP, 3 DOWN 2 EXIT 1 MENU
 uint32_t read_keys()
 {
-	register uint32_t x ;
-	register uint32_t y ;
+	uint32_t x ;
+	uint32_t y ;
 
 	y = 0 ;
 #ifdef PCBX12D
@@ -3849,9 +3849,9 @@ uint32_t read_trims()
 
 uint32_t hwKeyState( uint8_t key )
 {
-  register uint32_t b = GPIOB->IDR ;
-  register uint32_t g = GPIOG->IDR ;
-  register uint32_t h = GPIOH->IDR ;
+  uint32_t b = GPIOB->IDR ;
+  uint32_t g = GPIOG->IDR ;
+  uint32_t h = GPIOH->IDR ;
 
   uint32_t xxx = 0 ;
 //  uint32_t analog = 0 ;

@@ -176,6 +176,7 @@ static void inactivityCheck()
   }
 }
 
+
 //#ifdef PCBX9D
 //extern uint16_t MixerRunAtTime ;
 //void checkMixerNeeded()
@@ -972,77 +973,80 @@ void perOut(int16_t *chanOut, uint8_t att )
      		      	v = rawSticks[k]; //Switch is on. MAX=FULL=512 or value.
 							}
 						}
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
 						if ( k == MIX_3POS-1 )
 						{
-#ifdef REV9E
-							if ( md->switchSource > 18 )
-#else
-							if ( md->switchSource > 8 )	// Sort for X9E ********
-#endif
-							{
-#ifdef REV9E
-								v = getSwitch( CSW_INDEX+md->switchSource-18, 0, 0 ) ;
-#else
-								v = getSwitch( CSW_INDEX+md->switchSource-8, 0, 0 ) ;
-#endif
-								v = v ? 1024 : -1024 ;
-							}
-							else
-							{
-								uint32_t /*EnumKeys*/ sw = switchIndex[md->switchSource] ;
-								if ( ( md->switchSource == 5) || ( md->switchSource == 7) )
-								{ // 2-POS switch
-        					v = hwKeyState(sw) ? 1024 : -1024 ;
-								}
-#ifdef REV9E
-								else if( md->switchSource == 18)
-#else
-								else if( md->switchSource == 8)
-#endif
-								{
-									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-								}
-								else
-								{ // 3-POS switch
-        					v = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
-								}
-							}
+							v = switchSourceValue( md->switchSource, 1024 ) ;
 						}
-#endif
-#if defined(PCBSKY) || defined(PCB9XT)
-						if ( k == MIX_3POS-1 )
-						{
-							if ( md->switchSource > 6 )
-							{
-								if ( md->switchSource == 31 )
-								{
-									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-								}
-								else
-								{
-									v = getSwitch( CSW_INDEX+md->switchSource-6, 0, 0 ) ;
-									v = v ? 1024 : -1024 ;
-								}
-							}
-							else
-							{
-								uint32_t sw = Sw3PosList[md->switchSource] ;
-								if ( Sw3PosCount[md->switchSource] == 2 )
-								{
-        					v = hwKeyState(sw) ? 1024 : -1024 ;
-								}
-								else if ( Sw3PosCount[md->switchSource] == 6 )
-								{
-									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-								}
-								else
-								{
-        					v = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
-								}
-							}
-						}
-#endif
+//#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+//						{
+//#ifdef REV9E
+//							if ( md->switchSource > 18 )
+//#else
+//							if ( md->switchSource > 8 )	// Sort for X9E ********
+//#endif
+//							{
+//#ifdef REV9E
+//								v = getSwitch( CSW_INDEX+md->switchSource-18, 0, 0 ) ;
+//#else
+//								v = getSwitch( CSW_INDEX+md->switchSource-8, 0, 0 ) ;
+//#endif
+//								v = v ? 1024 : -1024 ;
+//							}
+//							else
+//							{
+//								uint32_t /*EnumKeys*/ sw = switchIndex[md->switchSource] ;
+//								if ( ( md->switchSource == 5) || ( md->switchSource == 7) )
+//								{ // 2-POS switch
+//        					v = hwKeyState(sw) ? 1024 : -1024 ;
+//								}
+//#ifdef REV9E
+//								else if( md->switchSource == 18)
+//#else
+//								else if( md->switchSource == 8)
+//#endif
+//								{
+//									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//								}
+//								else
+//								{ // 3-POS switch
+//        					v = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+//								}
+//							}
+//						}
+//#endif
+//#if defined(PCBSKY) || defined(PCB9XT)
+//						if ( k == MIX_3POS-1 )
+//						{
+//							if ( md->switchSource > 6 )
+//							{
+//								if ( md->switchSource == 31 )
+//								{
+//									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//								}
+//								else
+//								{
+//									v = getSwitch( CSW_INDEX+md->switchSource-6, 0, 0 ) ;
+//									v = v ? 1024 : -1024 ;
+//								}
+//							}
+//							else
+//							{
+//								uint32_t sw = Sw3PosList[md->switchSource] ;
+//								if ( Sw3PosCount[md->switchSource] == 2 )
+//								{
+//        					v = hwKeyState(sw) ? 1024 : -1024 ;
+//								}
+//								else if ( Sw3PosCount[md->switchSource] == 6 )
+//								{
+//									v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//								}
+//								else
+//								{
+//        					v = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+//								}
+//							}
+//						}
+//#endif
 //            if(k>=CHOUT_BASE && (k<i)) v = chans[k]; // if we've already calculated the value - take it instead // anas[i+CHOUT_BASE] = chans[i]
 						if ( k >= CHOUT_BASE )
             {

@@ -786,6 +786,41 @@ uint8_t CS_STATE( uint8_t x) ;
 #endif
 
 #if defined(PCBSKY) || defined(PCB9XT)
+//const char SW_3_IDX[] = "\004sIDxsTHRsRUDsELEsAILsGEAsTRNL1  L2  L3  L4  L5  L6  L7  L8  L9  LA  LB  LC  LD  LE  LF  LG  LH  LI  LJ  LK  LL  LM  LN  LO  6POS" ;
+#define NUM_MIX_SWITCHES	(7+NUM_SKYCSW)
+#endif
+#ifdef PCBX9D
+ #ifdef REV9E
+#define NUM_MIX_SWITCHES	(19+NUM_SKYCSW)
+ #else // X9E
+  #ifdef PCBX7
+#define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
+  #else // PCBX7
+   #ifdef PCBX9LITE
+#define NUM_MIX_SWITCHES	(5+NUM_SKYCSW)
+   #else // PCBX9LITE
+    #if defined(REVPLUS) || defined(REVNORM) || defined(REV19)
+#define NUM_MIX_SWITCHES	(8+NUM_SKYCSW)
+    #endif // norm/plus
+		#ifdef PCBXLITE
+#define NUM_MIX_SWITCHES	(4+NUM_SKYCSW)
+    #endif // Xlite
+   #endif // PCBX9LITE
+  #endif // PCBX7
+ #endif	// REV9E
+#endif // X9D
+
+#if defined(PCBX12D) || defined(PCBX10)
+#define NUM_MIX_SWITCHES	(9+NUM_SKYCSW)
+#endif
+
+#if defined(PCBLEM1)
+#define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
+#endif
+
+
+
+#if defined(PCBSKY) || defined(PCB9XT)
 //#define SWP_RUD (SW_RuddDR-SW_BASE)
 //#define SWP_ELE (SW_ElevDR-SW_BASE)
 //#define SWP_AIL (SW_AileDR-SW_BASE)
@@ -1192,7 +1227,7 @@ extern uint8_t StepSize ;
 
 extern const int8_t TelemIndex[] ;
 extern const uint8_t TelemValid[] ;
-extern int16_t convertTelemConstant( int8_t channel, int8_t value) ;
+extern int16_t convertTelemConstant( int16_t channel, int8_t value) ;
 extern int16_t getValue(uint8_t i) ;
 #define NUM_TELEM_ITEMS 89
 #define TELEM_GAP_START	75
@@ -1205,14 +1240,14 @@ extern int16_t getValue(uint8_t i) ;
 
 #define MIX_3POS	(NUM_SKYXCHNRAW+1)
 
-inline int32_t calc100toRESX(register int8_t x)
+inline int32_t calc100toRESX(int8_t x)
 {
   return ((int32_t)x*41943)>>12 ;
 }
 
-inline int16_t calc1000toRESX( register int32_t x)  // improve calc time by Pat MacKenzie
+inline int16_t calc1000toRESX( int32_t x)  // improve calc time by Pat MacKenzie
 {
-    register int32_t y = x>>5;
+    int32_t y = x>>5;
     x+=y;
     y=y>>2;
     x-=y;

@@ -73,6 +73,35 @@ void touchMenuTitle( char *s ) ;
 #define YN_NO		2
 
 uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
+uint32_t decodeSwSource( uint32_t idx ) ;
+uint32_t positionSwSource( uint32_t idx ) ;
+void setTextSwSource( uint32_t idx ) ;
+void displaySourceRaw( coord_t x, coord_t y, uint32_t val, LcdFlags attr ) ;
+int16_t convertSwitchConstant( int16_t channel, int8_t value, uint32_t *type ) ;
+uint32_t checkSwitchSource( uint32_t x, uint32_t editType ) ;
+void displayTelemSource( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
+void displaySwSource( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
+void displayMixTextSource( coord_t x, coord_t y, uint8_t index, LcdFlags att ) ;
+uint32_t maxMixSources() ;
+
+
+#define SWC_TYPE_TEL		0
+#define SWC_TYPE_VAR		1
+#define SWC_TYPE_NUM		2
+
+#if defined(PCBX7) || defined (PCBXLITE)
+#define POT_COUNT_ADJUST	1
+#else // PCBX7
+ #ifdef PCBX9LITE
+#define POT_COUNT_ADJUST	2
+ #else // PCBX9LITE
+  #ifdef PCBLEM1
+#define POT_COUNT_ADJUST	2
+  #else
+#define POT_COUNT_ADJUST	 0
+  #endif
+ #endif
+#endif
 
 #define POPUP_NONE			0
 #define POPUP_SELECT		1
@@ -114,7 +143,7 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 #define NUM_ANA_ITEMS		2
 #endif
 
-#ifdef TOUCH
+#ifdef COLOUR_DISPLAY
 
 #define TTOP			10
 #define THTOP			14
@@ -134,16 +163,17 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 
 #else
 
-#define TTOP			10
+#define TTOP			FH
 #define THTOP			18
-#define TFH				12
-#define TRIGHT	 180
-#define TMID		 110
-#define TLINES		9
-#define TSCALE		2
-#define TVOFF			2
-#define THOFF			4
-#define TRMARGIN	3
+#define TFH				FH
+#define TRIGHT		PARAM_OFS
+//#define TMID		 110
+#define TLINES		SCREEN_LINES
+#define TSCALE		1
+#define TVOFF			0
+#define THOFF			0
+#define TRMARGIN	0
+//#define lcd_hline(a,b,c)
 
 #endif
 
@@ -177,18 +207,30 @@ uint8_t yesNoMenuExit( uint8_t event, const prog_char * s ) ;
 #define FWPx18		"\154"
 #endif
 
-#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+//#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
+//#define FWchk			"\162"
+//#else
 #define FWchk			"\162"
-#else
-#define FWchk			"\162"
-#endif
+//#endif
 
 #if defined(PCBX12D) || defined(PCBX10)
-#define PARAM_OFSP   17*FWCOLOUR
+#define PARAM_OFSP   19*FWCOLOUR
 #else
-#define PARAM_OFSP   17*FW
+#define PARAM_OFSP   19*FW
 #endif
-#define PARAM_OFS   17*FW
+#define PARAM_OFS   19*FW
+
+
+#ifndef COLOUR_DISPLAY
+#define drawItem(a,b) PUTS_ATT_LEFT( b, a ) ;
+#define drawIdxText(a,b,c,d) PUTS_AT_IDX( PARAM_OFS, a, b, c, d|LUA_RIGHT ) ;	// v1>v2  v1<v2  
+#define drawNumber(a,b,c,d) PUTS_NUM( a, b, c, d )
+//#define TRIGHT		PARAM_OFS
+//#define TRMARGIN	0
+//#define TVOFF			0
+//#define TFH				FH
+//#define TTOP			FH
+#endif
 
 // Access protocol
 #define ACC_NORMAL		0
@@ -312,6 +354,11 @@ uint32_t touchOnOffItem( uint8_t value, coord_t y, const prog_char *s, uint8_t c
 uint32_t touchOffOnItem( uint8_t value, coord_t y, const prog_char *s, uint8_t condition, uint16_t colour ) ;
 void putsChnColour( coord_t x, coord_t y, uint8_t idx1, LcdFlags att ) ;
 void saveEditColours( uint32_t attr, uint16_t colour ) ;
+#ifdef TOUCH
+#define saveEditColoursBlink(a,b) saveEditColours(a,b)
+#else
+void saveEditColoursBlink( uint32_t attr, uint16_t colour ) ;
+#endif
 void restoreEditColours() ;
 int32_t checkTouchSelect( uint32_t rows, uint32_t pgOfs, uint32_t flag = 0 ) ;
 uint16_t processSelection( uint8_t vert, int32_t newSelection ) ;
@@ -483,11 +530,11 @@ extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 #define TEL_ITEM_CUST8	  75
 
 // TextHelp types
-#define TEXT_TYPE_TELE_SOURCE		0
-#define TEXT_TYPE_SW_SOURCE			1
-#define TEXT_TYPE_MIX_SOURCE		2
-#define TEXT_TYPE_SW_FUNCTION		3
-#define TEXT_TYPE_CUSTOM				4
+//#define TEXT_TYPE_TELE_SOURCE		0
+//#define TEXT_TYPE_SW_SOURCE			1
+//#define TEXT_TYPE_MIX_SOURCE		2
+//#define TEXT_TYPE_SW_FUNCTION		3
+//#define TEXT_TYPE_CUSTOM				4
 
 // units
 #define U_FEET			0
@@ -528,9 +575,10 @@ struct t_textControl
 	uint8_t *TextMap ;
 	uint8_t TextWidth ;
 	uint8_t TextOption ;
+	uint8_t TextLength ;
 } ;
 
-extern struct t_textControl TextControl ;
+extern struct t_textControl TextDataControl ;
 extern uint8_t MaskRotaryLong ;
 
 extern uint8_t EditType ;
@@ -591,6 +639,7 @@ uint32_t checkForMenuEncoderLong( uint8_t event ) ;
 void menuGlobalVoiceAlarm(uint8_t event) ;
 void displayGPSformat( uint16_t x, uint16_t y, uint8_t attr ) ;
 uint8_t edit3posSwitchSource( coord_t y, uint8_t value, uint16_t mask, uint8_t condition, uint8_t allowAna ) ;
+int32_t switchSourceValue( uint32_t swin, int32_t scale ) ;
 
 void voiceMinutes( int16_t value ) ;
 

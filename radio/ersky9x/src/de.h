@@ -95,7 +95,7 @@ v.xx.01-german
 // ISTR_YELORGRED je genau 3 Zeichen lang
 #define ISTR_YELORGRED	     "\003---GelOrgRot"
 #define ISTR_A_EQ		       "A ="
-#define ISTR_SOUNDS	       "\006Warn1 ""Warn2 ""Cheap ""Ring  ""SciFi ""Robot ""Chirp ""Tada  ""Crickt""Siren ""AlmClk""Ratata""Tick  ""Haptc1""Haptc2""Haptc3" "Haptc4"
+#define ISTR_SOUNDS	       "\006 Warn1"" Warn2"" Cheap""  Ring"" SciFi"" Robot"" Chirp""  Tada""Crickt"" Siren""AlmClk""Ratata""  Tick""Haptc1""Haptc2""Haptc3" "Haptc4"
 #define ISTR_SWITCH_WARN	   "Schalter Warnung" 
 //#define ISTR_SWITCH				   "Schalter" 
 #define ISTR_WARNING			   "Warnung" 
@@ -316,7 +316,7 @@ v.xx.01-german
 // ISTR_23_US after \023 max 2 chars
 #define ISTR_23_US          "\023uS"
 // ISTR_PPMFRAME_MSEC before \015 max 9 chars, after max 4 chars
-#define ISTR_PPMFRAME_MSEC  "PPM FrLen\016mSek" // Puls Pausen Modulation
+#define ISTR_PPMFRAME_MSEC  "PPM FrLen\023mS" // Puls Pausen Modulation
 #define ISTR_SEND_RX_NUM    " Send Em Nummer [MENU]"
 #define ISTR_DSM_TYPE       " DSM Typ" 
 #define ISTR_PPM_1ST_CHAN   "1. Kanal"
@@ -370,7 +370,7 @@ v.xx.01-german
 #define ISTR_OWNER_NAME     "Nutzername"
 #define ISTR_BEEPER         "Pieper"
 // ISTR_BEEP_MODES indexed 6 chars each
-#define ISTR_BEEP_MODES     "\006Lautls""TstAus""xKurz ""Kurz  ""Normal""Lang  ""xLang " // x = seh
+#define ISTR_BEEP_MODES     "\006Lautls""TstAus"" xKurz""  Kurz""Normal""  Lang"" xLang" // x = seh
 #define ISTR_SOUND_MODE     "Sound Modus"
 // ISTR_SPEAKER_OPTS indexed 10 chars each
 #define ISTR_SPEAKER_OPTS   "\012Pieper    ""PiLautspre""PieprTon  ""PieLautTon""MegaSound "
@@ -451,9 +451,9 @@ v.xx.01-german
 // c17-c24 added for timer mode A display
 #define ICURV_STR					 "\003---x>0x<0|x|f>0f<0|f|c1 c2 c3 c4 c5 c6 c7 c8 c9 c10c11c12c13c14c15c16c17c18c19c20c21c22c23c24c25c26c27c28c29c30c31c32"
 // CSWITCH_STR indexed 7 chars each
-#define ICSWITCH_STR        "\007----   v>val  v<val  |v|>val|v|<valAND    OR     XOR    ""v1==v2 ""v1!=v2 ""v1>v2  ""v1<v2  ""Latch  F-Flop TimeOffNtmeOff1-Shot 1-ShotRv\173=val v&val  v1\173=v2 v=val  Range  |d|>vald>=val "
+#define ICSWITCH_STR        "\007   ----  v>val  v<val|v|>val|v|<val    AND     OR    XOR"" v1==v2"" v1!=v2""  v1>v2""  v1<v2""  Latch F-FlopTimeOffNtmeOff 1-Shot1-ShotRv \173=val  v&val v1\173=v2  v=val  Range|d|>val d>=val"
 
-#define ISWASH_TYPE_STR     "\170" "\004" "\004----"" 120""120X"" 140""  90"
+#define ISWASH_TYPE_STR     "\162" "\004" "\004----"" 120""120X"" 140""  90"
 
 #define ISTR_STICK_NAMES    "\005Sei \0H\302h \0Gas \0Que "
 

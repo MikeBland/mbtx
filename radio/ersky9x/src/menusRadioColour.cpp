@@ -266,6 +266,10 @@ void menuDisplay( uint8_t event )
 		drawItem( (char *)(( i == 0) ? PSTR(STR_LIGHT_AFTER) : PSTR(STR_LIGHT_STICK)), y, attr ) ;
 		b = ( i == 0 ) ? g_eeGeneral.lightAutoOff : g_eeGeneral.lightOnStickMove ;
 
+    if ( attr )
+		{
+			CHECK_INCDEC_H_GENVAR_0( b, 600/5) ;
+		}
     if( b )
 		{
 			drawNumber( TRIGHT-5-FW, y, b * 5, attr) ; //, attr ? ~colour : colour ) ;
@@ -287,10 +291,6 @@ void menuDisplay( uint8_t event )
 #else
   		PUTS_ATT_COLOUR( TRIGHT-TRMARGIN, y+TVOFF, PSTR(STR_OFF), LUA_RIGHT, attr ? ~LcdForeground : LcdForeground ) ; //, attr ? ~colour : colour ) ;
 #endif
-		}
-    if ( attr )
-		{
-			CHECK_INCDEC_H_GENVAR_0( b, 600/5) ;
 		}
 		if ( i == 0 )
 		{
@@ -620,7 +620,7 @@ void menuAudio( uint8_t event )
 				if ( b != g_eeGeneral.unused_PPM_Multiplier )
 				{
 					b = g_eeGeneral.unused_PPM_Multiplier ;
-void I2C_set_volume( register uint8_t volume ) ;
+void I2C_set_volume( uint8_t volume ) ;
 					I2C_set_volume( b ) ;
 				}
 			}	

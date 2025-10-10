@@ -868,6 +868,7 @@ extern uint32_t IdlePercent ;
 //#endif
 //}
 
+#ifdef PCBSKY
 static int32_t calcTemp( int32_t temp )
 {
  #ifdef SMALL
@@ -880,6 +881,7 @@ static int32_t calcTemp( int32_t temp )
 	return ( ( (temp - 838 ) * 621 ) >> 11 ) - 20 ;
 #endif
 }
+#endif
 
 void menuProcBattery(uint8_t event)
 {
@@ -2842,7 +2844,7 @@ extern uint16_t TelRxCount ;
 #ifdef PROP_TEXT
 
 	lcdDrawTextLeft( 6*FH, XPSTR("Raw Logging") ) ;
-	lcdDrawTextAtIndex( PARAM_OFS, 6*FH, XPSTR("\003OFFBinHex"), RawLogging, 0 ) ;
+	lcdDrawTextAtIndex( PARAM_OFS-FW, 6*FH, XPSTR("\003OFFBinHex"), RawLogging, 0 ) ;
 	lcdDrawTextLeft( 7*FH, XPSTR("TelRxCount") ) ;
   PUT_HEX4( 12*FW,  7*FH, TelRxCount ) ;
   PUT_HEX4( 17*FW,  7*FH, FrskyTelemetryType | (TelemetryType << 8) ) ;

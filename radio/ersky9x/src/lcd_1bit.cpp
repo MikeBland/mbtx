@@ -856,7 +856,7 @@ void lcdDrawHex2(coord_t x, coord_t y, uint8_t val )
 //	return s ;
 //}
 
-void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len )
+void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len )
 {
   char str[16+1] ;
   char *s = str+16 ;
@@ -864,12 +864,20 @@ void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t le
   int idx = 0 ;
   int mode = MODE(flags) ;
   bool neg = false ;
+//	uint32_t fullwidth = 0 ;
 
   if (val < 0)
 	{
     val = -val ;
     neg = true ;
   }
+	
+	if ( len < 0 )
+	{
+//		fullwidth = 1 ;
+		len = -len ;		
+	}
+	
 	if ( len > 15)
 	{
 		len = 15 ;	// Allow for '-'
@@ -1639,9 +1647,14 @@ char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_
 	return s ;
 }
 
-void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour)
+void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len, uint16_t colour)
 {
   char str[16+1] ;
+	if ( len < 0 )
+	{
+//		fullwidth = 1 ;
+		len = -len ;		
+	}
   char *s = numberToText( val, flags, len, str, 17 ) ;
 
 	flags &= ~(LEADING0 | PREC1 | PREC2) ;
@@ -1708,24 +1721,24 @@ void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t le
 	
 //}
 
-void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len)
+void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len)
 {
 	lcdDrawNumber( x, y, val, flags, len, LcdForeground ) ;
 }
 
 void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags)
 {
-	lcdDrawNumber( x, y, val, flags, 0, LcdForeground ) ;
+	lcdDrawNumber( x, y, val, flags, (int8_t)0, LcdForeground ) ;
 }
 
 void lcdDrawNumber(coord_t x, coord_t y, int32_t val )
 {
-	lcdDrawNumber( x, y, val, 0, 0, LcdForeground ) ;
+	lcdDrawNumber( x, y, val, 0, (int8_t)0, LcdForeground ) ;
 }
 
 void lcd2Digits( coord_t x, coord_t y, int16_t value, LcdFlags attr )
 {
-	lcdDrawNumber( x, y, value, attr + LEADING0, 2, LcdForeground ) ;
+	lcdDrawNumber( x, y, value, attr + LEADING0, (int8_t)2, LcdForeground ) ;
 }
 
 void putsTimeP( coord_t x, coord_t y, int16_t tme, LcdFlags att )

@@ -406,12 +406,12 @@ extern void lcdDrawTextAtIndex(coord_t x, coord_t y, const char * s,uint8_t idx,
 extern void lcdDrawTextAtIndex(coord_t x, coord_t y, const char * s,uint8_t idx, LcdFlags flags) ;
 extern void lcdDrawHex4(coord_t x, coord_t y, uint16_t val ) ;
 extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags) ;
-extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len ) ;
+extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len ) ;
 extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val ) ;
 extern void putsTimeP( coord_t x, coord_t y, int16_t tme, LcdFlags att) ;
 extern void lcd2Digits( coord_t x, coord_t y, int16_t value, LcdFlags attr ) ;
 extern uint16_t getTextWidth(const char * s, uint8_t len, LcdFlags flags) ;
-extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len, uint16_t colour ) ;
+extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len, uint16_t colour ) ;
 extern void lcdDrawPropImage( uint16_t x, uint16_t y, uint32_t w, uint32_t h, uint32_t mode, uint16_t colour, uint8_t *bitmap ) ;
 extern char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size ) ;
 #endif
@@ -434,7 +434,7 @@ extern void lcdDrawTextAtIndex(coord_t x, coord_t y, const char * s,uint8_t idx,
 extern void lcdDrawHex4(coord_t x, coord_t y, uint16_t val ) ;
 extern void lcdDrawHex2(coord_t x, coord_t y, uint8_t val ) ;
 extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags) ;
-extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, uint8_t len) ;
+extern void lcdDrawNumber(coord_t x, coord_t y, int32_t val, LcdFlags flags, int8_t len) ;
 extern void putsTimeP( coord_t x, coord_t y, int16_t tme, LcdFlags att) ;
 extern void lcd2Digits( coord_t x, coord_t y, int16_t value, LcdFlags attr ) ;
 extern char *numberToText( int32_t val, LcdFlags flags, uint8_t len, char *str, uint32_t size ) ;

@@ -1187,7 +1187,7 @@ extern uint8_t SlaveTempReceiveBuffer[] ;
 //				f_printf(&g_oLogFile, ",%d.%02d", qr.quot, qr.rem ) ;
 //			}
 			
-			logSingleDiv10( LOG_SBECA, TelemetryData[FR_SBEC_CURRENT] ) ;
+			logSingleDiv100( LOG_SBECA, TelemetryData[FR_SBEC_CURRENT] ) ;
 //			if ( isLogEnabled( LOG_SBECA ) )
 //			{
 //				qr = div( TelemetryData[FR_SBEC_CURRENT], 10);

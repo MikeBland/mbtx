@@ -240,7 +240,7 @@ void init_pb14_heartbeat() ;
 void stop_pb14_heartbeat() ;
 #endif                              
 
-extern void putEvent( register uint8_t evt) ;
+extern void putEvent( uint8_t evt) ;
 extern void UART_Configure( uint32_t baudrate, uint32_t masterClock) ;
 //extern void UART2_Configure( uint32_t baudrate, uint32_t masterClock) ;
 extern void UART2_9dataOdd1stop( void ) ;
@@ -317,7 +317,7 @@ void set_stick_gain( uint32_t gains ) ;
 extern void init_ssc( uint16_t baudrate ) ;
 extern void eeprom_write_byte_cmp (uint8_t dat, uint16_t pointer_eeprom) ;
 extern void eeWriteBlockCmp(const void *i_pointer_ram, void *i_pointer_eeprom, size_t size) ;
-extern void eeprom_read_block( void *i_pointer_ram, const void *i_pointer_eeprom, register uint32_t size ) ;
+extern void eeprom_read_block( void *i_pointer_ram, const void *i_pointer_eeprom, uint32_t size ) ;
 void start_ppm_capture( void ) ;
 void end_ppm_capture( void ) ;
 extern void start_2Mhz_timer( void ) ;
@@ -389,7 +389,7 @@ void USART6SetBaudrate( uint32_t baudrate ) ;
 //void com2Parity( uint32_t even ) ;
 #endif
 
-uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
+uint32_t read32_eeprom_data( uint32_t eeAddress, uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 
 extern void init_SDcard( void ) ;
 

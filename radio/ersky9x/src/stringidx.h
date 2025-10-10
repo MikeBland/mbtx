@@ -14,9 +14,9 @@
 #define FWx15		"\132"
 #define FWx16		"\140"
 #define FWx17		"\146"
-#define FWx18		"\152"
-#define FWx19		"\160"
-#define FWx20		"\166"
+#define FWx18		"\154"
+#define FWx19		"\162"
+#define FWx20		"\170"
 
 
 #define STR_ON              0

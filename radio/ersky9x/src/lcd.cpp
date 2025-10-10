@@ -273,10 +273,22 @@ void putsTime(coord_t x,coord_t y,int16_t tme,LcdFlags att,LcdFlags att2)
 		tme = -tme;
 	}
 	qr = div( tme, 60 ) ;
+	
+	if ( neg)
+	{
+		qr.quot = -qr.quot ;
+	}
+	if ( att & LUA_RIGHT )
+	{
+		x -= 2*FW ;
+	}
+	lcd2Digits( x, y, qr.quot, att ) ;
 	lcdDrawChar( x, y, ':', att ) ;
-	lcdDrawNumber( LcdNextPos, y, qr.rem, att2|LEADING0|LEFT, 2 ) ;
-	tme = neg ? -qr.quot : qr.quot ;
-	lcdDrawNumber( x, y, tme, att|LEADING0, 2 ) ;
+	lcd2Digits( LcdNextPos, y, qr.rem, LEFT|(att & ~LUA_RIGHT) ) ;
+//	lcdDrawChar( x, y, ':', att ) ;
+//	lcdDrawNumber( LcdNextPos, y, qr.rem, att2|LEADING0|LEFT, 2 ) ;
+//	tme = neg ? -qr.quot : qr.quot ;
+//	lcdDrawNumber( x, y, tme, att|LEADING0, 2 ) ;
 
 #else
 	uint8_t z = FWNUM*6-2 ;
@@ -472,7 +484,7 @@ void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, ui
 #endif
     for(x=0; x < w; x++)
 		{
-      register uint8_t b = *bitmap++ ;
+      uint8_t b = *bitmap++ ;
 			if ( inv )
 			{
 				b = ~b ;
@@ -508,9 +520,9 @@ void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, ui
 void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
   register const unsigned char *q = imgdat ;
-  register uint8_t w    = *q++ ;
-  register uint32_t hb   = *q++ ;
-  register uint8_t sze1 = *q++ ;
+  uint8_t w    = *q++ ;
+  uint32_t hb   = *q++ ;
+  uint8_t sze1 = *q++ ;
 //	uint32_t yb ;
 //	uint32_t x ;
 
@@ -562,7 +574,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 #endif
     for(x=0; x < w; x++)
 		{
-      register uint8_t b = *bitmap++ ;
+      uint8_t b = *bitmap++ ;
 			if ( inv )
 			{
 				b = ~b ;
@@ -600,9 +612,9 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
   register const unsigned char *q = imgdat ;
-  register uint8_t w    = *q++ ;
-  register uint32_t hb   = *q++ ;
-  register uint8_t sze1 = *q++ ;
+  uint8_t w    = *q++ ;
+  uint32_t hb   = *q++ ;
+  uint8_t sze1 = *q++ ;
 //	uint32_t yb ;
 //	uint32_t x ;
 
@@ -631,7 +643,7 @@ void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 //	bool inv = (mode & INVERS) ? true : (mode & BLINK ? BLINK_ON_PHASE : false ) ;
   for( yb = 0; yb < h; yb++)
 	{
-    register uint8_t *p = &DISPLAY_START[ (i_y / 8 + yb) * DISPLAY_W + i_x ];
+    uint8_t *p = &DISPLAY_START[ (i_y / 8 + yb) * DISPLAY_W + i_x ];
 #if PCBX9D
 		if ( i_x > 211-X9D_OFFSET )
 		{
@@ -640,7 +652,7 @@ void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 #endif
     for(x=0; x < w; x++)
 		{
-      register uint8_t b = *bitmap++ ;
+      uint8_t b = *bitmap++ ;
       *p++ = inv ? ~b : b;
     }
   }
@@ -650,9 +662,9 @@ void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 void lcd_img( coord_t i_x, coord_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode )
 {
   register const unsigned char *q = imgdat ;
-  register uint8_t w    = *q++ ;
-  register uint32_t hb   = (*q++ +7) / 8 ;
-  register uint8_t sze1 = *q++ ;
+  uint8_t w    = *q++ ;
+  uint32_t hb   = (*q++ +7) / 8 ;
+  uint8_t sze1 = *q++ ;
 //	uint32_t yb ;
 //	uint32_t x ;
 
@@ -1292,8 +1304,8 @@ static uint8_t *dispBufAddress( coord_t x, coord_t y )
  #ifndef PROP_TEXT
 uint8_t lcd_putcAtt(coord_t x,coord_t y,const char c,uint8_t mode)
 {
-	register int32_t i ;
-	register uint8_t *p    = dispBufAddress( x, y ) ;
+	int32_t i ;
+	uint8_t *p    = dispBufAddress( x, y ) ;
 #if PCBX9D
 	if ( x > 211-X9D_OFFSET )
 	{
@@ -1317,7 +1329,7 @@ uint8_t lcd_putcAtt(coord_t x,coord_t y,const char c,uint8_t mode)
 		return x ;
 	}
 	x += FW ;
-  register uint8_t    *q ;
+  uint8_t    *q ;
 	if( c < 0xC0 )
 	{
 		q = (uint8_t *) &font_5x8_x20_x7f[(c-0x20)*5] ;
@@ -1531,8 +1543,8 @@ uint8_t lcd_putcAtt(coord_t x,coord_t y,const char c,uint8_t mode)
 #ifndef PROP_TEXT
 uint8_t lcd_putcSmall( coord_t x, coord_t y, uint8_t c, LcdFlags mode )
 {
-	register int32_t i ;
-	register uint8_t *p = dispBufAddress( x, y ) ;
+	int32_t i ;
+	uint8_t *p = dispBufAddress( x, y ) ;
   register bool inv = false ;
 #if PCBX9D
 	if ( x > 211-X9D_OFFSET )
@@ -1541,7 +1553,7 @@ uint8_t lcd_putcSmall( coord_t x, coord_t y, uint8_t c, LcdFlags mode )
 	}
 #endif
 	x += 5 ;
-  register uint8_t *q ;
+  uint8_t *q ;
 	if( c < 0x80 )
 	{
 		q = (uint8_t *) &font_04_06[(c-0x20)*5] ;
@@ -1877,7 +1889,7 @@ void lcd_outhex4(coord_t x,coord_t y,uint16_t val)
 #endif // PROP_TEXT
 //void lcd_outhex2(uint8_t x,uint8_t y,uint8_t val)
 //{
-//  register int i ;
+//  int i ;
 //  x+=FWNUM*2;
 //  for(i=0; i<2; i++)
 //  {
@@ -2397,9 +2409,9 @@ void lcd_plot( coord_t x, coord_t y )
 {
 	uint8_t *p = dispBufAddress( x, y ) ;
 //#ifdef GREY_SCALE
-//  register uint8_t *p   = &DISPLAY_START[ y / 2 * DISPLAY_W + x ];
+//  uint8_t *p   = &DISPLAY_START[ y / 2 * DISPLAY_W + x ];
 //#else
-//  register uint8_t *p   = &DISPLAY_START[ y / 8 * DISPLAY_W + x ];
+//  uint8_t *p   = &DISPLAY_START[ y / 8 * DISPLAY_W + x ];
 //#endif
 #ifdef GREY_SCALE
 	lcd_write_bits( p, (y&1) ? 0xF0 : 0x0F ) ;
@@ -2412,11 +2424,11 @@ void lcd_hlineStip( coord_t x, coord_t y, int16_t w, uint8_t pat )
 {
   if(w<0) {x+=w; w=-w;}
 #ifdef GREY_SCALE
-  register uint8_t *p = &DISPLAY_START[ y / 2 * DISPLAY_W + x ] ;
-	register uint8_t msk = (y&1) ? 0xF0 : 0x0F ;
+  uint8_t *p = &DISPLAY_START[ y / 2 * DISPLAY_W + x ] ;
+	uint8_t msk = (y&1) ? 0xF0 : 0x0F ;
 #else
 	uint8_t *p = dispBufAddress( x, y ) ;
-	register uint8_t msk = BITMASK(y%8) ;
+	uint8_t msk = BITMASK(y%8) ;
 #endif  
   while(w)
 	{
@@ -2586,9 +2598,9 @@ void lcd_char_inverse( coord_t x, coord_t y, uint8_t w, uint8_t blink )
 	uint8_t end = x + w ;
 	uint8_t *p = dispBufAddress( x, y ) ;
 //#ifdef GREY_SCALE
-//  register uint8_t *p = &DISPLAY_START[ y / 2 * DISPLAY_W + x ] ;
+//  uint8_t *p = &DISPLAY_START[ y / 2 * DISPLAY_W + x ] ;
 //#else
-//  register uint8_t *p = &DISPLAY_START[ y / 8 * DISPLAY_W + x ] ;
+//  uint8_t *p = &DISPLAY_START[ y / 8 * DISPLAY_W + x ] ;
 //#endif  
 
 	y &= 7 ;
@@ -2775,7 +2787,7 @@ void lcd_vline( coord_t x, coord_t y, int8_t h )
   if (h<0) { y+=h; h=-h; }
 
 #ifdef GREY_SCALE
-  register uint8_t *p   = &DISPLAY_START[ y / 2 * DISPLAY_W + x ];
+  uint8_t *p   = &DISPLAY_START[ y / 2 * DISPLAY_W + x ];
   y &= 0x01 ;
 	if ( y )
 	{
@@ -3067,7 +3079,7 @@ const static uint8_t Lcd_ERC12864_2[] =
 
 void lcdInit()
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	uint32_t i ;
   // /home/thus/txt/datasheets/lcd/KS0713.pdf
   // ~/txt/flieger/ST7565RV17.pdf  from http://www.glyn.de/content.asp?wdid=132&sid=
@@ -3189,7 +3201,7 @@ void lcd_stop()
 void lcdSetRefVolt(uint8_t val)
 {
 #ifndef SIMU
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	pioptr = PIOC ;
 
 // read the inputs, and lock the LCD lines
@@ -3274,7 +3286,7 @@ void lcdSetOrientation()
 
 void lcdSendCtl(uint8_t val)
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 
 	
 #ifndef REVA
@@ -3319,12 +3331,12 @@ void refreshDisplay()
 #else
 void refreshDisplay()
 {
-	register Pio *pioptr ;
-  register uint8_t *p=DisplayBuf;
-	register uint32_t y ;
-	register uint32_t x ;
-	register uint32_t z ;
-	register uint32_t ebit ;
+	Pio *pioptr ;
+  uint8_t *p=DisplayBuf;
+	uint32_t y ;
+	uint32_t x ;
+	uint32_t z ;
+	uint32_t ebit ;
 	uint16_t delayCount ;
 #ifdef PCBSKY
 #ifdef REVX
@@ -3378,7 +3390,7 @@ void refreshDisplay()
 
 
 #ifdef REVA
-  register uint8_t *lookup ;
+  uint8_t *lookup ;
 	lookup = (uint8_t *)Lcd_lookup ;
 #endif // REVA
 	ebit = LCD_E ;

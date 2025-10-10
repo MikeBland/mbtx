@@ -1442,8 +1442,8 @@ extern "C" void EXTI9_5_IRQHandler()
 	RTC->BKP1R = 0x9D ;
 #endif
 #endif
-  register uint32_t capture ;
-  register uint32_t dummy ;
+  uint32_t capture ;
+  uint32_t dummy ;
 	struct t_softSerial *pss = &SoftSerial1 ;
 
 	capture =  TIM7->CNT ;	// Capture time

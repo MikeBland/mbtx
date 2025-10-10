@@ -7023,7 +7023,7 @@ uint32_t basicExecute( uint32_t begin, uint16_t event, uint32_t index )
 		}
 		execLinesProcessed += 1 ;
 #ifndef QT
-		if ( (uint16_t)( getTmr2MHz() - t1 ) > 2000 )
+		if ( (uint16_t)( getTmr2MHz() - t1 ) > 3000 )
 		{
 			break ;
 		}

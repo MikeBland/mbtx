@@ -180,7 +180,7 @@ struct t_serial_tx *Current_Com6 ;
 
 volatile uint8_t Spi_complete ;
 
-void putEvent( register uint8_t evt) ;
+void putEvent( uint8_t evt) ;
 void per10ms( void ) ;
 uint8_t getEvent( void ) ;
 void pauseEvents(uint8_t event) ;
@@ -249,7 +249,7 @@ static uint8_t lastWasFirstLeft ;
 #endif
 
 #ifdef MULTI_EVENTS
-void putEvent( register uint8_t evt)
+void putEvent( uint8_t evt)
 {
 #ifdef REV9E
 	if ( g_eeGeneral.pageButton )
@@ -281,7 +281,7 @@ void putEvent( register uint8_t evt)
 	}
 }
 #else
-void putEvent( register uint8_t evt)
+void putEvent( uint8_t evt)
 {
 #ifdef REV9E
 	if ( g_eeGeneral.pageButton )
@@ -339,7 +339,7 @@ uint8_t peekEvent()
 #else
 uint8_t getEvent()
 {
-  register uint8_t evt = s_evt;
+  uint8_t evt = s_evt;
   s_evt=0;
   return evt;
 }
@@ -669,7 +669,7 @@ extern uint8_t ExtDisplaySend ;
 
 void per10ms()
 {
-	register uint32_t i ;
+	uint32_t i ;
 
   g_tmr10ms++ ;
 	g_ltmr10ms += 1 ;
@@ -1187,10 +1187,10 @@ void putCaptureTime( struct t_softSerial *pss, uint16_t time, uint32_t value )
 // Set clock to 3 MHz, AT25 device is rated to 70MHz, 18MHz would be better
 void init_spi()
 {
-//	register Pio *pioptr ;
-	register Spi *spiptr ;
-	register uint32_t timer ;
-	register uint8_t *p ;
+//	Pio *pioptr ;
+	Spi *spiptr ;
+	uint32_t timer ;
+	uint8_t *p ;
 	uint8_t spi_buf[4] ;
 
   PMC->PMC_PCER0 |= 0x00200000L ;		// Enable peripheral clock to SPI
@@ -1234,7 +1234,7 @@ extern "C" void SPI_IRQHandler()
 	RTC->BKP1R = 0x8A ;
 #endif
 #endif
-	register Spi *spiptr ;
+	Spi *spiptr ;
 
 	spiptr = SPI ;
 	SPI->SPI_IDR = 0x07FF ;			// All interrupts off
@@ -1262,8 +1262,8 @@ uint32_t eeprom_read_status()
 
 uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
 {
-	register Spi *spiptr ;
-	register uint32_t result ;
+	Spi *spiptr ;
+	uint32_t result ;
 	
 	spiptr = SPI ;
 	spiptr->SPI_CR = 1 ;								// Enable
@@ -1300,10 +1300,10 @@ uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
 	return spiptr->SPI_RDR ;
 }
 
-uint32_t spi_operation( register uint8_t *tx, register uint8_t *rx, register uint32_t count )
+uint32_t spi_operation( uint8_t *tx, uint8_t *rx, uint32_t count )
 {
-	register Spi *spiptr ;
-	register uint32_t result ;
+	Spi *spiptr ;
+	uint32_t result ;
 
 //  PMC->PMC_PCER0 |= 0x00200000L ;		// Enable peripheral clock to SPI
 
@@ -1360,9 +1360,9 @@ uint32_t spi_operation( register uint8_t *tx, register uint8_t *rx, register uin
 uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t comlen, uint32_t count )
 {
 #ifndef SIMU
-	register Spi *spiptr ;
-//	register uint32_t result ;
-	register uint32_t condition ;
+	Spi *spiptr ;
+//	uint32_t result ;
+	uint32_t condition ;
 	static uint8_t discard_rx_command[4] ;
 
 //  PMC->PMC_PCER0 |= 0x00200000L ;		// Enable peripheral clock to SPI
@@ -1427,7 +1427,7 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 //{
 ////    const Pin pPins[] = CONSOLE_PINS;
 //  register Uart *pUart = CONSOLE_USART;
-////	register Pio *pioptr ;
+////	Pio *pioptr ;
 
 //  /* Configure PIO */
 //	configure_pins( (PIO_PA9 | PIO_PA10), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
@@ -1624,7 +1624,7 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 //{
 ////    const Pin pPins[] = CONSOLE_PINS;
 //  register Uart *pUart = BT_USART;
-////	register Pio *pioptr ;
+////	Pio *pioptr ;
 
 //  /* Configure PIO */
 //	configure_pins( (PIO_PB2 | PIO_PB3), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTB | PIN_NO_PULLUP ) ;
@@ -1744,7 +1744,7 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 //{
 //////    const Pin pPins[] = CONSOLE_PINS;
 //  register Usart *pUsart = SECOND_USART;
-////	register Pio *pioptr ;
+////	Pio *pioptr ;
 
 //  /* Configure PIO */
 //	disable_software_com1() ;
@@ -2311,8 +2311,8 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 void read_adc()
 {
 	register Adc *padc ;
-	register uint32_t y ;
-	register uint32_t x ;
+	uint32_t y ;
+	uint32_t x ;
 #ifndef ARUNI
 	static uint16_t timer = 0 ;
 #endif
@@ -2514,7 +2514,7 @@ void read_adc()
 void init_adc()
 {
 	register Adc *padc ;
-	register uint32_t timer ;
+	uint32_t timer ;
 
 	timer = ( Master_frequency / (9000000*2) - 1 ) << 8 ;
 	// Enable peripheral clock ADC = bit 29
@@ -2598,7 +2598,7 @@ void start_timer3()
 {
 #ifndef SIMU
   register Tc *ptc ;
-//	register Pio *pioptr ;
+//	Pio *pioptr ;
 
 	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
   PMC->PMC_PCER0 |= 0x04000000L ;		// Enable peripheral clock to TC3
@@ -2622,7 +2622,7 @@ void start_timer4()
 {
 #ifndef SIMU
   register Tc *ptc ;
-	register uint32_t timer ;
+	uint32_t timer ;
 
 	timer = Master_frequency / (2*2000000) ;		// MCK/2 and 2MHz
 
@@ -2699,7 +2699,7 @@ void setCaptureMode(uint32_t mode)
 //{
 //#ifndef SIMU
 //  register Tc *ptc ;
-////	register Pio *pioptr ;
+////	Pio *pioptr ;
 
 //	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
 //  PMC->PMC_PCER0 |= 0x10000000L ;		// Enable peripheral clock to TC5
@@ -2789,8 +2789,8 @@ void setCaptureMode(uint32_t mode)
 //	RTC->BKP1R = 0x8E ;
 //#endif
 //#endif
-//  register uint32_t capture ;
-//  register uint32_t dummy ;
+//  uint32_t capture ;
+//  uint32_t dummy ;
 	
 //	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
 //	struct t_softSerial *pss = &SoftSerial1 ;
@@ -3056,8 +3056,8 @@ extern uint8_t TrainerPolarity ;
 // TD is on PA17, peripheral A
 void init_ssc( uint16_t baudrate )
 {
-//	register Pio *pioptr ;
-	register Ssc *sscptr ;
+//	Pio *pioptr ;
+	Ssc *sscptr ;
 
 	Scc_baudrate = baudrate ;
 
@@ -3100,8 +3100,8 @@ void init_ssc( uint16_t baudrate )
 
 void disable_ssc()
 {
-	register Pio *pioptr ;
-	register Ssc *sscptr ;
+	Pio *pioptr ;
+	Ssc *sscptr ;
 
 	// Revert back to pwm output
 	pioptr = PIOA ;
@@ -3862,7 +3862,7 @@ extern "C" void EXTI15_10_IRQHandler()
 	RTC->BKP1R = 0x98 ;
 #endif
 #endif
-  register uint32_t capture ;
+  uint32_t capture ;
   static uint16_t lastCapt ;
   uint16_t val ;
 
@@ -3955,7 +3955,7 @@ extern "C" void EXTI15_10_IRQHandler()
 	RTC->BKP1R = 0x99 ;
 #endif
 #endif
-  register uint32_t capture ;
+  uint32_t capture ;
 
 	capture =  TIM7->CNT ;	// Capture time
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
@@ -3991,7 +3991,7 @@ void stop_xjt_heartbeat()
 
 //extern "C" void EXTI15_10_IRQHandler()
 //{
-//  register uint32_t capture ;
+//  uint32_t capture ;
 
 //	capture =  TIM7->CNT ;	// Capture time
 //	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
@@ -4036,7 +4036,7 @@ extern "C" void EXTI1_IRQHandler()
 	RTC->BKP1R = 0x99 ;
 #endif
 #endif
-  register uint32_t capture ;
+  uint32_t capture ;
 
 	capture =  TIM7->CNT ;	// Capture time
 	if ( EXTI->PR & XJT_HEARTBEAT_BIT )
@@ -4682,8 +4682,8 @@ extern "C" void EXTI1_IRQHandler()
 //	RTC->BKP1R = 0x9D ;
 //#endif
 //#endif
-//  register uint32_t capture ;
-//  register uint32_t dummy ;
+//  uint32_t capture ;
+//  uint32_t dummy ;
 //	struct t_softSerial *pss = &SoftSerial1 ;
 
 //	capture =  TIM7->CNT ;	// Capture time
@@ -4775,7 +4775,7 @@ extern "C" void EXTI1_IRQHandler()
 #ifdef PCB9XT
 void init_spi()
 {
-	register uint8_t *p ;
+	uint8_t *p ;
 	uint8_t spi_buf[4] ;
 
   /* Enable GPIO clock for CS */
@@ -4815,10 +4815,10 @@ void init_spi()
 	GPIOA->BSRRL = GPIO_Pin_SPI_EE_CS ;		// output disable
 }
 
-uint32_t spi_operation( register uint8_t *tx, register uint8_t *rx, register uint32_t count )
+uint32_t spi_operation( uint8_t *tx, uint8_t *rx, uint32_t count )
 {
-	register SPI_TypeDef *spiptr = SPI1 ;
-	register uint32_t result ;
+	SPI_TypeDef *spiptr = SPI1 ;
+	uint32_t result ;
 	
 	GPIOA->BSRRH = GPIO_Pin_SPI_EE_CS ;		// output enable
 	(void) spiptr->DR ;		// Dump any rx data
@@ -4882,8 +4882,8 @@ uint32_t eeprom_read_status()
 
 uint32_t  eeprom_write_one( uint8_t byte, uint8_t count )
 {
-	register SPI_TypeDef *spiptr = SPI1 ;
-	register uint32_t result ;
+	SPI_TypeDef *spiptr = SPI1 ;
+	uint32_t result ;
 	
 	GPIOA->BSRRH = GPIO_Pin_SPI_EE_CS ;		// output enable
 	(void) spiptr->DR ;		// Dump any rx data
@@ -4924,7 +4924,7 @@ uint16_t readSpiEncoder()
 //	uint32_t x ;
 	uint16_t x ;
 //	uint32_t y ;
-	register SPI_TypeDef *spiptr = SPI1 ;
+	SPI_TypeDef *spiptr = SPI1 ;
 
 	// Toggle the CS line
 	GPIOA->BSRRH = GPIO_Pin_SPI_EE_CS ;		// output enable

@@ -192,40 +192,6 @@ const uint8_t *g_icons[] = {
 #endif
 
 
-#if defined(PCBSKY) || defined(PCB9XT)
-//const char SW_3_IDX[] = "\004sIDxsTHRsRUDsELEsAILsGEAsTRNL1  L2  L3  L4  L5  L6  L7  L8  L9  LA  LB  LC  LD  LE  LF  LG  LH  LI  LJ  LK  LL  LM  LN  LO  6POS" ;
-#define NUM_MIX_SWITCHES	(7+NUM_SKYCSW)
-#endif
-#ifdef PCBX9D
- #ifdef REV9E
-#define NUM_MIX_SWITCHES	(19+NUM_SKYCSW)
- #else // X9E
-  #ifdef PCBX7
-#define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
-  #else // PCBX7
-   #ifdef PCBX9LITE
-#define NUM_MIX_SWITCHES	(5+NUM_SKYCSW)
-   #else // PCBX9LITE
-    #if defined(REVPLUS) || defined(REVNORM) || defined(REV19)
-#define NUM_MIX_SWITCHES	(8+NUM_SKYCSW)
-    #endif // norm/plus
-		#ifdef PCBXLITE
-#define NUM_MIX_SWITCHES	(4+NUM_SKYCSW)
-    #endif // Xlite
-   #endif // PCBX9LITE
-  #endif // PCBX7
- #endif	// REV9E
-#endif // X9D
-
-#if defined(PCBX12D) || defined(PCBX10)
-#define NUM_MIX_SWITCHES	(9+NUM_SKYCSW)
-#endif
-
-#if defined(PCBLEM1)
-#define NUM_MIX_SWITCHES	(6+NUM_SKYCSW)
-#endif
-
-
 #ifdef COLOUR_DISPLAY
 #include "menusRadioColour.cpp"
 #endif
@@ -451,11 +417,11 @@ STR_DiagAna
 #else
       PUTS_ATT_LEFT( y, PSTR(STR_CONTRAST) ) ;
 #endif
-      PUTS_NUM( PARAM_OFS+2*FW, y, g_eeGeneral.contrast, (sub==subN) ? blink : 0) ;
+      drawNumber( PARAM_OFS, y, g_eeGeneral.contrast, (sub==subN) ? blink : 0 ) ;
 			y += FHPY ;
 			subN += 1 ;
-  		
-			PUTS_ATT_LEFT( y, PSTR(STR_BRIGHTNESS)) ;
+
+  		drawItem( PSTR(STR_BRIGHTNESS), y ) ;
 #if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10)
 #if defined(REVPLUS) || defined(REV9E)
 		  PUTS_P(11*FW, y, XPSTR( "COLOUR"));
@@ -475,7 +441,7 @@ STR_DiagAna
 			{
 				attr = INVERS ;
 			}
-			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			b = gvarMenuItem(PARAM_OFS, y, b, 0, 100, attr | GVAR_100, event ) ;
 			if ( b < 101 )
 			{
 				b = 100 - b ;
@@ -484,7 +450,7 @@ STR_DiagAna
 
 #else
 			 
-			PUTS_NUM( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright, (sub==subN) ? blink : 0 ) ;
+			drawNumber( PARAM_OFS, y, 100-g_eeGeneral.bright, (sub==subN) ? blink : 0 ) ;
       if(sub==subN)
 			{
 				uint8_t b ;
@@ -536,7 +502,7 @@ STR_DiagAna
 			{
 				attr = INVERS ;
 			}
-			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			b = gvarMenuItem(PARAM_OFS, y, b, 0, 100, attr | GVAR_100, event ) ;
 			if ( b < 101 )
 			{
 				b = 100 - b ;
@@ -544,7 +510,7 @@ STR_DiagAna
 			g_eeGeneral.bright_white = b ;
 #else
    		PUTS_P(11*FW, y, XPSTR( "WHITE"));
-			PUTS_NUM( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
+			drawNumber( PARAM_OFS, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
       if(sub==subN)
 			{
 				uint8_t b ;
@@ -583,7 +549,7 @@ STR_DiagAna
 			{
 				attr = INVERS ;
 			}
-			b = gvarMenuItem(PARAM_OFS+2*FW, y, b, 0, 100, attr | GVAR_100, event ) ;
+			b = gvarMenuItem(PARAM_OFS, y, b, 0, 100, attr | GVAR_100, event ) ;
 			if ( b < 101 )
 			{
 				b = 100 - b ;
@@ -605,7 +571,7 @@ STR_DiagAna
 
 #if defined(PCBX12D) || defined(PCBX10)
 			PUTS_ATT_LEFT( y,XPSTR("Off brightness"));
-			PUTS_NUM( PARAM_OFS+2*FW, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
+			drawNumber( PARAM_OFS, y, 100-g_eeGeneral.bright_white, (sub==subN) ? blink : 0 ) ;
       if(sub==subN)
 			{
 				uint8_t b ;
@@ -617,12 +583,8 @@ STR_DiagAna
 			subN++;
 #endif
       
-			PUTS_ATT_LEFT( y,PSTR(STR_LIGHT_SWITCH));
-#if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
-      putsDrSwitches(PARAM_OFS+2*FW,y,g_eeGeneral.lightSw,(sub==subN ? blink : 0)|LUA_RIGHT);
-#else
-      putsDrSwitches(PARAM_OFS-FW,y,g_eeGeneral.lightSw,(sub==subN ? blink : 0));
-#endif
+  		drawItem( PSTR(STR_LIGHT_SWITCH), y ) ;
+      putsDrSwitches(PARAM_OFS,y,g_eeGeneral.lightSw,(sub==subN ? blink : 0)|LUA_RIGHT);
       if(sub==subN) CHECK_INCDEC_GENERALSWITCH(event, g_eeGeneral.lightSw, -MaxSwitchIndex, MaxSwitchIndex) ;
 			
 			y += FHPY ;
@@ -636,17 +598,16 @@ STR_DiagAna
 
     	  if(b)
 				{
+   	      PUTS_NUM(PARAM_OFS, y, b*5, (sub==subN ? blink : 0));
 #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
-   	      PUTS_NUM(PARAM_OFS+2*FW, y, b*5, (sub==subN ? blink : 0));
    	      PUTC(LcdLastRightPos, y*HVSCALE, 's');
 #else
-					PUTS_NUM(PARAM_OFS, y, b*5,LEFT|(sub==subN ? blink : 0));
 					PUTC(Lcd_lastPos, y, 's');
 #endif
     	  }
     	  else
 				{
-					PUTS_ATT(PARAM_OFS+2*FW, y, PSTR(STR_OFF),(sub==subN ? blink:0)|LUA_RIGHT) ;
+					PUTS_ATT(PARAM_OFS, y, PSTR(STR_OFF),(sub==subN ? blink:0)|LUA_RIGHT) ;
 				}
     	  if(sub==subN) CHECK_INCDEC_H_GENVAR_0( b, 600/5);
 				if ( i == 0 )
@@ -761,7 +722,7 @@ STR_DiagAna
 
 			attr = (sub==subN) ? INVERS : 0 ;
 			PUTS_P( 0, y, XPSTR("Theme") ) ;
-			PUTS_NUM( PARAM_OFS+2*FW, y, g_eeGeneral.selectedTheme, (sub==subN) ? blink : 0 ) ;
+			PUTS_NUM( PARAM_OFS, y, g_eeGeneral.selectedTheme, (sub==subN) ? blink : 0 ) ;
 			if( attr )
 			{
 				uint8_t oldTheme = g_eeGeneral.selectedTheme ;
@@ -794,11 +755,6 @@ STR_DiagAna
 #endif // TOUCH
 		break ;
 
-#ifdef COLOUR_DISPLAY
-#define RAUD_OFF_0			0
-#else
-#define RAUD_OFF_0			0
-#endif
 		 
 		case M_AUDIO :
 #ifdef COLOUR_DISPLAY
@@ -822,10 +778,6 @@ STR_DiagAna
 #endif      
 			TITLE( PSTR(STR_AudioHaptic) ) ;
 
-//#ifdef COLOUR_DISPLAY
-//			DisplayOffset = RAUD_OFF_0 ;
-//#endif
-  		 
 #ifndef COLOUR_DISPLAY
 #ifdef HAPTIC
 			if ( sub < 6 )
@@ -836,9 +788,9 @@ STR_DiagAna
 				displayNext() ;
 #endif
 
-				PUTS_ATT_LEFT( y, PSTR(STR_VOLUME));
+	  		drawItem( PSTR(STR_VOLUME), y ) ;
 				current_volume = g_eeGeneral.volume ;
-				PUTS_NUM( PARAM_OFS+2*FW+RAUD_OFF_0, y, current_volume, (sub==subN) ? blink : 0 ) ;
+				PUTS_NUM( PARAM_OFS, y, current_volume, (sub==subN) ? blink : 0 ) ;
   			if(sub==subN)
 				{
 					CHECK_INCDEC_H_GENVAR_0( current_volume,NUM_VOL_LEVELS-1);
@@ -852,28 +804,28 @@ STR_DiagAna
       
 	    	uint8_t b ;
   	  	b = g_eeGeneral.beeperVal ;
-      	PUTS_ATT_LEFT( y,PSTR(STR_BEEPER));
-      	PUTS_AT_IDX(PARAM_OFS+2*FW, y, PSTR(STR_BEEP_MODES),b,(sub==subN ? blink:0)|LUA_RIGHT);
+	  		drawItem( PSTR(STR_BEEPER), y ) ;
+      	PUTS_AT_IDX(PARAM_OFS, y, PSTR(STR_BEEP_MODES),b,(sub==subN ? blink:0)|LUA_RIGHT);
 	    	if(sub==subN) { CHECK_INCDEC_H_GENVAR_0( b, 6); g_eeGeneral.beeperVal = b ; }
   			y += FHPY ;
 				subN += 1 ;
 
 		// audio start by rob
       	PUTS_ATT_LEFT( y,PSTR(STR_SPEAKER_PITCH));
-      	PUTS_NUM(PARAM_OFS+2*FW,y,g_eeGeneral.speakerPitch,(sub==subN ? blink : 0) );
+      	PUTS_NUM(PARAM_OFS,y,g_eeGeneral.speakerPitch,(sub==subN ? blink : 0) );
       	if(sub==subN) CHECK_INCDEC_H_GENVAR( g_eeGeneral.speakerPitch, 1, 100) ;
   			y += FHPY ;
 				subN += 1 ;
 	 
 #ifdef HAPTIC
       	PUTS_ATT_LEFT( y,PSTR(STR_HAPTICSTRENGTH));
-      	PUTS_NUM(PARAM_OFS+2*FW+RAUD_OFF_0,y,g_eeGeneral.hapticStrength,(sub==subN ? blink : 0) );
+      	PUTS_NUM(PARAM_OFS,y,g_eeGeneral.hapticStrength,(sub==subN ? blink : 0) );
       	if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.hapticStrength, 5) ;
   			y += FHPY ;
 				subN += 1 ;
 
       	PUTS_ATT_LEFT( y,XPSTR("Haptic Min Run"));
-      	PUTS_NUM(PARAM_OFS+2*FW+RAUD_OFF_0,y,g_eeGeneral.hapticMinRun+20,(sub==subN ? blink : 0) );
+      	PUTS_NUM(PARAM_OFS,y,g_eeGeneral.hapticMinRun+20,(sub==subN ? blink : 0) );
       	if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.hapticMinRun, 20 ) ;
   			y += FHPY ;
 				subN += 1 ;
@@ -920,7 +872,7 @@ STR_DiagAna
 			 		PUTS_ATT_LEFT( y, XPSTR( "FileName") ) ;
     			LcdFlags attr = sub == subN ? InverseBlink : 0 ;
 					SubMenuCall = 0x89 ;
-					alphaEditName( 10*FW-2+RAUD_OFF_0, y, (uint8_t *)g_eeGeneral.welcomeFileName, sizeof(g_eeGeneral.welcomeFileName), (sub==subN) | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FileName") ) ;
+					alphaEditName( 10*FW-2, y, (uint8_t *)g_eeGeneral.welcomeFileName, sizeof(g_eeGeneral.welcomeFileName), (sub==subN) | ALPHA_NO_NAME, (uint8_t *)XPSTR( "FileName") ) ;
 					validateName( g_eeGeneral.welcomeFileName, sizeof(g_eeGeneral.welcomeFileName) ) ;
   				if( attr )
 					{
@@ -949,13 +901,13 @@ STR_DiagAna
 					attr = 0 ;
 					b = g_eeGeneral.unused_PPM_Multiplier ;
       		if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR( g_eeGeneral.unused_PPM_Multiplier, 0, 127) ; }
-	      	PUTS_NUM(PARAM_OFS+2*FW-2+RAUD_OFF_0, y, g_eeGeneral.unused_PPM_Multiplier, attr);
+	      	PUTS_NUM(PARAM_OFS, y, g_eeGeneral.unused_PPM_Multiplier, attr);
 //uint8_t I2C_read_volume() ;
 //					PUTS_NUMX( PARAM_OFS+80, y, I2C_read_volume() ) ;
 					if ( b != g_eeGeneral.unused_PPM_Multiplier )
 					{
 						b = g_eeGeneral.unused_PPM_Multiplier ;
-void I2C_set_volume( register uint8_t volume ) ;
+void I2C_set_volume( uint8_t volume ) ;
 						I2C_set_volume( b ) ;
 					}
 				}
@@ -998,27 +950,23 @@ void I2C_set_volume( register uint8_t volume ) ;
   		LcdFlags attr ;
 			TITLE( PSTR(STR_Alarms) ) ;
 
-//#ifdef COLOUR_DISPLAY
-//			DisplayOffset = RALRM_OFF_0 ;
-//#endif
-			 
   		attr = LEFT ;
       PUTS_ATT_LEFT( y,PSTR(STR_BATT_WARN));
       if(sub==subN) { attr = blink | LEFT ; CHECK_INCDEC_H_GENVAR( g_eeGeneral.vBatWarn, 40, 120); } //5-10V
-      putsVolts(PARAM_OFS+RALRM_OFF_0, y, g_eeGeneral.vBatWarn, attr);
+      putsVolts(PARAM_OFS, y, g_eeGeneral.vBatWarn, attr|LUA_RIGHT ) ;
   		y += FHPY ;
 			subN += 1 ;
 
   		attr = 0 ;//LEFT ;
       PUTS_ATT_LEFT( y,PSTR(STR_INACT_ALARM));
       if(sub==subN) { attr = blink ; CHECK_INCDEC_H_GENVAR( g_eeGeneral.inactivityTimer, -10, 110); } //0..120minutes
-      PUTS_NUM(PARAM_OFS+2*FW-2, y, g_eeGeneral.inactivityTimer+10, attr);
+      PUTS_NUM(PARAM_OFS, y, g_eeGeneral.inactivityTimer+10, attr);
   		y += FHPY ;
 			subN += 1 ;
 
-	  	PUTS_P( FW+RALRM_OFF_0, y, PSTR(STR_VOLUME) ) ;
+	  	PUTS_P( FW, y, PSTR(STR_VOLUME) ) ;
 			int8_t value = g_eeGeneral.inactivityVolume + ( NUM_VOL_LEVELS-3 ) ;
-			PUTS_NUM( PARAM_OFS+2*FW+RALRM_OFF_0, y, value, (sub==subN) ? blink : 0 ) ;
+			PUTS_NUM( PARAM_OFS, y, value, (sub==subN) ? blink : 0 ) ;
 	  	if(sub==subN)
 			{
 				CHECK_INCDEC_H_GENVAR_0( value,NUM_VOL_LEVELS-1);
@@ -1031,7 +979,7 @@ void I2C_set_volume( register uint8_t volume ) ;
 			if ( g_eeGeneral.ar9xBoard == 0 )
 			{
   			PUTS_ATT_LEFT( y, PSTR(STR_CAPACITY_ALARM));
-				PUTS_NUM( PARAM_OFS+2*FW+RALRM_OFF_0, y, g_eeGeneral.mAh_alarm*50, (sub==subN) ? blink : 0 ) ;
+				PUTS_NUM( PARAM_OFS, y, g_eeGeneral.mAh_alarm*50, (sub==subN) ? blink : 0 ) ;
   			if(sub==subN)
 				{
 					CHECK_INCDEC_H_GENVAR_0(g_eeGeneral.mAh_alarm,100);
@@ -1116,13 +1064,13 @@ void I2C_set_volume( register uint8_t volume ) ;
 	    PUTS_ATT_LEFT( y,PSTR(STR_LANGUAGE));
 #ifdef SMALL
  #ifdef FRENCH
-	    PUTS_AT_IDX( PARAM_OFS, y, XPSTR("\012   ENGLISH  FRANCAIS"),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
+	    PUTS_AT_IDX( PARAM_OFS+2*FW, y, XPSTR("\012   ENGLISH  FRANCAIS"),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
  #else
-	    PUTS_AT_IDX( PARAM_OFS, y, XPSTR("\012   ENGLISH  DEUTSCH "),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
+	    PUTS_AT_IDX( PARAM_OFS+2*FW, y, XPSTR("\012   ENGLISH  DEUTSCH "),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
  #endif	    
 			if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 1 ) ;
 #else
-	    PUTS_AT_IDX( PARAM_OFS, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN    POLISHVIETNAMESE   SPANISH"),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
+	    PUTS_AT_IDX( PARAM_OFS+2*FW, y, XPSTR("\012   ENGLISH  FRANCAIS   DEUTSCH NORWEGIAN   SWEDISH   ITALIAN    POLISHVIETNAMESE   SPANISH"),g_eeGeneral.language,(sub==subN ? blink:0)|LUA_RIGHT);
 	    if(sub==subN) CHECK_INCDEC_H_GENVAR_0( g_eeGeneral.language, 8 ) ;
 #endif
 			setLanguage() ;
@@ -1173,7 +1121,7 @@ void I2C_set_volume( register uint8_t volume ) ;
 
 #if defined(PCBSKY) || defined(PCB9XT)
   		PUTS_ATT_LEFT( y, PSTR(STR_BT_BAUDRATE));
-  		PUTS_AT_IDX( PARAM_OFS+2*FW, y, XPSTR(BtBaudString),g_eeGeneral.bt_baudrate,(sub==subN ? blink:0)|LUA_RIGHT);
+  		PUTS_AT_IDX( PARAM_OFS, y, XPSTR(BtBaudString),g_eeGeneral.bt_baudrate,(sub==subN ? blink:0)|LUA_RIGHT);
   		if(sub==subN)
 			{
 				CHECK_INCDEC_H_GENVAR_0(g_eeGeneral.bt_baudrate,4);
@@ -1182,7 +1130,7 @@ void I2C_set_volume( register uint8_t volume ) ;
 			subN += 1 ;
 #endif
   		PUTS_ATT_LEFT( y, XPSTR("GPS Format") ) ;
-  		displayGPSformat( PARAM_OFS+4*FW, y, (sub==subN ? blink:0) ) ;
+  		displayGPSformat( PARAM_OFS+2*FW, y, (sub==subN ? blink:0) ) ;
   		if(sub==subN)
 			{
 				CHECK_INCDEC_H_GENVAR_0(g_eeGeneral.gpsFormat,1) ;
@@ -1225,7 +1173,7 @@ void I2C_set_volume( register uint8_t volume ) ;
  			y += FHPY ;
 			subN += 1 ;
 			PUTS_ATT_LEFT( y,XPSTR("ScreenShot Sw"));
-      putsDrSwitches(PARAM_OFS-FW+RGEN_OFF_0,y,g_eeGeneral.screenShotSw,sub==subN ? blink : 0);
+      putsDrSwitches(PARAM_OFS,y,g_eeGeneral.screenShotSw,sub==subN ? blink : 0);
       if(sub==subN) CHECK_INCDEC_GENERALSWITCH(event, g_eeGeneral.screenShotSw, -MaxSwitchIndex, MaxSwitchIndex) ;
 #endif
 
@@ -2699,7 +2647,7 @@ void menuConfigPots(uint8_t event)
 		putsChnRaw( 0, y, k, 0 ) ;
 		PUTS_ATT_LEFT( y, "\004has Detent" ) ;
 		k = (sub == i) ? InverseBlink : 0  ;
-		menu_lcd_onoff( PARAM_OFS+1, y, b, k ) ;
+		menu_lcd_onoff( PARAM_OFS, y, b, k ) ;
   	if( k )
 		{
 			CHECK_INCDEC_H_MODELVAR_0( b, 1 ) ;

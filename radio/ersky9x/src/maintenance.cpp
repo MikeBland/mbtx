@@ -139,6 +139,10 @@ extern uint8_t SetByEncoder ;
 #define INTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWRINT, PIN_INT_RF_PWR)
 #define EXTERNAL_RF_ON()      GPIO_SetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
 #define EXTERNAL_RF_OFF()     GPIO_ResetBits(GPIOPWREXT, PIN_EXT_RF_PWR)
+ #if defined(PCBREV_EXPRESS)
+#define SPORT_RF_ON()		      GPIO_SetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
+#define SPORT_RF_OFF()  			GPIO_ResetBits(GPIOPWRSPORT, PIN_SPORT_PWR)
+ #endif
 #endif
 
 // Update Types
@@ -151,6 +155,7 @@ extern uint8_t SetByEncoder ;
 #define UPDATE_TYPE_XMEGA					6
 #define UPDATE_TYPE_MULTI					7
 #define UPDATE_TYPE_PCHIP					8
+#define UPDATE_TYPE_CHAN_CHANGE		10
 
  #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
 #define SPORT_MODULE		0
@@ -319,6 +324,8 @@ uint8_t MultiState ;
 #endif
  #endif
 #endif
+
+
 
 #ifndef NO_MULTI
 void initMultiMode()
@@ -684,7 +691,7 @@ uint32_t program( uint32_t *address, uint32_t *buffer )	// size is 256 bytes
 //disturbances. The following sequence is used to unlock this register:
 //1. Write KEY1 = 0x45670123 in the Flash key register (FLASH_KEYR)
 //2. Write KEY2 = 0xCDEF89AB in the Flash key register (FLASH_KEYR)
-//Any wrong sequence will return a bus error and lock up the FLASH_CR register until the
+//Any wrong sequence will return a bus error and lock up the FLASH_CR until the
 //next reset.
 //The FLASH_CR register can be locked again by software by setting the LOCK bit in the
 //FLASH_CR register.
@@ -1351,6 +1358,252 @@ void setCrc()
   }
 	TxPhyPacket[9] = ~crc ;
 }
+
+extern volatile uint8_t *PxxTxPtr ;
+extern volatile uint8_t PxxTxCount ;
+
+#if (defined(PCBX10) && defined(PCBREV_EXPRESS)) || defined(PCBX9LITE)
+const uint8_t GetIdMsg[] = { 0x9F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x80, 0x00, 0xE0, 0x1F } ;
+
+uint8_t CcCount ;
+uint8_t CcRxFrame[17] ;
+uint8_t CcTxFrame[17] ;
+uint8_t CcCurrentId ;
+uint8_t CcNewId ;
+uint8_t CcVert ;
+uint8_t CcEdit ;
+uint8_t CcUpdate ;
+
+#define CMD_HEADER_BYTE  0x9F
+#define CODE_SET_ID      0xB2
+
+//uint8_t RxCsum ;
+//uint8_t CalcCsum ;
+//uint8_t CcRxed ;
+//uint8_t Com1Rxed ;
+//uint8_t Com1Read ;
+
+uint8_t negate( uint8_t value)
+{
+  value = ((value & 0xf0)>>4)|((value & 0x0f)<<4) ;
+  value = ((value & 0xcc)>>2)|((value & 0x33)<<2) ;
+  value = ((value & 0xaa)>>1)|((value & 0x55)<<1) ;
+
+  return value ;
+}
+
+uint8_t calcChanChecksum(uint8_t *ptr)
+{
+  uint32_t i ; // 2nd to 16th byte
+  uint8_t checksum = 0 ;
+	for ( i = 1 ; i < 16 ; i += 1)
+	{
+		checksum -= negate(ptr[i]) ;
+	}
+  return negate(checksum) ; // Checksum is 17th byte
+}
+
+void ccProcessByte( int32_t byte )
+{
+	if ( CcCount == 0 )
+	{
+		if ( byte == 0x05 )
+		{
+			CcRxFrame[CcCount++] = byte ;
+		}
+	}
+	else
+	{
+		if ( CcCount < 17 )
+		{
+			CcRxFrame[CcCount++] = byte ;
+		}
+		else
+		{
+			if ( calcChanChecksum(CcRxFrame) == CcRxFrame[16] )
+			{
+				CcCurrentId = negate(CcRxFrame[1]) + 1 ;
+			}
+			CcCount = 0 ;
+		}
+	}
+}
+
+void buildChanFrame( uint8_t id )
+{
+//	memcpy( &CcTxFrame[1], &CcRxFrame[1], sizeof(GetIdMsg) ) ;
+	memcpy( CcTxFrame, CcRxFrame, sizeof(GetIdMsg) ) ;
+	CcTxFrame[0] = CMD_HEADER_BYTE ;
+	CcTxFrame[1] = negate( id-1 ) ;
+	CcTxFrame[15] = CODE_SET_ID ;
+	CcTxFrame[16] = calcChanChecksum(CcTxFrame) ;
+}
+
+void menuChanChange(uint8_t event)
+{
+	static uint32_t i = 0 ;
+	int32_t byte ;
+
+	TITLE( "Change Channel" ) ;
+
+	switch(event)
+	{
+    case EVT_ENTRY:
+//			initSportPwr() ;
+			com1_Configure( 9600, SERIAL_NORM, 1 ) ; // Kick off at 9600 baud, even parity
+//			USART2->CR1 &= ~0x00000001 ;
+//			USART2->CR2 &= ~0x00030000 ;
+//			USART2->CR1 |= 0x00000001 ;
+			NVIC_SetPriority( USART2_IRQn, 3 ) ; // Quite high priority interrupt
+		  NVIC_EnableIRQ( USART2_IRQn) ;
+			while ( get_fifo128( &Com1_fifo ) != -1 )
+			{
+				// flush fifo
+			}
+			CcCount = 0 ;
+			CcCurrentId = 0 ;
+			CcNewId = 1 ;
+
+#if defined(PCBX10)
+	configure_pins( GPIO_Pin_13, PIN_PORTH | PIN_OUTPUT | PIN_PUSHPULL | PIN_OS25 ) ;
+#endif
+
+			SPORT_RF_ON() ;
+    break ;
+    
+//		case EVT_KEY_LONG(BTN_RE) :
+//			if ( g_eeGeneral.disableBtnLong )
+//			{
+//				break ;
+//			}		
+		case EVT_KEY_FIRST(KEY_EXIT):
+//			if ( state < UPDATE_ACTION )
+//			{
+			  NVIC_DisableIRQ( USART2_IRQn) ;
+      	chainMenu(menuUpdate) ;
+    		killEvents(event) ;
+				SPORT_RF_OFF() ;
+//			}
+    break ;
+
+		case EVT_KEY_BREAK(BTN_RE) :
+			if ( CcVert == 0 )
+			{
+				if ( CcEdit )
+				{
+					CcEdit = 0 ;
+				}
+				else
+				{
+					CcEdit = 1 ;
+				}
+			}
+			else
+			{
+				buildChanFrame( CcNewId ) ;
+				CcUpdate = 1 ;
+				i = 9 ;
+			}
+    break ;
+
+		case EVT_KEY_FIRST(KEY_UP):
+			if ( CcEdit )
+			{
+				if ( CcNewId > 1 )
+				{
+					CcNewId -= 1 ;
+				}
+			}
+			else
+			{
+				if ( CcVert )
+				{
+					CcVert = 0 ;
+				}
+			}
+    break ;
+
+		case EVT_KEY_FIRST(KEY_DOWN):
+			if ( CcEdit )
+			{
+				if ( CcNewId < 16 )
+				{
+					CcNewId += 1 ;
+				}
+			}
+			else
+			{
+				if ( CcVert == 0 )
+				{
+					CcVert = 1 ;
+				}
+			}
+    break ;
+	}
+	i += 1 ;
+#if defined(PCBX9LITE)
+	if ( i > 50 )
+#else
+	if ( i > 10 )
+#endif
+	{
+		i = 0 ;
+		if ( CcUpdate )
+		{
+			x9dSPortTxStart( (uint8_t *)CcTxFrame, sizeof(GetIdMsg), 0 ) ;
+			CcUpdate = 0 ;
+		}
+		else
+		{
+			x9dSPortTxStart( (uint8_t *)GetIdMsg, sizeof(GetIdMsg), 0 ) ;
+		}
+	}
+
+	while ( ( byte = get_fifo128( &Com1_fifo ) ) != -1 )
+	{
+		ccProcessByte(byte) ;
+	}
+
+	PUTS_ATT_LEFT( 2*FH, "Current Id:" ) ;
+	PUTS_NUMX( 14*FW, 2*FH, CcCurrentId ) ;
+
+	PUTS_ATT_LEFT( 3*FH, "New Id:" ) ;
+	PUTS_NUM( 14*FW, 3*FH, CcNewId, CcEdit ? BLINK : 0 ) ;
+
+	if ( ( CcVert == 0 ) && ( CcEdit == 0 ) )
+	{
+#if defined(PCBX9LITE)
+		lcd_char_inverse( 12*FW, 3*FH, 2*FW, 0 ) ;
+#else
+		lcd_char_inverse( 12*FW, 3*FH, 2*FW, 0, 9 ) ;
+#endif
+	}
+
+	PUTS_ATT_LEFT( 4*FH, "Set:" ) ;
+
+	if ( CcVert == 1 )
+	{
+#if defined(PCBX9LITE)
+		lcd_char_inverse( 0, 4*FH, 3*FW, 0 ) ;
+#else
+		lcd_char_inverse( 0, 4*FH, 3*FW, 0, 9 ) ;
+#endif
+	}
+
+//	PUT_HEX4( 0, 6*FH, RxCsum ) ;
+//	PUT_HEX4( 0, 7*FH, CalcCsum ) ;
+
+//	PUT_HEX4( 30, 7*FH, CcRxed ) ;
+//	PUT_HEX4( 0, 6*FH, Com1Rxed ) ;
+//	PUT_HEX4( 0, 7*FH, Com1Read ) ;
+
+}
+
+
+
+#endif
+
+
 
 void menuChangeId(uint8_t event)
 {
@@ -2923,68 +3176,70 @@ void menuUpdate(uint8_t event)
 	static uint8_t reboot = 0 ;
 	static uint32_t position = 2*FH ;
   TITLE( "MAINTENANCE" ) ;
-	PUTS_ATT_LEFT( 2*FH, "  Update Bootloader" );
+	PUTS_ATT_LEFT( 2*FH, "Update Bootloader" );
 #ifdef PCBSKY
  #ifndef REVX
 //	lcd_puts_Pleft( 3*FH, "  Update CoProcessor" );
-	PUTS_ATT_LEFT( 3*FH, "  Update SPort" );
+	PUTS_ATT_LEFT( 3*FH, "Update SPort" );
   #ifdef SMALL
 //	lcd_puts_Pleft( 4*FH, "  Update Xmega" );
 	#else
-	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
-	PUTS_ATT_LEFT( 5*FH, "  Update Xmega" );
+	PUTS_ATT_LEFT( 4*FH, "Change SPort Id" );
+	PUTS_ATT_LEFT( 5*FH, "Update Xmega" );
 	#endif
   #ifndef NO_MULTI
-	 PUTS_ATT_LEFT( 6*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 6*FH, "Update Multi" );
 	#endif
  #else
-	PUTS_ATT_LEFT( 3*FH, "  Update SPort" );
-	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
-	PUTS_ATT_LEFT( 5*FH, "  Update Xmega" );
-	PUTS_ATT_LEFT( 6*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 3*FH, "Update SPort" );
+	PUTS_ATT_LEFT( 4*FH, "Change SPort Id" );
+	PUTS_ATT_LEFT( 5*FH, "Update Xmega" );
+	PUTS_ATT_LEFT( 6*FH, "Update Multi" );
  #endif
 #endif
 #ifdef PCBX9D
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(PCBX7)
-	PUTS_ATT_LEFT( 3*FH, "  Update Int. Module" );
-	PUTS_ATT_LEFT( 4*FH, "  Update Ext. Module" );
-	PUTS_ATT_LEFT( 5*FH, "  Update Ext. SPort" );
+	PUTS_ATT_LEFT( 3*FH, "Update Int. Module" );
+	PUTS_ATT_LEFT( 4*FH, "Update Ext. Module" );
+	PUTS_ATT_LEFT( 5*FH, "Update Ext. SPort" );
 #if defined(PCBX9LITE)
-	PUTS_ATT_LEFT( 6*FH, "  Update Power Chip" );
+//	PUTS_ATT_LEFT( 6*FH, "Update Power Chip" );
+	PUTS_ATT_LEFT( 6*FH, "Channel Change" );
 #else
-	PUTS_ATT_LEFT( 6*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 6*FH, "Change SPort Id" );
 #endif
-	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 7*FH, "Update Multi" );
 #else
-	PUTS_ATT_LEFT( 3*FH, "  Update Int. Module" );
-	PUTS_ATT_LEFT( 4*FH, "  Update Ext. SPort" );
-	PUTS_ATT_LEFT( 5*FH, "  Change SPort Id" );
-	PUTS_ATT_LEFT( 6*FH, "  Update Xmega" );
-	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 3*FH, "Update Int. Module" );
+	PUTS_ATT_LEFT( 4*FH, "Update Ext. SPort" );
+	PUTS_ATT_LEFT( 5*FH, "Change SPort Id" );
+	PUTS_ATT_LEFT( 6*FH, "Update Xmega" );
+	PUTS_ATT_LEFT( 7*FH, "Update Multi" );
 #endif
 #endif
 #ifdef PCB9XT
-	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
-	PUTS_ATT_LEFT( 4*FH, "  Update Int. Module" );
-	PUTS_ATT_LEFT( 5*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 3*FH, "Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "Update Int. Module" );
+	PUTS_ATT_LEFT( 5*FH, "Change SPort Id" );
 //	lcd_puts_Pleft( 5*FH, "  Update Avr CPU" );
-	PUTS_ATT_LEFT( 6*FH, "  Update Xmega" );
-	PUTS_ATT_LEFT( 7*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 6*FH, "Update Xmega" );
+	PUTS_ATT_LEFT( 7*FH, "Update Multi" );
 #endif
 #if defined(PCBX12D) || defined(PCBX10)
 //	lcd_puts_Pleft( 2*FH, "  Update Int. Module" );
  #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
 //	lcd_puts_Pleft( 3*FH, "  Update Int. Module" );
-	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
-	PUTS_ATT_LEFT( 4*FH, "  Update Int. Module" );
-	PUTS_ATT_LEFT( 5*FH, "  Update Ext. Multi" );
+	PUTS_ATT_LEFT( 3*FH, "Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "Update Int. Module" );
+	PUTS_ATT_LEFT( 5*FH, "Update Ext. Multi" );
+	PUTS_ATT_LEFT( 6*FH, "Channel Change" );
  #else
-	PUTS_ATT_LEFT( 3*FH, "  Update Ext. SPort" );
-	PUTS_ATT_LEFT( 4*FH, "  Change SPort Id" );
+	PUTS_ATT_LEFT( 3*FH, "Update Ext. SPort" );
+	PUTS_ATT_LEFT( 4*FH, "Change SPort Id" );
   #if defined(PCBT16)
-	PUTS_ATT_LEFT( 5*FH, "  Update Multi" );
+	PUTS_ATT_LEFT( 5*FH, "Update Multi" );
   #else
-	PUTS_ATT_LEFT( 5*FH, "  Update Ext. Multi" );
+	PUTS_ATT_LEFT( 5*FH, "Update Ext. Multi" );
   #endif
  #endif
 #endif
@@ -3087,8 +3342,9 @@ void menuUpdate(uint8_t event)
 			if ( position == 6*FH )
 			{
 #if defined(PCBX9LITE)
-				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_PCHIP ;
-	      chainMenu(menuUp1) ;
+				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHAN_CHANGE ;
+//	      chainMenu(menuUp1) ;
+	      chainMenu(menuChanChange) ;
 //	      pushMenu(menuUpPchip) ;
 #else
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_CHANGE_ID ;
@@ -3183,6 +3439,12 @@ void menuUpdate(uint8_t event)
 				SharedMemory.Mdata.UpdateItem = UPDATE_TYPE_MULTI ;
 	      pushMenu(menuUpMulti) ;
 			}
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+			if ( position == 6*FH )
+			{
+	      chainMenu(menuChanChange) ;
+			}
+ #endif
 #endif
     	killEvents(event) ;
 			reboot = 0 ;
@@ -3274,8 +3536,12 @@ void menuUpdate(uint8_t event)
 #if defined(PCBX12D) || defined(PCBX10)
     case EVT_KEY_FIRST(KEY_DOWN):
 //			if ( position < 4*FH )
-			if ( position < 5*FH )
-			{
+ #if (defined(PCBX10) && defined(PCBREV_EXPRESS))
+			if ( position < 6*FH )
+ #else
+ 			if ( position < 5*FH )
+ #endif
+ 			{
 				position += FH ;				
 			}
 		break ;
@@ -3297,9 +3563,13 @@ void menuUpdate(uint8_t event)
 		}
 	}
 #if defined(PCBTARANIS)
-	lcd_filled_rect( 2*FW, position, 18*FW, 8, 0xFF, 0 ) ;
+	lcd_filled_rect( 0, position+1, 18*FW, 0, 0xFF, 0 ) ;
 #else
-	lcd_char_inverse( 2*FW, position, 18*FW, 0 ) ;
+ #if defined(PCBX12D) || defined(PCBX10)
+	lcd_char_inverse( 0, position, 18*FW, 0, 9 ) ;
+ #else
+	lcd_char_inverse( 0, position, 18*FW, 0 ) ;
+ #endif
 #endif
 }
 
@@ -3310,8 +3580,8 @@ void menuUpdate(uint8_t event)
 #ifdef REVX
 void init_mtwi()
 {
-	register Pio *pioptr ;
-	register uint32_t timing ;
+	Pio *pioptr ;
+	uint32_t timing ;
   
 	PMC->PMC_PCER0 |= 0x00080000L ;		// Enable peripheral clock to TWI0
 	
@@ -3589,8 +3859,6 @@ void writePacket( uint8_t *buffer, uint8_t phyId )
 #if defined(PCBX9LITE) || defined(REV19) || (defined(PCBX10) && defined(PCBREV_EXPRESS))
 	if ( SharedMemory.Mdata.UpdateItem == UPDATE_TYPE_SPORT_INT )
 	{
-extern volatile uint8_t *PxxTxPtr ;
-extern volatile uint8_t PxxTxCount ;
 		PxxTxPtr = TxPhyPacket ;
 		PxxTxCount = i ;
 		INTMODULE_USART->CR1 |= USART_CR1_TXEIE ;
@@ -4469,9 +4737,13 @@ void maintenanceBackground()
 #endif
 	{	
 		uint16_t rxchar ;
-		while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
-		{
-			frsky_receive_byte( rxchar ) ;
+		
+		if ( SharedMemory.Mdata.UpdateItem != UPDATE_TYPE_CHAN_CHANGE )
+		{		
+			while ( ( rxchar = rxTelemetry() ) != 0xFFFF )
+			{
+				frsky_receive_byte( rxchar ) ;
+			}
 		}
 	}
 #endif

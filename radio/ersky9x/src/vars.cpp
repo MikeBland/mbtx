@@ -23,6 +23,7 @@
 #include "drivers.h"
 #include "stringidx.h"
 #include "audio.h"
+#include "logicio.h"
 #include "vars.h"
 
 extern uint8_t InverseBlink ;
@@ -210,7 +211,7 @@ void displayVarName( uint16_t x, uint16_t y, int32_t index, uint16_t attr )
 	}
 	*p = 0 ;
 #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
-	PUTS_ATT( x, y, (char *)text, attr & LUA_RIGHT ) ;
+	PUTS_ATT( x, y, (char *)text, attr & (LUA_RIGHT|INVERS) ) ;
 #else
  #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
 	PUTS_ATT( x, y, (char *)text, attr) ;
@@ -320,6 +321,8 @@ uint8_t PopActs ;	// Set to 0xFF indicates delete value
 const char StringValueCategory[] = "\006    OnSwitchF.Mode" ;
 const char StringActionCategory[] = "\006    OnSwitch" ;
 const char StringActionFunction[] = "\010  Assign     AddSubtractMultiply  Divide     Min     MaxUse Trim" ;	// percent, min, max, repurpose trim
+const char StringExtraChannels[] = "\003c25c26c27c28c29c30c31c32O25O26O27O28O29O30O31O32" ;
+
 
 //void displayValueCategory( uint16_t x, uint16_t y, uint32_t index, uint16_t attr )
 //{
@@ -394,7 +397,34 @@ void displayVarSource( uint16_t x, uint16_t y, struct t_valVarPack *pvalue, uint
 		}
 		else
 #endif 
-		PUTS_AT_IDX( x, y, PSTR(STR_GV_SOURCE), t, attr ) ;
+#if defined(PCBSKY) || defined(PCB9XT)
+		if ( t > 68+NUM_RADIO_VARS )
+		{
+			if ( t > 68+NUM_RADIO_VARS + 16 )
+			{
+				PUTS_AT_IDX( x, y, PSTR(HW_SWITCHES_STR), t - (69+NUM_RADIO_VARS+16), attr ) ;
+			}
+			else
+			{
+				PUTS_AT_IDX( x, y, StringExtraChannels, t - (69+NUM_RADIO_VARS), attr ) ;
+			}
+#else
+		if ( t > 69+NUM_RADIO_VARS )
+		{
+			if ( t > 69+NUM_RADIO_VARS + 16 )
+			{
+				PUTS_AT_IDX( x, y, PSTR(HW_SWITCHES_STR), t - (70+NUM_RADIO_VARS+16), attr ) ;
+			}
+			else
+			{
+				PUTS_AT_IDX( x, y, StringExtraChannels, t - (70+NUM_RADIO_VARS), attr ) ;
+			}
+#endif
+		}
+		else
+		{
+			PUTS_AT_IDX( x, y, PSTR(STR_GV_SOURCE), t, attr ) ;
+		}
 	}
 }			 
 
@@ -510,7 +540,7 @@ void menuOneAction( uint8_t event )
 			{
 				int32_t oldCategory = pAction->category ;
 				PUTS_ATT_LEFT( y, XPSTR("Category") ) ;
-				PUTS_AT_IDX( 12*FW, y, StringActionCategory, pAction->category, attr ) ;
+				PUTS_AT_IDX( PARAM_OFS, y, StringActionCategory, pAction->category, attr|LUA_RIGHT ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pAction->category, 1 ) ;
@@ -525,7 +555,7 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 1 :
 				PUTS_ATT_LEFT( y, XPSTR("Item") ) ;
-				displayActionItem( 18*FW, y, pAction, attr ) ;
+				displayActionItem( PARAM_OFS, y, pAction, attr|LUA_RIGHT ) ;
 				switch ( pvalue->category )
 				{
 					case 1 :	// Switch
@@ -545,7 +575,7 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 2 :
 				PUTS_ATT_LEFT( y, XPSTR("Function") ) ;
-				PUTS_AT_IDX( 10*FW, y, StringActionFunction, pAction->function, attr ) ;
+				PUTS_AT_IDX( PARAM_OFS, y, StringActionFunction, pAction->function, attr|LUA_RIGHT ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pAction->function, 7 ) ;
@@ -565,12 +595,12 @@ void menuOneAction( uint8_t event )
 				if ( pAction->function == 7 )
 				{
 					PUTS_ATT_LEFT( y, XPSTR("Trim") ) ;
-					PUTS_AT_IDX( 16*FW, y, XPSTR("\002LHLVRVRH"), lindex, attr ) ;
+					PUTS_AT_IDX( PARAM_OFS, y, XPSTR("\002LHLVRVRH"), lindex, attr|LUA_RIGHT ) ;
 				}
 				else
 				{
 					PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
-					PUTS_NUM( 18*FW, y, pAction->value, attr|PREC1) ;
+					PUTS_NUM( PARAM_OFS, y, pAction->value, attr|PREC1) ;
 				}
 				if(attr)
 				{
@@ -595,7 +625,7 @@ void menuOneAction( uint8_t event )
 				}
 				uint32_t lindex = (pAction->value >> 9) & 0x03 ;
 				PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
-				PUTS_NUM( 18*FW, y, lvalue, attr|PREC1) ;
+				PUTS_NUM( PARAM_OFS, y, lvalue, attr|PREC1) ;
 				if(attr)
 				{
 					lvalue = checkIncDec16( lvalue, -250, 250, EE_MODEL ) ;
@@ -632,7 +662,7 @@ void menuOneValue( uint8_t event )
 			{
 				int32_t oldCategory = pvalue->category ;
 				PUTS_ATT_LEFT( y, XPSTR("Category") ) ;
-				PUTS_AT_IDX( 12*FW, y, StringValueCategory, pvalue->category, attr ) ;
+				PUTS_AT_IDX( PARAM_OFS, y, StringValueCategory, pvalue->category, attr|LUA_RIGHT ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR_0( pvalue->category, 2 ) ;
@@ -645,7 +675,7 @@ void menuOneValue( uint8_t event )
 			break ;
 			case 1 :
 				PUTS_ATT_LEFT( y, XPSTR("Item") ) ;
-				displayValueItem( 18*FW, y, pvalue, attr ) ;
+				displayValueItem( PARAM_OFS, y, pvalue, attr ) ;
 				switch ( pvalue->category )
 				{
 					case 1 :	// Switch
@@ -678,18 +708,18 @@ void menuOneValue( uint8_t event )
 				PUTS_ATT_LEFT( y, XPSTR("Value") ) ;
  				if ( pvalue->valIsSource )
 				{
-					displayVarSource( 17*FW, y, pvalue, attr ) ;
 			 		if(attr)
 					{
-void editGvarSource(uint8_t *p) ;
+void editGvarSource(uint8_t *p, uint32_t varMode ) ;
 						sItem = pvalue->value ;
-						editGvarSource(&sItem) ;
+						editGvarSource(&sItem, 1 ) ;
 						pvalue->value = sItem ;
 					}
+					displayVarSource( PARAM_OFS, y, pvalue, attr|LUA_RIGHT ) ;
 				}
 				else
 				{
-					PUTS_NUM( 17*FW, y, pvalue->value, attr|PREC1) ;
+					PUTS_NUM( PARAM_OFS, y, pvalue->value, attr|PREC1) ;
 					if(attr)
 					{
 						pvalue->value = checkIncDec16( pvalue->value, -2000, 2000, EE_MODEL ) ;
@@ -1017,7 +1047,7 @@ extern uint8_t evalHresOffset(int8_t sub) ;
 extern uint8_t EditType ;
 extern uint8_t s_pgOfs ;
 extern uint8_t evalHresOffset(int8_t sub) ;
-extern void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
+//extern void drawIdxText( uint16_t y, char *s, uint32_t index, uint16_t mode ) ;
 
 #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
 
@@ -1084,16 +1114,6 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 1 :
 				drawItem( (char *)XPSTR("Item"), y, attr ) ;
-				if ( attr & INVERS )
-				{
-					if ( s_editMode && BLINK_ON_PHASE )
-					{
-						attr = 0 ;
-					}
-				}
-				saveEditColours( attr, colour ) ;
-				displayActionItem( TRIGHT-TRMARGIN, y+TVOFF, pAction, attr & ~INVERS ) ;
-				restoreEditColours() ;
 				switch ( pvalue->category )
 				{
 					case 0 :	// Nothing to edit
@@ -1116,10 +1136,13 @@ void menuOneAction( uint8_t event )
 					}
 					break ;
 				}
+				saveEditColoursBlink( attr, colour ) ;
+				displayActionItem( TRIGHT-TRMARGIN, y+TVOFF, pAction, attr & ~INVERS ) ;
+				restoreEditColours() ;
 			break ;
 			case 2 :
 				drawItem( (char *)XPSTR("Function"), y, attr ) ;
-				drawIdxText( y*2+TVOFF, (char *)StringActionFunction, pAction->function, attr ) ;
+				drawIdxText( y+TVOFF, (char *)StringActionFunction, pAction->function, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( pAction->function, 0, 7 ) ;
@@ -1231,16 +1254,6 @@ void menuOneValue( uint8_t event )
 			break ;
 			case 1 :
 				drawItem( (char *)XPSTR("Item"), y, attr ) ;
-//				if ( attr & INVERS )
-//				{
-//					if ( s_editMode && BLINK_ON_PHASE )
-//					{
-//						attr = 0 ;
-//					}
-//				}
-				saveEditColours( attr, colour ) ;
-				displayValueItem( TRIGHT-TRMARGIN, y+TVOFF/2, pvalue, attr & ~INVERS ) ;
-				restoreEditColours() ;
 				switch ( pvalue->category )
 				{
 					case 0 :	// Nothing to edit
@@ -1262,6 +1275,9 @@ void menuOneValue( uint8_t event )
 						}
 					break ;
 				}
+				saveEditColoursBlink( attr, colour ) ;
+				displayValueItem( TRIGHT-TRMARGIN, y+TVOFF/2, pvalue, attr & ~INVERS ) ;
+				restoreEditColours() ;
 			break ;
 	 
 			case 2 :
@@ -1274,27 +1290,22 @@ void menuOneValue( uint8_t event )
 				}
 			}
 			break ;
+
 			case 3 :
 				drawItem( (char *)XPSTR("Value"), y, attr ) ;
  				if ( pvalue->valIsSource )
 				{
-					if ( attr & INVERS )
-					{
-						if ( s_editMode && BLINK_ON_PHASE )
-						{
-							attr = 0 ;
-						}
-					}
-					saveEditColours( attr, colour ) ;
-					displayVarSource( TRIGHT-TRMARGIN-3*FW, y+TVOFF, pvalue, attr & ~INVERS ) ;
-					restoreEditColours() ;
 			 		if(attr)
 					{
-void editGvarSource(uint8_t *p) ;
+void editGvarSource(uint8_t *p, uint32_t varMode ) ;
 						sItem = pvalue->value ;
-						editGvarSource(&sItem) ;
+						editGvarSource(&sItem, 1) ;
 						pvalue->value = sItem ;
 					}
+					saveEditColoursBlink( attr, colour ) ;
+					displayVarSource( TRIGHT-TRMARGIN-3*FW, y+TVOFF, pvalue, attr & ~INVERS ) ;
+					restoreEditColours() ;
+					PUTS_NUM( 10*FW, 6*FH, pvalue->value, 0 ) ;
 				}
 				else
 				{
@@ -1708,12 +1719,26 @@ void menuVars(uint8_t event)
 #endif
 
 extern int16_t getVarSourceValue( uint8_t src ) ;
+int32_t switchSourceValue( uint32_t swin, int32_t scale ) ;
 
 int16_t getVarSingleValue( struct t_valVarPack *pVal )
 {
 	int16_t value ;
 	if ( pVal->valIsSource )
 	{
+#if defined(PCBSKY) || defined(PCB9XT)
+		if ( pVal->value > 68+NUM_RADIO_VARS+16 )
+		{
+			uint32_t item = pVal->value - (69+NUM_RADIO_VARS+16) ;
+#else
+		if ( pVal->value > 69+NUM_RADIO_VARS+16 )
+		{
+			uint32_t item = pVal->value - (70+NUM_RADIO_VARS+16) ;
+#endif
+			// Make the following a function, also useable by the mixer
+			value = switchSourceValue( item, 1000 ) ;
+			return value ;
+		}
 		if ( pVal->value )
 		{
 			value = getVarSourceValue( pVal->value ) ;
@@ -2081,7 +2106,7 @@ int16_t editVarCapable100Value( uint16_t x, uint16_t y, int16_t value, uint32_t 
 		value += 1100 ;	// gives 999 to 975
 	}
 #if defined(PCBX12D) || defined(PCBX10) || defined(TOUCH)
-	x -= FW*2/3 ;
+//	x -= FW*2/3 ;
 #endif				 
 	value = editVarCapableValue( x, y, value, -100, 100, NUM_VAR25, attr | LUA_SMLSIZE, event ) ;
 	if ( value > 900 )

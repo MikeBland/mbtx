@@ -162,7 +162,7 @@ void drawNumber( uint16_t x, uint16_t y, int32_t val, uint16_t mode ) //, uint16
 			fcolour = ~LcdForeground ;
 		}
 	}
-	lcdDrawNumber( x*TSCALE, y*TSCALE+TVOFF, val, mode & ~INVERS, 5, fcolour) ; //, colour ) ;
+	lcdDrawNumber( x*TSCALE, y*TSCALE+TVOFF, val, mode & ~INVERS, (int8_t)5, fcolour) ; //, colour ) ;
 }		  
 
 void drawText( uint16_t x, uint16_t y, char *s, uint16_t mode )
@@ -240,6 +240,22 @@ void saveEditColours( uint32_t attr, uint16_t colour )
 		LcdForeground = ~LcdForeground ;
 	}
 }
+
+#ifndef TOUCH
+void saveEditColoursBlink( uint32_t attr, uint16_t colour )
+{
+	oldFcolour = LcdForeground ;
+	if ( attr & INVERS )
+	{
+		if ( ( s_editMode && BLINK_ON_PHASE ) == 0 )
+		{
+			LcdForeground = ~LcdForeground ;
+		}
+	}
+}
+#else
+#define saveEditColoursBlink(a,b) saveEditColours(a,b)
+#endif
 
 void restoreEditColours()
 {
@@ -1047,7 +1063,7 @@ void sortTelemText()
 			{
 				b = s ;
 			}
-			if ( strncmp( a, b, 4 ) > 0 )
+			if ( strncasecmp( a, b, 4 ) > 0 )
 			{
 				temp = TelemMap[i] ;
 				TelemMap[i] = TelemMap[i+1] ;
@@ -1245,7 +1261,7 @@ void menu_lcd_onoff( coord_t x, coord_t y, uint8_t value, uint16_t mode )
 void menu_lcd_onoff( coord_t x,coord_t y, uint8_t value, uint8_t mode )
 #endif
 {
-	x += FW ;
+	x -= FW+2 ;
   if (value)
 	{
 #if defined(PCBX12D) || defined(PCBX10) || defined(PROP_TEXT)
@@ -2019,16 +2035,90 @@ int32_t getGvarValue100( int32_t value )
 	return value ;
 }
 
+extern const uint8_t switchIndex[] ;
+
+int32_t switchSourceValue( uint32_t swin, int32_t scale )
+{
+	int32_t v ;
+#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+#ifdef REV9E
+	if ( swin > 18 )
+#else
+	if ( swin > 8 )	// Sort for X9E ********
+#endif
+	{
+#ifdef REV9E
+		v = getSwitch( CSW_INDEX+swin-18, 0, 0 ) ;
+#else
+		v = getSwitch( CSW_INDEX+swin-8, 0, 0 ) ;
+#endif
+		v = v ? scale : -scale ;
+	}
+	else
+	{
+		uint32_t sw = switchIndex[swin] ;
+		if ( ( sw == 5) || ( sw == 7) )
+		{ // 2-POS switch
+      v = hwKeyState(sw) ? scale : -scale ;
+		}
+#ifdef REV9E
+		else if( swin == 18)
+#else
+		else if( swin == 8)
+#endif
+		{
+			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2 * scale)/5 - scale ;
+		}
+		else
+		{ // 3-POS switch
+      v = hwKeyState(sw) ? -scale : (hwKeyState(sw+1) ? 0 : scale) ;
+		}
+	}
+#endif
+#if defined(PCBSKY) || defined(PCB9XT)
+	if ( swin > 6 )
+	{
+		if ( swin == 31 )
+		{
+			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2 * scale)/5 - scale ;
+		}
+		else
+		{
+			v = getSwitch( CSW_INDEX+swin-6, 0, 0 ) ;
+			v = v ? scale : -scale ;
+		}
+	}
+	else
+	{
+		uint32_t sw = Sw3PosList[swin] ;
+		if ( Sw3PosCount[swin] == 2 )
+		{
+      v = hwKeyState(sw) ? scale : -scale ;
+		}
+		else if ( Sw3PosCount[swin] == 6 )
+		{
+			v = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2 * scale)/5 - scale ;
+		}
+		else
+		{
+      v = hwKeyState(sw) ? -scale : (hwKeyState(sw+1) ? 0 : scale) ;
+		}
+	}
+#endif
+	return v ;
+}
+
+
 #ifdef INPUTS
 void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, LcdFlags attr )
 {
+	coord_t x1 = x ;
 	struct te_InputsData *pinput = &g_model.inputs[inputIndex-1] ;
 	uint32_t value = pinput->srcRaw ;
-#if defined(PCBX12D) || defined(PCBX10)
-	lcd_img( x, y+1, IconInput, 0, 0 ) ;
-#else
-	lcd_img( x, y, IconInput, 0, 0 ) ;
-#endif
+	if ( ( attr & LUA_RIGHT ) == 0 )
+	{
+		x1 += FW ;
+	}
   if( value && (value <= 4) )
 	{
 		const char *ptr = "" ;
@@ -2038,17 +2128,35 @@ void displayInputName( uint16_t x, uint16_t y, uint8_t inputIndex, LcdFlags attr
 		}
 		if ( !( *ptr && (*ptr != ' ' ) ) )
 		{
-    	PUTS_AT_IDX( x+FW, y, PSTR(STR_STICK_NAMES), value-1, attr ) ;
+    	PUTS_AT_IDX( x1, y, PSTR(STR_STICK_NAMES), value-1, attr ) ;
 		}
 		else
 		{
-			PUTS_ATT( x+FW, y, ptr, attr ) ;
+			PUTS_ATT( x1, y, ptr, attr ) ;
 		}
 	}
 	else
 	{
-		PUTS_NUM_N(x+3*FW-1, y, inputIndex, attr + LEADING0, 2) ;
+		x1 = x ;
+		if ( ( attr & LUA_RIGHT ) == 0 )
+		{
+			x1 += 3*FW-1 ;
+		}		
+		PUTS_NUM_N(x1, y, inputIndex, attr + LEADING0, 2) ;
 	}
+	if ( attr & LUA_RIGHT )
+	{
+#if defined(PCBX12D) || defined(PCBX10)
+		x = LcdLastLeftPos/TSCALE-FW ;
+#else
+		x = LcdLastLeftPos-FW ;
+#endif
+	}
+#if defined(PCBX12D) || defined(PCBX10)
+	lcd_img( x, y+1, IconInput, 0, 0 ) ;
+#else
+	lcd_img( x, y, IconInput, 0, 0 ) ;
+#endif
 }
 
 int16_t processOneInput( struct te_InputsData *pinput, int16_t value )
@@ -2273,13 +2381,13 @@ void evalAllInputs()
 }
 
 
-extern const uint8_t switchIndex[] ;
 extern int32_t chans[] ;
+
 
 int16_t getInputSourceValue( struct te_InputsData *pinput )
 {
 	int16_t value ;
-	uint32_t switchIdx ;
+//	uint32_t switchIdx ;
 	if ( pinput )
 	{
 		if ( (pinput->srcRaw) && ( pinput->srcRaw <= 7 ) )
@@ -2305,73 +2413,74 @@ int16_t getInputSourceValue( struct te_InputsData *pinput )
 		
 		if (pinput->srcRaw >= 128)	// A Switch
 		{
-			switchIdx = pinput->srcRaw - 128 ;
-#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
-#ifdef REV9E
-			if ( switchIdx > 18 )
-#else
-			if ( switchIdx > 8 )	// Sort for X9E ********
-#endif
-			{
-#ifdef REV9E
-				value = getSwitch( CSW_INDEX+switchIdx-19, 0, 0 ) ;
-#else
-				value = getSwitch( CSW_INDEX+switchIdx-8, 0, 0 ) ;
-#endif
-				value = value ? 1024 : -1024 ;
-			}
-			else
-			{
-				uint32_t sw = switchIndex[switchIdx] ;
-				if ( ( switchIdx == 5) || ( switchIdx == 7) )
-				{ // 2-POS switch
-        	value = hwKeyState(sw) ? 1024 : -1024 ;
-				}
-#ifdef REV9E
-				else if( switchIdx == 18)
-#else
-				else if( switchIdx == 8)
-#endif
-				{
-					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-				}
-				else
-				{ // 3-POS switch
-        	value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
-				}
-			}
-#endif
-#if defined(PCBSKY) || defined(PCB9XT)
-			if ( switchIdx > 6 )
-			{
-				if ( switchIdx == 31 )
-				{
-					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-				}
-				else
-				{
-					value = getSwitch( CSW_INDEX+switchIdx-6, 0, 0 ) ;
-					value = value ? 1024 : -1024 ;
-				}
-			}
-			else
-			{
-				uint32_t sw = Sw3PosList[switchIdx] ;
-				if ( Sw3PosCount[switchIdx] == 2 )
-				{
-        	value = hwKeyState(sw) ? 1024 : -1024 ;
-				}
-				else if ( Sw3PosCount[switchIdx] == 6 )
-				{
-					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
-				}
-				else
-				{
-        	value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
-				}
-			}
-#endif
-			return value ;
+			return switchSourceValue( pinput->srcRaw - 128, 1024 ) ;
+//			switchIdx = pinput->srcRaw - 128 ;
+//#if defined(PCBX9D) || defined(PCBX12D) || defined(PCBX10) || defined(PCBLEM1)
+//#ifdef REV9E
+//			if ( switchIdx > 18 )
+//#else
+//			if ( switchIdx > 8 )	// Sort for X9E ********
+//#endif
+//			{
+//#ifdef REV9E
+//				value = getSwitch( CSW_INDEX+switchIdx-19, 0, 0 ) ;
+//#else
+//				value = getSwitch( CSW_INDEX+switchIdx-8, 0, 0 ) ;
+//#endif
+//				value = value ? 1024 : -1024 ;
+//			}
+//			else
+//			{
+//				uint32_t sw = switchIndex[switchIdx] ;
+//				if ( ( switchIdx == 5) || ( switchIdx == 7) )
+//				{ // 2-POS switch
+//        	value = hwKeyState(sw) ? 1024 : -1024 ;
+//				}
+//#ifdef REV9E
+//				else if( switchIdx == 18)
+//#else
+//				else if( switchIdx == 8)
+//#endif
+//				{
+//					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//				}
+//				else
+//				{ // 3-POS switch
+//        	value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+//				}
+//			}
+//#endif
+//#if defined(PCBSKY) || defined(PCB9XT)
+//			if ( switchIdx > 6 )
+//			{
+//				if ( switchIdx == 31 )
+//				{
+//					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//				}
+//				else
+//				{
+//					value = getSwitch( CSW_INDEX+switchIdx-6, 0, 0 ) ;
+//					value = value ? 1024 : -1024 ;
+//				}
+//			}
+//			else
+//			{
+//				uint32_t sw = Sw3PosList[switchIdx] ;
+//				if ( Sw3PosCount[switchIdx] == 2 )
+//				{
+//        	value = hwKeyState(sw) ? 1024 : -1024 ;
+//				}
+//				else if ( Sw3PosCount[switchIdx] == 6 )
+//				{
+//					value = ((int32_t)switchPosition( HSW_Ele6pos0 ) * 2048 - 5120)/5 ;
+//				}
+//				else
+//				{
+//        	value = hwKeyState(sw) ? -1024 : (hwKeyState(sw+1) ? 0 : 1024) ;
+//				}
+//			}
+//#endif
+//			return value ;
 		}
 
 		if (pinput->srcRaw >= EXTRA_POTS_START )
