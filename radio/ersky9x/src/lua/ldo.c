@@ -220,7 +220,7 @@ static int stackinuse (lua_State *L) {
 
 void luaD_shrinkstack (lua_State *L) {
   int inuse = stackinuse(L);
-  int goodsize = inuse + (inuse / 8) + 2*EXTRA_STACK;
+  int goodsize = inuse + BASIC_STACK_SIZE;
   if (goodsize > LUAI_MAXSTACK)
     goodsize = LUAI_MAXSTACK;  /* respect stack limit */
   if (L->stacksize > LUAI_MAXSTACK)  /* had been handling stack overflow? */
@@ -229,8 +229,7 @@ void luaD_shrinkstack (lua_State *L) {
     luaE_shrinkCI(L);  /* shrink list */
   /* if thread is currently not handling a stack overflow and its
      good size is smaller than current size, shrink its stack */
-  if (inuse <= (LUAI_MAXSTACK - EXTRA_STACK) &&
-      goodsize < L->stacksize)
+  if (inuse <= (LUAI_MAXSTACK - EXTRA_STACK) && goodsize < L->stacksize)
     luaD_reallocstack(L, goodsize);
   else  /* don't change stack */
     condmovestack(L,{},{});  /* (change only for debugging) */
