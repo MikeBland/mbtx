@@ -358,7 +358,7 @@ ifdef OBJROOT
 else
 OBJROOT = .
 endif
-OBJDIR = $(OBJROOT)\obj_$(PROJECT)
+OBJDIR = $(OBJROOT)/obj_$(PROJECT)
 
 # List all user C define here, like -D_DEBUG=1
 
@@ -1256,7 +1256,7 @@ LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).ma
 else
 LDFLAGS = $(MCFLAGS) -mthumb -nostartfiles -T$(LDSCRIPT) -Wl,-Map=$(FULL_PRJ).map,--cref,--no-warn-mismatch $(LIBDIR) --specs=nano.specs -u _printf_float
 endif
-CPPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fverbose-asm $(DEFS)
+CPPFLAGS = $(MCFLAGS) $(OPT) -gdwarf-2 -mthumb -fomit-frame-pointer -Wall -fverbose-asm $(DEFS) -Wno-address-of-packed-member
 
 CPPFLAGS += $(CPPDEFS)
 CPFLAGS += $(CPPDEFS)
@@ -1361,7 +1361,7 @@ $(OBJDIR):
 ifeq ($(OSLIN), 0)
 	if NOT EXIST $(OBJDIR) mkdir $(OBJDIR)
 else
-	test -d $(OBJDIR) || $(shell mkdir -p $(OBJDIR) )
+	test -d $(OBJDIR) || mkdir -p $(OBJDIR)
 endif
 
 #$(OBJDIR)/%.o : %.cpp
@@ -1415,6 +1415,7 @@ clean:
 #	-rm -f x9lsobj/*.*
 	-rm -f $(OBJROOT)/obj_x9d/*.*
 	-rm -f $(OBJROOT)/obj_x9e/*.*
+	-rm -f $(OBJROOT)/obj_x9eAccess/*.*
 	-rm -f $(OBJROOT)/obj_x9dp/*.*
 	-rm -f $(OBJROOT)/obj_x12d/*.*
 	-rm -f $(OBJROOT)/obj_ersky9xs/*.*
@@ -1437,6 +1438,7 @@ clean:
 	-rm -f $(OBJROOT)/obj_tx16s/*.*
 	-rm -f $(OBJROOT)/obj_tx18s/*.*
 	-rm -f $(OBJROOT)/obj_aruni/*.*
+#	-rm -f $(OBJROOT)/obj_aruni4S/*.*
 #	-rm -f $(FULL_PRJ).elf
 #	-rm -f $(FULL_PRJ).map
 #	-rm -f $(FULL_PRJ).hex

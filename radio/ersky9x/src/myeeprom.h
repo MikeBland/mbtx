@@ -18,7 +18,6 @@
 
 #include <stdint.h>
 
-
 //eeprom data
 //#define EE_VERSION 2
 #if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX12D) || defined(PCBX10)
@@ -821,7 +820,7 @@ struct t_module
 	uint8_t exsub_protocol:2 ;
 	uint8_t multiDisableTelemetry:1 ;
 	uint8_t extR9Mlite:1 ;
-	uint8_t sparey:7 ;
+	int8_t xfireArmSwitch:7 ;
 	uint8_t sparex ;
 } ;
 
@@ -1119,7 +1118,7 @@ union t_sharedMemory
 {
 	struct
 	{
-		struct t_text TextControl ;	
+		struct t_text TextControl ;
 	} ;
 	struct t_calib Cal_data ;
 	struct

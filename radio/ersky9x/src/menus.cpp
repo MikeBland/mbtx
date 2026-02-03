@@ -256,6 +256,8 @@ extern int16_t AltOffset ;
 extern uint8_t ExtraInputs ;
 extern uint8_t MuteTimer ;
 
+int8_t qRotary() ;
+
 uint8_t s_currIdx;
 uint8_t RestoreIndex ;
 static uint8_t SubMenuFromIndex = 0 ;
@@ -1361,11 +1363,15 @@ uint32_t displayMultiSubProtocol( uint32_t index, uint32_t subIndex, coord_t y, 
 
 SKYMixData *mixAddress( uint32_t index )
 {
-	SKYMixData *md2 = &g_model.mixData[index] ;
+	SKYMixData *md2 ;
 //#if EXTRA_SKYMIXERS
 	if ( index >= MAX_SKYMIXERS )
 	{
 		md2 = &g_model.exmixData[index-MAX_SKYMIXERS] ;
+	}
+	else
+	{
+		md2 = &g_model.mixData[index] ;
 	}
 //#endif
 	return md2 ;
@@ -5732,7 +5738,8 @@ uint32_t maxMixSources()
  #endif
 #endif
 
-	max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
+	max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS + NUM_VARS ;
+//	max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
 
 	return max ; 
 }
@@ -5764,10 +5771,27 @@ uint8_t mapMixSource( uint8_t index, uint8_t switchSource )
 
 	max = maxMixSources() ;
 
-	if ( index >= 224 )
+//	if ( index >= 224 )
+//	{
+//		return max + index - 224 + 2 - NUM_INPUTS ;
+//	}
+
+//	if ( index >= 224 - NUM_VARS )
+//	{
+//		index = 223 - index + (224 - NUM_VARS) ;
+//		return max + index - 224 + 2 - NUM_INPUTS ;
+//	}
+
+	if ( index >= 224 - NUM_VARS )
 	{
+		if ( index < 224 )
+		{
+			index = 223 - index + (224 - NUM_VARS) ;
+		}
 		return max + index - 224 + 2 - NUM_INPUTS ;
 	}
+
+
 
 //#ifdef REV9E
 //	if ( ( index >= MIX_TRIMS_START ) && ( index <= MIX_TRIMS_START+3 ) )
@@ -5892,7 +5916,12 @@ uint8_t unmapMixSource( uint8_t index, uint8_t *switchSource )
 #endif // PCBX7
 	if ( index >= max + 2 )
 	{
-		return 224 + index - max - 2 ;
+		index = 224 - NUM_VARS + index - max - 2 ;
+		if ( index < 224 )
+		{
+			index = 223 - index + (224 - NUM_VARS) ;
+		}
+		return index ;
 	}
 
 #ifdef REV9E
@@ -6001,7 +6030,7 @@ uint8_t TextIndex ;
 uint8_t TextTimer ;
 uint8_t TextSearching ;
 uint8_t TextFound ;
-uint8_t TextType ;
+//uint8_t TextType ;
 uint8_t TextResult ;
 
 #ifdef REV9E
@@ -6015,12 +6044,12 @@ uint32_t maxSwSource()
 {
 	uint32_t max ;
 #ifdef PCBX7
-		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 1 + NUM_VARS ;
+		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 1 + NUM_VARS + NUM_INPUTS ;
 #else
  #ifdef PCBX9LITE
-		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 2 + NUM_VARS ;
+		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots - 2 + NUM_VARS + NUM_INPUTS ;
  #else // PCBX9LITE
-		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots + NUM_VARS ;
+		max = NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots + NUM_VARS + NUM_INPUTS ;
  #endif // PCBX9LITE
 #endif // PCBX7
 	return max ;
@@ -6033,7 +6062,6 @@ void menuTextHelp(uint8_t event)
 	uint8_t item[8] ;
 	uint32_t i ;
 	uint32_t index ;
-//	uint32_t type = TextType ;
 	struct t_textControl *TextCtrl = &TextDataControl ;
 #ifdef COLOUR_DISPLAY
 	uint32_t width = 6 ;
@@ -6042,63 +6070,9 @@ void menuTextHelp(uint8_t event)
 #endif
 	uint32_t length = 5 ;
 	uint16_t max = NUM_TELEM_ITEMS ;
-//	uint32_t num_mix_switches = NUM_MIX_SWITCHES ;
-//	if ( type == TEXT_TYPE_SW_SOURCE )
-//	{
-//		max = maxSwSource() ;
-////#ifdef USE_VARS
-////		max += NUM_VARS ;
-////#endif
-//	}
-//	else
-//	if ( type == TEXT_TYPE_MIX_SOURCE )
-//	{
-//#if defined(PCBSKY) || defined(PCB9XT) || defined(PCBX9D)
-//		if ( g_eeGeneral.analogMapping & MASK_6POS )
-//		{
-//			num_mix_switches += 1 ;
-//		}
-//#endif
-////#ifdef PCBX12D
-////		num_mix_switches += 1 ;
-////#endif
-//		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
-
-//		max = TextControl.TextMax ;
-//		width = TextCtrl->TextWidth ;
-
-//#ifdef PCBX7
-//		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
-//#else // PCBX7
-// #if defined(PCBX9LITE) || defined(PCBLEM1)
-//		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
-// #else // PCBX9LITE
-//		max = NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) - 1 + EXTRA_SKYCHANNELS - POT_COUNT_ADJUST + 4 + NUM_INPUTS ;
-// #endif // PCBX9LITE
-//#endif // PCBX7
-//		if ( TextCtrl->TextOption )
-//		{
-//			TextCtrl->TextOption = 1 ;
-//		}
-//	}
-//	else if ( type == TEXT_TYPE_SW_FUNCTION )
-//	{
-//		max = CS_MAXF ;
-//#ifdef COLOUR_DISPLAY
-//		width = 3 ;
-//#else
-//		width = 2 ;
-//#endif
-//		length = 7 ;
-//	}
-//	else
-	
-//	if ( type == TEXT_TYPE_CUSTOM )
-	{
-		max = TextCtrl->TextMax ;
-		width = TextCtrl->TextWidth ;
-		length = TextCtrl->TextLength ;
-	}
+	max = TextCtrl->TextMax ;
+	width = TextCtrl->TextWidth ;
+	length = TextCtrl->TextLength ;
 
 	uint32_t rows = max + 1 ;
 	uint32_t lastCol = (rows) % width ;
@@ -6142,32 +6116,6 @@ void menuTextHelp(uint8_t event)
 	}
 	else if ( checkForMenuEncoderBreak( event ) )
 	{
-//		if ( type == TEXT_TYPE_SW_SOURCE )
-//		{
-//			uint32_t offset ;
-//			uint32_t idx = TextIndex ;
-//			offset = NUM_SKYXCHNRAW + NumExtraPots ;
-//#ifdef PCBX9LITE
-//			offset -= 2 ;
-//#endif
-//#if defined(PCBX7) || defined (PCBXLITE)
-//			offset -= 1 ;
-//#endif
-////			if ( idx > max )
-////			{
-////				TextIndex = 224 - max ;
-////			}			
-////			else
-//			if ( idx > offset )
-//			{
-//				idx -= offset+1 ;
-//				TextIndex = TelemMap[idx] ;
-//				TextIndex += offset+1 ;
-//			}
-//		}
-//		else if ( type == TEXT_TYPE_TELE_SOURCE )
-//		{
-//		}
 		TextResult = 1 ;
   	s_editMode = 0 ;
 		killEvents(event) ;
@@ -6175,34 +6123,31 @@ void menuTextHelp(uint8_t event)
 	}
 
 #ifdef TOUCH
-//	if ( type == TEXT_TYPE_SW_FUNCTION )
+	if ( TouchUpdated )
 	{
-		if ( TouchUpdated )
+		if ( TouchControl.event == TEVT_UP )
 		{
-			if ( TouchControl.event == TEVT_UP )
+			uint32_t tx = 31 * 2 ;
+			if ( width == 3 )
 			{
-				uint32_t tx = 31 * 2 ;
-				if ( width == 3 )
-				{
-					tx = 62 * 2 ;
-				}
+				tx = 62 * 2 ;
+			}
 				
-				if ( TouchControl.x < tx * width )
+			if ( TouchControl.x < tx * width )
+			{
+				uint32_t vrows = rows > 7 ? 7 : rows ;
+				if ( (TouchControl.y < (vrows+1)*TFH*TSCALE+THTOP*TSCALE ) && (TouchControl.y > THTOP*TSCALE) )
 				{
-					uint32_t vrows = rows > 7 ? 7 : rows ;
-					if ( (TouchControl.y < (vrows+1)*TFH*TSCALE+THTOP*TSCALE ) && (TouchControl.y > THTOP*TSCALE) )
+					TextIndex = (TouchControl.x/(tx)) + (TouchControl.y - THTOP*TSCALE) / (TFH*TSCALE) * width ;
+					TextIndex += s_pgOfs * width ;
+					if ( TextIndex > max )
 					{
-						TextIndex = (TouchControl.x/(tx)) + (TouchControl.y - THTOP*TSCALE) / (TFH*TSCALE) * width ;
-						TextIndex += s_pgOfs * width ;
-						if ( TextIndex > max )
-						{
-							TextIndex = max ;
-						}
-						mstate2.m_posVert = TextIndex / width ;
-						g_posHorz = TextIndex % width ;
-						TextTimer = 15 ;
-						TouchUpdated = 0 ;
+						TextIndex = max ;
 					}
+					mstate2.m_posVert = TextIndex / width ;
+					g_posHorz = TextIndex % width ;
+					TextTimer = 15 ;
+					TouchUpdated = 0 ;
 				}
 			}
 		}
@@ -6239,71 +6184,43 @@ void menuTextHelp(uint8_t event)
 	{
 #ifdef COLOUR_DISPLAY
  #ifndef TOUCH
-	event = checkPageMove( event, &mstate2.m_posVert, rows - 1 ) ;
+		event = checkPageMove( event, &mstate2.m_posVert, rows - 1 ) ;
+ #endif
+#else
+ #ifdef PAGE_NAVIGATION
+	{
+		uint8_t lpos = mstate2.m_posVert ;
+		if ( event == EVT_KEY_FIRST(KEY_LEFT) )	// PAGE
+		{
+			if ( lpos == rows )
+			{
+				lpos = 0 ;
+			}
+			else
+			{
+				lpos += SCREEN_LINES-3 ;
+				if ( lpos > rows )
+				{
+					lpos = rows ;
+				}
+			}
+			killEvents( EVT_KEY_FIRST(KEY_LEFT) ) ;
+			event = 0 ;
+			Tevent = 0 ;
+		}	 
+		mstate2.m_posVert = lpos ;
+	}
  #endif
 #endif
-		event = mstate2.check_columns( event, rows ) ;
+	event = mstate2.check_columns( event, rows ) ;
 	}
 	if ( event == EVT_ENTRY )
 	{
-//		if ( type == TEXT_TYPE_MIX_SOURCE )
-//		{
-//			TextIndex -= 1 ;
-//		}
-
-//		else if ( type == TEXT_TYPE_SW_FUNCTION )
-//		{
-//			TextIndex = locateMappedItem( TextIndex, (uint8_t *)SwitchFunctionMap, CS_MAXF+1 ) ;
-//		}
-//		else if ( type == TEXT_TYPE_SW_SOURCE )
-//		{
-//			uint32_t offset ;
-//			uint32_t idx = TextIndex ;
-////			uint32_t i ;
-//			offset = NUM_SKYXCHNRAW + NumExtraPots ;
-//#ifdef PCBX9LITE
-//			offset -= 2 ;
-//#endif
-//#if defined(PCBX7) || defined (PCBXLITE)
-//			offset -= 1 ;
-//#endif
-//			if ( idx > offset )
-//			{
-//				idx -= offset+1 ;
-//				idx = locateMappedItem( idx, TelemMap, sizeof(TelemMap) ) ;
-////				for ( i = 0 ; i < sizeof(TelemMap) ; i += 1 )
-////				{
-////					if ( TelemMap[i] == idx )
-////					{
-////						idx = i ;
-////						break ;
-////					}
-////				}
-//				idx += offset+1 ;
-//				TextIndex = positionSwSource( TextIndex ) ;
-//			}
-//		}
-//		else if ( type == TEXT_TYPE_TELE_SOURCE )
-//		{
-////			uint32_t idx = TextIndex ;
-			
-////			if ( idx > 0 )
-////			{
-////				idx -= 1 ;
-////				idx = locateMappedItem( idx, TelemMap, sizeof(TelemMap) ) ;
-////				idx += 1 ;
-////				TextIndex = idx ;
-////			}
-//		}
-//		else
-//		if ( type == TEXT_TYPE_CUSTOM )
+		if ( TextCtrl->TextMap )
 		{
-			if ( TextCtrl->TextMap )
-			{
-				uint32_t idx = TextIndex ;
-				idx = locateMappedItem( idx, TextCtrl->TextMap, TextCtrl->TextMax+1 ) ;
-				TextIndex = idx ;
-			}
+			uint32_t idx = TextIndex ;
+			idx = locateMappedItem( idx, TextCtrl->TextMap, TextCtrl->TextMax+1 ) ;
+			TextIndex = idx ;
 		}
 		mstate2.m_posVert = TextIndex / width ;
 		g_posHorz = TextIndex % width ;
@@ -6392,128 +6309,16 @@ void menuTextHelp(uint8_t event)
 		{
 			att = 0 ;
 		}
-//		if ( type == TEXT_TYPE_TELE_SOURCE )
-//		{
-//			displayTelemSource( x, y, index, att ) ;
-////			uint32_t idx ;
-////			idx = index ;
-////			if ( idx )
-////			{
-////				idx = TelemMap[idx-1] + 1 ;
-////			}
-////			if ( idx > TELEM_GAP_START )
-////			{
-////				idx += 8 ;
-////			}
-////			putsAttIdxTelemItems( x, y, idx, att | TSSI_TEXT ) ;
-//		}
-//		else
-//		if ( type == TEXT_TYPE_SW_SOURCE )
-//		{
-//			displaySwSource( x, y, index, att ) ;
-			
-//			uint32_t offset ;
-//			uint32_t tidx = index ;
-//			offset = NUM_SKYXCHNRAW + NumExtraPots ;
-//#ifdef PCBX9LITE
-//			offset -= 2 ;
-//#endif
-//#if defined(PCBX7) || defined (PCBXLITE)
-//			offset -= 1 ;
-//#endif
-////			if ( idx > max )
-////			{
-				
-////			}
-			
-//			if ( tidx > offset )
-//			{
-//				tidx -= offset+1 ;
-//				tidx = TelemMap[tidx] ;
-//				tidx += offset+1 ;
-//			}
-//			putsChnRaw( x*HVSCALE, y*HVSCALE, unmapPots(tidx), att | TSSI_TEXT ) ;
-//		}
-//		else
-//		if ( type == TEXT_TYPE_MIX_SOURCE )
-//		{
-//			if ( TextCtrl->TextFunction )
-//			{
-//				uint32_t idx = index ;
-//				if ( TextCtrl->TextMap )
-//				{
-//					idx = TextCtrl->TextMap[index] ;
-//				}
-//				(*TextCtrl->TextFunction)( x, y, idx, att ) ;
-//			}
-//			displayMixTextSource( x, y, index, att ) ;
-
-//			uint32_t idx ;
-//			uint8_t swidx ;
-//			swidx = 0 ;
-
-////			lcd_outdez( 12*FW, 0, TextIndex+1 ) ;
-////			idx = unmapMixSource( TextIndex+1, &swidx ) ;
-////			lcd_outdez( 17*FW, 0, idx ) ;
-////			lcd_outdez( 22*FW, 0, swidx ) ;
-////			lcd_outdez( 27*FW, 0, max ) ;
-
-//			idx = index + 1 ;
-
-//			idx = unmapMixSource( idx, &swidx ) ;
-
-////			if ( att & INVERS )
-////			{
-////    		lcd_outdez( 17*FW, 0, idx ) ;
-////			}
-////			idx = unmapPots( idx ) ;
-////			if ( idx >= MIX_3POS )
-////			{
-////				if ( idx > (uint32_t)MIX_3POS + (num_mix_switches-1) )
-////				{
-////					if ( idx < EXTRA_POTS_START )
-////					{
-////						idx -= (num_mix_switches-1) ;
-////					}
-////				}
-////				else
-////				{
-////					swidx = idx - MIX_3POS ;
-////					idx = MIX_3POS ;
-////				}
-////			}
-//			putsChnOpRaw( x*HVSCALE, y*HVSCALE, idx, swidx, TextCtrl->TextOption, att ) ;
-//		}
-//		else if ( type == TEXT_TYPE_SW_FUNCTION )
-//		{
-//			uint32_t offset = SwitchFunctionMap[index] ;
-//			PUTS_AT_IDX( x, y, PSTR(CSWITCH_STR), offset, att ) ;
-//			setLastIdx( (char *) PSTR(CSWITCH_STR), offset ) ;
-//		}
-//#ifndef SMALL
-//		else
-//		if ( type == TEXT_TYPE_CUSTOM )
+		if ( TextCtrl->TextFunction )
 		{
-			if ( TextCtrl->TextFunction )
+			uint32_t idx = index ;
+			if ( TextCtrl->TextMap )
 			{
-				uint32_t idx = index ;
-				if ( TextCtrl->TextMap )
-				{
-					idx = TextCtrl->TextMap[index] ;
-				}
-				(*TextCtrl->TextFunction)( x, y, idx, att ) ;
+				idx = TextCtrl->TextMap[index] ;
 			}
-
-//			if ( att & INVERS )
-//			{
-//				uint32_t value ;
-//extern uint8_t InputMap[] ;
-
-//				value = InputMap[ index ] ;
-//    		PUTS_NUMX( 17*FW, 0, value ) ;
-//			}
+			(*TextCtrl->TextFunction)( x, y, idx, att ) ;
 		}
-//#endif		
+
 		if ( att )
 		{
 			ncpystr( item, (uint8_t *)LastItem, length ) ;
@@ -6571,21 +6376,6 @@ void menuTextHelp(uint8_t event)
 	{
 		PUTS_ATT( 0, (SCREEN_LINES-1)*FHPY, (char *)&SharedMemory.TextControl.TextMenuBuffer[TextFound], 0 ) ;
 	}
-//	else
-//	{
-//		PUTS_ATT( 0, 7*FHPY, (char *)item, 0 ) ;
-//	}
-
-//	lcd_outdez( 8*FW, 0, TextIndex ) ;
-//	lcd_outdez( 11*FW, 0, TextTimer ) ;
-//	lcd_outdez( 14*FW, 0, ttt ) ;
-//	lcd_outdez( 17*FW, 0, uuu ) ;
-
-//  PUT_HEX4( 5*FW, 7*FHPY, strlen((char *)item) ) ;
-//  PUT_HEX4( 9*FW, 7*FHPY, TextMenuBuffer[1] ) ;
-//  PUT_HEX4( 13*FW, 7*FHPY, TextMenuBuffer[2] ) ;
-//  PUT_HEX4( 17*FW, 7*FHPY, TextMenuBuffer[3] ) ;
-
 }
 
 void copyFileName( char *dest, char *source, uint32_t size )
@@ -8149,7 +7939,16 @@ uint32_t decodeSwSource( uint32_t idx )
 		if ( idx > offset + NUM_TELEM_ITEMS )
 		{
 			idx -= offset + NUM_TELEM_ITEMS + 1 ;	// Var 0-n
-			idx = 223 - idx ;
+#ifdef INPUTS
+			if ( idx >= NUM_VARS )
+			{
+				idx = 224 + idx - NUM_VARS ;
+			}
+			else
+#endif
+			{
+				idx = 223 - idx ;
+			}
 		}
 		else
 		{		
@@ -8164,9 +7963,25 @@ uint32_t decodeSwSource( uint32_t idx )
 void displaySwSource( coord_t x, coord_t y, uint8_t index, LcdFlags att )
 {
 	uint32_t idx = decodeSwSource( index ) ;
+
+//	if ( att )
+//	{
+//	  PUTS_NUM( 12*FW, 0, index, 0 ) ;
+//	  PUTS_NUM( 17*FW, 0, idx, 0 ) ;
+//	}
+
 	if ( idx > 223 - NUM_VARS )
 	{
-		displayVarName( x, y, 223 - idx, att ) ;
+#ifdef INPUTS
+		if ( idx >= 224 )
+		{
+			displayInputName( x, y, idx - 224 + 1, att ) ;
+		}
+		else
+#endif
+		{
+			displayVarName( x, y, 223 - idx, att ) ;
+		}
 	}
 	else
 	{
@@ -8181,8 +7996,18 @@ uint32_t positionSwSource( uint32_t idx )
 	offset = NUM_SKYXCHNRAW + NumExtraPots-POT_COUNT_ADJUST ;
 	if ( idx > 223 - NUM_VARS )
 	{
-		idx = 223 - idx ;
-		idx += offset + NUM_TELEM_ITEMS + 1 ;
+#ifdef INPUTS
+		if ( idx > 223 )
+		{
+			idx -= 224 ;
+			idx += offset + NUM_TELEM_ITEMS + 1 + NUM_VARS ;
+		}
+		else
+#endif
+		{
+			idx = 223 - idx ;
+			idx += offset + NUM_TELEM_ITEMS + 1 ;
+		}
 	}
 	else
 	if ( idx > offset )
@@ -8220,9 +8045,18 @@ void setTextSwSource( uint32_t idx )
 
 void displaySourceRaw( coord_t x, coord_t y, uint32_t val, LcdFlags attr )
 {
-		if ( val > 223 - NUM_VARS )
+	if ( val > 223 - NUM_VARS )
 	{
-		displayVarName( x, y, 223 - val, attr ) ;
+#ifdef INPUTS
+		if ( val >= 224 )
+		{
+			displayInputName( x, y, val - 224 + 1, attr ) ;
+		}
+		else
+#endif
+		{
+			displayVarName( x, y, 223 - val, attr ) ;
+		}
 	}
 	else
 	{
@@ -9740,14 +9574,33 @@ uint32_t checkSwitchSource( uint32_t x, uint32_t editType )
 {
 	if ( x > 223 - NUM_VARS )
 	{
-		x = 223 - x ;
-		x += NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+1 ;
+#ifdef INPUTS
+		if ( x >= 224 )
+		{
+			x -= 224 ;
+			x += NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+1 + NUM_VARS ;
+		}
+		else
+#endif
+		{
+			x = 223 - x ;
+			x += NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+1 ;
+		}
 	}
-	x = checkIncDec16( x,0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+NUM_VARS,editType);
+	x = checkIncDec16( x,0,NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+NUM_VARS+NUM_INPUTS,editType);
 	if ( x > (uint32_t)(NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST) )
 	{
 		x -= NUM_SKYXCHNRAW+NUM_TELEM_ITEMS+NumExtraPots-POT_COUNT_ADJUST+1 ;
-		x = 223 - x ;
+#ifdef INPUTS
+		if ( x >= NUM_VARS )
+		{
+			x += 224 - NUM_VARS ;
+		}
+		else
+#endif
+		{
+			x = 223 - x ;
+		}
 	}
 	return x ;
 }
@@ -10026,6 +9879,9 @@ void menuSwitchOne(uint8_t event)
   {
 		drawItem( XPSTR("v1\037val"), 2*FHPY ) ;
 
+//	PUTS_NUM( 12*FW, 0, cs.v1u, 0 ) ;
+//	PUTS_NUM( 17*FW, 0, getValue(cs.v1u-1), 0 ) ;
+
 		displaySourceRaw( PARAM_OFS, 2*FHPY, cs.v1u, (sub == 1 ? blink : 0 )|LUA_RIGHT ) ;
 //		putsChnRaw( PARAM_OFS, 2*FHPY, cs.v1u, (sub == 1 ? blink : 0 )|LUA_RIGHT ) ;
 		LcdFlags att = (sub==2) && (g_posHorz==0) ? blink : 0 ;
@@ -10035,7 +9891,7 @@ void menuSwitchOne(uint8_t event)
 		value = convertSwitchConstant( cs.v1u, cs.v2, &type ) ;
 		if ( type == SWC_TYPE_TEL )
 		{
-			putsTelemetryChannel( 9*FW, 3*FHPY, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, att, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
+			putsTelemetryChannel( PARAM_OFS, 3*FHPY, cs.v1u-CHOUT_BASE-NUM_SKYCHNOUT-1, value, att|LUA_RIGHT, TELEM_NOTIME_UNIT | TELEM_UNIT| TELEM_CONSTANT ) ;
 		}
 		else
 		{
@@ -10077,14 +9933,15 @@ void menuSwitchOne(uint8_t event)
   else if(cstate == CS_VBOOL)
   {
 		PUTS_ATT_LEFT( 2*FHPY, XPSTR("v1\037v2") ) ;		
-    putsDrSwitches( 11*FW, 2*FHPY, cs.v1, sub==1 ? blink : 0 ) ;
-    putsDrSwitches( 11*FW, 3*FHPY, cs.v2, sub==2 ? blink : 0 ) ;
+    putsDrSwitches( PARAM_OFS, 2*FHPY, cs.v1, (sub==1 ? blink : 0)|LUA_RIGHT ) ;
+    putsDrSwitches( PARAM_OFS, 3*FHPY, cs.v2, (sub==2 ? blink : 0)|LUA_RIGHT ) ;
   }
   else if(cstate == CS_VCOMP)
   {
 		PUTS_ATT_LEFT( 2*FHPY, XPSTR("v1\037v2") ) ;		
-    putsChnRaw( 11*FW, 2*FHPY, cs.v1u, sub==1 ? blink : 0 ) ;
-    putsChnRaw( 11*FW, 3*FHPY, cs.v2u, sub==2 ? blink : 0 ) ;
+    
+		putsChnRaw( PARAM_OFS, 2*FHPY, cs.v1u, (sub==1 ? blink : 0 ) | ( cs.v1u >= 224 ? MIX_SOURCE : 0 )|LUA_RIGHT) ;
+    putsChnRaw( PARAM_OFS, 3*FHPY, cs.v2u, (sub==2 ? blink : 0 ) | ( cs.v2u >= 224 ? MIX_SOURCE : 0 )|LUA_RIGHT ) ;
   }
 	else if(cstate == CS_TIMER)
 	{
@@ -11193,22 +11050,6 @@ void menuVoiceOne(uint8_t event)
  #endif // X12/X10
 #endif // TOUCH
 
-int8_t qRotary()
-{
-	int8_t diff = 0 ;
-
-	if ( Rotary_diff > 0)
-	{
-		diff = 1 ;
-	}
-	else if ( Rotary_diff < 0)
-	{
-		diff = -1 ;
-	}
-	Rotary_diff = 0 ;
-	return diff ;
-}
-
 #ifdef COLOUR_DISPLAY
 #define VOI_OFF_0			0
 #else
@@ -11711,7 +11552,7 @@ void menuMixOne(uint8_t event)
 					drawItem( (char *)PSTR(STR_2SOURCE)+1, y ) ;
 					uint32_t value = md2->srcRaw ;
     	    
-					PUTS_NUM( FW*26, 0, value, 0 ) ;
+//					PUTS_NUM( FW*26, 0, value, 0 ) ;
 
 					putsChnOpRaw( FW*19-MIX_OFF, y, value, md2->switchSource, md2->disableExpoDr, attr|LUA_RIGHT ) ;
 					if ( attr )
@@ -11720,10 +11561,10 @@ void menuMixOne(uint8_t event)
  #ifndef TOUCH
   #if defined(PCBX7) || defined (PCBXLITE) || defined (PCBX9LITE)
 //						CHECK_INCDEC_H_MODELVAR( x, 1, NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS-1+4 + 2 + NUM_INPUTS ) ;
-						x = checkIncDec16( x, 1, NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS-1+4 + 2 + NUM_INPUTS, EE_MODEL) ;
+						x = checkIncDec16( x, 1, NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS-1+4 + 2 + NUM_INPUTS + NUM_VARS, EE_MODEL) ;
   #else // PCBX7
 //						CHECK_INCDEC_H_MODELVAR( x, 1,NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS+4 + 2 + NUM_INPUTS ) ;
-						x = checkIncDec16( x, 1, NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS+4 + 2 + NUM_INPUTS, EE_MODEL) ;
+						x = checkIncDec16( x, 1, NUM_SKYXCHNRAW+1+MAX_GVARS+1+NUM_SCALERS+8+NumExtraPots + (num_mix_switches-1) + EXTRA_SKYCHANNELS+4 + 2 + NUM_INPUTS + NUM_VARS, EE_MODEL) ;
 
   #endif // PCBX7
 //						if ( md2->srcRaw > 4 )
@@ -12062,7 +11903,7 @@ void menuMixOne(uint8_t event)
         case 9:
 				{	
 					uint8_t b = 1 ;
-					drawItem( (char *)PSTR(STR_MODES)+1, y ) ;
+					drawItem( (char *)PSTR(STR_MODES), y ) ;
 //            PUTS_ATT_LEFT( y,XPSTR("\001MODES"));
 						
 					if ( attr )
@@ -12333,330 +12174,6 @@ void menuDeleteMix(uint8_t event)
     break;
   }
 }
-
-
-static uint8_t popupProcess( uint8_t event, uint8_t max )
-{
-	int8_t popidxud = qRotary() ;
-	uint8_t popidx = PopupData.PopupIdx ;
-
-	if ( PopupData.PopupTimer )
-	{
-		if ( BLINK_ON_PHASE )
-		{
-			if ( --PopupData.PopupTimer == 0 )
-			{
-				// Timeout popup
-				PopupData.PopupActive = 0 ;
-				return POPUP_EXIT ;
-			}
-		}
-	}
-	else
-	{
-		PopupData.PopupTimer = 255 ;
-  }
-
-//  event = Tevent ;
-	switch(event)
-	{
-    case EVT_KEY_BREAK(KEY_MENU) :
-    case EVT_KEY_BREAK(BTN_RE):
-			PopupData.PopupActive = 0 ;
-			PopupData.PopupTimer = 0 ;
-		return POPUP_SELECT ;
-    
-		case EVT_KEY_FIRST(KEY_UP) :
-		case EVT_KEY_REPT(KEY_UP) :
-			popidxud = -1 ;
-		break ;
-    
-		case EVT_KEY_FIRST(KEY_DOWN) :
-		case EVT_KEY_REPT(KEY_DOWN) :
-			popidxud = 1 ;
-		break ;
-    
-		case EVT_KEY_LONG(BTN_RE) :
-			if ( g_eeGeneral.disableBtnLong )
-			{
-				break ;
-			}		
-		case EVT_KEY_BREAK(KEY_EXIT) :
-			killEvents( event ) ;
-			Tevent = 0 ;
-			PopupData.PopupActive = 0 ;
-			PopupData.PopupTimer = 0 ;
-		return POPUP_EXIT ;
-	}
-
-	if (popidxud > 0)
-	{
-		if ( popidx < max )
-		{
-			popidx += 1 ;
-		}
-		else
-		{
-			popidx = 0 ;			
-		}
-	}
-	else if (popidxud < 0)
-	{		
-		if ( popidx )
-		{
-			popidx -= 1 ;
-		}
-		else
-		{
-			popidx = max ;
-		}
-	}
-
-	if (popidxud )
-	{
-		if ( PopupData.PopupTimer )
-		{
-			PopupData.PopupTimer = 255 ;
-		}
-	}	
-
-#ifdef TOUCH
-	if ( TouchUpdated )
-	{
-		uint32_t exiting = 0 ;
-		uint32_t outside = 0 ;
-		TouchUpdated = 0 ;
-
-		if ( ( TouchControl.x < PopupData.PopupHpos ) || ( TouchControl.x > PopupData.PopupHpos + PopupData.PopupWidth ) )
-		{
-			outside = 1 ;
-		}
-		else if ( ( TouchControl.y < PopupData.PopupVpos ) || ( TouchControl.y > PopupData.PopupVpos + (max+1) * (FH+POPUP_SPACING)*2 ) )
-		{
-			outside = 1 ;
-		}
-
-		if ( TouchControl.event == TEVT_DOWN )
-		{
-			if ( outside == 0 )
-			{
-		 		popidx = (TouchControl.y - PopupData.PopupVpos - POPUP_SPACING) / ((FH+POPUP_SPACING)*2) ;
-				if ( popidx > max )
-				{
-					popidx = max ;
-				}
-				if ( PopupData.PopupTimer )
-				{
-					PopupData.PopupTimer = 255 ;
-				}
-			}
-		}
-		else if ( TouchControl.event == TEVT_UP )
-		{
-			if ( outside )
-			{
-				exiting = 1 ;
-			}
-			else
-			{
-				PopupData.PopupActive = 0 ;
-				PopupData.PopupTimer = 0 ;
-				return POPUP_SELECT ;
-			}
-		}
-		if ( exiting )
-		{
-			PopupData.PopupActive = 0 ;
-			PopupData.PopupTimer = 0 ;
-			return POPUP_EXIT ;
-		}
-	}
-#endif
-
-	PopupData.PopupIdx = popidx ;
-	return POPUP_NONE ;
-}
-
-//extern uint16_t LCDLastOp ;
-
-#if defined(PCBX12D) || defined(PCBX10)
-
-#define POPUP_VOFFSET			4
-
-#ifdef TOUCH
-static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
-{
-	uint16_t bitWidth = width * FW * 2 ;
-	uint32_t entries = 0 ;
-	uint16_t y = FH+POPUP_VOFFSET ;
-	uint16_t x = ( LCD_W - bitWidth) / 4 ;
-	PopupData.PopupHpos = x*2 ;
-	PopupData.PopupVpos = y*2 ;
-	PopupData.PopupWidth = bitWidth ;
-
-	uint16_t xmask = mask ;
-	while ( xmask )
-	{
-		if ( xmask & 1 )
-		{
-			entries += 1 ;
-		}
-		xmask >>= 1 ;
-	}
-	
-	lcdDrawSolidFilledRectDMA( (x*2), POPUP_VOFFSET, bitWidth, (FH+2 + entries*(FH+POPUP_SPACING))*2, DimBackColour ) ;
-	
-	while ( mask )
-	{
-		if ( mask & 1 )
-		{
-//			uint32_t len = strlen( list ) ;
-			PUTS_P( x+FW, y, (const char *)(list) ) ;
-//			lcd_putsn_P( x + FW + len*FW, y, "              ", width-len-1 ) ;
-			y += FH ;
-			y += POPUP_SPACING ;
-		}
-		mask >>= 1 ;
-		while ( *list )
-		{
-			list += 1 ;			
-		}		
-		list += 1 ;			
-	}
-	x *= 2 ;
-	y *= 2 ;
-	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, bitWidth, 2, LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x), y, bitWidth, 2, LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET), LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x+bitWidth), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)+2, LcdForeground ) ;
-	lcd_char_inverse( x/2 + FW, (PopupData.PopupIdx+1)*(FH+POPUP_SPACING)+POPUP_VOFFSET-POPUP_SPACING-POPUP_SPACING/2, bitWidth/2 - 2*FW, 0, POPUP_SPACING+FH ) ;
-
-	return entries ;
-	
-}
-#else
-static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
-{
-	uint16_t bitWidth = width * FW * 2 ;
-	uint32_t entries = 0 ;
-	uint16_t y = FHPY+POPUP_VOFFSET/2 ;
-	uint16_t x = ( LCD_W - bitWidth) / 2 ;
-//	PopupData.PopupHpos = x*2 ;
-//	PopupData.PopupVpos = y*2 ;
-//	PopupData.PopupWidth = bitWidth ;
-	
-	uint16_t xmask = mask ;
-	while ( xmask )
-	{
-		if ( xmask & 1 )
-		{
-			entries += 1 ;
-		}
-		xmask >>= 1 ;
-	}
-	
-	lcdDrawSolidFilledRectDMA( x, POPUP_VOFFSET, bitWidth, (FHPY*2 + entries*(FHPY*2)), DimBackColour ) ;
-	
-	while ( mask )
-	{
-		if ( mask & 1 )
-		{
-//			uint32_t len = strlen( list ) ;
-			PUTS_P( x/2 + FWPX, y, (const char *)(list) ) ;
-//			lcd_putsn_P( (4+len)*FW + X12OFFSET, y, "              ", width-len-1 ) ;
-			y += FHPY ;
-		}
-		mask >>= 1 ;
-		while ( *list )
-		{
-			list += 1 ;			
-		}		
-		list += 1 ;			
-	}
-//	x *= 2 ;
-//	y *= 2 ;
-	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, bitWidth, 2, LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x), y*2, bitWidth+2, 2, LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)*2+4, LcdForeground ) ;
-	lcdDrawSolidFilledRectDMA( (x+bitWidth), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)*2+4, LcdForeground ) ;
-	lcd_char_inverse( x/2 + FWPX, (PopupData.PopupIdx+1)*(FHPY)+POPUP_VOFFSET/2, bitWidth/2 - 2*FW, 0, FHPY ) ;
-//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, POPUP_VOFFSET*2, width*FW*2, 2, LCD_BLACK) ;
-//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, y*2, width*FW*2, 2, LCD_BLACK) ;
-//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, POPUP_VOFFSET*2, 2, (y-POPUP_VOFFSET)*2, LCD_BLACK) ;
-//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET+width*FW)*2, POPUP_VOFFSET*2, 2, (y-POPUP_VOFFSET)*2+2, LCD_BLACK) ;
-//	lcd_char_inverse( 4*FW + X12OFFSET, (PopupData.PopupIdx+1)*FHY+POPUP_VOFFSET, (width-2)*FW, 0 ) ;
-
-	return entries ;
-}
-#endif
-
-#else
-static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
-{
-	uint32_t entries = 0 ;
-	coord_t y = 0 ;
-
-	while ( mask )
-	{
-		if ( mask & 1 )
-		{
-#ifdef PROP_TEXT
-			PUTS_ATT_N( 3*FW + X12OFFSET, y, "\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223", width, 0 ) ;
-#else
-			PUTS_ATT_N( 3*FW + X12OFFSET, y, "                ", width, 0 ) ;
-#endif
-			PUTS_P( 4*FW + X12OFFSET, y, (const char *)(list) ) ;
-			entries += 1 ;
-			y += FH ;
-		}
-		mask >>= 1 ;
-		while ( *list )
-		{
-			list += 1 ;			
-		}		
-		list += 1 ;			
-	}
-	if ( y >= 7*FH )
-	{
-		y -= 1 ;
-	}
-	lcd_rect( 3*FW + X12OFFSET, 0, width*FW, y+1 ) ;
-	lcd_char_inverse( 4*FW + X12OFFSET, (PopupData.PopupIdx)*FH, (width-2)*FW, 0 ) ;
-
-	return entries ;
-}
-#endif
-
-static uint8_t popTranslate( uint8_t popidx, uint16_t mask )
-{
-	uint32_t position ;
-	popidx += 1 ;
-	for ( position = 0 ; position < 16 ; position += 1 )
-	{
-		if ( mask & 1 )
-		{
-			if ( --popidx == 0)
-			{
-				break ;
-			}
-		}
-		mask >>= 1 ;
-	}
-	return position ;
-}
-
-
-uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event )
-{
-	CPU_UINT count = popupDisplay( list, mask, width ) ;
-	uint32_t popaction = popupProcess( event, count - 1 ) ;
-	uint8_t popidx = PopupData.PopupIdx ;
-	PopupData.PopupSel = popTranslate( popidx, mask ) ;
-	return popaction ;
-}
-
-
-
 
 uint16_t expou(uint16_t x, uint16_t k)
 {
@@ -16016,6 +15533,7 @@ void editOneProtocol( uint8_t event )
 	uint8_t dataItems = 6 ;
 	uint8_t module = EditingModule ;
 	LcdFlags attr ;
+	LcdFlags blink = InverseBlink ;
 	if ( module )
 	{
 		module = 1 ;
@@ -16092,10 +15610,10 @@ void editOneProtocol( uint8_t event )
 	}
 
 #ifdef XFIRE
-	if ( module && (pModule->protocol == PROTO_XFIRE ) )
-	{
-		dataItems -= 2 ;
-	}
+//	if ( module && (pModule->protocol == PROTO_XFIRE ) )
+//	{
+//		dataItems -= 1 ;
+//	}
 #endif
 	
 	if ( pModule->protocol == PROTO_OFF )
@@ -16174,7 +15692,7 @@ void editOneProtocol( uint8_t event )
 			attr = 0 ;
 			if ( sub==subN )
 			{
-				attr = INVERS ;
+				attr = blink ;
 #ifdef ACCESS
 				if (checkProtocolOptions( module ) )
 				{
@@ -16197,7 +15715,7 @@ void editOneProtocol( uint8_t event )
 		{
 			if ( pModule->protocol == PROTO_PPM )
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				if ( ( pModule->channels > 8 ) || (pModule->channels < -4) )
 				{
 					pModule->channels = 0 ;		// Correct if wrong from DSM
@@ -16214,7 +15732,7 @@ void editOneProtocol( uint8_t event )
 				if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
 				if(t_pgOfs<=subN)
 				{
-					attr = ( sub==subN ) ? INVERS : 0 ;
+					attr = sub==subN ? blink : 0 ;
 					drawItem( XPSTR("Pulse Width (uS)"), y ) ;
 					drawNumber( TRIGHT-TRMARGIN, y, (pModule->ppmDelay*50)+300, attr ) ;
 					if ( attr )
@@ -16225,7 +15743,7 @@ void editOneProtocol( uint8_t event )
 			}
 			else
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 		  	if ( ( pModule->protocol == PROTO_DSM2) && ( pModule->sub_protocol == DSM_9XR ) )
   			{
 					drawItem( XPSTR("Chans"), y ) ;
@@ -16255,7 +15773,7 @@ void editOneProtocol( uint8_t event )
 		
 		if(t_pgOfs<=subN)
 		{
-			attr = ( sub==subN ) ? INVERS : 0 ;
+			attr = sub==subN ? blink : 0 ;
 			drawItem( XPSTR("Detect Telem."), y ) ;
 			drawIdxText( y, (char *)XPSTR("\006  AutoSelect"), g_model.ForceTelemetryType, attr ) ;
 			if ( attr )
@@ -16270,7 +15788,7 @@ void editOneProtocol( uint8_t event )
 		{
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_MULTI_PROTO), y ) ;
 				uint8_t oldValue = pModule->sub_protocol & 0x3F ;
 				oldValue |= pModule->exsub_protocol << 6 ;
@@ -16300,7 +15818,7 @@ void editOneProtocol( uint8_t event )
 			{
 				uint8_t x = (pModule->sub_protocol & 0x3F ) | (pModule->exsub_protocol << 6 ) ;
 #ifndef SMALL  			
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? InverseBlink : 0 ;
 				drawItem( ( x == M_SCANNER ) ? (char *)XPSTR("Display Scan") : (char *)PSTR(STR_MULTI_TYPE), y ) ;
 
 				if ( x == M_SCANNER )
@@ -16336,7 +15854,7 @@ void editOneProtocol( uint8_t event )
 		
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_MULTI_AUTO), y ) ;
 				uint8_t value = (pModule->sub_protocol>>6)&0x01 ;
 				drawIdxText( y, (char *)XPSTR(M_NY_STR), value, attr ) ;
@@ -16351,7 +15869,7 @@ void editOneProtocol( uint8_t event )
 
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				uint32_t x = (pModule->sub_protocol & 0x3F ) | (pModule->exsub_protocol << 6 ) ;
 				multiOption( 21*FW, y, pModule->option_protocol, (sub==subN ? INVERS:0), x ) ;
 				if(attr)
@@ -16364,7 +15882,7 @@ void editOneProtocol( uint8_t event )
 		 
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)XPSTR("Power"), y ) ;
 				// Power stored in ppmNCH bit7 & Option stored in option_protocol
 				uint8_t value = (pModule->channels>>7)&0x01 ;
@@ -16386,7 +15904,7 @@ void editOneProtocol( uint8_t event )
 			
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)XPSTR("Rate (mS)"), y ) ;
 				drawIdxText( y, (char *)XPSTR("\002 7 8 91011"), pModule->ppmFrameLength, attr ) ;
 				if(attr)
@@ -16408,7 +15926,7 @@ void editOneProtocol( uint8_t event )
 				attr = 0 ;
 				if ( sub==subN )
 				{
-					attr = INVERS ;
+					attr = blink ;
 				}
 				PUTS_ATT( 0, y, XPSTR("Failsafe"), attr ) ;
 				if ( ( PrivateData[1] && ( ( PrivateData[0] & 0x20 ) == 0 ) ) )
@@ -16439,7 +15957,7 @@ void editOneProtocol( uint8_t event )
 		{
 			if(t_pgOfs<=subN)
   		{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_DSM_TYPE), y ) ;
   			int8_t x ;
   		  x = pModule->sub_protocol ;
@@ -16462,7 +15980,7 @@ void editOneProtocol( uint8_t event )
 		{
 			if(t_pgOfs<=subN)
   		{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_PPMFRAME_MSEC), y ) ;
 				drawNumber( PARAM_OFS, y, (int16_t)pModule->ppmFrameLength*5 + 225, attr|PREC1 ) ;
  	  	  if ( attr )
@@ -16475,7 +15993,7 @@ void editOneProtocol( uint8_t event )
 
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_SHIFT_SEL), y ) ;
 				drawIdxText( y, (char *)PSTR(STR_POS_NEG), pModule->pulsePol, attr ) ;
 				if ( attr )
@@ -16491,7 +16009,7 @@ void editOneProtocol( uint8_t event )
 		{
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_TYPE)+1, y ) ;
 #if defined(PCBXLITE) || defined(PCBX9LITE) || defined(REV19) || defined(PCBX7ACCESS)
 extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
@@ -16524,7 +16042,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 			subN += 1 ;
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)XPSTR("Chans"), y ) ;
 				drawIdxText( y, (char *)XPSTR("\00216 8"), pModule->channels, attr ) ;
 				if ( attr )
@@ -16539,7 +16057,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 				if(t_pgOfs<=subN)
 				{
 					uint32_t temp ;
-					attr = ( sub==subN ) ? INVERS : 0 ;
+					attr = sub==subN ? blink : 0 ;
 					temp = pModule->r9MflexMode ;
 					drawItem( (char *)XPSTR("Flex mode"), y ) ;
 					drawIdxText( y, (char *)XPSTR("\006   OFF915MHz868MHz"), temp, attr ) ;
@@ -16562,7 +16080,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 					
 				if(t_pgOfs<=subN)
 				{
-					attr = ( sub==subN ) ? INVERS : 0 ;
+					attr = sub==subN ? blink : 0 ;
 					char *s ; 
 					s = XPSTR("\004  10 100 5001000") ;
 					if ( ( pModule->country == 2 ) && (pModule->r9MflexMode == 0) )
@@ -16605,12 +16123,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 			if(t_pgOfs<=subN)
 			{
 //				lcd_hline( 0, y+TFH, TRIGHT ) ;
-				attr = 0 ;
-				if ( sub==subN )
-				{
-					attr = INVERS ;
-//					lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
-				}
+				attr = sub==subN ? blink : 0 ;
 				PUTS_ATT( 0, y, XPSTR("Failsafe"), sub==subN ? INVERS : 0 ) ;
 				if ( pModule->failsafeMode == 0 )
 				{
@@ -16630,7 +16143,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 			
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 				drawItem( (char *)PSTR(STR_COUNTRY)+1, y ) ;
 				drawIdxText( y, (char *)XPSTR("\003AmeJapEur"), pModule->country, attr ) ;
 				if ( attr )
@@ -16644,7 +16157,7 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 
 		if(t_pgOfs<=subN)
 		{
-			attr = ( sub==subN ) ? INVERS : 0 ;
+			attr = sub==subN ? blink : 0 ;
 			drawItem( (char *)PSTR(STR_PPM_1ST_CHAN), y ) ;
 			drawNumber( PARAM_OFS, y, pModule->startChannel + 1, attr ) ;
  			if ( attr )
@@ -16655,12 +16168,35 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 		}
 		subN += 1 ;
 
+		if ( pModule->protocol == PROTO_XFIRE )
+		{
+			if(t_pgOfs<=subN)
+			{
+				attr = sub==subN ? blink : 0 ;
+				drawItem( (char *)XPSTR("Arm Option"), y ) ;
+				if ( pModule->xfireArmSwitch )
+				{
+		    	putsDrSwitches( PARAM_OFS, y, pModule->xfireArmSwitch, attr|LUA_RIGHT ) ;
+				}
+				else
+				{
+          PUTS_ATT( PARAM_OFS, y, XPSTR("CH 5"), attr|LUA_RIGHT ) ;
+				}
+				if ( attr )
+				{
+          CHECK_INCDEC_MODELSWITCH( pModule->xfireArmSwitch, -MaxSwitchIndex,MaxSwitchIndex);
+				}
+				if((y+=FH)>(SCREEN_LINES-1)*FH) return ;
+			}
+			subN += 1 ;
+		}
+
 		uint8_t brNeeded = need_bind_range ;
 		if ( brNeeded & 1 )
 		{
 			if(t_pgOfs<=subN)
 			{
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 //				if ( attr )
 //				{
 //					lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
@@ -16739,7 +16275,7 @@ extern uint16_t XjtVersion ;
 			if(t_pgOfs<=subN)
 			{
 //				lcd_hline( 0, y+TFH, TRIGHT ) ;
-				attr = ( sub==subN ) ? INVERS : 0 ;
+				attr = sub==subN ? blink : 0 ;
 //				if ( attr )
 //				{
 //					lcdDrawSolidFilledRectDMA( 0, y*TSCALE+2, TRIGHT*TSCALE, TFH*TSCALE-2, ~LcdBackground ) ;
@@ -17544,7 +17080,7 @@ void menuTrainerProtocol(uint8_t event)
 	LcdFlags attr = 0 ;
 	PUTS_ATT_LEFT( y, XPSTR("Trainer Polarity"));
 	if(sub==subN) { attr = blink ; CHECK_INCDEC_H_MODELVAR_0( g_model.trainPulsePol,1);}
-	PUTS_AT_IDX( 17*FW+TRAINP_OFF_0, y, PSTR(STR_POS_NEG),g_model.trainPulsePol,attr );
+	PUTS_AT_IDX( PARAM_OFS + FW, y, PSTR(STR_POS_NEG),g_model.trainPulsePol,attr|LUA_RIGHT );
   
 	y += FHPY ;
  	subN += 1 ;
@@ -17556,7 +17092,7 @@ void menuTrainerProtocol(uint8_t event)
 		attr |= blink ;
  		CHECK_INCDEC_H_MODELVAR_0( g_model.ppmNCH, 12 ) ;
 	}
-	PUTS_NUM( 20*FW+TRAINP_OFF_0, y, g_model.ppmNCH + 4, attr ) ;
+	PUTS_NUM( PARAM_OFS + FW, y, g_model.ppmNCH + 4, attr ) ;
 
 	y += FHPY ;
  	subN += 1 ;
@@ -17568,7 +17104,7 @@ void menuTrainerProtocol(uint8_t event)
 		attr |= blink ;
  		CHECK_INCDEC_H_MODELVAR( g_model.ppmFrameLength, -12, 12 ) ;
 	}
- 	PUTS_NUM( 14*FW-1+TRAINP_OFF_0, y, g_model.ppmFrameLength*5 + 225, attr ) ;
+ 	PUTS_NUM( PARAM_OFS - FW, y, g_model.ppmFrameLength*5 + 225, attr ) ;
 
 	y += FHPY ;
  	subN += 1 ;
@@ -17580,7 +17116,7 @@ void menuTrainerProtocol(uint8_t event)
 		attr |= blink ;
 		CHECK_INCDEC_H_MODELVAR( g_model.ppmDelay,-4,10);
 	}
-	PUTS_NUM( 11*FW+7*FW-1+TRAINP_OFF_0, y, (g_model.ppmDelay*50)+300, attr);
+	PUTS_NUM( PARAM_OFS - FW, y, (g_model.ppmDelay*50)+300, attr);
 
 	y += FHPY ;
  	subN += 1 ;
@@ -17589,8 +17125,7 @@ void menuTrainerProtocol(uint8_t event)
 	
 	PUTS_ATT_LEFT( y, PSTR(STR_PPM_1ST_CHAN));
 	if(sub==subN) { attr = INVERS ; CHECK_INCDEC_H_MODELVAR_0( g_model.startChannel, 16 ) ; }
-	PUTS_NUM( 14*FW+TRAINP_OFF_0, y, g_model.startChannel + 1, attr ) ;
-
+	PUTS_NUM( PARAM_OFS + FW, y, g_model.startChannel + 1, attr ) ;
 	y += FHPY ;
  	subN += 1 ;
 		
@@ -17602,7 +17137,7 @@ void menuTrainerProtocol(uint8_t event)
   PUTS_ATT_LEFT( y, PSTR(STR_Trainer) ) ;
   if(value)
 	{
-    PUTS_NUM( PARAM_OFS+3*FW+TRAINP_OFF_0, y, value-1, (sub==subN ? blink : 0) ) ;
+    PUTS_NUM( PARAM_OFS + FW, y, value-1, (sub==subN ? blink : 0) ) ;
     PUTC( 8*FW+TRAINP_OFF_0, y, '(' ) ;
     PUTC( 15*FW+TRAINP_OFF_0, y, ')' ) ;
 		validateText( g_eeGeneral.trainerProfile[value-1].profileName, 6 ) ;
@@ -17610,7 +17145,7 @@ void menuTrainerProtocol(uint8_t event)
   }
   else
 	{
-    PUTS_ATT(PARAM_OFS+TRAINP_OFF_0, y, PSTR(STR_OFF), (sub==subN ? blink:0) ) ;
+    PUTS_ATT( PARAM_OFS + FW, y, PSTR(STR_OFF), (sub==subN ? blink:0)|LUA_RIGHT ) ;
 	}
   if(sub==subN)
 	{
@@ -23230,7 +22765,7 @@ void menuProcText(uint8_t event)
 		if ( result != FR_OK )
 		{
 		 	memset( SharedMemory.TextControl.TextMenuBuffer,' ', 16*21 ) ;
-  		strncpy_P( (char *)&SharedMemory.TextControl.TextMenuBuffer[63+3], XPSTR("No Notes Found"), 14 );
+  		memcpy( (char *)&SharedMemory.TextControl.TextMenuBuffer[63+3], XPSTR("No Notes Found"), 14 );
 			SharedMemory.TextControl.TextLines = 8 ;
 		}
 	 }
@@ -24344,8 +23879,12 @@ void menuProc0(uint8_t event)
     putsVBat( 7*FWX/2, 0*FHY/2, att|NO_UNIT/*|CONDENSED*/);
 		lcdDrawChar( 7*FWX, 1*FHY-6, 'V') ;
 #else
-    putsVBat( 6*FW+1 + X12SMALL_OFFSET, 2*FH, att|NO_UNIT|CONDENSED);
-    PUTC( 6*FW+2 + X12SMALL_OFFSET, 3*FH, 'V');
+#ifdef SMALL
+    putsVBat( 5*FW+1, 2*FH, att|NO_UNIT|CONDENSED);
+#else
+    putsVBat( 5*FW+1 + X12SMALL_OFFSET, 2*FH-2, att|NO_UNIT|MIDSIZE);
+#endif    
+		PUTC( 5*FW+2 + X12SMALL_OFFSET, 2*FH-2, 'V');
 #endif		
 
 #if defined(PCBX12D) || defined(PCBX10)
@@ -24394,15 +23933,15 @@ void menuProc0(uint8_t event)
 			i += 1 ;
 			if ( p->name[0] != ' ' )
 			{
-				PUTS_ATT_N( 6*FW+2 + X12SMALL_OFFSET, 2*FH, p->name, 6, /*BSS*/ 0 ) ;
+				PUTS_ATT_N( 7*FW+2 + X12SMALL_OFFSET, 2*FH, p->name, 6, /*BSS*/ 0 ) ;
 			}
 			else
 			{
-  			PUTC( 6*FW+2 + X12SMALL_OFFSET, 2*FH, 'F' ) ;
-  			PUTC( 7*FW+2 + X12SMALL_OFFSET, 2*FH, '0'+ i ) ;
+  			PUTC( 7*FW+2 + X12SMALL_OFFSET, 2*FH, 'F' ) ;
+  			PUTC( 8*FW+2 + X12SMALL_OFFSET, 2*FH, '0'+ i ) ;
 			}
 #ifndef ARUNI
-			lcd_rect( 6*FW+1 + X12SMALL_OFFSET, 2*FH-1, 6*FW+2, 9 ) ;   // put a bounding box
+			lcd_rect( 7*FW+1 + X12SMALL_OFFSET, 2*FH-1, 6*FW+2, 9 ) ;   // put a bounding box
 #endif
 		}
 		else

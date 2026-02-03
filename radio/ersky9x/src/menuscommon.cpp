@@ -104,7 +104,6 @@ extern uint8_t TlExitIcon ;
 extern const char s_charTab[] = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-.";
 #define NUMCHARS (sizeof(s_charTab)-1)
 
-
 void touchMenuTitle( char *s )
 {
 	TITLE(s) ;
@@ -542,6 +541,385 @@ uint8_t evalHresOffset(int8_t sub)
 	return (s_pgOfs = t_pgOfs) ;
 }
 #endif
+
+extern int32_t Rotary_diff ;
+int8_t qRotary()
+{
+	int8_t diff = 0 ;
+
+	if ( Rotary_diff > 0)
+	{
+		diff = 1 ;
+	}
+	else if ( Rotary_diff < 0)
+	{
+		diff = -1 ;
+	}
+	Rotary_diff = 0 ;
+	return diff ;
+}
+
+
+static uint8_t popupProcess( uint8_t event, uint8_t max )
+{
+	int8_t popidxud = qRotary() ;
+	uint8_t popidx = PopupData.PopupIdx ;
+
+	if ( PopupData.PopupTimer )
+	{
+#ifndef X20
+		if ( BLINK_ON_PHASE )
+#endif
+		{
+			if ( --PopupData.PopupTimer == 0 )
+			{
+				// Timeout popup
+				PopupData.PopupActive = 0 ;
+				return POPUP_EXIT ;
+			}
+		}
+	}
+	else
+	{
+#ifdef X20
+		PopupData.PopupTimer = 200 ;
+#else
+		PopupData.PopupTimer = 255 ;
+#endif
+  }
+
+//  event = Tevent ;
+	switch(event)
+	{
+#ifndef X20
+    case EVT_KEY_BREAK(KEY_MENU) :
+#endif
+    case EVT_KEY_BREAK(BTN_RE):
+			PopupData.PopupActive = 0 ;
+			PopupData.PopupTimer = 0 ;
+		return POPUP_SELECT ;
+    
+		case EVT_KEY_FIRST(KEY_UP) :
+#ifndef X20
+		case EVT_KEY_REPT(KEY_UP) :
+#endif
+			popidxud = -1 ;
+		break ;
+    
+		case EVT_KEY_FIRST(KEY_DOWN) :
+#ifndef X20
+		case EVT_KEY_REPT(KEY_DOWN) :
+#endif
+			popidxud = 1 ;
+		break ;
+    
+		case EVT_KEY_LONG(BTN_RE) :
+			if ( g_eeGeneral.disableBtnLong )
+			{
+				break ;
+			}		
+		case EVT_KEY_BREAK(KEY_EXIT) :
+			killEvents( event ) ;
+			Tevent = 0 ;
+			PopupData.PopupActive = 0 ;
+			PopupData.PopupTimer = 0 ;
+		return POPUP_EXIT ;
+	}
+
+	if (popidxud > 0)
+	{
+		if ( popidx < max )
+		{
+			popidx += 1 ;
+		}
+		else
+		{
+			popidx = 0 ;			
+		}
+	}
+	else if (popidxud < 0)
+	{		
+		if ( popidx )
+		{
+			popidx -= 1 ;
+		}
+		else
+		{
+			popidx = max ;
+		}
+	}
+
+	if (popidxud )
+	{
+		if ( PopupData.PopupTimer )
+		{
+			PopupData.PopupTimer = 255 ;
+		}
+	}	
+
+#ifdef TOUCH
+	if ( TouchUpdated )
+	{
+		uint32_t exiting = 0 ;
+		uint32_t outside = 0 ;
+		TouchUpdated = 0 ;
+
+		if ( ( TouchControl.x < PopupData.PopupHpos ) || ( TouchControl.x > PopupData.PopupHpos + PopupData.PopupWidth ) )
+		{
+			outside = 1 ;
+		}
+		else if ( ( TouchControl.y < PopupData.PopupVpos ) || ( TouchControl.y > PopupData.PopupVpos + (max+1) * (FH+POPUP_SPACING)*2 ) )
+		{
+			outside = 1 ;
+		}
+
+		if ( TouchControl.event == TEVT_DOWN )
+		{
+			if ( outside == 0 )
+			{
+#ifdef X20
+		 		popidx = (TouchControl.y - PopupData.PopupVpos - POPUP_SPACING/2) / (FH+POPUP_SPACING) ;
+#else
+		 		popidx = (TouchControl.y - PopupData.PopupVpos - POPUP_SPACING) / ((FH+POPUP_SPACING)*2) ;
+#endif
+				if ( popidx > max )
+				{
+					popidx = max ;
+				}
+				if ( PopupData.PopupTimer )
+				{
+					PopupData.PopupTimer = 255 ;
+				}
+			}
+		}
+		else if ( TouchControl.event == TEVT_UP )
+		{
+			if ( outside )
+			{
+				exiting = 1 ;
+			}
+			else
+			{
+				PopupData.PopupActive = 0 ;
+				PopupData.PopupTimer = 0 ;
+				return POPUP_SELECT ;
+			}
+		}
+		if ( exiting )
+		{
+			PopupData.PopupActive = 0 ;
+			PopupData.PopupTimer = 0 ;
+			return POPUP_EXIT ;
+		}
+	}
+#endif
+
+	PopupData.PopupIdx = popidx ;
+	return POPUP_NONE ;
+}
+
+//extern uint16_t LCDLastOp ;
+
+#if defined(PCBX12D) || defined(PCBX10) || defined(X20)
+
+#ifdef X20
+#define POPUP_VOFFSET			16
+#else
+#define POPUP_VOFFSET			4
+#endif
+
+#ifdef TOUCH
+static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
+{
+	uint32_t entries = 0 ;
+	uint16_t y = FH+POPUP_VOFFSET ;
+#ifdef X20
+	uint16_t bitWidth = width * FW ;
+	uint16_t x = ( LCD_W - bitWidth) / 2 ;
+	PopupData.PopupHpos = x ;
+	PopupData.PopupVpos = y ;
+#else
+	uint16_t bitWidth = width * FW * 2 ;
+	uint16_t x = ( LCD_W - bitWidth) / 4 ;
+	PopupData.PopupHpos = x*2 ;
+	PopupData.PopupVpos = y*2 ;
+#endif
+	PopupData.PopupWidth = bitWidth ;
+
+	uint16_t xmask = mask ;
+	while ( xmask )
+	{
+		if ( xmask & 1 )
+		{
+			entries += 1 ;
+		}
+		xmask >>= 1 ;
+	}
+	
+#ifdef X20
+	lcdDrawSolidFilledRectDMA( x, POPUP_VOFFSET, bitWidth, (FH+2 + entries*(FH+POPUP_SPACING)), DimBackColour ) ;
+#else
+	lcdDrawSolidFilledRectDMA( (x*2), POPUP_VOFFSET, bitWidth, (FH+2 + entries*(FH+POPUP_SPACING))*2, DimBackColour ) ;
+#endif
+	 
+	while ( mask )
+	{
+		if ( mask & 1 )
+		{
+//			uint32_t len = strlen( list ) ;
+#ifdef X20
+			lcdDrawText( x+FW, y, (const char *)(list) ) ;
+#else
+			PUTS_P( x+FW, y, (const char *)(list) ) ;
+#endif
+//			lcd_putsn_P( x + FW + len*FW, y, "              ", width-len-1 ) ;
+			y += FH ;
+			y += POPUP_SPACING ;
+		}
+		mask >>= 1 ;
+		while ( *list )
+		{
+			list += 1 ;			
+		}		
+		list += 1 ;			
+	}
+#ifndef X20
+	x *= 2 ;
+	y *= 2 ;
+#endif
+	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, bitWidth, 2, LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x), y, bitWidth, 2, LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET), LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x+bitWidth), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)+2, LcdForeground ) ;
+#ifdef X20
+	lcd_char_inverse( x + FW, (PopupData.PopupIdx+1)*(FH+POPUP_SPACING)+POPUP_VOFFSET-POPUP_SPACING-POPUP_SPACING/2, bitWidth - 2*FW, 0, POPUP_SPACING+FH ) ;
+#else
+	lcd_char_inverse( x/2 + FW, (PopupData.PopupIdx+1)*(FH+POPUP_SPACING)+POPUP_VOFFSET-POPUP_SPACING-POPUP_SPACING/2, bitWidth/2 - 2*FW, 0, POPUP_SPACING+FH ) ;
+#endif
+
+	return entries ;
+	
+}
+#else
+static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
+{
+	uint16_t bitWidth = width * FW * 2 ;
+	uint32_t entries = 0 ;
+	uint16_t y = FHPY+POPUP_VOFFSET/2 ;
+	uint16_t x = ( LCD_W - bitWidth) / 2 ;
+//	PopupData.PopupHpos = x*2 ;
+//	PopupData.PopupVpos = y*2 ;
+//	PopupData.PopupWidth = bitWidth ;
+	
+	uint16_t xmask = mask ;
+	while ( xmask )
+	{
+		if ( xmask & 1 )
+		{
+			entries += 1 ;
+		}
+		xmask >>= 1 ;
+	}
+	
+	lcdDrawSolidFilledRectDMA( x, POPUP_VOFFSET, bitWidth, (FHPY*2 + entries*(FHPY*2)), DimBackColour ) ;
+	
+	while ( mask )
+	{
+		if ( mask & 1 )
+		{
+//			uint32_t len = strlen( list ) ;
+			PUTS_P( x/2 + FWPX, y, (const char *)(list) ) ;
+//			lcd_putsn_P( (4+len)*FW + X12OFFSET, y, "              ", width-len-1 ) ;
+			y += FHPY ;
+		}
+		mask >>= 1 ;
+		while ( *list )
+		{
+			list += 1 ;			
+		}		
+		list += 1 ;			
+	}
+//	x *= 2 ;
+//	y *= 2 ;
+	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, bitWidth, 2, LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x), y*2, bitWidth+2, 2, LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)*2+4, LcdForeground ) ;
+	lcdDrawSolidFilledRectDMA( (x+bitWidth), POPUP_VOFFSET, 2, (y-POPUP_VOFFSET)*2+4, LcdForeground ) ;
+	lcd_char_inverse( x/2 + FWPX, (PopupData.PopupIdx+1)*(FHPY)+POPUP_VOFFSET/2, bitWidth/2 - 2*FW, 0, FHPY ) ;
+//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, POPUP_VOFFSET*2, width*FW*2, 2, LCD_BLACK) ;
+//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, y*2, width*FW*2, 2, LCD_BLACK) ;
+//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET)*2, POPUP_VOFFSET*2, 2, (y-POPUP_VOFFSET)*2, LCD_BLACK) ;
+//	lcdDrawSolidFilledRectDMA( (3*FW + X12OFFSET+width*FW)*2, POPUP_VOFFSET*2, 2, (y-POPUP_VOFFSET)*2+2, LCD_BLACK) ;
+//	lcd_char_inverse( 4*FW + X12OFFSET, (PopupData.PopupIdx+1)*FHY+POPUP_VOFFSET, (width-2)*FW, 0 ) ;
+
+	return entries ;
+}
+#endif
+
+#else
+static uint32_t popupDisplay( const char *list, uint16_t mask, uint8_t width )
+{
+	uint32_t entries = 0 ;
+	coord_t y = 0 ;
+
+	while ( mask )
+	{
+		if ( mask & 1 )
+		{
+#ifdef PROP_TEXT
+			PUTS_ATT_N( 3*FW + X12OFFSET, y, "\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223\223", width, 0 ) ;
+#else
+			PUTS_ATT_N( 3*FW + X12OFFSET, y, "                ", width, 0 ) ;
+#endif
+			PUTS_P( 4*FW + X12OFFSET, y, (const char *)(list) ) ;
+			entries += 1 ;
+			y += FH ;
+		}
+		mask >>= 1 ;
+		while ( *list )
+		{
+			list += 1 ;			
+		}		
+		list += 1 ;			
+	}
+	if ( y >= 7*FH )
+	{
+		y -= 1 ;
+	}
+	lcd_rect( 3*FW + X12OFFSET, 0, width*FW, y+1 ) ;
+	lcd_char_inverse( 4*FW + X12OFFSET, (PopupData.PopupIdx)*FH, (width-2)*FW, 0 ) ;
+
+	return entries ;
+}
+#endif
+
+static uint8_t popTranslate( uint8_t popidx, uint16_t mask )
+{
+	uint32_t position ;
+	popidx += 1 ;
+	for ( position = 0 ; position < 16 ; position += 1 )
+	{
+		if ( mask & 1 )
+		{
+			if ( --popidx == 0)
+			{
+				break ;
+			}
+		}
+		mask >>= 1 ;
+	}
+	return position ;
+}
+
+
+uint32_t doPopup( const char *list, uint16_t mask, uint8_t width, uint8_t event )
+{
+	uint32_t count = popupDisplay( list, mask, width ) ;
+	uint32_t popaction = popupProcess( event, count - 1 ) ;
+	uint8_t popidx = PopupData.PopupIdx ;
+	PopupData.PopupSel = popTranslate( popidx, mask ) ;
+	return popaction ;
+}
 
 
 uint8_t char2idx(char c)
@@ -1812,8 +2190,19 @@ void putsChnRaw(coord_t x,coord_t y,uint8_t idx, LcdFlags att)
 #else
 					displayInputName( x, y, idx-224+1, att ) ;
 #endif
-//					lcd_img( x, y, IconInput, 0, 0 ) ;
+					cpystr( (uint8_t *)LastItem, (uint8_t *) "input" ) ;
+
+//					lcd_img( x, y, IconInput, 0, 0 ) ;putsChnRaw
 //					lcd_outdezNAtt(x+3*FW, y, idx-224, att + LEADING0, 2) ;
+					return ;
+				}
+				if ( idx >= 224-NUM_VARS )
+				{
+#ifdef COLOUR_DISPLAY
+					displayVarName( x/2, y/2, 223-idx, att ) ;
+#else
+					displayVarName( x, y, 223-idx, att  ) ;
+#endif
 					return ;
 				}
 				uint32_t h = idx ;

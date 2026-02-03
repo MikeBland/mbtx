@@ -625,12 +625,20 @@ extern uint8_t Bit_pulses[] ;
 extern uint16_t XfireLength ;
 extern struct t_telemetryTx TelemetryTx ;
 
+// Arming addition code in edgeTx for ELRS 4
+
 // Range for pulses (channels output) is [-1024:+1024]
+//  // sends channel data and also communicates commanded armed status in arming mode Switch.
+//  // frame len 24 -> arming mode CH5: module will use channel 5
+//  // frame len 25 -> arming mode Switch: send commanded armed status in extra byte after channel data
 uint8_t setupPulsesXfire()
 {
 	uint32_t startChan ;
  	uint8_t *buf = Bit_pulses ;
- 	*buf++ = MODULE_ADDRESS ;
+	int8_t armingMode = g_model.Module[1].xfireArmSwitch ; // 0 = Channel mode, !0 = Switch mode
+  uint8_t lenAdjust = armingMode ? 1 : 0;
+ 	
+	*buf++ = MODULE_ADDRESS ;
 
 	if ( TelemetryTx.XfireTx.count )
 	{
@@ -653,7 +661,7 @@ uint8_t setupPulsesXfire()
 	else
 	{
 		startChan = g_model.Module[1].startChannel ;
-  	*buf++ = 24 ; // 1(ID) + 22 + 1(CRC)
+  	*buf++ = 24 + lenAdjust ; // 1(ID) + 22 + 1(CRC)
   	uint8_t *crc_start = buf ;
   	*buf++ = CHANNELS_ID ;
   	uint32_t bits = 0 ;
@@ -670,7 +678,11 @@ uint8_t setupPulsesXfire()
   	    bitsavailable -= 8 ;
   	  }
   	}
-  	*buf++ = crc8( crc_start, 23) ;
+		if ( armingMode )
+		{
+	    *buf++ = getSwitch00(armingMode) ;  // commanded armed status in Switch mode
+		}
+  	*buf++ = crc8( crc_start, 23 + lenAdjust) ;
 	}
   return (XfireLength = (buf - Bit_pulses)) ;
 }

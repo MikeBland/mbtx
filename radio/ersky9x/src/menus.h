@@ -559,7 +559,7 @@ extern uint32_t fillPlaylist( TCHAR *dir, struct fileControl *fc, char *ext ) ;
 
 
 extern uint8_t TextIndex ;
-extern uint8_t TextType ;
+//extern uint8_t TextType ;
 extern uint8_t TextResult ;
 
 extern uint8_t InverseBlink ;

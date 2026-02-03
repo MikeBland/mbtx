@@ -576,7 +576,7 @@ void menuSwitches(uint8_t event)
 				{
 					// Long MENU pressed
 		      s_currIdx = sub ;
-  				TextType = 0 ;
+//  				TextType = 0 ;
 					pushMenu(menuSwitchOne) ;
   	  		s_editMode = false ;
 				}
@@ -708,7 +708,8 @@ extern uint8_t TlExitIcon ;
 	else
 	{
 		uint32_t newVpos ;
-		int32_t newSelection = checkTouchSelect( TLINES, 0, 2 ) ;
+		uint32_t newSelection = checkTouchSelect( s_mixMaxSel, t_pgOfs, 2 ) ;
+//		int32_t newSelection = checkTouchSelect( TLINES, t_pgOfs, 2 ) ;
 		uint16_t newVert = processSelection( sub , newSelection ) ;
 		sub = mstate2.m_posVert = newVert & 0x00FF ;
 		checkTouchEnterEdit( newVert ) ;
@@ -727,11 +728,11 @@ extern uint8_t TlExitIcon ;
 				mstate2.m_posVert = sub = t_pgOfs + TLINES - 1 ;
 			}
 		}
-	}
-	if ( handleSelectIcon() || selected )
-	{
-		s_currIdx = sub ;
-		menulong = 1 ;
+		if ( handleSelectIcon() || selected )
+		{
+			s_currIdx = sub ;
+			menulong = 1 ;
+		}
 	}
 #endif
 		

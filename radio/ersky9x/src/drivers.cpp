@@ -2310,7 +2310,7 @@ uint32_t spi_PDC_action( uint8_t *command, uint8_t *tx, uint8_t *rx, uint32_t co
 // Documented bug, must do them 1 by 1
 void read_adc()
 {
-	register Adc *padc ;
+	Adc *padc ;
 	uint32_t y ;
 	uint32_t x ;
 #ifndef ARUNI
@@ -2513,7 +2513,7 @@ void read_adc()
 
 void init_adc()
 {
-	register Adc *padc ;
+	Adc *padc ;
 	uint32_t timer ;
 
 	timer = ( Master_frequency / (9000000*2) - 1 ) << 8 ;
@@ -2538,7 +2538,7 @@ void init_adc()
 
 void set_stick_gain( uint32_t gains )
 {
-	register Adc *padc ;
+	Adc *padc ;
 	uint32_t gain ;
 	uint32_t offset ;
 
@@ -2597,7 +2597,7 @@ void set_stick_gain( uint32_t gains )
 void start_timer3()
 {
 #ifndef SIMU
-  register Tc *ptc ;
+  Tc *ptc ;
 //	Pio *pioptr ;
 
 	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
@@ -2621,7 +2621,7 @@ void start_timer3()
 void start_timer4()
 {
 #ifndef SIMU
-  register Tc *ptc ;
+  Tc *ptc ;
 	uint32_t timer ;
 
 	timer = Master_frequency / (2*2000000) ;		// MCK/2 and 2MHz

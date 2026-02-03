@@ -10558,10 +10558,6 @@ extern int32_t Rotary_diff ;
 extern uint32_t TotalExecTime ;
 				uint16_t execTime = getTmr2MHz() ;
 				refreshNeeded = basicTask( evt|(evtAsRotary<<8), SCRIPT_LCD_OK	| SCRIPT_STANDALONE ) ;
-//				if ( refreshNeeded < 4)
-//				{
-//					Rf2Counters[refreshNeeded] += 1 ;
-//				}
 				execTime = (uint16_t)(getTmr2MHz() - execTime) ;
 				TotalExecTime += execTime ;
 				if ( refreshNeeded == 3 )
@@ -10578,7 +10574,6 @@ extern uint32_t TotalExecTime ;
 				{
 	  			if ( !refreshNeeded )
 					{
-//						ScCounters[0] += 1 ;
 						uint16_t execTime = getTmr2MHz() ;
     				refreshNeeded = basicTask( PopupData.PopupActive ? 0 : evt|(evtAsRotary<<8), SCRIPT_TELEMETRY ) ;
 						execTime = (uint16_t)(getTmr2MHz() - execTime) ;
@@ -10593,12 +10588,6 @@ extern uint32_t TotalExecTime ;
 							TotalExecTime += execTime ;
 						}
 
-//				ScriptMonitor <<= 4 ;
-//				ScriptMonitor |= refreshNeeded ;
-//				if ( refreshNeeded < 4)
-//				{
-//					Rf3Counters[refreshNeeded] += 1 ;
-//				}
 						if ( refreshNeeded )
 						{
 							telemetryScriptRunning = 1 ;
@@ -10611,7 +10600,10 @@ extern uint32_t TotalExecTime ;
 				ScriptActive = 1 ;
 				if ( PopupData.PopupActive )
 				{
-//					ScCounters[1] += 1 ;
+					if ( evt == 0 )
+					{
+						evt = getEvent() ;
+					}
 					actionMainPopup( evt ) ;
 				}
 				else
@@ -12502,6 +12494,13 @@ const char *get_switches_string()
 int16_t getValue(uint8_t i)
 {
   if(i<7) return calibratedStick[i];//-512..512
+#ifdef INPUTS
+	if ( i+1 >= 224 )
+	{
+extern int16_t InputAnas[] ;
+		return InputAnas[i-224+1] ;
+	}
+#endif
 	if ( i+1 > 223 - NUM_VARS )
 	{
 		i = 223 - (i+1) ;

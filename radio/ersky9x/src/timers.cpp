@@ -194,8 +194,8 @@ void startPulses()
 #ifdef PCBSKY
 void init5msTimer()
 {
-  register Tc *ptc ;
-	register uint32_t timer ;
+  Tc *ptc ;
+	uint32_t timer ;
 
   PMC->PMC_PCER0 |= 0x02000000L ;		// Enable peripheral clock to TC2
 
@@ -222,7 +222,7 @@ void TC2_Handler()
 extern "C" void TC2_IRQHandler()
 #endif
 {
-  register uint32_t dummy;
+  uint32_t dummy;
 #ifdef WDOG_REPORT
 #ifdef PCBSKY	
 	GPBR->SYS_GPBR1 = 0x64 ;
@@ -254,7 +254,7 @@ extern "C" void TC2_IRQHandler()
 // @120MHz this is 15MHz
 void init_hw_timer()
 {
-  register Tc *ptc ;
+  Tc *ptc ;
 
   PMC->PMC_PCER0 |= 0x00800000L ;		// Enable peripheral clock to TC0
 
@@ -290,10 +290,10 @@ void init_hw_timer()
 void init_pwm()
 {
 #ifdef REVA
-	register Pio *pioptr ;
+	Pio *pioptr ;
 #endif
-	register Pwm *pwmptr ;
-	register uint32_t timer ;
+	Pwm *pwmptr ;
+	uint32_t timer ;
 
   PMC->PMC_PCER0 |= ( 1 << ID_PWM ) ;		// Enable peripheral clock to PWM
   
@@ -1998,7 +1998,7 @@ void setupPulsesPpmAll(uint32_t module)
 #endif
 
 #ifdef PCBSKY
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 	uint32_t pwmChannel = module ? 1 : 3 ;
 	
 	pwmptr = PWM ;

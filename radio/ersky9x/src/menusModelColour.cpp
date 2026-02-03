@@ -4292,9 +4292,9 @@ void editOneInput(uint8_t event)
 					{
 						// Long MENU pressed
 						TextIndex = x ;
-#ifdef X20
-  					TextType = TEXT_TYPE_CUSTOM ;
-#endif
+//#ifdef X20
+//  					TextType = TEXT_TYPE_CUSTOM ;
+//#endif
 						TextDataControl.TextOption = 0 ;
 						TextDataControl.TextWidth = 6 ;
 						TextDataControl.TextLength = 5 ;
@@ -4391,11 +4391,11 @@ void editOneInput(uint8_t event)
 					if( attr && ( g_posHorz == p ) )
 					{
 #ifdef X20
-						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-1, y+TVOFF-1, FW+2, 34, DimBackColour ) ;
-						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-2, y+TVOFF-2, FW+4, 36, DimBackColour ) ;
-						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-3, y+TVOFF-3, FW+6, 38, DimBackColour ) ;
+						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-1, y+TVOFF-1, FW+1, 34, DimBackColour ) ;
+						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-2, y+TVOFF-2, FW+3, 36, DimBackColour ) ;
+						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-3, y+TVOFF-3, FW+5, 38, DimBackColour ) ;
 #else
-						lcd_rectColour( TRIGHT-TRMARGIN-7*(FW+3)+p*(FW+2)-1, y+TVOFF-1, FW+2, 9, DimBackColour ) ;
+						lcd_rectColour( TRIGHT-TRMARGIN-7*(FW+3)+p*(FW+2)-1, y+TVOFF-1, FW+1, 11, DimBackColour ) ;
 //						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-1, y+TVOFF-1, FW+2, 34, DimBackColour ) ;
 //						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-2, y+TVOFF-2, FW+4, 36, DimBackColour ) ;
 //						lcdHiresRect( TRIGHT-TRMARGIN-8*(FW+4)+p*(FW+4)-3, y+TVOFF-3, FW+6, 38, DimBackColour ) ;

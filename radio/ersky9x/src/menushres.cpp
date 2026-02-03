@@ -2673,7 +2673,7 @@ void menuVoiceOne(uint8_t event)
 							// Long MENU pressed
 #ifdef X20
 							TextIndex = pvad->source ;
-  					  TextType = TEXT_TYPE_SW_SOURCE ;
+//  					  TextType = TEXT_TYPE_SW_SOURCE ;
 #else
 							setTextSwSource( pvad->source ) ;
 //							TextIndex = positionSwSource( mapPots( pvad->source ) ) ;
@@ -2850,13 +2850,14 @@ void menuVoiceOne(uint8_t event)
 						validateName( pvad->file.name, sizeof(pvad->file.name) ) ;
 	  				if( attr )
 						{
-							lcd_rect( TRIGHT-TRMARGIN-8*FW-1, y+TVOFF-1, sizeof(pvad->file.name)*FW+2, 9 ) ;
+//							lcd_rect( TRIGHT-TRMARGIN-8*FW-1, y+TVOFF-1, sizeof(pvad->file.name)*FW+2, 9 ) ;
 #ifdef TOUCH
 							if ( event==EVT_KEY_LONG(BTN_RE) || handleSelectIcon() || selected )
 #else
 							if ( event==EVT_KEY_LONG(BTN_RE) )
 #endif
 							{
+								killEvents(event) ;								
 								VoiceFileType = ( pvad->fnameType == 4 ) ? VOICE_FILE_TYPE_SYSTEM : VOICE_FILE_TYPE_USER ;
       				 	pushMenu( menuSelectVoiceFile ) ;
 							}
@@ -4711,7 +4712,7 @@ void editOneProtocol( uint8_t event )
 #ifdef XFIRE
 	if ( module && (pModule->protocol == PROTO_XFIRE ) )
 	{
-		dataItems -= 2 ;
+		dataItems -= 1 ;
 	}
 #endif
 	
@@ -5364,6 +5365,31 @@ extern void set_ext_serial_baudrate( uint32_t baudrate ) ;
 			if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
 		}
 		subN += 1 ;
+
+		if ( pModule->protocol == PROTO_XFIRE )
+		{
+			if(t_pgOfs<=subN)
+			{
+				attr = sub==subN ? INVERS : 0 ;
+				drawItem( (char *)XPSTR("Arm Option"), y, attr ) ;
+				saveEditColours( attr, DimBackColour ) ;
+				if ( pModule->xfireArmSwitch )
+				{
+					putsDrSwitches(TRIGHT-TRMARGIN, y+TVOFF, pModule->xfireArmSwitch, LUA_RIGHT ) ;
+				}
+				else
+				{
+					drawText( TRIGHT-TRMARGIN, y, XPSTR("CH 5"), LUA_RIGHT ) ;
+				}
+				restoreEditColours() ;
+				if ( attr )
+				{
+          CHECK_INCDEC_MODELSWITCH( pModule->xfireArmSwitch, -MaxSwitchIndex,MaxSwitchIndex);
+				}
+				if((y+=TFH)>(TLINES-1)*TFH+TTOP) return ;
+			}
+			subN += 1 ;
+		}
 
 		uint8_t brNeeded = need_bind_range ;
 		if ( brNeeded & 1 )
@@ -6062,7 +6088,7 @@ void menuMixOne(uint8_t event)
    				PUTC_ATT( TRIGHT-TRMARGIN-7*(FW+3)+p*(FW+2), y+TVOFF, '0'+p, ( z & b ) ? 0 : INVERS ) ;
 					if( attr && ( g_posHorz == p ) )
 					{
-						lcd_rect( TRIGHT-TRMARGIN-7*(FW+3)+p*(FW+2)-1, y+TVOFF-3, FW+1, 12 ) ;
+						lcd_rect( TRIGHT-TRMARGIN-7*(FW+3)+p*(FW+2)-1, y+TVOFF-1, FW+1, 12 ) ;
 						if ( event==EVT_KEY_BREAK(KEY_MENU) || event==EVT_KEY_BREAK(BTN_RE) ) 
 						{
 							md2->modeControl ^= b ;

@@ -264,7 +264,7 @@ extern void disable_software_com2( void ) ;
 //extern void UART_Stop( void ) ;
 //extern void Bt_UART_Stop( void ) ;
 extern void txmit( uint8_t c ) ;
-extern void uputs( register char *string ) ;
+extern void uputs( char *string ) ;
 extern uint16_t rxCom2( void ) ;
 extern void txmit2nd( uint8_t c ) ;
 extern uint16_t rx2nduart( void ) ;

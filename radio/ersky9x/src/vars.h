@@ -47,7 +47,8 @@ PACK(struct t_valVarPack // 4 bytes
 	int32_t value:13 ;
 	uint32_t valIsSource:1 ;
 	int32_t item:8 ;
-	uint32_t spare2:5 ;
+	uint32_t scale:4 ;
+	uint32_t spare2:1 ;
 	uint32_t category:3 ;
 }) ;
 
@@ -77,6 +78,7 @@ void menuOneVar(uint8_t event) ;
 void menuVars(uint8_t event) ;
 
 extern uint8_t VarUsesTrim ;	// 4 bits
+extern char LastItem[] ;
 
 #endif // USE_VARS
 

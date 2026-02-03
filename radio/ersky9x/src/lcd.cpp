@@ -465,7 +465,7 @@ void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, ui
 	}
 #endif
 	 
-  register bool inv = false ;
+  bool inv = false ;
 	if (mode & INVERS) inv = true ;
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
 	{
@@ -519,7 +519,7 @@ void lcd_HiResbitmap( uint16_t i_x, uint16_t i_y, PROGMEM *bitmap, uint8_t w, ui
 
 void lcd_HiResimg( uint16_t i_x, uint16_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
-  register const unsigned char *q = imgdat ;
+  const unsigned char *q = imgdat ;
   uint8_t w    = *q++ ;
   uint32_t hb   = *q++ ;
   uint8_t sze1 = *q++ ;
@@ -555,7 +555,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 //	i_y = (LCD_H/2-1) - i_y ;
 #endif
 	 
-  register bool inv = false ;
+  bool inv = false ;
 	if (mode & INVERS) inv = true ;
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
 	{
@@ -611,7 +611,7 @@ void lcd_bitmap( uint8_t i_x, uint8_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 
 void lcd_img( uint8_t i_x, uint8_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode, uint16_t colour, uint16_t background )
 {
-  register const unsigned char *q = imgdat ;
+  const unsigned char *q = imgdat ;
   uint8_t w    = *q++ ;
   uint32_t hb   = *q++ ;
   uint8_t sze1 = *q++ ;
@@ -634,7 +634,7 @@ void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 	uint32_t yb ;
 	uint32_t x ;
 	
-  register bool inv = false ;
+  bool inv = false ;
 	if (mode & INVERS) inv = true ;
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
 	{
@@ -661,7 +661,7 @@ void lcd_bitmap( coord_t i_x, coord_t i_y, PROGMEM *bitmap, uint8_t w, uint8_t h
 
 void lcd_img( coord_t i_x, coord_t i_y, PROGMEM *imgdat, uint8_t idx, LcdFlags mode )
 {
-  register const unsigned char *q = imgdat ;
+  const unsigned char *q = imgdat ;
   uint8_t w    = *q++ ;
   uint32_t hb   = (*q++ +7) / 8 ;
   uint8_t sze1 = *q++ ;
@@ -1274,7 +1274,7 @@ uint16_t lcd_putcAtt(uint16_t x,uint16_t y,const char c,LcdFlags mode, uint16_t 
 #ifndef COLOUR_DISPLAY
 void lcd_putsnAttColour( uint16_t x, uint16_t y, const char * s,uint8_t len,LcdFlags mode, uint16_t colour, uint16_t bgColour )
 {
-	register char c ;
+	char c ;
   while(len!=0) {
     c = *s++ ;
 #ifdef BOOT
@@ -1345,7 +1345,7 @@ uint8_t lcd_putcAtt(coord_t x,coord_t y,const char c,uint8_t mode)
 			q = (uint8_t *) &font_5x8_x20_x7f[0] ;
 		}
 	}
-  register bool inv = false ;
+  bool inv = false ;
 	if (mode & INVERS) inv = true ;
 	if ( (mode & BLINK) && BLINK_ON_PHASE )
 	{
@@ -1545,7 +1545,7 @@ uint8_t lcd_putcSmall( coord_t x, coord_t y, uint8_t c, LcdFlags mode )
 {
 	int32_t i ;
 	uint8_t *p = dispBufAddress( x, y ) ;
-  register bool inv = false ;
+  bool inv = false ;
 #if PCBX9D
 	if ( x > 211-X9D_OFFSET )
 	{
@@ -1642,7 +1642,7 @@ void lcd_putsnAtt(coord_t x,coord_t y, const char * s,uint8_t len,LcdFlags mode)
  #endif
 #endif
 	 
-	register char c ;
+	char c ;
   while(len!=0) {
     c = *s++ ;
 #ifdef BOOT

@@ -159,8 +159,8 @@ uint32_t get_current_block_number( uint32_t block_no, t_file_entry *pfs ) ;
 #else
 uint32_t get_current_block_number( uint32_t block_no, uint16_t *p_size, uint32_t *p_seq ) ;
 #endif
-uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
-uint32_t write32_eeprom_block( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
+uint32_t read32_eeprom_data( uint32_t eeAddress, uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
+uint32_t write32_eeprom_block( uint32_t eeAddress, uint8_t *buffer, uint32_t size, uint32_t immediate ) ;
 void ee32_read_model_names( void ) ;
 void ee32LoadModelName(uint8_t id, unsigned char*buf,uint8_t len) ;
 void ee32_update_name( uint32_t id, uint8_t *source ) ;
@@ -419,7 +419,7 @@ void ee32SwapModels(uint8_t id1, uint8_t id2)
 #endif
 }
 
-uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
+uint32_t write32_eeprom_2K( uint32_t eeAddress, uint8_t *buffer )
 {
 	uint32_t i ;
 	uint8_t *p ;
@@ -475,7 +475,7 @@ uint32_t write32_eeprom_2K( uint32_t eeAddress, register uint8_t *buffer )
 }
 
 // Read eeprom data starting at random address
-uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
+uint32_t read32_eeprom_data( uint32_t eeAddress, uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
 #ifdef SIMU
   assert(size);
@@ -487,8 +487,8 @@ uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint3
   sem_post(eeprom_write_sem);
   int x;
 #else
-	register uint8_t *p ;
-	register uint32_t x ;
+	uint8_t *p ;
+	uint32_t x ;
 
 	p = Spi_tx_buf ;
 	*p = 3 ;		// Read command
@@ -517,10 +517,10 @@ uint32_t read32_eeprom_data( uint32_t eeAddress, register uint8_t *buffer, uint3
 }
 
 
-uint32_t write32_eeprom_block( uint32_t eeAddress, register uint8_t *buffer, uint32_t size, uint32_t immediate )
+uint32_t write32_eeprom_block( uint32_t eeAddress, uint8_t *buffer, uint32_t size, uint32_t immediate )
 {
-	register uint8_t *p ;
-	register uint32_t x ;
+	uint8_t *p ;
+	uint32_t x ;
 
 	eeprom_write_enable() ;
 
@@ -1147,10 +1147,10 @@ void eraseBlock( uint32_t eeAddress )
 
 void ee32_process()
 {
-	register uint8_t *p ;
-	register uint8_t *q ;
-	register uint32_t x ;
-	register uint32_t eeAddress ;
+	uint8_t *p ;
+	uint8_t *q ;
+	uint32_t x ;
+	uint32_t eeAddress ;
 
 //	return 0 ;
 
@@ -1581,7 +1581,7 @@ extern uint8_t SpiEncoderValid ;
 
 uint32_t unprotect_eeprom()
 {
- 	register uint8_t *p ;
+ 	uint8_t *p ;
 	uint32_t result ;
 	eeprom_write_enable() ;
 		

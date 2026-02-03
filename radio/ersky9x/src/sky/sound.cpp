@@ -60,12 +60,12 @@ void start_sound( void ) ;
 void start_dactimer( void ) ;
 void init_dac( void ) ;
 extern "C" void DAC_IRQHandler( void ) ;
-void disp_mem( register uint32_t address ) ;
+void disp_mem( uint32_t address ) ;
 //void end_sound( void ) ;
-void tone_start( register uint32_t time ) ;
+void tone_start( uint32_t time ) ;
 void tone_stop( void ) ;
 void init_twi( void ) ;
-void setVolume( register uint8_t volume ) ;
+void setVolume( uint8_t volume ) ;
 extern "C" void TWI0_IRQHandler (void) ;
 void audioDefevent( uint8_t e ) ;
 void i2c_check_for_request( void ) ;
@@ -175,7 +175,7 @@ void start_sound()
 //	pioptr->PIO_OER = 0x02000000L ;		// Set bit A25 as output
 //#endif
 #else
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	pioptr = PIOA ;
 	pioptr->PIO_CODR = 0x00010000L ;	// Set bit A16 OFF
 	pioptr->PIO_PER = 0x00010000L ;		// Enable bit A16 (Stock buzzer)
@@ -225,8 +225,8 @@ void start_sound()
 
 void set_frequency( uint32_t frequency )
 {
-  register Tc *ptc ;
-	register uint32_t timer ;
+  Tc *ptc ;
+	uint32_t timer ;
 
 	timer = Master_frequency / (8 * frequency) ;		// MCK/8 and 100 000 Hz
 	if ( timer > 65535 )
@@ -249,8 +249,8 @@ void set_frequency( uint32_t frequency )
 // Start TIMER1 at 100000Hz, used for DACC trigger
 void start_dactimer()
 {
-  register Tc *ptc ;
-	register uint32_t timer ;
+  Tc *ptc ;
+	uint32_t timer ;
 
 	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
   PMC->PMC_PCER0 |= 0x01000000L ;		// Enable peripheral clock to TC1
@@ -277,7 +277,7 @@ void start_dactimer()
 // So maybe it is automatically done
 void init_dac()
 {
-	register Dacc *dacptr ;
+	Dacc *dacptr ;
 
 //	SoundType = SOUND_NONE ;
 
@@ -459,7 +459,7 @@ void audioOff( void )
 // Called every 5mS from interrupt routine
 void sound_5ms()
 {
-	register Dacc *dacptr ;
+	Dacc *dacptr ;
 
 	if ( CoProcTimer )
 	{
@@ -663,7 +663,7 @@ void endVoice()
 
 void appendVoice( uint32_t index )		// index of next buffer
 {
-	register Dacc *dacptr ;
+	Dacc *dacptr ;
 	VoiceBuffer[index].flags &= ~VF_SENT ;
 	dacptr = DACC ;
 	__disable_irq() ;
@@ -782,8 +782,8 @@ uint32_t TwiLowSpeed ;
 // Need PA3 and PA4 set to peripheral A
 void init_twi()
 {
-	register Pio *pioptr ;
-	register uint32_t timing ;
+	Pio *pioptr ;
+	uint32_t timing ;
   
 	PMC->PMC_PCER0 |= 0x00080000L ;		// Enable peripheral clock to TWI0
 
@@ -1322,7 +1322,7 @@ void i2c_check_for_request()
 	}
 }
 
-void setVolume( register uint8_t volume )
+void setVolume( uint8_t volume )
 {
 //	PMC->PMC_PCER0 |= 0x00080000L ;		// Enable peripheral clock to TWI0
 	
@@ -1779,7 +1779,7 @@ void hapticOff()
 // pwmPercent 0-100
 void hapticOn( uint32_t pwmPercent )
 {
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 
 	pwmptr = PWM ;
 

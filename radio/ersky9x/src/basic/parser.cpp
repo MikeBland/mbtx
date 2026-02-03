@@ -1676,16 +1676,7 @@ void addSymbol( uint8_t type, uint8_t sub_type, uint16_t value, uint16_t dimensi
 
 #ifdef QT	
 uint32_t loadBasic( char *fileName, uint32_t type ) ;
-uint32_t basicTask( uint8_t event, uint8_t flags ) ;
-
-// Bitfields in ScriptFlags
-#define	SCRIPT_LCD_OK					1
-#define	SCRIPT_STANDALONE			2
-#define	SCRIPT_TELEMETRY			4
-#define	SCRIPT_RESUME					8
-#define	SCRIPT_BACKGROUND			16
-#define	SCRIPT_FRSKY					32
-#define	SCRIPT_ROTARY					64
+uint32_t basicTask( uint16_t event, uint8_t flags ) ;
 
 void scriptReleasetBt(void)
 {
@@ -3120,7 +3111,7 @@ void basicLoadModelScripts()
 // 3 Script finished (unloaded) or Loading needed
 // 4 (For QT) Loading complete
 
-uint32_t basicTask( uint8_t event, uint8_t flags )
+uint32_t basicTask( uint16_t event, uint8_t flags )
 {
 	uint32_t result ;
 	ScriptFlags = flags ;

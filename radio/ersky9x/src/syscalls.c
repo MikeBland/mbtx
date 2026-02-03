@@ -25,8 +25,14 @@
 #include <errno.h>
 //#include "debug.h"
 
-#undef errno
-extern int errno ;
+//#undef errno
+// Provide errno function for newlib-nano compatibility
+int * __errno(void)
+{
+  static int errno_value = 0;
+  return &errno_value;
+}
+
 extern int _end ;
 extern int _heap_end ;
 
@@ -43,7 +49,7 @@ extern caddr_t _sbrk(int nbytes)
   }
   else
 	{
-    errno = ENOMEM ;
+    *__errno() = ENOMEM ;
     return ((void *)-1) ;
   }
 }
@@ -69,36 +75,36 @@ extern int _gettimeofday(void *p1, void *p2)
 //  return -1;
 //}
 
-//extern int _close(int file)
-//{
-//  return -1;
-//}
+extern int _close(int file)
+{
+  return -1;
+}
 
-//extern int _fstat(int file, struct stat * st)
-//{
-//  st->st_mode = S_IFCHR ;
-//  return 0;
-//}
+extern int _fstat(int file, struct stat * st)
+{
+  st->st_mode = S_IFCHR ;
+  return 0;
+}
 
-//extern int _isatty(int file)
-//{
-//  return 1;
-//}
+extern int _isatty(int file)
+{
+  return 1;
+}
 
-//extern int _lseek(int file, int ptr, int dir)
-//{
-//  return 0;
-//}
+extern int _lseek(int file, int ptr, int dir)
+{
+  return 0;
+}
 
-//extern int _read(int file, char *ptr, int len)
-//{
-//  return 0;
-//}
+extern int _read(int file, char *ptr, int len)
+{
+  return 0;
+}
 
-//extern int _write(int file, char *ptr, int len)
-//{
-//  return 0;
-//}
+extern int _write(int file, char *ptr, int len)
+{
+  return 0;
+}
 
 extern void _exit(int status)
 {

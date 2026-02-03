@@ -1139,6 +1139,10 @@ extern uint8_t CalcScaleNest ;
 								{
 									v = InputAnas[k-224+1] ;
 								}
+								else if ( k >= 224-1-NUM_VARS )
+								{
+									v = getVarValue( 223 - ( k + 1) ) ;
+								}
 								else
 #endif
 								{

@@ -110,7 +110,7 @@ void startPdcBtReceive() ;
  */
 void UART_Configure( uint32_t baudrate, uint32_t masterClock)
 {
-  register Uart *pUart = CONSOLE_USART ;
+  Uart *pUart = CONSOLE_USART ;
 
   /* Configure PIO */
 	configure_pins( (PIO_PA9 | PIO_PA10), PIN_PERIPHERAL | PIN_INPUT | PIN_PER_A | PIN_PORTA | PIN_NO_PULLUP ) ;
@@ -177,7 +177,7 @@ void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 	else
 	{
 		UART_Configure( baudrate, Master_frequency) ;
-  	register Uart *pUart = CONSOLE_USART ;
+  	Uart *pUart = CONSOLE_USART ;
 		if ( parity )
 		{
   		pUart->UART_MR =  0 ;  // NORMAL, Even Parity, 8 bit
@@ -192,7 +192,7 @@ void com2_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 //// Set up COM2 for SBUS (8E2), can't set 2 stop bits!
 void UART_Sbus_configure( uint32_t masterClock )
 {
-  register Uart *pUart = CONSOLE_USART;
+  Uart *pUart = CONSOLE_USART;
 
 	UART_Configure( 100000, masterClock ) ;
   pUart->UART_MR =  0 ;  // NORMAL, Even Parity
@@ -200,7 +200,7 @@ void UART_Sbus_configure( uint32_t masterClock )
 
 void UART_Sbus57600_configure( uint32_t masterClock )
 {
-  register Uart *pUart = CONSOLE_USART;
+  Uart *pUart = CONSOLE_USART;
 
 	UART_Configure( 57600, masterClock ) ;
   pUart->UART_MR =  0 ;  // NORMAL, Even Parity
@@ -238,7 +238,7 @@ uint32_t txPdcCom2( struct t_serial_tx *data )
 #ifndef SMALL
 uint32_t txPdcCom1( struct t_serial_tx *data )
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 
 	if ( pUsart->US_TCR == 0 )
 	{
@@ -306,7 +306,7 @@ extern "C" void UART0_IRQHandler()
 void UART3_Configure( uint32_t baudrate, uint32_t masterClock)
 {
 //    const Pin pPins[] = CONSOLE_PINS;
-  register Uart *pUart = BT_USART;
+  Uart *pUart = BT_USART;
 //	register Pio *pioptr ;
 
   /* Configure PIO */
@@ -364,7 +364,7 @@ int32_t rxBtuart()
 #ifdef BT_PDC
 void startPdcBtReceive()
 {
-  register Uart *pUart = BT_USART;
+  Uart *pUart = BT_USART;
 	BtPdcFifo.outPtr = BtPdcFifo.fifo ;
 #ifndef SIMU
 	pUart->UART_RPR = (uint32_t)BtPdcFifo.fifo ;
@@ -378,7 +378,7 @@ void startPdcBtReceive()
 #ifndef SMALL
 void endPdcUsartReceive()
 {
-  register Uart *pUart = BT_USART;
+  Uart *pUart = BT_USART;
 
 	pUart->UART_PTCR = UART_PTCR_RXTDIS ;
 }
@@ -387,7 +387,7 @@ void endPdcUsartReceive()
 static int32_t rxPdcBt()
 {
 #if !defined(SIMU)
-  register Uart *pUart = BT_USART;
+  Uart *pUart = BT_USART;
 	uint8_t *ptr ;
 	uint8_t *endPtr ;
   int32_t chr ;
@@ -438,7 +438,7 @@ static int32_t rxPdcBt()
 static void UART2_Configure( uint32_t baudrate, uint32_t masterClock)
 {
 ////    const Pin pPins[] = CONSOLE_PINS;
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 //	register Pio *pioptr ;
 
   /* Configure PIO */
@@ -513,7 +513,7 @@ void com1_Configure( uint32_t baudrate, uint32_t invert, uint32_t parity )
 	else
 	{
 		UART2_Configure( baudrate, Master_frequency ) ;	
-  	register Usart *pUsart = SECOND_USART;
+  	Usart *pUsart = SECOND_USART;
 		if ( parity )
 		{
   		pUsart->US_MR =  0x000000C0 ;  // NORMAL, Even Parity, 8 bit
@@ -544,7 +544,7 @@ extern "C" void USART0_IRQHandler()
 	RTC->BKP1R = 0x8C ;
 #endif
 #endif
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 	uint32_t status ;
 
 #ifdef REVX
@@ -769,7 +769,7 @@ extern "C" void USART0_IRQHandler()
 #ifdef REVX
 void jetiSendWord( uint16_t word )
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 	uint32_t i ;
 	uint16_t parity = 0 ;
 
@@ -823,7 +823,7 @@ int32_t getJetiWord()
 
 uint32_t txPdcUsart( uint8_t *buffer, uint32_t size, uint32_t receive )
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 
 	if ( pUsart->US_TNCR == 0 )
 	{
@@ -867,7 +867,7 @@ uint32_t txCom2Uart( uint8_t *buffer, uint32_t size )
 
 uint32_t txPdcPending()
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 	uint32_t x ;
 
 	__disable_irq() ;
@@ -966,7 +966,7 @@ void txmit( uint8_t c )
 #ifndef SMALL
 void txmit2nd( uint8_t c )
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 
 	/* Wait for the transmitter to be ready */
   while ( (pUsart->US_CSR & US_CSR_TXEMPTY) == 0 ) ;
@@ -977,7 +977,7 @@ void txmit2nd( uint8_t c )
 
 uint16_t rx2nduart()
 {
-  register Usart *pUsart = SECOND_USART;
+  Usart *pUsart = SECOND_USART;
 
   if (pUsart->US_CSR & US_CSR_RXRDY)
 	{
@@ -1014,7 +1014,7 @@ uint16_t rx2nduart()
 static void start_timer5()
 {
 #ifndef SIMU
-  register Tc *ptc ;
+  Tc *ptc ;
 //	register Pio *pioptr ;
 
 	// Enable peripheral clock TC0 = bit 23 thru TC5 = bit 28
@@ -1105,8 +1105,8 @@ extern "C" void PIOA_IRQHandler()
 	RTC->BKP1R = 0x8E ;
 #endif
 #endif
-  register uint32_t capture ;
-  register uint32_t dummy ;
+  uint32_t capture ;
+  uint32_t dummy ;
 	
 	capture =  TC1->TC_CHANNEL[0].TC_CV ;	// Capture time
 	struct t_softSerial *pss = &SoftSerial1 ;

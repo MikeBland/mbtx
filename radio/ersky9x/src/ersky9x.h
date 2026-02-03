@@ -1884,7 +1884,15 @@ extern uint16_t FailsafeCounter[2] ;
 struct t_text
 {
 	FIL TextFile ;
-	uint8_t TextMenuBuffer[16*21] ;
+	union
+	{
+		uint8_t TextMenuBuffer[16*21] ;
+		struct
+		{
+			uint8_t TextIndices[256] ;	
+			uint8_t TextIndexCount ;
+		} ;
+	} ;
 	uint8_t TextMenuStore[16*21+32] ;	// Allow for CRLF
 	uint8_t TextLines ;
 	uint8_t TextOffset ;

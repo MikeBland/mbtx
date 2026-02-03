@@ -164,6 +164,7 @@ uint32_t insertValue( struct t_varPack *pvar, uint32_t position )
 		pvalue->value = 0 ;
 		pvalue->category = 0 ;
 		pvalue->valIsSource = 0 ;
+		pvalue->scale = 0 ;
 		buildVarOffsetTable() ;
 		LockVars = 0 ;
 		return 1 ;
@@ -221,6 +222,7 @@ void displayVarName( uint16_t x, uint16_t y, int32_t index, uint16_t attr )
  #endif
 #endif
 			 
+	cpystr( (uint8_t *)LastItem, (uint8_t *) text ) ;
 			
 //#ifdef TOUCH
 //			lcd_putcAttColour( x+3*FW, y, qr.quot+'0', 0 ) ;
@@ -642,7 +644,6 @@ void menuOneValue( uint8_t event )
 	TITLE(XPSTR("Value")) ;
 	uint32_t rows = 4 ;
 	static MState2 mstate2 ;
-	mstate2.check_columns( event, rows-1 ) ;
 	struct t_valVarPack *pvalue ;
 	uint32_t i ;
 	uint8_t sub = mstate2.m_posVert ;
@@ -650,6 +651,13 @@ void menuOneValue( uint8_t event )
 	uint8_t sItem ;
 
 	pvalue = getValueAddress( PopPvar, PopOpts ) ;
+
+	if ( pvalue->valIsSource )
+	{
+		rows = 5 ;
+	}
+
+	mstate2.check_columns( event, rows-1 ) ;
 
  	for( i = 0 ; i < rows ; i += 1 )
 	{
@@ -701,6 +709,7 @@ void menuOneValue( uint8_t event )
 				if ( pvalue->valIsSource != old )
 				{
 					pvalue->value = 0 ;
+					pvalue->scale = 0 ;
 				}
 			}
 			break ;
@@ -725,6 +734,14 @@ void editGvarSource(uint8_t *p, uint32_t varMode ) ;
 						pvalue->value = checkIncDec16( pvalue->value, -2000, 2000, EE_MODEL ) ;
   	 			}
 				}
+			break ;
+			case 4 :
+				PUTS_ATT_LEFT( y, XPSTR("Scale") ) ;
+				PUTS_NUM( PARAM_OFS, y, pvalue->scale+1, attr) ;
+				if(attr)
+				{
+					pvalue->scale = checkIncDec16( pvalue->scale, 0, 9, EE_MODEL ) ;
+ 	 			}
 			break ;
 		}
 	}
@@ -1142,7 +1159,7 @@ void menuOneAction( uint8_t event )
 			break ;
 			case 2 :
 				drawItem( (char *)XPSTR("Function"), y, attr ) ;
-				drawIdxText( y+TVOFF, (char *)StringActionFunction, pAction->function, attr ) ;
+				drawIdxText( y, (char *)StringActionFunction, pAction->function, attr ) ;
 	 			if(attr)
 				{
 					CHECK_INCDEC_H_MODELVAR( pAction->function, 0, 7 ) ;
@@ -1162,7 +1179,7 @@ void menuOneAction( uint8_t event )
 				if ( pAction->function == 7 )
 				{
 			 		drawItem( (char *)XPSTR("Trim"), y, attr ) ;
-					drawIdxText( y*2+TVOFF, (char *)XPSTR("\002LHLVRVRH"), lindex, attr ) ;
+					drawIdxText( y, (char *)XPSTR("\002LHLVRVRH"), lindex, attr ) ;
 				}
 				else
 				{
@@ -1211,7 +1228,14 @@ void menuOneValue( uint8_t event )
 	uint32_t rows = 4 ;
 	struct t_valVarPack *pvalue ;
 	uint8_t sItem ;
+
+	pvalue = getValueAddress( PopPvar, PopOpts ) ;
 	
+	if ( pvalue->valIsSource )
+	{
+		rows = 5 ;
+	}
+	 
 	event = mstate2.check_columns( event, rows-1 ) ;
 	
 	uint8_t sub = mstate2.m_posVert ;
@@ -1228,7 +1252,6 @@ void menuOneValue( uint8_t event )
 
 	lcd_hline( 0, TTOP, TRIGHT ) ;
 
-	pvalue = getValueAddress( PopPvar, PopOpts ) ;
 
  	for( uint32_t i = 0 ; i < rows ; i += 1 )
 	{
@@ -1287,6 +1310,7 @@ void menuOneValue( uint8_t event )
 				if ( pvalue->valIsSource != old )
 				{
 					pvalue->value = 0 ;
+					pvalue->scale = 0 ;
 				}
 			}
 			break ;
@@ -1303,9 +1327,9 @@ void editGvarSource(uint8_t *p, uint32_t varMode ) ;
 						pvalue->value = sItem ;
 					}
 					saveEditColoursBlink( attr, colour ) ;
-					displayVarSource( TRIGHT-TRMARGIN-3*FW, y+TVOFF, pvalue, attr & ~INVERS ) ;
+					displayVarSource( TRIGHT-TRMARGIN, y+TVOFF, pvalue, (attr & ~INVERS) | LUA_RIGHT ) ;
 					restoreEditColours() ;
-					PUTS_NUM( 10*FW, 6*FH, pvalue->value, 0 ) ;
+//					PUTS_NUM( 10*FW, 6*FH, pvalue->value, 0 ) ;
 				}
 				else
 				{
@@ -1315,6 +1339,14 @@ void editGvarSource(uint8_t *p, uint32_t varMode ) ;
 						pvalue->value = checkIncDec16( pvalue->value, -2000, 2000, EE_MODEL ) ;
   	 			}
 				}
+			break ;
+			case 4 :
+				drawItem( (char *)XPSTR("Scale"), y, attr ) ;
+				drawNumber( TRIGHT-TRMARGIN, y, pvalue->scale+1, attr ) ;
+				if(attr)
+				{
+					pvalue->scale = checkIncDec16( pvalue->scale, 0, 9, EE_MODEL ) ;
+ 	 			}
 			break ;
 		}
 	}
@@ -1737,11 +1769,11 @@ int16_t getVarSingleValue( struct t_valVarPack *pVal )
 #endif
 			// Make the following a function, also useable by the mixer
 			value = switchSourceValue( item, 1000 ) ;
-			return value ;
+			return value * (pVal->scale+1) ;
 		}
 		if ( pVal->value )
 		{
-			value = getVarSourceValue( pVal->value ) ;
+			value = getVarSourceValue( pVal->value ) * (pVal->scale+1) ;
 		}
 		else
 		{

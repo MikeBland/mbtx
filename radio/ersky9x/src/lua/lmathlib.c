@@ -34,7 +34,7 @@
 #endif
 #endif				/* } */
 
-uint32_t __errno ;
+//uint32_t __errno ;
 
 static int math_abs (lua_State *L) {
   if (lua_isinteger(L, 1)) {

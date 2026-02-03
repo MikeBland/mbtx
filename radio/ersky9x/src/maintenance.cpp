@@ -1288,7 +1288,7 @@ extern int32_t Rotary_diff ;
 #if !defined(PCBTARANIS)
 void lcd_putsnAtt0(uint16_t x,uint16_t y, const char * s,uint8_t len,uint8_t mode)
 {
-	register char c ;
+	char c ;
   while(len!=0)
 	{
     c = *s++ ;

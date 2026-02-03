@@ -132,7 +132,7 @@ void module_output_low()
 
 void module_output_active()
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	
 //	if ( ( CurrentTrainerSource != TRAINER_SLAVE ) || (g_model.Module[1].protocol != PROTO_PPM) )
 	if ( CurrentTrainerSource != TRAINER_SLAVE )
@@ -254,7 +254,7 @@ void checkTrainerSource()
 
 void init_ppm2( uint32_t period, uint32_t out_enable )
 {
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 	
 // This is the PPM2 output
 #ifndef REVA
@@ -294,7 +294,7 @@ void init_ppm2( uint32_t period, uint32_t out_enable )
 
 void init_main_ppm( uint32_t period, uint32_t out_enable )
 {
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 	
   perOut(g_chans512, 0) ;
   setupPulsesPPM() ;
@@ -329,7 +329,7 @@ void init_main_ppm( uint32_t period, uint32_t out_enable )
 
 void disable_main_ppm()
 {
-	register Pio *pioptr ;
+	Pio *pioptr ;
 	
 	pioptr = PIOA ;
 	pioptr->PIO_PER = PIO_PA17 ;						// Assign A17 to PIO
@@ -367,8 +367,8 @@ uint16_t XjtHbeatOffset ;
 #ifndef SIMU
 extern "C" void PWM_IRQHandler (void)
 {
-	register Pwm *pwmptr ;
-	register Ssc *sscptr ;
+	Pwm *pwmptr ;
+	Ssc *sscptr ;
 	uint32_t period ;
 	uint32_t reason ;
 
@@ -1130,7 +1130,7 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 #endif
     
 #ifdef PCBSKY
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 	
 	pwmptr = PWM ;
 	pwmptr->PWM_CH_NUM[3].PWM_CDTYUPD = ((i ? g_model.ppmDelay : g_model.Module[1].ppmDelay)*50+300)*2; //Stoplen *2
@@ -1187,7 +1187,7 @@ void setupPulsesPPM()			// Don't enable interrupts through here
 void setupPulsesPPM2()
 {
   static uint8_t dsmDat[2+6*2+4]={0xFF,0x00,  0x00,0xAA,  0x05,0xFF,  0x09,0xFF,  0x0D,0xFF,  0x13,0x54,  0x14,0xAA } ;
-	register Pwm *pwmptr ;
+	Pwm *pwmptr ;
 	uint8_t *dataPtr ;
 	uint32_t byteCount ;
 	uint32_t bitTime ;
