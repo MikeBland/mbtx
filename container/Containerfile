@@ -1,0 +1,33 @@
+FROM ubuntu:18.04 AS buildmake
+
+# The sources require make >= 4.4 (because of their use of the .WAIT target),
+# but there is no version of Ubuntu that (a) has make 4.4 and (b) has versions
+# of the ARM toolchain that will build this project.
+#
+# So we'll just build make from source.
+
+RUN apt-get update && \
+      DEBIAN_FRONTEND=noninteractive apt-get -y install \
+      build-essential \
+      && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+ADD https://ftp.gnu.org/gnu/make/make-4.4.1.tar.gz ./make.tar.gz
+WORKDIR /build/make
+RUN tar -xf ../make.tar.gz --strip-components=1
+RUN ./configure
+RUN make -j install
+
+FROM ubuntu:18.04
+
+COPY --from=buildmake /usr/local/bin/make /usr/local/bin/make
+
+RUN apt-get update && \
+      DEBIAN_FRONTEND=noninteractive apt-get -y install \
+      build-essential \
+      cmake \
+      libusb-dev \
+      make \
+      binutils-arm-none-eabi \
+      gcc-arm-none-eabi \
+      && rm -rf /var/lib/apt/lists/*
